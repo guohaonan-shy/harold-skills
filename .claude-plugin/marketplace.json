@@ -10,6 +10,11 @@
       "name": "clinical-research",
       "source": "./clinical-research",
       "description": "Clinical research workflow skills: study design, variable coding, statistical analysis, and paper drafting. For clinical medicine researchers conducting retrospective cohort studies."
+    },
+    {
+      "name": "excalidrawer",
+      "source": "./excalidrawer",
+      "description": "Code-first Excalidraw diagram generation. Four skills (flowchart / timeline / architecture / sequence) clarify intent via AskUserQuestion, shape data into JSON, and call the excalidrawer npm CLI to produce .excalidraw / .svg / .png outputs."
     }
   ]
 }

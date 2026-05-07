@@ -7,6 +7,7 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 | Plugin | Purpose | Status |
 |---|---|---|
 | [`clinical-research/`](./clinical-research/) | 临床医学回顾性队列研究工作流（study-design / variable-coding / stat-analysis / paper-draft）| ✅ Ready |
+| [`excalidrawer/`](./excalidrawer/) | Code-first Excalidraw 图表生成（flowchart / timeline / architecture / sequence）| ✅ Ready |
 
 更多 plugin 会陆续迁过来。
 
