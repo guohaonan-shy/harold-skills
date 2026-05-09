@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 当前 plugins:
 - `clinical-research/` — 临床医学回顾性队列研究工作流（study-design / variable-coding / stat-analysis / paper-draft）。4 skill 完成，含 plugin 级 `references/conventions.md` 和每个 skill 的 `references/cases.md`（共 15 个真实研究案例）。详见 `clinical-research/README.md`。
 - `excalidrawer/` — Code-first Excalidraw 图表生成（flowchart / timeline / architecture / sequence）。4 skill 完成，plugin 级 `references/` 装 cli-usage / colors / custom-api fallback；底层调 npm 包 `excalidrawer` CLI。详见 `excalidrawer/README.md`。
+- `anti-olden/` — 飞书 / Lark 职场沟通参谋（reply-coach / comm-memory / chat-recap / meeting-recap）。4 skill 完成，plugin 级 `references/` 装 conventions / memory-index / lark-cli-cookbook / olden-patterns / diff-format / prompts / templates。Memory 用三维度格式（section 自由 + 4 类闭合 type [profile/event/behavior/strategy] + KV 自由 + reinforcement count）；**用户数据（memory + raw）落 `~/.anti-olden/`**（不在 plugin 目录里），底层调官方 `larksuite/cli` skill 包提供的 `lark-cli`。详见 `anti-olden/README.md`。
 
 ## 标准 plugin 目录结构
 
@@ -40,10 +41,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 要点：
 - SKILL.md 主体保持精简（< 5000 字），把长篇领域知识、真实案例放 `skills/<name>/references/`
 - 跨 skill 共享约定（提问方式、文件覆盖、语言切换、文件名约定等）写到 plugin 级 `references/conventions.md`，每个 SKILL.md 在 §0 必读约定 段引用
-- skill 运行时产物写到**用户当前工作目录的固定语义文件名**（gstack 风格，下游 skill 通过文件名 Read 衔接，**不用** `outputs/<timestamp>/` 子目录）
-  - 文本产物：`./design-brief.md` / `./paper-results.md`
-  - 二进制产物：`./flowchart-<name>.png` / `./timeline-<name>.svg`
-  - 中间数据：可走 `/tmp/`（如 excalidrawer 的中间 JSON），不污染 cwd
+- skill 运行时产物分两类，按性质选位置：
+  - **任务产物（per-project）** → 用户当前工作目录的固定语义文件名（gstack 风格，下游 skill 通过文件名 Read 衔接，**不用** `outputs/<timestamp>/` 子目录）
+    - 文本：`./design-brief.md` / `./paper-results.md`
+    - 二进制：`./flowchart-<name>.png` / `./timeline-<name>.svg`
+    - 中间数据：可走 `/tmp/`（如 excalidrawer 的中间 JSON），不污染 cwd
+  - **跨会话持久的用户数据（不绑定 cwd）** → `~/.<plugin-name>/`（如 `~/.anti-olden/{memory,raw}/`）
+    - plugin 目录是只读的（marketplace 升级会换路径），所以 runtime-mutable 状态必须落用户主目录
+    - 适用场景：用户画像 / 长期档案 / 跨会话的原始数据缓存——不属于"某个项目"的产物
 
 ## SKILL.md 编写约定（跨所有 plugin）
 

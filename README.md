@@ -8,6 +8,7 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 |---|---|---|
 | [`clinical-research/`](./clinical-research/) | 临床医学回顾性队列研究工作流（study-design / variable-coding / stat-analysis / paper-draft）| ✅ Ready |
 | [`excalidrawer/`](./excalidrawer/) | Code-first Excalidraw 图表生成（flowchart / timeline / architecture / sequence）| ✅ Ready |
+| [`anti-olden/`](./anti-olden/) | 飞书 / Lark 职场沟通参谋（reply-coach / comm-memory / chat-recap / meeting-recap）| ✅ Ready |
 
 更多 plugin 会陆续迁过来。
 
@@ -24,6 +25,7 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 ```text
 /plugin install clinical-research    # 临床研究工作流（4 skill）
 /plugin install excalidrawer         # 图表生成（4 skill：flowchart / timeline / architecture / sequence）
+/plugin install anti-olden           # 飞书沟通参谋（4 skill：reply-coach / comm-memory / chat-recap / meeting-recap）
 ```
 
 ## Repository structure

@@ -15,6 +15,11 @@
       "name": "excalidrawer",
       "source": "./excalidrawer",
       "description": "Code-first Excalidraw diagram generation. Four skills (flowchart / timeline / architecture / sequence) clarify intent via AskUserQuestion, shape data into JSON, and call the excalidrawer npm CLI to produce .excalidraw / .svg / .png outputs."
+    },
+    {
+      "name": "anti-olden",
+      "source": "./anti-olden",
+      "description": "Workplace communication coach for Lark / 飞书. Four skills (reply-coach / comm-memory / chat-recap / meeting-recap) analyze high-friction IM messages + meeting transcripts, maintain person + group profiles with type+KV memory format (profile/event/behavior/strategy + reinforcement), and draft replies in preset strategies. User data lives under ~/.anti-olden/ — plugin dir is read-only references and prompts."
     }
   ]
 }
