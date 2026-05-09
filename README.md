@@ -19,10 +19,11 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 /reload-plugins                                        # 让 skill 生效
 ```
 
-例如装 `clinical-research`：
+例如：
 
 ```text
-/plugin install clinical-research
+/plugin install clinical-research    # 临床研究工作流（4 skill）
+/plugin install excalidrawer         # 图表生成（4 skill：flowchart / timeline / architecture / sequence）
 ```
 
 ## Repository structure
@@ -36,12 +37,14 @@ harold-skills/
 └── <plugin-name>/            # 每个目录 = 一个 plugin
     ├── .claude-plugin/plugin.json
     ├── README.md
-    ├── references/           # plugin 内跨 skill 共享约定
+    ├── references/           # plugin 级共享（按需，如 conventions.md / cli-usage.md）
     └── skills/
         └── <skill-name>/
             ├── SKILL.md
-            └── references/   # skill 自己的深度参考
+            └── references/   # skill 自己的深度参考（按需，如 cases.md）
 ```
+
+`references/` 灵活布局——只 plugin 级（excalidrawer 模式）或两级都有（clinical-research 模式），看内容是否需要 skill 特异性。
 
 每个 plugin 独立可装。维护约定见 [CLAUDE.md](./CLAUDE.md)。
 
