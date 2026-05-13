@@ -1,11 +1,21 @@
 # CLI usage
 
-底层 npm 包 `excalidrawer`（已发布到 npm registry，version 0.5.2+）。所有 skill 通过 `npx` 调用，无需用户手动 `npm install`。
+底层 npm 包 `excalidrawer`（已发布到 npm registry）。当前 plugin 锁定 **`excalidrawer@^0.5.3`**——所有 skill 调用都带版本约束，老 npx 缓存不匹配会自动 fetch。
+
+## 版本 pin 维护约定（写给 plugin 维护者）
+
+每次 npm 包发版且包含 **user-visible 行为变化**（渲染默认值、新参数、新子命令等），同步操作：
+
+1. 升 plugin 版本（`.claude-plugin/plugin.json` 的 `version`）
+2. 把所有 SKILL.md 和本文件里的 `excalidrawer@^X.Y.Z` 改成新版本号
+3. commit、走 marketplace 升级流程
+
+**只是 npm 改 bug 修复 / 内部重构**（用户感知不到）→ 不需要升 plugin。
 
 ## 前置检查（每个会话首次用时）
 
 ```bash
-npx excalidrawer --version
+npx excalidrawer@^0.5.3 --version
 ```
 
 失败处理：
@@ -15,7 +25,7 @@ npx excalidrawer --version
 ## 生成命令
 
 ```bash
-npx excalidrawer generate \
+npx excalidrawer@^0.5.3 generate \
   --type <type> \
   --input <data.json> \
   --output <out-prefix> \
@@ -57,7 +67,7 @@ skill 默认写到**用户当前工作目录**：
 ## stdin 用法（少用，只在数据量很小或脚本化场景）
 
 ```bash
-echo '{"title":"X","items":[...]}' | npx excalidrawer generate -t timeline -o ./out
+echo '{"title":"X","items":[...]}' | npx excalidrawer@^0.5.3 generate -t timeline -o ./out
 ```
 
 skill 默认走 `--input <file>`：先 Write JSON 文件再调 CLI，便于排错和复用。

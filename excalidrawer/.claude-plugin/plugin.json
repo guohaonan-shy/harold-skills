@@ -1,7 +1,7 @@
 {
   "name": "excalidrawer",
   "description": "Code-first Excalidraw diagram generation. Four skills (flowchart / timeline / architecture / sequence) that clarify intent via AskUserQuestion, shape data into JSON, and call the excalidrawer npm CLI to produce .excalidraw / .svg / .png outputs.",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "author": {
     "name": "Harold"
   }

@@ -10,7 +10,7 @@
 npm install excalidrawer
 ```
 
-模版工作流不需要——`npx excalidrawer generate ...` 会自动拉。
+模版工作流不需要——`npx excalidrawer@^0.5.3 generate ...` 会自动拉。
 
 ## API 速览
 

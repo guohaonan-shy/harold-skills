@@ -1,7 +1,7 @@
 ---
 name: architecture
 description: 用 Excalidraw 手绘风格生成系统架构图 / 分层组件图 / 模块依赖图。任何提到 architecture / 架构图 / 系统架构 / 分层 / layered / component diagram / 模块图 / 服务拓扑 / 微服务架构 / 前后端架构 / 数据流图 / system topology / 中台架构 / 数据中台 / 三层架构 / 四层架构 的场景都触发本 skill。底层调 npx excalidrawer CLI 输出 .excalidraw / .svg / .png。开 AskUserQuestion 工具先 clarify 系统名 / 分层 / 跨层连接，再拼 JSON 调 CLI。
-allowed-tools: Bash(npx excalidrawer:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
+allowed-tools: Bash(npx excalidrawer@^0.5.3:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
 ---
 
 # Architecture skill
@@ -17,7 +17,7 @@ allowed-tools: Bash(npx excalidrawer:*), Bash(ls:*), Read, Write(*.json), AskUse
 ## 1. 前置检查（会话首次）
 
 ```bash
-npx excalidrawer --version
+npx excalidrawer@^0.5.3 --version
 ```
 
 ## 2. Clarify 阶段（核心步骤，先问后画）
@@ -116,7 +116,7 @@ Schema：
 ## 4. 调 CLI 生成
 
 ```bash
-npx excalidrawer generate \
+npx excalidrawer@^0.5.3 generate \
   -t architecture \
   -i ./architecture-order-service.json \
   -o ./architecture-order-service \
