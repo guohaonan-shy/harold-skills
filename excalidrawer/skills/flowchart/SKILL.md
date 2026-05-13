@@ -1,7 +1,7 @@
 ---
 name: flowchart
 description: 用 Excalidraw 手绘风格生成流程图 / 决策流 / 分支判断图。任何提到 flowchart / 流程图 / 决策树 / decision flow / branching / 判断分支 / yes-no 流程 / 表单校验流 / 业务流转 / 审批流 / pipeline 流程 / process diagram 的场景都触发本 skill。底层调 npx excalidrawer CLI 输出 .excalidraw / .svg / .png。开 AskUserQuestion 工具先 clarify 用户的目标 / 节点 / 分支 / 方向，再拼 JSON 调 CLI。
-allowed-tools: Bash(npx excalidrawer@^0.5.3:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
+allowed-tools: Bash(npx excalidrawer@^0.5.4:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
 ---
 
 # Flowchart skill
@@ -17,7 +17,7 @@ allowed-tools: Bash(npx excalidrawer@^0.5.3:*), Bash(ls:*), Read, Write(*.json),
 ## 1. 前置检查（会话首次）
 
 ```bash
-npx excalidrawer@^0.5.3 --version
+npx excalidrawer@^0.5.4 --version
 ```
 
 ## 2. Clarify 阶段（核心步骤，先问后画）
@@ -92,7 +92,7 @@ Schema：
 ## 4. 调 CLI 生成
 
 ```bash
-npx excalidrawer@^0.5.3 generate \
+npx excalidrawer@^0.5.4 generate \
   -t flowchart \
   -i ./flowchart-form-submit.json \
   -o ./flowchart-form-submit \

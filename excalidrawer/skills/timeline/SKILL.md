@@ -1,7 +1,7 @@
 ---
 name: timeline
 description: 用 Excalidraw 手绘风格生成时间线 / 路线图 / 项目里程碑图。任何提到 timeline / 时间线 / 路线图 / roadmap / milestone / 里程碑 / 项目阶段 / phase / 季度规划 / 年度计划 / Q1Q2Q3Q4 / 周计划 / 时间节点 / chronology 的场景都触发本 skill。底层调 npx excalidrawer CLI 输出 .excalidraw / .svg / .png。开 AskUserQuestion 工具先 clarify 时间跨度 / 粒度 / 关键里程碑，再拼 JSON 调 CLI。
-allowed-tools: Bash(npx excalidrawer@^0.5.3:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
+allowed-tools: Bash(npx excalidrawer@^0.5.4:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
 ---
 
 # Timeline skill
@@ -17,7 +17,7 @@ allowed-tools: Bash(npx excalidrawer@^0.5.3:*), Bash(ls:*), Read, Write(*.json),
 ## 1. 前置检查（会话首次）
 
 ```bash
-npx excalidrawer@^0.5.3 --version
+npx excalidrawer@^0.5.4 --version
 ```
 
 ## 2. Clarify 阶段（核心步骤，先问后画）
@@ -86,7 +86,7 @@ Schema：
 ## 4. 调 CLI 生成
 
 ```bash
-npx excalidrawer@^0.5.3 generate \
+npx excalidrawer@^0.5.4 generate \
   -t timeline \
   -i ./timeline-2026-roadmap.json \
   -o ./timeline-2026-roadmap \

@@ -1,6 +1,6 @@
 # CLI usage
 
-底层 npm 包 `excalidrawer`（已发布到 npm registry）。当前 plugin 锁定 **`excalidrawer@^0.5.3`**——所有 skill 调用都带版本约束，老 npx 缓存不匹配会自动 fetch。
+底层 npm 包 `excalidrawer`（已发布到 npm registry）。当前 plugin 锁定 **`excalidrawer@^0.5.4`**——所有 skill 调用都带版本约束，老 npx 缓存不匹配会自动 fetch。
 
 ## 版本 pin 维护约定（写给 plugin 维护者）
 
@@ -15,7 +15,7 @@
 ## 前置检查（每个会话首次用时）
 
 ```bash
-npx excalidrawer@^0.5.3 --version
+npx excalidrawer@^0.5.4 --version
 ```
 
 失败处理：
@@ -25,7 +25,7 @@ npx excalidrawer@^0.5.3 --version
 ## 生成命令
 
 ```bash
-npx excalidrawer@^0.5.3 generate \
+npx excalidrawer@^0.5.4 generate \
   --type <type> \
   --input <data.json> \
   --output <out-prefix> \
@@ -67,7 +67,7 @@ skill 默认写到**用户当前工作目录**：
 ## stdin 用法（少用，只在数据量很小或脚本化场景）
 
 ```bash
-echo '{"title":"X","items":[...]}' | npx excalidrawer@^0.5.3 generate -t timeline -o ./out
+echo '{"title":"X","items":[...]}' | npx excalidrawer@^0.5.4 generate -t timeline -o ./out
 ```
 
 skill 默认走 `--input <file>`：先 Write JSON 文件再调 CLI，便于排错和复用。
