@@ -1,152 +1,100 @@
 ---
 name: sequence
-description: 用 Excalidraw 手绘风格生成时序图 / sequence diagram / 交互图 / swimlane 流程。任何提到 sequence diagram / 时序图 / 交互图 / swimlane / 多角色交互 / API 调用顺序 / 客户端服务端交互 / 跨服务调用链 / 协议握手 / handshake / 异步消息流 / message flow / 谁先谁后 的场景都触发本 skill。底层调 npx excalidrawer CLI 输出 .excalidraw / .svg / .png。开 AskUserQuestion 工具先 clarify 参与方 / 步骤顺序 / 同步异步，再拼 JSON 调 CLI。
-allowed-tools: Bash(npx excalidrawer@^0.5.4:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
+description: 用 Excalidraw 手绘风生成时序图 / 多角色交互图 / API 调用顺序图。任何提到 sequence diagram / 时序图 / 交互流 / API 调用顺序 / handshake / OAuth 流程 / 异步交互 / 跨服务调用 / RPC 链路 / 谁先谁后 / 协议握手 的场景都触发本 skill。流程:AskUserQuestion clarify → 读 recipe → 拼 sugar(actor 头 + 虚线生命线 + 消息箭头) → 调 excalidrawer MCP server 的 render_diagram 输出 .excalidraw / .svg / .png。
+allowed-tools: mcp__excalidrawer__render_diagram, mcp__excalidrawer__compute_layout, Bash(npx -y -p excalidrawer*:*), Read, Write(./sequence-*.json), AskUserQuestion
 ---
 
 # Sequence skill
 
-把多角色之间按时间顺序的交互画成手绘风时序图（横向 actors + 纵向 steps）。**先 clarify actors 和步骤再画**。
+把多角色 / 多服务之间的交互画成手绘风时序图。流程:**clarify → 读 recipe → 拼 sugar → render_diagram**。
 
 ## 0. 必读约定
 
-- CLI 用法 / 输出文件命名 / 覆盖策略 → `${CLAUDE_PLUGIN_ROOT}/references/cli-usage.md`
-- 颜色 palette → `${CLAUDE_PLUGIN_ROOT}/references/colors.md`
-- 自定义场景（非时序）→ `${CLAUDE_PLUGIN_ROOT}/references/custom-api.md`
+- 跨 skill 约定 → `${CLAUDE_PLUGIN_ROOT}/references/conventions.md`
+- sugar schema → `${CLAUDE_PLUGIN_ROOT}/references/sugar.md`
+- 配色 → `${CLAUDE_PLUGIN_ROOT}/references/colors.md`
+- sequence 具体模式(actor 摆位 / 生命线 / 消息样式 / 跨 lifeline label) → `${CLAUDE_PLUGIN_ROOT}/skills/sequence/recipes/sequence.md`
 
-## 1. 前置检查（会话首次）
+## 1. 前置检查
 
-```bash
-npx excalidrawer@^0.5.4 --version
+MCP 工具可见。否则走 CLI fallback。
+
+## 2. Clarify(必)
+
+AskUserQuestion 2-3 个问题:
+
+1. **参与的角色 / 服务** —— 自由文本
+   - 例:"User / Client / Auth Server" 或 "Frontend / Gateway / Payment / DB"
+   - 让用户列出来,你按交互顺序定 actor 排列
+
+2. **核心交互序列** —— 自由文本
+   - 例:"OAuth login flow with code exchange"
+   - 用户能粘步骤更好;粘不出来用问的方式抽取关键 step
+
+3. **返回 / 响应消息样式** —— AskUserQuestion 单选
+   - `按方向区分:左→右实线,右→左虚线`(默认,直观)
+   - `按语义区分:请求实线,响应/return 虚线`(标准 UML 风格)
+   - `不区分:全实线`(简单交互可用)
+
+4. **输出格式 / 使用场景** —— AskUserQuestion 单选,选项和映射见 `${CLAUDE_PLUGIN_ROOT}/references/conventions.md` §6。
+
+**diagram label 默认英文**(见 conventions §4)。
+
+## 3. 读 recipe
+
+`Read ${CLAUDE_PLUGIN_ROOT}/skills/sequence/recipes/sequence.md` —— actor 摆位、生命线样式、消息间距、跨 lifeline label 的 `labelT` 处理。
+
+## 4. 拼 sugar 元素
+
+骨架:
+
+```js
+// title
+{ shape: "text", at: [80, 10], size: [TOTAL_W, 32], text: "<title>", fontSize: 26 }
+
+// actor 头(顶部一行)
+{ shape: "rect", id: "user", at: [cx - AW/2, ATOP], size: [AW, AH],
+  fill: "yellow", text: "User", fontSize: 15 }
+
+// 生命线 = 细虚线无箭头(sugar 没有 line 原语,用 arrow + head:"none" + dashed)
+{ shape: "arrow", at: [cx, LIFE_TOP], points: [[0, 0], [0, LIFE_LEN]],
+  head: "none", dashed: true, stroke: "gray" }
+
+// 消息 = 横向 L4 箭头
+{ shape: "arrow", at: [fromX, y], points: [[0, 0], [toX - fromX, 0]],
+  dashed: <按 §2 §3 规则>, text: "1. Login request" }
+
+// 跨多条 lifeline 的消息加 labelT 错开(避开中间 lifeline)
+{ shape: "arrow", ..., labelT: 0.25 }
 ```
 
-## 2. Clarify 阶段（核心步骤，先问后画）
+actor x positions: `chain({ start: {x:200, y:0}, count: N, dx: 330 })`
+step y positions: `chain({ start: {x:0, y: LIFE_TOP + 40}, count: M, dy: 52 })`
 
-时序图错一个 actor 或步骤顺序，整图都得重做。**用 AskUserQuestion 问 3 个 load-bearing 问题**。
+## 5. 渲染
 
-### 必问
-
-1. **参与方（actors）有哪些** —— 自然语言模板
-   - 提示用户列出参与方，从左到右顺序就是图上 actor 列顺序：
-     ```
-     - <actor 1>
-     - <actor 2>
-     - <actor 3>
-     ```
-   - 例：`Client / Service / Storage` 或 `User / Frontend / Backend / Database`
-   - 一般 2-5 个；超过 5 列建议拆图或简化
-
-2. **整体流程一句话目标** —— 自由文本
-   - 例："用户提交请求到拿到响应的全过程" / "Token 刷新流程"
-   - 决定 title 和步骤主线
-
-3. **是否包含失败 / 异步返回路径** —— AskUserQuestion 二/三选一
-   - 选项：
-     - "只画成功路径（同步主线）"
-     - "包含返回 / 响应路径（用 dashed 箭头）"
-     - "包含失败分支" → 提醒用户复杂分支建议拆成多个时序图
-
-### 可选追问
-
-- 步骤数大约多少（3-5 / 6-10 / >10），>10 建议拆段
-- 是否要标识"成功终态"（最后一步 `color: green`）
-
-### 跳过 clarify 的条件
-
-用户已经粘了结构化的 actor 列表 + 步骤序列，直接进 §3。
-
-## 3. 拼 JSON
-
-Schema：
-
-```json
-{
-  "title": "Request Response Flow",
-  "actors": [
-    { "label": "Client",  "color": "yellow" },
-    { "label": "Service", "color": "blue"   },
-    { "label": "Storage", "color": "gray"   }
-  ],
-  "steps": [
-    {
-      "actor": "Client",
-      "text":  "1. Send request"
-    },
-    {
-      "actor": "Service",
-      "text":  "2. Validate + lookup",
-      "from":  "Client",
-      "arrow": "POST /resource"
-    },
-    {
-      "actor": "Storage",
-      "text":  "3. Query data",
-      "from":  "Service",
-      "arrow": "SELECT ..."
-    },
-    {
-      "actor": "Service",
-      "text":  "4. Format response",
-      "from":  "Storage",
-      "arrow": "rows",
-      "style": "dashed"
-    },
-    {
-      "actor": "Client",
-      "text":  "5. Receive response",
-      "color": "green",
-      "from":  "Service",
-      "arrow": "200 OK"
-    }
-  ]
-}
+```text
+mcp__excalidrawer__render_diagram({
+  elements: <sugar 数组>,
+  output: "./sequence-<name>",
+  formats: <按 §2 clarify §4 / conventions §6 选>,
+  scale: <高清演示场景传 3,其它略>
+})
 ```
 
-字段：
-- `title` (string, optional) — 图顶标题，居中
-- `actors[]` —— 参与方列，从左到右
-  - `label` (string) — actor 名（也作为 step 里 `actor` / `from` 的引用键）
-  - `color` (string, optional) — 表头 box 色键（详见 colors.md）
-- `steps[]` —— 按时间顺序，每条占一行
-  - `actor` (string) — 这步落在哪个 actor 列（必须匹配某个 actor `label`）
-  - `text` (string) — box 内文本，自动换行；可用 `\n` 强制换行
-  - `color` (string, optional) — 覆盖 box 色（如 `"green"` 标终态）
-  - `from` (string, optional) — 源 actor label；填了就画**水平箭头**从那条 lifeline 进入本步
-  - `arrow` (string, optional) — 箭头上的文本；`""` 表示无文本箭头
-  - `style` (string, optional) — `"solid"`（默认）/ `"dashed"`（返回 / 异步）
+## 6. 给用户
 
-写到 `./<diagram-name>.json`（例 `./sequence-request-response.json`）。
+把三个路径告诉用户。时序图通常用 `.png` 贴 docs / Notion。
 
-## 4. 调 CLI 生成
+## 7. 常见迭代
 
-```bash
-npx excalidrawer@^0.5.4 generate \
-  -t sequence \
-  -i ./sequence-request-response.json \
-  -o ./sequence-request-response \
-  -s 400000
-```
+- "加一步" → 在对应 y 加 message arrow,后续 step y 顺移
+- "插入一个新 actor" → 加 actor box + lifeline,所有跨它的 message 补 `labelT`
+- "返回消息要更明显" → 切换 §3 选项一(按方向区分)
+- "actor 太挤,label 溢出" → 增大 actor 间距 dx(默认 330,长 label 可调到 380+)
 
-输出 `./sequence-request-response.{excalidraw,svg,png}`。
+## 8. 不适用本 skill(路由)
 
-## 5. 验证 + 给用户
-
-```bash
-ls -la ./sequence-request-response.{excalidraw,svg,png}
-```
-
-汇报三个路径。
-
-## 6. 常见迭代
-
-- "中间多一步" → steps[] 插入对应位置，重跑同 seed
-- "返回值要画虚线" → 那个 step 加 `"style": "dashed"`
-- "失败分支怎么画" → 简单情况单独再画一张失败时序；复杂分支建议升级 flowchart 或拆图
-- "actor 顺序要换" → 改 actors[] 顺序，整图列重排
-
-## 7. 不适用本 skill 的场景（建议路由）
-
-- 单线性流程 / 决策分支 → `flowchart` skill
-- 时间线 / 项目阶段 → `timeline` skill
-- 系统分层架构（不是按时间） → `architecture` skill
-- 状态机图 / 树形结构 → `references/custom-api.md` 写自定义
+- 决策 / 业务流转 → `flowchart`
+- 系统组件 / 分层 → `architecture`
+- 时间线 / 路线图 → `timeline`

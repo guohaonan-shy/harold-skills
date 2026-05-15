@@ -1,117 +1,90 @@
 ---
 name: timeline
-description: 用 Excalidraw 手绘风格生成时间线 / 路线图 / 项目里程碑图。任何提到 timeline / 时间线 / 路线图 / roadmap / milestone / 里程碑 / 项目阶段 / phase / 季度规划 / 年度计划 / Q1Q2Q3Q4 / 周计划 / 时间节点 / chronology 的场景都触发本 skill。底层调 npx excalidrawer CLI 输出 .excalidraw / .svg / .png。开 AskUserQuestion 工具先 clarify 时间跨度 / 粒度 / 关键里程碑，再拼 JSON 调 CLI。
-allowed-tools: Bash(npx excalidrawer@^0.5.4:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
+description: 用 Excalidraw 手绘风生成时间线 / 路线图 / 里程碑图。任何提到 timeline / 时间线 / 路线图 / roadmap / milestone / 里程碑 / 项目阶段 / phase / 季度规划 / Q1Q2Q3Q4 / 周计划 / 时间节点 / chronology 的场景都触发本 skill。流程:AskUserQuestion clarify → 读 recipe → 拼 sugar(轴 + 里程碑圆点 + 上下交替标签) → 调 excalidrawer MCP server 的 render_diagram 输出 .excalidraw / .svg / .png。
+allowed-tools: mcp__excalidrawer__render_diagram, mcp__excalidrawer__compute_layout, Bash(npx -y -p excalidrawer*:*), Read, Write(./timeline-*.json), AskUserQuestion
 ---
 
 # Timeline skill
 
-把用户的项目阶段 / 路线图 / 里程碑序列画成手绘风时间轴。**先 clarify 再画**。
+把项目阶段 / 路线图 / 历史里程碑画成手绘风时间线。流程:**clarify → 读 recipe → 拼 sugar → render_diagram**。
 
 ## 0. 必读约定
 
-- CLI 用法 / 输出文件命名 / 覆盖策略 → `${CLAUDE_PLUGIN_ROOT}/references/cli-usage.md`
-- 颜色 palette → `${CLAUDE_PLUGIN_ROOT}/references/colors.md`
-- 自定义图（非时间轴形态）→ `${CLAUDE_PLUGIN_ROOT}/references/custom-api.md`
+- 跨 skill 约定 → `${CLAUDE_PLUGIN_ROOT}/references/conventions.md`
+- sugar schema → `${CLAUDE_PLUGIN_ROOT}/references/sugar.md`
+- 配色 → `${CLAUDE_PLUGIN_ROOT}/references/colors.md`
+- timeline 具体模式(两种轴/圆点风格、文字布局、配色循环、不等时间间隔) → `${CLAUDE_PLUGIN_ROOT}/skills/timeline/recipes/timeline.md`
 
-## 1. 前置检查（会话首次）
+## 1. 前置检查
 
-```bash
-npx excalidrawer@^0.5.4 --version
+MCP 工具可见。否则走 CLI fallback。
+
+## 2. Clarify(必)
+
+AskUserQuestion 2 个问题:
+
+1. **里程碑列表** —— 自由文本
+   - 每个里程碑给 3 个字段:`time`(日期 / 季度 / 阶段)、`label`(短标题)、`desc`(可选,一行描述)
+   - 例:`Jan 2026 / MVP / Core features ready` ×4 条
+
+2. **轴 / 圆点风格** —— AskUserQuestion 单选
+   - `居中穿珠`(圆点居中在轴上,轴在圆点处断开;视觉最干净,**推荐**)
+   - `lollipop`(圆点切于轴,偏到 label 同侧)
+
+3. **输出格式 / 使用场景** —— AskUserQuestion 单选,选项和映射见 `${CLAUDE_PLUGIN_ROOT}/references/conventions.md` §6。timeline 常用于 slides,默认偏 PNG。
+
+可选追问:
+- 如果时间跨度不均(Jan/Mar/Aug/Sep),要不要按真实跨度拉开 x 距离
+
+**diagram label 默认英文**(见 conventions §4)。
+
+## 3. 读 recipe
+
+`Read ${CLAUDE_PLUGIN_ROOT}/skills/timeline/recipes/timeline.md` —— 两种风格的拼法、文字三件套布局(time/label/desc)、配色循环、不等时间间隔处理。
+
+## 4. 拼 sugar 元素
+
+骨架:
+
+```js
+// title
+{ shape: "text", at: [60, 30], size: [AXIS_END_X, 38], text: "<title>", fontSize: 28 }
+
+// 节点 x 位置
+const xs = mcp__excalidrawer__compute_layout({
+  helper: "chain",
+  args: { start: {x: 200, y: AXIS_Y}, count: N, dx: 260 }
+}).result;
+
+// 轴(两种风格之一,见 recipe)
+// 圆点(每个里程碑一个 ellipse,配色循环)
+// 每个里程碑:time(顶上,带色) + label(大字) + desc(灰小字),上下交替
 ```
 
-## 2. Clarify 阶段（核心步骤，先问后画）
+## 5. 渲染
 
-时间线信息密度大、粒度敏感——画错粒度全图重做。**用 AskUserQuestion 问 2-3 个 load-bearing 问题**。
-
-### 必问
-
-1. **时间跨度 + 粒度** —— AskUserQuestion 单选
-   - 选项示例：
-     - "按月（覆盖 1 年内项目）"
-     - "按季度（覆盖 1-3 年规划）"
-     - "按年（多年战略路线）"
-     - "按周（短期冲刺）"
-     - "自定义粒度"
-   - 决定 `time` 字段的格式（`Jan` / `Q1` / `2026` / `W1`）
-
-2. **里程碑列表** —— 自然语言模板（粘贴友好）
-   - 提示用户用以下模板提供：
-     ```
-     - <时间>: <里程碑名> — <一句话描述>
-     - <时间>: <里程碑名> — <一句话描述>
-     ```
-   - 例：
-     ```
-     - Jan: Kickoff — 立项 + 需求收敛
-     - Mar: Alpha — 内部小流量验证
-     - Jun: GA — 全量上线
-     ```
-
-### 可选追问
-
-- 是否要**高亮当前进度** / **today 标记**（用 `color: red` 染红那一项）
-- 里程碑之间是否要颜色区分阶段（默认按 palette 循环上色，相邻里程碑天然不同色）
-
-### 跳过 clarify 的条件
-
-用户已经粘了结构化里程碑列表（带时间 + 描述），直接进 §3。
-
-## 3. 拼 JSON
-
-Schema：
-
-```json
-{
-  "title": "Project Timeline 2026",
-  "items": [
-    { "label": "Kickoff", "time": "Jan", "desc": "立项 + 需求收敛" },
-    { "label": "Alpha",   "time": "Mar", "desc": "内部小流量验证\n关键功能 ready" },
-    { "label": "Beta",    "time": "May", "desc": "外部 50 用户灰度", "color": "orange" },
-    { "label": "GA",      "time": "Jun", "desc": "全量上线",         "color": "green" }
-  ]
-}
+```text
+mcp__excalidrawer__render_diagram({
+  elements: <sugar 数组>,
+  output: "./timeline-<name>",
+  formats: <按 §2 clarify §3 / conventions §6 选>,
+  scale: <高清演示场景传 3,其它略>
+})
 ```
 
-字段：
-- `title` (string) — 图顶标题
-- `items[]` —— 按时间顺序
-  - `label` (string) — 里程碑名（彩色 box 内显示）
-  - `time` (string) — 时间标签（轴上显示，如 `"Jan"` / `"Q1"` / `"W3"`）
-  - `desc` (string) — 描述文字，`\n` 换行
-  - `color` (string, optional) — box 填色；不填按 palette 循环（详见 colors.md）
+## 6. 给用户
 
-写到 `./<diagram-name>.json`（例 `./timeline-2026-roadmap.json`）。
+把三个路径告诉用户。时间线常用于 slides / 对外汇报,`.png` 优先。
 
-## 4. 调 CLI 生成
+## 7. 常见迭代
 
-```bash
-npx excalidrawer@^0.5.4 generate \
-  -t timeline \
-  -i ./timeline-2026-roadmap.json \
-  -o ./timeline-2026-roadmap \
-  -s 200000
-```
+- "加一个里程碑" → 加一条数据,chain count + 1,re-render
+- "里程碑顺序错了" → 调数据顺序,re-render
+- "X 阶段时间跨度大,想视觉上拉开" → 用不等 dx(自定义 x 数组,见 recipe §Uneven gaps)
+- "换字段顺序(label 在 time 上面)" → 在 recipe 选项里改
 
-输出 `./timeline-2026-roadmap.{excalidraw,svg,png}`。
+## 8. 不适用本 skill(路由)
 
-## 5. 验证 + 给用户
-
-```bash
-ls -la ./timeline-2026-roadmap.{excalidraw,svg,png}
-```
-
-汇报三个路径：`.svg` 贴 Markdown / GitHub，`.png` 贴 Notion / slides，`.excalidraw` 留给用户继续编辑。
-
-## 6. 常见迭代
-
-- "再加一个里程碑在中间" → items[] 插入对应位置 + 调 desc，重跑同 seed
-- "颜色都按阶段分组" → 同阶段 items 显式给同色（`color: "blue"` × N，`color: "green"` × N）
-- "标记 today" → 在对应里程碑加 `"color": "red"` + `desc` 加 `"(current)"`
-
-## 7. 不适用本 skill 的场景（建议路由）
-
-- 流程 / 决策分支 → `flowchart` skill
-- 系统层级架构 → `architecture` skill
-- 多方角色交互 → `sequence` skill
-- 甘特图 / 多任务并行带条 → 模版不覆盖，走 `references/custom-api.md` 写自定义脚本
+- 流程 / 决策 → `flowchart`
+- 系统架构 → `architecture`
+- 多角色交互 → `sequence`

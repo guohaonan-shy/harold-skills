@@ -1,150 +1,109 @@
 ---
 name: architecture
-description: 用 Excalidraw 手绘风格生成系统架构图 / 分层组件图 / 模块依赖图。任何提到 architecture / 架构图 / 系统架构 / 分层 / layered / component diagram / 模块图 / 服务拓扑 / 微服务架构 / 前后端架构 / 数据流图 / system topology / 中台架构 / 数据中台 / 三层架构 / 四层架构 的场景都触发本 skill。底层调 npx excalidrawer CLI 输出 .excalidraw / .svg / .png。开 AskUserQuestion 工具先 clarify 系统名 / 分层 / 跨层连接，再拼 JSON 调 CLI。
-allowed-tools: Bash(npx excalidrawer@^0.5.4:*), Bash(ls:*), Read, Write(*.json), AskUserQuestion
+description: 用 Excalidraw 手绘风生成系统架构图 / 服务拓扑 / 分层组件图。任何提到 architecture / 架构图 / 分层 / 三层架构 / 微服务 / 数据中台 / system topology / service map / module map / tech stack 的场景都触发本 skill。支持单 lane 分层和"一行多 lane"(子分组)两种模式。流程:AskUserQuestion clarify → 读 recipe → 拼 sugar(用 `gridLayout` 或 `swimlane` helper 摆 lane 带) → 调 excalidrawer MCP server 的 render_diagram 输出 .excalidraw / .svg / .png。
+allowed-tools: mcp__excalidrawer__render_diagram, mcp__excalidrawer__compute_layout, Bash(npx -y -p excalidrawer*:*), Read, Write(./architecture-*.json), AskUserQuestion
 ---
 
 # Architecture skill
 
-把用户的系统组件 / 分层架构画成手绘风架构图。**先 clarify 分层结构再画**——分层错了整图都得重做。
+把用户描述的系统结构画成手绘风架构图。流程:**clarify → 读 recipe → 拼 sugar → render_diagram**。
 
 ## 0. 必读约定
 
-- CLI 用法 / 输出文件命名 / 覆盖策略 → `${CLAUDE_PLUGIN_ROOT}/references/cli-usage.md`
-- 颜色 palette → `${CLAUDE_PLUGIN_ROOT}/references/colors.md`
-- 树状图 / 心智图等非分层架构 → `${CLAUDE_PLUGIN_ROOT}/references/custom-api.md`
+- 跨 skill 约定 → `${CLAUDE_PLUGIN_ROOT}/references/conventions.md`
+- sugar schema → `${CLAUDE_PLUGIN_ROOT}/references/sugar.md`
+- 配色 → `${CLAUDE_PLUGIN_ROOT}/references/colors.md`
+- architecture 具体模式(单 lane / 多 lane / 配色 / 是否画连线 / 列对齐) → `${CLAUDE_PLUGIN_ROOT}/skills/architecture/recipes/architecture.md`
 
-## 1. 前置检查（会话首次）
+## 1. 前置检查
 
-```bash
-npx excalidrawer@^0.5.4 --version
+确认 MCP 工具可见。否则走 conventions §3 的 CLI fallback。
+
+## 2. Clarify(必)
+
+AskUserQuestion 2-4 个 load-bearing 问题:
+
+1. **系统 / 子系统的核心组成** —— 自由文本
+   - 例:"e-commerce:前端 web+移动、后端 API+业务服务、数据 PG+Redis"
+   - 让用户列出来,你按层分;不清楚再追问
+
+2. **结构形态** —— AskUserQuestion 单选
+   - `经典分层`(每个 tier 一条 lane,如 Frontend / Backend / Data)
+   - `分层 + 子分组`(每个 tier 横向再分子 lane,如 Frontend 拆 Web/Mobile)
+   - `自由拓扑`(没明显分层,服务平铺)
+
+3. **是否画连线** —— AskUserQuestion 单选
+   - `纯拓扑,不画连线`(默认,只展示组成关系)
+   - `画关键流`(挑 3-5 条主要数据流标出来)
+   - `画完整连线`(慎选,连线密就乱)
+
+4. **输出格式 / 使用场景** —— AskUserQuestion 单选,选项和映射见 `${CLAUDE_PLUGIN_ROOT}/references/conventions.md` §6。
+
+可选追问:有没有特殊 tier(API Gateway / Message Queue / Service Mesh 等独立一层)。
+
+**跳过 clarify 的条件**:用户已粘完整结构化数据(分层 + 服务列表),直接 §3。
+
+**diagram label 默认英文**(见 conventions §4)。
+
+## 3. 读 recipe
+
+`Read ${CLAUDE_PLUGIN_ROOT}/skills/architecture/recipes/architecture.md` —— 单 lane vs 多 lane 模式选择、lane 带数值、列对齐规则(画连线时)、配色策略。
+
+## 4. 拼 sugar 元素
+
+按 recipe 拼。两个主要模式:
+
+**A. 单 lane 分层** —— 用 `swimlane` helper:
+
+```text
+mcp__excalidrawer__compute_layout({
+  helper: "swimlane",
+  args: { lanes:[...], items:[...], laneW, laneH, itemW, itemH, headerW, ... }
+})
+→ { laneRects, itemPositions }
 ```
 
-## 2. Clarify 阶段（核心步骤，先问后画）
+**B. 多 lane 一行** —— 用 `gridLayout` 摆 sub-lane 带:
 
-架构图最容易"画着画着发现该改分层"——一定先 clarify。**用 AskUserQuestion 问 3 个 load-bearing 问题**。
-
-### 必问
-
-1. **系统 / 产品名（标题）** —— 自由文本
-   - 例："Order Service Architecture" / "数据中台架构"
-
-2. **分层方式 + 各层名字** —— 自然语言模板
-   - 提示用户用以下模板提供：
-     ```
-     - <层名>: <这层包含的组件>
-     - <层名>: <这层包含的组件>
-     ```
-   - 例：
-     ```
-     - Frontend: Web App, Mobile App
-     - Service Layer: API Gateway, Order Service, User Service
-     - Data Layer: MySQL, Redis, ElasticSearch
-     ```
-   - 一般 2-5 层；超过 5 层要建议拆图
-
-3. **是否要画跨层连接箭头** —— AskUserQuestion 二/三选一
-   - 选项：
-     - "不画箭头，只看分层结构"
-     - "画主要数据流（3-5 条关键箭头）"
-     - "画完整调用关系（>5 条）" → 提醒用户太多箭头会乱，建议保留 5-8 条主线
-
-### 可选追问
-
-- 跨层箭头是否区分 solid（同步） / dashed（异步 / 旁路），默认全 solid
-- 某些组件是否需要副信息（用 `desc` 字段，小灰字显示在 box 下方）
-
-### 跳过 clarify 的条件
-
-用户已经清晰列出层 + 组件 + 连接（粘了结构化清单或 ASCII），直接进 §3。
-
-## 3. 拼 JSON
-
-Schema：
-
-```json
-{
-  "title": "Order Service Architecture",
-  "sections": [
-    {
-      "label": "Frontend",
-      "color": "yellow",
-      "items": [
-        { "label": "Web App",    "desc": "React SPA" },
-        { "label": "Mobile App", "desc": "iOS / Android" }
-      ]
-    },
-    {
-      "label": "Service Layer",
-      "color": "blue",
-      "items": [
-        { "label": "API Gateway",   "color": "blue" },
-        { "label": "Order Service", "color": "green" },
-        { "label": "User Service",  "color": "green" }
-      ]
-    },
-    {
-      "label": "Data Layer",
-      "color": "gray",
-      "items": ["MySQL", "Redis"]
-    }
-  ],
-  "connections": [
-    { "from": "Web App",     "to": "API Gateway" },
-    { "from": "API Gateway", "to": "Order Service" },
-    { "from": "Order Service", "to": "MySQL", "style": "dashed" }
-  ]
-}
+```text
+mcp__excalidrawer__compute_layout({
+  helper: "gridLayout",
+  args: { count, cols, cellW, cellH, colGap, rowGap, originX, originY }
+})
+→ [{ x, y, w, h, col, row }, ...]  // 每个 cell 当一个 sub-lane 背景
 ```
 
-字段：
-- `title` (string, optional) — 顶部标题
-- `sections[]` —— 横向分层，从上到下
-  - `label` (string) — 层名（如 "Frontend" / "Service Layer"）
-  - `color` (string, optional) — 整层背景色键（详见 colors.md）
-  - `items[]` —— 该层内的 box，水平排列
-    - 简写：`"Label string"`
-    - 完整：`{ label, color?, desc? }`
-    - `desc` 是小灰字副信息，**别塞进 label**（label 长会撑宽全部 box）
-- `connections[]` —— 跨 section 箭头（可选）
-  - `from` / `to` — 必须**完全匹配** item 的 `label` 字符串
-  - `label` (string, optional) — 箭头上的文字
-  - `style` — `"solid"`（默认） / `"dashed"`
+每个 sub-lane:bg 矩形(浅色填充 + 深色 stroke,如 `fill:"bgBlue", stroke:"blue"`)+ 标题文字 + items(用 `chain` 排列)。
 
-写到 `./<diagram-name>.json`（例 `./architecture-order-service.json`）。
+画连线时(只在 clarify 选了"画连线"才做):
+- 跨层用 `fromSide:"bottom"` + `toSide:"top"`(垂直降下,别让 auto 选)
+- fan-in / fan-out 用 `fromT` / `toT` 错开接入点(`0.35` / `0.65`)
 
-## 4. 调 CLI 生成
+## 5. 渲染
 
-```bash
-npx excalidrawer@^0.5.4 generate \
-  -t architecture \
-  -i ./architecture-order-service.json \
-  -o ./architecture-order-service \
-  -s 300000
+```text
+mcp__excalidrawer__render_diagram({
+  elements: <sugar 数组>,
+  output: "./architecture-<name>",
+  formats: <按 §2 clarify §4 / conventions §6 选>,
+  scale: <高清演示场景传 3,其它略>
+})
 ```
 
-输出 `./architecture-order-service.{excalidraw,svg,png}`。
+## 6. 给用户
 
-## 5. 验证 + 给用户
+把三个路径告诉用户。复杂架构图建议主推 `.png` 贴 slides。
 
-```bash
-ls -la ./architecture-order-service.{excalidraw,svg,png}
-```
+## 7. 常见迭代
 
-汇报三个路径。架构图特别推荐 `.svg` —— 矢量缩放在 GitHub / 文档站清晰。
+- "加一层 Cache" → 增 lane / sub-lane,resize 整体高度
+- "把 Web 和 Mobile 拆开" → 从 A 模式切到 B 模式
+- "加一条 Auth → DB 的关键连线" → 单加一条 arrow(注意 fromSide/toSide)
+- "用同色调区分前端 / 后端" → 见 recipe 配色策略
 
-## 6. 常见迭代
+## 8. 不适用本 skill(路由)
 
-- "某层要再细分两组" → 把那一层拆成两个 sections
-- "字太长 box 都被撑宽了" → 长内容挪到 `desc`，label 留短关键词
-- "箭头太乱" → 砍到 5-8 条主线，其余在 README 文字补充
-- "异步调用需要标识" → 那条 connection 加 `"style": "dashed"`
-
-每次改 JSON 后用同 `--seed` 重跑，element ID 稳定，diff 干净。
-
-## 7. 不适用本 skill 的场景（建议路由）
-
-- 流程 / 判断分支 → `flowchart` skill
-- 时间线 / 路线图 → `timeline` skill
-- 多角色交互（按时间顺序） → `sequence` skill
-- 树状结构 / 组织架构 / 心智图 → `references/custom-api.md` 写自定义
+- 流程 / 决策分支 → `flowchart`
+- 时间线 / 路线图 → `timeline`
+- 多角色交互 / 调用顺序 → `sequence`
+- 真自由拓扑(树 / 心智图) → 手摆 sugar
