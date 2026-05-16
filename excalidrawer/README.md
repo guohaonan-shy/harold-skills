@@ -1,33 +1,29 @@
 # excalidrawer
 
-Code-first Excalidraw 图表生成的 Claude Code plugin。4 个 skill 各自负责一种图类型——AI 先用 AskUserQuestion 问 2-3 个 load-bearing 问题,然后读 skill 的 recipe(diagram-kind 知识),用 sugar 短写法拼元素数组,调 `excalidrawer-mcp` 服务的 `render_diagram` 工具输出 `.excalidraw` / `.svg` / `.png`。
+[中文](./README.zh.md) | **English**
 
-**目标用户**:写文档 / 出 slides / 在飞书/Notion/GitHub 贴图的开发者、研究者、产品。**不是图表设计师**——输出是手绘风(Excalidraw 风格),适合工程文档而不是商业海报。
+Code-first Excalidraw diagram generation as a Claude Code plugin. Four skills, each owning one diagram type — the AI asks 2–3 load-bearing questions via AskUserQuestion, reads the skill's recipe (diagram-kind knowledge), composes elements with sugar shorthand, then calls the `excalidrawer-mcp` server's `render_diagram` tool to emit `.excalidraw` / `.svg` / `.png`.
+
+**Target audience**: developers, researchers, and PMs who write docs, build slides, or paste diagrams into Feishu / Notion / GitHub. **Not for diagram designers** — output is hand-drawn (Excalidraw) style, suited to engineering docs, not commercial posters.
 
 ---
 
-## 4 个 skill
+## The 4 skills
 
-| Skill | 用途 | 触发关键词 | 主要产物 |
+| Skill | Use case | Trigger keywords | Output |
 |---|---|---|---|
-| **flowchart** | 决策流 / 流程图 / 分支判断 | flowchart / 流程图 / 决策树 / yes-no / 判断分支 / 业务流转 / 审批流 | `./flowchart-<name>.{excalidraw,svg,png}` |
-| **timeline** | 时间线 / 路线图 / 项目里程碑 | timeline / 时间线 / 路线图 / roadmap / milestone / 里程碑 / 阶段 / Q1Q2 | `./timeline-<name>.{excalidraw,svg,png}` |
-| **architecture** | 系统架构 / 分层组件 / 模块拓扑 | architecture / 架构图 / 分层 / 三层架构 / 微服务 / 数据中台 | `./architecture-<name>.{excalidraw,svg,png}` |
-| **sequence** | 时序图 / 多角色交互 / 调用链 | sequence diagram / 时序图 / 交互 / 调用顺序 / handshake / OAuth | `./sequence-<name>.{excalidraw,svg,png}` |
+| **flowchart** | Decision flows / process diagrams / branching logic | flowchart / 流程图 / decision tree / yes-no / branching / business flow / approval flow | `./flowchart-<name>.{excalidraw,svg,png}` |
+| **timeline** | Timelines / roadmaps / project milestones | timeline / 时间线 / roadmap / milestone / 里程碑 / phase / Q1Q2 | `./timeline-<name>.{excalidraw,svg,png}` |
+| **architecture** | System architecture / layered components / module topology | architecture / 架构图 / layering / 3-tier / microservices / data platform | `./architecture-<name>.{excalidraw,svg,png}` |
+| **sequence** | Sequence diagrams / multi-actor interactions / call chains | sequence diagram / 时序图 / interaction / call order / handshake / OAuth | `./sequence-<name>.{excalidraw,svg,png}` |
 
-每个 SKILL.md 的 frontmatter `description` 写满了中英触发关键词——自然语言描述需求就能命中对应 skill。显式 `/flowchart` / `/timeline` / `/architecture` / `/sequence` 也能直接调。
+Each SKILL.md's frontmatter `description` is stuffed with EN/CN trigger keywords — describing your need in natural language is enough to fire the right skill. Explicit `/flowchart` / `/timeline` / `/architecture` / `/sequence` also work.
 
 ---
 
-## 安装
+## Install
 
-```text
-/plugin marketplace add guohaonan-shy/harold-skills
-/plugin install excalidrawer
-/reload-plugins
-```
-
-plugin 在 `plugin.json` 里声明了 MCP server:
+The underlying MCP server is declared in `plugin.json` like this — all clients share the same config:
 
 ```json
 "mcpServers": {
@@ -38,77 +34,139 @@ plugin 在 `plugin.json` 里声明了 MCP server:
 }
 ```
 
-`npx` 在首次启动时自动拉取底层 `excalidrawer` npm 包并缓存。如果想加快冷启动,可以全局装一份:`npm install -g excalidrawer`,MCP server 会优先用全局 binary。
+`npx` auto-fetches the underlying `excalidrawer` npm package on first launch and caches it. To speed up cold start, install globally: `npm install -g excalidrawer` — the MCP server will prefer the global binary.
+
+### Claude Code (CLI) ✅
+
+https://github.com/user-attachments/assets/a8d136e9-3ade-4f2a-a7f9-f09abf54d7f2
+
+```text
+/plugin marketplace add guohaonan-shy/harold-skills
+/plugin install excalidrawer
+/reload-plugins
+```
+
+Works out of the box. The 4 skills show up in the `/` menu, and natural-language keywords trigger them automatically.
+
+### Claude Desktop — Code / Cowork mode ✅
+
+https://github.com/user-attachments/assets/03c6111e-15e1-4664-88c9-92318660af1d
+
+Both Code mode and Cowork mode ship with a terminal — installation is identical to the CLI flow:
+
+```text
+/plugin marketplace add guohaonan-shy/harold-skills
+/plugin install excalidrawer
+/reload-plugins
+```
+
+Note on Cowork mode: the plugin lives inside the VM, so it doesn't touch your host machine; the VM has network access, so `npx` package fetching works fine.
+
+> Regular Chat mode **does not support plugins** — see the "manual integration" path below.
+
+### Claude Chat / Claude Desktop Chat 🚧
+
+Chat mode has no plugin loader, so MCP and skills have to be **wired up separately by hand**. The experience is incomplete right now.
+
+**MCP server** — add it to the desktop config at `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+
+```json
+{
+  "mcpServers": {
+    "excalidrawer": {
+      "command": "npx",
+      "args": ["-y", "-p", "excalidrawer@^0.5.7", "-c", "excalidrawer-mcp"]
+    }
+  }
+}
+```
+
+Fully quit and relaunch the desktop app — `render_diagram` and `compute_layout` will become callable.
+
+**Skills** — Chat does not auto-load this repo's SKILL.md files. You'll have to manually copy each of the 4 skills' SKILL.md + `recipes/` contents into claude.ai → Settings → Capabilities → Skills and upload them one at a time.
+
+**Known limitations (why this is 🚧)**:
+
+- Skill trigger keywords / AskUserQuestion flow / recipe-read pipeline are not yet verified end-to-end in Chat mode
+- Whether an uploaded custom skill correctly routes to MCP tools is still untested
+- No one-shot script — the 4 skills must be uploaded individually
+
+Short-term guidance: power users should stick to Claude Code (CLI) or Desktop Code/Cowork mode. Chat mode is only recommended for lightweight "MCP tool only, no skill" use cases.
+
+### Codex 🚧
+
+MCP / skill integration paths for Codex are not yet verified — TBD.
 
 ---
 
-## 单次会话长什么样
+## What a single session looks like
 
 ```
-1. cd ~/<your-project>/             # 产物落 cwd
-2. "帮我画一个用户注册流程图"      # 自然语言触发
-   → flowchart skill 启动
-   → AskUserQuestion 问场景 / 判断点 / 方向
-   → Read skills/flowchart/recipes/flowchart.md(读 diagram-kind 知识)
-   → 拼 sugar 元素数组(+ compute_layout 算 chain x 坐标)
+1. cd ~/<your-project>/             # outputs land in cwd
+2. "draw a user registration flowchart"  # natural-language trigger
+   → flowchart skill activates
+   → AskUserQuestion asks for scenario / decision points / direction
+   → Read skills/flowchart/recipes/flowchart.md (diagram-kind knowledge)
+   → compose sugar elements (+ compute_layout for chain x-coordinates)
    → call mcp__excalidrawer__render_diagram(elements, output)
-   → 写出 ./flowchart-user-registration.{excalidraw,svg,png}
-3. 用户拿 .svg 贴 Markdown 或 .png 贴 Notion / 飞书 / slides
-4. "把判断节点 X 拆成 Y 和 Z"
-   → AI 改 sugar 数组重 render,文件名不变 → diff 干净
+   → write ./flowchart-user-registration.{excalidraw,svg,png}
+3. Paste the .svg into Markdown or the .png into Notion / Feishu / slides
+4. "split decision node X into Y and Z"
+   → AI edits the sugar array, re-renders, filename stays the same → clean diff
 ```
 
 ---
 
-## 目录结构
+## Directory layout
 
 ```
 excalidrawer/
 ├── .claude-plugin/plugin.json
-├── README.md                              # 本文件
-├── references/                            # plugin 级共享
-│   ├── conventions.md                     # clarify / 文件命名 / MCP fallback / 语言 / 路由
-│   ├── sugar.md                           # sugar schema 速查(shape / arrow L1-L4 / 自动路由 / helper)
+├── README.md                              # English (default, this file)
+├── README.zh.md                           # Chinese
+├── references/                            # plugin-wide shared
+│   ├── conventions.md                     # clarify / naming / MCP fallback / language / routing
+│   ├── sugar.md                           # sugar schema cheatsheet (shape / arrow L1-L4 / auto routing / helper)
 │   └── colors.md                          # palette
 └── skills/
     ├── flowchart/
     │   ├── SKILL.md
-    │   └── recipes/flowchart.md           # diagram-kind 模式(节点 / back-edge / decision)
+    │   └── recipes/flowchart.md           # diagram-kind patterns (nodes / back-edge / decision)
     ├── timeline/
     │   ├── SKILL.md
-    │   └── recipes/timeline.md            # 两种轴/圆点风格 / 文字三件套 / 配色循环
+    │   └── recipes/timeline.md            # two axis/dot styles / text triplet / color cycle
     ├── architecture/
     │   ├── SKILL.md
-    │   └── recipes/architecture.md        # 单 lane / 多 lane / 列对齐 / 连线开关
+    │   └── recipes/architecture.md        # single lane / multi-lane / column alignment / edge toggles
     └── sequence/
         ├── SKILL.md
-        └── recipes/sequence.md            # actor + 虚线生命线 / 方向区分 / 跨 lifeline label
+        └── recipes/sequence.md            # actor + dashed lifeline / direction split / cross-lifeline labels
 ```
 
 ---
 
-## 设计要点
+## Design notes
 
-- **MCP-first**:`render_diagram`(sugar/raw → 文件)+ `compute_layout`(几何 helper)。CLI 是 MCP 不可用时的兜底。
-- **Sugar 短写法**(`references/sugar.md`):agent 直接拼简短 JSON,raw Excalidraw 元素仍可穿透。不再手写完整 schema。
-- **Recipe vs 模板**:diagram-kind 意见("API Gateway 自成一 tier"、"back-edge 用垂直边对")写在 `skills/<name>/recipes/*.md`,agent 在 clarify 之后读。早期版本把这些固化进引擎模板,新增变体得改引擎;现在新变体 = 新 recipe,引擎不动。
-- **AskUserQuestion 是必经步骤**:动手画前先问 1-3 个 load-bearing 问题,降低"画着画着发现该改"的成本。
-- **gstack 风格命名**:产物固定语义命名落 cwd(`./<type>-<name>.{ext}`),不用 `outputs/<timestamp>/`。下游工具按名读。
-
----
-
-## 与 npm 包版本解耦
-
-本 plugin 的 `version`(`plugin.json` 里)只跟 **plugin 内容变动**(SKILL.md / recipe 改写、布局参数调整)。底层 npm 包 `excalidrawer` 独立版本化,plugin 在 `mcpServers.args` 里用 `^` 范围 pin 它的**最低能力要求**,只有需要新能力时才 re-pin。
-
-当前 pin:`excalidrawer@^0.5.7`(sugar mode + 自动正交路由 + arrow 风格选项 + MCP server)。
+- **MCP-first**: `render_diagram` (sugar/raw → file) + `compute_layout` (geometry helper). CLI is the fallback when MCP is unavailable.
+- **Sugar shorthand** (`references/sugar.md`): agents compose terse JSON directly; raw Excalidraw elements still pass through. No more hand-writing the full schema.
+- **Recipe vs template**: diagram-kind opinions ("API Gateway is its own tier", "back-edges use vertical edge pairs") live in `skills/<name>/recipes/*.md`, read by the agent after clarification. Earlier versions baked these into engine templates — adding a variant meant editing the engine. Now a new variant = a new recipe; engine stays untouched.
+- **AskUserQuestion is mandatory**: 1–3 load-bearing questions before drawing — cuts the cost of "drew it, then realized it needs to change."
+- **gstack-style naming**: outputs use stable semantic names in cwd (`./<type>-<name>.{ext}`), not `outputs/<timestamp>/`. Downstream tools read by name.
 
 ---
 
-## 反馈
+## Decoupled from npm package version
 
-issue 提到 [harold-skills repo](https://github.com/guohaonan-shy/harold-skills/issues)。
+This plugin's `version` (in `plugin.json`) tracks **plugin-content changes only** (SKILL.md / recipe rewrites, layout tweaks). The underlying npm package `excalidrawer` is versioned independently — the plugin pins its **minimum capability requirement** with a `^` range in `mcpServers.args`, and only re-pins when new capabilities are needed.
 
-底层 npm 包源码:https://github.com/guohaonan-shy/excalidrawer(独立仓库)
+Current pin: `excalidrawer@^0.5.7` (sugar mode + auto-orthogonal routing + arrow style options + MCP server).
+
+---
+
+## Feedback
+
+File issues at the [harold-skills repo](https://github.com/guohaonan-shy/harold-skills/issues).
+
+Underlying npm package source: https://github.com/guohaonan-shy/excalidrawer (separate repo)
 
 **Author**: Harold
