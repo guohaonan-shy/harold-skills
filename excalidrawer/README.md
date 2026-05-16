@@ -50,6 +50,8 @@ Works out of the box. The 4 skills show up in the `/` menu, and natural-language
 
 ### Claude Desktop — Code / Cowork mode ✅
 
+https://github.com/user-attachments/assets/03c6111e-15e1-4664-88c9-92318660af1d
+
 Both Code mode and Cowork mode ship with a terminal — installation is identical to the CLI flow:
 
 ```text

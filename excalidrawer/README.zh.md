@@ -50,6 +50,8 @@ https://github.com/user-attachments/assets/a8d136e9-3ade-4f2a-a7f9-f09abf54d7f2
 
 ### Claude Desktop — Code / Cowork 模式 ✅
 
+https://github.com/user-attachments/assets/03c6111e-15e1-4664-88c9-92318660af1d
+
 Code 模式和 Cowork 模式都内置终端,装法跟 CLI 一样:
 
 ```text
