@@ -1,0 +1,8 @@
+{
+  "name": "content-creator",
+  "description": "Content creation toolkit for short-video / social-feed creators (Xiaohongshu, 视频号, YouTube). Currently ships thumbnail-gen — an interactive HTML/CSS thumbnail generator with portrait photo layout math, multi-platform spec presets, and Playwright screenshot rendering. Future skills will cover title writing, post body drafting, hashtag/tag generation, and video voiceover scripts.",
+  "version": "0.0.1",
+  "author": {
+    "name": "Harold"
+  }
+}
