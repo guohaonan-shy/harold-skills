@@ -17,9 +17,9 @@
       "description": "Code-first Excalidraw diagram generation. Four skills (flowchart / timeline / architecture / sequence) clarify intent via AskUserQuestion, shape data into JSON, and call the excalidrawer npm CLI to produce .excalidraw / .svg / .png outputs."
     },
     {
-      "name": "anti-olden",
-      "source": "./anti-olden",
-      "description": "Workplace communication coach for Lark / 飞书. Four skills (reply-coach / comm-memory / chat-recap / meeting-recap) analyze high-friction IM messages + meeting transcripts, maintain person + group profiles with type+KV memory format (profile/event/behavior/strategy + reinforcement), and draft replies in preset strategies. User data lives under ~/.anti-olden/ — plugin dir is read-only references and prompts."
+      "name": "memex",
+      "source": "./memex",
+      "description": "Personal memory wiki built from your conversations. Pluggable connectors (lark / 飞书 today; wechat / slack later) pull raw chats + meeting transcripts, render them losslessly to markdown, then distill them into an obsidian-style wiki of people and things — persons / groups / topics (events live inline and in a dated log digest), written with #tag + Dataview fields + [[wikilinks]] + provenance anchors. Verb-oriented skills: ingest (fetch+render), recap (distill), comm-memory (dictation CRUD), reply-coach (draft high-friction replies). User data lives under ~/.memex/ — plugin dir is read-only references and prompts."
     },
     {
       "name": "content-creator",
