@@ -72,6 +72,15 @@ roster:                              # 身份落实（R0）：本月发言人 �
 - **reply 关系**：父消息在同文件 → `↳ 回复 [[#^parent]]`；跨文件（跨月/历史） → `↳ 回复 [[<connector>/chats/<群>/<父月>#^parent]]`。
 - **附件 / 媒体 —— 必下载 + 图片必配 caption（铁律，见下「媒体处理」）**：媒体消息**先下载二进制**到 `raw/<connector>/attachments/<file_key>.<ext>`，**图片用视觉 Read 出一句话内容**写进渲染，再附相对链接。格式：`[图片: <一句话内容描述>](../../../../raw/.../attachments/<key>.jpg) ^anchor`。非图片忠实标类型（`[语音 12s]` / `[文件: report.pdf]`），不丢。
 - **thread**：thread 子消息在父消息下缩进渲染，或单列一段标 `（thread）`，保持时间顺序。
+- **转发会话记录（`merge_forward` / 合并转发）**：lark CLI 已把 `.content` 解码成 `<forwarded_messages>` 文本块（`[ISO时间] 发言人:` 缩进正文）。渲染成**引用块**挂在转发者那条下，保留内嵌发言的时间/发言人：
+  ```markdown
+  **05-21 15:23 Ethan(李钊文)**
+  [转发会话记录]
+  > [2026-05-20 18:20] Kano Tom: @Hayden(熊浩) ...desktop SDK 反馈...
+  > [2026-05-21 00:58] Hayden(熊浩): @Kano Tom Got it. ...
+  ^anchor
+  ```
+  **限制**：转发块里内嵌的 `[Image: img_...]` 属于**原始消息**、不挂在本条 message_id 上，普通 `resources-download` 拉不到——保留 `[Image: <key>]` 字面标注、不强行下载（拉不到不算违反图片铁律；如确需看图，去原群按原 message_id 拉）。
 
 ---
 

@@ -122,7 +122,7 @@ lark-cli im +messages-search --keyword "<词>" --format json          # 跨聊�
 **返回结构（2026-05 实测，重要）**：`+chat-messages-list` 返回在 `.data.messages[]`（不是 `.data.items[]`）；每条**字段已扁平化**：
 - `.content` 是**已解码的顶层字符串**（text 类型直接是正文，**不用** `.body.content | fromjson`；`.body` 实际为 null）。
 - `.sender` = `{id, id_type, name, sender_type}`（`name` 已带，省一次补全）；`.create_time` 格式是 **`YYYY-MM-DD HH:mm`（到分钟、无秒、无时区后缀）**——渲染 `stamp` 直接 `.create_time[5:]`，月分桶 `.create_time[:7]`。
-- 非 text：`image` 的 `.content` 是图片 key、`post`/`merge_forward` 等按 `.msg_type` 分支。
+- 非 text：`image` 的 `.content` 是图片 key、`post` 的 `.content` 可能图文混排（`[Image: key]` + 文字）、`merge_forward`（合并转发的群聊会话记录）的 `.content` 已被 CLI 解码成 `<forwarded_messages>` 文本块（`[ISO时间] 发言人: 正文`）——渲染规则见 render-spec「转发会话记录」（引用块 + 内嵌图拉不到只留字面）。其余按 `.msg_type` 分支。
 - ⚠️ 这跟 raw API `GET /open-apis/im/v1/messages`（外层 `data.items[]`、`body.content` 是 JSON 字符串需 `fromjson`）**不一样**。本 connector 默认走 shortcut，按上面的扁平结构处理。
 
 ### 分页拉取脚手架（窗口内翻到底）
