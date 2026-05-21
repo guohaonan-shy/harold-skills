@@ -1,6 +1,0 @@
-{
-  "name": "anti-olden",
-  "description": "职场沟通参谋 / Workplace communication coach. Four skills (reply-coach / comm-memory / chat-recap / meeting-recap) help analyze high-friction Lark / 飞书 messages and meeting transcripts, maintain person & group profiles, and propose reply drafts in preset strategies. Reads/writes user data under ~/.anti-olden/ — plugin dir is read-only references and prompts.",
-  "version": "0.2.0",
-  "author": { "name": "Harold" }
-}

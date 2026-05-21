@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 当前 plugins:
 - `clinical-research/` — 临床医学回顾性队列研究工作流（study-design / variable-coding / stat-analysis / paper-draft）。4 skill 完成，含 plugin 级 `references/conventions.md` 和每个 skill 的 `references/cases.md`（共 15 个真实研究案例）。详见 `clinical-research/README.md`。
 - `excalidrawer/` — Code-first Excalidraw 图表生成（flowchart / timeline / architecture / sequence）。4 skill 完成，plugin 级 `references/` 装 cli-usage / colors / custom-api fallback；底层调 npm 包 `excalidrawer` CLI。详见 `excalidrawer/README.md`。
-- `anti-olden/` — 飞书 / Lark 职场沟通参谋（reply-coach / comm-memory / chat-recap / meeting-recap）。4 skill 完成，plugin 级 `references/` 装 conventions / memory-index / lark-cli-cookbook / olden-patterns / diff-format / prompts / templates。Memory 用三维度格式（section 自由 + 4 类闭合 type [profile/event/behavior/strategy] + KV 自由 + reinforcement count）；**用户数据（memory + raw）落 `~/.anti-olden/`**（不在 plugin 目录里），底层调官方 `larksuite/cli` skill 包提供的 `lark-cli`。详见 `anti-olden/README.md`。
+- `memex/` — 多源个人记忆 wiki（anti-olden v2 重构）。动词导向 **5 skill（写 3 读 2）**：写入侧 `ingest`（读 config 选 connector → fetch raw → render sources，含图片 caption，自动接 recap）/ `recap`（distill sources → 人/事 memory，kind-aware chat·meeting，triage 准入 + 防瞎猜三铁律）/ `comm-memory`（口述 CRUD + lint 体检）；读取侧 `recall`（**模糊 query → 相关上下文 + 作答的唯一前门**，引擎用 Claude Code 自带 grep/Read、无 embedding）/ `reply-coach`（recall 的回复型消费：3 候选 + 分支预判）。connector 是**运行时加载的驱动**（`references/connectors/<name>.md`，固定四节契约 identity/fetch/render/send）不是 skill；只 lark 实现，wechat/slack stub。`references/` 装 conventions / memory-index / render-spec / connectors / olden-patterns / diff-format / prompts / templates。Memory 用 **obsidian 原生标记**（`#tag` 4 类闭合 [profile/event/behavior/strategy] + Dataview `(key:: val)` 自由字段 + `[[wikilink]]` + `^anchor` provenance），实体含 persons（跨 connector `identities` map 合并）/ groups（`connector`+`chat_id` 平台独立）/ topics（话题/项目线/重大事件 hub；**无独立 events 类型**，一次性事件行内 `#event`、时序流落 log.md 按日 digest）+ index.md 导航 + log.md 事件 digest；**用户数据落 `~/.memex/`**（config.json / raw / sources / memory，不在 plugin 目录）。借 OpenHuman + Karpathy LLM Wiki 的数据模型概念但 agent-driven（无 daemon）。详见 `memex/README.md` 与 `memex/docs/refactor-v2-obsidian-wiki.md`。
 - `content-creator/` — 短视频 / 社交 feed 内容创作工具集（当前 1 skill: thumbnail-gen，roadmap: title-writer / post-writer / tag-gen / video-script）。thumbnail-gen 走交互式 HTML/CSS composer，自带多平台 spec 预设（3:4 小红书/视频号封面 / 4:3 视频号分享卡片 / 9:16 Shorts / 16:9 YouTube）、人像照片 layout math（cover/contain/auto + 关键区域 y 百分比驱动 `background-position`）、多比例衍生流程（基于已有封面派生其他比例不重新设计）、Playwright headless 截图、bundled Smiley Sans (得意黑) 字体。Scripts 用 `uv run --script` inline metadata（playwright/rembg 按需自动装到 uv 缓存，不污染 plugin 目录）。中间产物落 `/tmp/thumbnail-gen/`，最终交付 PNG 落用户 cwd。详见 `content-creator/README.md`。
 
 ## 标准 plugin 目录结构
@@ -47,7 +47,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - 文本：`./design-brief.md` / `./paper-results.md`
     - 二进制：`./flowchart-<name>.png` / `./timeline-<name>.svg`
     - 中间数据：可走 `/tmp/`（如 excalidrawer 的中间 JSON），不污染 cwd
-  - **跨会话持久的用户数据（不绑定 cwd）** → `~/.<plugin-name>/`（如 `~/.anti-olden/{memory,raw}/`）
+  - **跨会话持久的用户数据（不绑定 cwd）** → `~/.<plugin-name>/`（如 `~/.memex/{config.json,raw,sources,memory}/`）
     - plugin 目录是只读的（marketplace 升级会换路径），所以 runtime-mutable 状态必须落用户主目录
     - 适用场景：用户画像 / 长期档案 / 跨会话的原始数据缓存——不属于"某个项目"的产物
 
