@@ -62,7 +62,7 @@ roster:                              # 身份落实（R0）：本月发言人 �
 ↳ 回复 [[#^omabc123]]
 
 **05-08 14:36 张三**
-[图片](../../../../raw/lark/attachments/img_v3_xxx.jpg) ^omghi789
+[图片: 一张 ChatGPT Pro 订阅页截图](../../../../raw/lark/attachments/img_v3_xxx.jpg) ^omghi789
 ```
 
 要点：
@@ -70,9 +70,24 @@ roster:                              # 身份落实（R0）：本月发言人 �
 - **每条消息**：`**<MM-DD HH:mm> <发言人显示名>**` 一行 + 正文 + 行尾 `^anchor`。"我"渲染成 `我`（运行时身份比对 `config.self.id`）。
 - **实现注意（避坑）**：渲染脚本逐条写盘时，含换行的消息正文会带控制字符——必须用 `jq -c` 直出（一条一行、自动转义），**不要** `echo "$line" | jq`（shell 的 echo 会篡改转义、炸控制字符）。
 - **reply 关系**：父消息在同文件 → `↳ 回复 [[#^parent]]`；跨文件（跨月/历史） → `↳ 回复 [[<connector>/chats/<群>/<父月>#^parent]]`。
-- **附件**：渲染成指向 `raw/<connector>/attachments/<file_key>.<ext>` 的相对链接；图片用 `![]()` 或 `[图片]()`（Obsidian 可预览）。
-- **媒体/非文本消息**：忠实标注类型（`[语音 12s]` / `[文件: report.pdf]`），不丢。
+- **附件 / 媒体 —— 必下载 + 图片必配 caption（铁律，见下「媒体处理」）**：媒体消息**先下载二进制**到 `raw/<connector>/attachments/<file_key>.<ext>`，**图片用视觉 Read 出一句话内容**写进渲染，再附相对链接。格式：`[图片: <一句话内容描述>](../../../../raw/.../attachments/<key>.jpg) ^anchor`。非图片忠实标类型（`[语音 12s]` / `[文件: report.pdf]`），不丢。
 - **thread**：thread 子消息在父消息下缩进渲染，或单列一段标 `（thread）`，保持时间顺序。
+
+---
+
+## 媒体处理（铁律：图片必看、必配文字）
+
+> 血的教训：曾把 Pany 发的「戒不掉啊戒不掉」+ 一张图，在**没看图**的情况下脑补成"抽烟"落了 `#profile`；图其实是 **ChatGPT Pro 订阅页**（戒不掉的是 AI 氪金）。**承重内容常在图里，文字只是注脚。**
+
+**渲染媒体消息时，两步都不能省**：
+1. **必下载二进制**：`image / file / audio / media` 一律下载到 `raw/<connector>/attachments/<file_key>.<ext>`（去重：已存在跳过）。
+2. **图片必配 caption**：对每张**非纯表情**图片，用视觉 **Read 一遍**，把内容浓缩成一句话写进渲染：`[图片: 一句话内容]`。纯表情/sticker 标 `[表情]` 即可，可不细读。
+
+这样 `sources/` 是**文本完备**的（图的语义变成可 grep 的文字 + 二进制可回溯），下游 distill / recall **不必再开图也不会瞎猜**。
+
+**对应的下游纪律**（recap/recall 必守）：**任何结论若依赖某张图，证据必须在手**——sources 里有 caption 就用 caption，没有就**先下载 Read 再说**；**绝不在"未看的图"旁边对其内容下断言**（尤其别落 `#profile`）。详见 `memory-index.md` distill 规矩。
+
+成本权衡：高活跃群图多，caption 全做有视觉调用成本——但**信息密度高的群值得**；可对明显是 sticker/物流截图的降级为 `[表情]`/`[截图]` 不细读，对像是"内容承重"的（文字截图、文档、图表、付费页…）必做 caption。
 
 ---
 

@@ -5,6 +5,8 @@
 > 状态：**已落地**（2026-05-20）。所有核心决策已对齐（见 §1），§8 清单已逐文件改写完成。本文档保留为设计依据 / 决策记录。
 > 落地补充：ingest 拉完**自动接 recap**（用户答 "自动连跑"）；config.json 首次 bootstrap **只注册当次要用的 connector**（用户答 "只注册当前要用的"）；reply-coach 保留 **8 个回复策略**（"3" 指 3 个候选强度，不是策略数）。
 >
+> **v2.2 修订（2026-05-21，召回讨论 + 媒体踩坑后）**：①新增 **`recall` skill** 作读取侧统一前门（模糊 query → 相关上下文 + 作答，引擎用 Claude Code 自带 grep/Read、无 embedding）；`reply-coach` 重定位为它的"回复型消费场景"。skill 总数 4→**5（写 3 读 2）**。②**媒体铁律**：ingest 渲染媒体必下载二进制 + 图片必配视觉 caption；recap/recall **结论依赖图时证据必须在手**（见 render-spec「媒体处理」+ memory-index「Distill 三条防瞎猜铁律」，源于把"ChatGPT Pro 订阅页"误读成"抽烟"的踩坑）。
+>
 > **v2.1 修订（2026-05-20，实测后）**：基于六六6 群实测,两处改动 —— ①**身份落实**:建 person 前必经 connector `## identity` 解析得稳定 ID（ingest 在 sources frontmatter 写 sender roster；recap/comm-memory 对非成员走 contact 解析）,禁止凭显示名/代号建档（memory-index.md R0）。②**砍掉独立 `events/` 类型**:Karpathy（event=article,无类型）与 OpenHuman（event=daily digest + hotness 涌现的 topic 树）都不设独立 event 类型 → memex 同步:一次性事件用行内 `#event`,够热（跨实体反复，lint"新连接"命中）升 `topics/`,时序流落 `log.md` 升级成的**按日 digest**。下文 §1/§3/§6/§7/§8 中凡 `events/` 一级 note 的表述均以本修订为准。
 
 ---

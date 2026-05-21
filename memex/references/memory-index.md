@@ -278,6 +278,12 @@ IO 状态归 `raw/<connector>/chats/<id>/_meta.json`，ingest 拉消息时就地
 - **大窗口两遍 distill**（活跃群半年几千条）：先快扫 `sources/` 标记"哪几段有信号"（便宜），再只对标记段深抽 observation（贵）。镜像 fast-score / deep-score，省 token 又不漏。
 - 判定"有信号"靠 LLM 语义判断（不引入打分算法）：是否揭示某人的稳定特征 / 模式命中 / 策略效果 / 重大事件。
 
+### Distill 三条防瞎猜铁律（血泪教训）
+
+1. **承重证据在手才下结论**：一条 observation 若依赖某张图/某条媒体，**证据必须在手**——sources 有 caption 就用，没有就**先下载 Read 那张图再说**。**绝不在"未看的图"旁边对其内容下断言**（render-spec 已要求 ingest 给图配 caption；若遇到裸 `[图片]` 占位，自己补看）。〔反例：「戒不掉啊戒不掉」+ 一张没看的图 → 脑补成"抽烟"，图其实是 ChatGPT Pro 订阅页。〕
+2. **personal-habit 类 `#profile` 需佐证或标推测**：从单条玩笑/闲聊推出来的个人习惯（抽烟/作息/嗜好…），**要么不落，要么标 `(source:: 推测)` 等佐证**。`#behavior/#strategy` 有 pattern/seen/outcome 硬字段相对收敛；`#profile` 最容易被一句俏皮话带偏。
+3. **不透明黑话 token 降置信，不收编进假设**：看不懂的梗/缩写（"少吸点二"的"二"）应**降低**结论置信度，而不是被强行解读来支持已有假设。
+
 ---
 
 ## index.md + log.md（导航 + 事件流）

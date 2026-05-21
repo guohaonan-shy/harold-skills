@@ -85,7 +85,8 @@ cat ~/.memex/config.json 2>/dev/null | jq .
 
 ### 4.1 chat → `sources/<connector>/chats/<group-pinyin>/<YYYY-MM>.md`
 
-- 每条消息 `**MM-DD HH:mm 发言人**` + 正文 + 行尾 `^anchor`；reply → `↳ 回复 [[#^parent]]`；附件 → 指向 `raw/.../attachments/` 的相对链接；媒体类型忠实标注。
+- 每条消息 `**MM-DD HH:mm 发言人**` + 正文 + 行尾 `^anchor`；reply → `↳ 回复 [[#^parent]]`。
+- **媒体铁律(render-spec「媒体处理」)**：媒体消息**必下载二进制**到 `raw/.../attachments/`，**图片必用视觉 Read 出一句话 caption** 写进渲染 `[图片: <内容>](相对链接) ^anchor`(纯表情标 `[表情]` 可不细读)。**不留只标 `[图片]` 的裸占位**——否则下游会"绕图瞎猜"(踩过坑)。承重图必看。
 - "我"（`config.self.id` 匹配 sender）渲染成 `我`。
 - `<group-pinyin>` 与未来 `groups/<group-pinyin>.md` 命名对齐（同 slug）。
 - **写 sender roster（身份落实，#1）**：渲染时把本月出现过的所有发言人 `显示名 → <connector>:<id>` 写进该 sources 文件 frontmatter 的 `roster:` 字段（raw 里现成有 `sender.id`，零额外调用）。下游 recap 直接读 roster 给群成员 keying，无需再调 CLI；被议论的非成员仍由 recap 走 connector `## identity` 解析。

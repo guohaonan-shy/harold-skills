@@ -45,6 +45,8 @@ ls ~/.memex/sources/*/ 2>/dev/null            # 有没有已渲染的 sources
 
 判定"有信号"靠 LLM 语义判断，**不引入打分算法**。triage 后真没信号 → §6 如实说"没什么可沉淀的"，0 条是合理结果。
 
+**Distill 三条防瞎猜铁律(memory-index「Distill triage」,必守)**:① 结论依赖某张图 → caption 没有就**先 Read 那张图(二进制在 `raw/.../attachments/`)**,绝不绕未看的图断言;② personal-habit 类 `#profile` 单条玩笑不立、需佐证或标 `(source:: 推测)`;③ 看不懂的黑话 token 降置信、别强行收编。
+
 ## 4. 身份落实 R0 + 读 background memory（按 type 分块加载，原生 grep）
 
 ### R0. 先把人落实到 connector ID（建/认人前必做）

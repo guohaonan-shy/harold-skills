@@ -19,7 +19,7 @@
     {
       "name": "memex",
       "source": "./memex",
-      "description": "Personal memory wiki built from your conversations. Pluggable connectors (lark / 飞书 today; wechat / slack later) pull raw chats + meeting transcripts, render them losslessly to markdown, then distill them into an obsidian-style wiki of people and things — persons / groups / topics (events live inline and in a dated log digest), written with #tag + Dataview fields + [[wikilinks]] + provenance anchors. Verb-oriented skills: ingest (fetch+render), recap (distill), comm-memory (dictation CRUD), reply-coach (draft high-friction replies). User data lives under ~/.memex/ — plugin dir is read-only references and prompts."
+      "description": "Personal memory wiki built from your conversations. Pluggable connectors (lark / 飞书 today; wechat / slack later) pull raw chats + meeting transcripts, render them losslessly to markdown, then distill them into an obsidian-style wiki of people and things — persons / groups / topics (events live inline and in a dated log digest), written with #tag + Dataview fields + [[wikilinks]] + provenance anchors. Verb-oriented skills: ingest (fetch+render), recap (distill), comm-memory (dictation CRUD + lint), recall (fuzzy-query read front-door), reply-coach (draft high-friction replies). User data lives under ~/.memex/ — plugin dir is read-only references and prompts."
     },
     {
       "name": "content-creator",

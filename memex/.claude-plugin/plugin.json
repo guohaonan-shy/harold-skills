@@ -1,6 +1,6 @@
 {
   "name": "memex",
-  "description": "个人记忆 wiki / Personal memory wiki. Pluggable connectors (lark / 飞书 today; wechat / slack later) pull raw conversations, render them losslessly to markdown, and distill them into an obsidian-style wiki of people (persons) and things (groups / topics; events live inline and in a dated log digest) — #tag + Dataview fields + [[wikilinks]] + provenance anchors. Verb-oriented skills: ingest (fetch + render), recap (distill into memory), comm-memory (dictation CRUD), reply-coach (draft high-friction replies). User data lives under ~/.memex/ — plugin dir is read-only references and prompts.",
+  "description": "个人记忆 wiki / Personal memory wiki. Pluggable connectors (lark / 飞书 today; wechat / slack later) pull raw conversations, render them losslessly to markdown, and distill them into an obsidian-style wiki of people (persons) and things (groups / topics; events live inline and in a dated log digest) — #tag + Dataview fields + [[wikilinks]] + provenance anchors. Verb-oriented skills: ingest (fetch + render), recap (distill into memory), comm-memory (dictation CRUD + lint), recall (fuzzy-query read front-door), reply-coach (draft high-friction replies). User data lives under ~/.memex/ — plugin dir is read-only references and prompts.",
   "version": "0.0.1",
   "author": { "name": "Harold" }
 }

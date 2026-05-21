@@ -1,6 +1,6 @@
 # memex
 
-个人记忆 wiki / Personal memory wiki built from your conversations. 可插拔 connector（lark / 飞书 today；wechat / slack later）拉对话 → 忠实渲染成 markdown → 慢慢提炼成"人和事"的 obsidian wiki。Four Claude Code skills, verb-oriented: `ingest`（拉+渲染）/ `recap`（提炼）/ `comm-memory`（口述 CRUD + 体检）/ `reply-coach`（起草高情绪成本回复）。
+个人记忆 wiki / Personal memory wiki built from your conversations. 可插拔 connector（lark / 飞书 today；wechat / slack later）拉对话 → 忠实渲染成 markdown → 慢慢提炼成"人和事"的 obsidian wiki。Five Claude Code skills, verb-oriented: `ingest`（拉+渲染）/ `recap`（提炼）/ `comm-memory`（口述 CRUD + 体检）/ `recall`（模糊召回前门）/ `reply-coach`（起草高情绪成本回复）。
 
 > **memex** = Vannevar Bush 1945 的 "memory extender"：存下你所有记录/通信、用关联轨迹（associative trails = `[[link]]` / provenance）串起来的个人设备。第二大脑的鼻祖概念。记忆框架参考 OpenHuman obsidian-wiki + Karpathy 的 LLM Wiki。
 >
@@ -12,14 +12,15 @@
 |---|---|---|---|
 | [`ingest`](./skills/ingest/) | 把对话从某平台拉进来并渲染成可读 markdown（fetch + render） | connector（lark…） | `raw/` + `sources/` + `config.json` |
 | [`recap`](./skills/recap/) | 把已渲染的 `sources/` 提炼成人/事档案（kind-aware：chat 跨群模式 / meeting "线下尾巴"）→ 用户审 → 落档 | `sources/` + memory | memory（+ index/log） |
-| [`comm-memory`](./skills/comm-memory/) | 纯**用户口述**驱动的记忆 CRUD + **lint 健康检查**——查 / 改 / 新建 画像 / 人 / 群 / 事件 / 话题 | memory | memory（+ index/log） |
-| [`reply-coach`](./skills/reply-coach/) | 起草高情绪成本消息的回复——取上下文 → 加载档案 → 3 个**完整可发**候选（保守/标准/微刺）+ 分支预判 | memory + sources/ + connector | nothing（只读；末尾 offer 回填） |
+| [`comm-memory`](./skills/comm-memory/) | 纯**用户口述**驱动的记忆 CRUD + **lint 健康检查**——查 / 改 / 新建 画像 / 人 / 群 / 话题 | memory | memory（+ index/log） |
+| [`recall`](./skills/recall/) | **读取侧统一前门**：把任意**模糊 query**（"那个想挤我走的人是谁" / "怎么回这条" / "上个月发生啥"）落到 wiki 相关上下文并作答（带 provenance） | memory + sources/ + connector(身份) | nothing（只读） |
+| [`reply-coach`](./skills/reply-coach/) | recall 的回复型消费场景——3 个**完整可发**候选（保守/标准/微刺）+ 分支预判 | memory + sources/ + connector | nothing（只读；末尾 offer 回填） |
 
-`ingest` 拉完会**自动接 `recap`** 提炼（写 memory 仍走用户 ABCD 确认）。connector 是运行时加载的**驱动**（`references/connectors/<name>.md`），不是 skill。
+**5 个 skill，写 3 读 2**：写入侧 `ingest`→`recap`（拉完自动接，写 memory 仍走 W4 ABCD）+ `comm-memory`（口述/lint）；读取侧 `recall`（模糊召回的唯一前门）+ `reply-coach`（回复型消费）。connector 是运行时加载的**驱动**（`references/connectors/<name>.md`），不是 skill。
 
 ## Architecture in one paragraph
 
-三层、connector 无关：**connector 层**（lark/wechat/slack 各自的 fetch+render 驱动）把对话拉成 `raw/` 再忠实渲染成 `sources/<connector>/*.md` 的**统一格式**（= 集成缝）；**核心层** `memory/` 是 connector 无关的 obsidian wiki，用 `#tag`（type）+ Dataview `(key:: val)`（字段）+ `[[wikilink]]`（实体关联）+ `^anchor`（回溯 sources 原文）写人/群/话题；**消费者层** reply-coach 等吃 wiki 给建议。**加新平台 = 写一份 connector 模块，核心和消费者一行不动。** persons 跨平台合并（frontmatter `identities` map），groups 平台独立（`connector` + `chat_id`），同一件事跨平台靠 `topics/` hub `[[link]]` 串起来。**没有独立 events 类型**：一次性事件用行内 `#event` 记在所属 person/group，够热的（跨实体反复）升 `topics/`，时序"哪天发生啥"落 `log.md` 按日 digest（Karpathy/OpenHuman 都不设独立 event 类型）。
+三层、connector 无关：**connector 层**（lark/wechat/slack 各自的 fetch+render 驱动）把对话拉成 `raw/` 再忠实渲染成 `sources/<connector>/*.md` 的**统一格式**（= 集成缝）；**核心层** `memory/` 是 connector 无关的 obsidian wiki，用 `#tag`（type）+ Dataview `(key:: val)`（字段）+ `[[wikilink]]`（实体关联）+ `^anchor`（回溯 sources 原文）写人/群/话题；**消费者层**走 `recall`（读取前门：模糊 query→相关上下文，引擎是 Claude Code 自带的 grep/Read，无 embedding），`reply-coach` 等是它的细分场景。**加新平台 = 写一份 connector 模块，核心和消费者一行不动。** persons 跨平台合并（frontmatter `identities` map），groups 平台独立（`connector` + `chat_id`），同一件事跨平台靠 `topics/` hub `[[link]]` 串起来。**没有独立 events 类型**：一次性事件用行内 `#event` 记在所属 person/group，够热的（跨实体反复）升 `topics/`，时序"哪天发生啥"落 `log.md` 按日 digest（Karpathy/OpenHuman 都不设独立 event 类型）。
 
 memex 是 **agent-driven**：借 OpenHuman / Karpathy 的数据模型和概念（三层 / compile / triage 准入 / index+log / lint），但不要后台 daemon / job 队列 / SQLite / embedding——后台 worker 持续做的，agent 在一次 skill 调用里做完，用 grep + LLM 语义判断而非向量。
 
