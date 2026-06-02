@@ -25,6 +25,11 @@
       "name": "content-creator",
       "source": "./content-creator",
       "description": "Content creation toolkit for short-video / social-feed creators (Xiaohongshu, 视频号, YouTube). Currently ships thumbnail-gen — interactive HTML/CSS thumbnail generator with portrait-photo layout math, multi-platform spec presets (3:4 / 4:3 / 9:16 / 16:9), multi-ratio derivation, and Playwright screenshot rendering. Bundled Smiley Sans (得意黑) font. Roadmap: title-writer / post-writer / tag-gen / video-script."
+    },
+    {
+      "name": "happy-life",
+      "source": "./happy-life",
+      "description": "Personal lifestyle skills for small daily rituals, taste memory, and playful self-care workflows. Currently ships daily-coffee-oracle — a Markdown-profile based coffee recommendation skill that learns from casual coffee chat and generates refined ASCII coffee cards."
     }
   ]
 }
