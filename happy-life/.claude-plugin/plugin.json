@@ -1,0 +1,8 @@
+{
+  "name": "happy-life",
+  "description": "Personal lifestyle skills for small daily rituals, taste memory, and playful self-care workflows. Currently ships daily-coffee-oracle, a Markdown-profile based coffee recommendation skill that turns coffee preferences, casual coffee chat, zodiac context, and daily mood into refined ASCII coffee cards.",
+  "version": "0.0.1",
+  "author": {
+    "name": "Harold"
+  }
+}
