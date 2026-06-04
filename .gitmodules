@@ -1,0 +1,3 @@
+[submodule "excalidrawer"]
+	path = excalidrawer
+	url = https://github.com/guohaonan-shy/excalidrawer.git
