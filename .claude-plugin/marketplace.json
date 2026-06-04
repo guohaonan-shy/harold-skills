@@ -13,8 +13,11 @@
     },
     {
       "name": "excalidrawer",
-      "source": "./excalidrawer",
-      "description": "Code-first Excalidraw diagram generation. Four skills (flowchart / timeline / architecture / sequence) clarify intent via AskUserQuestion, shape data into JSON, and call the excalidrawer npm CLI to produce .excalidraw / .svg / .png outputs."
+      "source": {
+        "source": "github",
+        "repo": "guohaonan-shy/excalidrawer"
+      },
+      "description": "Code-first Excalidraw diagram generation. Per-type skills (flowchart / timeline / architecture / sequence) on a shared base clarify intent via AskUserQuestion, compose sugar elements, and call the excalidrawer MCP server to produce .excalidraw / .svg / .png outputs. Single-sourced from guohaonan-shy/excalidrawer; installing auto-registers the MCP server."
     },
     {
       "name": "memex",
