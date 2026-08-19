@@ -1,0 +1,303 @@
+<title>PR Review</title>
+<style>
+  /* ───────────────────────────────────────────────────────────
+     PR review triage board.
+     这是工具不是文档：扫它只为回答「现在有什么必须我处理」。
+     所以 —— 摘要先于细节，状态编码进形状（severity 色条 + chip），
+     长 trace 一律 <details> 折起来。
+     ─────────────────────────────────────────────────────────── */
+  :root {
+    --ground:      #FBFAF8;   /* 暖中性，不是纯灰——被挑过的中性 */
+    --surface:     #FFFFFF;
+    --sunk:        #F2F0EC;
+    --ink:         #1A1815;
+    --ink-soft:    #55504A;
+    --ink-faint:   #8A837A;
+    --rule:        #E4E0D9;
+    --rule-strong: #CBC5BB;
+    --accent:      #4C5B8C;   /* 结构色：chip 边、链接。不参与 severity */
+    --accent-soft: #ECEEF6;
+    --crit:        #A81E2D;   --crit-soft:  #FBEAEC;
+    --high:        #B4551A;   --high-soft:  #FCEFE4;
+    --med:         #8A6A12;   --med-soft:   #FAF3DF;
+    --low:         #6C6459;   --low-soft:   #F1EEE9;
+    --done:        #2F6B49;   --done-soft:  #E7F2EB;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #14130F; --surface: #1C1A16; --sunk: #24211C;
+      --ink: #EDEAE3; --ink-soft: #ADA79D; --ink-faint: #7A736A;
+      --rule: #2E2A24; --rule-strong: #443E36;
+      --accent: #93A3D8; --accent-soft: #1E2233;
+      --crit: #F2818C; --crit-soft: #33161A;
+      --high: #E4A06A; --high-soft: #33220F;
+      --med:  #D8BC6A; --med-soft:  #2E2712;
+      --low:  #9A9287; --low-soft:  #23211C;
+      --done: #6FC094; --done-soft: #14291E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #14130F; --surface: #1C1A16; --sunk: #24211C;
+    --ink: #EDEAE3; --ink-soft: #ADA79D; --ink-faint: #7A736A;
+    --rule: #2E2A24; --rule-strong: #443E36;
+    --accent: #93A3D8; --accent-soft: #1E2233;
+    --crit: #F2818C; --crit-soft: #33161A;
+    --high: #E4A06A; --high-soft: #33220F;
+    --med:  #D8BC6A; --med-soft:  #2E2712;
+    --low:  #9A9287; --low-soft:  #23211C;
+    --done: #6FC094; --done-soft: #14291E;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font: 15px/1.6 var(--sans); margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+
+  /* ── masthead ─────────────────────────────── */
+  header { padding: 40px 0 20px; border-bottom: 1px solid var(--rule); }
+  .eyebrow { font: 500 11px/1 var(--mono); letter-spacing: .13em; text-transform: uppercase;
+             color: var(--ink-faint); margin-bottom: 12px; }
+  h1 { font-size: 25px; line-height: 1.25; margin: 0 0 12px; letter-spacing: -.015em;
+       font-weight: 640; text-wrap: balance; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 12px/1.5 var(--mono); color: var(--ink-faint); }
+  .meta a { color: var(--accent); }
+
+  /* ── the number that decides whether you keep reading ── */
+  .verdict {
+    margin: 22px 0 8px; padding: 18px 20px; border-radius: 4px;
+    border: 1px solid var(--rule-strong); background: var(--surface);
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  }
+  .verdict.blocking { border-color: var(--crit); background: var(--crit-soft); }
+  .verdict.clear    { border-color: var(--done); background: var(--done-soft); }
+  .verdict .n { font: 640 30px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .verdict.blocking .n { color: var(--crit); }
+  .verdict.clear .n    { color: var(--done); }
+  .verdict .what { font-size: 14.5px; color: var(--ink-soft); }
+  .verdict .what b { color: var(--ink); }
+
+  /* ── per-axis scoreboard ──────────────────── */
+  .axes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+          gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+          border-radius: 4px; overflow: hidden; margin-bottom: 30px; }
+  .ax { background: var(--surface); padding: 13px 15px; }
+  .ax .name { font: 600 12.5px/1.4 var(--sans); margin-bottom: 2px; }
+  .ax .sub  { font: 11px/1.4 var(--mono); color: var(--ink-faint); }
+  .ax .cnt  { font: 600 18px/1.2 var(--mono); font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .ax.muted { background: var(--sunk); }
+  .ax.muted .cnt { color: var(--ink-faint); font-weight: 400; font-size: 13px; }
+
+  /* ── sections ─────────────────────────────── */
+  section { margin-top: 34px; }
+  h2 { font-size: 17px; font-weight: 620; margin: 0 0 4px; letter-spacing: -.005em; }
+  .note { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 16px; max-width: 66ch; }
+
+  /* ── finding card ─────────────────────────── */
+  .find {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 3px solid var(--low); border-radius: 4px;
+    padding: 14px 16px; margin-bottom: 10px;
+  }
+  .find.critical { border-left-color: var(--crit); }
+  .find.high     { border-left-color: var(--high); }
+  .find.medium   { border-left-color: var(--med); }
+  .find.low      { border-left-color: var(--low); }
+  .find.resolved { border-left-color: var(--done); background: var(--sunk); }
+  .find.resolved .ttl { color: var(--ink-faint); }
+
+  .fhead { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; margin-bottom: 5px; }
+  .fid  { font: 600 11.5px/1 var(--mono); color: var(--ink-faint); flex: none; }
+  .ttl  { font-weight: 600; font-size: 14.5px; line-height: 1.45; flex: 1 1 320px; }
+  .loc  { font: 11.5px/1.5 var(--mono); color: var(--ink-faint); word-break: break-all; margin-bottom: 8px; }
+
+  .chip { font: 500 10.5px/1.6 var(--mono); letter-spacing: .04em; padding: 1px 7px;
+          border-radius: 3px; white-space: nowrap; flex: none; }
+  .chip.critical { background: var(--crit-soft); color: var(--crit); }
+  .chip.high     { background: var(--high-soft); color: var(--high); }
+  .chip.medium   { background: var(--med-soft);  color: var(--med); }
+  .chip.low      { background: var(--low-soft);  color: var(--low); }
+  .chip.axis     { background: var(--accent-soft); color: var(--accent); }
+  .chip.done     { background: var(--done-soft);  color: var(--done); }
+  .chip.plaus    { background: var(--sunk); color: var(--ink-soft); border: 1px dashed var(--rule-strong); }
+
+  /* 这就是「文字堆叠」的解药：trace 默认折起来 */
+  details.trace { margin-top: 9px; border-top: 1px solid var(--rule); padding-top: 8px; }
+  details.trace > summary {
+    cursor: pointer; font: 11.5px/1.5 var(--mono); color: var(--accent);
+    list-style: none; user-select: none;
+  }
+  details.trace > summary::-webkit-details-marker { display: none; }
+  details.trace > summary::before { content: "▸ "; }
+  details.trace[open] > summary::before { content: "▾ "; }
+  details.trace .body {
+    margin-top: 9px; font-size: 13.5px; line-height: 1.68; color: var(--ink-soft);
+    max-width: 74ch;
+  }
+  .fix { margin-top: 9px; padding: 9px 12px; background: var(--sunk);
+         border-radius: 3px; font-size: 13.5px; line-height: 1.6; }
+  .fix b { color: var(--ink); }
+  .resolved-note { margin-top: 8px; font-size: 12.5px; color: var(--done); }
+  .contra-note   { margin-top: 8px; font-size: 12.5px; color: var(--high); }
+
+  code { font: .88em var(--mono); background: var(--sunk); padding: 1px 5px;
+         border-radius: 3px; word-break: break-word; }
+
+  /* ── quiet sections（不该占你注意力的）────── */
+  details.quiet { border: 1px solid var(--rule); border-radius: 4px;
+                  background: var(--surface); margin-bottom: 10px; }
+  details.quiet > summary { cursor: pointer; padding: 12px 16px; font-weight: 600;
+                            font-size: 13.5px; list-style: none; }
+  details.quiet > summary::-webkit-details-marker { display: none; }
+  details.quiet > summary::before { content: "▸ "; color: var(--ink-faint); }
+  details.quiet[open] > summary::before { content: "▾ "; }
+  details.quiet .inner { padding: 0 16px 14px; }
+  ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  ul.plain li { font-size: 13.5px; line-height: 1.55; color: var(--ink-soft); }
+  ul.plain li b { color: var(--ink); font-weight: 600; }
+
+  /* ── round history ────────────────────────── */
+  .rounds { border-left: 2px solid var(--rule); padding-left: 16px; display: grid; gap: 11px; }
+  .rd { position: relative; font-size: 13px; }
+  .rd::before { content: ""; position: absolute; left: -21px; top: 6px; width: 7px; height: 7px;
+                border-radius: 50%; background: var(--rule-strong); }
+  .rd.latest::before { background: var(--accent); }
+  .rd .when { font: 11.5px/1.5 var(--mono); color: var(--ink-faint); }
+  .rd .tally { color: var(--ink-soft); }
+
+  .scroll { overflow-x: auto; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  footer { margin-top: 44px; padding-top: 14px; border-top: 1px solid var(--rule);
+           font: 11.5px/1.6 var(--mono); color: var(--ink-faint); }
+  @media (max-width: 560px) { .verdict { gap: 8px; } h1 { font-size: 21px; } }
+</style>
+
+<!--
+════════════════════════════════════════════════════════════════════════
+  填充说明（给 pr-review-round 的 Publish agent）
+
+  这份模板编码的是 Harold 批过的信息层级，**不要每轮重新设计**：
+
+  1. `.verdict` —— 全页唯一的大数字，只数 **Correctness + Spec** 的
+     open critical/high。Standards 永不进这个数（风格问题不该让一个
+     正确的 PR 显得有阻塞）。零 → class="clear"；非零 → class="blocking"。
+  2. 「需要你处理」段 —— 只放上面数进去的那些 finding，按 severity 排。
+     这是他唯一必须逐条读的东西。
+  3. 每条 finding 的长 trace **必须**放进 <details class="trace">。
+     散文墙折起来，标题 + 位置 + severity 留在外面。
+  4. Standards 轴、Plausible、Dismissed、已修复 —— 一律 <details class="quiet">
+     默认折叠。它们是记录，不是待办。
+  5. 机械自动修掉的（ruff --fix）**不列成 finding**，只在 quiet 段里
+     写一行「本轮自动修复 N 处（commit <sha>）」。
+
+  内容语言：中文；代码标识符/路径保持原样。
+  更新时 Read-modify-Write 这个文件，不要从头重建——历史轮次要留着。
+════════════════════════════════════════════════════════════════════════
+-->
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">PR Review · Round {{ROUND}}</p>
+  <h1>#{{PR_NUMBER}} {{PR_TITLE}}</h1>
+  <div class="meta">
+    <span><code>{{HEAD_REF}}</code> → <code>{{BASE_REF}}</code></span>
+    <span><a href="{{PR_URL}}">在 GitHub 打开</a></span>
+    <span>{{DATE}}</span>
+  </div>
+</header>
+
+<!-- 唯一的大数字。零 = clear，非零 = blocking -->
+<div class="verdict blocking">
+  <span class="n">{{OPEN_BLOCKING}}</span>
+  <span class="what">条 <b>Correctness / Spec</b> 的 critical·high 仍未解决 —— 这些需要你决定怎么修。<br>
+    Standards 轴的发现不计入此数。</span>
+</div>
+
+<div class="axes">
+  <div class="ax">
+    <div class="name">Correctness</div><div class="sub">有没有引入 bug</div>
+    <div class="cnt">{{C_CONFIRMED}} confirmed</div>
+  </div>
+  <div class="ax">
+    <div class="name">Spec</div><div class="sub">是不是说好的那个</div>
+    <div class="cnt">{{S_CONFIRMED}} confirmed</div>
+  </div>
+  <div class="ax muted">
+    <div class="name">Standards</div><div class="sub">合不合规 · 不阻塞</div>
+    <div class="cnt">{{ST_SUMMARY}}</div>
+  </div>
+</div>
+
+<section>
+  <h2>需要你处理</h2>
+  <p class="note">只有 Correctness 与 Spec 轴的 confirmed critical/high 会出现在这里。每条的完整 trace 折在里面，点开再看。</p>
+
+  <!-- 重复此块，按 severity 降序 -->
+  <div class="find critical">
+    <div class="fhead">
+      <span class="fid">F-1</span>
+      <span class="ttl">{{FINDING_TITLE}}</span>
+      <span class="chip critical">critical</span>
+      <span class="chip axis">Correctness</span>
+    </div>
+    <div class="loc">{{FILE}}:{{LINE}}</div>
+    <details class="trace">
+      <summary>展开证据链</summary>
+      <div class="body">{{EVIDENCE}}</div>
+    </details>
+    <div class="fix"><b>修法方向：</b>{{FIX_DIRECTION}}</div>
+  </div>
+
+</section>
+
+<section>
+  <h2>其余（记录用，不用现在看）</h2>
+
+  <details class="quiet">
+    <summary>Standards 轴 · {{ST_COUNT}} 条 · 不阻塞</summary>
+    <div class="inner">
+      <p class="note">机械可修的已在 loop 里自动修掉，这里只剩需要人判断的设计层意见。smell 一律是判断题，不是硬违规。</p>
+      <ul class="plain">
+        <li><b>{{TITLE}}</b> — {{ONE_LINE}} <code>{{FILE}}</code></li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="quiet">
+    <summary>Plausible · {{P_COUNT}} 条 —— 需要你判断，但证据不足以定论</summary>
+    <div class="inner"><ul class="plain"><li><b>{{TITLE}}</b> — {{WHY_UNSURE}}</li></ul></div>
+  </details>
+
+  <details class="quiet">
+    <summary>已修复 · {{R_COUNT}} 条</summary>
+    <div class="inner"><ul class="plain"><li><b>F-n {{TITLE}}</b> — ✅ round {{R}} 已修复：{{PROOF}}</li></ul></div>
+  </details>
+
+  <details class="quiet">
+    <summary>Dismissed · {{D_COUNT}} 条</summary>
+    <div class="inner"><ul class="plain"><li><b>[{{AXIS}}] {{TITLE}}</b> — {{REBUTTAL}}</li></ul></div>
+  </details>
+</section>
+
+<section>
+  <h2>轮次</h2>
+  <div class="rounds">
+    <div class="rd latest">
+      <div class="when">Round {{ROUND}} · {{DATE}}</div>
+      <div class="tally">Correctness {{C}}/{{CP}}/{{CD}} · Standards {{ST}} · Spec {{SP}}/{{SPP}}/{{SPD}}{{AUTOFIX_NOTE}}</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  三轴独立评判，结果不合并、不跨轴重排 —— 一个改动可以过一个轴挂另一个。<br>
+  未跑成的轴记作「❌ 未跑」，绝不记作零发现。
+</footer>
+
+</div>
