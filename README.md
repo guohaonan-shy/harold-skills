@@ -13,6 +13,7 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 | [`memex/`](./memex/) | Personal memory wiki from conversations, with ingestion, recap, recall, memory maintenance, and reply coaching. | Ready |
 | [`content-creator/`](./content-creator/) | Content creation toolkit for short-video and social-feed creators. Currently ships `thumbnail-gen`. | Ready |
 | [`happy-life/`](./happy-life/) | Personal lifestyle skills for daily rituals and taste memory. Currently ships `daily-coffee-oracle`. | Ready |
+| [`idea-loop/`](./idea-loop/) | Closed loop from idea to shipped engineering — design-tree interview → spec → tracer-bullet tickets → TDD implementation → three-axis PR review (Correctness / Standards / Spec) → knowledge-base reconciliation. Generalized out of a real project, reads the target repo's own conventions rather than hardcoding them. | Ready |
 
 More plugins may be added over time.
 
@@ -32,6 +33,7 @@ Examples:
 /plugin install memex@harold-skills
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
+/plugin install idea-loop@harold-skills
 ```
 
 ## Repository Structure
@@ -48,6 +50,7 @@ harold-skills/
     │   └── plugin.json
     ├── README.md             # plugin introduction, install notes, usage examples
     ├── references/           # plugin-level shared references, optional
+    ├── workflows/            # optional — Workflow-tool scripts (.mjs), e.g. idea-loop's PR review loop
     └── skills/
         └── <skill-name>/
             ├── SKILL.md

@@ -13,6 +13,7 @@ Default English version: [README.md](./README.md)
 | [`memex/`](./memex/) | 从对话构建个人记忆 wiki，支持 ingest、recap、recall、memory 维护和 reply coaching。 | Ready |
 | [`content-creator/`](./content-creator/) | 面向短视频 / 社交 feed 创作者的内容工具集，当前包含 `thumbnail-gen`。 | Ready |
 | [`happy-life/`](./happy-life/) | 面向日常仪式感和个人 taste memory 的生活类 skills，当前包含 `daily-coffee-oracle`。 | Ready |
+| [`idea-loop/`](./idea-loop/) | 从 idea 到工程落地的闭环——设计树访谈 → spec → tracer-bullet ticket → TDD 实现 → 三轴 PR review（Correctness / Standards / Spec）→ 知识库对账。从一个真实项目里通用化出来，读目标仓库自己的约定，不硬编码。 | Ready |
 
 更多 plugin 会陆续加入。
 
@@ -32,6 +33,7 @@ Default English version: [README.md](./README.md)
 /plugin install memex@harold-skills
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
+/plugin install idea-loop@harold-skills
 ```
 
 ## 仓库结构
@@ -48,6 +50,7 @@ harold-skills/
     │   └── plugin.json
     ├── README.md             # plugin 介绍、安装说明、用法示例
     ├── references/           # plugin 级共享参考，可选
+    ├── workflows/            # 可选 —— Workflow 工具脚本（.mjs），如 idea-loop 的 PR review 闭环
     └── skills/
         └── <skill-name>/
             ├── SKILL.md
