@@ -66,4 +66,18 @@ disable-model-invocation: true
 
 手动 `/dreaming`，或 Harold 在 Claude 桌面端挂的 weekly schedule。
 
+**这是周期性的批量对账，不是单份 spec 的收尾。** 三个触发信号：
+
+| 信号 | |
+|---|---|
+| 周期到了 | weekly schedule |
+| **spec 堆积** | `docs/spec/` 里躺着一批「做完但还没对账」的 —— 那是正常状态，攒到一批再扫一次 |
+| 手动 | 你觉得该扫了 |
+
+**别在 `to-spec` 或 `implement` 刚跑完之后立刻跑。** 那等于拿一份几分钟前写的 spec 去撞几分钟前写的代码，
+而下面那条幂等自检（重跑输出应为空）是给**批量扫描**设计的，不是给单份文档收尾用的。
+
+前向环（`grill` → `to-spec` → `to-ticket` → `implement` → `pr-*`）里**没有任何一步写 ADR**。
+ADR 只在这里产生。所以一份 spec 从「活干完了」到「被蒸馏成 ADR 并删除」之间有一段间隔，那是设计，不是漏掉了。
+
 **不挂 launchd 定时**——与 growth-weekly 不同，这里没有外部数据窗口的时钟压力，定时跑容易变成没人看的噪音。

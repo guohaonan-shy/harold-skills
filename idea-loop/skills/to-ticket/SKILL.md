@@ -1,7 +1,6 @@
 ---
 name: to-ticket
 description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被谁挡着。临时凭据，合了即删。
-disable-model-invocation: true
 ---
 
 # To Ticket
@@ -74,6 +73,8 @@ disable-model-invocation: true
 从 `docs/testing/test-cases.md` 里，按这一刀碰到的**页面**挑（不是全量套件），每条一句话说明为什么它有风险。
 ```
 
+> **这个文件是本 plugin 起源项目的布局假设。** 目标仓库没有它是常态。没有就**如实写「无 test-cases 库」，并指名那个仓库真实存在的套件**（按名字/角色，不按路径）—— 不要编一个不存在的路径让模板看起来填满了。
+
 ### 设计冻结闸门挂在这里
 
 **动 UI 的 ticket 要求设计已冻结才能开工**；spec 不要求（spec 可以停在 `status: 等设计冻结`）。
@@ -91,10 +92,16 @@ disable-model-invocation: true
 
 下一环是 `implement`：它只读那一张 ticket，不重开方案。
 
+> **这一环的交接是给人的，不是模型自己往下调。** `/clear` 是人的动作 —— 模型清不了自己的上下文，所以它无法满足 `implement` 的第一条前置（一个全新会话）。`implement` 因此对模型不可见（`disable-model-invocation`，与上游一致）。落盘完 ticket 之后，**告诉人**去 `/clear` 再 `/implement`。
+
 依赖图**是给人用的调度信息，不是自动编排**：blocker 都完成的 ticket 就在 frontier 上，可以开工，仅此而已。
 
 > 反面数据：某团队按**层**横切了 26 张 ticket，结果是每关闭一张要跑约 20 次 agent，其中约四分之三是返工。垂直切片不是审美偏好。
 
 ## 7 收工
 
-合并后**删掉那张 ticket 文件**。全部 ticket 都删完了，说明这份 spec 做完了——交给 `dreaming` 蒸馏成 ADR 并删除 spec。
+合并后**删掉那张 ticket 文件**。全部 ticket 都删完了，说明这份 spec 做完了。
+
+**ADR 与 spec 的删除归 `dreaming`，但它不是这一步的立即下一环。** dreaming 是**周期性的维护扫描**（见它的 `## 触发`），不是单份 spec 的收尾。所以「**做完但还没对账**」是 spec 的一个正常状态，不是漏洞 —— 等下一次 maintain 扫过，或者 spec 堆积到你想手动跑一次。
+
+**别在这里提前手写 ADR。** dreaming 的纪律 5 要求每个判定都靠当次跑出来的证据，手写就是凭记忆。

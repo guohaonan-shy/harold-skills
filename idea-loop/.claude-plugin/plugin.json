@@ -1,7 +1,7 @@
 {
   "name": "idea-loop",
   "displayName": "Idea Loop",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Closed loop from idea to shipped engineering, backed by a docs/ Obsidian vault as its knowledge base. Seven user-invoked skills, no state machine — a file's existence IS its status: a spec exists while the work is in flight, and is deleted once an ADR records why/how/result. grill runs a design-tree interview in frontier rounds (facts are the agent's job, decisions are the human's) until nothing is silently assumed; to-spec lands that conversation as a raw transcript plus one spec (problem, user stories, implementation + testing decisions, agreed seams); to-ticket slices a spec into tracer-bullet vertical cuts with blocking edges, each a temporary credential deleted on merge, and holds the design-freeze gate for UI work; implement turns one ticket into one commit in a fresh session, driving TDD at the seams the spec already agreed and never reopening the plan, then hands off to pr-open-review (push, open PR, round-1 three-axis review) and pr-fix-verify (one round of agreed fixes, then re-review) — Correctness / Standards / Spec run in parallel and never merged or reranked; dreaming reconciles every doc against origin/main — including CLAUDE.md — and proposes disposals the human approves before anything moves. Generalized out of a real project (Toeflair) — reads the current repo's own CLAUDE.md and lint/typecheck config rather than hardcoding either. Skills own the mechanics; the human owns every judgement call.",
   "author": {
     "name": "Harold"

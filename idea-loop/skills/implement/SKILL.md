@@ -16,6 +16,10 @@ disable-model-invocation: true
 
 节奏是 `/clear` → 做这一张 → commit → `/clear`。
 
+> **出处，以及一处上游的自相矛盾。** 这条节奏来自上游作者的文章（`aihero.dev/skills-implement`：「clear context, implement one ticket, commit, clear again」、「One run covers one ticket」，以及被直接问到能否一次指向全部 ticket 或并行跑几个时的回答「One invocation, one ticket」），**上游的 `SKILL.md` 本身一个字都没写**。而上游那份 description 写的是「a spec or **set of tickets**」—— 复数，与文章相反。本 skill 取文章那一边，并把约束写进正文，因为约束住在会被加载的文件里才起作用。
+>
+> **也是本 skill 对模型不可见的原因**（`disable-model-invocation`，与上游一致）：`/clear` 是人的动作，模型清不了自己的上下文，所以它无法满足上面那条前置。
+
 拿起 ticket 的这个会话**从没见过那份 spec**——这不是缺陷，是设计：ticket 的尺寸约束（塞得进一个全新上下文窗口）和那几条禁令（禁文件路径、禁代码片段、描述行为不描述过程）都是为此。所以**照 ticket 说的做，不要去把整份 spec 读回来"补充理解"**——真缺了什么，那是 ticket 写得不够，回去补 ticket。
 
 例外只有一个：**spec 的 §5 测试决策要读**，它说明这一刀该用哪种仪器验（见下）。
