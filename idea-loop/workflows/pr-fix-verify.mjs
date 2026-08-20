@@ -8,12 +8,21 @@ export const meta = {
   ],
 }
 
-const CODEX_COMPANION = '/Users/guohaonan/.claude/plugins/marketplaces/openai-codex/plugins/codex/scripts/codex-companion.mjs'
-
 // See pr-open-review.mjs for why this defensive parse exists — args has been
 // observed arriving JSON-stringified rather than pre-parsed.
 const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
-const { cwd, prNumber, headRefName, baseRefName, priorRound, findingsToFix, feedback, pluginRoot } = parsedArgs
+const { cwd, prNumber, headRefName, baseRefName, priorRound, findingsToFix, feedback, pluginRoot, codexCompanion } = parsedArgs
+// Codex's companion script belongs to a *different* plugin, so
+// ${CLAUDE_PLUGIN_ROOT} does not point at it. It travels the same route as
+// pluginRoot: the dispatcher SKILL.md resolves it (only markdown expands that
+// placeholder, and only the dispatcher can shell out to look) and threads it
+// down as an argument. Deliberately no fallback — the hardcoded default this
+// replaced named one machine's username and config directory, and silently
+// pointed at a file that did not exist anywhere else.
+const CODEX_COMPANION = codexCompanion
+if (!CODEX_COMPANION) {
+  return { error: 'codexCompanion was not passed in — the dispatcher SKILL.md has to resolve the openai-codex companion script and thread it through. See README, Portability.' }
+}
 
 phase('Fix + Test')
 const fixed = await agent(
@@ -106,6 +115,7 @@ const nextRound = await workflow({ scriptPath: `${pluginRoot}/workflows/pr-revie
   baseRefName,
   roundHint: priorRound + 1,
   pluginRoot,
+  codexCompanion,
   note: `本轮（commit ${fixed.commitSha || '(none committed)'}）尝试修复了 round ${priorRound} 的以下 finding。
 已修复且非对抗二次核实通过（标记为已解决）：${JSON.stringify(secondOpinion.confirmedResolved)}。
 声称修复但被二次核实反驳（保留为 open，附上原因）：${JSON.stringify(secondOpinion.contradicted)}。
