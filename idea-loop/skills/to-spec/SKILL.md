@@ -1,7 +1,6 @@
 ---
 name: to-spec
 description: 把刚才这场对话落盘成 raw transcript + 一份 spec。不再访谈，只综合。
-disable-model-invocation: true
 ---
 
 # To Spec

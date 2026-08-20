@@ -16,6 +16,29 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:pr-fix-verify` | Review · round N+1 | Lands an agreed round of fixes as one commit, then re-reviews. **No browser.** |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
+### The forward loop is not the maintenance sweep
+
+`grill → to-spec → to-ticket → implement → pr-open-review → pr-fix-verify` runs once
+per piece of work. `dreaming` is a **periodic batch reconciliation** over the whole
+vault — weekly, or when specs pile up, or by hand. It is not the next step after
+`implement`.
+
+**No stage in the forward loop writes an ADR.** ADRs are produced only in Maintain,
+which is also where a finished spec is deleted (the contract's invariant: never delete
+a spec before its ADR exists). So a spec sitting in `docs/spec/` with its work already
+merged is a **normal state**, not an oversight — it is waiting for the next sweep.
+
+Which skills the model may invoke itself:
+
+| Model-invocable | Human-invoked only (`disable-model-invocation`) |
+|---|---|
+| `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `implement`, `dreaming` |
+
+`grill` is an interview — it only means something when a human starts it. `dreaming`
+proposes destructive disposals. `implement` requires a fresh context window, and
+clearing context is something only the human can do, so a self-invoking `implement`
+would break its own first precondition.
+
 ### The review loop
 
 Both dispatchers call the shared `pr-review-round` workflow (`workflows/`),

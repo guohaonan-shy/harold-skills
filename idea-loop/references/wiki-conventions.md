@@ -4,6 +4,9 @@
 
 > **改这份文件本身需要 Harold 签字**——它是共享契约。应用它是 skill 的日常工作，不需要。
 >
+> **2026-08-20 签字**：§1 的「做完但还没对账」状态、§3 对 ticket 的豁免、§4 对 `index.md` 的豁免。
+> 前两条来自一次实跑（把 spec 落进一个已有常驻规格的仓库）暴露的洞，第三条是 §4 与 §5 本身相冲。
+>
 > 真相源：[[docs-wiki-v2]]（`docs/spec/`）。这五个 skill 取代了 v1 的五个：
 > `distill-source`（并入 grill + to-spec）、`draft-prd` / `freeze-prd` / `archive-prd`
 > （状态机取消，归档并入 dreaming）、`prd-to-plan`（拆成 to-ticket + 后续的 implement）。
@@ -24,6 +27,16 @@ ticket 消失            = 那一刀合了
 
 > **不变量：删 spec 之前必须先写 ADR。**
 > 决策在 spec 存活期间只住在 spec 里，先删就是丢决策。无例外。
+
+**「做完但还没对账」是 spec 的一个正常状态，不是漏洞。** 上面那张表读起来像是活一干完 spec 就该消失，
+但写 ADR 与删 spec 都归 `dreaming`，而它是**周期性的维护扫描**，不是单份 spec 的收尾——前向环
+（`grill` → `to-spec` → `to-ticket` → `implement` → `pr-*`）里没有任何一步写 ADR。所以：
+
+```
+spec 存在 + 活已合并 + 无 ADR   = 等下一次 maintain 扫描（正常）
+```
+
+**不要因为活干完了就提前手写 ADR。** `dreaming` 的纪律 5 要求每个判定都靠当次跑出来的证据，手写就是凭记忆。
 
 ## 2 目录
 
@@ -46,6 +59,10 @@ docs/
 ## 3 frontmatter
 
 每份 md 都带。这是 dreaming 与召回 grep 的锚点。
+
+**两处豁免**：`spec/tickets/` 下的 ticket 按 `to-ticket` §5 的模板走，**不带 frontmatter**——它是临时凭据，
+`dreaming` 扫它是按**目录**扫（「漏网的 ticket 也归这里扫」），不靠 frontmatter 锚定。各层的 `index.md`
+同样不带——它是导航，表体从别人的 frontmatter 生成。
 
 ```yaml
 ---
@@ -72,6 +89,9 @@ related: ["[[other-slug]]"]
 ## 4 slug 与链接
 
 - 这是 Obsidian vault，**wiki-link 按 basename 解析，与目录无关** → **`docs/` 下每个 slug 必须全局唯一**。建文件前 grep 一遍。
+  - **豁免 `index.md`。** §5 要求「每层一个 `index.md`」，那与本条直接相冲。不咬人的原因是索引**从不做链接目标**——
+    没有任何文件写 `[[index]]`，所以歧义不会发生。**代价是这条豁免必须靠纪律维持**：谁都不要写 `[[index]]`，
+    要引某一层就写路径。
 - spec 的 slug 必须**不同于**它 raw 素材的 slug，否则 `[[x]]` 有歧义。
 - 移动不打断 basename 链接；**删除会**。所以每次删除后必须跑 link sweep：grep `\[\[` 提取全部 slug，逐个确认文件存在。
 - 文档正文语言：中文。
