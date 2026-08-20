@@ -13,7 +13,7 @@ export const meta = {
 // directly silently yields undefined for every field. Parse defensively so
 // this still works if a future runtime build fixes the stringification.
 const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
-const { cwd, baseRefName, prTitle, prBody, pluginRoot } = parsedArgs
+const { cwd, baseRefName, prTitle, prBody, pluginRoot, codexCompanion } = parsedArgs
 const base = baseRefName || 'main'
 
 phase('Open PR')
@@ -54,6 +54,9 @@ const round1 = await workflow({ scriptPath: `${pluginRoot}/workflows/pr-review-r
   baseRefName: opened.baseRefName || base,
   roundHint: 1,
   pluginRoot,
+  // Not used here — this workflow never shells out to codex. Threaded through
+  // for pr-review-round, which does.
+  codexCompanion,
 })
 
 return { ...opened, ...round1 }

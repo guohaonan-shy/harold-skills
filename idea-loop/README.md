@@ -50,10 +50,12 @@ hardcoded. Cross-plugin file paths are threaded through as `pluginRoot`
 (via `${CLAUDE_PLUGIN_ROOT}`, resolved in each dispatcher's own SKILL.md —
 Workflow scripts have no filesystem/env API of their own) rather than
 hardcoded, so this plugin should survive being copied to another project or
-machine as-is. One known exception: `pr-review-round.mjs`'s `CODEX_COMPANION`
-constant still points at the `openai-codex` marketplace plugin's install
-path directly — that's a different plugin's path, not this one's, and there
-is currently no verified portable way to resolve it.
+machine as-is. The `openai-codex` companion script travels the same route: the
+dispatcher walks up from `${CLAUDE_PLUGIN_ROOT}` to the plugins root, finds the
+companion under either the marketplace clone or the versioned cache, and passes
+it in as `codexCompanion`. The workflows have no fallback for it on purpose — a
+hardcoded default is what made this unportable, and a review that silently
+points at a nonexistent script is worse than one that refuses to start.
 
 ## Architecture
 

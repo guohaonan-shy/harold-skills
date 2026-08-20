@@ -9,21 +9,28 @@ export const meta = {
   ],
 }
 
-// Codex's own install path — machine-specific, not this plugin's problem to
-// solve (it points at a *different* marketplace plugin, not at us). Known
-// remaining fragility: if codex is ever installed elsewhere, update here.
-const CODEX_COMPANION = '/Users/guohaonan/.claude/plugins/marketplaces/openai-codex/plugins/codex/scripts/codex-companion.mjs'
-
 // See pr-open-review.mjs for why this defensive parse exists — args has been
 // observed arriving JSON-stringified rather than pre-parsed.
 const parsedArgs = typeof args === 'string' ? JSON.parse(args) : args
-const { cwd, prNumber, prUrl, headRefName, baseRefName, roundHint, note, pluginRoot } = parsedArgs
+const { cwd, prNumber, prUrl, headRefName, baseRefName, roundHint, note, pluginRoot, codexCompanion } = parsedArgs
 
 // Workflow scripts have no filesystem/env API, so these can't be resolved
 // here — the dispatcher SKILL.md reads ${CLAUDE_PLUGIN_ROOT} (which only
 // expands in markdown) and threads it down as `pluginRoot`.
 const REVIEW_STANDARDS = `${pluginRoot}/references/review-standards.md`
 const ARTIFACT_TEMPLATE = `${pluginRoot}/references/review-artifact-template.html`
+
+// Codex's companion script belongs to a *different* plugin, so
+// ${CLAUDE_PLUGIN_ROOT} does not point at it. It travels the same route as
+// pluginRoot: the dispatcher SKILL.md resolves it (only markdown expands that
+// placeholder, and only the dispatcher can shell out to look) and threads it
+// down as an argument. Deliberately no fallback — the hardcoded default this
+// replaced named one machine's username and config directory, and silently
+// pointed at a file that did not exist anywhere else.
+const CODEX_COMPANION = codexCompanion
+if (!CODEX_COMPANION) {
+  return { error: 'codexCompanion was not passed in — the dispatcher SKILL.md has to resolve the openai-codex companion script and thread it through. See README, Portability.' }
+}
 
 // Scratch state for building up the artifact across rounds within one
 // session — not the source of truth (the published Artifact is; the

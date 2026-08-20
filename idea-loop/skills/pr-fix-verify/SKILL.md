@@ -35,7 +35,31 @@ they've told you to go implement it.
      every open finding in the file. If that's ambiguous, ask which ones before
      calling the workflow; guessing wide (all open findings) risks the fix-agent
      "fixing" something whose direction was never actually agreed.
-4. **Call the workflow.** Use `scriptPath`, not `name` — this workflow isn't in
+4. **Resolve `codexCompanion`.** The review axes shell out to the `openai-codex`
+   plugin's companion script. That file belongs to a *different* plugin, so
+   `${CLAUDE_PLUGIN_ROOT}` does not point at it — but it does live under the same
+   plugins root, so it can be found from here. Walk up to the directory named
+   `plugins`, then take the first of these that exists:
+   ```bash
+   R="${CLAUDE_PLUGIN_ROOT}"
+   while [ "$R" != "/" ] && [ "$(basename "$R")" != "plugins" ]; do R=$(dirname "$R"); done
+   { find "$R/cache/openai-codex" -name codex-companion.mjs 2>/dev/null | sort -Vr
+     ls "$R/marketplaces/openai-codex/plugins/codex/scripts/codex-companion.mjs" 2>/dev/null
+   } | head -1
+   ```
+   Both layouts are checked because a plugin loads from either the versioned
+   cache (preferred — it is what is actually installed) or the marketplace clone.
+   No wildcard appears anywhere in that command on purpose: under zsh an
+   unmatched glob aborts the whole pipeline instead of expanding to nothing, so a
+   globbed version directory would report "codex not installed" whenever only the
+   other layout was present.
+
+   If nothing prints, **stop** — `openai-codex` isn't installed and there is no
+   review to run; say that instead of calling the workflow. Never substitute a
+   guessed path. A hardcoded one is exactly what made this unportable before: it
+   named one machine's username and one config directory, and resolved to a file
+   that existed nowhere else.
+5. **Call the workflow.** Use `scriptPath`, not `name` — this workflow isn't in
    the named registry (confirmed: `Workflow({name:"pr-fix-verify",...})` fails
    with "not found; Available: deep-research, code-review"):
    ```
@@ -50,17 +74,18 @@ they've told you to go implement it.
        findingsToFix: [...],
        feedback: "<$ARGUMENTS — the agreed fix direction, verbatim>",
        pluginRoot: "${CLAUDE_PLUGIN_ROOT}",
+       codexCompanion: "<resolved above>",
      },
    })
    ```
-   `pluginRoot` is threaded through for the same reason as `pr-open-review` —
-   `${CLAUDE_PLUGIN_ROOT}` only expands in this markdown, not inside the `.mjs`
-   files this calls.
-5. Runs in the background — tell the user it's running, you'll report per-finding
+   `pluginRoot` and `codexCompanion` are threaded through for the same reason as
+   `pr-open-review` — `${CLAUDE_PLUGIN_ROOT}` only expands in this markdown, and
+   only this dispatcher can shell out to locate a sibling plugin's file.
+6. Runs in the background — tell the user it's running, you'll report per-finding
    results (fixed/blocked, with the real verification signal reported for each)
    plus the next round's artifact link + `openHighSeverityCount` once the
    completion notification arrives.
-6. When it lands: report clearly which findings actually got fixed-and-confirmed,
+7. When it lands: report clearly which findings actually got fixed-and-confirmed,
    which were **blocked** (surface the `blockedReason` — that's the developer's
    cue to give more direction), and which were claimed-fixed but **contradicted**
    by the non-adversarial recheck (these need another look, not a retry with the
