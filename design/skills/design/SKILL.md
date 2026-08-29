@@ -17,8 +17,7 @@ Classify the request by the **highest affected altitude**, not by the noun used:
 
 | Ask | Route |
 |---|---|
-| Whole marketing site / multiple pages / IA | §1–4, then `design-landing-plan` for the full IA deliverable |
-| One landing page or landing section | §1–4, then `design-landing` |
+| Whole marketing site / multiple pages / IA, or one landing page / landing section | §1–4, then `design-ui`'s Landing/IA entry route |
 | Product surface (app page, module) | §1–4, then `design-ui` |
 | Bounded component treatment | Skip to `design-ui` component fast path — candidates are overkill |
 | Motion or interaction on an approved static design | Skip to `design-motion` |

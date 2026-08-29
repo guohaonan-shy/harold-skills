@@ -44,7 +44,7 @@ Project-agnostic 且自包含：品牌与 token 法则在运行时从目标项�
 
 来自 design-lib 消费侧 plugin，本轮刻意不搬：
 
-- **落地页专属的两个技能**（`design-landing` / `design-landing-plan`）——它们的方法论（page taxonomy、Hero 七槽模型）会被拆出来单独整理，通用部分并入 `design-ui` 自己的 craft reference，是另一张 ticket 的事。
+- **落地页专属的两个技能**（`design-landing` / `design-landing-plan`）——它们的方法论已拆分：page taxonomy、Hero 七槽模型整理进 `design-ui` 专用的 `references/landing-ia.md`（走 Landing/IA 这档路由时才读），证明地图、响应式改稿、运行时/降级状态模型这类任何 altitude 都用得上的通用工艺并入了 `references/design-core.md` §7。
 - **视频背景生成技能**（`video-bg-section`）——按讨论明确排除，留到下一版单独展开。
 
 `port-to-react` 未单独出现在这份列表里：它的翻译机制已并入 `design-port`，不再作为独立技能存在。

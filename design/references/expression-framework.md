@@ -15,7 +15,11 @@ dominance model, hierarchy vectors, flat/noise failure modes) + `craft/laws-of-u
 (`critique.md` visual-noise floor + ≤4 working-memory chunking, `layout.md` spatial thesis +
 squint test, `scripts/palette.mjs` text-on-fill rules), and a real project's practice-dashboard-card
 badge decision (2026-07, now that project's DESIGN.md §7 case law). Externals are raw feeds; this file is the
-source of truth — update by explicit re-distill, never by runtime reads of external paths.
+source of truth — update by explicit re-distill, never by runtime reads of external paths. The
+remaining laws from `craft/laws-of-ux.md` not operationalized here (Gestalt grouping, decision
+framing beyond Hick's Law, memory/recall, motor timing, behavioral expectation) were distilled
+separately into `references/laws-of-ux.md`, which cross-references back to this file rather than
+restating the four laws already turned into ladders/budgets here.
 
 ## 0. Conditional-state precondition
 

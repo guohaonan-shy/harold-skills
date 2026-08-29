@@ -6,7 +6,9 @@ description: >-
   or a bounded component. Route by the HIGHEST affected altitude, not by the noun
   in the request: Surface work descends through Module and then the decision-bearing
   or conditional Components; Module work descends through Components; a bounded
-  Component treatment uses the component fast path directly. Conditional UI starts
+  Component treatment uses the component fast path directly. A landing/marketing page
+  or multi-product information architecture routes through Landing/IA, a Surface-level
+  entry with its own page-taxonomy and Hero-geometry vocabulary. Conditional UI starts
   with a reachable-state matrix before visual design. Surface/Module composition is
   frozen as gray-box wireframes; unresolved component treatments use a compact
   Variant Board instead. Existing redesigns begin from captured product truth at
@@ -60,7 +62,8 @@ component work from carrying a page-sized playbook while ensuring page work stil
 altitude.
 
 - `references/design-core.md` supplies the Design Read, register dials, identity floors, anti-slop
-  law, and close-out protocol.
+  law, close-out protocol, and the cross-altitude craft methodology (proof map, responsive
+  re-edit, runtime & fallback states — design-core §7).
 - `references/expression-framework.md` supplies the altitude-neutral content → priority → weight
   procedure and the conditional-state precondition.
 - The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
@@ -68,7 +71,12 @@ altitude.
   If the project has no `DESIGN.md`, fall back to this plugin's built-in defaults (design-core
   floors + anti-slop law), note that no project design law was found, and suggest the user create
   a `DESIGN.md` — never abort over a missing doc.
-- The route protocols supply only the instructions needed at the affected altitudes.
+- The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
+  route additionally reads `references/landing-ia.md` (see the table in §A).
+- Two reference files load on demand rather than at Setup: `references/accessibility-baseline.md`
+  when a compliance question goes beyond design-core §4's one-line a11y floor, and
+  `references/laws-of-ux.md` when a composition question isn't already answered by the expression
+  framework's ladders and budgets.
 
 ### 3. The gates do not trust the generator
 
@@ -104,8 +112,14 @@ Choose the **highest affected altitude**, not the filename or noun in the prompt
 | Entry route | Use when… | Read now |
 |---|---|---|
 | **Surface** | Route/page IA, user journey, module order, dominant reading path, or responsive composition changes | `references/surface-protocol.md` |
+| **Landing / IA** | The route/page is a landing, marketing, or multi-product page whose page taxonomy (which company/product/pricing/trust type it is) and Hero geometry need to be decided before composition | `references/surface-protocol.md` **+** `references/landing-ia.md` |
 | **Module** | One bounded section's internal composition changes while page IA and surrounding module order remain stable | `references/module-protocol.md` |
 | **Component** | One bounded UI subtree changes; parent composition and user journey remain stable; uncertainty is treatment, signals, or conditional states | `references/component-protocol.md` |
+
+Landing/IA is not a fourth descent tier — it runs the same Surface R/B/W procedure in
+`surface-protocol.md`; `landing-ia.md` only supplies the extra domain vocabulary (page taxonomy,
+Hero seven-slot model) that stage B and stage W need for this kind of page. It still descends into
+Module and Component exactly as Surface does.
 
 A component that forces parent scrolling, module reordering, a different mobile information
 architecture, or a new journey has crossed altitude: route from Module or Surface instead. A module
@@ -147,13 +161,27 @@ preference). A bounded component treatment may use one concept; use variants onl
 visual choices, not to manufacture options.
 
 **Gate:** concept, state contract where applicable, and expression table are signed off before
-references or design pixels.
+references or design pixels. An unresolved named question routes to stage C's research backend,
+not back into this stage's inference.
 
 ### C · Ground with references only for a named question
 
 Skip by default. A reference is admissible only when the concept leaves a specific structural,
 coverage, flow, or state question unanswered. Component references are not forbidden, but must answer
 a component-sized question such as collapsed behavior or error recovery.
+
+User-provided sources come first; Refero is a fallback candidate search, not ground truth
+(`platform: "web"`), and it is not one undifferentiated pool — route the named question to the
+layer that actually answers it:
+
+| The named question is about… | Research-backend layer |
+|---|---|
+| Visual direction — taste, aesthetic family, palette/type mood | Refero **styles** |
+| A concrete UI pattern — how a specific component or screen is structured | Refero **screens** |
+| A multi-step flow — how a user moves across connected screens to complete a task | Refero **flows** |
+
+Full routing contract and caveats (styles doesn't cover in-app dashboards/auth/settings/iOS):
+`references/research-backend.md`.
 
 For every used reference record:
 
@@ -162,8 +190,7 @@ For every used reference record:
 - **Keep / Change / Do not copy** — controllable structural qualities, product-specific changes,
   and protected/irrelevant skin.
 
-A reference that cannot represent the target state never enters the conclusion layer. User-provided
-sources come first; Refero is a fallback candidate search, not ground truth (`platform: "web"`).
+A reference that cannot represent the target state never enters the conclusion layer.
 
 ### W · Freeze the appropriate low-cost artifact
 
@@ -184,7 +211,7 @@ change the frozen composition; bounce back to W when spatial structure changes.
 
 ### D · Escalate the playbook only when earned
 
-For a flagship marketing surface, deep-read the vendored taste-skill sections named in core §7.
+For a flagship marketing surface, deep-read the vendored taste-skill sections named in core §8.
 In-app surfaces, modules, and components use core + DESIGN.md + shipped siblings; they do not pay the
 flagship token cost.
 

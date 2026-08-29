@@ -16,7 +16,7 @@ is small enough to always be present.
 
 **Precedence.** The target project root's `DESIGN.md` (+ `.impeccable/design.json`), when present,
 wins on any brand/token conflict — this file never restates its values, only names its floors (§4).
-When the target project has no `DESIGN.md`, this file's generic law (§2, §5, §6) is the default,
+When the target project has no `DESIGN.md`, this file's generic law (§2, §5, §6, §7) is the default,
 the §4 example floors serve as illustrative case law only, and the skill should suggest the user
 create a `DESIGN.md` — a missing doc is a degradation, never an abort. What this file adds is
 the *generic* anti-slop law and the forced protocols (§2, §6) that no brand doc carries.
@@ -89,7 +89,8 @@ a11y floors are universal. Never relax the target project's floors:
 - **Marketing-Display** — Inter tight; **no serif display anywhere** (Instrument Serif is retired
   as slop; Charter is blog *body* only).
 - **A11y floors** — contrast ≥4.5:1 body / ≥3:1 large; focus-visible ring; reduced-motion
-  alternative for every animation; never gate content visibility on a transition.
+  alternative for every animation; never gate content visibility on a transition. Full compliance
+  floor, touch-target table, and keyboard/ARIA discipline: `references/accessibility-baseline.md`.
 
 > Brand override note: generic advice like "avoid Inter as a display face" (taste-skill §4.1,
 > open-design §C) is **overridden** — Inter tight / Plus Jakarta Sans ARE our display faces by
@@ -108,6 +109,8 @@ a11y floors are universal. Never relax the target project's floors:
 - ❌ Warm beige / cream / peach page backgrounds (our base is slate)
 - ❌ Gradient text on large headers; neon glow; glassmorphism-by-default
 - ❌ Lucide icons as editorial/marketing decoration (DESIGN.md — decoration ≠ demonstration)
+- ❌ More than ~12 raw hex values outside `:root` — tokens were not honoured
+- ❌ The brand accent token used 6+ times in the rendered body — cap at 2 visible uses per screen
 
 ### 5.2 Layout discipline *(taste-skill §4.7, the hard rules)*
 - **Hero fits the initial viewport**: headline ≤2 lines desktop, subtext ≤20 words, CTAs visible
@@ -181,7 +184,7 @@ the full case-by-case tables; the rules below are the always-on floor, distilled
 
 **Landing / marketing copy.** Distilled from `great-web-copy` (github.com/makash/great-web-copy —
 the closest thing found to a ready-made framework for this register; not vendored locally, see
-§7 provenance). **Not adopted**: Unbounce's page-architecture / section-order model — considered,
+§8 provenance). **Not adopted**: Unbounce's page-architecture / section-order model — considered,
 parked for now.
 - **Pick the narrative by scenario, don't default to one**: PAS (problem → agitation → solution)
   for a cold-audience landing page; BAB (before → after → bridge) for a transformation/SaaS story;
@@ -229,7 +232,77 @@ taste skill — its narrative logic generalizes beyond image generation)*:
    of real photography — separates work from a sketch. Three competing flourishes turn it back
    into noise.
 
-## 7. Provenance & escalation
+## 7. Craft methodology — proof map, responsive re-edit, runtime & fallback states
+
+Three procedures that apply at any altitude, not just a landing page — they were originally scoped
+to landing-page work and generalize cleanly to in-app surfaces, modules, and components carrying
+metrics, media, or async data.
+
+### 7.1 Proof map
+
+For every claim, number, testimonial, logo, or screenshot the UI shows, trace it to one of four
+routes before it ships:
+
+- **Reuse a real product asset** — preferred whenever the surface is claiming something about the
+  product itself (a screenshot, a real chart, a real state).
+- **Reconstruct from verified real state** — HTML/CSS/SVG built from an actually-observed UI or
+  data shape, never inventing a feature or a number that doesn't exist.
+- **Source licensed/owned media** — record provenance and any crop/processing applied.
+- **Mark unsupported** — an honest labelled placeholder or grey block. Never fill the space with a
+  fake logo, a fabricated metric, or a generic stock avatar (the same floor as §1's "honest
+  placeholders beat fake stats" and §5.1's invented-metrics ban — the proof map is the procedure
+  that catches it before build, not just the checklist that catches it after).
+
+Do this at stage E (pulling parts) for any component/module carrying a claim, and roll it into the
+Surface-level asset inventory for a whole-page build.
+
+### 7.2 Responsive re-edit
+
+Desktop and Mobile are separate compositions sharing the same content contract, not one shrunk into
+the other:
+
+- Choose the Mobile order explicitly — don't assume it mirrors Desktop DOM order.
+- Preserve the underlying reading logic (claim → explanation/identity → proof → action) at the new
+  width, even when the visual arrangement changes completely.
+- Re-crop or replace media instead of shrinking the Desktop frame.
+- Test 390px and 360px, longer copy (+30–40%, for localization expansion), missing optional
+  assets, keyboard focus order at the new layout, and confirm no horizontal scroll.
+- Touch targets ≥44px where touch applies (the AAA craft commitment — see
+  `accessibility-baseline.md`'s touch-target table for the AA floor and the exceptions).
+
+This is `surface-protocol.md`'s G-stage viewport matrix (1440 + 390/360) made procedural: the
+matrix says *which* widths to check, this section says *what changes* between them.
+
+### 7.3 Runtime & fallback states
+
+For any dynamic, animated, or media-bearing section, expose six directly testable states before
+calling it done:
+
+```text
+normal / reduced / offscreen / failed / loading / settled
+```
+
+- **Reduced** has an equivalent settled state and no required autoplay — this is the *structural*
+  half (does an equivalent state exist); `motion-spec.md` §6 owns the *mechanical* half (the
+  `prefers-reduced-motion` fallback implementation) once a surface reaches `design-motion`.
+- **Offscreen** work pauses or substantially reduces.
+- **Failed** hides or bypasses broken media while the claim, proof, and CTA remain — a failed image
+  never takes the surrounding meaning down with it.
+- **Loading** reserves dimensions and never pretends product success; see `laws-of-ux.md`'s
+  Doherty Threshold entry for the timing bands (skeleton vs spinner vs determinate bar vs
+  error/retry).
+- **Settled** is deterministic — the state a screenshot or regression check captures.
+- A static section may mark reduced/offscreen `not-required`, but still needs the image/font
+  failure path and the responsive checks above before promotion.
+
+Do this at stage F (build) for anything that isn't purely static content, and record the six
+states' results in the G-stage review alongside the viewport matrix.
+
+Distilled from a design-lib research repository's `design-landing`/`design-landing-plan` skills
+(§5 responsive re-edit, §6 runtime states, and the asset-truth production routes behind the proof
+map), generalized away from that repo's landing-only framing and `$DESIGN_LIB_ROOT` gating.
+
+## 8. Provenance & escalation
 
 Distilled 2026-07-08 from: **taste-skill** (vendored at
 `~/projects/open-design/skills/taste-skill/SKILL.md`, upstream `Leonxlnx/taste-skill`; also
@@ -268,7 +341,11 @@ never by runtime reads of external paths. Runtime *tools* (impeccable `critique`
 invocations, the detect.mjs engine inside our lint hook) stay live-linked: engine upgrades are
 wanted. Sibling distillates: `expression-framework.md` (open-design craft/ + impeccable emphasis
 rules + our badge case), `color-application.md` (impeccable colorize + palette.mjs),
-`design-system-review.md` (impeccable doctor discipline).
+`design-system-review.md` (impeccable doctor discipline), `accessibility-baseline.md` and
+`laws-of-ux.md` (an external product repository's `craft/`, one-time inspiration source, no path
+dependency retained), `landing-ia.md` (a design-lib research repository's landing skills,
+generalized away from its allow-list gating), `research-backend.md` (routing contract for
+`refero-design`'s three research layers, a live dependency by design).
 
 - **Escalation**: for a flagship marketing surface that wants the full playbook (GSAP skeletons,
   design-system mapping, redesign protocol), deep-read taste-skill §4 / §9 / §11 / §14 directly.
