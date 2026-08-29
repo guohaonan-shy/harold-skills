@@ -1,6 +1,6 @@
 ---
 name: design-brief
-description: Establish a project's design language and write its DESIGN.md — the three-tier law (T1 identity floors, T2 case law, T3 bans) that every other design skill reads at runtime. Use when a project has no DESIGN.md, when its design decisions live only in people's heads or in scattered components, or when the user asks to define a visual direction, design system, or brand guidelines for a codebase.
+description: Establish a project's design language and write its DESIGN.md — fixed eight-section format (Overview, Colors, Typography, Layout, Elevation & Depth, Shapes, Components, Do's and Don'ts) carrying the three-tier law (T1 identity floors, T2 case law, T3 bans) that every other design skill reads at runtime. Use when a project has no DESIGN.md, when its design decisions live only in people's heads or in scattered components, or when the user asks to define a visual direction, design system, or brand guidelines for a codebase.
 user-invocable: true
 argument-hint: "[project or product to establish a design language for]"
 ---
@@ -62,21 +62,42 @@ Present them for a decision. **Stop and let the user choose.** This is the one g
 
 ## 4. Write DESIGN.md
 
-Structure the file in three tiers, because that is what the other skills enforce:
+The file's shape is not invented per project — it is a fixed structure so that every other skill (and any outside `design.md`-aware tooling) can parse it the same way:
 
 ```text
-T1 · Identity floors  — never relaxed silently; the things that make it this product
-T2 · Case law         — dated precedents from real surfaces; appended over time
-T3 · Bans             — what this project does not do, and why
+---
+name: <required — the project/product name>
+version: <optional>
+description: <optional>
+colors: / typography: / rounded: / spacing: / components:  <optional token fields, only the ones the project actually has>
+---
+
+## Overview
+## Colors
+## Typography
+## Layout
+## Elevation & Depth
+## Shapes
+## Components
+## Do's and Don'ts
 ```
+
+`name` is the only required frontmatter field. The eight `##` headings are fixed, in this exact order — do not rename, reorder, merge, or drop one, even if a section ends up thin.
+
+Custom or unrecognized headings are allowed and are **not** an error — that is how the appended case-law section below gets attached. What *is* an error is a **duplicate** heading: never write one of the eight fixed headings twice, and never open a second `## Case Law` when one already exists in the file — append into the existing one instead.
+
+The three-tier law from before is not gone — it now lives inside this structure instead of beside it:
+
+- **T1 identity floors** are not a separate list; they live as token + prose *inside* `Overview` and inside whichever of `Colors` / `Typography` / `Layout` / `Elevation & Depth` / `Shapes` / `Components` the floor concerns. A floor stated in prose without a checkable token is a preference, not a floor.
+- **T3 bans** live in the native `Do's and Don'ts` section, in the `Don't` half. Every ban still carries its reason — a ban without one gets relitigated every session.
+- **T2 case law** lives in an appended, non-native `## Case Law` heading, entries dated and appended in chronological order only. New precedents get appended to this section; T1 floors and T3 bans already written elsewhere in the file are never rewritten to accommodate a new case.
 
 Rules that keep the file usable:
 
-- **T1 is short.** Five to eight floors. A T1 with thirty entries has no floors, only preferences.
-- **Every T3 ban carries its reason.** A ban without a reason gets relitigated every session.
-- **T2 starts nearly empty** and grows from real work. Do not seed it with speculative precedents — case law comes from cases.
+- **T1 is short.** Five to eight floors total, spread across the fixed sections. Thirty scattered floors are not floors, only preferences.
 - **Write floors as checkable statements.** "Accessible" is not a floor; "text contrast ≥ 4.5:1, measured, no exceptions for decorative headings" is.
-- Record the accessibility floor explicitly. It is the one T1 entry that should never be a matter of taste.
+- Record the accessibility floor explicitly, inside whichever section it constrains (usually `Colors` or `Typography`). It is the one floor that should never be a matter of taste.
+- **`## Case Law` starts nearly empty** and grows from real work. Do not seed it with speculative precedents — case law comes from cases.
 
 Confirm the draft with the user before writing the file. If they decline the file, hand back the content as text.
 
