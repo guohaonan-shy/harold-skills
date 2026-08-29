@@ -2,17 +2,18 @@
 /**
  * Design lint — the mechanical gate of the design workflow.
  *
- * NOTE: the P0 "brand floor" rules below encode a real project's DESIGN.md decisions
- * (retired-ink, warm-action-tint, instrument-serif, …) and ship as sensible defaults.
- * They are generic anti-slop tells in most products; a target project whose DESIGN.md
- * legitimately allows one of these should treat that finding as brand-overridden
- * (justify it in the review list rather than editing this file).
+ * NOTE: this file only carries rules that are generically true across projects (the
+ * AI-slop tells in design-core.md §5). Project-specific brand floors — a banned hex,
+ * a retired warm tint, a retired display font — are NOT encoded here: they live in
+ * the target project's own DESIGN.md as free text, and the skill that builds static
+ * UI reads that file and holds the agent + human sign-off to it. No regex engine for
+ * that half; it stays judgment + manual reconciliation.
  *
  * Deterministic, grep-style checks over a design-preview HTML file, modeled on
  * open-design's `lint-artifact.ts`. Encodes the mechanically-checkable subset of
- * references/design-core.md (§4 brand floors + §5 anti-slop law). The model-judged
- * rules (hierarchy, concept, restraint judgment) stay with critique — this file only
- * carries what a regex can decide.
+ * references/design-core.md §5 anti-slop law. The model-judged rules (hierarchy,
+ * concept, restraint judgment) stay with critique — this file only carries what a
+ * regex can decide.
  *
  * Usage:  node design-lint.mjs <file.html> [more.html...] [--json]
  * Exit:   0 = clean (or P2-only), 2 = P0/P1 findings.
@@ -55,13 +56,7 @@ function findAll(haystack, re) {
 
 /** Each rule: { id, severity, why, check(html, ctx) → [{detail, line?}] } */
 const RULES = [
-  // — P0: brand floors (default set, from a real project's DESIGN.md; see header note) —
-  {
-    id: 'retired-ink',
-    severity: 'P0',
-    why: 'Ink #0a0a0a is retired (DESIGN.md Retired-Ink Rule); selection = brand ring + soft elevation.',
-    check: (html) => findAll(html, /#0a0a0a/gi).map((m) => ({ detail: 'ink #0a0a0a', line: lineOf(html, m.index) })),
-  },
+  // — P0: hard bans, cross-project generic —
   {
     id: 'hard-offset-shadow',
     severity: 'P0',
@@ -81,12 +76,6 @@ const RULES = [
     },
   },
   {
-    id: 'warm-action-tint',
-    severity: 'P0',
-    why: 'The warm #FFFDF4 action-tint is retired (DESIGN.md).',
-    check: (html) => findAll(html, /#fffdf4/gi).map((m) => ({ detail: '#FFFDF4', line: lineOf(html, m.index) })),
-  },
-  {
     id: 'ai-purple-indigo',
     severity: 'P0',
     why: 'AI-default purple/indigo accent family (design-core §5.1); the project brand accent is the only structural loud color.',
@@ -95,12 +84,6 @@ const RULES = [
       const tw = findAll(html, /\b(?:bg|text|from|to|via|border|ring)-(?:indigo|violet|purple|fuchsia)-\d{2,3}\b/g);
       return hex.concat(tw).map((m) => ({ detail: m[0], line: lineOf(html, m.index) }));
     },
-  },
-  {
-    id: 'instrument-serif',
-    severity: 'P0',
-    why: 'Instrument Serif is retired as slop (DESIGN.md Marketing-Display Rule): marketing display is Inter tight.',
-    check: (html) => findAll(html, /instrument\s+serif/gi).map((m) => ({ line: lineOf(html, m.index) })),
   },
   {
     id: 'gradient-text',
