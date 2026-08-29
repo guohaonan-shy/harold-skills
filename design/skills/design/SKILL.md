@@ -24,7 +24,7 @@ Classify the request by the **highest affected altitude**, not by the noun used:
 | Motion or interaction on an approved static design | Skip to `design-motion` |
 | Verifying an existing port | Skip to `design-port` |
 
-If a structure has **already been agreed** (an approved plan, an existing page being tweaked), skip §3–4 entirely and go straight to the downstream skill. Candidate generation is for when the structure is genuinely open. Do not manufacture a decision the user already made.
+If a structure has **already been agreed** — an approved plan, an existing page being tweaked, or the common case in the `grill` → spec → ticket pipeline, where `grill`'s decision tree already settled the structure before handing off here — skip §3–4 entirely and go straight to the downstream skill. In that pipeline, skipping candidate generation is the default path, not the exception. The mechanism itself is unchanged: it stays available for when the structure is genuinely open, e.g. a brand-new page that never went through `grill`. Do not manufacture a decision the user already made.
 
 ## 1. Load target-project truth
 
@@ -40,6 +40,8 @@ Read at the target project root, each **if present**:
 Knowledge records are optional: resolve `$DESIGN_LIB_ROOT` (explicit config, or the repository root when running inside a design-lib checkout — **the plugin does not ship the library**). Unreachable is a normal mode: state that no approved rule is available and work from first principles with labeled assumptions. Never attribute an invented rule to design-lib.
 
 ## 2. Clarify
+
+**Skip this section when `design` is invoked as `grill`'s design-subtree handoff.** By that point `grill`'s frontier has already surfaced everything this round would ask; asking again would split one interview across two Q&A formats mid-stream. This section applies in full only when a human invokes `design` directly, without going through `grill`.
 
 Ask only what changes the output. Use `AskUserQuestion`, at most one round, and prefer questions whose answers you cannot obtain by reading the project.
 
