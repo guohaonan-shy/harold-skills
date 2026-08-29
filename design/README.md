@@ -26,7 +26,7 @@ Project-agnostic 且自包含：品牌与 token 法则在运行时从目标项�
 | `design-brief` | **写** DESIGN.md：三层法（T1 底线 / T2 判例 / T3 禁令），Establish/Infer 两种模式。其余 skill 都只读它 |
 | `design-ui` | 产品 surface 静态 UI：按最高影响高度路由 Surface → Module → Component |
 | `design-motion` | 在已批准静态稿上设计动效与原生交互，浏览器内验证后再 port |
-| `design-port` | 端口保真度闸门：preview HTML 为真相，比对真实 React 路由——本轮只验证不翻译，翻译机制的合并是下一张 ticket 的事 |
+| `design-port` | 把签字通过的 preview 改动译成真实 React（分类 CSS、映射 Tailwind、识别数据契约变更、按状态归属找组件），再验证端口保真度：preview HTML 为真相，比对真实 React 路由 |
 
 ## Workflows
 
@@ -45,7 +45,8 @@ Project-agnostic 且自包含：品牌与 token 法则在运行时从目标项�
 来自 design-lib 消费侧 plugin，本轮刻意不搬：
 
 - **落地页专属的两个技能**（`design-landing` / `design-landing-plan`）——它们的方法论（page taxonomy、Hero 七槽模型）会被拆出来单独整理，通用部分并入 `design-ui` 自己的 craft reference，是另一张 ticket 的事。
-- **独立的端口翻译技能**（`port-to-react`）——翻译机制会并入 `design-port`，不再作为独立技能存在，是下一张 ticket 的事。
 - **视频背景生成技能**（`video-bg-section`）——按讨论明确排除，留到下一版单独展开。
+
+`port-to-react` 未单独出现在这份列表里：它的翻译机制已并入 `design-port`，不再作为独立技能存在。
 
 搬迁与去耦记录见 design-lib 仓库自己的 `MIGRATION.md`；本次是同一批技能第二次搬家，只换 marketplace 位置，不重做那一轮已经做过的工作。
