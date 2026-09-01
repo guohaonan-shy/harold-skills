@@ -11,23 +11,30 @@ product at the selected Surface / Module / Component scope are all real, not app
 
 ## Tools
 
-- **Playwright MCP — default to the headless + isolated server for all review/verification.** Two
-  servers are wired up, and picking the wrong one costs you a session of thrash:
-  - **`mcp__playwright__browser_*`** — the project `.mcp.json` server, launched `@playwright/mcp
-    --headless --isolated`. **This is the default for stage R capture + stage G review** (screenshot,
-    contrast via `browser_evaluate(getComputedStyle)`, route-specific viewport/container matrix,
-    console). Headless + a fresh
-    isolated profile per session means: no window stealing focus, **no singleton-lock "Browser is
-    already in use" fights**, and **no stale-cache** — each navigate is a clean profile, so you never
-    need a `?v=N` cache-buster to see your latest edit.
-  - **`mcp__plugin_playwright_playwright__browser_*`** — the plugin's own server, launched headed with a
-    **shared** profile. Use ONLY when a human wants to watch the page live. Its shared headed profile is
-    exactly what causes the singleton-lock conflicts and serves cached (stale) HTML after edits — do not
-    reach for it for automated review.
+- **Playwright MCP — default to a headless + isolated server for all review/verification.** Up to
+  three servers can be present, and picking the wrong one costs you a session of thrash:
+  - **`mcp__playwright__browser_*`** — the target project's own `.mcp.json` server, when it defines
+    one, launched `@playwright/mcp --headless --isolated`. **Prefer this over this plugin's bundled
+    server when both are present** — a project-level server wins by Claude Code's own precedence
+    (Local > Project > User > Plugins), and this line just names the tool prefix that shows up when
+    it does.
+  - **`mcp__plugin_design_playwright__browser_*`** — **this plugin's own bundled headless + isolated
+    server** (`design/.mcp.json`, same `@playwright/mcp --headless --isolated` launch), present the
+    moment the `design` plugin is installed even when the target project configures nothing itself.
+    **This is the default for stage R capture + stage G review** (screenshot, contrast via
+    `browser_evaluate(getComputedStyle)`, route-specific viewport/container matrix, console) whenever
+    no project-level `mcp__playwright__browser_*` is present. Headless + a fresh isolated profile per
+    session means: no window stealing focus, **no singleton-lock "Browser is already in use" fights**,
+    and **no stale-cache** — each navigate is a clean profile, so you never need a `?v=N` cache-buster
+    to see your latest edit.
+  - **`mcp__plugin_playwright_playwright__browser_*`** — a separate, generic Playwright plugin some
+    environments have installed, launched headed with a **shared** profile. Use ONLY when a human
+    wants to watch the page live. Its shared headed profile is exactly what causes the singleton-lock
+    conflicts and serves cached (stale) HTML after edits — do not reach for it for automated review.
   - Nothing in the review gates needs a headed browser: **taste** doesn't drive a browser at all (you
-    screenshot for its lens), and **impeccable `critique`** does all its work headless (screenshots,
-    computed-style contrast, detector-overlay injection, console) — its "present the browser to the
-    human" step is optional with a fallback.
+    screenshot for its lens), and the **isolated critique pass** (`ui-craft-checklist.md` /
+    `heuristics-checklist.md`) does all its work headless (screenshots, computed-style contrast,
+    console) — presenting the browser to a human is stage H's job, not this one's.
   - Tools on either server: navigate, resize, hover/click, `browser_take_screenshot` (with a
     `target`/element for a region), `browser_evaluate` for measurements, `browser_console_messages`.
   - The **human** reviews by opening the served `http://localhost:<port>/…` URL in their own real
@@ -94,7 +101,7 @@ evolution without forcing every task to reproduce an entire page.
 
 ## Review screenshots (stage G) — now on a real DOM
 
-- `browser_take_screenshot` per section for taste / impeccable `critique`.
+- `browser_take_screenshot` per section for taste / the isolated critique pass.
 - **Contrast is real:** read exact color via `browser_evaluate(getComputedStyle)` and compute ratios
   (body ≥4.5:1, large ≥3:1) — no static approximation needed.
 - **Responsive/container behavior is real:** execute the route-specific matrix from the selected

@@ -3,7 +3,7 @@
 Adapted 2026-07-08 from motion-anything's `MOTION-SPEC.md`
 (`~/projects/motion-anything/MOTION-SPEC.md`, Apache-2.0; itself aligned with Material motion,
 Apple HIG, and Emil Kowalski's principles), originally reconciled with a real project's DESIGN.md
-§4 motion language and `.impeccable/design.json` motion tokens (DESIGN.md-specific citations below
+§4 motion language and motion tokens (DESIGN.md-specific citations below
 are that project's case law). `design-motion` MUST read this at Setup — it replaces the loose
 "motion numbers" prose. **The target project's DESIGN.md (when present) wins on any conflict**;
 this file quantifies what it leaves open, and is the default law when the project has none.

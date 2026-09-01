@@ -1,7 +1,7 @@
 {
   "name": "design",
   "displayName": "Design",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Human-in-the-loop design pipeline for product surfaces: one entry (`design`) takes a requirement through target-project truth loading, clarification, 2-3 independently generated gray-box wireframe candidates, and a single human selection gate, then routes into static UI design (`design-ui`, altitude-routed Surface/Module/Component) and, when warranted, verified motion (`design-motion`), closing with `design-port`, which translates the signed-off change into React and verifies port fidelity. `design-brief` is the upstream skill that establishes a project's DESIGN.md (T1 identity floors / T2 case law / T3 bans) when one doesn't exist yet. Project-agnostic and self-contained: brand and token law is read at runtime from the target project's DESIGN.md, degrading to the plugin's vendored taste layer when absent. Ships a deterministic lint hook that fires on writes to design-preview/ and design-motion-preview/ HTML.",
   "author": {
     "name": "Harold"

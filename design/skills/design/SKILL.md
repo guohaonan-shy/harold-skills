@@ -17,11 +17,11 @@ Classify the request by the **highest affected altitude**, not by the noun used:
 
 | Ask | Route |
 |---|---|
-| Whole marketing site / multiple pages / IA, or one landing page / landing section | §1–4, then `design-ui`'s Landing/IA entry route |
-| Product surface (app page, module) | §1–4, then `design-ui` |
-| Bounded component treatment | Skip to `design-ui` component fast path — candidates are overkill |
-| Motion or interaction on an approved static design | Skip to `design-motion` |
-| Verifying an existing port | Skip to `design-port` |
+| Whole marketing site / multiple pages / IA, or one landing page / landing section | §1–4, then `design:design-ui`'s Landing/IA entry route |
+| Product surface (app page, module) | §1–4, then `design:design-ui` |
+| Bounded component treatment | Skip to `design:design-ui` component fast path — candidates are overkill |
+| Motion or interaction on an approved static design | Skip to `design:design-motion` |
+| Verifying an existing port | Skip to `design:design-port` |
 
 If a structure has **already been agreed** — an approved plan, an existing page being tweaked, or the common case in the `grill` → spec → ticket pipeline, where `grill`'s decision tree already settled the structure before handing off here — skip §3–4 entirely and go straight to the downstream skill. In that pipeline, skipping candidate generation is the default path, not the exception. The mechanism itself is unchanged: it stays available for when the structure is genuinely open, e.g. a brand-new page that never went through `grill`. Do not manufacture a decision the user already made.
 
@@ -31,10 +31,9 @@ Read at the target project root, each **if present**:
 
 - `DESIGN.md` — design language, T1 identity floors, T2 case law, T3 bans;
 - `PRODUCT.md` — product, user, jobs, commercial and proof truth;
-- `.impeccable/design.json` — structured tokens;
 - existing routes, components, sibling surfaces, analytics.
 
-**Missing `DESIGN.md` is not an error, but it is a fork.** If the project has no design language and the work is more than a one-off tweak, offer `design-brief` first — establishing the language once is cheaper than deciding it implicitly inside every surface. If the user declines, proceed on this plugin's vendored taste layer and say explicitly that no project design law was found.
+**Missing `DESIGN.md` is not an error, but it is a fork.** If the project has no design language and the work is more than a one-off tweak, offer `design:design-brief` first — establishing the language once is cheaper than deciding it implicitly inside every surface. If the user declines, proceed on this plugin's vendored taste layer and say explicitly that no project design law was found.
 
 Knowledge records are optional: resolve `$DESIGN_LIB_ROOT` (explicit config, or the repository root when running inside a design-lib checkout — **the plugin does not ship the library**). Unreachable is a normal mode: state that no approved rule is available and work from first principles with labeled assumptions. Never attribute an invented rule to design-lib.
 
@@ -88,7 +87,7 @@ Hand the chosen structure to the matching skill from §0, carrying forward:
 - every `(unknown)` and `(empty)` slot, still marked;
 - constraints, labeled assumptions, and any candidate-mode knowledge with its M/P labels.
 
-Motion is not automatic. Invoke `design-motion` only when a block's job actually requires it — state, result, identity, or atmosphere. "It would look more alive" is not a job.
+Motion is not automatic. Invoke `design:design-motion` only when a block's job actually requires it — state, result, identity, or atmosphere. "It would look more alive" is not a job.
 
 ## 6. Close out
 

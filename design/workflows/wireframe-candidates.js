@@ -13,7 +13,9 @@ export const meta = {
 //   scope, pageType, productTruth, contentInventory, proofInventory,
 //   designLanguage, constraints, knowledge, missingInputs
 // }
-const brief = args || {}
+// args sometimes arrives pre-serialized as a JSON string rather than a parsed
+// object, depending on how the caller passed it — accept both.
+const brief = typeof args === 'string' ? JSON.parse(args) : (args || {})
 
 const required = ['scope', 'productTruth']
 const missing = required.filter((k) => !brief[k])

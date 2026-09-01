@@ -14,7 +14,7 @@ the session from the start. The old model ("invoke the taste skill at stage D/G"
 model remembering to load a 1200-line playbook mid-task; in practice it didn't happen. This file
 is small enough to always be present.
 
-**Precedence.** The target project root's `DESIGN.md` (+ `.impeccable/design.json`), when present,
+**Precedence.** The target project root's `DESIGN.md`, when present,
 wins on any brand/token conflict — this file never restates its values, only names its floors (§4).
 When the target project has no `DESIGN.md`, this file's generic law (§2, §5, §6, §7) is the default,
 the §4 example floors serve as illustrative case law only, and the skill should suggest the user
@@ -35,8 +35,8 @@ is the hard gate; this file carries the *why* plus the judgment calls a regex ca
     decisive flourish.
   - **In-app product surface** (report, dashboard, practice flow) → systems designer. Information
     density is the feature; calm is the identity; no decoration.
-  - *(Mapping to impeccable v4's Modes: marketing → **Persuade**; in-app product → **Operate** /
-    **Read** — same axis as our register dial, useful when reading impeccable output.)*
+  - *(This maps to the four-Mode marketing/persuade/operate/read framing distilled from impeccable
+    v4 — same axis as our register dial, kept here as a terminology cross-reference only.)*
 - **Concept before references** — the design concept comes from the product's own truth (data
   model, pedagogy, the user's job on this surface), never from "what a dashboard looks like."
   (design-ui stage B owns this; the core just states the principle.)
@@ -162,10 +162,11 @@ Where §5.3 lists copy *tells to avoid*, this is how to build copy that works �
 pieces (extended filler-word list, weak CTA labels, placeholder-only labels) are enforced by
 design-lint.mjs; the rest is judgment, applied at close-out (§6).
 
-**In-app / product copy.** Deep reference: the vendored **`impeccable` plugin's `clarify`
-command** (`reference/clarify.md`) — richer than anything found externally (situational error
-templates by cause, translation-expansion tables, terminology-glossary discipline). Read it for
-the full case-by-case tables; the rules below are the always-on floor, distilled from it:
+**In-app / product copy.** Distilled from the **`impeccable` plugin's `clarify` command**
+(situational error templates by cause, translation-expansion tables, terminology-glossary
+discipline) — richer than anything found externally. The rules below are the always-on floor,
+distilled from it; going deeper than this floor is a fresh vendoring pass into this file, not a
+runtime read of an external path (see §8's vendoring principle):
 - **Errors, three-part formula**: what happened + why + how to fix. Never blame the user
   ("Please enter a date in MM/DD/YYYY" not "You entered an invalid date"). Don't over-promise:
   never surface an internal error code as the primary message, never state a cause or fix the
@@ -311,41 +312,50 @@ installed locally as `.claude/skills/design-taste-frontend`), **open-design prom
 `DESIGN.md`. Sections marked *(verbatim)* are lifted, not paraphrased, to preserve their force.
 
 §5.6 (copy construction) distilled 2026-07-23 from: the **`impeccable` plugin's `clarify`
-command** (installed at `~/.claude/plugins/cache/impeccable/impeccable/<version>/skills/impeccable/
-reference/clarify.md` — already in this environment, not something to re-source) for in-app copy,
-and **`great-web-copy`** (github.com/makash/great-web-copy, MIT, `skills/write-copy/SKILL.md` —
-read remotely, not vendored) for landing/marketing copy. A parallel research pass (web search +
-Codex, both logged in the originating session) surveyed named traditions — Unbounce page
-architecture, StoryBrand/PAS/AIDA/BAB, April Dunford positioning, Eugene Schwartz's awareness
-stages, Google Material's UX-writing principles, NN/g, GOV.UK, Shopify Polaris — before settling on
-these two as the actually-distillable sources; the rest stay theoretical background, not
-re-derived into this file.
+command** (in-app error/button/loading/tone rules) for in-app copy, and **`great-web-copy`**
+(github.com/makash/great-web-copy, MIT, `skills/write-copy/SKILL.md` — read remotely, not vendored)
+for landing/marketing copy. A parallel research pass (web search + Codex, both logged in the
+originating session) surveyed named traditions — Unbounce page architecture, StoryBrand/PAS/AIDA/BAB,
+April Dunford positioning, Eugene Schwartz's awareness stages, Google Material's UX-writing
+principles, NN/g, GOV.UK, Shopify Polaris — before settling on these two as the actually-distillable
+sources; the rest stay theoretical background, not re-derived into this file.
 
-§5.6's in-app rules were refreshed 2026-07-23 against **`impeccable` v4.0.1** (the plugin was
-upgraded locally that day; `clarify.md` was rewritten upstream, ~60% shorter, principle-driven over
-example tables). Four new judgments survived the diff and were folded in *(impeccable v4)*: prefer
-undo over confirmation when recovery is safe, don't over-promise a diagnosis the system can't
-verify, never invent loading progress, and warmth-not-jokes on serious errors. The three-part error
-formula, the button verb+object rule, and the placeholder-is-not-a-label rule (§5.6, enforced by
-`weak-cta-label` / `placeholder-only-label` in design-lint.mjs) were unchanged in v4 and remain
-correct as written.
+§5.6's in-app rules were refreshed 2026-07-23 against **`impeccable` v4.0.1** (`clarify.md` was
+rewritten upstream that day, ~60% shorter, principle-driven over example tables). Four new
+judgments survived the diff and were folded in *(impeccable v4)*: prefer undo over confirmation
+when recovery is safe, don't over-promise a diagnosis the system can't verify, never invent loading
+progress, and warmth-not-jokes on serious errors. The three-part error formula, the button
+verb+object rule, and the placeholder-is-not-a-label rule (§5.6, enforced by `weak-cta-label` /
+`placeholder-only-label` in design-lint.mjs) were unchanged in v4 and remain correct as written.
 
 **Source-tracking update (2026-07-24).** open-design consolidated its two prompt files into
 `apps/daemon/src/prompts/core-slim.ts` (0.15.x; the runtime default in current builds) — future
-re-distills track that file. `taste-skill/SKILL.md` is unchanged since 2026-06. impeccable is at
-v4.0.1 (its register split became four Modes — see §1's mapping). **Vendoring principle** (the
-architecture this plugin follows): knowledge-layer content from external skills is distilled
-into this plugin's `references/` with a provenance header (source path, version, date) — the
-external source is the raw feed, and an upstream update is consumed by an explicit re-distill,
-never by runtime reads of external paths. Runtime *tools* (impeccable `critique`/`audit`
-invocations, the detect.mjs engine inside our lint hook) stay live-linked: engine upgrades are
-wanted. Sibling distillates: `expression-framework.md` (open-design craft/ + impeccable emphasis
-rules + our badge case), `color-application.md` (impeccable colorize + palette.mjs),
-`design-system-review.md` (impeccable doctor discipline), `accessibility-baseline.md` and
-`laws-of-ux.md` (an external product repository's `craft/`, one-time inspiration source, no path
-dependency retained), `landing-ia.md` (a design-lib research repository's landing skills,
-generalized away from its allow-list gating), `research-backend.md` (routing contract for
-`refero-design`'s three research layers, a live dependency by design).
+re-distills track that file. `taste-skill/SKILL.md` is unchanged since 2026-06.
+
+**Vendoring principle** (the architecture this plugin follows): knowledge-layer content from
+external skills/tools is distilled into this plugin's `references/` with a provenance header
+(source, version, date) — the external source is the raw feed, and an upstream update is consumed
+by an explicit re-distill, never by a runtime read of an external path.
+
+**No live runtime dependency (2026-08-31).** This plugin has zero runtime dependency on any
+external skill or tool — every gate (mechanical lint, isolated critique, motion-craft audit, frame
+check, port-fidelity diff) runs entirely on this plugin's own scripts and `references/` content. An
+earlier version of the lint hook optionally chained an external detector when installed, and Gate 2
+in `design-ui`/`design-motion` invoked an external critique/audit tool; both were removed in favor
+of native lint rules (`layout-transition`, `bounce-easing` in `design-lint.mjs`) and self-contained
+checklists (`ui-craft-checklist.md`, `heuristics-checklist.md`, `motion-craft-checklist.md`). An
+upgrade to an external tool no longer changes this plugin's behavior — only an explicit re-distill
+does, per the vendoring principle above.
+
+Sibling distillates: `expression-framework.md` (open-design craft/ + impeccable-inspired emphasis
+rules + our badge case), `color-application.md` (impeccable colorize/palette.mjs inspiration),
+`ui-craft-checklist.md` / `heuristics-checklist.md` (impeccable critique/audit-tool rules distilled
+into native lint + self-contained checklists, replacing the retired live invocation),
+`accessibility-baseline.md` and `laws-of-ux.md` (an external product repository's `craft/`,
+one-time inspiration source, no path dependency retained), `landing-ia.md` (a design-lib research
+repository's landing skills, generalized away from its allow-list gating), `research-backend.md`
+(routing contract for `refero-design`'s three research layers — the one remaining live dependency,
+scoped to optional reference research, never a gate).
 
 - **Escalation**: for a flagship marketing surface that wants the full playbook (GSAP skeletons,
   design-system mapping, redesign protocol), deep-read taste-skill §4 / §9 / §11 / §14 directly.

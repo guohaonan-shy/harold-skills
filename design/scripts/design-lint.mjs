@@ -135,6 +135,20 @@ const RULES = [
     },
   },
   {
+    id: 'layout-transition',
+    severity: 'P1',
+    why: 'Animating layout-triggering properties causes layout thrash; animate transform/opacity only (motion-spec §5, motion-craft-checklist.md §1).',
+    check: (html, { css }) => {
+      const layoutProps = /\b(?:width|height|top|left|right|bottom|margin(?:-\w+)?|padding(?:-\w+)?|all)\b/i;
+      const hits = [];
+      for (const m of findAll(css, /transition(?:-property)?\s*:\s*([^;{}]+)/gi)) {
+        const value = m[1].trim();
+        if (layoutProps.test(value)) hits.push({ detail: `transition: ${value.slice(0, 60)}` });
+      }
+      return hits;
+    },
+  },
+  {
     id: 'left-accent-card',
     severity: 'P1',
     why: 'Rounded card with a left colored border accent = the "AI dashboard tile" (design-core §5.1).',
@@ -198,7 +212,7 @@ const RULES = [
   {
     id: 'placeholder-only-label',
     severity: 'P1',
-    why: 'Placeholder text disappears once the user types — it is not a label (design-core §5.6, impeccable clarify NEVER list).',
+    why: 'Placeholder text disappears once the user types — it is not a label (design-core §5.6).',
     check: (html) => {
       const hits = [];
       for (const m of findAll(html, /<input\b[^>]*placeholder\s*=\s*"[^"]*"[^>]*>/gi)) {

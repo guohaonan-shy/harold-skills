@@ -22,7 +22,7 @@ State which mode you are in. Inferring a language from three placeholder pages a
 
 ## 1. Gather product truth first
 
-Design language is downstream of what the product is. Read, if present: `PRODUCT.md`, README, landing copy, existing routes and components, `.impeccable/design.json`, any prior brand assets.
+Design language is downstream of what the product is. Read, if present: `PRODUCT.md`, README, landing copy, existing routes and components, any prior brand assets.
 
 Establish before proposing anything:
 

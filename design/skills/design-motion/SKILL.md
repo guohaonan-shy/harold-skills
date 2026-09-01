@@ -5,8 +5,8 @@ description: >-
   `design-ui` (its fidelity-accurate preview HTML) and design the ANIMATION +
   native INTERACTION in a real browser under the motion law
   (references/motion-spec.md: duration/easing tokens, restraint budget,
-  freezable-timeline verification), pass the review gates (lint hook, impeccable
-  full audit, deterministic seek-frame check), get the user's sign-off, and only
+  freezable-timeline verification), pass the review gates (lint hook, the
+  self-contained motion-craft audit, deterministic seek-frame check), get the user's sign-off, and only
   THEN port it to React. Use this whenever a surface needs real motion or
   interaction designed or reworked — "加动效", "做交互", "重做这块的动效/交互",
   "animate this", "prototype the interaction", "make it move", "把动效加上" — or
@@ -36,7 +36,7 @@ layer motion on top, gate it on the human, and port to React last.
 - The **route-specific context matrix** used for static sign-off. Motion verification repeats the
   same relevant modes, dimensions, themes, locales, and product states.
 
-If you arrived here without a frozen static UI, stop and run `design-ui` first — designing motion on
+If you arrived here without a frozen static UI, stop and run `design:design-ui` first — designing motion on
 an unsettled layout wastes both stages.
 
 ## Principle — motion is law-governed, and the gates don't trust the generator
@@ -61,7 +61,7 @@ an unsettled layout wastes both stages.
 ## Setup
 1. **`references/design-core.md` + `references/motion-spec.md` (this plugin) — FIRST.** The core
    carries the register dials + close-out protocol; the spec carries the motion law.
-2. The target project root's `DESIGN.md` + `.impeccable/design.json` — **if present** — for the
+2. The target project root's `DESIGN.md` — **if present** — for the
    project's in-app motion precedent library (e.g., from a real project: sliding indicator,
    highlight reveal, hover lift, crossfade, clean connectors, processing shimmer; T2, with the
    admission process for new patterns) vs the livelier marketing register, and the project's
@@ -102,13 +102,16 @@ an unsettled layout wastes both stages.
 ### B · Review gates — to convergence
 Now there's a real rendered page, so the full checks are available.
 1. **Gate 1 — mechanical lint (automatic).** The PostToolUse hook lints every write to
-   `design-motion-preview/` (brand rules + impeccable detect — including `layout-transition` and
-   `bounce-easing`). P0 = build error; fix before continuing.
-2. **Gate 2 — impeccable full `audit`** (invoke the `impeccable` skill): a11y (real semantics,
-   focus order, keyboard), perf, and the **route-specific context matrix inherited from design-ui**
-   — plus `animate` / `polish` for motion craft. Public surfaces include 390 / 360; bounded product
-   components use their real container modes and consequential dimensions. Fix findings, re-audit
-   until clean (no P0/P1).
+   `design-motion-preview/` — brand rules plus the native `layout-transition` and `bounce-easing`
+   detectors (`scripts/design-lint.mjs`, no external tool chained in). P0 = build error; fix before
+   continuing.
+2. **Gate 2 — motion-craft audit** (self-contained: read `references/motion-craft-checklist.md`
+   and `references/accessibility-baseline.md`): a11y (real semantics, focus order, keyboard — check
+   the animation-in-progress case per motion-craft-checklist §3), perf (offscreen-pause, no
+   unbounded blur/filter), and the **route-specific context matrix inherited from design-ui** —
+   plus the motion slop catalog and Motion Pyramid framework for motion craft. Public surfaces
+   include 390 / 360; bounded product components use their real container modes and consequential
+   dimensions. Fix findings, re-audit until clean (no P0/P1).
 3. **Gate 3 — deterministic frame check (the falsifiable one, spec §8):**
    `browser_evaluate(__maTimeline.seek(t))` at t = 0 / mid / end (+ keyframes of interest) →
    screenshot each → confirm the frames **differ** and match the intended choreography (identical
@@ -156,7 +159,7 @@ in product UI; selection = brand ring).
 ## What this skill is NOT
 - Not for designing the static visual/layout — that's `design-ui` (run it first).
 - Not a place to silently redesign the approved UI — if the motion work reveals a layout problem,
-  surface it and bounce back to `design-ui`, don't quietly re-skin in the browser.
+  surface it and bounce back to `design:design-ui`, don't quietly re-skin in the browser.
 - Not "animate everything" — unmotivated motion is slop; the in-app whitelist + the restraint
   budget are the default.
 - Not verified by a single screenshot or `getComputedStyle` — only seek-frame evidence counts.

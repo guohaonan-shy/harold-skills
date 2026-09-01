@@ -67,7 +67,7 @@ altitude.
 - `references/expression-framework.md` supplies the altitude-neutral content → priority → weight
   procedure and the conditional-state precondition.
 - The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
-  the project root, plus `.impeccable/design.json` and `PRODUCT.md` (project root) when present.
+  the project root, plus `PRODUCT.md` (project root) when present.
   If the project has no `DESIGN.md`, fall back to this plugin's built-in defaults (design-core
   floors + anti-slop law), note that no project design law was found, and suggest the user create
   a `DESIGN.md` — never abort over a missing doc.
@@ -91,7 +91,7 @@ Before stage A:
 
 1. Read `references/design-core.md` first.
 2. Read `references/expression-framework.md`.
-3. Read the target project root's `DESIGN.md`, `.impeccable/design.json`, and `PRODUCT.md` —
+3. Read the target project root's `DESIGN.md` and `PRODUCT.md` —
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
    and recommend creating `DESIGN.md` (see Setup note above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
@@ -121,9 +121,14 @@ Landing/IA is not a fourth descent tier — it runs the same Surface R/B/W proce
 Hero seven-slot model) that stage B and stage W need for this kind of page. It still descends into
 Module and Component exactly as Surface does.
 
-A component that forces parent scrolling, module reordering, a different mobile information
-architecture, or a new journey has crossed altitude: route from Module or Surface instead. A module
-whose change is only a bounded component treatment should enter at Component.
+A component whose own state change visibly changes anything **outside its own boundary** — a
+sibling's rendered size/position, the parent's scroll position, module order, the mobile
+information architecture, or the user's journey — has crossed altitude: route from Module or
+Surface instead, even when a local CSS/JS patch could technically make the symptom go away. Forces
+parent scrolling, reorders modules, changes the mobile information architecture, or opens a new
+journey are examples of this test, not the exhaustive list — the test is whether anything outside
+your own DOM subtree changed because of you, not whether the change matches one of these named
+phrases. A module whose change is only a bounded component treatment should enter at Component.
 
 Close A by recording: chosen entry route, why it is the highest changed altitude, and which lower
 altitudes are expected later. Run exactly one entry route; descending is composition, not a second
@@ -243,9 +248,12 @@ core's 5-dimensional critique and restraint check.
 1. **Mechanical lint.** Confirm the final preview is P0-clean; run
    `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" design-preview/<surface>.html` (this
    plugin's script, wherever the plugin is installed) when needed. Fix or explicitly justify P1s.
-2. **Isolated critique.** Run impeccable `critique <served preview URL>` and require a fresh
-   `.impeccable/critique/` snapshot. Route direction findings back to B/W and craft findings to F.
-   Check computed contrast and a clean console from the real DOM.
+2. **Isolated critique.** Self-contained pass over the served preview URL: read
+   `references/ui-craft-checklist.md` and `references/heuristics-checklist.md`, screenshot each
+   section, and record findings against both (typography thresholds, visual slop catalog, layout
+   integrity, Nielsen/cognitive-load/persona scoring). Route direction findings back to B/W and
+   craft findings to F. Check computed contrast (`browser_evaluate(getComputedStyle)`) and a clean
+   console from the real DOM.
 3. **Context matrix.** Use the selected protocol's review matrix instead of a one-size viewport:
    public surfaces always include 1440 plus 390/360; product modules/components include every
    reachable container mode, consequential width/height, theme, locale, and product state. A fixed
@@ -279,7 +287,7 @@ hand the drafted amendments to the user as text instead of writing any file. Dis
 appends dated T2 entries; it never rewrites human-authored T1/T3 content.
 An empty Distill-back is valid only when stated explicitly.
 
-The approved preview HTML + concept + state contract pass to `design-motion`. Do not port to React in
+The approved preview HTML + concept + state contract pass to `design:design-motion`. Do not port to React in
 this skill.
 
 ## DESIGN.md governance
@@ -302,6 +310,6 @@ real project's design law — substitute the target project's own T1/T3 entries.
 - Not a reason to redesign every component on a new page: existing primitives are reused; only
   decision-bearing or conditional components earn the full Component Protocol.
 - Not a reference assembler or a one-shot generator.
-- Not where native motion/interaction or the React port happens; use `design-motion` after sign-off.
+- Not where native motion/interaction or the React port happens; use `design:design-motion` after sign-off.
 - Not self-refereed: lint, isolated critique evidence, real-DOM checks, and the human gate remain
   mandatory.

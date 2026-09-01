@@ -38,7 +38,7 @@ Project-agnostic 且自包含：品牌与 token 法则在运行时从目标项�
 
 ## Lint hook
 
-`hooks/hooks.json` 在 `Write|Edit` 后触发 `scripts/design-lint-hook.mjs`：只对 `design-preview/` 与 `design-motion-preview/` 下的 HTML 文件生效，跑内置的品牌/anti-slop 规则（`scripts/design-lint.mjs`），并链式调用外部检测器 `impeccable`（若装在 `~/.claude/plugins/marketplaces/impeccable/` 下——按 marketplace 名字查找，不依赖本 plugin 自己装在哪个 marketplace）。P0/P1 发现会以非零退出码把问题带回模型；非 preview 文件与全部通过时静默退出。
+`hooks/hooks.json` 在 `Write|Edit` 后触发 `scripts/design-lint-hook.mjs`：只对 `design-preview/` 与 `design-motion-preview/` 下的 HTML 文件生效，跑内置的品牌/anti-slop 规则（`scripts/design-lint.mjs`，含原生的 `layout-transition`/`bounce-easing` 检测，不链式调用任何外部工具）。P0/P1 发现会以非零退出码把问题带回模型；非 preview 文件与全部通过时静默退出。
 
 ## 未搬入的部分
 

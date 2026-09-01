@@ -53,7 +53,7 @@ port is done until Phase B has run against it.
 
 - The **signed-off prototype file** — the `design-preview/` or `design-motion-preview/` HTML this
   session (or a prior one) already approved. Don't re-litigate its design here; if something looks
-  wrong, that's a bounce back to `design-ui`/`design-motion`, not a silent change mid-port.
+  wrong, that's a bounce back to `design:design-ui`/`design:design-motion`, not a silent change mid-port.
 - The **React component(s)** the prototype represents — may be one file or span a parent + child
   (state ownership doesn't have to match the prototype's flat DOM nesting, see Phase A §A3 below).
 - Whether the change is **purely visual** or also **introduces new content/data** the app didn't
@@ -181,7 +181,7 @@ behavioral or a11y regression the diff can't see):
 - **No baseline image store.** Screenshots taken during a run are verification evidence for that
   run, not assets to persist/compare against forever — the preview HTML itself is the durable
   baseline.
-- Not a replacement for `design-motion`'s gates (lint hook, impeccable full audit, freezable-timeline
+- Not a replacement for `design-motion`'s gates (lint hook, motion-craft audit, freezable-timeline
   frame check) when the surface has real motion still under review — this skill checks fidelity to
   what was already approved, not motion quality.
 
