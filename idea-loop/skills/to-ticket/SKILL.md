@@ -60,7 +60,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 # NN — <标题>
 
 **Blocked by**：<编号/标题>，或「无——可立即开工」
-**设计冻结**：不涉及 UI ｜ 已冻结（<产物>）｜ ⛔ 未冻结 —— 不可开工
+**设计冻结**：不涉及 UI ｜ 已冻结（<预览 HTML 路径> · <一行 fidelity/decision ledger 摘要>）｜ ⛔ 未冻结 —— 不可开工
 
 ## 要建什么
 这张 ticket 让什么端到端行为跑起来，用户视角——不是逐层的实现清单。
@@ -80,6 +80,11 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 **动 UI 的 ticket 要求设计已冻结才能开工**；spec 不要求（spec 可以停在 `status: 等设计冻结`）。
 
 设计冻结是**开工前置条件**，不是规格的完成度指标。挂在 spec 上就会积一批"想清楚了但画不出来"的文档长期驻留。
+
+**这份产物从哪来、怎么誊写**：涉及 UI 的分叉在 `grill` 里挂了设计子树时，`design:design`（设计总入口）收工带回的答案——预览 HTML 路径 + 一行 fidelity/decision ledger 摘要——已经被 `to-spec` 综合进 §1 读的那份 spec（通常在 §4 实现决策，跟这张 ticket 对应的那条决策挂在一起）。切这张 ticket 时：
+
+- spec 里能找到这张 ticket 对应范围的产物记录 → 原样誊写路径和摘要到「设计冻结」字段，**不改写、不新编数字或措辞**——那是 `design:design` 产出时自己填的，切票这一步只誊写。
+- 涉及 UI 但 spec 里没有对应记录（子树没跑完就被打断、或这张 ticket 划的范围比 spec 记录的更大）→ 字段落 `⛔ 未冻结 —— 不可开工`；`implement` 会照这行拦下开工。
 
 ## 6 谁来做这些 ticket
 

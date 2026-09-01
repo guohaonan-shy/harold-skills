@@ -40,7 +40,7 @@ disable-model-invocation: true
 | API 契约 | TDD API 测试（走 ASGI） |
 | DB schema / 迁移 / 事务语义 | **真 DB** 测试 |
 | LLM 输出质量 | eval（`backend/evals/`） |
-| 视觉正确性 | 截图（`design-port`） |
+| 视觉正确性 | `Skill(design:design-port)`（跨 plugin 调用；以 design-preview HTML 为真值，线上路由为待验证的候选） |
 | 端到端流程 | `qa:*` |
 
 循环的规矩、反模式、mock 边界在 `../../references/tdd.md`。**新写的测试守「只在系统边界 mock」**——存量不守，别照抄存量。
