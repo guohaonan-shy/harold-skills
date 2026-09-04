@@ -4,3 +4,7 @@
 .idea/
 .vscode/
 .claude/settings.local.json
+
+# Internal eval baselines (design plugin B-category harness output, etc.) —
+# never shipped to plugin installers, kept local-only on purpose.
+eval-fixtures/
