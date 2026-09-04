@@ -43,6 +43,11 @@
       "name": "design",
       "source": "./design",
       "description": "Human-in-the-loop design pipeline for product surfaces: one entry (design) takes a requirement through target-project truth loading, clarification, 2-3 independently generated gray-box wireframe candidates, and a single human selection gate, then routes into static UI design (design-ui, altitude-routed Surface/Module/Component) and, when warranted, verified motion (design-motion), closing with a port-fidelity gate (design-port). design-brief is the upstream skill that establishes a project's DESIGN.md (T1 identity floors / T2 case law / T3 bans) when one doesn't exist yet. Project-agnostic and self-contained: brand and token law is read at runtime from the target project's DESIGN.md, degrading to the plugin's vendored taste layer when absent. Ships a deterministic lint hook that fires on writes to design-preview/ and design-motion-preview/ HTML."
+    },
+    {
+      "name": "interview-coach",
+      "source": "./interview-coach",
+      "description": "AI Engineer / AI Agent Engineer / Harness 方向的面试陪练。mock-interview 基于简历 + 目标方向扮演面试官,按四类问题框架(概括/选型/实现/延伸场景)深挖简历项目和领域知识点,全程不给反馈；interview-review 消费一场面试的转录(mock-interview 产物,或真实面试的录音转写),逐题做内容结构/表达/hook/技术准确性四维复盘,并把暴露出的知识漏洞讲透。两个 skill 共享同一份从真实面试教练转录里蒸馏出的四类问题框架和领域知识点清单。"
     }
   ]
 }
