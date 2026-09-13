@@ -11,6 +11,7 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
 | `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
+| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders variants at the lowest fidelity that tells them apart, and ships ONE direction note back into the spec — no critic, no scoring, no fidelity bump |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a fresh session, TDD at the seams the spec already agreed |
 | `/idea-loop:pr-open-review` | Review · round 1 | Pushes the branch, opens the PR, runs the three-axis round. **No browser.** |
@@ -19,8 +20,9 @@ status (see `references/wiki-conventions.md`).
 
 ### The forward loop is not the maintenance sweep
 
-`grill → to-spec → to-ticket → implement → pr-open-review → pr-fix-verify` runs once
-per piece of work. `dreaming` is a **periodic batch reconciliation** over the whole
+`grill → to-spec → uiux-imagine → to-ticket → implement → pr-open-review →
+pr-fix-verify` runs once per piece of work (`uiux-imagine` only when the spec
+stopped at `等设计冻结`). `dreaming` is a **periodic batch reconciliation** over the whole
 vault — weekly, or when specs pile up, or by hand. It is not the next step after
 `implement`.
 
@@ -33,11 +35,13 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `implement`, `dreaming` |
+| `prototype`, `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `uiux-imagine`, `implement`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
-`grill` itself is an interview — it only means something when a human starts it. `dreaming`
+`grill` itself is an interview — it only means something when a human starts it.
+`uiux-imagine` is the same shape one stage later: it steers on a human's directional
+reaction each round, and a human is the one who declares the direction done. `dreaming`
 proposes destructive disposals. `implement` requires a fresh context window, and
 clearing context is something only the human can do, so a self-invoking `implement`
 would break its own first precondition.
@@ -75,9 +79,10 @@ node --test '*/scripts/*.test.mjs'
 Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
 keeps it out of `.claude/` worktrees. Today it covers the design-lint rules,
-the two UI-loop comparators, and the critic score check, all living in this
-plugin's `scripts/`; new deterministic scripts get picked up by putting their
-tests next to them as `<name>.test.mjs`.
+the two UI-loop comparators, the critic score check, and the direction
+note's seven-section shape, all living in this plugin's `scripts/`; new
+deterministic scripts get picked up by putting their tests next to them as
+`<name>.test.mjs`.
 
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
@@ -118,6 +123,7 @@ idea-loop/
 │   ├── grill/SKILL.md
 │   ├── prototype/SKILL.md
 │   ├── to-spec/SKILL.md
+│   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md
 │   ├── pr-open-review/SKILL.md       # → workflows/pr-open-review.mjs
@@ -133,6 +139,8 @@ idea-loop/
 │   ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
 │   ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit
 │   ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
+│   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections
+│   ├── direction-note-check.test.mjs # its unit tests — one per droppable section
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   └── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
