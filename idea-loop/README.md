@@ -9,6 +9,7 @@ status (see `references/wiki-conventions.md`).
 | Skill | Stage | Coverage |
 |---|---|---|
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
+| `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
 | `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a fresh session, TDD at the seams the spec already agreed |
@@ -32,9 +33,11 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `implement`, `dreaming` |
+| `prototype`, `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `implement`, `dreaming` |
 
-`grill` is an interview — it only means something when a human starts it. `dreaming`
+`prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
+leaving the session, the moment a frontier question cannot be settled in prose.
+`grill` itself is an interview — it only means something when a human starts it. `dreaming`
 proposes destructive disposals. `implement` requires a fresh context window, and
 clearing context is something only the human can do, so a self-invoking `implement`
 would break its own first precondition.
@@ -88,6 +91,7 @@ idea-loop/
 ├── README.md (this file)
 ├── skills/
 │   ├── grill/SKILL.md
+│   ├── prototype/SKILL.md
 │   ├── to-spec/SKILL.md
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md
