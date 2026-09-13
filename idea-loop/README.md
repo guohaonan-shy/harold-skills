@@ -63,6 +63,25 @@ that works and does what was asked.
 Output is one HTML triage page per PR, updated in place each round: the open
 correctness/spec blockers up top, everything else collapsed.
 
+## Tests
+
+Node unit tests across this whole repo (every plugin's `scripts/`) run under **one
+command**, from the repo root:
+
+```
+node --test '*/scripts/*.test.mjs'
+```
+
+Node's own test runner, no test framework and no `package.json` — the glob is
+what keeps the command stable as plugins add suites, and the leading `*` is what
+keeps it out of `.claude/` worktrees. Today it covers the design-lint rules and
+the two UI-loop comparators; new deterministic scripts get picked up by putting
+their tests next to them as `<name>.test.mjs`.
+
+Only the deterministic cores are unit-tested. The playwright shell
+(`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
+purpose — mocking a browser would test the mock.
+
 ## Portability
 
 This plugin was built inside one project (Toeflair) and generalized out of
@@ -102,9 +121,14 @@ idea-loop/
 │   ├── pr-open-review.mjs            # round 1: push, open PR, call pr-review-round
 │   ├── pr-fix-verify.mjs             # round N+1: fix, commit, call pr-review-round
 │   └── pr-review-round.mjs           # shared tail: the three-axis review itself
+├── scripts/
+│   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
+│   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
+│   └── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── tdd.md                        # red→green loop, seams, mock boundary
+    ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
     ├── review-standards.md           # Standards axis: this repo's own principles + Fowler baseline
     └── review-artifact-template.html # the PR triage page's approved shape
 ```
