@@ -198,3 +198,42 @@ function stopDecision(worst, score, past) {
   if (worst !== null && past.length >= 2 && a === worst && b === worst) return 'plateau';
   return 'continue';
 }
+
+/** Human-readable render, same grouping the other scripts use. */
+export function renderRound(result, file) {
+  const at = file ? ` (${file})` : '';
+  if (!result.valid) {
+    return [`critic-round: 本轮无效${at} —— 重跑评委，不要把分数谈下来：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
+  }
+  const n = result.counts;
+  const tally = SEVERITIES.filter((s) => n[s]).map((s) => `${s}×${n[s]}`).join(' · ') || '无 finding';
+  return [
+    `critic-round: 有效 ✓${at}`,
+    `  最差：${result.worst ?? '无'}　计数：${tally}　允许区间：${result.band.min}–${result.band.max}`,
+    `  停止判定：${result.stop}`,
+  ].join('\n');
+}
+
+// CLI — the thin shell the refine loop calls each round. The module above stays pure;
+// the filesystem enters only here. Input is one JSON file: { findings, score, history }.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const { readFileSync } = await import('node:fs');
+  const args = process.argv.slice(2);
+  const json = args.includes('--json');
+  const [file] = args.filter((a) => !a.startsWith('--'));
+  if (!file) {
+    console.error('usage: critic-score.mjs <round.json> [--json]   # { findings, score, history }');
+    process.exit(1);
+  }
+  let round;
+  try {
+    round = JSON.parse(readFileSync(file, 'utf8'));
+  } catch (e) {
+    console.error(`critic-score: cannot read ${file}: ${e.message}`);
+    process.exit(1);
+  }
+  const result = checkRound(round?.findings, round?.score, round?.history ?? []);
+  if (json) console.log(JSON.stringify(result, null, 2));
+  else console.log(renderRound(result, file));
+  process.exit(result.valid ? 0 : 2);
+}

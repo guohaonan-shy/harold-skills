@@ -12,6 +12,7 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
 | `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
 | `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders variants at the lowest fidelity that tells them apart, and ships ONE direction note back into the spec — no critic, no scoring, no fidelity bump |
+| `/idea-loop:uiux-refine` | Design · converge | Rebuilds the canvas from the direction note alone, converges it through a two-model critic/executor loop, then runs a subtraction pass and an AI-tells pass, and freezes on the human's signature |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a fresh session, TDD at the seams the spec already agreed |
 | `/idea-loop:pr-open-review` | Review · round 1 | Pushes the branch, opens the PR, runs the three-axis round. **No browser.** |
@@ -20,9 +21,10 @@ status (see `references/wiki-conventions.md`).
 
 ### The forward loop is not the maintenance sweep
 
-`grill → to-spec → uiux-imagine → to-ticket → implement → pr-open-review →
-pr-fix-verify` runs once per piece of work (`uiux-imagine` only when the spec
-stopped at `等设计冻结`). `dreaming` is a **periodic batch reconciliation** over the whole
+`grill → to-spec → uiux-imagine → uiux-refine → to-ticket → implement →
+pr-open-review → pr-fix-verify` runs once per piece of work (the two `uiux-*`
+stages only when the spec stopped at `等设计冻结`; `uiux-refine` is what flips it
+back to `在飞`). `dreaming` is a **periodic batch reconciliation** over the whole
 vault — weekly, or when specs pile up, or by hand. It is not the next step after
 `implement`.
 
@@ -35,13 +37,16 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `uiux-imagine`, `implement`, `dreaming` |
+| `prototype`, `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `uiux-imagine`, `uiux-refine`, `implement`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
 `grill` itself is an interview — it only means something when a human starts it.
 `uiux-imagine` is the same shape one stage later: it steers on a human's directional
-reaction each round, and a human is the one who declares the direction done. `dreaming`
+reaction each round, and a human is the one who declares the direction done.
+`uiux-refine` stops on a human at every exit it has — a direction-level finding, a
+plateau, the sign-off — and, like `implement`, wants a fresh window so it rebuilds from
+the direction note instead of continuing the diverge session it cannot see. `dreaming`
 proposes destructive disposals. `implement` requires a fresh context window, and
 clearing context is something only the human can do, so a self-invoking `implement`
 would break its own first precondition.
@@ -86,7 +91,10 @@ deterministic scripts get picked up by putting their tests next to them as
 
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
-purpose — mocking a browser would test the mock. The lint **hook**
+purpose — mocking a browser would test the mock. The CLI tails on
+`critic-score.mjs` and `direction-note-check.mjs` are the same kind of thin
+shell — argv, a file read, an exit code — and are verified by being run, not
+by a spawned-process test. The lint **hook**
 (`scripts/design-lint-hook.mjs`) has no unit test either — it is verified by
 actually writing an HTML file into a `design-preview/` directory and confirming
 it reports; that is the falsifiable signal, not a mocked stdin payload.
@@ -124,6 +132,7 @@ idea-loop/
 │   ├── prototype/SKILL.md
 │   ├── to-spec/SKILL.md
 │   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
+│   ├── uiux-refine/SKILL.md          # the convergent half — direction note in, one frozen canvas out
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md
 │   ├── pr-open-review/SKILL.md       # → workflows/pr-open-review.mjs
@@ -137,7 +146,7 @@ idea-loop/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
 │   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
 │   ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
-│   ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit
+│   ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit (+ the CLI uiux-refine calls each round)
 │   ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
 │   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section
