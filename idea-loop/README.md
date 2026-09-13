@@ -74,10 +74,10 @@ node --test '*/scripts/*.test.mjs'
 
 Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
-keeps it out of `.claude/` worktrees. Today it covers the design-lint rules and
-the two UI-loop comparators, both now living in this plugin's `scripts/`; new
-deterministic scripts get picked up by putting their tests next to them as
-`<name>.test.mjs`.
+keeps it out of `.claude/` worktrees. Today it covers the design-lint rules,
+the two UI-loop comparators, and the critic score check, all living in this
+plugin's `scripts/`; new deterministic scripts get picked up by putting their
+tests next to them as `<name>.test.mjs`.
 
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
@@ -131,6 +131,8 @@ idea-loop/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
 │   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
 │   ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
+│   ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit
+│   ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   └── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
@@ -160,6 +162,12 @@ What came across:
 | The `DESIGN.md` spec (fixed eight sections, three-tier law, "T1 is five to eight floors") | `references/design/design-md-format.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | `.mcp.json` (headless, isolated Playwright) |
+
+One file there did not come across — `references/design/critic-rubric.md` is new. It is
+what the design critic reads each round: the severity ladder anchored to an AD's action,
+the score bands the worst finding caps, and the stop threshold, stated openly rather than
+hidden. It holds because `scripts/critic-score.mjs` recomputes the allowed band from the
+findings the critic just wrote and invalidates the round when the number does not follow.
 
 Nothing in `references/design/` is an entry point. They are loaded on demand by whichever
 step is running; the hook is the one piece that fires on its own, and only on a `Write`/`Edit`
