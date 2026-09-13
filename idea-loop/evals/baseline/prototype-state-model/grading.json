@@ -1,0 +1,25 @@
+{
+  "eval_name": "prototype-state-model",
+  "expectations": [
+    {
+      "text": "原型 HTML 落进 raw 桶的 assets/（不是 /tmp，也不是项目根）",
+      "passed": true,
+      "evidence": "docs/raw/practice-history/assets/attempt-state-model.html"
+    },
+    {
+      "text": "raw 桶里有一份 source_type: prototype 的记录，与 HTML 同桶",
+      "passed": true,
+      "evidence": "docs/raw/practice-history/2026-09-14-attempt-state-model.md ↔ docs/raw/practice-history/assets/attempt-state-model.html"
+    },
+    {
+      "text": "人在页面上看到的那句问题，与裁决记录里写的是同一句（逐字），且在第一个控件之前就读到",
+      "passed": true,
+      "evidence": "「一次 attempt 从开始到出分，中间有哪些状态；草稿算不算一次 attempt。」"
+    },
+    {
+      "text": "裁决记下来了，且不是空标题",
+      "passed": true,
+      "evidence": "docs/raw/practice-history/2026-09-14-attempt-state-model.md：选 B。…"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "eval_name": "imagine-direction-note",
+  "expectations": [
+    {
+      "text": "写回 spec 的方向说明过 direction-note-check（七节齐全、同级、有序、有正文）",
+      "passed": true,
+      "evidence": "docs/spec/practice-history-surface.md §4 设计方向：七节在 #### 这一级"
+    },
+    {
+      "text": "发散不翻状态——spec 仍是「等设计冻结」（翻成在飞是收敛那一段的事）",
+      "passed": true,
+      "evidence": "docs/spec/practice-history-surface.md: 等设计冻结"
+    },
+    {
+      "text": "准出物只有那一份方向说明——渲染物、style tile、contact sheet 一个都没留在仓库里",
+      "passed": true,
+      "evidence": "只改了既有的 spec"
+    },
+    {
+      "text": "语言高度没打开——项目有 DESIGN.md，而这一跑里没有人说过「重探语言」",
+      "passed": true,
+      "evidence": "「- **语言高度：不打开。** 项目有 `DESIGN.md`，本次没有人说「重探语言」。按 §2，有 `DESIGN.md` 时语言高度默认关闭，只能由人显式打开——没有人打开，」"
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "baseline": "toeflair-practice-history",
+  "ran_at": "2026-09-13T19:39:33.293Z",
+  "out_dir": "/tmp/idea-loop-eval/baseline-20260914-000539",
+  "passed": 23,
+  "total": 23,
+  "results": [
+    {
+      "eval_id": 0,
+      "eval_name": "prototype-state-model",
+      "skill": "idea-loop:prototype",
+      "run": {
+        "elapsedSec": 270,
+        "exitCode": 0,
+        "timedOut": false,
+        "usage": {
+          "total_cost_usd": 1.6647345,
+          "num_turns": 24,
+          "duration_ms": 265253,
+          "is_error": false
+        }
+      },
+      "passed": 4,
+      "total": 4,
+      "expectations": [
+        {
+          "text": "原型 HTML 落进 raw 桶的 assets/（不是 /tmp，也不是项目根）",
+          "passed": true,
+          "evidence": "docs/raw/practice-history/assets/attempt-state-model.html"
+        },
+        {
+          "text": "raw 桶里有一份 source_type: prototype 的记录，与 HTML 同桶",
+          "passed": true,
+          "evidence": "docs/raw/practice-history/2026-09-14-attempt-state-model.md ↔ docs/raw/practice-history/assets/attempt-state-model.html"
+        },
+        {
+          "text": "人在页面上看到的那句问题，与裁决记录里写的是同一句（逐字），且在第一个控件之前就读到",
+          "passed": true,
+          "evidence": "「一次 attempt 从开始到出分，中间有哪些状态；草稿算不算一次 attempt。」"
+        },
+        {
+          "text": "裁决记下来了，且不是空标题",
+          "passed": true,
+          "evidence": "docs/raw/practice-history/2026-09-14-attempt-state-model.md：选 B。…"
+        }
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "to-spec-ui-freeze",
+      "skill": "idea-loop:to-spec",
+      "run": {
+        "elapsedSec": 241,
+        "exitCode": 0,
+        "timedOut": false,
+        "usage": {
+          "total_cost_usd": 1.0609229999999998,
+          "num_turns": 11,
+          "duration_ms": 236342,
+          "is_error": false
+        }
+      },
+      "passed": 4,
+      "total": 4,
+      "expectations": [
+        {
+          "text": "碰 UI 的 spec 落成 status: 等设计冻结（不是「在飞」）",
+          "passed": true,
+          "evidence": "docs/spec/practice-history-surface.md: 等设计冻结"
+        },
+        {
+          "text": "spec §4 把结构决策挂在原型证据上（一条指向 raw 的 wikilink）",
+          "passed": true,
+          "evidence": "[[2026-09-05-attempt-state-model]]"
+        },
+        {
+          "text": "访谈逐字转录落进了同一个 topic 桶",
+          "passed": true,
+          "evidence": "docs/raw/practice-history/2026-09-14-practice-history-grill.md（source_type: conversation）"
+        },
+        {
+          "text": "新落的文件在它那一层的 index.md 里出现了",
+          "passed": true,
+          "evidence": "raw / spec 两层索引都对得上"
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "to-ticket-unfrozen-gate",
+      "skill": "idea-loop:to-ticket",
+      "run": {
+        "elapsedSec": 249,
+        "exitCode": 0,
+        "timedOut": false,
+        "usage": {
+          "total_cost_usd": 1.134342,
+          "num_turns": 12,
+          "duration_ms": 244417,
+          "is_error": false
+        }
+      },
+      "passed": 3,
+      "total": 3,
+      "expectations": [
+        {
+          "text": "仍未冻结的 UI ticket，「设计冻结」字段落 ⛔ 未冻结",
+          "passed": true,
+          "evidence": "4/7 张落了 ⛔：docs/spec/tickets/04-history-page-question-groups.md, docs/spec/tickets/05-score-cell-dimension-and-status.md, docs/spec/tickets/06-retry-in-place-entry.md, docs/spec/tickets/07-draft-resume-from-history.md"
+        },
+        {
+          "text": "非 UI 的 ticket 不被这道闸门按住（字段写「不涉及 UI」）",
+          "passed": true,
+          "evidence": "3 张写了「不涉及 UI」：docs/spec/tickets/01-attempt-number-on-submit.md, docs/spec/tickets/02-grading-retry-action.md, docs/spec/tickets/03-history-grouped-by-question-api.md"
+        },
+        {
+          "text": "ticket 不带 frontmatter（它是临时凭据，dreaming 按目录扫）",
+          "passed": true,
+          "evidence": "7 张票都没带"
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "imagine-direction-note",
+      "skill": "idea-loop:uiux-imagine",
+      "run": {
+        "elapsedSec": 552,
+        "exitCode": 0,
+        "timedOut": false,
+        "usage": {
+          "total_cost_usd": 2.388154,
+          "num_turns": 18,
+          "duration_ms": 548005,
+          "is_error": false
+        }
+      },
+      "passed": 4,
+      "total": 4,
+      "expectations": [
+        {
+          "text": "写回 spec 的方向说明过 direction-note-check（七节齐全、同级、有序、有正文）",
+          "passed": true,
+          "evidence": "docs/spec/practice-history-surface.md §4 设计方向：七节在 #### 这一级"
+        },
+        {
+          "text": "发散不翻状态——spec 仍是「等设计冻结」（翻成在飞是收敛那一段的事）",
+          "passed": true,
+          "evidence": "docs/spec/practice-history-surface.md: 等设计冻结"
+        },
+        {
+          "text": "准出物只有那一份方向说明——渲染物、style tile、contact sheet 一个都没留在仓库里",
+          "passed": true,
+          "evidence": "只改了既有的 spec"
+        },
+        {
+          "text": "语言高度没打开——项目有 DESIGN.md，而这一跑里没有人说过「重探语言」",
+          "passed": true,
+          "evidence": "「- **语言高度：不打开。** 项目有 `DESIGN.md`，本次没有人说「重探语言」。按 §2，有 `DESIGN.md` 时语言高度默认关闭，只能由人显式打开——没有人打开，」"
+        }
+      ]
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "refine-freeze",
+      "skill": "idea-loop:uiux-refine",
+      "run": {
+        "elapsedSec": 3052,
+        "exitCode": 0,
+        "timedOut": false,
+        "usage": {
+          "total_cost_usd": 22.27973369999998,
+          "num_turns": 164,
+          "duration_ms": 3047023,
+          "is_error": false
+        }
+      },
+      "passed": 7,
+      "total": 7,
+      "expectations": [
+        {
+          "text": "画布落在 design-preview/ 下（落在别处等于把 lint hook 悄悄关掉）",
+          "passed": true,
+          "evidence": "design-preview/practice-history.html"
+        },
+        {
+          "text": "画布过确定性 lint，P0 清零",
+          "passed": true,
+          "evidence": "design-preview/practice-history.html: 0 条 P0（P1 0 / P2 0）"
+        },
+        {
+          "text": "冻结进 raw 桶：画布 HTML 与 ledger 全文都在，ledger 不留在 /tmp",
+          "passed": true,
+          "evidence": "docs/raw/practice-history/2026-09-14-practice-history-design-freeze.md + docs/raw/practice-history/assets/attempt-state-model.html, docs/raw/practice-history/assets/practice-history-canvas.html，ledger 102 行"
+        },
+        {
+          "text": "验收矩阵每格的截图跟画布同桶（按格名）",
+          "passed": true,
+          "evidence": "5 张：desktop-en-mixed.png, desktop-zh-empty.png, desktop-zh-mixed.png, mobile-zh-long.png, mobile-zh-mixed.png"
+        },
+        {
+          "text": "「冻结摘要」取代「设计方向」——不是并排（留着它下游会看到两份真值）",
+          "passed": true,
+          "evidence": "docs/spec/practice-history-surface.md §4 只剩冻结摘要"
+        },
+        {
+          "text": "冻结摘要固定五样都在（画布指针 / 矩阵 / mismatch 阈值 / ledger 摘要 / 状态矩阵与数据契约变更）",
+          "passed": true,
+          "evidence": "五样齐"
+        },
+        {
+          "text": "冻结那一刻 spec 翻成「在飞」——这一翻就是闸门本身",
+          "passed": true,
+          "evidence": "docs/spec/practice-history-surface.md: 在飞"
+        }
+      ]
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "repo-static",
+      "skill": null,
+      "run": null,
+      "passed": 1,
+      "total": 1,
+      "expectations": [
+        {
+          "text": "全仓无跨 plugin 的 skill 调用——设计侧整个住在 idea-loop 里",
+          "passed": true,
+          "evidence": "扫了 112 个 plugin 内的文件，零命中"
+        }
+      ]
+    }
+  ]
+}

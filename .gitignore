@@ -5,6 +5,8 @@
 .vscode/
 .claude/settings.local.json
 
-# Internal eval baselines (design plugin B-category harness output, etc.) —
-# never shipped to plugin installers, kept local-only on purpose.
+# Ad-hoc eval harness output — local-only, never shipped to plugin installers.
+# The one eval that IS committed is idea-loop's pinned baseline: only its verdicts
+# (evals/baseline/benchmark.json + per-cell grading.json) live in the repo; the full
+# run directories it grades stay under /tmp (see idea-loop/evals/README.md).
 eval-fixtures/

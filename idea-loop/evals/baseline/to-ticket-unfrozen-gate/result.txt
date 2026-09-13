@@ -1,0 +1,39 @@
+落盘完毕。
+
+## 切出来的 7 张 ticket
+
+写在 `docs/spec/tickets/`，按依赖顺序编号（blocker 在前）：
+
+| # | 文件 | Blocked by | 设计冻结 |
+|---|---|---|---|
+| 01 | `01-attempt-number-on-submit.md` | 无——可立即开工 | 不涉及 UI |
+| 02 | `02-grading-retry-action.md` | 01 | 不涉及 UI |
+| 03 | `03-history-grouped-by-question-api.md` | 01 | 不涉及 UI |
+| 04 | `04-history-page-question-groups.md` | 03 | ⛔ 未冻结 |
+| 05 | `05-score-cell-dimension-and-status.md` | 04 | ⛔ 未冻结 |
+| 06 | `06-retry-in-place-entry.md` | 02、05 | ⛔ 未冻结 |
+| 07 | `07-draft-resume-from-history.md` | 04 | ⛔ 未冻结 |
+
+**frontier 现在只有 01。** 01 合了之后 02、03 同时解锁。
+
+## 落盘时按规矩处理的三处
+
+**设计冻结闸门**：spec 是 `等设计冻结`、§4 没有冻结摘要小节，所以 04–07 一律落 `⛔ 未冻结 —— 不可开工`。我没有替它冻结，也没有编造画布指针、matrix 格子或 mismatch 数字——那几项是收敛设计那一段时自己填的。这四张票照切、照编号、照进依赖图，只是还不能开工；`implement` 会认 ⛔ 这个标记本身把它们拦下。
+
+**UI 票的比对项**：按规矩，只有誊写了冻结摘要的票才在验收标准里写比对项。这四张没有摘要可誊，所以每张最后一条写的是「视觉比对项待冻结摘要补齐，未补齐前不算可开工」——把缺口标在验收标准里，而不是拿一条填不出数字的假比对项占位。
+
+**存量回归**：这个仓库没有 `docs/testing/` 的 test-cases 库，也没有任何已落地的测试套件——如实写了「无 test-cases 库」，点名的是 spec §5 自己列的那几台仪器（TDD 单元 / TDD API / 真 DB / `qa:*` / UI 实现环测量脚本），按角色指名，没有编路径。
+
+## 下一步（这是给你的动作，我做不了）
+
+非 UI 那三张现在就能开工。节奏是：
+
+```
+/clear  →  /implement 01  →  commit  →  /clear  →  /implement 02  …
+```
+
+`/clear` 只有人能按——`implement` 的第一条前置是一个全新会话，我清不掉自己的上下文，所以它对我不可见。
+
+04–07 要先把设计那两段跑完，把冻结摘要（画布指针 · matrix 各格 · mismatch 阈值 · 一行 ledger · 状态矩阵与数据契约变更）写进 spec §4，再回来把这四张票的「设计冻结」字段原样誊写掉 ⛔。设计那两段可以和 01/02/03 并行跑。
+
+合并一张就删一张 ticket 文件。全删完，这份 spec 就做完了——ADR 与删 spec 归 `dreaming` 的周期扫描，别在这里提前手写。

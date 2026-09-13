@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><title>attempt 状态模型</title>
+<style>
+ body{font:15px/1.6 Inter,system-ui,sans-serif;color:#0f172a;background:#f6f7f8;margin:0;padding:24px}
+ h1{font-size:18px;margin:0 0 4px}
+ .q{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:16px}
+ .panel{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:16px}
+ .state{font-weight:700;color:#137fec}
+ button{font:inherit;padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer}
+ button:disabled{opacity:.4;cursor:not-allowed}
+ .tabs button{margin-right:6px}
+ .tabs button[aria-selected=true]{background:#eff6fe;border-color:#137fec}
+ ol{margin:8px 0 0 18px}
+</style></head><body>
+<h1>一次 attempt 从开始到出分，中间有哪些状态；草稿算不算一次 attempt。</h1>
+<div class="q">变体：<label><input type="radio" name="v" value="A">A 草稿占编号</label>
+ <label><input type="radio" name="v" value="B" checked>B 草稿不占编号</label></div>
+
+<div class="panel">
+ <div>当前状态：<span class="state" id="s">无</span>　上一个状态：<span id="p">—</span></div>
+ <div>已分配的 attempt 编号：<span id="n">（还没有）</span>　草稿：<span id="d">无</span></div>
+</div>
+
+<div class="panel">
+ <div>自由操作</div>
+ <div id="ops">
+  <button data-op="start">开始作答</button>
+  <button data-op="leave">中途离开</button>
+  <button data-op="submit">提交</button>
+  <button data-op="scored">评分成功</button>
+  <button data-op="failed">评分失败</button>
+  <button data-op="retry">重试评分</button>
+  <button data-op="discard">丢弃草稿</button>
+ </div>
+</div>
+
+<div class="panel tabs">
+ <button aria-selected="true" data-w="0">正常出分</button>
+ <button aria-selected="false" data-w="1">中途离开再回来</button>
+ <button aria-selected="false" data-w="2">评分失败重试</button>
+ <ol id="steps"></ol>
+</div>
+
+<script>
+const W=[["开始作答","提交","评分成功"],["开始作答","中途离开","开始作答","提交","评分成功"],["开始作答","提交","评分失败","重试评分","评分成功"]];
+let st={state:"无",prev:"—",num:null,draft:"无",seq:0};
+const $=id=>document.getElementById(id);
+const variant=()=>document.querySelector('input[name=v]:checked').value;
+function set(s){st.prev=st.state;st.state=s;render()}
+function render(){$('s').textContent=st.state;$('p').textContent=st.prev;
+ $('n').textContent=st.num?('#'+st.num):'（还没有）';$('d').textContent=st.draft}
+const OPS={
+ start(){ if(variant()==='A'&&!st.num){st.num=++st.seq} st.draft='有（每题一份，续写）';set('草稿') },
+ leave(){ set('草稿（已离开）') },
+ submit(){ if(variant()==='B'&&!st.num){st.num=++st.seq} st.draft='无（已转成提交）';set('已提交待评分') },
+ scored(){ set('已评分') },
+ failed(){ set('评分失败') },
+ retry(){ set('已提交待评分') },
+ discard(){ st.draft='无'; if(variant()==='A'){st.num=null;st.seq=Math.max(0,st.seq-1)} set('无') }
+};
+document.getElementById('ops').addEventListener('click',e=>{const op=e.target.dataset.op;if(op)OPS[op]()});
+document.querySelectorAll('input[name=v]').forEach(r=>r.addEventListener('change',()=>{st={state:"无",prev:"—",num:null,draft:"无",seq:0};render()}));
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected','false'));
+ b.setAttribute('aria-selected','true');
+ $('steps').innerHTML=W[+b.dataset.w].map(s=>'<li>'+s+'</li>').join('')}));
+$('steps').innerHTML=W[0].map(s=>'<li>'+s+'</li>').join('');
+render();
+</script></body></html>

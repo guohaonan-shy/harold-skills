@@ -21,10 +21,13 @@ status (see `references/wiki-conventions.md`).
 
 ### The forward loop is not the maintenance sweep
 
-`grill → to-spec → uiux-imagine → uiux-refine → to-ticket → implement →
-pr-open-review → pr-fix-verify` runs once per piece of work (the two `uiux-*`
-stages only when the spec stopped at `等设计冻结`; `uiux-refine` is what flips it
-back to `在飞`). `dreaming` is a **periodic batch reconciliation** over the whole
+`grill → to-spec → [uiux-imagine → uiux-refine] → to-ticket → implement →
+pr-open-review → pr-fix-verify` runs once per piece of work. **The bracket is the
+whole design side, and it is conditional**: you walk those two stages only when
+`to-spec` landed the spec at `等设计冻结` — i.e. the work touches UI. A spec that
+landed at `在飞` goes straight from `to-spec` to `to-ticket`. `uiux-refine` is
+what flips a bracketed spec back to `在飞`, which is the gate `to-ticket` reads.
+`dreaming` is a **periodic batch reconciliation** over the whole
 vault — weekly, or when specs pile up, or by hand. It is not the next step after
 `implement`.
 
@@ -99,6 +102,30 @@ by a spawned-process test. The lint **hook**
 actually writing an HTML file into a `design-preview/` directory and confirming
 it reports; that is the falsifiable signal, not a mocked stdin payload.
 
+### Baseline eval
+
+`prototype`, `uiux-imagine` and `uiux-refine` are the three skills whose rubric and
+prompts are going to keep changing, so they get a pinned baseline — one real case
+(Toeflair's practice-history surface, carrying a minimal `DESIGN.md` + `PRODUCT.md`),
+run once and archived, re-run on every change to a rubric, a prompt, or a `SKILL.md`:
+
+```
+node idea-loop/evals/run-baseline.mjs
+```
+
+This is a **deliberate exception** to the repo-wide "subjective output skips
+quantitative eval" convention — stated as such in the root `CLAUDE.md` §5 right next
+to the convention itself, so the next reader doesn't take it for an oversight. The
+reasoning, the case, and how to read a run live in
+[`evals/README.md`](./evals/README.md).
+
+The **whole loop's wiring check rides along as assertions in that baseline** rather
+than as a one-off dry run: prototype landing in raw, a UI-touching spec landing at
+`等设计冻结`, an unfrozen UI ticket getting ⛔, the freeze putting canvas + ledger in
+the raw bucket and flipping the spec to `在飞`, and no cross-plugin skill invocation
+anywhere in the repo. A dry run's conclusion dies with its session; an assertion
+goes red three weeks later.
+
 ## Portability
 
 This plugin was built inside one project (Toeflair) and generalized out of
@@ -153,6 +180,12 @@ idea-loop/
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   └── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
+├── evals/                            # the pinned baseline (see evals/README.md)
+│   ├── evals.json                    # six cells: the three skills, the two seams around them, one static repo check
+│   ├── assert.mjs                    # the assertions — shape only, no model, no taste
+│   ├── run-baseline.mjs              # runs each cell in a clean copy of the case, then grades
+│   ├── case/                         # Toeflair's practice-history surface + its staged starting states
+│   └── baseline/                     # the archived run: benchmark.json + per-cell grading
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── tdd.md                        # red→green loop, seams, mock boundary

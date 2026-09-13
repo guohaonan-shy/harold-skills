@@ -1,0 +1,25 @@
+{
+  "eval_name": "to-spec-ui-freeze",
+  "expectations": [
+    {
+      "text": "碰 UI 的 spec 落成 status: 等设计冻结（不是「在飞」）",
+      "passed": true,
+      "evidence": "docs/spec/practice-history-surface.md: 等设计冻结"
+    },
+    {
+      "text": "spec §4 把结构决策挂在原型证据上（一条指向 raw 的 wikilink）",
+      "passed": true,
+      "evidence": "[[2026-09-05-attempt-state-model]]"
+    },
+    {
+      "text": "访谈逐字转录落进了同一个 topic 桶",
+      "passed": true,
+      "evidence": "docs/raw/practice-history/2026-09-14-practice-history-grill.md（source_type: conversation）"
+    },
+    {
+      "text": "新落的文件在它那一层的 index.md 里出现了",
+      "passed": true,
+      "evidence": "raw / spec 两层索引都对得上"
+    }
+  ]
+}
