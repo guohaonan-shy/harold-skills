@@ -75,7 +75,7 @@ related: ["[[<transcript-slug>]]"]
 | API 契约（路由、schema、序列化） | TDD API 测试（走 ASGI） | |
 | DB schema / 迁移 / 并发与事务语义 | **真 DB** 测试 | |
 | LLM 输出质量（prompt 改动） | eval（promptfoo + 确定性 assert） | |
-| 视觉正确性 | 截图对比（`design-port`） | |
+| 视觉正确性 | UI 实现环（`references/ui-implementation-standard.md` + 测量/像素比对脚本） | |
 | 端到端用户流程 | `qa:*` 浏览器测试 | |
 
 判据是**能不能先写出一个会红的测试**。前三行能，所以走 TDD；后三行的输出是非确定的（LLM）或感知性的（视觉）或跨系统的（E2E），无从写红，falsifiable signal 是另一种仪器。

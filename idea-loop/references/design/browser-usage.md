@@ -1,6 +1,6 @@
 # Browser canvas — usage + the replication-diff recipe
 
-This is the **active** canvas for `design-ui` (and `design-motion`) while the Paper canvas is
+This is the **active** canvas for `static-ui-protocol` (and `motion-protocol`) while the Paper canvas is
 temporarily disabled (Paper has no parallel-page support yet — see `paper-usage.md`'s dormant banner;
 expected back in ~1 month). The canvas is a **preview HTML file rendered in a real browser**, driven
 with Playwright. Read this before your first browser tool call in a session.
@@ -45,7 +45,7 @@ product at the selected Surface / Module / Component scope are all real, not app
 ## Scratch layout
 
 - Preview files live in a scratch dir, **not** the app tree: `design-preview/<surface>.html`
-  (+ `design-preview/assets/` for captured PNGs). `design-motion` uses `design-motion-preview/`.
+  (+ `design-preview/assets/` for captured PNGs). `motion-protocol` uses `design-motion-preview/`.
 - Authoring style: inline styles + `var(--token)`, or pull our real Tailwind/tokens by inlining a
   built CSS — whatever reproduces the shipped surface most faithfully. Real DOM means real CSS works;
   you are not limited to flex-only like Paper.
@@ -71,7 +71,7 @@ product at the selected Surface / Module / Component scope are all real, not app
 4. Record the surface's URL, viewport, and selector in the replica file's header comment so the diff
    is reproducible.
 
-## The replication-diff loop (`design-ui` stage R)
+## The replication-diff loop (`static-ui-protocol` stage R)
 
 The goal is a **pixel-faithful HTML baseline at the selected scope** — affected Surface, bounded
 Module in parent context, or Component in its real container — so the redesign is a faithful
@@ -108,12 +108,12 @@ evolution without forcing every task to reproduce an entire page.
   protocol. Public surfaces always include 390 / 360; product modules/components verify the modes,
   widths, heights, themes, locales, and product states that can actually change their result. Don't
   substitute an irrelevant mobile width for a fixed sidebar's short-height check. (Full runtime
-  a11y-semantics / perf / motion audit still belongs to `design-motion` — this stage is static visual
+  a11y-semantics / perf / motion audit still belongs to `motion-protocol` — this stage is static visual
   + layout only.)
 - Verify with screenshots / measured values, never by inspection of the code alone.
 
-## Export (handoff to `design-motion`)
+## Export (handoff to `motion-protocol`)
 
-The preview HTML **is** the artifact — no separate export step. `design-motion` builds the motion layer
+The preview HTML **is** the artifact — no separate export step. `motion-protocol` builds the motion layer
 directly on top of this file, then ports to React last. Pull exact values for the React port from
 `browser_evaluate(getComputedStyle)`, never off a screenshot.

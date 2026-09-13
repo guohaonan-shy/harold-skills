@@ -49,7 +49,7 @@
 spec §5 的仪器矩阵已经划好了。判据是**能不能先写出一个会红的测试**：
 
 - **LLM 输出质量** —— 输出非确定，无从写红 → **eval**（promptfoo + 确定性 assert）
-- **视觉正确性** —— 感知性判断 → **截图对比**（`design-port`）
+- **视觉正确性** —— 判据不在代码里，在冻结的 HTML 画布上 → **UI 实现环**（`references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`）。它自己是红绿的，只是被测的不是函数返回值而是渲染出来的像素与测量值
 - **端到端流程** —— 跨系统，红了也定位不到 → **`qa:*` 浏览器测试**
 
 缝里的情况：**prompt 改动本身走 eval，但 prompt 产出的结构**（schema、字段存在性、枚举闭集）**走 TDD**。

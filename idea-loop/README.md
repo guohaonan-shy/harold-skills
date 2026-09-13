@@ -75,12 +75,16 @@ node --test '*/scripts/*.test.mjs'
 Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
 keeps it out of `.claude/` worktrees. Today it covers the design-lint rules and
-the two UI-loop comparators; new deterministic scripts get picked up by putting
-their tests next to them as `<name>.test.mjs`.
+the two UI-loop comparators, both now living in this plugin's `scripts/`; new
+deterministic scripts get picked up by putting their tests next to them as
+`<name>.test.mjs`.
 
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
-purpose — mocking a browser would test the mock.
+purpose — mocking a browser would test the mock. The lint **hook**
+(`scripts/design-lint-hook.mjs`) has no unit test either — it is verified by
+actually writing an HTML file into a `design-preview/` directory and confirming
+it reports; that is the falsifiable signal, not a mocked stdin payload.
 
 ## Portability
 
@@ -107,6 +111,8 @@ points at a nonexistent script is worse than one that refuses to start.
 ```
 idea-loop/
 ├── .claude-plugin/plugin.json
+├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
+├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs
 ├── README.md (this file)
 ├── skills/
 │   ├── grill/SKILL.md
@@ -124,11 +130,42 @@ idea-loop/
 ├── scripts/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
 │   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
-│   └── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
+│   ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
+│   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
+│   ├── design-lint.test.mjs          # their unit tests
+│   └── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
     ├── review-standards.md           # Standards axis: this repo's own principles + Fowler baseline
-    └── review-artifact-template.html # the PR triage page's approved shape
+    ├── review-artifact-template.html # the PR triage page's approved shape
+    └── design/                       # the design side (see below)
 ```
+
+## The design side
+
+Design used to be its own installable plugin. It isn't any more — every stage of it
+consumed or produced an `idea-loop` artifact (a spec, a prototype, the freeze a ticket
+reads, the instrument `implement` runs), so keeping it addressable across a plugin
+boundary only bought two version numbers that could drift apart. It now lives here,
+with **no alias, no compatibility shim, and no transitional double install**.
+
+What came across:
+
+| Piece | Where it lives now |
+|---|---|
+| The taste/craft references | `references/design/` |
+| The two former design skills | `references/design/static-ui-protocol.md`, `references/design/motion-protocol.md` — demoted to on-demand protocols, same shape as the surface / module / component ones next to them |
+| The `DESIGN.md` spec (fixed eight sections, three-tier law, "T1 is five to eight floors") | `references/design/design-md-format.md` |
+| The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
+| The browser | `.mcp.json` (headless, isolated Playwright) |
+
+Nothing in `references/design/` is an entry point. They are loaded on demand by whichever
+step is running; the hook is the one piece that fires on its own, and only on a `Write`/`Edit`
+whose path lands in `design-preview/` or `design-motion-preview/` HTML.
+
+What retired outright, because its content was already relocated: the `design` entry skill,
+the DESIGN.md-writing skill (→ the reference above), the port-verification skill
+(→ `references/ui-implementation-standard.md`, which generalized it past React), and the
+`wireframe-candidates` workflow (→ the structural-divergence audit `prototype` now runs).

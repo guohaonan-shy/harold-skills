@@ -1,7 +1,7 @@
 > ⚠️ **DORMANT — do not use right now.** The Paper canvas is temporarily disabled because Paper has
 > no parallel-page support yet (can't hold multiple surfaces' pages open at once); the Paper community
-> expects it in ~1 month. Until then `design-ui` and `design-motion` run on the **browser canvas** —
-> see `references/browser-usage.md`. This file is kept intact as the **restore source**: when Paper
+> expects it in ~1 month. Until then `static-ui-protocol` and `motion-protocol` run on the **browser canvas** —
+> see `references/design/browser-usage.md`. This file is kept intact as the **restore source**: when Paper
 > ships parallel pages, swap the active canvas back here and remove this banner. Everything below is the
 > Paper operating manual, frozen as-is.
 
@@ -9,7 +9,7 @@
 
 # Paper MCP — usage + the recipes that took a pilot to learn
 
-Paper (`mcp__plugin_paper-desktop_paper__*`) is the canvas where `design-ui` draws. It renders
+Paper (`mcp__plugin_paper-desktop_paper__*`) is the canvas where `static-ui-protocol` draws. It renders
 HTML/CSS into editable design nodes and round-trips to code. This file is the hard-won operating
 manual — read it before your first Paper tool call in a session so you don't re-discover the same
 gotchas live.
@@ -78,13 +78,13 @@ the genuinely-hard-to-rebuild bits.
   group (spacing, type, contrast, alignment, artboard fit, repetition). Transparent nodes screenshot
   on black; that's just the backdrop, not a bug.
 - `get_computed_styles(nodeIds)` returns **exact** hex + sizes — enough to compute contrast ratios
-  *statically* (no browser), which is how `design-ui` runs its a11y-visual check.
+  *statically* (no browser), which is how `static-ui-protocol` runs its a11y-visual check.
 
-## Export to code (the handoff to `design-motion`)
+## Export to code (the handoff to `motion-protocol`)
 
 - `get_jsx(nodeId, format:"inline-styles")` → clean HTML/JSX with the real styles (SVGs preserved,
   tokens mapped). `format:"tailwind"` emits Tailwind classes instead. This is verified to work and is
-  the fidelity-accurate static HTML that `design-motion` builds the animation layer on top of.
+  the fidelity-accurate static HTML that `motion-protocol` builds the animation layer on top of.
 - `get_computed_styles` / `get_fill_image` for exact values when porting. **Never read sizes/colors
   off a screenshot — pull them from these tools.**
 
@@ -92,7 +92,7 @@ the genuinely-hard-to-rebuild bits.
 
 Call `finish_working_on_nodes` when done editing (releases the working indicator). Don't leave it set.
 
-## Known limits (why `design-motion` exists)
+## Known limits (why `motion-protocol` exists)
 
 Paper is a **static** canvas: no native animation/interaction, and no real DOM semantics/perf. It can
 embed motion assets (Lottie/Rive/video/three.js are on the roadmap, not native authoring), but

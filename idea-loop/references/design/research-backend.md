@@ -1,7 +1,7 @@
 # Research backend — routing to Refero's three layers
 
-**Load when:** `design-ui` stage C has a named question the concept can't answer on its own (see
-`skills/design-ui/SKILL.md` §C). This file is the routing contract only — which of Refero's three
+**Load when:** `static-ui-protocol` stage C has a named question the concept can't answer on its own (see
+`references/design/static-ui-protocol.md` §C). This file is the routing contract only — which of Refero's three
 research layers answers which kind of question. Tool mechanics (parameters, batch limits, platform
 filters) live in the `refero-design` skill's own `references/mcp-tools.md`; don't restate them
 here, they'd rot out of sync.
@@ -27,12 +27,12 @@ direction.
 - Even for product UI, use Styles first to establish taste, then Screens/Flows for
   product-specific structural logic — don't skip Styles just because the surface is in-app.
 - User-provided sources always outrank a Refero search; Refero is a fallback candidate search, not
-  ground truth (`design-ui` stage C, `platform: "web"`).
+  ground truth (`static-ui-protocol` stage C, `platform: "web"`).
 
 ## Provenance
 
 Refero's three-layer research backend is a live dependency of this plugin, not a one-time
-inspiration source — naming it here and in `design-ui`'s stage C is the intended coupling. This
+inspiration source — naming it here and in `static-ui-protocol`'s stage C is the intended coupling. This
 file exists only to keep the routing decision (which layer for which question) visible in prose
-next to `design-ui`, per this plugin's convention of naming referenced files explicitly rather than
+next to `static-ui-protocol`, per this plugin's convention of naming referenced files explicitly rather than
 pointing at a directory.

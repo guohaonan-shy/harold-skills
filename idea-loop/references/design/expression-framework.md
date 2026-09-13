@@ -3,7 +3,7 @@
 **What this is.** The decision procedure that turns "what the user needs to see" into layout and
 visual treatment. It is the wireframe-stage logic of the classic pipeline (requirements →
 information architecture → wireframe → visual design → prototype), plus the visual-weight
-ladder used at the hi-fi stage. `design-ui` reads this at Setup; its stage-B **state contract +
+ladder used at the hi-fi stage. `static-ui-protocol` reads this at Setup; its stage-B **state contract +
 expression table** and stage-W **wireframe / Variant Board** are this file's outputs. It exists
 because "which color should this badge be" is almost never the real question — "what behavior is
 reachable, and how important is this signal to the user's decision" comes first; both have answers
@@ -18,7 +18,7 @@ badge decision (2026-07, now that project's DESIGN.md §7 case law). Externals a
 source of truth — update by explicit re-distill, never by runtime reads of external paths. The
 remaining laws from `craft/laws-of-ux.md` not operationalized here (Gestalt grouping, decision
 framing beyond Hick's Law, memory/recall, motor timing, behavioral expectation) were distilled
-separately into `references/laws-of-ux.md`, which cross-references back to this file rather than
+separately into `references/design/laws-of-ux.md`, which cross-references back to this file rather than
 restating the four laws already turned into ladders/budgets here.
 
 ## 0. Conditional-state precondition
@@ -123,6 +123,6 @@ one argument about step 2 — and rank has a right answer where taste doesn't.
 
 ## 7. Maintenance
 
-New generalizable treatment decisions distill back into DESIGN.md §7 case law (design-ui's
+New generalizable treatment decisions distill back into DESIGN.md §7 case law (static-ui-protocol's
 Distill-back step): this file defines the ladders and the procedure; DESIGN.md records the
 decided instances.

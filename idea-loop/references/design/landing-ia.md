@@ -1,7 +1,7 @@
 # Landing / IA — page taxonomy and Hero geometry
 
-**Load when:** `design-ui` stage A routes to the **Landing / IA** entry (see the route table in
-`skills/design-ui/SKILL.md` §A) — a landing, marketing, or multi-surface information-architecture
+**Load when:** `static-ui-protocol` stage A routes to the **Landing / IA** entry (see the route table in
+`references/design/static-ui-protocol.md` §A) — a landing, marketing, or multi-surface information-architecture
 page. Read this alongside `surface-protocol.md`, not instead of it: Landing/IA still runs the
 Surface R/B/W procedure end to end; this file supplies the extra domain vocabulary that procedure
 needs at stage B (page taxonomy) and stage W (Hero geometry). It does not replace `design-core.md`

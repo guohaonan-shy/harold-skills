@@ -1,7 +1,7 @@
 # Color Application — roles, dosage, text-on-fill
 
 **What this is.** How to *apply* the tokens the target project's DESIGN.md fixes: the
-component-level color decisions of design-ui stages E/F. DESIGN.md owns which colors exist
+component-level color decisions of static-ui-protocol stages E/F. DESIGN.md owns which colors exist
 (when the project has none, use the theme/tokens found in its code); this file owns how much
 and where.
 

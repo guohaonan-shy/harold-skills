@@ -154,5 +154,5 @@ The human review list includes:
 - test cases derived from the state matrix;
 - generalizable product decisions proposed for DESIGN.md Distill-back.
 
-The component preview remains the static source for `design-motion`; direct React iteration is not a
+The component preview remains the static source for `motion-protocol`; direct React iteration is not a
 substitute for resolving visual choices in the board/context first.

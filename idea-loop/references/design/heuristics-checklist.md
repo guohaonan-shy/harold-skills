@@ -1,7 +1,7 @@
 # Heuristics checklist — structured usability scoring for Gate 2
 
-Three independent scoring passes to run over the rendered preview at `design-ui` Gate 2 (and again
-at `design-motion` Gate 2 for anything usability-relevant that motion touches). Each pass answers a
+Three independent scoring passes to run over the rendered preview at `static-ui-protocol` Gate 2 (and again
+at `motion-protocol` Gate 2 for anything usability-relevant that motion touches). Each pass answers a
 different question; running only one misses what the others catch.
 
 ## 1. Nielsen's 10 usability heuristics — score 0–4 per heuristic

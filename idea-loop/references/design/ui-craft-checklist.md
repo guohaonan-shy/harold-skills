@@ -1,6 +1,6 @@
 # UI craft checklist — the static-visual half of Gate 2
 
-Self-contained replacement for a live critique-tool invocation. Read this at `design-ui` Gate 2
+Self-contained replacement for a live critique-tool invocation. Read this at `static-ui-protocol` Gate 2
 ("isolated critique") alongside `design-core.md` §5. The mechanically-checkable subset already runs
 in `scripts/design-lint.mjs`; this file carries what a regex can't decide — judgment applied against
 a rendered screenshot/DOM, plus the checklist items that are cheap for a human/model to eyeball but
@@ -87,7 +87,7 @@ Verify on the rendered DOM, not the source:
 
 ### 4.1 Heuristic and cognitive-load scoring
 
-See `references/heuristics-checklist.md` for the Nielsen 10-heuristic scoring rubric, the
+See `references/design/heuristics-checklist.md` for the Nielsen 10-heuristic scoring rubric, the
 cognitive-load checklist, and the five-persona red-flag test — run these as part of the same Gate 2
 pass.
 

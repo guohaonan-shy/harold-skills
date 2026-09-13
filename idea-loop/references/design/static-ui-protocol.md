@@ -1,32 +1,18 @@
----
-name: design-ui
-description: >-
-  Stage 1 of the design pipeline — design or redesign any STATIC UI in a
-  real browser before it ships: a brand-new page, an existing surface, one module,
-  or a bounded component. Route by the HIGHEST affected altitude, not by the noun
-  in the request: Surface work descends through Module and then the decision-bearing
-  or conditional Components; Module work descends through Components; a bounded
-  Component treatment uses the component fast path directly. A landing/marketing page
-  or multi-product information architecture routes through Landing/IA, a Surface-level
-  entry with its own page-taxonomy and Hero-geometry vocabulary. Conditional UI starts
-  with a reachable-state matrix before visual design. Surface/Module composition is
-  frozen as gray-box wireframes; unresolved component treatments use a compact
-  Variant Board instead. Existing redesigns begin from captured product truth at
-  the relevant scope, references are optional and question-gated, and every route
-  ends with browser review, human sign-off, and Distill-back into DESIGN.md T2 case
-  law. Motion/native interaction and the React port remain Stage 2 (`design-motion`).
-  Use this whenever the user asks to design, prototype, redesign, or explore the
-  look/structure of UI — including pages, modules, cards, banners, navigation,
-  dialogs, empty states, conditional states, or responsive treatments. SUPERSEDES
-  the retired design-loop / Pencil skills.
-user-invocable: true
-argument-hint: "[UI to design — page, module, or component]"
+# 静态 UI protocol —— 在浏览器里把一个 surface 的静态设计做完
+
+**按需加载。** 与 `references/design/surface-protocol.md` / `module-protocol.md` /
+`component-protocol.md` 同一模式：这不是入口，是 `uiux-refine` 走到"静态视觉"这一段时读的
+protocol。入口在 `uiux-imagine` / `uiux-refine`，由它们决定要不要降到这一层。
+
+动效与原生交互在 `references/design/motion-protocol.md`；把签字通过的画布落成代码是
+`references/ui-implementation-standard.md` 的活，不在这里。
+
 ---
 
 Design the **static UI** of a product surface in a **real browser** as a preview HTML file. Static
 includes visual system, layout, hierarchy, copy, component structure, and the *shape* of
 interactions (which states exist and where controls sit). Real animation, native interaction, and
-the React port belong to `design-motion` after this stage is approved.
+the React port belong to `motion-protocol` after this stage is approved.
 
 The workflow has one public entry but three composable design altitudes:
 
@@ -41,8 +27,8 @@ of a higher route: a new page does not skip component design; it descends into t
 carry a decision, introduce a new pattern, or vary by product state. Choose one entry route so the
 same work is not performed twice.
 
-> **Canvas: browser, not Paper (temporarily).** Read `references/browser-usage.md` before any
-> browser tool call. Paper remains dormant (`references/paper-usage.md`).
+> **Canvas: browser, not Paper (temporarily).** Read `references/design/browser-usage.md` before any
+> browser tool call. Paper remains dormant (`references/design/paper-usage.md`).
 
 ## Principles
 
@@ -61,10 +47,10 @@ Read the shared core once, then progressively disclose route-specific instructio
 component work from carrying a page-sized playbook while ensuring page work still reaches component
 altitude.
 
-- `references/design-core.md` supplies the Design Read, register dials, identity floors, anti-slop
+- `references/design/design-core.md` supplies the Design Read, register dials, identity floors, anti-slop
   law, close-out protocol, and the cross-altitude craft methodology (proof map, responsive
   re-edit, runtime & fallback states — design-core §7).
-- `references/expression-framework.md` supplies the altitude-neutral content → priority → weight
+- `references/design/expression-framework.md` supplies the altitude-neutral content → priority → weight
   procedure and the conditional-state precondition.
 - The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
   the project root, plus `PRODUCT.md` (project root) when present.
@@ -72,10 +58,10 @@ altitude.
   floors + anti-slop law), note that no project design law was found, and suggest the user create
   a `DESIGN.md` — never abort over a missing doc.
 - The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
-  route additionally reads `references/landing-ia.md` (see the table in §A).
-- Two reference files load on demand rather than at Setup: `references/accessibility-baseline.md`
+  route additionally reads `references/design/landing-ia.md` (see the table in §A).
+- Two reference files load on demand rather than at Setup: `references/design/accessibility-baseline.md`
   when a compliance question goes beyond design-core §4's one-line a11y floor, and
-  `references/laws-of-ux.md` when a composition question isn't already answered by the expression
+  `references/design/laws-of-ux.md` when a composition question isn't already answered by the expression
   framework's ladders and budgets.
 
 ### 3. The gates do not trust the generator
@@ -89,13 +75,13 @@ are written into `DESIGN.md` T2 case law before handoff.
 
 Before stage A:
 
-1. Read `references/design-core.md` first.
-2. Read `references/expression-framework.md`.
+1. Read `references/design/design-core.md` first.
+2. Read `references/design/expression-framework.md`.
 3. Read the target project root's `DESIGN.md` and `PRODUCT.md` —
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
    and recommend creating `DESIGN.md` (see Setup note above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
-5. Before any browser call, read `references/browser-usage.md`.
+5. Before any browser call, read `references/design/browser-usage.md`.
 
 Do not load every altitude protocol up front. Stage A selects the entry route; read lower-altitude
 protocols when the work descends to them.
@@ -111,10 +97,10 @@ Choose the **highest affected altitude**, not the filename or noun in the prompt
 
 | Entry route | Use when… | Read now |
 |---|---|---|
-| **Surface** | Route/page IA, user journey, module order, dominant reading path, or responsive composition changes | `references/surface-protocol.md` |
-| **Landing / IA** | The route/page is a landing, marketing, or multi-product page whose page taxonomy (which company/product/pricing/trust type it is) and Hero geometry need to be decided before composition | `references/surface-protocol.md` **+** `references/landing-ia.md` |
-| **Module** | One bounded section's internal composition changes while page IA and surrounding module order remain stable | `references/module-protocol.md` |
-| **Component** | One bounded UI subtree changes; parent composition and user journey remain stable; uncertainty is treatment, signals, or conditional states | `references/component-protocol.md` |
+| **Surface** | Route/page IA, user journey, module order, dominant reading path, or responsive composition changes | `references/design/surface-protocol.md` |
+| **Landing / IA** | The route/page is a landing, marketing, or multi-product page whose page taxonomy (which company/product/pricing/trust type it is) and Hero geometry need to be decided before composition | `references/design/surface-protocol.md` **+** `references/design/landing-ia.md` |
+| **Module** | One bounded section's internal composition changes while page IA and surrounding module order remain stable | `references/design/module-protocol.md` |
+| **Component** | One bounded UI subtree changes; parent composition and user journey remain stable; uncertainty is treatment, signals, or conditional states | `references/design/component-protocol.md` |
 
 Landing/IA is not a fourth descent tier — it runs the same Surface R/B/W procedure in
 `surface-protocol.md`; `landing-ia.md` only supplies the extra domain vocabulary (page taxonomy,
@@ -186,7 +172,7 @@ layer that actually answers it:
 | A multi-step flow — how a user moves across connected screens to complete a task | Refero **flows** |
 
 Full routing contract and caveats (styles doesn't cover in-app dashboards/auth/settings/iOS):
-`references/research-backend.md`.
+`references/design/research-backend.md`.
 
 For every used reference record:
 
@@ -225,7 +211,7 @@ flagship token cost.
 - Reuse the target project's UI primitives (e.g. `src/components/ui`) and shipped sibling
   components before inventing new chrome.
 - Inspect Aceternity/shadcn as parts, not skin; translate any useful structure into our tokens.
-- Read `references/color-application.md` before assigning component color.
+- Read `references/design/color-application.md` before assigning component color.
 - At component descent, classify children per `component-protocol.md`: existing primitive,
   deterministic composition, decision-bearing component, or conditional component. Only the last
   two earn the full protocol.
@@ -249,7 +235,7 @@ core's 5-dimensional critique and restraint check.
    `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" design-preview/<surface>.html` (this
    plugin's script, wherever the plugin is installed) when needed. Fix or explicitly justify P1s.
 2. **Isolated critique.** Self-contained pass over the served preview URL: read
-   `references/ui-craft-checklist.md` and `references/heuristics-checklist.md`, screenshot each
+   `references/design/ui-craft-checklist.md` and `references/design/heuristics-checklist.md`, screenshot each
    section, and record findings against both (typography thresholds, visual slop catalog, layout
    integrity, Nielsen/cognitive-load/persona scoring). Route direction findings back to B/W and
    craft findings to F. Check computed contrast (`browser_evaluate(getComputedStyle)`) and a clean
@@ -287,8 +273,8 @@ hand the drafted amendments to the user as text instead of writing any file. Dis
 appends dated T2 entries; it never rewrites human-authored T1/T3 content.
 An empty Distill-back is valid only when stated explicitly.
 
-The approved preview HTML + concept + state contract pass to `design:design-motion`. Do not port to React in
-this skill.
+The approved preview HTML + concept + state contract pass to `references/design/motion-protocol.md`. Do not port to React in
+this protocol.
 
 ## DESIGN.md governance
 
@@ -303,13 +289,13 @@ real project's design law — substitute the target project's own T1/T3 entries.
 - Typical T2 territory includes density, component treatments, responsive container behavior,
   promotion hierarchy, disclosure, and motion precedents.
 
-## What this skill is not
+## What this protocol is not
 
-- Not three competing skills: Surface, Module, and Component are composable altitudes behind one
+- Not three competing protocols: Surface, Module, and Component are composable altitudes behind one
   entry.
 - Not a reason to redesign every component on a new page: existing primitives are reused; only
   decision-bearing or conditional components earn the full Component Protocol.
 - Not a reference assembler or a one-shot generator.
-- Not where native motion/interaction or the React port happens; use `design:design-motion` after sign-off.
+- Not where native motion/interaction or the React port happens; use `references/design/motion-protocol.md` after sign-off.
 - Not self-refereed: lint, isolated critique evidence, real-DOM checks, and the human gate remain
   mandatory.

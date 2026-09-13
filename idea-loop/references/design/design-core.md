@@ -8,7 +8,7 @@
 
 **What this is.** The distilled taste core for every design run, modeled on open-design's
 baked-in prompt layer (their `official-system.ts` + `discovery.ts`: ~555 lines that ride along on
-EVERY generation, regardless of which skill is active). `design-ui` and `design-motion` MUST read
+EVERY generation, regardless of which skill is active). `static-ui-protocol` and `motion-protocol` MUST read
 this file at Setup, before any concept or pixels — it is not invoked mid-loop, it is the law of
 the session from the start. The old model ("invoke the taste skill at stage D/G") relied on the
 model remembering to load a 1200-line playbook mid-task; in practice it didn't happen. This file
@@ -39,7 +39,7 @@ is the hard gate; this file carries the *why* plus the judgment calls a regex ca
     v4 — same axis as our register dial, kept here as a terminology cross-reference only.)*
 - **Concept before references** — the design concept comes from the product's own truth (data
   model, pedagogy, the user's job on this surface), never from "what a dashboard looks like."
-  (design-ui stage B owns this; the core just states the principle.)
+  (static-ui-protocol stage B owns this; the core just states the principle.)
 - **The category-reflex check** *(impeccable)* — run at two altitudes: if someone could guess the
   design from the surface's category alone, it's the first training-data reflex; if they could
   guess it from category-plus-anti-references, it's the trap one tier deeper. Rework until neither
@@ -90,7 +90,7 @@ a11y floors are universal. Never relax the target project's floors:
   as slop; Charter is blog *body* only).
 - **A11y floors** — contrast ≥4.5:1 body / ≥3:1 large; focus-visible ring; reduced-motion
   alternative for every animation; never gate content visibility on a transition. Full compliance
-  floor, touch-target table, and keyboard/ARIA discipline: `references/accessibility-baseline.md`.
+  floor, touch-target table, and keyboard/ARIA discipline: `references/design/accessibility-baseline.md`.
 
 > Brand override note: generic advice like "avoid Inter as a display face" (taste-skill §4.1,
 > open-design §C) is **overridden** — Inter tight / Plus Jakarta Sans ARE our display faces by
@@ -285,7 +285,7 @@ normal / reduced / offscreen / failed / loading / settled
 
 - **Reduced** has an equivalent settled state and no required autoplay — this is the *structural*
   half (does an equivalent state exist); `motion-spec.md` §6 owns the *mechanical* half (the
-  `prefers-reduced-motion` fallback implementation) once a surface reaches `design-motion`.
+  `prefers-reduced-motion` fallback implementation) once a surface reaches `motion-protocol`.
 - **Offscreen** work pauses or substantially reduces.
 - **Failed** hides or bypasses broken media while the claim, proof, and CTA remain — a failed image
   never takes the surrounding meaning down with it.
@@ -341,7 +341,7 @@ by an explicit re-distill, never by a runtime read of an external path.
 external skill or tool — every gate (mechanical lint, isolated critique, motion-craft audit, frame
 check, port-fidelity diff) runs entirely on this plugin's own scripts and `references/` content. An
 earlier version of the lint hook optionally chained an external detector when installed, and Gate 2
-in `design-ui`/`design-motion` invoked an external critique/audit tool; both were removed in favor
+in `static-ui-protocol`/`motion-protocol` invoked an external critique/audit tool; both were removed in favor
 of native lint rules (`layout-transition`, `bounce-easing` in `design-lint.mjs`) and self-contained
 checklists (`ui-craft-checklist.md`, `heuristics-checklist.md`, `motion-craft-checklist.md`). An
 upgrade to an external tool no longer changes this plugin's behavior — only an explicit re-distill

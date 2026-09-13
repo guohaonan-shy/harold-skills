@@ -1,6 +1,6 @@
 # Motion craft checklist — the static-rules half of Gate 2
 
-Self-contained replacement for a live audit-tool invocation. Read this at `design-motion` Gate 2
+Self-contained replacement for a live audit-tool invocation. Read this at `motion-protocol` Gate 2
 alongside `motion-spec.md`. The mechanically-checkable subset runs natively in
 `scripts/design-lint.mjs` (`bounce-easing`, `layout-transition` rules — no external detector
 chained in); this file carries the judgment calls and the rules not worth encoding as regex,

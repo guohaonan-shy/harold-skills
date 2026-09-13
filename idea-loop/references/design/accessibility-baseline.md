@@ -129,7 +129,7 @@ The non-negotiable floor: WCAG 2.3.1 (Level A) — flashing more than three time
 period is non-conformant unless the flash area stays below the general/red flash thresholds
 (photosensitive epilepsy is the protected concern). The animation-timing half of reduced motion
 (duration/easing fallback mechanics) is `motion-spec.md` §6's job once a surface reaches
-`design-motion`; this file owns the flashing floor, not the fallback implementation.
+`motion-protocol`; this file owns the flashing floor, not the fallback implementation.
 
 ## Native mobile parity
 

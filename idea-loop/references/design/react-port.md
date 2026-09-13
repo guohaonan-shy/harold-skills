@@ -1,10 +1,14 @@
 # React-Port Checklist — from prototype to real component
 
-Read at Setup by `design-port` (Phase A). This is what
-actually goes wrong translating a `design-preview/` or `design-motion-preview/` HTML+CSS+JS file
-into the real React/TSX component — every rule below came out of an actual port in a real project,
-not a hypothetical (worked examples and class names below are that project's case law).
-`references/design-core.md`'s brand floors still apply here: a Tailwind translation that quietly
+**React-only appendix to `references/ui-implementation-standard.md`.** That file is the
+stack-agnostic standard `implement` reads on every UI ticket, and it already owns the general
+rules (classify before porting, data-contract changes, token attribution, state-ownership, the
+measurement loop). Load this one *in addition* when the target project is React/Tailwind and you
+want the concrete mechanics: it is what actually goes wrong translating a `design-preview/` or
+`design-motion-preview/` HTML+CSS+JS file into the real React/TSX component — every rule below
+came out of an actual port in a real project, not a hypothetical (worked examples and class names
+below are that project's case law).
+`references/design/design-core.md`'s brand floors still apply here: a Tailwind translation that quietly
 drifts off a token in the target project's DESIGN.md is a regression, not a detail.
 
 ## 1. Classify every changed CSS rule before touching React

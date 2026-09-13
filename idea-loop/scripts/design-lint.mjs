@@ -11,7 +11,7 @@
  *
  * Deterministic, grep-style checks over a design-preview HTML file, modeled on
  * open-design's `lint-artifact.ts`. Encodes the mechanically-checkable subset of
- * references/design-core.md §5 anti-slop law. The model-judged rules (hierarchy,
+ * references/design/design-core.md §5 anti-slop law. The model-judged rules (hierarchy,
  * concept, restraint judgment) stay with critique — this file only carries what a
  * regex can decide.
  *
