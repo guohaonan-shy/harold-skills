@@ -3,7 +3,7 @@ type: spec
 status: 在飞
 tags: [design-workflow, idea-loop, design-plugin, plugin-migration]
 summary: 把 design-lib 消费侧 design 工作流迁入 harold-skills 独立 plugin，接入 idea-loop 生命周期
-related: ["[[grill-design-idea-loop]]"]
+related: ["[[2026-08-28-grill-design-idea-loop]]"]
 ---
 
 # 把 Design 工作流迁入 harold-skills 并接入 idea-loop 生命周期
@@ -158,7 +158,7 @@ Harold 现在维护 build 和 design 两条日常工作流，但 design 这条�
 
 ## 7 关联
 
-- raw：[[grill-design-idea-loop]]
+- raw：[[2026-08-28-grill-design-idea-loop]]
 - 起点讨论稿：`docs/design-workflow-architecture.md`（本仓库既有文件，早于本次会话，记录了上一轮多次讨论收敛的结论；本次 grill 是在它基础上补齐待定项，并订正了其中一处对 refero-design 路由机制的错误描述）
 - 外部真相源（迁移执行时需要重新核实，不要只信这份 spec 的摘要）：
   - `design-lib` 仓库 `plugins/design/`（0.2.0）：`skills/{design,design-brief,design-ui,design-motion}/SKILL.md`、`references/browser-usage.md`、`MIGRATION.md`、`hooks/hooks.json`、`scripts/design-lint.mjs`
