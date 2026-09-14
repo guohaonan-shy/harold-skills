@@ -61,7 +61,7 @@ disable-model-invocation: true
 > 顺序不能反。先 commit 再勾框，工作区就留着一份未提交的 ticket 改动；等这批做完交给 `idea-loop:pr-open-review` 时，它的脏树网关会直接把你拦下来。
 3. **还有 ticket 没做就回到第一步**（`/clear` → 下一张）。**这一批做完了**，交给 `/idea-loop:pr-open-review` —— 它推分支、开 PR、跑三轴 review。
 
-> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR（`/idea-loop:pr-fix-verify`），一份 artifact 记录全部轮次。不要一张 ticket 开一个 PR。
+> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR（`/idea-loop:pr-fix-verify`）；GitHub PR 描述、每轮评论和原问题线程记录讲解、证据与处置，不再使用独立 artifact。不要一张 ticket 开一个 PR。
 >
 > **本地 diff 不单独 review** —— 三轴 review 是它的严格超集，中间只隔一次 push。
 
