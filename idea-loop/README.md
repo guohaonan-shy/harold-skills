@@ -12,8 +12,8 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a fresh session, TDD at the seams the spec already agreed |
-| `/idea-loop:pr-open-review` | Review · round 1 | Pushes the branch, opens the PR, runs the three-axis round. **No browser.** |
-| `/idea-loop:pr-fix-verify` | Review · round N+1 | Lands an agreed round of fixes as one commit, then re-reviews. **No browser.** |
+| `/idea-loop:pr-open-review` | Review · round 1 | Pushes committed work, explains it with examples/Mermaid, reviews and publishes GitHub threads. |
+| `/idea-loop:pr-fix-verify` | Review · round N+1 | Fixes selected GitHub findings, repeats original verification, updates threads and PR explanation. |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -32,7 +32,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `implement`, `dreaming` |
+| `to-spec`, `to-ticket` | `grill`, `implement`, `pr-open-review`, `pr-fix-verify`, `dreaming` |
 
 `grill` is an interview — it only means something when a human starts it. `dreaming`
 proposes destructive disposals. `implement` requires a fresh context window, and
@@ -41,35 +41,50 @@ would break its own first precondition.
 
 ### The review loop
 
-Both dispatchers call the shared `pr-review-round` workflow (`workflows/`),
-which reviews on three axes **in parallel and never merges or reranks
-them** — a change can pass one and fail another:
+Start each round yourself in Claude Code:
+
+```text
+/idea-loop:pr-open-review
+/idea-loop:pr-fix-verify F-1 <agreed fix direction>
+```
+
+These commands launch local host `Workflow` scripts, not GitHub Actions. Running `gh pr create`
+alone only opens a PR; it does not start a review. `pr-open-review` can reuse that existing PR.
+After implementation or a review round, stop and wait for the next manual command. Both review
+skills set `disable-model-invocation: true`; no PR/push hook or automatic skill handoff is wired.
+One command still runs its complete review/fix/verification/publication sequence once started.
+
+Both dispatchers call `pr-review-round`: pin base/head and accepted scope, investigate
+three axes, independently verify and deduplicate findings, then publish on GitHub.
 
 | Axis | Asks | Blocks a merge? |
 |---|---|---|
-| **Correctness** | did this introduce a bug (codex adversarial) | ✅ yes |
-| **Spec** | is this what the ticket/spec actually asked for | ✅ yes |
-| **Standards** | does this follow this repo's documented conventions | ❌ **never** |
+| **Correctness** | Did this introduce/activate a supported-path defect? Normal Codex review. | By proven impact |
+| **Spec** | Does this satisfy the actual acceptance agreement and amendments? | By requirement/impact |
+| **Standards** | Does this violate an applicable written project rule? No generic smells. | By explicit rule/impact |
 
-Standards discovers whatever lint/typecheck this repo already has configured
-and runs it first (diff-scoped) — CI-enforced checks aren't re-reported, only
-what nothing else catches — and only then reviews what tooling cannot check —
-capped at 5 findings and at `medium` severity, so style never holds up a PR
-that works and does what was asked.
+Axes retain coverage status but the same defect gets one stable finding ID and thread.
+Tool diagnostics require baseline attribution; CI failures appear in checks rather than
+duplicate comments. Missing acceptance or required verification remains incomplete, not green.
 
-Output is one HTML triage page per PR, updated in place each round: the open
-correctness/spec blockers up top, everything else collapsed.
+The PR title/body explains the final behavior with examples and native Mermaid where useful.
+Each round has a short summary linking original problem threads; fixes reply there with
+independently reproduced before/after evidence before resolution. No HTML artifacts or required
+local history. Later rounds focus on fix deltas and affected callers; no automatic adversarial
+review. See `references/github-review.md` for the JSON publication contract and recovery behavior.
+
+`scripts/github-review.mjs` uses authenticated `gh api` (official GitHub REST/GraphQL). It
+paginates history, preserves IDs, detects changed base/head and description conflicts, and
+resumes partial publication without duplicating completed comments. It never approves/merges.
+Run `node --test idea-loop/scripts/*.test.mjs` manually from the repository root for the mocked
+GitHub and host-workflow tests. No GitHub Actions job is required or shipped for this loop.
+Real model quality and host Workflow execution require a live CC run.
 
 ## Portability
 
-This plugin was built inside one project (Toeflair) and generalized out of
-it for reuse — `references/review-standards.md`'s 8-principle table is that
-origin project's own `CLAUDE.md` principles, kept as a working default; the
-axis is instructed to read *the current repo's own* `CLAUDE.md` first and
-only fall back to this table (then to Fowler's smell baseline) where the
-current repo hasn't documented something. Lint/typecheck tooling and any
-domain-specific standards docs are discovered from the current repo, not
-hardcoded. Cross-plugin file paths are threaded through as `pluginRoot`
+Project rules and verification tools come from the current repository's REVIEW.md,
+AGENTS.md and applicable documents/configuration. There is no inherited Toeflair/Fowler
+baseline. Cross-plugin paths are threaded through as `pluginRoot`
 (via `${CLAUDE_PLUGIN_ROOT}`, resolved in each dispatcher's own SKILL.md —
 Workflow scripts have no filesystem/env API of their own) rather than
 hardcoded, so this plugin should survive being copied to another project or
@@ -98,9 +113,14 @@ idea-loop/
 │   ├── pr-open-review.mjs            # round 1: push, open PR, call pr-review-round
 │   ├── pr-fix-verify.mjs             # round N+1: fix, commit, call pr-review-round
 │   └── pr-review-round.mjs           # shared tail: the three-axis review itself
+├── scripts/
+│   ├── github-review.mjs             # official GitHub API publication and recovery
+│   ├── github-review.test.mjs        # state, threads, retries, stale-head tests
+│   └── review-workflows.test.mjs     # mocked host orchestration tests
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── tdd.md                        # red→green loop, seams, mock boundary
-    ├── review-standards.md           # Standards axis: this repo's own principles + Fowler baseline
-    └── review-artifact-template.html # the PR triage page's approved shape
+    ├── review-standards.md           # project-rule admission, evidence and severity
+    ├── review-entry.md               # dispatcher prerequisites and result handling
+    └── github-review.md              # native Markdown, publication schema and threads
 ```
