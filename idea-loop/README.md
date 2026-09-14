@@ -32,7 +32,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `implement`, `dreaming` |
+| `to-spec`, `to-ticket` | `grill`, `implement`, `pr-open-review`, `pr-fix-verify`, `dreaming` |
 
 `grill` is an interview — it only means something when a human starts it. `dreaming`
 proposes destructive disposals. `implement` requires a fresh context window, and
@@ -40,6 +40,19 @@ clearing context is something only the human can do, so a self-invoking `impleme
 would break its own first precondition.
 
 ### The review loop
+
+Start each round yourself in Claude Code:
+
+```text
+/idea-loop:pr-open-review
+/idea-loop:pr-fix-verify F-1 <agreed fix direction>
+```
+
+These commands launch local host `Workflow` scripts, not GitHub Actions. Running `gh pr create`
+alone only opens a PR; it does not start a review. `pr-open-review` can reuse that existing PR.
+After implementation or a review round, stop and wait for the next manual command. Both review
+skills set `disable-model-invocation: true`; no PR/push hook or automatic skill handoff is wired.
+One command still runs its complete review/fix/verification/publication sequence once started.
 
 Both dispatchers call `pr-review-round`: pin base/head and accepted scope, investigate
 three axes, independently verify and deduplicate findings, then publish on GitHub.
@@ -63,8 +76,9 @@ review. See `references/github-review.md` for the JSON publication contract and 
 `scripts/github-review.mjs` uses authenticated `gh api` (official GitHub REST/GraphQL). It
 paginates history, preserves IDs, detects changed base/head and description conflicts, and
 resumes partial publication without duplicating completed comments. It never approves/merges.
-Run `node --test idea-loop/scripts/*.test.mjs` from the repository root for the mocked GitHub
-and host-workflow tests. Real model quality and host Workflow execution require a live CC run.
+Run `node --test idea-loop/scripts/*.test.mjs` manually from the repository root for the mocked
+GitHub and host-workflow tests. No GitHub Actions job is required or shipped for this loop.
+Real model quality and host Workflow execution require a live CC run.
 
 ## Portability
 

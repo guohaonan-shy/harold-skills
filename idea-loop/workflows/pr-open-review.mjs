@@ -1,7 +1,7 @@
 export const meta = {
   name: 'pr-open-review',
   description: 'Push committed work, open its PR with examples/Mermaid, then review and publish findings on GitHub',
-  whenToUse: 'After agreed implementation is committed; does not implement or commit code.',
+  whenToUse: 'Only after the user invokes /idea-loop:pr-open-review with committed work; never triggered by a push, gh pr create or another skill.',
   phases: [{ title: 'Open PR' }, { title: 'Review on GitHub' }],
 }
 

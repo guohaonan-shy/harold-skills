@@ -59,7 +59,7 @@ disable-model-invocation: true
 2. **再 commit**，把勾好的 ticket 一起带上。一个 commit 对应一个完整问题——别把无关改动混进来，也别把一个问题拆碎。
 
 > 顺序不能反。先 commit 再勾框，工作区就留着一份未提交的 ticket 改动；等这批做完交给 `idea-loop:pr-open-review` 时，它的脏树网关会直接把你拦下来。
-3. **还有 ticket 没做就回到第一步**（`/clear` → 下一张）。**这一批做完了**，交给 `/idea-loop:pr-open-review` —— 它推分支、开 PR、跑三轴 review。
+3. **还有 ticket 没做就回到第一步**（`/clear` → 下一张）。**这一批做完了就停下**，报告提交和验证结果，提示用户可手动运行 `/idea-loop:pr-open-review`（推分支、创建或复用 PR、跑三轴 review）。不要代用户调用 review skill 或 Workflow，也不要安装 `gh pr` 后自动触发的 hook。
 
 > 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR（`/idea-loop:pr-fix-verify`）；GitHub PR 描述、每轮评论和原问题线程记录讲解、证据与处置，不再使用独立 artifact。不要一张 ticket 开一个 PR。
 >

@@ -1,9 +1,14 @@
 ---
 name: pr-fix-verify
-description: Implement an agreed round of fixes for selected GitHub review findings, independently repeat their verification paths, and update the original threads plus PR explanation. Use after the developer has chosen findings and fix direction.
+description: Manually start one agreed round of fixes for selected GitHub review findings, independently repeat their verification paths, and update the original threads plus PR explanation. Use after the developer has chosen findings and fix direction.
+disable-model-invocation: true
 ---
 
 # Fix and verify GitHub findings
+
+Run only when the user invokes `/idea-loop:pr-fix-verify`. A new review comment, a push,
+agreement about a fix direction or completion of another workflow is not a trigger.
+Do not install a hook or automatically start another fix round after this one finishes.
 
 Read [review-entry.md](../../references/review-entry.md),
 [github-review.md](../../references/github-review.md), and the target REVIEW.md/AGENTS.md.

@@ -1,9 +1,14 @@
 ---
 name: pr-open-review
-description: Push already-committed work, open a GitHub PR with examples and Mermaid, then run normal Codex correctness review and project-rule/spec checks. Publish verified findings in GitHub comments and threads. Does not implement or commit code.
+description: Manually start one PR review workflow — push already-committed work, create or reuse a GitHub PR with examples and Mermaid, then run normal Codex correctness review and project-rule/spec checks. Publish verified findings in GitHub comments and threads. Does not implement or commit code.
+disable-model-invocation: true
 ---
 
 # Open and review a PR
+
+Run only when the user invokes `/idea-loop:pr-open-review`. Completing implementation,
+pushing a branch or running `gh pr create` is not a trigger. Do not install a hook or call
+this workflow automatically from another skill. An already-open PR is reused.
 
 Read [review-entry.md](../../references/review-entry.md) for context, companion discovery and
 result handling, and [github-review.md](../../references/github-review.md) for publication.
