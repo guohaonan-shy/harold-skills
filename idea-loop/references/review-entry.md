@@ -1,12 +1,13 @@
 # Review dispatcher setup
 
-These are manually started Claude Code Workflow runs, not GitHub Actions jobs. Require the
-user's corresponding slash command before dispatching; no hook, push/PR event, upstream
-skill completion or automatic follow-up starts a run. One manual invocation includes that
-workflow's existing review/verification/publication phases, then stops. The shared
-pr-review-round remains an internal phase, not a separately auto-triggered workflow.
+These are explicitly started Claude Code Workflow runs, not GitHub Actions jobs. Require an
+explicit request before dispatching — the user's corresponding slash command, or a caller that
+asked for this run: a hook, a push/PR event or an upstream skill merely finishing is not one.
+One invocation includes that workflow's existing review/verification/publication phases, then
+stops; it never chains into the next round on its own. The shared pr-review-round remains an
+internal phase, not a separately auto-triggered workflow.
 
-Resolve cwd from the work actually edited in the conversation, not blindly from shell cwd.
+Resolve cwd from the work actually edited, not blindly from shell cwd.
 Read the repository's applicable AGENTS.md and REVIEW.md explicitly. Check tracked cleanliness
 with git status --short --untracked-files=no. Do not reset/stash someone else's edits.
 Unrelated untracked scratch is allowed; intended new files must already be committed.

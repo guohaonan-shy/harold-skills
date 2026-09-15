@@ -1,14 +1,15 @@
 ---
 name: pr-fix-verify
-description: Manually start one agreed round of fixes for selected GitHub review findings, independently repeat their verification paths, and update the original threads plus PR explanation. Use after the developer has chosen findings and fix direction.
-disable-model-invocation: true
+description: Start one agreed round of fixes for selected GitHub review findings, independently repeat their verification paths, and update the original threads plus PR explanation. Use after the findings and the fix direction have been chosen.
 ---
 
 # Fix and verify GitHub findings
 
-Run only when the user invokes `/idea-loop:pr-fix-verify`. A new review comment, a push,
-agreement about a fix direction or completion of another workflow is not a trigger.
-Do not install a hook or automatically start another fix round after this one finishes.
+Start on an explicit request — the user invoking `/idea-loop:pr-fix-verify`, or a caller that
+names the findings and the fix direction. A new review comment or a push is not by itself a
+trigger; do not install a hook that fires on them. **One invocation is one round**: when this
+round finishes, stop and report. The round budget belongs to whoever called you — never start
+the next round on your own.
 
 Read [review-entry.md](../../references/review-entry.md),
 [github-review.md](../../references/github-review.md), and the target REVIEW.md/AGENTS.md.
@@ -16,11 +17,13 @@ Resolve the actual worktree and PR, then read the GitHub snapshot, original find
 and human replies. GitHub is the source of truth; never read a local HTML artifact to decide
 what is open or which round this is.
 
-The developer must already have agreed which findings and how to fix them. Select exactly
+Which findings, and how to fix them, must already be settled before this runs. Select exactly
 the IDs named in the request or unambiguously discussed in the immediately preceding turns.
-"Go ahead" does not mean all open findings. If ambiguous, ask which ones; if direction is
-still exploratory, discuss it first. Existing authorization does not need reconfirmation.
-Missing legacy history follows github-review.md's migration guidance; do not invent IDs.
+"Go ahead" does not mean all open findings, and never widen the selection on your own. If the
+selection or the direction is unclear, **stop and say what is missing** — ask the user when one
+is present, otherwise hand the question back to the caller; do not guess and proceed. Existing
+authorization does not need reconfirmation. Missing legacy history follows github-review.md's
+migration guidance; do not invent IDs.
 
 ```javascript
 Workflow({

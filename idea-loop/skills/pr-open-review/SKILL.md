@@ -1,23 +1,24 @@
 ---
 name: pr-open-review
-description: Manually start one PR review workflow — push already-committed work, create or reuse a GitHub PR with examples and Mermaid, then run normal Codex correctness review and project-rule/spec checks. Publish verified findings in GitHub comments and threads. Does not implement or commit code.
-disable-model-invocation: true
+description: Start one PR review workflow — push already-committed work, create or reuse a GitHub PR with examples and Mermaid, then run normal Codex correctness review and project-rule/spec checks. Publish verified findings in GitHub comments and threads. Does not implement or commit code.
 ---
 
 # Open and review a PR
 
-Run only when the user invokes `/idea-loop:pr-open-review`. Completing implementation,
-pushing a branch or running `gh pr create` is not a trigger. Do not install a hook or call
-this workflow automatically from another skill. An already-open PR is reused.
+Start on an explicit request — the user invoking `/idea-loop:pr-open-review`, or a caller that
+hands you a worktree whose work is already committed. Completing implementation, pushing a
+branch or running `gh pr create` is not by itself a trigger; do not install a hook that fires
+on them. An already-open PR is reused.
 
 Read [review-entry.md](../../references/review-entry.md) for context, companion discovery and
 result handling, and [github-review.md](../../references/github-review.md) for publication.
 Read the target repository's REVIEW.md and applicable AGENTS.md before dispatching.
 
-Use the actual worktree edited in this conversation as cwd. Require implementation to be
-committed; this command does not implement or commit unfinished work. Capture the accepted
-task, explicit ticket/spec links, acceptance checks, scope amendments and exclusions from the
-conversation as agreement. Do not replace them with a guess from the branch title.
+Use the actual worktree the work was done in as cwd. Require implementation to be committed;
+this command does not implement or commit unfinished work. Capture the accepted task, explicit
+ticket/spec links, acceptance checks, scope amendments and exclusions as agreement — from this
+conversation, or from the request the caller handed you. Do not replace them with a guess from
+the branch title; if none of that is available, stop and report what is missing.
 
 Call the workflow by scriptPath (it is not in the named registry):
 
