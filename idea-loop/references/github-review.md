@@ -10,6 +10,14 @@ Use authenticated gh with PR/review-thread access. The helper calls official RES
 APIs, with JSON on stdin, and paginates comments/threads. Official GitHub plugin tools can
 also inspect the PR; use the helper for writes to preserve markers and retry behavior.
 
+The helper has no identity of its own — it inherits whatever `gh` is authenticated as. That is
+what lets an autonomous dispatcher publish a round under a machine account: run the publish
+command with that token in the environment, which the two entry workflows expose as the optional
+`botTokenCommand`. It changes who the comments come **from**, so a human can tell their own
+remarks from an agent's. It does not touch the in-body attribution rules below, which are about
+naming which tool produced a finding, and it is not a licence to post as a *person* who did not
+write the comment.
+
 ```bash
 node "<pluginRoot>/scripts/github-review.mjs" snapshot OWNER/REPO PR
 node "<pluginRoot>/scripts/github-review.mjs" publish /absolute/path/to/plan.json

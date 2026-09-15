@@ -6,7 +6,8 @@ export const meta = {
 }
 
 const input = typeof args === 'string' ? JSON.parse(args) : args
-const { cwd, baseRefName = 'main', pluginRoot, codexCompanion, agreement = '', prTitle = '', prBody = '' } = input
+const { cwd, baseRefName = 'main', pluginRoot, codexCompanion, agreement = '', prTitle = '', prBody = '',
+  botTokenCommand = '' } = input
 if (!cwd || !pluginRoot || !codexCompanion) return { error: 'Missing cwd/pluginRoot/codexCompanion', mergeReady: false }
 phase('Open PR')
 const opened = await agent(`Open/reuse a PR for committed work in ${cwd} targeting ${baseRefName}.
@@ -41,5 +42,6 @@ if (!opened?.prNumber || !/^[a-f0-9]{40}$/.test(opened.headSha || '')) {
 phase('Review on GitHub')
 const review = await workflow({ scriptPath: `${pluginRoot}/workflows/pr-review-round.mjs` }, {
   cwd, prNumber: opened.prNumber, pluginRoot, codexCompanion, agreement, expectedHead: opened.headSha,
+  botTokenCommand,
 })
 return { ...opened, ...review }

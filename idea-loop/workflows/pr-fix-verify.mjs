@@ -6,7 +6,7 @@ export const meta = {
 }
 
 const input = typeof args === 'string' ? JSON.parse(args) : args
-const { cwd, prNumber, findingIds, feedback, pluginRoot, codexCompanion } = input
+const { cwd, prNumber, findingIds, feedback, pluginRoot, codexCompanion, botTokenCommand = '' } = input
 if (!cwd || !prNumber || !Array.isArray(findingIds) || !findingIds.length || !feedback || !pluginRoot || !codexCompanion) {
   return { error: 'Missing PR, selected GitHub finding IDs, or agreed fix direction', mergeReady: false }
 }
@@ -87,6 +87,6 @@ if (updates.length !== prepared.findings.length || prepared.findings.some(f => !
 phase('Review and publish')
 const review = await workflow({ scriptPath: `${pluginRoot}/workflows/pr-review-round.mjs` }, {
   cwd, prNumber, pluginRoot, codexCompanion, agreement: prepared.instructionText,
-  expectedHead: fixed.headSha, previousHead: before.headSha, fixUpdates: updates,
+  expectedHead: fixed.headSha, previousHead: before.headSha, fixUpdates: updates, botTokenCommand,
 })
 return { fixResults: fixed.results, verification: updates, ...review }

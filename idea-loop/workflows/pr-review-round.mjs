@@ -7,11 +7,15 @@ export const meta = {
 
 const input = typeof args === 'string' ? JSON.parse(args) : args
 const { cwd, prNumber, pluginRoot, codexCompanion, agreement = '', previousHead = null,
-  fixUpdates = [], expectedHead = null } = input
+  fixUpdates = [], expectedHead = null, botTokenCommand = '' } = input
 if (!cwd || !prNumber || !pluginRoot || !codexCompanion) return { error: 'Missing review context or Codex companion path', mergeReady: false }
 const rules = `${pluginRoot}/references/review-standards.md`
 const github = `${pluginRoot}/references/github-review.md`
 const helper = `${pluginRoot}/scripts/github-review.mjs`
+// An autonomous caller can publish this round under a machine identity so a human reading the PR
+// can tell which comments are theirs. Reads stay on the session's own gh auth; only the publish
+// write is re-pointed, and the token is substituted per command rather than stored anywhere.
+const publishPrefix = botTokenCommand ? `GH_TOKEN=$(${botTokenCommand}) ` : ''
 
 phase('Prepare')
 const context = await agent(`Prepare a read-only review of PR #${prNumber} in ${cwd}.
@@ -125,7 +129,12 @@ checks.push(...(triage?.additionalChecks || []))
 
 phase('Publish')
 const published = await agent(`Publish PR #${prNumber} through ${github}; read it fully.
-Use node "${helper}" publish PLAN.json. Temporary JSON is disposable; GitHub is durable.
+Use ${publishPrefix}node "${helper}" publish PLAN.json — run it exactly with that prefix, in one
+command, so the token is substituted per invocation and never assigned, echoed or written to disk.
+${botTokenCommand
+  ? 'That prefix publishes this round under a machine identity chosen by the caller. It applies ONLY to publish; snapshot and every read stay on your own gh auth. If the prefixed command fails to authenticate, report published:false with that error — never fall back to publishing under your own identity, because the resulting comments would be indistinguishable from a human\'s.'
+  : 'No bot identity was supplied, so publication runs under your own gh auth.'}
+Temporary JSON is disposable; GitHub is durable.
 Prepared snapshot: ${JSON.stringify(state)}
 Reviewed agreement: ${context.instructionText}
 Checks (preserve failures/gaps): ${JSON.stringify(checks)}
