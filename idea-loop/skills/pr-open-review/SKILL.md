@@ -31,9 +31,21 @@ Workflow({
     agreement: "<accepted task and source links>",
     pluginRoot: "${CLAUDE_PLUGIN_ROOT}",
     codexCompanion: "<existing sibling companion path>",
+    botTokenCommand: "<optional machine identity; see below>",
   },
 })
 ```
+
+`botTokenCommand` is optional and exists for an autonomous caller. Supply a shell command that
+prints a short-lived token to stdout and the publication step runs as
+`GH_TOKEN=$(<cmd>) node <helper> publish …`, so this round's findings and round summary carry a
+machine identity a reader can tell apart from a human's own comments. It re-points **writes
+only** — every read stays on the session's own gh auth — and the token is substituted per
+command, never assigned, echoed or written to disk. Omit it and publication runs under the
+caller's own identity, which stays the right default whenever a human is present. A caller that
+supplies it owns that credential; this workflow never mints one, and it never falls back to the
+session identity when the supplied command fails — a silent fallback would produce exactly the
+comments the parameter exists to distinguish.
 
 The workflow pushes, creates/reuses the PR, prepares a pinned review, verifies findings and
 publishes the current explanation and review threads on GitHub. Await its completion

@@ -35,6 +35,7 @@ Workflow({
     feedback: "<agreed fix direction, including accepted scope changes>",
     pluginRoot: "${CLAUDE_PLUGIN_ROOT}",
     codexCompanion: "<existing sibling companion path>",
+    botTokenCommand: "<optional machine identity; see pr-open-review>",
   },
 })
 ```
