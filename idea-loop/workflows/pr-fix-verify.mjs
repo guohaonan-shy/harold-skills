@@ -1,7 +1,7 @@
 export const meta = {
   name: 'pr-fix-verify',
   description: 'Fix agreed GitHub findings, independently repeat their verification, then update original threads and PR explanation',
-  whenToUse: 'Only after the user invokes /idea-loop:pr-fix-verify with agreed findings and direction; never triggered by comments, pushes or another round finishing.',
+  whenToUse: 'On an explicit request naming the findings and the fix direction — from the user via /idea-loop:pr-fix-verify, or from a caller. One invocation is one round; a comment, a push or a previous round finishing is not by itself a trigger.',
   phases: [{ title: 'Read GitHub' }, { title: 'Fix and test' }, { title: 'Verify original failures' }, { title: 'Review and publish' }],
 }
 

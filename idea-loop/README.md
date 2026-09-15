@@ -11,7 +11,7 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
-| `/idea-loop:implement` | Build | One ticket → one commit, in a fresh session, TDD at the seams the spec already agreed |
+| `/idea-loop:implement` | Build | One ticket → one commit, in a context holding nothing but that ticket, TDD at the seams the spec already agreed |
 | `/idea-loop:pr-open-review` | Review · round 1 | Pushes committed work, explains it with examples/Mermaid, reviews and publishes GitHub threads. |
 | `/idea-loop:pr-fix-verify` | Review · round N+1 | Fixes selected GitHub findings, repeats original verification, updates threads and PR explanation. |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
@@ -32,16 +32,22 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `to-spec`, `to-ticket` | `grill`, `implement`, `pr-open-review`, `pr-fix-verify`, `dreaming` |
+| `to-spec`, `to-ticket`, `implement`, `pr-open-review`, `pr-fix-verify` | `grill`, `dreaming` |
 
 `grill` is an interview — it only means something when a human starts it. `dreaming`
-proposes destructive disposals. `implement` requires a fresh context window, and
-clearing context is something only the human can do, so a self-invoking `implement`
-would break its own first precondition.
+proposes destructive disposals.
+
+The execution three were human-only until the caller-dispatch model landed: `implement`
+requires a context holding nothing but the one ticket, and `/clear` is a human action.
+Dispatching a fresh agent satisfies that precondition too — more strictly, in fact — so the
+lock came off. What the lock was protecting did not: the ticket must still be self-contained
+(no file paths, no code snippets, behaviour not procedure), and `implement` must still **stop
+and report** when a precondition turns out not to hold rather than guessing its way onward.
+See `to-ticket` §6 for where each of the original two reasons now lives.
 
 ### The review loop
 
-Start each round yourself in Claude Code:
+Start each round in Claude Code:
 
 ```text
 /idea-loop:pr-open-review
@@ -50,9 +56,10 @@ Start each round yourself in Claude Code:
 
 These commands launch local host `Workflow` scripts, not GitHub Actions. Running `gh pr create`
 alone only opens a PR; it does not start a review. `pr-open-review` can reuse that existing PR.
-After implementation or a review round, stop and wait for the next manual command. Both review
-skills set `disable-model-invocation: true`; no PR/push hook or automatic skill handoff is wired.
-One command still runs its complete review/fix/verification/publication sequence once started.
+A caller may start either round instead of you, but the trigger is always an explicit request:
+no PR/push hook is wired, and neither skill starts the next round by itself — the round budget
+belongs to whoever called it. One command still runs its complete
+review/fix/verification/publication sequence once started.
 
 Both dispatchers call `pr-review-round`: pin base/head and accepted scope, investigate
 three axes, independently verify and deduplicate findings, then publish on GitHub.
