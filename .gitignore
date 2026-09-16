@@ -10,3 +10,6 @@
 # (evals/baseline/benchmark.json + per-cell grading.json) live in the repo; the full
 # run directories it grades stay under /tmp (see idea-loop/evals/README.md).
 eval-fixtures/
+
+# Claude Code worktrees (local scratch)
+.claude/worktrees/
