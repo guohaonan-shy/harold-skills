@@ -4,7 +4,7 @@ source_type: web
 captured: 2026-09-11
 title: Lenny's Newsletter —— How to turn your AI into a world-class designer（Anshu Chimala）
 tags: [design-workflow, critic-loop, seed-strings, asset-generation]
-related: ["[[design-loop-v2]]", "[[2026-09-11-design-loop-prototype-critic]]"]
+related: ["[[0002-design-loop-v2-imagine-refine]]", "[[2026-09-11-design-loop-prototype-critic]]"]
 ---
 
 > 来源：https://www.lennysnewsletter.com/p/how-to-turn-your-ai-into-a-world 。抓取于 2026-09-11。作者 Anshu Chimala，前 Apple 设计师/工程师。文章后半段（Technique 7 "Remove AI tells"）在付费墙后，未抓到。以下是忠实摘录，非本仓库观点。

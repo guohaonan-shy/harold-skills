@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-08-28
 title: grill —— 把 design 工作流迁入 harold-skills 并接入 idea-loop
 tags: [design-workflow, idea-loop, design-plugin, plugin-migration]
-related: ["[[design-plugin-idea-loop-integration]]"]
+related: ["[[0001-design-workflow-into-harold-skills]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现，取证过程/工具调用/中间推演略去。外部产物留链接不复制正文。末尾一张「本轮决议」表。

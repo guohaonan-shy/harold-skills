@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-09-11
 title: grill —— 设计工作流 v2：prototype 进 grill、design 独立成阶段、评委收敛环
 tags: [design-workflow, idea-loop, design-plugin, prototype, critic-loop]
-related: ["[[design-loop-v2]]", "[[2026-09-11-aihero-prototype-skill]]", "[[2026-09-11-lenny-ai-world-class-designer]]"]
+related: ["[[0002-design-loop-v2-imagine-refine]]", "[[2026-09-11-aihero-prototype-skill]]", "[[2026-09-11-lenny-ai-world-class-designer]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现，取证过程/工具调用/中间推演略去。外部产物留链接不复制正文。末尾一张「本轮决议」表。

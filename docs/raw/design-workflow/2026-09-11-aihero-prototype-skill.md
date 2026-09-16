@@ -4,7 +4,7 @@ source_type: web
 captured: 2026-09-11
 title: aihero.dev —— /prototype skill（Matt Pocock）
 tags: [design-workflow, prototype, idea-loop]
-related: ["[[design-loop-v2]]", "[[2026-09-11-design-loop-prototype-critic]]"]
+related: ["[[0002-design-loop-v2-imagine-refine]]", "[[2026-09-11-design-loop-prototype-critic]]"]
 ---
 
 > 来源：https://www.aihero.dev/skills-prototype 与 https://www.aihero.dev/skills-wayfinder（后者只取与 prototype 相关的部分）。抓取于 2026-09-11。以下是页面内容的忠实摘录，非本仓库观点。
