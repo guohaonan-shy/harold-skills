@@ -1,7 +1,6 @@
 ---
 name: implement
 description: 实现一张已经定好的 ticket。不重开方案，只把它变成一个 commit。
-disable-model-invocation: true
 ---
 
 # Implement
@@ -12,15 +11,17 @@ disable-model-invocation: true
 
 > 先读一次 `../../references/wiki-conventions.md`（目录与状态约定）和 `../../references/tdd.md`（循环的规矩、seam、mock 边界）。
 
-## 一次一张 ticket，一个全新会话
+## 一次一张 ticket，一个只装着它的上下文
 
-节奏是 `/clear` → 做这一张 → commit → `/clear`。
+一次调用做一张，做完就停。人的节奏是 `/clear` → 做这一张 → commit → `/clear`；派出来的执行方是一张 ticket = 一个隔离工作区 = 一次调用，做完交还。两条路满足的是同一条前置——**动手的这个上下文里只有这一张 ticket**。
 
 > **出处，以及一处上游的自相矛盾。** 这条节奏来自上游作者的文章（`aihero.dev/skills-implement`：「clear context, implement one ticket, commit, clear again」、「One run covers one ticket」，以及被直接问到能否一次指向全部 ticket 或并行跑几个时的回答「One invocation, one ticket」），**上游的 `SKILL.md` 本身一个字都没写**。而上游那份 description 写的是「a spec or **set of tickets**」—— 复数，与文章相反。本 skill 取文章那一边，并把约束写进正文，因为约束住在会被加载的文件里才起作用。
 >
-> **也是本 skill 对模型不可见的原因**（`disable-model-invocation`，与上游一致）：`/clear` 是人的动作，模型清不了自己的上下文，所以它无法满足上面那条前置。
+> **这条前置有两种满足方式，本 skill 早先只认其中一种。** `/clear` 是人的动作，模型清不了自己的上下文——所以它曾经对模型不可见（`disable-model-invocation`）。但派一个新的执行方同样得到一个只装着这一张 ticket 的上下文，而且更干净：连"上一张做了什么"都不在里面。**放开的是"谁能调"，不是这条前置本身**——无论哪条路，带着一屁股无关上下文来做这张 ticket 都仍然是错的。
 
 拿起 ticket 的这个会话**从没见过那份 spec**——这不是缺陷，是设计：ticket 的尺寸约束（塞得进一个全新上下文窗口）和那几条禁令（禁文件路径、禁代码片段、描述行为不描述过程）都是为此。所以**照 ticket 说的做，不要去把整份 spec 读回来"补充理解"**——真缺了什么，那是 ticket 写得不够，回去补 ticket。
+
+**前提不成立就停。** 撞到 ticket 没交代、而且不是查一下代码就能定的东西（"这个边界情况算不算 in scope"、"ticket 描述的现状跟代码对不上"），**停下来把缺的是什么说清楚再交还**——人在就问人，是被派来的就回报给调用方。不要自己拍一个往下做：这一条是执行方替代不了人在场追问的唯一方式，也是"一张 ticket 一次调用"能被安全自动派发的前提。
 
 例外只有一个：**spec 的 §5 测试决策要读**，它说明这一刀该用哪种仪器验（见下）。
 
@@ -61,9 +62,9 @@ disable-model-invocation: true
 2. **再 commit**，把勾好的 ticket 一起带上。一个 commit 对应一个完整问题——别把无关改动混进来，也别把一个问题拆碎。
 
 > 顺序不能反。先 commit 再勾框，工作区就留着一份未提交的 ticket 改动；等这批做完交给 `idea-loop:pr-open-review` 时，它的脏树网关会直接把你拦下来。
-3. **还有 ticket 没做就回到第一步**（`/clear` → 下一张）。**这一批做完了**，交给 `/idea-loop:pr-open-review` —— 它推分支、开 PR、跑三轴 review。
+3. **还有 ticket 没做就回到第一步**（人 `/clear` 接下一张；执行方交还后由派它的那一方派下一张）。**这一批做完了就停下**，报告提交和验证结果。下一环是 `idea-loop:pr-open-review`（推分支、创建或复用 PR、跑三轴 review），由人调或由调用方接着调都行——但**不由本 skill 自己往下调**，链条的编排权在调用方手里；也不要安装 `gh pr` 后自动触发的 hook。
 
-> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR（`/idea-loop:pr-fix-verify`），一份 artifact 记录全部轮次。不要一张 ticket 开一个 PR。
+> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR（`/idea-loop:pr-fix-verify`）；GitHub PR 描述、每轮评论和原问题线程记录讲解、证据与处置，不再使用独立 artifact。不要一张 ticket 开一个 PR。
 >
 > **本地 diff 不单独 review** —— 三轴 review 是它的严格超集，中间只隔一次 push。
 

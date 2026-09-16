@@ -14,9 +14,9 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders variants at the lowest fidelity that tells them apart, and ships ONE direction note back into the spec — no critic, no scoring, no fidelity bump |
 | `/idea-loop:uiux-refine` | Design · converge | Rebuilds the canvas from the direction note alone, converges it through a two-model critic/executor loop, then runs a subtraction pass and an AI-tells pass, and freezes on the human's signature |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
-| `/idea-loop:implement` | Build | One ticket → one commit, in a fresh session, TDD at the seams the spec already agreed |
-| `/idea-loop:pr-open-review` | Review · round 1 | Pushes the branch, opens the PR, runs the three-axis round. **No browser.** |
-| `/idea-loop:pr-fix-verify` | Review · round N+1 | Lands an agreed round of fixes as one commit, then re-reviews. **No browser.** |
+| `/idea-loop:implement` | Build | One ticket → one commit, in a context holding nothing but that ticket, TDD at the seams the spec already agreed |
+| `/idea-loop:pr-open-review` | Review · round 1 | Pushes committed work, explains it with examples/Mermaid, reviews and publishes GitHub threads. |
+| `/idea-loop:pr-fix-verify` | Review · round N+1 | Fixes selected GitHub findings, repeats original verification, updates threads and PR explanation. |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -40,7 +40,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `to-ticket`, `pr-open-review`, `pr-fix-verify` | `grill`, `uiux-imagine`, `uiux-refine`, `implement`, `dreaming` |
+| `prototype`, `to-spec`, `to-ticket`, `implement`, `pr-open-review`, `pr-fix-verify` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
@@ -48,32 +48,59 @@ leaving the session, the moment a frontier question cannot be settled in prose.
 `uiux-imagine` is the same shape one stage later: it steers on a human's directional
 reaction each round, and a human is the one who declares the direction done.
 `uiux-refine` stops on a human at every exit it has — a direction-level finding, a
-plateau, the sign-off — and, like `implement`, wants a fresh window so it rebuilds from
-the direction note instead of continuing the diverge session it cannot see. `dreaming`
-proposes destructive disposals. `implement` requires a fresh context window, and
-clearing context is something only the human can do, so a self-invoking `implement`
-would break its own first precondition.
+plateau, the sign-off — and wants a fresh window so it rebuilds from the direction
+note instead of continuing the diverge session it cannot see. `dreaming` proposes
+destructive disposals.
+
+The execution three were human-only until the caller-dispatch model landed: `implement`
+requires a context holding nothing but the one ticket, and `/clear` is a human action.
+Dispatching a fresh agent satisfies that precondition too — more strictly, in fact — so the
+lock came off. What the lock was protecting did not: the ticket must still be self-contained
+(no file paths, no code snippets, behaviour not procedure), and `implement` must still **stop
+and report** when a precondition turns out not to hold rather than guessing its way onward.
+See `to-ticket` §6 for where each of the original two reasons now lives.
 
 ### The review loop
 
-Both dispatchers call the shared `pr-review-round` workflow (`workflows/`),
-which reviews on three axes **in parallel and never merges or reranks
-them** — a change can pass one and fail another:
+Start each round in Claude Code:
+
+```text
+/idea-loop:pr-open-review
+/idea-loop:pr-fix-verify F-1 <agreed fix direction>
+```
+
+These commands launch local host `Workflow` scripts, not GitHub Actions. Running `gh pr create`
+alone only opens a PR; it does not start a review. `pr-open-review` can reuse that existing PR.
+A caller may start either round instead of you, but the trigger is always an explicit request:
+no PR/push hook is wired, and neither skill starts the next round by itself — the round budget
+belongs to whoever called it. One command still runs its complete
+review/fix/verification/publication sequence once started.
+
+Both dispatchers call `pr-review-round`: pin base/head and accepted scope, investigate
+three axes, independently verify and deduplicate findings, then publish on GitHub.
 
 | Axis | Asks | Blocks a merge? |
 |---|---|---|
-| **Correctness** | did this introduce a bug (codex adversarial) | ✅ yes |
-| **Spec** | is this what the ticket/spec actually asked for | ✅ yes |
-| **Standards** | does this follow this repo's documented conventions | ❌ **never** |
+| **Correctness** | Did this introduce/activate a supported-path defect? Normal Codex review. | By proven impact |
+| **Spec** | Does this satisfy the actual acceptance agreement and amendments? | By requirement/impact |
+| **Standards** | Does this violate an applicable written project rule? No generic smells. | By explicit rule/impact |
 
-Standards discovers whatever lint/typecheck this repo already has configured
-and runs it first (diff-scoped) — CI-enforced checks aren't re-reported, only
-what nothing else catches — and only then reviews what tooling cannot check —
-capped at 5 findings and at `medium` severity, so style never holds up a PR
-that works and does what was asked.
+Axes retain coverage status but the same defect gets one stable finding ID and thread.
+Tool diagnostics require baseline attribution; CI failures appear in checks rather than
+duplicate comments. Missing acceptance or required verification remains incomplete, not green.
 
-Output is one HTML triage page per PR, updated in place each round: the open
-correctness/spec blockers up top, everything else collapsed.
+The PR title/body explains the final behavior with examples and native Mermaid where useful.
+Each round has a short summary linking original problem threads; fixes reply there with
+independently reproduced before/after evidence before resolution. No HTML artifacts or required
+local history. Later rounds focus on fix deltas and affected callers; no automatic adversarial
+review. See `references/github-review.md` for the JSON publication contract and recovery behavior.
+
+`scripts/github-review.mjs` uses authenticated `gh api` (official GitHub REST/GraphQL). It
+paginates history, preserves IDs, detects changed base/head and description conflicts, and
+resumes partial publication without duplicating completed comments. It never approves/merges.
+Run `node --test idea-loop/scripts/*.test.mjs` manually from the repository root for the mocked
+GitHub and host-workflow tests. No GitHub Actions job is required or shipped for this loop.
+Real model quality and host Workflow execution require a live CC run.
 
 ## Tests
 
@@ -128,14 +155,9 @@ goes red three weeks later.
 
 ## Portability
 
-This plugin was built inside one project (Toeflair) and generalized out of
-it for reuse — `references/review-standards.md`'s 8-principle table is that
-origin project's own `CLAUDE.md` principles, kept as a working default; the
-axis is instructed to read *the current repo's own* `CLAUDE.md` first and
-only fall back to this table (then to Fowler's smell baseline) where the
-current repo hasn't documented something. Lint/typecheck tooling and any
-domain-specific standards docs are discovered from the current repo, not
-hardcoded. Cross-plugin file paths are threaded through as `pluginRoot`
+Project rules and verification tools come from the current repository's REVIEW.md,
+AGENTS.md and applicable documents/configuration. There is no inherited Toeflair/Fowler
+baseline. Cross-plugin paths are threaded through as `pluginRoot`
 (via `${CLAUDE_PLUGIN_ROOT}`, resolved in each dispatcher's own SKILL.md —
 Workflow scripts have no filesystem/env API of their own) rather than
 hardcoded, so this plugin should survive being copied to another project or
@@ -179,7 +201,10 @@ idea-loop/
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
-│   └── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
+│   ├── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
+│   ├── github-review.mjs             # official GitHub API publication and recovery
+│   ├── github-review.test.mjs        # state, threads, retries, stale-head tests
+│   └── review-workflows.test.mjs     # mocked host orchestration tests
 ├── evals/                            # the pinned baseline (see evals/README.md)
 │   ├── evals.json                    # six cells: the three skills, the two seams around them, one static repo check
 │   ├── assert.mjs                    # the assertions — shape only, no model, no taste
@@ -190,8 +215,9 @@ idea-loop/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
-    ├── review-standards.md           # Standards axis: this repo's own principles + Fowler baseline
-    ├── review-artifact-template.html # the PR triage page's approved shape
+    ├── review-standards.md           # project-rule admission, evidence and severity
+    ├── review-entry.md               # dispatcher prerequisites and result handling
+    ├── github-review.md              # native Markdown, publication schema and threads
     └── design/                       # the design side (see below)
 ```
 
