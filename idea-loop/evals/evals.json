@@ -1,0 +1,83 @@
+{
+  "baseline": "toeflair-practice-history",
+  "case": "case/",
+  "note": "prompt 里那份「人的回答」是脚本化的人。这条环每一段都停在人身上（发散的方向性 note、收敛的签字），没有它，无人值守的一跑会停在第一个闸门。脚本化的人给的只是方向性反应，不是答案——它不替模型做设计。",
+  "evals": [
+    {
+      "eval_id": 0,
+      "eval_name": "prototype-state-model",
+      "skill": "idea-loop:prototype",
+      "seed": [],
+      "prompt": "/idea-loop:prototype 这是一次无人值守的 baseline 跑。你是在一场 `grill` 访谈中途被叫起来的：有一条 frontier 问题用文字定不了，要一次性原型取证。\n\n问题（**原样使用，一个字都不要改写**）：一次 attempt 从开始到出分，中间有哪些状态；草稿算不算一次 attempt。\n\n背景读项目根的 `PRODUCT.md`，尤其最后那一节「这次 baseline 要做的那个 surface」。raw 的 topic 桶用 `practice-history`。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要把控制权交回给人，就读下一条：\n\n1. 「两个变体都做出来，我点。」\n2. （这是裁决）「选 B。草稿占编号的话，我在一道题上开三次又关三次，历史里就多三条空记录。学生看到 attempt #4 但只有一次真的答过，这个数字就废了。attempt 编号得是『我真的交过几次』。」\n3. 「没有别的了，落盘吧。」\n\n落盘照 skill 自己的规定走。",
+      "assertions": [
+        "prototype-html-in-raw-assets",
+        "prototype-record-in-raw",
+        "prototype-question-verbatim",
+        "prototype-verdict-recorded"
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "to-spec-ui-freeze",
+      "skill": "idea-loop:to-spec",
+      "seed": ["raw", "raw-index"],
+      "files": ["grill-transcript.md"],
+      "prompt": "/idea-loop:to-spec 这是一次无人值守的 baseline 跑。刚跑完的那场 `grill` 访谈的完整对话逐字存在项目根的 `grill-transcript.md` 里——**把它当作「刚才这场对话」**，不要再访谈。\n\n访谈中途调过一次 `prototype`，它的证据已经在 raw 桶里（`docs/raw/practice-history/`）。topic 桶沿用 `practice-history`。spec 的 slug 用 `practice-history-surface`。\n\n**人不在场，不要停下来提问。** 需要人拍板的地方按访谈里已经落定的答案走；访谈里没答过的，按 skill 自己的规矩落，并在收工报告里说一句你是怎么落的。",
+      "assertions": [
+        "ui-spec-awaits-freeze",
+        "spec-points-at-prototype",
+        "raw-transcript-landed",
+        "indexes-refreshed"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "to-ticket-unfrozen-gate",
+      "skill": "idea-loop:to-ticket",
+      "seed": ["raw", "raw-index", "spec-awaiting-freeze", "spec-index"],
+      "prompt": "/idea-loop:to-ticket 这是一次无人值守的 baseline 跑。要切的 spec 是 `docs/spec/practice-history-surface.md`。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人：**\n\n1. （看完切法提案）「这么切可以，开始吧。」\n2. （被问还有没有要调的）「没有了。」\n\n照 skill 自己的规矩切、照它自己的规矩填每张票的字段。",
+      "assertions": [
+        "unfrozen-ui-ticket-marked-blocked",
+        "non-ui-ticket-not-blocked",
+        "tickets-carry-no-frontmatter"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "imagine-direction-note",
+      "skill": "idea-loop:uiux-imagine",
+      "seed": ["raw", "raw-index", "spec-awaiting-freeze", "spec-index"],
+      "prompt": "/idea-loop:uiux-imagine 这是一次无人值守的 baseline 跑。spec 是 `docs/spec/practice-history-surface.md`，状态 `等设计冻结`。项目根有 `DESIGN.md` 与 `PRODUCT.md`。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要人给反应，就读下一条：\n\n1. （看完第一批想法清单）「渲染这几个：把同一道题的几次收在一起的那个、把分数画成趋势的那个、按能力维度重排的那个，再加一个最保守的——流水不动只加状态色。」\n2. （看完第一轮变种）「趋势那个不行：折线要占一整行宽度才看得清，手机上它会把题目标题挤到第二行；而且我这几次维度不一样的时候，那条线是假的。按维度重排那个也不行，那就变成报告页了，历史页不该抢它的活。流水加状态色那个，问题 1 一点没解决，只是把问题 2 补了。」\n3. （看完第二轮）「收在一起那个对。我要看的是上次那条评语这次还在不在，不是 3.5 变 4.0。往这个方向再推一格。」\n4. 「题组卡之间的间距看着有点散，卡跟卡像没关系。」\n5. 「状态那个 pill 别做得比分数还显眼。」\n6. 「折叠起来的那几行，手机上一行放不下，得想想截断哪一段。」\n7. 「重试按钮不要用主色，它不是这一页的主操作。」\n8. （这是收工宣布）「方向没有要补的了。」\n\n注意第 4–7 条是什么性质的话，按 skill 的纪律处理它们。收工照 skill 自己的规矩走。",
+      "assertions": [
+        "direction-note-passes-shape-check",
+        "imagine-leaves-status-untouched",
+        "imagine-ships-only-the-note",
+        "imagine-keeps-the-language-altitude-shut"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "refine-freeze",
+      "skill": "idea-loop:uiux-refine",
+      "seed": ["raw", "raw-index", "spec-with-direction", "spec-index"],
+      "prompt": "/idea-loop:uiux-refine 这是一次无人值守的 baseline 跑，而且**是一个全新会话**——你没见过发散那一段。spec 是 `docs/spec/practice-history-surface.md`，§4 下的「设计方向」就是那封信。项目根有 `DESIGN.md` 与 `PRODUCT.md`。surface 名用 `practice-history`。\n\n浏览器是本 plugin 自带的 headless playwright MCP。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要把控制权交回给人，就读下一条：\n\n1. （摆出画布与 ledger 求签字）「组头那行的题型标签和状态 pill 挨得太近，读起来像一个东西。改完我再看。」\n2. （再摆一次）「可以了，签字。冻结吧。」\n\n如果环停在 plateau 或方向级 finding 上，就如实停下、把停的理由写进产物，**不要自己把方向拧过去**——那一跑就照停下来的样子存档。收工照 skill 自己的规矩走。",
+      "assertions": [
+        "canvas-lands-in-design-preview",
+        "canvas-lint-p0-clean",
+        "freeze-lands-canvas-and-ledger-in-raw",
+        "freeze-lands-matrix-screenshots",
+        "freeze-summary-replaces-direction-note",
+        "freeze-summary-carries-five-items",
+        "freeze-flips-spec-to-in-flight"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "repo-static",
+      "skill": null,
+      "seed": [],
+      "prompt": null,
+      "assertions": ["no-cross-plugin-invocation"]
+    }
+  ]
+}

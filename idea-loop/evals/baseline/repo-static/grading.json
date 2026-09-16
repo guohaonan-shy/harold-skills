@@ -1,0 +1,10 @@
+{
+  "eval_name": "repo-static",
+  "expectations": [
+    {
+      "text": "全仓无跨 plugin 的 skill 调用——设计侧整个住在 idea-loop 里",
+      "passed": true,
+      "evidence": "扫了 112 个 plugin 内的文件，零命中"
+    }
+  ]
+}

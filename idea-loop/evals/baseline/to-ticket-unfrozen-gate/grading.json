@@ -1,0 +1,20 @@
+{
+  "eval_name": "to-ticket-unfrozen-gate",
+  "expectations": [
+    {
+      "text": "仍未冻结的 UI ticket，「设计冻结」字段落 ⛔ 未冻结",
+      "passed": true,
+      "evidence": "4/7 张落了 ⛔：docs/spec/tickets/04-history-page-question-groups.md, docs/spec/tickets/05-score-cell-dimension-and-status.md, docs/spec/tickets/06-retry-in-place-entry.md, docs/spec/tickets/07-draft-resume-from-history.md"
+    },
+    {
+      "text": "非 UI 的 ticket 不被这道闸门按住（字段写「不涉及 UI」）",
+      "passed": true,
+      "evidence": "3 张写了「不涉及 UI」：docs/spec/tickets/01-attempt-number-on-submit.md, docs/spec/tickets/02-grading-retry-action.md, docs/spec/tickets/03-history-grouped-by-question-api.md"
+    },
+    {
+      "text": "ticket 不带 frontmatter（它是临时凭据，dreaming 按目录扫）",
+      "passed": true,
+      "evidence": "7 张票都没带"
+    }
+  ]
+}

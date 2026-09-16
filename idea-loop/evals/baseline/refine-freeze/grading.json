@@ -1,0 +1,40 @@
+{
+  "eval_name": "refine-freeze",
+  "expectations": [
+    {
+      "text": "画布落在 design-preview/ 下（落在别处等于把 lint hook 悄悄关掉）",
+      "passed": true,
+      "evidence": "design-preview/practice-history.html"
+    },
+    {
+      "text": "画布过确定性 lint，P0 清零",
+      "passed": true,
+      "evidence": "design-preview/practice-history.html: 0 条 P0（P1 0 / P2 0）"
+    },
+    {
+      "text": "冻结进 raw 桶：画布 HTML 与 ledger 全文都在，ledger 不留在 /tmp",
+      "passed": true,
+      "evidence": "docs/raw/practice-history/2026-09-14-practice-history-design-freeze.md + docs/raw/practice-history/assets/attempt-state-model.html, docs/raw/practice-history/assets/practice-history-canvas.html，ledger 102 行"
+    },
+    {
+      "text": "验收矩阵每格的截图跟画布同桶（按格名）",
+      "passed": true,
+      "evidence": "5 张：desktop-en-mixed.png, desktop-zh-empty.png, desktop-zh-mixed.png, mobile-zh-long.png, mobile-zh-mixed.png"
+    },
+    {
+      "text": "「冻结摘要」取代「设计方向」——不是并排（留着它下游会看到两份真值）",
+      "passed": true,
+      "evidence": "docs/spec/practice-history-surface.md §4 只剩冻结摘要"
+    },
+    {
+      "text": "冻结摘要固定五样都在（画布指针 / 矩阵 / mismatch 阈值 / ledger 摘要 / 状态矩阵与数据契约变更）",
+      "passed": true,
+      "evidence": "五样齐"
+    },
+    {
+      "text": "冻结那一刻 spec 翻成「在飞」——这一翻就是闸门本身",
+      "passed": true,
+      "evidence": "docs/spec/practice-history-surface.md: 在飞"
+    }
+  ]
+}

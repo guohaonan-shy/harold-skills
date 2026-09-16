@@ -41,10 +41,12 @@ description: 实现一张已经定好的 ticket。不重开方案，只把它变
 | API 契约 | TDD API 测试（走 ASGI） |
 | DB schema / 迁移 / 事务语义 | **真 DB** 测试 |
 | LLM 输出质量 | eval（`backend/evals/`） |
-| 视觉正确性 | `Skill(design:design-port)`（跨 plugin 调用；以 design-preview HTML 为真值，线上路由为待验证的候选） |
+| 视觉正确性 | **UI 实现环**（`../../references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`；以冻结的 HTML 画布为真值，你的实现为待验证的候选） |
 | 端到端流程 | `qa:*` |
 
 循环的规矩、反模式、mock 边界在 `../../references/tdd.md`。**新写的测试守「只在系统边界 mock」**——存量不守，别照抄存量。
+
+**UI ticket 多一道环**，形状仍是红绿，裁判是脚本不是 agent：读 `../../references/ui-implementation-standard.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后按验收矩阵跑测量脚本——它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判 plateau**（同一批 finding 两轮不变）。plateau 就停下交人，并说清残留差异是实现问题还是设计决策；后者回 `uiux-refine` 弯一下并记 ledger，**不在这里硬磨**。这一环在 TDD 循环里主动跑，**不**挂在每次写文件的 hook 上（要 dev server、秒级、半成品假红）；收工那道检查只查「最后一轮是绿的」。
 
 过程中：
 
