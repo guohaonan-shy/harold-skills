@@ -50,10 +50,9 @@ description: 实现一张已经定好的 ticket。不重开方案，只把它变
 
 过程中：
 
-- **常跑 typecheck 和单个测试文件**（快反馈）。
-  - 后端 `uv run pytest tests/test_x.py -q` · lint `uv run ruff check app/`
-  - 前端 `npx vitest run src/…/x.test.tsx` · 类型 `npx -p typescript@5 tsc --noEmit`
-- **全量套件在最后跑一次**（后端 `uv run pytest tests/ -q`，前端 `npm test`）。
+- **常跑 typecheck 和单个测试文件**（快反馈）。命令用目标仓库 `REVIEW.md`（Verification paths）与 CI 声明的那几条，
+  不要凭记忆写——review 那一环跑的也是同一批命令。
+- **全量套件在最后跑一次**，同样用仓库声明的命令。
 - ticket 的**「选中的存量回归」**那节列的用例，也要跑。
 
 ## 收工
@@ -61,13 +60,13 @@ description: 实现一张已经定好的 ticket。不重开方案，只把它变
 1. **先把 ticket 的验收标准逐条勾上**（`- [x]`），但**不要删掉这个文件**。
 2. **再 commit**，把勾好的 ticket 一起带上。一个 commit 对应一个完整问题——别把无关改动混进来，也别把一个问题拆碎。
 
-> 顺序不能反。先 commit 再勾框，工作区就留着一份未提交的 ticket 改动；等这批做完交给 `idea-loop:pr-open-review` 时，它的脏树网关会直接把你拦下来。
-3. **还有 ticket 没做就回到第一步**（人 `/clear` 接下一张；执行方交还后由派它的那一方派下一张）。**这一批做完了就停下**，报告提交和验证结果。下一环是 `idea-loop:pr-open-review`（推分支、创建或复用 PR、跑三轴 review），由人调或由调用方接着调都行——但**不由本 skill 自己往下调**，链条的编排权在调用方手里；也不要安装 `gh pr` 后自动触发的 hook。
+> 顺序不能反。先 commit 再勾框，工作区就留着一份未提交的 ticket 改动；等这批做完交给 `idea-loop:pr-review` 时，它的脏树网关会直接把你拦下来。
+3. **还有 ticket 没做就回到第一步**（人 `/clear` 接下一张；执行方交还后由派它的那一方派下一张）。**这一批做完了就停下**，报告提交和验证结果。下一环是 `idea-loop:pr-review`（推分支、创建或复用 PR，自动跑至多两轮 review → 修复 → 复验），由人调或由调用方接着调都行——但**不由本 skill 自己往下调**，链条的编排权在调用方手里；也不要安装 `gh pr` 后自动触发的 hook。
 
-> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR（`/idea-loop:pr-fix-verify`）；GitHub PR 描述、每轮评论和原问题线程记录讲解、证据与处置，不再使用独立 artifact。不要一张 ticket 开一个 PR。
+> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR；PR 描述与每轮一条的轮次帖记录讲解、证据与处置，不再使用独立 artifact。不要一张 ticket 开一个 PR。
 >
 > **本地 diff 不单独 review** —— 三轴 review 是它的严格超集，中间只隔一次 push。
 
 > ⚠️ ticket **活到合并为止**，不是活到 commit 为止。review 的 Spec 轴在 PR 阶段会去读 `docs/spec/tickets/`，那些验收 checkbox 是它能拿到的**最锋利的契约**——commit 后就删，等于在它最需要的前一刻把输入抽走。删除归 `to-ticket` §7（合并后），漏网的由 `dreaming` 按「PR 已 MERGED」扫出来。
 
-**不做**：不开 PR（那是 `idea-loop:pr-open-review`）、不建分支、不改 spec 的 scope、**不删 ticket**。
+**不做**：不开 PR（那是 `idea-loop:pr-review`）、不建分支、不改 spec 的 scope、**不删 ticket**。
