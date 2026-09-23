@@ -1,209 +1,195 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { marker, parseMarker, publish, readiness, snapshot } from './github-review.mjs'
+import { generateKeyPairSync, verify } from 'node:crypto'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { appConfig, appJwt, appToken, marker, parseMarker, publish, readiness, snapshot, validatePlan } from './github-review.mjs'
 
-const head = 'a'.repeat(40)
+const reviewed = 'a'.repeat(40)
 const base = 'b'.repeat(40)
-const next = 'c'.repeat(40)
+const fixed = 'c'.repeat(40)
+const mergeBase = 'd'.repeat(40)
 const clone = value => structuredClone(value)
-function checks() {
-  return ['correctness', 'standards', 'spec', 'verification'].map(name => ({ name, required: true, status: 'passed', evidence: 'Executed the relevant check at the reviewed SHA' }))
+
+function checks(overrides = {}) {
+  return ['correctness', 'standards', 'spec', 'verification'].map(name => ({ name, required: true, status: 'passed',
+    evidence: 'Executed at the reviewed SHA', ...(overrides[name] || {}) }))
 }
 function finding(overrides = {}) {
-  return { key: 'recording|idempotency|duplicate-request', title: 'Repeated request creates duplicate recording',
-    priority: 'P1', axes: ['correctness', 'spec'], blocksMerge: true, status: 'confirmed',
-    body: 'Input: repeat request 42. Expected one row; observed two. Reproducer: pytest tests/test_retry.py.',
-    location: { path: 'app/retry.py', line: 12, side: 'RIGHT' }, ...overrides }
+  return { key: 'recording|duplicate-request', title: '重复提交会生成两条录音记录', priority: 'P1',
+    axes: ['correctness'], blocksMerge: true, introduced: true, status: 'resolved',
+    impact: '学生重复点提交时，历史页出现两条相同的录音。',
+    repro: ['连续两次提交同一段录音', '打开历史页，看到两条记录'],
+    fix: '提交接口按 request_id 去重', evidence: 'pytest tests/test_retry.py::test_duplicate -> 2 rows',
+    instrument: 'unit-test', reproducer: 'uv run pytest tests/test_retry.py -k duplicate',
+    location: { path: 'app/retry.py', line: 12 },
+    verification: { result: 'passed', instrument: 'unit-test', beforeSha: reviewed, headSha: fixed,
+      procedure: 'uv run pytest tests/test_retry.py -k duplicate', before: '2 rows, test failed', after: '1 row, test passed',
+      testRef: 'tests/test_retry.py::test_duplicate', regressions: 'tests/test_retry.py 全部通过' }, ...overrides }
 }
 function plan(overrides = {}) {
-  return { repo: 'owner/repo', pr: 7, headSha: head, baseSha: base,
-    expectedBody: 'Original human context', expectedTitle: 'Original title',
-    body: 'Current change with examples\n\n```mermaid\nflowchart LR\nA-->B\n```', title: 'Current title',
-    summary: '本轮核对了重复请求的数据库结果。', checks: checks(), updates: [finding()], ...overrides }
+  return { repo: 'owner/repo', pr: 7, round: 1, reviewedSha: reviewed, headSha: fixed, baseSha: base, mergeBaseSha: mergeBase,
+    summary: '本轮发现 1 条本次引入的问题，已修复并验证。', checks: checks(), findings: [finding()], ...overrides }
 }
-// Stateful API fake exercises the real publisher and recovery, not generated prompt wording.
-function github() {
-  const state = { pull: { head: { sha: head, ref: 'fix/retry' }, base: { sha: base, ref: 'main' },
-    state: 'open', body: 'Original human context', title: 'Original title', html_url: 'https://github.com/owner/repo/pull/7' },
-  conversation: [], inline: [], threads: [], calls: [], nextId: 1, fail: null }
-  const add = (list, data) => {
-    const id = state.nextId++
-    const value = { ...data, id, html_url: `https://github.com/owner/repo/pull/7#comment-${id}`,
-      created_at: new Date(id * 1000).toISOString() }
-    list.push(value)
-    return clone(value)
-  }
+// Stateful fake of the two REST endpoints the publisher uses.
+function github(head = fixed) {
+  const state = { pull: { head: { sha: head, ref: 'fix/retry' }, base: { sha: base, ref: 'main' }, state: 'open',
+    body: 'Human description', title: 'Fix retries', html_url: 'https://github.com/owner/repo/pull/7' },
+  conversation: [], inline: [], calls: [], nextId: 1 }
   const api = async (method, endpoint, data, paginate) => {
     state.calls.push({ method, endpoint, data: clone(data), paginate })
-    if (state.fail?.(method, endpoint, data)) throw new Error('Simulated API failure')
     if (method === 'GET' && endpoint === 'repos/owner/repo/pulls/7') return clone(state.pull)
     if (method === 'GET' && endpoint.includes('/issues/7/comments?')) return [clone(state.conversation.slice(0, 1)), clone(state.conversation.slice(1))]
-    if (method === 'GET' && endpoint.includes('/pulls/7/comments?')) return [clone(state.inline.slice(0, 1)), clone(state.inline.slice(1))]
-    if (endpoint === 'graphql' && data.query.startsWith('query')) {
-      const page = data.variables.cursor ? state.threads.slice(1) : state.threads.slice(0, 1)
-      return { data: { repository: { pullRequest: { reviewThreads: { nodes: clone(page),
-        pageInfo: { hasNextPage: !data.variables.cursor && state.threads.length > 1, endCursor: 'page2' } } } } } }
+    if (method === 'GET' && endpoint.includes('/pulls/7/comments?')) return [clone(state.inline)]
+    if (method === 'POST' && endpoint === 'repos/owner/repo/issues/7/comments') {
+      const id = state.nextId++
+      const comment = { ...data, id, html_url: `https://github.com/owner/repo/pull/7#issuecomment-${id}`, created_at: new Date(id * 1000).toISOString() }
+      state.conversation.push(comment)
+      return clone(comment)
     }
-    if (endpoint === 'graphql' && data.query.startsWith('mutation')) {
-      const thread = state.threads.find(t => t.id === data.variables.id)
-      assert.ok(thread, 'Must use GraphQL thread ID')
-      thread.isResolved = !data.query.includes('unresolveReviewThread')
-      return { data: { mutation: { thread: clone(thread) } } }
-    }
-    if (method === 'POST' && endpoint === 'repos/owner/repo/pulls/7/comments') {
-      const comment = add(state.inline, data)
-      state.threads.push({ id: `THREAD_${comment.id}`, isResolved: false, isOutdated: false,
-        comments: { nodes: [{ databaseId: comment.id }] } })
-      return comment
-    }
-    const reply = endpoint.match(/pulls\/7\/comments\/(\d+)\/replies$/)
-    if (method === 'POST' && reply) {
-      assert.ok(state.inline.some(c => c.id === Number(reply[1]) && !c.in_reply_to_id), 'Must reply to root')
-      return add(state.inline, { ...data, in_reply_to_id: Number(reply[1]) })
-    }
-    if (method === 'POST' && endpoint === 'repos/owner/repo/issues/7/comments') return add(state.conversation, data)
-    if (method === 'PATCH' && endpoint === 'repos/owner/repo/pulls/7') {
-      Object.assign(state.pull, data)
-      return clone(state.pull)
-    }
-    const comment = endpoint.match(/issues\/comments\/(\d+)$/)
-    if (method === 'PATCH' && comment) {
-      const target = state.conversation.find(c => c.id === Number(comment[1]))
+    const edit = endpoint.match(/issues\/comments\/(\d+)$/)
+    if (method === 'PATCH' && edit) {
+      const target = state.conversation.find(c => c.id === Number(edit[1]))
       Object.assign(target, data)
       return clone(target)
     }
     throw new Error(`Unexpected API operation: ${method} ${endpoint}`)
   }
+  api.identity = 'app'
   return { state, api }
 }
+const writes = state => state.calls.filter(c => c.method !== 'GET')
 
-test('publishes inline findings and one retry-safe round, with Markdown intact', async () => {
+test('publishes one round post with the fixed finding template and a recoverable marker', async () => {
   const { state, api } = github()
-  const p = plan({ summary: 'Literal `$(secret)` and "quotes"\n中文段落' })
-  const first = await publish(p, api)
-  const second = await publish(p, api)
-  assert.equal(first.mergeReady, false)
-  assert.equal(first.openBlockingCount, 1)
-  assert.equal(second.round, 1)
-  assert.equal(state.inline.length, 1)
-  assert.equal(state.conversation.length, 1)
-  assert.equal(state.pull.body, p.body)
-  assert.ok(state.conversation[0].body.includes(p.summary))
-  assert.deepEqual(parseMarker(state.conversation[0].body).checks, p.checks)
-})
-
-test('new head replies to original thread and resolves only with verification', async () => {
-  const { state, api } = github()
-  await publish(plan(), api)
-  state.pull.head.sha = next
-  const p = plan({ headSha: next, expectedBody: state.pull.body, expectedTitle: state.pull.title,
-    updates: [finding({ status: 'resolved', body: '独立复验：重复请求现在只有一行，正常请求仍成功。',
-      verification: { headSha: next, result: 'passed', procedure: 'pytest tests/test_retry.py', before: '2 rows', after: '1 row' } })] })
-  const result = await publish(p, api)
-  await publish(p, api)
-  assert.equal(result.round, 2)
+  const result = await publish(plan(), api)
+  assert.equal(writes(state).length, 1)
+  const body = state.conversation[0].body
+  assert.match(body, /^<!-- idea-loop-review /)
+  assert.match(body, /## Review 第 1 轮 · 审 aaaaaaa → 修复后 ccccccc/)
+  const order = ['**影响**', '**复现**', '**修法（已做）**', '**验证**', '<details><summary>证据']
+  assert.deepEqual(order.map(s => body.indexOf(s)).toSorted((a, b) => a - b), order.map(s => body.indexOf(s)))
+  assert.match(body, /1\. 连续两次提交同一段录音\n2\. 打开历史页/)
+  assert.match(body, /修复前 aaaaaaa：2 rows, test failed/)
+  assert.match(body, /blob\/c{40}\/app\/retry\.py#L12/)
   assert.equal(result.mergeReady, true)
-  assert.equal(state.inline.length, 2)
-  assert.equal(state.inline[1].in_reply_to_id, state.inline[0].id)
-  assert.equal(state.threads[0].isResolved, true)
-  const recovered = await snapshot('owner/repo', 7, api)
-  assert.equal(recovered.findings[0].id, 'F-1')
-  assert.equal(recovered.findings[0].status, 'resolved')
+  assert.equal(result.ids['recording|duplicate-request'], 'F-1')
+  const record = parseMarker(body)
+  assert.equal(record.kind, 'round-post')
+  assert.equal(record.findings[0].evidence, undefined, 'marker stays compact')
 })
 
-test('rejects unverified or stale verification before any write', async () => {
-  const { state, api } = github()
-  for (const verification of [undefined, { headSha: next, result: 'passed', procedure: 'test', before: 'bad', after: 'good' }]) {
-    await assert.rejects(publish(plan({ updates: [finding({ status: 'resolved', verification })] }), api), /Resolution requires/)
-  }
-  assert.equal(state.calls.length, 0)
-})
-
-test('retains omitted findings and prevents incomplete/no-spec from appearing green', async () => {
-  const { api } = github()
-  await publish(plan(), api)
-  const p = plan({ updates: [], checks: checks().map(c => c.name === 'spec' ? { ...c, status: 'incomplete', evidence: 'Missing acceptance agreement' } : c) })
-  const result = await publish(p, api)
-  assert.equal(result.openBlockingCount, 1)
-  assert.equal(result.mergeReady, false)
-  assert.equal(readiness([], p.checks).mergeReady, false)
-})
-
-test('rejects stale base/head and concurrent human description edits', async () => {
-  for (const change of [s => { s.pull.head.sha = next }, s => { s.pull.base.sha = next }, s => { s.pull.body = 'Human amendment' }]) {
-    const { state, api } = github()
-    change(state)
-    await assert.rejects(publish(plan(), api), /changed|edited/)
-    assert.equal(state.inline.length, 0)
-    assert.equal(state.conversation.length, 0)
-  }
-})
-
-test('recovers after reply succeeds but thread resolution fails', async () => {
+test('retrying the same round edits the same post instead of duplicating it', async () => {
   const { state, api } = github()
   await publish(plan(), api)
-  state.pull.head.sha = next
-  const p = plan({ headSha: next, updates: [finding({ status: 'dismissed', body: '完整调用链证明已有幂等保护。', dispositionEvidence: 'app/guard.py:24 checks the same key' })] })
-  state.fail = (method, endpoint, data) => endpoint === 'graphql' && data.query.startsWith('mutation')
-  await assert.rejects(publish(p, api), /Simulated/)
-  assert.equal(state.inline.length, 2)
-  state.fail = null
-  await publish(p, api)
-  assert.equal(state.inline.length, 2, 'Retry must not duplicate the posted reply')
-  assert.equal(state.threads[0].isResolved, true)
+  await publish(plan({ summary: '重试：补充了回归范围。' }), api)
+  assert.equal(state.conversation.length, 1)
+  assert.deepEqual(writes(state).map(c => c.method), ['POST', 'PATCH'])
+  assert.match(state.conversation[0].body, /重试：补充了回归范围/)
 })
 
-test('unanchored questions remain linked Conversation comments, not fake threads', async () => {
-  const { state, api } = github()
-  await publish(plan({ updates: [finding({ location: undefined, status: 'needs-decision' })] }), api)
-  state.pull.head.sha = next
-  await publish(plan({ headSha: next, updates: [finding({ location: undefined, status: 'accepted-risk', body: 'Maintainer accepted the limitation.', dispositionEvidence: 'https://github.com/owner/repo/pull/7#issuecomment-9' })] }), api)
-  assert.equal(state.inline.length, 0)
-  assert.equal(state.threads.length, 0)
-  assert.ok(state.conversation.some(c => c.body.includes('[原问题 F-1]')))
-  assert.equal((await snapshot('owner/repo', 7, api)).findings.length, 1)
-})
-
-test('paginates comment and GraphQL history and preserves later-page findings', async () => {
-  const { state, api } = github()
-  await publish(plan({ updates: [finding(), finding({ key: 'second', location: { path: 'other.py', line: 2, side: 'RIGHT' } })] }), api)
-  const result = await snapshot('owner/repo', 7, api)
-  assert.equal(result.findings.length, 2)
-  assert.ok(result.findings.every(f => f.threadId))
-  assert.ok(state.calls.some(c => c.data?.variables?.cursor === 'page2'))
-})
-
-test('head changes during publication stop remaining writes and readiness', async () => {
-  const { state, api } = github()
-  const wrapped = async (...args) => {
-    const result = await api(...args)
-    if (args[0] === 'POST' && args[1] === 'repos/owner/repo/pulls/7/comments') state.pull.head.sha = next
-    return result
-  }
-  await assert.rejects(publish(plan(), wrapped), /base\/head changed/)
-  assert.equal(state.inline.length, 1, 'Partial write remains recoverable and pinned to old commit')
-  assert.equal(state.conversation.length, 0, 'No false green summary')
-})
-
-test('marker safely round-trips HTML terminators and literal shell syntax', () => {
-  const value = { kind: 'finding', body: '--> <script> $(printenv) `id` 中文' }
-  assert.deepEqual(parseMarker(marker(value)), value)
-  assert.equal((marker(value).match(/-->/g) || []).length, 1)
-})
-
-test('a changed base starts a new round even if head did not move', async () => {
+test('round 2 reuses finding IDs by key, continues numbering and must follow round 1', async () => {
   const { state, api } = github()
   await publish(plan(), api)
-  state.pull.base.sha = next
-  const result = await publish(plan({ baseSha: next, updates: [] }), api)
-  assert.equal(result.round, 2)
+  await assert.rejects(publish(plan({ round: 3 }), api), /Expected round 2/)
+  await assert.rejects(publish(plan({ reviewedSha: 'e'.repeat(40), findings: [] }), api), /different reviewed SHA/)
+  const second = { ...finding({ key: 'history|empty-state', title: '历史页空状态闪一下', priority: 'P2', blocksMerge: false,
+    status: 'confirmed', verification: undefined }) }
+  const result = await publish(plan({ round: 2, reviewedSha: fixed, findings: [second, finding({ status: 'resolved', verification: { ...finding().verification, beforeSha: fixed, headSha: fixed } })] }), api)
+    .catch(error => error)
+  assert.match(String(result), /later fix head/, 'a round without a fix commit cannot resolve anything')
+  const ok = await publish(plan({ round: 2, reviewedSha: fixed, findings: [second] }), api)
+  assert.equal(ok.ids['history|empty-state'], 'F-2')
+  const snap = await snapshot('owner/repo', 7, api)
+  assert.equal(snap.nextRound, 3)
+  assert.equal(snap.findings.find(f => f.key === 'recording|duplicate-request').status, 'resolved', 'earlier rounds keep their outcome')
   assert.equal(state.conversation.length, 2)
 })
 
-test('requires all mandatory checks and fails on invalid anchors without silent fallback', async () => {
+test('the finding shape is enforced mechanically before any write', () => {
+  const cases = [
+    [{ title: '重复提交 app/retry.py:12 出错' }, /title/],
+    [{ impact: '这是一句远远超过六十个字的影响描述，它把机制、调用链、文件位置和修法全部塞进了影响这一栏里，读者读完还是看不出到底谁受了影响。' }, /at most 60/],
+    [{ impact: '在 app/retry.py:12 重复写入' }, /impact/],
+    [{ repro: ['只有一步'] }, /two steps/],
+    [{ instrument: 'vibes' }, /instrument/],
+    [{ status: 'confirmed', verification: undefined, fix: '' }, /one fix/],
+    [{ status: 'needs-decision', options: ['只有一个选项'] }, /two options/],
+    [{ introduced: false }, /pre-existing problem cannot block/],
+    [{ status: 'backlogged', introduced: false, blocksMerge: false }, /backlog path/],
+    [{ verification: { ...finding().verification, instrument: 'static' } }, /cannot downgrade/],
+    [{ verification: { ...finding().verification, testRef: '' } }, /regression test/],
+    [{ verification: { ...finding().verification, beforeSha: base } }, /reviewed SHA/],
+    [{ status: 'dismissed' }, /disposition/],
+  ]
+  for (const [override, message] of cases) assert.throws(() => validatePlan(plan({ findings: [finding(override)] })), message)
+  assert.throws(() => validatePlan(plan({ checks: checks().filter(c => c.name !== 'spec') })), /required spec/)
+  assert.throws(() => validatePlan(plan({ checks: checks({ correctness: { status: 'not-applicable' } }) })), /Correctness must run/)
+  validatePlan(plan({ findings: [finding({ status: 'backlogged', introduced: false, blocksMerge: false, verification: undefined,
+    backlog: { path: 'docs/quality-backlog.md', entry: '- [ ] **重复提交生成两条录音** —— …' } })] }))
+  validatePlan(plan({ findings: [finding({ instrument: 'browser', verification: { ...finding().verification, instrument: 'browser', testRef: undefined } })] }))
+})
+
+test('readiness: backlog items never block; decisions, open blockers and check gaps do', () => {
+  const backlogged = { key: 'a', status: 'backlogged', blocksMerge: false }
+  const decision = { key: 'b', status: 'needs-decision', blocksMerge: true }
+  const open = { key: 'c', status: 'confirmed', blocksMerge: true }
+  assert.equal(readiness([backlogged], checks()).mergeReady, true)
+  assert.deepEqual(readiness([backlogged, decision], checks()), { openBlockingCount: 0, needsHuman: ['b'], mergeReady: false })
+  assert.equal(readiness([open], checks()).openBlockingCount, 1)
+  assert.equal(readiness([], checks({ spec: { status: 'incomplete' } })).mergeReady, false)
+})
+
+test('stale head or closed PR stops publication before any write', async () => {
+  const { state, api } = github('e'.repeat(40))
+  await assert.rejects(publish(plan(), api), /base\/head changed/)
+  assert.equal(writes(state).length, 0)
+})
+
+test('legacy per-finding comments stay readable and numbering continues after them', async () => {
   const { state, api } = github()
-  await assert.rejects(publish(plan({ checks: checks().slice(1) }), api), /Missing required correctness/)
-  state.fail = (method, endpoint) => method === 'POST' && endpoint === 'repos/owner/repo/pulls/7/comments'
-  await assert.rejects(publish(plan(), api), /Simulated/)
-  assert.equal(state.conversation.length, 0)
+  state.inline.push({ id: 90, html_url: 'x', created_at: new Date(0).toISOString(),
+    body: `${marker({ kind: 'finding', id: 'F-4', key: 'old', round: 1 })}\nold inline thread` })
+  const snap = await snapshot('owner/repo', 7, api)
+  assert.equal(snap.legacyCount, 1)
+  assert.equal(snap.nextRound, 2)
+  const result = await publish(plan({ round: 2 }), api)
+  assert.equal(result.ids['recording|duplicate-request'], 'F-5')
+})
+
+test('marker safely round-trips HTML terminators and literal shell syntax', () => {
+  const record = { kind: 'round-post', text: 'x --> <!-- $(rm -rf /) `id`' }
+  assert.equal(marker(record).includes('-->', 20), true)
+  assert.deepEqual(parseMarker(marker(record)), record)
+})
+
+test('GitHub App identity: config lookup, signed JWT, installation token, no config means gh login', async () => {
+  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+  const dir = mkdtempSync(join(tmpdir(), 'idea-loop-app-'))
+  const pem = join(dir, 'app.pem')
+  writeFileSync(pem, privateKey.export({ type: 'pkcs8', format: 'pem' }))
+  const configPath = join(dir, 'github-apps.json')
+  writeFileSync(configPath, JSON.stringify({ 'owner/repo': { appId: 4948428, privateKeyPath: pem } }))
+  assert.equal(appConfig('other/repo', configPath), null)
+  assert.equal(appConfig('owner/repo', join(dir, 'missing.json')), null)
+  const config = appConfig('owner/repo', configPath)
+
+  const jwt = appJwt(config.appId, privateKey.export({ type: 'pkcs8', format: 'pem' }), 1_000_000)
+  const [header, payload, signature] = jwt.split('.')
+  assert.ok(verify('RSA-SHA256', Buffer.from(`${header}.${payload}`), publicKey, Buffer.from(signature, 'base64url')))
+  assert.deepEqual(JSON.parse(Buffer.from(payload, 'base64url')), { iat: 999_940, exp: 1_000_540, iss: '4948428' })
+
+  const requests = []
+  const fetchImpl = async (url, options) => {
+    requests.push({ url, method: options.method || 'GET', auth: options.headers.Authorization })
+    if (url.endsWith('/repos/owner/repo/installation')) return { ok: true, json: async () => ({ id: 55 }) }
+    if (url.endsWith('/app/installations/55/access_tokens')) return { ok: true, json: async () => ({ token: 'ghs_test' }) }
+    return { ok: false, status: 404 }
+  }
+  assert.equal(await appToken('owner/repo', { config, fetchImpl, nowSeconds: 1_000_000 }), 'ghs_test')
+  assert.deepEqual(requests.map(r => r.method), ['GET', 'POST'])
+  assert.ok(requests.every(r => r.auth.startsWith('Bearer ')))
+  assert.equal(await appToken('owner/repo', { config: null, fetchImpl }), null)
+  await assert.rejects(appToken('owner/repo', { config, fetchImpl: async () => ({ ok: false, status: 404 }) }), /not installed/)
 })

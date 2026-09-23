@@ -1,88 +1,107 @@
 # GitHub review record
 
-Read this when preparing, publishing or resuming either PR workflow. GitHub PR Markdown,
-Conversation comments and inline threads are the durable record. No HTML artifacts or
-required local review files. Temporary command inputs are disposable.
+Read this when preparing, publishing or resuming a review loop. **One Conversation comment per round**
+(the round post) plus the PR description are the durable record. No HTML artifacts or local review
+files; temporary plan JSON is disposable.
 
-## Read and publish
-
-Use authenticated gh with PR/review-thread access. The helper calls official REST/GraphQL
-APIs, with JSON on stdin, and paginates comments/threads. Official GitHub plugin tools can
-also inspect the PR; use the helper for writes to preserve markers and retry behavior.
+## Helper
 
 ```bash
 node "<pluginRoot>/scripts/github-review.mjs" snapshot OWNER/REPO PR
-node "<pluginRoot>/scripts/github-review.mjs" publish /absolute/path/to/plan.json
+node "<pluginRoot>/scripts/github-review.mjs" publish /absolute/path/to/plan.json   # or - for stdin
 ```
 
-snapshot returns base/head SHAs, title/body, complete comments, recovered findings with stable
-IDs/root comment IDs/thread IDs/URLs, prior rounds and current round. Read human replies too.
-Only one publisher should operate on a PR at a time. Each write checks base/head; API errors
-stop publication rather than silently creating a different kind of comment. GitHub provides
-no cross-API transaction: after partial failure, report written operations, reread state,
-and retry the same plan after reconciling edits.
+`snapshot` returns head/base SHAs, the PR title and body, every round post (round, URL, the findings
+recorded in its marker), the latest status per finding key across rounds, `nextRound` and the highest
+finding ID. Per-finding comments from the earlier design are counted (`legacyCount`) and continue the
+numbering, but are never rewritten.
 
-The publish JSON:
+`publish` validates the plan, checks that the PR is open and its head/base equal the plan's, allocates
+`F-N` IDs (a key keeps its ID across rounds), renders the round post and creates it, or edits the same
+post when that round was already published for the same reviewed SHA. Retrying the same plan never
+duplicates a post. Only one publisher should operate on a PR at a time.
+
+## Identity
+
+If `~/.idea-loop/github-apps.json` has an entry for the repository, the helper signs a JWT with that
+GitHub App's private key, exchanges it for an installation token and uses it only as `GH_TOKEN` for its
+own `gh` calls. The token is never printed, written or handed to an agent. Round posts then come from
+the App (for Toeflair: `toeflair-claude`, App ID 4948428). Speaking as the App with the App's own token
+is not impersonation. Without an entry, the gh login publishes and the post says so. Pushing, creating
+the PR and writing its description stay with Harold's gh login.
+
+```json
+{ "guohaonan-shy/Tofelair": { "appId": 4948428, "privateKeyPath": "~/projects/TOFEL-demo/toeflair-claude.pem" } }
+```
+
+The App needs Issues read/write (Conversation comments) and Pull requests + Contents read.
+
+## Plan
 
 | Field | Contents |
-| --- | --- |
-| repo, pr | Base repository owner/name and PR number |
-| headSha, baseSha | Full SHAs from the reviewed snapshot |
-| expectedBody, expectedTitle | Unmodified PR text read before drafting; detects edit conflicts |
-| body, title | Complete current description/title preserving human context and decisions |
-| summary | Short Chinese round delta, decisions and limitations |
-| checks | Entries {name, required, status, evidence}; required correctness, standards, spec, verification plus relevant CI |
-| updates | Only new/changed findings; omitted prior findings remain open |
+|---|---|
+| repo, pr, round | Base repository, PR number, the round being published |
+| reviewedSha | The head this round reviewed |
+| headSha | The head after this round's fix commits (equals reviewedSha when nothing was committed) |
+| baseSha, mergeBaseSha | Full SHAs from preparation |
+| summary | Short Chinese summary of the round |
+| checks | `{name, required, status, evidence}`; required correctness, standards, spec, verification (plus project-checks) |
+| findings | This round's findings; earlier rounds keep their outcome unless a key reappears |
 
-Check status: passed, failed, incomplete, not-applicable, always with evidence/reason.
-Correctness must run. No spec and no sufficient accepted agreement means incomplete.
-No written applicable standards can mean not-applicable, with discovery evidence.
-Not applicable never means a required tool failed to start.
+Check status: passed, failed, incomplete, not-applicable, always with evidence. Correctness must run.
+No explicit acceptance agreement means spec is incomplete, never not-applicable.
 
-Each finding update contains:
+## Finding fields
 
-- key: stable failure identity (behavior/invariant + trigger); reuse across axes, rounds and
-  line moves. The helper allocates F-N IDs.
-- title, axes (correctness/standards/spec), priority (P0/P1/P2), blocksMerge, status.
-- body: concise Chinese scenario, expected/observed behavior, evidence/procedure and suggested
-  fix. Identify Codex as correctness source and Claude as verifier where applicable; the
-  authenticated account publishes both, without impersonating another GitHub identity.
-- location: optional {path, line, side: "RIGHT" | "LEFT"} for a real current diff anchor.
-  Verify it first. Omit for cross-cutting concerns; Conversation comments are not threads.
-- For resolved: verification: {headSha, result: "passed", procedure, before, after}.
-  Include independent verification/regression evidence in visible body too.
-- For dismissed/accepted-risk: dispositionEvidence with rebuttal or maintainer decision URL.
-  Accepting risk is not fixing. Reopening requires new evidence.
+Every field is written for the person deciding, in concise Chinese. The helper rejects a plan that
+breaks any rule in the right column.
 
-Updates reply to the ROOT inline comment, not a reply ID. Resolution uses GraphQL thread ID,
-not REST comment ID. The helper resolves/reopens after posting the explanation. Conversation
-updates are new linked comments with the same finding ID. Hidden markers support recovery;
-all meaningful evidence also belongs in visible Markdown. Preserve human discussion.
+| Field | Meaning | Enforced |
+|---|---|---|
+| key | Stable failure identity (behavior/invariant + trigger), reused across rounds | unique per plan |
+| title | The consequence, not the mechanism | no `path:line` |
+| impact | One sentence: who, when, what goes wrong | ≤ 60 characters, no `path:line` |
+| repro | Numbered steps from a user action or input | ≥ 2 steps |
+| fix | ONE recommended remedy + one-line reason; after a fix, what was done | required for confirmed/resolved |
+| options | Exactly two choices with their cost | required for needs-decision |
+| evidence | Output, line references, trace | required; rendered folded |
+| instrument | unit-test / api / db / browser / eval / eval-replay / static | closed set |
+| reproducer | The rerunnable command or browser steps | required for confirmed/resolved |
+| introduced | Whether this PR introduced it (review-standards.md) | false ⇒ never blocks |
+| location | `{path, line}` on the head, rendered as a permalink | optional |
+| priority, axes, status, blocksMerge | P0/P1/P2; correctness/standards/spec; see below | closed sets |
 
-## Description and diagrams
+Status: confirmed, resolved, needs-decision, needs-verification, backlogged, dismissed, accepted-risk.
 
-Explain the final change, not commit chronology. Every logical change gets a before/after
-example and code entry links. Use native fenced mermaid for changed flows, dependencies or
-state transitions when useful. Small changes can use examples alone. No external diagram
-service or HTML report is needed.
+- **resolved** needs `verification {result: "passed", instrument, beforeSha, headSha, procedure, before, after}`
+  where beforeSha is the reviewed head, headSha the plan's head (a later commit), and instrument equals
+  the finding's own; unit-test, api and db also need `testRef`, the regression test that failed before
+  and passes after.
+- **backlogged** is a pre-existing problem with `backlog {path, entry, commit}`; it never blocks.
+- **dismissed** and **accepted-risk** need `dispositionEvidence`: a rebuttal, or a linked maintainer decision.
+  Accepting risk is not fixing.
 
-Suggested order: why → logical changes (example + Mermaid where useful) → actual verification
-→ limits/decisions. Fold long traces/eval tables with details. Update title when scope expands.
-Preserve human-authored constraints and issue/spec links.
+## Round post
 
-Trace diagram edges/examples to actual code. Validate Mermaid syntax with available tooling
-and inspect GitHub rendering after publication when a browser is available; disclose checks
-not performed. A syntax check is not rendered QA. Prose-only changes need no app servers unless
-a claim requires them.
+Rendered by the helper in a fixed order, so it reads the same every round:
 
-One summary per reviewed head: retries update that round, new commits start a new round.
-Link every finding and report axis/check gaps independently of blocker count. An old SHA
-summary is historical after a push. Fetch current head before claiming readiness.
-Never auto-approve or merge.
+```markdown
+## Review 第 N 轮 · 审 a1b2c3d → 修复后 e4f5a6b
+<summary>
+<verdict: mergeReady, or what blocks>
+| # | 标题 | 优先级 | 轴 | 状态 |
+### F-1 · [P1] <title>
+axes · 状态 · 阻塞/不阻塞 · 本次引入/存量问题 · [代码](permalink)
+**影响** → **复现** → **修法** → **验证**（修复前/修复后/回归测试）→ <details>证据</details>
+<details>本轮检查</details>
+```
 
-## Existing artifact-only PRs
+A hidden marker at the top holds the compact findings so the next round's snapshot can recover them;
+everything meaningful is also in the visible text. mergeReady is never a merge authorization.
 
-Fresh PRs need no migration. If an old PR has no GitHub finding records, report missing history.
-A legacy HTML file can be imported once only when available and the user authorizes migration;
-mark old verification stale. Otherwise run a fresh current-head review rather than inventing
-IDs or claiming old findings resolved. Do not open or republish an artifact.
+## PR description
+
+Written once, when the loop opens the PR: why, each logical change with a before/after example,
+native Mermaid only where a flow needs it, code links, and a final `## 验收契约` section with the
+accepted agreement verbatim. A reused PR's human-written description is not rewritten; when it has no
+`## 验收契约` section, only that section is appended. Round posts carry the review history.

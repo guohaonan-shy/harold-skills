@@ -15,14 +15,13 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:uiux-refine` | Design · converge | Rebuilds the canvas from the direction note alone, converges it through a two-model critic/executor loop, then runs a subtraction pass and an AI-tells pass, and freezes on the human's signature |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a context holding nothing but that ticket, TDD at the seams the spec already agreed |
-| `/idea-loop:pr-open-review` | Review · round 1 | Pushes committed work, explains it with examples/Mermaid, reviews and publishes GitHub threads. |
-| `/idea-loop:pr-fix-verify` | Review · round N+1 | Fixes selected GitHub findings, repeats original verification, updates threads and PR explanation. |
+| `/idea-loop:pr-review` | Review | Opens or reuses the PR, then runs up to two automatic rounds of Codex review → verify → fix → independent re-verify, one GitHub post per round; stops at mergeReady and waits for a merge order |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
 
 `grill → to-spec → [uiux-imagine → uiux-refine] → to-ticket → implement →
-pr-open-review → pr-fix-verify` runs once per piece of work. **The bracket is the
+pr-review` runs once per piece of work. **The bracket is the
 whole design side, and it is conditional**: you walk those two stages only when
 `to-spec` landed the spec at `等设计冻结` — i.e. the work touches UI. A spec that
 landed at `在飞` goes straight from `to-spec` to `to-ticket`. `uiux-refine` is
@@ -40,7 +39,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `to-ticket`, `implement`, `pr-open-review`, `pr-fix-verify` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
+| `prototype`, `to-spec`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
@@ -62,45 +61,50 @@ See `to-ticket` §6 for where each of the original two reasons now lives.
 
 ### The review loop
 
-Start each round in Claude Code:
-
 ```text
-/idea-loop:pr-open-review
-/idea-loop:pr-fix-verify F-1 <agreed fix direction>
+/idea-loop:pr-review
 ```
 
-These commands launch local host `Workflow` scripts, not GitHub Actions. Running `gh pr create`
-alone only opens a PR; it does not start a review. `pr-open-review` can reuse that existing PR.
-A caller may start either round instead of you, but the trigger is always an explicit request:
-no PR/push hook is wired, and neither skill starts the next round by itself — the round budget
-belongs to whoever called it. One command still runs its complete
-review/fix/verification/publication sequence once started.
+It launches a local host `Workflow` script (`workflows/pr-review-loop.mjs`), not a GitHub Actions
+job. Running `gh pr create` alone only opens a PR; it does not start a review. A caller may start it
+instead of you, but the trigger is always an explicit request: no PR/push hook is wired.
 
-Both dispatchers call `pr-review-round`: pin base/head and accepted scope, investigate
-three axes, independently verify and deduplicate findings, then publish on GitHub.
+One invocation runs **at most two rounds**, then stops so a human reads what happened. Each round:
+
+| Step | Runs on |
+|---|---|
+| Open/reuse the PR, snapshot GitHub, build the review contract | Claude Sonnet 5 · xhigh |
+| Correctness · written Standards · Spec, in parallel, plus the repo's own check commands | Codex `gpt-6-sol` (`review` / read-only `task`) |
+| Reproduce, dedup, and decide *introduced or pre-existing* by rerunning at the merge-base | Claude Sonnet 5 · xhigh |
+| Fix what this PR introduced, each with a regression test; backlog what it did not | Claude Sonnet 5 · xhigh |
+| Independently verify each fix red → green with the finding's own instrument | Claude Sonnet 5 · xhigh, a separate agent |
+| Publish one round post | `scripts/github-review.mjs`, run by a Sonnet 5 · low agent |
 
 | Axis | Asks | Blocks a merge? |
 |---|---|---|
-| **Correctness** | Did this introduce/activate a supported-path defect? Normal Codex review. | By proven impact |
+| **Correctness** | Did this introduce/activate a supported-path defect? Codex's native review. | By proven impact |
 | **Spec** | Does this satisfy the actual acceptance agreement and amendments? | By requirement/impact |
 | **Standards** | Does this violate an applicable written project rule? No generic smells. | By explicit rule/impact |
 
-Axes retain coverage status but the same defect gets one stable finding ID and thread.
-Tool diagnostics require baseline attribution; CI failures appear in checks rather than
-duplicate comments. Missing acceptance or required verification remains incomplete, not green.
+Pre-existing problems never block: they get one line in the target repo's
+`docs/quality-backlog.md` §线上问题 (a separate commit on the PR branch) and are listed in the round
+post. The loop stops early when a round finds nothing introduced, when something needs a human
+decision, or on any failure. It never approves or merges; mergeReady is a report, not an order.
 
-The PR title/body explains the final behavior with examples and native Mermaid where useful.
-Each round has a short summary linking original problem threads; fixes reply there with
-independently reproduced before/after evidence before resolution. No HTML artifacts or required
-local history. Later rounds focus on fix deltas and affected callers; no automatic adversarial
-review. See `references/github-review.md` for the JSON publication contract and recovery behavior.
+Each finding is structured — consequence-first title, one-sentence impact (≤ 60 characters),
+numbered repro steps, one fix, folded evidence, a closed-set instrument — and the helper refuses a
+plan that breaks that shape or closes a fix without red → green evidence on the same instrument. The
+round post is rendered from those fields in a fixed order. With `~/.idea-loop/github-apps.json`
+configured, posts come from the repository's GitHub App instead of the gh login. See
+`references/github-review.md` for the plan contract and `references/review-standards.md` for the
+introduced-or-not rules and the verification standard. The design record is
+[`docs/pr-review-loop.md`](./docs/pr-review-loop.md).
 
-`scripts/github-review.mjs` uses authenticated `gh api` (official GitHub REST/GraphQL). It
-paginates history, preserves IDs, detects changed base/head and description conflicts, and
-resumes partial publication without duplicating completed comments. It never approves/merges.
-Run `node --test idea-loop/scripts/*.test.mjs` manually from the repository root for the mocked
-GitHub and host-workflow tests. No GitHub Actions job is required or shipped for this loop.
-Real model quality and host Workflow execution require a live CC run.
+`scripts/github-review.mjs` uses authenticated `gh api` (official GitHub REST). It recovers every
+round from the posts' markers, keeps finding IDs stable across rounds, detects a changed base/head,
+and edits the same post on a retry instead of duplicating it. The mocked GitHub and host-workflow
+tests run with the rest of the suite below. Real model quality and host Workflow execution require a
+live CC run.
 
 ## Tests
 
@@ -158,7 +162,7 @@ goes red three weeks later.
 Project rules and verification tools come from the current repository's REVIEW.md,
 AGENTS.md and applicable documents/configuration. There is no inherited Toeflair/Fowler
 baseline. Cross-plugin paths are threaded through as `pluginRoot`
-(via `${CLAUDE_PLUGIN_ROOT}`, resolved in each dispatcher's own SKILL.md —
+(via `${CLAUDE_PLUGIN_ROOT}`, resolved in the dispatching SKILL.md —
 Workflow scripts have no filesystem/env API of their own) rather than
 hardcoded, so this plugin should survive being copied to another project or
 machine as-is. The `openai-codex` companion script travels the same route: the
@@ -184,13 +188,12 @@ idea-loop/
 │   ├── uiux-refine/SKILL.md          # the convergent half — direction note in, one frozen canvas out
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md
-│   ├── pr-open-review/SKILL.md       # → workflows/pr-open-review.mjs
-│   ├── pr-fix-verify/SKILL.md        # → workflows/pr-fix-verify.mjs
+│   ├── pr-review/SKILL.md            # → workflows/pr-review-loop.mjs
 │   └── dreaming/SKILL.md
 ├── workflows/
-│   ├── pr-open-review.mjs            # round 1: push, open PR, call pr-review-round
-│   ├── pr-fix-verify.mjs             # round N+1: fix, commit, call pr-review-round
-│   └── pr-review-round.mjs           # shared tail: the three-axis review itself
+│   └── pr-review-loop.mjs            # open/reuse PR, then up to two review → fix → re-verify rounds
+├── docs/
+│   └── pr-review-loop.md             # design record of the review loop (+ its flowchart)
 ├── scripts/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
 │   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
@@ -202,9 +205,9 @@ idea-loop/
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   ├── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
-│   ├── github-review.mjs             # official GitHub API publication and recovery
-│   ├── github-review.test.mjs        # state, threads, retries, stale-head tests
-│   └── review-workflows.test.mjs     # mocked host orchestration tests
+│   ├── github-review.mjs             # round posts: snapshot, finding-shape gate, rendering, GitHub App identity
+│   ├── github-review.test.mjs        # shape gate, retries, round numbering, stale head, App token
+│   └── review-workflows.test.mjs     # mocked host orchestration tests of the loop
 ├── evals/                            # the pinned baseline (see evals/README.md)
 │   ├── evals.json                    # six cells: the three skills, the two seams around them, one static repo check
 │   ├── assert.mjs                    # the assertions — shape only, no model, no taste
@@ -215,9 +218,9 @@ idea-loop/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
-    ├── review-standards.md           # project-rule admission, evidence and severity
-    ├── review-entry.md               # dispatcher prerequisites and result handling
-    ├── github-review.md              # native Markdown, publication schema and threads
+    ├── review-standards.md           # admission, introduced-or-pre-existing, verification standard, severity
+    ├── review-entry.md               # round budget, who runs what, prerequisites, reporting
+    ├── github-review.md              # round posts, finding fields, plan schema, App identity
     └── design/                       # the design side (see below)
 ```
 
