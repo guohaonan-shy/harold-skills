@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Start the PR review loop — open or reuse the PR for already-committed work, then run up to two automatic rounds of Codex review (gpt-6-sol, three axes), verification, fixing with regression tests and independent re-verification, publishing one GitHub post per round. Pre-existing problems go to the backlog instead of being fixed. Stops at mergeReady and waits for an explicit merge order. Use when committed work is ready for review, or to continue reviewing a PR after a human decision.
+description: Start the PR review loop — open or reuse the PR for already-committed work, then run up to two automatic rounds of Codex review (gpt-5.6-sol at effort high, three axes), verification, fixing with regression tests and independent re-verification, publishing one GitHub post per round. Pre-existing problems go to the backlog instead of being fixed. Stops at mergeReady and waits for an explicit merge order. Use when committed work is ready for review, or to continue reviewing a PR after a human decision.
 ---
 
 # PR review loop
@@ -21,7 +21,9 @@ the round budget and how to report.
    guess it from the branch name. If none of it is available, stop and say what is missing.
    Workflow agents cannot see this conversation; the first round writes the agreement into the PR
    description's `## 验收契约` section and later rounds read it from there.
-3. **Codex companion path**, per review-entry.md. The three axes run on `gpt-6-sol`.
+3. **Codex companion path**, per review-entry.md. The three axes run on `gpt-5.6-sol` at effort `high`.
+   The correctness axis reads its effort from `~/.codex/config.toml` (`model_reasoning_effort = "high"`); if
+   that is set to something else, the axis reports incomplete instead of running — say so before starting.
 4. **Continuing a PR.** When the PR already exists, run `node "${CLAUDE_PLUGIN_ROOT}/scripts/github-review.mjs"
    snapshot OWNER/REPO PR`; if its `nextRound` is above 1 (earlier round posts, or legacy review threads),
    pass `prNumber` and `startRound: nextRound`. The human decision that
@@ -37,6 +39,7 @@ Workflow({
     pluginRoot: "${CLAUDE_PLUGIN_ROOT}",
     codexCompanion: "<existing sibling companion path>",
     // prNumber: 123, startRound: 3   — only when continuing a PR
+    // codexModel: "gpt-5.6-sol", codexEffort: "high"   — the defaults; override only on request
   },
 })
 ```

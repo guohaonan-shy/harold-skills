@@ -36,7 +36,7 @@
 4. **每轮在 PR 上发一个独立的「轮次帖」**，装下这一轮的全部 finding，以及每条的处理结果：怎么修的、怎么验证的、结果如何。
    下一轮的准备步骤读「PR 描述 + 之前每一轮的轮次帖」，据此做后面的 review。
 5. **模型分配**：
-   - 三个审核轴全由 Codex 做，模型 `gpt-6-sol`；
+   - 三个审核轴全由 Codex 做，模型 `gpt-5.6-sol`，思考强度 `high`（2026-09-28 从 `gpt-6-sol` 改过来）；
    - 验证、去重、修复、回归、修复验证用 **Claude Sonnet 5，effort `xhigh`**，不用 Opus；
    - 发布只做一件事：把本轮内容按上一条的格式发到 PR。
 6. **自动修复的范围 = 本次改动引入的、验证为真的问题。** 不是本次引入的，写进目标仓库的
@@ -70,7 +70,7 @@
 | 步骤 | 做什么 | 执行者 · 模型 |
 |---|---|---|
 | ① 开 PR / 复用 + 准备 | 第 1 轮：push、`gh pr create`，PR 描述写入变更说明和验收契约；第 2 轮：复用。然后跑 helper `snapshot`（head/base、merge-base、之前的轮次帖），预检工作树，整理这一轮的**审核契约**：适用规则、验收标准、验证手段对照表、本轮 review 的起点 | Claude · Sonnet 5 · xhigh |
-| ② Codex 三轴 | Correctness：`review --model gpt-6-sol --scope branch --base <起点>`；Standards（文字规则）和 Spec：`task --model gpt-6-sol`，只读，提示词带审核契约。三轴并行 | Codex · gpt-6-sol；包装 agent 用 Sonnet 5 · low，设超时 |
+| ② Codex 三轴 | Correctness：`review --model gpt-5.6-sol --scope branch --base <起点>`，思考强度取自 Codex config，不是 `high` 就不跑、报 incomplete；Standards（文字规则）和 Spec：`task --model gpt-5.6-sol --effort high`，只读，提示词带审核契约。三轴并行 | Codex · gpt-5.6-sol · high；包装 agent 用 Sonnet 5 · low，设超时 |
 | ②′ 项目检查命令 | 跑 REVIEW.md 声明的 lint / typecheck / test（提议，§2.1） | Claude · Sonnet 5 · low |
 | ③ 问题验证 + 去重 | 逐条复现，去重，在 merge-base 上重跑以判定是否本次引入（§5），产出结构化 finding（§6） | Claude · Sonnet 5 · xhigh |
 | ④ 修复 | 修本次引入的 `confirmed` finding，每条带回归测试；存量问题追加进 backlog（单独 commit）；push | Claude · Sonnet 5 · xhigh |
@@ -247,9 +247,10 @@ checkout 或 stash**。`api` / `browser` / `db` 类要在 scratchpad 副本上�
 
 ## 12 风险与待验证
 
-- **gpt-6-sol 能不能用。** 本机 codex CLI 是 0.154.0（最新 0.156.1），`~/.codex/config.toml` 默认模型是 `gpt-6-astra`。
-  companion 的 `review` 与 `task` 都接受 `--model`（`review` 的 usage 里没写，但参数解析里有）。
-  实现前：升级 CLI，用 `--model gpt-6-sol` 各跑一次 `review` 和 `task` 确认。
+- **Codex 模型与思考强度。** CLI 已升到 0.156.1。`gpt-5.6-sol --effort high` 用 `task` 实跑确认可用（2026-09-28）。
+  companion 的 `review` 接受 `--model`（usage 里没写，但参数解析里有），**不接受 effort**，只继承
+  `~/.codex/config.toml` 的 `model_reasoning_effort`（当前是 `high`）；correctness 的包装 agent 先读这个值，不是 `high` 就不跑、报 incomplete。
+  `review --model gpt-5.6-sol` 本身还没实跑过。
 - **Codex 额度。** 每轮 Codex 调用从 1 次变成 3 次；与 eval 判官共用周订阅额度，
   2026-09-14 撞满过一次（Toeflair `quality-backlog.md` #29）。
 - **Codex `task` 只读沙箱能做什么。** 设计里只让它判文字规则、不跑工具；实现前确认它在只读模式下

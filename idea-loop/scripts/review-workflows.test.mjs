@@ -82,9 +82,10 @@ test('a clean first round publishes once and stops ready; models and Codex flags
   const byLabel = label => calls.find(c => c.label === label)
   for (const label of ['r1:prepare', 'r1:verify']) assert.deepEqual([byLabel(label).model, byLabel(label).effort], ['sonnet', 'xhigh'])
   for (const label of ['r1:correctness', 'r1:standards', 'r1:spec', 'r1:publish']) assert.deepEqual([byLabel(label).model, byLabel(label).effort], ['sonnet', 'low'])
-  assert.match(byLabel('r1:correctness').prompt, new RegExp(`review --wait --model gpt-6-sol --scope branch --base "${D}"`))
+  assert.match(byLabel('r1:correctness').prompt, new RegExp(`review --wait --model gpt-5\\.6-sol --scope branch --base "${D}"`))
+  assert.match(byLabel('r1:correctness').prompt, /model_reasoning_effort[\s\S]*not "high", do not run the review/)
   for (const label of ['r1:standards', 'r1:spec']) {
-    assert.match(byLabel(label).prompt, /task --model gpt-6-sol/)
+    assert.match(byLabel(label).prompt, /task --model gpt-5\.6-sol --effort high/)
     assert.doesNotMatch(byLabel(label).prompt, /task[^\n]*--write/)
   }
   assert.match(byLabel('r1:prepare').prompt, /## 验收契约[\s\S]*Only fix duplicate submissions/)
@@ -190,4 +191,12 @@ test('a continued PR starts at the snapshot round and keeps counting', async () 
   assert.match(calls[0].prompt, /nextRound must be 3/)
   assert.match(calls[0].prompt, /Reuse PR #7/)
   assert.equal(plans[0].round, 3)
+})
+
+test('the Codex model and effort can be overridden per invocation', async () => {
+  const { calls } = await run({ ...input, codexModel: 'gpt-x', codexEffort: 'xhigh' }, results())
+  assert.match(calls.find(c => c.label === 'r1:standards').prompt, /task --model gpt-x --effort xhigh/)
+  const correctness = calls.find(c => c.label === 'r1:correctness').prompt
+  assert.match(correctness, /not "xhigh", do not run the review/)
+  assert.match(correctness, /review --wait --model gpt-x /)
 })
