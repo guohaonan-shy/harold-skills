@@ -4,8 +4,8 @@
 stack-agnostic standard `implement` reads on every UI ticket, and it already owns the general
 rules (classify before porting, data-contract changes, token attribution, state-ownership, the
 measurement loop). Load this one *in addition* when the target project is React/Tailwind and you
-want the concrete mechanics: it is what actually goes wrong translating a `design-preview/` or
-`design-motion-preview/` HTML+CSS+JS file into the real React/TSX component — every rule below
+want the concrete mechanics: it is what actually goes wrong translating a frozen canvas
+(`docs/design/<spec-slug>/*.html`) HTML+CSS+JS file into the real React/TSX component — every rule below
 came out of an actual port in a real project, not a hypothetical (worked examples and class names
 below are that project's case law).
 `references/design/design-core.md`'s brand floors still apply here: a Tailwind translation that quietly
@@ -106,8 +106,8 @@ re-render mechanics.
 
 ## 8. Keep the prototype's own file copies in sync
 
-If this project keeps more than one copy of a `design-preview/` file (e.g. one inside a git
-worktree, one in the main checkout, both gitignored, served by two different local ports), `diff`
+If this project keeps more than one copy of a canvas file (e.g. one inside a git
+worktree, one in the main checkout, not yet committed, served by two different local ports), `diff`
 them after every edit and sync the pair. A stale copy quietly served from whichever port the user
 has bookmarked is a realistic, already-observed failure mode — don't assume a previously-synced
 pair stays synced across sessions.

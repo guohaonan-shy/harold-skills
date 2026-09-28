@@ -22,8 +22,8 @@ create a `DESIGN.md` — a missing doc is a degradation, never an abort. What th
 the *generic* anti-slop law and the forced protocols (§2, §6) that no brand doc carries.
 
 **Enforcement split.** The mechanically-checkable subset of these rules is enforced by
-`scripts/design-lint.mjs` — a PostToolUse hook runs it on every write to `design-preview/` /
-`design-motion-preview/` HTML, so violations surface without anyone remembering to check. The lint
+`scripts/design-lint.mjs` — a PostToolUse hook runs it on every write to a canvas HTML
+(`docs/design/<spec-slug>/`, plus the legacy `design-preview/` / `design-motion-preview/`), so violations surface without anyone remembering to check. The lint
 is the hard gate; this file carries the *why* plus the judgment calls a regex can't make.
 
 ---
@@ -152,8 +152,8 @@ comments are out of scope.)
 ### 5.5 Assets
 - **No div-built fake screenshots** — we have a real product; capture the real surface (the
   product-shots pipeline) or use none.
-- No hot-linked stock CDNs (unsplash/placehold) in previews; local assets under
-  `design-preview/assets/`.
+- No hot-linked stock CDNs (unsplash/placehold) in previews; local assets under the
+  canvas folder's `assets/`.
 
 ### 5.6 Copy construction — landing & app copy
 

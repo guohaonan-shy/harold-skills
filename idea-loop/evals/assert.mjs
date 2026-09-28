@@ -92,6 +92,15 @@ export function sectionUntil(md, titleFragment, siblingFragments) {
 const specFiles = (p) =>
   walk(p).filter((f) => f.startsWith('docs/spec/') && f.endsWith('.md') && !f.includes('/tickets/') && !f.endsWith('index.md'));
 const ticketFiles = (p) => walk(p).filter((f) => f.startsWith('docs/spec/tickets/') && f.endsWith('.md'));
+/** 画布：docs/design/<spec-slug>/ 下直接放的 HTML（assets/ 里的不算）。 */
+const designCanvases = (p) => walk(p).filter((f) => /^docs\/design\/[^/]+\/[^/]+\.html$/.test(f));
+/** 冻结记录：docs/design/<slug>/<slug>-design.md，frontmatter type: design。 */
+const designRecord = (p) =>
+  walk(p).find((f) => {
+    const m = f.match(/^docs\/design\/([^/]+)\/([^/]+)-design\.md$/);
+    return m && m[1] === m[2] && frontmatter(read(join(p, f))).type === 'design';
+  });
+
 const rawRecords = (p) =>
   walk(p).filter((f) => f.startsWith('docs/raw/') && f.endsWith('.md') && !f.endsWith('index.md') && !f.includes('/assets/'));
 
@@ -305,18 +314,18 @@ export const ASSERTIONS = {
 
   // —— uiux-refine ————————————————————————————————————————————————
 
-  'canvas-lands-in-design-preview': {
-    text: '画布落在 design-preview/ 下（落在别处等于把 lint hook 悄悄关掉）',
+  'canvas-lands-in-docs-design': {
+    text: '画布落在 docs/design/<spec-slug>/ 下（落在别处等于把 lint hook 悄悄关掉，冻结后也找不到真值）',
     run: ({ project }) => {
-      const hits = walk(project).filter((f) => /^design-preview\/.*\.html$/.test(f));
-      return hits.length ? ok(hits.join(', ')) : no(`design-preview/ 下没有 HTML；项目里的 HTML：${walk(project).filter((f) => f.endsWith('.html')).join(', ') || '（无）'}`);
+      const hits = designCanvases(project);
+      return hits.length ? ok(hits.join(', ')) : no(`docs/design/<spec-slug>/ 下没有 HTML；项目里的 HTML：${walk(project).filter((f) => f.endsWith('.html')).join(', ') || '（无）'}`);
     },
   },
 
   'canvas-lint-p0-clean': {
     text: '画布过确定性 lint，P0 清零',
     run: ({ project, pluginRoot }) => {
-      const hits = walk(project).filter((f) => /^design-preview\/.*\.html$/.test(f));
+      const hits = designCanvases(project);
       if (!hits.length) return no('没有画布可 lint');
       const out = [];
       for (const f of hits) {
@@ -341,16 +350,16 @@ export const ASSERTIONS = {
     },
   },
 
-  'freeze-lands-canvas-and-ledger-in-raw': {
-    text: '冻结进 raw 桶：画布 HTML 与 ledger 全文都在，ledger 不留在 /tmp',
+  'freeze-lands-canvas-and-ledger-in-docs-design': {
+    text: '冻结在 docs/design/<spec-slug>/ 原地落齐：画布 HTML 与 <spec-slug>-design.md（ledger 全文）同目录，ledger 不留在 /tmp',
     run: ({ project }) => {
-      const rec = rawRecords(project).find((f) => frontmatter(read(join(project, f))).source_type === 'design-freeze');
-      if (!rec) return no(`没有 source_type: design-freeze 的 raw；现有：${rawRecords(project).join(', ') || '（空）'}`);
+      const rec = designRecord(project);
+      if (!rec) return no(`没有 docs/design/<spec-slug>/<spec-slug>-design.md（type: design）；docs/design 下现有：${walk(project).filter((f) => f.startsWith('docs/design/')).join(', ') || '（空）'}`);
       const bucket = rec.split('/').slice(0, 3).join('/');
-      const canvas = walk(project).filter((f) => f.startsWith(`${bucket}/assets/`) && f.endsWith('.html'));
+      const canvas = designCanvases(project).filter((f) => f.startsWith(`${bucket}/`));
       const ledger = sectionUntil(read(join(project, rec)), '打磨轨迹', ['签字']);
       const problems = [];
-      if (!canvas.length) return no(`${bucket}/assets/ 下没有画布 HTML`);
+      if (!canvas.length) return no(`${bucket}/ 下没有画布 HTML`);
       if (ledger === null) problems.push('没有「打磨轨迹」那一节');
       else if (!ledger.trim()) problems.push('「打磨轨迹」是空的——ledger 全文要搬进来');
       return problems.length ? no(problems.join('；')) : ok(`${rec} + ${canvas.join(', ')}，ledger ${ledger.trim().split('\n').filter(Boolean).length} 行`);
@@ -358,10 +367,10 @@ export const ASSERTIONS = {
   },
 
   'freeze-lands-matrix-screenshots': {
-    text: '验收矩阵每格的截图跟画布同桶（按格名）',
+    text: '验收矩阵每格的截图跟画布同目录的 assets/（按格名）',
     run: ({ project }) => {
-      const rec = rawRecords(project).find((f) => frontmatter(read(join(project, f))).source_type === 'design-freeze');
-      if (!rec) return no('没有 design-freeze 记录');
+      const rec = designRecord(project);
+      if (!rec) return no('没有 docs/design 冻结记录');
       const bucket = rec.split('/').slice(0, 3).join('/');
       const shots = walk(project).filter((f) => f.startsWith(`${bucket}/assets/`) && /\.(png|jpe?g|webp)$/.test(f));
       return shots.length ? ok(`${shots.length} 张：${shots.map((f) => f.split('/').pop()).join(', ')}`) : no(`${bucket}/assets/ 下一张截图都没有`);

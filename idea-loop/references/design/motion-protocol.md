@@ -70,7 +70,7 @@ an unsettled layout wastes both stages.
    everything into our tokens; never paste defaults.
 3. **Build on the static HTML.** Start from `static-ui-protocol`'s approved preview (so the visual stays
    pixel-faithful) and layer in real motion + native interaction. Write to
-   `design-motion-preview/<surface>.html` (the lint hook watches this dir too). React-heavy
+   `docs/design/<spec-slug>/<spec-slug>-motion.html`, next to the static canvas (the lint hook watches it too). React-heavy
    preview → inline `react@18.3.1` + `react-dom@18.3.1` + `@babel/standalone` + framer
    (`window.Motion`); else plain HTML + CSS + small JS using the spec tokens.
 4. **Expose the freezable timeline** (spec §8): the preview defines
@@ -87,7 +87,7 @@ an unsettled layout wastes both stages.
 ### B · Review gates — to convergence
 Now there's a real rendered page, so the full checks are available.
 1. **Gate 1 — mechanical lint (automatic).** The PostToolUse hook lints every write to
-   `design-motion-preview/` — brand rules plus the native `layout-transition` and `bounce-easing`
+   the motion canvas — brand rules plus the native `layout-transition` and `bounce-easing`
    detectors (`scripts/design-lint.mjs`, no external tool chained in). P0 = build error; fix before
    continuing.
 2. **Gate 2 — motion-craft audit** (self-contained: read `references/design/motion-craft-checklist.md`

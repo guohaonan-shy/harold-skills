@@ -1,6 +1,6 @@
 ---
 name: uiux-refine
-description: 设计收敛——方向定了之后由人跑它。从方向说明重建画布，跑评委与执行者的双模型打磨环收敛到可发布，静态构图冻结之后按需接动效段（评委看定格帧序列，seek-frame / restraint budget / reduced-motion 三样验证照旧）与素材段（营销 register 才开），再各跑一轮减法与 AI tells 清理，人签字后冻结进 raw 桶、spec 翻在飞。要求一个全新会话。
+description: 设计收敛——方向定了之后由人跑它。从方向说明重建画布，跑评委与执行者的双模型打磨环收敛到可发布，静态构图冻结之后按需接动效段（评委看定格帧序列，seek-frame / restraint budget / reduced-motion 三样验证照旧）与素材段（营销 register 才开），再各跑一轮减法与 AI tells 清理，人签字后冻结进项目的 `docs/design/<spec-slug>/`、spec 翻在飞。要求一个全新会话。
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,9 @@ disable-model-invocation: true
 
 **收敛，准出一块冻结的画布。** 方向已经定了，这一段只把它做对。
 
-> 先读一次 `../../references/wiki-conventions.md`（spec / raw 的位置与状态约定）。
+> 先读一次 `../../references/wiki-conventions.md`（spec / design 层的位置与状态约定）。
+>
+> **一份 spec 就是一次 refine 的单位**：一块画布、一份 ledger、一串评分，全部按 spec 的 slug 分开放（下文写作 `<spec-slug>`）。一份 spec 可以横跨好几个 surface（保存页、终态页、报告页……），它们住在同一块画布里，用 `?state=` 切。
 
 ## 0 什么时候跑
 
@@ -22,12 +24,15 @@ disable-model-invocation: true
 1. **spec**，含 §4 那份方向说明（七节）。
 2. **目标项目根的 `DESIGN.md` 与 `PRODUCT.md`**，有就读。没有 `DESIGN.md` 不中止：用本 plugin 的内置底线继续，并**明说**项目没有设计法、建议建一份。
 3. **本 plugin 的 `references/`**，按需加载。
+4. **人在调用时附的话**（可选）。它按 §9 的性质分流：执行层的要求（「分隔线太重」「这个状态也要画」）照收，第一轮跟待打磨清单一起消费；**跟方向说明矛盾的**不在这里消费，停下交人判是否回 `uiux-imagine`。**方向说明里本该写却漏了的那句**（读不出来的东西），仍然回去补进那封信，不让它只活在这次调用的 prompt 里。
 
 **不读发散那一段的任何渲染物**（变种、style tile、contact sheet）。**handoff 是一封写完整的信，不是「如上所述」**：读不出来的东西是那份说明写漏了一句，回去补它，不是翻图猜。
 
 ## 2 从 prompt 重建画布
 
-工作文件落**目标项目的 `design-preview/<surface>.html`**（素材放 `design-preview/assets/`）。**路径不是随便选的**：lint hook 只认 `design-preview/` 与 `design-motion-preview/` 下的 HTML，落在别处等于把 Gate 1 悄悄关掉。
+画布从第一笔就落在它冻结后的家：**目标项目的 `docs/design/<spec-slug>/<spec-slug>.html`**（素材与截图放同目录的 `assets/`）。冻结之前它只是工作区里一个没提交的文件；冻结就是在原地补齐记录、交人签字，不再搬家。**路径不是随便选的**：lint hook 认 `docs/design/<spec-slug>/` 下的 HTML（以及旧的 `design-preview/` / `design-motion-preview/`），落在别处等于把 Gate 1 悄悄关掉。
+
+**只有打磨过程的临时件进 `/tmp/uiux-refine/<spec-slug>/`**——ledger、每轮评分 JSON、评委看的截图。按 spec 分子目录不是洁癖：固定文件名放在共享的 `/tmp/uiux-refine/` 顶层，两份 spec 先后跑 refine（前一份停在等签字、ledger 还没进项目）就会互相覆盖，而且覆盖得悄无声息。
 
 重建的依据只有方向说明的七节，**在项目自己的 `DESIGN.md` 之下**——不是给某个变种加保真度，那个变种你根本没看见。
 
@@ -63,18 +68,18 @@ disable-model-invocation: true
 
 | kind | 去哪 |
 |---|---|
-| `direction` | **停环交人。** 不自己改方向（§9） |
+| `direction` | **停环交人。** 人判它是不是真的跟方向说明矛盾：矛盾才回 `uiux-imagine`；不矛盾，人的裁决当执行性 note 回本环。不自己改方向（§9） |
 | `pattern` | 带那个**具名问题**查参考研究（`../../references/design/research-backend.md`：三层路由与 reference-averaging 禁令）再改 |
 | `craft` | 在当前画布里直接改 |
 
-**ledger 每轮落一行**（`/tmp/uiux-refine/ledger.md`）：核心问题、查了哪一层、选了哪个参考、改了什么。
+**ledger 每轮落一行**（`/tmp/uiux-refine/<spec-slug>/ledger.md`）：核心问题、查了哪一层、选了哪个参考、改了什么。
 
 ## 5 校验与收敛
 
 评委给完分，把 `{ findings, score, history }` 写成 JSON 再跑：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>.json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/<spec-slug>/round-<N>.json
 ```
 
 `history` 是**之前每一轮**的最差严重度，从旧到新。退出码 `0` 有效、`2` 无效。
@@ -87,7 +92,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>
 |---|---|---|
 | `pass` | 分达标（阈值 9，rubric 里公开写着） | 停。**静态构图到此冻结**，进 §6 判要不要动效 |
 | `plateau` | 最差严重度**连着两轮没降**（同一档连着出现三轮） | 停下交人 |
-| `direction` | 出现方向级 finding（P0） | **立即**停下交人 |
+| `direction` | 出现方向级 finding（P0） | **立即**停下交人。评委说方向错，不等于回推：由人判是否与方向说明矛盾，矛盾才回 `uiux-imagine` |
 | `continue` | 还在降 | 下一轮 |
 
 后两条都停在人身上：**人不该为一个评委修不了的方向问题付无限轮次。**
@@ -113,7 +118,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>
 
 ### 6.2 做：在冻结的画布上叠一层，不重画
 
-工作文件是 `design-motion-preview/<surface>.html`，从 §5 冻结的那份静态画布起手（lint hook 也盯这个目录）。**动效是叠上去的一层**：做动效时发现构图有问题，停下来说，回 §4，不在这里顺手重新排版。
+工作文件是同目录的 `docs/design/<spec-slug>/<spec-slug>-motion.html`，从 §5 冻结的那份静态画布起手（lint hook 同样盯它）。**动效是叠上去的一层**：做动效时发现构图有问题，停下来说，回 §4，不在这里顺手重新排版。
 
 怎么做、要暴露什么句柄（`window.__maTimeline` 的 `seek` / `duration` / `resume`）、reduced-motion 怎么写：`../../references/design/motion-protocol.md` 的 A 段，法在 `../../references/design/motion-spec.md`。**token 不自己编**——duration 与 easing 取 motion-spec §2–3，项目 `DESIGN.md` §4 有自己的动效先例库就用它的。
 
@@ -170,7 +175,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>
 
 ### 7.4 素材进同一个桶
 
-生成出来的图片与视频**随冻结一起**进 `docs/raw/<topic>/assets/`，和画布、矩阵截图、ledger 同一个桶（§11.1）——不另开目录，不留在下载目录或 `/tmp`。画布引用它们走 `design-preview/assets/`，冻结时一并搬过去。每个素材在冻结记录里带一行：用途、哪个块的哪个 job、谁生成的、验收过了什么。
+生成出来的图片与视频直接进 `docs/design/<spec-slug>/assets/`，和画布、矩阵截图同一个目录（§11.1）——不另开目录，不留在下载目录或 `/tmp`。画布按相对路径 `assets/…` 引用它们。每个素材在冻结记录里带一行：用途、哪个块的哪个 job、谁生成的、验收过了什么。
 
 ## 8 收敛之后：两轮独立的 pass
 
@@ -188,7 +193,9 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>
 | note 是什么 | 去哪 |
 |---|---|
 | **执行性**（"这条分隔线太重"） | 带着它**再跑一轮评委**，回 §4 |
-| **方向性**（"不该像个 dashboard"） | 回 `uiux-imagine`，**在对应的那一档高度**重开 |
+| **跟方向说明矛盾**（"不该像个 dashboard"，而方向说明写的就是 dashboard 式的结构） | 回 `uiux-imagine`，**在对应的那一档高度**重开 |
+
+**回推只有一个理由：跟方向说明矛盾。** 设计的顺序是需求 → imagine 多轮 → 方向定稿 → refine；refine 不因为「评委不满意」「这样也挺好」回推。判据是能不能在方向说明里指出被推翻的那一句——指不出来，就是执行性的，在这里改。拿不准时摆给人判，不自己归类成方向性来逃避一轮打磨，也不自己归类成执行性来绕过一次选择。plateau 时摆给人的取舍题同理：多数是执行层的取舍，人定了就回本环。
 
 **refine 永不改方向。** 方向是人在一排真正不同的变种之间选出来的；在这里顺一句话拧过去，等于用一个没有备选项的选择替换掉那次选择。
 
@@ -208,13 +215,25 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>
 
 ## 11 冻结
 
-### 11.1 进 raw 桶
+### 11.1 在 `docs/design/<spec-slug>/` 落齐
 
-画布 HTML 与**矩阵每格截图**（按格名）进 `docs/raw/<topic>/assets/`，**跑过 §6 的把动效 preview 与那组定格帧（或 GIF）一起放进去，跑过 §7 的把生成素材也放进去**——同一个桶，不分家。配一份 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`——frontmatter 按 wiki-conventions §3，`source_type: design-freeze`。
+冻结版本维护在项目里，一份 spec 一个目录：
 
-正文四节，短：**意图**（取自方向说明，逐字一致）· **冻结了什么**（画布 wikilink、矩阵每格、mismatch 阈值；有动效就加每条动效的理由与 token、restraint 结算、帧证据；有素材就每个素材一行）· **打磨轨迹**（ledger 全文搬进来，随冻结活下去，不留在 `/tmp`；素材单在里面）· **签字**（人的原话，静态与动效两次各记一次，以及被分流回发散那一段的 note）。
+```
+docs/design/<spec-slug>/
+├── <spec-slug>.html           画布（§2 起就在这里）
+├── <spec-slug>-motion.html    跑过 §6 才有
+├── <spec-slug>-design.md      冻结记录
+└── assets/                    矩阵每格截图（按格名）、定格帧或 GIF、§7 的生成素材、画布引用的素材
+```
 
-落完刷新 `docs/raw/index.md`。
+记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>.md` 撞名。frontmatter 按 wiki-conventions §3，`type: design`。
+
+**这个目录不跟 spec 一起删。** spec 做完即删，冻结设计是实现之后的视觉真值，ADR 链到它；它属于知识库存量，和 `domain/`、`reference/` 同一类。
+
+正文四节，短：**意图**（取自方向说明，逐字一致）· **冻结了什么**（画布 wikilink、矩阵每格、mismatch 阈值；有动效就加每条动效的理由与 token、restraint 结算、帧证据；有素材就每个素材一行）· **打磨轨迹**（`/tmp/uiux-refine/<spec-slug>/ledger.md` 全文搬进来，随冻结活下去，不留在 `/tmp`；素材单在里面）· **签字**（人的原话，静态与动效两次各记一次，以及被分流回发散那一段的 note）。
+
+落完刷新 `docs/design/index.md`（没有就建，契约见 wiki-conventions §5），并清掉 `/tmp/uiux-refine/<spec-slug>/`。
 
 ### 11.2 改 spec
 
@@ -222,7 +241,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" /tmp/uiux-refine/round-<N>
 
 冻结摘要固定五样，`to-ticket` 原样誊写、不改写：
 
-- **画布指针** —— raw 桶那份 HTML 的 wikilink。跑过动效那一段的，**同一条指针**把动效 preview 与帧证据一并带上：它是同一块画布的一层，不是第六样。
+- **画布指针** —— `[[<spec-slug>-design]]`，冻结记录的 wikilink，画布 HTML 就在它旁边。跑过动效那一段的，**同一条指针**把动效 preview 与帧证据一并带上：它是同一块画布的一层，不是第六样。
 - **矩阵** —— 每格的 viewport × 主题 × 语言 × 状态，标「人看」的格照标。
 - **mismatch 阈值** —— 沿用 `ui-implementation-standard.md` §3.2 的默认；按格覆盖的写覆盖值**和理由**。
 - **一行 ledger 摘要**。

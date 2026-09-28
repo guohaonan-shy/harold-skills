@@ -44,8 +44,11 @@ product at the selected Surface / Module / Component scope are all real, not app
 
 ## Scratch layout
 
-- Preview files live in a scratch dir, **not** the app tree: `design-preview/<surface>.html`
-  (+ `design-preview/assets/` for captured PNGs). `motion-protocol` uses `design-motion-preview/`.
+- The canvas lives in the target project's docs, **not** the app tree: `docs/design/<spec-slug>/<spec-slug>.html`
+  (+ `docs/design/<spec-slug>/assets/` for captured PNGs; the motion layer is `<spec-slug>-motion.html` in the
+  same folder). It is written there from the first stroke and frozen in place by `uiux-refine`. One spec
+  = one folder, however many surfaces it spans. Scratch that should not survive (critic frames, round
+  JSON) goes under `/tmp/<skill>/<spec-slug>/` instead.
 - Authoring style: inline styles + `var(--token)`, or pull our real Tailwind/tokens by inlining a
   built CSS — whatever reproduces the shipped surface most faithfully. Real DOM means real CSS works;
   you are not limited to flex-only like Paper.
@@ -63,7 +66,7 @@ product at the selected Surface / Module / Component scope are all real, not app
    signed in. (The headed plugin server happens to keep a session, but its lock/cache pitfalls
    aren't worth it just to skip a login.)
 3. **Screenshot the exact selected scope** with a `target` selector to a PNG under
-   `design-preview/assets/`: the affected surface for a Surface route, the module plus enough parent
+   the canvas folder's `assets/`: the affected surface for a Surface route, the module plus enough parent
    context for a Module route, or the component in its real container for a Component route. Pin the
    **probative viewport/container dimensions** so the replica can be captured at the *same* size for
    an honest diff. Public surfaces include 1440 and 390/360; fixed product components may require
@@ -80,7 +83,7 @@ evolution without forcing every task to reproduce an entire page.
 1. **Read the React code first** — the component(s), the `ui/` primitives, the exact tokens/classes,
    and the data shape it renders. The replica is built from the *code's real styles*, not eyeballed
    from the screenshot. (Don't guess hex from a screenshot — read it from the source / computed style.)
-2. **Build the replica** in `design-preview/<surface>.html` from that code + the captured PNG as the
+2. **Build the replica** in the canvas file from that code + the captured PNG as the
    visual target.
 3. **Capture the replica** at the *same viewport + region* as the production reference.
 4. **Diff:** put the two screenshots side by side and compare — spacing, color, type, weight,

@@ -40,7 +40,7 @@
 - 碰 UI 的 spec 落成 `等设计冻结`，§4 把结构决策挂在原型证据上
 - 仍未冻结的 UI ticket，「设计冻结」字段落 ⛔；同一批里非 UI 的票写「不涉及 UI」，不被按住
 - 发散只准出一份方向说明（过 `direction-note-check`），不翻状态，不往仓库里留渲染物
-- 收敛冻结之后：raw 桶里有画布、矩阵每格截图、ledger 全文；spec §4 的「设计方向」被「冻结摘要」**取代**；状态翻 `在飞`
+- 收敛冻结之后：`docs/design/<spec-slug>/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；spec §4 的「设计方向」被「冻结摘要」**取代**；状态翻 `在飞`
 - 全仓无跨 plugin 的 skill 调用
 
 ## case
@@ -90,7 +90,7 @@ node idea-loop/evals/run-baseline.mjs --archive idea-loop/evals/baseline   # 跑
 - `benchmark.json` —— 每格过了几条断言、跑了多久、花了多少钱
 - `<eval-name>/grading.json` —— 逐条断言的 `passed` 与 `evidence`（evidence 是证据，不是措辞）
 - `<eval-name>/result.txt` —— 那一跑最后说的话
-- `<eval-name>/project/` —— **跑完的整个项目目录**，画布、方向说明、ticket、raw 桶都在里面（只在 `--out` 那份里，存档不带）
+- `<eval-name>/project/` —— **跑完的整个项目目录**，画布（`docs/design/`）、方向说明、ticket、raw 桶都在里面（只在 `--out` 那份里，存档不带）
 
 `baseline/` 是存档的那一次：只留 `benchmark.json` 与每格的 `grading.json` / `result.txt` / `run.meta.json`，
 不留整个项目目录——那份几十兆的产物属于跑它的那台机器，不属于仓库。**要比的是断言的红绿和证据，不是像素。**
