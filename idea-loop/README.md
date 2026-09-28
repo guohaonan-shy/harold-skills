@@ -74,7 +74,7 @@ One invocation runs **at most two rounds**, then stops so a human reads what hap
 | Step | Runs on |
 |---|---|
 | Open/reuse the PR, snapshot GitHub, build the review contract | Claude Sonnet 5 · xhigh |
-| Correctness · written Standards · Spec, in parallel, plus the repo's own check commands | Codex `gpt-6-sol` (`review` / read-only `task`) |
+| Correctness · written Standards · Spec, in parallel, plus the repo's own check commands | Codex `gpt-5.6-sol`, effort high (`review` / read-only `task`) |
 | Reproduce, dedup, and decide *introduced or pre-existing* by rerunning at the merge-base | Claude Sonnet 5 · xhigh |
 | Fix what this PR introduced, each with a regression test; backlog what it did not | Claude Sonnet 5 · xhigh |
 | Independently verify each fix red → green with the finding's own instrument | Claude Sonnet 5 · xhigh, a separate agent |

@@ -16,11 +16,17 @@ snapshot's `nextRound`; round numbers keep counting across invocations.
 | Step | Runs on |
 |---|---|
 | Open/reuse PR + prepare the review contract | Claude Sonnet 5, effort xhigh |
-| Correctness axis | Codex `review --model gpt-6-sol --scope branch --base <sha>` |
-| Written-standards axis, spec axis | Codex `task --model gpt-6-sol`, read-only (never `--write`) |
+| Correctness axis | Codex `review --model gpt-5.6-sol --scope branch --base <sha>`; effort comes from Codex config and must be `high` |
+| Written-standards axis, spec axis | Codex `task --model gpt-5.6-sol --effort high`, read-only (never `--write`) |
 | Wrappers around Codex, project check commands | Claude Sonnet 5, effort low |
 | Verify + dedup, fix, independent re-verification | Claude Sonnet 5, effort xhigh; fixer and verifier are separate agents |
 | Publish | the helper renders and posts; the agent that runs it uses Sonnet 5, effort low |
+
+The model and effort are the workflow's `codexModel` / `codexEffort` args (defaults `gpt-5.6-sol` / `high`).
+The companion's native `review` accepts `--model` but no effort, so the correctness axis inherits
+`model_reasoning_effort` from `$CODEX_HOME/config.toml` (default `~/.codex/config.toml`). Its wrapper reads
+that value first and refuses to run — the axis is reported incomplete — when it differs from `codexEffort`,
+rather than silently reviewing at another effort. It never edits the config.
 
 ## Preconditions
 

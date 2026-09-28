@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'On an explicit /idea-loop:pr-review request with committed work. A push, gh pr create or a finished implement run is not by itself a trigger.',
   phases: [
     { title: 'Prepare', detail: 'open/reuse PR, snapshot, review contract (Sonnet xhigh)' },
-    { title: 'Review', detail: 'Codex gpt-6-sol on three axes + project checks' },
+    { title: 'Review', detail: 'Codex gpt-5.6-sol (effort high) on three axes + project checks' },
     { title: 'Verify', detail: 'reproduce, dedup, introduced-or-not at merge-base (Sonnet xhigh)' },
     { title: 'Fix', detail: 'fix introduced findings with regression tests; backlog the rest (Sonnet xhigh)' },
     { title: 'Re-verify', detail: 'independent red-to-green verification (Sonnet xhigh)' },
@@ -14,7 +14,7 @@ export const meta = {
 
 const input = typeof args === 'string' ? JSON.parse(args) : args
 const { cwd, pluginRoot, codexCompanion, agreement = '', baseRefName = 'main', maxRounds = 2,
-  startRound = 1, codexModel = 'gpt-6-sol' } = input || {}
+  startRound = 1, codexModel = 'gpt-5.6-sol', codexEffort = 'high' } = input || {}
 if (!cwd || !pluginRoot || !codexCompanion || !agreement.trim()) {
   return { error: 'Missing cwd, pluginRoot, codexCompanion or the accepted task agreement', mergeReady: false }
 }
@@ -114,7 +114,7 @@ Use the Bash tool with its maximum timeout. If it times out, poll \`node "${code
 Return Codex's final output verbatim in rawOutput. A startup failure, nonzero exit or missing result is incomplete;
 an explicit completed run with no findings is passed. Do not review the code yourself and do not edit anything.`
   const taskPrompt = (focus) => `Write this prompt to a file in your scratchpad, then run Codex read-only on it (never --write):
-node "${codexCompanion}" task --model ${codexModel} --effort high --prompt-file <that file> --cwd "${cwd}"
+node "${codexCompanion}" task --model ${codexModel} --effort ${codexEffort} --prompt-file <that file> --cwd "${cwd}"
 --- prompt ---
 ${pinned}
 ${focus}
@@ -124,7 +124,12 @@ explicitly when there are none.
 --- end prompt ---
 ${codexRun('(the task command above)')}`
   const axes = [
-    { key: 'correctness', prompt: codexRun(`node "${codexCompanion}" review --wait --model ${codexModel} --scope branch --base "${prep.reviewBaseSha}" --cwd "${cwd}"`) },
+    // The companion's native review takes --model but no effort; it inherits model_reasoning_effort from Codex config.
+    { key: 'correctness', prompt: `First read model_reasoning_effort from $CODEX_HOME/config.toml (default ~/.codex/config.toml).
+If it is not "${codexEffort}", do not run the review: return status incomplete with evidence naming the configured value and
+that correctness must run at effort ${codexEffort}. Never edit the config yourself. Otherwise:
+${codexRun(`node "${codexCompanion}" review --wait --model ${codexModel} --scope branch --base "${prep.reviewBaseSha}" --cwd "${cwd}"`)}
+Start evidence with "model ${codexModel}, effort ${codexEffort} (from config)".` },
     { key: 'standards', prompt: taskPrompt('Check the diff only against the written rules listed in the contract. No generic smells, naming preferences or rules that are not written down. A missing rule means nothing to enforce.') },
     { key: 'spec', skip: !prep.specAvailable, prompt: taskPrompt('Check the diff against the acceptance criteria and scope in the contract. Distinguish missing functionality from missing verification, and respect the ticket slice boundaries.') },
     { key: 'project-checks', skip: !prep.checkCommands?.length, prompt: `${pinned}
