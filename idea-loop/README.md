@@ -130,7 +130,7 @@ purpose — mocking a browser would test the mock. The CLI tails on
 shell — argv, a file read, an exit code — and are verified by being run, not
 by a spawned-process test. The lint **hook**
 (`scripts/design-lint-hook.mjs`) has no unit test either — it is verified by
-actually writing an HTML file into a `design-preview/` directory and confirming
+actually writing an HTML file into a `docs/design/<spec-slug>/` directory and confirming
 it reports; that is the falsifiable signal, not a mocked stdin payload.
 
 ### Baseline eval
@@ -152,8 +152,8 @@ reasoning, the case, and how to read a run live in
 
 The **whole loop's wiring check rides along as assertions in that baseline** rather
 than as a one-off dry run: prototype landing in raw, a UI-touching spec landing at
-`等设计冻结`, an unfrozen UI ticket getting ⛔, the freeze putting canvas + ledger in
-the raw bucket and flipping the spec to `在飞`, and no cross-plugin skill invocation
+`等设计冻结`, an unfrozen UI ticket getting ⛔, the freeze landing canvas + ledger in
+`docs/design/<spec-slug>/` and flipping the spec to `在飞`, and no cross-plugin skill invocation
 anywhere in the repo. A dry run's conclusion dies with its session; an assertion
 goes red three weeks later.
 
@@ -204,7 +204,7 @@ idea-loop/
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
-│   ├── design-lint-hook.mjs          # PostToolUse entry: lints design-preview/ HTML, exit 2 on P0/P1
+│   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/<spec-slug>/), exit 2 on P0/P1
 │   ├── github-review.mjs             # round posts: snapshot, finding-shape gate, rendering, GitHub App identity
 │   ├── github-review.test.mjs        # shape gate, retries, round numbering, stale head, App token
 │   └── review-workflows.test.mjs     # mocked host orchestration tests of the loop
@@ -250,7 +250,8 @@ findings the critic just wrote and invalidates the round when the number does no
 
 Nothing in `references/design/` is an entry point. They are loaded on demand by whichever
 step is running; the hook is the one piece that fires on its own, and only on a `Write`/`Edit`
-whose path lands in `design-preview/` or `design-motion-preview/` HTML.
+whose path lands in a canvas HTML — `docs/design/<spec-slug>/*.html`, or the legacy
+`design-preview/` / `design-motion-preview/` scratch dirs.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
 the DESIGN.md-writing skill (→ the reference above), the port-verification skill

@@ -3,7 +3,7 @@
  * PostToolUse hook — the automatic trigger for design-lint.mjs.
  *
  * The daemon-side lint of open-design, ported to a Claude Code hook: every Write/Edit
- * that lands in design-preview/ or design-motion-preview/ HTML gets linted without
+ * that lands in a design canvas gets linted without
  * anyone remembering to check, and findings are fed back to the model (stderr + exit 2).
  * Fully self-contained — no external detector is chained in; every rule (including
  * bounce-easing and layout-transition) lives natively in design-lint.mjs.
@@ -25,7 +25,11 @@ try {
   process.exit(0);
 }
 const filePath = payload?.tool_input?.file_path || '';
-if (!/(?:design-preview|design-motion-preview)\/[^/]*\.html?$/.test(filePath)) process.exit(0);
+// Canvases live in docs/design/<spec-slug>/ (uiux-refine's home, frozen in place). The two
+// scratch dirs stay recognized for protocols run outside refine and for older projects.
+// Only HTML directly inside the spec folder counts: assets/ holds captures, not canvases.
+const CANVAS = /(?:(?:^|\/)(?:design-preview|design-motion-preview)\/[^/]*|(?:^|\/)docs\/design\/[^/]+\/[^/]*)\.html?$/;
+if (!CANVAS.test(filePath)) process.exit(0);
 if (!existsSync(filePath)) process.exit(0);
 
 // --- our brand + anti-slop lint ---

@@ -13,7 +13,7 @@ For an existing surface:
 1. Read the route/page React code, layout shell, real data shape, and shared primitives.
 2. Capture the shipped surface at a pinned viewport using the production-capture recipe in
    `browser-usage.md`.
-3. Build the affected surface faithfully in `design-preview/<surface>.html`.
+3. Build the affected surface faithfully in the canvas (`docs/design/<spec-slug>/<spec-slug>.html`).
 4. Run the screenshot-diff loop until no major differences remain. Preserve shipped warts; lint
    findings against legacy styling are redesign backlog, not permission to change the baseline.
 5. Record a one-line fidelity note and the exact state/viewport captured.

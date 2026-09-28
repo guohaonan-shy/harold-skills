@@ -7,6 +7,9 @@
 > **2026-08-20 签字**：§1 的「做完但还没对账」状态、§3 对 ticket 的豁免、§4 对 `index.md` 的豁免。
 > 前两条来自一次实跑（把 spec 落进一个已有常驻规格的仓库）暴露的洞，第三条是 §4 与 §5 本身相冲。
 >
+> **2026-09-28 签字**：§2 新增 `design/<spec-slug>/` 层、§3 新增 `type: design`。冻结的设计从
+> raw 桶搬出来，作为实现之后的视觉真值维护在项目里，不跟 spec 一起删。
+>
 > 真相源：[[docs-wiki-v2]]（`docs/spec/`）。这五个 skill 取代了 v1 的五个：
 > `distill-source`（并入 grill + to-spec）、`draft-prd` / `freeze-prd` / `archive-prd`
 > （状态机取消，归档并入 dreaming）、`prd-to-plan`（拆成 to-ticket + 后续的 implement）。
@@ -47,6 +50,7 @@ docs/
 ├── spec/                 在飞的规格 —— 做完即删
 │   └── tickets/          单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 归档总结 —— 永久
+├── design/<spec-slug>/   冻结的设计 —— 画布 HTML + <spec-slug>-design.md + assets/，uiux-refine 产出，spec 删了它也留着
 ├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
 ├── reference/            常驻约定与手册
 ├── records/              周期快照 —— weekly / okara / pulse-log
@@ -54,7 +58,9 @@ docs/
 └── quality-backlog.md    线上问题登记册
 ```
 
-前三层是**会话产物**，后三层是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
+`raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` / `reference/` / `records/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
+
+`design/` 骑在分界上：它由一次 `uiux-refine` 会话产出，但冻结之后就是实现的视觉真值，活得比 spec 长——spec 删掉、ADR 写好之后它还在，ADR 链到它。所以 **`dreaming` 不因为 spec 没了就提议删它**；它被取代的唯一方式是同一块 UI 的下一次冻结。
 
 ## 3 frontmatter
 
@@ -66,8 +72,8 @@ docs/
 
 ```yaml
 ---
-type: raw | spec | adr | domain | reference | record
-status: <见下表>                 # raw / reference / domain 省略
+type: raw | spec | adr | design | domain | reference | record
+status: <见下表>                 # raw / design / reference / domain 省略
 tags: [<topic>, <feature-slug>]
 summary: <一句话，≤60 字>
 related: ["[[other-slug]]"]
