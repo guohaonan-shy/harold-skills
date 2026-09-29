@@ -108,9 +108,17 @@ test('the worst finding sets the ceiling regardless of what sits under it', () =
 
 // ---------- stop judgement ----------
 
-test('pass needs the threshold, and the threshold is the one written in the rubric', () => {
+test('pass needs the threshold, and the threshold lives here, not in the rubric', () => {
   assert.equal(STOP_THRESHOLD, 9);
   assert.equal(checkRound([finding('P2')], 8).stop, 'continue');
+});
+
+test('the rubric the critic reads never tells it where the loop stops', () => {
+  // a critic that knows the finish line drifts toward it — keep scoring blind to it
+  const rubric = readFileSync(new URL('../references/design/critic-rubric.md', import.meta.url), 'utf8');
+  for (const word of ['threshold', 'plateau', 'stuck', 'pass']) {
+    assert.ok(!new RegExp(`\\b${word}\\b`, 'i').test(rubric), `the rubric mentions "${word}"`);
+  }
 });
 
 test('one round of memory cannot see a plateau — it takes three', () => {
@@ -150,7 +158,8 @@ test('a schema error counts toward stuck like a score error does', () => {
 test('the rubric states every count in its score bands as a number, not a word', () => {
   // "several" once meant >= 2 here and "more than two" to the critic — five rounds thrown away
   const rubric = readFileSync(new URL('../references/design/critic-rubric.md', import.meta.url), 'utf8');
-  const bands = rubric.slice(rubric.indexOf('## Score bands'), rubric.indexOf('## What the check returns'));
+  const start = rubric.indexOf('## Score bands');
+  const bands = rubric.slice(start, rubric.indexOf('\n## ', start + 1));
   assert.ok(bands.length > 0, 'score-band section not found');
   for (const word of ['several', 'a few', 'many', 'multiple', 'some']) {
     assert.ok(!new RegExp(`\\b${word}\\b`, 'i').test(bands), `score bands say "${word}" — write the number`);

@@ -39,7 +39,11 @@ export const KINDS_BY_SEVERITY = {
 /** Every finding carries exactly these fields, always, in this order. */
 export const FINDING_FIELDS = ['dimension', 'severity', 'kind', 'where', 'detail', 'why'];
 
-/** The stop threshold, stated in the rubric the critic reads — it is not hidden from it. */
+/**
+ * The stop threshold. It lives here and in `uiux-refine` §5 — deliberately NOT in the rubric the
+ * critic reads: a critic that knows the finish line drifts toward it. The band audit below is what
+ * keeps the number honest, not the critic's knowledge of where the loop ends.
+ */
 export const STOP_THRESHOLD = 9;
 
 /**

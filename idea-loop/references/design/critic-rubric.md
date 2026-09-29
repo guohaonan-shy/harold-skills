@@ -1,15 +1,19 @@
 # Critic rubric — what a score means, and what it may not mean
 
-The rubric the critic reads before every round of the design loop. It answers one question and
-declines the rest: **measured against the aesthetic this work is reaching for, how well is it
-executed?** Nothing here scores whether the thing is usable, legible, accessible, or on-brand —
+The rubric the critic reads before every round of the design loop. The critic is given **only what
+the screen looks like** — a screenshot, or for motion a time-ordered set of frames — and this file.
+No code, no earlier rounds, no brief about what the design is meant to be. It answers one question
+and declines the rest: **read the aesthetic this screen is going for off the screen itself; measured
+against how a top studio would execute that aesthetic, how well is it executed, and where are the
+biggest gaps?** Whether that aesthetic is the one the project asked for is not the critic's question
+— a human judges that against the direction note at sign-off. Nothing here scores whether the thing is usable, legible, accessible, or on-brand —
 those have their own gates, listed at the bottom, and folding them in here would let a
 contrast failure and a timid type scale cancel each other out into a meaningless 7.
 
-The stop threshold is **9**, and it is written here on purpose. The critic sees it. What keeps a
-critic from simply typing 9 is not secrecy — it is that the score has to survive
-`scripts/critic-score.mjs`, which recomputes the allowed band from the findings the critic just
-wrote. A 9 under a P1 is an invalid round and the critic is rerun.
+Score what you see. This file does not say what score ends the loop, and the critic is not told —
+a critic that knows the finish line drifts toward it. The number is not free either: it has to sit
+inside the band that the critic's own findings allow (the table under Score bands), and
+`scripts/critic-score.mjs` checks that every round. A number outside the band throws the round away.
 
 ## Severity ladder
 
@@ -18,7 +22,7 @@ bad it feels.
 
 | Severity | Definition | The AD's action | Dimension it lands on |
 |---|---|---|---|
-| **P0** | The aesthetic the screen reads as is not the one it wants; or it hits any entry in the slop catalog | Reopen the direction — do not revise this comp | Philosophy; the filler half of Specificity |
+| **P0** | The screen does not hold one aesthetic — it reads as none, or as two at war; or it hits any entry in the slop catalog | Stop polishing this comp — the direction itself is in question | Philosophy; the filler half of Specificity |
 | **P1** | The squint test fails: the eye lands nowhere, primary and secondary compete; or several flourishes fight each other | Send this block back to be recomposed | Hierarchy; Restraint |
 | **P2** | Type size, tracking, spacing, alignment, contrast are "close but not right" — there is a fix you could put a ruler on | Red-pen it, one more round | Execution |
 | **P3** | Something an AD notices but would not hold the release for | Fix it in passing; not a blocker | Headroom in any dimension |
@@ -35,7 +39,7 @@ never a craft note, a P2 is never a direction argument:
 | P2 | `craft` |
 | P3 | `craft` |
 
-`direction` reopens the direction. `pattern` is the one kind that may summon reference research —
+`direction` stops the loop and puts the direction in front of a human. `pattern` is the one kind that may summon reference research —
 it is a named question ("what do studios do with a filter rail this dense?"), never a pre-work
 browse. `craft` is fixed in place in the current comp.
 
@@ -57,24 +61,9 @@ score outside the band: the number is audited, the feeling is not.
 | 1–3 | two or more P0 | Not an execution problem, a brief problem |
 
 `scripts/critic-score.mjs` implements this table row for row — when one changes, both change, and
-its test suite fails if a word stands in for a number in this section again.
-
-## What the check returns
-
-`checkRound(findings, score, history, invalidBefore)` is a pure function. It takes the round's
-findings, the critic's score, the worst severity of each previous round, and how many runs of
-this round were already thrown away, and returns two things:
-
-- **valid / invalid** — invalid means the score is outside the band its own findings allow. Rerun
-  the critic; do not argue the number down.
-- **stop judgement** — `continue`, `pass` (≥ 9), `plateau` (three rounds running at the same worst
-  severity — more rounds are not going to help), or `direction` (a P0 is present; the next move is
-  a new direction, not another polish pass). On an invalid run it is empty, except on the second
-  invalid run of the same round, which is `stuck`: two invalid runs in a row nearly always share a
-  shape, which means this rubric and the script disagree about a word — a defect to fix here, not
-  a critic to rerun a third time.
-
-It never assigns a score. Scoring is the critic's judgement; this is the audit.
+its test suite fails if a word stands in for a number in this section again. How the loop reads
+the result — when it ends, when it gives up — lives in that script and in `uiux-refine` §5,
+not here: the critic does not need it and should not have it.
 
 ## Material this rubric stands on — read it there, it is not copied here
 
