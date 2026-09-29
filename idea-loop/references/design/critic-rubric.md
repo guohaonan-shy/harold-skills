@@ -42,31 +42,37 @@ browse. `craft` is fixed in place in the current comp.
 ## Score bands
 
 The worst finding of the round sets the ceiling. Count moves the score inside that ceiling; it
-never lifts it.
+never lifts it. **Every count below is a number, read literally** — "two or more P2" means two
+counts. A critic that feels two P2 do not add up to much should say so in their severity, not by typing a
+score outside the band: the number is audited, the feeling is not.
 
-| Score | Worst finding | What it means |
+| Score | Findings | What it means |
 |---|---|---|
 | 10 | none | The critic cannot find anything it would put a hand on |
-| 9 | P3 only, no more than 2 | The studio would ship this as-is |
-| 8 | a P2, no P1 | Approved, but one more red-pen round |
-| 7 | one P1 | One block needs recomposing |
-| 6 | two or more P1, or a P1 stacked with several P2 | Several blocks need recomposing |
-| 4–5 | a P0 | Direction drift or slop — reopen |
-| ≤ 3 | several P0 | Not an execution problem, a brief problem |
+| 9 | 1–2 P3, nothing worse | The studio would ship this as-is |
+| 8 | at least one P2 and no P1; or 3 or more P3 and nothing worse | Approved, but one more red-pen round |
+| 7 | exactly one P1, with at most one P2 | One block needs recomposing |
+| 6 | two or more P1; or one P1 with two or more P2 | More than one block needs recomposing |
+| 4–5 | exactly one P0 | Direction drift or slop — reopen |
+| 1–3 | two or more P0 | Not an execution problem, a brief problem |
 
-More than two P3 and nothing worse drops to 8: past a couple, polish notes are a red-pen round.
-`scripts/critic-score.mjs` implements this table row for row — when one changes, both change.
+`scripts/critic-score.mjs` implements this table row for row — when one changes, both change, and
+its test suite fails if a word stands in for a number in this section again.
 
 ## What the check returns
 
-`checkRound(findings, score, history)` is a pure function. It takes the round's findings, the
-critic's score, and the worst severity of each previous round, and returns two things:
+`checkRound(findings, score, history, invalidBefore)` is a pure function. It takes the round's
+findings, the critic's score, the worst severity of each previous round, and how many runs of
+this round were already thrown away, and returns two things:
 
 - **valid / invalid** — invalid means the score is outside the band its own findings allow. Rerun
   the critic; do not argue the number down.
 - **stop judgement** — `continue`, `pass` (≥ 9), `plateau` (three rounds running at the same worst
   severity — more rounds are not going to help), or `direction` (a P0 is present; the next move is
-  a new direction, not another polish pass).
+  a new direction, not another polish pass). On an invalid run it is empty, except on the second
+  invalid run of the same round, which is `stuck`: two invalid runs in a row nearly always share a
+  shape, which means this rubric and the script disagree about a word — a defect to fix here, not
+  a critic to rerun a third time.
 
 It never assigns a score. Scoring is the critic's judgement; this is the audit.
 

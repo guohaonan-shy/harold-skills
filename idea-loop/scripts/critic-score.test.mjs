@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   checkRound, validateFindings, scoreBand, worstSeverity,
-  DIMENSIONS, SEVERITIES, KINDS, KINDS_BY_SEVERITY, FINDING_FIELDS, STOP_THRESHOLD,
+  DIMENSIONS, SEVERITIES, KINDS, KINDS_BY_SEVERITY, FINDING_FIELDS, STOP_THRESHOLD, STUCK_AFTER,
 } from './critic-score.mjs';
+import { readFileSync } from 'node:fs';
 
 /** A well-formed finding; every test starts from this and bends one thing. */
 const finding = (severity, over = {}) => ({
@@ -127,6 +128,33 @@ test('direction outranks plateau — three P0 rounds still means reopen the dire
 
 test('an invalid round yields no stop judgement — the score it rests on is not trusted', () => {
   assert.equal(checkRound(p('P3', 2), 10).stop, null);
+});
+
+test('the second invalid run of the same round stops the loop as stuck', () => {
+  // one P1 + two P2 is the 6 band; a critic that reads "two" as not "several" types 7
+  const round = [finding('P1'), ...p('P2', 2)];
+  assert.equal(checkRound(round, 7, [], 0).stop, null);
+  const second = checkRound(round, 7, [], STUCK_AFTER - 1);
+  assert.equal(second.valid, false);
+  assert.equal(second.stop, 'stuck');
+});
+
+test('a valid run after an invalid one is judged on the design, not stuck', () => {
+  assert.equal(checkRound([finding('P1'), ...p('P2', 2)], 6, [], 1).stop, 'continue');
+});
+
+test('a schema error counts toward stuck like a score error does', () => {
+  assert.equal(checkRound([finding('P2', { kind: 'direction' })], 8, [], 1).stop, 'stuck');
+});
+
+test('the rubric states every count in its score bands as a number, not a word', () => {
+  // "several" once meant >= 2 here and "more than two" to the critic — five rounds thrown away
+  const rubric = readFileSync(new URL('../references/design/critic-rubric.md', import.meta.url), 'utf8');
+  const bands = rubric.slice(rubric.indexOf('## Score bands'), rubric.indexOf('## What the check returns'));
+  assert.ok(bands.length > 0, 'score-band section not found');
+  for (const word of ['several', 'a few', 'many', 'multiple', 'some']) {
+    assert.ok(!new RegExp(`\\b${word}\\b`, 'i').test(bands), `score bands say "${word}" — write the number`);
+  }
 });
 
 // ---------- the closed sets ----------

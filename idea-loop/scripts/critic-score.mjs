@@ -42,6 +42,14 @@ export const FINDING_FIELDS = ['dimension', 'severity', 'kind', 'where', 'detail
 /** The stop threshold, stated in the rubric the critic reads — it is not hidden from it. */
 export const STOP_THRESHOLD = 9;
 
+/**
+ * Invalid critic runs in one round before the loop stops as `stuck`. A second invalid run of
+ * the same round almost always has the same shape as the first — the critic reads a rubric
+ * word one way and this file counts it another — so a third run buys nothing. Observed:
+ * "a P1 stacked with several P2" against `P2 >= 2`, thrown away five times in one refine.
+ */
+export const STUCK_AFTER = 2;
+
 /** Fields that may be null when they do not apply; everything else must be a string. */
 const NULLABLE = new Set(['where']);
 
@@ -126,7 +134,7 @@ export function scoreBand(findings) {
 
   if (n.P0 >= 2) return { min: 1, max: 3 };           // several P0 — a brief problem
   if (n.P0 === 1) return { min: 4, max: 5 };          // one P0 — drift or slop, reopen
-  if (n.P1 >= 2 || (n.P1 === 1 && n.P2 >= 2)) return { min: 6, max: 6 };
+  if (n.P1 >= 2 || (n.P1 === 1 && n.P2 >= 2)) return { min: 6, max: 6 }; // one P1 + two or more P2
   if (n.P1 === 1) return { min: 7, max: 7 };
   if (n.P2 >= 1) return { min: 8, max: 8 };
   if (n.P3 > 2) return { min: 8, max: 8 };            // the count adjustment out of the 9 band
@@ -145,16 +153,20 @@ export function scoreBand(findings) {
  *                  read as a one-round history. Plateau is a three-round property, so one
  *                  round of memory can never see one — that is why this takes a list and not
  *                  just "last round's worst".
+ * @param invalidBefore  how many critic runs THIS round has already thrown away as invalid.
  * @returns { valid, errors, worst, counts, band, stop }
- *          `stop` is one of continue / pass / plateau / direction, and is null on an invalid
- *          round: the judgement would rest on a score that does not follow from the findings.
+ *          `stop` is one of continue / pass / plateau / direction on a valid round. On an
+ *          invalid one it is null — the judgement would rest on a score that does not follow
+ *          from the findings — unless this is the second invalid run in a row, which is
+ *          `stuck`: that is not a judgement on the design but on the loop itself.
  */
-export function checkRound(findings, score, history = []) {
+export function checkRound(findings, score, history = [], invalidBefore = 0) {
   const errors = validateFindings(findings);
   const past = typeof history === 'string' ? [history] : Array.isArray(history) ? history : [];
+  const invalidStop = Number.isInteger(invalidBefore) && invalidBefore >= STUCK_AFTER - 1 ? 'stuck' : null;
 
   if (errors.length) {
-    return { valid: false, errors, worst: null, counts: null, band: null, stop: null };
+    return { valid: false, errors, worst: null, counts: null, band: null, stop: invalidStop };
   }
   if (!Number.isInteger(score) || score < 1 || score > 10) {
     return {
@@ -163,7 +175,7 @@ export function checkRound(findings, score, history = []) {
       worst: worstSeverity(findings),
       counts: counts(findings),
       band: scoreBand(findings),
-      stop: null,
+      stop: invalidStop,
     };
   }
 
@@ -180,7 +192,7 @@ export function checkRound(findings, score, history = []) {
       worst,
       counts: counts(findings),
       band,
-      stop: null,
+      stop: invalidStop,
     };
   }
 
@@ -203,7 +215,10 @@ function stopDecision(worst, score, past) {
 export function renderRound(result, file) {
   const at = file ? ` (${file})` : '';
   if (!result.valid) {
-    return [`critic-round: 本轮无效${at} —— 重跑评委，不要把分数谈下来：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
+    const head = result.stop === 'stuck'
+      ? `critic-round: 本轮无效${at} —— 同一轮已连着作废 ${STUCK_AFTER} 次以上，停止判定：stuck。停环交人，别跑第三次：`
+      : `critic-round: 本轮无效${at} —— 重跑评委，不要把分数谈下来：`;
+    return [head, ...result.errors.map((e) => `  - ${e}`)].join('\n');
   }
   const n = result.counts;
   const tally = SEVERITIES.filter((s) => n[s]).map((s) => `${s}×${n[s]}`).join(' · ') || '无 finding';
@@ -215,14 +230,14 @@ export function renderRound(result, file) {
 }
 
 // CLI — the thin shell the refine loop calls each round. The module above stays pure;
-// the filesystem enters only here. Input is one JSON file: { findings, score, history }.
+// the filesystem enters only here. Input is one JSON file: { findings, score, history, invalidBefore }.
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { readFileSync } = await import('node:fs');
   const args = process.argv.slice(2);
   const json = args.includes('--json');
   const [file] = args.filter((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('usage: critic-score.mjs <round.json> [--json]   # { findings, score, history }');
+    console.error('usage: critic-score.mjs <round.json> [--json]   # { findings, score, history, invalidBefore }');
     process.exit(1);
   }
   let round;
@@ -232,7 +247,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error(`critic-score: cannot read ${file}: ${e.message}`);
     process.exit(1);
   }
-  const result = checkRound(round?.findings, round?.score, round?.history ?? []);
+  const result = checkRound(round?.findings, round?.score, round?.history ?? [], round?.invalidBefore ?? 0);
   if (json) console.log(JSON.stringify(result, null, 2));
   else console.log(renderRound(result, file));
   process.exit(result.valid ? 0 : 2);
