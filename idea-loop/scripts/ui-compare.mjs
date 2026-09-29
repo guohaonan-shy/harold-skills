@@ -49,6 +49,24 @@ const WHY = {
     'A token value (color, size, radius, weight…) is not identical to the canvas — an off-token value is a second style system, not a rounding detail.',
 };
 
+/**
+ * Token values that are declared differently but render the same. Both came up on every ticket
+ * of one real port and were never a defect:
+ * - the colour of a 0px border — the canvas leaves `currentColor`, a CSS reset sets its own;
+ * - a font stack past its first family — the fallbacks differ, the rendered face does not
+ *   (whether the first family actually loaded is the font-loading convention's job, §3.1).
+ */
+function sameRendered(property, expectedBox, actualBox) {
+  if (property === 'borderColor') {
+    return Number(expectedBox.borderWidth) === 0 && Number(actualBox.borderWidth) === 0;
+  }
+  if (property === 'fontFamily') {
+    const first = (v) => String(v).split(',')[0].trim().replace(/^["']|["']$/g, '').toLowerCase();
+    return first(expectedBox.fontFamily) === first(actualBox.fontFamily);
+  }
+  return false;
+}
+
 function positionTolerance(tolerance, anchor) {
   const byAnchor = tolerance.byAnchor?.[anchor]?.position;
   if (typeof byAnchor === 'number') return byAnchor;
@@ -102,7 +120,7 @@ export function compareMeasurements(canvas, local, tolerance = {}, context = {})
 
       // Token class: exact match. No tolerance of any kind is consulted here —
       // "one shade off" is a different token, not a rounding error.
-      if (expected !== actual) {
+      if (expected !== actual && !sameRendered(property, expectedBox, actualBox)) {
         findings.push({
           id: 'token-mismatch', severity: 'P1', cell, anchor, property,
           expected, actual, delta: null,

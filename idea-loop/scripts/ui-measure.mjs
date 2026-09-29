@@ -97,7 +97,8 @@ function withState(url, state) {
 
 async function prepare(page, url, cell) {
   await page.setViewportSize(cell.viewport);
-  await page.emulateMedia({ colorScheme: cell.colorScheme ?? 'light' });
+  // Media conditions are cell properties, emulated on both tabs — not ?state= flags the page fakes.
+  await page.emulateMedia({ colorScheme: cell.colorScheme ?? 'light', reducedMotion: cell.reducedMotion ?? 'no-preference' });
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.addStyleTag({ content: FREEZE_CSS });
   await page.evaluate(() => document.fonts.ready);

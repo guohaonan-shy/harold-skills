@@ -59,6 +59,14 @@
 
 分不清就 grep 项目。假设一个 utility 存在而不查，是这一步最常见的错。
 
+**「原样复用」撞上「画布跟它不一样」时**——项目已有一个共享组件（别的页面也在用），画布里同一个东西长得略有不同（每一项都有底线，而组件用的是只画项与项之间的分隔；内边距在外层而画布放在内层）——三条路里只有一条对：
+
+- **不 fork**：照着它再造一个「本页专用版」，就是 §1.4 说的第二套样式系统。
+- **不改它的默认样式**：别的页面签过的是它现在的样子，改默认等于替那些页面重做了一次没人签的设计。
+- **给它加可选的口子，在本页的作用域里覆盖**：组件接收一个可选的 `class`（或同类 prop）和一个默认关闭的开关（例如只在本页输出 `data-anchor`），本页在自己的样式作用域里对准这个 class 覆盖那几处差异。**验证其他使用方没变**：改动前后各构建一次，逐字节比对其他页面的产物 HTML/CSS——一样才算没波及。这一条是会红的：只凭「我只加了可选参数」推断没波及，不算验证。
+
+覆盖的那几处差异如果在两个以上的页面都出现，它就不是本页的例外，是组件该改的地方——那是一条 Distill-back，交人定，不在这张票里顺手改默认。
+
 ---
 
 ## 2 各栈附录
@@ -101,6 +109,8 @@
 
 prod 404 断言的形状（栈无关）：以生产模式构建并启动，请求 harness 路径，断言状态码 404。
 
+**媒体条件不是状态。** 色彩模式、`prefers-reduced-motion` 这类由浏览器报告的条件，写成矩阵格的属性（`colorScheme`、`reducedMotion`），由测量脚本在两个 tab 上**模拟**，不要做成一个 `?state=` 再在页面上挂一个属性去假装它。后者的代价是每一条替代写两份——一份在 `@media (prefers-reduced-motion: reduce)` 里给真用户，一份挂在 harness 的属性选择器下给比对——两份迟早漂开，而比对量到的永远是用户看不到的那一份。
+
 ---
 
 ## 3 校验环怎么跑
@@ -134,10 +144,11 @@ prod 404 断言的形状（栈无关）：以生产模式构建并启动，请�
 {
   "canvas": "http://localhost:8000/canvas/settings.html",
   "local": "http://localhost:5173/__design/settings",
-  "dpr": 2,
+  "dpr": 1,
   "tolerance": { "position": 1, "antialias": 0.1, "pixel": 1 },
   "cells": [
     { "name": "desktop/light/default", "viewport": { "width": 1440, "height": 900 }, "colorScheme": "light", "state": "default" },
+    { "name": "desktop/light/reduced", "viewport": { "width": 1440, "height": 900 }, "reducedMotion": "reduce", "state": "default" },
     { "name": "mobile/dark/empty", "viewport": { "width": 390, "height": 844 }, "colorScheme": "dark", "state": "empty",
       "tolerance": { "pixel": 2 }, "byAnchor": { "chart": { "position": 3 } } },
     { "name": "desktop/light/live-data", "viewport": { "width": 1440, "height": 900 }, "state": "live", "review": "human" }
@@ -148,6 +159,9 @@ prod 404 断言的形状（栈无关）：以生产模式构建并启动，请�
 - 格的 `name` 用在每条 finding 的位置字段里，写得让人一眼知道是哪一格。
 - `review: "human"` 的格脚本**跳过**，单独列出来，不计入绿。
 - 像素层看的是 **viewport 那一帧**（不是整页），所以两张截图必然同尺寸；折叠线以下的覆盖靠锚点，需要单独看就再加一格。
+- **`dpr` 写 1。** 脚本把整帧像素搬进 node 比对，1440×900 在 2 倍下是两千万个数，会在跑了几分钟之后把 node 的堆撑爆；要看高分屏细节就对那一块单独开一格。
+- **非确定渲染的格不比像素。** WebGL、canvas 动画、视频这类跨 GPU / 驱动不逐像素一致的背景，像素层在那一格没有意义：给它的画布与实现各提供一个降级状态（例如 `?state=webgl-off` 渲染静态降级背景），在降级状态下比文字与布局，渲染本身标 `review: "human"`。冻结摘要里写明这一格为什么换比法。
+- **关掉 dev server 的浮动工具条。** 框架的开发浮层（开发工具条、错误浮层按钮）钉在视口里，宽视口只占不到 1%，窄视口能到 3%，直接把像素预算顶破，报出来是一条说不清原因的 P2。比对前关掉，量完再开回来。
 
 ### 3.4 跑，然后照 finding 改
 
@@ -157,6 +171,10 @@ node <plugin>/idea-loop/scripts/ui-measure.mjs matrix.json --json  # 机读
 ```
 
 退出码：`0` 全绿，`2` 有 finding。
+
+**读位置类 finding：先找最上游的那一条。** `top` 是整页坐标，上游一个块高了 12px，它下面每个锚点都会报一条 `top` 漂 12px——那是一个原因，不是二十条。先修最上游的；上游不在这张票的范围里（共享页头、别的票负责的块），就把本票的块按**它自己的宽高、`left`，加块内元素相对块顶的偏移**来判，下游那串等量的 `top` 漂移在票里写明来源，不去逐条追。
+
+两类「声明不同、渲染相同」的 token 差异由比对脚本自己认：0px 宽边框的颜色（画布留着 `currentColor`，CSS reset 另给一个），以及字体栈第一个字体之后的 fallback。别的 token 差异一律是 finding，不因为「看起来一样」放过——那两条是量过、确认渲染结果相同才写进脚本的。
 
 finding 的形状与本仓库 lint 输出同构，字段是闭集：
 

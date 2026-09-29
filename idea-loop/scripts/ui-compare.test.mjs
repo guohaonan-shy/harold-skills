@@ -84,6 +84,33 @@ test('an extra anchor on the ported side is not a finding', () => {
   assert.deepEqual(compareMeasurements(canvas, local), []);
 });
 
+test('the colour of a border nobody can see is not a finding', () => {
+  // canvas leaves currentColor, Tailwind preflight sets slate-200 on every element: both 0px wide
+  const canvas = { faq: { ...anchor(), borderWidth: 0, borderColor: 'rgb(15, 23, 42)' } };
+  const local = { faq: { ...anchor(), borderWidth: 0, borderColor: 'oklch(0.929 0.013 255.508)' } };
+  assert.deepEqual(compareMeasurements(canvas, local), []);
+});
+
+test('a border colour still counts once either side draws the border', () => {
+  const canvas = { faq: { ...anchor(), borderWidth: 1, borderColor: 'rgb(226, 232, 240)' } };
+  const local = { faq: { ...anchor(), borderWidth: 0, borderColor: 'rgb(15, 23, 42)' } };
+  assert.deepEqual(compareMeasurements(canvas, local).map((f) => f.property).sort(), ['borderColor', 'borderWidth']);
+});
+
+test('font stacks that differ only after the first family are the same font', () => {
+  const canvas = { h1: { ...anchor(), fontFamily: 'Inter, system-ui, sans-serif' } };
+  const local = { h1: { ...anchor(), fontFamily: '"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif' } };
+  assert.deepEqual(compareMeasurements(canvas, local), []);
+});
+
+test('a different first family is a token finding', () => {
+  const canvas = { h1: { ...anchor(), fontFamily: 'Inter, sans-serif' } };
+  const local = { h1: { ...anchor(), fontFamily: 'system-ui, Inter, sans-serif' } };
+  const findings = compareMeasurements(canvas, local);
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].property, 'fontFamily');
+});
+
 // ---------- pixel layer ----------
 
 const solid = (w, h, [r, g, b]) => ({
