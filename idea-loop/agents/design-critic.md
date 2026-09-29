@@ -32,10 +32,10 @@ tools: Read
 一个 JSON 对象，不加别的话：
 
 ```json
-{ "findings": [ { "dimension": "…", "severity": "P0|P1|P2|P3", "kind": "direction|pattern|craft", "where": "…|null", "detail": "…", "why": "…" } ], "score": 7 }
+{ "findings": [ { "dimension": "philosophy|hierarchy|execution|specificity|restraint", "severity": "P0|P1|P2|P3", "kind": "direction|pattern|craft", "where": "…|null", "detail": "…", "why": "…" } ], "score": 7 }
 ```
 
-- 字段、闭集与 kind×严重度的合法组合以 `scripts/critic-score.mjs` 为准，rubric 里有同一张表。
+- 字段名与每个取值照 rubric「What you hand back — exact literals」那一节**逐字**写（维度名是小写）。写错一个字，这一轮就被作废，看得再准也不算。
 - **分数照 rubric 的分数带从你自己的 finding 推出来**：先定 finding，再按最差严重度与计数查表。分数带里的数量是写死的数字，照字面数；你觉得「两条不算多」，那是一个该写进 finding 严重度的判断，不是一个把分数挪出分数带的理由。
 - **看不见的不算发现。** 每条 finding 必须在你收到的截图上指得出来。
 - **给得出数的就给数**：「标题与正文左缘差约 10px」比「没对齐」好——执行者会先在同一张截图上量，量出来不成立的发现会被剔除。给数是让你的发现可以被核对，不是让它显得精确；量不准就写「目测」。

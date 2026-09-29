@@ -65,6 +65,28 @@ its test suite fails if a word stands in for a number in this section again. How
 the result — when it ends, when it gives up — lives in that script and in `uiux-refine` §5,
 not here: the critic does not need it and should not have it.
 
+## What you hand back — exact literals
+
+One JSON object and nothing else. Field names and values are **exact strings, lower-case where
+shown**; anything else fails the schema check and the round is thrown away, however good the
+reading was.
+
+```json
+{ "findings": [ { "dimension": "hierarchy", "severity": "P1", "kind": "craft", "where": "group header", "detail": "…", "why": "…" } ], "score": 7 }
+```
+
+| Field | Allowed values |
+|---|---|
+| `dimension` | `philosophy` · `hierarchy` · `execution` · `specificity` · `restraint` |
+| `severity` | `P0` · `P1` · `P2` · `P3` |
+| `kind` | `direction` · `pattern` · `craft`, legal only in the combinations under "Kind, and where each one goes" |
+| `where` | a string naming the place on the screen, or `null` |
+| `detail` · `why` | strings |
+| `score` | an integer 1–10, inside the band your findings allow |
+
+Every finding carries all six fields — no more, no fewer. The prose above names the dimensions in
+title case; the JSON takes them lower-case.
+
 ## Material this rubric stands on — read it there, it is not copied here
 
 - **The five dimensions** (Philosophy / Hierarchy / Execution / Specificity / Restraint) and the

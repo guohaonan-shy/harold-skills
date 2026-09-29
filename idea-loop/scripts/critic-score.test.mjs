@@ -113,6 +113,15 @@ test('pass needs the threshold, and the threshold lives here, not in the rubric'
   assert.equal(checkRound([finding('P2')], 8).stop, 'continue');
 });
 
+test('every closed-set literal the schema accepts is spelled out in the rubric the critic reads', () => {
+  // the critic sees the rubric, never this script: a literal only written here is one it cannot hit
+  // (observed: every dimension came back title-case, twice, and the loop stopped as stuck)
+  const rubric = readFileSync(new URL('../references/design/critic-rubric.md', import.meta.url), 'utf8');
+  for (const literal of [...DIMENSIONS, ...SEVERITIES, ...KINDS, ...FINDING_FIELDS]) {
+    assert.ok(rubric.includes('`' + literal + '`'), `the rubric never spells out \`${literal}\``);
+  }
+});
+
 test('the rubric the critic reads never tells it where the loop stops', () => {
   // a critic that knows the finish line drifts toward it — keep scoring blind to it
   const rubric = readFileSync(new URL('../references/design/critic-rubric.md', import.meta.url), 'utf8');
