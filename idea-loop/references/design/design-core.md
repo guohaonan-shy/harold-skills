@@ -95,6 +95,9 @@ a11y floors are universal. Never relax the target project's floors:
 > Brand override note: generic advice like "avoid Inter as a display face" (taste-skill §4.1,
 > open-design §C) is **overridden** — Inter tight / Plus Jakarta Sans ARE our display faces by
 > DESIGN.md decision. Palette-rotation advice is likewise overridden: we are brand-locked.
+> **The lock covers the interface, not the imagery.** Chrome, controls, fills and accents carry the
+> brand hue; a photograph, a render or an illustration brings its own palette. Briefing every image
+> in the brand hue makes a page read as one flat colour (`landing-ia.md` § Imagery).
 
 ## 5. Anti-slop law (generic; reconciled against DESIGN.md)
 
@@ -103,6 +106,8 @@ a11y floors are universal. Never relax the target project's floors:
 - ❌ Generic emoji feature icons (✨ 🚀 🎯 …)
 - ❌ Rounded card with a left colored border accent (the "AI dashboard tile")
 - ❌ Hand-drawn SVG humans / faces / scenery
+- ❌ Decorative imagery — an image that would still work on any other page of the product
+  (the portability check, `landing-ia.md` § Imagery). Being on-brand does not make it relevant.
 - ❌ Invented metrics ("10× faster", "99.9% uptime") without a source
 - ❌ Filler copy — "Feature One / Feature Two", lorem ipsum
 - ❌ An icon next to every heading; a gradient on every background
@@ -152,6 +157,12 @@ comments are out of scope.)
 ### 5.5 Assets
 - **No div-built fake screenshots** — we have a real product; capture the real surface (the
   product-shots pipeline) or use none.
+- **No invented UI for a concept.** Anything that looks like UI must be a component the product
+  really has (its structure, its styles, real data). When the page's subject is not the product —
+  a third party's standard, a scale, an idea — do not code up a UI-looking card for it; draw the
+  concept's own physical form as line art, or photograph its traces (`landing-ia.md` § Imagery).
+  The fake-screenshot rule above only catches a surface pretending to be the product; this one
+  catches a widget made up for one page, which reads as the product claiming a feature it lacks.
 - No hot-linked stock CDNs (unsplash/placehold) in previews; local assets under the
   canvas folder's `assets/`.
 
