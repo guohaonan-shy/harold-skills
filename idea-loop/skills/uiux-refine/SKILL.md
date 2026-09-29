@@ -228,6 +228,7 @@ Image prompt:
 | Nielsen 启发式 / 认知负荷 / 五角色红旗 | `design/heuristics-checklist.md` |
 | 对比度与 a11y，**从真 DOM 的 computed style 读**，不肉眼估 | `design/accessibility-baseline.md`，读法见 browser-usage |
 | `DESIGN.md` drift check | `design/ui-craft-checklist.md` §5 |
+| **文案里的每条说法都有出处**：关于产品的走真实产物，关于外部世界的（分数量纲、规则、日期、第三方的数）指到发布方自己的文件，出处写进冻结记录。打磨环里文案一直在改，**签字前对最终文案再过一遍**——后加的句子最容易没人追 | `design/design-core.md` §7.1 Proof map |
 | 验收矩阵逐格看过 | 矩阵取自方向说明的「验收矩阵」 |
 
 **Distill-back 有两个去处，先分类再写。** 分类只问一句：**换一个产品，这条还成立吗？**

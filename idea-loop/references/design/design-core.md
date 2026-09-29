@@ -252,7 +252,7 @@ metrics, media, or async data.
 
 ### 7.1 Proof map
 
-For every claim, number, testimonial, logo, or screenshot the UI shows, trace it to one of four
+For every claim, number, testimonial, logo, or screenshot the UI shows, trace it to one of five
 routes before it ships:
 
 - **Reuse a real product asset** — preferred whenever the surface is claiming something about the
@@ -260,13 +260,22 @@ routes before it ships:
 - **Reconstruct from verified real state** — HTML/CSS/SVG built from an actually-observed UI or
   data shape, never inventing a feature or a number that doesn't exist.
 - **Source licensed/owned media** — record provenance and any crop/processing applied.
+- **Cite the issuing source** — a claim about the outside world (a test's score scale, a rule, a
+  date, a third party's number) is traced to the document of whoever issues it, and the citation
+  goes into the freeze record next to the copy. A secondary page, a blog, or the model's own memory
+  is not a source. Copy is frozen with the canvas and then ported verbatim, so a wrong fact that
+  survives sign-off ships: on one marketing page three factual sentences passed design sign-off and
+  were caught only at code review (a retired test format's maximum score, whether an old scale
+  still prints during a transition, and a claim about how a conversion behaves).
 - **Mark unsupported** — an honest labelled placeholder or grey block. Never fill the space with a
   fake logo, a fabricated metric, or a generic stock avatar (the same floor as §1's "honest
   placeholders beat fake stats" and §5.1's invented-metrics ban — the proof map is the procedure
   that catches it before build, not just the checklist that catches it after).
 
-Do this at stage E (pulling parts) for any component/module carrying a claim, and roll it into the
-Surface-level asset inventory for a whole-page build.
+Do this at stage E (pulling parts) for any component/module carrying a claim, roll it into the
+Surface-level asset inventory for a whole-page build, and run it once more over the final copy
+before sign-off — copy keeps changing through the polish loop, and the claims added late are the
+ones nobody traced.
 
 ### 7.2 Responsive re-edit
 
