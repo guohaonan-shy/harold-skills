@@ -264,12 +264,17 @@ Serve the preview and provide a short review list:
 On feedback, return to the earliest wrong altitude. Read a cluster of fine notes as one underlying
 rule, not independent patches.
 
-On sign-off, perform **Distill-back before handoff**: identify decisions that generalize, draft dated
-T2 case-law amendments, confirm them with the user, and apply them in the same session. Workflow
-method changes belong in this plugin; product interaction/treatment decisions belong in DESIGN.md.
+On sign-off, perform **Distill-back before handoff**: identify decisions that generalize, confirm
+the wording with the user, and apply them in the same session. Classify each candidate with one
+question — **would it still hold for a different product?** If yes, it is design method (how to
+choose, what counts as relevant, how to measure or verify) and belongs in this plugin's
+`references/design/`, written in the plugin's source repository through its own PR. If no, it
+describes this product's visual language and belongs in DESIGN.md as a dated T2 entry. A page's
+image style (people, still life, line art, isometric) is neither: it is chosen per page from that
+page's content (`landing-ia.md` § Imagery) and stays in the page's freeze record.
 If the project has no `DESIGN.md` yet, offer to bootstrap a minimal one (title + a "T2 case law"
 section holding this session's confirmed decisions) — with user confirmation only; if declined,
-hand the drafted amendments to the user as text instead of writing any file. Distill-back only
+hand the drafted amendments to the user as text instead of writing any file. In DESIGN.md, Distill-back only
 appends dated T2 entries; it never rewrites human-authored T1/T3 content.
 An empty Distill-back is valid only when stated explicitly.
 
