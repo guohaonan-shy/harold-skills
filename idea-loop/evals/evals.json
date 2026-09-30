@@ -60,7 +60,7 @@
       "eval_name": "refine-freeze",
       "skill": "idea-loop:uiux-refine",
       "seed": ["raw", "raw-index", "spec-with-direction", "spec-index"],
-      "prompt": "/idea-loop:uiux-refine 这是一次无人值守的 baseline 跑，而且**是一个全新会话**——你没见过发散那一段。spec 是 `docs/spec/practice-history-surface.md`，§4 下的「设计方向」就是那封信。项目根有 `DESIGN.md` 与 `PRODUCT.md`。画布目录按 spec 的 slug（`practice-history-surface`）。\n\n浏览器是本 plugin 自带的 headless playwright MCP。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要把控制权交回给人，就读下一条：\n\n1. （摆出画布与 ledger 求签字）「组头那行的题型标签和状态 pill 挨得太近，读起来像一个东西。改完我再看。」\n2. （再摆一次）「可以了，签字。冻结吧。」\n\n环里碰到 pattern 类 finding、skill 要你停下来和人一起查参考时，**这一跑人不在场**：照 skill 写的无人值守做法，自己查、按格式记进 ledger，**不消费上面的回答**。\n\n如果环停在 plateau、方向级 finding 或 stuck 上，就如实停下、把停的理由写进产物，**不要自己把方向拧过去**——那一跑就照停下来的样子存档。收工照 skill 自己的规矩走。",
+      "prompt": "/idea-loop:uiux-refine 这是一次无人值守的 baseline 跑，而且**是一个全新会话**——你没见过发散那一段。spec 是 `docs/spec/practice-history-surface.md`，§4 下的「设计方向」就是那封信。项目根有 `DESIGN.md` 与 `PRODUCT.md`。画布目录按 spec 的 slug（`practice-history-surface`）。\n\n浏览器是本 plugin 自带的 headless playwright MCP。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要把控制权交回给人，就读下一条：\n\n1. （摆出画布与 ledger 求签字，或 plateau 停下交人）「组头那行的题型标签和状态 pill 挨得太近，读起来像一个东西。改完我再看。」\n2. （再摆一次，签字或 plateau 都一样）「可以了，签字。冻结吧。」\n\n环里碰到 pattern 类 finding、skill 要你停下来和人一起查参考时，**这一跑人不在场**：照 skill 写的无人值守做法，自己查、按格式记进 ledger，**不消费上面的回答**。\n\n**plateau 是交人的一次，照常读下一条回答**（skill §9：plateau 时摆给人的取舍题，人定了就回本环）。**方向级 finding 或 stuck** 才如实停下、把停的理由写进产物，**不要自己把方向拧过去**——那一跑就照停下来的样子存档。收工照 skill 自己的规矩走。",
       "assertions": [
         "canvas-lands-in-docs-design",
         "canvas-lint-p0-clean",
