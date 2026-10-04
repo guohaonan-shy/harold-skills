@@ -1,5 +1,8 @@
 # idea-loop plugin
 
+> The domain glossary (`GLOSSARY.md`, `references/glossary.md`) adapts the `domain-modeling` design from
+> [mattpocock/skills](https://github.com/mattpocock/skills) (MIT). What changed and why is listed at the end of that reference.
+
 Closed loop from idea to shipped engineering, backed by the `docs/` Obsidian
 vault as its knowledge base. No state machine — a file's existence IS its
 status (see `references/wiki-conventions.md`).
@@ -118,20 +121,20 @@ node --test '*/scripts/*.test.mjs'
 Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
 keeps it out of `.claude/` worktrees. Today it covers the design-lint rules,
-the two UI-loop comparators, the critic score check, and the direction
-note's seven-section shape, all living in this plugin's `scripts/`; new
+the two UI-loop comparators, the critic score check, the direction
+note's seven-section shape, and the glossary lint, all living in this plugin's `scripts/`; new
 deterministic scripts get picked up by putting their tests next to them as
 `<name>.test.mjs`.
 
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
 purpose — mocking a browser would test the mock. The CLI tails on
-`critic-score.mjs` and `direction-note-check.mjs` are the same kind of thin
+`critic-score.mjs`, `direction-note-check.mjs` and `glossary-check.mjs` are the same kind of thin
 shell — argv, a file read, an exit code — and are verified by being run, not
-by a spawned-process test. The lint **hook**
-(`scripts/design-lint-hook.mjs`) has no unit test either — it is verified by
-actually writing an HTML file into a `docs/design/<spec-slug>/` directory and confirming
-it reports; that is the falsifiable signal, not a mocked stdin payload.
+by a spawned-process test. The lint **hooks**
+(`scripts/design-lint-hook.mjs`, `scripts/glossary-check-hook.mjs`) have no unit tests either — they are verified by
+actually writing an HTML file into a `docs/design/<spec-slug>/` directory (or a broken
+`GLOSSARY.md` anywhere) and confirming it reports; that is the falsifiable signal, not a mocked stdin payload.
 
 ### Baseline eval
 
@@ -178,7 +181,7 @@ points at a nonexistent script is worse than one that refuses to start.
 idea-loop/
 ├── .claude-plugin/plugin.json
 ├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
-├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs
+├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + glossary-check-hook.mjs
 ├── README.md (this file)
 ├── skills/
 │   ├── grill/SKILL.md
@@ -205,6 +208,9 @@ idea-loop/
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/<spec-slug>/), exit 2 on P0/P1
+│   ├── glossary-check.mjs            # GLOSSARY.md format lint — single-file, zero-dep, so target-repo CI can curl it pinned
+│   ├── glossary-check.test.mjs       # its unit tests — one per rule, plus a well-formed baseline
+│   ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
 │   ├── github-review.mjs             # round posts: snapshot, finding-shape gate, rendering, GitHub App identity
 │   ├── github-review.test.mjs        # shape gate, retries, round numbering, stale head, App token
 │   └── review-workflows.test.mjs     # mocked host orchestration tests of the loop
@@ -216,6 +222,7 @@ idea-loop/
 │   └── baseline/                     # the archived run: benchmark.json + per-cell grading
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
+    ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
     ├── review-standards.md           # admission, introduced-or-pre-existing, verification standard, severity

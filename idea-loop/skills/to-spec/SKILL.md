@@ -39,6 +39,8 @@ related: ["[[<spec-slug>]]"]
 
 写进 `docs/spec/<slug>.md`。slug 必须**全局唯一**且**不同于 transcript 的 slug**。
 
+目标项目有 `GLOSSARY.md` 就读它，spec 标题和正文里的领域概念用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../../references/glossary.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
+
 ```markdown
 ---
 type: spec

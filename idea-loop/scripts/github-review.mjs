@@ -173,6 +173,12 @@ export function validatePlan(plan) {
     }
     if (check.name === 'correctness' && check.status === 'not-applicable') throw new Error('Correctness must run')
   }
+  if (plan.missingTerms !== undefined) {
+    if (!Array.isArray(plan.missingTerms)) throw new Error('missingTerms must be an array')
+    for (const t of plan.missingTerms) {
+      if (!text(t?.concept) || !text(t?.suggested)) throw new Error('Every missing term needs concept and suggested')
+    }
+  }
   const keys = new Set()
   for (const f of plan.findings) {
     if (keys.has(f.key)) throw new Error(`Duplicate finding key ${f.key}`)
@@ -226,9 +232,14 @@ export function renderRoundPost(plan, findings, result, identity) {
   const verdict = result.mergeReady
     ? '**mergeReady**：必需检查已完成，没有未处置的阻塞问题。这不是合并授权，合并等维护者下令。'
     : `**不能合并**：未解决阻塞 ${result.openBlockingCount} 条${result.needsHuman.length ? `，待人决定或待验证 ${result.needsHuman.length} 条` : ''}${plan.checks.some(c => c.required && !['passed', 'not-applicable'].includes(c.status)) ? '，有必需检查未完成' : ''}。`
+  // Missing glossary terms are reported, never fixed or blocking: only grill writes GLOSSARY.md.
+  const missing = plan.missingTerms?.length
+    ? ['### 缺词（不阻塞，由 Harold 决定是否开一轮 grill 定下来）', '', '| 概念 | 推荐叫法 |', '|---|---|',
+      ...plan.missingTerms.map(t => `| ${cell(t.concept)} | ${cell(t.suggested)} |`), '']
+    : []
   const footer = identity === 'gh-login' ? '\n\n<sub>未配置 GitHub App，本帖以 gh 当前登录身份发布。</sub>' : ''
   return [`## Review 第 ${plan.round} 轮 · ${headLine}`, '', plan.summary.trim(), '', verdict, '', table, '',
-    ...findings.map(f => renderFinding(f, plan) + '\n'), '<details><summary>本轮检查</summary>', '', checks, '', '</details>'].join('\n') + footer
+    ...findings.map(f => renderFinding(f, plan) + '\n'), ...missing, '<details><summary>本轮检查</summary>', '', checks, '', '</details>'].join('\n') + footer
 }
 
 // ---------- publish ----------

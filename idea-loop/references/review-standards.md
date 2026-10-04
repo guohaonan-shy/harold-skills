@@ -4,6 +4,12 @@ Read the target repository's REVIEW.md, root/applicable nested AGENTS.md and app
 CLAUDE.md/linked conventions. Read referenced requirements explicitly; do not assume
 agent-specific imports expand. Report sources actually read. Do not copy Toeflair rules.
 
+Read the target repository's GLOSSARY.md (or each one GLOSSARY-MAP.md lists) when it exists, and name
+domain concepts with its canonical terms in titles, findings and summaries. A concept this PR introduces
+or renames that the glossary does not define is a missing term, reported in the round post's 缺词 table
+(`missingTerms`, see github-review.md) — not a finding, never blocking, never fixed by the loop.
+New terms are only added in `grill` (`glossary.md`).
+
 ## Finding admission
 
 - Correctness: introduced/activated defects with a supported trigger, a causal path from

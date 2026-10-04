@@ -30,6 +30,7 @@ description: 实现一张已经定好的 ticket。不重开方案，只把它变
 1. **确认在目标分支上。** 这个 skill 不建分支、不切分支。
 2. **设计冻结闸门**：ticket 的 `设计冻结` 那行写着 `⛔ 未冻结` 就**停**——动 UI 的活要先有冻结的设计。
 3. **确认 blocker 都完成了**（ticket 的 `Blocked by`）。
+4. **领域词汇。** 目标项目有 `GLOSSARY.md` 就读它，新的类型名、函数名、测试名和 commit message 用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../../references/glossary.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
 
 ## 做
 

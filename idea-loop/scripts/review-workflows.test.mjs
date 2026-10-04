@@ -200,3 +200,23 @@ test('the Codex model and effort can be overridden per invocation', async () => 
   assert.match(correctness, /not "xhigh", do not run the review/)
   assert.match(correctness, /review --wait --model gpt-x /)
 })
+
+test('missing glossary terms flow from verify into the plan and the round result, without blocking or fixing', async () => {
+  const terms = [{ concept: '学生一次练习里被判为需要重练的那组题', suggested: 'Retry set' }]
+  const { result, calls, plans, labels } = await run(input, results({
+    'r1:verify': { findings: [], verification: passCheck, summary: '没有问题，有一个缺词', missingTerms: terms },
+  }))
+  assert.equal(result.stopReason, 'ready')
+  assert.deepEqual(plans[0].missingTerms, terms)
+  assert.deepEqual(result.rounds[0].missingTerms, terms)
+  assert.equal(labels.some(l => l.endsWith(':fix')), false)
+  const byLabel = label => calls.find(c => c.label === label).prompt
+  assert.match(byLabel('r1:prepare'), /glossary: the path of GLOSSARY\.md/)
+  assert.match(byLabel('r1:spec'), /MISSING TERMS/)
+  assert.match(byLabel('r1:verify'), /do not edit any GLOSSARY\.md/)
+})
+
+test('a verify result without missingTerms still publishes an empty list', async () => {
+  const { plans } = await run(input, results())
+  assert.deepEqual(plans[0].missingTerms, [])
+})
