@@ -26,12 +26,12 @@ duplicates a post. Only one publisher should operate on a PR at a time.
 If `~/.idea-loop/github-apps.json` has an entry for the repository, the helper signs a JWT with that
 GitHub App's private key, exchanges it for an installation token and uses it only as `GH_TOKEN` for its
 own `gh` calls. The token is never printed, written or handed to an agent. Round posts then come from
-the App (for Toeflair: `toeflair-claude`, App ID 4948428). Speaking as the App with the App's own token
+the App (typically a `<project>-claude` App). Speaking as the App with the App's own token
 is not impersonation. Without an entry, the gh login publishes and the post says so. Pushing, creating
 the PR and writing its description stay with Harold's gh login.
 
 ```json
-{ "guohaonan-shy/Tofelair": { "appId": 4948428, "privateKeyPath": "~/projects/TOFEL-demo/toeflair-claude.pem" } }
+{ "<owner>/<repo>": { "appId": 123456, "privateKeyPath": "~/.idea-loop/keys/<app-name>.pem" } }
 ```
 
 The App needs Issues read/write (Conversation comments) and Pull requests + Contents read.

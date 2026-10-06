@@ -6,8 +6,8 @@ rules (classify before porting, data-contract changes, token attribution, state-
 measurement loop). Load this one *in addition* when the target project is React/Tailwind and you
 want the concrete mechanics: it is what actually goes wrong translating a frozen canvas
 (`docs/design/<spec-slug>/*.html`) HTML+CSS+JS file into the real React/TSX component — every rule below
-came out of an actual port in a real project, not a hypothetical (worked examples and class names
-below are that project's case law).
+came out of an actual port, not a hypothetical; the class and field names in the worked examples
+are illustrative.
 `references/design/design-core.md`'s brand floors still apply here: a Tailwind translation that quietly
 drifts off a token in the target project's DESIGN.md is a regression, not a detail.
 
@@ -17,11 +17,11 @@ A prototype's `<style>` block mixes two different kinds of rule, and treating th
 is the single most common port mistake:
 
 - **Invented for this prototype** — a class that exists ONLY in the HTML file's own stylesheet
-  (e.g. `.pa-gist`, `.pa-toolbar`). These must be TRANSLATED into Tailwind utility classes inline
+  (e.g. `.proto-summary`, `.proto-toolbar`). These must be TRANSLATED into Tailwind utility classes inline
   in JSX. Never copy the literal class name into React — there is no such class there, and adding
   one just to match the name duplicates styling logic the rest of the app doesn't share.
 - **Already-shared branded CSS** — a class the running React app already imports and other
-  components already use (e.g. `epa-grad-brand`, `epa-grad-text`, `epa-prose` — real CSS rules
+  components already use (e.g. `brand-gradient`, `brand-gradient-text`, `article-prose` — real CSS rules
   loaded by the app, not prototype scaffolding). These must be REUSED verbatim. Reinventing them
   as a new Tailwind utility string that merely *looks* similar throws away a shared definition and
   guarantees the two will drift apart at the next redesign.
@@ -62,7 +62,7 @@ If the prototype edit adds content that didn't exist in the real data flow befor
 "add the text to JSX" — it's a data-contract change, and skipping straight to JSX will render
 `undefined` for every row that predates it.
 
-Worked example: adding a one-sentence `gist` caption required, in order — (a) a new required field
+Worked example: adding a one-sentence `summary` caption required, in order — (a) a new required field
 in the backend's extraction schema, (b) new register/length instructions in the LLM generation
 prompt for that field, (c) a matching check added to the critique-pass prompt's checklist, (d) the
 extractor prompt updated to map the new markdown line into the field, (e) the field added to the
@@ -80,7 +80,7 @@ a real user's input, or an edge-case row will actually produce.
 
 Worked example: after wiring a new field end-to-end, the verification wasn't "the prototype looks
 right with its hand-written sample text" — it was driving a REAL submission through the actual app
-(login → fill a real practice → submit → wait for the real pipeline), then querying the resulting
+(login → complete a real task → submit → wait for the real pipeline), then querying the resulting
 database row directly to confirm the model-produced value actually landed and actually met its
 length/register target (word-counted from the real string). Only after that ground-truth check did
 the React page get screenshotted against that real row. (Ground decisions in evidence you

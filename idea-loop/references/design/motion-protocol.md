@@ -29,8 +29,8 @@ an unsettled layout wastes both stages.
 - **`references/design/motion-spec.md` is the motion law** (read at Setup): duration/easing **tokens**
   (never invented numbers), the **restraint budget** (≤1 delight moment, ≤3 simultaneous
   entrances, stagger 40–80ms, zero ambient loops in-app), mandatory reduced-motion, the in-app
-  **motion precedent library** (DESIGN.md §4, T2 — preferred patterns with an admission process,
-  not a closed whitelist) vs the marketing register, and the **freezable-timeline** verification
+  **motion precedent library** (in the project's DESIGN.md — preferred patterns admitted through
+  `design-modeling`, not a closed whitelist) vs the marketing register, and the **freezable-timeline** verification
   convention.
 - **Every animation earns a one-sentence reason** tied to the concept: feedback, continuity, or
   attention (spec §1). "It looked cool" is not a reason — drop it.
@@ -47,12 +47,12 @@ an unsettled layout wastes both stages.
 1. **`references/design/design-core.md` + `references/design/motion-spec.md` (this plugin) — FIRST.** The core
    carries the register dials + close-out protocol; the spec carries the motion law.
 2. The target project root's `DESIGN.md` — **if present** — for the
-   project's in-app motion precedent library (e.g., from a real project: sliding indicator,
-   highlight reveal, hover lift, crossfade, clean connectors, processing shimmer; T2, with the
-   admission process for new patterns) vs the livelier marketing register, and the project's
+   project's in-app motion precedent library (e.g. sliding indicator, highlight reveal, hover
+   lift, crossfade, clean connectors, processing shimmer; new patterns are admitted through
+   `design-modeling`) vs the livelier marketing register, and the project's
    house motion tokens (e.g. `ease-out` cubic-bezier(0.22,1,0.36,1), tab-indicator spring).
    If the project has no `DESIGN.md`, use the motion-spec tokens as the default law, note it,
-   and suggest the user create a `DESIGN.md` — never abort over a missing doc.
+   and suggest creating one through `design-modeling` — never abort over a missing doc.
 3. The sibling shipped components whose interactions you must match or extend.
 
 ## The loop (A build · B gates · C human sign-off · D React)
@@ -62,12 +62,13 @@ an unsettled layout wastes both stages.
    reason (spec §1) + its **spec category** (entrance / hover-press / state-transition / …, spec
    §7 of motion-anything's taxonomy as adopted) + the **duration & easing tokens** (spec §2–3).
    Sum the entrances against the **restraint budget** (spec §4) before building.
-2. **Parts, not paste.** Reference **aceternity / react-bits + our own** (`motion` / framer v12,
+2. **Parts, not paste.** Reference **component/motion libraries (e.g. Aceternity, React Bits) + the
+   project's own** (`motion` / framer v12,
    `gsap`, the sibling components) *and* **motion-anything's recipe library** (spec §9 —
    `~/projects/motion-anything/recipes/` **when available on this machine; skip silently if
    absent**, each recipe self-contained with `avoid_when` +
-   `restraint` in its yaml; a recipe whose `avoid_when` matches our context is discarded). Adapt
-   everything into our tokens; never paste defaults.
+   `restraint` in its yaml; a recipe whose `avoid_when` matches the current context is discarded). Adapt
+   everything into the project's tokens; never paste defaults.
 3. **Build on the static HTML.** Start from `static-ui-protocol`'s approved preview (so the visual stays
    pixel-faithful) and layer in real motion + native interaction. Write to
    `docs/design/<spec-slug>/<spec-slug>-motion.html`, next to the static canvas (the lint hook watches it too). React-heavy
@@ -116,9 +117,9 @@ browser. Their feedback is the only switch that advances. Read a *cluster* of fi
 rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
-passed the gates is recorded into the project's DESIGN.md motion precedent library as a dated
-entry — that IS the admission process (if the project has no DESIGN.md yet, propose creating one
-to hold the precedent). A new pattern shipping silently, outside the library, is the failure
+passed the gates is written as a candidate in the freeze record's `## 设计法候选` section and handed
+to `design-modeling`, where the human decides whether it joins the project's motion precedents —
+that IS the admission process. A new pattern shipping silently, outside that path, is the failure
 mode.
 
 ### D · Port to React (final, only after sign-off)
@@ -144,8 +145,8 @@ CLAUDE.md workflow, if it defines one):
 ## DESIGN.md governance (same as static-ui-protocol)
 Soft preferences → surface and ASK before deviating. Hard floors never relax: a11y (incl.
 reduced-motion is non-optional), the restraint budget, and the target project's brand core
-(example from a real project: Electric Blue; Retired-Ink; Tamed-Aceternity — no flashy defaults
-in product UI; selection = brand ring).
+(whatever its DESIGN.md names — typically the single accent, a retired previous identity, the
+motion whitelist, and the selection treatment).
 
 ## What this protocol is NOT
 - Not for designing the static visual/layout — that's `static-ui-protocol` (run it first).

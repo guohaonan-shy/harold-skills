@@ -2,7 +2,7 @@
 
 Read the target repository's REVIEW.md, root/applicable nested AGENTS.md and applicable
 CLAUDE.md/linked conventions. Read referenced requirements explicitly; do not assume
-agent-specific imports expand. Report sources actually read. Do not copy Toeflair rules.
+agent-specific imports expand. Report sources actually read. Do not carry over another project's rules.
 
 ## Finding admission
 

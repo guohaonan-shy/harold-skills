@@ -2,17 +2,17 @@
 
 Adapted 2026-07-08 from motion-anything's `MOTION-SPEC.md`
 (`~/projects/motion-anything/MOTION-SPEC.md`, Apache-2.0; itself aligned with Material motion,
-Apple HIG, and Emil Kowalski's principles), originally reconciled with a real project's DESIGN.md
-§4 motion language and motion tokens (DESIGN.md-specific citations below
-are that project's case law). `motion-protocol` MUST read this at Setup — it replaces the loose
+Apple HIG, and Emil Kowalski's principles). Where a rule below says "DESIGN.md", it means the
+target project's own file: the kind of rule it usually holds, not a value this spec presumes.
+`motion-protocol` MUST read this at Setup — it replaces the loose
 "motion numbers" prose. **The target project's DESIGN.md (when present) wins on any conflict**;
 this file quantifies what it leaves open, and is the default law when the project has none.
 
 ## 1. First principles *(verbatim where possible)*
 
 1. **Motion must mean something.** Every animation gives feedback, shows a relationship /
-   continuity, or directs attention. If it does none of these, cut it. (= DESIGN.md
-   Motion-Earns-It.)
+   continuity, or directs attention. If it does none of these, cut it. (A typical DESIGN.md
+   floor states the same thing.)
 2. **The best motion is felt, not noticed.** If users consciously notice it, it is usually too
    slow, too big, or too frequent.
 3. **Restraint is the craft.** A single, well-placed moment beats ten.
@@ -26,7 +26,7 @@ this file quantifies what it leaves open, and is the default law when the projec
 | `instant` | 80–120 | both | hover/press feedback, tiny state flips |
 | `fast` | 140–220 | both | micro-interactions, button/toggle states, small reveals — **the in-app default** (our house 150–220ms band) |
 | `base` | 220–320 | both | standard transitions, panel enter (our `panel-enter` = 220ms) |
-| `slow` | 320–500 | both | cross-screen / section transitions (DESIGN.md's "~300–500ms, nothing else should") |
+| `slow` | 320–500 | both | cross-screen / section transitions — nothing else should take this long |
 | `deliberate` | 500–800 | marketing only | hero moments, celebratory bursts |
 | `cinematic` | 800–2000 | marketing only | launch-film moments |
 
@@ -44,7 +44,7 @@ In-app UI micro-interactions are almost always `fast`.
 | `spring-snappy` | spring(stiffness ~300–380, damping ~30–32) | crisp controls; our `tab-indicator` = spring(380, 32) |
 
 Default to `ease-out`. Linear is for continuous loops only (spinners, marquees). **No
-bounce/elastic in-app** (DESIGN.md Don'ts) — overshoot springs are a marketing-register decision.
+bounce/elastic in-app** — overshoot springs are a marketing-register decision.
 
 ## 4. Restraint budget (per visible viewport)
 
@@ -70,15 +70,16 @@ bounce/elastic in-app** (DESIGN.md Don'ts) — overshoot springs are a marketing
 Every animation ships a `prefers-reduced-motion: reduce` fallback: `scale-only` (keep a tiny
 scale/opacity cue), `crossfade`, or `none` (instant end state). **The reveal must enhance an
 already-visible default — never gate content visibility on a transition** (it ships blank on
-hidden tabs / headless renders; DESIGN.md hard floor).
+hidden tabs / headless renders; an a11y floor, not a preference).
 
-## 7. The in-app whitelist (DESIGN.md §4) vs marketing
+## 7. The in-app whitelist vs marketing
 
-- **In-app**, motion comes from the tamed whitelist: sliding tab/segment indicator ·
-  highlight reveal · hover lift (~1px + shadow-md) · content crossfade/small rise ·
-  clean connectors. Anything beyond the whitelist is a DESIGN.md deviation — surface and ask.
+- **In-app**, motion comes from the project's whitelist (its DESIGN.md motion precedents). With
+  none declared, the default whitelist is: sliding tab/segment indicator · highlight reveal ·
+  hover lift (~1px + shadow-md) · content crossfade/small rise · clean connectors. Anything beyond
+  the whitelist is a DESIGN.md deviation — surface and ask.
 - **Marketing** may go bigger (beams, spotlight, tracing reveals, staggered scroll moments),
-  on-brand (Electric Blue + slate), within this spec's budget and a11y floors.
+  on-brand (the project's own accent and neutrals), within this spec's budget and a11y floors.
 
 ## 8. The freezable timeline — how motion gets VERIFIED *(from motion-anything's `MA_RUNTIME`)*
 
@@ -113,11 +114,11 @@ A single screenshot cannot verify motion, and `getComputedStyle` mid-transition 
 
 `~/projects/motion-anything/recipes/` — ~400 dependency-free motion recipes, each a folder with
 `recipe.motion.yaml` + self-contained `preview.html` + implementation. Use alongside
-aceternity/react-bits as an ideas/parts source, with two rules:
+component/motion libraries (e.g. Aceternity, React Bits) as an ideas/parts source, with two rules:
 - **Respect `avoid_when` + `restraint`** in each recipe's yaml — a recipe whose `avoid_when`
-  matches our context is discarded, whatever it looks like.
-- **Adapt into our language** (tokens above + DESIGN.md), never paste defaults — same as the
-  Aceternity rule.
+  matches the current context is discarded, whatever it looks like.
+- **Adapt into the project's language** (tokens above + DESIGN.md), never paste defaults — same as
+  for any library part.
 
 ## 10. Definition of done (every produced motion)
 

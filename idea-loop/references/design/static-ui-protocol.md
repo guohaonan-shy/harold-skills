@@ -55,8 +55,8 @@ altitude.
 - The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
   the project root, plus `PRODUCT.md` (project root) when present.
   If the project has no `DESIGN.md`, fall back to this plugin's built-in defaults (design-core
-  floors + anti-slop law), note that no project design law was found, and suggest the user create
-  a `DESIGN.md` — never abort over a missing doc.
+  floors + anti-slop law), note that no project design law was found, and suggest creating one through
+  `design-modeling` — never abort over a missing doc.
 - The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
   route additionally reads `references/design/landing-ia.md` (see the table in §A).
 - Two reference files load on demand rather than at Setup: `references/design/accessibility-baseline.md`
@@ -69,7 +69,8 @@ altitude.
 Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
 checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
 concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
-are written into `DESIGN.md` T2 case law before handoff.
+become candidates and reach `DESIGN.md` only through `design-modeling`, which puts each one to the
+human before anything is written.
 
 ## Setup
 
@@ -210,7 +211,8 @@ flagship token cost.
 
 - Reuse the target project's UI primitives (e.g. `src/components/ui`) and shipped sibling
   components before inventing new chrome.
-- Inspect Aceternity/shadcn as parts, not skin; translate any useful structure into our tokens.
+- Inspect third-party component libraries (e.g. shadcn, Aceternity) as parts, not skin; translate
+  any useful structure into the project's tokens.
 - Read `references/design/color-application.md` before assigning component color.
 - At component descent, classify children per `component-protocol.md`: existing primitive,
   deterministic composition, decision-bearing component, or conditional component. Only the last
@@ -264,28 +266,34 @@ Serve the preview and provide a short review list:
 On feedback, return to the earliest wrong altitude. Read a cluster of fine notes as one underlying
 rule, not independent patches.
 
-On sign-off, perform **Distill-back before handoff**: identify decisions that generalize, draft dated
-T2 case-law amendments, confirm them with the user, and apply them in the same session. Workflow
-method changes belong in this plugin; product interaction/treatment decisions belong in DESIGN.md.
-If the project has no `DESIGN.md` yet, offer to bootstrap a minimal one (title + a "T2 case law"
-section holding this session's confirmed decisions) — with user confirmation only; if declined,
-hand the drafted amendments to the user as text instead of writing any file. Distill-back only
-appends dated T2 entries; it never rewrites human-authored T1/T3 content.
-An empty Distill-back is valid only when stated explicitly.
+On sign-off, perform **Distill-back before handoff**, routed through `design-modeling` — the only
+writer of the project's `DESIGN.md`:
+
+1. Write each decision that might generalize as a candidate in the freeze record's
+   `## 设计法候选` section, in the format `skills/design-modeling/SKILL.md` §8 defines. An empty
+   Distill-back is valid only when stated explicitly: the section then holds one line, 「无」.
+2. Invoke `design-modeling`'s distill mode. It runs every candidate through its layer table with
+   the human — product visual language goes to `DESIGN.md`, method that holds for any product goes
+   back to this plugin as an issue, a single page's choice stays in its freeze record — and the
+   human decides whether to process the batch now or after the page ships.
+
+This protocol never writes `DESIGN.md` itself and never bootstraps one; a project without a
+`DESIGN.md` gets one through `design-modeling`.
 
 The approved preview HTML + concept + state contract pass to `references/design/motion-protocol.md`. Do not port to React in
 this protocol.
 
 ## DESIGN.md governance
 
-(Applies when the target project has a `DESIGN.md`; the named floors below are examples from a
-real project's design law — substitute the target project's own T1/T3 entries.)
+(Applies when the target project has a `DESIGN.md`; its own floors and bans are the ones that
+count.)
 
-- **T1 identity floors and T3 bans:** never relax silently. Example set from a real project:
-  a11y, Electric Blue identity, Retired-Ink, Soft-Elevation, Tamed-Aceternity, selection by brand
-  ring, Inter-tight marketing display.
+- **T1 identity floors and T3 bans:** never relax silently. Their usual territory: a11y, the
+  single-accent identity, a retired previous identity, the elevation language, the motion
+  whitelist, the selection treatment, the display face.
 - **T2 case law:** challenge through concept B or surface a mid-build deviation explicitly. A
-  winning deviation is written back at H; a silent deviation is a workflow failure.
+  winning deviation becomes a candidate at H and reaches `DESIGN.md` only through
+  `design-modeling`; a silent deviation is a workflow failure.
 - Typical T2 territory includes density, component treatments, responsive container behavior,
   promotion hierarchy, disclosure, and motion precedents.
 

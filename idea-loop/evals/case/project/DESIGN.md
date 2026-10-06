@@ -1,9 +1,56 @@
 ---
 name: Toeflair
 description: TOEFL 口语 + 写作练习平台的 C 端 app 设计法。这是 baseline case 用的**最小版**，从真实项目那份 574 行的 DESIGN.md 蒸馏而来，只保留 T1 底线、两个 register、判得动一个 surface 的 token。
-colors: electric-blue-137fec, slate-base
-typography: Plus Jakarta Sans / Inter / Charter
-rounded: 8px
+colors:
+  primary: "#137fec"
+  primary-pressed: "#0f6fd1"
+  primary-subtle: "#eff6fe"
+  page: "#f6f7f8"
+  surface: "#ffffff"
+  surface-muted: "#f8fafc"
+  foreground: "#0f172a"
+  muted-foreground: "#64748b"
+  muted-foreground-on-page: "#475569"
+  border: "#e2e8f0"
+  destructive: "#dc2626"
+  success: "#16a34a"
+typography:
+  display:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 48px
+    fontWeight: 800
+    letterSpacing: -0.5px
+  headline:
+    fontFamily: Inter
+    fontSize: 28px
+    fontWeight: 700
+  title:
+    fontFamily: Inter
+    fontSize: 18px
+    fontWeight: 700
+  body:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.6
+  label:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: 700
+    letterSpacing: 1px
+rounded:
+  control: 6px
+  card: 8px
+  panel: 12px
+  full: 9999px
+spacing:
+  grid: 8px
+  card-sm: 16px
+  card-md: 20px
+  card-lg: 24px
+omitted:
+  - section: components
+    reason: "最小版只保留判得动一个 surface 的 token，组件配方留在正文的 Components 一节"
 ---
 
 ## Overview
