@@ -13,8 +13,8 @@ that can be established before taste.
 dominance model, hierarchy vectors, flat/noise failure modes) + `craft/laws-of-ux.md`
 (selective attention, decision weight, congestion caps — research-grounded), impeccable v4.0.1
 (`critique.md` visual-noise floor + ≤4 working-memory chunking, `layout.md` spatial thesis +
-squint test, `scripts/palette.mjs` text-on-fill rules), and a real project's practice-dashboard-card
-badge decision (2026-07, now that project's DESIGN.md §7 case law). Externals are raw feeds; this file is the
+squint test, `scripts/palette.mjs` text-on-fill rules), and one badge-placement case (2026-07),
+retold in §6 on a fictional product. Externals are raw feeds; this file is the
 source of truth — update by explicit re-distill, never by runtime reads of external paths. The
 remaining laws from `craft/laws-of-ux.md` not operationalized here (Gestalt grouping, decision
 framing beyond Hick's Law, memory/recall, motor timing, behavioral expectation) were distilled
@@ -72,7 +72,7 @@ it is spent in ink. The ranking logic never changes — only the currency does.*
 element earns its place through at least two levers pointing the same way (bigger AND first;
 filled AND heavier) — a single lever reads as accident, not intent.
 
-## 3. The weight ladder (component altitude — L3 examples cite a real project's tokens)
+## 3. The weight ladder (component altitude — token names are examples)
 
 - **L4 — loud:** saturated deep fill + white text. Reserved for the single most
   decision-relevant signal on the component. Text-on-fill rule *(impeccable palette)*: a
@@ -86,8 +86,8 @@ filled AND heavier) — a single lever reads as accident, not intent.
 - **Non-color redundancy** *(a11y + von Restorff)*: every emphasized signal also carries a
   non-color cue — position, an icon, a text label. Color-only emphasis fails color-blind users
   and weakens the signal for everyone.
-- Semantic color (state) and data-category color (e.g. practice category) are **separate
-  systems** — one element speaks one system (DESIGN.md One Voice: categories ride a dot/label).
+- Semantic color (state) and data-category color (e.g. a content category) are **separate
+  systems** — one element speaks one system (a common DESIGN.md floor: categories ride a dot/label).
 
 ## 4. The position ladder (progressive disclosure — all altitudes)
 
@@ -112,17 +112,17 @@ corner anchor (component altitude); a secondary module moves below the fold or t
 
 ## 6. Worked example — the badge case (component altitude, 2026-07)
 
-Practice dashboard card. **Inventory:** title, category, real-exam qualifier, difficulty, NEW
-recency, count/duration meta. **Ranking** for the student's job (pick what to practice): real
-exam = primary qualifier (changes the decision); difficulty = secondary; NEW = tertiary; meta =
-silent. **Assignment:** real exam → L4 (deep fill + white text, the card's one loud signal);
-difficulty → L3 tint; meta → L1. **Budget:** three inline badges + NEW = congestion → NEW moves
+A trail card in a hiking app (fictional). **Inventory:** title, region, permit-required
+qualifier, difficulty, NEW recency, distance/elevation meta. **Ranking** for the hiker's job (pick a
+trail for Saturday): permit required = primary qualifier (changes the decision); difficulty =
+secondary; NEW = tertiary; meta = silent. **Assignment:** permit required → L4 (deep fill + white
+text, the card's one loud signal); difficulty → L3 tint; meta → L1. **Budget:** three inline badges + NEW = congestion → NEW moves
 down the position ladder to the corner anchor. **Verify:** squint — the L4 badge and the title
 survive; nothing else competes. The hours once spent iterating hue and placement collapse into
 one argument about step 2 — and rank has a right answer where taste doesn't.
 
 ## 7. Maintenance
 
-New generalizable treatment decisions distill back into DESIGN.md §7 case law (static-ui-protocol's
-Distill-back step): this file defines the ladders and the procedure; DESIGN.md records the
-decided instances.
+New generalizable treatment decisions become candidates at static-ui-protocol's Distill-back step
+and reach the project's `DESIGN.md` only through `design-modeling`: this file defines the ladders
+and the procedure; DESIGN.md records the decided instances.

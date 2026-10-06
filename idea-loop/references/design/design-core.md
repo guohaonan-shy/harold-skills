@@ -1,10 +1,9 @@
 # Design Core — the always-on taste layer
 
-> **Note on provenance:** this core was distilled inside a real product project (an English-learning
-> app) and its brand floors (§4) and register dials (§3) name that project's decisions as concrete
-> examples. The *law structure* (precedence, anti-slop, close-out) is generic; the named tokens are
-> example case law. When the target project has its own `DESIGN.md`, its values replace the examples
-> below wherever they conflict.
+> **Note on examples:** the *law structure* here (precedence, anti-slop, close-out) is generic. The
+> register dials (§3) and brand floors (§4) are filled in for a **fictional product, Fieldnote** (a
+> notebook app for field researchers), only to show how concrete a dial or a floor should be. They
+> are not defaults. When the target project has its own `DESIGN.md`, its values are the law.
 
 **What this is.** The distilled taste core for every design run, modeled on open-design's
 baked-in prompt layer (their `official-system.ts` + `discovery.ts`: ~555 lines that ride along on
@@ -17,8 +16,8 @@ is small enough to always be present.
 **Precedence.** The target project root's `DESIGN.md`, when present,
 wins on any brand/token conflict — this file never restates its values, only names its floors (§4).
 When the target project has no `DESIGN.md`, this file's generic law (§2, §5, §6, §7) is the default,
-the §4 example floors serve as illustrative case law only, and the skill should suggest the user
-create a `DESIGN.md` — a missing doc is a degradation, never an abort. What this file adds is
+the §4 example floors are illustration only, and the skill should suggest creating a `DESIGN.md`
+through `design-modeling` — a missing doc is a degradation, never an abort. What this file adds is
 the *generic* anti-slop law and the forced protocols (§2, §6) that no brand doc carries.
 
 **Enforcement split.** The mechanically-checkable subset of these rules is enforced by
@@ -33,7 +32,7 @@ is the hard gate; this file carries the *why* plus the judgment calls a regex ca
 - **Embody the specialist** *(open-design discovery §A, the two personas we use)*:
   - **Landing / marketing surface** → brand designer. One hero, 3–6 sections, real copy, **one**
     decisive flourish.
-  - **In-app product surface** (report, dashboard, practice flow) → systems designer. Information
+  - **In-app product surface** (report, dashboard, task flow) → systems designer. Information
     density is the feature; calm is the identity; no decoration.
   - *(This maps to the four-Mode marketing/persuade/operate/read framing distilled from impeccable
     v4 — same axis as our register dial, kept here as a terminology cross-reference only.)*
@@ -64,37 +63,39 @@ hero over dark mesh, three equal feature cards, generic glassmorphism, infinite-
 micro-animations, or the same templated section rhythm. These are the LLM defaults; reach past
 them deliberately based on the read.
 
-## 3. Register dials (calibration — example from a real project; re-tune per target project)
+## 3. Register dials (calibration — Fieldnote example; re-tune per target project)
 
 | Dial | In-app (product) | Marketing (public) |
 |---|---|---|
-| DESIGN_VARIANCE | medium-low — shadcn-calm; emphasis from brand ring + motion | medium-high — livelier, cinematic allowed, on-brand |
-| MOTION_INTENSITY | low–medium — the tamed whitelist only | medium–high — bigger Aceternity moments |
-| VISUAL_DENSITY | medium — a learning workspace | medium — anchor moments + natural-height content sections |
+| DESIGN_VARIANCE | medium-low — calm; emphasis from the accent ring + motion | medium-high — livelier, cinematic allowed, on-brand |
+| MOTION_INTENSITY | low–medium — the in-app whitelist only | medium–high — bigger signature moments |
+| VISUAL_DENSITY | medium — a working notebook | medium — anchor moments + natural-height content sections |
 
 The register is decided in the Design Read (§2) and never drifts mid-loop.
 
 ## 4. Brand floors — names only; the target project's DESIGN.md is the law
 
-The floors below are an **example set from a real project's DESIGN.md** (kept as case law for how
-concrete a floor should be). For any target project, its own DESIGN.md floors replace these; the
-a11y floors are universal. Never relax the target project's floors:
-- **One Voice** — Electric Blue `#137fec` is the only structural loud color; categories ride on a
+The floors below are written for the **fictional Fieldnote** (see the note at the top), to show
+how concrete a floor should be — a token or a measurable rule, never an adjective. For any target
+project, its own DESIGN.md floors replace these; only the a11y floors are universal. Never relax the
+target project's floors:
+- **One Voice** — Signal Teal `#0b7285` is the only structural loud color; categories ride on a
   dot/label.
-- **Retired-Ink** — no ink `#0a0a0a` borders, no hard offset shadows, no warm `#FFFDF4` tint.
-- **Soft-Elevation** — every shadow blurred and near-neutral; selection = brand ring + tint.
-- **Tamed-Aceternity** — in-app motion from the whitelist only; flashy defaults are marketing-only
-  and on-brand.
+- **Retired-Neon** — the launch identity's neon `#39ff14` accents, glow shadows and dark mesh
+  backgrounds are retired; none of them returns in new work.
+- **Soft-Elevation** — every shadow blurred and near-neutral; selection = accent ring + tint.
+- **Whitelisted-Motion** — in-app motion from a short named whitelist only; bigger moments are
+  marketing-only and on-brand.
 - **Motion-Earns-It** — motion marks a real change; ambient decoration is slop.
-- **Marketing-Display** — Inter tight; **no serif display anywhere** (Instrument Serif is retired
-  as slop; Charter is blog *body* only).
+- **One-Display-Face** — one sans display family; **no serif display anywhere** (a serif is
+  allowed for long-form body text only).
 - **A11y floors** — contrast ≥4.5:1 body / ≥3:1 large; focus-visible ring; reduced-motion
   alternative for every animation; never gate content visibility on a transition. Full compliance
   floor, touch-target table, and keyboard/ARIA discipline: `references/design/accessibility-baseline.md`.
 
-> Brand override note: generic advice like "avoid Inter as a display face" (taste-skill §4.1,
-> open-design §C) is **overridden** — Inter tight / Plus Jakarta Sans ARE our display faces by
-> DESIGN.md decision. Palette-rotation advice is likewise overridden: we are brand-locked.
+> Brand override note: when the target project's DESIGN.md picks something generic advice flags
+> (e.g. "avoid Inter as a display face", taste-skill §4.1, open-design §C), the DESIGN.md decision
+> wins. Palette-rotation advice is likewise overridden for a brand-locked project.
 
 ## 5. Anti-slop law (generic; reconciled against DESIGN.md)
 
@@ -106,7 +107,7 @@ a11y floors are universal. Never relax the target project's floors:
 - ❌ Invented metrics ("10× faster", "99.9% uptime") without a source
 - ❌ Filler copy — "Feature One / Feature Two", lorem ipsum
 - ❌ An icon next to every heading; a gradient on every background
-- ❌ Warm beige / cream / peach page backgrounds (our base is slate)
+- ❌ Warm beige / cream / peach page backgrounds, unless the project's DESIGN.md chose them
 - ❌ Gradient text on large headers; neon glow; glassmorphism-by-default
 - ❌ Lucide icons as editorial/marketing decoration (DESIGN.md — decoration ≠ demonstration)
 - ❌ More than ~12 raw hex values outside `:root` — tokens were not honoured
@@ -150,8 +151,8 @@ Ranges use a hyphen (`2018-2026`). (Scope: visible page copy in previews/ports; 
 comments are out of scope.)
 
 ### 5.5 Assets
-- **No div-built fake screenshots** — we have a real product; capture the real surface (the
-  product-shots pipeline) or use none.
+- **No div-built fake screenshots** — capture the real product surface (a screenshot of the
+  running product) or use none.
 - No hot-linked stock CDNs (unsplash/placehold) in previews; local assets under the
   canvas folder's `assets/`.
 

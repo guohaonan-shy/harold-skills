@@ -40,11 +40,12 @@ gotchas live.
 ## Design tokens
 
 Create the brand system once with `create_tokens` so the file speaks the target project's language
-(pull the values from its DESIGN.md / theme; the set below is an example from a real project):
-- colors: slate ramp (`--color-slate-50…900`), `--color-primary #137fec` (+ strong/bright), white,
-  hero gradient stops; `--color-ink #0a0a0a` only as a *legacy* token (brutalism is retired — see
-  that project's DESIGN.md).
-- fonts: `--font-sans Inter`, `--font-display "Plus Jakarta Sans"`.
+(pull the values from its DESIGN.md / theme; the set below is a fictional example, shaped like a
+real one):
+- colors: a neutral ramp (`--color-neutral-50…900`), `--color-primary #0b7285` (+ strong/bright),
+  white, hero gradient stops; a retired identity's color kept only as a *legacy* token, if the
+  project's DESIGN.md says so.
+- fonts: `--font-sans`, `--font-display` (the families the project's DESIGN.md names).
 - radii: `--radius-md 10 / -lg 14 / -xl 20 / -2xl 24`.
 Then style with `var(--…)`. `get_tokens` lists what's there; reuse before adding.
 

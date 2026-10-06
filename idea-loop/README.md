@@ -16,6 +16,7 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
 | `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders variants at the lowest fidelity that tells them apart, and ships ONE direction note back into the spec — no critic, no scoring, no fidelity bump |
 | `/idea-loop:uiux-refine` | Design · converge | Rebuilds the canvas from the direction note alone, converges it through a two-model critic/executor loop, then runs a subtraction pass and an AI-tells pass, and freezes on the human's signature |
+| `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a context holding nothing but that ticket, TDD at the seams the spec already agreed |
 | `/idea-loop:pr-review` | Review | Opens or reuses the PR, then runs up to two automatic rounds of Codex review → verify → fix → independent re-verify, one GitHub post per round; stops at mergeReady and waits for a merge order |
@@ -42,7 +43,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
+| `prototype`, `to-spec`, `design-modeling`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
@@ -53,6 +54,11 @@ reaction each round, and a human is the one who declares the direction done.
 plateau, the sign-off — and wants a fresh window so it rebuilds from the direction
 note instead of continuing the diverge session it cannot see. `dreaming` proposes
 destructive disposals.
+
+`design-modeling` is model-invocable for the same reason `prototype` is: `uiux-imagine`
+hands it the language it just chose without leaving the session, while the chosen roles and the
+measured contrast are still in context. Being callable is not being unattended — it stops for
+the human before every write to `DESIGN.md`.
 
 The execution three were human-only until the caller-dispatch model landed: `implement`
 requires a context holding nothing but the one ticket, and `/clear` is a human action.
@@ -122,7 +128,9 @@ Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
 keeps it out of `.claude/` worktrees. Today it covers the design-lint rules,
 the two UI-loop comparators, the critic score check, the direction
-note's seven-section shape, and the glossary lint, all living in this plugin's `scripts/`; new
+note's seven-section shape, the glossary lint, the DESIGN.md lint hook (against a fake CLI, no
+network), and a tripwire that keeps `skills/` and `references/` free of the source project's
+names and examples, all living in this plugin's `scripts/`; new
 deterministic scripts get picked up by putting their tests next to them as
 `<name>.test.mjs`.
 
@@ -135,6 +143,9 @@ by a spawned-process test. The lint **hooks**
 (`scripts/design-lint-hook.mjs`, `scripts/glossary-check-hook.mjs`) have no unit tests either — they are verified by
 actually writing an HTML file into a `docs/design/<spec-slug>/` directory (or a broken
 `GLOSSARY.md` anywhere) and confirming it reports; that is the falsifiable signal, not a mocked stdin payload.
+`scripts/design-md-hook.mjs` is the exception: its whole job is shelling out to an external CLI, so
+its tests swap in a fake CLI to pin the exit-code contract (error blocks, warning passes, an
+unreachable CLI never blocks), and one real run against the official CLI was the falsifiable check.
 
 ### Baseline eval
 
@@ -181,7 +192,7 @@ points at a nonexistent script is worse than one that refuses to start.
 idea-loop/
 ├── .claude-plugin/plugin.json
 ├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
-├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + glossary-check-hook.mjs
+├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── README.md (this file)
 ├── skills/
 │   ├── grill/SKILL.md
@@ -189,6 +200,7 @@ idea-loop/
 │   ├── to-spec/SKILL.md
 │   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
 │   ├── uiux-refine/SKILL.md          # the convergent half — direction note in, one frozen canvas out
+│   ├── design-modeling/SKILL.md      # the only writer of the project's DESIGN.md — create / distill / reconcile
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md
 │   ├── pr-review/SKILL.md            # → workflows/pr-review-loop.mjs
@@ -196,7 +208,8 @@ idea-loop/
 ├── workflows/
 │   └── pr-review-loop.mjs            # open/reuse PR, then up to two review → fix → re-verify rounds
 ├── docs/
-│   └── pr-review-loop.md             # design record of the review loop (+ its flowchart)
+│   ├── pr-review-loop.md             # design record of the review loop (+ its flowchart)
+│   └── design-modeling.md            # design record of design-modeling
 ├── scripts/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
 │   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
@@ -208,6 +221,9 @@ idea-loop/
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/<spec-slug>/), exit 2 on P0/P1
+│   ├── design-md-hook.mjs            # PostToolUse entry: official @google/design.md lint on any DESIGN.md, exit 2 on an error
+│   ├── design-md-hook.test.mjs       # its tests, against a fake CLI
+│   ├── no-project-leak.test.mjs      # tripwire: skills/ and references/ carry no source-project names or examples
 │   ├── glossary-check.mjs            # GLOSSARY.md format lint — single-file, zero-dep, so target-repo CI can curl it pinned
 │   ├── glossary-check.test.mjs       # its unit tests — one per rule, plus a well-formed baseline
 │   ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
@@ -245,7 +261,7 @@ What came across:
 |---|---|
 | The taste/craft references | `references/design/` |
 | The two former design skills | `references/design/static-ui-protocol.md`, `references/design/motion-protocol.md` — demoted to on-demand protocols, same shape as the surface / module / component ones next to them |
-| The `DESIGN.md` spec (fixed eight sections, three-tier law, "T1 is five to eight floors") | `references/design/design-md-format.md` |
+| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, content rules, candidate format: `skills/design-modeling/SKILL.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | `.mcp.json` (headless, isolated Playwright) |
 
@@ -256,11 +272,13 @@ hidden. It holds because `scripts/critic-score.mjs` recomputes the allowed band 
 findings the critic just wrote and invalidates the round when the number does not follow.
 
 Nothing in `references/design/` is an entry point. They are loaded on demand by whichever
-step is running; the hook is the one piece that fires on its own, and only on a `Write`/`Edit`
-whose path lands in a canvas HTML — `docs/design/<spec-slug>/*.html`, or the legacy
-`design-preview/` / `design-motion-preview/` scratch dirs.
+step is running; the hooks are the only pieces that fire on their own. One fires only on a
+`Write`/`Edit` whose path lands in a canvas HTML — `docs/design/<spec-slug>/*.html`, or the legacy
+`design-preview/` / `design-motion-preview/` scratch dirs; the other only on a write to a file named
+`DESIGN.md`, where it runs the official `@google/design.md` lint at `@latest` and hands any error
+back to the model.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
-the DESIGN.md-writing skill (→ the reference above), the port-verification skill
+the DESIGN.md-writing skill (its job is now `design-modeling`'s), the port-verification skill
 (→ `references/ui-implementation-standard.md`, which generalized it past React), and the
 `wireframe-candidates` workflow (→ the structural-divergence audit `prototype` now runs).

@@ -2,7 +2,7 @@
 
 Read the target repository's REVIEW.md, root/applicable nested AGENTS.md and applicable
 CLAUDE.md/linked conventions. Read referenced requirements explicitly; do not assume
-agent-specific imports expand. Report sources actually read. Do not copy Toeflair rules.
+agent-specific imports expand. Report sources actually read. Do not carry over another project's rules.
 
 Read the target repository's GLOSSARY.md (or each one GLOSSARY-MAP.md lists) when it exists, and name
 domain concepts with its canonical terms in titles, findings and summaries. A concept this PR introduces

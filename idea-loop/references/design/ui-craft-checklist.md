@@ -123,6 +123,7 @@ declared tokens before sign-off:
    type scale, radius scale) — read it from the project's own source of truth, not from memory.
 2. Sample computed values from the rendered preview (`getComputedStyle` on representative elements)
    and check each against the nearest declared token.
-3. A value that doesn't map to any declared token is either a legitimate new addition (name it,
-   propose it as a T2 case-law entry at close-out) or drift (fix it to the existing token). Silence
+3. A value that doesn't map to any declared token is either a legitimate new addition (name it and
+   write it as a candidate for `design-modeling` at close-out) or drift (fix it to the existing
+   token). Silence
    is the failure mode either way — every off-token value gets a decision, not a shrug.

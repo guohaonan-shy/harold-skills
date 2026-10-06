@@ -13,13 +13,12 @@ update by explicit re-distill, never by runtime reads of external paths.
   action / focus / selection, borders, semantic states, data-category. Every color use names
   its role; a color without a role is decoration and gets cut.
 - **Two separate systems, never conflated:** semantic color (state: success / error / progress)
-  vs data-category color (badge tier, practice category). One element speaks one system.
+  vs data-category color (badge tier, content category). One element speaks one system.
 - **Name the dosage strategy before assigning** *(per register)*: in-app default is
   **Restrained** — tinted neutrals + the accent on ≤10% of the surface (rarity is the point).
   A marketing moment may go **Committed** — one saturated color carrying 30–60% —
   deliberately and on-brand, never by drift. Either way One Voice holds: the project's single
-  brand accent (e.g. Electric Blue, in the project this rule was distilled from) is the only
-  structural loud color.
+  brand accent is the only structural loud color.
 - **Rarity gives an accent force:** a color used everywhere stops meaning anything. Don't
   spend the primary-action color on decoration; the strongest color owns one region.
 - **Text on color fills** *(perceptual, not just WCAG)*: a saturated mid-luminance fill
