@@ -17,7 +17,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 ## 2 探代码库
 
-看清现状。ticket 的标题和描述用项目已有的领域词汇。
+看清现状。目标项目有 `GLOSSARY.md` 就读它，ticket 的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../../references/glossary.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
 
 顺手找**预重构**的机会：*让改动变容易，然后做那个容易的改动。*
 

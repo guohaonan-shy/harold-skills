@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 这个 skill 拿每一份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后**提议**处置。
 
-> 先读一次 `../../references/wiki-conventions.md`。
+> 先读一次 `../../references/wiki-conventions.md`。目标项目有 `GLOSSARY.md` 时，再读一次 `../../references/glossary.md`。
 
 ## 七条纪律（每一条都来自踩过的坑）
 
@@ -42,6 +42,7 @@ disable-model-invocation: true
 | spec 确认不做 | 人确认（**不是**超时推断） | 写 ADR（❌ 未采纳，带 why-not）→ 删 spec |
 | ⚠️ spec 说 X，代码是 Y | 代码物在，但形态对不上 | **报警，绝不自动处理**——文档在撒谎，比过期危险 |
 | domain / reference 与现状不符 | 引用的表/字段/接口已改名 | 订正，不删 |
+| `GLOSSARY.md` 与现状不符 | `_Avoid_` 里的词出现在新代码或新文档里；词条说的概念在代码里已经没了 | **逐条问人**，同意了才订正或删除；不新增词条——新增只在 `grill` 里 |
 | 新 spec 的决策，判了某个已生效 ADR 的某一节 | 写新 ADR 前，先搜 `docs/adr/` 有没有同话题旧决策 | **section 级标注，不是整份作废**：旧 ADR 那一节标题后加 `⚠️ 已被取代 → ADR-<new> §<n>`；只有当旧 ADR **全部**小节都已被取代，才把 frontmatter `status` 整份翻成 `已被取代（→ ADR-<new>）` |
 
 **漏网的 ticket 也归这里扫。** `docs/spec/tickets/` 里的 ticket 本该在合并后由 `to-ticket` 删掉；对每一张仍然存在的，查它对应的 PR 是否已 MERGED（`gh`，且标题要对得上）——已合并却还躺着的，就是没删干净，提议删除。ticket 是临时凭据，留着会让「还有活没干完」这个信号失真。
@@ -50,7 +51,7 @@ disable-model-invocation: true
 
 ## 流程
 
-1. `git fetch`。列出 `docs/` 全部文件 + `CLAUDE.md` + 插件 references。
+1. `git fetch`。列出 `docs/` 全部文件 + `CLAUDE.md` + `GLOSSARY.md`（有就列）+ 插件 references。
 2. 逐份取证。量大就派 subagent 并行，**每个 agent 只读不写**，回结构化表格。
 3. 汇成一张处置表：文件 / 自称状态 / 实现判定 / 证据 / 建议处置。
 4. **摆给人，逐行确认。** 量大就发 Artifact。

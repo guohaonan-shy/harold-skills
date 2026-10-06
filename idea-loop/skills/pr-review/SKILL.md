@@ -63,6 +63,9 @@ Await the completion notification; never report a result early. Then give, in wo
 - `stopReason` and `mergeReady`, plus any incomplete check. An incomplete check is not a pass, and a
   zero blocker count alone is not merge readiness;
 - the `note` when the last round's fixes had no further review after them;
-- what exactly needs Harold, for `needs-human`.
+- what exactly needs Harold, for `needs-human`;
+- every round's `missingTerms`, read out as a list (concept + suggested name). Do not write them into
+  `GLOSSARY.md` — new terms are only added in `grill`. Ask whether Harold wants a `grill` round to settle them; the
+  round post keeps the list either way.
 
 Merge only when Harold says so, in this conversation.

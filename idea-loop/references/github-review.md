@@ -47,6 +47,7 @@ The App needs Issues read/write (Conversation comments) and Pull requests + Cont
 | summary | Short Chinese summary of the round |
 | checks | `{name, required, status, evidence}`; required correctness, standards, spec, verification (plus project-checks) |
 | findings | This round's findings; earlier rounds keep their outcome unless a key reappears |
+| missingTerms | Optional `{concept, suggested}` list: domain concepts this PR introduces or renames that the target repo's `GLOSSARY.md` does not define. Rendered as its own 缺词 table; never findings, never blocking, never written to the glossary by the loop (new terms are only added in `grill`, see `glossary.md`) |
 
 Check status: passed, failed, incomplete, not-applicable, always with evidence. Correctness must run.
 No explicit acceptance agreement means spec is incomplete, never not-applicable.

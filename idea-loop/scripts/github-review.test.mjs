@@ -193,3 +193,23 @@ test('GitHub App identity: config lookup, signed JWT, installation token, no con
   assert.equal(await appToken('owner/repo', { config: null, fetchImpl }), null)
   await assert.rejects(appToken('owner/repo', { config, fetchImpl: async () => ({ ok: false, status: 404 }) }), /not installed/)
 })
+
+test('missing glossary terms render as their own non-blocking table and are shape-checked', async () => {
+  const terms = [{ concept: '学生一次练习里被判为需要重练的那组题', suggested: 'Retry set' }]
+  const { state, api } = github()
+  const result = await publish(plan({ missingTerms: terms }), api)
+  const body = state.conversation[0].body
+  assert.match(body, /### 缺词（不阻塞[^\n]*\n\n\| 概念 \| 推荐叫法 \|\n\|---\|---\|\n\| 学生一次练习里被判为需要重练的那组题 \| Retry set \|/)
+  assert.ok(body.indexOf('### 缺词') < body.indexOf('<details><summary>本轮检查'))
+  assert.equal(result.mergeReady, true, 'missing terms never block')
+  validatePlan(plan({ missingTerms: [] }))
+  validatePlan(plan())
+  assert.throws(() => validatePlan(plan({ missingTerms: {} })), /must be an array/)
+  assert.throws(() => validatePlan(plan({ missingTerms: [{ concept: '有概念' }] })), /concept and suggested/)
+})
+
+test('no missing terms means no 缺词 section', async () => {
+  const { state, api } = github()
+  await publish(plan({ missingTerms: [] }), api)
+  assert.doesNotMatch(state.conversation[0].body, /缺词/)
+})

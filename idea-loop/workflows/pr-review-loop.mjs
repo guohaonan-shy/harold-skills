@@ -84,7 +84,8 @@ ${prNumber ? `2. Reuse PR #${prNumber}. Local HEAD must equal the remote PR head
    - the verification path per instrument (unit-test / api / db / browser / eval / eval-replay / static) from REVIEW.md, with real commands,
      worktree and port rules;
    - backlogPath: REVIEW.md's override, else docs/quality-backlog.md if it exists (its §线上问题 section), else backlog.md;
-   - checkCommands: the lint / typecheck / test commands REVIEW.md or CI declares for the changed paths.
+   - checkCommands: the lint / typecheck / test commands REVIEW.md or CI declares for the changed paths;
+   - glossary: the path of GLOSSARY.md (or each GLOSSARY.md that GLOSSARY-MAP.md lists) when one exists, else say none.
 6. priorFindings: every finding the snapshot recovered from earlier round posts (key, id, status, title, instrument, reproducer).
 Return ready:false with the exact reason on any preflight failure, and change nothing after that.`, {
     label: `${tag}:prepare`, phase: 'Prepare', ...DEEP, schema: { type: 'object', properties: {
@@ -131,7 +132,7 @@ that correctness must run at effort ${codexEffort}. Never edit the config yourse
 ${codexRun(`node "${codexCompanion}" review --wait --model ${codexModel} --scope branch --base "${prep.reviewBaseSha}" --cwd "${cwd}"`)}
 Start evidence with "model ${codexModel}, effort ${codexEffort} (from config)".` },
     { key: 'standards', prompt: taskPrompt('Check the diff only against the written rules listed in the contract. No generic smells, naming preferences or rules that are not written down. A missing rule means nothing to enforce.') },
-    { key: 'spec', skip: !prep.specAvailable, prompt: taskPrompt('Check the diff against the acceptance criteria and scope in the contract. Distinguish missing functionality from missing verification, and respect the ticket slice boundaries.') },
+    { key: 'spec', skip: !prep.specAvailable, prompt: taskPrompt('Check the diff against the acceptance criteria and scope in the contract. Distinguish missing functionality from missing verification, and respect the ticket slice boundaries. If the contract names a glossary, also list under a separate heading MISSING TERMS the domain concepts this PR introduces or renames (in code, tests, spec or tickets) that the glossary does not define, each with a suggested name; these are not findings.') },
     { key: 'project-checks', skip: !prep.checkCommands?.length, prompt: `${pinned}
 Run each of these project check commands at the reviewed head, exactly as declared: ${JSON.stringify(prep.checkCommands || [])}.
 For a failure, attribute it: extract the merge-base with \`git archive ${prep.mergeBaseSha} | tar -x -C <scratch dir>\` (never checkout or
@@ -168,9 +169,14 @@ under its old key. Pre-existing findings are never blocking.
 Write every field in concise Chinese: title states the consequence (no path:line), impact is one sentence of at most 60 characters,
 repro is numbered steps from a user action or input, fix is ONE recommended remedy with a one-line reason, reproducer is the exact
 rerunnable command or browser steps (required for confirmed), evidence holds the output and line references, location points at the
-line on the reviewed head when there is one. A dismissed candidate is only returned when it needs a visible rebuttal (dispositionEvidence). Return verification as a check with your procedure as evidence, and a short Chinese summary of the round.`, {
+line on the reviewed head when there is one. A dismissed candidate is only returned when it needs a visible rebuttal (dispositionEvidence). Return verification as a check with your procedure as evidence, and a short Chinese summary of the round.
+missingTerms: when the contract names a glossary, read it (and ${refs}/glossary.md §2) and return the domain concepts this PR introduces or
+renames that the glossary does not define — the spec axis's MISSING TERMS plus any you find yourself, deduplicated. Keep only concepts that pass
+glossary.md §2's three questions. Each is { concept: one Chinese sentence on what it is, suggested: the name you recommend }. They are reported,
+never findings, never fixed: do not edit any GLOSSARY.md. Return an empty array when there is no glossary or nothing is missing.`, {
     label: `${tag}:verify`, phase: 'Verify', ...DEEP, schema: { type: 'object', properties: {
       findings: { type: 'array', items: FINDING }, verification: CHECK, summary: { type: 'string' },
+      missingTerms: { type: 'array', items: { type: 'object', properties: { concept: { type: 'string' }, suggested: { type: 'string' } }, required: ['concept', 'suggested'] } },
     }, required: ['findings', 'verification', 'summary'] },
   })
   if (!verified) return stop('error', { error: `Round ${round} verification did not complete` })
@@ -268,7 +274,7 @@ needs-verification if the required runtime was unavailable. Also return this ste
       evidence: [verified.verification.evidence, reverify?.check.evidence].filter(Boolean).join(' / ') },
   ]
   const plan = { repo: prep.repo, pr: prep.prNumber, round, reviewedSha: prep.reviewedSha, headSha, baseSha: prep.baseSha,
-    mergeBaseSha: prep.mergeBaseSha, summary: verified.summary, checks,
+    mergeBaseSha: prep.mergeBaseSha, summary: verified.summary, checks, missingTerms: verified.missingTerms || [],
     findings: [...findings.values()].filter(f => f.status !== 'dismissed' || f.dispositionEvidence) }
   const published = await agent(`Publish round ${round} of PR #${prep.prNumber} in ${cwd}. Do not edit, summarize or reformat anything.
 Write the JSON below byte-for-byte to a new file in your scratchpad, then run: node "${helper}" publish <that file>
@@ -283,7 +289,8 @@ ${JSON.stringify(plan)}`, {
   const result = published.result
   rounds.push({ round, url: result.url, prUrl: result.prUrl, reviewedSha: prep.reviewedSha, headSha,
     mergeReady: result.mergeReady === true, openBlockingCount: result.openBlockingCount, needsHuman: result.needsHuman || [],
-    fixed: [...findings.values()].filter(f => f.status === 'resolved').length, backlogged: preexisting.length })
+    fixed: [...findings.values()].filter(f => f.status === 'resolved').length, backlogged: preexisting.length,
+    missingTerms: verified.missingTerms || [] })
   log(`Round ${round}: ${result.url} — mergeReady ${result.mergeReady}`)
 
   if (result.needsHuman?.length) return stop('needs-human')
