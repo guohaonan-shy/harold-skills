@@ -11,5 +11,10 @@
 # run directories it grades stay under /tmp (see idea-loop/evals/README.md).
 eval-fixtures/
 
+# Evals built from real Claude Code session transcripts (ui-master / grill / to-spec).
+# They carry a real product's content and the human's own words, and this repo is public —
+# so cases, transcripts and run results stay on the machine that has the history.
+idea-loop/evals/local/
+
 # Claude Code worktrees (local scratch)
 .claude/worktrees/

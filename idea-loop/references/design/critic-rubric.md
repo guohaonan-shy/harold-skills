@@ -1,6 +1,6 @@
 # Critic rubric — what a score means, and what it may not mean
 
-The rubric the critic reads before every round of the design loop. It answers one question and
+The rubric the critic (`idea-loop:ui-master`, `agents/ui-master.md`) reads before every round of the design loop. It answers one question and
 declines the rest: **measured against the aesthetic this work is reaching for, how well is it
 executed?** Nothing here scores whether the thing is usable, legible, accessible, or on-brand —
 those have their own gates, listed at the bottom, and folding them in here would let a

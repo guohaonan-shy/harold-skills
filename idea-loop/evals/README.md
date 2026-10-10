@@ -37,10 +37,10 @@
 写成断言的那几条（全文在 `assert.mjs`）：
 
 - 原型的 HTML 与裁决落进 raw 桶，页面顶部那句问题与裁决记录里的是同一句
-- 碰 UI 的 spec 落成 `等设计冻结`，§4 把结构决策挂在原型证据上
+- 碰 UI 的 spec 落成 `等设计冻结`，§4 把结构决策挂在原型证据上，技术方案总览三小节齐、前端交互标着待补图
 - 仍未冻结的 UI ticket，「设计冻结」字段落 ⛔；同一批里非 UI 的票写「不涉及 UI」，不被按住
-- 发散只准出一份方向说明（过 `direction-note-check`），不翻状态，不往仓库里留渲染物
-- 收敛冻结之后：`docs/design/<spec-slug>/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；spec §4 的「设计方向」被「冻结摘要」**取代**；状态翻 `在飞`
+- 发散只准出一份方向说明（过 `direction-note-check`，落在项目根 `.tmp/uiux-imagine/<slug>/`），不改 spec、不翻状态，不往仓库里留渲染物
+- 收敛冻结之后：`docs/design/<spec-slug>/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；spec §4 写入「冻结摘要」、§5.3 换成 `assets/flows/` 下的交互图；`/tmp` 两个目录清掉；状态翻 `在飞`
 - 全仓无跨 plugin 的 skill 调用
 
 ## case
@@ -56,6 +56,13 @@ node idea-loop/evals/run-baseline.mjs --only refine-freeze # 只跑一格
 node idea-loop/evals/run-baseline.mjs --out <dir> --grade-only   # 不重跑，只重判（改了断言时用）
 node idea-loop/evals/run-baseline.mjs --archive idea-loop/evals/baseline   # 跑完顺手更新存档
 ```
+
+> **存档落后于 skill（2026-10-09）**：#25–#27 改了 to-spec 的模板（技术方案总览）、imagine 的准出（方向说明落 `/tmp`、构成清单）、
+> refine 的执行方式（designer agent + 编排者、交互图写回 spec），断言与 fixture 已同步，**`baseline/` 里的存档还是改动之前那一跑**，
+> 新加的断言（`spec-has-technical-overview` / `imagine-leaves-spec-untouched` / `freeze-writes-interaction-flows` / `freeze-clears-tmp`）在存档里没有记录。
+> 下次重跑时连同 `--archive` 一起更新。
+>
+> refine 的两个 agent 写的是模型**别名**（designer `opus`、ui-master `fable`），解析到哪个版本取决于跑的那份命令行 `claude`。所以每格的 `run.meta.json` 记下这一跑实际调用过的模型（`usage.models`，含 subagent），`benchmark.json` 记 `claude_version`——两次 baseline 对不上时，先看是不是模型换了，再看 prompt。
 
 **跑一次要多久、多少钱**（存档那一跑的实测，Opus 5）：
 

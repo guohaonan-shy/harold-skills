@@ -62,6 +62,23 @@ docs/
 
 `design/` 骑在分界上：它由一次 `uiux-refine` 会话产出，但冻结之后就是实现的视觉真值，活得比 spec 长——spec 删掉、ADR 写好之后它还在，ADR 链到它。所以 **`dreaming` 不因为 spec 没了就提议删它**；它被取代的唯一方式是同一块 UI 的下一次冻结。
 
+### 2.1 中间产物：worktree 根下的 `.tmp/`
+
+不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在**当前 worktree 根**的 `.tmp/` 下，按 skill 与对象分目录：
+
+```
+<worktree 根>/.tmp/
+├── grill/<YYYY-MM-DD>-<topic>/   复现过程的截图、网络日志、trace —— grill 收工时删
+├── uiux-imagine/<spec-slug>/     对比页与抓取物（imagine 收工时删）、方向说明（refine 冻结时删）
+└── uiux-refine/<spec-slug>/      ledger、每轮评分 JSON、评委看的截图 —— refine 冻结时删
+```
+
+- `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
+- 第一次用时确认 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里，不在就追加一行——本地忽略，不改仓库的 `.gitignore`，也不会被误提交。
+- **不放系统 `/tmp`**：生命周期要跟着 worktree。系统 `/tmp` 重启会被清（方向说明丢了 refine 就开不了工），而且不同 worktree、不同会话的东西攒在一起分不清是谁的；放在 worktree 里，该删的时候 skill 删，没来得及删的随 worktree 一起删掉。
+- 按 `<spec-slug>` / `<topic>` 分子目录不是洁癖：两份 spec 在同一个 worktree 里先后跑，固定文件名放在共享的顶层会互相覆盖，而且覆盖得悄无声息。
+- 一次性的、跑完即弃、不跨步骤的东西（比如 excalidrawer 的中间 JSON）仍然可以用系统临时目录。
+
 ## 3 frontmatter
 
 每份 md 都带。这是 dreaming 与召回 grep 的锚点。

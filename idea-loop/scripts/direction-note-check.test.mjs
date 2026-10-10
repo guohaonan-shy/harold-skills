@@ -1,10 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkDirectionNote, SECTIONS } from './direction-note-check.mjs';
+import { checkDirectionNote, checkComposition, SECTIONS, COMPOSITION } from './direction-note-check.mjs';
+
+/** The composition list a chosen variant carries inside 「变种裁决」. */
+const composition = (skip = []) =>
+  ['  **构成**（B）：', ...COMPOSITION.filter((c) => !skip.includes(c)).map((c) => `  - ${c}：${c === '颜色' ? '待打磨' : `${c} 的写法`}`)].join('\n');
+
+const VERDICT = `- **B「对话气泡」** —— 赌的是说明贴着按钮出现。**选中**。\n${composition()}\n- **A「顶部横幅」** —— **落选**。`;
+
+/** Default body for a section; 「变种裁决」 carries the composition list. */
+const body = (s) => (s === '变种裁决' ? VERDICT : `${s} 的正文。`);
 
 /** A well-formed note; every test starts from this and bends one thing. */
 const note = (over = {}) =>
-  SECTIONS.map((s) => `## ${s}\n\n${over[s] ?? `${s} 的正文。`}`).join('\n\n');
+  SECTIONS.map((s) => `## ${s}\n\n${over[s] ?? body(s)}`).join('\n\n');
 
 test('the seven sections, in order, each with a body, is a valid note', () => {
   const r = checkDirectionNote(note());
@@ -27,14 +36,14 @@ for (const dropped of SECTIONS) {
 }
 
 test('a section with a heading but no body counts as missing, not present', () => {
-  const md = SECTIONS.map((s) => (s === '待打磨清单' ? `## ${s}\n` : `## ${s}\n\n${s} 的正文。`)).join('\n\n');
+  const md = SECTIONS.map((s) => (s === '待打磨清单' ? `## ${s}\n` : `## ${s}\n\n${body(s)}`)).join('\n\n');
   const r = checkDirectionNote(md);
   assert.equal(r.valid, false);
   assert.ok(r.errors.some((e) => e.includes('待打磨清单') && /空/.test(e)));
 });
 
 test('the note survives being demoted one level into the spec', () => {
-  const md = SECTIONS.map((s) => `### ${s}\n\n${s} 的正文。`).join('\n\n');
+  const md = SECTIONS.map((s) => `### ${s}\n\n${body(s)}`).join('\n\n');
   const r = checkDirectionNote(md);
   assert.equal(r.valid, true);
   assert.equal(r.level, 3);
@@ -70,7 +79,7 @@ test('a stray sibling section among the seven is an error', () => {
 });
 
 test('sub-headings inside a section are free', () => {
-  const md = note({ 变种裁决: '### A · 冷工具\n\n落选：人说太像后台。' });
+  const md = note({ 变种裁决: `### A · 冷工具\n\n落选：人说太像后台。\n\n${composition()}` });
   const r = checkDirectionNote(md);
   assert.equal(r.valid, true);
 });
@@ -85,4 +94,33 @@ test('headings inside a fenced code block are not sections', () => {
   const md = `${note()}\n\n\`\`\`md\n## 意图\n\`\`\`\n`;
   const r = checkDirectionNote(md);
   assert.equal(r.valid, true);
+});
+
+test('a chosen variant with no composition list fails — refine never sees the render', () => {
+  const r = checkDirectionNote(note({ 变种裁决: '- **B** —— **选中**。人说就这个。' }));
+  assert.equal(r.valid, false);
+  assert.ok(r.errors.some((e) => e.includes('构成')));
+});
+
+for (const dropped of COMPOSITION) {
+  test(`a composition list without 「${dropped}」 fails and names it`, () => {
+    const errors = checkComposition(`- **B** —— **选中**。\n${composition([dropped])}`);
+    assert.equal(errors.length, 1);
+    assert.ok(errors[0].includes(dropped));
+  });
+}
+
+test('「待打磨」 is a legal value — parked, not silently skipped', () => {
+  assert.deepEqual(checkComposition(composition()), []);
+});
+
+test('an item with nothing after the colon counts as missing', () => {
+  const errors = checkComposition(composition().replace('指向：指向 的写法', '指向：'));
+  assert.ok(errors.some((e) => e.includes('指向')));
+});
+
+test('every composition block is checked, not just the first', () => {
+  const errors = checkComposition(`${composition()}\n- **C** —— **选中**。\n${composition(['颜色'])}`);
+  assert.equal(errors.length, 1);
+  assert.ok(errors[0].startsWith('第 2 份'));
 });
