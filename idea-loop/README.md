@@ -13,9 +13,9 @@ status (see `references/wiki-conventions.md`).
 |---|---|---|
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
-| `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec (problem, user stories, implementation + testing decisions, agreed seams) |
-| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders variants at the lowest fidelity that tells them apart, and ships ONE direction note back into the spec — no critic, no scoring, no fidelity bump |
-| `/idea-loop:uiux-refine` | Design · converge | Rebuilds the canvas from the direction note alone, converges it through a two-model critic/executor loop, then runs a subtraction pass and an AI-tells pass, and freezes on the human's signature |
+| `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. Figure rules: `references/spec-figures.md` |
+| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant) to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump |
+| `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | One ticket → one commit, in a context holding nothing but that ticket, TDD at the seams the spec already agreed |
@@ -193,13 +193,16 @@ idea-loop/
 ├── .claude-plugin/plugin.json
 ├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
 ├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
+├── agents/
+│   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
+│   └── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
 ├── README.md (this file)
 ├── skills/
 │   ├── grill/SKILL.md
 │   ├── prototype/SKILL.md
 │   ├── to-spec/SKILL.md
 │   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
-│   ├── uiux-refine/SKILL.md          # the convergent half — direction note in, one frozen canvas out
+│   ├── uiux-refine/SKILL.md          # the convergent half — only the calling mechanism; the work is in agents/
 │   ├── design-modeling/SKILL.md      # the only writer of the project's DESIGN.md — create / distill / reconcile
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md
@@ -216,8 +219,10 @@ idea-loop/
 │   ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
 │   ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit (+ the CLI uiux-refine calls each round)
 │   ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
-│   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections
-│   ├── direction-note-check.test.mjs # its unit tests — one per droppable section
+│   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
+│   ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
+│   ├── flow-compose.mjs              # interaction flow figures: screenshots + arrows + red rings → one PNG (spec §1 / §5.3)
+│   ├── flow-compose.test.mjs         # its unit tests — the flow schema and the layout
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
 │   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/<spec-slug>/), exit 2 on P0/P1

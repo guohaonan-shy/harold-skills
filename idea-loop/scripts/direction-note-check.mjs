@@ -10,12 +10,12 @@
  * human in the room.
  *
  * This file does not judge the note's content — no model, no taste, no scoring. It judges its
- * shape: the seven fixed sections, at one heading level, in order, each with something in it.
- * That is the falsifiable half of "缺任一节 → 收工校验失败，不写 spec".
+ * shape: the seven fixed sections, at one heading level, in order, each with something in it, and
+ * a complete composition list for every chosen variant inside 「变种裁决」.
+ * That is the falsifiable half of "缺任一节 → 收工校验失败".
  *
- * The level is not pinned to `##` on purpose: the note is drafted standalone and then pasted
- * under the spec's 「设计方向」 subsection, where the same seven sections sit one level deeper.
- * Same note, same check, either side of the move.
+ * The level is not pinned to `##` on purpose: the note usually sits at `##` in its own file under
+ * <worktree>/.tmp/uiux-imagine/<spec-slug>/, but a note quoted one level deeper elsewhere checks the same.
  *
  * Pure: no browser, no model, no clock. The CLI at the bottom is the only thing that reads a file.
  */
@@ -24,6 +24,17 @@ import { readFileSync } from 'node:fs';
 
 /** The seven sections, in the order they must appear. Closed set. */
 export const SECTIONS = ['意图', '高度记录', '结构', '变种裁决', '待打磨清单', '约束与素材', '验收矩阵'];
+
+/**
+ * The composition list every SELECTED variant carries inside 「变种裁决」. Closed set.
+ *
+ * The note is a letter and refine never sees the renders, so whatever the chosen variant looked
+ * like has to be spelled out item by item — a run once lost a speech bubble's tail and its side
+ * because the letter only said "a floating card next to the button". 「待打磨」 is a legal value:
+ * it says the item was not decided here and is parked for convergence, which is different from
+ * silently not writing it.
+ */
+export const COMPOSITION = ['容器形状', '指向', '锚点与位置', '尺寸与字号', '颜色', '出现与消失'];
 
 /**
  * Parse ATX headings, skipping fenced code blocks — a note that shows its own template in a
@@ -106,6 +117,13 @@ export function checkDirectionNote(markdown) {
     if (!hasBody(markdown, all, h.index)) errors.push(`「${title}」是空的——有标题没正文不算写过`);
   }
 
+  const verdict = seen.get('变种裁决');
+  if (verdict && hasBody(markdown, all, verdict.index)) {
+    const lines = String(markdown).split(/\r?\n/);
+    const next = all.slice(verdict.index + 1).find((h) => h.level <= verdict.level);
+    errors.push(...checkComposition(lines.slice(verdict.line, next ? next.line - 1 : lines.length).join('\n')));
+  }
+
   const order = [...seen.values()].map((h) => h.title);
   const expected = SECTIONS.filter((s) => seen.has(s));
   if (order.join('|') !== expected.join('|')) {
@@ -123,10 +141,36 @@ export function checkDirectionNote(markdown) {
   return { valid: errors.length === 0, errors, missing, level };
 }
 
+/**
+ * Check the 构成 blocks inside the 「变种裁决」 body. A block starts at a bold 「构成」 marker
+ * (`**构成**` or `**构成（B）**`) and runs until the next marker, the next top-level list item or
+ * heading. Each block must name all six items with something after the colon.
+ */
+export function checkComposition(verdictBody) {
+  const errors = [];
+  const lines = String(verdictBody).split(/\r?\n/);
+  const marker = /^\s*(?:[-*]\s+)?\*\*构成[^*]*\*\*/;
+  const starts = lines.map((l, i) => (marker.test(l) ? i : -1)).filter((i) => i >= 0);
+  if (starts.length === 0) {
+    errors.push(`「变种裁决」里没有选中变种的构成清单（**构成**：${COMPOSITION.join(' / ')}）——refine 看不到渲染物，选中的样子只能靠它`);
+    return errors;
+  }
+  starts.forEach((start, n) => {
+    const end = lines.findIndex((l, i) => i > start && (marker.test(l) || /^(?:[-*]\s|#)/.test(l)));
+    const block = lines.slice(start, end === -1 ? lines.length : end);
+    const name = lines[start].match(/\*\*(构成[^*]*)\*\*/)[1];
+    const missing = COMPOSITION.filter(
+      (item) => !block.some((l) => new RegExp(`^\\s*(?:[-*]\\s+)?${item}\\s*[:：]\\s*\\S`).test(l)),
+    );
+    if (missing.length) errors.push(`第 ${n + 1} 份「${name}」缺：${missing.join(' / ')}（没定的写「待打磨」，不要不写）`);
+  });
+  return errors;
+}
+
 /** Human-readable render, same grouping the other scripts use. */
 export function renderReport(result, file) {
   if (result.valid) return `direction-note: green ✓${file ? ` (${file})` : ''}`;
-  return [`direction-note: 收工校验失败${file ? ` (${file})` : ''} —— 不要写进 spec，先补齐：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
+  return [`direction-note: 收工校验失败${file ? ` (${file})` : ''} —— 不要交给 refine，先补齐：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
 }
 
 // CLI

@@ -35,8 +35,8 @@ case/
 └── stages/                      按 eval 需要往副本里补的起始状态
     ├── grill-transcript.md      to-spec 的输入：一场跑完的访谈逐字转录
     ├── raw/                     已经落过的原型证据（raw md + 可点击 HTML）
-    ├── spec-awaiting-freeze.md  status: 等设计冻结，§4 无「设计方向」
-    └── spec-with-direction.md   同上 + §4 已有七节方向说明
+    ├── spec-awaiting-freeze.md  status: 等设计冻结，§5.3 前端交互还是文字 + 待补图
+    └── direction-note.md        七节方向说明（选中变种带构成清单）；seed 时放到项目根 .tmp/uiux-imagine/<slug>/，不进 spec
 ```
 
 `stages/` 不是 fixture 的装饰——**它是让每一格只测一件事的手段**。收敛那一格如果还要先跑一遍发散，

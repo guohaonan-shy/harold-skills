@@ -24,11 +24,13 @@ import { checkDirectionNote } from '../scripts/direction-note-check.mjs';
  *
  * `.playwright-mcp/` 是浏览器 MCP 自己往 cwd 里扔的抓取缓存（页面快照、console log），
  * 不是这条环的产物——它跟 `.git` 一样属于工具的痕迹，不进任何一条断言的视野。
+ * `.tmp/` 是 skill 自己的中间产物（wiki-conventions §2.1），不算进仓库的产物；
+ * 要看它的断言直接按路径去读。
  */
 export function walk(root, dir = root, out = []) {
   if (!existsSync(dir)) return out;
   for (const name of readdirSync(dir)) {
-    if (name === '.git' || name === 'node_modules' || name === '.playwright-mcp') continue;
+    if (name === '.git' || name === 'node_modules' || name === '.playwright-mcp' || name === '.tmp') continue;
     const full = join(dir, name);
     if (statSync(full).isDirectory()) walk(root, full, out);
     else out.push(relative(root, full).split(sep).join('/'));
@@ -111,6 +113,18 @@ function theSpec(project) {
   return { file: files[0], md: read(join(project, files[0])), files };
 }
 
+/** spec 的 slug = 文件名。 */
+const slugOf = (specFile) => specFile.split('/').pop().replace(/\.md$/, '');
+
+/** 方向说明住在项目根的 .tmp/（发散交给收敛的中间产物，不进 spec），按 spec 的 slug 分目录。 */
+function theNote(project) {
+  const { file } = theSpec(project);
+  if (!file) return { path: null, md: null };
+  const path = `.tmp/uiux-imagine/${slugOf(file)}/direction-note.md`;
+  const full = join(project, path);
+  return { path, md: existsSync(full) ? readFileSync(full, 'utf8') : null };
+}
+
 const ok = (evidence) => ({ passed: true, evidence });
 const no = (evidence) => ({ passed: false, evidence });
 
@@ -178,6 +192,20 @@ export const ASSERTIONS = {
   },
 
   // —— to-spec ————————————————————————————————————————————————————
+
+  'spec-has-technical-overview': {
+    text: 'spec 有「技术方案总览」，后端 / 前端内部 / 前端交互三小节都在且有正文（不涉及写「不涉及」）；碰 UI 的前端交互标着待补图',
+    run: ({ project }) => {
+      const { file, md } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const overview = section(md, '技术方案总览');
+      if (overview === null) return no(`${file} 没有「技术方案总览」`);
+      const empty = ['后端', '前端内部', '前端交互'].filter((t) => !(section(overview, t) ?? '').trim());
+      if (empty.length) return no(`缺或空：${empty.join(' / ')}`);
+      const ui = section(overview, '前端交互');
+      return /待补图/.test(ui) ? ok('三小节齐，前端交互标了待补图') : no('前端交互没标「待补图」——设计还没冻结，图要等 refine 补');
+    },
+  },
 
   'ui-spec-awaits-freeze': {
     text: '碰 UI 的 spec 落成 status: 等设计冻结（不是「在飞」）',
@@ -262,14 +290,22 @@ export const ASSERTIONS = {
   // —— uiux-imagine ————————————————————————————————————————————————
 
   'direction-note-passes-shape-check': {
-    text: '写回 spec 的方向说明过 direction-note-check（七节齐全、同级、有序、有正文）',
+    text: '.tmp/uiux-imagine/<spec-slug>/ 下的方向说明过 direction-note-check（七节齐全、同级、有序、有正文，选中变种带完整构成清单）',
+    run: ({ project }) => {
+      const { path, md } = theNote(project);
+      if (!path) return no('没有唯一的 spec');
+      if (md === null) return no(`${path} 不存在`);
+      const r = checkDirectionNote(md);
+      return r.valid ? ok(`${path}：七节在 ${'#'.repeat(r.level)} 这一级，构成清单齐`) : no(r.errors.join('；'));
+    },
+  },
+
+  'imagine-leaves-spec-untouched': {
+    text: '发散不改 spec——方向说明是交给收敛的中间产物，不写进 spec（也就不会出现 spec 里留着旧一轮的情况）',
     run: ({ project }) => {
       const { file, md } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
-      const note = section(md, '设计方向');
-      if (note === null) return no(`${file} 的 §4 下没有「设计方向」小节`);
-      const r = checkDirectionNote(note);
-      return r.valid ? ok(`${file} §4 设计方向：七节在 ${'#'.repeat(r.level)} 这一级`) : no(r.errors.join('；'));
+      return section(md, '设计方向') === null ? ok(`${file} 里没有「设计方向」小节`) : no(`${file} 里多了「设计方向」小节`);
     },
   },
 
@@ -284,19 +320,23 @@ export const ASSERTIONS = {
   },
 
   'imagine-ships-only-the-note': {
-    text: '准出物只有那一份方向说明——渲染物、style tile、contact sheet 一个都没留在仓库里',
+    text: '准出物只有那一份方向说明——仓库里没多出文件，.tmp/uiux-imagine/<spec-slug>/ 里的对比页与抓取物也清掉了，只剩 direction-note.md',
     run: ({ project, before }) => {
       const added = walk(project).filter((f) => !before.includes(f));
       const stray = added.filter((f) => !specFiles(project).includes(f));
-      return stray.length ? no(`多出来的文件：${stray.join(', ')}`) : ok(added.length ? `只动了 ${added.join(', ')}` : '只改了既有的 spec');
+      if (stray.length) return no(`多出来的文件：${stray.join(', ')}`);
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const work = `.tmp/uiux-imagine/${slugOf(file)}`;
+      const left = walk(join(project, work)).filter((f) => f !== 'direction-note.md');
+      return left.length ? no(`${work}/ 里渲染物没清：${left.join(', ')}`) : ok(`仓库没多文件；${work}/ 只剩方向说明`);
     },
   },
 
   'imagine-keeps-the-language-altitude-shut': {
     text: '语言高度没打开——项目有 DESIGN.md，而这一跑里没有人说过「重探语言」',
     run: ({ project }) => {
-      const { md } = theSpec(project);
-      const note = section(md, '设计方向');
+      const { md: note } = theNote(project);
       const alt = note === null ? null : section(note, '高度记录');
       if (!alt) return no('没有「高度记录」那一节');
 
@@ -377,8 +417,8 @@ export const ASSERTIONS = {
     },
   },
 
-  'freeze-summary-replaces-direction-note': {
-    text: '「冻结摘要」取代「设计方向」——不是并排（留着它下游会看到两份真值）',
+  'freeze-summary-lands-in-spec': {
+    text: '冻结摘要写进 spec §4，且 spec 里没有「设计方向」与它并排（并排下游会看到两份真值）',
     run: ({ project }) => {
       const { file, md } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
@@ -400,6 +440,33 @@ export const ASSERTIONS = {
       const want = [['画布指针', /画布指针|\[\[/], ['矩阵', /矩阵/], ['mismatch 阈值', /mismatch/i], ['ledger 摘要', /ledger/i], ['状态矩阵与数据契约变更', /数据契约/]];
       const missing = want.filter(([, re]) => !re.test(s)).map(([n]) => n);
       return missing.length ? no(`缺：${missing.join(' / ')}`) : ok('五样齐');
+    },
+  },
+
+  'freeze-writes-interaction-flows': {
+    text: 'spec §5 的前端交互换成了交互图：图在 docs/design/<spec-slug>/assets/flows/，「待补图」标记已去掉',
+    run: ({ project }) => {
+      const { file, md } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const ui = section(md, '前端交互');
+      if (ui === null) return no(`${file} 没有「前端交互」小节`);
+      if (/待补图/.test(ui)) return no(`${file} 前端交互还标着「待补图」`);
+      const imgs = [...ui.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => m[1]);
+      const flows = imgs.filter((i) => /docs\/design\/[^/]+\/assets\/flows\/[^/]+\.png$/.test(join('docs/spec', i).split(sep).join('/')));
+      if (!flows.length) return no(`前端交互里没有指向 docs/design/<slug>/assets/flows/ 的图：${imgs.join(', ') || '（一张图都没有）'}`);
+      const missing = flows.filter((i) => !existsSync(join(project, 'docs/spec', i)));
+      return missing.length ? no(`图链接指向不存在的文件：${missing.join(', ')}`) : ok(`${flows.length} 张：${flows.map((f) => f.split('/').pop()).join(', ')}`);
+    },
+  },
+
+  'freeze-clears-tmp': {
+    text: '冻结后 .tmp/uiux-imagine/<spec-slug>/ 与 .tmp/uiux-refine/<spec-slug>/ 都清掉了（方向说明与打磨临时件随冻结结束）',
+    run: ({ project }) => {
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const slug = slugOf(file);
+      const left = [`.tmp/uiux-imagine/${slug}`, `.tmp/uiux-refine/${slug}`].filter((d) => existsSync(join(project, d)));
+      return left.length ? no(`还在：${left.join(', ')}`) : ok('两个都清了');
     },
   },
 

@@ -33,7 +33,8 @@ const SEEDS = {
   'raw-index': ['stages/raw-index.md', 'docs/raw/index.md'],
   'spec-index': ['stages/spec-index.md', 'docs/spec/index.md'],
   'spec-awaiting-freeze': ['stages/spec-awaiting-freeze.md', 'docs/spec/practice-history-surface.md'],
-  'spec-with-direction': ['stages/spec-with-direction.md', 'docs/spec/practice-history-surface.md'],
+  // 方向说明是发散交给收敛的中间产物，住在项目根的 .tmp/ 而不在 spec 里（wiki-conventions §2.1）。
+  'direction-note': ['stages/direction-note.md', '.tmp/uiux-imagine/practice-history-surface/direction-note.md'],
 };
 
 function parseArgs(argv) {
@@ -64,7 +65,9 @@ function buildProject(evalDef, projectDir) {
     const mapping = SEEDS[seed];
     if (!mapping) throw new Error(`evals.json 里的 seed「${seed}」在 run-baseline.mjs 的 SEEDS 表里没有`);
     const [from, to] = mapping;
-    cpSync(join(CASE, from), join(projectDir, to), { recursive: true });
+    const target = join(projectDir, to);
+    mkdirSync(dirname(target), { recursive: true });
+    cpSync(join(CASE, from), target, { recursive: true });
   }
   for (const f of evalDef.files ?? []) cpSync(join(CASE, 'stages', f), join(projectDir, f));
 }
@@ -93,7 +96,12 @@ function runClaude(evalDef, projectDir, runDir, opts) {
   let usage = null;
   try {
     const parsed = JSON.parse(r.stdout);
-    usage = { total_cost_usd: parsed.total_cost_usd, num_turns: parsed.num_turns, duration_ms: parsed.duration_ms, is_error: parsed.is_error };
+    // agent 定义里写的是别名（opus / fable），解析到哪个模型取决于跑的那份 Claude Code。
+    // 把这一跑实际调用过的模型（含 subagent）记下来——两次 baseline 对不上时，先看是不是模型换了。
+    usage = {
+      total_cost_usd: parsed.total_cost_usd, num_turns: parsed.num_turns, duration_ms: parsed.duration_ms, is_error: parsed.is_error,
+      models: Object.keys(parsed.modelUsage ?? {}),
+    };
     writeFileSync(join(runDir, 'result.txt'), String(parsed.result ?? ''));
   } catch {
     /* 没吐出可解析的 JSON 也照样往下判形状——产物在不在跟它会不会说话是两件事 */
@@ -164,7 +172,8 @@ function main() {
 
   const passed = results.reduce((n, r) => n + r.passed, 0);
   const total = results.reduce((n, r) => n + r.total, 0);
-  const benchmark = { baseline: 'toeflair-practice-history', ran_at: new Date().toISOString(), out_dir: outDir, passed, total, results };
+  const claudeVersion = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout?.trim() ?? null;
+  const benchmark = { baseline: 'toeflair-practice-history', ran_at: new Date().toISOString(), claude_version: claudeVersion, out_dir: outDir, passed, total, results };
   writeFileSync(join(outDir, 'benchmark.json'), JSON.stringify(benchmark, null, 2));
   console.log(`断言：${passed}/${total} 过\n${join(outDir, 'benchmark.json')}`);
 
