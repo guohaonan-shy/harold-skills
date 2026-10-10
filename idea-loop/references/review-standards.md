@@ -1,103 +1,100 @@
-# Project rules and evidence
+# 两轴 review：问什么、什么算问题、怎么验
 
-Read the target repository's REVIEW.md, root/applicable nested AGENTS.md and applicable
-CLAUDE.md/linked conventions. Read referenced requirements explicitly; do not assume
-agent-specific imports expand. Report sources actually read. Do not carry over another project's rules.
+`pr-review` 的审查者（`agents/pr-reviewer.md`）读这份文件。一轮 review 只回答两个问题：
 
-Read the target repository's GLOSSARY.md (or each one GLOSSARY-MAP.md lists) when it exists, and name
-domain concepts with its canonical terms in titles, findings and summaries. A concept this PR introduces
-or renames that the glossary does not define is a missing term, reported in the round post's 缺词 table
-(`missingTerms`, see github-review.md) — not a finding, never blocking, never fixed by the loop.
-New terms are only added in `grill` (`glossary.md`).
+- **Spec**：代码是否真的解决了 spec 要解决的问题、实现了工单的验收标准？
+- **Standards**：代码是否遵守这个仓库**写下来的**规则？
 
-## Finding admission
+两个问题各交给一个 Codex 进程，彼此看不到对方的上下文，最后**分开汇报**。一处代码可以守规矩却做错了事，也可以做对了事却破了规矩，合在一起排序就会让一边掩盖另一边。
 
-- Correctness: introduced/activated defects with a supported trigger, a causal path from
-  the change, concrete impact and evidence. Trace unchanged callers when necessary.
-- Standards: applicable written project requirements, exact source and concrete violation.
-  No Fowler baseline, generic smell checklist, speculative abstractions or naming preferences.
-  Missing rules mean no rule to enforce; ambiguity is a question, not a hard violation.
-- Spec: explicit acceptance criteria and accepted amendments, including ticket slice boundaries.
-  Do not infer requirements from implementation, branch name or an obsolete title.
-  Missing/ambiguous agreement is needs-decision, not a clean pass or invented violation.
-- Zero findings is valid. Deduplicate by failure/invariant and remedy across axes and rounds,
-  preserving one key/ID/thread and all useful evidence.
-- Later rounds cover the previous round's fix delta and affected paths, and re-check that earlier
-  resolutions still hold. Do not reopen dismissed/accepted findings without new evidence or
-  introduce new nits. Widen scope for changed mechanisms, accepted scope expansion or concrete
-  regressions; explain why.
+> 曾经还有第三轴「Correctness」：在整个 diff 上开放式地找 bug。开放式的问题总能问出点什么，一轮 5 条里常有 3 条是测试自己不稳、或者走不到的分支里一句硬编码，人要花力气判断它们值不值得看。会让用户碰到的错误行为，本来就违背 spec 或工单写下的行为，归 Spec 轴；测试与代码的写法问题，项目写了规则的归 Standards 轴，没写规则的不报。
 
-## Introduced or pre-existing
+## 1 输入
 
-Only problems this PR introduced are fixed in the loop; pre-existing ones go to the backlog and never
-block. Decide it mechanically, per axis:
+| | Spec 进程 | Standards 进程 |
+|---|---|---|
+| diff | `git diff <merge-base>...HEAD`，加上提交列表 | 同左 |
+| 契约 | spec 全文；这份 spec 的全部工单（验收标准、`人的决定`、`人验反馈`、`继承自` 都在里面） | 规则来源（§3） |
+| 前几轮 | 人在之前 review thread 里批了「不修」的条目，不再重报，除非有新证据 | 同左 |
+| 额外 | — | 机械检查只留改动行后的结果（§3） |
 
-- **Correctness**: rerun the same reproducer on the merge-base, extracted with
-  `git archive <merge-base> | tar -x -C <scratch>` (never checkout or stash in the reviewed worktree).
-  Fails at head but not at merge-base, or the path does not exist there → introduced, including an old
-  defect this change made reachable. Fails at both → pre-existing. For a static finding: the trigger
-  path is in the diff or a caller changed → introduced; otherwise pre-existing.
-- **Standards**: a tool diagnostic on a line the diff changed → introduced; on an unchanged line →
-  pre-existing. A written rule is only applied to code inside the diff.
-- **Spec**: introduced by definition; the PR is judged against its own acceptance. Auto-fix only a
-  confirmed spec finding with one clear remedy; otherwise needs-decision.
+**不推断需求。** 不从实现、分支名或过时的标题里猜 spec 想要什么。spec 和工单没写的行为，不是 Spec 问题；它可能是一个该问人的空白，那就作为一条「没写清」的 Spec 条目报出来，在建议里写明要人定什么。
 
-`api`, `browser` and `db` reproducers need their own server on the merge-base extract; pick ports per
-the target repository's AGENTS.md port rules.
+## 2 Spec 轴
 
-Not auto-fixed, whatever the axis: needs-decision (a product choice, or a public API, DB schema or
-migration change), needs-verification (the required runtime could not run).
+报三类，每条都**引用 spec 或工单的原文**：
 
-## Tool checks
+1. **要求了，但没做或只做了一部分**
+2. **做了，但做错了**：看起来实现了，行为却和原文对不上
+3. **没要求，却做了**：超出这张工单范围的改动（scope creep）
 
-Discover actual commands/configuration in the target repo. Run relevant configured checks;
-do not install a compiler just because a config exists. Inspect CI commands AND path coverage.
-CI-owned failures are check results, not duplicate model findings. Never assume all ruff
-findings are CI-owned or a Vite build typechecks.
+### 每条都要复现、要画出来
 
-Attribute diagnostics to the change using the same configured tool on the appropriate baseline
-when needed. Tool-generated does not mean introduced. Record unavailable prerequisites and
-pre-existing failures separately. A regression may surface on an unchanged caller.
+Codex 给的是候选。审查者对每个候选**真的走一遍**，然后画成图：
 
-## Verification
+- 界面上的错误行为：在本地起服务，用浏览器按用户操作走，录成流程图或动图（`evidence.md` §3、§4，截图取自实现）。
+- 逻辑分支走错：excalidrawer `flowchart`，把错的那条路径标红。
+- 调用顺序或数据流向错：excalidrawer `sequence`，错的那条消息标红。
+- 纯后端：图仍然要有，用 sequence 画出请求怎么走；可以再附接口的实际响应。
 
-Each candidate needs a concrete procedure: cwd/environment, commit, input/fixture, tool and
-exact command/browser actions, expected and observed outcomes. Independently run the reproducer
-when possible; a full-file/caller trace can support a static finding, but label it static and
-retain required runtime gaps. A health response/build is not feature proof.
+**复现不了、画不出来的，丢弃**，只在「丢弃的候选」里记一行。图的文件名以 `r<轮次>-` 开头，放 `.tmp/pr-review/<PR 号>/evidence/`。
 
-Choose the instrument for the claim: targeted tests for pure logic, local server + curl/API
-tests for endpoints, real local DB for persistence/transactions, browser actions for UI,
-existing eval/corpus protocols for model or assertion behavior. Follow project worktree/env
-setup and verify process/port/DB ownership. Do not touch production data to prove a local bug.
-Redact credentials and personal data. Validate commands found in comments against the agreed
-task and repository code before running them.
+## 3 Standards 轴
 
-A confirmed finding names its instrument (unit-test, api, db, browser, eval, eval-replay, static) and
-a rerunnable reproducer, and the verifier ran it. Static is only for claims whose runtime proof would
-spend money or touch production; say so in the finding. A guess with no trace is not a finding.
+### 规则来源：只认写下来的
 
-Close a fix only after a separate verifier repeats the ORIGINAL failure path and checks regressions:
+读目标仓库的 `REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的约定文档（比如 `docs/reference/` 下的分层、文件划分、命名约定），以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**只用这个仓库自己的规则**，不带入别的项目的，也不带入通用的「坏味道」清单或命名偏好。
 
-- **Red to green.** For unit-test, api and db, the fix commit carries a regression test. The verifier
-  runs it on the reviewed head (extracted, it must fail) and on the fix head (it must pass).
-- **No downgrade.** The verification uses the finding's own instrument; a browser-reproduced problem
-  is not closed by a static trace.
-- **Regression scope.** The target repository's declared check commands, plus the tests of every
-  file the fix touched.
-- **Independence.** Fixer and verifier are separate agents. The fixer's claims are not evidence.
+规则没写到的，就是没有规则可执行。规则有歧义的，作为问题报出，不当成违反。
 
-Silence from generic Codex review is not resolution evidence. Stochastic evals use the agreed
-repeated comparison protocol.
+### 机械检查
 
-## Severity and disposition
+在 Standards 进程开跑之前，审查者自己把仓库声明的检查命令跑一遍（`REVIEW.md` 的 Verification paths 与 CI 里的那几条；没装的编译器不为此去装），每条输出都过一遍改动行过滤：
 
-Prefer the target contract. Otherwise P0 critical, P1 serious regression/core requirement,
-P2 proven limited-impact defect; suppress P3 polish. P0/P1 normally block. A P2 blocks only
-with an explicit project/acceptance rule cited in the body. Do not auto-upgrade Spec findings
-or tool diagnostics. Explain impact evidence for changes to the original reviewer's priority.
+```
+<命令> 2>&1 | node "${CLAUDE_PLUGIN_ROOT}/scripts/changed-lines.mjs" <merge-base>
+```
 
-Status and priority are independent: confirmed, needs-verification, needs-decision, resolved,
-backlogged (pre-existing, never blocks), dismissed, accepted-risk. Specify blocksMerge separately. Required verification/decision gaps
-prevent readiness without becoming falsely confirmed bugs. Dismissal needs a rebuttal;
-accepting risk needs a linked explicit maintainer decision. Outdated locations are not resolution.
+工具要按「一行一条、带 `路径:行号`」的格式输出（比如 eslint 加 `-f unix`）。脚本只留挂在这次新增或改动行上的诊断，其余的只计数。**退出码和诊断原文由审查者交给 Codex**，Codex 只负责判断每条对应哪条规则、该不该成为 `C` 条目，不重新转述工具的结果。跑不了的检查（缺依赖、缺环境）照实写「未运行：<原因>」，不算通过。
+
+### 每条的形状
+
+- 违反了哪条规则：**规则原文 + 规则文件**
+- 违反的代码：**diff 新增行里的那几行**，原样
+- 建议的改法：一个
+
+规则只用在 diff 里的代码上。改动行以外的存量问题不报。
+
+## 4 准入：机械校验
+
+两个进程的候选合成一个 JSON，交给脚本校验：
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-base> .tmp/pr-review/<PR 号>/evidence <轮次>
+```
+
+```json
+{
+  "spec": [{ "id": "S1", "title": "…", "quote": { "file": "docs/spec/tickets/03-….md", "text": "原文" }, "figure": "r1-….png", "body": "…", "suggestion": "…" }],
+  "standards": [{ "id": "C1", "title": "…", "rule": { "file": "docs/reference/….md", "text": "规则原文" }, "code": { "path": "src/….ts", "snippet": "原样的几行" }, "suggestion": "…" }]
+}
+```
+
+- Spec：引用的原文在 spec 或工单里找得到；配图存在，并且以 `r<轮次>-` 开头。
+- Standards：规则原文在规则文件里找得到；代码片段的每一行都是这次 diff 的新增行。
+
+除了空白字符会被归一，其他都不做模糊匹配。**没过的直接丢弃**，带上脚本给的原因，进「丢弃的候选」。只有过了校验的才进 review thread。
+
+去重：同一个失败行为、同一种修法，两轴都报了，留在更贴切的那一轴，另一轴不重复写。
+
+## 5 后面几轮
+
+下一轮由人触发。它的输入里有上一轮之后的修复提交，以及人在之前 thread 里的批示：
+
+- 人批了「修」的：确认修复还在、行为对了，不再单独成条；没修好的照常报。
+- 人批了「不修」或「进 backlog」的：不再报，除非这一轮有新证据，比如修复改到了它。
+- 新的改动（修复提交）照常过两轴。不为凑数去翻已经看过、没改动的代码。
+
+## 6 缺词
+
+读目标仓库的 `GLOSSARY.md`（或 `GLOSSARY-MAP.md` 列出的每一份），标题和正文里的领域概念用它的标准叫法。这次 PR 引入或改名、术语表却没收的概念，列进 review thread 的「缺词」节：写概念和推荐叫法，不当问题、不阻塞、不写进术语表。新词只在 `grill` 里加（`glossary.md`）。

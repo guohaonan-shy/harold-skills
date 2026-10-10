@@ -1,73 +1,100 @@
 ---
 name: implement
-description: 实现一张已经定好的 ticket。不重开方案，只把它变成一个 commit。
+description: 把一份 spec 的工单连续实现完——调用它的会话做编排，按工单的依赖图逐张派 plugin 自带的 implementer agent（每张一个只装着它的新上下文，在集成分支上做成一个 commit），只在要人拍板时停：没有能做的工单了，就在 draft PR 上以项目 bot 的身份新开一个 thread，放要人决定的事和要人看的素材（流程图、动图），人在 thread 里回答后接着做；全部落地、没有等决定的事之后把 PR 转成 open，接 pr-review。也可以只做指定的几张。不重开方案，不改 spec 的 scope。
 ---
 
 # Implement
 
-把**已经决定好**的工作变成代码。
+**把一份已经切好工单的 spec 做完。** 这份文件是入口，写的是**编排机制**：谁起谁、怎么算下一张、交回后核对什么、什么时候停下交给人。一张工单具体怎么做写在 `agents/implementer.md` 里，这里不复述。
 
-**不重开方案。** 没有访谈环节，没有重新设计的机会——上游定下来的东西就是这次的不可变输入。要改方案，回 `grill`。
+> 先读一次 `../../references/wiki-conventions.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定，下文简写 `.tmp/…`）和 `../../references/pr-description.md`（PR 描述每一节写什么）。
 
-> 先读一次 `../../references/wiki-conventions.md`（目录与状态约定）和 `../../references/tdd.md`（循环的规矩、seam、mock 边界）。
+## 0 什么时候跑、输入是什么
 
-## 一次一张 ticket，一个只装着它的上下文
+- 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。只做其中几张时，在后面列出工单号。
+- **当前 worktree 就是集成分支**：一份 spec 的所有工单共享一条分支、一个 PR。这个 skill 不建分支、不切分支。分支不对、工作区不干净（`git status --short` 非空），就停下告诉人。
+- `docs/spec/tickets/` 下有这份 spec 的工单。没有就停：先跑 `to-ticket`。
 
-一次调用做一张，做完就停。人的节奏是 `/clear` → 做这一张 → commit → `/clear`；派出来的执行方是一张 ticket = 一个隔离工作区 = 一次调用，做完交还。两条路满足的是同一条前置——**动手的这个上下文里只有这一张 ticket**。
+**不需要 `/clear`。** 干活的是每张工单新起的 implementer，它的上下文里只有那一张工单，连上一张做了什么都不在。这个会话可以留着之前的讨论。
 
-> **出处，以及一处上游的自相矛盾。** 这条节奏来自上游作者的文章（`aihero.dev/skills-implement`：「clear context, implement one ticket, commit, clear again」、「One run covers one ticket」，以及被直接问到能否一次指向全部 ticket 或并行跑几个时的回答「One invocation, one ticket」），**上游的 `SKILL.md` 本身一个字都没写**。而上游那份 description 写的是「a spec or **set of tickets**」—— 复数，与文章相反。本 skill 取文章那一边，并把约束写进正文，因为约束住在会被加载的文件里才起作用。
->
-> **这条前置有两种满足方式，本 skill 早先只认其中一种。** `/clear` 是人的动作，模型清不了自己的上下文——所以它曾经对模型不可见（`disable-model-invocation`）。但派一个新的执行方同样得到一个只装着这一张 ticket 的上下文，而且更干净：连"上一张做了什么"都不在里面。**放开的是"谁能调"，不是这条前置本身**——无论哪条路，带着一屁股无关上下文来做这张 ticket 都仍然是错的。
+## 1 三个角色
 
-拿起 ticket 的这个会话**从没见过那份 spec**——这不是缺陷，是设计：ticket 的尺寸约束（塞得进一个全新上下文窗口）和那几条禁令（禁文件路径、禁代码片段、描述行为不描述过程）都是为此。所以**照 ticket 说的做，不要去把整份 spec 读回来"补充理解"**——真缺了什么，那是 ticket 写得不够，回去补 ticket。
+| 角色 | 是谁 | 做什么 |
+|---|---|---|
+| **编排者** | 调用 implement 的这个会话 | 算下一张、派执行方、核对交回、停下时在 draft PR 上以 bot 身份开 thread、处理人在 thread 里的回复、把人的决定写回工单 |
+| **implementer** | `idea-loop:implementer`（`agents/implementer.md`），`opus` · high | 一张工单一个，做成一个 commit，或者停下交回问题 |
+| **pr-review** | `/idea-loop:pr-review` | 全部落地后接手同一个 PR，跑两轴 review |
 
-**前提不成立就停。** 撞到 ticket 没交代、而且不是查一下代码就能定的东西（"这个边界情况算不算 in scope"、"ticket 描述的现状跟代码对不上"），**停下来把缺的是什么说清楚再交还**——人在就问人，是被派来的就回报给调用方。不要自己拍一个往下做：这一条是执行方替代不了人在场追问的唯一方式，也是"一张 ticket 一次调用"能被安全自动派发的前提。
+**编排者不亲手写实现代码。** 它一旦动手，「这个上下文里只有这一张工单」的前提就破了。
 
-例外只有一个：**spec 的 §6 测试决策要读**，它说明这一刀该用哪种仪器验（见下）。
+## 2 账本：git 加 `.tmp/implement/<spec-slug>/`
 
-## 开工前
+不另建状态文件，不信任何可能过时的计数：
 
-1. **确认在目标分支上。** 这个 skill 不建分支、不切分支。
-2. **设计冻结闸门**：ticket 的 `设计冻结` 那行写着 `⛔ 未冻结` 就**停**——动 UI 的活要先有冻结的设计。
-3. **确认 blocker 都完成了**（ticket 的 `Blocked by`）。
-4. **领域词汇。** 目标项目有 `GLOSSARY.md` 就读它，新的类型名、函数名、测试名和 commit message 用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../../references/glossary.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
+- **已落地** = 集成分支上从 merge-base 起，message 带 `Ticket: <NN>-<slug>` trailer 的 commit：
+  `git log --format='%H %(trailers:key=Ticket,valueonly)' $(git merge-base HEAD <base>)..HEAD`
+- **等决定** = `.tmp/implement/<spec-slug>/pending.md` 里的条目，每条记下工单号、问题、选项、推荐、patch 路径。
+- **素材** = `.tmp/implement/<spec-slug>/evidence/`；**半成品** = `.tmp/implement/<spec-slug>/wip/`。
 
-## 做
+**frontier**（现在可以开工的工单）= 还没落地、不在等决定、`设计冻结` 不是 `⛔`、`Blocked by` 里的工单全部已落地。依赖等决定工单的（直接或间接）都不在 frontier 上。
 
-**在事先谈拢的 seam 上跑 TDD。** 哪些改动该用 TDD、哪些该用别的仪器，spec §6 的矩阵已经答过了——查表，不要临场判断：
+会话断了也能接着做：git 和 `.tmp/` 就是恢复点，重新算一遍 frontier 即可。
 
-| 变的是什么 | 仪器 |
-|---|---|
-| 纯逻辑 / 数据转换 | TDD 单元 |
-| API 契约 | TDD API 测试（走 ASGI） |
-| DB schema / 迁移 / 事务语义 | **真 DB** 测试 |
-| LLM 输出质量 | eval（`backend/evals/`） |
-| 视觉正确性 | **UI 实现环**（`../../references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`；以冻结的 HTML 画布为真值，你的实现为待验证的候选） |
-| 端到端流程 | `qa:*` |
+## 3 派工：默认串行
 
-循环的规矩、反模式、mock 边界在 `../../references/tdd.md`。**新写的测试守「只在系统边界 mock」**——存量不守，别照抄存量。
+从 frontier 里按编号取最小的一张，用 Agent 工具起 `idea-loop:implementer`，**只给指针**：工单路径、spec 路径、worktree 路径、证据目录、已落地工单的提交列表、这张工单若有人的决定，就说明决定已写进工单。不转述工单，不写摘要。
 
-**UI ticket 多一道环**，形状仍是红绿，裁判是脚本不是 agent：读 `../../references/ui-implementation-standard.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后按验收矩阵跑测量脚本——它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判 plateau**（同一批 finding 两轮不变）。plateau 就停下交人，并说清残留差异是实现问题还是设计决策；后者回 `uiux-refine` 弯一下并记 ledger，**不在这里硬磨**。这一环在 TDD 循环里主动跑，**不**挂在每次写文件的 hook 上（要 dev server、秒级、半成品假红）；收工那道检查只查「最后一轮是绿的」。
+等它交回，核对（§4），再取下一张。
 
-过程中：
+**默认串行。** 并行要人明说才开，因为每个并行执行方都要一个自己的 worktree，代价不小：要先跑仓库的 worktree 初始化（补 `.env` 之类），前后端端口要错开，浏览器类验证并行时标签页会串，被 gitignore 的素材在新 worktree 里可能让测试悄悄跳过。真并行时，每个执行方用 `isolation: "worktree"` 基于集成分支开工，落地前先合入集成分支的最新提交，让落地是 fast-forward。
 
-- **常跑 typecheck 和单个测试文件**（快反馈）。命令用目标仓库 `REVIEW.md`（Verification paths）与 CI 声明的那几条，
-  不要凭记忆写——review 那一环跑的也是同一批命令。
-- **全量套件在最后跑一次**，同样用仓库声明的命令。
-- ticket 的**「选中的存量回归」**那节列的用例，也要跑。
+## 4 交回后的核对：只核能机械判断的
 
-## 收工
+| 交回 | 核对 | 不过怎么办 |
+|---|---|---|
+| `landed` | commit 存在且带对的 trailer；工作区干净；工单的验收标准每一格要么 `[x]`，要么带 `⏭ 延后 → <接手方>`；接手方是后面某张没落地的工单时，那张工单里确实有对应的「继承自」格；接手方是 PR 交付验收时，`human_verify` 里有对应的素材且文件在证据目录 | SendMessage 退回同一个执行方，说清哪条没过。退回一次还不过，按 `failed` 处理 |
+| `blocked` | 工作区干净，patch 文件存在 | 同上 |
+| `failed` | — | 记进 pending，当成要人看的问题，附上没过的那条和输出摘要 |
 
-1. **先把 ticket 的验收标准逐条勾上**（`- [x]`），但**不要删掉这个文件**。
-2. **再 commit**，把勾好的 ticket 一起带上。一个 commit 对应一个完整问题——别把无关改动混进来，也别把一个问题拆碎。
+**不重跑测试套件。** 下一张工单的执行方开工时、`pr-review` 的机械检查都会再跑一遍。这一步核的是执行方的声明在形式上站得住。
 
-> 顺序不能反。先 commit 再勾框，工作区就留着一份未提交的 ticket 改动；等这批做完交给 `idea-loop:pr-review` 时，它的脏树网关会直接把你拦下来。
-3. **还有 ticket 没做就回到第一步**（人 `/clear` 接下一张；执行方交还后由派它的那一方派下一张）。**这一批做完了就停下**，报告提交和验证结果。下一环是 `idea-loop:pr-review`（推分支、创建或复用 PR，自动跑至多两轮 review → 修复 → 复验），由人调或由调用方接着调都行——但**不由本 skill 自己往下调**，链条的编排权在调用方手里；也不要安装 `gh pr` 后自动触发的 hook。
+`landed` 之后，把它的 `human_verify`、`tradeoffs`、`found` 记下来，停下时要写进 PR。
 
-> 一份 spec 的所有 ticket 共享**一条分支、一个 PR**。review 轮次里的修复 commit 也进同一个 PR；PR 描述与每轮一条的轮次帖记录讲解、证据与处置，不再使用独立 artifact。不要一张 ticket 开一个 PR。
->
-> **本地 diff 不单独 review** —— 三轴 review 是它的严格超集，中间只隔一次 push。
+## 5 卡住一张，别的接着做
 
-> ⚠️ ticket **活到合并为止**，不是活到 commit 为止。review 的 Spec 轴在 PR 阶段会去读 `docs/spec/tickets/`，那些验收 checkbox 是它能拿到的**最锋利的契约**——commit 后就删，等于在它最需要的前一刻把输入抽走。删除归 `to-ticket` §7（合并后），漏网的由 `dreaming` 按「PR 已 MERGED」扫出来。
+交回 `blocked` 或 `failed`：
 
-**不做**：不开 PR（那是 `idea-loop:pr-review`）、不建分支、不改 spec 的 scope、**不删 ticket**。
+1. 记进 `pending.md`，并列出现在因为它而等着的工单（依赖图上它的所有下游）。
+2. 用 PushNotification 告诉人一句：哪张卡住了、卡在哪，其余工单继续。
+3. 回到 §3，接着从 frontier 取。
+
+## 6 frontier 空了，就停下交给人
+
+停下有两种情况：只剩等决定的工单和依赖它们的工单；或者全部落地了。人在 PR 上看、在 PR 上回答，所以停下就是在 draft PR 上开一个新 thread（`../../references/pr-description.md` §2、§4）。
+
+1. **还没有 PR 就开 draft PR**：推送集成分支，`gh pr create --draft --base <base>`，标题用 spec 的标题，`header` 节写 spec 链接加一句话。PR 的署名行照常带上。
+2. **上传素材**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish <owner/repo> <PR 号> <证据目录下的新文件>`，拿到 URL（`../../references/evidence.md` §2）。
+3. **开这次停下的 thread**：`pr-thread.mjs open <owner/repo> <PR 号> pause <轮次> <汇报.md> <工单文件>...`，轮次取 `pr-thread.mjs list` 的 `next.pause`。汇报写这次停下之前新落地的工单的人验素材与取舍，以及每条 pending 的决定题，格式见 `pr-description.md` §4。锚定文件给本轮落地的工单文件。**以项目的 bot 身份发**，脚本会自动用配好的 GitHub App；没配 App 时，每条都写明是 Claude 代发。不以人的身份说话。
+4. **更新 `ledger` 节**，加上这个 thread 的链接。推送新的提交。
+5. **在对话里只说一句**：停在哪（落地几张、等决定几件）+ thread 链接。人在 thread 里回复完，回到对话说一声；人直接在对话里回答也行，编排者会把那段回答原文转贴进 thread，让 PR 上的记录是完整的。
+
+**人回复后**，`pr-thread.mjs read` 读这个 thread，逐条处理人的消息，每处理完一条就在同一个 thread 里 `reply` 一条，说明做了什么、带上提交链接：
+
+- **决定**（「03 选 A」）：把决定写进那张工单。在 `要建什么` 末尾加一行 `> 人的决定（<日期>）：<决定原文>`，验收标准随之增删格。用 `docs(tickets): <NN> — 人的决定` 提交，从 pending 里删掉这一条。
+- **人验项不对**：在那张工单的验收标准末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，再派一个 implementer 做这张工单。这次它的 commit 照样带同一个 `Ticket:` trailer，账本按「同一张工单的第二个 commit」处理。新素材用原来的文件名上传，替换原图，URL 不变。
+- **疑问**：在 thread 里直接回答。答不了的（要改方案的），说明要回 `grill`。
+- **勾复选框**：不用做什么，状态就在 PR 上。
+
+这个 thread 里的事都处理完了，在里面回一句「都处理完了，确认无误请 resolve」，然后回到 §3 接着派工单。**resolve 由人点**，那是人对这一轮的签收，bot 不代点。下一次停下再开新的 thread，**不在旧 thread 里接着汇报**。
+
+**全部落地、pending 已清空、所有停下 thread 都已被人 resolve**（`pr-thread.mjs list` 里 `pause` 下每个都是 `resolved: true`）：`gh pr ready <PR 号>` 把 PR 转成 open，接 `/idea-loop:pr-review`，在同一个 PR 上跑第一轮 review。review 的结果写在 PR 描述的 `review` 节。转 open 时在对话里提一句：交付验收里还有几项没勾。不勾不挡转 open，但人应该知道。
+
+## 7 PR 合并之后
+
+不归这个 skill 管，记在这里方便对照：删工单归 `to-ticket` §7；同一时机跑 `evidence.mjs cleanup <owner/repo> <PR 号>` 删掉素材 release；清掉 `.tmp/implement/<spec-slug>/`。
+
+## 不做
+
+- 编排者不写实现代码、不跑执行方的验证、不把执行方的日志搬进对话。
+- 不替人回答决定题，也不跳过等决定的工单去做依赖它的工单。不以人的身份在 PR 上发言。
+- 不改 spec 的 scope，不删工单，不合并 PR。

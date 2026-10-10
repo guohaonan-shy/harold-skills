@@ -15,7 +15,7 @@ disable-model-invocation: true
 - spec 状态是 `等设计冻结`，且 `.tmp/uiux-imagine/<spec-slug>/direction-note.md` 在、过得了 `direction-note-check`（`uiux-imagine` 的准出）。
 - 方向说明找不到就停下告诉人：回 `uiux-imagine` 重写那封信，不凭 spec 或记忆补。
 
-它**只能人调**（与 `grill` / `uiux-imagine` / `implement` 同档）：环的每一次停都停在人身上——方向级 finding、plateau、签字。**不需要 `/clear`**：干活的是新起的 designer，它的上下文里本来就没有发散那一段的变种和半成品；这个会话可以留着 imagine 的讨论。
+它**只能人调**（与 `grill` / `uiux-imagine` 同档）：环的每一次停都停在人身上——方向级 finding、plateau、签字。**不需要 `/clear`**：干活的是新起的 designer，它的上下文里本来就没有发散那一段的变种和半成品；这个会话可以留着 imagine 的讨论。
 
 ## 1 三个角色
 

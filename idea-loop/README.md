@@ -18,8 +18,8 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
-| `/idea-loop:implement` | Build | One ticket → one commit, in a context holding nothing but that ticket, TDD at the seams the spec already agreed |
-| `/idea-loop:pr-review` | Review | Opens or reuses the PR, then runs up to two automatic rounds of Codex review → verify → fix → independent re-verify, one GitHub post per round; stops at mergeReady and waits for a merge order |
+| `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching a fresh `idea-loop:implementer` per ticket along the `Blocked by` graph (one ticket → one commit on the integration branch, TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a new bot thread on the draft PR per stop — and turns the PR ready once everything has landed |
+| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces and draws every Spec finding, checks every quote mechanically, and opens the round's bot thread. The human rules in the thread; fixes go back through the tickets and the implementer. Never merges |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -60,60 +60,55 @@ hands it the language it just chose without leaving the session, while the chose
 measured contrast are still in context. Being callable is not being unattended — it stops for
 the human before every write to `DESIGN.md`.
 
-The execution three were human-only until the caller-dispatch model landed: `implement`
-requires a context holding nothing but the one ticket, and `/clear` is a human action.
-Dispatching a fresh agent satisfies that precondition too — more strictly, in fact — so the
-lock came off. What the lock was protecting did not: the ticket must still be self-contained
-(no file paths, no code snippets, behaviour not procedure), and `implement` must still **stop
-and report** when a precondition turns out not to hold rather than guessing its way onward.
-See `to-ticket` §6 for where each of the original two reasons now lives.
+The execution two were human-only until the caller-dispatch model landed: a ticket needs a
+context holding nothing but itself, and `/clear` is a human action. Dispatching a fresh agent
+satisfies that precondition too — more strictly, in fact — so `implement` became an orchestrator
+that dispatches one `idea-loop:implementer` per ticket. What the lock was protecting did not come
+off: the ticket must still be self-contained (no file paths, no code snippets, behaviour not
+procedure), and the implementer must still **stop and report** when a behaviour is undecided
+rather than guessing its way onward. See `to-ticket` §6 for where each of the original reasons
+now lives.
 
-### The review loop
+### Delivery: implement → draft PR → review
 
 ```text
-/idea-loop:pr-review
+/idea-loop:implement <spec-slug>
 ```
 
-It launches a local host `Workflow` script (`workflows/pr-review-loop.mjs`), not a GitHub Actions
-job. Running `gh pr create` alone only opens a PR; it does not start a review. A caller may start it
-instead of you, but the trigger is always an explicit request: no PR/push hook is wired.
+One spec, one integration branch, one PR. The PR is written for one reader — the person deciding
+whether it merges — and every time they open it they should see at once what they must decide and
+what they must look at. Layout: `references/pr-description.md`.
 
-One invocation runs **at most two rounds**, then stops so a human reads what happened. Each round:
+| Phase | PR | Who talks | Where the human answers |
+|---|---|---|---|
+| Implementing | draft | `implement`'s orchestrator, as the project's bot | A **new review thread per stop**: decisions (two options + a recommendation) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
+| Review | open | `pr-review`'s reviewer, as the project's bot | A **new review thread per round**: Spec findings, each with a figure; Standards findings, each with the rule's text and the diff lines |
 
-| Step | Runs on |
-|---|---|
-| Open/reuse the PR, snapshot GitHub, build the review contract | Claude Sonnet 5 · xhigh |
-| Correctness · written Standards · Spec, in parallel, plus the repo's own check commands | Codex `gpt-5.6-sol`, effort high (`review` / read-only `task`) |
-| Reproduce, dedup, and decide *introduced or pre-existing* by rerunning at the merge-base | Claude Sonnet 5 · xhigh |
-| Fix what this PR introduced, each with a regression test; backlog what it did not | Claude Sonnet 5 · xhigh |
-| Independently verify each fix red → green with the finding's own instrument | Claude Sonnet 5 · xhigh, a separate agent |
-| Publish one round post | `scripts/github-review.mjs`, run by a Sonnet 5 · low agent |
+- **Ticket done = every acceptance box has evidence or names who takes it over** (a later ticket,
+  or the PR's delivery check), the selected regressions and the full suite are green — then one
+  commit carrying a `Ticket: <NN>-<slug>` trailer. Git is the ledger; nothing else counts tickets.
+- **Stop vs defer.** A behaviour nobody decided stops that ticket (and what depends on it);
+  everything else keeps going. A behaviour that is decided but cannot be proven inside this ticket
+  is deferred to a named receiver; no receiver means it was undecided after all.
+- **Bot identity.** With `~/.idea-loop/github-apps.json` configured, Claude's threads and replies
+  come from the repository's GitHub App (Pull requests write, Contents read). Without it they come
+  from the gh login and say up front that Claude posted them. The human answers as themselves;
+  **resolving a thread is the human's sign-off**, never the bot's.
+- **Delivery evidence never enters git.** It lives in one draft release per PR
+  (`scripts/evidence.mjs`), visible to collaborators only, deleted when the PR merges
+  (`references/evidence.md`). Knowledge-base images — spec figures, frozen canvases — stay in `docs/`.
+- **Two axes, reported apart** (`references/review-standards.md`). The reviewer runs the repo's
+  declared checks and keeps only diagnostics on changed lines (`scripts/changed-lines.mjs`); each
+  Codex process sees only its own question. A Spec finding that cannot be reproduced and drawn,
+  or a Standards finding whose rule text or code is not where it claims, is discarded by
+  `scripts/review-check.mjs` and listed in one folded line.
+- **Fixes go back through the tickets.** A finding the human marks "fix" becomes a new acceptance
+  box on the ticket that introduced it (found by the quote, or by `git blame` → `Ticket:` trailer),
+  and a fresh implementer does it. The next round is the human's call; merging is the human's order.
 
-| Axis | Asks | Blocks a merge? |
-|---|---|---|
-| **Correctness** | Did this introduce/activate a supported-path defect? Codex's native review. | By proven impact |
-| **Spec** | Does this satisfy the actual acceptance agreement and amendments? | By requirement/impact |
-| **Standards** | Does this violate an applicable written project rule? No generic smells. | By explicit rule/impact |
-
-Pre-existing problems never block: they get one line in the target repo's
-`docs/quality-backlog.md` §线上问题 (a separate commit on the PR branch) and are listed in the round
-post. The loop stops early when a round finds nothing introduced, when something needs a human
-decision, or on any failure. It never approves or merges; mergeReady is a report, not an order.
-
-Each finding is structured — consequence-first title, one-sentence impact (≤ 60 characters),
-numbered repro steps, one fix, folded evidence, a closed-set instrument — and the helper refuses a
-plan that breaks that shape or closes a fix without red → green evidence on the same instrument. The
-round post is rendered from those fields in a fixed order. With `~/.idea-loop/github-apps.json`
-configured, posts come from the repository's GitHub App instead of the gh login. See
-`references/github-review.md` for the plan contract and `references/review-standards.md` for the
-introduced-or-not rules and the verification standard. The design record is
-[`docs/pr-review-loop.md`](./docs/pr-review-loop.md).
-
-`scripts/github-review.mjs` uses authenticated `gh api` (official GitHub REST). It recovers every
-round from the posts' markers, keeps finding IDs stable across rounds, detects a changed base/head,
-and edits the same post on a retry instead of duplicating it. The mocked GitHub and host-workflow
-tests run with the rest of the suite below. Real model quality and host Workflow execution require a
-live CC run.
+The old loop (up to two automatic rounds of three-axis review → fix → re-verify, one round post per
+round, a mergeReady verdict) and its design record [`docs/pr-review-loop.md`](./docs/pr-review-loop.md)
+are superseded; the record stays as history.
 
 ## Tests
 
@@ -175,16 +170,13 @@ goes red three weeks later.
 
 Project rules and verification tools come from the current repository's REVIEW.md,
 AGENTS.md and applicable documents/configuration. There is no inherited Toeflair/Fowler
-baseline. Cross-plugin paths are threaded through as `pluginRoot`
-(via `${CLAUDE_PLUGIN_ROOT}`, resolved in the dispatching SKILL.md —
-Workflow scripts have no filesystem/env API of their own) rather than
-hardcoded, so this plugin should survive being copied to another project or
-machine as-is. The `openai-codex` companion script travels the same route: the
-dispatcher walks up from `${CLAUDE_PLUGIN_ROOT}` to the plugins root, finds the
-companion under either the marketplace clone or the versioned cache, and passes
-it in as `codexCompanion`. The workflows have no fallback for it on purpose — a
-hardcoded default is what made this unportable, and a review that silently
-points at a nonexistent script is worse than one that refuses to start.
+baseline. Plugin paths go through `${CLAUDE_PLUGIN_ROOT}` rather than being hardcoded,
+so this plugin should survive being copied to another project or machine as-is. The
+`openai-codex` companion script is found the same way: walk up from `${CLAUDE_PLUGIN_ROOT}`
+to the plugins root and look under either the marketplace clone or the versioned cache.
+There is no fallback for it on purpose — a hardcoded default is what made this unportable,
+and a review that silently points at a nonexistent script is worse than one that refuses
+to start.
 
 ## Architecture
 
@@ -195,7 +187,9 @@ idea-loop/
 ├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── agents/
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
-│   └── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
+│   ├── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
+│   ├── implementer.md                # implement's executor (idea-loop:implementer) — `opus` alias, effort high, one per ticket
+│   └── pr-reviewer.md                # pr-review's reviewer (idea-loop:pr-reviewer) — `sonnet` alias, effort xhigh, one per round
 ├── README.md (this file)
 ├── skills/
 │   ├── grill/SKILL.md
@@ -205,13 +199,11 @@ idea-loop/
 │   ├── uiux-refine/SKILL.md          # the convergent half — only the calling mechanism; the work is in agents/
 │   ├── design-modeling/SKILL.md      # the only writer of the project's DESIGN.md — create / distill / reconcile
 │   ├── to-ticket/SKILL.md
-│   ├── implement/SKILL.md
-│   ├── pr-review/SKILL.md            # → workflows/pr-review-loop.mjs
+│   ├── implement/SKILL.md            # orchestrates a spec's tickets — the work is in agents/implementer.md
+│   ├── pr-review/SKILL.md            # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   └── dreaming/SKILL.md
-├── workflows/
-│   └── pr-review-loop.mjs            # open/reuse PR, then up to two review → fix → re-verify rounds
 ├── docs/
-│   ├── pr-review-loop.md             # design record of the review loop (+ its flowchart)
+│   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of design-modeling
 ├── scripts/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
@@ -232,9 +224,18 @@ idea-loop/
 │   ├── glossary-check.mjs            # GLOSSARY.md format lint — single-file, zero-dep, so target-repo CI can curl it pinned
 │   ├── glossary-check.test.mjs       # its unit tests — one per rule, plus a well-formed baseline
 │   ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
-│   ├── github-review.mjs             # round posts: snapshot, finding-shape gate, rendering, GitHub App identity
-│   ├── github-review.test.mjs        # shape gate, retries, round numbering, stale head, App token
-│   └── review-workflows.test.mjs     # mocked host orchestration tests of the loop
+│   ├── github-app.mjs                # the bot's identity: GitHub App installation token, else the gh login
+│   ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
+│   ├── pr-thread.mjs                 # Claude's threads on a PR: one per stop / per review round; read, reply, list
+│   ├── pr-thread.test.mjs            # marker, anchor choice, bot-vs-human, grouping
+│   ├── pr-body.mjs                   # PR description by section: header / review / ledger, each writer owns its own
+│   ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
+│   ├── evidence.mjs                  # delivery evidence: one draft release per PR, upload → URLs, cleanup on merge
+│   ├── evidence.test.mjs             # owner-prefixed names, image types, size cap
+│   ├── changed-lines.mjs             # keep only tool diagnostics on lines this PR changed
+│   ├── changed-lines.test.mjs        # diff parsing, diagnostic formats, filtering
+│   ├── review-check.mjs              # admission: quotes must exist, Standards code must be in the diff, Spec needs a figure
+│   └── review-check.test.mjs         # one per discard reason
 ├── evals/                            # the pinned baseline (see evals/README.md)
 │   ├── evals.json                    # six cells: the three skills, the two seams around them, one static repo check
 │   ├── assert.mjs                    # the assertions — shape only, no model, no taste
@@ -246,9 +247,9 @@ idea-loop/
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
-    ├── review-standards.md           # admission, introduced-or-pre-existing, verification standard, severity
-    ├── review-entry.md               # round budget, who runs what, prerequisites, reporting
-    ├── github-review.md              # round posts, finding fields, plan schema, App identity
+    ├── review-standards.md           # the two review axes: inputs, what counts, reproduce-and-draw, mechanical admission
+    ├── pr-description.md             # the PR page: description sections, bot threads per stop / per round, who writes what
+    ├── evidence.md                   # delivery evidence: flows, GIFs, side-by-sides from the implementation; never in git
     └── design/                       # the design side (see below)
 ```
 
