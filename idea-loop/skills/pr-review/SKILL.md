@@ -36,7 +36,7 @@ PR 描述也不归审查者：它只开 thread，描述的四节由 `implement` 
 2. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径与工单目录、之前各轮 review thread 的 id、companion 路径。
 3. 等它交回，**不提前汇报**。
 4. **更新 PR 描述的 `your-todo` 节**：「要你审的」加上这一轮的 thread 链接，「要你决定的」写有几条等批示（`pr-body.mjs set`，见 `pr-description.md` §6）。只放链接和条数，结论留在 thread 里。
-5. **在后台盯着这个 thread**：用后台方式跑 `pr-thread.mjs wait <owner/repo> <PR 号> <这一轮 thread 的首条评论 id>`（`pr-description.md` §2），人在 GitHub 上批示完、安静两分钟后它退出，会话被叫醒，接 §3。
+5. **在后台盯着这个 thread**（人不在对话里时，由本地 routine 跑的 `pr-inbox` 接手同样的事）：用后台方式跑 `pr-thread.mjs wait <owner/repo> <PR 号> <这一轮 thread 的首条评论 id>`（`pr-description.md` §2），人在 GitHub 上批示完、安静两分钟后它退出，会话被叫醒，接 §3。
 6. **在对话里只说几句**：第几轮，Spec 几条、Standards 几条，thread 链接。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
 
 ## 3 人批示之后

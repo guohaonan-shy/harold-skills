@@ -57,7 +57,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/pr-thread.mjs" list  <owner/repo> <PR 号>
   node "${CLAUDE_PLUGIN_ROOT}/scripts/pr-thread.mjs" wait <owner/repo> <PR 号> <thread 首条评论 id>... [--quiet 120]
   ```
 
-  它每分钟查一次，等到人说了新的话、并且安静了两分钟（人常常分几条评论写完），或者这几个 thread 全被 resolve，就退出并打印人新说的内容。这个退出会把会话叫醒，编排者接着处理，不用人回到对话里说一声。「新」永远指 Claude 在这个 thread 里最后一次发言之后的话，所以重跑不会漏也不会重复。会话关着的时候没人在听：人回到对话里说一声，编排者就按同样的办法读一遍。
+  它每分钟查一次，等到人说了新的话、并且安静了两分钟（人常常分几条评论写完），或者这几个 thread 全被 resolve，就退出并打印人新说的内容。这个退出会把会话叫醒，编排者接着处理，不用人回到对话里说一声。「新」永远指 Claude 在这个 thread 里最后一次发言之后的话，所以重跑不会漏也不会重复。会话关着的时候由 `pr-inbox` 接手：本地 routine 每 15 分钟扫一遍所有 open 的 PR，按同一个「最后一次发言之后」的判断找出人的新命令（`skills/pr-inbox/SKILL.md`）。
 - **编排者在 thread 里回复它做了什么，一次只回一条。** 把人这一批消息里的每一点都处理完，再在同一个 thread 里回**一条**汇总，逐点写做了什么、带上提交链接：「03 的决定已写回工单，03 和依赖它的 05 继续（<提交链接>）；S1 已修，补了回归测试（<提交链接>）；C2 记进了 backlog（<提交链接>）」。不要一个点回一条。人的追问也放进这条里回答。
 - **改写已经发出的帖子用 `edit`。** 人要求某一轮的 thread 重写（比如「写成我看得懂的样子」），就改那条评论本身，不另开 thread、不在下面再贴一份。脚本保留首行的 thread 标记，改完它还是同一轮、同一个 thread；改完在 thread 里回一句改了什么。
 - **resolve 是人的签收，不是 bot 的。** 一个 thread 里的事都处理完了，编排者回一句「都处理完了，确认无误请 resolve」，由人点 resolve，人也可以随时重新打开。编排者从 `list` 读每个 thread 的状态，把「都已 resolve」当作人签收的信号。另外，GitHub App 要有 Contents 写权限才能 resolve review thread，bot 不该为此拿到能改代码的权限。
