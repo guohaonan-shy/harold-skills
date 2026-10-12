@@ -12,7 +12,7 @@ description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用�
 ## 0 什么时候跑
 
 - **`implement` 全部落地后自动接**：PR 刚转成 open，跑第 1 轮。
-- **人触发下一轮**：人调 `/idea-loop:pr-review`，或者在对话里说「再跑一轮」。一般是上一轮的批示修完之后。
+- **人触发下一轮**：人调 `/idea-loop:pr-review`，在对话里说「再跑一轮」，或者在 review thread 里这样说（后台的 `wait` 会把会话叫醒）。一般是上一轮的批示修完之后。
 - 推送、`gh pr create`、某个 skill 跑完，都**不是**触发条件。不装任何自动触发的 hook。
 
 前提：
@@ -36,14 +36,14 @@ PR 描述也不归审查者：它只开 thread，描述的四节由 `implement` 
 2. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径与工单目录、之前各轮 review thread 的 id、companion 路径。
 3. 等它交回，**不提前汇报**。
 4. **更新 PR 描述的 `your-todo` 节**：「要你审的」加上这一轮的 thread 链接，「要你决定的」写有几条等批示（`pr-body.mjs set`，见 `pr-description.md` §6）。只放链接和条数，结论留在 thread 里。
-5. **在后台盯着这个 thread**（人不在对话里时，由本地 routine 跑的 `pr-inbox` 接手同样的事）：用后台方式跑 `pr-thread.mjs wait <owner/repo> <PR 号> <这一轮 thread 的首条评论 id>`（`pr-description.md` §2），人在 GitHub 上批示完、安静两分钟后它退出，会话被叫醒，接 §3。
+5. **确认后台还挂着 `wait`**（`implement` 开 PR 时挂上的；这个会话没挂就挂上，见 `pr-description.md` §2）。它会盯到这一轮新开的 thread，人在 GitHub 上批示完、安静两分钟后它退出，会话被叫醒，接 §3。
 6. **在对话里只说几句**：第几轮，Spec 几条、Standards 几条，thread 链接。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
 
 ## 3 人批示之后
 
 人在这一轮的 review thread 里批示（「S1 接受，C1 修，C2 进 backlog」），后台的 `wait` 退出就把会话叫醒。人直接在对话里批示也行，编排者把原文转贴进 thread，开头标「Harold 在对话里回答：」。
 
-`pr-thread.mjs read` 读这个 thread，把这一批批示逐条处理完：
+`pr-thread.mjs read` 读这个 thread，把这一批批示逐条处理完。只照做下面这几类，超出的（合并、改配置、和这个 PR 无关的活）请人回到对话里说（`pr-description.md` §2）：
 
 - **修**：先找到它归哪张工单。
   - Spec 条目：它引用的那张工单。
@@ -57,9 +57,10 @@ PR 描述也不归审查者：它只开 thread，描述的四节由 `implement` 
 - **进 backlog**：在目标仓库的 `docs/quality-backlog.md` 追加一条（是什么、在哪、为什么这次不修），提交、推送，在 thread 里回提交链接。
 - **疑问**：在 thread 里直接回答。
 - **批示带出合并前后要做的事**（「S2 接受，上线时手动处理迁移」）：照上面处理之外，要人在上线前做的，追加进 PR 描述 `your-todo` 节的「上线前要注意的」、写明为什么要人来做；Claude 合并后自己做的，追加进 `reference` 节的清理清单（`pr-body.mjs set`，见 `pr-description.md` §1、§6）。
+- **再跑一轮**：人在 thread 里明说「再跑一轮」，按 §2 跑下一轮。不说就不跑。
 - **要求把 thread 改写**（「写成我看得懂的样子」）：照 `pr-description.md` §5 改写正文，用 `pr-thread.mjs edit` 改那条首评论本身，不另开 thread；改了什么写进下面那条汇总。
 
-全部处理完，在同一个 thread 里回**一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条（`pr-description.md` §2）；末尾加一句「都处理完了，确认无误请 resolve；要再跑一轮就告诉我」，再在后台跑一次 `wait` 等人签收或追问。同时把 PR 描述 `your-todo` 里已经决定的那几项勾上。**resolve 由人点。下一轮也由人触发**，编排者不自己接着跑。
+全部处理完，在同一个 thread 里回**一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条（`pr-description.md` §2）；回之前再读一遍 thread，期间新说的话一并处理。末尾加一句「都处理完了，确认无误请 resolve；要再跑一轮就在这里说」，然后重新挂上 `wait`。同时把 PR 描述 `your-todo` 里已经决定的那几项勾上。**resolve 由人点。下一轮也由人触发**，编排者不自己接着跑。
 
 ## 4 合并
 

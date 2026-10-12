@@ -20,15 +20,19 @@
  * on GitHub, never from the new text, so an edit cannot turn a thread into a non-thread or move it to
  * another round.
  *
- * Harold answers on GitHub, not in the session, so the orchestrator has to hear about it: `wait`
- * polls the threads it is told to watch and exits once there is something to act on — a human
- * message newer than Claude's last word in a thread, after a quiet spell (so a reply typed as
- * several comments arrives as one batch), or every watched thread resolved. Run it in the
- * background; its exit wakes the session. It is stateless: "new" is always "after the bot last
- * spoke", so a restart never loses or repeats anything.
+ * Harold answers on GitHub, not in the session, so the session that owns the PR has to hear about
+ * it: after opening the PR it runs `wait` in the background, and the command's exit wakes it. `wait`
+ * watches every idea-loop thread on the PR, including ones opened later, and exits once there is
+ * something to act on: a message from a commander (the account gh is logged in as, i.e. Harold,
+ * plus any --commander) newer than Claude's last word in its thread, after a quiet spell so a reply
+ * typed as several comments arrives as one batch; or the PR merged or closed, which ends the watch
+ * for good. Anyone else's message never wakes the session; it is listed as ignored when it does
+ * wake. Resolving a thread is not a reason to wake. A laptop going to sleep only freezes the
+ * process; it resumes on wake and catches up on its first poll. It is stateless — "new" is always
+ * "after the bot last spoke" — so a watch restarted after the app quit loses or repeats nothing.
  *
  * Deterministic core (threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship,
- * editedBody, pending, settled) is pure and unit-tested.
+ * editedBody, pending, byCommanders, settled) is pure and unit-tested.
  *
  * Usage:
  *   node pr-thread.mjs open  <owner/repo> <pr> <pause|review> <round> <body.md> <preferred-anchor>...
@@ -36,13 +40,13 @@
  *   node pr-thread.mjs reply <owner/repo> <pr> <root-comment-id> <body.md>
  *   node pr-thread.mjs edit  <owner/repo> <pr> <comment-id> <body.md>
  *   node pr-thread.mjs list  <owner/repo> <pr>
- *   node pr-thread.mjs wait  <owner/repo> <pr> <root-comment-id>... [--quiet <seconds>] [--every <seconds>]
+ *   node pr-thread.mjs wait  <owner/repo> <pr> [--commander <login>]... [--quiet <seconds>] [--every <seconds>]
  * Exit: 0 = done, 1 = usage / API error.
  */
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { repoApi } from './github-app.mjs';
+import { ghApi, repoApi } from './github-app.mjs';
 
 export const KINDS = ['pause', 'review'];
 const MARK = /<!-- idea-loop-thread (\{.*?\}) -->/;
@@ -99,12 +103,15 @@ export function pending(t) {
   return t.messages.slice(lastBot + 1).filter((m) => m.author !== 'claude');
 }
 
-/**
- * Whether the watch is over: every thread resolved, or new human messages with none in the last
- * quietMs (Harold may still be typing the next one).
- */
+/** Split what was said after the bot into what commanders said (acted on) and the rest (ignored). */
+export function byCommanders(said, commanders) {
+  const allowed = new Set(commanders.map((c) => c.toLowerCase()));
+  const mine = said.filter((m) => allowed.has(String(m.author).toLowerCase()));
+  return { mine, others: said.filter((m) => !mine.includes(m)) };
+}
+
+/** 'replied' once commanders have said something and nothing more in the last quietMs; else null. */
 export function settled(watched, nowMs, quietMs) {
-  if (watched.length && watched.every((w) => w.resolved)) return 'resolved';
   const fresh = watched.flatMap((w) => w.pending);
   if (!fresh.length) return null;
   return nowMs - Math.max(...fresh.map((m) => Date.parse(m.at))) >= quietMs ? 'replied' : null;
@@ -144,28 +151,36 @@ async function main() {
   const api = await repoApi(repo);
 
   if (cmd === 'wait') {
-    const flag = (name, fallback) => {
-      const i = rest.indexOf(name);
-      return i === -1 ? fallback : Number(rest.splice(i, 2)[1]);
+    const take = (name) => {
+      const out = [];
+      for (let i = rest.indexOf(name); i !== -1; i = rest.indexOf(name)) out.push(rest.splice(i, 2)[1]);
+      return out;
     };
-    const quietMs = flag('--quiet', 120) * 1000;
-    const everyMs = flag('--every', 60) * 1000;
-    const ids = rest.map(Number);
-    if (!ids.length || !ids.every(Number.isSafeInteger)) throw new Error('usage: wait <owner/repo> <pr> <root-comment-id>... [--quiet <s>] [--every <s>]');
+    const extra = take('--commander');
+    const quietMs = Number(take('--quiet').at(-1) ?? 120) * 1000;
+    const everyMs = Number(take('--every').at(-1) ?? 60) * 1000;
+    if (rest.length || extra.some((c) => !c) || !(quietMs >= 0) || !(everyMs > 0)) {
+      throw new Error('usage: wait <owner/repo> <pr> [--commander <login>]... [--quiet <s>] [--every <s>]');
+    }
+    const commanders = [ghApi('GET', 'user').login, ...extra]; // the gh login is Harold, even when the App posts
     for (;;) {
       try {
+        const pull = await api('GET', `repos/${repo}/pulls/${pr}`);
+        if (pull.state !== 'open') return console.log(JSON.stringify({ why: pull.merged_at ? 'merged' : 'closed', commanders }, null, 2));
         const comments = await pullComments(api, repo, pr);
         const resolved = await resolvedById(api, repo, pr);
-        const watched = ids.map((id) => {
-          const t = thread(id, comments);
-          if (!t) throw new Error(`no review comment ${id} on PR ${pr}`);
-          return { rootId: id, url: t.url, kind: t.kind, round: t.round, resolved: resolved.get(id) ?? false, pending: pending(t) };
+        const all = Object.values(threads(comments)).flat().map((root) => {
+          const t = thread(root.rootId, comments);
+          const { mine, others } = byCommanders(pending(t), commanders);
+          return { rootId: root.rootId, url: root.url, kind: root.kind, round: root.round, resolved: resolved.get(root.rootId) ?? false, pending: mine, ignored: others };
         });
-        const why = settled(watched, Date.now(), quietMs);
-        if (why) return console.log(JSON.stringify({ why, threads: watched }, null, 2));
+        const why = settled(all, Date.now(), quietMs);
+        if (why) {
+          const ignored = all.flatMap((w) => w.ignored.map((m) => ({ rootId: w.rootId, author: m.author, at: m.at })));
+          return console.log(JSON.stringify({ why, commanders, threads: all.filter((w) => w.pending.length).map(({ ignored: _, ...w }) => w), ignored }, null, 2));
+        }
       } catch (error) {
-        if (/no review comment/.test(error.message)) throw error;
-        console.error(`poll failed, retrying: ${error.message}`); // a network blip must not end the watch
+        console.error(`poll failed, retrying: ${error.message}`); // a network blip or a laptop waking up must not end the watch
       }
       await new Promise((r) => setTimeout(r, everyMs));
     }

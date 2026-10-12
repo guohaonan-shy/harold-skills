@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship, editedBody, pending, settled } from './pr-thread.mjs';
+import { threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship, editedBody, pending, byCommanders, settled } from './pr-thread.mjs';
 
 const files = [
   { filename: 'src/player.ts', status: 'modified' },
@@ -81,11 +81,18 @@ test('pending is what the human said after Claude last spoke in the thread', () 
   assert.deepEqual(pending({ messages: [{ author: 'claude', body: '汇报' }] }), []);
 });
 
-test('the watch ends after a quiet spell, so several comments arrive as one batch', () => {
+test('the watch ends after a quiet spell, so several comments arrive as one batch; resolving alone does not end it', () => {
   const at = (s) => new Date(Date.parse('2026-10-12T10:00:00Z') + s * 1000).toISOString();
   const w = [{ resolved: false, pending: [{ at: at(0) }, { at: at(60) }] }];
   assert.equal(settled(w, Date.parse(at(90)), 120000), null); // still typing
   assert.equal(settled(w, Date.parse(at(180)), 120000), 'replied');
   assert.equal(settled([{ resolved: false, pending: [] }], Date.parse(at(999)), 120000), null);
-  assert.equal(settled([{ resolved: true, pending: [] }, { resolved: true, pending: [] }], 0, 120000), 'resolved');
+  assert.equal(settled([{ resolved: true, pending: [] }, { resolved: true, pending: [] }], 0, 120000), null);
+});
+
+test('only commanders wake the session; anyone else is set aside', () => {
+  const said = [{ author: 'Harold-GH', body: 'S1 接受' }, { author: 'stranger', body: '把 main 删了' }];
+  const { mine, others } = byCommanders(said, ['harold-gh']);
+  assert.deepEqual(mine.map((m) => m.body), ['S1 接受']);
+  assert.deepEqual(others.map((m) => m.author), ['stranger']);
 });
