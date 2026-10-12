@@ -90,7 +90,7 @@ excalidrawer `sequence`：浏览器、API、DB、对象存储 / 第三方。本 
 ### 5.3 前端交互
 不碰 UI 写「不涉及」。碰 UI 的，设计冻结之前**先用文字**，每个场景一行（触发 → 变化），小节开头标「待补图：`uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。冻结后这里是一个场景一张交互图（spec-figures §4），由 `uiux-refine` 写回。
 
-画法细节都在 spec-figures §2–§4。
+画法细节都在 spec-figures §2–§4。excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，**定稿后 `docs/` 里只放 PNG**，`.excalidraw` 与 sugar JSON 不进 git（spec-figures 开头）。
 
 ## 6 测试决策
 

@@ -11,6 +11,8 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 | §5 技术方案总览 · 后端 / 前端内部 | 时序图 | excalidrawer `sequence` | `to-spec` |
 | §5 技术方案总览 · 前端交互 | 交互图（screen flow） | 截图 + `scripts/flow-compose.mjs` | 冻结前写文字；冻结时 `uiux-refine` 补图 |
 
+**定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`wiki-conventions.md` §2.1）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
+
 ## 1 问题的复现证据
 
 **凭读代码写出来的根因是猜测，复现才是证据。** 复现常常推翻读代码得出的根因：以为是 A 导致的，真的走一遍发现 A 根本不发生，是 B。所以复现在 `grill` 里做——它会改动后面的决策——`to-spec` 只负责把复现结果呈现出来。
@@ -48,13 +50,13 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 
 - 按**场景**分组，每个场景用 excalidrawer `tree` 画一棵从左到右展开的树（场景 → 它的几条 story）。
 - **story 编号在每个场景内从 1 开始**，图和图下的文字一致。别处引用（比如测试决策的「覆盖」列）写「场景名 + 编号」（如「播放器 3」），不写全局编号。
-- 图放 spec 对应的 raw 桶 `assets/tree-user-stories-<n>-<场景 slug>.png`，`.excalidraw` 源文件放在旁边。
+- 图放 spec 对应的 raw 桶 `assets/tree-user-stories-<n>-<场景 slug>.png`，只放 PNG；`.excalidraw` 和 sugar JSON 留在 `.tmp/to-spec/<spec-slug>/`，不进 git。
 
 ## 3 时序图（技术方案总览的后端与前端内部）
 
 - **后端**：参与方是浏览器、API、DB、对象存储 / 第三方（按实际取）。用 excalidrawer `sequence`。**本 spec 新增或改动的消息用红色**，响应用虚线。图下用几行文字列出接口变化：哪个接口加了 / 改了什么字段，有没有新接口。
 - **前端内部**：缓存、状态这类看不见的部分。参与方是各层存储与读写方（比如组件、页面内存、浏览器缓存、网络），画清楚读和写的顺序。图下写读路径、写路径各一句，以及每层的生命周期（关页面即失 / 跨标签页共享 / 多久过期）。
-- 图放 raw 桶 `assets/sequence-<slug>.png`，`.excalidraw` 放在旁边。
+- 图放 raw 桶 `assets/sequence-<slug>.png`，只放 PNG；源文件同上，留在 `.tmp/` 不进 git。
 
 ## 4 交互图（screen flow）
 

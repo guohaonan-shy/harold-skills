@@ -69,19 +69,20 @@ docs/
 ```
 <worktree 根>/.tmp/
 ├── grill/<YYYY-MM-DD>-<topic>/   复现过程的截图、网络日志、trace —— grill 收工时删
+├── to-spec/<spec-slug>/          spec 图的 excalidrawer 源文件（sugar JSON、.excalidraw）—— 只有 PNG 进 docs/，spec 定稿后可删
 ├── uiux-imagine/<spec-slug>/     对比页与抓取物（imagine 收工时删）、方向说明（refine 冻结时删）
 ├── uiux-refine/<spec-slug>/      ledger、每轮评分 JSON、评委看的截图 —— refine 冻结时删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、wip/（卡住工单的 patch）—— PR 合并后删
 └── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、evidence/（review 配图）—— PR 合并后删
 ```
 
-`evidence/` 下的素材是**交付证据**，上传到 PR 的 draft release 后才被引用，从不进 git（`evidence.md`）。
+`evidence/` 下的素材是**交付证据**，上传到 PR 的素材分支后才被引用，从不进代码分支和 `docs/`（`evidence.md`）。
 
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
 - 第一次用时确认 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里，不在就追加一行——本地忽略，不改仓库的 `.gitignore`，也不会被误提交。
 - **不放系统 `/tmp`**：生命周期要跟着 worktree。系统 `/tmp` 重启会被清（方向说明丢了 refine 就开不了工），而且不同 worktree、不同会话的东西攒在一起分不清是谁的；放在 worktree 里，该删的时候 skill 删，没来得及删的随 worktree 一起删掉。
 - 按 `<spec-slug>` / `<topic>` 分子目录不是洁癖：两份 spec 在同一个 worktree 里先后跑，固定文件名放在共享的顶层会互相覆盖，而且覆盖得悄无声息。
-- 一次性的、跑完即弃、不跨步骤的东西（比如 excalidrawer 的中间 JSON）仍然可以用系统临时目录。
+- 一次性的、跑完即弃、不跨步骤的东西仍然可以用系统临时目录。spec 图的 excalidrawer 源文件不算：定稿前可能还要改好几轮，放 `.tmp/to-spec/<spec-slug>/`。
 
 ## 3 frontmatter
 

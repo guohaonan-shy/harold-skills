@@ -15,14 +15,28 @@
  * gh login posts and every body says up front that Claude posted it — the bot never passes as the
  * human.
  *
- * Deterministic core (threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship) is
- * pure and unit-tested.
+ * A report can be rewritten in place (edit) — the root of a review thread after Harold asks for it to
+ * read differently, say. The thread marker on the root's first line is carried over from the comment
+ * on GitHub, never from the new text, so an edit cannot turn a thread into a non-thread or move it to
+ * another round.
+ *
+ * Harold answers on GitHub, not in the session, so the orchestrator has to hear about it: `wait`
+ * polls the threads it is told to watch and exits once there is something to act on — a human
+ * message newer than Claude's last word in a thread, after a quiet spell (so a reply typed as
+ * several comments arrives as one batch), or every watched thread resolved. Run it in the
+ * background; its exit wakes the session. It is stateless: "new" is always "after the bot last
+ * spoke", so a restart never loses or repeats anything.
+ *
+ * Deterministic core (threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship,
+ * editedBody, pending, settled) is pure and unit-tested.
  *
  * Usage:
  *   node pr-thread.mjs open  <owner/repo> <pr> <pause|review> <round> <body.md> <preferred-anchor>...
  *   node pr-thread.mjs read  <owner/repo> <pr> <root-comment-id>
  *   node pr-thread.mjs reply <owner/repo> <pr> <root-comment-id> <body.md>
+ *   node pr-thread.mjs edit  <owner/repo> <pr> <comment-id> <body.md>
  *   node pr-thread.mjs list  <owner/repo> <pr>
+ *   node pr-thread.mjs wait  <owner/repo> <pr> <root-comment-id>... [--quiet <seconds>] [--every <seconds>]
  * Exit: 0 = done, 1 = usage / API error.
  */
 
@@ -52,6 +66,13 @@ export function withAuthorship(body, identity) {
   return identity === 'app' ? body : `> 🤖 由 Claude 代发（仓库未配置 GitHub App，借用 gh 当前登录的账号发出，不是本人所写）\n\n${body}`;
 }
 
+/** New text for an existing comment, keeping the thread marker the comment already has (if any). */
+export function editedBody(oldBody, text, identity) {
+  const m = String(oldBody ?? '').match(MARK);
+  const body = withAuthorship(String(text).replace(MARK, '').trim(), identity);
+  return m ? `${m[0]}\n${body}` : body;
+}
+
 /** First preferred anchor that is a file in the PR's diff; review comments can only sit on those. */
 export function pickAnchor(preferred, prFiles) {
   const live = prFiles.filter((f) => f.status !== 'removed');
@@ -70,6 +91,23 @@ export function thread(rootId, comments) {
     url: root.html_url, path: root.path, ...parseThread(root.body),
     messages: [root, ...replies].map((c) => ({ id: c.id, author: who(c), at: c.created_at, body: c.body })),
   };
+}
+
+/** Human messages in one thread that came after Claude last spoke there. */
+export function pending(t) {
+  const lastBot = t.messages.map((m) => m.author).lastIndexOf('claude');
+  return t.messages.slice(lastBot + 1).filter((m) => m.author !== 'claude');
+}
+
+/**
+ * Whether the watch is over: every thread resolved, or new human messages with none in the last
+ * quietMs (Harold may still be typing the next one).
+ */
+export function settled(watched, nowMs, quietMs) {
+  if (watched.length && watched.every((w) => w.resolved)) return 'resolved';
+  const fresh = watched.flatMap((w) => w.pending);
+  if (!fresh.length) return null;
+  return nowMs - Math.max(...fresh.map((m) => Date.parse(m.at))) >= quietMs ? 'replied' : null;
 }
 
 /** Every Claude thread on the PR, grouped by kind and ordered by round. */
@@ -100,10 +138,38 @@ const capped = (body) => {
 
 async function main() {
   const [cmd, repo, pr, ...rest] = process.argv.slice(2);
-  if (!['open', 'read', 'reply', 'list'].includes(cmd) || !/^[\w.-]+\/[\w.-]+$/.test(repo ?? '') || !/^\d+$/.test(pr ?? '')) {
-    throw new Error('usage: pr-thread.mjs open|read|reply|list <owner/repo> <pr> ...');
+  if (!['open', 'read', 'reply', 'edit', 'list', 'wait'].includes(cmd) || !/^[\w.-]+\/[\w.-]+$/.test(repo ?? '') || !/^\d+$/.test(pr ?? '')) {
+    throw new Error('usage: pr-thread.mjs open|read|reply|edit|list|wait <owner/repo> <pr> ...');
   }
   const api = await repoApi(repo);
+
+  if (cmd === 'wait') {
+    const flag = (name, fallback) => {
+      const i = rest.indexOf(name);
+      return i === -1 ? fallback : Number(rest.splice(i, 2)[1]);
+    };
+    const quietMs = flag('--quiet', 120) * 1000;
+    const everyMs = flag('--every', 60) * 1000;
+    const ids = rest.map(Number);
+    if (!ids.length || !ids.every(Number.isSafeInteger)) throw new Error('usage: wait <owner/repo> <pr> <root-comment-id>... [--quiet <s>] [--every <s>]');
+    for (;;) {
+      try {
+        const comments = await pullComments(api, repo, pr);
+        const resolved = await resolvedById(api, repo, pr);
+        const watched = ids.map((id) => {
+          const t = thread(id, comments);
+          if (!t) throw new Error(`no review comment ${id} on PR ${pr}`);
+          return { rootId: id, url: t.url, kind: t.kind, round: t.round, resolved: resolved.get(id) ?? false, pending: pending(t) };
+        });
+        const why = settled(watched, Date.now(), quietMs);
+        if (why) return console.log(JSON.stringify({ why, threads: watched }, null, 2));
+      } catch (error) {
+        if (/no review comment/.test(error.message)) throw error;
+        console.error(`poll failed, retrying: ${error.message}`); // a network blip must not end the watch
+      }
+      await new Promise((r) => setTimeout(r, everyMs));
+    }
+  }
 
   if (cmd === 'list') {
     const all = threads(await pullComments(api, repo, pr));
@@ -128,7 +194,15 @@ async function main() {
     return console.log(JSON.stringify({ kind, round: Number(round), rootId: c.id, url: c.html_url, anchor, identity: api.identity }, null, 2));
   }
   const rootId = Number(rest[0]);
-  if (!Number.isSafeInteger(rootId)) throw new Error('root-comment-id must be a number');
+  if (!Number.isSafeInteger(rootId)) throw new Error('comment id must be a number');
+  if (cmd === 'edit') {
+    if (!rest[1]) throw new Error('usage: edit <owner/repo> <pr> <comment-id> <body.md>');
+    const old = await api('GET', `repos/${repo}/pulls/comments/${rootId}`);
+    if (String(old.pull_request_url ?? '').split('/').pop() !== String(pr)) throw new Error(`comment ${rootId} is not on PR ${pr}`);
+    const body = capped(editedBody(old.body, readFileSync(rest[1], 'utf8'), api.identity));
+    const c = await api('PATCH', `repos/${repo}/pulls/comments/${rootId}`, { body });
+    return console.log(JSON.stringify({ id: c.id, url: c.html_url, thread: parseThread(c.body) }, null, 2));
+  }
   if (cmd === 'read') {
     const t = thread(rootId, await pullComments(api, repo, pr));
     if (!t) throw new Error(`no review comment ${rootId} on PR ${pr}`);

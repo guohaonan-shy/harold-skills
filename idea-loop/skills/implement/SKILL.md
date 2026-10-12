@@ -7,7 +7,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 **把一份已经切好工单的 spec 做完。** 这份文件是入口，写的是**编排机制**：谁起谁、怎么算下一张、交回后核对什么、什么时候停下交给人。一张工单具体怎么做写在 `agents/implementer.md` 里，这里不复述。
 
-> 先读一次 `../../references/wiki-conventions.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定，下文简写 `.tmp/…`）和 `../../references/pr-description.md`（PR 描述每一节写什么）。
+> 先读一次 `../../references/wiki-conventions.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定，下文简写 `.tmp/…`）和 `../../references/pr-description.md`（§1、§6：PR 描述的四节，每节谁写、写什么）。
 
 ## 0 什么时候跑、输入是什么
 
@@ -72,26 +72,37 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 停下有两种情况：只剩等决定的工单和依赖它们的工单；或者全部落地了。人在 PR 上看、在 PR 上回答，所以停下就是在 draft PR 上开一个新 thread（`../../references/pr-description.md` §2、§4）。
 
-1. **还没有 PR 就开 draft PR**：推送集成分支，`gh pr create --draft --base <base>`，标题用 spec 的标题，`header` 节写 spec 链接加一句话。PR 的署名行照常带上。
+1. **还没有 PR 就开 draft PR**：推送集成分支，`gh pr create --draft --base <base>`，标题用 spec 的标题，PR 的署名行照常带上。然后用 `pr-body.mjs set` 写两节：`summary`（一句话说这份 spec 解决什么）、`reference`（spec 与工单链接、空的执行记录、合并后的清理）。
 2. **上传素材**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish <owner/repo> <PR 号> <证据目录下的新文件>`，拿到 URL（`../../references/evidence.md` §2）。
 3. **开这次停下的 thread**：`pr-thread.mjs open <owner/repo> <PR 号> pause <轮次> <汇报.md> <工单文件>...`，轮次取 `pr-thread.mjs list` 的 `next.pause`。汇报写这次停下之前新落地的工单的人验素材与取舍，以及每条 pending 的决定题，格式见 `pr-description.md` §4。锚定文件给本轮落地的工单文件。**以项目的 bot 身份发**，脚本会自动用配好的 GitHub App；没配 App 时，每条都写明是 Claude 代发。不以人的身份说话。
-4. **更新 `ledger` 节**，加上这个 thread 的链接。推送新的提交。
-5. **在对话里只说一句**：停在哪（落地几张、等决定几件）+ thread 链接。人在 thread 里回复完，回到对话说一声；人直接在对话里回答也行，编排者会把那段回答原文转贴进 thread，让 PR 上的记录是完整的。
+4. **更新 `reference` 节**里折叠的执行记录，加上这个 thread 的链接。推送新的提交。
+5. **在对话里只说一句**：停在哪（落地几张、等决定几件）+ thread 链接。
+6. **在后台盯着这个 thread**：用后台方式跑 `pr-thread.mjs wait <owner/repo> <PR 号> <thread 首条评论 id>`（`pr-description.md` §2）。人在 GitHub 上回复完、安静两分钟后它退出，会话被叫醒，接着往下做。人直接在对话里回答也行，编排者把那段回答原文转贴进 thread，让 PR 上的记录是完整的。
 
-**人回复后**，`pr-thread.mjs read` 读这个 thread，逐条处理人的消息，每处理完一条就在同一个 thread 里 `reply` 一条，说明做了什么、带上提交链接：
+**人回复后**（`wait` 退出，或人在对话里说了），`pr-thread.mjs read` 读这个 thread，把人这一批消息逐点处理完，再在同一个 thread 里 `reply` **一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条：
 
 - **决定**（「03 选 A」）：把决定写进那张工单。在 `要建什么` 末尾加一行 `> 人的决定（<日期>）：<决定原文>`，验收标准随之增删格。用 `docs(tickets): <NN> — 人的决定` 提交，从 pending 里删掉这一条。
 - **人验项不对**：在那张工单的验收标准末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，再派一个 implementer 做这张工单。这次它的 commit 照样带同一个 `Ticket:` trailer，账本按「同一张工单的第二个 commit」处理。新素材用原来的文件名上传，替换原图，URL 不变。
 - **疑问**：在 thread 里直接回答。答不了的（要改方案的），说明要回 `grill`。
 - **勾复选框**：不用做什么，状态就在 PR 上。
 
-这个 thread 里的事都处理完了，在里面回一句「都处理完了，确认无误请 resolve」，然后回到 §3 接着派工单。**resolve 由人点**，那是人对这一轮的签收，bot 不代点。下一次停下再开新的 thread，**不在旧 thread 里接着汇报**。
+这个 thread 里的事都处理完了，在那条汇总的末尾加一句「都处理完了，确认无误请 resolve」，再在后台跑一次 `wait` 等人签收或追问，然后回到 §3 接着派工单。**resolve 由人点**，那是人对这一轮的签收，bot 不代点。下一次停下再开新的 thread，**不在旧 thread 里接着汇报**。
 
-**全部落地、pending 已清空、所有停下 thread 都已被人 resolve**（`pr-thread.mjs list` 里 `pause` 下每个都是 `resolved: true`）：`gh pr ready <PR 号>` 把 PR 转成 open，接 `/idea-loop:pr-review`，在同一个 PR 上跑第一轮 review。review 的结果写在 PR 描述的 `review` 节。转 open 时在对话里提一句：交付验收里还有几项没勾。不勾不挡转 open，但人应该知道。
+**全部落地、pending 已清空、所有停下 thread 都已被人 resolve**（`pr-thread.mjs list` 里 `pause` 下每个都是 `resolved: true`）：先把描述写齐（`pr-description.md` §1、§6）：
+
+1. **专门拍之前 → 之后**：同一组操作在基准分支和集成分支上各走一遍。基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，在那里起服务，拍完 `git worktree remove`。前端用截图、动图或带标注的截图流程，后端用时序图，按哪种最快看懂选；不复用人验素材。文件名以 `pr-` 开头，`evidence.mjs publish` 上传。
+2. **`summary`** 按落地结果重写成一句话。
+3. **`changes`** 按点分块：碰了页面的，一个页面一块，写它端到端变了什么，再写背后的后端流程变了什么；没碰页面的，一个后端流程一块。每块里放上一步的对照图、这一点上执行方替人做的决定（从各张工单交回的 `tradeoffs` 里挑：背景、定成了什么、对用户的影响）、怎么验证的和验证了哪几个点。
+4. **`your-todo`**：要人审的（还没勾的人验项，带素材链接）、要人决定的（还开着的决定）、上线前要人注意的（生产配置、手动迁移、真实服务冒烟）。Claude 自己能做的不列。
+5. **`reference`** 补上按模块的改动地图。
+
+这三节是给人读的：不写代码行、变量名、函数名、文件路径、提交号、章节编号，`pr-body.mjs` 查到会拒写（`pr-description.md` §1）。
+
+然后 `gh pr ready <PR 号>` 把 PR 转成 open，接 `/idea-loop:pr-review`，在同一个 PR 上跑第一轮 review。review 的结果只在它自己的 thread 里，不进描述。转 open 时在对话里提一句：交付验收里还有几项没勾。不勾不挡转 open，但人应该知道。
 
 ## 7 PR 合并之后
 
-不归这个 skill 管，记在这里方便对照：删工单归 `to-ticket` §7；同一时机跑 `evidence.mjs cleanup <owner/repo> <PR 号>` 删掉素材 release；清掉 `.tmp/implement/<spec-slug>/`。
+不归这个 skill 管，记在这里方便对照：删工单归 `to-ticket` §7；同一时机跑 `evidence.mjs cleanup <owner/repo> <PR 号>` 删掉素材分支；清掉 `.tmp/implement/<spec-slug>/`。
 
 ## 不做
 
