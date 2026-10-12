@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { inboxThreads, readConfig, worktreeFor } from './pr-inbox.mjs';
+import { inboxThreads, repoFromRemote, worktreeFor } from './pr-inbox.mjs';
 import { threadMarker } from './pr-thread.mjs';
 
 const bot = { login: 'project-claude[bot]', type: 'Bot' };
@@ -36,8 +36,9 @@ test('the worktree that has the PR branch checked out is found; none means creat
   assert.equal(worktreeFor(porcelain, 'feat'), null); // no prefix matches
 });
 
-test('a config without commanders or repos is refused, not silently empty', () => {
-  assert.throws(() => readConfig('{"commanders":[],"repos":{"a/b":{"checkout":"/x"}}}'), /commanders/);
-  assert.throws(() => readConfig('{"commanders":["harold"],"repos":{}}'), /repos/);
-  assert.deepEqual(readConfig('{"commanders":["harold"],"repos":{"a/b":{"checkout":"/x"}}}').commanders, ['harold']);
+test('the repository comes from the checkout\'s origin, https or ssh; anything else is not a GitHub project', () => {
+  assert.equal(repoFromRemote('git@github.com:acme/app.git'), 'acme/app');
+  assert.equal(repoFromRemote('https://github.com/acme/app.git\n'), 'acme/app');
+  assert.equal(repoFromRemote('https://github.com/acme/my.app'), 'acme/my.app');
+  assert.equal(repoFromRemote('https://gitlab.com/acme/app.git'), null);
 });

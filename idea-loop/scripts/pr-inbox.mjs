@@ -18,33 +18,29 @@
  * checked out (it keeps the .tmp/ state implement left there), or none, in which case pr-inbox
  * creates one.
  *
- * Config: ~/.idea-loop/inbox.json
- *   { "commanders": ["<github login>"], "repos": { "<owner/repo>": { "checkout": "<abs path of a local clone>" } } }
+ * Project-scoped, no config file: one routine per project, its working folder the project's
+ * checkout. The repository is that checkout's `origin`; the commanders are the account gh is logged
+ * in as (the human's own), plus any `--commander` given in the routine's instruction. Who may
+ * command never goes into git. A user-scoped inbox across projects may come later.
  *
- * Deterministic core (inboxThreads, worktreeFor, readConfig) is pure and unit-tested.
+ * Deterministic core (inboxThreads, worktreeFor, repoFromRemote) is pure and unit-tested.
  *
- * Usage:  node pr-inbox.mjs scan [--config <path>]
- * Output: JSON { items: [{ repo, pr, title, url, head, checkout, worktree, threads: [...] }],
- *                ignored: [{ repo, pr, rootId, author, at }], errors: [{ repo, error }] }
- * Exit:   0 = scanned, 1 = usage / API error, 3 = no config yet (first run: set it up with Harold).
+ * Usage:  node pr-inbox.mjs scan [--commander <login>]...      (run inside the project's checkout)
+ * Output: JSON { repo, checkout, commanders, items: [{ pr, title, url, head, worktree, threads: [...] }],
+ *                ignored: [{ pr, rootId, author, at }] }
+ * Exit:   0 = scanned, 1 = usage / API error, 3 = not inside a git checkout with a GitHub origin.
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ghApi } from './github-app.mjs';
 import { pending, thread, threads } from './pr-thread.mjs';
 
-export const CONFIG = `${homedir()}/.idea-loop/inbox.json`;
-
-export function readConfig(text) {
-  const cfg = JSON.parse(text);
-  const commanders = Array.isArray(cfg.commanders) ? cfg.commanders.filter((c) => typeof c === 'string' && c) : [];
-  const repos = Object.entries(cfg.repos ?? {}).filter(([r, v]) => /^[\w.-]+\/[\w.-]+$/.test(r) && typeof v?.checkout === 'string');
-  if (!commanders.length) throw new Error('inbox.json: commanders is empty — nobody would be allowed to give commands');
-  if (!repos.length) throw new Error('inbox.json: repos is empty — nothing to scan');
-  return { commanders, repos: Object.fromEntries(repos) };
+/** owner/repo from a GitHub remote URL (https or ssh); null for anything else. */
+export function repoFromRemote(url) {
+  const m = String(url ?? '').trim().match(/github\.com[:/]([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/);
+  return m ? `${m[1]}/${m[2]}` : null;
 }
 
 /**
@@ -86,48 +82,45 @@ function resolvedById(repo, pr) {
   return new Map(res.data.repository.pullRequest.reviewThreads.nodes.map((t) => [t.comments.nodes[0]?.databaseId, t.isResolved]));
 }
 
-function scan(cfg) {
-  const out = { items: [], ignored: [], errors: [] };
-  for (const [repo, { checkout }] of Object.entries(cfg.repos)) {
-    try {
-      const prs = ghApi('GET', `repos/${repo}/pulls?state=open&per_page=100`, null, true).flat();
-      for (const p of prs) {
-        const comments = ghApi('GET', `repos/${repo}/pulls/${p.number}/comments?per_page=100`, null, true).flat();
-        if (!comments.some((c) => /<!-- idea-loop-thread /.test(c.body ?? ''))) continue;
-        const { act, ignored } = inboxThreads(comments, resolvedById(repo, p.number), cfg.commanders);
-        out.ignored.push(...ignored.map((i) => ({ repo, pr: p.number, ...i })));
-        if (!act.length) continue;
-        let worktree = null;
-        try {
-          worktree = worktreeFor(execFileSync('git', ['-C', checkout, 'worktree', 'list', '--porcelain'], { encoding: 'utf8' }), p.head.ref);
-        } catch {
-          // checkout missing or not a repository: pr-inbox reports it before doing anything
-        }
-        out.items.push({ repo, pr: p.number, title: p.title, url: p.html_url, head: p.head.ref, checkout, worktree, threads: act });
-      }
-    } catch (error) {
-      out.errors.push({ repo, error: String(error.stderr || error.message).trim() });
-    }
+const git = (...args) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+
+function scan(extraCommanders) {
+  let repo;
+  let checkout;
+  try {
+    repo = repoFromRemote(git('remote', 'get-url', 'origin'));
+    checkout = dirname(git('rev-parse', '--path-format=absolute', '--git-common-dir')); // the main checkout, even from a worktree
+  } catch {
+    repo = null;
+  }
+  if (!repo) {
+    console.error('not inside a git checkout whose origin is on GitHub — run pr-inbox from the project root (skills/pr-inbox/SKILL.md §1)');
+    process.exit(3);
+  }
+  const commanders = [ghApi('GET', 'user').login, ...extraCommanders];
+  const porcelain = git('-C', checkout, 'worktree', 'list', '--porcelain');
+  const out = { repo, checkout, commanders, items: [], ignored: [] };
+  for (const p of ghApi('GET', `repos/${repo}/pulls?state=open&per_page=100`, null, true).flat()) {
+    const comments = ghApi('GET', `repos/${repo}/pulls/${p.number}/comments?per_page=100`, null, true).flat();
+    if (!comments.some((c) => /<!-- idea-loop-thread /.test(c.body ?? ''))) continue;
+    const { act, ignored } = inboxThreads(comments, resolvedById(repo, p.number), commanders);
+    out.ignored.push(...ignored.map((i) => ({ pr: p.number, ...i })));
+    if (act.length) out.items.push({ pr: p.number, title: p.title, url: p.html_url, head: p.head.ref, worktree: worktreeFor(porcelain, p.head.ref), threads: act });
   }
   return out;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const args = process.argv.slice(2);
-  const i = args.indexOf('--config');
-  const path = i === -1 ? CONFIG : args[i + 1];
-  if (args[0] !== 'scan' || !path) {
-    console.error('usage: node pr-inbox.mjs scan [--config <path>]');
+  const [cmd, ...rest] = process.argv.slice(2);
+  const extra = rest.flatMap((a, i) => (a === '--commander' && rest[i + 1] ? [rest[i + 1]] : []));
+  if (cmd !== 'scan' || rest.length !== extra.length * 2) {
+    console.error('usage: node pr-inbox.mjs scan [--commander <login>]...');
     process.exit(1);
   }
-  if (!existsSync(path)) {
-    console.error(`no inbox config at ${path} — first run: set it up with Harold (skills/pr-inbox/SKILL.md §1)`);
-    process.exit(3);
-  }
   try {
-    console.log(JSON.stringify(scan(readConfig(readFileSync(path, 'utf8'))), null, 2));
+    console.log(JSON.stringify(scan(extra), null, 2));
   } catch (error) {
-    console.error(error.message);
+    console.error(String(error.stderr || error.message).trim());
     process.exit(1);
   }
 }

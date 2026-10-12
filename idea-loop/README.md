@@ -20,7 +20,7 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching a fresh `idea-loop:implementer` per ticket along the `Blocked by` graph (one ticket → one commit on the integration branch, TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a new bot thread on the draft PR per stop — and turns the PR ready once everything has landed |
 | `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces and draws every Spec finding, checks every quote mechanically, and opens the round's bot thread. The human rules in the thread; fixes go back through the tickets and the implementer. Never merges |
-| `/idea-loop:pr-inbox` | Async | Picks up commands the human left on GitHub. A local routine runs it every 15 minutes: it finds idea-loop threads where a configured commander spoke after the bot last did (`scripts/pr-inbox.mjs scan`), works each PR in the worktree that has its branch (or a new one), handles stop answers as `implement` does and review rulings as `pr-review` does, dispatching subagents, and answers each thread in one summary reply. Nothing new means it ends at once. Never merges, never resolves, ignores everyone but the commanders. First manual run sets up `~/.idea-loop/inbox.json` and offers to create the routine |
+| `/idea-loop:pr-inbox` | Async | Picks up commands the human left on GitHub. One local routine per project, its working folder the project root, runs it every 15 minutes: it finds idea-loop threads where the human spoke after the bot last did (`scripts/pr-inbox.mjs scan`), works each PR in the worktree that has its branch (or a new one), handles stop answers as `implement` does and review rulings as `pr-review` does, dispatching subagents, and answers each thread in one summary reply. Nothing new means it ends at once. Never merges, never resolves, ignores everyone but the commanders. **Project-scoped for now** — see below |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -39,6 +39,22 @@ vault — weekly, or when specs pile up, or by hand. It is not the next step aft
 which is also where a finished spec is deleted (the contract's invariant: never delete
 a spec before its ADR exists). So a spec sitting in `docs/spec/` with its work already
 merged is a **normal state**, not an oversight — it is waiting for the next sweep.
+
+### pr-inbox is project-scoped (for now)
+
+idea-loop is used one project at a time, so `pr-inbox` is too. There is no config file:
+
+- **One routine per project.** A local routine (Desktop app → Routines → Local), every 15 minutes,
+  working folder = the project root, instruction `/idea-loop:pr-inbox`. Running it once by hand in
+  the project root offers to create the routine.
+- **Everything else is derived from that folder.** The repository is its `origin`; the local clone
+  is its main checkout; how to start services and run tests is what the project's own
+  AGENTS.md / CLAUDE.md say, read by the subagents exactly as in `implement`.
+- **Who may give commands never enters git.** By default only the account gh is logged in as — the
+  human. More accounts go into the routine's instruction (`/idea-loop:pr-inbox --commander <login>`),
+  which lives on the machine, not in the repository.
+
+A user-scoped inbox (one routine across all of a person's projects) may come later.
 
 Which skills the model may invoke itself:
 
@@ -239,8 +255,8 @@ idea-loop/
 │   ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
 │   ├── pr-thread.mjs                 # Claude's threads on a PR: one per stop / per review round; read, reply, edit (keeps the marker), list, wait (blocks until the human has replied on GitHub)
 │   ├── pr-thread.test.mjs            # marker, anchor choice, bot-vs-human, grouping, edit, wait
-│   ├── pr-inbox.mjs                  # pr-inbox scan: open PRs with commander messages Claude has not answered; where to work
-│   ├── pr-inbox.test.mjs             # commanders only, answered vs unanswered, worktree lookup, config
+│   ├── pr-inbox.mjs                  # pr-inbox scan, run in the project root: open PRs with commander messages Claude has not answered; where to work
+│   ├── pr-inbox.test.mjs             # commanders only, answered vs unanswered, worktree lookup, repo from origin
 │   ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
 │   ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
 │   ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge
