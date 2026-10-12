@@ -1,29 +1,36 @@
 #!/usr/bin/env node
 /**
- * Delivery evidence store — one draft GitHub release per PR, deleted when the PR is merged.
+ * Delivery evidence store — one orphan branch per PR, deleted when the PR is merged.
  *
  * Delivery evidence (the human-verify flows and GIFs a ticket's implementer records, the figures a
  * review round draws for its findings) only serves "is this delivery right?". It dies with the PR,
- * so it never enters git: not the code branch, not docs/. A draft release is the cheapest home
- * that is off git, private to the repository's collaborators, scriptable with gh, and deletable in
- * one call. Rules and lifecycle: references/evidence.md.
+ * so it never enters the code branch or docs/. It lives on its own orphan branch
+ * `idea-loop-evidence-pr-<N>`: never merged, no history shared with the code, deleted in one call.
+ * Rules and lifecycle: references/evidence.md.
  *
- * Release assets are a flat namespace, so the caller names files with their owner up front
- * (`t03-flow-sentence-failed.png`, `r2-spec-1-quota-flow.png`). Uploading the same name again
- * replaces it, so a re-recorded GIF keeps its URL.
+ * Why a branch and not a release: a release asset URL is served as a download
+ * (`content-disposition: attachment`), so clicking an image in a PR comment downloads it instead of
+ * opening it full size. A file on a branch, linked as `blob/<branch>/<name>?raw=true`, redirects to
+ * raw.githubusercontent.com and comes back as `image/png` — the browser shows it, and it zooms. GitHub
+ * wraps every comment image in a link to its own src, so the embed alone is enough.
  *
- * Deterministic core (releaseTag, checkAssets) is pure and unit-tested. The CLI at the bottom is
- * the gh boundary.
+ * The orphan tree holds no `.github/workflows`, so pushing to it starts no CI run. Files are a flat
+ * namespace, so the caller names them with their owner up front (`t03-flow-sentence-failed.png`,
+ * `r2-spec-1-quota-flow.png`, and `pr-` for the PR description's before/after shots). Uploading the same name again replaces it and the URL stays the same,
+ * so a re-recorded GIF does not touch the reports already posted.
+ *
+ * Deterministic core (evidenceBranch, imageUrl, checkAssets) is pure and unit-tested. The CLI at the
+ * bottom is the gh boundary; it writes through the git data API, never touching the local checkout.
  *
  * Usage:
  *   node evidence.mjs publish <owner/repo> <pr> <file>...   → prints {"<name>": "<url>"} as JSON
  *   node evidence.mjs list    <owner/repo> <pr>             → prints {"<name>": "<url>"} as JSON
- *   node evidence.mjs cleanup <owner/repo> <pr>             → deletes the release (no-op if absent)
+ *   node evidence.mjs cleanup <owner/repo> <pr>             → deletes the branch (no-op if absent)
  * Exit: 0 = done, 1 = usage / gh error, 2 = the files are invalid (problems listed).
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename, extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -31,7 +38,10 @@ export const MAX_BYTES = 10 * 1024 * 1024;
 export const EXTENSIONS = ['.png', '.gif', '.jpg', '.jpeg', '.webp'];
 const NAME = /^[a-z0-9][a-z0-9._-]*$/;
 
-export const releaseTag = (pr) => `idea-loop-evidence-pr-${pr}`;
+export const evidenceBranch = (pr) => `idea-loop-evidence-pr-${pr}`;
+
+/** The address to embed: opens as an image in the browser, not as a download. */
+export const imageUrl = (repo, pr, name) => `https://github.com/${repo}/blob/${evidenceBranch(pr)}/${name}?raw=true`;
 
 /**
  * Validate the files of one publish.
@@ -49,10 +59,10 @@ export function checkAssets(files) {
       errors.push(`${name}：只收图片（${EXTENSIONS.join(' / ')}）`);
     }
     if (!NAME.test(name)) {
-      errors.push(`${name}：文件名只用小写字母、数字、点、横线、下划线（release 附件名会被 GitHub 改写，改写后链接对不上）`);
+      errors.push(`${name}：文件名只用小写字母、数字、点、横线、下划线（要直接放进图片地址里，别的字符会被转义，链接对不上）`);
     }
-    if (!/^(t\d{2}|r\d+)-/.test(name)) {
-      errors.push(`${name}：要以归属开头——工单素材 tNN-（如 t03-），review 第 N 轮的图 rN-（如 r2-）；附件是平铺的，不带归属就会互相覆盖`);
+    if (!/^(t\d{2}|r\d+|pr)-/.test(name)) {
+      errors.push(`${name}：要以归属开头——工单素材 tNN-（如 t03-），review 第 N 轮的图 rN-（如 r2-），PR 描述的之前 / 之后对照 pr-；素材分支是平铺的，不带归属就会互相覆盖`);
     }
     if (seen.has(name)) errors.push(`${name}：同一次上传里重名`);
     seen.add(name);
@@ -66,17 +76,24 @@ export function checkAssets(files) {
 
 // ---------- gh boundary ----------
 
-const gh = (args, opts = {}) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, ...opts });
+const gh = (args, input) => execFileSync('gh', args, { encoding: 'utf8', input, maxBuffer: 64 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'] });
+const api = (method, endpoint, data) => JSON.parse(gh(['api', endpoint, '--method', method, ...(data ? ['--input', '-'] : [])], data ? JSON.stringify(data) : undefined) || 'null');
 
-function release(repo, pr) {
+function head(repo, pr) {
   try {
-    return JSON.parse(gh(['release', 'view', releaseTag(pr), '--repo', repo, '--json', 'tagName,isDraft,assets'], { stdio: ['ignore', 'pipe', 'ignore'] }));
+    return api('GET', `repos/${repo}/git/ref/heads/${evidenceBranch(pr)}`).object.sha;
   } catch {
     return null;
   }
 }
 
-const urls = (rel) => Object.fromEntries((rel?.assets ?? []).map((a) => [a.name, a.url]));
+function names(repo, pr) {
+  const sha = head(repo, pr);
+  if (!sha) return [];
+  return api('GET', `repos/${repo}/git/trees/${sha}`).tree.filter((e) => e.type === 'blob').map((e) => e.path);
+}
+
+const urls = (repo, pr, list) => Object.fromEntries(list.map((n) => [n, imageUrl(repo, pr, n)]));
 
 function publish(repo, pr, paths) {
   const files = paths.map((path) => ({ path, size: existsSync(path) ? statSync(path).size : 0 }));
@@ -85,31 +102,39 @@ function publish(repo, pr, paths) {
     console.error(errors.join('\n'));
     process.exit(2);
   }
-  const existing = release(repo, pr);
-  if (existing && !existing.isDraft) {
-    console.error(`${releaseTag(pr)} 已经被发布成正式 release，不再往里传——它不该是正式 release，先让人处理`);
-    process.exit(1);
-  }
-  if (!existing) {
-    gh(['release', 'create', releaseTag(pr), '--repo', repo, '--draft',
-      '--title', `PR #${pr} 交付证据（idea-loop，合并后删除）`,
-      '--notes', `idea-loop 为 PR #${pr} 存的人验素材与 review 配图。不进 git，PR 合并或关闭后整个删除。`]);
-  }
-  gh(['release', 'upload', releaseTag(pr), '--repo', repo, '--clobber', ...paths]);
-  const all = urls(release(repo, pr));
-  const mine = Object.fromEntries(paths.map((p) => [basename(p), all[basename(p)]]));
-  console.log(JSON.stringify(mine, null, 2));
+  const parent = head(repo, pr);
+  const tree = paths.map((p) => ({
+    path: basename(p), mode: '100644', type: 'blob',
+    sha: api('POST', `repos/${repo}/git/blobs`, { content: readFileSync(p).toString('base64'), encoding: 'base64' }).sha,
+  }));
+  const treeSha = api('POST', `repos/${repo}/git/trees`, parent ? { base_tree: api('GET', `repos/${repo}/git/commits/${parent}`).tree.sha, tree } : { tree }).sha;
+  const commit = api('POST', `repos/${repo}/git/commits`, {
+    message: `PR #${pr} 交付证据：${tree.map((t) => t.path).join(', ')}\n\nidea-loop 素材分支，不合并，PR 合并或关闭后整个删除。`,
+    tree: treeSha, parents: parent ? [parent] : [],
+  }).sha;
+  if (parent) api('PATCH', `repos/${repo}/git/refs/heads/${evidenceBranch(pr)}`, { sha: commit, force: false });
+  else api('POST', `repos/${repo}/git/refs`, { ref: `refs/heads/${evidenceBranch(pr)}`, sha: commit });
+  console.log(JSON.stringify(urls(repo, pr, tree.map((t) => t.path)), null, 2));
 }
 
 function cleanup(repo, pr) {
-  const existing = release(repo, pr);
-  if (!existing) return console.log(`${releaseTag(pr)} 不存在，无需删除`);
-  if (!existing.isDraft) {
-    console.error(`${releaseTag(pr)} 是正式 release，不由本脚本删除`);
-    process.exit(1);
+  const files = names(repo, pr);
+  if (head(repo, pr)) {
+    api('DELETE', `repos/${repo}/git/refs/heads/${evidenceBranch(pr)}`);
+    console.log(`已删除 ${evidenceBranch(pr)}（${files.length} 个文件）`);
+  } else {
+    console.log(`${evidenceBranch(pr)} 不存在，无需删除`);
   }
-  gh(['release', 'delete', releaseTag(pr), '--repo', repo, '--yes']);
-  console.log(`已删除 ${releaseTag(pr)}（${existing.assets.length} 个附件）`);
+  // Before 0.0.16 evidence lived in a draft release under the same name; sweep one left over.
+  try {
+    const rel = JSON.parse(gh(['release', 'view', evidenceBranch(pr), '--repo', repo, '--json', 'isDraft']));
+    if (rel.isDraft) {
+      gh(['release', 'delete', evidenceBranch(pr), '--repo', repo, '--yes']);
+      console.log(`另删除了旧版留下的 draft release ${evidenceBranch(pr)}`);
+    }
+  } catch {
+    // no legacy release
+  }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
@@ -118,7 +143,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     console.error('usage: evidence.mjs publish|list|cleanup <owner/repo> <pr> [file...]');
     process.exit(1);
   }
-  if (cmd === 'publish') publish(repo, pr, paths);
-  else if (cmd === 'list') console.log(JSON.stringify(urls(release(repo, pr)), null, 2));
-  else cleanup(repo, pr);
+  try {
+    if (cmd === 'publish') publish(repo, pr, paths);
+    else if (cmd === 'list') console.log(JSON.stringify(urls(repo, pr, names(repo, pr)), null, 2));
+    else cleanup(repo, pr);
+  } catch (error) {
+    console.error(String(error.stderr || error.message));
+    process.exit(1);
+  }
 }

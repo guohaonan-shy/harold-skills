@@ -1,15 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkAssets, releaseTag, MAX_BYTES } from './evidence.mjs';
+import { checkAssets, evidenceBranch, imageUrl, MAX_BYTES } from './evidence.mjs';
 
 const ok = (path, size = 1000) => ({ path, size });
 
-test('one release per PR, named so a sweep can find it', () => {
-  assert.equal(releaseTag(42), 'idea-loop-evidence-pr-42');
+test('one branch per PR, named so a sweep can find it', () => {
+  assert.equal(evidenceBranch(42), 'idea-loop-evidence-pr-42');
+});
+
+test('the embed address opens as an image in the browser, not as a release download', () => {
+  const url = imageUrl('acme/app', 42, 'r1-s1-sequence.png');
+  assert.equal(url, 'https://github.com/acme/app/blob/idea-loop-evidence-pr-42/r1-s1-sequence.png?raw=true');
+  assert.doesNotMatch(url, /releases\/download/);
 });
 
 test('ticket and review-round files with owner prefixes are valid', () => {
-  assert.deepEqual(checkAssets([ok('/x/t03-flow-sentence-failed.png'), ok('t03-dwell.gif'), ok('r2-spec-1-quota.png')]), { valid: true, errors: [] });
+  assert.deepEqual(checkAssets([ok('/x/t03-flow-sentence-failed.png'), ok('t03-dwell.gif'), ok('r2-spec-1-quota.png'), ok('pr-before-after-retry.gif')]), { valid: true, errors: [] });
 });
 
 test('a file without an owner prefix is rejected — assets are flat and would overwrite each other', () => {

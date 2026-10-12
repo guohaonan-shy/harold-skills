@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship } from './pr-thread.mjs';
+import { threadMarker, parseThread, pickAnchor, thread, threads, withAuthorship, editedBody, pending, settled } from './pr-thread.mjs';
 
 const files = [
   { filename: 'src/player.ts', status: 'modified' },
@@ -55,4 +55,37 @@ test('threads groups root comments by kind and orders them by round; replies quo
   const t = threads(comments);
   assert.deepEqual(t.pause.map((p) => [p.round, p.rootId]), [[1, 1], [2, 5]]);
   assert.deepEqual(t.review.map((p) => [p.round, p.rootId]), [[1, 7]]);
+});
+
+test('an edit keeps the thread marker from GitHub, never from the new text', () => {
+  const old = `${threadMarker('review', 1)}\n## Review 第 1 轮\n旧正文`;
+  const next = editedBody(old, `${threadMarker('review', 9)}\n## Review 第 1 轮\n新正文`, 'app');
+  assert.deepEqual(parseThread(next), { kind: 'review', round: 1 });
+  assert.equal(next.match(/idea-loop-thread/g).length, 1);
+  assert.ok(next.startsWith(threadMarker('review', 1)));
+  assert.match(next, /新正文/);
+});
+
+test('an edited reply stays a plain reply, and still says who wrote it without an App', () => {
+  const next = editedBody('已修复', '已修复（a1b2c3d）', 'gh-login');
+  assert.equal(parseThread(next), null);
+  assert.match(next, /由 Claude 代发/);
+});
+
+test('pending is what the human said after Claude last spoke in the thread', () => {
+  const t = { messages: [
+    { author: 'claude', body: '汇报' }, { author: 'harold', body: '03 选 A' },
+    { author: 'claude', body: '已写回' }, { author: 'harold', body: 'S1 接受' }, { author: 'harold', body: 'C1 修' },
+  ] };
+  assert.deepEqual(pending(t).map((m) => m.body), ['S1 接受', 'C1 修']);
+  assert.deepEqual(pending({ messages: [{ author: 'claude', body: '汇报' }] }), []);
+});
+
+test('the watch ends after a quiet spell, so several comments arrive as one batch', () => {
+  const at = (s) => new Date(Date.parse('2026-10-12T10:00:00Z') + s * 1000).toISOString();
+  const w = [{ resolved: false, pending: [{ at: at(0) }, { at: at(60) }] }];
+  assert.equal(settled(w, Date.parse(at(90)), 120000), null); // still typing
+  assert.equal(settled(w, Date.parse(at(180)), 120000), 'replied');
+  assert.equal(settled([{ resolved: false, pending: [] }], Date.parse(at(999)), 120000), null);
+  assert.equal(settled([{ resolved: true, pending: [] }, { resolved: true, pending: [] }], 0, 120000), 'resolved');
 });

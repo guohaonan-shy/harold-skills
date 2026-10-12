@@ -11,7 +11,7 @@
 | | 例子 | 去处 |
 |---|---|---|
 | **知识库** | raw 讨论的复现截图、spec 的图（`spec-figures.md`）、冻结画布与它的交互图 | git，`docs/` 下 |
-| **交付证据**（本文件） | 工单的人验流程图与动图、review 给问题配的图 | **不进 git**，跟着 PR 走，合并即删 |
+| **交付证据**（本文件） | 工单的人验流程图与动图、review 给问题配的图 | **不进代码分支、不进 `docs/`**，放在每个 PR 一条的素材分支上，合并即删 |
 
 交付证据只服务于「这次交付对不对」，人的结论会以文字写回工单和 spec，图本身用完即弃。真遇到值得长期保留的一张（比如某个关键动效的定稿），就显式复制进 `docs/` 对应的位置，这属于少数情况，不是默认做法。
 
@@ -20,14 +20,15 @@
 ## 2 放哪、怎么上传、什么时候删
 
 - **做的时候**：`<worktree 根>/.tmp/implement/<spec-slug>/evidence/`（工单素材）或 `.tmp/pr-review/<PR 号>/evidence/`（review 配图），约定见 `wiki-conventions.md` §2.1。截图原图、帧序列、拼图用的 JSON 都在这里。
-- **上传**：每个 PR 一个 **draft release**，只有仓库协作者看得见，附件不进 git 树。
+- **上传**：每个 PR 一条**素材分支** `idea-loop-evidence-pr-<N>`：孤儿分支，跟代码没有共同历史，从不合并。脚本用 gh 当前登录的账号、经 GitHub 的 git 数据接口直接写，不碰本地工作区（bot 的 GitHub App 仍然不需要 Contents 写权限）；分支里没有 `.github/workflows`，推上去不会触发 CI。私有仓库里只有协作者看得见。
 
   ```
   node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish <owner/repo> <PR 号> <文件>...
   ```
 
-  输出每个文件名对应的 URL，停下汇报的 thread 和 review 节里直接用它做图片地址。文件名必须以归属开头：工单素材用 `tNN-`（`t03-flow-sentence-failed.png`），review 第 N 轮的图用 `rN-`（`r2-spec-1-quota.png`）。附件是平铺的，不带归属就会互相覆盖，脚本会拒收。同名再传会替换原文件，URL 不变，所以重录一张动图不用改已经发出去的汇报。单个文件不超过 10MB。
-- **删除**：PR 合并或关闭后跑 `evidence.mjs cleanup <owner/repo> <PR 号>`，时机与 `to-ticket` §7 删工单相同。漏网的由 `dreaming` 扫：PR 已经 MERGED 或 CLOSED，`idea-loop-evidence-pr-<N>` 却还在。
+  输出每个文件名对应的地址，形如 `https://github.com/<owner>/<repo>/blob/idea-loop-evidence-pr-<N>/<文件名>?raw=true`，停下汇报和 review 的 thread 里直接用它做图片地址：`![图说](<地址>)`。文件名必须以归属开头：工单素材用 `tNN-`（`t03-flow-sentence-failed.png`），review 第 N 轮的图用 `rN-`（`r2-spec-1-quota.png`）。分支里的文件是平铺的，不带归属就会互相覆盖，脚本会拒收。同名再传会替换原文件，地址不变，所以重录一张动图不用改已经发出去的汇报。单个文件不超过 10MB。
+- **点开能看大图**：GitHub 会给评论里的每张图包一层指向图片地址本身的链接。`blob/…?raw=true` 跳到 `raw.githubusercontent.com`，返回的是 `image/png`，浏览器直接显示原图、能放大。0.0.15 及以前用的 draft release 附件做不到：附件地址返回 `content-disposition: attachment`，点图就变成下载。宽的流程图、时序图在评论里会被缩小，所以这一点不能省。
+- **删除**：PR 合并或关闭后跑 `evidence.mjs cleanup <owner/repo> <PR 号>`，时机与 `to-ticket` §7 删工单相同。它删掉素材分支，顺带删掉旧版留下的同名 draft release。漏网的由 `dreaming` 扫：PR 已经 MERGED 或 CLOSED，`idea-loop-evidence-pr-<N>` 分支（或旧版的 release）却还在。
 
 ## 3 三种形态，按要人判断的东西选
 
@@ -37,7 +38,7 @@
 | **动效**：动起来是什么样 | 动图 | §4 |
 | **静态样式**：悬停、按下、窄屏 | 并排截图（静止 / 悬停，或宽 / 窄） | 也用 `flow-compose.mjs`：一行，`connected: false`，`label` 写「同一元素 · 静止 / 悬停」 |
 
-review 给 spec 问题配图时多两种：逻辑分支用 excalidrawer `flowchart`，多方之间的调用顺序用 excalidrawer `sequence`。界面上的错误行为仍然用上面三种。
+review 给 spec 问题做证据、PR 描述拍「之前 → 之后」时，按「最快能让人看懂」选形式，不固定图种（`pr-description.md` §5「证据」、§6）：上面三种之外，后端的先后与等待多半用 excalidrawer `sequence`（main 和本分支并排），也可以是一张小表或一行例子。PR 描述的对照图文件名以 `pr-` 开头。
 
 ### 和 spec 的图有一处不同：截图取自实现
 
@@ -68,7 +69,7 @@ review 给 spec 问题配图时多两种：逻辑分支用 excalidrawer `flowcha
 ```markdown
 - [ ] 气泡进场、停留 5 秒、退场；点完鼠标还停在按钮上也照常 5 秒消失
 
-  ![气泡停留 5 秒](https://github.com/<owner>/<repo>/releases/download/<...>/t03-sentence-fail-dwell.gif)
+  ![气泡停留 5 秒](https://github.com/<owner>/<repo>/blob/idea-loop-evidence-pr-<N>/t03-sentence-fail-dwell.gif?raw=true)
 ```
 
 - **复选框 + 一句「看什么」+ 素材。** 「看什么」写的是判断标准，不写操作步骤。人看完觉得对就勾上，不对就在下面回一句。

@@ -1,13 +1,13 @@
 ---
 name: pr-review
-description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用它的会话做编排，起 plugin 自带的 pr-reviewer agent：它自己跑仓库声明的机械检查（只看改动行），并行起两个只读 Codex 进程（gpt-5.6-sol，思考强度 high）分别回答 Spec（代码是否解决了 spec 要解决的问题）与 Standards（代码是否遵守仓库写下来的规则），Spec 问题逐条复现并画成图，两轴引文由脚本校验，最后以项目 bot 的身份开这一轮的 review thread、更新 PR 描述。人在 thread 里批示「修 / 不修 / 进 backlog」，编排者把要修的写回工单、派 implementer 修，下一轮由人触发。implement 全部落地后会自动接它跑第一轮；人要再跑一轮时调它。不合并。
+description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用它的会话做编排，起 plugin 自带的 pr-reviewer agent：它自己跑仓库声明的机械检查（只看改动行），并行起两个只读 Codex 进程（gpt-5.6-sol，思考强度 high）分别回答 Spec（代码是否解决了 spec 要解决的问题）与 Standards（代码是否遵守仓库写下来的规则），行为问题逐条复现并做成最快能看懂的证据（截图、截图流程、动图、时序图、小表或例子），两轴引文与写法由脚本校验，最后以项目 bot 的身份开这一轮的 review thread（写给拍板的人看：标题即用户后果、对用户的影响、要你决定，不出现代码指称）。PR 描述不放 review。人在 thread 里批示「接受 / 修 / 不修 / 进 backlog」，编排者把要修的写回工单、派 implementer 修，下一轮由人触发。implement 全部落地后会自动接它跑第一轮；人要再跑一轮时调它。不合并。
 ---
 
 # PR review
 
 **一次调用跑一轮。** 这份文件是入口，写的是**编排机制**：起谁、交接什么、人批示之后怎么修。一轮 review 具体怎么跑写在 `agents/pr-reviewer.md` 里，问什么、什么算问题写在 `references/review-standards.md` 里，这里不复述。
 
-> 先读一次 `../../references/pr-description.md`（PR 页面每一块写什么，§2 是 bot 身份与 thread）。
+> 先读一次 `../../references/pr-description.md`（PR 页面每一块写什么：§1 描述的四节，§2 bot 身份与 thread，§5 review thread）。
 
 ## 0 什么时候跑
 
@@ -26,22 +26,24 @@ description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用�
 | 角色 | 是谁 | 做什么 |
 |---|---|---|
 | **编排者** | 调用 pr-review 的这个会话 | 起审查者、读人在 thread 里的批示、把要修的写回工单、派 implementer、在 thread 里回复做了什么 |
-| **pr-reviewer** | `idea-loop:pr-reviewer`（`agents/pr-reviewer.md`），`sonnet` · xhigh | 一轮一个：机械检查、两个 Codex 进程、复现画图、校验、开 review thread、更新描述 |
+| **pr-reviewer** | `idea-loop:pr-reviewer`（`agents/pr-reviewer.md`），`sonnet` · xhigh | 一轮一个：机械检查、两个 Codex 进程、核实与画图、校验、开 review thread。不碰 PR 描述 |
 
-修复不归审查者，归 `idea-loop:implementer`（`agents/implementer.md`）。审查和修复分开，是为了让审查者只读，它的结论不被它自己的修法影响。
+PR 描述也不归审查者：它只开 thread，描述的四节由 `implement` 写、由编排者按人的批示更新。修复不归审查者，归 `idea-loop:implementer`（`agents/implementer.md`）。审查和修复分开，是为了让审查者只读，它的结论不被它自己的修法影响。
 
 ## 2 跑一轮
 
 1. 轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/pr-thread.mjs" list <owner/repo> <PR 号>` 输出的 `next.review`。之前各轮 review thread 的首条评论 id 也从这里拿。
 2. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径与工单目录、之前各轮 review thread 的 id、companion 路径。
 3. 等它交回，**不提前汇报**。
-4. **在对话里只说几句**：第几轮，Spec 几条、Standards 几条，thread 链接。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
+4. **更新 PR 描述的 `your-todo` 节**：「要你审的」加上这一轮的 thread 链接，「要你决定的」写有几条等批示（`pr-body.mjs set`，见 `pr-description.md` §6）。只放链接和条数，结论留在 thread 里。
+5. **在后台盯着这个 thread**（人不在对话里时，由本地 routine 跑的 `pr-inbox` 接手同样的事）：用后台方式跑 `pr-thread.mjs wait <owner/repo> <PR 号> <这一轮 thread 的首条评论 id>`（`pr-description.md` §2），人在 GitHub 上批示完、安静两分钟后它退出，会话被叫醒，接 §3。
+6. **在对话里只说几句**：第几轮，Spec 几条、Standards 几条，thread 链接。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
 
 ## 3 人批示之后
 
-人在这一轮的 review thread 里批示（「S1 修，C2 不修，C3 进 backlog」），回到对话说一声。人直接在对话里批示也行，编排者把原文转贴进 thread，开头标「Harold 在对话里回答：」。
+人在这一轮的 review thread 里批示（「S1 接受，C1 修，C2 进 backlog」），后台的 `wait` 退出就把会话叫醒。人直接在对话里批示也行，编排者把原文转贴进 thread，开头标「Harold 在对话里回答：」。
 
-`pr-thread.mjs read` 读这个 thread，逐条处理：
+`pr-thread.mjs read` 读这个 thread，把这一批批示逐条处理完：
 
 - **修**：先找到它归哪张工单。
   - Spec 条目：它引用的那张工单。
@@ -49,17 +51,21 @@ description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用�
   - 两条路都找不到（比如代码来自一次不带 trailer 的修复），就问人归哪张。
 
   在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，用 `docs(tickets): <NN> — review 第 <N> 轮 <编号>` 提交，然后派一个 `idea-loop:implementer` 做这张工单。它只会去做没勾的那几格，commit 照样带同一个 `Ticket:` trailer。同一张工单上有好几条要修的，一次写完再派一次。多张工单的，按编号串行派。全部修完推送。
+  条目的位置（文件、行号、提交）在审查者交回的报告和 thread 折叠区的「给修复方的位置」里，写进工单时照旧描述行为，不抄路径。
+- **接受**（Spec 条目选了「接受，补进 spec 或工单」这一类选项）：代码不动，把那条偏差写进 spec 或工单（例外清单、验收标准、改过的路径），用 `docs(spec): …` 或 `docs(tickets): …` 提交、推送，在 thread 里回提交链接。
 - **不修**：在 thread 里回一句收到。下一轮不再报它，除非有新证据。
 - **进 backlog**：在目标仓库的 `docs/quality-backlog.md` 追加一条（是什么、在哪、为什么这次不修），提交、推送，在 thread 里回提交链接。
 - **疑问**：在 thread 里直接回答。
+- **批示带出合并前后要做的事**（「S2 接受，上线时手动处理迁移」）：照上面处理之外，要人在上线前做的，追加进 PR 描述 `your-todo` 节的「上线前要注意的」、写明为什么要人来做；Claude 合并后自己做的，追加进 `reference` 节的清理清单（`pr-body.mjs set`，见 `pr-description.md` §1、§6）。
+- **要求把 thread 改写**（「写成我看得懂的样子」）：照 `pr-description.md` §5 改写正文，用 `pr-thread.mjs edit` 改那条首评论本身，不另开 thread；改了什么写进下面那条汇总。
 
-每处理完一条，就在同一个 thread 里回一条，说明做了什么并带上提交链接（`pr-description.md` §2）。全部处理完，回一句「都处理完了，确认无误请 resolve；要再跑一轮就告诉我」。**resolve 由人点。下一轮也由人触发**，编排者不自己接着跑。
+全部处理完，在同一个 thread 里回**一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条（`pr-description.md` §2）；末尾加一句「都处理完了，确认无误请 resolve；要再跑一轮就告诉我」，再在后台跑一次 `wait` 等人签收或追问。同时把 PR 描述 `your-todo` 里已经决定的那几项勾上。**resolve 由人点。下一轮也由人触发**，编排者不自己接着跑。
 
 ## 4 合并
 
-**只在人在对话里明确下令时合并。** 没有 mergeReady 判定，也没有自动批准：人看过最新一轮的 thread 和交付验收，自己决定。
+**只在人在对话里明确下令时合并。** 没有 mergeReady 判定，也没有自动批准：人看过最新一轮的 thread 和 PR 描述的「要你做的事」，自己决定。那张清单还有没勾的，下令时提醒人一句。
 
-合并之后：删工单（`to-ticket` §7），删这个 PR 的素材 release（`evidence.mjs cleanup <owner/repo> <PR 号>`），清掉 `.tmp/implement/<spec-slug>/` 和 `.tmp/pr-review/<PR 号>/`。
+合并之后按 PR 描述「参考」里的清理清单逐项做：删工单（`to-ticket` §7），删这个 PR 的素材分支（`evidence.mjs cleanup <owner/repo> <PR 号>`），清掉 `.tmp/implement/<spec-slug>/` 和 `.tmp/pr-review/<PR 号>/`，再加上这个 PR 特有的几项。做完一项勾一项。
 
 ## 不做
 

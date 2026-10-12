@@ -20,6 +20,7 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching a fresh `idea-loop:implementer` per ticket along the `Blocked by` graph (one ticket → one commit on the integration branch, TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a new bot thread on the draft PR per stop — and turns the PR ready once everything has landed |
 | `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces and draws every Spec finding, checks every quote mechanically, and opens the round's bot thread. The human rules in the thread; fixes go back through the tickets and the implementer. Never merges |
+| `/idea-loop:pr-inbox` | Async | Picks up commands the human left on GitHub. One local routine per project, its working folder the project root, runs it every 15 minutes: it finds idea-loop threads where the human spoke after the bot last did (`scripts/pr-inbox.mjs scan`), works each PR in the worktree that has its branch (or a new one), handles stop answers as `implement` does and review rulings as `pr-review` does, dispatching subagents, and answers each thread in one summary reply. Nothing new means it ends at once. Never merges, never resolves, ignores everyone but the commanders. **Project-scoped for now** — see below |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -39,11 +40,27 @@ which is also where a finished spec is deleted (the contract's invariant: never 
 a spec before its ADR exists). So a spec sitting in `docs/spec/` with its work already
 merged is a **normal state**, not an oversight — it is waiting for the next sweep.
 
+### pr-inbox is project-scoped (for now)
+
+idea-loop is used one project at a time, so `pr-inbox` is too. There is no config file:
+
+- **One routine per project.** A local routine (Desktop app → Routines → Local), every 15 minutes,
+  working folder = the project root, instruction `/idea-loop:pr-inbox`. Running it once by hand in
+  the project root offers to create the routine.
+- **Everything else is derived from that folder.** The repository is its `origin`; the local clone
+  is its main checkout; how to start services and run tests is what the project's own
+  AGENTS.md / CLAUDE.md say, read by the subagents exactly as in `implement`.
+- **Who may give commands never enters git.** By default only the account gh is logged in as — the
+  human. More accounts go into the routine's instruction (`/idea-loop:pr-inbox --commander <login>`),
+  which lives on the machine, not in the repository.
+
+A user-scoped inbox (one routine across all of a person's projects) may come later.
+
 Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `design-modeling`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
+| `prototype`, `to-spec`, `design-modeling`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming`, `pr-inbox` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
@@ -77,12 +94,20 @@ now lives.
 
 One spec, one integration branch, one PR. The PR is written for one reader — the person deciding
 whether it merges — and every time they open it they should see at once what they must decide and
-what they must look at. Layout: `references/pr-description.md`.
+what they must look at. The description is written for a reader with no context (the work was delegated)
+and reads top-down: one sentence; what changed, one block per page end to end (plus the backend
+flow behind it) or per backend flow, each block carrying its before → after shot specially before
+the PR opens (screenshots, GIFs or annotated screen flows for the front end, sequence diagrams for
+the back end), the decisions implementers made there on their own and how it was verified; what the
+human has to review, decide and prepare before going live; and a folded reference. No code lines,
+variable names or paths outside that reference — `scripts/pr-body.mjs` refuses them. It never
+carries review: each round lives in its own thread. When the human replies on GitHub, a background
+`pr-thread.mjs wait` wakes the session, and the orchestrator answers each batch in one reply. Layout: `references/pr-description.md`.
 
 | Phase | PR | Who talks | Where the human answers |
 |---|---|---|---|
 | Implementing | draft | `implement`'s orchestrator, as the project's bot | A **new review thread per stop**: decisions (two options + a recommendation) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
-| Review | open | `pr-review`'s reviewer, as the project's bot | A **new review thread per round**: Spec findings, each with a figure; Standards findings, each with the rule's text and the diff lines |
+| Review | open | `pr-review`'s reviewer, as the project's bot | A **new review thread per round**, written for the person who decides: a one-line verdict, then each Spec finding titled by its consequence, with the problem, the user impact, whatever evidence makes it fastest to grasp (screenshots, an annotated flow, a GIF, a sequence diagram, a small table, a worked example) and a decision with options and a recommendation; each Standards finding as rule / now / impact / suggestion; no variable names, file:line, commit hashes or section numbers in the body — code locations go in a folded block for the fixer |
 
 - **Ticket done = every acceptance box has evidence or names who takes it over** (a later ticket,
   or the PR's delivery check), the selected regressions and the full suite are green — then one
@@ -94,14 +119,16 @@ what they must look at. Layout: `references/pr-description.md`.
   come from the repository's GitHub App (Pull requests write, Contents read). Without it they come
   from the gh login and say up front that Claude posted them. The human answers as themselves;
   **resolving a thread is the human's sign-off**, never the bot's.
-- **Delivery evidence never enters git.** It lives in one draft release per PR
-  (`scripts/evidence.mjs`), visible to collaborators only, deleted when the PR merges
+- **Delivery evidence never enters the code branch or `docs/`.** It lives on one orphan branch per
+  PR (`scripts/evidence.mjs`), never merged, deleted when the PR merges, and is embedded as
+  `blob/<branch>/<file>?raw=true` so clicking an image opens it full size instead of downloading it
   (`references/evidence.md`). Knowledge-base images — spec figures, frozen canvases — stay in `docs/`.
 - **Two axes, reported apart** (`references/review-standards.md`). The reviewer runs the repo's
   declared checks and keeps only diagnostics on changed lines (`scripts/changed-lines.mjs`); each
-  Codex process sees only its own question. A Spec finding that cannot be reproduced and drawn,
-  or a Standards finding whose rule text or code is not where it claims, is discarded by
-  `scripts/review-check.mjs` and listed in one folded line.
+  Codex process sees only its own question. A behavioural Spec finding that cannot be reproduced
+  and drawn, or a Standards finding whose rule text or code is not where it claims, is discarded by
+  `scripts/review-check.mjs` and listed in one folded line; a finding that stands but is missing a
+  part or speaks in code terms is sent back for rewording before the thread is posted.
 - **Fixes go back through the tickets.** A finding the human marks "fix" becomes a new acceptance
   box on the ticket that introduced it (found by the quote, or by `git blame` → `Ticket:` trailer),
   and a fresh implementer does it. The next round is the human's call; merging is the human's order.
@@ -226,15 +253,17 @@ idea-loop/
 │   ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
 │   ├── github-app.mjs                # the bot's identity: GitHub App installation token, else the gh login
 │   ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
-│   ├── pr-thread.mjs                 # Claude's threads on a PR: one per stop / per review round; read, reply, list
-│   ├── pr-thread.test.mjs            # marker, anchor choice, bot-vs-human, grouping
-│   ├── pr-body.mjs                   # PR description by section: header / review / ledger, each writer owns its own
+│   ├── pr-thread.mjs                 # Claude's threads on a PR: one per stop / per review round; read, reply, edit (keeps the marker), list, wait (blocks until the human has replied on GitHub)
+│   ├── pr-thread.test.mjs            # marker, anchor choice, bot-vs-human, grouping, edit, wait
+│   ├── pr-inbox.mjs                  # pr-inbox scan, run in the project root: open PRs with commander messages Claude has not answered; where to work
+│   ├── pr-inbox.test.mjs             # commanders only, answered vs unanswered, worktree lookup, repo from origin
+│   ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
 │   ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
-│   ├── evidence.mjs                  # delivery evidence: one draft release per PR, upload → URLs, cleanup on merge
+│   ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge
 │   ├── evidence.test.mjs             # owner-prefixed names, image types, size cap
 │   ├── changed-lines.mjs             # keep only tool diagnostics on lines this PR changed
 │   ├── changed-lines.test.mjs        # diff parsing, diagnostic formats, filtering
-│   ├── review-check.mjs              # admission: quotes must exist, Standards code must be in the diff, Spec needs a figure
+│   ├── review-check.mjs              # admission: quotes must exist, Standards code must be in the diff, behavioural Spec needs evidence (figure, table or example); shape: fixed parts, no code references
 │   └── review-check.test.mjs         # one per discard reason
 ├── evals/                            # the pinned baseline (see evals/README.md)
 │   ├── evals.json                    # six cells: the three skills, the two seams around them, one static repo check
