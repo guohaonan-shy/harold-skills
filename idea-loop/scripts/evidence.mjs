@@ -95,13 +95,11 @@ function names(repo, pr) {
 
 const urls = (repo, pr, list) => Object.fromEntries(list.map((n) => [n, imageUrl(repo, pr, n)]));
 
-function publish(repo, pr, paths) {
+/** Upload files to the PR's evidence branch; returns {"<name>": "<url>"}. Throws (with .invalid) on bad files. */
+export function publish(repo, pr, paths) {
   const files = paths.map((path) => ({ path, size: existsSync(path) ? statSync(path).size : 0 }));
   const { valid, errors } = checkAssets(files);
-  if (!valid) {
-    console.error(errors.join('\n'));
-    process.exit(2);
-  }
+  if (!valid) throw Object.assign(new Error(errors.join('\n')), { invalid: true });
   const parent = head(repo, pr);
   const tree = paths.map((p) => ({
     path: basename(p), mode: '100644', type: 'blob',
@@ -114,7 +112,7 @@ function publish(repo, pr, paths) {
   }).sha;
   if (parent) api('PATCH', `repos/${repo}/git/refs/heads/${evidenceBranch(pr)}`, { sha: commit, force: false });
   else api('POST', `repos/${repo}/git/refs`, { ref: `refs/heads/${evidenceBranch(pr)}`, sha: commit });
-  console.log(JSON.stringify(urls(repo, pr, tree.map((t) => t.path)), null, 2));
+  return urls(repo, pr, tree.map((t) => t.path));
 }
 
 function cleanup(repo, pr) {
@@ -144,11 +142,11 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     process.exit(1);
   }
   try {
-    if (cmd === 'publish') publish(repo, pr, paths);
+    if (cmd === 'publish') console.log(JSON.stringify(publish(repo, pr, paths), null, 2));
     else if (cmd === 'list') console.log(JSON.stringify(urls(repo, pr, names(repo, pr)), null, 2));
     else cleanup(repo, pr);
   } catch (error) {
     console.error(String(error.stderr || error.message));
-    process.exit(1);
+    process.exit(error.invalid ? 2 : 1);
   }
 }

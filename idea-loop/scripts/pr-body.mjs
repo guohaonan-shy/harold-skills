@@ -5,8 +5,8 @@
  * The reader is the person who decides the merge, opening the PR with no context: the work was
  * delegated, and they may only half remember the spec. So the description reads top-down from
  * "what is this" to "what do I have to do", and everything that is only for looking things up sits
- * folded at the bottom. Review findings never go here: every round has its own thread
- * (pr-thread.mjs). Sections live between hidden markers, always appear in this order whatever order
+ * folded at the bottom. Review findings never go here: they live in the PR's review loop (the
+ * session and its local file, review-loop.mjs), archived to the PR as comments when it merges. Sections live between hidden markers, always appear in this order whatever order
  * they were written in, and each carries a fixed heading the script writes itself:
  *
  *   summary    一句话        who can now do what, or what got fixed

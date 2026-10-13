@@ -1,6 +1,6 @@
 ---
 name: implement
-description: 把一份 spec 的工单连续实现完——调用它的会话做编排，按工单的依赖图逐张派 plugin 自带的 implementer agent（每张一个只装着它的新上下文，在集成分支上做成一个 commit），只在要人拍板时停：没有能做的工单了，就在 draft PR 上以项目 bot 的身份新开一个 thread，放要人决定的事和要人看的素材（流程图、动图），人在 thread 里回答后接着做；全部落地、没有等决定的事之后把 PR 转成 open，接 pr-review。也可以只做指定的几张。不重开方案，不改 spec 的 scope。
+description: 把一份 spec 的工单连续实现完——调用它的会话做编排，按工单的依赖图逐张派 plugin 自带的 implementer agent（每张一个只装着它的新上下文，在集成分支上做成一个 commit），只在要人拍板时停：没有能做的工单了，就在会话里给人一份停下汇报，放要人决定的事和要人看的素材（流程图、动图），同样的内容记进这个 PR 的本地 review loop 文件，人在会话里回答后接着做；全部落地、没有等决定的事之后把 PR 转成 open，接 pr-review。也可以只做指定的几张。不重开方案，不改 spec 的 scope。
 ---
 
 # Implement
@@ -21,7 +21,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 | 角色 | 是谁 | 做什么 |
 |---|---|---|
-| **编排者** | 调用 implement 的这个会话 | 算下一张、派执行方、核对交回、停下时在 draft PR 上以 bot 身份开 thread、处理人在 thread 里的回复、把人的决定写回工单 |
+| **编排者** | 调用 implement 的这个会话 | 算下一张、派执行方、核对交回、停下时在会话里给人汇报并记进 review loop 文件、处理人的回复、把人的决定写回工单 |
 | **implementer** | `idea-loop:implementer`（`agents/implementer.md`），`opus` · high | 一张工单一个，做成一个 commit，或者停下交回问题 |
 | **pr-review** | `/idea-loop:pr-review` | 全部落地后接手同一个 PR，跑两轴 review |
 
@@ -33,7 +33,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 - **已落地** = 集成分支上从 merge-base 起，message 带 `Ticket: <NN>-<slug>` trailer 的 commit：
   `git log --format='%H %(trailers:key=Ticket,valueonly)' $(git merge-base HEAD <base>)..HEAD`
-- **等决定** = `.tmp/implement/<spec-slug>/pending.md` 里的条目，每条记下工单号、问题、选项、推荐、patch 路径。它是缓存：在另一个 worktree 里接手时（比如 `pr-inbox`），从这个 PR 还没 resolve 的停下 thread 还原——「需要你决定」下的每一项，人在其后回答了就算已决定。
+- **等决定** = `.tmp/implement/<spec-slug>/pending.md` 里的条目，每条记下工单号、问题、选项、推荐、patch 路径。它是缓存：在另一个 worktree 或新会话里接手时，从这个 PR 的 review loop 文件还原——停下汇报「需要你决定」下的每一项，后面有人的批示和「做了什么」就算已决定。
 - **素材** = `.tmp/implement/<spec-slug>/evidence/`；**半成品** = `.tmp/implement/<spec-slug>/wip/`。
 
 **frontier**（现在可以开工的工单）= 还没落地、不在等决定、`设计冻结` 不是 `⛔`、`Blocked by` 里的工单全部已落地。依赖等决定工单的（直接或间接）都不在 frontier 上。
@@ -70,25 +70,23 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 ## 6 frontier 空了，就停下交给人
 
-停下有两种情况：只剩等决定的工单和依赖它们的工单；或者全部落地了。人在 PR 上看、在 PR 上回答，所以停下就是在 draft PR 上开一个新 thread（`../../references/pr-description.md` §2、§4）。
+停下有两种情况：只剩等决定的工单和依赖它们的工单；或者全部落地了。人在会话里看、在会话里回答，同样的内容逐字记进这个 PR 的 review loop 文件（`../../references/review-loop.md`，汇报的写法见 `../../references/pr-description.md` §4）。
 
 1. **还没有 PR 就开 draft PR**：推送集成分支，`gh pr create --draft --base <base>`，标题用 spec 的标题，PR 的署名行照常带上。然后用 `pr-body.mjs set` 写两节：`summary`（一句话说这份 spec 解决什么）、`reference`（spec 与工单链接、空的执行记录、合并后的清理）。
-2. **上传素材**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish <owner/repo> <PR 号> <证据目录下的新文件>`，拿到 URL（`../../references/evidence.md` §2）。
-3. **开这次停下的 thread**：`pr-thread.mjs open <owner/repo> <PR 号> pause <轮次> <汇报.md> <工单文件>...`，轮次取 `pr-thread.mjs list` 的 `next.pause`。汇报写这次停下之前新落地的工单的人验素材与取舍，以及每条 pending 的决定题，格式见 `pr-description.md` §4。锚定文件给本轮落地的工单文件。**以项目的 bot 身份发**，脚本会自动用配好的 GitHub App；没配 App 时，每条都写明是 Claude 代发。不以人的身份说话。
-4. **更新 `reference` 节**里折叠的执行记录，加上这个 thread 的链接。推送新的提交。
-5. **在对话里只说一句**：停在哪（落地几张、等决定几件）+ thread 链接。
-6. **在后台盯着这个 thread**（人不在对话里时，由本地 routine 跑的 `pr-inbox` 接手同样的事）：用后台方式跑 `pr-thread.mjs wait <owner/repo> <PR 号> <thread 首条评论 id>`（`pr-description.md` §2）。人在 GitHub 上回复完、安静两分钟后它退出，会话被叫醒，接着往下做。人直接在对话里回答也行，编排者把那段回答原文转贴进 thread，让 PR 上的记录是完整的。
+2. **写停下汇报**：这次停下之前新落地的工单的人验素材与取舍，以及每条 pending 的决定题。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，作为新条目追加进文件。素材写本地路径，不上传（归档时才传）。
+3. **更新 `reference` 节**里折叠的执行记录（停下几次）。推送新的提交。
+4. **在会话里给人看**：贴同样的汇报，素材用发送文件的工具发给人；再发一条推送通知，一句话说停在哪（落地几张、等决定几件）。
 
-**人回复后**（`wait` 退出，或人在对话里说了），`pr-thread.mjs read` 读这个 thread，把人这一批消息逐点处理完，再在同一个 thread 里 `reply` **一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条：
+**人回复后**，把原话逐字记进那个条目的「你的批示」，逐点处理完，在会话里回**一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条；同样的内容记进「做了什么」：
 
 - **决定**（「03 选 A」）：把决定写进那张工单。在 `要建什么` 末尾加一行 `> 人的决定（<日期>）：<决定原文>`，验收标准随之增删格。用 `docs(tickets): <NN> — 人的决定` 提交，从 pending 里删掉这一条。
-- **人验项不对**：在那张工单的验收标准末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，再派一个 implementer 做这张工单。这次它的 commit 照样带同一个 `Ticket:` trailer，账本按「同一张工单的第二个 commit」处理。新素材用原来的文件名上传，替换原图，URL 不变。
-- **疑问**：在 thread 里直接回答。答不了的（要改方案的），说明要回 `grill`。
-- **勾复选框**：不用做什么，状态就在 PR 上。
+- **人验项看过、对**：在文件里把那一项勾上。
+- **人验项不对**：在那张工单的验收标准末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，再派一个 implementer 做这张工单。这次它的 commit 照样带同一个 `Ticket:` trailer，账本按「同一张工单的第二个 commit」处理。新素材用原来的文件名覆盖。
+- **疑问**：直接回答。答不了的（要改方案的），说明要回 `grill`。
 
-这个 thread 里的事都处理完了，在那条汇总的末尾加一句「都处理完了，确认无误请 resolve」，再在后台跑一次 `wait` 等人签收或追问，然后回到 §3 接着派工单。**resolve 由人点**，那是人对这一轮的签收，bot 不代点。下一次停下再开新的 thread，**不在旧 thread 里接着汇报**。
+处理完回到 §3 接着派工单。下一次停下再追加一个新条目，**不改前面的条目**。
 
-**全部落地、pending 已清空、所有停下 thread 都已被人 resolve**（`pr-thread.mjs list` 里 `pause` 下每个都是 `resolved: true`）：先把描述写齐（`pr-description.md` §1、§6）：
+**全部落地、pending 已清空、所有停下汇报都处理完了**（`review-loop.mjs check` 里没有未处理的 `pause` 条目）：先把描述写齐（`pr-description.md` §1、§6）：
 
 1. **专门拍之前 → 之后**：同一组操作在基准分支和集成分支上各走一遍。基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，在那里起服务，拍完 `git worktree remove`。前端用截图、动图或带标注的截图流程，后端用时序图，按哪种最快看懂选；不复用人验素材。文件名以 `pr-` 开头，`evidence.mjs publish` 上传。
 2. **`summary`** 按落地结果重写成一句话。
@@ -98,7 +96,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 这三节是给人读的：不写代码行、变量名、函数名、文件路径、提交号、章节编号，`pr-body.mjs` 查到会拒写（`pr-description.md` §1）。
 
-然后 `gh pr ready <PR 号>` 把 PR 转成 open，接 `/idea-loop:pr-review`，在同一个 PR 上跑第一轮 review。review 的结果只在它自己的 thread 里，不进描述。转 open 时在对话里提一句：交付验收里还有几项没勾。不勾不挡转 open，但人应该知道。
+然后 `gh pr ready <PR 号>` 把 PR 转成 open，接 `/idea-loop:pr-review`，在同一个 PR 上跑第一轮 review。review 的结果在会话和 review loop 文件里，不进描述。转 open 时在对话里提一句：交付验收里还有几项没勾。不勾不挡转 open，但人应该知道。
 
 ## 7 PR 合并之后
 
