@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用它的会话做编排，起 plugin 自带的 pr-reviewer agent：它自己跑仓库声明的机械检查（只看改动行），并行起两个只读 Codex 进程（gpt-5.6-sol，思考强度 high）分别回答 Spec（代码是否解决了 spec 要解决的问题）与 Standards（代码是否遵守仓库写下来的规则），行为问题逐条复现并做成最快能看懂的证据（截图、截图流程、动图、时序图、小表或例子），两轴引文与写法由脚本校验，最后写出这一轮的汇报（写给拍板的人看：标题即用户后果、对用户的影响、要你决定，不出现代码指称），编排者在会话里给人看、逐字记进这个 PR 的本地 review loop 文件。PR 描述不放 review，PR 上也不开 thread。人在会话里批示「接受 / 修 / 不修 / 进 backlog」，编排者把要修的写回工单、派 implementer 修，下一轮由人触发；人说合并时，把整份 review loop 按停下和轮次归档成 PR 评论再合并。implement 全部落地后会自动接它跑第一轮；人要再跑一轮或合并时调它。
+description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用它的会话做编排，起 plugin 自带的 pr-reviewer agent：它自己跑仓库声明的机械检查（只看改动行），并行起两个只读 Codex 进程（gpt-5.6-sol，思考强度 high）分别回答 Spec（代码是否解决了 spec 要解决的问题）与 Standards（代码是否遵守仓库写下来的规则），行为问题逐条复现并做成证据（界面上看得到的必须是截图、截图流程或动图，看不到的用时序图、小表或例子），两轴引文与写法由脚本校验，最后写出这一轮的汇报（写给拍板的人看：标题即用户后果、对用户的影响、要你决定，不出现代码指称），编排者在会话里给人看、逐字记进这个 PR 的本地 review loop 文件。PR 描述不放 review，PR 上也不开 thread。人在会话里批示「接受 / 修 / 不修 / 进 backlog」，编排者把要修的写回工单、派 implementer 修，下一轮由人触发；人说合并时，把整份 review loop 按停下和轮次归档成 PR 评论再合并。implement 全部落地后会自动接它跑第一轮；人要再跑一轮或合并时调它。
 ---
 
 # PR review

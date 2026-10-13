@@ -42,7 +42,7 @@ const standardsWords = {
   impact: '以后换存储或加缓存时，这一处会被漏掉。',
   suggestion: '把查询挪进业务层，接口只调它。',
 };
-const S1 = { id: 'S1', title: '连续失败的学生会提前用完当天的练习次数', behavior: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '只重新分析这一题， 不消耗配额' }, figure: 'r1-retry-quota.png', ...specWords };
+const S1 = { id: 'S1', title: '连续失败的学生会提前用完当天的练习次数', behavior: true, on_screen: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '只重新分析这一题， 不消耗配额' }, figure: 'r1-retry-quota.png', ...specWords };
 const C1 = { id: 'C1', title: '接口直接查数据库', rule: { file: 'docs/reference/code-layering.md', text: '路由层不直接访问数据库' }, code: { path: 'src/api/handler.ts', snippet: "import { db } from '../db/client';" }, locations: ['src/api/handler.ts:2'], ...standardsWords };
 
 test('grounded candidates in shape are admitted on both axes, with nothing to rewrite', () => {
@@ -50,9 +50,18 @@ test('grounded candidates in shape are admitted on both axes, with nothing to re
   assert.deepEqual([r.spec.length, r.standards.length, r.discarded.length, r.rewrite.length], [1, 1, 0, 0]);
 });
 
-test('a behavioural finding may carry its reproduction as an inline example instead of a figure', () => {
-  const r = admit({ spec: [{ ...S1, figure: undefined, example: '| 第几次重试 | main 剩余次数 | 本分支剩余次数 |\n|---|---|---|\n| 1 | 5 | 4 |' }] }, io, { round: 1 });
+test('a behavioural finding that does not show on screen may carry its reproduction as an inline example', () => {
+  const r = admit({ spec: [{ ...S1, on_screen: false, figure: undefined, example: '| 第几次重试 | main 剩余次数 | 本分支剩余次数 |\n|---|---|---|\n| 1 | 5 | 4 |' }] }, io, { round: 1 });
   assert.deepEqual([r.spec.length, r.rewrite.length], [1, 0]);
+});
+
+test('a finding that shows on screen needs a screenshot; a table alone goes to rewrite unless it says why none could be shot', () => {
+  const tableOnly = { ...S1, figure: undefined, example: '| 第几步 | 麦克风 |\n|---|---|\n| 示范还在播 | 已打开 |' };
+  const r = admit({ spec: [tableOnly] }, io, { round: 1 });
+  assert.deepEqual([r.spec.length, r.discarded.length], [1, 0]);
+  assert.match(r.rewrite[0].problems.join(), /截图/);
+  assert.deepEqual(shapeProblems({ ...tableOnly, no_screenshot: '只有戴蓝牙耳机的真机才复现得出来' }, 'spec'), []);
+  assert.match(shapeProblems({ ...S1, on_screen: undefined }, 'spec').join(), /没标 on_screen/);
 });
 
 test('a non-behavioural Spec finding needs no figure, and must not carry one', () => {
