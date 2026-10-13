@@ -73,10 +73,11 @@ docs/
 ├── uiux-imagine/<spec-slug>/     对比页与抓取物（imagine 收工时删）、方向说明（refine 冻结时删）
 ├── uiux-refine/<spec-slug>/      ledger、每轮评分 JSON、评委看的截图 —— refine 冻结时删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、wip/（卡住工单的 patch）—— PR 合并后删
-└── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、evidence/（review 配图）—— PR 合并后删
+├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删
+└── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（review-loop.md）
 ```
 
-`evidence/` 下的素材是**交付证据**，上传到 PR 的素材分支后才被引用，从不进代码分支和 `docs/`（`evidence.md`）。
+`evidence/` 下的素材是**交付证据**：过程中以本地文件发给人看，PR 描述用到或合并归档时才上传到 PR 的素材分支，从不进代码分支和 `docs/`（`evidence.md`）。
 
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
 - 第一次用时确认 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里，不在就追加一行——本地忽略，不改仓库的 `.gitignore`，也不会被误提交。

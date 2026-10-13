@@ -18,9 +18,8 @@ status (see `references/wiki-conventions.md`).
 | `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
-| `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching a fresh `idea-loop:implementer` per ticket along the `Blocked by` graph (one ticket → one commit on the integration branch, TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a new bot thread on the draft PR per stop — and turns the PR ready once everything has landed |
-| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces and draws every Spec finding, checks every quote mechanically, and opens the round's bot thread. The human rules in the thread; fixes go back through the tickets and the implementer. Never merges |
-| `/idea-loop:pr-inbox` | Async | Picks up commands the human left on GitHub. One local routine per project, its working folder the project root, runs it every 15 minutes: it finds idea-loop threads where the human spoke after the bot last did (`scripts/pr-inbox.mjs scan`), works each PR in the worktree that has its branch (or a new one), handles stop answers as `implement` does and review rulings as `pr-review` does, dispatching subagents, and answers each thread in one summary reply. Nothing new means it ends at once. Never merges, never resolves, ignores everyone but the commanders. **Project-scoped for now** — see below |
+| `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching a fresh `idea-loop:implementer` per ticket along the `Blocked by` graph (one ticket → one commit on the integration branch, TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
+| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -40,27 +39,11 @@ which is also where a finished spec is deleted (the contract's invariant: never 
 a spec before its ADR exists). So a spec sitting in `docs/spec/` with its work already
 merged is a **normal state**, not an oversight — it is waiting for the next sweep.
 
-### pr-inbox is project-scoped (for now)
-
-idea-loop is used one project at a time, so `pr-inbox` is too. There is no config file:
-
-- **One routine per project.** A local routine (Desktop app → Routines → Local), every 15 minutes,
-  working folder = the project root, instruction `/idea-loop:pr-inbox`. Running it once by hand in
-  the project root offers to create the routine.
-- **Everything else is derived from that folder.** The repository is its `origin`; the local clone
-  is its main checkout; how to start services and run tests is what the project's own
-  AGENTS.md / CLAUDE.md say, read by the subagents exactly as in `implement`.
-- **Who may give commands never enters git.** By default only the account gh is logged in as — the
-  human. More accounts go into the routine's instruction (`/idea-loop:pr-inbox --commander <login>`),
-  which lives on the machine, not in the repository.
-
-A user-scoped inbox (one routine across all of a person's projects) may come later.
-
 Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `design-modeling`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming`, `pr-inbox` |
+| `prototype`, `to-spec`, `design-modeling`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
@@ -101,13 +84,23 @@ the PR opens (screenshots, GIFs or annotated screen flows for the front end, seq
 the back end), the decisions implementers made there on their own and how it was verified; what the
 human has to review, decide and prepare before going live; and a folded reference. No code lines,
 variable names or paths outside that reference — `scripts/pr-body.mjs` refuses them. It never
-carries review: each round lives in its own thread. When the human replies on GitHub, a background
-`pr-thread.mjs wait` wakes the session, and the orchestrator answers each batch in one reply. Layout: `references/pr-description.md`.
+carries review. Layout: `references/pr-description.md`.
+
+**The review loop lives in the session, not on GitHub** (`references/review-loop.md`). Only one
+person reads the reports and decides, and they are already in the Claude session (desktop or
+phone), so every stop and every review round is shown there, with figures sent as files and a push
+notification; the human replies there; the orchestrator handles the batch and answers in one reply.
+The same words — report, the human's rulings verbatim, what was done — go into one local file per PR
+(`.tmp/review-loop/<PR>.md`, `scripts/review-loop.mjs`), the loop's memory across compaction or a new
+session. When the human says merge, each stop and round is posted to the PR as one plain comment
+(figures uploaded and linked), then the PR merges and the file is deleted. No threads, no bot
+waiting on GitHub. (Tried first: threads on the PR with a background watcher waking the session;
+it worked, but carried one person's words from GitHub back into the session they were already in.)
 
 | Phase | PR | Who talks | Where the human answers |
 |---|---|---|---|
-| Implementing | draft | `implement`'s orchestrator, as the project's bot | A **new review thread per stop**: decisions (two options + a recommendation) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
-| Review | open | `pr-review`'s reviewer, as the project's bot | A **new review thread per round**, written for the person who decides: a one-line verdict, then each Spec finding titled by its consequence, with the problem, the user impact, whatever evidence makes it fastest to grasp (screenshots, an annotated flow, a GIF, a sequence diagram, a small table, a worked example) and a decision with options and a recommendation; each Standards finding as rule / now / impact / suggestion; no variable names, file:line, commit hashes or section numbers in the body — code locations go in a folded block for the fixer |
+| Implementing | draft | `implement`'s orchestrator, in the session | A **stop report per stop**: decisions (two options + a recommendation) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
+| Review | open | `pr-review`'s orchestrator, in the session | A **report per round**, written for the person who decides: a one-line verdict, then each Spec finding titled by its consequence, with the problem, the user impact, whatever evidence makes it fastest to grasp (screenshots, an annotated flow, a GIF, a sequence diagram, a small table, a worked example) and a decision with options and a recommendation; each Standards finding as rule / now / impact / suggestion; no variable names, file:line, commit hashes or section numbers in the body — code locations go in a folded block for the fixer |
 
 - **Ticket done = every acceptance box has evidence or names who takes it over** (a later ticket,
   or the PR's delivery check), the selected regressions and the full suite are green — then one
@@ -115,10 +108,9 @@ carries review: each round lives in its own thread. When the human replies on Gi
 - **Stop vs defer.** A behaviour nobody decided stops that ticket (and what depends on it);
   everything else keeps going. A behaviour that is decided but cannot be proven inside this ticket
   is deferred to a named receiver; no receiver means it was undecided after all.
-- **Bot identity.** With `~/.idea-loop/github-apps.json` configured, Claude's threads and replies
-  come from the repository's GitHub App (Pull requests write, Contents read). Without it they come
-  from the gh login and say up front that Claude posted them. The human answers as themselves;
-  **resolving a thread is the human's sign-off**, never the bot's.
+- **Bot identity.** The archive comments posted at merge come from the repository's GitHub App
+  when `~/.idea-loop/github-apps.json` configures one (Pull requests write, Contents read); otherwise
+  from the gh login, saying up front that Claude posted them. Claude never speaks as the human.
 - **Delivery evidence never enters the code branch or `docs/`.** It lives on one orphan branch per
   PR (`scripts/evidence.mjs`), never merged, deleted when the PR merges, and is embedded as
   `blob/<branch>/<file>?raw=true` so clicking an image opens it full size instead of downloading it
@@ -128,7 +120,7 @@ carries review: each round lives in its own thread. When the human replies on Gi
   Codex process sees only its own question. A behavioural Spec finding that cannot be reproduced
   and drawn, or a Standards finding whose rule text or code is not where it claims, is discarded by
   `scripts/review-check.mjs` and listed in one folded line; a finding that stands but is missing a
-  part or speaks in code terms is sent back for rewording before the thread is posted.
+  part or speaks in code terms is sent back for rewording before the report is shown.
 - **Fixes go back through the tickets.** A finding the human marks "fix" becomes a new acceptance
   box on the ticket that introduced it (found by the quote, or by `git blame` → `Ticket:` trailer),
   and a fresh implementer does it. The next round is the human's call; merging is the human's order.
@@ -253,10 +245,8 @@ idea-loop/
 │   ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
 │   ├── github-app.mjs                # the bot's identity: GitHub App installation token, else the gh login
 │   ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
-│   ├── pr-thread.mjs                 # Claude's threads on a PR: one per stop / per review round; read, reply, edit (keeps the marker), list, wait (blocks until the human has replied on GitHub)
-│   ├── pr-thread.test.mjs            # marker, anchor choice, bot-vs-human, grouping, edit, wait
-│   ├── pr-inbox.mjs                  # pr-inbox scan, run in the project root: open PRs with commander messages Claude has not answered; where to work
-│   ├── pr-inbox.test.mjs             # commanders only, answered vs unanswered, worktree lookup, repo from origin
+│   ├── review-loop.mjs               # the PR's local review loop: next round, unsettled entries, archive to PR comments at merge (figures uploaded)
+│   ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
 │   ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
 │   ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
 │   ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge
@@ -277,7 +267,8 @@ idea-loop/
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
     ├── review-standards.md           # the two review axes: inputs, what counts, reproduce-and-draw, mechanical admission
-    ├── pr-description.md             # the PR page: description sections, bot threads per stop / per round, who writes what
+    ├── pr-description.md             # the PR description's four sections, and how stop reports and review rounds are written
+    ├── review-loop.md                # where reports live: the session + one local file per PR; replies; archive at merge
     ├── evidence.md                   # delivery evidence: flows, GIFs, side-by-sides from the implementation; never in git
     └── design/                       # the design side (see below)
 ```

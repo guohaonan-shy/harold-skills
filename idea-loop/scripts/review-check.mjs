@@ -17,9 +17,9 @@
  *               of code.path in `git diff <base>...HEAD`
  *
  * Whitespace is normalized; nothing else is fuzzy. A failed candidate is discarded with its reason;
- * the review thread lists discards in one folded line each.
+ * the round's report lists discards in one folded line each.
  *
- * Admitted candidates are then checked for the shape the thread is written in, because the thread
+ * Admitted candidates are then checked for the shape the round's report is written in, because it
  * is read by the person who decides, not by the person who fixes: a Spec finding has a title that
  * states the consequence, the problem, the user impact, and a decision (one line of context, options,
  * a recommendation); a Standards finding has now / impact / suggestion; and none of that reader-facing text may carry a
