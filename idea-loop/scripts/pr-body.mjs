@@ -11,8 +11,8 @@
  *
  *   summary    一句话        who can now do what, or what got fixed
  *   changes    改了什么      one block per page (end to end) or per backend flow: before → after shown,
- *                            the backend flow change, the decisions made on the human's behalf, how it
- *                            was verified and at which points
+ *                            the backend flow change, and how it was verified, one behaviour per line
+ *                            (what was left unverified included); no decisions the implementer made
  *   your-todo  要你做的事    what to review, what to decide, what to prepare before going live
  *   reference  参考          folded: change map by module, spec & tickets, ledger, cleanup
  *
