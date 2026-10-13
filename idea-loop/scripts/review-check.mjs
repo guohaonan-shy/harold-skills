@@ -13,6 +13,11 @@
  *               that was not reproduced is not a finding. Which form is the reviewer's call: whatever
  *               lets the reader see it fastest. A non-behavioural one (an extra file, a path that
  *               differs from the spec) needs no evidence beyond the diff.
+ *               A behavioural finding also says whether it shows on screen (on_screen). One that does
+ *               must carry a screenshot taken from the implementation (before / after, a screenshot
+ *               flow, a gif) — a table or a timeline in words leaves the decider guessing what the
+ *               student saw — unless no_screenshot says why it could not be shot; that is a shape
+ *               problem (rewrite), not a discard.
  *   standards — rule.text appears in rule.file; every non-blank line of code.snippet is an added line
  *               of code.path in `git diff <base>...HEAD`
  *
@@ -105,6 +110,11 @@ export function shapeProblems(c, axis) {
   if (axis === 'spec') {
     if (typeof c.behavior !== 'boolean') problems.push('没标 behavior（是不是行为问题决定要不要配图）');
     else if (!c.behavior && c.figure) problems.push('不是行为问题（多了 / 少了文件、路径不一致这类）不配图，去掉 figure');
+    else if (c.behavior && typeof c.on_screen !== 'boolean') problems.push('没标 on_screen（这个问题在界面上看不看得到，决定证据要不要用截图）');
+    else if (c.behavior && c.on_screen && !c.figure && !filled(c.no_screenshot)) {
+      problems.push('界面上看得到的问题要配取自实现的截图：单点差别用之前 / 之后截图，多步流程用截图拼的流程，动起来的用动图；表格、时序图、例子只能补充。确实拍不到（比如只有真机能复现），在 no_screenshot 里写一句为什么');
+    }
+    if (filled(c.no_screenshot)) for (const hit of codeRefs(c.no_screenshot)) problems.push(`「为什么没有截图」里有代码层面的指称：${hit}`);
     if (!filled(c.decide?.context)) problems.push('「要你决定」缺一句前提（和 spec 或工单哪条规定对不上）');
     const options = c.decide?.options;
     if (!Array.isArray(options) || options.filter(filled).length < 2) problems.push('「要你决定」至少要列两个选项');
