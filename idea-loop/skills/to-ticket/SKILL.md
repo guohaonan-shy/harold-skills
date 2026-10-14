@@ -7,13 +7,21 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 把一份 spec 切成若干 **ticket**——tracer bullet 式的**垂直切片**，每张声明挡着它的那些 ticket。
 
-> 先读一次 `../../references/wiki-conventions.md`。
+> 先读一次 `../../references/wiki-conventions.md` 和 `../../references/spec-status.md`（状态只走 `scripts/spec-status.mjs`）。
 
 **ticket 是临时凭据。** 开工时才建，那一刀合并后就删掉。它不是归档物，不留痕——留痕的是 spec（在飞时）和 ADR（了结后）。
 
-## 1 读 spec
+## 1 读 spec，先看它能不能切
 
-`docs/spec/<slug>.md` 全文，含它的 §6 测试决策（seam 已经谈拢了，别重开）。
+`docs/spec/<slug>/<slug>.md` 全文，含它的 §6 测试决策（seam 已经谈拢了，别重开）。
+
+先跑一次 `spec-status.mjs check <docs>`：报了旧平铺布局就停下，提议按 wiki-conventions §2.2 迁移。
+
+只切「在飞」前一刻的 spec（状态机见 `spec-status.md` §1）。三个条件都满足才往下走，缺哪个就停下告诉人缺什么：
+
+- `status` 是 `审核中`（不碰 UI：§5.3 写「不涉及」），或 `设计中` **且** §4 里有冻结摘要（设计已冻结）。`设计中` 还没冻结的不切——先跑完设计那两段。`草稿` 不切——人还没审。
+- 正文开头没有「需要 grill」那一行。有就先 grill。
+- 人在会话里明说同意这份 spec（「spec 可以了」「同意，切吧」这一类）。没说就问一句，不替人默认。
 
 ## 2 探代码库
 
@@ -30,7 +38,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 给每张 ticket 它的 **blocking edges**——必须先完成的那些 ticket。没有 blocker 的可以立刻开工。
 
-**一份 spec 塞得进一个 PR 就别建 ticket**，直接开工。
+**一份 spec 塞得进一个 PR 就只切一张 ticket。** `implement` 按工单派执行方，`在飞` 也要求至少一张工单。
 
 ### 大范围重构是垂直切片的例外
 
@@ -54,13 +62,15 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 ## 5 落盘
 
-`docs/spec/tickets/<NN>-<slug>.md`，从 `01` 开始按依赖顺序编号（blocker 在前）。
+`docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`，在这份 spec 内从 `01` 开始按依赖顺序编号（blocker 在前）。工单住在自己 spec 的目录里，跟别的 spec 的工单不混、编号不互撞（wiki-conventions §2）。
+
+人点头、工单全部落盘之后，`spec-status.mjs set <docs> <spec-slug> 在飞`。这一翻只归这一步：它同时说明设计已冻结、人同意了、工单已切；脚本会再核一遍冻结摘要和工单在不在，拒绝就照它说的原因处理，不手改状态。
 
 ```markdown
 # NN — <标题>
 
 **Blocked by**：<编号/标题>，或「无——可立即开工」
-**设计冻结**：不涉及 UI ｜ 已冻结（<画布指针> · <matrix 各格> · <mismatch 阈值> · <一行 ledger 摘要> · <状态矩阵与数据契约变更>）｜ ⛔ 未冻结 —— 不可开工
+**设计冻结**：不涉及 UI ｜ 已冻结（<画布指针> · <matrix 各格> · <mismatch 阈值> · <一行 ledger 摘要> · <状态矩阵与数据契约变更>）
 
 ## 要建什么
 这张 ticket 让什么端到端行为跑起来，用户视角——不是逐层的实现清单。
@@ -75,20 +85,15 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 > **这个文件是本 plugin 起源项目的布局假设。** 目标仓库没有它是常态。没有就**如实写「无 test-cases 库」，并指名那个仓库真实存在的套件**（按名字/角色，不按路径）—— 不要编一个不存在的路径让模板看起来填满了。
 
-### 设计冻结闸门挂在这里
+### 设计冻结闸门挂在 spec 的状态上
 
-**动 UI 的 ticket 要求设计已冻结才能开工**；spec 不要求（spec 可以停在 `status: 等设计冻结`）。
+**碰 UI 的 spec 要设计已冻结才切工单**（§1）：`设计中` 的 spec 在冻结之前一张票都不切，所以不会有「切了但不能开工」的票，`在飞` 之前也不会有实现的 commit。代价是一份混着 UI 和非 UI 的 spec，非 UI 那部分也要等设计冻结；不想等，就在审核时把它拆成两份 spec。
 
-设计冻结是**开工前置条件**，不是规格的完成度指标。挂在 spec 上就会积一批"想清楚了但画不出来"的文档长期驻留。
+**誊写只读 spec**——§1 读的那份，就是全部输入。不看 cwd 里的临时文件，不调别的 skill，也不等任何别的 plugin 的返回值。动 UI 的票，把 §4 实现决策里的**冻结摘要**原样誊写到「设计冻结」字段：**画布指针**（HTML 画布的 wikilink）、**matrix**（这张 ticket 范围内的那些格：viewport × 主题 × 状态）、**mismatch 阈值**（按格覆盖过的写覆盖值，没覆盖的写沿用默认）、**一行 ledger 摘要**、**状态矩阵与数据契约变更**（画布上有、项目现在渲染不出来的字段——漏掉这项，`implement` 会拿写死的假数据糊过去）。**不改写、不新编数字或措辞**——那些是收敛那一段产出时自己填的，切票这一步只誊写。
 
-**判定只读 spec**——§1 读的那份，就是全部输入。不看 cwd 里的临时文件，不调别的 skill，也不等任何别的 plugin 的返回值。只有两条路：
+**不要因为"看起来设计得差不多了"就替它冻结。** 冻结摘要不在、或者只冻结了一部分，就是还没冻结，回 §1 停下。
 
-- spec `status: 在飞` **且** §4 实现决策里有**冻结摘要**小节 → 原样誊写到「设计冻结」字段：**画布指针**（HTML 画布的 wikilink）、**matrix**（这张 ticket 范围内的那些格：viewport × 主题 × 状态）、**mismatch 阈值**（按格覆盖过的写覆盖值，没覆盖的写沿用默认）、**一行 ledger 摘要**、**状态矩阵与数据契约变更**（画布上有、项目现在渲染不出来的字段——漏掉这项，`implement` 会拿写死的假数据糊过去）。**不改写、不新编数字或措辞**——那些是收敛那一段产出时自己填的，切票这一步只誊写。
-- spec `status: 等设计冻结`（§4 里还没有冻结摘要）→ 字段落 `⛔ 未冻结 —— 不可开工`。`implement` 认的就是 ⛔ 这个标记本身，它会照这行拦下开工。
-
-没有第三条路：**不要因为"看起来设计得差不多了"就替它冻结**，也不要跳过这张 ticket 不切——⛔ 的 ticket 照切、照编号、照进依赖图，它只是还不能开工。
-
-**非 UI 的 ticket 不受这道闸门影响**：字段写「不涉及 UI」，可以和设计那两段**并行**开工。一份碰 UI 的 spec 切出来的票通常是混的，别让一张 ⛔ 把整批都按住。
+不碰 UI 的票字段写「不涉及 UI」。
 
 ### UI ticket 的验收标准要带上比对项
 
@@ -119,7 +124,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 ## 7 收工
 
-合并后**删掉那张 ticket 文件**。全部 ticket 都删完了，说明这份 spec 做完了。
+合并后**删掉那张 ticket 文件**。全部 ticket 都删完了（`docs/spec/<spec-slug>/tickets/` 空了），说明这份 spec 做完了；空的 `tickets/` 目录一起删。spec 目录本身留着，等 `dreaming` 写完 ADR 后整个删。
 
 同一时机删掉这个 PR 的交付证据：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`（`../../references/evidence.md` §2）。人验素材和 review 配图只服务于这次交付，不进知识库。
 

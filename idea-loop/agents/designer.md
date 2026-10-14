@@ -219,7 +219,7 @@ docs/design/<spec-slug>/
     └── flows/                 §11.2 写回 spec 的交互图（PNG），拼图输入在 flows/src/
 ```
 
-记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>.md` 撞名。frontmatter 按 wiki-conventions §3，`type: design`。
+记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 wiki-conventions §3，`type: design`。
 
 **这个目录不跟 spec 一起删。** 冻结设计是实现之后的视觉真值，ADR 链到它。
 
@@ -241,16 +241,16 @@ docs/design/<spec-slug>/
 
 **§5.3 的交互图**：照 `refs/spec-figures.md` §4，一个场景一张，截图取自冻结画布（手机宽度、主语言、动画定格、2 倍像素密度、每一步只截那个组件），用 `scripts/flow-compose.mjs` 拼，PNG 落 `docs/design/<spec-slug>/assets/flows/`，替换掉冻结前那几行文字和「待补图」标记。改动的位置画红色光圈，图下一两句补截图里看不出来的规则。**这一步不能省**：不做，冻结设计跟 spec 两头脱节。
 
-### 11.3 翻状态
+### 11.3 状态不翻
 
-spec 的 `status`：`等设计冻结` → **`在飞`**。这一翻就是闸门本身——`to-ticket` 认「在飞 **且** §4 有冻结摘要」。然后交回编排者（§9 的格式，「要看哪里」列交互图的路径）。
+spec 的 `status` 留在 **`设计中`**，不翻。`to-ticket` 认的闸门是「`设计中` **且** §4 有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`refs/spec-status.md`）。写完 §11.2 就交回编排者（§9 的格式，「要看哪里」列交互图的路径）。
 
 ### 11.4 部分冻结
 
 人说「这几块可以冻结了，那几块回去重新发散」时：
 
 1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。
-2. spec **不动**：状态留在 `等设计冻结`，不写冻结摘要——`to-ticket` 只认整份冻结。
+2. spec **不动**：状态留在 `设计中`，不写冻结摘要——`to-ticket` 只认整份冻结。
 3. 回推的那几块记进冻结记录的签字节（分流回 `uiux-imagine` 的 note）。`.tmp/uiux-imagine/<spec-slug>/` 与 `.tmp/uiux-refine/<spec-slug>/` **保留**。
 4. 交回编排者，然后你就结束了。下一个 designer 从 §2「已冻结过一部分」那条接上。
 

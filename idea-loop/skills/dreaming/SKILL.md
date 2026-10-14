@@ -10,14 +10,14 @@ disable-model-invocation: true
 
 这个 skill 拿每一份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后**提议**处置。
 
-> 先读一次 `../../references/wiki-conventions.md`。目标项目有 `GLOSSARY.md` 时，再读一次 `../../references/glossary.md`。
+> 先读一次 `../../references/wiki-conventions.md` 和 `../../references/spec-status.md`（翻状态只走 `scripts/spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再读一次 `../../references/glossary.md`。
 
 ## 七条纪律（每一条都来自踩过的坑）
 
 1. **开跑先 `git fetch`，所有核实对 `origin/main`。** 本地工作树会落后（实测落后过 24 个 commit），在落后的树上判"未实现"就是误判。
 2. **不能靠 grep `#\d+` 判 PR。** `#2563eb` 是 hex 色值，`#15`–`#27` 是文档内部的任务编号——`gh pr view 15` 会返回一个看起来完全合理的无关 PR。**必须交叉核对 PR 标题与文档主题对不对得上。**
 3. **扫描范围含 `CLAUDE.md` 和各插件的 references。** 实测里最陈旧的文档不在 `docs/` 里，而在那份每次会话都注入上下文的文件中（列了一张三个半月前就被 DROP 的表）。
-4. **`status: parked` 的 spec 跳过年龄判定。** 年龄分不出"被遗忘"和"被故意排期"。
+4. **`status: parked` 的 spec 跳过年龄判定。** 年龄分不出"被遗忘"和"被故意排期"。`草稿` / `审核中` / `设计中` 的 spec 还没开工，判定只看它停在这个状态多久了（提议人去审、去设计或标 `parked`），不判实现。
 5. **提议 → 人批准 → 机械执行**，三步分离。绝不凭记忆、也不凭文档自己的旧结论标记——每个判定都靠这一次跑出来的证据。存疑就留着不动。
 6. **删 spec 前先写 ADR**（契约 §1 的不变量）。
 7. **每次删除后跑 link sweep。** 移动不打断 basename 链接，删除会。
@@ -38,14 +38,14 @@ disable-model-invocation: true
 
 | 情况 | 信号 | 处置 |
 |---|---|---|
-| spec 已实现 | 代码物在树上 / PR merged 且标题对得上 | 写 ADR → 删 spec |
-| spec 确认不做 | 人确认（**不是**超时推断） | 写 ADR（❌ 未采纳，带 why-not）→ 删 spec |
+| spec 已实现 | 代码物在树上 / PR merged 且标题对得上 | 写 ADR → 删整个 spec 目录 |
+| spec 确认不做 | 人确认（**不是**超时推断） | 写 ADR（❌ 未采纳，带 why-not）→ 删整个 spec 目录 |
 | ⚠️ spec 说 X，代码是 Y | 代码物在，但形态对不上 | **报警，绝不自动处理**——文档在撒谎，比过期危险 |
 | domain / reference 与现状不符 | 引用的表/字段/接口已改名 | 订正，不删 |
 | `GLOSSARY.md` 与现状不符 | `_Avoid_` 里的词出现在新代码或新文档里；词条说的概念在代码里已经没了 | **逐条问人**，同意了才订正或删除；不新增词条——新增只在 `grill` 里 |
 | 新 spec 的决策，判了某个已生效 ADR 的某一节 | 写新 ADR 前，先搜 `docs/adr/` 有没有同话题旧决策 | **section 级标注，不是整份作废**：旧 ADR 那一节标题后加 `⚠️ 已被取代 → ADR-<new> §<n>`；只有当旧 ADR **全部**小节都已被取代，才把 frontmatter `status` 整份翻成 `已被取代（→ ADR-<new>）` |
 
-**漏网的 ticket 也归这里扫。** `docs/spec/tickets/` 里的 ticket 本该在合并后由 `to-ticket` 删掉；对每一张仍然存在的，查它对应的 PR 是否已 MERGED（`gh`，且标题要对得上）——已合并却还躺着的，就是没删干净，提议删除。ticket 是临时凭据，留着会让「还有活没干完」这个信号失真。
+**漏网的 ticket 也归这里扫。** `docs/spec/<spec-slug>/tickets/` 里的 ticket 本该在合并后由 `to-ticket` 删掉；对每一张仍然存在的，查它对应的 PR 是否已 MERGED（`gh`，且标题要对得上）——已合并却还躺着的，就是没删干净，提议删除。ticket 是临时凭据，留着会让「还有活没干完」这个信号失真。
 
 `部分实现` 的 spec 按契约拆：已完成的部分写 ADR，剩下的留一份小 spec。剩余部分若是无限期搁置，标 `status: parked` 单独成文——否则一份 spec 会因为一个永远不做的 follow-up 而永久驻留。
 
@@ -55,8 +55,8 @@ disable-model-invocation: true
 2. 逐份取证。量大就派 subagent 并行，**每个 agent 只读不写**，回结构化表格。
 3. 汇成一张处置表：文件 / 自称状态 / 实现判定 / 证据 / 建议处置。
 4. **摆给人，逐行确认。** 量大就发 Artifact。
-5. 执行批准了的：`git mv` 移动、先 ADR 后 `git rm` 删除、订正内容。
-6. link sweep + 重新生成各层 `index.md`。
+5. 执行批准了的：`git mv` 移动、先 ADR 后 `git rm` 删除、订正内容。删 spec 是删它整个目录（`docs/spec/<spec-slug>/`，含 `tickets/` 和 backlog 模式落的 `assets/`）；`assets/` 里 ADR 要引的证据图先挪进 ADR 旁边再删。目标仓库还是旧的平铺布局，先提议按 wiki-conventions §2.2 迁移。
+6. link sweep + 重新生成各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）。
 7. 报告：动了什么、留了什么、为什么留。
 
 ## 幂等
