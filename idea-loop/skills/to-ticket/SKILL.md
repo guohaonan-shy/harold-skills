@@ -7,7 +7,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 把一份 spec 切成若干 **ticket**——tracer bullet 式的**垂直切片**，每张声明挡着它的那些 ticket。
 
-> 先读一次 `../../references/wiki-conventions.md`。
+> 先读一次 `../../references/wiki-conventions.md` 和 `../../references/spec-status.md`（状态只走 `scripts/spec-status.mjs`）。
 
 **ticket 是临时凭据。** 开工时才建，那一刀合并后就删掉。它不是归档物，不留痕——留痕的是 spec（在飞时）和 ADR（了结后）。
 
@@ -15,7 +15,9 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 `docs/spec/<slug>/<slug>.md` 全文，含它的 §6 测试决策（seam 已经谈拢了，别重开）。
 
-只切「在飞」前一刻的 spec（状态机见 wiki-conventions §3）。三个条件都满足才往下走，缺哪个就停下告诉人缺什么：
+先跑一次 `spec-status.mjs check <docs>`：报了旧平铺布局就停下，提议按 wiki-conventions §2.2 迁移。
+
+只切「在飞」前一刻的 spec（状态机见 `spec-status.md` §1）。三个条件都满足才往下走，缺哪个就停下告诉人缺什么：
 
 - `status` 是 `审核中`（不碰 UI：§5.3 写「不涉及」），或 `设计中` **且** §4 里有冻结摘要（设计已冻结）。`设计中` 还没冻结的不切——先跑完设计那两段。`草稿` 不切——人还没审。
 - 正文开头没有「需要 grill」那一行。有就先 grill。
@@ -36,7 +38,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 给每张 ticket 它的 **blocking edges**——必须先完成的那些 ticket。没有 blocker 的可以立刻开工。
 
-**一份 spec 塞得进一个 PR 就别建 ticket**，直接开工。
+**一份 spec 塞得进一个 PR 就只切一张 ticket。** `implement` 按工单派执行方，`在飞` 也要求至少一张工单。
 
 ### 大范围重构是垂直切片的例外
 
@@ -62,7 +64,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 `docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`，在这份 spec 内从 `01` 开始按依赖顺序编号（blocker 在前）。工单住在自己 spec 的目录里，跟别的 spec 的工单不混、编号不互撞（wiki-conventions §2）。
 
-人点头、工单全部落盘之后，把 spec 的 `status` 翻成 **`在飞`**，刷新 `docs/spec/index.md`。这一翻只归这一步：它同时说明设计已冻结、人同意了、工单已切。
+人点头、工单全部落盘之后，`spec-status.mjs set <docs> <spec-slug> 在飞`。这一翻只归这一步：它同时说明设计已冻结、人同意了、工单已切；脚本会再核一遍冻结摘要和工单在不在，拒绝就照它说的原因处理，不手改状态。
 
 ```markdown
 # NN — <标题>

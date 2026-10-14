@@ -12,7 +12,7 @@ description: 把刚才这场对话落盘成 raw transcript + 一份 spec，或�
 - **grill 模式**（默认）：输入是刚才这场 grill 对话。走下面 §1–§4。
 - **backlog 模式**：输入是 backlog 里同一模块的一组条目，没有对话，通常由起草 routine 调用。走 `references/backlog-mode.md`，那里写了它跟本文哪几处不同；没写到的照本文。
 
-> 先读一次 `../../references/wiki-conventions.md`（目录、frontmatter、slug 唯一性、禁写文件路径）和 `../../references/spec-figures.md`（spec 里四处图：画什么、用什么画、放哪）。
+> 先读一次 `../../references/wiki-conventions.md`（目录、frontmatter、slug 唯一性、禁写文件路径）、`../../references/spec-status.md`（状态机、backlog 移交标记，都只走 `scripts/spec-status.mjs`）和 `../../references/spec-figures.md`（spec 里四处图：画什么、用什么画、放哪）。
 >
 > spec 不只写给 agent，也写给人：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在 §4 的决策拼成一条链。所以 §1、§3、§5 都要配图。
 
@@ -44,6 +44,8 @@ related: ["[[<spec-slug>]]"]
 
 ## 2 落 spec
 
+开工前跑一次 `spec-status.mjs check <docs>`：报了旧平铺布局就停下，提议按 wiki-conventions §2.2 迁移。
+
 写进 `docs/spec/<slug>/<slug>.md`——一份 spec 一个目录，文件与目录同名（wiki-conventions §2）。slug 必须**全局唯一**且**不同于 transcript 的 slug**。
 
 目标项目有 `GLOSSARY.md` 就读它，spec 标题和正文里的领域概念用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../../references/glossary.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
@@ -51,7 +53,7 @@ related: ["[[<spec-slug>]]"]
 ```markdown
 ---
 type: spec
-status: 审核中        # backlog 模式落 草稿；状态机见 wiki-conventions §3
+status: 审核中        # backlog 模式落 草稿；状态机见 spec-status.md
 tags: [...]
 summary: <一句话，≤60 字>
 related: ["[[<transcript-slug>]]"]
@@ -142,7 +144,7 @@ raw 素材、相关 spec、相关 ADR。跑过 `prototype` 的，把它落的那
 
 grill 出来的 spec 一律落 `审核中`，碰不碰 UI 都一样。grill 里人答过的问题不等于人同意了整份 spec：落盘之后人要通读一遍，才轮到切工单。
 
-**碰 UI 的 spec 靠 §5.3 标出来**：§5.3 写文字、开头标「待补图」，这就是「要先设计」的记号。人审完，审核会话把状态翻成 `设计中`，接 `uiux-imagine`。设计冻结时在 §4 写入**冻结摘要**、把 §5.3 的文字换成交互图，那时 `to-ticket` 才誊得出设计冻结字段。中间 `uiux-imagine` 产出的方向说明是交给 `uiux-refine` 的中间产物，住在 worktree 根的 `.tmp/`，不写进 spec。
+**碰 UI 的 spec 靠 §5.3 标出来**：§5.3 写文字、开头标「待补图」，这就是「要先设计」的记号，`spec-status.mjs` 也按它判断能不能进 `设计中`。人审完对它调 `uiux-imagine`，由 imagine 开工时把状态翻成 `设计中`。设计冻结时在 §4 写入**冻结摘要**、把 §5.3 的文字换成交互图，那时 `to-ticket` 才誊得出设计冻结字段。中间 `uiux-imagine` 产出的方向说明是交给 `uiux-refine` 的中间产物，住在 worktree 根的 `.tmp/`，不写进 spec。
 
 翻成 `在飞` 是 `to-ticket` 的事：设计冻结了（不碰 UI 的跳过）、人同意了、工单切完了，才翻。别为了让 spec 看起来"完成"而提前翻状态。
 
@@ -156,15 +158,15 @@ grill 出来的 spec 一律落 `审核中`，碰不碰 UI 都一样。grill 里�
 
 ## 3 建索引条目，写移交标记
 
-刷新 `docs/spec/index.md` 和 `docs/raw/index.md`（表体从 frontmatter 生成）。
+`spec-status.mjs index <docs>` 刷新 `docs/spec/index.md`；`docs/raw/index.md` 照旧从 frontmatter 生成。
 
-这份 spec 覆盖了项目 backlog 里的条目（对话里提到的、§8 关联里挂的），就在每条上写「已移交 → [[<spec-slug>]]」，写法按 wiki-conventions §8。不写，起草 routine 会为同一条再起草一份。
+这份 spec 覆盖了项目 backlog 里的条目（对话里提到的、§8 关联里挂的），每条跑一次 `spec-status.mjs handoff`（`spec-status.md` §2）。不写，起草 routine 会为同一条再起草一份。
 
 ## 4 收工，点名下一步
 
 两个产物落完、索引刷完之后，**明说下一环是谁**：下一步是人审这份 spec。
 
-- 人审完、spec 碰 UI（§5.3 标了「待补图」）→ 状态翻成 `设计中`，下一步是 `uiux-imagine`（设计发散）。不要直接进 `to-ticket`——它不切 `设计中` 还没冻结的 spec。
+- 人审完、spec 碰 UI（§5.3 标了「待补图」）→ 下一步是 `uiux-imagine`（设计发散），它开工时把状态翻成 `设计中`。不要直接进 `to-ticket`——碰 UI 的 spec 设计冻结之前它不切。
 - 人审完、不碰 UI、人明说同意 → 下一步是 `to-ticket`。
 
 ## 边界

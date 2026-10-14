@@ -13,8 +13,8 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。只做其中几张时，在后面列出工单号。
 - **当前 worktree 就是集成分支**：一份 spec 的所有工单共享一条分支、一个 PR。这个 skill 不建分支、不切分支。工作区不干净（`git status --short` 非空）、或者当前分支是基准分支本身，就停下告诉人。
-- **审核会话开出来的 worktree，分支先改名**：`claude -w` 建的 worktree 分支名形如 `worktree-review-<slug>`。当前分支以 `worktree-` 开头、还没推送过（没有 upstream），开工前先 `git branch -m fix/<spec-slug>`，改完它就是集成分支。已经推送过的不改名，照原名用，在第一次停下汇报里提一句。审核会话里改 spec、切工单的 docs commit 都在这条分支上，跟实现一起进同一个 PR。
-- spec 的 `status` 是 `在飞`，`docs/spec/<spec-slug>/tickets/` 下有工单。不是就停：先跑 `to-ticket`（它切完工单才把 spec 翻成 `在飞`）。
+- 审核会话开在哪个 worktree、分支叫什么，是开会话的那一方（人，或项目的起草 routine）定的，这个 skill 照当前分支用。审核会话里改 spec、切工单的 docs commit 都在这条分支上，跟实现一起进同一个 PR。
+- `spec-status.mjs check <docs>` 不报旧平铺布局；spec 的 `status` 是 `在飞`，`docs/spec/<spec-slug>/tickets/` 下有工单。不是就停：旧布局先按 wiki-conventions §2.2 迁移；没切票先跑 `to-ticket`（它切完工单才把 spec 翻成 `在飞`，`../../references/spec-status.md`）。
 
 **不需要 `/clear`。** 干活的是每张工单新起的 implementer，它的上下文里只有那一张工单，连上一张做了什么都不在。这个会话可以留着之前的讨论。
 

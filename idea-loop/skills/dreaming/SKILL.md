@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 这个 skill 拿每一份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后**提议**处置。
 
-> 先读一次 `../../references/wiki-conventions.md`。目标项目有 `GLOSSARY.md` 时，再读一次 `../../references/glossary.md`。
+> 先读一次 `../../references/wiki-conventions.md` 和 `../../references/spec-status.md`（翻状态只走 `scripts/spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再读一次 `../../references/glossary.md`。
 
 ## 七条纪律（每一条都来自踩过的坑）
 
@@ -56,7 +56,7 @@ disable-model-invocation: true
 3. 汇成一张处置表：文件 / 自称状态 / 实现判定 / 证据 / 建议处置。
 4. **摆给人，逐行确认。** 量大就发 Artifact。
 5. 执行批准了的：`git mv` 移动、先 ADR 后 `git rm` 删除、订正内容。删 spec 是删它整个目录（`docs/spec/<spec-slug>/`，含 `tickets/` 和 backlog 模式落的 `assets/`）；`assets/` 里 ADR 要引的证据图先挪进 ADR 旁边再删。目标仓库还是旧的平铺布局，先提议按 wiki-conventions §2.2 迁移。
-6. link sweep + 重新生成各层 `index.md`。
+6. link sweep + 重新生成各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）。
 7. 报告：动了什么、留了什么、为什么留。
 
 ## 幂等

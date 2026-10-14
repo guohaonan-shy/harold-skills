@@ -6,7 +6,7 @@
 
 ## 0 输入
 
-- 一组 backlog 条目，都属于同一个模块。模块划分表在 backlog 文件的「模块」一节，是项目配置（wiki-conventions §8）；读不到这一节就停下，说缺什么，不自己编模块。
+- 一组 backlog 条目，都属于同一个模块。模块划分表在 backlog 文件的「模块」一节，是项目配置（`../../../references/spec-status.md` §2）；读不到这一节就停下，说缺什么，不自己编模块。
 - 条目里带「已移交 → [[…]]」标记的，已经有 spec 了，跳过。
 
 ## 1 先复现
@@ -53,8 +53,8 @@
 ## 4 落盘
 
 - frontmatter `status: 草稿`。`related` 不挂 transcript，挂这份 spec 关联的其他 spec / ADR，没有就留空列表。
-- 刷新 `docs/spec/index.md`。
-- 在每条被这份 spec 覆盖的 backlog 条目上写「已移交 → [[<spec-slug>]]」（wiki-conventions §8）。进了「建议关闭」的也写——它同样等着人在这份 spec 的审核里处置。
+- `spec-status.mjs index <docs>` 刷新 `docs/spec/index.md`。
+- 每条被这份 spec 覆盖的 backlog 条目跑一次 `spec-status.mjs handoff`（`../../../references/spec-status.md` §2）。进了「建议关闭」的也写——它同样等着人在这份 spec 的审核里处置。
 - **不提交、不推送、不开会话。** 这些是起草 routine 的事，它是项目的本机配置，不归 idea-loop。
 
 收工时列出：起草了哪几份 spec（slug、各含哪几条、是否标了「需要 grill」、是否碰 UI），以及进了「建议关闭」的条目。

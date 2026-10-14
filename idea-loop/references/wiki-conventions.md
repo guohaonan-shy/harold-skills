@@ -8,7 +8,7 @@
 > 前两条来自一次实跑（把 spec 落进一个已有常驻规格的仓库）暴露的洞，第三条是 §4 与 §5 本身相冲。
 >
 > **2026-10-14 签字**（harold-skills#42）：§2 每份 spec 一个目录、工单住进自己 spec 的目录；§3 spec 状态机加
-> `草稿` / `审核中`，`等设计冻结` 改名 `设计中`；§4 对工单文件名的豁免；§8 backlog 移交标记。起因是几份 spec
+> `草稿` / `审核中`，`等设计冻结` 改名 `设计中`，状态与 backlog 移交标记的规则搬进 `spec-status.md`、只走脚本改；§4 对工单文件名的豁免。起因是几份 spec
 > 同时在飞时工单混在一个目录里、编号互撞，以及起草 routine 要从 backlog 自动起草 spec。
 >
 > **2026-09-28 签字**：§2 新增 `design/<spec-slug>/` 层、§3 新增 `type: design`。冻结的设计从
@@ -102,7 +102,7 @@ docs/
 1. 每份 `docs/spec/<slug>.md` → `git mv` 到 `docs/spec/<slug>/<slug>.md`。wiki-link 按文件名解析，移动不打断它们；**相对路径的图片引用会断**（spec 深了一层），每条前面补一个 `../`，改完逐条确认文件存在。
 2. `docs/spec/tickets/` 下的每张工单，按它的 PR、它引用的 spec 或它的标题判断属于哪份 spec，`git mv` 到那份 spec 的 `tickets/`。判断不了的列给人，不猜。归属清楚后旧的 `tickets/` 目录应该是空的，删掉它。
 3. 旧状态值改名：`等设计冻结` → `设计中`。`在飞` 不动——已经在做的 spec 不回退成 `审核中`。
-4. 刷新 `docs/spec/index.md`（§5），文件列的链接不变。
+4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`spec-status.md` §1）。
 
 正在做的 PR 不受影响：集成分支上已有的 commit 里，`Ticket:` trailer 只写工单名，不写路径。
 
@@ -134,19 +134,7 @@ related: ["[[other-slug]]"]
 
 `parked` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
 
-spec 的状态按这个顺序往前走，每一步只有一个写入方：
-
-| 状态 | 含义 | 谁写入 |
-|---|---|---|
-| `草稿` | 起草 routine 从 backlog 起草、还没人审 | 只有 `to-spec` 的 backlog 模式 |
-| `审核中` | 人在审 | routine 给草稿开出审核会话时；grill 会话里的 `to-spec` 直接落这个状态 |
-| `设计中` | 人审完，这份 spec 碰 UI、要先设计 | 人审完、说要设计时，审核会话把状态翻过来 |
-| `在飞` | 设计已冻结（不碰 UI 的跳过这一步）、人同意了 spec、工单已切 | `to-ticket` 切完工单时 |
-| `已拍板未排期` · `parked` | 定了但不排期 · 故意搁置 | 人 |
-
-`to-ticket` 只接 `审核中`（不碰 UI）和设计已冻结的 `设计中`（§4 有冻结摘要），而且要人在会话里明说同意这份 spec。`设计中` 的 spec 在冻结之前不切工单，所以 `在飞` 之前不会有实现的 commit。
-
-合并后照旧整个目录删（§1）。
+spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `spec-status.md`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
 
 **ADR 的取代默认是 section 级，不是整份**——一份 ADR 常含多条决策（引用粒度本就是 `ADR-NNNN §n`），新决策通常只推翻其中一节。frontmatter 的 `status` 只在**全部**小节都作废时才翻成 `已被取代`；部分取代记在那一节标题后（`⚠️ 已被取代 → ADR-<new> §<n>`），文件本身仍是 `生效`。
 
@@ -174,7 +162,7 @@ spec 的状态按这个顺序往前走，每一步只有一个写入方：
 | [[slug]] | 在飞 | <取自 frontmatter.summary> |
 ```
 
-表体**从 frontmatter 生成**，不手工维护——手工维护必然漂移（v1 实证：一份文档晋级后旧索引条目还留着，同时出现在两个索引里）。
+表体**从 frontmatter 生成**，不手工维护（`docs/spec/index.md` 由 `scripts/spec-status.mjs index` 生成）——手工维护必然漂移（v1 实证：一份文档晋级后旧索引条目还留着，同时出现在两个索引里）。
 
 ## 6 人机分工
 
@@ -189,13 +177,4 @@ spec 的状态按这个顺序往前走，每一步只有一个写入方：
 
 ## 8 backlog 移交标记
 
-项目的 backlog（例如 `docs/quality-backlog.md`）里的条目被一份 spec 覆盖时，在条目上写「已移交 → [[<spec-slug>]]」。起草 routine 靠这个标记跳过已经有 spec 的条目，否则它会为同一条再起草一份。
-
-- **谁写**：`to-spec` 的两种模式都写——grill 来的 spec 只要覆盖了 backlog 条目，也要写。人在审核时把某条踢出 spec，审核会话就撤掉它的标记，并从 spec 的 §8 关联里删掉那条。
-- **写在哪**：
-  - 表格型（「待办」，带状态列）：状态列的值换成 `已移交 → [[<spec-slug>]]`。
-  - 勾选列表型（「线上问题」）：在条目的第一行末尾追加 ` 已移交 → [[<spec-slug>]]`，勾选框不动。
-- **routine 怎么过滤**：一行里有 `已移交 → [[` 就跳过。两种格式都只看这一个字面串。
-- **之后**：spec 的 PR 合并后，标记由起草 routine 对账时改成 backlog 自己的「已解决」写法。这一步不归 idea-loop。
-
-backlog 的**模块划分表**是项目配置，写在 backlog 文件里的「模块」一节，`to-spec` 的 backlog 模式从那里读，不写死在 skill 里。
+backlog 里被 spec 覆盖的条目带「已移交 → [[<spec-slug>]]」，起草 routine 靠它跳过已经有 spec 的条目。谁写、谁撤、两种 backlog 格式怎么写，在 `spec-status.md` §2，**写和撤都只走 `scripts/spec-status.mjs`**。backlog 的模块划分表是项目配置，写在 backlog 文件里的「模块」一节。

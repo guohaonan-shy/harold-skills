@@ -31,8 +31,10 @@ pr-review` runs once per piece of work. A spec's status walks
 `草稿 → 审核中 → 设计中 → 在飞`: `to-spec`'s backlog mode lands `草稿`, a `grill`
 spec lands `审核中`, and either way a human reads the whole spec before anything is
 cut. **The bracket is the whole design side, and it is conditional**: when the spec
-touches UI the human's review flips it to `设计中` and you walk those two stages;
-otherwise it goes straight to `to-ticket`. The freeze leaves the spec at `设计中`
+touches UI the human runs `uiux-imagine` on it once the review is done, and imagine's
+first step flips it to `设计中`; otherwise it goes straight to `to-ticket`. Every status
+change and every backlog hand-over mark goes through `scripts/spec-status.mjs`, which
+checks the step's precondition before writing (`references/spec-status.md`). The freeze leaves the spec at `设计中`
 with a freeze summary in it — `to-ticket` is the only thing that flips a spec to
 `在飞`, once the design is frozen, the human has agreed and the tickets are cut.
 `dreaming` is a **periodic batch reconciliation** over the whole
@@ -252,6 +254,8 @@ idea-loop/
 │   ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
 │   ├── review-loop.mjs               # the PR's local review loop: next round, unsettled entries, archive to PR comments at merge (figures uploaded)
 │   ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
+│   ├── spec-status.mjs               # the only writer of a spec's status and the backlog hand-over marks — checks each step, re-indexes
+│   ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, both backlog shapes
 │   ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
 │   ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
 │   ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge
@@ -268,6 +272,7 @@ idea-loop/
 │   └── baseline/                     # the archived run: benchmark.json + per-cell grading
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
+    ├── spec-status.md                # the spec state machine (who flips what, when) and the backlog hand-over marks
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
