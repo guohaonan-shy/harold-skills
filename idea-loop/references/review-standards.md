@@ -92,7 +92,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 {
   "spec": [{
     "id": "S1", "title": "…", "behavior": true, "on_screen": true,
-    "quote": { "file": "docs/spec/tickets/03-….md", "text": "原文" },
+    "quote": { "file": "docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
     "figure": "r1-….png", "example": "（界面上看不到时可以只有它：一张小表或一行例子）",
     "problem": "…", "user_impact": "…",
     "decide": { "context": "…", "options": ["…", "…"], "recommend": "…" },

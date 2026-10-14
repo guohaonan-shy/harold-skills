@@ -16,7 +16,7 @@ effort: xhigh
 编排者给你：
 
 - worktree 路径（集成分支，已推送）、`<owner/repo>`、PR 号、基准分支、这一轮的轮次
-- spec 路径和工单目录
+- spec 路径（`docs/spec/<spec-slug>/<spec-slug>.md`）和工单目录（同一目录下的 `tickets/`）
 - 这个 PR 的 review loop 文件路径（`refs/review-loop.md`；从里面读之前几轮的汇报和人的批示）
 - Codex companion 的路径（§2）
 

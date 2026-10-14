@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 等设计冻结
+status: 设计中
 tags: [practice-history, attempt, surface]
 summary: 练习记录页：把「我练过什么、同一道题这几次修好了什么」变成一个能一眼看出来的 surface
 related: ["[[2026-09-05-attempt-state-model]]"]

@@ -13,7 +13,7 @@
  */
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { checkDirectionNote } from '../scripts/direction-note-check.mjs';
 
@@ -91,9 +91,14 @@ export function sectionUntil(md, titleFragment, siblingFragments) {
   return (end < 0 ? rest : rest.slice(0, end)).join('\n');
 }
 
+/** spec：docs/spec/<slug>/<slug>.md，一份 spec 一个目录、文件与目录同名（wiki-conventions §2）。 */
 const specFiles = (p) =>
-  walk(p).filter((f) => f.startsWith('docs/spec/') && f.endsWith('.md') && !f.includes('/tickets/') && !f.endsWith('index.md'));
-const ticketFiles = (p) => walk(p).filter((f) => f.startsWith('docs/spec/tickets/') && f.endsWith('.md'));
+  walk(p).filter((f) => {
+    const m = f.match(/^docs\/spec\/([^/]+)\/([^/]+)\.md$/);
+    return m && m[1] === m[2];
+  });
+/** 工单：docs/spec/<slug>/tickets/NN-<slug>.md。 */
+const ticketFiles = (p) => walk(p).filter((f) => /^docs\/spec\/[^/]+\/tickets\/[^/]+\.md$/.test(f));
 /** 画布：docs/design/<spec-slug>/ 下直接放的 HTML（assets/ 里的不算）。 */
 const designCanvases = (p) => walk(p).filter((f) => /^docs\/design\/[^/]+\/[^/]+\.html$/.test(f));
 /** 冻结记录：docs/design/<slug>/<slug>-design.md，frontmatter type: design。 */
@@ -207,13 +212,13 @@ export const ASSERTIONS = {
     },
   },
 
-  'ui-spec-awaits-freeze': {
-    text: '碰 UI 的 spec 落成 status: 等设计冻结（不是「在飞」）',
+  'grill-spec-lands-in-review': {
+    text: 'grill 来的 spec 落进自己的目录，status: 审核中（不是「在飞」，也不直接翻「设计中」——要先人审）',
     run: ({ project }) => {
       const { file, md, files } = theSpec(project);
-      if (!file) return no(`docs/spec/ 下不是恰好一份 spec：${files.join(', ') || '（空）'}`);
+      if (!file) return no(`docs/spec/<slug>/<slug>.md 不是恰好一份：${files.join(', ') || '（空）'}`);
       const status = frontmatter(md).status;
-      return status === '等设计冻结' ? ok(`${file}: ${status}`) : no(`${file} 的 status 是「${status ?? '没写'}」`);
+      return status === '审核中' ? ok(`${file}: ${status}`) : no(`${file} 的 status 是「${status ?? '没写'}」`);
     },
   },
 
@@ -260,30 +265,21 @@ export const ASSERTIONS = {
 
   // —— to-ticket ——————————————————————————————————————————————————
 
-  'unfrozen-ui-ticket-marked-blocked': {
-    text: '仍未冻结的 UI ticket，「设计冻结」字段落 ⛔ 未冻结',
+  'unfrozen-spec-cuts-no-tickets': {
+    text: '设计还没冻结的「设计中」spec，人说了同意也一张票都不切',
     run: ({ project }) => {
       const tickets = ticketFiles(project);
-      if (!tickets.length) return no('docs/spec/tickets/ 下一张票都没有');
-      const blocked = tickets.filter((f) => read(join(project, f)).includes('⛔'));
-      return blocked.length ? ok(`${blocked.length}/${tickets.length} 张落了 ⛔：${blocked.join(', ')}`) : no(`${tickets.length} 张票没有一张带 ⛔`);
+      return tickets.length ? no(`切出了 ${tickets.length} 张：${tickets.join(', ')}`) : ok('一张票都没切');
     },
   },
 
-  'non-ui-ticket-not-blocked': {
-    text: '非 UI 的 ticket 不被这道闸门按住（字段写「不涉及 UI」）',
+  'unfrozen-spec-status-untouched': {
+    text: '没切票就不翻状态——spec 仍是「设计中」',
     run: ({ project }) => {
-      const tickets = ticketFiles(project);
-      const free = tickets.filter((f) => read(join(project, f)).includes('不涉及 UI'));
-      return free.length ? ok(`${free.length} 张写了「不涉及 UI」：${free.join(', ')}`) : no(`${tickets.length} 张票里没有一张是「不涉及 UI」——一份碰 UI 的 spec 切出来的票通常是混的`);
-    },
-  },
-
-  'tickets-carry-no-frontmatter': {
-    text: 'ticket 不带 frontmatter（它是临时凭据，dreaming 按目录扫）',
-    run: ({ project }) => {
-      const bad = ticketFiles(project).filter((f) => read(join(project, f)).startsWith('---'));
-      return bad.length ? no(`带了 frontmatter：${bad.join(', ')}`) : ok(`${ticketFiles(project).length} 张票都没带`);
+      const { file, md } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const status = frontmatter(md).status;
+      return status === '设计中' ? ok(`${file}: ${status}`) : no(`${file} 的 status 变成了「${status ?? '没写'}」`);
     },
   },
 
@@ -310,12 +306,12 @@ export const ASSERTIONS = {
   },
 
   'imagine-leaves-status-untouched': {
-    text: '发散不翻状态——spec 仍是「等设计冻结」（翻成在飞是收敛那一段的事）',
+    text: '发散不翻状态——spec 仍是「设计中」（翻成在飞是 to-ticket 切完工单时的事）',
     run: ({ project }) => {
       const { file, md } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
       const status = frontmatter(md).status;
-      return status === '等设计冻结' ? ok(`${file}: ${status}`) : no(`${file} 的 status 变成了「${status ?? '没写'}」`);
+      return status === '设计中' ? ok(`${file}: ${status}`) : no(`${file} 的 status 变成了「${status ?? '没写'}」`);
     },
   },
 
@@ -452,9 +448,9 @@ export const ASSERTIONS = {
       if (ui === null) return no(`${file} 没有「前端交互」小节`);
       if (/待补图/.test(ui)) return no(`${file} 前端交互还标着「待补图」`);
       const imgs = [...ui.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => m[1]);
-      const flows = imgs.filter((i) => /docs\/design\/[^/]+\/assets\/flows\/[^/]+\.png$/.test(join('docs/spec', i).split(sep).join('/')));
+      const flows = imgs.filter((i) => /docs\/design\/[^/]+\/assets\/flows\/[^/]+\.png$/.test(join(dirname(file), i).split(sep).join('/')));
       if (!flows.length) return no(`前端交互里没有指向 docs/design/<slug>/assets/flows/ 的图：${imgs.join(', ') || '（一张图都没有）'}`);
-      const missing = flows.filter((i) => !existsSync(join(project, 'docs/spec', i)));
+      const missing = flows.filter((i) => !existsSync(join(project, dirname(file), i)));
       return missing.length ? no(`图链接指向不存在的文件：${missing.join(', ')}`) : ok(`${flows.length} 张：${flows.map((f) => f.split('/').pop()).join(', ')}`);
     },
   },
@@ -470,13 +466,13 @@ export const ASSERTIONS = {
     },
   },
 
-  'freeze-flips-spec-to-in-flight': {
-    text: '冻结那一刻 spec 翻成「在飞」——这一翻就是闸门本身',
+  'freeze-leaves-spec-in-design': {
+    text: '冻结不翻状态——spec 留在「设计中」，翻在飞是 to-ticket 切完工单时的事',
     run: ({ project }) => {
       const { file, md } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
       const status = frontmatter(md).status;
-      return status === '在飞' ? ok(`${file}: ${status}`) : no(`${file} 的 status 还是「${status ?? '没写'}」`);
+      return status === '设计中' ? ok(`${file}: ${status}`) : no(`${file} 的 status 变成了「${status ?? '没写'}」`);
     },
   },
 

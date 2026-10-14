@@ -7,6 +7,10 @@
 > **2026-08-20 签字**：§1 的「做完但还没对账」状态、§3 对 ticket 的豁免、§4 对 `index.md` 的豁免。
 > 前两条来自一次实跑（把 spec 落进一个已有常驻规格的仓库）暴露的洞，第三条是 §4 与 §5 本身相冲。
 >
+> **2026-10-14 签字**（harold-skills#42）：§2 每份 spec 一个目录、工单住进自己 spec 的目录；§3 spec 状态机加
+> `草稿` / `审核中`，`等设计冻结` 改名 `设计中`；§4 对工单文件名的豁免；§8 backlog 移交标记。起因是几份 spec
+> 同时在飞时工单混在一个目录里、编号互撞，以及起草 routine 要从 backlog 自动起草 spec。
+>
 > **2026-09-28 签字**：§2 新增 `design/<spec-slug>/` 层、§3 新增 `type: design`。冻结的设计从
 > raw 桶搬出来，作为实现之后的视觉真值维护在项目里，不跟 spec 一起删。
 >
@@ -21,9 +25,9 @@
 没有 drafts/freeze/archive 三态目录，没有状态机。
 
 ```
-spec 存在              = 在飞
-spec 消失 + ADR 存在   = 已了结（做了 → why/how/result；决定不做 → why-not）
-spec 消失 + 无 ADR     = 不值得记
+spec 目录存在          = 还没了结（走到哪一步看 frontmatter 的 status，§3）
+spec 目录消失 + ADR 存在   = 已了结（做了 → why/how/result；决定不做 → why-not）
+spec 目录消失 + 无 ADR     = 不值得记
 ticket 存在            = 有人正在做这一刀
 ticket 消失            = 那一刀合了
 ```
@@ -47,8 +51,10 @@ spec 存在 + 活已合并 + 无 ADR   = 等下一次 maintain 扫描（正常�
 docs/
 ├── index.md              顶层导航
 ├── raw/<topic>/          素材与事实 —— 忠实，不编辑（含 assets/）
-├── spec/                 在飞的规格 —— 做完即删
-│   └── tickets/          单 PR 临时凭据 —— 合了即删
+├── spec/                 还没了结的规格 —— 做完整个目录删
+│   └── <spec-slug>/      一份 spec 一个目录
+│       ├── <spec-slug>.md        spec 本身
+│       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 归档总结 —— 永久
 ├── design/<spec-slug>/   冻结的设计 —— 画布 HTML + <spec-slug>-design.md + assets/，uiux-refine 产出，spec 删了它也留着
 ├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
@@ -59,6 +65,10 @@ docs/
 ```
 
 `raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` / `reference/` / `records/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
+
+**spec 文件与目录同名**（`docs/spec/<spec-slug>/<spec-slug>.md`），不叫 `spec.md`：wiki-link 按文件名解析（§4），所有 spec 都叫 `spec.md` 的话，`[[<spec-slug>]]` 一处也指不到。
+
+**工单住在自己 spec 的目录里**，编号在每份 spec 内从 `01` 起。几份 spec 同时在飞时，工单不会混在一起、编号也不会互撞。要找一份 spec 的工单，就看它目录下的 `tickets/`；不靠文件名猜它属于谁。
 
 `design/` 骑在分界上：它由一次 `uiux-refine` 会话产出，但冻结之后就是实现的视觉真值，活得比 spec 长——spec 删掉、ADR 写好之后它还在，ADR 链到它。所以 **`dreaming` 不因为 spec 没了就提议删它**；它被取代的唯一方式是同一块 UI 的下一次冻结。
 
@@ -85,11 +95,22 @@ docs/
 - 按 `<spec-slug>` / `<topic>` 分子目录不是洁癖：两份 spec 在同一个 worktree 里先后跑，固定文件名放在共享的顶层会互相覆盖，而且覆盖得悄无声息。
 - 一次性的、跑完即弃、不跨步骤的东西仍然可以用系统临时目录。spec 图的 excalidrawer 源文件不算：定稿前可能还要改好几轮，放 `.tmp/to-spec/<spec-slug>/`。
 
+### 2.2 从平铺布局迁移
+
+旧布局是 `docs/spec/<slug>.md` 平铺、所有 spec 的工单共用 `docs/spec/tickets/`。在一个旧布局的仓库里第一次跑 `to-spec` / `to-ticket` / `implement` 之前，先一次性迁过去（一个 `docs(spec): 每份 spec 一个目录` 提交）：
+
+1. 每份 `docs/spec/<slug>.md` → `git mv` 到 `docs/spec/<slug>/<slug>.md`。wiki-link 按文件名解析，移动不打断它们；**相对路径的图片引用会断**（spec 深了一层），每条前面补一个 `../`，改完逐条确认文件存在。
+2. `docs/spec/tickets/` 下的每张工单，按它的 PR、它引用的 spec 或它的标题判断属于哪份 spec，`git mv` 到那份 spec 的 `tickets/`。判断不了的列给人，不猜。归属清楚后旧的 `tickets/` 目录应该是空的，删掉它。
+3. 旧状态值改名：`等设计冻结` → `设计中`。`在飞` 不动——已经在做的 spec 不回退成 `审核中`。
+4. 刷新 `docs/spec/index.md`（§5），文件列的链接不变。
+
+正在做的 PR 不受影响：集成分支上已有的 commit 里，`Ticket:` trailer 只写工单名，不写路径。
+
 ## 3 frontmatter
 
 每份 md 都带。这是 dreaming 与召回 grep 的锚点。
 
-**两处豁免**：`spec/tickets/` 下的 ticket 按 `to-ticket` §5 的模板走，**不带 frontmatter**——它是临时凭据，
+**两处豁免**：`spec/<spec-slug>/tickets/` 下的 ticket 按 `to-ticket` §5 的模板走，**不带 frontmatter**——它是临时凭据，
 `dreaming` 扫它是按**目录**扫（「漏网的 ticket 也归这里扫」），不靠 frontmatter 锚定。各层的 `index.md`
 同样不带——它是导航，表体从别人的 frontmatter 生成。
 
@@ -107,17 +128,32 @@ related: ["[[other-slug]]"]
 
 | type | 合法 status |
 |---|---|
-| `spec` | `在飞` · `等设计冻结` · `已拍板未排期` · `parked` |
+| `spec` | `草稿` · `审核中` · `设计中` · `在飞` · `已拍板未排期` · `parked` |
 | `adr` | `生效` · `已被取代（→ ADR-NNNN）` |
 | `raw` | 无（改用 `source_type` + `captured`） |
 
 `parked` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
+
+spec 的状态按这个顺序往前走，每一步只有一个写入方：
+
+| 状态 | 含义 | 谁写入 |
+|---|---|---|
+| `草稿` | 起草 routine 从 backlog 起草、还没人审 | 只有 `to-spec` 的 backlog 模式 |
+| `审核中` | 人在审 | routine 给草稿开出审核会话时；grill 会话里的 `to-spec` 直接落这个状态 |
+| `设计中` | 人审完，这份 spec 碰 UI、要先设计 | 人审完、说要设计时，审核会话把状态翻过来 |
+| `在飞` | 设计已冻结（不碰 UI 的跳过这一步）、人同意了 spec、工单已切 | `to-ticket` 切完工单时 |
+| `已拍板未排期` · `parked` | 定了但不排期 · 故意搁置 | 人 |
+
+`to-ticket` 只接 `审核中`（不碰 UI）和设计已冻结的 `设计中`（§4 有冻结摘要），而且要人在会话里明说同意这份 spec。`设计中` 的 spec 在冻结之前不切工单，所以 `在飞` 之前不会有实现的 commit。
+
+合并后照旧整个目录删（§1）。
 
 **ADR 的取代默认是 section 级，不是整份**——一份 ADR 常含多条决策（引用粒度本就是 `ADR-NNNN §n`），新决策通常只推翻其中一节。frontmatter 的 `status` 只在**全部**小节都作废时才翻成 `已被取代`；部分取代记在那一节标题后（`⚠️ 已被取代 → ADR-<new> §<n>`），文件本身仍是 `生效`。
 
 ## 4 slug 与链接
 
 - 这是 Obsidian vault，**wiki-link 按 basename 解析，与目录无关** → **`docs/` 下每个 slug 必须全局唯一**。建文件前 grep 一遍。
+  - **豁免工单文件。** 工单在每份 spec 内从 `01` 编号，两份 spec 各有一张 `01-schema.md` 是正常的。它们跟 `index.md` 一样**从不做链接目标**——要引一张工单就写它的路径，不写 `[[01-schema]]`。
   - **豁免 `index.md`。** §5 要求「每层一个 `index.md`」，那与本条直接相冲。不咬人的原因是索引**从不做链接目标**——
     没有任何文件写 `[[index]]`，所以歧义不会发生。**代价是这条豁免必须靠纪律维持**：谁都不要写 `[[index]]`，
     要引某一层就写路径。
@@ -150,3 +186,16 @@ related: ["[[other-slug]]"]
 - **spec 和 ticket 里禁止写具体文件路径和代码片段**——它们烂得最快。写接口、契约、行为、约束。
   例外：用散文说不清的决策载体（状态机、schema、类型形状、taxonomy 的类别 id）可内联，并注明出处。
 - **描述行为，不描述过程**。"`SkillConfig` 接受一个可选的 `schedule` 字段" ✅；"打开 src/types/skill.ts 在第 42 行加字段" ❌。
+
+## 8 backlog 移交标记
+
+项目的 backlog（例如 `docs/quality-backlog.md`）里的条目被一份 spec 覆盖时，在条目上写「已移交 → [[<spec-slug>]]」。起草 routine 靠这个标记跳过已经有 spec 的条目，否则它会为同一条再起草一份。
+
+- **谁写**：`to-spec` 的两种模式都写——grill 来的 spec 只要覆盖了 backlog 条目，也要写。人在审核时把某条踢出 spec，审核会话就撤掉它的标记，并从 spec 的 §8 关联里删掉那条。
+- **写在哪**：
+  - 表格型（「待办」，带状态列）：状态列的值换成 `已移交 → [[<spec-slug>]]`。
+  - 勾选列表型（「线上问题」）：在条目的第一行末尾追加 ` 已移交 → [[<spec-slug>]]`，勾选框不动。
+- **routine 怎么过滤**：一行里有 `已移交 → [[` 就跳过。两种格式都只看这一个字面串。
+- **之后**：spec 的 PR 合并后，标记由起草 routine 对账时改成 backlog 自己的「已解决」写法。这一步不归 idea-loop。
+
+backlog 的**模块划分表**是项目配置，写在 backlog 文件里的「模块」一节，`to-spec` 的 backlog 模式从那里读，不写死在 skill 里。

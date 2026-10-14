@@ -12,8 +12,9 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 ## 0 什么时候跑、输入是什么
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。只做其中几张时，在后面列出工单号。
-- **当前 worktree 就是集成分支**：一份 spec 的所有工单共享一条分支、一个 PR。这个 skill 不建分支、不切分支。分支不对、工作区不干净（`git status --short` 非空），就停下告诉人。
-- `docs/spec/tickets/` 下有这份 spec 的工单。没有就停：先跑 `to-ticket`。
+- **当前 worktree 就是集成分支**：一份 spec 的所有工单共享一条分支、一个 PR。这个 skill 不建分支、不切分支。工作区不干净（`git status --short` 非空）、或者当前分支是基准分支本身，就停下告诉人。
+- **审核会话开出来的 worktree，分支先改名**：`claude -w` 建的 worktree 分支名形如 `worktree-review-<slug>`。当前分支以 `worktree-` 开头、还没推送过（没有 upstream），开工前先 `git branch -m fix/<spec-slug>`，改完它就是集成分支。已经推送过的不改名，照原名用，在第一次停下汇报里提一句。审核会话里改 spec、切工单的 docs commit 都在这条分支上，跟实现一起进同一个 PR。
+- spec 的 `status` 是 `在飞`，`docs/spec/<spec-slug>/tickets/` 下有工单。不是就停：先跑 `to-ticket`（它切完工单才把 spec 翻成 `在飞`）。
 
 **不需要 `/clear`。** 干活的是每张工单新起的 implementer，它的上下文里只有那一张工单，连上一张做了什么都不在。这个会话可以留着之前的讨论。
 
@@ -36,13 +37,13 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 - **等决定** = `.tmp/implement/<spec-slug>/pending.md` 里的条目，每条记下工单号、问题、选项、推荐、patch 路径。它是缓存：在另一个 worktree 或新会话里接手时，从这个 PR 的 review loop 文件还原——停下汇报「需要你决定」下的每一项，后面有人的批示和「做了什么」就算已决定。
 - **素材** = `.tmp/implement/<spec-slug>/evidence/`；**半成品** = `.tmp/implement/<spec-slug>/wip/`。
 
-**frontier**（现在可以开工的工单）= 还没落地、不在等决定、`设计冻结` 不是 `⛔`、`Blocked by` 里的工单全部已落地。依赖等决定工单的（直接或间接）都不在 frontier 上。
+**frontier**（现在可以开工的工单）= 还没落地、不在等决定、`Blocked by` 里的工单全部已落地。依赖等决定工单的（直接或间接）都不在 frontier 上。
 
 会话断了也能接着做：git 和 `.tmp/` 就是恢复点，重新算一遍 frontier 即可。
 
 ## 3 派工：默认串行
 
-从 frontier 里按编号取最小的一张，用 Agent 工具起 `idea-loop:implementer`，**只给指针**：工单路径、spec 路径、worktree 路径、证据目录、已落地工单的提交列表、这张工单若有人的决定，就说明决定已写进工单。不转述工单，不写摘要。
+从 frontier 里按编号取最小的一张，用 Agent 工具起 `idea-loop:implementer`，**只给指针**：工单路径（`docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`）、spec 路径（`docs/spec/<spec-slug>/<spec-slug>.md`）、worktree 路径、证据目录、已落地工单的提交列表、这张工单若有人的决定，就说明决定已写进工单。不转述工单，不写摘要。
 
 等它交回，核对（§4），再取下一张。
 

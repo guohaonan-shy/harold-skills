@@ -4,8 +4,10 @@
 > [mattpocock/skills](https://github.com/mattpocock/skills) (MIT). What changed and why is listed at the end of that reference.
 
 Closed loop from idea to shipped engineering, backed by the `docs/` Obsidian
-vault as its knowledge base. No state machine — a file's existence IS its
-status (see `references/wiki-conventions.md`).
+vault as its knowledge base. Each spec lives in its own directory,
+`docs/spec/<slug>/<slug>.md`, with its tickets under `docs/spec/<slug>/tickets/`;
+the directory's existence says the spec is not settled yet, and its frontmatter
+`status` says how far it got (see `references/wiki-conventions.md`).
 
 ## Skills
 
@@ -13,23 +15,26 @@ status (see `references/wiki-conventions.md`).
 |---|---|---|
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
-| `/idea-loop:to-spec` | Spec | Lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. Figure rules: `references/spec-figures.md` |
+| `/idea-loop:to-spec` | Spec | Two modes. From a `grill`: lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. From the backlog (`skills/to-spec/references/backlog-mode.md`): reproduces one module's backlog entries first, splits them (design work, feature-sized work and groups over five each get their own spec), and lands drafts with one expected behaviour per problem. Both modes mark the backlog entries they cover as handed over. Figure rules: `references/spec-figures.md` |
 | `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant) to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump |
 | `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
-| `/idea-loop:to-ticket` | Plan | Slices a spec into tracer-bullet vertical cuts with blocking edges; holds the design-freeze gate for UI work |
+| `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching a fresh `idea-loop:implementer` per ticket along the `Blocked by` graph (one ticket → one commit on the integration branch, TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
 | `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
 
-`grill → to-spec → [uiux-imagine → uiux-refine] → to-ticket → implement →
-pr-review` runs once per piece of work. **The bracket is the
-whole design side, and it is conditional**: you walk those two stages only when
-`to-spec` landed the spec at `等设计冻结` — i.e. the work touches UI. A spec that
-landed at `在飞` goes straight from `to-spec` to `to-ticket`. `uiux-refine` is
-what flips a bracketed spec back to `在飞`, which is the gate `to-ticket` reads.
+`grill → to-spec → (human review) → [uiux-imagine → uiux-refine] → to-ticket → implement →
+pr-review` runs once per piece of work. A spec's status walks
+`草稿 → 审核中 → 设计中 → 在飞`: `to-spec`'s backlog mode lands `草稿`, a `grill`
+spec lands `审核中`, and either way a human reads the whole spec before anything is
+cut. **The bracket is the whole design side, and it is conditional**: when the spec
+touches UI the human's review flips it to `设计中` and you walk those two stages;
+otherwise it goes straight to `to-ticket`. The freeze leaves the spec at `设计中`
+with a freeze summary in it — `to-ticket` is the only thing that flips a spec to
+`在飞`, once the design is frozen, the human has agreed and the tickets are cut.
 `dreaming` is a **periodic batch reconciliation** over the whole
 vault — weekly, or when specs pile up, or by hand. It is not the next step after
 `implement`.
@@ -179,9 +184,9 @@ reasoning, the case, and how to read a run live in
 [`evals/README.md`](./evals/README.md).
 
 The **whole loop's wiring check rides along as assertions in that baseline** rather
-than as a one-off dry run: prototype landing in raw, a UI-touching spec landing at
-`等设计冻结`, an unfrozen UI ticket getting ⛔, the freeze landing canvas + ledger in
-`docs/design/<spec-slug>/` and flipping the spec to `在飞`, and no cross-plugin skill invocation
+than as a one-off dry run: prototype landing in raw, a `grill` spec landing at
+`审核中`, `to-ticket` refusing a `设计中` spec whose design is not frozen, the freeze landing canvas + ledger in
+`docs/design/<spec-slug>/` while leaving the spec at `设计中`, and no cross-plugin skill invocation
 anywhere in the repo. A dry run's conclusion dies with its session; an assertion
 goes red three weeks later.
 
@@ -213,7 +218,7 @@ idea-loop/
 ├── skills/
 │   ├── grill/SKILL.md
 │   ├── prototype/SKILL.md
-│   ├── to-spec/SKILL.md
+│   ├── to-spec/SKILL.md              # + references/backlog-mode.md — drafting specs from backlog entries
 │   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
 │   ├── uiux-refine/SKILL.md          # the convergent half — only the calling mechanism; the work is in agents/
 │   ├── design-modeling/SKILL.md      # the only writer of the project's DESIGN.md — create / distill / reconcile

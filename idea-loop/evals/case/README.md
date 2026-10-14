@@ -35,7 +35,7 @@ case/
 └── stages/                      按 eval 需要往副本里补的起始状态
     ├── grill-transcript.md      to-spec 的输入：一场跑完的访谈逐字转录
     ├── raw/                     已经落过的原型证据（raw md + 可点击 HTML）
-    ├── spec-awaiting-freeze.md  status: 等设计冻结，§5.3 前端交互还是文字 + 待补图
+    ├── spec-awaiting-freeze.md  status: 设计中（人已审完、要设计），§5.3 前端交互还是文字 + 待补图
     └── direction-note.md        七节方向说明（选中变种带构成清单）；seed 时放到项目根 .tmp/uiux-imagine/<slug>/，不进 spec
 ```
 

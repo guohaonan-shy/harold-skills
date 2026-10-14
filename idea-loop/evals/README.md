@@ -37,10 +37,10 @@
 写成断言的那几条（全文在 `assert.mjs`）：
 
 - 原型的 HTML 与裁决落进 raw 桶，页面顶部那句问题与裁决记录里的是同一句
-- 碰 UI 的 spec 落成 `等设计冻结`，§4 把结构决策挂在原型证据上，技术方案总览三小节齐、前端交互标着待补图
-- 仍未冻结的 UI ticket，「设计冻结」字段落 ⛔；同一批里非 UI 的票写「不涉及 UI」，不被按住
+- grill 来的 spec 落进 `docs/spec/<slug>/<slug>.md`、状态 `审核中`，§4 把结构决策挂在原型证据上，技术方案总览三小节齐、前端交互标着待补图
+- 设计还没冻结的 `设计中` spec，人说了同意，`to-ticket` 也一张票都不切、不翻状态
 - 发散只准出一份方向说明（过 `direction-note-check`，落在项目根 `.tmp/uiux-imagine/<slug>/`），不改 spec、不翻状态，不往仓库里留渲染物
-- 收敛冻结之后：`docs/design/<spec-slug>/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；spec §4 写入「冻结摘要」、§5.3 换成 `assets/flows/` 下的交互图；`/tmp` 两个目录清掉；状态翻 `在飞`
+- 收敛冻结之后：`docs/design/<spec-slug>/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；spec §4 写入「冻结摘要」、§5.3 换成 `assets/flows/` 下的交互图；`/tmp` 两个目录清掉；状态留在 `设计中`
 - 全仓无跨 plugin 的 skill 调用
 
 ## case

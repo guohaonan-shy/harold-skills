@@ -1,6 +1,6 @@
 ---
 name: uiux-refine
-description: 设计收敛——方向定了之后由人跑它。起 plugin 自带的 designer agent（最新的 Opus，思考强度 high）从方向说明重建画布、跑打磨环（每轮新起一个 ui-master agent 当评委，最新的 Fable，思考强度 high），按需接动效段与素材段，再各跑一轮减法与 AI tells；调用它的会话只做编排——designer 每次停下就把画布在内嵌浏览器里摆给人、把人的意见分流后转回同一个 designer。人签字后冻结进项目的 `docs/design/<spec-slug>/`、交互图写回 spec、spec 翻在飞；也可以部分冻结、其余回 uiux-imagine。
+description: 设计收敛——方向定了之后由人跑它。起 plugin 自带的 designer agent（最新的 Opus，思考强度 high）从方向说明重建画布、跑打磨环（每轮新起一个 ui-master agent 当评委，最新的 Fable，思考强度 high），按需接动效段与素材段，再各跑一轮减法与 AI tells；调用它的会话只做编排——designer 每次停下就把画布在内嵌浏览器里摆给人、把人的意见分流后转回同一个 designer。人签字后冻结进项目的 `docs/design/<spec-slug>/`、交互图写回 spec（状态留在设计中，切完工单才由 to-ticket 翻在飞）；也可以部分冻结、其余回 uiux-imagine。
 disable-model-invocation: true
 ---
 
@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ## 0 什么时候跑
 
-- spec 状态是 `等设计冻结`，且 `.tmp/uiux-imagine/<spec-slug>/direction-note.md` 在、过得了 `direction-note-check`（`uiux-imagine` 的准出）。
+- spec 状态是 `设计中`，且 `.tmp/uiux-imagine/<spec-slug>/direction-note.md` 在、过得了 `direction-note-check`（`uiux-imagine` 的准出）。
 - 方向说明找不到就停下告诉人：回 `uiux-imagine` 重写那封信，不凭 spec 或记忆补。
 
 它**只能人调**（与 `grill` / `uiux-imagine` 同档）：环的每一次停都停在人身上——方向级 finding、plateau、签字。**不需要 `/clear`**：干活的是新起的 designer，它的上下文里本来就没有发散那一段的变种和半成品；这个会话可以留着 imagine 的讨论。
@@ -61,8 +61,8 @@ designer 从这里开始自己跑，停下时交回。
 
 ## 5 生命周期
 
-- **冻结**：designer 落冻结记录、写回 spec（§4 冻结摘要、§5.3 交互图）、翻 `在飞`、清 `.tmp` 下两个目录，然后交回。编排者**核对**：spec 是 `在飞`、§4 冻结摘要五样齐（画布指针 / 矩阵 / mismatch 阈值 / ledger 摘要 / 状态矩阵与数据契约变更）、§5.3 的图都在且能打开、`.tmp/uiux-imagine/<spec-slug>/` 与 `.tmp/uiux-refine/<spec-slug>/` 已清。在内嵌浏览器里打开交互图给人看，关掉预览服务器，告诉人：还没切票去 `/idea-loop:to-ticket`；票已切过（落的 ⛔）就回去补那几张的「设计冻结」字段。
-- **部分冻结、其余回 `uiux-imagine`**：人常常是「这几块可以冻结了，那几块回去重新发散」，照这样做，不逼人二选一。转给 designer 落部分冻结（签过字的进冻结记录，spec 不动、留在 `等设计冻结`，`.tmp` 两个目录保留），它交回后就结束了；关掉预览服务器，告诉人去跑 `uiux-imagine` 重开那几块。人跑完第二轮发散再调 refine，起一个**新的** designer，它在已冻结的画布上接着做。
+- **冻结**：designer 落冻结记录、写回 spec（§4 冻结摘要、§5.3 交互图）、清 `.tmp` 下两个目录，然后交回。状态**不翻**，留在 `设计中`——翻 `在飞` 是 `to-ticket` 切完工单时的事。编排者**核对**：spec 仍是 `设计中`、§4 冻结摘要五样齐（画布指针 / 矩阵 / mismatch 阈值 / ledger 摘要 / 状态矩阵与数据契约变更）、§5.3 的图都在且能打开、`.tmp/uiux-imagine/<spec-slug>/` 与 `.tmp/uiux-refine/<spec-slug>/` 已清。在内嵌浏览器里打开交互图给人看，关掉预览服务器，告诉人：下一步是人确认同意这份 spec，然后 `/idea-loop:to-ticket` 切工单（它切完把 spec 翻成 `在飞`）。
+- **部分冻结、其余回 `uiux-imagine`**：人常常是「这几块可以冻结了，那几块回去重新发散」，照这样做，不逼人二选一。转给 designer 落部分冻结（签过字的进冻结记录，spec 不动、留在 `设计中`，`.tmp` 两个目录保留），它交回后就结束了；关掉预览服务器，告诉人去跑 `uiux-imagine` 重开那几块。人跑完第二轮发散再调 refine，起一个**新的** designer，它在已冻结的画布上接着做。
 - **会话结束或重开**：designer 接不回来。下次调 refine 起新的 designer，画布、`.tmp/uiux-refine/<spec-slug>/ledger.md` 与方向说明就是恢复点。
 
 ## 不做

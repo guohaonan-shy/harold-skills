@@ -11,7 +11,7 @@ const diff = `--- a/src/api/handler.ts
 `;
 
 const files = {
-  'docs/spec/tickets/03-retry.md': '- [x] 失败后点「重试」，只重新分析这一题，  不消耗配额',
+  'docs/spec/practice-retry/tickets/03-retry.md': '- [x] 失败后点「重试」，只重新分析这一题，  不消耗配额',
   'docs/reference/code-layering.md': '路由层不直接访问数据库，\n统一经过 service 层。',
 };
 const io = {
@@ -42,7 +42,7 @@ const standardsWords = {
   impact: '以后换存储或加缓存时，这一处会被漏掉。',
   suggestion: '把查询挪进业务层，接口只调它。',
 };
-const S1 = { id: 'S1', title: '连续失败的学生会提前用完当天的练习次数', behavior: true, on_screen: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '只重新分析这一题， 不消耗配额' }, figure: 'r1-retry-quota.png', ...specWords };
+const S1 = { id: 'S1', title: '连续失败的学生会提前用完当天的练习次数', behavior: true, on_screen: true, quote: { file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '只重新分析这一题， 不消耗配额' }, figure: 'r1-retry-quota.png', ...specWords };
 const C1 = { id: 'C1', title: '接口直接查数据库', rule: { file: 'docs/reference/code-layering.md', text: '路由层不直接访问数据库' }, code: { path: 'src/api/handler.ts', snippet: "import { db } from '../db/client';" }, locations: ['src/api/handler.ts:2'], ...standardsWords };
 
 test('grounded candidates in shape are admitted on both axes, with nothing to rewrite', () => {
@@ -93,10 +93,10 @@ test('a finding missing a part, a decision, or written in code terms goes to rew
 test('each ungrounded candidate is discarded with its reason', () => {
   const r = admit({
     spec: [
-      { id: 'S1', title: '编的原文', behavior: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '重试最多三次' }, figure: 'r1-retry-quota.png' },
-      { id: 'S2', title: '行为问题没有复现证据', behavior: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '不消耗配额' } },
-      { id: 'S3', title: '图名是上一轮的', behavior: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '不消耗配额' }, figure: 'r0-x.png' },
-      { id: 'S4', title: '图不存在', behavior: true, quote: { file: 'docs/spec/tickets/03-retry.md', text: '不消耗配额' }, figure: 'r1-missing.png' },
+      { id: 'S1', title: '编的原文', behavior: true, quote: { file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '重试最多三次' }, figure: 'r1-retry-quota.png' },
+      { id: 'S2', title: '行为问题没有复现证据', behavior: true, quote: { file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '不消耗配额' } },
+      { id: 'S3', title: '图名是上一轮的', behavior: true, quote: { file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '不消耗配额' }, figure: 'r0-x.png' },
+      { id: 'S4', title: '图不存在', behavior: true, quote: { file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '不消耗配额' }, figure: 'r1-missing.png' },
     ],
     standards: [
       { id: 'C1', title: '编的规则', rule: { file: 'docs/reference/code-layering.md', text: '禁止使用 any' }, code: { path: 'src/api/handler.ts', snippet: 'export async function handler(req) {' } },
