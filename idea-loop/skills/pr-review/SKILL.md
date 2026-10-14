@@ -50,7 +50,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
   - Standards 条目：对代码片段所在的行跑 `git blame`，找到引入它的 commit，读 commit 的 `Ticket:` trailer。
   - 两条路都找不到（比如代码来自一次不带 trailer 的修复），就问人归哪张。
 
-  在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，用 `docs(tickets): <NN> — review 第 <N> 轮 <编号>` 提交，然后派一个 `idea-loop:implementer` 做这张工单。它只会去做没勾的那几格，commit 照样带同一个 `Ticket:` trailer。同一张工单上有好几条要修的，一次写完再派一次。多张工单的，按编号串行派。全部修完推送。
+  在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，用 `docs(tickets): <NN> — review 第 <N> 轮 <编号>` 提交，然后派一个 `idea-loop:implementer` 做这张工单，派工、核对、落地与回收照 `implement` §3、§4（自己的 worktree、起点 SHA、分到的端口，fast-forward 落地）。它只会去做没勾的那几格，commit 照样带同一个 `Ticket:` trailer。同一张工单上有好几条要修的，一次写完再派一次。多张工单的可以并行派。全部落地后推送。
   条目的位置（文件、行号、提交）在审查者交回的报告和汇报折叠区的「给修复方的位置」里，写进工单时照旧描述行为，不抄路径。
 - **接受**（Spec 条目选了「接受，补进 spec 或工单」这一类选项）：代码不动，把那条偏差写进 spec 或工单（例外清单、验收标准、改过的路径），用 `docs(spec): …` 或 `docs(tickets): …` 提交、推送。
 - **不修**：记下。下一轮不再报它，除非有新证据。

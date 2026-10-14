@@ -101,7 +101,7 @@ description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被�
 
 ## 6 谁来做这些 ticket
 
-**一张 ticket = 一个只装着它的上下文 = 一个提交。** 下一环是 `implement`：调用它的会话做编排，按依赖图逐张派 `idea-loop:implementer`，每张一个新起的执行方，只读那一张 ticket，不重开方案，做完在集成分支上提交一个 commit。
+**一张 ticket = 一个只装着它的上下文 = 一个提交。** 下一环是 `implement`：调用它的会话做编排，按依赖图并行派 `idea-loop:implementer`，每张一个新起的执行方、一个自己的 worktree，只读那一张 ticket，不重开方案，做完落成集成分支上的一个 commit。
 
 ### 这里原来禁止派 subagent，现在不禁了——那两条理由去哪了
 
