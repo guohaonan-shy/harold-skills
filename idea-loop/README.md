@@ -13,9 +13,10 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 
 | Skill | Stage | Coverage |
 |---|---|---|
+| `/idea-loop:issue-dispatch` | Intake | One dispatch round over the project's GitHub issues, run hourly by a fixed dispatcher session under `/loop`: archives review sessions whose PR merged and closes the issues their spec covered, counts sessions in review (cap 5), opens a review session per draft spec, and only with a free slot hands the oldest open issues to `idea-loop:issue-explorer` to draft new specs. The one label it owns is the issue's `status:*`, which mirrors the covering spec's status (`references/spec-status.md` §3) |
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
-| `/idea-loop:to-spec` | Spec | Two modes. From a `grill`: lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. From the backlog (`skills/to-spec/references/backlog-mode.md`): reproduces one module's backlog entries first, splits them (design work, feature-sized work and groups over five each get their own spec), and lands drafts with one expected behaviour per problem. Both modes mark the backlog entries they cover as handed over. Figure rules: `references/spec-figures.md` |
+| `/idea-loop:to-spec` | Spec | Two modes. From a `grill`: lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. From the backlog (`skills/to-spec/references/backlog-mode.md`): reproduces one module's backlog entries — or a batch of GitHub issues — first, splits them (design work, feature-sized work and groups over five each get their own spec), and lands drafts with one expected behaviour per problem. Both modes mark the backlog entries they cover as handed over. Figure rules: `references/spec-figures.md` |
 | `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant) to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump |
 | `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
@@ -34,7 +35,10 @@ cut. **The bracket is the whole design side, and it is conditional**: when the s
 touches UI the human runs `uiux-imagine` on it once the review is done, and imagine's
 first step flips it to `设计中`; otherwise it goes straight to `to-ticket`. Every status
 change and every backlog hand-over mark goes through `scripts/spec-status.mjs`, which
-checks the step's precondition before writing (`references/spec-status.md`). The freeze leaves the spec at `设计中`
+checks the step's precondition before writing (`references/spec-status.md`). When the
+backlog is GitHub issues, a spec lists the issues it covers in its frontmatter and
+every status flip re-labels them `status:<status>` through `scripts/issues.mjs`, so the
+issue list on GitHub always shows where each issue stands in the loop. The freeze leaves the spec at `设计中`
 with a freeze summary in it — `to-ticket` is the only thing that flips a spec to
 `在飞`, once the design is frozen, the human has agreed and the tickets are cut.
 `dreaming` is a **periodic batch reconciliation** over the whole
@@ -215,10 +219,12 @@ idea-loop/
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
 │   ├── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
 │   ├── implementer.md                # implement's executor (idea-loop:implementer) — `sonnet` alias, effort high, one per ticket, its own worktree
+│   ├── issue-explorer.md             # issue-dispatch's drafter (idea-loop:issue-explorer) — `opus` alias, effort medium, at most one per round, reproduces and drafts a batch of issues
 │   ├── explorer.md                   # implement's scout (idea-loop:explorer) — `haiku` alias, effort high, pointer-only shared notes before a parallel dispatch
 │   └── pr-reviewer.md                # pr-review's reviewer (idea-loop:pr-reviewer) — `sonnet` alias, effort xhigh, one per round
 ├── README.md (this file)
 ├── skills/
+│   ├── issue-dispatch/SKILL.md       # one dispatch round over GitHub issues — run by a fixed session under /loop
 │   ├── grill/SKILL.md
 │   ├── prototype/SKILL.md
 │   ├── to-spec/SKILL.md              # + references/backlog-mode.md — drafting specs from backlog entries
@@ -257,6 +263,8 @@ idea-loop/
 │   ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
 │   ├── spec-status.mjs               # the only writer of a spec's status and the backlog hand-over marks — checks each step, re-indexes
 │   ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, both backlog shapes
+│   ├── issues.mjs                    # the only writer of an issue's status:* label — hand-over into spec frontmatter, sync, resolve
+│   ├── issues.test.mjs               # its unit tests against a fake gh
 │   ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
 │   ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
 │   ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge
@@ -275,7 +283,7 @@ idea-loop/
 │   └── baseline/                     # the archived run: benchmark.json + per-cell grading
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
-    ├── spec-status.md                # the spec state machine (who flips what, when) and the backlog hand-over marks
+    ├── spec-status.md                # the spec state machine (who flips what, when), the backlog hand-over marks, and the issue status labels
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
