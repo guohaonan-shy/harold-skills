@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 草稿
+status: 审核中
 tags: [idea-loop, pr-review, to-spec]
 summary: issue 34 的五处 pr-review / to-spec 改动复现后都已落地，建议关闭
 related: []

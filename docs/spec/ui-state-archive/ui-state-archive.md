@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 草稿
+status: 审核中
 tags: [idea-loop, design, ui-archive, dreaming]
 summary: docs/design 分 tmp / prod，按页面维护线上 UI 状态图，设计与验证共用
 related: ["[[0002-design-loop-v2-imagine-refine]]"]
