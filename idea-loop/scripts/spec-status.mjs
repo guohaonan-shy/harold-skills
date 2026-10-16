@@ -24,12 +24,16 @@
  *   node spec-status.mjs handoff   <backlog-file> <spec-slug> <entry>         → marks one entry
  *   node spec-status.mjs unhandoff <backlog-file> <spec-slug> <entry> [<status>] → removes the mark (table rows get <status>, default 待办)
  * <entry> is `#<n>` for the table row whose first cell is n, or a piece of text found on exactly one entry line.
+ * A spec that lists GitHub issues in its frontmatter (`issues: [12, 15]`) has their status labels
+ * synced after `set` (issues.mjs, references/spec-status.md §3); a failed sync leaves the status written
+ * and says how to retry.
  * Exit: 0 = done, 1 = refused / usage / io error (the reason on stderr).
  */
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { defaultGh, issuesOf, syncIssues } from './issues.mjs';
 
 export const STATUSES = ['草稿', '审核中', '设计中', '在飞', '已拍板未排期', 'parked'];
 
@@ -213,7 +217,15 @@ function main() {
     if (why) throw new Error(`拒绝：${why}`);
     writeFileSync(file, withStatus(md, c));
     reindex(a);
-    return console.log(`${b}: ${frontmatter(md).status} → ${c}`);
+    console.log(`${b}: ${frontmatter(md).status} → ${c}`);
+    if (issuesOf(md).length) {
+      try {
+        syncIssues(defaultGh(a), a, b).forEach((l) => console.log(l));
+      } catch (error) {
+        console.error(`状态已写入，issue 标签没同步：${String(error.stderr ?? '').trim() || error.message}——修好后跑 issues.mjs sync ${a} ${b}`);
+      }
+    }
+    return;
   }
   if (cmd === 'index' && a) return reindex(a);
   if (cmd === 'check' && a) return console.log(JSON.stringify(scan(a), null, 2));

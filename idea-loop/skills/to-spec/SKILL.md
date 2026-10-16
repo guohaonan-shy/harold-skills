@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: 把刚才这场对话落盘成 raw transcript + 一份 spec，或者（backlog 模式）把 backlog 里同一模块的一组条目先复现、再起草成 spec 草稿。不再访谈，只综合。
+description: 把刚才这场对话落盘成 raw transcript + 一份 spec，或者（backlog 模式）把 backlog 里同一模块的一组条目、或一组 GitHub issue，先复现、再起草成 spec 草稿。不再访谈，只综合。
 ---
 
 # To Spec
@@ -10,7 +10,7 @@ description: 把刚才这场对话落盘成 raw transcript + 一份 spec，或�
 **两种模式**，按输入选：
 
 - **grill 模式**（默认）：输入是刚才这场 grill 对话。走下面 §1–§4。
-- **backlog 模式**：输入是 backlog 里同一模块的一组条目，没有对话，通常由起草 routine 调用。走 `references/backlog-mode.md`，那里写了它跟本文哪几处不同；没写到的照本文。
+- **backlog 模式**：输入是 backlog 里同一模块的一组条目或一组 GitHub issue，没有对话，通常由起草 routine 或 `idea-loop:issue-explorer` 调用。走 `references/backlog-mode.md`，那里写了它跟本文哪几处不同；没写到的照本文。
 
 > 先读一次 `../../references/wiki-conventions.md`（目录、frontmatter、slug 唯一性、禁写文件路径）、`../../references/spec-status.md`（状态机、backlog 移交标记，都只走 `scripts/spec-status.mjs`）和 `../../references/spec-figures.md`（spec 里四处图：画什么、用什么画、放哪）。
 >
@@ -160,7 +160,7 @@ grill 出来的 spec 一律落 `审核中`，碰不碰 UI 都一样。grill 里�
 
 `spec-status.mjs index <docs>` 刷新 `docs/spec/index.md`；`docs/raw/index.md` 照旧从 frontmatter 生成。
 
-这份 spec 覆盖了项目 backlog 里的条目（对话里提到的、§8 关联里挂的），每条跑一次 `spec-status.mjs handoff`（`spec-status.md` §2）。不写，起草 routine 会为同一条再起草一份。
+这份 spec 覆盖了项目 backlog 里的条目（对话里提到的、§8 关联里挂的），每条跑一次 `spec-status.mjs handoff`（`spec-status.md` §2）；覆盖的是 GitHub issue 的，每个跑一次 `issues.mjs handoff`（同上 §3），落盘后再跑一次 `issues.mjs sync` 让 issue 挂上状态。不写，起草方会为同一条再起草一份。
 
 ## 4 收工，点名下一步
 
