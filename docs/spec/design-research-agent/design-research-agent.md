@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 草稿
+status: 审核中
 tags: [idea-loop, uiux-imagine, uiux-refine, research, agent]
 summary: 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看
 related: ["[[uiux-imagine-agent]]", "[[0002-design-loop-v2-imagine-refine]]"]
