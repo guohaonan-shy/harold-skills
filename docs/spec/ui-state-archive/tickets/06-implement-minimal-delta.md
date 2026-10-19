@@ -12,10 +12,10 @@
 - 两处说明都写明：写 `prod/` 不归 implementer，归档在合并前由 pr-review 做。
 
 ## 验收标准
-- [ ] implement 的派工说明里有「交给 implementer 的 tmp 绝对路径」这一项
-- [ ] implementer 的说明里写明读冻结画布的位置、最小差异的写法与范围、进状态先查档案
-- [ ] 两处都不让 implementer 写 `prod/`
-- [ ] 全量 node 测试套件全绿
+- [x] implement 的派工说明里有「交给 implementer 的 tmp 绝对路径」这一项
+- [x] implementer 的说明里写明读冻结画布的位置、最小差异的写法与范围、进状态先查档案
+- [x] 两处都不让 implementer 写 `prod/`
+- [x] 全量 node 测试套件全绿
 
 ## 选中的存量回归
 无 test-cases 库。跑全量 `*/scripts/*.test.mjs`。

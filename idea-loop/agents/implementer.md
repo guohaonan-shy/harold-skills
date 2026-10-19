@@ -20,6 +20,7 @@ effort: high
 - **起点 SHA** 和**集成分支名**。你在 Claude 为你建的 worktree 里做，它默认不是从集成分支切出的，开工先 reset 到这个 SHA（§2）
 - **分到的端口**。起服务只用它，别的端口可能是别的执行方的
 - 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（explorer 写的，可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁，不往那里写别的**
+- **tmp 绝对路径**：集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径。`tmp/` 不进版本库，你自己的 worktree 里没有它，所以画布和最小差异都用这个绝对路径读写（§3 末尾）
 - 这份 spec 前面已经落地的工单的提交列表。要看前一张怎么做的，用 `git show`
 - 上次卡住留下的半成品分支（可选）。有就在 reset 之后 `git merge --squash <分支>` 拿回来当起点，不提交，接着做
 - 这张工单不是第一次做时，编排者会说明原因：上次卡住后人做了决定（工单里有 `> 人的决定`），或人验反馈、review 批示要修（验收标准末尾新追加了 `人验反馈` / `review 第 N 轮` 的未勾格）。**这时只做没勾的那几格**，已勾的格对应的行为不要动坏：存量回归和全量套件照样要全绿
@@ -65,6 +66,18 @@ effort: high
 
   拿到后先 `browser_close` 一次（不继承上一个人的 tab 和登录上下文），只访问自己端口上的页面；用完再 `browser_close`，然后 `release … --owner <NN>`。等太久（默认 30 分钟）没拿到，按 `failed` 交回，写明卡在锁上。
 - 工单「选中的存量回归」那节列的用例，也要跑。
+
+### UI 工单与设计档案
+
+> 档案的结构、frontmatter 与校验在 `refs/design-archive.md`，写之前读它的 §2–§5。
+
+- **冻结画布从 tmp 绝对路径的 `canvas/` 下读**，不要在自己的 worktree 里找。
+- **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
+  - **范围**：只写这张工单碰到的状态、边、组件文件，别的对象不碰。
+  - **写法**：照 `refs/design-archive.md` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，不覆盖别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
+  - **自检**：以集成 worktree 当仓库根，跑 `node scripts/design-archive-check.mjs <集成 worktree> --delta <spec-slug>`，违规当场改。
+- **要进某个状态去复现或写测试时，先查档案**，不要自己摸路：`node scripts/design-archive-query.mjs <集成 worktree> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
+- **不写 `prod/`。** 它只由归档脚本写，归档在合并前由 pr-review 阶段做，不归你。
 
 ## 4 停，还是延后
 
@@ -176,5 +189,5 @@ failed: <哪一条完成标准没过，最后一次的输出摘要>   # failed �
 ## 不做
 
 - 不跟人对话，不推送，不开 PR；不建、不切别的分支，不碰集成分支。
-- 不改 spec 的 scope，不删工单，不读整份 spec。
+- 不改 spec 的 scope，不删工单，不读整份 spec；不写 `docs/design/prod/`（只写 tmp 路径下的 `delta/`）。
 - 不把延后当成漏掉一格的办法；不在行为没定时自己选一个往下做。
