@@ -7,7 +7,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 **把一份已经切好工单的 spec 做完。** 这里只写编排：谁起谁、派哪张、交回后核什么、何时停下交给人。一张工单怎么做在 `agents/implementer.md`。
 
-> 先读 `../../references/wiki-conventions.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`../../references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../../references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../../references/decision-rules.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」和停下汇报的决定题都按它）。
+> 先读 `../../references/wiki-conventions.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`../../references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../../references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../../references/decision-rules.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
 
 ## 0 前提
 
@@ -33,7 +33,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 - **已落地**：`git log --format='%H %(trailers:key=Ticket,valueonly)' $(git merge-base HEAD <base>)..HEAD` 里带 `Ticket:` 的 commit。
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项、推荐、半成品的 worktree 和分支。丢了就从 review loop 文件还原（停下汇报里有批示和「做了什么」的就算已决定）。
-- **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`，每落地一张就把它交回的「按现有做法定的」与标「存量本次修」的 `found` 记进来（工单号 + 做了什么 + 依据），写进停下汇报后清空。执行方回收后只剩落地提交，这些交回内容找不回来，所以落地时立刻记。
+- **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`，每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、以及为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接），写进停下汇报后清空。执行方回收后只剩落地提交，这些交回内容找不回来，所以落地时立刻记。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（MCP 浏览器锁）。在跑的执行方只记在会话里。
 
 **frontier** = 没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。会话断了：重算 frontier；`git worktree list` 里 pending 没记着的执行方 worktree 按 `worktree.md` §3 回收后重派。
@@ -60,7 +60,9 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 不过就 SendMessage 退回同一个执行方说清哪条，第二次还不过按 `failed`。
 
-**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑全量套件——不算失败。落地后按 `worktree.md` §3 **回收**，再记下它的 `human_verify`（进停下汇报）、`verified`（进描述）、`by_existing_practice` 与标「存量本次修」的 `found`（进 handled，下次停下汇报的「已按规则处理」）、其余 `found`（标「spec 缺口」的进 pending 当决定题，其余进参考）。
+**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑全量套件——不算失败。落地后按 `worktree.md` §3 **回收**，再记下它的 `human_verify`（进停下汇报）、`verified`（进描述）、`by_existing_practice` 与标「存量本次修」的 `found`（进 handled，下次停下汇报的「已按规则处理」）、标「spec 缺口」的 `found`（进 pending 当决定题）、其余 `found`（跟这次无关的存量，见下）。
+
+**跟这次无关的存量问题自动开 issue**（`decision-rules.md` §1 第 2 条）：其余 `found` 逐条在目标仓库 `gh issue create`，不加 `status:*` 标签（没标签就是待办，`issue-dispatch` 会接手），写给一个没有上下文的人看：是什么、在哪、为什么这张工单没动它。开之前 `gh issue list --search` 查一次，已有同一问题的 open issue 就不重开，链接那一个。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次停下汇报的「已按规则处理」和第 1 轮 review 汇报的「已按规则处理」都带它；人一句话可推翻（§6）。开不成（`gh` 失败）不静默丢：记进 handled 写明没开成与原因，让人在停下汇报里看到。审查者不去找存量问题（`pr-reviewer` 只报污染本次、让 CI 变红的那两种），开 issue 是编排者对执行方交回的做。
 
 `by_existing_practice` 每条必须带至少一处现存实例，没有实例的不收：退回执行方，要么补实例，要么改按「行为没定」停（`decision-rules.md` §2，宁可多问，不凭推断凑依据）。
 
@@ -73,13 +75,14 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 没有在跑的、frontier 也空了才停（只剩等决定的及其下游，或全部落地）。
 
 1. 还没有 PR：推送，`gh pr create --draft --base <base>`（标题用 spec 标题，带署名行），`pr-body.mjs set` 写 `summary` 和 `reference`。
-2. 停下汇报按 `pr-description.md` §4 写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` §7）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
+2. 停下汇报按 `pr-description.md` §4 写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` §7）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
 3. 更新 `reference` 的执行记录，推送。
 4. 会话里按条目贴汇报，每项文字后紧跟它的素材（`review-loop.md` §2）；再发一条推送通知。
 
 **人回复后**：原话逐字记进「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
 - **推翻**（对「已按规则处理」里的某条，「推翻某条」）：当作一条**人的决定**。原话逐字记进「你的批示」；那条所属的那张工单，`要建什么` 末尾加 `> 人的决定（<日期>）：推翻「<那条做了什么>」：<原文>`，验收末尾追加 `- [ ] 人推翻（<日期>）：<人要的样子>`，提交 `docs(tickets): <NN> — 人的决定`；工单回 frontier 重派（同一 trailer，带上「人的决定已写进工单」）。之后审查者读到这条记录，不再按同一依据把它当成照规则。
+- **推翻「开了 issue」的那类**：不回工单，不派执行方。原话逐字记进「你的批示」，在那个 issue 上留一条说明并关掉（`--reason "not planned"`），人要别的处理（比如这次就修）就按那个处理：要修的按上一条写回所属工单。
 - **决定**：工单 `要建什么` 末尾加 `> 人的决定（<日期>）：<原文>`，验收格随之增删，提交 `docs(tickets): <NN> — 人的决定`，从 pending 删掉。工单回 frontier，派时带上半成品分支；它落地后旧 worktree 和分支一并回收。
 - **人验对**：勾上。**不对**：验收末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，工单回 frontier 重派（同一 trailer，素材同名覆盖）。
 - **疑问**：直接答；要改方案的，说明回 `grill`。

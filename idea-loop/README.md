@@ -110,7 +110,7 @@ it worked, but carried one person's words from GitHub back into the session they
 
 | Phase | PR | Who talks | Where the human answers |
 |---|---|---|---|
-| Implementing | draft | `implement`'s orchestrator, in the session | A **stop report per stop**: first what was **handled by rule** (details the spec left open that the product already answers, legacy problems fixed because they spoiled the ticket's input or turned CI red — one line each with its basis; overturn any with one sentence, which the orchestrator writes into the ticket as the human's decision), then decisions (two options + a recommendation, written by `references/decision-rules.md` §7) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
+| Implementing | draft | `implement`'s orchestrator, in the session | A **stop report per stop**: first what was **handled by rule** (details the spec left open that the product already answers, legacy problems fixed because they spoiled the ticket's input or turned CI red, and unrelated legacy problems the implementer noticed, for which the orchestrator already opened an issue (no status label) — one line each with its basis; overturn any with one sentence, which the orchestrator writes into the ticket as the human's decision), then decisions (two options + a recommendation, written by `references/decision-rules.md` §7) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
 | Review | open | `pr-review`'s orchestrator, in the session | A **report per round**, written for the person who decides: a one-line verdict, then **handled by rule** (what was done, on what basis, with a commit or issue link — overturn any with one sentence), then each Spec finding titled by its consequence, with the problem, the user impact, whatever evidence makes it fastest to grasp (screenshots, an annotated flow, a GIF, a sequence diagram, a small table, a worked example) and a decision with options and a recommendation; each Standards finding as rule / now / impact / suggestion; no variable names, file:line, commit hashes or section numbers in the body — code locations go in a folded block for the fixer |
 
 - **Ticket done = every acceptance box has evidence or names who takes it over** (a later ticket,
@@ -119,7 +119,7 @@ it worked, but carried one person's words from GitHub back into the session they
 - **Stop vs defer.** A behaviour nobody decided stops that ticket (and what depends on it) — unless the
   product already has one way of doing it (name an existing instance): then the implementer follows it
   and says so in its hand-back; a legacy problem that spoils the ticket's input or turns CI red is
-  fixed in this ticket and reported as such (`references/decision-rules.md` §1). Everything else keeps going. A behaviour that is decided but cannot be proven inside this ticket
+  fixed in this ticket and reported as such, while an unrelated one becomes an issue the orchestrator opens (the reviewer does not hunt for legacy problems) (`references/decision-rules.md` §1). Everything else keeps going. A behaviour that is decided but cannot be proven inside this ticket
   is deferred to a named receiver; no receiver means it was undecided after all.
 - **Bot identity.** The archive comments posted at merge come from the repository's GitHub App
   when `~/.idea-loop/github-apps.json` configures one (Pull requests write, Contents read); otherwise
