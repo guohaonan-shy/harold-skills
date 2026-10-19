@@ -64,7 +64,7 @@ issues: [49]
 - **`uiux-imagine`**：项目还没有 `DESIGN.md` 时，选定语言后在同一会话里照 reference 写第一份。
 - **`dreaming`**：蒸馏候选、对账、从线上代码量出来新建。
 
-其余想改 `DESIGN.md` 的地方——designer 签字后的新动效、Distill-back 的可推广决定、`uiux-imagine` 已有 `DESIGN.md` 时「重探语言」的修订提案、实现时冒出来的新 token——都改成写一条「设计法候选」，等 `dreaming` 处理。人口述的一条规则，可以手动调一次 `dreaming` 只处理这一条（§4.6，待人定）。
+其余想改 `DESIGN.md` 的地方——designer 签字后的新动效、Distill-back 的可推广决定、`uiux-imagine` 已有 `DESIGN.md` 时「重探语言」的修订提案、实现时冒出来的新 token——都改成写一条「设计法候选」，等 `dreaming` 处理。人口述的一条规则，可以手动调一次 `dreaming` 只处理这一条（§4.6）。
 
 ## 3 User Stories
 
@@ -74,7 +74,7 @@ issues: [49]
 
 1. 作为项目负责人，我在一个还没有 `DESIGN.md` 的项目上跑 `uiux-imagine`、选定一套语言后，同一个会话就照写入标准起草第一份 `DESIGN.md`，等我确认措辞后才落笔，落笔后跑官方 lint。
 2. 作为项目负责人，第一份 `DESIGN.md` 只用 8 节加 3 个扩展章，不需要的章用 front matter 的 `omitted` 写明原因，不留空标题，没有 `## Case Law`。
-3. 作为项目负责人，有线上 UI 但还没有 `DESIGN.md` 的项目，第一份由 `dreaming` 从线上代码量出来（一致的进、不一致的交我裁决、偶然的不进），同样等我确认。
+3. 作为项目负责人，有线上 UI 但还没有 `DESIGN.md` 的项目，第一份照样由 `uiux-imagine` 写，按写入标准从线上代码量出来（一致的进、不一致的交我裁决、偶然的不进），同样等我确认；没跑过 imagine 的项目，由 `dreaming` 的定期对账发现没有时量出第一份。
 
 ![设计过程中冒出的规则](assets/tree-user-stories-2-candidates.png)
 
@@ -84,7 +84,7 @@ issues: [49]
 2. 作为项目负责人，静态设计签字时（Distill-back）可推广的决定也只写成候选，designer 和设计 protocol 都不写 `DESIGN.md`。
 3. 作为项目负责人，已有 `DESIGN.md` 时我让 `uiux-imagine`「重探语言」，它的修订提案写成候选，不直接改文件。
 4. 作为 implementer，实现时遇到一个会复用、但 `DESIGN.md` 里没有的值，我停下交人判断，要进的写成候选，不在代码里留魔法数，也不改 `DESIGN.md`。
-5. 作为项目负责人，我口述一条视觉规则时，能当场手动调一次 `dreaming` 只处理这一条；不调就记成候选等每周那次（§4.6，待人定）。
+5. 作为项目负责人，我口述一条视觉规则时，能当场手动调一次 `dreaming` 只处理这一条；不调就记成候选等每周那次（§4.6）。
 
 ![dreaming 写 DESIGN.md](assets/tree-user-stories-3-dreaming.png)
 
@@ -133,6 +133,7 @@ plugin 级 reference 一份（暂定 `references/design-md.md`），把 `design-
 ### 4.3 `uiux-imagine`：只在没有 `DESIGN.md` 时写，而且自己写
 
 - 语言高度打开、选定语言之后：先实测每一对角色色的对比度（现有步骤不变），再**读 reference，照它的「新建」一节在这个会话里起草第一份 `DESIGN.md`**，摆给人确认措辞后才落笔；hook 跑官方 lint，收尾再跑一次 lint。原来「调 `design-modeling` 的新建模式」那一步换成这个。
+- **只要 imagine 开工时项目没有 `DESIGN.md`，第一份就归它写**，不论有没有线上 UI（Harold 2026-10-19 拍板）。有线上 UI 的，照 reference「新建」一节的第一种来源从代码与真 DOM 量（一致 / 不一致 / 偶然三桶分开报，不一致的交人裁决）；没有的，接语言高度选定的语言。`dreaming` 只在定期对账时发现项目没有 `DESIGN.md` 才新建。
 - 项目已有 `DESIGN.md`、人显式说「重探语言」：产物从「带日期的修订提案」改成**设计法候选**（每条写明要并进哪一章），等 `dreaming` 处理；imagine 不改文件。营销 register 分支照旧。
 - imagine 要写文件，所以它的工具权限要能写 `DESIGN.md`（它是 `disable-model-invocation`，只会被人调起，这一点不变）。
 
@@ -159,14 +160,14 @@ plugin 级 reference 一份（暂定 `references/design-md.md`），把 `design-
 - 不再有「情境 / 决定 / 理由」三段式和去向行：`dreaming` 处理完就删（grill 已定），去向记在 `dreaming` 那次的执行结果里。
 - 本 spec 落地时档案对象还不存在，候选先写在现有冻结记录的「设计法候选」一节，形态已经是新的；档案那份 spec 落地时把住处换成档案对象。
 
-### 4.6 人口述的规则怎么当场落（待人定）
+### 4.6 人口述的规则怎么当场落
 
 删掉 `design-modeling` 之后，人在会话里说「以后这类卡片都用 X」，没有一个能当场写 `DESIGN.md` 的入口。
 
 - **A**：一律写成候选，等每周那次 `dreaming`。
 - **B**：人可以手动调一次 `dreaming` 并带上这条规则，`dreaming` 只走这一条的蒸馏（读 reference → 起草 → 人确认 → 落笔 → lint），不跑全量对账；人不调，就记成候选等每周那次。
 
-**推荐 B**：`dreaming` 本来就是人手动调的 skill，不另开入口；每周一次的节奏下，A 意味着一条人已经想清楚的规则要等最多七天，期间设计侧照旧按老规矩出图。`dreaming` 的单条调用怎么接进它的流程归 [[dreaming-design-reconcile]]，本 spec 在 reference 里写好单条蒸馏要走的步骤。
+**定 B**（Harold 2026-10-19 拍板）：`dreaming` 本来就是人手动调的 skill，不另开入口；每周一次的节奏下，A 意味着一条人已经想清楚的规则要等最多七天，期间设计侧照旧按老规矩出图。`dreaming` 的单条调用怎么接进它的流程归 [[dreaming-design-reconcile]]，本 spec 在 reference 里写好单条蒸馏要走的步骤。
 
 ### 4.7 跟着改的文档
 
