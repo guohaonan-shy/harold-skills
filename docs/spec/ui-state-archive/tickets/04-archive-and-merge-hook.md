@@ -15,7 +15,7 @@
 
 输入一个 spec 名，把 `docs/design/tmp/<spec-slug>/delta/` 并进 `prod/`：
 
-1. 先跑 01 的校验（叠加这份 delta）；不通过就**什么都不写**，报出违规后非 0 退出。
+1. 先跑 01 的校验（叠加这份 delta）；不通过就**什么都不写**，报出违规后非 0 退出。此时 `usedBy` 还没重算，新增页面引用已有组件时必然不一致，所以这一步跳过「`usedBy` 与反向引用一致」那半条（01 的校验模块有开关支持），第 3 步生成之后再完整校验一次。
 2. `delta/` 下的对象文件按同路径覆盖进 `prod/`（连同各自的 `assets/`），按 `delta/removed.md` 删掉对象。
 3. 重新生成所有组件与动效的 `usedBy`，重新生成 `prod/index.md`（页面、组件、动效、用户路径四张清单，表体从 frontmatter 生成；保留 index 自身 frontmatter 里的主视口 / 主题 / 语言设定）。
 4. 交互图：`tmp/<spec-slug>/canvas/` 下的交互图挪进 `prod/pages/<page>/assets/flows/`（page 取图所对应状态的页面；对应不上时放进 delta 里第一个页面并在输出里说明），然后把 `docs/spec/<spec-slug>/<spec-slug>.md` 里指向旧位置的图片链接改写成新路径。
