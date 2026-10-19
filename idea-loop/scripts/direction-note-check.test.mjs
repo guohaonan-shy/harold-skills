@@ -163,3 +163,14 @@ test('a note whose composition list lacks markers is not a valid note', () => {
   assert.equal(r.valid, false);
   assert.ok(r.errors.some((e) => e.includes('缺来源标记')));
 });
+
+test('a 「人保留」 line written under an item is not a composition item and leaves the note valid', () => {
+  const kept = composition().replace(
+    '  - 容器形状：容器形状 的写法（人选定）',
+    '  - 容器形状：容器形状 的写法（人选定）\n    - 人保留（2026-10-19）：评委要把关闭按钮挪到左上，人说保留右上',
+  );
+  assert.ok(kept.includes('人保留（2026-10-19）'));
+  assert.deepEqual(checkComposition(kept), []);
+  const verdict = `- **B「对话气泡」** —— **选中**。\n${kept}\n- **A「顶部横幅」** —— **落选**。`;
+  assert.equal(checkDirectionNote(note({ 变种裁决: verdict })).valid, true);
+});

@@ -16,6 +16,13 @@
  * (direction → reopen the direction, pattern → reference research, craft → fix in place).
  * Absent values are null, never omitted — a consumer never has to feature-detect.
  *
+ * One more input, optional: the exclusion set. A finding that asks to move something the human
+ * chose is held back by the designer and put to the human; if the human says keep, the finding
+ * is listed in `excluded` and no longer counts toward the round. The critic stays blind to all
+ * of this — it is held to its own findings first, and only then are the kept ones taken out.
+ * The set is by index into `findings` plus the human's words; the finding shape does not grow
+ * a field for it. Empty or absent, every output is exactly what it was before the set existed.
+ *
  * Pure: no browser, no model, no clock, no filesystem. Nothing here needs a mock.
  */
 
@@ -97,6 +104,43 @@ export function validateFindings(findings) {
   return errors;
 }
 
+// ---------- the human-kept exclusion set ----------
+
+/** Every exclusion carries exactly these fields: which finding, and the human's words for it. */
+export const EXCLUSION_FIELDS = ['index', 'reason'];
+
+/**
+ * Guard the exclusion set against the findings it points into.
+ *
+ * @returns one human-readable error per violation, `[]` when the set is well-formed
+ */
+export function validateExclusions(findings, excluded) {
+  if (!Array.isArray(excluded)) return ['excluded must be an array'];
+  const errors = [];
+  const seen = new Set();
+  excluded.forEach((e, i) => {
+    const at = `excluded[${i}]`;
+    if (e === null || typeof e !== 'object' || Array.isArray(e)) {
+      errors.push(`${at}: must be an object`);
+      return;
+    }
+    for (const field of Object.keys(e)) {
+      if (!EXCLUSION_FIELDS.includes(field)) errors.push(`${at}: unknown field "${field}"`);
+    }
+    if (typeof e.reason !== 'string' || e.reason.trim() === '') {
+      errors.push(`${at}: reason must be a non-empty string — the human's words (人保留（日期）…) are what gets listed`);
+    }
+    if (!Number.isInteger(e.index) || e.index < 0 || e.index >= findings.length) {
+      errors.push(`${at}: index ${JSON.stringify(e.index)} does not point at a finding (this round has ${findings.length}, indices 0–${findings.length - 1})`);
+    } else if (seen.has(e.index)) {
+      errors.push(`${at}: finding ${e.index} is excluded twice`);
+    } else {
+      seen.add(e.index);
+    }
+  });
+  return errors;
+}
+
 // ---------- score bands ----------
 
 /** Worst severity present, or null when the round found nothing. */
@@ -145,16 +189,28 @@ export function scoreBand(findings) {
  *                  read as a one-round history. Plateau is a three-round property, so one
  *                  round of memory can never see one — that is why this takes a list and not
  *                  just "last round's worst".
+ * @param excluded  findings the human has chosen to keep, as `[{ index, reason }]` — index into
+ *                  `findings`, reason the human's words. They do not count toward the round and
+ *                  come back listed in the result. A reference to a finding that is not there is
+ *                  an error. `history` should carry the worst severity of what COUNTED in each
+ *                  previous round, so a kept finding does not feed a plateau.
  * @returns { valid, errors, worst, counts, band, stop }
  *          `stop` is one of continue / pass / plateau / direction, and is null on an invalid
  *          round: the judgement would rest on a score that does not follow from the findings.
+ *          With a non-empty `excluded`, worst / counts / band describe what still counts, and
+ *          `criticScore`, `effectiveScore` and the listed `excluded` are added; with none, the
+ *          result is exactly the shape it had before the set existed.
  */
-export function checkRound(findings, score, history = []) {
+export function checkRound(findings, score, history = [], excluded = []) {
   const errors = validateFindings(findings);
   const past = typeof history === 'string' ? [history] : Array.isArray(history) ? history : [];
 
   if (errors.length) {
     return { valid: false, errors, worst: null, counts: null, band: null, stop: null };
+  }
+  const exclusionErrors = validateExclusions(findings, excluded);
+  if (exclusionErrors.length) {
+    return { valid: false, errors: exclusionErrors, worst: null, counts: null, band: null, stop: null };
   }
   if (!Number.isInteger(score) || score < 1 || score > 10) {
     return {
@@ -167,24 +223,46 @@ export function checkRound(findings, score, history = []) {
     };
   }
 
-  const band = scoreBand(findings);
-  const worst = worstSeverity(findings);
-  const valid = score >= band.min && score <= band.max;
+  // The critic is held to everything it wrote — kept findings included.
+  const criticBand = scoreBand(findings);
+  const criticWorst = worstSeverity(findings);
+  const valid = score >= criticBand.min && score <= criticBand.max;
 
   if (!valid) {
     return {
       valid: false,
       errors: [
-        `score ${score} is outside the band ${band.min}–${band.max} that ${worst ?? 'no findings'} allows — rerun the critic`,
+        `score ${score} is outside the band ${criticBand.min}–${criticBand.max} that ${criticWorst ?? 'no findings'} allows — rerun the critic`,
       ],
-      worst,
+      worst: criticWorst,
       counts: counts(findings),
-      band,
+      band: criticBand,
       stop: null,
     };
   }
 
-  return { valid: true, errors: [], worst, counts: counts(findings), band, stop: stopDecision(worst, score, past) };
+  if (excluded.length === 0) {
+    return { valid: true, errors: [], worst: criticWorst, counts: counts(findings), band: criticBand, stop: stopDecision(criticWorst, score, past) };
+  }
+
+  // Only now take the kept ones out. What still counts sets the band, the worst and the stop;
+  // the critic's own number is moved the least that puts it inside that band.
+  const dropped = new Set(excluded.map((e) => e.index));
+  const counted = findings.filter((_, i) => !dropped.has(i));
+  const band = scoreBand(counted);
+  const worst = worstSeverity(counted);
+  const effectiveScore = Math.min(Math.max(score, band.min), band.max);
+  return {
+    valid: true,
+    errors: [],
+    worst,
+    counts: counts(counted),
+    band,
+    stop: stopDecision(worst, effectiveScore, past),
+    criticScore: score,
+    effectiveScore,
+    excluded: excluded.map((e) => ({ index: e.index, reason: e.reason, finding: findings[e.index] })),
+  };
 }
 
 /**
@@ -207,22 +285,30 @@ export function renderRound(result, file) {
   }
   const n = result.counts;
   const tally = SEVERITIES.filter((s) => n[s]).map((s) => `${s}×${n[s]}`).join(' · ') || '无 finding';
-  return [
+  const lines = [
     `critic-round: 有效 ✓${at}`,
     `  最差：${result.worst ?? '无'}　计数：${tally}　允许区间：${result.band.min}–${result.band.max}`,
     `  停止判定：${result.stop}`,
-  ].join('\n');
+  ];
+  if (result.excluded?.length) {
+    lines.splice(2, 0, `  评委分 ${result.criticScore} → 计入后 ${result.effectiveScore}`);
+    lines.push(`  已被人保留，不计分（${result.excluded.length} 条）：`);
+    for (const e of result.excluded) {
+      lines.push(`    - findings[${e.index}] ${e.finding.severity} ${e.finding.where ?? '（无位置）'}：${e.finding.detail}　←　${e.reason}`);
+    }
+  }
+  return lines.join('\n');
 }
 
 // CLI — the thin shell the refine loop calls each round. The module above stays pure;
-// the filesystem enters only here. Input is one JSON file: { findings, score, history }.
+// the filesystem enters only here. Input is one JSON file: { findings, score, history, excluded? }.
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { readFileSync } = await import('node:fs');
   const args = process.argv.slice(2);
   const json = args.includes('--json');
   const [file] = args.filter((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('usage: critic-score.mjs <round.json> [--json]   # { findings, score, history }');
+    console.error('usage: critic-score.mjs <round.json> [--json]   # { findings, score, history, excluded? }');
     process.exit(1);
   }
   let round;
@@ -232,7 +318,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.error(`critic-score: cannot read ${file}: ${e.message}`);
     process.exit(1);
   }
-  const result = checkRound(round?.findings, round?.score, round?.history ?? []);
+  const result = checkRound(round?.findings, round?.score, round?.history ?? [], round?.excluded ?? []);
   if (json) console.log(JSON.stringify(result, null, 2));
   else console.log(renderRound(result, file));
   process.exit(result.valid ? 0 : 2);
