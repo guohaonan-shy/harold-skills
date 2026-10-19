@@ -16,11 +16,12 @@
  *   node idea-loop/evals/run-baseline.mjs --archive idea-loop/evals/baseline
  */
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, cpSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { grade, walk } from './assert.mjs';
+import { digestStream, loadSession } from './session.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..');
@@ -35,6 +36,10 @@ const SEEDS = {
   'spec-awaiting-freeze': ['stages/spec-awaiting-freeze.md', 'docs/spec/practice-history-surface/practice-history-surface.md'],
   // 方向说明是发散交给收敛的中间产物，住在项目根的 .tmp/ 而不在 spec 里（wiki-conventions §2.1）。
   'direction-note': ['stages/direction-note.md', '.tmp/uiux-imagine/practice-history-surface/direction-note.md'],
+  // 交接画布是 imagine 交给 refine 的另一半准出，住在同一个工作目录的 handoff/ 里。
+  handoff: ['stages/handoff', '.tmp/uiux-imagine/practice-history-surface/handoff'],
+  // 「uiux-imaginer 直跑」那一格的起始状态：前两轮留下的变种板与每轮记录，整个搬进工作目录。
+  'imagine-resume': ['stages/imaginer-resume', '.tmp/uiux-imagine/practice-history-surface'],
 };
 
 function parseArgs(argv) {
@@ -73,38 +78,52 @@ function buildProject(evalDef, projectDir) {
 }
 
 function runClaude(evalDef, projectDir, runDir, opts) {
+  // stream-json 而不是 json：断言要读「调用会话自己做了什么」（会话只编排、不写变种板），
+  // 只有事件流里每条消息带 parent_tool_use_id，分得出会话与子代理。--verbose 是 stream-json 的前提。
   const args = [
     '-p', evalDef.prompt,
     '--plugin-dir', PLUGIN_ROOT,
     '--dangerously-skip-permissions',
-    '--output-format', 'json',
+    '--output-format', 'stream-json',
+    '--verbose',
   ];
   if (opts.model) args.push('--model', opts.model);
 
+  const streamPath = join(runDir, 'run.stream.jsonl');
+  // 流里有截图的 base64，一跑几百兆：让 claude 直接写文件，不经过 spawnSync 的内存缓冲。
+  const out = openSync(streamPath, 'w');
   const started = Date.now();
-  const r = spawnSync('claude', args, {
-    cwd: projectDir,
-    encoding: 'utf8',
-    timeout: opts.timeoutMin * 60_000,
-    maxBuffer: 64 * 1024 * 1024,
-  });
+  let r;
+  try {
+    r = spawnSync('claude', args, {
+      cwd: projectDir,
+      encoding: 'utf8',
+      timeout: opts.timeoutMin * 60_000,
+      stdio: ['ignore', out, 'pipe'],
+    });
+  } finally {
+    closeSync(out);
+  }
   const elapsedSec = Math.round((Date.now() - started) / 1000);
 
-  writeFileSync(join(runDir, 'run.stdout.json'), r.stdout ?? '');
   if (r.stderr) writeFileSync(join(runDir, 'run.stderr.log'), r.stderr);
 
   let usage = null;
   try {
-    const parsed = JSON.parse(r.stdout);
-    // agent 定义里写的是别名（opus / fable），解析到哪个模型取决于跑的那份 Claude Code。
-    // 把这一跑实际调用过的模型（含 subagent）记下来——两次 baseline 对不上时，先看是不是模型换了。
-    usage = {
-      total_cost_usd: parsed.total_cost_usd, num_turns: parsed.num_turns, duration_ms: parsed.duration_ms, is_error: parsed.is_error,
-      models: Object.keys(parsed.modelUsage ?? {}),
-    };
-    writeFileSync(join(runDir, 'result.txt'), String(parsed.result ?? ''));
+    const session = digestStream(streamPath);
+    writeFileSync(join(runDir, 'session.json'), JSON.stringify(session));
+    const parsed = session.result;
+    if (parsed) {
+      // agent 定义里写的是别名（opus / fable），解析到哪个模型取决于跑的那份 Claude Code。
+      // 把这一跑实际调用过的模型（含 subagent）记下来——两次 baseline 对不上时，先看是不是模型换了。
+      usage = {
+        total_cost_usd: parsed.total_cost_usd, num_turns: parsed.num_turns, duration_ms: parsed.duration_ms, is_error: parsed.is_error,
+        models: Object.keys(parsed.modelUsage ?? {}),
+      };
+      writeFileSync(join(runDir, 'result.txt'), String(parsed.result ?? ''));
+    }
   } catch {
-    /* 没吐出可解析的 JSON 也照样往下判形状——产物在不在跟它会不会说话是两件事 */
+    /* 没吐出可解析的流也照样往下判形状——产物在不在跟它会不会说话是两件事 */
   }
 
   return { elapsedSec, exitCode: r.status, timedOut: r.error?.code === 'ETIMEDOUT', usage };
@@ -153,6 +172,9 @@ function main() {
       repoRoot: REPO_ROOT,
       pluginRoot: PLUGIN_ROOT,
       before,
+      runDir,
+      // 会话摘要：谁（会话还是子代理）调了什么、子代理交回了什么。没有它的断言会明说「没有会话记录」。
+      session: e.prompt === null ? null : loadSession(runDir),
     });
     writeFileSync(join(runDir, 'grading.json'), JSON.stringify({ eval_name: e.eval_name, expectations }, null, 2));
 

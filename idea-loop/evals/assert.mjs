@@ -15,7 +15,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { checkDirectionNote } from '../scripts/direction-note-check.mjs';
+import { checkDirectionNote, checkComposition, COMPOSITION } from '../scripts/direction-note-check.mjs';
 
 // ── 小工具 ──────────────────────────────────────────────────────────────────
 
@@ -132,6 +132,192 @@ function theNote(project) {
 
 const ok = (evidence) => ({ passed: true, evidence });
 const no = (evidence) => ({ passed: false, evidence });
+
+// ── 会话摘要的小工具（session.mjs 压出来的那份；没有会话记录时断言明说，不猜）──────────
+
+const NO_SESSION = '没有会话记录（run.stream.jsonl / session.json）——这一跑是旧版 runner 跑的，只留了最终文字；重跑这一格才有';
+const sessionEvents = (session) => session?.events ?? [];
+const toolUses = (session) => sessionEvents(session).filter((e) => e.kind === 'tool_use');
+const isAgentCall = (e) => /^(Agent|Task)$/.test(e.name);
+const startsImaginer = (e) => isAgentCall(e) && /uiux-imaginer/.test(String(e.input?.subagent_type ?? ''));
+
+/** 子代理交回会话的那段文字：Agent / SendMessage 的 tool_result，且是会话自己收到的（不是子代理之间的）。 */
+function handbacks(session) {
+  const nameById = new Map(toolUses(session).map((e) => [e.id, e.name]));
+  return sessionEvents(session).filter(
+    (e) => e.kind === 'tool_result' && !e.sub && /^(Agent|Task|SendMessage)$/.test(nameById.get(e.toolUseId) ?? ''),
+  );
+}
+
+/** 编排者不该亲手做的事：写变种板与渲染物、截图、调 Refero。返回原因，没有就是 null。 */
+function orchestratorForbidden(c) {
+  const input = c.input ?? {};
+  const path = String(input.file_path ?? input.notebook_path ?? input.path ?? '');
+  const cmd = String(input.command ?? '');
+  if (/refero/i.test(c.name)) return 'Refero 调用';
+  if (/screenshot/i.test(c.name)) return '截图';
+  if (c.name === 'computer' && /screenshot/i.test(JSON.stringify(input))) return '截图';
+  if (c.name === 'Bash' && /screenshot|screencapture/i.test(cmd)) return '截图';
+  if (/^(Write|Edit|MultiEdit|NotebookEdit)$/.test(c.name) && /(^|\/)board\.html$|\.tmp\/uiux-imagine\/[^/]+\/(assets|research|handoff)\//.test(path)) return `写变种板或渲染物（${path}）`;
+  if (c.name === 'Bash' && (/(>>?|\btee\b(\s+-a)?)\s*\S*board\.html/.test(cmd) || /\b(cp|mv|install)\b[^|;&\n]*\bboard\.html\b/.test(cmd) || /\bsed\s+-i[^|;&\n]*board\.html/.test(cmd))) return '写变种板';
+  return null;
+}
+
+// ── 每轮记录 rounds.md ────────────────────────────────────────────────────────
+
+/** 一份 rounds.md 的正文 → Map<轮号, 该轮正文>。同一轮出现两次（整份重写）以后写的为准。 */
+function parseRounds(text) {
+  const out = new Map();
+  if (!text) return out;
+  const marks = [...text.matchAll(/^#{2,3}\s*第\s*(\d+)\s*轮[^\n]*$/gm)];
+  marks.forEach((m, i) => out.set(Number(m[1]), text.slice(m.index + m[0].length, i + 1 < marks.length ? marks[i + 1].index : text.length).trim()));
+  return out;
+}
+
+/** 一轮正文拆成「人说了什么」与「交回原文」两半。 */
+function splitRound(body) {
+  const i = body.indexOf('**交回原文**');
+  return i < 0 ? { said: body, handback: '' } : { said: body.slice(0, i), handback: body.slice(i) };
+}
+
+/**
+ * 取每轮记录。文件在就读文件；imagine 收工会把它连同渲染物一起删（所以整条 skill 的那一格读不到文件），
+ * 这时从事件流里重建——uiux-imaginer 每一轮追加它的那几次写入，入参里就是那一节的全文。
+ */
+function roundsRecord({ project, session }) {
+  const { file } = theSpec(project);
+  if (!file) return { source: null, text: null, why: '没有唯一的 spec' };
+  const path = join(project, `.tmp/uiux-imagine/${slugOf(file)}/rounds.md`);
+  if (existsSync(path)) return { source: 'rounds.md', text: readFileSync(path, 'utf8') };
+  if (!session) return { source: null, text: null, why: `rounds.md 已被收工清掉，而且${NO_SESSION}` };
+  const pieces = toolUses(session)
+    .filter((e) => e.sub && JSON.stringify(e.input ?? {}).includes('rounds.md'))
+    .map((e) => String(e.input.content ?? e.input.new_string ?? e.input.command ?? ''));
+  if (!pieces.length) return { source: null, text: null, why: 'rounds.md 已被收工清掉，事件流里也没有子代理写它的调用' };
+  return { source: '事件流（rounds.md 已被收工清掉）', text: pieces.join('\n') };
+}
+
+// ── 交接画布 ──────────────────────────────────────────────────────────────────
+
+const isLocalRef = (u) => u && !/^(https?:|data:|mailto:|tel:|javascript:|#|\?|\/\/)/i.test(u);
+
+/** 一份 HTML 或 CSS 里会去取别的文件的引用：src / poster / <link href> / url() / @import。 */
+function assetRefs(text, isCss) {
+  const out = [];
+  if (!isCss) {
+    for (const m of text.matchAll(/\b(?:src|poster)\s*=\s*["']([^"']+)["']/gi)) out.push(m[1]);
+    for (const m of text.matchAll(/<link\b[^>]*\bhref\s*=\s*["']([^"']+)["']/gi)) out.push(m[1]);
+  }
+  for (const m of text.matchAll(/url\(\s*["']?([^"')]+?)["']?\s*\)/gi)) out.push(m[1]);
+  for (const m of text.matchAll(/@import\s+["']([^"']+)["']/gi)) out.push(m[1]);
+  return out;
+}
+
+/**
+ * 交接画布「自包含、能打开、能切状态」的静态检查。不开浏览器——断言只判形状：
+ * 入口在、引用的素材都在且是相对路径、没有对比页的残留（board.html / ?variant= 切换）、
+ * 读 ?state=、有真的 prefers-reduced-motion 媒体查询。
+ */
+function checkHandoff(project) {
+  const { file } = theSpec(project);
+  if (!file) return { problems: ['没有唯一的 spec'], info: '' };
+  const rel = `.tmp/uiux-imagine/${slugOf(file)}/handoff`;
+  const dir = join(project, rel);
+  const index = join(dir, 'index.html');
+  if (!existsSync(index)) return { problems: [`${rel}/index.html 不存在`], info: '' };
+
+  const problems = [];
+  const seen = new Set();
+  const queue = [{ path: index, css: false }];
+  let checked = 0;
+  let allText = '';
+  while (queue.length) {
+    const { path, css } = queue.shift();
+    if (seen.has(path)) continue;
+    seen.add(path);
+    const text = readFileSync(path, 'utf8');
+    allText += `\n${text}`;
+    for (const raw of assetRefs(text, css)) {
+      if (/^https?:/i.test(raw)) {
+        problems.push(`${relative(dir, path)} 引用了外部地址 ${raw.slice(0, 60)}——交接画布要自包含`);
+        continue;
+      }
+      if (!isLocalRef(raw)) continue;
+      const clean = raw.split(/[?#]/)[0];
+      if (!clean) continue;
+      if (clean.startsWith('/')) {
+        problems.push(`${relative(dir, path)} 用了绝对路径 ${clean}`);
+        continue;
+      }
+      const target = join(dirname(path), clean);
+      checked += 1;
+      if (!existsSync(target)) problems.push(`${relative(dir, path)} 引用的 ${clean} 不存在（会 404）`);
+      else if (/\.css$/i.test(clean)) queue.push({ path: target, css: true });
+    }
+  }
+  if (/board\.html/.test(allText)) problems.push('页面里还有 board.html 的引用——对比页外壳没去干净');
+  if (/get\(\s*['"]variant['"]\s*\)|[?&]variant=/.test(allText)) problems.push('页面里还有 ?variant= 的切换——别的变种没去干净');
+  if (/127\.0\.0\.1|localhost/.test(allText)) problems.push('页面里写死了本地服务地址');
+  if (!/['"]state['"]|[?&]state=/.test(allText)) problems.push('页面不读 ?state=，状态切不了');
+  if (!/@media[^{]*prefers-reduced-motion/.test(allText)) problems.push('没有真的 prefers-reduced-motion 媒体查询（顶部「预览减弱动效」开关应换成它）');
+  const files = walk(dir).length;
+  return { problems, info: `${rel}/ 共 ${files} 个文件，${checked} 个相对引用都在；读 ?state=；有 prefers-reduced-motion；无 board.html / ?variant= 残留` };
+}
+
+/** 构成清单每项：{ item, mark }，只扫「变种裁决」那一节。 */
+function compositionLines(note) {
+  const verdict = section(note, '变种裁决') ?? '';
+  const out = [];
+  for (const item of COMPOSITION) {
+    for (const l of verdict.split(/\r?\n/)) {
+      if (!new RegExp(`^\\s*(?:[-*]\\s+)?${item}\\s*[:：]\\s*\\S`).test(l)) continue;
+      out.push({ item, line: l.trim(), mark: l.trimEnd().match(/（([^（）]*)）$/)?.[1] ?? null });
+    }
+  }
+  return { verdict, items: out };
+}
+
+/** 种子画布里的 data-anchor 名字（refine 的起始画布从它来，名字是契约，不随构图调整改）。 */
+const anchorsOf = (html) => new Set([...String(html ?? '').matchAll(/data-anchor\s*=\s*["']([^"']+)["']/g)].map((m) => m[1]));
+
+/** 脚本化的人在整条 imagine 那一格里说的话，各取一个别处不会出现的片段。 */
+const IMAGINE_SCRIPTED = [
+  ['这几个方向'], ['趋势那个不行'], ['收在一起那个对'], ['间距看着有点散'], ['pill 别做得'], ['一行放不下'], ['重试按钮不要用主色'],
+];
+
+/** 方向定下之前的四条执行层话：（待打磨清单里的关键词，那句话的片段）。 */
+const EXEC_REMARKS = [
+  { key: '间距', said: '间距看着有点散' },
+  { key: 'pill', said: 'pill 别做得' },
+  { key: '折叠', said: '一行放不下' },
+  { key: '重试', said: '重试按钮不要用主色' },
+];
+
+/** designer 写的每轮评分 JSON：Write 的入参，或 Bash 里 heredoc 出来的那一份。 */
+function roundJsons(session) {
+  const out = [];
+  for (const e of toolUses(session)) {
+    if (!e.sub) continue;
+    const input = e.input ?? {};
+    let name = null;
+    let body = null;
+    if (e.name === 'Write' && /round-\d+\.json$/.test(String(input.file_path ?? ''))) {
+      name = String(input.file_path).split('/').pop();
+      body = String(input.content ?? '');
+    } else if (e.name === 'Bash' && /round-\d+\.json/.test(String(input.command ?? ''))) {
+      const cmd = String(input.command);
+      name = cmd.match(/round-\d+\.json/)[0];
+      body = cmd.slice(cmd.indexOf('{'), cmd.lastIndexOf('}') + 1);
+    }
+    if (!name) continue;
+    try {
+      out.push({ name, json: JSON.parse(body) });
+    } catch {
+      /* 不是整份 JSON（比如只改了一行的 Edit）就不当证据 */
+    }
+  }
+  return out;
+}
 
 // ── 断言 ────────────────────────────────────────────────────────────────────
 
@@ -315,8 +501,8 @@ export const ASSERTIONS = {
     },
   },
 
-  'imagine-ships-only-the-note': {
-    text: '准出物只有那一份方向说明——仓库里没多出文件，.tmp/uiux-imagine/<spec-slug>/ 里的对比页与抓取物也清掉了，只剩 direction-note.md',
+  'imagine-ships-note-and-handoff': {
+    text: '准出物只有方向说明与交接画布——仓库里没多出文件，.tmp/uiux-imagine/<spec-slug>/ 里对比页、落选变种与抓取物清掉了，只剩 direction-note.md 与 handoff/',
     run: ({ project, before }) => {
       const added = walk(project).filter((f) => !before.includes(f));
       const stray = added.filter((f) => !specFiles(project).includes(f));
@@ -324,8 +510,11 @@ export const ASSERTIONS = {
       const { file } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
       const work = `.tmp/uiux-imagine/${slugOf(file)}`;
-      const left = walk(join(project, work)).filter((f) => f !== 'direction-note.md');
-      return left.length ? no(`${work}/ 里渲染物没清：${left.join(', ')}`) : ok(`仓库没多文件；${work}/ 只剩方向说明`);
+      const all = walk(join(project, work));
+      if (!all.includes('direction-note.md')) return no(`${work}/ 里没有 direction-note.md`);
+      if (!all.includes('handoff/index.html')) return no(`${work}/handoff/index.html 不在——交接画布是 refine 的起点，没有它 refine 只能从文字重建`);
+      const left = all.filter((f) => f !== 'direction-note.md' && !f.startsWith('handoff/'));
+      return left.length ? no(`${work}/ 里渲染物没清：${left.join(', ')}`) : ok(`仓库没多文件；${work}/ 只剩方向说明与 handoff/（${all.filter((f) => f.startsWith('handoff/')).length} 个文件）`);
     },
   },
 
@@ -345,6 +534,198 @@ export const ASSERTIONS = {
       if (!mentions.length) return no('「高度记录」里一句都没交代语言高度——这一节欠的正是「语言高度是自动打开还是人显式要求的」');
       const shut = mentions.find((l) => closed.test(l));
       return shut ? ok(`「${shut.slice(0, 90)}」`) : no(`提到语言的行里没有一行说它没打开：${mentions.map((l) => `「${l.slice(0, 50)}」`).join(' ')}`);
+    },
+  },
+
+  'session-only-orchestrates': {
+    text: '调用会话只编排——它自己的工具调用里没有写变种板、截图、Refero 调用（子代理的不计），而且起过 uiux-imaginer',
+    run: ({ session }) => {
+      if (!session) return no(NO_SESSION);
+      const all = toolUses(session);
+      const own = all.filter((e) => !e.sub);
+      const bad = own.map((c) => [c, orchestratorForbidden(c)]).filter(([, why]) => why);
+      const starts = own.filter(startsImaginer);
+      const sends = own.filter((c) => c.name === 'SendMessage');
+      const problems = [];
+      if (!starts.length) problems.push('会话没有起过 idea-loop:uiux-imaginer（自己的 Agent 调用里 subagent_type 没有它）');
+      if (bad.length) problems.push(`会话自己做了不该做的：${bad.slice(0, 5).map(([c, why]) => `${c.name}→${why}`).join('；')}${bad.length > 5 ? `…共 ${bad.length} 条` : ''}`);
+      return problems.length
+        ? no(problems.join('；'))
+        : ok(`会话自己 ${own.length} 次工具调用（子代理的 ${all.length - own.length} 次不计）：起 uiux-imaginer ${starts.length} 次、SendMessage ${sends.length} 次；零次写变种板、截图、Refero`);
+    },
+  },
+
+  'imagine-rounds-recorded': {
+    text: '每轮交回都追加进了每轮记录：轮号 1..K 连续、至少四轮，脚本化的人的七条反应都逐字落在记录里',
+    run: (ctx) => {
+      const rec = roundsRecord(ctx);
+      if (rec.text === null) return no(rec.why);
+      const rounds = parseRounds(rec.text);
+      const nums = [...rounds.keys()].sort((a, b) => a - b);
+      if (!nums.length) return no(`${rec.source} 里一个「## 第 N 轮」都没有`);
+      const problems = [];
+      if (nums.some((n, i) => n !== i + 1)) problems.push(`轮号不是从 1 连续到 ${nums.length}：${nums.join(',')}`);
+      if (nums.length < 4) problems.push(`只有 ${nums.length} 轮；一次调用加三条方向性反应至少四轮`);
+      const all = [...rounds.values()].join('\n');
+      const lost = IMAGINE_SCRIPTED.filter(([frag]) => !all.includes(frag)).map(([f]) => `「${f}」`);
+      if (lost.length) problems.push(`人的话没落进记录：${lost.join(' ')}`);
+      return problems.length ? no(`${rec.source}：${problems.join('；')}`) : ok(`${rec.source}：${nums.length} 轮（1..${nums.length}），七条反应都在`);
+    },
+  },
+
+  'composition-items-carry-provenance': {
+    text: '选中变种的构成清单每项行末都带来源标记（人选定 / 模型代填），且不是全标一种——至少有一项是人选定的',
+    run: ({ project }) => {
+      const { path, md } = theNote(project);
+      if (!path) return no('没有唯一的 spec');
+      if (md === null) return no(`${path} 不存在`);
+      const { verdict, items } = compositionLines(md);
+      const errors = checkComposition(verdict);
+      if (errors.length) return no(errors.join('；'));
+      const human = items.filter((x) => x.mark === '人选定');
+      const model = items.filter((x) => x.mark === '模型代填');
+      if (!human.length) return no(`${items.length} 项都标了来源，但没有一项是人选定的——人在变种之间选过，至少「容器形状」这类应是人选定`);
+      return ok(`${items.length} 项：${human.length} 人选定（${human.map((x) => x.item).join('/')}）/ ${model.length} 模型代填`);
+    },
+  },
+
+  'imagine-parks-execution-remarks': {
+    text: '方向没定前脚本化的人的第 4–7 条（间距、pill、折叠截断、重试按钮）进了方向说明的待打磨清单，对应那几轮的交回说的是「记进待打磨」而不是「已改在」',
+    run: (ctx) => {
+      const { path, md } = theNote(ctx.project);
+      if (!path) return no('没有唯一的 spec');
+      if (md === null) return no(`${path} 不存在`);
+      const list = section(md, '待打磨清单') ?? '';
+      const missing = EXEC_REMARKS.filter((r) => !new RegExp(r.key, 'i').test(list)).map((r) => r.key);
+      if (missing.length) return no(`待打磨清单里找不到：${missing.join(' / ')}`);
+      const rec = roundsRecord(ctx);
+      if (rec.text === null) return no(`清单里四条都在，但读不到记录来核对「变种板没改」：${rec.why}`);
+      const rounds = [...parseRounds(rec.text).entries()].map(([n, body]) => ({ n, ...splitRound(body) }));
+      const bad = [];
+      for (const r of EXEC_REMARKS) {
+        const hit = rounds.find((x) => x.said.includes(r.said));
+        if (!hit) bad.push(`${r.key}：记录里找不到这句话的那一轮`);
+        else if (/已改在/.test(hit.handback)) bad.push(`${r.key}：第 ${hit.n} 轮交回说「已改在」——方向没定，不该当场改`);
+        else if (!/待打磨/.test(hit.handback)) bad.push(`${r.key}：第 ${hit.n} 轮交回没说记进待打磨`);
+      }
+      return bad.length ? no(bad.join('；')) : ok('待打磨清单里四条都在；四句话所在的轮次，交回都说记进待打磨、没有「已改在」');
+    },
+  },
+
+  'imagine-orchestrator-verified-before-clear': {
+    text: '收工：编排者自己核对（跑方向说明校验）之后才放 uiux-imaginer 结束——会话里最后一次校验在最后一次 SendMessage 之前',
+    run: ({ session }) => {
+      if (!session) return no(NO_SESSION);
+      const own = toolUses(session).filter((e) => !e.sub);
+      const checks = own.filter((c) => c.name === 'Bash' && /direction-note-check/.test(String(c.input?.command ?? '')));
+      const sends = own.filter((c) => c.name === 'SendMessage');
+      if (!checks.length) return no('会话自己一次都没跑过 direction-note-check——收工的核对是编排者的活，不能只信 uiux-imaginer 说它过了');
+      if (!sends.length) return no('会话一次 SendMessage 都没发过，转不了人的意见，也放不了 uiux-imaginer 结束');
+      const lastCheck = Math.max(...checks.map((c) => c.seq));
+      const lastSend = Math.max(...sends.map((c) => c.seq));
+      return lastCheck < lastSend
+        ? ok(`会话自己跑了 ${checks.length} 次校验（最后一次 #${lastCheck}），之后才发出最后一条 SendMessage（#${lastSend}）`)
+        : no(`最后一次校验（#${lastCheck}）在最后一条 SendMessage（#${lastSend}）之后——核对放在了放它结束之后`);
+    },
+  },
+
+  'handoff-canvas-is-standalone': {
+    text: '交接画布能单独打开：入口在、素材都是相对路径且都在、读 ?state=、有真的 prefers-reduced-motion，没有 board.html 与 ?variant= 的残留',
+    run: ({ project }) => {
+      const r = checkHandoff(project);
+      return r.problems.length ? no(r.problems.join('；')) : ok(r.info);
+    },
+  },
+
+  // —— uiux-imaginer 直跑 ——————————————————————————————————————————————
+
+  'imaginer-run-bypasses-the-skill': {
+    text: '这一格不经过 uiux-imagine skill——会话没有调过它',
+    run: ({ session }) => {
+      if (!session) return no(NO_SESSION);
+      const hit = toolUses(session).filter((e) => !e.sub && e.name === 'Skill' && /uiux-imagine/.test(JSON.stringify(e.input ?? {})));
+      return hit.length ? no(`会话调了 ${hit.length} 次 uiux-imagine skill`) : ok('会话没调 skill，直接起的 agent');
+    },
+  },
+
+  'imaginer-continues-from-records': {
+    text: '它接着做第三轮，不重做第一、二轮——每轮记录里前两轮原样没动、第 1 轮只出现一次、新增了第 3 轮；变种板还在且保留着选中的 B',
+    run: ({ project, pluginRoot }) => {
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const dir = `.tmp/uiux-imagine/${slugOf(file)}`;
+      const text = read(join(project, dir, 'rounds.md'));
+      if (text === null) return no(`${dir}/rounds.md 不在`);
+      const seedRounds = parseRounds(read(join(pluginRoot, 'evals/case/stages/imaginer-resume/rounds.md')));
+      const now = parseRounds(text);
+      const problems = [];
+      for (const [n, body] of seedRounds) {
+        if (!now.has(n)) problems.push(`第 ${n} 轮的记录没了`);
+        else if (now.get(n) !== body) problems.push(`第 ${n} 轮的记录被改动了——这是上一个 agent 留下的恢复点，只追加不重写`);
+      }
+      const ones = (text.match(/^#{2,3}\s*第\s*1\s*轮/gm) ?? []).length;
+      if (ones > 1) problems.push(`「第 1 轮」出现了 ${ones} 次——重来了一遍`);
+      const added = [...now.keys()].filter((n) => !seedRounds.has(n)).sort((a, b) => a - b);
+      if (!added.includes(3)) problems.push(`没有新增第 3 轮；新增的轮号：${added.join(',') || '（无）'}`);
+      const board = read(join(project, dir, 'board.html'));
+      if (board === null) problems.push('变种板 board.html 不在（收工之前不该清）');
+      else if (!board.includes('最近一次展开')) problems.push('变种板里找不到选中的 B（「最近一次展开」）');
+      return problems.length ? no(problems.join('；')) : ok(`第 ${[...seedRounds.keys()].join('、')} 轮逐字未动，新增第 ${added.join('、')} 轮；变种板还在、B 还在`);
+    },
+  },
+
+  'imaginer-handback-carries-agreed-items': {
+    text: '它交回的一轮带齐约定的几项：板地址与 ?variant= 参数、每个变种赌什么、本轮改动、七节进度、要人回的那句话、要人判的取舍（或明写没有）',
+    run: ({ project, pluginRoot }) => {
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const text = read(join(project, `.tmp/uiux-imagine/${slugOf(file)}/rounds.md`));
+      if (text === null) return no('rounds.md 不在');
+      const seed = parseRounds(read(join(pluginRoot, 'evals/case/stages/imaginer-resume/rounds.md')));
+      const rounds = parseRounds(text);
+      const first = [...rounds.keys()].filter((n) => !seed.has(n)).sort((a, b) => a - b)[0];
+      if (first === undefined) return no('没有新增的一轮');
+      const hb = splitRound(rounds.get(first)).handback;
+      if (!hb) return no(`第 ${first} 轮没有「交回原文」`);
+      const want = [
+        ['板地址与 ?variant=', /board\.html/.test(hb) && /variant=/.test(hb)],
+        ['每个变种赌什么', /赌/.test(hb)],
+        ['本轮改动', /本轮改动/.test(hb)],
+        ['七节进度', /七节/.test(hb)],
+        ['要人回的那句话', /要人回/.test(hb)],
+        ['要人判的取舍', /取舍|没有要人判的/.test(hb)],
+      ];
+      const missing = want.filter(([, hit]) => !hit).map(([n]) => n);
+      return missing.length ? no(`第 ${first} 轮的交回缺：${missing.join(' / ')}`) : ok(`第 ${first} 轮的交回六项都在（${hb.length} 字）`);
+    },
+  },
+
+  'imaginer-applies-in-place-after-pick': {
+    text: '人点名留下 B 之后说「这个直接改在 B 上给我看」：改在选中的那一版上、交回说「已改在 B」，构成清单里「颜色」一项记成人选定，也没有再塞进待打磨清单',
+    run: ({ project, pluginRoot }) => {
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const dir = `.tmp/uiux-imagine/${slugOf(file)}`;
+      const problems = [];
+      const text = read(join(project, dir, 'rounds.md'));
+      const seed = parseRounds(read(join(pluginRoot, 'evals/case/stages/imaginer-resume/rounds.md')));
+      const round3 = text === null ? null : [...parseRounds(text).entries()].filter(([n]) => !seed.has(n)).sort((a, b) => a[0] - b[0])[0];
+      if (!round3) problems.push('每轮记录里没有新增的一轮');
+      else if (!/已改在[^\n]*B/.test(splitRound(round3[1]).handback)) problems.push(`第 ${round3[0]} 轮的交回里没有「已改在 B 上：…」那一行`);
+      const { path, md } = theNote(project);
+      let colorLine = '';
+      if (md === null) problems.push(`${path ?? '方向说明'} 不存在`);
+      else {
+        const color = compositionLines(md).items.find((x) => x.item === '颜色');
+        if (!color) problems.push('构成清单里没有「颜色」一项');
+        else {
+          colorLine = color.line;
+          if (!/重试/.test(color.line)) problems.push(`「颜色」一项没提重试按钮：${color.line.slice(0, 60)}`);
+          else if (color.mark !== '人选定') problems.push(`「颜色」一项记成了（${color.mark ?? '无标记'}），应是（人选定）`);
+        }
+        if (/重试按钮/.test(section(md, '待打磨清单') ?? '')) problems.push('重试按钮又被塞进了待打磨清单——人明说要看，已经改了，不该再停进清单');
+      }
+      return problems.length ? no(problems.join('；')) : ok(`第 ${round3[0]} 轮交回说已改在 B 上；构成清单「颜色」：${colorLine.slice(0, 70)}`);
     },
   },
 
@@ -473,6 +854,85 @@ export const ASSERTIONS = {
       if (!file) return no('没有唯一的 spec');
       const status = frontmatter(md).status;
       return status === '设计中' ? ok(`${file}: ${status}`) : no(`${file} 的 status 变成了「${status ?? '没写'}」`);
+    },
+  },
+
+  'refine-starts-from-handoff': {
+    text: 'refine：designer 第一版画布来自交接画布——ledger 第一行有「起手：交接画布；……没有重抓线上组件」，画布保留着交接画布的锚点，过程里 designer 没有重抓线上组件',
+    run: ({ project, pluginRoot, session }) => {
+      const rec = designRecord(project);
+      if (!rec) return no('没有冻结记录——这一跑没冻结到，ledger 的起手那一行读不到（冻结时 .tmp/uiux-refine 已清，ledger 全文只在冻结记录的「打磨轨迹」里）');
+      const ledger = sectionUntil(read(join(project, rec)), '打磨轨迹', ['签字']) ?? '';
+      const problems = [];
+      if (!/起手[:：]\s*交接画布/.test(ledger)) problems.push('ledger 里没有「起手：交接画布…」那一行');
+      else if (!/没有重抓线上组件/.test(ledger)) problems.push('起手那一行没写「没有重抓线上组件」');
+
+      const seed = anchorsOf(read(join(pluginRoot, 'evals/case/stages/handoff/index.html')));
+      const canvas = designCanvases(project)[0];
+      const final = anchorsOf(canvas ? read(join(project, canvas)) : '');
+      const kept = [...seed].filter((a) => final.has(a));
+      if (kept.length < Math.ceil(seed.size * 0.6)) problems.push(`画布只保留了种子的 ${kept.length}/${seed.size} 个锚点（缺 ${[...seed].filter((a) => !final.has(a)).join(',')}）——不像是从交接画布接着做的`);
+
+      let recapture = '（无会话记录，没核）';
+      if (!session) problems.push(NO_SESSION);
+      else {
+        const hits = toolUses(session).filter((e) => {
+          if (!e.sub) return false;
+          const input = JSON.stringify(e.input ?? {});
+          if (/browser_(evaluate|run_code)/.test(e.name) && /outerHTML|document\.styleSheets/.test(input)) return true;
+          if (e.name === 'Bash' && /\b(npm|pnpm|yarn|bun)\s+(run\s+)?(dev|start)\b/.test(String(e.input?.command ?? ''))) return true;
+          if (/browser_navigate$/.test(e.name) && !/^(https?:\/\/(127\.0\.0\.1|localhost)|file:)/.test(String(e.input?.url ?? ''))) return true;
+          return false;
+        });
+        if (hits.length) problems.push(`designer 有 ${hits.length} 次像在重抓线上组件：${hits.slice(0, 3).map((h) => h.name).join('、')}`);
+        recapture = `designer ${toolUses(session).filter((e) => e.sub).length} 次工具调用里零次重抓线上组件`;
+      }
+      return problems.length ? no(problems.join('；')) : ok(`起手一行在；保留 ${kept.length}/${seed.size} 个种子锚点；${recapture}`);
+    },
+  },
+
+  'refine-conflict-held-by-human': {
+    text: 'refine：评委动到人选定的项时 designer 不改、交回里出现「与人选定冲突」；人说保留之后，那一项被写进 excluded 不计分，ledger 记下「人保留（日期）」',
+    run: ({ project, session }) => {
+      if (!session) return no(NO_SESSION);
+      const conflicts = handbacks(session).filter((h) => {
+        for (const m of h.text.matchAll(/与人选定冲突/g)) {
+          const before = h.text.slice(Math.max(0, m.index - 8), m.index);
+          if (!/没有|无|不存在|未|零/.test(before)) return true;
+        }
+        return false;
+      });
+      if (!conflicts.length) return no('designer 的交回里一次都没出现「与人选定冲突」——这一跑评委没碰到种子里那条人选定的项（组头标签、标题、pill 紧挨着排），拿不到证据；换一条更招眼的种子，或看 round-*.json 里评委提了什么');
+      const excl = roundJsons(session).filter((r) => Array.isArray(r.json.excluded) && r.json.excluded.some((x) => /人保留/.test(String(x.reason ?? ''))));
+      const rec = designRecord(project);
+      const ledger = rec ? sectionUntil(read(join(project, rec)), '打磨轨迹', ['签字']) ?? '' : '';
+      const problems = [];
+      if (!excl.length) problems.push('没有任何一份 round-*.json 的 excluded 带「人保留」——保留之后那一项还在计分');
+      if (!rec) problems.push('没有冻结记录，ledger 里「人保留（日期）」读不到');
+      else if (!/人保留（/.test(ledger)) problems.push('打磨轨迹里没有「人保留（日期）」');
+      return problems.length
+        ? no(`${problems.join('；')}（冲突交回 ${conflicts.length} 次）`)
+        : ok(`冲突交回 ${conflicts.length} 次；${excl[0].name} 的 excluded 有 ${excl[0].json.excluded.length} 条带「人保留」；打磨轨迹里有「人保留（…）」`);
+    },
+  },
+
+  // —— uiux-refine · 没有交接画布的退路 ————————————————————————————
+
+  'refine-fallback-says-so': {
+    text: '没有交接画布、只有方向说明：起 designer 之前会话告诉了人，designer 第一次交回里明说走了从文字重建的退路，也没有凭空造出 handoff/',
+    run: ({ project, session }) => {
+      if (!session) return no(NO_SESSION);
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const problems = [];
+      const back = handbacks(session)[0];
+      if (!back) problems.push('会话没收到 designer 的交回');
+      else if (!/没有交接画布/.test(back.text) || !/退路/.test(back.text)) problems.push('designer 第一次交回里没有同时说「没有交接画布」和「退路」');
+      const firstAgent = sessionEvents(session).find((e) => !e.sub && e.kind === 'tool_use' && isAgentCall(e));
+      const told = sessionEvents(session).some((e) => !e.sub && e.kind === 'text' && /没有交接画布/.test(e.text) && (!firstAgent || e.seq < firstAgent.seq));
+      if (!told) problems.push('起 designer 之前，会话没有对人说「这份 spec 没有交接画布，会从方向说明重建」');
+      if (existsSync(join(project, `.tmp/uiux-imagine/${slugOf(file)}/handoff`))) problems.push('handoff/ 凭空出现了');
+      return problems.length ? no(problems.join('；')) : ok('会话先告诉了人；designer 第一次交回里有「没有交接画布」与「退路」；没有 handoff/');
     },
   },
 

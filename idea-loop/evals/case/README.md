@@ -13,7 +13,8 @@
 |---|---|
 | `prototype` | 一条文字定不了的问题：草稿算不算一次 attempt（两个变体在数据上真的不同） |
 | `uiux-imagine` | 一档真的没定的高度：布局与处理（语言和结构都已经定了，发散必须知道不去重开它们） |
-| `uiux-refine` | 一块要收敛的画布：五格验收矩阵、四条待打磨清单、in-app register（所以素材段该判成不开） |
+| `uiux-refine` | 一块要收敛的画布：五格验收矩阵、四条待打磨清单、in-app register（所以素材段该判成不开）；有交接画布时从它起手，没有时走退路 |
+| `uiux-imaginer`（直跑） | 一份做到第二轮的变种板与每轮记录，人已点名留下 B：它得从记录接着做第三轮，不重来 |
 
 ## 「最小」最小在哪
 
@@ -36,7 +37,10 @@ case/
     ├── grill-transcript.md      to-spec 的输入：一场跑完的访谈逐字转录
     ├── raw/                     已经落过的原型证据（raw md + 可点击 HTML）
     ├── spec-awaiting-freeze.md  status: 设计中（人已审完、要设计），§5.3 前端交互还是文字 + 待补图
-    └── direction-note.md        七节方向说明（选中变种带构成清单）；seed 时放到项目根 .tmp/uiux-imagine/<slug>/，不进 spec
+    ├── direction-note.md        七节方向说明（选中变种带构成清单，每项行末带来源标记）；seed 时放到项目根 .tmp/uiux-imagine/<slug>/，不进 spec。
+    │                            「锚点与位置」里组头的题型标签、标题、状态 pill 紧挨着排是人选定的——这是故意留给评委去撞的一条，refine 那一格靠它拿到「与人选定冲突」的证据
+    ├── handoff/                 交接画布（imagine 选中的 B）：index.html + assets/，自包含、读 ?state=（mixed / empty / long）、带 data-anchor；seed 时放到 .tmp/uiux-imagine/<slug>/handoff/
+    └── imaginer-resume/         「uiux-imaginer 直跑」那一格的起始状态：board.html（第 2 轮的 B 与保守对照 D）、rounds.md（第 1、2 轮，第 2 轮记着「人点名留下：B」）；整个搬到 .tmp/uiux-imagine/<slug>/
 ```
 
 `stages/` 不是 fixture 的装饰——**它是让每一格只测一件事的手段**。收敛那一格如果还要先跑一遍发散，
