@@ -57,7 +57,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
   条目的位置（文件、行号、提交）在审查者交回的报告和汇报折叠区的「给修复方的位置」里，写进工单时照旧描述行为，不抄路径。
 - **接受**（Spec 条目选了「接受，补进 spec 或工单」这一类选项）：代码不动，把那条偏差写进 spec 或工单（例外清单、验收标准、改过的路径），用 `docs(spec): …` 或 `docs(tickets): …` 提交、推送。UI 审查的条目选了「改档案，接受实现」的，改的是 `docs/design/tmp/<spec-slug>/delta/` 里对应的文件（本地、不进 git），不用提交；改完记进「做了什么」。
 - **不修**：记下。下一轮不再报它，除非有新证据。
-- **进 backlog**：在目标仓库的 `docs/quality-backlog.md` 追加一条（是什么、在哪、为什么这次不修），提交、推送。
+- **进 backlog**：在目标仓库开一个 GitHub issue（是什么、在哪、为什么这次不修，链回这个 PR），不打 `status:*` label，让它作为待办进 `issue-dispatch`。
 - **疑问**：直接回答。
 - **批示带出合并前后要做的事**（「S2 接受，上线时手动处理迁移」）：照上面处理之外，要人在上线前做的，追加进 PR 描述 `your-todo` 节的「上线前要注意的」、写明为什么要人来做；Claude 合并后自己做的，追加进 `reference` 节的清理清单（`pr-body.mjs set`，见 `pr-description.md` §1、§6）。
 - **要求把汇报改写**（「写成我看得懂的样子」）：照 `pr-description.md` §5 改写，改 review loop 文件里那个条目的汇报部分，在会话里重新贴一遍；改了什么写进下面那条汇总。

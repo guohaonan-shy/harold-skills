@@ -66,8 +66,7 @@ docs/
 ├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
 ├── reference/            常驻约定与手册
 ├── records/              周期快照 —— weekly / okara / pulse-log
-├── testing/              test-cases 库
-└── quality-backlog.md    线上问题登记册
+└── testing/              test-cases 库
 ```
 
 `raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` / `reference/` / `records/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
