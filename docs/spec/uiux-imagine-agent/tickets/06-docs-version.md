@@ -14,9 +14,9 @@
 
 ## 验收标准
 
-- [ ] README 与 `CLAUDE.md` 里不再出现「designer 只从方向说明重建画布」这类与新形状矛盾的说法；新增 agent 的名字、职责、模型写对。
-- [ ] plugin 版本是 0.0.25，marketplace 与 plugin 自己的清单一致。
-- [ ] 没有手写或改动 ADR。
+- [x] README 与 `CLAUDE.md` 里不再出现「designer 只从方向说明重建画布」这类与新形状矛盾的说法；新增 agent 的名字、职责、模型写对。
+- [x] plugin 版本是 0.0.25，marketplace 与 plugin 自己的清单一致。
+- [x] 没有手写或改动 ADR。
 
 ## 选中的存量回归
 

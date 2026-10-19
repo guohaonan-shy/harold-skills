@@ -17,8 +17,8 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
 | `/idea-loop:to-spec` | Spec | Two modes. From a `grill`: lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. From the backlog (`skills/to-spec/references/backlog-mode.md`): reproduces one module's backlog entries — or a batch of GitHub issues — first, splits them (design work, feature-sized work and groups over five each get their own spec), and lands drafts with one expected behaviour per problem. Both modes mark the backlog entries they cover as handed over. Figure rules: `references/spec-figures.md` |
-| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant) to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump |
-| `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
+| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant, each item marked human-chosen or model-filled) plus a handoff canvas to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump. The skill is only the calling mechanism; the design work lives in `idea-loop:uiux-imaginer` (latest Opus via the `opus` alias, effort high), and the calling session only orchestrates — serves the board, shows each round in the built-in browser and relays the human's notes to the same imaginer |
+| `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) continues from the handoff canvas `uiux-imagine` leaves behind (falling back to rebuilding from the direction note alone when there is none) and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer; when the critic's finding touches an item the human chose, the designer stops and puts it to the human instead of acting on it. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching fresh `idea-loop:implementer`s in parallel along the `Blocked by` frontier (up to three at once by default, each in its own worktree; an `idea-loop:explorer` writes shared pointer-only notes first; one ticket → one commit the orchestrator fast-forwards onto the integration branch, then reclaims the worktree; TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
@@ -62,8 +62,8 @@ leaving the session, the moment a frontier question cannot be settled in prose.
 `uiux-imagine` is the same shape one stage later: it steers on a human's directional
 reaction each round, and a human is the one who declares the direction done.
 `uiux-refine` stops on a human at every exit it has — a direction-level finding, a
-plateau, the sign-off — and wants a fresh window so it rebuilds from the direction
-note instead of continuing the diverge session it cannot see. `dreaming` proposes
+plateau, the sign-off — and wants a fresh window so it starts from the handoff canvas and
+direction note instead of continuing the diverge session it cannot see. `dreaming` proposes
 destructive disposals.
 
 `design-modeling` is model-invocable for the same reason `prototype` is: `uiux-imagine`
@@ -216,6 +216,7 @@ idea-loop/
 ├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
 ├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── agents/
+│   ├── uiux-imaginer.md              # uiux-imagine's executor (idea-loop:uiux-imaginer) — `opus` alias, effort high, one per imagine run
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
 │   ├── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
 │   ├── implementer.md                # implement's executor (idea-loop:implementer) — `sonnet` alias, effort high, one per ticket, its own worktree
@@ -228,7 +229,7 @@ idea-loop/
 │   ├── grill/SKILL.md
 │   ├── prototype/SKILL.md
 │   ├── to-spec/SKILL.md              # + references/backlog-mode.md — drafting specs from backlog entries
-│   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
+│   ├── uiux-imagine/SKILL.md         # the divergent half — only the calling mechanism; the work is in agents/uiux-imaginer.md
 │   ├── uiux-refine/SKILL.md          # the convergent half — only the calling mechanism; the work is in agents/
 │   ├── design-modeling/SKILL.md      # the only writer of the project's DESIGN.md — create / distill / reconcile
 │   ├── to-ticket/SKILL.md
