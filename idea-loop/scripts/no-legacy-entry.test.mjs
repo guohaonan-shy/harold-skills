@@ -6,7 +6,7 @@
  * separately-ruled entry and has been deleted. This test greps every skill, agent, reference, hook
  * and script for the retired name, so a stale pointer to it cannot slip back in.
  *
- * docs/ holds history (the superseded design record) and evals/ holds pinned baselines; neither is
+ * docs/ holds history (the superseded design record) and is not
  * scanned. This file is skipped because it has to spell the name it forbids.
  */
 import { test } from 'node:test';

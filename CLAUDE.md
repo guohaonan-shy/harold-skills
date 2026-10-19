@@ -27,12 +27,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是这个仓库自己用的开发流程。在它上面工作时：
 
 - **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
-- **不硬编码 Toeflair**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；Toeflair 只作为 eval case 和举例出现。
-- 下面四处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
+- **不硬编码 Toeflair**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；Toeflair 只作为举例出现。
+- 下面三处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
   1. **不走 pushy description**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。
   2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
   3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。
-  4. **唯一带 `evals/`**：理由见下面 §5。
 
 ## 标准 plugin 目录结构
 
@@ -44,7 +43,6 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
-├── evals/                           # 可选 —— 钉住的 baseline eval（只有 idea-loop 有，见 §5 的有意例外）
 ├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
 ├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
@@ -100,16 +98,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 
 ### 5. Eval 策略
 
-这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可。
-
-**唯一的有意例外：`idea-loop` 的 `prototype` / `uiux-imagine` / `uiux-refine`**（baseline 在 `idea-loop/evals/`）。
-例外的理由不是"它们更重要"，是**迭代形状不同**：这三个的 rubric 分数带、评委 prompt、种子指令、方向说明的七节
-注定要反复改；改一条 rubric 的措辞，影响落在"下一次收敛环第几轮停"上，当场看不出来；而它们的输出是**下游 skill 的输入**
-（方向说明喂 `uiux-refine`，冻结摘要喂 `to-ticket`），形状错了要到两步之后才炸。所以那里钉了一个真实 case
-（Toeflair 的练习记录页，自带最小 `DESIGN.md` 与 `PRODUCT.md`），跑一次存档，**此后每次改 rubric、prompt 或 SKILL.md 都对着它重跑**。
-断言只判形状（环还接着吗、契约还守着吗），不判好不好看——好不好看仍然是人对着产物看。
-**不为评语和方向说明的质量另建 promptfoo 套件**，质量走这个 baseline。
-写这条例外是为了让下一个读到它的人知道这是决定，不是遗漏。
+这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可，所有 plugin 都一样。
 
 ### 6. allowed-tools 收窄到具体命令模式
 

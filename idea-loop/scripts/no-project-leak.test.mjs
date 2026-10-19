@@ -8,8 +8,8 @@
  *
  * This test greps skills/ and references/ for the known tells of the source project. It is a
  * tripwire, not a classifier: it catches the names we know, and a new example drawn from a real
- * project should be rewritten on a fictional product before it lands. evals/case/ is a deliberately
- * pinned real fixture and docs/ records history; neither is scanned.
+ * project should be rewritten on a fictional product before it lands. docs/ records history and is
+ * not scanned.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

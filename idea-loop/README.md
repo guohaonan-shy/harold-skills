@@ -177,30 +177,6 @@ right is *which paths it watches* (only HTML directly in `docs/design/tmp/<spec-
 its tests swap in a fake CLI to pin the exit-code contract (error blocks, warning passes, an
 unreachable CLI never blocks), and one real run against the official CLI was the falsifiable check.
 
-### Baseline eval
-
-`prototype`, `uiux-imagine` and `uiux-refine` are the three skills whose rubric and
-prompts are going to keep changing, so they get a pinned baseline — one real case
-(Toeflair's practice-history surface, carrying a minimal `DESIGN.md` + `PRODUCT.md`),
-run once and archived, re-run on every change to a rubric, a prompt, or a `SKILL.md`:
-
-```
-node idea-loop/evals/run-baseline.mjs
-```
-
-This is a **deliberate exception** to the repo-wide "subjective output skips
-quantitative eval" convention — stated as such in the root `CLAUDE.md` §5 right next
-to the convention itself, so the next reader doesn't take it for an oversight. The
-reasoning, the case, and how to read a run live in
-[`evals/README.md`](./evals/README.md).
-
-The **whole loop's wiring check rides along as assertions in that baseline** rather
-than as a one-off dry run: prototype landing in raw, a `grill` spec landing at
-`审核中`, `to-ticket` refusing a `设计中` spec whose design is not frozen, the freeze landing canvas + ledger in
-`docs/design/tmp/<spec-slug>/canvas/` while leaving the spec at `设计中`, and no cross-plugin skill invocation
-anywhere in the repo. A dry run's conclusion dies with its session; an assertion
-goes red three weeks later.
-
 ## Portability
 
 Project rules and verification tools come from the current repository's REVIEW.md,
@@ -302,12 +278,6 @@ idea-loop/
 │   ├── changed-lines.test.mjs        # diff parsing, diagnostic formats, filtering
 │   ├── review-check.mjs              # admission: quotes must exist, Standards code must be in the diff, behavioural Spec needs evidence (figure, table or example); shape: fixed parts, no code references
 │   └── review-check.test.mjs         # one per discard reason
-├── evals/                            # the pinned baseline (see evals/README.md)
-│   ├── evals.json                    # eight cells: the three skills, the imaginer run and the no-handoff fallback, the two seams around them, one static repo check
-│   ├── assert.mjs                    # the assertions — shape only, no model, no taste
-│   ├── run-baseline.mjs              # runs each cell in a clean copy of the case, then grades
-│   ├── case/                         # Toeflair's practice-history surface + its staged starting states
-│   └── baseline/                     # the archived run: benchmark.json + per-cell grading
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── spec-status.md                # the spec state machine (who flips what, when), the backlog hand-over marks, and the issue status labels

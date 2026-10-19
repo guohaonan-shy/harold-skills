@@ -7,8 +7,6 @@
  * and `usedBy` is only ever written by the archive script. A check command without the flag therefore
  * fails a correct delta and sends the agent to hand-edit `usedBy`. This greps the skills, agents and
  * references for the command so a copy without the flag cannot slip back in.
- *
- * evals/ holds pinned baselines and is not scanned.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
