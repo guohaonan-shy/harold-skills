@@ -22,7 +22,7 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 | `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching fresh `idea-loop:implementer`s in parallel along the `Blocked by` frontier (up to three at once by default, each in its own worktree; an `idea-loop:explorer` writes shared pointer-only notes first; one ticket → one commit the orchestrator fast-forwards onto the integration branch, then reclaims the worktree; TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
 | `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
-| `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
+| `/idea-loop:dreaming` | Maintain | Weekly, in two passes with the human between them. The **proposal pass** (the only thing the weekly schedule runs; nothing is written) reconciles every doc against `origin/main` — including `CLAUDE.md` — and also distills design-law candidates into `DESIGN.md` and audits `DESIGN.md` itself against the code, then stops at one proposal table (one row per object; closed set of dispositions per row type, checked by `scripts/proposal-table-check.mjs`; an empty table is a one-line push, not an Artifact). The **execution pass** runs only the rows the human approved, and its result is one PR that touches only `docs/`, `DESIGN.md` and `GLOSSARY.md`. Writing `DESIGN.md` always waits for the human; a broken product or a rule the code disobeys becomes a drafted GitHub issue, opened only on approval. Manual runs may do just one part, or distill a single rule on the spot |
 
 ### The forward loop is not the maintenance sweep
 
@@ -41,8 +41,11 @@ issue list on GitHub always shows where each issue stands in the loop. The freez
 with a freeze summary in it — `to-ticket` is the only thing that flips a spec to
 `在飞`, once the design is frozen, the human has agreed and the tickets are cut.
 `dreaming` is a **periodic batch reconciliation** over the whole
-vault — weekly, or when specs pile up, or by hand. It is not the next step after
-`implement`.
+vault — a weekly desktop schedule (proposal pass only), or by hand when specs pile up. Its scope is
+the docs, the design archive and `DESIGN.md`. The skill is locked against model invocation, so the
+scheduled task's prompt tells the model to read the highest-versioned `dreaming/SKILL.md` in the
+plugin cache and follow it (the standard wording is in the skill's 「触发」 section). It is not the
+next step after `implement`.
 
 **No stage in the forward loop writes an ADR.** ADRs are produced only in Maintain,
 which is also where a finished spec is deleted (the contract's invariant: never delete
@@ -233,7 +236,7 @@ idea-loop/
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md            # orchestrates a spec's tickets — the work is in agents/implementer.md
 │   ├── pr-review/SKILL.md            # one two-axis round per call — the work is in agents/pr-reviewer.md
-│   └── dreaming/SKILL.md
+│   └── dreaming/SKILL.md             # + references/ — proposal-table (shape and execution pass), candidate-distillation, design-md-reconcile
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of the retired design-modeling skill — superseded by references/design-md.md, kept as history
@@ -245,6 +248,8 @@ idea-loop/
 │   ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
 │   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
+│   ├── proposal-table-check.mjs      # dreaming's exit gate: row types, per-type disposition sets, two pictures on archive rows, "product broken" never replaces the archive, empty-table test
+│   ├── proposal-table-check.test.mjs # its unit tests, through the command line — the red/green of each rule
 │   ├── flow-compose.mjs              # interaction flow figures: screenshots + arrows + red rings → one PNG (spec §1 / §5.3)
 │   ├── flow-compose.test.mjs         # its unit tests — the flow schema and the layout
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules

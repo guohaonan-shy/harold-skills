@@ -1,6 +1,6 @@
 ---
 name: dreaming
-description: 拿知识库跟真实代码对账——找出撒谎的、做完的、烂掉的文档，提议处置，人批准后机械执行。
+description: 每周拿知识库、设计档案和 DESIGN.md 跟真实代码对账——找出撒谎的、做完的、烂掉的文档，把所有发现写成一张提议表就停下；人逐行批过之后才执行，结果开一个只改知识库的 PR。
 disable-model-invocation: true
 ---
 
@@ -24,15 +24,7 @@ disable-model-invocation: true
 
 ## 判定必须可证伪
 
-每条判定给三档之一，并附证据：
-
-- `已实现` —— 找到了文档承诺的主要代码物（附 1-2 条路径）
-- `部分实现` —— 找到一部分（说清有什么、缺什么）
-- `未实现` —— 主要代码物都不存在（说清搜了哪些关键词和路径）
-
-文档描述得太抽象、没有可查的代码物 → 写 `无法机械判定`，说明原因。**不要为了填表而猜。**
-
-做法：读文档正文，抽出它承诺产出的**具体代码物**（组件名、API 路径、DB 表/列、prompt 模块、feature flag），然后实际 Grep/Glob 去查。
+每条判定给三档之一，并附证据：`已实现`（找到文档承诺的主要代码物，附 1-2 条路径）· `部分实现`（说清有什么、缺什么）· `未实现`（说清搜了哪些关键词和路径）。文档太抽象、没有可查的代码物 → `无法机械判定`，说明原因，**不要为了填表而猜**。做法：从正文抽出它承诺的具体代码物（组件名、API 路径、DB 表/列、prompt 模块、feature flag），实际 Grep/Glob 去查。
 
 ## 四条边
 
@@ -43,42 +35,37 @@ disable-model-invocation: true
 | ⚠️ spec 说 X，代码是 Y | 代码物在，但形态对不上 | **报警，绝不自动处理**——文档在撒谎，比过期危险 |
 | domain / reference 与现状不符 | 引用的表/字段/接口已改名 | 订正，不删 |
 | `GLOSSARY.md` 与现状不符 | `_Avoid_` 里的词出现在新代码或新文档里；词条说的概念在代码里已经没了 | **逐条问人**，同意了才订正或删除；不新增词条——新增只在 `grill` 里 |
-| 新 spec 的决策，判了某个已生效 ADR 的某一节 | 写新 ADR 前，先搜 `docs/adr/` 有没有同话题旧决策 | **section 级标注，不是整份作废**：旧 ADR 那一节标题后加 `⚠️ 已被取代 → ADR-<new> §<n>`；只有当旧 ADR **全部**小节都已被取代，才把 frontmatter `status` 整份翻成 `已被取代（→ ADR-<new>）` |
+| 新 spec 的决策，判了某个已生效 ADR 的某一节 | 写新 ADR 前，先搜 `docs/adr/` 有没有同话题旧决策 | **section 级标注**：旧 ADR 那一节标题后加 `⚠️ 已被取代 → ADR-<new> §<n>`；只有**全部**小节都已被取代，才把 frontmatter `status` 整份翻成 `已被取代（→ ADR-<new>）` |
 
-**漏网的 ticket 也归这里扫。** `docs/spec/<spec-slug>/tickets/` 里的 ticket 本该在合并后由 `to-ticket` 删掉；对每一张仍然存在的，查它对应的 PR 是否已 MERGED（`gh`，且标题要对得上）——已合并却还躺着的，就是没删干净，提议删除。ticket 是临时凭据，留着会让「还有活没干完」这个信号失真。
+**漏网的 ticket 也归这里扫。** `docs/spec/<spec-slug>/tickets/` 里仍然存在的 ticket，查它对应的 PR 是否已 MERGED（`gh`，标题要对得上）——已合并却还躺着的，提议删除。`部分实现` 的 spec 按契约拆：已完成的写 ADR，剩下的留一份小 spec；剩余若无限期搁置，标 `parked`。
 
-`部分实现` 的 spec 按契约拆：已完成的部分写 ADR，剩下的留一份小 spec。剩余部分若是无限期搁置，标 `status: parked` 单独成文——否则一份 spec 会因为一个永远不做的 follow-up 而永久驻留。
+## 流程：两段，中间停在人身上
 
-## 流程
+**提议段**（定时那次只跑这一段，没有任何写入）：
 
-1. `git fetch`。列出 `docs/` 全部文件 + `CLAUDE.md` + `GLOSSARY.md`（有就列）+ 插件 references。
-2. 逐份取证。量大就派 subagent 并行，**每个 agent 只读不写**，回结构化表格。
-3. 汇成一张处置表：文件 / 自称状态 / 实现判定 / 证据 / 建议处置。
-4. **摆给人，逐行确认。** 量大就发 Artifact。
-5. 执行批准了的：`git mv` 移动、先 ADR 后 `git rm` 删除、订正内容。删 spec 是删它整个目录（`docs/spec/<spec-slug>/`，含 `tickets/` 和 backlog 模式落的 `assets/`）；`assets/` 里 ADR 要引的证据图先挪进 ADR 旁边再删。目标仓库还是旧的平铺布局，先提议按 wiki-conventions §2.2 迁移。
-6. link sweep + 重新生成各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）。
-7. 报告：动了什么、留了什么、为什么留。
+1. `git fetch`，在一个从 `origin/main` 新切的 worktree 里工作；`.tmp/dreaming/<YYYY-MM-DD>/` 放这次的中间物。
+2. **知识库对账**：列出 `docs/` 全部文件 + `CLAUDE.md` + `GLOSSARY.md`（有就列）+ 插件 references，逐份取证，按上面的纪律、判定、四条边出结论。量大就派 subagent 并行，**每个只读不写**，回结构化表格。
+3. **档案对账 / 全站初扫**（设计档案 `docs/design/prod/`）：随后的 `references/archive-reconcile.md`、`references/initial-scan.md` 接上，现在没有这一步，提议表里不写这两部分的节。
+4. **候选蒸馏**：`references/candidate-distillation.md`。
+5. **`DESIGN.md` 对账**：`references/design-md-reconcile.md`。两者写 `DESIGN.md` 的判据与流程都在 `../../references/design-md.md`，这里不复述。
+6. **写提议表**（形状、各类行的处置闭集见 `references/proposal-table.md`），先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才交出去。有行：量大发 Artifact，会话里逐行摆给人，定时那次另发一条推送通知；**空表只推一句「本周无事」**，不发 Artifact。
 
-## 幂等
+**执行段**（人逐行批过之后）：只执行批了的行，每类行怎么执行见 `references/proposal-table.md` §4；然后 link sweep、重新生成各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）、**开一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的 PR**。删 spec 是删它整个目录（含 `tickets/` 和 `assets/`；`assets/` 里 ADR 要引的证据图先挪进 ADR 旁边）。目标仓库还是旧平铺布局，先提议按 wiki-conventions §2.2 迁移。最后报告：动了什么、留了什么、为什么留。
 
-同一批文档**重跑一次，输出应为空**。不为空说明上一次没处理干净——这是这个 skill 的自检。
+**写 `DESIGN.md` 永远停在人身上**：定时那次只把旧文和新文并排放进提议表；人批了、确认措辞，才落笔。缺陷（产品坏了、法对代码错）起草成目标仓库的 GitHub issue，人批了才开，不打 `status:*` label。
+
+**幂等**：同一批文档重跑一次，提议表应为空。不为空说明上一次没处理干净——这是自检。
 
 ## 触发
 
-手动 `/dreaming`，或 Harold 在 Claude 桌面端挂的 weekly schedule。
+**每周一次**，用 Claude 桌面端的定时任务挂；也可以手动 `/dreaming`。`dreaming` 不许模型调用，定时任务的提示词是一段文字、调不起它，所以让模型直接读这份 SKILL.md。挂的时候工作目录选目标项目，提示词照抄：
 
-**这是周期性的批量对账，不是单份 spec 的收尾。** 三个触发信号：
+```
+在插件缓存目录 ~/.claude/plugins/cache 里找 idea-loop 版本号最高的那份 skills/dreaming/SKILL.md，读完照做，只跑提议段：从 origin/main 新切 worktree，写出提议表并过校验脚本，按 SKILL.md 说的推送；不执行任何写入，不开 PR，不开 issue。
+```
 
-| 信号 | |
-|---|---|
-| 周期到了 | weekly schedule |
-| **spec 堆积** | `docs/spec/` 里躺着一批「做完但还没对账」的 —— 那是正常状态，攒到一批再扫一次 |
-| 手动 | 你觉得该扫了 |
+提示词里不写带版本号的路径——插件一升级就失效。
 
-**别在 `to-spec` 或 `implement` 刚跑完之后立刻跑。** 那等于拿一份几分钟前写的 spec 去撞几分钟前写的代码，
-而下面那条幂等自检（重跑输出应为空）是给**批量扫描**设计的，不是给单份文档收尾用的。
+手动调用可以**只跑某一部分**（比如只跑候选蒸馏）。**单条蒸馏**：在会话里口述了一条视觉规则、想当场落，就手动调一次并带上这条规则——只处理这一条，**不开浏览器、不跑其它部分、不出提议表**，步骤见 `references/candidate-distillation.md` §4；不调就记成候选，等每周那次。
 
-前向环（`grill` → `to-spec` → `to-ticket` → `implement` → `pr-*`）里**没有任何一步写 ADR**。
-ADR 只在这里产生。所以一份 spec 从「活干完了」到「被蒸馏成 ADR 并删除」之间有一段间隔，那是设计，不是漏掉了。
-
-**不挂 launchd 定时**——与 growth-weekly 不同，这里没有外部数据窗口的时钟压力，定时跑容易变成没人看的噪音。
+**这是周期性的批量对账，不是单份 spec 的收尾**：别在 `to-spec` 或 `implement` 刚跑完之后立刻跑——那等于拿几分钟前写的 spec 去撞几分钟前写的代码，也撑不起上面的幂等自检。前向环里没有任何一步写 ADR，ADR 只在这里产生；一份 spec 从「活干完了」到「被蒸馏成 ADR 并删除」之间有一段间隔，那是设计，不是漏掉了。
