@@ -4,7 +4,7 @@
 | 文件 | status | summary |
 |---|---|---|
 | [[design-research-agent]] | 审核中 | 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看 |
-| [[pr-review-report-followups]] | 审核中 | issue 34 的五处 pr-review / to-spec 改动复现后都已落地，建议关闭 |
+| [[pr-review-report-followups]] | 在飞 | 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板 |
 | [[ui-state-archive]] | 审核中 | docs/design 分 tmp / prod，按页面维护线上 UI 状态图，设计与验证共用 |
 | [[uiux-imagine-agent]] | 审核中 | uiux-imagine 的执行抽成专职 imaginer agent，会话只编排和摆结果 |
 

@@ -7,3 +7,4 @@
 | [[2026-09-11-design-loop-prototype-critic]] | conversation | 2026-09-11 | grill —— 设计工作流 v2：prototype 进 grill、design 独立成阶段、评委收敛环 |
 | [[2026-09-11-aihero-prototype-skill]] | web | 2026-09-11 | aihero.dev —— /prototype skill（Matt Pocock） |
 | [[2026-09-11-lenny-ai-world-class-designer]] | web | 2026-09-11 | Lenny's Newsletter —— How to turn your AI into a world-class designer（Anshu Chimala） |
+| [[2026-10-19-pr-decision-friction]] | conversation | 2026-10-19 | 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么 |
