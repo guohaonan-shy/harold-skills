@@ -80,7 +80,7 @@ docs/
 <worktree 根>/.tmp/
 ├── grill/<YYYY-MM-DD>-<topic>/   复现过程的截图、网络日志、trace —— grill 收工时删
 ├── to-spec/<spec-slug>/          spec 图的 excalidrawer 源文件（sugar JSON、.excalidraw）—— 只有 PNG 进 docs/，spec 定稿后可删
-├── uiux-imagine/<spec-slug>/     变种板与抓取物、参考图、每轮记录 rounds.md（imagine 收工时删）、方向说明（refine 冻结时删）
+├── uiux-imagine/<spec-slug>/     变种板与抓取物、参考图、每轮记录 rounds.md（imagine 收工时删）、方向说明 direction-note.md 与交接画布 handoff/（refine 冻结时删）
 ├── uiux-refine/<spec-slug>/      ledger、每轮评分 JSON、评委看的截图 —— refine 冻结时删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（MCP 浏览器锁）—— PR 合并后删
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删

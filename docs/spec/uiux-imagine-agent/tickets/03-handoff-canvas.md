@@ -16,12 +16,12 @@ imagine 收工时不再把人选中的那一版删掉：uiux-imaginer 把它导�
 
 ## 验收标准
 
-- [ ] imagine 收工后：交接画布在、能在浏览器里打开并切换状态；对比页和落选变种不在；方向说明在。
-- [ ] 收工后调 refine：designer 第一版画布与交接画布在相同 viewport 下截图比对一致；designer 的过程里没有重起前后端、没有重抓线上组件。
-- [ ] 对一份只有方向说明、没有交接画布的 spec 调 refine：designer 从文字重建，交回里写明走了退路。
-- [ ] 部分冻结后重开：交接画布只含重开的几块，已签字的部分在冻结画布上原样不动。
-- [ ] refine 冻结后 imagine 工作目录（含交接画布）与 refine 工作目录都清掉。
-- [ ] plugin 脚本单测套件全绿。
+- [ ] imagine 收工后：交接画布在、能在浏览器里打开并切换状态；对比页和落选变种不在；方向说明在。 ⏭ 延后 → 05：要起真的 uiux-imaginer 才看得到；05 的 uiux-imaginer 直跑格与 imagine 格断言收工后 `handoff/` 在、对比页与落选变种不在。定义里的导出规则（uiux-imaginer §10 第 4–6 步、browser-usage「The handoff canvas」）与编排者核对（imagine SKILL.md §5 第 2 步）已写
+- [ ] 收工后调 refine：designer 第一版画布与交接画布在相同 viewport 下截图比对一致；designer 的过程里没有重起前后端、没有重抓线上组件。 ⏭ 延后 → 05：05 的 refine 格种子带 `handoff/`，断言第一版画布来自它、ledger 第一行有比对结论、没重抓线上组件。designer 定义 §2「从交接画布起手」已写比对步骤与那行 ledger，`static-ui-protocol.md` §R 加了例外
+- [ ] 对一份只有方向说明、没有交接画布的 spec 调 refine：designer 从文字重建，交回里写明走了退路。 ⏭ 延后 → 05：现有 refine 格的种子本来就没有 `handoff/`，05 在断言表里补「交回里明说走了退路」。refine SKILL.md §0 与 designer 定义 §2 的退路行已写
+- [ ] 部分冻结后重开：交接画布只含重开的几块，已签字的部分在冻结画布上原样不动。 ⏭ 延后 → PR 交付验收：要先冻结一部分、再跑第二轮 imagine、再调 refine，一次三段的真会话，eval 的种子与断言不覆盖（也没有哪一格的范围能让它变得可证明）；定义里已写：uiux-imaginer §10 第 4 步「重开一部分的第二轮发散」、designer 定义 §2「部分冻结后重开」含已签字部分的回归截图
+- [x] refine 冻结后 imagine 工作目录（含交接画布）与 refine 工作目录都清掉。（designer 定义 §11.1 清整个 `.tmp/uiux-imagine/<spec-slug>/`，`handoff/` 在其中；refine SKILL.md §5 的核对清单与 baseline 的 `freeze-clears-tmp` 断言都是按目录判，不用改）
+- [x] plugin 脚本单测套件全绿。（`node --test 'idea-loop/scripts/*.test.mjs'`：193/193）
 
 ## 选中的存量回归
 
