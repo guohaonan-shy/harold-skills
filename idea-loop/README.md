@@ -213,7 +213,7 @@ to start.
 ```
 idea-loop/
 ├── .claude-plugin/plugin.json
-├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
+├── .mcp.json                         # two MCP servers: headless Playwright (the design canvas's browser) + design-archive (read-only lookups of the design archive)
 ├── hooks/hooks.json                  # PreToolUse(Bash) → merge-gate-hook.mjs; PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── agents/
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
@@ -248,6 +248,8 @@ idea-loop/
 │   ├── design-archive-check.test.mjs # one red fixture per rule + the delta overlay + the old-layout note
 │   ├── design-archive-query.mjs      # the archive's six read entries (page, state, journey, requirement diff, reverse lookup, keyword) + the way-in derivation, as a module and a JSON command line; reads prod/ or prod/ with a requirement's delta/ laid over it
 │   ├── design-archive-query.test.mjs # their unit tests on the shared fixture + a requirement's delta/, and the command line's exit codes
+│   ├── design-archive-mcp.mjs        # the archive's MCP server (stdio, hand-written JSON-RPC, zero deps): the six query entries as six read-only tools, repo root = git top level of the session's cwd; started by .mcp.json
+│   ├── design-archive-mcp.test.mjs   # spawns it over stdio: initialize / tools/list, tools/call equals the command line on the shared fixture, error results, .mcp.json
 │   ├── design-archive-fixture.mjs    # a fictional two-page archive shared by the archive tests (not a test file)
 │   ├── design-archive-write.mjs      # the archive script — the only writer of docs/design/prod/: validate, fold delta/ in, drop removed.md, regenerate usedBy + index.md, move interaction figures and re-point the spec's links, say what LFS / .gitignore lack, empty tmp/<spec-slug>/; --dry-run writes nothing
 │   ├── design-archive-write.test.mjs # one requirement end to end, refuse-writes-nothing, dry-run, hints, and the pieces
@@ -326,6 +328,7 @@ What came across:
 | The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `references/design-md.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | `.mcp.json` (headless, isolated Playwright) |
+| The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
 
 One file there did not come across — `references/design/critic-rubric.md` is new. It is
 what the design critic reads each round: the severity ladder anchored to an AD's action,

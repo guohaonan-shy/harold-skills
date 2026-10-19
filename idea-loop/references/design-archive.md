@@ -178,6 +178,8 @@ node scripts/design-archive-query.mjs <仓库根> <入口> <参数> [--delta <sp
 - 进得去：`{ reachable: true, entry: { state, url, preconditions }, steps: [边…] }`。`steps` 里 `user` 边带 `component` / `locate` / `action`，`system` 边带 `trigger` / `how`，都可能带 `motion`；入口节点本身 `steps` 为空。最短路径相同时取 id 较小的入口、先写的边。
 - 进不去：`{ reachable: false, verdict: '进不去', blocked: [边 + missing + tried…], undeclared }`。`blocked` 是这个状态的入边和它上游（走到入口能到达的状态为止）所有带 `blocked` 的边；一条都没有时 `undeclared: true`，表示没有路径也没人解释——校验规则 1 会报它。
 
+**MCP 包装**：`scripts/design-archive-mcp.mjs` 把这六个入口暴露成六个只读工具，由插件自己的 `.mcp.json` 里的 `design-archive` 启动（走 stdio，不引入第三方依赖），目标项目零配置。工具名与入口一一对应：`design_page` / `design_state` / `design_journey` / `design_diff` / `design_refs` / `design_keyword`；入参是入口的参数（`name`、`spec` 或 `text`），除 `design_diff` 外都可选带 `delta`（需求名）。它只转发，返回的就是命令行打印的那份 JSON，所以两边不会漂开。仓库根取会话工作目录的 git 顶层。名字对不上、不在 git 仓库里、缺参数都返回 MCP 的错误结果（`isError`，原因写在文本里），进程不退出。**不提供任何写工具**：`prod/` 只经归档脚本改。
+
 **错误**：名字对不上时不返回空结果，而是退出码 1、stderr 说清楚：这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象。`keyword` 一条都没命中同样退出码 1（模块函数返回空的 `matches`）。用法错误、不是仓库根、`diff` 带了 `--delta` 退出码 2。
 
 ## 9 归档：写 `prod/` 的唯一入口

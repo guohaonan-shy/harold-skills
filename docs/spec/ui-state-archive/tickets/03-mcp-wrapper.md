@@ -13,11 +13,11 @@
 - 每个工具的描述写清楚「什么时候用它」（例如单个状态：要进某个状态复现或写测试时）。
 
 ## 验收标准
-- [ ] 起子进程走 stdio，initialize 与 tools/list 返回六个工具及入参 schema
-- [ ] 对 02 的同一组夹具，六个工具的 tools/call 返回与命令行输出等价
-- [ ] 找不到对象、不在 git 仓库里时返回 MCP 的错误结果而不是让进程崩
-- [ ] 插件 MCP 配置里新增这个 server，已有的浏览器 server 不受影响
-- [ ] 全量 node 测试套件全绿
+- [x] 起子进程走 stdio，initialize 与 tools/list 返回六个工具及入参 schema
+- [x] 对 02 的同一组夹具，六个工具的 tools/call 返回与命令行输出等价
+- [x] 找不到对象、不在 git 仓库里时返回 MCP 的错误结果而不是让进程崩
+- [x] 插件 MCP 配置里新增这个 server，已有的浏览器 server 不受影响
+- [x] 全量 node 测试套件全绿
 
 ## 选中的存量回归
 无 test-cases 库。跑全量 `*/scripts/*.test.mjs`。
