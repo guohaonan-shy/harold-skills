@@ -371,6 +371,21 @@ test('cli: --delta overlays a requirement; --json reports machine-readable viola
   assert.ok(j.violations.every((x) => x.rule && x.file && x.message));
 });
 
+test('cli: --no-used-by judges a delta whose new components and motions have no usedBy yet', () => {
+  const files = deltaFiles();
+  files[D('components/ShareButton/ShareButton.md')] = files[D('components/ShareButton/ShareButton.md')].replace(/^usedBy:.*\n/m, '');
+  const root = writeRepo(files);
+  const strict = cli(root, '--delta', SPEC_SLUG);
+  assert.equal(strict.status, 1);
+  assert.match(strict.stdout, /规则 6.*usedBy.*未生成/);
+  const lenient = cli(root, '--delta', SPEC_SLUG, '--no-used-by');
+  assert.equal(lenient.status, 0, lenient.stdout);
+  // only the usedBy half is skipped: other rules still judge the delta
+  const broken = deltaFiles();
+  delete broken[D('pages/pantry/pantry--overview.md')];
+  assert.equal(cli(writeRepo(broken), '--delta', SPEC_SLUG, '--no-used-by').status, 1);
+});
+
 test('cli: usage errors and a directory that is not a repository root exit 2', () => {
   assert.equal(spawnSync('node', [CLI], { encoding: 'utf8' }).status, 2);
   assert.equal(cli(writeRepo({ 'README.md': 'x' })).status, 2);

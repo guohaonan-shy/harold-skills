@@ -22,7 +22,7 @@ the *generic* anti-slop law and the forced protocols (§2, §6) that no brand do
 
 **Enforcement split.** The mechanically-checkable subset of these rules is enforced by
 `scripts/design-lint.mjs` — a PostToolUse hook runs it on every write to a canvas HTML
-(`docs/design/<spec-slug>/`, plus the legacy `design-preview/` / `design-motion-preview/`), so violations surface without anyone remembering to check. The lint
+(`docs/design/tmp/<spec-slug>/canvas/`, plus the legacy `design-preview/` / `design-motion-preview/`), so violations surface without anyone remembering to check. The lint
 is the hard gate; this file carries the *why* plus the judgment calls a regex can't make.
 
 ---

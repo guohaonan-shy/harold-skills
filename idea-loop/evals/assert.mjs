@@ -79,7 +79,7 @@ export function section(md, titleFragment) {
  * 比容纳它的 `##` 还浅。按「同级或更浅就停」去切，会在 ledger 的第一行就切断，
  * 然后报出一个「ledger 1 行」这种看起来像证据、其实是量具坏了的数字。
  *
- * 冻结记录的四节（意图 · 冻结了什么 · 打磨轨迹 · 签字）是 skill 定死的闭集，
+ * 冻结记录的五节（意图 · 冻结了什么 · 打磨轨迹 · 设计法候选 · 签字）是 skill 定死的闭集，
  * 所以「下一个兄弟是谁」这件事是契约，不是猜。
  */
 export function sectionUntil(md, titleFragment, siblingFragments) {
@@ -99,12 +99,12 @@ const specFiles = (p) =>
   });
 /** 工单：docs/spec/<slug>/tickets/NN-<slug>.md。 */
 const ticketFiles = (p) => walk(p).filter((f) => /^docs\/spec\/[^/]+\/tickets\/[^/]+\.md$/.test(f));
-/** 画布：docs/design/<spec-slug>/ 下直接放的 HTML（assets/ 里的不算）。 */
-const designCanvases = (p) => walk(p).filter((f) => /^docs\/design\/[^/]+\/[^/]+\.html$/.test(f));
-/** 冻结记录：docs/design/<slug>/<slug>-design.md，frontmatter type: design。 */
+/** 画布：docs/design/tmp/<spec-slug>/canvas/ 下直接放的 HTML（assets/ 里的不算）。 */
+const designCanvases = (p) => walk(p).filter((f) => /^docs\/design\/tmp\/[^/]+\/canvas\/[^/]+\.html$/.test(f));
+/** 冻结记录：docs/design/tmp/<slug>/canvas/<slug>-design.md，frontmatter type: design。 */
 const designRecord = (p) =>
   walk(p).find((f) => {
-    const m = f.match(/^docs\/design\/([^/]+)\/([^/]+)-design\.md$/);
+    const m = f.match(/^docs\/design\/tmp\/([^/]+)\/canvas\/([^/]+)-design\.md$/);
     return m && m[1] === m[2] && frontmatter(read(join(p, f))).type === 'design';
   });
 
@@ -121,11 +121,11 @@ function theSpec(project) {
 /** spec 的 slug = 文件名。 */
 const slugOf = (specFile) => specFile.split('/').pop().replace(/\.md$/, '');
 
-/** 方向说明住在项目根的 .tmp/（发散交给收敛的中间产物，不进 spec），按 spec 的 slug 分目录。 */
+/** 方向说明住在 docs/design/tmp/<spec-slug>/imagine/（发散交给收敛的中间产物，本地、不进 git、不进 spec）。 */
 function theNote(project) {
   const { file } = theSpec(project);
   if (!file) return { path: null, md: null };
-  const path = `.tmp/uiux-imagine/${slugOf(file)}/direction-note.md`;
+  const path = `docs/design/tmp/${slugOf(file)}/imagine/direction-note.md`;
   const full = join(project, path);
   return { path, md: existsSync(full) ? readFileSync(full, 'utf8') : null };
 }
@@ -286,7 +286,7 @@ export const ASSERTIONS = {
   // —— uiux-imagine ————————————————————————————————————————————————
 
   'direction-note-passes-shape-check': {
-    text: '.tmp/uiux-imagine/<spec-slug>/ 下的方向说明过 direction-note-check（七节齐全、同级、有序、有正文，选中变种带完整构成清单）',
+    text: 'docs/design/tmp/<spec-slug>/imagine/ 下的方向说明过 direction-note-check（七节齐全、同级、有序、有正文，选中变种带完整构成清单）',
     run: ({ project }) => {
       const { path, md } = theNote(project);
       if (!path) return no('没有唯一的 spec');
@@ -316,14 +316,14 @@ export const ASSERTIONS = {
   },
 
   'imagine-ships-only-the-note': {
-    text: '准出物只有那一份方向说明——仓库里没多出文件，.tmp/uiux-imagine/<spec-slug>/ 里的对比页与抓取物也清掉了，只剩 direction-note.md',
+    text: '准出物只有那一份方向说明——仓库里除了 docs/design/tmp/<spec-slug>/imagine/direction-note.md 没多出文件，imagine/ 里的对比页与抓取物也清掉了，只剩 direction-note.md',
     run: ({ project, before }) => {
-      const added = walk(project).filter((f) => !before.includes(f));
-      const stray = added.filter((f) => !specFiles(project).includes(f));
-      if (stray.length) return no(`多出来的文件：${stray.join(', ')}`);
       const { file } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
-      const work = `.tmp/uiux-imagine/${slugOf(file)}`;
+      const work = `docs/design/tmp/${slugOf(file)}/imagine`;
+      const added = walk(project).filter((f) => !before.includes(f));
+      const stray = added.filter((f) => !specFiles(project).includes(f) && f !== `${work}/direction-note.md`);
+      if (stray.length) return no(`多出来的文件：${stray.join(', ')}`);
       const left = walk(join(project, work)).filter((f) => f !== 'direction-note.md');
       return left.length ? no(`${work}/ 里渲染物没清：${left.join(', ')}`) : ok(`仓库没多文件；${work}/ 只剩方向说明`);
     },
@@ -351,10 +351,10 @@ export const ASSERTIONS = {
   // —— uiux-refine ————————————————————————————————————————————————
 
   'canvas-lands-in-docs-design': {
-    text: '画布落在 docs/design/<spec-slug>/ 下（落在别处等于把 lint hook 悄悄关掉，冻结后也找不到真值）',
+    text: '画布落在 docs/design/tmp/<spec-slug>/canvas/ 下（落在别处等于把 lint hook 悄悄关掉，冻结后也找不到真值）',
     run: ({ project }) => {
       const hits = designCanvases(project);
-      return hits.length ? ok(hits.join(', ')) : no(`docs/design/<spec-slug>/ 下没有 HTML；项目里的 HTML：${walk(project).filter((f) => f.endsWith('.html')).join(', ') || '（无）'}`);
+      return hits.length ? ok(hits.join(', ')) : no(`docs/design/tmp/<spec-slug>/canvas/ 下没有 HTML；项目里的 HTML：${walk(project).filter((f) => f.endsWith('.html')).join(', ') || '（无）'}`);
     },
   },
 
@@ -387,13 +387,13 @@ export const ASSERTIONS = {
   },
 
   'freeze-lands-canvas-and-ledger-in-docs-design': {
-    text: '冻结在 docs/design/<spec-slug>/ 原地落齐：画布 HTML 与 <spec-slug>-design.md（ledger 全文）同目录，ledger 不留在 /tmp',
+    text: '冻结在 docs/design/tmp/<spec-slug>/canvas/ 原地落齐：画布 HTML 与 <spec-slug>-design.md（ledger 全文）同目录，ledger 不留在 work/ 里',
     run: ({ project }) => {
       const rec = designRecord(project);
-      if (!rec) return no(`没有 docs/design/<spec-slug>/<spec-slug>-design.md（type: design）；docs/design 下现有：${walk(project).filter((f) => f.startsWith('docs/design/')).join(', ') || '（空）'}`);
-      const bucket = rec.split('/').slice(0, 3).join('/');
+      if (!rec) return no(`没有 docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md（type: design）；docs/design 下现有：${walk(project).filter((f) => f.startsWith('docs/design/')).join(', ') || '（空）'}`);
+      const bucket = dirname(rec);
       const canvas = designCanvases(project).filter((f) => f.startsWith(`${bucket}/`));
-      const ledger = sectionUntil(read(join(project, rec)), '打磨轨迹', ['签字']);
+      const ledger = sectionUntil(read(join(project, rec)), '打磨轨迹', ['设计法候选', '签字']);
       const problems = [];
       if (!canvas.length) return no(`${bucket}/ 下没有画布 HTML`);
       if (ledger === null) problems.push('没有「打磨轨迹」那一节');
@@ -407,7 +407,7 @@ export const ASSERTIONS = {
     run: ({ project }) => {
       const rec = designRecord(project);
       if (!rec) return no('没有 docs/design 冻结记录');
-      const bucket = rec.split('/').slice(0, 3).join('/');
+      const bucket = dirname(rec);
       const shots = walk(project).filter((f) => f.startsWith(`${bucket}/assets/`) && /\.(png|jpe?g|webp)$/.test(f));
       return shots.length ? ok(`${shots.length} 张：${shots.map((f) => f.split('/').pop()).join(', ')}`) : no(`${bucket}/assets/ 下一张截图都没有`);
     },
@@ -440,7 +440,7 @@ export const ASSERTIONS = {
   },
 
   'freeze-writes-interaction-flows': {
-    text: 'spec §5 的前端交互换成了交互图：图在 docs/design/<spec-slug>/assets/flows/，「待补图」标记已去掉',
+    text: 'spec §5 的前端交互换成了交互图：图在 docs/design/tmp/<spec-slug>/canvas/flows/（文件名 flow-<n>-<page>--<state>.png），「待补图」标记已去掉',
     run: ({ project }) => {
       const { file, md } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
@@ -448,21 +448,50 @@ export const ASSERTIONS = {
       if (ui === null) return no(`${file} 没有「前端交互」小节`);
       if (/待补图/.test(ui)) return no(`${file} 前端交互还标着「待补图」`);
       const imgs = [...ui.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => m[1]);
-      const flows = imgs.filter((i) => /docs\/design\/[^/]+\/assets\/flows\/[^/]+\.png$/.test(join(dirname(file), i).split(sep).join('/')));
-      if (!flows.length) return no(`前端交互里没有指向 docs/design/<slug>/assets/flows/ 的图：${imgs.join(', ') || '（一张图都没有）'}`);
+      const flows = imgs.filter((i) => /docs\/design\/tmp\/[^/]+\/canvas\/flows\/flow-\d+-[^/]+--[^/]+\.png$/.test(join(dirname(file), i).split(sep).join('/')));
+      if (!flows.length) return no(`前端交互里没有指向 docs/design/tmp/<slug>/canvas/flows/flow-<n>-<page>--<state>.png 的图：${imgs.join(', ') || '（一张图都没有）'}`);
       const missing = flows.filter((i) => !existsSync(join(project, dirname(file), i)));
       return missing.length ? no(`图链接指向不存在的文件：${missing.join(', ')}`) : ok(`${flows.length} 张：${flows.map((f) => f.split('/').pop()).join(', ')}`);
     },
   },
 
   'freeze-clears-tmp': {
-    text: '冻结后 .tmp/uiux-imagine/<spec-slug>/ 与 .tmp/uiux-refine/<spec-slug>/ 都清掉了（方向说明与打磨临时件随冻结结束）',
+    text: '冻结后 docs/design/tmp/<spec-slug>/imagine/ 与 canvas/work/ 都清掉了（方向说明与打磨临时件随冻结结束；canvas/ 其余保留到归档）',
     run: ({ project }) => {
       const { file } = theSpec(project);
       if (!file) return no('没有唯一的 spec');
       const slug = slugOf(file);
-      const left = [`.tmp/uiux-imagine/${slug}`, `.tmp/uiux-refine/${slug}`].filter((d) => existsSync(join(project, d)));
+      const left = [`docs/design/tmp/${slug}/imagine`, `docs/design/tmp/${slug}/canvas/work`].filter((d) => existsSync(join(project, d)));
       return left.length ? no(`还在：${left.join(', ')}`) : ok('两个都清了');
+    },
+  },
+
+  'freeze-writes-delta': {
+    text: '冻结同时写了 docs/design/tmp/<spec-slug>/delta/：至少一个状态文件，且叠到档案上过 design-archive-check（不查 usedBy）；冻结记录里有「设计法候选」一节',
+    run: ({ project, pluginRoot }) => {
+      const { file } = theSpec(project);
+      if (!file) return no('没有唯一的 spec');
+      const slug = slugOf(file);
+      const states = walk(project).filter((f) => f.startsWith(`docs/design/tmp/${slug}/delta/`) && f.endsWith('.md') && frontmatter(read(join(project, f))).type === 'design-state');
+      if (!states.length) return no(`docs/design/tmp/${slug}/delta/ 下没有 type: design-state 的文件`);
+      const rec = designRecord(project);
+      if (!rec) return no('没有冻结记录');
+      if (section(read(join(project, rec)), '设计法候选') === null) return no(`${rec} 里没有「设计法候选」一节`);
+      let out = '';
+      let status = 0;
+      try {
+        out = execFileSync('node', [join(pluginRoot, 'scripts/design-archive-check.mjs'), project, '--delta', slug, '--no-used-by', '--json'], { encoding: 'utf8' });
+      } catch (e) {
+        out = e.stdout ?? '';
+        status = e.status ?? 1;
+      }
+      let report;
+      try {
+        report = JSON.parse(out);
+      } catch {
+        return no(`design-archive-check 没吐出可解析的 JSON（退出码 ${status}）：${out.slice(0, 200)}`);
+      }
+      return report.ok ? ok(`${states.length} 个状态文件；${report.objects} 个对象过校验`) : no(`${report.violations.length} 条违规：${report.violations.slice(0, 3).map((v) => `${v.file} ${v.message}`).join('；')}`);
     },
   },
 

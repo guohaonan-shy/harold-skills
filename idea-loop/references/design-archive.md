@@ -137,10 +137,10 @@ path:
 ## 6 校验
 
 ```
-node scripts/design-archive-check.mjs <仓库根> [--delta <spec-slug>] [--json]
+node scripts/design-archive-check.mjs <仓库根> [--delta <spec-slug>] [--no-used-by] [--json]
 ```
 
-退出码 0 = 通过，1 = 有违规（逐条指名文件与字段），2 = 用法错误或不是仓库根。`--delta` 把 `tmp/<spec-slug>/delta/` 叠到 `prod/` 上（同 id 的对象以 `delta/` 为准，按 `removed.md` 去掉对象），再判叠完之后的样子。
+退出码 0 = 通过，1 = 有违规（逐条指名文件与字段），2 = 用法错误或不是仓库根。`--delta` 把 `tmp/<spec-slug>/delta/` 叠到 `prod/` 上（同 id 的对象以 `delta/` 为准，按 `removed.md` 去掉对象），再判叠完之后的样子。`--no-used-by` 跳过规则 6 里 `usedBy` 那一半：agent 写 `delta/` 时不手写 `usedBy`（归档脚本生成），自查时带上它。
 
 | 规则 | 判什么 |
 |---|---|

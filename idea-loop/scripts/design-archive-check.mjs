@@ -23,7 +23,9 @@
  * `docs/design/` entries other than tmp/, prod/ and index.md are the old per-spec layout: one note
  * each, never a violation, never read.
  *
- * Usage:  node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--json]
+ * Usage:  node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--json]
+ *         --no-used-by skips the `usedBy` half of rule 6, for judging a delta/ before the archive
+ *         script has regenerated `usedBy` (an agent never writes it by hand).
  * Exit:   0 = no violations, 1 = violations, 2 = usage / cannot read the repository
  */
 
@@ -324,11 +326,14 @@ export function formatViolation(x) {
 function main(argv) {
   const args = argv.slice(2);
   const json = args.includes('--json');
+  // A requirement's delta/ is written before the archive script regenerates usedBy, so an agent
+  // checking its own delta skips that half of rule 6 (the script itself judges the finished prod/).
+  const usedBy = !args.includes('--no-used-by');
   const di = args.indexOf('--delta');
   const delta = di >= 0 ? args[di + 1] : null;
   const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--delta');
   if (positional.length !== 1 || (di >= 0 && !delta)) {
-    console.error('用法：node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--json]');
+    console.error('用法：node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--json]');
     return 2;
   }
   const root = resolve(positional[0]);
@@ -338,7 +343,7 @@ function main(argv) {
   }
   let result;
   try {
-    result = check(root, { delta });
+    result = check(root, { delta, usedBy });
   } catch (e) {
     console.error(e.message);
     return 2;

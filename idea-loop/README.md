@@ -162,12 +162,14 @@ deterministic scripts get picked up by putting their tests next to them as
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
 purpose — mocking a browser would test the mock. The CLI tails on
-`critic-score.mjs`, `direction-note-check.mjs` and `glossary-check.mjs` are the same kind of thin
+`critic-score.mjs` and `glossary-check.mjs` are the same kind of thin
 shell — argv, a file read, an exit code — and are verified by being run, not
-by a spawned-process test. The lint **hooks**
-(`scripts/design-lint-hook.mjs`, `scripts/glossary-check-hook.mjs`) have no unit tests either — they are verified by
-actually writing an HTML file into a `docs/design/<spec-slug>/` directory (or a broken
-`GLOSSARY.md` anywhere) and confirming it reports; that is the falsifiable signal, not a mocked stdin payload.
+by a spawned-process test. (`direction-note-check.mjs` and `flow-compose.mjs` also have spawned-process
+tests for the paths they are called on and the state-id file contract.) The glossary **hook**
+(`scripts/glossary-check-hook.mjs`) has no unit test either — it is verified by
+actually writing a broken `GLOSSARY.md` anywhere and confirming it reports; that is the falsifiable signal, not a mocked stdin payload.
+`scripts/design-lint-hook.mjs` is tested by spawning it with a real payload on real files, because what it must get
+right is *which paths it watches* (only HTML directly in `docs/design/tmp/<spec-slug>/canvas/`).
 `scripts/design-md-hook.mjs` is the exception: its whole job is shelling out to an external CLI, so
 its tests swap in a fake CLI to pin the exit-code contract (error blocks, warning passes, an
 unreachable CLI never blocks), and one real run against the official CLI was the falsifiable check.
@@ -192,7 +194,7 @@ reasoning, the case, and how to read a run live in
 The **whole loop's wiring check rides along as assertions in that baseline** rather
 than as a one-off dry run: prototype landing in raw, a `grill` spec landing at
 `审核中`, `to-ticket` refusing a `设计中` spec whose design is not frozen, the freeze landing canvas + ledger in
-`docs/design/<spec-slug>/` while leaving the spec at `设计中`, and no cross-plugin skill invocation
+`docs/design/tmp/<spec-slug>/canvas/` while leaving the spec at `设计中`, and no cross-plugin skill invocation
 anywhere in the repo. A dry run's conclusion dies with its session; an assertion
 goes red three weeks later.
 
@@ -259,11 +261,12 @@ idea-loop/
 │   ├── mini-yaml.test.mjs
 │   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
-│   ├── flow-compose.mjs              # interaction flow figures: screenshots + arrows + red rings → one PNG (spec §1 / §5.3)
-│   ├── flow-compose.test.mjs         # its unit tests — the flow schema and the layout
+│   ├── flow-compose.mjs              # interaction flow figures: screenshots + arrows + red rings → one PNG (spec §1 / §5.3); a step can name its archive state (`state`), kept in the PNG's tag, the HTML and a `.states.json` beside it
+│   ├── flow-compose.test.mjs         # its unit tests — the flow schema, the layout, state ids and the `flow-<n>-<page>--<state>.png` name
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
-│   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/<spec-slug>/), exit 2 on P0/P1
+│   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/tmp/<spec-slug>/canvas/), exit 2 on P0/P1
+│   ├── design-lint-hook.test.mjs     # its tests — which paths it watches, spawned with a real payload
 │   ├── design-md-hook.mjs            # PostToolUse entry: official @google/design.md lint on any DESIGN.md, exit 2 on an error
 │   ├── design-md-hook.test.mjs       # its tests, against a fake CLI
 │   ├── no-project-leak.test.mjs      # tripwire: skills/ and references/ carry no source-project names or examples
@@ -338,7 +341,7 @@ findings the critic just wrote and invalidates the round when the number does no
 
 Nothing in `references/design/` is an entry point. They are loaded on demand by whichever
 step is running; the hooks are the only pieces that fire on their own. One fires only on a
-`Write`/`Edit` whose path lands in a canvas HTML — `docs/design/<spec-slug>/*.html`, or the legacy
+`Write`/`Edit` whose path lands in a canvas HTML — `docs/design/tmp/<spec-slug>/canvas/*.html`, or the legacy
 `design-preview/` / `design-motion-preview/` scratch dirs; the other only on a write to a file named
 `DESIGN.md`, where it runs the official `@google/design.md` lint at `@latest` and hands any error
 back to the model. A fourth, `merge-gate-hook.mjs`, fires on `Bash` before the command runs: a `gh pr merge`

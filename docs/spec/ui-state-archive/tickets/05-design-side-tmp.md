@@ -18,12 +18,12 @@
 不要在新写的文字里提已删掉的旧 DESIGN.md 建模 skill 的名字（有绊线测试扫）。
 
 ## 验收标准
-- [ ] 插件里不再有写到 `.tmp/uiux-imagine/`、`.tmp/uiux-refine/` 或 `docs/design/<spec-slug>/` 的指示（evals 的历史存档除外）
-- [ ] 方向说明校验、design-lint 钩子、拼图脚本的测试按新路径与状态 id 输入更新并全绿；拼图脚本不带状态 id 时输出与改动前一致
-- [ ] designer 的冻结步骤写明 delta 的写法，且与档案结构 reference 一致（对象类型、决定与候选的形状）
-- [ ] wiki 约定的目录、type 闭集、index 契约已更新
-- [ ] evals 断言路径已改，交接里给出重跑命令
-- [ ] 全量 node 测试套件全绿
+- [x] 插件里不再有写到 `.tmp/uiux-imagine/`、`.tmp/uiux-refine/` 或 `docs/design/<spec-slug>/` 的指示（evals 的历史存档除外）
+- [x] 方向说明校验、design-lint 钩子、拼图脚本的测试按新路径与状态 id 输入更新并全绿；拼图脚本不带状态 id 时输出与改动前一致
+- [x] designer 的冻结步骤写明 delta 的写法，且与档案结构 reference 一致（对象类型、决定与候选的形状）
+- [x] wiki 约定的目录、type 闭集、index 契约已更新
+- [x] evals 断言路径已改，交接里给出重跑命令
+- [x] 全量 node 测试套件全绿
 
 ## 选中的存量回归
 无 test-cases 库。跑全量 `*/scripts/*.test.mjs`；重点是方向说明校验、design-lint 钩子、拼图脚本、无遗留入口绊线、不泄露项目名这几组。
