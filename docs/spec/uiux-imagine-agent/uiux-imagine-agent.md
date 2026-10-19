@@ -188,15 +188,14 @@ issue 写「不降级，继承会话的模型和思考强度」；refine 的 des
 
 这里的「后端」是插件里的 agent、调研与生图、内嵌浏览器和静态服务。
 
-![uiux-imaginer 时序](assets/sequence-imaginer.png)
+![uiux-imaginer 时序](assets/sequence-uiux-imaginer.png)
 
-红色是本 spec 新增的消息，虚线是响应。
+红色是本 spec 新增或改动的消息，虚线是响应。1–11 是 imagine 段，12–19 是 refine 段（只画了跟本 spec 有关的往返：从交接画布开工、评委的 finding 碰到人选定项时摆给人）。
 
 - 新增 uiux-imaginer 的定义：输入是 spec 路径、`DESIGN.md` / `PRODUCT.md` 路径、人的原话（编排者不改写），第一轮之后加上一轮选中的变种；每轮交回板地址与 `?variant=` / `?state=` 参数、每个变种的构成说明、本轮改动、取舍与推荐、参考图路径；收工交回方向说明草稿和校验结果。
 - imagine 的 SKILL.md 改成编排者的说明：什么时候跑、起服务、起 uiux-imaginer、每轮摆给人、意见分流、恢复。
 - 第 4 步的调研与生图按 §4.2、§4.3 的决定走。
 - 交接改成交画（§4.8–§4.10）：uiux-imaginer 收工时导出交接画布；refine 的 SKILL.md 改开工前置与起步，designer 定义改「从交接画布接着做」（保留从文字重建作退路）和「与人选定冲突」的分流；`direction-note-check.mjs` 加构成清单的来源标记，`critic-score.mjs` 加人保留排除集。
-- 上面的时序图还是只拆执行者时画的，没画交接画布与「与人选定冲突」那一来一回；切工单前按 spec-figures 重画。
 
 ### 5.2 前端内部
 
