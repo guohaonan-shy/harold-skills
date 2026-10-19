@@ -1,7 +1,7 @@
 {
   "name": "idea-loop",
   "displayName": "Idea Loop",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "Harold's idea-to-merge loop for real engineering: grilling, specs and tickets, UI design from exploration to freeze, ticket-by-ticket implementation, two-axis PR review, and a docs/ knowledge base that outlives each change. The human decides; agents do the rest.",
   "author": {
     "name": "Harold"
