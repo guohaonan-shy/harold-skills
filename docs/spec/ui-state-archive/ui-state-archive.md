@@ -52,7 +52,7 @@ issues: [28, 48]
 
 写入只在一个时刻发生：**合并前归档**。本地钩子在合并命令前看到 `tmp/` 还有东西就拦下；pr-review 的编排者起 UI 审查 agent，对着实现逐个进状态、走边、比对，通过后重拍素材、起草说明交人审，人通过才由归档脚本并进 `prod/`。同一个 agent 也在 pr-review 每一轮里跑，拿实现出来的图对冻结的图，抓漏掉的。
 
-`DESIGN.md` 怎么写、谁能写，不在这份 spec 里（[[design-md-write-entry]]）；`dreaming` 怎么每周核对这张图（[[dreaming-design-reconcile]]）也不在。这份 spec 只给它们留好读取入口和「设计法候选」这个交接格式（§4.12）。
+Toeflair 已经有 `toeflair-app/DESIGN.md`；它怎么写、谁能写，不在这份 spec 里（[[design-md-write-entry]]）；`dreaming` 怎么每周核对这张图（[[dreaming-design-reconcile]]）也不在。这份 spec 只给它们留好读取入口和「设计法候选」这个交接格式（§4.12）。
 
 ## 3 User Stories
 
@@ -194,7 +194,7 @@ async:                           # 这一屏发起了异步动作时必填
   ```
 
   不写日期；规则改了**原地改写**，不追加新条目；编号不复用。
-- **「设计法候选」单列**，每条写成 `DESIGN.md` 可以直接收的形态（无日期、无页面名、可照做），加「并进：<章名>」和「证据：<引用了这种做法的对象 wikilink>」。由 dreaming 处理，处理完即删；这一节空了就是处置完了。候选「该不该进、怎么进」的判据归 [[design-md-write-entry]]，这里只定形状。
+- **「设计法候选」是页面、组件、动效、路线文件正文的固定一节**，状态文件没有。一条候选长什么样由 `DESIGN.md` 写入标准那份 reference 的「设计法候选的形态」一节定（[[design-md-write-entry]]）：一句无日期、无页面名、可照做的规则，下挂「并进」「为什么」「证据」（证据写引用了这种做法的对象 wikilink）；没有候选写一行「无」。本 spec 只定**住处**，不另起一套格式。由 dreaming 处理，处理完即删。
 
 ### 4.5 进入方式从图上推导
 
@@ -264,7 +264,7 @@ async:                           # 这一屏发起了异步动作时必填
 
 ### 4.12 与另两份 spec 的接缝
 
-- **[[design-md-write-entry]]**：本 spec 定「设计法候选」的**形状和住处**（对象文件的一节，§4.4）；它定「该不该进 `DESIGN.md`、怎么进」与谁来写。designer / uiux-imagine 里 `DESIGN.md` 写入行为的改动归它，本 spec 只改这些 skill 里的产物路径。
+- **[[design-md-write-entry]]**：本 spec 定「设计法候选」的**住处**（对象文件的固定一节，§4.4）；候选的形状、「该不该进 `DESIGN.md`、怎么进」与谁来写都归它（已集成）。designer 冻结记录和 uiux-refine 现在把候选写在冻结记录的同名一节，本 spec 落地时把住处换成档案对象。designer / uiux-imagine 里 `DESIGN.md` 写入行为的改动归它，本 spec 只改这些 skill 里的产物路径。
 - **[[dreaming-design-reconcile]]**：它通过本 spec 的查询模块读 `prod/`，用 §4.5 的进入方式重新驱动抓漂移，处理候选后删掉候选、把决定的「来源」改链到 ADR。它的全站初扫和重拍产物先写进 `tmp/`、人审后由本 spec 的归档脚本并进 `prod/`——写入 `prod/` 只有归档脚本一条路。
 - 接口细节写在共享笔记 `archive-interface.md`，供另两个会话读。
 
