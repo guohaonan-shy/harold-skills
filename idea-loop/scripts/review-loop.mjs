@@ -24,7 +24,7 @@
  *
  * An entry is settled once every 你的批示 has a 做了什么 after it; a review round that asks the human
  * nothing (every finding handled by rule, no 要你决定 in it) is settled by its 做了什么 alone, so the
- * orchestrator can tell "everything is handled" and start the next round (pr-review §4). Overturning
+ * orchestrator can tell "everything is handled" and start the next round (pr-review §5). Overturning
  * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
  *
