@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 审核中
+status: 在飞
 tags: [idea-loop, pr-review, to-spec, implement, decision-rules]
 summary: 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板
 related: ["[[2026-10-19-pr-decision-friction]]"]
