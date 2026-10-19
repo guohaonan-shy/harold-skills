@@ -22,13 +22,13 @@
 
 ## 验收标准
 
-- [ ] 跑两轮 imagine：会话自己的工具调用里没有写变种板、截图、Refero 调用，只有起服务、起 uiux-imaginer、打开变种板、转意见（看会话记录）。
-- [ ] 第一轮后说「往 B 那边再推一格」：转给的是同一个 uiux-imaginer（SendMessage 接着它的上下文），新板在 B 的基础上改。
-- [ ] 说一句「这块要不要存在都得重想」：编排者不转给 uiux-imaginer，先问人是否回 spec / grill。
-- [ ] 每轮交回原文都追加进了每轮记录文件；第二轮后重开会话再调 imagine，新 uiux-imaginer 接着做第三轮。
-- [ ] 收工：方向说明过方向说明校验脚本、交回编排者核对后 uiux-imaginer 才结束。
-- [ ] agent 定义的 frontmatter 钉了模型与思考强度；imagine 的 SKILL.md 里不再有写给执行者的设计步骤。
-- [ ] plugin 脚本单测套件全绿。
+- [ ] 跑两轮 imagine：会话自己的工具调用里没有写变种板、截图、Refero 调用，只有起服务、起 uiux-imaginer、打开变种板、转意见（看会话记录）。 ⏭ 延后 → 05：要跑真会话才看得到，05 的 imagine 那一格有「会话只编排」断言，且 05 在本 spec 里排在后面
+- [ ] 第一轮后说「往 B 那边再推一格」：转给的是同一个 uiux-imaginer（SendMessage 接着它的上下文），新板在 B 的基础上改。 ⏭ 延后 → PR 交付验收：编排者的分流只能在真会话里由人看（05 的 eval 不覆盖编排者的转发），SKILL.md §4 已写明用 SendMessage 接着转、不重起
+- [ ] 说一句「这块要不要存在都得重想」：编排者不转给 uiux-imaginer，先问人是否回 spec / grill。 ⏭ 延后 → PR 交付验收：同上，SKILL.md §4 分流表第三行与判据已写
+- [ ] 每轮交回原文都追加进了每轮记录文件；第二轮后重开会话再调 imagine，新 uiux-imaginer 接着做第三轮。 ⏭ 延后 → 05：05 的 imagine 格断言每轮记录落盘，uiux-imaginer 直跑格断言从记录接着做第三轮
+- [ ] 收工：方向说明过方向说明校验脚本、交回编排者核对后 uiux-imaginer 才结束。 ⏭ 延后 → 05：uiux-imaginer 直跑格断言收工时方向说明过校验；定义里的收工顺序（agent 定义 §10、SKILL.md §5）已写
+- [x] agent 定义的 frontmatter 钉了模型与思考强度；imagine 的 SKILL.md 里不再有写给执行者的设计步骤。
+- [x] plugin 脚本单测套件全绿。
 
 ## 选中的存量回归
 
