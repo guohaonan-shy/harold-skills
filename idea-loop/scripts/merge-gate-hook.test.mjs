@@ -59,6 +59,10 @@ test('a merge command is blocked while tmp/ holds a requirement, and the message
   assert.equal(r.status, 2);
   assert.match(r.stderr, /demo-spec/);
   assert.match(r.stderr, /design-archive-write\.mjs/);
+  // the way out is the review flow, not the bare script: UI review first, a human reads the draft, only then the script
+  assert.match(r.stderr, /pr-review/);
+  assert.match(r.stderr, /UI 审查/);
+  assert.match(r.stderr, /人通过后/);
   assert.equal(r.stdout, '');
 });
 
