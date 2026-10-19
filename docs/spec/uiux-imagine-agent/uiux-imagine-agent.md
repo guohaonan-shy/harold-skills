@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 审核中
+status: 在飞
 tags: [idea-loop, uiux-imagine, agent]
 summary: uiux-imagine 的执行抽成专职 uiux-imaginer agent，会话只编排和摆结果
 related: ["[[design-research-agent]]", "[[0002-design-loop-v2-imagine-refine]]"]
