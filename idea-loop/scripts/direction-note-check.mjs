@@ -11,11 +11,13 @@
  *
  * This file does not judge the note's content — no model, no taste, no scoring. It judges its
  * shape: the seven fixed sections, at one heading level, in order, each with something in it, and
- * a complete composition list for every chosen variant inside 「变种裁决」.
+ * a complete composition list for every chosen variant inside 「变种裁决」, every item of which
+ * says where it came from (人选定 / 模型代填).
  * That is the falsifiable half of "缺任一节 → 收工校验失败".
  *
  * The level is not pinned to `##` on purpose: the note usually sits at `##` in its own file under
- * <worktree>/.tmp/uiux-imagine/<spec-slug>/, but a note quoted one level deeper elsewhere checks the same.
+ * <repo>/docs/design/tmp/<spec-slug>/imagine/, but a note quoted one level deeper elsewhere checks the same.
+ * The CLI takes any file path; where the note lives is the skill's business, not this check's.
  *
  * Pure: no browser, no model, no clock. The CLI at the bottom is the only thing that reads a file.
  */
@@ -35,6 +37,16 @@ export const SECTIONS = ['意图', '高度记录', '结构', '变种裁决', '�
  * silently not writing it.
  */
 export const COMPOSITION = ['容器形状', '指向', '锚点与位置', '尺寸与字号', '颜色', '出现与消失'];
+
+/**
+ * Where each composition item came from, written at the END of its line: `- 颜色：白底、发丝边（人选定）`.
+ * Closed set of two. 「人选定」 = the human picked it between variants or gave it outright;
+ * 「模型代填」 = the model filled it in and showed it to the human at wrap-up for confirmation.
+ * Convergence reads the marker: a finding that would move a human-chosen item goes to the human
+ * instead of being applied. 「待打磨」 is a value like any other, so it carries a marker too
+ * (who parked it).
+ */
+export const PROVENANCE = ['人选定', '模型代填'];
 
 /**
  * Parse ATX headings, skipping fenced code blocks — a note that shows its own template in a
@@ -144,7 +156,8 @@ export function checkDirectionNote(markdown) {
 /**
  * Check the 构成 blocks inside the 「变种裁决」 body. A block starts at a bold 「构成」 marker
  * (`**构成**` or `**构成（B）**`) and runs until the next marker, the next top-level list item or
- * heading. Each block must name all six items with something after the colon.
+ * heading. Each block must name all six items with something after the colon, and each item's
+ * line must end in a provenance marker (see PROVENANCE).
  */
 export function checkComposition(verdictBody) {
   const errors = [];
@@ -163,6 +176,17 @@ export function checkComposition(verdictBody) {
       (item) => !block.some((l) => new RegExp(`^\\s*(?:[-*]\\s+)?${item}\\s*[:：]\\s*\\S`).test(l)),
     );
     if (missing.length) errors.push(`第 ${n + 1} 份「${name}」缺：${missing.join(' / ')}（没定的写「待打磨」，不要不写）`);
+    const unmarked = [];
+    const wrong = [];
+    for (const item of COMPOSITION) {
+      if (missing.includes(item)) continue;
+      const line = block.find((l) => new RegExp(`^\\s*(?:[-*]\\s+)?${item}\\s*[:：]\\s*\\S`).test(l));
+      const tail = line.trimEnd().match(/（([^（）]*)）$/);
+      if (!tail) unmarked.push(item);
+      else if (!PROVENANCE.includes(tail[1])) wrong.push(`${item}（${tail[1]}）`);
+    }
+    if (unmarked.length) errors.push(`第 ${n + 1} 份「${name}」缺来源标记：${unmarked.join(' / ')}（每项行末标（${PROVENANCE.join('）或（')}），「待打磨」也要标）`);
+    if (wrong.length) errors.push(`第 ${n + 1} 份「${name}」来源标记不对：${wrong.join(' / ')}（只能是（${PROVENANCE.join('）或（')}））`);
   });
   return errors;
 }

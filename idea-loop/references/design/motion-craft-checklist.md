@@ -9,7 +9,7 @@ plus the self-check recipes for the two that are.
 ## 1. The two lint-enforced detectors — what they catch and why
 
 Both already run automatically via the PostToolUse hook on every write to
-the motion canvas (`docs/design/<spec-slug>/<spec-slug>-motion.html`). Documented here so the *reasoning* travels with the rule, not just the
+the motion canvas (`docs/design/tmp/<spec-slug>/canvas/<spec-slug>-motion.html`). Documented here so the *reasoning* travels with the rule, not just the
 pass/fail:
 
 - **`layout-transition`** — flags `transition`/`transition-property` declarations touching

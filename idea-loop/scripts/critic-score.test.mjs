@@ -1,7 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
-  checkRound, validateFindings, scoreBand, worstSeverity,
+  checkRound, validateFindings, scoreBand, worstSeverity, renderRound,
   DIMENSIONS, SEVERITIES, KINDS, KINDS_BY_SEVERITY, FINDING_FIELDS, STOP_THRESHOLD,
 } from './critic-score.mjs';
 
@@ -178,4 +182,145 @@ test('a score outside 1–10 or not an integer is invalid on its own', () => {
   assert.equal(checkRound([], 11).valid, false);
   assert.equal(checkRound([], 9.5).valid, false);
   assert.equal(checkRound([], '10').valid, false);
+});
+
+// ---------- the human-kept exclusion set ----------
+//
+// A finding that touches something the human chose is held back by the designer, put to the
+// human, and — if the human says keep — excluded from the score on every later round. The
+// critic stays blind; the exclusion lives in the round file, never in the finding shape.
+
+const kept = (index, reason = '人保留（2026-10-19）：关闭按钮在右上') => ({ index, reason });
+
+test('an empty exclusion set changes nothing — the result is byte-for-byte what it was without one', () => {
+  const findings = [finding('P1'), finding('P3')];
+  const without = checkRound(findings, 7, ['P1']);
+  assert.deepEqual(checkRound(findings, 7, ['P1'], []), without);
+  assert.equal(JSON.stringify(checkRound(findings, 7, ['P1'], [])), JSON.stringify(without));
+  assert.equal(renderRound(checkRound(findings, 7, ['P1'], []), 'r.json'), renderRound(without, 'r.json'));
+  assert.equal('excluded' in without, false);
+  assert.equal('effectiveScore' in without, false);
+});
+
+test('the pre-existing result shape is pinned literally so "unchanged" cannot drift with the code', () => {
+  assert.deepEqual(checkRound(p('P3', 2), 9), {
+    valid: true, errors: [], worst: 'P3', counts: { P0: 0, P1: 0, P2: 0, P3: 2 }, band: { min: 9, max: 9 }, stop: 'pass',
+  });
+  assert.equal(
+    renderRound(checkRound(p('P3', 2), 9), 'r.json'),
+    'critic-round: 有效 ✓ (r.json)\n  最差：P3　计数：P3×2　允许区间：9–9\n  停止判定：pass',
+  );
+});
+
+test('an excluded finding does not count: the P1 that the human kept no longer caps the round at 7', () => {
+  const findings = [finding('P1', { where: 'close button' }), finding('P3')];
+  const r = checkRound(findings, 7, [], [kept(0)]);
+  assert.equal(r.valid, true);
+  assert.equal(r.worst, 'P3');
+  assert.deepEqual(r.counts, { P0: 0, P1: 0, P2: 0, P3: 1 });
+  assert.deepEqual(r.band, { min: 9, max: 9 });
+});
+
+test('the critic is still held to what it wrote: the score must fit ALL its findings, kept or not', () => {
+  const findings = [finding('P1'), finding('P3')];
+  const r = checkRound(findings, 9, [], [kept(0)]);
+  assert.equal(r.valid, false);
+  assert.match(r.errors[0], /band 7–7/);
+  assert.equal(r.stop, null);
+});
+
+test("the effective score is the critic's score moved just far enough into the band of what still counts", () => {
+  const r = checkRound([finding('P1'), finding('P3')], 7, [], [kept(0)]);
+  assert.equal(r.criticScore, 7);
+  assert.equal(r.effectiveScore, 9);
+  assert.equal(r.stop, 'pass');
+});
+
+test('excluding nothing that matters leaves the effective score where the critic put it', () => {
+  const r = checkRound([finding('P1'), finding('P3')], 7, [], [kept(1)]);
+  assert.equal(r.effectiveScore, 7);
+  assert.equal(r.stop, 'continue');
+});
+
+test("excluded findings are listed one by one with the whole finding and the human's words — never dropped silently", () => {
+  const findings = [finding('P2', { where: 'close button', detail: 'sits too far from the title' }), finding('P3', { where: 'footer' })];
+  const r = checkRound(findings, 8, [], [kept(0, '人保留（2026-10-19）：关闭按钮在右上')]);
+  assert.equal(r.excluded.length, 1);
+  assert.deepEqual(r.excluded[0], {
+    index: 0,
+    reason: '人保留（2026-10-19）：关闭按钮在右上',
+    finding: findings[0],
+  });
+  const text = renderRound(r, 'r.json');
+  assert.match(text, /已被人保留，不计分（1 条）/);
+  assert.match(text, /findings\[0\].*P2.*close button.*人保留（2026-10-19）：关闭按钮在右上/);
+});
+
+test('a kept P0 no longer sends the loop back to direction', () => {
+  const r = checkRound([finding('P0'), finding('P3')], 5, [], [kept(0)]);
+  assert.equal(r.valid, true);
+  assert.equal(r.stop, 'pass');
+});
+
+test('excluding every finding is the 10 band — nothing left to touch', () => {
+  const r = checkRound([finding('P2')], 8, [], [kept(0)]);
+  assert.equal(r.worst, null);
+  assert.equal(r.effectiveScore, 10);
+  assert.equal(r.stop, 'pass');
+});
+
+test('an exclusion that points at a finding that is not there is an error, not a shrug', () => {
+  for (const bad of [kept(2), kept(-1), kept(1.5), { index: '0', reason: 'x' }, { reason: 'x' }]) {
+    const r = checkRound([finding('P2'), finding('P3')], 8, [], [bad]);
+    assert.equal(r.valid, false, JSON.stringify(bad));
+    assert.match(r.errors[0], /excluded\[0\]/);
+    assert.equal(r.stop, null);
+  }
+});
+
+test('an exclusion with no reason, a duplicate index, or a non-array set is an error', () => {
+  const two = [finding('P2'), finding('P3')];
+  assert.match(checkRound(two, 8, [], [{ index: 0, reason: '' }]).errors[0], /reason/);
+  assert.match(checkRound(two, 8, [], [{ index: 0 }]).errors[0], /reason/);
+  assert.match(checkRound(two, 8, [], [kept(0), kept(0)]).errors[0], /twice/);
+  assert.equal(checkRound(two, 8, [], 'finding 0').valid, false);
+  assert.equal(checkRound(two, 8, [], [null]).valid, false);
+});
+
+test('an unknown field on an exclusion is an error — the shape is closed like the findings are', () => {
+  const r = checkRound([finding('P2')], 8, [], [{ index: 0, reason: 'x', why: 'y' }]);
+  assert.equal(r.valid, false);
+  assert.match(r.errors[0], /unknown field "why"/);
+});
+
+test('a malformed finding is reported before any exclusion is looked at', () => {
+  const r = checkRound([finding('P2', { kind: 'direction' })], 8, [], [kept(9)]);
+  assert.equal(r.valid, false);
+  assert.match(r.errors[0], /kind/);
+});
+
+// ---------- the CLI: the round file carries the exclusion set ----------
+
+function runCli(round) {
+  const dir = mkdtempSync(join(tmpdir(), 'critic-score-'));
+  const file = join(dir, 'round-1.json');
+  writeFileSync(file, JSON.stringify(round));
+  const out = spawnSync(process.execPath, [new URL('./critic-score.mjs', import.meta.url).pathname, file, '--json'], { encoding: 'utf8' });
+  return { status: out.status, result: JSON.parse(out.stdout) };
+}
+
+test('CLI: a round file with no "excluded" key behaves as before', () => {
+  const { status, result } = runCli({ findings: p('P3', 2), score: 9, history: [] });
+  assert.equal(status, 0);
+  assert.equal('excluded' in result, false);
+});
+
+test('CLI: "excluded" in the round file is honoured and an out-of-range index exits 2', () => {
+  const ok = runCli({ findings: [finding('P1'), finding('P3')], score: 7, history: [], excluded: [kept(0)] });
+  assert.equal(ok.status, 0);
+  assert.equal(ok.result.excluded.length, 1);
+  assert.equal(ok.result.effectiveScore, 9);
+  const bad = runCli({ findings: [finding('P1')], score: 7, history: [], excluded: [kept(3)] });
+  assert.equal(bad.status, 2);
+  assert.equal(bad.result.valid, false);
 });

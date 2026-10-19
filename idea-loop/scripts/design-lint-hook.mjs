@@ -13,41 +13,52 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// --- read hook payload from stdin ---
-let payload = {};
-try {
-  payload = JSON.parse(readFileSync(0, 'utf8'));
-} catch {
-  process.exit(0);
+// Canvases live in docs/design/tmp/<spec-slug>/canvas/ (uiux-refine's home; they stay there until
+// the requirement is archived). The two scratch dirs stay recognized for protocols run outside
+// refine and for older projects. Only HTML directly inside canvas/ counts: canvas/assets/ holds
+// captures, and imagine/ holds throwaway comparison pages, not canvases.
+const CANVAS = /(?:(?:^|\/)(?:design-preview|design-motion-preview)\/[^/]*|(?:^|\/)docs\/design\/tmp\/[^/]+\/canvas\/[^/]*)\.html?$/;
+
+/** Does this path name a design canvas the hook should lint? */
+export function isCanvas(filePath) {
+  return typeof filePath === 'string' && CANVAS.test(filePath);
 }
-const filePath = payload?.tool_input?.file_path || '';
-// Canvases live in docs/design/<spec-slug>/ (uiux-refine's home, frozen in place). The two
-// scratch dirs stay recognized for protocols run outside refine and for older projects.
-// Only HTML directly inside the spec folder counts: assets/ holds captures, not canvases.
-const CANVAS = /(?:(?:^|\/)(?:design-preview|design-motion-preview)\/[^/]*|(?:^|\/)docs\/design\/[^/]+\/[^/]*)\.html?$/;
-if (!CANVAS.test(filePath)) process.exit(0);
-if (!existsSync(filePath)) process.exit(0);
 
-// --- our brand + anti-slop lint ---
-const { lintHtml, renderFindings } = await import(join(here, 'design-lint.mjs'));
-const html = readFileSync(filePath, 'utf8');
-const findings = lintHtml(html, filePath);
+async function main() {
+  // --- read hook payload from stdin ---
+  let payload = {};
+  try {
+    payload = JSON.parse(readFileSync(0, 'utf8'));
+  } catch {
+    process.exit(0);
+  }
+  const filePath = payload?.tool_input?.file_path || '';
+  if (!isCanvas(filePath)) process.exit(0);
+  if (!existsSync(filePath)) process.exit(0);
 
-const hasBlocking = findings.some((f) => f.severity === 'P0' || f.severity === 'P1');
+  // --- our brand + anti-slop lint ---
+  const { lintHtml, renderFindings } = await import(join(here, 'design-lint.mjs'));
+  const html = readFileSync(filePath, 'utf8');
+  const findings = lintHtml(html, filePath);
 
-if (!hasBlocking) process.exit(0); // clean — stay silent
+  const hasBlocking = findings.some((f) => f.severity === 'P0' || f.severity === 'P1');
 
-const report = [
-  `design-lint on ${filePath}:`,
-  renderFindings(findings),
-  '\nFix P0 before continuing (design-core.md §6.1); P1 should be fixed or consciously justified in the review list.',
-]
-  .filter(Boolean)
-  .join('\n');
+  if (!hasBlocking) process.exit(0); // clean — stay silent
 
-console.error(report);
-process.exit(2);
+  const report = [
+    `design-lint on ${filePath}:`,
+    renderFindings(findings),
+    '\nFix P0 before continuing (design-core.md §6.1); P1 should be fixed or consciously justified in the review list.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  console.error(report);
+  process.exit(2);
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) await main();

@@ -49,7 +49,7 @@ spec-status check <docs>                      # 列出所有 spec，和旧平铺
 
 ## 2 backlog 移交标记
 
-项目的 backlog（例如 `docs/quality-backlog.md`）里的条目被一份 spec 覆盖时，条目上写「已移交 → [[<spec-slug>]]」。起草 routine 靠这个标记跳过已经有 spec 的条目，否则它会为同一条再起草一份。
+项目用文件当 backlog 时（用 GitHub issue 的见 §3），backlog 文件里的条目被一份 spec 覆盖时，条目上写「已移交 → [[<spec-slug>]]」。起草 routine 靠这个标记跳过已经有 spec 的条目，否则它会为同一条再起草一份。
 
 ```bash
 spec-status handoff   <backlog 文件> <spec-slug> <条目>             # 写标记

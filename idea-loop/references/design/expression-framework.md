@@ -124,5 +124,6 @@ one argument about step 2 — and rank has a right answer where taste doesn't.
 ## 7. Maintenance
 
 New generalizable treatment decisions become candidates at static-ui-protocol's Distill-back step
-and reach the project's `DESIGN.md` only through `design-modeling`: this file defines the ladders
-and the procedure; DESIGN.md records the decided instances.
+and never edit the project's `DESIGN.md` from here; `dreaming` processes them under
+`references/design-md.md`. This file defines the ladders and the procedure; DESIGN.md records the
+decided instances.

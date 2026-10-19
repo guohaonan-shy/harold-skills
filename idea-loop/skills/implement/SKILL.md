@@ -44,7 +44,9 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 **第一次派工且 frontier 上有两张以上**：先起 explorer，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、这批工单路径、spec 路径、笔记目录，等它交回。
 
-每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD`；用 Agent 起 implementer，`isolation: "worktree"`、`run_in_background: true`，**只给指针**——工单与 spec 的仓库内路径、起点 SHA、集成分支名、端口、集成分支 worktree 的绝对路径、已落地提交列表，以及（有的话）「人的决定已写进工单」和上次的半成品分支。不转述工单。
+每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD`；用 Agent 起 implementer，`isolation: "worktree"`、`run_in_background: true`，**只给指针**——工单与 spec 的仓库内路径、起点 SHA、集成分支名、端口、集成分支 worktree 的绝对路径、**交给 implementer 的 tmp 绝对路径**（集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径；`tmp/` 不进版本库，执行方自己的 worktree 里没有它，冻结画布从它的 `canvas/` 读，没有设计稿的 UI 工单把最小差异记进它的 `delta/`，结构见 `../../references/design-archive.md`；目录还不存在就照给路径，由执行方创建）、已落地提交列表，以及（有的话）「人的决定已写进工单」和上次的半成品分支。不转述工单。
+
+**写 `prod/` 不归 implementer**：执行方只写上面那个 tmp 路径下的 `delta/`；归档在合并前由 pr-review 阶段走 `design-archive-write.mjs`，人批过之后才写（`design-archive.md` §9）。
 
 一次处理一个交回：核对 → 落地回收 → 补派。
 

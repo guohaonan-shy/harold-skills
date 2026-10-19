@@ -1,5 +1,7 @@
 # design-modeling 设计稿
 
+> **已被取代，保留作历史。** `design-modeling` 已删除，规则并入 `references/design-md.md`，写入口收拢到 `uiux-imagine` 与 `dreaming`（见 `docs/spec/design-md-write-entry/`）。下文是删除前的设计，不再生效。
+
 > 状态：草稿，待 Harold 审。来源：issue #22 第 2 项「DESIGN.md 的迭代方式不固定」；PR #19 分支上 Distill-back 分两个去处的提案（未合）；与工作流优化会话的分工交接。
 > 本稿只管 `design-modeling` 这一个 skill 与它直接拥有的文件。imagine / refine 怎么调用它、什么时候调用，归工作流优化那边。
 

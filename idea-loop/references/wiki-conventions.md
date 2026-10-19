@@ -14,6 +14,10 @@
 > **2026-09-28 签字**：§2 新增 `design/<spec-slug>/` 层、§3 新增 `type: design`。冻结的设计从
 > raw 桶搬出来，作为实现之后的视觉真值维护在项目里，不跟 spec 一起删。
 >
+> **2026-10-19 签字**（ui-state-archive）：§2 把 `design/<spec-slug>/` 换成 `design/tmp/` 与 `design/prod/` 两层，
+> §2.1 去掉 imagine / refine 的 `.tmp/` 目录；§3 的 type 闭集加入五种设计档案对象；§5 补 `prod/index.md` 的契约（脚本生成）。
+> 起因是冻结的设计按 spec 命名、存了画布却没有"这个页面有哪些状态"的图，改成按页面记现状、按需求暂存过程。
+>
 > 真相源：[[docs-wiki-v2]]（`docs/spec/`）。这五个 skill 取代了 v1 的五个：
 > `distill-source`（并入 grill + to-spec）、`draft-prd` / `freeze-prd` / `archive-prd`
 > （状态机取消，归档并入 dreaming）、`prd-to-plan`（拆成 to-ticket + 后续的 implement）。
@@ -56,12 +60,13 @@ docs/
 │       ├── <spec-slug>.md        spec 本身
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 归档总结 —— 永久
-├── design/<spec-slug>/   冻结的设计 —— 画布 HTML + <spec-slug>-design.md + assets/，uiux-refine 产出，spec 删了它也留着
+├── design/
+│   ├── tmp/<spec-slug>/  进行中需求的设计过程产物，只在本地、不进 git —— imagine/（方向说明、交接画布）、canvas/（画布、冻结记录、完整验收矩阵、交互图）、delta/（对 prod/ 的差异）
+│   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
 ├── reference/            常驻约定与手册
 ├── records/              周期快照 —— weekly / okara / pulse-log
-├── testing/              test-cases 库
-└── quality-backlog.md    线上问题登记册
+└── testing/              test-cases 库
 ```
 
 `raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` / `reference/` / `records/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
@@ -70,7 +75,12 @@ docs/
 
 **工单住在自己 spec 的目录里**，编号在每份 spec 内从 `01` 起。几份 spec 同时在飞时，工单不会混在一起、编号也不会互撞。要找一份 spec 的工单，就看它目录下的 `tickets/`；不靠文件名猜它属于谁。
 
-`design/` 骑在分界上：它由一次 `uiux-refine` 会话产出，但冻结之后就是实现的视觉真值，活得比 spec 长——spec 删掉、ADR 写好之后它还在，ADR 链到它。所以 **`dreaming` 不因为 spec 没了就提议删它**；它被取代的唯一方式是同一块 UI 的下一次冻结。
+`design/` 分两层，生命周期相反：
+
+- **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`（变种板与抓取物、每轮记录 `rounds.md`、方向说明 `direction-note.md`、交接画布 `handoff/`），`uiux-refine` 写 `canvas/` 和 `delta/`。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
+- **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `design-archive.md`。
+
+按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。
 
 ### 2.1 中间产物：worktree 根下的 `.tmp/`
 
@@ -80,12 +90,13 @@ docs/
 <worktree 根>/.tmp/
 ├── grill/<YYYY-MM-DD>-<topic>/   复现过程的截图、网络日志、trace —— grill 收工时删
 ├── to-spec/<spec-slug>/          spec 图的 excalidrawer 源文件（sugar JSON、.excalidraw）—— 只有 PNG 进 docs/，spec 定稿后可删
-├── uiux-imagine/<spec-slug>/     对比页与抓取物（imagine 收工时删）、方向说明（refine 冻结时删）
-├── uiux-refine/<spec-slug>/      ledger、每轮评分 JSON、评委看的截图 —— refine 冻结时删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（MCP 浏览器锁）—— PR 合并后删
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删
+├── dreaming/<YYYY-MM-DD>/        这一次运行的提议表 proposal.md 与中间物（重拍与初扫的产物不在这里，在 docs/design/tmp/ 下）—— 执行段完成后删
 └── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（review-loop.md）
 ```
+
+**设计侧的过程产物不放这里**：`uiux-imagine` 与 `uiux-refine` 的工作区、方向说明、交接画布、ledger、评分 JSON、评委截图都在 `docs/design/tmp/<spec-slug>/`（§2），同样只在本地、不进 git，但归档脚本认得它。
 
 `evidence/` 下的素材是**交付证据**：过程中以本地文件发给人看，PR 描述用到或合并归档时才上传到 PR 的素材分支，从不进代码分支和 `docs/`（`evidence.md`）。
 
@@ -116,8 +127,8 @@ docs/
 
 ```yaml
 ---
-type: raw | spec | adr | design | domain | reference | record
-status: <见下表>                 # raw / design / reference / domain 省略
+type: raw | spec | adr | design | design-page | design-state | design-component | design-motion | design-journey | domain | reference | record
+status: <见下表>                 # raw / design / design-* / reference / domain 省略
 tags: [<topic>, <feature-slug>]
 summary: <一句话，≤60 字>
 related: ["[[other-slug]]"]
@@ -133,6 +144,8 @@ related: ["[[other-slug]]"]
 | `raw` | 无（改用 `source_type` + `captured`） |
 
 `parked` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
+
+`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `design-archive.md` §3。
 
 spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `spec-status.md`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
 
@@ -163,6 +176,12 @@ spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。�
 ```
 
 表体**从 frontmatter 生成**，不手工维护（`docs/spec/index.md` 由 `scripts/spec-status.mjs index` 生成）——手工维护必然漂移（v1 实证：一份文档晋级后旧索引条目还留着，同时出现在两个索引里）。
+
+**设计档案的索引是 `docs/design/prod/index.md`**，由归档脚本生成，不手写，也没有 `docs/design/index.md`：
+
+> 契约：设计档案里现有的页面、组件、动效、用户路径各一张清单，`usedBy` 由脚本反向生成；frontmatter 里定主视口 / 主题 / 语言（项目定一次）。不收 `tmp/` 里进行中的需求。
+
+它是唯一带 frontmatter 的 `index.md`（主视口 / 主题 / 语言要被脚本读），其余各层的 `index.md` 仍不带。
 
 ## 6 人机分工
 

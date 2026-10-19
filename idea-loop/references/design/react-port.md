@@ -5,7 +5,7 @@ stack-agnostic standard `implement` reads on every UI ticket, and it already own
 rules (classify before porting, data-contract changes, token attribution, state-ownership, the
 measurement loop). Load this one *in addition* when the target project is React/Tailwind and you
 want the concrete mechanics: it is what actually goes wrong translating a frozen canvas
-(`docs/design/<spec-slug>/*.html`) HTML+CSS+JS file into the real React/TSX component — every rule below
+(`docs/design/tmp/<spec-slug>/canvas/*.html`) HTML+CSS+JS file into the real React/TSX component — every rule below
 came out of an actual port, not a hypothetical; the class and field names in the worked examples
 are illustrative.
 `references/design/design-core.md`'s brand floors still apply here: a Tailwind translation that quietly
