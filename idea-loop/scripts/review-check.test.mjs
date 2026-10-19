@@ -13,6 +13,8 @@ const diff = `--- a/src/api/handler.ts
 const files = {
   'docs/spec/practice-retry/tickets/03-retry.md': '- [x] 失败后点「重试」，只重新分析这一题，  不消耗配额',
   'docs/reference/code-layering.md': '路由层不直接访问数据库，\n统一经过 service 层。',
+  'docs/reference/wording.md': '界面文案里的按钮名称统一用两个字的动词。',
+  'src/api/legacy.ts': "export const quota = readQuota();\nexport function readQuota() {\n  return db.query('select quota');\n}\n",
 };
 const io = {
   read: (p) => files[p] ?? null,
@@ -106,4 +108,69 @@ test('each ungrounded candidate is discarded with its reason', () => {
   }, io, { round: 1 });
   assert.deepEqual(r.discarded.map((d) => d.id), ['S1', 'S2', 'S3', 'S4', 'C1', 'C2', 'C3']);
   assert.ok(r.discarded.every((d) => d.reason.length > 0));
+});
+
+// ---------- 处置：照规则 / 要你决定 ----------
+
+const basisRule = { kind: '规则原文', file: 'docs/reference/wording.md', text: '按钮名称统一用两个字的动词', summary: '仓库的文案规定写明按钮名称统一用两个字的动词。' };
+const S_RULED = { ...S1, id: 'S3', disposition: '照规则', basis: basisRule, action: '同步改', decide: undefined };
+const C_RULED = { ...C1, disposition: '照规则', action: '修' };
+const run = (c, axis = 'spec') => admit({ [axis]: [c] }, io, { round: 1 });
+
+test('a ruled Spec finding with a basis and an action needs no options and no recommendation', () => {
+  const r = run(S_RULED);
+  assert.deepEqual([r.spec.length, r.discarded.length, r.rewrite.length], [1, 0, 0]);
+});
+
+test('a ruled finding missing its basis or its action goes to rewrite', () => {
+  assert.match(run({ ...S_RULED, basis: undefined }).rewrite[0].problems.join(), /缺依据/);
+  assert.match(run({ ...S_RULED, action: undefined }).rewrite[0].problems.join(), /缺动作/);
+  assert.match(run({ ...S_RULED, action: '改一改' }).rewrite[0].problems.join(), /动作只能是/);
+  assert.match(run({ ...S_RULED, basis: { ...basisRule, kind: '我觉得' } }).rewrite[0].problems.join(), /依据只认三种/);
+  assert.match(run({ ...S_RULED, basis: { ...basisRule, summary: '' } }).rewrite[0].problems.join(), /缺一句依据/);
+  assert.match(run({ ...S_RULED, basis: { kind: '规则原文', summary: '有规定。' } }).rewrite[0].problems.join(), /缺出处或原文/);
+});
+
+test('a ruled finding does not carry a decision for the human, and its basis sentence speaks in words, not code', () => {
+  const withDecide = run({ ...S_RULED, decide: specWords.decide });
+  assert.match(withDecide.rewrite[0].problems.join(), /照规则.*不写「要你决定」/);
+  const codey = run({ ...S_RULED, basis: { ...basisRule, summary: '见 docs/reference/wording.md 的第三条' } });
+  assert.match(codey.rewrite[0].problems.join(), /依据.*代码层面的指称/);
+});
+
+test('a ruled finding whose basis is not where it claims is discarded, whichever kind of basis it names', () => {
+  const r = run({ ...S_RULED, basis: { ...basisRule, text: '按钮名称一律写英文' } });
+  assert.deepEqual([r.spec.length, r.discarded.length], [0, 1]);
+  assert.match(r.discarded[0].reason, /依据/);
+  const gone = run({ ...S_RULED, basis: { ...basisRule, file: 'docs/reference/missing.md' } });
+  assert.match(gone.discarded[0].reason, /依据/);
+  const humanWords = { kind: '人的决定', file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '重试最多三次', summary: '人在工单里定过。' };
+  assert.match(run({ ...S_RULED, basis: humanWords }).discarded[0].reason, /依据/);
+  const real = { ...humanWords, text: '不消耗配额', summary: '人在工单里定过重试不消耗配额。' };
+  const ok = run({ ...S_RULED, basis: real });
+  assert.deepEqual([ok.spec.length, ok.discarded.length], [1, 0]);
+});
+
+test('an unknown disposition goes to rewrite; no disposition keeps the old 要你决定 shape', () => {
+  assert.match(run({ ...S1, disposition: '随便' }).rewrite[0].problems.join(), /处置只能是/);
+  assert.deepEqual(run({ ...S1, disposition: '要你决定' }).rewrite, []);
+  assert.ok(run({ ...S1, decide: undefined }).rewrite[0].problems.some((p) => /要你决定/.test(p)));
+});
+
+test('a ruled Standards finding stands on its rule, and still needs an action', () => {
+  const r = run(C_RULED, 'standards');
+  assert.deepEqual([r.standards.length, r.discarded.length, r.rewrite.length], [1, 0, 0]);
+  assert.match(run({ ...C_RULED, action: undefined }, 'standards').rewrite[0].problems.join(), /缺动作/);
+  assert.equal(run({ ...C_RULED, rule: { ...C1.rule, text: '禁止使用 any' } }, 'standards').discarded.length, 1);
+});
+
+test('an existing (not added) Standards problem is reported only as a ruled fix that says how it spoils this change', () => {
+  const stock = { ...C_RULED, id: 'C2', code: { path: 'src/api/legacy.ts', snippet: 'export const quota = readQuota();' }, existing: true, pollutes: '这次的练习次数统计读的就是这个值，它错了，统计就跟着错。' };
+  const ok = run(stock, 'standards');
+  assert.deepEqual([ok.standards.length, ok.discarded.length, ok.rewrite.length], [1, 0, 0]);
+  assert.match(run({ ...stock, pollutes: '' }, 'standards').rewrite[0].problems.join(), /缺一句.*怎么影响这次/);
+  assert.match(run({ ...stock, disposition: undefined }, 'standards').rewrite[0].problems.join(), /存量.*照规则/);
+  assert.equal(run({ ...stock, code: { path: 'src/api/legacy.ts', snippet: 'not there();' } }, 'standards').discarded.length, 1);
+  // without the flag a snippet that is not an added line is still discarded
+  assert.equal(run({ ...stock, existing: undefined }, 'standards').discarded.length, 1);
 });

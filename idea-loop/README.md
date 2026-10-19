@@ -22,7 +22,7 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 | `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching fresh `idea-loop:implementer`s in parallel along the `Blocked by` frontier (up to three at once by default, each in its own worktree; an `idea-loop:explorer` writes shared pointer-only notes first; one ticket → one commit the orchestrator fast-forwards onto the integration branch, then reclaims the worktree; TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
-| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
+| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, marks every finding with a disposition (by rule / the human decides, `references/decision-rules.md`), and writes the round's report, which the session shows the human and keeps in the review-loop file. Findings the written rules already settle are handled before the report is shown and listed first under "handled by rule"; the human can overturn any of them with one sentence. The rest the human rules on in the session; fixes go back through the tickets and the implementer; when a round had fixes, they have landed and fewer than two rounds have run, the session starts the next round itself. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
 | `/idea-loop:dreaming` | Maintain | Reconciles every doc against `origin/main` — including `CLAUDE.md` — and proposes disposals the human approves before anything moves |
 
 ### The forward loop is not the maintenance sweep
@@ -111,7 +111,7 @@ it worked, but carried one person's words from GitHub back into the session they
 | Phase | PR | Who talks | Where the human answers |
 |---|---|---|---|
 | Implementing | draft | `implement`'s orchestrator, in the session | A **stop report per stop**: decisions (two options + a recommendation) and delivery evidence (flows and GIFs recorded from the implementation, one checkbox each) |
-| Review | open | `pr-review`'s orchestrator, in the session | A **report per round**, written for the person who decides: a one-line verdict, then each Spec finding titled by its consequence, with the problem, the user impact, whatever evidence makes it fastest to grasp (screenshots, an annotated flow, a GIF, a sequence diagram, a small table, a worked example) and a decision with options and a recommendation; each Standards finding as rule / now / impact / suggestion; no variable names, file:line, commit hashes or section numbers in the body — code locations go in a folded block for the fixer |
+| Review | open | `pr-review`'s orchestrator, in the session | A **report per round**, written for the person who decides: a one-line verdict, then **handled by rule** (what was done, on what basis, with a commit or issue link — overturn any with one sentence), then each Spec finding titled by its consequence, with the problem, the user impact, whatever evidence makes it fastest to grasp (screenshots, an annotated flow, a GIF, a sequence diagram, a small table, a worked example) and a decision with options and a recommendation; each Standards finding as rule / now / impact / suggestion; no variable names, file:line, commit hashes or section numbers in the body — code locations go in a folded block for the fixer |
 
 - **Ticket done = every acceptance box has evidence or names who takes it over** (a later ticket,
   or the PR's delivery check), the selected regressions and the full suite are green — then one
@@ -132,9 +132,25 @@ it worked, but carried one person's words from GitHub back into the session they
   and drawn, or a Standards finding whose rule text or code is not where it claims, is discarded by
   `scripts/review-check.mjs` and listed in one folded line; a finding that stands but is missing a
   part or speaks in code terms is sent back for rewording before the report is shown.
-- **Fixes go back through the tickets.** A finding the human marks "fix" becomes a new acceptance
-  box on the ticket that introduced it (found by the quote, or by `git blame` → `Ticket:` trailer),
-  and a fresh implementer does it. The next round is the human's call; merging is the human's order.
+- **What the agents settle themselves, and what they ask** (`references/decision-rules.md`). A
+  finding is settled by rule when it stands on one of three things — the text of a written rule, the
+  human's own words already given in this spec or PR, an existing practice with a named instance
+  — and `review-check.mjs` finds that text where it says it is. Standards violations under an
+  unambiguous written rule are always "by rule · fix"; an existing problem outside the changed lines
+  is reported only when it spoils this change's input or conclusion or turns CI red. The orchestrator
+  acts before showing the report (fix through the tickets, sync a document, accept and note, restore,
+  open an issue) and lists it first; an overturn is one more ruling, recorded verbatim, and the next
+  round stops using that basis. Edge cases that lose nothing stay with the human in a PR (the cost
+  rule only picks the recommendation there); naming, human-verification material, taxonomies,
+  publishing, production data and merging are never automatic. "Into the backlog" now means opening
+  an issue in the target repository.
+- **Fixes go back through the tickets.** A finding fixed — by rule or by the human's word — becomes a
+  new acceptance box on the ticket that introduced it (found by the quote, or by `git blame` →
+  `Ticket:` trailer), and a fresh implementer does it. **The next round starts itself** when
+  this round had at least one fix, every item is handled and the fixes are pushed, and fewer than
+  two rounds have run (it says so and sends a push notification first); with no fix it stops and
+  waits for the word to merge, after two rounds it stops and says so. The cap binds only the
+  automatic start — the human can ask for another round any time. Merging is the human's order.
 
 The old loop (up to two automatic rounds of three-axis review → fix → re-verify, one round post per
 round, a mergeReady verdict) and its design record [`docs/pr-review-loop.md`](./docs/pr-review-loop.md)
@@ -287,7 +303,8 @@ idea-loop/
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
-    ├── review-standards.md           # the two review axes: inputs, what counts, reproduce-and-draw, mechanical admission
+    ├── decision-rules.md             # what an agent settles by rule and what it leaves to the human — read by the reviewer and pr-review's orchestrator
+    ├── review-standards.md           # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
     ├── pr-description.md             # the PR description's four sections, and how stop reports and review rounds are written
     ├── review-loop.md                # where reports live: the session + one local file per PR; replies; archive at merge
     ├── evidence.md                   # delivery evidence: flows, GIFs, side-by-sides from the implementation; never in git

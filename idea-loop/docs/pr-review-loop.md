@@ -1,6 +1,6 @@
 # PR review loop：把 open-review 与 fix-verify 合成一个命令
 
-> **状态：已被取代（2026-10-10）。** 三轴自动修复环换成了两轴（Spec / Standards）、一次一轮、人在 bot thread 里批示的 review，workflow 与轮次帖脚本已删除。现行做法见 `skills/pr-review/SKILL.md`、`agents/pr-reviewer.md`、`references/review-standards.md`、`references/pr-description.md`。本文留作历史。
+> **状态：已被取代（2026-10-10）。** 三轴自动修复环换成了两轴（Spec / Standards）、一次一轮、人在 bot thread 里批示的 review，workflow 与轮次帖脚本已删除。现行做法见 `skills/pr-review/SKILL.md`、`agents/pr-reviewer.md`、`references/review-standards.md`、`references/pr-description.md`。本文留作历史。文中「存量问题追加进 backlog 文件」的做法也已取代：现在「进 backlog」就是在目标仓库开 issue（`skills/pr-review/SKILL.md` §3、§4）。
 >
 > 原状态：第 2 版，Harold 2026-09-23 已确认，已实现（`skills/pr-review/`、`workflows/pr-review-loop.mjs`、`scripts/github-review.mjs`）。
 > 日期：2026-09-23

@@ -22,7 +22,10 @@
  *   ### 你的批示（<time>）         ← Harold's words, verbatim
  *   ### 做了什么                   ← what was done, with commit links
  *
- * An entry is settled once every 你的批示 has a 做了什么 after it. `check` lists the unsettled ones
+ * An entry is settled once every 你的批示 has a 做了什么 after it; a review round that asks the human
+ * nothing (every finding handled by rule, no 要你决定 in it) is settled by its 做了什么 alone, so the
+ * orchestrator can tell "everything is handled" and start the next round (pr-review §4). Overturning
+ * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
  *
  * Figures in the file are local paths (the evidence directories under .tmp/): in the session they are
@@ -72,7 +75,12 @@ export function parseLoop(text = '') {
   return entries.map(({ kind, round, lines }) => {
     const body = lines.join('\n').trim();
     const rulings = (body.match(/^### 你的批示/gm) ?? []).length;
-    const settled = rulings > 0 && /^### 做了什么/m.test(body.slice(body.lastIndexOf('### 你的批示')));
+    const acted = (s) => /^### 做了什么/m.test(s);
+    // A review round whose findings were all settled by rule (decision-rules.md) never asks the human
+    // anything, so there is no ruling to wait for: it is settled once it says what was done. A round
+    // that still carries a 要你决定 needs the human's ruling as before; a stop report always does.
+    const askedNothing = kind === 'review' && rulings === 0 && !/\*\*要你决定\*\*/.test(body);
+    const settled = rulings > 0 ? acted(body.slice(body.lastIndexOf('### 你的批示'))) : askedNothing && acted(body);
     return { kind, round, body, rulings, settled };
   });
 }
