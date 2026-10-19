@@ -61,7 +61,7 @@ docs/
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 归档总结 —— 永久
 ├── design/
-│   ├── tmp/<spec-slug>/  进行中需求的设计过程产物，只在本地、不进 git —— imagine/（方向说明）、canvas/（画布、冻结记录、完整验收矩阵、交互图）、delta/（对 prod/ 的差异）
+│   ├── tmp/<spec-slug>/  进行中需求的设计过程产物，只在本地、不进 git —— imagine/（方向说明、交接画布）、canvas/（画布、冻结记录、完整验收矩阵、交互图）、delta/（对 prod/ 的差异）
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
 ├── reference/            常驻约定与手册
@@ -77,7 +77,7 @@ docs/
 
 `design/` 分两层，生命周期相反：
 
-- **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`，`uiux-refine` 写 `canvas/` 和 `delta/`。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
+- **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`（变种板与抓取物、每轮记录 `rounds.md`、方向说明 `direction-note.md`、交接画布 `handoff/`），`uiux-refine` 写 `canvas/` 和 `delta/`。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
 - **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `design-archive.md`。
 
 按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。
@@ -96,7 +96,7 @@ docs/
 └── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（review-loop.md）
 ```
 
-**设计侧的过程产物不放这里**：`uiux-imagine` 与 `uiux-refine` 的工作区、方向说明、ledger、评分 JSON、评委截图都在 `docs/design/tmp/<spec-slug>/`（§2），同样只在本地、不进 git，但归档脚本认得它。
+**设计侧的过程产物不放这里**：`uiux-imagine` 与 `uiux-refine` 的工作区、方向说明、交接画布、ledger、评分 JSON、评委截图都在 `docs/design/tmp/<spec-slug>/`（§2），同样只在本地、不进 git，但归档脚本认得它。
 
 `evidence/` 下的素材是**交付证据**：过程中以本地文件发给人看，PR 描述用到或合并归档时才上传到 PR 的素材分支，从不进代码分支和 `docs/`（`evidence.md`）。
 

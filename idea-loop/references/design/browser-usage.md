@@ -184,7 +184,34 @@ Pitfalls that have bitten real runs:
 - Brand-new surfaces have nothing to clone; build the variants from scratch, same board, same
   built-in browser.
 
+### The handoff canvas
+
+What the human picked is not thrown away. When imagine finishes, `uiux-imaginer` exports the
+selected variant as a standalone page at `docs/design/tmp/<spec-slug>/imagine/handoff/index.html`, and
+`uiux-refine`'s designer starts from it instead of rebuilding from the direction note's prose.
+
+- **Strip the board shell**: the header, the variant label and "what it bets on", the timeline
+  captions, the `?variant=` switch, every other variant. The "preview reduced motion" toggle
+  becomes a real `prefers-reduced-motion` media query.
+- **Keep what makes it the picked variant**: the `?state=` switch (state names match the direction
+  note's acceptance matrix), the real motion and its simulated timeline, and the component markup
+  and CSS cloned from the baseline. Unchanged parts stay as the shipped UI; nothing is redrawn.
+- **Self-contained**: images, fonts and every `url(…)` in the captured CSS are copied into
+  `handoff/assets/` and rewritten as relative paths. No reference to `board.html`, the working
+  directory's own `assets/` or `research/`, a dev server, the capture server, or an absolute
+  address — any static server (or `file://`) opens it. The designer copies it into
+  `docs/design/tmp/<spec-slug>/canvas/` unchanged, so `assets/…` must keep resolving from there.
+- **Same fidelity as the pick**: no polish added, nothing cut to look cleaner.
+- **A partial reopen** (some blocks frozen, the rest back to imagine) exports only the reopened
+  blocks; the frozen canvas is their baseline.
+- Open it with `handoff/index.html?state=<name>` from any static server serving the imagine
+  working directory (the orchestrator's, while it is still up).
+
 ### Cleanup
 
-The board, the captures, and **both** servers (static + the capture POST server) go when imagine
-finishes — renders do not survive the phase. The direction note is the only thing that does.
+When imagine finishes, these go: the board (`board.html`), the unselected variants, the captures,
+the style tile, `research/`, the working directory's own `assets/`, `rounds.md`, and **both**
+servers (static + the capture POST server). These two stay: **the direction note and `handoff/`**.
+The two together are what `uiux-refine` starts from; renders other than the handoff canvas do not
+survive the phase. When refine freezes, the whole imagine working directory (handoff included)
+is deleted along with refine's own.

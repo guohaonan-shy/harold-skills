@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>练习记录页 · 对比板 · 第 2 轮</title>
+<style>
+  :root { --page:#f6f7f8; --surface:#fff; --fg:#0f172a; --muted:#64748b; --border:#e2e8f0; --primary:#137fec; --primary-subtle:#eff6fe; --success:#16a34a; --destructive:#dc2626; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--page); color:var(--fg); font:15px/1.6 -apple-system,"Segoe UI",sans-serif; }
+  .shell { background:#0f172a; color:#e2e8f0; padding:10px 16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; font-size:13px; }
+  .shell a { color:#93c5fd; text-decoration:none; padding:2px 8px; border-radius:4px; }
+  .shell a.on { background:#1e3a8a; color:#fff; }
+  .shell .round { margin-left:auto; opacity:.8; }
+  .bet { max-width:760px; margin:12px auto 0; padding:0 16px; color:var(--muted); font-size:13px; }
+  .page { max-width:760px; margin:0 auto; padding:12px 16px 48px; }
+  .group-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .group-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .type-tag { font-size:12px; font-weight:700; padding:2px 8px; border-radius:6px; background:var(--primary-subtle); color:var(--primary); }
+  .group-title { font-size:16px; margin:0; }
+  .status-pill { font-size:12px; padding:2px 10px; border:1px solid var(--border); border-radius:9999px; color:var(--muted); }
+  .status-pill[data-status="scored"] { color:var(--success); }
+  .status-pill[data-status="failed"] { color:var(--destructive); }
+  .status-pill[data-status="grading"] { color:var(--primary); }
+  .expanded { margin-top:12px; padding:12px; background:var(--primary-subtle); border-radius:8px; font-size:14px; }
+  .carry { margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); font-size:13px; }
+  .row { display:flex; gap:10px; margin-top:6px; padding:8px 4px; border-top:1px solid var(--border); font-size:14px; }
+  .row .score { margin-left:auto; font-weight:700; }
+  .retry { margin-top:8px; border:0; border-radius:6px; padding:6px 12px; background:var(--primary); color:#fff; font:inherit; cursor:pointer; }
+  .flat { display:flex; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border); font-size:14px; }
+  .flat .score { margin-left:auto; font-weight:700; }
+  body.reduced * { transition:none !important; animation:none !important; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <strong>练习记录页 · 对比板</strong>
+  <span>变种：</span>
+  <a data-nav="variant" data-value="B" href="?variant=B">B</a>
+  <a data-nav="variant" data-value="D" href="?variant=D">D</a>
+  <span>状态：</span>
+  <a data-nav="state" data-value="mixed" href="?state=mixed">混合</a>
+  <a data-nav="state" data-value="failed" href="?state=failed">评分失败</a>
+  <label><input type="checkbox" id="reduce"> 预览减弱动效</label>
+  <span class="round" data-round="2">第 2 轮</span>
+</div>
+<div class="bet" id="bet"></div>
+<main class="page" id="stage"></main>
+<script>
+  const q = new URLSearchParams(location.search);
+  const variant = q.get('variant') || 'B';
+  const state = q.get('state') || 'mixed';
+  document.querySelectorAll('.shell a').forEach((a) => {
+    const key = a.dataset.nav; const val = a.dataset.value;
+    const cur = key === 'variant' ? variant : state;
+    a.classList.toggle('on', cur === val);
+    const next = new URLSearchParams(location.search); next.set(key, val); a.href = '?' + next.toString();
+  });
+  document.getElementById('reduce').addEventListener('change', (e) => document.body.classList.toggle('reduced', e.target.checked));
+
+  const BETS = {
+    B: 'B「最近一次展开 + 其余折叠」——赌进步由「上一次的问题在这一次还在不在」承担，不由数字承担。第 2 轮：展开的那次里加了一条「上次的评语」对照。',
+    D: 'D「时间线不动，只加状态色」——保守对照：保留流水，只把三种未出分状态标出来。',
+  };
+  document.getElementById('bet').textContent = BETS[variant];
+
+  const failed = state === 'failed';
+  const stage = document.getElementById('stage');
+  if (variant === 'B') {
+    stage.innerHTML = `
+    <section class="group-card" data-variant="B"><div class="group-head"><span class="type-tag">口语复述</span><h2 class="group-title">校园咖啡馆装修</h2><span class="status-pill" data-status="scored">已评分</span></div>
+      <div class="expanded">第 3 次 · 今天 · 4.0
+        <div class="carry">上次的评语：<b>例子不够具体</b> → 这次：<b>已补上</b></div></div>
+      <div class="row"><span>第 2 次</span><span>3 天前</span><span class="score">3.5</span></div>
+      <div class="row"><span>第 1 次</span><span>一周前</span><span class="score">3.0</span></div>
+    </section>
+    <section class="group-card" data-variant="B"><div class="group-head"><span class="type-tag">听后复述</span><h2 class="group-title">植物学讲座</h2><span class="status-pill" data-status="${failed ? 'failed' : 'grading'}">${failed ? '评分失败' : '待评分'}</span></div>
+      <div class="expanded">第 1 次 · 昨天 ${failed ? '<p>评分没有出来。</p><button class="retry" id="retry">重试</button>' : ''}</div>
+    </section>`;
+  } else {
+    stage.innerHTML = `
+    <section class="group-card" data-variant="D">
+      <div class="flat"><span class="type-tag">口语复述</span><span>校园咖啡馆装修</span><span class="status-pill" data-status="scored">已评分</span><span class="score">4.0</span></div>
+      <div class="flat"><span class="type-tag">学术讨论</span><span>远程办公的利弊</span><span class="status-pill" data-status="grading">待评分</span><span class="score">—</span></div>
+      <div class="flat"><span class="type-tag">听后复述</span><span>植物学讲座</span><span class="status-pill" data-status="${failed ? 'failed' : 'grading'}">${failed ? '评分失败' : '待评分'}</span><span class="score">—</span></div>
+    </section>`;
+  }
+  // 模拟时序：评分失败态下点重试 → 待评分 1.3 秒 → 已评分。
+  const retry = document.getElementById('retry');
+  if (retry) retry.addEventListener('click', () => {
+    const pill = retry.closest('.group-card').querySelector('.status-pill');
+    pill.dataset.status = 'grading'; pill.textContent = '待评分'; retry.disabled = true;
+    setTimeout(() => { pill.dataset.status = 'scored'; pill.textContent = '已评分'; retry.remove(); }, 1300);
+  });
+</script>
+</body>
+</html>

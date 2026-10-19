@@ -62,13 +62,44 @@
         "spec-awaiting-freeze",
         "spec-index"
       ],
-      "prompt": "/idea-loop:uiux-imagine 这是一次无人值守的 baseline 跑。spec 是 `docs/spec/practice-history-surface/practice-history-surface.md`，状态 `设计中`。项目根有 `DESIGN.md` 与 `PRODUCT.md`。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要人给反应，就读下一条：\n\n1. （看完第一轮对比页）「这一轮里要有这几个方向：把同一道题的几次收在一起的那个、把分数画成趋势的那个、按能力维度重排的那个，再加一个最保守的——流水不动只加状态色。没有的补进同一个页面再给我看。」\n2. （看完第一轮变种）「趋势那个不行：折线要占一整行宽度才看得清，手机上它会把题目标题挤到第二行；而且我这几次维度不一样的时候，那条线是假的。按维度重排那个也不行，那就变成报告页了，历史页不该抢它的活。流水加状态色那个，问题 1 一点没解决，只是把问题 2 补了。」\n3. （看完第二轮）「收在一起那个对。我要看的是上次那条评语这次还在不在，不是 3.5 变 4.0。往这个方向再推一格。」\n4. 「题组卡之间的间距看着有点散，卡跟卡像没关系。」\n5. 「状态那个 pill 别做得比分数还显眼。」\n6. 「折叠起来的那几行，手机上一行放不下，得想想截断哪一段。」\n7. 「重试按钮不要用主色，它不是这一页的主操作。」\n8. （这是收工宣布）「方向没有要补的了。」\n\n注意第 4–7 条是什么性质的话，按 skill 的纪律处理它们。收工照 skill 自己的规矩走。\n\n这是 headless 跑，没有内嵌浏览器：对比页照搭，按 skill 的退路给出本地地址，不要停下等人打开。",
+      "prompt": "/idea-loop:uiux-imagine 这是一次无人值守的 baseline 跑。spec 是 `docs/spec/practice-history-surface/practice-history-surface.md`，状态 `设计中`。项目根有 `DESIGN.md` 与 `PRODUCT.md`。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要人给反应，就读下一条：\n\n1. （看完第一轮对比页）「这一轮里要有这几个方向：把同一道题的几次收在一起的那个、把分数画成趋势的那个、按能力维度重排的那个，再加一个最保守的——流水不动只加状态色。没有的补进同一个页面再给我看。」\n2. （看完第一轮变种）「趋势那个不行：折线要占一整行宽度才看得清，手机上它会把题目标题挤到第二行；而且我这几次维度不一样的时候，那条线是假的。按维度重排那个也不行，那就变成报告页了，历史页不该抢它的活。流水加状态色那个，问题 1 一点没解决，只是把问题 2 补了。」\n3. （看完第二轮）「收在一起那个对。我要看的是上次那条评语这次还在不在，不是 3.5 变 4.0。往这个方向再推一格。」\n4. 「题组卡之间的间距看着有点散，卡跟卡像没关系。」\n5. 「状态那个 pill 别做得比分数还显眼。」\n6. 「折叠起来的那几行，手机上一行放不下，得想想截断哪一段。」\n7. 「重试按钮不要用主色，它不是这一页的主操作。」\n8. （这是收工宣布）「方向没有要补的了。」\n9. （收工草稿里逐条摆出模型代填的那几格，问对不对）「都对，按你写的写。」\n10. （交接画布核对完，问要不要把变种板再看一遍）「不用了，看完了，清吧。」\n\n注意第 4–7 条是什么性质的话，按 skill 的纪律处理它们。收工照 skill 自己的规矩走。\n\n这是 headless 跑，没有内嵌浏览器：对比页照搭，按 skill 的退路给出本地地址，不要停下等人打开。核对交接画布时同理——没有内嵌浏览器就用 curl 取 `handoff/index.html` 和它引用的素材，确认都在，不要停下等人打开。\n\n起子代理、给它转话都用前台方式等它交回（Agent 调用不要 run_in_background）：这是 `claude -p` 的无人值守跑，主会话一结束整跑就结束，后台子代理没人等。",
       "assertions": [
         "direction-note-passes-shape-check",
         "imagine-leaves-spec-untouched",
         "imagine-leaves-status-untouched",
-        "imagine-ships-only-the-note",
-        "imagine-keeps-the-language-altitude-shut"
+        "imagine-ships-note-and-handoff",
+        "imagine-keeps-the-language-altitude-shut",
+        "session-only-orchestrates",
+        "imagine-rounds-recorded",
+        "composition-items-carry-provenance",
+        "imagine-parks-execution-remarks",
+        "imagine-orchestrator-verified-before-clear",
+        "handoff-canvas-is-standalone"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "eval_name": "imaginer-resumes-round-3",
+      "skill": "idea-loop:uiux-imaginer（agent 直跑，不经过 skill）",
+      "seed": [
+        "raw",
+        "raw-index",
+        "spec-awaiting-freeze",
+        "spec-index",
+        "imagine-resume"
+      ],
+      "prompt": "这是一次无人值守的 baseline 跑，测的是 `idea-loop:uiux-imaginer` 这个 agent 本身，**不经过** `uiux-imagine` skill（不要调它）。你在这里只当最薄的一层编排者：起 agent、把人的话原样转给它、收工时核对一下。\n\n背景：spec 是 `docs/spec/practice-history-surface/practice-history-surface.md`，状态 `设计中`。项目根有 `DESIGN.md` 与 `PRODUCT.md`。`docs/design/tmp/practice-history-surface/imagine/` 里是前两轮留下的：变种板 `board.html` 和每轮记录 `rounds.md`——这是会话重开之后的恢复，前两轮不是这个 agent 做的。\n\n步骤：\n1. 在 `docs/design/tmp/practice-history-surface/imagine/` 起一个静态服务器（后台跑），记下根地址。\n2. 用 Agent 工具起 `idea-loop:uiux-imaginer`。交给它的只有：spec 路径与 slug、`DESIGN.md` / `PRODUCT.md` 路径、预览地址、一句「这是恢复：读 `rounds.md` 和 `board.html`，从上次停下的地方接着做」，以及下面第 1 条人的话（**原样，一个字都不要改写**）。\n3. 它每次交回之后，用 SendMessage 把下一条人的话原样转给它。\n\n**人的话已经写好，按顺序消费，不要停下来等真人：**\n\n1. 「重试按钮不要用主色，它不是这一页的主操作。这个直接改在 B 上，给我看一下。」\n2. 「方向没有要补的了。」\n3. （它在收工草稿里逐条摆出模型代填的那几格，问对不对）「你替我定的那几格都对，按你写的写。」\n\n它收工、交回之后：自己跑一次 `direction-note-check` 核对方向说明，确认交接画布 `handoff/index.html` 在，然后**停**——不要转「清」，让变种板和每轮记录留在原处。\n\n不要自己写变种板、截图、调研，那是它的活。headless 没有内嵌浏览器，不用打开变种板。\n\n起子代理、给它转话都用前台方式等它交回（Agent 调用不要 run_in_background）：这是 `claude -p` 的无人值守跑，主会话一结束整跑就结束，后台子代理没人等。",
+      "assertions": [
+        "imaginer-run-bypasses-the-skill",
+        "session-only-orchestrates",
+        "imaginer-continues-from-records",
+        "imaginer-handback-carries-agreed-items",
+        "imaginer-applies-in-place-after-pick",
+        "direction-note-passes-shape-check",
+        "composition-items-carry-provenance",
+        "handoff-canvas-is-standalone",
+        "imagine-leaves-spec-untouched",
+        "imagine-leaves-status-untouched"
       ]
     },
     {
@@ -80,9 +111,10 @@
         "raw-index",
         "spec-awaiting-freeze",
         "spec-index",
-        "direction-note"
+        "direction-note",
+        "handoff"
       ],
-      "prompt": "/idea-loop:uiux-refine 这是一次无人值守的 baseline 跑——你没见过发散那一段。spec 是 `docs/spec/practice-history-surface/practice-history-surface.md`，方向说明在 `docs/design/tmp/practice-history-surface/imagine/direction-note.md`。项目根有 `DESIGN.md` 与 `PRODUCT.md`。画布目录按 spec 的 slug（`practice-history-surface`）。\n\n浏览器是本 plugin 自带的 headless playwright MCP；没有内嵌浏览器，摆给人时按 skill 的退路给出本地地址。\n\n**人的回答已经写好，按顺序消费，不要停下来等真人。** 每当这个 skill 要把控制权交回给人，就读下一条：\n\n1. （摆出画布与 ledger 求签字）「组头那行的题型标签和状态 pill 挨得太近，读起来像一个东西。改完我再看。」\n2. （再摆一次）「可以了，签字。冻结吧。」\n\n如果环停在 plateau 或方向级 finding 上，就如实停下、把停的理由写进产物，**不要自己把方向拧过去**——那一跑就照停下来的样子存档。收工照 skill 自己的规矩走。",
+      "prompt": "/idea-loop:uiux-refine 这是一次无人值守的 baseline 跑——你没见过发散那一段。spec 是 `docs/spec/practice-history-surface/practice-history-surface.md`，方向说明在 `docs/design/tmp/practice-history-surface/imagine/direction-note.md`，**交接画布在 `docs/design/tmp/practice-history-surface/imagine/handoff/`**（imagine 选中的那一版）。项目根有 `DESIGN.md` 与 `PRODUCT.md`。画布目录按 spec 的 slug（`practice-history-surface`）。\n\n浏览器是本 plugin 自带的 headless playwright MCP；没有内嵌浏览器，摆给人时按 skill 的退路给出本地地址。\n\n**人的回答已经写好，不要停下来等真人。** 每当这个 skill 要把控制权交回给人，先看 designer 的交回里有没有「与人选定冲突」：\n\n- **有**，就读这一条：「保留。那一行我是特意挨着排的，别改。」（每次摆出冲突都这样答；答过之后同一项不该再来问。）\n- **没有**，按顺序读下面的，读完一条就不再读：\n  1. （摆出画布与 ledger 求签字）「折叠行里的日期读起来太轻了，加深一档。改完我再看。」\n  2. （再摆一次）「可以了，签字。冻结吧。」\n\n如果环停在 plateau 或方向级 finding 上，就如实停下、把停的理由写进产物，**不要自己把方向拧过去**——那一跑就照停下来的样子存档。收工照 skill 自己的规矩走。\n\n起子代理、给它转话都用前台方式等它交回（Agent 调用不要 run_in_background）：这是 `claude -p` 的无人值守跑，主会话一结束整跑就结束，后台子代理没人等。",
       "assertions": [
         "canvas-lands-in-docs-design",
         "canvas-lint-p0-clean",
@@ -93,7 +125,27 @@
         "freeze-leaves-spec-in-design",
         "freeze-writes-interaction-flows",
         "freeze-writes-delta",
-        "freeze-clears-tmp"
+        "freeze-clears-tmp",
+        "refine-starts-from-handoff",
+        "refine-conflict-held-by-human"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "eval_name": "refine-no-handoff-fallback",
+      "skill": "idea-loop:uiux-refine",
+      "seed": [
+        "raw",
+        "raw-index",
+        "spec-awaiting-freeze",
+        "spec-index",
+        "direction-note"
+      ],
+      "prompt": "/idea-loop:uiux-refine 这是一次无人值守的 baseline 跑。spec 是 `docs/spec/practice-history-surface/practice-history-surface.md`，方向说明在 `docs/design/tmp/practice-history-surface/imagine/direction-note.md`。这份 spec 是旧流程留下的：**没有交接画布**，只有方向说明。项目根有 `DESIGN.md` 与 `PRODUCT.md`。画布目录按 spec 的 slug（`practice-history-surface`）。\n\n浏览器是本 plugin 自带的 headless playwright MCP；没有内嵌浏览器，摆给人时按 skill 的退路给出本地地址。\n\n**人的回答已经写好，不要停下来等真人。** designer 第一次交回、要把控制权交给人时，读这一条：「先停在这儿，今天不冻结，不用继续打磨了。」读完就收工，不要再起下一轮。\n\n起子代理、给它转话都用前台方式等它交回（Agent 调用不要 run_in_background）：这是 `claude -p` 的无人值守跑，主会话一结束整跑就结束，后台子代理没人等。",
+      "assertions": [
+        "canvas-lands-in-docs-design",
+        "refine-fallback-says-so",
+        "freeze-leaves-spec-in-design"
       ]
     },
     {
