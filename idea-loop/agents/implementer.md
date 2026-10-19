@@ -133,7 +133,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
    Ticket: <NN>-<slug>
    ```
 
-   编排者靠这一行判断哪些工单已经落地，所以它必须一字不差地等于工单的文件名去掉 `.md`。
+   编排者靠这一行判断哪些工单已经落地，所以它必须一字不差地等于工单的文件名去掉 `.md`，自成一行。署名行（`Co-Authored-By:` 之类）放在它后面；环境把署名另起一段追加也没关系，编排者整条 message 里找这一行。提交后自己核一遍：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of HEAD` 要输出这张工单的名字。
 
 **第 2 步到第 4 步之间不要重新取集成分支。** 它中途前进了的话，`reset --soft` 到新提交会把别人刚落地的改动悄悄撤掉。编排者 fast-forward 不了会退回你，那时从第 2 步再做一遍。
 

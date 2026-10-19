@@ -64,7 +64,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 
 - **修**：先找到它归哪张工单。
   - Spec 条目：它引用的那张工单。
-  - Standards 条目：对代码片段所在的行跑 `git blame`，找到引入它的 commit，读 commit 的 `Ticket:` trailer。
+  - Standards 条目：对代码片段所在的行跑 `git blame`，找到引入它的 commit，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of <commit>` 读它属于哪张工单。
   - 两条路都找不到（比如代码来自一次不带 trailer 的修复），就问人归哪张。
 
   在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，用 `docs(tickets): <NN> — review 第 <N> 轮 <编号>` 提交，然后派一个 `idea-loop:implementer` 做这张工单，派工、核对、落地与回收照 `implement` §3、§4（自己的 worktree、起点 SHA、分到的端口，fast-forward 落地）。它只会去做没勾的那几格，commit 照样带同一个 `Ticket:` trailer。同一张工单上有好几条要修的，一次写完再派一次。多张工单的可以并行派。全部落地后推送。

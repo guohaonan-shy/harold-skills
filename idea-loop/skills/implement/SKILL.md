@@ -31,7 +31,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 不另建状态文件：
 
-- **已落地**：`git log --format='%H %(trailers:key=Ticket,valueonly)' $(git merge-base HEAD <base>)..HEAD` 里带 `Ticket:` 的 commit。
+- **已落地**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。不用 git 的 trailer 读法：执行方提交时环境会在末尾另起一段追加署名，`Ticket:` 那行就不再是最后一段，按 trailer 读会读空。
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项、推荐、半成品的 worktree 和分支。丢了就从 review loop 文件还原（停下汇报里有批示和「做了什么」的就算已决定）。
 - **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`，每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、以及为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接），写进停下汇报后清空。执行方回收后只剩落地提交，这些交回内容找不回来，所以落地时立刻记。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（MCP 浏览器锁）。在跑的执行方只记在会话里。
@@ -54,7 +54,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 | 交回 | 核对 |
 |---|---|
-| `landed` | 比集成分支只多一个 commit（`git rev-list --count HEAD..<commit>` 为 1），trailer 对；`git show <commit>:<工单>` 里每格 `[x]` 或 `⏭ 延后 → <接手方>`；延后给后续工单的，那张有「继承自」格；延后给 PR 交付验收的，`human_verify` 有素材且文件在它的证据目录 |
+| `landed` | 比集成分支只多一个 commit（`git rev-list --count HEAD..<commit>` 为 1），`ticket-ledger.mjs of <commit>` 输出的正是这张工单；`git show <commit>:<工单>` 里每格 `[x]` 或 `⏭ 延后 → <接手方>`；延后给后续工单的，那张有「继承自」格；延后给 PR 交付验收的，`human_verify` 有素材且文件在它的证据目录 |
 | `blocked` | 半成品已提交在它的分支上，worktree 干净 |
 | `failed` | 不核，直接进 §5 |
 
