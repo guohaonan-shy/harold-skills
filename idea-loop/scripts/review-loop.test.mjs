@@ -68,6 +68,44 @@ test('an entry too long for one GitHub comment is refused before it is sent', ()
   assert.throws(() => archiveBody({ kind: 'review', round: 1, body: 'x'.repeat(70000) }, 'app'), /limit/);
 });
 
+const ruledOnly = `<!-- idea-loop-entry {"kind":"review","round":1} -->
+## Review 第 1 轮
+**结论**：Spec 0 条、Standards 1 条，都已按规则处理。
+
+### 已按规则处理
+- C1：补了缺的说明文字（依据：仓库的文案规定；提交链接）
+
+### 做了什么
+- C1 已修并推送（提交链接）
+`;
+
+test('a review round whose findings were all handled by rule, and says what was done, is settled without a ruling', () => {
+  const [e] = parseLoop(ruledOnly);
+  assert.deepEqual([e.rulings, e.settled], [0, true]);
+  assert.deepEqual(unsettled([e]), []);
+});
+
+test('a review round that still asks the human something, or has not said what was done, is not settled without a ruling', () => {
+  const asks = ruledOnly.replace('### 做了什么', '#### S1 · 标题\n**要你决定**：A，还是 B？\n\n### 做了什么');
+  assert.equal(parseLoop(asks)[0].settled, false);
+  assert.equal(parseLoop(ruledOnly.replace(/### 做了什么[\s\S]*$/, ''))[0].settled, false);
+  // a stop report is not covered by this: its delivery items always wait for the human
+  assert.equal(parseLoop(ruledOnly.replace('"kind":"review"', '"kind":"pause"'))[0].settled, false);
+});
+
+test('overturning a handled-by-rule item is one more ruling in the same entry, and re-opens it until it is acted on', () => {
+  const overturned = `${ruledOnly}
+### 你的批示（2026-10-19 16:00）
+> 推翻 C1，这个不用改
+
+`;
+  const [e] = parseLoop(overturned);
+  assert.deepEqual([e.rulings, e.settled], [1, false]);
+  assert.match(e.body, /推翻 C1/);
+  const [done] = parseLoop(`${overturned}### 做了什么\n- C1 改回去了（提交链接）\n`);
+  assert.deepEqual([done.rulings, done.settled], [1, true]);
+});
+
 test('local figures are found and swapped for their uploaded addresses; web addresses are left alone', () => {
   const body = '![重试流程](../pr-review/12/evidence/r1-s1-flow.png)\n![旧图](https://example.com/a.png)\n![同一张](../pr-review/12/evidence/r1-s1-flow.png)';
   assert.deepEqual(localFigures(body), ['../pr-review/12/evidence/r1-s1-flow.png']);
