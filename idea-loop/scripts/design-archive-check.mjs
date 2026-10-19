@@ -63,8 +63,10 @@ const DECISION_HEADING = /^决定(\s*\d+)?(\s*[：:].*)?$/;
 
 /**
  * @param {object} archive  from loadArchive
- * @param {{ usedBy?: boolean }} [opts]  usedBy:false skips the `usedBy` half of rule 6 — for the archive
- *   script, which validates a delta before it regenerates usedBy
+ * @param {{ usedBy?: boolean }} [opts]  usedBy:false leaves the `usedBy` field alone — the consistency
+ *   half of rule 6, and rule 3's check that its links resolve (a removed page leaves stale ones behind).
+ *   For the archive script, which validates a delta before it regenerates usedBy; the regenerated
+ *   archive is then checked with the default (usedBy:true)
  * @returns {{ rule: number, file: string, field: string|null, message: string }[]}
  */
 export function checkArchive(archive, { usedBy = true } = {}) {
@@ -121,6 +123,7 @@ export function checkArchive(archive, { usedBy = true } = {}) {
   for (const r of archive.refs) {
     if (r.where.startsWith('async.')) continue; // rule 2 judges these
     if (archive.files.has(r.target)) continue;
+    if (!usedBy && /^usedBy(\[|$)/.test(r.where)) continue; // about to be regenerated
     v(3, r.file, r.where, `[[${r.target}]] 解析不到：docs/ 下没有这个文件`);
   }
   const expect = (o, field, value, want) => {
@@ -146,7 +149,7 @@ export function checkArchive(archive, { usedBy = true } = {}) {
     if (o.kind === 'page') {
       asList(o.fm.regions).forEach((r, i) => expect(o, `regions[${i}].component`, r?.component, 'component'));
     }
-    if (o.kind === 'component' || o.kind === 'motion') expect(o, 'usedBy', o.fm.usedBy, 'page');
+    if (usedBy && (o.kind === 'component' || o.kind === 'motion')) expect(o, 'usedBy', o.fm.usedBy, 'page');
     if (o.kind === 'journey') {
       asList(o.fm.path).forEach((item, i) => expect(o, `path[${i}]`, item && typeof item === 'object' ? item.state : item, 'state'));
     }

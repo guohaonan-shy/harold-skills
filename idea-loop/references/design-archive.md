@@ -179,3 +179,24 @@ node scripts/design-archive-query.mjs <仓库根> <入口> <参数> [--delta <sp
 - 进不去：`{ reachable: false, verdict: '进不去', blocked: [边 + missing + tried…], undeclared }`。`blocked` 是这个状态的入边和它上游（走到入口能到达的状态为止）所有带 `blocked` 的边；一条都没有时 `undeclared: true`，表示没有路径也没人解释——校验规则 1 会报它。
 
 **错误**：名字对不上时不返回空结果，而是退出码 1、stderr 说清楚：这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象。`keyword` 一条都没命中同样退出码 1（模块函数返回空的 `matches`）。用法错误、不是仓库根、`diff` 带了 `--delta` 退出码 2。
+
+## 9 归档：写 `prod/` 的唯一入口
+
+```
+node scripts/design-archive-write.mjs <仓库根> <spec-slug> [--dry-run] [--json]
+```
+
+退出码 0 = 已归档（`--dry-run` 时是「可以归档」），1 = 拒绝（逐条列出违规或冲突，**什么都没写**），2 = 用法错误或 `tmp/<spec-slug>/` 不存在。顺序：
+
+1. 校验：把 `delta/` 叠在 `prod/` 上跑 §6 的六条。`usedBy` 此时还没重算，所以这一步不判它（既不判与反向引用是否一致，也不判其中的链接是否还能解析——被删的页面会留下过期的链接）；第 3 步生成之后再完整校验一次。
+2. `delta/` 下除 `removed.md` 与 `index.md` 外的文件按同路径覆盖进 `prod/`（含各自的 `assets/`）；`removed.md` 列出的对象删掉。组件的整个文件夹随它走；页面或组件的文件夹里没有对象文件了，连 `assets/` 一起删。
+3. 重算每个组件、动效的 `usedBy`（只改这一个字段，其余字节不动；集合没变的文件不碰），重新生成 `prod/index.md`：页面、组件、动效、用户路径四张清单，表体取自 frontmatter，index 自己的 frontmatter（主视口 / 主题 / 语言）原样保留。
+4. 交互图：`tmp/<spec-slug>/canvas/` 里某个 `flows/` 目录下直接放着的图片，加上 spec 里链接到、位于 `canvas/` 下的图片，挪进 `prod/pages/<page>/assets/flows/`。图属于**文件名里带着状态 id 的那个状态**的页面（约定的写法是 `flow-<n>-<状态 id>.png`；多个状态 id 都在名字里时取最长的）；名字里没有状态 id 的，放进 delta 里第一个页面（没有就取第一个状态的页面），并在输出里说明。`flows/src/` 里的拼图源不挪。目标位置已有内容不同的同名文件，或两张图落到同一个位置，都是冲突，拒绝。然后把 `docs/spec/<spec-slug>/<spec-slug>.md` 里指向旧位置的图片链接改成新路径（链接的写法——相对、仓库根相对、带前导斜杠——保持不变，代码围栏里的不改）。
+5. 检查目标仓库：`.gitattributes` 有没有用 Git LFS 管 `docs/design/prod/**/assets/` 下的 png / gif / webm，`.gitignore` 有没有忽略 `docs/design/tmp/`，`prod/index.md` 有没有定主视口 / 主题 / 语言；缺什么在输出里各提示一次，写出要加的行，**不改** `.gitattributes` 与 `.gitignore`。spec 里还有指向 `tmp/` 却不会被归档的链接，同样提示。
+6. 清空 `tmp/<spec-slug>/`。
+
+第 2 到第 4 步先排成一份计划，套在 `docs/` 的一份临时副本上（文本文件真实，其余文件建成空占位），对副本跑**完整**校验（含 `usedBy`）；过了才把同一份计划套到仓库上。所以任何一步不过，`prod/`、spec、`tmp/` 都保持原样，`--dry-run` 就是做到这一步为止。没有 `delta/` 目录的需求（只留了画布）照样走第 4、6 步。
+
+### 合并前钩子
+
+`scripts/merge-gate-hook.mjs` 是插件级 PreToolUse 钩子（挂在 Bash 上，登记在 `hooks/hooks.json`）：命令里含 `gh pr merge`，且当前仓库的 `docs/design/tmp/` 下有任何含文件的需求目录，就以退出码 2 拦下，stderr 点名是哪几个需求并给出归档命令。其余命令、`tmp/` 不存在或为空、不在 git 仓库里时放行。钩子只跑脚本，不起 agent；不设 CI 检查（`tmp/` 不进 PR，CI 看不到）。

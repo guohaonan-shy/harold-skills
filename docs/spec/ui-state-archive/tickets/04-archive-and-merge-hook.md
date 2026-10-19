@@ -28,13 +28,13 @@
 目标项目 `.gitignore` 需要包含 `docs/design/tmp/`：归档脚本发现没有时一并提示（不代改）。
 
 ## 验收标准
-- [ ] 钩子：`tmp/` 下有非空需求目录时，喂一条 `gh pr merge 12` 被拦并点名该需求；清空后放行；非合并命令始终放行
-- [ ] 归档：夹具 delta 新增两个状态、改一条边、删一个状态，spec 引用了 `tmp/` 里的交互图；归档后 `prod/` 多两个状态、边更新、被删的没了，`usedBy` 与 `prod/index.md` 刷新，交互图在页面的 `assets/flows/`，spec 链接已改写，`tmp/<spec-slug>/` 清空
-- [ ] 校验不过时 `prod/`、spec、`tmp/` 一个字节都不变
-- [ ] 没配 LFS、没忽略 `tmp/` 时各提示一次，且不改 `.gitattributes` / `.gitignore`
-- [ ] dry-run 不写任何文件
-- [ ] 钩子已登记进插件的钩子配置，已有三个 PostToolUse 钩子不受影响
-- [ ] 全量 node 测试套件全绿
+- [x] 钩子：`tmp/` 下有非空需求目录时，喂一条 `gh pr merge 12` 被拦并点名该需求；清空后放行；非合并命令始终放行
+- [x] 归档：夹具 delta 新增两个状态、改一条边、删一个状态，spec 引用了 `tmp/` 里的交互图；归档后 `prod/` 多两个状态、边更新、被删的没了，`usedBy` 与 `prod/index.md` 刷新，交互图在页面的 `assets/flows/`，spec 链接已改写，`tmp/<spec-slug>/` 清空
+- [x] 校验不过时 `prod/`、spec、`tmp/` 一个字节都不变
+- [x] 没配 LFS、没忽略 `tmp/` 时各提示一次，且不改 `.gitattributes` / `.gitignore`
+- [x] dry-run 不写任何文件
+- [x] 钩子已登记进插件的钩子配置，已有三个 PostToolUse 钩子不受影响
+- [x] 全量 node 测试套件全绿
 
 ## 选中的存量回归
 无 test-cases 库。跑全量 `*/scripts/*.test.mjs`；已有的钩子测试（设计 lint、DESIGN.md、术语表）必须保持绿。

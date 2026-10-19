@@ -206,7 +206,8 @@ function labelled(text, labels) {
 
 // ---------- reading a tree ----------
 
-function walk(dir, skip = () => false) {
+/** Every file under `dir` (sorted, depth-first), skipping what `skip(path, name)` rejects. */
+export function walk(dir, skip = () => false) {
   const out = [];
   if (!existsSync(dir)) return out;
   for (const name of readdirSync(dir).sort()) {

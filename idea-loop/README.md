@@ -214,7 +214,7 @@ to start.
 idea-loop/
 ├── .claude-plugin/plugin.json
 ├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
-├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
+├── hooks/hooks.json                  # PreToolUse(Bash) → merge-gate-hook.mjs; PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── agents/
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
 │   ├── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
@@ -249,6 +249,10 @@ idea-loop/
 │   ├── design-archive-query.mjs      # the archive's six read entries (page, state, journey, requirement diff, reverse lookup, keyword) + the way-in derivation, as a module and a JSON command line; reads prod/ or prod/ with a requirement's delta/ laid over it
 │   ├── design-archive-query.test.mjs # their unit tests on the shared fixture + a requirement's delta/, and the command line's exit codes
 │   ├── design-archive-fixture.mjs    # a fictional two-page archive shared by the archive tests (not a test file)
+│   ├── design-archive-write.mjs      # the archive script — the only writer of docs/design/prod/: validate, fold delta/ in, drop removed.md, regenerate usedBy + index.md, move interaction figures and re-point the spec's links, say what LFS / .gitignore lack, empty tmp/<spec-slug>/; --dry-run writes nothing
+│   ├── design-archive-write.test.mjs # one requirement end to end, refuse-writes-nothing, dry-run, hints, and the pieces
+│   ├── merge-gate-hook.mjs           # PreToolUse(Bash) entry: blocks `gh pr merge` while docs/design/tmp/ still holds a requirement, exit 2 naming it
+│   ├── merge-gate-hook.test.mjs      # block / pass / non-merge / no tmp / not a git repo, and the hook registration
 │   ├── mini-yaml.mjs                 # the dependency-free YAML subset the archive's frontmatter uses
 │   ├── mini-yaml.test.mjs
 │   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
@@ -334,7 +338,9 @@ step is running; the hooks are the only pieces that fire on their own. One fires
 `Write`/`Edit` whose path lands in a canvas HTML — `docs/design/<spec-slug>/*.html`, or the legacy
 `design-preview/` / `design-motion-preview/` scratch dirs; the other only on a write to a file named
 `DESIGN.md`, where it runs the official `@google/design.md` lint at `@latest` and hands any error
-back to the model.
+back to the model. A fourth, `merge-gate-hook.mjs`, fires on `Bash` before the command runs: a `gh pr merge`
+while `docs/design/tmp/` still holds a requirement is stopped, with the requirement named and the archive
+command to run (`scripts/design-archive-write.mjs`); every other command passes.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
 the DESIGN.md-writing skill (its rules are now `references/design-md.md`, written by `uiux-imagine` and `dreaming`), the port-verification skill

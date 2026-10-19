@@ -255,6 +255,12 @@ test('rule 6: usedBy must match the references actually found', () => {
   assert.deepEqual(skipped.violations, []);
 });
 
+test('rule 6: with usedBy off, links in usedBy that no longer resolve (a removed page) are not judged either; with it on they are', () => {
+  const stale = { [SPINNER]: sub('usedBy: ["[[cookbook]]"]', 'usedBy: ["[[cookbook]]", "[[gone]]"]') };
+  assert.deepEqual(run(bend(stale), { usedBy: false }).violations, []);
+  assert.deepEqual([...new Set(rules(run(bend(stale))))].sort(), [3, 6]);
+});
+
 // ---------- delta overlay ----------
 
 const DELTA = `docs/design/tmp/${SPEC_SLUG}/delta`;
