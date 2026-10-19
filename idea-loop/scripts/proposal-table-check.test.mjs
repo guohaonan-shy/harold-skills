@@ -36,7 +36,7 @@ const section = (type, rows = []) =>
 /** One valid row per row type; tests bend a single cell of a single section. */
 const ROWS = {
   文档: [['docs/spec/cart-promo/cart-promo.md', '自称 在飞；代码物已在树上', 'src/cart/promo.ts', '写 ADR 删 spec', OPTS]],
-  档案对象: [['components/PromoBadge', '挂的代码路径 src/ui/PromoBadge.tsx 已不存在', 'git ls-files 无此路径', '删对象', OPTS]],
+  档案对象: [['components/PromoBadge', '挂的代码路径 src/ui/PromoBadge.tsx 已不存在', '仓库里无此路径；引用：pages/cart--empty 的区域「促销」、边 pages/cart--list#open-promo', '删对象', OPTS]],
   档案状态: [['pages/cart--empty', '档案过期：空购物车文案改了，引用的代码自上次改动有提交 3 次', `${IMG_PROD} ${IMG_TMP}`, '替换档案', OPTS]],
   初扫页面: [['pages/wishlist', '档案里没有这一页；路由 /wishlist 可进', 'docs/design/tmp/dreaming-2026-10-19/delta/pages/wishlist/wishlist.md', '新增页面', OPTS]],
   候选: [['候选：卡片内边距统一 16px（组件 PromoCard、OrderCard 重复，共 2 次）', '与已有规则「卡片内边距 12px」矛盾', 'components/PromoCard、components/OrderCard', '改写已有规则', OPTS]],
@@ -109,8 +109,28 @@ test('an archive-state row whose first picture is not the archive\'s own (under 
 });
 
 test('a state the product cannot reach is the one archive row that carries no pictures', () => {
-  const unreachable = [['pages/cart--gift', '进不去：礼品卡状态需要一个未发放的礼品账号', '路径上的边「应用礼品卡」执行不了；试过两条路线', '补进不去说明', OPTS]];
+  const unreachable = [['pages/cart--gift', '进不去：礼品卡状态需要一个未发放的礼品账号', '缺：一个未发放的礼品账号；试过：直接输入礼品码、从订单页进入', '补进不去说明', OPTS]];
   assert.equal(run(sample({ 档案状态: unreachable })).status, 0);
+});
+
+test('a 删对象 row has to name who refers to the object — deleting a component the graph still uses breaks the graph', () => {
+  const noRefs = [['components/PromoBadge', '挂的代码路径 src/ui/PromoBadge.tsx 已不存在', '仓库里无此路径', '删对象', OPTS]];
+  const r = run(sample({ 档案对象: noRefs }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /档案对象/);
+  assert.match(r.out, /引用/);
+  const none = [['components/PromoBadge', '没有任何节点、边、用户路径引用它', '引用：无', '删对象', OPTS]];
+  assert.equal(run(sample({ 档案对象: none })).status, 0, '"引用：无" is an answer; silence is not');
+  const other = [['components/PromoBadge', '挂的代码路径改名了', '重命名记录指向 src/ui/Badge.tsx', '改代码路径', OPTS]];
+  assert.equal(run(sample({ 档案对象: other })).status, 0, 'only 删对象 needs the referrers');
+});
+
+test('a 进不去 state row says what was missing and what was tried', () => {
+  const vague = [['pages/cart--gift', '进不去：礼品卡状态进不去', '走不通', '补进不去说明', OPTS]];
+  const r = run(sample({ 档案状态: vague }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /缺/);
+  assert.match(r.out, /试过/);
 });
 
 test('a defect row about a broken state needs the same two pictures; a rule-versus-code defect does not', () => {

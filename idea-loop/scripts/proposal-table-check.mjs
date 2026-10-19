@@ -131,6 +131,24 @@ function verdictProblem(type, cells) {
   return null;
 }
 
+/**
+ * Two rows whose evidence has to carry a specific answer, not just look plausible:
+ *  - 删对象 — deleting an archive object while a node, edge or journey still points at it breaks the
+ *    graph, so the row names its referrers (`引用：…`, or `引用：无` — silence is not an answer);
+ *  - 进不去 — a state nobody could enter is only useful if it says what was missing and what was
+ *    tried, the two things the archive's own rule asks for (`缺…` and `试过…`).
+ */
+function evidenceProblems(type, cells) {
+  const evidence = cells[2];
+  if (type === '档案对象' && leadingDisposition(cells[3]) === '删对象' && !/引用\s*[：:]/.test(evidence)) {
+    return ['的处置是「删对象」，证据里要写「引用：」列出还引用它的节点与边——没有就写「引用：无」'];
+  }
+  if (type === '档案状态' && verdictOf(cells[1]) === '进不去' && !(/缺/.test(evidence) && /试过/.test(evidence))) {
+    return ['的判定是「进不去」，证据里要写清缺什么前置条件、试过哪些路线（「缺…」「试过…」）'];
+  }
+  return [];
+}
+
 /** Image paths in a cell, in order — markdown image syntax only. */
 function imagePaths(cell) {
   return [...cell.matchAll(/!\[[^\]]*\]\(\s*([^)\s]+)[^)]*\)/g)].map((m) => m[1]);
@@ -197,6 +215,7 @@ export function checkProposalTable(markdown) {
       const bad = broken ?? verdictProblem(s.title, row.cells) ?? dispositionProblem(s.title, row.cells[3]);
       if (bad) errors.push(`${where}${bad}`);
       errors.push(...pictureProblems(s.title, row.cells).map((p) => `${where}${p}`));
+      errors.push(...evidenceProblems(s.title, row.cells).map((p) => `${where}${p}`));
       if (s.title === '初扫页面' && !/(^|[\s/(`])tmp\//.test(row.cells[2])) {
         errors.push(`${where}的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，人批了才经归档脚本进 prod/`);
       }
