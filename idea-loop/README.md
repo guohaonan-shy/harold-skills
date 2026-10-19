@@ -246,6 +246,8 @@ idea-loop/
 │   ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
 │   ├── design-archive-check.mjs      # the archive's six validation rules (reachability, async, references, journeys, decisions/candidates, motions/usedBy), file and field named; exit 0/1
 │   ├── design-archive-check.test.mjs # one red fixture per rule + the delta overlay + the old-layout note
+│   ├── design-archive-query.mjs      # the archive's six read entries (page, state, journey, requirement diff, reverse lookup, keyword) + the way-in derivation, as a module and a JSON command line; reads prod/ or prod/ with a requirement's delta/ laid over it
+│   ├── design-archive-query.test.mjs # their unit tests on the shared fixture + a requirement's delta/, and the command line's exit codes
 │   ├── design-archive-fixture.mjs    # a fictional two-page archive shared by the archive tests (not a test file)
 │   ├── mini-yaml.mjs                 # the dependency-free YAML subset the archive's frontmatter uses
 │   ├── mini-yaml.test.mjs
@@ -290,7 +292,7 @@ idea-loop/
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── spec-status.md                # the spec state machine (who flips what, when), the backlog hand-over marks, and the issue status labels
-    ├── design-archive.md             # the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules
+    ├── design-archive.md             # the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
     ├── design-md.md                  # the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
