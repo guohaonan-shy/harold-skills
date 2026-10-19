@@ -221,7 +221,7 @@ flagship token cost.
 
 ### F · Build in the browser
 
-Evolve the baseline or context frame in the canvas (`docs/design/<spec-slug>/<spec-slug>.html`). Implement changed parts in
+Evolve the baseline or context frame in the canvas (`docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html`). Implement changed parts in
 full; preserve unchanged parts from the replica or mark them with an honest placeholder. Pure
 deletions remain code-level work.
 
@@ -235,7 +235,7 @@ core's 5-dimensional critique and restraint check.
 ### G · Review gates to convergence
 
 1. **Mechanical lint.** Confirm the final preview is P0-clean; run
-   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/<spec-slug>/<spec-slug>.html` (this
+   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html` (this
    plugin's script, wherever the plugin is installed) when needed. Fix or explicitly justify P1s.
 2. **Isolated critique.** Self-contained pass over the served preview URL: read
    `references/design/ui-craft-checklist.md` and `references/design/heuristics-checklist.md`, screenshot each
@@ -269,14 +269,17 @@ rule, not independent patches.
 
 On sign-off, perform **Distill-back before handoff**, and it only writes candidates:
 
-1. Write each decision that might generalize as a candidate in the freeze record's
-   `## 设计法候选` section, in the format `references/design-md.md` §13 defines — a one-line rule
-   already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why, evidence.
-   An empty Distill-back is valid only when stated explicitly: the section then holds one line, 「无」.
+1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
+   archive object it came from (page, component, motion or journey file under `delta/`; shape in
+   `references/design-archive.md` §4), in the format `references/design-md.md` §13 defines — a
+   one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
+   evidence. The freeze record's same-named section lists them (one line each, saying which object
+   carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
+   one line, 「无」.
 2. Stop there. `dreaming` later runs every candidate through the admission table in
    `references/design-md.md` §7 with the human — product design system goes to `DESIGN.md`, method
    that holds for any product goes back to this plugin as an issue, a single page's choice stays in
-   its freeze record.
+   its object's 「决定」.
 
 This protocol never writes `DESIGN.md` and never bootstraps one; a project without a `DESIGN.md`
 gets one through `uiux-imagine` (at its start) or `dreaming`.

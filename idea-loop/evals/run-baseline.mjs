@@ -33,8 +33,8 @@ const SEEDS = {
   'raw-index': ['stages/raw-index.md', 'docs/raw/index.md'],
   'spec-index': ['stages/spec-index.md', 'docs/spec/index.md'],
   'spec-awaiting-freeze': ['stages/spec-awaiting-freeze.md', 'docs/spec/practice-history-surface/practice-history-surface.md'],
-  // 方向说明是发散交给收敛的中间产物，住在项目根的 .tmp/ 而不在 spec 里（wiki-conventions §2.1）。
-  'direction-note': ['stages/direction-note.md', '.tmp/uiux-imagine/practice-history-surface/direction-note.md'],
+  // 方向说明是发散交给收敛的中间产物，住在 docs/design/tmp/<spec-slug>/imagine/（本地，不在 spec 里；wiki-conventions §2）。
+  'direction-note': ['stages/direction-note.md', 'docs/design/tmp/practice-history-surface/imagine/direction-note.md'],
 };
 
 function parseArgs(argv) {

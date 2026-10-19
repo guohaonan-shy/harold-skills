@@ -1,5 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { checkDirectionNote, checkComposition, SECTIONS, COMPOSITION } from './direction-note-check.mjs';
 
 /** The composition list a chosen variant carries inside 「变种裁决」. */
@@ -123,4 +128,38 @@ test('every composition block is checked, not just the first', () => {
   const errors = checkComposition(`${composition()}\n- **C** —— **选中**。\n${composition(['颜色'])}`);
   assert.equal(errors.length, 1);
   assert.ok(errors[0].startsWith('第 2 份'));
+});
+
+// ---- the CLI, on the note's home: docs/design/tmp/<spec-slug>/imagine/direction-note.md ----
+
+const script = join(dirname(fileURLToPath(import.meta.url)), 'direction-note-check.mjs');
+
+/** Put a note where uiux-imagine leaves it, in a throwaway project root; returns its path. */
+function noteAtHome(md, slug = 'cookbook-redesign') {
+  const file = join(mkdtempSync(join(tmpdir(), 'direction-note-')), 'docs/design/tmp', slug, 'imagine/direction-note.md');
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, md);
+  return file;
+}
+
+const check = (file, ...extra) => spawnSync(process.execPath, [script, file, ...extra], { encoding: 'utf8' });
+
+test('cli: a complete note in docs/design/tmp/<spec-slug>/imagine/ passes', () => {
+  const file = noteAtHome(note());
+  const res = check(file);
+  assert.equal(res.status, 0, res.stderr);
+  assert.match(res.stdout, /green/);
+  assert.ok(res.stdout.includes('docs/design/tmp/cookbook-redesign/imagine/direction-note.md'));
+});
+
+test('cli: a note missing a section at that path fails with exit 2 and names the section', () => {
+  const file = noteAtHome(note().replace('## 验收矩阵', '## 别的'));
+  const res = check(file, '--json');
+  assert.equal(res.status, 2);
+  assert.deepEqual(JSON.parse(res.stdout).missing, ['验收矩阵']);
+});
+
+test('cli: no path, or a path nobody wrote, is a usage error (exit 1)', () => {
+  assert.equal(spawnSync(process.execPath, [script], { encoding: 'utf8' }).status, 1);
+  assert.equal(check(join(tmpdir(), 'docs/design/tmp/nope/imagine/direction-note.md')).status, 1);
 });

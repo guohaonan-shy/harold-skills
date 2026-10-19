@@ -152,8 +152,9 @@ The human review list includes:
 - Variant Board question and selected combination, if used;
 - route-specific review matrix and failures found;
 - test cases derived from the state matrix;
-- generalizable product decisions, written as `## 设计法候选` entries in the format of `references/design-md.md` §13
-  (static-ui-protocol H); this protocol never writes `DESIGN.md`.
+- generalizable product decisions, written as `## 设计法候选` entries on the component's (or page's) archive file
+  under `delta/`, in the format of `references/design-md.md` §13 (static-ui-protocol H); this protocol never
+  writes `DESIGN.md`.
 
 The component preview remains the static source for `motion-protocol`; direct React iteration is not a
 substitute for resolving visual choices in the board/context first.

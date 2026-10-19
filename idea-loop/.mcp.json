@@ -3,6 +3,10 @@
     "playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp", "--headless", "--isolated"]
+    },
+    "design-archive": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs"]
     }
   }
 }

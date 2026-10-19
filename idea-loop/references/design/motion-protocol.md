@@ -70,7 +70,7 @@ an unsettled layout wastes both stages.
    everything into the project's tokens; never paste defaults.
 3. **Build on the static HTML.** Start from `static-ui-protocol`'s approved preview (so the visual stays
    pixel-faithful) and layer in real motion + native interaction. Write to
-   `docs/design/<spec-slug>/<spec-slug>-motion.html`, next to the static canvas (the lint hook watches it too). React-heavy
+   `docs/design/tmp/<spec-slug>/canvas/<spec-slug>-motion.html`, next to the static canvas (the lint hook watches it too). React-heavy
    preview → inline `react@18.3.1` + `react-dom@18.3.1` + `@babel/standalone` + framer
    (`window.Motion`); else plain HTML + CSS + small JS using the spec tokens.
 4. **Expose the freezable timeline** (spec §8): the preview defines
@@ -116,9 +116,11 @@ browser. Their feedback is the only switch that advances. Read a *cluster* of fi
 rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
-passed the gates is written as a candidate in the freeze record's `## 设计法候选` section
-(`references/design-md.md` §13) — the rule behind it, shaped to join the Motion chapter as a global
-principle; the specific parameters stay in the freeze record. This protocol never writes
+passed the gates is written as a candidate in the `## 设计法候选` section of its motion file under
+`delta/` (`references/design-md.md` §13, object shape in `references/design-archive.md` §3–4) — the
+rule behind it, shaped to join the Motion chapter as a global principle; the specific parameters stay
+in that motion file, and the freeze record lists the candidate. A new motion goes **only** into the
+motion file and the candidate, never straight into `DESIGN.md`. This protocol never writes
 `DESIGN.md`; `dreaming` puts the candidate to the human — that IS the admission process. A new
 pattern shipping with no candidate is the failure mode.
 

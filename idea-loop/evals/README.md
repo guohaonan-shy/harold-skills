@@ -39,8 +39,8 @@
 - 原型的 HTML 与裁决落进 raw 桶，页面顶部那句问题与裁决记录里的是同一句
 - grill 来的 spec 落进 `docs/spec/<slug>/<slug>.md`、状态 `审核中`，§4 把结构决策挂在原型证据上，技术方案总览三小节齐、前端交互标着待补图
 - 设计还没冻结的 `设计中` spec，人说了同意，`to-ticket` 也一张票都不切、不翻状态
-- 发散只准出一份方向说明（过 `direction-note-check`，落在项目根 `.tmp/uiux-imagine/<slug>/`），不改 spec、不翻状态，不往仓库里留渲染物
-- 收敛冻结之后：`docs/design/<spec-slug>/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；spec §4 写入「冻结摘要」、§5.3 换成 `assets/flows/` 下的交互图；`/tmp` 两个目录清掉；状态留在 `设计中`
+- 发散只准出一份方向说明（过 `direction-note-check`，落在项目的 `docs/design/tmp/<slug>/imagine/`），不改 spec、不翻状态，不往仓库里留渲染物
+- 收敛冻结之后：`docs/design/tmp/<spec-slug>/canvas/` 里有画布、矩阵每格截图、带 ledger 全文的 `<spec-slug>-design.md`；`delta/` 里有冻结出来的状态文件（叠上档案过 `design-archive-check`）；spec §4 写入「冻结摘要」、§5.3 换成 `canvas/flows/` 下的交互图（`flow-<n>-<page>--<state>.png`）；`imagine/` 与 `canvas/work/` 清掉；状态留在 `设计中`
 - 全仓无跨 plugin 的 skill 调用
 
 ## case
@@ -61,6 +61,11 @@ node idea-loop/evals/run-baseline.mjs --archive idea-loop/evals/baseline   # 跑
 > refine 的执行方式（designer agent + 编排者、交互图写回 spec），断言与 fixture 已同步，**`baseline/` 里的存档还是改动之前那一跑**，
 > 新加的断言（`spec-has-technical-overview` / `imagine-leaves-spec-untouched` / `freeze-writes-interaction-flows` / `freeze-clears-tmp`）在存档里没有记录。
 > 下次重跑时连同 `--archive` 一起更新。
+>
+> **产物路径搬家（ui-state-archive，未重跑）**：方向说明、画布、冻结记录、交互图现在都在 `docs/design/tmp/<spec-slug>/` 下（`imagine/` · `canvas/` · `canvas/flows/` · `delta/`），断言、seed、refine 的 prompt 已同步，新增 `freeze-writes-delta`；存档没动。
+> 这次改动没有重跑 baseline（付费 eval 夜里跑）。要重跑：
+> `node idea-loop/evals/run-baseline.mjs --only prototype-state-model,imagine-direction-note,refine-freeze`（约 $22–25，`refine-freeze` 一格占大头，别在白天跑）；
+> 跑完存档用 `--archive idea-loop/evals/baseline`。
 >
 > refine 的两个 agent 写的是模型**别名**（designer `opus`、ui-master `fable`），解析到哪个版本取决于跑的那份命令行 `claude`。所以每格的 `run.meta.json` 记下这一跑实际调用过的模型（`usage.models`，含 subagent），`benchmark.json` 记 `claude_version`——两次 baseline 对不上时，先看是不是模型换了，再看 prompt。
 

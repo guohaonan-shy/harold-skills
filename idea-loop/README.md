@@ -21,7 +21,7 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 | `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
 | `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching fresh `idea-loop:implementer`s in parallel along the `Blocked by` frontier (up to three at once by default, each in its own worktree; an `idea-loop:explorer` writes shared pointer-only notes first; one ticket → one commit the orchestrator fast-forwards onto the integration branch, then reclaims the worktree; TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
-| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
+| `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. When the local `docs/design/tmp/` holds this spec, an `idea-loop:ui-reviewer` first walks the implementation against the frozen design each round and its findings are merged into the Spec section; on the human's word to merge, a leftover `tmp/` goes through the pre-merge archive (UI review of the delta → the human reads the draft → the archive script → commit and push), then the review loop is archived to the PR as comments, then the PR merges |
 | `/idea-loop:dreaming` | Maintain | Weekly, in two passes with the human between them. The **proposal pass** (the only thing the weekly schedule runs; nothing is written) reconciles every doc against `origin/main` — including `CLAUDE.md` — and also distills design-law candidates into `DESIGN.md` and audits `DESIGN.md` itself against the code, then stops at one proposal table (one row per object; closed set of dispositions per row type, checked by `scripts/proposal-table-check.mjs`; an empty table is a one-line push, not an Artifact). The **execution pass** runs only the rows the human approved, and its result is one PR that touches only `docs/`, `DESIGN.md` and `GLOSSARY.md`. Writing `DESIGN.md` always waits for the human; a broken product or a rule the code disobeys becomes a drafted GitHub issue, opened only on approval. Manual runs may do just one part, or distill a single rule on the spot |
 
 ### The forward loop is not the maintenance sweep
@@ -165,12 +165,14 @@ deterministic scripts get picked up by putting their tests next to them as
 Only the deterministic cores are unit-tested. The playwright shell
 (`scripts/ui-measure.mjs`) is the browser boundary and has no unit tests on
 purpose — mocking a browser would test the mock. The CLI tails on
-`critic-score.mjs`, `direction-note-check.mjs` and `glossary-check.mjs` are the same kind of thin
+`critic-score.mjs` and `glossary-check.mjs` are the same kind of thin
 shell — argv, a file read, an exit code — and are verified by being run, not
-by a spawned-process test. The lint **hooks**
-(`scripts/design-lint-hook.mjs`, `scripts/glossary-check-hook.mjs`) have no unit tests either — they are verified by
-actually writing an HTML file into a `docs/design/<spec-slug>/` directory (or a broken
-`GLOSSARY.md` anywhere) and confirming it reports; that is the falsifiable signal, not a mocked stdin payload.
+by a spawned-process test. (`direction-note-check.mjs` and `flow-compose.mjs` also have spawned-process
+tests for the paths they are called on and the state-id file contract.) The glossary **hook**
+(`scripts/glossary-check-hook.mjs`) has no unit test either — it is verified by
+actually writing a broken `GLOSSARY.md` anywhere and confirming it reports; that is the falsifiable signal, not a mocked stdin payload.
+`scripts/design-lint-hook.mjs` is tested by spawning it with a real payload on real files, because what it must get
+right is *which paths it watches* (only HTML directly in `docs/design/tmp/<spec-slug>/canvas/`).
 `scripts/design-md-hook.mjs` is the exception: its whole job is shelling out to an external CLI, so
 its tests swap in a fake CLI to pin the exit-code contract (error blocks, warning passes, an
 unreachable CLI never blocks), and one real run against the official CLI was the falsifiable check.
@@ -195,7 +197,7 @@ reasoning, the case, and how to read a run live in
 The **whole loop's wiring check rides along as assertions in that baseline** rather
 than as a one-off dry run: prototype landing in raw, a `grill` spec landing at
 `审核中`, `to-ticket` refusing a `设计中` spec whose design is not frozen, the freeze landing canvas + ledger in
-`docs/design/<spec-slug>/` while leaving the spec at `设计中`, and no cross-plugin skill invocation
+`docs/design/tmp/<spec-slug>/canvas/` while leaving the spec at `设计中`, and no cross-plugin skill invocation
 anywhere in the repo. A dry run's conclusion dies with its session; an assertion
 goes red three weeks later.
 
@@ -216,13 +218,14 @@ to start.
 ```
 idea-loop/
 ├── .claude-plugin/plugin.json
-├── .mcp.json                         # headless Playwright MCP — the design canvas's browser
-├── hooks/hooks.json                  # PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
+├── .mcp.json                         # two MCP servers: headless Playwright (the design canvas's browser) + design-archive (read-only lookups of the design archive)
+├── hooks/hooks.json                  # PreToolUse(Bash) → merge-gate-hook.mjs; PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── agents/
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run
 │   ├── ui-master.md                  # its critic (idea-loop:ui-master) — `fable` alias, effort high, Read-only, a fresh one per round
 │   ├── implementer.md                # implement's executor (idea-loop:implementer) — `sonnet` alias, effort high, one per ticket, its own worktree
 │   ├── issue-explorer.md             # issue-dispatch's drafter (idea-loop:issue-explorer) — `opus` alias, effort medium, at most one per round, reproduces and drafts a batch of issues
+│   ├── ui-reviewer.md                # pr-review's UI reviewer (idea-loop:ui-reviewer) — `sonnet` alias, effort high, one per round when tmp/ holds this spec, and once more before merge to check the archive draft
 │   ├── explorer.md                   # implement's scout (idea-loop:explorer) — `haiku` alias, effort high, pointer-only shared notes before a parallel dispatch
 │   └── pr-reviewer.md                # pr-review's reviewer (idea-loop:pr-reviewer) — `sonnet` alias, effort xhigh, one per round
 ├── README.md (this file)
@@ -246,15 +249,30 @@ idea-loop/
 │   ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
 │   ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit (+ the CLI uiux-refine calls each round)
 │   ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
+│   ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
+│   ├── design-archive-check.mjs      # the archive's six validation rules (reachability, async, references, journeys, decisions/candidates, motions/usedBy), file and field named; exit 0/1
+│   ├── design-archive-check.test.mjs # one red fixture per rule + the delta overlay + the old-layout note
+│   ├── design-archive-query.mjs      # the archive's six read entries (page, state, journey, requirement diff, reverse lookup, keyword) + the way-in derivation, as a module and a JSON command line; reads prod/ or prod/ with a requirement's delta/ laid over it
+│   ├── design-archive-query.test.mjs # their unit tests on the shared fixture + a requirement's delta/, and the command line's exit codes
+│   ├── design-archive-mcp.mjs        # the archive's MCP server (stdio, hand-written JSON-RPC, zero deps): the six query entries as six read-only tools, repo root = git top level of the session's cwd; started by .mcp.json
+│   ├── design-archive-mcp.test.mjs   # spawns it over stdio: initialize / tools/list, tools/call equals the command line on the shared fixture, error results, .mcp.json
+│   ├── design-archive-fixture.mjs    # a fictional two-page archive shared by the archive tests (not a test file)
+│   ├── design-archive-write.mjs      # the archive script — the only writer of docs/design/prod/: validate, fold delta/ in, drop removed.md, regenerate usedBy + index.md, move interaction figures and re-point the spec's links, say what LFS / .gitignore lack, empty tmp/<spec-slug>/; --dry-run writes nothing
+│   ├── design-archive-write.test.mjs # one requirement end to end, refuse-writes-nothing, dry-run, hints, and the pieces
+│   ├── merge-gate-hook.mjs           # PreToolUse(Bash) entry: blocks `gh pr merge` while docs/design/tmp/ still holds a requirement, exit 2 naming it
+│   ├── merge-gate-hook.test.mjs      # block / pass / non-merge / no tmp / not a git repo, and the hook registration
+│   ├── mini-yaml.mjs                 # the dependency-free YAML subset the archive's frontmatter uses
+│   ├── mini-yaml.test.mjs
 │   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
 │   ├── proposal-table-check.mjs      # dreaming's exit gate: row types, per-type disposition sets, two pictures on archive rows, "product broken" never replaces the archive, empty-table test
 │   ├── proposal-table-check.test.mjs # its unit tests, through the command line — the red/green of each rule
-│   ├── flow-compose.mjs              # interaction flow figures: screenshots + arrows + red rings → one PNG (spec §1 / §5.3)
-│   ├── flow-compose.test.mjs         # its unit tests — the flow schema and the layout
+│   ├── flow-compose.mjs              # interaction flow figures: screenshots + arrows + red rings → one PNG (spec §1 / §5.3); a step can name its archive state (`state`), kept in the PNG's tag, the HTML and a `.states.json` beside it
+│   ├── flow-compose.test.mjs         # its unit tests — the flow schema, the layout, state ids and the `flow-<n>-<page>--<state>.png` name
 │   ├── design-lint.mjs               # the deterministic anti-slop/brand rules
 │   ├── design-lint.test.mjs          # their unit tests
-│   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/<spec-slug>/), exit 2 on P0/P1
+│   ├── design-lint-hook.mjs          # PostToolUse entry: lints canvas HTML (docs/design/tmp/<spec-slug>/canvas/), exit 2 on P0/P1
+│   ├── design-lint-hook.test.mjs     # its tests — which paths it watches, spawned with a real payload
 │   ├── design-md-hook.mjs            # PostToolUse entry: official @google/design.md lint on any DESIGN.md, exit 2 on an error
 │   ├── design-md-hook.test.mjs       # its tests, against a fake CLI
 │   ├── no-project-leak.test.mjs      # tripwire: skills/ and references/ carry no source-project names or examples
@@ -289,6 +307,7 @@ idea-loop/
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── spec-status.md                # the spec state machine (who flips what, when), the backlog hand-over marks, and the issue status labels
+    ├── design-archive.md             # the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
     ├── design-md.md                  # the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
@@ -318,6 +337,7 @@ What came across:
 | The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `references/design-md.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | `.mcp.json` (headless, isolated Playwright) |
+| The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
 
 One file there did not come across — `references/design/critic-rubric.md` is new. It is
 what the design critic reads each round: the severity ladder anchored to an AD's action,
@@ -327,10 +347,12 @@ findings the critic just wrote and invalidates the round when the number does no
 
 Nothing in `references/design/` is an entry point. They are loaded on demand by whichever
 step is running; the hooks are the only pieces that fire on their own. One fires only on a
-`Write`/`Edit` whose path lands in a canvas HTML — `docs/design/<spec-slug>/*.html`, or the legacy
+`Write`/`Edit` whose path lands in a canvas HTML — `docs/design/tmp/<spec-slug>/canvas/*.html`, or the legacy
 `design-preview/` / `design-motion-preview/` scratch dirs; the other only on a write to a file named
 `DESIGN.md`, where it runs the official `@google/design.md` lint at `@latest` and hands any error
-back to the model.
+back to the model. A fourth, `merge-gate-hook.mjs`, fires on `Bash` before the command runs: a `gh pr merge`
+while `docs/design/tmp/` still holds a requirement is stopped, with the requirement named and the archive
+command to run (`scripts/design-archive-write.mjs`); every other command passes.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
 the DESIGN.md-writing skill (its rules are now `references/design-md.md`, written by `uiux-imagine` and `dreaming`), the port-verification skill

@@ -11,7 +11,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 > 先读一次 `../../references/wiki-conventions.md`（spec 的位置、状态约定）和 `../../references/design/browser-usage.md` 的「The comparison board」（对比页怎么搭、怎么在内嵌浏览器里打开）。
 >
-> 工作目录是 worktree 根下的 `.tmp/uiux-imagine/<spec-slug>/`（约定见 wiki-conventions §2.1，下文简写 `.tmp/…`）。
+> 工作目录是目标项目的 `docs/design/tmp/<spec-slug>/imagine/`（约定见 wiki-conventions §2，本地、不进 git，下文简写 `imagine/…`）。第一次用时确认 `docs/design/tmp/` 被 git 忽略（同 wiki-conventions §2 的做法）。
 
 ## 0 什么时候跑
 
@@ -41,7 +41,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 ## 2 语言高度是显式的
 
 - 项目**没有** `DESIGN.md` → 语言高度**自动打开**。
-- 项目**有** `DESIGN.md` → 默认不打开，要人**显式说"重探语言"**才打开。产物是**设计法候选**（每条写明要并进哪一章，形态见 `../../references/design-md.md` §13，写在冻结记录的「设计法候选」一节，等 `dreaming` 处理），或者一条营销 register 分支；**不改 `DESIGN.md`**，不悄悄覆盖。打破路径依赖是一个显式决定，不是一次顺手的重构。
+- 项目**有** `DESIGN.md` → 默认不打开，要人**显式说"重探语言"**才打开。产物是**设计法候选**（每条写明要并进哪一章，形态见 `../../references/design-md.md` §13，写进方向说明，冻结时由 refine 的 designer 落进对应档案对象的「设计法候选」，等 `dreaming` 处理），或者一条营销 register 分支；**不改 `DESIGN.md`**，不悄悄覆盖。打破路径依赖是一个显式决定，不是一次顺手的重构。
 
 语言高度一旦打开，**一路降到 surface**，不许停在风格上：
 
@@ -71,9 +71,9 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 | 情况 | 例子 | 变种怎么出 |
 |---|---|---|
 | **没有现有 UI** | 一个还不存在的页面、一个新模块 | 照上面的起点从零出变种 |
-| **基于现有 UI** | 在已上线的交互上给某个组件加状态、改处理 | **先把线上真组件克隆成基线**（在本地开发环境抓真组件的 `outerHTML` 与整页 CSS，按 browser-usage「Building variants on an existing UI」），再在基线上出变种：每个变种只改这次要动的那几处，没动的部分保持线上原样或用占位条标「不变」，**不凭空重画**。抓的时候确认组件处在静止态——抓到加载中，它就会被误当成基线 |
+| **基于现有 UI** | 在已上线的交互上给某个组件加状态、改处理 | **先把线上真组件克隆成基线**（设计档案 `docs/design/prod/` 里有这个页面就先用档案的「页面」查询入口——插件的档案查询 MCP 工具，有就用，没有就读 `prod/pages/<page>/`——拿到它现有的状态、区域与组件，知道要抓哪几个；然后在本地开发环境抓真组件的 `outerHTML` 与整页 CSS，按 browser-usage「Building variants on an existing UI」），再在基线上出变种：每个变种只改这次要动的那几处，没动的部分保持线上原样或用占位条标「不变」，**不凭空重画**。抓的时候确认组件处在静止态——抓到加载中，它就会被误当成基线 |
 
-**这份 spec 已经冻结过一部分**（`docs/design/<spec-slug>/` 里有签过字的状态，这一轮是把其中几块重开）：已签字的部分不重开，写进高度记录；重开的那几块以冻结画布上的现状为基线，跟「基于现有 UI」同样处理。
+**这份 spec 已经冻结过一部分**（`docs/design/tmp/<spec-slug>/canvas/` 里有签过字的状态，这一轮是把其中几块重开）：已签字的部分不重开，写进高度记录；重开的那几块以冻结画布上的现状为基线，跟「基于现有 UI」同样处理。
 
 基于现有 UI 时，**人比的是「改了什么」**，不是几张各自重画的新页面——重画会把线上本来就有的差异混进变种之间，人分不出哪些差别是这次的提案。两种情况混在一个 surface 里也常见（旧页面上加一块全新的模块）：按块各自归类，写进高度记录。
 
@@ -136,7 +136,7 @@ grill 的判据是一句话：**frontier 空了，没有任何东西是暗中假
 
 **七节不是收尾时才写的交付物，它是整段的议程。** 变种是工具，七个容器是要装满的东西——每一轮渲染变种、拿人的反应，都是在往其中某一格里装信息。装满即可收工。把七节只当成最后一步的产物来读，人就会在整段过程里不知道自己站在哪一格，也就无法判断什么时候到。
 
-变种的渲染物（对比页、克隆来的组件、style tile）**只服务于人当下的反应**：不留存、不往下传、不进 raw 桶、不交给 refine。工作文件放 `.tmp/uiux-imagine/<spec-slug>/`，收工即弃。**落选的理由和选中变种的样子都以文字进方向说明**——那才是要活下去的东西。
+变种的渲染物（对比页、克隆来的组件、style tile）**只服务于人当下的反应**：不留存、不往下传、不进 raw 桶、不交给 refine。工作文件放 `docs/design/tmp/<spec-slug>/imagine/`，收工即弃。**落选的理由和选中变种的样子都以文字进方向说明**——那才是要活下去的东西。
 
 七节**固定**：
 
@@ -181,15 +181,15 @@ refine 看不到渲染物，只能照文字重建。选中变种身上的**视�
 
 ## 8 收工
 
-1. **你写草稿，然后停。闸门是人的**——人改过并确认才算通过。模型写完自己判通过，这一段就白跑了。草稿落 `.tmp/uiux-imagine/<spec-slug>/direction-note.md`，开头一行写明第几轮、日期、这一轮覆盖哪几块。**同时摆出哪几节是模型代填的**（见 §7 那条）。
+1. **你写草稿，然后停。闸门是人的**——人改过并确认才算通过。模型写完自己判通过，这一段就白跑了。草稿落 `docs/design/tmp/<spec-slug>/imagine/direction-note.md`，开头一行写明第几轮、日期、这一轮覆盖哪几块。**同时摆出哪几节是模型代填的**（见 §7 那条）。
 2. **跑校验**：
 
    ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "$(git rev-parse --show-toplevel)/.tmp/uiux-imagine/<spec-slug>/direction-note.md"
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "$(git rev-parse --show-toplevel)/docs/design/tmp/<spec-slug>/imagine/direction-note.md"
    ```
 
    **缺任一节（含有标题没正文）、或选中变种的构成清单缺项，就失败；失败就不交给 refine**——先补齐再跑一次。
-3. **方向说明是交给 refine 的中间产物，不写进 spec。** 它住在 `.tmp/uiux-imagine/<spec-slug>/`，refine 冻结后连同 refine 的临时件一起删。spec 这一段一个字不动，状态**仍留在 `设计中`**——收敛那一段冻结时也不翻，翻成 `在飞` 是 `to-ticket` 切完工单时的事。**这是唯一一份**：第二轮发散（重开一部分）直接改写这份文件，不另起一份，refine 读到的永远是最新一轮。
+3. **方向说明是交给 refine 的中间产物，不写进 spec。** 它住在 `docs/design/tmp/<spec-slug>/imagine/`，refine 冻结后清掉这个目录（画布与冻结记录留在同级的 `canvas/`，等归档）。spec 这一段一个字不动，状态**仍留在 `设计中`**——收敛那一段冻结时也不翻，翻成 `在飞` 是 `to-ticket` 切完工单时的事。**这是唯一一份**：第二轮发散（重开一部分）直接改写这份文件，不另起一份，refine 读到的永远是最新一轮。
 4. **清掉渲染物。** 对比页、抓来的组件与 CSS、style tile，以及为它们起的两个本地服务器（静态的、接收抓取的）。方向说明留着。清之前问人一句要不要再看一遍。**主动提示，不要等人想起来**——它们已经完成了自己的工作（激发过人的反应），留着只会让下一段误以为它们是真值。
 5. **告诉人下一步是 `/idea-loop:uiux-refine`，就在这个会话里调，不用 `/clear`。** refine 会另起一个专职的 designer agent，它的上下文里没有这一段的变种和半成品——「全新上下文」由 agent 天然提供，人不用清掉这里的讨论。同时告诉人两件事：designer 的输入是那份方向说明（加上目标项目的 `DESIGN.md` / `PRODUCT.md`），**方向信息只住在信里**——人想补一句关于方向的话，说明信写漏了，先补进信里，不要让它只活在对话中；**执行层的要求**（某个状态还要画、某条线太重）可以直接在调用 refine 时说，refine 照收。
 

@@ -116,11 +116,12 @@ excalidrawer 目前不支持图片节点，所以用脚本拼。**这是唯一�
 - `circles` 用截图的**原始像素坐标**（圆心 x、y，半径 r），脚本按 `scale` 换算。
 - `trigger` 写在指向这一步的箭头上；一行的第一步没有箭头，除非这一行是分支（`branchFrom`），这时箭头从分叉的那一步拐下来。
 - `connected: false` 的行不画箭头，必须带 `label`。
+- `state`（可选，每一步一个）：这一步展示的档案状态名，形态见下面「放哪」。
 
 运行：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png
+node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archive <仓库根> [--delta <spec-slug>]]
 ```
 
 脚本先校验（不合规就退出码 2，逐条列出问题），再生成一个自包含的 HTML（截图内联），用目标项目的 playwright 截成 PNG。目标项目解析不到 playwright 时，脚本只写出 `out.html`，截图改用 Playwright MCP：它**不开 `file:` 地址**，所以在 HTML 所在目录起一个静态服务器（`python3 -m http.server <port>`），打开 `http://127.0.0.1:<port>/out.html`，等 `document.body.dataset.ready === "1"`，对 `#flow` 截图，截完关掉服务器。MCP 只能往工作区里写文件，截图先存进工作区再挪到目标位置。
@@ -128,7 +129,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png
 ### 放哪
 
 - **问题图**（§1）：跟复现截图一起进 raw 桶。
-- **设计图**（§5 前端交互）：从冻结画布派生，跟画布放在一起，`docs/design/<spec-slug>/assets/flows/flow-<n>-<slug>.png`，JSON 和截图源放在 `assets/flows/src/`，画布改了能重新生成。spec 里用相对路径引用。
+- **设计图**（§5 前端交互）：从冻结画布派生，跟画布放在一起，`docs/design/tmp/<spec-slug>/canvas/flows/flow-<n>-<page>--<state>.png`，JSON 和截图源放在 `flows/src/`，画布改了能重新生成。**文件名里的 `<page>--<state>` 是这张图第一格的档案状态名**，归档脚本靠它判断图属于哪个页面；`<n>` 是这份 spec 里的序号。spec 里用相对路径引用。`tmp/` 不进 git，所以这条链接在 PR 里是断的，直到归档：归档脚本把图挪进 `prod/pages/<page>/assets/flows/`，同时把 spec 里指向它们的链接改写成新路径。
+- **每一格对回档案里的状态**：JSON 里每一步可以带 `state`（档案里的状态名，如 `cookbook--search-loading`），指向 `delta/` 里那个状态文件。脚本把它印在截图下的小字里、写进 HTML 的 `data-state`，并在 PNG 旁多存一份同名的 `.states.json`（哪一行哪一步是哪个状态）。输出文件按 `flow-<n>-…` 起名时，脚本要求名字就是 `flow-<n>-<第一格的状态名>.png`，对不上退出码 2；别的名字（问题图等）不受限。带 `--archive <仓库根> --delta <spec-slug>` 时，脚本还会核对每个 id 在档案（叠上这个需求的 `delta/`）里是否存在，不存在就退出码 2。不带 `state` 时行为和输出都不变——问题图、没有档案的项目照旧。
 
 ### 设计冻结之前
 

@@ -15,7 +15,8 @@
  * That is the falsifiable half of "缺任一节 → 收工校验失败".
  *
  * The level is not pinned to `##` on purpose: the note usually sits at `##` in its own file under
- * <worktree>/.tmp/uiux-imagine/<spec-slug>/, but a note quoted one level deeper elsewhere checks the same.
+ * <repo>/docs/design/tmp/<spec-slug>/imagine/, but a note quoted one level deeper elsewhere checks the same.
+ * The CLI takes any file path; where the note lives is the skill's business, not this check's.
  *
  * Pure: no browser, no model, no clock. The CLI at the bottom is the only thing that reads a file.
  */
