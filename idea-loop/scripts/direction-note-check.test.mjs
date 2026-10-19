@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkDirectionNote, checkComposition, SECTIONS, COMPOSITION } from './direction-note-check.mjs';
+import { checkDirectionNote, checkComposition, SECTIONS, COMPOSITION, PROVENANCE } from './direction-note-check.mjs';
 
-/** The composition list a chosen variant carries inside 「变种裁决」. */
+/** The composition list a chosen variant carries inside 「变种裁决」; every item ends in a provenance marker. */
 const composition = (skip = []) =>
-  ['  **构成**（B）：', ...COMPOSITION.filter((c) => !skip.includes(c)).map((c) => `  - ${c}：${c === '颜色' ? '待打磨' : `${c} 的写法`}`)].join('\n');
+  ['  **构成**（B）：', ...COMPOSITION.filter((c) => !skip.includes(c)).map((c) => `  - ${c}：${c === '颜色' ? '待打磨' : `${c} 的写法`}（${c === '指向' ? '模型代填' : '人选定'}）`)].join('\n');
 
 const VERDICT = `- **B「对话气泡」** —— 赌的是说明贴着按钮出现。**选中**。\n${composition()}\n- **A「顶部横幅」** —— **落选**。`;
 
@@ -115,7 +115,7 @@ test('「待打磨」 is a legal value — parked, not silently skipped', () => 
 });
 
 test('an item with nothing after the colon counts as missing', () => {
-  const errors = checkComposition(composition().replace('指向：指向 的写法', '指向：'));
+  const errors = checkComposition(composition().replace('指向：指向 的写法（模型代填）', '指向：'));
   assert.ok(errors.some((e) => e.includes('指向')));
 });
 
@@ -123,4 +123,43 @@ test('every composition block is checked, not just the first', () => {
   const errors = checkComposition(`${composition()}\n- **C** —— **选中**。\n${composition(['颜色'])}`);
   assert.equal(errors.length, 1);
   assert.ok(errors[0].startsWith('第 2 份'));
+});
+
+for (const marker of PROVENANCE) {
+  test(`an item ending in （${marker}） is accepted`, () => {
+    assert.deepEqual(checkComposition(composition().replace('（模型代填）', `（${marker}）`)), []);
+  });
+}
+
+for (const item of COMPOSITION) {
+  test(`「${item}」 without a provenance marker fails and names it`, () => {
+    const bare = composition().replace(new RegExp(`(${item}：[^\\n]*?)（(?:人选定|模型代填)）`), '$1');
+    const errors = checkComposition(`- **B** —— **选中**。\n${bare}`);
+    assert.equal(errors.length, 1);
+    assert.ok(errors[0].includes('缺来源标记') && errors[0].includes(item));
+  });
+}
+
+test('a marker that is neither 人选定 nor 模型代填 fails and names the item', () => {
+  const errors = checkComposition(composition().replace('指向 的写法（模型代填）', '指向 的写法（待定）'));
+  assert.equal(errors.length, 1);
+  assert.ok(errors[0].includes('来源标记不对') && errors[0].includes('指向（待定）'));
+});
+
+test('「待打磨」 without a marker fails too — parking is also someone\'s call', () => {
+  const errors = checkComposition(composition().replace('颜色：待打磨（人选定）', '颜色：待打磨'));
+  assert.equal(errors.length, 1);
+  assert.ok(errors[0].includes('颜色'));
+});
+
+test('a marker in the middle of the line does not count — it goes at the end', () => {
+  const errors = checkComposition(composition().replace('指向：指向 的写法（模型代填）', '指向：（模型代填）指向 的写法'));
+  assert.ok(errors.some((e) => e.includes('缺来源标记') && e.includes('指向')));
+});
+
+test('a note whose composition list lacks markers is not a valid note', () => {
+  const bare = VERDICT.replace(/（(?:人选定|模型代填)）/g, '');
+  const r = checkDirectionNote(note({ 变种裁决: bare }));
+  assert.equal(r.valid, false);
+  assert.ok(r.errors.some((e) => e.includes('缺来源标记')));
 });
