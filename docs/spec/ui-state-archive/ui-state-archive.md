@@ -4,7 +4,7 @@ status: 审核中
 tags: [idea-loop, design, ui-archive, dreaming]
 summary: docs/design 分 tmp / prod，按页面维护线上 UI 状态图，设计与验证共用
 related: ["[[0002-design-loop-v2-imagine-refine]]"]
-issues: [28]
+issues: [28, 48]
 ---
 
 # 线上 UI 状态档案：docs/design 分 tmp / prod，设计与验证共用一张状态图
