@@ -29,8 +29,8 @@ an unsettled layout wastes both stages.
 - **`references/design/motion-spec.md` is the motion law** (read at Setup): duration/easing **tokens**
   (never invented numbers), the **restraint budget** (≤1 delight moment, ≤3 simultaneous
   entrances, stagger 40–80ms, zero ambient loops in-app), mandatory reduced-motion, the in-app
-  **motion precedent library** (in the project's DESIGN.md — preferred patterns admitted through
-  `design-modeling`, not a closed whitelist) vs the marketing register, and the **freezable-timeline** verification
+  **motion whitelist** (the project's DESIGN.md Motion chapter — global principles and bans — when it
+  has one, else the plugin's built-in default whitelist in motion-spec §7) vs the marketing register, and the **freezable-timeline** verification
   convention.
 - **Every animation earns a one-sentence reason** tied to the concept: feedback, continuity, or
   attention (spec §1). "It looked cool" is not a reason — drop it.
@@ -47,12 +47,11 @@ an unsettled layout wastes both stages.
 1. **`references/design/design-core.md` + `references/design/motion-spec.md` (this plugin) — FIRST.** The core
    carries the register dials + close-out protocol; the spec carries the motion law.
 2. The target project root's `DESIGN.md` — **if present** — for the
-   project's in-app motion precedent library (e.g. sliding indicator, highlight reveal, hover
-   lift, crossfade, clean connectors, processing shimmer; new patterns are admitted through
-   `design-modeling`) vs the livelier marketing register, and the project's
-   house motion tokens (e.g. `ease-out` cubic-bezier(0.22,1,0.36,1), tab-indicator spring).
-   If the project has no `DESIGN.md`, use the motion-spec tokens as the default law, note it,
-   and suggest creating one through `design-modeling` — never abort over a missing doc.
+   project's Motion chapter (global principles, bans, house duration/easing tokens — it holds no list
+   of specific animations) vs the livelier marketing register. With no Motion chapter, use the
+   motion-spec §7 default whitelist. If the project has no `DESIGN.md`, use the motion-spec tokens
+   as the default law, note it, and suggest running `uiux-imagine` (no live UI) or `dreaming`
+   (live UI) to create one — never abort over a missing doc.
 3. The sibling shipped components whose interactions you must match or extend.
 
 ## The loop (A build · B gates · C human sign-off · D React)
@@ -117,10 +116,11 @@ browser. Their feedback is the only switch that advances. Read a *cluster* of fi
 rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
-passed the gates is written as a candidate in the freeze record's `## 设计法候选` section and handed
-to `design-modeling`, where the human decides whether it joins the project's motion precedents —
-that IS the admission process. A new pattern shipping silently, outside that path, is the failure
-mode.
+passed the gates is written as a candidate in the freeze record's `## 设计法候选` section
+(`references/design-md.md` §13) — the rule behind it, shaped to join the Motion chapter as a global
+principle; the specific parameters stay in the freeze record. This protocol never writes
+`DESIGN.md`; `dreaming` puts the candidate to the human — that IS the admission process. A new
+pattern shipping with no candidate is the failure mode.
 
 ### D · Port to React (final, only after sign-off)
 > **The port mechanics are not this protocol's.** `references/ui-implementation-standard.md`
@@ -146,7 +146,7 @@ CLAUDE.md workflow, if it defines one):
 Soft preferences → surface and ASK before deviating. Hard floors never relax: a11y (incl.
 reduced-motion is non-optional), the restraint budget, and the target project's brand core
 (whatever its DESIGN.md names — typically the single accent, a retired previous identity, the
-motion whitelist, and the selection treatment).
+motion principles and bans, and the selection treatment).
 
 ## What this protocol is NOT
 - Not for designing the static visual/layout — that's `static-ui-protocol` (run it first).

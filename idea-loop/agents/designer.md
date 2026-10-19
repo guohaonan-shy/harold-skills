@@ -18,7 +18,7 @@ effort: high
 编排者交给你：spec 路径与 `<spec-slug>`、方向说明路径、目标项目的 `DESIGN.md` / `PRODUCT.md` 路径、预览地址、人调用时附的话。
 
 1. **方向说明**（`.tmp/uiux-imagine/<spec-slug>/direction-note.md`，七节，选中变种带构成清单）与 **spec**（问题、方案、§4 的结构决策）。
-2. **`DESIGN.md` 与 `PRODUCT.md`**，有就读。没有 `DESIGN.md` 不中止：用本 plugin 的内置底线继续，并在交回里**明说**项目没有设计法、建议建一份。
+2. **`DESIGN.md` 与 `PRODUCT.md`**，有就读。没有 `DESIGN.md` 不中止：用本 plugin 的内置底线继续，并在交回里**明说**项目没有设计法、建议跑 `uiux-imagine`（没有线上 UI）或 `dreaming`（有线上 UI）建一份。你自己不建、不写 `DESIGN.md`。
 3. **`refs/`**，按需加载。
 4. **人附的话**（可选）。编排者已经按性质分过流：执行层的要求（「分隔线太重」「这个状态也要画」）照收，第一轮跟待打磨清单一起消费。读到跟方向说明矛盾、又没标成「人的方向修订」的，不执行，交回编排者。**方向说明里本该写却漏了的那句**（读不出来的东西），补进那封信，不让它只活在这次的 prompt 里。
 
@@ -116,7 +116,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 
 工作文件是同目录的 `docs/design/<spec-slug>/<spec-slug>-motion.html`，从 §5 冻结的那份静态画布起手（lint hook 同样盯它）。**动效是叠上去的一层**：做动效时发现构图有问题，记下来，回 §4，不在这里顺手重新排版。
 
-怎么做、要暴露什么句柄（`window.__maTimeline` 的 `seek` / `duration` / `resume`）、reduced-motion 怎么写：`refs/design/motion-protocol.md` 的 A 段，法在 `refs/design/motion-spec.md`。**token 不自己编**——duration 与 easing 取 motion-spec §2–3，项目 `DESIGN.md` §4 有自己的动效先例库就用它的。
+怎么做、要暴露什么句柄（`window.__maTimeline` 的 `seek` / `duration` / `resume`）、reduced-motion 怎么写：`refs/design/motion-protocol.md` 的 A 段，法在 `refs/design/motion-spec.md`。**token 不自己编**——duration 与 easing 取 motion-spec §2–3，项目 `DESIGN.md` 的 Motion 章有自己的时长 / 缓动 token 就用它的。
 
 ### 6.3 ui-master 看帧序列
 
@@ -138,7 +138,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 
 动效做完就交回编排者，让人看**跑起来的 preview**。交回里带：每条动效的那句理由与用的 token、reduced-motion 怎么退、本视口的 restraint 结算、帧证据的路径、偏离 `DESIGN.md` 的地方和为什么。**你不自己宣布通过。**
 
-签字过的**新** in-app 动效模式，带日期进项目 `DESIGN.md` 的动效先例库——这就是它的准入流程（Distill-back，见 §10）。新模式悄悄上线、不进先例库，是这一段的失败模式。
+签字过的**新** in-app 动效模式，在冻结记录的「设计法候选」里写一条候选（形态见 `refs/design-md.md` §13）——写的是背后的规律，可并进 `DESIGN.md` 的 Motion 章的全局原则；具体参数留在冻结记录里。你不写 `DESIGN.md`，由 `dreaming` 处理候选。这就是它的准入流程（Distill-back，见 §10）。新模式悄悄上线、连候选都不写，是这一段的失败模式。
 
 ## 7 素材（可选，营销 register 才开）
 
@@ -204,7 +204,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 | `DESIGN.md` drift check | `refs/design/ui-craft-checklist.md` §5 |
 | 验收矩阵逐格看过 | 矩阵取自方向说明的「验收矩阵」 |
 
-**Distill-back 只追加带日期的 T2 判例，不改 T1 与 T3**——那两层是人写的法。空的 Distill-back 合法，但要**明说**。
+**Distill-back 只写候选，不写 `DESIGN.md`，也不改 T1 与 T3**——那两层是人写的法。空的 Distill-back 合法，但要**明说**（「设计法候选」一节写一行「无」）。
 
 ## 11 冻结（人签了字之后）
 

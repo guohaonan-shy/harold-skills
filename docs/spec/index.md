@@ -3,7 +3,7 @@
 
 | 文件 | status | summary |
 |---|---|---|
-| [[design-md-write-entry]] | 审核中 | DESIGN.md 写入口收拢：删 design-modeling，写入标准成 reference，只留 uiux-imagine 与 dreaming 两处写 |
+| [[design-md-write-entry]] | 在飞 | DESIGN.md 写入口收拢：删 design-modeling，写入标准成 reference，只留 uiux-imagine 与 dreaming 两处写 |
 | [[dreaming-design-reconcile]] | 在飞 | dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏 |
 | [[pr-review-report-followups]] | 审核中 | issue 34 的五处 pr-review / to-spec 改动复现后都已落地，建议关闭 |
 | [[ui-state-archive]] | 审核中 | docs/design 分 tmp / prod，按页面维护线上 UI 状态图，设计与验证共用 |

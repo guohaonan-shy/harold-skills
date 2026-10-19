@@ -17,9 +17,8 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 | `/idea-loop:grill` | Idea | Design-tree interview in frontier rounds — facts are the agent's job, decisions are the human's |
 | `/idea-loop:prototype` | Idea | Throwaway code that answers ONE question — a clickable single-file HTML state model, or structurally distinct gray-box variants; the artifact and the verdict both land in the raw bucket |
 | `/idea-loop:to-spec` | Spec | Two modes. From a `grill`: lands the conversation as a raw transcript + one spec readable by humans as well as agents: problems shown with the reproduction evidence `grill` captured, user stories as one tree per scenario, implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams. From the backlog (`skills/to-spec/references/backlog-mode.md`): reproduces one module's backlog entries — or a batch of GitHub issues — first, splits them (design work, feature-sized work and groups over five each get their own spec), and lands drafts with one expected behaviour per problem. Both modes mark the backlog entries they cover as handed over. Figure rules: `references/spec-figures.md` |
-| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant) to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump |
+| `/idea-loop:uiux-imagine` | Design · diverge | Opens only the altitude that is still undecided, renders every round straight into a clickable comparison page with real motion in the built-in browser, at the lowest fidelity that tells the variants apart, and hands ONE direction note (with a composition list per chosen variant) to `uiux-refine` via the worktree's `.tmp/` — no critic, no scoring, no fidelity bump. When the project has no `DESIGN.md` at the start, it also writes the first one under `references/design-md.md`, after the human confirms the wording |
 | `/idea-loop:uiux-refine` | Design · converge | The skill is only the calling mechanism; the design work lives in two plugin agents. `idea-loop:designer` (latest Opus via the `opus` alias, effort high) rebuilds the canvas from the direction note alone and converges it through a critic/executor loop, judged each round by a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code), then a subtraction pass and an AI-tells pass; the calling session only orchestrates — shows each result in the built-in browser and relays the human's notes to the same designer. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
-| `/idea-loop:design-modeling` | Design · law | The only writer of the project's `DESIGN.md`: creates it (measured from live UI, or from the language `uiux-imagine` chose), distills the candidates freeze records leave behind through a five-layer admission table, and reconciles it against code — every write waits on the human, every write is linted by the official `@google/design.md` CLI |
 | `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching fresh `idea-loop:implementer`s in parallel along the `Blocked by` frontier (up to three at once by default, each in its own worktree; an `idea-loop:explorer` writes shared pointer-only notes first; one ticket → one commit the orchestrator fast-forwards onto the integration branch, then reclaims the worktree; TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file — and turns the PR ready once everything has landed |
 | `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, and writes the round's report, which the session shows the human and keeps in the review-loop file. The human rules in the session; fixes go back through the tickets and the implementer. On the human's word to merge, the review loop is archived to the PR as comments, then the PR merges |
@@ -54,7 +53,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `prototype`, `to-spec`, `design-modeling`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
+| `prototype`, `to-spec`, `to-ticket`, `implement`, `pr-review` | `grill`, `uiux-imagine`, `uiux-refine`, `dreaming` |
 
 `prototype` is model-invocable on purpose: `grill` calls it mid-interview, without
 leaving the session, the moment a frontier question cannot be settled in prose.
@@ -66,10 +65,11 @@ plateau, the sign-off — and wants a fresh window so it rebuilds from the direc
 note instead of continuing the diverge session it cannot see. `dreaming` proposes
 destructive disposals.
 
-`design-modeling` is model-invocable for the same reason `prototype` is: `uiux-imagine`
-hands it the language it just chose without leaving the session, while the chosen roles and the
-measured contrast are still in context. Being callable is not being unattended — it stops for
-the human before every write to `DESIGN.md`.
+The project's `DESIGN.md` is written from exactly two places, `uiux-imagine` (only when the
+project has none at the start) and `dreaming`; both read `references/design-md.md` and wait for the
+human to confirm the wording before every write. Everything else on the design side — `designer`'s
+motion sign-off, the Distill-back at the end of a freeze, an implementer meeting a value `DESIGN.md`
+lacks — only writes a *design-law candidate* for `dreaming` to process.
 
 The execution two were human-only until the caller-dispatch model landed: a ticket needs a
 context holding nothing but itself, and `/clear` is a human action. Dispatching a fresh agent
@@ -230,14 +230,13 @@ idea-loop/
 │   ├── to-spec/SKILL.md              # + references/backlog-mode.md — drafting specs from backlog entries
 │   ├── uiux-imagine/SKILL.md         # the divergent half — variants in, one direction note out
 │   ├── uiux-refine/SKILL.md          # the convergent half — only the calling mechanism; the work is in agents/
-│   ├── design-modeling/SKILL.md      # the only writer of the project's DESIGN.md — create / distill / reconcile
 │   ├── to-ticket/SKILL.md
 │   ├── implement/SKILL.md            # orchestrates a spec's tickets — the work is in agents/implementer.md
 │   ├── pr-review/SKILL.md            # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   └── dreaming/SKILL.md
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
-│   └── design-modeling.md            # design record of design-modeling
+│   └── design-modeling.md            # design record of the retired design-modeling skill — superseded by references/design-md.md, kept as history
 ├── scripts/
 │   ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
 │   ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
@@ -254,6 +253,7 @@ idea-loop/
 │   ├── design-md-hook.mjs            # PostToolUse entry: official @google/design.md lint on any DESIGN.md, exit 2 on an error
 │   ├── design-md-hook.test.mjs       # its tests, against a fake CLI
 │   ├── no-project-leak.test.mjs      # tripwire: skills/ and references/ carry no source-project names or examples
+│   ├── no-legacy-entry.test.mjs      # tripwire: no skill / agent / reference / hook / script names the retired design-modeling entry
 │   ├── glossary-check.mjs            # GLOSSARY.md format lint — single-file, zero-dep, so target-repo CI can curl it pinned
 │   ├── glossary-check.test.mjs       # its unit tests — one per rule, plus a well-formed baseline
 │   ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
@@ -284,6 +284,7 @@ idea-loop/
 └── references/
     ├── wiki-conventions.md           # the docs/ contract — directories, frontmatter, status enums
     ├── spec-status.md                # the spec state machine (who flips what, when), the backlog hand-over marks, and the issue status labels
+    ├── design-md.md                  # the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
     ├── glossary.md                   # GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
     ├── tdd.md                        # red→green loop, seams, mock boundary
     ├── ui-implementation-standard.md # UI tickets: canvas → component tree, per-stack notes, the verification loop
@@ -309,7 +310,7 @@ What came across:
 |---|---|
 | The taste/craft references | `references/design/` |
 | The two former design skills | `references/design/static-ui-protocol.md`, `references/design/motion-protocol.md` — demoted to on-demand protocols, same shape as the surface / module / component ones next to them |
-| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, content rules, candidate format: `skills/design-modeling/SKILL.md` |
+| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `references/design-md.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | `.mcp.json` (headless, isolated Playwright) |
 
@@ -327,6 +328,6 @@ step is running; the hooks are the only pieces that fire on their own. One fires
 back to the model.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
-the DESIGN.md-writing skill (its job is now `design-modeling`'s), the port-verification skill
+the DESIGN.md-writing skill (its rules are now `references/design-md.md`, written by `uiux-imagine` and `dreaming`), the port-verification skill
 (→ `references/ui-implementation-standard.md`, which generalized it past React), and the
 `wireframe-candidates` workflow (→ the structural-divergence audit `prototype` now runs).

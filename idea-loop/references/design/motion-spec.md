@@ -74,8 +74,8 @@ hidden tabs / headless renders; an a11y floor, not a preference).
 
 ## 7. The in-app whitelist vs marketing
 
-- **In-app**, motion comes from the project's whitelist (its DESIGN.md motion precedents). With
-  none declared, the default whitelist is: sliding tab/segment indicator · highlight reveal ·
+- **In-app**, motion comes from the project's whitelist (its DESIGN.md Motion chapter: global
+  principles and bans). With none declared, the default whitelist is: sliding tab/segment indicator · highlight reveal ·
   hover lift (~1px + shadow-md) · content crossfade/small rise · clean connectors. Anything beyond
   the whitelist is a DESIGN.md deviation — surface and ask.
 - **Marketing** may go bigger (beams, spotlight, tracing reveals, staggered scroll moments),
