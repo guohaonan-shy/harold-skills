@@ -2,6 +2,7 @@
 name: uiux-imagine
 description: 设计发散——人审完一份碰 UI 的 spec 后跑它，开工时把 spec 翻成「设计中」。在还没定下来的最高高度上出几个真正不同的变种，每轮直接渲染成内嵌浏览器里可点击、带真动效的对比页，人给方向性的话，调向到方向没有要补的了，准出一份方向说明交给 uiux-refine。不收敛、不打分、不提保真度。
 disable-model-invocation: true
+allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(npx -y @google/design.md@latest:*), Bash(git ls-files:*), Bash(git diff:*), Bash(git log:*), Bash(git show:*), AskUserQuestion
 ---
 
 # uiux-imagine
@@ -40,13 +41,13 @@ disable-model-invocation: true
 ## 2 语言高度是显式的
 
 - 项目**没有** `DESIGN.md` → 语言高度**自动打开**。
-- 项目**有** `DESIGN.md` → 默认不打开，要人**显式说"重探语言"**才打开。产物是一份**带日期的修订提案**，或者一条营销 register 分支；**要不要改 `DESIGN.md` 交给 `design-modeling`，由人决定**，不悄悄覆盖。打破路径依赖是一个显式决定，不是一次顺手的重构。
+- 项目**有** `DESIGN.md` → 默认不打开，要人**显式说"重探语言"**才打开。产物是**设计法候选**（每条写明要并进哪一章，形态见 `../../references/design-md.md` §13，写在冻结记录的「设计法候选」一节，等 `dreaming` 处理），或者一条营销 register 分支；**不改 `DESIGN.md`**，不悄悄覆盖。打破路径依赖是一个显式决定，不是一次顺手的重构。
 
 语言高度一旦打开，**一路降到 surface**，不许停在风格上：
 
 1. 出语言变种（style tile），人选；
-2. **选定配色之后、交给 `design-modeling` 之前，把每一对角色色的对比度实测一遍**——ground/ink、ground/accent、accent 上压白字，逐对算。不过线就调到过线为止，**把实测值写进 floor**。不测就写，等于把一条坏掉的 floor 立成法，后面每一段都按它执行；
-3. **在这个会话里调用 `design-modeling` 的新建模式**，把选定的语言交给它：色彩角色（各一句用途）、字体与字阶、形状语言、register、每一对角色色的实测对比度，有锚点就带上锚点路径。`DESIGN.md` 只有它能写——它起草、人确认后落笔，hook 跑官方 lint。不在这里自己写，也不换会话再交：选定的东西都还在上下文里；
+2. **选定配色之后、起草 `DESIGN.md` 之前，把每一对角色色的对比度实测一遍**——ground/ink、ground/accent、accent 上压白字，逐对算。不过线就调到过线为止，**把实测值写进 floor**。不测就写，等于把一条坏掉的 floor 立成法，后面每一段都按它执行；
+3. **开工时项目没有 `DESIGN.md`，第一份归你写**，不论有没有线上 UI。先读 `../../references/design-md.md`，照它的「新建」一节在这个会话里起草：有线上 UI 的从代码与真 DOM 量（一致 / 不一致 / 偶然三桶分开报，不一致的交人裁决）；没有的接选定的语言——色彩角色（各一句用途）、字体与字阶、形状语言、register、每一对角色色的实测对比度，有锚点就带上锚点路径。再照它的「一次写入怎么走」：摆给人确认措辞，**人确认后才落笔**，hook 跑官方 lint，收尾再跑一次 lint 与 diff。不换会话再写：选定的东西都还在上下文里；
 4. **再在结构或布局高度出一轮变种**。
 
 收工时方向说明描述的必须是**一个 surface**，不是一种风格。

@@ -23,14 +23,14 @@ idea-loop 插件里，判断「什么能进项目的 `DESIGN.md`、怎么写、�
 
 ## 验收标准
 
-- [ ] plugin 级 reference 存在，spec §4.1 表里每一行在它里面都有对应一节；定稿标准的 11 章（8 节 + 3 个扩展章）每章都有「定义 / 写什么 / 不写什么」；「明确不进的内容」、维护原则（整改优先于追加）、front matter 强制规则（影响渲染的属性必须进 token）、候选形态、单条蒸馏步骤、「谁写谁读」都在。
-- [ ] `design-modeling` 的 skill 目录已删；新绊线测试绿，且在任一 skill 里临时加一行 `design-modeling` 时变红（贴出红的那次输出）。
-- [ ] 插件的 skill、agent、reference 里搜「写 / 改 / 追加 / 落笔 `DESIGN.md`」的指令，只出现在 `uiux-imagine`（没有 `DESIGN.md` 时）和 reference 的「谁写」一节（指向 `dreaming`）；designer、静态 / 动效 / 组件 protocol、实现标准都指向候选。列出搜索命令和结果。
-- [ ] 插件里不再有「带日期进动效先例库」「追加带日期的 T2 判例」「`## Case Law` 追加判例」这类指令（eval 的存档与插件 `docs/` 的历史设计稿除外）。列出搜索结果。
-- [ ] `uiux-imagine` 的工具权限允许写 `DESIGN.md`，且仍是 `disable-model-invocation`。
-- [ ] README 与仓库 `CLAUDE.md` 里 idea-loop 的 skill 数是 10，没有把 `design-modeling` 写成现存 skill 的地方；插件版本号没变。
-- [ ] 每个改过的 SKILL.md 主体仍在 5000 字以内。
-- [ ] 插件的全量 `node --test` 套件全绿。
+- [x] plugin 级 reference 存在，spec §4.1 表里每一行在它里面都有对应一节；定稿标准的 11 章（8 节 + 3 个扩展章）每章都有「定义 / 写什么 / 不写什么」；「明确不进的内容」、维护原则（整改优先于追加）、front matter 强制规则（影响渲染的属性必须进 token）、候选形态、单条蒸馏步骤、「谁写谁读」都在。
+- [x] `design-modeling` 的 skill 目录已删；新绊线测试绿，且在任一 skill 里临时加一行 `design-modeling` 时变红（贴出红的那次输出）。
+- [x] 插件的 skill、agent、reference 里搜「写 / 改 / 追加 / 落笔 `DESIGN.md`」的指令，只出现在 `uiux-imagine`（没有 `DESIGN.md` 时）和 reference 的「谁写」一节（指向 `dreaming`）；designer、静态 / 动效 / 组件 protocol、实现标准都指向候选。列出搜索命令和结果。
+- [x] 插件里不再有「带日期进动效先例库」「追加带日期的 T2 判例」「`## Case Law` 追加判例」这类指令（eval 的存档与插件 `docs/` 的历史设计稿除外）。列出搜索结果。
+- [x] `uiux-imagine` 的工具权限允许写 `DESIGN.md`，且仍是 `disable-model-invocation`。
+- [x] README 与仓库 `CLAUDE.md` 里 idea-loop 的 skill 数是 10，没有把 `design-modeling` 写成现存 skill 的地方；插件版本号没变。
+- [x] 每个改过的 SKILL.md 主体仍在 5000 字以内。
+- [x] 插件的全量 `node --test` 套件全绿。
 
 ## 选中的存量回归
 

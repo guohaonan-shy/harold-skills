@@ -42,7 +42,7 @@ Then apply the expression framework at Surface altitude:
 - spend weight through area, order, grouping, above/below fold, and whitespace;
 - keep one dominant module per screen and at most five named groups.
 
-For a redesign or substantial new surface, offer concept A inside current T2 case law and concept B
+For a redesign or substantial new surface, offer concept A inside current T2 defaults and concept B
 that bends at least one named T2 preference. Name the bend, benefit, and cost. T1 floors and T3 bans
 remain fixed.
 
