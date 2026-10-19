@@ -1,9 +1,9 @@
 ---
 type: spec
-status: 审核中
+status: 在飞
 tags: [idea-loop, design, design-md]
 summary: DESIGN.md 写入口收拢：删 design-modeling，写入标准成 reference，只留 uiux-imagine 与 dreaming 两处写
-related: ["[[ui-state-archive]]", "[[dreaming-design-reconcile]]"]
+related: ["[[ui-state-archive]]", "[[dreaming-design-reconcile]]", "[[2026-10-19-design-md-standard]]"]
 issues: [49]
 ---
 
@@ -240,4 +240,5 @@ plugin 级 reference 一份（暂定 `references/design-md.md`），把 `design-
 - #28：父 issue；#49：本 spec 覆盖的子 issue。
 - [[ui-state-archive]]：候选与「决定」的住处、档案对象的定义；它 §1.4 的事实错误见本 spec §4.8。
 - [[dreaming-design-reconcile]]：`dreaming` 读本 spec 交付的 reference 来写 `DESIGN.md`。
-- 定稿的 DESIGN.md 写入标准与调研依据：在开这三个会话的审核会话的共享笔记里（`design-md-standard.md`、`design-md-survey.md`），reference 照它写。
+- [[2026-10-19-design-md-standard]]：定稿的 DESIGN.md 写入标准（Harold 已认可），reference 照它写。
+- [[2026-10-17-design-md-survey]]：调研依据（Google 规范 + VoltAgent 84 份样本，含对 Toeflair DESIGN.md 的对照）。

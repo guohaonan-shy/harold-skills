@@ -7,3 +7,5 @@
 | [[2026-09-11-design-loop-prototype-critic]] | conversation | 2026-09-11 | grill —— 设计工作流 v2：prototype 进 grill、design 独立成阶段、评委收敛环 |
 | [[2026-09-11-aihero-prototype-skill]] | web | 2026-09-11 | aihero.dev —— /prototype skill（Matt Pocock） |
 | [[2026-09-11-lenny-ai-world-class-designer]] | web | 2026-09-11 | Lenny's Newsletter —— How to turn your AI into a world-class designer（Anshu Chimala） |
+| [[2026-10-17-design-md-survey]] | document | 2026-10-17 | DESIGN.md 写法调研（Google 规范 + VoltAgent 84 份样本） |
+| [[2026-10-19-design-md-standard]] | document | 2026-10-19 | DESIGN.md 写入标准（Harold 已认可） |
