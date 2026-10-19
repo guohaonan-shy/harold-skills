@@ -14,7 +14,7 @@
 > **2026-09-28 签字**：§2 新增 `design/<spec-slug>/` 层、§3 新增 `type: design`。冻结的设计从
 > raw 桶搬出来，作为实现之后的视觉真值维护在项目里，不跟 spec 一起删。
 >
-> **2026-10-19 修订（ui-state-archive，待 Harold 签字）**：§2 把 `design/<spec-slug>/` 换成 `design/tmp/` 与 `design/prod/` 两层，
+> **2026-10-19 签字**（ui-state-archive）：§2 把 `design/<spec-slug>/` 换成 `design/tmp/` 与 `design/prod/` 两层，
 > §2.1 去掉 imagine / refine 的 `.tmp/` 目录；§3 的 type 闭集加入五种设计档案对象；§5 补 `prod/index.md` 的契约（脚本生成）。
 > 起因是冻结的设计按 spec 命名、存了画布却没有"这个页面有哪些状态"的图，改成按页面记现状、按需求暂存过程。
 >
