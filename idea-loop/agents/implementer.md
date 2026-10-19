@@ -75,7 +75,7 @@ effort: high
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
   - **范围**：只写这张工单碰到的状态、边、组件文件，别的对象不碰。
   - **写法**：照 `refs/design-archive.md` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，不覆盖别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
-  - **自检**：以集成 worktree 当仓库根，跑 `node scripts/design-archive-check.mjs <集成 worktree> --delta <spec-slug>`，违规当场改。
+  - **自检**：以集成 worktree 当仓库根，跑 `node scripts/design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
 - **要进某个状态去复现或写测试时，先查档案**，不要自己摸路：`node scripts/design-archive-query.mjs <集成 worktree> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
 - **不写 `prod/`。** 它只由归档脚本写，归档在合并前由 pr-review 阶段做，不归你。
 

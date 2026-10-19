@@ -386,6 +386,19 @@ test('cli: --no-used-by judges a delta whose new components and motions have no 
   assert.equal(cli(writeRepo(broken), '--delta', SPEC_SLUG, '--no-used-by').status, 1);
 });
 
+test('cli: a new page that reuses an existing component fails without --no-used-by and passes with it', () => {
+  // the delta adds a page using RecipeCard, whose usedBy (written by the archive script, not by hand) still lists the old pages
+  const files = compliantFiles();
+  files[D('pages/history/history.md')] = `---\ntype: design-page\ntags: [history]\nsummary: 浏览历史\ncode: [src/pages/history.tsx]\nregions:\n  - { name: 历史卡片, component: "[[RecipeCard]]" }\n---\n\n# 浏览历史\n\n页面描述。\n\n## 决定\n\n无\n\n## 设计法候选\n\n无\n`;
+  files[D('pages/history/history--list.md')] = `---\ntype: design-state\ntags: [history]\nsummary: 浏览历史默认一屏\npage: "[[history]]"\nentry:\n  url: /history\n  preconditions: { account: 已登录的测试账号, data: 至少 1 条浏览记录 }\ncomponents: ["[[RecipeCard]]"]\nedges: []\n---\n\n## 这一屏\n\n历史卡片列表。\n\n## 应看到什么\n\n- 看到历史卡片\n`;
+  const root = writeRepo(files);
+  const strict = cli(root, '--delta', SPEC_SLUG);
+  assert.equal(strict.status, 1);
+  assert.match(strict.stdout, /规则 6.*RecipeCard.*usedBy/);
+  const lenient = cli(root, '--delta', SPEC_SLUG, '--no-used-by');
+  assert.equal(lenient.status, 0, lenient.stdout);
+});
+
 test('cli: usage errors and a directory that is not a repository root exit 2', () => {
   assert.equal(spawnSync('node', [CLI], { encoding: 'utf8' }).status, 2);
   assert.equal(cli(writeRepo({ 'README.md': 'x' })).status, 2);

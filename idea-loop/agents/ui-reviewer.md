@@ -38,7 +38,7 @@ effort: high
    node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <集成 worktree> diff <spec-slug>
    ```
 
-   `added` / `changed` / `removed` 就是这次要核的清单。`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑一遍 `design-archive-check.mjs <集成 worktree> --delta <spec-slug>`，有违规直接记进交回（归档会被它拦下，不在这里替人改档案的结构）。
+   `added` / `changed` / `removed` 就是这次要核的清单。`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑一遍 `design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 要等归档脚本重算，这一步不判它），有违规直接记进交回（归档会被它拦下，不在这里替人改档案的结构）。
 3. **起开发服务器**：按 `refs/worktree.md` §2 找目标仓库声明的准备命令，用分到的端口起（对账模式：在 dreaming 的 worktree 里起，它是从 `origin/main` 新切的，跑的是 main 的代码；服务已经由别人起好了的，先确认它跑的就是这个 worktree：`lsof -a -d cwd -p <监听端口的进程号>` 看它的工作目录在不在 dreaming 的 worktree 下，不是就如实记「未完成」，别拿别处的代码当 main 判）。服务起不来、页面打不开，不要硬磨：交回时写明卡在哪，这一轮的 UI 审查记为「未完成」，**未完成不等于没问题**。交回前停掉服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
 4. **要用会话的 MCP 浏览器时先抢锁**（`scripts/browser-lock.mjs acquire <集成 worktree>/.tmp/implement/<spec-slug>/browser.lock --owner ui-review`，用完 `browser_close` 再 `release`；对账模式用输入里给的锁目录，`--owner ui-reconcile`）。自己起 chromium 的脚本（`ui-measure.mjs`、拼流程图、录动图）不用抢。
 5. **逐个状态进去**：对 `added` 与 `changed` 里每个状态对象，以及 `changed` 里改了边的状态（对账模式：对输入里的每个状态 id，不带 `--delta`）：
@@ -87,7 +87,7 @@ effort: high
 
 - 任何新增或改动的状态进不去而档案又没解释、任何新增或改动的边走不通、任何冻结画布比对不过，**都不通过**。
 - 不通过就**不写**：不动 `delta/`，不拍精简矩阵。把失败写成一份 `.tmp/pr-review/<PR 号>/archive/failed.json`（形状同 §3 的发现文件，每条带取自实现的截图），交回 `status: failed`，一句话说最要紧的是什么。编排者会把它们带回 review loop。
-- `design-archive-check.mjs … --delta` 有违规，同样不通过（归档脚本会拒绝它）：违规逐条写进 `failed.json`，不替人改档案的结构。
+- `design-archive-check.mjs … --delta … --no-used-by` 有违规，同样不通过（归档脚本会拒绝它）：违规逐条写进 `failed.json`，不替人改档案的结构。
 - 只剩标了「人看」的格、没有失败，算通过。
 
 **第二步：通过之后写**（都写在 `docs/design/tmp/<spec-slug>/delta/` 里，与 `prod/` 同构）：
@@ -95,7 +95,7 @@ effort: high
 1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`；每个有动效的边或节点录一张 GIF（`refs/evidence.md` §4），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
 2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
 3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、但还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `refs/design-md.md` §13 的形状。**拿不准的不替人编**，留在草稿的「待你定」里。
-4. **自检**：`design-archive-check.mjs <集成 worktree> --delta <spec-slug>` 与 `design-archive-write.mjs <集成 worktree> <spec-slug> --dry-run` 都要通过（后者只校验、不写）。**绝不跑不带 `--dry-run` 的归档脚本**：那是编排者在人批过之后的事。
+4. **自检**：`design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 只由归档脚本重算，这里不判）与 `design-archive-write.mjs <集成 worktree> <spec-slug> --dry-run` 都要通过（后者只校验、不写）。**绝不跑不带 `--dry-run` 的归档脚本**：那是编排者在人批过之后的事。
 
 **第三步：写草稿给人看**，存成 `.tmp/pr-review/<PR 号>/archive/draft.md`。读的人是拍板的人，所以按他关心的写：
 
