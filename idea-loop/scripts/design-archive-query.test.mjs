@@ -559,6 +559,20 @@ test('page: the sections of the entry state, each with its edges out and in, its
   assert.equal(by.hero.screenshotExists, false);
 });
 
+test('page: a section declared `unstable` carries the reason, the others carry null; refs shows it on the target only when set', () => {
+  const files = marketingFiles();
+  files[MKT_ENTRY_FILE] = files[MKT_ENTRY_FILE].replace(
+    '{ id: hero, locate: { role: heading, name: 一个价格，没有隐藏项 } }',
+    '{ id: hero, locate: { role: heading, name: 一个价格，没有隐藏项 }, unstable: 首屏演示是脚本驱动的循环动画 }',
+  );
+  const a = mktArchive(files);
+  const by = Object.fromEntries(queryPage(a, MKT).sections.map((x) => [x.id.split('#')[1], x]));
+  assert.equal(by.hero.unstable, '首屏演示是脚本驱动的循环动画');
+  assert.equal(by.footer.unstable, null);
+  assert.equal(queryRefs(a, `${MKT}#hero`).target.unstable, '首屏演示是脚本驱动的循环动画');
+  assert.equal('unstable' in queryRefs(a, `${MKT}#footer`).target, false);
+});
+
 test("page: edges carry fromSection and toSection, so do a state's way in and a journey's steps", () => {
   const a = mktArchive();
   const p = queryPage(a, MKT);

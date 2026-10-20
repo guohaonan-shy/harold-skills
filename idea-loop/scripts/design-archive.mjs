@@ -466,7 +466,19 @@ export function sectionLocate(locate) {
   return null;
 }
 
-/** The `sections` a state declares, normalised and in page order: `{ index, id, type, qualifier, idError, locate, by }`. */
+/**
+ * A section's `unstable`: the reason a section keeps changing between two shots (a script-driven loop, a
+ * carousel). `{ reason }` for a non-empty string, `{ reason: null }` for absent / null / false (stable),
+ * `{ reason: null, invalid: true }` for anything else (a bare `true`, an empty string, a number, a list):
+ * the reason is the point of the field, so a flag without one is a shape error the check reports.
+ */
+function unstableOf(value) {
+  if (value == null || value === false) return { reason: null };
+  if (typeof value === 'string' && value.trim()) return { reason: value.trim() };
+  return { reason: null, invalid: true };
+}
+
+/** The `sections` a state declares, normalised and in page order: `{ index, id, type, qualifier, idError, locate, by, unstable, unstableInvalid }`. */
 export function sectionsOfState(state) {
   const raw = state.fm.sections;
   if (!Array.isArray(raw)) return [];
@@ -482,6 +494,8 @@ export function sectionsOfState(state) {
       idError: parsed.error ?? null,
       locate: it.locate ?? null,
       by: sectionLocate(it.locate),
+      unstable: unstableOf(it.unstable).reason,
+      unstableInvalid: unstableOf(it.unstable).invalid === true,
       state: state.id,
     };
   });

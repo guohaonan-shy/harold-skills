@@ -200,6 +200,7 @@ function sectionView(archive, pageId, entry, x) {
     qualifier: x.qualifier,
     locate: x.locate,
     locateBy: x.by?.kind ?? null,
+    unstable: x.unstable,
     declaredBy: entry.id,
     outgoing: archive.edges.filter((e) => e.fromSection === ref).map(edgeView),
     incoming: archive.edges.filter((e) => e.toSection === ref).map(edgeView),
@@ -463,7 +464,7 @@ function refsOfSection(archive, ref) {
   );
   return {
     target: clean({
-      id: view.id, kind: 'section', page: pageId, type: view.type, qualifier: view.qualifier, locate: view.locate, declaredBy: view.declaredBy,
+      id: view.id, kind: 'section', page: pageId, type: view.type, qualifier: view.qualifier, locate: view.locate, unstable: view.unstable, declaredBy: view.declaredBy,
     }),
     matchedBy: 'section',
     outgoing: view.outgoing,

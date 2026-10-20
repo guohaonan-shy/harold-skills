@@ -321,6 +321,9 @@ function sectionRules(archive, v) {
         v(7, s.file, `${at}.locate`, 'locate 只能是 { role: heading, name: <完整标题> }、{ role: banner } / { role: contentinfo }、{ position: N } 三种之一');
       }
     }
+    for (const x of list) {
+      if (x.unstableInvalid) v(7, s.file, `sections[${x.index}].unstable`, `unstable 要写原因（一句话：哪个东西在动），分段「${x.id ?? ''}」写的不是非空字符串；不是不稳定的段就不写这个字段`);
+    }
     // the same type more than once: every one of them carries a qualifier
     const byType = new Map();
     for (const x of list) if (x.type) byType.set(x.type, [...(byType.get(x.type) ?? []), x]);

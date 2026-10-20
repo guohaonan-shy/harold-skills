@@ -46,6 +46,9 @@ const FREEZE_CSS = `*, *::before, *::after {
   caret-color: transparent !important; scroll-behavior: auto !important;
 }`;
 
+/** How long after the picture the second look is taken: longer than the pause of a typical loop, short enough not to drag the run. */
+const SETTLE_MS = 1000;
+
 /**
  * Which elements are the page's top-level blocks. Pure over an adapter, so it is unit-tested over a fake
  * tree and also serialised (`toString()`) into the page, where the adapter is the real DOM. It has to
@@ -168,9 +171,16 @@ function collectInPage(selectBlocks) {
       return { id: i, level: levelOf(el), name: nameOf(el), ...box(el), block: block ? Number(block.getAttribute('data-ds-block')) : -1, landmark: landmarkOf(el) };
     });
 
+  // the embedded pages, where they sit: what the second look says moved is matched to them
+  const iframes = [...document.querySelectorAll('iframe')].filter(shown).map((el) => {
+    const r = el.getBoundingClientRect();
+    return { src: el.getAttribute('src') || '', left: px(r.left + window.scrollX), right: px(r.right + window.scrollX), ...box(el) };
+  });
+
   const info = document.querySelector('[data-ds-lm="contentinfo"]');
   return {
     pageSize: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+    iframes,
     blocks: blocks.map(box),
     contentinfo: info ? box(info) : null,
     clickables,
@@ -193,7 +203,9 @@ function collectInPage(selectBlocks) {
  * one the browser refuses (gone, navigating away). `watch` also freezes a frame the moment it navigates, for
  * the ones that load after this pass; call it again later for the ones that slipped in between.
  * The style goes in once per document (an element with a fixed id), whatever number of passes.
- * @returns {Promise<{ url: string, frozen: boolean, why?: string }[]>} one entry per frame, the page first
+ * `injected` says only that the style went in. It does not say the page holds still: a loop driven by a
+ * script ignores the style, and what actually stands still is found by looking twice (`movingSections`).
+ * @returns {Promise<{ url: string, injected: boolean, why?: string }[]>} one entry per frame, the page first
  */
 export async function freezeFrames(page, css, { watch = false } = {}) {
   const originOf = (u) => {
@@ -214,12 +226,12 @@ export async function freezeFrames(page, css, { watch = false } = {}) {
     const url = frame.url();
     const here = originOf(page.url());
     const same = frame === page.mainFrame() || url.startsWith('about:') || (here !== null && originOf(url) === here);
-    if (!same) return { url, frozen: false, why: '跨域的内嵌页面，样式注入不进去' };
+    if (!same) return { url, injected: false, why: '跨域的内嵌页面，样式注入不进去' };
     try {
       await frame.evaluate(inject, css);
-      return { url, frozen: true };
+      return { url, injected: true };
     } catch (e) {
-      return { url, frozen: false, why: String((e && e.message) || e).split('\n')[0].slice(0, 120) };
+      return { url, injected: false, why: String((e && e.message) || e).split('\n')[0].slice(0, 120) };
     }
   };
   if (watch) page.on('framenavigated', (f) => { if (f !== page.mainFrame()) one(f); });
@@ -229,11 +241,177 @@ export async function freezeFrames(page, css, { watch = false } = {}) {
 }
 
 /**
+ * Which sections still change between two shots of the whole page taken a beat apart, with motion switched
+ * off. Switching animations off does not make a page hold still (a loop driven by a script, a carousel on
+ * a timer), so this is what says whether a section can be compared pixel for pixel later.
+ *
+ * `a` and `b` are decoded pictures `{ width, height, data }` (RGBA); `ranges` are `computeRanges`' (CSS
+ * pixels); `scale` is picture pixels per CSS pixel. A pixel counts as changed when some channel differs by
+ * more than `channel`; a section is moving when at least `minPixels` of its pixels changed. Rows only one
+ * of the two pictures has (the page grew) count as changed; pictures of different widths make every
+ * section moving.
+ *
+ * Stands alone: unit-tested here, and written into the page-side code, where the pictures come from a canvas.
+ *
+ * @returns {{ id: string, ref: string, changedPixels: number|null, ratio: number|null, box: {x0, y0, x1, y1}|null, reason?: string }[]}
+ *   `box` is the bounding box of what changed, in CSS pixels of the page
+ */
+export function movingSections(a, b, ranges, opts = {}) {
+  const channel = opts.channel ?? 16;
+  const minPixels = opts.minPixels ?? 100;
+  const scale = opts.scale ?? 1;
+  if (a.width !== b.width) {
+    return ranges.map((r) => ({ id: r.id, ref: r.ref, changedPixels: null, ratio: null, box: null, reason: `两张图的尺寸不同（宽 ${a.width} 与 ${b.width}）` }));
+  }
+  const w = a.width;
+  const shared = Math.min(a.height, b.height);
+  const rows = Math.max(a.height, b.height);
+  const out = [];
+  for (const r of ranges) {
+    const y0 = Math.max(0, Math.round(r.start * scale));
+    const y1 = Math.min(rows, Math.round(r.end * scale));
+    if (y1 <= y0) continue;
+    let n = 0;
+    let minX = Infinity;
+    let maxX = -1;
+    let minY = Infinity;
+    let maxY = -1;
+    for (let y = y0; y < y1; y += 1) {
+      if (y >= shared) {
+        n += w;
+        minX = 0;
+        maxX = w - 1;
+        minY = Math.min(minY, y);
+        maxY = y;
+        continue;
+      }
+      for (let x = 0; x < w; x += 1) {
+        const i = (y * w + x) * 4;
+        if (Math.abs(a.data[i] - b.data[i]) > channel || Math.abs(a.data[i + 1] - b.data[i + 1]) > channel || Math.abs(a.data[i + 2] - b.data[i + 2]) > channel) {
+          n += 1;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (n < minPixels) continue;
+    out.push({
+      id: r.id,
+      ref: r.ref,
+      changedPixels: n,
+      ratio: n / ((y1 - y0) * w),
+      box: { x0: Math.floor(minX / scale), y0: Math.floor(minY / scale), x1: Math.ceil((maxX + 1) / scale), y1: Math.ceil((maxY + 1) / scale) },
+    });
+  }
+  return out;
+}
+
+/**
+ * Which embedded pages (iframes) sit under what moved: the measured answer to "which embedded page did
+ * not freeze". `moving` is `movingSections`' result, `iframes` the boxes of the page's iframes
+ * (`{ src, left, right, top, bottom }`, page coordinates), `frames` is `freezeFrames`' report (to say
+ * whether the style got in), `pageUrl` resolves a relative `src`. Stands alone (written into the generated code).
+ * @returns {{ url: string, section: string, injected: boolean|null, why?: string }[]}
+ */
+export function framesInMotion(moving, iframes, frames, pageUrl) {
+  const out = [];
+  for (const m of moving ?? []) {
+    if (!m.box) continue;
+    for (const f of iframes ?? []) {
+      if (!(f.left < m.box.x1 && f.right > m.box.x0 && f.top < m.box.y1 && f.bottom > m.box.y0)) continue;
+      let url = f.src;
+      try {
+        url = new URL(f.src, pageUrl).href;
+      } catch (e) {
+        // a src that is not a URL stays as written
+      }
+      if (out.some((o) => o.url === url && o.section === m.id)) continue;
+      const known = (frames ?? []).find((x) => x.url === url);
+      out.push({ url, section: m.id, injected: known ? known.injected : null, ...(known && known.why ? { why: known.why } : {}) });
+    }
+  }
+  return out;
+}
+
+/**
+ * Which tab groups had a different tab selected between two readings (`readTabGroups`' result, before and
+ * after). A carousel on a timer changes the picture without any script of ours having touched it, and the
+ * "stop it first" step does not always stick. Groups are matched by key; a group only the later reading has
+ * (it hydrated meanwhile) is not a change; one that was there and is gone is, with `to: null`. Stands alone.
+ * @returns {{ group: string, from: string[], to: string[]|null }[]}
+ */
+export function tabGroupChanges(before, after) {
+  const now = new Map((after ?? []).map((g) => [g.key, g]));
+  const out = [];
+  for (const g of before ?? []) {
+    const h = now.get(g.key);
+    if (!h) out.push({ group: g.key, from: g.selected, to: null });
+    else if (JSON.stringify(g.selected) !== JSON.stringify(h.selected)) out.push({ group: g.key, from: g.selected, to: h.selected });
+  }
+  return out;
+}
+
+/**
+ * Inside the page: every tab group and which of its tabs is selected (`aria-selected`, `aria-current`, or
+ * `data-state="active"`). A group is a `role="tablist"` or, for tabs outside any, the tabs sharing a parent.
+ * The key is the group's label, else its tab names joined; a repeated key gets a number. Handed to
+ * `page.evaluate` as text, so it stands alone.
+ */
+function readTabGroups() {
+  const name = (el) => (el.getAttribute('aria-label') || el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  const groups = [...document.querySelectorAll('[role="tablist"]')].map((l) => ({ label: l.getAttribute('aria-label') || '', tabs: [...l.querySelectorAll('[role="tab"]')] }));
+  const loose = new Map();
+  for (const t of document.querySelectorAll('[role="tab"]')) {
+    if (t.closest('[role="tablist"]')) continue;
+    loose.set(t.parentElement, [...(loose.get(t.parentElement) ?? []), t]);
+  }
+  for (const tabs of loose.values()) groups.push({ label: '', tabs });
+  const used = new Map();
+  return groups.filter((g) => g.tabs.length).map((g) => {
+    const names = g.tabs.map(name);
+    const base = g.label || names.join('|');
+    const n = (used.get(base) ?? 0) + 1;
+    used.set(base, n);
+    const on = (t) => t.getAttribute('aria-selected') === 'true' || (t.hasAttribute('aria-current') && t.getAttribute('aria-current') !== 'false') || t.getAttribute('data-state') === 'active';
+    return { key: n > 1 ? `${base}#${n}` : base, tabs: names, selected: g.tabs.filter(on).map(name) };
+  });
+}
+
+/**
+ * Inside the page: the function `page.evaluate` calls with the two pictures (base64 PNGs), the ranges and
+ * the page width; decodes them on a canvas and returns `movingSections`' answer. Written as text with
+ * `movingSections` in, so it stands alone.
+ */
+function compareInPage(movingSections) {
+  return async (args) => {
+    const decode = async (b64) => {
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+      const bmp = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const canvas = new OffscreenCanvas(bmp.width, bmp.height);
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(bmp, 0, 0);
+      const d = ctx.getImageData(0, 0, bmp.width, bmp.height);
+      if (bmp.close) bmp.close();
+      return { width: d.width, height: d.height, data: d.data };
+    };
+    const a = await decode(args.a);
+    const b = await decode(args.b);
+    return movingSections(a, b, args.ranges, { scale: args.pageWidth ? a.width / args.pageWidth : 1 });
+  };
+}
+
+/**
  * Runs inside the Playwright MCP's `browser_run_code_unsafe`, serialised with `toString()`, so it has
  * to stand alone: everything it needs arrives in `C` (the config) or is created inside. Returns the
  * measurement `attribute` reads. Positions are page coordinates in CSS pixels, taken at scroll 0.
  */
 async function measurePage(page, C) {
+  // which tab of each tab group is selected, before anything below runs: a carousel on a timer changes it
+  const tabsBefore = await page.evaluate(C.tabsExpr);
   await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
   await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
 
@@ -303,15 +481,32 @@ async function measurePage(page, C) {
     el.removeAttribute('data-ds-lm');
     el.removeAttribute('data-ds-h');
   }));
-  let image = null;
-  if (C.out) {
-    await page.screenshot({ path: C.out, fullPage: true, animations: 'disabled' });
-    image = { path: C.out };
+  // the picture, then — a beat later — a second look at the whole page. Switching animations off does not
+  // make a page hold still (a loop run by a script, a carousel on a timer): what changed between the two
+  // looks, section by section, is what is still moving
+  const shot = await page.screenshot({ ...(C.out ? { path: C.out } : {}), fullPage: true, animations: 'disabled' });
+  const image = C.out ? { path: C.out } : null;
+  await page.waitForTimeout(C.settleMs);
+  const again = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  const tabsAfter = await page.evaluate(C.tabsExpr);
+  let moving = null;
+  let compare = { ok: true };
+  try {
+    const ranges = computeRanges({ sections, blocks: base.blocks, contentinfo: base.contentinfo, pageSize: base.pageSize, page: C.page });
+    // a string given to page.evaluate is run as an expression and a function in it is not called, so the
+    // text is made back into a function here
+    const result = await page.evaluate(new Function(`return ${C.compareExpr}`)(), { a: shot.toString('base64'), b: again.toString('base64'), ranges, pageWidth: base.pageSize.width });
+    if (!Array.isArray(result)) throw new Error('页面里的比对没有返回结果');
+    moving = result;
+  } catch (e) {
+    compare = { ok: false, why: String((e && e.message) || e).split('\n')[0].slice(0, 160) };
   }
+  const tabs = { before: tabsBefore, after: tabsAfter, changed: tabGroupChanges(tabsBefore, tabsAfter) };
   const measurement = {
     state: C.state, page: C.page, viewport: C.viewport, theme: C.theme, motion: C.motion,
     pageSize: base.pageSize, blocks: base.blocks, contentinfo: base.contentinfo,
-    sections, clickables: base.clickables, headings: base.headings, env: base.env, frames, image,
+    sections, clickables: base.clickables, headings: base.headings, env: base.env, frames,
+    moving, tabs, compare, settleMs: C.settleMs, image,
   };
   // run_code cannot write a file, and its return value is echoed whole into the conversation: keep the
   // measurement on the page for `browser_evaluate` (with a `filename`) to save, and return a summary
@@ -322,7 +517,12 @@ async function measurePage(page, C) {
     state: C.state, pageSize: base.pageSize, blocks: base.blocks.length, headings: base.headings.length, clickables: base.clickables.length,
     sections: sections.map((x) => ({ id: x.id, found: x.found, ...(x.found ? {} : { reason: x.reason }) })),
     env: base.env,
-    frames: { total: frames.length, notFrozen: frames.filter((f) => !f.frozen) },
+    // 还在动的段：隔约一秒再拍一次整页、逐段比出来的（compare.ok 为 false 时没比成，原因在 compare.why）
+    moving: !Array.isArray(moving) ? null : moving.map((x) => ({ id: x.id, changedPixels: x.changedPixels, ratio: x.ratio, box: x.box })),
+    compare,
+    tabsChanged: tabs.changed,
+    // injectFailed: the style could not be put in; notFrozen: the embedded pages under what really moved
+    frames: { total: frames.length, injectFailed: frames.filter((f) => !f.injected), notFrozen: framesInMotion(moving, base.iframes, frames, page.url()) },
     image,
   };
 }
@@ -342,11 +542,16 @@ export function buildMeasureCode(config) {
     motion: config.motion ?? 'default',
     out: config.out ?? null,
     freezeCss: FREEZE_CSS,
+    settleMs: SETTLE_MS,
     // an expression, not a function: a string given to page.evaluate is run as is, not called
     collectExpr: `(${collectInPage.toString()})(${selectBlocks.toString()})`,
+    tabsExpr: `(${readTabGroups.toString()})()`,
+    // a function written out as text; `measurePage` makes it a function again for `page.evaluate(fn, arg)`
+    compareExpr: `(args) => (${compareInPage.toString()})(${movingSections.toString()})(args)`,
   };
-  // `freezeFrames` is a free name inside `measurePage`; declared beside it here, it resolves in the page-side function's closure
-  return `async (page) => { const freezeFrames = ${freezeFrames.toString()}; return (${measurePage.toString()})(page, ${JSON.stringify(C)}); }`;
+  // the helpers are free names inside `measurePage`; declared beside it here, they resolve in its closure
+  const helpers = [freezeFrames, computeRanges, tabGroupChanges, framesInMotion].map((f) => `const ${f.name} = ${f.toString()};`).join(' ');
+  return `async (page) => { ${helpers} return (${measurePage.toString()})(page, ${JSON.stringify(C)}); }`;
 }
 
 // ---------- ranges and ownership ----------
@@ -354,7 +559,7 @@ export function buildMeasureCode(config) {
 const roundPx = (v) => Math.round(v);
 
 /**
- * Measurement → ranges, the section each clickable element belongs to, and what does not fit.
+ * Measurement → each located section's range.
  *
  * Ranges (references/design-archive.md §3): a section found by heading starts at the top of the top-level
  * block that holds the heading when it is the first declared one in that block (but not above where the
@@ -364,6 +569,49 @@ const roundPx = (v) => Math.round(v);
  * own box. Whole pixels: the start is rounded, the height is the rounded real height, the end is start
  * plus height — so a section whose content did not change keeps its height whatever moves above it
  * (neighbours may end up a pixel apart; that is not reported). No end goes past the page height.
+ *
+ * Stands alone (no reference to anything outside it): `attribute` calls it, and it is also written into
+ * the generated page-side code, which cuts the second look at the page by the very same ranges.
+ *
+ * @returns {{ id: string, ref: string, by: string, role: string|null, start: number, end: number, height: number }[]}
+ */
+export function computeRanges(m) {
+  const ref = (id) => (m.page ? `${m.page}#${id}` : id);
+  const blocks = m.blocks ?? [];
+  const pageHeight = m.pageSize?.height ?? 0;
+  const found = (m.sections ?? []).filter((s) => s.found);
+  const kindOf = (s) => (s.locate?.position !== undefined ? 'position' : s.locate?.role === 'heading' ? 'heading' : 'landmark');
+  const firstInBlock = new Set();
+  const seenBlocks = new Set();
+  found.forEach((s, i) => {
+    if (kindOf(s) !== 'heading' || s.block < 0 || seenBlocks.has(s.block)) return;
+    seenBlocks.add(s.block);
+    firstInBlock.add(i);
+  });
+  // the real (fractional) start of each section
+  const rawStart = found.map((s, i) => {
+    if (kindOf(s) !== 'heading' || !firstInBlock.has(i) || !blocks[s.block]) return s.top;
+    const before = found[i - 1];
+    const floor = before && kindOf(before) !== 'heading' ? before.bottom : 0;
+    return Math.max(blocks[s.block].top, floor);
+  });
+  const rawEnd = found.map((s, i) => {
+    if (kindOf(s) !== 'heading') return s.bottom;
+    return i + 1 < found.length ? rawStart[i + 1] : m.contentinfo?.top ?? pageHeight;
+  });
+  // nothing runs past the bottom of the page: rounding a last section up can put its end a pixel beyond it
+  const cap = pageHeight > 0 ? Math.round(pageHeight) : Infinity;
+  return found.map((s, i) => {
+    const start = Math.round(rawStart[i]);
+    const end = Math.max(start, Math.min(start + Math.round(rawEnd[i] - rawStart[i]), cap));
+    return { id: s.id, ref: ref(s.id), by: kindOf(s), role: s.locate?.role ?? null, start, end, height: end - start };
+  });
+}
+
+/**
+ * Measurement → ranges, the section each clickable element belongs to, and what does not fit.
+ *
+ * Ranges: see `computeRanges`.
  * Ownership: a clickable inside a banner / contentinfo belongs to the section that declares that landmark;
  * any other one belongs to the section whose range holds its vertical centre.
  * Undeclared headings: a heading of any level the declared section headings use (a page declared only down
@@ -387,32 +635,7 @@ export function attribute(m) {
   const notFound = secs.filter((s) => !s.found).map((s) => ({ id: s.id, ref: ref(s.id), locate: s.locate, reason: s.reason ?? '没有定位到' }));
 
   const kindOf = (s) => (s.locate?.position !== undefined ? 'position' : s.locate?.role === 'heading' ? 'heading' : 'landmark');
-  const firstInBlock = new Set();
-  const seenBlocks = new Set();
-  found.forEach((s, i) => {
-    if (kindOf(s) !== 'heading' || s.block < 0 || seenBlocks.has(s.block)) return;
-    seenBlocks.add(s.block);
-    firstInBlock.add(i);
-  });
-  // the real (fractional) start of each section
-  const rawStart = found.map((s, i) => {
-    if (kindOf(s) !== 'heading' || !firstInBlock.has(i) || !blocks[s.block]) return s.top;
-    const before = found[i - 1];
-    const floor = before && kindOf(before) !== 'heading' ? before.bottom : 0;
-    return Math.max(blocks[s.block].top, floor);
-  });
-  const rawEnd = found.map((s, i) => {
-    if (kindOf(s) !== 'heading') return s.bottom;
-    return i + 1 < found.length ? rawStart[i + 1] : m.contentinfo?.top ?? pageHeight;
-  });
-
-  // nothing runs past the bottom of the page: rounding a last section up can put its end a pixel beyond it
-  const cap = pageHeight > 0 ? roundPx(pageHeight) : Infinity;
-  const ranges = found.map((s, i) => {
-    const start = roundPx(rawStart[i]);
-    const end = Math.max(start, Math.min(start + roundPx(rawEnd[i] - rawStart[i]), cap));
-    return { id: s.id, ref: ref(s.id), by: kindOf(s), role: s.locate?.role ?? null, start, end, height: end - start };
-  });
+  const ranges = computeRanges(m);
 
   const outOfOrder = [];
   ranges.forEach((r, i) => {
@@ -518,6 +741,10 @@ export function attribute(m) {
     outOfOrder,
     undeclaredHeadings,
     coverage: { gaps, overlaps },
+    // what the measurement saw still moving / switching: passed on, never a failure (the sections are
+    // declared `unstable` in the archive instead — references/design-archive.md §10)
+    moving: m.moving ?? [],
+    tabsChanged: m.tabs?.changed ?? [],
   };
 }
 
@@ -696,6 +923,12 @@ function attributeCommand(positional) {
   if (positional.length !== 1) throw new UsageError('attribute 要一个测量结果文件');
   const result = attribute(readJson(positional[0], '测量结果'));
   console.log(JSON.stringify(result, null, 2));
+  if (result.moving.length) {
+    console.error(`attribute: 还在动的段 ${result.moving.length} 个（关了动画隔约一秒再拍，画面变了）：${result.moving.map((x) => `${x.id}（${x.reason ?? `变了 ${x.changedPixels} 个像素，范围 ${x.box.x0},${x.box.y0}–${x.box.x1},${x.box.y1}`}）`).join('；')}——在入口状态的 sections 里给它们标 unstable，写明是哪个东西在动；切图照存，「这一屏」注明拍到的只是其中一帧`);
+  }
+  if (result.tabsChanged.length) {
+    console.error(`attribute: 测量期间选中项变了的标签组 ${result.tabsChanged.length} 个：${result.tabsChanged.map((x) => `${x.group}（${x.from.join('、') || '无'} → ${x.to ? x.to.join('、') || '无' : '组不见了'}）`).join('；')}——有轮播在自己切换：先把它点停（点了没用就在入口状态的「这一屏」里注明）再重测`);
+  }
   if (!result.ok) {
     console.error(`attribute: 落空 ${result.orphans.length} 个，定位失败 ${result.notFound.length} 段，顺序不对 ${result.outOfOrder.length} 段，没声明的同级标题 ${result.undeclaredHeadings.length} 个——补分段或改定位后重测，清零再写档案`);
     return 1;

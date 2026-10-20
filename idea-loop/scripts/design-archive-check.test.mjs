@@ -456,6 +456,33 @@ for (const [name, edits, field, needle, renames] of BREAKS) {
   });
 }
 
+const HERO_DECL = '{ id: hero, locate: { role: heading, name: 一个价格，没有隐藏项 } }';
+const heroWith = (extra) => `{ id: hero, locate: { role: heading, name: 一个价格，没有隐藏项 }, unstable: ${extra} }`;
+
+test('rule 7: a section that is `unstable` with a reason passes — only the shape is checked, not what the reason says', () => {
+  const r = run(bendMkt({ [MKT_ENTRY_FILE]: sub(HERO_DECL, heroWith('首屏演示是脚本驱动的循环动画')) }));
+  assert.deepEqual(r.violations, []);
+  assert.deepEqual(r.notes, []);
+});
+
+test('rule 7: `unstable` without a reason (empty, blank, true, a number, a list, a map) is one rule 7 violation naming the field', () => {
+  for (const bad of ["''", '"   "', 'true', '3', '[a]', '{ x: 1 }']) {
+    const r = run(bendMkt({ [MKT_ENTRY_FILE]: sub(HERO_DECL, heroWith(bad)) }));
+    const v = r.violations.filter((x) => x.rule === 7);
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.equal(v[0].field, 'sections[1].unstable');
+    assert.match(v[0].message, /原因/);
+    assert.deepEqual(r.violations.filter((x) => x.rule !== 7), [], 'only rule 7 is broken');
+  }
+});
+
+test('rule 7: `unstable` written as null or false is "stable" and passes', () => {
+  for (const ok of ['null', 'false']) {
+    const r = run(bendMkt({ [MKT_ENTRY_FILE]: sub(HERO_DECL, heroWith(ok)) }));
+    assert.deepEqual(r.violations, [], ok);
+  }
+});
+
 test('rule 7: two entry states of one page both declaring sections is reported', () => {
   const files = marketingFiles();
   files[`${BASE}/pages/${MKT}/${MKT}--second-entry.md`] = files[MKT_ENTRY_FILE]

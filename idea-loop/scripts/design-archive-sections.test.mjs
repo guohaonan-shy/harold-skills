@@ -635,7 +635,7 @@ test('freezeFrames: the page itself and every same-origin embedded page get the 
   assert.equal([...demo.doc.styles.values()][0], CSS, 'the same text the page got');
   assert.equal(blank.doc.styles.size, 1, 'a blank or srcdoc frame is the parent\'s origin');
   assert.equal(ad.doc.styles.size, 0, 'cross-origin: not touched');
-  assert.deepEqual(report.map((r) => [r.url, r.frozen]), [
+  assert.deepEqual(report.map((r) => [r.url, r.injected]), [
     ['https://site.test/interview', true], ['https://site.test/embed/demo', true], ['about:blank', true], ['https://ads.example/slot', false],
   ]);
   assert.match(report[3].why, /跨域/);
@@ -649,7 +649,7 @@ test('freezeFrames: a frame that loaded after the first pass is frozen by the ne
   const second = await freezeFrames(page, CSS);
   assert.equal(late.doc.styles.size, 1);
   assert.equal(page.main.doc.styles.size, 1, 'one style element, not two');
-  assert.equal(second.filter((r) => r.frozen).length, 2);
+  assert.equal(second.filter((r) => r.injected).length, 2);
 });
 
 test('freezeFrames: a document with no <head> yet takes the style on its root element', async () => {
@@ -663,7 +663,7 @@ test('freezeFrames: a frame the browser refuses (detached, navigating away) is r
   const gone = fakeFrame('https://site.test/embed/gone', { fail: true });
   const ok = fakeFrame('https://site.test/embed/ok');
   const report = await freezeFrames(fakePage('https://site.test/p', [gone, ok]), CSS);
-  assert.deepEqual(report.map((r) => r.frozen), [true, false, true]);
+  assert.deepEqual(report.map((r) => r.injected), [true, false, true]);
   assert.match(report[1].why, /destroyed/);
 });
 
