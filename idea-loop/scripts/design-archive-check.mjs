@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Design archive validation — the six rules, run over a parsed archive.
+ * Design archive validation — the seven rules, run over a parsed archive.
  *
  * `docs/design/prod/` is only trustworthy if the graph in it holds together: every state can be
  * reached (or says why not), every reference points at something, every journey follows real edges,
@@ -16,6 +16,7 @@
  *   4 consecutive states of a journey are joined by an edge; with several, `via` names one
  *   5 state files carry no 「决定」; every decision has 为什么 / 否掉过 / 来源; every candidate 并进 / 为什么 / 证据
  *   6 literal motion values carry `deviates`; `usedBy` matches the references actually found
+ *   7 sections of a long entry state: closed type set, ids, `locate` shapes, `from` / `section` references, `user` edges name their section
  * Rule 0 is the structure the rules stand on: files that cannot be read as objects, required fields.
  *
  * With `--delta <spec-slug>` the requirement's `tmp/<slug>/delta/` is laid over `prod/` first
@@ -44,7 +45,12 @@ import {
   pageOfState,
   parseCandidates,
   parseDecisions,
+  parseSectionRef,
+  SECTION_TYPES,
   section,
+  sectionEntries,
+  sectionsOfPage,
+  sectionsOfState,
   wikilinkTarget,
 } from './design-archive.mjs';
 
@@ -56,6 +62,7 @@ export const RULES = {
   4: '用户路径',
   5: '决定与候选',
   6: '动效',
+  7: '分段',
 };
 
 const filled = (v) => typeof v === 'string' ? v.trim() !== '' : v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0);
@@ -256,6 +263,120 @@ export function checkArchive(archive, { usedBy = true } = {}) {
     }
   }
 
+  // ---------- 7: sections ----------
+  sectionRules(archive, v);
+
+  return out;
+}
+
+const TYPE_LIST = Object.keys(SECTION_TYPES).join(' ');
+
+/** Why a `<page>#<section>` value cannot be used here, or null when it names a declared section. */
+function badSectionRef(raw, wantPage, declared, what) {
+  if (typeof raw !== 'string') return `${what}要写成 <页面>#<段> 的普通字符串（现在是 ${JSON.stringify(raw)}）`;
+  if (/^\s*\[\[.*\]\]\s*$/.test(raw)) return `${what}「${raw}」要写普通字符串 ${wantPage}#<段>，不写 wikilink（Obsidian 会把 # 后面当成页面文件里的标题）`;
+  const ref = parseSectionRef(raw);
+  if (!ref) return `${what}「${raw}」写法不对，应为 <页面>#<段>（如 ${wantPage}#hero）`;
+  if (ref.page !== wantPage) return `${what}「${raw}」的页面部分应是 ${wantPage}`;
+  if (!declared.some((x) => x.id === ref.id)) {
+    return `${what}「${raw}」指向的段 ${ref.id} 没有声明过${declared.length ? `；${wantPage} 现有分段：${declared.map((x) => x.id).join('、')}` : `（${wantPage} 的入口状态没有 sections）`}`;
+  }
+  return null;
+}
+
+/** Rule 7 — see references/design-archive.md §6. */
+function sectionRules(archive, v) {
+  const states = objectsOfKind(archive, 'state').sort((a, b) => (a.id < b.id ? -1 : 1));
+  const declaring = new Map(); // page id → the entry state whose `sections` count
+
+  for (const s of states) {
+    if (s.fm.sections === undefined) continue;
+    const page = pageOfState(s);
+    if (!isEntry(s)) {
+      v(7, s.file, 'sections', `sections 只写在入口状态上（有 entry 的状态），${s.id} 不是入口`);
+      continue;
+    }
+    if (!Array.isArray(s.fm.sections)) {
+      v(7, s.file, 'sections', 'sections 必须是列表（自上而下，顺序即页面顺序）');
+      continue;
+    }
+    if (declaring.has(page)) {
+      v(7, s.file, 'sections', `页面 ${page} 的分段已经由 ${declaring.get(page).id} 声明；两个入口状态都写 sections，「${page}#<段>」就指不到唯一一处`);
+      continue;
+    }
+    declaring.set(page, s);
+    const list = sectionsOfState(s);
+    const seen = new Set();
+    for (const x of list) {
+      const at = `sections[${x.index}]`;
+      if (x.idError === 'format') {
+        v(7, s.file, `${at}.id`, `分段 id「${x.id ?? ''}」写法不对：要 <类型> 或 <类型>-<限定词>，小写 kebab-case`);
+      } else if (x.idError === 'type') {
+        v(7, s.file, `${at}.id`, `分段 id「${x.id}」的类型不在闭集里；类型表：${TYPE_LIST}`);
+      } else if (seen.has(x.id)) {
+        v(7, s.file, `${at}.id`, `分段 id「${x.id}」在 ${page} 里重名`);
+      }
+      if (x.id !== null) seen.add(x.id);
+      if (!x.by) {
+        v(7, s.file, `${at}.locate`, 'locate 只能是 { role: heading, name: <完整标题> }、{ role: banner } / { role: contentinfo }、{ position: N } 三种之一');
+      }
+    }
+    // the same type more than once: every one of them carries a qualifier
+    const byType = new Map();
+    for (const x of list) if (x.type) byType.set(x.type, [...(byType.get(x.type) ?? []), x]);
+    for (const [type, xs] of byType) {
+      const bare = xs.find((x) => x.qualifier === null);
+      if (xs.length > 1 && bare) {
+        v(7, s.file, `sections[${bare.index}].id`, `同一页出现了 ${xs.length} 个 ${type} 类的段（${xs.map((x) => x.id).join('、')}），要每个都加限定词（如 ${type}-<按内容起的词>）`);
+      }
+    }
+  }
+
+  const declared = (page) => sectionsOfPage(archive, page);
+  for (const s of states) {
+    const page = pageOfState(s);
+    const isDeclaring = declaring.get(page)?.id === s.id;
+    for (const e of archive.edges.filter((x) => x.from === s.id)) {
+      const at = `edges[${e.index}]`;
+      if (e.fromSection !== null) {
+        const why = badSectionRef(e.fromSection, page, declared(page), '边的 from（本页的出发段）');
+        if (why) v(7, s.file, `${at}.from`, why);
+      } else if (isDeclaring && e.kind === 'user') {
+        v(7, s.file, `${at}.from`, `${s.id} 声明了分段，user 边「${e.id}」要写 from: ${page}#<出发段>`);
+      }
+      if (e.toSection !== null) {
+        const target = e.to ? archive.objects.get(e.to) : null;
+        if (!target || target.kind !== 'state') continue; // rule 3
+        if (!isEntry(target)) {
+          v(7, s.file, `${at}.section`, `边的 section 要落在入口状态的段上，而 ${target.id} 不是入口状态`);
+        } else {
+          const why = badSectionRef(e.toSection, pageOfState(target), sectionsOfState(target), `边的 section（落在 ${target.id} 的段）`);
+          if (why) v(7, s.file, `${at}.section`, why);
+        }
+      }
+    }
+    if (s.fm.section !== undefined) {
+      if (isEntry(s)) v(7, s.file, 'section', '入口状态不写 section（它自己有 sections）');
+      else {
+        const why = badSectionRef(s.fm.section, page, declared(page), '状态的 section（它发生在本页哪一段）');
+        if (why) v(7, s.file, 'section', why);
+      }
+    }
+  }
+}
+
+/** Hints for sections that are allowed but weak: `content` as a catch-all, a locate by position. */
+export function sectionNotes(archive) {
+  const out = [];
+  for (const page of objectsOfKind(archive, 'page')) {
+    for (const entry of sectionEntries(archive, page.id).slice(0, 1)) {
+      for (const x of sectionsOfState(entry)) {
+        const at = `${entry.file} · sections[${x.index}]`;
+        if (x.type === 'content') out.push(`${at}：分段「${x.id}」用了 content 兜底——多半该归进某一类，或者类型表里缺一类`);
+        if (x.by?.kind === 'position') out.push(`${at}：分段「${x.id}」按第 ${x.by.position} 个顶层分块定位，这条定位比较脆，页面加一个分块就会错位`);
+      }
+    }
+  }
   return out;
 }
 
@@ -313,7 +434,10 @@ function structure(o, v) {
 export function check(root, { delta = null, usedBy = true } = {}) {
   const archive = loadArchive(root, { delta });
   const violations = checkArchive(archive, { usedBy });
-  const notes = archive.legacy.map((n) => `docs/design/${n}/ 是旧布局（按 spec 命名的冻结记录），建议删——不读，不算违规`);
+  const notes = [
+    ...archive.legacy.map((n) => `docs/design/${n}/ 是旧布局（按 spec 命名的冻结记录），建议删——不读，不算违规`),
+    ...sectionNotes(archive),
+  ];
   return { violations, notes, archive };
 }
 

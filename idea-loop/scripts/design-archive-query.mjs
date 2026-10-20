@@ -6,7 +6,8 @@
  *   queryState(archive, name)     a state: how to get into it, what to see there, screenshot paths
  *   queryJourney(archive, name)   a journey: intent + ordered steps, how each is triggered, what to see
  *   queryDiff(root, slug)          what a requirement's delta/ adds, changes (field by field) and removes
- *   queryRefs(archive, name)      who refers to a component (by name or code path) or a motion
+ *   queryRefs(archive, name)      who refers to a component (by name or code path), a motion, a section
+ *                                 (`<page>#<section>`) or every section of a type (`#<type>`)
  *   queryKeyword(archive, text)   objects whose name / summary / body match, best position first
  *   enterState(archive, id)       the shortest way in (the state entry's `enter`), usable on its own
  *
@@ -36,7 +37,11 @@ import {
   pageOfState,
   parseCandidates,
   parseDecisions,
+  SECTION_TYPES,
   section,
+  sectionEntries,
+  sectionsOfPage,
+  sectionsOfState,
   statesOfPage,
   wikilinkTarget,
 } from './design-archive.mjs';
@@ -76,6 +81,8 @@ function edgeView(e) {
     kind: e.kind,
     component: e.component,
     locate: e.locate,
+    fromSection: e.fromSection,
+    toSection: e.toSection,
     action: e.action,
     trigger: e.trigger,
     how: e.how,
@@ -164,6 +171,56 @@ export function enterState(archive, id) {
   return { state: id, reachable: false, verdict: '进不去', blocked, undeclared: blocked.length === 0, shouldSee };
 }
 
+// ---------- 分段 ----------
+
+const posixPath = (p) => p.split('\\').join('/');
+
+/**
+ * Where a section's slice is: `<entry state id>@<section id>.png` in the `assets/` next to the entry
+ * state's file. Reading with a requirement's delta laid over, a slice only `prod/` has is still the
+ * slice (the delta re-shoots only the sections that changed). `exists` says whether the file is there;
+ * when it is not, `path` is where it goes.
+ */
+function sliceOf(archive, entry, sectionId) {
+  const home = posixPath(normalize(join(dirname(entry.file), 'assets', `${entry.id}@${sectionId}.png`)));
+  const candidates = [home];
+  if (entry.source === 'delta' && archive.delta) candidates.push(home.replace(`docs/design/tmp/${archive.delta.slug}/delta/`, 'docs/design/prod/'));
+  const found = candidates.find((c) => existsSync(join(archive.root, c)));
+  return { path: found ?? home, exists: found !== undefined };
+}
+
+/** One section of a page as the queries show it. `id` is the full `<page>#<section>`. */
+function sectionView(archive, pageId, entry, x) {
+  const ref = `${pageId}#${x.id}`;
+  const slice = sliceOf(archive, entry, x.id);
+  return {
+    id: ref,
+    page: pageId,
+    type: x.type,
+    qualifier: x.qualifier,
+    locate: x.locate,
+    locateBy: x.by?.kind ?? null,
+    declaredBy: entry.id,
+    outgoing: archive.edges.filter((e) => e.fromSection === ref).map(edgeView),
+    incoming: archive.edges.filter((e) => e.toSection === ref).map(edgeView),
+    states: sortById(statesOfPage(archive, pageId).filter((s) => s.fm.section === ref)).map((s) => s.id),
+    screenshot: slice.path,
+    screenshotExists: slice.exists,
+  };
+}
+
+/** The sections of a page, in page order (empty when its entry state declares none). */
+function sectionViews(archive, pageId) {
+  const entry = sectionEntries(archive, pageId)[0];
+  if (!entry) return [];
+  return sectionsOfState(entry)
+    .filter((x) => x.id !== null)
+    .map((x) => sectionView(archive, pageId, entry, x));
+}
+
+const allSectionViews = (archive) =>
+  sortById(objectsOfKind(archive, 'page')).flatMap((p) => sectionViews(archive, p.id));
+
 // ---------- 页面 ----------
 
 const idsOf = (list) => asList(list).map((x) => wikilinkTarget(x) ?? String(x));
@@ -247,7 +304,9 @@ export function queryPage(archive, name) {
       motions: idsOf(s.fm.motions),
       outgoing: outgoingEdges(archive, s.id).map(edgeView),
       incoming: incomingEdges(archive, s.id).map(edgeView),
+      ...(s.fm.section ? { section: String(s.fm.section) } : {}),
     })),
+    sections: sectionViews(archive, page.id),
     journeys: journeys.map((j) => ({ id: j.id, intent: j.fm.intent ?? null, states: journeyPath(j).map((p) => p.state) })),
     decisions: dc.flatMap((x) => x.decisions),
     candidates: dc.flatMap((x) => x.candidates),
@@ -261,7 +320,7 @@ export function queryState(archive, name) {
   const state = need(archive, name, 'state');
   const { shouldSee, ...enter } = enterState(archive, name);
   return {
-    state: clean({ id: state.id, page: pageOfState(state), file: state.file, summary: summaryOf(state) }),
+    state: clean({ id: state.id, page: pageOfState(state), file: state.file, summary: summaryOf(state), section: state.fm.section == null ? null : String(state.fm.section) }),
     enter,
     shouldSee,
     screen: screenOf(state),
@@ -322,6 +381,8 @@ const normalizeCode = (p) => String(p).trim().replace(/\\/g, '/').replace(/^\.\/
  */
 export function queryRefs(archive, name) {
   const key = normalizeCode(name);
+  if (key.startsWith('#')) return refsOfSectionType(archive, key.slice(1));
+  if (/^[^#]+#[^#]+$/.test(key)) return refsOfSection(archive, key);
   let target = archive.objects.get(key);
   let matchedBy = 'name';
   if (target && target.kind !== 'component' && target.kind !== 'motion') {
@@ -364,6 +425,52 @@ export function queryRefs(archive, name) {
     ),
     journeys: journeys.map((j) => ({ id: j.id, intent: j.fm.intent ?? null })),
     pages: (isComponent ? used.components : used.motions).get(target.id) ?? [],
+  };
+}
+
+const TYPE_LIST = Object.keys(SECTION_TYPES).join('、');
+
+/** `#<type>`: every section of that type on every page. */
+function refsOfSectionType(archive, type) {
+  if (!Object.hasOwn(SECTION_TYPES, type)) throw new QueryError(`「#${type}」不是分段类型；类型表：${TYPE_LIST}`);
+  const all = allSectionViews(archive);
+  const sections = all.filter((x) => x.type === type);
+  if (!sections.length) {
+    throw new QueryError(`档案里没有 ${type} 类的段；${all.length ? `现有分段：${all.map((x) => x.id).join('、')}` : '档案里还没有任何分段'}`);
+  }
+  return {
+    target: { kind: 'section-type', type },
+    matchedBy: 'type',
+    sections: sections.map((x) => ({ page: x.page, id: x.id, type: x.type, qualifier: x.qualifier, locate: x.locate, declaredBy: x.declaredBy })),
+  };
+}
+
+/** `<page>#<section>`: what leaves it, lands on it, happens inside it, and the journeys through those. */
+function refsOfSection(archive, ref) {
+  const [pageId, id] = ref.split('#');
+  need(archive, pageId, 'page');
+  const here = sectionsOfPage(archive, pageId);
+  if (!here.length) throw new QueryError(`页面「${pageId}」没有声明分段（它的入口状态没有 sections）`);
+  const view = sectionViews(archive, pageId).find((x) => x.id === ref);
+  if (!view) throw new QueryError(`找不到分段「${id}」；${pageId} 现有分段：${here.map((x) => x.id).join('、')}`);
+
+  const key = (e) => `${e.from}/${e.id}`;
+  const through = new Set([...view.outgoing, ...view.incoming].map(key));
+  const journeys = sortById(
+    objectsOfKind(archive, 'journey').filter((j) =>
+      journeySteps(archive, j).some((s) => (s.edge && through.has(key(s.edge))) || (s.object && s.object.fm.section === ref)),
+    ),
+  );
+  return {
+    target: clean({
+      id: view.id, kind: 'section', page: pageId, type: view.type, qualifier: view.qualifier, locate: view.locate, declaredBy: view.declaredBy,
+    }),
+    matchedBy: 'section',
+    outgoing: view.outgoing,
+    incoming: view.incoming,
+    states: view.states.map((sid) => ({ id: sid, page: pageId, via: ['section'] })),
+    journeys: journeys.map((j) => ({ id: j.id, intent: j.fm.intent ?? null })),
+    pages: [pageId],
   };
 }
 
@@ -478,7 +585,9 @@ function unlink(v) {
  */
 function diffFields(path, a, b, out = []) {
   if (isDeepStrictEqual(a, b)) return out;
-  if (isPlain(a) && isPlain(b)) {
+  // a section's locate is one thing: the heading, the landmark or the position it is found by
+  const atomic = /^sections\[[^\]]+\]\.locate$/.test(path);
+  if (isPlain(a) && isPlain(b) && !atomic) {
     for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) diffFields(path ? `${path}.${k}` : k, a[k], b[k], out);
   } else if (isKeyedList(a) && isKeyedList(b)) {
     const byId = (list) => new Map(list.map((x) => [x.id, x]));
@@ -551,7 +660,7 @@ export const ENTRIES = {
   page: { run: (archive, arg) => queryPage(archive, arg), arg: '页面名' },
   state: { run: (archive, arg) => queryState(archive, arg), arg: '状态名' },
   journey: { run: (archive, arg) => queryJourney(archive, arg), arg: '用户路径名' },
-  refs: { run: (archive, arg) => queryRefs(archive, arg), arg: '组件名、组件代码路径或动效名' },
+  refs: { run: (archive, arg) => queryRefs(archive, arg), arg: '组件名、组件代码路径、动效名、<页面>#<段> 或 #<段类型>' },
   keyword: { run: (archive, arg) => queryKeyword(archive, arg), arg: '一段文字' },
   diff: { run: null, arg: 'spec 名', root: true },
 };
