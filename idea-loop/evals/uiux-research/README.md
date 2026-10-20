@@ -54,10 +54,10 @@ node idea-loop/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-
 
 ## 人怎么用
 
-1. 打开 `output/index.html`，对着页面顶部的问题看：它回答了吗？「不能回答什么」诚实吗？每个来源的三段解构有用吗？
+1. 打开 `output/index.html`，对着页面顶部的人的原话和具名问题看：它回答了吗？结论里的通用结论成立吗？要人决策的问题抓住了真正没定的事吗（答不了的时间 / 行为问题有没有照实写、没有硬凑）？每个来源的场景和设计逻辑有用吗？截图点得开吗？（内嵌浏览器对 `file://` 只显示静态快照，点不了；要在里面看就在 `output/` 起一个本地静态服务。）
 2. 在 `cases/<case>/annotations.md` 追加一段：哪里缺了什么、多了什么、错在哪、希望它怎么样。
 3. 重复几次之后，把反复出现的标注收成一条「产物应该（不该）包含什么」，写回 `agents/uiux-researcher.md` 或
    `references/design/research-backend.md`；收敛到一定程度，再决定哪些值得变成 `research-check` 的机械检查。
 
-脚本里唯一跑的机械检查是已有的 `scripts/research-check.mjs`（页面形状：三段齐不齐、图在不在），它红了说明形状坏了，
+脚本里唯一跑的机械检查是已有的 `scripts/research-check.mjs`（页面形状：顶部的原话 / 具名问题 / 上下文、两块结论、每个来源的两段齐不齐，图在不在、点不点得开），它红了说明形状坏了，
 绿了**不说明**内容好。内容好不好只有人说了算。

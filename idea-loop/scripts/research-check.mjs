@@ -6,13 +6,17 @@
  * checkable without a model: this file judges its SHAPE, never whether the reading of a reference
  * is right.
  *
- *   - the head of the page: the named question, one-sentence conclusion, what this research
- *     cannot answer (a time- or behaviour-dimension question that static screenshots cannot
- *     settle goes there instead of being padded with references);
+ *   - the head of the page: what was asked (the human's own words, the named question handed to the
+ *     researcher, the product context handed with it), then the conclusion in exactly two blocks —
+ *     what these products agree on (`general`) and the questions the human has to decide once that
+ *     is read against our needs (`decisions`). A question that static screenshots cannot settle
+ *     (time / behaviour) is not padded with references: it appears inside those two blocks;
  *   - every source: a title, a flow (ordered steps, each with a screenshot AND a line saying what
- *     the step does), and the three readings 场景 / 设计逻辑 / 对我们;
- *   - every screenshot is a relative path that resolves inside the drop directory, so the page
- *     opens from file:// and nothing points at a remote address that expires.
+ *     the step does, and the screenshot clickable to a larger picture), and two readings,
+ *     场景 / 设计逻辑. How a source bears on OUR needs is said once, in `decisions`, not per source,
+ *     so the retired `for-us` and `cannot-answer` parts are an error;
+ *   - every screenshot and every zoom target is a relative path that resolves inside the drop
+ *     directory, so the page opens from file:// and nothing points at a remote address that expires.
  *
  * The page marks these parts with `data-part` attributes (the contract with the template in
  * references/design/research-backend.md). A page with no source at all is legal only when a
@@ -89,10 +93,27 @@ export function checkResearchPage(html, { fileExists }) {
   const root = parse(strip(html));
   const errors = [];
 
-  for (const part of ['question', 'conclusion', 'cannot-answer']) {
+  const emptyHint = {
+    'human-words': '页面上要能看到人的原话，原样抄',
+    question: '页面上要能看到交给调研 agent 的具名问题，原样抄',
+    context: '页面上要能看到交给调研 agent 的产品上下文',
+    conclusion: '结论要写',
+  };
+  for (const part of ['human-words', 'question', 'context', 'conclusion']) {
     const found = byPart(root, part);
     if (!found.length) errors.push(`缺少顶部的 ${part}（data-part="${part}"）`);
-    else if (!textOf(found[0])) errors.push(`${part} 是空的：照实写，「不能回答什么」也一样`);
+    else if (!textOf(found[0])) errors.push(`${part} 是空的：${emptyHint[part]}`);
+  }
+  const conclusion = byPart(root, 'conclusion')[0];
+  if (conclusion) {
+    for (const [part, what] of [['general', '这些产品的通用结论'], ['decisions', '结合我们需求、要人决策的问题']]) {
+      const found = [...walk(conclusion)].filter((e) => e.attrs['data-part'] === part);
+      if (!found.length) errors.push(`结论里缺 ${part}（${what}；data-part="${part}"，放在 data-part="conclusion" 里面）`);
+      else if (!textOf(found[0])) errors.push(`结论的 ${part} 是空的（${what}）：没有分歧要人定，也照实写一句`);
+    }
+  }
+  for (const gone of ['cannot-answer', 'for-us']) {
+    if (byPart(root, gone).length) errors.push(`${gone} 已取消：不再单列「不能回答什么」，也不在每个来源里写「对我们」；跟我们需求的结合只在结论的 decisions 里出现一次`);
   }
 
   const sources = [...walk(root)].filter((e) => 'data-source' in e.attrs);
@@ -120,13 +141,21 @@ export function checkResearchPage(html, { fileExists }) {
           const s = img.attrs.src ?? '';
           if (!isRelative(s)) errors.push(`${name}第 ${n + 1} 步的图 ${s || '(无 src)'} 不是落图目录内的相对路径`);
           else if (!fileExists(s)) errors.push(`${name}第 ${n + 1} 步的图 ${s} 在落图目录里不存在`);
+          let zoom = img.parent;
+          while (zoom && zoom !== li && !(zoom.tag === 'a' && zoom.attrs['data-part'] === 'zoom')) zoom = zoom.parent;
+          if (!zoom || zoom === li) errors.push(`${name}第 ${n + 1} 步的图不能点开放大：用 <a data-part="zoom" href="…大图"> 包住 <img>`);
+          else {
+            const h = zoom.attrs.href ?? '';
+            if (!isRelative(h)) errors.push(`${name}第 ${n + 1} 步的放大地址 ${h || '(无 href)'} 不是落图目录内的相对路径`);
+            else if (!fileExists(h)) errors.push(`${name}第 ${n + 1} 步的放大图 ${h} 在落图目录里不存在`);
+          }
         }
       });
     }
 
-    for (const part of ['scene', 'logic', 'for-us']) {
+    for (const part of ['scene', 'logic']) {
       const found = [...walk(src)].filter((e) => e.attrs['data-part'] === part);
-      if (!found.length || !textOf(found[0])) errors.push(`${name}缺 ${part}（场景 / 设计逻辑 / 对我们 三段都要有内容）`);
+      if (!found.length || !textOf(found[0])) errors.push(`${name}缺 ${part}（场景 / 设计逻辑 两段都要有内容）`);
     }
   });
 
