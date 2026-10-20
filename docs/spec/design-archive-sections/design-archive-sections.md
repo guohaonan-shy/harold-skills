@@ -125,7 +125,7 @@ issues: [61]
 
 照 #61 修订二：
 
-- **`sections` 里每段的 `id` 写 `<类型>` 或 `<类型>-<限定词>`**，类型取自类型表（下），限定词按内容起、kebab-case。限定词只在同一页同一类型出现多次时加，加了就每个都加（`feature-listen-repeat` 和 `feature-interview`，不能一个 `feature` 一个 `feature-interview`）。
+- **`sections` 里每段的 `id` 写 `<类型>` 或 `<类型>-<限定词>`**，类型取自类型表（下），限定词按内容起、kebab-case。同一页同一类型出现多次时每个都要加限定词（`feature-listen-repeat` 和 `feature-interview`，不能一个 `feature` 一个 `feature-interview`）；只出现一次时**建议**不加，校验不拦（后来改：起草时写成「只在多次时加」，review 第 1 轮发现校验不拦单个带限定词的，Harold 定接受现状——拦住它，删掉一个同类段后剩下那段就得改名，连带改一串引用）。
 - **类型表放进 `design-archive.md`**，跨项目通用，不进目标项目的 `DESIGN.md`；校验从同一份常量读。19 类：`header` `hero` `social-proof` `problem` `feature` `feature-grid` `demo` `how-it-works` `value-prop` `trust` `testimonials` `comparison` `pricing` `stats` `faq` `related-content` `final-cta` `footer` `content`，每类一句「是什么」照修订二的表；两类判不准时按「这一段主要在回答什么」定（修订二原话：「为什么信你」归 trust，「多少人在用」归 social-proof）。闭集要扩，改这张表和校验的单测，不在档案里自造。
 - **类型按最长前缀认**：`feature-grid` 是类型 `feature-grid`，`feature-grid-pricing` 是 `feature-grid` 加限定词 `pricing`；于是 `feature` 不能用 `grid` 当限定词。表里只有 `feature` / `feature-grid` 这一对有前缀重叠，代价只有这一个限定词不能用。
 - **引用一个分段写 `<页面>#<段>`**（`mkt-toefl-score#faq`），边的 `from` / `section` 和状态的 `section` 都写全称；`sections` 列表里的 `id` 写短名（它已经在这一页的入口状态里）。用 `#` 不用 `--`：`--` 是状态的分隔符（修订一原话）。全称让「所有页的 trust 段」一次 grep 得到，也让校验能核页面部分写没写对。
@@ -172,7 +172,7 @@ issues: [61]
 
 - **拍法**：照 `ui-implementation-standard.md` §3.1 的三条（同 viewport 与 DPR、等字体、关动画与过渡），再加两步：先整页滚一遍（让懒加载的岛水合、让滚动触发的出现动画都走完），回到顶部，再注入关动画的样式、拍整页长图。动效模式取 `prod/index.md` 的 `motion`，插件的默认值是 `default`（§4.10 已定）。
 - **切图**：分段脚本按 §4.3 的范围从长图切出每段一张。超长分段整段一张、不限高（§4.10 已定）。
-- **存什么**：`prod/` 只存每段的切图，不存整页长图。依据：`prod/` 只存精简矩阵（reference §2），按 §4.3 范围首尾相接，各段拼起来就是整页，再存一份长图是同样的像素存两遍、Git LFS 多涨一倍。长图只留在拍图的临时目录。
+- **存什么**：`prod/` 只存每段的切图，不存整页长图。依据：`prod/` 只存精简矩阵（reference §2），可点元素全部落在段里，段之间、页顶页底的空隙（没有可点元素的留白）在归属结果的覆盖信息里列出、不拦，所以各段拼起来通常就是整页，再存一份长图是同样的像素存两遍、Git LFS 多涨一倍。长图只留在拍图的临时目录。（后来改：起草时写成「首尾相接、拼起来就是整页」；review 第 1 轮发现没有可点元素的空隙不拦，Harold 定接受现状、只把说法改准——硬拦会让 main 之外的内容补分段也盖不住的页面没法归档。）
 - **文件名**：`<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`，例如 `mkt-toefl-score--entry@faq.png`。`@` 不与状态分隔符 `--`、分段引用的 `#` 冲突，在 Markdown 链接里不用转义；带状态 id 前缀，`docs/` 下 basename 照旧唯一。
 - **正文**：入口状态的「这一屏」按段排开，每段一个 `###` 小标题（段 id）、一张切图、一两句描述；「应看到什么」照旧几条可判定的话，可以按段写。
 - **段内交互的状态**（带 `section` 的）：只拍那一段，截图照旧叫这个状态自己的名字。进入时先滚到那一段。
