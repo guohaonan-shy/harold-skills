@@ -6,9 +6,9 @@
 .claude/settings.local.json
 
 # Ad-hoc eval harness output — local-only, never shipped to plugin installers.
-# The one eval that IS committed is idea-loop's pinned baseline: only its verdicts
-# (evals/baseline/benchmark.json + per-cell grading.json) live in the repo; the full
-# run directories it grades stay under /tmp (see idea-loop/evals/README.md).
+# The one baseline that IS committed is idea-loop's uiux-research: its cases, minimal project and the
+# human's annotations live in the repo; the pages each run produces (they carry Refero screenshots)
+# stay under /tmp (see idea-loop/evals/uiux-research/README.md).
 eval-fixtures/
 
 # Evals built from real Claude Code session transcripts (ui-master / grill / to-spec).

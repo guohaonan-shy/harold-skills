@@ -204,6 +204,25 @@ right is *which paths it watches* (only HTML directly in `docs/design/tmp/<spec-
 its tests swap in a fake CLI to pin the exit-code contract (error blocks, warning passes, an
 unreachable CLI never blocks), and one real run against the official CLI was the falsifiable check.
 
+## Baseline: `uiux-research`
+
+`evals/uiux-research/` is the plugin's only baseline, and it is deliberately not a pass/fail eval.
+What the researcher's page should contain is still being settled with the human, so it asserts no content and gives no
+score. It pins **six default prompts taken from real design sessions** (leave confirmation, resuming after a
+pause, failure card or not, error-title tone, where a failed list item goes, pausing under a modal), each with one line
+on what that research actually helped or did not help with last time, plus a minimal product context
+(`DESIGN.md`, `PRODUCT.md`). One command runs all or some of them; each page is left at a fixed place and each case has its
+own `annotations.md` where the human records what is wrong with it. Annotations are kept, and they are what the page's
+shape converges on over time.
+
+```
+node idea-loop/evals/uiux-research/run.mjs --list                  # cases and prompts
+node idea-loop/evals/uiux-research/run.mjs --only leave-confirm    # one case
+node idea-loop/evals/uiux-research/run.mjs                         # all six (calls Refero for real — run it at night)
+```
+
+Output lands in `/tmp/idea-loop-uiux-research/<case>/output/index.html`. Details: `evals/uiux-research/README.md`.
+
 ## Portability
 
 Project rules and verification tools come from the current repository's REVIEW.md,
@@ -246,6 +265,7 @@ idea-loop/
 │   ├── implement/SKILL.md            # orchestrates a spec's tickets — the work is in agents/implementer.md
 │   ├── pr-review/SKILL.md            # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   └── dreaming/SKILL.md             # + references/ — proposal-table (shape and execution pass), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
+├── evals/uiux-research/              # the one baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of the retired design-modeling skill — superseded by references/design-md.md, kept as history
@@ -272,6 +292,7 @@ idea-loop/
 │   ├── mini-yaml.test.mjs
 │   ├── research-check.mjs            # uiux-research's gate: the page's head (question / conclusion / cannot-answer), every source's flow + three readings, every screenshot a relative path that exists
 │   ├── research-check.test.mjs       # one per rule, plus the CLI exit codes
+│   ├── research-baseline.test.mjs    # keeps the uiux-research baseline well-formed: six cases, each with a prompt, a comparison line and an annotation file; the runner's stream digest
 │   ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
 │   ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
 │   ├── proposal-table-check.mjs      # dreaming's exit gate: row types, per-type disposition sets, two pictures on archive rows, a delete-object row names its referrers, an unreachable-state row says what was missing and tried, "product broken" never replaces the archive, empty-table test
