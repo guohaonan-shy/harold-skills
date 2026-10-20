@@ -53,6 +53,19 @@ test('pendingRequirements: only folders that hold a file, sorted; empty or absen
   assert.deepEqual(pendingRequirements(root), ['alpha', 'zeta']);
 });
 
+test('pendingRequirements: research pages from uiux-research are scratch, not an unarchived design', () => {
+  // no-spec research lives at tmp/research/, with-spec research at tmp/<spec-slug>/research/
+  const root = repo({
+    'docs/design/tmp/research/leave-confirm/index.html': '<html></html>',
+    'docs/design/tmp/research/leave-confirm/shots/a-1.png': 'png',
+    'docs/design/tmp/only-research/research/empty-state/index.html': '<html></html>',
+    'docs/design/tmp/with-delta/research/q/index.html': '<html></html>',
+    'docs/design/tmp/with-delta/delta/pages/p/p.md': 'x',
+  });
+  assert.deepEqual(pendingRequirements(root), ['with-delta']);
+  assert.equal(runHook(bash('gh pr merge 12', repo({ 'docs/design/tmp/research/q/index.html': 'x', 'docs/design/tmp/s/research/q/shots/a.png': 'x' }))).status, 0);
+});
+
 test('a merge command is blocked while tmp/ holds a requirement, and the message names it and the way out', () => {
   const root = repo({ 'docs/design/tmp/demo-spec/delta/pages/p/p.md': 'x' });
   const r = runHook(bash('gh pr merge 12', root));

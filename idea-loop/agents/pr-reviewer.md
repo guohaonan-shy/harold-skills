@@ -19,7 +19,7 @@ effort: xhigh
 - spec 路径（`docs/spec/<spec-slug>/<spec-slug>.md`）和工单目录（同一目录下的 `tickets/`）
 - 这个 PR 的 review loop 文件路径（`refs/review-loop.md`；从里面读之前几轮的汇报和人的批示，**尤其是人推翻过的条目**，见 §5 第 1 步）
 - Codex companion 的路径（§2）
-- **UI 审查的发现文件路径**（可选）：本地 `docs/design/tmp/` 有这份 spec 的需求目录时，编排者在起你之前先起了 `idea-loop:ui-reviewer`，它写的 `ui-findings.json`。没给就是这一轮没有 UI 审查，什么都不并进汇报
+- **UI 审查的发现文件路径**（可选）：本地 `docs/design/tmp/` 有这份 spec 的设计产物（`research/` 不算）时，编排者在起你之前先起了 `idea-loop:ui-reviewer`，它写的 `ui-findings.json`。没给就是这一轮没有 UI 审查，什么都不并进汇报
 
 这一轮的工作目录是 `.tmp/pr-review/<PR 号>/round-<N>/`，配图放 `.tmp/pr-review/<PR 号>/evidence/`。
 

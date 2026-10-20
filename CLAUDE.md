@@ -28,10 +28,11 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 
 - **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
 - **不硬编码 Toeflair**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；Toeflair 只作为举例出现。
-- 下面三处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
-  1. **不走 pushy description**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。
+- 下面四处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
+  1. **不走 pushy description**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。
   2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
   3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。
+  4. **唯一带 `evals/`**：理由见下面 §5。
 
 ## 标准 plugin 目录结构
 
@@ -43,6 +44,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
+├── evals/                           # 可选 —— 钉住的 baseline（只有 idea-loop 有，见 §5 的有意例外）
 ├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
 ├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
@@ -99,6 +101,12 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ### 5. Eval 策略
 
 这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可，所有 plugin 都一样。
+
+**唯一的有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
+理由不是它更重要，是它的**产物形状还在跟人一起收敛**：它交出一页给人看的 HTML，这一页该包含什么、怎么写才对，现在没人能先写成断言。
+所以那里不判好坏、不打分：钉一组取自真实设计会话的 default prompt 加一份最小的产品上下文，一条命令跑，每个 case 把页面留在固定位置、旁边放一个文件让人标注问题，
+标注留档，逐步收敛出产物该包含什么。改了调研 agent、契约或 skill，就对着同一组问题再跑一遍给人看。
+写这条例外是为了让下一个读到它的人知道这是决定，不是遗漏；等产物形状稳了，标注收敛出的东西该变成 `research-check` 的机械检查，这个例外就可以收掉。
 
 ### 6. allowed-tools 收窄到具体命令模式
 
