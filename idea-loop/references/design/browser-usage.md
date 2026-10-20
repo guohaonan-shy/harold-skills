@@ -53,12 +53,15 @@ product at the selected Surface / Module / Component scope are all real, not app
 
 ## Scratch layout
 
-- The canvas lives in the target project's docs, **not** the app tree: `docs/design/<spec-slug>/<spec-slug>.html`
-  (+ `docs/design/<spec-slug>/assets/` for captured PNGs; the motion layer is `<spec-slug>-motion.html` in the
-  same folder). It is written there from the first stroke and frozen in place by `uiux-refine`. One spec
+- The canvas lives in the target project's docs, **not** the app tree:
+  `docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html` (+ `canvas/assets/` for captured PNGs; the motion layer
+  is `<spec-slug>-motion.html` in the same folder). It is written there from the first stroke and frozen in
+  place by `uiux-refine`; `tmp/` is local-only and stays until the requirement is archived. One spec
   = one folder, however many surfaces it spans. Scratch that should not survive (critic frames, round
-  JSON) goes under `.tmp/<skill>/<spec-slug>/` at the worktree root instead (not the system `/tmp` — the
-  lifetime follows the worktree; see `wiki-conventions.md` §2.1).
+  JSON, the ledger) goes under `docs/design/tmp/<spec-slug>/canvas/work/`, the divergent half's
+  throwaway files under `docs/design/tmp/<spec-slug>/imagine/` — not the system `/tmp`, so the
+  lifetime follows the requirement (`wiki-conventions.md` §2). A protocol run outside the design loop
+  keeps its scratch under `.tmp/<skill>/<spec-slug>/` at the worktree root (§2.1).
 - Authoring style: inline styles + `var(--token)`, or pull our real Tailwind/tokens by inlining a
   built CSS — whatever reproduces the shipped surface most faithfully. Real DOM means real CSS works;
   you are not limited to flex-only like Paper.
@@ -140,7 +143,7 @@ spinning" is not a reaction the human can give honestly.
 
 ### The board
 
-- One file, `.tmp/uiux-imagine/<spec-slug>/board.html` at the worktree root, served from that directory; the same page
+- One file, `docs/design/tmp/<spec-slug>/imagine/board.html`, served from that directory; the same page
   is refreshed every round (no new tab per round).
 - **Variants stack vertically**, full width each. The built-in browser pane is ~800px wide; three
   side-by-side columns squash every variant into something nobody would ship.
@@ -167,7 +170,7 @@ changed only where this change bites:
    relative `url(/…)` to absolute dev-server URLs — otherwise fonts and icons don't load on the
    board.
 3. The Playwright MCP's code sandbox **cannot write files**. Run a tiny CORS-enabled HTTP server in
-   `.tmp/uiux-imagine/<spec-slug>/` that accepts a POST and writes the body to disk, and `fetch` the
+   `docs/design/tmp/<spec-slug>/imagine/` that accepts a POST and writes the body to disk, and `fetch` the
    captures to it from inside the page.
 4. Assemble `board.html`: the captured CSS once, then one clone per variant with only the changed
    parts edited, each wired to its simulated timeline.
@@ -181,7 +184,34 @@ Pitfalls that have bitten real runs:
 - Brand-new surfaces have nothing to clone; build the variants from scratch, same board, same
   built-in browser.
 
+### The handoff canvas
+
+What the human picked is not thrown away. When imagine finishes, `uiux-imaginer` exports the
+selected variant as a standalone page at `docs/design/tmp/<spec-slug>/imagine/handoff/index.html`, and
+`uiux-refine`'s designer starts from it instead of rebuilding from the direction note's prose.
+
+- **Strip the board shell**: the header, the variant label and "what it bets on", the timeline
+  captions, the `?variant=` switch, every other variant. The "preview reduced motion" toggle
+  becomes a real `prefers-reduced-motion` media query.
+- **Keep what makes it the picked variant**: the `?state=` switch (state names match the direction
+  note's acceptance matrix), the real motion and its simulated timeline, and the component markup
+  and CSS cloned from the baseline. Unchanged parts stay as the shipped UI; nothing is redrawn.
+- **Self-contained**: images, fonts and every `url(…)` in the captured CSS are copied into
+  `handoff/assets/` and rewritten as relative paths. No reference to `board.html`, the working
+  directory's own `assets/` or `research/`, a dev server, the capture server, or an absolute
+  address — any static server (or `file://`) opens it. The designer copies it into
+  `docs/design/tmp/<spec-slug>/canvas/` unchanged, so `assets/…` must keep resolving from there.
+- **Same fidelity as the pick**: no polish added, nothing cut to look cleaner.
+- **A partial reopen** (some blocks frozen, the rest back to imagine) exports only the reopened
+  blocks; the frozen canvas is their baseline.
+- Open it with `handoff/index.html?state=<name>` from any static server serving the imagine
+  working directory (the orchestrator's, while it is still up).
+
 ### Cleanup
 
-The board, the captures, and **both** servers (static + the capture POST server) go when imagine
-finishes — renders do not survive the phase. The direction note is the only thing that does.
+When imagine finishes, these go: the board (`board.html`), the unselected variants, the captures,
+the style tile, `research/`, the working directory's own `assets/`, `rounds.md`, and **both**
+servers (static + the capture POST server). These two stay: **the direction note and `handoff/`**.
+The two together are what `uiux-refine` starts from; renders other than the handoff canvas do not
+survive the phase. When refine freezes, the whole imagine working directory (handoff included)
+is deleted along with refine's own.

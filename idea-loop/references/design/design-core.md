@@ -17,12 +17,12 @@ is small enough to always be present.
 wins on any brand/token conflict — this file never restates its values, only names its floors (§4).
 When the target project has no `DESIGN.md`, this file's generic law (§2, §5, §6, §7) is the default,
 the §4 example floors are illustration only, and the skill should suggest creating a `DESIGN.md`
-through `design-modeling` — a missing doc is a degradation, never an abort. What this file adds is
+by running `uiux-imagine` (no live UI) or `dreaming` (live UI) — a missing doc is a degradation, never an abort. What this file adds is
 the *generic* anti-slop law and the forced protocols (§2, §6) that no brand doc carries.
 
 **Enforcement split.** The mechanically-checkable subset of these rules is enforced by
 `scripts/design-lint.mjs` — a PostToolUse hook runs it on every write to a canvas HTML
-(`docs/design/<spec-slug>/`, plus the legacy `design-preview/` / `design-motion-preview/`), so violations surface without anyone remembering to check. The lint
+(`docs/design/tmp/<spec-slug>/canvas/`, plus the legacy `design-preview/` / `design-motion-preview/`), so violations surface without anyone remembering to check. The lint
 is the hard gate; this file carries the *why* plus the judgment calls a regex can't make.
 
 ---

@@ -55,8 +55,8 @@ altitude.
 - The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
   the project root, plus `PRODUCT.md` (project root) when present.
   If the project has no `DESIGN.md`, fall back to this plugin's built-in defaults (design-core
-  floors + anti-slop law), note that no project design law was found, and suggest creating one through
-  `design-modeling` — never abort over a missing doc.
+  floors + anti-slop law), note that no project design law was found, and suggest running
+  `uiux-imagine` (no live UI) or `dreaming` (live UI) to create one — never abort over a missing doc.
 - The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
   route additionally reads `references/design/landing-ia.md` (see the table in §A).
 - Two reference files load on demand rather than at Setup: `references/design/accessibility-baseline.md`
@@ -69,8 +69,9 @@ altitude.
 Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
 checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
 concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
-become candidates and reach `DESIGN.md` only through `design-modeling`, which puts each one to the
-human before anything is written.
+become candidates (format: `references/design-md.md` §13); this protocol never writes `DESIGN.md`.
+`dreaming` processes them under that reference and puts each one to the human before anything is
+written.
 
 ## Setup
 
@@ -80,7 +81,7 @@ Before stage A:
 2. Read `references/design/expression-framework.md`.
 3. Read the target project root's `DESIGN.md` and `PRODUCT.md` —
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
-   and recommend creating `DESIGN.md` (see Setup note above).
+   and recommend creating `DESIGN.md` through `uiux-imagine` or `dreaming` (see Setup note above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
 5. Before any browser call, read `references/design/browser-usage.md`.
 
@@ -132,6 +133,9 @@ Follow the selected protocol's R section:
   sources; do not build a page replica merely because the component already ships.
 - Brand-new work: there is nothing to replicate; build an honest context frame from real siblings
   and tokens instead.
+- **Starting from an imagine handoff canvas** (`uiux-refine`): the baseline was already cloned from
+  production during imagine and lives in `handoff/`. Do not re-capture production or restart the
+  app; verify the copy against the handoff canvas instead (`agents/designer.md` §2).
 
 The judge here is fidelity, not improvement. Record a one-line fidelity/context note.
 
@@ -220,7 +224,7 @@ flagship token cost.
 
 ### F · Build in the browser
 
-Evolve the baseline or context frame in the canvas (`docs/design/<spec-slug>/<spec-slug>.html`). Implement changed parts in
+Evolve the baseline or context frame in the canvas (`docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html`). Implement changed parts in
 full; preserve unchanged parts from the replica or mark them with an honest placeholder. Pure
 deletions remain code-level work.
 
@@ -234,7 +238,7 @@ core's 5-dimensional critique and restraint check.
 ### G · Review gates to convergence
 
 1. **Mechanical lint.** Confirm the final preview is P0-clean; run
-   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/<spec-slug>/<spec-slug>.html` (this
+   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html` (this
    plugin's script, wherever the plugin is installed) when needed. Fix or explicitly justify P1s.
 2. **Isolated critique.** Self-contained pass over the served preview URL: read
    `references/design/ui-craft-checklist.md` and `references/design/heuristics-checklist.md`, screenshot each
@@ -266,19 +270,22 @@ Serve the preview and provide a short review list:
 On feedback, return to the earliest wrong altitude. Read a cluster of fine notes as one underlying
 rule, not independent patches.
 
-On sign-off, perform **Distill-back before handoff**, routed through `design-modeling` — the only
-writer of the project's `DESIGN.md`:
+On sign-off, perform **Distill-back before handoff**, and it only writes candidates:
 
-1. Write each decision that might generalize as a candidate in the freeze record's
-   `## 设计法候选` section, in the format `skills/design-modeling/SKILL.md` §8 defines. An empty
-   Distill-back is valid only when stated explicitly: the section then holds one line, 「无」.
-2. Invoke `design-modeling`'s distill mode. It runs every candidate through its layer table with
-   the human — product visual language goes to `DESIGN.md`, method that holds for any product goes
-   back to this plugin as an issue, a single page's choice stays in its freeze record — and the
-   human decides whether to process the batch now or after the page ships.
+1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
+   archive object it came from (page, component, motion or journey file under `delta/`; shape in
+   `references/design-archive.md` §4), in the format `references/design-md.md` §13 defines — a
+   one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
+   evidence. The freeze record's same-named section lists them (one line each, saying which object
+   carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
+   one line, 「无」.
+2. Stop there. `dreaming` later runs every candidate through the admission table in
+   `references/design-md.md` §7 with the human — product design system goes to `DESIGN.md`, method
+   that holds for any product goes back to this plugin as an issue, a single page's choice stays in
+   its object's 「决定」.
 
-This protocol never writes `DESIGN.md` itself and never bootstraps one; a project without a
-`DESIGN.md` gets one through `design-modeling`.
+This protocol never writes `DESIGN.md` and never bootstraps one; a project without a `DESIGN.md`
+gets one through `uiux-imagine` (at its start) or `dreaming`.
 
 The approved preview HTML + concept + state contract pass to `references/design/motion-protocol.md`. Do not port to React in
 this protocol.
@@ -290,12 +297,12 @@ count.)
 
 - **T1 identity floors and T3 bans:** never relax silently. Their usual territory: a11y, the
   single-accent identity, a retired previous identity, the elevation language, the motion
-  whitelist, the selection treatment, the display face.
-- **T2 case law:** challenge through concept B or surface a mid-build deviation explicitly. A
-  winning deviation becomes a candidate at H and reaches `DESIGN.md` only through
-  `design-modeling`; a silent deviation is a workflow failure.
+  principles and bans, the selection treatment, the display face.
+- **T2 defaults** (rules in `DESIGN.md` that are neither a floor nor a ban): challenge through
+  concept B or surface a mid-build deviation explicitly. A winning deviation becomes a candidate at
+  H and never edits `DESIGN.md` here; a silent deviation is a workflow failure.
 - Typical T2 territory includes density, component treatments, responsive container behavior,
-  promotion hierarchy, disclosure, and motion precedents.
+  promotion hierarchy, disclosure, and motion defaults.
 
 ## What this protocol is not
 

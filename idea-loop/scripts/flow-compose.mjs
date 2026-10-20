@@ -8,33 +8,44 @@
  * yet, so this script is THE way those figures get made — one recipe, so every figure in a spec
  * (and in the next spec) looks the same. Rules and placement: references/spec-figures.md §4.
  *
- * The input is one JSON per figure. Its shape is deliberately the same as a flow in the future
- * docs/ui/ archive, so figures can move there unchanged.
+ * The input is one JSON per figure. Its shape is deliberately the same as a flow in the design
+ * archive (docs/design/prod/, references/design-archive.md), so figures can move there unchanged.
  *
- * Deterministic core (checkFlow, renderHtml) is pure and unit-tested. The CLI at the bottom is
- * the file + browser boundary: it inlines the screenshots, writes a self-contained HTML, and
- * screenshots it with the target project's playwright when that resolves.
+ * A step may also say which archive state it shows (`state`, the state's name, e.g.
+ * `cookbook--search-loading`). The id is kept in the output — a tag under the caption, a
+ * `data-state` attribute in the HTML, and a `<out>.states.json` map beside the PNG — so every
+ * cell of the figure can be traced back to a state file under docs/design/tmp/<spec-slug>/delta/.
+ * With `--archive <repo root> [--delta <spec-slug>]` the ids are also checked against the archive.
+ * Steps without `state` render exactly as they did before the field existed.
  *
- * Usage:  node flow-compose.mjs <flow.json> <out.png>
+ * Deterministic core (checkFlow, stateMap, renderHtml) is pure and unit-tested. The CLI at the
+ * bottom is the file + browser boundary: it inlines the screenshots, writes a self-contained HTML,
+ * and screenshots it with the target project's playwright when that resolves.
+ *
+ * Usage:  node flow-compose.mjs <flow.json> <out.png> [--archive <repo-root> [--delta <spec-slug>]]
  * Exit:   0 = written, 1 = usage / io error, 2 = the flow is invalid (problems listed).
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, extname, join, resolve } from 'node:path';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
+/** An archive state name: one token, no whitespace, no wikilink brackets. */
+const isStateId = (v) => typeof v === 'string' && /^[^\s[\]]+$/.test(v);
 
 /**
  * Validate one flow.
  *
- * @param flow    the parsed JSON
- * @param exists  (relativeImagePath) => boolean — injected so the core stays pure
+ * @param flow      the parsed JSON
+ * @param exists    (relativeImagePath) => boolean — injected so the core stays pure
+ * @param hasState  optional (stateId) => boolean — whether the design archive has that state;
+ *                  when omitted, state ids are checked for shape only
  * @returns { valid, errors }
  */
-export function checkFlow(flow, exists = () => true) {
+export function checkFlow(flow, exists = () => true, hasState = null) {
   const errors = [];
   if (!flow || typeof flow !== 'object') return { valid: false, errors: ['flow 不是一个对象'] };
   if (!isText(flow.title)) errors.push('缺 title（这张图讲的是哪个场景）');
@@ -72,6 +83,13 @@ export function checkFlow(flow, exists = () => true) {
       if (!isText(step.image)) errors.push(`${where}缺 image`);
       else if (!exists(step.image)) errors.push(`${where}的截图不存在：${step.image}`);
       if (!isText(step.caption)) errors.push(`${where}缺 caption（截图下那一句）`);
+      if (step.state !== undefined) {
+        if (!isStateId(step.state)) {
+          errors.push(`${where}的 state 要写档案里的状态名（一个词，如 cookbook--search-loading，不带空格和 [[ ]]）`);
+        } else if (hasState && !hasState(step.state)) {
+          errors.push(`${where}的 state「${step.state}」在档案里找不到`);
+        }
+      }
       const arrowIn = row.connected !== false && (s > 0 || row.branchFrom !== undefined);
       if (arrowIn && !isText(step.trigger)) errors.push(`${where}有箭头指进来，要写 trigger`);
       if (!arrowIn && step.trigger !== undefined && s === 0) {
@@ -90,6 +108,31 @@ export function checkFlow(flow, exists = () => true) {
 
 const esc = (s) =>
   String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+
+/**
+ * Which archive state each step shows, in reading order — the correspondence the figure keeps so a
+ * cell can be traced back to a state file. Rows and steps count from 1, like the error messages.
+ * Steps without a `state` are left out.
+ */
+export function stateMap(flow) {
+  const map = [];
+  (flow.rows ?? []).forEach((row, r) =>
+    (row.steps ?? []).forEach((step, s) => {
+      if (step.state !== undefined) map.push({ row: r + 1, step: s + 1, state: step.state, caption: step.caption });
+    }),
+  );
+  return map;
+}
+
+/**
+ * File name for the n-th figure of a spec: `flow-<n>-<page>--<state>.png`, the state being the first
+ * one the figure shows (state ids are `<page>--<state>`, so the page rides along). The archive
+ * script reads the owning page off this name. Null when no step names a state.
+ */
+export function flowFileName(flow, n) {
+  const first = stateMap(flow)[0];
+  return first ? `flow-${n}-${first.state}.png` : null;
+}
 
 /**
  * Grid placement. Each row occupies one grid row; a branch row starts one column right of the
@@ -119,6 +162,10 @@ export function layout(flow) {
 export function renderHtml(flow, src = (p) => p) {
   const scale = flow.scale ?? 0.5;
   const { placed, cols } = layout(flow);
+  // The state tag only exists (and only its style rule is emitted) when a step names a state.
+  const stateCss = stateMap(flow).length
+    ? '  .state { margin-top:4px; font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted); max-width:260px; word-break:break-all; }\n'
+    : '';
   const cells = [];
   for (const { r, start, gridRow, labelRow } of placed) {
     const row = flow.rows[r];
@@ -136,8 +183,8 @@ export function renderHtml(flow, src = (p) => p) {
       cells.push(
         `<div class="cell${first}" style="grid-row:${gridRow};grid-column:${start + s + 1}">` +
           `<div class="gutter">${arrowIn ? `<span class="trigger" data-from="${from}" data-to="${id}" data-branch="${s === 0 ? 1 : 0}">${esc(step.trigger)}</span>` : ''}</div>` +
-          `<figure id="${id}"><div class="shot"><img src="${esc(src(step.image))}" data-scale="${scale}">${rings}</div>` +
-          `<figcaption>${esc(step.caption)}</figcaption></figure>` +
+          `<figure id="${id}"${step.state !== undefined ? ` data-state="${esc(step.state)}"` : ''}><div class="shot"><img src="${esc(src(step.image))}" data-scale="${scale}">${rings}</div>` +
+          `<figcaption>${esc(step.caption)}</figcaption>${step.state !== undefined ? `<div class="state">${esc(step.state)}</div>` : ''}</figure>` +
         `</div>`,
       );
     });
@@ -163,7 +210,7 @@ export function renderHtml(flow, src = (p) => p) {
   .shot img { display:block; border-radius:6px; }
   .ring { position:absolute; border:3px solid var(--ring); border-radius:50%; box-shadow:0 0 0 3px rgba(239,68,68,.18); pointer-events:none; }
   figcaption { margin-top:8px; font-size:12px; color:var(--muted); max-width:260px; line-height:1.45; }
-  .label { font-size:12px; color:var(--muted); padding-left:120px; margin-bottom:-16px; }
+${stateCss}  .label { font-size:12px; color:var(--muted); padding-left:120px; margin-bottom:-16px; }
   .label.first { padding-left:0; }
   .note { margin-top:24px; font-size:13px; color:var(--ink); max-width:720px; }
   svg#wires { position:absolute; left:0; top:0; pointer-events:none; overflow:visible; }
@@ -227,11 +274,22 @@ const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
 
 // CLI
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const [file, out] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-  if (!file || !out) {
-    console.error('usage: flow-compose.mjs <flow.json> <out.png>');
+  const usage = () => {
+    console.error('usage: flow-compose.mjs <flow.json> <out.png> [--archive <repo-root> [--delta <spec-slug>]]');
     process.exit(1);
+  };
+  const positional = [];
+  const flags = {};
+  const argv = process.argv.slice(2);
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--archive' || argv[i] === '--delta') {
+      if (argv[i + 1] === undefined || argv[i + 1].startsWith('--')) usage();
+      flags[argv[i].slice(2)] = argv[++i];
+    } else if (argv[i].startsWith('--')) usage();
+    else positional.push(argv[i]);
   }
+  const [file, out] = positional;
+  if (!file || !out || positional.length > 2 || (flags.delta && !flags.archive)) usage();
   const base = dirname(resolve(file));
   let flow;
   try {
@@ -240,9 +298,26 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     console.error(`flow-compose: 读不了 ${file}：${e.message}`);
     process.exit(1);
   }
-  const result = checkFlow(flow, (p) => existsSync(join(base, p)));
+  let hasState = null;
+  if (flags.archive) {
+    if (!existsSync(join(flags.archive, 'docs'))) {
+      console.error(`flow-compose: ${flags.archive} 不是仓库根（下面没有 docs/）`);
+      process.exit(1);
+    }
+    const { loadArchive } = await import('./design-archive.mjs');
+    const archive = loadArchive(resolve(flags.archive), { delta: flags.delta ?? null });
+    hasState = (id) => archive.objects.get(id)?.kind === 'state';
+  }
+  const result = checkFlow(flow, (p) => existsSync(join(base, p)), hasState);
   if (!result.valid) {
     console.error(renderReport(result, file));
+    process.exit(2);
+  }
+  // A figure filed as flow-<n>-… in a spec must say which archive state it starts at, in its name.
+  const named = basename(out).match(/^flow-(\d+)-/);
+  const wanted = named ? flowFileName(flow, Number(named[1])) : null;
+  if (wanted && basename(out) !== wanted) {
+    console.error(`flow-compose: 这张图的步骤带了状态 id，文件名要写成 ${wanted}（flow-<序号>-<第一格的状态名>.png），现在是 ${basename(out)}`);
     process.exit(2);
   }
   const dataUri = (p) => {
@@ -251,6 +326,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   };
   const htmlPath = out.replace(/\.png$/i, '') + '.html';
   writeFileSync(htmlPath, renderHtml(flow, dataUri));
+  // The HTML is disposable; this map is what stays beside the PNG when cells name archive states.
+  const states = stateMap(flow);
+  if (states.length) writeFileSync(out.replace(/\.png$/i, '') + '.states.json', JSON.stringify(states, null, 2) + '\n');
 
   const pw = await loadPlaywright();
   if (!pw) {
