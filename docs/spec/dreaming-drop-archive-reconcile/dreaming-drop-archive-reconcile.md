@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 审核中
+status: 在飞
 tags: [idea-loop, dreaming, design-archive]
 summary: dreaming 暂时不碰设计档案的页面：删掉每周档案对账与全站初扫，候选蒸馏与 DESIGN.md 对账照旧
 related: ["[[2026-10-21-archive-scope-app-only]]", "[[dreaming-design-reconcile]]"]
