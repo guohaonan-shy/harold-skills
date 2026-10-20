@@ -77,7 +77,7 @@ Toeflair 的项目记忆里写着当初刻意把调研留在主会话的原因�
 新增一个 skill `uiux-research` 和它背后的调研 agent：
 
 - **入口是 skill**：人在任何会话里调 `/idea-loop:uiux-research <具名问题>`；imagine / refine 之外的普通对话里，模型也可以自己调。imagine / refine 的编排者只在人说要查时才调。
-- **执行者是调研 agent**：拿一句具名问题、产品上下文和一个落图目录，查 Refero，把参考图下载下来，写一页 `index.html`——结论、不能回答什么、每个来源一组按 flow 排好的截图配三段解构——交回这页的路径和一句结论。Refero 的调用只发生在它那里。
+- **执行者是调研 agent**：拿一句具名问题、产品上下文和一个落图目录，查 Refero，把参考图下载下来，写一页 `index.html`——人的原话与具名问题、结论两块（通用结论、要人决策的问题）、每个来源一组按 flow 排好、可点开大图的截图配场景与设计逻辑两段——交回这页的路径和一句结论。Refero 的调用只发生在它那里。
 - **imagine / refine 里不再自己调研**：uiux-imaginer、designer、静态 UI 协议 C 段都不再查参考。拿不准的 UX 问题写成「建议调研的问题」加推荐做法放进交回，不停下等人，先按推荐做法往下走。
 - **接回流程由人决定**：编排者把 HTML 发给人；人看完决定转哪些，编排者再把文字结论转给执行者，不给图。imagine 开工前查到的结论以文字写进交给种子子代理的需求。
 
@@ -113,7 +113,7 @@ issue #46 定下的边界（不下方向结论、不做 reference-averaging、�
 - 查：UX pattern、user flow、某一类页面的通常做法、文案语气。走 Refero 的 screens / flows 层。
 - 不查：视觉风格（styles 层）。视觉方向交给随机种子和 `DESIGN.md`；研究契约里「选定语言后可选的 styles 压力测试」一并删掉。
 - 不再受「第一批变种出现之前不查」限制：调研回答的是 UX 问题，不决定 UI 长什么样，UI 的发散由种子负责。人可以在 imagine 开工前查。
-- 时间 / 行为维度的问题（某个动效、某个状态什么时候出现）静态截图往往答不了：调研 agent 照实写进「不能回答什么」，不硬凑参考。
+- 时间 / 行为维度的问题（某个动效、某个状态什么时候出现）静态截图往往答不了：调研 agent 在通用结论里写明「没有参考能回答」，并列进要人决策的问题，不硬凑参考。
 
 ### 4.4 交回：一页 HTML
 
@@ -153,7 +153,7 @@ issue #46 定下的边界（不下方向结论、不做 reference-averaging、�
 
 - 新增 `skills/uiux-research/SKILL.md`：把人的话收成一句具名问题，定落图目录，起调研 agent，拿到路径后把 HTML 发给人；在 imagine / refine 会话里，人说要转时把文字结论转给执行者。
 - 新增 `agents/uiux-researcher.md`（名字随实现定）：输入具名问题、产品上下文（`DESIGN.md` 路径、一句话描述当前在做什么）、落图目录；输出 `index.html` 路径和一句结论。
-- `references/design/research-backend.md` 改成写给调研 agent：去掉「第一批变种之前不读」和 styles 层、三行记录改三段解构、加 HTML 交回格式。
+- `references/design/research-backend.md` 改成写给调研 agent：去掉「第一批变种之前不读」和 styles 层、三行记录改成每个来源场景与设计逻辑两段、加 HTML 交回格式（§4.4）。
 - `agents/uiux-imaginer.md`：§6 改成「不调研；拿不准写建议调研的问题」，删掉 `imagine/research/` 及其清理；交回里的「参考图路径」改成「建议调研的问题」；开工时接编排者带来的调研文字，写进种子子代理的需求。
 - `skills/uiux-imagine/SKILL.md`、`skills/uiux-refine/SKILL.md`：编排者在人说要查时调 `uiux-research`，人说要转时转文字。
 - `agents/designer.md`：`pattern` 路由改成 §4.2。
@@ -172,7 +172,7 @@ issue #46 定下的边界（不下方向结论、不做 reference-averaging、�
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑 / 数据转换 | TDD 单元 | 碰到一处：如果给 `index.html` 加形状校验脚本（每个来源三段齐、引用的图都存在、有「不能回答什么」），照现有脚本旁的 `*.test.mjs` 写。不加脚本就不涉及。 |
+| 纯逻辑 / 数据转换 | TDD 单元 | 碰到一处：如果给 `index.html` 加形状校验脚本（结论两块齐、每个来源两段齐、引用的图都存在且能点开大图、有人的原话），照现有脚本旁的 `*.test.mjs` 写。不加脚本就不涉及。 |
 | API 契约 | TDD API 测试 | 不涉及。 |
 | DB schema / 迁移 / 并发 | 真 DB 测试 | 不涉及。 |
 | LLM 输出质量 | eval | 碰到：新 skill、新 agent 和改动的说明都是提示词改动，按仓库约定走 vibe 迭代；另给 `uiux-research` 建一个 baseline（人的决定，2026-10-20）：取以前真实会话里调研过的几个问题作 default prompt，配最小产品上下文，跑出的 HTML 交给人看、人标注问题，逐步收敛产物该包含什么，不预设内容断言。imagine / refine 原来的 baseline 已于 2026-10-19 删除，这两段的回归改由交付验收时真实跑一轮来看。 |
@@ -182,7 +182,7 @@ issue #46 定下的边界（不下方向结论、不做 reference-averaging、�
 - **seam**：`uiux-research` 的交回（一个 HTML 路径加一句结论）和落图目录是唯一的 seam；有校验脚本的话，seam 是脚本的命令行入口和退出码。
 - **增量功能测试**：
   - 会话只收结果：人在 imagine 中途调 `uiux-research`；期望——会话里只出现 HTML 路径和一句结论，没有 Refero 调用和整张截图。覆盖 1。
-  - HTML 能读：期望——`file://` 打开即可看到按 flow 排的截图和三段解构，顶部有「不能回答什么」。覆盖 2。
+  - HTML 能读：期望——在内嵌浏览器里打开即可看到人的原话、结论两块、按 flow 排的截图（能点开大图）和每个来源的场景与设计逻辑。覆盖 2。
   - 不自动转：人看完不表态；期望——编排者不把结论转给执行者。人说转；期望——执行者收到的是文字，没有图。覆盖 3。
   - 执行者不自己查：跑一轮 imagine 和一轮 refine；期望——uiux-imaginer、designer 的记录里没有 Refero 调用；拿不准的地方以「建议调研的问题」出现在交回里。覆盖 3、4。
   - 开工前调研：人在 imagine 前调一次；期望——种子子代理收到的需求里有调研的文字结论，没有图。覆盖 3。
