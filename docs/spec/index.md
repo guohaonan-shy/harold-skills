@@ -3,6 +3,7 @@
 
 | 文件 | status | summary |
 |---|---|---|
+| [[design-archive-scope]] | 审核中 | dreaming 的设计档案初扫与对账只覆盖目标仓库声明的范围，没声明照旧全站 |
 | [[design-md-write-entry]] | 在飞 | DESIGN.md 写入口收拢：删 design-modeling，写入标准成 reference，只留 uiux-imagine 与 dreaming 两处写 |
 | [[design-research-agent]] | 在飞 | 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看 |
 | [[dreaming-design-reconcile]] | 在飞 | dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏 |

@@ -10,3 +10,4 @@
 | [[2026-10-17-design-md-survey]] | document | 2026-10-17 | DESIGN.md 写法调研（Google 规范 + VoltAgent 84 份样本） |
 | [[2026-10-19-design-md-standard]] | document | 2026-10-19 | DESIGN.md 写入标准（Harold 已认可） |
 | [[2026-10-19-pr-decision-friction]] | conversation | 2026-10-19 | 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么 |
+| [[2026-10-21-archive-scope-app-only]] | conversation | 2026-10-21 | 讨论 —— 设计档案的重跑先只覆盖 app，不碰营销站 |
