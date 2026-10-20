@@ -99,6 +99,63 @@ test('decisions inside the top conclusion, or before the last source, fails: the
   assert.ok(e.some((x) => x.includes('decisions') && x.includes('最后一个来源之后')), e.join('\n'));
 });
 
+/** The page's top-level blocks, in order: title, brief, conclusion, each source, decisions. */
+const blocksOf = (html) => {
+  const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>')).trim();
+  return body.split(/\n(?=<(?:h1|section))/).filter(Boolean);
+};
+const assemble = (blocks) => `<!doctype html><html><head><meta charset="utf-8"><title>调研</title></head><body>\n${blocks.join('\n')}\n</body></html>`;
+
+test('the sources before the general conclusion, or before the research question, fail: the head comes first', () => {
+  const [h1, brief, conclusion, src, decisions] = blocksOf(page());
+  assert.deepEqual(errorsOf(assemble([h1, brief, conclusion, src, decisions])), []); // control
+
+  let e = errorsOf(assemble([h1, brief, src, conclusion, decisions]));
+  assert.ok(e.some((x) => x.includes('通用结论要排在各来源之前')), e.join('\n'));
+
+  e = errorsOf(assemble([src, h1, brief, conclusion, decisions]));
+  assert.ok(e.some((x) => x.includes('通用结论要排在各来源之前')), e.join('\n'));
+});
+
+test('the research-question block, the context or the title after the general conclusion fails', () => {
+  const [h1, brief, conclusion, src, decisions] = blocksOf(page());
+  const e = errorsOf(assemble([h1, conclusion, brief, src, decisions]));
+  assert.ok(e.some((x) => x.includes('human-words') && x.includes('通用结论之前')), e.join('\n'));
+  assert.ok(e.some((x) => x.includes('context') && x.includes('通用结论之前')), e.join('\n'));
+
+  const e2 = errorsOf(assemble([brief, conclusion, h1, src, decisions]));
+  assert.ok(e2.some((x) => x.includes('question') && x.includes('通用结论之前')), e2.join('\n'));
+});
+
+test('another block after the decisions fails, at any nesting; the zoom dialog and its script after it are fine', () => {
+  const footer = '<section data-part="footer"><p>附：本次搜索过程说明</p></section>';
+  let e = errorsOf(page().replace('</body>', `${footer}</body>`));
+  assert.ok(e.some((x) => x.includes('decisions 之后不能再有别的块') && x.includes('footer')), e.join('\n'));
+
+  // a plain trailing paragraph / heading with no data-part is a block too
+  e = errorsOf(page().replace('</body>', '<p>谢谢阅读</p></body>'));
+  assert.ok(e.some((x) => x.includes('decisions 之后不能再有别的块')), e.join('\n'));
+
+  // inside the same wrapper as the decisions
+  e = errorsOf(page().replace('</div></section>\n</body>', '</div><div data-part="notes">备注</div></section>\n</body>'));
+  assert.ok(e.some((x) => x.includes('decisions 之后不能再有别的块')), e.join('\n'));
+
+  // the page wrapped in <main>
+  const wrapped = page().replace(/<h1/, '<main><h1').replace('</body>', `${footer}</main></body>`);
+  assert.ok(errorsOf(wrapped).some((x) => x.includes('decisions 之后不能再有别的块')));
+
+  const tail = '<dialog id="zoom"><img alt=""></dialog><script>const dlg = document.getElementById("zoom");</script>';
+  assert.deepEqual(errorsOf(page().replace('</body>', `${tail}</body>`)), []);
+});
+
+test('what a chapter holds is not enforced: an extra block in the conclusion, a third reading in a source, a screenshot outside shots/ all pass', () => {
+  const extraConclusion = page().replace('</div></section>\n<section data-source>', '</div><div data-part="process"><p>哪些来源没放进来</p></div></section>\n<section data-source>');
+  assert.deepEqual(errorsOf(extraConclusion), []);
+  const thirdReading = page({ sources: [source().replace('</section>', '<div data-part="takeaway"><h3>补充</h3><p>可以借鉴</p></div></section>')] });
+  assert.deepEqual(errorsOf(thirdReading), []);
+  assert.deepEqual(errorsOf(page({ sources: [source({ steps: [['elsewhere/a.png', '点 X', 'elsewhere/a-full.png']] })] })), []);
+});
+
 for (const [part, over] of [['scene', { scene: '' }], ['logic', { logic: '' }]]) {
   test(`a source whose ${part} is empty fails, and the error says which source`, () => {
     const r = checkResearchPage(page({ sources: [source(), source({ title: 'Beta · 退出', ...over })] }), { fileExists: everything });

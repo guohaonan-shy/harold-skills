@@ -3,23 +3,28 @@
  *
  * The researcher writes one self-contained `index.html` next to the screenshots it downloaded, and
  * the calling session sends that file to the human without reading it. So the page has to be
- * checkable without a model: this file judges its SHAPE, never whether the reading of a reference
- * is right.
+ * checkable without a model: this file judges its SKELETON, never whether the reading of a reference
+ * is right and never what a chapter says.
  *
- *   - the head of the page: what was asked, under the heading 「研究问题」 (the human's own words),
- *     the named question handed to the researcher (the page title) and the product context handed
- *     with it; then the conclusion — only what these products agree on (`general`). A question that
- *     static screenshots cannot settle (time / behaviour) is not padded with references: it is said
- *     in `general` and carried into the decisions;
- *   - every source: a title, a flow (ordered steps, each with a screenshot AND a line saying what
- *     the step does, and the screenshot clickable to a larger picture), and two readings,
- *     场景 / 设计逻辑. How a source bears on OUR needs is said once, in `decisions`, not per source,
- *     so the retired `for-us` and `cannot-answer` parts are an error;
- *   - the questions the human has to decide once the sources are read against our needs
- *     (`decisions`) come AFTER the last source, as the last block of the page, not inside the
- *     conclusion at the top: the human reads the evidence first and is then asked;
- *   - every screenshot and every zoom target is a relative path that resolves inside the drop
- *     directory, so the page opens from file:// and nothing points at a remote address that expires.
+ * The page is a fixed sequence of chapters (human decision, review round 1: "the broad shape is
+ * fixed to this report; each chapter has a description, not a hard requirement"):
+ *
+ *   1. 研究问题 — the page title (the named question handed to the researcher), the human's own
+ *      words under the heading 「研究问题」, and the product context handed with it;
+ *   2. 通用结论 (`general`) — what these products agree on;
+ *   3. the sources — each with a title, a flow (ordered steps, each a screenshot AND a line saying
+ *      what the step does, the screenshot clickable to a larger picture), and two readings,
+ *      场景 / 设计逻辑;
+ *   4. 要我们决策的问题 (`decisions`) — the LAST block of the page; nothing follows it.
+ *
+ * What this check enforces is exactly that skeleton: the chapters exist and are non-empty, they come
+ * in that order, nothing comes after the decisions, every flow step has its picture / line / zoom,
+ * and every screenshot address is a relative path that resolves inside the drop directory (so the
+ * page opens from file:// and nothing points at a remote address that expires). What a chapter holds
+ * beyond that — an extra paragraph, an extra block inside the conclusion or a source — is the
+ * contract's prose (references/design/research-backend.md, "What each chapter is for") and the
+ * human's reading, not a failing check. The two retired parts (`cannot-answer`, `for-us`) stay an
+ * error because a human annotation removed them by name.
  *
  * The page marks these parts with `data-part` attributes (the contract with the template in
  * references/design/research-backend.md). A page with no source at all is legal only when a
@@ -85,6 +90,9 @@ function within(el, ancestor) {
   for (let n = el; n; n = n.parent) if (n === ancestor) return true;
   return false;
 }
+/** Tags that can follow the last chapter without being a chapter (the zoom dialog and its script). */
+const NOT_CONTENT = new Set(['script', 'style', 'dialog', 'template', 'noscript']);
+const isContent = (el) => !NOT_CONTENT.has(el.tag) && ('data-part' in el.attrs || 'data-source' in el.attrs || textOf(el) !== '');
 const byPart = (root, part) => [...walk(root)].filter((e) => e.attrs['data-part'] === part);
 
 /** A screenshot address must stay inside the drop directory: relative, no scheme, no `..`. */
@@ -127,19 +135,42 @@ export function checkResearchPage(html, { fileExists }) {
     if (byPart(root, gone).length) errors.push(`${gone} 已取消：不再单列「不能回答什么」，也不在每个来源里写「对我们」；跟我们需求的结合只在页面最后的 decisions 里出现一次`);
   }
 
-  // decisions: one block, after every source (or the no-source note), outside the top conclusion.
+  // decisions: one block, after every source (or the no-source note), outside the top conclusion,
+  // and the last block of the page.
+  const order = new Map([...walk(root)].map((e, i) => [e, i]));
   const decisions = byPart(root, 'decisions')[0];
+  const lastBody = [...walk(root)].filter((e) => 'data-source' in e.attrs || e.attrs['data-part'] === 'no-source').pop();
   if (!decisions) errors.push('缺少 decisions（结合我们需求、要人决策的问题；data-part="decisions"，放在所有来源之后）');
   else {
     if (!textOf(decisions)) errors.push('decisions 是空的（结合我们需求、要人决策的问题）：没有分歧要人定，也照实写一句');
     if (conclusion && within(decisions, conclusion)) {
       errors.push('decisions 不放在顶部的结论里：「结合我们需求、要人决策的问题」放在最后一个来源之后，作为页面的最后一块');
+    } else if (lastBody && (within(decisions, lastBody) || order.get(decisions) < order.get(lastBody))) {
+      errors.push('decisions 要放在最后一个来源之后：先让人看完各来源，再摆要人决策的问题');
     } else {
-      const order = new Map([...walk(root)].map((e, i) => [e, i]));
-      const last = [...walk(root)].filter((e) => 'data-source' in e.attrs || e.attrs['data-part'] === 'no-source').pop();
-      if (last && (within(decisions, last) || order.get(decisions) < order.get(last))) {
-        errors.push('decisions 要放在最后一个来源之后：先让人看完各来源，再摆要人决策的问题');
+      // placed correctly; now nothing may follow it: walk up, and at every level the later siblings
+      // must be non-content (the zoom dialog / script are fine, a footer block is not).
+      for (let n = decisions; n.parent; n = n.parent) {
+        const later = n.parent.children.slice(n.parent.children.indexOf(n) + 1).filter(isContent);
+        if (later.length) {
+          errors.push(`decisions 之后不能再有别的块（发现 <${later[0].tag}${later[0].attrs['data-part'] ? ` data-part="${later[0].attrs['data-part']}"` : ''}>）：「要我们决策的问题」是页面的最后一块，补充说明放进它前面的章节或删掉`);
+          break;
+        }
       }
+    }
+  }
+
+  // The head comes first: 研究问题 (title, the human's words, the context) -> 通用结论 -> the sources.
+  if (conclusion) {
+    for (const part of ['question', 'human-words', 'context']) {
+      const el = byPart(root, part)[0];
+      if (el && order.get(el) > order.get(conclusion)) {
+        errors.push(`${part} 要排在通用结论之前：页面的顺序是 研究问题与上下文 → 通用结论 → 各来源 → 要我们决策的问题`);
+      }
+    }
+    const firstBody = [...walk(root)].find((e) => 'data-source' in e.attrs || e.attrs['data-part'] === 'no-source');
+    if (firstBody && order.get(firstBody) < order.get(conclusion)) {
+      errors.push('通用结论要排在各来源之前：先说这些产品得出的共同点，再逐个摆来源');
     }
   }
 

@@ -59,5 +59,5 @@ node idea-loop/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-
 3. 重复几次之后，把反复出现的标注收成一条「产物应该（不该）包含什么」，写回 `agents/uiux-researcher.md` 或
    `references/design/research-backend.md`；收敛到一定程度，再决定哪些值得变成 `research-check` 的机械检查。
 
-脚本里唯一跑的机械检查是已有的 `scripts/research-check.mjs`（页面形状：顶部的「研究问题」/ 具名问题 / 上下文、通用结论，每个来源的两段齐不齐，图在不在、点不点得开，最后的决策块在不在、是不是排在所有来源之后），它红了说明形状坏了，
+脚本里唯一跑的机械检查是已有的 `scripts/research-check.mjs`（页面形状：顶部的「研究问题」/ 具名问题 / 上下文、通用结论，每个来源的两段齐不齐，图在不在、点不点得开，章节顺序对不对：研究问题与上下文 → 通用结论 → 各来源 → 要我们决策的问题，决策块是最后一块、之后没有别的块；章节里面写什么不查），它红了说明形状坏了，
 绿了**不说明**内容好。内容好不好只有人说了算。

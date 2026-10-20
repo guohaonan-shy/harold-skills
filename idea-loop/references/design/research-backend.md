@@ -75,49 +75,60 @@ references them by relative path only, so it opens from `file://` and moves with
 
 ## The page: structure
 
-The page reads in this order — the human first sees what was asked, then what the products agree on,
-then the evidence, and only at the very end is asked to decide:
+The broad shape is fixed (human decision, review round 1, 2026-10-20: "the shape follows the report
+as it stands; each chapter gets a description, not a hard requirement"). The page reads in this
+order — the human first sees what was asked, then what the products agree on, then the evidence, and
+only at the very end is asked to decide:
 
-1. **The named question** — the one sentence you were handed, copied **verbatim** (it is the page's
-   `<h1>`; do not reword it into a nicer question).
-2. **研究问题 (what was asked)** — a block headed exactly 「研究问题」 holding **the human's own words**
-   (as you received them), then the **product context** you were handed (which product, which
-   surface, the `DESIGN.md` pointer, platform), both verbatim. The human reads the page to judge
-   whether it served the ask, so they have to be able to see what the ask was and what you were given.
-3. **The conclusion — what these products agree on (通用结论)** — and nothing else: the conclusions
-   that hold across the sources you show, as a short list, the most important first. A part of the
-   question that static pictures cannot answer (time / behaviour) is one line here ("no reference
-   shows when X happens") — not a separate block, and no process notes (which sources were left out,
-   how you ordered things).
+1. 研究问题 (what was asked) — title, the human's words, the context
+2. 通用结论 (what these products agree on)
+3. one section per source, each with a flow, 场景 and 设计逻辑
+4. 要我们决策的问题 (what is still open for us) — the last block; nothing comes after it
 
-Then **one section per source**, in the order you would show them to a colleague:
+`research-check.mjs` guards that skeleton and nothing finer (see "What the check guards" below). What
+follows is what each chapter is **for** — the description to write toward, not a rule the check can
+fail you on. Write the page in the language of the named question.
 
-- the **flow**: that source's screenshots in a horizontal row, in the order the user meets them, each
-  with a line underneath saying what this step does. **Every screenshot can be clicked to see it
-  larger**, with the sharpest picture you could get behind the click (see above);
-- beside it, two readings, nothing more:
-  1. **Scene (场景)** — which product, which user, which surface this page sits on and in what
-     moment, what they are trying to get done.
-  2. **Design logic (设计逻辑)** — which pattern or flow it uses, what problem that solves, and
-     therefore why the UI looks the way it does.
+## What each chapter is for
 
-How a source bears on *our* needs is **not** repeated per source: it appears once, in the decisions
-block after the last source. A source that cannot represent the target state does not belong on the
-page at all.
+**研究问题.** What it holds: the named question, the one sentence you were handed, copied
+**verbatim** as the page's `<h1>` (do not reword it into a nicer question); under a block headed
+exactly 「研究问题」, **the human's own words** as you received them; and the **product context** you
+were handed (which product, which surface, the `DESIGN.md` pointer, platform), also verbatim. Why:
+the human reads the page to judge whether it served the ask, so they have to be able to see what the
+ask was and what you were given; a reworded question hides a mismatch.
 
-Last, **after the final source**, the page's closing block:
+**通用结论 (`general`).** What it holds: the conclusions that hold across the sources you show, as
+a short list, the most important first. A part of the question that static pictures cannot answer
+(time / behaviour) is one line here ("no reference shows when X happens"). Why: this is the part the
+human reads first and may read only; it has to stand without the sources. Keep process notes (which
+sources were left out, how you ordered things) out of it — the first human annotation (2026-10-20)
+found them low-value; an honest "no reference answers this" beats a confident wrong one.
 
-4. **The questions the human has to decide (要我们决策的问题)**: read the general conclusions and the
-   sources against the product context and name what is still open for *our* product. One entry per
-   decision: the question, the options, the source each option comes from, and what each means for
-   our surface given the context. Where sources split, the split **is** the entry — alternatives
-   named, never a midpoint (`ui-craft-checklist.md` §2: a reference is evidence for a specific claim,
-   not a vote). You do not pick one: no "so choose B". If nothing is open, say so in one line. It
-   goes last because the human decides after reading the evidence (second human annotation,
-   2026-10-20: "需要我们决策的内容放在内容调研后面"); put at the top it asked for decisions before
-   the sources that justify them had been read.
+**Each source.** In the order you would show them to a colleague: a title, then the **flow** — that
+source's screenshots in a horizontal row, in the order the user meets them, each with a line
+underneath saying what this step does. **Every screenshot can be clicked to see it larger**, with the
+sharpest picture you could get behind the click (see above). Why: the human has to see the
+sequence to follow the reasoning, and read the text against the picture. Beside it, two readings:
 
-Write the page in the language of the named question.
+- **场景 (scene)** — which product, which user, which surface this page sits on and in what moment,
+  what they are trying to get done. Why: a pattern means nothing detached from the moment it serves.
+- **设计逻辑 (design logic)** — which pattern or flow it uses, what problem that solves, and
+  therefore why the UI looks the way it does. Why: this is the transferable part, and it travels
+  only together with its scene.
+
+How a source bears on *our* needs is not repeated per source: it appears once, in the last chapter.
+A source that cannot represent the target state does not belong on the page at all.
+
+**要我们决策的问题 (`decisions`).** What it holds: read the general conclusions and the sources
+against the product context and name what is still open for *our* product. One entry per decision:
+the question, the options, the source each option comes from, and what each means for our surface
+given the context. Where sources split, the split **is** the entry — alternatives named, never a
+midpoint (`ui-craft-checklist.md` §2: a reference is evidence for a specific claim, not a vote). You
+do not pick one: no "so choose B". If nothing is open, say so in one line. Why it goes last: the
+human decides after reading the evidence (second human annotation, 2026-10-20: "需要我们决策的内容放在
+内容调研后面"); at the top it asked for decisions before the sources that justify them had been read.
+Why nothing follows it: it is the page's end point, the thing the human leaves with.
 
 ## The page: markup contract
 
@@ -179,13 +190,25 @@ else (CSS, wording of headings) is yours.
 
 - A page with no source at all is legal only when a `<section data-part="no-source">` says why (what was
   searched, why nothing could represent the target state).
-- The block holding the human's words is headed 「研究问题」. `conclusion` holds `general` (non-empty)
-  and nothing else. `decisions` is non-empty and sits **after the last source** (after the `no-source`
-  note when there is no source) — not inside `conclusion`.
-- `cannot-answer` and `for-us` are retired and fail the check if they appear.
-- Every `<img>` and every zoom `href` is a path **relative to the drop directory**, under `shots/`, and
+
+### What the check guards
+
+- **The skeleton, in order:** the title, the 「研究问题」 block (the human's words) and the context come
+  before the conclusion; the conclusion (`general`, non-empty) comes before the first source; every
+  source (or the `no-source` note) comes before `decisions`; `decisions` is non-empty, is not inside
+  `conclusion`, and is the **last block of the page** — only the zoom `<dialog>` and its `<script>`
+  may follow it.
+- **Per source:** a title, a flow whose every step has a screenshot wrapped in `<a data-part="zoom">`
+  and a line of text, and non-empty `scene` and `logic`.
+- **Addresses:** every `<img>` and every zoom `href` is a path **relative to the drop directory** and
   exists. No remote addresses (they expire), no `data:` URIs, no `..`.
-- Each flow step has a screenshot wrapped in `<a data-part="zoom">` and a line of text.
+- **Two retired parts:** `cannot-answer` and `for-us` fail the check if they appear — a human
+  annotation removed them by name.
+
+What the check does **not** guard: what a chapter holds. An extra paragraph in the conclusion, a
+third reading in a source, a different screenshot folder than `shots/`: the descriptions above say
+what to write, the human's reading catches drift, and once annotations show the same drift recurring
+it can be promoted into a check.
 
 Run the check before handing back, and fix until it is green:
 

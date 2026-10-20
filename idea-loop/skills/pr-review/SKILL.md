@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用它的会话做编排，起 plugin 自带的 pr-reviewer agent：它自己跑仓库声明的机械检查（只看改动行），并行起两个只读 Codex 进程（gpt-5.6-sol，思考强度 high）分别回答 Spec（代码是否解决了 spec 要解决的问题）与 Standards（代码是否遵守仓库写下来的规则），行为问题逐条复现并做成证据（界面上看得到的必须是截图、截图流程或动图，看不到的用时序图、小表或例子），每条候选标处置（照规则 / 要你决定），两轴引文、依据与写法由脚本校验，最后写出这一轮的汇报（写给拍板的人看：开头一句结论，最前面单列「已按规则处理」，标题即用户后果、对用户的影响、要你决定，不出现代码指称），编排者在会话里给人看、逐字记进这个 PR 的本地 review loop 文件。本地 `docs/design/tmp/` 有这份 spec 的需求目录时，每一轮先起 `idea-loop:ui-reviewer` 拿实现走出来的画面对冻结的设计、把发现交给 pr-reviewer 并进 Spec 一节。照规则的条目编排者在贴汇报之前就处理掉（派修、开 issue、同步改文档），人一句「推翻某条」就改回；要人定的条目人在会话里批示「接受 / 修 / 不修 / 开 issue」，要修的写回工单、派 implementer 修。这一轮有修复、修复都落地、还没跑满两轮时，编排者自己起下一轮；跑满两轮就停下等人，人也随时能说「再跑一轮」。PR 描述不放 review，PR 上也不开 thread。人说合并时，`tmp/` 里还有设计差异就先走归档（UI 审查 → 人看草稿 → 归档脚本 → 提交推送），再把整份 review loop 按停下和轮次归档成 PR 评论再合并。implement 全部落地后会自动接它跑第一轮；人要再跑一轮或合并时调它。
+description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用它的会话做编排，起 plugin 自带的 pr-reviewer agent：它自己跑仓库声明的机械检查（只看改动行），并行起两个只读 Codex 进程（gpt-5.6-sol，思考强度 high）分别回答 Spec（代码是否解决了 spec 要解决的问题）与 Standards（代码是否遵守仓库写下来的规则），行为问题逐条复现并做成证据（界面上看得到的必须是截图、截图流程或动图，看不到的用时序图、小表或例子），每条候选标处置（照规则 / 要你决定），两轴引文、依据与写法由脚本校验，最后写出这一轮的汇报（写给拍板的人看：开头一句结论，最前面单列「已按规则处理」，标题即用户后果、对用户的影响、要你决定，不出现代码指称），编排者在会话里给人看、逐字记进这个 PR 的本地 review loop 文件。本地 `docs/design/tmp/` 有这份 spec 的设计产物（`research/` 调研目录不算）时，每一轮先起 `idea-loop:ui-reviewer` 拿实现走出来的画面对冻结的设计、把发现交给 pr-reviewer 并进 Spec 一节。照规则的条目编排者在贴汇报之前就处理掉（派修、开 issue、同步改文档），人一句「推翻某条」就改回；要人定的条目人在会话里批示「接受 / 修 / 不修 / 开 issue」，要修的写回工单、派 implementer 修。这一轮有修复、修复都落地、还没跑满两轮时，编排者自己起下一轮；跑满两轮就停下等人，人也随时能说「再跑一轮」。PR 描述不放 review，PR 上也不开 thread。人说合并时，`tmp/` 里还有设计差异就先走归档（UI 审查 → 人看草稿 → 归档脚本 → 提交推送），再把整份 review loop 按停下和轮次归档成 PR 评论再合并。implement 全部落地后会自动接它跑第一轮；人要再跑一轮或合并时调它。
 ---
 
 # PR review
@@ -28,7 +28,7 @@ description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用�
 | 角色 | 是谁 | 做什么 |
 |---|---|---|
 | **编排者** | 调用 pr-review 的这个会话 | 起审查者、先记文件、立即处理照规则的条目、在会话里给人看汇报、处理人的批示与推翻、把要修的写回工单、派 implementer、回一条汇总、满足条件时自己起下一轮、人说合并时归档并合并 |
-| **ui-reviewer** | `idea-loop:ui-reviewer`（`agents/ui-reviewer.md`），`sonnet` · high | 本地 `tmp/` 有这份 spec 的需求目录时才起：每轮审查模式写一份发现文件；归档模式核过之后备好草稿并停下。只读代码、只写 `.tmp/` 与 `tmp/<spec-slug>/delta/`，不写 `prod/`，Codex 不参与 |
+| **ui-reviewer** | `idea-loop:ui-reviewer`（`agents/ui-reviewer.md`），`sonnet` · high | 本地 `tmp/` 有这份 spec 的设计产物（`research/` 不算）时才起：每轮审查模式写一份发现文件；归档模式核过之后备好草稿并停下。只读代码、只写 `.tmp/` 与 `tmp/<spec-slug>/delta/`，不写 `prod/`，Codex 不参与 |
 | **pr-reviewer** | `idea-loop:pr-reviewer`（`agents/pr-reviewer.md`），`sonnet` · xhigh | 一轮一个：机械检查、两个 Codex 进程、核实与画图、给每条候选标处置、校验、写出这一轮的汇报。不碰 PR，不碰 review loop 文件 |
 
 UI 审查者起在 pr-reviewer **之前**，因为子 agent 起不了子 agent，要由编排者把两者串起来；它的发现并进 Spec 一节，由 pr-reviewer 沿用现有的格式与校验。PR 和 review loop 文件都不归审查者：它们只写出这一轮的汇报交回，描述的四节由 `implement` 写、由编排者按人的批示更新。修复不归审查者，归 `idea-loop:implementer`（`agents/implementer.md`）。审查和修复分开，是为了让审查者只读，它的结论不被它自己的修法影响。
@@ -38,7 +38,7 @@ UI 审查者起在 pr-reviewer **之前**，因为子 agent 起不了子 agent�
 review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）。
 
 1. 轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review`。
-2. **有 `tmp/` 才先 UI 审查**：看集成 worktree 的 `docs/design/tmp/` 下有没有这份 spec 的需求目录（`<spec-slug>/` 且里面有文件）。**有**，就在起 pr-reviewer 之前先用 Agent 工具起 `idea-loop:ui-reviewer`（每轮审查模式），只给指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。等它交回发现文件路径 `ui-findings.json`。没有就跳过这一步，下面不传发现文件。UI 审查标了未完成（服务起不来、页面打不开）的，照实告诉人并记进汇报的「没覆盖到的」，**未完成不等于没问题**，不阻塞这一轮的代码审查。
+2. **有 `tmp/` 才先 UI 审查**：看集成 worktree 的 `docs/design/tmp/` 下有没有这份 spec 的需求目录（`<spec-slug>/` 且里面有设计产物：`research/` 子目录不算，那是人调 `uiux-research` 落的调研页，看完就丢，跟合并前钩子同一口径；只有调研的需求等于没有）。**有**，就在起 pr-reviewer 之前先用 Agent 工具起 `idea-loop:ui-reviewer`（每轮审查模式），只给指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。等它交回发现文件路径 `ui-findings.json`。没有就跳过这一步，下面不传发现文件。UI 审查标了未完成（服务起不来、页面打不开）的，照实告诉人并记进汇报的「没覆盖到的」，**未完成不等于没问题**，不阻塞这一轮的代码审查。
 3. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径与工单目录（`docs/spec/<spec-slug>/<spec-slug>.md` 和同一目录下的 `tickets/`）、review loop 文件路径（它从里面读之前几轮人批了「不修」或「开 issue」的条目，以及人**推翻**过的条目）、companion 路径，**以及第 2 步的发现文件路径**（有的话）。它把发现并进汇报的 Spec 一节，格式与校验沿用现有的；PR 描述「之前 → 之后」的「之前」从档案 `prod/` 取（`pr-description.md` §6）。
 4. 等它交回，**不提前汇报**。
 5. **先把这一轮记进 review loop 文件**：把审查者写好的汇报作为新条目原样追加。
@@ -113,14 +113,14 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 **只在人在会话里明确说合并时做。** 没有 mergeReady 判定，也没有自动批准：人看过最新一轮的汇报和 PR 描述的「要你做的事」，自己决定。
 
 1. `review-loop.mjs check .tmp/review-loop/<PR 号>.md` 列出还没处理完的条目；PR 描述「要你做的事」还有没勾的。有的话提醒人一句，人仍然说合并就继续。
-2. **先看设计档案要不要归档**：集成 worktree 的 `docs/design/tmp/` 下有任何含文件的需求目录（合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就执行 `gh pr merge` 会被它拦下，提示指向这一节），就走 §4.1 的归档，**走完再继续第 3 步**。没有就直接第 3 步。
+2. **先看设计档案要不要归档**：集成 worktree 的 `docs/design/tmp/` 下有任何含设计产物的需求目录（`research/` 子目录不算，合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就执行 `gh pr merge` 会被它拦下，提示指向这一节），就走 §4.1 的归档，**走完再继续第 3 步**。没有就直接第 3 步。**调研目录本身从不归档**：只做过调研、没有 imagine / refine 产物的需求，不走归档，合并也不被拦；那个目录是看完就丢的草稿，随 `tmp/` 的生命周期删，想早点清就手动删。调研结论若被用进了设计，已经以文字记在方向说明或冻结记录里，随设计一起归档。
 3. **归档 review loop**：`review-loop.mjs archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`review-loop.md` §4）。中途失败直接重跑，贴过的不会重复。
 4. **合并**：`gh pr merge <PR 号>`，用仓库惯用的合并方式。
 5. **收尾**：按 PR 描述「参考」里的清理清单逐项做：删工单（`to-ticket` §7），删这个 PR 的素材分支（`evidence.mjs cleanup <owner/repo> <PR 号>`），删 `.tmp/review-loop/<PR 号>.md`，清掉 `.tmp/implement/<spec-slug>/` 和 `.tmp/pr-review/<PR 号>/`，再加上这个 PR 特有的几项。
 
 ### 4.1 合并前归档
 
-目标：把这次 UI 改动在 `tmp/<spec-slug>/delta/` 里的设计差异，经实现核过、经人看过之后，才并进线上档案 `prod/`。**写 `prod/` 只有归档脚本一条路**，人没批过不跑。每个有 `tmp/` 需求目录的 spec 各做一遍，按下面六步：
+目标：把这次 UI 改动在 `tmp/<spec-slug>/delta/` 里的设计差异，经实现核过、经人看过之后，才并进线上档案 `prod/`。**写 `prod/` 只有归档脚本一条路**，人没批过不跑。每个有 `tmp/` 设计产物（`research/` 不算）的 spec 各做一遍，按下面六步：
 
 1. **起 UI 审查（归档模式）**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：spec 名、集成 worktree 的绝对路径、分到的端口、模式「归档」、图的前缀 `r<最近一轮的轮次>-ui-merge-`、草稿存放处 `.tmp/pr-review/<PR 号>/archive/`。
 2. **看它核得过不过**：
