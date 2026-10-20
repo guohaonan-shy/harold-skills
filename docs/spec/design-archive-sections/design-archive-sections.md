@@ -286,7 +286,7 @@ issues: [61]
 
 | 前置 | 步骤 | 期望 | 覆盖 |
 |---|---|---|---|
-| 夹具加一个营销页：入口状态 5 段（`header` `hero` `feature-a` `feature-b` `footer`），一条页内锚点自环、一条跨页落到某段的边、一个带 `section: …#faq` 的状态 | 跑校验 | 通过，无提示 | 1、2、3、4、5 |
+| 夹具加一个营销页：入口状态 5 段（`header` `hero` `feature-a` `feature-b` `footer`），一条页内锚点自环、一条跨页落到某段的边、一个带 `section: …#feature-b` 的状态（起草时写成 `#faq`，跟这 5 段对不上，实现时按 5 段改） | 跑校验 | 通过，无提示 | 1、2、3、4、5 |
 | 同上，逐个掰坏：类型 `closing-band`；`feature` 与 `feature-b` 并存；同页重名；`sections` 挪到非入口状态；`from` 指向没声明的段；`section` 指向目标状态没有的段；`to` 指向非入口却带 `section`；入口上一条 `user` 边删掉 `from`；引用写成 `"[[页#段]]"` | 每次跑校验 | 各报一条规则 7 的违规，点名文件与字段 | 2、3、7 |
 | 一段改成 `content`、一段改成 `{ position: 2 }` | 跑校验 | 通过，两条提示 | 7 |
 | 夹具营销页 | 页面查询 | `sections` 五项，各带出入边、状态、切图路径；出入边带 `fromSection` / `toSection` | 11、14 |
