@@ -200,13 +200,24 @@ else (CSS, wording of headings) is yours.
   may follow it.
 - **Per source:** a title, a flow whose every step has a screenshot wrapped in `<a data-part="zoom">`
   and a line of text, and non-empty `scene` and `logic`.
-- **Addresses:** every `<img>` and every zoom `href` is a path **relative to the drop directory** and
-  exists. No remote addresses (they expire), no `data:` URIs, no `..`.
+- **Addresses:** every `<img>` on the page — in a flow step or anywhere else (the conclusion, a
+  reading, the decisions) — and every zoom `href` is a path **relative to the drop directory** and
+  exists. No remote addresses (they expire), no `data:` URIs, no `..`. The one exemption is the empty
+  `<img alt="">` inside the zoom `<dialog>` (any `<img>` inside a `<dialog>` is skipped), whose address
+  the script sets at click time.
 - **Two retired parts:** `cannot-answer` and `for-us` fail the check if they appear — a human
   annotation removed them by name.
 
-What the check does **not** guard: what a chapter holds. An extra paragraph in the conclusion, a
-third reading in a source, a different screenshot folder than `shots/`: the descriptions above say
+What the check does **not** guard (known limits, accepted by the human in review round 2 — the human's
+reading of the page is the gate for these):
+
+- an extra block **before** the 「研究问题」 block (a preface, a banner);
+- an extra overlay, `<template>` or `<style>` block **after** the decisions that is not the zoom
+  `<dialog>` and its script — the check lets any `<dialog>`, `<template>`, `<script>`, `<style>` and
+  `<noscript>` follow the decisions, so only a visible block (a footer, a paragraph) is caught.
+
+Nor is what a chapter holds checked: an extra paragraph in the conclusion, a
+third reading in a source, a different screenshot folder than `shots/`. The descriptions above say
 what to write, the human's reading catches drift, and once annotations show the same drift recurring
 it can be promoted into a check.
 

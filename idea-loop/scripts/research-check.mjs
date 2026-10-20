@@ -19,7 +19,8 @@
  *
  * What this check enforces is exactly that skeleton: the chapters exist and are non-empty, they come
  * in that order, nothing comes after the decisions, every flow step has its picture / line / zoom,
- * and every screenshot address is a relative path that resolves inside the drop directory (so the
+ * and every picture on the page — in a flow step or anywhere else, the zoom dialog's own empty
+ * <img> excepted — has an address that is a relative path resolving inside the drop directory (so the
  * page opens from file:// and nothing points at a remote address that expires). What a chapter holds
  * beyond that — an extra paragraph, an extra block inside the conclusion or a source — is the
  * contract's prose (references/design/research-backend.md, "What each chapter is for") and the
@@ -88,6 +89,11 @@ const headings = (el) => [...walk(el)].filter((e) => /^h[1-6]$/.test(e.tag)).map
 /** Is `el` inside `ancestor` (or the ancestor itself)? */
 function within(el, ancestor) {
   for (let n = el; n; n = n.parent) if (n === ancestor) return true;
+  return false;
+}
+/** Does `el` sit inside an element with this tag? */
+function hasAncestor(el, tag) {
+  for (let n = el.parent; n; n = n.parent) if (n.tag === tag) return true;
   return false;
 }
 /** Tags that can follow the last chapter without being a chapter (the zoom dialog and its script). */
@@ -174,6 +180,7 @@ export function checkResearchPage(html, { fileExists }) {
     }
   }
 
+  const checkedImgs = new Set();
   const sources = [...walk(root)].filter((e) => 'data-source' in e.attrs);
   if (!sources.length) {
     const none = byPart(root, 'no-source');
@@ -196,6 +203,7 @@ export function checkResearchPage(html, { fileExists }) {
         if (!imgs.length) errors.push(`${name}第 ${n + 1} 步缺截图`);
         if (!textOf(li)) errors.push(`${name}第 ${n + 1} 步缺说明：这一步在做什么`);
         for (const img of imgs) {
+          checkedImgs.add(img);
           const s = img.attrs.src ?? '';
           if (!isRelative(s)) errors.push(`${name}第 ${n + 1} 步的图 ${s || '(无 src)'} 不是落图目录内的相对路径`);
           else if (!fileExists(s)) errors.push(`${name}第 ${n + 1} 步的图 ${s} 在落图目录里不存在`);
@@ -216,6 +224,16 @@ export function checkResearchPage(html, { fileExists }) {
       if (!found.length || !textOf(found[0])) errors.push(`${name}缺 ${part}（场景 / 设计逻辑 两段都要有内容）`);
     }
   });
+
+  // Every other picture on the page (in the conclusion, a source's readings, the decisions, ...) has
+  // the same rule as a flow step's: a relative path that exists in the drop directory. The only
+  // picture exempt is the one inside the zoom <dialog> — its src is set by the script at click time.
+  for (const img of [...walk(root)].filter((e) => e.tag === 'img' && !checkedImgs.has(e))) {
+    if (hasAncestor(img, 'dialog')) continue;
+    const s = img.attrs.src ?? '';
+    if (!isRelative(s)) errors.push(`页面上的图 ${s || '(无 src)'} 不是落图目录内的相对路径：参考图都要下载到落图目录再引用，远程地址会过期`);
+    else if (!fileExists(s)) errors.push(`页面上的图 ${s} 在落图目录里不存在`);
+  }
 
   return { valid: errors.length === 0, errors, sources: sources.length };
 }

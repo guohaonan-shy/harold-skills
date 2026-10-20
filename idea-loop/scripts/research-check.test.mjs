@@ -220,6 +220,34 @@ for (const bad of ['https://images.refero.design/a.png', 'http://x/a.png', '//cd
   });
 }
 
+test('a picture outside the flow steps is held to the same address rule: remote or missing fails, a local existing one passes, the zoom dialog image is exempt', () => {
+  const inConclusion = (src) => page({ general: `<p>多数用二次确认。</p><img src="${src}" alt="">` });
+  const inDecisions = (src) => page({ decisions: `<ol><li>入口：X 还是箭头？<img src="${src}" alt=""></li></ol>` });
+  const inScene = (src) => page({ sources: [source({ scene: `练习中途想退出 <img src="${src}" alt="">` })] });
+
+  for (const make of [inConclusion, inDecisions, inScene]) {
+    for (const bad of ['https://images.refero.design/x.jpg', '//cdn/x.jpg', '/abs/x.jpg', '../outside.jpg', 'data:image/png;base64,AAAA']) {
+      const e = errorsOf(make(bad));
+      assert.ok(e.some((x) => x.includes(bad) && /相对/.test(x)), `${make.name} ${bad}: ${e.join('\n')}`);
+    }
+    const missing = checkResearchPage(make('shots/gone.png'), { fileExists: (p) => p !== 'shots/gone.png' }).errors;
+    assert.ok(missing.some((x) => x.includes('shots/gone.png') && /不存在/.test(x)), `${make.name}: ${missing.join('\n')}`);
+    assert.deepEqual(errorsOf(make('shots/extra.png')), []); // control: local and exists
+  }
+
+  // an <img> with no src at all, outside the flow
+  const noSrc = errorsOf(page({ general: '<p>x</p><img alt="">' }));
+  assert.ok(noSrc.some((x) => x.includes('无 src')), noSrc.join('\n'));
+
+  // a flow step's bad picture is reported once, not twice
+  const once = errorsOf(page({ sources: [source({ steps: [['https://x/a.png', '点 X']] })] })).filter((x) => x.includes('https://x/a.png') && /相对/.test(x));
+  assert.equal(once.length, 1);
+
+  // the template's zoom dialog (an empty <img alt="">) stays legal
+  const tail = '<dialog id="zoom"><img alt=""></dialog><script>const dlg = document.getElementById("zoom");</script>';
+  assert.deepEqual(errorsOf(page().replace('</body>', `${tail}</body>`)), []);
+});
+
 test('a page with no source and no no-source reason fails; with a reason it passes', () => {
   let r = checkResearchPage(page({ sources: [] }), { fileExists: everything });
   assert.equal(r.valid, false);
