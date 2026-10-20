@@ -30,6 +30,7 @@ ${steps
 </section>`;
 
 const page = ({
+  wordsHeading = '研究问题',
   humanWords = '练习做到一半点退出时要弹一个确认：入口用 X 还是返回箭头？',
   question = '退出确认：入口用 X 还是箭头、弹窗怎么摆',
   context = 'Toeflair 的口语练习，移动端；DESIGN.md 在项目根。',
@@ -39,15 +40,16 @@ const page = ({
 } = {}) => `<!doctype html>
 <html><head><meta charset="utf-8"><title>调研</title><style>.x{color:red}</style></head><body>
 <h1 data-part="question">${question}</h1>
-<section data-part="brief"><div data-part="human-words">${humanWords}</div><div data-part="context">${context}</div></section>
-<section data-part="conclusion"><div data-part="general">${general}</div><div data-part="decisions">${decisions}</div></section>
+<section data-part="brief"><div data-part="human-words"><h3>${wordsHeading}</h3>${humanWords}</div><div data-part="context">${context}</div></section>
+<section data-part="conclusion"><div data-part="general">${general}</div></section>
 ${sources.join('\n')}
+<section data-part="decisions-block"><div data-part="decisions">${decisions}</div></section>
 </body></html>`;
 
 const everything = () => true;
 const errorsOf = (html, io = { fileExists: everything }) => checkResearchPage(html, io).errors;
 
-test('a page with the asked block, a two-block conclusion and one complete source is valid', () => {
+test('a page with the 研究问题 block, the general conclusion, one complete source and the decisions after it is valid', () => {
   const r = checkResearchPage(page(), { fileExists: everything });
   assert.deepEqual(r.errors, []);
   assert.equal(r.valid, true);
@@ -64,7 +66,7 @@ for (const part of ['human-words', 'question', 'context']) {
 }
 
 for (const part of ['general', 'decisions']) {
-  test(`a conclusion without ${part}, or with it empty, fails and names it`, () => {
+  test(`a page without ${part}, or with it empty, fails and names it`, () => {
     const missing = page().replace(new RegExp(`<div data-part="${part}">[\\s\\S]*?</div>`), '');
     assert.ok(errorsOf(missing).some((e) => e.includes(part)), errorsOf(missing).join('\n'));
     const blank = page({ [part]: '  ' });
@@ -72,10 +74,29 @@ for (const part of ['general', 'decisions']) {
   });
 }
 
-test('general and decisions count only inside the conclusion', () => {
-  const outside = page().replace(/<section data-part="conclusion">[\s\S]*?<\/section>/, '<section data-part="conclusion"><p>结论</p></section><div data-part="general">x</div><div data-part="decisions">y</div>');
-  const e = errorsOf(outside);
-  assert.ok(e.some((x) => x.includes('general')) && e.some((x) => x.includes('decisions')), e.join('\n'));
+test('general counts only inside the conclusion', () => {
+  const outside = page().replace(/<section data-part="conclusion">[\s\S]*?<\/section>/, '<section data-part="conclusion"><p>结论</p></section><div data-part="general">x</div>');
+  assert.ok(errorsOf(outside).some((x) => x.includes('general')), errorsOf(outside).join('\n'));
+});
+
+test('the human-words block must be headed 研究问题', () => {
+  const e = errorsOf(page({ wordsHeading: '人的原话' }));
+  assert.ok(e.some((x) => x.includes('研究问题')), e.join('\n'));
+  assert.deepEqual(errorsOf(page({ wordsHeading: '研究问题' })), []);
+});
+
+test('decisions inside the top conclusion, or before the last source, fails: they come after the sources', () => {
+  const inConclusion = page().replace('<div data-part="general">', '<div data-part="decisions"><ol><li>x</li></ol></div><div data-part="general">').replace(/<section data-part="decisions-block">[\s\S]*?<\/section>/, '');
+  let e = errorsOf(inConclusion);
+  assert.ok(e.some((x) => x.includes('decisions') && x.includes('结论里')), e.join('\n'));
+
+  const before = page({ sources: [source(), source({ title: 'Beta · 退出' })] }).replace(/<section data-part="decisions-block">[\s\S]*?<\/section>/, '').replace(/<section data-source>/, '<section data-part="decisions"><ol><li>x</li></ol></section><section data-source>');
+  e = errorsOf(before);
+  assert.ok(e.some((x) => x.includes('decisions') && x.includes('最后一个来源之后')), e.join('\n'));
+
+  const insideSource = page().replace(/<section data-part="decisions-block">[\s\S]*?<\/section>/, '').replace(/<\/section>\s*<\/body>/, '<div data-part="decisions"><ol><li>x</li></ol></div></section></body>');
+  e = errorsOf(insideSource);
+  assert.ok(e.some((x) => x.includes('decisions') && x.includes('最后一个来源之后')), e.join('\n'));
 });
 
 for (const [part, over] of [['scene', { scene: '' }], ['logic', { logic: '' }]]) {

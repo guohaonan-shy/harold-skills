@@ -6,15 +6,18 @@
  * checkable without a model: this file judges its SHAPE, never whether the reading of a reference
  * is right.
  *
- *   - the head of the page: what was asked (the human's own words, the named question handed to the
- *     researcher, the product context handed with it), then the conclusion in exactly two blocks —
- *     what these products agree on (`general`) and the questions the human has to decide once that
- *     is read against our needs (`decisions`). A question that static screenshots cannot settle
- *     (time / behaviour) is not padded with references: it appears inside those two blocks;
+ *   - the head of the page: what was asked, under the heading 「研究问题」 (the human's own words),
+ *     the named question handed to the researcher (the page title) and the product context handed
+ *     with it; then the conclusion — only what these products agree on (`general`). A question that
+ *     static screenshots cannot settle (time / behaviour) is not padded with references: it is said
+ *     in `general` and carried into the decisions;
  *   - every source: a title, a flow (ordered steps, each with a screenshot AND a line saying what
  *     the step does, and the screenshot clickable to a larger picture), and two readings,
  *     场景 / 设计逻辑. How a source bears on OUR needs is said once, in `decisions`, not per source,
  *     so the retired `for-us` and `cannot-answer` parts are an error;
+ *   - the questions the human has to decide once the sources are read against our needs
+ *     (`decisions`) come AFTER the last source, as the last block of the page, not inside the
+ *     conclusion at the top: the human reads the evidence first and is then asked;
  *   - every screenshot and every zoom target is a relative path that resolves inside the drop
  *     directory, so the page opens from file:// and nothing points at a remote address that expires.
  *
@@ -76,6 +79,12 @@ function* walk(el) {
 }
 
 const textOf = (el) => el.text.replace(/\s+/g, ' ').trim();
+const headings = (el) => [...walk(el)].filter((e) => /^h[1-6]$/.test(e.tag)).map(textOf);
+/** Is `el` inside `ancestor` (or the ancestor itself)? */
+function within(el, ancestor) {
+  for (let n = el; n; n = n.parent) if (n === ancestor) return true;
+  return false;
+}
 const byPart = (root, part) => [...walk(root)].filter((e) => e.attrs['data-part'] === part);
 
 /** A screenshot address must stay inside the drop directory: relative, no scheme, no `..`. */
@@ -104,16 +113,34 @@ export function checkResearchPage(html, { fileExists }) {
     if (!found.length) errors.push(`缺少顶部的 ${part}（data-part="${part}"）`);
     else if (!textOf(found[0])) errors.push(`${part} 是空的：${emptyHint[part]}`);
   }
+  const words = byPart(root, 'human-words')[0];
+  if (words && !headings(words).includes('研究问题')) {
+    errors.push('人的原话那一块的标题要写「研究问题」（<h3>研究问题</h3>，下面原样抄人的原话）');
+  }
   const conclusion = byPart(root, 'conclusion')[0];
   if (conclusion) {
-    for (const [part, what] of [['general', '这些产品的通用结论'], ['decisions', '结合我们需求、要人决策的问题']]) {
-      const found = [...walk(conclusion)].filter((e) => e.attrs['data-part'] === part);
-      if (!found.length) errors.push(`结论里缺 ${part}（${what}；data-part="${part}"，放在 data-part="conclusion" 里面）`);
-      else if (!textOf(found[0])) errors.push(`结论的 ${part} 是空的（${what}）：没有分歧要人定，也照实写一句`);
-    }
+    const general = [...walk(conclusion)].filter((e) => e.attrs['data-part'] === 'general');
+    if (!general.length) errors.push('结论里缺 general（这些产品的通用结论；data-part="general"，放在 data-part="conclusion" 里面）');
+    else if (!textOf(general[0])) errors.push('结论的 general 是空的（这些产品的通用结论）：没有共同点也照实写一句');
   }
   for (const gone of ['cannot-answer', 'for-us']) {
-    if (byPart(root, gone).length) errors.push(`${gone} 已取消：不再单列「不能回答什么」，也不在每个来源里写「对我们」；跟我们需求的结合只在结论的 decisions 里出现一次`);
+    if (byPart(root, gone).length) errors.push(`${gone} 已取消：不再单列「不能回答什么」，也不在每个来源里写「对我们」；跟我们需求的结合只在页面最后的 decisions 里出现一次`);
+  }
+
+  // decisions: one block, after every source (or the no-source note), outside the top conclusion.
+  const decisions = byPart(root, 'decisions')[0];
+  if (!decisions) errors.push('缺少 decisions（结合我们需求、要人决策的问题；data-part="decisions"，放在所有来源之后）');
+  else {
+    if (!textOf(decisions)) errors.push('decisions 是空的（结合我们需求、要人决策的问题）：没有分歧要人定，也照实写一句');
+    if (conclusion && within(decisions, conclusion)) {
+      errors.push('decisions 不放在顶部的结论里：「结合我们需求、要人决策的问题」放在最后一个来源之后，作为页面的最后一块');
+    } else {
+      const order = new Map([...walk(root)].map((e, i) => [e, i]));
+      const last = [...walk(root)].filter((e) => 'data-source' in e.attrs || e.attrs['data-part'] === 'no-source').pop();
+      if (last && (within(decisions, last) || order.get(decisions) < order.get(last))) {
+        errors.push('decisions 要放在最后一个来源之后：先让人看完各来源，再摆要人决策的问题');
+      }
+    }
   }
 
   const sources = [...walk(root)].filter((e) => 'data-source' in e.attrs);

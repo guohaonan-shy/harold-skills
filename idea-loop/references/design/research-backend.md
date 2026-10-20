@@ -52,9 +52,9 @@ This backend is **never a gate**. Nothing blocks on it, and a run that never ope
 
 A question about **time or behaviour** — when a state appears, whether something pauses while a dialog
 is open, how an animation eases — is usually not answerable from still pictures. Do not pad the page
-with references that only look relevant: say so inside the conclusion — a line in the general
-conclusions ("no reference shows when X happens") and an entry in the decisions the human must make
-(with the options you can name) — and answer only what the screenshots can. There is no standalone
+with references that only look relevant: say so — a line in the general conclusions ("no reference
+shows when X happens") and an entry in the decisions block at the end of the page (with the options
+you can name) — and answer only what the screenshots can. There is no standalone
 "cannot answer" block: the first human annotation (2026-10-20) found it low-value, and it filled up
 with process notes ("the order is mine", "these sources were left out") that belong nowhere on the
 page. An honest "no reference answers this" beats a confident wrong one.
@@ -75,25 +75,20 @@ references them by relative path only, so it opens from `file://` and moves with
 
 ## The page: structure
 
-Top of the page, in this order:
+The page reads in this order — the human first sees what was asked, then what the products agree on,
+then the evidence, and only at the very end is asked to decide:
 
 1. **The named question** — the one sentence you were handed, copied **verbatim** (it is the page's
    `<h1>`; do not reword it into a nicer question).
-2. **What was asked** — two short things, both verbatim: **the human's own words** (as you received
-   them) and **the product context** you were handed (which product, which surface, the `DESIGN.md`
-   pointer, platform). The human reads the page to judge whether it served the ask, so they have to
-   be able to see what the ask was and what you were given.
-3. **The conclusion** — exactly two blocks, nothing else:
-   - **What these products agree on (通用结论)**: the conclusions that hold across the sources you
-     show, as a short list, the most important first. A part of the question that static pictures
-     cannot answer (time / behaviour) is one line here ("no reference shows when X happens") — not a
-     separate block, and no process notes (which sources were left out, how you ordered things).
-   - **The questions the human has to decide (要人决策的问题)**: read those general conclusions against
-     the product context and name what is still open for *our* product. One entry per decision: the
-     question, the options, the source each option comes from, and what each means for our surface
-     given the context. Where sources split, the split **is** the entry — alternatives named, never a
-     midpoint (`ui-craft-checklist.md` §2: a reference is evidence for a specific claim, not a vote).
-     You do not pick one: no "so choose B". If nothing is open, say so in one line.
+2. **研究问题 (what was asked)** — a block headed exactly 「研究问题」 holding **the human's own words**
+   (as you received them), then the **product context** you were handed (which product, which
+   surface, the `DESIGN.md` pointer, platform), both verbatim. The human reads the page to judge
+   whether it served the ask, so they have to be able to see what the ask was and what you were given.
+3. **The conclusion — what these products agree on (通用结论)** — and nothing else: the conclusions
+   that hold across the sources you show, as a short list, the most important first. A part of the
+   question that static pictures cannot answer (time / behaviour) is one line here ("no reference
+   shows when X happens") — not a separate block, and no process notes (which sources were left out,
+   how you ordered things).
 
 Then **one section per source**, in the order you would show them to a colleague:
 
@@ -107,7 +102,20 @@ Then **one section per source**, in the order you would show them to a colleague
      therefore why the UI looks the way it does.
 
 How a source bears on *our* needs is **not** repeated per source: it appears once, in the decisions
-block at the top. A source that cannot represent the target state does not belong on the page at all.
+block after the last source. A source that cannot represent the target state does not belong on the
+page at all.
+
+Last, **after the final source**, the page's closing block:
+
+4. **The questions the human has to decide (要我们决策的问题)**: read the general conclusions and the
+   sources against the product context and name what is still open for *our* product. One entry per
+   decision: the question, the options, the source each option comes from, and what each means for
+   our surface given the context. Where sources split, the split **is** the entry — alternatives
+   named, never a midpoint (`ui-craft-checklist.md` §2: a reference is evidence for a specific claim,
+   not a vote). You do not pick one: no "so choose B". If nothing is open, say so in one line. It
+   goes last because the human decides after reading the evidence (second human annotation,
+   2026-10-20: "需要我们决策的内容放在内容调研后面"); put at the top it asked for decisions before
+   the sources that justify them had been read.
 
 Write the page in the language of the named question.
 
@@ -132,13 +140,11 @@ else (CSS, wording of headings) is yours.
 </style></head><body>
 <h1 data-part="question">具名问题，原样</h1>
 <section data-part="brief">
-  <div data-part="human-words"><h3>人的原话</h3><p>…原样…</p></div>
+  <div data-part="human-words"><h3>研究问题</h3><p>…人的原话，原样…</p></div>
   <div data-part="context"><h3>交给调研 agent 的上下文</h3><p>…原样…</p></div>
 </section>
 <section data-part="conclusion">
-  <h2>结论</h2>
-  <div data-part="general"><h3>这些产品的通用结论</h3><ul><li>…</li></ul></div>
-  <div data-part="decisions"><h3>结合我们的需求，要人决策的问题</h3><ol><li>…问题、选项、各自出处、对我们这块界面意味着什么…</li></ol></div>
+  <div data-part="general"><h2>这些产品的通用结论</h2><ul><li>…</li></ul></div>
 </section>
 
 <section data-source>
@@ -151,6 +157,10 @@ else (CSS, wording of headings) is yours.
   <div data-part="logic"><h3>设计逻辑</h3><p>…</p></div>
 </section>
 <!-- more <section data-source>… -->
+
+<section data-part="decisions-block">
+  <div data-part="decisions"><h2>要我们决策的问题</h2><ol><li>…问题、选项、各自出处、对我们这块界面意味着什么…</li></ol></div>
+</section>
 
 <dialog id="zoom"><img alt=""></dialog>
 <script>
@@ -169,7 +179,9 @@ else (CSS, wording of headings) is yours.
 
 - A page with no source at all is legal only when a `<section data-part="no-source">` says why (what was
   searched, why nothing could represent the target state).
-- `conclusion` holds `general` and `decisions` inside it; both are non-empty.
+- The block holding the human's words is headed 「研究问题」. `conclusion` holds `general` (non-empty)
+  and nothing else. `decisions` is non-empty and sits **after the last source** (after the `no-source`
+  note when there is no source) — not inside `conclusion`.
 - `cannot-answer` and `for-us` are retired and fail the check if they appear.
 - Every `<img>` and every zoom `href` is a path **relative to the drop directory**, under `shots/`, and
   exists. No remote addresses (they expire), no `data:` URIs, no `..`.
