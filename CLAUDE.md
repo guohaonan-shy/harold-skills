@@ -29,7 +29,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 - **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
 - **不硬编码 Toeflair**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；Toeflair 只作为举例出现。
 - 下面三处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
-  1. **不走 pushy description**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。
+  1. **不走 pushy description**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。
   2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
   3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。
 

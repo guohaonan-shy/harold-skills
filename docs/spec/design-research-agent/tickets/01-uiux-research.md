@@ -25,16 +25,16 @@ idea-loop 插件多一个由人调起的设计调研能力，并把 imagine / re
 
 ## 验收标准
 
-- [ ] 在 Toeflair 的一份碰 UI 的 spec 上，人调一次 `uiux-research`：调用方会话里只出现 HTML 路径和一句结论，没有 Refero 的调用记录、没有整张截图。
-- [ ] 那页 HTML 用 `file://` 打开，能看到顶部的具名问题、结论、「不能回答什么」，以及每个来源一组按 flow 排的截图和三段解构；引用的每张图都在落图目录里。
-- [ ] 落图目录符合「有 spec / 没 spec」两种约定，且不在 git 的跟踪里。
-- [ ] 在一份没有 spec 的普通对话里，人说「查一下别人的退出确认弹窗怎么做」，模型自己调起 `uiux-research`。
-- [ ] 跑一轮 imagine 和一轮 refine：uiux-imaginer 与 designer 的会话记录里没有 Refero 调用；有拿不准的地方时，交回里出现「建议调研的问题」并带推荐做法，执行者没有停下等人。
-- [ ] 人看完 HTML 不表态时，编排者不转；人说转某几条时，执行者收到的是文字，没有图。
-- [ ] 人在 imagine 开工前调过一次：种子子代理收到的需求里有调研的文字结论，没有图。
-- [ ] 插件里不再有地方要求执行者自己查 Refero、不再提「第一批变种之前不读」和 styles 压力测试；imagine 工作目录里不再有 `research/`。
-- [ ] idea-loop 自带的脚本单测全量通过。
-- [ ] imagine / refine 的 baseline eval 在本地重跑一次、断言「环还接着」全绿；这一项较重，执行方给出命令、`⏭ 延后 → PR 交付验收`，由人晚上跑。
+- [ ] 在 Toeflair 的一份碰 UI 的 spec 上，人调一次 `uiux-research`：调用方会话里只出现 HTML 路径和一句结论，没有 Refero 的调用记录、没有整张截图。⏭ 延后 → PR 交付验收：要在真实会话里起 Refero 才能证明；实现时只核了提示词、校验脚本和 Refero 返回的形状（搜索结果带 `thumbnail_url`，curl 能下）。
+- [ ] 那页 HTML 用 `file://` 打开，能看到顶部的具名问题、结论、「不能回答什么」，以及每个来源一组按 flow 排的截图和三段解构；引用的每张图都在落图目录里。⏭ 延后 → PR 交付验收：页面形状已由 `research-check` 机械校验（契约里的模板和单测都过），真实 researcher 产出的那一页要人打开看。
+- [ ] 落图目录符合「有 spec / 没 spec」两种约定，且不在 git 的跟踪里。⏭ 延后 → PR 交付验收：约定已写进 `uiux-research` §2 与 wiki-conventions，合并拦截（`merge-gate-hook`）已放行 `research/`，真实调一次才能证明目录落对。
+- [ ] 在一份没有 spec 的普通对话里，人说「查一下别人的退出确认弹窗怎么做」，模型自己调起 `uiux-research`。⏭ 延后 → PR 交付验收：模型自调取决于 description 在真实对话里是否触发。
+- [ ] 跑一轮 imagine 和一轮 refine：uiux-imaginer 与 designer 的会话记录里没有 Refero 调用；有拿不准的地方时，交回里出现「建议调研的问题」并带推荐做法，执行者没有停下等人。⏭ 延后 → PR 交付验收：要真实跑一轮 imagine 和 refine。
+- [ ] 人看完 HTML 不表态时，编排者不转；人说转某几条时，执行者收到的是文字，没有图。⏭ 延后 → PR 交付验收：编排者的转不转规则已写进 uiux-research §5 与两个编排 skill，要真实会话验证。
+- [ ] 人在 imagine 开工前调过一次：种子子代理收到的需求里有调研的文字结论，没有图。⏭ 延后 → PR 交付验收：要真实跑 imagine 开工前调研再起 uiux-imaginer。
+- [x] 插件里不再有地方要求执行者自己查 Refero、不再提「第一批变种之前不读」和 styles 压力测试；imagine 工作目录里不再有 `research/`。
+- [x] idea-loop 自带的脚本单测全量通过。
+- [ ] imagine / refine 的 baseline eval 在本地重跑一次、断言「环还接着」全绿；这一项较重，执行方给出命令、`⏭ 延后 → PR 交付验收`，由人晚上跑。⏭ 延后 → PR 交付验收：`idea-loop/evals/` 已在 773e3b2 移除，没有可重跑的 baseline，也就没有命令可给；这一格需要人决定是划掉，还是先重建 eval。
 
 ## 选中的存量回归
 

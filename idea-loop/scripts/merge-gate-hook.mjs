@@ -28,19 +28,26 @@ export function isMergeCommand(command) {
   return /\bgh\b[^|;&\n]*?\bpr\s+merge\b/.test(String(command ?? ''));
 }
 
-const hasFile = (dir) =>
+const hasFile = (dir, skip = () => false) =>
   readdirSync(dir).some((name) => {
-    if (name === '.DS_Store') return false;
+    if (name === '.DS_Store' || skip(name)) return false;
     const p = join(dir, name);
     return statSync(p).isDirectory() ? hasFile(p) : true;
   });
 
-/** Spec slugs under `<root>/docs/design/tmp/` whose folder holds at least one file, sorted. */
+/**
+ * `research/` is where `uiux-research` drops its pages and screenshots — `tmp/research/` when there is
+ * no spec, `tmp/<spec-slug>/research/` when there is. It is scratch the human read, not a design that
+ * has to be folded into `prod/`, so it never counts as an unarchived requirement (it goes with `tmp/`).
+ */
+const RESEARCH = 'research';
+
+/** Spec slugs under `<root>/docs/design/tmp/` whose folder holds at least one file (outside `research/`), sorted. */
 export function pendingRequirements(root) {
   const tmp = join(root, TMP);
   if (!existsSync(tmp)) return [];
   return readdirSync(tmp)
-    .filter((name) => statSync(join(tmp, name)).isDirectory() && hasFile(join(tmp, name)))
+    .filter((name) => name !== RESEARCH && statSync(join(tmp, name)).isDirectory() && hasFile(join(tmp, name), (n) => n === RESEARCH))
     .sort();
 }
 

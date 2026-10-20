@@ -29,14 +29,14 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 |---|---|---|---|
 | **人** | — | — | 在内嵌浏览器里看变种板，说方向性的话，宣布「方向没有要补的了」，确认模型代填的那几格 |
 | **编排者** | 调用 imagine 的这个会话 | 人定，这份文件不规定 | 承接人的消息和 uiux-imaginer 的交回：翻 spec 状态、起静态服务器、起 uiux-imaginer、在内嵌浏览器里摆结果、分流人的意见（§2–§5）；代办 uiux-imaginer 够不着的两件事（`codex exec` 生图、项目没有 `DESIGN.md` 时把它起草的第一份交人确认后写入） |
-| **uiux-imaginer** | `idea-loop:uiux-imaginer`（`agents/uiux-imaginer.md`） | `opus` · high | 定高度、出变种、写变种板、截图自检、调研、生图、摆每轮的 frontier、收工写方向说明并跑校验。整个 imagine 只有这一个，人的每条意见都回到它 |
+| **uiux-imaginer** | `idea-loop:uiux-imaginer`（`agents/uiux-imaginer.md`） | `opus` · high | 定高度、出变种、写变种板、截图自检、生图、摆每轮的 frontier、收工写方向说明并跑校验。**不调研**：拿不准的 UX 问题写成「建议调研的问题」加推荐做法交回，先按推荐做法往下做。整个 imagine 只有这一个，人的每条意见都回到它 |
 
 **模型写在 agent 定义里，不跟着编排者走**，写的是别名（`opus`），解析成当前这份 Claude Code 映射的最新版本。要临时钉死某个版本，用环境变量覆盖别名映射（如 `ANTHROPIC_DEFAULT_OPUS_MODEL`），不改定义。
 
 ## 2 起步
 
 1. **起静态服务器。** 在 `docs/design/tmp/<spec-slug>/imagine/`（没有就建）起一个静态服务器（后台跑），变种板地址 `http://127.0.0.1:<port>/board.html`。服务器**归编排者**：人要在这个会话的内嵌浏览器里看变种板，它就得活到 imagine 收工，不跟着 uiux-imaginer 的某一轮走。第一次用先确认 `docs/design/tmp/` 被 git 忽略（wiki-conventions §2）。
-2. **起 uiux-imaginer。** 用 Agent 工具起 `idea-loop:uiux-imaginer`，交给它的只有：spec 路径与 `<spec-slug>`、目标项目的 `DESIGN.md` / `PRODUCT.md` 路径、预览地址（上一步的根地址）、**人调用时附的话，原文，不改写**。**不转述方向、不替它定高度**——那是它的活。
+2. **起 uiux-imaginer。** 用 Agent 工具起 `idea-loop:uiux-imaginer`，交给它的只有：spec 路径与 `<spec-slug>`、目标项目的 `DESIGN.md` / `PRODUCT.md` 路径、预览地址（上一步的根地址）、**人调用时附的话，原文，不改写**；**人在 imagine 开工前调过 `uiux-research` 的，再带上调研的文字结论**（`../uiux-research/SKILL.md` §5：只有文字，不带图，不带 `index.html` 的路径），uiux-imaginer 会把它写进交给种子子代理的需求。**不转述方向、不替它定高度**——那是它的活。
 3. 它从这里开始自己跑，停下时交回。
 
 ## 3 uiux-imaginer 每次交回，都在内嵌浏览器里摆给人
@@ -45,7 +45,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 - **先探端口。** app 在回合结束时会停掉自己起的预览服务，静态服务器可能已经死了。打开之前先 `curl` 一下交回里的地址，不通就重起（换了端口要在下一条转给 uiux-imaginer 的消息里告诉它）。
 - 用 `preview_start` 的 `url` 打开交回给的 `board.html?variant=…&state=…`，停在本轮改动的那个变种和状态。同一个标签页，后续轮次导航过去，不另开。内嵌浏览器不可用时按 browser-usage 的退路（先给本地地址让人在自己的浏览器里开，再不行才是截图），并明说。
-- 配一份短清单，**从交回里摘，不加工**：这一轮渲染了哪几个变种、各自赌什么、本轮改了什么；它摆出来的 frontier 三样（开着的问题加推荐、此刻要人回的那句话、七节进度）；要人判的取舍；`research/` 下的参考图（有就一并打开）。截图、抓取物、调研过程留在 uiux-imaginer 和工作目录里，**不搬进这个对话**。
+- 配一份短清单，**从交回里摘，不加工**：这一轮渲染了哪几个变种、各自赌什么、本轮改了什么；它摆出来的 frontier 三样（开着的问题加推荐、此刻要人回的那句话、七节进度）；要人判的取舍；**「建议调研的问题」**（有就和其它取舍一起摆给人，每条带它的推荐做法——uiux-imaginer 已经按推荐做法渲染了，人要查才调 `uiux-research`，不要查就当它是定了的推荐）。截图、抓取物留在 uiux-imaginer 和工作目录里，**不搬进这个对话**。
 - **代办两件事**（交回里写了才做）：
   - 它要走 `codex exec` 生图：照它给的用途、prompt、文件名生成，放进 `imagine/assets/`，再转一句「图已放好」；
   - 项目开工时没有 `DESIGN.md`，它选定了语言、交回里带一份「待写入 DESIGN.md」的草稿：**第一份 `DESIGN.md` 由这个会话写**（`DESIGN.md` 只有 `uiux-imagine` 与 `dreaming` 两处写入口，`../../references/design-md.md` §14）。先读 `../../references/design-md.md`，照它的「新建」（§10）与「一次写入怎么走」（§9）：把草稿摆给人确认措辞，**人确认后才落笔**（人改过的措辞以人的为准），hook 跑官方 lint，收尾再跑一次 lint 与 diff。草稿缺 §10 要的哪一样，转回给 uiux-imaginer 补，不自己猜。写完告诉 uiux-imaginer。项目**已有** `DESIGN.md` 时「重探语言」只产出设计法候选（写进方向说明），这一条不适用，不改文件。
@@ -63,6 +63,8 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 | **模型代填项的确认**（收工草稿那一轮，人对每一格说对不对） | 原话转给 uiux-imaginer，它据此改草稿 |
 | **「方向没有要补的了」** | 转给 uiux-imaginer，它进收工（§5） |
 | **「重探语言」** | 转给 uiux-imaginer，它打开语言高度 |
+| **要查别人怎么做**（「查一下别人的退出确认怎么做」，或点了某条「建议调研的问题」说查） | **不转**。编排者调 `uiux-research`（落图目录用这份 spec 的 `research/`，同一处），把 HTML 以文件发给人。uiux-imaginer 全程不参与、不被打断 |
+| **看完调研后说要转哪些**（「第二个来源的设计逻辑和对我们给它」） | 取出对应的解构**文字**，原话加上这些文字转给 uiux-imaginer，开头标「调研结论（文字）」。**不给图、不给图片路径、不给 `index.html` 路径**。人不说转，就不转 |
 
 **回 spec / grill 只有一个理由：这句话推翻了 spec 里的某一句**（它要解决的问题、scope、一条 story）。判据是能不能指出被推翻的那一句——指不出来，就是设计层的话，转给 uiux-imaginer。**拿不准就问人**：不自己归类成「问题本身」来替人结束发散，也不自己归类成设计层来绕过一次回 spec 的机会。
 
@@ -94,7 +96,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 ## 不做
 
-- 编排者**不亲手写变种板**、不截图、不调研（不调 Refero）、不生图（`codex exec` 的代办除外）、不把过程细节读进对话；uiux-imaginer 不直接跟人对话。
+- 编排者**不亲手写变种板**、不截图、不自己调 Refero（人说要查才调 `uiux-research`，由 uiux-researcher 去查）、不生图（`codex exec` 的代办除外）、不把过程细节读进对话；uiux-imaginer 不直接跟人对话。
 - **不替人宣布方向定了**。不收敛、不打分、不写 ticket。
 - 不动 spec 的 scope 和正文；状态只在 §0 翻那一次。
 - 不把渲染物留在仓库里；交给 refine 的只有方向说明与交接画布，对比页和落选变种不交。

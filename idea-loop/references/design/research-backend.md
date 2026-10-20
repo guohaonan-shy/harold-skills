@@ -1,99 +1,162 @@
-# Research backend — summoned by a named question, routed to one of three layers
+# Research backend — one named question in, one local HTML page out
 
-**按需加载。** This is the routing contract only: when a research call is allowed at all, which of
-Refero's three layers answers which kind of question, and how the result gets recorded. Tool
-mechanics (parameters, batch limits, platform filters) live in the `refero-design` skill's own
+**按需加载。** Read by exactly one executor: `idea-loop:uiux-researcher` (`agents/uiux-researcher.md`),
+started by the `uiux-research` skill when the **human** asks to look at how other products do
+something. Nobody else reads this file and nobody else calls Refero: `uiux-imaginer`, `designer` and
+stage C of `static-ui-protocol.md` do not research — when a UX question cannot be settled by
+judgment they write it down as a **suggested research question** (one named question plus a
+recommended answer) in their hand-back and carry on with the recommendation. Whether it gets
+researched is the human's call.
+
+Tool mechanics (parameters, batch limits, platform filters) live in the `refero-design` skill's own
 `references/mcp-tools.md`; don't restate them here, they'd rot out of sync.
 
-Two callers, one contract: `uiux-imagine` (the divergent half) and `uiux-refine` through
-`references/design/static-ui-protocol.md` §C.
+## What gets researched
 
-## The one hard rule
+A **named question** is one sentence, about one decision, that the current work cannot settle from the
+product's own truth. "What should this feel like" is not one. "How do products confirm leaving a
+session in progress, and where does the confirmation sit" is.
 
-**Nothing here is read before the first batch of variants exists.**
-
-In `uiux-imagine` that is literal — the first list of deliberately underspecified ideas, and the
-renders of the ones the human picked, come out of the product's own world, not out of a search. In
-`uiux-refine` the same rule wears a different name: stage C is skipped by default, and a reference
-is admissible only once the concept leaves a specific question unanswered.
-
-The rule exists because a reference read too early stops being evidence and becomes the brief.
-Whatever comes back from a search run before there is anything to compare it against sets the
-direction by default — and setting the direction by default is the one thing the divergent half
-exists to prevent.
-
-This backend is **never a gate**. No step blocks on it, and "we ran this whole thing without
-opening it" is a legitimate outcome.
-
-## The two places a named question comes from
-
-A **named question** is one sentence, about one decision, that the current variants cannot settle
-from the product's own truth. "What should this feel like" is not one. "How does a comparison table
-survive at 390px when every row carries five metrics" is.
-
-1. **The human's directional note.** Reacting to a rendered variant, the human names something the
-   variants don't answer — a state nobody drew, a density they don't believe, a step that goes
-   somewhere the board doesn't show.
-2. **The model's own gap.** While producing or steering variants, you reach a decision you are
-   about to guess at. Write the question down first — one you cannot fit in a sentence is not ready
-   to be researched, it is ready to be split.
-
-Either way the question is stated **before** the call, and the layer is picked from the question.
-
-## The three layers
+Research answers **UX questions**: a UX pattern, a user flow across screens, how a class of page is
+usually built, the tone of a piece of copy. It does **not** answer visual-style questions (taste,
+aesthetic family, palette or type mood) — those belong to `DESIGN.md` and the random seeds that drive
+divergence. So only Refero's two product layers are used:
 
 | The named question is about… | Layer | Refero call |
 |---|---|---|
-| Visual direction — taste, aesthetic family, palette/type mood | **Styles** | `refero_search_styles` |
-| A concrete UI pattern — how a specific component or screen is structured | **Screens** | `refero_search_screens` (+ `refero_get_screen`, `refero_get_similar_screens`) |
+| A concrete UI pattern — how a specific component or screen is structured, what it says | **Screens** | `refero_search_screens` (+ `refero_get_screen`, `refero_get_similar_screens`) |
 | A multi-step flow — how a user moves across connected screens to complete a task | **Flows** | `refero_search_flows` (+ `refero_get_flow`) |
 
-Pick the layer that matches the *question*, not the altitude of the work — a Component-altitude
-run can still need Flows if the named question is "what happens after this action, across
-screens," and a Surface-altitude run can stay at Styles if the only open question is visual
-direction.
+Pick the layer that matches the *question*, not the altitude of the work. When a flow search comes
+back sparse, search the related screens and reconstruct the order by hand — and say on the page that
+the order is reconstructed.
 
-### Caveats that change which layer to reach for
+**Never call `refero_search_styles` / `refero_get_style`,** and never use `refero_get_screen_image`:
+it hands the picture back as an image block with no address, so it cannot be saved to disk. Screenshots
+come from the `thumbnail_url` that each screen in a search result carries (an `images.refero.design/…_thumb.jpg`
+address, about 800px wide — enough to read a dialog; the un-suffixed full-size address is refused with 403, so
+do not guess it), downloaded with `curl`. Flow details carry the same field per step.
 
-- Styles doesn't currently cover in-app dashboards, auth screens, settings screens, or iOS app
-  screens as style systems — for those, go straight to Screens/Flows even for a visual-direction
-  question.
-- Even for product UI, use Styles first to establish taste, then Screens/Flows for
-  product-specific structural logic — don't skip Styles just because the surface is in-app.
-- User-provided sources always outrank a Refero search; Refero is a fallback candidate search, not
-  ground truth (`static-ui-protocol` stage C, `platform: "web"`).
+Research is not gated on how far the work has got. It does not decide what a UI looks like — it tells
+the human what others tried and why; the divergence itself is driven by seeds. The human may research
+before the first variant exists.
 
-### The optional styles stress test
+This backend is **never a gate**. Nothing blocks on it, and a run that never opened it is legitimate.
 
-Once a language has been **chosen** — the language altitude closed, `DESIGN.md` written — one
-Styles pass may be run against the scenarios a young language collapses under: dense tables, long
-forms, error-laden states, a twelve-row list. It is optional, it happens strictly after the choice,
-and it may only produce findings **against the chosen language**. It never reopens the choice by
-holding up a prettier alternative; reopening is the human's call, in words.
+### What static screenshots cannot answer
 
-## Recording a result — three lines per source, always
+A question about **time or behaviour** — when a state appears, whether something pauses while a dialog
+is open, how an animation eases — is usually not answerable from still pictures. Do not pad the page
+with references that only look relevant: write the question (or the part of it) under **Cannot
+answer** at the top of the page, say what a screenshot could not show, and answer only what it can.
+An honest "no reference answers this" beats a confident wrong one.
 
-- **Can answer** — the exact question this source is evidence for.
-- **Cannot answer** — the nearby decisions it does not support.
-- **Keep / Change / Do not copy** — the controllable structural qualities worth keeping, what
-  changes for this product, and the protected or irrelevant skin.
+## Where the files go
 
-A source that cannot represent the target state never enters the conclusion layer. In
-`uiux-imagine` these three lines land in the direction note's 「约束与素材」 section — which is where
-they survive, since the renders themselves do not. In `uiux-refine` they land where stage C records
-them.
+The caller hands you a drop directory — one of two shapes, both local and never in git, deleted with
+the `docs/design/tmp/` lifecycle:
 
-## The ban that governs how they are used
+- with a spec: `docs/design/tmp/<spec-slug>/research/<question-short-name>/`
+- without one: `docs/design/tmp/research/<question-short-name>/`
 
-**reference-averaging** (`ui-craft-checklist.md` §2): when several sources come back for one
-question, blending them into a safe median instead of picking the one whose reasoning actually
-answers the question. **A reference is evidence for a specific claim, not a vote.** Two sources that
-disagree are a decision to make, never a midpoint to compute.
+Inside: `index.html` and the downloaded screenshots under `shots/<source>-<n>.jpg`. The page
+references them by relative path only, so it opens from `file://` and moves with the folder.
+
+## The page: structure
+
+Top of the page, in this order:
+
+1. **The named question** — the one sentence.
+2. **The conclusion** — one sentence. What most sources agree on, or the fork they split on.
+3. **Cannot answer** — what this research does not settle (time / behaviour questions, states no source
+   shows, platforms not covered). Never empty: if truly nothing, say what was not looked at.
+
+Then **one section per source**, in the order you would show them to a colleague:
+
+- the **flow**: that source's screenshots in a horizontal row, in the order the user meets them, each
+  with a line underneath saying what this step does;
+- beside it, three readings:
+  1. **Scene (场景)** — which product, which user, what they are trying to get done.
+  2. **Design logic (设计逻辑)** — which pattern or flow it uses, what problem that solves, and
+     therefore why the UI looks the way it does.
+  3. **For us (对我们)** — what this source can answer and what it cannot; what to keep, what to
+     change, what not to copy. A source that cannot represent the target state does not belong on
+     the page at all.
+
+**When sources disagree, the page says so as a decision for the human** — two or more named
+alternatives, each with the source it comes from and why — never a midpoint. That is the
+reference-averaging ban (`ui-craft-checklist.md` §2): a reference is evidence for a specific claim,
+not a vote.
+
+Write the page in the language of the named question.
+
+## The page: markup contract
+
+`scripts/research-check.mjs` checks the shape by these attributes, so keep them exactly. Everything
+else (CSS, wording of headings) is yours.
+
+```html
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><title>调研：退出确认</title>
+<style>
+  body{font:16px/1.6 system-ui,sans-serif;max-width:1100px;margin:0 auto;padding:24px 16px;color:#1a1a1a;background:#fff}
+  @media (prefers-color-scheme:dark){body{color:#e8e8e8;background:#161616}}
+  ol[data-part=flow]{display:flex;gap:16px;overflow-x:auto;list-style:none;padding:0}
+  ol[data-part=flow] li{flex:0 0 220px}
+  ol[data-part=flow] img{width:100%;border:1px solid #8884;border-radius:8px}
+  section[data-source]{border-top:1px solid #8884;margin-top:32px;padding-top:16px}
+</style></head><body>
+<h1 data-part="question">一句话的具名问题</h1>
+<p data-part="conclusion">一句话结论。</p>
+<section data-part="cannot-answer"><h2>不能回答什么</h2><p>…</p></section>
+
+<section data-source>
+  <h2 data-part="source-title">产品名 · 这一组在做什么</h2>
+  <ol data-part="flow">
+    <li><img src="shots/acme-1.jpg" alt="第 1 步"><p>这一步在做什么</p></li>
+    <li><img src="shots/acme-2.jpg" alt="第 2 步"><p>这一步在做什么</p></li>
+  </ol>
+  <div data-part="scene"><h3>场景</h3><p>…</p></div>
+  <div data-part="logic"><h3>设计逻辑</h3><p>…</p></div>
+  <div data-part="for-us"><h3>对我们</h3><p>…</p></div>
+</section>
+<!-- more <section data-source>…; sources that disagree: add a section naming the fork as a decision -->
+</body></html>
+```
+
+- A page with no source at all is legal only when a `<section data-part="no-source">` says why (what was
+  searched, why nothing could represent the target state).
+- Every `<img>` is a path **relative to the drop directory**, under `shots/`, and exists. No remote
+  addresses (they expire), no `data:` URIs, no `..`.
+- Each flow step has both a screenshot and a line of text.
+
+Run the check before handing back, and fix until it is green:
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/research-check.mjs" <drop directory>/index.html
+```
+
+## What goes back to the caller
+
+Only two things: the **absolute path of `index.html`** and **one sentence** of conclusion. Refero
+calls, search results and screenshots stay with the researcher. The calling session sends the file to
+the human; the human decides which readings, if any, go back to `uiux-imaginer` or `designer`, and
+they go as **text from the three readings, never the pictures**.
+
+## How a used result is recorded
+
+When the human takes a conclusion into the work, the executor records it the way its stage already
+records things:
+
+- `uiux-imagine`: in the direction note's 「约束与素材」, as text — the renders and screenshots do not
+  survive the phase, the words do.
+- `uiux-refine`: in the freeze record, where stage C used to note a reference.
+
+Keep the three readings together when recording one (what it answers, what it does not, keep /
+change / do not copy) — a conclusion without its "does not answer" is the half that misleads.
 
 ## Provenance
 
-Refero's three-layer research backend is a live dependency of this plugin, not a one-time
-inspiration source — naming it here and in the two callers above is the intended coupling. This
-file exists only to keep the routing decision (which layer for which question) visible in prose
-next to those callers, per this plugin's convention of naming referenced files explicitly rather
-than pointing at a directory.
+Refero's screens and flows layers are a live dependency of this plugin, named here and in
+`agents/uiux-researcher.md` — the only two places that call them. This file exists to keep the
+routing and the page contract visible in prose next to that agent.
