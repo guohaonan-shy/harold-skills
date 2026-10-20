@@ -48,7 +48,7 @@ disable-model-invocation: true
 3. **档案对账 / 全站初扫**（设计档案 `docs/design/prod/`）：`prod/` 里有对象，就做档案对账（`references/archive-reconcile.md`：先源码波、再实时波，实时波交给 `idea-loop:ui-reviewer` 的对账模式逐个状态重新驱动，每个状态判成一致 / 档案过期 / 进入方式过期 / 产品坏了 / 进不去，容差以内不重拍）；`prod/` 为空，就做全站初扫（`references/initial-scan.md`：从路由出发按页面建第一份档案草稿，进不去的写明缺什么、试过什么）。两者的产物都先放这次运行自己的 `docs/design/tmp/dreaming-<日期>/`，提议表里写 `档案对象` / `档案状态` / `初扫页面` 三节（产品坏了单列在 `缺陷`）；**不直接写 `prod/`**，人批了才由档案的归档脚本并进去。没有设计档案目录、也不打算建的项目，整步跳过，提议表里不写这几节。
 4. **候选蒸馏**：`references/candidate-distillation.md`。
 5. **`DESIGN.md` 对账**：`references/design-md-reconcile.md`。两者写 `DESIGN.md` 的判据与流程都在 `../../references/design-md.md`，这里不复述。
-6. **写提议表**（形状、各类行的处置闭集见 `references/proposal-table.md`），先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才交出去。有行：量大发 Artifact，会话里逐行摆给人，定时那次另发一条推送通知；**空表只推一句「本周无事」**，不发 Artifact。
+6. **写提议表**（形状、各类行的处置闭集见 `references/proposal-table.md`），先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才交出去。`候选` 与 `DESIGN.md 条目` 有行时，另出一页审核页，每行一张卡（`references/review-page.md`）：候选卡有界面截图、拟写进 `DESIGN.md` 的原文和落在哪一节、带推荐的选择；维护卡有改前 → 改后和点名的依据。有行：量大发 Artifact，会话里逐行摆给人，定时那次另发一条推送通知；**空表只推一句「本周无事」**，不发 Artifact。
 
 **执行段**（人逐行批过之后）：只执行批了的行，每类行怎么执行见 `references/proposal-table.md` §4；然后 link sweep、重新生成各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）、**开一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的 PR**。删 spec 是删它整个目录（含 `tickets/` 和 `assets/`；`assets/` 里 ADR 要引的证据图先挪进 ADR 旁边）。目标仓库还是旧平铺布局，先提议按 wiki-conventions §2.2 迁移。最后报告：动了什么、留了什么、为什么留。
 

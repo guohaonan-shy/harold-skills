@@ -10,7 +10,9 @@
  * This file judges shape, never content — no model, no taste, no network. It checks: the row types
  * (the `##` sections) are a closed set; each row type has a closed set of dispositions; archive
  * rows carry two pictures, the second under `tmp/`; a "product broken" row never carries a
- * replace-the-archive disposition; and whether the table is empty (nothing to approve this week).
+ * replace-the-archive disposition; every candidate row carries a picture of the UI it is about; a
+ * candidate headed for DESIGN.md and every DESIGN.md row carry the old and new text side by side;
+ * every DESIGN.md row names the standard it rests on; and whether the table is empty.
  *
  * Pure: the CLI at the bottom is the only thing that reads a file.
  */
@@ -149,6 +151,45 @@ function evidenceProblems(type, cells) {
   return [];
 }
 
+/** The candidate dispositions that end in DESIGN.md text — the ones whose wording a human approves. */
+const WRITES_DESIGN_MD = ['改写已有规则', '追加新规则'];
+
+/**
+ * DESIGN.md rows are judged by reading the change itself, so the change has to be in the cell:
+ *  - a candidate row shows the UI the rule is about (`![…](…)`), or says why it has none (`无图：…`) —
+ *    a rule the human cannot see on screen sends them back to the frozen record;
+ *  - a candidate headed for DESIGN.md says where it lands (`并进：<章>`) and shows 旧：… 新：…;
+ *  - every DESIGN.md row names what it rests on (`依据：` plus a section of the writing reference
+ *    `§N`, the official spec, or a lint rule) — "should change" with no named standard is taste;
+ *  - every DESIGN.md row except a new file shows 旧：…, and 新：… or `→ 删` (a 交人裁决 row's new
+ *    texts live in its 选项, one per choice).
+ */
+function designMdProblems(type, cells) {
+  const evidence = cells[2];
+  const lead = leadingDisposition(cells[3]);
+  const problems = [];
+  if (type === '候选') {
+    if (imagePaths(evidence).length === 0 && !/无图\s*[：:]/.test(evidence)) {
+      problems.push('的证据里没有图——放这条规则说的那块界面的截图（取自设计档案或实现），实在没有界面写「无图：原因」');
+    }
+    if (WRITES_DESIGN_MD.includes(lead)) {
+      if (!/并进\s*[：:]/.test(evidence)) problems.push(`的处置是「${lead}」，证据里要写「并进：」进 DESIGN.md 的哪一章哪一条`);
+      if (!(/旧\s*[：:]/.test(evidence) && /新\s*[：:]/.test(evidence))) problems.push(`的处置是「${lead}」，证据里要放旧文与新文并排（「旧：…→ 新：…」，追加写「旧：无」）`);
+    }
+  }
+  if (type === 'DESIGN.md 条目') {
+    const basis = evidence.match(/依据\s*[：:](.*)$/s);
+    if (!basis || !/§\s*\d|lint|规范/i.test(basis[1])) {
+      problems.push('的证据里要写「依据：」并点名那条标准——写入 reference 的 §N（如「§3 规则 5」「§8 带日期的先例」）、官方 design.md 规范的哪一条，或 lint 规则名');
+    }
+    if (lead !== '新建 DESIGN.md') {
+      if (!/旧\s*[：:]/.test(evidence)) problems.push('的证据里要有改前的原文（「旧：「…」」）');
+      else if (lead !== '交人裁决' && !/新\s*[：:]|→\s*删/.test(evidence)) problems.push('的证据里要有改后的样子（「→ 新：「…」」，删掉写「→ 删」）');
+    }
+  }
+  return problems;
+}
+
 /** Image paths in a cell, in order — markdown image syntax only. */
 function imagePaths(cell) {
   return [...cell.matchAll(/!\[[^\]]*\]\(\s*([^)\s]+)[^)]*\)/g)].map((m) => m[1]);
@@ -216,6 +257,7 @@ export function checkProposalTable(markdown) {
       if (bad) errors.push(`${where}${bad}`);
       errors.push(...pictureProblems(s.title, row.cells).map((p) => `${where}${p}`));
       errors.push(...evidenceProblems(s.title, row.cells).map((p) => `${where}${p}`));
+      errors.push(...designMdProblems(s.title, row.cells).map((p) => `${where}${p}`));
       if (s.title === '初扫页面' && !/(^|[\s/(`])tmp\//.test(row.cells[2])) {
         errors.push(`${where}的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，人批了才经归档脚本进 prod/`);
       }
