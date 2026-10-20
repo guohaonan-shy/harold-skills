@@ -28,6 +28,7 @@ const HEAD = '| 对象 | 发现 | 证据 | 建议处置 | 选项 |\n|---|---|---
 const IMG_PROD = '![档案里的](docs/design/prod/pages/cart/assets/cart--empty.png)';
 const IMG_TMP = '![现在的](docs/design/tmp/dreaming-2026-10-19/delta/pages/cart/assets/cart--empty.png)';
 const OPTS = '批 / 不批 / 改成…';
+const IMG_CARD = '![促销卡](docs/design/prod/components/PromoCard/assets/promo-card.png)';
 
 /** A section: `## <row type>` then the shared header and the given rows (each an array of 5 cells). */
 const section = (type, rows = []) =>
@@ -39,8 +40,8 @@ const ROWS = {
   档案对象: [['components/PromoBadge', '挂的代码路径 src/ui/PromoBadge.tsx 已不存在', '仓库里无此路径；引用：pages/cart--empty 的区域「促销」、边 pages/cart--list#open-promo', '删对象', OPTS]],
   档案状态: [['pages/cart--empty', '档案过期：空购物车文案改了，引用的代码自上次改动有提交 3 次', `${IMG_PROD} ${IMG_TMP}`, '替换档案', OPTS]],
   初扫页面: [['pages/wishlist', '档案里没有这一页；路由 /wishlist 可进', 'docs/design/tmp/dreaming-2026-10-19/delta/pages/wishlist/wishlist.md', '新增页面', OPTS]],
-  候选: [['候选：卡片内边距统一 16px（组件 PromoCard、OrderCard 重复，共 2 次）', '与已有规则「卡片内边距 12px」矛盾', 'components/PromoCard、components/OrderCard', '改写已有规则', OPTS]],
-  'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行', '删除', OPTS]],
+  候选: [['候选：卡片内边距统一 16px（组件 PromoCard、OrderCard 重复，共 2 次）', '与已有规则「卡片内边距 12px」矛盾', `${IMG_CARD} 并进：Components · 卡片；旧：「卡片内边距 12px」→ 新：「卡片内边距 16px」`, '改写已有规则', OPTS]],
+  'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：写入 reference §8「带日期的先例」', '删除', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -140,6 +141,48 @@ test('a defect row about a broken state needs the same two pictures; a rule-vers
   assert.match(r.out, /两张图/);
   const ruleVsCode = [['DESIGN.md 的 Motion 章第 1 条', '法对代码错：规则要求全站 0.2s，结算页写死 0.5s', 'src/checkout/Button.css 第 12 行', '开 issue', OPTS]];
   assert.equal(run(sample({ 缺陷: ruleVsCode })).status, 0);
+});
+
+test('a candidate row shows the UI it is about, or says why there is none', () => {
+  const r = run(sample({ 候选: withEvidence('候选', '并进：Components · 卡片；旧：「12px」→ 新：「16px」') }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /候选/);
+  assert.match(r.out, /截图|图/);
+  const noUi = [['候选：通用原则：只有会丢东西时才确认', '换个产品也成立', '无图：说的是确认的时机，没有单独一块界面', '起草通用原则 issue', OPTS]];
+  assert.equal(run(sample({ 候选: noUi })).status, 0, '"无图：" with a reason is an answer');
+});
+
+test('a candidate headed for DESIGN.md says where it lands and shows the old and new text', () => {
+  const noPlace = run(sample({ 候选: withEvidence('候选', `${IMG_CARD} 旧：「12px」→ 新：「16px」`) }));
+  assert.equal(noPlace.status, 2, noPlace.out);
+  assert.match(noPlace.out, /并进/);
+  const noText = run(sample({ 候选: withEvidence('候选', `${IMG_CARD} 并进：Components · 卡片`) }));
+  assert.equal(noText.status, 2, noText.out);
+  assert.match(noText.out, /旧文与新文/);
+  const stays = [['候选：结算弹层的版式', '只对这个组件成立', IMG_CARD, '留在原处', OPTS]];
+  assert.equal(run(sample({ 候选: stays })).status, 0, 'only the dispositions that write DESIGN.md need the text');
+});
+
+test('a DESIGN.md row names the standard it rests on — "should change" with no named rule is taste', () => {
+  const none = run(sample({ 'DESIGN.md 条目': withEvidence('DESIGN.md 条目', '旧：「弹层淡入 0.2s（2026-07-16 定）」→ 删') }));
+  assert.equal(none.status, 2, none.out);
+  assert.match(none.out, /依据/);
+  const vague = run(sample({ 'DESIGN.md 条目': withEvidence('DESIGN.md 条目', '旧：「…」→ 删；依据：不太好') }));
+  assert.equal(vague.status, 2, vague.out);
+  const lint = [['front matter colors.border', 'lint 报定义了没被引用', '旧：「border: \'#e2e8f0\'」→ 新：同值，omitted 里补一句说明；依据：官方 lint orphaned-tokens', '处理 lint 警告', OPTS]];
+  assert.equal(run(sample({ 'DESIGN.md 条目': lint })).status, 0, 'a lint rule name is a named standard');
+});
+
+test('a DESIGN.md row shows the text before and after; a ruling row keeps its new texts in the options', () => {
+  const noOld = run(sample({ 'DESIGN.md 条目': withEvidence('DESIGN.md 条目', '依据：§8「带日期的先例」') }));
+  assert.equal(noOld.status, 2, noOld.out);
+  assert.match(noOld.out, /改前/);
+  const noNew = [['Shapes 章', '规则写 8px，代码是 10px', '旧：「圆角 8px」；依据：§12 法和代码对不上', '合并为一条', OPTS]];
+  const r = run(sample({ 'DESIGN.md 条目': noNew }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /改后/);
+  const ruling = [['Shapes 章', '规则写 8px，代码是 10px', '旧：「圆角 8px」；依据：§12 法和代码对不上', '交人裁决', 'A 改法 → 新：「圆角 10px」/ B 代码错：开 issue']];
+  assert.equal(run(sample({ 'DESIGN.md 条目': ruling })).status, 0);
 });
 
 const BROKEN = '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError';
