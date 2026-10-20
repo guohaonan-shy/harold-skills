@@ -35,9 +35,11 @@ never a craft note, a P2 is never a direction argument:
 | P2 | `craft` |
 | P3 | `craft` |
 
-`direction` reopens the direction. `pattern` is the one kind that may summon reference research —
-it is a named question ("what do studios do with a filter rail this dense?"), never a pre-work
-browse. `craft` is fixed in place in the current comp.
+`direction` reopens the direction. `pattern` is a named question ("what do studios do with a filter
+rail this dense?"): the executor first settles it by judgment, and if it cannot it writes the
+question down as a suggested research question for the human — the executor never researches it
+itself, and the judge only names the question, it does not ask for a research pass. `craft` is fixed
+in place in the current comp.
 
 ## Score bands
 
@@ -77,7 +79,7 @@ It never assigns a score. Scoring is the critic's judgement; this is the audit.
 - **The P0–P3 severity semantics** that the ladder above specializes for aesthetics:
   `heuristics-checklist.md`.
 - **The slop catalog** that a P0 can hit, and the **reference-averaging** ban that governs how a
-  `pattern` finding may use research: `ui-craft-checklist.md` §2.
+  `pattern` finding may use a reference the human forwards: `ui-craft-checklist.md` §2.
 
 ## Not this rubric's business
 

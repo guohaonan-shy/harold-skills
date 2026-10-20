@@ -61,7 +61,7 @@ docs/
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 归档总结 —— 永久
 ├── design/
-│   ├── tmp/<spec-slug>/  进行中需求的设计过程产物，只在本地、不进 git —— imagine/（方向说明、交接画布）、canvas/（画布、冻结记录、完整验收矩阵、交互图）、delta/（对 prod/ 的差异）
+│   ├── tmp/<spec-slug>/  进行中需求的设计过程产物，只在本地、不进 git —— imagine/（方向说明、交接画布）、canvas/（画布、冻结记录、完整验收矩阵、交互图）、delta/（对 prod/ 的差异）、research/<问题短名>/（人调 `uiux-research` 的结果：index.html 与下载的参考截图）；没有 spec 时调研放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
 ├── reference/            常驻约定与手册
@@ -77,7 +77,7 @@ docs/
 
 `design/` 分两层，生命周期相反：
 
-- **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`（变种板与抓取物、每轮记录 `rounds.md`、方向说明 `direction-note.md`、交接画布 `handoff/`），`uiux-refine` 写 `canvas/` 和 `delta/`。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
+- **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`（变种板与抓取物、每轮记录 `rounds.md`、方向说明 `direction-note.md`、交接画布 `handoff/`），`uiux-refine` 写 `canvas/` 和 `delta/`；`uiux-research` 的调研结果落 `research/<问题短名>/`（imagine 与 refine 用同一处，没有 spec 时落 `docs/design/tmp/research/<问题短名>/`），不放进 `imagine/`，所以 imagine 收工清 `imagine/` 时它还在；合并前的拦截（`merge-gate-hook.mjs`）、pr-review 每轮的 UI 审查判断、合并前的归档判断、ui-reviewer 的跳过条件，都不把 `research/` 算作设计产物——调研目录从不归档，只做过调研的需求不起 UI 审查、合并不走归档；调研结论用进了设计的，已经以文字记在方向说明或冻结记录里，随设计一起归档。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
 - **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `design-archive.md`。
 
 按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。

@@ -205,4 +205,4 @@ node scripts/design-archive-write.mjs <仓库根> <spec-slug> [--dry-run] [--jso
 
 ### 合并前钩子
 
-`scripts/merge-gate-hook.mjs` 是插件级 PreToolUse 钩子（挂在 Bash 上，登记在 `hooks/hooks.json`）：命令里含 `gh pr merge`，且当前仓库的 `docs/design/tmp/` 下有任何含文件的需求目录，就以退出码 2 拦下，stderr 点名是哪几个需求，指向上面这条流程并给出归档命令。其余命令、`tmp/` 不存在或为空、不在 git 仓库里时放行。钩子只跑脚本，不起 agent；不设 CI 检查（`tmp/` 不进 PR，CI 看不到）。
+`scripts/merge-gate-hook.mjs` 是插件级 PreToolUse 钩子（挂在 Bash 上，登记在 `hooks/hooks.json`）：命令里含 `gh pr merge`，且当前仓库的 `docs/design/tmp/` 下有任何含文件的需求目录（不算 `research/`：调研页是看完就丢的草稿，从不归档），就以退出码 2 拦下，stderr 点名是哪几个需求，指向上面这条流程并给出归档命令。其余命令、`tmp/` 不存在或为空、不在 git 仓库里时放行。钩子只跑脚本，不起 agent；不设 CI 检查（`tmp/` 不进 PR，CI 看不到）。

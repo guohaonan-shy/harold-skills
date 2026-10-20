@@ -13,7 +13,7 @@
  * Finding shape is isomorphic to the comparators' in `ui-compare.mjs` — same reading:
  * 维度 = dimension · 严重度 = severity · 位置 = where · 缺陷 = detail/why. The extra field
  * is `kind`, which the mechanical comparators have no use for and the critic loop routes on
- * (direction → reopen the direction, pattern → reference research, craft → fix in place).
+ * (direction → reopen the direction, pattern → judgment first, else a suggested research question, craft → fix in place).
  * Absent values are null, never omitted — a consumer never has to feature-detect.
  *
  * One more input, optional: the exclusion set. A finding that asks to move something the human

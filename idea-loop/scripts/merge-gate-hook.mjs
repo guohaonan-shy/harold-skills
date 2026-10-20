@@ -3,9 +3,10 @@
  * PreToolUse hook on Bash: no `gh pr merge` while a requirement's design is still unarchived.
  *
  * `docs/design/tmp/<spec-slug>/` is the local scratch area of a requirement in flight (never in git,
- * so no CI check can see it). If a merge command is about to run and that folder still holds anything,
- * the design side of the PR was never folded into `docs/design/prod/` — the merge would silently lose
- * it. This hook stops the command and names the requirements, and points at the flow that clears them
+ * so no CI check can see it). If a merge command is about to run and that folder still holds design
+ * output (anything outside its `research/` subfolder — the pages `uiux-research` drops are scratch the
+ * human read, never design output), the design side of the PR was never folded into `docs/design/prod/`
+ * — the merge would silently lose it. This hook stops the command and names the requirements, and points at the flow that clears them
  * (pr-review's pre-merge archive: UI review, a human reads the draft, then the archive script
  * design-archive-write.mjs).
  *
@@ -28,19 +29,26 @@ export function isMergeCommand(command) {
   return /\bgh\b[^|;&\n]*?\bpr\s+merge\b/.test(String(command ?? ''));
 }
 
-const hasFile = (dir) =>
+const hasFile = (dir, skip = () => false) =>
   readdirSync(dir).some((name) => {
-    if (name === '.DS_Store') return false;
+    if (name === '.DS_Store' || skip(name)) return false;
     const p = join(dir, name);
     return statSync(p).isDirectory() ? hasFile(p) : true;
   });
 
-/** Spec slugs under `<root>/docs/design/tmp/` whose folder holds at least one file, sorted. */
+/**
+ * `research/` is where `uiux-research` drops its pages and screenshots — `tmp/research/` when there is
+ * no spec, `tmp/<spec-slug>/research/` when there is. It is scratch the human read, not a design that
+ * has to be folded into `prod/`, so it never counts as an unarchived requirement (it goes with `tmp/`).
+ */
+const RESEARCH = 'research';
+
+/** Spec slugs under `<root>/docs/design/tmp/` whose folder holds at least one file (outside `research/`), sorted. */
 export function pendingRequirements(root) {
   const tmp = join(root, TMP);
   if (!existsSync(tmp)) return [];
   return readdirSync(tmp)
-    .filter((name) => statSync(join(tmp, name)).isDirectory() && hasFile(join(tmp, name)))
+    .filter((name) => name !== RESEARCH && statSync(join(tmp, name)).isDirectory() && hasFile(join(tmp, name), (n) => n === RESEARCH))
     .sort();
 }
 
