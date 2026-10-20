@@ -173,7 +173,7 @@ issue #46 定下的边界（不下方向结论、不做 reference-averaging、�
 | 纯逻辑 / 数据转换 | TDD 单元 | 碰到一处：如果给 `index.html` 加形状校验脚本（每个来源三段齐、引用的图都存在、有「不能回答什么」），照现有脚本旁的 `*.test.mjs` 写。不加脚本就不涉及。 |
 | API 契约 | TDD API 测试 | 不涉及。 |
 | DB schema / 迁移 / 并发 | 真 DB 测试 | 不涉及。 |
-| LLM 输出质量 | eval | 碰到但不新建套件：新 skill、新 agent 和改动的说明都是提示词改动，按仓库约定走 vibe 迭代；imagine / refine 的说明改了，在本地对 `idea-loop/evals/` 的 baseline 重跑一次，只断言「环还接着」。重跑较重，命令交给人晚上跑。 |
+| LLM 输出质量 | eval | 碰到：新 skill、新 agent 和改动的说明都是提示词改动，按仓库约定走 vibe 迭代；另给 `uiux-research` 建一个 baseline（人的决定，2026-10-20）：取以前真实会话里调研过的几个问题作 default prompt，配最小产品上下文，跑出的 HTML 交给人看、人标注问题，逐步收敛产物该包含什么，不预设内容断言。imagine / refine 原来的 baseline 已于 2026-10-19 删除，这两段的回归改由交付验收时真实跑一轮来看。 |
 | 视觉正确性 | UI 实现环 | 不涉及。 |
 | 端到端用户流程 | 浏览器测试 | 碰到：在 Toeflair 上跑一轮 imagine，人调一次 `uiux-research`，走一遍「起调研 agent → 图和 HTML 落本地 → 发给人 → 人说转 → 执行者收到文字」。 |
 
@@ -184,7 +184,7 @@ issue #46 定下的边界（不下方向结论、不做 reference-averaging、�
   - 不自动转：人看完不表态；期望——编排者不把结论转给执行者。人说转；期望——执行者收到的是文字，没有图。覆盖 3。
   - 执行者不自己查：跑一轮 imagine 和一轮 refine；期望——uiux-imaginer、designer 的记录里没有 Refero 调用；拿不准的地方以「建议调研的问题」出现在交回里。覆盖 3、4。
   - 开工前调研：人在 imagine 前调一次；期望——种子子代理收到的需求里有调研的文字结论，没有图。覆盖 3。
-- **prompt / eval 变动**：新增 skill 与 agent 的定义；改研究契约、uiux-imaginer、uiux-imagine、uiux-refine、designer、静态 UI 协议 C 段。不新建 eval 轴，只重跑现有 baseline。
+- **prompt / eval 变动**：新增 skill 与 agent 的定义；改研究契约、uiux-imaginer、uiux-imagine、uiux-refine、designer、静态 UI 协议 C 段。新增 `uiux-research` 的人工标注 baseline。
 - 先例：`agents/ui-master.md`（调用方每次新起、交回即结束）、`agents/explorer.md`（在定义里钉模型的写法）。
 
 ## 7 Out of scope
