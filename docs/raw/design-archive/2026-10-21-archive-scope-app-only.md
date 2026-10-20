@@ -2,14 +2,14 @@
 type: raw
 source_type: conversation
 captured: 2026-10-21
-title: 讨论 —— 设计档案的重跑先只覆盖 app，不碰营销站
-tags: [design-archive, dreaming, design-archive-scope]
-related: ["[[design-archive-scope]]"]
+title: 讨论 —— 设计档案的重跑先只覆盖 app，随后改为 dreaming 暂时不做档案对账与初扫
+tags: [design-archive, dreaming, dreaming-drop-archive-reconcile]
+related: ["[[dreaming-drop-archive-reconcile]]"]
 ---
 
 > 格式约定：`## U<n>` 是交给这场会话的原话，逐字保留；`## A<n>` 只保留结论与发现，取证过程/工具调用/中间推演略去。外部产物留链接不复制正文。末尾一张「本轮决议」表。
 >
-> 这场没有 grill：任务由「设计档案分段」那条线的主会话交过来，里面转述了 Harold 2026-10-21 的决定。U1 是那段任务原文。
+> 这场没有 grill：任务由「设计档案分段」那条线的主会话交过来，里面转述了 Harold 2026-10-21 的决定。U1 是那段任务原文；U2 起是 Harold 本人在这场会话里的话。A1 之后起草过一份「按项目声明范围」的 spec 草稿（slug `design-archive-scope`），被 U2 推翻，改写成现在这份。
 
 ## U1
 
@@ -27,11 +27,23 @@ related: ["[[design-archive-scope]]"]
 - **判一个页面在不在范围里，用源码波现成的匹配**：入口状态的 `entry.url` 对声明范围内的路由表（`:param` 当通配）。不需要新脚本、不改校验。
 - TOFEL-demo 现状（2026-10-21 查，main `d649bbb2`）：`docs/design/` 只有旧布局的冻结记录目录，没有 `prod/`，下次 dreaming 跑的是全站初扫。app 的路由表在 SPA 的入口组件里；营销页（`/`、`/pricing`、四个题型介绍页、`/blog`）由 Astro 站出，nginx 不把它们交给 SPA。SPA 路由表里另有 `/legal/:type`（生产上由 Astro 出）、开发专用的 `/dev/*`、`/__design/*` 和兜底重定向 `*`。
 
+## U2
+
+我建议先把dreaming里涉及到prod对账的内容删掉，我准备暂时不在对账里处理设计的内容，我会直接在TOEFLAIR的项目仓库要求它根据我们定义的格式内容，先将存量的内容重新扫一遍。
+
+## A2
+
+问了两件事，Harold 选了推荐项：
+
+- dreaming 里删到哪一层 →「对账+初扫都删」：dreaming 整步不碰 `docs/design/prod/` 的页面，删掉档案对账与全站初扫两份 reference、提议表里档案对象 / 档案状态 / 初扫页面几节及校验、`ui-reviewer` 的对账模式；候选蒸馏与 `DESIGN.md` 对账保留。
+- 原来的范围声明（TOFEL-demo 只扫 app）还要不要做 →「不做了」：dreaming 不再扫页面，范围声明也就不需要；TOFEL-demo 那边不提交。
+
 ## 本轮决议
 
 | 议题 | 决议 |
 |---|---|
-| 范围由谁定 | 目标仓库自己在 `AGENTS.md` / `CLAUDE.md` 声明；插件只读，没声明行为照旧 |
-| 声明放哪 | `AGENTS.md` / `CLAUDE.md` 一句，不放 `prod/index.md`（初扫时它还不存在） |
-| 范围管到哪 | dreaming 设计档案那一步的全部四个入口：初扫的页面清单、初扫的跨页边、对账源码波的补扫、对账实时波；`pr-review` 的归档不管 |
-| TOFEL-demo 的声明 | 在它自己的仓库单独提交 / 开 PR，不与插件改动混 |
+| dreaming 的档案对账与全站初扫 | 删（U2）；存量档案由 Harold 在项目仓库里按档案格式自己发起重扫 |
+| 候选蒸馏、`DESIGN.md` 对账 | 保留 |
+| 只为对账存在的东西（`ui-reviewer` 对账模式、提议表三节与校验、比对脚本） | 一起删 |
+| 按项目声明范围只扫 app | 不做（A1 的方案被 U2 取代） |
+| TOFEL-demo 的范围声明 | 不提交 |
