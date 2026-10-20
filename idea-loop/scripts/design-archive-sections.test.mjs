@@ -14,7 +14,7 @@ import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { crc32, deflateSync } from 'node:zlib';
 import { BASE, MKT, MKT_ENTRY, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, encodePng, sliceImage } from './design-archive-sections.mjs';
+import { attribute, buildMeasureCode, encodePng, selectBlocks, sliceImage } from './design-archive-sections.mjs';
 import { comparePngs, decodePng } from './ui-png-compare.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
@@ -73,13 +73,163 @@ test('attribute: a heading section ends where the next starts; with no section a
   assert.equal(none.ranges.find((x) => x.id === 'feature-b').end, 6000);
 });
 
-test('attribute: two declared headings in one block — the block top goes to neither, each starts at its own heading', () => {
+test('attribute: two declared headings in one block — the first starts at the block top, the second at its own heading', () => {
   const second = { ...FEATURE_B, top: 2000, bottom: 2040, block: 1 }; // now in the same block as feature-a
   const r = attribute(measurement([HEADER, HERO, FEATURE_A, second, FOOTER]));
   assert.deepEqual(r.ranges.filter((x) => ['feature-a', 'feature-b'].includes(x.id)).map((x) => [x.id, x.start, x.end]), [
-    ['feature-a', 1000, 2000],
+    ['feature-a', 900, 2000],
     ['feature-b', 2000, 5800],
   ]);
+});
+
+test('attribute: the first section of a block starts at the lower of "block top" and "end of the section before" — a banner that overlays the block pushes it down', () => {
+  // the main block begins under a sticky banner (block top 0, banner 0–100): hero must not start inside the banner
+  const r = attribute(measurement([HEADER, HERO, FEATURE_A, FEATURE_B, FOOTER], { blocks: [{ top: 0, bottom: 900 }, { top: 900, bottom: 4500 }, { top: 4500, bottom: 5800 }] }));
+  assert.deepEqual(r.ranges.find((x) => x.id === 'hero'), { id: 'hero', ref: `${MKT}#hero`, by: 'heading', role: 'heading', start: 100, end: 900, height: 800 });
+  assert.deepEqual(r.coverage, { gaps: [], overlaps: [] });
+});
+
+test('attribute: a block\'s first heading takes the block top (the eyebrow and white space above its title go in its picture); later ones in the block start at their own heading', () => {
+  // pricing-like: hero / plans / free in one block (123–2000), headings at 203, 600, 1500
+  const hero = { id: 'hero', locate: { role: 'heading', name: 'h' }, found: true, top: 203, bottom: 260, block: 0 };
+  const plans = { id: 'pricing', locate: { role: 'heading', name: 'p' }, found: true, top: 600, bottom: 640, block: 0 };
+  const free = { id: 'pricing-free', locate: { role: 'heading', name: 'f' }, found: true, top: 1500, bottom: 1540, block: 0 };
+  const r = attribute(measurement([HEADER, hero, plans, free], { blocks: [{ top: 123, bottom: 2000 }], contentinfo: { top: 2000, bottom: 2100 }, pageSize: { width: 1440, height: 2100 }, clickables: [] }));
+  assert.deepEqual(r.ranges.map((x) => [x.id, x.start, x.end]), [['header', 0, 100], ['hero', 123, 600], ['pricing', 600, 1500], ['pricing-free', 1500, 2000]]);
+});
+
+test('attribute: ranges are whole pixels, and a section whose content did not change keeps its height when the section above it grows', () => {
+  // real layout positions are fractional: faq is 1353.46 tall; the section above grows by 18.3 and moves it
+  const mk = (shift) => measurement([
+    { id: 'hero', locate: { role: 'heading', name: 'a' }, found: true, top: 6010, bottom: 6050, block: 0 },
+    { id: 'faq', locate: { role: 'heading', name: 'b' }, found: true, top: 7040.94 + shift, bottom: 7090 + shift, block: 1 },
+    { id: 'final-cta', locate: { role: 'heading', name: 'c' }, found: true, top: 8394.4 + shift, bottom: 8440 + shift, block: 2 },
+  ], {
+    blocks: [{ top: 6000, bottom: 7040.94 + shift }, { top: 7040.94 + shift, bottom: 8394.4 + shift }, { top: 8394.4 + shift, bottom: 9000 + shift }],
+    contentinfo: null, clickables: [], pageSize: { width: 1440, height: 9000 + shift },
+  });
+  const heightOf = (m, id) => attribute(m).ranges.find((r) => r.id === id).height;
+  assert.equal(heightOf(mk(0), 'faq'), heightOf(mk(18.3), 'faq'), 'same content, same height');
+  assert.equal(heightOf(mk(0), 'faq'), 1353);
+  for (const r of [...attribute(mk(0)).ranges, ...attribute(mk(18.3)).ranges]) {
+    assert.ok(Number.isInteger(r.start) && Number.isInteger(r.end) && Number.isInteger(r.height), JSON.stringify(r));
+    assert.equal(r.end - r.start, r.height);
+  }
+});
+
+test('attribute: rounding may leave a pixel between two neighbouring sections; that is not reported as a gap or an overlap', () => {
+  const r = attribute(measurement([
+    { id: 'hero', locate: { role: 'heading', name: 'a' }, found: true, top: 100, bottom: 140, block: 0 },
+    { id: 'faq', locate: { role: 'heading', name: 'b' }, found: true, top: 1000.6, bottom: 1040, block: 1 },
+    { id: 'final-cta', locate: { role: 'heading', name: 'c' }, found: true, top: 2000.4, bottom: 2040, block: 2 },
+  ], { blocks: [{ top: 100, bottom: 1000.6 }, { top: 1000.6, bottom: 2000.4 }, { top: 2000.4, bottom: 3000 }], contentinfo: null, clickables: [], pageSize: { width: 1440, height: 3000 } }));
+  assert.deepEqual(r.coverage, { gaps: [{ from: 0, to: 100 }], overlaps: [] }, 'only the real gap above the first section');
+});
+
+// a page whose section headings are all h2 (the hero's is the h1), some of them left out of `sections`
+const lrHeading = (id, level, top, block) => ({ id, locate: { role: 'heading', name: id }, found: true, level, top, bottom: top + 40, block });
+const LR_BLOCKS = [{ top: 100, bottom: 900 }, { top: 900, bottom: 2000 }, { top: 2000, bottom: 3000 }, { top: 3000, bottom: 4000 }, { top: 4000, bottom: 5000 }];
+const LR_HEADINGS = [
+  { level: 1, name: 'hero', top: 300, bottom: 340 },
+  { level: 2, name: 'trust', top: 1000, bottom: 1040 },
+  { level: 3, name: 'a card inside trust', top: 1200, bottom: 1230 },
+  { level: 2, name: 'faq', top: 2100, bottom: 2140 },
+  { level: 2, name: 'related-content', top: 3100, bottom: 3140 },
+  { level: 2, name: 'final-cta', top: 4100, bottom: 4140 },
+];
+const lrMeasurement = (sections, headings = LR_HEADINGS) => measurement(sections, {
+  blocks: LR_BLOCKS, contentinfo: { top: 5000, bottom: 5200 }, pageSize: { width: 1440, height: 5200 }, headings,
+  clickables: [
+    { role: 'button', name: 'q1', top: 2200, bottom: 2230, landmark: null }, // in faq
+    { role: 'link', name: 'post', top: 3200, bottom: 3230, landmark: null }, // in related-content
+  ],
+});
+const LR_ALL = [HEADER, lrHeading('hero', 1, 300, 0), lrHeading('trust', 2, 1000, 1), lrHeading('faq', 2, 2100, 2), lrHeading('related-content', 2, 3100, 3), lrHeading('final-cta', 2, 4100, 4), { ...FOOTER, top: 5000, bottom: 5200 }];
+
+test('attribute: every section declared → nothing undeclared; the sub-heading of a card (a deeper level) is not a section', () => {
+  const r = attribute(lrMeasurement(LR_ALL));
+  assert.deepEqual(r.undeclaredHeadings, []);
+  assert.equal(r.ok, true);
+});
+
+test('attribute: two sections left out in the middle — the one before swallows them, nothing is orphaned, and the same-level headings are listed so the run fails', () => {
+  const r = attribute(lrMeasurement(LR_ALL.filter((s) => s.id !== 'faq' && s.id !== 'related-content')));
+  assert.equal(r.orphans.length, 0, 'the elements were silently handed to trust — which is exactly what must not pass');
+  assert.equal(r.clickables.find((c) => c.name === 'q1').section, 'trust');
+  assert.equal(r.ok, false);
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.level, h.in, h.ref]), [
+    ['faq', 2, 'trust', `${MKT}#trust`],
+    ['related-content', 2, 'trust', `${MKT}#trust`],
+  ]);
+  assert.match(r.undeclaredHeadings[0].reason, /补一段|改定位/);
+});
+
+test('attribute: an undeclared h2 inside the hero (an h1 section) is still a miss — "same level" is the level the page\'s sections use, not only the owner\'s', () => {
+  const r = attribute(lrMeasurement(LR_ALL.filter((s) => s.id !== 'trust')));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['trust', 'hero']]);
+});
+
+test('attribute: a heading inside a landmark is not a section\'s; a measurement with no headings list behaves as before', () => {
+  const inFooter = lrMeasurement(LR_ALL, [...LR_HEADINGS, { level: 2, name: 'Product', top: 5050, bottom: 5080, landmark: 'contentinfo' }]);
+  assert.deepEqual(attribute(inFooter).undeclaredHeadings, []);
+  assert.deepEqual(attribute(measurement(ALL)).undeclaredHeadings, []);
+});
+
+test('cli attribute: an undeclared heading exits 1 and the message counts it', () => {
+  const f = join(tmp(), 'm.json');
+  writeFileSync(f, JSON.stringify(lrMeasurement(LR_ALL.filter((s) => s.id !== 'faq'))));
+  const r = run('attribute', f);
+  assert.equal(r.status, 1);
+  assert.equal(JSON.parse(r.stdout).undeclaredHeadings.length, 1);
+  assert.match(r.stderr, /没声明的同级标题 1/);
+});
+
+test('attribute: each clickable carries the link address the measurement gave it', () => {
+  const r = attribute(measurement(ALL, { clickables: [{ role: 'link', name: '看功能', top: 600, bottom: 620, landmark: null, href: '/pricing#faq' }, { role: 'button', name: '展开', top: 700, bottom: 720, landmark: null }] }));
+  assert.equal(r.clickables[0].href, '/pricing#faq');
+  assert.equal('href' in r.clickables[1], false, 'a button has none');
+});
+
+// ---------- which elements count as top-level blocks: the rule the browser code runs, over a fake tree ----------
+
+const el = (name, props = {}, children = []) => ({ name, display: 'block', visible: true, skip: false, ...props, children });
+const adapter = { display: (e) => e.display, children: (e) => e.children, shown: (e) => e.visible, skip: (e) => e.skip };
+const namesOf = (list) => list.map((e) => e.name);
+
+test('selectBlocks: the children of <main>, the visible ones', () => {
+  const main = el('main', {}, [el('a'), el('b', { visible: false }), el('c')]);
+  assert.deepEqual(namesOf(selectBlocks(main, adapter, { hasMain: true })), ['a', 'c']);
+});
+
+test('selectBlocks: an element that takes no space (display: contents) is replaced by its children, however deep', () => {
+  const main = el('main', {}, [
+    el('island1', { display: 'contents', visible: false }, [el('hero'), el('island-in-island', { display: 'contents', visible: false }, [el('demo')])]),
+    el('faq'),
+    el('island2', { display: 'contents', visible: false }, [el('final-cta')]),
+  ]);
+  assert.deepEqual(namesOf(selectBlocks(main, adapter, { hasMain: true })), ['hero', 'demo', 'faq', 'final-cta']);
+});
+
+test('selectBlocks: without <main>, the <body> children minus the skipped (landmarks, script, style) are the blocks', () => {
+  const body = el('body', {}, [el('header', { skip: true }), el('s1'), el('script', { skip: true, visible: false }), el('s2'), el('footer', { skip: true })]);
+  assert.deepEqual(namesOf(selectBlocks(body, adapter, { hasMain: false })), ['s1', 's2']);
+});
+
+test('selectBlocks: without <main>, a lone wrapper is gone through to the level that has several children — through single-child chains too', () => {
+  const body = el('body', {}, [el('wrapper', {}, [el('inner', {}, [el('header', { skip: true }), el('hero'), el('features'), el('footer', { skip: true })])])]);
+  assert.deepEqual(namesOf(selectBlocks(body, adapter, { hasMain: false })), ['hero', 'features']);
+});
+
+test('selectBlocks: a wrapper behind a display: contents element is still seen; a lone element with nothing visible inside stays the one block', () => {
+  const body = el('body', {}, [el('island', { display: 'contents', visible: false }, [el('wrapper', {}, [el('a'), el('b')])])]);
+  assert.deepEqual(namesOf(selectBlocks(body, adapter, { hasMain: false })), ['a', 'b']);
+  const lone = el('body', {}, [el('only', {}, [el('hidden', { visible: false })])]);
+  assert.deepEqual(namesOf(selectBlocks(lone, adapter, { hasMain: false })), ['only']);
+});
+
+test('selectBlocks: with <main>, a lone child is not gone through (the page said where its sections are)', () => {
+  const main = el('main', {}, [el('container', {}, [el('a'), el('b')])]);
+  assert.deepEqual(namesOf(selectBlocks(main, adapter, { hasMain: true })), ['container']);
 });
 
 test('attribute: a `position` section is that block\'s own box', () => {
@@ -290,6 +440,20 @@ test('buildMeasureCode: a single async function of `page` that carries the confi
   assert.match(code, /scrollTo/);
   assert.match(code, /animation: none !important/);
   assert.match(code, /\/tmp\/x\.png/);
+});
+
+test('buildMeasureCode: the page-side look is the tested block rule written in, takes each link\'s address and every heading, and the measurement is left on the page to be saved', () => {
+  const code = buildMeasureCode({ sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'light' });
+  assert.match(code, /function selectBlocks/, 'the same function the unit tests run');
+  assert.match(code, /=== 'contents'/);
+  assert.match(code, /getAttribute\('href'\)/);
+  assert.match(code, /h1,h2,h3,h4,h5,h6/);
+  assert.match(code, /window\.__designArchiveMeasure = m/);
+  assert.match(code, /browser_evaluate/, 'the summary it returns says how to save the file');
+  // the page-side function is an expression that it calls the embedded block rule
+  const C = JSON.parse(code.match(/\)\(page, (\{.*\})\)$/s)[1]);
+  assert.doesNotThrow(() => new Function(`return ${C.collectExpr}`));
+  assert.match(C.collectExpr, /function selectBlocks/);
 });
 
 test('buildMeasureCode: reduced motion is only asked for when the settings say so', () => {

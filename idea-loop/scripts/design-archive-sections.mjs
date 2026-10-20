@@ -47,6 +47,137 @@ const FREEZE_CSS = `*, *::before, *::after {
 }`;
 
 /**
+ * Which elements are the page's top-level blocks. Pure over an adapter, so it is unit-tested over a fake
+ * tree and also serialised (`toString()`) into the page, where the adapter is the real DOM. It has to
+ * stand alone: no reference to anything outside it.
+ *
+ *   - the start is the children of `<main>`, or of `<body>` when there is no main; the ones the adapter
+ *     says to skip (landmarks, script, style) are left out
+ *   - an element that takes no space (`display: contents`, e.g. a component framework's island) is
+ *     replaced by its children, however deep
+ *   - with no `<main>`, when exactly one visible candidate is left (the whole page wrapped in one element)
+ *     go down into it, again and again, until a level has more than one — or nothing visible is below
+ *   - the blocks are the visible ones (height > 0) of the level that was reached
+ *
+ * @param {*} root `<main>` or `<body>`
+ * @param {{ display(e): string, children(e): any[], shown(e): boolean, skip(e): boolean }} a
+ * @param {{ hasMain: boolean }} opts
+ */
+export function selectBlocks(root, a, opts) {
+  const flat = (els) => els.flatMap((e) => (a.display(e) === 'contents' ? flat(a.children(e)) : [e]));
+  const level = (e) => flat(a.children(e)).filter((x) => !a.skip(x));
+  let kids = level(root);
+  if (!opts.hasMain) {
+    for (;;) {
+      const visible = kids.filter(a.shown);
+      if (visible.length !== 1) break;
+      const next = level(visible[0]);
+      if (!next.some(a.shown)) break;
+      kids = next;
+    }
+  }
+  return kids.filter(a.shown);
+}
+
+/**
+ * The first look at the page, inside the page: top-level blocks (by `selectBlocks`), every visible
+ * heading, every clickable element with its box, link address and landmark. Handed to `page.evaluate`
+ * as text, with `selectBlocks` written in; it stands alone like `measurePage`. Marks the blocks with
+ * `data-ds-block` (the caller cleans them off).
+ */
+function collectInPage(selectBlocks) {
+  const px = (v) => Math.round(v * 100) / 100;
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return { top: px(r.top + window.scrollY), bottom: px(r.bottom + window.scrollY) };
+  };
+  const shown = (el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
+  };
+  const main = document.querySelector('main, [role="main"]');
+  const blocks = selectBlocks(main ?? document.body, {
+    display: (e) => getComputedStyle(e).display,
+    children: (e) => [...e.children],
+    shown,
+    skip: (e) => e.hasAttribute('data-ds-lm') || /^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(e.tagName),
+  }, { hasMain: Boolean(main) });
+  blocks.forEach((el, i) => el.setAttribute('data-ds-block', String(i)));
+
+  const implicitRole = (el) => {
+    const explicit = el.getAttribute('role');
+    if (explicit) return explicit;
+    const tag = el.tagName;
+    if (tag === 'A') return 'link';
+    if (tag === 'BUTTON' || tag === 'SUMMARY') return 'button';
+    if (tag === 'SELECT') return 'combobox';
+    if (tag === 'TEXTAREA') return 'textbox';
+    if (tag === 'INPUT') {
+      const t = (el.getAttribute('type') || 'text').toLowerCase();
+      return t === 'checkbox' || t === 'radio' ? t : /^(button|submit|reset|image)$/.test(t) ? 'button' : 'textbox';
+    }
+    return 'generic';
+  };
+  const nameOf = (el) => {
+    const labelled = el.getAttribute('aria-labelledby');
+    const parts = [
+      el.getAttribute('aria-label'),
+      labelled && labelled.split(/\s+/).map((id) => document.getElementById(id)?.textContent || '').join(' '),
+      el.labels && el.labels[0] && el.labels[0].textContent,
+      el.innerText,
+      el.getAttribute('alt') || el.querySelector('img[alt]')?.getAttribute('alt'),
+      el.getAttribute('title'),
+      el.getAttribute('placeholder'),
+      el.value,
+    ];
+    return (parts.find((p) => p && p.trim()) || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  };
+  // the link address as the page wrote it; a same-site one as path + query + hash
+  const hrefOf = (el) => {
+    const raw = el.getAttribute('href');
+    if (!raw) return null;
+    try {
+      const u = new URL(raw, location.href);
+      return u.origin === location.origin ? u.pathname + u.search + u.hash : u.href;
+    } catch (e) {
+      return raw;
+    }
+  };
+  const clickSelector = [
+    'a[href]', 'button', 'summary', 'input:not([type="hidden"])', 'select', 'textarea',
+    '[role="button"]', '[role="link"]', '[role="tab"]', '[role="menuitem"]', '[role="checkbox"]', '[role="radio"]', '[role="switch"]',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(',');
+  const landmarkOf = (el) => el.closest('[data-ds-lm]')?.getAttribute('data-ds-lm') || null;
+  const clickables = [...document.querySelectorAll(clickSelector)]
+    .filter(shown)
+    .map((el) => {
+      const href = hrefOf(el);
+      return { role: implicitRole(el), name: nameOf(el), ...box(el), landmark: landmarkOf(el), ...(href ? { href } : {}) };
+    });
+  const levelOf = (el) => Number(el.getAttribute('aria-level')) || Number((/^H([1-6])$/.exec(el.tagName) || [])[1]) || 2;
+  const headings = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')]
+    .filter(shown)
+    .map((el) => ({ level: levelOf(el), name: nameOf(el), ...box(el), landmark: landmarkOf(el) }));
+
+  const info = document.querySelector('[data-ds-lm="contentinfo"]');
+  return {
+    pageSize: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+    blocks: blocks.map(box),
+    contentinfo: info ? box(info) : null,
+    clickables,
+    headings,
+    env: {
+      language: navigator.language,
+      dark: matchMedia('(prefers-color-scheme: dark)').matches,
+      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      dpr: window.devicePixelRatio,
+    },
+  };
+}
+
+/**
  * Runs inside the Playwright MCP's `browser_run_code_unsafe`, serialised with `toString()`, so it has
  * to stand alone: everything it needs arrives in `C` (the config) or is created inside. Returns the
  * measurement `attribute` reads. Positions are page coordinates in CSS pixels, taken at scroll 0.
@@ -81,75 +212,7 @@ async function measurePage(page, C) {
   for (const role of ['banner', 'contentinfo']) {
     await page.getByRole(role).evaluateAll((els, r) => els.forEach((el) => el.setAttribute('data-ds-lm', r)), role);
   }
-  const base = await page.evaluate(() => {
-    const px = (v) => Math.round(v * 100) / 100;
-    const box = (el) => {
-      const r = el.getBoundingClientRect();
-      return { top: px(r.top + window.scrollY), bottom: px(r.bottom + window.scrollY) };
-    };
-    const shown = (el) => {
-      const r = el.getBoundingClientRect();
-      const cs = getComputedStyle(el);
-      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
-    };
-    const main = document.querySelector('main, [role="main"]');
-    const kids = main
-      ? [...main.children]
-      : [...document.body.children].filter((el) => !el.hasAttribute('data-ds-lm') && !/^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(el.tagName));
-    const blocks = kids.filter(shown);
-    blocks.forEach((el, i) => el.setAttribute('data-ds-block', String(i)));
-
-    const implicitRole = (el) => {
-      const explicit = el.getAttribute('role');
-      if (explicit) return explicit;
-      const tag = el.tagName;
-      if (tag === 'A') return 'link';
-      if (tag === 'BUTTON' || tag === 'SUMMARY') return 'button';
-      if (tag === 'SELECT') return 'combobox';
-      if (tag === 'TEXTAREA') return 'textbox';
-      if (tag === 'INPUT') {
-        const t = (el.getAttribute('type') || 'text').toLowerCase();
-        return t === 'checkbox' || t === 'radio' ? t : /^(button|submit|reset|image)$/.test(t) ? 'button' : 'textbox';
-      }
-      return 'generic';
-    };
-    const nameOf = (el) => {
-      const labelled = el.getAttribute('aria-labelledby');
-      const parts = [
-        el.getAttribute('aria-label'),
-        labelled && labelled.split(/\s+/).map((id) => document.getElementById(id)?.textContent || '').join(' '),
-        el.labels && el.labels[0] && el.labels[0].textContent,
-        el.innerText,
-        el.getAttribute('alt') || el.querySelector('img[alt]')?.getAttribute('alt'),
-        el.getAttribute('title'),
-        el.getAttribute('placeholder'),
-        el.value,
-      ];
-      return (parts.find((p) => p && p.trim()) || '').replace(/\s+/g, ' ').trim().slice(0, 80);
-    };
-    const clickSelector = [
-      'a[href]', 'button', 'summary', 'input:not([type="hidden"])', 'select', 'textarea',
-      '[role="button"]', '[role="link"]', '[role="tab"]', '[role="menuitem"]', '[role="checkbox"]', '[role="radio"]', '[role="switch"]',
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(',');
-    const clickables = [...document.querySelectorAll(clickSelector)]
-      .filter(shown)
-      .map((el) => ({ role: implicitRole(el), name: nameOf(el), ...box(el), landmark: el.closest('[data-ds-lm]')?.getAttribute('data-ds-lm') || null }));
-
-    const info = document.querySelector('[data-ds-lm="contentinfo"]');
-    return {
-      pageSize: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
-      blocks: blocks.map(box),
-      contentinfo: info ? box(info) : null,
-      clickables,
-      env: {
-        language: navigator.language,
-        dark: matchMedia('(prefers-color-scheme: dark)').matches,
-        reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
-        dpr: window.devicePixelRatio,
-      },
-    };
-  });
+  const base = await page.evaluate(C.collectExpr);
 
   // 4 locate each declared section through the accessibility tree
   const sections = [];
@@ -172,7 +235,8 @@ async function measurePage(page, C) {
       const rect = el.getBoundingClientRect();
       const px = (v) => Math.round(v * 100) / 100;
       const block = el.closest('[data-ds-block]');
-      return { top: px(rect.top + window.scrollY), bottom: px(rect.bottom + window.scrollY), block: block ? Number(block.getAttribute('data-ds-block')) : -1 };
+      const level = Number(el.getAttribute('aria-level')) || Number((/^H([1-6])$/.exec(el.tagName) || [])[1]) || 2;
+      return { top: px(rect.top + window.scrollY), bottom: px(rect.bottom + window.scrollY), block: block ? Number(block.getAttribute('data-ds-block')) : -1, level };
     });
     sections.push({ ...entry, found: true, ...r });
   }
@@ -187,10 +251,20 @@ async function measurePage(page, C) {
     await page.screenshot({ path: C.out, fullPage: true, animations: 'disabled' });
     image = { path: C.out };
   }
-  return {
+  const measurement = {
     state: C.state, page: C.page, viewport: C.viewport, theme: C.theme, motion: C.motion,
     pageSize: base.pageSize, blocks: base.blocks, contentinfo: base.contentinfo,
-    sections, clickables: base.clickables, env: base.env, image,
+    sections, clickables: base.clickables, headings: base.headings, env: base.env, image,
+  };
+  // run_code cannot write a file, and its return value is echoed whole into the conversation: keep the
+  // measurement on the page for `browser_evaluate` (with a `filename`) to save, and return a summary
+  await page.evaluate((m) => { window.__designArchiveMeasure = m; }, measurement);
+  return {
+    saved: 'window.__designArchiveMeasure',
+    next: 'browser_evaluate { function: "() => window.__designArchiveMeasure", filename: "<测量结果.json>" } 存成文件，再交给 attribute',
+    state: C.state, pageSize: base.pageSize, blocks: base.blocks.length, headings: base.headings.length, clickables: base.clickables.length,
+    sections: sections.map((x) => ({ id: x.id, found: x.found, ...(x.found ? {} : { reason: x.reason }) })),
+    env: base.env, image,
   };
 }
 
@@ -209,6 +283,8 @@ export function buildMeasureCode(config) {
     motion: config.motion ?? 'default',
     out: config.out ?? null,
     freezeCss: FREEZE_CSS,
+    // an expression, not a function: a string given to page.evaluate is run as is, not called
+    collectExpr: `(${collectInPage.toString()})(${selectBlocks.toString()})`,
   };
   return `async (page) => (${measurePage.toString()})(page, ${JSON.stringify(C)})`;
 }
@@ -220,15 +296,23 @@ const roundPx = (v) => Math.round(v);
 /**
  * Measurement → ranges, the section each clickable element belongs to, and what does not fit.
  *
- * Ranges (references/design-archive.md §4): a section found by heading starts at the top of the
- * top-level block that holds the heading — at the heading itself when that block holds another declared
- * heading — and runs to where the next declared section starts (the last one: the top of the page's
- * first contentinfo, declared or not, else the page bottom). A landmark or `position` section is that
- * element's own box. Ownership: a clickable inside a banner / contentinfo belongs to the section that
- * declares that landmark; any other one belongs to the section whose range holds its vertical centre.
+ * Ranges (references/design-archive.md §3): a section found by heading starts at the top of the top-level
+ * block that holds the heading when it is the first declared one in that block (but not above where the
+ * section before it ends, when that one is a landmark or `position` box), and at the heading itself
+ * otherwise; it runs to where the next declared section starts (the last one: the top of the page's first
+ * contentinfo, declared or not, else the page bottom). A landmark or `position` section is that element's
+ * own box. Whole pixels: the start is rounded, the height is the rounded real height, the end is start
+ * plus height — so a section whose content did not change keeps its height whatever moves above it
+ * (neighbours may end up a pixel apart; that is not reported).
+ * Ownership: a clickable inside a banner / contentinfo belongs to the section that declares that landmark;
+ * any other one belongs to the section whose range holds its vertical centre.
+ * Undeclared headings: a heading of the page's section level (the level most declared headings use, or the
+ * owning section's own) inside a heading section's range, that is not itself a declared section, means a
+ * section was left out and swallowed — listed, and the run fails like an orphan does.
  *
  * @returns {{ ok: boolean, ranges: object[], clickables: object[], orphans: object[], notFound: object[],
- *   outOfOrder: object[], coverage: { gaps: object[], overlaps: object[] }, pageHeight: number }}
+ *   outOfOrder: object[], undeclaredHeadings: object[], coverage: { gaps: object[], overlaps: object[] },
+ *   pageHeight: number }}
  */
 export function attribute(m) {
   const ref = (id) => (m.page ? `${m.page}#${id}` : id);
@@ -239,15 +323,29 @@ export function attribute(m) {
   const notFound = secs.filter((s) => !s.found).map((s) => ({ id: s.id, ref: ref(s.id), locate: s.locate, reason: s.reason ?? '没有定位到' }));
 
   const kindOf = (s) => (s.locate?.position !== undefined ? 'position' : s.locate?.role === 'heading' ? 'heading' : 'landmark');
-  const headingsInBlock = (block) => found.filter((x) => kindOf(x) === 'heading' && x.block === block).length;
-  const startOf = (s) => (kindOf(s) === 'heading' && s.block >= 0 && headingsInBlock(s.block) === 1 && blocks[s.block] ? blocks[s.block].top : s.top);
+  const firstInBlock = new Set();
+  const seenBlocks = new Set();
+  found.forEach((s, i) => {
+    if (kindOf(s) !== 'heading' || s.block < 0 || seenBlocks.has(s.block)) return;
+    seenBlocks.add(s.block);
+    firstInBlock.add(i);
+  });
+  // the real (fractional) start of each section
+  const rawStart = found.map((s, i) => {
+    if (kindOf(s) !== 'heading' || !firstInBlock.has(i) || !blocks[s.block]) return s.top;
+    const before = found[i - 1];
+    const floor = before && kindOf(before) !== 'heading' ? before.bottom : 0;
+    return Math.max(blocks[s.block].top, floor);
+  });
+  const rawEnd = found.map((s, i) => {
+    if (kindOf(s) !== 'heading') return s.bottom;
+    return i + 1 < found.length ? rawStart[i + 1] : m.contentinfo?.top ?? pageHeight;
+  });
 
   const ranges = found.map((s, i) => {
-    const kind = kindOf(s);
-    const start = startOf(s);
-    const next = found[i + 1];
-    const end = kind === 'heading' ? (next ? startOf(next) : m.contentinfo?.top ?? pageHeight) : s.bottom;
-    return { id: s.id, ref: ref(s.id), by: kind, role: s.locate?.role ?? null, start: roundPx(start), end: roundPx(end), height: roundPx(end) - roundPx(start) };
+    const start = roundPx(rawStart[i]);
+    const height = roundPx(rawEnd[i] - rawStart[i]);
+    return { id: s.id, ref: ref(s.id), by: kindOf(s), role: s.locate?.role ?? null, start, end: start + height, height };
   });
 
   const outOfOrder = [];
@@ -256,16 +354,17 @@ export function attribute(m) {
     else if (i > 0 && r.start < ranges[i - 1].start) outOfOrder.push({ id: r.id, ref: r.ref, reason: `起点 ${r.start} 比前一段（${ranges[i - 1].id}）的起点 ${ranges[i - 1].start} 还靠上：sections 的顺序要和页面一致` });
   });
 
+  // rounding leaves at most a pixel between two neighbours: only more than that is a gap or an overlap
   const gaps = [];
   const overlaps = [];
   const sorted = [...ranges].filter((r) => r.height > 0).sort((a, b) => a.start - b.start);
   let cursor = 0;
   for (const r of sorted) {
-    if (r.start > cursor) gaps.push({ from: cursor, to: r.start });
-    else if (r.start < cursor) overlaps.push({ at: r.id, from: r.start, to: cursor });
+    if (r.start - cursor > 1) gaps.push({ from: cursor, to: r.start });
+    else if (cursor - r.start > 1) overlaps.push({ at: r.id, from: r.start, to: cursor });
     cursor = Math.max(cursor, r.end);
   }
-  if (pageHeight > cursor) gaps.push({ from: cursor, to: pageHeight });
+  if (pageHeight - cursor > 1) gaps.push({ from: cursor, to: pageHeight });
 
   const landmarkOwner = (role) => ranges.find((r) => r.by === 'landmark' && r.role === role);
   const clickables = [];
@@ -288,13 +387,35 @@ export function attribute(m) {
           : '落在相邻两段之间的空隙里';
       }
     }
-    const item = { role: c.role, name: c.name, y, section: owner ? owner.id : null, ref: owner ? owner.ref : null };
+    const item = { role: c.role, name: c.name, y, section: owner ? owner.id : null, ref: owner ? owner.ref : null, ...(c.href ? { href: c.href } : {}) };
     clickables.push(item);
     if (!owner) orphans.push({ ...item, landmark: c.landmark ?? null, reason: why });
   }
 
+  // headings of the sections' level that fall inside a heading section's range without being a section
+  const levelCount = new Map();
+  for (const s of found) if (kindOf(s) === 'heading' && s.level) levelCount.set(s.level, (levelCount.get(s.level) ?? 0) + 1);
+  const sectionLevel = [...levelCount.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? null;
+  const declaredAt = (h) => found.some((s) => kindOf(s) === 'heading' && Math.abs(s.top - h.top) < 1 && Math.abs(s.bottom - h.bottom) < 1);
+  const undeclaredHeadings = [];
+  ranges.forEach((r, i) => {
+    if (r.by !== 'heading') return;
+    const own = found[i].level;
+    for (const h of m.headings ?? []) {
+      if (h.landmark || !h.level || declaredAt(h)) continue;
+      if (h.level !== sectionLevel && h.level !== own) continue;
+      const y = roundPx(h.top);
+      if (y < r.start || y >= r.end) continue;
+      undeclaredHeadings.push({
+        level: h.level, name: h.name, y, in: r.id, ref: r.ref,
+        reason: `「${h.name}」是一个 h${h.level} 标题，和已声明的分段标题同一级，却没声明，被 ${r.id} 段吞掉了：补一段（最差补一段 content）或改定位，重测`,
+      });
+    }
+  });
+  undeclaredHeadings.sort((a, b) => a.y - b.y);
+
   return {
-    ok: orphans.length === 0 && notFound.length === 0 && outOfOrder.length === 0,
+    ok: orphans.length === 0 && notFound.length === 0 && outOfOrder.length === 0 && undeclaredHeadings.length === 0,
     state: m.state ?? null,
     page: m.page ?? null,
     pageHeight,
@@ -304,6 +425,7 @@ export function attribute(m) {
     orphans,
     notFound,
     outOfOrder,
+    undeclaredHeadings,
     coverage: { gaps, overlaps },
   };
 }
@@ -484,7 +606,7 @@ function attributeCommand(positional) {
   const result = attribute(readJson(positional[0], '测量结果'));
   console.log(JSON.stringify(result, null, 2));
   if (!result.ok) {
-    console.error(`attribute: 落空 ${result.orphans.length} 个，定位失败 ${result.notFound.length} 段，顺序不对 ${result.outOfOrder.length} 段——补分段或改定位后重测，清零再写档案`);
+    console.error(`attribute: 落空 ${result.orphans.length} 个，定位失败 ${result.notFound.length} 段，顺序不对 ${result.outOfOrder.length} 段，没声明的同级标题 ${result.undeclaredHeadings.length} 个——补分段或改定位后重测，清零再写档案`);
     return 1;
   }
   return 0;
