@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 草稿
+status: 审核中
 tags: [idea-loop, ui-archive, dreaming]
 summary: 设计档案给长页面加可引用的分段：入口拍整页按段切图，边带出发段和落点段，按段比对
 related: ["[[ui-state-archive]]", "[[dreaming-design-reconcile]]"]
