@@ -3,9 +3,10 @@
  * PreToolUse hook on Bash: no `gh pr merge` while a requirement's design is still unarchived.
  *
  * `docs/design/tmp/<spec-slug>/` is the local scratch area of a requirement in flight (never in git,
- * so no CI check can see it). If a merge command is about to run and that folder still holds anything,
- * the design side of the PR was never folded into `docs/design/prod/` — the merge would silently lose
- * it. This hook stops the command and names the requirements, and points at the flow that clears them
+ * so no CI check can see it). If a merge command is about to run and that folder still holds design
+ * output (anything outside its `research/` subfolder — the pages `uiux-research` drops are scratch the
+ * human read, never design output), the design side of the PR was never folded into `docs/design/prod/`
+ * — the merge would silently lose it. This hook stops the command and names the requirements, and points at the flow that clears them
  * (pr-review's pre-merge archive: UI review, a human reads the draft, then the archive script
  * design-archive-write.mjs).
  *
