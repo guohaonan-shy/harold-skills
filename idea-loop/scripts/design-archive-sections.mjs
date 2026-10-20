@@ -7,7 +7,7 @@
  * the plain logic, split off the way `ui-measure.mjs` (browser) and `ui-compare.mjs` (pure) are:
  *
  *   measure    prints the code the headless Playwright MCP runs (`browser_run_code_unsafe`): scroll the
- *              page through once, back to the top, freeze motion, locate each section with the
+ *              page through once, back to the top, freeze motion (in the page and in each same-origin embedded page), locate each section with the
  *              accessibility tree, box the top-level blocks and every clickable element, shoot the full page.
  *   attribute  measurement JSON → each section's range, which section each clickable element belongs to,
  *              the ones that fall in none ("落空"), the sections that could not be located. Exit 1 when either exists.
@@ -185,6 +185,50 @@ function collectInPage(selectBlocks) {
 }
 
 /**
+ * Puts the motion-off style into the page and into every embedded page (iframe) that shares its origin,
+ * the loop-animated product demos on a marketing page being the case that matters: a style added to the
+ * outer document does not reach into them, so two shots of one entry differ. Runs in the Playwright
+ * process (serialised into the generated function, so it stands alone; the fake page in the unit tests is
+ * the boundary). A cross-origin embedded page cannot be reached and is reported, not retried; neither is
+ * one the browser refuses (gone, navigating away). `watch` also freezes a frame the moment it navigates, for
+ * the ones that load after this pass; call it again later for the ones that slipped in between.
+ * The style goes in once per document (an element with a fixed id), whatever number of passes.
+ * @returns {Promise<{ url: string, frozen: boolean, why?: string }[]>} one entry per frame, the page first
+ */
+export async function freezeFrames(page, css, { watch = false } = {}) {
+  const originOf = (u) => {
+    try {
+      return new URL(u).origin;
+    } catch (e) {
+      return null;
+    }
+  };
+  const inject = (c) => {
+    if (document.getElementById('__ds-freeze')) return;
+    const style = document.createElement('style');
+    style.id = '__ds-freeze';
+    style.textContent = c;
+    (document.head || document.documentElement).append(style);
+  };
+  const one = async (frame) => {
+    const url = frame.url();
+    const here = originOf(page.url());
+    const same = frame === page.mainFrame() || url.startsWith('about:') || (here !== null && originOf(url) === here);
+    if (!same) return { url, frozen: false, why: '跨域的内嵌页面，样式注入不进去' };
+    try {
+      await frame.evaluate(inject, css);
+      return { url, frozen: true };
+    } catch (e) {
+      return { url, frozen: false, why: String((e && e.message) || e).split('\n')[0].slice(0, 120) };
+    }
+  };
+  if (watch) page.on('framenavigated', (f) => { if (f !== page.mainFrame()) one(f); });
+  const report = [];
+  for (const frame of page.frames()) report.push(await one(frame));
+  return report;
+}
+
+/**
  * Runs inside the Playwright MCP's `browser_run_code_unsafe`, serialised with `toString()`, so it has
  * to stand alone: everything it needs arrives in `C` (the config) or is created inside. Returns the
  * measurement `attribute` reads. Positions are page coordinates in CSS pixels, taken at scroll 0.
@@ -211,7 +255,7 @@ async function measurePage(page, C) {
   }
   // 2 back to the top, motion frozen, fonts ready
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.addStyleTag({ content: C.freezeCss });
+  await freezeFrames(page, C.freezeCss, { watch: true });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(300);
 
@@ -252,7 +296,8 @@ async function measurePage(page, C) {
     sections.push({ ...entry, found: true, ...r });
   }
 
-  // 5 clean the marks off, shoot the whole page
+  // 5 freeze once more (an embedded page can have loaded since), clean the marks off, shoot the whole page
+  const frames = await freezeFrames(page, C.freezeCss);
   await page.evaluate(() => document.querySelectorAll('[data-ds-block],[data-ds-lm],[data-ds-h]').forEach((el) => {
     el.removeAttribute('data-ds-block');
     el.removeAttribute('data-ds-lm');
@@ -266,7 +311,7 @@ async function measurePage(page, C) {
   const measurement = {
     state: C.state, page: C.page, viewport: C.viewport, theme: C.theme, motion: C.motion,
     pageSize: base.pageSize, blocks: base.blocks, contentinfo: base.contentinfo,
-    sections, clickables: base.clickables, headings: base.headings, env: base.env, image,
+    sections, clickables: base.clickables, headings: base.headings, env: base.env, frames, image,
   };
   // run_code cannot write a file, and its return value is echoed whole into the conversation: keep the
   // measurement on the page for `browser_evaluate` (with a `filename`) to save, and return a summary
@@ -276,7 +321,9 @@ async function measurePage(page, C) {
     next: 'browser_evaluate { function: "() => window.__designArchiveMeasure", filename: "<测量结果.json>" } 存成文件，再交给 attribute',
     state: C.state, pageSize: base.pageSize, blocks: base.blocks.length, headings: base.headings.length, clickables: base.clickables.length,
     sections: sections.map((x) => ({ id: x.id, found: x.found, ...(x.found ? {} : { reason: x.reason }) })),
-    env: base.env, image,
+    env: base.env,
+    frames: { total: frames.length, notFrozen: frames.filter((f) => !f.frozen) },
+    image,
   };
 }
 
@@ -298,7 +345,8 @@ export function buildMeasureCode(config) {
     // an expression, not a function: a string given to page.evaluate is run as is, not called
     collectExpr: `(${collectInPage.toString()})(${selectBlocks.toString()})`,
   };
-  return `async (page) => (${measurePage.toString()})(page, ${JSON.stringify(C)})`;
+  // `freezeFrames` is a free name inside `measurePage`; declared beside it here, it resolves in the page-side function's closure
+  return `async (page) => { const freezeFrames = ${freezeFrames.toString()}; return (${measurePage.toString()})(page, ${JSON.stringify(C)}); }`;
 }
 
 // ---------- ranges and ownership ----------
@@ -318,8 +366,8 @@ const roundPx = (v) => Math.round(v);
  * (neighbours may end up a pixel apart; that is not reported). No end goes past the page height.
  * Ownership: a clickable inside a banner / contentinfo belongs to the section that declares that landmark;
  * any other one belongs to the section whose range holds its vertical centre.
- * Undeclared headings: a heading of the page's section level (the level most declared headings use, or the
- * owning section's own) inside a heading section's range, that is not itself a declared section, means a
+ * Undeclared headings: a heading of any level the declared section headings use (a page declared only down
+ * to its h1 title: h2 too) inside a heading section's range, that is not itself a declared section, means a
  * section was left out and swallowed — listed, and the run fails like an orphan does. "Declared" is judged
  * on the element (the measurement says which heading each section was located by), not on coordinates.
  * Not a miss: same-level headings side by side in one row when none of them is a section (a card grid),
@@ -417,10 +465,12 @@ export function attribute(m) {
   //     are one piece of content, not sections that were left out
   //   - a block declared as one: the heading sits in the same top-level block as the heading that opens
   //     the section, and that is the only section declared in that block — the block was declared whole
-  const levelCount = new Map();
-  for (const s of found) if (kindOf(s) === 'heading' && s.level) levelCount.set(s.level, (levelCount.get(s.level) ?? 0) + 1);
-  const sectionLevel = [...levelCount.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? null;
   const headingSections = found.filter((s) => kindOf(s) === 'heading');
+  // "same level" = every level a declared section heading uses — not one picked by count (a tie, or one
+  // h1 among h2s, used to drop a level). A page declared only down to its h1 title: the headings right
+  // under the title are the page's sections, so h2 counts too.
+  const sectionLevels = new Set(headingSections.map((s) => s.level).filter(Boolean));
+  if (sectionLevels.size === 1 && sectionLevels.has(1)) sectionLevels.add(2);
   const isDeclared = (h) => headingSections.some((s) => (h.id !== undefined && s.heading !== undefined && s.heading >= 0 ? s.heading === h.id : s.locate?.name === h.name));
   const blockOf = (h) => {
     if (h.block !== undefined) return h.block;
@@ -434,12 +484,11 @@ export function attribute(m) {
   const undeclaredHeadings = [];
   ranges.forEach((r, i) => {
     if (r.by !== 'heading') return;
-    const own = found[i].level;
     const ownBlock = found[i].block ?? -1;
     const wholeBlock = ownBlock >= 0 && headingSections.filter((s) => s.block === ownBlock).length === 1;
     for (const h of pageHeadings) {
       if (isDeclared(h)) continue;
-      if (h.level !== sectionLevel && h.level !== own) continue;
+      if (!sectionLevels.has(h.level)) continue;
       const y = roundPx(h.top);
       if (y < r.start || y >= r.end) continue;
       if (wholeBlock && blockOf(h) === ownBlock) continue;

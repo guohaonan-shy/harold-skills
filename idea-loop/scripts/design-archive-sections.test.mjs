@@ -14,7 +14,7 @@ import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { crc32, deflateSync } from 'node:zlib';
 import { BASE, MKT, MKT_ENTRY, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, encodePng, selectBlocks, sliceImage } from './design-archive-sections.mjs';
+import { attribute, buildMeasureCode, encodePng, freezeFrames, selectBlocks, sliceImage } from './design-archive-sections.mjs';
 import { comparePngs, decodePng } from './ui-png-compare.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
@@ -257,6 +257,52 @@ test('attribute: a heading in a block that no section opens is a miss, even when
   // feature-grid is left out: its heading sits in block 1, and pricing-free (block 0) swallows it
   const r = attribute(prMeasurement(PR_SPLIT.filter((x) => x.id !== 'feature-grid')));
   assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['What Pro Keeps Unlocking', 'pricing-free']]);
+});
+
+// ---------- "same level" is every level the declared section headings use, not one picked by count ----------
+
+test('attribute: only the header, the h1 "pricing" and the footer declared — the two h2 sections below are swallowed by pricing and listed (used to report nothing)', () => {
+  const r = attribute(prMeasurement([PR_HEADER, prSection('pricing', 0, 0), PR_FOOTER]));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.level, h.in]), [
+    ['What Pro Keeps Unlocking', 2, 'pricing'],
+    ['Frequently asked questions', 2, 'pricing'],
+  ]);
+  assert.equal(r.ok, false);
+  // the box inside the block declared whole and the row of plan cards are still its own content
+  assert.ok(!r.undeclaredHeadings.some((h) => h.name === 'Not ready to commit?' || /Month/.test(h.name)));
+});
+
+test('attribute: "feature-grid" left out of the five — pricing (h1) and faq (h2) tie on count, and the h2 in between is still listed', () => {
+  const r = attribute(prMeasurement(PR_FIVE.filter((x) => x.id !== 'feature-grid')));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['What Pro Keeps Unlocking', 'pricing']]);
+  assert.equal(r.ok, false);
+});
+
+test('attribute: the h3 headings of the plan cards stay content when the declared sections are h1 and h2', () => {
+  const r = attribute(prMeasurement(PR_FIVE.filter((x) => x.id !== 'faq')));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['Frequently asked questions', 'feature-grid']], 'only the h2; the six h3 card titles are not listed');
+});
+
+test('attribute: a level used by only one declared section still counts — an undeclared heading of that level is a miss though h2 is the common one', () => {
+  // hero h1, trust h2, related-content declared at h3, final-cta h2; the block between them has no section and
+  // starts with an h3. Counting levels kept only h2 and let it through.
+  const sections = [HEADER, lrHeading('hero', 1, 300, 0), lrHeading('trust', 2, 1000, 1), lrHeading('related-content', 3, 3100, 3), lrHeading('final-cta', 2, 4100, 4), { ...FOOTER, top: 5000, bottom: 5200 }];
+  const headings = [
+    { level: 1, name: 'hero', top: 300, bottom: 340 },
+    { level: 2, name: 'trust', top: 1000, bottom: 1040 },
+    { level: 3, name: 'a heading nobody declared', top: 2100, bottom: 2140 },
+    { level: 3, name: 'related-content', top: 3100, bottom: 3140 },
+    { level: 2, name: 'final-cta', top: 4100, bottom: 4140 },
+  ];
+  const r = attribute(lrMeasurement(sections, headings));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.level, h.in]), [['a heading nobody declared', 3, 'trust']]);
+});
+
+test('attribute: the two exemptions stay — a row of same-level headings is not a miss, and a block declared as one section keeps its own headings', () => {
+  // the card row (h2 side by side) sits in block 0, which the pricing section holds whole
+  assert.deepEqual(attribute(prMeasurement([PR_HEADER, prSection('pricing', 0, 0), prSection('feature-grid', 5, 1), prSection('faq', 7, 2), PR_FOOTER])).undeclaredHeadings, []);
+  // block 0 split in two: the card row inside hero is a row, not sections
+  assert.deepEqual(attribute(prMeasurement(PR_SPLIT)).undeclaredHeadings, []);
 });
 
 test('attribute: no section ends past the bottom of the page — the footer of a page 2513 tall ends at 2513, not 2514', () => {
@@ -527,6 +573,15 @@ test('buildMeasureCode: a single async function of `page` that carries the confi
   assert.match(code, /\/tmp\/x\.png/);
 });
 
+test('buildMeasureCode: the generated function carries the frame-freezing code, freezes the page and its embedded pages, and passes the report on', () => {
+  const code = buildMeasureCode({ sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'light' });
+  assert.match(code, /async function freezeFrames/);
+  assert.match(code, /freezeFrames\(page, C\.freezeCss, \{ watch: true \}\)/, 'before the measuring');
+  assert.match(code, /await freezeFrames\(page, C\.freezeCss\);/, 'once more before the shot');
+  assert.doesNotMatch(code, /addStyleTag/, 'the style no longer goes only into the outer document');
+  assert.match(code, /notFrozen/, 'the summary names the pages that could not be frozen');
+});
+
 test('buildMeasureCode: the page-side look is the tested block rule written in, takes each link\'s address and every heading, and the measurement is left on the page to be saved', () => {
   const code = buildMeasureCode({ sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'light' });
   assert.match(code, /function selectBlocks/, 'the same function the unit tests run');
@@ -536,9 +591,90 @@ test('buildMeasureCode: the page-side look is the tested block rule written in, 
   assert.match(code, /window\.__designArchiveMeasure = m/);
   assert.match(code, /browser_evaluate/, 'the summary it returns says how to save the file');
   // the page-side function is an expression that it calls the embedded block rule
-  const C = JSON.parse(code.match(/\)\(page, (\{.*\})\)$/s)[1]);
+  const C = JSON.parse(code.match(/\)\(page, (\{.*\})\);\s*\}$/s)[1]);
   assert.doesNotThrow(() => new Function(`return ${C.collectExpr}`));
   assert.match(C.collectExpr, /function selectBlocks/);
+});
+
+// ---------- freezing motion in embedded pages: the Playwright side, over a fake page ----------
+//
+// `freezeFrames(page, css)` is the code that runs in the Playwright process (it is serialised into the
+// generated function); the fake page is the system boundary it talks to: a frame knows its url, runs a
+// function in its document, and a browser-side document is a small object here.
+
+const fakeDoc = () => ({ styles: new Map(), noHead: false });
+const fakeFrame = (url, { doc = fakeDoc(), fail = false } = {}) => ({
+  url: () => url,
+  doc,
+  async evaluate(fn, arg) {
+    if (fail) throw new Error('Execution context was destroyed');
+    // a stand-in `document` for the injected function: it only needs getElementById / createElement / append
+    const document = {
+      head: doc.noHead ? null : { append: (n) => doc.styles.set(n.id, n.textContent) },
+      documentElement: { append: (n) => doc.styles.set(n.id, n.textContent) },
+      getElementById: (id) => (doc.styles.has(id) ? {} : null),
+      createElement: () => ({}),
+    };
+    return runInNewContext(`(${fn})(${JSON.stringify(arg)})`, { document });
+  },
+});
+const fakePage = (mainUrl, children = []) => {
+  const main = fakeFrame(mainUrl);
+  const frames = [main, ...children];
+  return { url: () => mainUrl, mainFrame: () => main, frames: () => frames, add: (f) => frames.push(f), main };
+};
+const CSS = '* { animation: none !important; }';
+
+test('freezeFrames: the page itself and every same-origin embedded page get the style; a cross-origin one does not, and is reported', async () => {
+  const demo = fakeFrame('https://site.test/embed/demo');
+  const blank = fakeFrame('about:blank');
+  const ad = fakeFrame('https://ads.example/slot');
+  const page = fakePage('https://site.test/interview', [demo, blank, ad]);
+  const report = await freezeFrames(page, CSS);
+  assert.equal(page.main.doc.styles.size, 1);
+  assert.equal([...demo.doc.styles.values()][0], CSS, 'the same text the page got');
+  assert.equal(blank.doc.styles.size, 1, 'a blank or srcdoc frame is the parent\'s origin');
+  assert.equal(ad.doc.styles.size, 0, 'cross-origin: not touched');
+  assert.deepEqual(report.map((r) => [r.url, r.frozen]), [
+    ['https://site.test/interview', true], ['https://site.test/embed/demo', true], ['about:blank', true], ['https://ads.example/slot', false],
+  ]);
+  assert.match(report[3].why, /跨域/);
+});
+
+test('freezeFrames: a frame that loaded after the first pass is frozen by the next one, and a frame already frozen is not given the style twice', async () => {
+  const page = fakePage('https://site.test/interview');
+  await freezeFrames(page, CSS);
+  const late = fakeFrame('https://site.test/embed/late');
+  page.add(late);
+  const second = await freezeFrames(page, CSS);
+  assert.equal(late.doc.styles.size, 1);
+  assert.equal(page.main.doc.styles.size, 1, 'one style element, not two');
+  assert.equal(second.filter((r) => r.frozen).length, 2);
+});
+
+test('freezeFrames: a document with no <head> yet takes the style on its root element', async () => {
+  const early = fakeFrame('https://site.test/embed/early', { doc: { styles: new Map(), noHead: true } });
+  const page = fakePage('https://site.test/p', [early]);
+  await freezeFrames(page, CSS);
+  assert.equal(early.doc.styles.size, 1);
+});
+
+test('freezeFrames: a frame the browser refuses (detached, navigating away) is reported with the reason and does not stop the others', async () => {
+  const gone = fakeFrame('https://site.test/embed/gone', { fail: true });
+  const ok = fakeFrame('https://site.test/embed/ok');
+  const report = await freezeFrames(fakePage('https://site.test/p', [gone, ok]), CSS);
+  assert.deepEqual(report.map((r) => r.frozen), [true, false, true]);
+  assert.match(report[1].why, /destroyed/);
+});
+
+test('freezeFrames: a frame navigating after the first pass is frozen as soon as it commits', async () => {
+  const handlers = {};
+  const page = { ...fakePage('https://site.test/p'), on: (ev, fn) => { handlers[ev] = fn; } };
+  await freezeFrames(page, CSS, { watch: true });
+  const late = fakeFrame('https://site.test/embed/late');
+  page.add(late);
+  await handlers.framenavigated(late);
+  assert.equal(late.doc.styles.size, 1);
 });
 
 test('buildMeasureCode: reduced motion is only asked for when the settings say so', () => {
