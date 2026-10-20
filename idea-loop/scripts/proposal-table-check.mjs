@@ -4,15 +4,13 @@
  * A dreaming run is two passes with a human between them. The first writes every finding into one
  * proposal table and stops; the second executes only the rows the human approved. So the table is
  * the run's only output, and a malformed one is dangerous in a specific way: a row whose
- * disposition is not in the closed set is a row the execution pass cannot mechanically carry out,
- * and an archive row without both pictures is a row the human cannot judge at a glance.
+ * disposition is not in the closed set is a row the execution pass cannot mechanically carry out.
  *
  * This file judges shape, never content — no model, no taste, no network. It checks: the row types
- * (the `##` sections) are a closed set; each row type has a closed set of dispositions; archive
- * rows carry two pictures, the second under `tmp/`; a "product broken" row never carries a
- * replace-the-archive disposition; every candidate row carries a picture of the UI it is about; a
- * candidate headed for DESIGN.md and every DESIGN.md row carry the old and new text side by side;
- * every DESIGN.md row names the standard it rests on; and whether the table is empty.
+ * (the `##` sections) are a closed set; each row type has a closed set of dispositions; a defect
+ * row opens by saying it is a rule-versus-code one; every candidate row carries a picture of the UI
+ * it is about; a candidate headed for DESIGN.md and every DESIGN.md row carry the old and new text
+ * side by side; every DESIGN.md row names the standard it rests on; and whether the table is empty.
  *
  * Pure: the CLI at the bottom is the only thing that reads a file.
  */
@@ -22,14 +20,11 @@ import { readFileSync } from 'node:fs';
 export const COLUMNS = ['对象', '发现', '证据', '建议处置', '选项'];
 
 /**
- * Row types, one `##` section each. Closed set. `dispositions` is the closed set of 建议处置 for
- * that row type; the archive ones are fixed here so the archive tickets build on a settled shape.
+ * Row types, one `##` section each. Closed set. Each value is the closed set of 建议处置 for that
+ * row type.
  */
 export const ROW_TYPES = {
   文档: ['写 ADR 删 spec', '写 ADR 未采纳删 spec', '报警', '订正', '标注被取代', '删漏网工单', '标 parked', '去审核', '去设计', '问人', '迁移布局', '删除'],
-  档案对象: ['改代码路径', '删对象', '补扫页面', '标进入方式过期'],
-  档案状态: ['替换档案', '改进入方式', '补进不去说明'],
-  初扫页面: ['新增页面'],
   候选: ['改写已有规则', '追加新规则', '已覆盖不加', '留在原处', '起草通用原则 issue', '起草缺陷 issue', '驳回'],
   'DESIGN.md 条目': ['改法', '移出', '删除', '改写为全局规则', '合并为一条', '新建 DESIGN.md', '处理 lint 警告', '交人裁决'],
   缺陷: ['开 issue', '已有 #N'],
@@ -95,60 +90,12 @@ function dispositionProblem(type, cell) {
   return `的建议处置「${lead}」不在这一类的闭集里——只能是：${legal.join(' / ')}`;
 }
 
-/** The verdict a 发现 cell opens with (`档案过期：…`), or null. */
-function verdictOf(finding) {
-  const m = finding.match(/^(档案过期|进入方式过期|进不去|产品坏了|法对代码错)\s*[：:]/);
-  return m ? m[1] : null;
-}
-
-/** What each archive-state verdict is allowed to propose. 产品坏了 is deliberately absent. */
-const VERDICT_DISPOSITION = { 档案过期: '替换档案', 进入方式过期: '改进入方式', 进不去: '补进不去说明' };
-
-/**
- * A product that is broken is not an archive that is out of date. Writing the broken picture over
- * the archive would freeze a regression into the source of truth, so a 产品坏了 row proposing to
- * replace the archive is refused by name, wherever it sits.
- */
-function productBrokenReplace(cells) {
-  if (verdictOf(cells[1]) !== '产品坏了') return null;
-  if (leadingDisposition(cells[3]) !== '替换档案') return null;
-  return '是「产品坏了」却建议「替换档案」——不许：产品坏了不改档案，起草一条 issue 交人，别把坏掉的样子写进档案';
-}
-
-/** Verdict ↔ section rules. Null when the row's 发现 opens correctly for where it sits. */
-function verdictProblem(type, cells) {
-  const verdict = verdictOf(cells[1]);
-  if (type === '档案状态') {
-    if (verdict === null) return `的「发现」要以判定开头（${Object.keys(VERDICT_DISPOSITION).join(' / ')}），再加冒号`;
-    if (verdict === '产品坏了') return '的判定是「产品坏了」，不进「档案状态」——单列到「缺陷」一节，档案不改';
-    if (verdict === '法对代码错') return '的判定「法对代码错」不属于档案状态——它去「缺陷」一节';
-    const want = VERDICT_DISPOSITION[verdict];
-    if (cells[3] !== '' && leadingDisposition(cells[3]) !== want) {
-      return `的判定是「${verdict}」，建议处置应为「${want}」，不是「${leadingDisposition(cells[3])}」`;
-    }
-  }
-  if (type === '缺陷' && verdict !== '产品坏了' && verdict !== '法对代码错') {
-    return '的「发现」要以「产品坏了：」或「法对代码错：」开头，说明是哪一类缺陷';
+/** Defect rows say which kind they are by how 发现 opens; only rule-versus-code defects exist. */
+function defectProblem(type, cells) {
+  if (type === '缺陷' && !/^法对代码错\s*[：:]/.test(cells[1])) {
+    return '的「发现」要以「法对代码错：」开头——缺陷这一节只收 DESIGN.md 里的法与代码对不上';
   }
   return null;
-}
-
-/**
- * Two rows whose evidence has to carry a specific answer, not just look plausible:
- *  - 删对象 — deleting an archive object while a node, edge or journey still points at it breaks the
- *    graph, so the row names its referrers (`引用：…`, or `引用：无` — silence is not an answer);
- *  - 进不去 — a state nobody could enter is only useful if it says what was missing and what was
- *    tried, the two things the archive's own rule asks for (`缺…` and `试过…`).
- */
-function evidenceProblems(type, cells) {
-  const evidence = cells[2];
-  if (type === '档案对象' && leadingDisposition(cells[3]) === '删对象' && !/引用\s*[：:]/.test(evidence)) {
-    return ['的处置是「删对象」，证据里要写「引用：」列出还引用它的节点与边——没有就写「引用：无」'];
-  }
-  if (type === '档案状态' && verdictOf(cells[1]) === '进不去' && !(/缺/.test(evidence) && /试过/.test(evidence))) {
-    return ['的判定是「进不去」，证据里要写清缺什么前置条件、试过哪些路线（「缺…」「试过…」）'];
-  }
-  return [];
 }
 
 /** The candidate dispositions that end in DESIGN.md text — the ones whose wording a human approves. */
@@ -196,27 +143,6 @@ function imagePaths(cell) {
 }
 
 /**
- * Archive rows are the ones a human judges by looking: the archive's picture next to the fresh
- * one. So an archive-state row, and a defect row about a broken state, carry exactly the archive's
- * own picture (under `prod/`) and then the new one (under `tmp/`, never a second `prod/` picture —
- * that would be the archive compared with itself). A state that could not be entered has nothing
- * to photograph and is the one exception.
- */
-function pictureProblems(type, cells) {
-  const verdict = verdictOf(cells[1]);
-  const needs = (type === '档案状态' && verdict !== '进不去') || (type === '缺陷' && verdict === '产品坏了');
-  if (!needs) return [];
-  const pics = imagePaths(cells[2]);
-  if (pics.length < 2) {
-    return [`的证据只有 ${pics.length} 张图，档案行要两张图并排：先是 prod/ 里档案的样子，再是 tmp/ 里这次新拍的`];
-  }
-  const problems = [];
-  if (!/(^|\/)prod\//.test(pics[0])) problems.push(`的第一张图「${pics[0]}」不在 prod/ 下——第一张是档案里原本的样子`);
-  if (!/(^|\/)tmp\//.test(pics[1])) problems.push(`的第二张图「${pics[1]}」不在 tmp/ 下——第二张是这次新拍的，放在 dreaming 自己的 tmp/ 目录里`);
-  return problems;
-}
-
-/**
  * Check one proposal table's shape.
  * @returns { valid, empty, errors, counts }  `counts` maps each row type found to its row count.
  */
@@ -252,21 +178,15 @@ export function checkProposalTable(markdown) {
       COLUMNS.forEach((name, i) => {
         if (row.cells[i] === '') errors.push(`${where}的「${name}」是空的`);
       });
-      const broken = productBrokenReplace(row.cells);
-      const bad = broken ?? verdictProblem(s.title, row.cells) ?? dispositionProblem(s.title, row.cells[3]);
+      const bad = defectProblem(s.title, row.cells) ?? dispositionProblem(s.title, row.cells[3]);
       if (bad) errors.push(`${where}${bad}`);
-      errors.push(...pictureProblems(s.title, row.cells).map((p) => `${where}${p}`));
-      errors.push(...evidenceProblems(s.title, row.cells).map((p) => `${where}${p}`));
       errors.push(...designMdProblems(s.title, row.cells).map((p) => `${where}${p}`));
-      if (s.title === '初扫页面' && !/(^|[\s/(`])tmp\//.test(row.cells[2])) {
-        errors.push(`${where}的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，人批了才经归档脚本进 prod/`);
-      }
     }
   }
 
   const valid = errors.length === 0;
   // Empty means "nothing for a human to approve": a well-formed table with zero rows. Notes such as
-  // 「未扫：…」 are prose, not rows, so they do not make a table non-empty.
+  // 「未查：…」 are prose, not rows, so they do not make a table non-empty.
   const empty = valid && Object.values(counts).every((n) => n === 0);
   return { valid, empty, errors, counts };
 }

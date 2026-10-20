@@ -92,7 +92,7 @@ docs/
 ├── to-spec/<spec-slug>/          spec 图的 excalidrawer 源文件（sugar JSON、.excalidraw）—— 只有 PNG 进 docs/，spec 定稿后可删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（MCP 浏览器锁）—— PR 合并后删
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删
-├── dreaming/<YYYY-MM-DD>/        这一次运行的提议表 proposal.md 与中间物（重拍与初扫的产物不在这里，在 docs/design/tmp/ 下）—— 执行段完成后删
+├── dreaming/<YYYY-MM-DD>/        这一次运行的提议表 proposal.md 与中间物（候选蒸馏要改的档案对象不在这里，在 docs/design/tmp/dreaming-<日期>/ 下）—— 执行段完成后删
 └── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（review-loop.md）
 ```
 
