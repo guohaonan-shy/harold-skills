@@ -184,6 +184,91 @@ test('cli attribute: an undeclared heading exits 1 and the message counts it', (
   assert.match(r.stderr, /没声明的同级标题 1/);
 });
 
+// ---------- a pricing page measured on a real site (positions as measured; the copy is not the site's) ----------
+//
+// One top-level block holds the title, a row of three plan cards and a "not ready" box. The page was
+// declared as five sections (header, pricing = the whole first block, feature-grid, faq, footer) and
+// the check reported four headings of that very block as left-out sections.
+
+const PR_BLOCKS = [{ top: 123, bottom: 1185.38 }, { top: 1225.38, bottom: 1854.22 }, { top: 1902.22, bottom: 2331.72 }];
+const prHeading = (id, level, name, top, bottom, block) => ({ id, level, name, top, bottom, block, landmark: null });
+const PR_HEADINGS = [
+  prHeading(0, 1, 'Simple, Honest Pricing', 203, 329, 0),
+  prHeading(1, 2, '1 Month', 517.38, 545.88, 0),
+  prHeading(2, 2, '3 Months', 518.38, 546.88, 0),
+  prHeading(3, 2, '6 Months', 517.38, 545.88, 0), // exactly the box of 1 Month
+  prHeading(4, 2, 'Not ready to commit?', 1040.38, 1067.38, 0),
+  prHeading(5, 2, 'What Pro Keeps Unlocking', 1329.38, 1368.38, 1),
+  prHeading(6, 3, 'Your Learning Profile', 1495.38, 1517.88, 1),
+  prHeading(7, 2, 'Frequently asked questions', 2041.72, 2073.72, 2),
+];
+const prSection = (id, heading, block) => {
+  const h = PR_HEADINGS[heading];
+  return { id, locate: { role: 'heading', name: h.name }, found: true, top: h.top, bottom: h.bottom, block, level: h.level, heading };
+};
+const PR_HEADER = { id: 'header', locate: { role: 'banner' }, found: true, top: 0, bottom: 79, block: -1, level: 2 };
+const PR_FOOTER = { id: 'footer', locate: { role: 'contentinfo' }, found: true, top: 2395.72, bottom: 2513.22, block: -1, level: 2 };
+const prMeasurement = (sections, headings = PR_HEADINGS) => ({
+  state: 'mkt-pricing--entry', page: 'mkt-pricing', pageSize: { width: 1440, height: 2513 },
+  blocks: PR_BLOCKS, contentinfo: { top: 2395.72, bottom: 2513.22 }, sections, clickables: [], headings,
+});
+const PR_FIVE = [PR_HEADER, prSection('pricing', 0, 0), prSection('feature-grid', 5, 1), prSection('faq', 7, 2), PR_FOOTER];
+const stripIdentity = (hs) => hs.map(({ id, block, ...h }) => h); // a measurement from before headings carried one
+const stripHeading = (ss) => ss.map(({ heading, ...s }) => s);
+
+test('attribute: the pricing page declared as five sections reports nothing — the card row and the box in the block declared whole are not left-out sections', () => {
+  const r = attribute(prMeasurement(PR_FIVE));
+  assert.deepEqual(r.undeclaredHeadings, []);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.ranges.map((x) => [x.id, x.start, x.end]), [
+    ['header', 0, 79], ['pricing', 123, 1225], ['feature-grid', 1225, 1902], ['faq', 1902, 2395], ['footer', 2396, 2513],
+  ]);
+});
+
+test('attribute: the same page measured the old way (no identity on headings or sections) gives the same answer', () => {
+  const r = attribute(prMeasurement(stripHeading(PR_FIVE), stripIdentity(PR_HEADINGS)));
+  assert.deepEqual(r.undeclaredHeadings, []);
+});
+
+test('attribute: a different heading with the same box as a declared one is not taken for it — judged on the element, not on coordinates', () => {
+  // "1 Month" is a section (a card taken for one); "6 Months" has the very same box and used to be waved through
+  const r = attribute(prMeasurement([PR_HEADER, prSection('hero', 0, 0), prSection('pricing', 1, 0), prSection('pricing-free', 4, 0), prSection('feature-grid', 5, 1), prSection('faq', 7, 2), PR_FOOTER]));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['6 Months', 'pricing'], ['3 Months', 'pricing']]);
+  assert.match(r.undeclaredHeadings[1].reason, /1 Month/, 'it says which declared heading it sits beside');
+  assert.match(r.undeclaredHeadings[1].reason, /整块声明成一段/);
+  assert.equal(r.ok, false);
+});
+
+// a block split into sections is checked; a row of undeclared headings inside it is not a section
+const PR_SPLIT = [PR_HEADER, prSection('hero', 0, 0), prSection('pricing-free', 4, 0), prSection('feature-grid', 5, 1), prSection('faq', 7, 2), PR_FOOTER];
+
+test('attribute: where a block is split into several sections, a row of undeclared same-level headings (a card grid) is still not a section', () => {
+  const r = attribute(prMeasurement(PR_SPLIT));
+  assert.deepEqual(r.undeclaredHeadings, [], 'hero ends where pricing-free starts; the three cards sit in a row inside hero');
+});
+
+test('attribute: where a block is split into several sections, a lone undeclared same-level heading in it is a miss', () => {
+  const lone = [...PR_HEADINGS, prHeading(8, 2, 'Money back', 700, 730, 0)];
+  const r = attribute(prMeasurement(PR_SPLIT, lone));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['Money back', 'hero']]);
+});
+
+test('attribute: a heading in a block that no section opens is a miss, even when the section before it is a block declared whole', () => {
+  // feature-grid is left out: its heading sits in block 1, and pricing-free (block 0) swallows it
+  const r = attribute(prMeasurement(PR_SPLIT.filter((x) => x.id !== 'feature-grid')));
+  assert.deepEqual(r.undeclaredHeadings.map((h) => [h.name, h.in]), [['What Pro Keeps Unlocking', 'pricing-free']]);
+});
+
+test('attribute: no section ends past the bottom of the page — the footer of a page 2513 tall ends at 2513, not 2514', () => {
+  const r = attribute(prMeasurement(PR_FIVE));
+  const footer = r.ranges.find((x) => x.id === 'footer');
+  assert.deepEqual([footer.start, footer.end, footer.height], [2396, 2513, 117]);
+  assert.ok(r.ranges.every((x) => x.end <= 2513));
+  // cut from a picture as tall as the page, every piece is as tall as its range says
+  const pieces = sliceImage(bandedPng(100, 2513, () => [10, 20, 30]), { ...r, pageWidth: 100 });
+  assert.deepEqual(pieces.map((x) => x.height), r.ranges.map((x) => x.height));
+});
+
 test('attribute: each clickable carries the link address the measurement gave it', () => {
   const r = attribute(measurement(ALL, { clickables: [{ role: 'link', name: '看功能', top: 600, bottom: 620, landmark: null, href: '/pricing#faq' }, { role: 'button', name: '展开', top: 700, bottom: 720, landmark: null }] }));
   assert.equal(r.clickables[0].href, '/pricing#faq');

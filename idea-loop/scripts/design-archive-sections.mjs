@@ -157,9 +157,16 @@ function collectInPage(selectBlocks) {
       return { role: implicitRole(el), name: nameOf(el), ...box(el), landmark: landmarkOf(el), ...(href ? { href } : {}) };
     });
   const levelOf = (el) => Number(el.getAttribute('aria-level')) || Number((/^H([1-6])$/.exec(el.tagName) || [])[1]) || 2;
+  // each heading gets an identity (its place in this list, also written on the element as `data-ds-h`) and
+  // the top-level block it sits in, so the caller can tell "the heading a section is located by" from
+  // "another heading at the same coordinates" without comparing coordinates
   const headings = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')]
     .filter(shown)
-    .map((el) => ({ level: levelOf(el), name: nameOf(el), ...box(el), landmark: landmarkOf(el) }));
+    .map((el, i) => {
+      el.setAttribute('data-ds-h', String(i));
+      const block = el.closest('[data-ds-block]');
+      return { id: i, level: levelOf(el), name: nameOf(el), ...box(el), block: block ? Number(block.getAttribute('data-ds-block')) : -1, landmark: landmarkOf(el) };
+    });
 
   const info = document.querySelector('[data-ds-lm="contentinfo"]');
   return {
@@ -236,15 +243,20 @@ async function measurePage(page, C) {
       const px = (v) => Math.round(v * 100) / 100;
       const block = el.closest('[data-ds-block]');
       const level = Number(el.getAttribute('aria-level')) || Number((/^H([1-6])$/.exec(el.tagName) || [])[1]) || 2;
-      return { top: px(rect.top + window.scrollY), bottom: px(rect.bottom + window.scrollY), block: block ? Number(block.getAttribute('data-ds-block')) : -1, level };
+      const h = el.getAttribute('data-ds-h');
+      return {
+        top: px(rect.top + window.scrollY), bottom: px(rect.bottom + window.scrollY),
+        block: block ? Number(block.getAttribute('data-ds-block')) : -1, level, heading: h === null ? -1 : Number(h),
+      };
     });
     sections.push({ ...entry, found: true, ...r });
   }
 
   // 5 clean the marks off, shoot the whole page
-  await page.evaluate(() => document.querySelectorAll('[data-ds-block],[data-ds-lm]').forEach((el) => {
+  await page.evaluate(() => document.querySelectorAll('[data-ds-block],[data-ds-lm],[data-ds-h]').forEach((el) => {
     el.removeAttribute('data-ds-block');
     el.removeAttribute('data-ds-lm');
+    el.removeAttribute('data-ds-h');
   }));
   let image = null;
   if (C.out) {
@@ -303,12 +315,16 @@ const roundPx = (v) => Math.round(v);
  * contentinfo, declared or not, else the page bottom). A landmark or `position` section is that element's
  * own box. Whole pixels: the start is rounded, the height is the rounded real height, the end is start
  * plus height — so a section whose content did not change keeps its height whatever moves above it
- * (neighbours may end up a pixel apart; that is not reported).
+ * (neighbours may end up a pixel apart; that is not reported). No end goes past the page height.
  * Ownership: a clickable inside a banner / contentinfo belongs to the section that declares that landmark;
  * any other one belongs to the section whose range holds its vertical centre.
  * Undeclared headings: a heading of the page's section level (the level most declared headings use, or the
  * owning section's own) inside a heading section's range, that is not itself a declared section, means a
- * section was left out and swallowed — listed, and the run fails like an orphan does.
+ * section was left out and swallowed — listed, and the run fails like an orphan does. "Declared" is judged
+ * on the element (the measurement says which heading each section was located by), not on coordinates.
+ * Not a miss: same-level headings side by side in one row when none of them is a section (a card grid),
+ * and any heading in the same top-level block as the heading that opens a section when that is the only
+ * section declared in the block (the block was declared as one section).
  *
  * @returns {{ ok: boolean, ranges: object[], clickables: object[], orphans: object[], notFound: object[],
  *   outOfOrder: object[], undeclaredHeadings: object[], coverage: { gaps: object[], overlaps: object[] },
@@ -342,10 +358,12 @@ export function attribute(m) {
     return i + 1 < found.length ? rawStart[i + 1] : m.contentinfo?.top ?? pageHeight;
   });
 
+  // nothing runs past the bottom of the page: rounding a last section up can put its end a pixel beyond it
+  const cap = pageHeight > 0 ? roundPx(pageHeight) : Infinity;
   const ranges = found.map((s, i) => {
     const start = roundPx(rawStart[i]);
-    const height = roundPx(rawEnd[i] - rawStart[i]);
-    return { id: s.id, ref: ref(s.id), by: kindOf(s), role: s.locate?.role ?? null, start, end: start + height, height };
+    const end = Math.max(start, Math.min(start + roundPx(rawEnd[i] - rawStart[i]), cap));
+    return { id: s.id, ref: ref(s.id), by: kindOf(s), role: s.locate?.role ?? null, start, end, height: end - start };
   });
 
   const outOfOrder = [];
@@ -392,23 +410,47 @@ export function attribute(m) {
     if (!owner) orphans.push({ ...item, landmark: c.landmark ?? null, reason: why });
   }
 
-  // headings of the sections' level that fall inside a heading section's range without being a section
+  // Headings of the sections' level that fall inside a heading section's range without being a section.
+  // Whether a heading is declared is a question about the element (the one a section was located by),
+  // never about coordinates: two different headings can share a box. Two things are not a miss:
+  //   - a row: same-level headings side by side (a grid of cards) when none of them is a section — they
+  //     are one piece of content, not sections that were left out
+  //   - a block declared as one: the heading sits in the same top-level block as the heading that opens
+  //     the section, and that is the only section declared in that block — the block was declared whole
   const levelCount = new Map();
   for (const s of found) if (kindOf(s) === 'heading' && s.level) levelCount.set(s.level, (levelCount.get(s.level) ?? 0) + 1);
   const sectionLevel = [...levelCount.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? null;
-  const declaredAt = (h) => found.some((s) => kindOf(s) === 'heading' && Math.abs(s.top - h.top) < 1 && Math.abs(s.bottom - h.bottom) < 1);
+  const headingSections = found.filter((s) => kindOf(s) === 'heading');
+  const isDeclared = (h) => headingSections.some((s) => (h.id !== undefined && s.heading !== undefined && s.heading >= 0 ? s.heading === h.id : s.locate?.name === h.name));
+  const blockOf = (h) => {
+    if (h.block !== undefined) return h.block;
+    const y = h.top;
+    const at = blocks.findIndex((b) => y >= b.top && y < b.bottom);
+    return at;
+  };
+  const sameRow = (a, b) => a.level === b.level
+    && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) >= 0.5 * Math.min(a.bottom - a.top, b.bottom - b.top);
+  const pageHeadings = (m.headings ?? []).filter((h) => !h.landmark && h.level);
   const undeclaredHeadings = [];
   ranges.forEach((r, i) => {
     if (r.by !== 'heading') return;
     const own = found[i].level;
-    for (const h of m.headings ?? []) {
-      if (h.landmark || !h.level || declaredAt(h)) continue;
+    const ownBlock = found[i].block ?? -1;
+    const wholeBlock = ownBlock >= 0 && headingSections.filter((s) => s.block === ownBlock).length === 1;
+    for (const h of pageHeadings) {
+      if (isDeclared(h)) continue;
       if (h.level !== sectionLevel && h.level !== own) continue;
       const y = roundPx(h.top);
       if (y < r.start || y >= r.end) continue;
+      if (wholeBlock && blockOf(h) === ownBlock) continue;
+      const row = pageHeadings.filter((o) => o !== h && sameRow(h, o));
+      const declaredMate = row.find(isDeclared);
+      if (row.length > 0 && !declaredMate) continue;
       undeclaredHeadings.push({
         level: h.level, name: h.name, y, in: r.id, ref: r.ref,
-        reason: `「${h.name}」是一个 h${h.level} 标题，和已声明的分段标题同一级，却没声明，被 ${r.id} 段吞掉了：补一段（最差补一段 content）或改定位，重测`,
+        reason: declaredMate
+          ? `「${h.name}」和已声明的分段标题「${declaredMate.name}」并排在同一行（像是卡片宫格里的标题被当成了分段），被 ${r.id} 段吞掉了：这一整块声明成一段（定位用块里的主标题），或把并排的标题都补成段，重测`
+          : `「${h.name}」是一个 h${h.level} 标题，和已声明的分段标题同一级，却没声明，被 ${r.id} 段吞掉了：补一段（最差补一段 content）或改定位，重测`,
       });
     }
   });
