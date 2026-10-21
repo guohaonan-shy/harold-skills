@@ -282,6 +282,7 @@ idea-loop/
 │   │   ├── uiux-refine/SKILL.md      # the convergent half — only the calling mechanism; the work is in agents/
 │   │   │   references/ui-implementation-standard.md  # UI tickets: canvas → component tree, per-stack notes, the verification loop
 │   │   │   references/design/                # the design side (see below)
+│   │   │   references/freeze.md, motion-stage.md, asset-stage.md, pinned-findings.md  # designer reads each only on its branch: sign-off, motion, marketing assets, a pinned finding
 │   │   └── uiux-research/SKILL.md    # human-run design research — only the calling mechanism; the work is in agents/uiux-researcher.md
 │   │       references/research-backend.md
 │   └── productivity/
