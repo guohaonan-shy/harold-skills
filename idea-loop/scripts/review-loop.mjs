@@ -10,8 +10,8 @@
  * to one file per PR; his rulings and what was done about them are appended under it. The file is
  * the loop's memory: a session that was compacted or reopened reads it and carries on. When Harold
  * says merge, each report is posted to the PR as one plain comment — a record, not a conversation —
- * and the local file is deleted. Layout and wording: references/review-loop.md,
- * references/pr-description.md §4–§5.
+ * and the local file is deleted. Layout and wording: skills/engineering/pr/references/review-loop.md,
+ * skills/engineering/pr/references/stop-report.md and review-round.md.
  *
  * File: <worktree root>/.tmp/review-loop/<PR>.md
  *
@@ -24,7 +24,7 @@
  *
  * An entry is settled once every 你的批示 has a 做了什么 after it; a review round that asks the human
  * nothing (every finding handled by rule, no 要你决定 in it) is settled by its 做了什么 alone, so the
- * orchestrator can tell "everything is handled" and start the next round (pr-review §5). Overturning
+ * orchestrator can tell "everything is handled" and start the next round (pr-review, section 下一轮：什么时候自己起). Overturning
  * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
  *

@@ -4,9 +4,9 @@
  * idea-loop was generalized out of one real product, and its references kept quoting that
  * product's decisions as if they were law (its accent color, its retired identity, its motion
  * whitelist). A product's visual language belongs in that product's own DESIGN.md, written through
- * the single write path in references/design-md.md; references/ holds only principles that would survive a change of product.
+ * the single write path in skills/design/design-modeling/SKILL.md; the skills' references hold only principles that would survive a change of product.
  *
- * This test greps skills/ and references/ for the known tells of the source project. It is a
+ * This test greps skills/ for the known tells of the source project. It is a
  * tripwire, not a classifier: it catches the names we know, and a new example drawn from a real
  * project should be rewritten on a fictional product before it lands. docs/ records history and is
  * not scanned.
@@ -18,7 +18,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCANNED = ['skills', 'references'];
+const SCANNED = ['skills'];
 
 const TELLS = [
   /toeflair|tofelair|\btoefl\b/i,
@@ -37,7 +37,7 @@ function files(dir) {
   });
 }
 
-test('skills/ and references/ carry no project-specific names or examples', () => {
+test('skills/ carries no project-specific names or examples', () => {
   const hits = [];
   for (const dir of SCANNED) {
     for (const file of files(join(pluginRoot, dir))) {

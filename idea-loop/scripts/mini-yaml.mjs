@@ -1,7 +1,7 @@
 /**
  * A small YAML reader for the design archive's frontmatter.
  *
- * The archive's object files carry their structure in YAML frontmatter (references/design-archive.md),
+ * The archive's object files carry their structure in YAML frontmatter (skills/design/design-archive/SKILL.md),
  * and the plugin ships no dependencies, so this reads the subset those files actually use:
  *
  *   - block mappings and block sequences, nested by indentation (a sequence may sit at the same

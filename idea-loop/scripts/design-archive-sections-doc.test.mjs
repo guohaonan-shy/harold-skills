@@ -4,7 +4,7 @@
  * The sections script has three subcommands, each with its own options (`COMMAND_FLAGS` in the script is
  * the single list the parser also uses). The agents and references quote the commands; a renamed option or
  * a made-up subcommand would send an agent into a usage error in the middle of a long shot. This greps the
- * skills, agents and references for lines that run the script and checks the subcommand and every `--option`.
+ * skills and agents for lines that run the script and checks the subcommand and every `--option`.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { COMMAND_FLAGS } from './design-archive-sections.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCANNED = ['skills', 'agents', 'references'];
+const SCANNED = ['skills', 'agents'];
 
 function files(dir) {
   return readdirSync(dir).flatMap((name) => {

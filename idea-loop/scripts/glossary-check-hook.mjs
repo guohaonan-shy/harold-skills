@@ -30,7 +30,7 @@ const result = checkGlossary(readFileSync(filePath, 'utf8'));
 if (result.valid) process.exit(0);
 
 console.error(
-  `${renderReport(result, filePath)}\n\n改到通过再继续。格式规则见 idea-loop 的 references/glossary.md §3；` +
-    '挪出去的内容按 §2「不收的东西去哪」放。',
+  `${renderReport(result, filePath)}\n\n改到通过再继续。格式规则见 idea-loop 的 skills/productivity/glossary/SKILL.md 的「文件与格式」；` +
+    '挪出去的内容按「收什么：三问全过才收」里那张去处表放。',
 );
 process.exit(2);

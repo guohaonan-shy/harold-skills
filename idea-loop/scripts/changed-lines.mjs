@@ -6,7 +6,7 @@
  * commands) into its answer, but only for code this PR wrote: a whole-repo lint dumps the existing
  * debt into the review, and that debt is not this PR's to fix. So the reviewer runs the checks, pipes
  * their output through here, and only diagnostics on added or changed lines of `git diff
- * <base>...HEAD` become candidates. Rules: references/review-standards.md §3.
+ * <base>...HEAD` become candidates. Rules: skills/engineering/pr-review/references/review-standards.md, section 机械检查.
  *
  * Tools must print one diagnostic per line with its location: `path:line[:col]` (ruff, mypy,
  * eslint -f unix, most compilers) or `path(line,col)` (tsc). Paths may be absolute or relative to a

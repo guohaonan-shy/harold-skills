@@ -8,9 +8,7 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 
 | Plugin | Purpose | Status |
 |---|---|---|
-| [`clinical-research/`](./clinical-research/) | Retrospective clinical research workflows: study design, variable coding, statistical analysis, and paper drafting. | Ready |
 | [`excalidrawer/`](./excalidrawer/) | Code-first Excalidraw diagram generation for flowcharts, timelines, architecture diagrams, and sequences. | Ready |
-| [`memex/`](./memex/) | Personal memory wiki from conversations, with ingestion, recap, recall, memory maintenance, and reply coaching. | Ready |
 | [`content-creator/`](./content-creator/) | Content creation toolkit for short-video and social-feed creators. Currently ships `thumbnail-gen`. | Ready |
 | [`happy-life/`](./happy-life/) | Personal lifestyle skills for daily rituals and taste memory. Currently ships `daily-coffee-oracle`. | Ready |
 | [`idea-loop/`](./idea-loop/) | Closed loop from idea to shipped engineering — design-tree interview → spec → [design diverge → design converge] → tracer-bullet tickets → TDD implementation → three-axis PR review (Correctness / Standards / Spec) → knowledge-base reconciliation. The bracketed design pair runs only when the spec touches UI. Generalized out of a real project, reads the target repo's own conventions rather than hardcoding them. | Ready |
@@ -28,9 +26,7 @@ More plugins may be added over time.
 Examples:
 
 ```text
-/plugin install clinical-research@harold-skills
 /plugin install excalidrawer@harold-skills
-/plugin install memex@harold-skills
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
 /plugin install idea-loop@harold-skills
@@ -42,7 +38,7 @@ Examples:
 harold-skills/
 ├── .claude-plugin/
 │   └── marketplace.json      # marketplace metadata
-├── CLAUDE.md                 # repository maintenance conventions
+├── AGENTS.md                 # repository maintenance conventions (CLAUDE.md imports it)
 ├── README.md                 # default English README
 ├── README.zh-CN.md           # Chinese README
 └── <plugin-name>/            # each top-level directory is one plugin
@@ -60,7 +56,7 @@ harold-skills/
 
 `references/` is flexible. Some plugins use only plugin-level references, while others keep both plugin-level and skill-level references when the material is skill-specific.
 
-Each plugin is independently installable. See [CLAUDE.md](./CLAUDE.md) for repository maintenance conventions.
+Each plugin is independently installable. See [AGENTS.md](./AGENTS.md) for repository maintenance conventions.
 
 ## License
 

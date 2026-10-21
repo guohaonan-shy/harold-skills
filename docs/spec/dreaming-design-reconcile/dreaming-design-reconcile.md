@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 在飞
+status: 实现中
 tags: [idea-loop, dreaming, ui-archive]
 summary: dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏
 related: ["[[ui-state-archive]]", "[[design-md-write-entry]]"]

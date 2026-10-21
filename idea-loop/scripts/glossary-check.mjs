@@ -1,5 +1,5 @@
 /**
- * GLOSSARY.md lint — the format half of `references/glossary.md` §3, made falsifiable.
+ * GLOSSARY.md lint — the format half of `skills/productivity/glossary/SKILL.md`, section 文件与格式, made falsifiable.
  *
  * The failure this guards against is the one upstream reports most: a glossary that slowly turns
  * into a spec. Field values, code constants, file paths and mechanism write-ups creep in one
@@ -8,7 +8,7 @@
  * almost always leaves behind — a backtick, a path, a link, a `2=listen_repeat` mapping, a
  * definition that has grown past two sentences — and refuses them outright.
  *
- * It does not judge content: whether a term belongs (the three questions in §2), whether a
+ * It does not judge content: whether a term belongs (the three questions in 收什么), whether a
  * definition is right, whether it says what a thing IS rather than what it does. Those stay with
  * Harold.
  *
@@ -252,7 +252,7 @@ export function renderReport(result, file) {
   const where = file ? ` (${file})` : '';
   if (result.valid) return `glossary-check: green ✓${where}`;
   return [
-    `glossary-check: ${result.errors.length} 处不符合 references/glossary.md §3${where}：`,
+    `glossary-check: ${result.errors.length} 处不符合 skills/productivity/glossary/SKILL.md 的「文件与格式」${where}：`,
     ...result.errors.map((e) => `  - ${e}`),
   ].join('\n');
 }

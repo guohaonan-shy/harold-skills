@@ -8,9 +8,7 @@ Default English version: [README.md](./README.md)
 
 | Plugin | 用途 | 状态 |
 |---|---|---|
-| [`clinical-research/`](./clinical-research/) | 临床医学回顾性队列研究工作流：研究设计、变量编码、统计分析、论文初稿。 | Ready |
 | [`excalidrawer/`](./excalidrawer/) | Code-first Excalidraw 图表生成：流程图、时间线、架构图、序列图。 | Ready |
-| [`memex/`](./memex/) | 从对话构建个人记忆 wiki，支持 ingest、recap、recall、memory 维护和 reply coaching。 | Ready |
 | [`content-creator/`](./content-creator/) | 面向短视频 / 社交 feed 创作者的内容工具集，当前包含 `thumbnail-gen`。 | Ready |
 | [`happy-life/`](./happy-life/) | 面向日常仪式感和个人 taste memory 的生活类 skills，当前包含 `daily-coffee-oracle`。 | Ready |
 | [`idea-loop/`](./idea-loop/) | 从 idea 到工程落地的闭环——设计树访谈 → spec → ［设计发散 → 设计收敛］ → tracer-bullet ticket → TDD 实现 → 三轴 PR review（Correctness / Standards / Spec）→ 知识库对账。方括号那两段只在 spec 碰 UI 时才走。从一个真实项目里通用化出来，读目标仓库自己的约定，不硬编码。 | Ready |
@@ -28,9 +26,7 @@ Default English version: [README.md](./README.md)
 例如：
 
 ```text
-/plugin install clinical-research@harold-skills
 /plugin install excalidrawer@harold-skills
-/plugin install memex@harold-skills
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
 /plugin install idea-loop@harold-skills
@@ -42,7 +38,7 @@ Default English version: [README.md](./README.md)
 harold-skills/
 ├── .claude-plugin/
 │   └── marketplace.json      # marketplace metadata
-├── CLAUDE.md                 # 仓库级维护约定
+├── AGENTS.md                 # 仓库级维护约定（CLAUDE.md 引用它）
 ├── README.md                 # 默认英文 README
 ├── README.zh-CN.md           # 中文 README
 └── <plugin-name>/            # 每个顶层目录是一个 plugin
@@ -60,7 +56,7 @@ harold-skills/
 
 `references/` 的布局是灵活的。有些 plugin 只使用 plugin 级 references，有些会同时保留 plugin 级和 skill 级 references。
 
-每个 plugin 都可以独立安装。仓库维护约定见 [CLAUDE.md](./CLAUDE.md)。
+每个 plugin 都可以独立安装。仓库维护约定见 [AGENTS.md](./AGENTS.md)。
 
 ## License
 

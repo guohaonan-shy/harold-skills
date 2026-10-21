@@ -9,7 +9,7 @@
  * file and field named, and the archive script (which is the only way to write `prod/`) refuses to
  * write when the result would not pass.
  *
- * Rules (references/design-archive.md §6):
+ * Rules (skills/design/design-archive/SKILL.md, section 校验):
  *   1 every state is reachable from an entry node over non-blocked edges, or has a blocked incoming edge
  *   2 a state that starts async work writes loading / failure / empty — each an existing state or 「不适用」
  *   3 every wikilink resolves; an edge's component is a component, its motion a motion; docs/ basenames are unique
@@ -288,7 +288,7 @@ function badSectionRef(raw, wantPage, declared, what) {
   return null;
 }
 
-/** Rule 7 — see references/design-archive.md §6. */
+/** Rule 7 — see skills/design/design-archive/references/sections.md, 校验规则 7. */
 function sectionRules(archive, v) {
   const states = objectsOfKind(archive, 'state').sort((a, b) => (a.id < b.id ? -1 : 1));
   const declaring = new Map(); // page id → the entry state whose `sections` count

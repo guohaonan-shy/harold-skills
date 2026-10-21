@@ -22,7 +22,7 @@
  *               of code.path in `git diff <base>...HEAD`
  *
  * Every candidate also carries a disposition. Absent or 要你决定 is the old shape — the human decides.
- * 照规则 is a finding whose handling the written rules already settle (references/decision-rules.md):
+ * 照规则 is a finding whose handling the written rules already settle (skills/productivity/decision-rules/SKILL.md):
  * it carries a basis ({ kind, file, text, summary } — kind is one of the three things a decision may
  * stand on: the text of a written rule, the human's own words from this spec or PR, an existing
  * practice with an instance; text must be found in file, else the candidate is discarded like any
@@ -42,7 +42,7 @@
  * code-level reference — backticks, file:line, a path, a snake_case name, a commit hash, a section
  * number like §4.7. Those belong in `locations`, which only the fixer sees. Shape problems are not
  * discards: the finding stands, its wording has to be redone (`rewrite`). Rules:
- * references/review-standards.md, references/pr-description.md §5.
+ * skills/engineering/pr-review/references/review-standards.md, skills/engineering/pr/references/review-round.md.
  *
  * Deterministic core (normalize, contains, snippetInDiff, codeRefs, shapeProblems, admit) is pure
  * and unit-tested.

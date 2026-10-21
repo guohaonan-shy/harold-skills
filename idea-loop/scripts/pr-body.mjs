@@ -23,7 +23,7 @@
  * Each writer rewrites only its own sections, so none clobbers another. The legacy `review` section
  * and the 0.0.16 drafts' sections are dropped on the next write;
  * legacy `header` / `ledger` blocks are left as text.
- * Layout and who writes what: references/pr-description.md.
+ * Layout and who writes what: skills/engineering/pr/SKILL.md.
  *
  * Deterministic core (getSection, setSection, readerProblems) is pure and unit-tested. The CLI is the gh boundary;
  * content arrives as a file, never interpolated into a shell command.

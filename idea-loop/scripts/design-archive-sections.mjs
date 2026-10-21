@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The deterministic half of shooting a long page for the design archive (references/design-archive.md §10).
+ * The deterministic half of shooting a long page for the design archive (skills/design/design-archive/references/sections.md, 拍图).
  *
  * A long entry state declares `sections` (design-archive.mjs). Writing it into the archive takes a
  * browser for the measuring and the shooting, and plain logic for everything else; this file is
@@ -445,7 +445,7 @@ const roundPx = (v) => Math.round(v);
 /**
  * Measurement → ranges, the section each clickable element belongs to, and what does not fit.
  *
- * Ranges (references/design-archive.md §3): a section found by heading starts at the top of the
+ * Ranges (skills/design/design-archive/references/sections.md, 怎么定位): a section found by heading starts at the top of the
  * top-level block that holds the heading — at the heading itself when that block holds another declared
  * heading — and runs to where the next declared section starts (the last one: the top of the page's
  * first contentinfo, declared or not, else the page bottom). A landmark or `position` section is that

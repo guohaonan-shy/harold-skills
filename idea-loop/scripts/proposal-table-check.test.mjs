@@ -41,7 +41,7 @@ const ROWS = {
   档案状态: [['pages/cart--empty', '档案过期：空购物车文案改了，引用的代码自上次改动有提交 3 次', `${IMG_PROD} ${IMG_TMP}`, '替换档案', OPTS]],
   初扫页面: [['pages/wishlist', '档案里没有这一页；路由 /wishlist 可进', 'docs/design/tmp/dreaming-2026-10-19/delta/pages/wishlist/wishlist.md', '新增页面', OPTS]],
   候选: [['候选：卡片内边距统一 16px（组件 PromoCard、OrderCard 重复，共 2 次）', '与已有规则「卡片内边距 12px」矛盾', `${IMG_CARD} 并进：Components · 卡片；旧：「卡片内边距 12px」→ 新：「卡片内边距 16px」`, '改写已有规则', OPTS]],
-  'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：写入 reference §8「带日期的先例」', '删除', OPTS]],
+  'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「明确不进 DESIGN.md 的内容」里的带日期的先例', '删除', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -174,14 +174,14 @@ test('a DESIGN.md row names the standard it rests on — "should change" with no
 });
 
 test('a DESIGN.md row shows the text before and after; a ruling row keeps its new texts in the options', () => {
-  const noOld = run(sample({ 'DESIGN.md 条目': withEvidence('DESIGN.md 条目', '依据：§8「带日期的先例」') }));
+  const noOld = run(sample({ 'DESIGN.md 条目': withEvidence('DESIGN.md 条目', '依据：「明确不进 DESIGN.md 的内容」里的带日期的先例') }));
   assert.equal(noOld.status, 2, noOld.out);
   assert.match(noOld.out, /改前/);
-  const noNew = [['Shapes 章', '规则写 8px，代码是 10px', '旧：「圆角 8px」；依据：§12 法和代码对不上', '合并为一条', OPTS]];
+  const noNew = [['Shapes 章', '规则写 8px，代码是 10px', '旧：「圆角 8px」；依据：「对账」法和代码对不上', '合并为一条', OPTS]];
   const r = run(sample({ 'DESIGN.md 条目': noNew }));
   assert.equal(r.status, 2, r.out);
   assert.match(r.out, /改后/);
-  const ruling = [['Shapes 章', '规则写 8px，代码是 10px', '旧：「圆角 8px」；依据：§12 法和代码对不上', '交人裁决', 'A 改法 → 新：「圆角 10px」/ B 代码错：开 issue']];
+  const ruling = [['Shapes 章', '规则写 8px，代码是 10px', '旧：「圆角 8px」；依据：「对账」法和代码对不上', '交人裁决', 'A 改法 → 新：「圆角 10px」/ B 代码错：开 issue']];
   assert.equal(run(sample({ 'DESIGN.md 条目': ruling })).status, 0);
 });
 
@@ -231,7 +231,7 @@ test('an initial-scan page row must point at what it built under tmp/ — it nev
 });
 
 test('the sample table printed in the dreaming reference is itself valid — the doc and the script cannot drift apart', () => {
-  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
+  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'productivity', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
   const block = ref.match(/```markdown\n(# 提议表[\s\S]*?)\n```/);
   assert.ok(block, 'the reference carries no ```markdown sample table');
   const r = run(block[1]);
@@ -239,7 +239,7 @@ test('the sample table printed in the dreaming reference is itself valid — the
 });
 
 test('every row type and disposition the reference lists is one the script accepts, and nothing more', () => {
-  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
+  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'productivity', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
   for (const [type, set] of Object.entries(ROW_TYPES)) {
     const line = ref.split('\n').find((l) => l.startsWith(`| \`${type}\``));
     assert.ok(line, `the reference has no row for the ${type} row type`);

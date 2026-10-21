@@ -1,0 +1,314 @@
+# 静态 UI protocol —— 在浏览器里把一个 surface 的静态设计做完
+
+**按需加载。** 与 [surface-protocol.md](surface-protocol.md) / [module-protocol.md](module-protocol.md) /
+[component-protocol.md](component-protocol.md) 同一模式：这不是入口，是 `idea-loop:uiux-refine` 走到"静态视觉"这一段时读的
+protocol。入口在 `idea-loop:uiux-imagine` / `idea-loop:uiux-refine`，由它们决定要不要降到这一层。
+
+动效与原生交互在 [motion-protocol.md](motion-protocol.md)；把签字通过的画布落成代码是
+`idea-loop:implement` 的活，不在这里。
+
+---
+
+Design the **static UI** of a product surface in a **real browser** as a preview HTML file. Static
+includes visual system, layout, hierarchy, copy, component structure, and the *shape* of
+interactions (which states exist and where controls sit). Real animation, native interaction, and
+the React port belong to `motion-protocol` after this stage is approved.
+
+The workflow has one public entry but three composable design altitudes:
+
+```text
+Surface route  → Surface protocol → Module protocol → Component protocol where needed
+Module route   → Module protocol → Component protocol where needed
+Component route→ Component protocol only
+```
+
+The route chooses the **highest altitude changed by the work**. Lower-altitude design is still part
+of a higher route: a new page does not skip component design; it descends into the components that
+carry a decision, introduce a new pattern, or vary by product state. Choose one entry route so the
+same work is not performed twice.
+
+**Canvas: browser, not Paper (temporarily).** Before any browser tool call, load `idea-loop:browser`
+with the Skill tool; replication and review recipes are in [replication.md](replication.md).
+
+## Principles
+
+### Concept before references
+
+Start from product truth: the user's actual job, the data/domain model, the reachable states, and
+the language of shipped sibling components. A reference the human supplies or forwards may answer a
+named structural, coverage, or state question after the concept exists; it never supplies the
+product's visual skin.
+
+Replication is the exception: it reproduces the current UI only to establish ground truth at the
+scope being changed. The redesign begins after that baseline exists.
+
+### The core is always on; detailed protocols load only when needed
+
+Read the shared core once, then progressively disclose route-specific instructions. This keeps
+component work from carrying a page-sized playbook while ensuring page work still reaches component
+altitude.
+
+- [design-core.md](design-core.md) supplies the Design Read, register dials, identity floors, anti-slop
+  law, close-out protocol, and the cross-altitude craft methodology (proof map, responsive
+  re-edit, runtime & fallback states — design-core's "Craft methodology").
+- [expression-framework.md](expression-framework.md) supplies the altitude-neutral content → priority → weight
+  procedure and the conditional-state precondition.
+- The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
+  the project root, plus `PRODUCT.md` (project root) when present.
+  If the project has no `DESIGN.md`, fall back to this plugin's built-in defaults (design-core
+  floors + anti-slop law), note that no project design law was found, and suggest running
+  `idea-loop:uiux-imagine` (no live UI) or `idea-loop:dreaming` (live UI) to create one — never abort over a missing doc.
+- The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
+  route additionally reads [landing-ia.md](landing-ia.md) (see the route table in stage A).
+- Two reference files load on demand rather than at Setup: when a compliance question goes beyond
+  the one-line a11y floor in design-core's "Brand floors", read
+  [accessibility-baseline.md](accessibility-baseline.md); when a composition question isn't already
+  answered by the expression framework's ladders and budgets, read [laws-of-ux.md](laws-of-ux.md).
+
+### The gates do not trust the generator
+
+Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
+checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
+concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
+become candidates (format: `idea-loop:design-modeling`, section 设计法候选的形态); this protocol never writes `DESIGN.md`.
+`idea-loop:dreaming` processes them under that reference and puts each one to the human before anything is
+written.
+
+## Setup
+
+Before stage A:
+
+1. Read [design-core.md](design-core.md) first.
+2. Read [expression-framework.md](expression-framework.md).
+3. Read the target project root's `DESIGN.md` and `PRODUCT.md` —
+   each **if present**. Missing files are not errors: continue with the plugin's generic defaults
+   and recommend creating `DESIGN.md` through `idea-loop:uiux-imagine` or `idea-loop:dreaming` (see "The core is always on" above).
+4. Read the real code, data/domain model, and sibling shipped components at the target scope.
+5. Before any browser call, load `idea-loop:browser` with the Skill tool and read [replication.md](replication.md).
+
+Do not load every altitude protocol up front. Stage A selects the entry route; read lower-altitude
+protocols when the work descends to them.
+
+## The loop (A route · R ground truth · B concept & expression · C ground? · W freeze · D escalate? · E parts · F build · G gates · H human)
+
+### A · Clarify the brief, declare the Design Read, and choose the entry route
+
+State the Design Read (design-core's "The Design Read") in one line. Ask at most one clarifying question only when the
+brief is genuinely ambiguous; otherwise infer from the request and real code.
+
+Choose the **highest affected altitude**, not the filename or noun in the prompt:
+
+| Entry route | Use when… | Read now |
+|---|---|---|
+| **Surface** | Route/page IA, user journey, module order, dominant reading path, or responsive composition changes | [surface-protocol.md](surface-protocol.md) |
+| **Landing / IA** | The route/page is a landing, marketing, or multi-product page whose page taxonomy (which company/product/pricing/trust type it is) and Hero geometry need to be decided before composition | [surface-protocol.md](surface-protocol.md) **+** [landing-ia.md](landing-ia.md) |
+| **Module** | One bounded section's internal composition changes while page IA and surrounding module order remain stable | [module-protocol.md](module-protocol.md) |
+| **Component** | One bounded UI subtree changes; parent composition and user journey remain stable; uncertainty is treatment, signals, or conditional states | [component-protocol.md](component-protocol.md) |
+
+Landing/IA is not a fourth descent tier — it runs the same Surface R/B/W procedure in
+`surface-protocol.md`; `landing-ia.md` only supplies the extra domain vocabulary (page taxonomy,
+Hero seven-slot model) that stage B and stage W need for this kind of page. It still descends into
+Module and Component exactly as Surface does.
+
+A component whose own state change visibly changes anything **outside its own boundary** — a
+sibling's rendered size/position, the parent's scroll position, module order, the mobile
+information architecture, or the user's journey — has crossed altitude: route from Module or
+Surface instead, even when a local CSS/JS patch could technically make the symptom go away. Forces
+parent scrolling, reorders modules, changes the mobile information architecture, or opens a new
+journey are examples of this test, not the exhaustive list — the test is whether anything outside
+your own DOM subtree changed because of you, not whether the change matches one of these named
+phrases. A module whose change is only a bounded component treatment should enter at Component.
+
+Close A by recording: chosen entry route, why it is the highest changed altitude, and which lower
+altitudes are expected later. Run exactly one entry route; descending is composition, not a second
+run.
+
+### R · Establish ground truth at the selected scope
+
+Follow the selected protocol's R section:
+
+- Surface redesign: faithful affected-surface baseline and production screenshot diff.
+- Module redesign: faithful module baseline inside its real parent context; do not reproduce the
+  whole page unless the module boundary cannot be judged otherwise.
+- Component redesign: capture the component in its real container and read its actual state/data
+  sources; do not build a page replica merely because the component already ships.
+- Brand-new work: there is nothing to replicate; build an honest context frame from real siblings
+  and tokens instead.
+- **Starting from an imagine handoff canvas** (`idea-loop:uiux-refine`): the baseline was already cloned from
+  production during imagine and lives in `handoff/`. Do not re-capture production or restart the
+  app; verify the copy against the handoff canvas instead (the 「起手」 section of the `idea-loop:designer` agent).
+
+The judge here is fidelity, not improvement. Record a one-line fidelity/context note.
+
+### B · Form the concept and expression contract
+
+Run the selected protocol's B section plus the expression framework.
+
+For any UI whose visibility, content, action, or visual priority changes with external product
+conditions, complete the **reachable-state matrix before visual design**. State framing precedes the
+content inventory: a component cannot have one honest hierarchy until its distinct behaviors are
+known. Collapse behaviorally identical cells into visual equivalence classes, but keep their source
+conditions available for tests.
+
+Then write the expression table at the current altitude. Higher routes later repeat the same
+procedure at lower altitudes only for changed or decision-bearing children.
+
+Surface/new-module redesigns normally offer concept A (in-system) and concept B (bending a named T2
+preference). A bounded component treatment may use one concept; use variants only for unresolved
+visual choices, not to manufacture options.
+
+**Gate:** concept, state contract where applicable, and expression table are signed off before
+references or design pixels. An unresolved named question is written down in stage C as a suggested
+research question with a recommended answer — it is not researched by the executor, and it does not
+come back into this stage's inference.
+
+### C · A named question the concept leaves open: write it down, do not research it
+
+Skip by default. This stage fires only when the concept leaves a specific structural, coverage, flow,
+or state question unanswered — a question a component-sized or surface-sized judgment cannot settle.
+
+**The executor does not research.** It does not call Refero and does not start a research agent.
+Instead it writes the question down as a **suggested research question**: one sentence, one decision,
+plus the executor's **recommended answer**. That goes into the round's hand-back
+(`designer`'s 「建议调研的问题」), and the executor carries on **without stopping**, working from the
+recommendation. Whether the question is worth researching is the human's call — the human may run
+`idea-loop:uiux-research`, read the page it produces, and forward some of its conclusions back as **text**.
+
+- User-provided sources still come first: anything the human attached is read here and now, as input,
+  not as research.
+- A conclusion the human forwarded and the executor used is recorded in the freeze record with its
+  four parts together — what the source answers, what it does not (**Cannot answer**), and
+  **Keep / Change / Do not copy** — because "what it does not answer" is the half that keeps a
+  reference from being over-read. A reference that cannot represent the target state never enters the
+  conclusion layer.
+- **reference-averaging** (`ui-craft-checklist.md`'s "Visual slop catalog") still applies to forwarded conclusions: when
+  sources disagree, that is a decision for the human, not a midpoint.
+
+How research is run and what the page looks like is `idea-loop:uiux-research`'s business, not this stage's.
+
+### W · Freeze the appropriate low-cost artifact
+
+Use the artifact defined by the current altitude:
+
+- **Surface:** gray-box page wireframe with real text hierarchy.
+- **Module:** gray-box local composition inside a lightweight parent context.
+- **Component:** a deterministic treatment if the answer is already governed, otherwise a compact
+  2–3 option Variant Board in the same real context and state.
+
+A higher route descends only after its current composition is frozen. Surface work therefore freezes
+page composition, then reads `module-protocol.md` for changed modules; changed modules freeze local
+composition, then read `component-protocol.md` for decision-bearing or conditional children.
+Existing primitives and unchanged siblings are reused, not redesigned.
+
+**Gate:** the relevant wireframe or chosen component treatment is signed off. Styling cannot quietly
+change the frozen composition; bounce back to W when spatial structure changes.
+
+### D · Escalate the playbook only when earned
+
+For a flagship marketing surface, deep-read the taste-skill sections named in design-core's "Escalation".
+In-app surfaces, modules, and components use core + DESIGN.md + shipped siblings; they do not pay the
+flagship token cost.
+
+### E · Pull parts that serve the concept
+
+- Reuse the target project's UI primitives (e.g. `src/components/ui`) and shipped sibling
+  components before inventing new chrome.
+- Inspect third-party component libraries (e.g. shadcn, Aceternity) as parts, not skin; translate
+  any useful structure into the project's tokens.
+- Before assigning component color, read [color-application.md](color-application.md).
+- At component descent, classify children per `component-protocol.md`: existing primitive,
+  deterministic composition, decision-bearing component, or conditional component. Only the last
+  two earn the full protocol.
+
+### F · Build in the browser
+
+Evolve the baseline or context frame in the canvas (the latest version `docs/design/tmp/<spec-slug>/canvas/v<N>.html`, see [refine-canvas.md](../refine-canvas.md)). Implement changed parts in
+full; preserve unchanged parts from the replica or mark them with an honest placeholder. Pure
+deletions remain code-level work.
+
+Re-run the squint test at every altitude: page composition, module hierarchy, then component signal
+weight. The declared primary must survive styling. A spatial failure returns to W; a state-contract
+failure returns to B.
+
+The lint hook runs on every preview write. Treat P0 as a build error. Close each build round with the
+core's 5-dimensional critique and restraint check.
+
+### G · Review gates to convergence
+
+1. **Mechanical lint.** Confirm the final preview is P0-clean; run
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/v<N>.html`
+   when needed. Fix or explicitly justify P1s.
+2. **Isolated critique.** Self-contained pass over the served preview URL: read
+   [ui-craft-checklist.md](ui-craft-checklist.md) and [heuristics-checklist.md](heuristics-checklist.md), screenshot each
+   section, and record findings against both (typography thresholds, visual slop catalog, layout
+   integrity, Nielsen/cognitive-load/persona scoring). Route direction findings back to B/W and
+   craft findings to F. Check computed contrast (`browser_evaluate(getComputedStyle)`) and a clean
+   console from the real DOM.
+3. **Context matrix.** Use the selected protocol's review matrix instead of a one-size viewport:
+   public surfaces always include 1440 plus 390/360; product modules/components include every
+   reachable container mode, consequential width/height, theme, locale, and product state. A fixed
+   sidebar component may need 1000/900/768/720 heights more than an irrelevant standalone 390 view.
+
+Pass means lint clean, fresh critique evidence resolved or explicitly deferred with the user, and the
+route-specific matrix visibly verified.
+
+### H · Human review, Distill-back, and handoff
+
+Serve the preview and provide a short review list:
+
+- Design Read, entry route, and concept;
+- R fidelity/context note;
+- state matrix summary and visual equivalence classes where applicable;
+- expression and composition decisions;
+- Variant Board choice, if one was needed;
+- context-matrix coverage;
+- critique findings fixed/deferred;
+- T2 deviations and tradeoffs.
+
+On feedback, return to the earliest wrong altitude. Read a cluster of fine notes as one underlying
+rule, not independent patches.
+
+On sign-off, perform **Distill-back before handoff**, and it only writes candidates:
+
+1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
+   archive object it came from (page, component, motion or journey file under `delta/`; shape in
+   `idea-loop:design-archive`, section 正文), in the format `idea-loop:design-modeling`, section 设计法候选的形态 defines — a
+   one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
+   evidence. The freeze record's same-named section lists them (one line each, saying which object
+   carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
+   one line, 「无」.
+2. Stop there. `idea-loop:dreaming` later runs every candidate through the admission table in
+   `idea-loop:design-modeling`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
+   that holds for any product goes back to this plugin as an issue, a single page's choice stays in
+   its object's 「决定」.
+
+This protocol never writes `DESIGN.md` and never bootstraps one; a project without a `DESIGN.md`
+gets one through `idea-loop:uiux-imagine` (at its start) or `idea-loop:dreaming`.
+
+The approved preview HTML + concept + state contract pass to [motion-protocol.md](motion-protocol.md). Do not port to React in
+this protocol.
+
+## DESIGN.md governance
+
+(Applies when the target project has a `DESIGN.md`; its own floors and bans are the ones that
+count.)
+
+- **T1 identity floors and T3 bans:** never relax silently. Their usual territory: a11y, the
+  single-accent identity, a retired previous identity, the elevation language, the motion
+  principles and bans, the selection treatment, the display face.
+- **T2 defaults** (rules in `DESIGN.md` that are neither a floor nor a ban): challenge through
+  concept B or surface a mid-build deviation explicitly. A winning deviation becomes a candidate at
+  H and never edits `DESIGN.md` here; a silent deviation is a workflow failure.
+- Typical T2 territory includes density, component treatments, responsive container behavior,
+  promotion hierarchy, disclosure, and motion defaults.
+
+## What this protocol is not
+
+- Not three competing protocols: Surface, Module, and Component are composable altitudes behind one
+  entry.
+- Not a reason to redesign every component on a new page: existing primitives are reused; only
+  decision-bearing or conditional components earn the full Component Protocol.
+- Not a reference assembler or a one-shot generator.
+- Not where native motion/interaction or the React port happens; after sign-off, use [motion-protocol.md](motion-protocol.md).
+- Not self-refereed: lint, isolated critique evidence, real-DOM checks, and the human gate remain
+  mandatory.
