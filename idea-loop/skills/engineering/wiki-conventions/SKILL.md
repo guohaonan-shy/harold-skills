@@ -69,7 +69,7 @@ docs/
 │   ├── tmp/<spec-slug>/  一个需求的设计过程，只在本地、不进 git
 │   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部见 `../../design/uiux-imagine/references/imagine-canvas.md`
 │   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图 —— 内部见 `../../design/uiux-refine/references/refine-canvas.md`
-│   │   ├── delta/        冻结结果对 prod/ 的差异 —— 结构见 `../dreaming/references/design-archive.md`
+│   │   ├── delta/        冻结结果对 prod/ 的差异 —— 结构见 `../design-archive/SKILL.md`
 │   │   └── research/<问题短名>/  `uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 └── domain/               领域知识 —— 业务机制、规则、数据结论
@@ -86,7 +86,7 @@ docs/
 `design/` 分两层，生命周期相反：
 
 - **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`，`uiux-refine` 写 `canvas/` 和 `delta/`，`uiux-research` 写 `research/`（imagine 与 refine 用同一处）。调研不放进 `imagine/`，所以 imagine 收工清 `imagine/` 时它还在；合并前的拦截（`merge-gate-hook.mjs`）、pr-review 每轮的 UI 审查判断、合并前的归档判断、ui-reviewer 的跳过条件，都不把 `research/` 算作设计产物——调研目录从不归档，只做过调研的需求不起 UI 审查、合并不走归档；调研结论用进了设计的，已经以文字记在方向说明或冻结记录里，随设计一起归档。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
-- **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `../dreaming/references/design-archive.md`。
+- **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `../design-archive/SKILL.md`。
 
 按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。
 
@@ -153,7 +153,7 @@ related: ["[[other-slug]]"]
 
 `parked` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
 
-`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `../dreaming/references/design-archive.md` §3。
+`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `../design-archive/SKILL.md` 的「frontmatter」。
 
 spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `../spec-status/SKILL.md`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
 

@@ -9,7 +9,7 @@
  * (and in the next spec) looks the same. Rules and placement: skills/engineering/evidence/references/spec-figures.md, section 交互图.
  *
  * The input is one JSON per figure. Its shape is deliberately the same as a flow in the design
- * archive (docs/design/prod/, skills/engineering/dreaming/references/design-archive.md), so figures can move there unchanged.
+ * archive (docs/design/prod/, skills/engineering/design-archive/SKILL.md), so figures can move there unchanged.
  *
  * A step may also say which archive state it shows (`state`, the state's name, e.g.
  * `cookbook--search-loading`). The id is kept in the output — a tag under the caption, a

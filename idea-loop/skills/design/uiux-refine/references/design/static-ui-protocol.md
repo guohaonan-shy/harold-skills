@@ -273,7 +273,7 @@ On sign-off, perform **Distill-back before handoff**, and it only writes candida
 
 1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
    archive object it came from (page, component, motion or journey file under `delta/`; shape in
-   `skills/engineering/dreaming/references/design-archive.md` §4), in the format `skills/engineering/dreaming/references/design-md.md` §13 defines — a
+   `skills/engineering/design-archive/SKILL.md`, section 正文), in the format `skills/engineering/dreaming/references/design-md.md` §13 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
    evidence. The freeze record's same-named section lists them (one line each, saying which object
    carries it). An empty Distill-back is valid only when stated explicitly: each section then holds

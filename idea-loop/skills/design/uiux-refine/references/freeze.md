@@ -33,7 +33,7 @@ docs/design/tmp/<spec-slug>/
 
 ## 写 delta：把冻结结果写成对 `prod/` 的差异
 
-放进 `tmp/<spec-slug>/delta/`。`prod/` 只有归档脚本（人批过之后）写，你只写 `delta/`。结构、字段、正文分节全以 [`../../../engineering/dreaming/references/design-archive.md`](../../../engineering/dreaming/references/design-archive.md) 为准，这里只列这一步怎么做：
+放进 `tmp/<spec-slug>/delta/`。`prod/` 只有归档脚本（人批过之后）写，你只写 `delta/`。结构、字段、正文分节全以 [`../../../engineering/design-archive/SKILL.md`](../../../engineering/design-archive/SKILL.md) 为准，这里只列这一步怎么做：
 
 1. **先看档案里这块 UI 现在有什么。** `docs/design/prod/` 在就读：档案的「页面」查询入口（插件的档案查询 MCP 工具）有就用，没有就直接读目录。`prod/` 不存在（项目还没建档案）就当整块都是新增。
 2. **和冻结画布对，新增或改动的对象各放一份改完之后的全文**，路径与 `prod/` 里相同；没动的对象不放。
@@ -43,7 +43,7 @@ docs/design/tmp/<spec-slug>/
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域 / 代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`。
    - `usedBy` 由归档脚本生成。
-3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 `design-archive.md` 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`design-md.md`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
+3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 design-archive 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`design-md.md`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
 4. **自查**，跑到退出码 0：
 
    ```

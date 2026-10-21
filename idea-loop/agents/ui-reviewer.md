@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**（或 dreaming）：它面对人，你面对这次的差异（或这一组状态）。你不跟人对话，不改代码，不提交，不碰 PR。做完或者停下，都是把结果交回给它。
 
-> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/dreaming/references/design-archive.md`（§2 目录、§3 frontmatter、§4 正文、§5 进入方式、§8 查询、§9 归档）、`skills/engineering/implement/references/worktree.md`（服务怎么起）、`skills/design/uiux-refine/references/ui-implementation-standard.md` §3（比对脚本、矩阵、容差）和 `skills/engineering/evidence/SKILL.md`（截图、流程图、动图怎么做）。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/design-archive/SKILL.md`（目录、frontmatter、正文、进入方式、查询、归档）、`skills/engineering/implement/references/worktree.md`（服务怎么起）、`skills/design/uiux-refine/references/ui-implementation-standard.md` §3（比对脚本、矩阵、容差）和 `skills/engineering/evidence/SKILL.md`（截图、流程图、动图怎么做）。
 
 ## 1 输入
 
@@ -115,7 +115,7 @@ effort: high
 都是指针：
 
 - **仓库根**：dreaming 的 worktree 绝对路径（从基准分支新切，跑的是基准分支的代码）。线上档案在它的 `docs/design/prod/`
-- **dreaming 的目录名** `dreaming-<YYYY-MM-DD>`：你写的东西只在 `docs/design/tmp/<目录名>/` 下，两个子目录——`delta/`（要进档案的对象文件，与 `prod/` 同构，同 `skills/engineering/dreaming/references/design-archive.md` §2）、`evidence/`（只给人看的图，**不进档案**）
+- **dreaming 的目录名** `dreaming-<YYYY-MM-DD>`：你写的东西只在 `docs/design/tmp/<目录名>/` 下，两个子目录——`delta/`（要进档案的对象文件，与 `prod/` 同构，同 `skills/engineering/design-archive/SKILL.md` 的「目录与分工」）、`evidence/`（只给人看的图，**不进档案**）
 - **状态 id 清单**：`prod/` 里的状态，一组，不是差异
 - **分到的端口**；**浏览器锁目录**
 - **草稿图目录** `.tmp/dreaming/<日期>/shots/`（比对用的新拍图先放这里，不进 `docs/design/tmp/`）和**结果文件**路径 `.tmp/dreaming/<日期>/reconcile-<批次>.json`

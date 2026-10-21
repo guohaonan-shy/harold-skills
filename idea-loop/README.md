@@ -259,6 +259,7 @@ idea-loop/
 │   │   ├── evidence/SKILL.md         # shared, model-invoked — figures a human judges at a glance: spec figures (references/spec-figures.md, in docs/) and delivery evidence (references/delivery.md, flows, GIFs, side-by-sides from the implementation; never in git)
 │   │   ├── spec-status/SKILL.md      # shared, model-invoked — the spec state machine (who flips what, when) and how issue labels follow it
 │   │   ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human
+│   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md and the CLAUDE.md / AGENTS.md block
 │   │   ├── issue-dispatch/SKILL.md   # one dispatch round over GitHub issues — run by a fixed session under /loop
 │   │   ├── to-spec/SKILL.md          # + references/from-issues.md — drafting specs from GitHub issues
@@ -270,7 +271,6 @@ idea-loop/
 │   │   │   references/pr-description.md      # the PR description's four sections, and how stop reports and review rounds are written
 │   │   │   references/review-loop.md         # where reports live: the session + one local file per PR; replies; archive at merge
 │   │   └── dreaming/SKILL.md         # + references/ — proposal-table (shape and execution pass), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
-│   │       references/design-archive.md      # the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
 │   │       references/design-md.md           # the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
 │   ├── design/
 │   │   ├── uiux-imagine/SKILL.md     # the divergent half — the process; the work is in agents/uiux-imaginer.md

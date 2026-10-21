@@ -1,10 +1,10 @@
 # 档案对账：拿 `prod/` 去对运行中的界面
 
-`dreaming` 每周把设计档案（`docs/design/prod/`，结构见 `design-archive.md`，下称「档案 reference」）拿去对 main 上真实跑着的界面，抓三种悄悄发生的漂移：绕过流程的改动（没走 `tmp/` 的提交）、环境变化（依赖升级、后端返回变了）、产品本身坏了。**前两种提议改档案，第三种报告给人，档案不被改成坏掉的样子。**
+`dreaming` 每周把设计档案（`docs/design/prod/`，结构见 `../../design-archive/SKILL.md`，下称「档案」）拿去对 main 上真实跑着的界面，抓三种悄悄发生的漂移：绕过流程的改动（没走 `tmp/` 的提交）、环境变化（依赖升级、后端返回变了）、产品本身坏了。**前两种提议改档案，第三种报告给人，档案不被改成坏掉的样子。**
 
 两波：先**源码波**（不开浏览器，便宜），再**实时波**（必跑，源码波干净也跑）。出处是 pstack 的 maintain-verification-skill：两波、分诊、驱动不变量。`prod/` 里没有任何对象时不跑这份，改做全站初扫（`initial-scan.md`）。
 
-> 下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根>`。读之前先读档案 reference §2、§5、§8。提议表的行与处置闭集在 `proposal-table.md`；**产物一律先写进 dreaming 自己的 tmp 目录，不直接写 `prod/`**（§4）。
+> 下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根>`。读之前先读档案的「目录与分工」「进入方式从图上推导」「查询模块」。提议表的行与处置闭集在 `proposal-table.md`；**产物一律先写进 dreaming 自己的 tmp 目录，不直接写 `prod/`**（§4）。
 
 ## 1 环境
 
@@ -12,7 +12,7 @@
 - **开发服务**：按 `../../implement/references/worktree.md` §2 找目标仓库声明的准备命令，用一个**自己挑的空闲端口**起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换；定时那次没有编排者给端口）。前后端要互相指向的，改它读的那个配置，别碰别人的端口。
 - **浏览器**：和 `implement` 并行的执行方一样共用会话里那一个，照 `../../implement/references/worktree.md` 与 `implement` 的做法排队——`scripts/browser-lock.mjs acquire <锁目录> --owner dreaming`。锁目录默认放自己 worktree 的 `.tmp/dreaming/<日期>/browser.lock`；人说同一时间有 `implement` 在用同一个浏览器，就改用那一边的锁目录。自己起 chromium 的脚本不用抢。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」，目录名叫 `dreaming-<日期>`，不是任何一个 spec 的名字）：
-  - `delta/`：要进档案的对象，与 `prod/` 同构（档案 reference §2），人批了才由归档脚本并进 `prod/`；
+  - `delta/`：要进档案的对象，与 `prod/` 同构（档案的「目录与分工」），人批了才由归档脚本并进 `prod/`；
   - `evidence/`：只给人看、**不进档案**的图（产品坏了的现状）。
 
   比对用的草稿图放 `.tmp/dreaming/<日期>/shots/`，不放进 `docs/design/tmp/`——一致的状态不该在 tmp 里留下任何新图。进行中需求的 `tmp/<spec-slug>/` 不归 dreaming 管，一个字节不碰。
