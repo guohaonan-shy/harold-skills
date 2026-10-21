@@ -14,10 +14,10 @@ issue 是需求的入口，不是工单：待办的 issue 被起草成 spec，sp
 
 ## 发布 spec
 
-spec 推送到远端之后才发布到这里（issue-dispatch 的起草要等起草 PR 合并进主分支），免得 issue 指向一份别人读不到的 spec。用 idea-loop 的 `issues.mjs publish`，不手开：
+spec 经一个只改 `docs/` 的 PR 合进主分支之后，才在这里挂上状态 label，免得 label 指向一份主分支上没有的 spec。全用 idea-loop 的 `issues.mjs`，不手开、不手打：
 
-- spec 覆盖了已有的 issue：按 spec 的状态同步它们的 label，第一次同步时留一条评论指向 spec。
-- 没有：开一个标题以「spec：」开头的 issue，挂上 spec 的状态 label，正文是 spec 的 summary、spec 文件路径和它所在的分支。设计和实现的 loop 靠它找到这份 spec。
+- spec 覆盖了已有的 issue：写 spec 时 `handoff`，号码记进 spec；合并后 `sync` 挂 label，第一次挂时留一条评论指向 spec。
+- 一个都没覆盖：写 spec 时 `open`，开一个标题以「spec：」开头、先不挂 label 的 issue，正文是 spec 的 summary 和 spec 文件路径；合并后同样 `sync`。
 
 ## 状态 label
 
@@ -27,8 +27,8 @@ idea-loop 只管 `status:*` 这一组 label，由它的脚本按 spec 的状态�
 |---|---|
 | 待办 | open，没有 `status:*` label |
 | 不接手 | open，`status:搁置`，没有 spec 覆盖它：人手动打，idea-loop 不接 |
-| 跟着 spec 走 | open，恰好一个 `status:<spec 的状态>`：`草稿` / `审核中` / `待设计` / `设计中` / `待实现` / `在飞` / `已拍板未排期` / `搁置` |
-| 已解决 | closed，completed：spec 的 PR 合并后 |
-| 不做 | closed，not planned：人审 spec 时决定不做 |
+| 跟着 spec 走 | open，恰好一个 `status:<spec 的状态>`：`审核中` / `待设计` / `设计中` / `待实现` / `在飞` / `已拍板未排期` / `搁置` |
+| 已解决 | closed，completed：spec 的实现 PR 合并后 |
+| 不做 | closed，not planned：人在审核会话里决定不做 |
 
 spec 覆盖了哪几个 issue，记在 spec frontmatter 的 `issues: [12, 15]` 里。spec 是真相，label 是它的投影。

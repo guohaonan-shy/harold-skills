@@ -2,10 +2,12 @@
 /**
  * The one way a spec's status changes.
  *
- * A spec walks 草稿 → 审核中 → (待设计 → 设计中 →) 待实现 → 在飞 (skills/engineering/spec-status/SKILL.md). Each
- * step has one writer and a precondition that can be read off the files: the design states only for a spec
- * that touches UI, 待实现 only once its design is frozen (a 冻结摘要 under 实现决策), 在飞 only once the tickets
- * are cut. 待设计 and 待实现 are queue states: the dispatcher loops pick specs up from them. Skills used to flip the
+ * A spec walks 审核中 → (待设计 → 设计中 →) 待实现 → 在飞 (skills/engineering/spec-status/SKILL.md). Each
+ * step has one writer and a precondition that can be read off the files: a spec leaves 审核中 only once nothing
+ * in it waits for a human (no 需要 grill, no 待定 fork under 实现决策, no 建议关闭 entry), the design states only
+ * for a spec that touches UI, 待实现 only once its design is frozen (a 冻结摘要 under 实现决策), 在飞 only once
+ * the tickets are cut. A new spec is written as 审核中 and `route` moves it straight on when nothing waits for
+ * a human. 待设计 and 待实现 are queue states: the dispatcher loops pick specs up from them. Skills used to flip the
  * frontmatter by hand and refresh docs/spec/index.md by hand; a flip that skipped its precondition,
  * or an index that kept the old status, went unnoticed until a later stage refused to start. Here the
  * transition is checked, written and indexed in one call, and anything illegal is refused with the
@@ -16,6 +18,7 @@
  *
  * Usage:
  *   node spec-status.mjs set       <docs-dir> <spec-slug> <status>            → checks, writes, re-indexes
+ *   node spec-status.mjs route     <docs-dir> <spec-slug>                     → a new 审核中 spec: on to 待设计 / 待实现 unless something waits for a human (no label sync)
  *   node spec-status.mjs index     <docs-dir>                                 → regenerates docs/spec/index.md
  *   node spec-status.mjs check     <docs-dir>                                 → JSON: specs, problems (old flat layout, bad status)
  * A spec that lists GitHub issues in its frontmatter (`issues: [12, 15]`) has their status labels
@@ -29,11 +32,10 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { defaultGh, issuesOf, syncIssues } from './issues.mjs';
 
-export const STATUSES = ['草稿', '审核中', '待设计', '设计中', '待实现', '在飞', '已拍板未排期', '搁置'];
+export const STATUSES = ['审核中', '待设计', '设计中', '待实现', '在飞', '已拍板未排期', '搁置'];
 
 /** Legal next statuses. Preconditions on top of these live in transitionError. */
 export const NEXT = {
-  草稿: ['审核中', '搁置'],
   审核中: ['待设计', '待实现', '已拍板未排期', '搁置'],
   待设计: ['设计中', '审核中', '已拍板未排期', '搁置'],
   设计中: ['待实现', '审核中', '已拍板未排期', '搁置'],
@@ -85,6 +87,17 @@ export function touchesUi(md) {
 }
 
 export const needsGrill = (md) => /^>\s*需要 grill/m.test(String(md));
+/** What in the spec still waits for a human; empty when it can leave 审核中. */
+export function forHuman(md) {
+  const out = [];
+  if (needsGrill(md)) out.push('开头标着「需要 grill」');
+  const forks = (section(md, '实现决策') ?? '').split('\n').filter((l) => /^#{2,6}\s+待定/.test(l)).length;
+  if (forks) out.push(`「实现决策」里还有 ${forks} 条「待定」`);
+  const close = section(md, '建议关闭');
+  if (close !== null && close.trim()) out.push('「建议关闭」里还有 issue 等人处置');
+  return out;
+}
+
 export const hasFreezeSummary = (md) => section(section(md, '实现决策') ?? '', '冻结摘要') !== null;
 
 /** Why `from → to` is refused, or null when it is allowed. */
@@ -93,6 +106,7 @@ export function transitionError(from, to, md, ticketCount) {
   if (!STATUSES.includes(from)) return `spec 现在的状态「${from || '没写'}」不在状态机里，先按 wiki-conventions 的「从平铺布局迁移」迁移`;
   if (from === to) return `spec 已经是「${to}」`;
   if (!NEXT[from].includes(to)) return `「${from}」不能直接翻成「${to}」（能翻成：${NEXT[from].join(' / ')}）`;
+  if (from === '审核中' && (to === '待设计' || to === '待实现') && forHuman(md).length) return `spec 里还有等人定的：${forHuman(md).join('；')}`;
   if (['待设计', '设计中', '待实现', '在飞'].includes(to) && needsGrill(md)) return 'spec 开头标着「需要 grill」，先 grill 再往下走';
   if ((to === '待设计' || to === '设计中') && !touchesUi(md)) return 'spec 的「前端交互」写的是「不涉及」——不碰 UI 的 spec 不进设计';
   if (to === '待实现') {
@@ -111,11 +125,15 @@ export function transitionError(from, to, md, ticketCount) {
 const DEFAULT_INDEX = `# spec
 > 契约：还没了结的规格，一份一个目录（\`<slug>/<slug>.md\`，工单在 \`<slug>/tickets/\`）——做完整个目录删（删前必须先写 ADR）。
 
-| 文件 | status | summary |
-|---|---|---|
+| 文件 | summary |
+|---|---|
 `;
 
-/** Replaces the rows of the index table, keeping everything above and below it. */
+/**
+ * Replaces the index table, keeping everything above and below it. No status column: the status
+ * lives in each spec's frontmatter and changes on every stage's PR, so a column here would make
+ * PRs running side by side conflict on this file. An old table with a status column is rewritten.
+ */
 export function renderIndex(existing, specs) {
   const lines = String(existing || DEFAULT_INDEX).split('\n');
   let header = lines.findIndex((l) => /^\|\s*文件\s*\|/.test(l));
@@ -124,8 +142,8 @@ export function renderIndex(existing, specs) {
   while (end < lines.length && lines[end].startsWith('|')) end++;
   const rows = [...specs]
     .sort((a, b) => a.slug.localeCompare(b.slug))
-    .map((s) => `| [[${s.slug}]] | ${s.status ?? ''} | ${s.summary ?? ''} |`);
-  return [...lines.slice(0, header + 2), ...rows, ...lines.slice(end)].join('\n');
+    .map((s) => `| [[${s.slug}]] | ${s.summary ?? ''} |`);
+  return [...lines.slice(0, header), '| 文件 | summary |', '|---|---|', ...rows, ...lines.slice(end)].join('\n');
 }
 
 // ---------- io boundary ----------
@@ -181,9 +199,21 @@ function main() {
     }
     return;
   }
+  if (cmd === 'route' && a && b) {
+    const file = join(a, 'spec', b, `${b}.md`);
+    if (!existsSync(file)) throw new Error(`没有 ${file}`);
+    const md = read(file);
+    if (frontmatter(md).status !== '审核中') throw new Error(`拒绝：route 只用于刚写好的「审核中」spec，${b} 现在是「${frontmatter(md).status ?? '没写'}」`);
+    const wait = forHuman(md);
+    if (wait.length) return console.log(`${b}: 留在审核中——${wait.join('；')}`);
+    const to = touchesUi(md) ? '待设计' : '待实现';
+    writeFileSync(file, withStatus(md, to));
+    reindex(a);
+    return console.log(`${b}: 审核中 → ${to}（issue 的 label 在发布时同步）`);
+  }
   if (cmd === 'index' && a) return reindex(a);
   if (cmd === 'check' && a) return console.log(JSON.stringify(scan(a), null, 2));
-  throw new Error('usage: spec-status.mjs set <docs-dir> <spec-slug> <status> | index <docs-dir> | check <docs-dir>');
+  throw new Error('usage: spec-status.mjs set <docs-dir> <spec-slug> <status> | route <docs-dir> <spec-slug> | index <docs-dir> | check <docs-dir>');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

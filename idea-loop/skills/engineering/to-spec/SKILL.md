@@ -21,22 +21,28 @@ issue tracker 怎么用、状态 label 是什么意思，setup 已经写进目�
 
 5. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter 写：
    - `type: spec`；
-   - `status`：人在场写 `审核中`，不在场写 `草稿`，碰不碰 UI 都一样，grill 里人答过的问题不等于人同意了整份 spec；
+   - `status: 审核中`；
    - `tags`、`summary`（一句话，≤60 字）；
    - `related`：有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有就留空列表。
 
-   spec 覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`。不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
+   让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`，不挂的话 `issue-dispatch` 会为同一个 issue 再起草一份；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后才挂。
 
    frontmatter 之后第一行是 `# <标题>`，再往下照 `<spec-template>`。几条贯穿全文的规则在 `idea-loop:decision-rules`，模板里只写它落在哪一节：
    - 现状的陈述都带出处，讲影响带规模数字（「现状先查清」）；
    - 先写交付物，再写做法（「先写交付物，再列做法」）；
    - 能按规则判的自己定，写成已定的决定并注明依据；依据不成立的才写成选项（「自己定的四条」「交给人时」）。
 
-   图怎么画、放哪照 `idea-loop:evidence` 的「spec 里的图」：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。写完跑 `spec-status index <docs>` 刷新 `docs/spec/index.md`。
+   图怎么画、放哪照 `idea-loop:evidence` 的「spec 里的图」：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
 
-6. **发布到 issue tracker**：spec 到了远端之后才发布，免得 issue 指向一份别人读不到的 spec。提交并推送当前分支，然后跑 `issues publish <docs> <slug>`：spec 列了 issue 的，按 spec 的状态同步它们的 label；没列的，开一个 spec issue，正文指向 spec 文件和当前分支，号码写回 frontmatter，再提交推送一次。这一步之后设计和实现的 loop 就看得到它。调用方说了发布由它来做的（比如起草 PR 要先合并），写完 spec 就停在这里。
+6. **分流**：跑 `spec-status route <docs> <slug>`。spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」、「建议关闭」），它就按碰不碰 UI 翻成 `待设计` 或 `待实现`；有，就留在 `审核中`，并说出还剩哪几样。不用等人审：人在对话里答过的、规则能判的，已经写成定下的决定了。
 
-7. **收工**：告诉人下一步是通读这份 spec。人说审完、同意了：碰 UI 的（「前端交互」标着「待补图」）翻成 `待设计`，不碰的翻成 `待实现`（`spec-status set`，issue 的 label 跟着翻），提交、推送，loop 接手。人也可以不等 loop，自己调 `/idea-loop:uiux-imagine` 或 `idea-loop:to-ticket`。人审完改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
+7. **合进主分支，发布到 issue tracker**：loop 只从主分支取活，所以 spec 先经一个只改 `docs/` 的 PR 合进主分支，再给 issue 挂 label，免得 label 指向一份主分支上没有的 spec。
+   调用方说了提交、合并和发布由它来做的（比如 `issue-dispatch` 的起草），这一步整个留给它。
+
+   1. 提交到从最新主分支开出的 `spec/<slug>` 分支，只带这份 spec 的目录、raw 桶和 `docs/spec/index.md`；工作区里有别的改动，就另开一个 worktree 来提交。推送，`gh pr create`。
+   2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`，然后在更新过的主分支上跑 `issues sync <docs> <slug>`，按 spec 的状态挂上 label。检查失败就停下告诉人。
+
+8. **收工**：告诉人这份 spec 到了哪个状态。`待设计` / `待实现` 的，由 `issue-dispatch` 对应状态的 loop 接手，人也可以自己调 `/idea-loop:uiux-imagine` 或 `idea-loop:to-ticket`。留在 `审核中` 的，说清还剩哪几样等人定：人在场就接着在这里定，定完删掉对应的标记，`spec-status set` 翻状态，照第 7 步合进主分支；不在场就等审核的 loop 开会话。人改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
 
 这里不建工单（`idea-loop:to-ticket` 的事），不写 ADR（`/idea-loop:dreaming` 的事）。
 
@@ -93,7 +99,7 @@ issue tracker 怎么用、状态 label 是什么意思，setup 已经写进目�
 
 ## 实现决策
 
-要建或改的模块、它们的接口、技术澄清、架构选择、schema 变更、API 契约、具体交互。能按规则判的写成已定的决定，注明依据（规则原文、人的原话或现存实例），边缘情形在这里定好，不留给 implement 停下。依据不成立的才写成选项：差在用户能感到的地方，每个选项配一个具体例子，写上推荐。一条要人定的都没有，写「无选项」。
+要建或改的模块、它们的接口、技术澄清、架构选择、schema 变更、API 契约、具体交互。能按规则判的写成已定的决定，注明依据（规则原文、人的原话或现存实例），边缘情形在这里定好，不留给 implement 停下。依据不成立的才写成选项，每条一个小节，标题是「### 待定：<要定的问题>」：选项差在用户能感到的地方，每个选项配一个具体例子，写上推荐。人定了，就把小节改写成定下的决定、删掉「待定」两个字。
 
 不写文件路径和代码片段，它们烂得最快。例外：原型里产出的片段比散文更准地说清了一个决定（状态机、reducer、schema、类型形状），就内联进那条决定，注明出自原型，只留带决定的部分。
 

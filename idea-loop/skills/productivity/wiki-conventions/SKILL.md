@@ -147,7 +147,7 @@ related: ["[[other-slug]]"]
 
 | type | 合法 status |
 |---|---|
-| `spec` | `草稿` · `审核中` · `待设计` · `设计中` · `待实现` · `在飞` · `已拍板未排期` · `搁置` |
+| `spec` | `审核中` · `待设计` · `设计中` · `待实现` · `在飞` · `已拍板未排期` · `搁置` |
 | `adr` | `生效` · `已被取代（→ ADR-NNNN）` |
 | `raw` | 无（改用 `source_type` + `captured`） |
 
@@ -155,7 +155,7 @@ related: ["[[other-slug]]"]
 
 `design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `idea-loop:design-archive` 的「frontmatter」。
 
-spec 的状态按 `草稿 → 审核中 →（待设计 → 设计中 →）待实现 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `idea-loop:spec-status`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
+spec 的状态按 `审核中 →（待设计 → 设计中 →）待实现 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `idea-loop:spec-status`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
 
 **ADR 的取代默认是 section 级，不是整份**——一份 ADR 常含多条决策（引用粒度本就是 `ADR-NNNN §n`），新决策通常只推翻其中一节。frontmatter 的 `status` 只在**全部**小节都作废时才翻成 `已被取代`；部分取代记在那一节标题后（`⚠️ 已被取代 → ADR-<new> §<n>`），文件本身仍是 `生效`。
 
@@ -182,6 +182,8 @@ spec 的状态按 `草稿 → 审核中 →（待设计 → 设计中 →）待�
 |---|---|---|
 | [[slug]] | 在飞 | <取自 frontmatter.summary> |
 ```
+
+`docs/spec/index.md` 只有「文件」「summary」两列，不列 status：spec 的状态每过一段就在那一段的 PR 里变，几个 PR 同时开着时会在这张表上冲突；状态看每份 spec 的 frontmatter，要看全貌跑 `spec-status.mjs check`。
 
 表体**从 frontmatter 生成**，不手工维护（`docs/spec/index.md` 由 `scripts/spec-status.mjs index` 生成）——手工维护必然漂移（v1 实证：一份文档晋级后旧索引条目还留着，同时出现在两个索引里）。
 

@@ -3,21 +3,22 @@
  * The one way a GitHub issue's loop status changes (skills/engineering/spec-status/SKILL.md, section issue 的 label).
  *
  * An issue the loop has not touched carries no status label: it is 待办. Once a spec covers it, the
- * issue carries exactly one `status:<spec status>` label that follows the spec — 草稿 when drafted,
- * 审核中 when its review session opens, and so on — and it is closed when the spec's PR merges. The
+ * issue carries exactly one `status:<spec status>` label that follows the spec — set once the spec is
+ * on the main branch, then flipped along with it — and it is closed when the spec's PR merges. The
  * human can put `status:搁置` on an untouched issue to keep the loop away from it. The link from a
  * spec to its issues lives in the spec's frontmatter (`issues: [12, 15]`), so the spec is the source of
  * truth and the labels are a projection of it: spec-status.mjs calls `sync` after every status flip.
- * `publish` is how a spec reaches the tracker once it is on the remote: the issues it lists get their
- * labels synced, and a spec that covers no issue (one written from a conversation) gets one opened, so
- * the design and implement loops, which pick work up from the labels, can see it. That issue's body
- * points at the spec file and the branch it lives on; the spec file stays the truth.
+ * Labels are first synced once the spec's PR has merged into the main branch, so no label points at a
+ * spec the main branch does not have. A spec that covers no issue (one written from a conversation) gets
+ * a spec issue from `open` before its PR, so the number travels with the PR; it carries no label until
+ * that first sync, and `candidates` never offers it. Its body points at the spec file; the spec file
+ * stays the truth.
  *
  * Usage (<docs> is the target project's docs/ directory; gh runs there, so it acts on that repo):
  *   node issues.mjs labels     <docs>                      → creates the status:* labels that are missing
  *   node issues.mjs candidates <docs> [<limit>]            → JSON: open issues with no status:* label that no spec lists, oldest first
  *   node issues.mjs handoff    <docs> <spec-slug> <n>      → adds #n to the spec's frontmatter (GitHub untouched)
- *   node issues.mjs publish    <docs> <spec-slug>          → syncs the listed issues; none listed: opens one with the spec's status label, writes the number back
+ *   node issues.mjs open       <docs> <spec-slug>          → the spec covers no issue: opens a spec issue (no label yet), writes the number into the spec
  *   node issues.mjs sync       <docs> <spec-slug>          → sets each listed issue's label to the spec's status
  *   node issues.mjs unhandoff  <docs> <spec-slug> <n>      → takes #n off the spec and its status label off → 待办
  *   node issues.mjs drop       <docs> <spec-slug> <n>      → takes #n off the spec and closes it as not planned
@@ -33,7 +34,7 @@ import { STATUSES, frontmatter, scan } from './spec-status.mjs';
 
 export const PREFIX = 'status:';
 export const label = (status) => `${PREFIX}${status}`;
-const COLORS = { 草稿: 'fbca04', 审核中: '1d76db', 待设计: 'd4c5f9', 设计中: '5319e7', 待实现: 'c2e0c6', 在飞: '0e8a16', 已拍板未排期: 'c5def5', 搁置: 'bfbfbf' };
+const COLORS = { 审核中: '1d76db', 待设计: 'd4c5f9', 设计中: '5319e7', 待实现: 'c2e0c6', 在飞: '0e8a16', 已拍板未排期: 'c5def5', 搁置: 'bfbfbf' };
 
 // ---------- spec frontmatter: issues: [12, 15] ----------
 
@@ -99,7 +100,7 @@ export function listedIssues(docs) {
 export function candidates(gh, limit = 100, listed = new Set()) {
   const all = JSON.parse(gh(['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'number,title,labels']));
   return all
-    .filter((i) => !i.labels.some((l) => l.name.startsWith(PREFIX)) && !listed.has(i.number))
+    .filter((i) => !i.labels.some((l) => l.name.startsWith(PREFIX)) && !listed.has(i.number) && !isSpecIssue(i.title))
     .sort((a, b) => a.number - b.number)
     .slice(0, limit)
     .map(({ number, title }) => ({ number, title }));
@@ -117,24 +118,24 @@ export function handoffIssue(gh, docs, slug, n) {
   writeFileSync(file, withIssues(md, [...issuesOf(md), n]));
 }
 
-/** Puts a spec on the tracker: syncs the issues it lists, or opens one when it lists none. Returns the lines to print. */
-export function publishSpec(gh, docs, slug, branch) {
+export const SPEC_ISSUE = 'spec：';
+const isSpecIssue = (title) => String(title ?? '').startsWith(SPEC_ISSUE);
+
+/** Opens a spec issue for a spec that covers none, without a label; returns its number, or null when the spec already lists issues. */
+export function openSpecIssue(gh, docs, slug) {
   const { file, md } = readSpec(docs, slug);
-  if (issuesOf(md).length) return syncIssues(gh, docs, slug);
-  const { status, summary } = frontmatter(md);
-  if (!STATUSES.includes(status)) throw new Error(`spec 的 status「${status ?? '没写'}」不在状态机里`);
-  ensureLabels(gh);
+  if (issuesOf(md).length) return null;
   const title = String(md).match(/^# (.+)$/m)?.[1].trim() || slug;
   const body = [
-    summary,
+    frontmatter(md).summary ?? '',
     '',
-    `spec：\`docs/spec/${slug}/${slug}.md\`${branch ? `，分支 \`${branch}\`` : ''}。spec 文件是真相，这个 issue 只是它在 tracker 上的入口；状态 label 跟着 spec 走，spec 的 PR 合并时关闭。`,
-  ].filter((l) => l !== undefined).join('\n');
-  const out = gh(['issue', 'create', '--title', `spec：${title}`, '--body', body, '--label', label(status)]);
-  const n = Number(String(out).trim().match(/\/issues\/(\d+)$/)?.[1]);
-  if (!n) throw new Error(`gh issue create 没返回 issue 地址：${String(out).trim()}`);
+    `spec：\`docs/spec/${slug}/${slug}.md\`。spec 文件是真相，这个 issue 只是它在 tracker 上的入口；状态 label 在 spec 合进主分支后挂上、跟着 spec 走，spec 的实现 PR 合并时关闭。`,
+  ].join('\n');
+  const out = String(gh(['issue', 'create', '--title', `${SPEC_ISSUE}${title}`, '--body', body])).trim();
+  const n = Number(out.match(/\/issues\/(\d+)$/)?.[1]);
+  if (!n) throw new Error(`gh issue create 没返回 issue 地址：${out}`);
   writeFileSync(file, withIssues(md, [n]));
-  return [`#${n} ← spec ${slug}（${label(status)}）`];
+  return n;
 }
 
 export function syncIssues(gh, docs, slug) {
@@ -143,9 +144,10 @@ export function syncIssues(gh, docs, slug) {
   if (!STATUSES.includes(status)) throw new Error(`spec 的 status「${status ?? '没写'}」不在状态机里`);
   const done = [];
   for (const n of issuesOf(md)) {
-    const plan = labelPlan(issue(gh, n).labels, status);
+    const it = issue(gh, n);
+    const plan = labelPlan(it.labels, status);
     edit(gh, n, plan);
-    if (plan.first) gh(['issue', 'comment', String(n), '--body', `已移交给 spec \`${slug}\`（\`docs/spec/${slug}/${slug}.md\`）。`]);
+    if (plan.first && !isSpecIssue(it.title)) gh(['issue', 'comment', String(n), '--body', `已移交给 spec \`${slug}\`（\`docs/spec/${slug}/${slug}.md\`）。`]);
     done.push(`#${n} → ${label(status)}`);
   }
   return done;
@@ -183,14 +185,6 @@ export function resolveIssues(gh, docs, slug, pr) {
 
 // ---------- cli ----------
 
-const currentBranch = (cwd) => {
-  try {
-    return execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-  } catch {
-    return '';
-  }
-};
-
 const num = (v, what) => {
   if (!/^\d+$/.test(String(v ?? ''))) throw new Error(`${what}「${v ?? ''}」不是数字`);
   return Number(v);
@@ -198,14 +192,17 @@ const num = (v, what) => {
 
 function main() {
   const [cmd, docs, a, b] = process.argv.slice(2);
-  if (!docs || !existsSync(docs)) throw new Error(`usage: issues.mjs <labels|candidates|handoff|publish|sync|unhandoff|drop|resolve> <docs> …（${docs ?? '没给 docs'} 不存在）`);
-  if (!['labels', 'candidates', 'handoff', 'publish', 'sync', 'unhandoff', 'drop', 'resolve'].includes(cmd)) throw new Error(`不认识的命令「${cmd}」`);
+  if (!docs || !existsSync(docs)) throw new Error(`usage: issues.mjs <labels|candidates|handoff|open|sync|unhandoff|drop|resolve> <docs> …（${docs ?? '没给 docs'} 不存在）`);
+  if (!['labels', 'candidates', 'handoff', 'open', 'sync', 'unhandoff', 'drop', 'resolve'].includes(cmd)) throw new Error(`不认识的命令「${cmd}」`);
   const gh = defaultGh(docs);
   if (cmd === 'labels') return ensureLabels(gh).forEach((l) => console.log(`created ${l}`));
   if (cmd === 'candidates') return console.log(JSON.stringify(candidates(gh, a ? num(a, 'limit') : undefined, listedIssues(docs)), null, 2));
   if (!a) throw new Error(`usage: issues.mjs ${cmd} <docs> <spec-slug> …`);
   if (cmd === 'handoff') return handoffIssue(gh, docs, a, num(b, 'issue'));
-  if (cmd === 'publish') return publishSpec(gh, docs, a, currentBranch(docs)).forEach((l) => console.log(l));
+  if (cmd === 'open') {
+    const n = openSpecIssue(gh, docs, a);
+    return console.log(n ? `#${n} ← spec ${a}` : `spec ${a} 已经列了 issue，不另开`);
+  }
   if (cmd === 'sync') return syncIssues(gh, docs, a).forEach((l) => console.log(l));
   if (cmd === 'unhandoff') return unhandoffIssue(gh, docs, a, num(b, 'issue'));
   if (cmd === 'drop') return dropIssue(gh, docs, a, num(b, 'issue'));

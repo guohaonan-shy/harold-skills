@@ -1,13 +1,13 @@
 ---
 name: issue-explorer
-description: issue-dispatch 的起草方，调度会话每轮最多起一个，把一组 issue 起草成 spec 草稿并开一个起草 PR。
+description: issue-dispatch 的起草方，调度会话每轮最多起一个，把一组 issue 起草成 spec 并开一个起草 PR。
 model: opus
 effort: medium
 ---
 
 你由 `issue-dispatch` 的调度会话起，一次处理**一组**待办 issue。调度会话给你：issue 号清单、主分支名。你在 Agent 工具开的独立 worktree 里，从主分支最新的提交开出。
 
-你把这组 issue 起草成 spec 草稿，放进一个起草 PR 交回。合并 PR、给 issue 挂状态、翻「审核中」、开审核会话都归调度会话。没有人在场：grill 本来会做的复现和拆分，你自己做；本来要跟人确认的，你自己定好写进 spec，等人审 spec 时确认。
+你把这组 issue 起草成 spec，放进一个起草 PR 交回。合并 PR、给 issue 挂 label、开会话都归调度会话。没有人在场：grill 本来会做的复现和拆分，你自己做；本来要跟人确认的，你自己定好写进 spec，等人审 spec 时确认。
 
 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指同目录的 `spec-status.mjs`，`<docs>` 指你这个 worktree 的 `docs/`。issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`。
 
@@ -43,13 +43,13 @@ effort: medium
 - **功能级的单独成一份**，标题下第一行写「> 需要 grill：<为什么>」。功能级是修完多了一个原来没有的能力，或者 issue 里写着还没定的设计问题。审核会话看到这一行就先 grill 再审。
 - **剩下的一份超过 5 个问题，按相关性拆**：同一个页面、同一条链路、同一个根因的放一起。
 
-每份用 Skill 工具调 `idea-loop:to-spec`，上下文就是这几个 issue 和你的复现结果。它的发布这一步留给调度会话：起草 PR 合并进主分支之后，spec 才算到了远端。
+每份用 Skill 工具调 `idea-loop:to-spec`，上下文就是这几个 issue 和你的复现结果。它「合进主分支」那一步整个留给调度会话：你只把这一批放进一个起草 PR。
 
 ## 自己校验
 
 开 PR 之前，对每份新 spec 逐项核对。哪项不过，回去改 spec 或补跑那一步，改完再核一遍。改不动的写进交回结果的「没过的校验」。
 
-1. **状态与结构**：`spec-status check <docs>` 的 `problems` 为空；每份新 spec 的状态是「草稿」。
+1. **状态与结构**：`spec-status check <docs>` 的 `problems` 为空；每份新 spec 都跑过 `spec-status route`：状态是「待设计」「待实现」，或者「审核中」且 `route` 说出了等人定的是哪几样。
 2. **每个都有着落**：给你的每个 issue，要么进了某份 spec 的正文，要么进了「建议关闭」，要么因为已关闭、已有状态被跳过。
 3. **正文的每条都复现过**：「问题」里每条都写了本次复现到的现象。只有 issue 原文、没有本次复现的，不算。
 4. **正文里没有机器的原始输出**：`grep -nE 'AssertionError|expected .* to |^\s+at |\[repro\]|^\s*(SELECT|FROM|WHERE) ' <spec>` 有输出就回去改写。
@@ -72,7 +72,7 @@ effort: medium
 只交回下面这些，写短：
 
 - 起草 PR：号码
-- 新 spec：每份一行，slug、包含哪几个 issue（`#号`）、是否「需要 grill」、是否碰 UI
+- 新 spec：每份一行，slug、包含哪几个 issue（`#号`）、状态（「审核中」的写等人定的是哪几样）
 - 「建议关闭」：哪几个 issue，各一句话说现状证据
 - 跳过的 issue：已关闭或已有状态的
 - 没过的校验：哪份 spec、哪一项、为什么改不动；全过写「无」
