@@ -283,7 +283,8 @@ idea-loop/
 │   │   └── uiux-research/SKILL.md    # human-run design research — only the calling mechanism; the work is in agents/uiux-researcher.md
 │   │       references/research-backend.md
 │   └── productivity/
-│       └── grill/SKILL.md
+│       ├── grill/SKILL.md
+│       └── writing-for-agents/       # human-invoked; SKILL.md + SKILL-MECHANICS.md copied verbatim from mattpocock/skills (MIT, see its LICENSE)
 ├── evals/uiux-research/              # the one baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
