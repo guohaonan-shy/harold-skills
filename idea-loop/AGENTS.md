@@ -2,13 +2,13 @@
 
 ## skill 分类
 
-skill 放在 `skills/<分类>/<slug>/SKILL.md`，分类看这个 skill 产出什么：
+skill 放在 `skills/<分类>/<slug>/SKILL.md`。三个分类：
 
-- **engineering**：产出落在目标仓库的代码或 `docs/` 上——spec、工单、实现、review、知识库维护。
-- **design**：产出是界面设计——调研页、原型、变种板、冻结画布。
-- **productivity**：不绑定某个目标仓库，任何对话都能用——追问、写给 agent 的文档。
+- **engineering**：按生产工程的标准，从一个想法走到合并进主干的代码——spec、工单、实现、review，以及这一路沉淀下来的知识库。
+- **design**：UI 与品牌内容的设计——调研别人怎么做、原型、发散出方向、打磨到冻结。
+- **productivity**：日常工作的效率工具，不绑定某个产品或某段流程——追问想法、给 agent 写文档。
 
-拿不准时问：换一个没有代码的项目，这个 skill 还用得上吗？用得上是 productivity；用得上但只在做界面时用是 design；其余是 engineering。
+一个 skill 同时沾两类时，按它的产出归类：产出是代码或知识库里的工程文档，归 engineering；产出是界面或品牌素材，归 design；产出只服务于人自己的工作方式，归 productivity。
 
 ## 参考资料归谁
 
