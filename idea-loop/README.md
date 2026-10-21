@@ -297,8 +297,8 @@ idea-loop/
     ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
     ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
     ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
-    ├── critic-score.mjs              # finding schema + the critic's score-vs-findings audit (+ the CLI uiux-refine calls each round)
-    ├── critic-score.test.mjs         # its unit tests — the score bands, row for row
+    ├── critic-score.mjs              # the critic's output shape and the stop decision: direction / pass / plateau / continue (+ the CLI uiux-refine calls each round)
+    ├── critic-score.test.mjs         # its unit tests
     ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
     ├── design-archive-check.mjs      # the archive's six validation rules (reachability, async, references, journeys, decisions/candidates, motions/usedBy), file and field named; exit 0/1
     ├── design-archive-check.test.mjs # one red fixture per rule + the delta overlay + the old-layout note
@@ -387,11 +387,10 @@ What came across:
 | The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
 | Design research | user-level `refero` MCP (the human adds it with their own token), checked by `setup` |
 
-One file there did not come across — `skills/design/uiux-refine/references/design/critic-rubric.md` is new. It is
-what the design critic reads each round: the severity ladder anchored to an AD's action,
-the score bands the worst finding caps, and the stop threshold, stated openly rather than
-hidden. It holds because `scripts/critic-score.mjs` recomputes the allowed band from the
-findings the critic just wrote and invalidates the round when the number does not follow.
+The design critic (`agents/ui-master.md`) has no separate rubric: it judges the gap to what a top
+studio would ship, lists the biggest gaps first (each routed by `kind`: direction / pattern / craft)
+and scores 1–10, 9 and up meaning the studio would ship it as-is. `scripts/critic-score.mjs` checks
+the shape and turns the round into a stop decision (direction, pass, a three-round plateau, or continue).
 
 Nothing in `skills/design/uiux-refine/references/design/` is an entry point. They are loaded on demand by whichever
 step is running; the hooks are the only pieces that fire on their own. One fires only on a

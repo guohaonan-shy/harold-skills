@@ -27,15 +27,15 @@ disable-model-invocation: true
 
 designer 交付一版之后：
 
-1. **请评委**：用 Agent 工具新起一个 `idea-loop:ui-master`，跑完即弃。给它三样：designer 交付的截图路径、方向说明「意图」节的那句话、这一轮看什么（静态 / 动效 / 减法）。
-2. **分拣意见**：评委看不到哪些是人亲手定的，所以由你分。照「碰到人选定项的意见」把每条分成要问人、按人保留排除、交给 designer 三类。
-3. **评分**：把评委的 `findings`、`score` 和之前每一轮还计分的意见里最差的严重度（`history`，从旧到新），有排除时再加 `excluded`，写成 `canvas/work/round-<N>.json`，跑：
+1. **请评委**：用 Agent 工具新起一个 `idea-loop:ui-master`，跑完即弃。给它：designer 交付的截图路径、方向说明「意图」节的那句话、这一轮看什么（静态 / 动效 / 减法），以及方向说明里标了「人保留」的项（有才给，告诉它这几处不算差距）。
+2. **分拣意见**：评委看不到哪些是人亲手定的，所以由你分。照「碰到人选定项的意见」把每条分成要问人、按人保留不交、交给 designer 三类。
+3. **评分**：把评委的 `findings`、`score` 和之前每一轮的分数（`history`，从旧到新）写成 `canvas/work/round-<N>.json`，跑：
 
    ```
    node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
    ```
 
-   退出码 `2` 是评分无效：作废这一轮，新起一个 ui-master 重评。判据都在脚本里，按它的停止判定走：
+   退出码 `2` 是评委的输出不合格式：作废这一轮，新起一个 ui-master 重评。按它的停止判定走：
 
    | 停止判定 | 做什么 |
    |---|---|
@@ -51,10 +51,10 @@ designer 交付一版之后：
 | 意见要动的是 | 你做 |
 |---|---|
 | `（人选定）` 项已写下来的那部分 | 冲突项：不交给 designer，留着问人「保留 / 改」 |
-| 方向说明里这一项下已有 `人保留（日期）` 那一行 | 排除，照 [`references/pinned-findings.md`](references/pinned-findings.md) 写进本轮的 `excluded` |
+| 方向说明里这一项下已有 `人保留（日期）` 那一行 | 拦下，不交给 designer（[`references/pinned-findings.md`](references/pinned-findings.md)） |
 | 其余 | 交给 designer |
 
-这一轮有冲突项时：其余意见照常交给 designer 改完这一版，然后停下，冲突项排在最前问人；人答之前不开下一轮。人说**保留**，你照 `pinned-findings.md` 记下，designer 不用动，之后评委再提它直接排除，不再问人；人说**改**，交给 designer，标明「人的方向修订」。
+这一轮有冲突项时：其余意见照常交给 designer 改完这一版，然后停下，冲突项排在最前问人；人答之前不开下一轮。人说**保留**，你照 `pinned-findings.md` 记下，designer 不用动，之后起评委时把它作为「人保留的项」交给评委，评委再提它就直接拦下，不再问人；人说**改**，交给 designer，标明「人的方向修订」。
 
 ## 定稿之后
 

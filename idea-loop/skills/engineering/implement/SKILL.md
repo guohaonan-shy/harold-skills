@@ -1,6 +1,6 @@
 ---
 name: implement
-description: 把一份已切好工单的 spec 实现完，或只做其中指定的几张。spec 进了「实现中」、要开工时用。
+description: 把一份已切好工单的 spec 实现完。spec 进了「实现中」、要开工时用。
 ---
 
 **把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
@@ -9,7 +9,7 @@ description: 把一份已切好工单的 spec 实现完，或只做其中指定�
 
 ## 前提
 
-- 人调 `/idea-loop:implement <spec-slug> [工单号…]`，或调用方要求做完一份 spec。
+- 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
 - **当前 worktree 就是集成分支**：一份 spec 一条分支、一个 PR，这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局，spec 是「实现中」，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。
 - 每张工单的执行方都是新上下文，人不用在工单之间 `/clear`。
