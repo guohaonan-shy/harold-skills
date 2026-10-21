@@ -5,9 +5,9 @@ description: 在一个已经 open 的 PR 上跑一轮两轴 review——调用�
 
 # PR review
 
-**一次调用跑一轮。** 这份文件是入口，写的是**编排机制**：起谁、交接什么、照规则的条目怎么立即处理、人批示之后怎么修、什么时候自己起下一轮。一轮 review 具体怎么跑写在 `agents/pr-reviewer.md` 里，问什么、什么算问题写在 `references/review-standards.md` 里，哪些条目能照规则处理写在 `references/decision-rules.md` 里，这里不复述。
+**一次调用跑一轮。** 这份文件是入口，写的是**编排机制**：起谁、交接什么、照规则的条目怎么立即处理、人批示之后怎么修、什么时候自己起下一轮。一轮 review 具体怎么跑写在 `agents/pr-reviewer.md` 里，问什么、什么算问题写在 `skills/engineering/pr-review/references/review-standards.md` 里，哪些条目能照规则处理写在 `skills/engineering/pr-review/references/decision-rules.md` 里，这里不复述。
 
-> 先读一次 `../../../references/review-loop.md`（汇报放在哪、人怎么回复、合并时怎么归档）、`../../../references/pr-description.md`（§1、§6 描述的四节，§5 review 汇报的写法）和 `../../../references/decision-rules.md`（哪些条目不等人）。
+> 先读一次 `references/review-loop.md`（汇报放在哪、人怎么回复、合并时怎么归档）、`references/pr-description.md`（§1、§6 描述的四节，§5 review 汇报的写法）和 `references/decision-rules.md`（哪些条目不等人）。
 
 ## 0 什么时候跑
 

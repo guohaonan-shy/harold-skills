@@ -2,7 +2,7 @@
  * Tripwire — there is no third DESIGN.md write entry.
  *
  * The project's DESIGN.md is written from exactly two places (uiux-imagine when the project has none,
- * dreaming); both read references/design-md.md. The old `design-modeling` skill was a third,
+ * dreaming); both read skills/engineering/dreaming/references/design-md.md. The old `design-modeling` skill was a third,
  * separately-ruled entry and has been deleted. This test greps every skill, agent, reference, hook
  * and script for the retired name, so a stale pointer to it cannot slip back in.
  *
@@ -16,7 +16,7 @@ import { join, dirname, relative, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCANNED = ['skills', 'agents', 'references', 'hooks', 'scripts'];
+const SCANNED = ['skills', 'agents', 'hooks', 'scripts'];
 const RETIRED = /design-modeling/i;
 const SELF = basename(fileURLToPath(import.meta.url));
 

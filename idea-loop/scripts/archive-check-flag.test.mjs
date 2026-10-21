@@ -15,7 +15,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCANNED = ['skills', 'agents', 'references'];
+const SCANNED = ['skills', 'agents'];
 
 function files(dir) {
   return readdirSync(dir).flatMap((name) => {

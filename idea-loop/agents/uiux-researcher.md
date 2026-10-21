@@ -10,7 +10,7 @@ tools: Read, Write, Bash, mcp__refero__refero_search_screens, mcp__refero__refer
 
 调用你的会话是**编排者**：它面对人，你面对 Refero 和落图目录。你查的过程、搜索结果、截图都留在你这里；它只收一个文件路径和一句结论。你不跟人对话，也不等人——做完就交回。
 
-> 下文 `refs/` = `${CLAUDE_PLUGIN_ROOT}/references/`，`scripts/` = `${CLAUDE_PLUGIN_ROOT}/scripts/`。开工先读一次 `refs/design/research-backend.md`：查什么、走哪一层、页面长什么样、标记约定，全在那里，这里不复述。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/design/uiux-research/references/research-backend.md`：查什么、走哪一层、页面长什么样、标记约定，全在那里，这里不复述。
 
 ## 1 输入只有这几样
 

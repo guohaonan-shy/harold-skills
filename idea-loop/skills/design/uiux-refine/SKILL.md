@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 **收敛，准出一块冻结的画布。** 这份文件是入口，写的是**调用机制**：谁起谁、交接什么、停下之后怎么摆给人、人的意见怎么回去。怎么做设计写在 agent 的定义里，这里不复述。
 
-> 先读一次 `../../../references/wiki-conventions.md`（spec / design 层的位置与状态约定；§2 的 `design/tmp/<spec-slug>/` 是这一段的工作区，下文简写 `tmp/…`，指目标项目的 `docs/design/tmp/…`——本地、不进 git）。
+> 先读一次 `../../engineering/wiki-conventions/SKILL.md`（spec / design 层的位置与状态约定；§2 的 `design/tmp/<spec-slug>/` 是这一段的工作区，下文简写 `tmp/…`，指目标项目的 `docs/design/tmp/…`——本地、不进 git）。
 
 ## 0 什么时候跑
 
@@ -41,7 +41,7 @@ designer 从这里开始自己跑（有交接画布就复制成第一版画布�
 
 停在 `pass` / `plateau` / `direction`、动效做完、冻结、部分冻结——每次都一样，**不等人要**：
 
-- 用 `preview_start` 的 `url` 打开 designer 交回的地址，停在本轮改动的那个状态。同一个标签页，后续轮次导航过去，不另开。内嵌浏览器不可用时按 `../../../references/design/browser-usage.md` 的退路（先给本地地址，再不行才是截图），并明说。
+- 用 `preview_start` 的 `url` 打开 designer 交回的地址，停在本轮改动的那个状态。同一个标签页，后续轮次导航过去，不另开。内嵌浏览器不可用时按 `references/design/browser-usage.md` 的退路（先给本地地址，再不行才是截图），并明说。
 - 配一份短清单，从 designer 的交回里摘：本轮核心问题、改了什么、评委分与停的原因、要人判的取舍（带 designer 的推荐）。截图、测量、评委回执留在 designer 和 ledger 里，**不搬进这个对话**。
 - **交回里有「与人选定冲突」的，排在清单最前、连画布一起摆给人，问「保留 / 改」**：评委的原话、撞上的是方向说明里哪一项人选定的东西、画布停在没动那一项的样子。评委是盲评的，它不知道这一项是人定的；designer 因此没执行，等人判。人答之前不放行下一轮。交回里只写一行「已按人保留排除 N 条」的，是人早先说过保留的，**不再问**，随清单带一句即可。
 - **交回里有「建议调研的问题」的**（`pattern` 类 finding designer 凭判断定不了、静态 UI 协议 C 段的具名问题），和这一轮其它要人判的取舍一起摆给人，每条带 designer 的推荐做法——designer 已经按推荐做法改了、没有停下等人。人要查才调 `uiux-research`（落图目录用这份 spec 的 `research/`），不要查就当它是定了的推荐。

@@ -1,8 +1,8 @@
 # 动效 protocol —— 在浏览器里把动效与原生交互做完并验过
 
-**按需加载。** 与 `references/design/surface-protocol.md` / `module-protocol.md` /
+**按需加载。** 与 `skills/design/uiux-refine/references/design/surface-protocol.md` / `module-protocol.md` /
 `component-protocol.md` 同一模式：这不是入口，是 `uiux-refine` 走到"这个 surface 确实需要真动效"
-时才读的 protocol。静态那一段在 `references/design/static-ui-protocol.md`。
+时才读的 protocol。静态那一段在 `skills/design/uiux-refine/references/design/static-ui-protocol.md`。
 
 ---
 
@@ -21,12 +21,12 @@ layer motion on top, gate it on the human, and port to React last.
 - The **route-specific context matrix** used for static sign-off. Motion verification repeats the
   same relevant modes, dimensions, themes, locales, and product states.
 
-If you arrived here without a frozen static UI, stop and run `references/design/static-ui-protocol.md` first — designing motion on
+If you arrived here without a frozen static UI, stop and run `skills/design/uiux-refine/references/design/static-ui-protocol.md` first — designing motion on
 an unsettled layout wastes both stages.
 
 ## Principle — motion is law-governed, and the gates don't trust the generator
 
-- **`references/design/motion-spec.md` is the motion law** (read at Setup): duration/easing **tokens**
+- **`skills/design/uiux-refine/references/design/motion-spec.md` is the motion law** (read at Setup): duration/easing **tokens**
   (never invented numbers), the **restraint budget** (≤1 delight moment, ≤3 simultaneous
   entrances, stagger 40–80ms, zero ambient loops in-app), mandatory reduced-motion, the in-app
   **motion whitelist** (the project's DESIGN.md Motion chapter — global principles and bans — when it
@@ -44,7 +44,7 @@ an unsettled layout wastes both stages.
   through B's gates before the React port.
 
 ## Setup
-1. **`references/design/design-core.md` + `references/design/motion-spec.md` (this plugin) — FIRST.** The core
+1. **`skills/design/uiux-refine/references/design/design-core.md` + `skills/design/uiux-refine/references/design/motion-spec.md` (this plugin) — FIRST.** The core
    carries the register dials + close-out protocol; the spec carries the motion law.
 2. The target project root's `DESIGN.md` — **if present** — for the
    project's Motion chapter (global principles, bans, house duration/easing tokens — it holds no list
@@ -82,7 +82,7 @@ an unsettled layout wastes both stages.
    default — never gate content visibility on a transition (it ships blank on hidden tabs /
    headless renders).
 6. Serve it locally and drive it with Playwright (default headless server per
-   `references/design/browser-usage.md`): navigate, interact, capture.
+   `skills/design/uiux-refine/references/design/browser-usage.md`): navigate, interact, capture.
 
 ### B · Review gates — to convergence
 Now there's a real rendered page, so the full checks are available.
@@ -90,8 +90,8 @@ Now there's a real rendered page, so the full checks are available.
    the motion canvas — brand rules plus the native `layout-transition` and `bounce-easing`
    detectors (`scripts/design-lint.mjs`, no external tool chained in). P0 = build error; fix before
    continuing.
-2. **Gate 2 — motion-craft audit** (self-contained: read `references/design/motion-craft-checklist.md`
-   and `references/design/accessibility-baseline.md`): a11y (real semantics, focus order, keyboard — check
+2. **Gate 2 — motion-craft audit** (self-contained: read `skills/design/uiux-refine/references/design/motion-craft-checklist.md`
+   and `skills/design/uiux-refine/references/design/accessibility-baseline.md`): a11y (real semantics, focus order, keyboard — check
    the animation-in-progress case per motion-craft-checklist §3), perf (offscreen-pause, no
    unbounded blur/filter), and the **route-specific context matrix inherited from static-ui-protocol** —
    plus the motion slop catalog and Motion Pyramid framework for motion craft. Public surfaces
@@ -117,7 +117,7 @@ rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
 passed the gates is written as a candidate in the `## 设计法候选` section of its motion file under
-`delta/` (`references/design-md.md` §13, object shape in `references/design-archive.md` §3–4) — the
+`delta/` (`skills/engineering/dreaming/references/design-md.md` §13, object shape in `skills/engineering/dreaming/references/design-archive.md` §3–4) — the
 rule behind it, shaped to join the Motion chapter as a global principle; the specific parameters stay
 in that motion file, and the freeze record lists the candidate. A new motion goes **only** into the
 motion file and the candidate, never straight into `DESIGN.md`. This protocol never writes
@@ -125,7 +125,7 @@ motion file and the candidate, never straight into `DESIGN.md`. This protocol ne
 pattern shipping with no candidate is the failure mode.
 
 ### D · Port to React (final, only after sign-off)
-> **The port mechanics are not this protocol's.** `references/ui-implementation-standard.md`
+> **The port mechanics are not this protocol's.** `skills/design/uiux-refine/references/ui-implementation-standard.md`
 > owns turning an approved canvas into project code (component tree by state ownership, data
 > contract changes, token attribution, the measurement loop) and `implement` runs it from a UI
 > ticket. What stays here is the **motion-specific re-verification** below — the part that
@@ -153,7 +153,7 @@ motion principles and bans, and the selection treatment).
 ## What this protocol is NOT
 - Not for designing the static visual/layout — that's `static-ui-protocol` (run it first).
 - Not a place to silently redesign the approved UI — if the motion work reveals a layout problem,
-  surface it and bounce back to `references/design/static-ui-protocol.md`, don't quietly re-skin in the browser.
+  surface it and bounce back to `skills/design/uiux-refine/references/design/static-ui-protocol.md`, don't quietly re-skin in the browser.
 - Not "animate everything" — unmotivated motion is slop; the in-app whitelist + the restraint
   budget are the default.
 - Not verified by a single screenshot or `getComputedStyle` — only seek-frame evidence counts.

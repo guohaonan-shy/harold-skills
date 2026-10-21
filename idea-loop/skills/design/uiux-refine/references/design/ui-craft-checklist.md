@@ -87,7 +87,7 @@ Verify on the rendered DOM, not the source:
 
 ### 4.1 Heuristic and cognitive-load scoring
 
-See `references/design/heuristics-checklist.md` for the Nielsen 10-heuristic scoring rubric, the
+See `skills/design/uiux-refine/references/design/heuristics-checklist.md` for the Nielsen 10-heuristic scoring rubric, the
 cognitive-load checklist, and the five-persona red-flag test — run these as part of the same Gate 2
 pass.
 
@@ -124,6 +124,6 @@ declared tokens before sign-off:
 2. Sample computed values from the rendered preview (`getComputedStyle` on representative elements)
    and check each against the nearest declared token.
 3. A value that doesn't map to any declared token is either a legitimate new addition (name it and
-   write it as a candidate, `references/design-md.md` §13, at close-out) or drift (fix it to the existing
+   write it as a candidate, `skills/engineering/dreaming/references/design-md.md` §13, at close-out) or drift (fix it to the existing
    token). Silence
    is the failure mode either way — every off-token value gets a decision, not a shrug.

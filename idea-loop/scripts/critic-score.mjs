@@ -1,7 +1,7 @@
 /**
  * Critic self-consistency check — the deterministic half of the design critic loop.
  *
- * The critic is a model. It reads `references/design/critic-rubric.md`, writes findings,
+ * The critic is a model. It reads `skills/design/uiux-refine/references/design/critic-rubric.md`, writes findings,
  * and puts a number on the round. This file does NOT score anything: it holds the critic
  * to what it just wrote. A score that does not follow from the findings is an invalid
  * round — rerun the critic, do not negotiate the number.
@@ -160,7 +160,7 @@ function counts(findings) {
 /**
  * The band the findings allow. The worst finding sets the ceiling; count moves within it.
  *
- * Mirrors the score-band table in `references/design/critic-rubric.md` row for row — when
+ * Mirrors the score-band table in `skills/design/uiux-refine/references/design/critic-rubric.md` row for row — when
  * one changes, both change.
  *
  * @returns { min, max } inclusive

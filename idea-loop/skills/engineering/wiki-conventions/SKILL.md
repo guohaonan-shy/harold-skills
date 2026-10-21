@@ -1,3 +1,8 @@
+---
+name: wiki-conventions
+description: 目标仓库 docs/ 知识库的共享契约：目录、spec 与工单的位置和状态、命名。动 docs/ 之前用。
+---
+
 # idea-loop 契约
 
 五个 skill（`grill` / `to-spec` / `to-ticket` / `implement` / `dreaming`）共享的规则。每个 skill 每会话读一次，动 `docs/` 之前读。
@@ -8,7 +13,7 @@
 > 前两条来自一次实跑（把 spec 落进一个已有常驻规格的仓库）暴露的洞，第三条是 §4 与 §5 本身相冲。
 >
 > **2026-10-14 签字**（harold-skills#42）：§2 每份 spec 一个目录、工单住进自己 spec 的目录；§3 spec 状态机加
-> `草稿` / `审核中`，`等设计冻结` 改名 `设计中`，状态与 backlog 移交标记的规则搬进 `spec-status.md`、只走脚本改；§4 对工单文件名的豁免。起因是几份 spec
+> `草稿` / `审核中`，`等设计冻结` 改名 `设计中`，状态与 backlog 移交标记的规则搬进 `../to-spec/references/spec-status.md`、只走脚本改；§4 对工单文件名的豁免。起因是几份 spec
 > 同时在飞时工单混在一个目录里、编号互撞，以及起草 routine 要从 backlog 自动起草 spec。
 >
 > **2026-09-28 签字**：§2 新增 `design/<spec-slug>/` 层、§3 新增 `type: design`。冻结的设计从
@@ -78,7 +83,7 @@ docs/
 `design/` 分两层，生命周期相反：
 
 - **`design/tmp/<spec-slug>/`** 是一个需求的设计过程，跟着需求走：`uiux-imagine` 写 `imagine/`（变种板与抓取物、每轮记录 `rounds.md`、方向说明 `direction-note.md`、交接画布 `handoff/`），`uiux-refine` 写 `canvas/` 和 `delta/`；`uiux-research` 的调研结果落 `research/<问题短名>/`（imagine 与 refine 用同一处，没有 spec 时落 `docs/design/tmp/research/<问题短名>/`），不放进 `imagine/`，所以 imagine 收工清 `imagine/` 时它还在；合并前的拦截（`merge-gate-hook.mjs`）、pr-review 每轮的 UI 审查判断、合并前的归档判断、ui-reviewer 的跳过条件，都不把 `research/` 算作设计产物——调研目录从不归档，只做过调研的需求不起 UI 审查、合并不走归档；调研结论用进了设计的，已经以文字记在方向说明或冻结记录里，随设计一起归档。**只在本地**——目标项目要把 `docs/design/tmp/` 排除出 git（第一次用时确认，不在就追加到 `$(git rev-parse --git-common-dir)/info/exclude`，同 §2.1），所以放弃的需求只是丢画布，有价值的结论写回 spec 或 issue。需求的冻结记录和画布留在 `canvas/` 里直到归档，归档时清掉整个 `tmp/<spec-slug>/`。
-- **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `design-archive.md`。
+- **`design/prod/`** 是设计档案，记线上现在的样子，提交、活得比 spec 长——spec 删掉、ADR 写好之后它还在。**写 `prod/` 只有归档脚本一条路**（人批过之后）：agent 只写 `tmp/<spec-slug>/delta/`。所以 **`dreaming` 不因为 spec 没了就提议删 `prod/` 里的东西**；一个对象被取代的唯一方式是下一个需求归档时覆盖或删除它。结构见 `../dreaming/references/design-archive.md`。
 
 按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。
 
@@ -93,12 +98,12 @@ docs/
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（MCP 浏览器锁）—— PR 合并后删
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删
 ├── dreaming/<YYYY-MM-DD>/        这一次运行的提议表 proposal.md 与中间物（重拍与初扫的产物不在这里，在 docs/design/tmp/ 下）—— 执行段完成后删
-└── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（review-loop.md）
+└── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（../pr-review/references/review-loop.md）
 ```
 
 **设计侧的过程产物不放这里**：`uiux-imagine` 与 `uiux-refine` 的工作区、方向说明、交接画布、ledger、评分 JSON、评委截图都在 `docs/design/tmp/<spec-slug>/`（§2），同样只在本地、不进 git，但归档脚本认得它。
 
-`evidence/` 下的素材是**交付证据**：过程中以本地文件发给人看，PR 描述用到或合并归档时才上传到 PR 的素材分支，从不进代码分支和 `docs/`（`evidence.md`）。
+`evidence/` 下的素材是**交付证据**：过程中以本地文件发给人看，PR 描述用到或合并归档时才上传到 PR 的素材分支，从不进代码分支和 `docs/`（`../evidence/SKILL.md`）。
 
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
 - 第一次用时确认 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里，不在就追加一行——本地忽略，不改仓库的 `.gitignore`，也不会被误提交。
@@ -113,7 +118,7 @@ docs/
 1. 每份 `docs/spec/<slug>.md` → `git mv` 到 `docs/spec/<slug>/<slug>.md`。wiki-link 按文件名解析，移动不打断它们；**相对路径的图片引用会断**（spec 深了一层），每条前面补一个 `../`，改完逐条确认文件存在。
 2. `docs/spec/tickets/` 下的每张工单，按它的 PR、它引用的 spec 或它的标题判断属于哪份 spec，`git mv` 到那份 spec 的 `tickets/`。判断不了的列给人，不猜。归属清楚后旧的 `tickets/` 目录应该是空的，删掉它。
 3. 旧状态值改名：`等设计冻结` → `设计中`。`在飞` 不动——已经在做的 spec 不回退成 `审核中`。
-4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`spec-status.md` §1）。
+4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`../to-spec/references/spec-status.md` §1）。
 
 正在做的 PR 不受影响：集成分支上已有的 commit 里，`Ticket:` trailer 只写工单名，不写路径。
 
@@ -145,9 +150,9 @@ related: ["[[other-slug]]"]
 
 `parked` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
 
-`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `design-archive.md` §3。
+`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `../dreaming/references/design-archive.md` §3。
 
-spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `spec-status.md`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
+spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `../to-spec/references/spec-status.md`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
 
 **ADR 的取代默认是 section 级，不是整份**——一份 ADR 常含多条决策（引用粒度本就是 `ADR-NNNN §n`），新决策通常只推翻其中一节。frontmatter 的 `status` 只在**全部**小节都作废时才翻成 `已被取代`；部分取代记在那一节标题后（`⚠️ 已被取代 → ADR-<new> §<n>`），文件本身仍是 `生效`。
 
@@ -196,4 +201,4 @@ spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。�
 
 ## 8 backlog 移交标记
 
-backlog 里被 spec 覆盖的条目带「已移交 → [[<spec-slug>]]」，起草 routine 靠它跳过已经有 spec 的条目。谁写、谁撤、两种 backlog 格式怎么写，在 `spec-status.md` §2，**写和撤都只走 `scripts/spec-status.mjs`**。backlog 的模块划分表是项目配置，写在 backlog 文件里的「模块」一节。
+backlog 里被 spec 覆盖的条目带「已移交 → [[<spec-slug>]]」，起草 routine 靠它跳过已经有 spec 的条目。谁写、谁撤、两种 backlog 格式怎么写，在 `../to-spec/references/spec-status.md` §2，**写和撤都只走 `scripts/spec-status.mjs`**。backlog 的模块划分表是项目配置，写在 backlog 文件里的「模块」一节。

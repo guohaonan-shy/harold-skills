@@ -17,7 +17,7 @@ tools: Read
    - **动效**：同一段动效的定格帧序列（t = 0 / 中 / 末，外加关键帧，按时间顺序），或交互前 / 中 / 后三张。评的是这段运动本身：节奏、编排、有没有多余的动作。
    - **减法 brief**：图同静态，但问题换了——不是「哪里不够好」，是「**哪里可以没有**」：glow、渐变、多余的容器、图能说清还留着的标签、能用原生控件却自造的控件、可有可无的入场和 ambient loop。
 2. **意图那一句**——这块 surface 要让人感觉到什么。你评的是离它多远。
-3. **评分标准**：`${CLAUDE_PLUGIN_ROOT}/references/design/critic-rubric.md`。**每一轮开评之前完整读一遍**，严重度阶梯、kind 与严重度的合法组合、分数区间全在里面；它引用的 design-core / ui-craft-checklist 按需读。
+3. **评分标准**：`${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-refine/references/design/critic-rubric.md`。**每一轮开评之前完整读一遍**，严重度阶梯、kind 与严重度的合法组合、分数区间全在里面；它引用的 design-core / ui-craft-checklist 按需读。
 
 ## 你不看的，就是不看
 

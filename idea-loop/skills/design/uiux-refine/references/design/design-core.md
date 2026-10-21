@@ -91,7 +91,7 @@ target project's floors:
   allowed for long-form body text only).
 - **A11y floors** — contrast ≥4.5:1 body / ≥3:1 large; focus-visible ring; reduced-motion
   alternative for every animation; never gate content visibility on a transition. Full compliance
-  floor, touch-target table, and keyboard/ARIA discipline: `references/design/accessibility-baseline.md`.
+  floor, touch-target table, and keyboard/ARIA discipline: `skills/design/uiux-refine/references/design/accessibility-baseline.md`.
 
 > Brand override note: when the target project's DESIGN.md picks something generic advice flags
 > (e.g. "avoid Inter as a display face", taste-skill §4.1, open-design §C), the DESIGN.md decision
@@ -334,13 +334,13 @@ verb+object rule, and the placeholder-is-not-a-label rule (§5.6, enforced by `w
 re-distills track that file. `taste-skill/SKILL.md` is unchanged since 2026-06.
 
 **Vendoring principle** (the architecture this plugin follows): knowledge-layer content from
-external skills/tools is distilled into this plugin's `references/` with a provenance header
+external skills/tools is distilled into this plugin's skill references with a provenance header
 (source, version, date) — the external source is the raw feed, and an upstream update is consumed
 by an explicit re-distill, never by a runtime read of an external path.
 
 **No live runtime dependency (2026-08-31).** This plugin has zero runtime dependency on any
 external skill or tool — every gate (mechanical lint, isolated critique, motion-craft audit, frame
-check, port-fidelity diff) runs entirely on this plugin's own scripts and `references/` content. An
+check, port-fidelity diff) runs entirely on this plugin's own scripts and skill references. An
 earlier version of the lint hook optionally chained an external detector when installed, and Gate 2
 in `static-ui-protocol`/`motion-protocol` invoked an external critique/audit tool; both were removed in favor
 of native lint rules (`layout-transition`, `bounce-easing` in `design-lint.mjs`) and self-contained
@@ -354,7 +354,7 @@ rules + our badge case), `color-application.md` (impeccable colorize/palette.mjs
 into native lint + self-contained checklists, replacing the retired live invocation),
 `accessibility-baseline.md` and `laws-of-ux.md` (an external product repository's `craft/`,
 one-time inspiration source, no path dependency retained), `landing-ia.md` (a design-lib research
-repository's landing skills, generalized away from its allow-list gating), `research-backend.md`
+repository's landing skills, generalized away from its allow-list gating), `../../../uiux-research/references/research-backend.md`
 (the contract for `idea-loop:uiux-researcher`, the one agent that calls `refero-design`'s screens and
 flows layers — the one remaining live dependency, run only when the human asks, never a gate).
 

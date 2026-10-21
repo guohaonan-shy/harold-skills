@@ -1,11 +1,11 @@
 # 静态 UI protocol —— 在浏览器里把一个 surface 的静态设计做完
 
-**按需加载。** 与 `references/design/surface-protocol.md` / `module-protocol.md` /
+**按需加载。** 与 `skills/design/uiux-refine/references/design/surface-protocol.md` / `module-protocol.md` /
 `component-protocol.md` 同一模式：这不是入口，是 `uiux-refine` 走到"静态视觉"这一段时读的
 protocol。入口在 `uiux-imagine` / `uiux-refine`，由它们决定要不要降到这一层。
 
-动效与原生交互在 `references/design/motion-protocol.md`；把签字通过的画布落成代码是
-`references/ui-implementation-standard.md` 的活，不在这里。
+动效与原生交互在 `skills/design/uiux-refine/references/design/motion-protocol.md`；把签字通过的画布落成代码是
+`skills/design/uiux-refine/references/ui-implementation-standard.md` 的活，不在这里。
 
 ---
 
@@ -27,8 +27,8 @@ of a higher route: a new page does not skip component design; it descends into t
 carry a decision, introduce a new pattern, or vary by product state. Choose one entry route so the
 same work is not performed twice.
 
-> **Canvas: browser, not Paper (temporarily).** Read `references/design/browser-usage.md` before any
-> browser tool call. Paper remains dormant (`references/design/paper-usage.md`).
+> **Canvas: browser, not Paper (temporarily).** Read `skills/design/uiux-refine/references/design/browser-usage.md` before any
+> browser tool call. Paper remains dormant (`skills/design/uiux-refine/references/design/paper-usage.md`).
 
 ## Principles
 
@@ -48,10 +48,10 @@ Read the shared core once, then progressively disclose route-specific instructio
 component work from carrying a page-sized playbook while ensuring page work still reaches component
 altitude.
 
-- `references/design/design-core.md` supplies the Design Read, register dials, identity floors, anti-slop
+- `skills/design/uiux-refine/references/design/design-core.md` supplies the Design Read, register dials, identity floors, anti-slop
   law, close-out protocol, and the cross-altitude craft methodology (proof map, responsive
   re-edit, runtime & fallback states — design-core §7).
-- `references/design/expression-framework.md` supplies the altitude-neutral content → priority → weight
+- `skills/design/uiux-refine/references/design/expression-framework.md` supplies the altitude-neutral content → priority → weight
   procedure and the conditional-state precondition.
 - The **target project's design docs** are the product and visual source of truth: `DESIGN.md` at
   the project root, plus `PRODUCT.md` (project root) when present.
@@ -59,10 +59,10 @@ altitude.
   floors + anti-slop law), note that no project design law was found, and suggest running
   `uiux-imagine` (no live UI) or `dreaming` (live UI) to create one — never abort over a missing doc.
 - The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
-  route additionally reads `references/design/landing-ia.md` (see the table in §A).
-- Two reference files load on demand rather than at Setup: `references/design/accessibility-baseline.md`
+  route additionally reads `skills/design/uiux-refine/references/design/landing-ia.md` (see the table in §A).
+- Two reference files load on demand rather than at Setup: `skills/design/uiux-refine/references/design/accessibility-baseline.md`
   when a compliance question goes beyond design-core §4's one-line a11y floor, and
-  `references/design/laws-of-ux.md` when a composition question isn't already answered by the expression
+  `skills/design/uiux-refine/references/design/laws-of-ux.md` when a composition question isn't already answered by the expression
   framework's ladders and budgets.
 
 ### 3. The gates do not trust the generator
@@ -70,7 +70,7 @@ altitude.
 Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
 checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
 concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
-become candidates (format: `references/design-md.md` §13); this protocol never writes `DESIGN.md`.
+become candidates (format: `skills/engineering/dreaming/references/design-md.md` §13); this protocol never writes `DESIGN.md`.
 `dreaming` processes them under that reference and puts each one to the human before anything is
 written.
 
@@ -78,13 +78,13 @@ written.
 
 Before stage A:
 
-1. Read `references/design/design-core.md` first.
-2. Read `references/design/expression-framework.md`.
+1. Read `skills/design/uiux-refine/references/design/design-core.md` first.
+2. Read `skills/design/uiux-refine/references/design/expression-framework.md`.
 3. Read the target project root's `DESIGN.md` and `PRODUCT.md` —
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
    and recommend creating `DESIGN.md` through `uiux-imagine` or `dreaming` (see Setup note above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
-5. Before any browser call, read `references/design/browser-usage.md`.
+5. Before any browser call, read `skills/design/uiux-refine/references/design/browser-usage.md`.
 
 Do not load every altitude protocol up front. Stage A selects the entry route; read lower-altitude
 protocols when the work descends to them.
@@ -100,10 +100,10 @@ Choose the **highest affected altitude**, not the filename or noun in the prompt
 
 | Entry route | Use when… | Read now |
 |---|---|---|
-| **Surface** | Route/page IA, user journey, module order, dominant reading path, or responsive composition changes | `references/design/surface-protocol.md` |
-| **Landing / IA** | The route/page is a landing, marketing, or multi-product page whose page taxonomy (which company/product/pricing/trust type it is) and Hero geometry need to be decided before composition | `references/design/surface-protocol.md` **+** `references/design/landing-ia.md` |
-| **Module** | One bounded section's internal composition changes while page IA and surrounding module order remain stable | `references/design/module-protocol.md` |
-| **Component** | One bounded UI subtree changes; parent composition and user journey remain stable; uncertainty is treatment, signals, or conditional states | `references/design/component-protocol.md` |
+| **Surface** | Route/page IA, user journey, module order, dominant reading path, or responsive composition changes | `skills/design/uiux-refine/references/design/surface-protocol.md` |
+| **Landing / IA** | The route/page is a landing, marketing, or multi-product page whose page taxonomy (which company/product/pricing/trust type it is) and Hero geometry need to be decided before composition | `skills/design/uiux-refine/references/design/surface-protocol.md` **+** `skills/design/uiux-refine/references/design/landing-ia.md` |
+| **Module** | One bounded section's internal composition changes while page IA and surrounding module order remain stable | `skills/design/uiux-refine/references/design/module-protocol.md` |
+| **Component** | One bounded UI subtree changes; parent composition and user journey remain stable; uncertainty is treatment, signals, or conditional states | `skills/design/uiux-refine/references/design/component-protocol.md` |
 
 Landing/IA is not a fourth descent tier — it runs the same Surface R/B/W procedure in
 `surface-protocol.md`; `landing-ia.md` only supplies the extra domain vocabulary (page taxonomy,
@@ -184,7 +184,7 @@ recommendation. Whether the question is worth researching is the human's call �
 - **reference-averaging** (`ui-craft-checklist.md` §2) still applies to forwarded conclusions: when
   sources disagree, that is a decision for the human, not a midpoint.
 
-How research is run and what the page looks like: `references/design/research-backend.md` — written
+How research is run and what the page looks like: `skills/design/uiux-research/references/research-backend.md` — written
 for the researcher agent, not for this stage.
 
 ### W · Freeze the appropriate low-cost artifact
@@ -216,7 +216,7 @@ flagship token cost.
   components before inventing new chrome.
 - Inspect third-party component libraries (e.g. shadcn, Aceternity) as parts, not skin; translate
   any useful structure into the project's tokens.
-- Read `references/design/color-application.md` before assigning component color.
+- Read `skills/design/uiux-refine/references/design/color-application.md` before assigning component color.
 - At component descent, classify children per `component-protocol.md`: existing primitive,
   deterministic composition, decision-bearing component, or conditional component. Only the last
   two earn the full protocol.
@@ -240,7 +240,7 @@ core's 5-dimensional critique and restraint check.
    `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html` (this
    plugin's script, wherever the plugin is installed) when needed. Fix or explicitly justify P1s.
 2. **Isolated critique.** Self-contained pass over the served preview URL: read
-   `references/design/ui-craft-checklist.md` and `references/design/heuristics-checklist.md`, screenshot each
+   `skills/design/uiux-refine/references/design/ui-craft-checklist.md` and `skills/design/uiux-refine/references/design/heuristics-checklist.md`, screenshot each
    section, and record findings against both (typography thresholds, visual slop catalog, layout
    integrity, Nielsen/cognitive-load/persona scoring). Route direction findings back to B/W and
    craft findings to F. Check computed contrast (`browser_evaluate(getComputedStyle)`) and a clean
@@ -273,20 +273,20 @@ On sign-off, perform **Distill-back before handoff**, and it only writes candida
 
 1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
    archive object it came from (page, component, motion or journey file under `delta/`; shape in
-   `references/design-archive.md` §4), in the format `references/design-md.md` §13 defines — a
+   `skills/engineering/dreaming/references/design-archive.md` §4), in the format `skills/engineering/dreaming/references/design-md.md` §13 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
    evidence. The freeze record's same-named section lists them (one line each, saying which object
    carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
    one line, 「无」.
 2. Stop there. `dreaming` later runs every candidate through the admission table in
-   `references/design-md.md` §7 with the human — product design system goes to `DESIGN.md`, method
+   `skills/engineering/dreaming/references/design-md.md` §7 with the human — product design system goes to `DESIGN.md`, method
    that holds for any product goes back to this plugin as an issue, a single page's choice stays in
    its object's 「决定」.
 
 This protocol never writes `DESIGN.md` and never bootstraps one; a project without a `DESIGN.md`
 gets one through `uiux-imagine` (at its start) or `dreaming`.
 
-The approved preview HTML + concept + state contract pass to `references/design/motion-protocol.md`. Do not port to React in
+The approved preview HTML + concept + state contract pass to `skills/design/uiux-refine/references/design/motion-protocol.md`. Do not port to React in
 this protocol.
 
 ## DESIGN.md governance
@@ -310,6 +310,6 @@ count.)
 - Not a reason to redesign every component on a new page: existing primitives are reused; only
   decision-bearing or conditional components earn the full Component Protocol.
 - Not a reference assembler or a one-shot generator.
-- Not where native motion/interaction or the React port happens; use `references/design/motion-protocol.md` after sign-off.
+- Not where native motion/interaction or the React port happens; use `skills/design/uiux-refine/references/design/motion-protocol.md` after sign-off.
 - Not self-refereed: lint, isolated critique evidence, real-DOM checks, and the human gate remain
   mandatory.

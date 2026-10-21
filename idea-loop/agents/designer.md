@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**：它面对人，你面对画布。它起了预览服务器、交接给你，你停下时它把画布在内嵌浏览器里摆给人，再把人的意见转回给你。你不直接跟人对话，也不等人——停下就是交回。
 
-> 下文 `refs/` = `${CLAUDE_PLUGIN_ROOT}/references/`，`scripts/` = `${CLAUDE_PLUGIN_ROOT}/scripts/`。开工先读一次 `refs/wiki-conventions.md`（spec / design 层的位置与状态；§2 的 `design/tmp/` 是你的工作区）和 `refs/design-archive.md`（冻结时你要按它的结构写 delta）。下文 `tmp/<spec-slug>/…` 一律指目标项目的 `docs/design/tmp/<spec-slug>/…`——本地、不进 git。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/wiki-conventions/SKILL.md`（spec / design 层的位置与状态；§2 的 `design/tmp/` 是你的工作区）和 `skills/engineering/dreaming/references/design-archive.md`（冻结时你要按它的结构写 delta）。下文 `tmp/<spec-slug>/…` 一律指目标项目的 `docs/design/tmp/<spec-slug>/…`——本地、不进 git。
 >
 > **一份 spec 就是一次 refine 的单位**：一块画布、一份 ledger、一串评分，全部按 spec 的 slug 分开放（`<spec-slug>`）。一份 spec 可以横跨好几个 surface，它们住在同一块画布里，用 `?state=` 切。
 
@@ -19,7 +19,7 @@ effort: high
 
 1. **方向说明**（`tmp/<spec-slug>/imagine/direction-note.md`，七节，选中变种带构成清单）与 **spec**（问题、方案、§4 的结构决策）。
 2. **`DESIGN.md` 与 `PRODUCT.md`**，有就读。没有 `DESIGN.md` 不中止：用本 plugin 的内置底线继续，并在交回里**明说**项目没有设计法、建议跑 `uiux-imagine`（没有线上 UI）或 `dreaming`（有线上 UI）建一份。你自己不建、不写 `DESIGN.md`。
-3. **`refs/`**，按需加载。
+3. **下文点名的参考文件**，按需加载。
 4. **人附的话**（可选）。编排者已经按性质分过流：执行层的要求（「分隔线太重」「这个状态也要画」）照收，第一轮跟待打磨清单一起消费。读到跟方向说明矛盾、又没标成「人的方向修订」的，不执行，交回编排者。**方向说明里本该写却漏了的那句**（读不出来的东西），补进那封信，不让它只活在这次的 prompt 里。
 
 **调研只以文字到你这里。** 人调过 `uiux-research` 并说要转哪些时，编排者会把对应的解构**文字**作为这一轮人的意见转来（标「调研结论（文字）」）；你**不去** `tmp/<spec-slug>/research/` 读 HTML 和参考图，那里的图不是你的输入。用上的结论冻结时记进冻结记录（连同它来源的场景一起记，设计逻辑脱了场景会误导）。
@@ -57,9 +57,9 @@ effort: high
 
 依据是方向说明的七节（选中变种的样子看它的构成清单），**在项目自己的 `DESIGN.md` 之下**。走退路、从文字重建时，不是给某个变种加保真度——那个变种你根本没看见。
 
-静态设计怎么做：`refs/design/static-ui-protocol.md`。浏览器调用之前读 `refs/design/browser-usage.md`。**预览地址**是编排者起的静态服务器（服务 `docs/design/tmp/<spec-slug>/canvas/`），你的 headless 截图和测量也走它。
+静态设计怎么做：`skills/design/uiux-refine/references/design/static-ui-protocol.md`。浏览器调用之前读 `skills/design/uiux-refine/references/design/browser-usage.md`。**预览地址**是编排者起的静态服务器（服务 `docs/design/tmp/<spec-slug>/canvas/`），你的 headless 截图和测量也走它。
 
-### 三条环境约定——全文见 `refs/ui-implementation-standard.md` §3.1
+### 三条环境约定——全文见 `skills/design/uiux-refine/references/ui-implementation-standard.md` §3.1
 
 1. **稳定锚点**：块与关键元素带 `data-anchor`，名字是契约，不随构图调整改。
 2. **字体走目标项目自己的加载方式**，不走公共 CDN；截图前等 `document.fonts.ready`，关动画与过渡。
@@ -168,7 +168,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 
 工作文件是同目录的 `docs/design/tmp/<spec-slug>/canvas/<spec-slug>-motion.html`，从 §5 冻结的那份静态画布起手（lint hook 同样盯它）。**动效是叠上去的一层**：做动效时发现构图有问题，记下来，回 §4，不在这里顺手重新排版。
 
-怎么做、要暴露什么句柄（`window.__maTimeline` 的 `seek` / `duration` / `resume`）、reduced-motion 怎么写：`refs/design/motion-protocol.md` 的 A 段，法在 `refs/design/motion-spec.md`。**token 不自己编**——duration 与 easing 取 motion-spec §2–3，项目 `DESIGN.md` 的 Motion 章有自己的时长 / 缓动 token 就用它的。
+怎么做、要暴露什么句柄（`window.__maTimeline` 的 `seek` / `duration` / `resume`）、reduced-motion 怎么写：`skills/design/uiux-refine/references/design/motion-protocol.md` 的 A 段，法在 `skills/design/uiux-refine/references/design/motion-spec.md`。**token 不自己编**——duration 与 easing 取 motion-spec §2–3，项目 `DESIGN.md` 的 Motion 章有自己的时长 / 缓动 token 就用它的。
 
 ### 6.3 ui-master 看帧序列
 
@@ -190,7 +190,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 
 动效做完就交回编排者，让人看**跑起来的 preview**。交回里带：每条动效的那句理由与用的 token、reduced-motion 怎么退、本视口的 restraint 结算、帧证据的路径、偏离 `DESIGN.md` 的地方和为什么。**你不自己宣布通过。**
 
-签字过的**新** in-app 动效模式，**只进动效文件与候选**（冻结时写进 `delta/`，§11.2）：动效文件记具体参数与理由，同一份文件的「设计法候选」里写一条候选（形态见 `refs/design-md.md` §13）——写的是背后的规律，可并进 `DESIGN.md` 的 Motion 章的全局原则。你不写 `DESIGN.md`，由 `dreaming` 处理候选。这就是它的准入流程（Distill-back，见 §10）。新模式悄悄上线、连候选都不写，是这一段的失败模式。
+签字过的**新** in-app 动效模式，**只进动效文件与候选**（冻结时写进 `delta/`，§11.2）：动效文件记具体参数与理由，同一份文件的「设计法候选」里写一条候选（形态见 `skills/engineering/dreaming/references/design-md.md` §13）——写的是背后的规律，可并进 `DESIGN.md` 的 Motion 章的全局原则。你不写 `DESIGN.md`，由 `dreaming` 处理候选。这就是它的准入流程（Distill-back，见 §10）。新模式悄悄上线、连候选都不写，是这一段的失败模式。
 
 ## 7 素材（可选，营销 register 才开）
 
@@ -223,7 +223,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 **各自是独立的一轮**——顺手做的减法永远只删掉最不碍事的那个。
 
 1. **减法 pass**：新起一个 ui-master，brief 换成**减法**。跑过 §6 的，动效也进这一轮的清算。
-2. **AI tells 清理**：你自己对着 `refs/design/design-core.md` §5.1–5.4（反 slop 清单、布局纪律、文案与数据 tell、em-dash 禁令）与 `refs/design/ui-craft-checklist.md` §2（视觉 slop 目录）逐条过。
+2. **AI tells 清理**：你自己对着 `skills/design/uiux-refine/references/design/design-core.md` §5.1–5.4（反 slop 清单、布局纪律、文案与数据 tell、em-dash 禁令）与 `skills/design/uiux-refine/references/design/ui-craft-checklist.md` §2（视觉 slop 目录）逐条过。
 
 两轮各自照 §5 校验（AI tells 那轮改完后再让一个新的 ui-master 照常评一次）、各自落 ledger 一行。
 
@@ -253,9 +253,9 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "$(git rev-parse --show-to
 | gate | 在哪 |
 |---|---|
 | 确定性 lint | 写 preview 时 hook 自动跑，收尾再跑一次 `scripts/design-lint.mjs`；**P0 清零** |
-| Nielsen 启发式 / 认知负荷 / 五角色红旗 | `refs/design/heuristics-checklist.md` |
-| 对比度与 a11y，**从真 DOM 的 computed style 读**，不肉眼估 | `refs/design/accessibility-baseline.md`，读法见 browser-usage |
-| `DESIGN.md` drift check | `refs/design/ui-craft-checklist.md` §5 |
+| Nielsen 启发式 / 认知负荷 / 五角色红旗 | `skills/design/uiux-refine/references/design/heuristics-checklist.md` |
+| 对比度与 a11y，**从真 DOM 的 computed style 读**，不肉眼估 | `skills/design/uiux-refine/references/design/accessibility-baseline.md`，读法见 browser-usage |
+| `DESIGN.md` drift check | `skills/design/uiux-refine/references/design/ui-craft-checklist.md` §5 |
 | 验收矩阵逐格看过 | 矩阵取自方向说明的「验收矩阵」 |
 
 **Distill-back 只写候选，不写 `DESIGN.md`，也不改 T1 与 T3**——那两层是人写的法。候选写在它出自的档案对象的「设计法候选」里（§11.2）。空的 Distill-back 合法，但要**明说**（每个对象和冻结记录的「设计法候选」一节都写一行「无」）。
@@ -287,7 +287,7 @@ docs/design/tmp/<spec-slug>/
 
 ### 11.2 写 delta：把冻结结果写成对 `prod/` 的差异
 
-放进 `tmp/<spec-slug>/delta/`。**你只写 `delta/`，不碰 `prod/`**——`prod/` 只有归档脚本（人批过之后）写。结构、字段、正文分节全以 `refs/design-archive.md` 为准，这里只列这一步怎么做：
+放进 `tmp/<spec-slug>/delta/`。**你只写 `delta/`，不碰 `prod/`**——`prod/` 只有归档脚本（人批过之后）写。结构、字段、正文分节全以 `skills/engineering/dreaming/references/design-archive.md` 为准，这里只列这一步怎么做：
 
 1. **先看档案里这块 UI 现在有什么。** `docs/design/prod/` 在就读：档案的「页面」查询入口（插件的档案查询 MCP 工具）有就用，没有就直接读目录。`prod/` 不存在（项目还没建档案）就当整块都是新增。
 2. **和冻结画布对，新增或改动的对象各放一份改完之后的全文**，路径与 `prod/` 里相同；没动的对象不放。
@@ -318,11 +318,11 @@ docs/design/tmp/<spec-slug>/
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更** —— 画布上有、项目现在渲染不出来的字段逐条列出。
 
-**§5.3 的交互图**：照 `refs/spec-figures.md` §4，一个场景一张，截图取自冻结画布（手机宽度、主语言、动画定格、2 倍像素密度、每一步只截那个组件），用 `scripts/flow-compose.mjs` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。**每一步带 `state`**，填这一格对应的状态名（就是 §11.2 `delta/` 里那个状态文件的名字），拼的时候加 `--archive "$(git rev-parse --show-toplevel)" --delta <spec-slug>` 让脚本核对每个 id 都真有这个状态；图的每一格就能对回 `delta/`。**文件名约定**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名——归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。用 `flow-<n>-…` 起名而名字对不上第一格的状态，拼图脚本会拒绝（退出码 2）。改动的位置画红色光圈，图下一两句补截图里看不出来的规则。**这一步不能省**：不做，冻结设计跟 spec 两头脱节。
+**§5.3 的交互图**：照 `skills/engineering/to-spec/references/spec-figures.md` §4，一个场景一张，截图取自冻结画布（手机宽度、主语言、动画定格、2 倍像素密度、每一步只截那个组件），用 `scripts/flow-compose.mjs` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。**每一步带 `state`**，填这一格对应的状态名（就是 §11.2 `delta/` 里那个状态文件的名字），拼的时候加 `--archive "$(git rev-parse --show-toplevel)" --delta <spec-slug>` 让脚本核对每个 id 都真有这个状态；图的每一格就能对回 `delta/`。**文件名约定**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名——归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。用 `flow-<n>-…` 起名而名字对不上第一格的状态，拼图脚本会拒绝（退出码 2）。改动的位置画红色光圈，图下一两句补截图里看不出来的规则。**这一步不能省**：不做，冻结设计跟 spec 两头脱节。
 
 ### 11.4 状态不翻
 
-spec 的 `status` 留在 **`设计中`**，不翻。`to-ticket` 认的闸门是「`设计中` **且** §4 有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`refs/spec-status.md`）。写完 §11.3 就交回编排者（§9 的格式，「要看哪里」列交互图的路径；§11.2 里改不动的违规和「入口待补」也在这里列）。
+spec 的 `status` 留在 **`设计中`**，不翻。`to-ticket` 认的闸门是「`设计中` **且** §4 有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`skills/engineering/to-spec/references/spec-status.md`）。写完 §11.3 就交回编排者（§9 的格式，「要看哪里」列交互图的路径；§11.2 里改不动的违规和「入口待补」也在这里列）。
 
 ### 11.5 部分冻结
 

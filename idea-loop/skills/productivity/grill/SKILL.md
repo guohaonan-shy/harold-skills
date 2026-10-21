@@ -39,7 +39,7 @@ disable-model-invocation: true
 - **核实根因。** 复现经常推翻读代码得出的根因——以为是 A，走一遍发现 A 根本不发生，是 B。根因一变，挂在它下面的决策全要重问；等到 `to-spec` 才发现，就得回头重新 grill。所以在相关决策落定之前做。
 - **顺手留下 spec 第一章的证据。** 复现时截的图、记的时间线，挑出来标注好，就是 `to-spec` §1 给人 review 的图；`to-spec` 不再复现，只负责排版。新功能没有根因要核实，只剩这个用处：截现在的 UI、圈出它不够用的地方。
 
-仪器和证据形式照 `../../../references/spec-figures.md` §1：
+仪器和证据形式照 `../../engineering/to-spec/references/spec-figures.md` §1：
 
 - 用户可见的问题：本地开发环境里用浏览器自动化走一遍用户路径，慢网络用请求延迟、失败用请求拦截模拟；截图、标注、需要时记下每步的毫秒数。
 - 纯后端、埋点、数据问题：查询结果、日志、接口响应。
@@ -53,7 +53,7 @@ disable-model-invocation: true
 
 ## 术语
 
-先读一次 `../../../references/glossary.md`。目标项目根有 `GLOSSARY.md`（或 `GLOSSARY-MAP.md`）就每轮开问前读一遍，没有就跳过。
+先读一次 `../../engineering/glossary/SKILL.md`。目标项目根有 `GLOSSARY.md`（或 `GLOSSARY-MAP.md`）就每轮开问前读一遍，没有就跳过。
 
 **定一个叫法是决策，是人的活。** 下面三种情况各出一道术语题，跟别的题一起放进当轮 frontier，附推荐叫法：
 

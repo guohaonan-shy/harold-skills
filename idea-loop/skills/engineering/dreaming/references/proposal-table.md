@@ -123,7 +123,7 @@
 | 行类型 | 怎么执行 |
 |---|---|
 | `文档` | 照 SKILL.md 的「四条边」：写 ADR 先、`git rm` 整个 spec 目录后；写 ADR、删 spec 时顺带把设计档案里「决定」的来源链接 `[[<spec-slug>]]` 改指新 ADR（编号不复用、原地改写）；删完跑 link sweep |
-| `候选` / `DESIGN.md 条目` | 写 `DESIGN.md` 照写入 reference（`../../../../references/design-md.md`）§9 的流程，只改批过的几处，写完 lint 与 diff；处理完的候选从档案对象里删掉（见 `candidate-distillation.md`） |
+| `候选` / `DESIGN.md 条目` | 写 `DESIGN.md` 照写入 reference（`design-md.md`）§9 的流程，只改批过的几处，写完 lint 与 diff；处理完的候选从档案对象里删掉（见 `candidate-distillation.md`） |
 | `缺陷` | `gh issue create` 到目标仓库，标题和正文用表里起草的；不打任何 `status:*` label（那归 `issue-dispatch`）；写「已有 #N」的行不开 |
 | `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照写入 reference §11 |
 | `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：**先删掉没批的对象，再跑档案的归档脚本整目录并进 `prod/`**（它负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清目录；dreaming 不直接写 `prod/`、不另写搬运）。步骤见 `archive-reconcile.md` §5 与 `initial-scan.md` §4 |

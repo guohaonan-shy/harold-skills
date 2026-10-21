@@ -154,7 +154,7 @@ front matter 之后，正文用 `##` 二级标题，按下面的顺序（出现�
 | 层 | 去处 | 判据 |
 |---|---|---|
 | 工作流 | idea-loop 插件的 `skills/*/SKILL.md` | 说的是环怎么跑 |
-| 通用设计原则 | idea-loop 插件的 `references/design/` | **换一个产品照样成立** |
+| 通用设计原则 | idea-loop 插件的 `skills/design/uiux-refine/references/design/` | **换一个产品照样成立** |
 | 产品设计系统 | 项目 `DESIGN.md` | 只对这个产品成立，**而且跨页都要服从**，并且已经能写成全局规则（无日期、无页面名、可照做） |
 | 页面或组件的决定 | 设计档案里对应对象的「决定」（需求进行中写在 `tmp/<spec-slug>/delta/` 的对象文件里，归档时进 `prod/`） | 只对这一页、这个组件成立 |
 | 现状、缺陷、迁移 | 目标仓库的 GitHub issue / spec | 说的是「现在什么样」，不是「应该什么样」 |
@@ -208,7 +208,7 @@ front matter 之后，正文用 `##` 二级标题，按下面的顺序（出现�
 
 ### 10.1 有线上 UI——从代码量
 
-**量，不凭印象。** 从代码与真 DOM 的 computed style 读出字阶、间距节奏、圆角、边框粗细、阴影、颜色在实际用法里的角色，以及实测对比度。浏览器怎么读见 `design/browser-usage.md`，对比度判据见 `design/accessibility-baseline.md`。
+**量，不凭印象。** 从代码与真 DOM 的 computed style 读出字阶、间距节奏、圆角、边框粗细、阴影、颜色在实际用法里的角色，以及实测对比度。浏览器怎么读见 `../../../design/uiux-refine/references/design/browser-usage.md`，对比度判据见 `../../../design/uiux-refine/references/design/accessibility-baseline.md`。
 
 量出来的值分三桶，**分开报告**：
 

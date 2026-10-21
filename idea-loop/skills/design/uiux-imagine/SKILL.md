@@ -9,7 +9,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 **发散，准出一份方向说明和一张交接画布。** 这份文件是入口，写的是**调用机制**：谁起谁、交接什么、每轮之后怎么摆给人、人的意见怎么回去、会话断了怎么接。怎么做设计（高度、起点、纪律、调向环、七节）写在 agent 的定义里，这里不复述。
 
-> 先读一次 `../../../references/wiki-conventions.md`（spec 的位置、状态约定）和 `../../../references/design/browser-usage.md` 的「The comparison board」（内嵌浏览器里怎么打开、不可用时的退路）。
+> 先读一次 `../../engineering/wiki-conventions/SKILL.md`（spec 的位置、状态约定）和 `../uiux-refine/references/design/browser-usage.md` 的「The comparison board」（内嵌浏览器里怎么打开、不可用时的退路）。
 >
 > 工作目录是目标项目的 `docs/design/tmp/<spec-slug>/imagine/`（约定见 wiki-conventions §2，本地、不进 git，下文简写 `imagine/…`）。第一次用时确认 `docs/design/tmp/` 被 git 忽略（同 wiki-conventions §2 的做法）。
 
@@ -17,7 +17,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 触发条件：目标项目的 spec 状态是 `审核中`（第一次发散）或 `设计中`（重开一部分，或会话断了接着做，见 §6）。
 
-- `审核中`：人对它调 imagine，这个动作本身就是「审完了、要设计」。**开工第一步**跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`../../../references/spec-status.md`）。脚本拒绝（比如 §5.3 写着「不涉及」、开头标着「需要 grill」），就停下把原因告诉人，不手改状态。**状态只有编排者翻**，uiux-imaginer 不碰。
+- `审核中`：人对它调 imagine，这个动作本身就是「审完了、要设计」。**开工第一步**跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`../../engineering/to-spec/references/spec-status.md`）。脚本拒绝（比如 §5.3 写着「不涉及」、开头标着「需要 grill」），就停下把原因告诉人，不手改状态。**状态只有编排者翻**，uiux-imaginer 不碰。
 - `设计中`：已经翻过了，直接开工。
 - 别的状态就别跑——`草稿` 的人还没审；`在飞` 的已经切了工单；还没落 spec 的，先 `grill` → `to-spec`。
 
@@ -48,7 +48,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 - 配一份短清单，**从交回里摘，不加工**：这一轮渲染了哪几个变种、各自赌什么、本轮改了什么；它摆出来的 frontier 三样（开着的问题加推荐、此刻要人回的那句话、七节进度）；要人判的取舍；**「建议调研的问题」**（有就和其它取舍一起摆给人，每条带它的推荐做法——uiux-imaginer 已经按推荐做法渲染了，人要查才调 `uiux-research`，不要查就当它是定了的推荐）。截图、抓取物留在 uiux-imaginer 和工作目录里，**不搬进这个对话**。
 - **代办两件事**（交回里写了才做）：
   - 它要走 `codex exec` 生图：照它给的用途、prompt、文件名生成，放进 `imagine/assets/`，再转一句「图已放好」；
-  - 项目开工时没有 `DESIGN.md`，它选定了语言、交回里带一份「待写入 DESIGN.md」的草稿：**第一份 `DESIGN.md` 由这个会话写**（`DESIGN.md` 只有 `uiux-imagine` 与 `dreaming` 两处写入口，`../../../references/design-md.md` §14）。先读 `../../../references/design-md.md`，照它的「新建」（§10）与「一次写入怎么走」（§9）：把草稿摆给人确认措辞，**人确认后才落笔**（人改过的措辞以人的为准），hook 跑官方 lint，收尾再跑一次 lint 与 diff。草稿缺 §10 要的哪一样，转回给 uiux-imaginer 补，不自己猜。写完告诉 uiux-imaginer。项目**已有** `DESIGN.md` 时「重探语言」只产出设计法候选（写进方向说明），这一条不适用，不改文件。
+  - 项目开工时没有 `DESIGN.md`，它选定了语言、交回里带一份「待写入 DESIGN.md」的草稿：**第一份 `DESIGN.md` 由这个会话写**（`DESIGN.md` 只有 `uiux-imagine` 与 `dreaming` 两处写入口，`../../engineering/dreaming/references/design-md.md` §14）。先读 `../../engineering/dreaming/references/design-md.md`，照它的「新建」（§10）与「一次写入怎么走」（§9）：把草稿摆给人确认措辞，**人确认后才落笔**（人改过的措辞以人的为准），hook 跑官方 lint，收尾再跑一次 lint 与 diff。草稿缺 §10 要的哪一样，转回给 uiux-imaginer 补，不自己猜。写完告诉 uiux-imaginer。项目**已有** `DESIGN.md` 时「重探语言」只产出设计法候选（写进方向说明），这一条不适用，不改文件。
 - **不替人宣布方向定了，也不替人宣布收工。** 闸门是人的。uiux-imaginer 判断四条都满足时会在交回里主动说，摆给人看就是；人要不要接受，人说了算。
 
 ## 4 人的意见：按性质分流，再转回同一个 uiux-imaginer

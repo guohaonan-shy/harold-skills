@@ -1,3 +1,8 @@
+---
+name: tdd
+description: red → green 循环怎么跑、什么样的测试值得留。按 TDD 实现工单或写测试时用。
+---
+
 # TDD —— red → green 循环，以及怎么让它产出值得留的测试
 
 `implement` 在写测试前读这份。它不是"要不要写测试"的说明书——**该用哪种仪器验，spec 的 §6 已经答过了**。这份只管：既然这一刀落在 TDD 那几行上，怎么把循环跑对。
@@ -49,7 +54,7 @@
 spec §6 的仪器矩阵已经划好了。判据是**能不能先写出一个会红的测试**：
 
 - **LLM 输出质量** —— 输出非确定，无从写红 → **eval**（promptfoo + 确定性 assert）
-- **视觉正确性** —— 判据不在代码里，在冻结的 HTML 画布上 → **UI 实现环**（`references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`）。它自己是红绿的，只是被测的不是函数返回值而是渲染出来的像素与测量值
+- **视觉正确性** —— 判据不在代码里，在冻结的 HTML 画布上 → **UI 实现环**（`skills/design/uiux-refine/references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`）。它自己是红绿的，只是被测的不是函数返回值而是渲染出来的像素与测量值
 - **端到端流程** —— 跨系统，红了也定位不到 → **`qa:*` 浏览器测试**
 
 缝里的情况：**prompt 改动本身走 eval，但 prompt 产出的结构**（schema、字段存在性、枚举闭集）**走 TDD**。

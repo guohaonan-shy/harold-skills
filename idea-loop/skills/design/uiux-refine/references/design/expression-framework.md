@@ -18,7 +18,7 @@ retold in §6 on a fictional product. Externals are raw feeds; this file is the
 source of truth — update by explicit re-distill, never by runtime reads of external paths. The
 remaining laws from `craft/laws-of-ux.md` not operationalized here (Gestalt grouping, decision
 framing beyond Hick's Law, memory/recall, motor timing, behavioral expectation) were distilled
-separately into `references/design/laws-of-ux.md`, which cross-references back to this file rather than
+separately into `skills/design/uiux-refine/references/design/laws-of-ux.md`, which cross-references back to this file rather than
 restating the four laws already turned into ladders/budgets here.
 
 ## 0. Conditional-state precondition
@@ -125,5 +125,5 @@ one argument about step 2 — and rank has a right answer where taste doesn't.
 
 New generalizable treatment decisions become candidates at static-ui-protocol's Distill-back step
 and never edit the project's `DESIGN.md` from here; `dreaming` processes them under
-`references/design-md.md`. This file defines the ladders and the procedure; DESIGN.md records the
+`skills/engineering/dreaming/references/design-md.md`. This file defines the ladders and the procedure; DESIGN.md records the
 decided instances.

@@ -7,7 +7,7 @@
 
 > 为什么要有这份文件：一轮 review 或一次停下里摆给人的决定，大部分是重复的——有明文规则的违规、说明文字跟已定做法对不上、跟这次无关的存量问题，人每次都定成同一个答案。每一次都走一遍人，是把「按推荐」的力气花在不需要判断的事上，真正要人定的事反而被淹没。所以先写下「什么算判得出来」，判得出来的立即办、单列出来让人能推翻，其余才问人。
 
-**现在读它的地方**：`agents/pr-reviewer.md` 与 `references/review-standards.md`（每条候选标处置）、`skills/engineering/pr-review/SKILL.md`（照规则的条目在贴汇报之前就处理，满足条件时自己起下一轮）、`skills/engineering/to-spec/SKILL.md` 与它的 `references/backlog-mode.md`、`agents/issue-explorer.md`（起草 spec：§4 先自己定、交给人的题按 §7 写）、`agents/implementer.md` 与 `skills/engineering/implement/SKILL.md`（执行方沿用现有做法、存量按依赖分流，停下汇报单列「已按规则处理」，决定题按 §7 写）。别处不再各写一份「谁来定」「题怎么写」的判断，要写就引用这里。
+**现在读它的地方**：`agents/pr-reviewer.md` 与 `skills/engineering/pr-review/references/review-standards.md`（每条候选标处置）、`skills/engineering/pr-review/SKILL.md`（照规则的条目在贴汇报之前就处理，满足条件时自己起下一轮）、`skills/engineering/to-spec/SKILL.md` 与它的 `references/backlog-mode.md`、`agents/issue-explorer.md`（起草 spec：§4 先自己定、交给人的题按 §7 写）、`agents/implementer.md` 与 `skills/engineering/implement/SKILL.md`（执行方沿用现有做法、存量按依赖分流，停下汇报单列「已按规则处理」，决定题按 §7 写）。别处不再各写一份「谁来定」「题怎么写」的判断，要写就引用这里。
 
 ## 1 自己定的四条
 

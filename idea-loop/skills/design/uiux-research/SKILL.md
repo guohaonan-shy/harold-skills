@@ -6,9 +6,9 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 # uiux-research
 
-**回答一个具名问题：别人怎么做的、为什么这样做，给人一页能直接打开的 HTML。** 这份文件是入口，写的是**调用机制**；怎么查、页面长什么样写在 `agents/uiux-researcher.md` 和 `../../../references/design/research-backend.md`，这里不复述。
+**回答一个具名问题：别人怎么做的、为什么这样做，给人一页能直接打开的 HTML。** 这份文件是入口，写的是**调用机制**；怎么查、页面长什么样写在 `agents/uiux-researcher.md` 和 `references/research-backend.md`，这里不复述。
 
-> 先读一次 `../../../references/wiki-conventions.md` 的 §2（`design/tmp/` 的位置与「不进 git」的做法）。
+> 先读一次 `../../engineering/wiki-conventions/SKILL.md` 的 §2（`design/tmp/` 的位置与「不进 git」的做法）。
 
 ## 0 谁来调，什么时候调
 

@@ -1,5 +1,5 @@
 /**
- * GLOSSARY.md lint — the format half of `references/glossary.md` §3, made falsifiable.
+ * GLOSSARY.md lint — the format half of `skills/engineering/glossary/SKILL.md` §3, made falsifiable.
  *
  * The failure this guards against is the one upstream reports most: a glossary that slowly turns
  * into a spec. Field values, code constants, file paths and mechanism write-ups creep in one
@@ -252,7 +252,7 @@ export function renderReport(result, file) {
   const where = file ? ` (${file})` : '';
   if (result.valid) return `glossary-check: green ✓${where}`;
   return [
-    `glossary-check: ${result.errors.length} 处不符合 references/glossary.md §3${where}：`,
+    `glossary-check: ${result.errors.length} 处不符合 skills/engineering/glossary/SKILL.md §3${where}：`,
     ...result.errors.map((e) => `  - ${e}`),
   ].join('\n');
 }

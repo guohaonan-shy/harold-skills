@@ -8,8 +8,8 @@
 
 两种来源，按调用方给的选：
 
-- **backlog 文件**：一组条目，都属于同一个模块。模块划分表在 backlog 文件的「模块」一节，是项目配置（`../../../../references/spec-status.md` §2）；读不到这一节就停下，说缺什么，不自己编模块。条目里带「已移交 → [[…]]」标记的，已经有 spec 了，跳过。
-- **GitHub issue**：一组 issue 号。没有模块表——哪几个该放进同一份 spec，按 §2 的拆分规则自己判断，互不相关的各成一份。每个 issue 先读全文和评论（`gh issue view <号> --comments`）。已经有 `status:*` label 的，已经在流程里了，跳过（`../../../../references/spec-status.md` §3）。
+- **backlog 文件**：一组条目，都属于同一个模块。模块划分表在 backlog 文件的「模块」一节，是项目配置（`spec-status.md` §2）；读不到这一节就停下，说缺什么，不自己编模块。条目里带「已移交 → [[…]]」标记的，已经有 spec 了，跳过。
+- **GitHub issue**：一组 issue 号。没有模块表——哪几个该放进同一份 spec，按 §2 的拆分规则自己判断，互不相关的各成一份。每个 issue 先读全文和评论（`gh issue view <号> --comments`）。已经有 `status:*` label 的，已经在流程里了，跳过（`spec-status.md` §3）。
 
 下文的「条目」两种来源都指。
 
@@ -33,7 +33,7 @@
 
 三样缺哪样，人审核时就得自己去查，那是这一节要替人省掉的活。人审核时决定关掉还是补信息。
 
-**方案、选项、范围依赖的现状，也要在起草时核清**，不止是问题本身：代码现在怎么做、影响有多大、同类入口有哪些、相邻在飞的 spec 与 issue。没有人在场可问，漏核的会在审核时由人一条条追问。规则（出处、规模数字、同类入口、出题前对最新基准分支再核一次）在 `../../../../references/decision-rules.md` §7.1；条目是不是已经被做掉了，也靠这一步查出来，查出来的进「建议关闭」。
+**方案、选项、范围依赖的现状，也要在起草时核清**，不止是问题本身：代码现在怎么做、影响有多大、同类入口有哪些、相邻在飞的 spec 与 issue。没有人在场可问，漏核的会在审核时由人一条条追问。规则（出处、规模数字、同类入口、出题前对最新基准分支再核一次）在 `../../pr-review/references/decision-rules.md` §7.1；条目是不是已经被做掉了，也靠这一步查出来，查出来的进「建议关闭」。
 
 复现推翻了条目原来的说法（比如条目写的根因不对），在 §1 根因里写明「修正：条目原先认为 X，实测是 Y」。
 
@@ -68,7 +68,7 @@
 
 - frontmatter `status: 草稿`。`related` 不挂 transcript，挂这份 spec 关联的其他 spec / ADR，没有就留空列表。
 - `spec-status.mjs index <docs>` 刷新 `docs/spec/index.md`。
-- 每条被这份 spec 覆盖的条目写一次移交：backlog 条目跑 `spec-status.mjs handoff`（`../../../../references/spec-status.md` §2）；issue 跑 `issues.mjs handoff`（同上 §3，只写进 spec frontmatter 的 `issues`，GitHub 上的 label 由调度方推送之后再同步）。进了「建议关闭」的也写——它同样等着人在这份 spec 的审核里处置。
+- 每条被这份 spec 覆盖的条目写一次移交：backlog 条目跑 `spec-status.mjs handoff`（`spec-status.md` §2）；issue 跑 `issues.mjs handoff`（同上 §3，只写进 spec frontmatter 的 `issues`，GitHub 上的 label 由调度方推送之后再同步）。进了「建议关闭」的也写——它同样等着人在这份 spec 的审核里处置。
 - **不提交、不推送、不开会话。** 这些是调用方的事（`issue-dispatch`，或项目自己的起草 routine）。
 
 收工时列出：起草了哪几份 spec（slug、各含哪几条、是否标了「需要 grill」、是否碰 UI），以及进了「建议关闭」的条目。

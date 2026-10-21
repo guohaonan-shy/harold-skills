@@ -7,7 +7,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 **把一份已经切好工单的 spec 做完。** 这里只写编排：谁起谁、派哪张、交回后核什么、何时停下交给人。一张工单怎么做在 `agents/implementer.md`。
 
-> 先读 `../../../references/wiki-conventions.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`../../../references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../../../references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../../../references/decision-rules.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
+> 先读 `../wiki-conventions/SKILL.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../pr-review/references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../pr-review/references/decision-rules.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
 
 ## 0 前提
 
@@ -44,7 +44,7 @@ description: 把一份 spec 的工单连续实现完——调用它的会话做�
 
 **第一次派工且 frontier 上有两张以上**：先起 explorer，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、这批工单路径、spec 路径、笔记目录，等它交回。
 
-每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD`；用 Agent 起 implementer，`isolation: "worktree"`、`run_in_background: true`，**只给指针**——工单与 spec 的仓库内路径、起点 SHA、集成分支名、端口、集成分支 worktree 的绝对路径、**交给 implementer 的 tmp 绝对路径**（集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径；`tmp/` 不进版本库，执行方自己的 worktree 里没有它，冻结画布从它的 `canvas/` 读，没有设计稿的 UI 工单把最小差异记进它的 `delta/`，结构见 `../../../references/design-archive.md`；目录还不存在就照给路径，由执行方创建）、已落地提交列表，以及（有的话）「人的决定已写进工单」和上次的半成品分支。不转述工单。
+每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD`；用 Agent 起 implementer，`isolation: "worktree"`、`run_in_background: true`，**只给指针**——工单与 spec 的仓库内路径、起点 SHA、集成分支名、端口、集成分支 worktree 的绝对路径、**交给 implementer 的 tmp 绝对路径**（集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径；`tmp/` 不进版本库，执行方自己的 worktree 里没有它，冻结画布从它的 `canvas/` 读，没有设计稿的 UI 工单把最小差异记进它的 `delta/`，结构见 `../dreaming/references/design-archive.md`；目录还不存在就照给路径，由执行方创建）、已落地提交列表，以及（有的话）「人的决定已写进工单」和上次的半成品分支。不转述工单。
 
 **写 `prod/` 不归 implementer**：执行方只写上面那个 tmp 路径下的 `delta/`；归档在合并前由 pr-review 阶段走 `design-archive-write.mjs`，人批过之后才写（`design-archive.md` §9）。
 

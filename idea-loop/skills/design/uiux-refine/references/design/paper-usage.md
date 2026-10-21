@@ -1,7 +1,7 @@
 > ⚠️ **DORMANT — do not use right now.** The Paper canvas is temporarily disabled because Paper has
 > no parallel-page support yet (can't hold multiple surfaces' pages open at once); the Paper community
 > expects it in ~1 month. Until then `static-ui-protocol` and `motion-protocol` run on the **browser canvas** —
-> see `references/design/browser-usage.md`. This file is kept intact as the **restore source**: when Paper
+> see `skills/design/uiux-refine/references/design/browser-usage.md`. This file is kept intact as the **restore source**: when Paper
 > ships parallel pages, swap the active canvas back here and remove this banner. Everything below is the
 > Paper operating manual, frozen as-is.
 

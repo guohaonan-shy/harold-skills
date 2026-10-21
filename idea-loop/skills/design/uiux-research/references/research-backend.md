@@ -3,7 +3,7 @@
 **按需加载。** Read by exactly one executor: `idea-loop:uiux-researcher` (`agents/uiux-researcher.md`),
 started by the `uiux-research` skill when the **human** asks to look at how other products do
 something. Nobody else reads this file and nobody else calls Refero: `uiux-imaginer`, `designer` and
-stage C of `static-ui-protocol.md` do not research — when a UX question cannot be settled by
+stage C of `../../uiux-refine/references/design/static-ui-protocol.md` do not research — when a UX question cannot be settled by
 judgment they write it down as a **suggested research question** (one named question plus a
 recommended answer) in their hand-back and carry on with the recommendation. Whether it gets
 researched is the human's call.
@@ -124,7 +124,7 @@ A source that cannot represent the target state does not belong on the page at a
 against the product context and name what is still open for *our* product. One entry per decision:
 the question, the options, the source each option comes from, and what each means for our surface
 given the context. Where sources split, the split **is** the entry — alternatives named, never a
-midpoint (`ui-craft-checklist.md` §2: a reference is evidence for a specific claim, not a vote). You
+midpoint (`../../uiux-refine/references/design/ui-craft-checklist.md` §2: a reference is evidence for a specific claim, not a vote). You
 do not pick one: no "so choose B". If nothing is open, say so in one line. Why it goes last: the
 human decides after reading the evidence (second human annotation, 2026-10-20: "需要我们决策的内容放在
 内容调研后面"); at the top it asked for decisions before the sources that justify them had been read.

@@ -2,7 +2,7 @@
 /**
  * The one way a spec's status changes, and the one way a backlog entry is marked as handed over.
  *
- * A spec walks 草稿 → 审核中 → 设计中 → 在飞 (references/spec-status.md). Each step has one writer and
+ * A spec walks 草稿 → 审核中 → 设计中 → 在飞 (skills/engineering/to-spec/references/spec-status.md). Each step has one writer and
  * a precondition that can be read off the files: 设计中 only for a spec that touches UI, 在飞 only once
  * the design is frozen (a 冻结摘要 under §4) and the tickets are cut. Skills used to flip the
  * frontmatter by hand and refresh docs/spec/index.md by hand; a flip that skipped its precondition,
@@ -14,7 +14,7 @@
  * not draft them again. The backlog has two shapes — a table with a status column, a checklist —
  * and the mark is written and removed here for both, so the routine can filter on one literal.
  *
- * Layout (references/wiki-conventions.md §2): docs/spec/<slug>/<slug>.md, tickets in
+ * Layout (skills/engineering/wiki-conventions/SKILL.md §2): docs/spec/<slug>/<slug>.md, tickets in
  * docs/spec/<slug>/tickets/NN-<slug>.md, the index at docs/spec/index.md.
  *
  * Usage:
@@ -25,7 +25,7 @@
  *   node spec-status.mjs unhandoff <backlog-file> <spec-slug> <entry> [<status>] → removes the mark (table rows get <status>, default 待办)
  * <entry> is `#<n>` for the table row whose first cell is n, or a piece of text found on exactly one entry line.
  * A spec that lists GitHub issues in its frontmatter (`issues: [12, 15]`) has their status labels
- * synced after `set` (issues.mjs, references/spec-status.md §3); a failed sync leaves the status written
+ * synced after `set` (issues.mjs, skills/engineering/to-spec/references/spec-status.md §3); a failed sync leaves the status written
  * and says how to retry.
  * Exit: 0 = done, 1 = refused / usage / io error (the reason on stderr).
  */

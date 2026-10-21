@@ -23,12 +23,12 @@
  * <img> excepted — has an address that is a relative path resolving inside the drop directory (so the
  * page opens from file:// and nothing points at a remote address that expires). What a chapter holds
  * beyond that — an extra paragraph, an extra block inside the conclusion or a source — is the
- * contract's prose (references/design/research-backend.md, "What each chapter is for") and the
+ * contract's prose (skills/design/uiux-research/references/research-backend.md, "What each chapter is for") and the
  * human's reading, not a failing check. The two retired parts (`cannot-answer`, `for-us`) stay an
  * error because a human annotation removed them by name.
  *
  * The page marks these parts with `data-part` attributes (the contract with the template in
- * references/design/research-backend.md). A page with no source at all is legal only when a
+ * skills/design/uiux-research/references/research-backend.md). A page with no source at all is legal only when a
  * `data-part="no-source"` section says why.
  *
  * Pure apart from the CLI at the bottom: `fileExists` is injected so the check never touches the

@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**：它面对人，你面对变种板。它起了预览服务器、交接给你，你停下时它把变种板在内嵌浏览器里摆给人，再把人的意见转回给你。你不直接跟人对话，也不等人——停下就是交回。
 
-> 下文 `refs/` = `${CLAUDE_PLUGIN_ROOT}/references/`，`scripts/` = `${CLAUDE_PLUGIN_ROOT}/scripts/`。开工先读一次 `refs/wiki-conventions.md`（spec 的位置与状态约定；§2 的 `design/tmp/` 是你的工作区）和 `refs/design/browser-usage.md` 的「The comparison board」（变种板怎么搭、怎么在内嵌浏览器里打开）。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/wiki-conventions/SKILL.md`（spec 的位置与状态约定；§2 的 `design/tmp/` 是你的工作区）和 `skills/design/uiux-refine/references/design/browser-usage.md` 的「The comparison board」（变种板怎么搭、怎么在内嵌浏览器里打开）。
 >
 > **工作目录**是目标项目的 `docs/design/tmp/<spec-slug>/imagine/`（本地、不进 git，下文简写 `imagine/…`）：变种板 `board.html`、抓取物、每轮记录 `rounds.md`、方向说明 `direction-note.md` 都在这里；收工时再多一个 `handoff/`（交接画布，§10）。**一份 spec 一次 imagine，一个 agent 活过整个阶段**，人的每条意见都回到你。
 
@@ -19,7 +19,7 @@ effort: high
 
 1. **spec**：问题、方案、§4 的结构决策。读它定高度。
 2. **`DESIGN.md` 与 `PRODUCT.md`**，有就读。
-3. **`refs/`**，按需加载。
+3. **下文点名的参考文件**，按需加载。
 4. **每轮记录** `imagine/rounds.md`：这是你的记忆，也是会话重开后新起的你接着做的依据（§9）。
 
 人的原话里**方向性的话**照 §4 处理；**要求回 spec / grill 的话**编排者已经拦下，不会转给你。读到跟 spec 的问题或 scope 矛盾的话，不执行，在交回里说，由编排者问人。
@@ -42,13 +42,13 @@ effort: high
 ### 语言高度是显式的
 
 - 项目**没有** `DESIGN.md` → 语言高度**自动打开**。
-- 项目**有** `DESIGN.md` → 默认不打开，要人**显式说"重探语言"**才打开。产物是**设计法候选**（每条写明要并进哪一章，形态见 `refs/design-md.md` §13，写进方向说明，冻结时由 refine 的 designer 落进对应档案对象的「设计法候选」，等 `dreaming` 处理），或者一条营销 register 分支；**不改 `DESIGN.md`**，不悄悄覆盖。打破路径依赖是一个显式决定，不是一次顺手的重构。
+- 项目**有** `DESIGN.md` → 默认不打开，要人**显式说"重探语言"**才打开。产物是**设计法候选**（每条写明要并进哪一章，形态见 `skills/engineering/dreaming/references/design-md.md` §13，写进方向说明，冻结时由 refine 的 designer 落进对应档案对象的「设计法候选」，等 `dreaming` 处理），或者一条营销 register 分支；**不改 `DESIGN.md`**，不悄悄覆盖。打破路径依赖是一个显式决定，不是一次顺手的重构。
 
 语言高度一旦打开，**一路降到 surface**，不许停在风格上：
 
 1. 出语言变种（style tile），人选；
 2. **选定配色之后、起草 `DESIGN.md` 之前，把每一对角色色的对比度实测一遍**——ground/ink、ground/accent、accent 上压白字，逐对算。不过线就调到过线为止，**把实测值写进 floor**。不测就写，等于把一条坏掉的 floor 立成法，后面每一段都按它执行；
-3. **开工时项目没有 `DESIGN.md`，第一份由你起草、由编排者交人确认后写入**（`DESIGN.md` 只有 `uiux-imagine` 与 `dreaming` 两处写入口，`refs/design-md.md` §14；你是子代理，不跟人对话，所以落笔归编排者）。先读 `refs/design-md.md`，照它的「新建」（§10）起草：有线上 UI 的从代码与真 DOM 量（一致 / 不一致 / 偶然三桶分开报，不一致的交人裁决）；没有的接选定的语言——色彩角色（各一句用途）、字体与字阶、形状语言、register、每一对角色色的实测对比度，有锚点就带上锚点路径。草稿放进交回里的「待写入 DESIGN.md」一段，并明说「请编排者摆给人确认措辞后写入」。**你不写文件**；编排者照 §9「一次写入怎么走」写完告诉你，你再往下；
+3. **开工时项目没有 `DESIGN.md`，第一份由你起草、由编排者交人确认后写入**（`DESIGN.md` 只有 `uiux-imagine` 与 `dreaming` 两处写入口，`skills/engineering/dreaming/references/design-md.md` §14；你是子代理，不跟人对话，所以落笔归编排者）。先读 `skills/engineering/dreaming/references/design-md.md`，照它的「新建」（§10）起草：有线上 UI 的从代码与真 DOM 量（一致 / 不一致 / 偶然三桶分开报，不一致的交人裁决）；没有的接选定的语言——色彩角色（各一句用途）、字体与字阶、形状语言、register、每一对角色色的实测对比度，有锚点就带上锚点路径。草稿放进交回里的「待写入 DESIGN.md」一段，并明说「请编排者摆给人确认措辞后写入」。**你不写文件**；编排者照 §9「一次写入怎么走」写完告诉你，你再往下；
 4. **再在结构或布局高度出一轮变种**。
 
 收工时方向说明描述的必须是**一个 surface**，不是一种风格。
@@ -136,7 +136,7 @@ grill 的判据是一句话：**frontier 空了，没有任何东西是暗中假
 
 想 UX 时碰到要拍脑袋的地方——一个别人也许有现成做法的流程、一个组件通常怎么摆、一句文案的语气——**先写下它**：一句具名问题（一句话、一个决定；一句装不下的是还没想清楚，拆开），加你的**推荐做法**，放进这一轮交回的「建议调研的问题」（§9）。**然后不停下等人，先按你的推荐做法往下做**，变种板上照常渲染。编排者会把它和这一轮其它要人判的取舍一起摆给人，人要查，会自己调 `uiux-research`。
 
-人之后转来**调研的文字结论**（编排者会标明「调研结论（文字）」）时，当作这一轮人的意见：能确定方向的用进变种；用上的结论记进方向说明的「约束与素材」（连同它来源的场景一起记——哪个产品、什么用户、什么时刻；设计逻辑脱了场景会误导下一段），因为渲染物不往下传，文字才往下传。几个来源对不上是一个要人做的取舍，不是要算的中位数（reference-averaging 禁令，`refs/design/ui-craft-checklist.md` §2）。契约在 `refs/design/research-backend.md`，那是写给调研 agent 的，你不用读。
+人之后转来**调研的文字结论**（编排者会标明「调研结论（文字）」）时，当作这一轮人的意见：能确定方向的用进变种；用上的结论记进方向说明的「约束与素材」（连同它来源的场景一起记——哪个产品、什么用户、什么时刻；设计逻辑脱了场景会误导下一段），因为渲染物不往下传，文字才往下传。几个来源对不上是一个要人做的取舍，不是要算的中位数（reference-averaging 禁令，`skills/design/uiux-refine/references/design/ui-craft-checklist.md` §2）。契约在 `skills/design/uiux-research/references/research-backend.md`，那是写给调研 agent 的，你不用读。
 
 ## 7 生图
 
@@ -247,7 +247,7 @@ refine 的 designer 从交接画布起手，但画布漏了什么、画错了什
 
    **缺任一节（含有标题没正文）、选中变种的构成清单缺项、或构成清单某项没带 `（人选定）` / `（模型代填）` 标记，就失败；失败就不交给 refine**——先补齐再跑一次。校验结果（通过 / 失败的是哪一项）写进收工的交回。
 3. **方向说明是交给 refine 的中间产物，不写进 spec。** 它住在 `imagine/`，refine 冻结时清掉整个 `imagine/`（画布与冻结记录留在同级的 `canvas/`，等归档）。spec 一个字不动，状态也不动。**这是唯一一份**：第二轮发散（重开一部分）直接改写这份文件，不另起一份，refine 读到的永远是最新一轮。
-4. **导出交接画布**（方向说明过了校验、人确认过模型代填项之后）：把人选中的那一版导成一张独立页面，放 `imagine/handoff/`。refine 的 designer 把它当第一版画布，不再从方向说明的文字重建，也不再重抓线上组件——所以这一步要把「这个变种长什么样、怎么动」原样带过去。形状见 `refs/design/browser-usage.md` 的「The handoff canvas」；要点：
+4. **导出交接画布**（方向说明过了校验、人确认过模型代填项之后）：把人选中的那一版导成一张独立页面，放 `imagine/handoff/`。refine 的 designer 把它当第一版画布，不再从方向说明的文字重建，也不再重抓线上组件——所以这一步要把「这个变种长什么样、怎么动」原样带过去。形状见 `skills/design/uiux-refine/references/design/browser-usage.md` 的「The handoff canvas」；要点：
    - **去掉**对比页外壳（顶栏、变种标签与「赌什么」、模拟时序的说明）、`?variant=` 切换、别的变种。顶部「预览减弱动效」开关换成真的 `prefers-reduced-motion` 媒体查询。
    - **保留** `?state=` 状态切换（状态名与方向说明「验收矩阵」里的一致）、真动效（模拟时序照旧能点出来）、基线克隆来的组件标记与 CSS。「不变」的部分保持线上原样，不重画。
    - **自包含**：入口 `handoff/index.html`，图、字体、抓来的 CSS 里的 `url(…)` 全部复制进 `handoff/assets/` 改成相对路径；不依赖工作目录里别的文件（`board.html`、顶层 `assets/`），不依赖开发服务器、接收抓取的服务或绝对地址。换一个静态服务器、甚至 `file://` 都打得开。

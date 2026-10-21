@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**：它面对人，你面对这一张工单。你不跟人对话，也不等人。做完或者停下，都是把结果交回给它。
 
-> 下文 `refs/` = `${CLAUDE_PLUGIN_ROOT}/references/`，`scripts/` = `${CLAUDE_PLUGIN_ROOT}/scripts/`。开工先读一次 `refs/wiki-conventions.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定）、`refs/worktree.md`（你这个 worktree 的起点与准备）、`refs/tdd.md`（循环的规矩、seam、mock 边界）和 `refs/decision-rules.md`（什么自己定、什么交给人；§4 的判定表引用它，不另写一份）。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/wiki-conventions/SKILL.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定）、`skills/engineering/implement/references/worktree.md`（你这个 worktree 的起点与准备）、`skills/engineering/tdd/SKILL.md`（循环的规矩、seam、mock 边界）和 `skills/engineering/pr-review/references/decision-rules.md`（什么自己定、什么交给人；§4 的判定表引用它，不另写一份）。
 
 ## 1 输入只有这几样
 
@@ -29,11 +29,11 @@ effort: high
 
 ## 2 开工前
 
-1. **起点**：`git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后按 `refs/worktree.md` §2 准备：目标仓库声明了 worktree 准备命令就带上端口跑它，没有就用默认做法；依赖按锁文件核对一遍。
+1. **起点**：`git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后按 `skills/engineering/implement/references/worktree.md` §2 准备：目标仓库声明了 worktree 准备命令就带上端口跑它，没有就用默认做法；依赖按锁文件核对一遍。
 2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停（现在的 `to-ticket` 不切没冻结的 spec，只有旧流程切的票还会带它）。
 4. **blocker 都已落地**（工单的 `Blocked by`，对照编排者给的提交列表）。
-5. **领域词汇**：目标项目有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，不用 `_Avoid_` 里的词（`refs/glossary.md` §5）。缺词不问、不写，先用描述性的说法。
+5. **领域词汇**：目标项目有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，不用 `_Avoid_` 里的词（`skills/engineering/glossary/SKILL.md` §5）。缺词不问、不写，先用描述性的说法。
 6. **先把前提核一遍再写代码**：工单描述的现状和代码对得上吗？每一格验收标准，你知道它的「对」长什么样吗？卡住最好卡在这里，而不是写到一半。共享笔记有就先读：它只给位置，位置对不对你自己打开核。
 
 ## 3 做
@@ -46,12 +46,12 @@ effort: high
 | API 契约 | TDD API 测试 |
 | DB schema / 迁移 / 事务语义 | **真 DB** 测试 |
 | LLM 输出质量 | eval |
-| 视觉正确性 | **UI 实现环**（`refs/ui-implementation-standard.md` + `scripts/ui-measure.mjs`；以冻结的 HTML 画布为真值，你的实现为待验证的候选） |
+| 视觉正确性 | **UI 实现环**（`skills/design/uiux-refine/references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`；以冻结的 HTML 画布为真值，你的实现为待验证的候选） |
 | 端到端流程 | 仓库自己的端到端检查 |
 
-循环的规矩、反模式、mock 边界在 `refs/tdd.md`。**新写的测试守「只在系统边界 mock」**；存量测试不守这条，别照抄存量。
+循环的规矩、反模式、mock 边界在 `skills/engineering/tdd/SKILL.md`。**新写的测试守「只在系统边界 mock」**；存量测试不守这条，别照抄存量。
 
-**UI 工单多一道环**，形状仍是红绿，裁判是脚本不是 agent：读 `refs/ui-implementation-standard.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后按验收矩阵跑测量脚本。它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判 plateau**（同一批 finding 两轮不变）。plateau 时判断残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按 §4 停下。不在这里硬磨。
+**UI 工单多一道环**，形状仍是红绿，裁判是脚本不是 agent：读 `skills/design/uiux-refine/references/ui-implementation-standard.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后按验收矩阵跑测量脚本。它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判 plateau**（同一批 finding 两轮不变）。plateau 时判断残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按 §4 停下。不在这里硬磨。
 
 过程中：
 
@@ -69,19 +69,19 @@ effort: high
 
 ### UI 工单与设计档案
 
-> 档案的结构、frontmatter 与校验在 `refs/design-archive.md`，写之前读它的 §2–§5。
+> 档案的结构、frontmatter 与校验在 `skills/engineering/dreaming/references/design-archive.md`，写之前读它的 §2–§5。
 
 - **冻结画布从 tmp 绝对路径的 `canvas/` 下读**，不要在自己的 worktree 里找。
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
   - **范围**：只写这张工单碰到的状态、边、组件文件，别的对象不碰。
-  - **写法**：照 `refs/design-archive.md` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，不覆盖别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
+  - **写法**：照 `skills/engineering/dreaming/references/design-archive.md` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，不覆盖别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
   - **自检**：以集成 worktree 当仓库根，跑 `node scripts/design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
 - **要进某个状态去复现或写测试时，先查档案**，不要自己摸路：`node scripts/design-archive-query.mjs <集成 worktree> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
 - **不写 `prod/`。** 它只由归档脚本写，归档在合并前由 pr-review 阶段做，不归你。
 
 ## 4 停，还是延后
 
-撞到工单没交代的东西，先分清是哪一种。**「自己定」的规则在 `refs/decision-rules.md` §1，这里只说它落在执行方身上是什么样，不另写一份**：
+撞到工单没交代的东西，先分清是哪一种。**「自己定」的规则在 `skills/engineering/pr-review/references/decision-rules.md` §1，这里只说它落在执行方身上是什么样，不另写一份**：
 
 | 情况 | 例子 | 怎么办 |
 |---|---|---|
@@ -120,7 +120,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 
 ## 5 要人判断的部分，录成素材
 
-每一格标「人看」的验收（动效、悬停的样子、流程是否顺），以及你延后给「PR 交付验收」的格，都按 `refs/evidence.md` 做成素材：流程用 `scripts/flow-compose.mjs` 拼真实截图，动效录动图，样式出并排截图。素材取自**你的实现**（真实页面加网络拦截，或开发状态页上的真实组件），不取画布。
+每一格标「人看」的验收（动效、悬停的样子、流程是否顺），以及你延后给「PR 交付验收」的格，都按 `skills/engineering/evidence/SKILL.md` 做成素材：流程用 `scripts/flow-compose.mjs` 拼真实截图，动效录动图，样式出并排截图。素材取自**你的实现**（真实页面加网络拦截，或开发状态页上的真实组件），不取画布。
 
 - 文件放**你这个 worktree** 的 `.tmp/implement/<spec-slug>/evidence/`，文件名以 `t<NN>-` 开头。编排者回收你的 worktree 前会把它们拷走。**不上传**，编排者停下时统一上传。
 - **录的过程中看到的行为和验收标准对不上，那是 bug，不是人验项**：当场修，补回归测试，然后重录。
@@ -138,8 +138,8 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 然后**做成一个能 fast-forward 进集成分支的 commit**。冲突由你解决，你最清楚这张工单：
 
 1. 先把全部改动提交一次，message 随意。
-2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突按 `refs/worktree.md` §2，不手工合并。
-3. 依赖按锁文件核对一遍（`refs/worktree.md` §2），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
+2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突按 `skills/engineering/implement/references/worktree.md` §2，不手工合并。
+3. 依赖按锁文件核对一遍（`skills/engineering/implement/references/worktree.md` §2），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
 4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部改动，加上勾好框的工单文件（以及被你追加了继承格的那张工单）。message 用仓库的风格写，**末尾带一行 trailer**：
 
    ```

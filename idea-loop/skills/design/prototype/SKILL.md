@@ -7,7 +7,7 @@ description: 用一次性原型回答一个文字定不了的问题——逻辑 
 
 **一次性代码，回答一个问题。** 问题先行，它决定后面所有东西的形状。
 
-> 先读一次 `../../../references/wiki-conventions.md`（raw 桶的位置、frontmatter、slug 唯一性）。
+> 先读一次 `../../engineering/wiki-conventions/SKILL.md`（raw 桶的位置、frontmatter、slug 唯一性）。
 
 人可以直接调；`grill` 也会在访谈会话里调它——某条 frontier 问题用文字定不了结构或行为时，把那条问题压成一句话交过来，人在原型里选，答案作为这条 frontier 的落定回到决策树。
 

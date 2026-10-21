@@ -33,7 +33,7 @@ docs/design/
 
 - 各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。
 - **页面是目录，每个状态一份文件**：状态若只是页面文件里的一节，页面内的流转在 Obsidian 图上全变成自环。**状态文件名带页面前缀**（`<page>--<state>`），因为 wikilink 按 basename 解析，不同页面都有 `loading` 时靠前缀区分。组件文件用代码组件名。
-- **basename 在 `docs/` 下全局唯一**（`wiki-conventions.md` §4），由校验查；工单文件与 `index.md` 豁免。
+- **basename 在 `docs/` 下全局唯一**（`../../wiki-conventions/SKILL.md` §4），由校验查；工单文件与 `index.md` 豁免。
 - **`tmp/` 与 `prod/` 的分工**：`tmp/<spec-slug>/` 放进行中需求的全部设计过程产物（`imagine/` 方向说明、`canvas/` 画布与冻结记录与完整验收矩阵、`delta/` 对 `prod/` 的差异），只在本地，目标项目要把它排除出 git；`prod/` 放线上现在的样子，提交。放弃的需求不上线，有价值的结论写回 spec 或 issue。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行一条，`- [[<id>]]`（后面可跟一句原因）。于是归档 = 覆盖 + 删除，需求差异 = 逐个对象比对，都不用解析补丁格式。
 - **`prod/` 只存精简矩阵**：每个状态一张主视口截图（主视口、主题、语言写在 `prod/index.md` 的 frontmatter，项目定一次），每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
@@ -43,7 +43,7 @@ docs/design/
 
 ## 3 frontmatter：机器读的结构
 
-每份对象文件照 `wiki-conventions.md` §3 带 `type` / `tags` / `summary`，再加各自的结构字段。**引用一律写成带引号的 `"[[basename]]"` 字符串**，Obsidian 和脚本读的是同一个东西；`{token}` 形式的 token 引用同样加引号。
+每份对象文件照 `../../wiki-conventions/SKILL.md` §3 带 `type` / `tags` / `summary`，再加各自的结构字段。**引用一律写成带引号的 `"[[basename]]"` 字符串**，Obsidian 和脚本读的是同一个东西；`{token}` 形式的 token 引用同样加引号。
 
 **页面** `type: design-page`
 

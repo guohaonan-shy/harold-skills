@@ -12,9 +12,9 @@ description: 把刚才这场对话落盘成 raw transcript + 一份 spec，或�
 - **grill 模式**（默认）：输入是刚才这场 grill 对话。走下面 §1–§4。
 - **backlog 模式**：输入是 backlog 里同一模块的一组条目或一组 GitHub issue，没有对话，通常由起草 routine 或 `idea-loop:issue-explorer` 调用。走 `references/backlog-mode.md`，那里写了它跟本文哪几处不同；没写到的照本文。
 
-> 先读一次 `../../../references/wiki-conventions.md`（目录、frontmatter、slug 唯一性、禁写文件路径）、`../../../references/spec-status.md`（状态机、backlog 移交标记，都只走 `scripts/spec-status.mjs`）和 `../../../references/spec-figures.md`（spec 里四处图：画什么、用什么画、放哪）。
+> 先读一次 `../wiki-conventions/SKILL.md`（目录、frontmatter、slug 唯一性、禁写文件路径）、`references/spec-status.md`（状态机、backlog 移交标记，都只走 `scripts/spec-status.mjs`）和 `references/spec-figures.md`（spec 里四处图：画什么、用什么画、放哪）。
 >
-> 谁来定、题怎么写，不在这里重写：都在 `../../../references/decision-rules.md`。§1 现状的出处与规模、§2 先写交付物、§4 先自己定再留选项、范围与 §8 的扫描、改文字同步图和测试表，下面各处只写「落在 spec 的哪一节」，规则本身引用它。两种模式都守。
+> 谁来定、题怎么写，不在这里重写：都在 `../pr-review/references/decision-rules.md`。§1 现状的出处与规模、§2 先写交付物、§4 先自己定再留选项、范围与 §8 的扫描、改文字同步图和测试表，下面各处只写「落在 spec 的哪一节」，规则本身引用它。两种模式都守。
 >
 > spec 不只写给 agent，也写给人：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在 §4 的决策拼成一条链。所以 §1、§3、§5 都要配图。
 
@@ -50,7 +50,7 @@ related: ["[[<spec-slug>]]"]
 
 写进 `docs/spec/<slug>/<slug>.md`——一份 spec 一个目录，文件与目录同名（wiki-conventions §2）。slug 必须**全局唯一**且**不同于 transcript 的 slug**。
 
-目标项目有 `GLOSSARY.md` 就读它，spec 标题和正文里的领域概念用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../../../references/glossary.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
+目标项目有 `GLOSSARY.md` 就读它，spec 标题和正文里的领域概念用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../glossary/SKILL.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
 
 ```markdown
 ---
@@ -115,7 +115,7 @@ excalidrawer `sequence`：浏览器、API、DB、对象存储 / 第三方。本 
 | API 契约（路由、schema、序列化） | TDD API 测试（走 ASGI） | |
 | DB schema / 迁移 / 并发与事务语义 | **真 DB** 测试 | |
 | LLM 输出质量（prompt 改动） | eval（promptfoo + 确定性 assert） | |
-| 视觉正确性 | UI 实现环（`references/ui-implementation-standard.md` + 测量/像素比对脚本） | |
+| 视觉正确性 | UI 实现环（`skills/design/uiux-refine/references/ui-implementation-standard.md` + 测量/像素比对脚本） | |
 | 端到端用户流程 | `qa:*` 浏览器测试 | |
 
 判据是**能不能先写出一个会红的测试**。前三行能，所以走 TDD；后三行的输出是非确定的（LLM）或感知性的（视觉）或跨系统的（E2E），无从写红，falsifiable signal 是另一种仪器。
