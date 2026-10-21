@@ -7,7 +7,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 **把一份已经切好工单的 spec 做完。** 这里只写编排：谁起谁、派哪张、交回后核什么、何时停下交给人。一张工单怎么做在 `agents/implementer.md`。
 
-> 先读 `../wiki-conventions/SKILL.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`../pr/SKILL.md`（停下汇报、PR 描述的四节）、`../decision-rules/SKILL.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
+> 先用 Skill 工具调 `idea-loop:wiki-conventions`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（停下汇报、PR 描述的四节）、`idea-loop:decision-rules`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
 
 ## 0 前提
 
@@ -44,7 +44,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 **第一次派工且 frontier 上有两张以上**：先起 explorer，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、这批工单路径、spec 路径、笔记目录，等它交回。
 
-每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD`；用 Agent 起 implementer，`isolation: "worktree"`、`run_in_background: true`，**只给指针**——工单与 spec 的仓库内路径、起点 SHA、集成分支名、端口、集成分支 worktree 的绝对路径、**交给 implementer 的 tmp 绝对路径**（集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径；`tmp/` 不进版本库，执行方自己的 worktree 里没有它，冻结画布从它的 `canvas/` 读，没有设计稿的 UI 工单把最小差异记进它的 `delta/`，结构见 `../design-archive/SKILL.md`；目录还不存在就照给路径，由执行方创建）、已落地提交列表，以及（有的话）「人的决定已写进工单」和上次的半成品分支。不转述工单。
+每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD`；用 Agent 起 implementer，`isolation: "worktree"`、`run_in_background: true`，**只给指针**——工单与 spec 的仓库内路径、起点 SHA、集成分支名、端口、集成分支 worktree 的绝对路径、**交给 implementer 的 tmp 绝对路径**（集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径；`tmp/` 不进版本库，执行方自己的 worktree 里没有它，冻结画布从它的 `canvas/` 读，没有设计稿的 UI 工单把最小差异记进它的 `delta/`，结构见 `idea-loop:design-archive`；目录还不存在就照给路径，由执行方创建）、已落地提交列表，以及（有的话）「人的决定已写进工单」和上次的半成品分支。不转述工单。
 
 **写 `prod/` 不归 implementer**：执行方只写上面那个 tmp 路径下的 `delta/`；归档在合并前由 pr-review 阶段走 `design-archive-write.mjs`，人批过之后才写（design-archive 的「归档」）。
 
@@ -77,9 +77,9 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 没有在跑的、frontier 也空了才停（只剩等决定的及其下游，或全部落地）。
 
 1. 还没有 PR：推送，`gh pr create --draft --base <base>`（标题用 spec 标题，带署名行），`pr-body.mjs set` 写 `summary` 和 `reference`。
-2. 停下汇报按 `../pr/SKILL.md` 的「停下汇报」写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` 的「交给人时」）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
+2. 停下汇报按 `idea-loop:pr` 的「停下汇报」写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` 的「交给人时」）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
 3. 更新 `reference` 的执行记录，推送。
-4. 会话里按条目贴汇报，每项文字后紧跟它的素材（`../pr/SKILL.md` 的「review loop」）；再发一条推送通知。
+4. 会话里按条目贴汇报，每项文字后紧跟它的素材（`idea-loop:pr` 的「review loop」）；再发一条推送通知。
 
 **人回复后**：原话逐字记进「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
@@ -91,7 +91,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 回 §3。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的 `pause`**：按 `../pr/SKILL.md` 的「PR 描述的四节」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，接 `/idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的 `pause`**：按 `idea-loop:pr` 的「PR 描述的四节」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，接 `/idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
 
 ## 回收
 

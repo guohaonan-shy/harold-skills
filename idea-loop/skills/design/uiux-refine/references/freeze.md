@@ -33,7 +33,7 @@ docs/design/tmp/<spec-slug>/
 
 ## 写 delta：把冻结结果写成对 `prod/` 的差异
 
-放进 `tmp/<spec-slug>/delta/`。`prod/` 只有归档脚本（人批过之后）写，你只写 `delta/`。结构、字段、正文分节全以 [`../../../engineering/design-archive/SKILL.md`](../../../engineering/design-archive/SKILL.md) 为准，这里只列这一步怎么做：
+放进 `tmp/<spec-slug>/delta/`。`prod/` 只有归档脚本（人批过之后）写，你只写 `delta/`。结构、字段、正文分节全以 `idea-loop:design-archive` 为准，这里只列这一步怎么做：
 
 1. **先看档案里这块 UI 现在有什么。** `docs/design/prod/` 在就读：档案的「页面」查询入口（插件的档案查询 MCP 工具）有就用，没有就直接读目录。`prod/` 不存在（项目还没建档案）就当整块都是新增。
 2. **和冻结画布对，新增或改动的对象各放一份改完之后的全文**，路径与 `prod/` 里相同；没动的对象不放。
@@ -43,7 +43,7 @@ docs/design/tmp/<spec-slug>/
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域 / 代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`。
    - `usedBy` 由归档脚本生成。
-3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 design-archive 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`../../design-modeling/SKILL.md`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
+3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 design-archive 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`idea-loop:design-modeling`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
 4. **自查**，跑到退出码 0：
 
    ```
@@ -60,11 +60,11 @@ docs/design/tmp/<spec-slug>/
 
 - **画布指针**：`docs/design/tmp/<spec-slug>/canvas/` 里画布 HTML 的路径（写路径，不写 wikilink：目标不进 git）。跑过动效段的，同一条指针把动效 preview 与帧证据一并带上。
 - **矩阵**：每格的 viewport × 主题 × 语言 × 状态，标「人看」的格照标。
-- **mismatch 阈值**：沿用 `ui-measure` skill（`../../../engineering/ui-measure/SKILL.md`）的「默认容差」；按格覆盖的写覆盖值和理由。
+- **mismatch 阈值**：沿用 `idea-loop:ui-measure`的「默认容差」；按格覆盖的写覆盖值和理由。
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更**：画布上有、项目现在渲染不出来的字段逐条列出。
 
-**「前端交互」的交互图**：照 evidence skill（`../../../engineering/evidence/SKILL.md`）的 spec 图里「交互图（screen flow）」，一个场景一张，截图取自冻结画布（手机宽度、主语言、动画定格、2 倍像素密度、每一步只截那个组件），用 `scripts/flow-compose.mjs` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
+**「前端交互」的交互图**：照 evidence skill（`idea-loop:evidence`）的 spec 图里「交互图（screen flow）」，一个场景一张，截图取自冻结画布（手机宽度、主语言、动画定格、2 倍像素密度、每一步只截那个组件），用 `scripts/flow-compose.mjs` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
 
 - **每一步带 `state`**，填这一格对应的状态名（就是「写 delta」里那个状态文件的名字），拼的时候加 `--archive "$(git rev-parse --show-toplevel)" --delta <spec-slug>` 让脚本核对每个 id 都真有这个状态。
 - **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图脚本退出码 2。
@@ -74,7 +74,7 @@ docs/design/tmp/<spec-slug>/
 
 ## 状态不翻，输出
 
-spec 的 `status` 留在 **`设计中`**。`to-ticket` 认的闸门是「`设计中` **且**「实现决策」里有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`../../../engineering/spec-status/SKILL.md`）。
+spec 的 `status` 留在 **`设计中`**。`to-ticket` 认的闸门是「`设计中` **且**「实现决策」里有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`idea-loop:spec-status`）。
 
 写完「改 spec」就停下输出：「要看哪里」列交互图的路径；「写 delta」里改不动的违规和「入口待补」写进「要人判的取舍」。
 

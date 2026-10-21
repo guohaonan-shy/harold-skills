@@ -36,7 +36,7 @@ description: 目标项目 GLOSSARY.md 的格式、谁能写、怎么读。新增
 | 代码约定（命名风格、下划线还是连字符） | 最近的 `AGENTS.md`，能 lint 就写成 lint |
 | 指向代码常量或文件的「以 X 为准」 | 对应的 `docs/domain/` 文档或模块 `AGENTS.md` |
 | 机制、调研、分类体系、「它怎么运作」 | `docs/domain/` |
-| 决策和它的理由 | spec，了结后进 ADR（归 `dreaming`，见 `../wiki-conventions/SKILL.md` §1） |
+| 决策和它的理由 | spec，了结后进 ADR（归 `dreaming`，见 `idea-loop:wiki-conventions` §1） |
 
 方向是单向的：其他文档用术语表里的叫法，术语表不链回它们。
 
@@ -48,7 +48,7 @@ description: 目标项目 GLOSSARY.md 的格式、谁能写、怎么读。新增
 - 多上下文：根目录一份 `GLOSSARY-MAP.md`，指向各上下文自己的 `GLOSSARY.md`。**先拿子标题分组撑着**，
   只有当文件已经精简、仍然覆盖两块读者不会同时需要的领域时才拆。一份膨胀的文件拆开，只会得到几份膨胀的文件。
 - **按需创建**：第一个术语定下来时才建文件，不提前建空壳，不因为文件不存在去提醒人。
-- 它在 `docs/` 之外，不是 vault 的一部分：**不带 frontmatter**，不参与 `../wiki-conventions/SKILL.md` 的 slug 唯一性。
+- 它在 `docs/` 之外，不是 vault 的一部分：**不带 frontmatter**，不参与 `idea-loop:wiki-conventions` 的 slug 唯一性。
 
 ### 格式
 

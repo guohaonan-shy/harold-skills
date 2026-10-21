@@ -9,7 +9,7 @@ description: 调度会话的一轮：把 GitHub issue 派成 spec 草稿和审�
 
 审核会话是**挂在你下面的子会话**（`start_session` 开的），一份 spec 一个。spec 审核、切工单、实现、PR 都在子会话里由人推进，你不参与。
 
-> 先读一次 `../spec-status/SKILL.md`：「状态机」是 spec 的状态，「issue 的 label」是 issue 的状态 label 怎么跟着 spec 走；label 各代表什么在目标仓库根目录的 `ISSUE_TRACKER.md`。
+> 先用 Skill 工具调 `idea-loop:spec-status`：「状态机」是 spec 的状态，「issue 的 label」是 issue 的状态 label 怎么跟着 spec 走；label 各代表什么在目标仓库根目录的 `ISSUE_TRACKER.md`。
 
 ## 0 前提与边界
 
@@ -80,7 +80,7 @@ description: 调度会话的一轮：把 GitHub issue 派成 spec 草稿和审�
 1. 把当前分支改名为 fix/<slug>：git branch -m fix/<slug>。这个分支就是这份 spec 的集成分支。
 2. 读 docs/spec/<slug>/<slug>.md，用几句话概括：要解决的问题、覆盖了哪几个 issue（frontmatter 的 issues）、「建议关闭」里有哪几个、有没有标「需要 grill」。然后停下等用户来审。用户开口之前不改文件、不提交、不推送。
 
-审核时的规则（全文在 <plugin 根>/skills/engineering/spec-status/SKILL.md；spec 状态只走 node <plugin 根>/scripts/spec-status.mjs，issue 状态只走 node <plugin 根>/scripts/issues.mjs，不手改 label 和 frontmatter；下面的 <docs> 是本 worktree 的 docs/）：
+审核时的规则（全文在 `idea-loop:spec-status`；spec 状态只走 node <plugin 根>/scripts/spec-status.mjs，issue 状态只走 node <plugin 根>/scripts/issues.mjs，不手改 label 和 frontmatter；下面的 <docs> 是本 worktree 的 docs/）：
 - 用户把某个 issue 踢出 spec：issues.mjs unhandoff <docs> <slug> <号>（issue 回到待办），再把它从 spec 的「问题」「方案」「User Stories」「关联」里删掉，在本分支提交。
 - 用户决定某个 issue 不做（比如「建议关闭」里的）：issues.mjs drop <docs> <slug> <号>（关成 not planned），再把它从 spec 里删掉，在本分支提交。
 - PR 合并后关 issue 由调度会话做，这里不做。

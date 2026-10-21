@@ -7,7 +7,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 把一份 spec 切成若干 **ticket**——tracer bullet 式的**垂直切片**，每张声明挡着它的那些 ticket。
 
-> 先读一次 `../wiki-conventions/SKILL.md` 和 `../spec-status/SKILL.md`（状态只走 `scripts/spec-status.mjs`）。
+> 先用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:spec-status`（状态只走 `scripts/spec-status.mjs`）。
 
 **ticket 是临时凭据。** 开工时才建，那一刀合并后就删掉。它不是归档物，不留痕——留痕的是 spec（在飞时）和 ADR（了结后）。
 
@@ -25,7 +25,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 ## 2 探代码库
 
-看清现状。目标项目有 `GLOSSARY.md` 就读它，ticket 的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../glossary/SKILL.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
+看清现状。目标项目有 `GLOSSARY.md` 就读它，ticket 的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `idea-loop:glossary` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
 
 顺手找**预重构**的机会：*让改动变容易，然后做那个容易的改动。*
 
@@ -124,7 +124,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 合并后**删掉那张 ticket 文件**。全部 ticket 都删完了（`docs/spec/<spec-slug>/tickets/` 空了），说明这份 spec 做完了；空的 `tickets/` 目录一起删。spec 目录本身留着，等 `dreaming` 写完 ADR 后整个删。
 
-同一时机删掉这个 PR 的交付证据：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`（`../evidence/SKILL.md` 的交付证据）。人验素材和 review 配图只服务于这次交付，不进知识库。
+同一时机删掉这个 PR 的交付证据：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`（`idea-loop:evidence` 的交付证据）。人验素材和 review 配图只服务于这次交付，不进知识库。
 
 **ADR 与 spec 的删除归 `dreaming`，但它不是这一步的立即下一环。** dreaming 是**周期性的维护扫描**（见它的 `## 触发`），不是单份 spec 的收尾。所以「**做完但还没对账**」是 spec 的一个正常状态，不是漏洞 —— 等下一次 maintain 扫过，或者 spec 堆积到你想手动跑一次。
 

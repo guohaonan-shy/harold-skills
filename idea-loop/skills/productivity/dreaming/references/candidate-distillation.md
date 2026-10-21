@@ -1,6 +1,6 @@
 # 候选蒸馏：dreaming 特有的部分
 
-把设计档案里的「设计法候选」收进项目的 `DESIGN.md`。**判据、写入流程、单条蒸馏的步骤都不在这里**：全在 design-modeling（`../../../design/design-modeling/SKILL.md`）。这份文件只写 dreaming 自己多出来的几件事：候选从哪找、每周这次怎么出提议、批了之后怎么收尾。
+把设计档案里的「设计法候选」收进项目的 `DESIGN.md`。**判据、写入流程、单条蒸馏的步骤都不在这里**：全在 design-modeling（`idea-loop:design-modeling`）。这份文件只写 dreaming 自己多出来的几件事：候选从哪找、每周这次怎么出提议、批了之后怎么收尾。
 
 > 读之前先读 design-modeling 的「五条写法规则」、「维护原则」、「准入分层表」、「明确不进 DESIGN.md 的内容」、「蒸馏」、「设计法候选的形态」。判断一条候选该不该进、进哪，只按那几节，不在这里另立。
 

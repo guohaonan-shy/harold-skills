@@ -28,7 +28,7 @@ lint hook 只认 `canvas/` 下直接放着的 HTML，所以画布不放进子目
 
 ## 三条约定
 
-下游 `implement` 开两个标签页，一边是冻结的画布，一边是实现，逐格比对。三条约定保证两边比的是同一个东西，一条都不能破（全文在 `ui-measure` skill，`../../../engineering/ui-measure/SKILL.md` 的「三条环境约定」）：
+下游 `implement` 开两个标签页，一边是冻结的画布，一边是实现，逐格比对。三条约定保证两边比的是同一个东西，一条都不能破（全文在 `ui-measure` skill，`idea-loop:ui-measure` 的「三条环境约定」）：
 
 1. **锚点**：块与关键元素带 `data-anchor`，名字是契约，换版本、调构图都不改。两个 DOM 靠它对齐。
 2. **渲染环境**：字体走目标项目自己的加载方式，不走公共 CDN；截图前等 `document.fonts.ready`，关动画与过渡。

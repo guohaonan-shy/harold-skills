@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每出一版就请评委 `idea-loop:ui-master` 打分，把该改的意见交回 designer 出下一版，直到评分说停；停下时把画布在内嵌浏览器里摆给人，人的回复分好类再交回去，直到人签字、designer 冻结完。画布只由 designer 改，签字只由人宣布。
 
-先读 `../../engineering/wiki-conventions/SKILL.md` 的「目录」一节和 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。下文的目录都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，本地、不进 git。
+先用 Skill 工具调 `idea-loop:wiki-conventions` 的「目录」一节和 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。下文的目录都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，本地、不进 git。
 
 ## 开工前
 
@@ -65,7 +65,7 @@ designer 交付一版之后：
 
 停在 `瓶颈`、`方向`、有冲突、动效做完、签字前检查做完、冻结、部分冻结，或 designer 交付「卡住」时，不等人要：
 
-- 用 `preview_start` 的 `url` 打开最新一版，停在这次改动的那个状态；之后都在同一个标签页里导航。内嵌浏览器不可用时，照 `../../engineering/browser/SKILL.md` 的退路（先给本地地址，再不行才是截图），并告诉人。
+- 用 `preview_start` 的 `url` 打开最新一版，停在这次改动的那个状态；之后都在同一个标签页里导航。内嵌浏览器不可用时，照 `idea-loop:browser` 的退路（先给本地地址，再不行才是截图），并告诉人。
 - 配一份短清单：为什么停、评委分、本轮核心问题、designer 改了什么、要人判的取舍（带 designer 的推荐）。截图和评委回执留在 `canvas/work/`。
 - **有冲突项的排在最前**，连画布一起问「保留 / 改」：评委原话、撞上的是哪一项人选定的东西、画布停在没动那一项的样子。被人早先保留、这一轮又被排除的，只带一句「已按人保留排除 N 条」。
 - **有「建议调研的问题」的**，和要人判的取舍一起摆，每条带 designer 的推荐做法：designer 已经按它改了。人说要查才调 `uiux-research`，落图目录用这份 spec 的 `research/`；不查，就当推荐做法定了。

@@ -1,6 +1,6 @@
 # `DESIGN.md` 对账：dreaming 特有的部分
 
-候选蒸馏是把候选往 `DESIGN.md` 里收；对账方向相反：**拿 `DESIGN.md` 现有的内容去量代码，再按写入标准体检**。判据、对账表、写入流程全在 design-modeling（`../../../design/design-modeling/SKILL.md`）的「对账」和「一次写入怎么走」；新建在「新建」。这份文件只写 dreaming 特有的：每周跑、只出提议、怎么落进提议表。
+候选蒸馏是把候选往 `DESIGN.md` 里收；对账方向相反：**拿 `DESIGN.md` 现有的内容去量代码，再按写入标准体检**。判据、对账表、写入流程全在 design-modeling（`idea-loop:design-modeling`）的「对账」和「一次写入怎么走」；新建在「新建」。这份文件只写 dreaming 特有的：每周跑、只出提议、怎么落进提议表。
 
 > 读之前先读 design-modeling 的「五条写法规则」、「各章写什么」、「准入分层表」、「明确不进 DESIGN.md 的内容」、「对账」。对账表的每一行怎么判，只按「对账」，不在这里复述。
 

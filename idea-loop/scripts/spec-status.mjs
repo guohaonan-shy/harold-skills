@@ -10,7 +10,7 @@
  * transition is checked, written and indexed in one call, and anything illegal is refused with the
  * reason.
  *
- * Layout (skills/engineering/wiki-conventions/SKILL.md §2): docs/spec/<slug>/<slug>.md, tickets in
+ * Layout (skills/productivity/wiki-conventions/SKILL.md §2): docs/spec/<slug>/<slug>.md, tickets in
  * docs/spec/<slug>/tickets/NN-<slug>.md, the index at docs/spec/index.md.
  *
  * Usage:

@@ -5,7 +5,7 @@ description: 设计档案 docs/design/prod/ 的结构：页面状态构成的图
 
 目标项目的 `docs/design/prod/` 是一张图，记录**线上现在的样子**：每个页面有哪些状态、状态之间怎么跳、用到哪些组件和动效、当初为什么这样定。这份文件回答：图由什么组成、文件怎么放、每份文件的 frontmatter 和正文写什么、怎么校验。读档案、写档案、查档案的 skill 与 agent 都以它为准。
 
-> 与 `DESIGN.md` 的分工：`DESIGN.md` 是**设计系统本身**（全局、无页面名、可照做的规则，见 `../../design/design-modeling/SKILL.md`）；档案是**每个页面、组件、动效的现状与决定**。一条内容两边都像时，按 `../../design/design-modeling/SKILL.md` 的准入分层表落。
+> 与 `DESIGN.md` 的分工：`DESIGN.md` 是**设计系统本身**（全局、无页面名、可照做的规则，见 `idea-loop:design-modeling`）；档案是**每个页面、组件、动效的现状与决定**。一条内容两边都像时，按 `idea-loop:design-modeling` 的准入分层表落。
 
 ## 图的模型
 
@@ -36,7 +36,7 @@ docs/design/
 
 - 各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。
 - **页面是目录，每个状态一份文件**：状态若只是页面文件里的一节，页面内的流转在 Obsidian 图上全变成自环。**状态文件名带页面前缀**（`<page>--<state>`），因为 wikilink 按 basename 解析，不同页面都有 `loading` 时靠前缀区分。组件文件用代码组件名。
-- **basename 在 `docs/` 下全局唯一**（`../wiki-conventions/SKILL.md` 的 basename 规则），由校验查；工单文件与 `index.md` 豁免。
+- **basename 在 `docs/` 下全局唯一**（`idea-loop:wiki-conventions` 的 basename 规则），由校验查；工单文件与 `index.md` 豁免。
 - **`tmp/` 与 `prod/` 的分工**：`tmp/<spec-slug>/` 放进行中需求的全部设计过程产物（`imagine/` 方向说明、`canvas/` 画布与冻结记录与完整验收矩阵、`delta/` 对 `prod/` 的差异），只在本地，目标项目要把它排除出 git；`prod/` 放线上现在的样子，提交。放弃的需求不上线，有价值的结论写回 spec 或 issue。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行一条，`- [[<id>]]`（后面可跟一句原因）。于是归档 = 覆盖 + 删除，需求差异 = 逐个对象比对，都不用解析补丁格式。
 - **`prod/` 只存精简矩阵**：每个状态一张主视口截图（主视口、主题、语言写在 `prod/index.md` 的 frontmatter，项目定一次），每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
@@ -46,7 +46,7 @@ docs/design/
 
 ## frontmatter：机器读的结构
 
-每份对象文件照 `../wiki-conventions/SKILL.md` 的 frontmatter 约定 带 `type` / `tags` / `summary`，再加各自的结构字段。**引用一律写成带引号的 `"[[basename]]"` 字符串**，Obsidian 和脚本读的是同一个东西；`{token}` 形式的 token 引用同样加引号。
+每份对象文件照 `idea-loop:wiki-conventions` 的 frontmatter 约定 带 `type` / `tags` / `summary`，再加各自的结构字段。**引用一律写成带引号的 `"[[basename]]"` 字符串**，Obsidian 和脚本读的是同一个东西；`{token}` 形式的 token 引用同样加引号。
 
 **页面** `type: design-page`
 
@@ -128,7 +128,7 @@ path:
   ```
 
   不写日期；规则改了**原地改写**，不追加新条目；编号不复用。蒸馏成 ADR 之后「来源」改链到 ADR。
-- **「设计法候选」**每条的形状以 `../../design/design-modeling/SKILL.md` 的「设计法候选的形态」 为准：一句无日期、无页面名、可照做的规则，下挂「并进」「为什么」「证据」三项。校验只看三项都在。处理候选的是 `dreaming`，处理完即删。
+- **「设计法候选」**每条的形状以 `idea-loop:design-modeling` 的「设计法候选的形态」 为准：一句无日期、无页面名、可照做的规则，下挂「并进」「为什么」「证据」三项。校验只看三项都在。处理候选的是 `dreaming`，处理完即删。
 
 ## 进入方式从图上推导
 
@@ -204,7 +204,7 @@ node scripts/design-archive-write.mjs <仓库根> <spec-slug> [--dry-run] [--jso
 
 ### 谁在什么时候跑它
 
-不是随手跑的。`pr-review` 的合并步骤在 `tmp/` 里还有设计差异时，先起 UI 审查者（`agents/ui-reviewer.md`，归档模式）对着实现核过差异、补齐状态文件、备好决定与候选的草稿，在会话里给人看；**人通过后**编排者才跑这个脚本，再提交 `prod/` 并推送，然后重新合并（`skills/engineering/pr-review/SKILL.md` §4.1）。UI 审查者只写 `tmp/<spec-slug>/delta/`，自检时只跑 `--dry-run`。
+不是随手跑的。`pr-review` 的合并步骤在 `tmp/` 里还有设计差异时，先起 UI 审查者（`agents/ui-reviewer.md`，归档模式）对着实现核过差异、补齐状态文件、备好决定与候选的草稿，在会话里给人看；**人通过后**编排者才跑这个脚本，再提交 `prod/` 并推送，然后重新合并（`idea-loop:pr-review` §4.1）。UI 审查者只写 `tmp/<spec-slug>/delta/`，自检时只跑 `--dry-run`。
 
 ### 合并前钩子
 

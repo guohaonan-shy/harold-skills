@@ -30,7 +30,7 @@ effort: high
 - **这份 spec 已经冻结过一部分**：照 `freeze.md` 的「部分冻结后重开」。
 - **画布已有版本、还没签字**：上一个 designer 中断了，从最新一版和 ledger 接着做。
 
-然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议跑 `uiux-imagine` 或 `dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-ui-protocol.md`，调浏览器前读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/browser/SKILL.md`，复刻线上界面和截图评审照 `design/replication.md`。
+然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议跑 `uiux-imagine` 或 `dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-ui-protocol.md`，调浏览器前读 `idea-loop:browser`，复刻线上界面和截图评审照 `design/replication.md`。
 
 ## 按意见改
 

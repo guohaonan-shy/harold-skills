@@ -7,11 +7,11 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 你是这次 imagine 的编排者：起一个 `idea-loop:uiux-imaginer` 出变种，每交付一轮就把变种板在内嵌浏览器里摆给人，人的回复分好类再交回去，直到人说方向没有要补的了；然后让它写方向说明、导出交接画布，交给 `uiux-refine`。变种板只由 uiux-imaginer 改，方向定没定只由人宣布。
 
-先读 `../../engineering/wiki-conventions/SKILL.md` 的「目录」一节和 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。下文的目录都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，本地、不进 git。
+先用 Skill 工具调 `idea-loop:wiki-conventions` 的「目录」一节和 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。下文的目录都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，本地、不进 git。
 
 ## 开工前
 
-- spec 状态是 `审核中`：人调 imagine 就是「审完了、要设计」。先跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`../../engineering/spec-status/SKILL.md`）。脚本拒绝（比如 spec 写着不涉及 UI、开头标着需要 grill），停下把原因告诉人，不手改状态。
+- spec 状态是 `审核中`：人调 imagine 就是「审完了、要设计」。先跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`idea-loop:spec-status`）。脚本拒绝（比如 spec 写着不涉及 UI、开头标着需要 grill），停下把原因告诉人，不手改状态。
 - 是 `设计中`：已经翻过，直接开工；`imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 - 别的状态不跑：`草稿` 人还没审，`在飞` 已经切了工单，还没有 spec 的先 `grill` → `to-spec`。
 
@@ -30,7 +30,7 @@ uiux-imaginer 交付一轮之后：
    - 配一份短清单，从交付里摘：这一轮有哪几个变种、各自赌什么、改了什么；还开着的问题（带它的推荐）；要人回的那句话；七节进度；要人判的取舍。「建议调研的问题」和取舍一起摆，每条带它的推荐做法：它已经按推荐做法渲染了，人说要查才调 `uiux-research`，不查就当推荐做法定了。截图和抓来的东西不搬进对话。
 2. **代办它够不着的事**（交付里写了才做）：
    - 生图要走 `codex exec`：照它给的用途、prompt、文件名生成，放进 `imagine/assets/`，告诉它「图已放好」。
-   - 项目没有 `DESIGN.md`，它交了「待写入 DESIGN.md」的草稿：第一份由你写。照 `../design-modeling/SKILL.md` 的「新建」与「一次写入怎么走」，把草稿摆给人确认措辞，人确认后才落笔，人改过的以人的为准。草稿缺东西就交回给它补，不自己猜。写完告诉它。
+   - 项目没有 `DESIGN.md`，它交了「待写入 DESIGN.md」的草稿：第一份由你写。照 `idea-loop:design-modeling` 的「新建」与「一次写入怎么走」，把草稿摆给人确认措辞，人确认后才落笔，人改过的以人的为准。草稿缺东西就交回给它补，不自己猜。写完告诉它。
 3. **看能不能提议收工**。四条都满足，就在清单最后主动说「方向上没有开着的问题了，可以收工进 refine，你确认吗」：
    - 七节都填得出来，尤其「结构」：块序、每块的内容责任、读者先遇到什么，都能一句话说死；
    - 人最近一轮的话里只剩执行，没有方向了；

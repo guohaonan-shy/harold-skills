@@ -9,7 +9,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 | 技术方案总览 · 后端 / 前端内部 | 时序图 | excalidrawer `sequence` | `to-spec` |
 | 技术方案总览 · 前端交互 | 交互图（screen flow） | 截图 + `scripts/flow-compose.mjs` | 冻结前写文字；冻结时 `uiux-refine` 补图 |
 
-**定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`../../wiki-conventions/SKILL.md` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
+**定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`idea-loop:wiki-conventions` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
 
 ## 问题的复现证据
 
@@ -17,7 +17,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 
 ### 复现走什么仪器
 
-- **用户可见的问题**：在本地开发环境用浏览器自动化（headless Playwright，见 `../../browser/SKILL.md`），按用户的操作把路径真的走一遍。慢网络用请求延迟模拟（`page.route` 里先等再 `continue`），下载失败、接口报错用请求拦截模拟（`route.abort()` / `route.fulfill({ status })`）。
+- **用户可见的问题**：在本地开发环境用浏览器自动化（headless Playwright，见 `idea-loop:browser`），按用户的操作把路径真的走一遍。慢网络用请求延迟模拟（`page.route` 里先等再 `continue`），下载失败、接口报错用请求拦截模拟（`route.abort()` / `route.fulfill({ status })`）。
 - **纯后端、埋点、数据问题**：证据换成查询结果、日志片段、接口响应。原样贴，标上查询条件和时间。
 - **新功能（不是 bug）**：新需求也是从旧页面满足不了什么里产生的。截**现在的 UI**，用红色光圈标出它在哪里不够用。完全没有可截的现状时，文字写明「无现状可截」。
 

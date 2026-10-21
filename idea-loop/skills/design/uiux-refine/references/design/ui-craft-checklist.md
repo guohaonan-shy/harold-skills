@@ -124,6 +124,6 @@ declared tokens before sign-off:
 2. Sample computed values from the rendered preview (`getComputedStyle` on representative elements)
    and check each against the nearest declared token.
 3. A value that doesn't map to any declared token is either a legitimate new addition (name it and
-   write it as a candidate, `skills/design/design-modeling/SKILL.md`, section 设计法候选的形态, at close-out) or drift (fix it to the existing
+   write it as a candidate, `idea-loop:design-modeling`, section 设计法候选的形态, at close-out) or drift (fix it to the existing
    token). Silence
    is the failure mode either way — every off-token value gets a decision, not a shrug.

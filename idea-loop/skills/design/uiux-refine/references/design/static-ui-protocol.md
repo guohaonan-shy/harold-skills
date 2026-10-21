@@ -27,7 +27,7 @@ of a higher route: a new page does not skip component design; it descends into t
 carry a decision, introduce a new pattern, or vary by product state. Choose one entry route so the
 same work is not performed twice.
 
-> **Canvas: browser, not Paper (temporarily).** Read the `browser` skill (`skills/engineering/browser/SKILL.md`) before any
+> **Canvas: browser, not Paper (temporarily).** load `idea-loop:browser` with the Skill tool before any
 > browser tool call; replication and review recipes are in `skills/design/uiux-refine/references/design/replication.md`. Paper remains dormant (`skills/design/uiux-refine/references/design/paper-usage.md`).
 
 ## Principles
@@ -70,7 +70,7 @@ altitude.
 Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
 checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
 concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
-become candidates (format: `skills/design/design-modeling/SKILL.md`, section 设计法候选的形态); this protocol never writes `DESIGN.md`.
+become candidates (format: `idea-loop:design-modeling`, section 设计法候选的形态); this protocol never writes `DESIGN.md`.
 `dreaming` processes them under that reference and puts each one to the human before anything is
 written.
 
@@ -84,7 +84,7 @@ Before stage A:
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
    and recommend creating `DESIGN.md` through `uiux-imagine` or `dreaming` (see Setup note above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
-5. Before any browser call, read the `browser` skill (`skills/engineering/browser/SKILL.md`) and `skills/design/uiux-refine/references/design/replication.md`.
+5. Before any browser call, load `idea-loop:browser` with the Skill tool and `skills/design/uiux-refine/references/design/replication.md`.
 
 Do not load every altitude protocol up front. Stage A selects the entry route; read lower-altitude
 protocols when the work descends to them.
@@ -272,13 +272,13 @@ On sign-off, perform **Distill-back before handoff**, and it only writes candida
 
 1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
    archive object it came from (page, component, motion or journey file under `delta/`; shape in
-   `skills/engineering/design-archive/SKILL.md`, section 正文), in the format `skills/design/design-modeling/SKILL.md`, section 设计法候选的形态 defines — a
+   `idea-loop:design-archive`, section 正文), in the format `idea-loop:design-modeling`, section 设计法候选的形态 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
    evidence. The freeze record's same-named section lists them (one line each, saying which object
    carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
    one line, 「无」.
 2. Stop there. `dreaming` later runs every candidate through the admission table in
-   `skills/design/design-modeling/SKILL.md`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
+   `idea-loop:design-modeling`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
    that holds for any product goes back to this plugin as an issue, a single page's choice stays in
    its object's 「决定」.
 

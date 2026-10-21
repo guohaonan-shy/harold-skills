@@ -1,7 +1,7 @@
 /**
  * The design archive, parsed — the reusable layer under validation, queries, MCP and archiving.
  *
- * `docs/design/prod/` is a graph (skills/engineering/design-archive/SKILL.md): page states are the nodes, the
+ * `docs/design/prod/` is a graph (skills/design/design-archive/SKILL.md): page states are the nodes, the
  * `edges` written in each state file are the edges, and pages / components / motions / journeys are
  * objects the nodes and edges point at. This module reads a repository root and returns every object,
  * edge and reference in one structure; the validator (design-archive-check.mjs) is a layer on it, and

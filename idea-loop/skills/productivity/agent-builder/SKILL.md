@@ -4,7 +4,7 @@ description: 新建或改写一个 subagent 定义（agents/*.md），连同调�
 disable-model-invocation: true
 ---
 
-写之前读一次 [`../writing-for-agents/SKILL.md`](../writing-for-agents/SKILL.md)，每一步都按它的写法落字。
+写之前读一次 `/idea-loop:writing-for-agents`，每一步都按它的写法落字。
 
 ## 先判断它该不该是 agent
 

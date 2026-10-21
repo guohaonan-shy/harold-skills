@@ -7,7 +7,7 @@ description: 把刚才的对话写成一份 spec（连同 raw transcript）；�
 
 输入是一组 GitHub issue、没有对话时（通常由 `idea-loop:issue-explorer` 调），照 [`references/from-issues.md`](references/from-issues.md) 走，它只写跟下面不同的地方。
 
-先读 `../wiki-conventions/SKILL.md`（目录、frontmatter、slug）和 `../spec-status/SKILL.md`（状态只走 `spec-status.mjs`）。下文的 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、frontmatter、slug）和 `idea-loop:spec-status`（状态只走 `spec-status.mjs`）。下文的 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
 ## 过程
 
@@ -17,12 +17,12 @@ description: 把刚才的对话写成一份 spec（连同 raw transcript）；�
 
 3. **探代码，谈 seam**：没探过就先探，看清现状。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词不问、不写，先用描述性的说法；这一块有 ADR 就守它。然后定准备在哪些 seam 上测：优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置。每个 seam 带一行「它能抓到什么、漏掉什么」，摆给人确认再往下写。
 
-4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。照下面的 `<spec-template>`。几条贯穿全文的规则在 `../decision-rules/SKILL.md`，下面模板里只写它落在哪一节：
+4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。照下面的 `<spec-template>`。几条贯穿全文的规则在 `idea-loop:decision-rules`，下面模板里只写它落在哪一节：
    - 现状的陈述都带出处，讲影响带规模数字（「现状先查清」）；
    - 先写交付物，再写做法（「先写交付物，再列做法」）；
    - 能按规则判的自己定，写成已定的决定并注明依据；依据不成立的才写成选项（「自己定的四条」「交给人时」）。
 
-   图怎么画、放哪照 `../evidence/SKILL.md` 的「spec 里的图」：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
+   图怎么画、放哪照 `idea-loop:evidence` 的「spec 里的图」：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
 
 5. **刷索引，挂 issue**：`spec-status index <docs>` 刷新 `docs/spec/index.md`。对话里谈的是某几个 GitHub issue 的，每个跑一次 `issues.mjs handoff`，再跑一次 `issues.mjs sync`（见 spec-status 的「issue 的 label」）；不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
 

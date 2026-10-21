@@ -125,5 +125,5 @@ one argument about step 2 — and rank has a right answer where taste doesn't.
 
 New generalizable treatment decisions become candidates at static-ui-protocol's Distill-back step
 and never edit the project's `DESIGN.md` from here; `dreaming` processes them under
-`skills/design/design-modeling/SKILL.md`. This file defines the ladders and the procedure; DESIGN.md records the
+`idea-loop:design-modeling`. This file defines the ladders and the procedure; DESIGN.md records the
 decided instances.
