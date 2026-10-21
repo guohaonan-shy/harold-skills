@@ -147,11 +147,11 @@ related: ["[[other-slug]]"]
 
 | type | 合法 status |
 |---|---|
-| `spec` | `草稿` · `审核中` · `设计中` · `在飞` · `已拍板未排期` · `parked` |
+| `spec` | `草稿` · `审核中` · `设计中` · `在飞` · `已拍板未排期` · `搁置` |
 | `adr` | `生效` · `已被取代（→ ADR-NNNN）` |
 | `raw` | 无（改用 `source_type` + `captured`） |
 
-`parked` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
+`搁置` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
 
 `design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `idea-loop:design-archive` 的「frontmatter」。
 

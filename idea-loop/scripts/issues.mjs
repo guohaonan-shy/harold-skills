@@ -5,7 +5,7 @@
  * An issue the loop has not touched carries no status label: it is 待办. Once a spec covers it, the
  * issue carries exactly one `status:<spec status>` label that follows the spec — 草稿 when drafted,
  * 审核中 when its review session opens, and so on — and it is closed when the spec's PR merges. The
- * human can put `status:parked` on an untouched issue to keep the loop away from it. The link from a
+ * human can put `status:搁置` on an untouched issue to keep the loop away from it. The link from a
  * spec to its issues lives in the spec's frontmatter (`issues: [12, 15]`), so the spec is the source of
  * truth and the labels are a projection of it: spec-status.mjs calls `sync` after every status flip.
  *
@@ -28,7 +28,7 @@ import { STATUSES, frontmatter, scan } from './spec-status.mjs';
 
 export const PREFIX = 'status:';
 export const label = (status) => `${PREFIX}${status}`;
-const COLORS = { 草稿: 'fbca04', 审核中: '1d76db', 设计中: '5319e7', 在飞: '0e8a16', 已拍板未排期: 'c5def5', parked: 'bfbfbf' };
+const COLORS = { 草稿: 'fbca04', 审核中: '1d76db', 设计中: '5319e7', 在飞: '0e8a16', 已拍板未排期: 'c5def5', 搁置: 'bfbfbf' };
 
 // ---------- spec frontmatter: issues: [12, 15] ----------
 
@@ -80,7 +80,7 @@ export function ensureLabels(gh) {
   const made = [];
   for (const s of STATUSES) {
     if (have.has(label(s))) continue;
-    gh(['label', 'create', label(s), '--color', COLORS[s], '--description', s === 'parked' ? 'idea-loop 不接手 / spec 搁置' : `idea-loop：spec ${s}`]);
+    gh(['label', 'create', label(s), '--color', COLORS[s], '--description', s === '搁置' ? 'idea-loop 不接手 / spec 搁置' : `idea-loop：spec ${s}`]);
     made.push(label(s));
   }
   return made;

@@ -1,7 +1,6 @@
 ---
 name: writing-for-agents
-description: 给 agent 写文档的方法——skill、agent、AGENTS.md / CLAUDE.md 都适用。
-disable-model-invocation: true
+description: 给 agent 写文档的方法：skill、subagent 定义、AGENTS.md / CLAUDE.md。写或改这几类文档时用。
 ---
 
 这是写任何给 agent 读的文档时的参考：skill、`AGENTS.md` / `CLAUDE.md`、经由指针才读到的文档。包装不同，写法相同：同一组杠杆让它们都变得可预测——agent 每次走的是同一个*过程*，而不是产出同一个结果。

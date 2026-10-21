@@ -55,7 +55,7 @@ test('legal steps pass', () => {
   assert.equal(transitionError('审核中', '设计中', spec({ ui: UI }), 0), null);
   assert.equal(transitionError('审核中', '在飞', spec(), 2), null);
   assert.equal(transitionError('设计中', '在飞', spec({ status: '设计中', ui: UI, freeze: true }), 3), null);
-  assert.equal(transitionError('在飞', 'parked', spec(), 3), null);
+  assert.equal(transitionError('在飞', '搁置', spec(), 3), null);
 });
 
 test('skipping a step is refused', () => {

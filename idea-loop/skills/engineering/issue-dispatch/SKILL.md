@@ -52,7 +52,7 @@ description: 调度会话的一轮：把 GitHub issue 派成 spec 草稿和审�
 ## 4 有空位才起草新 spec
 
 1. `issues labels <docs>`（建出缺的 `status:*` label，平常什么都不输出）。
-2. `issues candidates <docs> 5`：最早的 5 个待办 issue（没有任何 `status:*` label 的 open issue）。空的就汇报、结束。人打了 `status:parked` 的不会出现在这里。
+2. `issues candidates <docs> 5`：最早的 5 个待办 issue（没有任何 `status:*` label 的 open issue）。空的就汇报、结束。人打了 `status:搁置` 的不会出现在这里。
 3. 用 Agent 工具起一个 `idea-loop:issue-explorer`（不要 worktree 隔离，前台等它交回），给它：这几个 issue 号、主 checkout 路径。它负责复现、拆分、起草、自验，只交回 spec 名字和一份短结果；复现的过程不要你来跑，也不要让它把日志贴回来。**一轮只起一个**（它们都改 spec 索引，并行会撞）。
 4. 起草方不提交，由你提交。先核一遍：`git -C <主 checkout> status --short` 里的改动只能是新 spec 目录和 `docs/spec/index.md`，有别的就别提交、写进汇报、结束。然后 `git add` 每份新 spec 的目录，
    `git commit -m "docs(spec): 起草 <slugs>" -- docs/spec/<每个新 slug> docs/spec/index.md`，推送。

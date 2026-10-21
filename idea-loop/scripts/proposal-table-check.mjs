@@ -29,7 +29,7 @@ const STANDARD_SECTIONS = ['是什么', '结构', '五条写法规则', '维护�
  * that row type; the archive ones are fixed here so the archive tickets build on a settled shape.
  */
 export const ROW_TYPES = {
-  文档: ['写 ADR 删 spec', '写 ADR 未采纳删 spec', '报警', '订正', '标注被取代', '删漏网工单', '标 parked', '去审核', '去设计', '问人', '迁移布局', '删除'],
+  文档: ['写 ADR 删 spec', '写 ADR 未采纳删 spec', '报警', '订正', '标注被取代', '删漏网工单', '标搁置', '去审核', '去设计', '问人', '迁移布局', '删除'],
   档案对象: ['改代码路径', '删对象', '补扫页面', '标进入方式过期'],
   档案状态: ['替换档案', '改进入方式', '补进不去说明'],
   初扫页面: ['新增页面'],

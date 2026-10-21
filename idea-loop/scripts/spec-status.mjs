@@ -28,16 +28,16 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { defaultGh, issuesOf, syncIssues } from './issues.mjs';
 
-export const STATUSES = ['草稿', '审核中', '设计中', '在飞', '已拍板未排期', 'parked'];
+export const STATUSES = ['草稿', '审核中', '设计中', '在飞', '已拍板未排期', '搁置'];
 
 /** Legal next statuses. Preconditions on top of these live in transitionError. */
 export const NEXT = {
-  草稿: ['审核中', 'parked'],
-  审核中: ['设计中', '在飞', '已拍板未排期', 'parked'],
-  设计中: ['在飞', '审核中', '已拍板未排期', 'parked'],
-  在飞: ['parked'],
-  已拍板未排期: ['审核中', 'parked'],
-  parked: ['审核中', '已拍板未排期'],
+  草稿: ['审核中', '搁置'],
+  审核中: ['设计中', '在飞', '已拍板未排期', '搁置'],
+  设计中: ['在飞', '审核中', '已拍板未排期', '搁置'],
+  在飞: ['搁置'],
+  已拍板未排期: ['审核中', '搁置'],
+  搁置: ['审核中', '已拍板未排期'],
 };
 
 

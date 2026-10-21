@@ -19,8 +19,8 @@ idea-loop 只管 `status:*` 这一组 label，由它的脚本按 spec 的状态�
 | issue 的状态 | GitHub 上 |
 |---|---|
 | 待办 | open，没有 `status:*` label |
-| 不接手 | open，`status:parked`，没有 spec 覆盖它：人手动打，idea-loop 不接 |
-| 跟着 spec 走 | open，恰好一个 `status:<spec 的状态>`：`草稿` / `审核中` / `设计中` / `在飞` / `已拍板未排期` / `parked` |
+| 不接手 | open，`status:搁置`，没有 spec 覆盖它：人手动打，idea-loop 不接 |
+| 跟着 spec 走 | open，恰好一个 `status:<spec 的状态>`：`草稿` / `审核中` / `设计中` / `在飞` / `已拍板未排期` / `搁置` |
 | 已解决 | closed，completed：spec 的 PR 合并后 |
 | 不做 | closed，not planned：人审 spec 时决定不做 |
 

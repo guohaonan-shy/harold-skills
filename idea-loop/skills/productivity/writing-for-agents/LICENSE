@@ -1,6 +1,6 @@
 SKILL.md 与 SKILL-MECHANICS.md 译自 mattpocock/skills
 （skills/productivity/writing-for-agents，commit 5beb35b，2026-10-19）。
-正文为中文翻译，未增删内容；SKILL.md 的 frontmatter 改为人看的 description 加 disable-model-invocation。
+正文为中文翻译；SKILL-MECHANICS.md 加了「引用另一个 skill」一节；SKILL.md 的 frontmatter 换成中文 description。
 
 MIT License
 

@@ -1,6 +1,6 @@
 # 档案对账：拿 `prod/` 去对运行中的界面
 
-`dreaming` 每周把设计档案（`docs/design/prod/`，结构见 `idea-loop:design-archive`，下称「档案」）拿去对 main 上真实跑着的界面，抓三种悄悄发生的漂移：绕过流程的改动（没走 `tmp/` 的提交）、环境变化（依赖升级、后端返回变了）、产品本身坏了。**前两种提议改档案，第三种报告给人，档案不被改成坏掉的样子。**
+`dreaming` 把设计档案（`docs/design/prod/`，结构见 `idea-loop:design-archive`，下称「档案」）拿去对 main 上真实跑着的界面，抓三种悄悄发生的漂移：绕过流程的改动（没走 `tmp/` 的提交）、环境变化（依赖升级、后端返回变了）、产品本身坏了。**前两种提议改档案，第三种报告给人，档案不被改成坏掉的样子。**
 
 两波：先**源码波**（不开浏览器，便宜），再**实时波**（必跑，源码波干净也跑）。出处是 pstack 的 maintain-verification-skill：两波、分诊、驱动不变量。`prod/` 里没有任何对象时不跑这份，改做全站初扫（`initial-scan.md`）。
 
@@ -9,7 +9,7 @@
 ## 1 环境
 
 - **worktree**：在从 `origin/<基准分支>` 新切的 worktree 里工作（SKILL.md 流程第 1 步）。开发环境要跑基准分支的代码，不能跑某个功能分支；`tmp/` 只在本地，放在自己的 worktree 里不会跟进行中需求的 `tmp/<spec-slug>/` 混。
-- **开发服务**：照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」准备，用一个**自己挑的空闲端口**起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换；定时那次没有编排者给端口）。前后端要互相指向的，改它读的那个配置，别碰别人的端口。
+- **开发服务**：照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」准备，用一个**自己挑的空闲端口**起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换；没有编排者给端口）。前后端要互相指向的，改它读的那个配置，别碰别人的端口。
 - **浏览器**：和 `implement` 并行的执行方一样共用会话里那一个，用浏览器锁排队：`scripts/browser-lock.mjs acquire <锁目录> --owner dreaming`。锁目录默认放自己 worktree 的 `.tmp/dreaming/<日期>/browser.lock`；人说同一时间有 `implement` 在用同一个浏览器，就改用那一边的锁目录。自己起 chromium 的脚本不用抢。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」，目录名叫 `dreaming-<日期>`，不是任何一个 spec 的名字）：
   - `delta/`：要进档案的对象，与 `prod/` 同构（档案的「目录与分工」），人批了才由归档脚本并进 `prod/`；
@@ -52,7 +52,7 @@
 
 - **issue 草稿**起草成**目标仓库的 GitHub issue**，人批了才 `gh issue create`；不打 `status:*` label（那归 `issue-dispatch`）。上周已经开过、还开着的同一个问题，不重复起草，处置写 `已有 #N`（用 `gh issue list` 对着标题与状态 id 找）。
 - **分不清「档案过期」还是「产品坏了」，按产品坏了报**，在发现里写出两种解释，由人判。宁可多报一条，也不把一次回归写进档案。
-- 容差以内的状态不重拍——档案的素材走 Git LFS，每周都重拍会让档案天天有提交。
+- 容差以内的状态不重拍——档案的素材走 Git LFS，每次都重拍会让档案不停地出提交。
 
 提议表写完过 `proposal-table-check`。
 

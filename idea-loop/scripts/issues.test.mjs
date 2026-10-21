@@ -72,12 +72,12 @@ test('ensureLabels creates only the missing status labels', () => {
   const { gh, calls } = fakeGh({}, ['status:草稿', 'bug']);
   const made = ensureLabels(gh);
   assert.ok(!made.includes('status:草稿'));
-  assert.ok(made.includes('status:parked'));
+  assert.ok(made.includes('status:搁置'));
   assert.equal(calls.length, made.length);
 });
 
 test('candidates are open issues with no status label, oldest first', () => {
-  const { gh } = fakeGh({ 9: open(9), 3: open(3, ['bug']), 5: open(5, ['status:parked']), 7: open(7, ['status:审核中']) });
+  const { gh } = fakeGh({ 9: open(9), 3: open(3, ['bug']), 5: open(5, ['status:搁置']), 7: open(7, ['status:审核中']) });
   assert.deepEqual(candidates(gh).map((i) => i.number), [3, 9]);
   assert.deepEqual(candidates(gh, 1).map((i) => i.number), [3]);
 });
@@ -91,12 +91,12 @@ test('candidates skip issues a spec still lists, e.g. taken off on a review bran
 
 test('handoff writes the frontmatter only, and refuses taken, closed or double-listed issues', () => {
   const docs = docsWith({ a: spec(), b: spec({ issues: '[4]' }) });
-  const { gh, calls } = fakeGh({ 1: open(1), 2: open(2, ['status:parked']), 3: { ...open(3), state: 'CLOSED' }, 4: open(4) });
+  const { gh, calls } = fakeGh({ 1: open(1), 2: open(2, ['status:搁置']), 3: { ...open(3), state: 'CLOSED' }, 4: open(4) });
   handoffIssue(gh, docs, 'a', 1);
   handoffIssue(gh, docs, 'a', 1);
   assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec/a/a.md'), 'utf8')), [1]);
   assert.equal(calls.length, 0);
-  assert.throws(() => handoffIssue(gh, docs, 'a', 2), /status:parked/);
+  assert.throws(() => handoffIssue(gh, docs, 'a', 2), /status:搁置/);
   assert.throws(() => handoffIssue(gh, docs, 'a', 3), /CLOSED/);
   assert.throws(() => handoffIssue(gh, docs, 'a', 4), /\[\[b\]\]/);
 });
