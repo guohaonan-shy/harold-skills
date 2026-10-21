@@ -1,21 +1,18 @@
 /**
- * The sections script's seams: its pure functions (`attribute`, `sliceImage`) fed hand-written
- * measurements and PNGs encoded here with node's own zlib, and its command line (exit codes, stdout).
- * The browser side — the generated code actually running in Playwright — has no unit test, like
- * `ui-measure.mjs`; it is covered by running it on a real page.
+ * The sections script's seams: its pure functions (`attribute`, `shootTargets`) fed hand-written
+ * measurements, and its command line (exit codes, stdout). The generated code actually running in a
+ * browser is in design-archive-sections-browser.test.mjs.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { crc32, deflateSync } from 'node:zlib';
 import { BASE, MKT, MKT_ENTRY, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, encodePng, sliceImage } from './design-archive-sections.mjs';
-import { comparePngs, decodePng } from './ui-png-compare.mjs';
+import { attribute, buildMeasureCode, buildShootCode, shootTargets } from './design-archive-sections.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
 const run = (...args) => spawnSync('node', [CLI, ...args], { encoding: 'utf8' });
@@ -129,6 +126,107 @@ test('attribute: sections listed in a different order from the page are reported
   assert.ok(r.outOfOrder.length >= 1, JSON.stringify(r.outOfOrder));
 });
 
+// ---------- after the trial scan ----------
+
+test('attribute: a see-through clickable is not placed (nor an orphan) — it is listed as hidden; a fixed one is placed where it first showed up', () => {
+  const clicks = [
+    { role: 'button', name: '开始使用', top: 500, bottom: 548, landmark: null, opacity: 1 },
+    // a contents list pinned to the screen, fade-in only in feature-a: at scroll 0 it measures at y 377–523 (hero), it appears at scroll 1000
+    { role: 'link', name: '01 目录', top: 377, bottom: 523, landmark: null, opacity: 0, fixed: true, appearance: { scrollY: 1000, top: 377, bottom: 523 } },
+    { role: 'link', name: '一直透明', top: 700, bottom: 720, landmark: null, opacity: 0 },
+    { role: 'link', name: '从没出现', top: 300, bottom: 320, landmark: null, opacity: 1, fixed: true, appearance: null },
+  ];
+  const r = attribute(measurement(ALL, { clickables: clicks }));
+  assert.equal(r.ok, true, JSON.stringify(r.orphans));
+  assert.deepEqual(r.clickables.map((c) => [c.name, c.section]), [['开始使用', 'hero'], ['01 目录', 'feature-a']]);
+  assert.equal(r.clickables[1].y, 1450);
+  assert.equal(r.clickables[1].fixed, true);
+  assert.deepEqual(r.hidden.map((h) => h.name), ['一直透明', '从没出现']);
+  assert.match(r.hidden[0].reason, /透明度/);
+  assert.match(r.hidden[1].reason, /固定/);
+});
+
+test('attribute: a clickable inside the banner that is see-through is hidden too, one that is fixed there and showed up still belongs to the header', () => {
+  const r = attribute(measurement(ALL, {
+    clickables: [
+      { role: 'link', name: '关着的菜单项', top: 50, bottom: 70, landmark: 'banner', opacity: 0 },
+      { role: 'link', name: '固定顶栏', top: 10, bottom: 40, landmark: 'banner', opacity: 1, fixed: true, appearance: { scrollY: 0, top: 10, bottom: 40 } },
+    ],
+  }));
+  assert.deepEqual(r.hidden.map((h) => h.name), ['关着的菜单项']);
+  assert.deepEqual(r.clickables.map((c) => [c.name, c.section]), [['固定顶栏', 'header']]);
+});
+
+test('attribute: two sections whose ranges overlap fail like an orphan, naming both and the rows they share', () => {
+  // a `position` section on the block that also holds the faq heading: the heading section starts at the block top too
+  const pos = { id: 'trust', locate: { position: 2 }, found: true, top: 900, bottom: 4500, block: 1 };
+  const faq = { id: 'faq', locate: { role: 'heading', name: '常见问题' }, found: true, top: 1000, bottom: 1040, block: 1 };
+  const r = attribute(measurement([HEADER, HERO, pos, faq, FOOTER]));
+  assert.equal(r.ok, false);
+  assert.equal(r.overlaps.length, 1);
+  assert.deepEqual([r.overlaps[0].with, r.overlaps[0].at, r.overlaps[0].from, r.overlaps[0].to], ['trust', 'faq', 900, 4500]);
+  assert.match(r.overlaps[0].reason, /重叠/);
+  assert.deepEqual(r.coverage.overlaps, r.overlaps);
+});
+
+test('attribute: a header that floats over the top of the content overlaps by geometry only — not a failure', () => {
+  const floating = { ...HEADER, bottom: 160 };
+  const r = attribute(measurement([floating, HERO, FEATURE_A, FEATURE_B, FOOTER]));
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.overlaps, []);
+});
+
+test('attribute: clickables role + name cannot find are listed with the section they are in; headings come with their full names', () => {
+  const r = attribute(measurement(ALL, {
+    clickables: [
+      { role: 'button', name: '什么是模考', top: 4700, bottom: 4740, landmark: null, byRole: false, matches: 0, textMatches: 1 },
+      { role: 'button', name: '开始使用', top: 500, bottom: 548, landmark: null, byRole: true, matches: 1 },
+    ],
+    headings: [{ level: 2, name: '读一篇，答一篇。', byRole: true, matches: 1, top: 300, bottom: 340 }, { level: 2, name: '食材库同步', byRole: true, matches: 1, top: 4600, bottom: 4640 }],
+  }));
+  assert.deepEqual(r.roleUnresolved, [{ role: 'button', name: '什么是模考', section: 'feature-b', textMatches: 1 }]);
+  assert.deepEqual(r.headings.map((h) => [h.level, h.name, h.section]), [[2, '读一篇，答一篇。', 'hero'], [2, '食材库同步', 'feature-b']]);
+});
+
+test('attribute: carries the shooting settings and which state it was measured for', () => {
+  const r = attribute(measurement(ALL, { entry: MKT_ENTRY, section: 'faq', viewport: { width: 1440, height: 900 }, theme: 'dark', motion: 'reduce' }));
+  assert.deepEqual([r.entry, r.section, r.viewport, r.theme, r.motion], [MKT_ENTRY, 'faq', { width: 1440, height: 900 }, 'dark', 'reduce']);
+});
+
+test('shootTargets: one per section named <entry>@<section>.png, the 3600-tall one whole; --section narrows; a range with no height is skipped', () => {
+  const a = attribute(measurement(ALL));
+  const all = shootTargets(a);
+  assert.deepEqual(all.targets.map((t) => [t.file, t.start, t.end]), [
+    [`${MKT_ENTRY}@header.png`, 0, 100], [`${MKT_ENTRY}@hero.png`, 100, 900], [`${MKT_ENTRY}@feature-a.png`, 900, 4500],
+    [`${MKT_ENTRY}@feature-b.png`, 4500, 5800], [`${MKT_ENTRY}@footer.png`, 5800, 6000],
+  ]);
+  assert.equal(all.targets[2].end - all.targets[2].start, 3600);
+  assert.deepEqual(shootTargets(a, { only: ['feature-b', 'hero'] }).targets.map((t) => t.id), ['hero', 'feature-b']);
+  assert.throws(() => shootTargets(a, { only: ['nowhere'] }), /nowhere.*header、hero/);
+  const flat = { ...a, ranges: [...a.ranges, { id: 'tail', ref: 'p#tail', start: 6100, end: 6100 }] };
+  assert.deepEqual(shootTargets(flat).skipped.map((s) => s.id), ['tail']);
+});
+
+test('shootTargets: for a state inside a section it is the one section, named after the state', () => {
+  const a = attribute(measurement(ALL, { state: `${MKT}--feature-b-expanded`, entry: MKT_ENTRY, section: 'feature-b' }));
+  const { targets } = shootTargets(a);
+  assert.deepEqual(targets.map((t) => [t.id, t.file, t.start, t.end]), [['feature-b', `${MKT}--feature-b-expanded.png`, 4500, 5800]]);
+  assert.throws(() => shootTargets({ ...a, section: null }), /在哪一段/);
+});
+
+test('buildShootCode: a single async function of `page` that freezes the page clock and shoots with a clip in page coordinates', () => {
+  const targets = shootTargets(attribute(measurement(ALL))).targets;
+  const code = buildShootCode({ targets, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' });
+  const fn = runInNewContext(code);
+  assert.equal(fn.constructor.name, 'AsyncFunction');
+  assert.match(code, /pauseAt/);
+  assert.match(code, /resume/);
+  assert.match(code, /fullPage: true/);
+  assert.match(code, /animations: 'disabled'/);
+  assert.match(code, /\/tmp\/shots/);
+  assert.match(code, new RegExp(`${MKT_ENTRY}@feature-a\\.png`));
+});
+
 test('cli attribute: prints the result as JSON; exit 0 with nothing orphaned, 1 with orphans or an unlocated section, 2 for bad input', () => {
   const dir = tmp();
   const write = (name, m) => {
@@ -152,132 +250,12 @@ test('cli attribute: prints the result as JSON; exit 0 with nothing orphaned, 1 
   assert.equal(run('attribute', join(dir, 'junk.json')).status, 2);
 });
 
-// ---------- PNGs: built here with a different encoder from the one under test ----------
-
-const chunk = (type, data) => {
-  const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(body) >>> 0);
-  return Buffer.concat([len, body, crc]);
-};
-
-/** An RGB PNG (colour type 2, no filter) whose rows come from `rowColor(y) → [r, g, b]`, with optional `patch`. */
-function bandedPng(width, height, rowColor, patch = null) {
-  const stride = width * 3;
-  const raw = Buffer.alloc((stride + 1) * height);
-  for (let y = 0; y < height; y += 1) {
-    const [r, g, b] = rowColor(y);
-    const at = y * (stride + 1) + 1;
-    for (let x = 0; x < width; x += 1) {
-      const [pr, pg, pb] = patch && patch.test(x, y) ? patch.color : [r, g, b];
-      raw[at + x * 3] = pr;
-      raw[at + x * 3 + 1] = pg;
-      raw[at + x * 3 + 2] = pb;
-    }
-  }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 2;
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw, { level: 1 })),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
-}
-
-const BAND_EDGES = [0, 100, 900, 4500, 5800, 6000]; // header hero feature-a feature-b footer
-const BAND_COLORS = [[250, 0, 0], [0, 250, 0], [0, 0, 250], [250, 250, 0], [0, 250, 250]];
-const bandOf = (y) => BAND_EDGES.findIndex((e, i) => y >= e && y < BAND_EDGES[i + 1]);
-const longPage = (patch) => bandedPng(1440, 6000, (y) => BAND_COLORS[bandOf(y)], patch);
-
-test('sliceImage: a 1440×6000 page cut into five, each as tall as its range; the 3600 one is whole', () => {
-  const attribution = attribute(measurement(ALL));
-  const pieces = sliceImage(longPage(), attribution);
-  assert.deepEqual(pieces.map((p) => [p.file, p.width, p.height]), [
-    [`${MKT_ENTRY}@header.png`, 1440, 100],
-    [`${MKT_ENTRY}@hero.png`, 1440, 800],
-    [`${MKT_ENTRY}@feature-a.png`, 1440, 3600],
-    [`${MKT_ENTRY}@feature-b.png`, 1440, 1300],
-    [`${MKT_ENTRY}@footer.png`, 1440, 200],
-  ]);
-  assert.equal(pieces.reduce((n, p) => n + p.height, 0), 6000, 'the five meet end to start and add up to the page');
-  assert.deepEqual(pieces.skipped, []);
-  // what is in each: its own band, top row to bottom row
-  pieces.forEach((p, i) => {
-    const img = decodePng(p.png);
-    assert.equal(img.height, p.height);
-    const px = (y) => [...img.data.subarray(y * 1440 * 4, y * 1440 * 4 + 3)];
-    assert.deepEqual(px(0), BAND_COLORS[i], `${p.id} first row`);
-    assert.deepEqual(px(img.height - 1), BAND_COLORS[i], `${p.id} last row`);
-  });
-});
-
-test('sliceImage: a picture at 2× is cut at twice the CSS coordinates; a range outside the picture is skipped and named', () => {
-  const png = bandedPng(2880, 400, (y) => [y < 200 ? 250 : 0, 0, 0]);
-  const att = { state: 'p--entry', pageWidth: 1440, ranges: [{ id: 'hero', ref: 'p#hero', start: 0, end: 100 }, { id: 'tail', ref: 'p#tail', start: 400, end: 500 }] };
-  const pieces = sliceImage(png, att);
-  assert.deepEqual(pieces.map((p) => [p.id, p.width, p.height]), [['hero', 2880, 200]]);
-  assert.deepEqual(pieces.skipped.map((s) => s.id), ['tail']);
-});
-
-test('cli slice: writes <state>@<section>.png into the directory and lists them; exit 2 for a missing picture, attribution or --out', () => {
-  const dir = tmp();
-  const attFile = join(dir, 'attribution.json');
-  const fullFile = join(dir, 'full.png');
-  writeFileSync(attFile, JSON.stringify(attribute(measurement(ALL))));
-  writeFileSync(fullFile, longPage());
-  const out = join(dir, 'slices');
-  const r = run('slice', attFile, fullFile, '--out', out);
-  assert.equal(r.status, 0, r.stderr);
-  assert.deepEqual(readdirSync(out).sort(), ['footer', 'feature-a', 'feature-b', 'header', 'hero'].map((s) => `${MKT_ENTRY}@${s}.png`).sort());
-  assert.equal(JSON.parse(r.stdout).slices.length, 5);
-  assert.equal(decodePng(readFileSync(join(out, `${MKT_ENTRY}@feature-a.png`))).height, 3600);
-  assert.equal(run('slice', attFile, join(dir, 'none.png'), '--out', out).status, 2);
-  assert.equal(run('slice', join(dir, 'none.json'), fullFile, '--out', out).status, 2);
-  assert.equal(run('slice', attFile, fullFile).status, 2);
-  writeFileSync(join(dir, 'not-a-png.png'), 'hello');
-  assert.equal(run('slice', attFile, join(dir, 'not-a-png.png'), '--out', out).status, 2);
-});
-
-test('encodePng: what it writes decodes back to the same pixels', () => {
-  const data = Buffer.alloc(5 * 3 * 4);
-  for (let i = 0; i < data.length; i += 1) data[i] = (i * 37) % 251;
-  const back = decodePng(encodePng({ width: 5, height: 3, data }));
-  assert.deepEqual([back.width, back.height], [5, 3]);
-  assert.deepEqual([...back.data], [...data]);
-});
-
-test('compare per section: of two groups of slices only the one whose pixels changed is beyond the tolerance', () => {
-  const before = sliceImage(longPage(), attribute(measurement(ALL)));
-  // a 600×400 block turns white inside feature-a (page rows 1500–1900)
-  const patch = { test: (x, y) => x >= 100 && x < 700 && y >= 1500 && y < 1900, color: [255, 255, 255] };
-  const after = sliceImage(longPage(patch), attribute(measurement(ALL)));
-  const verdicts = Object.fromEntries(before.map((b, i) => [b.id, comparePngs(b.png, after[i].png)]));
-  assert.deepEqual(Object.entries(verdicts).filter(([, v]) => !v.within).map(([id]) => id), ['feature-a']);
-  assert.ok(verdicts['feature-a'].percent > 1);
-});
-
-test('compare per section: a section that got taller is beyond the tolerance by size alone', () => {
-  const taller = attribute(measurement(ALL.map((s) => (s.id === 'feature-b' ? { ...s, top: 4600 } : s))));
-  const base = sliceImage(longPage(), attribute(measurement(ALL)));
-  const grown = { ...taller, ranges: taller.ranges.map((r) => (r.id === 'feature-b' ? { ...r, end: r.end + 100 } : r)) };
-  const wider = sliceImage(longPage(), grown);
-  const [b, g] = [base, wider].map((l) => l.find((p) => p.id === 'feature-b'));
-  assert.equal(comparePngs(b.png, g.png).within, false);
-  assert.match(comparePngs(b.png, g.png).reason, /尺寸不同/);
-});
-
 // ---------- measure: the code handed to Playwright ----------
 
 const SECTIONS = [{ id: 'hero', locate: { role: 'heading', name: '一个价格' } }, { id: 'footer', locate: { role: 'contentinfo' } }, { id: 'feature-b', locate: { position: 3 } }];
 
 test('buildMeasureCode: a single async function of `page` that carries the config and locates through the accessibility tree', () => {
-  const code = buildMeasureCode({ state: 'p--entry', page: 'p', sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', out: '/tmp/x.png' });
+  const code = buildMeasureCode({ state: 'p--entry', page: 'p', sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default' });
   const fn = runInNewContext(code);
   assert.equal(typeof fn, 'function');
   assert.equal(fn.constructor.name, 'AsyncFunction');
@@ -286,10 +264,18 @@ test('buildMeasureCode: a single async function of `page` that carries the confi
   assert.match(code, /"theme":"light"/);
   assert.match(code, /"motion":"default"/);
   assert.match(code, /getByRole\('heading', \{ name: sec\.locate\.name, exact: true \}\)/);
-  assert.match(code, /fullPage: true/);
   assert.match(code, /scrollTo/);
-  assert.match(code, /animation: none !important/);
-  assert.match(code, /\/tmp\/x\.png/);
+  assert.match(code, /display === 'contents'/, 'a wrapper that takes no room is looked through');
+  assert.match(code, /clock\.install/);
+  assert.match(code, /window\.__dsMeasure/, 'the result stays in the page, where browser_evaluate can save it');
+  assert.doesNotMatch(code, /fullPage/, 'measuring takes no picture any more; each section is shot by itself');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+});
+
+test('buildMeasureCode: an entry state may reload the page to put the clock under it; a state reached by interacting must not', () => {
+  const base = { sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'light' };
+  assert.match(buildMeasureCode(base), /"reload":true/);
+  assert.match(buildMeasureCode({ ...base, reload: false }), /"reload":false/);
 });
 
 test('buildMeasureCode: reduced motion is only asked for when the settings say so', () => {
@@ -307,7 +293,7 @@ const withIndex = (extra = '') => {
 };
 
 test('cli measure: takes the sections from the entry state and the viewport / theme from prod/index.md', () => {
-  const r = run('measure', writeRepo(marketingFiles()), MKT_ENTRY, '--out', '/tmp/full.png');
+  const r = run('measure', writeRepo(marketingFiles()), MKT_ENTRY);
   assert.equal(r.status, 0, r.stderr);
   const code = r.stdout;
   assert.equal(typeof runInNewContext(code), 'function');
@@ -386,4 +372,85 @@ test('cli measure: with --delta the sections come from the requirement\'s delta/
   assert.doesNotMatch(run('measure', root, MKT_ENTRY).stdout, /"id":"faq"/);
   assert.match(run('measure', root, MKT_ENTRY, '--delta', 'demo-spec').stdout, /"id":"faq"/);
   assert.ok(existsSync(root));
+});
+
+test('cli measure --for: a state inside a section is measured as it stands (no reload), named after the state, with its section from the archive or --section', () => {
+  const root = writeRepo(marketingFiles());
+  const r = run('measure', root, MKT_ENTRY, '--for', `${MKT}--feature-b-expanded`);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, new RegExp(`"state":"${MKT}--feature-b-expanded"`));
+  assert.match(r.stdout, new RegExp(`"entry":"${MKT_ENTRY}"`));
+  assert.match(r.stdout, /"section":"feature-b"/);
+  assert.match(r.stdout, /"reload":false/);
+  assert.match(r.stderr, /不重载/);
+  // a state the archive does not have yet (first scan) needs --section
+  const first = run('measure', root, MKT_ENTRY, '--for', `${MKT}--hero-menu`);
+  assert.equal(first.status, 2);
+  assert.match(first.stderr, /--section/);
+  const given = run('measure', root, MKT_ENTRY, '--for', `${MKT}--hero-menu`, '--section', 'hero');
+  assert.equal(given.status, 0, given.stderr);
+  assert.match(given.stdout, /"section":"hero"/);
+  assert.equal(run('measure', root, MKT_ENTRY, '--for', 'x--y', '--section', 'nowhere').status, 2);
+  assert.equal(run('measure', root, MKT_ENTRY, '--section', 'hero').status, 2, '--section alone means nothing');
+});
+
+// ---------- the command line: shoot ----------
+
+const attributionFile = (overrides = {}) => {
+  const f = join(tmp(), 'attribution.json');
+  writeFileSync(f, JSON.stringify({ ...attribute(measurement(ALL, { viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default' })), ...overrides }));
+  return f;
+};
+
+test('cli shoot: prints the code for every section, or only the --section ones, and says what files it will write', () => {
+  const out = join(tmp(), 'shots');
+  const all = run('shoot', attributionFile(), '--out', out);
+  assert.equal(all.status, 0, all.stderr);
+  assert.equal(typeof runInNewContext(all.stdout), 'function');
+  for (const id of ['header', 'hero', 'feature-a', 'feature-b', 'footer']) assert.match(all.stdout, new RegExp(`${MKT_ENTRY}@${id}\\.png`));
+  assert.match(all.stdout, /"viewport":\{"width":1440,"height":900\}/);
+  assert.ok(all.stdout.includes(JSON.stringify(out)), 'the output directory is written into the code');
+  assert.match(all.stderr, /5 张/);
+  const only = run('shoot', attributionFile(), '--out', out, '--section', 'hero,footer');
+  assert.equal(only.status, 0, only.stderr);
+  assert.doesNotMatch(only.stdout, /@feature-a/);
+  assert.match(only.stderr, /2 张/);
+});
+
+test('cli shoot: --include is passed on as a locator for an overlay; it has to be one of role / text / selector', () => {
+  const out = join(tmp(), 'shots');
+  const ok = run('shoot', attributionFile(), '--out', out, '--section', 'header', '--include', '{"role":"menu","name":"产品"}');
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /"include":\{"role":"menu","name":"产品"\}/);
+  assert.equal(run('shoot', attributionFile(), '--out', out, '--include', '{"color":"red"}').status, 2);
+  assert.equal(run('shoot', attributionFile(), '--out', out, '--include', 'menu').status, 2);
+});
+
+test('cli shoot: usage errors exit 2 and say why', () => {
+  const out = join(tmp(), 'shots');
+  const good = attributionFile();
+  const cases = [
+    [['shoot'], /归属结果/],
+    [['shoot', good], /--out/],
+    [['shoot', join(tmp(), 'nope.json'), '--out', out], /读不出来/],
+    [['shoot', good, '--out', out, '--section', 'nowhere'], /nowhere/],
+    [['shoot', attributionFile({ ok: false }), '--out', out], /没通过/],
+    [['shoot', attributionFile({ viewport: null }), '--out', out], /viewport/],
+    [['shoot', attributionFile({ ranges: undefined }), '--out', out], /ranges/],
+    [['shoot', good, '--out', out, '--bogus', 'x'], /不认识的选项/],
+  ];
+  for (const [args, pattern] of cases) {
+    const r = run(...args);
+    assert.equal(r.status, 2, args.join(' '));
+    assert.match(r.stderr, pattern, args.join(' '));
+  }
+});
+
+test('cli shoot: an attribution made for a state inside a section shoots that section only, to <state>.png', () => {
+  const f = attributionFile({ state: `${MKT}--feature-b-expanded`, entry: MKT_ENTRY, section: 'feature-b' });
+  const r = run('shoot', f, '--out', join(tmp(), 'shots'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, new RegExp(`${MKT}--feature-b-expanded\\.png`));
+  assert.doesNotMatch(r.stdout, /@hero/);
+  assert.match(r.stderr, /1 张/);
 });

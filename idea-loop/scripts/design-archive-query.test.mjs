@@ -578,6 +578,17 @@ test("page: edges carry fromSection and toSection, so do a state's way in and a 
   assert.equal(j.steps[2].trigger.fromSection, `${MKT}#feature-b`);
 });
 
+test("an edge's `when` shows in every edge view — the page's edges, a state's way in, a journey's steps; edges without it have no such key", () => {
+  const files = marketingFiles();
+  files[MKT_ENTRY_FILE] = files[MKT_ENTRY_FILE].replace('    locate: { role: button, name: 展开细节 }', '    locate: { role: button, name: 展开细节 }\n    when: 从价格页进来时');
+  const a = archiveOf(files);
+  const entry = queryPage(a, MKT).states.find((s) => s.id === MKT_ENTRY);
+  assert.equal(entry.outgoing.find((e) => e.id === 'expand').when, '从价格页进来时');
+  assert.equal('when' in entry.outgoing.find((e) => e.id === 'start'), false);
+  assert.equal(queryState(a, `${MKT}--feature-b-expanded`).enter.steps.find((e) => e.id === 'expand').when, '从价格页进来时');
+  assert.equal(queryJourney(a, 'explore-pricing').steps[2].trigger.when, '从价格页进来时');
+});
+
 test('page: a page without sections gets an empty list and its edges are unchanged', () => {
   const p = queryPage(archiveOf(), 'cookbook');
   assert.deepEqual(p.sections, []);

@@ -521,3 +521,97 @@ test('rule 7: the check command line prints the rule 7 violation and the hints, 
   assert.equal(ok.status, 0, ok.stdout);
   assert.match(ok.stdout, /提示：.*content/);
 });
+
+// ---------- after the trial scan: `when`, a text locate, workspace prefixes ----------
+
+const SEARCH_EDGE = 'locate: { role: searchbox, name: 搜索菜谱 }';
+
+test('an edge may carry `when` (one sentence of condition); an empty or non-string one is a structure violation naming the field', () => {
+  const ok = run(bend({ [LIST]: sub(SEARCH_EDGE, `${SEARCH_EDGE}\n    when: 从首页进来时`) }));
+  assert.deepEqual(ok.violations, []);
+  for (const bad of ['""', '[a, b]', '{ x: 1 }']) {
+    const r = run(bend({ [LIST]: sub(SEARCH_EDGE, `${SEARCH_EDGE}\n    when: ${bad}`) }));
+    const v = named(r, 0, 'when');
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.match(v[0].field, /edges\[\d+\]\.when/);
+  }
+});
+
+test('the parsed edge carries `when`, null when not written', () => {
+  const a = loadArchive(writeRepo(bend({ [LIST]: sub(SEARCH_EDGE, `${SEARCH_EDGE}\n    when: 从首页进来时`) })));
+  const edges = outgoingEdges(a, 'cookbook--list');
+  assert.equal(edges.find((e) => e.id === 'search').when, '从首页进来时');
+  assert.equal(edges.find((e) => e.id !== 'search').when, null);
+});
+
+test('a user edge may locate by `{ text: <whole text> }` when role and name cannot find it; text mixed with role, or empty, is not a locate', () => {
+  const ok = run(bend({ [LIST]: sub(SEARCH_EDGE, 'locate: { text: 搜索菜谱 }') }));
+  assert.deepEqual(ok.violations, []);
+  for (const bad of ['{ text: "" }', '{ text: 搜索菜谱, role: searchbox }', '{ text: 搜索菜谱, name: x }', '{ text: [a] }']) {
+    const r = run(bend({ [LIST]: sub(SEARCH_EDGE, `locate: ${bad}`) }));
+    const v = named(r, 0, 'locate');
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.match(v[0].field, /edges\[\d+\]\.locate/);
+  }
+});
+
+test('async: a failure state may belong to another page (a failed load that sends the user elsewhere)', () => {
+  const r = run(bend({ [LIST]: sub('failure: "[[cookbook--search-failed]]"', 'failure: "[[pantry--empty]]"') }));
+  assert.deepEqual(named(r, 2), [], JSON.stringify(r.violations));
+});
+
+const COMPONENT_NAMES = ['NavBar', 'RecipeCard', 'RetryButton', 'SaveButton', 'SearchBox'];
+const WITH_WORKSPACES = (list) => sub('locale: zh-CN', `locale: zh-CN\nworkspaces: ${list}`);
+const INDEX_FILE = P('index.md');
+const prefixHits = (r) => r.violations.filter((x) => x.file !== INDEX_FILE && /前缀/.test(x.message));
+
+test('workspaces in prod/index.md: a component file name must start with one of the prefixes; each other one is a structure violation naming the component', () => {
+  const r = run(bend({ [INDEX_FILE]: WITH_WORKSPACES('[mkt, app]') }));
+  const v = prefixHits(r);
+  assert.deepEqual(v.map((x) => x.file).sort(), COMPONENT_NAMES.map((n) => P(`components/${n}/${n}.md`)).sort());
+  assert.ok(v.every((x) => x.rule === 0));
+  assert.match(v[0].message, /mkt-/);
+  assert.match(v[0].message, /app-/);
+  assert.equal(r.violations.length, v.length, 'nothing else is broken');
+});
+
+test('workspaces: components named with a declared prefix pass, and a project that declares none is not judged', () => {
+  const files = compliantFiles();
+  const moved = {};
+  for (const [path, text] of Object.entries(files)) {
+    const m = path.match(/components\/([^/]+)\/\1\.md$/);
+    const target = m ? path.replace(`${m[1]}/${m[1]}.md`, `mkt-${m[1]}/mkt-${m[1]}.md`) : path;
+    moved[target] = COMPONENT_NAMES.reduce((s, n) => s.replaceAll(`[[${n}]]`, `[[mkt-${n}]]`).replace(new RegExp(`^# ${n}$`, 'm'), `# mkt-${n}`), text);
+  }
+  moved[INDEX_FILE] = WITH_WORKSPACES('[mkt, app]')(moved[INDEX_FILE]);
+  const r = run(moved);
+  assert.deepEqual(r.violations, [], JSON.stringify(r.violations.slice(0, 3)));
+  assert.deepEqual(run(compliantFiles()).violations, [], 'no workspaces key, no prefix rule');
+});
+
+test('workspaces: a value that is not a non-empty list of kebab-case words is one violation on prod/index.md, and is not applied to the components', () => {
+  for (const bad of ['mkt', '[]', '[Mkt]', '[mkt, 3]', '{ a: b }']) {
+    const r = run(bend({ [INDEX_FILE]: WITH_WORKSPACES(bad) }));
+    const v = r.violations.filter((x) => x.file === INDEX_FILE);
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.equal(v[0].field, 'workspaces');
+    assert.equal(prefixHits(r).length, 0);
+  }
+});
+
+test('check(): the prefixes can also come from the caller (the scan before prod/index.md exists), and then beat the index', () => {
+  assert.equal(prefixHits(check(writeRepo(compliantFiles()), { workspaces: ['mkt'] })).length, 5);
+  const declared = writeRepo(bend({ [INDEX_FILE]: WITH_WORKSPACES('[mkt]') }));
+  assert.equal(prefixHits(check(declared)).length, 5);
+  assert.match(prefixHits(check(declared, { workspaces: ['app'] }))[0].message, /app-/);
+});
+
+test('cli --workspaces mkt,app is the same as declaring them; a bad value exits 2', () => {
+  const root = writeRepo(compliantFiles());
+  const bad = spawnSync('node', [CLI, root, '--workspaces', 'mkt,app'], { encoding: 'utf8' });
+  assert.equal(bad.status, 1);
+  assert.match(bad.stdout, /前缀/);
+  assert.equal(spawnSync('node', [CLI, root, '--workspaces', 'Mkt!'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync('node', [CLI, root, '--workspaces'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync('node', [CLI, root], { encoding: 'utf8' }).status, 0);
+});

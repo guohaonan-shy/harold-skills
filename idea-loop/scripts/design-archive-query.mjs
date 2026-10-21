@@ -83,6 +83,7 @@ function edgeView(e) {
     locate: e.locate,
     fromSection: e.fromSection,
     toSection: e.toSection,
+    when: e.when,
     action: e.action,
     trigger: e.trigger,
     how: e.how,

@@ -284,6 +284,7 @@ function normalizeEdges(state) {
       locate: edge.locate ?? null,
       fromSection: edge.from == null ? null : String(edge.from),
       toSection: edge.section == null ? null : String(edge.section),
+      when: edge.when ?? null,
       action: edge.action ?? null,
       trigger: edge.trigger ?? null,
       how: edge.how ?? null,
@@ -305,7 +306,7 @@ function normalizeEdges(state) {
  *   refs: object[],                     every wikilink in an object: { from, file, where, target, embed? }
  *   files: Map<string, string[]>,       basename → paths in docs/ (md without extension, assets with it)
  *   duplicates: Map<string, string[]>,  object ids that more than one file claims
- *   index: object|null,                 prod/index.md frontmatter (viewport / theme / locale)
+ *   index: object|null,                 prod/index.md frontmatter (viewport / theme / locale / motion / workspaces)
  *   problems: { file, message }[],      files that could not be read as objects
  *   legacy: string[],                   docs/design/ entries other than tmp, prod, index.md
  *   delta: { slug, added, changed, removed } | null,

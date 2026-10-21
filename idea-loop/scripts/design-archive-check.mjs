@@ -72,13 +72,16 @@ const DECISION_HEADING = /^决定(\s*\d+)?(\s*[：:].*)?$/;
 
 /**
  * @param {object} archive  from loadArchive
- * @param {{ usedBy?: boolean }} [opts]  usedBy:false leaves the `usedBy` field alone — the consistency
+ * @param {{ usedBy?: boolean, workspaces?: string[]|null }} [opts]  workspaces: the component name prefixes
+ *   of a project with more than one front end; they come from `prod/index.md` (`workspaces`) unless the caller
+ *   passes them (the first scan, before that file exists).
+ *   usedBy:false leaves the `usedBy` field alone — the consistency
  *   half of rule 6, and rule 3's check that its links resolve (a removed page leaves stale ones behind).
  *   For the archive script, which validates a delta before it regenerates usedBy; the regenerated
  *   archive is then checked with the default (usedBy:true)
  * @returns {{ rule: number, file: string, field: string|null, message: string }[]}
  */
-export function checkArchive(archive, { usedBy = true } = {}) {
+export function checkArchive(archive, { usedBy = true, workspaces = null } = {}) {
   const out = [];
   const v = (rule, file, field, message) => out.push({ rule, file, field, message });
   const objs = [...archive.objects.values()];
@@ -86,6 +89,7 @@ export function checkArchive(archive, { usedBy = true } = {}) {
   // ---------- 0: structure ----------
   for (const p of archive.problems) v(0, p.file, null, p.message);
   for (const o of objs) structure(o, v);
+  workspacePrefixes(archive, workspaces, v);
 
   // ---------- 1: reachability ----------
   const states = objectsOfKind(archive, 'state');
@@ -414,6 +418,9 @@ function structure(o, v) {
     else if (seen.has(String(e.id))) v(0, o.file, at, `边 id「${e.id}」在本状态内重复`);
     else seen.add(String(e.id));
     if (!filled(e.to)) v(0, o.file, `${at}.to`, '边缺 to（目标状态）');
+    if (e.when !== undefined && e.when !== null && !(typeof e.when === 'string' && e.when.trim() !== '')) {
+      v(0, o.file, `${at}.when`, 'when 是一句话的条件（字符串），不能为空');
+    }
     if (e.kind !== 'user' && e.kind !== 'system') return v(0, o.file, `${at}.kind`, `边的 kind 只能是 user 或 system（现在是 ${e.kind ?? '缺失'}）`);
     if (e.blocked != null && e.blocked !== false) {
       const b = e.blocked;
@@ -424,16 +431,56 @@ function structure(o, v) {
     }
     const need = e.kind === 'user' ? ['component', 'locate', 'action'] : ['trigger', 'how'];
     for (const k of need) if (!filled(e[k])) v(0, o.file, `${at}.${k}`, `${e.kind} 边缺 ${k}`);
-    if (e.kind === 'user' && filled(e.locate) && !(e.locate && filled(e.locate.role) && filled(e.locate.name))) {
-      v(0, o.file, `${at}.locate`, 'locate 要写 role 和 name（用 ARIA 角色和名字定位）');
+    if (e.kind === 'user' && filled(e.locate) && !edgeLocateOk(e.locate)) {
+      v(0, o.file, `${at}.locate`, 'locate 要写 role 和 name（用 ARIA 角色和名字定位）；按角色定位不到的元素才改写成只有 text 的 { text: <完整文字> }，两种不混写');
     }
   });
 }
 
+/** An edge's `locate`: `{ role, name }`, or — when the element cannot be found by role — `{ text }` alone. */
+function edgeLocateOk(locate) {
+  if (!locate || typeof locate !== 'object' || Array.isArray(locate)) return false;
+  if (locate.text !== undefined) return Object.keys(locate).length === 1 && typeof locate.text === 'string' && locate.text.trim() !== '';
+  return filled(locate.role) && filled(locate.name);
+}
+
+const KEBAB_WORD = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const INDEX_FILE = 'docs/design/prod/index.md';
+
+/** `workspaces` as a list of prefixes, or null when it is not a non-empty list of kebab-case words. */
+export function parseWorkspaces(value) {
+  return Array.isArray(value) && value.length && value.every((p) => typeof p === 'string' && KEBAB_WORD.test(p)) ? value : null;
+}
+
+/**
+ * A project with more than one front end names every component file with the workspace's prefix
+ * (`mkt-SiteFooter`, `app-SiteFooter`), so two workspaces' same-named components do not collide on
+ * basename. The prefixes are the project's to declare, in `prod/index.md`; the caller can hand them in
+ * when that file does not exist yet.
+ */
+function workspacePrefixes(archive, given, v) {
+  let prefixes = given;
+  if (prefixes === null) {
+    const declared = archive.index?.workspaces;
+    if (declared === undefined) return;
+    prefixes = parseWorkspaces(declared);
+    if (!prefixes) {
+      v(0, INDEX_FILE, 'workspaces', 'workspaces 要写成工作区前缀的列表（小写 kebab-case，如 [mkt, app]），不能为空');
+      return;
+    }
+  } else if (!parseWorkspaces(prefixes)) {
+    throw new Error('workspaces 要是工作区前缀的列表（小写 kebab-case，如 mkt、app），不能为空');
+  }
+  for (const o of objectsOfKind(archive, 'component')) {
+    if (prefixes.some((p) => o.id.startsWith(`${p}-`))) continue;
+    v(0, o.file, null, `组件文件名「${o.id}」要带工作区前缀（${prefixes.map((p) => `${p}-`).join('、')}），如 ${prefixes[0]}-${o.id}；前缀在 prod/index.md 的 workspaces 里声明`);
+  }
+}
+
 /** Load + check in one call. Returns { violations, notes, archive }. */
-export function check(root, { delta = null, usedBy = true } = {}) {
+export function check(root, { delta = null, usedBy = true, workspaces = null } = {}) {
   const archive = loadArchive(root, { delta });
-  const violations = checkArchive(archive, { usedBy });
+  const violations = checkArchive(archive, { usedBy, workspaces });
   const notes = [
     ...archive.legacy.map((n) => `docs/design/${n}/ 是旧布局（按 spec 命名的冻结记录），建议删——不读，不算违规`),
     ...sectionNotes(archive),
@@ -455,9 +502,18 @@ function main(argv) {
   const usedBy = !args.includes('--no-used-by');
   const di = args.indexOf('--delta');
   const delta = di >= 0 ? args[di + 1] : null;
-  const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--delta');
-  if (positional.length !== 1 || (di >= 0 && !delta)) {
-    console.error('用法：node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--json]');
+  // The component name prefixes of a project with several front ends; for the first scan, when
+  // prod/index.md (where the project declares them) does not exist yet.
+  const wi = args.indexOf('--workspaces');
+  const wsRaw = wi >= 0 ? args[wi + 1] : null;
+  const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--delta' && args[i - 1] !== '--workspaces');
+  if (positional.length !== 1 || (di >= 0 && !delta) || (wi >= 0 && (!wsRaw || wsRaw.startsWith('--')))) {
+    console.error('用法：node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--workspaces <前缀,前缀>] [--json]');
+    return 2;
+  }
+  const workspaces = wsRaw ? wsRaw.split(',').map((s) => s.trim()) : null;
+  if (workspaces && !parseWorkspaces(workspaces)) {
+    console.error(`--workspaces 要是小写 kebab-case 的前缀、逗号分隔（如 mkt,app），现在是「${wsRaw}」`);
     return 2;
   }
   const root = resolve(positional[0]);
@@ -467,7 +523,7 @@ function main(argv) {
   }
   let result;
   try {
-    result = check(root, { delta, usedBy });
+    result = check(root, { delta, usedBy, workspaces });
   } catch (e) {
     console.error(e.message);
     return 2;
