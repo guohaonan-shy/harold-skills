@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  candidates, dropIssue, listedIssues, ensureLabels, handoffIssue, issuesOf, labelPlan, resolveIssues, syncIssues, unhandoffIssue, withIssues,
+  candidates, dropIssue, publishSpec, listedIssues, ensureLabels, handoffIssue, issuesOf, labelPlan, resolveIssues, syncIssues, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
 const spec = ({ status = '草稿', issues } = {}) => `---
@@ -46,6 +46,12 @@ function fakeGh(issues, labels = []) {
       }
     }
     if (noun === 'issue' && verb === 'close') issues[n].state = 'CLOSED';
+    if (noun === 'issue' && verb === 'create') {
+      const number = Math.max(0, ...Object.keys(issues).map(Number)) + 1;
+      const at = (flag) => args[args.indexOf(flag) + 1];
+      issues[number] = { number, title: at('--title'), body: at('--body'), state: 'OPEN', labels: [at('--label')] };
+      return `https://github.com/o/r/issues/${number}\n`;
+    }
     return '';
   };
   return { gh, calls };
@@ -99,6 +105,28 @@ test('handoff writes the frontmatter only, and refuses taken, closed or double-l
   assert.throws(() => handoffIssue(gh, docs, 'a', 2), /status:搁置/);
   assert.throws(() => handoffIssue(gh, docs, 'a', 3), /CLOSED/);
   assert.throws(() => handoffIssue(gh, docs, 'a', 4), /\[\[b\]\]/);
+});
+
+test('publish opens an issue for a spec that lists none, labelled with its status, and writes the number back', () => {
+  const docs = docsWith({ a: spec({ status: '审核中' }) });
+  const issues = { 1: open(1) };
+  const { gh } = fakeGh(issues, ['status:审核中']);
+  assert.deepEqual(publishSpec(gh, docs, 'a', 'feat/retry'), ['#2 ← spec a（status:审核中）']);
+  assert.equal(issues[2].title, 'spec：重试不消耗配额');
+  assert.deepEqual(issues[2].labels, ['status:审核中']);
+  assert.match(issues[2].body, /docs\/spec\/a\/a\.md`，分支 `feat\/retry`/);
+  assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec/a/a.md'), 'utf8')), [2]);
+});
+
+test('publish syncs the issues a spec already lists instead of opening one', () => {
+  const docs = docsWith({ a: spec({ status: '草稿', issues: '[1]' }) });
+  const issues = { 1: open(1) };
+  const { gh, calls } = fakeGh(issues, ['status:草稿']);
+  assert.deepEqual(publishSpec(gh, docs, 'a', 'main'), ['#1 → status:草稿']);
+  assert.deepEqual(issues[1].labels, ['status:草稿']);
+  assert.equal(calls.filter((c) => c[1] === 'create').length, 0);
+  assert.deepEqual(publishSpec(gh, docs, 'a', 'main'), ['#1 → status:草稿']);
+  assert.equal(calls.filter((c) => c[1] === 'comment').length, 1);
 });
 
 test('sync projects the spec status onto every listed issue, commenting only the first time', () => {

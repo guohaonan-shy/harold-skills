@@ -16,7 +16,7 @@ spec 走到哪一步、谁在哪一刻把它往前推；覆盖它的 GitHub issu
 
 | 状态 | 含义 | 谁、在哪一刻写入 | 脚本核的前提 |
 |---|---|---|---|
-| `草稿` | 从 GitHub issue 起草、还没人审 | `to-spec` 从 issue 起草落盘时（新建，写在 frontmatter 里） | — |
+| `草稿` | 没人在场时起草、还没人审 | `idea-loop:issue-explorer` 调 `to-spec` 起草时（新建，写在 frontmatter 里） | — |
 | `审核中` | 人在审 | grill 会话里的 `to-spec` 落盘时（新建）；`issue-dispatch` 给草稿开出审核会话时 | — |
 | `待设计` | 人审完、同意了，spec 碰 UI，等人开设计会话 | 审核会话，人说审完时 | 「前端交互」不是「不涉及」；开头没有「需要 grill」 |
 | `设计中` | 在设计 | `uiux-imagine` 开工第一步 | 同上 |
@@ -63,6 +63,7 @@ label 各代表什么，写在目标仓库根目录的 `ISSUE_TRACKER.md`（`set
 issues labels     <docs>                    # 建出缺的 status:* label
 issues candidates <docs> [<limit>]          # 待办的 issue，最早的在前（JSON）；<docs> 里还有 spec 列着的不算
 issues handoff    <docs> <spec-slug> <n>    # 把 #n 写进 spec frontmatter，只改本地文件，不碰 GitHub
+issues publish    <docs> <spec-slug>        # spec 到了远端之后发布：列了 issue 的同步 label；没列的开一个 spec issue，号码写回 frontmatter
 issues sync       <docs> <spec-slug>        # 按 spec 的状态同步 label；第一次同步时在 issue 上留一条评论指向 spec
 issues unhandoff  <docs> <spec-slug> <n>    # 从 spec 里移出 #n，去掉 label，回到待办
 issues drop       <docs> <spec-slug> <n>    # 从 spec 里移出 #n，关成 not planned
@@ -73,8 +74,9 @@ issues resolve    <docs> <spec-slug> <pr>   # PR 合并：关掉 spec 列出的�
 
 | 时机 | 谁 | 做什么 |
 |---|---|---|
-| 从 issue 起草 spec | `to-spec`（`idea-loop:issue-explorer` 调它） | 每个覆盖到的 issue `handoff`；「关联」里逐条挂 `#<号>` |
-| 草稿提交、推送之后 | `issue-dispatch` | `sync`：issue 第一次挂上 `status:草稿` |
+| 写 spec 时覆盖了已有 issue | `to-spec` | 每个覆盖到的 issue `handoff`；「关联」里逐条挂 `#<号>` |
+| 对话里写的 spec 推送之后 | `to-spec` | `publish`：列了 issue 的同步 label；没列的开一个 spec issue，正文指向 spec 文件和当前分支 |
+| 起草 PR 合并之后 | `issue-dispatch` | `publish`：issue 第一次挂上 `status:草稿` |
 | spec 翻状态 | 谁翻谁顺带（`spec-status set` 里自动做） | — |
 | 人审核时把某个 issue 踢出 spec | 审核会话 | `unhandoff`，并从 spec 的「问题」「方案」「User Stories」「关联」里删掉它 |
 | 人审核时决定某个 issue 不做 | 审核会话 | `drop`，并从 spec 里删掉它 |
