@@ -7,7 +7,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 **把一份已经切好工单的 spec 做完。** 这里只写编排：谁起谁、派哪张、交回后核什么、何时停下交给人。一张工单怎么做在 `agents/implementer.md`。
 
-> 先读 `../wiki-conventions/SKILL.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../pr-review/references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../decision-rules/SKILL.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
+> 先读 `../wiki-conventions/SKILL.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`../pr/SKILL.md`（停下汇报、PR 描述的四节）、`../decision-rules/SKILL.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
 
 ## 0 前提
 
@@ -36,7 +36,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 - **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`，每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、以及为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接），写进停下汇报后清空。执行方回收后只剩落地提交，这些交回内容找不回来，所以落地时立刻记。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（MCP 浏览器锁）。在跑的执行方只记在会话里。
 
-**frontier** = 没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。会话断了：重算 frontier；`git worktree list` 里 pending 没记着的执行方 worktree 按 `worktree.md` §3 回收后重派。
+**frontier** = 没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。会话断了：重算 frontier；`git worktree list` 里 pending 没记着的执行方 worktree 照「回收」收掉后重派。
 
 ## 3 派工
 
@@ -62,7 +62,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 不过就 SendMessage 退回同一个执行方说清哪条，第二次还不过按 `failed`。
 
-**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑全量套件——不算失败。落地后按 `worktree.md` §3 **回收**，再记下它的 `human_verify`（进停下汇报）、`verified`（进描述）、`by_existing_practice` 与标「存量本次修」的 `found`（进 handled，下次停下汇报的「已按规则处理」）、标「spec 缺口」的 `found`（进 pending 当决定题）、其余 `found`（跟这次无关的存量，见下）。
+**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑全量套件——不算失败。落地后照下面「回收」收掉它的 worktree，再记下它的 `human_verify`（进停下汇报）、`verified`（进描述）、`by_existing_practice` 与标「存量本次修」的 `found`（进 handled，下次停下汇报的「已按规则处理」）、标「spec 缺口」的 `found`（进 pending 当决定题）、其余 `found`（跟这次无关的存量，见下）。
 
 **跟这次无关的存量问题自动开 issue**（`decision-rules.md` 的「自己定的四条」第 2 条）：其余 `found` 逐条在目标仓库 `gh issue create`，不加 `status:*` 标签（没标签就是待办，`issue-dispatch` 会接手），写给一个没有上下文的人看：是什么、在哪、为什么这张工单没动它。开之前 `gh issue list --search` 查一次，已有同一问题的 open issue 就不重开，链接那一个。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次停下汇报的「已按规则处理」和第 1 轮 review 汇报的「已按规则处理」都带它；人一句话可推翻（§6）。开不成（`gh` 失败）不静默丢：记进 handled 写明没开成与原因，让人在停下汇报里看到。审查者不去找存量问题（`pr-reviewer` 只报污染本次、让 CI 变红的那两种），开 issue 是编排者对执行方交回的做。
 
@@ -77,9 +77,9 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 没有在跑的、frontier 也空了才停（只剩等决定的及其下游，或全部落地）。
 
 1. 还没有 PR：推送，`gh pr create --draft --base <base>`（标题用 spec 标题，带署名行），`pr-body.mjs set` 写 `summary` 和 `reference`。
-2. 停下汇报按 `pr-description.md` §4 写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` 的「交给人时」）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
+2. 停下汇报按 `../pr/SKILL.md` 的「停下汇报」写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` 的「交给人时」）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
 3. 更新 `reference` 的执行记录，推送。
-4. 会话里按条目贴汇报，每项文字后紧跟它的素材（`review-loop.md` §2）；再发一条推送通知。
+4. 会话里按条目贴汇报，每项文字后紧跟它的素材（`../pr/SKILL.md` 的「review loop」）；再发一条推送通知。
 
 **人回复后**：原话逐字记进「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
@@ -91,11 +91,22 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 回 §3。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的 `pause`**：按 `pr-description.md` §6 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，接 `/idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的 `pause`**：按 `../pr/SKILL.md` 的「PR 描述的四节」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，接 `/idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+
+## 回收
+
+只在工单落地（fast-forward 进集成分支）之后做。目标仓库 `DEVELOPMENT.md` 的「清理」写了命令就先跑它，然后：
+
+1. 停掉这个 worktree 端口上的服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
+2. 它还持有浏览器锁就释放（`scripts/browser-lock.mjs release <锁目录> --force`）。
+3. 把它 `.tmp/implement/<spec-slug>/evidence/` 下的素材拷进集成分支 worktree 的同名目录。
+4. `git worktree remove --force <路径>`（Claude 加的锁先 `git worktree unlock`），再 `git branch -D <它的分支>`。
+
+卡住或失败的工单不回收：worktree 和分支留着，半成品在它的分支上，等人做完决定由下一个 implementer 接着用。素材照样先拷出来，停下汇报要用。
 
 ## 7 合并之后（不归这里，备查）
 
-删工单归 `to-ticket` §7；`evidence.mjs cleanup <owner/repo> <PR 号>`；剩下的执行方 worktree 按 `worktree.md` §3 回收；删 `.tmp/implement/<spec-slug>/`。
+删工单归 `to-ticket` §7；`evidence.mjs cleanup <owner/repo> <PR 号>`；剩下的执行方 worktree 照「回收」收掉；删 `.tmp/implement/<spec-slug>/`。
 
 ## 不做
 

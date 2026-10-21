@@ -354,7 +354,7 @@ rules + our badge case), `color-application.md` (impeccable colorize/palette.mjs
 into native lint + self-contained checklists, replacing the retired live invocation),
 `accessibility-baseline.md` and `laws-of-ux.md` (an external product repository's `craft/`,
 one-time inspiration source, no path dependency retained), `landing-ia.md` (a design-lib research
-repository's landing skills, generalized away from its allow-list gating), `../../../uiux-research/references/research-backend.md`
+repository's landing skills, generalized away from its allow-list gating), `uiux-research`'s research backend
 (the contract for `idea-loop:uiux-researcher`, the one agent that calls `refero-design`'s screens and
 flows layers — the one remaining live dependency, run only when the human asks, never a gate).
 

@@ -1,7 +1,7 @@
 // GitHub identity for idea-loop's own posts: the GitHub App configured for the repository speaks,
 // otherwise the gh login. Claude's posts on a PR (the review loop's archive, when the PR merges) go
 // through here so they never appear as written by the human. All writes use JSON on stdin; PR text is
-// never interpolated into shell code. Configuration and permissions: skills/engineering/pr-review/references/review-loop.md.
+// never interpolated into shell code. Configuration and permissions: skills/engineering/pr/references/review-loop.md.
 import { execFileSync } from 'node:child_process'
 import { createPrivateKey, sign } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'

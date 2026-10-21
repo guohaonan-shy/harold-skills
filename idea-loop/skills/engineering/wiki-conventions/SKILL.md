@@ -67,8 +67,8 @@ docs/
 ├── adr/NNNN-<slug>.md    spec 归档总结 —— 永久
 ├── design/
 │   ├── tmp/<spec-slug>/  一个需求的设计过程，只在本地、不进 git
-│   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部见 `../../design/uiux-imagine/references/imagine-canvas.md`
-│   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图 —— 内部见 `../../design/uiux-refine/references/refine-canvas.md`
+│   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部结构归 `uiux-imagine`
+│   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图 —— 内部结构归 `uiux-refine`
 │   │   ├── delta/        冻结结果对 prod/ 的差异 —— 结构见 `../design-archive/SKILL.md`
 │   │   └── research/<问题短名>/  `uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
@@ -101,7 +101,7 @@ docs/
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（MCP 浏览器锁）—— PR 合并后删
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删
 ├── dreaming/<YYYY-MM-DD>/        这一次运行的提议表 proposal.md 与中间物（重拍与初扫的产物不在这里，在 docs/design/tmp/ 下）—— 执行段完成后删
-└── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（../pr-review/references/review-loop.md）
+└── review-loop/<PR 号>.md        这个 PR 的 review loop：每次停下、每轮 review 的汇报，人的原话批示，做了什么 —— 合并时归档进 PR 后删（`pr` skill 的「review loop」）
 ```
 
 **设计侧的过程产物不放这里**：`uiux-imagine` 与 `uiux-refine` 的工作区、方向说明、交接画布、ledger、评分 JSON、评委截图都在 `docs/design/tmp/<spec-slug>/`（§2），同样只在本地、不进 git，但归档脚本认得它。

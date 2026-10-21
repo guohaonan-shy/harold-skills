@@ -184,8 +184,7 @@ recommendation. Whether the question is worth researching is the human's call �
 - **reference-averaging** (`ui-craft-checklist.md` §2) still applies to forwarded conclusions: when
   sources disagree, that is a decision for the human, not a midpoint.
 
-How research is run and what the page looks like: `skills/design/uiux-research/references/research-backend.md` — written
-for the researcher agent, not for this stage.
+How research is run and what the page looks like is `uiux-research`'s business, not this stage's.
 
 ### W · Freeze the appropriate low-cost artifact
 

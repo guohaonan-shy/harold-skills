@@ -10,8 +10,8 @@
  * to one file per PR; his rulings and what was done about them are appended under it. The file is
  * the loop's memory: a session that was compacted or reopened reads it and carries on. When Harold
  * says merge, each report is posted to the PR as one plain comment — a record, not a conversation —
- * and the local file is deleted. Layout and wording: skills/engineering/pr-review/references/review-loop.md,
- * skills/engineering/pr-review/references/pr-description.md §4–§5.
+ * and the local file is deleted. Layout and wording: skills/engineering/pr/references/review-loop.md,
+ * skills/engineering/pr/references/stop-report.md and review-round.md.
  *
  * File: <worktree root>/.tmp/review-loop/<PR>.md
  *

@@ -97,9 +97,9 @@ the PR opens (screenshots, GIFs or annotated screen flows for the front end, seq
 the back end), the decisions implementers made there on their own and how it was verified; what the
 human has to review, decide and prepare before going live; and a folded reference. No code lines,
 variable names or paths outside that reference — `scripts/pr-body.mjs` refuses them. It never
-carries review. Layout: `skills/engineering/pr-review/references/pr-description.md`.
+carries review. Layout: `skills/engineering/pr/SKILL.md`.
 
-**The review loop lives in the session, not on GitHub** (`skills/engineering/pr-review/references/review-loop.md`). Only one
+**The review loop lives in the session, not on GitHub** (`skills/engineering/pr/SKILL.md`, section "review loop"). Only one
 person reads the reports and decides, and they are already in the Claude session (desktop or
 phone), so every stop and every review round is shown there, with figures sent as files and a push
 notification; the human replies there; the orchestrator handles the batch and answers in one reply.
@@ -262,17 +262,15 @@ idea-loop/
 │   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
 │   │   ├── browser/SKILL.md          # shared, model-invoked — headless Playwright for your own capture and measuring, the built-in browser for showing the human; static serving, logging in, measuring from the real DOM
 │   │   ├── ui-measure/SKILL.md       # shared, model-invoked — implementation vs frozen canvas, cell by cell: the three environment rules, default tolerances, the matrix, when to stop
+│   │   ├── pr/SKILL.md               # shared, model-invoked — what the human reads on a PR: the description's four sections, stop reports and review rounds, the review loop file (+ references/)
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md and the CLAUDE.md / AGENTS.md block
 │   │   ├── issue-dispatch/SKILL.md   # one dispatch round over GitHub issues — run by a fixed session under /loop
 │   │   ├── to-spec/SKILL.md          # + references/from-issues.md — drafting specs from GitHub issues
 │   │   ├── to-ticket/SKILL.md
 │   │   ├── implement/SKILL.md        # orchestrates a spec's tickets — the work is in agents/implementer.md
 │   │   │   references/ui-tickets.md, react-port.md  # UI tickets: canvas → the project's component tree, per-stack notes, the dev-only state harness
-│   │   │   references/worktree.md            # an implementer's worktree: start point, preparation (`DEVELOPMENT.md`'s command, else defaults), reclaim
 │   │   ├── pr-review/SKILL.md        # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   │   │   references/review-standards.md    # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
-│   │   │   references/pr-description.md      # the PR description's four sections, and how stop reports and review rounds are written
-│   │   │   references/review-loop.md         # where reports live: the session + one local file per PR; replies; archive at merge
 │   │   └── dreaming/SKILL.md         # + references/ — proposal-table (shape and execution pass), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
 │   ├── design/
 │   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes

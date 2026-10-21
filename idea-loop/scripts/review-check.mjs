@@ -42,7 +42,7 @@
  * code-level reference — backticks, file:line, a path, a snake_case name, a commit hash, a section
  * number like §4.7. Those belong in `locations`, which only the fixer sees. Shape problems are not
  * discards: the finding stands, its wording has to be redone (`rewrite`). Rules:
- * skills/engineering/pr-review/references/review-standards.md, skills/engineering/pr-review/references/pr-description.md §5.
+ * skills/engineering/pr-review/references/review-standards.md, skills/engineering/pr/references/review-round.md.
  *
  * Deterministic core (normalize, contains, snippetInDiff, codeRefs, shapeProblems, admit) is pure
  * and unit-tested.

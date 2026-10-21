@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**：它面对人，你面对这一张工单。你不跟人对话，也不等人。做完或者停下，都是把结果交回给它。
 
-> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/wiki-conventions/SKILL.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定）、`skills/engineering/implement/references/worktree.md`（你这个 worktree 的起点与准备）、`skills/engineering/tdd/SKILL.md`（循环的规矩、seam、mock 边界）和 `skills/engineering/decision-rules/SKILL.md`（什么自己定、什么交给人；§4 的判定表引用它，不另写一份）。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/wiki-conventions/SKILL.md`（目录与状态约定；§2.1 是 worktree 根下 `.tmp/` 的约定）、目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）、`skills/engineering/tdd/SKILL.md`（循环的规矩、seam、mock 边界）和 `skills/engineering/decision-rules/SKILL.md`（什么自己定、什么交给人；§4 的判定表引用它，不另写一份）。
 
 ## 1 输入只有这几样
 
@@ -29,7 +29,7 @@ effort: high
 
 ## 2 开工前
 
-1. **起点**：`git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后按 `skills/engineering/implement/references/worktree.md` §2 准备：目标仓库声明了 worktree 准备命令就带上端口跑它，没有就用默认做法；依赖按锁文件核对一遍。
+1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先 `git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
 2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停（现在的 `to-ticket` 不切没冻结的 spec，只有旧流程切的票还会带它）。
 4. **blocker 都已落地**（工单的 `Blocked by`，对照编排者给的提交列表）。
@@ -138,8 +138,8 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 然后**做成一个能 fast-forward 进集成分支的 commit**。冲突由你解决，你最清楚这张工单：
 
 1. 先把全部改动提交一次，message 随意。
-2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突按 `skills/engineering/implement/references/worktree.md` §2，不手工合并。
-3. 依赖按锁文件核对一遍（`skills/engineering/implement/references/worktree.md` §2），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
+2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突照 `DEVELOPMENT.md` 的「worktree 准备」，不手工合并。
+3. 依赖按锁文件核对一遍（`DEVELOPMENT.md` 的「worktree 准备」），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
 4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部改动，加上勾好框的工单文件（以及被你追加了继承格的那张工单）。message 用仓库的风格写，**末尾带一行 trailer**：
 
    ```

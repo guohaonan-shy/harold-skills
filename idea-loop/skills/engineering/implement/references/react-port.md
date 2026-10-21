@@ -8,7 +8,7 @@ want the concrete mechanics: it is what actually goes wrong translating a frozen
 (`docs/design/tmp/<spec-slug>/canvas/*.html`) HTML+CSS+JS file into the real React/TSX component — every rule below
 came out of an actual port, not a hypothetical; the class and field names in the worked examples
 are illustrative.
-`skills/design/uiux-refine/references/design/design-core.md`'s brand floors still apply here: a Tailwind translation that quietly
+The target project's `DESIGN.md` still applies here: a Tailwind translation that quietly
 drifts off a token in the target project's DESIGN.md is a regression, not a detail.
 
 ## 1. Classify every changed CSS rule before touching React

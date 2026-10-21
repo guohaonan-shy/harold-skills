@@ -7,7 +7,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 **一次调用跑一轮。** 这份文件是入口，写的是**编排机制**：起谁、交接什么、照规则的条目怎么立即处理、人批示之后怎么修、什么时候自己起下一轮。一轮 review 具体怎么跑写在 `agents/pr-reviewer.md` 里，问什么、什么算问题写在 `skills/engineering/pr-review/references/review-standards.md` 里，哪些条目能照规则处理写在 `skills/engineering/decision-rules/SKILL.md` 里，这里不复述。
 
-> 先读一次 `references/review-loop.md`（汇报放在哪、人怎么回复、合并时怎么归档）、`references/pr-description.md`（§1、§6 描述的四节，§5 review 汇报的写法）和 `../decision-rules/SKILL.md`（哪些条目不等人）。
+> 先读一次 `../pr/SKILL.md` 的「review loop」（汇报放在哪、人怎么回复、合并时怎么归档）、`../pr/SKILL.md`（PR 描述的四节、review 汇报的写法）和 `../decision-rules/SKILL.md`（哪些条目不等人）。
 
 ## 0 什么时候跑
 
@@ -35,15 +35,15 @@ UI 审查者起在 pr-reviewer **之前**，因为子 agent 起不了子 agent�
 
 ## 2 跑一轮
 
-review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）。
+review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`../pr/SKILL.md` 的「review loop」）。
 
 1. 轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review`。
 2. **有 `tmp/` 才先 UI 审查**：看集成 worktree 的 `docs/design/tmp/` 下有没有这份 spec 的需求目录（`<spec-slug>/` 且里面有设计产物：`research/` 子目录不算，那是人调 `uiux-research` 落的调研页，看完就丢，跟合并前钩子同一口径；只有调研的需求等于没有）。**有**，就在起 pr-reviewer 之前先用 Agent 工具起 `idea-loop:ui-reviewer`（每轮审查模式），只给指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。等它交回发现文件路径 `ui-findings.json`。没有就跳过这一步，下面不传发现文件。UI 审查标了未完成（服务起不来、页面打不开）的，照实告诉人并记进汇报的「没覆盖到的」，**未完成不等于没问题**，不阻塞这一轮的代码审查。
-3. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径与工单目录（`docs/spec/<spec-slug>/<spec-slug>.md` 和同一目录下的 `tickets/`）、review loop 文件路径（它从里面读之前几轮人批了「不修」或「开 issue」的条目，以及人**推翻**过的条目）、companion 路径，**以及第 2 步的发现文件路径**（有的话）。它把发现并进汇报的 Spec 一节，格式与校验沿用现有的；PR 描述「之前 → 之后」的「之前」从档案 `prod/` 取（`pr-description.md` §6）。
+3. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径与工单目录（`docs/spec/<spec-slug>/<spec-slug>.md` 和同一目录下的 `tickets/`）、review loop 文件路径（它从里面读之前几轮人批了「不修」或「开 issue」的条目，以及人**推翻**过的条目）、companion 路径，**以及第 2 步的发现文件路径**（有的话）。它把发现并进汇报的 Spec 一节，格式与校验沿用现有的；PR 描述「之前 → 之后」的「之前」从档案 `prod/` 取（`../pr/SKILL.md` 的「PR 描述的四节」）。
 4. 等它交回，**不提前汇报**。
 5. **先把这一轮记进 review loop 文件**：把审查者写好的汇报作为新条目原样追加。
 6. **立即处理照规则的条目**（§3），不等人。
-7. **在会话里给人看**：汇报里「已按规则处理」一节的每一行补上提交或 issue 链接（审查者留的 `〔链接〕` 占位，一个都不能剩），文件里的条目同步改成一字不差的同一份；然后按条目贴汇报，**「已按规则处理」放在最前、在 Spec 与 Standards 之前**（第 1 轮把 `implement` 期间为执行方顺手发现的存量问题开的 issue 也补进这一节：从 review loop 文件里各次停下的「已按规则处理」找出带 issue 链接的几行，原样列进来；它们不是审查者的条目，审查者不去找存量问题，`decision-rules.md` 的「自己定的四条」第 2 条），每一条的文字后面紧跟着单独发这一条的证据图（`review-loop.md` §2）；再发一条推送通知，一句话说第几轮、几条已按规则处理、几条要你决定。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
+7. **在会话里给人看**：汇报里「已按规则处理」一节的每一行补上提交或 issue 链接（审查者留的 `〔链接〕` 占位，一个都不能剩），文件里的条目同步改成一字不差的同一份；然后按条目贴汇报，**「已按规则处理」放在最前、在 Spec 与 Standards 之前**（第 1 轮把 `implement` 期间为执行方顺手发现的存量问题开的 issue 也补进这一节：从 review loop 文件里各次停下的「已按规则处理」找出带 issue 链接的几行，原样列进来；它们不是审查者的条目，审查者不去找存量问题，`decision-rules.md` 的「自己定的四条」第 2 条），每一条的文字后面紧跟着单独发这一条的证据图（`../pr/SKILL.md` 的「review loop」）；再发一条推送通知，一句话说第几轮、几条已按规则处理、几条要你决定。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
 
 ## 3 照规则的条目：贴汇报之前就处理
 
@@ -82,8 +82,8 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 
   下一轮审查者读 review loop，看到这条推翻记录，**不再按同一依据**把这条标成照规则。
 - **疑问**：直接回答。
-- **批示带出合并前后要做的事**（「S2 接受，上线时手动处理迁移」）：照上面处理之外，要人在上线前做的，追加进 PR 描述 `your-todo` 节的「上线前要注意的」、写明为什么要人来做；Claude 合并后自己做的，追加进 `reference` 节的清理清单（`pr-body.mjs set`，见 `pr-description.md` §1、§6）。
-- **要求把汇报改写**（「写成我看得懂的样子」）：照 `pr-description.md` §5 改写，改 review loop 文件里那个条目的汇报部分，在会话里重新贴一遍；改了什么写进下面那条汇总。
+- **批示带出合并前后要做的事**（「S2 接受，上线时手动处理迁移」）：照上面处理之外，要人在上线前做的，追加进 PR 描述 `your-todo` 节的「上线前要注意的」、写明为什么要人来做；Claude 合并后自己做的，追加进 `reference` 节的清理清单（`pr-body.mjs set`，见 `../pr/SKILL.md` 的「PR 描述是总览，汇报在会话里」、§6）。
+- **要求把汇报改写**（「写成我看得懂的样子」）：照 `../pr/SKILL.md` 的「review 汇报」改写，改 review loop 文件里那个条目的汇报部分，在会话里重新贴一遍；改了什么写进下面那条汇总。
 
 全部处理完，在会话里回**一条**汇总，逐点说做了什么、带上提交链接，不要一个点回一条；同样的内容记进这一轮条目的「做了什么」。同时把 PR 描述 `your-todo` 里已经决定的那几项勾上。然后看 §5：满足条件就自己起下一轮。
 
@@ -114,7 +114,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 
 1. `review-loop.mjs check .tmp/review-loop/<PR 号>.md` 列出还没处理完的条目；PR 描述「要你做的事」还有没勾的。有的话提醒人一句，人仍然说合并就继续。
 2. **先看设计档案要不要归档**：集成 worktree 的 `docs/design/tmp/` 下有任何含设计产物的需求目录（`research/` 子目录不算，合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就执行 `gh pr merge` 会被它拦下，提示指向这一节），就走 §4.1 的归档，**走完再继续第 3 步**。没有就直接第 3 步。**调研目录本身从不归档**：只做过调研、没有 imagine / refine 产物的需求，不走归档，合并也不被拦；那个目录是看完就丢的草稿，随 `tmp/` 的生命周期删，想早点清就手动删。调研结论若被用进了设计，已经以文字记在方向说明或冻结记录里，随设计一起归档。
-3. **归档 review loop**：`review-loop.mjs archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`review-loop.md` §4）。中途失败直接重跑，贴过的不会重复。
+3. **归档 review loop**：`review-loop.mjs archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`../pr/SKILL.md` 的「review loop」）。中途失败直接重跑，贴过的不会重复。
 4. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md`「分支」节。
 5. **收尾**：按 PR 描述「参考」里的清理清单逐项做：删工单（`to-ticket` §7），删这个 PR 的素材分支（`evidence.mjs cleanup <owner/repo> <PR 号>`），删 `.tmp/review-loop/<PR 号>.md`，清掉 `.tmp/implement/<spec-slug>/` 和 `.tmp/pr-review/<PR 号>/`，再加上这个 PR 特有的几项。
 
@@ -124,7 +124,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 
 1. **起 UI 审查（归档模式）**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：spec 名、集成 worktree 的绝对路径、分到的端口、模式「归档」、图的前缀 `r<最近一轮的轮次>-ui-merge-`、草稿存放处 `.tmp/pr-review/<PR 号>/archive/`。
 2. **看它核得过不过**：
-   - **不通过**（`status: failed`）：什么都没写。把它交回的 `failed.json` 里的条目，按 `pr-description.md` §5 的 Spec 条目格式记成 review loop 的一条新条目（轮次取 `review-loop.mjs next … pause`，标题写「第 N 次停下 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（修 / 改档案接受实现 / 不修），按 §3 处理；处理完人再说合并，从第 1 步重来。
+   - **不通过**（`status: failed`）：什么都没写。把它交回的 `failed.json` 里的条目，按 `../pr/SKILL.md` 的「review 汇报」的 Spec 条目格式记成 review loop 的一条新条目（轮次取 `review-loop.mjs next … pause`，标题写「第 N 次停下 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（修 / 改档案接受实现 / 不修），按 §3 处理；处理完人再说合并，从第 1 步重来。
    - **未完成**（服务起不来、页面打不开）：照实告诉人缺什么，**不合并、不归档**，也不当成通过。
    - **通过**：往下。
 3. **在会话里给人看草稿**：把 `draft.md` 作为新条目记进 review loop 文件（`pause` 类，标题写「第 N 次停下 · 归档设计档案，等你过目草稿」），按条目一段一段贴，截图和 GIF 跟在对应那条的文字后面，发推送通知。人要改，就把批示原话（记进「你的批示」）用 SendMessage 转回**同一个** ui-reviewer，它改完交回，再贴一次，直到人说通过。
