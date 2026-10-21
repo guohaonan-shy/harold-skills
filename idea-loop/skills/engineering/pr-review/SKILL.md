@@ -113,7 +113,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`idea-loop:pr` 的「revi
 **只在人在会话里明确说合并时做。** 没有 mergeReady 判定，也没有自动批准：人看过最新一轮的汇报和 PR 描述的「要你做的事」，自己决定。
 
 1. `review-loop.mjs check .tmp/review-loop/<PR 号>.md` 列出还没处理完的条目；PR 描述「要你做的事」还有没勾的。有的话提醒人一句，人仍然说合并就继续。
-2. **先看设计档案要不要归档**：集成 worktree 的 `docs/design/tmp/` 下有任何含设计产物的需求目录（`research/` 子目录不算，合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就执行 `gh pr merge` 会被它拦下，提示指向这一节），就走 §4.1 的归档，**走完再继续第 3 步**。没有就直接第 3 步。**调研目录本身从不归档**：只做过调研、没有 imagine / refine 产物的需求，不走归档，合并也不被拦；那个目录是看完就丢的草稿，随 `tmp/` 的生命周期删，想早点清就手动删。调研结论若被用进了设计，已经以文字记在方向说明或冻结记录里，随设计一起归档。
+2. **先看设计档案要不要归档**：集成 worktree 的 `docs/design/tmp/<spec-slug>/` 有设计产物（`research/` 子目录不算；冻结时经设计 PR 提交的画布和 `delta/` 就在这里。合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就执行 `gh pr merge` 会被它拦下，提示指向这一节），就走「合并前归档」，**走完再继续第 3 步**。没有就直接第 3 步。**调研目录本身从不归档**：只做过调研、没有 imagine / refine 产物的需求，不走归档，合并也不被拦；那个目录是看完就丢的草稿，随 `tmp/` 的生命周期删，想早点清就手动删。调研结论若被用进了设计，已经以文字记在方向说明或冻结记录里，随设计一起归档。
 3. **归档 review loop**：`review-loop.mjs archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`idea-loop:pr` 的「review loop」）。中途失败直接重跑，贴过的不会重复。
 4. **spec 翻完成**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`，提交、推送到 PR 分支，跟着这次合并一起进主分支。它覆盖的 issue 由 `issue-dispatch` 下一轮对账关掉；项目没跑 loop 的，合并后在主 checkout 上跑 `issues.mjs reconcile <docs>`。
 5. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md`「分支」节。
@@ -130,7 +130,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`idea-loop:pr` 的「revi
    - **通过**：往下。
 3. **在会话里给人看草稿**：把 `draft.md` 作为新条目记进 review loop 文件（`pause` 类，标题写「第 N 次停下 · 归档设计档案，等你过目草稿」），按条目一段一段贴，截图和 GIF 跟在对应那条的文字后面，发推送通知。人要改，就把批示原话（记进「你的批示」）用 SendMessage 转回**同一个** ui-reviewer，它改完交回，再贴一次，直到人说通过。
 4. **人通过后跑归档脚本**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <集成 worktree> <spec-slug>`。它先校验再写，退出码 1 就是拒绝（`prod/`、spec 和 `tmp/` 都没动），把它列的违规或冲突回到 review loop 按「归档被拦下」处理，**不合并**。退出码 0 之后，输出里提示的缺失项（`.gitattributes` 没管素材、`.gitignore` 没忽略 `tmp/`、`prod/index.md` 没定视口 / 主题 / 语言）如实告诉人：脚本不改它们，补不补由人定。
-5. **提交并推送到 PR 分支**：`git add -A docs/design/prod docs/spec/<spec-slug>`（被改写的 spec 图片链接也在里面），提交信息写「归档 <spec-slug> 的设计差异」，推送。工作区应当干净。
+5. **提交并推送到 PR 分支**：`git add -A docs/design/prod docs/spec/<spec-slug>`（被改写的 spec 图片链接也在里面），再 `git add -u docs/design/tmp/<spec-slug>`（冻结时提交过的画布和 `delta/` 被归档脚本清掉了，这一步把删除也提交上），提交信息写「归档 <spec-slug> 的设计差异」，推送。工作区应当干净。
 6. **重新执行合并**：回到 §4 的第 3 步往下；`tmp/` 现在已清空，合并前钩子这次放行。
 
 **记一笔**：第 2 步和第 3 步的条目就是这次归档的审查结论与人的批示（原话逐字），第 4 步、第 5 步做了什么写进该条目的「做了什么」。有多个 spec 要归档的，每个各占一条。

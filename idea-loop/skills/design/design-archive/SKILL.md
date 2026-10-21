@@ -24,7 +24,7 @@ description: 设计档案 docs/design/prod/ 的结构：页面状态构成的图
 
 ```
 docs/design/
-├── tmp/<spec-slug>/{imagine,canvas,delta}/   只在本地，不进 git
+├── tmp/<spec-slug>/{imagine,canvas,delta}/   过程只在本地；冻结结果经设计 PR 提交，归档时清掉
 └── prod/
     ├── index.md                              生成；frontmatter 里定主视口 / 主题 / 语言
     ├── pages/<page>/<page>.md                页面
@@ -37,7 +37,7 @@ docs/design/
 - 各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。
 - **页面是目录，每个状态一份文件**：状态若只是页面文件里的一节，页面内的流转在 Obsidian 图上全变成自环。**状态文件名带页面前缀**（`<page>--<state>`），因为 wikilink 按 basename 解析，不同页面都有 `loading` 时靠前缀区分。组件文件用代码组件名。
 - **basename 在 `docs/` 下全局唯一**（`idea-loop:wiki-conventions` 的 basename 规则），由校验查；工单文件与 `index.md` 豁免。
-- **`tmp/` 与 `prod/` 的分工**：`tmp/<spec-slug>/` 放进行中需求的全部设计过程产物（`imagine/` 方向说明、`canvas/` 画布与冻结记录与完整验收矩阵、`delta/` 对 `prod/` 的差异），只在本地，目标项目要把它排除出 git；`prod/` 放线上现在的样子，提交。放弃的需求不上线，有价值的结论写回 spec 或 issue。
+- **`tmp/` 与 `prod/` 的分工**：`tmp/<spec-slug>/` 放进行中需求的全部设计过程产物（`imagine/` 方向说明、`canvas/` 画布与冻结记录与完整验收矩阵、`delta/` 对 `prod/` 的差异）。目标项目把它排除出 git，过程产物只在本地；冻结时，签字的画布、冻结记录、交互图和 `delta/` 经设计 PR 提交进主分支（`git add -f`），实现从主分支开 worktree 就拿得到；`prod/` 放线上现在的样子，提交。放弃的需求不上线，有价值的结论写回 spec 或 issue。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行一条，`- [[<id>]]`（后面可跟一句原因）。于是归档 = 覆盖 + 删除，需求差异 = 逐个对象比对，都不用解析补丁格式。
 - **`prod/` 只存精简矩阵**：每个状态一张主视口截图（主视口、主题、语言写在 `prod/index.md` 的 frontmatter，项目定一次），每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
 - **素材走 Git LFS**：目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/` 下的 png / gif / webm。归档脚本首次归档时检查，没配就提示要加哪一行，不代改。
@@ -208,4 +208,4 @@ node scripts/design-archive-write.mjs <仓库根> <spec-slug> [--dry-run] [--jso
 
 ### 合并前钩子
 
-`scripts/merge-gate-hook.mjs` 是插件级 PreToolUse 钩子（挂在 Bash 上，登记在 `hooks/hooks.json`）：命令里含 `gh pr merge`，且当前仓库的 `docs/design/tmp/` 下有任何含文件的需求目录（不算 `research/`：调研页是看完就丢的草稿，从不归档），就以退出码 2 拦下，stderr 点名是哪几个需求，指向上面这条流程并给出归档命令。其余命令、`tmp/` 不存在或为空、不在 git 仓库里时放行。钩子只跑脚本，不起 agent；不设 CI 检查（`tmp/` 不进 PR，CI 看不到）。
+`scripts/merge-gate-hook.mjs` 是插件级 PreToolUse 钩子（挂在 Bash 上，登记在 `hooks/hooks.json`）：命令里含 `gh pr merge`，且这次合并要负责的需求在 `docs/design/tmp/` 下还有含文件的目录（不算 `research/`：调研页是看完就丢的草稿，从不归档），就以退出码 2 拦下，stderr 点名是哪几个需求，指向上面这条流程并给出归档命令。要负责哪些，看当前分支相对主分支改了什么：只改 `docs/` 的分支（spec PR、设计 PR）一个都不负责；改了代码的，只负责它碰到的 spec 或设计目录对应的需求，别的需求冻结在主分支上的设计不拦它；读不出来（没有 `origin/HEAD`、没有差异）时，所有需求都算。其余命令、`tmp/` 不存在或为空、不在 git 仓库里时放行。钩子只跑 git，不起 agent。

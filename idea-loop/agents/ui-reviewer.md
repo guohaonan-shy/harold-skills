@@ -31,7 +31,7 @@ effort: high
 
 第 1、3、4、5 步三种模式都用；第 2、6、7、8 步是需求差异那两种模式的，**对账模式走 §5 自己的那一套**（括号里写了对账模式在每一步上的不同）。
 
-1. **工作区**：你只写 `.tmp/` 和 `docs/design/tmp/<spec-slug>/delta/` 下的东西（两处都不进 git）。其余文件一个字节都不动，`prod/` 尤其不碰：它只由归档脚本写。（对账模式：写 `.tmp/dreaming/` 和 `docs/design/tmp/<dreaming 目录名>/` 下的 `delta/` 与 `evidence/`，其余同。）
+1. **工作区**：你只写 `.tmp/` 和 `docs/design/tmp/<spec-slug>/delta/` 下的东西（`delta/` 冻结时已经提交过，你改的由编排者归档时提交）。其余文件一个字节都不动，`prod/` 尤其不碰：它只由归档脚本写。（对账模式：写 `.tmp/dreaming/` 和 `docs/design/tmp/<dreaming 目录名>/` 下的 `delta/` 与 `evidence/`，其余同。）
 2. **拿差异**：
 
    ```

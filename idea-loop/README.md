@@ -305,8 +305,8 @@ idea-loop/
     ├── design-archive-fixture.mjs    # a fictional two-page archive shared by the archive tests (not a test file)
     ├── design-archive-write.mjs      # the archive script — the only writer of docs/design/prod/: validate, fold delta/ in, drop removed.md, regenerate usedBy + index.md, move interaction figures and re-point the spec's links, say what LFS / .gitignore lack, empty tmp/<spec-slug>/; --dry-run writes nothing
     ├── design-archive-write.test.mjs # one requirement end to end, refuse-writes-nothing, dry-run, hints, and the pieces
-    ├── merge-gate-hook.mjs           # PreToolUse(Bash) entry: blocks `gh pr merge` while docs/design/tmp/ still holds a requirement with design output (`research/` never counts), exit 2 naming it
-    ├── merge-gate-hook.test.mjs      # block / pass / non-merge / no tmp / not a git repo, and the hook registration
+    ├── merge-gate-hook.mjs           # PreToolUse(Bash) entry: blocks a code-changing `gh pr merge` while docs/design/tmp/ still holds design output for a requirement the branch touches (`research/` never counts; docs-only branches pass), exit 2 naming it
+    ├── merge-gate-hook.test.mjs      # block / pass / scoping by the branch diff / non-merge / no tmp / not a git repo, and the hook registration
     ├── mini-yaml.mjs                 # the dependency-free YAML subset the archive's frontmatter uses
     ├── mini-yaml.test.mjs
     ├── research-check.mjs            # uiux-research's gate: the page's head (question / 研究问题 = human's words / context / conclusion = general), every source's flow + scene / logic, the decisions block after the last source, every screenshot clickable and a relative path that exists, the chapters in the fixed order with nothing after the decisions block (what a chapter holds is the contract's prose, not a check)
@@ -390,8 +390,8 @@ step is running; the hooks are the only pieces that fire on their own. One fires
 `design-preview/` / `design-motion-preview/` scratch dirs; the other only on a write to a file named
 `DESIGN.md`, where it runs the official `@google/design.md` lint at `@latest` and hands any error
 back to the model. A fourth, `merge-gate-hook.mjs`, fires on `Bash` before the command runs: a `gh pr merge`
-while `docs/design/tmp/` still holds a requirement with design output is stopped, with the requirement named and the archive
-command to run (`scripts/design-archive-write.mjs`); the `research/` folder `uiux-research` drops never counts as design output, so a requirement that only holds research passes; every other command passes.
+that changes code while `docs/design/tmp/` still holds design output for a requirement the branch touches is stopped, with the requirement named and the archive
+command to run (`scripts/design-archive-write.mjs`); a branch that only changes `docs/` (a spec or design PR) passes, and another spec's frozen design sitting on main does not count; the `research/` folder `uiux-research` drops never counts as design output, so a requirement that only holds research passes; every other command passes.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
 the port-verification skill

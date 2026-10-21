@@ -1,6 +1,6 @@
 # 冻结
 
-designer 收到人的签字（全部或一部分）时从头读到「状态不翻，输出」，部分冻结读「部分冻结」；接手一份已经冻结过一部分的 spec 时读「部分冻结后重开」。
+designer 收到人的签字（全部或一部分）时从头读到「不提交，输出」，部分冻结读「部分冻结」；接手一份已经冻结过一部分的 spec 时读「部分冻结后重开」。
 
 ## 在 `docs/design/tmp/<spec-slug>/` 落齐
 
@@ -19,7 +19,7 @@ docs/design/tmp/<spec-slug>/
 
 记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 wiki-conventions 的「frontmatter」一节，`type: design`。
 
-这个目录只在本地，不进 git，也不跟 spec 一起删：画布和冻结记录留到归档（归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后才清掉 `tmp/<spec-slug>/`）。
+这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 与 `delta/` 由编排者经设计 PR 强制提交进主分支，实现从主分支开 worktree 就拿得到；它们留到实现 PR 合并前的归档（归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
 
 冻结记录正文五节，短：
 
@@ -29,7 +29,7 @@ docs/design/tmp/<spec-slug>/
 - **设计法候选**：Distill-back 的汇总，每条一行：规则 + 它挂在哪个档案对象上 `[[...]]`，原件在对象文件里；没有就一行「无」。
 - **签字**：人的原话，静态与动效两次各记一次；人的方向修订；被分流回发散那一段的 note。
 
-落完清掉 `tmp/<spec-slug>/imagine/`（交接画布 `handoff/` 在里面，一起删）与 `tmp/<spec-slug>/canvas/work/`（ledger 已经在记录里）。`canvas/` 其余全部保留。
+落完清掉 `tmp/<spec-slug>/imagine/`（交接画布 `handoff/` 在里面，一起删）、`tmp/<spec-slug>/canvas/work/`（ledger 已经在记录里），以及没签字的画布版本：静态和动效各只留签字的那一版。`canvas/` 其余全部保留，它们要进 git。
 
 ## 写 delta：把冻结结果写成对 `prod/` 的差异
 
@@ -58,7 +58,7 @@ docs/design/tmp/<spec-slug>/
 
 冻结摘要固定五样，`to-ticket` 原样誊写：
 
-- **画布指针**：`docs/design/tmp/<spec-slug>/canvas/` 里画布 HTML 的路径（写路径，不写 wikilink：目标不进 git）。跑过动效段的，同一条指针把动效 preview 与帧证据一并带上。
+- **画布指针**：`docs/design/tmp/<spec-slug>/canvas/` 里画布 HTML 的路径（写路径，不写 wikilink）。跑过动效段的，同一条指针把动效 preview 与帧证据一并带上。
 - **矩阵**：每格的 viewport × 主题 × 语言 × 状态，标「人看」的格照标。
 - **mismatch 阈值**：沿用 `idea-loop:ui-measure`的「默认容差」；按格覆盖的写覆盖值和理由。
 - **一行 ledger 摘要**。
@@ -72,9 +72,9 @@ docs/design/tmp/<spec-slug>/
 
 这一步不做，冻结设计跟 spec 两头脱节。
 
-## 状态不翻，输出
+## 不提交，输出
 
-spec 的 `status` 不由你翻：编排者核对冻结结果之后把它翻成 `待实现`。
+spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排者：它核对冻结结果之后开。
 
 写完「改 spec」就停下输出：「要看哪里」列交互图的路径；「写 delta」里改不动的违规和「入口待补」写进「要人判的取舍」。
 
@@ -83,7 +83,7 @@ spec 的 `status` 不由你翻：编排者核对冻结结果之后把它翻成 `
 人说「这几块可以冻结了，那几块回去重新发散」时：
 
 1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。`delta/` 只写签过字的那几块（照「写 delta」）。
-2. spec 不动：状态留在 `设计中`，不写冻结摘要——`to-ticket` 只认整份冻结。
+2. spec 不动：不写冻结摘要，也不开设计 PR——`to-ticket` 只认整份冻结。
 3. 回推的那几块记进冻结记录的签字节（分流回 `uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
 4. 停下输出，然后你就结束了。下一个 designer 从「部分冻结后重开」接上。
 

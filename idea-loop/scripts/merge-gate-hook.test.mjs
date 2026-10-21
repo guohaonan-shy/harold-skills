@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isMergeCommand, pendingRequirements } from './merge-gate-hook.mjs';
+import { blocking, isMergeCommand, pendingRequirements } from './merge-gate-hook.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const hook = join(here, 'merge-gate-hook.mjs');
@@ -99,6 +99,39 @@ test('a missing tmp/ passes; a folder inside the repository resolves to the repo
   assert.equal(runHook(bash('gh pr merge 12', clean)).status, 0);
   const root = repo({ 'docs/design/tmp/demo-spec/delta/x.md': 'x', 'src/deep/file.txt': 'x' });
   assert.equal(runHook(bash('gh pr merge 12', join(root, 'src/deep'))).status, 2);
+});
+
+const git = (root, ...args) => assert.equal(spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...args], { cwd: root }).status, 0, args.join(' '));
+
+/** A repository whose main branch (origin/HEAD) holds `onMain`, with `onBranch` committed on top. */
+function branchRepo(onMain, onBranch) {
+  const root = repo(onMain);
+  git(root, 'add', '-A', '-f');
+  git(root, 'commit', '-qm', 'main');
+  git(root, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
+  git(root, 'symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main');
+  put(root, onBranch);
+  git(root, 'add', '-A', '-f');
+  git(root, 'commit', '-qm', 'branch');
+  return root;
+}
+
+test('blocking: a docs-only branch answers for nothing; otherwise only the specs it touches; unknown means all', () => {
+  assert.deepEqual(blocking(['a', 'b'], ['docs/spec/a/a.md', 'docs/design/tmp/a/canvas/v3.html']), []);
+  assert.deepEqual(blocking(['a', 'b'], ['src/x.ts', 'docs/spec/a/a.md']), ['a']);
+  assert.deepEqual(blocking(['a', 'b'], ['src/x.ts', 'docs/design/tmp/b/delta/x.md']), ['b']);
+  assert.deepEqual(blocking(['a', 'b'], ['src/x.ts']), []);
+  assert.deepEqual(blocking(['a', 'b'], null), ['a', 'b']);
+});
+
+test('a design PR merges with its frozen design in tmp/; another spec\'s frozen design on main does not block an implementation', () => {
+  const design = branchRepo({ 'README.md': 'x' }, { 'docs/spec/a/a.md': 'x', 'docs/design/tmp/a/canvas/v3.html': 'x', 'docs/design/tmp/a/delta/p.md': 'x' });
+  assert.equal(runHook(bash('gh pr merge 3 --squash', design)).status, 0);
+  const impl = branchRepo({ 'docs/design/tmp/b/delta/p.md': 'x', 'docs/design/tmp/a/delta/p.md': 'x' }, { 'src/a.ts': 'x', 'docs/spec/a/a.md': 'x' });
+  const r = runHook(bash('gh pr merge 4', impl));
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /- a\b/);
+  assert.doesNotMatch(r.stderr, /- b\b/);
 });
 
 test('other commands are never blocked', () => {
