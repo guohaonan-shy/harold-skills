@@ -14,7 +14,7 @@ disable-model-invocation: true
 
 ## 七条纪律（每一条都来自踩过的坑）
 
-1. **开跑先 `git fetch`，所有核实对 `origin/main`。** 本地工作树会落后（实测落后过 24 个 commit），在落后的树上判"未实现"就是误判。
+1. **开跑先 `git fetch`，所有核实对 `origin/<基准分支>`**（基准分支见目标仓库 `DEVELOPMENT.md`「分支」节；没有这份文件就停下，让人跑 `/idea-loop:setup`）。 本地工作树会落后（实测落后过 24 个 commit），在落后的树上判"未实现"就是误判。
 2. **不能靠 grep `#\d+` 判 PR。** `#2563eb` 是 hex 色值，`#15`–`#27` 是文档内部的任务编号——`gh pr view 15` 会返回一个看起来完全合理的无关 PR。**必须交叉核对 PR 标题与文档主题对不对得上。**
 3. **扫描范围含 `CLAUDE.md` 和各插件的 references。** 实测里最陈旧的文档不在 `docs/` 里，而在那份每次会话都注入上下文的文件中（列了一张三个半月前就被 DROP 的表）。
 4. **`status: parked` 的 spec 跳过年龄判定。** 年龄分不出"被遗忘"和"被故意排期"。`草稿` / `审核中` / `设计中` 的 spec 还没开工，判定只看它停在这个状态多久了（提议人去审、去设计或标 `parked`），不判实现。
@@ -43,7 +43,7 @@ disable-model-invocation: true
 
 **提议段**（定时那次只跑这一段，没有任何写入）：
 
-1. `git fetch`，在一个从 `origin/main` 新切的 worktree 里工作；`.tmp/dreaming/<YYYY-MM-DD>/` 放这次的中间物。
+1. `git fetch`，在一个从 `origin/<基准分支>` 新切的 worktree 里工作；`.tmp/dreaming/<YYYY-MM-DD>/` 放这次的中间物。
 2. **知识库对账**：列出 `docs/` 全部文件 + `CLAUDE.md` + `GLOSSARY.md`（有就列）+ 插件 references，逐份取证，按上面的纪律、判定、四条边出结论。量大就派 subagent 并行，**每个只读不写**，回结构化表格。
 3. **档案对账 / 全站初扫**（设计档案 `docs/design/prod/`）：`prod/` 里有对象，就做档案对账（`references/archive-reconcile.md`：先源码波、再实时波，实时波交给 `idea-loop:ui-reviewer` 的对账模式逐个状态重新驱动，每个状态判成一致 / 档案过期 / 进入方式过期 / 产品坏了 / 进不去，容差以内不重拍）；`prod/` 为空，就做全站初扫（`references/initial-scan.md`：从路由出发按页面建第一份档案草稿，进不去的写明缺什么、试过什么）。两者的产物都先放这次运行自己的 `docs/design/tmp/dreaming-<日期>/`，提议表里写 `档案对象` / `档案状态` / `初扫页面` 三节（产品坏了单列在 `缺陷`）；**不直接写 `prod/`**，人批了才由档案的归档脚本并进去。没有设计档案目录、也不打算建的项目，整步跳过，提议表里不写这几节。
 4. **候选蒸馏**：`references/candidate-distillation.md`。
@@ -61,7 +61,7 @@ disable-model-invocation: true
 **每周一次**，用 Claude 桌面端的定时任务挂；也可以手动 `/dreaming`。`dreaming` 不许模型调用，定时任务的提示词是一段文字、调不起它，所以让模型直接读这份 SKILL.md。挂的时候工作目录选目标项目，提示词照抄：
 
 ```
-在插件缓存目录 ~/.claude/plugins/cache 里找 idea-loop 版本号最高的那份 skills/engineering/dreaming/SKILL.md，读完照做，只跑提议段：从 origin/main 新切 worktree，写出提议表并过校验脚本，按 SKILL.md 说的推送；不执行任何写入，不开 PR，不开 issue。
+在插件缓存目录 ~/.claude/plugins/cache 里找 idea-loop 版本号最高的那份 skills/engineering/dreaming/SKILL.md，读完照做，只跑提议段：从基准分支（目标仓库 DEVELOPMENT.md）新切 worktree，写出提议表并过校验脚本，按 SKILL.md 说的推送；不执行任何写入，不开 PR，不开 issue。
 ```
 
 提示词里不写带版本号的路径——插件一升级就失效。

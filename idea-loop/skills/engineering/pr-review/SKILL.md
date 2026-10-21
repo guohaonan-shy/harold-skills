@@ -115,7 +115,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 1. `review-loop.mjs check .tmp/review-loop/<PR 号>.md` 列出还没处理完的条目；PR 描述「要你做的事」还有没勾的。有的话提醒人一句，人仍然说合并就继续。
 2. **先看设计档案要不要归档**：集成 worktree 的 `docs/design/tmp/` 下有任何含设计产物的需求目录（`research/` 子目录不算，合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就执行 `gh pr merge` 会被它拦下，提示指向这一节），就走 §4.1 的归档，**走完再继续第 3 步**。没有就直接第 3 步。**调研目录本身从不归档**：只做过调研、没有 imagine / refine 产物的需求，不走归档，合并也不被拦；那个目录是看完就丢的草稿，随 `tmp/` 的生命周期删，想早点清就手动删。调研结论若被用进了设计，已经以文字记在方向说明或冻结记录里，随设计一起归档。
 3. **归档 review loop**：`review-loop.mjs archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`review-loop.md` §4）。中途失败直接重跑，贴过的不会重复。
-4. **合并**：`gh pr merge <PR 号>`，用仓库惯用的合并方式。
+4. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md`「分支」节。
 5. **收尾**：按 PR 描述「参考」里的清理清单逐项做：删工单（`to-ticket` §7），删这个 PR 的素材分支（`evidence.mjs cleanup <owner/repo> <PR 号>`），删 `.tmp/review-loop/<PR 号>.md`，清掉 `.tmp/implement/<spec-slug>/` 和 `.tmp/pr-review/<PR 号>/`，再加上这个 PR 特有的几项。
 
 ### 4.1 合并前归档

@@ -1,6 +1,6 @@
 ---
 name: ui-reviewer
-description: 设计档案的 UI 审查者，三种模式。pr-review 的编排者起它，在 pr-reviewer 之前（每轮审查）或人说合并时（归档）：按 worktree 约定起开发服务器，用「需求差异」查询拿 tmp 里 delta 相对 prod 的变化，对每个新增或改动的状态用「单个状态」查询推导的路径进去、走每条新增或改动的边，把实现出来的画面对冻结画布（没有画布的只核「应看到什么」）；每轮审查写一份发现文件，每条带取自实现的截图，归档模式进不去或对不上就不写、交回失败原因，通过就在实现上重拍精简矩阵、补齐状态文件、把决定与候选整理成草稿给人看，然后停下。dreaming 每周对账时也起它（对账模式）：给一组 prod 里的状态 id，在 origin/main 的开发环境里逐个重新驱动，每个状态判成一致、档案过期、进入方式过期、产品坏了、进不去之一，容差以内不重拍，容差以外才把新图与新描述写进 dreaming 的 tmp 目录。不写 prod，不碰 PR，不跟人对话，Codex 不参与，不在 pr-review 与 dreaming 之外被调用。
+description: 设计档案的 UI 审查者，三种模式。pr-review 的编排者起它，在 pr-reviewer 之前（每轮审查）或人说合并时（归档）：按 worktree 约定起开发服务器，用「需求差异」查询拿 tmp 里 delta 相对 prod 的变化，对每个新增或改动的状态用「单个状态」查询推导的路径进去、走每条新增或改动的边，把实现出来的画面对冻结画布（没有画布的只核「应看到什么」）；每轮审查写一份发现文件，每条带取自实现的截图，归档模式进不去或对不上就不写、交回失败原因，通过就在实现上重拍精简矩阵、补齐状态文件、把决定与候选整理成草稿给人看，然后停下。dreaming 每周对账时也起它（对账模式）：给一组 prod 里的状态 id，在基准分支的开发环境里逐个重新驱动，每个状态判成一致、档案过期、进入方式过期、产品坏了、进不去之一，容差以内不重拍，容差以外才把新图与新描述写进 dreaming 的 tmp 目录。不写 prod，不碰 PR，不跟人对话，Codex 不参与，不在 pr-review 与 dreaming 之外被调用。
 model: sonnet
 effort: high
 ---
@@ -39,7 +39,7 @@ effort: high
    ```
 
    `added` / `changed` / `removed` 就是这次要核的清单。`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑一遍 `design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 要等归档脚本重算，这一步不判它），有违规直接记进交回（归档会被它拦下，不在这里替人改档案的结构）。
-3. **起开发服务器**：按 `skills/engineering/implement/references/worktree.md` §2 找目标仓库声明的准备命令，用分到的端口起（对账模式：在 dreaming 的 worktree 里起，它是从 `origin/main` 新切的，跑的是 main 的代码；服务已经由别人起好了的，先确认它跑的就是这个 worktree：`lsof -a -d cwd -p <监听端口的进程号>` 看它的工作目录在不在 dreaming 的 worktree 下，不是就如实记「未完成」，别拿别处的代码当 main 判）。服务起不来、页面打不开，不要硬磨：交回时写明卡在哪，这一轮的 UI 审查记为「未完成」，**未完成不等于没问题**。交回前停掉服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
+3. **起开发服务器**：先跑目标仓库 `DEVELOPMENT.md`「worktree 准备」节的命令，再照「开发服务器」节的命令用分到的端口起；没有 `DEVELOPMENT.md` 就交回「未完成」，说明要人跑 `/idea-loop:setup`（对账模式：在 dreaming 的 worktree 里起，它是从基准分支新切的，跑的是基准分支的代码；服务已经由别人起好了的，先确认它跑的就是这个 worktree：`lsof -a -d cwd -p <监听端口的进程号>` 看它的工作目录在不在 dreaming 的 worktree 下，不是就如实记「未完成」，别拿别处的代码当基准分支判）。服务起不来、页面打不开，不要硬磨：交回时写明卡在哪，这一轮的 UI 审查记为「未完成」，**未完成不等于没问题**。交回前停掉服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
 4. **要用会话的 MCP 浏览器时先抢锁**（`scripts/browser-lock.mjs acquire <集成 worktree>/.tmp/implement/<spec-slug>/browser.lock --owner ui-review`，用完 `browser_close` 再 `release`；对账模式用输入里给的锁目录，`--owner ui-reconcile`）。自己起 chromium 的脚本（`ui-measure.mjs`、拼流程图、录动图）不用抢。
 5. **逐个状态进去**：对 `added` 与 `changed` 里每个状态对象，以及 `changed` 里改了边的状态（对账模式：对输入里的每个状态 id，不带 `--delta`）：
 
@@ -114,7 +114,7 @@ effort: high
 
 都是指针：
 
-- **仓库根**：dreaming 的 worktree 绝对路径（从 `origin/main` 新切，跑的是 main 的代码）。线上档案在它的 `docs/design/prod/`
+- **仓库根**：dreaming 的 worktree 绝对路径（从基准分支新切，跑的是基准分支的代码）。线上档案在它的 `docs/design/prod/`
 - **dreaming 的目录名** `dreaming-<YYYY-MM-DD>`：你写的东西只在 `docs/design/tmp/<目录名>/` 下，两个子目录——`delta/`（要进档案的对象文件，与 `prod/` 同构，同 `skills/engineering/dreaming/references/design-archive.md` §2）、`evidence/`（只给人看的图，**不进档案**）
 - **状态 id 清单**：`prod/` 里的状态，一组，不是差异
 - **分到的端口**；**浏览器锁目录**

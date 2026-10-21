@@ -18,7 +18,7 @@ effort: medium
 1. 每个 issue 读全文和评论：`gh issue view <号> --comments`。已经关闭、或已经有 `status:*` label 的跳过，写进交回结果。
 2. 用 Skill 工具调用 `idea-loop:to-spec`，走 backlog 模式（它的 `references/backlog-mode.md`），来源是 GitHub issue，输入就是这组 issue。它会先复现、再拆分、再起草，落「草稿」，刷新 spec 索引，用 `issues handoff` 把覆盖到的 issue 写进 spec 的 frontmatter。
 3. 起草前读一次 `../skills/engineering/pr-review/references/decision-rules.md`：§4 先按「自己定」处置能判的，只把依据不成立的写成选项；现状、范围、选项的例子按它的 §7 写。没人在场可问，查不清的现状写不出来就回去查，不留给审核时由人追问。
-4. 复现要起服务，照目标仓库 `AGENTS.md` / `CLAUDE.md` 写的命令起；仓库没写，按 `../skills/engineering/implement/references/worktree.md` 的默认做法。收工前把你起的服务全部停掉，别留给调度会话。
+4. 复现要起服务，照目标仓库 `DEVELOPMENT.md`「开发服务器」节的命令起。仓库没有 `DEVELOPMENT.md`，停下交回，说明要人跑 `/idea-loop:setup`。收工前把你起的服务全部停掉，别留给调度会话。
 
 ## 2 自己校验
 

@@ -31,7 +31,7 @@ effort: xhigh
 
 ## 3 机械检查（Standards 轴的一半）
 
-按 `skills/engineering/pr-review/references/review-standards.md` §3：跑仓库声明的检查命令（`REVIEW.md` 的 Verification paths 与 CI 里的那几条），每条输出过一遍 `scripts/changed-lines.mjs <merge-base>`。记下每条命令的退出码、只留改动行的诊断、其余的计数。跑不了的写「未运行：<原因>」。
+按 `skills/engineering/pr-review/references/review-standards.md` §3：跑仓库声明的检查命令（`REVIEW.md` 的「验证命令」节与 CI 里的那几条），每条输出过一遍 `scripts/changed-lines.mjs <merge-base>`。记下每条命令的退出码、只留改动行的诊断、其余的计数。跑不了的写「未运行：<原因>」。
 
 这些结果是事实，原样交给 Standards 进程，**不让 Codex 重新转述**。
 

@@ -8,7 +8,7 @@
 
 ## 1 环境
 
-- **worktree**：在从 `origin/main` 新切的 worktree 里工作（SKILL.md 流程第 1 步）。开发环境要跑 main 的代码，不能跑某个功能分支；`tmp/` 只在本地，放在自己的 worktree 里不会跟进行中需求的 `tmp/<spec-slug>/` 混。
+- **worktree**：在从 `origin/<基准分支>` 新切的 worktree 里工作（SKILL.md 流程第 1 步）。开发环境要跑基准分支的代码，不能跑某个功能分支；`tmp/` 只在本地，放在自己的 worktree 里不会跟进行中需求的 `tmp/<spec-slug>/` 混。
 - **开发服务**：按 `../../implement/references/worktree.md` §2 找目标仓库声明的准备命令，用一个**自己挑的空闲端口**起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换；定时那次没有编排者给端口）。前后端要互相指向的，改它读的那个配置，别碰别人的端口。
 - **浏览器**：和 `implement` 并行的执行方一样共用会话里那一个，照 `../../implement/references/worktree.md` 与 `implement` 的做法排队——`scripts/browser-lock.mjs acquire <锁目录> --owner dreaming`。锁目录默认放自己 worktree 的 `.tmp/dreaming/<日期>/browser.lock`；人说同一时间有 `implement` 在用同一个浏览器，就改用那一边的锁目录。自己起 chromium 的脚本不用抢。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」，目录名叫 `dreaming-<日期>`，不是任何一个 spec 的名字）：

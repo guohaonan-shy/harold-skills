@@ -6,7 +6,7 @@
 
 ## 1 放哪、谁看
 
-- 表写在 dreaming 自己 worktree 根的 `.tmp/dreaming/<YYYY-MM-DD>/proposal.md`（不进仓库）。`dreaming` 的 worktree 是从 `origin/main` 新切的，不是任何一个进行中需求的工作区。
+- 表写在 dreaming 自己 worktree 根的 `.tmp/dreaming/<YYYY-MM-DD>/proposal.md`（不进仓库）。`dreaming` 的 worktree 是从 `origin/<基准分支>` 新切的，不是任何一个进行中需求的工作区。
 - **有行**：量大（一屏摆不下）就发 Artifact，会话里按节摆给人；`候选` 和 `DESIGN.md 条目` 有行时，另做一页审核页，每行一张卡片（图、改前 → 改后、依据、带后果的选项），格式见 `review-page.md`；定时那次没人在场，发一条推送通知（一句话：几类、共几行）加一页可看的 Artifact。
 - **空表**：只发一句推送「本周无事」，不发 Artifact——定时跑最怕变成没人看的噪音。
 - 人在会话里逐行回「批 / 不批 / 改成…」。不批的行不执行；「改成…」按人的话改那一行再执行。
@@ -115,7 +115,7 @@
 
 ## 4 批了之后：执行段
 
-**只执行批了的行**，在提议段同一个 worktree 里做（它从 `origin/main` 切出，PR 也从它开）。顺序：
+**只执行批了的行**，在提议段同一个 worktree 里做（它从 `origin/<基准分支>` 切出，PR 也从它开）。顺序：
 
 1. 先处理会删掉东西的行，再处理会改写的行，最后 link sweep、刷各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index`）。
 2. 每类行怎么执行：

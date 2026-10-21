@@ -81,13 +81,13 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 ### 规则来源：只认写下来的
 
-读目标仓库的 `REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的约定文档（比如 `docs/reference/` 下的分层、文件划分、命名约定），以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**只用这个仓库自己的规则**，不带入别的项目的，也不带入通用的「坏味道」清单或命名偏好。
+读目标仓库的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**只用这个仓库自己的规则**，不带入别的项目的，也不带入通用的「坏味道」清单或命名偏好。
 
 规则没写到的，就是没有规则可执行。规则有歧义的，作为问题报出，不当成违反。
 
 ### 机械检查
 
-在 Standards 进程开跑之前，审查者自己把仓库声明的检查命令跑一遍（`REVIEW.md` 的 Verification paths 与 CI 里的那几条；没装的编译器不为此去装），每条输出都过一遍改动行过滤：
+在 Standards 进程开跑之前，审查者自己把仓库声明的检查命令跑一遍（`REVIEW.md` 的「验证命令」节与 CI 里的那几条；没装的编译器不为此去装），每条输出都过一遍改动行过滤：
 
 ```
 <命令> 2>&1 | node "${CLAUDE_PLUGIN_ROOT}/scripts/changed-lines.mjs" <merge-base>
@@ -136,7 +136,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
   }],
   "standards": [{
     "id": "C1", "title": "…", "disposition": "照规则", "action": "修",
-    "rule": { "file": "docs/reference/….md", "text": "规则原文" },
+    "rule": { "file": "CODING_STANDARDS.md", "text": "规则原文" },
     "code": { "path": "src/….ts", "snippet": "原样的几行" },
     "now": "…", "impact": "…", "suggestion": "…",
     "locations": ["src/….ts:17"]

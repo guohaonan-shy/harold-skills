@@ -1,6 +1,6 @@
 # 执行方的 worktree：起点、准备、回收
 
-`implement` 并行派工时，每张工单的 implementer 在一个自己的 worktree 里做。这份文件只写三件事：从哪开始、开工前准备什么、做完谁收拾。准备和清理优先用**目标仓库自己声明的命令**；仓库没声明，就用下面的默认做法。
+`implement` 并行派工时，每张工单的 implementer 在一个自己的 worktree 里做。这份文件只写三件事：从哪开始、开工前准备什么、做完谁收拾。准备和清理的命令在目标仓库的 `DEVELOPMENT.md`（`setup` 写的）；那里写「无」，就用下面的默认做法。
 
 ## 1 起点
 
@@ -9,16 +9,16 @@
 
 ## 2 准备
 
-先读目标仓库的 `CLAUDE.md` / `AGENTS.md`，找 worktree 准备命令（形如「新 worktree 先跑 `<命令>`」）。
+读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」节。仓库没有 `DEVELOPMENT.md`，停下交回，说明要人跑 `/idea-loop:setup`。
 
-- **有**：在 reset 之后跑它，把编排者分配的端口按它要求的参数传进去。
-- **没有**：照下面的默认做法逐项补齐，跳过不适用的项。
+- **写的是命令**：在 reset 之后跑它，`<端口>` 换成编排者分配的端口。
+- **写的是「无」**：照下面的默认做法逐项补齐，跳过不适用的项。
 
 | 要补的 | 默认做法 |
 |---|---|
 | 被 git 忽略的配置（`.env` 之类） | Claude 建 worktree 时会按仓库根的 `.worktreeinclude` 复制。它**跳过所有软链**，缺了的从主 checkout（`git worktree list` 第一行）手动补 |
 | 依赖目录（如 `node_modules`） | 按锁文件装（如 `npm ci`）。macOS 上源和目标在同一个 APFS 卷时，可以用 `cp -cR` 从主 checkout 克隆，软链保留，比重装快。不要用 `.worktreeinclude` 复制依赖目录：`.bin` 这类软链会整个丢失 |
-| 端口 | 用编排者分配的端口起服务；前端要指向后端的，改它读的那个配置 |
+| 端口 | 用编排者分配的端口，照 `DEVELOPMENT.md`「开发服务器」节的命令起服务；前端要指向后端的，改它读的那个配置 |
 
 **依赖要跟着代码基准走。** 每次代码基准变了（开工时 reset 到 SHA、交回前合入集成分支的最新提交），都对比一次依赖目录里记录的锁文件和当前锁文件（npm：`node_modules/.package-lock.json` 对 `package-lock.json`），不一致就增量装一次（`npm install`）。这一步放在跑全量套件之前。克隆的来源是主 checkout，通常停在旧的 main 上，别的工单落地时也可能带进了新依赖。
 
@@ -27,7 +27,7 @@
 
 ## 3 回收
 
-归编排者，只在工单落地（fast-forward 进集成分支）之后做。仓库声明了清理命令就用它，没有就：
+归编排者，只在工单落地（fast-forward 进集成分支）之后做。`DEVELOPMENT.md` 的「清理」节写了命令就先跑它，然后：
 
 1. 停掉这个 worktree 端口上的服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
 2. 它还持有浏览器锁就释放（`scripts/browser-lock.mjs release <锁目录> --force`）。

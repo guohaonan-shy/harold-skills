@@ -18,8 +18,8 @@ tools: Read, Grep, Glob, Bash, Write, WebFetch
 
 | 找什么 | 去哪找 |
 |---|---|
-| 验证命令（typecheck、lint、单测、全量套件、端到端） | 目标仓库的 `REVIEW.md`（Verification paths）、CI 配置、`package.json` 之类的脚本表 |
-| worktree 准备命令、服务怎么起、端口怎么配 | `CLAUDE.md`、`AGENTS.md`、README |
+| 验证命令（typecheck、lint、单测、全量套件、端到端） | 目标仓库 `REVIEW.md` 的「验证命令」节；端到端等没列的，再看 CI 配置 |
+| worktree 准备命令、服务怎么起、端口怎么配 | 目标仓库 `DEVELOPMENT.md` |
 | 测试怎么写、数据怎么造、mock 边界在哪 | 和工单同一层的存量测试，挑一两个最像的 |
 | 领域词汇 | `GLOSSARY.md`（有就读） |
 | 每张工单描述的现状在代码里对应哪几处 | 用工单里的行为描述和领域词 grep 代码 |

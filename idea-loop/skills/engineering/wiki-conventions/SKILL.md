@@ -68,13 +68,12 @@ docs/
 ├── design/
 │   ├── tmp/<spec-slug>/  进行中需求的设计过程产物，只在本地、不进 git —— imagine/（方向说明、交接画布）、canvas/（画布、冻结记录、完整验收矩阵、交互图）、delta/（对 prod/ 的差异）、research/<问题短名>/（人调 `uiux-research` 的结果：index.html 与下载的参考截图）；没有 spec 时调研放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
-├── domain/               领域知识 —— 题型机制 / 能力体系 / 真实数据结论
-├── reference/            常驻约定与手册
-├── records/              周期快照 —— weekly / okara / pulse-log
-└── testing/              test-cases 库
+└── domain/               领域知识 —— 业务机制、规则、数据结论
 ```
 
-`raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` / `reference/` / `records/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
+`raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
+
+项目级的规则不放 `docs/`，放在仓库根目录、一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`（`setup` 建），`GLOSSARY.md`、`DESIGN.md`、`PRODUCT.md`。
 
 **spec 文件与目录同名**（`docs/spec/<spec-slug>/<spec-slug>.md`），不叫 `spec.md`：wiki-link 按文件名解析（§4），所有 spec 都叫 `spec.md` 的话，`[[<spec-slug>]]` 一处也指不到。
 

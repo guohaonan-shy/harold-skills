@@ -14,7 +14,7 @@
 一条处置能从下面推出来，就照办，不问人：
 
 1. **有依据就照办。** 依据只认三种，缺一不可具体：
-   - **仓库写下来的规则原文**：`REVIEW.md`、`AGENTS.md` / `CLAUDE.md`、它们链接到的约定文档、lint 与 typecheck 的配置。能引原文、指出出处。
+   - **仓库写下来的规则原文**：`CODING_STANDARDS.md`、`REVIEW.md`、`AGENTS.md` / `CLAUDE.md`、它们链接到的文档、lint 与 typecheck 的配置。能引原文、指出出处。
    - **人在这份 spec 或这个 PR 里已经做过的决定**：原话，来自 spec、工单（`人的决定`）或这个 PR 的 review loop 文件里人的批示。
    - **产品里已有的统一做法**：能指出至少一处现存实例。「大概是这样」不算。
 
