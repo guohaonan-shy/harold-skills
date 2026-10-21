@@ -61,7 +61,7 @@ disable-model-invocation: true
 **每周一次**，用 Claude 桌面端的定时任务挂；也可以手动 `/dreaming`。`dreaming` 不许模型调用，定时任务的提示词是一段文字、调不起它，所以让模型直接读这份 SKILL.md。挂的时候工作目录选目标项目，提示词照抄：
 
 ```
-在插件缓存目录 ~/.claude/plugins/cache 里找 idea-loop 版本号最高的那份 skills/dreaming/SKILL.md，读完照做，只跑提议段：从 origin/main 新切 worktree，写出提议表并过校验脚本，按 SKILL.md 说的推送；不执行任何写入，不开 PR，不开 issue。
+在插件缓存目录 ~/.claude/plugins/cache 里找 idea-loop 版本号最高的那份 skills/engineering/dreaming/SKILL.md，读完照做，只跑提议段：从 origin/main 新切 worktree，写出提议表并过校验脚本，按 SKILL.md 说的推送；不执行任何写入，不开 PR，不开 issue。
 ```
 
 提示词里不写带版本号的路径——插件一升级就失效。
