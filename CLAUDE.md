@@ -12,9 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - plugin 之间相互独立、可单独安装分发
 
 当前 plugins（每个做什么、有哪些 skill、怎么用、文件放哪，以各自的 `README.md` 为准，这里不复述）：
-- `clinical-research/` — 临床回顾性队列研究工作流
 - `excalidrawer/` — code-first 的 Excalidraw 图表生成
-- `memex/` — 多源个人记忆 wiki（用户数据落 `~/.memex/`）
 - `content-creator/` — 短视频 / 社交 feed 内容创作
 - `idea-loop/` — 从 idea 到工程落地的闭环：grill → spec → 设计 → 工单 → 实现 → review
 - `interview-coach/` — AI 工程方向的面试陪练
@@ -28,11 +26,12 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 
 - **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
 - **不硬编码 Toeflair**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；Toeflair 只作为举例出现。
-- 下面四处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
-  1. **不走 pushy description**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。
+- 下面五处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
+  1. **调用方式按出口定**：`grill` / `uiux-imagine` / `uiux-refine` / `dreaming` / `setup` / `agent-builder` / `writing-for-agents` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 调 `prototype`、`/loop` 的文字提示调 `issue-dispatch`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。
   2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
   3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。
   4. **唯一带 `evals/`**：理由见下面 §5。
+  5. **skill 按分类目录放、没有 plugin 级 `references/`**：`skills/{engineering,design,productivity}/<slug>/`，每份参考资料归一个 skill；规则在 `idea-loop/AGENTS.md`。
 
 ## 标准 plugin 目录结构
 
@@ -57,7 +56,8 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 
 **`references/` 灵活布局**：
 - 只 plugin 级（如 `excalidrawer/` —— 4 个 skill 共享同一组 references，每个 skill 自己没 references/ 子目录）
-- 两级都有（如 `clinical-research/` —— plugin 级 conventions.md + 每个 skill 自己的 cases.md）
+- 两级都有（plugin 级 conventions.md + 每个 skill 自己的 cases.md）
+- 只 skill 级（如 `idea-loop/` —— 每份参考资料归一个 skill，见 `idea-loop/AGENTS.md`）
 - 看内容是否需要 skill 特异性
 
 要点：
@@ -68,17 +68,18 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
     - 文本：`./design-brief.md` / `./paper-results.md`
     - 二进制：`./flowchart-<name>.png` / `./timeline-<name>.svg`
     - 中间数据：可走 `/tmp/`（如 excalidrawer 的中间 JSON），不污染 cwd
-  - **跨会话持久的用户数据（不绑定 cwd）** → `~/.<plugin-name>/`（如 `~/.memex/{config.json,raw,sources,memory}/`）
+  - **跨会话持久的用户数据（不绑定 cwd）** → `~/.<plugin-name>/`（如 `~/.idea-loop/github-apps.json`）
     - plugin 目录是只读的（marketplace 升级会换路径），所以 runtime-mutable 状态必须落用户主目录
     - 适用场景：用户画像 / 长期档案 / 跨会话的原始数据缓存——不属于"某个项目"的产物
 
 ## SKILL.md 编写约定（跨所有 plugin）
 
-### 1. Frontmatter description 要 "pushy"
+### 1. Frontmatter description 只做路由
 
-显式列出触发关键词（中英文都列、覆盖多个目标领域），抵御 undertrigger。例如：
-- clinical-research 不要只写"用于变量编码"，要写"任何提到变量标准化、编码规则、ISGPS、Clavien-Dindo、NYHA、KDIGO、APACHE 等场景"
-- excalidrawer 不要只写"画时间线"，要写"任何提到 timeline / 时间线 / 路线图 / roadmap / milestone / 里程碑 / 项目阶段 / Q1Q2Q3Q4 / 时间节点 / chronology 的场景"
+description 常驻在每一轮的上下文里，只写触发它需要的东西。写法见 `idea-loop/skills/productivity/writing-for-agents/`（`SKILL-MECHANICS.md` 的「调用方式」）：
+- 模型可调用：写它是什么，每个分支一个触发词（同义词合并），必要时加一句「X 的情况用 Y」。流程、产物格式、模型名不写。
+- 只能由人调用（`disable-model-invocation: true`）：一行给人看的摘要。
+- agent：写谁起它、什么时候起。
 
 ### 2. 必填没拿到不要猜不要默认
 
@@ -95,7 +96,6 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ### 4. 输出语言
 
 按用户场景定。具体规则在各 plugin 的 `conventions.md` 写一次：
-- clinical-research：默认中文 / SCI 切英文 / 不混用
 - excalidrawer：跟随用户输入语言，不强制切换（图表里 label 短，混语言风险低）
 
 ### 5. Eval 策略
@@ -121,4 +121,4 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 3. 一次只构建一个 skill；先让用户审 SKILL.md 草稿，确认后再写下一个 —— **不要一次性吐多个**
 4. 有依赖关系的 skill 按上游 → 下游顺序构建
 5. 全部 skill 完成后再生成 plugin 的 `README.md`
-6. plugin 级共享参考统一放 `<plugin>/references/`；如有原始对话 / 真实案例可蒸馏到 `skills/<name>/references/cases.md`（clinical-research 模式），没案例可跳过该步（excalidrawer 模式）
+6. plugin 级共享参考统一放 `<plugin>/references/`；如有原始对话 / 真实案例可蒸馏到 `skills/<name>/references/cases.md`，没案例可跳过该步（excalidrawer 模式）

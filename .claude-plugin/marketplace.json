@@ -7,22 +7,12 @@
   "description": "Harold's personal collection of Claude Code skills, organized as plugins.",
   "plugins": [
     {
-      "name": "clinical-research",
-      "source": "./clinical-research",
-      "description": "Clinical research workflow skills: study design, variable coding, statistical analysis, and paper drafting. For clinical medicine researchers conducting retrospective cohort studies."
-    },
-    {
       "name": "excalidrawer",
       "source": {
         "source": "github",
         "repo": "guohaonan-shy/excalidrawer"
       },
       "description": "Code-first Excalidraw diagram generation. Per-type skills (flowchart / timeline / architecture / sequence) on a shared base clarify intent via AskUserQuestion, compose sugar elements, and call the excalidrawer MCP server to produce .excalidraw / .svg / .png outputs. Single-sourced from guohaonan-shy/excalidrawer; installing auto-registers the MCP server."
-    },
-    {
-      "name": "memex",
-      "source": "./memex",
-      "description": "Personal memory wiki built from your conversations. Pluggable connectors (lark / 飞书 today; wechat / slack later) pull raw chats + meeting transcripts, render them losslessly to markdown, then distill them into an obsidian-style wiki of people and things — persons / groups / topics (events live inline and in a dated log digest), written with #tag + Dataview fields + [[wikilinks]] + provenance anchors. Verb-oriented skills: ingest (fetch+render), recap (distill), comm-memory (dictation CRUD + lint), recall (fuzzy-query read front-door), reply-coach (draft high-friction replies). User data lives under ~/.memex/ — plugin dir is read-only references and prompts."
     },
     {
       "name": "content-creator",
