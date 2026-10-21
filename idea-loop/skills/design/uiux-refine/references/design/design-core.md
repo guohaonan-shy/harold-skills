@@ -1,33 +1,32 @@
 # Design Core — the always-on taste layer
 
-> **Note on examples:** the *law structure* here (precedence, anti-slop, close-out) is generic. The
-> register dials (§3) and brand floors (§4) are filled in for a **fictional product, Fieldnote** (a
-> notebook app for field researchers), only to show how concrete a dial or a floor should be. They
-> are not defaults. When the target project has its own `DESIGN.md`, its values are the law.
+**Examples are fictional.** The *law structure* here (precedence, anti-slop, close-out) is generic.
+"Register dials" and "Brand floors" are filled in for a **fictional product, Fieldnote** (a
+notebook app for field researchers), only to show how concrete a dial or a floor should be. They
+are not defaults. When the target project has its own `DESIGN.md`, its values are the law.
 
 **What this is.** The distilled taste core for every design run, modeled on open-design's
-baked-in prompt layer (their `official-system.ts` + `discovery.ts`: ~555 lines that ride along on
-EVERY generation, regardless of which skill is active). `static-ui-protocol` and `motion-protocol` MUST read
+baked-in prompt layer that rides along on every generation. `static-ui-protocol` and `motion-protocol` MUST read
 this file at Setup, before any concept or pixels — it is not invoked mid-loop, it is the law of
-the session from the start. The old model ("invoke the taste skill at stage D/G") relied on the
-model remembering to load a 1200-line playbook mid-task; in practice it didn't happen. This file
-is small enough to always be present.
+the session from the start, and it is small enough to always be present.
 
 **Precedence.** The target project root's `DESIGN.md`, when present,
-wins on any brand/token conflict — this file never restates its values, only names its floors (§4).
-When the target project has no `DESIGN.md`, this file's generic law (§2, §5, §6, §7) is the default,
-the §4 example floors are illustration only, and the skill should suggest creating a `DESIGN.md`
-by running `uiux-imagine` (no live UI) or `dreaming` (live UI) — a missing doc is a degradation, never an abort. What this file adds is
-the *generic* anti-slop law and the forced protocols (§2, §6) that no brand doc carries.
+wins on any brand/token conflict — this file never restates its values, only names its floors ("Brand floors").
+When the target project has no `DESIGN.md`, this file's generic law ("The Design Read", "Anti-slop law",
+"Close-out protocol", "Craft methodology") is the default, the example floors in "Brand floors" are
+illustration only, and the skill should suggest creating a `DESIGN.md` by running `idea-loop:uiux-imagine`
+(no live UI) or `idea-loop:dreaming` (live UI) — a missing doc is a degradation, never an abort. What this
+file adds is the *generic* anti-slop law and the forced protocols ("The Design Read", "Close-out protocol")
+that no brand doc carries.
 
 **Enforcement split.** The mechanically-checkable subset of these rules is enforced by
-`scripts/design-lint.mjs` — a PostToolUse hook runs it on every write to a canvas HTML
+`${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs` — a PostToolUse hook runs it on every write to a canvas HTML
 (`docs/design/tmp/<spec-slug>/canvas/`, plus the legacy `design-preview/` / `design-motion-preview/`), so violations surface without anyone remembering to check. The lint
 is the hard gate; this file carries the *why* plus the judgment calls a regex can't make.
 
 ---
 
-## 1. Posture
+## Posture
 
 - **Embody the specialist** *(open-design discovery §A, the two personas we use)*:
   - **Landing / marketing surface** → brand designer. One hero, 3–6 sections, real copy, **one**
@@ -46,9 +45,9 @@ is the hard gate; this file carries the *why* plus the judgment calls a regex ca
 - **Honest placeholders beat fake stats** *(open-design)*: when you don't have a real value, use a
   short labelled stub or a grey block — never invent one.
 
-## 2. The Design Read — forced first output *(taste-skill §0, near-verbatim)*
+## The Design Read
 
-Before any concept work or code, state in one line:
+Forced first output *(taste-skill §0, near-verbatim)*. Before any concept work or code, state in one line:
 
 > **"Reading this as: \<surface kind\> for \<audience\>, register \<in-app | marketing\>, leaning
 > toward \<direction / aesthetic family\>."**
@@ -63,7 +62,9 @@ hero over dark mesh, three equal feature cards, generic glassmorphism, infinite-
 micro-animations, or the same templated section rhythm. These are the LLM defaults; reach past
 them deliberately based on the read.
 
-## 3. Register dials (calibration — Fieldnote example; re-tune per target project)
+## Register dials
+
+Calibration — the Fieldnote example; re-tune per target project.
 
 | Dial | In-app (product) | Marketing (public) |
 |---|---|---|
@@ -71,11 +72,11 @@ them deliberately based on the read.
 | MOTION_INTENSITY | low–medium — the in-app whitelist only | medium–high — bigger signature moments |
 | VISUAL_DENSITY | medium — a working notebook | medium — anchor moments + natural-height content sections |
 
-The register is decided in the Design Read (§2) and never drifts mid-loop.
+The register is decided in "The Design Read" and never drifts mid-loop.
 
-## 4. Brand floors — names only; the target project's DESIGN.md is the law
+## Brand floors
 
-The floors below are written for the **fictional Fieldnote** (see the note at the top), to show
+Names only; the target project's DESIGN.md is the law. The floors below are written for the **fictional Fieldnote** (see the note at the top), to show
 how concrete a floor should be — a token or a measurable rule, never an adjective. For any target
 project, its own DESIGN.md floors replace these; only the a11y floors are universal. Never relax the
 target project's floors:
@@ -90,16 +91,21 @@ target project's floors:
 - **One-Display-Face** — one sans display family; **no serif display anywhere** (a serif is
   allowed for long-form body text only).
 - **A11y floors** — contrast ≥4.5:1 body / ≥3:1 large; focus-visible ring; reduced-motion
-  alternative for every animation; never gate content visibility on a transition. Full compliance
-  floor, touch-target table, and keyboard/ARIA discipline: `skills/design/uiux-refine/references/design/accessibility-baseline.md`.
+  alternative for every animation; never gate content visibility on a transition. When a question
+  needs the full compliance floor, touch-target table, or keyboard/ARIA discipline, read
+  [accessibility-baseline.md](accessibility-baseline.md).
 
-> Brand override note: when the target project's DESIGN.md picks something generic advice flags
-> (e.g. "avoid Inter as a display face", taste-skill §4.1, open-design §C), the DESIGN.md decision
-> wins. Palette-rotation advice is likewise overridden for a brand-locked project.
+**Brand override:** when the target project's DESIGN.md picks something generic advice flags
+(e.g. "avoid Inter as a display face", taste-skill §4.1, open-design §C), the DESIGN.md decision
+wins. Palette-rotation advice is likewise overridden for a brand-locked project.
 
-## 5. Anti-slop law (generic; reconciled against DESIGN.md)
+## Anti-slop law
 
-### 5.1 The checklist *(open-design discovery §C, reconciled)*
+Generic law, reconciled against DESIGN.md.
+
+### Anti-slop checklist
+
+*(open-design discovery §C, reconciled)*
 - ❌ Aggressive purple/violet/indigo gradients or accents (the AI-default hex family)
 - ❌ Generic emoji feature icons (✨ 🚀 🎯 …)
 - ❌ Rounded card with a left colored border accent (the "AI dashboard tile")
@@ -113,7 +119,9 @@ target project's floors:
 - ❌ More than ~12 raw hex values outside `:root` — tokens were not honoured
 - ❌ The brand accent token used 6+ times in the rendered body — cap at 2 visible uses per screen
 
-### 5.2 Layout discipline *(taste-skill §4.7, the hard rules)*
+### Layout discipline
+
+*(taste-skill §4.7, the hard rules)*
 - **Hero fits the initial viewport**: headline ≤2 lines desktop, subtext ≤20 words, CTAs visible
   without scroll, top padding ≤ `pt-24`, **max 4 text elements** (eyebrow-or-nothing, headline,
   subtext, CTAs). Trust strips / pricing teasers / feature bullets move below the hero.
@@ -129,10 +137,12 @@ target project's floors:
   stack vertically (max-width 65ch) unless the right column carries a real element.
 - Nav single-line at desktop, height ≤80px.
 
-### 5.3 Copy & data tells *(taste-skill §9.D / §9.F)*
+### Copy & data tells
+
+*(taste-skill §9.D / §9.F)*
 - No filler verbs/adjectives: "Elevate", "Seamless", "Unleash", "Next-Gen", "Revolutionize",
   "Innovative", "Cutting-edge", "Leverage", "Synergy", "Best-in-class", "State-of-the-art",
-  "World-class", "Holistic", "Robust" *(the last eight from great-web-copy, §5.6 provenance)*.
+  "World-class", "Holistic", "Robust" *(the last eight from great-web-copy)*.
 - No fake-perfect numbers (99.99%, 1234567) — organic data reads real (47.2%).
 - No generic names/avatars ("John Doe", egg avatars) — locale-appropriate, believable.
 - No version labels as hero eyebrows (`BETA`, `V2.0`, `EARLY ACCESS`) unless the brief is a launch.
@@ -144,30 +154,32 @@ target project's floors:
 - No poetic section labels ("From the field", "On our desks") — plain functional labels or none.
 - No photo-credit captions as decoration; no pills/tags overlaid on images.
 
-### 5.4 The em-dash ban *(taste-skill §9.G, binary)*
+### The em-dash ban
+
+*(taste-skill §9.G, binary)*
 **Zero `—` (and separator `–`) in user-visible copy** of a designed surface — headlines, labels,
 body, captions, buttons, quotes. It is the #1 AI tell. Use a period, comma, colon, or ` - `.
 Ranges use a hyphen (`2018-2026`). (Scope: visible page copy in previews/ports; docs and code
 comments are out of scope.)
 
-### 5.5 Assets
+### Assets
 - **No div-built fake screenshots** — capture the real product surface (a screenshot of the
   running product) or use none.
 - No hot-linked stock CDNs (unsplash/placehold) in previews; local assets under the
   canvas folder's `assets/`.
 
-### 5.6 Copy construction — landing & app copy
+### Copy construction
 
-Where §5.3 lists copy *tells to avoid*, this is how to build copy that works — split by register
-(§3), each pointing to its real source instead of re-deriving from scratch. Mechanically-checkable
-pieces (extended filler-word list, weak CTA labels, placeholder-only labels) are enforced by
-design-lint.mjs; the rest is judgment, applied at close-out (§6).
+Landing and app copy. Where "Copy & data tells" lists copy *tells to avoid*, this is how to build
+copy that works — split by register ("Register dials"), each pointing to its real source instead of
+re-deriving from scratch. Mechanically-checkable pieces (extended filler-word list, weak CTA labels,
+placeholder-only labels) are enforced by design-lint.mjs; the rest is judgment, applied at close-out
+("Close-out protocol").
 
 **In-app / product copy.** Distilled from the **`impeccable` plugin's `clarify` command**
 (situational error templates by cause, translation-expansion tables, terminology-glossary
-discipline) — richer than anything found externally. The rules below are the always-on floor,
-distilled from it; going deeper than this floor is a fresh vendoring pass into this file, not a
-runtime read of an external path (see §8's vendoring principle):
+discipline). The rules below are the always-on floor, distilled from it; going deeper than this
+floor is a re-distill into this file, never a runtime read of an external path:
 - **Errors, three-part formula**: what happened + why + how to fix. Never blame the user
   ("Please enter a date in MM/DD/YYYY" not "You entered an invalid date"). Don't over-promise:
   never surface an internal error code as the primary message, never state a cause or fix the
@@ -184,13 +196,10 @@ runtime read of an external path (see §8's vendoring principle):
   in an error; a joke is not, once the stakes are real (privacy, payment, deletion, access loss)
   *(impeccable v4)*.
 
-**Landing / marketing copy.** Distilled from `great-web-copy` (github.com/makash/great-web-copy —
-the closest thing found to a ready-made framework for this register; not vendored locally, see
-§8 provenance). **Not adopted**: Unbounce's page-architecture / section-order model — considered,
-parked for now.
+**Landing / marketing copy.** Distilled from `great-web-copy` (github.com/makash/great-web-copy).
 - **Pick the narrative by scenario, don't default to one**: PAS (problem → agitation → solution)
   for a cold-audience landing page; BAB (before → after → bridge) for a transformation/SaaS story;
-  AIDA for a broad-audience homepage; StoryBrand for full-site narrative. The register dial (§3)
+  AIDA for a broad-audience homepage; StoryBrand for full-site narrative. The register dial ("Register dials")
   sets how loud to play it, not which one to pick — that's the audience and traffic source.
 - **CTA formula**: verb + what they get, with a friction-reducer nearby. "Start your free scan"
   not "Get started"; pair with "No credit card required" / "Takes 2 minutes" where true.
@@ -198,8 +207,8 @@ parked for now.
   close-out, not hard-enforced — in-app error copy legitimately says "we couldn't reach the
   server," so the ratio only applies to persuasive marketing copy, not a whole mixed-register file.
 
-**Landing narrative skeleton** *(distilled 2026-07-24 from the local `imagegen-frontend-web`
-taste skill — its narrative logic generalizes beyond image generation)*:
+**Landing narrative skeleton** *(from the `imagegen-frontend-web` taste skill — its narrative logic
+generalizes beyond image generation)*:
 - **Every section has exactly one job** — hook, proof, educate, or convert. A section that
   can't name its job is cut.
 - **Default funnel order** (deviate deliberately, never by drift): hook → proof bar →
@@ -211,11 +220,12 @@ taste skill — its narrative logic generalizes beyond image generation)*:
 - **The final section closes**: a single strong CTA + one trust cue. A mood-reel ending with no
   funnel logic is a fail.
 
-## 6. Close-out protocol — every build round, non-negotiable *(open-design Steps 7–8)*
+## Close-out protocol
+
+Every build round, non-negotiable *(open-design Steps 7–8)*.
 
 1. **Mechanical pre-flight**: confirm the lint hook ran clean on the final write (or run
-   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" <preview.html>` yourself — i.e. this
-   plugin's `scripts/design-lint.mjs`, wherever the plugin is installed). Every
+   `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" <preview.html>` yourself). Every
    P0 must pass — a failing P0 does not proceed to review.
 2. **5-dimensional critique** *(verbatim from open-design; score silently 1–5)*:
    1. **Philosophy** — does the visual posture match what was asked, or did you drift back to
@@ -234,13 +244,13 @@ taste skill — its narrative logic generalizes beyond image generation)*:
    of real photography — separates work from a sketch. Three competing flourishes turn it back
    into noise.
 
-## 7. Craft methodology — proof map, responsive re-edit, runtime & fallback states
+## Craft methodology
 
-Three procedures that apply at any altitude, not just a landing page — they were originally scoped
+Three procedures (proof map, responsive re-edit, runtime & fallback states) that apply at any altitude, not just a landing page — they were originally scoped
 to landing-page work and generalize cleanly to in-app surfaces, modules, and components carrying
 metrics, media, or async data.
 
-### 7.1 Proof map
+### Proof map
 
 For every claim, number, testimonial, logo, or screenshot the UI shows, trace it to one of four
 routes before it ships:
@@ -251,14 +261,14 @@ routes before it ships:
   data shape, never inventing a feature or a number that doesn't exist.
 - **Source licensed/owned media** — record provenance and any crop/processing applied.
 - **Mark unsupported** — an honest labelled placeholder or grey block. Never fill the space with a
-  fake logo, a fabricated metric, or a generic stock avatar (the same floor as §1's "honest
-  placeholders beat fake stats" and §5.1's invented-metrics ban — the proof map is the procedure
+  fake logo, a fabricated metric, or a generic stock avatar (the same floor as "Posture"'s "honest
+  placeholders beat fake stats" and the invented-metrics ban in "Anti-slop checklist" — the proof map is the procedure
   that catches it before build, not just the checklist that catches it after).
 
 Do this at stage E (pulling parts) for any component/module carrying a claim, and roll it into the
 Surface-level asset inventory for a whole-page build.
 
-### 7.2 Responsive re-edit
+### Responsive re-edit
 
 Desktop and Mobile are separate compositions sharing the same content contract, not one shrunk into
 the other:
@@ -275,7 +285,7 @@ the other:
 This is `surface-protocol.md`'s G-stage viewport matrix (1440 + 390/360) made procedural: the
 matrix says *which* widths to check, this section says *what changes* between them.
 
-### 7.3 Runtime & fallback states
+### Runtime & fallback states
 
 For any dynamic, animated, or media-bearing section, expose six directly testable states before
 calling it done:
@@ -285,7 +295,7 @@ normal / reduced / offscreen / failed / loading / settled
 ```
 
 - **Reduced** has an equivalent settled state and no required autoplay — this is the *structural*
-  half (does an equivalent state exist); `motion-spec.md` §6 owns the *mechanical* half (the
+  half (does an equivalent state exist); `motion-spec.md`'s "Reduced motion" owns the *mechanical* half (the
   `prefers-reduced-motion` fallback implementation) once a surface reaches `motion-protocol`.
 - **Offscreen** work pauses or substantially reduces.
 - **Failed** hides or bypasses broken media while the claim, proof, and CTA remain — a failed image
@@ -300,66 +310,19 @@ normal / reduced / offscreen / failed / loading / settled
 Do this at stage F (build) for anything that isn't purely static content, and record the six
 states' results in the G-stage review alongside the viewport matrix.
 
-Distilled from a design-lib research repository's `design-landing`/`design-landing-plan` skills
-(§5 responsive re-edit, §6 runtime states, and the asset-truth production routes behind the proof
-map), generalized away from that repo's landing-only framing and `$DESIGN_LIB_ROOT` gating.
+## Escalation
 
-## 8. Provenance & escalation
+For a flagship marketing surface that wants the full playbook (GSAP skeletons, design-system
+mapping, redesign protocol), deep-read taste-skill §4 / §9 / §11 / §14 directly (upstream
+`Leonxlnx/taste-skill`; local copies at `~/projects/open-design/skills/taste-skill/SKILL.md` and
+`.claude/skills/design-taste-frontend`).
 
-Distilled 2026-07-08 from: **taste-skill** (vendored at
-`~/projects/open-design/skills/taste-skill/SKILL.md`, upstream `Leonxlnx/taste-skill`; also
-installed locally as `.claude/skills/design-taste-frontend`), **open-design prompt core**
-(`~/projects/open-design/apps/daemon/src/prompts/{official-system,discovery}.ts`), and our
-`DESIGN.md`. Sections marked *(verbatim)* are lifted, not paraphrased, to preserve their force.
+## Provenance
 
-§5.6 (copy construction) distilled 2026-07-23 from: the **`impeccable` plugin's `clarify`
-command** (in-app error/button/loading/tone rules) for in-app copy, and **`great-web-copy`**
-(github.com/makash/great-web-copy, MIT, `skills/write-copy/SKILL.md` — read remotely, not vendored)
-for landing/marketing copy. A parallel research pass (web search + Codex, both logged in the
-originating session) surveyed named traditions — Unbounce page architecture, StoryBrand/PAS/AIDA/BAB,
-April Dunford positioning, Eugene Schwartz's awareness stages, Google Material's UX-writing
-principles, NN/g, GOV.UK, Shopify Polaris — before settling on these two as the actually-distillable
-sources; the rest stay theoretical background, not re-derived into this file.
-
-§5.6's in-app rules were refreshed 2026-07-23 against **`impeccable` v4.0.1** (`clarify.md` was
-rewritten upstream that day, ~60% shorter, principle-driven over example tables). Four new
-judgments survived the diff and were folded in *(impeccable v4)*: prefer undo over confirmation
-when recovery is safe, don't over-promise a diagnosis the system can't verify, never invent loading
-progress, and warmth-not-jokes on serious errors. The three-part error formula, the button
-verb+object rule, and the placeholder-is-not-a-label rule (§5.6, enforced by `weak-cta-label` /
-`placeholder-only-label` in design-lint.mjs) were unchanged in v4 and remain correct as written.
-
-**Source-tracking update (2026-07-24).** open-design consolidated its two prompt files into
-`apps/daemon/src/prompts/core-slim.ts` (0.15.x; the runtime default in current builds) — future
-re-distills track that file. `taste-skill/SKILL.md` is unchanged since 2026-06.
-
-**Vendoring principle** (the architecture this plugin follows): knowledge-layer content from
-external skills/tools is distilled into this plugin's skill references with a provenance header
-(source, version, date) — the external source is the raw feed, and an upstream update is consumed
-by an explicit re-distill, never by a runtime read of an external path.
-
-**No live runtime dependency (2026-08-31).** This plugin has zero runtime dependency on any
-external skill or tool — every gate (mechanical lint, isolated critique, motion-craft audit, frame
-check, port-fidelity diff) runs entirely on this plugin's own scripts and skill references. An
-earlier version of the lint hook optionally chained an external detector when installed, and Gate 2
-in `static-ui-protocol`/`motion-protocol` invoked an external critique/audit tool; both were removed in favor
-of native lint rules (`layout-transition`, `bounce-easing` in `design-lint.mjs`) and self-contained
-checklists (`ui-craft-checklist.md`, `heuristics-checklist.md`, `motion-craft-checklist.md`). An
-upgrade to an external tool no longer changes this plugin's behavior — only an explicit re-distill
-does, per the vendoring principle above.
-
-Sibling distillates: `expression-framework.md` (open-design craft/ + impeccable-inspired emphasis
-rules + our badge case), `color-application.md` (impeccable colorize/palette.mjs inspiration),
-`ui-craft-checklist.md` / `heuristics-checklist.md` (impeccable critique/audit-tool rules distilled
-into native lint + self-contained checklists, replacing the retired live invocation),
-`accessibility-baseline.md` and `laws-of-ux.md` (an external product repository's `craft/`,
-one-time inspiration source, no path dependency retained), `landing-ia.md` (a design-lib research
-repository's landing skills, generalized away from its allow-list gating), `uiux-research`'s research backend
-(the contract for `idea-loop:uiux-researcher`, the one agent that calls `refero-design`'s screens and
-flows layers — the one remaining live dependency, run only when the human asks, never a gate).
-
-- **Escalation**: for a flagship marketing surface that wants the full playbook (GSAP skeletons,
-  design-system mapping, redesign protocol), deep-read taste-skill §4 / §9 / §11 / §14 directly.
-- **Maintenance**: this file is OUR asset — it changes in the same pass as any DESIGN.md rule
-  change that touches §3/§4, and gets re-checked against upstream when we re-pull the vendored
-  skills. A slightly stale core that is always loaded beats a fresh playbook that never was.
+Distilled from taste-skill (upstream `Leonxlnx/taste-skill`), the open-design prompt core, the
+`impeccable` plugin (v4.0.1 `clarify`), `great-web-copy`, the `imagegen-frontend-web` taste skill, a
+design-lib research repository's `design-landing` / `design-landing-plan` skills, and the target
+project's `DESIGN.md`; sections marked *(verbatim)* are lifted, not paraphrased. Every gate runs on
+this plugin's own scripts and references, with no runtime read of an external skill or tool; the
+one live dependency is `idea-loop:uiux-research`'s Refero research, run only when the human asks,
+never a gate.

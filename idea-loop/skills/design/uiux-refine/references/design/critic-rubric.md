@@ -1,6 +1,6 @@
 # Critic rubric — what a score means, and what it may not mean
 
-The rubric the critic (`idea-loop:ui-master`, `agents/ui-master.md`) reads before every round of the design loop. It answers one question and
+The rubric the critic (`idea-loop:ui-master`) reads before every round of the design loop. It answers one question and
 declines the rest: **measured against the aesthetic this work is reaching for, how well is it
 executed?** Nothing here scores whether the thing is usable, legible, accessible, or on-brand —
 those have their own gates, listed at the bottom, and folding them in here would let a
@@ -8,7 +8,7 @@ contrast failure and a timid type scale cancel each other out into a meaningless
 
 The stop threshold is **9**, and it is written here on purpose. The critic sees it. What keeps a
 critic from simply typing 9 is not secrecy — it is that the score has to survive
-`scripts/critic-score.mjs`, which recomputes the allowed band from the findings the critic just
+`${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs`, which recomputes the allowed band from the findings the critic just
 wrote. A 9 under a P1 is an invalid round and the critic is rerun.
 
 ## Severity ladder
@@ -57,7 +57,7 @@ never lifts it.
 | ≤ 3 | several P0 | Not an execution problem, a brief problem |
 
 More than two P3 and nothing worse drops to 8: past a couple, polish notes are a red-pen round.
-`scripts/critic-score.mjs` implements this table row for row — when one changes, both change.
+`${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs` implements this table row for row.
 
 ## What the check returns
 
@@ -75,11 +75,11 @@ It never assigns a score. Scoring is the critic's judgement; this is the audit.
 ## Material this rubric stands on — read it there, it is not copied here
 
 - **The five dimensions** (Philosophy / Hierarchy / Execution / Specificity / Restraint) and the
-  close-out protocol they belong to: `design-core.md` §6.
+  close-out protocol they belong to: `design-core.md`'s "Close-out protocol".
 - **The P0–P3 severity semantics** that the ladder above specializes for aesthetics:
   `heuristics-checklist.md`.
 - **The slop catalog** that a P0 can hit, and the **reference-averaging** ban that governs how a
-  `pattern` finding may use a reference the human forwards: `ui-craft-checklist.md` §2.
+  `pattern` finding may use a reference the human forwards: `ui-craft-checklist.md`'s "Visual slop catalog".
 
 ## Not this rubric's business
 
@@ -87,7 +87,7 @@ It never assigns a score. Scoring is the critic's judgement; this is the audit.
 |---|---|
 | Usability heuristics (Nielsen, cognitive load, persona scoring) | `heuristics-checklist.md`, run at `static-ui-protocol` / `motion-protocol` Gate 2 |
 | Contrast and accessibility | `accessibility-baseline.md`, verified against computed style from the real DOM at the same Gate 2 |
-| DESIGN.md compliance and brand floors | the `design-lint.mjs` hook (mechanical, Gate 1) plus the DESIGN.md drift check in `ui-craft-checklist.md` §5 |
+| DESIGN.md compliance and brand floors | the `design-lint.mjs` hook (mechanical, Gate 1) plus `ui-craft-checklist.md`'s "DESIGN.md drift check" |
 
 A critic that finds one of these should say so where that gate lives, not convert it into a score
 here.

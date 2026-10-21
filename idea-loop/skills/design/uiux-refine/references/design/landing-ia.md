@@ -1,7 +1,7 @@
 # Landing / IA — page taxonomy and Hero geometry
 
 **Load when:** `static-ui-protocol` stage A routes to the **Landing / IA** entry (see the route table in
-`skills/design/uiux-refine/references/design/static-ui-protocol.md` §A) — a landing, marketing, or multi-surface information-architecture
+stage A of [static-ui-protocol.md](static-ui-protocol.md)) — a landing, marketing, or multi-surface information-architecture
 page. Read this alongside `surface-protocol.md`, not instead of it: Landing/IA still runs the
 Surface R/B/W procedure end to end; this file supplies the extra domain vocabulary that procedure
 needs at stage B (page taxonomy) and stage W (Hero geometry). It does not replace `design-core.md`
@@ -38,7 +38,7 @@ Inventory the Hero as seven slots, not as a single "hero image + headline" block
 Nav / Headline / Supporting / Primary CTA / Proof / Visual / Scroll hook
 ```
 
-The content and proof actually available — from the proof map (`design-core.md` §7.1) — chooses
+The content and proof actually available — from the proof map (`design-core.md`'s "Proof map") — chooses
 which slots exist and how they're weighted; never default to one
 archetype because it's familiar. Do this slot inventory at stage B alongside the taxonomy call,
 then lock the chosen geometry at stage W before descending into module/component work.
@@ -58,9 +58,4 @@ Mobile reordering is always a fresh design decision, never a shrink of the Deskt
 
 ## Provenance
 
-Distilled from a design-lib research repository's `design-landing-plan` / `design-landing` skills
-(page classification and the Hero seven-slot inventory), generalized away from that repo's
-`$DESIGN_LIB_ROOT`-relative allow-list gating (M/P evidence levels, candidate-mode opt-in) — this
-file carries no path dependency on that repository and no machinery to keep in sync with it. The
-epistemic caveats on the four Hero archetypes (same source, no Mobile evidence) are carried over
-because they're load-bearing, not because the gating mechanism they came from is being kept.
+Distilled from a design-lib research repository's `design-landing-plan` / `design-landing` skills.

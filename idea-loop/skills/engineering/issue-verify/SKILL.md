@@ -1,11 +1,11 @@
 ---
 name: issue-verify
-description: 验证一组 GitHub issue 描述的问题是否真实存在，存在的起草成 spec，不存在的留下证据。
+description: 验证一组 GitHub issue 描述的问题是否真实存在，存在的起草成 spec，不存在的留下证据。验证会话里、或人要核一组 issue 时用。
 ---
 
-验证一组 issue：每个先复现，判断问题是否真实存在，再按「同一处改动」分组，每组用 `idea-loop:to-spec` 起草一份 spec，spec 里记下每个 issue 的验证结论。规则判不了、要人定的，就在这个会话里跟人 grill。最后经只改 `docs/` 的 PR 合进主分支，issue 的 label 由 `issue-dispatch` 下一轮对账时按主分支挂上、关掉。
+验证一组 issue：每个先复现，判断问题是否真实存在，再按「同一处改动」分组，每组用 `idea-loop:to-spec` 起草一份 spec，spec 里记下每个 issue 的验证结论。规则判不了、要人定的，就在这个会话里跟人 grill。最后经只改 `docs/` 的 PR 合进主分支，issue 的 label 由 `idea-loop:issue-dispatch` 下一轮对账时按主分支挂上、关掉。
 
-issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`。先用 Skill 工具调 `idea-loop:spec-status`（spec 和 issue 的状态）和 `idea-loop:decision-rules`（能按「自己定的四条」判的自己定，依据不成立的才留给人）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指同目录的 `spec-status.mjs`，`<docs>` 指当前 worktree 的 `docs/`。
+issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`。先用 Skill 工具调 `idea-loop:spec-status`（spec 和 issue 的状态）和 `idea-loop:decision-rules`（能按「自己定的四条」判的自己定，依据不成立的才留给人）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指当前 worktree 的 `docs/`。
 
 ## 开场
 
@@ -18,11 +18,11 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 
 | issue 的性质 | 复现手段 | spec 里写什么 |
 |---|---|---|
-| 逻辑、数据、API 行为 | 一个会红的测试，不提交：测试代码和输出放 `.tmp/to-spec/<spec-slug>/repro/`，正式的测试由 `implement` 写 | 白话写测了什么、看到什么、本该是什么，带一个具体例子 |
+| 逻辑、数据、API 行为 | 一个会红的测试，不提交：测试代码和输出放 `.tmp/to-spec/<spec-slug>/repro/`，正式的测试由 `idea-loop:implement` 写 | 白话写测了什么、看到什么、本该是什么，带一个具体例子 |
 | 看得见的界面问题 | 一张截图，标注照 `idea-loop:evidence` 里「问题的复现证据」 | 截图本身 |
 | 线上数据、日志、性能 | 一条查询或一段日志，写明查的是什么、什么时候查的 | 查的范围和时间，加结果；数字能列成小表就列 |
 
-**复现的输出不进这个会话的上下文。** 服务日志、测试的失败输出、堆栈、查询结果都重定向进 `.tmp/to-spec/<spec-slug>/repro/` 下的文件，只读回判断要用的那一两行。人可能要进这个会话 grill，那时上下文里该是 issue、结论和 spec，不是一屏屏的日志。
+**复现的输出留在文件里。** 服务日志、测试的失败输出、堆栈、查询结果都重定向进 `.tmp/to-spec/<spec-slug>/repro/` 下的文件，只读回判断要用的那一两行：人可能要进这个会话 grill，那时上下文里该是 issue、结论和 spec。
 
 方案、选项、范围依赖的现状也在这时核清：代码现在怎么做、影响多大、同类入口有哪些、相邻还没完成的 spec 与 issue。issue 是不是已经被做掉了，也靠这一步查出来。
 
@@ -60,7 +60,7 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 
 「正式」和「完成」的 spec 不等「审核中」的那几份：
 
-1. 只 `git add` 这几份 spec 的目录和 `docs/spec/index.md`，提交（`docs(spec): 起草 <slugs>`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写），`git push -u origin <分支>`，`gh pr create --base <主分支>`，正文每份 spec 一行：slug、状态、覆盖的 `#号`。
+1. 只 `git add` 这几份 spec 的目录和 `docs/spec/index.md`，提交（`docs(spec): 起草 <slugs>`），`git push -u origin <分支>`，`gh pr create --base <主分支>`，正文每份 spec 一行：slug、状态、覆盖的 `#号`。
 2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；失败就停下告诉人。只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。
 3. 还有「审核中」的，`git fetch` 后从更新过的主分支开新分支接着做：`git switch -c spec/<slug> origin/<主分支>`，没提交的 spec 文件会跟过来。
 
@@ -76,7 +76,7 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 
 ## 收工
 
-告诉人每份 spec 落在哪：合进主分支的 PR 号，「正式」的之后由 loop 按碰不碰 UI 排进「待设计」或「待实现」，「完成」的覆盖的 issue 会被关掉。label 由 `issue-dispatch` 下一轮对账挂；项目没跑 loop 的，在主 checkout 上跑 `issues reconcile <docs>`。
+告诉人每份 spec 落在哪：合进主分支的 PR 号，「正式」的之后由 loop 按碰不碰 UI 排进「待设计」或「待实现」，「完成」的覆盖的 issue 会被关掉。label 由 `idea-loop:issue-dispatch` 下一轮对账挂；项目没跑 loop 的，在主 checkout 上跑 `issues reconcile <docs>`。
 
 这个会话是 loop 开出来的，所有 spec 都合进主分支或搁置之后，用 `archive_session`（session_id 写 `self`，reason 写「issue 验证结束」）归档自己。
 

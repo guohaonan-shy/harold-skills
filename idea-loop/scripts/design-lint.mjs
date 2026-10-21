@@ -3,7 +3,7 @@
  * Design lint — the mechanical gate of the design workflow.
  *
  * NOTE: this file only carries rules that are generically true across projects (the
- * AI-slop tells in design-core.md §5). Project-specific brand floors — a banned hex,
+ * AI-slop tells in design-core.md, Anti-slop law). Project-specific brand floors — a banned hex,
  * a retired warm tint, a retired display font — are NOT encoded here: they live in
  * the target project's own DESIGN.md as free text, and the skill that builds static
  * UI reads that file and holds the agent + human sign-off to it. No regex engine for
@@ -11,7 +11,7 @@
  *
  * Deterministic, grep-style checks over a design canvas HTML file, modeled on
  * open-design's `lint-artifact.ts`. Encodes the mechanically-checkable subset of
- * skills/design/uiux-refine/references/design/design-core.md §5 anti-slop law. The model-judged rules (hierarchy,
+ * skills/design/uiux-refine/references/design/design-core.md, section Anti-slop law. The model-judged rules (hierarchy,
  * concept, restraint judgment) stay with critique — this file only carries what a
  * regex can decide.
  *
@@ -78,7 +78,7 @@ const RULES = [
   {
     id: 'ai-purple-indigo',
     severity: 'P0',
-    why: 'AI-default purple/indigo accent family (design-core §5.1); the project brand accent is the only structural loud color.',
+    why: 'AI-default purple/indigo accent family (design-core: Anti-slop checklist); the project brand accent is the only structural loud color.',
     check: (html) => {
       const hex = findAll(html, /#(?:6366f1|4f46e5|4338ca|7c3aed|8b5cf6|a855f7|6d28d9|9333ea|c084fc|d946ef)\b/gi);
       const tw = findAll(html, /\b(?:bg|text|from|to|via|border|ring)-(?:indigo|violet|purple|fuchsia)-\d{2,3}\b/g);
@@ -88,13 +88,13 @@ const RULES = [
   {
     id: 'gradient-text',
     severity: 'P0',
-    why: 'Gradient text on headers is a banned AI tell (DESIGN.md Don\'ts, design-core §5.1).',
+    why: 'Gradient text on headers is a banned AI tell (DESIGN.md Don\'ts, design-core: Anti-slop checklist).',
     check: (html, { css }) => findAll(css, /background-clip\s*:\s*text/gi).map((m) => ({ detail: m[0] })),
   },
   {
     id: 'em-dash-copy',
     severity: 'P0',
-    why: 'Em/en-dash in user-visible EN copy is the #1 AI tell (design-core §5.4, binary ban). CJK 破折号 is exempt.',
+    why: 'Em/en-dash in user-visible EN copy is the #1 AI tell (design-core: The em-dash ban, binary ban). CJK 破折号 is exempt.',
     check: (html, { text }) =>
       findAll(text, /(?:\S+[ \t]+){0,3}\S*[—–]\S*(?:[ \t]+\S+){0,3}/g)
         .filter((m) => !/[一-鿿　-〿＀-￯]/.test(m[0])) // skip CJK context
@@ -105,14 +105,14 @@ const RULES = [
   {
     id: 'emoji-icon',
     severity: 'P1',
-    why: 'Emoji as feature icons is an AI tell (design-core §5.1).',
+    why: 'Emoji as feature icons is an AI tell (design-core: Anti-slop checklist).',
     check: (html, { text }) =>
       findAll(text, /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu).map((m) => ({ detail: m[0] })),
   },
   {
     id: 'external-stock-image',
     severity: 'P1',
-    why: 'Hot-linked stock/placeholder CDNs break offline previews; use local assets (design-core §5.5).',
+    why: 'Hot-linked stock/placeholder CDNs break offline previews; use local assets (design-core: Assets).',
     check: (html) =>
       findAll(html, /(?:images\.unsplash\.com|placehold\.(?:it|co)|via\.placeholder\.com|picsum\.photos)/gi).map(
         (m) => ({ detail: m[0], line: lineOf(html, m.index) }),
@@ -137,7 +137,7 @@ const RULES = [
   {
     id: 'layout-transition',
     severity: 'P1',
-    why: 'Animating layout-triggering properties causes layout thrash; animate transform/opacity only (motion-spec §5, motion-craft-checklist.md §1).',
+    why: 'Animating layout-triggering properties causes layout thrash; animate transform/opacity only (motion-spec: Performance rules; motion-craft-checklist: The two lint-enforced detectors).',
     check: (html, { css }) => {
       const layoutProps = /\b(?:width|height|top|left|right|bottom|margin(?:-\w+)?|padding(?:-\w+)?|all)\b/i;
       const hits = [];
@@ -151,14 +151,14 @@ const RULES = [
   {
     id: 'left-accent-card',
     severity: 'P1',
-    why: 'Rounded card with a left colored border accent = the "AI dashboard tile" (design-core §5.1).',
+    why: 'Rounded card with a left colored border accent = the "AI dashboard tile" (design-core: Anti-slop checklist).',
     check: (html, { css }) =>
       findAll(css, /border-left\s*:\s*[3-9]px\s+solid\s+(?!#e2e8f0|transparent)/gi).map((m) => ({ detail: m[0].slice(0, 50) })),
   },
   {
     id: 'eyebrow-overuse',
     severity: 'P1',
-    why: 'Max 1 uppercase-tracked eyebrow per 3 sections (design-core §5.2, mechanical quota).',
+    why: 'Max 1 uppercase-tracked eyebrow per 3 sections (design-core: Layout discipline, mechanical quota).',
     check: (html, { css }) => {
       const sections = Math.max(findAll(html, /<section\b/gi).length, 1);
       const twEyebrows = findAll(html, /class\s*=\s*"[^"]*\buppercase\b[^"]*\btracking-|class\s*=\s*"[^"]*\btracking-\[?[^"]*\buppercase\b/g).length;
@@ -187,7 +187,7 @@ const RULES = [
   {
     id: 'filler-verbs',
     severity: 'P1',
-    why: 'Filler marketing verbs/adjectives are AI tells (design-core §5.3, extended from great-web-copy): concrete language only.',
+    why: 'Filler marketing verbs/adjectives are AI tells (design-core: Copy & data tells, extended from great-web-copy): concrete language only.',
     check: (html, { text }) =>
       findAll(
         text,
@@ -197,7 +197,7 @@ const RULES = [
   {
     id: 'weak-cta-label',
     severity: 'P1',
-    why: 'Button/CTA text must be a specific verb + object (design-core §5.6): "OK"/"Submit"/"Yes"/"No"/"Click here" are banned as the sole label.',
+    why: 'Button/CTA text must be a specific verb + object (design-core: Copy construction): "OK"/"Submit"/"Yes"/"No"/"Click here" are banned as the sole label.',
     check: (html) => {
       const banned = /^(?:ok|submit|yes|no|click here)$/i;
       const hits = [];
@@ -212,7 +212,7 @@ const RULES = [
   {
     id: 'placeholder-only-label',
     severity: 'P1',
-    why: 'Placeholder text disappears once the user types — it is not a label (design-core §5.6).',
+    why: 'Placeholder text disappears once the user types — it is not a label (design-core: Copy construction).',
     check: (html) => {
       const hits = [];
       for (const m of findAll(html, /<input\b[^>]*placeholder\s*=\s*"[^"]*"[^>]*>/gi)) {
@@ -228,7 +228,7 @@ const RULES = [
   {
     id: 'middle-dot-chain',
     severity: 'P1',
-    why: 'Middle-dot is rationed: max 1 per metadata line, not the default separator (design-core §5.3).',
+    why: 'Middle-dot is rationed: max 1 per metadata line, not the default separator (design-core: Copy & data tells).',
     check: (html, { text }) =>
       text
         .split('\n')
@@ -247,7 +247,7 @@ const RULES = [
   {
     id: 'you-we-ratio',
     severity: 'P2',
-    why: '"You" should outnumber "we" on persuasive marketing copy (design-core §5.6, great-web-copy). Advisory only — in-app copy legitimately says "we couldn\'t reach the server," so a mixed-register file can trip this without being wrong.',
+    why: '"You" should outnumber "we" on persuasive marketing copy (design-core: Copy construction, great-web-copy). Advisory only — in-app copy legitimately says "we couldn\'t reach the server," so a mixed-register file can trip this without being wrong.',
     check: (html, { text }) => {
       const you = (text.match(/\byou(?:r|rs)?\b/gi) || []).length;
       const we = (text.match(/\bwe(?:'re|'ll|'ve)?\b|\bour\b|\bus\b/gi) || []).length;

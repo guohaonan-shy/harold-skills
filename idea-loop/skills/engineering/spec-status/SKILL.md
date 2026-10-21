@@ -5,10 +5,10 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 
 两套状态，各管一件事：
 
-- **issue 的状态**说工作排到了哪，写在 GitHub label 上。`issue-dispatch` 的 loop 只看它。
+- **issue 的状态**说工作排到了哪，写在 GitHub label 上。`idea-loop:issue-dispatch` 的 loop 只看它。
 - **spec 的状态**说这份文档成熟到哪一步，写在 spec 的 frontmatter 里，只在 idea-loop 内部用。
 
-改状态只走脚本，不手改 label、frontmatter 的 `status` 行或 `docs/spec/index.md`：脚本先核前提再写，前提不满足就拒绝并说明原因。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指同目录的 `spec-status.mjs`，`<docs>` 指目标项目的 `docs/`。
+改状态只走脚本，label、frontmatter 的 `status` 行和 `docs/spec/index.md` 都由它写：脚本先核前提再写，前提不满足就拒绝并说明原因，照原因处理。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
 ## issue 的状态
 
@@ -54,17 +54,25 @@ issues unhandoff  <docs> <slug> <号>           # 从 spec 里移出 #号，回�
 issues drop       <docs> <slug> <号>           # 从 spec 里移出 #号，关成 not planned（人决定不做）
 ```
 
-spec 覆盖了哪几个 issue，记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件、`open` 开的 issue 不挂 label，是为了让 spec 的 PR 没合并时，GitHub 上不会有 label 指向主分支上没有的 spec。
+spec 覆盖了哪几个 issue，记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件、`open` 开的 issue 不挂 label：spec 的 PR 没合并时，GitHub 上不该有 label 指向主分支上没有的 spec。
+
+## 开一个待验证的 issue
+
+流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开成目标仓库的待验证 issue，loop 会接手：
+
+1. 先查重：`gh issue list --state open --search "<关键词>"`。已有同一个问题的，就用那一条，写「已有 #N」。
+2. 没有就 `gh issue create`，不打 `status:*` label。标题写问题本身；正文写给一个没有上下文的人看：是什么、在哪、怎么复现或怎么看到、为什么这次不做。
+3. 开不成（`gh` 失败）的，记下没开成和原因，交给人。
 
 ## spec 的状态
 
 | 状态 | 意思 | 谁、什么时候翻 | 脚本核的前提 |
 |---|---|---|---|
-| 草稿 | 在写 | `to-spec` 新建时（写在 frontmatter 里） | — |
+| 草稿 | 在写 | `idea-loop:to-spec` 新建时（写在 frontmatter 里） | — |
 | 审核中 | 有要人定的：开头的「> 需要 grill：…」，或「实现决策」下标题以「待定」开头的小节 | `route` | — |
 | 正式 | 定稿了，设计和实现都照它做 | `route`；或审核中定完时 | 没有「需要 grill」，没有「待定」；覆盖的 issue 不能全都不存在 |
-| 实现中 | 工单已切 | `to-ticket` 切完时 | `tickets/` 下至少一张工单；碰 UI 的要有冻结摘要 |
-| 完成 | 实现合并了，或覆盖的 issue 全都验证为不存在 | `pr-review` 合并前；`route` | 不经实现直接完成的：「验证」表里覆盖的 issue 全是「不存在」 |
+| 实现中 | 工单已切 | `idea-loop:to-ticket` 切完时 | `tickets/` 下至少一张工单；碰 UI 的要有冻结摘要 |
+| 完成 | 实现合并了，或覆盖的 issue 全都验证为不存在 | `idea-loop:pr-review` 合并前；`route` | 不经实现直接完成的：「验证」表里覆盖的 issue 全是「不存在」 |
 
 脚本只放行：草稿 → 审核中 / 正式 / 完成；审核中 → 正式 / 完成；正式 → 实现中 / 审核中（重新要人定）；实现中 → 完成。
 
@@ -78,9 +86,9 @@ spec-status check   <docs>                 # 列出所有 spec，和旧平铺布
 spec-status migrate <docs>                 # 旧状态机的状态换成新的
 ```
 
-`to-spec` / `to-ticket` / `implement` 开工时先跑一次 `check`：报了旧平铺布局，就停下提议照 wiki-conventions 的「从平铺布局迁移」迁移；报了旧状态，就跑 `migrate`。
+`check` 报了旧平铺布局，停下提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移；报了旧状态，跑 `migrate`。
 
-「完成」的 spec 由 `dreaming` 写 ADR、删目录（wiki-conventions 的「文件在不在，就是状态」），删完跑 `spec-status index <docs>`。
+「完成」的 spec 由 `/idea-loop:dreaming` 写 ADR、删目录，删完跑 `spec-status index <docs>`。
 
 ## 从旧状态机迁移
 

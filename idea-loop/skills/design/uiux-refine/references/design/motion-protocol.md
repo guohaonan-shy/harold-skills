@@ -1,8 +1,8 @@
 # 动效 protocol —— 在浏览器里把动效与原生交互做完并验过
 
-**按需加载。** 与 `skills/design/uiux-refine/references/design/surface-protocol.md` / `module-protocol.md` /
-`component-protocol.md` 同一模式：这不是入口，是 `uiux-refine` 走到"这个 surface 确实需要真动效"
-时才读的 protocol。静态那一段在 `skills/design/uiux-refine/references/design/static-ui-protocol.md`。
+**按需加载。** 与 [surface-protocol.md](surface-protocol.md) / [module-protocol.md](module-protocol.md) /
+[component-protocol.md](component-protocol.md) 同一模式：这不是入口，是 `idea-loop:uiux-refine` 走到"这个 surface 确实需要真动效"
+时才读的 protocol。静态那一段在 [static-ui-protocol.md](static-ui-protocol.md)。
 
 ---
 
@@ -21,22 +21,22 @@ layer motion on top, gate it on the human, and port to React last.
 - The **route-specific context matrix** used for static sign-off. Motion verification repeats the
   same relevant modes, dimensions, themes, locales, and product states.
 
-If you arrived here without a frozen static UI, stop and run `skills/design/uiux-refine/references/design/static-ui-protocol.md` first — designing motion on
+If you arrived here without a frozen static UI, stop and run [static-ui-protocol.md](static-ui-protocol.md) first — designing motion on
 an unsettled layout wastes both stages.
 
 ## Principle — motion is law-governed, and the gates don't trust the generator
 
-- **`skills/design/uiux-refine/references/design/motion-spec.md` is the motion law** (read at Setup): duration/easing **tokens**
+- **[motion-spec.md](motion-spec.md) is the motion law** (read at Setup): duration/easing **tokens**
   (never invented numbers), the **restraint budget** (≤1 delight moment, ≤3 simultaneous
   entrances, stagger 40–80ms, zero ambient loops in-app), mandatory reduced-motion, the in-app
   **motion whitelist** (the project's DESIGN.md Motion chapter — global principles and bans — when it
-  has one, else the plugin's built-in default whitelist in motion-spec §7) vs the marketing register, and the **freezable-timeline** verification
+  has one, else the plugin's built-in default whitelist in motion-spec's "The in-app whitelist vs marketing") vs the marketing register, and the **freezable-timeline** verification
   convention.
 - **Every animation earns a one-sentence reason** tied to the concept: feedback, continuity, or
-  attention (spec §1). "It looked cool" is not a reason — drop it.
+  attention (motion-spec's "First principles"). "It looked cool" is not a reason — drop it.
 - **Verification is deterministic frames, not vibes.** `getComputedStyle` mid-transition reads the
   *target* (a frozen animation looks fine) — the only falsifiable signal is seeking the timeline to
-  fixed times and confirming the frames differ as intended (spec §8).
+  fixed times and confirming the frames differ as intended (motion-spec's "Freezable timeline").
 - **This protocol is the review lens for ALL motion — split by CONCERN, not chronology.** Any
   animation work goes through here: not just a fresh post-`static-ui-protocol` pass, but also **motion edits
   made while redesigning a component that already ships motion** (e.g. retuning/removing a GSAP
@@ -44,13 +44,13 @@ an unsettled layout wastes both stages.
   through B's gates before the React port.
 
 ## Setup
-1. **`skills/design/uiux-refine/references/design/design-core.md` + `skills/design/uiux-refine/references/design/motion-spec.md` (this plugin) — FIRST.** The core
+1. **[design-core.md](design-core.md) + [motion-spec.md](motion-spec.md) (this plugin) — FIRST.** The core
    carries the register dials + close-out protocol; the spec carries the motion law.
 2. The target project root's `DESIGN.md` — **if present** — for the
    project's Motion chapter (global principles, bans, house duration/easing tokens — it holds no list
    of specific animations) vs the livelier marketing register. With no Motion chapter, use the
-   motion-spec §7 default whitelist. If the project has no `DESIGN.md`, use the motion-spec tokens
-   as the default law, note it, and suggest running `uiux-imagine` (no live UI) or `dreaming`
+   default whitelist in motion-spec's "The in-app whitelist vs marketing". If the project has no `DESIGN.md`, use the motion-spec tokens
+   as the default law, note it, and suggest running `idea-loop:uiux-imagine` (no live UI) or `idea-loop:dreaming`
    (live UI) to create one — never abort over a missing doc.
 3. The sibling shipped components whose interactions you must match or extend.
 
@@ -58,53 +58,54 @@ an unsettled layout wastes both stages.
 
 ### A · Design the motion/interaction in the browser
 1. **Motion concept** (brief, written): for each moving/interactive element — the one-sentence
-   reason (spec §1) + its **spec category** (entrance / hover-press / state-transition / …, spec
-   §7 of motion-anything's taxonomy as adopted) + the **duration & easing tokens** (spec §2–3).
-   Sum the entrances against the **restraint budget** (spec §4) before building.
+   reason (motion-spec's "First principles") + its **spec category** (entrance / hover-press / state-transition / …,
+   motion-anything's taxonomy as adopted, its MOTION-SPEC §7) + the **duration & easing tokens** (motion-spec's
+   "Duration tokens" and "Easing tokens"). Sum the entrances against the **restraint budget** (motion-spec's
+   "Restraint budget") before building.
 2. **Parts, not paste.** Reference **component/motion libraries (e.g. Aceternity, React Bits) + the
    project's own** (`motion` / framer v12,
-   `gsap`, the sibling components) *and* **motion-anything's recipe library** (spec §9 —
+   `gsap`, the sibling components) *and* **motion-anything's recipe library** (motion-spec's "Recipe library" —
    `~/projects/motion-anything/recipes/` **when available on this machine; skip silently if
    absent**, each recipe self-contained with `avoid_when` +
    `restraint` in its yaml; a recipe whose `avoid_when` matches the current context is discarded). Adapt
    everything into the project's tokens; never paste defaults.
 3. **Build on the static HTML.** Start from `static-ui-protocol`'s approved preview (so the visual stays
    pixel-faithful) and layer in real motion + native interaction. Write to
-   `docs/design/tmp/<spec-slug>/canvas/motion-v<N>.html` (versioned, see `../refine-canvas.md`), next to the static canvas (the lint hook watches it too). React-heavy
+   `docs/design/tmp/<spec-slug>/canvas/motion-v<N>.html` (versioned, see [refine-canvas.md](../refine-canvas.md)), next to the static canvas (the lint hook watches it too). React-heavy
    preview → inline `react@18.3.1` + `react-dom@18.3.1` + `@babel/standalone` + framer
    (`window.Motion`); else plain HTML + CSS + small JS using the spec tokens.
-4. **Expose the freezable timeline** (spec §8): the preview defines
+4. **Expose the freezable timeline** (motion-spec's "Freezable timeline"): the preview defines
    `window.__maTimeline = { seek(t), duration(), resume() }` covering the entrance choreography.
    Prefer WAAPI/CSS animations (seekable via `document.getAnimations()`) over rAF clocks for
    choreography — unseekable motion is unverifiable motion.
-5. **Reduced motion is mandatory** (spec §6): every animation has a `prefers-reduced-motion`
+5. **Reduced motion is mandatory** (motion-spec's "Reduced motion"): every animation has a `prefers-reduced-motion`
    alternative (scale-only / crossfade / none), and the reveal must enhance an already-visible
    default — never gate content visibility on a transition (it ships blank on hidden tabs /
    headless renders).
-6. Serve it locally and drive it with Playwright (default headless server per the
-   `browser` skill, `idea-loop:browser`): navigate, interact, capture.
+6. Serve it locally and drive it with Playwright: load `idea-loop:browser` with the Skill tool first
+   (it sets the default headless server), then navigate, interact, capture.
 
 ### B · Review gates — to convergence
 Now there's a real rendered page, so the full checks are available.
 1. **Gate 1 — mechanical lint (automatic).** The PostToolUse hook lints every write to
    the motion canvas — brand rules plus the native `layout-transition` and `bounce-easing`
-   detectors (`scripts/design-lint.mjs`, no external tool chained in). P0 = build error; fix before
+   detectors (`${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs`, no external tool chained in). P0 = build error; fix before
    continuing.
-2. **Gate 2 — motion-craft audit** (self-contained: read `skills/design/uiux-refine/references/design/motion-craft-checklist.md`
-   and `skills/design/uiux-refine/references/design/accessibility-baseline.md`): a11y (real semantics, focus order, keyboard — check
-   the animation-in-progress case per motion-craft-checklist §3), perf (offscreen-pause, no
+2. **Gate 2 — motion-craft audit** (self-contained: read [motion-craft-checklist.md](motion-craft-checklist.md)
+   and [accessibility-baseline.md](accessibility-baseline.md)): a11y (real semantics, focus order, keyboard — check
+   the animation-in-progress case per motion-craft-checklist's "Rules not yet in motion-spec.md"), perf (offscreen-pause, no
    unbounded blur/filter), and the **route-specific context matrix inherited from static-ui-protocol** —
    plus the motion slop catalog and Motion Pyramid framework for motion craft. Public surfaces
    include 390 / 360; bounded product components use their real container modes and consequential
    dimensions. Fix findings, re-audit until clean (no P0/P1).
-3. **Gate 3 — deterministic frame check (the falsifiable one, spec §8):**
+3. **Gate 3 — deterministic frame check (the falsifiable one, motion-spec's "Freezable timeline"):**
    `browser_evaluate(__maTimeline.seek(t))` at t = 0 / mid / end (+ keyframes of interest) →
    screenshot each → confirm the frames **differ** and match the intended choreography (identical
    frames = the animation never played). Then emulate `prefers-reduced-motion` and confirm the
    fallback. For scroll-driven or pointer interactions the timeline can't cover, capture
    screenshots across the interaction (before / during / after) instead.
-4. **Gate 4 — the motion DoD checklist (spec §10)**, item by item, plus the close-out protocol
-   (core §6). A checklist item that can't be ticked is a finding, not a footnote.
+4. **Gate 4 — the motion DoD checklist (motion-spec's "Definition of done")**, item by item, plus the close-out protocol
+   (design-core's "Close-out protocol"). A checklist item that can't be ticked is a finding, not a footnote.
 - **Pass = lint clean AND audit clean AND frame check demonstrates the motion AND DoD fully
   ticked.**
 
@@ -125,11 +126,11 @@ motion file and the candidate, never straight into `DESIGN.md`. This protocol ne
 pattern shipping with no candidate is the failure mode.
 
 ### D · Port to React (final, only after sign-off)
-> **The port mechanics are not this protocol's.** `implement` (its UI-ticket reference)
-> owns turning an approved canvas into project code (component tree by state ownership, data
-> contract changes, token attribution, the measurement loop) and `implement` runs it from a UI
-> ticket. What stays here is the **motion-specific re-verification** below — the part that
-> standard's pixel/measurement comparators cannot see.
+**The port mechanics are not this protocol's.** `idea-loop:implement` (its UI-ticket reference)
+owns turning an approved canvas into project code (component tree by state ownership, data
+contract changes, token attribution, the measurement loop) and runs it from a UI ticket. What
+stays here is the **motion-specific re-verification** below — the part that standard's
+pixel/measurement comparators cannot see.
 
 Port the approved HTML/motion into real React/TSX in a worktree (per the target project's
 CLAUDE.md workflow, if it defines one):
@@ -153,7 +154,7 @@ motion principles and bans, and the selection treatment).
 ## What this protocol is NOT
 - Not for designing the static visual/layout — that's `static-ui-protocol` (run it first).
 - Not a place to silently redesign the approved UI — if the motion work reveals a layout problem,
-  surface it and bounce back to `skills/design/uiux-refine/references/design/static-ui-protocol.md`, don't quietly re-skin in the browser.
+  surface it and bounce back to [static-ui-protocol.md](static-ui-protocol.md), don't quietly re-skin in the browser.
 - Not "animate everything" — unmotivated motion is slop; the in-app whitelist + the restraint
   budget are the default.
 - Not verified by a single screenshot or `getComputedStyle` — only seek-frame evidence counts.

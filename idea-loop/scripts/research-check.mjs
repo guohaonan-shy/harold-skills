@@ -21,9 +21,9 @@
  * in that order, nothing comes after the decisions, every flow step has its picture / line / zoom,
  * and every picture on the page — in a flow step or anywhere else, the zoom dialog's own empty
  * <img> excepted — has an address that is a relative path resolving inside the drop directory (so the
- * page opens from file:// and nothing points at a remote address that expires). What a chapter holds
+ * page opens from a static server over its own directory and nothing points at a remote address that expires). What a chapter holds
  * beyond that — an extra paragraph, an extra block inside the conclusion or a source — is the
- * contract's prose (skills/design/uiux-research/references/research-backend.md, "What each chapter is for") and the
+ * contract's prose (skills/design/uiux-research/references/research-backend.md, section 每块写什么) and the
  * human's reading, not a failing check. The two retired parts (`cannot-answer`, `for-us`) stay an
  * error because a human annotation removed them by name.
  *

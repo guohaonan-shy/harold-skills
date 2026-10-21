@@ -2,11 +2,10 @@
 
 The canvas is a preview HTML file rendered in a real browser, so there is a real DOM from the first
 pixel: contrast, responsive and container checks, and screenshot diffs against the shipped product
-are measured, not approximated. Which Playwright server to drive, how to serve the page, how to show
-it to the human and how to log in are in the `browser` skill
-(`idea-loop:browser`); read it before your first browser call.
-Where the canvas lives and how its versions advance: `../refine-canvas.md`. Paper is temporarily
-disabled (`paper-usage.md`).
+are measured, not approximated. Before your first browser call, load `idea-loop:browser` with the
+Skill tool: it covers which Playwright server to drive, how to serve the page, how to show it to the
+human and how to log in. Where the canvas lives and how its versions advance:
+[refine-canvas.md](../refine-canvas.md).
 
 ## Capturing the production reference (ground truth for replication)
 

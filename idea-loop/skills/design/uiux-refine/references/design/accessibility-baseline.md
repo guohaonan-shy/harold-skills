@@ -1,13 +1,13 @@
 # Accessibility baseline — the compliance floor an artifact must clear
 
 Universal rules for the legal floor of accessibility, plus craft commitments that go beyond it.
-`design-core.md` §4's "A11y floors" line is the one-sentence summary always in scope; this file is
+The "A11y floors" line in `design-core.md`'s "Brand floors" is the one-sentence summary always in scope; this file is
 what backs it up when a surface needs more than the summary — contrast/touch-target numbers,
 keyboard semantics, ARIA discipline, and the mistakes that most often slip past a review.
 
-> Grounded in primary sources: WCAG 2.2 Understanding pages, ISO/IEC 40500:2025, ADA Title II 2024
-> + 2026 IFR, EN 301 549 v3.2.1, WAI-ARIA 1.3 + AccName 1.2 + Core AAM 1.2, WebAIM Million 2026
-> (February 2026 crawl), APCA W3C silver branch.
+Grounded in primary sources: WCAG 2.2 Understanding pages, ISO/IEC 40500:2025, ADA Title II 2024 +
+2026 IFR, EN 301 549 v3.2.1, WAI-ARIA 1.3 + AccName 1.2 + Core AAM 1.2, WebAIM Million 2026
+(February 2026 crawl), APCA W3C silver branch.
 
 ## The legal floor changes by jurisdiction
 
@@ -128,7 +128,7 @@ Never invent ARIA attributes or roles.
 The non-negotiable floor: WCAG 2.3.1 (Level A) — flashing more than three times per one-second
 period is non-conformant unless the flash area stays below the general/red flash thresholds
 (photosensitive epilepsy is the protected concern). The animation-timing half of reduced motion
-(duration/easing fallback mechanics) is `motion-spec.md` §6's job once a surface reaches
+(duration/easing fallback mechanics) is the job of `motion-spec.md`'s "Reduced motion" once a surface reaches
 `motion-protocol`; this file owns the flashing floor, not the fallback implementation.
 
 ## Native mobile parity
@@ -163,8 +163,4 @@ screen-reader path — use the platform API for each target.
 
 ## Provenance
 
-Distilled from an external product repository's `craft/accessibility-baseline.md` (one-time
-inspiration source, no path dependency retained) — trimmed of that repo's own tooling references
-(its linter, its sibling `state-coverage.md`/`animation-discipline.md` files) since this plugin
-doesn't vendor them; the flashing floor above is restated standalone rather than pointed at a file
-that doesn't exist here.
+Distilled from an external product repository's `craft/accessibility-baseline.md`.

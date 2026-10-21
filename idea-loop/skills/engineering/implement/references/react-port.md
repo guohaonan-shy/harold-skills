@@ -1,138 +1,43 @@
-# React-Port Checklist — from prototype to real component
+# React 移植清单：从冻结画布到真组件
 
-**React-only appendix to `ui-tickets.md`.** That file is the
-stack-agnostic standard `implement` reads on every UI ticket, and it already owns the general
-rules (classify before porting, data-contract changes, token attribution, state-ownership, the
-measurement loop). Load this one *in addition* when the target project is React/Tailwind and you
-want the concrete mechanics: it is what actually goes wrong translating a frozen canvas
-(`docs/design/tmp/<spec-slug>/canvas/*.html`) HTML+CSS+JS file into the real React/TSX component — every rule below
-came out of an actual port, not a hypothetical; the class and field names in the worked examples
-are illustrative.
-The target project's `DESIGN.md` still applies here: a Tailwind translation that quietly
-drifts off a token in the target project's DESIGN.md is a regression, not a detail.
+目标项目是 React / Tailwind 时，在 [`ui-tickets.md`](ui-tickets.md) 之外再读这份。两桶分类、数据契约、token 归因、按状态归属找组件这些通用规则在那份里；这里只补把冻结画布（`docs/design/tmp/<spec-slug>/canvas/*.html`）翻成 React/TSX 时真正会出错的几处。项目的 `DESIGN.md` 照样适用：Tailwind 翻译悄悄偏离了它的 token，就是回归，不是细节。下面例子里的类名、字段名都是举例。
 
-## 1. Classify every changed CSS rule before touching React
+## 先查先例，再信一个 utility 存在
 
-A prototype's `<style>` block mixes two different kinds of rule, and treating them the same way
-is the single most common port mistake:
+每条画布 CSS 都要找 Tailwind 对应，但先 grep 代码库确认这个 utility 在这里用过。例：画布的 `-webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;` 换成 `line-clamp-2`，是在 `grep -rn "line-clamp" src/` 确认别处已经在用之后。没有对应 utility 的一次性值用任意值（`text-[15px]`），只有真会复用的才考虑新的全局类。
 
-- **Invented for this prototype** — a class that exists ONLY in the HTML file's own stylesheet
-  (e.g. `.proto-summary`, `.proto-toolbar`). These must be TRANSLATED into Tailwind utility classes inline
-  in JSX. Never copy the literal class name into React — there is no such class there, and adding
-  one just to match the name duplicates styling logic the rest of the app doesn't share.
-- **Already-shared branded CSS** — a class the running React app already imports and other
-  components already use (e.g. `brand-gradient`, `brand-gradient-text`, `article-prose` — real CSS rules
-  loaded by the app, not prototype scaffolding). These must be REUSED verbatim. Reinventing them
-  as a new Tailwind utility string that merely *looks* similar throws away a shared definition and
-  guarantees the two will drift apart at the next redesign.
+## 像素值对不上 Tailwind 的刻度，靠截图验
 
-Before writing a single Tailwind class, sort the prototype's changed rules into these two buckets.
+画布能写任意 px，Tailwind 的刻度是离散的（`text-sm`=14px、`text-base`=16px，间距约 4px 一档）。有时正好对上（16px/600 → `text-base font-semibold`），有时只能取最近的一档（`margin-top: 9px` → `mt-2` = 8px）。近似对不对，只能对**真实渲染的 React 页面**重新截图来判断，不能只比两个数字或类名就宣布「和画布一致」。
 
-## 2. Map CSS properties to Tailwind utilities — check precedent, don't assume
+## 新数据要追到源头
 
-Every prototype CSS property needs a Tailwind equivalent, but don't assume one exists just because
-it seems like it should. Grep the codebase for prior use before trusting a utility is available.
+画布里多出来的内容在真实数据流里还不存在时，直接写 JSX 会让之前的每一行都渲染成 `undefined`。判别：画布 `<script>` 里手写的 mock 数据，是不是有一个真实管线里还没有的字段？是，就先把字段追到源头再写 JSX。
 
-Worked example: the prototype's `-webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow:
-hidden;` became Tailwind's `line-clamp-2` in React — but only after `grep -rn "line-clamp" src/`
-confirmed it was already used elsewhere in this codebase (Tailwind 4 ships it as a core utility).
-Without that check, the honest answer would have been "not sure this utility exists here" and a
-manual CSS class would have been the safer fallback. When no utility exists, an arbitrary-value
-bracket (`text-[15px]`) is the right fallback — don't invent a new global CSS class for a one-off
-value unless it's genuinely going to be reused.
+例（给一条内容加一行由模型生成的摘要说明）：依次改了后端抽取 schema 加必填字段 → 生成 prompt 加这个字段的语气与长度要求 → 自检 prompt 的清单 → 抽取 prompt 把 markdown 映射进字段 → i18n 重新本地化的闸门和翻译调用 → markdown 清理 → 前端 TypeScript 类型 → 项目里冻结的契约文档，**最后**才是 React JSX。
 
-## 3. Reconcile exact pixel values against Tailwind's discrete scale — then verify visually
+验证也走真实数据：真跑一遍提交流程，直接查数据库里生成的那一行，确认模型产出的值真落了地、真满足长度与语气要求，然后才拿这一行去截 React 页面。画布的 mock 文字是为好看写的，证明不了真东西能用。
 
-A prototype can specify any px value (`font-size: 16px`, `margin-top: 9px`). Tailwind's scale is
-discrete (`text-sm`=14px, `text-base`=16px; spacing in ~4px steps). Sometimes the mapping is
-exact; sometimes it's the nearest approximation, and that gap is invisible if you only compare
-class names on paper.
+## 命令式 JS 换成 React 的声明式状态
 
-Worked example: bumping a caption from 14px/regular to 16px/600-weight mapped EXACTLY onto
-Tailwind's `text-base font-semibold` — 16px is a real token, nothing was lost. But an adjacent dot
-marker's `margin-top: 9px` had no exact Tailwind spacing match, so it was approximated (`mt-2` =
-8px) — the only way to know that approximation actually looked right was a fresh screenshot of the
-LIVE React page, not a comparison of the two numbers. Never declare a port "matches the prototype"
-from reading class names alone; always re-screenshot the rendered page (a falsifiable signal,
-not a proxy that always looks fine).
+决定打开哪个文件之前，先 grep 相关的 `useState` 看状态归谁（`ui-tickets.md` 的「按状态归属找组件」）：视觉上嵌在某块里的改动，可能属于父组件的 JSX。
 
-## 4. New DATA is a contract change, not a styling port
+画布通常手动重渲染：一个函数改 `textContent`、重建 `innerHTML`，靠 `addEventListener` 委托接线。React 里同样的行为就是 JSX 直接读状态（`{value}`），没有重渲染函数。交互逻辑在之前的 React 版本里已经接对了的话，纯样式移植需要的新 JS / 状态是**零**：只为模仿画布重渲染机制而加的 `useEffect` 或 handler 都不该有。
 
-If the prototype edit adds content that didn't exist in the real data flow before, the port is not
-"add the text to JSX" — it's a data-contract change, and skipping straight to JSX will render
-`undefined` for every row that predates it.
+## 画布有几份副本，就保持同步
 
-Worked example: adding a one-sentence `summary` caption required, in order — (a) a new required field
-in the backend's extraction schema, (b) new register/length instructions in the LLM generation
-prompt for that field, (c) a matching check added to the critique-pass prompt's checklist, (d) the
-extractor prompt updated to map the new markdown line into the field, (e) the field added to the
-i18n relocalization gate + translation call (so a non-English target doesn't silently leave it
-untranslated), (f) the markdown-cleanup pass extended to cover it, (g) the frontend TypeScript type
-updated, (h) the project's frozen-contract doc updated to match — and only THEN (i) the React JSX.
-The tell: does the prototype's mock data (hand-written in its own `<script>` block) represent a
-field that doesn't yet exist anywhere in the real pipeline? If yes, trace the field back to its
-source before writing any JSX.
+项目里同一份画布有不止一份（比如 worktree 里一份、主 checkout 里一份还没提交，由两个本地端口分别提供）时，每次改完 `diff` 一下并同步。从人收藏的那个端口悄悄提供一份过期的副本，是真实出现过的失败。之前同步过，不代表跨会话还同步着。
 
-## 5. Never trust the prototype's mock data as proof the real thing works
+## 在同样的断点上验真页面，用不会说谎的信号
 
-A prototype's mock text is authored to look nice. That proves nothing about what a live model call,
-a real user's input, or an edge-case row will actually produce.
-
-Worked example: after wiring a new field end-to-end, the verification wasn't "the prototype looks
-right with its hand-written sample text" — it was driving a REAL submission through the actual app
-(login → complete a real task → submit → wait for the real pipeline), then querying the resulting
-database row directly to confirm the model-produced value actually landed and actually met its
-length/register target (word-counted from the real string). Only after that ground-truth check did
-the React page get screenshotted against that real row. (Ground decisions in evidence you
-actually gathered, not a plausible-looking mock.)
-
-## 6. Find the true home in the component tree by state ownership, not prototype DOM nesting
-
-The prototype is one flat HTML file. React is already split into components with specific state
-ownership — e.g. a selection state lifted to a parent component so both a switcher control and an
-action button can read it. A prototype edit that visually sits "inside" one block might actually
-belong in the PARENT component's JSX, not the child that merely renders that block's look. Grep
-for the relevant `useState` before deciding which file to open.
-
-## 7. Translate imperative JS into React's declarative state model — never copy it verbatim
-
-A prototype typically re-renders by hand: a function that does `$('#x').textContent = value` and
-rebuilds `innerHTML` on every state change, wired through manual `addEventListener` delegation.
-React expresses the identical behavior as JSX reading directly from state (`{value}`), with no
-imperative re-render function at all. If the interaction logic (which state changes on which
-event) was already correctly wired in a prior React round, a pure styling port needs ZERO new
-JS/state — resist adding a `useEffect` or handler whose only job is to imitate the prototype's own
-re-render mechanics.
-
-## 8. Keep the prototype's own file copies in sync
-
-If this project keeps more than one copy of a canvas file (e.g. one inside a git
-worktree, one in the main checkout, not yet committed, served by two different local ports), `diff`
-them after every edit and sync the pair. A stale copy quietly served from whichever port the user
-has bookmarked is a realistic, already-observed failure mode — don't assume a previously-synced
-pair stays synced across sessions.
-
-## 9. Verify the live React port at the same breakpoints, with a falsifiable signal
-
-Re-run the same responsive check the prototype passed (desktop 1440 + mobile 390/360) against the
-LIVE rendered React page — not the prototype a second time. A screenshot alone can crop out an
-overflow; prefer a signal that can't lie:
+对**真实渲染的 React 页面**（不是再看一遍画布）重跑画布过过的响应式检查：桌面 1440，移动 390 / 360。截图会把溢出裁掉，优先用这个信号：
 
 ```js
 document.documentElement.scrollWidth > document.documentElement.clientWidth
 ```
 
-This exact check caught a real regression: clustering two flex children into one wrapper without
-`flex-wrap`/`max-width: 100%` overflowed the viewport at 390px even though the desktop screenshot
-looked fine. Also confirm any state-driven value (e.g. switching an active tab) actually updates
-the newly-ported element on interaction, not just on first render.
+它抓到过一次真实回归：把两个 flex 子元素包进一个没有 `flex-wrap` / `max-width: 100%` 的容器，桌面截图正常，390px 下溢出了视口。状态驱动的值（比如切换当前 tab）也要确认在交互后真的更新了新移植的元素，不只是首次渲染。
 
-## Gate
+## 完成条件
 
-A port is done when: every changed rule is classified (§1) and translated or reused correctly
-(§2–3), any new data has been traced to a real contract change if applicable (§4) and verified
-against a real, freshly-generated row (§5), the edit landed in the component that actually owns
-the relevant state (§6–7), both prototype copies (if any) are back in sync (§8), and the live page
-has been re-verified at 1440 + 390/360 with the scrollWidth/clientWidth check plus a real
-screenshot (§9). Skipping straight from "the prototype looks right" to "done" is the failure mode
-this checklist exists to prevent.
+每条改动的 CSS 规则都分了桶、正确地翻译或复用了；新数据（如果有）追到了真实的契约变更，并用一行新生成的真实数据验过；改动落在真正持有相关状态的组件里，没有多余的 JS；画布副本（如果有多份）重新同步；真页面在 1440 + 390 / 360 下过了 `scrollWidth` / `clientWidth` 检查，并重新截了图。

@@ -335,7 +335,7 @@ export function loadArchive(root, { delta = null } = {}) {
     const rel = posix(relative(designDir, p));
     if (rel === 'tmp' || rel.startsWith('tmp/')) return true;
     if (legacy.includes(rel.split('/')[0])) return true;
-    // ticket files repeat names across specs by design (wiki-conventions §4)
+    // ticket files repeat names across specs by design (wiki-conventions, section slug 与链接)
     return /(^|\/)spec\/[^/]+\/tickets$/.test(posix(relative(docs, p))) && name === 'tickets';
   };
   const files = new Map();

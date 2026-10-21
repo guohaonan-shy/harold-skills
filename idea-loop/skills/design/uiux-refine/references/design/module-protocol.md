@@ -74,9 +74,9 @@ After Module W is frozen, classify each changed child:
 1. **Existing primitive** — reuse without redesign.
 2. **Deterministic composition** — one treatment already governed by DESIGN.md/siblings; build once.
 3. **Decision-bearing component** — multiple legitimate treatments or a major user decision; read
-   `component-protocol.md`.
+   [component-protocol.md](component-protocol.md).
 4. **Conditional component** — external product/container state changes visibility, content, action,
-   or priority; read `component-protocol.md` and require a state matrix.
+   or priority; read [component-protocol.md](component-protocol.md) and require a state matrix.
 
 Do not run the full protocol on every button, badge, or card merely because the page is new.
 

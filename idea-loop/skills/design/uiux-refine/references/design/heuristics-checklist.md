@@ -4,9 +4,9 @@ Three independent scoring passes to run over the rendered preview at `static-ui-
 at `motion-protocol` Gate 2 for anything usability-relevant that motion touches). Each pass answers a
 different question; running only one misses what the others catch.
 
-## 1. Nielsen's 10 usability heuristics — score 0–4 per heuristic
+## Nielsen's 10 usability heuristics
 
-Score each heuristic against the actual rendered surface, not the concept. A dimension under 3/4 is
+Score each heuristic 0–4 against the actual rendered surface, not the concept. A dimension under 3/4 is
 a finding, not a footnote — name it, route it back to the owning stage (composition issue → W,
 concept issue → B, craft issue → F).
 
@@ -20,13 +20,13 @@ concept issue → B, craft issue → F).
 | 6 | Recognition rather than recall | Are options/actions visible in context, or does the user have to remember something from an earlier screen? |
 | 7 | Flexibility and efficiency of use | Does a repeat/expert user have a faster path (shortcuts, bulk actions) without the novice path being removed? |
 | 8 | Aesthetic and minimalist design | Is every element carrying real signal, or is something present "because it looks nice"? |
-| 9 | Help users recognize, diagnose, and recover from errors | Does an error message state what happened, why, and how to fix it (three-part formula, design-core.md §5.6)? |
+| 9 | Help users recognize, diagnose, and recover from errors | Does an error message state what happened, why, and how to fix it (three-part formula, design-core.md's "Copy construction")? |
 | 10 | Help and documentation | For a genuinely non-obvious action, is help discoverable in context rather than requiring an external doc? |
 
 **Severity mapping for findings**: P0 = blocks the primary task or causes data loss; P1 = causes
 confusion or a wrong action but is recoverable; P2 = friction, not confusion; P3 = polish-only.
 
-## 2. Cognitive load checklist
+## Cognitive load checklist
 
 Three load types, checked independently — a surface can pass one and fail another:
 
@@ -61,7 +61,7 @@ Eight-item checklist:
 - **Recall-not-Recognition** — the user must type/remember instead of picking from what's shown.
 - **Undifferentiated Density** — everything rendered at the same visual weight, nothing to anchor on.
 
-## 3. Five-persona red-flag test
+## Five-persona red-flag test
 
 Read the surface through five lenses; each carries a distinct failure mode a single "does this
 look good" pass won't catch. Pick the personas relevant to the interface type (not all five apply

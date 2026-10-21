@@ -2,8 +2,8 @@
 
 **Load when:** stage A identifies the highest affected altitude as a page/surface: route IA, user
 journey, module order, dominant reading path, or responsive composition changes. This protocol owns
-the Surface altitude. It deliberately descends into `module-protocol.md`, then
-`component-protocol.md`; a page is not complete until its changed lower-altitude decisions are
+the Surface altitude. It deliberately descends into [module-protocol.md](module-protocol.md), then
+[component-protocol.md](component-protocol.md); a page is not complete until its changed lower-altitude decisions are
 resolved.
 
 ## R · Surface ground truth
@@ -12,8 +12,8 @@ For an existing surface:
 
 1. Read the route/page React code, layout shell, real data shape, and shared primitives.
 2. Capture the shipped surface at a pinned viewport using the production-capture recipe in
-   `replication.md`.
-3. Build the affected surface faithfully in the canvas (the latest version `docs/design/tmp/<spec-slug>/canvas/v<N>.html`, see `../refine-canvas.md`).
+   [replication.md](replication.md).
+3. Build the affected surface faithfully in the canvas (the latest version `docs/design/tmp/<spec-slug>/canvas/v<N>.html`, see [refine-canvas.md](../refine-canvas.md)).
 4. Run the screenshot-diff loop until no major differences remain. Preserve shipped warts; lint
    findings against legacy styling are redesign backlog, not permission to change the baseline.
 5. Record a one-line fidelity note and the exact state/viewport captured.
@@ -72,9 +72,9 @@ After Surface W is frozen:
 
 1. Inventory modules as **unchanged**, **changed composition**, or **new**.
 2. Preserve/stub unchanged modules; do not redesign them for completeness.
-3. Read `module-protocol.md` for each changed/new module whose internal hierarchy matters.
-4. Let each changed module classify its children and read `component-protocol.md` only for
-   decision-bearing or conditional components.
+3. For each changed/new module whose internal hierarchy matters, read [module-protocol.md](module-protocol.md).
+4. Let each changed module classify its children; only for decision-bearing or conditional
+   components, read [component-protocol.md](component-protocol.md).
 
 This is one Surface run descending in altitude, not separate design sessions.
 

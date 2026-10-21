@@ -1,5 +1,5 @@
 /**
- * Reading the design archive: six entries, one module (skills/design/design-archive/SKILL.md, section 查询模块).
+ * Reading the design archive: six entries, one module (skills/design/design-archive/references/query.md).
  *
  *   queryPage(archive, name)      a page: regions and components, every state and its edges, the journeys
  *                                 through it, the motions it uses, all decisions and candidates

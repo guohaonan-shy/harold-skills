@@ -1,12 +1,11 @@
 # Motion craft checklist — the static-rules half of Gate 2
 
-Self-contained replacement for a live audit-tool invocation. Read this at `motion-protocol` Gate 2
-alongside `motion-spec.md`. The mechanically-checkable subset runs natively in
-`scripts/design-lint.mjs` (`bounce-easing`, `layout-transition` rules — no external detector
+At `motion-protocol` Gate 2, read this alongside [motion-spec.md](motion-spec.md). The
+mechanically-checkable subset runs natively in `${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs` (`bounce-easing`, `layout-transition` rules — no external detector
 chained in); this file carries the judgment calls and the rules not worth encoding as regex,
 plus the self-check recipes for the two that are.
 
-## 1. The two lint-enforced detectors — what they catch and why
+## The two lint-enforced detectors
 
 Both already run automatically via the PostToolUse hook on every write to
 the motion canvas (`docs/design/tmp/<spec-slug>/canvas/motion-v<N>.html`). Documented here so the *reasoning* travels with the rule, not just the
@@ -23,10 +22,12 @@ pass/fail:
   strictly cheaper to name the 1–2 properties actually being transitioned.
 - **`bounce-easing`** — flags the literal keywords `bounce`/`elastic` and any cubic-bezier with an
   overshoot control point (`y > 1` or `y < 0`), which is what elastic/spring/wobble/jiggle easings
-  produce mathematically. In-app motion uses exponential/standard easing only (motion-spec §3); the
+  produce mathematically. In-app motion uses exponential/standard easing only (motion-spec's "Easing tokens"); the
   overshoot silhouette reads as playful/toy-like, wrong register for a product surface.
 
-## 2. Motion slop catalog (extends motion-spec's restraint budget)
+## Motion slop catalog
+
+Extends motion-spec's "Restraint budget".
 
 - **pulsing-dot** — a decorative pulsing status dot with no real underlying state change. A pulse
   is only earned when it's reporting a genuine live-data transition; otherwise use a static
@@ -36,7 +37,7 @@ pass/fail:
 - **image-hover-transform** — scale/rotate-on-hover with no functional reason for the image to
   react.
 
-## 3. Rules not yet in motion-spec.md
+## Rules not yet in motion-spec.md
 
 - **`transform-origin` must be set explicitly** whenever a `scale`/`rotate` transform is used — the
   default (`50% 50%`) is rarely the right pivot. A dropdown/menu opening from a trigger should pivot
@@ -50,7 +51,7 @@ pass/fail:
   only after it completes.
 - **Off-screen/hidden animations pause.** Any looping or scroll-driven animation stops doing work
   when its element leaves the viewport or its tab/panel is hidden — this is a performance rule
-  (motion-spec §4's "zero ambient loops in-app" already bans the case that matters most; this
+  (motion-spec's "Restraint budget" with its "zero ambient loops in-app" already bans the case that matters most; this
   extends it to loops that *are* allowed, e.g. a marketing-register loop, which still must not burn
   cycles off-screen).
 - **`prefers-reduced-motion` fallback must preserve state change and hierarchy, not just kill
@@ -64,7 +65,9 @@ pass/fail:
   until it has genuinely left the DOM — check this specifically for animated lists/panels, since
   `accessibility-baseline.md`'s static focus-order checks don't cover a moving target.
 
-## 4. The Motion Pyramid — how much justification an animation needs
+## The Motion Pyramid
+
+How much justification an animation needs.
 
 A four-level framework for judging whether a proposed animation earns its place, steeper levels
 need a stronger, more specific reason (a vague "it'll feel nice" only clears Level 1):
@@ -76,7 +79,7 @@ need a stronger, more specific reason (a vague "it'll feel nice" only clears Lev
    the user should be able to track *what* changed without re-scanning the whole screen.
 3. **Entrance/attention** — new content appearing, a toast, a highlight pulse on a genuine update.
    Justification: directs attention to something the user needs to notice *now*, not "the section
-   arriving is nicer with a fade." Counts against the restraint budget (motion-spec §4).
+   arriving is nicer with a fade." Counts against the restraint budget (motion-spec's "Restraint budget").
 4. **Expressive/atmospheric** — ambient loops, marketing-register flourishes, brand-personality
    motion. Justification: a specific brand/identity reason tied to the register dial (marketing
    only — motion-spec's in-app rules ban ambient decoration outright). The highest bar; "it looked

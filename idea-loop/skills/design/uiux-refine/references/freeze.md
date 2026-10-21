@@ -8,7 +8,7 @@ designer 收到人的签字（全部或一部分）时从头读到「不提交�
 docs/design/tmp/<spec-slug>/
 ├── imagine/                    方向说明与发散的临时件（冻结时清）
 ├── canvas/
-│   ├── v<N>.html                  静态画布的各个版本（见 refine-canvas.md）
+│   ├── v<N>.html                  静态画布的各个版本（见 [refine-canvas.md](refine-canvas.md)）
 │   ├── motion-v<N>.html           动效画布的各个版本（开了动效才有）
 │   ├── <spec-slug>-design.md      冻结记录
 │   ├── assets/                    矩阵每格截图（按格名，完整矩阵只在这里）、定格帧或 GIF、素材段的生成素材、画布引用的素材
@@ -17,7 +17,7 @@ docs/design/tmp/<spec-slug>/
 └── delta/                      「写 delta」写的对设计档案的差异
 ```
 
-记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 wiki-conventions 的「frontmatter」一节，`type: design`。
+记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 `idea-loop:wiki-conventions` 的「frontmatter」，`type: design`。
 
 这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 与 `delta/` 由编排者经设计 PR 强制提交进主分支，实现从主分支开 worktree 就拿得到；它们留到实现 PR 合并前的归档（归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
 
@@ -26,7 +26,7 @@ docs/design/tmp/<spec-slug>/
 - **意图**：取自方向说明，逐字一致。
 - **冻结了什么**：画布路径、矩阵每格、mismatch 阈值；有动效就加每条动效的理由与 token、restraint 结算、帧证据；有素材就每个素材一行。
 - **打磨轨迹**：ledger 全文搬进来；素材单在里面；人转来并用上了的调研结论也记在这里，场景 / 设计逻辑 / 对我们 / 不能回答什么一起记，文字，不带图。
-- **设计法候选**：Distill-back 的汇总，每条一行：规则 + 它挂在哪个档案对象上 `[[...]]`，原件在对象文件里；没有就一行「无」。
+- **设计法候选**：签字时从画布里提炼出的、可能成为设计法的规律（Distill-back）的汇总，每条一行：规则 + 它挂在哪个档案对象上 `[[...]]`，原件在对象文件里；没有就一行「无」。
 - **签字**：人的原话，静态与动效两次各记一次；人的方向修订；被分流回发散那一段的 note。
 
 落完清掉 `tmp/<spec-slug>/imagine/`（交接画布 `handoff/` 在里面，一起删）、`tmp/<spec-slug>/canvas/work/`（ledger 已经在记录里），以及没签字的画布版本：静态和动效各只留签字的那一版。`canvas/` 其余全部保留，它们要进 git。
@@ -43,7 +43,7 @@ docs/design/tmp/<spec-slug>/
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域 / 代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`。
    - `usedBy` 由归档脚本生成。
-3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 design-archive 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`idea-loop:design-modeling`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
+3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 `idea-loop:design-archive` 的「正文」：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`idea-loop:design-modeling`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
 4. **自查**，跑到退出码 0：
 
    ```
@@ -56,15 +56,15 @@ docs/design/tmp/<spec-slug>/
 
 两处：「实现决策」写入**冻结摘要**，「前端交互」的文字**换成交互图**。spec 里如果还留着旧流程的「设计方向」小节，删掉，免得下游同时看到两份真值。
 
-冻结摘要固定五样，`to-ticket` 原样誊写：
+冻结摘要固定五样，`idea-loop:to-ticket` 原样誊写：
 
 - **画布指针**：`docs/design/tmp/<spec-slug>/canvas/` 里画布 HTML 的路径（写路径，不写 wikilink）。跑过动效段的，同一条指针把动效 preview 与帧证据一并带上。
 - **矩阵**：每格的 viewport × 主题 × 语言 × 状态，标「人看」的格照标。
-- **mismatch 阈值**：沿用 `idea-loop:ui-measure`的「默认容差」；按格覆盖的写覆盖值和理由。
+- **mismatch 阈值**：沿用 `idea-loop:ui-measure` 的「默认容差」；按格覆盖的写覆盖值和理由。
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更**：画布上有、项目现在渲染不出来的字段逐条列出。
 
-**「前端交互」的交互图**：照 evidence skill（`idea-loop:evidence`）的 spec 图里「交互图（screen flow）」，一个场景一张，截图取自冻结画布（手机宽度、主语言、动画定格、2 倍像素密度、每一步只截那个组件），用 `scripts/flow-compose.mjs` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
+**「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它 spec 图里的「交互图（screen flow）」，一个场景一张，截图取自冻结画布，规格照它的「两类共用的」，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
 
 - **每一步带 `state`**，填这一格对应的状态名（就是「写 delta」里那个状态文件的名字），拼的时候加 `--archive "$(git rev-parse --show-toplevel)" --delta <spec-slug>` 让脚本核对每个 id 都真有这个状态。
 - **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图脚本退出码 2。
@@ -83,8 +83,8 @@ spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排�
 人说「这几块可以冻结了，那几块回去重新发散」时：
 
 1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。`delta/` 只写签过字的那几块（照「写 delta」）。
-2. spec 不动：不写冻结摘要，也不开设计 PR——`to-ticket` 只认整份冻结。
-3. 回推的那几块记进冻结记录的签字节（分流回 `uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
+2. spec 不动：不写冻结摘要，也不开设计 PR——`idea-loop:to-ticket` 只认整份冻结。
+3. 回推的那几块记进冻结记录的签字节（分流回 `/idea-loop:uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
 4. 停下输出，然后你就结束了。下一个 designer 从「部分冻结后重开」接上。
 
 ## 部分冻结后重开

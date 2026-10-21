@@ -5,9 +5,8 @@ component-level color decisions of static-ui-protocol stages E/F. DESIGN.md owns
 (when the project has none, use the theme/tokens found in its code); this file owns how much
 and where.
 
-**Provenance.** Distilled 2026-07-24 from impeccable v4.0.1 `reference/colorize.md` +
-`scripts/palette.mjs` (the text-on-fill and badge-accent rules). Externals are raw feeds;
-update by explicit re-distill, never by runtime reads of external paths.
+**Provenance.** Distilled from impeccable v4.0.1 `reference/colorize.md` and impeccable's own
+`scripts/palette.mjs` (the text-on-fill and badge-accent rules).
 
 - **Build roles, not a bag of swatches:** canvas / elevated surface, primary / secondary text,
   action / focus / selection, borders, semantic states, data-category. Every color use names

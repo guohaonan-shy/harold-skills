@@ -26,7 +26,7 @@
  * Pure: no browser, no model, no clock, no filesystem. Nothing here needs a mock.
  */
 
-/** The five critique dimensions — design-core.md §6. Closed set. */
+/** The five critique dimensions — design-core.md, section Close-out protocol (the 5-dimensional critique). Closed set. */
 export const DIMENSIONS = ['philosophy', 'hierarchy', 'execution', 'specificity', 'restraint'];
 
 /** Severity ladder, most severe first — the rungs the rubric anchors to an AD's action. */

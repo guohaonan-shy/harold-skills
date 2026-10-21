@@ -1,12 +1,12 @@
 # UI craft checklist — the static-visual half of Gate 2
 
-Self-contained replacement for a live critique-tool invocation. Read this at `static-ui-protocol` Gate 2
-("isolated critique") alongside `design-core.md` §5. The mechanically-checkable subset already runs
-in `scripts/design-lint.mjs`; this file carries what a regex can't decide — judgment applied against
+At `static-ui-protocol` Gate 2 ("isolated critique"), read this alongside `design-core.md`'s
+"Anti-slop law". The mechanically-checkable subset already runs in
+`${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs`; this file carries what a regex can't decide — judgment applied against
 a rendered screenshot/DOM, plus the checklist items that are cheap for a human/model to eyeball but
 not worth encoding as a brittle regex.
 
-## 1. Typography thresholds
+## Typography thresholds
 
 Quantified failure signatures — measure against the rendered DOM (`getComputedStyle`), don't eyeball:
 
@@ -30,7 +30,9 @@ Quantified failure signatures — measure against the rendered DOM (`getComputed
   hyphenation (produces ugly rivers), all-caps body paragraphs (fine for short labels, wrong for
   running text).
 
-## 2. Visual slop catalog (extends design-core.md §5.1)
+## Visual slop catalog
+
+Extends `design-core.md`'s "Anti-slop checklist".
 
 - **dark-glow** — zero-offset, saturated colored box-shadow used as an ambient glow.
 - **radial-halo** — a saturated radial gradient glow behind content on a dark page background.
@@ -57,9 +59,9 @@ Quantified failure signatures — measure against the rendered DOM (`getComputed
   into a safe median instead of picking the one whose reasoning actually answers the question. A
   reference is evidence for a specific claim, not a vote.
 
-## 3. Layout/implementation integrity (rendering bugs, not composition judgment)
+## Layout/implementation integrity
 
-Verify on the rendered DOM, not the source:
+Rendering bugs, not composition judgment. Verify on the rendered DOM, not the source:
 
 - **cramped-padding** — padding materially smaller than the contained text's font size/line-height
   reads as claustrophobic; there is no single px threshold, but padding under ~0.5× the font size
@@ -83,15 +85,16 @@ Verify on the rendered DOM, not the source:
 - **broken-image** — a broken/404 image reference in the shipped preview.
 - **script-error** — an uncaught console error/exception on load or interaction.
 
-## 4. Structured critique methodologies
+## Structured critique methodologies
 
-### 4.1 Heuristic and cognitive-load scoring
+### Heuristic and cognitive-load scoring
 
-See `skills/design/uiux-refine/references/design/heuristics-checklist.md` for the Nielsen 10-heuristic scoring rubric, the
-cognitive-load checklist, and the five-persona red-flag test — run these as part of the same Gate 2
-pass.
+In the same Gate 2 pass, read [heuristics-checklist.md](heuristics-checklist.md) and run its Nielsen
+10-heuristic scoring rubric, cognitive-load checklist, and five-persona red-flag test.
 
-### 4.2 Practical craft checklist (forms, touch, performance, navigation, copy)
+### Practical craft checklist
+
+Forms, touch, performance, navigation, copy.
 
 - **Forms**: correct `autocomplete` values on every input that maps to a known field type; never
   block `paste` into a field (breaks password managers and legitimate copy-paste); submit buttons
@@ -107,16 +110,16 @@ pass.
 - **Navigation**: meaningful UI state (selected tab, open filter, current page) belongs in the URL,
   not only in component state, so back/forward/refresh/share work.
 - **Destructive actions**: require explicit confirmation or provide an undo window — never a
-  same-click destructive action with no recovery path (cross-reference design-core.md §5.6's
-  undo-over-confirm preference: prefer undo when recovery is actually possible; confirmation is the
+  same-click destructive action with no recovery path (cross-reference the
+  undo-over-confirm preference in `design-core.md`'s "Copy construction": prefer undo when recovery is actually possible; confirmation is the
   fallback only when it isn't).
 - **Copy mechanics**: active voice over passive; Title Case for UI labels/buttons per the project's
   own casing convention (don't override a DESIGN.md convention that already picked one); numerals
   as digits ("3 items" not "three items") in UI copy.
 
-## 5. DESIGN.md drift check (procedure, not a new rule set)
+## DESIGN.md drift check
 
-When the target project has a `DESIGN.md`, diff the rendered preview's computed values against its
+A procedure, not a new rule set. When the target project has a `DESIGN.md`, diff the rendered preview's computed values against its
 declared tokens before sign-off:
 
 1. Pull the token set the project's own `DESIGN.md` actually maintains (color ramp, spacing scale,

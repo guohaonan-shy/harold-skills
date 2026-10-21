@@ -1,14 +1,14 @@
 # Motion Spec — the motion law
 
-Adapted 2026-07-08 from motion-anything's `MOTION-SPEC.md`
-(`~/projects/motion-anything/MOTION-SPEC.md`, Apache-2.0; itself aligned with Material motion,
+Adapted from motion-anything's `MOTION-SPEC.md` (Apache-2.0; itself aligned with Material motion,
 Apple HIG, and Emil Kowalski's principles). Where a rule below says "DESIGN.md", it means the
 target project's own file: the kind of rule it usually holds, not a value this spec presumes.
-`motion-protocol` MUST read this at Setup — it replaces the loose
-"motion numbers" prose. **The target project's DESIGN.md (when present) wins on any conflict**;
+`motion-protocol` MUST read this at Setup. **The target project's DESIGN.md (when present) wins on any conflict**;
 this file quantifies what it leaves open, and is the default law when the project has none.
 
-## 1. First principles *(verbatim where possible)*
+## First principles
+
+Verbatim where possible.
 
 1. **Motion must mean something.** Every animation gives feedback, shows a relationship /
    continuity, or directs attention. If it does none of these, cut it. (A typical DESIGN.md
@@ -19,7 +19,9 @@ this file quantifies what it leaves open, and is the default law when the projec
 4. **Performance is part of taste.** Janky motion reads as cheap.
 5. **Accessibility is non-negotiable.** Always honor `prefers-reduced-motion`.
 
-## 2. Duration tokens — do not invent arbitrary durations
+## Duration tokens
+
+Do not invent arbitrary durations.
 
 | Token | ms | Register | Use for |
 |-------|----|----------|---------|
@@ -33,7 +35,7 @@ this file quantifies what it leaves open, and is the default law when the projec
 Rule of thumb: the larger the element or distance, the longer the duration — but stay in band.
 In-app UI micro-interactions are almost always `fast`.
 
-## 3. Easing tokens
+## Easing tokens
 
 | Token | value | Use for |
 |-------|-------|---------|
@@ -46,7 +48,9 @@ In-app UI micro-interactions are almost always `fast`.
 Default to `ease-out`. Linear is for continuous loops only (spinners, marquees). **No
 bounce/elastic in-app** — overshoot springs are a marketing-register decision.
 
-## 4. Restraint budget (per visible viewport)
+## Restraint budget
+
+Per visible viewport:
 
 - **≤ 1** celebratory / attention-grabbing moment.
 - **≤ 3** simultaneous entrance animations; stagger the rest at **40–80ms** steps, the whole
@@ -57,7 +61,7 @@ bounce/elastic in-app** — overshoot springs are a marketing-register decision.
 - When composing parts (Aceternity blocks, recipes) that each want "the one moment", the budget
   applies to their **sum** — pick one.
 
-## 5. Performance rules
+## Performance rules
 
 - Animate **`transform` and `opacity` only**. Never `width`/`height`/`top`/`left`/`margin`
   (layout thrash — the lint's `layout-transition` detect rule catches this).
@@ -65,14 +69,14 @@ bounce/elastic in-app** — overshoot springs are a marketing-register decision.
 - Target 60fps; if a pattern can't hold it, simplify.
 - Clean up: cancel timers/rAF, remove injected DOM (particles) after they finish.
 
-## 6. Reduced motion (mandatory)
+## Reduced motion
 
-Every animation ships a `prefers-reduced-motion: reduce` fallback: `scale-only` (keep a tiny
+Mandatory. Every animation ships a `prefers-reduced-motion: reduce` fallback: `scale-only` (keep a tiny
 scale/opacity cue), `crossfade`, or `none` (instant end state). **The reveal must enhance an
 already-visible default — never gate content visibility on a transition** (it ships blank on
 hidden tabs / headless renders; an a11y floor, not a preference).
 
-## 7. The in-app whitelist vs marketing
+## The in-app whitelist vs marketing
 
 - **In-app**, motion comes from the project's whitelist (its DESIGN.md Motion chapter: global
   principles and bans). With none declared, the default whitelist is: sliding tab/segment indicator · highlight reveal ·
@@ -81,9 +85,9 @@ hidden tabs / headless renders; an a11y floor, not a preference).
 - **Marketing** may go bigger (beams, spotlight, tracing reveals, staggered scroll moments),
   on-brand (the project's own accent and neutrals), within this spec's budget and a11y floors.
 
-## 8. The freezable timeline — how motion gets VERIFIED *(from motion-anything's `MA_RUNTIME`)*
+## Freezable timeline
 
-A single screenshot cannot verify motion, and `getComputedStyle` mid-transition reads the
+How motion gets VERIFIED *(from motion-anything's `MA_RUNTIME`)*. A single screenshot cannot verify motion, and `getComputedStyle` mid-transition reads the
 *target* (a frozen animation looks fine). The falsifiable signal is **deterministic frames**:
 
 1. **Every motion preview exposes a seek handle.** Add to the preview HTML:
@@ -110,7 +114,9 @@ A single screenshot cannot verify motion, and `getComputedStyle` mid-transition 
 4. This is also the export path: a seekable preview can be rendered frame-exact to MP4/GIF later
    (motion-anything's `html-capture.js` / HyperFrames) if we ever need motion recordings.
 
-## 9. Recipe library (parts, not paste)
+## Recipe library
+
+Parts, not paste.
 
 `~/projects/motion-anything/recipes/` — ~400 dependency-free motion recipes, each a folder with
 `recipe.motion.yaml` + self-contained `preview.html` + implementation. Use alongside
@@ -120,11 +126,13 @@ component/motion libraries (e.g. Aceternity, React Bits) as an ideas/parts sourc
 - **Adapt into the project's language** (tokens above + DESIGN.md), never paste defaults — same as
   for any library part.
 
-## 10. Definition of done (every produced motion)
+## Definition of done
 
-- [ ] Serves feedback, continuity, or attention (§1) — stated in one sentence in the review list.
-- [ ] Duration + easing pulled from the tokens (§2–3), appropriate to element size.
-- [ ] Within the restraint budget (§4); in-app additionally within the whitelist (§7).
-- [ ] Transforms/opacity only; cleans up after itself (§5).
-- [ ] Working `prefers-reduced-motion` fallback; content visible without the transition (§6).
-- [ ] Preview exposes `__maTimeline.seek(t)` and the frame check ran (§8).
+Every produced motion:
+
+- [ ] Serves feedback, continuity, or attention ("First principles") — stated in one sentence in the review list.
+- [ ] Duration + easing pulled from the tokens ("Duration tokens", "Easing tokens"), appropriate to element size.
+- [ ] Within the restraint budget ("Restraint budget"); in-app additionally within the whitelist ("The in-app whitelist vs marketing").
+- [ ] Transforms/opacity only; cleans up after itself ("Performance rules").
+- [ ] Working `prefers-reduced-motion` fallback; content visible without the transition ("Reduced motion").
+- [ ] Preview exposes `__maTimeline.seek(t)` and the frame check ran ("Freezable timeline").

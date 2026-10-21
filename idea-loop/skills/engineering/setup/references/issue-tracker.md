@@ -14,7 +14,7 @@ issue 是需求的入口，也是工作的队列：idea-loop 的 loop 按 issue 
 
 ## 状态 label
 
-idea-loop 只管 `status:*` 这一组 label，全由它的 `issues.mjs` 改，不手打；只有 `status:搁置` 可以由人打。别的 label 是这个仓库自己的。
+idea-loop 只管 `status:*` 这一组 label，全由它的 `issues.mjs` 改；人只手动打 `status:搁置`。别的 label 是这个仓库自己的。
 
 | issue 的状态 | GitHub 上 | 意思 |
 |---|---|---|
@@ -24,7 +24,7 @@ idea-loop 只管 `status:*` 这一组 label，全由它的 `issues.mjs` 改，�
 | 待设计 / 设计中 | `status:待设计` / `status:设计中` | spec 定稿、碰 UI，等设计 / 在设计 |
 | 待实现 / 实现中 | `status:待实现` / `status:实现中` | 等实现 / 在实现 |
 | 搁置 | `status:搁置` | 先放着，loop 不碰 |
-| 不存在 | closed，not planned | 验证发现问题不成立，或人决定不做 |
-| 已解决 | closed，completed | 实现合并了 |
+| 关闭·不存在 | closed，not planned | 验证发现问题不成立，或人决定不做 |
+| 关闭·完成 | closed，completed | 实现合并了 |
 
 「待」开头的 label 只在上一段的产出合进主分支之后才挂，由 loop 每轮对账时按主分支挂上；问题不存在、实现已合并的，也在对账时关掉。spec 覆盖了哪几个 issue，记在 spec frontmatter 的 `issues: [12, 15]` 里；一个都没覆盖的 spec（从对话里写的），会开一个标题以「spec：」开头的 issue 作为它在这里的入口。

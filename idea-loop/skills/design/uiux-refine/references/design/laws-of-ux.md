@@ -9,23 +9,23 @@ underlying research, `expression-framework.md` operationalizes a subset of it). 
 the laws `expression-framework.md` doesn't already cover: Gestalt grouping, decision framing,
 memory/recall, motor/interaction timing, and behavioral expectation.
 
-> Distilled from primary sources: Wertheimer (1923) for proximity/similarity/Prägnanz, Palmer
-> (1992) for Common Region, Palmer & Rock (1994) for Uniform Connectedness, Kurosu & Kashimura
-> (1995), Tversky & Kahneman (1974) for Anchoring, Pareto (c.1906)/Juran (1951), Tesler (Apple,
-> 1980s), Ockham (14th c.), Ebbinghaus (1885), Kahneman/Fredrickson/Schreiber/Redelmeier (1993) for
-> Peak-End, Zeigarnik (1927), Fitts (1954), Doherty & Thadani (1982), Csíkszentmihályi (1975), Hull
-> (1932), Postel (RFC 760, 1980), Nielsen (2000), Norman *POET* (1988), Carroll & Rosson (1987),
-> Parkinson (1955), Sweller (1988).
+Distilled from primary sources: Wertheimer (1923) for proximity/similarity/Prägnanz, Palmer
+(1992) for Common Region, Palmer & Rock (1994) for Uniform Connectedness, Kurosu & Kashimura
+(1995), Tversky & Kahneman (1974) for Anchoring, Pareto (c.1906)/Juran (1951), Tesler (Apple,
+1980s), Ockham (14th c.), Ebbinghaus (1885), Kahneman/Fredrickson/Schreiber/Redelmeier (1993) for
+Peak-End, Zeigarnik (1927), Fitts (1954), Doherty & Thadani (1982), Csíkszentmihályi (1975), Hull
+(1932), Postel (RFC 760, 1980), Nielsen (2000), Norman *POET* (1988), Carroll & Rosson (1987),
+Parkinson (1955), Sweller (1988).
 
 **These are guidance, applied by the reviewer and the agent — not auto-checked** by
-`design-lint.mjs`, unlike the mechanical rules in `design-core.md` §5.
+`design-lint.mjs`, unlike the mechanical rules in `design-core.md`'s "Anti-slop law".
 
 ## Already operationalized elsewhere — don't re-derive
 
 `expression-framework.md` already turns four of the best-known laws into this plugin's actual
 ladders and budgets: **Selective Attention** and **Von Restorff Effect** → its congestion budget
-(§5, "reserve the strongest contrast for the single goal-relevant signal"); **Hick's Law** and
-**Choice Overload** → its priority ranking (§1 step 2, "≤1 primary, 2–3 secondary") and decision-
+("Congestion budgets", "reserve the strongest contrast for the single goal-relevant signal"); **Hick's Law** and
+**Choice Overload** → its priority ranking ("The procedure" step 2, "≤1 primary, 2–3 secondary") and decision-
 screen caps. Cite the law name if it clarifies a review comment; don't restate the mechanics here.
 
 ## Perception and visual grouping
@@ -55,7 +55,7 @@ answer a different question (how loud, not how grouped).
 - **Aesthetic-Usability Effect** (Kurosu & Kashimura, Hitachi Design Center, 1995). Visual polish
   biases perceived usability — refined typography, generous whitespace, a calm palette earn the
   benefit of the doubt for minor friction. Never a substitute for measurable usability or for the
-  runtime-states contract (`design-core.md` §7.3).
+  runtime-states contract (`design-core.md`'s "Runtime & fallback states").
 
 ## Decision-making
 
@@ -87,8 +87,8 @@ answer a different question (how loud, not how grouped).
 - **Peak-End Rule** (Kahneman, Fredrickson, Schreiber, Redelmeier, *Psychological Science*, 1993).
   Memory of an experience is dominated by the emotional peak and the ending, not the average. Stage
   a high-effort celebratory success state; let intermediate steps stay calm. The peak belongs at
-  the *end* of a flow, not as arbitrary mid-flow motion — `motion-spec.md` §1's "motion must mean
-  something" already rejects motion that performs rather than confirms a state change.
+  the *end* of a flow, not as arbitrary mid-flow motion — the "motion must mean something" rule in
+  `motion-spec.md`'s "First principles" already rejects motion that performs rather than confirms a state change.
 - **Zeigarnik Effect** (Zeigarnik, 1927). Uncompleted tasks create cognitive tension that pulls the
   user back. Visible progress ("3 of 5 steps", greyed-out next sections) converts that tension into
   completion pressure. Reserve for genuinely beneficial flows like onboarding — applying the same
@@ -104,7 +104,7 @@ answer a different question (how loud, not how grouped).
   users in flow; latency above ~1s breaks attention. Working directive: no indicator under 300ms;
   skeleton 300ms–2s; labelled spinner 2–10s; determinate bar with cancel 10–60s; stop and offer
   error/retry past 60s — this is also the loading-state timing under the runtime/fallback model
-  (`design-core.md` §7.3).
+  (`design-core.md`'s "Runtime & fallback states").
 - **Flow** (Csíkszentmihályi, 1975). Flow sits in the balance between challenge and skill — too
   hard breeds frustration, too easy breeds boredom. Continuous feedback and a clear sense of
   control keep the user inside the state; system friction and latency are the fastest ways to
@@ -136,16 +136,11 @@ answer a different question (how loud, not how grouped).
   saved state) so a flow finishes faster than the user expected.
 - **Cognitive Load** (Sweller, 1988). Total mental effort splits into intrinsic (the task's
   inherent difficulty) and extraneous (poor layout, jargon, inconsistent patterns, visual noise).
-  Extraneous load is what a designer controls — `design-core.md`'s restraint law (§5, §6) and the
+  Extraneous load is what a designer controls — `design-core.md`'s restraint law ("Anti-slop law", "Close-out protocol") and the
   expression framework's congestion budgets are the concrete levers; this entry names the cost
   those levers exist to reduce.
 
 ## Provenance
 
-Distilled from an external product repository's `craft/laws-of-ux.md` (one-time inspiration
-source, no path dependency retained). Trimmed of the four laws `expression-framework.md` already
-operationalizes (see above) to avoid restating the same rule twice, and of cross-references to that
-repository's sibling craft files this plugin doesn't vendor (`state-coverage.md`,
-`animation-discipline.md`, `typography.md`, `color.md`, `form-validation.md`) — pointers were
-redirected to this plugin's own equivalents (`design-core.md`, `motion-spec.md`,
-`accessibility-baseline.md`) where one exists, or dropped where none does.
+Distilled from an external product repository's `craft/laws-of-ux.md`, minus the four laws
+`expression-framework.md` already operationalizes.

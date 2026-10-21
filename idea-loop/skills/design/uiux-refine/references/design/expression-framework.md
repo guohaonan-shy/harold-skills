@@ -9,19 +9,14 @@ because "which color should this badge be" is almost never the real question —
 reachable, and how important is this signal to the user's decision" comes first; both have answers
 that can be established before taste.
 
-**Provenance.** Distilled 2026-07-24 from: open-design `craft/typography-hierarchy.md` (the
-dominance model, hierarchy vectors, flat/noise failure modes) + `craft/laws-of-ux.md`
-(selective attention, decision weight, congestion caps — research-grounded), impeccable v4.0.1
-(`critique.md` visual-noise floor + ≤4 working-memory chunking, `layout.md` spatial thesis +
-squint test, `scripts/palette.mjs` text-on-fill rules), and one badge-placement case (2026-07),
-retold in §6 on a fictional product. Externals are raw feeds; this file is the
-source of truth — update by explicit re-distill, never by runtime reads of external paths. The
-remaining laws from `craft/laws-of-ux.md` not operationalized here (Gestalt grouping, decision
-framing beyond Hick's Law, memory/recall, motor timing, behavioral expectation) were distilled
-separately into `skills/design/uiux-refine/references/design/laws-of-ux.md`, which cross-references back to this file rather than
-restating the four laws already turned into ladders/budgets here.
+**Provenance.** Distilled from open-design `craft/typography-hierarchy.md` and `craft/laws-of-ux.md`,
+impeccable v4.0.1 (`critique.md`, `layout.md`, and its own `scripts/palette.mjs` text-on-fill rules),
+and one badge-placement case retold in "Worked example — the badge case" on a fictional product.
 
-## 0. Conditional-state precondition
+For the laws not turned into ladders/budgets here (Gestalt grouping, decision framing beyond Hick's
+Law, memory/recall, motor timing, behavioral expectation), read [laws-of-ux.md](laws-of-ux.md).
+
+## Conditional-state precondition
 
 Before the five expression steps, ask whether external product or container conditions change the
 UI's **visibility, content, available action, fallback, or visual priority**. If so, establish the
@@ -43,36 +38,42 @@ share one visual treatment.
 This is a precondition, not a sixth expression step: the five-step procedure runs once the honest
 content for each distinct behavior is known.
 
-## 1. The procedure (five steps, altitude-neutral)
+## The procedure
+
+Five steps, altitude-neutral.
 
 1. **Content inventory** — list every element this surface must show. From the data model and
    the user's job, not from imagination or "what such pages usually have."
 2. **Priority ranking** — rank by the user's job on this surface: seen in the first scan /
    second scan / on demand. Hard constraint at every altitude: **≤1 primary, 2–3 secondary,
    everything else quiet.** If two things feel primary, the ranking isn't done — demote one.
-3. **Weight assignment** — map each rank to a treatment using the altitude's levers (§2, §3).
+3. **Weight assignment** — map each rank to a treatment using the altitude's levers ("The three altitudes", "The weight ladder").
    Visual weight must match decision weight; nothing gets emphasis "because it looks nice."
-4. **Congestion budget** — check the altitude's cap (§5). Over budget → demote a signal or
-   move it down the position ladder (§4); never solve congestion by making everything louder.
+4. **Congestion budget** — check the altitude's cap ("Congestion budgets"). Over budget → demote a signal or
+   move it down the position ladder ("The position ladder"); never solve congestion by making everything louder.
 5. **Verify — the squint test.** Blur the details (squint, or blur the screenshot): a stranger
    must still name the primary and the secondaries, in order. Name the failure explicitly if it
    fails: **flat** (everything equal = a wall) or **noise** (too many competing = demote even
    the things that "feel important").
 
-## 2. The three altitudes — same procedure, different levers
+## The three altitudes
+
+Same procedure, different levers.
 
 | Altitude | Inventory lists… | "Weight" is spent as… | Budget |
 |---|---|---|---|
 | **Page / surface** (IA → wireframe) | modules / sections | **area, position (above/below fold), order, grouping, whitespace** | 1 dominant module per screen; ≤5 named groups |
 | **Module** (wireframe) | elements within a module | size, type scale, alignment, density | ≤3 visible hierarchy levels |
-| **Component** (hi-fi) | signals on one component | **the weight ladder (§3), font weight, the position ladder (§4)** | ≤1 L4 · ≤2 L3 · ≤4 signals total |
+| **Component** (hi-fi) | signals on one component | **the weight ladder, font weight, the position ladder** (see those sections) | ≤1 L4 · ≤2 L3 · ≤4 signals total |
 
 The law across altitudes: **at wireframe altitude, weight is spent in space; at hi-fi altitude,
 it is spent in ink. The ranking logic never changes — only the currency does.** A dominant
 element earns its place through at least two levers pointing the same way (bigger AND first;
 filled AND heavier) — a single lever reads as accident, not intent.
 
-## 3. The weight ladder (component altitude — token names are examples)
+## The weight ladder
+
+Component altitude; token names are examples.
 
 - **L4 — loud:** saturated deep fill + white text. Reserved for the single most
   decision-relevant signal on the component. Text-on-fill rule *(impeccable palette)*: a
@@ -89,16 +90,18 @@ filled AND heavier) — a single lever reads as accident, not intent.
 - Semantic color (state) and data-category color (e.g. a content category) are **separate
   systems** — one element speaks one system (a common DESIGN.md floor: categories ride a dot/label).
 
-## 4. The position ladder (progressive disclosure — all altitudes)
+## The position ladder
 
-**in content flow → corner-anchored → behind hover/expand → next page/level.**
+Progressive disclosure, all altitudes: **in content flow → corner-anchored → behind hover/expand → next page/level.**
 
 Demoting a signal down this ladder is the standard answer to congestion — not shrinking
 everything, not another color. Instances: a NEW badge moves from the inline badge row to a
 corner anchor (component altitude); a secondary module moves below the fold or to a detail page
 (page altitude).
 
-## 5. Congestion budgets (why they exist)
+## Congestion budgets
+
+Why they exist:
 
 - Reserve the strongest visual contrast for the **single goal-relevant action or signal** per
   surface (selective attention). Repeated attention-grabbers train **banner blindness**; the
@@ -110,9 +113,9 @@ corner anchor (component altitude); a secondary module moves below the fold or t
 - The budget is a *feature*: hitting it forces the priority conversation ("is NEW really more
   important than difficulty?") that step 2 should have settled. Argue rank, not hue.
 
-## 6. Worked example — the badge case (component altitude, 2026-07)
+## Worked example — the badge case
 
-A trail card in a hiking app (fictional). **Inventory:** title, region, permit-required
+Component altitude. A trail card in a hiking app (fictional). **Inventory:** title, region, permit-required
 qualifier, difficulty, NEW recency, distance/elevation meta. **Ranking** for the hiker's job (pick a
 trail for Saturday): permit required = primary qualifier (changes the decision); difficulty =
 secondary; NEW = tertiary; meta = silent. **Assignment:** permit required → L4 (deep fill + white
@@ -121,9 +124,9 @@ down the position ladder to the corner anchor. **Verify:** squint — the L4 bad
 survive; nothing else competes. The hours once spent iterating hue and placement collapse into
 one argument about step 2 — and rank has a right answer where taste doesn't.
 
-## 7. Maintenance
+## Where new treatment decisions go
 
 New generalizable treatment decisions become candidates at static-ui-protocol's Distill-back step
-and never edit the project's `DESIGN.md` from here; `dreaming` processes them under
+and never edit the project's `DESIGN.md` from here; `idea-loop:dreaming` processes them under
 `idea-loop:design-modeling`. This file defines the ladders and the procedure; DESIGN.md records the
 decided instances.

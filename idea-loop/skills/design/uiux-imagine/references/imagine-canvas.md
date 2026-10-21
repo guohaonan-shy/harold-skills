@@ -1,17 +1,17 @@
 # imagine 的画布
 
-imagine 的画布是为了让人在几个真正不同的方向之间选：同一个问题出几个变种，摆在一块变种板上对比，每个变种只做到刚好分得出彼此。它跟 refine 的画布不是一种东西：refine 只有一个方向，求的是做对。
+imagine 的画布让人在几个真正不同的方向之间选：同一个问题出几个变种，摆在一块变种板上对比，每个变种只做到刚好分得出彼此。refine 的画布只有一个方向，求的是做对，两者不是一种东西。
 
 ## 目录里有什么
 
-位置见 wiki-conventions 的「目录」一节（`design/tmp/<spec-slug>/imagine/`），本地、不进 git：
+位置见 `idea-loop:wiki-conventions` 的「目录」（`design/tmp/<spec-slug>/imagine/`），本地、不进 git：
 
 ```
 imagine/
 ├── board.html            变种板：用 ?variant=<名字> 切变种，?state=<名字> 切状态
 ├── assets/               变种板引用的素材、抓来的组件与样式、生成的图
 ├── rounds.md             每轮记录：人的原话、点名留下的变种、交付原文；会话重开后从这里接着做
-├── direction-note.md     方向说明，写法见 direction-note.md
+├── direction-note.md     方向说明，写法见 [direction-note.md](direction-note.md)
 └── handoff/              交接画布：选中的那一版导成的独立页面，refine 的第一版画布从它来
     ├── index.html
     └── assets/
@@ -31,17 +31,16 @@ imagine/
 
 ## 在线上 UI 上出变种
 
-改动落在已上线的界面上时，每个变种都是线上真组件的克隆，只改这次要动的地方：
+改动落在已上线的界面上时，每个变种都是线上真组件的克隆，只改这次要动的地方。调浏览器前用 Skill 工具调 `idea-loop:browser`。
 
 1. 在本地开发环境用 Playwright 打开真页面，把它带到对的状态（登录、造数据、拦请求），取目标组件的 `outerHTML`。设计档案里有这个页面，先用档案的「页面」查询看它有哪些状态、区域与组件，知道要抓哪几个。
 2. 取整页 CSS：遍历 `document.styleSheets`，拼起每条规则的 `cssText`，把相对的 `url(/…)` 改成开发服务器的绝对地址，不然字体和图标加载不了。
-3. Playwright MCP 的代码沙箱写不了文件。在 `imagine/` 里起一个允许跨域的小 HTTP 服务，收到 POST 就把内容写盘，在页面里 `fetch` 过去。
+3. Playwright 的代码沙箱写不了文件：在 `imagine/` 里起一个允许跨域的小 HTTP 服务，收到 POST 就把内容写盘，在页面里 `fetch` 过去。
 4. 拼 `board.html`：抓来的 CSS 放一次，每个变种一份克隆，只改要动的部分，各接各的模拟时序。
 
 踩过的坑：
 
 - 抓的时候组件要处在静止态。抓到加载中，它就成了每个变种对比的「基线」。克隆前先看一眼抓到的是什么。
-- Playwright 代码沙箱里没有 `setTimeout`，等待用 `page.waitForTimeout(ms)`。
 - 全新的界面没有可克隆的，从零做，用同一块板。
 
 抓取用的开发服务器和接收服务，谁起的谁停。

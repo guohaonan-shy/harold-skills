@@ -52,7 +52,7 @@ async function main() {
   const report = [
     `design-lint on ${filePath}:`,
     renderFindings(findings),
-    '\nFix P0 before continuing (design-core.md §6.1); P1 should be fixed or consciously justified in the review list.',
+    '\nFix P0 before continuing (design-core.md, section Close-out protocol); P1 should be fixed or consciously justified in the review list.',
   ]
     .filter(Boolean)
     .join('\n');

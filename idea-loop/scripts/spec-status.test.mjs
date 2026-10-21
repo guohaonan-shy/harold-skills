@@ -26,7 +26,7 @@ ${grill ? '\n> 需要 grill：要不要给重试单独的配额，条目里没�
 ${Object.entries(verdict ?? {}).map(([n, v]) => `| #${n} | ${v} | 复现 |`).join('\n')}
 
 ## 实现决策
-${freeze ? '\n### 冻结摘要\n- 画布指针：[[practice-retry-design]]\n' : '\n无分歧。\n'}${fork ? '\n### 待定：重试要不要单独计配额\n- 选项 A：…\n' : ''}
+${freeze ? '\n### 冻结摘要\n- 画布指针：docs/design/tmp/practice-retry/canvas/v3.html\n' : '\n无分歧。\n'}${fork ? '\n### 待定：重试要不要单独计配额\n- 选项 A：…\n' : ''}
 ## 技术方案总览
 
 ### 后端

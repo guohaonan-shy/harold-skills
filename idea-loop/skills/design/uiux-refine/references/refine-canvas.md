@@ -1,10 +1,10 @@
 # refine 的画布
 
-refine 的画布是这份 spec 定稿用的高保真设计：方向说明的那一版，做到能让人签字冻结，下游 `implement` 拿它当真值比对。它跟 imagine 的变种板不是一种东西：变种板为了让人在几个方向之间选，refine 的画布只有一个方向，求的是做对。
+refine 的画布是这份 spec 定稿用的高保真设计：方向说明的那一版，做到能让人签字冻结，下游 `idea-loop:implement` 拿它当真值比对。它只有一个方向，求的是做对；imagine 的变种板才是为了在几个方向之间选。
 
 ## 放在哪
 
-一份 spec 一个目录，位置见 wiki-conventions 的「目录」一节（`design/tmp/<spec-slug>/canvas/`）。打磨时只在本地；冻结时删掉没签字的版本和 `work/`，其余经设计 PR 提交（`references/freeze.md`）：
+一份 spec 一个目录，位置见 `idea-loop:wiki-conventions` 的「目录」（`design/tmp/<spec-slug>/canvas/`）。打磨时只在本地；冻结时删掉没签字的版本和 `work/`，其余经设计 PR 提交（[freeze.md](freeze.md)）：
 
 ```
 canvas/
@@ -28,11 +28,7 @@ lint hook 只认 `canvas/` 下直接放着的 HTML，所以画布不放进子目
 
 ## 三条约定
 
-下游 `implement` 开两个标签页，一边是冻结的画布，一边是实现，逐格比对。三条约定保证两边比的是同一个东西，一条都不能破（全文在 `ui-measure` skill，`idea-loop:ui-measure` 的「三条环境约定」）：
-
-1. **锚点**：块与关键元素带 `data-anchor`，名字是契约，换版本、调构图都不改。两个 DOM 靠它对齐。
-2. **渲染环境**：字体走目标项目自己的加载方式，不走公共 CDN；截图前等 `document.fonts.ready`，关动画与过渡。
-3. **状态用 URL 切**：同一个界面的加载中、空、出错、展开等状态，用 `?state=<名字>` 打开。状态名进验收矩阵和冻结摘要，`implement` 按名字拼 URL 比对，设计档案的状态文件和交互图的每一格也用同一个名字。
+下游实现开两个标签页，一边是冻结的画布，一边是实现，逐格比对。画布照 `idea-loop:ui-measure` 的「三条环境约定」写：块与关键元素带 `data-anchor`，字体走目标项目自己的加载方式，每个状态用 `?state=<名字>` 打开。锚点名和状态名是契约，换版本、调构图都不改；状态名进验收矩阵和冻结摘要，设计档案的状态文件和交互图的每一格也用同一个名字。
 
 ## 预览
 
