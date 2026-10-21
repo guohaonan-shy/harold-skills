@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 在飞
+status: 实现中
 tags: [idea-loop, design, design-md]
 summary: DESIGN.md 写入口收拢：删 design-modeling，写入标准成 reference，只留 uiux-imagine 与 dreaming 两处写
 related: ["[[ui-state-archive]]", "[[dreaming-design-reconcile]]", "[[2026-10-19-design-md-standard]]"]

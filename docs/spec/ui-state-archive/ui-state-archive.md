@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 在飞
+status: 实现中
 tags: [idea-loop, design, ui-archive]
 summary: docs/design 分 tmp / prod，prod 是一张按页面状态建的图，设计与验证共用，合并前归档
 related: ["[[0002-design-loop-v2-imagine-refine]]", "[[design-md-write-entry]]", "[[dreaming-design-reconcile]]"]
