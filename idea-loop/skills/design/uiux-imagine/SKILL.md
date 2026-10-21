@@ -1,6 +1,6 @@
 ---
 name: uiux-imagine
-description: 设计发散——人审完一份碰 UI 的 spec 后跑它，开工时把 spec 翻成「设计中」。起 plugin 自带的 uiux-imaginer agent（最新的 Opus，思考强度 high）在还没定下来的最高高度上出几个真正不同的变种，每轮写成内嵌浏览器里可点击、带真动效的变种板；调用它的会话只做编排——起静态服务器、每轮把变种板摆给人、把人的意见分流后转回同一个 uiux-imaginer。人给方向性的话，调向到方向没有要补的了，准出一份方向说明和一张交接画布（选中的那一版）交给 uiux-refine。不收敛、不打分、不提保真度。
+description: 设计发散：从一份碰 UI 的 spec 出几个真正不同的变种，人定下方向后交给 uiux-refine。
 disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(npx -y @google/design.md@latest:*), Bash(git ls-files:*), Bash(git diff:*), Bash(git log:*), Bash(git show:*), AskUserQuestion
 ---

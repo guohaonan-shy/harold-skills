@@ -1,6 +1,6 @@
 ---
 name: uiux-researcher
-description: uiux-research 的执行者——每次调研一个，由 uiux-research 的编排者起。拿人的原话、一句具名问题、产品上下文和一个落图目录，用 Refero 的 screens / flows 层查别人怎么做，把参考截图下载进落图目录，写一页单文件 index.html（顶部是具名问题、「研究问题」块里的人的原话与上下文、这些产品的通用结论；中间每个来源一组可点开放大的按 flow 排的截图加场景 / 设计逻辑两段；最后一块是结合我们需求要人决策的问题），跑 research-check 校验后只交回这页的路径和一句结论。Refero 的调用和截图都不进调用方的上下文。不查视觉风格，不下方向结论，不改画布，不跟人对话，不在 uiux-research 之外被调用。
+description: uiux-research 的执行者，每次调研一个，只交回调研页路径和一句结论。
 model: opus
 effort: medium
 tools: Read, Write, Bash, mcp__refero__refero_search_screens, mcp__refero__refero_get_screen, mcp__refero__refero_get_similar_screens, mcp__refero__refero_search_flows, mcp__refero__refero_get_flow

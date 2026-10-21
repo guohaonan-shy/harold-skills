@@ -1,6 +1,6 @@
 ---
 name: uiux-refine
-description: 设计收敛——方向定了之后由人跑它。起 plugin 自带的 designer agent（最新的 Opus，思考强度 high）从 imagine 交出的交接画布接着做（没有交接画布时退回从方向说明重建）、跑打磨环（每轮新起一个 ui-master agent 当评委，最新的 Fable，思考强度 high），按需接动效段与素材段，再各跑一轮减法与 AI tells；调用它的会话只做编排——designer 每次停下就把画布在内嵌浏览器里摆给人、把人的意见分流后转回同一个 designer。人签字后冻结在项目的 `docs/design/tmp/<spec-slug>/canvas/`（本地、不进 git）、冻结结果写成对设计档案的 `delta/`、交互图写回 spec（状态留在设计中，切完工单才由 to-ticket 翻在飞）；也可以部分冻结、其余回 uiux-imagine。
+description: 设计收敛：从定下的方向打磨到人签字冻结，冻结结果写成设计档案的 delta。
 disable-model-invocation: true
 ---
 

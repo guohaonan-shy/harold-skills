@@ -1,6 +1,6 @@
 ---
 name: ui-master
-description: uiux-refine 打磨环的评委——每轮由 idea-loop:designer 新起一个，看完这一轮的截图（或动效帧序列）就交出 finding 与分数，然后结束。只看图、意图那一句和 critic rubric，不看画布代码、不看历史评语与分数、不看项目的 T1 底线。不在 uiux-refine 之外被调用。
+description: uiux-refine 打磨环的评委，designer 每轮新起一个，只看这一轮的截图给 finding 与分数。
 model: fable
 effort: high
 tools: Read

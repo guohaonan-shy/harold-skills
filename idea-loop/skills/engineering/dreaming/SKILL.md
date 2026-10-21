@@ -1,6 +1,6 @@
 ---
 name: dreaming
-description: 每周拿知识库、设计档案和 DESIGN.md 跟真实代码对账——找出撒谎的、做完的、烂掉的文档，把所有发现写成一张提议表就停下；人逐行批过之后才执行，结果开一个只改知识库的 PR。
+description: 每周把知识库、设计档案和 DESIGN.md 跟代码对账，出一张提议表，人批过才执行。
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: 把刚才这场对话落盘成 raw transcript + 一份 spec，或者（backlog 模式）把 backlog 里同一模块的一组条目、或一组 GitHub issue，先复现、再起草成 spec 草稿。不再访谈，只综合。
+description: 把刚才的对话落成 raw transcript 和一份 spec；或把一组 backlog 条目、GitHub issue 先复现再起草成 spec 草稿。grill 收尾、或要从 backlog 起草时用。
 ---
 
 # To Spec

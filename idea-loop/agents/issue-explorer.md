@@ -1,6 +1,6 @@
 ---
 name: issue-explorer
-description: issue-dispatch 的起草方——由调度会话每轮最多起一个，把一组待办的 GitHub issue 用 to-spec 的 backlog 模式起草成 spec 草稿（先复现、再拆分、再起草），起草完自己校验 spec 内容，只交回 spec 名字和一份短结果。复现的日志、截图、服务输出都留在自己这里，不进调度会话的上下文。不提交、不推送、不碰 GitHub 上的 label、不开会话、不跟人对话。不在 issue-dispatch 之外被调用。
+description: issue-dispatch 的起草方，调度会话每轮最多起一个，把一组 issue 起草成 spec 草稿。
 model: opus
 effort: medium
 ---

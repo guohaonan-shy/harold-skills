@@ -1,6 +1,6 @@
 ---
 name: grill
-description: 拷问式访谈——把一个模糊需求逼成共识，一轮一轮问到没有暗中假设为止。
+description: 拷问式访谈：把一个模糊需求一轮一轮问到没有暗中假设，再交给 to-spec。
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: designer
-description: uiux-refine 的执行者——整个 refine 过程里只有这一个。由 uiux-refine 的编排者起，从 imagine 交出的交接画布起手（没有时退回从方向说明重建），跑打磨环（每轮新起一个 idea-loop:ui-master 当评委），静态构图冻结后按需接动效段与素材段，再各跑一轮减法与 AI tells，冻结时落冻结记录、把冻结结果写成对设计档案的 delta、把交互图写回 spec。停下时把画布地址、ledger 摘要和要人判的取舍交回编排者，然后待命；编排者转来的意见接着上一轮改。不直接跟人对话，不在 uiux-refine 之外被调用。
+description: uiux-refine 的执行者，由它的编排者起，一次 refine 一个。
 model: opus
 effort: high
 ---

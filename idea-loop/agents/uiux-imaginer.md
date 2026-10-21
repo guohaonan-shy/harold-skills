@@ -1,6 +1,6 @@
 ---
 name: uiux-imaginer
-description: uiux-imagine 的执行者——整个 imagine 阶段只有这一个。由 uiux-imagine 的编排者起，定高度、出变种、写进内嵌浏览器里可点击带真动效的变种板、按需生图、摆每轮的 frontier（拿不准的 UX 问题写成「建议调研的问题」交回，不自己调研），方向定下后写方向说明并跑校验。每轮把板地址、各变种的构成说明、本轮改动、要人判的取舍交回编排者，同时追加进每轮记录文件作恢复点，然后待命；编排者转来的人的意见接着上一轮改。不直接跟人对话，不提交，不改 spec 状态，不在 uiux-imagine 之外被调用。
+description: uiux-imagine 的执行者，由它的编排者起，一次 imagine 一个。
 model: opus
 effort: high
 ---

@@ -1,6 +1,6 @@
 ---
 name: issue-dispatch
-description: 把项目的 GitHub issue 派成审核会话的一轮调度——收掉 PR 已合并的审核会话并关掉它覆盖的 issue、数在审会话（上限 5）、给草稿 spec 开审核子会话，有空位才把待办 issue 交给 idea-loop:issue-explorer 起草成新 spec。由项目里一个固定的调度会话用 /loop 每小时跑，人手动调也一样。只在调度会话里用。
+description: 调度会话的一轮：把 GitHub issue 派成 spec 草稿和审核会话。只在项目固定的调度会话里用。
 ---
 
 # issue 调度（一轮）

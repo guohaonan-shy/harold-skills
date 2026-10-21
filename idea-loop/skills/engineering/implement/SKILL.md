@@ -1,6 +1,6 @@
 ---
 name: implement
-description: 把一份 spec 的工单连续实现完——调用它的会话做编排，按工单的依赖图并行派 plugin 自带的 implementer agent（每张一个只装着它的新上下文、一个自己的 worktree，做成一个 commit，由编排者 fast-forward 进集成分支并回收那个 worktree），只在要人拍板时停：没有能做的工单了，就在会话里给人一份停下汇报，放执行方已按规则定下的事（人可推翻）、要人决定的事和要人看的素材（流程图、动图），同样的内容记进这个 PR 的本地 review loop 文件，人在会话里回答后接着做；全部落地、没有等决定的事之后把 PR 转成 open，接 pr-review。也可以只做指定的几张。不重开方案，不改 spec 的 scope。
+description: 把一份 spec 的工单按依赖并行实现完，只为要人拍板的事停下，全部落地后把 PR 转 open 交给 pr-review。实现一份 spec，或只做其中指定的几张工单时用。
 ---
 
 # Implement

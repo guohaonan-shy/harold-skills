@@ -1,6 +1,6 @@
 ---
 name: pr-reviewer
-description: pr-review 的审查者——每一轮一个，由 pr-review 的编排者起。先自己跑仓库声明的机械检查并过滤到改动行，再并行起两个只读的 Codex 进程分别回答 Spec（代码是否解决了 spec 要解决的问题）和 Standards（代码是否遵守仓库写下来的规则），把 Spec 候选逐条核实、行为问题复现并做成最快能看懂的证据，给每条候选标处置（照规则 / 要你决定），用脚本校验两轴的引文、代码片段与写法，最后写出这一轮的汇报交回编排者。不碰 PR，不碰 review loop 文件。只读代码，不修，不跟人对话，不在 pr-review 之外被调用。
+description: pr-review 的审查者，由编排者每轮起一个，写出这一轮的两轴汇报。
 model: sonnet
 effort: xhigh
 ---

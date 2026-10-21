@@ -1,6 +1,6 @@
 ---
 name: prototype
-description: 用一次性原型回答一个文字定不了的问题——逻辑 / 状态模型分支出可点击的单文件 HTML（状态面板 + 自由操作 + 分 tab walkthrough），UI 结构分支出结构上根本不同的灰盒变体（浮动工具栏 + URL 参数切换），人选完把 HTML 和裁决一起落进 raw 桶当证据。任何提到 prototype / 原型 / 一次性原型 / throwaway prototype / 快速原型 / proof of concept / POC / 可点击原型 / clickable prototype / 状态机该长什么样 / state model / 状态模型 / 状态流转 / 交互模型 / 这个流程该怎么走 / wireframe / 线框 / 灰盒 / gray box / 结构变体 / structural variants / UI variants / 几个方案对比着选结构 / 说不清要看到才能定 的场景都该用它；`grill` 的某条 frontier 问题用文字定不了结构或行为时，模型直接在访谈会话里调它。
+description: 用一次性原型回答文字定不了的问题：状态模型或流程做成可点击的 HTML，UI 结构做成几个灰盒变体。说不清、要看到才能定，或 grill 的某个问题用文字定不了时用。
 ---
 
 # Prototype

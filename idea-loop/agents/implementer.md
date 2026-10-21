@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: implement 的执行方——一张工单一个，由 implement 的编排者起，在自己的 worktree 里把这张工单做成一个 commit（合入集成分支最新提交后压成一个，让编排者能 fast-forward）：在 spec 谈拢的 seam 上跑 TDD，UI 工单多跑一道测量比对，要人判断的部分录成流程图和动图，验收标准逐格有证据或写明延后给谁，存量回归和全量套件全绿才提交。撞到行为没定、产品里又没有现成做法的事就停下，把问题、两个选项和推荐交回编排者；有现成做法的沿用，在交回里写明依据。不跟人对话，不推送，不开 PR，不在 implement 之外被调用。
+description: implement 的执行方，由编排者按工单起，一张工单一个 worktree、一个 commit。
 model: sonnet
 effort: high
 ---

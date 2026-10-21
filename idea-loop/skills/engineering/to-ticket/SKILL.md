@@ -1,6 +1,6 @@
 ---
 name: to-ticket
-description: 把一份 spec 切成 tracer-bullet ticket，每张声明自己被谁挡着。临时凭据，合了即删。
+description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡着。spec 审完要开工时用。
 ---
 
 # To Ticket

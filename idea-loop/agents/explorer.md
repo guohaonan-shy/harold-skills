@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: implement 开工前的探路者——由 implement 的编排者在并行派工前起一个，按编排者给的目的，把这批工单的 implementer 都要重复找的东西（验证命令、测试与造数据的写法、服务怎么起、领域词汇、每张工单描述的现状在代码里的位置、要用到的外部文档）找出来，写成只含指针的笔记，供并行的 implementer 共享。只找「在哪、怎么跑」，不下「应该是什么」的结论，不改代码，不跟人对话，不在 implement 之外被调用。
+description: implement 并行派工前的探路者，由 implement 的编排者起，把各 implementer 都要找的位置和命令写成指针笔记。
 model: haiku
 effort: high
 tools: Read, Grep, Glob, Bash, Write, WebFetch

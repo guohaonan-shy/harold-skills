@@ -1,6 +1,6 @@
 ---
 name: uiux-research
-description: 设计调研——人想知道「别人怎么做」时调它：把人的话收成一句具名问题，起 plugin 自带的 uiux-researcher agent（最新的 Opus，思考强度 medium）去 Refero 的 screens / flows 层查，参考截图下载到本地，写成一页 file:// 能直接打开的 HTML（顶部是具名问题、「研究问题」块里的人的原话与交给 agent 的上下文，再是这些产品的通用结论；中间每个来源一组可点开放大的按 flow 排的截图，加场景 / 设计逻辑两段；最后一块是结合我们需求、要人决策的问题）；调用方会话里只收这页的路径和一句结论，Refero 的调用和整张截图都不进上下文。任何提到 查一下别人怎么做 / 看看别的产品怎么处理 / 参考一下竞品 / 有没有现成的做法 / 业界惯例 / UX pattern / user flow / 退出确认弹窗怎么做 / 空状态怎么写 / how do other products handle / how does X do it / reference research / Refero 的场景都该用它。只查 UX pattern、flow、某类页面的通常做法、文案语气，不查视觉风格。uiux-imagine / uiux-refine 的编排者只在人说要查时才调；执行者碰到拿不准的 UX 问题只写成「建议调研的问题」，不自己查。
+description: 查别人怎么处理一个 UX 问题（flow、某类页面的常见做法、文案语气），产出一页带参考截图的调研页。人问别的产品怎么做、业界惯例、参考竞品时用；视觉风格不归它。
 allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(git ls-files:*), Bash(ls:*), Bash(node *research-check.mjs:*)
 ---
 
