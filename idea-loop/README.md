@@ -9,6 +9,15 @@ vault as its knowledge base. Each spec lives in its own directory,
 the directory's existence says the spec is not settled yet, and its frontmatter
 `status` says how far it got (see `skills/productivity/wiki-conventions/SKILL.md`).
 
+## Install
+
+```
+/plugin marketplace add guohaonan-shy/harold-skills
+/plugin install idea-loop@harold-skills
+```
+
+Then run `/idea-loop:setup` in the target repo.
+
 ## Skills
 
 | Skill | Stage | Coverage |
