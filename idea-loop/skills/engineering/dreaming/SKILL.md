@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 这个 skill 拿每一份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后**提议**处置。
 
-> 先读一次 `../wiki-conventions/SKILL.md` 和 `../to-spec/references/spec-status.md`（翻状态只走 `scripts/spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再读一次 `../glossary/SKILL.md`。
+> 先读一次 `../wiki-conventions/SKILL.md` 和 `../spec-status/SKILL.md`（翻状态只走 `scripts/spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再读一次 `../glossary/SKILL.md`。
 
 ## 七条纪律（每一条都来自踩过的坑）
 

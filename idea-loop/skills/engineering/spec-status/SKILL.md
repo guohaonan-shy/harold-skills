@@ -1,6 +1,9 @@
-# spec 的状态与 issue 的 label
+---
+name: spec-status
+description: spec 的状态机和覆盖它的 GitHub issue 的 label：谁在什么时候翻、脚本怎么跑。翻 spec 状态、把 issue 挂上或摘下 spec 时用。
+---
 
-spec 走到哪一步、谁在哪一刻把它往前推；覆盖它的 GitHub issue 上的 label 怎么跟着走。改状态和 label**只走 `scripts/spec-status.mjs`**，不手改 frontmatter 的 `status` 行，也不手改 `docs/spec/index.md` 的表——脚本先核前提再写，写完顺手刷索引，前提不满足就拒绝并说明原因。
+spec 走到哪一步、谁在哪一刻把它往前推；覆盖它的 GitHub issue 上的 label 怎么跟着走。改状态只走 `spec-status.mjs`，不手改 frontmatter 的 `status` 行，也不手改 `docs/spec/index.md` 的表：脚本先核前提再写，写完顺手刷索引，前提不满足就拒绝并说明原因。
 
 下文的 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/` 目录。
 
@@ -54,7 +57,7 @@ label 各代表什么，写在目标仓库根目录的 `ISSUE_TRACKER.md`（`set
 ```bash
 issues labels     <docs>                    # 建出缺的 status:* label
 issues candidates <docs> [<limit>]          # 待办的 issue，最早的在前（JSON）；<docs> 里还有 spec 列着的不算
-issues handoff    <docs> <spec-slug> <n>    # 把 #n 写进 spec frontmatter——只改本地文件，不碰 GitHub
+issues handoff    <docs> <spec-slug> <n>    # 把 #n 写进 spec frontmatter，只改本地文件，不碰 GitHub
 issues sync       <docs> <spec-slug>        # 按 spec 的状态同步 label；第一次同步时在 issue 上留一条评论指向 spec
 issues unhandoff  <docs> <spec-slug> <n>    # 从 spec 里移出 #n，去掉 label，回到待办
 issues drop       <docs> <spec-slug> <n>    # 从 spec 里移出 #n，关成 not planned

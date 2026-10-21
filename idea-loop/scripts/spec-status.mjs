@@ -2,7 +2,7 @@
 /**
  * The one way a spec's status changes.
  *
- * A spec walks 草稿 → 审核中 → 设计中 → 在飞 (skills/engineering/to-spec/references/spec-status.md). Each step has one writer and
+ * A spec walks 草稿 → 审核中 → 设计中 → 在飞 (skills/engineering/spec-status/SKILL.md). Each step has one writer and
  * a precondition that can be read off the files: 设计中 only for a spec that touches UI, 在飞 only once
  * the design is frozen (a 冻结摘要 under §4) and the tickets are cut. Skills used to flip the
  * frontmatter by hand and refresh docs/spec/index.md by hand; a flip that skipped its precondition,
@@ -18,7 +18,7 @@
  *   node spec-status.mjs index     <docs-dir>                                 → regenerates docs/spec/index.md
  *   node spec-status.mjs check     <docs-dir>                                 → JSON: specs, problems (old flat layout, bad status)
  * A spec that lists GitHub issues in its frontmatter (`issues: [12, 15]`) has their status labels
- * synced after `set` (issues.mjs, skills/engineering/to-spec/references/spec-status.md, section issue 的 label); a failed sync leaves the status written
+ * synced after `set` (issues.mjs, skills/engineering/spec-status/SKILL.md, section issue 的 label); a failed sync leaves the status written
  * and says how to retry.
  * Exit: 0 = done, 1 = refused / usage / io error (the reason on stderr).
  */

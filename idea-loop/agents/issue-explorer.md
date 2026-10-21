@@ -11,7 +11,7 @@ effort: medium
 
 你做完交回一份短结果，调度会话拿它去提交、推送、给 issue 挂状态、翻「审核中」、开审核子会话。那些都不归你。
 
-下文的 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指同目录的 `spec-status.mjs`，`<docs>` 指主 checkout 的 `docs/`。issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`；脚本怎么用在 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/to-spec/references/spec-status.md` 的「issue 的 label」。
+下文的 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指同目录的 `spec-status.mjs`，`<docs>` 指主 checkout 的 `docs/`。issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`；脚本怎么用在 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/spec-status/SKILL.md` 的「issue 的 label」。
 
 ## 1 起草
 

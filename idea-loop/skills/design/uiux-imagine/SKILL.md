@@ -11,7 +11,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 ## 开工前
 
-- spec 状态是 `审核中`：人调 imagine 就是「审完了、要设计」。先跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`../../engineering/to-spec/references/spec-status.md`）。脚本拒绝（比如 spec 写着不涉及 UI、开头标着需要 grill），停下把原因告诉人，不手改状态。
+- spec 状态是 `审核中`：人调 imagine 就是「审完了、要设计」。先跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`../../engineering/spec-status/SKILL.md`）。脚本拒绝（比如 spec 写着不涉及 UI、开头标着需要 grill），停下把原因告诉人，不手改状态。
 - 是 `设计中`：已经翻过，直接开工；`imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 - 别的状态不跑：`草稿` 人还没审，`在飞` 已经切了工单，还没有 spec 的先 `grill` → `to-spec`。
 

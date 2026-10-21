@@ -7,7 +7,7 @@ description: 把刚才的对话写成一份 spec（连同 raw transcript）；�
 
 输入是一组 GitHub issue、没有对话时（通常由 `idea-loop:issue-explorer` 调），照 [`references/from-issues.md`](references/from-issues.md) 走，它只写跟下面不同的地方。
 
-先读 `../wiki-conventions/SKILL.md`（目录、frontmatter、slug）和 [`references/spec-status.md`](references/spec-status.md)（状态只走 `spec-status.mjs`）。下文的 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
+先读 `../wiki-conventions/SKILL.md`（目录、frontmatter、slug）和 `../spec-status/SKILL.md`（状态只走 `spec-status.mjs`）。下文的 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
 ## 过程
 
@@ -24,7 +24,7 @@ description: 把刚才的对话写成一份 spec（连同 raw transcript）；�
 
    图怎么画、放哪照 [`references/spec-figures.md`](references/spec-figures.md)：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
 
-5. **刷索引，挂 issue**：`spec-status index <docs>` 刷新 `docs/spec/index.md`。对话里谈的是某几个 GitHub issue 的，每个跑一次 `issues.mjs handoff`，再跑一次 `issues.mjs sync`（见 `spec-status.md` 的「issue 的 label」）；不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
+5. **刷索引，挂 issue**：`spec-status index <docs>` 刷新 `docs/spec/index.md`。对话里谈的是某几个 GitHub issue 的，每个跑一次 `issues.mjs handoff`，再跑一次 `issues.mjs sync`（见 spec-status 的「issue 的 label」）；不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
 
 6. **收工**：告诉人下一步是通读这份 spec。人审完之后：碰 UI 的（「前端交互」标着「待补图」）跑 `/idea-loop:uiux-imagine`，它开工时把状态翻成 `设计中`；不碰 UI、人明说同意的，接 `to-ticket`。
 

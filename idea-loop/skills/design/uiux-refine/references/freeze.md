@@ -74,7 +74,7 @@ docs/design/tmp/<spec-slug>/
 
 ## 状态不翻，输出
 
-spec 的 `status` 留在 **`设计中`**。`to-ticket` 认的闸门是「`设计中` **且**「实现决策」里有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`../../../engineering/to-spec/references/spec-status.md`）。
+spec 的 `status` 留在 **`设计中`**。`to-ticket` 认的闸门是「`设计中` **且**「实现决策」里有冻结摘要」，它切完工单才把 spec 翻成 `在飞`（`../../../engineering/spec-status/SKILL.md`）。
 
 写完「改 spec」就停下输出：「要看哪里」列交互图的路径；「写 delta」里改不动的违规和「入口待补」写进「要人判的取舍」。
 
