@@ -13,7 +13,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 - 人调 `/idea-loop:implement <spec-slug> [工单号…]`，或调用方要求做完一份 spec。
 - **当前 worktree 就是集成分支**，一份 spec 一条分支、一个 PR；这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
-- `spec-status.mjs check <docs>` 不报旧布局，spec 是 `在飞`，`tickets/` 下有工单。否则停：旧布局按 wiki-conventions §2.2 迁移，没切票先跑 `to-ticket`。
+- `spec-status.mjs check <docs>` 不报旧布局，spec 是 `实现中`，`tickets/` 下有工单。否则停：旧布局按 wiki-conventions 的「从平铺布局迁移」迁移，没切票先跑 `to-ticket`。
 - 不需要 `/clear`：每张工单的执行方都是新上下文。
 
 ## 1 角色

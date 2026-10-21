@@ -78,7 +78,7 @@
 
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
 |---|---|---|---|---|
-| docs/spec/cart-promo/cart-promo.md | 自称 在飞；促销徽章组件与接口都已在树上，PR 标题对得上 | src/cart/promo.ts、PR 已合并 | 写 ADR 删 spec | 批 / 不批 / 改成… |
+| docs/spec/cart-promo/cart-promo.md | 自称 实现中；促销徽章组件与接口都已在树上，PR 标题对得上 | src/cart/promo.ts、PR 已合并 | 写 ADR 删 spec | 批 / 不批 / 改成… |
 
 ## 档案对象
 

@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: 把当前上下文写成一份 spec 并发布到项目的 issue tracker。
+description: 把当前上下文写成一份 spec，经 PR 合进主分支并挂到项目的 issue tracker 上。
 ---
 
 把当前上下文和你对代码库的理解综合成一份 spec。不访谈，只把已知的写下来。综合时发现思考本身有洞，停下回 `idea-loop:grill`，别在 spec 里粉饰。
@@ -17,15 +17,15 @@ issue tracker 怎么用、状态 label 是什么意思，setup 已经写进目�
 
 3. **探代码**：没探过就先探，看清现状。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词不问、不写，先用描述性的说法；这一块有 ADR 就守它。
 
-4. **谈 seam**：seam 是测试观察行为的那个公共边界，测试从这里喂输入、读输出，不伸手进它背后的实现。定准备在哪些 seam 上测：优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置。每个 seam 带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认再往下写；不在场就自己定，等人审 spec 时确认。
+4. **谈 seam**：seam 是测试观察行为的那个公共边界，测试从这里喂输入、读输出，不伸手进它背后的实现。定准备在哪些 seam 上测：优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置。每个 seam 带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认再往下写；不在场就自己定，写进「测试决策」。
 
 5. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter 写：
    - `type: spec`；
-   - `status: 审核中`；
+   - `status: 草稿`；
    - `tags`、`summary`（一句话，≤60 字）；
    - `related`：有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有就留空列表。
 
-   让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`，不挂的话 `issue-dispatch` 会为同一个 issue 再起草一份；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后才挂。
+   让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`，不挂的话 loop 会把同一个 issue 再拿去验证一遍；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后由对账挂。
 
    frontmatter 之后第一行是 `# <标题>`，再往下照 `<spec-template>`。几条贯穿全文的规则在 `idea-loop:decision-rules`，模板里只写它落在哪一节：
    - 现状的陈述都带出处，讲影响带规模数字（「现状先查清」）；
@@ -34,15 +34,15 @@ issue tracker 怎么用、状态 label 是什么意思，setup 已经写进目�
 
    图怎么画、放哪照 `idea-loop:evidence` 的「spec 里的图」：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
 
-6. **分流**：跑 `spec-status route <docs> <slug>`。spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」、「建议关闭」），它就按碰不碰 UI 翻成 `待设计` 或 `待实现`；有，就留在 `审核中`，并说出还剩哪几样。不用等人审：人在对话里答过的、规则能判的，已经写成定下的决定了。
+6. **分流**：跑 `spec-status route <docs> <slug>`。覆盖的 issue 在「验证」表里全都不存在的，翻成 `完成`；还有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），翻成 `审核中`，并说出还剩哪几样；都没有就是 `正式`。不用等人通读：人在对话里答过的、规则能判的，已经写成定下的决定了。人在场又是 `审核中` 的，就在这里接着定，定完删掉对应的标记，`spec-status set <docs> <slug> 正式`。
 
 7. **合进主分支，发布到 issue tracker**：loop 只从主分支取活，所以 spec 先经一个只改 `docs/` 的 PR 合进主分支，再给 issue 挂 label，免得 label 指向一份主分支上没有的 spec。
-   调用方说了提交、合并和发布由它来做的（比如 `issue-dispatch` 的起草），这一步整个留给它。
+   调用方说了提交和合并由它来做的（比如 `idea-loop:issue-verify`），这一步整个留给它。
 
    1. 提交到从最新主分支开出的 `spec/<slug>` 分支，只带这份 spec 的目录、raw 桶和 `docs/spec/index.md`；工作区里有别的改动，就另开一个 worktree 来提交。推送，`gh pr create`。
-   2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`，然后在更新过的主分支上跑 `issues sync <docs> <slug>`，按 spec 的状态挂上 label。检查失败就停下告诉人。
+   2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；检查失败就停下告诉人。issue 的 label 由 `issue-dispatch` 下一轮对账按主分支挂；项目没跑 loop 的，在主 checkout 上跑 `issues reconcile <docs>`。
 
-8. **收工**：告诉人这份 spec 到了哪个状态。`待设计` / `待实现` 的，由 `issue-dispatch` 对应状态的 loop 接手，人也可以自己调 `/idea-loop:uiux-imagine` 或 `idea-loop:to-ticket`。留在 `审核中` 的，说清还剩哪几样等人定：人在场就接着在这里定，定完删掉对应的标记，`spec-status set` 翻状态，照第 7 步合进主分支；不在场就等审核的 loop 开会话。人改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
+8. **收工**：告诉人这份 spec 到了哪个状态。`正式` 的，由 `issue-dispatch` 按碰不碰 UI 排进「待设计」或「待实现」，人也可以自己调 `/idea-loop:uiux-imagine` 或 `idea-loop:to-ticket`。人改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
 
 这里不建工单（`idea-loop:to-ticket` 的事），不写 ADR（`/idea-loop:dreaming` 的事）。
 
@@ -68,6 +68,16 @@ issue tracker 怎么用、状态 label 是什么意思，setup 已经写进目�
 </raw-template>
 
 <spec-template>
+
+## 验证
+
+spec 覆盖了已有的 issue 才写：每个 issue 一行，结论只写「存在」或「不存在」，脚本按这两个词判断 spec 能不能直接完成、issue 该不该关。
+
+| issue | 结论 | 证据 |
+|---|---|---|
+| #<号> <标题> | 存在 / 不存在 | 存在：一句话的复现现象，详情在「问题」；不存在：试了什么、卡在哪（或现在的规则、代码在哪），什么时候对着哪个基准分支、用什么手段核的 |
+
+覆盖的 issue 全都不存在的 spec，只写这一节和「关联」。
 
 ## 问题
 
@@ -151,14 +161,6 @@ mock 只在系统边界，规则见 `idea-loop:tdd` 的「mock 只在系统边�
 
 ## 关联
 
-raw 素材、相关 spec、相关 ADR；覆盖的 issue 逐个写 `#<号>` 加标题。相邻在飞的 spec 与 issue：查过，写明有没有重叠、谁先谁后，没有写「无」。
-
-## 建议关闭
-
-有才写。覆盖的 issue 里复现不出、或已经被做掉的，不进正文，列在这里，每条三样，缺一样人审核时就得自己去查：
-
-- **现象**：issue 说的是什么，一句话，带 `#<号>`。
-- **现状证据**：为什么现在不成立。复现不出的，写试了什么、卡在哪；已经做掉的，指出现在的规则或代码在哪。
-- **怎么验证的**：什么时候、对着哪个基准分支、用什么手段核的。
+raw 素材、相关 spec、相关 ADR；覆盖的 issue 逐个写 `#<号>` 加标题。相邻还没完成的 spec 与 issue：查过，写明有没有重叠、谁先谁后，没有写「无」。
 
 </spec-template>

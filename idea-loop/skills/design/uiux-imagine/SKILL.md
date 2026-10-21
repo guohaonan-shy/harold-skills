@@ -11,9 +11,9 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 ## 开工前
 
-- spec 状态是 `待设计`：先跑 `spec-status.mjs set <docs> <spec-slug> 设计中`（`idea-loop:spec-status`）。是 `审核中`：人直接调 imagine 就是「等人定的已经定完、要设计」，先翻 `待设计` 再翻 `设计中`。脚本拒绝（比如 spec 写着不涉及 UI、还有「待定」或「需要 grill」），停下把原因告诉人，不手改状态。
-- 是 `设计中`：已经翻过，直接开工；`imagine/rounds.md` 在就是恢复，见「中断与恢复」。
-- 别的状态不跑：`待实现`、`在飞` 设计已经冻结，还没有 spec 的先 `grill` → `to-spec`。
+- spec 是 `正式`、「前端交互」不是「不涉及」、「实现决策」里还没有冻结摘要，才往下走（`idea-loop:spec-status`）。还在 `审核中` 的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的先 `grill` → `to-spec`。
+- 它覆盖的 issue 应该是「设计中」：loop 开设计会话时已经翻过。人直接调 imagine、issue 还是「待设计」的，先跑 `issues.mjs set <docs> 设计中 <spec-slug>`。
+- `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 
 ## 起步
 
@@ -61,7 +61,7 @@ uiux-imaginer 交付一轮之后：
 1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格原样摆给人确认，一格一句「这是替你定的，依据是 X」；人的确认或改写交回去，任务「按确认改」。
 2. 任务「导出交接画布」。它交付后你核对：
    - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
-   - 七节都有正文，选中变种的构成清单齐；spec 没被动过（`git status` 里没有它），状态仍是 `设计中`；
+   - 七节都有正文，选中变种的构成清单齐；spec 没被动过（`git status` 里没有它），状态仍是 `正式`；
    - 在内嵌浏览器里打开 `<预览地址>/handoff/index.html`，换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
 
    不过就把问题交回去，它补完再核。
@@ -71,6 +71,6 @@ uiux-imaginer 交付一轮之后：
 ## 中断与恢复
 
 - 一个 uiux-imaginer 活过整个 imagine，人的每条意见都回到它。会话压缩或重开后接不回来。
-- 再调 imagine 时 spec 已是 `设计中`、`imagine/rounds.md` 在：不翻状态，重起服务器，新起一个 uiux-imaginer，任务「接着做」，输入同「起步」。先用一句话告诉人从第几轮接上；人这次附的话就是下一轮的原话。
+- 再调 imagine 时 `imagine/rounds.md` 在：不翻状态，重起服务器，新起一个 uiux-imaginer，任务「接着做」，输入同「起步」。先用一句话告诉人从第几轮接上；人这次附的话就是下一轮的原话。
 - `rounds.md` 不在，就是一次新的 imagine，从「起步」开始，并告诉人。
 - refine 部分冻结后回来重开几块：`rounds.md` 不在，照新的 imagine 起，任务「起手」时写明这是第二轮发散、哪几块要重开、以 `canvas/` 里的冻结画布为基线。

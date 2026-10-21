@@ -15,12 +15,12 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 `docs/spec/<slug>/<slug>.md` 全文，含它的 §6 测试决策（seam 已经谈拢了，别重开）。
 
-先跑一次 `spec-status.mjs check <docs>`：报了旧平铺布局就停下，提议按 wiki-conventions §2.2 迁移。
+先跑一次 `spec-status.mjs check <docs>`：报了旧平铺布局就停下，提议按 wiki-conventions 的「从平铺布局迁移」迁移。
 
-只切 `待实现` 的 spec（状态机见 `idea-loop:spec-status` 的「状态机」）。两个条件都满足才往下走，缺哪个就停下告诉人缺什么：
+只切 `正式` 的 spec（状态见 `idea-loop:spec-status` 的「spec 的状态」）。两个条件都满足才往下走，缺哪个就停下告诉人缺什么：
 
-- `status` 是 `待实现`：人在审核时同意了 spec；碰 UI 的，设计已冻结、「实现决策」里有冻结摘要。还在 `审核中` 的，先让人审完；还在 `待设计`、`设计中` 的，先跑完设计。
-- 正文开头没有「需要 grill」那一行。有就先 grill。
+- `status` 是 `正式`：没有「需要 grill」，也没有「待定」。还在 `审核中` 的，先跟人定完。
+- 碰 UI 的，设计已冻结、「实现决策」里有冻结摘要。没有就先跑完设计。
 
 ## 2 探代码库
 
@@ -37,7 +37,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 给每张 ticket 它的 **blocking edges**——必须先完成的那些 ticket。没有 blocker 的可以立刻开工。
 
-**一份 spec 塞得进一个 PR 就只切一张 ticket。** `implement` 按工单派执行方，`在飞` 也要求至少一张工单。
+**一份 spec 塞得进一个 PR 就只切一张 ticket。** `implement` 按工单派执行方，`实现中` 也要求至少一张工单。
 
 ### 大范围重构是垂直切片的例外
 
@@ -63,7 +63,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 `docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`，在这份 spec 内从 `01` 开始按依赖顺序编号（blocker 在前）。工单住在自己 spec 的目录里，跟别的 spec 的工单不混、编号不互撞（wiki-conventions §2）。
 
-人点头、工单全部落盘之后，`spec-status.mjs set <docs> <spec-slug> 在飞`。这一翻只归这一步：它同时说明设计已冻结、人同意了、工单已切；脚本会再核一遍冻结摘要和工单在不在，拒绝就照它说的原因处理，不手改状态。
+人点头、工单全部落盘之后，`spec-status.mjs set <docs> <spec-slug> 实现中`。这一翻只归这一步：它同时说明设计已冻结、工单已切；脚本会再核一遍冻结摘要和工单在不在，拒绝就照它说的原因处理，不手改状态。
 
 ```markdown
 # NN — <标题>
@@ -84,7 +84,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 ### 设计冻结闸门挂在 spec 的状态上
 
-**只切 `待实现` 的 spec**：碰 UI 的冻结后才进 `待实现`，所以不会有「切了但不能开工」的票，`在飞` 之前也不会有实现的 commit。代价是一份混着 UI 和非 UI 的 spec，非 UI 那部分也要等设计冻结；不想等，就在审核时把它拆成两份 spec。
+**碰 UI 的只在冻结后切**：所以不会有「切了但不能开工」的票，`实现中` 之前也不会有实现的 commit。代价是一份混着 UI 和非 UI 的 spec，非 UI 那部分也要等设计冻结；不想等，就在起草时把它拆成两份 spec。
 
 **誊写只读 spec**——§1 读的那份，就是全部输入。不看 cwd 里的临时文件，不调别的 skill，也不等任何别的 plugin 的返回值。动 UI 的票，把 §4 实现决策里的**冻结摘要**原样誊写到「设计冻结」字段：**画布指针**（HTML 画布的 wikilink）、**matrix**（这张 ticket 范围内的那些格：viewport × 主题 × 状态）、**mismatch 阈值**（按格覆盖过的写覆盖值，没覆盖的写沿用默认）、**一行 ledger 摘要**、**状态矩阵与数据契约变更**（画布上有、项目现在渲染不出来的字段——漏掉这项，`implement` 会拿写死的假数据糊过去）。**不改写、不新编数字或措辞**——那些是收敛那一段产出时自己填的，切票这一步只誊写。
 

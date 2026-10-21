@@ -120,8 +120,8 @@ docs/
 
 1. 每份 `docs/spec/<slug>.md` → `git mv` 到 `docs/spec/<slug>/<slug>.md`。wiki-link 按文件名解析，移动不打断它们；**相对路径的图片引用会断**（spec 深了一层），每条前面补一个 `../`，改完逐条确认文件存在。
 2. `docs/spec/tickets/` 下的每张工单，按它的 PR、它引用的 spec 或它的标题判断属于哪份 spec，`git mv` 到那份 spec 的 `tickets/`。判断不了的列给人，不猜。归属清楚后旧的 `tickets/` 目录应该是空的，删掉它。
-3. 旧状态值改名：`等设计冻结` → `设计中`。`在飞` 不动——已经在做的 spec 不回退成 `审核中`。
-4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`idea-loop:spec-status` 的「状态机」）。
+3. 旧状态值换成现在的：跑 `spec-status.mjs migrate`（`idea-loop:spec-status` 的「从旧状态机迁移」）。
+4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`idea-loop:spec-status`）。
 
 正在做的 PR 不受影响：集成分支上已有的 commit 里，`Ticket:` trailer 只写工单名，不写路径。
 
@@ -147,15 +147,15 @@ related: ["[[other-slug]]"]
 
 | type | 合法 status |
 |---|---|
-| `spec` | `审核中` · `待设计` · `设计中` · `待实现` · `在飞` · `已拍板未排期` · `搁置` |
+| `spec` | `草稿` · `审核中` · `正式` · `实现中` · `完成` |
 | `adr` | `生效` · `已被取代（→ ADR-NNNN）` |
 | `raw` | 无（改用 `source_type` + `captured`） |
 
-`搁置` 是显式状态。dreaming 靠它区分"被遗忘"与"被故意搁置"。
+spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置`。dreaming 靠这个 label 区分"被遗忘"与"被故意搁置"。
 
 `design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉；`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `design/tmp/<spec-slug>/delta/` 同构），都不带 `status`，各自的结构字段见 `idea-loop:design-archive` 的「frontmatter」。
 
-spec 的状态按 `审核中 →（待设计 → 设计中 →）待实现 → 在飞` 往前走。每一步谁写、前提是什么、怎么写，都在 `idea-loop:spec-status`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
+spec 的状态按 `草稿 →（审核中 →）正式 → 实现中 → 完成` 往前走；工作排到了哪（待设计、待实现……）记在 issue 的 label 上，不在 spec 里。每一步谁写、前提是什么、怎么写，都在 `idea-loop:spec-status`：**改状态只走 `scripts/spec-status.mjs`**，不手改这一行。
 
 **ADR 的取代默认是 section 级，不是整份**——一份 ADR 常含多条决策（引用粒度本就是 `ADR-NNNN §n`），新决策通常只推翻其中一节。frontmatter 的 `status` 只在**全部**小节都作废时才翻成 `已被取代`；部分取代记在那一节标题后（`⚠️ 已被取代 → ADR-<new> §<n>`），文件本身仍是 `生效`。
 
@@ -180,7 +180,7 @@ spec 的状态按 `审核中 →（待设计 → 设计中 →）待实现 → �
 
 | 文件 | status | summary |
 |---|---|---|
-| [[slug]] | 在飞 | <取自 frontmatter.summary> |
+| [[slug]] | 生效 | <取自 frontmatter.summary> |
 ```
 
 `docs/spec/index.md` 只有「文件」「summary」两列，不列 status：spec 的状态每过一段就在那一段的 PR 里变，几个 PR 同时开着时会在这张表上冲突；状态看每份 spec 的 frontmatter，要看全貌跑 `spec-status.mjs check`。
