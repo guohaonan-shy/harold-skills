@@ -231,7 +231,7 @@ test('an initial-scan page row must point at what it built under tmp/ — it nev
 });
 
 test('the sample table printed in the dreaming reference is itself valid — the doc and the script cannot drift apart', () => {
-  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
+  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'engineering', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
   const block = ref.match(/```markdown\n(# 提议表[\s\S]*?)\n```/);
   assert.ok(block, 'the reference carries no ```markdown sample table');
   const r = run(block[1]);
@@ -239,7 +239,7 @@ test('the sample table printed in the dreaming reference is itself valid — the
 });
 
 test('every row type and disposition the reference lists is one the script accepts, and nothing more', () => {
-  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
+  const ref = readFileSync(join(dirname(SCRIPT), '..', 'skills', 'engineering', 'dreaming', 'references', 'proposal-table.md'), 'utf8');
   for (const [type, set] of Object.entries(ROW_TYPES)) {
     const line = ref.split('\n').find((l) => l.startsWith(`| \`${type}\``));
     assert.ok(line, `the reference has no row for the ${type} row type`);

@@ -72,7 +72,7 @@ node "<companion>" task --model gpt-5.6-sol --effort high --prompt-file <standar
 - **图写本地路径**，相对 review loop 文件所在的目录（`.tmp/review-loop/`），即 `../pr-review/<PR 号>/evidence/r<N>-….png`。不上传：在会话里由编排者把图发给人，合并归档时才传。
 - 写完自己再读一遍折叠区以外的部分：有没有反引号、路径、提交号、章节编号。
 
-**不碰 PR，也不碰 review loop 文件。** 汇报交给编排者，由它记进文件、在会话里给人看；PR 描述也由编排者按人的批示更新（`skills/pr-review/SKILL.md` §2–§4）。
+**不碰 PR，也不碰 review loop 文件。** 汇报交给编排者，由它记进文件、在会话里给人看；PR 描述也由编排者按人的批示更新（`skills/engineering/pr-review/SKILL.md` §2–§4）。
 
 ## 7 交回
 

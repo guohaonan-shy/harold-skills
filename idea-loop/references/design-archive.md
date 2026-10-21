@@ -201,7 +201,7 @@ node scripts/design-archive-write.mjs <仓库根> <spec-slug> [--dry-run] [--jso
 
 ### 谁在什么时候跑它
 
-不是随手跑的。`pr-review` 的合并步骤在 `tmp/` 里还有设计差异时，先起 UI 审查者（`agents/ui-reviewer.md`，归档模式）对着实现核过差异、补齐状态文件、备好决定与候选的草稿，在会话里给人看；**人通过后**编排者才跑这个脚本，再提交 `prod/` 并推送，然后重新合并（`skills/pr-review/SKILL.md` §4.1）。UI 审查者只写 `tmp/<spec-slug>/delta/`，自检时只跑 `--dry-run`。
+不是随手跑的。`pr-review` 的合并步骤在 `tmp/` 里还有设计差异时，先起 UI 审查者（`agents/ui-reviewer.md`，归档模式）对着实现核过差异、补齐状态文件、备好决定与候选的草稿，在会话里给人看；**人通过后**编排者才跑这个脚本，再提交 `prod/` 并推送，然后重新合并（`skills/engineering/pr-review/SKILL.md` §4.1）。UI 审查者只写 `tmp/<spec-slug>/delta/`，自检时只跑 `--dry-run`。
 
 ### 合并前钩子
 

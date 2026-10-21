@@ -167,7 +167,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 
 ## 5 后面几轮
 
-下一轮由编排者在条件成立时自己起，或由人触发（`skills/pr-review/SKILL.md` §5）。它的输入里有上一轮之后的修复提交，以及人在之前几轮的批示（review loop 文件）：
+下一轮由编排者在条件成立时自己起，或由人触发（`skills/engineering/pr-review/SKILL.md` §5）。它的输入里有上一轮之后的修复提交，以及人在之前几轮的批示（review loop 文件）：
 
 - 人批了「修」的、以及上一轮照规则修的：确认修复还在、行为对了，不再单独成条；没修好的照常报。
 - 人批了「不修」或「开 issue」（旧说法「进 backlog」）的：不再报，除非这一轮有新证据，比如修复改到了它。

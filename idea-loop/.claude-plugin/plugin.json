@@ -6,6 +6,11 @@
   "author": {
     "name": "Harold"
   },
+  "skills": [
+    "./skills/engineering/",
+    "./skills/design/",
+    "./skills/productivity/"
+  ],
   "keywords": [
     "docs",
     "wiki",

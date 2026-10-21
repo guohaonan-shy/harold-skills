@@ -7,7 +7,7 @@
 
 > 为什么要有这份文件：一轮 review 或一次停下里摆给人的决定，大部分是重复的——有明文规则的违规、说明文字跟已定做法对不上、跟这次无关的存量问题，人每次都定成同一个答案。每一次都走一遍人，是把「按推荐」的力气花在不需要判断的事上，真正要人定的事反而被淹没。所以先写下「什么算判得出来」，判得出来的立即办、单列出来让人能推翻，其余才问人。
 
-**现在读它的地方**：`agents/pr-reviewer.md` 与 `references/review-standards.md`（每条候选标处置）、`skills/pr-review/SKILL.md`（照规则的条目在贴汇报之前就处理，满足条件时自己起下一轮）、`skills/to-spec/SKILL.md` 与它的 `references/backlog-mode.md`、`agents/issue-explorer.md`（起草 spec：§4 先自己定、交给人的题按 §7 写）、`agents/implementer.md` 与 `skills/implement/SKILL.md`（执行方沿用现有做法、存量按依赖分流，停下汇报单列「已按规则处理」，决定题按 §7 写）。别处不再各写一份「谁来定」「题怎么写」的判断，要写就引用这里。
+**现在读它的地方**：`agents/pr-reviewer.md` 与 `references/review-standards.md`（每条候选标处置）、`skills/engineering/pr-review/SKILL.md`（照规则的条目在贴汇报之前就处理，满足条件时自己起下一轮）、`skills/engineering/to-spec/SKILL.md` 与它的 `references/backlog-mode.md`、`agents/issue-explorer.md`（起草 spec：§4 先自己定、交给人的题按 §7 写）、`agents/implementer.md` 与 `skills/engineering/implement/SKILL.md`（执行方沿用现有做法、存量按依赖分流，停下汇报单列「已按规则处理」，决定题按 §7 写）。别处不再各写一份「谁来定」「题怎么写」的判断，要写就引用这里。
 
 ## 1 自己定的四条
 
@@ -25,7 +25,7 @@
    - 执行方超出范围的删除：删掉的东西没有调用方、也没人读，**接受并补记**进工单；删掉的是有人读的信息，或改变了行为，**恢复**。
 2. **归不归这次，看依赖。** 这次引入的，这次修。存量问题**开 issue**；例外是它让这次改动拿到错的数据、让这次的结论站不住、或让 CI 变红——这次修。**谁去找、谁来开**分开看：
    - **审查者不去找存量问题**。它只在存量污染了这次改动、或让 CI 变红时才报（处置是修）；跟这次无关的存量，它不找、不报，更不处置。
-   - **跟这次无关的存量，开 issue 由编排者做**，对象是执行方交回的「顺手发现」：`implement` 的编排者逐条在目标仓库开 issue（不加 `status:*` 标签，没标签就是待办，`issue-dispatch` 会接手），写进停下汇报的「已按规则处理」，第 1 轮 review 汇报的「已按规则处理」里也带上这几条；人一句话可推翻（`skills/implement/SKILL.md` §6）。
+   - **跟这次无关的存量，开 issue 由编排者做**，对象是执行方交回的「顺手发现」：`implement` 的编排者逐条在目标仓库开 issue（不加 `status:*` 标签，没标签就是待办，`issue-dispatch` 会接手），写进停下汇报的「已按规则处理」，第 1 轮 review 汇报的「已按规则处理」里也带上这几条；人一句话可推翻（`skills/engineering/implement/SKILL.md` §6）。
 3. **代价跟用户会失去的东西相称。** 会丢用户已交的内容、数据、钱：修。只在兜底路径或罕见异常里出现、又不丢东西：接受，写成已知限制。等待时间、体验上的小代价：接受，上线后看数据。**在 PR 流程里这一条只用来定推荐**，见 §3。
 4. **默认改动最小。** 结构性的重排（目录重构、换框架）不顺手并进来，要做就单独起。
 
@@ -56,7 +56,7 @@
 - 方案形状被人提出第三条路的
 - 对外发布
 - 动生产业务数据
-- 合并（下一轮 review 只在 `skills/pr-review/SKILL.md` §5 写明的条件下自动起，其余照旧由人触发）
+- 合并（下一轮 review 只在 `skills/engineering/pr-review/SKILL.md` §5 写明的条件下自动起，其余照旧由人触发）
 
 ## 5 照规则的处置，人能推翻
 

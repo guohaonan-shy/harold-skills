@@ -44,7 +44,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 两处，生命周期不同：
 
 - **复现过程的工作文件** → `<worktree 根>/.tmp/grill/<YYYY-MM-DD>-<topic>/`（约定见 wiki-conventions §2.1）。每次尝试的截图、网络日志、trace、标注前的原图都在这里，grill 收工时删。
-- **证据图** → 挑出来、标注好的那几张，进这场讨论的 raw 桶 `docs/raw/<topic>/assets/`，文件名带问题编号（`problem-<n>-<slug>.png`）。每张图在 raw transcript 里配一段文字描述（wiki-conventions：没有文字的图片不算捕获）。`to-spec` 只从这里取。`to-spec` 的 backlog 模式没有 raw 桶，证据图放这份 spec 自己目录下的 `assets/`（`skills/to-spec/references/backlog-mode.md` §1）。
+- **证据图** → 挑出来、标注好的那几张，进这场讨论的 raw 桶 `docs/raw/<topic>/assets/`，文件名带问题编号（`problem-<n>-<slug>.png`）。每张图在 raw transcript 里配一段文字描述（wiki-conventions：没有文字的图片不算捕获）。`to-spec` 只从这里取。`to-spec` 的 backlog 模式没有 raw 桶，证据图放这份 spec 自己目录下的 `assets/`（`skills/engineering/to-spec/references/backlog-mode.md` §1）。
 
 ## 2 User Stories 的树
 

@@ -57,7 +57,7 @@ export function blockMessage(root, slugs, script = join(dirname(fileURLToPath(im
   return [
     `gh pr merge 被拦下：${TMP}/ 下还有没归档的设计差异，合并会把它们丢掉。`,
     ...slugs.map((s) => `  - ${s}`),
-    '先走 pr-review 的合并前归档（skills/pr-review/SKILL.md §4.1），再重新合并：',
+    '先走 pr-review 的合并前归档（skills/engineering/pr-review/SKILL.md §4.1），再重新合并：',
     '  1 起 UI 审查（归档模式），对着实现核一遍；核不过就不归档，回 review loop',
     '  2 在会话里把草稿给人看，人要改就转回同一个 UI 审查，改到人通过',
     '  3 人通过后才跑归档脚本（不要在人看过之前跑）：',
