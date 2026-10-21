@@ -79,7 +79,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 description 常驻在每一轮的上下文里，只写触发它需要的东西。写法见 `idea-loop/skills/productivity/writing-for-agents/`（`SKILL-MECHANICS.md` 的「调用方式」）：
 - 模型可调用：写它是什么，每个分支一个触发词（同义词合并），必要时加一句「X 的情况用 Y」。流程、产物格式、模型名不写。
 - 只能由人调用（`disable-model-invocation: true`）：一行给人看的摘要。
-- agent：写谁起它、什么时候起。
+- agent：写它的职业身份和交付，不写谁起它（调用方按名字起它）。
 
 ### 2. 必填没拿到不要猜不要默认
 

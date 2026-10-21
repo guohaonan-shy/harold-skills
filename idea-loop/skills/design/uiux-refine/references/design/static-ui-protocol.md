@@ -136,7 +136,7 @@ Follow the selected protocol's R section:
   and tokens instead.
 - **Starting from an imagine handoff canvas** (`uiux-refine`): the baseline was already cloned from
   production during imagine and lives in `handoff/`. Do not re-capture production or restart the
-  app; verify the copy against the handoff canvas instead (`agents/designer.md` §2).
+  app; verify the copy against the handoff canvas instead (the 「起手」 section of `agents/designer.md`).
 
 The judge here is fidelity, not improvement. Record a one-line fidelity/context note.
 
