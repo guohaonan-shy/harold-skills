@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Design archive validation — the six rules, run over a parsed archive.
+ * Design archive validation — the seven rules, run over a parsed archive.
  *
  * `docs/design/prod/` is only trustworthy if the graph in it holds together: every state can be
  * reached (or says why not), every reference points at something, every journey follows real edges,
@@ -16,6 +16,7 @@
  *   4 consecutive states of a journey are joined by an edge; with several, `via` names one
  *   5 state files carry no 「决定」; every decision has 为什么 / 否掉过 / 来源; every candidate 并进 / 为什么 / 证据
  *   6 literal motion values carry `deviates`; `usedBy` matches the references actually found
+ *   7 sections of a long entry state: closed type set, ids, `locate` shapes, `from` / `section` references, `user` edges name their section
  * Rule 0 is the structure the rules stand on: files that cannot be read as objects, required fields.
  *
  * With `--delta <spec-slug>` the requirement's `tmp/<slug>/delta/` is laid over `prod/` first
@@ -44,7 +45,12 @@ import {
   pageOfState,
   parseCandidates,
   parseDecisions,
+  parseSectionRef,
+  SECTION_TYPES,
   section,
+  sectionEntries,
+  sectionsOfPage,
+  sectionsOfState,
   wikilinkTarget,
 } from './design-archive.mjs';
 
@@ -56,6 +62,7 @@ export const RULES = {
   4: '用户路径',
   5: '决定与候选',
   6: '动效',
+  7: '分段',
 };
 
 const filled = (v) => typeof v === 'string' ? v.trim() !== '' : v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0);
@@ -65,13 +72,16 @@ const DECISION_HEADING = /^决定(\s*\d+)?(\s*[：:].*)?$/;
 
 /**
  * @param {object} archive  from loadArchive
- * @param {{ usedBy?: boolean }} [opts]  usedBy:false leaves the `usedBy` field alone — the consistency
+ * @param {{ usedBy?: boolean, workspaces?: string[]|null }} [opts]  workspaces: the component name prefixes
+ *   of a project with more than one front end; they come from `prod/index.md` (`workspaces`) unless the caller
+ *   passes them (the first scan, before that file exists).
+ *   usedBy:false leaves the `usedBy` field alone — the consistency
  *   half of rule 6, and rule 3's check that its links resolve (a removed page leaves stale ones behind).
  *   For the archive script, which validates a delta before it regenerates usedBy; the regenerated
  *   archive is then checked with the default (usedBy:true)
  * @returns {{ rule: number, file: string, field: string|null, message: string }[]}
  */
-export function checkArchive(archive, { usedBy = true } = {}) {
+export function checkArchive(archive, { usedBy = true, workspaces = null } = {}) {
   const out = [];
   const v = (rule, file, field, message) => out.push({ rule, file, field, message });
   const objs = [...archive.objects.values()];
@@ -79,6 +89,7 @@ export function checkArchive(archive, { usedBy = true } = {}) {
   // ---------- 0: structure ----------
   for (const p of archive.problems) v(0, p.file, null, p.message);
   for (const o of objs) structure(o, v);
+  workspacePrefixes(archive, workspaces, v);
 
   // ---------- 1: reachability ----------
   const states = objectsOfKind(archive, 'state');
@@ -256,6 +267,120 @@ export function checkArchive(archive, { usedBy = true } = {}) {
     }
   }
 
+  // ---------- 7: sections ----------
+  sectionRules(archive, v);
+
+  return out;
+}
+
+const TYPE_LIST = Object.keys(SECTION_TYPES).join(' ');
+
+/** Why a `<page>#<section>` value cannot be used here, or null when it names a declared section. */
+function badSectionRef(raw, wantPage, declared, what) {
+  if (typeof raw !== 'string') return `${what}要写成 <页面>#<段> 的普通字符串（现在是 ${JSON.stringify(raw)}）`;
+  if (/^\s*\[\[.*\]\]\s*$/.test(raw)) return `${what}「${raw}」要写普通字符串 ${wantPage}#<段>，不写 wikilink（Obsidian 会把 # 后面当成页面文件里的标题）`;
+  const ref = parseSectionRef(raw);
+  if (!ref) return `${what}「${raw}」写法不对，应为 <页面>#<段>（如 ${wantPage}#hero）`;
+  if (ref.page !== wantPage) return `${what}「${raw}」的页面部分应是 ${wantPage}`;
+  if (!declared.some((x) => x.id === ref.id)) {
+    return `${what}「${raw}」指向的段 ${ref.id} 没有声明过${declared.length ? `；${wantPage} 现有分段：${declared.map((x) => x.id).join('、')}` : `（${wantPage} 的入口状态没有 sections）`}`;
+  }
+  return null;
+}
+
+/** Rule 7 — see skills/design/design-archive/references/sections.md, 校验规则 7. */
+function sectionRules(archive, v) {
+  const states = objectsOfKind(archive, 'state').sort((a, b) => (a.id < b.id ? -1 : 1));
+  const declaring = new Map(); // page id → the entry state whose `sections` count
+
+  for (const s of states) {
+    if (s.fm.sections === undefined) continue;
+    const page = pageOfState(s);
+    if (!isEntry(s)) {
+      v(7, s.file, 'sections', `sections 只写在入口状态上（有 entry 的状态），${s.id} 不是入口`);
+      continue;
+    }
+    if (!Array.isArray(s.fm.sections)) {
+      v(7, s.file, 'sections', 'sections 必须是列表（自上而下，顺序即页面顺序）');
+      continue;
+    }
+    if (declaring.has(page)) {
+      v(7, s.file, 'sections', `页面 ${page} 的分段已经由 ${declaring.get(page).id} 声明；两个入口状态都写 sections，「${page}#<段>」就指不到唯一一处`);
+      continue;
+    }
+    declaring.set(page, s);
+    const list = sectionsOfState(s);
+    const seen = new Set();
+    for (const x of list) {
+      const at = `sections[${x.index}]`;
+      if (x.idError === 'format') {
+        v(7, s.file, `${at}.id`, `分段 id「${x.id ?? ''}」写法不对：要 <类型> 或 <类型>-<限定词>，小写 kebab-case`);
+      } else if (x.idError === 'type') {
+        v(7, s.file, `${at}.id`, `分段 id「${x.id}」的类型不在闭集里；类型表：${TYPE_LIST}`);
+      } else if (seen.has(x.id)) {
+        v(7, s.file, `${at}.id`, `分段 id「${x.id}」在 ${page} 里重名`);
+      }
+      if (x.id !== null) seen.add(x.id);
+      if (!x.by) {
+        v(7, s.file, `${at}.locate`, 'locate 只能是 { role: heading, name: <完整标题> }、{ role: banner } / { role: contentinfo }、{ position: N } 三种之一');
+      }
+    }
+    // the same type more than once: every one of them carries a qualifier
+    const byType = new Map();
+    for (const x of list) if (x.type) byType.set(x.type, [...(byType.get(x.type) ?? []), x]);
+    for (const [type, xs] of byType) {
+      const bare = xs.find((x) => x.qualifier === null);
+      if (xs.length > 1 && bare) {
+        v(7, s.file, `sections[${bare.index}].id`, `同一页出现了 ${xs.length} 个 ${type} 类的段（${xs.map((x) => x.id).join('、')}），要每个都加限定词（如 ${type}-<按内容起的词>）`);
+      }
+    }
+  }
+
+  const declared = (page) => sectionsOfPage(archive, page);
+  for (const s of states) {
+    const page = pageOfState(s);
+    const isDeclaring = declaring.get(page)?.id === s.id;
+    for (const e of archive.edges.filter((x) => x.from === s.id)) {
+      const at = `edges[${e.index}]`;
+      if (e.fromSection !== null) {
+        const why = badSectionRef(e.fromSection, page, declared(page), '边的 from（本页的出发段）');
+        if (why) v(7, s.file, `${at}.from`, why);
+      } else if (isDeclaring && e.kind === 'user') {
+        v(7, s.file, `${at}.from`, `${s.id} 声明了分段，user 边「${e.id}」要写 from: ${page}#<出发段>`);
+      }
+      if (e.toSection !== null) {
+        const target = e.to ? archive.objects.get(e.to) : null;
+        if (!target || target.kind !== 'state') continue; // rule 3
+        if (!isEntry(target)) {
+          v(7, s.file, `${at}.section`, `边的 section 要落在入口状态的段上，而 ${target.id} 不是入口状态`);
+        } else {
+          const why = badSectionRef(e.toSection, pageOfState(target), sectionsOfState(target), `边的 section（落在 ${target.id} 的段）`);
+          if (why) v(7, s.file, `${at}.section`, why);
+        }
+      }
+    }
+    if (s.fm.section !== undefined) {
+      if (isEntry(s)) v(7, s.file, 'section', '入口状态不写 section（它自己有 sections）');
+      else {
+        const why = badSectionRef(s.fm.section, page, declared(page), '状态的 section（它发生在本页哪一段）');
+        if (why) v(7, s.file, 'section', why);
+      }
+    }
+  }
+}
+
+/** Hints for sections that are allowed but weak: `content` as a catch-all, a locate by position. */
+export function sectionNotes(archive) {
+  const out = [];
+  for (const page of objectsOfKind(archive, 'page')) {
+    for (const entry of sectionEntries(archive, page.id).slice(0, 1)) {
+      for (const x of sectionsOfState(entry)) {
+        const at = `${entry.file} · sections[${x.index}]`;
+        if (x.type === 'content') out.push(`${at}：分段「${x.id}」用了 content 兜底——多半该归进某一类，或者类型表里缺一类`);
+        if (x.by?.kind === 'position') out.push(`${at}：分段「${x.id}」按第 ${x.by.position} 个顶层分块定位，这条定位比较脆，页面加一个分块就会错位`);
+      }
+    }
+  }
   return out;
 }
 
@@ -293,6 +418,9 @@ function structure(o, v) {
     else if (seen.has(String(e.id))) v(0, o.file, at, `边 id「${e.id}」在本状态内重复`);
     else seen.add(String(e.id));
     if (!filled(e.to)) v(0, o.file, `${at}.to`, '边缺 to（目标状态）');
+    if (e.when !== undefined && e.when !== null && !(typeof e.when === 'string' && e.when.trim() !== '')) {
+      v(0, o.file, `${at}.when`, 'when 是一句话的条件（字符串），不能为空');
+    }
     if (e.kind !== 'user' && e.kind !== 'system') return v(0, o.file, `${at}.kind`, `边的 kind 只能是 user 或 system（现在是 ${e.kind ?? '缺失'}）`);
     if (e.blocked != null && e.blocked !== false) {
       const b = e.blocked;
@@ -303,17 +431,60 @@ function structure(o, v) {
     }
     const need = e.kind === 'user' ? ['component', 'locate', 'action'] : ['trigger', 'how'];
     for (const k of need) if (!filled(e[k])) v(0, o.file, `${at}.${k}`, `${e.kind} 边缺 ${k}`);
-    if (e.kind === 'user' && filled(e.locate) && !(e.locate && filled(e.locate.role) && filled(e.locate.name))) {
-      v(0, o.file, `${at}.locate`, 'locate 要写 role 和 name（用 ARIA 角色和名字定位）');
+    if (e.kind === 'user' && filled(e.locate) && !edgeLocateOk(e.locate)) {
+      v(0, o.file, `${at}.locate`, 'locate 要写 role 和 name（用 ARIA 角色和名字定位）；按角色定位不到的元素才改写成只有 text 的 { text: <完整文字> }，两种不混写');
     }
   });
 }
 
+/** An edge's `locate`: `{ role, name }`, or — when the element cannot be found by role — `{ text }` alone. */
+function edgeLocateOk(locate) {
+  if (!locate || typeof locate !== 'object' || Array.isArray(locate)) return false;
+  if (locate.text !== undefined) return Object.keys(locate).length === 1 && typeof locate.text === 'string' && locate.text.trim() !== '';
+  return filled(locate.role) && filled(locate.name);
+}
+
+const KEBAB_WORD = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const INDEX_FILE = 'docs/design/prod/index.md';
+
+/** `workspaces` as a list of prefixes, or null when it is not a non-empty list of kebab-case words. */
+export function parseWorkspaces(value) {
+  return Array.isArray(value) && value.length && value.every((p) => typeof p === 'string' && KEBAB_WORD.test(p)) ? value : null;
+}
+
+/**
+ * A project with more than one front end names every component file with the workspace's prefix
+ * (`mkt-SiteFooter`, `app-SiteFooter`), so two workspaces' same-named components do not collide on
+ * basename. The prefixes are the project's to declare, in `prod/index.md`; the caller can hand them in
+ * when that file does not exist yet.
+ */
+function workspacePrefixes(archive, given, v) {
+  let prefixes = given;
+  if (prefixes === null) {
+    const declared = archive.index?.workspaces;
+    if (declared === undefined) return;
+    prefixes = parseWorkspaces(declared);
+    if (!prefixes) {
+      v(0, INDEX_FILE, 'workspaces', 'workspaces 要写成工作区前缀的列表（小写 kebab-case，如 [mkt, app]），不能为空');
+      return;
+    }
+  } else if (!parseWorkspaces(prefixes)) {
+    throw new Error('workspaces 要是工作区前缀的列表（小写 kebab-case，如 mkt、app），不能为空');
+  }
+  for (const o of objectsOfKind(archive, 'component')) {
+    if (prefixes.some((p) => o.id.startsWith(`${p}-`))) continue;
+    v(0, o.file, null, `组件文件名「${o.id}」要带工作区前缀（${prefixes.map((p) => `${p}-`).join('、')}），如 ${prefixes[0]}-${o.id}；前缀在 prod/index.md 的 workspaces 里声明`);
+  }
+}
+
 /** Load + check in one call. Returns { violations, notes, archive }. */
-export function check(root, { delta = null, usedBy = true } = {}) {
+export function check(root, { delta = null, usedBy = true, workspaces = null } = {}) {
   const archive = loadArchive(root, { delta });
-  const violations = checkArchive(archive, { usedBy });
-  const notes = archive.legacy.map((n) => `docs/design/${n}/ 是旧布局（按 spec 命名的冻结记录），建议删——不读，不算违规`);
+  const violations = checkArchive(archive, { usedBy, workspaces });
+  const notes = [
+    ...archive.legacy.map((n) => `docs/design/${n}/ 是旧布局（按 spec 命名的冻结记录），建议删——不读，不算违规`),
+    ...sectionNotes(archive),
+  ];
   return { violations, notes, archive };
 }
 
@@ -331,9 +502,18 @@ function main(argv) {
   const usedBy = !args.includes('--no-used-by');
   const di = args.indexOf('--delta');
   const delta = di >= 0 ? args[di + 1] : null;
-  const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--delta');
-  if (positional.length !== 1 || (di >= 0 && !delta)) {
-    console.error('用法：node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--json]');
+  // The component name prefixes of a project with several front ends; for the first scan, when
+  // prod/index.md (where the project declares them) does not exist yet.
+  const wi = args.indexOf('--workspaces');
+  const wsRaw = wi >= 0 ? args[wi + 1] : null;
+  const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--delta' && args[i - 1] !== '--workspaces');
+  if (positional.length !== 1 || (di >= 0 && !delta) || (wi >= 0 && (!wsRaw || wsRaw.startsWith('--')))) {
+    console.error('用法：node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--workspaces <前缀,前缀>] [--json]');
+    return 2;
+  }
+  const workspaces = wsRaw ? wsRaw.split(',').map((s) => s.trim()) : null;
+  if (workspaces && !parseWorkspaces(workspaces)) {
+    console.error(`--workspaces 要是小写 kebab-case 的前缀、逗号分隔（如 mkt,app），现在是「${wsRaw}」`);
     return 2;
   }
   const root = resolve(positional[0]);
@@ -343,7 +523,7 @@ function main(argv) {
   }
   let result;
   try {
-    result = check(root, { delta, usedBy });
+    result = check(root, { delta, usedBy, workspaces });
   } catch (e) {
     console.error(e.message);
     return 2;

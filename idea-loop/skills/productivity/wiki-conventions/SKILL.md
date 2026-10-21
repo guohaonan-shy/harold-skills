@@ -144,7 +144,7 @@ spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置
 ```
 
 - `docs/spec/index.md` 由 `spec-status.mjs index <docs>` 生成，只有「文件」「summary」两列：spec 的状态在各段 PR 里变，几个 PR 同时开着会在状态列上冲突。要看状态看各 spec 的 frontmatter，看全貌跑 `spec-status.mjs check`。
-- 设计档案的索引是 `docs/design/prod/index.md`，由归档脚本生成，没有 `docs/design/index.md`。它的契约行：「设计档案里现有的页面、组件、动效、用户路径各一张清单，`usedBy` 由脚本反向生成；frontmatter 里定主视口 / 主题 / 语言（项目定一次）。不收 `tmp/` 里进行中的需求。」它是唯一带 frontmatter 的 `index.md`，主视口 / 主题 / 语言要被脚本读。
+- 设计档案的索引是 `docs/design/prod/index.md`，由归档脚本生成，没有 `docs/design/index.md`。它的契约行：「设计档案里现有的页面、组件、动效、用户路径各一张清单，`usedBy` 由脚本反向生成；frontmatter 里定主视口 / 主题 / 语言 / 动效模式（`motion`，项目定一次）。不收 `tmp/` 里进行中的需求。」它是唯一带 frontmatter 的 `index.md`，主视口 / 主题 / 语言 / 动效模式要被脚本读。
 
 ## spec 和工单怎么写
 

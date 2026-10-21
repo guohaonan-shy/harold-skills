@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（目录、frontmatter、正文、进入方式、查询、归档）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
+用 Skill 工具调 `idea-loop:design-archive`（目录、frontmatter、正文、进入方式、查询、归档，长页面再读它的 `references/sections.md`）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
 下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs"`，`check` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs"`。
 
@@ -85,8 +85,10 @@ effort: high
 
 **第二步：通过之后写**，都写在 `docs/design/tmp/<spec-slug>/delta/` 里，与 `prod/` 同构。档案里只写你在实现上核过的东西。
 
-1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`；每个有动效的边或节点录一张 GIF（`idea-loop:evidence` 的交付证据：动图），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
-2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF），「应看到什么」写成几条可判定的话。决定不写在状态文件里。
+1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`。拍之前关掉开发服务器的调试浮层（框架的开发工具条、错误浮层），不然它们进每张图。
+   - **长页面的入口状态**（页面滚动高度大于主视口）**按段拍**，照 `idea-loop:design-archive` 的 `references/sections.md`「拍图：分段脚本」：没声明分段的先在 `delta/` 的状态文件里补上；`measure … --delta <spec-slug>`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格）→ `attribute`，落空、定位失败、重叠清零了才往下（归属结果顺带给出每条 `user` 边的 `from`，和哪些元素要写 `{ text }` 定位）→ `shoot`。**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`。段内交互的状态只拍那一段（`measure … --for <段内状态 id>`）。
+   - 每个有动效的边或节点录一张 GIF（`idea-loop:evidence` 的交付证据：动图），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
+2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF；有分段的入口状态按段排开，每段一个 `###` 小标题、这一段的图、一两句描述），「应看到什么」写成几条可判定的话。决定不写在状态文件里。
 3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `idea-loop:design-modeling` 的「设计法候选的形态」。**拿不准的留在草稿的「待你定」里**，不替人编。
 4. **自检**：`check <集成 worktree> --delta <spec-slug> --no-used-by` 与 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <集成 worktree> <spec-slug> --dry-run` 都通过。归档脚本你只跑 `--dry-run`。
 
@@ -121,8 +123,8 @@ effort: high
 
 1. **进**：`query <仓库根> state <id>`，按返回的进入方式走（「共用的步骤」第 5 步）。档案里标了「进不去」的状态，不再走一遍路径，但仍然试一次入边最后那一步，看这次通了没有。入口状态的 `steps` 是空的：**要停在哪一屏的做法写在状态文件的「这一屏」里**（比如加载态要把那条请求拦住才停得住），照着做；失败态、空态靠它入边的 `how`。
 2. **核「应看到什么」**：每一条可判定的，对着实际画面逐条判成立 / 不成立。
-3. **拍**：主视口、主题、语言取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。照 `idea-loop:ui-measure` 的「三条环境约定」拍：等到网络空闲且字体就绪；要停在瞬态（加载中）的，拦住请求后再等一小会让这一屏画完；注入 `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }`（`ui-measure.mjs` 用的同一段，转圈因此停在固定的一帧）；不另设 `prefers-reduced-motion`。拍到 `.tmp/dreaming/<日期>/shots/<状态 id>.png`。
-4. **比**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-png-compare.mjs" <prod 里这个状态的截图> <刚拍的图> --json`。它用 `ui-measure.mjs` 同一套像素层容差（抗锯齿 0.1、像素差 ≤ 1%），不放宽、不收紧。尺寸不同算容差外。截图是 Git LFS 指针、取不下来（退出码 2），记进交回，这个状态记「未完成」，不判。
+3. **拍**：主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。拍之前关掉开发服务器的调试浮层。**入口状态声明了 `sections` 的，不拍一张主视口图，照 `idea-loop:design-archive` 的 `references/sections.md`「拍图：分段脚本」每段单独截**（`prod/index.md` 还没定视口或主题时 `measure` 带 `--viewport` 与 `--theme`），`shoot` 的 `--out` 用 `.tmp/dreaming/<日期>/shots/<状态 id>`；段内交互的状态（带 `section`）只拍那一段。分段脚本用冻结页面时钟加 Playwright 的 `animations: 'disabled'`，不注入下面那段样式。其余状态照 `idea-loop:ui-measure` 的「三条环境约定」拍：等到网络空闲且字体就绪；要停在瞬态（加载中）的，拦住请求后再等一小会让这一屏画完；注入 `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }`（`ui-measure.mjs` 用的同一段，转圈因此停在固定的一帧）；不另设 `prefers-reduced-motion`（`motion` 为 `reduce` 时才由分段脚本的代码设）。拍到 `.tmp/dreaming/<日期>/shots/<状态 id>.png`。
+4. **比**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-png-compare.mjs" <prod 里这个状态的截图> <刚拍的图> --json`。它用 `ui-measure.mjs` 同一套像素层容差（抗锯齿 0.1、像素差 ≤ 1%），不放宽、不收紧。尺寸不同算容差外。**有分段的入口状态逐段比**：每段用它的图（`<状态 id>@<段 id>.png`）各比一次；`shoot` 返回里 `stable` 不是 `true` 的段，容差外时先再拍一次，两次都超出才算。哪一段超出容差，只这一段判后续，只重拍、只写这一段；整页都在容差内照旧「一致」。`attribute` 报了定位失败（多半是标题改名了）：判「进入方式过期」，在页面的可访问性快照里找到改了名的标题，提议新的 `locate`，写进 `delta/` 里入口状态的 `sections`，改完再测一遍；新出现了落空的可点元素（页面多了一块内容）：当作画面变了，按「档案过期 / 产品坏了」原来的判法走，判档案过期时一并提议新的分段。截图是 Git LFS 指针、取不下来（退出码 2），记进交回，这个状态记「未完成」，不判。
 5. **看信号**：控制台的错误、失败的请求、空白页、点了没反应。状态本来就该有的错误（失败态的红字、它那条失败请求）以「应看到什么」为准，没写到的异常才算。
 
 驱动只在开发环境里用测试值；会写真实外部服务的操作（付款、发信、第三方登录）不执行，按「进不去」记缺什么。应用的代码和开发环境的数据保持原样，走不通就按判定记。

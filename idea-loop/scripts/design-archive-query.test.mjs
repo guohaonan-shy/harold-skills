@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { BASE, SPEC_SLUG, compliantFiles, writeRepo } from './design-archive-fixture.mjs';
+import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
 import { loadArchive } from './design-archive.mjs';
 import {
   QueryError,
@@ -530,4 +530,151 @@ test('every other entry can read the archive after the change', () => {
   assert.equal(queryPage(loadArchive(root), 'cookbook').states.some((s) => s.id === 'cookbook--share-sheet'), false);
   assert.throws(() => queryState(after, 'pantry--empty'), (e) => e instanceof QueryError);
   assert.equal(queryState(after, 'cookbook--search-results').enter.steps[1].kind, 'system');
+});
+
+// ---------- sections of a long entry state ----------
+
+const mktArchive = (files = marketingFiles(), opts) => loadArchive(writeRepo(files), opts);
+
+test('page: the sections of the entry state, each with its edges out and in, its states and the slice path', () => {
+  const p = queryPage(mktArchive(), MKT);
+  assert.deepEqual(p.sections.map((x) => x.id), ['header', 'hero', 'feature-a', 'feature-b', 'footer'].map((x) => `${MKT}#${x}`));
+  const by = Object.fromEntries(p.sections.map((x) => [x.id.split('#')[1], x]));
+  assert.deepEqual(
+    { type: by.hero.type, qualifier: by.hero.qualifier, locate: by.hero.locate, locateBy: by.hero.locateBy, declaredBy: by.hero.declaredBy },
+    { type: 'hero', qualifier: null, locate: { role: 'heading', name: '一个价格，没有隐藏项' }, locateBy: 'heading', declaredBy: MKT_ENTRY },
+  );
+  assert.equal(by['feature-b'].type, 'feature');
+  assert.equal(by['feature-b'].qualifier, 'b');
+  assert.equal(by.header.locateBy, 'landmark');
+  // out: from the section; in: landing on it, including the same-page anchor (a self-loop)
+  assert.deepEqual(by.hero.outgoing.map((e) => e.id), ['start', 'see-features']);
+  assert.deepEqual(by['feature-a'].incoming.map((e) => [e.id, e.from, e.to]), [['see-features', MKT_ENTRY, MKT_ENTRY]]);
+  assert.deepEqual(by['feature-b'].incoming.map((e) => [e.id, e.from]), [['see-pricing', 'cookbook--list']]);
+  assert.deepEqual(by['feature-b'].outgoing.map((e) => e.id), ['expand']);
+  assert.deepEqual(by['feature-b'].states, [`${MKT}--feature-b-expanded`]);
+  assert.deepEqual(by.hero.states, []);
+  // the slice lives next to the entry state, named <state>@<section>.png
+  assert.equal(by.hero.screenshot, `${BASE}/pages/${MKT}/assets/${MKT_ENTRY}@hero.png`);
+  assert.equal(by.hero.screenshotExists, false);
+});
+
+test("page: edges carry fromSection and toSection, so do a state's way in and a journey's steps", () => {
+  const a = mktArchive();
+  const p = queryPage(a, MKT);
+  const entry = p.states.find((s) => s.id === MKT_ENTRY);
+  const anchor = entry.outgoing.find((e) => e.id === 'see-features');
+  assert.equal(anchor.fromSection, `${MKT}#hero`);
+  assert.equal(anchor.toSection, `${MKT}#feature-a`);
+  assert.equal(entry.outgoing.find((e) => e.id === 'start').toSection, undefined);
+  assert.equal(entry.incoming.find((e) => e.id === 'see-pricing').toSection, `${MKT}#feature-b`);
+  // the way into a state shows where to scroll first
+  const enter = queryState(a, `${MKT}--feature-b-expanded`).enter;
+  assert.deepEqual(enter.steps.map((e) => [e.id, e.fromSection]), [['expand', `${MKT}#feature-b`]]);
+  assert.equal(queryState(a, `${MKT}--feature-b-expanded`).state.section, `${MKT}#feature-b`);
+  // a journey
+  const j = queryJourney(a, 'explore-pricing');
+  assert.equal(j.steps[1].trigger.toSection, `${MKT}#feature-b`);
+  assert.equal(j.steps[2].trigger.fromSection, `${MKT}#feature-b`);
+});
+
+test("an edge's `when` shows in every edge view — the page's edges, a state's way in, a journey's steps; edges without it have no such key", () => {
+  const files = marketingFiles();
+  files[MKT_ENTRY_FILE] = files[MKT_ENTRY_FILE].replace('    locate: { role: button, name: 展开细节 }', '    locate: { role: button, name: 展开细节 }\n    when: 从价格页进来时');
+  const a = archiveOf(files);
+  const entry = queryPage(a, MKT).states.find((s) => s.id === MKT_ENTRY);
+  assert.equal(entry.outgoing.find((e) => e.id === 'expand').when, '从价格页进来时');
+  assert.equal('when' in entry.outgoing.find((e) => e.id === 'start'), false);
+  assert.equal(queryState(a, `${MKT}--feature-b-expanded`).enter.steps.find((e) => e.id === 'expand').when, '从价格页进来时');
+  assert.equal(queryJourney(a, 'explore-pricing').steps[2].trigger.when, '从价格页进来时');
+});
+
+test('page: a page without sections gets an empty list and its edges are unchanged', () => {
+  const p = queryPage(archiveOf(), 'cookbook');
+  assert.deepEqual(p.sections, []);
+  assert.equal(JSON.stringify(p.states).includes('Section'), false);
+});
+
+test('page: a slice that exists on disk is reported as existing', () => {
+  const files = { ...marketingFiles(), [`${BASE}/pages/${MKT}/assets/${MKT_ENTRY}@hero.png`]: 'x' };
+  const hero = queryPage(mktArchive(files), MKT).sections.find((x) => x.id === `${MKT}#hero`);
+  assert.equal(hero.screenshotExists, true);
+});
+
+test('refs: <page>#<section> returns the edges out of it and into it, the states inside it and the journeys through them', () => {
+  const r = queryRefs(mktArchive(), `${MKT}#feature-b`);
+  assert.deepEqual(r.target, {
+    id: `${MKT}#feature-b`, kind: 'section', page: MKT, type: 'feature', qualifier: 'b', locate: { role: 'heading', name: '食材库同步' }, declaredBy: MKT_ENTRY,
+  });
+  assert.equal(r.matchedBy, 'section');
+  assert.deepEqual(r.outgoing.map((e) => e.id), ['expand']);
+  assert.deepEqual(r.incoming.map((e) => e.id), ['see-pricing']);
+  assert.deepEqual(r.states.map((x) => x.id), [`${MKT}--feature-b-expanded`]);
+  assert.deepEqual(r.journeys.map((j) => j.id), ['explore-pricing']);
+  assert.deepEqual(r.pages, [MKT]);
+  // a section with only a way out
+  const hero = queryRefs(mktArchive(), `${MKT}#hero`);
+  assert.deepEqual(hero.outgoing.map((e) => e.id), ['start', 'see-features']);
+  assert.deepEqual(hero.incoming, []);
+  assert.deepEqual(hero.journeys, []);
+});
+
+test('refs: #<type> returns every section of that type on every page, qualified ones included', () => {
+  const r = queryRefs(mktArchive(), '#feature');
+  assert.deepEqual(r.target, { kind: 'section-type', type: 'feature' });
+  assert.equal(r.matchedBy, 'type');
+  assert.deepEqual(r.sections.map((x) => [x.page, x.id, x.qualifier]), [[MKT, `${MKT}#feature-a`, 'a'], [MKT, `${MKT}#feature-b`, 'b']]);
+  assert.deepEqual(queryRefs(mktArchive(), '#hero').sections.map((x) => x.id), [`${MKT}#hero`]);
+});
+
+test('refs: the old arguments (component name, code path, motion) behave as before on an archive with sections', () => {
+  const a = mktArchive();
+  assert.equal(queryRefs(a, 'SiteNav').matchedBy, 'name');
+  assert.equal(queryRefs(a, 'src/components/CtaButton.tsx').target.id, 'CtaButton');
+  assert.equal(queryRefs(a, 'save-pop').target.kind, 'motion');
+});
+
+test('refs: a section or type that is not there is a QueryError that lists what exists', () => {
+  const a = mktArchive();
+  assert.throws(() => queryRefs(a, `${MKT}#nowhere`), (e) => e instanceof QueryError && /nowhere/.test(e.message) && /hero/.test(e.message) && /footer/.test(e.message));
+  assert.throws(() => queryRefs(a, 'no-page#hero'), (e) => e instanceof QueryError && /no-page/.test(e.message));
+  assert.throws(() => queryRefs(a, 'cookbook#hero'), (e) => e instanceof QueryError && /没有声明分段/.test(e.message));
+  assert.throws(() => queryRefs(a, '#trust'), (e) => e instanceof QueryError && /trust/.test(e.message) && /hero/.test(e.message));
+  assert.throws(() => queryRefs(a, '#closing-band'), (e) => e instanceof QueryError && /类型表/.test(e.message));
+});
+
+test('cli: refs with a section id prints the same JSON and exits 1 with the existing sections when it is not there', () => {
+  const root = writeRepo(marketingFiles());
+  const ok = cli(root, 'refs', `${MKT}#hero`);
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.deepEqual(JSON.parse(ok.stdout), JSON.parse(JSON.stringify(queryRefs(loadArchive(root), `${MKT}#hero`))));
+  assert.equal(cli(root, 'refs', '#feature').status, 0);
+  const bad = cli(root, 'refs', `${MKT}#nowhere`);
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, /hero/);
+  assert.equal(bad.stdout, '');
+  const page = cli(root, 'page', MKT);
+  assert.equal(JSON.parse(page.stdout).sections.length, 5);
+});
+
+test('diff: sections are expanded by section id — moving one locate shows only that field of that section', () => {
+  const base = marketingFiles();
+  const edited = base[MKT_ENTRY_FILE].replace('{ role: heading, name: 无限菜谱 }', '{ role: heading, name: 无限菜谱收藏 }');
+  assert.notEqual(edited, base[MKT_ENTRY_FILE]);
+  const files = { ...base, [`docs/design/tmp/${SPEC_SLUG}/delta/pages/${MKT}/${MKT_ENTRY}.md`]: edited };
+  const changed = queryDiff(writeRepo(files), SPEC_SLUG).changed;
+  assert.deepEqual(changed.map((o) => o.id), [MKT_ENTRY]);
+  assert.deepEqual(changed[0].fields, [
+    { field: 'sections[feature-a].locate', before: { role: 'heading', name: '无限菜谱' }, after: { role: 'heading', name: '无限菜谱收藏' } },
+  ]);
+});
+
+test('diff: a section added is reported under its own id, and an edge `from` change under that edge', () => {
+  const base = marketingFiles();
+  const edited = base[MKT_ENTRY_FILE]
+    .replace('  - { id: footer, locate: { role: contentinfo } }', '  - { id: faq, locate: { role: heading, name: 常见问题 } }\n  - { id: footer, locate: { role: contentinfo } }')
+    .replace('from: mkt-pricing#footer', 'from: mkt-pricing#faq');
+  const files = { ...base, [`docs/design/tmp/${SPEC_SLUG}/delta/pages/${MKT}/${MKT_ENTRY}.md`]: edited };
+  const fields = queryDiff(writeRepo(files), SPEC_SLUG).changed[0].fields.map((f) => f.field);
+  assert.deepEqual(fields, ['sections[faq]', 'edges[footer-terms].from']);
 });
