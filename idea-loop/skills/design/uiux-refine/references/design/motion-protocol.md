@@ -117,7 +117,7 @@ rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
 passed the gates is written as a candidate in the `## 设计法候选` section of its motion file under
-`delta/` (`skills/engineering/dreaming/references/design-md.md` §13, object shape in `skills/engineering/design-archive/SKILL.md`, sections frontmatter and 正文) — the
+`delta/` (`skills/design/design-modeling/SKILL.md`, section 设计法候选的形态, object shape in `skills/engineering/design-archive/SKILL.md`, sections frontmatter and 正文) — the
 rule behind it, shaped to join the Motion chapter as a global principle; the specific parameters stay
 in that motion file, and the freeze record lists the candidate. A new motion goes **only** into the
 motion file and the candidate, never straight into `DESIGN.md`. This protocol never writes

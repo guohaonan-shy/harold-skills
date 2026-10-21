@@ -23,7 +23,7 @@ the directory's existence says the spec is not settled yet, and its frontmatter
 | `/idea-loop:to-ticket` | Plan | Slices a reviewed spec (design frozen if it touches UI, the human's explicit agreement in the session) into tracer-bullet vertical cuts with blocking edges, then flips it to `在飞` |
 | `/idea-loop:implement` | Build | Runs a whole spec: the calling session orchestrates, dispatching fresh `idea-loop:implementer`s in parallel along the `Blocked by` frontier (up to three at once by default, each in its own worktree; an `idea-loop:explorer` writes shared pointer-only notes first; one ticket → one commit the orchestrator fast-forwards onto the integration branch, then reclaims the worktree; TDD at the agreed seams, human-verify flows and GIFs recorded from the implementation). Stops only for the human — a stop report shown in the session and kept in the PR's local review-loop file: what the implementers already settled by the existing way of the product or by fixing a legacy problem that spoiled the ticket (listed first, the human overturns any with one sentence), then the decisions that really need a human — and turns the PR ready once everything has landed |
 | `/idea-loop:pr-review` | Review | One round per call on the open PR: an `idea-loop:pr-reviewer` runs the repo's own checks (changed lines only) and two read-only Codex processes — Spec and Standards — reproduces every behavioural Spec finding and shows it in whatever form is fastest to grasp, checks every quote and the wording mechanically, marks every finding with a disposition (by rule / the human decides, `skills/engineering/decision-rules/SKILL.md`), and writes the round's report, which the session shows the human and keeps in the review-loop file. Findings the written rules already settle are handled before the report is shown and listed first under "handled by rule"; the human can overturn any of them with one sentence. The rest the human rules on in the session; fixes go back through the tickets and the implementer; when a round had fixes, they have landed and fewer than two rounds have run, the session starts the next round itself. When the local `docs/design/tmp/` holds design output for this spec (the `research/` folder `uiux-research` drops never counts as design output), an `idea-loop:ui-reviewer` first walks the implementation against the frozen design each round and its findings are merged into the Spec section. On the human's word to merge, a leftover `tmp/` with design output goes through the pre-merge archive (UI review of the delta → the human reads the draft → the archive script → commit and push), then the review loop is archived to the PR as comments, then the PR merges |
-| `/idea-loop:dreaming` | Maintain | Weekly, in two passes with the human between them. The **proposal pass** (the only thing the weekly schedule runs; nothing is written) reconciles every doc against `origin/<base branch>` (from `DEVELOPMENT.md`) — including `CLAUDE.md` — re-drives every state of the design archive (`docs/design/prod/`) in a dev environment through `idea-loop:ui-reviewer`'s reconcile mode (each state is judged consistent / archive stale / entry stale / product broken / unreachable; within tolerance nothing is re-shot; an empty archive gets a first draft from a whole-site initial scan, approved page by page), and also distills design-law candidates into `DESIGN.md` and audits `DESIGN.md` itself against the code, then stops at one proposal table (one row per object; closed set of dispositions per row type, checked by `scripts/proposal-table-check.mjs`; an empty table is a one-line push, not an Artifact). The `DESIGN.md` rows are put to the human as a review page, one card per row (`references/review-page.md`): a candidate card shows a screenshot of the UI the rule is about (from the design archive, else from the implementation), the exact rule text and the `DESIGN.md` section it lands in, and choices with their consequences and one recommendation; a maintenance card shows before → after and names the standard it rests on (a section of `skills/engineering/dreaming/references/design-md.md`, the official spec, or a lint rule name). The **execution pass** runs only the rows the human approved, and its result is one PR that touches only `docs/`, `DESIGN.md` and `GLOSSARY.md`. Writing `DESIGN.md` always waits for the human; a broken product is never written into the archive and, like a rule the code disobeys, becomes a drafted GitHub issue, opened only on approval. Manual runs may do just one part, or distill a single rule on the spot |
+| `/idea-loop:dreaming` | Maintain | Weekly, in two passes with the human between them. The **proposal pass** (the only thing the weekly schedule runs; nothing is written) reconciles every doc against `origin/<base branch>` (from `DEVELOPMENT.md`) — including `CLAUDE.md` — re-drives every state of the design archive (`docs/design/prod/`) in a dev environment through `idea-loop:ui-reviewer`'s reconcile mode (each state is judged consistent / archive stale / entry stale / product broken / unreachable; within tolerance nothing is re-shot; an empty archive gets a first draft from a whole-site initial scan, approved page by page), and also distills design-law candidates into `DESIGN.md` and audits `DESIGN.md` itself against the code, then stops at one proposal table (one row per object; closed set of dispositions per row type, checked by `scripts/proposal-table-check.mjs`; an empty table is a one-line push, not an Artifact). The `DESIGN.md` rows are put to the human as a review page, one card per row (`references/review-page.md`): a candidate card shows a screenshot of the UI the rule is about (from the design archive, else from the implementation), the exact rule text and the `DESIGN.md` section it lands in, and choices with their consequences and one recommendation; a maintenance card shows before → after and names the standard it rests on (a section of `skills/design/design-modeling/SKILL.md`, the official spec, or a lint rule name). The **execution pass** runs only the rows the human approved, and its result is one PR that touches only `docs/`, `DESIGN.md` and `GLOSSARY.md`. Writing `DESIGN.md` always waits for the human; a broken product is never written into the archive and, like a rule the code disobeys, becomes a drafted GitHub issue, opened only on approval. Manual runs may do just one part, or distill a single rule on the spot |
 
 ### The forward loop is not the maintenance sweep
 
@@ -68,7 +68,7 @@ direction note instead of continuing the diverge session it cannot see. `dreamin
 destructive disposals.
 
 The project's `DESIGN.md` is written from exactly two places, `uiux-imagine` (only when the
-project has none at the start) and `dreaming`; both read `skills/engineering/dreaming/references/design-md.md` and wait for the
+project has none at the start) and `dreaming`; both read `skills/design/design-modeling/SKILL.md` and wait for the
 human to confirm the wording before every write. Everything else on the design side — `designer`'s
 motion sign-off, the Distill-back at the end of a freeze, an implementer meeting a value `DESIGN.md`
 lacks — only writes a *design-law candidate* for `dreaming` to process.
@@ -271,8 +271,8 @@ idea-loop/
 │   │   │   references/pr-description.md      # the PR description's four sections, and how stop reports and review rounds are written
 │   │   │   references/review-loop.md         # where reports live: the session + one local file per PR; replies; archive at merge
 │   │   └── dreaming/SKILL.md         # + references/ — proposal-table (shape and execution pass), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
-│   │       references/design-md.md           # the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
 │   ├── design/
+│   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
 │   │   ├── uiux-imagine/SKILL.md     # the divergent half — the process; the work is in agents/uiux-imaginer.md
 │   │   │   references/imagine-canvas.md  # the board, cloning variants from a shipped UI, the handoff canvas, cleanup
 │   │   │   references/direction-note.md  # the letter to refine: seven sections, composition list, provenance markers
@@ -289,7 +289,7 @@ idea-loop/
 ├── evals/uiux-research/              # the one baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
-│   └── design-modeling.md            # design record of the retired design-modeling skill — superseded by skills/engineering/dreaming/references/design-md.md, kept as history
+│   └── design-modeling.md            # design record of the first design-modeling skill — its rules were folded into dreaming, then split back out as skills/design/design-modeling/SKILL.md; kept as history
 └── scripts/
     ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
     ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
@@ -329,7 +329,6 @@ idea-loop/
     ├── design-md-hook.mjs            # PostToolUse entry: official @google/design.md lint on any DESIGN.md, exit 2 on an error
     ├── design-md-hook.test.mjs       # its tests, against a fake CLI
     ├── no-project-leak.test.mjs      # tripwire: skills/ and references/ carry no source-project names or examples
-    ├── no-legacy-entry.test.mjs      # tripwire: no skill / agent / reference / hook / script names the retired design-modeling entry
     ├── glossary-check.mjs            # GLOSSARY.md format lint — single-file, zero-dep, so target-repo CI can curl it pinned
     ├── glossary-check.test.mjs       # its unit tests — one per rule, plus a well-formed baseline
     ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
@@ -375,7 +374,7 @@ What came across:
 |---|---|
 | The taste/craft references | `skills/design/uiux-refine/references/design/` |
 | The two former design skills | `skills/design/uiux-refine/references/design/static-ui-protocol.md`, `skills/design/uiux-refine/references/design/motion-protocol.md` — demoted to on-demand protocols, same shape as the surface / module / component ones next to them |
-| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `skills/engineering/dreaming/references/design-md.md` |
+| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `skills/design/design-modeling/SKILL.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | `.mcp.json` (headless, isolated Playwright) |
 | The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
@@ -396,6 +395,6 @@ while `docs/design/tmp/` still holds a requirement with design output is stopped
 command to run (`scripts/design-archive-write.mjs`); the `research/` folder `uiux-research` drops never counts as design output, so a requirement that only holds research passes; every other command passes.
 
 What retired outright, because its content was already relocated: the `design` entry skill,
-the DESIGN.md-writing skill (its rules are now `skills/engineering/dreaming/references/design-md.md`, written by `uiux-imagine` and `dreaming`), the port-verification skill
+the port-verification skill
 (→ `skills/design/uiux-refine/references/ui-implementation-standard.md`, which generalized it past React), and the
 `wireframe-candidates` workflow (its structural-divergence audit moved into `prototype`, which was later removed too).

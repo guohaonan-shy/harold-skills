@@ -5,7 +5,7 @@ description: 设计档案 docs/design/prod/ 的结构：页面状态构成的图
 
 目标项目的 `docs/design/prod/` 是一张图，记录**线上现在的样子**：每个页面有哪些状态、状态之间怎么跳、用到哪些组件和动效、当初为什么这样定。这份文件回答：图由什么组成、文件怎么放、每份文件的 frontmatter 和正文写什么、怎么校验。读档案、写档案、查档案的 skill 与 agent 都以它为准。
 
-> 与 `DESIGN.md` 的分工：`DESIGN.md` 是**设计系统本身**（全局、无页面名、可照做的规则，见 `../dreaming/references/design-md.md`）；档案是**每个页面、组件、动效的现状与决定**。一条内容两边都像时，按 `../dreaming/references/design-md.md` 的准入分层表落。
+> 与 `DESIGN.md` 的分工：`DESIGN.md` 是**设计系统本身**（全局、无页面名、可照做的规则，见 `../../design/design-modeling/SKILL.md`）；档案是**每个页面、组件、动效的现状与决定**。一条内容两边都像时，按 `../../design/design-modeling/SKILL.md` 的准入分层表落。
 
 ## 图的模型
 
@@ -128,7 +128,7 @@ path:
   ```
 
   不写日期；规则改了**原地改写**，不追加新条目；编号不复用。蒸馏成 ADR 之后「来源」改链到 ADR。
-- **「设计法候选」**每条的形状以 `../dreaming/references/design-md.md` 的「设计法候选的形态」 为准：一句无日期、无页面名、可照做的规则，下挂「并进」「为什么」「证据」三项。校验只看三项都在。处理候选的是 `dreaming`，处理完即删。
+- **「设计法候选」**每条的形状以 `../../design/design-modeling/SKILL.md` 的「设计法候选的形态」 为准：一句无日期、无页面名、可照做的规则，下挂「并进」「为什么」「证据」三项。校验只看三项都在。处理候选的是 `dreaming`，处理完即删。
 
 ## 进入方式从图上推导
 

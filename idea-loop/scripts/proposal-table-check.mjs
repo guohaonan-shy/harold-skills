@@ -21,6 +21,9 @@ import { readFileSync } from 'node:fs';
 
 export const COLUMNS = ['对象', '发现', '证据', '建议处置', '选项'];
 
+
+/** design-modeling 的节名：DESIGN.md 条目的「依据」要点名其中一节。 */
+const STANDARD_SECTIONS = ['是什么', '结构', '五条写法规则', '维护原则', 'Front matter', '各章写什么', '准入分层表', '明确不进 DESIGN.md 的内容', '一次写入怎么走', '新建', '蒸馏', '对账', '设计法候选的形态', '谁写、谁读'];
 /**
  * Row types, one `##` section each. Closed set. `dispositions` is the closed set of 建议处置 for
  * that row type; the archive ones are fixed here so the archive tickets build on a settled shape.
@@ -159,8 +162,8 @@ const WRITES_DESIGN_MD = ['改写已有规则', '追加新规则'];
  *  - a candidate row shows the UI the rule is about (`![…](…)`), or says why it has none (`无图：…`) —
  *    a rule the human cannot see on screen sends them back to the frozen record;
  *  - a candidate headed for DESIGN.md says where it lands (`并进：<章>`) and shows 旧：… 新：…;
- *  - every DESIGN.md row names what it rests on (`依据：` plus a section of the writing reference
- *    `§N`, the official spec, or a lint rule) — "should change" with no named standard is taste;
+ *  - every DESIGN.md row names what it rests on (`依据：` plus a section of design-modeling by name,
+ *    the official spec, or a lint rule) — "should change" with no named standard is taste;
  *  - every DESIGN.md row except a new file shows 旧：…, and 新：… or `→ 删` (a 交人裁决 row's new
  *    texts live in its 选项, one per choice).
  */
@@ -179,8 +182,8 @@ function designMdProblems(type, cells) {
   }
   if (type === 'DESIGN.md 条目') {
     const basis = evidence.match(/依据\s*[：:](.*)$/s);
-    if (!basis || !/§\s*\d|lint|规范/i.test(basis[1])) {
-      problems.push('的证据里要写「依据：」并点名那条标准——写入 reference 的 §N（如「§3 规则 5」「§8 带日期的先例」）、官方 design.md 规范的哪一条，或 lint 规则名');
+    if (!basis || !(STANDARD_SECTIONS.some((name) => basis[1].includes(`「${name}」`)) || /lint|规范/i.test(basis[1]))) {
+      problems.push('的证据里要写「依据：」并点名那条标准——design-modeling 的哪一节（如「五条写法规则」第 5 条、「明确不进 DESIGN.md 的内容」里的带日期的先例）、官方 design.md 规范的哪一条，或 lint 规则名');
     }
     if (lead !== '新建 DESIGN.md') {
       if (!/旧\s*[：:]/.test(evidence)) problems.push('的证据里要有改前的原文（「旧：「…」」）');

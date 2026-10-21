@@ -43,7 +43,7 @@ docs/design/tmp/<spec-slug>/
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域 / 代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`。
    - `usedBy` 由归档脚本生成。
-3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 design-archive 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`design-md.md`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
+3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 design-archive 的「正文」一节：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`../../design-modeling/SKILL.md`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
 4. **自查**，跑到退出码 0：
 
    ```

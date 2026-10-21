@@ -4,7 +4,7 @@
  * idea-loop was generalized out of one real product, and its references kept quoting that
  * product's decisions as if they were law (its accent color, its retired identity, its motion
  * whitelist). A product's visual language belongs in that product's own DESIGN.md, written through
- * the single write path in skills/engineering/dreaming/references/design-md.md; the skills' references hold only principles that would survive a change of product.
+ * the single write path in skills/design/design-modeling/SKILL.md; the skills' references hold only principles that would survive a change of product.
  *
  * This test greps skills/ for the known tells of the source project. It is a
  * tripwire, not a classifier: it catches the names we know, and a new example drawn from a real

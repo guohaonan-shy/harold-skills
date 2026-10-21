@@ -70,7 +70,7 @@ altitude.
 Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
 checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
 concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
-become candidates (format: `skills/engineering/dreaming/references/design-md.md` §13); this protocol never writes `DESIGN.md`.
+become candidates (format: `skills/design/design-modeling/SKILL.md`, section 设计法候选的形态); this protocol never writes `DESIGN.md`.
 `dreaming` processes them under that reference and puts each one to the human before anything is
 written.
 
@@ -273,13 +273,13 @@ On sign-off, perform **Distill-back before handoff**, and it only writes candida
 
 1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
    archive object it came from (page, component, motion or journey file under `delta/`; shape in
-   `skills/engineering/design-archive/SKILL.md`, section 正文), in the format `skills/engineering/dreaming/references/design-md.md` §13 defines — a
+   `skills/engineering/design-archive/SKILL.md`, section 正文), in the format `skills/design/design-modeling/SKILL.md`, section 设计法候选的形态 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
    evidence. The freeze record's same-named section lists them (one line each, saying which object
    carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
    one line, 「无」.
 2. Stop there. `dreaming` later runs every candidate through the admission table in
-   `skills/engineering/dreaming/references/design-md.md` §7 with the human — product design system goes to `DESIGN.md`, method
+   `skills/design/design-modeling/SKILL.md`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
    that holds for any product goes back to this plugin as an issue, a single page's choice stays in
    its object's 「决定」.
 

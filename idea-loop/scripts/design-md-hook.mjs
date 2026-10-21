@@ -8,7 +8,7 @@
  *
  * - Not a DESIGN.md, or the file is gone → silent exit 0 (must never slow normal work).
  * - Lint errors → findings on stderr + exit 2, which Claude Code feeds back to the model.
- * - Warnings only → silent; the writer's closing `diff` step (skills/engineering/dreaming/references/design-md.md §9) judges regressions.
+ * - Warnings only → silent; the writer's closing `diff` step (skills/design/design-modeling/SKILL.md, section 一次写入怎么走) judges regressions.
  * - CLI unreachable (offline, registry down, non-JSON output) → note on stderr, exit 0.
  *   A lint we could not run is not a lint failure; blocking every write while offline would be.
  *

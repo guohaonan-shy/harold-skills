@@ -43,4 +43,4 @@ designer 在打磨环 `pass`、静态构图冻结之后，判断要不要开这�
 
 动效做完就停下输出，让人看跑起来的 preview。输出的「改了什么」里带：每条动效的那句理由与用的 token、reduced-motion 怎么退、本视口的 restraint 结算、帧证据的路径、偏离 `DESIGN.md` 的地方和为什么。签字由人宣布。
 
-签字过的**新** in-app 动效模式，只进动效文件与候选（冻结时写进 `delta/`）：动效文件记具体参数与理由，同一份文件的「设计法候选」里写一条候选（形态见 `../../../engineering/dreaming/references/design-md.md` 的「设计法候选的形态」），写的是背后的规律，可并进 `DESIGN.md` Motion 章的全局原则。`DESIGN.md` 由 `dreaming` 处理候选后写。新模式连候选都不写就上线，是这一段的失败模式。
+签字过的**新** in-app 动效模式，只进动效文件与候选（冻结时写进 `delta/`）：动效文件记具体参数与理由，同一份文件的「设计法候选」里写一条候选（形态见 `../../design-modeling/SKILL.md` 的「设计法候选的形态」），写的是背后的规律，可并进 `DESIGN.md` Motion 章的全局原则。`DESIGN.md` 由 `dreaming` 处理候选后写。新模式连候选都不写就上线，是这一段的失败模式。

@@ -94,7 +94,7 @@ effort: high
 
 1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`；每个有动效的边或节点录一张 GIF（`skills/engineering/evidence/SKILL.md` 的交付证据（动图）），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
 2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
-3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、但还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `skills/engineering/dreaming/references/design-md.md` §13 的形状。**拿不准的不替人编**，留在草稿的「待你定」里。
+3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、但还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `skills/design/design-modeling/SKILL.md` 的「设计法候选的形态」 的形状。**拿不准的不替人编**，留在草稿的「待你定」里。
 4. **自检**：`design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 只由归档脚本重算，这里不判）与 `design-archive-write.mjs <集成 worktree> <spec-slug> --dry-run` 都要通过（后者只校验、不写）。**绝不跑不带 `--dry-run` 的归档脚本**：那是编排者在人批过之后的事。
 
 **第三步：写草稿给人看**，存成 `.tmp/pr-review/<PR 号>/archive/draft.md`。读的人是拍板的人，所以按他关心的写：

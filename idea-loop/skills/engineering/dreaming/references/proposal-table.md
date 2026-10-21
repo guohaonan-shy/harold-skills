@@ -63,7 +63,7 @@
 人是对着审核页（`review-page.md`）的卡片拍板的，卡片的内容来自这一格，所以：
 
 - `候选`：证据里有图（这条规则说的那块界面，取自设计档案或实现）；实在没有界面写「无图：原因」。处置是 `改写已有规则` 或 `追加新规则` 的，还要写「并进：」（进哪一章哪一条）和旧文新文并排（`旧：「…」→ 新：「…」`，追加写 `旧：无`）。
-- `DESIGN.md 条目`：证据里写「依据：」并点名那条标准——写入 reference 的 `§N`（具体到哪条规则或哪一行）、官方 design.md 规范，或 lint 规则名；还要有旧文（`旧：「…」`）和改后的样子（`→ 新：「…」`，删掉写 `→ 删`）。`新建 DESIGN.md` 没有旧文；`交人裁决` 的新文写在「选项」里，每个选项一份。
+- `DESIGN.md 条目`：证据里写「依据：」并点名那条标准——design-modeling 的哪一节（具体到哪条规则或哪一行）、官方 design.md 规范，或 lint 规则名；还要有旧文（`旧：「…」`）和改后的样子（`→ 新：「…」`，删掉写 `→ 删`）。`新建 DESIGN.md` 没有旧文；`交人裁决` 的新文写在「选项」里，每个选项一份。
 
 档案那几类行怎么产生、怎么批，见 `archive-reconcile.md` 与 `initial-scan.md`。
 
@@ -104,7 +104,7 @@
 
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
 |---|---|---|---|---|
-| Motion 章第 3 条 | 带日期的先例：不属于设计系统本身 | DESIGN.md 第 88 行；旧：「结算弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：写入 reference §3 规则 5「只写当前状态」、§8「带日期的先例」 | 删除 | 按新文改 / 改措辞 / 不改 |
+| Motion 章第 3 条 | 带日期的先例：不属于设计系统本身 | DESIGN.md 第 88 行；旧：「结算弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「五条写法规则」第 5 条「只写当前状态」、「明确不进 DESIGN.md 的内容」里的带日期的先例 | 删除 | 按新文改 / 改措辞 / 不改 |
 
 ## 缺陷
 
@@ -123,9 +123,9 @@
 | 行类型 | 怎么执行 |
 |---|---|
 | `文档` | 照 SKILL.md 的「四条边」：写 ADR 先、`git rm` 整个 spec 目录后；写 ADR、删 spec 时顺带把设计档案里「决定」的来源链接 `[[<spec-slug>]]` 改指新 ADR（编号不复用、原地改写）；删完跑 link sweep |
-| `候选` / `DESIGN.md 条目` | 写 `DESIGN.md` 照写入 reference（`design-md.md`）§9 的流程，只改批过的几处，写完 lint 与 diff；处理完的候选从档案对象里删掉（见 `candidate-distillation.md`） |
+| `候选` / `DESIGN.md 条目` | 写 `DESIGN.md` 照 design-modeling（`../../../design/design-modeling/SKILL.md`）的「一次写入怎么走」，只改批过的几处，写完 lint 与 diff；处理完的候选从档案对象里删掉（见 `candidate-distillation.md`） |
 | `缺陷` | `gh issue create` 到目标仓库，标题和正文用表里起草的；不打任何 `status:*` label（那归 `issue-dispatch`）；写「已有 #N」的行不开 |
-| `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照写入 reference §11 |
+| `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照 design-modeling 的「蒸馏」 |
 | `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：**先删掉没批的对象，再跑档案的归档脚本整目录并进 `prod/`**（它负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清目录；dreaming 不直接写 `prod/`、不另写搬运）。步骤见 `archive-reconcile.md` §5 与 `initial-scan.md` §4 |
 | `缺陷`（产品坏了） | 照上一行 `缺陷`：只开 issue，档案不动；它的 `evidence/` 图随 tmp 目录一起丢 |
 
