@@ -22,7 +22,7 @@ description: 把刚才的对话写成一份 spec（连同 raw transcript）；�
    - 先写交付物，再写做法（「先写交付物，再列做法」）；
    - 能按规则判的自己定，写成已定的决定并注明依据；依据不成立的才写成选项（「自己定的四条」「交给人时」）。
 
-   图怎么画、放哪照 [`references/spec-figures.md`](references/spec-figures.md)：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
+   图怎么画、放哪照 `../evidence/SKILL.md` 的「spec 里的图」：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
 
 5. **刷索引，挂 issue**：`spec-status index <docs>` 刷新 `docs/spec/index.md`。对话里谈的是某几个 GitHub issue 的，每个跑一次 `issues.mjs handoff`，再跑一次 `issues.mjs sync`（见 spec-status 的「issue 的 label」）；不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
 

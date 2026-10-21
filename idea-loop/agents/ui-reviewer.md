@@ -74,7 +74,7 @@ effort: high
 
   - `quote` 引**冻结下来的原文**：优先是 `delta/` 里那个状态文件的「应看到什么」或边的描述（`file` 写相对集成 worktree 根的路径），没有就引 spec 或工单。引不到原文的，不是发现。
   - 写法照 `skills/engineering/pr-review/references/pr-description.md` §5：`title` 是用户能感到的后果，`problem` / `user_impact` / `decide` 用话说行为，**不写代码、路径、选项里的实现细节**；位置只放 `locations`。选项至少两个，典型是「改实现，补上这个状态」与「改档案，接受实现」，并给建议。
-  - **每条是行为问题，界面上看得到，必须有取自实现的截图**：单点差别用之前 / 之后（画布或档案的图在左，实现在右），多步流程用截图拼的流程（`skills/engineering/evidence/SKILL.md` §3），动起来的用动图。图是你自己在实现上拍的，不取画布冒充实现。确实拍不到的，在 `no_screenshot` 里写为什么。复现不了的，不算发现，写进 `coverage.notRun`。
+  - **每条是行为问题，界面上看得到，必须有取自实现的截图**：单点差别用之前 / 之后（画布或档案的图在左，实现在右），多步流程用截图拼的流程（`skills/engineering/evidence/SKILL.md` 的交付证据（三种形态）），动起来的用动图。图是你自己在实现上拍的，不取画布冒充实现。确实拍不到的，在 `no_screenshot` 里写为什么。复现不了的，不算发现，写进 `coverage.notRun`。
   - `coverage` 是给 pr-reviewer 写折叠区用的：走过哪些状态与边、哪些进不去、哪些标了「人看」、哪些没来得及跑。
 - 没有发现也要交回文件：`spec` 是空数组、`coverage` 写满。
 - **不写档案**（`delta/` 里的对象文件也不改），不拍精简矩阵。
@@ -92,7 +92,7 @@ effort: high
 
 **第二步：通过之后写**（都写在 `docs/design/tmp/<spec-slug>/delta/` 里，与 `prod/` 同构）：
 
-1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`；每个有动效的边或节点录一张 GIF（`skills/engineering/evidence/SKILL.md` §4），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
+1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`；每个有动效的边或节点录一张 GIF（`skills/engineering/evidence/SKILL.md` 的交付证据（动图）），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
 2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
 3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、但还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `skills/engineering/dreaming/references/design-md.md` §13 的形状。**拿不准的不替人编**，留在草稿的「待你定」里。
 4. **自检**：`design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 只由归档脚本重算，这里不判）与 `design-archive-write.mjs <集成 worktree> <spec-slug> --dry-run` 都要通过（后者只校验、不写）。**绝不跑不带 `--dry-run` 的归档脚本**：那是编排者在人批过之后的事。

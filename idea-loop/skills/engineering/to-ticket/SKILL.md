@@ -124,7 +124,7 @@ description: 把一份 spec 切成 tracer-bullet 工单，每张写明被谁挡�
 
 合并后**删掉那张 ticket 文件**。全部 ticket 都删完了（`docs/spec/<spec-slug>/tickets/` 空了），说明这份 spec 做完了；空的 `tickets/` 目录一起删。spec 目录本身留着，等 `dreaming` 写完 ADR 后整个删。
 
-同一时机删掉这个 PR 的交付证据：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`（`../evidence/SKILL.md` §2）。人验素材和 review 配图只服务于这次交付，不进知识库。
+同一时机删掉这个 PR 的交付证据：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`（`../evidence/SKILL.md` 的交付证据）。人验素材和 review 配图只服务于这次交付，不进知识库。
 
 **ADR 与 spec 的删除归 `dreaming`，但它不是这一步的立即下一环。** dreaming 是**周期性的维护扫描**（见它的 `## 触发`），不是单份 spec 的收尾。所以「**做完但还没对账**」是 spec 的一个正常状态，不是漏洞 —— 等下一次 maintain 扫过，或者 spec 堆积到你想手动跑一次。
 

@@ -2,8 +2,6 @@
 
 spec 不只给 agent 读，也给人读。人读不出一段文字描述的问题到底长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。所以 spec 有四处要配图。这份文件规定每处画什么、用什么画、放在哪。
 
-`grill` 复现问题时读「问题的复现证据」，`to-spec` 落 spec 时全读，`uiux-refine` 冻结写回交互图时读「交互图」。
-
 | spec 的哪里 | 画什么 | 用什么画 | 谁画 |
 |---|---|---|---|
 | 问题 | 复现证据 | 截图 + 标注，按问题性质选形式 | `grill` 复现时截图，`to-spec` 排版 |
@@ -15,7 +13,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 
 ## 问题的复现证据
 
-**凭读代码写出来的根因是猜测，复现才是证据。** 复现常常推翻读代码得出的根因：以为是 A 导致的，真的走一遍发现 A 根本不发生，是 B。所以复现在 `grill` 里做——它会改动后面的决策——`to-spec` 只负责把复现结果呈现出来。
+**凭读代码写出来的根因是猜测，复现才是证据。** 复现常常推翻读代码得出的根因：以为是 A 导致的，真的走一遍发现 A 根本不发生，是 B。所以复现在 `grill` 里做，因为它会改动后面的决策；`to-spec` 只负责把复现结果呈现出来。
 
 ### 复现走什么仪器
 
@@ -44,7 +42,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 两处，生命周期不同：
 
 - **复现过程的工作文件** → `<worktree 根>/.tmp/grill/<YYYY-MM-DD>-<topic>/`（约定见 wiki-conventions 的「中间产物」）。每次尝试的截图、网络日志、trace、标注前的原图都在这里，grill 收工时删。
-- **证据图** → 挑出来、标注好的那几张，进这场讨论的 raw 桶 `docs/raw/<topic>/assets/`，文件名带问题编号（`problem-<n>-<slug>.png`）。每张图在 raw transcript 里配一段文字描述（wiki-conventions：没有文字的图片不算捕获）。`to-spec` 只从这里取。`to-spec` 的 backlog 模式没有 raw 桶，证据图放这份 spec 自己目录下的 `assets/`（[`backlog-mode.md`](backlog-mode.md) 的「先复现」）。
+- **证据图** → 挑出来、标注好的那几张，进这场讨论的 raw 桶 `docs/raw/<topic>/assets/`，文件名带问题编号（`problem-<n>-<slug>.png`）。每张图在 raw transcript 里配一段文字描述（wiki-conventions：没有文字的图片不算捕获）。`to-spec` 只从这里取。从 GitHub issue 起草、没有对话的 spec 没有 raw 桶，证据图放这份 spec 自己目录下的 `assets/`。
 
 ## User Stories 的树
 

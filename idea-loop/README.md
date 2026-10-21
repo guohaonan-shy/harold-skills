@@ -256,13 +256,12 @@ idea-loop/
 │   │   ├── tdd/SKILL.md              # shared, model-invoked — red→green loop, seams, mock boundary
 │   │   ├── glossary/SKILL.md         # shared, model-invoked — GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads, CI snippet
 │   │   ├── wiki-conventions/SKILL.md # shared, model-invoked — the docs/ contract — directories, frontmatter, status enums
-│   │   ├── evidence/SKILL.md         # shared, model-invoked — delivery evidence: flows, GIFs, side-by-sides from the implementation; never in git
+│   │   ├── evidence/SKILL.md         # shared, model-invoked — figures a human judges at a glance: spec figures (references/spec-figures.md, in docs/) and delivery evidence (references/delivery.md, flows, GIFs, side-by-sides from the implementation; never in git)
 │   │   ├── spec-status/SKILL.md      # shared, model-invoked — the spec state machine (who flips what, when) and how issue labels follow it
 │   │   ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md and the CLAUDE.md / AGENTS.md block
 │   │   ├── issue-dispatch/SKILL.md   # one dispatch round over GitHub issues — run by a fixed session under /loop
 │   │   ├── to-spec/SKILL.md          # + references/from-issues.md — drafting specs from GitHub issues
-│   │   │   references/spec-figures.md
 │   │   ├── to-ticket/SKILL.md
 │   │   ├── implement/SKILL.md        # orchestrates a spec's tickets — the work is in agents/implementer.md
 │   │   │   references/worktree.md            # an implementer's worktree: start point, preparation (`DEVELOPMENT.md`'s command, else defaults), reclaim
