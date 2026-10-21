@@ -85,6 +85,5 @@ description: 调度会话的一轮：把 GitHub issue 派成 spec 草稿和审�
 - 用户决定某个 issue 不做（比如「建议关闭」里的）：issues.mjs drop <docs> <slug> <号>（关成 not planned），再把它从 spec 里删掉，在本分支提交。
 - PR 合并后关 issue 由调度会话做，这里不做。
 - spec 开头标了「需要 grill」：先跟用户 grill，再审。
-- 碰 UI 的 spec 由用户调 /idea-loop:uiux-imagine 进入设计，它自己翻状态，issue 的 label 跟着变。
-- 切工单前要用户明说同意 spec，/idea-loop:to-ticket 会问。之后 /idea-loop:implement 在本分支上实现并开 PR，/idea-loop:pr-review 审。
+- 用户说审完、同意这份 spec：碰 UI 的跑 spec-status.mjs set <docs> <slug> 待设计，不碰的跑 set <docs> <slug> 待实现；提交、推送。之后设计和实现由各自的 loop 接手，用户也可以在这里接着调 /idea-loop:uiux-imagine 或 idea-loop:to-ticket。
 ```

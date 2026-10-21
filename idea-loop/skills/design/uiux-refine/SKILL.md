@@ -92,12 +92,12 @@ designer 交付一版之后：
 
 designer 交付「冻结」后，你核对：
 
-- spec 仍是 `设计中`；「实现决策」里的冻结摘要五样齐：画布指针（签字的那一版）、矩阵、比对容差、ledger 摘要、状态矩阵与数据契约变更。
+- spec 仍是 `设计中`，还没翻；「实现决策」里的冻结摘要五样齐：画布指针（签字的那一版）、矩阵、比对容差、ledger 摘要、状态矩阵与数据契约变更。
 - 「前端交互」的交互图都在，能打开。
 - `delta/` 过得了 `design-archive-check.mjs <仓库根> --delta <spec-slug> --no-used-by`（designer 列出的改不动的违规除外）。
 - `imagine/` 与 `canvas/work/` 已清。
 
-然后在内嵌浏览器里打开交互图给人看，关掉预览服务器，告诉人：下一步是确认这份 spec，然后 `/idea-loop:to-ticket` 切工单（它切完把 spec 翻成 `在飞`）。
+都过了，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <docs> <spec-slug> 待实现`。然后在内嵌浏览器里打开交互图给人看，关掉预览服务器，告诉人：spec 已进 `待实现`，实现的 loop 会接手；人也可以自己调 `idea-loop:to-ticket` 切工单开工。
 
 **部分冻结**：designer 交付后就结束了。关掉预览服务器，告诉人去跑 `uiux-imagine` 重开回推的那几块；第二轮发散之后再调 refine，起一个**新的** designer，任务「起手」，它会接到已冻结的画布上。
 

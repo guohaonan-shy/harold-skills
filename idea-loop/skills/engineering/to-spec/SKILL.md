@@ -26,9 +26,9 @@ description: 把刚才的对话写成一份 spec（连同 raw transcript）；�
 
 5. **刷索引，挂 issue**：`spec-status index <docs>` 刷新 `docs/spec/index.md`。对话里谈的是某几个 GitHub issue 的，每个跑一次 `issues.mjs handoff`，再跑一次 `issues.mjs sync`（见 spec-status 的「issue 的 label」）；不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
 
-6. **收工**：告诉人下一步是通读这份 spec。人审完之后：碰 UI 的（「前端交互」标着「待补图」）跑 `/idea-loop:uiux-imagine`，它开工时把状态翻成 `设计中`；不碰 UI、人明说同意的，接 `to-ticket`。
+6. **收工**：告诉人下一步是通读这份 spec。人说审完、同意了：碰 UI 的（「前端交互」标着「待补图」）翻成 `待设计`，不碰的翻成 `待实现`（`spec-status set`）。之后设计和实现由各自的 loop 接手，人也可以自己调 `/idea-loop:uiux-imagine` 或 `idea-loop:to-ticket`。
 
-spec 一律落 `审核中`，碰不碰 UI 都一样：grill 里人答过的问题不等于人同意了整份 spec。翻 `在飞` 归 `to-ticket`。人审完改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
+spec 一律落 `审核中`，碰不碰 UI 都一样：grill 里人答过的问题不等于人同意了整份 spec。翻 `在飞` 归 `to-ticket`，它只切 `待实现` 的 spec。人审完改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
 
 这里不建工单（`to-ticket` 的事），不写 ADR（`dreaming` 的事）。
 

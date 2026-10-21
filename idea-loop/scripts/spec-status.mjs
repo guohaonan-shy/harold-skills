@@ -2,9 +2,10 @@
 /**
  * The one way a spec's status changes.
  *
- * A spec walks 草稿 → 审核中 → 设计中 → 在飞 (skills/engineering/spec-status/SKILL.md). Each step has one writer and
- * a precondition that can be read off the files: 设计中 only for a spec that touches UI, 在飞 only once
- * the design is frozen (a 冻结摘要 under §4) and the tickets are cut. Skills used to flip the
+ * A spec walks 草稿 → 审核中 → (待设计 → 设计中 →) 待实现 → 在飞 (skills/engineering/spec-status/SKILL.md). Each
+ * step has one writer and a precondition that can be read off the files: the design states only for a spec
+ * that touches UI, 待实现 only once its design is frozen (a 冻结摘要 under 实现决策), 在飞 only once the tickets
+ * are cut. 待设计 and 待实现 are queue states: the dispatcher loops pick specs up from them. Skills used to flip the
  * frontmatter by hand and refresh docs/spec/index.md by hand; a flip that skipped its precondition,
  * or an index that kept the old status, went unnoticed until a later stage refused to start. Here the
  * transition is checked, written and indexed in one call, and anything illegal is refused with the
@@ -28,13 +29,15 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { defaultGh, issuesOf, syncIssues } from './issues.mjs';
 
-export const STATUSES = ['草稿', '审核中', '设计中', '在飞', '已拍板未排期', '搁置'];
+export const STATUSES = ['草稿', '审核中', '待设计', '设计中', '待实现', '在飞', '已拍板未排期', '搁置'];
 
 /** Legal next statuses. Preconditions on top of these live in transitionError. */
 export const NEXT = {
   草稿: ['审核中', '搁置'],
-  审核中: ['设计中', '在飞', '已拍板未排期', '搁置'],
-  设计中: ['在飞', '审核中', '已拍板未排期', '搁置'],
+  审核中: ['待设计', '待实现', '已拍板未排期', '搁置'],
+  待设计: ['设计中', '审核中', '已拍板未排期', '搁置'],
+  设计中: ['待实现', '审核中', '已拍板未排期', '搁置'],
+  待实现: ['在飞', '设计中', '审核中', '已拍板未排期', '搁置'],
   在飞: ['搁置'],
   已拍板未排期: ['审核中', '搁置'],
   搁置: ['审核中', '已拍板未排期'],
@@ -75,7 +78,7 @@ export function section(md, title) {
   return (end < 0 ? rest : rest.slice(0, end)).join('\n');
 }
 
-/** §5.3 前端交互 says 不涉及 → the spec does not touch UI. A missing section counts as touching nothing. */
+/** 「前端交互」 says 不涉及 → the spec does not touch UI. A missing section counts as touching nothing. */
 export function touchesUi(md) {
   const ui = section(md, '前端交互');
   return ui !== null && !/^\s*(>\s*)?不涉及/.test(ui.trim());
@@ -87,14 +90,17 @@ export const hasFreezeSummary = (md) => section(section(md, '实现决策') ?? '
 /** Why `from → to` is refused, or null when it is allowed. */
 export function transitionError(from, to, md, ticketCount) {
   if (!STATUSES.includes(to)) return `「${to}」不是合法状态（${STATUSES.join(' / ')}）`;
-  if (!STATUSES.includes(from)) return `spec 现在的状态「${from || '没写'}」不在状态机里，先按 wiki-conventions §2.2 迁移`;
+  if (!STATUSES.includes(from)) return `spec 现在的状态「${from || '没写'}」不在状态机里，先按 wiki-conventions 的「从平铺布局迁移」迁移`;
   if (from === to) return `spec 已经是「${to}」`;
   if (!NEXT[from].includes(to)) return `「${from}」不能直接翻成「${to}」（能翻成：${NEXT[from].join(' / ')}）`;
-  if ((to === '设计中' || to === '在飞') && needsGrill(md)) return 'spec 开头标着「需要 grill」，先 grill 再往下走';
-  if (to === '设计中' && !touchesUi(md)) return 'spec 的 §5.3 前端交互写的是「不涉及」——不碰 UI 的 spec 不进设计';
+  if (['待设计', '设计中', '待实现', '在飞'].includes(to) && needsGrill(md)) return 'spec 开头标着「需要 grill」，先 grill 再往下走';
+  if ((to === '待设计' || to === '设计中') && !touchesUi(md)) return 'spec 的「前端交互」写的是「不涉及」——不碰 UI 的 spec 不进设计';
+  if (to === '待实现') {
+    if (from === '审核中' && touchesUi(md)) return 'spec 碰 UI（「前端交互」不是「不涉及」）——先走设计，冻结后再进待实现';
+    if (from === '设计中' && !hasFreezeSummary(md)) return 'spec 的「实现决策」里还没有「冻结摘要」——设计没冻结';
+  }
   if (to === '在飞') {
-    if (from === '审核中' && touchesUi(md)) return 'spec 碰 UI（§5.3 不是「不涉及」）——先走设计，冻结后再切票';
-    if (from === '设计中' && !hasFreezeSummary(md)) return 'spec 的 §4 里还没有「冻结摘要」——设计没冻结';
+    if (touchesUi(md) && !hasFreezeSummary(md)) return 'spec 的「实现决策」里还没有「冻结摘要」——设计没冻结';
     if (!ticketCount) return 'spec 目录下的 tickets/ 里一张工单都没有——切完工单才翻在飞';
   }
   return null;

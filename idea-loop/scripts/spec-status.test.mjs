@@ -45,37 +45,47 @@ test('withStatus rewrites only the status line', () => {
   assert.equal(out.replace('status: 在飞', 'status: 审核中'), spec());
 });
 
-test('touchesUi reads §5.3: 不涉及 means no UI', () => {
+test('touchesUi reads 前端交互: 不涉及 means no UI', () => {
   assert.equal(touchesUi(spec()), false);
   assert.equal(touchesUi(spec({ ui: UI })), true);
 });
 
 test('legal steps pass', () => {
   assert.equal(transitionError('草稿', '审核中', spec(), 0), null);
-  assert.equal(transitionError('审核中', '设计中', spec({ ui: UI }), 0), null);
-  assert.equal(transitionError('审核中', '在飞', spec(), 2), null);
-  assert.equal(transitionError('设计中', '在飞', spec({ status: '设计中', ui: UI, freeze: true }), 3), null);
+  assert.equal(transitionError('审核中', '待设计', spec({ ui: UI }), 0), null);
+  assert.equal(transitionError('待设计', '设计中', spec({ ui: UI }), 0), null);
+  assert.equal(transitionError('设计中', '待实现', spec({ ui: UI, freeze: true }), 0), null);
+  assert.equal(transitionError('审核中', '待实现', spec(), 0), null);
+  assert.equal(transitionError('待实现', '在飞', spec(), 2), null);
+  assert.equal(transitionError('待实现', '在飞', spec({ ui: UI, freeze: true }), 3), null);
   assert.equal(transitionError('在飞', '搁置', spec(), 3), null);
 });
 
 test('skipping a step is refused', () => {
   assert.match(transitionError('草稿', '在飞', spec(), 2), /不能直接翻/);
-  assert.match(transitionError('草稿', '设计中', spec({ ui: UI }), 0), /不能直接翻/);
+  assert.match(transitionError('审核中', '在飞', spec(), 2), /不能直接翻/);
+  assert.match(transitionError('审核中', '设计中', spec({ ui: UI }), 0), /不能直接翻/);
   assert.match(transitionError('在飞', '审核中', spec(), 2), /不能直接翻/);
 });
 
-test('设计中 is only for a spec that touches UI', () => {
-  assert.match(transitionError('审核中', '设计中', spec(), 0), /不涉及/);
+test('待设计 and 设计中 are only for a spec that touches UI', () => {
+  assert.match(transitionError('审核中', '待设计', spec(), 0), /不涉及/);
+  assert.match(transitionError('待设计', '设计中', spec(), 0), /不涉及/);
 });
 
-test('在飞 needs the design frozen and the tickets cut', () => {
-  assert.match(transitionError('审核中', '在飞', spec({ ui: UI }), 2), /先走设计/);
-  assert.match(transitionError('设计中', '在飞', spec({ status: '设计中', ui: UI }), 2), /冻结摘要/);
-  assert.match(transitionError('审核中', '在飞', spec(), 0), /一张工单都没有/);
+test('待实现 needs the design frozen when the spec touches UI', () => {
+  assert.match(transitionError('审核中', '待实现', spec({ ui: UI }), 0), /先走设计/);
+  assert.match(transitionError('设计中', '待实现', spec({ ui: UI }), 0), /冻结摘要/);
+});
+
+test('在飞 needs the tickets cut, and the design still frozen', () => {
+  assert.match(transitionError('待实现', '在飞', spec(), 0), /一张工单都没有/);
+  assert.match(transitionError('待实现', '在飞', spec({ ui: UI }), 2), /冻结摘要/);
 });
 
 test('a spec marked 需要 grill does not move on', () => {
-  assert.match(transitionError('审核中', '在飞', spec({ grill: true }), 2), /需要 grill/);
+  assert.match(transitionError('审核中', '待实现', spec({ grill: true }), 0), /需要 grill/);
+  assert.match(transitionError('审核中', '待设计', spec({ grill: true, ui: UI }), 0), /需要 grill/);
 });
 
 test('old and unknown statuses are refused with the reason', () => {
@@ -95,7 +105,7 @@ function project() {
   const docs = join(mkdtempSync(join(tmpdir(), 'spec-status-')), 'docs');
   mkdirSync(join(docs, 'spec', 'practice-retry', 'tickets'), { recursive: true });
   writeFileSync(join(docs, 'spec', 'index.md'), '# spec\n> 契约：x\n\n| 文件 | status | summary |\n|---|---|---|\n');
-  writeFileSync(join(docs, 'spec', 'practice-retry', 'practice-retry.md'), spec());
+  writeFileSync(join(docs, 'spec', 'practice-retry', 'practice-retry.md'), spec({ status: '待实现' }));
   return docs;
 }
 
@@ -112,7 +122,7 @@ test('set writes the status and the index together', () => {
 test('set refuses an illegal step and leaves the file alone', () => {
   const docs = project();
   assert.throws(() => run('set', docs, 'practice-retry', '在飞'), /一张工单都没有/);
-  assert.equal(frontmatter(readFileSync(join(docs, 'spec', 'practice-retry', 'practice-retry.md'), 'utf8')).status, '审核中');
+  assert.equal(frontmatter(readFileSync(join(docs, 'spec', 'practice-retry', 'practice-retry.md'), 'utf8')).status, '待实现');
 });
 
 test('check reports the old flat layout', () => {

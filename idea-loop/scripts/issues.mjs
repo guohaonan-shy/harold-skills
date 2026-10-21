@@ -28,7 +28,7 @@ import { STATUSES, frontmatter, scan } from './spec-status.mjs';
 
 export const PREFIX = 'status:';
 export const label = (status) => `${PREFIX}${status}`;
-const COLORS = { 草稿: 'fbca04', 审核中: '1d76db', 设计中: '5319e7', 在飞: '0e8a16', 已拍板未排期: 'c5def5', 搁置: 'bfbfbf' };
+const COLORS = { 草稿: 'fbca04', 审核中: '1d76db', 待设计: 'd4c5f9', 设计中: '5319e7', 待实现: 'c2e0c6', 在飞: '0e8a16', 已拍板未排期: 'c5def5', 搁置: 'bfbfbf' };
 
 // ---------- spec frontmatter: issues: [12, 15] ----------
 
