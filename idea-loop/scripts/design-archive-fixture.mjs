@@ -13,6 +13,10 @@
  *   journeys: save-a-recipe (one page, a `via` because results → saved has two edges) and
  *             glance-at-pantry (list → pantry → list, spans two pages)
  *
+ * `marketingFiles()` is the same archive plus a long marketing page (`mkt-pricing`) whose entry state
+ * declares five sections — see its comment. Kept separate so the tests of pages without sections keep
+ * running on the unchanged fixture.
+ *
  * Not a test file: it has no assertions. Import `compliantFiles()` and bend one thing.
  */
 
@@ -274,6 +278,133 @@ path:
     `# glance-at-pantry\n\n${DECISIONS_AND_CANDIDATES('无', '无')}`,
   );
 
+  return f;
+}
+
+export const MKT = 'mkt-pricing';
+export const MKT_ENTRY = `${MKT}--entry`;
+export const MKT_ENTRY_FILE = `${BASE}/pages/${MKT}/${MKT_ENTRY}.md`;
+export const MKT_SECTIONS_YAML = `sections:
+  - { id: header, locate: { role: banner } }
+  - { id: hero, locate: { role: heading, name: 一个价格，没有隐藏项 } }
+  - { id: feature-a, locate: { role: heading, name: 无限菜谱 } }
+  - { id: feature-b, locate: { role: heading, name: 食材库同步 } }
+  - { id: footer, locate: { role: contentinfo } }`;
+
+/**
+ * The compliant fixture plus a long marketing page.
+ *
+ *   mkt-pricing--entry (entry, 5 sections: header hero feature-a feature-b footer)
+ *     header   → cookbook--list                       (user edge, `from` header)
+ *     hero     → cookbook--list ; → itself, landing on feature-a (a same-page anchor: self-loop with `section`)
+ *     feature-b→ mkt-pricing--feature-b-expanded      (user edge, `from` feature-b)
+ *     footer   → cookbook--list
+ *   mkt-pricing--feature-b-expanded  a state inside the feature-b section (`section: mkt-pricing#feature-b`)
+ *   cookbook--list  gains an edge that jumps to mkt-pricing--entry and lands on feature-b (a cross-page `section`)
+ *   journey explore-pricing: cookbook--list → mkt-pricing--entry → mkt-pricing--feature-b-expanded
+ */
+export function marketingFiles() {
+  const f = compliantFiles();
+  const list = `${BASE}/pages/cookbook/cookbook--list.md`;
+  f[list] = f[list].replace(
+    `async:`,
+    `  - id: see-pricing
+    to: "[[${MKT_ENTRY}]]"
+    kind: user
+    component: "[[NavBar]]"
+    locate: { role: link, name: 价格 }
+    action: click
+    section: ${MKT}#feature-b
+async:`,
+  );
+  f[`${BASE}/pages/${MKT}/${MKT}.md`] = doc(
+    `type: design-page
+tags: [marketing]
+summary: 价格页：一个长的营销页
+code: [src/pages/pricing.tsx]
+regions:
+  - { name: 顶栏, component: "[[SiteNav]]" }`,
+    `# 价格页\n\n页面描述。\n\n${DECISIONS_AND_CANDIDATES('无', '无')}`,
+  );
+  f[MKT_ENTRY_FILE] = doc(
+    `type: design-state
+tags: [marketing]
+summary: 价格页的入口：整页分五段
+page: "[[${MKT}]]"
+entry:
+  url: /pricing
+  preconditions: { account: 未登录 }
+${MKT_SECTIONS_YAML}
+edges:
+  - id: nav-home
+    to: "[[cookbook--list]]"
+    kind: user
+    from: ${MKT}#header
+    component: "[[SiteNav]]"
+    locate: { role: link, name: 菜谱 }
+    action: click
+  - id: start
+    to: "[[cookbook--list]]"
+    kind: user
+    from: ${MKT}#hero
+    component: "[[CtaButton]]"
+    locate: { role: button, name: 开始使用 }
+    action: click
+  - id: see-features
+    to: "[[${MKT_ENTRY}]]"
+    kind: user
+    from: ${MKT}#hero
+    section: ${MKT}#feature-a
+    component: "[[CtaButton]]"
+    locate: { role: link, name: 看功能 }
+    action: click（页内锚点，页面滚到「无限菜谱」）
+  - id: expand
+    to: "[[${MKT}--feature-b-expanded]]"
+    kind: user
+    from: ${MKT}#feature-b
+    component: "[[CtaButton]]"
+    locate: { role: button, name: 展开细节 }
+    action: click
+  - id: footer-terms
+    to: "[[cookbook--list]]"
+    kind: user
+    from: ${MKT}#footer
+    component: "[[SiteNav]]"
+    locate: { role: link, name: 菜谱首页 }
+    action: click`,
+    `# ${MKT_ENTRY}\n\n${STATE_BODY('整页五段。', '- 顶栏、首屏标语、两个功能段、页脚都在')}`,
+  );
+  f[`${BASE}/pages/${MKT}/${MKT}--feature-b-expanded.md`] = doc(
+    `type: design-state
+tags: [marketing]
+summary: 食材库同步一段展开了细节
+page: "[[${MKT}]]"
+section: ${MKT}#feature-b
+edges: []`,
+    `# ${MKT}--feature-b-expanded\n\n${STATE_BODY('「食材库同步」这一段展开了细节。', '- 看到展开后的细节')}`,
+  );
+  const comp = (name, summary) =>
+    doc(
+      `type: design-component
+tags: [component]
+summary: ${summary}
+code: [src/components/${name}.tsx]
+usedBy: ["[[${MKT}]]"]`,
+      `# ${name}\n\n${DECISIONS_AND_CANDIDATES('无', '无')}`,
+    );
+  f[`${BASE}/components/SiteNav/SiteNav.md`] = comp('SiteNav', '营销页顶栏与页脚链接');
+  f[`${BASE}/components/CtaButton/CtaButton.md`] = comp('CtaButton', '营销页按钮与锚点链接');
+  f[`${BASE}/journeys/explore-pricing.md`] = doc(
+    `type: design-journey
+tags: [journey]
+summary: 从菜谱页看价格页，展开一个功能的细节
+intent: 用户从菜谱页去价格页，看一个功能的细节
+path:
+  - "[[cookbook--list]]"
+  - "[[${MKT_ENTRY}]]"
+  - "[[${MKT}--feature-b-expanded]]"`,
+    `# explore-pricing\n\n${DECISIONS_AND_CANDIDATES('无', '无')}`,
+  );
   return f;
 }
 

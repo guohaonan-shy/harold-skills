@@ -18,7 +18,7 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const OWNER_FILE = 'owner.json';
@@ -48,6 +48,9 @@ export function status(dir, { staleMin = 45, now = Date.now() } = {}) {
 
 /** One attempt. Returns true if this call now holds the lock. */
 export function tryAcquire(dir, owner, { staleMin = 45, now = Date.now() } = {}) {
+  // The parents (e.g. a dated .tmp/dreaming/<date>/) may not exist yet; only the lock itself must be
+  // a single atomic mkdir.
+  mkdirSync(dirname(dir), { recursive: true });
   try {
     mkdirSync(dir);
   } catch (e) {

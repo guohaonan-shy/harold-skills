@@ -282,6 +282,9 @@ function normalizeEdges(state) {
       component: edge.component == null ? null : wikilinkTarget(edge.component) ?? String(edge.component),
       motion: edge.motion == null ? null : wikilinkTarget(edge.motion) ?? String(edge.motion),
       locate: edge.locate ?? null,
+      fromSection: edge.from == null ? null : String(edge.from),
+      toSection: edge.section == null ? null : String(edge.section),
+      when: edge.when ?? null,
       action: edge.action ?? null,
       trigger: edge.trigger ?? null,
       how: edge.how ?? null,
@@ -303,7 +306,7 @@ function normalizeEdges(state) {
  *   refs: object[],                     every wikilink in an object: { from, file, where, target, embed? }
  *   files: Map<string, string[]>,       basename → paths in docs/ (md without extension, assets with it)
  *   duplicates: Map<string, string[]>,  object ids that more than one file claims
- *   index: object|null,                 prod/index.md frontmatter (viewport / theme / locale)
+ *   index: object|null,                 prod/index.md frontmatter (viewport / theme / locale / motion / workspaces)
  *   problems: { file, message }[],      files that could not be read as objects
  *   legacy: string[],                   docs/design/ entries other than tmp, prod, index.md
  *   delta: { slug, added, changed, removed } | null,
@@ -397,6 +400,105 @@ function swapFile(files, id, oldFile, newFile) {
   if (newFile) rest.push(newFile);
   if (rest.length) files.set(id, rest);
   else files.delete(id);
+}
+
+// ---------- sections of a long entry state ----------
+
+/**
+ * The section types: a closed set, shared by every project (references/design-archive.md §3). A section
+ * id is `<type>` or `<type>-<qualifier>`; the value here is the one-line meaning that decides which type
+ * a block of the page is. Growing the set means editing this table, its test and the reference.
+ */
+export const SECTION_TYPES = {
+  header: '页面顶栏：站点标识、主导航、顶部的登录与行动按钮',
+  hero: '首屏主视觉：一句主张加一个主行动',
+  'social-proof': '多少人在用：用户数、客户 logo 墙、评分',
+  problem: '用户的痛点：为什么现有做法不够',
+  feature: '一项功能的展开说明',
+  'feature-grid': '多项功能并排的宫格或列表',
+  demo: '产品的实际画面、可操作的示例或演示',
+  'how-it-works': '分步骤说明怎么用',
+  'value-prop': '价值主张：好处汇总，不绑具体功能',
+  trust: '为什么信你：安全、隐私、资质、保证',
+  testimonials: '用户的原话与案例',
+  comparison: '与别的做法或套餐的对比',
+  pricing: '价格与套餐',
+  stats: '一组数字',
+  faq: '常见问题',
+  'related-content': '相关文章、延伸阅读',
+  'final-cta': '页尾前最后一次行动号召',
+  footer: '页脚：站点链接、法务、版权',
+  content: '兜底：以上都不是的正文（多半说明该归进某一类）',
+};
+
+const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
+ * A section id → `{ type, qualifier }` (qualifier null when absent). The type is the longest entry of
+ * `SECTION_TYPES` that is the whole id or its prefix before a `-`, so `feature-grid-pricing` is the type
+ * `feature-grid` with qualifier `pricing`. Otherwise `{ error }`: 'format' (not kebab-case) or 'type'
+ * (kebab-case, but no known type in front).
+ */
+export function parseSectionId(id) {
+  if (typeof id !== 'string' || !KEBAB.test(id)) return { error: 'format' };
+  const type = Object.keys(SECTION_TYPES)
+    .filter((t) => id === t || id.startsWith(`${t}-`))
+    .sort((a, b) => b.length - a.length)[0];
+  if (!type) return { error: 'type' };
+  return { type, qualifier: id === type ? null : id.slice(type.length + 1) };
+}
+
+/** `<page>#<section>` written as a plain string → `{ page, id }`; null for anything else (wikilinks included). */
+export function parseSectionRef(value) {
+  if (typeof value !== 'string') return null;
+  const m = value.match(/^([^#\s\[\]|]+)#([^#\s\[\]|]+)$/);
+  return m ? { page: m[1], id: m[2] } : null;
+}
+
+/** How a section is found on the page: `{ kind: 'heading'|'landmark'|'position', ... }`, or null for any other shape. */
+export function sectionLocate(locate) {
+  if (!locate || typeof locate !== 'object' || Array.isArray(locate)) return null;
+  const keys = Object.keys(locate).sort().join(',');
+  if (keys === 'name,role' && locate.role === 'heading' && typeof locate.name === 'string' && locate.name.trim()) {
+    return { kind: 'heading', role: 'heading', name: locate.name };
+  }
+  if (keys === 'role' && (locate.role === 'banner' || locate.role === 'contentinfo')) return { kind: 'landmark', role: locate.role };
+  if (keys === 'position' && Number.isInteger(locate.position) && locate.position >= 1) return { kind: 'position', position: locate.position };
+  return null;
+}
+
+/** The `sections` a state declares, normalised and in page order: `{ index, id, type, qualifier, idError, locate, by }`. */
+export function sectionsOfState(state) {
+  const raw = state.fm.sections;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item, index) => {
+    const it = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
+    const id = it.id == null ? null : String(it.id);
+    const parsed = id === null ? { error: 'format' } : parseSectionId(id);
+    return {
+      index,
+      id,
+      type: parsed.type ?? null,
+      qualifier: parsed.qualifier ?? null,
+      idError: parsed.error ?? null,
+      locate: it.locate ?? null,
+      by: sectionLocate(it.locate),
+      state: state.id,
+    };
+  });
+}
+
+/** The entry states of a page that declare `sections`, id order. */
+export function sectionEntries(archive, pageId) {
+  return statesOfPage(archive, pageId)
+    .filter((s) => isEntry(s) && s.fm.sections !== undefined)
+    .sort((a, b) => (a.id < b.id ? -1 : 1));
+}
+
+/** The sections of a page (those its entry state declares); empty for a page that has none. */
+export function sectionsOfPage(archive, pageId) {
+  const entry = sectionEntries(archive, pageId)[0];
+  return entry ? sectionsOfState(entry) : [];
 }
 
 // ---------- reading the graph ----------

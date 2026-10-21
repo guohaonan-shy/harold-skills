@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { BASE, SPEC_SLUG, compliantFiles, writeRepo } from './design-archive-fixture.mjs';
+import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
 import { check } from './design-archive-check.mjs';
 import { computeUsedBy, loadArchive, objectsOfKind, outgoingEdges, statesOfPage } from './design-archive.mjs';
 
@@ -403,4 +403,215 @@ test('cli: usage errors and a directory that is not a repository root exit 2', (
   assert.equal(spawnSync('node', [CLI], { encoding: 'utf8' }).status, 2);
   assert.equal(cli(writeRepo({ 'README.md': 'x' })).status, 2);
   assert.equal(cli(writeRepo(compliantFiles()), '--delta', 'nope').status, 2);
+});
+
+// ---------- rule 7: sections of a long entry state ----------
+
+const MKT_FEATURE_B = P(`pages/${MKT}/${MKT}--feature-b-expanded.md`);
+/** The marketing fixture with edits applied. */
+function bendMkt(edits, renames = []) {
+  const files = marketingFiles();
+  // renaming a section means renaming every reference to it too
+  for (const [a, b] of renames) {
+    for (const path of Object.keys(files)) files[path] = files[path].replaceAll(`${MKT}#${a}`, `${MKT}#${b}`).replaceAll(`id: ${a},`, `id: ${b},`);
+  }
+  for (const [path, fn] of Object.entries(edits)) {
+    assert.ok(path in files, `fixture has no ${path}`);
+    const next = fn(files[path]);
+    assert.notEqual(next, files[path], `edit on ${path} changed nothing`);
+    files[path] = next;
+  }
+  return files;
+}
+
+test('rule 7: the marketing fixture (5 sections, an anchor self-loop, a cross-page landing, a state in a section) passes with no notes', () => {
+  const r = run(marketingFiles());
+  assert.deepEqual(r.violations, []);
+  assert.deepEqual(r.notes, []);
+});
+
+test('rule 7: a page without sections is judged exactly as before', () => {
+  assert.deepEqual(rules(run(compliantFiles())), []);
+});
+
+const BREAKS = [
+  ['a type outside the closed set', {}, 'sections[3]', '类型', [['feature-b', 'closing-band']]],
+  ['a type and the same type with a qualifier side by side', {}, 'sections', '限定词', [['feature-a', 'feature']]],
+  ['a repeated id', { [MKT_ENTRY_FILE]: sub('  - { id: footer,', '  - { id: feature-a, locate: { role: heading, name: 另一段 } }\n  - { id: footer,') }, 'sections[4]', '重名'],
+  ['sections on a state that is not an entry', { [MKT_FEATURE_B]: sub('edges: []', 'sections:\n  - { id: hero, locate: { position: 1 } }\nedges: []') }, 'sections', '入口'],
+  ['an edge leaving from an undeclared section', { [MKT_ENTRY_FILE]: sub('from: mkt-pricing#header', 'from: mkt-pricing#nowhere') }, 'edges[0].from', 'nowhere'],
+  ['an edge landing on a section the target does not have', { [P('pages/cookbook/cookbook--list.md')]: sub('section: mkt-pricing#feature-b', 'section: mkt-pricing#faq') }, 'edges[2].section', 'faq'],
+  ['an edge with `section` whose target is not an entry state', { [MKT_ENTRY_FILE]: sub('    from: mkt-pricing#feature-b\n', '    from: mkt-pricing#feature-b\n    section: mkt-pricing#feature-b\n') }, 'edges[3].section', '入口'],
+  ['a `user` edge without `from` on an entry state with sections', { [MKT_ENTRY_FILE]: sub('    from: mkt-pricing#header\n', '') }, 'edges[0].from', '出发'],
+  ['a reference written as a wikilink', { [MKT_ENTRY_FILE]: sub('from: mkt-pricing#header', 'from: "[[mkt-pricing#header]]"') }, 'edges[0].from', '普通字符串'],
+];
+for (const [name, edits, field, needle, renames] of BREAKS) {
+  test(`rule 7: ${name} → one rule 7 violation naming the file and field`, () => {
+    const r = run(bendMkt(edits, renames));
+    const v = r.violations.filter((x) => x.rule === 7);
+    assert.equal(v.length, 1, JSON.stringify(r.violations));
+    assert.ok(v[0].file.endsWith('.md') && `${v[0].field}`.includes(field), JSON.stringify(v[0]));
+    assert.ok(v[0].message.includes(needle), v[0].message);
+    assert.deepEqual(r.violations.filter((x) => x.rule !== 7), [], 'only rule 7 is broken');
+  });
+}
+
+test('rule 7: two entry states of one page both declaring sections is reported', () => {
+  const files = marketingFiles();
+  files[`${BASE}/pages/${MKT}/${MKT}--second-entry.md`] = files[MKT_ENTRY_FILE]
+    .replace(/edges:[\s\S]*$/, 'edges: []\n---\n\n## 这一屏\n\n第二个入口。\n\n## 应看到什么\n\n- 看到页面\n')
+    .replace(/from: [^\n]+\n/g, '')
+    .replace('url: /pricing', 'url: /pricing-b');
+  const v = run(files).violations.filter((x) => x.rule === 7);
+  assert.equal(v.length, 1, JSON.stringify(v));
+  assert.match(v[0].message, /两个入口/);
+});
+
+test('rule 7: a locate that is none of heading / banner-or-contentinfo / position is reported', () => {
+  for (const bad of ['{ role: heading }', '{ role: link, name: x }', '{ position: 0 }', '{ position: 1.5 }', '{ role: banner, name: x }', '{ text: 价格 }']) {
+    const r = run(bendMkt({ [MKT_ENTRY_FILE]: sub('{ role: contentinfo }', bad) }));
+    const v = r.violations.filter((x) => x.rule === 7);
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.match(`${v[0].field}`, /sections\[4\]\.locate/);
+  }
+});
+
+test('rule 7: an id that is not <type> or <type>-<qualifier> in kebab-case is reported as a bad id, not as an unknown type', () => {
+  for (const bad of ['Hero', 'hero_2', 'hero-', 'hero--x', 'feature-A']) {
+    const r = run(bendMkt({ [MKT_ENTRY_FILE]: sub('id: hero,', `id: ${bad},`) }));
+    const v = r.violations.filter((x) => x.rule === 7 && /sections\[1\]/.test(`${x.field}`));
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.match(v[0].message, /写法|kebab/);
+  }
+});
+
+test('rule 7: the longest type prefix wins — feature-grid is a type, feature-grid-pricing adds a qualifier, feature cannot take grid', () => {
+  const ok = run(bendMkt({}, [['feature-a', 'feature-grid-pricing']]));
+  assert.deepEqual(ok.violations.filter((x) => x.rule === 7), []);
+  const alone = run(bendMkt({}, [['feature-a', 'feature-grid'], ['feature-b', 'feature-grid-pricing']]));
+  assert.ok(alone.violations.some((x) => x.rule === 7 && /限定词/.test(x.message)), 'feature-grid and feature-grid-pricing are the same type twice');
+});
+
+test('rule 7 notes: `content` and a `position` locate are hints, not violations', () => {
+  const r = run(bendMkt({ [MKT_ENTRY_FILE]: sub('{ role: heading, name: 食材库同步 }', '{ position: 2 }') }, [['feature-a', 'content']]));
+  assert.deepEqual(r.violations, []);
+  assert.equal(r.notes.length, 2, r.notes.join('\n'));
+  assert.ok(r.notes.some((n) => /content/.test(n) && /sections\[2\]/.test(n)), r.notes.join('\n'));
+  assert.ok(r.notes.some((n) => /位置|脆/.test(n) && /sections\[3\]/.test(n)), r.notes.join('\n'));
+});
+
+test('rule 7: a state `section` that the page did not declare is reported; the entry state does not carry one', () => {
+  const bad = run(bendMkt({ [MKT_FEATURE_B]: sub('section: mkt-pricing#feature-b', 'section: mkt-pricing#faq') }));
+  const v = bad.violations.filter((x) => x.rule === 7);
+  assert.equal(v.length, 1, JSON.stringify(bad.violations));
+  assert.equal(v[0].field, 'section');
+  const other = run(bendMkt({ [MKT_FEATURE_B]: sub('section: mkt-pricing#feature-b', 'section: cookbook#hero') }));
+  assert.equal(other.violations.filter((x) => x.rule === 7).length, 1);
+  const entry = run(bendMkt({ [MKT_ENTRY_FILE]: sub('edges:', 'section: mkt-pricing#hero\nedges:') }));
+  assert.equal(entry.violations.filter((x) => x.rule === 7).length, 1);
+});
+
+test('rule 7: the check command line prints the rule 7 violation and the hints, and exits 1 only for violations', () => {
+  const root = writeRepo(bendMkt({ [MKT_ENTRY_FILE]: sub('from: mkt-pricing#header', 'from: mkt-pricing#nowhere') }));
+  const bad = spawnSync('node', [CLI, root], { encoding: 'utf8' });
+  assert.equal(bad.status, 1);
+  assert.match(bad.stdout, /规则 7 分段/);
+  const hint = writeRepo(bendMkt({}, [['feature-a', 'content']]));
+  const ok = spawnSync('node', [CLI, hint], { encoding: 'utf8' });
+  assert.equal(ok.status, 0, ok.stdout);
+  assert.match(ok.stdout, /提示：.*content/);
+});
+
+// ---------- after the trial scan: `when`, a text locate, workspace prefixes ----------
+
+const SEARCH_EDGE = 'locate: { role: searchbox, name: 搜索菜谱 }';
+
+test('an edge may carry `when` (one sentence of condition); an empty or non-string one is a structure violation naming the field', () => {
+  const ok = run(bend({ [LIST]: sub(SEARCH_EDGE, `${SEARCH_EDGE}\n    when: 从首页进来时`) }));
+  assert.deepEqual(ok.violations, []);
+  for (const bad of ['""', '[a, b]', '{ x: 1 }']) {
+    const r = run(bend({ [LIST]: sub(SEARCH_EDGE, `${SEARCH_EDGE}\n    when: ${bad}`) }));
+    const v = named(r, 0, 'when');
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.match(v[0].field, /edges\[\d+\]\.when/);
+  }
+});
+
+test('the parsed edge carries `when`, null when not written', () => {
+  const a = loadArchive(writeRepo(bend({ [LIST]: sub(SEARCH_EDGE, `${SEARCH_EDGE}\n    when: 从首页进来时`) })));
+  const edges = outgoingEdges(a, 'cookbook--list');
+  assert.equal(edges.find((e) => e.id === 'search').when, '从首页进来时');
+  assert.equal(edges.find((e) => e.id !== 'search').when, null);
+});
+
+test('a user edge may locate by `{ text: <whole text> }` when role and name cannot find it; text mixed with role, or empty, is not a locate', () => {
+  const ok = run(bend({ [LIST]: sub(SEARCH_EDGE, 'locate: { text: 搜索菜谱 }') }));
+  assert.deepEqual(ok.violations, []);
+  for (const bad of ['{ text: "" }', '{ text: 搜索菜谱, role: searchbox }', '{ text: 搜索菜谱, name: x }', '{ text: [a] }']) {
+    const r = run(bend({ [LIST]: sub(SEARCH_EDGE, `locate: ${bad}`) }));
+    const v = named(r, 0, 'locate');
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.match(v[0].field, /edges\[\d+\]\.locate/);
+  }
+});
+
+test('async: a failure state may belong to another page (a failed load that sends the user elsewhere)', () => {
+  const r = run(bend({ [LIST]: sub('failure: "[[cookbook--search-failed]]"', 'failure: "[[pantry--empty]]"') }));
+  assert.deepEqual(named(r, 2), [], JSON.stringify(r.violations));
+});
+
+const COMPONENT_NAMES = ['NavBar', 'RecipeCard', 'RetryButton', 'SaveButton', 'SearchBox'];
+const WITH_WORKSPACES = (list) => sub('locale: zh-CN', `locale: zh-CN\nworkspaces: ${list}`);
+const INDEX_FILE = P('index.md');
+const prefixHits = (r) => r.violations.filter((x) => x.file !== INDEX_FILE && /前缀/.test(x.message));
+
+test('workspaces in prod/index.md: a component file name must start with one of the prefixes; each other one is a structure violation naming the component', () => {
+  const r = run(bend({ [INDEX_FILE]: WITH_WORKSPACES('[mkt, app]') }));
+  const v = prefixHits(r);
+  assert.deepEqual(v.map((x) => x.file).sort(), COMPONENT_NAMES.map((n) => P(`components/${n}/${n}.md`)).sort());
+  assert.ok(v.every((x) => x.rule === 0));
+  assert.match(v[0].message, /mkt-/);
+  assert.match(v[0].message, /app-/);
+  assert.equal(r.violations.length, v.length, 'nothing else is broken');
+});
+
+test('workspaces: components named with a declared prefix pass, and a project that declares none is not judged', () => {
+  const files = compliantFiles();
+  const moved = {};
+  for (const [path, text] of Object.entries(files)) {
+    const m = path.match(/components\/([^/]+)\/\1\.md$/);
+    const target = m ? path.replace(`${m[1]}/${m[1]}.md`, `mkt-${m[1]}/mkt-${m[1]}.md`) : path;
+    moved[target] = COMPONENT_NAMES.reduce((s, n) => s.replaceAll(`[[${n}]]`, `[[mkt-${n}]]`).replace(new RegExp(`^# ${n}$`, 'm'), `# mkt-${n}`), text);
+  }
+  moved[INDEX_FILE] = WITH_WORKSPACES('[mkt, app]')(moved[INDEX_FILE]);
+  const r = run(moved);
+  assert.deepEqual(r.violations, [], JSON.stringify(r.violations.slice(0, 3)));
+  assert.deepEqual(run(compliantFiles()).violations, [], 'no workspaces key, no prefix rule');
+});
+
+test('workspaces: a value that is not a non-empty list of kebab-case words is one violation on prod/index.md, and is not applied to the components', () => {
+  for (const bad of ['mkt', '[]', '[Mkt]', '[mkt, 3]', '{ a: b }']) {
+    const r = run(bend({ [INDEX_FILE]: WITH_WORKSPACES(bad) }));
+    const v = r.violations.filter((x) => x.file === INDEX_FILE);
+    assert.equal(v.length, 1, `${bad}: ${JSON.stringify(r.violations)}`);
+    assert.equal(v[0].field, 'workspaces');
+    assert.equal(prefixHits(r).length, 0);
+  }
+});
+
+test('check(): the prefixes can also come from the caller (the scan before prod/index.md exists), and then beat the index', () => {
+  assert.equal(prefixHits(check(writeRepo(compliantFiles()), { workspaces: ['mkt'] })).length, 5);
+  const declared = writeRepo(bend({ [INDEX_FILE]: WITH_WORKSPACES('[mkt]') }));
+  assert.equal(prefixHits(check(declared)).length, 5);
+  assert.match(prefixHits(check(declared, { workspaces: ['app'] }))[0].message, /app-/);
+});
+
+test('cli --workspaces mkt,app is the same as declaring them; a bad value exits 2', () => {
+  const root = writeRepo(compliantFiles());
+  const bad = spawnSync('node', [CLI, root, '--workspaces', 'mkt,app'], { encoding: 'utf8' });
+  assert.equal(bad.status, 1);
+  assert.match(bad.stdout, /前缀/);
+  assert.equal(spawnSync('node', [CLI, root, '--workspaces', 'Mkt!'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync('node', [CLI, root, '--workspaces'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync('node', [CLI, root], { encoding: 'utf8' }).status, 0);
 });

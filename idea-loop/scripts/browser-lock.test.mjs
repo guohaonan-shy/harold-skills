@@ -17,6 +17,12 @@ test('the first caller holds the lock and a second one is refused', () => {
   assert.equal(readOwner(dir).owner, '03');
 });
 
+test('a lock whose parent directories do not exist yet is still acquired', () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'browser-lock-')), '.tmp', 'dreaming', '2026-10-21', 'browser.lock');
+  assert.equal(tryAcquire(dir, 'dreaming'), true);
+  assert.equal(readOwner(dir).owner, 'dreaming');
+});
+
 test('re-acquiring by the holder is a no-op success', () => {
   const dir = lockDir();
   tryAcquire(dir, '03');

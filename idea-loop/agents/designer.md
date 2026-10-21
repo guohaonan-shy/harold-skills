@@ -291,7 +291,7 @@ docs/design/tmp/<spec-slug>/
 
 1. **先看档案里这块 UI 现在有什么。** `docs/design/prod/` 在就读：档案的「页面」查询入口（插件的档案查询 MCP 工具）有就用，没有就直接读目录。`prod/` 不存在（项目还没建档案）就当整块都是新增。
 2. **和冻结画布对，新增或改动的对象各放一份改完之后的全文**，路径与 `prod/` 里相同；没动的对象不放。
-   - **状态** `delta/pages/<page>/<page>--<state>.md`：画布 `?state=<名字>` 的名字就是 `<state>`（与冻结摘要的状态矩阵同名）。frontmatter：`page`，入口节点的 `entry`，可选的 `components` / `motions`，`edges`，发起了异步动作的写全 `async`。正文只有「这一屏」（取自冻结画布，附矩阵截图）与「应看到什么」（可判定的几条）。**状态文件不写决定。**
+   - **状态** `delta/pages/<page>/<page>--<state>.md`：画布 `?state=<名字>` 的名字就是 `<state>`（与冻结摘要的状态矩阵同名）。frontmatter：`page`，入口节点的 `entry`，可选的 `components` / `motions`，`edges`，发起了异步动作的写全 `async`。正文只有「这一屏」（取自冻结画布，附矩阵截图）与「应看到什么」（可判定的几条）。长页面（比主视口高）的入口状态照 `refs/design-archive.md` §3「分段」写 `sections`、边的 `from`（你写的是结构，不拍档案图）。**状态文件不写决定。**
    - **边**：`user` 边的 `locate`（`role` + `name`）从画布真 DOM 的可访问树读，不凭想象；`system` 边写 `trigger` 与 `how`（实现之后怎么在真应用里让它发生：拦哪个请求、等多久）。写不出 `how`、或在真应用里走不通的边带 `blocked`（`missing` + `tried`），不编。
    - **入口**：新页面的地址与前置条件取自 spec；spec 没写的不编，在交回里列「入口待补」。
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域 / 代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件，不编）、**动效** `delta/motions/<motion>.md`（§6 签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。

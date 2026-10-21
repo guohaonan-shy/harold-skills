@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SPEC_SLUG, compliantFiles, writeRepo } from './design-archive-fixture.mjs';
+import { SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
 
 const SERVER = fileURLToPath(new URL('./design-archive-mcp.mjs', import.meta.url));
 const CLI = fileURLToPath(new URL('./design-archive-query.mjs', import.meta.url));
@@ -21,6 +21,9 @@ function gitRepo(extra = {}) {
   assert.equal(spawnSync('git', ['init', '-q'], { cwd: root }).status, 0);
   return root;
 }
+
+/** The marketing page's files on top of the compliant fixture (marketingFiles() is a superset of it). */
+const marketingExtra = () => marketingFiles();
 
 const INIT = { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '0' } } };
 const call = (id, name, args) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name, arguments: args } });
@@ -114,6 +117,39 @@ test('tools/call returns what the command line prints, for all six entries', () 
     assert.ok(!res.result.isError, `${name}: ${JSON.stringify(res)}`);
     assert.deepEqual(JSON.parse(textOf(res)), cliJson(root, ...cliArgs), name);
   });
+});
+
+test('tools/call: design_refs with a section id or a section type returns what the command line prints; design_page lists the sections', () => {
+  const root = gitRepo(marketingExtra());
+  const cases = [
+    ['design_refs', { name: 'mkt-pricing#hero' }, ['refs', 'mkt-pricing#hero']],
+    ['design_refs', { name: 'mkt-pricing#feature-b' }, ['refs', 'mkt-pricing#feature-b']],
+    ['design_refs', { name: '#feature' }, ['refs', '#feature']],
+    ['design_page', { name: 'mkt-pricing' }, ['page', 'mkt-pricing']],
+    ['design_state', { name: 'mkt-pricing--feature-b-expanded' }, ['state', 'mkt-pricing--feature-b-expanded']],
+  ];
+  const s = session(root, [INIT, ...cases.map(([name, args], i) => call(10 + i, name, args))]);
+  cases.forEach(([name, args, cliArgs], i) => {
+    const res = s.byId[10 + i];
+    assert.ok(!res.result.isError, `${name} ${JSON.stringify(args)}: ${JSON.stringify(res)}`);
+    assert.deepEqual(JSON.parse(textOf(res)), cliJson(root, ...cliArgs), `${name} ${JSON.stringify(args)}`);
+  });
+  assert.equal(JSON.parse(textOf(s.byId[13])).sections.length, 5);
+});
+
+test('tools/call: a section that is not there is an error result that lists the existing ones', () => {
+  const s = session(gitRepo(marketingExtra()), [INIT, call(2, 'design_refs', { name: 'mkt-pricing#nowhere' })]);
+  assert.equal(s.byId[2].result.isError, true);
+  assert.match(textOf(s.byId[2]), /hero/);
+});
+
+test('tools/list: design_page and design_refs say they know about sections, and how to ask', () => {
+  const s = session(gitRepo(), [INIT, LIST]);
+  const tools = Object.fromEntries(s.byId[2].result.tools.map((t) => [t.name, t]));
+  assert.match(tools.design_page.description, /分段/);
+  assert.match(tools.design_refs.description, /分段/);
+  assert.match(tools.design_refs.inputSchema.properties.name.description, /<页面>#<段>/);
+  assert.match(tools.design_refs.inputSchema.properties.name.description, /#<段类型>/);
 });
 
 test('tools/call with delta reads the archive as it will be after the requirement', () => {

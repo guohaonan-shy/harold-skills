@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**（或 dreaming）：它面对人，你面对这次的差异（或这一组状态）。你不跟人对话，不改代码，不提交，不碰 PR。做完或者停下，都是把结果交回给它。
 
-> 下文 `refs/` = `${CLAUDE_PLUGIN_ROOT}/references/`，`scripts/` = `${CLAUDE_PLUGIN_ROOT}/scripts/`。开工先读一次 `refs/design-archive.md`（§2 目录、§3 frontmatter、§4 正文、§5 进入方式、§8 查询、§9 归档）、`refs/worktree.md`（服务怎么起）、`refs/ui-implementation-standard.md` §3（比对脚本、矩阵、容差）和 `refs/evidence.md`（截图、流程图、动图怎么做）。
+> 下文 `refs/` = `${CLAUDE_PLUGIN_ROOT}/references/`，`scripts/` = `${CLAUDE_PLUGIN_ROOT}/scripts/`。开工先读一次 `refs/design-archive.md`（§2 目录、§3 frontmatter、§4 正文、§5 进入方式、§8 查询、§9 归档、§10 长页面的分段与拍图）、`refs/worktree.md`（服务怎么起）、`refs/ui-implementation-standard.md` §3（比对脚本、矩阵、容差）和 `refs/evidence.md`（截图、流程图、动图怎么做）。
 
 ## 1 输入
 
@@ -92,8 +92,8 @@ effort: high
 
 **第二步：通过之后写**（都写在 `docs/design/tmp/<spec-slug>/delta/` 里，与 `prod/` 同构）：
 
-1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`；每个有动效的边或节点录一张 GIF（`refs/evidence.md` §4），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
-2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
+1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`。拍之前关掉开发服务器的调试浮层（框架的开发工具条、错误浮层），不然它们进每张图。**长页面的入口状态（页面滚动高度大于主视口，`sections` 已声明或该声明）按段拍**：入口状态没声明分段的，先照 `refs/design-archive.md` §3「分段」补进 `delta/` 的状态文件（分段名取自类型表、用标题或 landmark 定位）；然后跑分段脚本（§10）：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <集成 worktree> <入口状态 id> --delta <spec-slug> [--viewport <WxH> --theme <light|dark>]` 打印一段代码，存成文件交给 Playwright 跑（先 `browser_navigate` 进入口状态；代码文件与输出目录的路径要在 Playwright 的工作区根目录里），再用 `browser_evaluate`（`() => window.__dsMeasure`，带 `filename`）把测量结果存成文件（**`prod/index.md` 还没定视口或主题时**，上面那条 `measure` 必须带 `--viewport` 与 `--theme`，值就是这一步取的画布矩阵默认格，否则脚本退出码 2、不猜）；然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" attribute <测量结果.json>`（输出存成文件）：**有落空的可点元素、定位失败或重叠，补分段、改定位再测，清零了才往下**；归属结果顺带告诉你每条 `user` 边该写哪个 `from`，以及哪些可点元素按角色定位不到（这些边的 `locate` 写 `{ text: <完整文字> }`）。清零后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out <目录>` 打印第二段代码，交给 Playwright 跑，**每段单独截**（滚到这一段、等内容稳定、冻结页面时钟再截），每张叫 `<入口状态 id>@<段 id>.png`；**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`（段变高了尺寸不同，算改了）。段内交互的状态（带 `section`）只拍那一段：先进入这个状态，`measure … --for <段内状态 id>`（不重载页面），`attribute`，`shoot` 出 `<段内状态 id>.png`；浮层越出所在段时 `shoot` 带 `--include`（§10）。每个有动效的边或节点录一张 GIF（`refs/evidence.md` §4），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
+2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF；有分段的入口状态按段排开，每段一个 `###` 小标题、这一段的图、一两句描述），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
 3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、但还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `refs/design-md.md` §13 的形状。**拿不准的不替人编**，留在草稿的「待你定」里。
 4. **自检**：`design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 只由归档脚本重算，这里不判）与 `design-archive-write.mjs <集成 worktree> <spec-slug> --dry-run` 都要通过（后者只校验、不写）。**绝不跑不带 `--dry-run` 的归档脚本**：那是编排者在人批过之后的事。
 
@@ -128,14 +128,14 @@ effort: high
 
 1. **进**：`design-archive-query.mjs <仓库根> state <id>`，按返回的进入方式走（§2 第 5 步）。档案里标了「进不去」的状态，不用再走一遍路径，但仍然试一次入边最后那一步，看这次通了没有。入口状态的 `steps` 是空的：**要停在哪一屏的做法写在状态文件的「这一屏」里**（比如加载态要把那条请求拦住才停得住），照着做；失败态、空态靠它入边的 `how`。
 2. **核「应看到什么」**：每一条可判定的，对着实际画面逐条判成立 / 不成立。
-3. **拍**：主视口、主题、语言取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。截图前照 `refs/ui-implementation-standard.md` §3.1：同 viewport 与 DPR、等字体、关动画与过渡。具体：等到网络空闲且字体就绪；要停在瞬态（加载中）的，拦住请求后再等一小会让这一屏画完；注入 `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }`（`ui-measure.mjs` 用的同一段，转圈因此停在固定的一帧）；不另设 `prefers-reduced-motion`。拍到 `.tmp/dreaming/<日期>/shots/<状态 id>.png`。
+3. **拍**：主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。拍之前关掉开发服务器的调试浮层。**入口状态声明了 `sections` 的，不拍一张主视口图，按 `refs/design-archive.md` §10 每段单独截**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> <状态 id> [--viewport <WxH> --theme <light|dark>]` 生成代码（**`prod/index.md` 还没定视口或主题时**必须带 `--viewport` 与 `--theme`，值就是上面取到的项目默认值，否则脚本退出码 2、不猜），交给 Playwright 跑（先进入口状态），用 `browser_evaluate`（`() => window.__dsMeasure`，带 `filename`）把测量结果存成文件，`attribute` 算归属，`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out .tmp/dreaming/<日期>/shots/<状态 id>` 出每段一张；**段内交互的状态（带 `section`）只拍那一段**：进入状态后 `measure … --for <状态 id>`，再 `attribute`、`shoot`（浮层越出所在段时带 `--include`），出 `<状态 id>.png`。其余状态的截图前照 `refs/ui-implementation-standard.md` §3.1：同 viewport 与 DPR、等字体、关动画与过渡。具体：等到网络空闲且字体就绪；要停在瞬态（加载中）的，拦住请求后再等一小会让这一屏画完；注入 `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }`（`ui-measure.mjs` 用的同一段，转圈因此停在固定的一帧）；不另设 `prefers-reduced-motion`（`motion` 为 `reduce` 时才由分段脚本的代码设）。拍到 `.tmp/dreaming/<日期>/shots/<状态 id>.png`。分段脚本不注入这段样式，它用冻结页面时钟加 Playwright 的 `animations: 'disabled'`。
 4. **比**：
 
    ```
    node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-png-compare.mjs" <prod 里这个状态的截图> <刚拍的图> --json
    ```
 
-   它用的是 `ui-measure.mjs` 同一套像素层容差（抗锯齿 0.1、像素差 ≤ 1%），不放宽、不收紧。尺寸不同算容差外。截图是 Git LFS 指针、取不下来（退出码 2），记进交回，这个状态记「未完成」，不判。
+   它用的是 `ui-measure.mjs` 同一套像素层容差（抗锯齿 0.1、像素差 ≤ 1%），不放宽、不收紧。尺寸不同算容差外。**有分段的入口状态逐段比**：每段用它的图（`<状态 id>@<段 id>.png`）各比一次；`shoot` 返回里 `stable` 不是 `true` 的段，容差外时先再拍一次，两次都超出才算。哪一段超出容差，只这一段判后续（档案过期 / 产品坏了的判法不变），只重拍、只写这一段；整页都在容差内照旧「一致」，什么都不写。`attribute` 报了**定位失败**（多半是标题改名了）：判「进入方式过期」，在页面的可访问性快照里找到改了名的标题，提议新的 `locate`，写进 `delta/` 里入口状态的 `sections`，改完再测一遍确认；**新出现了落空的可点元素**（页面多了一块内容）：当作画面变了，按「档案过期 / 产品坏了」原来的判法走，判档案过期时一并提议新的分段。截图是 Git LFS 指针、取不下来（退出码 2），记进交回，这个状态记「未完成」，不判。
 5. **看信号**：控制台的错误、失败的请求、空白页、点了没反应。**状态本来就该有的错误不算**（失败态的红字、它那条失败请求）——以「应看到什么」为准，没写到的异常才算。
 
 ### 5.3 判定
