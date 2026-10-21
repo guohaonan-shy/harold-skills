@@ -8,8 +8,8 @@ designer 收到人的签字（全部或一部分）时从头读到「状态不�
 docs/design/tmp/<spec-slug>/
 ├── imagine/                    方向说明与发散的临时件（冻结时清）
 ├── canvas/
-│   ├── <spec-slug>.html           画布（起手时就在这里）
-│   ├── <spec-slug>-motion.html    跑过动效段才有
+│   ├── v<N>.html                  静态画布的各个版本（见 refine-canvas.md）
+│   ├── motion-v<N>.html           动效画布的各个版本（开了动效才有）
 │   ├── <spec-slug>-design.md      冻结记录
 │   ├── assets/                    矩阵每格截图（按格名，完整矩阵只在这里）、定格帧或 GIF、素材段的生成素材、画布引用的素材
 │   ├── flows/                     「改 spec」写回 spec 的交互图（PNG，文件名 flow-<n>-<page>--<state>.png），拼图输入在 flows/src/

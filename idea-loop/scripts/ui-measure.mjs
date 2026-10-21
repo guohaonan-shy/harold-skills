@@ -114,7 +114,7 @@ async function toRgba(scratch, buffer) {
   }, buffer.toString('base64'));
 }
 
-/** Identity of a finding for plateau detection — the defect, not its numbers. */
+/** Identity of a finding for 瓶颈 (bottleneck) detection — the defect, not its numbers. */
 const fingerprint = (f) => `${f.cell}|${f.id}|${f.anchor}|${f.property}`;
 
 async function main() {
@@ -177,15 +177,15 @@ async function main() {
   const memo = resolve(dirname(matrixPath), '.ui-measure-last.json');
   const previous = existsSync(memo) ? JSON.parse(readFileSync(memo, 'utf8')) : null;
   const current = sorted.map(fingerprint);
-  const plateau = previous !== null && sorted.length > 0
+  const bottleneck = previous !== null && sorted.length > 0
     && previous.length === current.length && previous.every((f, i) => f === current[i]);
   writeFileSync(memo, JSON.stringify(current, null, 2));
 
   if (asJson) {
-    console.log(JSON.stringify({ findings: sorted, plateau, humanReviewCells: humanCells }, null, 2));
+    console.log(JSON.stringify({ findings: sorted, 瓶颈: bottleneck, humanReviewCells: humanCells }, null, 2));
   } else {
     console.log(renderFindings(sorted));
-    if (plateau) console.log('\nPLATEAU — identical findings two runs running. Stop and hand it to a human.');
+    if (bottleneck) console.log('\n瓶颈：同一批 finding 连续两轮不变。停下，交给人。');
     if (humanCells.length) console.log(`\nHUMAN REVIEW (not green, not checked): ${humanCells.join(', ')}`);
   }
   process.exit(sorted.length ? 2 : 0);

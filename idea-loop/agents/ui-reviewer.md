@@ -53,7 +53,7 @@ effort: high
    - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`skills/design/uiux-refine/references/ui-implementation-standard.md` §3.3 的格式；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对不过的 finding 就是对不上的画面。harness 覆盖不了的格标「人看」，列出来，不假装绿。
    - 没有冻结画布（implementer 记的最小差异）：只核状态文件的「应看到什么」，每一条可判定的都对着实际画面看。
 
-   `ui-measure.mjs` 判了 plateau，或残留差异是设计决策层面的，照实记，不在这里硬磨。
+   `ui-measure.mjs` 判了瓶颈，或残留差异是设计决策层面的，照实记，不在这里硬磨。
 8. **漏掉的**：实现里这一屏上出现了、`delta/` 与 `prod/` 里都没有的状态或边（页面上多出一个弹层、一个按钮能走到档案里没有的地方），同样是发现。
 
 ## 3 每轮审查模式

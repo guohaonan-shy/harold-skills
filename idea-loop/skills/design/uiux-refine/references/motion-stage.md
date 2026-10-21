@@ -19,7 +19,7 @@ designer 在打磨环 `pass`、静态构图冻结之后，判断要不要开这�
 
 ## 做：在冻结的画布上叠一层
 
-工作文件是同目录的 `docs/design/tmp/<spec-slug>/canvas/<spec-slug>-motion.html`，从冻结的那份静态画布起手（lint hook 同样盯它）。动效是叠上去的一层：做动效时发现构图有问题，记下来，回打磨环改构图。
+工作文件是同目录的 `motion-v<N>.html`：`motion-v1.html` 从签过字的那一版静态画布复制起手，之后每改一次递增一版（见 `refine-canvas.md`，lint hook 同样盯它）。动效是叠上去的一层：做动效时发现构图有问题，记下来，回打磨环改构图。
 
 怎么做、要暴露什么句柄（`window.__maTimeline` 的 `seek` / `duration` / `resume`）、reduced-motion 怎么写：[`design/motion-protocol.md`](design/motion-protocol.md) 的 A 段，法在 [`design/motion-spec.md`](design/motion-spec.md)。duration 与 easing 取 motion-spec 的「Duration tokens」与「Easing tokens」；项目 `DESIGN.md` 的 Motion 章有自己的时长 / 缓动 token 就用它的。
 

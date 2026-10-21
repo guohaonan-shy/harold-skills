@@ -54,8 +54,8 @@ product at the selected Surface / Module / Component scope are all real, not app
 ## Scratch layout
 
 - The canvas lives in the target project's docs, **not** the app tree:
-  `docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html` (+ `canvas/assets/` for captured PNGs; the motion layer
-  is `<spec-slug>-motion.html` in the same folder). It is written there from the first stroke and frozen in
+  `docs/design/tmp/<spec-slug>/canvas/v<N>.html`, one file per version (+ `canvas/assets/` for captured PNGs; the
+  motion layer is `motion-v<N>.html` in the same folder; see `../refine-canvas.md`). It is written there from the first stroke and frozen in
   place by `uiux-refine`; `tmp/` is local-only and stays until the requirement is archived. One spec
   = one folder, however many surfaces it spans. Scratch that should not survive (critic frames, round
   JSON, the ledger) goes under `docs/design/tmp/<spec-slug>/canvas/work/`, the divergent half's

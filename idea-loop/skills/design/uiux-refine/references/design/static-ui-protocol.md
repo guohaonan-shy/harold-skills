@@ -223,7 +223,7 @@ flagship token cost.
 
 ### F · Build in the browser
 
-Evolve the baseline or context frame in the canvas (`docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html`). Implement changed parts in
+Evolve the baseline or context frame in the canvas (the latest version `docs/design/tmp/<spec-slug>/canvas/v<N>.html`, see `../refine-canvas.md`). Implement changed parts in
 full; preserve unchanged parts from the replica or mark them with an honest placeholder. Pure
 deletions remain code-level work.
 
@@ -237,7 +237,7 @@ core's 5-dimensional critique and restraint check.
 ### G · Review gates to convergence
 
 1. **Mechanical lint.** Confirm the final preview is P0-clean; run
-   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/<spec-slug>.html` (this
+   `node "$CLAUDE_PLUGIN_ROOT/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/v<N>.html` (this
    plugin's script, wherever the plugin is installed) when needed. Fix or explicitly justify P1s.
 2. **Isolated critique.** Self-contained pass over the served preview URL: read
    `skills/design/uiux-refine/references/design/ui-craft-checklist.md` and `skills/design/uiux-refine/references/design/heuristics-checklist.md`, screenshot each

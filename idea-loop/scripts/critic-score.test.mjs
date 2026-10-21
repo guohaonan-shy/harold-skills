@@ -27,7 +27,7 @@ const p = (severity, n, over = {}) => Array.from({ length: n }, () => finding(se
 test('two P3 scored 9 is a valid round and stops as pass', () => {
   const r = checkRound(p('P3', 2), 9);
   assert.equal(r.valid, true);
-  assert.equal(r.stop, 'pass');
+  assert.equal(r.stop, '通过');
 });
 
 test('two P3 scored 10 is invalid — 10 means the critic found nothing to touch', () => {
@@ -46,13 +46,13 @@ test('one P1 scored 9 is invalid — a reflow-level finding caps the round at 7'
 test('one P0 scored 5 is a valid round and stops as direction', () => {
   const r = checkRound(p('P0', 1), 5);
   assert.equal(r.valid, true);
-  assert.equal(r.stop, 'direction');
+  assert.equal(r.stop, '方向');
 });
 
-test('three rounds running with P1 as the worst is a plateau on the third', () => {
+test('three rounds running with P1 as the worst is a 瓶颈 (bottleneck) on the third', () => {
   const r = checkRound(p('P1', 1), 7, ['P1', 'P1']);
   assert.equal(r.valid, true);
-  assert.equal(r.stop, 'plateau');
+  assert.equal(r.stop, '瓶颈');
 });
 
 test('a P2 carrying kind "direction" fails schema validation', () => {
@@ -69,7 +69,7 @@ test('a P2 carrying kind "direction" fails schema validation', () => {
 test('no findings at all is the only way to score 10', () => {
   const r = checkRound([], 10);
   assert.equal(r.valid, true);
-  assert.equal(r.stop, 'pass');
+  assert.equal(r.stop, '通过');
   assert.equal(r.worst, null);
   assert.deepEqual(r.band, { min: 10, max: 10 });
 });
@@ -113,20 +113,20 @@ test('the worst finding sets the ceiling regardless of what sits under it', () =
 
 test('pass needs the threshold, and the threshold is the one written in the rubric', () => {
   assert.equal(STOP_THRESHOLD, 9);
-  assert.equal(checkRound([finding('P2')], 8).stop, 'continue');
+  assert.equal(checkRound([finding('P2')], 8).stop, '继续');
 });
 
-test('one round of memory cannot see a plateau — it takes three', () => {
-  assert.equal(checkRound(p('P1', 1), 7, 'P1').stop, 'continue');
-  assert.equal(checkRound(p('P1', 1), 7, []).stop, 'continue');
+test('one round of memory cannot see a 瓶颈 (bottleneck) — it takes three', () => {
+  assert.equal(checkRound(p('P1', 1), 7, 'P1').stop, '继续');
+  assert.equal(checkRound(p('P1', 1), 7, []).stop, '继续');
 });
 
-test('a plateau at a different severity than this round is not a plateau', () => {
-  assert.equal(checkRound(p('P2', 1), 8, ['P1', 'P1']).stop, 'continue');
+test('a 瓶颈 at a different severity than this round is not a 瓶颈', () => {
+  assert.equal(checkRound(p('P2', 1), 8, ['P1', 'P1']).stop, '继续');
 });
 
-test('direction outranks plateau — three P0 rounds still means reopen the direction', () => {
-  assert.equal(checkRound(p('P0', 1), 5, ['P0', 'P0']).stop, 'direction');
+test('方向 outranks 瓶颈 — three P0 rounds still means reopen the direction', () => {
+  assert.equal(checkRound(p('P0', 1), 5, ['P0', 'P0']).stop, '方向');
 });
 
 test('an invalid round yields no stop judgement — the score it rests on is not trusted', () => {
@@ -204,11 +204,11 @@ test('an empty exclusion set changes nothing — the result is byte-for-byte wha
 
 test('the pre-existing result shape is pinned literally so "unchanged" cannot drift with the code', () => {
   assert.deepEqual(checkRound(p('P3', 2), 9), {
-    valid: true, errors: [], worst: 'P3', counts: { P0: 0, P1: 0, P2: 0, P3: 2 }, band: { min: 9, max: 9 }, stop: 'pass',
+    valid: true, errors: [], worst: 'P3', counts: { P0: 0, P1: 0, P2: 0, P3: 2 }, band: { min: 9, max: 9 }, stop: '通过',
   });
   assert.equal(
     renderRound(checkRound(p('P3', 2), 9), 'r.json'),
-    'critic-round: 有效 ✓ (r.json)\n  最差：P3　计数：P3×2　允许区间：9–9\n  停止判定：pass',
+    'critic-round: 有效 ✓ (r.json)\n  最差：P3　计数：P3×2　允许区间：9–9\n  停止判定：通过',
   );
 });
 
@@ -233,13 +233,13 @@ test("the effective score is the critic's score moved just far enough into the b
   const r = checkRound([finding('P1'), finding('P3')], 7, [], [kept(0)]);
   assert.equal(r.criticScore, 7);
   assert.equal(r.effectiveScore, 9);
-  assert.equal(r.stop, 'pass');
+  assert.equal(r.stop, '通过');
 });
 
 test('excluding nothing that matters leaves the effective score where the critic put it', () => {
   const r = checkRound([finding('P1'), finding('P3')], 7, [], [kept(1)]);
   assert.equal(r.effectiveScore, 7);
-  assert.equal(r.stop, 'continue');
+  assert.equal(r.stop, '继续');
 });
 
 test("excluded findings are listed one by one with the whole finding and the human's words — never dropped silently", () => {
@@ -259,14 +259,14 @@ test("excluded findings are listed one by one with the whole finding and the hum
 test('a kept P0 no longer sends the loop back to direction', () => {
   const r = checkRound([finding('P0'), finding('P3')], 5, [], [kept(0)]);
   assert.equal(r.valid, true);
-  assert.equal(r.stop, 'pass');
+  assert.equal(r.stop, '通过');
 });
 
 test('excluding every finding is the 10 band — nothing left to touch', () => {
   const r = checkRound([finding('P2')], 8, [], [kept(0)]);
   assert.equal(r.worst, null);
   assert.equal(r.effectiveScore, 10);
-  assert.equal(r.stop, 'pass');
+  assert.equal(r.stop, '通过');
 });
 
 test('an exclusion that points at a finding that is not there is an error, not a shrug', () => {

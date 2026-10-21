@@ -66,7 +66,7 @@ critic's score, and the worst severity of each previous round, and returns two t
 
 - **valid / invalid** — invalid means the score is outside the band its own findings allow. Rerun
   the critic; do not argue the number down.
-- **stop judgement** — `continue`, `pass` (≥ 9), `plateau` (three rounds running at the same worst
+- **stop judgement** — `继续` (continue), `通过` (pass, ≥ 9), `瓶颈` (bottleneck: three rounds running at the same worst
   severity — more rounds are not going to help), or `direction` (a P0 is present; the next move is
   a new direction, not another polish pass).
 

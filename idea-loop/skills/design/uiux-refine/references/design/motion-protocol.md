@@ -70,7 +70,7 @@ an unsettled layout wastes both stages.
    everything into the project's tokens; never paste defaults.
 3. **Build on the static HTML.** Start from `static-ui-protocol`'s approved preview (so the visual stays
    pixel-faithful) and layer in real motion + native interaction. Write to
-   `docs/design/tmp/<spec-slug>/canvas/<spec-slug>-motion.html`, next to the static canvas (the lint hook watches it too). React-heavy
+   `docs/design/tmp/<spec-slug>/canvas/motion-v<N>.html` (versioned, see `../refine-canvas.md`), next to the static canvas (the lint hook watches it too). React-heavy
    preview → inline `react@18.3.1` + `react-dom@18.3.1` + `@babel/standalone` + framer
    (`window.Motion`); else plain HTML + CSS + small JS using the spec tokens.
 4. **Expose the freezable timeline** (spec §8): the preview defines

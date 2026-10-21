@@ -193,9 +193,9 @@ export function scoreBand(findings) {
  *                  `findings`, reason the human's words. They do not count toward the round and
  *                  come back listed in the result. A reference to a finding that is not there is
  *                  an error. `history` should carry the worst severity of what COUNTED in each
- *                  previous round, so a kept finding does not feed a plateau.
+ *                  previous round, so a kept finding does not feed a false 瓶颈 (bottleneck).
  * @returns { valid, errors, worst, counts, band, stop }
- *          `stop` is one of continue / pass / plateau / direction, and is null on an invalid
+ *          `stop` is one of 继续 / 通过 / 瓶颈 / 方向, and is null on an invalid
  *          round: the judgement would rest on a score that does not follow from the findings.
  *          With a non-empty `excluded`, worst / counts / band describe what still counts, and
  *          `criticScore`, `effectiveScore` and the listed `excluded` are added; with none, the
@@ -270,11 +270,11 @@ export function checkRound(findings, score, history = [], excluded = []) {
  * "we have been stuck at P0 for three rounds" and "reopen the direction" are the same call.
  */
 function stopDecision(worst, score, past) {
-  if (worst === 'P0') return 'direction';
-  if (score >= STOP_THRESHOLD) return 'pass';
+  if (worst === 'P0') return '方向';
+  if (score >= STOP_THRESHOLD) return '通过';
   const [a, b] = past.slice(-2);
-  if (worst !== null && past.length >= 2 && a === worst && b === worst) return 'plateau';
-  return 'continue';
+  if (worst !== null && past.length >= 2 && a === worst && b === worst) return '瓶颈';
+  return '继续';
 }
 
 /** Human-readable render, same grouping the other scripts use. */
