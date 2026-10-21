@@ -238,7 +238,7 @@ to start.
 ```
 idea-loop/
 ├── .claude-plugin/plugin.json
-├── .mcp.json                         # two MCP servers: headless Playwright (the design canvas's browser) + design-archive (read-only lookups of the design archive)
+├── .mcp.json                         # one MCP server: design-archive (read-only lookups of the design archive). Playwright (headless, isolated) and Refero are configured at user level by the human; `setup` only checks them
 ├── hooks/hooks.json                  # PreToolUse(Bash) → merge-gate-hook.mjs; PostToolUse → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs
 ├── agents/
 │   ├── uiux-imaginer.md              # uiux-imagine's executor (idea-loop:uiux-imaginer) — `opus` alias, effort high, one per imagine run
@@ -260,6 +260,7 @@ idea-loop/
 │   │   ├── spec-status/SKILL.md      # shared, model-invoked — the spec state machine (who flips what, when) and how issue labels follow it
 │   │   ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human
 │   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
+│   │   ├── browser/SKILL.md          # shared, model-invoked — headless Playwright for your own capture and measuring, the built-in browser for showing the human; static serving, logging in, measuring from the real DOM
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md and the CLAUDE.md / AGENTS.md block
 │   │   ├── issue-dispatch/SKILL.md   # one dispatch round over GitHub issues — run by a fixed session under /loop
 │   │   ├── to-spec/SKILL.md          # + references/from-issues.md — drafting specs from GitHub issues
@@ -376,8 +377,9 @@ What came across:
 | The two former design skills | `skills/design/uiux-refine/references/design/static-ui-protocol.md`, `skills/design/uiux-refine/references/design/motion-protocol.md` — demoted to on-demand protocols, same shape as the surface / module / component ones next to them |
 | The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `skills/design/design-modeling/SKILL.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
-| The browser | `.mcp.json` (headless, isolated Playwright) |
+| The browser | user-level `playwright` MCP (headless, isolated), checked by `setup`; how to use it: `skills/engineering/browser/SKILL.md` |
 | The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
+| Design research | user-level `refero` MCP (the human adds it with their own token), checked by `setup` |
 
 One file there did not come across — `skills/design/uiux-refine/references/design/critic-rubric.md` is new. It is
 what the design critic reads each round: the severity ladder anchored to an AD's action,

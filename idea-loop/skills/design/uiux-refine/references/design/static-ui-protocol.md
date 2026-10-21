@@ -27,8 +27,8 @@ of a higher route: a new page does not skip component design; it descends into t
 carry a decision, introduce a new pattern, or vary by product state. Choose one entry route so the
 same work is not performed twice.
 
-> **Canvas: browser, not Paper (temporarily).** Read `skills/design/uiux-refine/references/design/browser-usage.md` before any
-> browser tool call. Paper remains dormant (`skills/design/uiux-refine/references/design/paper-usage.md`).
+> **Canvas: browser, not Paper (temporarily).** Read the `browser` skill (`skills/engineering/browser/SKILL.md`) before any
+> browser tool call; replication and review recipes are in `skills/design/uiux-refine/references/design/replication.md`. Paper remains dormant (`skills/design/uiux-refine/references/design/paper-usage.md`).
 
 ## Principles
 
@@ -84,7 +84,7 @@ Before stage A:
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
    and recommend creating `DESIGN.md` through `uiux-imagine` or `dreaming` (see Setup note above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
-5. Before any browser call, read `skills/design/uiux-refine/references/design/browser-usage.md`.
+5. Before any browser call, read the `browser` skill (`skills/engineering/browser/SKILL.md`) and `skills/design/uiux-refine/references/design/replication.md`.
 
 Do not load every altitude protocol up front. Stage A selects the entry route; read lower-altitude
 protocols when the work descends to them.

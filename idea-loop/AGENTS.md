@@ -15,7 +15,7 @@ skill 放在 `skills/<分类>/<slug>/SKILL.md`。三个分类：
 plugin 级不设 `references/`，每份参考资料归一个 skill：
 
 - **只服务一个流程的内部细节**，放在那个 skill 自己的 `references/`，只有这个 skill 和它起的 agent 读。别的 skill 也要读，说明它不只服务一个流程：升成 skill，或挪进真正用它的那个 skill。
-- **一种独立的能力、多处要用**（`tdd`、`glossary`、`wiki-conventions`、`evidence`、`decision-rules`、`spec-status`、`design-archive`、`design-modeling`），本身就是一个 skill，不设 `disable-model-invocation`，让别的 skill 和 agent 能取到。
+- **一种独立的能力、多处要用**（`tdd`、`glossary`、`wiki-conventions`、`evidence`、`decision-rules`、`spec-status`、`design-archive`、`design-modeling`、`browser`），本身就是一个 skill，不设 `disable-model-invocation`，让别的 skill 和 agent 能取到。
 
 ## 登记
 

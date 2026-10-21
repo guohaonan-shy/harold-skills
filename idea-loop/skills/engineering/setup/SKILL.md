@@ -27,7 +27,8 @@ idea-loop 的其他 skill 和 agent 只从这几处读项目配置，缺了就�
 | `origin/HEAD` | `git symbolic-ref --short refs/remotes/origin/HEAD`；修法 `git remote set-head origin -a` | 基准分支的推荐值 |
 | `gh` 已登录、能写这个仓库 | `gh auth status`；`gh repo view --json viewerPermission` 是 `WRITE` / `MAINTAIN` / `ADMIN` | issue-dispatch、implement、pr-review |
 | Codex companion | 照 [`agents/pr-reviewer.md`](../../../agents/pr-reviewer.md) 第 2 节第 3 步的找法 | pr-review |
-| Refero MCP | 这个会话里有没有 `mcp__refero__*` 工具 | uiux-research，可选 |
+| Playwright MCP | `claude mcp get playwright`：用户级，参数带 `--headless --isolated`；修法 `claude mcp add --scope user playwright -- npx -y @playwright/mcp --headless --isolated` | browser、evidence、uiux-refine、implement、pr-review |
+| Refero MCP | `claude mcp get refero`：用户级、http、`https://api.refero.design/mcp`；token 由人自己配，修法 `claude mcp add --scope user --transport http refero https://api.refero.design/mcp --header "Authorization: Bearer <token>"` | uiux-research，可选 |
 
 缺了必需项照样往下走，交回时列出来。
 
@@ -76,4 +77,4 @@ idea-loop 的其他 skill 和 agent 只从这几处读项目配置，缺了就�
 
 - 写了、改了哪些文件，建了哪些 label。
 - 第 1 步缺的必需项，各附修法命令。
-- 留给人的事：安装或登录 `gh`、Codex、Refero；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `grill` 建，`DESIGN.md` 由 `uiux-imagine` 或 `dreaming` 建。
+- 留给人的事：安装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见第 1 步的表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `grill` 建，`DESIGN.md` 由 `uiux-imagine` 或 `dreaming` 建。

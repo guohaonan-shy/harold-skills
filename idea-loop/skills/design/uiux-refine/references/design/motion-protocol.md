@@ -81,8 +81,8 @@ an unsettled layout wastes both stages.
    alternative (scale-only / crossfade / none), and the reveal must enhance an already-visible
    default — never gate content visibility on a transition (it ships blank on hidden tabs /
    headless renders).
-6. Serve it locally and drive it with Playwright (default headless server per
-   `skills/design/uiux-refine/references/design/browser-usage.md`): navigate, interact, capture.
+6. Serve it locally and drive it with Playwright (default headless server per the
+   `browser` skill, `skills/engineering/browser/SKILL.md`): navigate, interact, capture.
 
 ### B · Review gates — to convergence
 Now there's a real rendered page, so the full checks are available.

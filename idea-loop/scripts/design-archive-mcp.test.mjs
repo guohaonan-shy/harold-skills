@@ -210,14 +210,10 @@ test('read only: nothing but the six lookups is offered, and a write-shaped call
 
 // ---------- the plugin's MCP configuration ----------
 
-test('.mcp.json: the archive server sits beside the browser, which is untouched', () => {
+test('.mcp.json: the plugin ships only the archive server; Playwright and Refero are user-level', () => {
   const cfg = JSON.parse(readFileSync(MCP_JSON, 'utf8'));
-  assert.deepEqual(cfg.mcpServers.playwright, {
-    command: 'npx',
-    args: ['-y', '@playwright/mcp', '--headless', '--isolated'],
-  });
   const archive = cfg.mcpServers['design-archive'];
   assert.equal(archive.command, 'node');
   assert.deepEqual(archive.args, ['${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs']);
-  assert.equal(Object.keys(cfg.mcpServers).length, 2);
+  assert.deepEqual(Object.keys(cfg.mcpServers), ['design-archive']);
 });

@@ -17,7 +17,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 
 ### 复现走什么仪器
 
-- **用户可见的问题**：在本地开发环境用浏览器自动化（headless Playwright，见 `../../../design/uiux-refine/references/design/browser-usage.md`），按用户的操作把路径真的走一遍。慢网络用请求延迟模拟（`page.route` 里先等再 `continue`），下载失败、接口报错用请求拦截模拟（`route.abort()` / `route.fulfill({ status })`）。
+- **用户可见的问题**：在本地开发环境用浏览器自动化（headless Playwright，见 `../../browser/SKILL.md`），按用户的操作把路径真的走一遍。慢网络用请求延迟模拟（`page.route` 里先等再 `continue`），下载失败、接口报错用请求拦截模拟（`route.abort()` / `route.fulfill({ status })`）。
 - **纯后端、埋点、数据问题**：证据换成查询结果、日志片段、接口响应。原样贴，标上查询条件和时间。
 - **新功能（不是 bug）**：新需求也是从旧页面满足不了什么里产生的。截**现在的 UI**，用红色光圈标出它在哪里不够用。完全没有可截的现状时，文字写明「无现状可截」。
 
