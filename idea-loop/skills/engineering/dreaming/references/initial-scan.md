@@ -9,7 +9,7 @@
 
 **对象的格式完全照设计档案**（`../../design-archive/SKILL.md` 的目录、frontmatter、正文、进入方式、「进不去」的写法）：dreaming 不另定。本份只写扫的做法、产物放哪、怎么进提议表、批了怎么落。
 
-> 环境（worktree、端口、浏览器锁、dreaming 的 tmp 目录 `docs/design/tmp/dreaming-<日期>/`）与 `archive-reconcile.md` §1 相同。浏览器驱动、拍图、截图前的三条约定（同 viewport 与 DPR、等字体、关动画与过渡）照 `../../../design/uiux-refine/references/ui-implementation-standard.md` §3.1。
+> 环境（worktree、端口、浏览器锁、dreaming 的 tmp 目录 `docs/design/tmp/dreaming-<日期>/`）与 `archive-reconcile.md` §1 相同。浏览器驱动、拍图、截图前的三条约定（同 viewport 与 DPR、等字体、关动画与过渡）照 `../../ui-measure/SKILL.md` 的「三条环境约定」。
 
 ## 1 一页一页扫
 

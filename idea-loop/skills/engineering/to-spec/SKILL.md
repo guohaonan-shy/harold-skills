@@ -126,7 +126,7 @@ excalidrawer `sequence`：浏览器、API、DB、对象存储或第三方。本 
 | API 契约（路由、schema、序列化） | TDD API 测试 | |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | |
-| 视觉正确性 | UI 实现环（uiux-refine 的 `ui-implementation-standard.md`） | |
+| 视觉正确性 | UI 实现环（`ui-measure`，逐格比对冻结画布） | |
 | 端到端用户流程 | 浏览器端到端测试 | |
 
 判据是能不能先写出一个会红的测试：前三行能，走 TDD；后三行的输出不确定、靠感知或跨系统，换别的仪器。prompt 改动本身走 eval，但 prompt 产出的结构（schema、字段、枚举闭集）走 TDD。具体工具用目标项目自己的。

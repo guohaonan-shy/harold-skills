@@ -261,11 +261,13 @@ idea-loop/
 │   │   ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human
 │   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, directories and tmp/prod split, frontmatter shapes, body sections, the six validation rules, the six query entries
 │   │   ├── browser/SKILL.md          # shared, model-invoked — headless Playwright for your own capture and measuring, the built-in browser for showing the human; static serving, logging in, measuring from the real DOM
+│   │   ├── ui-measure/SKILL.md       # shared, model-invoked — implementation vs frozen canvas, cell by cell: the three environment rules, default tolerances, the matrix, when to stop
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md and the CLAUDE.md / AGENTS.md block
 │   │   ├── issue-dispatch/SKILL.md   # one dispatch round over GitHub issues — run by a fixed session under /loop
 │   │   ├── to-spec/SKILL.md          # + references/from-issues.md — drafting specs from GitHub issues
 │   │   ├── to-ticket/SKILL.md
 │   │   ├── implement/SKILL.md        # orchestrates a spec's tickets — the work is in agents/implementer.md
+│   │   │   references/ui-tickets.md, react-port.md  # UI tickets: canvas → the project's component tree, per-stack notes, the dev-only state harness
 │   │   │   references/worktree.md            # an implementer's worktree: start point, preparation (`DEVELOPMENT.md`'s command, else defaults), reclaim
 │   │   ├── pr-review/SKILL.md        # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   │   │   references/review-standards.md    # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
@@ -278,7 +280,6 @@ idea-loop/
 │   │   │   references/imagine-canvas.md  # the board, cloning variants from a shipped UI, the handoff canvas, cleanup
 │   │   │   references/direction-note.md  # the letter to refine: seven sections, composition list, provenance markers
 │   │   ├── uiux-refine/SKILL.md      # the convergent half — the process; the work is in agents/
-│   │   │   references/ui-implementation-standard.md  # UI tickets: canvas → component tree, per-stack notes, the verification loop
 │   │   │   references/design/                # the design side (see below)
 │   │   │   references/refine-canvas.md   # where the refine canvas lives and how its versions (v1, v2, …) advance
 │   │   │   references/freeze.md, motion-stage.md, asset-stage.md, pinned-findings.md  # read only on their branch: sign-off, motion, marketing assets, a pinned finding
@@ -398,5 +399,5 @@ command to run (`scripts/design-archive-write.mjs`); the `research/` folder `uiu
 
 What retired outright, because its content was already relocated: the `design` entry skill,
 the port-verification skill
-(→ `skills/design/uiux-refine/references/ui-implementation-standard.md`, which generalized it past React), and the
+(→ `skills/engineering/implement/references/ui-tickets.md` and the `ui-measure` skill, which generalized it past React), and the
 `wireframe-candidates` workflow (its structural-divergence audit moved into `prototype`, which was later removed too).

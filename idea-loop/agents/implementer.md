@@ -46,12 +46,12 @@ effort: high
 | API 契约 | TDD API 测试 |
 | DB schema / 迁移 / 事务语义 | **真 DB** 测试 |
 | LLM 输出质量 | eval |
-| 视觉正确性 | **UI 实现环**（`skills/design/uiux-refine/references/ui-implementation-standard.md` + `scripts/ui-measure.mjs`；以冻结的 HTML 画布为真值，你的实现为待验证的候选） |
+| 视觉正确性 | **UI 实现环**（`skills/engineering/implement/references/ui-tickets.md` + `skills/engineering/ui-measure/SKILL.md`；以冻结的 HTML 画布为真值，你的实现为待验证的候选） |
 | 端到端流程 | 仓库自己的端到端检查 |
 
 循环的规矩、反模式、mock 边界在 `skills/engineering/tdd/SKILL.md`。**新写的测试守「只在系统边界 mock」**；存量测试不守这条，别照抄存量。
 
-**UI 工单多一道环**，形状仍是红绿，裁判是脚本不是 agent：读 `skills/design/uiux-refine/references/ui-implementation-standard.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后按验收矩阵跑测量脚本。它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判瓶颈**（同一批 finding 两轮不变）。判瓶颈时判断残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按 §4 停下。不在这里硬磨。
+**UI 工单多一道环**，形状仍是红绿，裁判是脚本不是 agent：读 `skills/engineering/implement/references/ui-tickets.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后按验收矩阵跑测量脚本。它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判瓶颈**（同一批 finding 两轮不变）。判瓶颈时判断残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按 §4 停下。不在这里硬磨。
 
 过程中：
 

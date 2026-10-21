@@ -125,7 +125,7 @@ motion file and the candidate, never straight into `DESIGN.md`. This protocol ne
 pattern shipping with no candidate is the failure mode.
 
 ### D · Port to React (final, only after sign-off)
-> **The port mechanics are not this protocol's.** `skills/design/uiux-refine/references/ui-implementation-standard.md`
+> **The port mechanics are not this protocol's.** `implement` (its UI-ticket reference)
 > owns turning an approved canvas into project code (component tree by state ownership, data
 > contract changes, token attribution, the measurement loop) and `implement` runs it from a UI
 > ticket. What stays here is the **motion-specific re-verification** below — the part that

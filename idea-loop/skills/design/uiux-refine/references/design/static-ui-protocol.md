@@ -5,7 +5,7 @@
 protocol。入口在 `uiux-imagine` / `uiux-refine`，由它们决定要不要降到这一层。
 
 动效与原生交互在 `skills/design/uiux-refine/references/design/motion-protocol.md`；把签字通过的画布落成代码是
-`skills/design/uiux-refine/references/ui-implementation-standard.md` 的活，不在这里。
+`implement` 的活，不在这里。
 
 ---
 

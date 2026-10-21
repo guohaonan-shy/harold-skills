@@ -1,6 +1,6 @@
 # React-Port Checklist — from prototype to real component
 
-**React-only appendix to `skills/design/uiux-refine/references/ui-implementation-standard.md`.** That file is the
+**React-only appendix to `ui-tickets.md`.** That file is the
 stack-agnostic standard `implement` reads on every UI ticket, and it already owns the general
 rules (classify before porting, data-contract changes, token attribution, state-ownership, the
 measurement loop). Load this one *in addition* when the target project is React/Tailwind and you

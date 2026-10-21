@@ -9,7 +9,7 @@ effort: high
 
 调用你的会话是**编排者**（或 dreaming）：它面对人，你面对这次的差异（或这一组状态）。你不跟人对话，不改代码，不提交，不碰 PR。做完或者停下，都是把结果交回给它。
 
-> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/design-archive/SKILL.md`（目录、frontmatter、正文、进入方式、查询、归档）、`skills/engineering/implement/references/worktree.md`（服务怎么起）、`skills/design/uiux-refine/references/ui-implementation-standard.md` §3（比对脚本、矩阵、容差）和 `skills/engineering/evidence/SKILL.md`（截图、流程图、动图怎么做）。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读一次 `skills/engineering/design-archive/SKILL.md`（目录、frontmatter、正文、进入方式、查询、归档）、`skills/engineering/implement/references/worktree.md`（服务怎么起）、`skills/engineering/ui-measure/SKILL.md`（比对脚本、矩阵、容差）和 `skills/engineering/evidence/SKILL.md`（截图、流程图、动图怎么做）。
 
 ## 1 输入
 
@@ -50,7 +50,7 @@ effort: high
    按返回的进入方式走：入口地址与前置条件、沿途每一步（`user` 边照 `locate` 与 `action` 操作，`system` 边照 `how` 让它发生）。**进不去**（`reachable: false`）不是实现的错，先判是档案缺口还是环境问题：前置条件和试过的做法都在返回里，照做仍然进不去，就如实记「进不去」，附上缺什么、试过什么。
 6. **走每条新增或改动的边**：从出发状态照边的定位和操作触发，看实际到的画面是不是边指向的那个状态（它「应看到什么」成立吗）。`added` 里的边，目标状态存在、可达、`blocked` 标得对不对，也在这里核。
 7. **对画面**：
-   - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`skills/design/uiux-refine/references/ui-implementation-standard.md` §3.3 的格式；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对不过的 finding 就是对不上的画面。harness 覆盖不了的格标「人看」，列出来，不假装绿。
+   - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`skills/engineering/ui-measure/SKILL.md` 的「矩阵怎么写」；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对不过的 finding 就是对不上的画面。harness 覆盖不了的格标「人看」，列出来，不假装绿。
    - 没有冻结画布（implementer 记的最小差异）：只核状态文件的「应看到什么」，每一条可判定的都对着实际画面看。
 
    `ui-measure.mjs` 判了瓶颈，或残留差异是设计决策层面的，照实记，不在这里硬磨。
@@ -128,7 +128,7 @@ effort: high
 
 1. **进**：`design-archive-query.mjs <仓库根> state <id>`，按返回的进入方式走（§2 第 5 步）。档案里标了「进不去」的状态，不用再走一遍路径，但仍然试一次入边最后那一步，看这次通了没有。入口状态的 `steps` 是空的：**要停在哪一屏的做法写在状态文件的「这一屏」里**（比如加载态要把那条请求拦住才停得住），照着做；失败态、空态靠它入边的 `how`。
 2. **核「应看到什么」**：每一条可判定的，对着实际画面逐条判成立 / 不成立。
-3. **拍**：主视口、主题、语言取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。截图前照 `skills/design/uiux-refine/references/ui-implementation-standard.md` §3.1：同 viewport 与 DPR、等字体、关动画与过渡。具体：等到网络空闲且字体就绪；要停在瞬态（加载中）的，拦住请求后再等一小会让这一屏画完；注入 `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }`（`ui-measure.mjs` 用的同一段，转圈因此停在固定的一帧）；不另设 `prefers-reduced-motion`。拍到 `.tmp/dreaming/<日期>/shots/<状态 id>.png`。
+3. **拍**：主视口、主题、语言取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。截图前照 `skills/engineering/ui-measure/SKILL.md` 的「三条环境约定」：同 viewport 与 DPR、等字体、关动画与过渡。具体：等到网络空闲且字体就绪；要停在瞬态（加载中）的，拦住请求后再等一小会让这一屏画完；注入 `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }`（`ui-measure.mjs` 用的同一段，转圈因此停在固定的一帧）；不另设 `prefers-reduced-motion`。拍到 `.tmp/dreaming/<日期>/shots/<状态 id>.png`。
 4. **比**：
 
    ```

@@ -60,7 +60,7 @@ docs/design/tmp/<spec-slug>/
 
 - **画布指针**：`docs/design/tmp/<spec-slug>/canvas/` 里画布 HTML 的路径（写路径，不写 wikilink：目标不进 git）。跑过动效段的，同一条指针把动效 preview 与帧证据一并带上。
 - **矩阵**：每格的 viewport × 主题 × 语言 × 状态，标「人看」的格照标。
-- **mismatch 阈值**：沿用 [`ui-implementation-standard.md`](ui-implementation-standard.md)「默认容差」；按格覆盖的写覆盖值和理由。
+- **mismatch 阈值**：沿用 `ui-measure` skill（`../../../engineering/ui-measure/SKILL.md`）的「默认容差」；按格覆盖的写覆盖值和理由。
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更**：画布上有、项目现在渲染不出来的字段逐条列出。
 
