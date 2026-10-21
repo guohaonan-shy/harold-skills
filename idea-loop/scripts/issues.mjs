@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The one way a GitHub issue's loop status changes (skills/engineering/to-spec/references/spec-status.md §3).
+ * The one way a GitHub issue's loop status changes (skills/engineering/to-spec/references/spec-status.md, section issue 的 label).
  *
  * An issue the loop has not touched carries no status label: it is 待办. Once a spec covers it, the
  * issue carries exactly one `status:<spec status>` label that follows the spec — 草稿 when drafted,

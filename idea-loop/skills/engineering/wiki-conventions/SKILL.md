@@ -77,7 +77,7 @@ docs/
 
 `raw/` / `spec/` / `adr/` 是**会话产物**，`domain/` 是**知识库存量**（不由单次会话产生）。这条分界是它们必须分开的原因。
 
-项目级的规则不放 `docs/`，放在仓库根目录、一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`（`setup` 建），`GLOSSARY.md`、`DESIGN.md`、`PRODUCT.md`。
+项目级的规则不放 `docs/`，放在仓库根目录、一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`（`setup` 建），`GLOSSARY.md`、`DESIGN.md`。
 
 **spec 文件与目录同名**（`docs/spec/<spec-slug>/<spec-slug>.md`），不叫 `spec.md`：wiki-link 按文件名解析（§4），所有 spec 都叫 `spec.md` 的话，`[[<spec-slug>]]` 一处也指不到。
 
@@ -121,7 +121,7 @@ docs/
 1. 每份 `docs/spec/<slug>.md` → `git mv` 到 `docs/spec/<slug>/<slug>.md`。wiki-link 按文件名解析，移动不打断它们；**相对路径的图片引用会断**（spec 深了一层），每条前面补一个 `../`，改完逐条确认文件存在。
 2. `docs/spec/tickets/` 下的每张工单，按它的 PR、它引用的 spec 或它的标题判断属于哪份 spec，`git mv` 到那份 spec 的 `tickets/`。判断不了的列给人，不猜。归属清楚后旧的 `tickets/` 目录应该是空的，删掉它。
 3. 旧状态值改名：`等设计冻结` → `设计中`。`在飞` 不动——已经在做的 spec 不回退成 `审核中`。
-4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`../to-spec/references/spec-status.md` §1）。
+4. 跑 `spec-status.mjs check` 确认没有遗留问题，再跑 `spec-status.mjs index` 刷新 `docs/spec/index.md`（`../to-spec/references/spec-status.md` 的「状态机」）。
 
 正在做的 PR 不受影响：集成分支上已有的 commit 里，`Ticket:` trailer 只写工单名，不写路径。
 
@@ -201,7 +201,3 @@ spec 的状态按 `草稿 → 审核中 → 设计中 → 在飞` 往前走。�
 - **spec 和 ticket 里禁止写具体文件路径和代码片段**——它们烂得最快。写接口、契约、行为、约束。
   例外：用散文说不清的决策载体（状态机、schema、类型形状、taxonomy 的类别 id）可内联，并注明出处。
 - **描述行为，不描述过程**。"`SkillConfig` 接受一个可选的 `schedule` 字段" ✅；"打开 src/types/skill.ts 在第 42 行加字段" ❌。
-
-## 8 backlog 移交标记
-
-backlog 里被 spec 覆盖的条目带「已移交 → [[<spec-slug>]]」，起草 routine 靠它跳过已经有 spec 的条目。谁写、谁撤、两种 backlog 格式怎么写，在 `../to-spec/references/spec-status.md` §2，**写和撤都只走 `scripts/spec-status.mjs`**。backlog 的模块划分表是项目配置，写在 backlog 文件里的「模块」一节。

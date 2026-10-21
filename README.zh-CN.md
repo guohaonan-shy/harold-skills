@@ -38,7 +38,7 @@ Default English version: [README.md](./README.md)
 harold-skills/
 ├── .claude-plugin/
 │   └── marketplace.json      # marketplace metadata
-├── CLAUDE.md                 # 仓库级维护约定
+├── AGENTS.md                 # 仓库级维护约定（CLAUDE.md 引用它）
 ├── README.md                 # 默认英文 README
 ├── README.zh-CN.md           # 中文 README
 └── <plugin-name>/            # 每个顶层目录是一个 plugin
@@ -56,7 +56,7 @@ harold-skills/
 
 `references/` 的布局是灵活的。有些 plugin 只使用 plugin 级 references，有些会同时保留 plugin 级和 skill 级 references。
 
-每个 plugin 都可以独立安装。仓库维护约定见 [CLAUDE.md](./CLAUDE.md)。
+每个 plugin 都可以独立安装。仓库维护约定见 [AGENTS.md](./AGENTS.md)。
 
 ## License
 

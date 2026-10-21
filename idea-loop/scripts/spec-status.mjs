@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The one way a spec's status changes, and the one way a backlog entry is marked as handed over.
+ * The one way a spec's status changes.
  *
  * A spec walks 草稿 → 审核中 → 设计中 → 在飞 (skills/engineering/to-spec/references/spec-status.md). Each step has one writer and
  * a precondition that can be read off the files: 设计中 only for a spec that touches UI, 在飞 only once
@@ -10,10 +10,6 @@
  * transition is checked, written and indexed in one call, and anything illegal is refused with the
  * reason.
  *
- * Backlog entries covered by a spec carry 「已移交 → [[<spec-slug>]]」 so the drafting routine does
- * not draft them again. The backlog has two shapes — a table with a status column, a checklist —
- * and the mark is written and removed here for both, so the routine can filter on one literal.
- *
  * Layout (skills/engineering/wiki-conventions/SKILL.md §2): docs/spec/<slug>/<slug>.md, tickets in
  * docs/spec/<slug>/tickets/NN-<slug>.md, the index at docs/spec/index.md.
  *
@@ -21,11 +17,8 @@
  *   node spec-status.mjs set       <docs-dir> <spec-slug> <status>            → checks, writes, re-indexes
  *   node spec-status.mjs index     <docs-dir>                                 → regenerates docs/spec/index.md
  *   node spec-status.mjs check     <docs-dir>                                 → JSON: specs, problems (old flat layout, bad status)
- *   node spec-status.mjs handoff   <backlog-file> <spec-slug> <entry>         → marks one entry
- *   node spec-status.mjs unhandoff <backlog-file> <spec-slug> <entry> [<status>] → removes the mark (table rows get <status>, default 待办)
- * <entry> is `#<n>` for the table row whose first cell is n, or a piece of text found on exactly one entry line.
  * A spec that lists GitHub issues in its frontmatter (`issues: [12, 15]`) has their status labels
- * synced after `set` (issues.mjs, skills/engineering/to-spec/references/spec-status.md §3); a failed sync leaves the status written
+ * synced after `set` (issues.mjs, skills/engineering/to-spec/references/spec-status.md, section issue 的 label); a failed sync leaves the status written
  * and says how to retry.
  * Exit: 0 = done, 1 = refused / usage / io error (the reason on stderr).
  */
@@ -47,8 +40,6 @@ export const NEXT = {
   parked: ['审核中', '已拍板未排期'],
 };
 
-export const MARK = (slug) => `已移交 → [[${slug}]]`;
-const ANY_MARK = /已移交 → \[\[([^\]]+)\]\]/;
 
 // ---------- spec text ----------
 
@@ -131,49 +122,6 @@ export function renderIndex(existing, specs) {
   return [...lines.slice(0, header + 2), ...rows, ...lines.slice(end)].join('\n');
 }
 
-// ---------- backlog marks ----------
-
-const cells = (row) => row.split(/(?<!\\)\|/).slice(1, -1);
-const isRow = (l) => /^\|/.test(l) && !/^\|[\s:|-]+\|\s*$/.test(l);
-const isItem = (l) => /^\s*- \[[ xX]\]/.test(l);
-
-function findEntry(lines, entry) {
-  const num = String(entry).match(/^#(\d+)$/);
-  const hits = lines
-    .map((l, i) => ({ l, i }))
-    .filter(({ l }) => (num ? isRow(l) && cells(l)[0]?.trim() === num[1] : (isRow(l) || isItem(l)) && l.includes(entry)));
-  if (hits.length !== 1) throw new Error(`「${entry}」对上了 ${hits.length} 个条目，要恰好一个`);
-  return hits[0].i;
-}
-
-function setLastCell(row, value) {
-  const parts = row.split(/(?<!\\)\|/);
-  parts[parts.length - 2] = ` ${value} `;
-  return parts.join('|');
-}
-
-export function handoff(text, slug, entry) {
-  const lines = String(text).split('\n');
-  const i = findEntry(lines, entry);
-  const other = lines[i].match(ANY_MARK);
-  if (other) {
-    if (other[1] === slug) return text;
-    throw new Error(`这个条目已经移交给 [[${other[1]}]]`);
-  }
-  lines[i] = isRow(lines[i]) ? setLastCell(lines[i], MARK(slug)) : `${lines[i].replace(/\s+$/, '')} ${MARK(slug)}`;
-  return lines.join('\n');
-}
-
-export function unhandoff(text, slug, entry, restore = '待办') {
-  const lines = String(text).split('\n');
-  const i = findEntry(lines, entry);
-  const mark = lines[i].match(ANY_MARK);
-  if (!mark) return text;
-  if (mark[1] !== slug) throw new Error(`这个条目移交给的是 [[${mark[1]}]]，不是 [[${slug}]]`);
-  lines[i] = isRow(lines[i]) ? setLastCell(lines[i], restore) : lines[i].replace(` ${MARK(slug)}`, '').replace(MARK(slug), '');
-  return lines.join('\n');
-}
-
 // ---------- io boundary ----------
 
 const read = (f) => (existsSync(f) ? readFileSync(f, 'utf8') : '');
@@ -206,7 +154,7 @@ function reindex(docs) {
 }
 
 function main() {
-  const [cmd, a, b, c, d] = process.argv.slice(2);
+  const [cmd, a, b, c] = process.argv.slice(2);
   if (cmd === 'set' && a && b && c) {
     const file = join(a, 'spec', b, `${b}.md`);
     if (!existsSync(file)) throw new Error(`没有 ${file}`);
@@ -229,13 +177,7 @@ function main() {
   }
   if (cmd === 'index' && a) return reindex(a);
   if (cmd === 'check' && a) return console.log(JSON.stringify(scan(a), null, 2));
-  if ((cmd === 'handoff' || cmd === 'unhandoff') && a && b && c) {
-    if (!existsSync(a)) throw new Error(`没有 ${a}`);
-    const text = read(a);
-    writeFileSync(a, cmd === 'handoff' ? handoff(text, b, c) : unhandoff(text, b, c, d));
-    return;
-  }
-  throw new Error('usage: spec-status.mjs set <docs-dir> <spec-slug> <status> | index <docs-dir> | check <docs-dir> | handoff <backlog-file> <spec-slug> <entry> | unhandoff <backlog-file> <spec-slug> <entry> [<status>]');
+  throw new Error('usage: spec-status.mjs set <docs-dir> <spec-slug> <status> | index <docs-dir> | check <docs-dir>');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

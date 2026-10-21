@@ -5,9 +5,9 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 # PR review
 
-**一次调用跑一轮。** 这份文件是入口，写的是**编排机制**：起谁、交接什么、照规则的条目怎么立即处理、人批示之后怎么修、什么时候自己起下一轮。一轮 review 具体怎么跑写在 `agents/pr-reviewer.md` 里，问什么、什么算问题写在 `skills/engineering/pr-review/references/review-standards.md` 里，哪些条目能照规则处理写在 `skills/engineering/pr-review/references/decision-rules.md` 里，这里不复述。
+**一次调用跑一轮。** 这份文件是入口，写的是**编排机制**：起谁、交接什么、照规则的条目怎么立即处理、人批示之后怎么修、什么时候自己起下一轮。一轮 review 具体怎么跑写在 `agents/pr-reviewer.md` 里，问什么、什么算问题写在 `skills/engineering/pr-review/references/review-standards.md` 里，哪些条目能照规则处理写在 `skills/engineering/decision-rules/SKILL.md` 里，这里不复述。
 
-> 先读一次 `references/review-loop.md`（汇报放在哪、人怎么回复、合并时怎么归档）、`references/pr-description.md`（§1、§6 描述的四节，§5 review 汇报的写法）和 `references/decision-rules.md`（哪些条目不等人）。
+> 先读一次 `references/review-loop.md`（汇报放在哪、人怎么回复、合并时怎么归档）、`references/pr-description.md`（§1、§6 描述的四节，§5 review 汇报的写法）和 `../decision-rules/SKILL.md`（哪些条目不等人）。
 
 ## 0 什么时候跑
 
@@ -43,7 +43,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 4. 等它交回，**不提前汇报**。
 5. **先把这一轮记进 review loop 文件**：把审查者写好的汇报作为新条目原样追加。
 6. **立即处理照规则的条目**（§3），不等人。
-7. **在会话里给人看**：汇报里「已按规则处理」一节的每一行补上提交或 issue 链接（审查者留的 `〔链接〕` 占位，一个都不能剩），文件里的条目同步改成一字不差的同一份；然后按条目贴汇报，**「已按规则处理」放在最前、在 Spec 与 Standards 之前**（第 1 轮把 `implement` 期间为执行方顺手发现的存量问题开的 issue 也补进这一节：从 review loop 文件里各次停下的「已按规则处理」找出带 issue 链接的几行，原样列进来；它们不是审查者的条目，审查者不去找存量问题，`decision-rules.md` §1 第 2 条），每一条的文字后面紧跟着单独发这一条的证据图（`review-loop.md` §2）；再发一条推送通知，一句话说第几轮、几条已按规则处理、几条要你决定。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
+7. **在会话里给人看**：汇报里「已按规则处理」一节的每一行补上提交或 issue 链接（审查者留的 `〔链接〕` 占位，一个都不能剩），文件里的条目同步改成一字不差的同一份；然后按条目贴汇报，**「已按规则处理」放在最前、在 Spec 与 Standards 之前**（第 1 轮把 `implement` 期间为执行方顺手发现的存量问题开的 issue 也补进这一节：从 review loop 文件里各次停下的「已按规则处理」找出带 issue 链接的几行，原样列进来；它们不是审查者的条目，审查者不去找存量问题，`decision-rules.md` 的「自己定的四条」第 2 条），每一条的文字后面紧跟着单独发这一条的证据图（`review-loop.md` §2）；再发一条推送通知，一句话说第几轮、几条已按规则处理、几条要你决定。有未完成的轴或检查，要明说：**未完成不等于没问题**。缺词也念出来（概念 + 推荐叫法），问人要不要开一轮 `grill` 把它们定下来；不写进术语表。
 
 ## 3 照规则的条目：贴汇报之前就处理
 
@@ -58,7 +58,7 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`（`review-loop.md` §1）�
 
 处理完，在会话里给人看的汇报「已按规则处理」一节每条一句：做了什么、依据是什么、链接。没来得及落地的修复，诚实写「已派修，提交随后补上」，落地后补进「做了什么」。
 
-**「代价相称」不进这里**：边缘情形、不丢东西的罕见异常，在 PR 流程里照旧是「要你决定」，只用来定推荐（`decision-rules.md` §3）。依据一旦成立不了（规则有歧义、找不到现存实例），就不是照规则，不要自己补一个依据把它变成照规则。
+**「代价相称」不进这里**：边缘情形、不丢东西的罕见异常，在 PR 流程里照旧是「要你决定」，只用来定推荐（`decision-rules.md` 的「PR 流程里『代价相称』只定推荐」）。依据一旦成立不了（规则有歧义、找不到现存实例），就不是照规则，不要自己补一个依据把它变成照规则。
 
 ## 4 人批示之后
 

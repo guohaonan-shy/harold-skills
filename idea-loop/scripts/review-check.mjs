@@ -22,7 +22,7 @@
  *               of code.path in `git diff <base>...HEAD`
  *
  * Every candidate also carries a disposition. Absent or 要你决定 is the old shape — the human decides.
- * 照规则 is a finding whose handling the written rules already settle (skills/engineering/pr-review/references/decision-rules.md):
+ * 照规则 is a finding whose handling the written rules already settle (skills/engineering/decision-rules/SKILL.md):
  * it carries a basis ({ kind, file, text, summary } — kind is one of the three things a decision may
  * stand on: the text of a written rule, the human's own words from this spec or PR, an existing
  * practice with an instance; text must be found in file, else the candidate is discarded like any

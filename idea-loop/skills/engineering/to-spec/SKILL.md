@@ -1,28 +1,40 @@
 ---
 name: to-spec
-description: 把刚才的对话落成 raw transcript 和一份 spec；或把一组 backlog 条目、GitHub issue 先复现再起草成 spec 草稿。grill 收尾、或要从 backlog 起草时用。
+description: 把刚才的对话写成一份 spec（连同 raw transcript）；或把一组 GitHub issue 起草成 spec 草稿。
 ---
 
-# To Spec
+把当前对话和你对代码库的理解，综合成一份 spec 和它的 raw transcript。不再访谈：该问的 `grill` 已经问完了，这里只把已知的东西写下来。综合时发现思考本身有洞，停下回 `grill`，别在 spec 里粉饰。
 
-把当前对话和你对代码库的理解，综合成两个产物。**不要再访谈**——该问的 `grill` 已经问完了；这里只是把已知的东西写下来。
+输入是一组 GitHub issue、没有对话时（通常由 `idea-loop:issue-explorer` 调），照 [`references/from-issues.md`](references/from-issues.md) 走，它只写跟下面不同的地方。
 
-**两种模式**，按输入选：
+先读 `../wiki-conventions/SKILL.md`（目录、frontmatter、slug）和 [`references/spec-status.md`](references/spec-status.md)（状态只走 `spec-status.mjs`）。下文的 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
-- **grill 模式**（默认）：输入是刚才这场 grill 对话。走下面 §1–§4。
-- **backlog 模式**：输入是 backlog 里同一模块的一组条目或一组 GitHub issue，没有对话，通常由起草 routine 或 `idea-loop:issue-explorer` 调用。走 `references/backlog-mode.md`，那里写了它跟本文哪几处不同；没写到的照本文。
+## 过程
 
-> 先读一次 `../wiki-conventions/SKILL.md`（目录、frontmatter、slug 唯一性、禁写文件路径）、`references/spec-status.md`（状态机、backlog 移交标记，都只走 `scripts/spec-status.mjs`）和 `references/spec-figures.md`（spec 里四处图：画什么、用什么画、放哪）。
->
-> 谁来定、题怎么写，不在这里重写：都在 `../pr-review/references/decision-rules.md`。§1 现状的出处与规模、§2 先写交付物、§4 先自己定再留选项、范围与 §8 的扫描、改文字同步图和测试表，下面各处只写「落在 spec 的哪一节」，规则本身引用它。两种模式都守。
->
-> spec 不只写给 agent，也写给人：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在 §4 的决策拼成一条链。所以 §1、§3、§5 都要配图。
+1. **查布局**：跑 `spec-status check <docs>`。报了旧平铺布局就停下，提议照 wiki-conventions 的「从平铺布局迁移」迁移。
 
-## 1 落 raw transcript
+2. **落 raw transcript**：写进 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，照下面的 `<raw-template>`。讨论里引用过的外部材料（网页、PDF、查询结果、截图）抓进同一个桶，各自带 `source_type` 和 `captured`；图片下载到 `assets/`，每张配一段文字描述，没有文字的图不算捕获。
 
-写进 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`。
+3. **探代码，谈 seam**：没探过就先探，看清现状。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词不问、不写，先用描述性的说法；这一块有 ADR 就守它。然后定准备在哪些 seam 上测：优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置。每个 seam 带一行「它能抓到什么、漏掉什么」，摆给人确认再往下写。
 
-```yaml
+4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。照下面的 `<spec-template>`。几条贯穿全文的规则在 `../decision-rules/SKILL.md`，下面模板里只写它落在哪一节：
+   - 现状的陈述都带出处，讲影响带规模数字（「现状先查清」）；
+   - 先写交付物，再写做法（「先写交付物，再列做法」）；
+   - 能按规则判的自己定，写成已定的决定并注明依据；依据不成立的才写成选项（「自己定的四条」「交给人时」）。
+
+   图怎么画、放哪照 [`references/spec-figures.md`](references/spec-figures.md)：excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，`docs/` 里只放 PNG。
+
+5. **刷索引，挂 issue**：`spec-status index <docs>` 刷新 `docs/spec/index.md`。对话里谈的是某几个 GitHub issue 的，每个跑一次 `issues.mjs handoff`，再跑一次 `issues.mjs sync`（见 `spec-status.md` 的「issue 的 label」）；不挂，`issue-dispatch` 会为同一个 issue 再起草一份。
+
+6. **收工**：告诉人下一步是通读这份 spec。人审完之后：碰 UI 的（「前端交互」标着「待补图」）跑 `/idea-loop:uiux-imagine`，它开工时把状态翻成 `设计中`；不碰 UI、人明说同意的，接 `to-ticket`。
+
+spec 一律落 `审核中`，碰不碰 UI 都一样：grill 里人答过的问题不等于人同意了整份 spec。翻 `在飞` 归 `to-ticket`。人审完改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
+
+这里不建工单（`to-ticket` 的事），不写 ADR（`dreaming` 的事）。
+
+<raw-template>
+
+```markdown
 ---
 type: raw
 source_type: conversation
@@ -31,31 +43,30 @@ title: <人读的标题>
 tags: [<topic>, <feature-slug>]
 related: ["[[<spec-slug>]]"]
 ---
+
+<一段格式约定，让这份文件自解释：U 是人的原话，A 是 AI 的结论>
+
+## U1
+<人的发言，逐字保留，不改写不精简：决策住在这里>
+
+## A1
+<AI 的回应，只留结论与发现；取证过程、工具调用、中间推演都略去。引用的外部产物留链接，不复制正文>
+
+…
+
+## 本轮决议
+| 议题 | 决议 |
+|---|---|
 ```
 
-正文格式（顶部先写一段格式约定块，让这份文件自解释）：
+</raw-template>
 
-- `## U<n>` = 人的发言，**逐字保留**，不改写不精简——决策住在这里。
-- `## A<n>` = AI 的回应，**只保留结论与发现**，取证过程、工具调用、中间推演一律略去。
-- 引用的外部产物（Artifact / 报告）留链接，不复制正文。
-- 末尾一张「本轮决议」表，一行一个议题。
-
-参考实现：`docs/raw/docs-wiki-v2/discussion-2026-08-18.md`。
-
-同一场讨论若引用了外部材料（网页 / PDF / 数据查询 / 截图），一并抓进同一个 `docs/raw/<topic>/` 桶，各自带 `source_type` + `captured`。图片下载到本地 `assets/`，**永远配一段文字描述**——没有文字的图片不算捕获。
-
-## 2 落 spec
-
-开工前跑一次 `spec-status.mjs check <docs>`：报了旧平铺布局就停下，提议按 wiki-conventions §2.2 迁移。
-
-写进 `docs/spec/<slug>/<slug>.md`——一份 spec 一个目录，文件与目录同名（wiki-conventions §2）。slug 必须**全局唯一**且**不同于 transcript 的 slug**。
-
-目标项目有 `GLOSSARY.md` 就读它，spec 标题和正文里的领域概念用它的标准叫法、不用 `_Avoid_` 里的词（规则见 `../glossary/SKILL.md` §5）。缺词不问、不写，先用描述性的说法——`pr-review` 会把缺词列出来。
+<spec-template>
 
 ```markdown
 ---
 type: spec
-status: 审核中        # backlog 模式落 草稿；状态机见 spec-status.md
+status: 审核中
 tags: [...]
 summary: <一句话，≤60 字>
 related: ["[[<transcript-slug>]]"]
@@ -63,122 +74,79 @@ related: ["[[<transcript-slug>]]"]
 
 # <标题>
 
-## 1 问题
-用户视角的问题。不是"我们要建 X"，是"用户现在卡在哪"。
+## 问题
 
-**现状的陈述都带出处，讲影响带规模数字**（核过代码、数据或文档，写明在哪、什么时候查的；规则见 decision-rules §7.1）。
+用户现在卡在哪，用户视角；不是「我们要建 X」。每个问题一个小节，先证据、后文字。证据是 grill 复现时挑出来的图（raw 桶的 `assets/`，不取 `.tmp/grill/` 下的工作文件），形式按问题性质选，见 spec-figures 的「问题的复现证据」。新功能也有图：现在的 UI 加红色光圈，标出哪里不够用。
 
-每个问题一个小节：**先证据，后文字**。证据是 `grill` 复现时挑出来的证据图（在 raw 桶 `assets/` 里；`.tmp/grill/` 下的工作文件不取），这里只负责把它排成人一眼看得懂的样子——形式按问题性质选（时序 / 感知延迟用「截图 + 实测时间线」，流程问题用交互图，单个画面用「截图 + 红色光圈」），规则见 spec-figures §1。新功能同样有图：现在的 UI + 红色光圈，标出它哪里不够用。
+### 根因
 
-### 1.x 根因
-放在全部证据之后，单独一节。一条根因对应一处证据；没复现的，句末标「（未复现：卡在哪；依据：…）」——grill 里问过人、人确认了不复现的才这样写。复现推翻了先前的说法，写明「修正：原先认为 X，实测是 Y」。不涉及根因的新功能写「不涉及」。
+放在全部证据之后。一条根因对应一处证据。没复现的，句末标「（未复现：卡在哪；依据：…）」，只用于 grill 里人确认过不复现的。复现推翻了先前的说法，写「修正：原先认为 X，实测是 Y」。不涉及根因的新功能写「不涉及」。
 
-## 2 方案
-用户视角的解法。**先写交付物**：用户最终得到什么、由哪些输入决定，再讲怎么做（decision-rules §7.2）。**范围在这里写明**：同一行为的其他入口（页面、接口、调用方）逐个标纳入还是排除，排除的写理由（§7.1）。
+## 方案
 
-## 3 User Stories
-`作为 <角色>，我想要 <能力>，以便 <收益>`。要铺得足够全，覆盖这个特性的所有面——这是后面 code-review 的 Spec 轴逐条比对的清单。
+用户视角的解法。先写用户最终得到什么、由哪些输入决定，再写怎么做。同一行为的其他入口（页面、接口、调用方）逐个标纳入还是排除，排除的写理由。
 
-**按场景分组**，每个场景一棵 excalidrawer `tree`（场景 → story，从左到右），图下是同样的编号列表。**编号在每个场景内从 1 开始**，图与文字一致；别处引用（测试决策的「覆盖」列等）写「场景名 + 编号」。
+## User Stories
 
-## 4 实现决策
-要建/改的模块、它们的接口、技术澄清、架构选择、schema 变更、API 契约、具体交互。
-**先过一遍 decision-rules §1（自己定）**：能按它判的——有明文规则的、沿用产品已有做法的、边缘情形按「代价相称」的、默认改动最小的——写成**已定的决定**，注明依据（规则原文 / 人的原话 / 现存实例）；边缘情形在这里定好，不留给 `implement` 停下。**只有依据不成立的才写成选项**（规则有歧义、两条规则冲突、找不到现存实例、人的决定只覆盖相邻情形），选项的写法按 §7：差在用户能感到的地方、后续写全、每个选项配一个具体例子。
+`作为 <角色>，我想要 <能力>，以便 <收益>`。铺得足够全，覆盖这个特性的每一面：pr-review 的 Spec 轴逐条比对它。
 
-**不写文件路径、不写代码片段**（它们烂得最快）。例外：用散文说不清的决策载体（状态机、schema、类型形状）可内联，注明出处。
+按场景分组，每个场景一棵 story 树（excalidrawer `tree`，场景 → story，从左到右），图下是同样的编号列表。编号在每个场景内从 1 开始；别处引用写「场景名 + 编号」。
 
-碰 UI 时这里多两样东西：访谈里定下来的**结构决策**（哪个状态模型、surface 按什么结构组织），以及跑过 `prototype` 的话，那次裁决的**原型指针**（指向它落的 raw，用 wikilink）。结构已经被一个可点击的东西和一个人的选择定住了，下游发散从下一层高度开始，不重开它。
+## 实现决策
 
-## 5 技术方案总览
-把 §4 的决策按「谁和谁说话、按什么顺序」串起来。**分工**：§4 记决策（定了什么、为什么这样定），这一节记它们怎么串起来（谁、和谁、按什么顺序）。同一件事不在两节里各写一遍——这里引用 §4 的小节号，不复述理由。
+要建或改的模块、它们的接口、技术澄清、架构选择、schema 变更、API 契约、具体交互。能按规则判的写成已定的决定，注明依据（规则原文、人的原话或现存实例），边缘情形在这里定好，不留给 implement 停下。依据不成立的才写成选项：差在用户能感到的地方，每个选项配一个具体例子。
 
-三个小节**都要有**，不涉及的写「不涉及」，不留空：
+不写文件路径和代码片段，它们烂得最快。状态机、schema、类型形状这类散文说不清的可以内联，注明出处。
 
-### 5.1 后端
-excalidrawer `sequence`：浏览器、API、DB、对象存储 / 第三方。本 spec 新增或改动的消息用红色，响应用虚线。图下几行列出接口变化。
+碰 UI 的再写访谈里定下的结构决策：这块界面按什么结构组织。下游设计从下一层高度开始，不重开它们。
 
-### 5.2 前端内部
+## 技术方案总览
+
+把实现决策按「谁和谁说话、按什么顺序」串起来。理由留在实现决策里，这里只引用那一小节。三个小节都要有，不涉及的写「不涉及」：
+
+### 后端
+
+excalidrawer `sequence`：浏览器、API、DB、对象存储或第三方。本 spec 新增或改动的消息用红色，响应用虚线。图下几行列出接口变化。
+
+### 前端内部
+
 缓存、状态这类看不见的部分，同样用 `sequence` 画清各层的读写顺序。图下写读路径、写路径和每层的生命周期。
 
-### 5.3 前端交互
-不碰 UI 写「不涉及」。碰 UI 的，设计冻结之前**先用文字**，每个场景一行（触发 → 变化），小节开头标「待补图：`uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。冻结后这里是一个场景一张交互图（spec-figures §4），由 `uiux-refine` 写回。
+### 前端交互
 
-画法细节都在 spec-figures §2–§4。excalidrawer 的图在 `.tmp/to-spec/<spec-slug>/` 里渲染，**定稿后 `docs/` 里只放 PNG**，`.excalidraw` 与 sugar JSON 不进 git（spec-figures 开头）。
+不碰 UI 写「不涉及」。碰 UI 的，每个场景一行文字（触发 → 变化），小节开头标「待补图：uiux-refine 冻结时按冻结画布补交互图，替换本节文字」。
 
-## 6 测试决策
+## 测试决策
 
-**先逐行过仪器矩阵**，标出这次改动碰到了哪几行、各自怎么验。碰不到的写「不涉及」，**别留空**——写不出对应仪器，就是还没想清楚要改什么。
+先逐行过下表，标出这次碰到哪几行、各自怎么验；碰不到的写「不涉及」，不留空。写不出对应的仪器，就是还没想清楚要改什么。
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑 / 数据转换（taxonomy、评分聚合、状态机、判别式） | TDD 单元 | |
-| API 契约（路由、schema、序列化） | TDD API 测试（走 ASGI） | |
-| DB schema / 迁移 / 并发与事务语义 | **真 DB** 测试 | |
-| LLM 输出质量（prompt 改动） | eval（promptfoo + 确定性 assert） | |
-| 视觉正确性 | UI 实现环（`skills/design/uiux-refine/references/ui-implementation-standard.md` + 测量/像素比对脚本） | |
-| 端到端用户流程 | `qa:*` 浏览器测试 | |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | |
+| API 契约（路由、schema、序列化） | TDD API 测试 | |
+| DB schema、迁移、并发与事务语义 | 真 DB 测试 | |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | |
+| 视觉正确性 | UI 实现环（uiux-refine 的 `ui-implementation-standard.md`） | |
+| 端到端用户流程 | 浏览器端到端测试 | |
 
-判据是**能不能先写出一个会红的测试**。前三行能，所以走 TDD；后三行的输出是非确定的（LLM）或感知性的（视觉）或跨系统的（E2E），无从写红，falsifiable signal 是另一种仪器。
-
-**缝里的情况按这条切**：prompt 改动本身走 eval，但 prompt 产出的**结构**（schema、字段存在性、枚举闭集）走 TDD。
+判据是能不能先写出一个会红的测试：前三行能，走 TDD；后三行的输出不确定、靠感知或跨系统，换别的仪器。prompt 改动本身走 eval，但 prompt 产出的结构（schema、字段、枚举闭集）走 TDD。具体工具用目标项目自己的。
 
 然后写：
 
-- **seam**（测在哪个公共边界上）——见下。
-- **增量功能测试**：新行为的黑盒验收，用户视角、可证伪。写成 test-case 形态（前置/步骤/期望/覆盖），标明落在哪个页面下。
-- **prompt / eval 变动**：改了哪些 prompt → 要加/改哪些 eval 轴。**没有就明写「无 prompt/eval 变动」**——这一块是裸 /plan 最常忘的，必须每次都过一遍。
-- 既有同类测试的先例（照着谁写）。
+- **seam**：第 3 步跟人谈拢的那几个。
+- **增量功能测试**：新行为的黑盒验收，用户视角、可证伪，写成前置 / 步骤 / 期望 / 覆盖（场景名 + 编号），标明落在哪个页面。
+- **prompt / eval 变动**：改了哪些 prompt、要加或改哪些 eval。没有就写「无 prompt/eval 变动」。
+- **照着谁写**：仓库里同类测试的先例。
 
-### mock 只在系统边界
+mock 只在系统边界，规则见 `tdd` 的「mock 只在系统边界」。
 
-外部 API、数据库（**优先用测试库**）、时间/随机数、文件系统 —— 这些可以 mock。
+## Out of scope
 
-**不要 mock 自己的类/模块/内部协作者。** 判别标志：*重构了、行为没变，测试却红了*。
+明确的非目标。方案里排除的入口在这里再列一遍，各带一句理由。
 
-> 存量代码大概率不符合这条，这是常态：典型形态是 `patch("app.services.X.SomeRepository.get_by_id")` —— 把自己的类替换在**另一个自己模块的 import 点**上，等于把测试钉死在"这个 service 恰好 import 了那个 repository、恰好调了那个方法"上，这种 mock 在真实代码库里往往成百上千处。
->
-> **政策是只约束新增**：新写的测试守这条，存量不用一次扫完。如果某类 mock 其实是被环境问题逼出来的（比如某个模块一 import 就有副作用，测试环境没配好那个依赖），那是环境缺陷不是哲学问题，单独登记单独修。
+## 关联
 
-## 7 Out of scope
-明确的非目标。§2 里排除的同类入口在这里再列一遍，各带一句理由。
-
-## 8 关联
-raw 素材、相关 spec、相关 ADR。**相邻在飞的 spec 与 issue 也写在这里**：查过，写明有没有重叠、谁先谁后（decision-rules §7.1）；没有就写「无」。跑过 `prototype` 的，把它落的那份 raw 挂在这里——**只挂，不补写**，那份 raw 由 `prototype` 自己写完了。
+raw 素材、相关 spec、相关 ADR。相邻在飞的 spec 与 issue：查过，写明有没有重叠、谁先谁后，没有写「无」。
 ```
 
-**改了 spec 的文字，图和测试表一起改**（decision-rules §7.2）：人审完改了一个决定，§5 的时序图、§3 的场景树、§6 的增量功能测试里牵出的那几处同一轮改掉，别留到切工单前才发现图还是审核前的样子。
-
-### 落 `审核中`，不落 `在飞`
-
-grill 出来的 spec 一律落 `审核中`，碰不碰 UI 都一样。grill 里人答过的问题不等于人同意了整份 spec：落盘之后人要通读一遍，才轮到切工单。
-
-**碰 UI 的 spec 靠 §5.3 标出来**：§5.3 写文字、开头标「待补图」，这就是「要先设计」的记号，`spec-status.mjs` 也按它判断能不能进 `设计中`。人审完对它调 `uiux-imagine`，由 imagine 开工时把状态翻成 `设计中`。设计冻结时在 §4 写入**冻结摘要**、把 §5.3 的文字换成交互图，那时 `to-ticket` 才誊得出设计冻结字段。中间 `uiux-imagine` 产出的方向说明是交给 `uiux-refine` 的中间产物，住在 worktree 根的 `.tmp/`，不写进 spec。
-
-翻成 `在飞` 是 `to-ticket` 的事：设计冻结了（不碰 UI 的跳过）、人同意了、工单切完了，才翻。别为了让 spec 看起来"完成"而提前翻状态。
-
-### seam 要先谈拢
-
-写 spec 时把**准备在哪些 seam 上测**画出来：seam = 你能观察行为而不伸手进实现内部的那个公共边界。
-
-**优先复用已有 seam，用能用的最高那层，seam 越少越好——理想是一个。** 需要新 seam 就提在尽可能高的位置。
-
-把这些 seam 摆给人确认，再往下走。代码写之前谈拢的 seam，是测试能活过重构的原因。
-
-## 3 建索引条目，写移交标记
-
-`spec-status.mjs index <docs>` 刷新 `docs/spec/index.md`；`docs/raw/index.md` 照旧从 frontmatter 生成。
-
-这份 spec 覆盖了项目 backlog 里的条目（对话里提到的、§8 关联里挂的），每条跑一次 `spec-status.mjs handoff`（`spec-status.md` §2）；覆盖的是 GitHub issue 的，每个跑一次 `issues.mjs handoff`（同上 §3），落盘后再跑一次 `issues.mjs sync` 让 issue 挂上状态。不写，起草方会为同一条再起草一份。
-
-## 4 收工，点名下一步
-
-两个产物落完、索引刷完之后，**明说下一环是谁**：下一步是人审这份 spec。
-
-- 人审完、spec 碰 UI（§5.3 标了「待补图」）→ 下一步是 `uiux-imagine`（设计发散），它开工时把状态翻成 `设计中`。不要直接进 `to-ticket`——碰 UI 的 spec 设计冻结之前它不切。
-- 人审完、不碰 UI、人明说同意 → 下一步是 `to-ticket`。
-
-## 边界
-
-- **不生成 ticket。** ticket 是开工时才建的临时凭据，`to-ticket` 的活。在这里建会让 ticket 提前堆积。
-- **不写 ADR。** ADR 是 spec 归档时的总结，`dreaming` 的活。
-- 综合过程中如果发现思考本身有洞，**停下来回 `grill`**，别在 spec 里粉饰。
+</spec-template>

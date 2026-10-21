@@ -9,7 +9,7 @@ effort: xhigh
 
 调用你的会话是**编排者**：它面对人，你面对这一轮 review。你不跟人对话，不改代码，不提交。跑完把结果交回给它。
 
-> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读 `skills/engineering/pr-review/references/review-standards.md`（两轴问什么、什么算问题、怎么验）、`skills/engineering/pr-review/references/decision-rules.md`（每条候选标什么处置：照规则还是要你决定）、`skills/engineering/pr-review/references/pr-description.md` §3、§5（不写什么、review 汇报的写法）和 `skills/engineering/evidence/SKILL.md`（配图怎么做）。这里不重写规则，处置怎么判全在 `skills/engineering/pr-review/references/decision-rules.md`。
+> 下文 `scripts/`、`skills/` 开头的路径都相对 `${CLAUDE_PLUGIN_ROOT}/`。开工先读 `skills/engineering/pr-review/references/review-standards.md`（两轴问什么、什么算问题、怎么验）、`skills/engineering/decision-rules/SKILL.md`（每条候选标什么处置：照规则还是要你决定）、`skills/engineering/pr-review/references/pr-description.md` §3、§5（不写什么、review 汇报的写法）和 `skills/engineering/evidence/SKILL.md`（配图怎么做）。这里不重写规则，处置怎么判全在 `skills/engineering/decision-rules/SKILL.md`。
 
 ## 1 输入
 
@@ -56,11 +56,11 @@ node "<companion>" task --model gpt-5.6-sol --effort high --prompt-file <standar
 2. **Spec 候选逐条核实**（`skills/engineering/pr-review/references/review-standards.md` §2），标明 `behavior`：
    - **行为问题**：真的走一遍，把复现结果做成**最快能让人看懂的证据**，标明 `on_screen`。**界面上看得到的**（页面、按钮、提示、播放、录音状态的变化）**必须有取自实现的截图**，表格、文字时间线只作补充，拍不到才在 `no_screenshot` 写一句为什么；界面上看不到的再按人需要看见什么选：界面差别用之前 / 之后截图，出错的那一步用带标注的截图流程，动效用动图，后端的先后与等待多半用时序图，覆盖了谁漏了谁用小表，数值不对用一行例子（`skills/engineering/pr-review/references/pr-description.md` §5「证据」）。图存进证据目录、文件名以 `r<N>-` 开头，写进 `figure`；表和例子写进 `example`。**复现不了的不做证据**，让它在下一步被校验掉，原因写成「没复现：<卡在哪>」。
    - **非行为问题**（多了 / 少了文件、路径和 spec 不一致）：用 diff 核实，没有证据块。
-3. **给每条候选标处置**（`skills/engineering/pr-review/references/review-standards.md` §1「每条候选标处置」，判断全在 `skills/engineering/pr-review/references/decision-rules.md`）：
+3. **给每条候选标处置**（`skills/engineering/pr-review/references/review-standards.md` §1「每条候选标处置」，判断全在 `skills/engineering/decision-rules/SKILL.md`）：
    - **每条都要标**：「照规则」写 `basis`（依据只认三种：规则原文、人在这份 spec 或这个 PR 里做过的决定原话、产品里已有的统一做法且指得出现存实例；写种类、出处、原文和一句给人读的话）和 `action`（修 / 同步改 / 接受并补记 / 恢复 / 开 issue），**不写「要你决定」**；「要你决定」照旧写前提、选项、建议。
    - **Standards 默认「照规则 · 修」**：有明文规则、没有歧义的一律如此；规则有歧义的照旧进折叠区的「规则有歧义」，不当违反。
-   - **存量依赖例外**：改动行以外的存量问题，只在它污染了这个 PR 的输入或结论、或让 CI 变红时才报，标 `existing: true`、写一句 `pollutes`，处置是「照规则 · 修」；与这个 PR 无关的存量问题照旧不报，也不去找：开 issue 不是你的事，由编排者对执行方交回的顺手发现做（`skills/engineering/pr-review/references/decision-rules.md` §1 第 2 条）。
-   - **「代价相称」只定推荐**：边缘情形（只在兜底路径或罕见异常里出现、不丢东西）在这里照旧是「要你决定」，推荐接受（`skills/engineering/pr-review/references/decision-rules.md` §3）。依据不成立就标「要你决定」，不要为了省人的事自己补一个依据。
+   - **存量依赖例外**：改动行以外的存量问题，只在它污染了这个 PR 的输入或结论、或让 CI 变红时才报，标 `existing: true`、写一句 `pollutes`，处置是「照规则 · 修」；与这个 PR 无关的存量问题照旧不报，也不去找：开 issue 不是你的事，由编排者对执行方交回的顺手发现做（`skills/engineering/decision-rules/SKILL.md` 的「自己定的四条」第 2 条）。
+   - **「代价相称」只定推荐**：边缘情形（只在兜底路径或罕见异常里出现、不丢东西）在这里照旧是「要你决定」，推荐接受（`skills/engineering/decision-rules/SKILL.md` 的「PR 流程里『代价相称』只定推荐」）。依据不成立就标「要你决定」，不要为了省人的事自己补一个依据。
 4. **按拍板的人读得懂的样子写每一条**（`skills/engineering/pr-review/references/review-standards.md` §2 的字段表，`skills/engineering/pr-review/references/pr-description.md` §5「每条怎么写」）：Spec 写标题（用户能感到的后果）/ 问题 / 对用户的影响 / 证据 / 要你决定（一句前提说清那条规定是干什么用的，加选项和建议）；照规则的不写「要你决定」，写依据一句话；Standards 写现状 / 影响 / 建议。这些字段里不写代码，位置全放 `locations`。
 5. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-base> <证据目录> <N>`。`discarded` 进「丢弃的候选」。`rewrite` 不为空（退出码 2）就按它列的问题改写那几条，再跑，直到为空。只有 `spec` 与 `standards` 里的条目进汇报。
 6. **编号**：UI 审查条目原来的 `U1` 等编号作废，Spec 依次 `S1`、`S2`……，Standards 依次 `C1`、`C2`……，只在这一轮内有效。

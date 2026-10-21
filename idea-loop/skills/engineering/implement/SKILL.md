@@ -7,7 +7,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 **把一份已经切好工单的 spec 做完。** 这里只写编排：谁起谁、派哪张、交回后核什么、何时停下交给人。一张工单怎么做在 `agents/implementer.md`。
 
-> 先读 `../wiki-conventions/SKILL.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../pr-review/references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../pr-review/references/decision-rules.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
+> 先读 `../wiki-conventions/SKILL.md`（§2.1：`.tmp/…` 下文都指集成分支 worktree 的 `.tmp/`）、`references/worktree.md`（执行方 worktree 的起点、准备、回收）、`../pr-review/references/pr-description.md`（停下汇报 §4、描述四节 §6）、`../decision-rules/SKILL.md`（什么自己定、什么交给人：执行方交回的「按现有做法定的」「本次修的存量」、顺手发现的无关存量开 issue、停下汇报的决定题都按它）。
 
 ## 0 前提
 
@@ -64,9 +64,9 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 
 **落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑全量套件——不算失败。落地后按 `worktree.md` §3 **回收**，再记下它的 `human_verify`（进停下汇报）、`verified`（进描述）、`by_existing_practice` 与标「存量本次修」的 `found`（进 handled，下次停下汇报的「已按规则处理」）、标「spec 缺口」的 `found`（进 pending 当决定题）、其余 `found`（跟这次无关的存量，见下）。
 
-**跟这次无关的存量问题自动开 issue**（`decision-rules.md` §1 第 2 条）：其余 `found` 逐条在目标仓库 `gh issue create`，不加 `status:*` 标签（没标签就是待办，`issue-dispatch` 会接手），写给一个没有上下文的人看：是什么、在哪、为什么这张工单没动它。开之前 `gh issue list --search` 查一次，已有同一问题的 open issue 就不重开，链接那一个。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次停下汇报的「已按规则处理」和第 1 轮 review 汇报的「已按规则处理」都带它；人一句话可推翻（§6）。开不成（`gh` 失败）不静默丢：记进 handled 写明没开成与原因，让人在停下汇报里看到。审查者不去找存量问题（`pr-reviewer` 只报污染本次、让 CI 变红的那两种），开 issue 是编排者对执行方交回的做。
+**跟这次无关的存量问题自动开 issue**（`decision-rules.md` 的「自己定的四条」第 2 条）：其余 `found` 逐条在目标仓库 `gh issue create`，不加 `status:*` 标签（没标签就是待办，`issue-dispatch` 会接手），写给一个没有上下文的人看：是什么、在哪、为什么这张工单没动它。开之前 `gh issue list --search` 查一次，已有同一问题的 open issue 就不重开，链接那一个。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次停下汇报的「已按规则处理」和第 1 轮 review 汇报的「已按规则处理」都带它；人一句话可推翻（§6）。开不成（`gh` 失败）不静默丢：记进 handled 写明没开成与原因，让人在停下汇报里看到。审查者不去找存量问题（`pr-reviewer` 只报污染本次、让 CI 变红的那两种），开 issue 是编排者对执行方交回的做。
 
-`by_existing_practice` 每条必须带至少一处现存实例，没有实例的不收：退回执行方，要么补实例，要么改按「行为没定」停（`decision-rules.md` §2，宁可多问，不凭推断凑依据）。
+`by_existing_practice` 每条必须带至少一处现存实例，没有实例的不收：退回执行方，要么补实例，要么改按「行为没定」停（`decision-rules.md` 的「依据不成立：交给人」，宁可多问，不凭推断凑依据）。
 
 ## 5 卡住一张，别的接着做
 
@@ -77,7 +77,7 @@ description: 把一份 spec 的工单按依赖并行实现完，只为要人拍�
 没有在跑的、frontier 也空了才停（只剩等决定的及其下游，或全部落地）。
 
 1. 还没有 PR：推送，`gh pr create --draft --base <base>`（标题用 spec 标题，带署名行），`pr-body.mjs set` 写 `summary` 和 `reference`。
-2. 停下汇报按 `pr-description.md` §4 写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` §7）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
+2. 停下汇报按 `pr-description.md` §4 写：handled 里的每一条放「已按规则处理」（每条一句：做了什么 + 依据，开了 issue 的带链接，位置在「需要你决定」之前），新落地工单的人验素材，每条 pending 的决定题（写法按 `decision-rules.md` 的「交给人时」）。执行方只影响代码怎么写的细节不写；会改变用户看到什么的事，要么在「已按规则处理」里让人能推翻，要么是决定题。贴完之后清空 handled。轮次取 `review-loop.mjs next .tmp/review-loop/<PR 号>.md pause`，追加成新条目；素材写本地路径。
 3. 更新 `reference` 的执行记录，推送。
 4. 会话里按条目贴汇报，每项文字后紧跟它的素材（`review-loop.md` §2）；再发一条推送通知。
 

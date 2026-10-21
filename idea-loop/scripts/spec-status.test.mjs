@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { frontmatter, handoff, renderIndex, scan, touchesUi, transitionError, unhandoff, withStatus } from './spec-status.mjs';
+import { frontmatter, renderIndex, scan, touchesUi, transitionError, withStatus } from './spec-status.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./spec-status.mjs', import.meta.url));
 
@@ -89,48 +89,6 @@ test('renderIndex replaces the rows and keeps the text around the table', () => 
   const out = renderIndex(old, [{ slug: 'b', status: '审核中', summary: 'B' }, { slug: 'a', status: '草稿', summary: 'A' }]);
   assert.equal(out, '# spec\n> 契约：x\n\n| 文件 | status | summary |\n|---|---|---|\n| [[a]] | 草稿 | A |\n| [[b]] | 审核中 | B |\n\n> 当前为空。\n');
   assert.match(renderIndex('', []), /\| 文件 \| status \| summary \|/);
-});
-
-const BACKLOG = `## 待办
-
-| # | 区域 | 打磨点 | P | 状态 |
-|---|------|--------|---|------|
-| 7 | 报告 | 切题滞后 | P1 | 待办 |
-| 17 | 报告 | 重试 \\| 回放慢 | P2 | 待办 |
-
-## 线上问题
-
-- [ ] **重试判分听不到发音** —— 证据在日志里
-- [ ] **processing 行永久卡死** —— 没有清扫任务
-`;
-
-test('handoff marks a table row by number, and only that row', () => {
-  const out = handoff(BACKLOG, 'report-speed', '#7');
-  assert.match(out, /\| 7 \| 报告 \| 切题滞后 \| P1 \| 已移交 → \[\[report-speed\]\] \|/);
-  assert.match(out, /\| 17 \| 报告 \| 重试 \\\| 回放慢 \| P2 \| 待办 \|/);
-});
-
-test('handoff appends the mark to a checklist item, leaving the checkbox', () => {
-  const out = handoff(BACKLOG, 'retry-scoring', '重试判分听不到发音');
-  assert.match(out, /^- \[ \] \*\*重试判分听不到发音\*\* —— 证据在日志里 已移交 → \[\[retry-scoring\]\]$/m);
-});
-
-test('handoff is idempotent for the same spec and refuses another one', () => {
-  const once = handoff(BACKLOG, 'report-speed', '#7');
-  assert.equal(handoff(once, 'report-speed', '#7'), once);
-  assert.throws(() => handoff(once, 'other-spec', '#7'), /已经移交给 \[\[report-speed\]\]/);
-});
-
-test('an entry must match exactly one line', () => {
-  assert.throws(() => handoff(BACKLOG, 's', '报告'), /对上了 2 个条目/);
-  assert.throws(() => handoff(BACKLOG, 's', '#99'), /对上了 0 个条目/);
-});
-
-test('unhandoff undoes handoff in both shapes', () => {
-  const marked = handoff(handoff(BACKLOG, 'report-speed', '#7'), 'retry-scoring', '重试判分');
-  const back = unhandoff(unhandoff(marked, 'report-speed', '#7'), 'retry-scoring', '重试判分');
-  assert.equal(back, BACKLOG);
-  assert.throws(() => unhandoff(marked, 'retry-scoring', '#7'), /不是 \[\[retry-scoring\]\]/);
 });
 
 function project() {

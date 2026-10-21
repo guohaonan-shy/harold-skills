@@ -38,7 +38,7 @@ Examples:
 harold-skills/
 ├── .claude-plugin/
 │   └── marketplace.json      # marketplace metadata
-├── CLAUDE.md                 # repository maintenance conventions
+├── AGENTS.md                 # repository maintenance conventions (CLAUDE.md imports it)
 ├── README.md                 # default English README
 ├── README.zh-CN.md           # Chinese README
 └── <plugin-name>/            # each top-level directory is one plugin
@@ -56,7 +56,7 @@ harold-skills/
 
 `references/` is flexible. Some plugins use only plugin-level references, while others keep both plugin-level and skill-level references when the material is skill-specific.
 
-Each plugin is independently installable. See [CLAUDE.md](./CLAUDE.md) for repository maintenance conventions.
+Each plugin is independently installable. See [AGENTS.md](./AGENTS.md) for repository maintenance conventions.
 
 ## License
 

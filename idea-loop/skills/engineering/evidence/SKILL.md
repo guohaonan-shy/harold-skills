@@ -39,7 +39,7 @@ description: 要人判断的行为怎么做成一眼能判断的素材：截图�
 
 | 要人判断的 | 形态 | 怎么做 |
 |---|---|---|
-| **流程**：用户这样走，界面这样变，对不对 | 流程图：真实截图 + 光圈（点击处）+ 箭头上的触发条件 + 每帧下一句状态 | `scripts/flow-compose.mjs`，构图规则同 `../to-spec/references/spec-figures.md` §4 |
+| **流程**：用户这样走，界面这样变，对不对 | 流程图：真实截图 + 光圈（点击处）+ 箭头上的触发条件 + 每帧下一句状态 | `scripts/flow-compose.mjs`，构图规则同 `../to-spec/references/spec-figures.md` 的「交互图」 |
 | **动效**：动起来是什么样 | 动图 | §4 |
 | **静态样式**：悬停、按下、窄屏 | 并排截图（静止 / 悬停，或宽 / 窄） | 也用 `flow-compose.mjs`：一行，`connected: false`，`label` 写「同一元素 · 静止 / 悬停」 |
 
@@ -47,7 +47,7 @@ review 给 spec 问题做证据、PR 描述拍「之前 → 之后」时，**界
 
 ### 和 spec 的图有一处不同：截图取自实现
 
-`../to-spec/references/spec-figures.md` §4 的设计图取自冻结画布，因为当时还没有实现。交付证据要判断的是**实现**，所以截图一律取自实现本身：本地起的真实页面，或开发状态页（dev harness）上挂着的真实组件。**不取画布，也不重画。** 节奏靠网络拦截控制：慢下载用 `page.route` 先等再 `continue`，失败用 `route.fulfill({ status: 500 })` 或 `route.abort()`。
+`../to-spec/references/spec-figures.md`「交互图」里的设计图取自冻结画布，因为当时还没有实现。交付证据要判断的是**实现**，所以截图一律取自实现本身：本地起的真实页面，或开发状态页（dev harness）上挂着的真实组件。**不取画布，也不重画。** 节奏靠网络拦截控制：慢下载用 `page.route` 先等再 `continue`，失败用 `route.fulfill({ status: 500 })` 或 `route.abort()`。
 
 其余沿用 spec 的规则：只截那个组件（连同它弹出的浮层），2 倍像素密度，用 spec 的主语言，手机宽度默认 390。
 

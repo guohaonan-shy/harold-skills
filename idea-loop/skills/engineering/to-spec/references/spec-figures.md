@@ -1,19 +1,19 @@
-# spec 里的图——画什么、怎么画、放哪
+# spec 里的图：画什么、怎么画、放哪
 
-spec 不只给 agent 读，也给人读。人读不出一段文字描述的问题到底长什么样，也没法在脑子里把散在 §4 各小节的决策拼成一条链。所以 spec 有四处要配图。这份文件规定每处画什么、用什么画、放在哪。
+spec 不只给 agent 读，也给人读。人读不出一段文字描述的问题到底长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。所以 spec 有四处要配图。这份文件规定每处画什么、用什么画、放在哪。
 
-`grill` 复现问题时读 §1，`to-spec` 落 spec 时全读，`uiux-refine` 冻结写回交互图时读 §4 和 §5。
+`grill` 复现问题时读「问题的复现证据」，`to-spec` 落 spec 时全读，`uiux-refine` 冻结写回交互图时读「交互图」。
 
 | spec 的哪里 | 画什么 | 用什么画 | 谁画 |
 |---|---|---|---|
-| §1 问题 | 复现证据 | 截图 + 标注，按问题性质选形式（见 §1） | `grill` 复现时截图，`to-spec` 排版 |
-| §3 User Stories | 每个场景一棵 story 树 | excalidrawer `tree` | `to-spec` |
-| §5 技术方案总览 · 后端 / 前端内部 | 时序图 | excalidrawer `sequence` | `to-spec` |
-| §5 技术方案总览 · 前端交互 | 交互图（screen flow） | 截图 + `scripts/flow-compose.mjs` | 冻结前写文字；冻结时 `uiux-refine` 补图 |
+| 问题 | 复现证据 | 截图 + 标注，按问题性质选形式 | `grill` 复现时截图，`to-spec` 排版 |
+| User Stories | 每个场景一棵 story 树 | excalidrawer `tree` | `to-spec` |
+| 技术方案总览 · 后端 / 前端内部 | 时序图 | excalidrawer `sequence` | `to-spec` |
+| 技术方案总览 · 前端交互 | 交互图（screen flow） | 截图 + `scripts/flow-compose.mjs` | 冻结前写文字；冻结时 `uiux-refine` 补图 |
 
-**定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`../../wiki-conventions/SKILL.md` §2.1）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
+**定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`../../wiki-conventions/SKILL.md` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
 
-## 1 问题的复现证据
+## 问题的复现证据
 
 **凭读代码写出来的根因是猜测，复现才是证据。** 复现常常推翻读代码得出的根因：以为是 A 导致的，真的走一遍发现 A 根本不发生，是 B。所以复现在 `grill` 里做——它会改动后面的决策——`to-spec` 只负责把复现结果呈现出来。
 
@@ -30,7 +30,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 | 问题的性质 | 形式 |
 |---|---|
 | **时序 / 感知延迟**：点了之后多久才有反应、界面说在做其实没在做 | 左边截图（红框加编号），右边编号说明 + **实测时间线**（点击 → 界面变化 → 网络请求 → 真正生效，每步带毫秒数）+ 复现步骤 |
-| **流程**：要走好几步才暴露、或者某一步走不通 | 交互图（见 §4），红色光圈标出出问题的位置 |
+| **流程**：要走好几步才暴露、或者某一步走不通 | 交互图（见「交互图」），红色光圈标出出问题的位置 |
 | **单个画面就能说清**：缺一个状态、一个信息不见了 | 一张截图 + 红色光圈 + 一两句说明 |
 
 无论哪种：
@@ -43,22 +43,22 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 
 两处，生命周期不同：
 
-- **复现过程的工作文件** → `<worktree 根>/.tmp/grill/<YYYY-MM-DD>-<topic>/`（约定见 wiki-conventions §2.1）。每次尝试的截图、网络日志、trace、标注前的原图都在这里，grill 收工时删。
-- **证据图** → 挑出来、标注好的那几张，进这场讨论的 raw 桶 `docs/raw/<topic>/assets/`，文件名带问题编号（`problem-<n>-<slug>.png`）。每张图在 raw transcript 里配一段文字描述（wiki-conventions：没有文字的图片不算捕获）。`to-spec` 只从这里取。`to-spec` 的 backlog 模式没有 raw 桶，证据图放这份 spec 自己目录下的 `assets/`（`skills/engineering/to-spec/references/backlog-mode.md` §1）。
+- **复现过程的工作文件** → `<worktree 根>/.tmp/grill/<YYYY-MM-DD>-<topic>/`（约定见 wiki-conventions 的「中间产物」）。每次尝试的截图、网络日志、trace、标注前的原图都在这里，grill 收工时删。
+- **证据图** → 挑出来、标注好的那几张，进这场讨论的 raw 桶 `docs/raw/<topic>/assets/`，文件名带问题编号（`problem-<n>-<slug>.png`）。每张图在 raw transcript 里配一段文字描述（wiki-conventions：没有文字的图片不算捕获）。`to-spec` 只从这里取。`to-spec` 的 backlog 模式没有 raw 桶，证据图放这份 spec 自己目录下的 `assets/`（[`backlog-mode.md`](backlog-mode.md) 的「先复现」）。
 
-## 2 User Stories 的树
+## User Stories 的树
 
 - 按**场景**分组，每个场景用 excalidrawer `tree` 画一棵从左到右展开的树（场景 → 它的几条 story）。
 - **story 编号在每个场景内从 1 开始**，图和图下的文字一致。别处引用（比如测试决策的「覆盖」列）写「场景名 + 编号」（如「播放器 3」），不写全局编号。
 - 图放 spec 对应的 raw 桶 `assets/tree-user-stories-<n>-<场景 slug>.png`，只放 PNG；`.excalidraw` 和 sugar JSON 留在 `.tmp/to-spec/<spec-slug>/`，不进 git。
 
-## 3 时序图（技术方案总览的后端与前端内部）
+## 时序图（技术方案总览的后端与前端内部）
 
 - **后端**：参与方是浏览器、API、DB、对象存储 / 第三方（按实际取）。用 excalidrawer `sequence`。**本 spec 新增或改动的消息用红色**，响应用虚线。图下用几行文字列出接口变化：哪个接口加了 / 改了什么字段，有没有新接口。
 - **前端内部**：缓存、状态这类看不见的部分。参与方是各层存储与读写方（比如组件、页面内存、浏览器缓存、网络），画清楚读和写的顺序。图下写读路径、写路径各一句，以及每层的生命周期（关页面即失 / 跨标签页共享 / 多久过期）。
 - 图放 raw 桶 `assets/sequence-<slug>.png`，只放 PNG；源文件同上，留在 `.tmp/` 不进 git。
 
-## 4 交互图（screen flow）
+## 交互图（screen flow）
 
 **核心就是 UI 截图 + 截图之间的箭头 + 必要、简洁的文字**，问题和新设计都这样画。
 
@@ -75,7 +75,7 @@ spec 不只给 agent 读，也给人读。人读不出一段文字描述的问�
 
 - 设计图的截图**取自冻结画布**，不取自实现，也不重画：手机宽度（默认 390）、spec 的主语言、动画冻结（画布约定的定格参数）、2 倍像素密度。
 - **每一步只截那个组件**，必要时连同它弹出的浮层一起截。整页截图会把要看的东西缩到看不清。
-- 问题图的截图取自复现（§1）。
+- 问题图的截图取自复现（见「问题的复现证据」）。
 
 ### 拼图：`scripts/flow-compose.mjs`
 
@@ -128,10 +128,10 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archi
 
 ### 放哪
 
-- **问题图**（§1）：跟复现截图一起进 raw 桶。
-- **设计图**（§5 前端交互）：从冻结画布派生，跟画布放在一起，`docs/design/tmp/<spec-slug>/canvas/flows/flow-<n>-<page>--<state>.png`，JSON 和截图源放在 `flows/src/`，画布改了能重新生成。**文件名里的 `<page>--<state>` 是这张图第一格的档案状态名**，归档脚本靠它判断图属于哪个页面；`<n>` 是这份 spec 里的序号。spec 里用相对路径引用。`tmp/` 不进 git，所以这条链接在 PR 里是断的，直到归档：归档脚本把图挪进 `prod/pages/<page>/assets/flows/`，同时把 spec 里指向它们的链接改写成新路径。
+- **问题图**（「问题」一节）：跟复现截图一起进 raw 桶。
+- **设计图**（「前端交互」一节）：从冻结画布派生，跟画布放在一起，`docs/design/tmp/<spec-slug>/canvas/flows/flow-<n>-<page>--<state>.png`，JSON 和截图源放在 `flows/src/`，画布改了能重新生成。**文件名里的 `<page>--<state>` 是这张图第一格的档案状态名**，归档脚本靠它判断图属于哪个页面；`<n>` 是这份 spec 里的序号。spec 里用相对路径引用。`tmp/` 不进 git，所以这条链接在 PR 里是断的，直到归档：归档脚本把图挪进 `prod/pages/<page>/assets/flows/`，同时把 spec 里指向它们的链接改写成新路径。
 - **每一格对回档案里的状态**：JSON 里每一步可以带 `state`（档案里的状态名，如 `cookbook--search-loading`），指向 `delta/` 里那个状态文件。脚本把它印在截图下的小字里、写进 HTML 的 `data-state`，并在 PNG 旁多存一份同名的 `.states.json`（哪一行哪一步是哪个状态）。输出文件按 `flow-<n>-…` 起名时，脚本要求名字就是 `flow-<n>-<第一格的状态名>.png`，对不上退出码 2；别的名字（问题图等）不受限。带 `--archive <仓库根> --delta <spec-slug>` 时，脚本还会核对每个 id 在档案（叠上这个需求的 `delta/`）里是否存在，不存在就退出码 2。不带 `state` 时行为和输出都不变——问题图、没有档案的项目照旧。
 
 ### 设计冻结之前
 
-§5 前端交互先用文字列出交互变化（每个场景一行：触发 → 变化），小节开头标「待补图：`uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。
+「前端交互」先用文字列出交互变化（每个场景一行：触发 → 变化），小节开头标「待补图：`uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。
