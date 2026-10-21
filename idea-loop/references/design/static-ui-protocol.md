@@ -35,8 +35,9 @@ same work is not performed twice.
 ### 1. Concept before references
 
 Start from product truth: the user's actual job, the data/domain model, the reachable states, and
-the language of shipped sibling components. References may answer a named structural, coverage, or
-state question after the concept exists; they never supply the product's visual skin.
+the language of shipped sibling components. A reference the human supplies or forwards may answer a
+named structural, coverage, or state question after the concept exists; it never supplies the
+product's visual skin.
 
 Replication is the exception: it reproduces the current UI only to establish ground truth at the
 scope being changed. The redesign begins after that baseline exists.
@@ -157,36 +158,34 @@ preference). A bounded component treatment may use one concept; use variants onl
 visual choices, not to manufacture options.
 
 **Gate:** concept, state contract where applicable, and expression table are signed off before
-references or design pixels. An unresolved named question routes to stage C's research backend,
-not back into this stage's inference.
+references or design pixels. An unresolved named question is written down in stage C as a suggested
+research question with a recommended answer — it is not researched by the executor, and it does not
+come back into this stage's inference.
 
-### C · Ground with references only for a named question
+### C · A named question the concept leaves open: write it down, do not research it
 
-Skip by default. A reference is admissible only when the concept leaves a specific structural,
-coverage, flow, or state question unanswered. Component references are not forbidden, but must answer
-a component-sized question such as collapsed behavior or error recovery.
+Skip by default. This stage fires only when the concept leaves a specific structural, coverage, flow,
+or state question unanswered — a question a component-sized or surface-sized judgment cannot settle.
 
-User-provided sources come first; Refero is a fallback candidate search, not ground truth
-(`platform: "web"`), and it is not one undifferentiated pool — route the named question to the
-layer that actually answers it:
+**The executor does not research.** It does not call Refero and does not start a research agent.
+Instead it writes the question down as a **suggested research question**: one sentence, one decision,
+plus the executor's **recommended answer**. That goes into the round's hand-back
+(`designer`'s 「建议调研的问题」), and the executor carries on **without stopping**, working from the
+recommendation. Whether the question is worth researching is the human's call — the human may run
+`uiux-research`, read the page it produces, and forward some of its conclusions back as **text**.
 
-| The named question is about… | Research-backend layer |
-|---|---|
-| Visual direction — taste, aesthetic family, palette/type mood | Refero **styles** |
-| A concrete UI pattern — how a specific component or screen is structured | Refero **screens** |
-| A multi-step flow — how a user moves across connected screens to complete a task | Refero **flows** |
+- User-provided sources still come first: anything the human attached is read here and now, as input,
+  not as research.
+- A conclusion the human forwarded and the executor used is recorded in the freeze record with its
+  four parts together — what the source answers, what it does not (**Cannot answer**), and
+  **Keep / Change / Do not copy** — because "what it does not answer" is the half that keeps a
+  reference from being over-read. A reference that cannot represent the target state never enters the
+  conclusion layer.
+- **reference-averaging** (`ui-craft-checklist.md` §2) still applies to forwarded conclusions: when
+  sources disagree, that is a decision for the human, not a midpoint.
 
-Full routing contract and caveats (styles doesn't cover in-app dashboards/auth/settings/iOS):
-`references/design/research-backend.md`.
-
-For every used reference record:
-
-- **Can answer** — the exact question this source is evidence for.
-- **Cannot answer** — nearby decisions it does not support.
-- **Keep / Change / Do not copy** — controllable structural qualities, product-specific changes,
-  and protected/irrelevant skin.
-
-A reference that cannot represent the target state never enters the conclusion layer.
+How research is run and what the page looks like: `references/design/research-backend.md` — written
+for the researcher agent, not for this stage.
 
 ### W · Freeze the appropriate low-cost artifact
 

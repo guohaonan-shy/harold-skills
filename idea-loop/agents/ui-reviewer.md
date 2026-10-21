@@ -25,7 +25,7 @@ effort: high
 
 **对账模式**的输入不同，见 §5.1：没有 spec 名、没有集成 worktree，给的是 dreaming 的 worktree、它的目录名和一组状态 id。
 
-「每轮审查」与「归档」两种模式下，`tmp/` 里这份需求目录是空的或不存在，不是你要审的东西：直接交回 `status: skipped`，说明原因。
+「每轮审查」与「归档」两种模式下，`tmp/` 里这份需求目录是空的或不存在，或者里面只有 `research/`（人调 `uiux-research` 落的调研页，看完就丢，不是设计产物，不归档，也没有设计差异可审），不是你要审的东西：直接交回 `status: skipped`，说明原因。
 
 ## 2 三种模式共用的前半
 
@@ -93,7 +93,7 @@ effort: high
 **第二步：通过之后写**（都写在 `docs/design/tmp/<spec-slug>/delta/` 里，与 `prod/` 同构）：
 
 1. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`。拍之前关掉开发服务器的调试浮层（框架的开发工具条、错误浮层），不然它们进每张图。**长页面的入口状态（页面滚动高度大于主视口，`sections` 已声明或该声明）按段拍**：入口状态没声明分段的，先照 `refs/design-archive.md` §3「分段」补进 `delta/` 的状态文件（分段名取自类型表、用标题或 landmark 定位）；然后跑分段脚本（§10）：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <集成 worktree> <入口状态 id> --delta <spec-slug> [--viewport <WxH> --theme <light|dark>]` 打印一段代码，存成文件交给 Playwright 跑（先 `browser_navigate` 进入口状态；代码文件与输出目录的路径要在 Playwright 的工作区根目录里），再用 `browser_evaluate`（`() => window.__dsMeasure`，带 `filename`）把测量结果存成文件（**`prod/index.md` 还没定视口或主题时**，上面那条 `measure` 必须带 `--viewport` 与 `--theme`，值就是这一步取的画布矩阵默认格，否则脚本退出码 2、不猜）；然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" attribute <测量结果.json>`（输出存成文件）：**有落空的可点元素、定位失败或重叠，补分段、改定位再测，清零了才往下**；归属结果顺带告诉你每条 `user` 边该写哪个 `from`，以及哪些可点元素按角色定位不到（这些边的 `locate` 写 `{ text: <完整文字> }`）。清零后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out <目录>` 打印第二段代码，交给 Playwright 跑，**每段单独截**（滚到这一段、等内容稳定、冻结页面时钟再截），每张叫 `<入口状态 id>@<段 id>.png`；**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`（段变高了尺寸不同，算改了）。段内交互的状态（带 `section`）只拍那一段：先进入这个状态，`measure … --for <段内状态 id>`（不重载页面），`attribute`，`shoot` 出 `<段内状态 id>.png`；浮层越出所在段时 `shoot` 带 `--include`（§10）。每个有动效的边或节点录一张 GIF（`refs/evidence.md` §4），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
-2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF；有分段的入口状态按段排开，每段一个 `###` 小标题、一张切图、一两句描述），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
+2. **补齐状态文件**：「这一屏」写这一屏是什么样（内嵌刚拍的截图或 GIF；有分段的入口状态按段排开，每段一个 `###` 小标题、这一段的图、一两句描述），「应看到什么」写成几条可判定的话，进状态之后拿它核对。状态文件不写决定。
 3. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。设计过程里（冻结记录、工单、review loop 里人的批示）已经说清、但还没落进对象文件的，补进去：决定写为什么、否掉过、来源；候选按 `refs/design-md.md` §13 的形状。**拿不准的不替人编**，留在草稿的「待你定」里。
 4. **自检**：`design-archive-check.mjs <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 只由归档脚本重算，这里不判）与 `design-archive-write.mjs <集成 worktree> <spec-slug> --dry-run` 都要通过（后者只校验、不写）。**绝不跑不带 `--dry-run` 的归档脚本**：那是编排者在人批过之后的事。
 

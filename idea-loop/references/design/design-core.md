@@ -355,8 +355,8 @@ into native lint + self-contained checklists, replacing the retired live invocat
 `accessibility-baseline.md` and `laws-of-ux.md` (an external product repository's `craft/`,
 one-time inspiration source, no path dependency retained), `landing-ia.md` (a design-lib research
 repository's landing skills, generalized away from its allow-list gating), `research-backend.md`
-(routing contract for `refero-design`'s three research layers — the one remaining live dependency,
-scoped to optional reference research, never a gate).
+(the contract for `idea-loop:uiux-researcher`, the one agent that calls `refero-design`'s screens and
+flows layers — the one remaining live dependency, run only when the human asks, never a gate).
 
 - **Escalation**: for a flagship marketing surface that wants the full playbook (GSAP skeletons,
   design-system mapping, redesign protocol), deep-read taste-skill §4 / §9 / §11 / §14 directly.

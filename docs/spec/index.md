@@ -5,7 +5,7 @@
 |---|---|---|
 | [[design-archive-sections]] | 在飞 | 设计档案给长页面加可引用的分段：入口拍整页按段切图，边带出发段和落点段，按段比对 |
 | [[design-md-write-entry]] | 在飞 | DESIGN.md 写入口收拢：删 design-modeling，写入标准成 reference，只留 uiux-imagine 与 dreaming 两处写 |
-| [[design-research-agent]] | 审核中 | 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看 |
+| [[design-research-agent]] | 在飞 | 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看 |
 | [[dreaming-design-reconcile]] | 在飞 | dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏 |
 | [[pr-review-report-followups]] | 在飞 | 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板 |
 | [[ui-state-archive]] | 在飞 | docs/design 分 tmp / prod，prod 是一张按页面状态建的图，设计与验证共用，合并前归档 |

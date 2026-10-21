@@ -198,7 +198,7 @@ selected variant as a standalone page at `docs/design/tmp/<spec-slug>/imagine/ha
   and CSS cloned from the baseline. Unchanged parts stay as the shipped UI; nothing is redrawn.
 - **Self-contained**: images, fonts and every `url(…)` in the captured CSS are copied into
   `handoff/assets/` and rewritten as relative paths. No reference to `board.html`, the working
-  directory's own `assets/` or `research/`, a dev server, the capture server, or an absolute
+  directory's own `assets/`, a dev server, the capture server, or an absolute
   address — any static server (or `file://`) opens it. The designer copies it into
   `docs/design/tmp/<spec-slug>/canvas/` unchanged, so `assets/…` must keep resolving from there.
 - **Same fidelity as the pick**: no polish added, nothing cut to look cleaner.
@@ -210,7 +210,7 @@ selected variant as a standalone page at `docs/design/tmp/<spec-slug>/imagine/ha
 ### Cleanup
 
 When imagine finishes, these go: the board (`board.html`), the unselected variants, the captures,
-the style tile, `research/`, the working directory's own `assets/`, `rounds.md`, and **both**
+the style tile, the working directory's own `assets/`, `rounds.md`, and **both**
 servers (static + the capture POST server). These two stay: **the direction note and `handoff/`**.
 The two together are what `uiux-refine` starts from; renders other than the handoff canvas do not
 survive the phase. When refine freezes, the whole imagine working directory (handoff included)
