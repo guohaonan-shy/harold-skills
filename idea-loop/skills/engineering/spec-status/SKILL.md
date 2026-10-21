@@ -80,7 +80,7 @@ issues resolve    <docs> <spec-slug> <pr>   # PR 合并：关掉 spec 列出的�
 | spec 翻状态 | 谁翻谁顺带（`spec-status set` 里自动做） | — |
 | 人审核时把某个 issue 踢出 spec | 审核会话 | `unhandoff`，并从 spec 的「问题」「方案」「User Stories」「关联」里删掉它 |
 | 人审核时决定某个 issue 不做 | 审核会话 | `drop`，并从 spec 里删掉它 |
-| spec 的 PR 合并 | `issue-dispatch` 对账时 | `resolve` |
+| spec 的 PR 合并 | `pr-review` 合并时 | `resolve` |
 
 `handoff` 只写本地文件，是为了让起草的产物在提交推送之前都只在本地：推送失败时 GitHub 上不会留下指向一份不存在的 spec 的 label。它会拒绝已经有 `status:*` label 的、已关闭的、或已经写在另一份 spec frontmatter 里的 issue。
 
