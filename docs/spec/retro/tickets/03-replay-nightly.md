@@ -24,10 +24,10 @@
 - [x] 结果写进 review loop 文件的格式能被 `review-loop.mjs check` 读（作为一条记录，不打乱已有条目）
 - [x] implementer 的说明写清：大的用例放进队列、交回写「回放在队列里」；implement / pr-review 的说明写清：有排队中的回放时 PR 不进 review
 - [x] setup 的说明写清三件事（装 runner 到固定路径、建每晚 01:07 的循环计划任务、打印允许规则让人自己加）
-- [ ] 在本机实际建一次计划任务：已建（`idea-loop-retro-replay`，`list_scheduled_tasks` 里有，每晚 01:07 加几分钟固定抖动），固定路径的 runner 在本机直接跑过空队列与时间窗外两种情形都立即退出；「立即运行」被 auto 分类器拒绝，允许规则也只能人自己加 ⏭ 延后 → PR 交付验收：请你把 `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` 加进 `~/.claude/settings.json`，在计划任务页点一次 Run now（应当立即退出、不花钱），并决定留还是删这个任务
+- [ ] 在本机实际建一次计划任务：已建（`idea-loop-retro-replay`，`list_scheduled_tasks` 里有，每晚 01:07 加几分钟固定抖动），固定路径的 runner 在本机直接跑过空队列与时间窗外两种情形都立即退出；「立即运行」被 auto 分类器拒绝，允许规则也只能人自己加 ⏭ 延后 → PR 交付验收：请你把 `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` 加进 `~/.claude/settings.json`，在计划任务页点一次 Run now（应当立即退出、不花钱），并决定留还是删这个任务；任务 prompt 已换成新版（跑 runner，再按「回放结果」行用 SendMessage 发回会话、失败时 `--notify`），夜里真有排队的回放时，看结果有没有到 issue 会话
 - [x] 全量测试通过
 
-- [ ] 人的决定（2026-10-22）：入队时编排者把 issue 会话的 id 写进队列文件；runner 跑完每个 PR 打印一行带目标会话 id 的结果摘要；setup 建的计划任务 prompt 让那场会话按这些行用 SendMessage 逐条发回对应的 issue 会话；发不出去（会话已归档、找不到）时照旧发 macOS 通知，结果照旧在 review loop 文件里。有单测覆盖「打印的结果行带会话 id」「队列文件缺会话 id 时退回只发通知」；implement / issue-session 的说明写清 issue 会话收到结果后做什么（全过接着走、有不过的停下摆给人）
+- [x] 人的决定（2026-10-22）：入队时编排者把 issue 会话的 id 写进队列文件；runner 跑完每个 PR 打印一行带目标会话 id 的结果摘要；setup 建的计划任务 prompt 让那场会话按这些行用 SendMessage 逐条发回对应的 issue 会话；发不出去（会话已归档、找不到）时照旧发 macOS 通知，结果照旧在 review loop 文件里。有单测覆盖「打印的结果行带会话 id」「队列文件缺会话 id 时退回只发通知」；implement / issue-session 的说明写清 issue 会话收到结果后做什么（全过接着走、有不过的停下摆给人）
 
 ## 选中的存量回归
 

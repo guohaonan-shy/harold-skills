@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { allowRule, displayPath, install, taskCommand } from './retro-install.mjs';
+import { allowRule, displayPath, install, taskCommand, taskPrompt } from './retro-install.mjs';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'retro-install.mjs');
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'retro-install-')), 'bin');
@@ -61,4 +61,17 @@ test('the command line prints the rule and the command, and writes nothing outsi
   assert.ok(r.stdout.includes(taskCommand(dest)));
   assert.match(r.stdout, /不改权限设置/);
   assert.equal(spawnSync(process.execPath, [SCRIPT, '--bogus'], { encoding: 'utf8' }).status, 2);
+});
+
+test('the scheduled task prompt runs the one command, forwards each result line to its session with SendMessage, and falls back to the notification', () => {
+  const home = '/Users/someone';
+  const dest = '/Users/someone/.idea-loop/bin';
+  const prompt = taskPrompt(dest, home);
+  assert.ok(prompt.includes(taskCommand(dest, home)));
+  assert.match(prompt, /SendMessage/);
+  assert.match(prompt, /回放结果/);
+  assert.match(prompt, /session/);
+  assert.ok(prompt.includes('node ~/.idea-loop/bin/retro-replay.mjs --notify'), 'the fallback is the same runner, so one permission rule covers it');
+  // every command in it begins with the text the permission rule covers
+  for (const m of prompt.matchAll(/node \S*retro-replay\.mjs/g)) assert.equal(m[0], 'node ~/.idea-loop/bin/retro-replay.mjs');
 });

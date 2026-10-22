@@ -13,8 +13,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import {
-  appendReplayResults, buildReplayEntry, decideQueueRun, inNightWindow, makeQueueEntry, pushMessage, queueFileName,
-  reviewLoopPath, summarizeResults, validateQueueEntry,
+  RESULT_PREFIX, appendReplayResults, buildReplayEntry, decideQueueRun, inNightWindow, makeQueueEntry, parseResultLine, pushMessage,
+  queueFileName, resultLine, reviewLoopPath, sessionMessage, summarizeResults, validateQueueEntry,
 } from '../evals/retro/queue.mjs';
 import { nextRound, parseLoop, unsettled } from './review-loop.mjs';
 
@@ -78,6 +78,21 @@ test('queueing more cases for a PR that is already queued adds to its file inste
   assert.deepEqual(second.cases, ['explain-mechanism', 'other-case']);
   assert.equal(second.queued_at, '2026-10-22T20:00:00.000Z', 'the PR has been waiting since the first time');
   assert.deepEqual(validateQueueEntry(second), []);
+});
+
+test('a queue entry may name the issue session to send the result back to; without it the entry is still complete', () => {
+  assert.deepEqual(validateQueueEntry({ ...entry(), session: 'local_3fa9c1d2' }), []);
+  for (const bad of ['', '   ', 12, ['local_x'], 'two\nlines']) {
+    assert.ok(validateQueueEntry({ ...entry(), session: bad }).some((p) => p.field === 'session'), `session=${JSON.stringify(bad)} should be reported`);
+  }
+});
+
+test('the session id is kept in the file; queueing again without one keeps it, with one replaces it', () => {
+  const first = makeQueueEntry({ ...entry(), session: 'local_aaa', queuedAt: '2026-10-22T20:00:00.000Z' });
+  assert.equal(first.session, 'local_aaa');
+  assert.equal(makeQueueEntry({ ...entry(), cases: ['other-case'], queuedAt: 'later', existing: first }).session, 'local_aaa');
+  assert.equal(makeQueueEntry({ ...entry(), cases: ['other-case'], session: 'local_bbb', queuedAt: 'later', existing: first }).session, 'local_bbb');
+  assert.equal('session' in makeQueueEntry({ ...entry(), queuedAt: 'x' }), false, 'no session, no field');
 });
 
 // ---------- the result in the review loop file ----------
@@ -178,4 +193,41 @@ test('the push message says which PR, how many passed, and what is waiting for t
   const m = pushMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')] });
   assert.match(m, /#12/);
   assert.match(m, /1.*不过/);
+});
+
+// ---------- the result line the scheduled task forwards to the issue session ----------
+
+test('the result line is one line, carries the session id, and reads back the same', () => {
+  const line = resultLine({ session: 'local_3fa9c1d2', repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')], worktree: '/work/proj-impl' });
+  assert.ok(line.startsWith(RESULT_PREFIX));
+  assert.equal(line.includes('\n'), false);
+  const got = parseResultLine(line);
+  assert.equal(got.session, 'local_3fa9c1d2');
+  assert.equal(got.repo, 'owner/proj');
+  assert.equal(got.pr, 12);
+  assert.equal(got.allPassed, false);
+  assert.equal(got.loop, '/work/proj-impl/.tmp/review-loop/12.md');
+  assert.equal(got.message.split('\n')[0], pushMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')] }));
+});
+
+test('an entry without a session id gives a line whose session is null: only the notification can carry it', () => {
+  const line = resultLine({ session: undefined, repo: 'owner/proj', pr: 12, results: [pass('a')], worktree: '/w' });
+  assert.equal(parseResultLine(line).session, null);
+  assert.equal(parseResultLine(line).allPassed, true);
+});
+
+test('lines that are not result lines are not parsed as one', () => {
+  assert.equal(parseResultLine('推送：owner/proj #12 的规则回放：1 个用例全过'), null);
+  assert.equal(parseResultLine(`${RESULT_PREFIX}{not json`), null);
+});
+
+test('the message for the issue session says what came out and where, and what to do with it', () => {
+  const ok = sessionMessage({ repo: 'owner/proj', pr: 12, results: [pass('a')], worktree: '/w' });
+  assert.match(ok.split('\n')[0], /#12.*全过/);
+  assert.match(ok, /\/w\/\.tmp\/review-loop\/12\.md/);
+  assert.match(ok, /接着走/);
+  const bad = sessionMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')], worktree: '/w' });
+  assert.match(bad.split('\n')[0], /1.*不过/);
+  assert.match(bad, /停下/);
+  assert.match(bad, /摆给人/);
 });

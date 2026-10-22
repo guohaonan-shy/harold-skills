@@ -30,13 +30,17 @@
  *
  * The nightly queue (`~/.idea-loop/replay-queue/`, one file per PR waiting for its replays; format in queue.mjs):
  *
- *   node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/name> --pr <N> --worktree <dir> --cases a,b [--base main]
+ *   node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/name> --pr <N> --worktree <dir> --cases a,b [--base main] [--session <id>]
  *   node ~/.idea-loop/bin/retro-replay.mjs --queue
+ *   node ~/.idea-loop/bin/retro-replay.mjs --notify "<one line>"
  *
  * `--queue` checks the machine's clock first: outside 00:00–07:00 it starts nothing and leaves the queue as it is;
  * with an empty queue it exits at once. Otherwise each PR's cases are run the way `--case` runs them (large ones
  * too, nothing is stopped for starting an agent), the result is appended to that PR's review loop file
- * (`<worktree>/.tmp/review-loop/<PR>.md`), a push is sent, and the PR's queue file is deleted. A case that did not
+ * (`<worktree>/.tmp/review-loop/<PR>.md`), the PR's queue file is deleted, and the result goes back: the runner prints a
+ * line `回放结果 {json}` carrying the issue session id the queue file named (`--session`), and the scheduled task sends
+ * its `message` to that session with SendMessage, running `--notify` (a macOS notification) when that fails. A PR
+ * whose queue file names no session gets the notification from the runner itself. A case that did not
  * pass is not rerun: the result is the human's to rule on. When the clock passes 07:00 in the middle of the queue
  * the PRs not yet started stay queued. `--queue-dir` and `--now <local time>` exist for the tests.
  *
@@ -56,7 +60,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
 import { checkCasesDir, loadCases, validateCase } from './cases.mjs';
 import {
-  appendReplayResults, decideQueueRun, makeQueueEntry, pushMessage, queueFileName, reviewLoopPath, summarizeResults, validateQueueEntry,
+  appendReplayResults, decideQueueRun, makeQueueEntry, pushMessage, queueFileName, resultLine, reviewLoopPath, summarizeResults, validateQueueEntry,
 } from './queue.mjs';
 import {
   buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, parseOverrides, parseVerdict,
@@ -73,7 +77,7 @@ function parseArgs(argv) {
   const o = {
     list: false, case: null, settle: null, run: null, base: null, repo: null, out: DEFAULT_OUT, model: null, timeoutMin: 20,
     casesRoot: null, beforePlugin: null, afterPlugin: null, worktree: null,
-    queue: false, enqueue: false, queueDir: DEFAULT_QUEUE_DIR, now: null, slug: null, pr: null, cases: null,
+    queue: false, enqueue: false, session: null, notify: null, queueDir: DEFAULT_QUEUE_DIR, now: null, slug: null, pr: null, cases: null,
   };
   const val = (i) => {
     if (i >= argv.length) throw new Error(`${argv[i - 1]} needs a value`);
@@ -96,6 +100,8 @@ function parseArgs(argv) {
     else if (a === '--worktree') o.worktree = resolve(val(++i));
     else if (a === '--queue') o.queue = true;
     else if (a === '--enqueue') o.enqueue = true;
+    else if (a === '--session') o.session = val(++i);
+    else if (a === '--notify') o.notify = val(++i);
     else if (a === '--queue-dir') o.queueDir = resolve(val(++i));
     else if (a === '--now') {
       o.now = new Date(val(++i));
@@ -429,7 +435,10 @@ async function runQueue(opts) {
     unlinkSync(path);
     const s = summarizeResults(results);
     console.log(`${entry.repo} #${entry.pr}：${s.passed}/${s.total} 过，已从队列删掉`);
-    notify(pushMessage({ repo: entry.repo, pr: entry.pr, results }));
+    // The result goes back to the issue session named in the queue file: the scheduled task reads this line and sends it
+    // there, falling back to `--notify` when the session cannot be reached. A PR with no session gets the notification now.
+    console.log(resultLine({ session: entry.session, repo: entry.repo, pr: entry.pr, results, worktree: entry.worktree }));
+    if (!entry.session) notify(pushMessage({ repo: entry.repo, pr: entry.pr, results }));
   }
   return skipped ? 1 : 0;
 }
@@ -455,7 +464,9 @@ function enqueue(opts) {
   const base = git(opts.worktree, 'merge-base', opts.base ?? 'main', 'HEAD').toString('utf8').trim();
   const file = join(opts.queueDir, queueFileName({ repo: opts.slug, pr: opts.pr }));
   const existing = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : undefined;
-  const entry = makeQueueEntry({ repo: opts.slug, pr: opts.pr, worktree: opts.worktree, cases: opts.cases, base, queuedAt: new Date().toISOString(), existing });
+  const entry = makeQueueEntry({ repo: opts.slug, pr: opts.pr, worktree: opts.worktree, cases: opts.cases, base, session: opts.session ?? undefined, queuedAt: new Date().toISOString(), existing });
+  const problems = validateQueueEntry(entry);
+  if (problems.length) return bad(problems.map((p) => `${p.field}: ${p.message}`).join('；'));
   mkdirSync(opts.queueDir, { recursive: true });
   writeFileSync(file, `${JSON.stringify(entry, null, 2)}\n`);
   console.log(`回放在队列里：${file}\n  用例：${entry.cases.join('、')}；每晚 00:00–07:00 之间由夜间任务跑，结果写进 ${reviewLoopPath(entry.worktree, entry.pr)}`);
@@ -467,7 +478,7 @@ export async function main(argv = process.argv.slice(2)) {
   let t;
   try {
     opts = parseArgs(argv);
-    t = resolveTargets(opts, { needPlugin: Boolean(opts.case), needCases: !opts.queue });
+    t = resolveTargets(opts, { needPlugin: Boolean(opts.case), needCases: !opts.queue && opts.notify === null });
   } catch (e) {
     console.error(e.message);
     return 2;
@@ -476,6 +487,10 @@ export async function main(argv = process.argv.slice(2)) {
     for (const c of loadCases(t.casesRoot)) console.log(`${c.name}  [${c.size}]\n  ${c.prompt}\n  题：${c.question}\n`);
     const bad = checkCasesDir(t.casesRoot);
     for (const p of bad) console.log(`格式问题 ${p.case}: ${p.field}: ${p.message}`);
+    return 0;
+  }
+  if (opts.notify !== null) {
+    notify(opts.notify);
     return 0;
   }
   if (opts.queue) return runQueue(opts);

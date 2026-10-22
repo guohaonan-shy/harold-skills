@@ -257,17 +257,21 @@ needing the nightly queue (exit code 3). Details and the exit codes: the header 
 
 A large case (it starts a plugin agent, opens a browser or calls a paid service) is not run in the daytime. Once the PR exists the
 orchestrator queues it: `retro-replay.mjs --enqueue --slug <owner/name> --pr <N> --worktree <dir> --cases a,b` writes one file per PR
-into `~/.idea-loop/replay-queue/` (repository, PR number, worktree, case list, the commit the pre-change plugin is taken from). The PR
+into `~/.idea-loop/replay-queue/` (repository, PR number, worktree, case list, the commit the pre-change plugin is taken from, and with
+`--session <id>` the id of the issue session waiting for the result). The PR
 is not reviewed until the result is in. `retro-replay.mjs --queue` is what the nightly job runs: it checks the machine's clock first
 (outside 00:00–07:00 it starts nothing and leaves the queue as it is), exits at once on an empty queue, and otherwise runs each PR's
 cases the way a single case runs, appends the result to that PR's review loop file as a `replay` entry (readable by
-`review-loop.mjs check`; a case that did not pass leaves it unsettled), sends a push and deletes the PR's queue file. A case that
-did not pass is not rerun: the result is the human's to rule on.
+`review-loop.mjs check`; a case that did not pass leaves it unsettled), deletes the PR's queue file and prints one line
+`回放结果 {json}` carrying the session id. The scheduled task's session sends that line's `message` back to the issue session with
+`SendMessage` (the arrival wakes it: all passed, it carries on; not all passed, it stops and puts the result to the human) and runs
+`retro-replay.mjs --notify` (a macOS notification) when the session cannot be reached; a PR queued without a session id gets the
+notification from the runner itself. A case that did not pass is not rerun: the result is the human's to rule on.
 
 `/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed path,
 the one small replays use too), a desktop-app scheduled task `idea-loop-retro-replay` runs `node ~/.idea-loop/bin/retro-replay.mjs --queue`
 at 01:07 every night, and setup prints the permission rule `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` for the human to add to
-`~/.claude/settings.json` (setup never changes permission settings). The push is a macOS notification plus the runner's last output line.
+`~/.claude/settings.json` (setup never changes permission settings). The task's prompt is printed by `retro-install.mjs` as well, so setup and the task never drift apart.
 
 ## Portability
 

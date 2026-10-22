@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { reviewLoopPath, validateQueueEntry } from '../evals/retro/queue.mjs';
+import { parseResultLine, reviewLoopPath, validateQueueEntry } from '../evals/retro/queue.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RUNNER = join(HERE, '..', 'evals', 'retro', 'retro-replay.mjs');
@@ -118,12 +118,15 @@ const queueArgs = (env, now) => ['--queue', '--queue-dir', env.queueDir, '--out'
 const NIGHT = '2026-10-23T01:07:00';
 const DAY = '2026-10-23T09:12:00';
 
-function enqueue(env, n, cases = ['demo-case'], pr = 12) {
+function enqueue(env, n, cases = ['demo-case'], pr = 12, session = null) {
   return runner(env, [
     '--enqueue', '--slug', 'owner/proj', '--pr', String(pr), '--worktree', env.worktrees[n], '--cases', cases.join(','),
-    '--base', 'base-point', '--queue-dir', env.queueDir,
+    '--base', 'base-point', '--queue-dir', env.queueDir, ...(session ? ['--session', session] : []),
   ]);
 }
+
+/** The result lines in a run's output, parsed. */
+const resultLines = (stdout) => stdout.split('\n').map(parseResultLine).filter(Boolean);
 
 const loopCheck = (wt, pr) => JSON.parse(spawnSync(process.execPath, [REVIEW_LOOP, 'check', reviewLoopPath(wt, pr)], { encoding: 'utf8' }).stdout);
 
@@ -276,4 +279,53 @@ test('single-case use from the fixed path: --worktree stands for repo, plugin an
   const r = runner(env, ['--case', 'demo-case', '--worktree', env.worktrees[0], '--base', 'base-point', '--out', env.out, '--timeout-min', '1']);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /过/);
+});
+
+test('a PR queued with an issue session id: the run prints a result line carrying that id, and sends no notification of its own', () => {
+  const env = nightSetup();
+  assert.equal(enqueue(env, 0, ['demo-case'], 12, 'local_3fa9c1d2').status, 0);
+  assert.equal(JSON.parse(readFileSync(join(env.queueDir, 'owner__proj-12.json'), 'utf8')).session, 'local_3fa9c1d2');
+  const r = runner(env, queueArgs(env, NIGHT));
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const lines = resultLines(r.stdout);
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0].session, 'local_3fa9c1d2');
+  assert.equal(lines[0].pr, 12);
+  assert.equal(lines[0].allPassed, true);
+  assert.equal(lines[0].loop, reviewLoopPath(env.worktrees[0], 12));
+  assert.deepEqual(r.pushes, [], 'the scheduled task sends it to the session; the notification is its fallback');
+  assert.ok(existsSync(reviewLoopPath(env.worktrees[0], 12)), 'the result is in the review loop file all the same');
+});
+
+test('a PR queued without a session id falls back to the notification, and its result line says there is no session', () => {
+  const env = nightSetup();
+  enqueue(env, 0);
+  const r = runner(env, queueArgs(env, NIGHT));
+  const lines = resultLines(r.stdout);
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0].session, null);
+  assert.equal(r.pushes.length, 1);
+  assert.match(r.pushes[0], /#12/);
+});
+
+test('one result line per PR, each with its own session id, a not-passed one marked as such', () => {
+  const env = nightSetup({ prs: 2, after: 'reply: plain' });
+  enqueue(env, 0, ['demo-case'], 12, 'local_one');
+  enqueue(env, 1, ['demo-case'], 13, 'local_two');
+  const lines = resultLines(runner(env, queueArgs(env, NIGHT)).stdout);
+  assert.deepEqual(lines.map((l) => [l.pr, l.session, l.allPassed]), [[12, 'local_one', false], [13, 'local_two', false]]);
+});
+
+test('no result line before the result is in the review loop file: a PR that stays queued prints none', () => {
+  const env = nightSetup();
+  enqueue(env, 0, ['demo-case'], 12, 'local_x');
+  assert.deepEqual(resultLines(runner(env, queueArgs(env, DAY)).stdout), []);
+});
+
+test('--notify sends the one-line notification and nothing else: the fallback when the session cannot be reached', () => {
+  const env = nightSetup();
+  const r = runner(env, ['--notify', 'owner/proj #12 的规则回放：1 个用例全过']);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(r.pushes, ['owner/proj #12 的规则回放：1 个用例全过']);
+  assert.deepEqual(r.calls, []);
 });
