@@ -1,51 +1,49 @@
 ---
 name: issue-dispatch
-description: 调度会话的一轮：按 issue 的状态 label，给待验证、待设计、待实现的 issue 开会话往下做。只在项目固定的调度会话里用。
-argument-hint: "[待验证] [待设计] [待实现]"
+description: issue 的调度者：在项目固定的调度会话里起一个 loop，按间隔给待验证的 issue 出会话卡片，一个 issue 一张。
+argument-hint: "<间隔，如 30m>"
 ---
 
-你是这个项目的 **issue 调度会话**。这一轮负责的状态：`$ARGUMENTS`，可以有几个，按给的顺序逐个做；是空的就三个都做。每轮先对账，再按状态开会话，汇报，然后结束这一轮。人通常不在场：要人决定的事写进汇报，接着做完这一轮。
+你是项目的 **issue 的调度者**，在一个固定的调度会话里跑一个 loop。人敲 `/idea-loop:issue-dispatch <间隔>`（如 `30m`）起这个 loop：照「起 loop」排好定时，再立刻做第一轮。之后定时每到点以不带参数的 `/idea-loop:issue-dispatch` 调你，那是同一个 loop 的下一轮，照「每一轮」做。
 
-| 状态 | 开什么会话 | 同时开着的上限 | 标题 |
-|---|---|---|---|
-| `待验证` | 验证会话：复现、分组、起草 spec，要人定的就地 grill | 3 | `验证：#<号> #<号>…` |
-| `待设计` | 设计会话：人来设计，冻结后开设计 PR | 2 | `设计：<slug>` |
-| `待实现` | 实现会话：切工单、实现、开 PR，等人合并 | 5 | `实现：<slug>` |
+人通常不在场：要人决定的事写进汇报，接着做完这一轮。
 
-**只看 issue 的 label。** 「待」开头的 label 只由对账按主分支挂，所以看到它，主分支上一定已经有下一段要用的东西。各状态的意思在 `idea-loop:spec-status` 的「issue 的状态」。
+每个待验证的 issue 由一个 issue 会话（`idea-loop:issue-session`）从验证陪到关闭，会话按阶段待在侧边栏的三个 section 里：「审核中」「设计中」「实现中」。你只负责把新 issue 交出去：**定时触发的轮次不能开会话，你出卡片**，人点了卡片会话才开。
 
 ## 前提与边界
 
 - 工作目录是主 checkout（`git worktree list` 的第一行），在默认分支上（`git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`，下文叫「主分支」）。不是就停下，在汇报里说明，这一轮什么都不做。
-- 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指主 checkout 的 `docs/`。
-- issue 的状态只走 `issues`。你只管 `status:*` 一组 label，别的 label 是项目自己的，不读不写。
-- 主 checkout 跟别的会话共用，你在这里只读：不切分支、不建 worktree、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。开 PR、合并、改代码都在你开出的会话里做。
-- 会话只用 `start_session` 开，不碰侧边栏工具（`mcp__ccd_sidebar__*`），不归档、不删除会话：你开的会话收尾时自己归档。
-- 你开的会话结束一轮时，app 会把它汇报的开头转给你：只记一笔，它的活留给它自己。
+- 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指主 checkout 的 `docs/`，`<仓库名>` 取 `gh repo view --json name -q .name`。
+- 主 checkout 跟别的会话共用，你在这里只读：不切分支、不建 worktree、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。
+- issue 的状态只走 `issues`。侧边栏只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话：会话自己归位、自己收尾。
 
-## 对账
+## 起 loop
 
-每轮都做，不管参数是什么：
+loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由一个只触发一次的提醒在这个会话里叫人重起。
 
-1. `git pull --ff-only`。
-2. `issues labels <docs>`：建出缺的 `status:*` label。
-3. `issues reconcile <docs>`：按主分支上的 spec 翻 issue、关 issue。它报的问题原样记进汇报。
-4. `mcp__ccd_session_mgmt__list_sessions`（`linked: true`）列出你开过、还没归档的会话，按标题前缀数出三种各开着几个。label 是「验证中」「设计中」「实现中」、却没有对应会话开着的 issue，记进汇报交给人：会话可能是被人关掉的，要不要翻回去由人定。
+1. `CronList`：本会话里已有的 loop（prompt 是 `/idea-loop:issue-dispatch`）和到期提醒（prompt 以「调度 loop 已到期」开头）都用 `CronDelete` 删掉，重起时不留两个。
+2. `CronCreate` 循环定时：间隔换成 cron（分钟避开 0 和 30），prompt 是 `/idea-loop:issue-dispatch`，不带参数。
+3. `CronCreate` 到期提醒：`recurring: false`，时间定在现在起 7 天加 10 分钟（loop 那时已经删掉），prompt：「调度 loop 已到期。在会话里说：<仓库名> 的 issue 调度 loop 7 天到期，已经停了，重新敲 /idea-loop:issue-dispatch <间隔> 起一个新的。用 PushNotification 发同一句。」
+4. 汇报里写下次运行和到期的时间。
 
-## 开会话
+## 每一轮
 
-每种状态的空位 = 表里的上限 − 开着的这种会话数，≤ 0 就跳过这种。每个空位认领一份活、开一个会话：`start_session`，工作目录是主 checkout，**新 worktree**，标题照表。提示词按会话种类取 [references/session-prompts.md](references/session-prompts.md) 里的那一段。
-
-- **待验证**：`issues candidates <docs> 5` 取最早的 5 个待验证 issue，空的就停；`issues set <docs> 验证中 <号>...` 认领，下一个空位就不会再拿到它们；再开验证会话。
-- **待设计**：`issues queue <docs> 待设计` 列出等设计的 spec，最早的在前，`problems` 原样记进汇报。每个空位取一份，`issues set <docs> 设计中 <slug>`，再开设计会话。
-- **待实现**：`issues queue <docs> 待实现`，同上；`issues set <docs> 实现中 <slug>`，再开实现会话。
+1. **对账**：`git pull --ff-only`；`issues labels <docs>` 建出缺的 label（它列出的多余 label 记进汇报，不删）；`issues reconcile <docs>`，报的问题原样记进汇报。
+2. **section**：`list_sections` 里找「审核中」「设计中」「实现中」，缺的用 `create_section` 建。
+3. **数开着的会话**：三个 section 各用 `mcp__ccd_session_mgmt__list_sessions`（`group` 写 section 名，`limit: 100`）列出没归档的会话；section 自带的计数含已归档的，不用它。section 跨项目共用，总数也跨项目算。标题是「<仓库名>#<号> …」的就是这个仓库那个 issue 的会话。
+4. **没有会话的 issue**：label 是验证中、审核中、待设计、设计中、待实现、实现中，却没有对应标题的会话，记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或翻回去。
+5. **出卡片**：空位 = 10 − 开着的会话 − 还没点的卡片（你出过、issue 还是待验证的；上一轮汇报里记着）。空位 ≤ 0 就跳过。否则 `issues candidates <docs> <空位>` 取最早的待验证 issue，跳过还没点的卡片已经占着的，每个出一张卡片，一轮最多 3 张：
+   - `start_session`：`initiation: own_initiative`，`context: fresh`，`use_worktree: true`（会话要有自己的 worktree 才能从你这里脱离出去），标题「<仓库名>#<号> <issue 标题>」。
+   - `prompt`：`你是 <仓库名>#<号>（<issue 标题>）的 issue 会话，由 issue 调度会话的卡片开出。用 Skill 工具调 idea-loop:issue-session，参数 <号>，按它从开场做起。`
+   - `background`：这个仓库用 idea-loop 处理 issue，一个 issue 一个会话，会话按阶段待在侧边栏的「审核中」「设计中」「实现中」里，人在会话里 grill 和拍板。
+   - 卡片一周不点会过期：过期的从「还没点的卡片」里去掉，下一轮会重新出。
 
 ## 汇报
 
 五行以内（你的上下文会随每轮累积）：
 
 - 对账做了什么（哪些 issue 进了哪个状态、关了哪些）
-- 开了哪些会话；三种各开着几个 / 上限
-- 要人处理的事（对账和 queue 报的问题、没有会话的「中」状态、开会话失败），没有就写「无」
+- 开着的会话 / 10；这一轮出的卡片；还没点的卡片（issue 号，下一轮要读）
+- 要人处理的事（对账报的问题、多余的 label、没有会话的 issue、出卡片失败），没有就写「无」
 
-开了新会话或有要人处理的事，用 PushNotification 发一句话：开了哪几个 / 要处理什么。
+出了新卡片或有要人处理的事，用 PushNotification 发一句话：有几张卡片等点 / 要处理什么。

@@ -12,7 +12,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 ## 开工前
 
 - spec 是 `正式`、「前端交互」不是「不涉及」、「实现决策」里还没有冻结摘要，才往下走（状态的含义见 `idea-loop:spec-status`）。还在 `审核中` 的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
-- 它覆盖的 issue 应该是「设计中」：loop 开设计会话时已经翻过。人直接调 imagine、issue 还是「待设计」的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "${CLAUDE_PROJECT_DIR}/docs" 设计中 <spec-slug>`。
+- 它覆盖的 issue 应该是「设计中」：issue 会话换到设计阶段时已经翻过。人直接调 imagine、issue 还是「待设计」的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "${CLAUDE_PROJECT_DIR}/docs" 设计中 <spec-slug>`。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 
 ## 起步

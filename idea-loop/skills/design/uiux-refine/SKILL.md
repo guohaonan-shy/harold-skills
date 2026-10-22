@@ -101,14 +101,14 @@ designer 交付「冻结」后，你核对：
 - `delta/` 过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" "$(git rev-parse --show-toplevel)" --delta <spec-slug> --no-used-by`（designer 列出的改不动的违规除外）。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
-都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后开**设计 PR** 把冻结结果合进主分支：实现会话从主分支开 worktree，拿不到你这里的本地文件。
+都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后开**设计 PR** 把冻结结果合进主分支：实现阶段从最新主分支切分支，拿不到你这里的本地文件。
 
-1. 当前 worktree 应该是从主分支开出的（loop 开的设计会话就是）。把分支改名 `git branch -m design/<spec-slug>`；不在这种 worktree 里的，从最新主分支开一个，把下面这些文件带过去再提交。
+1. 当前 worktree 应该是从主分支开出的（issue 会话在设计阶段就是）。分支还不叫 `design/<spec-slug>` 的，改名 `git branch -m design/<spec-slug>`；不在这种 worktree 里的，从最新主分支开一个，把下面这些文件带过去再提交。
 2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas docs/design/tmp/<spec-slug>/delta`（`tmp/` 被排除在 git 之外，要强制加）。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进。
 3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写），`git push -u origin design/<spec-slug>`，`gh pr create`。
 4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」），合并前的钩子也放行它。失败就告诉人。
 
-告诉人：设计已冻结并合进主分支，issue 会在 `idea-loop:issue-dispatch` 下一轮对账时翻成「待实现」，实现的 loop 会接手；人也可以自己调 `idea-loop:to-ticket` 切工单开工。
+告诉人：设计已冻结并合进主分支。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
 
 **部分冻结**：designer 交付后就结束了。关掉预览服务器，告诉人跑 `/idea-loop:uiux-imagine` 重开回推的那几块；第二轮发散之后再调 refine，起一个**新的** designer，任务「起手」，它会接到已冻结的画布上。
 

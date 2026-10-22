@@ -4,8 +4,8 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  candidates, dropIssue, ensureLabels, handoffIssue, issuesOf, openSpecIssue, queue, reconcile, reconcilePlan, resume, setState, stateOf,
-  targetOf, unhandoffIssue, withIssues,
+  advance, advancePlan, candidates, dropIssue, ensureLabels, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, readTypes, reconcile,
+  reconcilePlan, resume, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
 const UI = '- 点重试 → 只重跑这一题';
@@ -90,13 +90,74 @@ test('stateOf: no status label is 待验证', () => {
   assert.equal(stateOf(['bug', 'status:设计中']), '设计中');
 });
 
-test('ensureLabels creates only the missing status labels', () => {
-  const { gh, calls } = fakeGh({}, ['status:验证中', 'bug']);
-  const made = ensureLabels(gh);
-  assert.equal(made.length, 6);
-  assert.ok(!made.includes('status:验证中'));
-  assert.ok(!made.includes('status:待验证'));
-  assert.equal(calls.length, 6);
+const TYPES = `# AGENTS.md
+
+## issue 分类
+
+GitHub 上打成 \`type:<父类>\`。
+
+- \`billing\`：计费
+- \`seo\`：搜索流量
+  - \`backlink\`：外链
+  - \`blog\`
+- \`uiux\`：界面与交互
+
+保留的 label：\`Idea\`、\`test infra\`
+
+## 别的
+- \`not-a-type\`
+`;
+
+test('parseTypes reads parents, children and the keep-list from the section only', () => {
+  const types = parseTypes(TYPES);
+  assert.deepEqual(types.parents.map((p) => p.name), ['billing', 'seo', 'uiux']);
+  assert.deepEqual(types.parents[1].children, [{ name: 'backlink', about: '外链' }, { name: 'blog', about: '' }]);
+  assert.deepEqual(types.keep, ['Idea', 'test infra']);
+  assert.equal(parseTypes('# x\n'), null);
+  assert.throws(() => parseTypes('## issue 分类\n- `UI/UX`\n'), /「\/」/);
+});
+
+test('readTypes finds the section in AGENTS.md, then CLAUDE.md, next to docs/', () => {
+  const root = mkdtempSync(join(tmpdir(), 'issues-root-'));
+  const docs = join(root, 'docs');
+  mkdirSync(docs);
+  assert.equal(readTypes(docs), null);
+  writeFileSync(join(root, 'AGENTS.md'), '# AGENTS.md\n');
+  writeFileSync(join(root, 'CLAUDE.md'), TYPES);
+  assert.deepEqual(readTypes(docs).keep, ['Idea', 'test infra']);
+});
+
+test('typeSet: a child brings its parent; unknown names are refused with the choices', () => {
+  const types = parseTypes(TYPES);
+  assert.deepEqual(typeSet(types, ['seo/blog', 'billing']), ['type:seo', 'type:seo/blog', 'type:billing']);
+  assert.throws(() => typeSet(types, ['ai']), /type:seo\/backlink|seo\/backlink/);
+  assert.throws(() => typeSet(types, ['seo/ads']), /没有子类「ads」/);
+});
+
+test('ensureLabels creates the missing status and type labels and lists the rest with their use', () => {
+  const types = parseTypes(TYPES);
+  const { gh, calls } = fakeGh({ 1: open(1, ['bug', 'Idea']), 2: open(2, ['bug']) }, ['status:验证中', 'bug', 'Idea', 'status:在飞', 'type:seo']);
+  const { made, surplus, deleted } = ensureLabels(gh, types);
+  assert.equal(made.filter((l) => l.startsWith('status:')).length, 6);
+  assert.deepEqual(made.filter((l) => l.startsWith('type:')), ['type:billing', 'type:seo/backlink', 'type:seo/blog', 'type:uiux']);
+  assert.deepEqual(surplus, [{ name: 'bug', openIssues: 2 }, { name: 'status:在飞', openIssues: 0 }]);
+  assert.deepEqual(deleted, []);
+  assert.ok(calls.every((c) => c[1] === 'create'));
+});
+
+test('ensureLabels --prune deletes the surplus, and refuses without categories', () => {
+  const { gh, calls } = fakeGh({}, ['bug', 'Idea']);
+  assert.deepEqual(ensureLabels(gh, parseTypes(TYPES), { prune: true }).deleted, ['bug']);
+  assert.ok(calls.some((c) => c.join(' ') === 'label delete bug --yes'));
+  assert.throws(() => ensureLabels(gh, null, { prune: true }), /不清理/);
+  assert.deepEqual(ensureLabels(gh, null).surplus, []);
+});
+
+test('setTypes replaces the issue\'s type labels and leaves the rest', () => {
+  const issues = { 1: open(1, ['status:验证中', 'type:billing', 'Idea']) };
+  const { gh } = fakeGh(issues);
+  setTypes(gh, parseTypes(TYPES), 1, ['seo/blog']);
+  assert.deepEqual(issues[1].labels.sort(), ['Idea', 'status:验证中', 'type:seo', 'type:seo/blog']);
 });
 
 test('candidates are 待验证 issues, oldest first, skipping spec issues and issues a spec already lists', () => {
@@ -229,4 +290,26 @@ test('unhandoff returns the issue to 待验证; drop closes it as not planned', 
   assert.ok(calls.some((c) => c[1] === 'comment'));
   assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec/a/a.md'), 'utf8')), []);
   assert.throws(() => unhandoffIssue(gh, docs, 'a', 1), /不在/);
+});
+
+test('advancePlan claims the next phase for the session, closes what main settled, and waits for main', () => {
+  assert.deepEqual(advancePlan(spec({ issues: '[1]', ui: UI }), [open(1, ['status:审核中'])]), { actions: [{ n: 1, from: '审核中', to: '设计中' }], phase: '设计中' });
+  assert.deepEqual(advancePlan(spec({ issues: '[1]', ui: UI, freeze: true }), [open(1, ['status:设计中'])]), { actions: [{ n: 1, from: '设计中', to: '实现中' }], phase: '实现中' });
+  assert.deepEqual(advancePlan(spec({ issues: '[1]' }), [open(1, ['status:待实现'])]), { actions: [{ n: 1, from: '待实现', to: '实现中' }], phase: '实现中' });
+  assert.deepEqual(advancePlan(spec({ status: '实现中', issues: '[1]' }), [open(1, ['status:实现中'])]), { actions: [], phase: '实现中' });
+  assert.deepEqual(advancePlan(spec({ status: '完成', issues: '[1]' }), [open(1, ['status:实现中'])]), { actions: [{ n: 1, from: '实现中', close: 'completed' }], phase: '关闭' });
+  assert.deepEqual(advancePlan(spec({ issues: '[1]', verdict: { 1: '不存在' } }), [open(1, ['status:验证中'])]).phase, '关闭');
+  assert.throws(() => advancePlan(spec({ status: '审核中', issues: '[1]' }), [open(1, ['status:审核中'])]), /还没有下一段/);
+  assert.throws(() => advancePlan(spec({ issues: '[1]' }), [open(1, ['status:搁置'])]), /resume/);
+  assert.throws(() => advancePlan(spec({ issues: '[1]', ui: UI }), [open(1, ['status:实现中'])]), /还要设计/);
+});
+
+test('advance relabels and closes, and says the next phase', () => {
+  const docs = docsWith({ a: spec({ issues: '[1]', ui: UI }), b: spec({ status: '完成', issues: '[2]' }) });
+  const issues = { 1: open(1, ['status:验证中', 'type:seo']), 2: open(2, ['status:实现中']) };
+  const { gh } = fakeGh(issues);
+  assert.deepEqual(advance(gh, docs, 'a'), { done: ['#1: 验证中 → 设计中'], phase: '设计中' });
+  assert.deepEqual(issues[1].labels, ['type:seo', 'status:设计中']);
+  assert.deepEqual(advance(gh, docs, 'b'), { done: ['#2: 实现中 → 关闭（completed）'], phase: '关闭' });
+  assert.equal(issues[2].reason, 'completed');
 });
