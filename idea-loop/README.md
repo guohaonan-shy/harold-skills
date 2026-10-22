@@ -253,6 +253,22 @@ judging `claude -p` that reads both products anonymously and answers the questio
 that turns out to start a plugin agent or open a browser is stopped, relabelled large in its `case.json`, and reported as
 needing the nightly queue (exit code 3). Details and the exit codes: the header of `evals/retro/retro-replay.mjs`.
 
+### The nightly queue
+
+A large case (it starts a plugin agent, opens a browser or calls a paid service) is not run in the daytime. Once the PR exists the
+orchestrator queues it: `retro-replay.mjs --enqueue --slug <owner/name> --pr <N> --worktree <dir> --cases a,b` writes one file per PR
+into `~/.idea-loop/replay-queue/` (repository, PR number, worktree, case list, the commit the pre-change plugin is taken from). The PR
+is not reviewed until the result is in. `retro-replay.mjs --queue` is what the nightly job runs: it checks the machine's clock first
+(outside 00:00–07:00 it starts nothing and leaves the queue as it is), exits at once on an empty queue, and otherwise runs each PR's
+cases the way a single case runs, appends the result to that PR's review loop file as a `replay` entry (readable by
+`review-loop.mjs check`; a case that did not pass leaves it unsettled), sends a push and deletes the PR's queue file. A case that
+did not pass is not rerun: the result is the human's to rule on.
+
+`/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed path,
+the one small replays use too), a desktop-app scheduled task `idea-loop-retro-replay` runs `node ~/.idea-loop/bin/retro-replay.mjs --queue`
+at 01:07 every night, and setup prints the permission rule `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` for the human to add to
+`~/.claude/settings.json` (setup never changes permission settings). The push is a macOS notification plus the runner's last output line.
+
 ## Portability
 
 Project rules and verification tools come from the current repository's root files written by
@@ -325,7 +341,7 @@ idea-loop/
 │       ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human (references/handing-to-human.md)
 │       └── dreaming/SKILL.md         # + references/ — proposal-table (shape and execution pass), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
 ├── evals/uiux-research/              # baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
-├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judging session answer its yes/no question (see below)
+├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judging session answer its yes/no question; `--queue` runs the large ones at night (`queue.mjs` holds the window and queue decisions) (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of the first design-modeling skill — its rules were folded into dreaming, then split back out as skills/design/design-modeling/SKILL.md; kept as history
@@ -360,6 +376,10 @@ idea-loop/
     ├── claude-stream.mjs             # reads a `claude -p` stream-json event stream — per-session tool counts, cost, and whether a plugin agent or a browser got involved; shared by both eval runners
     ├── claude-stream.test.mjs
     ├── retro-case.test.mjs           # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name; the shipped cases are well-formed
+    ├── retro-queue.test.mjs          # the nightly queue's decisions: the 00:00–07:00 window (09:12 runs nothing, an empty queue exits at once), the queue file, and the result as a review-loop entry that `check` reads
+    ├── retro-queue-run.test.mjs      # the runner's `--queue` / `--enqueue` end to end against a fake `claude`: pass and not-pass both clear the queue file, the clock passing 07:00 mid-queue, a bad queue file
+    ├── retro-install.mjs             # copies the replay runner to the fixed path `~/.idea-loop/bin/` and prints the permission rule and the scheduled command; never touches settings
+    ├── retro-install.test.mjs        # the installed copy works from there; installing again replaces it
     ├── retro-replay.test.mjs         # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude`
     ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
     ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
@@ -383,7 +403,7 @@ idea-loop/
     ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
     ├── session-digest.mjs            # squeezes a session transcript to the human's utterances + the AI conclusion before each; locates the transcript file (retro)
     ├── session-digest.test.mjs       # compaction markers, what is dropped, the conclusion rule, locating the file
-    ├── review-loop.mjs               # the PR's local review loop: next round, unsettled entries, archive to PR comments at merge (figures uploaded)
+    ├── review-loop.mjs               # the PR's local review loop (entries: pause / review / the nightly runner's replay): next round, unsettled entries, archive to PR comments at merge (figures uploaded)
     ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
     ├── spec-status.mjs               # the only writer of a spec's status — checks each step, re-indexes
     ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, the index

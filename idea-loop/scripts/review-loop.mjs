@@ -42,7 +42,7 @@
  * pure and unit-tested.
  *
  * Usage:
- *   node review-loop.mjs next    <file> <pause|review>        → prints the next round number
+ *   node review-loop.mjs next    <file> <pause|review|replay> → prints the next round number
  *   node review-loop.mjs check   <file>                       → JSON: entries, and which are unsettled
  *   node review-loop.mjs archive <file> <owner/repo> <pr>     → posts each entry not yet on the PR
  * Exit: 0 = done, 1 = usage / io / API error.
@@ -54,7 +54,7 @@ import { pathToFileURL } from 'node:url';
 import { publish } from './evidence.mjs';
 import { repoApi } from './github-app.mjs';
 
-export const KINDS = ['pause', 'review'];
+export const KINDS = ['pause', 'review', 'replay'];
 const ENTRY = /^<!-- idea-loop-entry (\{.*?\}) -->$/;
 const ARCHIVED = /<!-- idea-loop-archive (\{.*?\}) -->/;
 const MAX_BODY = 65000;
@@ -79,7 +79,9 @@ export function parseLoop(text = '') {
     // A review round whose findings were all settled by rule (decision-rules.md) never asks the human
     // anything, so there is no ruling to wait for: it is settled once it says what was done. A round
     // that still carries a 要你决定 needs the human's ruling as before; a stop report always does.
-    const askedNothing = kind === 'review' && rulings === 0 && !/\*\*要你决定\*\*/.test(body);
+    // A replay entry is the nightly runner's record of a rule-change replay: all passed → it says so under
+    // 做了什么 and is settled; something failed → it carries a 要你决定 until the human has ruled.
+    const askedNothing = (kind === 'review' || kind === 'replay') && rulings === 0 && !/\*\*要你决定\*\*/.test(body);
     const settled = rulings > 0 ? acted(body.slice(body.lastIndexOf('### 你的批示'))) : askedNothing && acted(body);
     return { kind, round, body, rulings, settled };
   });
@@ -118,7 +120,7 @@ export function withAuthorship(body, identity) {
 }
 
 export function archiveBody(entry, identity) {
-  const label = entry.kind === 'pause' ? `第 ${entry.round} 次停下` : `review 第 ${entry.round} 轮`;
+  const label = { pause: `第 ${entry.round} 次停下`, review: `review 第 ${entry.round} 轮`, replay: `规则回放第 ${entry.round} 次` }[entry.kind];
   const body = `${archiveMarker(entry.kind, entry.round)}\n${withAuthorship(`> 记录：${label}在会话里进行，下面是原样的汇报、批示和处理结果。\n\n${entry.body}`, identity)}`;
   if (body.length > MAX_BODY) throw new Error(`${label} is ${body.length} characters (limit ${MAX_BODY}); fold detail in the file before archiving`);
   return body;
@@ -150,7 +152,7 @@ async function main() {
     }
     return console.log(JSON.stringify({ posted, identity: api.identity }, null, 2));
   }
-  throw new Error('usage: review-loop.mjs next <file> <pause|review> | check <file> | archive <file> <owner/repo> <pr>');
+  throw new Error('usage: review-loop.mjs next <file> <pause|review|replay> | check <file> | archive <file> <owner/repo> <pr>');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
