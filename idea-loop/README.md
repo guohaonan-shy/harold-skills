@@ -215,7 +215,7 @@ unreachable CLI never blocks), and one real run against the official CLI was the
 
 ## Baseline: `uiux-research`
 
-`evals/uiux-research/` is the plugin's only baseline, and it is deliberately not a pass/fail eval.
+`evals/uiux-research/` is the plugin's baseline, and it is deliberately not a pass/fail eval.
 What the researcher's page should contain is still being settled with the human, so it asserts no content and gives no
 score. It pins **six default prompts taken from real design sessions** (leave confirmation, resuming after a
 pause, failure card or not, error-title tone, where a failed list item goes, pausing under a modal), each with one line
@@ -231,6 +231,27 @@ node idea-loop/evals/uiux-research/run.mjs                         # all six (ca
 ```
 
 Output lands in `/tmp/idea-loop-uiux-research/<case>/output/index.html`. Details: `evals/uiux-research/README.md`.
+
+## Replay: proving a rule change took effect
+
+A rule written into a skill, agent or reference is only a claim until the skill is seen behaving differently. A rule that can be
+decided mechanically becomes a check (a script or a validator test) that is first seen **failing** on the input that reproduces
+the old mistake. A rule that needs judgement gets a **replay case** in `evals/retro/cases/<case>/`: the commit the decision
+happened at, the prompt that made the skill produce the thing, where it stops (the moment it hands the thing to the human), a
+yes/no question written from what the human said back then (with the words quoted), and its size (small or large) with the basis.
+
+```
+node idea-loop/evals/retro/retro-replay.mjs --list                      # cases, sizes, format problems
+node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] # one small case: pre-change vs post-change plugin
+node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <dir> # re-decide after the human overruled a judgement
+```
+
+The runner copies the project as of the case's commit into `/tmp`, runs `claude -p` with `--plugin-dir` pointing at the base
+branch's plugin and again at this working tree's plugin (a sub-agent cannot do this: it loads the installed copy), then starts a
+judging `claude -p` that reads both products anonymously and answers the question with a quote. Pre-change "no" and post-change
+"yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. A small case
+that turns out to start a plugin agent or open a browser is stopped, relabelled large in its `case.json`, and reported as
+needing the nightly queue (exit code 3). Details and the exit codes: the header of `evals/retro/retro-replay.mjs`.
 
 ## Portability
 
@@ -303,7 +324,8 @@ idea-loop/
 │       ├── evidence/SKILL.md         # shared, model-invoked — figures a human judges at a glance: spec figures (references/spec-figures.md, in docs/) and delivery evidence (references/delivery.md, flows, GIFs, side-by-sides from the implementation; never in git)
 │       ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human (references/handing-to-human.md)
 │       └── dreaming/SKILL.md         # + references/ — proposal-table (shape and execution pass), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
-├── evals/uiux-research/              # the one baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
+├── evals/uiux-research/              # baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
+├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judging session answer its yes/no question (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of the first design-modeling skill — its rules were folded into dreaming, then split back out as skills/design/design-modeling/SKILL.md; kept as history
@@ -335,6 +357,10 @@ idea-loop/
     ├── research-check.mjs            # uiux-research's gate: the page's head (question / 研究问题 = human's words / context / conclusion = general), every source's flow + scene / logic, the decisions block after the last source, every screenshot clickable and a relative path that exists, the chapters in the fixed order with nothing after the decisions block (what a chapter holds is the contract's prose, not a check)
     ├── research-check.test.mjs       # one per rule, plus the CLI exit codes
     ├── research-baseline.test.mjs    # keeps the uiux-research baseline well-formed: six cases, each with a prompt, a comparison line and an annotation file; the runner's stream digest
+    ├── claude-stream.mjs             # reads a `claude -p` stream-json event stream — per-session tool counts, cost, and whether a plugin agent or a browser got involved; shared by both eval runners
+    ├── claude-stream.test.mjs
+    ├── retro-case.test.mjs           # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name; the shipped cases are well-formed
+    ├── retro-replay.test.mjs         # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude`
     ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
     ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
     ├── proposal-table-check.mjs      # dreaming's exit gate: row types, per-type disposition sets, two pictures on archive rows, a delete-object row names its referrers, an unreachable-state row says what was missing and tried, "product broken" never replaces the archive, a candidate row carries a picture, DESIGN.md-bound rows carry old → new and a DESIGN.md row names its basis, empty-table test

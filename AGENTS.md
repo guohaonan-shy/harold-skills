@@ -43,7 +43,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
-├── evals/                           # 可选 —— 钉住的 baseline（只有 idea-loop 有，见 §5 的有意例外）
+├── evals/                           # 可选 —— 钉住的 baseline 与回放用例（只有 idea-loop 有，见 §5 的两个有意例外）
 ├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
 ├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
@@ -102,11 +102,19 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 
 这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可，所有 plugin 都一样。
 
-**唯一的有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
+**第一个有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
 理由不是它更重要，是它的**产物形状还在跟人一起收敛**：它交出一页给人看的 HTML，这一页该包含什么、怎么写才对，现在没人能先写成断言。
 所以那里不判好坏、不打分：钉一组取自真实设计会话的 default prompt 加一份最小的产品上下文，一条命令跑，每个 case 把页面留在固定位置、旁边放一个文件让人标注问题，
 标注留档，逐步收敛出产物该包含什么。改了调研 agent、契约或 skill，就对着同一组问题再跑一遍给人看。
 写这条例外是为了让下一个读到它的人知道这是决定，不是遗漏；等产物形状稳了，标注收敛出的东西该变成 `research-check` 的机械检查，这个例外就可以收掉。
+
+**第二个有意例外：`idea-loop` 的 retro 回放**（用例和 runner 在 `idea-loop/evals/retro/`）。
+理由跟上一条不同：它不是质量基线，**不打分**，只判**一条规则对应的那一个点**——它是规则改动的验收。
+一个用例记下历史上出过问题的那个决策点（当时的提交、让 skill 产出东西的那句 prompt、停在哪、一道从人当时原话写出的是/否题）；
+改规则时，用改前、改后的插件在那个输入上各跑一遍，由判定会话回答是/否题并引出处：改前「否」、改后「是」才算这条规则真的让 skill 变了。
+改前就「是」的，说明用例没抓住问题，不算过。人可以推翻判定，推翻记在用例旁的 `annotations.md`。
+能机械判定的规则不走这里，做成检查并先在历史错误上看到它失败。
+这个例外跟 `uiux-research` 那条并存：那条等产物形状稳了会收掉，这条只要还有规则改动要验收就在。
 
 ### 6. allowed-tools 收窄到具体命令模式
 
