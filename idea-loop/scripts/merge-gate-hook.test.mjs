@@ -155,10 +155,16 @@ test('malformed or foreign input passes quietly', () => {
   assert.equal(runHook(bash('gh pr merge 1', '/no/such/dir')).status, 0);
 });
 
-test('the hook is registered on Bash in the plugin hooks, and the three PostToolUse hooks are untouched', () => {
+test('the hook is registered on Bash in the plugin hooks, next to the SEO check hook; the Write|Edit hooks are untouched', () => {
   const hooks = JSON.parse(readFileSync(join(here, '..', 'hooks', 'hooks.json'), 'utf8')).hooks;
   assert.deepEqual(hooks.PreToolUse, [
-    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/merge-gate-hook.mjs"' }] },
+    {
+      matcher: 'Bash',
+      hooks: [
+        { type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/merge-gate-hook.mjs"' },
+        { type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' },
+      ],
+    },
   ]);
   assert.deepEqual(hooks.PostToolUse, [
     {
@@ -168,6 +174,7 @@ test('the hook is registered on Bash in the plugin hooks, and the three PostTool
         command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/${n}.mjs"`,
       })),
     },
+    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
   ]);
   assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse']);
 });
