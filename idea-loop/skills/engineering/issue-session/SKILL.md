@@ -51,8 +51,9 @@ argument-hint: "<issue 号>"
 
 issue 关了，或人说先放着（`issues set <docs> 搁置 <号>`）之后：
 
-1. `git status --short` 里没有要留的改动；有就先问人。
-2. 用 `archive_session`（`session_id: self`，reason 写「#<号> 已关闭」或「#<号> 搁置」）归档自己，worktree 随归档清掉。
+1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录的 docs PR 合并之后，才往下走。
+2. `git status --short` 里没有要留的改动；有就先问人。
+3. 用 `archive_session`（`session_id: self`，reason 写「#<号> 已关闭」或「#<号> 搁置」）归档自己，worktree 随归档清掉。
 
 ## 边界
 

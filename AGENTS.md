@@ -27,7 +27,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 - **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
 - **不硬编码 Toeflair**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；Toeflair 只作为举例出现。
 - 下面五处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
-  1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `dreaming` / `setup` / `agent-builder` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`agent-builder` 也靠它调到 `writing-for-agents`。
+  1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `dreaming` / `setup` / `agent-builder` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。
   2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
   3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。
   4. **唯一带 `evals/`**：理由见下面 §5。
