@@ -22,13 +22,13 @@ idea-loop 的 `uiux-refine` 设计参考里有一份 UI craft 清单（`ui-craft
 
 ## 验收标准
 
-- [ ] 「Practical craft checklist」一节有一条离开 / 结束确认的条目，含上面四点和一句理由
-- [ ] 该条目引用 `design-core.md` 的 undo-over-confirm，不复述其内容；`design-core.md` 未改动
-- [ ] Forms 里离开未保存表单那句改成指向新条目；Destructive actions 原有要求还在，并加了交叉引用
-- [ ] 这一节已按 `idea-loop:writing-for-agents` 重写：交付说明里逐条列出照它改了什么，每条改动语义不变
-- [ ] `git diff` 只落在 `ui-craft-checklist.md` 的「Practical craft checklist」一节（和这份 spec 的 tickets 目录）
-- [ ] 对 `ui-craft-checklist.md` 搜 `Toeflair` / `TOEFLAIR` 无结果
-- [ ] 全文仍是英文
+- [x] 「Practical craft checklist」一节有一条离开 / 结束确认的条目，含上面四点和一句理由
+- [x] 该条目引用 `design-core.md` 的 undo-over-confirm，不复述其内容；`design-core.md` 未改动
+- [x] Forms 里离开未保存表单那句改成指向新条目；Destructive actions 原有要求还在，并加了交叉引用
+- [x] 这一节已按 `idea-loop:writing-for-agents` 重写：交付说明里逐条列出照它改了什么，每条改动语义不变
+- [x] `git diff` 只落在 `ui-craft-checklist.md` 的「Practical craft checklist」一节（和这份 spec 的 tickets 目录）
+- [x] 对 `ui-craft-checklist.md` 搜 `Toeflair` / `TOEFLAIR` 无结果
+- [x] 全文仍是英文
 
 ## 选中的存量回归
 
