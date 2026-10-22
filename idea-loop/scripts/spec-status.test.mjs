@@ -154,7 +154,10 @@ test('migrate rewrites the old statuses and says which issues to park', () => {
   const docs = project('在飞');
   mkdirSync(join(docs, 'spec', 'parked'));
   writeFileSync(join(docs, 'spec', 'parked', 'parked.md'), spec({ status: '已拍板未排期' }));
+  mkdirSync(join(docs, 'spec', 'parked-en'));
+  writeFileSync(join(docs, 'spec', 'parked-en', 'parked-en.md'), spec({ status: 'parked' }));
   const out = run('migrate', docs);
+  assert.match(out, /parked-en: parked → 正式（它覆盖的 issue 挂 status:搁置）/);
   assert.match(out, /practice-retry: 在飞 → 实现中/);
   assert.match(out, /parked: 已拍板未排期 → 正式（它覆盖的 issue 挂 status:搁置）/);
   assert.deepEqual(scan(docs).problems, []);

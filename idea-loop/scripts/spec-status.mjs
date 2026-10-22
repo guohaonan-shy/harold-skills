@@ -39,7 +39,7 @@ export const NEXT = {
 };
 
 /** The old state machine's statuses, and what each becomes. A parked spec becomes 正式; the parking moves to its issues' label. */
-export const MIGRATE = { 待设计: '正式', 设计中: '正式', 待实现: '正式', 在飞: '实现中', 已拍板未排期: '正式', 搁置: '正式' };
+export const MIGRATE = { 待设计: '正式', 设计中: '正式', 待实现: '正式', 在飞: '实现中', 已拍板未排期: '正式', 搁置: '正式', parked: '正式' };
 
 // ---------- spec text ----------
 
@@ -228,7 +228,7 @@ function main() {
       const to = MIGRATE[s.status];
       if (!to) continue;
       writeFileSync(s.file, withStatus(read(s.file), to));
-      console.log(`${s.slug}: ${s.status} → ${to}${['已拍板未排期', '搁置'].includes(s.status) ? '（它覆盖的 issue 挂 status:搁置）' : ''}`);
+      console.log(`${s.slug}: ${s.status} → ${to}${['已拍板未排期', '搁置', 'parked'].includes(s.status) ? '（它覆盖的 issue 挂 status:搁置）' : ''}`);
     }
     return reindex(a);
   }

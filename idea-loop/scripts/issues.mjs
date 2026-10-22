@@ -16,9 +16,19 @@
  * number travels with the PR; it has no label until `reconcile` sees the spec on main, and `candidates`
  * never offers it.
  *
+ * An issue session carries one issue from verification to merge. After each of its PRs lands it calls
+ * `advance`: the same flips `reconcile` would make for that one spec, then the claim of the next 中 state.
+ *
+ * Besides its status an issue carries category labels, `type:<parent>` and optionally
+ * `type:<parent>/<child>`. The project lists them in the「issue 分类」section of its AGENTS.md (or
+ * CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes every label outside the
+ * status states, the categories and that keep-list.
+ *
  * Usage (<docs> is the target project's docs/ directory; gh runs there, so it acts on that repo; a
  * target is an issue number or a spec slug, which stands for every issue the spec lists):
- *   node issues.mjs labels     <docs>                          → creates the status:* labels that are missing
+ *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels; lists the rest, --prune deletes them
+ *   node issues.mjs type       <docs> <n> <parent[/child]>...  → sets #n's type:* labels from the project's categories
+ *   node issues.mjs advance    <docs> <spec-slug>              → after a PR of the spec landed: its issues move on to 设计中 / 实现中, or close
  *   node issues.mjs candidates <docs> [<limit>]                → JSON: 待验证 issues no spec lists, oldest first
  *   node issues.mjs queue      <docs> <待设计|待实现>           → JSON: specs whose issues wait in that state, and the mismatches
  *   node issues.mjs set        <docs> <state> <target>...      → checked flip: claim, a session opening or giving up, 搁置
@@ -33,7 +43,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { frontmatter, hasFreezeSummary, issuesOf, scan, touchesUi, verdicts } from './spec-status.mjs';
 
@@ -66,6 +76,76 @@ export function stateOf(labels) {
   const own = labels.filter((l) => l.startsWith(PREFIX)).map((l) => l.slice(PREFIX.length));
   if (!own.length) return UNLABELLED;
   return own.length === 1 ? own[0] : own.join(' + ');
+}
+
+export const TYPE_PREFIX = 'type:';
+export const TYPES_HEADING = 'issue 分类';
+const TYPE_COLORS = { parent: '0052cc', child: 'c5def5' };
+
+/**
+ * The project's categories from its「issue 分类」section: a bullet per parent (`` - `seo`：搜索流量 ``),
+ * indented bullets for its children, and a line starting「保留的 label」that names, in backticks, the
+ * other labels to keep. Null when the section is missing.
+ */
+export function parseTypes(md) {
+  const lines = String(md).split('\n');
+  const start = lines.findIndex((l) => l.trim() === `## ${TYPES_HEADING}`);
+  if (start < 0) return null;
+  const parents = [];
+  const keep = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,2} /.test(line)) break;
+    const item = line.match(/^(\s*)- `([^`]+)`(?:[：:]\s*(.*))?$/);
+    if (item) {
+      const [, indent, name, about = ''] = item;
+      if (name.includes('/')) throw new Error(`分类「${name}」里有「/」：它留给子类分隔，换个名字`);
+      if (!indent) parents.push({ name, about, children: [] });
+      else if (parents.length) parents.at(-1).children.push({ name, about });
+      continue;
+    }
+    if (/^保留的 label/.test(line.trim())) keep.push(...[...line.matchAll(/`([^`]+)`/g)].map((m) => m[1]));
+  }
+  return { parents, keep };
+}
+
+/** The categories of the project <docs> belongs to: AGENTS.md first, then CLAUDE.md. */
+export function readTypes(docs) {
+  const root = dirname(resolve(docs));
+  for (const f of ['AGENTS.md', 'CLAUDE.md']) {
+    const file = join(root, f);
+    if (!existsSync(file)) continue;
+    const types = parseTypes(readFileSync(file, 'utf8'));
+    if (types) return types;
+  }
+  return null;
+}
+
+/** Every type:* label the categories define, with its color and description. */
+export function typeLabels(types) {
+  return (types?.parents ?? []).flatMap((p) => [
+    { name: `${TYPE_PREFIX}${p.name}`, color: TYPE_COLORS.parent, about: p.about },
+    ...p.children.map((c) => ({ name: `${TYPE_PREFIX}${p.name}/${c.name}`, color: TYPE_COLORS.child, about: c.about })),
+  ]);
+}
+
+/** The labels a project keeps: the status states, its categories, and its keep-list. */
+export function keptLabels(types) {
+  return new Set([...STATES.map(label), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
+}
+
+/** The type:* labels an issue should carry for the given values (`seo`, `seo/blog`); a child brings its parent. */
+export function typeSet(types, values) {
+  const out = new Set();
+  for (const v of values) {
+    const [p, c, extra] = String(v).split('/');
+    const parent = types?.parents.find((x) => x.name === p);
+    if (!parent || extra !== undefined) throw new Error(`「${v}」不是这个项目的分类（${typeLabels(types).map((t) => t.name.slice(TYPE_PREFIX.length)).join(' / ') || '没有定义分类'}）`);
+    out.add(`${TYPE_PREFIX}${p}`);
+    if (c === undefined) continue;
+    if (!parent.children.some((x) => x.name === c)) throw new Error(`「${p}」下没有子类「${c}」（${parent.children.map((x) => x.name).join(' / ') || '没有子类'}）`);
+    out.add(`${TYPE_PREFIX}${p}/${c}`);
+  }
+  return [...out];
 }
 
 export const SPEC_ISSUE = 'spec：';
@@ -126,6 +206,37 @@ export function reconcilePlan(specs, issues) {
   return { actions, problems };
 }
 
+/**
+ * What `advance` does for one spec on main: each open issue goes where main says, and a 待 state is
+ * claimed on the spot (待设计 → 设计中, 待实现 → 实现中), since the session asking is the one that works
+ * on it. `phase` is where the session goes next: 设计中, 实现中, or 关闭 once every issue is closed.
+ */
+export function advancePlan(md, issues) {
+  const open = new Map(issues.map((i) => [i.number, i]));
+  const status = frontmatter(md).status;
+  const actions = [];
+  const phases = new Set();
+  for (const n of issuesOf(md)) {
+    const it = open.get(n);
+    if (!it) continue;
+    const cur = stateOf(it.labels);
+    if (cur === '搁置') throw new Error(`#${n} 是「搁置」，先 resume`);
+    if (![UNLABELLED, ...STATES].includes(cur)) throw new Error(`#${n} 的 label「${cur}」不是 issue 的状态（旧状态机留下的就先迁移）`);
+    const t = targetOf(md, n);
+    if (!t) throw new Error(`spec 在这份 docs 里是「${status}」，主分支上还没有下一段要用的东西（advance 要在 PR 合并、切到最新主分支之后跑）`);
+    if (t.close) {
+      actions.push({ n, from: cur, close: t.close });
+      continue;
+    }
+    const to = t.state === '待设计' ? '设计中' : '实现中';
+    if (to === '设计中' && ['实现中', '待实现'].includes(cur)) throw new Error(`#${n} 已经是「${cur}」，spec 却还要设计`);
+    phases.add(to);
+    if (cur !== to) actions.push({ n, from: cur, to });
+  }
+  const phase = phases.has('设计中') ? '设计中' : phases.has('实现中') ? '实现中' : '关闭';
+  return { actions, phase };
+}
+
 // ---------- gh boundary ----------
 
 export const defaultGh = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -168,15 +279,49 @@ function expand(docs, targets) {
   return [...new Set(targets.flatMap((t) => (/^\d+$/.test(String(t)) ? [Number(t)] : issuesOf(readSpec(docs, t).md))))];
 }
 
-export function ensureLabels(gh) {
-  const have = new Set(JSON.parse(gh(['label', 'list', '--limit', '200', '--json', 'name'])).map((l) => l.name));
+/**
+ * Creates the missing status:* and type:* labels, and returns the labels outside the kept set with how
+ * many open issues carry each; with `prune` they are deleted. Without categories nothing is pruned: the
+ * keep-list lives in the same section, so every project label would look surplus.
+ */
+export function ensureLabels(gh, types = null, { prune = false } = {}) {
+  const have = new Set(JSON.parse(gh(['label', 'list', '--limit', '500', '--json', 'name'])).map((l) => l.name));
+  const want = [
+    ...STATES.map((s) => ({ name: label(s), color: COLORS[s], about: s === '搁置' ? 'idea-loop 不接手' : `idea-loop：${s}` })),
+    ...typeLabels(types),
+  ];
   const made = [];
-  for (const s of STATES) {
-    if (have.has(label(s))) continue;
-    gh(['label', 'create', label(s), '--color', COLORS[s], '--description', s === '搁置' ? 'idea-loop 不接手' : `idea-loop：${s}`]);
-    made.push(label(s));
+  for (const l of want) {
+    if (have.has(l.name)) continue;
+    gh(['label', 'create', l.name, '--color', l.color, '--description', l.about || 'idea-loop：分类']);
+    made.push(l.name);
   }
-  return made;
+  if (!types) {
+    if (prune) throw new Error(`没有「${TYPES_HEADING}」一节，不知道该留哪些 label，不清理`);
+    return { made, surplus: [], deleted: [] };
+  }
+  const kept = keptLabels(types);
+  const uses = new Map();
+  for (const i of openIssues(gh)) for (const l of i.labels) uses.set(l, (uses.get(l) ?? 0) + 1);
+  const surplus = [...have].filter((l) => !kept.has(l)).sort().map((name) => ({ name, openIssues: uses.get(name) ?? 0 }));
+  const deleted = [];
+  if (prune) {
+    for (const { name } of surplus) {
+      gh(['label', 'delete', name, '--yes']);
+      deleted.push(name);
+    }
+  }
+  return { made, surplus, deleted };
+}
+
+/** Leaves #n carrying exactly the type:* labels of `values`. */
+export function setTypes(gh, types, n, values) {
+  const want = typeSet(types, values);
+  const it = issue(gh, n);
+  const add = want.filter((l) => !it.labels.includes(l));
+  const remove = it.labels.filter((l) => l.startsWith(TYPE_PREFIX) && !want.includes(l));
+  if (add.length || remove.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
+  return want;
 }
 
 /** Issue numbers some spec under <docs> lists. */
@@ -237,6 +382,21 @@ export function reconcile(gh, docs) {
     done.push(a.close ? `#${a.n}: ${a.from} → 关闭（${a.close}）` : `#${a.n}: ${a.from} → ${a.to}`);
   }
   return { done, problems };
+}
+
+export function advance(gh, docs, slug) {
+  const { md } = readSpec(docs, slug);
+  const { actions, phase } = advancePlan(md, openIssues(gh));
+  const byNumber = new Map(openIssues(gh).map((i) => [i.number, i]));
+  const done = [];
+  for (const a of actions) {
+    const labels = byNumber.get(a.n)?.labels ?? [];
+    if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${slug}\`（\`docs/spec/${slug}/${slug}.md\` 的「验证」）。`);
+    else if (a.close === 'completed') close(gh, a.n, labels, 'completed', `spec \`${slug}\` 已实现并合并。`);
+    else relabel(gh, a.n, labels, a.to);
+    done.push(a.close ? `#${a.n}: ${a.from} → 关闭（${a.close}）` : `#${a.n}: ${a.from} → ${a.to}`);
+  }
+  return { done, phase };
 }
 
 export function resume(gh, docs, targets) {
@@ -309,7 +469,7 @@ const num = (v, what) => {
   return Number(v);
 };
 
-const COMMANDS = ['labels', 'candidates', 'queue', 'set', 'reconcile', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
+const COMMANDS = ['labels', 'type', 'candidates', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
 
 function main() {
   const [cmd, docs, a, b, ...rest] = process.argv.slice(2);
@@ -317,7 +477,14 @@ function main() {
   if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」`);
   const gh = defaultGh(docs);
   const print = (lines) => lines.forEach((l) => console.log(l));
-  if (cmd === 'labels') return print(ensureLabels(gh).map((l) => `created ${l}`));
+  if (cmd === 'labels') {
+    if (a !== undefined && a !== '--prune') throw new Error('usage: issues.mjs labels <docs> [--prune]');
+    const { made, surplus, deleted } = ensureLabels(gh, readTypes(docs), { prune: a === '--prune' });
+    print(made.map((l) => `created ${l}`));
+    if (a === '--prune') return print(deleted.map((l) => `deleted ${l}`));
+    if (surplus.length) print([`不在状态、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
+    return;
+  }
   if (cmd === 'candidates') return console.log(JSON.stringify(candidates(gh, a ? num(a, 'limit') : undefined, listedIssues(docs)), null, 2));
   if (cmd === 'reconcile') {
     const { done, problems } = reconcile(gh, docs);
@@ -326,6 +493,15 @@ function main() {
   }
   if (!a) throw new Error(`usage: issues.mjs ${cmd} <docs> …`);
   if (cmd === 'queue') return console.log(JSON.stringify(queue(gh, docs, a), null, 2));
+  if (cmd === 'type') {
+    if (b === undefined) throw new Error('usage: issues.mjs type <docs> <issue 号> <父类[/子类]>...');
+    return console.log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);
+  }
+  if (cmd === 'advance') {
+    const { done, phase } = advance(gh, docs, a);
+    print(done);
+    return console.log(`下一段：${phase}`);
+  }
   if (cmd === 'set') {
     if (b === undefined) throw new Error('usage: issues.mjs set <docs> <state> <issue 号 | spec-slug>...');
     return print(setState(gh, docs, a, [b, ...rest]));
