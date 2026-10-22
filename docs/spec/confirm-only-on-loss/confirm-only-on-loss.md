@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, design, uiux-refine, design-reference]
 summary: 设计参考加一条可检查的规则：离开 / 结束入口只在会丢用户成果时才弹确认
 related: []
@@ -65,6 +65,7 @@ designer 和 Gate 2 评审拿到的 `ui-craft-checklist.md`「Practical craft ch
 - **只改一份参考文件**：`ui-craft-checklist.md` 的「Practical craft checklist」加一条 **Leave / end confirmations** 条目，内容即「方案」里四点，英文写，跟这份文件的其余条目一致（依据：该文件全文英文）。
 - **Forms 那句改成引用**：「warn before navigating away from an unsaved form」改成指向新条目，语义不变。
 - **Destructive actions 那条加一句交叉引用**：破坏性操作的确认同样只在会丢东西时才有意义；不改它原有的要求。
+- **落点那一节按 `writing-for-agents` 重写**：新条目和它所在的 Practical craft checklist 一节（含 Forms、Destructive actions 等既有条目）照 `idea-loop:writing-for-agents` 的写法优化，语义不变；文件其余各节不动（依据：人的原话「ticket内部要写这块的规则要用/writing-for-agent 对对应的文件内容进行优化」，范围选「只改落点那一节」）。
 - **不写 TOEFLAIR 的具体规则**：条目里举例用「已交的答案 / 非空白输入 / 进行中的录音」这类通用说法，不写「口语题交过至少一题」这样的产品细节（依据：仓库 `AGENTS.md`「不硬编码 Toeflair：Toeflair 只作为举例出现」）。
 - **不加机械检查**：「会不会丢」要看状态和业务，`design-lint.mjs` 的正则判不了，只进模型判断的清单（依据：`ui-craft-checklist.md` 开头写明这份文件放的是 regex 判不了的部分）。
 
