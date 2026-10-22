@@ -105,8 +105,8 @@ Forms, touch, performance, navigation, destructive actions, leave / end confirma
   `autoFocus` on desktop only (on mobile it forces the keyboard open unexpectedly). Touch-target
   sizing lives in `accessibility-baseline.md`.
 - **Performance**: virtualize lists over ~50 items; keep layout reads (`getBoundingClientRect`,
-  `offsetHeight`) out of render and loops, batching reads before writes; use uncontrolled inputs
-  for high-frequency-typing fields (a controlled input re-renders on every keystroke).
+  `offsetHeight`) out of render and loops, batching reads before writes; prefer uncontrolled inputs
+  for high-frequency-typing fields over a controlled input that re-renders on every keystroke.
 - **Navigation**: keep meaningful UI state (selected tab, open filter, current page) in the URL,
   not only in component state, so back/forward/refresh/share work.
 - **Destructive actions**: give every destructive action a recovery path: an undo window, or

@@ -29,7 +29,7 @@ idea-loop 的 `uiux-refine` 设计参考里有一份 UI craft 清单（`ui-craft
 - [x] `git diff` 只落在 `ui-craft-checklist.md` 的「Practical craft checklist」一节（和这份 spec 的 tickets 目录）
 - [x] 对 `ui-craft-checklist.md` 搜 `Toeflair` / `TOEFLAIR` 无结果
 - [x] 全文仍是英文
-- [ ] review 第 1 轮 S1（2026-10-22）：Performance 里关于高频输入框的那句恢复成「优先」的语气（prefer uncontrolled inputs … over a controlled input that re-renders on every keystroke），不是硬性要求；重写只改写法，不收紧旧规则
+- [x] review 第 1 轮 S1（2026-10-22）：Performance 里关于高频输入框的那句恢复成「优先」的语气（prefer uncontrolled inputs … over a controlled input that re-renders on every keystroke），不是硬性要求；重写只改写法，不收紧旧规则
 
 ## 选中的存量回归
 
