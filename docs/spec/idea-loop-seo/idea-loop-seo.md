@@ -9,7 +9,7 @@ issues: [72]
 
 # idea-loop 的 seo 分类：OpenSEO 负责发现，idea-loop 负责解决
 
-> 2026-10-22 与 Harold grill 过，决议见 [[2026-10-22-grill-idea-loop-seo]] 末尾的表。**依赖 idea-loop 0.1.1 先合并**：本 spec 里的「issue 会话」「`type:` 分类」「`issues type`」都按 0.1.x 那个会话（2026-10-22 未合并，在 `feat/idea-loop-0.1.1` 上）的结论来写，实现排在它之后（Harold 原话：「它应该合并的会比你早一点，你可以基于他的结论」）。项目侧的接入（第一个项目是 TOEFLAIR）另写一份 spec，等本 spec 的实现合并后再写。
+> 2026-10-22 与 Harold grill 过，决议见 [[2026-10-22-grill-idea-loop-seo]] 末尾的表。本 spec 里的「issue 会话」「`type:` 分类」「`issues type`」都按 idea-loop 0.1.1 来写（2026-10-22 已合并，PR #71）。项目侧的接入（第一个项目是 TOEFLAIR）另写一份 spec，等本 spec 的实现合并后再写。
 
 ## 问题
 
@@ -237,7 +237,7 @@ seo-scan 里唯一写 GitHub 的地方。输入发现清单和开着的 `type:se
 
 ### 分类：`type:seo/<方向>`
 
-seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加父类 `seo`、子类 technical、pages、keywords、backlinks、geo，格式照 0.1.1 setup 的模板。seo-scan 提 issue 时就打上；审核阶段 issue-verify 照常再判一次，可以替换（例：一个「技术」issue 复现后其实是页面文案问题）。原来议过的 `seo`、`seo:<方向>` 两种项目标签不用（依据：Harold 同意 Q24；0.1.1 的 `labels --prune` 会删分类和保留名单以外的标签）。
+seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加父类 `seo`、子类 technical、pages、keywords、backlinks、geo，格式照 setup 的「issue 分类」模板（父类、子类各一行，名字放反引号里，子类缩进两格）。seo-scan 提 issue 时就打上；审核阶段 issue-verify 照常再判一次，可以替换（例：一个「技术」issue 复现后其实是页面文案问题）。原来议过的 `seo`、`seo:<方向>` 两种项目标签不用（依据：Harold 同意 Q24；0.1.1 的 `labels --prune` 会删分类和保留名单以外的标签）。
 
 ### SEO.md
 
@@ -378,7 +378,7 @@ seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加�
 ## 关联
 
 - 讨论：[[2026-10-22-grill-idea-loop-seo]]（本 spec 的决议）、[[2026-10-21-seo-workflow-discussion]]（前一天，方向划分和写作分型来自这里，位置与队列被推翻）。
-- 依赖：idea-loop 0.1.1（`feat/idea-loop-0.1.1`，2026-10-22 未合并）：issue 会话、`type:` 分类、`issues type`、setup 的「issue 分类」模板。本 spec 的实现排在它合并之后；两者都改 setup 的地方（「issue 分类」一节）以它的格式为准。
+- 前置：idea-loop 0.1.1（PR #71，2026-10-22 已合并）：issue 会话、`type:` 分类、`issues type`、setup 的「issue 分类」模板。seo-setup 写「issue 分类」时照 setup 的格式，不另起一套。
 - 相邻在飞的 spec：查过 2026-10-22 主分支上的全部 spec（设计档案分段、DESIGN.md 写入口、设计调研 agent、dreaming 设计对账、PR review 跟进、UI 状态档案、uiux-imagine agent），都在 design 分类或 review 流程里，和 seo 分类无重叠。
 - 相邻的 issue：harold-skills 上没有 SEO 相关的 issue（2026-10-22 查）。项目侧的 issue #435（旧执行链调用的 skill 不存在）由项目接入那份 spec 覆盖。
 - 外部来源：OpenSEO 插件 1.0.0（MIT，github.com/every-app/open-seo）；claude-seo（MIT，github.com/AgriciDaniel/claude-seo）。
