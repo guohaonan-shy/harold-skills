@@ -94,28 +94,42 @@ In the same Gate 2 pass, read [heuristics-checklist.md](heuristics-checklist.md)
 
 ### Practical craft checklist
 
-Forms, touch, performance, navigation, copy.
+Forms, touch, performance, navigation, destructive actions, leave / end confirmations, copy.
 
-- **Forms**: correct `autocomplete` values on every input that maps to a known field type; never
-  block `paste` into a field (breaks password managers and legitimate copy-paste); submit buttons
-  show a disabled+spinner state during submission, not a silent no-op; warn before navigating away
-  from an unsaved form.
-- **Touch**: `touch-action: manipulation` on tappable elements to kill the 300ms tap delay;
-  `overscroll-behavior: contain` on modal/scrollable panels so background scroll doesn't leak;
-  `autoFocus` is desktop-only (it forces the mobile keyboard open unexpectedly).
-  Touch-target sizing itself lives in `accessibility-baseline.md`.
-- **Performance**: virtualize lists over ~50 items; never read layout (`getBoundingClientRect`,
-  `offsetHeight`) inside a render/loop — batch reads before writes; prefer uncontrolled inputs for
-  high-frequency-typing fields over a controlled input that re-renders on every keystroke.
-- **Navigation**: meaningful UI state (selected tab, open filter, current page) belongs in the URL,
+- **Forms**: set the correct `autocomplete` on every input that maps to a known field type; allow
+  `paste` in every field (blocking it breaks password managers and legitimate copy-paste); show a
+  disabled+spinner state on submit buttons during submission, never a silent no-op; for leaving an
+  unsaved form, apply **Leave / end confirmations**.
+- **Touch**: `touch-action: manipulation` on tappable elements (kills the 300ms tap delay);
+  `overscroll-behavior: contain` on modal/scrollable panels (stops background scroll leaking);
+  `autoFocus` on desktop only (on mobile it forces the keyboard open unexpectedly). Touch-target
+  sizing lives in `accessibility-baseline.md`.
+- **Performance**: virtualize lists over ~50 items; keep layout reads (`getBoundingClientRect`,
+  `offsetHeight`) out of render and loops, batching reads before writes; prefer uncontrolled inputs
+  for high-frequency-typing fields over a controlled input that re-renders on every keystroke.
+- **Navigation**: keep meaningful UI state (selected tab, open filter, current page) in the URL,
   not only in component state, so back/forward/refresh/share work.
-- **Destructive actions**: require explicit confirmation or provide an undo window — never a
-  same-click destructive action with no recovery path (cross-reference the
-  undo-over-confirm preference in `design-core.md`'s "Copy construction": prefer undo when recovery is actually possible; confirmation is the
-  fallback only when it isn't).
+- **Destructive actions**: give every destructive action a recovery path: an undo window, or
+  explicit confirmation when undo is impossible. Prefer undo whenever recovery is actually
+  possible (`design-core.md`, "Copy construction"). Whether a confirmation belongs at all is
+  decided by **Leave / end confirmations**: a confirmation earns its place only when something is
+  at risk.
+- **Leave / end confirmations**: for every leave, end or close entry (back, close, end session,
+  cancel, navigate away):
+  1. Write down what a click right now would lose: submitted answers, non-whitespace text in an
+     input, a recording or upload in progress.
+  2. Something would be lost: protect it with a confirmation, or with undo when recovery is
+     possible (undo over confirm, `design-core.md`, "Copy construction").
+  3. Nothing would be lost: the entry acts immediately. A confirmation here is a finding.
+  4. Judge by state, not by entry: the same entry behaves differently when empty and when filled,
+     so the acceptance matrix covers both states.
+
+  Why: a confirmation that guards nothing trains users to click through without reading, and the
+  one that guards something real then fails to stop them. Use this to judge cases the list above
+  does not name.
 - **Copy mechanics**: active voice over passive; Title Case for UI labels/buttons per the project's
-  own casing convention (don't override a DESIGN.md convention that already picked one); numerals
-  as digits ("3 items" not "three items") in UI copy.
+  own casing convention (a DESIGN.md convention that already picked one wins); numerals as digits
+  ("3 items" not "three items") in UI copy.
 
 ## DESIGN.md drift check
 
