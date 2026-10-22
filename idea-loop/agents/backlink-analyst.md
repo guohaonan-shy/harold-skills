@@ -19,9 +19,10 @@ tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
 
 ## 做
 
-1. **找候选**：用 Skill 工具调 `idea-loop:link-prospecting`，`args` 照 findings.md 的「调方法 skill」填。这次只找候选和角度，联系方式留给实现阶段的 `idea-loop:seo-outreach` 去查。
-2. **按资产归条**：同一个资产（我们要被引用的那个页面）的候选合成一条，`kind` 写 `outreach-<资产页面的路径末段>`（例 `outreach-weeknight-dinners`），`targets` 列候选页面的网址，`evidence.values` 写每个候选为什么相关、建议的角度。引用了两个及以上竞品、没引用我们的域名，合成一条 `competitor-link-gap`。直接竞品、疑似付费位置的候选不列。
-3. **写文件**：全部发现写到 `<运行目录>/backlinks.json`，照 findings.md 验一遍。外链和 SERP 数据都没拿到：写成未采集。
+1. **读已联系过的站点**：读目标仓库 `docs/records/outreach/*/*-tracker.md` 里的每张跟进表，取每行的域名、状态、更新于。表里已有的域名这次不再提名；唯一的例外是状态为「无回应」且更新于距今天超过 90 天的，可以再提一次，`evidence.values` 里写明上次联系的日期。没有这个目录：当作没联系过任何站点。
+2. **找候选**：用 Skill 工具调 `idea-loop:link-prospecting`，`args` 照 findings.md 的「调方法 skill」填。这次只找候选和角度，联系方式留给实现阶段的 `idea-loop:seo-outreach` 去查。
+3. **按资产归条**：同一个资产（我们要被引用的那个页面）的候选合成一条，`kind` 写 `outreach-<资产页面的路径末段>`（例 `outreach-weeknight-dinners`），`targets` 列候选页面的网址，`evidence.values` 写每个候选为什么相关、建议的角度。引用了两个及以上竞品、没引用我们的域名，合成一条 `competitor-link-gap`。直接竞品、疑似付费位置、第 1 步排除的候选不列。
+4. **写文件**：全部发现写到 `<运行目录>/backlinks.json`，照 findings.md 验一遍。外链和 SERP 数据都没拿到：写成未采集。
 
 完成条件：`backlinks.json` 通过验证；每条外联发现都写了资产和角度。
 

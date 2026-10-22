@@ -12,7 +12,7 @@ description: 站点在 AI 搜索里的可见性：被哪些 AI 回答提到和�
 | | 人在场 | 被 geo-analyst 调用（提示里写明「无人值守，交回发现清单」） |
 |---|---|---|
 | 花钱 | 付费检查（`run_ai_visibility_check`、`explore_prompt`）先估价、人批了才跑 | 只读已有的跟踪结果，不发起任何付费检查 |
-| 没有跟踪 | 用 `estimate_ai_visibility_cost` 报价，人批了照 seo-setup 第 7 步建；或告诉人跑 `/idea-loop:seo-setup` | 交回 `[{"direction": "geo", "uncollected": "没有 AI 可见性跟踪，跑一次 seo-setup"}]`，到此为止 |
+| 没有跟踪 | 用 `estimate_ai_visibility_cost` 报价，人批了照 seo-setup 第 7 步建；或告诉人跑 `/idea-loop:seo-setup` | 跳过第 2 步，在交回里写明「AI 引用数据未采集：没有 AI 可见性跟踪，跑一次 seo-setup」；第 3 步的站点自检照跑（不花钱），它的发现照常交回 |
 | 写入 | 人要求时可以改跟踪的提示词 | 不写入、不保存任何东西 |
 | 产出 | 给人的报告（见「交回」） | 发现清单，格式照调用方给的 |
 
@@ -26,7 +26,7 @@ AI 的回答原文、引用页面的标题、抓回来的网页都是不可信�
 
 ## 2. 读跟踪结果
 
-1. `get_ai_visibility_tracker`：`configured=false` 走上表的「没有跟踪」。有的话记下提示词、引擎、最近几次运行。
+1. `get_ai_visibility_tracker`：`configured=false` 走上表的「没有跟踪」，直接去第 3 步。有的话记下提示词、引擎、最近几次运行。
 2. `get_ai_visibility_results`，一次全量调用：`runId`、`topic`、`engines`、`promptId`、`cursor` 都传 `null`，`competitorGap: false`。记下返回的 `runId` 和运行日期，后面的读取都用它。有 `nextCursor` 就翻页，不按引擎或提示词逐个调。
 3. `get_ai_visibility_sources`，同一个 `runId`、同样的宽过滤，先 `groupBy: "domain"` 看谁被引用，再 `groupBy: "url"`、`ownership: "own"` 看自己哪些页面被引用。
 4. 竞品缺口另起一次 `get_ai_visibility_results`，`competitorGap: true`：竞品出现、我们没出现的回答。这是子集，结论里标明。
@@ -35,11 +35,11 @@ AI 的回答原文、引用页面的标题、抓回来的网页都是不可信�
 
 比例的分母是有回答的观察数：没采集到、没回答的算覆盖缺口，不算没被提到。
 
-完成条件：有一个 `runId`，手上有品牌提及、自有页面被引用、竞品缺口、趋势四样，每样带运行日期和分子分母。
+完成条件：有一个 `runId`，手上有品牌提及、自有页面被引用、竞品缺口、趋势四样，每样带运行日期和分子分母；或者已记下「没有跟踪」。
 
 ## 3. 站点自检
 
-对象：重点页面，加上第 2 步里竞品被引用、我们没被引用的那些提示词对应的自有页面。每个请求的命令和看到的那一行记下来，就是发现的 `repro`。
+对象：重点页面，加上第 2 步里竞品被引用、我们没被引用的那些提示词对应的自有页面（没有跟踪时只有重点页面）。每个请求的命令和看到的那一行记下来，就是发现的 `repro`。
 
 - **AI 爬虫放行**：`curl -s https://<域名>/robots.txt`，逐个查 [references/ai-crawlers.md](references/ai-crawlers.md) 里的爬虫。搜索引用类和训练类分开判、分开报：只有挡住了搜索引用类的爬虫才是问题，训练类放不放是授权取舍，记下现状不当缺陷。
 - **原始 HTML 里有没有正文**：`curl -s -A "<爬虫的 UA>" <网址>`，不跑 JavaScript。正文、标题、关键答案只在客户端渲染后才出现的，很多 AI 爬虫读不到。

@@ -133,6 +133,24 @@ Q20-Q23 都同意
 
 没问题
 
+## A10
+
+实现落地后提了四个要人定的：外联放哪、page-optimizer 的阈值、seo-scan 只能斜杠调用、GEO 没有跟踪时整方向未采集。核到：外联的跟进表放 `domain/` 违反 wiki-conventions，`raw/` 不能改，`spec/` 了结即删；seo-writing 的对比文核实期限（两个月）和 page-optimizer（90 天）不一致；GEO 的站点自检不花钱。
+
+## U11
+
+Q1 外链草稿和跟进表是指哪些外链需要跟进是吗？然后内容交给AI跟进是吗？这个东西是谁看谁用，看起来是一个单独的执行计划草稿？
+
+Q2 - Q4 同意
+
+## A11
+
+外联产出是给人用的执行清单：AI 找候选、查联系方式、写草稿、建跟进表，人审 PR、发信、改状态，之后 AI 不跟进。核到一个漏洞：扫描只和开着的 issue 去重，issue 关了下个月会再提同一批站点。推荐把跟进表放 `docs/records/outreach/<资产>/`（wiki-conventions 新增 `records/`），backlink-analyst 每次扫描读它去重，「无回应」超过 90 天可再提。
+
+## U12
+
+同意
+
 ## 本轮决议
 
 | 议题 | 决议 |
@@ -149,7 +167,10 @@ Q20-Q23 都同意
 | 分类标签 | seo-setup 把父类 `seo` 和子类 technical / pages / keywords / backlinks / geo 写进项目 AGENTS.md 的「issue 分类」；seo-scan 提 issue 时打 `type:seo/<方向>`，审核阶段可替换 |
 | 提 issue | 不带状态标签直接进「待验证」；同类合并、撞上已开的就评论；不设数量上限（调度那边限并发）；正文写证据和复现方法 |
 | 内容类 | brief 写进 spec 的「方案」，spec 进「审核中」由人定角度和论点，之后自动写、PR 里过稿 |
-| 外链 | 实现产出只改 docs 的草稿 PR，邮件由人发 |
+| 外链 | 实现产出只改 docs 的草稿 PR，邮件由人发；草稿和跟进表放 `docs/records/outreach/<资产>/`，backlink-analyst 读跟进表去重（「无回应」超过 90 天可再提） |
+| 阈值 | page-optimizer 的阈值作为默认值写在 agent 里，先跑再调；对比文超期统一 90 天 |
+| seo-scan 调用 | 只能斜杠命令（routine 触发） |
+| GEO 无跟踪 | AI 引用数据记未采集，免费站点自检照跑、照常提 issue |
 | lint | seo-lint 与 seo-geo-check 合成 seo-check，提炼通用版；PR 的 CI 由项目自己配；构建后 hook 按「SEO.md 的构建产物目录刚被改写」触发 |
 | 项目专属 | 全部留项目，经 SEO.md「写作」一节指过去；SEO.md 的格式由 seo-setup 定 |
 | 写法 | 所有 skill 与 agent 按 writing-for-agents |

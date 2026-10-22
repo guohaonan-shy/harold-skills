@@ -62,13 +62,13 @@ OpenSEO 项目：<projectId>
 
 - 运行目录由调用方给（`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`）。发现清单写到 `<运行目录>/<方向>.json`：一个 JSON 数组，没有发现就是 `[]`。
 - 为了交给脚本而存的工具原始返回（审计逐页数据等）也放在运行目录里，文件名带方向前缀（`technical-audit-pages-current.json`）。运行目录以外不写任何文件。
-- **未采集**：这个方向的数据一样也没拿到（MCP 连不上、没有 Search Console 连接、没有 AI 可见性跟踪、额度为 0 而方法只剩付费调用），文件内容是只有一个对象的数组：
+- **未采集**：这个方向的数据一样也没拿到（MCP 连不上、没有 Search Console 连接、额度为 0 而方法只剩付费调用），文件内容是只有一个对象的数组：
 
   ```json
-  [{ "direction": "geo", "uncollected": "没有 AI 可见性跟踪，跑一次 seo-setup" }]
+  [{ "direction": "pages", "uncollected": "OpenSEO 项目没有连 Search Console" }]
   ```
 
-  拿到了一部分就交回拿到的那部分发现，缺的那块写进交回那一句。
+  拿到了一部分就交回拿到的那部分发现，缺的那块写进交回那一句（例：geo 方向没有 AI 可见性跟踪时，引用数据没采集，免费的站点自检照常交回发现）。
 - 写完先验一遍：`node -e 'const a=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(!Array.isArray(a))process.exit(1)' <文件>`，退出码 0 才交回。
 
 ## 交回

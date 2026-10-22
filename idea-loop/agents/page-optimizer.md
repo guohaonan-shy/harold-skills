@@ -19,7 +19,7 @@ tools: Read, Grep, Glob, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
 
 ## 做
 
-1. **Search Console**（免费）：调 `get_search_console_performance`，`dimensions: ["query","page"]`、`dateRange: "last_28_days"`、`rowLimit: 1000`，按下表判。没有 Search Console 连接：这一块记缺口，往下做。
+1. **Search Console**（免费）：调 `get_search_console_performance`，`dimensions: ["query","page"]`、`dateRange: "last_28_days"`、`rowLimit: 1000`，按下表判；表里的数是默认值，先照它跑，噪音大再调。没有 Search Console 连接：这一块记缺口，往下做。
 
    | kind | 判定 |
    |---|---|

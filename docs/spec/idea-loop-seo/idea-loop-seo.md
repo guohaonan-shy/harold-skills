@@ -195,7 +195,7 @@ content?     内容类才有：目标词、页面类型、新开还是改已有�
 
 ### 方向 agent
 
-五个，每个方向一个，只读：不提 issue、不改文件。名字：technical-auditor、page-optimizer、keyword-miner、backlink-analyst、geo-analyst。每个的定义只写四样：用哪个（几个）skill、读 SEO.md 的哪几节、本次放行的额度、按上一节的格式交回。方法全在 skill 里（Harold 同意：方法在 skill，agent 是薄包装）。
+五个，每个方向一个，只读：不提 issue、不改文件。page-optimizer 的判定阈值（排名 5–20 且展现 ≥ 50；排名 ≤ 10 且点击率不到本站同排名中位数的一半；同一查询 ≥ 2 个页面各 ≥ 20 次展现；站内入链 ≤ 2；对比文核实超过 90 天）是默认值，写在 agent 里，先跑几轮看噪音再调（Harold 同意）。名字：technical-auditor、page-optimizer、keyword-miner、backlink-analyst、geo-analyst。每个的定义只写四样：用哪个（几个）skill、读 SEO.md 的哪几节、本次放行的额度、按上一节的格式交回。方法全在 skill 里（Harold 同意：方法在 skill，agent 是薄包装）。
 
 起 agent 的理由（`agent-builder`「先判断它该不该是 agent」）：每个方向要读大量工具输出，不该进 seo-scan 的上下文；五个要并行。
 
@@ -260,7 +260,7 @@ seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加�
 
 ### seo-geo
 
-以 claude-seo 的 seo-geo（约 400 行）和它的两份 reference（AI 搜索优化指南、llms.txt 证据）为底，数据全部换成 OpenSEO 的 AI 可见性接口，压到百行左右。被 agent 调用时只读已有的跟踪结果、引用来源和趋势，不发起新的付费检查；没有跟踪或读不到，记「未采集：没有 AI 可见性跟踪，跑一次 seo-setup」，不提 issue。
+以 claude-seo 的 seo-geo（约 400 行）和它的两份 reference（AI 搜索优化指南、llms.txt 证据）为底，数据全部换成 OpenSEO 的 AI 可见性接口，压到百行左右。被 agent 调用时只读已有的跟踪结果、引用来源和趋势，不发起新的付费检查；没有跟踪或读不到，AI 引用数据那一段记「未采集：没有 AI 可见性跟踪，跑一次 seo-setup」，不为它提 issue；免费的站点自检（AI 爬虫放行、原始 HTML、schema、llms.txt、可抽取段落）照跑，查出的问题照常提 issue（Harold 同意，2026-10-22）。
 
 ### seo-brief
 
@@ -270,13 +270,15 @@ seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加�
 
 - **入口**：按 brief 写（实现阶段）；局部润色；多语言镜像（后两个不要 brief）。
 - **规则分两层**：插件里只放通用规则；项目的文风、失败案例从 SEO.md 的「写作」读，叠在通用规则上，冲突时项目的为准。
-- **按类型加载 reference**：四份通用类型规则：对比与研究、数据研究、故事、教程。对比与研究要求实际试用过竞品、记下核实日期、讲清各自适合谁而不宣布赢家、有对比表；数据研究要求每个数字可追溯、比例带分子分母；故事要求事实准确；教程用通用规则加步骤可复现。
+- **按类型加载 reference**：四份通用类型规则：对比与研究、数据研究、故事、教程。对比与研究要求实际试用过竞品、记下核实日期（超过 90 天算未核实，和页面方向报超期的期限一致）、讲清各自适合谁而不宣布赢家、有对比表；数据研究要求每个数字可追溯、比例带分子分母；故事要求事实准确；教程用通用规则加步骤可复现。
 - **类型从哪来**：有 brief 取 brief 的页面类型；润色和镜像读文章 frontmatter 里 SEO.md 指定的那个字段，按映射换成通用类型；都没有就先说出判断的类型再动笔。
 - 写完跑一次 seo-check（构建后 hook 也会兜底）。
 
 ### seo-outreach
 
-每个目标站点一份邮件草稿，加一张跟进表（站点、联系方式及其来源网址、角度、状态），放在项目的 `docs/` 下，经只改 `docs/` 的 PR 合并；合并即 issue 关闭。**永不发送**，草稿开头写明「由人发送」。
+每个目标站点一份邮件草稿，加一张跟进表（站点、联系方式及其来源网址、角度、状态、更新于），放在项目的 `docs/records/outreach/<资产>/` 下，经只改 `docs/` 的 PR 合并；合并即 issue 关闭。**永不发送**，草稿开头写明「由人发送」。
+
+跟进表有两个读者：人拿它发信、记状态；backlink-analyst 每次扫描先读全部跟进表，表里已有的站点不再提名，只有状态为「无回应」且超过 90 天的可以再提一次。不读它的话，issue 关闭后下个月的扫描会把同一批站点再提一遍。`records/` 是 wiki-conventions 新增的目录：会话起头、之后由人持续更新的台账，不进 spec 的生命周期（Harold 同意，2026-10-22）。
 
 ### seo-check 与构建后的检查 hook
 
