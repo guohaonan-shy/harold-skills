@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, design, uiux-refine, design-reference]
 summary: 设计参考加一条可检查的规则：离开 / 结束入口只在会丢用户成果时才弹确认
 related: []
