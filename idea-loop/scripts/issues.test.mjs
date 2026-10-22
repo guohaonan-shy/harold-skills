@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  advance, advancePlan, candidates, dropIssue, ensureLabels, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, readTypes, reconcile,
+  advance, advancePlan, candidates, dropIssue, ensureLabels, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, queueOf, queues, readTypes, reconcile,
   reconcilePlan, resume, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
@@ -165,6 +165,27 @@ test('candidates are 待验证 issues, oldest first, skipping spec issues and is
   const { gh } = fakeGh({ 5: open(5), 2: open(2), 3: open(3, ['status:验证中']), 4: open(4), 6: { ...open(6), title: 'spec：重试' } });
   assert.deepEqual(candidates(gh, 100, new Set([4])).map((i) => i.number), [2, 5]);
   assert.ok(docs);
+});
+
+test('a category marked 独立队列 gets its own queue, cap and sections; its note stays out of the label text', () => {
+  const types = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索可见性（独立队列，上限 5）\n  - `technical`：技术\n');
+  assert.equal(types.parents[1].about, '搜索可见性');
+  assert.deepEqual(queues(types), [
+    { name: null, cap: 10, sections: ['审核中', '设计中', '实现中'] },
+    { name: 'seo', cap: 5, sections: ['seo 审核中', 'seo 设计中', 'seo 实现中'] },
+  ]);
+  assert.equal(queueOf(types, ['type:seo', 'type:seo/technical']).name, 'seo');
+  assert.equal(queueOf(types, ['type:bug']).name, null);
+  assert.deepEqual(queues(null).map((q) => q.name), [null]);
+});
+
+test('candidates of the main queue skip own-queue issues; --queue takes only those', () => {
+  const types = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索（独立队列，上限 5）\n');
+  const { gh } = fakeGh({ 1: open(1, ['type:seo', 'type:seo/pages']), 2: open(2, ['type:bug']), 3: open(3), 4: open(4, ['type:seo']) });
+  assert.deepEqual(candidates(gh, 100, new Set(), { types }).map((i) => i.number), [2, 3]);
+  assert.deepEqual(candidates(gh, 100, new Set(), { types, queue: 'seo' }).map((i) => i.number), [1, 4]);
+  assert.deepEqual(candidates(gh, 1, new Set(), { types, queue: 'seo' }).map((i) => i.number), [1]);
+  assert.throws(() => candidates(gh, 100, new Set(), { types, queue: 'bug' }), /不是独立队列/);
 });
 
 test('set does the flips a session or a person makes, and refuses the 待 states reconcile owns', () => {
