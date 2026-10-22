@@ -8,7 +8,7 @@ argument-hint: "<间隔，如 30m>"
 
 人通常不在场：要人决定的事写进汇报，接着做完这一轮。
 
-每个待验证的 issue 由一个 issue 会话（`idea-loop:issue-session`）从验证陪到关闭，会话按阶段待在侧边栏的三个 section 里：「审核中」「设计中」「实现中」。你只负责把新 issue 交出去：**定时触发的轮次不能开会话，你出卡片**，人点了卡片会话才开。
+每个待验证的 issue 由一个 issue 会话（`idea-loop:issue-session`）从验证陪到关闭，会话按阶段待在侧边栏的三个 section 里：「审核中」「设计中」「实现中」。issue 分几个队列排，每个队列有自己的会话上限和自己的三个 section：默认只有主队列（上限 10）；项目在「issue 分类」里给某个父类注了「（独立队列，上限 N）」，那个分类的 issue 单独排，section 名前加分类名（如「seo 审核中」）。你只负责把新 issue 交出去：**定时触发的轮次不能开会话，你出卡片**，人点了卡片会话才开。
 
 ## 前提与边界
 
@@ -29,21 +29,21 @@ loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由�
 ## 每一轮
 
 1. **对账**：`git pull --ff-only`；`issues labels <docs>` 建出缺的 label（它列出的多余 label 记进汇报，不删）；`issues reconcile <docs>`，报的问题原样记进汇报。
-2. **section**：`list_sections` 里找「审核中」「设计中」「实现中」，缺的用 `create_section` 建。
-3. **数开着的会话**：三个 section 各用 `mcp__ccd_session_mgmt__list_sessions`（`group` 写 section 名，`limit: 100`）列出没归档的会话；section 自带的计数含已归档的，不用它。section 跨项目共用，总数也跨项目算。标题是「<仓库名>#<号> …」的就是这个仓库那个 issue 的会话。
+2. **队列与 section**：`issues queues <docs>` 列出每个队列的 `name`（主队列是 `null`）、`cap` 和三个 `sections`。`list_sections` 里缺的用 `create_section` 建。
+3. **数开着的会话**：每个队列的三个 section 各用 `mcp__ccd_session_mgmt__list_sessions`（`group` 写 section 名，`limit: 100`）列出没归档的会话，加起来是这个队列开着的会话数；section 自带的计数含已归档的，不用它。section 跨项目共用，总数也跨项目算。标题是「<仓库名>#<号> …」的就是这个仓库那个 issue 的会话。
 4. **没有会话的 issue**：label 是验证中、审核中、待设计、设计中、待实现、实现中，却没有对应标题的会话，记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或翻回去。
-5. **出卡片**：空位 = 10 − 开着的会话 − 还没点的卡片（你出过、issue 还是待验证的；上一轮汇报里记着）。空位 ≤ 0 就跳过。否则 `issues candidates <docs> <空位>` 取最早的待验证 issue，跳过还没点的卡片已经占着的，每个出一张卡片，一轮最多 3 张：
+5. **出卡片**：每个队列分开算。空位 = 这个队列的 `cap` − 它开着的会话 − 它还没点的卡片（你出过、issue 还是待验证的；上一轮汇报里按队列记着）。空位 ≤ 0 就跳过这个队列。否则取最早的待验证 issue：主队列 `issues candidates <docs> <空位>`，独立队列 `issues candidates <docs> <空位> --queue=<name>`；跳过还没点的卡片已经占着的，每个出一张卡片。一轮所有队列合计最多 3 张，主队列先出：
    - `start_session`：`initiation: own_initiative`，`context: fresh`，`use_worktree: true`（会话要有自己的 worktree 才能从你这里脱离出去），标题「<仓库名>#<号> <issue 标题>」。
    - `prompt`：`你是 <仓库名>#<号>（<issue 标题>）的 issue 会话，由 issue 调度会话的卡片开出。用 Skill 工具调 idea-loop:issue-session，参数 <号>，按它从开场做起。`
-   - `background`：这个仓库用 idea-loop 处理 issue，一个 issue 一个会话，会话按阶段待在侧边栏的「审核中」「设计中」「实现中」里，人在会话里 grill 和拍板。
+   - `background`：这个仓库用 idea-loop 处理 issue，一个 issue 一个会话，会话按阶段待在侧边栏的「审核中」「设计中」「实现中」里（独立队列的 issue 待在加了分类名的同名 section 里），人在会话里 grill 和拍板。
    - 卡片一周不点会过期：过期的从「还没点的卡片」里去掉，下一轮会重新出。
 
 ## 汇报
 
-五行以内（你的上下文会随每轮累积）：
+每个队列一行，加上下面另外两行（你的上下文会随每轮累积）：
 
 - 对账做了什么（哪些 issue 进了哪个状态、关了哪些）
-- 开着的会话 / 10；这一轮出的卡片；还没点的卡片（issue 号，下一轮要读）
+- 每个队列一行：开着的会话 / 上限；这一轮出的卡片；还没点的卡片（issue 号，下一轮要读）
 - 要人处理的事（对账报的问题、多余的 label、没有会话的 issue、出卡片失败），没有就写「无」
 
 出了新卡片或有要人处理的事，用 PushNotification 发一句话：有几张卡片等点 / 要处理什么。

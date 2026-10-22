@@ -4,6 +4,7 @@ import { parseSeoMd } from './seo-md.mjs';
 import { plan as budgetPlan, RUN_CAP } from './seo-budget.mjs';
 import { syncPlan } from './seo-context.mjs';
 import { regressions } from './seo-baseline.mjs';
+import { due } from './seo-due.mjs';
 
 const SEO_MD = `# SEO
 
@@ -136,4 +137,25 @@ test('baseline: a key page missing from this audit is severe; unchanged pages gi
   assert.equal(out.length, 1);
   assert.match(out[0].evidence.values, /本次审计里没有这个页面/);
   assert.deepEqual(regressions(seo, prev, prev), []);
+});
+
+const run = (date, collected) => ({ entryDate: date, summary: `seo-scan ${date} 22:05，方向：${collected}\n采集：${collected}\n花费：0 credits` });
+
+test('due: an empty log runs everything; a collected run waits its cadence, a skipped one does not', () => {
+  assert.deepEqual(due({ researchLog: [] }, '2026-10-25').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
+  const log = [
+    run('2026-10-18', 'technical 3 条；pages 2 条'),
+    run('2026-10-04', 'technical 1 条；pages 0 条；keywords 4 条；backlinks 未采集（数据源不可用）；geo 0 条'),
+    { entryDate: '2026-10-10', summary: 'Keyword research: weeknight dinners. Verdict: ...' },
+  ];
+  const r = due({ researchLog: log }, '2026-10-25');
+  assert.deepEqual(r.last, { technical: '2026-10-18', pages: '2026-10-18', keywords: '2026-10-04', backlinks: null, geo: '2026-10-04' });
+  assert.deepEqual(r.due, ['technical', 'pages', 'backlinks']);
+  assert.deepEqual(due({ researchLog: log }, '2026-10-31').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
+});
+
+test('due: a weekly run a few minutes early still counts as a week', () => {
+  assert.deepEqual(due({ researchLog: [run('2026-10-18', 'technical 1 条；pages 1 条')] }, '2026-10-24').due.slice(0, 2), ['technical', 'pages']);
+  assert.ok(!due({ researchLog: [run('2026-10-18', 'technical 1 条；pages 1 条')] }, '2026-10-20').due.includes('technical'));
+  assert.throws(() => due({}, '10/25'), /YYYY-MM-DD/);
 });

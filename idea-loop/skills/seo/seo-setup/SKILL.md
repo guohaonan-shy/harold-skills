@@ -1,6 +1,6 @@
 ---
 name: seo-setup
-description: 把一个站点接进 seo 分类：写仓库根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类，配 AI 可见性跟踪。每个站点跑一次，设定变了再跑。
+description: 把一个站点接进 seo 分类：写仓库根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类和队列，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
 disable-model-invocation: true
 ---
 
@@ -62,13 +62,15 @@ disable-model-invocation: true
 项目的「`## issue 分类`」一节在 `AGENTS.md`；没有 `AGENTS.md`，在有 `## idea-loop` 块的那份 `CLAUDE.md`。这一节不存在，告诉人先跑 `/idea-loop:setup`，这一步记「未做」。存在就补上缺的行，格式照 setup 的模板：父类、子类各一行，名字放反引号里，「：」后接说明，子类缩进两格。
 
 ```markdown
-- `seo`：搜索可见性的问题：由 seo-scan 定时提出，或人按 SEO 问题提
+- `seo`：搜索可见性的问题：由 seo-scan 定时提出，或人按 SEO 问题提（独立队列，上限 5）
   - `technical`：技术 SEO 与索引：审计问题、索引、sitemap、重点页面相对上次审计的回退
   - `pages`：已有页面优化：排名 5–20 位的词、标题与点击率、自相蚕食、内链缺口
   - `keywords`：关键词挖掘与新内容：新词、聚类、并入已有页还是新开
   - `backlinks`：外链：竞品有、我们没有的引用域，外联候选
   - `geo`：AI 搜索可见性：被 AI 回答提到和引用的情况、schema、llms.txt
 ```
+
+「（独立队列，上限 5）」让 seo 的 issue 在调度里单独排队、最多同时开 5 个会话，扫描一次提出一批也挤不掉别的 issue（`idea-loop:issue-dispatch`）。`seo` 那行已经在、没有这个括注，补上；人改过上限的，留着人的数。
 
 然后跑 `node S/issues.mjs labels docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 `/idea-loop:setup`。
 
@@ -86,6 +88,19 @@ disable-model-invocation: true
 
 完成条件：跟踪已开着定期检查，或人明确拒绝且记下了。
 
+## 8. 每周扫描
+
+扫描由 Claude 桌面 app 的定时任务每周调一次 `/idea-loop:seo-scan`，不带参数：哪些方向这周该跑，由 seo-scan 自己按研究日志定。定时任务跑出的会话用的是建它的会话的目录，所以这一步必须在本仓库的主 checkout 里做。
+
+1. `mcp__scheduled-tasks__list_scheduled_tasks`。没有这个工具（不在桌面 app 里）：把下面第 2 步的 prompt 和时间给人，让人在桌面 app 的定时任务里自己建，这一步记「未做：不在桌面 app」。
+2. 已有 prompt 里含 `/idea-loop:seo-scan` 的任务：报给人（时间、是否开着），这一步完成。没有：问人每周哪天几点（推荐周日晚上），人定了再 `create_scheduled_task`：
+   - `taskId`：`seo-scan-<仓库名>`；`title`：`<仓库名> 每周 SEO 扫描`
+   - `cronExpression`：人定的时间，分钟避开 0 和 30
+   - `prompt`：`用 Skill 工具调 idea-loop:seo-scan，不带参数，照它跑到「交回」。没有人在场：不提问，缺什么照 skill 写的记下来往下走。`
+3. 告诉人：app 关着时到点不跑，下次打开 app 时补跑；跑完的结果在侧边栏的定时任务里看。
+
+完成条件：本仓库有一个开着的每周 seo-scan 定时任务，或记下了没建的原因。
+
 ## 交回
 
 一张表：每一步一行，「完成 / 未做（原因）/ 人拒绝」，加下一步要做的事。再列：
@@ -94,4 +109,4 @@ disable-model-invocation: true
 - OpenSEO 里写了什么：项目（新建还是已有）、上下文各节、竞品和重点页面的增删、跟踪的提示词数与每月估价。
 - 建了哪些 label。
 - Search Console 有没有接上：`get_search_console_performance` 返回「未连接」，告诉人到 OpenSEO 项目的集成页去连。pages 方向靠它。
-- 接下来：在 routine 里按方向调 `/idea-loop:seo-scan`（例如每周 `technical pages`，每月 `keywords backlinks geo`）；不知道从哪下手，用 `idea-loop:seo-coach`。
+- 接下来：每周的定时任务会自己跑 `/idea-loop:seo-scan`，想马上看一次就手动敲它；不知道从哪下手，用 `idea-loop:seo-coach`。

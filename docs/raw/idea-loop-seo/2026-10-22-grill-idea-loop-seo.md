@@ -151,6 +151,36 @@ Q2 - Q4 同意
 
 同意
 
+## A12
+
+照办：外联进 `docs/records/outreach/`，backlink-analyst 读跟进表去重。
+
+## U13
+
+现在的修改应该差不多，在合并之前，我们来讨论下那我有没有一个统一的入口来触发，我觉得这个场景比较适合scheduler 每周定时跑，这个定时任务要怎么将所有的内容进行合并
+
+## A13
+
+入口已是 seo-scan，合并在它里面：方向文件拼成一份发现清单 → 同方向同 kind 合成一个 issue → 隐藏标记跨周去重、只评论新增目标 → 新 issue 待验证、调度出卡片。一个每周定时跑全部五个方向的问题：研究日志只有摘要，「30 天不重买」拿不到上次结果，贵的方向每周重买，还会被 2,000 的上限截断。推荐：一个每周定时、不带参数，seo-scan 读研究日志里以前各次扫描的「采集」行自己挑方向（technical、pages 每次，其余四周一次）。定时器建议用桌面 app 的本地定时任务，云端连不连得上 OpenSEO 未验证。
+
+## U14
+
+还有个点就是SEO相关的问题，我倾向于跟issue-dispatcher可以分开队列，seo标签单独（按照现在的调度机制，共享一个队列，队列就是10），另外，section下面可以创建子section吗？
+
+## A14
+
+section 不能嵌套：`create_section` 只收一个名字。推荐一个调度 loop 里分两个池：「issue 分类」里父类注「（独立队列，上限 N）」，`issues candidates` 按分类筛，各池各算空位，SEO 会话放「seo 审核中」这类带前缀的 section。不另起调度会话（多一个定时、一个到期提醒、要防抢 issue）。
+
+## U15
+
+都同意，上限5，放进#73一起改
+
+seo-scan我也同意，这个scheduler可以在plugin单独实现吗？还是说需要我在app上配置？
+
+## A15
+
+插件声明不了定时任务，但 seo-setup 能在人在场时用桌面 app 的定时任务工具替人建：查过 TOEFLAIR 已有的定时任务，它跑出的会话用建它的会话的目录（TOFEL-demo），所以在项目主 checkout 里跑 seo-setup 建就行，不用人去 app 里配；不在桌面 app 里时把 prompt 和时间给人自己建。
+
 ## 本轮决议
 
 | 议题 | 决议 |
@@ -169,7 +199,8 @@ Q2 - Q4 同意
 | 内容类 | brief 写进 spec 的「方案」，spec 进「审核中」由人定角度和论点，之后自动写、PR 里过稿 |
 | 外链 | 实现产出只改 docs 的草稿 PR，邮件由人发；草稿和跟进表放 `docs/records/outreach/<资产>/`，backlink-analyst 读跟进表去重（「无回应」超过 90 天可再提） |
 | 阈值 | page-optimizer 的阈值作为默认值写在 agent 里，先跑再调；对比文超期统一 90 天 |
-| seo-scan 调用 | 只能斜杠命令（routine 触发） |
+| seo-scan 调用 | 只能斜杠命令；一个每周定时任务不带参数调它，由 seo-setup 在项目主 checkout 里建；不带参数时按研究日志挑方向（technical、pages 每次，其余四周一次），带参数只跑给的 |
+| 调度队列 | 通用的独立队列：分类说明注「（独立队列，上限 N）」就单独排队、单独计数；`seo` 上限 5；section 不能嵌套，用「seo 审核中」这类前缀 |
 | GEO 无跟踪 | AI 引用数据记未采集，免费站点自检照跑、照常提 issue |
 | lint | seo-lint 与 seo-geo-check 合成 seo-check，提炼通用版；PR 的 CI 由项目自己配；构建后 hook 按「SEO.md 的构建产物目录刚被改写」触发 |
 | 项目专属 | 全部留项目，经 SEO.md「写作」一节指过去；SEO.md 的格式由 seo-setup 定 |

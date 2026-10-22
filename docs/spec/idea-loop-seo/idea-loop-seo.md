@@ -53,9 +53,9 @@ TOEFLAIR 有一套「Google 与 Bing 两个平台的标准不同」的检查：�
 
 装了 idea-loop 的项目跑一次 seo-setup，得到根目录的一份 SEO.md，此后：
 
-- **发现**：routine 按方向定时触发 seo-scan。每个方向一个 agent 并行，按从 OpenSEO 蒸馏来的方法取数据、判断，交回发现清单。
+- **发现**：seo-setup 建的定时任务每周触发一次 seo-scan，seo-scan 按研究日志挑出这周该跑的方向。每个方向一个 agent 并行，按从 OpenSEO 蒸馏来的方法取数据、判断，交回发现清单。
 - **入队**：一个脚本把发现清单变成 GitHub issue：同类合并、撞上开着的就评论，不设上限。issue 不带状态标签，直接是「待验证」，提出时就打上 `type:seo/<方向>`，正文写明证据和复现方法。
-- **解决**：issue-dispatch 照常出卡片，issue 会话照常走审核、（设计、）实现。SEO 带进来的只是领域能力：内容类在审核阶段由 seo-brief 写方案、由人定角度，实现阶段由 seo-writing 写；外链类的实现产出邮件草稿；任何会话构建出站点产物后，检查 hook 自动跑 seo-check。
+- **解决**：issue-dispatch 照常出卡片，但 SEO issue 在自己的独立队列里排（上限 5），不占主队列的 10 个名额；issue 会话照常走审核、（设计、）实现，待在「seo 审核中」这类带前缀的 section 里。SEO 带进来的只是领域能力：内容类在审核阶段由 seo-brief 写方案、由人定角度，实现阶段由 seo-writing 写；外链类的实现产出邮件草稿；任何会话构建出站点产物后，检查 hook 自动跑 seo-check。
 
 结果由这几样输入决定：项目的 SEO.md、当次从 OpenSEO 取到的数据（含它保存的上一次审计和研究日志）、GitHub 上开着的 SEO issue。
 
@@ -97,7 +97,7 @@ TOEFLAIR 有一套「Google 与 Bing 两个平台的标准不同」的检查：�
 
 ![定时扫描](../../raw/idea-loop-seo/assets/tree-user-stories-2-scan.png)
 
-1. 我想要 routine 按传入的方向触发、每次只跑这几个方向，以便贵的方向不必每周都跑。
+1. 我想要只有一个每周的定时任务，由 seo-scan 自己按上次跑的时间挑方向，以便贵的方向不必每周都跑，也不用配两个定时。
 2. 我想要每个方向由一个 agent 并行完成、各用对应的 skill，以便一个方向的数据不挤掉另一个方向的判断。
 3. 我想要余额低于下限时跳过付费调用并写明原因，以便无人值守也不会把额度花光。
 4. 我想要某个数据源不可用时只记「未采集」，以便一个源坏了不耽误其他方向。
@@ -158,7 +158,7 @@ TOEFLAIR 有一套「Google 与 Bing 两个平台的标准不同」的检查：�
 | seo-coach | OpenSEO 蒸馏 | 照原样，只改一处：先读 SEO.md 和项目上下文，不再从头问站点是做什么的 | 不被调用 |
 | seo-setup | OpenSEO 的 seo-project-setup 改写 | 只在人在场时跑 | — |
 | seo-geo | 以 claude-seo 的 seo-geo 为底，数据换成 OpenSEO，自己写 | 可问 | 交回发现清单 |
-| seo-scan | 自己写 | 人也能手动触发 | routine 触发 |
+| seo-scan | 自己写 | 人也能手动触发，可指定方向 | 每周定时任务触发，不带参数 |
 | seo-brief | 自己写 | 可手动调 | issue 会话审核阶段调 |
 | seo-writing | 自己写，规则从项目的 blog 写作 skill 提炼成通用版 | 润色、多语言镜像 | issue 会话实现阶段调 |
 | seo-outreach | 自己写 | 可手动调 | issue 会话实现阶段调 |
@@ -203,15 +203,15 @@ content?     内容类才有：目标词、页面类型、新开还是改已有�
 
 ### seo-scan 的一次运行
 
-参数是这次要跑的方向（如 `technical pages`）。节奏写在 routine 里，不写在 SEO.md：每周的 routine 传 technical、pages，每月的传其余三个（依据：SEO.md 不放扫描节奏，raw 的 Q21）。
+只有一个入口：seo-setup 在项目主 checkout 里建一个 Claude 桌面 app 的定时任务，每周调一次不带参数的 seo-scan（定时任务的会话用建它的会话的目录，2026-10-22 查 TOEFLAIR 已有的定时任务实测）。不带参数时由挑方向脚本读研究日志里以前各次扫描的「采集」行，technical、pages 每次都跑，keywords、backlinks、geo 距上次采集满四周才跑；只有采集到的才算跑过，预算跳过或数据源坏了的下周再跑。节奏是插件的，不写进 SEO.md，也不写进定时任务（原来是两个定时任务各传方向，Harold 改为「一个统一入口」，见 raw 的 U13–U15）。带参数时只跑给的方向，供人手动补跑。
 
-1. **预算**：`whoami` 读余额，交给预算脚本，按 SEO.md 的余额下限和各方向单次额度算出这次每个方向放行多少。各方向放行之和不超过 2,000 credits：OpenSEO 要求超过这个数先问人，routine 里没人可问。余额低于下限，付费调用全部不放行，免费的照常。
+1. **预算**：`whoami` 读余额，交给预算脚本，按 SEO.md 的余额下限和各方向单次额度算出这次每个方向放行多少。各方向放行之和不超过 2,000 credits：OpenSEO 要求超过这个数先问人，定时任务里没人可问。余额低于下限，付费调用全部不放行，免费的照常。
 2. **竞品与重点页面同步**：读项目上下文，交给比对脚本和 SEO.md 比；不一致就用 `update_project_context` 把 SEO.md 的写进去。单向，SEO.md 为准（依据：[[2026-10-21-seo-workflow-discussion]] 决议「SEO.md 为准、单向同步」）。
 3. **并行派方向 agent**，带上放行额度。某个方向的数据源不可用，记「未采集：原因」，不中止。
 4. **提 issue**：全部发现加上开着的 `type:seo` issue 交给提 issue 脚本，得到计划，照计划建 issue、发评论。
 5. **研究日志**：本次的摘要用 `update_project_context` 追加进 OpenSEO 的研究日志：跑了哪些方向、各自是否采集、花了多少、建了哪些 issue、拒收了哪些（一句原因）。
 
-运行状态不存进项目仓库：研究日志 OpenSEO 本来就有，蒸馏来的 skill 也按它判断「30 天内查过的不重买」；上一次审计 OpenSEO 也保存着（2026-10-22 查：这个项目存着 4 次审计，最近一次 2026-09-16）。这样 routine 不需要往仓库提交任何东西，提 issue 就是唯一的产出（原话：「直接提issue即可」）。
+运行状态不存进项目仓库：研究日志 OpenSEO 本来就有，蒸馏来的 skill 也按它判断「30 天内查过的不重买」；上一次审计 OpenSEO 也保存着（2026-10-22 查：这个项目存着 4 次审计，最近一次 2026-09-16）。这样定时任务不需要往仓库提交任何东西，提 issue 就是唯一的产出（原话：「直接提issue即可」）。
 
 不发布 Artifact，不写「洞察」。
 
@@ -230,10 +230,18 @@ seo-scan 里唯一写 GitHub 的地方。输入发现清单和开着的 `type:se
 - **拒收**：缺 `evidence`、缺 `repro`、`acceptance` 为空、文字里出现百分比却没带 `ratio`。拒收的只进研究日志。
 - **合并**：同一 `direction` 加 `kind` 的发现合成一个 issue，`targets` 取并集，正文列出全部受影响的页面或词。
 - **去重**：issue 正文末尾带一个隐藏标记，内容是 `direction` 加 `kind`。开着的 issue 带着同一标记的，在它下面评论本次的新数据和新增的 `targets`，不新开。
-- **不设数量上限**：并发由 issue-dispatch 限（原话：「扫描端不需要限制issue数目，issue调度那边会限制数目」）。
+- **不设数量上限**：并发由 issue-dispatch 限（原话：「扫描端不需要限制issue数目，issue调度那边会限制数目」）。为了一次扫描提出一批也挤不掉别的 issue，SEO 走调度的独立队列，见下节。
 - **标签**：不打任何 `status:*`，新 issue 就是「待验证」；用 `issues type <号> seo/<方向>` 打分类。分类不在项目的「issue 分类」里时，`issues type` 会拒绝，脚本照样建 issue，在研究日志里写明「项目没有 seo 分类，跑一次 seo-setup」。
 - **正文模板**：问题、证据、怎么复现、建议的修法、验收标准；内容类再加一节「审核阶段」：「起草 spec 时用 `idea-loop:seo-brief` 写方案；spec 开头写『需要 grill：选题角度和论点』」；外链类加一节「实现阶段」：「用 `idea-loop:seo-outreach`，产出只改 `docs/` 的 PR」。issue 会话里的 skill 按 issue 原文做，所以这几行就是给它的指引。
 - gh 调用通过注入的函数进来，测试换成假的。
+
+### 调度的独立队列
+
+seo-scan 不限 issue 数，一次扫描提出十几个是常态；和别的 issue 共用调度的 10 个名额，产品 issue 会排不上（Harold：「SEO相关的问题，我倾向于跟issue-dispatcher可以分开队列」）。做成通用机制，不在调度里写 SEO：
+
+- 项目「issue 分类」里一个父类的说明末尾注「（独立队列，上限 N）」，这个分类的待验证 issue 就单独排队，最多同时开 N 个会话。seo-setup 给 `seo` 注上限 5。
+- 每个队列有自己的三个 section，名字是分类名加阶段（「seo 审核中」「seo 设计中」「seo 实现中」）。侧边栏的 section 不能嵌套（`create_section` 只收一个名字），所以用前缀，不用子 section。调度按 section 分别数各队列开着的会话，空位各算各的，一轮所有队列合计最多 3 张卡片，主队列先出。
+- `issues queues` 列出队列（上限、section 名），带 issue 号时返回它在哪个队列；`issues candidates --queue=<分类>` 只取那个队列的待验证 issue，不带时只取主队列的。issue 会话归位和换阶段时都按它找 section，审核时分类改了，下一段就进新队列的 section。
 
 ### 分类：`type:seo/<方向>`
 
@@ -252,7 +260,7 @@ seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加�
 | 构建与检查 | 构建产物目录（相对仓库根）、各语言传给 seo-check 的参数 | 检查 hook |
 | 写作 | 本项目文风文件、文章类型字段名与取值到通用类型的映射、失败案例文件，都是指向项目文件的路径 | seo-writing、seo-brief、seo-outreach |
 
-不放：扫描节奏（在 routine 里）、issue 标签（插件固定）、方向的方法（在 skill 里）。
+不放：扫描节奏（插件固定，在挑方向脚本里）、issue 标签（插件固定）、方向的方法（在 skill 里）。
 
 ### seo-setup
 
@@ -354,6 +362,8 @@ seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加�
 | hook：没有 SEO.md | 仓库没有 SEO.md | 同上 | 放行 | 发布前检查 1 |
 | CJK 误报 | 中文页标题 28 个字，宽度在范围内 | 跑 seo-check | 不报 warn，只出一条 Bing 误报的 info | 发布前检查 2 |
 | 描述过宽 | 英文页描述宽度超出默认上限 | 跑 seo-check | error，退出码 1；用参数调高上限后通过 | 发布前检查 2、3 |
+| 独立队列 | 分类一节里 `seo` 注了「（独立队列，上限 5）」；开着 seo、bug、未分类的待验证 issue | 跑 `issues queues`、`issues candidates` 带和不带 `--queue=seo` | 两个队列，上限 10 和 5；主队列只出 bug 和未分类的，seo 队列只出 seo 的 | 提 issue 1 |
+| 按节奏挑方向 | 研究日志里两周前一次扫描采集了全部五个、上周一次只采集了 technical 和 pages | 跑挑方向脚本 | 只挑 technical、pages；满四周后五个都挑；某方向那次是「未采集」的，算没跑过 | 定时扫描 1 |
 | 不泄漏项目名 | 新 skill 全部写完 | 跑 `no-project-leak` | 通过 | 全部 |
 
 ### prompt / eval 变动
@@ -368,8 +378,8 @@ seo-setup 往项目 AGENTS.md（或 CLAUDE.md）的「issue 分类」一节加�
 
 ## Out of scope
 
-- 项目侧的接入：写 TOEFLAIR 的 SEO.md、迁出它的写作规范、退役它的周报插件与 launchd、配 routine、建 AI 可见性跟踪。另写一份 spec，本 spec 的实现合并后再写。
-- 改 issue-dispatch、issue-session、issue-verify、to-spec、implement：SEO issue 靠正文指引走通原流程。
+- 项目侧的接入：写 TOEFLAIR 的 SEO.md、迁出它的写作规范、退役它的周报插件与 launchd、跑 seo-setup 建每周定时任务、建 AI 可见性跟踪。另写一份 spec，本 spec 的实现合并后再写。
+- 改 issue-verify、to-spec、implement：SEO issue 靠正文指引走通原流程。issue-dispatch 和 issue-session 只加了独立队列，是通用机制，不认识 SEO。
 - 项目的 CI：由项目和用户自己配。
 - 项目里已有的 SEO 检查脚本、回合结束 hook：本期不动。
 - 自动发送外联邮件：永远由人发。

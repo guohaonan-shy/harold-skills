@@ -12,12 +12,14 @@ argument-hint: "<issue 号>"
 | 设计 | 设计中 | 设计中 | 冻结结果经设计 PR 合进主分支 |
 | 实现 | 实现中 | 实现中 | 实现 PR 合并 |
 
+section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
+
 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
 1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
-2. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按标题列出的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<号> <issue 标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话。
+2. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上面换好的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<号> <issue 标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话。
 3. **认领**：`gh issue view <号> --comments` 读全文和评论，看它现在的状态（`idea-loop:spec-status` 的「issue 的状态」）：
    - 待验证：`issues set <docs> 验证中 <号>`，从「审核」开始。
    - 已经是别的状态、你是调度卡片开出来的：别的会话已经在做它。告诉人，然后照「收尾」归档自己。
@@ -45,7 +47,7 @@ argument-hint: "<issue 号>"
 
 1. `git fetch origin`，从最新的主分支切出下一段的分支：`git switch -c <下一段>/<spec-slug> origin/<主分支>`（设计用 `design/`，实现用 `impl/`）。
 2. `issues advance <docs> <spec-slug>`：照主分支上的 spec 把 issue 翻到下一段并认领，或关掉；最后一行写着「下一段」。
-3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进同名 section，去那一段。是「关闭」：去「收尾」。
+3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进这一段的 section（先重跑一次 `issues queues <docs> <号>`：审核时分类可能改了），去那一段。是「关闭」：去「收尾」。
 
 ## 收尾
 

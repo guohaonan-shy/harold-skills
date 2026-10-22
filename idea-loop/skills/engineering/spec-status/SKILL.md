@@ -60,7 +60,7 @@ spec 覆盖了哪几个 issue，记在它 frontmatter 的 `issues: [12, 15]` 里
 
 ## issue 的分类
 
-除了状态，issue 还带分类 label：父类 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上。项目有哪些分类、另外保留哪些 label，写在根目录 `AGENTS.md`（或 `CLAUDE.md`）的「issue 分类」一节，`/idea-loop:setup` 建它。分类由 `idea-loop:issue-verify` 验证时打，走 `issues type`；`issues labels` 照这一节建出分类 label，不在状态、分类和保留清单里的 label 只列出来，`--prune` 才删。
+除了状态，issue 还带分类 label：父类 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上。项目有哪些分类、另外保留哪些 label，写在根目录 `AGENTS.md`（或 `CLAUDE.md`）的「issue 分类」一节，`/idea-loop:setup` 建它。分类由 `idea-loop:issue-verify` 验证时打，走 `issues type`；`issues labels` 照这一节建出分类 label，不在状态、分类和保留清单里的 label 只列出来，`--prune` 才删。父类那行注了「（独立队列，上限 N）」的，它的 issue 在调度里单独排队（`issues queues`）。
 
 ## 开一个待验证的 issue
 

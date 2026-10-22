@@ -52,4 +52,4 @@
 
 方向名固定为 `technical`、`pages`、`keywords`、`backlinks`、`geo`，和「issue 分类」里 `seo` 的子类同名。
 
-不写进 SEO.md 的：扫描节奏（在 routine 的参数里）、issue 标签（插件固定为 `type:seo/<方向>`）、各方向怎么查（在 skill 里）。
+不写进 SEO.md 的：扫描节奏（插件固定：seo-scan 按研究日志挑方向，`seo-due.mjs`）、issue 标签（插件固定为 `type:seo/<方向>`）、各方向怎么查（在 skill 里）。
