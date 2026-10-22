@@ -122,3 +122,28 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 4. 有依赖关系的 skill 按上游 → 下游顺序构建
 5. 全部 skill 完成后再生成 plugin 的 `README.md`
 6. plugin 级共享参考统一放 `<plugin>/references/`；如有原始对话 / 真实案例可蒸馏到 `skills/<name>/references/cases.md`，没案例可跳过该步（excalidrawer 模式）
+
+## idea-loop
+
+- 本地开发（分支、worktree、开发服务器）：`DEVELOPMENT.md`
+- 验证命令与 review 要求：`REVIEW.md`
+- 代码规范：`CODING_STANDARDS.md`
+- 需求从哪进来、issue 的状态 label：`ISSUE_TRACKER.md`
+- issue 的分类 label：`AGENTS.md` 的「issue 分类」一节
+- 产品是给谁的、要做成什么样：`PRODUCT.md`
+- 术语：`GLOSSARY.md`（有就读）
+
+## issue 分类
+
+issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类>`，子类打成 `type:<父类>/<子类>`，打子类时父类一起打。idea-loop 验证 issue 时打，人也可以手动打。父类按 issue 落在哪个 plugin 分。
+
+- `idea-loop`：idea-loop plugin 的 issue
+  - `engineering`：spec、工单、实现、review、issue 调度这条从想法到合并的流程
+  - `design`：设计调研、设计发散与收敛、设计档案、`DESIGN.md`
+  - `productivity`：grill、writing-for-agents、dreaming、知识库约定、决策规则这类不绑定某一段流程的能力
+- `excalidrawer`：excalidrawer plugin 的 issue
+- `content-creator`：content-creator plugin 的 issue
+- `interview-coach`：interview-coach plugin 的 issue
+- `happy-life`：happy-life plugin 的 issue
+
+保留的 label：无
