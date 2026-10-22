@@ -79,7 +79,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
 1. 还没有 PR：推送，`gh pr create --draft --base <base>`（标题用 spec 标题，带署名行），用 `pr-body.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`）。
-   - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：PR 开出来后，把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用 SendMessage 发回这个会话，没带 `--session` 就只有 macOS 通知。停下汇报里写明哪些用例在队列、几点以后有结果。
+   - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：PR 开出来后，把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。停下汇报里写明哪些用例在队列、几点以后有结果。
 2. 照 `idea-loop:pr` 的「停下汇报」写：handled 的每一条进「已按规则处理」，新落地工单的人验素材进交付验收，pending 的每一条写成决定题。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md pause`，追加成新条目，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。
 4. 照 `idea-loop:pr` 的「review loop」在会话里按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。

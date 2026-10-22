@@ -264,14 +264,14 @@ is not reviewed until the result is in. `retro-replay.mjs --queue` is what the n
 cases the way a single case runs, appends the result to that PR's review loop file as a `replay` entry (readable by
 `review-loop.mjs check`; a case that did not pass leaves it unsettled), deletes the PR's queue file and prints one line
 `回放结果 {json}` carrying the session id. The scheduled task's session sends that line's `message` back to the issue session with
-`SendMessage` (the arrival wakes it: all passed, it carries on; not all passed, it stops and puts the result to the human) and runs
+the `send_message` session tool (`SendMessage` does not reach another session from a scheduled-task session) (the arrival wakes it: all passed, it carries on; not all passed, it stops and puts the result to the human) and runs
 `retro-replay.mjs --notify` (a macOS notification) when the session cannot be reached; a PR queued without a session id gets the
 notification from the runner itself. A case that did not pass is not rerun: the result is the human's to rule on.
 
 `/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed path,
 the one small replays use too), a desktop-app scheduled task `idea-loop-retro-replay` runs `node ~/.idea-loop/bin/retro-replay.mjs --queue`
 at 01:07 every night, and setup prints the permission rule `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` for the human to add to
-`~/.claude/settings.json` (setup never changes permission settings). The task's prompt is printed by `retro-install.mjs` as well, so setup and the task never drift apart.
+`~/.claude/settings.json` (setup never changes permission settings). The task's prompt is printed by `retro-install.mjs` as well, so setup and the task never drift apart. It starts the runner with Bash's `run_in_background` and waits for the exit wake-up, because a foreground Bash call is cut at 10 minutes and a PR's replay takes longer.
 
 ## Portability
 

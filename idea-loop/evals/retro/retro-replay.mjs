@@ -39,7 +39,7 @@
  * too, nothing is stopped for starting an agent), the result is appended to that PR's review loop file
  * (`<worktree>/.tmp/review-loop/<PR>.md`), the PR's queue file is deleted, and the result goes back: the runner prints a
  * line `回放结果 {json}` carrying the issue session id the queue file named (`--session`), and the scheduled task sends
- * its `message` to that session with SendMessage, running `--notify` (a macOS notification) when that fails. A PR
+ * its `message` to that session with the session send_message tool, running `--notify` (a macOS notification) when that fails. A PR
  * whose queue file names no session gets the notification from the runner itself. A case that did not
  * pass is not rerun: the result is the human's to rule on. When the clock passes 07:00 in the middle of the queue
  * the PRs not yet started stay queued. `--queue-dir` and `--now <local time>` exist for the tests.

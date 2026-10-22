@@ -63,12 +63,20 @@ test('the command line prints the rule and the command, and writes nothing outsi
   assert.equal(spawnSync(process.execPath, [SCRIPT, '--bogus'], { encoding: 'utf8' }).status, 2);
 });
 
-test('the scheduled task prompt runs the one command, forwards each result line to its session with SendMessage, and falls back to the notification', () => {
+test('the scheduled task prompt starts the runner in the background and waits for its exit, so the foreground Bash timeout cannot cut it', () => {
+  const prompt = taskPrompt('/Users/someone/.idea-loop/bin', '/Users/someone');
+  assert.match(prompt, /run_in_background/);
+  assert.match(prompt, /退出/);
+  assert.doesNotMatch(prompt, /timeout 设成最大值/, 'the 10 minute foreground cap is what this replaces');
+  assert.match(prompt, /不要.{0,6}(轮询|sleep|反复)/, 'no polling while it runs');
+});
+
+test('the scheduled task prompt runs the one command, forwards each result line to its session with the session-management send_message tool, and falls back to the notification', () => {
   const home = '/Users/someone';
   const dest = '/Users/someone/.idea-loop/bin';
   const prompt = taskPrompt(dest, home);
   assert.ok(prompt.includes(taskCommand(dest, home)));
-  assert.match(prompt, /SendMessage/);
+  assert.match(prompt, /mcp__ccd_session_mgmt__send_message/, 'a scheduled task session cannot reach another session with SendMessage; this tool can');
   assert.match(prompt, /回放结果/);
   assert.match(prompt, /session/);
   assert.ok(prompt.includes('node ~/.idea-loop/bin/retro-replay.mjs --notify'), 'the fallback is the same runner, so one permission rule covers it');

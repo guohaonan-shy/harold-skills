@@ -47,20 +47,21 @@ export const notifyCommand = (dest, home) => `node ${displayPath(join(dest, ENTR
 
 /**
  * The scheduled task's whole prompt. The runner prints one `回放结果 {json}` line per finished PR; the session this task
- * starts cannot be reached by the runner (it is a script), so this prompt has the agent forward each line.
+ * starts cannot be reached by the runner (it is a script), so this prompt has the agent forward each line (with the session-management send_message tool: SendMessage does not reach another session from a scheduled-task session).
  */
 export function taskPrompt(dest, home) {
   return [
-    `运行下面这一条命令，不要重试，不要读写其他文件。它可能跑很久（每个 PR 的回放要几十分钟），Bash 的 timeout 设成最大值。`,
+    '运行下面这一条命令，不要重试，不要读写其他文件。它要跑很久（每个 PR 的回放要几十分钟），前台 Bash 最多等 10 分钟就会截断它，所以用 Bash 的 `run_in_background: true` 起它，不设 timeout。',
+    '起好之后什么都不做，不要轮询，不要 sleep，不要去读它的输出文件：它退出时会唤醒这场会话。被唤醒后，读它的完整输出，再按下面处理。',
     '',
     taskCommand(dest, home),
     '',
     '它的输出里，每一行以「回放结果 」开头、后面跟一段 JSON 的，是一个 PR 的回放结果。逐行处理：',
-    '- JSON 里的 `session` 是一个会话 id：用 SendMessage，`to` 填这个 id，`message` 填 JSON 里 `message` 字段的原文，不改写；',
+    '- JSON 里的 `session` 是一个会话 id：用 `mcp__ccd_session_mgmt__send_message`（还没加载就先用 ToolSearch 的 `select:mcp__ccd_session_mgmt__send_message` 加载），`session_id` 填这个 id，`message` 填 JSON 里 `message` 字段的原文，不改写。不要用 SendMessage：计划任务起的会话用它发不到别的会话（实测报错）；',
     `- 发不出去（会话已归档、找不到、报错）：改跑 \`${notifyCommand(dest, home)} "<message 的第一行>"\`，发一条 macOS 通知；`,
     '- `session` 是 null 的行：runner 已经自己发过通知，不用处理。',
     '',
-    '命令没有输出这样的行（队列空，或不在 00:00–07:00 的时间窗里）就什么都不发。最后回复：命令输出的最后几行，加上每一行是发给了会话、发了通知，还是没发。',
+    '命令退出后没有这样的行（队列空，或不在 00:00–07:00 的时间窗里）就什么都不发。最后回复：命令输出的最后几行，加上每一行是发给了会话、发了通知，还是没发。',
   ].join('\n');
 }
 
