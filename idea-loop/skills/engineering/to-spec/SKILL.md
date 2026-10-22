@@ -38,9 +38,9 @@ issue tracker 怎么用、状态 label 是什么意思，在目标仓库根目�
 
 7. **合进主分支**：loop 只从主分支取活，所以 spec 先经一个只改 `docs/` 的 PR 合进主分支，issue 再挂 label，label 才不会指向主分支上没有的 spec。调用方说了提交和合并由它来做的（比如 `idea-loop:issue-verify`），这一步整个留给它。
    1. 提交到从最新主分支开出的 `spec/<slug>` 分支，只带这份 spec 的目录、`docs/raw/<topic>/` 里这次写的文件和 `docs/spec/index.md`；工作区里有别的改动，就另开一个 worktree 来提交。推送，`gh pr create`。
-   2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；检查失败就停下告诉人。issue 的 label 由 `idea-loop:issue-dispatch` 下一轮对账按主分支挂；项目没跑 loop 的，在主 checkout 上跑 `issues reconcile <docs>`。
+   2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；检查失败就停下告诉人。issue 的 label 由 `idea-loop:issue-dispatch` 下一轮对账按主分支挂；在 issue 会话里的，由会话跑 `issues advance` 挂；都没有的，在主 checkout 上跑 `issues reconcile <docs>`。
 
-8. **收工**：告诉人这份 spec 到了哪个状态。`正式` 的，由 `idea-loop:issue-dispatch` 按碰不碰 UI 排进「待设计」或「待实现」，人也可以自己跑 `/idea-loop:uiux-imagine` 或调 `idea-loop:to-ticket`。人改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
+8. **收工**：告诉人这份 spec 到了哪个状态。`正式` 的，按碰不碰 UI 进「设计」或「实现」：在 issue 会话里的由会话接着往下走，不在的人用 `/idea-loop:issue-session <号>` 接上，也可以自己跑 `/idea-loop:uiux-imagine` 或调 `idea-loop:to-ticket`。人改了某个决定，牵出的图、User Stories 的树和测试决策同一轮改掉。
 
 工单归 `idea-loop:to-ticket`，ADR 归 `/idea-loop:dreaming`，这里只写 spec。
 

@@ -7,7 +7,7 @@
 1. `review-loop check .tmp/review-loop/<PR 号>.md` 列出没处理完的条目，再看 PR 描述「要你做的事」还有没有没勾的。有就提醒人一句，人仍然说合并就继续。
 2. **有设计产物就先归档**：走下面的「合并前归档」，走完再到第 3 步；没有就直接第 3 步。冻结时经设计 PR 提交的画布和 `delta/` 就在 `tmp/<spec-slug>/` 里；合并前钩子 `merge-gate-hook.mjs` 查的是同一件事，没归档就 `gh pr merge` 会被它拦下。只有调研目录的需求不归档、也不被拦：调研页随 `tmp/` 的生命周期删，想早点清就手动删；用进设计的调研结论已经写在方向说明或冻结记录里，随设计一起归档。
 3. **归档 review loop**：`review-loop archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`idea-loop:pr` 的「review loop」）。中途失败直接重跑，贴过的不会重复。
-4. **spec 翻完成、删工单**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个只改 `docs/` 的提交（`docs(spec): <spec-slug> 完成`），推送到这个已经通过审核的 PR 分支，跟着这次合并进主分支。它覆盖的 issue 由 `idea-loop:issue-dispatch` 下一轮对账关掉；项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
+4. **spec 翻完成、删工单**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个只改 `docs/` 的提交（`docs(spec): <spec-slug> 完成`），推送到这个已经通过审核的 PR 分支，跟着这次合并进主分支。它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
 5. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md` 的「分支」节。
 6. 做「合并后的清理」。
 
