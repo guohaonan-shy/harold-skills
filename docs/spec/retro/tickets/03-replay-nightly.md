@@ -29,6 +29,8 @@
 
 - [x] 人的决定（2026-10-22）：入队时编排者把 issue 会话的 id 写进队列文件；runner 跑完每个 PR 打印一行带目标会话 id 的结果摘要；setup 建的计划任务 prompt 让那场会话按这些行用 SendMessage 逐条发回对应的 issue 会话；发不出去（会话已归档、找不到）时照旧发 macOS 通知，结果照旧在 review loop 文件里。有单测覆盖「打印的结果行带会话 id」「队列文件缺会话 id 时退回只发通知」；implement / issue-session 的说明写清 issue 会话收到结果后做什么（全过接着走、有不过的停下摆给人）
 
+- [ ] 照规则（这次引入的，这次修）：夜间任务里 runner 不受 Bash 前台 10 分钟上限截断——计划任务的 prompt 让那场会话用后台方式起 runner、等它退出再按结果行发回会话；用一个假 runner（睡过 10 分钟再打印一行带会话 id 的结果）在本机计划任务里实测一次：结果真的发回了指定会话，测完删掉测试任务
+
 ## 选中的存量回归
 
 - `review-loop.test.mjs`：runner 往 review loop 文件追加结果，确认已有的解析、`check`、归档行为不变
