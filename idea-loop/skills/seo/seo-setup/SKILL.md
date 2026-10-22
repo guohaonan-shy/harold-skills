@@ -90,16 +90,18 @@ disable-model-invocation: true
 
 ## 8. 每周扫描
 
-扫描由 Claude 桌面 app 的定时任务每周调一次 `/idea-loop:seo-scan`，不带参数：哪些方向这周该跑，由 seo-scan 自己按研究日志定。定时任务跑出的会话用的是建它的会话的目录，所以这一步必须在本仓库的主 checkout 里做。
+扫描可以由 Claude 桌面 app 的定时任务每周调一次 `/idea-loop:seo-scan`，不带参数：哪些方向这周该跑，由 seo-scan 自己按研究日志定。定时任务跑出的会话用的是建它的会话的目录，所以这一步必须在本仓库的主 checkout 里做。
 
-1. `mcp__scheduled-tasks__list_scheduled_tasks`。没有这个工具（不在桌面 app 里）：把下面第 2 步的 prompt 和时间给人，让人在桌面 app 的定时任务里自己建，这一步记「未做：不在桌面 app」。
-2. 已有 prompt 里含 `/idea-loop:seo-scan` 的任务：报给人（时间、是否开着），这一步完成。没有：问人每周哪天几点（推荐周日晚上），人定了再 `create_scheduled_task`：
+1. `mcp__scheduled-tasks__list_scheduled_tasks`。没有这个工具（不在桌面 app 里）：把下面第 4 步的 prompt 给人，让人在桌面 app 的定时任务里自己建，这一步记「未做：不在桌面 app」。
+2. 已有 prompt 里含 `/idea-loop:seo-scan` 的任务：报给人（时间、是否开着），这一步完成。
+3. 没有：用 AskUserQuestion 问人要不要装，选项「装，每周日 22 点左右（推荐）」「装，换个时间」「不装，我自己手动跑」。选「换个时间」的，再问每周哪天几点。选「不装」：什么都不建，这一步记「人拒绝」。
+4. 人要装：`create_scheduled_task`：
    - `taskId`：`seo-scan-<仓库名>`；`title`：`<仓库名> 每周 SEO 扫描`
    - `cronExpression`：人定的时间，分钟避开 0 和 30
    - `prompt`：`用 Skill 工具调 idea-loop:seo-scan，不带参数，照它跑到「交回」。没有人在场：不提问，缺什么照 skill 写的记下来往下走。`
-3. 告诉人：app 关着时到点不跑，下次打开 app 时补跑；跑完的结果在侧边栏的定时任务里看。
+5. 告诉人：app 关着时到点不跑，下次打开 app 时补跑；跑完的结果在侧边栏的定时任务里看。
 
-完成条件：本仓库有一个开着的每周 seo-scan 定时任务，或记下了没建的原因。
+完成条件：本仓库有一个开着的每周 seo-scan 定时任务，或人拒绝了，或记下了没建的原因。
 
 ## 交回
 
@@ -109,4 +111,4 @@ disable-model-invocation: true
 - OpenSEO 里写了什么：项目（新建还是已有）、上下文各节、竞品和重点页面的增删、跟踪的提示词数与每月估价。
 - 建了哪些 label。
 - Search Console 有没有接上：`get_search_console_performance` 返回「未连接」，告诉人到 OpenSEO 项目的集成页去连。pages 方向靠它。
-- 接下来：每周的定时任务会自己跑 `/idea-loop:seo-scan`，想马上看一次就手动敲它；不知道从哪下手，用 `idea-loop:seo-coach`。
+- 接下来：装了定时任务的，它每周自己跑 `/idea-loop:seo-scan`；没装的，人自己按周敲它（不带参数，它会按节奏挑方向）；想马上看一次就手动敲；不知道从哪下手，用 `idea-loop:seo-coach`。
