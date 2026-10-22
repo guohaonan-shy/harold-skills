@@ -13,3 +13,4 @@
 | [[2026-10-21-setup-design]] | document | 2026-10-21 | idea-loop setup 设计稿：项目配置集中到根目录的几份文件 |
 | [[2026-10-21-skill-audit]] | document | 2026-10-21 | skill 审查：对照 writing-for-agents 审 23 个 skill |
 | [[2026-10-21-skill-writing-report]] | document | 2026-10-21 | Skill / Agent 怎么写：claude-seo、mattpocock/skills、cursor/plugins 三个仓库的对照 |
+| [[2026-10-22-retro-grill]] | conversation | 2026-10-22 | grill —— retro：从实际决策里把问题和决策点整理成规则，迭代 skill |
