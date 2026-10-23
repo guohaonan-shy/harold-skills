@@ -17,7 +17,8 @@
 |---|---|---|
 | 文档 | `idea-loop:adr-reconciler` | `.tmp/dreaming/<YYYY-MM-DD>/rows-docs.md` |
 | 候选、DESIGN.md 条目，及它们牵出的缺陷行 | `idea-loop:design-steward` | `.tmp/dreaming/<YYYY-MM-DD>/rows-design.md` |
-| 档案对象、档案状态、初扫页面，及产品坏了的缺陷行 | UI 档案对账（[archive-reconcile.md](archive-reconcile.md)，实时波是 `idea-loop:ui-reviewer` 的对账模式） | dreaming 自己的 tmp 目录与交回的结果文件 |
+| 档案对象、档案状态，及产品坏了的缺陷行 | `idea-loop:ui-reviewer` 的对账模式（[archive-reconcile.md](archive-reconcile.md)：源码波出 `档案对象`，实时波出 `档案状态` 与缺陷） | dreaming 自己的 tmp 目录与交回的结果文件 |
+| 初扫页面 | dreaming 自己（[initial-scan.md](initial-scan.md)：`prod/` 为空，或 reviewer 报了 `补扫页面`） | dreaming 自己的 tmp 目录 |
 | 漏归档 | dreaming 自己机械地查 | 直接写进表 |
 
 同一行类型只出现在一节里：`缺陷` 有两个来源，并成一节。并好后过校验脚本，退出码 0 才交出去。

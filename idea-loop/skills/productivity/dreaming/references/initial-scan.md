@@ -5,7 +5,7 @@
 两种时候做：
 
 - `prod/` 里没有任何对象（空档案）：代替档案对账，整站扫；
-- 档案对账的源码波报出「代码里有路由、档案里没有对应页面」（[archive-reconcile.md](archive-reconcile.md) 的「源码波」）：只扫那一页。
+- `idea-loop:ui-reviewer` 对账模式的源码波报出「代码里有路由、档案里没有对应页面」（一行 `补扫页面`，[archive-reconcile.md](archive-reconcile.md) 的「源码波」）：只扫那一页。扫不扫由 dreaming 做，reviewer 不扫。
 
 对象的格式完全照设计档案：用 Skill 工具调 `idea-loop:design-archive`（目录、frontmatter、正文、进入方式、「进不去」的写法；长页面再读它的 `references/sections.md`）。这份只写扫的做法、产物放哪、怎么进提议表、批了怎么落。
 
