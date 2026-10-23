@@ -270,12 +270,12 @@ rule, not independent patches.
 
 On sign-off, perform **Distill-back before handoff**, and it only writes candidates:
 
-1. Write each decision that might generalize as a candidate in the `## 设计法候选` section of the
-   archive object it came from (page, component, motion or journey file under `delta/`; shape in
-   `idea-loop:design-archive`, section 正文), in the format `idea-loop:design-modeling`, section 设计法候选的形态 defines — a
+1. Write each decision that might generalize as a candidate in the freeze record's `设计法候选`
+   section, one line each naming the archive object it will hang on (page, component, motion or
+   journey; the object file itself is written from the final canvas at the pre-merge archive, nothing
+   goes under `delta/` at freeze), in the format `idea-loop:design-modeling`, section 设计法候选的形态 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
-   evidence. The freeze record's same-named section lists them (one line each, saying which object
-   carries it). An empty Distill-back is valid only when stated explicitly: each section then holds
+   evidence. An empty Distill-back is valid only when stated explicitly: each section then holds
    one line, 「无」.
 2. Stop there. `idea-loop:dreaming` later runs every candidate through the admission table in
    `idea-loop:design-modeling`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
