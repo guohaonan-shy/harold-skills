@@ -103,9 +103,9 @@ effort: high
    - **边**：`user` 边的 `locate`（`role` + `name`）取自第一步记下的真实 DOM；`system` 边写 `trigger` 与 `how`（在真应用里怎么让它发生：拦哪个请求、等多久，照你核的时候实际做的）。走不通的边带 `blocked`（`missing` + `tried`）。
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域、代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`；`usedBy` 由归档脚本生成，不写。
-   - **长页面**（比主视口高）的入口状态照 `idea-loop:design-archive` 的 `references/sections.md` 写 `sections` 与边的 `from`；下面第 2 步按它拍图。
+   - **长页面**（比主视口高）的入口状态照 `idea-loop:design-archive` 的「长页面的分段」写 `sections` 与边的 `from`；下面第 2 步按它拍图。
 2. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`。拍之前关掉开发服务器的调试浮层（框架的开发工具条、错误浮层），不然它们进每张图。
-   - **长页面的入口状态**（页面滚动高度大于主视口）**按段拍**，照 `idea-loop:design-archive` 的 `references/sections.md`「拍图：分段脚本」：没声明分段的先在 `delta/` 的状态文件里补上；`measure … --delta <spec-slug>`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格）→ `attribute`，落空、定位失败、重叠清零了才往下（归属结果顺带给出每条 `user` 边的 `from`，和哪些元素要写 `{ text }` 定位）→ `shoot`。**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`。段内交互的状态只拍那一段（`measure … --for <段内状态 id>`）。
+   - **长页面的入口状态**（页面滚动高度大于主视口）**按段拍**，照 `idea-loop:design-archive` 的「长页面的分段」的「拍图：分段脚本」：没声明分段的先在 `delta/` 的状态文件里补上；`measure … --delta <spec-slug>`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格）→ `attribute`，落空、定位失败、重叠清零了才往下（归属结果顺带给出每条 `user` 边的 `from`，和哪些元素要写 `{ text }` 定位）→ `shoot`。**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`。段内交互的状态只拍那一段（`measure … --for <段内状态 id>`）。
    - 每个有动效的边或节点录一张 GIF（`idea-loop:evidence` 的交付证据：动图），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
 3. **补齐状态文件**：「这一屏」照实现拍的图写这一屏是什么样（内嵌刚拍的截图或 GIF；有分段的入口状态按段排开，每段一个 `###` 小标题、这一段的图、一两句描述），「应看到什么」照最终画布写成几条可判定的话。决定不写在状态文件里。
 4. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。素材取自冻结记录（意图、打磨轨迹、签字、设计法候选汇总、「冻结后的变更」一节，记录里没有这一节就跳过）、工单、和 review loop 文件 `.tmp/review-loop/<PR 号>.md` 里人的批示（「你的批示」，原话）：决定写为什么、否掉过、来源；候选按 `idea-loop:design-modeling` 的「设计法候选的形态」。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。**拿不准的留在草稿的「待你定」里**，不替人编。
