@@ -23,6 +23,7 @@ idea-loop 插件里，一个需求冻结之后，画布 `docs/design/tmp/<spec-s
 - [x] pr-review「接受」那条路里不再有手改 `delta/` 的说法
 - [x] 实现者记「最小差异」的规则原样保留
 - [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [ ] review 第 1 轮 C1（2026-10-23）：implement 与 pr-review 不直接读 uiux-refine 私有的冻结参考；「冻结之后的设计变更」的做法升成可调用的能力，或挪进真正用它的那个 skill，别处按能力名调用。规则原文：idea-loop/AGENTS.md「别的 skill 也要读，说明它不只服务一个流程：升成 skill，或挪进真正用它的那个 skill」
 
 ## 选中的存量回归
 - `archive-check-flag.test.mjs`：冻结说明里删掉「写 delta」后，残留的档案校验命令仍须带 `--no-used-by`

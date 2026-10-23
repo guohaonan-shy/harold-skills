@@ -17,6 +17,7 @@ idea-loop 插件里，一个碰 UI 的需求在合并时：人说合并，pr-rev
 - [x] ui-reviewer 的归档模式写明：核过之后整份写出 `delta/`（这一屏照实现、应看到什么照最终画布、边读自真实 DOM、决定与候选取自冻结记录与人的批示、长页面写 `sections`）；`delta/` 已存在时当草稿接着改
 - [x] pr-review 的合并 reference、design-archive、README 里不再有以合并前钩子为前提的句子（搜钩子脚本名与「合并前钩子」无残留，或只剩「已删除 / 已知缺口」的说明）；已知缺口写明
 - [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [ ] review 第 1 轮 C2（2026-10-23）：ui-reviewer 归档步骤里指向长页面分段写法的地方，按设计档案能力的名字加节名来指，不写文件路径。规则原文：writing-for-agents「不写文件路径：目录一挪路径就断，名字不变」
 
 ## 选中的存量回归
 - `archive-check-flag.test.mjs`：归档模式的说明里会新写档案校验命令，它保证每条都带 `--no-used-by`
