@@ -101,9 +101,9 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 冻结之后画布是唯一的设计真相。PR 开出前，人接受了一处跟画布不同的设计（来源：停下汇报里接受了实现者给的改法，或人自己改主意；review 里接受实现归 `idea-loop:pr-review`），不手改 `delta/`，也不手改画布，由 designer 改：
 
-1. 用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：画布 `docs/design/tmp/<spec-slug>/canvas/` 里最新一版的路径、人的原话、受影响的状态名、相关截图（执行方的素材，或人给的）。它只改这几格，交回新的一版画布与这几格的截图（做法见 `idea-loop:uiux-refine` 的 `references/freeze.md` 的「冻结之后的设计变更」）。
-2. 用 Agent 工具新起 `idea-loop:ui-master`，只给改动那几格的截图，评分与停止判定照 `idea-loop:uiux-refine` 的「每一轮」第 3 步：同一个 `critic-score.mjs`、同一张判定表。`继续`：把意见 SendMessage 交回同一个 designer，改完再评；`瓶颈`、`方向`：停下，写进 pending 当决定题；`通过`：往下。
-3. 过了：提交新一版画布并推送到集成分支（`docs(design): <spec-slug> 设计变更 —— <一句话>`），冻结记录「冻结后的变更」记一行（日期、画布版本、改了哪几格、人的原话、评委分；行格式见上面那份 `freeze.md`），跟画布同一个提交。
+1. 用 Skill 工具调 `idea-loop:design-change`，照它做：起 designer 改画布那几格、起 ui-master 评、过了提交并推送到**集成分支**、冻结记录记一行。给 designer 的相关截图用执行方的素材，或人给的。
+2. 评委判了 `瓶颈` 或 `方向`（`idea-loop:design-change` 的「评与停」）：停下，写进 pending 当决定题，带上评委意见与新旧两版截图。
+3. 过了之后，画布已提交，往下。
 4. 代码跟新画布不一致的（来源不是「接受实现」），在归属工单的验收标准末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<N+1>.html 做，比对脚本对这一版`，提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派。已落地的工单要改，就按 `idea-loop:pr-review` 的「修」那条路追加一格再派。
 
 人不再单独看新画的那几格：他接受的是改动的方向，具体样子由评委把关，实现出来后在 review 里照常看到。

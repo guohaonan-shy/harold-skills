@@ -110,7 +110,7 @@ designer 交付「冻结」后，你核对：
 
 告诉人：设计已冻结并合进主分支。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
 
-**冻结之后设计变了**：不回 refine，也不重起 designer。人接受了一处跟画布不同的设计，由当时的编排者（`idea-loop:implement` 或 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」，过程与冻结记录怎么记见 [`references/freeze.md`](references/freeze.md) 的「冻结之后的设计变更」。
+**冻结之后设计变了**：不回 refine，也不重起 designer。人接受了一处跟画布不同的设计，由当时的编排者（`idea-loop:implement` 或 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」，过程与冻结记录怎么记见 `idea-loop:design-change`。
 
 **部分冻结**：designer 交付后就结束了。关掉预览服务器，告诉人跑 `/idea-loop:uiux-imagine` 重开回推的那几块；第二轮发散之后再调 refine，起一个**新的** designer，任务「起手」，它会接到已冻结的画布上。
 
