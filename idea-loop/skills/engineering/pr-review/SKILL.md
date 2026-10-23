@@ -21,6 +21,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 ## 前提
 
 - PR 是 **open**。还是 draft，说明工单没落地完或还有等决定的事，回 `idea-loop:implement`。
+- **没有排队中的回放**：`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件（`<owner>__<repo>-<PR 号>.json`）。有，就是改规则的回放还在等夜里跑，告诉人等结果，不起这一轮。结果出来后 `review-loop check` 若列出未处理的 `replay` 条目（有用例没过），先把它交给人，等批示处理完再起这一轮。
 - 当前 worktree 是这个 PR 的集成分支，工作区干净（`git status --short --untracked-files=no` 为空），本地 HEAD 已推送、等于 PR 的 head。
 - **找到 Codex companion**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印它的路径。退出码 1 就在开跑前把它说的缺什么告诉人。
 

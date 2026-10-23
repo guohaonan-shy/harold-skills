@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label。每个仓库跑一次，项目配置变了再跑。
+description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务。每个仓库跑一次，项目配置变了再跑。
 disable-model-invocation: true
 ---
 
@@ -83,9 +83,20 @@ idea-loop 从这几处读项目配置：
 
 完成条件：这几份文件都在，模板里的小节一个不缺；`git diff` 给人看过；`issues.mjs labels docs` 不再列出多余的 label。
 
+## 夜间规则回放
+
+改规则的 PR 里有大的回放用例（会起插件 agent、开浏览器或调付费服务）时，它们不在白天跑，而是排进 `~/.idea-loop/replay-queue/`，每晚由一个计划任务跑。这一步装的是整台机器共用的东西，不属于哪个仓库：已经装过的就核对，不重复建。三件事：
+
+1. **装 runner 到固定路径**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-install.mjs"`。它把 runner 拷到 `~/.idea-loop/bin/`（入口是 `~/.idea-loop/bin/retro-replay.mjs`，不随 worktree 和插件升级变），再跑一次会换成插件现在的版本。小回放也走这个路径。
+2. **建计划任务**：先 `list_scheduled_tasks` 看有没有 `idea-loop-retro-replay`，没有才用 `create_scheduled_task` 建：`cronExpression` 为 `7 1 * * *`（每晚 01:07，本机时间），`taskId` 为 `idea-loop-retro-replay`，`prompt` 用 `retro-install.mjs` 打印的那一段原文（不要自己改写）：它先用后台方式（Bash 的 `run_in_background`，前台最多等 10 分钟会截断回放）跑 `node ~/.idea-loop/bin/retro-replay.mjs --queue`，等它退出的唤醒，再按输出里的每条「回放结果」行，用 `mcp__ccd_session_mgmt__send_message` 把结果发回队列文件里记的 issue 会话，发不出去时改跑同一个 runner 的 `--notify` 发 macOS 通知。命令都以允许规则覆盖的前缀开头，否则无人值守时会被 auto 分类器拦下。runner 自己核时间（只在 00:00–07:00 跑，app 夜里关着、早上补跑时它会不跑）、读队列（空就立即退出，不花钱）、写结果。已有的计划任务 prompt 跟打印的不一样（旧版只跑 runner），用 `update_scheduled_task` 换成新的。
+3. **打印允许规则，让人自己加**：`retro-install.mjs` 打印的 `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)`，在交回里原样给人，请他加进 `~/.claude/settings.json` 的 `permissions.allow`。**setup 不改权限设置**，不替人加。
+
+完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；计划任务在 `list_scheduled_tasks` 里；允许规则已打印给人。
+
 ## 交回
 
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
 - 预检缺的必需项，各附修法命令。
+- 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
 - 怎么起调度：在主 checkout 开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`（间隔照需要改）。
 - 留给人的事：安装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检的表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

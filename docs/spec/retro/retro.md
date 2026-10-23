@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 完成
 tags: [idea-loop, retro, decision-rules, evals]
 summary: retro：从会话里的纠正与决定提炼规则候选，批了开 issue，改 skill 要回放证明生效
 related: ["[[2026-10-22-retro-grill]]", "[[pr-review-report-followups]]", "[[2026-10-19-pr-decision-friction]]"]
@@ -23,7 +23,7 @@ issues: [51]
 
 - idea-loop 的 skill 里没有一个读会话记录、回看人的纠正或决定（在 `idea-loop/skills/` 下搜 `retro`、`会话记录`，无结果）。
 - 唯一一次从人的决定里提炼规则，是 2026-10-19 手工做的：导出 Tofelair 的 6 个审核会话、翻 10 个已合并 PR，统计出审 spec 时约 30 次追问和纠正、PR 里约 80 个决定（[[pr-review-report-followups]] 的 1.1、1.2），产物是现在的 `decision-rules`。下一类同样重复的事，要等人哪天再手工翻一次。
-- 这些东西都在会话里：issue 会话从验证一直陪到关闭，grill、审 spec、停下汇报、review 轮次都在同一场会话里。会话记录在本机落成文件（`~/.claude/projects/<项目>/<会话>.jsonl`），会话被压缩之后文件里仍有从开场起的全部原话（核的是 #51 自己的会话：压缩过一次，开场那句 `issue-session 51` 和之后每一轮人的原话都还在文件里）。
+- 这些东西都在会话里：issue 会话从验证一直陪到关闭，grill、审 spec、停下汇报、review 轮次都在同一场会话里。会话记录在本机落成文件（`~/.claude/projects/<项目>/<会话>.jsonl`），会话被压缩或恢复之后，文件里仍有从开场起的全部原话（核的是 #51 自己的会话：它没有被压缩过，但恢复过两次，每次恢复新起一份文件并带上之前的全部历史，开场那句 `issue-session 51` 和之后每一轮人的原话都在最新一份里；压缩记录的结构由执行方在本机另一份被压缩过的记录里核过）。
 
 例子：#51 自己这场会话里，人第一次回复就把第一版 spec 的前提改掉了（「这个用不用 dreaming，我觉得不重要根本」）；之后人追问「`claude -p` 起的是什么样的会话」「subagent 跟 `claude -p` 的区别」，都是汇报没讲清机制。这类信号现在会话一归档就没了。
 

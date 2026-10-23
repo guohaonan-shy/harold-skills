@@ -24,10 +24,15 @@
  * installed plugin says nothing about the change in front of you.
  */
 
-import { closeSync, cpSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, readSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, cpSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { digestStream, fileLines } from '../../scripts/claude-stream.mjs';
+
+// Reading the event stream lives in scripts/claude-stream.mjs, shared with the retro runner.
+// Re-exported here so existing importers (research-baseline.test.mjs) keep working.
+export { digestStream };
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
@@ -46,69 +51,6 @@ export function loadCases(root = HERE) {
 
 export function buildPrompt(c) {
   return c.prompt + UNATTENDED;
-}
-
-/**
- * Condense a `stream-json` event stream into facts about who did what.
- * Every message carries `parent_tool_use_id`: null is the calling session, anything else is a sub-agent.
- * Accepts the stream as text, or any iterable of lines.
- */
-export function digestStream(input) {
-  const lines = typeof input === 'string' ? input.split('\n') : input;
-  const bucket = () => ({ tools: {}, referoCalls: 0 });
-  const session = bucket();
-  const subagents = bucket();
-  let result = null;
-  for (const raw of lines) {
-    if (!raw.trim()) continue;
-    let ev;
-    try {
-      ev = JSON.parse(raw);
-    } catch {
-      continue; // last line cut off by the timeout
-    }
-    if (ev.type === 'result') {
-      result = {
-        text: String(ev.result ?? ''),
-        cost: ev.total_cost_usd ?? null,
-        turns: ev.num_turns ?? null,
-        durationMs: ev.duration_ms ?? null,
-        isError: ev.is_error ?? false,
-        models: Object.keys(ev.modelUsage ?? {}),
-      };
-      continue;
-    }
-    if (ev.type !== 'assistant') continue;
-    const b = ev.parent_tool_use_id ? subagents : session;
-    for (const block of ev.message?.content ?? []) {
-      if (block?.type !== 'tool_use') continue;
-      b.tools[block.name] = (b.tools[block.name] ?? 0) + 1;
-      if (/^mcp__.*refero/i.test(block.name)) b.referoCalls += 1;
-    }
-  }
-  return { session, subagents, result };
-}
-
-/** Read a possibly huge stream file line by line, without holding it in memory. */
-function* fileLines(path) {
-  const fd = openSync(path, 'r');
-  const chunk = Buffer.alloc(1 << 20);
-  let pending = Buffer.alloc(0);
-  try {
-    for (;;) {
-      const n = readSync(fd, chunk, 0, chunk.length, null);
-      if (n === 0) break;
-      pending = Buffer.concat([pending, chunk.subarray(0, n)]);
-      let nl;
-      while ((nl = pending.indexOf(10)) >= 0) {
-        yield pending.subarray(0, nl).toString('utf8');
-        pending = pending.subarray(nl + 1);
-      }
-    }
-    if (pending.length) yield pending.toString('utf8');
-  } finally {
-    closeSync(fd);
-  }
 }
 
 function parseArgs(argv) {

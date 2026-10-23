@@ -41,6 +41,12 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 用 Skill 工具调 `idea-loop:to-ticket` 切工单，再调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后接 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
 
+**规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
+
+- **全过**：条目已是处理完的状态（`review-loop.mjs check` 不列它）。回到 `idea-loop:implement` 的「没活了就停下」：没有别的挡着就 `gh pr ready` 进 `idea-loop:pr-review`。
+- **有不过的**：停下，不进 review。把没过的用例、判定会话在改前改后各答了什么和出处摆给人，选项就是条目里的三个处理（判定对 / 判定错 / 用例有问题），等人批示；人的批示照 `idea-loop:implement` 里「人回复后」处理。
+- 会话收到消息时正忙着别的，先做完手上这一步再处理；消息没发来（会话归档过、任务没跑）时，人会收到 macOS 通知，结果照样在文件里。
+
 ## 换阶段
 
 每个 PR 合并后做一遍：
@@ -53,8 +59,9 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 issue 关了，或人说先放着（`issues set <docs> 搁置 <号>`）之后：
 
-1. `git status --short` 里没有要留的改动；有就先问人。
-2. 用 `archive_session`（`session_id: self`，reason 写「#<号> 已关闭」或「#<号> 搁置」）归档自己，worktree 随归档清掉。
+1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录的 docs PR 合并之后，才往下走。
+2. `git status --short` 里没有要留的改动；有就先问人。
+3. 用 `archive_session`（`session_id: self`，reason 写「#<号> 已关闭」或「#<号> 搁置」）归档自己，worktree 随归档清掉。
 
 ## 边界
 

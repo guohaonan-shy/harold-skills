@@ -27,6 +27,7 @@ Then run `/idea-loop:setup` in the target repo.
 | `idea-loop:issue-session` | Intake → Merge | One issue's session from verification to close, the human's window for grilling and decisions. On start it detaches from the dispatcher, moves itself into its queue's sidebar section 审核中 and claims the issue (a card whose issue is already taken archives itself; a human call picks the issue up wherever it stands). It runs `issue-verify`, then design (`/idea-loop:uiux-imagine` → `uiux-refine`, started by the human) and implementation (`to-ticket` → `implement` → `pr-review`). After each PR lands it branches from the latest main, runs `issues.mjs advance` to move the issue on (or close it) and moves itself into the next section; once the issue is closed or parked it archives itself, which removes its worktree |
 | `idea-loop:issue-verify` | Verify | The review stage of an issue session: reproduces the one issue (output kept in `.tmp/`, only the conclusion read back), sets its `type:*` category from the project's 「issue 分类」, records 存在 / 不存在 with evidence in the spec's 「验证」 table and drafts one spec through `to-spec`. A spec with a 「需要 grill」 line or a 「待定」 fork turns the issue 审核中 and waits for the human to grill in the same session; once settled it lands on main through a docs-only PR and the slug goes back to the session |
 | `/idea-loop:grill` | Idea | Design-tree interview, one round of open questions at a time — facts are the agent's job, decisions are the human's |
+| `idea-loop:retro` | Retro | Run at the end of an issue session (`issue-session`'s 「收尾」, before it archives itself) or by the human saying "retro". Reads this session's own transcript file — not its context, which compaction has already thinned — squeezed by `scripts/session-digest.mjs` into every human utterance plus the conclusion of the AI reply before it (no tool calls or output). Finds three signals: the human's corrections and follow-up questions (one occurrence is enough), the human's choices on posed questions (the same kind at least twice across issues, no counter-example, counted from `docs/raw/decisions/` in the target repo), and directions the human volunteers (one occurrence; the human is asked which layer). Each candidate is shown with the verbatim words, where it happened, the layer (plugin skill / the target repo's rule files / a mechanical check) and old and new wording side by side, and the human answers approve / reject / change. It edits no rule file: an approved candidate becomes a to-be-verified issue (plugin problems to harold-skills, project ones to the target repo). The questions put to the human and each candidate's outcome are recorded in the target repo's `docs/raw/decisions/<issue>.md` through a docs-only PR |
 | `/idea-loop:to-spec` | Spec | Turns the current context (a `grill` conversation, or an issue `issue-verify` has already reproduced) into one spec readable by humans as well as agents: problems shown with their reproduction evidence, user stories as one tree per scenario (one expected behaviour per problem for pure fixes), implementation decisions, a technical overview (backend and front-end-internal sequence diagrams, interaction flows), testing decisions and agreed seams, and a 「验证」 table recording whether each covered issue exists. A conversation also lands as a raw transcript. Settles what the written rules can settle, gives every statement about the present state a source (`idea-loop:decision-rules`). A new spec is 草稿; `spec-status.mjs route` makes it 完成 (every issue absent), 审核中 (something waits for a human) or 正式; the spec then lands on main through a docs-only PR and the dispatcher's reconcile labels its issues (a spec that covers none gets an unlabelled spec issue from `issues.mjs open` first), as `ISSUE_TRACKER.md` says. Figure rules: `idea-loop:evidence` |
 | `/idea-loop:uiux-imagine` | Design · diverge | The skill runs the process; `idea-loop:uiux-imaginer` (latest Opus via the `opus` alias, effort high) does the work, one task at a time. It opens only the altitude that is still undecided and renders every round straight into a clickable comparison board with real motion, at the lowest fidelity that tells the variants apart. The skill shows each round in the built-in browser, sorts the human's reply into a task (steer / apply to the picked variant / park for refine / reopen the language), and proposes wrapping up once nothing directional is left; the human declares it. Wrap-up hands ONE direction note (seven sections, a composition list per chosen variant, each item marked human-chosen or model-filled) plus a handoff canvas to `uiux-refine` via `docs/design/tmp/<spec-slug>/imagine/` (local, not in git) — no critic, no scoring. The imaginer does not research: a UX question it can only guess at goes back as a suggested research question with its recommended answer; the human decides whether to run `uiux-research`. When the project has no `DESIGN.md`, the imaginer drafts the first one and the skill writes it only after the human confirms the wording |
 | `/idea-loop:uiux-refine` | Design · converge | The skill runs the process; two plugin agents do the work. Each round `idea-loop:designer` (latest Opus via the `opus` alias, effort high) delivers the next canvas version (`v1`, `v2`, …) from the handoff canvas `uiux-imagine` leaves behind (or from the direction note alone when there is none), and the session has a fresh `idea-loop:ui-master` (latest Fable via the `fable` alias, effort high, Read-only — it never sees the canvas code) score it, holds back any finding that touches an item the human chose and asks the human instead, scores the round with `critic-score.mjs` and either sends the rest back to the designer or stops at a bottleneck (`瓶颈`), a direction problem or a pass; after the pass come motion and assets when the brief calls for them, a subtraction round, an AI-tells round and the pre-sign-off checks. Every stop is shown in the built-in browser. The designer does not research: a `pattern` finding it cannot settle becomes a "suggested research question", worked from its recommendation. Freezes (fully or partly) on the human's signature and writes interaction flows back into the spec |
@@ -70,7 +71,7 @@ Which skills the model may invoke itself:
 
 | Model-invocable | Human-invoked only (`disable-model-invocation`) |
 |---|---|
-| `grill`, `issue-verify`, `to-spec`, `to-ticket`, `implement`, `pr-review`, `uiux-research`, `writing-for-agents`, the SEO method and solve skills | `uiux-imagine`, `uiux-refine`, `dreaming`, `setup`, `agent-builder`, `seo-setup`, `seo-scan` |
+| `grill`, `retro`, `issue-verify`, `to-spec`, `to-ticket`, `implement`, `pr-review`, `uiux-research`, `writing-for-agents`, the SEO method and solve skills | `uiux-imagine`, `uiux-refine`, `dreaming`, `setup`, `agent-builder`, `seo-setup`, `seo-scan` |
 
 `grill` is model-invocable so that "grill this idea" in an ordinary conversation starts it; it is still an
 interview, so it only means something with a human answering. `uiux-imagine` is human-invoked: it steers on a human's directional
@@ -218,7 +219,7 @@ unreachable CLI never blocks), and one real run against the official CLI was the
 
 ## Baseline: `uiux-research`
 
-`evals/uiux-research/` is the plugin's only baseline, and it is deliberately not a pass/fail eval.
+`evals/uiux-research/` is the plugin's baseline, and it is deliberately not a pass/fail eval.
 What the researcher's page should contain is still being settled with the human, so it asserts no content and gives no
 score. It pins **six default prompts taken from real design sessions** (leave confirmation, resuming after a
 pause, failure card or not, error-title tone, where a failed list item goes, pausing under a modal), each with one line
@@ -234,6 +235,47 @@ node idea-loop/evals/uiux-research/run.mjs                         # all six (ca
 ```
 
 Output lands in `/tmp/idea-loop-uiux-research/<case>/output/index.html`. Details: `evals/uiux-research/README.md`.
+
+## Replay: proving a rule change took effect
+
+A rule written into a skill, agent or reference is only a claim until the skill is seen behaving differently. A rule that can be
+decided mechanically becomes a check (a script or a validator test) that is first seen **failing** on the input that reproduces
+the old mistake. A rule that needs judgement gets a **replay case** in `evals/retro/cases/<case>/`: the commit the decision
+happened at, the prompt that made the skill produce the thing, where it stops (the moment it hands the thing to the human), a
+yes/no question written from what the human said back then (with the words quoted), and its size (small or large) with the basis.
+
+```
+node idea-loop/evals/retro/retro-replay.mjs --list                      # cases, sizes, format problems
+node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] # one small case: pre-change vs post-change plugin
+node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <dir> # re-decide after the human overruled a judgement
+```
+
+The runner copies the project as of the case's commit into `/tmp`, runs `claude -p` with `--plugin-dir` pointing at the base
+branch's plugin and again at this working tree's plugin (a sub-agent cannot do this: it loads the installed copy), then starts a
+judging `claude -p` that reads both products anonymously and answers the question with a quote. Pre-change "no" and post-change
+"yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. A small case
+that turns out to start a plugin agent or open a browser is stopped, relabelled large in its `case.json`, and reported as
+needing the nightly queue (exit code 3). Details and the exit codes: the header of `evals/retro/retro-replay.mjs`.
+
+### The nightly queue
+
+A large case (it starts a plugin agent, opens a browser or calls a paid service) is not run in the daytime. Once the PR exists the
+orchestrator queues it: `retro-replay.mjs --enqueue --slug <owner/name> --pr <N> --worktree <dir> --cases a,b` writes one file per PR
+into `~/.idea-loop/replay-queue/` (repository, PR number, worktree, case list, the commit the pre-change plugin is taken from, and with
+`--session <id>` the id of the issue session waiting for the result). The PR
+is not reviewed until the result is in. `retro-replay.mjs --queue` is what the nightly job runs: it checks the machine's clock first
+(outside 00:00–07:00 it starts nothing and leaves the queue as it is), exits at once on an empty queue, and otherwise runs each PR's
+cases the way a single case runs, appends the result to that PR's review loop file as a `replay` entry (readable by
+`review-loop.mjs check`; a case that did not pass leaves it unsettled), deletes the PR's queue file and prints one line
+`回放结果 {json}` carrying the session id. The scheduled task's session sends that line's `message` back to the issue session with
+the `send_message` session tool (`SendMessage` does not reach another session from a scheduled-task session) (the arrival wakes it: all passed, it carries on; not all passed, it stops and puts the result to the human) and runs
+`retro-replay.mjs --notify` (a macOS notification) when the session cannot be reached; a PR queued without a session id gets the
+notification from the runner itself. A case that did not pass is not rerun: the result is the human's to rule on.
+
+`/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed path,
+the one small replays use too), a desktop-app scheduled task `idea-loop-retro-replay` runs `node ~/.idea-loop/bin/retro-replay.mjs --queue`
+at 01:07 every night, and setup prints the permission rule `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` for the human to add to
+`~/.claude/settings.json` (setup never changes permission settings). The task's prompt is printed by `retro-install.mjs` as well, so setup and the task never drift apart. It starts the runner with Bash's `run_in_background` and waits for the exit wake-up, because a foreground Bash call is cut at 10 minutes and a PR's replay takes longer.
 
 ## Portability
 
@@ -300,13 +342,15 @@ idea-loop/
 │   │       references/query.md, archive-script.md, sections.md  # query return shapes; the archive script's steps; a long page's sections (type table, locating, rule 7, shooting section by section)
 │   └── productivity/
 │       ├── grill/SKILL.md
+│       ├── retro/SKILL.md            # model-invoked — end-of-session retro: rule candidates from the human's corrections, choices and directions; references/decision-record.md
 │       ├── writing-for-agents/       # shared, model-invoked; SKILL.md + SKILL-MECHANICS.md translated into Chinese from mattpocock/skills (MIT, see its LICENSE)
 │       ├── glossary/SKILL.md         # shared, model-invoked — GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads; references/target-repo-setup.md for the AGENTS.md block and CI snippet
 │       ├── wiki-conventions/SKILL.md # shared, model-invoked — the docs/ contract — directories, frontmatter, status enums; references/migrate-flat-layout.md
 │       ├── evidence/SKILL.md         # shared, model-invoked — figures a human judges at a glance: spec figures (references/spec-figures.md, in docs/) and delivery evidence (references/delivery.md, flows, GIFs, side-by-sides from the implementation; never in git)
 │       ├── decision-rules/SKILL.md   # shared, model-invoked — what an agent settles by rule, and what a question needs before it goes to the human (references/handing-to-human.md)
 │       └── dreaming/SKILL.md         # + references/ — proposal-table (shape and execution pass), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, five verdicts), initial-scan, candidate-distillation, design-md-reconcile
-├── evals/uiux-research/              # the one baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
+├── evals/uiux-research/              # baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
+├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judging session answer its yes/no question; `--queue` runs the large ones at night (`queue.mjs` holds the window and queue decisions) (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of the first design-modeling skill — its rules were folded into dreaming, then split back out as skills/design/design-modeling/SKILL.md; kept as history
@@ -338,6 +382,14 @@ idea-loop/
     ├── research-check.mjs            # uiux-research's gate: the page's head (question / 研究问题 = human's words / context / conclusion = general), every source's flow + scene / logic, the decisions block after the last source, every screenshot clickable and a relative path that exists, the chapters in the fixed order with nothing after the decisions block (what a chapter holds is the contract's prose, not a check)
     ├── research-check.test.mjs       # one per rule, plus the CLI exit codes
     ├── research-baseline.test.mjs    # keeps the uiux-research baseline well-formed: six cases, each with a prompt, a comparison line and an annotation file; the runner's stream digest
+    ├── claude-stream.mjs             # reads a `claude -p` stream-json event stream — per-session tool counts, cost, and whether a plugin agent or a browser got involved; shared by both eval runners
+    ├── claude-stream.test.mjs
+    ├── retro-case.test.mjs           # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name; the shipped cases are well-formed
+    ├── retro-queue.test.mjs          # the nightly queue's decisions: the 00:00–07:00 window (09:12 runs nothing, an empty queue exits at once), the queue file, and the result as a review-loop entry that `check` reads
+    ├── retro-queue-run.test.mjs      # the runner's `--queue` / `--enqueue` end to end against a fake `claude`: pass and not-pass both clear the queue file, the clock passing 07:00 mid-queue, a bad queue file
+    ├── retro-install.mjs             # copies the replay runner to the fixed path `~/.idea-loop/bin/` and prints the permission rule and the scheduled command; never touches settings
+    ├── retro-install.test.mjs        # the installed copy works from there; installing again replaces it
+    ├── retro-replay.test.mjs         # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude`
     ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
     ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
     ├── proposal-table-check.mjs      # dreaming's exit gate: row types, per-type disposition sets, two pictures on archive rows, a delete-object row names its referrers, an unreachable-state row says what was missing and tried, "product broken" never replaces the archive, a candidate row carries a picture, DESIGN.md-bound rows carry old → new and a DESIGN.md row names its basis, empty-table test
@@ -358,7 +410,9 @@ idea-loop/
     ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
     ├── github-app.mjs                # the bot's identity: GitHub App installation token, else the gh login
     ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
-    ├── review-loop.mjs               # the PR's local review loop: next round, unsettled entries, archive to PR comments at merge (figures uploaded)
+    ├── session-digest.mjs            # squeezes a session transcript to the human's utterances + the AI conclusion before each; locates the transcript file (retro)
+    ├── session-digest.test.mjs       # compaction markers, what is dropped, the conclusion rule, locating the file
+    ├── review-loop.mjs               # the PR's local review loop (entries: pause / review / the nightly runner's replay): next round, unsettled entries, archive to PR comments at merge (figures uploaded)
     ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
     ├── spec-status.mjs               # the only writer of a spec's status — checks each step, re-indexes
     ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, the index

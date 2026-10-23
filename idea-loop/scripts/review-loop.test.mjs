@@ -113,3 +113,18 @@ test('local figures are found and swapped for their uploaded addresses; web addr
   assert.equal(out.match(/raw=true/g).length, 2);
   assert.match(out, /example\.com/);
 });
+
+test('a nightly replay is a third kind of entry: numbered among replays, archived with its own label, and the old kinds read as before', () => {
+  const withReplay = `${loop}
+<!-- idea-loop-entry {"kind":"replay","round":1} -->
+## 规则回放 第 1 次 · 1 个用例，1 个过
+
+### 做了什么
+- 全部用例都过
+`;
+  const e = parseLoop(withReplay);
+  assert.deepEqual(e.map((x) => [x.kind, x.round, x.settled]), [['pause', 1, true], ['review', 1, false], ['replay', 1, true]]);
+  assert.equal(nextRound(e, 'replay'), 2);
+  assert.equal(nextRound(e, 'review'), 2, 'a replay does not use up a review round');
+  assert.match(archiveBody(e[2], 'app'), /规则回放第 1 次在会话里进行/);
+});
