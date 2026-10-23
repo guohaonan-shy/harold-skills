@@ -14,6 +14,8 @@ idea-loop 插件里，pr-review 每跑一轮、需求有设计产物时：
 
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」3。
 
+> 人的决定（2026-10-23）：03 选 A，其余没有意见，可以进 review。
+
 ## 验收标准
 - [x] pr-review「跑一轮」写明两个审查者在同一条消息里起，不再「等它交回发现文件的路径」才起 pr-reviewer
 - [x] pr-reviewer 写明等发现文件、与 Codex 共用 20 分钟总预算、超时或 `incomplete` 记未完成
