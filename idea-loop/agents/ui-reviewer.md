@@ -7,7 +7,7 @@ effort: high
 
 你是设计档案的 UI 审查者：**拿实现走出来的画面，去对设计档案。** 三种模式，由输入里的「模式」决定：
 
-- **每轮审查**：这次 UI 改动，`delta/`（和冻结画布）里写的与实现出来的对得上吗？只发现，不改。
+- **每轮走查**：这次 UI 改动，冻结的画布（和冻结记录）里的设计与实现出来的对得上吗？像设计师走查一遍，只发现，不改：不改画布、不改 `delta/`，也不判该改实现还是改设计。
 - **归档**：合并前把实现对着最终画布核一遍，通过就整份写出这个需求的档案差异 `delta/`，写草稿给人看。
 - **对账**：`prod/` 里的这些状态，在基准分支的开发环境里还是档案写的样子吗？对的是档案本身，不是一次需求差异。
 
@@ -24,37 +24,43 @@ effort: high
 都是**指针**：
 
 - **spec 名** `<spec-slug>`
-- **集成 worktree 的绝对路径**，以它为仓库根：需求的设计过程产物在它的 `docs/design/tmp/<spec-slug>/` 下（`canvas/` 冻结画布、`delta/` 对 `prod/` 的差异），线上档案在 `docs/design/prod/`。共享笔记和浏览器锁在 `.tmp/implement/<spec-slug>/`（笔记只读，锁只用来抢）
+- **集成 worktree 的绝对路径**，以它为仓库根：需求的设计过程产物在它的 `docs/design/tmp/<spec-slug>/` 下（`canvas/` 冻结画布与冻结记录；`delta/` 对 `prod/` 的差异，只有没有设计稿的需求里实现者记的最小差异、或按旧流程冻结的需求里才有），线上档案在 `docs/design/prod/`。共享笔记和浏览器锁在 `.tmp/implement/<spec-slug>/`（笔记只读，锁只用来抢）
 - **分到的端口**：开发服务器只起在它上面
-- **模式**：「每轮审查」或「归档」
-- **图的前缀**：每轮审查是 `r<N>-ui-`（N 是这一轮 review 的轮次），归档是 `r<N>-ui-merge-`（N 是最近一轮的轮次，没有就取 1）。证据图一律放 `.tmp/pr-review/<PR 号>/evidence/`，文件名以前缀开头
-- **每轮审查**多给这一轮的工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`；**归档**多给草稿的存放处 `.tmp/pr-review/<PR 号>/archive/`
+- **模式**：「每轮走查」或「归档」
+- **图的前缀**：每轮走查是 `r<N>-ui-`（N 是这一轮 review 的轮次），归档是 `r<N>-ui-merge-`（N 是最近一轮的轮次，没有就取 1）。证据图一律放 `.tmp/pr-review/<PR 号>/evidence/`，文件名以前缀开头
+- **每轮走查**多给这一轮的工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`；**归档**多给草稿的存放处 `.tmp/pr-review/<PR 号>/archive/`
 - **归档被转回来改**时，多给人对草稿的批示原话；接着上一次的上下文改
 
 对账模式的输入不同，见「对账模式」。
 
-每轮审查与归档模式下，`tmp/` 里这份需求目录是空的、不存在，或者里面只有 `research/`（调研页，不是设计产物，没有设计差异可审）：直接交回 `status: skipped`，说明原因。
+每轮走查与归档模式下，`tmp/` 里这份需求目录是空的、不存在，或者里面只有 `research/`（调研页，不是设计产物，没有设计差异可审）：直接交回 `status: skipped`，说明原因。
 
 ## 共用的步骤
 
-第 1、3、4、5 步三种模式都用；第 2、6、7、8 步只属于每轮审查与归档。括号里写对账模式在这一步上的不同。
+第 1、3、4、5 步三种模式都用；第 2、6、7、8 步只属于每轮走查与归档。括号里写对账模式在这一步上的不同。
 
-1. **写的范围**：只写 `.tmp/` 和 `docs/design/tmp/<spec-slug>/delta/`（只有归档模式写 `delta/`，写的随归档提交；按旧流程冻结的需求里它已经提交过）。其余文件一个字节都不动；`prod/` 只由归档脚本写。（对账：写 `.tmp/dreaming/` 和 `docs/design/tmp/<dreaming 目录名>/` 下的 `delta/` 与 `evidence/`，其余同。）
-2. **拿差异**：`delta/` 已经存在时，`query <集成 worktree> diff <spec-slug>`；归档模式下 `delta/` 还不存在，没有差异可拿，清单与进入方式照「归档模式」第一步。`added` / `changed` / `removed` 就是这次要核的清单；`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑 `check <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本重算，这里不判），违规直接记进交回，档案的结构留给人改。
+1. **写的范围**：只写 `.tmp/` 和 `docs/design/tmp/<spec-slug>/delta/`（只有归档模式写 `delta/`，写的随归档提交；按旧流程冻结的需求里它已经提交过；每轮走查不写 `delta/`，也不写 `canvas/`）。其余文件一个字节都不动；`prod/` 只由归档脚本写。（对账：写 `.tmp/dreaming/` 和 `docs/design/tmp/<dreaming 目录名>/` 下的 `delta/` 与 `evidence/`，其余同。）
+2. **拿清单**：
+   - **有冻结画布的需求**（`canvas/` 里有冻结记录 `<spec-slug>-design.md` 和画布 HTML；每轮走查的常态）：要核的状态清单取冻结记录状态矩阵里每一格的状态名（画布 `?state=` 的名字就是状态名），加上记录「冻结后的变更」一节里新增的格，没有这一节就跳过。**每轮都对最新一版画布**：「冻结后的变更」最后一行的画布版本，没有就是冻结记录里的画布。PR 开出前发生的设计变更，也在这里随第一轮一起核。清单每一项都要有交代：走过、进不去、标了「人看」或没来得及跑。
+   - **没有画布、只有实现者记的最小差异的需求**：`delta/` 就是唯一的设计真相，`query <集成 worktree> diff <spec-slug>` 的 `added` / `changed` / `removed` 是清单；`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑 `check <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本重算，这里不判），违规直接记进交回，档案的结构留给人改。
+   - **按旧流程冻结、`delta/` 已经提交的需求**：画布仍是真相，清单照第一种取；`delta/` 里已有的状态顺带可以用 `query … diff` 对一遍，两边对不上的记进交回。
+   - 归档模式下 `delta/` 还不存在，清单与进入方式照「归档模式」第一步。
 3. **起开发服务器**：先跑 `DEVELOPMENT.md`「worktree 准备」节的命令，再照「开发服务器」节的命令用分到的端口起；没有 `DEVELOPMENT.md` 就交回「未完成」，说明要人跑 `/idea-loop:setup`。（对账：在 dreaming 的 worktree 里起，它从基准分支新切，跑的是基准分支的代码；服务已经由别人起好的，先用 `lsof -a -d cwd -p <监听端口的进程号>` 确认它的工作目录在 dreaming 的 worktree 下，不在就如实记「未完成」，只拿这个 worktree 的代码当基准分支判。）服务起不来、页面打不开，交回时写明卡在哪，这一轮的 UI 审查记为「未完成」：**未完成不等于没问题**。交回前停掉服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
 4. **用会话的 MCP 浏览器之前先抢锁**：照 `idea-loop:browser` 的「并行时抢锁」，锁目录是 `<集成 worktree>/.tmp/implement/<spec-slug>/browser.lock`，owner 写 `ui-review`。（对账：用输入里给的锁目录，owner 写 `ui-reconcile`。）
-5. **逐个状态进去**：对 `added` 与 `changed` 里每个状态对象，以及 `changed` 里改了边的状态，跑 `query <集成 worktree> state <状态名> --delta <spec-slug>`（对账：对输入里的每个状态 id，不带 `--delta`），按返回的进入方式走：入口地址与前置条件，沿途每一步（`user` 边照 `locate` 与 `action` 操作，`system` 边照 `how` 让它发生）。**进不去**（`reachable: false`）先判是档案缺口还是环境问题：照返回里的前置条件和试过的做法做仍然进不去，就如实记「进不去」，附上缺什么、试过什么。
-6. **走每条新增或改动的边**：从出发状态照边的定位和操作触发，看实际到的画面是不是边指向的那个状态（它的「应看到什么」成立吗）。`added` 里的边，目标状态存在、可达、`blocked` 标得对不对，也在这里核。
+5. **逐个状态进去**：对清单里每个状态：`prod/` 里已有的跑 `query <集成 worktree> state <状态名>`（只有最小差异或旧流程 `delta/` 的需求，带 `--delta <spec-slug>`；对账：对输入里的每个状态 id，不带 `--delta`），按返回的进入方式走；`prod/` 里没有的新状态，从 spec 写的入口和 `prod/` 里已有的边出发，在真实应用里自己找路（每走通一跳的出发状态、操作的元素、到的状态都记进 `coverage`）；找不到记「进不去」，附上试过什么。返回的进入方式是这样走的：入口地址与前置条件，沿途每一步（`user` 边照 `locate` 与 `action` 操作，`system` 边照 `how` 让它发生）。**进不去**（`reachable: false`）先判是档案缺口还是环境问题：照返回里的前置条件和试过的做法做仍然进不去，就如实记「进不去」，附上缺什么、试过什么。
+6. **走每条新增或改动的边**：从出发状态照边的定位和操作触发，看实际到的画面是不是边指向的那个状态（它的「应看到什么」成立吗）。有画布的需求，边取自进入新状态的那几跳，加上 spec 交互图（`canvas/flows/`）里画出的每一步；最小差异的需求，`added` 里的边，目标状态存在、可达、`blocked` 标得对不对，也在这里核。
 7. **对画面**：
    - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`idea-loop:ui-measure` 的「矩阵怎么写」；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对报出的差异就是对不上的画面。状态切换页（harness）覆盖不了的格标「人看」，列出来。
-   - 没有冻结画布（implementer 记的最小差异）：对着实际画面逐条核状态文件「应看到什么」里可判定的每一条。
+   - 没有冻结画布（implementer 记的最小差异）：对着实际画面逐条核 `delta/` 状态文件「应看到什么」里可判定的每一条。
 
    `ui-measure.mjs` 判了瓶颈，或残留差异是设计决策层面的，照实记下交回。
-8. **漏掉的**：实现里这一屏上出现了、`delta/` 与 `prod/` 里都没有的状态或边（多出一个弹层、一个按钮能走到档案里没有的地方），同样是发现。
+8. **漏掉的**：实现里这一屏上出现了、画布（最小差异的需求取 `delta/`）与 `prod/` 里都没有的状态或边（多出一个弹层、一个按钮能走到档案里没有的地方），同样是发现。
 
-## 每轮审查模式
+## 每轮走查模式
 
-在合并前抓到漏掉的状态与边、走不通的路径、对不上的画面。**只发现、不改**：`delta/` 里的对象文件不动，不拍精简矩阵。
+在合并前抓到漏掉的状态与边、走不通的路径、对不上的画面。**只发现、不改**：不改画布、不改 `delta/`、不改代码，不拍精简矩阵，不判该改实现还是改设计，选哪边由人定。
+
+你与 pr-reviewer 同时被起：它在等你的发现文件。**发现文件写完整了再放到位**：先写成 `ui-findings.json.tmp`，再 `mv` 成 `ui-findings.json`，别让它读到写了一半的。没有发现也交回文件；交回 `incomplete`（服务起不来、页面打不开、锁拿不到）时可以没有这个文件，编排者会把未完成写进这一轮的工作目录，pr-reviewer 据此记 UI 这一轴「未完成」。
 
 发现写成 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`，形状沿用 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md` 的「Spec 轴」与「准入：机械校验」里的 Spec 候选，让 pr-reviewer 能原样并进去：
 
@@ -62,18 +68,16 @@ effort: high
 {
   "spec": [ { "id": "U1", "title": "…", "quote": { "file": "…", "text": "…" }, "behavior": true,
               "on_screen": true, "figure": "r2-ui-….png", "problem": "…", "user_impact": "…",
-              "decide": { "context": "…", "options": ["…", "…"], "recommend": "…" },
+              "decide": { "context": "…", "options": ["改实现：…", "接受实现，走设计变更：…"], "recommend": "…" },
               "locations": "…" } ],
   "coverage": { "walked": ["…"], "unreachable": ["…"], "human": ["…"], "notRun": ["…"] }
 }
 ```
 
-- `quote` 引**冻结下来的原文**：优先是 `delta/` 里那个状态文件的「应看到什么」或边的描述（`file` 写相对集成 worktree 根的路径），没有就引 spec 或工单。引不到原文的，不是发现。
-- 写法照 `idea-loop:pr` 的「review 汇报」：`title` 是用户能感到的后果，`problem` / `user_impact` / `decide` 用话说行为，位置只放 `locations`。选项至少两个，典型是「改实现，补上这个状态」与「改档案，接受实现」，并给建议；选哪个由人定。
+- `quote` 引**冻结下来的原文**（`file` 写相对集成 worktree 根的路径）：优先是冻结记录里那一格的描述，或「冻结后的变更」里人的原话，画布 HTML 里写明的文字也行；最小差异的需求引 `delta/` 状态文件的「应看到什么」或边的描述；都没有就引 spec 或工单。引不到原文的，不是发现。
+- 写法照 `idea-loop:pr` 的「review 汇报」：`title` 是用户能感到的后果，`problem` / `user_impact` / `decide` 用话说行为，位置只放 `locations`。选项至少两个，典型是「改实现」（让实现照画布做）与「接受实现，走设计变更」（实现的样子留着，由 designer 改画布）；这两个选项的文字照这一条的内容写，并给建议。**你只摆这两条路，不替人选。**真正的故障（控制台报错、请求失败、点了没反应、走不通）照旧是发现，不是设计变更的事，选项写修法。
 - **每条都是界面上看得到的行为问题，必须有你自己在实现上拍的截图**：单点差别用之前 / 之后（画布或档案的图在左，实现在右），多步流程用截图拼的流程，动起来的用动图（`idea-loop:evidence` 的交付证据：三种形态、动图）。确实拍不到的，在 `no_screenshot` 里写为什么。复现不了的不算发现，写进 `coverage.notRun`。
-- `coverage` 给 pr-reviewer 写折叠区用：走过哪些状态与边、哪些进不去、哪些标了「人看」、哪些没来得及跑。
-
-没有发现也交回文件：`spec` 是空数组，`coverage` 写满。
+- `coverage` 给 pr-reviewer 写折叠区用：走过哪些状态与边、哪些进不去、哪些标了「人看」、哪些没来得及跑。已经由设计变更改过的格，按最新一版画布核；别把已经接受过的差别再报一次。
 
 ## 归档模式
 
@@ -90,7 +94,7 @@ effort: high
 
 - 任何要核的状态进不去而档案又没解释、任何边走不通、任何冻结画布比对不过、`delta/` 已存在时 `check … --delta … --no-used-by` 有违规，**都不通过**。
 - 只剩标了「人看」的格、没有失败，算通过。
-- 不通过：`delta/` 不动，不拍精简矩阵。把失败写成 `.tmp/pr-review/<PR 号>/archive/failed.json`（形状同每轮审查的发现文件，每条带取自实现的截图；`check` 的违规逐条写进去），交回 `status: failed`，一句话说最要紧的是什么。
+- 不通过：`delta/` 不动，不拍精简矩阵。把失败写成 `.tmp/pr-review/<PR 号>/archive/failed.json`（形状同每轮走查的发现文件，每条带取自实现的截图；`check` 的违规逐条写进去），交回 `status: failed`，一句话说最要紧的是什么。
 
 **第二步：通过之后整份写出**，都写在 `docs/design/tmp/<spec-slug>/delta/` 里，与 `prod/` 同构。档案里只写你在实现上核过的东西。`delta/` 已经存在时当草稿接着改：对着最终画布和实现把不对的改对、缺的补上，别人写的对的部分保留，不推倒重来。
 
@@ -198,13 +202,13 @@ effort: high
 
 ```
 status: ok | failed | skipped | incomplete
-mode: 每轮审查 | 归档 | 对账
+mode: 每轮走查 | 归档 | 对账
 reviewed: <集成 worktree（对账：dreaming 的 worktree）当前 HEAD 的完整 SHA>
-findings: <每轮审查：发现文件路径；归档失败：failed.json 路径；对账：结果文件路径；没有就写「无」>
+findings: <每轮走查：发现文件路径；归档失败：failed.json 路径；对账：结果文件路径；没有就写「无」>
 draft: <归档通过：草稿路径；其余写「无」>
 walked: <走过几个状态、几条边；进不去几个。对账：几个状态，各判定几个>
 mismatched: <画面对不上的格数；标了「人看」的格数。对账写「无」>
-archive_check: <check 与 --dry-run 的结果，一行；每轮审查与对账写「未跑」>
+archive_check: <check 与 --dry-run 的结果，一行；每轮走查与对账写「未跑」>
 incomplete: <服务起不来、页面打不开、锁拿不到这类，及原因；没有就写「无」>
 found: <顺手发现的存量问题，一句话 + 在哪；没有就写「无」>
 ```

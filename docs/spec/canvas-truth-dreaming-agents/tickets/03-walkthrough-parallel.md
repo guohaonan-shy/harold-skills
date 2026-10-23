@@ -15,11 +15,11 @@ idea-loop 插件里，pr-review 每跑一轮、需求有设计产物时：
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」3。
 
 ## 验收标准
-- [ ] pr-review「跑一轮」写明两个审查者在同一条消息里起，不再「等它交回发现文件的路径」才起 pr-reviewer
-- [ ] pr-reviewer 写明等发现文件、与 Codex 共用 20 分钟总预算、超时或 `incomplete` 记未完成
-- [ ] ui-reviewer 的模式取值为「每轮走查 / 归档 / 对账」；每轮走查的清单、进入方式取自画布与冻结记录，最小差异的需求仍取 `delta/`；`decide` 选项已改名；仍写明只发现、不改
-- [ ] README 里 ui-reviewer 与 pr-review 的描述跟上
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [x] pr-review「跑一轮」写明两个审查者在同一条消息里起，不再「等它交回发现文件的路径」才起 pr-reviewer
+- [x] pr-reviewer 写明等发现文件、与 Codex 共用 20 分钟总预算、超时或 `incomplete` 记未完成
+- [x] ui-reviewer 的模式取值为「每轮走查 / 归档 / 对账」；每轮走查的清单、进入方式取自画布与冻结记录，最小差异的需求仍取 `delta/`；`decide` 选项已改名；仍写明只发现、不改
+- [x] README 里 ui-reviewer 与 pr-review 的描述跟上
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
 
 ## 选中的存量回归
 - `review-check.test.mjs`：UI 发现并进 Spec 候选的形状靠它校验，选项改名不能让它拒收

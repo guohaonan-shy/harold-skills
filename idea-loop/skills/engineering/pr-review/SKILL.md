@@ -28,9 +28,11 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 ## 跑一轮
 
 1. 轮次取 `review-loop next .tmp/review-loop/<PR 号>.md review`。这一轮的工作目录是 `.tmp/pr-review/<PR 号>/round-<N>/`。
-2. **有设计产物才先 UI 审查**：用 Agent 工具起 `idea-loop:ui-reviewer`（每轮审查模式），只给指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。等它交回发现文件 `ui-findings.json` 的路径。它标了未完成（服务起不来、页面打不开）的，照实告诉人并记进汇报的「没覆盖到的」：**未完成不等于没问题**，但不阻塞代码审查。没有设计产物就跳过这一步。
-3. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md` 与同目录的 `tickets/`、review loop 文件路径、companion 路径，以及第 2 步的发现文件路径（有的话）。
-4. 等它交回汇报，**不提前汇报**。
+2. **同一条消息里起两个审查者**，用 Agent 工具，**不等 UI 走查走完才起 pr-reviewer**：
+   - `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md` 与同目录的 `tickets/`、review loop 文件路径、companion 路径，以及（有设计产物时）将来的发现文件路径 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`。此时这个文件可能还不存在：pr-reviewer 照常起它的两个 Codex 进程，写汇报前等文件出现，等的时间记在它等 Codex 的同一个 20 分钟总预算里。
+   - **有设计产物才起** `idea-loop:ui-reviewer`（每轮走查模式），只给指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。没有设计产物就只起 pr-reviewer，不给发现文件路径。
+3. **盯着 ui-reviewer 交回**：交回 `status: incomplete`（服务起不来、页面打不开、锁拿不到），或 `skipped`、`failed` 而没有发现文件的，立刻在这一轮的工作目录里写 `ui-incomplete.md`（一句话：状态与原因），pr-reviewer 看到它就不再等，UI 这一轴记「未完成」写进汇报的「没覆盖到的」。照实告诉人：**未完成不等于没问题**，但不阻塞代码审查。ui-reviewer 交回 `ok` 时发现文件已经在位，不用写。
+4. 等 pr-reviewer 交回汇报，**不提前汇报**。
 5. **先记文件**：把汇报作为新条目原样追加进 review loop 文件。
 6. **处理照规则的条目**（见下一节），不等人。
 7. **在会话里给人看**：汇报里「已按规则处理」每一行的 `〔链接〕` 占位补成提交或 issue 链接，一个都不剩，文件里的条目同步改成一字不差的同一份。第 1 轮还要把 `idea-loop:implement` 期间为顺手发现的存量问题开的 issue 补进这一节：从 review loop 文件里各次停下的「已按规则处理」找出带 issue 链接的几行，原样列进来。然后照 `idea-loop:pr` 的「review loop」按条目贴，「已按规则处理」在最前，每条文字后紧跟它的证据图；再发一条推送通知：第几轮、几条已按规则处理、几条要你决定。有未完成的轴或检查要明说。汇报里有缺词，念出来（概念 + 推荐叫法），问人要不要开一轮 `idea-loop:grill` 定下来。
@@ -57,11 +59,11 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 - **修**：先找到它归哪张工单。
   - Spec 条目：它引用的那张工单。
   - Standards 条目：对代码片段所在的行跑 `git blame` 找到引入它的 commit，`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of <commit>` 读出工单。
-  - UI 审查并进来的条目（引的是档案里冻结的原文）：归改了那个状态或组件的工单（读各工单的「要建什么」，或对实现那处 `git blame` 看 `Ticket:`）。
+  - UI 走查并进来的条目（引的是冻结下来的原文）：归改了那个状态或组件的工单（读各工单的「要建什么」，或对实现那处 `git blame` 看 `Ticket:`）。
   - 都找不到（比如代码来自一次不带 trailer 的修复），问人归哪张。
 
   在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，用 `docs(tickets): <NN> — review 第 <N> 轮 <编号>` 提交，然后派一个 `idea-loop:implementer` 做这张工单，派工、核对、落地与回收用 Skill 工具调 `idea-loop:implement`，看它的「派工」「核对与落地」「回收」（自己的 worktree、起点 SHA、分到的端口，fast-forward 落地）。它只做没勾的格，commit 带同一个 `Ticket:` trailer。同一张工单上的几条一次写完再派；多张工单可以并行派。全部落地后推送。写进工单的是行为，不抄审查者给的文件、行号。
-- **接受**（选了「接受，补进 spec 或工单」一类）：代码不动，偏差写进 spec 或工单，`docs(spec): …` / `docs(tickets): …` 提交、推送。UI 审查的条目选了接受实现的，走下面的「设计变更」，由 designer 改画布，提交记进「做了什么」。
+- **接受**（选了「接受，补进 spec 或工单」一类）：代码不动，偏差写进 spec 或工单，`docs(spec): …` / `docs(tickets): …` 提交、推送。UI 走查的条目选了「接受实现，走设计变更」的，走下面的「设计变更」，由 designer 改画布，提交记进「做了什么」。
 - **设计变更**（人自己改了主意：「这个状态改成……」，不是在回某条 UI 发现）：照下面的「设计变更」做。
 - **不修**：记下。下一轮不再报，除非有新证据。
 - **开 issue**：同「照规则的条目」里的开 issue，链接记进「做了什么」。
@@ -81,7 +83,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 冻结之后画布是唯一的设计真相。人在 review 里接受了一处跟画布不同的设计（接受实现，或自己改了主意），不手改 `delta/`、不手改画布，由 designer 改：
 
-1. 用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：画布 `docs/design/tmp/<spec-slug>/canvas/` 里最新一版的路径、人的原话、受影响的状态名、相关截图（UI 审查发现里的图，或人给的）。它只改这几格，交回新的一版画布与这几格的截图（做法见 `idea-loop:uiux-refine` 的 `references/freeze.md` 的「冻结之后的设计变更」）。
+1. 用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：画布 `docs/design/tmp/<spec-slug>/canvas/` 里最新一版的路径、人的原话、受影响的状态名、相关截图（UI 走查发现里的图，或人给的）。它只改这几格，交回新的一版画布与这几格的截图（做法见 `idea-loop:uiux-refine` 的 `references/freeze.md` 的「冻结之后的设计变更」）。
 2. 用 Agent 工具新起 `idea-loop:ui-master`，只给改动那几格的截图，评分与停止判定照 `idea-loop:uiux-refine` 的「每一轮」第 3 步：同一个 `critic-score.mjs`、同一张判定表。`继续`：把意见 SendMessage 交回同一个 designer，改完再评；`瓶颈`、`方向`：停下，把评委意见和两版截图摆给人；`通过`：往下。
 3. 过了：提交新一版画布并推送到 PR 分支（`docs(design): <spec-slug> 设计变更 —— <一句话>`），冻结记录「冻结后的变更」记一行（日期、画布版本、改了哪几格、人的原话、评委分；行格式见上面那份 `freeze.md`），跟画布同一个提交。链接记进「做了什么」。
 4. 代码跟新画布不一致的（来源不是「接受实现」），照上面「修」那条路：找归属工单，验收末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<N+1>.html 做，比对脚本对这一版`，提交、派实现者。接受实现的，代码不动。
