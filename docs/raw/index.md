@@ -16,3 +16,6 @@
 | [[2026-10-21-skill-audit]] | document | 2026-10-21 | skill 审查：对照 writing-for-agents 审 23 个 skill |
 | [[2026-10-21-skill-writing-report]] | document | 2026-10-21 | Skill / Agent 怎么写：claude-seo、mattpocock/skills、cursor/plugins 三个仓库的对照 |
 | [[2026-10-22-retro-grill]] | conversation | 2026-10-22 | grill —— retro：从实际决策里把问题和决策点整理成规则，迭代 skill |
+| [decisions/51](decisions/51.md) | conversation | 2026-10-23 | 决定记录 —— #51 retro 的 issue 会话：摆过的题与 retro 候选的结果 |
+
+> `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
