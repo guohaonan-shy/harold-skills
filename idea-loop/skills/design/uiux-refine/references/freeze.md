@@ -1,6 +1,6 @@
 # 冻结
 
-designer 收到人的签字（全部或一部分）时从头读到「不提交，输出」，部分冻结读「部分冻结」；接手一份已经冻结过一部分的 spec 时读「部分冻结后重开」。
+designer 收到人的签字（全部或一部分）时从头读到「不提交，输出」，部分冻结读「部分冻结」；接手一份已经冻结过一部分的 spec 时读「部分冻结后重开」。冻结之后的设计变更读「冻结之后的设计变更」。
 
 ## 在 `docs/design/tmp/<spec-slug>/` 落齐
 
@@ -14,43 +14,24 @@ docs/design/tmp/<spec-slug>/
 │   ├── assets/                    矩阵每格截图（按格名，完整矩阵只在这里）、定格帧或 GIF、素材段的生成素材、画布引用的素材
 │   ├── flows/                     「改 spec」写回 spec 的交互图（PNG，文件名 flow-<n>-<page>--<state>.png），拼图输入在 flows/src/
 │   └── work/                      打磨过程的临时件：ledger、每轮评分 JSON、评委截图（冻结时清）
-└── delta/                      「写 delta」写的对设计档案的差异
 ```
+
+冻结不写 `delta/`：之后的需求周期里，「设计长什么样」只看 `canvas/`，它是唯一的设计真相。对设计档案的差异 `delta/` 只在合并前由 `idea-loop:ui-reviewer` 的归档模式从最终画布加实现整份写出。
 
 记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 `idea-loop:wiki-conventions` 的「frontmatter」，`type: design`。
 
-这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 与 `delta/` 由编排者经设计 PR 强制提交进主分支，实现从主分支开 worktree 就拿得到；它们留到实现 PR 合并前的归档（归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
+这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 由编排者经设计 PR 强制提交进主分支，实现从主分支开 worktree 就拿得到；它留到实现 PR 合并前的归档（归档模式从最终画布加实现写出 `delta/`，归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
 
-冻结记录正文五节，短：
+冻结记录正文六节，短：
 
 - **意图**：取自方向说明，逐字一致。
 - **冻结了什么**：画布路径、矩阵每格、mismatch 阈值；有动效就加每条动效的理由与 token、restraint 结算、帧证据；有素材就每个素材一行。
 - **打磨轨迹**：ledger 全文搬进来；素材单在里面；人转来并用上了的调研结论也记在这里，场景 / 设计逻辑 / 对我们 / 不能回答什么一起记，文字，不带图。
-- **设计法候选**：签字时从画布里提炼出的、可能成为设计法的规律（Distill-back）的汇总，每条一行：规则 + 它挂在哪个档案对象上 `[[...]]`，原件在对象文件里；没有就一行「无」。
+- **设计法候选**：签字时从画布里提炼出的、可能成为设计法的规律（Distill-back），每条一行：规则全文 + 它将挂在哪个档案对象上（页面、组件、动效或用户路径的名字，不加链接：对象文件要到合并前归档才写出）；没有就一行「无」。
 - **签字**：人的原话，静态与动效两次各记一次；人的方向修订；被分流回发散那一段的 note。
+- **冻结后的变更**：冻结之后每次设计变更记一行（见「冻结之后的设计变更」）。冻结时这一节写一行「无」。
 
 落完清掉 `tmp/<spec-slug>/imagine/`（交接画布 `handoff/` 在里面，一起删）、`tmp/<spec-slug>/canvas/work/`（ledger 已经在记录里），以及没签字的画布版本：静态和动效各只留签字的那一版。`canvas/` 其余全部保留，它们要进 git。
-
-## 写 delta：把冻结结果写成对 `prod/` 的差异
-
-放进 `tmp/<spec-slug>/delta/`。`prod/` 只有归档脚本（人批过之后）写，你只写 `delta/`。结构、字段、正文分节全以 `idea-loop:design-archive` 为准，这里只列这一步怎么做：
-
-1. **先看档案里这块 UI 现在有什么。** `docs/design/prod/` 在就读：档案的「页面」查询入口（插件的档案查询 MCP 工具）有就用，没有就直接读目录。`prod/` 不存在（项目还没建档案）就当整块都是新增。
-2. **和冻结画布对，新增或改动的对象各放一份改完之后的全文**，路径与 `prod/` 里相同；没动的对象不放。
-   - **状态** `delta/pages/<page>/<page>--<state>.md`：画布 `?state=<名字>` 的名字就是 `<state>`（与冻结摘要的状态矩阵同名）。frontmatter：`page`，入口节点的 `entry`，可选的 `components` / `motions`，`edges`，发起了异步动作的写全 `async`。正文只有「这一屏」（取自冻结画布，附矩阵截图）与「应看到什么」（可判定的几条）。长页面（比主视口高）的入口状态照 `idea-loop:design-archive` 的 `references/sections.md` 写 `sections`、边的 `from`（你写的是结构，不拍档案图）。决定写在页面、组件、动效、用户路径文件里，状态文件里没有。
-   - **边**：`user` 边的 `locate`（`role` + `name`）从画布真 DOM 的可访问树读；`system` 边写 `trigger` 与 `how`（实现之后怎么在真应用里让它发生：拦哪个请求、等多久）。写不出 `how`、或在真应用里走不通的边带 `blocked`（`missing` + `tried`）。
-   - **入口**：新页面的地址与前置条件取自 spec；spec 没写的，在输出里列「入口待补」。
-   - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域 / 代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
-   - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`。
-   - `usedBy` 由归档脚本生成。
-3. **理由拆进对象。** 冻结记录里（ledger、签字节）每条设计决定，放进它所属对象正文的「## 决定」，格式按 `idea-loop:design-archive` 的「正文」：`### 决定 N：…`，下挂 `为什么` / `否掉过`（被否的做法和理由，确实没有写「无」）/ `来源`（写 `[[<spec-slug>]]`）。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。Distill-back 的候选写进它出自的对象的「## 设计法候选」（`idea-loop:design-modeling`「设计法候选的形态」）。页面、组件、动效、用户路径文件两节都要有，没有内容写「无」。
-4. **自查**，跑到退出码 0：
-
-   ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" "$(git rev-parse --show-toplevel)" --delta <spec-slug> --no-used-by
-   ```
-
-   逐条违规改掉；改不动的（比如缺入口）在输出里列出来。
 
 ## 改 spec
 
@@ -66,7 +47,7 @@ docs/design/tmp/<spec-slug>/
 
 **「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它 spec 图里的「交互图（screen flow）」，一个场景一张，截图取自冻结画布，规格照它的「两类共用的」，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
 
-- **每一步带 `state`**，填这一格对应的状态名（就是「写 delta」里那个状态文件的名字），拼的时候加 `--archive "$(git rev-parse --show-toplevel)" --delta <spec-slug>` 让脚本核对每个 id 都真有这个状态。
+- **每一步带 `state`**，填这一格对应的状态名（画布 `?state=<名字>` 的名字，与冻结摘要的状态矩阵同名）。**不带** `--archive` / `--delta`：冻结不写 `delta/`，档案里还没有这些状态，脚本核不了；对回档案状态由合并前的归档做。
 - **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图脚本退出码 2。
 - 改动的位置画红色光圈，图下一两句补截图里看不出来的规则。
 
@@ -76,13 +57,13 @@ docs/design/tmp/<spec-slug>/
 
 spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排者：它核对冻结结果之后开。
 
-写完「改 spec」就停下输出：「要看哪里」列交互图的路径；「写 delta」里改不动的违规和「入口待补」写进「要人判的取舍」。
+写完「改 spec」就停下输出：「要看哪里」列交互图的路径；画布里碰到的、spec 没写入口的新页面，列进「要人判的取舍」。
 
 ## 部分冻结
 
 人说「这几块可以冻结了，那几块回去重新发散」时：
 
-1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。`delta/` 只写签过字的那几块（照「写 delta」）。
+1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。
 2. spec 不动：不写冻结摘要，也不开设计 PR——`idea-loop:to-ticket` 只认整份冻结。
 3. 回推的那几块记进冻结记录的签字节（分流回 `/idea-loop:uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
 4. 停下输出，然后你就结束了。下一个 designer 从「部分冻结后重开」接上。
@@ -92,3 +73,37 @@ spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排�
 这份 spec 已经冻结过一部分时，签过字的部分原样不动。第二轮 imagine 交出的 `handoff/` **只含重开的那几块**（方向说明开头一行写明是哪几块）：只把这几块接进已冻结的画布——复制出这几块的标记与样式，换掉或补进画布里对应的位置，其余一字不动。
 
 接完做一次回归：已签字的状态在相同 viewport 下，截图与接之前一致；结果记进 ledger。没有 `handoff/`（第二轮前的旧流程）就按方向说明重建重开的那几块。
+
+## 冻结之后的设计变更
+
+冻结之后，`canvas/` 是这个需求唯一的设计真相，designer 是它唯一的修改者。人接受了一处跟画布不同的设计时，编排者（实现期间是 `idea-loop:implement` 的会话，PR 开出后是 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」。来源三种：review 里人接受了实现；实现者做不下去、停下汇报里人接受了改法；人自己改主意。
+
+**designer 拿到**：画布路径（`canvas/` 里最新一版）、人的原话、受影响的状态名（画布 `?state=` 的名字）、相关截图（实现的截图，或停下汇报里那张图）；评委没过时还有要改的意见。
+
+**designer 做**：
+
+- 从最新一版复制出 `v<N+1>.html`（`refine-canvas.md` 的「版本」），**只改受影响的格子**：人的原话对应的那几个状态的标记与样式。别的格一字不动；改完把没动的格在同一 viewport 下各截一张，跟改之前一致，不一致就修回。
+- 状态名与锚点名是契约，改格不改名；人要的是新增一格，用新名字，加进状态矩阵。
+- 改过的格重截矩阵里那几格，覆盖 `assets/` 里同名截图；用 `design-lint.mjs` 过一遍 `v<N+1>.html`。
+- 人的原话与画布、方向说明矛盾时，照人的原话改，说明里点出矛盾。不落 ledger：`work/` 在冻结时已经清掉，这一次的记录在冻结记录的「冻结后的变更」里，由编排者记。
+- 评委意见交回来时用 SendMessage 接着做，同一个 designer，改成 `v<N+2>`。
+
+**designer 交回**：照 `designer.md` 的「交付」格式：新一版的版本号，改动的每一格的截图路径（放 `canvas/work/change-<序号>/`，不提交），「改了什么」写清改了哪几格、没动的格已比对。
+
+**评与停**：编排者新起一个 `idea-loop:ui-master`，只给改动那几格的截图；评分和停止判定照 `SKILL.md` 的「每一轮」第 3 步：同一个 `critic-score.mjs`、同一张判定表，评分 JSON 写在 `canvas/work/change-<序号>/round-<N>.json`，`history` 只放这一次变更自己前几轮的分数（打磨期的分数不带进来）。`继续` 把意见交回同一个 designer；`瓶颈`、`方向` 停下交人；`通过` 往下。
+
+**过了之后**，编排者：
+
+1. 提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<N+1>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到当前分支（实现期间是集成分支，review 期间是 PR 分支）。
+2. 冻结记录「冻结后的变更」记一行，跟画布同一个提交（第一次记时把「无」换成表头）：
+
+   ```
+   | 日期 | 画布版本 | 改了哪几格 | 人的原话 | 评委分 |
+   |---|---|---|---|---|
+   | 2026-10-24 | v6 | cookbook--search-loading | 「加载态不要骨架屏，一条细进度条就够」 | 9 |
+   ```
+
+   「改了哪几格」写状态名，多格用逗号；「评委分」是最后一轮 `critic-score.mjs` 的分数；「画布版本」是这一行之后的最终画布：它与冻结摘要里的画布指针不同时，以这一节最后一行的版本为准。
+3. 代码跟新画布不一致、而且来源不是「接受实现」的，编排者再照各自 skill 的路派实现者按新画布做；人不再单独看新画的那几格，实现出来后在 review 里照常看到。
+
+没有设计稿的 UI 改动不走这一条：那种需求没有画布，实现者在 `delta/` 记最小差异。

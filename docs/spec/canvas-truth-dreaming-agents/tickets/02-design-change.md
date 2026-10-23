@@ -17,12 +17,12 @@ idea-loop 插件里，一个需求冻结之后，画布 `docs/design/tmp/<spec-s
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」1、2。
 
 ## 验收标准
-- [ ] uiux-refine 的冻结说明里没有「写 delta」一步，设计 PR 的内容不含 `delta/`；冻结记录的正文多了「冻结后的变更」一节及它的行格式
-- [ ] designer 的定义写明「设计变更」这种任务：输入、只改受影响的格子、交回什么
-- [ ] implement 与 pr-review 各写明：人接受设计变更后起 designer、起 ui-master 只评改动格子、照 refine 的评分脚本与停止判定、过了提交并记冻结记录、代码不一致的派实现者
-- [ ] pr-review「接受」那条路里不再有手改 `delta/` 的说法
-- [ ] 实现者记「最小差异」的规则原样保留
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [x] uiux-refine 的冻结说明里没有「写 delta」一步，设计 PR 的内容不含 `delta/`；冻结记录的正文多了「冻结后的变更」一节及它的行格式
+- [x] designer 的定义写明「设计变更」这种任务：输入、只改受影响的格子、交回什么
+- [x] implement 与 pr-review 各写明：人接受设计变更后起 designer、起 ui-master 只评改动格子、照 refine 的评分脚本与停止判定、过了提交并记冻结记录、代码不一致的派实现者
+- [x] pr-review「接受」那条路里不再有手改 `delta/` 的说法
+- [x] 实现者记「最小差异」的规则原样保留
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
 
 ## 选中的存量回归
 - `archive-check-flag.test.mjs`：冻结说明里删掉「写 delta」后，残留的档案校验命令仍须带 `--no-used-by`
