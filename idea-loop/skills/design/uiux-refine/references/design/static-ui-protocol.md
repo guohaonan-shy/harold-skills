@@ -275,7 +275,7 @@ On sign-off, perform **Distill-back before handoff**, and it only writes candida
    journey; the object file itself is written from the final canvas at the pre-merge archive, nothing
    goes under `delta/` at freeze), in the format `idea-loop:design-modeling`, section 设计法候选的形态 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
-   evidence. An empty Distill-back is valid only when stated explicitly: each section then holds
+   evidence. An empty Distill-back is valid only when stated explicitly: the freeze record's section then holds
    one line, 「无」.
 2. Stop there. `idea-loop:dreaming` later runs every candidate through the admission table in
    `idea-loop:design-modeling`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
