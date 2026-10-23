@@ -10,6 +10,8 @@
 | [[2026-10-17-design-md-survey]] | document | 2026-10-17 | DESIGN.md 写法调研（Google 规范 + VoltAgent 84 份样本） |
 | [[2026-10-19-design-md-standard]] | document | 2026-10-19 | DESIGN.md 写入标准（Harold 已认可） |
 | [[2026-10-19-pr-decision-friction]] | conversation | 2026-10-19 | 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么 |
+| [[2026-10-21-seo-workflow-discussion]] | conversation | 2026-10-21 | 讨论 —— SEO 工作流重新设计：五个方向、项目内插件（位置与队列已被次日推翻） |
+| [[2026-10-22-grill-idea-loop-seo]] | conversation | 2026-10-22 | grill —— SEO 能力放进 idea-loop：OpenSEO 负责发现，idea-loop 负责解决 |
 | [[2026-10-21-setup-design]] | document | 2026-10-21 | idea-loop setup 设计稿：项目配置集中到根目录的几份文件 |
 | [[2026-10-21-skill-audit]] | document | 2026-10-21 | skill 审查：对照 writing-for-agents 审 23 个 skill |
 | [[2026-10-21-skill-writing-report]] | document | 2026-10-21 | Skill / Agent 怎么写：claude-seo、mattpocock/skills、cursor/plugins 三个仓库的对照 |

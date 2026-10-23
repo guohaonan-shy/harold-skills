@@ -42,10 +42,11 @@ docs/
 │   │   ├── delta/        冻结结果对 prod/ 的差异 —— 结构见 `idea-loop:design-archive`
 │   │   └── research/<问题短名>/  `idea-loop:uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
-└── domain/               领域知识 —— 业务机制、规则、数据结论
+├── domain/               领域知识 —— 业务机制、规则、数据结论
+└── records/<kind>/       运营台账 —— 会话起头、之后由人持续更新（如外联跟进表 `records/outreach/`）
 ```
 
-`raw/`、`spec/`、`adr/` 是会话产物；`domain/` 是知识库存量，不由单次会话产生。
+`raw/`、`spec/`、`adr/` 是会话产物；`domain/` 是知识库存量，不由单次会话产生；`records/` 由会话建、由人改，文件用 `type: record`，不进 spec 的生命周期，也不在 dreaming 里删。
 
 项目级的规则放在仓库根目录，一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`（`/idea-loop:setup` 建），`GLOSSARY.md`、`DESIGN.md`。
 

@@ -2,13 +2,14 @@
 
 ## skill 分类
 
-skill 放在 `skills/<分类>/<slug>/SKILL.md`。三个分类：
+skill 放在 `skills/<分类>/<slug>/SKILL.md`。四个分类：
 
 - **engineering**：按生产工程的标准，从一个想法走到合并进主干的代码：spec、工单、实现、review。
 - **design**：UI 与品牌内容的设计：调研别人怎么做、发散出方向、打磨到冻结，以及设计档案和 `DESIGN.md`。
 - **productivity**：不绑定某一段流程的能力和效率工具：追问想法、给 agent 写文档、知识库的约定与维护、决策规则、交付证据。
+- **seo**：SEO 的发现、入队和解决用的领域能力：从 OpenSEO 取数据找问题、把问题提成 issue、写内容与外联草稿、发布前检查。产出是 issue、站点内容或检查结果；issue 之后照 engineering 的流程走。外部来源的出处写在 `skills/seo/README.md`。
 
-一个 skill 同时沾两类时，按它服务谁归类：只服务从想法到代码那一条流程的，归 engineering；产出是界面、品牌素材或设计档案的，归 design；几条流程都要用、或只服务人自己的工作方式的，归 productivity。
+一个 skill 同时沾两类时，按它服务谁归类：只服务 SEO 的，归 seo；只服务从想法到代码那一条流程的，归 engineering；产出是界面、品牌素材或设计档案的，归 design；几条流程都要用、或只服务人自己的工作方式的，归 productivity。
 
 ## 参考资料归谁
 

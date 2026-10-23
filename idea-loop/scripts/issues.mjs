@@ -24,12 +24,19 @@
  * CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes every label outside the
  * status states, the categories and that keep-list.
  *
+ * The dispatch loop hands out sessions from queues, each with its own cap on open sessions. Every issue
+ * is in the main queue (cap 10) unless its parent category is marked「（独立队列，上限 N）」in that
+ * section: then it waits in that category's own queue, so a category that files issues in bulk (seo-scan
+ * has no cap) cannot crowd out the rest. A queue's sessions sit in its own sidebar sections, the stage
+ * names prefixed with the category (`seo 审核中`), which is how the loop counts them apart.
+ *
  * Usage (<docs> is the target project's docs/ directory; gh runs there, so it acts on that repo; a
  * target is an issue number or a spec slug, which stands for every issue the spec lists):
  *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels; lists the rest, --prune deletes them
  *   node issues.mjs type       <docs> <n> <parent[/child]>...  → sets #n's type:* labels from the project's categories
  *   node issues.mjs advance    <docs> <spec-slug>              → after a PR of the spec landed: its issues move on to 设计中 / 实现中, or close
- *   node issues.mjs candidates <docs> [<limit>]                → JSON: 待验证 issues no spec lists, oldest first
+ *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]  → JSON: 待验证 issues no spec lists, oldest first; main queue, or category c's own
+ *   node issues.mjs queues     <docs> [<n>]                    → JSON: every queue (cap, sidebar sections), or the one issue #n is in
  *   node issues.mjs queue      <docs> <待设计|待实现>           → JSON: specs whose issues wait in that state, and the mismatches
  *   node issues.mjs set        <docs> <state> <target>...      → checked flip: claim, a session opening or giving up, 搁置
  *   node issues.mjs reconcile  <docs>                          → the flips main already decides: 待设计 / 待实现, closing
@@ -80,12 +87,14 @@ export function stateOf(labels) {
 
 export const TYPE_PREFIX = 'type:';
 export const TYPES_HEADING = 'issue 分类';
+const QUEUE_NOTE = /\s*[（(]独立队列[，,]\s*上限\s*(\d+)\s*[)）]/;
 const TYPE_COLORS = { parent: '0052cc', child: 'c5def5' };
 
 /**
  * The project's categories from its「issue 分类」section: a bullet per parent (`` - `seo`：搜索流量 ``),
  * indented bullets for its children, and a line starting「保留的 label」that names, in backticks, the
- * other labels to keep. Null when the section is missing.
+ * other labels to keep. A parent whose line carries「（独立队列，上限 N）」gets `queue: N` (the note is
+ * not part of its label description). Null when the section is missing.
  */
 export function parseTypes(md) {
   const lines = String(md).split('\n');
@@ -99,7 +108,8 @@ export function parseTypes(md) {
     if (item) {
       const [, indent, name, about = ''] = item;
       if (name.includes('/')) throw new Error(`分类「${name}」里有「/」：它留给子类分隔，换个名字`);
-      if (!indent) parents.push({ name, about, children: [] });
+      const own = about.match(QUEUE_NOTE);
+      if (!indent) parents.push({ name, about: about.replace(QUEUE_NOTE, '').trim(), children: [], ...(own ? { queue: Number(own[1]) } : {}) });
       else if (parents.length) parents.at(-1).children.push({ name, about });
       continue;
     }
@@ -126,6 +136,21 @@ export function typeLabels(types) {
     { name: `${TYPE_PREFIX}${p.name}`, color: TYPE_COLORS.parent, about: p.about },
     ...p.children.map((c) => ({ name: `${TYPE_PREFIX}${p.name}/${c.name}`, color: TYPE_COLORS.child, about: c.about })),
   ]);
+}
+
+export const MAIN_CAP = 10;
+export const STAGE_SECTIONS = ['审核中', '设计中', '实现中'];
+
+/** The dispatch queues: the main one (`name: null`) first, then one per category marked 独立队列. */
+export function queues(types) {
+  const own = (types?.parents ?? []).filter((p) => p.queue).map((p) => ({ name: p.name, cap: p.queue, sections: STAGE_SECTIONS.map((s) => `${p.name} ${s}`) }));
+  return [{ name: null, cap: MAIN_CAP, sections: [...STAGE_SECTIONS] }, ...own];
+}
+
+/** The queue an issue with these labels waits in: the first own queue whose `type:<parent>` it carries, else main. */
+export function queueOf(types, labels) {
+  const [main, ...own] = queues(types);
+  return own.find((q) => labels.includes(`${TYPE_PREFIX}${q.name}`)) ?? main;
 }
 
 /** The labels a project keeps: the status states, its categories, and its keep-list. */
@@ -329,9 +354,11 @@ export function listedIssues(docs) {
   return new Set(specsOn(docs).flatMap((s) => issuesOf(s.md)));
 }
 
-export function candidates(gh, limit = 100, listed = new Set()) {
+export function candidates(gh, limit = 100, listed = new Set(), { types = null, queue = null } = {}) {
+  if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
   return openIssues(gh)
     .filter((i) => stateOf(i.labels) === UNLABELLED && !listed.has(i.number) && !isSpecIssue(i.title))
+    .filter((i) => queueOf(types, i.labels).name === queue)
     .sort((a, b) => a.number - b.number)
     .slice(0, limit)
     .map(({ number, title }) => ({ number, title }));
@@ -469,7 +496,7 @@ const num = (v, what) => {
   return Number(v);
 };
 
-const COMMANDS = ['labels', 'type', 'candidates', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
+const COMMANDS = ['labels', 'type', 'candidates', 'queues', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
 
 function main() {
   const [cmd, docs, a, b, ...rest] = process.argv.slice(2);
@@ -485,7 +512,17 @@ function main() {
     if (surplus.length) print([`不在状态、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
     return;
   }
-  if (cmd === 'candidates') return console.log(JSON.stringify(candidates(gh, a ? num(a, 'limit') : undefined, listedIssues(docs)), null, 2));
+  if (cmd === 'candidates') {
+    const args = [a, b, ...rest].filter((x) => x !== undefined);
+    const flag = args.find((x) => x.startsWith('--queue='));
+    const limit = args.find((x) => !x.startsWith('--'));
+    const opts = { types: readTypes(docs), queue: flag ? flag.slice('--queue='.length) : null };
+    return console.log(JSON.stringify(candidates(gh, limit ? num(limit, 'limit') : undefined, listedIssues(docs), opts), null, 2));
+  }
+  if (cmd === 'queues') {
+    const types = readTypes(docs);
+    return console.log(JSON.stringify(a ? queueOf(types, issue(gh, num(a, 'issue')).labels) : queues(types), null, 2));
+  }
   if (cmd === 'reconcile') {
     const { done, problems } = reconcile(gh, docs);
     print(done);
