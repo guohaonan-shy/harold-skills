@@ -19,12 +19,12 @@
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」6。
 
 ## 验收标准
-- [ ] 新增两个 agent 定义：spec → ADR（sonnet · high）、设计规范维护（opus · high），各写明输入、只读、交回的行
-- [ ] dreaming 的 SKILL 写明只编排、三个 agent 并行起、漏归档由它自己查；扫描范围含 `GLOSSARY.md`、`REVIEW.md`，不含 `CLAUDE.md`、`AGENTS.md`
-- [ ] 提议表 reference 多一类行 `漏归档`，处置闭集「补归档 · 丢弃」，执行段写明两种处置怎么做
-- [ ] 提议表校验脚本认 `漏归档` 行：处置「补归档」通过；处置写成闭集外的（如「归档」）被拒并说出闭集——有单测，先红后绿
-- [ ] README 的 agent 清单与 dreaming 描述跟上
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [x] 新增两个 agent 定义：spec → ADR（sonnet · high）、设计规范维护（opus · high），各写明输入、只读、交回的行
+- [x] dreaming 的 SKILL 写明只编排、三个 agent 并行起、漏归档由它自己查；扫描范围含 `GLOSSARY.md`、`REVIEW.md`，不含 `CLAUDE.md`、`AGENTS.md`
+- [x] 提议表 reference 多一类行 `漏归档`，处置闭集「补归档 · 丢弃」，执行段写明两种处置怎么做
+- [x] 提议表校验脚本认 `漏归档` 行：处置「补归档」通过；处置写成闭集外的（如「归档」）被拒并说出闭集——有单测，先红后绿
+- [x] README 的 agent 清单与 dreaming 描述跟上
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
 
 ## 选中的存量回归
 - `proposal-table-check.test.mjs`：现有行类型与闭集的断言，新加行类型不能破坏它们
