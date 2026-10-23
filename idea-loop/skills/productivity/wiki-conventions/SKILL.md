@@ -38,8 +38,8 @@ docs/
 ├── design/
 │   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果经设计 PR 提交
 │   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部结构归 `idea-loop:uiux-imagine`
-│   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图 —— 内部结构归 `idea-loop:uiux-refine`
-│   │   ├── delta/        冻结结果对 prod/ 的差异 —— 结构见 `idea-loop:design-archive`
+│   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图；冻结后唯一的设计真相 —— 内部结构归 `idea-loop:uiux-refine`
+│   │   ├── delta/        对 prod/ 的差异：合并前归档时从最终画布加实现写出（没有设计稿的改动由实现者记最小差异）—— 结构见 `idea-loop:design-archive`
 │   │   └── research/<问题短名>/  `idea-loop:uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 业务机制、规则、数据结论
@@ -55,9 +55,9 @@ docs/
 
 `design/` 分两层，生命周期相反：
 
-- **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/` 和 `delta/`，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
+- **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
   - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布，有价值的结论写回 spec 或 issue。
-  - 冻结时，签字的画布、冻结记录、交互图和 `delta/` 经设计 PR 提交进主分支（`git add -f`），实现从主分支开 worktree 就拿得到。它们留到实现 PR 合并前的归档：归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着实现 PR 进主分支。
+  - 冻结时，签字的画布、冻结记录和交互图经设计 PR 提交进主分支（`git add -f`），实现从主分支开 worktree 就拿得到。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着实现 PR 进主分支。
   - **`research/` 不算设计产物**：从不归档；只做过调研的需求不起 UI 审查，合并也不走归档。用进设计的调研结论已经以文字写在方向说明或冻结记录里，随设计归档。
 - **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（人批过之后），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `idea-loop:design-archive`。
 

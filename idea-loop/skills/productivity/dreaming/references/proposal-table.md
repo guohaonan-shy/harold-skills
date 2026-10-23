@@ -9,6 +9,20 @@
 - **空表**：只推一句「这次无事」，不发 Artifact。
 - 人在会话里逐行回「批 / 不批 / 改成…」。不批的行不执行；「改成…」按人的话改那一行再执行。
 
+## 表怎么汇成
+
+提议段的行来自三个专职 agent 与 dreaming 自己的机械检查，各写一段，dreaming 把它们并成一张表：
+
+| 段 | 谁写 | 放哪 |
+|---|---|---|
+| 文档 | `idea-loop:adr-reconciler` | `.tmp/dreaming/<YYYY-MM-DD>/rows-docs.md` |
+| 候选、DESIGN.md 条目，及它们牵出的缺陷行 | `idea-loop:design-steward` | `.tmp/dreaming/<YYYY-MM-DD>/rows-design.md` |
+| 档案对象、档案状态，及产品坏了的缺陷行 | `idea-loop:ui-reviewer` 的对账模式（[archive-reconcile.md](archive-reconcile.md)：源码波出 `档案对象`，实时波出 `档案状态` 与缺陷） | dreaming 自己的 tmp 目录与交回的结果文件 |
+| 初扫页面 | dreaming 自己（[initial-scan.md](initial-scan.md)：`prod/` 为空，或 reviewer 报了 `补扫页面`） | dreaming 自己的 tmp 目录 |
+| 漏归档 | dreaming 自己机械地查 | 直接写进表 |
+
+同一行类型只出现在一节里：`缺陷` 有两个来源，并成一节。并好后过校验脚本，退出码 0 才交出去。
+
 ## 一张表的形状
 
 一个 `#` 标题（写日期），下面按行类型分 `##` 节，节名就是行类型，闭集。每节一个表，列固定为：
@@ -16,7 +30,7 @@
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
 |---|---|---|---|---|
 
-- 一行一个对象（一份文档、一个档案状态、一条候选、`DESIGN.md` 的一处）。五列都要填。
+- 一行一个对象（一份文档、一个档案状态、一条候选、一个漏归档的需求、`DESIGN.md` 的一处）。五列都要填。
 - 「建议处置」从该行类型自己的闭集里取，后面可以跟一个括号写补充（`订正（路径改名）`）。闭集里找不到合适的，说明这份文件缺一条：先补闭集和校验脚本的单测，再写表。
 - 「选项」写人的几种回法（至少「批 / 不批 / 改成…」；两种解释分不清时把两种都写上）。
 - 跑过的部分，一节没有行就写一行 `无`：节在，才说明这一部分跑过了。没跑的部分整节不写。
@@ -25,11 +39,12 @@
 
 | 节（行类型） | 一行是什么 | 建议处置的闭集 |
 |---|---|---|
-| `文档` | 知识库对账里一份有话要说的文档 | 写 ADR 删 spec · 写 ADR 未采纳删 spec · 报警 · 订正 · 标注被取代 · 删漏网工单 · 标搁置 · 去审核 · 去设计 · 问人 · 迁移布局 · 删除 |
+| `文档` | 文档对账（`adr-reconciler`）里一份有话要说的文档 | 写 ADR 删 spec · 写 ADR 未采纳删 spec · 报警 · 订正 · 标注被取代 · 删漏网工单 · 标搁置 · 去审核 · 去设计 · 问人 · 迁移布局 · 删除 |
 | `档案对象` | 设计档案里源码一侧查出问题的一个对象 | 改代码路径 · 删对象 · 补扫页面 · 标进入方式过期 |
 | `档案状态` | 实时重新驱动后，一个有话要说的状态 | 替换档案 · 改进入方式 · 补进不去说明 |
 | `初扫页面` | 全站初扫建出来的一整页（人按页面批） | 新增页面 |
 | `候选` | 一条待蒸馏的设计法候选 | 改写已有规则 · 追加新规则 · 已覆盖不加 · 留在原处 · 起草通用原则 issue · 起草缺陷 issue · 驳回 |
+| `漏归档` | 基准分支上 `docs/design/tmp/<spec-slug>/` 里还留着设计产物、而 spec 已完成或已没有 spec 目录的一个需求（绕过合并步骤合进去的），见 [missed-archive.md](missed-archive.md) | 补归档 · 丢弃 |
 | `DESIGN.md 条目` | `DESIGN.md` 里对账出问题的一处 | 改法 · 移出 · 删除 · 改写为全局规则 · 合并为一条 · 新建 DESIGN.md · 处理 lint 警告 · 交人裁决 |
 | `缺陷` | 一条要开到目标仓库的 issue 草稿 | 开 issue · 已有 #N（N 是已开着的那条的编号） |
 
@@ -82,6 +97,12 @@
 |---|---|---|---|---|
 | 候选：卡片内边距统一 16px（来源：对象正文的候选；组件 PromoCard、OrderCard 重复，共 2 次） | 与已有规则「卡片内边距 12px」矛盾 | ![促销卡](docs/design/prod/components/PromoCard/assets/promo-card.png) ![订单卡](docs/design/prod/components/OrderCard/assets/order-card.png) 并进：Components · 卡片（改写）；旧：「卡片内边距 12px」→ 新：「卡片内边距 16px」 | 改写已有规则 | 采纳 / 改措辞 / 留在原处 / 驳回 |
 
+## 漏归档
+
+| 对象 | 发现 | 证据 | 建议处置 | 选项 |
+|---|---|---|---|---|
+| docs/design/tmp/cart-promo/ | spec 已是「完成」；tmp 里还留着 canvas/ 与 delta/，没经过归档 | git ls-tree origin/main docs/design/tmp/cart-promo/ 列出 12 个文件；spec 状态：完成 | 补归档 | 批 / 不批 / 改成… |
+
 ## DESIGN.md 条目
 
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
@@ -104,13 +125,14 @@
 
 | 行类型 | 怎么执行 |
 |---|---|
-| `文档` | 照 SKILL.md 的「几种情况怎么处置」：先写 ADR，再 `git rm` 整个 spec 目录；写 ADR、删 spec 时，顺带把设计档案里「决定」的来源链接 `[[<spec-slug>]]` 改指新 ADR（编号不复用、原地改写）。迁移布局照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」 |
+| `文档` | 照 [docs-reconcile.md](docs-reconcile.md) 的「几种情况怎么处置」：先写 ADR（提议段把草稿放在 `adr-drafts/`），再 `git rm` 整个 spec 目录；写 ADR、删 spec 时，顺带把设计档案里「决定」的来源链接 `[[<spec-slug>]]` 改指新 ADR（编号不复用、原地改写）。迁移布局照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」 |
 | `候选` / `DESIGN.md 条目` | 照 [candidate-distillation.md](candidate-distillation.md) 与 [design-md-reconcile.md](design-md-reconcile.md) 的「执行段」 |
 | `缺陷` | 照 `idea-loop:spec-status` 的「开一个待验证的 issue」开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
+| `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`；丢弃是 `git rm -r docs/design/tmp/<spec-slug>/`。都跟其余改动同一个 PR |
 | `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照 `idea-loop:design-modeling` 的「蒸馏」 |
 | `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：先删掉没批的对象，再跑档案的归档脚本整目录并进 `prod/`。步骤见 [archive-reconcile.md](archive-reconcile.md) 的「执行段」与 [initial-scan.md](initial-scan.md) 的「执行段」 |
 
 档案对象文件的任何改动都走 `delta/` 加归档脚本，包括「处理完的候选从档案对象里删掉」：把改过的对象全文放进 `delta/`，随同一次归档并进 `prod/`。
 
-3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然合并前钩子会拦下这个 PR。开一个 PR（`gh pr create`，标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、哪些没批留着、开出去的 issue 编号）。
+3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。开一个 PR（`gh pr create`，标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、哪些没批留着、开出去的 issue 编号）。
 4. 结果摆给人：动了什么、留了什么、为什么留。

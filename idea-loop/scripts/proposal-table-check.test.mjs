@@ -42,6 +42,7 @@ const ROWS = {
   初扫页面: [['pages/wishlist', '档案里没有这一页；路由 /wishlist 可进', 'docs/design/tmp/dreaming-2026-10-19/delta/pages/wishlist/wishlist.md', '新增页面', OPTS]],
   候选: [['候选：卡片内边距统一 16px（组件 PromoCard、OrderCard 重复，共 2 次）', '与已有规则「卡片内边距 12px」矛盾', `${IMG_CARD} 并进：Components · 卡片；旧：「卡片内边距 12px」→ 新：「卡片内边距 16px」`, '改写已有规则', OPTS]],
   'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「明确不进 DESIGN.md 的内容」里的带日期的先例', '删除', OPTS]],
+  漏归档: [['docs/design/tmp/cart-promo/', 'spec 已是「完成」，origin/main 上 tmp/cart-promo/ 里还留着画布与 delta（绕过合并步骤合进去的）', 'git ls-tree origin/main docs/design/tmp/cart-promo/；spec 状态：完成', '补归档', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -52,6 +53,21 @@ const sample = (over = {}) =>
 test('a well-formed proposal table, every row type present, exits 0', () => {
   const r = run(sample());
   assert.equal(r.status, 0, r.out);
+});
+
+test('a missed-archive row with 补归档 passes; 丢弃 passes too', () => {
+  for (const d of ['补归档', '丢弃', '丢弃（画布已作废）']) {
+    const r = run(sample({ 漏归档: withDisposition('漏归档', d) }));
+    assert.equal(r.status, 0, `${d}: ${r.out}`);
+  }
+});
+
+test('a missed-archive row whose disposition is outside the closed set (归档) fails and names the closed set', () => {
+  const r = run(sample({ 漏归档: withDisposition('漏归档', '归档') }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /漏归档/);
+  assert.match(r.out, /「归档」/);
+  assert.match(r.out, /补归档 \/ 丢弃/);
 });
 
 test('a section that is not a known row type fails and is named', () => {

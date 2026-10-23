@@ -401,16 +401,6 @@ test('cli: usage errors exit 2', () => {
   assert.equal(cli(writeRepo({ 'README.md': 'x' }), SPEC_SLUG).status, 2);
 });
 
-test('after the gate: archive clears the requirement the merge hook was naming', () => {
-  const root = writeRepo(requirement());
-  const hook = fileURLToPath(new URL('./merge-gate-hook.mjs', import.meta.url));
-  spawnSync('git', ['init', '-q'], { cwd: root });
-  const merge = () => spawnSync('node', [hook], { input: JSON.stringify({ tool_name: 'Bash', cwd: root, tool_input: { command: 'gh pr merge 12' } }), encoding: 'utf8' });
-  assert.equal(merge().status, 2);
-  assert.equal(cli(root, SPEC_SLUG).status, 0);
-  assert.equal(merge().status, 0);
-});
-
 // ---------- pieces ----------
 
 test('setUsedBy: replaces every YAML shape the field can take, appends when missing, touches nothing else', () => {

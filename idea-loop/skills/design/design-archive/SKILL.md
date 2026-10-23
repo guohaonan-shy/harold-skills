@@ -38,7 +38,7 @@ description: 设计档案（docs/design/prod/）的结构、校验、查询与�
 
 ```
 docs/design/
-├── tmp/<spec-slug>/{imagine,canvas,delta}/   过程只在本地；冻结结果经设计 PR 提交，归档时清掉
+├── tmp/<spec-slug>/{imagine,canvas,delta}/   过程只在本地；冻结的画布经设计 PR 提交，delta/ 合并前才写，归档时清掉
 └── prod/
     ├── index.md                              生成；frontmatter 里定主视口 / 主题 / 语言 / 动效模式，多前端的项目还有工作区前缀
     ├── pages/<page>/<page>.md                页面
@@ -51,11 +51,11 @@ docs/design/
 - 各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。
 - **页面是目录，每个状态一份文件。状态文件名带页面前缀**（`<page>--<state>`）：wikilink 按 basename 解析，不同页面都有 `loading` 时靠前缀区分。组件文件用代码组件名；**项目有不止一个前端时，组件文件名一律带工作区前缀**（`mkt-SiteFooter`、`app-SiteFooter`：两个前端各有一个同名的页脚，basename 就撞了），前缀在 `prod/index.md` 的 `workspaces` 里声明，校验认它。
 - **basename 在 `docs/` 下全局唯一**（`idea-loop:wiki-conventions` 的「slug 与链接」），由校验查；工单文件与 `index.md` 豁免。
-- **`tmp/<spec-slug>/`** 放进行中需求的全部设计过程产物：`imagine/` 方向说明，`canvas/` 画布、冻结记录与完整验收矩阵，`delta/` 对 `prod/` 的差异。目标项目把 `tmp/` 排除出 git；冻结时，签字的画布、冻结记录、交互图和 `delta/` 经设计 PR 用 `git add -f` 提交进主分支，实现从主分支开 worktree 就拿得到。放弃的需求不上线，有价值的结论写回 spec 或 issue。
+- **`tmp/<spec-slug>/`** 放进行中需求的全部设计过程产物：`imagine/` 方向说明，`canvas/` 画布、冻结记录与完整验收矩阵，`delta/` 对 `prod/` 的差异。目标项目把 `tmp/` 排除出 git；冻结时，签字的画布、冻结记录和交互图经设计 PR 用 `git add -f` 提交进主分支，实现从主分支开 worktree 就拿得到。**冻结之后，`canvas/` 是唯一的设计真相**：设计变了由 designer 改画布并记进冻结记录的「冻结后的变更」（`idea-loop:uiux-refine`），不改 `delta/`；`delta/` 只在合并前由 ui-reviewer 的归档模式从最终画布加实现整份写出。没有设计稿的 UI 改动没有画布，实现者在 `delta/` 记「最小差异」，那就是它唯一的设计真相。放弃的需求不上线，有价值的结论写回 spec 或 issue。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行一条，`- [[<id>]]`（后面可跟一句原因）。归档 = 覆盖 + 删除。
 - **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置写在 `prod/index.md` 的 frontmatter，见下面「`prod/index.md` 的设置键」）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
 - **素材走 Git LFS**：目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/` 下的 png / gif / webm。
-- **写档案只写 `tmp/<spec-slug>/delta/`**；`prod/` 只由归档脚本在人批过之后写（「归档」）。
+- **写档案只写 `tmp/<spec-slug>/delta/`**（合并前归档由 ui-reviewer 写，没有设计稿的改动由实现者写最小差异）；`prod/` 只由归档脚本在人批过之后写（「归档」）。
 - `docs/design/` 下 `tmp/`、`prod/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。
 
 ## frontmatter
@@ -215,4 +215,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <仓库根> <spec-
 
 退出码 0 = 已归档（`--dry-run` 时是「可以归档」），1 = 拒绝（逐条列出违规或冲突，**什么都没写**），2 = 用法错误或 `tmp/<spec-slug>/` 不存在。它把 `delta/` 叠上 `prod/` 校验，覆盖与删除对象，重算 `usedBy` 和 `prod/index.md`，把交互图挪进 `prod/` 并改 spec 里的链接，提示目标仓库缺的 Git LFS / `.gitignore` 配置，最后清空 `tmp/<spec-slug>/`；任何一步不过，什么都不动。拒绝原因看不懂、或要核对它挪了什么时，读 [references/archive-script.md](references/archive-script.md)。
 
-不带 `--dry-run` 的归档只在合并前、UI 审查者的归档草稿经人批过之后跑（`idea-loop:pr-review` 的「合并前归档」）；写 `delta/` 的 agent 自检只跑 `--dry-run`。插件的合并前钩子（`merge-gate-hook.mjs`）在这次合并负责的需求还有未归档的 `tmp/` 目录时拦下 `gh pr merge`，并给出归档命令；只有 `research/` 的目录不算。
+不带 `--dry-run` 的归档只在合并前、UI 审查者的归档草稿经人批过之后跑（`idea-loop:pr-review` 的「合并前归档」）；写 `delta/` 的 agent 自检只跑 `--dry-run`。归档是 `idea-loop:pr-review` 合并步骤里的一步，没有钩子替它把关：在网页上点合并或在别的会话里合并会绕过它（已知缺口），遗留的 `tmp/` 由每周的 `/idea-loop:dreaming` 当作「漏归档」兜底；`research/` 不算设计产物，不归档。

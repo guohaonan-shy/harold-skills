@@ -117,10 +117,11 @@ browser. Their feedback is the only switch that advances. Read a *cluster* of fi
 rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
-passed the gates is written as a candidate in the `## 设计法候选` section of its motion file under
-`delta/` (`idea-loop:design-modeling`, section 设计法候选的形态, object shape in `idea-loop:design-archive`, sections frontmatter and 正文) — the
-rule behind it, shaped to join the Motion chapter as a global principle; the specific parameters stay
-in that motion file, and the freeze record lists the candidate. A new motion goes **only** into the
+passed the gates is written as a candidate in the freeze record's `设计法候选` section, naming the
+motion object it will hang on (`idea-loop:design-modeling`, section 设计法候选的形态) — the
+rule behind it, shaped to join the Motion chapter as a global principle. The motion file itself, with
+the specific parameters and the candidate, is written from the final canvas at the pre-merge archive
+(object shape in `idea-loop:design-archive`, sections frontmatter and 正文); nothing is written under `delta/` at freeze. A new motion goes **only** into the
 motion file and the candidate, never straight into `DESIGN.md`. This protocol never writes
 `DESIGN.md`; `dreaming` puts the candidate to the human — that IS the admission process. A new
 pattern shipping with no candidate is the failure mode.

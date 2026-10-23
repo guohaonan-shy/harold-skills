@@ -34,9 +34,12 @@ export const ROW_TYPES = {
   档案状态: ['替换档案', '改进入方式', '补进不去说明'],
   初扫页面: ['新增页面'],
   候选: ['改写已有规则', '追加新规则', '已覆盖不加', '留在原处', '起草通用原则 issue', '起草缺陷 issue', '驳回'],
+  漏归档: ['补归档', '丢弃'],
   'DESIGN.md 条目': ['改法', '移出', '删除', '改写为全局规则', '合并为一条', '新建 DESIGN.md', '处理 lint 警告', '交人裁决'],
   缺陷: ['开 issue', '已有 #N'],
 };
+// 漏归档: a merged need whose docs/design/tmp/<spec-slug>/ still holds design output on the base
+// branch (it skipped pr-review's merge step). Dreaming finds it mechanically; no agent.
 
 /**
  * Parse ATX headings and pipe tables, skipping fenced code blocks.
