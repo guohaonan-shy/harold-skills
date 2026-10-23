@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, retro, decision-rules, evals]
 summary: retro：从会话里的纠正与决定提炼规则候选，批了开 issue，改 skill 要回放证明生效
 related: ["[[2026-10-22-retro-grill]]", "[[pr-review-report-followups]]", "[[2026-10-19-pr-decision-friction]]"]
