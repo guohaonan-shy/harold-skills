@@ -1,5 +1,5 @@
 ---
-name: design-change
+name: design-change-sync
 description: 设计已冻结的需求里，人接受了一处跟画布不同的设计，要把这处改进画布时用。
 ---
 

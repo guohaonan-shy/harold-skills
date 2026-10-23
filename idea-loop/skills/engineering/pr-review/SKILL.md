@@ -83,8 +83,8 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 冻结之后画布是唯一的设计真相。人在 review 里接受了一处跟画布不同的设计（接受实现，或自己改了主意），不手改 `delta/`、不手改画布，由 designer 改：
 
-1. 用 Skill 工具调 `idea-loop:design-change`，照它做：起 designer 改画布那几格、起 ui-master 评、过了提交并推送到 **PR 分支**、冻结记录记一行。给 designer 的相关截图用 UI 走查发现里的图，或人给的。
-2. 评委判了 `瓶颈` 或 `方向`（`idea-loop:design-change` 的「评与停」）：停下，把评委意见和新旧两版截图摆给人。
+1. 用 Skill 工具调 `idea-loop:design-change-sync`，照它做：起 designer 改画布那几格、起 ui-master 评、过了提交并推送到 **PR 分支**、冻结记录记一行。给 designer 的相关截图用 UI 走查发现里的图，或人给的。
+2. 评委判了 `瓶颈` 或 `方向`（`idea-loop:design-change-sync` 的「评与停」）：停下，把评委意见和新旧两版截图摆给人。
 3. 过了之后，画布已提交，提交链接记进「做了什么」。
 4. 代码跟新画布不一致的（来源不是「接受实现」），照上面「修」那条路：找归属工单，验收末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<N+1>.html 做，比对脚本对这一版`，提交、派实现者。接受实现的，代码不动。
 

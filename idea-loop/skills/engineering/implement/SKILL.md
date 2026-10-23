@@ -101,8 +101,8 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 冻结之后画布是唯一的设计真相。PR 开出前，人接受了一处跟画布不同的设计（来源：停下汇报里接受了实现者给的改法，或人自己改主意；review 里接受实现归 `idea-loop:pr-review`），不手改 `delta/`，也不手改画布，由 designer 改：
 
-1. 用 Skill 工具调 `idea-loop:design-change`，照它做：起 designer 改画布那几格、起 ui-master 评、过了提交并推送到**集成分支**、冻结记录记一行。给 designer 的相关截图用执行方的素材，或人给的。
-2. 评委判了 `瓶颈` 或 `方向`（`idea-loop:design-change` 的「评与停」）：停下，写进 pending 当决定题，带上评委意见与新旧两版截图。
+1. 用 Skill 工具调 `idea-loop:design-change-sync`，照它做：起 designer 改画布那几格、起 ui-master 评、过了提交并推送到**集成分支**、冻结记录记一行。给 designer 的相关截图用执行方的素材，或人给的。
+2. 评委判了 `瓶颈` 或 `方向`（`idea-loop:design-change-sync` 的「评与停」）：停下，写进 pending 当决定题，带上评委意见与新旧两版截图。
 3. 过了之后，画布已提交，往下。
 4. 代码跟新画布不一致的（来源不是「接受实现」），在归属工单的验收标准末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<N+1>.html 做，比对脚本对这一版`，提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派。已落地的工单要改，就按 `idea-loop:pr-review` 的「修」那条路追加一格再派。
 

@@ -46,7 +46,7 @@ effort: high
 - **清 AI tells**：对着 `design/design-core.md` 的「Anti-slop law」与 `design/ui-craft-checklist.md` 的「Visual slop catalog」逐条过，改出下一版。
 - **签字前检查**：这几项都要过，没过的改掉再交：`design-lint.mjs` 的 P0 清零；`design/heuristics-checklist.md`；对比度与 a11y 按 `design/accessibility-baseline.md` 从真 DOM 的 computed style 读；`design/ui-craft-checklist.md` 的「DESIGN.md drift check」；验收矩阵每一格看过；三条约定都在。画布里总结出的、可能成为设计法的规律写成候选（写进冻结记录的「设计法候选」，注明它将挂在哪个档案对象上；对象文件到合并前归档才写出），没有就写「无」；改 `DESIGN.md` 只走候选。
 - **冻结 / 部分冻结**：照 `freeze.md` 做。冻结只交画布、冻结记录和交互图，不写 `delta/`。
-- **设计变更**：冻结之后人接受了一处跟画布不同的设计（review 里接受了实现、实现者做不下去而人接受了改法、人自己改主意），编排者交给你。你拿到：画布路径、人的原话、受影响的状态名、相关截图。只改这几格，别的格一字不动；先用 Skill 工具调 `idea-loop:design-change`，做法、版本怎么递增、没动的格怎么比对照它的「designer 做」。交回新的一版画布与改动那几格的截图。冻结之后画布只由你改，没有别人手改它。
+- **设计变更**：冻结之后人接受了一处跟画布不同的设计（review 里接受了实现、实现者做不下去而人接受了改法、人自己改主意），编排者交给你。你拿到：画布路径、人的原话、受影响的状态名、相关截图。只改这几格，别的格一字不动；先用 Skill 工具调 `idea-loop:design-change-sync`，做法、版本怎么递增、没动的格怎么比对照它的「designer 做」。交回新的一版画布与改动那几格的截图。冻结之后画布只由你改，没有别人手改它。
 
 ## 交付
 
