@@ -135,7 +135,7 @@ dreaming 只做：起环境（从 `origin/<基准分支>` 切 worktree）、派�
 
 | agent | 做什么 | 交回 | 模型 | 依据 |
 |---|---|---|---|---|
-| UI 档案对账 | 不新建，复用 ui-reviewer 的对账模式；`prod/` 为空时的全站初扫留在 dreaming 现有写法里 | 现在的对账结果文件 | sonnet · high | Harold 原话「复用 ui-reviewer 对账模式，sonnet · high」 |
+| UI 档案对账 | 不新建，复用 ui-reviewer 的对账模式；源码波（不开浏览器的那一半：代码路径、引用、路由对照）也并进对账模式；`prod/` 为空时的全站初扫留在 dreaming 现有写法里 | 现在的对账结果文件，加源码波的「档案对象」行 | sonnet · high | Harold 原话「复用 ui-reviewer 对账模式，sonnet · high」；源码波归它，PR 审核第 1 轮 S3 定（「我倾向于选择B」，2026-10-23，后来改的） |
 | spec → ADR | 原「知识库对账」：判 spec 上线没有、起草 ADR、标被取代的旧 ADR 小节、找出已合并却还留着的工单；次要检查：`docs/domain/`、参考手册、`GLOSSARY.md`、`REVIEW.md` 的过期 | 提议表「文档」一节的行 | sonnet · high | Harold 原话「知识库对账与 ADR 起草合成一个……sonnet · high」；次要检查归它，审核会话里定（「同意」） |
 | 设计规范维护 | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它，量 token 的机械活可在内部再派 sonnet | 「候选」「DESIGN.md 条目」两节的行 | opus · high | Harold 原话「合成一个，避免对同一份文件提互相打架的修改」；模型审核会话里定（「同意」） |
 
@@ -207,7 +207,7 @@ dreaming 只做：起环境（从 `origin/<基准分支>` 切 worktree）、派�
 - 没有设计稿的 UI 改动：实现者照旧记「最小差异」到 `delta/`。
 - 让网页上点合并、在别的会话里合并也走归档：已知缺口，由 dreaming 的漏归档兜底（Harold 已定）。
 - `CLAUDE.md` / `AGENTS.md` 该放什么、要不要对账：Harold 还没想清楚，这次只把它们从 dreaming 的扫描里拿掉。
-- ui-reviewer 对账模式本身的判法、全站初扫的写法：不改。
+- ui-reviewer 对账模式实时波的判法、全站初扫的写法：不改（对账模式多接一段源码波，见实现决策 6，PR 审核第 1 轮 S3 后来改的）。
 
 ## 关联
 
