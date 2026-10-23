@@ -215,4 +215,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <仓库根> <spec-
 
 退出码 0 = 已归档（`--dry-run` 时是「可以归档」），1 = 拒绝（逐条列出违规或冲突，**什么都没写**），2 = 用法错误或 `tmp/<spec-slug>/` 不存在。它把 `delta/` 叠上 `prod/` 校验，覆盖与删除对象，重算 `usedBy` 和 `prod/index.md`，把交互图挪进 `prod/` 并改 spec 里的链接，提示目标仓库缺的 Git LFS / `.gitignore` 配置，最后清空 `tmp/<spec-slug>/`；任何一步不过，什么都不动。拒绝原因看不懂、或要核对它挪了什么时，读 [references/archive-script.md](references/archive-script.md)。
 
-不带 `--dry-run` 的归档只在合并前、UI 审查者的归档草稿经人批过之后跑（`idea-loop:pr-review` 的「合并前归档」）；写 `delta/` 的 agent 自检只跑 `--dry-run`。插件的合并前钩子（`merge-gate-hook.mjs`）在这次合并负责的需求还有未归档的 `tmp/` 目录时拦下 `gh pr merge`，并给出归档命令；只有 `research/` 的目录不算。
+不带 `--dry-run` 的归档只在合并前、UI 审查者的归档草稿经人批过之后跑（`idea-loop:pr-review` 的「合并前归档」）；写 `delta/` 的 agent 自检只跑 `--dry-run`。归档是 `idea-loop:pr-review` 合并步骤里的一步，没有钩子替它把关：在网页上点合并或在别的会话里合并会绕过它（已知缺口），遗留的 `tmp/` 由每周的 `/idea-loop:dreaming` 当作「漏归档」兜底；`research/` 不算设计产物，不归档。

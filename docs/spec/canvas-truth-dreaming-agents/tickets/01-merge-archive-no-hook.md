@@ -12,11 +12,11 @@ idea-loop 插件里，一个碰 UI 的需求在合并时：人说合并，pr-rev
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」4、5。
 
 ## 验收标准
-- [ ] 插件 hooks 注册里没有合并前钩子；PreToolUse 下的 SEO 检查钩子、PostToolUse 下的全部钩子都在
-- [ ] 合并前钩子的脚本与单测文件已删除；原单测里「其余钩子都注册着」这类断言挪进了某个仍存在的钩子的单测，并断言合并前钩子不在
-- [ ] ui-reviewer 的归档模式写明：核过之后整份写出 `delta/`（这一屏照实现、应看到什么照最终画布、边读自真实 DOM、决定与候选取自冻结记录与人的批示、长页面写 `sections`）；`delta/` 已存在时当草稿接着改
-- [ ] pr-review 的合并 reference、design-archive、README 里不再有以合并前钩子为前提的句子（搜钩子脚本名与「合并前钩子」无残留，或只剩「已删除 / 已知缺口」的说明）；已知缺口写明
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [x] 插件 hooks 注册里没有合并前钩子；PreToolUse 下的 SEO 检查钩子、PostToolUse 下的全部钩子都在
+- [x] 合并前钩子的脚本与单测文件已删除；原单测里「其余钩子都注册着」这类断言挪进了某个仍存在的钩子的单测，并断言合并前钩子不在
+- [x] ui-reviewer 的归档模式写明：核过之后整份写出 `delta/`（这一屏照实现、应看到什么照最终画布、边读自真实 DOM、决定与候选取自冻结记录与人的批示、长页面写 `sections`）；`delta/` 已存在时当草稿接着改
+- [x] pr-review 的合并 reference、design-archive、README 里不再有以合并前钩子为前提的句子（搜钩子脚本名与「合并前钩子」无残留，或只剩「已删除 / 已知缺口」的说明）；已知缺口写明
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
 
 ## 选中的存量回归
 - `archive-check-flag.test.mjs`：归档模式的说明里会新写档案校验命令，它保证每条都带 `--no-used-by`

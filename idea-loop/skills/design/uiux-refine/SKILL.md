@@ -106,7 +106,7 @@ designer 交付「冻结」后，你核对：
 1. 当前 worktree 应该是从主分支开出的（issue 会话在设计阶段就是）。分支还不叫 `design/<spec-slug>` 的，改名 `git branch -m design/<spec-slug>`；不在这种 worktree 里的，从最新主分支开一个，把下面这些文件带过去再提交。
 2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas docs/design/tmp/<spec-slug>/delta`（`tmp/` 被排除在 git 之外，要强制加）。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进。
 3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写），`git push -u origin design/<spec-slug>`，`gh pr create`。
-4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」），合并前的钩子也放行它。失败就告诉人。
+4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。失败就告诉人。
 
 告诉人：设计已冻结并合进主分支。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
 

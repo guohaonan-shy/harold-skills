@@ -7,7 +7,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）和 `idea-loop:decision-rules`（哪些条目不等人）。往来都在会话里：PR 上不开 thread，不以人的身份发言。
 
-下文 `review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指集成 worktree 的 `docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西（`research/` 是 `idea-loop:uiux-research` 落的调研页，看完就丢，合并前钩子也不算它）。
+下文 `review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指集成 worktree 的 `docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西（`research/` 是 `idea-loop:uiux-research` 落的调研页，看完就丢，不算设计产物，合并时也不归档它）。
 
 ## 什么时候跑
 

@@ -62,7 +62,7 @@
 2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 批了的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，按人说的在 delta 里改掉（改指向别的组件，或删边）；人没说清就不执行这一行。
 3. **归档**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`.gitignore` 没忽略 `docs/design/tmp/`、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进 PR 正文：那两个文件不是知识库文件，不在这个 PR 里改，交人处理。
 4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档脚本写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、没人批的档案行，不产生任何素材提交。
-5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然这个 PR 合并时会被合并前钩子拦下。
+5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。
 
 ## 边界
 
