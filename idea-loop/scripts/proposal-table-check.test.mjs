@@ -311,3 +311,30 @@ test('a row with an empty cell, or the wrong number of cells, fails', () => {
   assert.equal(run(sample({ 文档: [blank] })).status, 2);
   assert.equal(run(sample({ 文档: [ROWS.文档[0].slice(0, 4)] })).status, 2);
 });
+
+// ---------- 开头的说明行：全量还是增量，上一张还没处理 ----------
+
+const SCOPE_LINE = '对账范围：增量——自 2026-10-12 的提交 a1b2c3d 起，改过的代码牵到 3 个状态（档案共 42 个）';
+const PREVIOUS_LINE = '上一次（2026-10-12）的提议表还没处理';
+const withOpening = (md, ...lines) => md.replace(/^(# [^\n]*\n)/, `$1\n${lines.join('\n\n')}\n`);
+
+test('opening lines under the title — the scope of the screenshot pass, and a reminder that the last table is still open — do not make the table invalid', () => {
+  const r = run(withOpening(sample(), SCOPE_LINE, PREVIOUS_LINE), '--json');
+  assert.equal(r.status, 0, r.out);
+  assert.deepEqual(JSON.parse(r.out).counts, JSON.parse(run(sample(), '--json').out).counts);
+});
+
+test('opening lines are not rows: an otherwise empty table stays empty', () => {
+  const r = run(withOpening(`# 提议表 2026-10-19\n\n${EMPTY_SECTIONS('无')}`, SCOPE_LINE, PREVIOUS_LINE), '--json');
+  assert.equal(r.status, 0, r.out);
+  assert.equal(JSON.parse(r.out).empty, true);
+});
+
+test('a batch that did not run, noted at the end with the full-run hint, is a note and not a row', () => {
+  const note = '没跑成的批：pantry 页的 2 个状态（开发服务没起来）。下次可说全量补上。';
+  const r = run(`${sample()}\n${note}\n`, '--json');
+  assert.equal(r.status, 0, r.out);
+  assert.equal(JSON.parse(r.out).counts.缺陷, 1);
+  const empty = run(`# 提议表 2026-10-19\n\n${EMPTY_SECTIONS('无')}\n${note}\n`, '--json');
+  assert.equal(JSON.parse(empty.out).empty, true);
+});

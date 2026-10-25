@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务。每个仓库跑一次，项目配置变了再跑。
+description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 的定时任务。每个仓库跑一次，项目配置变了再跑。
 disable-model-invocation: true
 ---
 
@@ -93,10 +93,26 @@ idea-loop 从这几处读项目配置：
 
 完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；计划任务在 `list_scheduled_tasks` 里；允许规则已打印给人。
 
+## 每周对账
+
+`/idea-loop:dreaming` 可以由 Claude 桌面 app 的定时任务每周自己跑一次：提议段在那个会话里跑完，提议表摆在会话里等人批；截图对账只对上次成功执行以来代码动过的状态做（`idea-loop:dreaming` 的「对账范围」）。dreaming 仍然只由人或定时任务触发，不会在别的对话里被模型调起。定时任务跑出的会话用的是建它的会话的目录，所以这一步必须在本仓库的主 checkout 里做。
+
+1. `mcp__scheduled-tasks__list_scheduled_tasks`。没有这个工具（不在桌面 app 里）：把下面第 4 步的 prompt 给人，让人在桌面 app 的定时任务里自己建，同时告诉人任务 id 要叫 `dreaming-<仓库名>`（仓库名取主 checkout 的目录名；dreaming 靠这个 id 找执行记录），这一步记「未做：不在桌面 app」。
+2. 已有 id 为 `dreaming-<仓库名>` 的任务：报给人（时间、是否开着），这一步完成。
+3. 没有：用 AskUserQuestion 问人要不要装，选项「装，每周一早上 9 点左右（推荐）」「装，换个时间」「不装，我自己手动跑」。选「换个时间」的，再问每周哪天几点。选「不装」：什么都不建，这一步记「人拒绝」，告诉人手动敲 `/idea-loop:dreaming` 时没有基准点，每次都是全量。
+4. 人要装：`create_scheduled_task`：
+   - `taskId`：`dreaming-<仓库名>`；`title`：`<仓库名> 每周知识库对账`
+   - `cronExpression`：人定的时间，分钟避开 0 和 30
+   - `prompt`：`/idea-loop:dreaming`
+5. 告诉人：app 关着时到点不跑，下次打开 app 时补跑；跑完的会话在侧边栏的定时任务里看，提议表在那个会话里等人逐行批；下一次的截图对账从这一次成功执行的时间起算，手敲的那次不推进它，想把整个档案重新对一遍就在手敲时说「全量」。
+
+完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
+
 ## 交回
 
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
 - 预检缺的必需项，各附修法命令。
 - 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
+- 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
 - 怎么起调度：在主 checkout 开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`（间隔照需要改）。
 - 留给人的事：安装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检的表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

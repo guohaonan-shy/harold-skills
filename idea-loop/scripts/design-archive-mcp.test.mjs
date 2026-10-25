@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, realpathSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +11,7 @@ const SERVER = fileURLToPath(new URL('./design-archive-mcp.mjs', import.meta.url
 const CLI = fileURLToPath(new URL('./design-archive-query.mjs', import.meta.url));
 const MCP_JSON = fileURLToPath(new URL('../.mcp.json', import.meta.url));
 
-const SIX = ['design_page', 'design_state', 'design_journey', 'design_diff', 'design_refs', 'design_keyword'];
+const TOOLS = ['design_page', 'design_state', 'design_journey', 'design_diff', 'design_refs', 'design_keyword', 'design_affected'];
 
 // ---------- a stdio client: send every line, close stdin, read every response back ----------
 
@@ -46,7 +46,7 @@ const cliJson = (root, ...args) => {
 
 // ---------- initialize and tools/list ----------
 
-test('stdio: initialize answers with the tools capability, tools/list returns the six tools with input schemas', () => {
+test('stdio: initialize answers with the tools capability, tools/list returns the seven tools with input schemas', () => {
   const s = session(gitRepo(), [INIT, { jsonrpc: '2.0', method: 'notifications/initialized' }, LIST]);
   assert.equal(s.status, 0);
   assert.equal(s.byId[1].result.protocolVersion, '2025-06-18');
@@ -55,7 +55,7 @@ test('stdio: initialize answers with the tools capability, tools/list returns th
   assert.equal(s.out.length, 2, 'the initialized notification gets no reply');
 
   const tools = s.byId[2].result.tools;
-  assert.deepEqual(tools.map((t) => t.name).sort(), [...SIX].sort());
+  assert.deepEqual(tools.map((t) => t.name).sort(), [...TOOLS].sort());
   const required = (name) => tools.find((t) => t.name === name).inputSchema.required;
   const props = (name) => Object.keys(tools.find((t) => t.name === name).inputSchema.properties).sort();
   for (const t of tools) assert.equal(t.inputSchema.type, 'object', t.name);
@@ -65,8 +65,9 @@ test('stdio: initialize answers with the tools capability, tools/list returns th
   assert.deepEqual(required('design_refs'), ['name']);
   assert.deepEqual(required('design_keyword'), ['text']);
   assert.deepEqual(required('design_diff'), ['spec']);
+  assert.deepEqual(required('design_affected'), ['commit']);
   // every entry but the requirement diff can read "after the change"; the diff compares by itself
-  for (const n of ['design_page', 'design_state', 'design_journey', 'design_refs', 'design_keyword']) {
+  for (const n of ['design_page', 'design_state', 'design_journey', 'design_refs', 'design_keyword', 'design_affected']) {
     assert.ok(props(n).includes('delta'), n);
   }
   assert.deepEqual(props('design_diff'), ['spec']);
@@ -75,11 +76,12 @@ test('stdio: initialize answers with the tools capability, tools/list returns th
 test('tools/list: each description says when to reach for the tool', () => {
   const s = session(gitRepo(), [INIT, LIST]);
   const d = Object.fromEntries(s.byId[2].result.tools.map((t) => [t.name, t.description]));
-  for (const name of SIX) assert.match(d[name], /什么时候用|用于|当你|要.*时/, name);
+  for (const name of TOOLS) assert.match(d[name], /什么时候用|用于|当你|要.*时/, name);
   assert.match(d.design_state, /复现|测试/); // enter a state to reproduce or to write a test
   assert.match(d.design_diff, /需求|spec/i);
   assert.match(d.design_refs, /组件|动效/);
   assert.match(d.design_keyword, /不知道|不确定|模糊|关键词/);
+  assert.match(d.design_affected, /提交/); // asked with a commit
 });
 
 test('ping is answered; an unknown method is a JSON-RPC error, not a crash', () => {
@@ -91,7 +93,7 @@ test('ping is answered; an unknown method is a JSON-RPC error, not a crash', () 
   ]);
   assert.deepEqual(s.byId[2].result, {});
   assert.equal(s.byId[3].error.code, -32601);
-  assert.equal(s.byId[4].result.tools.length, 6);
+  assert.equal(s.byId[4].result.tools.length, 7);
 });
 
 // ---------- tools/call equals the command line ----------
@@ -101,7 +103,7 @@ const SHARE = `${DELTA}/pages/cookbook/cookbook--share-sheet.md`;
 const shareSheet =
   '---\ntype: design-state\ntags: [cookbook]\nsummary: 分享面板\npage: "[[cookbook]]"\nedges: []\n---\n\n## 这一屏\n\n分享面板。\n\n## 应看到什么\n\n- 看到分享面板\n';
 
-test('tools/call returns what the command line prints, for all six entries', () => {
+test('tools/call returns what the command line prints, for the six lookups that need no history', () => {
   const root = gitRepo({ [SHARE]: shareSheet });
   const cases = [
     ['design_page', { name: 'cookbook' }, ['page', 'cookbook']],
@@ -117,6 +119,26 @@ test('tools/call returns what the command line prints, for all six entries', () 
     assert.ok(!res.result.isError, `${name}: ${JSON.stringify(res)}`);
     assert.deepEqual(JSON.parse(textOf(res)), cliJson(root, ...cliArgs), name);
   });
+});
+
+test('tools/call: design_affected returns what the command line prints, and a commit that is not there is an error result', () => {
+  const root = gitRepo();
+  const git = (...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' });
+  mkdirSync(join(root, 'src', 'pages'), { recursive: true });
+  writeFileSync(join(root, 'src', 'pages', 'pantry.tsx'), 'one\n');
+  git('add', '-A');
+  git('commit', '-q', '-m', 'one');
+  const first = git('rev-parse', 'HEAD').stdout.trim();
+  writeFileSync(join(root, 'src', 'pages', 'pantry.tsx'), 'two\n');
+  git('add', '-A');
+  git('commit', '-q', '-m', 'two');
+  const s = session(root, [INIT, call(2, 'design_affected', { commit: first }), call(3, 'design_affected', { commit: 'no-such-commit' })]);
+  assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
+  const answer = JSON.parse(textOf(s.byId[2]));
+  assert.deepEqual(answer, cliJson(root, 'affected', first));
+  assert.deepEqual(answer.states.map((x) => x.id), ['pantry--empty', 'pantry--overview']);
+  assert.equal(s.byId[3].result.isError, true);
+  assert.match(textOf(s.byId[3]), /no-such-commit/);
 });
 
 test('tools/call: design_refs with a section id or a section type returns what the command line prints; design_page lists the sections', () => {
@@ -195,10 +217,10 @@ test('an unknown object is an MCP error result that says what exists, and the ne
 
 test('outside a git repository every tool returns a clear error result instead of crashing', () => {
   const bare = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-nogit-')));
-  const s = session(bare, [INIT, LIST, ...SIX.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x' }))]);
+  const s = session(bare, [INIT, LIST, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))]);
   assert.equal(s.status, 0);
-  assert.equal(s.byId[2].result.tools.length, 6, 'listing needs no repository');
-  SIX.forEach((n, i) => {
+  assert.equal(s.byId[2].result.tools.length, 7, 'listing needs no repository');
+  TOOLS.forEach((n, i) => {
     const res = s.byId[10 + i];
     assert.equal(res.result.isError, true, n);
     assert.match(textOf(res), /git/, n);
@@ -235,10 +257,10 @@ test('bad input: missing argument is an error result, unknown tool is a protocol
   assert.ok(!s.byId[7].result.isError, 'still serving after the bad lines');
 });
 
-test('read only: nothing but the six lookups is offered, and a write-shaped call is refused', () => {
+test('read only: nothing but the seven lookups is offered, and a write-shaped call is refused', () => {
   const root = gitRepo();
   const s = session(root, [INIT, LIST, call(3, 'design_write', { path: 'docs/design/prod/x.md', content: 'x' })]);
-  assert.deepEqual(s.byId[2].result.tools.map((t) => t.name).sort(), [...SIX].sort());
+  assert.deepEqual(s.byId[2].result.tools.map((t) => t.name).sort(), [...TOOLS].sort());
   assert.ok(s.byId[3].error);
   const status = spawnSync('git', ['status', '--porcelain', '-uall'], { cwd: root, encoding: 'utf8' }).stdout;
   assert.equal(status.includes('docs/design/prod/x.md'), false);

@@ -184,7 +184,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--del
 
 ## 查询模块
 
-读档案用查询，不自己翻文件。六个入口，每个都能用 `--delta <spec-slug>` 叠上某个需求的 `delta/`，读改完之后的样子（`diff` 除外）：
+读档案用查询，不自己翻文件。七个入口，每个都能用 `--delta <spec-slug>` 叠上某个需求的 `delta/`，读改完之后的样子（`diff` 除外）：
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入口> <参数> [--delta <spec-slug>]
@@ -198,10 +198,11 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入�
 | `diff` | spec 名 | 这个需求的 `delta/` 相对 `prod/` 新增、改动、删除了什么 |
 | `refs` | 组件名、组件代码路径、动效名；或分段 `<页面>#<段>`；或一类分段 `#<类型>` | 谁用了它：边、状态、用户路径、页面；分段给出从这段出发和落到这段的边；一类分段列出所有页面里这一类的段 |
 | `keyword` | 一段文字 | 名字、summary、正文里含这些词的对象 |
+| `affected` | 提交（SHA、分支名、`HEAD~N`） | 从它到 `HEAD` 改过的文件牵到哪些状态：页面登记的代码（这页全部状态）、组件登记的代码（用到它的状态）、被它们直接 import 的文件；dreaming 的增量截图对账用它挑状态 |
 
-同样的六个入口也是只读 MCP 工具 `design_page` / `design_state` / `design_journey` / `design_diff` / `design_refs` / `design_keyword`，返回同一份 JSON。
+同样的七个入口也是只读 MCP 工具 `design_page` / `design_state` / `design_journey` / `design_diff` / `design_refs` / `design_keyword` / `design_affected`，返回同一份 JSON。
 
-退出码：名字对不上时 1，stderr 说清这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象（分段对不上时列出这一页现有的段）；`keyword` 一条都没命中同样是 1。用法错误、不是仓库根、`diff` 带了 `--delta` 是 2。
+退出码：名字对不上时 1，stderr 说清这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象（分段对不上时列出这一页现有的段）；`keyword` 一条都没命中同样是 1；`affected` 的提交 git 认不出也是 1。用法错误、不是仓库根、`diff` 带了 `--delta` 是 2。
 
 要读返回的具体字段（进入方式的 `reachable` / `steps` / `blocked`、`diff` 的 `fields` / `sections`、`keyword` 的排序）时，读 [references/query.md](references/query.md)。
 
