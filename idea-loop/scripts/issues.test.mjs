@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   advance, advancePlan, candidates, dropIssue, ensureLabels, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, queueOf, queues, readTypes, reconcile,
-  reconcilePlan, resume, retroBatch, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
+  reconcilePlan, resume, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
 const UI = '- 点重试 → 只重跑这一题';
@@ -333,57 +333,4 @@ test('advance relabels and closes, and says the next phase', () => {
   assert.deepEqual(issues[1].labels, ['type:seo', 'status:设计中']);
   assert.deepEqual(advance(gh, docs, 'b'), { done: ['#2: 实现中 → 关闭（completed）'], phase: '关闭' });
   assert.equal(issues[2].reason, 'completed');
-});
-
-test('candidates skip issues labelled retro, in the main queue and in an own queue', () => {
-  const types = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索（独立队列，上限 5）\n');
-  const { gh } = fakeGh({ 1: open(1, ['retro', 'type:bug']), 2: open(2, ['type:bug']), 3: open(3, ['retro']), 4: open(4), 5: open(5, ['retro', 'type:seo']), 6: open(6, ['type:seo']) });
-  assert.deepEqual(candidates(gh, 100, new Set(), { types }).map((i) => i.number), [2, 4]);
-  assert.deepEqual(candidates(gh, 100, new Set(), { types, queue: 'seo' }).map((i) => i.number), [6]);
-});
-
-const retroIssues = (specs) => Object.fromEntries(specs.map(([n, labels]) => [n, open(n, labels)]));
-
-test('retroBatch takes the parent of the oldest retro issue and its oldest five', () => {
-  const ideaLoop = [2, 4, 6, 8, 10, 12, 14].map((n) => [n, ['retro', 'type:idea-loop', 'type:idea-loop/engineering']]);
-  const { gh } = fakeGh(retroIssues([[1, ['type:idea-loop']], ...ideaLoop, [5, ['retro', 'type:excalidrawer']], [11, ['retro', 'type:excalidrawer']]]));
-  const out = retroBatch(gh);
-  assert.equal(out.parent, 'idea-loop');
-  assert.deepEqual(out.issues, [2, 4, 6, 8, 10].map((n) => ({ number: n, title: `issue ${n}` })));
-  assert.deepEqual(out.unclassified, []);
-});
-
-test('retroBatch returns fewer than five when that is all the parent has', () => {
-  const { gh } = fakeGh(retroIssues([[7, ['retro', 'type:excalidrawer']], [9, ['retro', 'type:excalidrawer']], [8, ['type:idea-loop']]]));
-  const out = retroBatch(gh);
-  assert.equal(out.parent, 'excalidrawer');
-  assert.deepEqual(out.issues.map((i) => i.number), [7, 9]);
-});
-
-test('retroBatch ignores retro issues that already carry a status:* label', () => {
-  const { gh } = fakeGh(retroIssues([[1, ['retro', 'type:idea-loop', 'status:实现中']], [2, ['retro', 'type:excalidrawer']], [3, ['retro', 'type:idea-loop']]]));
-  const out = retroBatch(gh);
-  assert.equal(out.parent, 'excalidrawer');
-  assert.deepEqual(out.issues.map((i) => i.number), [2]);
-});
-
-test('retroBatch lists retro issues without a parent category apart, and returns no batch when only those are left', () => {
-  const { gh } = fakeGh(retroIssues([[1, ['retro']], [4, ['retro', 'type:idea-loop']], [2, ['retro']]]));
-  const out = retroBatch(gh);
-  assert.deepEqual(out.issues.map((i) => i.number), [4]);
-  assert.deepEqual(out.unclassified.map((i) => i.number), [1, 2]);
-  const none = retroBatch(fakeGh(retroIssues([[1, ['retro']]])).gh);
-  assert.deepEqual(none, { parent: null, issues: [], unclassified: [{ number: 1, title: 'issue 1' }] });
-  assert.deepEqual(retroBatch(fakeGh({}).gh), { parent: null, issues: [], unclassified: [] });
-});
-
-test('ensureLabels creates retro and does not list it as surplus, whatever the keep-list says', () => {
-  const { gh, calls } = fakeGh({ 1: open(1, ['retro']) }, ['retro']);
-  assert.ok(!ensureLabels(gh, parseTypes(TYPES)).surplus.some((s) => s.name === 'retro'));
-  const fresh = fakeGh({}, []);
-  const { made } = ensureLabels(fresh.gh, parseTypes(TYPES));
-  assert.ok(made.includes('retro'));
-  assert.ok(fresh.calls.some((c) => c.slice(0, 3).join(' ') === 'label create retro'));
-  assert.ok(!calls.some((c) => c[2] === 'retro'));
-  assert.ok(ensureLabels(fakeGh({}, []).gh, null).made.includes('retro'));
 });

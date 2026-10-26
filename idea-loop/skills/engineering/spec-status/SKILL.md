@@ -44,8 +44,7 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 ```bash
 issues labels     <docs> [--prune]             # 建出缺的 status:* 和 type:* label；列出多余的，--prune 才删
 issues type       <docs> <号> <父类[/子类]>...  # 给 issue 打分类，换掉它原有的 type:*
-issues candidates <docs> [<limit>]             # 待验证的 issue，最早的在前（JSON）；不含 spec issue、主分支上已有 spec 列着的和带 `retro` 的
-issues retro-batch <docs>                     # 下一次 retro 整合（JSON）：最早的 retro issue 所在父类里最早的至多 5 个；没有分类的另列在 unclassified
+issues candidates <docs> [<limit>]             # 待验证的 issue，最早的在前（JSON）；不含 spec issue 和主分支上已有 spec 列着的
 issues queue      <docs> <待设计|待实现>        # 等在这个状态的 spec，最早的 issue 在前（JSON），加上 label 和主分支对不上的问题
 issues set        <docs> <状态> <号 | slug>...  # 按上表翻；给 slug 就是它列的所有 issue
 issues reconcile  <docs>                       # 对账：主分支已经决定了的翻法

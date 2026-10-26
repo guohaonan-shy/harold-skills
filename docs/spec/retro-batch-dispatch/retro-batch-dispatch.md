@@ -9,6 +9,8 @@ issues: [106, 108]
 
 # 调度只数 issue 会话；retro issue 按 plugin 做 retro 整合，一个会话自动做到 PR
 
+> 后来改了（2026-10-26，PR #113 合并当天）：retro 整合部分（`retro` 标签、凑整合的命令、整合卡片、retro-merge skill、retro 第 5 步打标记）已撤回，只保留 #106「调度只数 issue 会话」。原因：人认为 retro 批的候选应先进 `docs/` 的候选池、由 dreaming 判断能不能进 skill，进候选池还是直接开 issue 由人在 retro 里定（#115）。下文是当时的决定，保留作由来。
+
 
 ## 验证
 
