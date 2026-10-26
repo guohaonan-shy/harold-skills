@@ -207,6 +207,42 @@ test('shootTargets: one per section named <entry>@<section>.png, the 3600-tall o
   assert.deepEqual(shootTargets(flat).skipped.map((s) => s.id), ['tail']);
 });
 
+const SHELL_SCROLLER = { kind: 'element', selector: 'body > div:nth-child(1) > main:nth-child(2)', tag: 'main', top: 60, left: 0, width: 800, contentHeight: 2100, visibleHeight: 540, others: [] };
+
+test('attribute: carries the scroll container the page was measured with, for `shoot` to scroll — null for an older measurement', () => {
+  assert.deepEqual(attribute(measurement(ALL, { scroller: SHELL_SCROLLER })).scroller, SHELL_SCROLLER);
+  assert.equal(attribute(measurement(ALL)).scroller, null);
+});
+
+test('shootTargets: hands the scroll container on; a target that starts inside it is shot from it, one above it as a page shot', () => {
+  const a = attribute({
+    state: 'app-home--entry', page: 'app-home', scroller: SHELL_SCROLLER, pageSize: { width: 800, height: 2160 },
+    blocks: [{ top: 60, bottom: 760 }, { top: 760, bottom: 1660 }, { top: 1660, bottom: 2160 }], contentinfo: null, clickables: [],
+    sections: [
+      { id: 'header', locate: { role: 'banner' }, found: true, top: 0, bottom: 60, block: -1 },
+      { id: 'hero', locate: { role: 'heading', name: 'A' }, found: true, top: 80, bottom: 120, block: 0 },
+      { id: 'list', locate: { role: 'heading', name: 'B' }, found: true, top: 800, bottom: 840, block: 1 },
+      { id: 'form', locate: { role: 'heading', name: 'C' }, found: true, top: 1700, bottom: 1740, block: 2 },
+    ],
+  });
+  const picked = shootTargets(a);
+  assert.deepEqual(picked.scroller, SHELL_SCROLLER);
+  assert.deepEqual(picked.targets.map((t) => [t.id, t.start, t.end, t.inScroller]), [['header', 0, 60, false], ['hero', 60, 760, true], ['list', 760, 1660, true], ['form', 1660, 2160, true]]);
+  const doc = shootTargets(attribute(measurement(ALL, { scroller: { kind: 'document', selector: null, top: 0, contentHeight: 6000, visibleHeight: 900 } })));
+  assert.ok(doc.targets.every((t) => t.inScroller === false), 'a scrolling document is shot as before: page shots');
+  assert.equal(shootTargets(attribute(measurement(ALL))).scroller, null);
+});
+
+test('buildShootCode: the scroll container is in the code for the browser to scroll — and only when there is one', () => {
+  const { targets, scroller } = shootTargets(attribute(measurement(ALL, { scroller: SHELL_SCROLLER })));
+  const code = buildShootCode({ targets, scroller, viewport: { width: 800, height: 600 }, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' });
+  assert.equal(runInNewContext(code).constructor.name, 'AsyncFunction');
+  assert.ok(code.includes(JSON.stringify(SHELL_SCROLLER.selector)), 'the selector the measurement found');
+  assert.match(code, /"inScroller":false/);
+  const plain = buildShootCode({ targets, viewport: { width: 800, height: 600 }, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' });
+  assert.match(plain, /"scroller":null/);
+});
+
 test('shootTargets: for a state inside a section it is the one section, named after the state', () => {
   const a = attribute(measurement(ALL, { state: `${MKT}--feature-b-expanded`, entry: MKT_ENTRY, section: 'feature-b' }));
   const { targets } = shootTargets(a);
