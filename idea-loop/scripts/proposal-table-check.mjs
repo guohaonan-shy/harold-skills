@@ -35,9 +35,13 @@ export const ROW_TYPES = {
   初扫页面: ['新增页面'],
   候选: ['改写已有规则', '追加新规则', '已覆盖不加', '留在原处', '起草通用原则 issue', '起草缺陷 issue', '驳回'],
   漏归档: ['补归档', '丢弃'],
+  'retro 候选': ['开 issue：机械检查', '开 issue：改 skill', '留在池里', '驳回'],
   'DESIGN.md 条目': ['改法', '移出', '删除', '改写为全局规则', '合并为一条', '新建 DESIGN.md', '处理 lint 警告', '交人裁决'],
   缺陷: ['开 issue', '已有 #N'],
 };
+// retro 候选: a rule candidate in the retro pool (docs/records/retro-candidates/) that has come up at
+// least 3 times. Dreaming reads the pool itself (no agent); the row's 证据 carries the verbatim words of
+// each occurrence, so it is checked only for being non-empty (the generic empty-cell rule).
 // 漏归档: a merged need whose docs/design/tmp/<spec-slug>/ still holds design output on the base
 // branch (it skipped pr-review's merge step). Dreaming finds it mechanically; no agent.
 
