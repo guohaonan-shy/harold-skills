@@ -18,5 +18,6 @@
 | [[2026-10-22-retro-grill]] | conversation | 2026-10-22 | grill —— retro：从实际决策里把问题和决策点整理成规则，迭代 skill |
 | [[2026-10-23-design-truth-after-freeze]] | conversation | 2026-10-23 | grill —— #55：冻结后画布是唯一设计真相，UI 审查只走查，设计变更由 designer 改画布 |
 | [decisions/51](decisions/51.md) | conversation | 2026-10-23 | 决定记录 —— #51 retro 的 issue 会话：摆过的题与 retro 候选的结果 |
+| [decisions/55](decisions/55.md) | conversation | 2026-10-26 | 决定记录 —— #55 的 issue 会话：冻结后画布为唯一真相、dreaming 拆分与增量对账，摆过的题与 retro 候选的结果 |
 
 > `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
