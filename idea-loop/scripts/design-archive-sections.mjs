@@ -8,8 +8,9 @@
  * `ui-compare.mjs` (pure) are:
  *
  *   measure    prints the code the headless Playwright MCP runs (`browser_run_code_unsafe`): put a page clock
- *              under the page, scroll it through once (lazy islands hydrate, entrances finish, fixed elements
- *              show where they appear), locate each section with the accessibility tree, box the top-level
+ *              under the page, find what scrolls (the document when it is taller than the screen, else the biggest
+ *              visible element with its own scroll: an app shell's <main>) and scroll it through once (lazy islands
+ *              hydrate, entrances finish, fixed elements show where they appear), locate each section with the accessibility tree, box the top-level
  *              blocks (a `display: contents` wrapper is looked through), every heading and every clickable
  *              element with its full accessible name and whether a role + name finds it.
  *   attribute  measurement JSON → each section's range, which section each clickable element belongs to,
@@ -72,9 +73,39 @@ async function measurePage(page, C) {
     const ds = {
       clickSelector,
       px,
+      scrollerSel: null,
+      get scroller() {
+        return ds.scrollerSel ? document.querySelector(ds.scrollerSel) : null;
+      },
+      scrollTop: () => (ds.scroller ? ds.scroller.scrollTop : window.scrollY),
+      scrollHeight: () => (ds.scroller ? ds.scroller.scrollHeight : document.documentElement.scrollHeight),
+      visibleHeight: () => (ds.scroller ? ds.scroller.clientHeight : window.innerHeight),
+      scrollTo: (v) => {
+        if (ds.scroller) ds.scroller.scrollTo({ top: v, behavior: 'instant' });
+        else window.scrollTo({ top: v, behavior: 'instant' });
+      },
+      pathOf: (el) => {
+        if (el === document.body) return 'body';
+        if (el.id && document.querySelectorAll('#' + CSS.escape(el.id)).length === 1) return '#' + CSS.escape(el.id);
+        const parts = [];
+        for (let p = el; p && p !== document.body; p = p.parentElement) parts.unshift(p.tagName.toLowerCase() + ':nth-child(' + ([...p.parentElement.children].indexOf(p) + 1) + ')');
+        return 'body > ' + parts.join(' > ');
+      },
+      // the page body counts too: a shell that locks <html> and lets <body> scroll has no element inside it that does
+      candidates: () => [document.body, ...document.querySelectorAll('body *')]
+        .flatMap((el) => {
+          if (/^(TEXTAREA|SELECT|INPUT)$/.test(el.tagName) || el.clientHeight === 0 || el.scrollHeight <= el.clientHeight) return [];
+          if (!/^(auto|scroll)$/.test(getComputedStyle(el).overflowY) || !ds.shown(el)) return [];
+          const r = el.getBoundingClientRect();
+          const area = Math.max(0, Math.min(r.right, window.innerWidth) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+          return area > 0 ? [{ el, area }] : [];
+        })
+        .sort((a, b) => b.area - a.area),
       box: (el) => {
         const r = el.getBoundingClientRect();
-        return { top: px(r.top + window.scrollY), bottom: px(r.bottom + window.scrollY) };
+        const sc = ds.scroller;
+        const shift = sc && sc !== el && sc.contains(el) ? sc.scrollTop : 0;
+        return { top: px(r.top + window.scrollY + shift), bottom: px(r.bottom + window.scrollY + shift) };
       },
       shown: (el) => {
         const r = el.getBoundingClientRect();
@@ -87,7 +118,9 @@ async function measurePage(page, C) {
         return px(o);
       },
       fixed: (el) => {
-        for (let p = el; p && p.nodeType === 1; p = p.parentElement) if (getComputedStyle(p).position === 'fixed') return true;
+        const sc = ds.scroller;
+        if (sc && !sc.contains(el)) return false;
+        for (let p = el; p && p.nodeType === 1 && p !== sc; p = p.parentElement) if (getComputedStyle(p).position === 'fixed') return true;
         return false;
       },
       fixedList: () => {
@@ -150,22 +183,28 @@ async function measurePage(page, C) {
     // a page that never goes quiet is measured as it stands
   }
   await page.waitForTimeout(500);
+  // what scrolls: the document when it is taller than the screen, else the biggest visible element with its own scroll, <body> among them (an app shell with a <main> that scrolls, or a <body> inside a locked <html>)
+  await page.evaluate(() => {
+    const ds = window.__ds;
+    const pick = document.documentElement.scrollHeight > window.innerHeight ? null : ds.candidates()[0];
+    ds.scrollerSel = pick ? ds.pathOf(pick.el) : null;
+  });
   const appeared = {};
-  const step = Math.max(150, Math.floor(C.viewport.height * 0.5));
-  for (let y = 0; y < (await page.evaluate(() => document.documentElement.scrollHeight)); y += step) {
-    await page.evaluate((v) => window.scrollTo({ top: v, behavior: 'instant' }), y);
+  const step = Math.max(150, Math.floor((await page.evaluate(() => window.__ds.visibleHeight())) * 0.5));
+  for (let y = 0; y < (await page.evaluate(() => window.__ds.scrollHeight())); y += step) {
+    await page.evaluate((v) => window.__ds.scrollTo(v), y);
     await page.waitForTimeout(200);
     const seen = await page.evaluate(() => {
       const ds = window.__ds;
       return ds.fixedList().flatMap(({ el, key }) => {
         const r = el.getBoundingClientRect();
         const on = ds.opacity(el) >= 0.01 && ds.shown(el) && r.bottom > 0 && r.top < window.innerHeight;
-        return on ? [{ key, scrollY: window.scrollY, top: ds.px(r.top), bottom: ds.px(r.bottom) }] : [];
+        return on ? [{ key, scrollY: ds.scrollTop(), top: ds.px(r.top), bottom: ds.px(r.bottom) }] : [];
       });
     });
     for (const f of seen) if (!appeared[f.key]) appeared[f.key] = { scrollY: f.scrollY, top: f.top, bottom: f.bottom };
   }
-  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await page.evaluate(() => window.__ds.scrollTo(window.__ds.scrollHeight()));
   await page.waitForTimeout(300);
   try {
     await page.waitForLoadState('networkidle', { timeout: 5000 });
@@ -175,12 +214,12 @@ async function measurePage(page, C) {
   // late content (a block that grows once its data or a timer arrives) moves everything below it: wait until the height holds still
   let height = -1;
   for (let i = 0; i < 6; i += 1) {
-    const h = await page.evaluate(() => document.documentElement.scrollHeight);
+    const h = await page.evaluate(() => window.__ds.scrollHeight());
     if (h === height) break;
     height = h;
     await page.waitForTimeout(500);
   }
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.evaluate(() => window.__ds.scrollTo(0));
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(300);
 
@@ -213,8 +252,16 @@ async function measurePage(page, C) {
       }));
 
     const info = document.querySelector('[data-ds-lm="contentinfo"]');
+    const sc = ds.scroller;
+    const rect = sc && sc.getBoundingClientRect();
+    const scroller = sc
+      ? { kind: 'element', selector: ds.scrollerSel, tag: sc.tagName.toLowerCase(), top: ds.px(rect.top + sc.clientTop + window.scrollY), left: ds.px(rect.left + sc.clientLeft), width: sc.clientWidth, contentHeight: sc.scrollHeight, visibleHeight: sc.clientHeight }
+      : { kind: 'document', selector: null, tag: 'html', top: 0, left: 0, width: document.documentElement.clientWidth, contentHeight: document.documentElement.scrollHeight, visibleHeight: window.innerHeight };
+    scroller.others = ds.candidates().filter((c) => c.el !== sc)
+      .map((c) => ({ selector: ds.pathOf(c.el), tag: c.el.tagName.toLowerCase(), contentHeight: c.el.scrollHeight, visibleHeight: c.el.clientHeight, visibleArea: Math.round(c.area) }));
     return {
-      pageSize: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+      scroller,
+      pageSize: { width: document.documentElement.scrollWidth, height: sc ? ds.px(scroller.top + scroller.contentHeight) : document.documentElement.scrollHeight },
       blocks: blocks.map(ds.box),
       contentinfo: info ? ds.box(info) : null,
       headings,
@@ -273,10 +320,8 @@ async function measurePage(page, C) {
       continue;
     }
     const r = await where.evaluate((el) => {
-      const rect = el.getBoundingClientRect();
-      const px = (v) => Math.round(v * 100) / 100;
       const block = el.closest('[data-ds-block]');
-      return { top: px(rect.top + window.scrollY), bottom: px(rect.bottom + window.scrollY), block: block ? Number(block.getAttribute('data-ds-block')) : -1 };
+      return { ...window.__ds.box(el), block: block ? Number(block.getAttribute('data-ds-block')) : -1 };
     });
     sections.push({ ...entry, found: true, ...r });
   }
@@ -291,7 +336,7 @@ async function measurePage(page, C) {
   });
   const result = {
     state: C.state, entry: C.entry, section: C.section, page: C.page, viewport: C.viewport, theme: C.theme, motion: C.motion, clock,
-    pageSize: base.pageSize, blocks: base.blocks, contentinfo: base.contentinfo,
+    scroller: base.scroller, pageSize: base.pageSize, blocks: base.blocks, contentinfo: base.contentinfo,
     sections, headings, clickables, env: base.env,
   };
   await page.evaluate((r) => { window.__dsMeasure = r; }, result);
@@ -335,6 +380,13 @@ export function buildMeasureCode(config) {
  * when nothing moves on its own), let the clock run again. The shots are `fullPage` with a `clip`, so the
  * clip is in page coordinates and may be taller than the viewport; Playwright's `animations: 'disabled'`
  * settles CSS animations and transitions (finite ones to their end, infinite ones to their start).
+ *
+ * When the page scrolls inside a container (the measurement's `scroller` is an element: an app shell whose
+ * `<main>` scrolls) the page shot cannot reach what the container clips. A section inside it is shot a
+ * screen at a time: the container scrolls one visible height, the visible part of the container is shot,
+ * and the screens are put together into one picture as wide as the container; a bar pinned to the top of the
+ * container is stood below on every screen. The stability check and the frozen clock cover all the screens
+ * of a section. A section above the container (the shell's top bar) is a page shot as before.
  */
 async function shootPage(page, C) {
   await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
@@ -346,27 +398,123 @@ async function shootPage(page, C) {
   }
   await page.evaluate(() => document.fonts.ready);
   const vh = C.viewport.height;
+  const sc = C.scroller && C.scroller.kind === 'element' ? C.scroller : null;
+  const contentTop = sc ? Math.round(sc.top) : 0;
   const maxScroll = Math.max(0, C.pageHeight - vh);
   const scrollTo = (y) => page.evaluate((v) => window.scrollTo({ top: v, behavior: 'instant' }), Math.max(0, Math.min(y, maxScroll)));
-  const shots = [];
-  for (const t of C.targets) {
-    for (let y = t.start; y < t.end; y += Math.floor(vh * 0.6)) {
-      await scrollTo(y);
-      await page.waitForTimeout(250);
-    }
-    await scrollTo(t.start);
-    await page.waitForTimeout(300);
-    // a bar pinned to the top of the screen would cover the first rows of the section: stand the section just below it
-    const inset = await page.evaluate(() => {
-      let bottom = 0;
+
+  // the scroll container (an app shell's <main>): scrolled by selector, looked at through its own box
+  const must = () =>
+    page.evaluate((s) => !!document.querySelector(s), sc && sc.selector).then((found) => {
+      if (!found) throw new Error('scroll container ' + sc.selector + ' is not on the page: measure and shoot have to look at the same page');
+    });
+  const scrollIn = (v) =>
+    page.evaluate(({ s, v }) => {
+      const el = document.querySelector(s);
+      el.scrollTo({ top: v, behavior: 'instant' });
+      return el.scrollTop;
+    }, { s: sc && sc.selector, v: Math.max(0, v) });
+  const boxIn = () =>
+    page.evaluate((s) => {
+      const el = document.querySelector(s);
+      const r = el.getBoundingClientRect();
+      return { x: Math.round(r.left + el.clientLeft), y: Math.round(r.top + el.clientTop), width: el.clientWidth, height: el.clientHeight, content: el.scrollHeight };
+    }, sc && sc.selector);
+  // a bar pinned to the top of the container: its height, so the part of a band under it is not taken from there
+  const pinnedIn = () =>
+    page.evaluate((s) => {
+      const box = document.querySelector(s);
+      const b = box.getBoundingClientRect();
+      const top = b.top + box.clientTop;
+      let bottom = top;
       for (const el of document.querySelectorAll('body *')) {
         const cs = getComputedStyle(el);
-        if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
+        if ((cs.position !== 'fixed' && cs.position !== 'sticky') || el === box || el.contains(box)) continue;
         const r = el.getBoundingClientRect();
-        if (r.top <= 2 && r.bottom > 0 && r.bottom < window.innerHeight * 0.4 && r.width >= window.innerWidth * 0.5 && parseFloat(cs.opacity) >= 0.01 && cs.visibility !== 'hidden') bottom = Math.max(bottom, r.bottom);
+        if (r.top <= top + 2 && r.bottom > top && r.bottom < top + box.clientHeight * 0.4 && r.width >= box.clientWidth * 0.5 && parseFloat(cs.opacity) >= 0.01 && cs.visibility !== 'hidden') bottom = Math.max(bottom, r.bottom);
       }
-      return Math.ceil(bottom);
+      return Math.ceil(bottom - top);
+    }, sc && sc.selector);
+  // the screens of a band [c0, c1) (offsets in the container's content): scroll a screen at a time, shoot what the container shows below a pinned bar
+  const screens = async (c0, c1) => {
+    const strips = [];
+    let at = c0;
+    while (at < c1) {
+      await scrollIn(at);
+      await page.waitForTimeout(120);
+      const pinned = at > 0 ? await pinnedIn() : 0;
+      const top = await scrollIn(at - pinned);
+      await page.waitForTimeout(120);
+      const g = await boxIn();
+      const skip = Math.round(at - top);
+      const rows = Math.min(g.height - skip, c1 - at, vh - (g.y + skip));
+      if (rows <= 0) break;
+      const buf = await page.screenshot({ clip: { x: g.x, y: g.y + skip, width: g.width, height: rows }, animations: 'disabled' });
+      strips.push({ buf, rows, width: g.width });
+      at += rows;
+    }
+    return strips;
+  };
+  // the screens are put one under the other in a tab of their own and shot from there: no image library needed
+  const stitch = async (strips, file) => {
+    const width = strips[0].width;
+    const height = strips.reduce((n, x) => n + x.rows, 0);
+    let y = 0;
+    const imgs = strips.map((x) => {
+      const html = '<img style="position:absolute;left:0;top:' + y + 'px;width:' + width + 'px;height:' + x.rows + 'px" src="data:image/png;base64,' + x.buf.toString('base64') + '">';
+      y += x.rows;
+      return html;
     });
+    const tab = await page.context().newPage();
+    try {
+      await tab.setViewportSize({ width, height: Math.min(height, 8000) });
+      await tab.setContent('<body style="margin:0"><div id="s" style="position:relative;overflow:hidden;width:' + width + 'px;height:' + height + 'px">' + imgs.join('') + '</div></body>');
+      await tab.evaluate(() => Promise.all([...document.images].map((i) => i.decode())));
+      await tab.locator('#s').screenshot({ path: file, animations: 'disabled' });
+    } finally {
+      await tab.close();
+    }
+  };
+  const sameScreens = (a, b) => a.length === b.length && a.every((x, i) => x.buf.equals(b[i].buf));
+
+  if (sc) {
+    await must();
+    await scrollIn(0);
+  }
+  const shots = [];
+  for (const t of C.targets) {
+    const inside = !!(sc && t.inScroller);
+    let c0 = t.start - contentTop;
+    let c1 = t.end - contentTop;
+    if (inside) {
+      for (let y = c0; y < c1; y += Math.floor(vh * 0.6)) {
+        await scrollIn(y);
+        await page.waitForTimeout(250);
+      }
+      await scrollIn(c0);
+    } else if (!sc) {
+      for (let y = t.start; y < t.end; y += Math.floor(vh * 0.6)) {
+        await scrollTo(y);
+        await page.waitForTimeout(250);
+      }
+      await scrollTo(t.start);
+    } else {
+      await scrollIn(0);
+    }
+    await page.waitForTimeout(300);
+    // a bar pinned to the top of the screen would cover the first rows of the section: stand the section just below it
+    const inset = sc
+      ? 0
+      : await page.evaluate(() => {
+          let bottom = 0;
+          for (const el of document.querySelectorAll('body *')) {
+            const cs = getComputedStyle(el);
+            if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
+            const r = el.getBoundingClientRect();
+            if (r.top <= 2 && r.bottom > 0 && r.bottom < window.innerHeight * 0.4 && r.width >= window.innerWidth * 0.5 && parseFloat(cs.opacity) >= 0.01 && cs.visibility !== 'hidden') bottom = Math.max(bottom, r.bottom);
+          }
+          return Math.ceil(bottom);
+        });
     if (inset > 0 && t.start > 0) {
       await scrollTo(t.start - inset);
       await page.waitForTimeout(300);
@@ -383,20 +531,40 @@ async function shootPage(page, C) {
       const where = i.role ? page.getByRole(i.role, i.name ? { name: i.name, exact: true } : {}) : i.text ? page.getByText(i.text, { exact: true }) : page.locator(i.selector);
       const box = await where.first().boundingBox();
       if (box) {
-        const sy = await page.evaluate(() => window.scrollY);
+        const sy = await page.evaluate((s) => (s ? document.querySelector(s).scrollTop : window.scrollY), sc && sc.selector);
         top = Math.max(0, Math.min(top, Math.floor(box.y + sy)));
         bottom = Math.min(C.pageHeight, Math.max(bottom, Math.ceil(box.y + sy + box.height)));
+        if (inside) {
+          c0 = Math.max(0, top - contentTop);
+          c1 = bottom - contentTop;
+        }
       }
     }
-    const heightNow = await page.evaluate(() => document.documentElement.scrollHeight);
+    const heightOf = async () => {
+      if (!sc) return page.evaluate(() => document.documentElement.scrollHeight);
+      const g = await boxIn();
+      return contentTop + g.content;
+    };
+    const heightNow = await heightOf();
+    // a shot of a section outside the container is a page shot, which cannot reach below the one screen the document is
+    let clipNote = null;
+    if (sc && !inside) {
+      const docHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+      if (bottom > docHeight) {
+        clipNote = 'the section reaches into the scroll container: only what the first screen shows of it is in the shot';
+        bottom = docHeight;
+      }
+    }
     const clip = { x: 0, y: top, width: C.viewport.width, height: bottom - top };
     const snap = (path) => page.screenshot({ path, fullPage: true, clip, animations: 'disabled' });
-    let previous = await snap();
+    const take = (path) => (inside ? screens(c0, c1) : snap(path));
+    const same = (a, b) => (inside ? sameScreens(a, b) : a.equals(b));
+    let previous = await take();
     let settled = false;
     for (let i = 0; i < 8 && !settled; i += 1) {
       await page.waitForTimeout(300);
-      const current = await snap();
-      settled = current.equals(previous);
+      const current = await take();
+      settled = same(current, previous);
       previous = current;
     }
     let frozen = false;
@@ -414,17 +582,24 @@ async function shootPage(page, C) {
       }
     }
     await page.waitForTimeout(150);
-    const first = await snap();
+    const first = await take();
     await page.waitForTimeout(250);
-    const second = await snap(`${C.outDir}/${t.file}`);
+    const second = await take(`${C.outDir}/${t.file}`);
     if (frozen) await page.clock.resume();
-    shots.push({ id: t.id, file: t.file, y0: top, y1: bottom, width: C.viewport.width, height: bottom - top, settled, clockFrozen: frozen, ...(clockError ? { clockError } : {}), stable: first.equals(second), heightDrift: heightNow - C.pageHeight });
+    if (inside) {
+      if (!second.length) throw new Error(t.id + ': the scroll container showed nothing to shoot');
+      await stitch(second, `${C.outDir}/${t.file}`);
+    }
+    const width = inside ? second[0].width : C.viewport.width;
+    const height = inside ? second.reduce((n, x) => n + x.rows, 0) : bottom - top;
+    shots.push({ id: t.id, file: t.file, y0: top, y1: bottom, width, height, ...(inside ? { screens: second.length } : {}), settled, clockFrozen: frozen, ...(clockError ? { clockError } : {}), ...(clipNote ? { note: clipNote } : {}), stable: same(first, second), heightDrift: heightNow - C.pageHeight });
   }
-  await scrollTo(0);
+  if (sc) await scrollIn(0);
+  else await scrollTo(0);
   return { out: C.outDir, clock, shots };
 }
 
-/** The code for `shoot`: `targets` are `{ id, file, start, end }`, see `shootTargets`. */
+/** The code for `shoot`: `targets` are `{ id, file, start, end, inScroller }`, `scroller` is the attribution's scroll container; see `shootTargets`. */
 export function buildShootCode(config) {
   const C = {
     targets: config.targets,
@@ -434,6 +609,7 @@ export function buildShootCode(config) {
     pageHeight: config.pageHeight,
     outDir: config.outDir,
     include: config.include ?? null,
+    scroller: config.scroller ?? null,
   };
   return `async (page) => (${compact(shootPage)})(page, ${JSON.stringify(C)})`;
 }
@@ -555,6 +731,7 @@ export function attribute(m) {
     clock: m.clock ?? null,
     pageHeight,
     pageWidth: m.pageSize?.width ?? null,
+    scroller: m.scroller ?? null,
     ranges,
     clickables,
     orphans,
@@ -571,7 +748,9 @@ export function attribute(m) {
 // ---------- what to shoot ----------
 
 /**
- * The shots an attribution asks for: `{ id, ref, file, start, end }` per section, clipped to the page.
+ * The shots an attribution asks for: `{ id, ref, file, start, end, inScroller }` per section, clipped to the page,
+ * and the `scroller` the page was measured with. `inScroller` is true for a section that starts inside a
+ * scroll container (not the document): that one is shot from the container, screen by screen.
  * For an entry state, one per section (or only those in `only`), `<entry>@<section>.png`. For a state inside
  * a section (the measurement was made `--for` it), the one section it sits in, named after the state:
  * `<state>.png`. A section with no height is skipped and named in `skipped`.
@@ -590,6 +769,7 @@ export function shootTargets(attribution, { only = null } = {}) {
     if (unknown.length) throw new Error(`没有段 ${unknown.join('、')}；现有：${wanted.map((r) => r.id).join('、')}`);
     wanted = wanted.filter((r) => only.includes(r.id));
   }
+  const scroller = attribution.scroller ?? null;
   const targets = [];
   const skipped = [];
   for (const r of wanted) {
@@ -599,9 +779,10 @@ export function shootTargets(attribution, { only = null } = {}) {
       skipped.push({ id: r.id, reason: `范围 ${r.start}–${r.end} 没有高度，或在页面（高 ${attribution.pageHeight}）之外` });
       continue;
     }
-    targets.push({ id: r.id, ref: r.ref, file: inSection ? `${attribution.state}.png` : `${entry}@${r.id}.png`, start, end });
+    const inScroller = scroller?.kind === 'element' && start >= Math.round(scroller.top);
+    targets.push({ id: r.id, ref: r.ref, file: inSection ? `${attribution.state}.png` : `${entry}@${r.id}.png`, start, end, inScroller });
   }
-  return { targets, skipped };
+  return { targets, skipped, scroller };
 }
 
 // ---------- the command line ----------
@@ -751,7 +932,8 @@ function shootCommand(positional, flags) {
   }
   if (!picked.targets.length) throw new UsageError(`没有要拍的段：${picked.skipped.map((s) => `${s.id}（${s.reason}）`).join('；') || '归属结果的 ranges 是空的'}`);
   const code = buildShootCode({
-    targets: picked.targets.map(({ id, file, start, end }) => ({ id, file, start, end })),
+    targets: picked.targets.map(({ id, file, start, end, inScroller }) => ({ id, file, start, end, inScroller })),
+    scroller: picked.scroller,
     viewport: attribution.viewport,
     theme: attribution.theme,
     motion: attribution.motion ?? 'default',
