@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The design archive's MCP server: the query module's six entries as six read-only tools, over stdio.
+ * The design archive's MCP server: the query module's seven entries as seven read-only tools, over stdio.
  *
  * A thin forwarder (skills/design/design-archive/references/query.md): each tool calls `query()` from
  * design-archive-query.mjs with the same arguments the command line takes and returns the same JSON,
@@ -90,6 +90,15 @@ const TOOLS = [
       '什么时候用：不知道对象叫什么、只记得一两个词或一个说法，想先找到相关的页面、状态、组件时；找到名字之后再用上面的精确查询。',
     properties: { text: nameProp('一段文字；空格分开的每个词都会参与匹配'), delta: DELTA_PROP },
   },
+  {
+    name: 'design_affected',
+    entry: 'affected',
+    arg: 'commit',
+    description:
+      '给一个提交，交回自它以来改过的代码牵到的状态：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了。同时给出每个状态是被哪个页面或组件牵进来的（via），和档案一共多少个状态。' +
+      '什么时候用：只想对「上次以来代码动过的界面」重新走一遍（增量截图对账），不想把整个档案都重跑时。',
+    properties: { commit: nameProp('起点提交：SHA、分支名或 HEAD~N；改动取从它到 HEAD'), delta: DELTA_PROP },
+  },
 ].map((t) => ({
   ...t,
   inputSchema: {
@@ -172,7 +181,7 @@ export function handle(msg) {
         protocolVersion: SUPPORTED_VERSIONS.includes(asked) ? asked : SUPPORTED_VERSIONS[0],
         capabilities: { tools: {} },
         serverInfo: SERVER_INFO,
-        instructions: '设计档案的只读查询：六个工具对应页面、状态、用户路径、需求差异、反查、关键词六种问法。',
+        instructions: '设计档案的只读查询：七个工具对应页面、状态、用户路径、需求差异、反查、关键词、受影响的状态七种问法。',
       });
     }
     case 'ping':

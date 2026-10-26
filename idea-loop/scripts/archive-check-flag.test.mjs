@@ -37,6 +37,8 @@ test('every doc line that runs design-archive-check over a --delta also passes -
       });
     }
   }
-  assert.ok(seen >= 6, `expected to find the check commands in the agent and skill docs, found ${seen}`);
+  // The floor only proves the scan still finds the commands. It was 6 while uiux-refine's freeze also ran the check over
+  // a delta it wrote; freezing no longer writes one, so the remaining places are the implementer, ui-reviewer and design-archive.
+  assert.ok(seen >= 4, `expected to find the check commands in the agent and skill docs, found ${seen}`);
   assert.deepEqual(hits, [], `these check commands lack --no-used-by:\n${hits.join('\n')}`);
 });

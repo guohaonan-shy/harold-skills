@@ -10,6 +10,7 @@
 | `diff` | spec 名 | `added` / `removed`（对象：`id`、`kind`、`summary`、`file`）、`changed`（对象加 `fields` 与 `sections`）、`unknownRemoved`（`removed.md` 里列了但 `prod/` 没有的 id）。`fields` 逐字段给 `before` / `after`，状态的边按边 id 展开成 `edges[<id>].<字段>`，入口状态的分段按段 id（文件里的短名）展开成 `sections[<id>].<字段>`（`locate` 当一个整体）；`sections` 按 `##` 小节比对，标 `added` / `removed` / `changed`。`delta/` 里与 `prod/` 一字不差的副本不算改动 |
 | `refs` | 组件名、组件代码路径、动效名；或分段 `<页面>#<段>`；或一类分段 `#<类型>` | 组件 / 动效：`target`、`matchedBy`（`name` / `code`）、`edges`（经过它的边）、`states`（列了它或有这样的边的状态，`via` 说明是 `components` / `motions` / `edges` 哪种）、`journeys`（某一步的边经过它，或某个状态列了它）、`pages`（用它的全部页面，来自反向引用，不读 `usedBy` 字段）。`<页面>#<段>`：`matchedBy: section`，`target`（全称 `id`、`type`、`qualifier`、`locate`、`declaredBy`）、`outgoing`（从这段出发的边）、`incoming`（落到这段的边）、`states`（`section` 是这段的状态）、`journeys`、`pages`。`#<类型>`（如 `#trust`）：`matchedBy: type`，`sections`：所有页面里这一类的段（含带限定词的），每段带 `page` 与全称 `id` |
 | `keyword` | 一段文字 | `matches`：名字、summary（用户路径还有 `intent`）、正文（连同 frontmatter 里的文字值）里含有任一个词的对象，不分大小写；按命中位置 `name` > `summary` > `body` 排序，同位置里命中词多的在前。每条带 `hit`、命中的 `terms` 与 `snippet`。整段没有空格、一个都没命中时，把其中的中文长串拆成相邻两字再找一遍（`expanded: true`） |
+| `affected` | 提交（SHA、分支名、`HEAD~N`） | `commit`（解析出的完整 SHA）、`changedFileCount`、`matched`（每个被改动牵到的页面或组件的每个改过的文件一项：`object`、`kind`、`file`、`rule`：`code` 是它登记的代码本身改了，`import` 是它的某个代码文件直接 import 了这个文件，带 `via` 指出是哪个代码文件）、`states`（受影响的状态：`id`、`page`、`via`：把它牵进来的页面与组件的 id）、`totalStates`（档案一共多少个状态）。选法：页面登记的代码改了，这页的全部状态；组件登记的代码改了，列了它的状态、边上用到它的状态、以及把它摆在区域里的页面的全部状态；页面或组件的代码文件直接 import 的数据、样式、静态资源改了，算它们改了（只追一跳，只认 `./`、`../` 相对路径，缺的扩展名、目录的 `index`、`.js` 对 `.ts` 会补；包名和别名路径不追）。改动取 `git diff --name-only <提交> HEAD`，改名按「删掉旧的、加上新的」算，旧路径也算改过。提交 git 认不出是「找不到」，目录不在 git 仓库里也是错误 |
 
 ## 边的视图
 
@@ -24,4 +25,4 @@
 
 ## MCP 工具
 
-插件自己的 `.mcp.json` 启动 `design-archive`，目标项目零配置。入参是入口的参数（`name`、`spec` 或 `text`；`design_refs` 的 `name` 也接 `<页面>#<段>` 与 `#<类型>`），除 `design_diff` 外都可选带 `delta`（需求名）。仓库根取会话工作目录的 git 顶层。名字对不上、不在 git 仓库里、缺参数，都返回错误结果（`isError`，原因写在文本里）。
+插件自己的 `.mcp.json` 启动 `design-archive`，目标项目零配置。入参是入口的参数（`name`、`spec`、`text` 或 `commit`；`design_refs` 的 `name` 也接 `<页面>#<段>` 与 `#<类型>`），除 `design_diff` 外都可选带 `delta`（需求名）。仓库根取会话工作目录的 git 顶层。名字对不上、不在 git 仓库里、缺参数，都返回错误结果（`isError`，原因写在文本里）。

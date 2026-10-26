@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 完成
 tags: [idea-loop, ui-reviewer, designer, pr-review, dreaming, design-archive]
 summary: 冻结后画布是唯一设计真相，设计变更由 designer 改画布；dreaming 拆成编排者加专职 agent
 related: ["[[2026-10-23-design-truth-after-freeze]]", "[[ui-state-archive]]", "[[design-archive-sections]]", "[[dreaming-design-reconcile]]"]
@@ -75,6 +75,7 @@ issues: [55]
 2. ui-reviewer 每轮只走查、只报问题，跟 pr-reviewer 同时起，发现照旧并进 Spec 一节。
 3. 插件上没有合并前钩子；合并在 pr-review 的合并步骤里先归档、再合并；漏归档的需求由 dreaming 发现。
 4. dreaming 本身不做对账，每一段交给一个钉了模型的 agent；提议表、人批、执行仍在 dreaming。
+5. dreaming 由桌面 app 的定时任务每周跑一次；截图对账只对上次成功执行以来代码改过的页面与状态做，人说「全量」才全量（PR 审核里后来加的）。
 
 ## 方案
 
@@ -135,14 +136,25 @@ dreaming 只做：起环境（从 `origin/<基准分支>` 切 worktree）、派�
 
 | agent | 做什么 | 交回 | 模型 | 依据 |
 |---|---|---|---|---|
-| UI 档案对账 | 不新建，复用 ui-reviewer 的对账模式；`prod/` 为空时的全站初扫留在 dreaming 现有写法里 | 现在的对账结果文件 | sonnet · high | Harold 原话「复用 ui-reviewer 对账模式，sonnet · high」 |
+| UI 档案对账 | 不新建，复用 ui-reviewer 的对账模式；源码波（不开浏览器的那一半：代码路径、引用、路由对照）也并进对账模式；`prod/` 为空时的全站初扫留在 dreaming 现有写法里 | 现在的对账结果文件，加源码波的「档案对象」行 | sonnet · high | Harold 原话「复用 ui-reviewer 对账模式，sonnet · high」；源码波归它，PR 审核第 1 轮 S3 定（「我倾向于选择B」，2026-10-23，后来改的） |
 | spec → ADR | 原「知识库对账」：判 spec 上线没有、起草 ADR、标被取代的旧 ADR 小节、找出已合并却还留着的工单；次要检查：`docs/domain/`、参考手册、`GLOSSARY.md`、`REVIEW.md` 的过期 | 提议表「文档」一节的行 | sonnet · high | Harold 原话「知识库对账与 ADR 起草合成一个……sonnet · high」；次要检查归它，审核会话里定（「同意」） |
 | 设计规范维护 | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它，量 token 的机械活可在内部再派 sonnet | 「候选」「DESIGN.md 条目」两节的行 | opus · high | Harold 原话「合成一个，避免对同一份文件提互相打架的修改」；模型审核会话里定（「同意」） |
 
-- **漏归档**（dreaming 自己做，不起 agent）：`origin/<基准分支>` 上 `docs/design/tmp/<spec-slug>/` 里还有设计产物（`research/` 之外），而这份 spec 已是「完成」、或已经没有 spec 目录，就是绕过合并步骤合进去的需求。提议表多一类行 `漏归档`，处置闭集「补归档 · 丢弃」：补归档是在 dreaming 的 worktree 里对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`，跟执行段的其余改动同一个 PR；丢弃是删掉 `tmp/<spec-slug>/`。依据：Harold 原话「靠每周 dreaming 兜底」；提议表「闭集里找不到合适的……先补闭集和校验脚本的单测」（现有原文）。
+- **漏归档**（dreaming 自己做，不起 agent）：`origin/<基准分支>` 上 `docs/design/tmp/<spec-slug>/` 里还有设计产物（`research/` 之外），而这份 spec 已是「完成」、或已经没有 spec 目录，就是绕过合并步骤合进去的需求。提议表多一类行 `漏归档`，处置闭集「补归档 · 丢弃」：补归档是在 dreaming 的 worktree 里对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`，跟执行段的其余改动同一个 PR；丢弃是删掉 `tmp/<spec-slug>/`。已知限制：spec 目录已经删掉的遗留需求，补归档时新页面的入口没有来源；新页面从档案已有页面点不进去时归档核不过，这一行不执行、原样交给人（Harold：「S2 选 A」，PR 审核第 2 轮，2026-10-26）。依据：Harold 原话「靠每周 dreaming 兜底」；提议表「闭集里找不到合适的……先补闭集和校验脚本的单测」（现有原文）。
 - **项目级文档**：`GLOSSARY.md` 与 `REVIEW.md` 纳入；`CLAUDE.md` 与 `AGENTS.md` 从扫描范围里拿掉（Harold 原话：「CLAUDE.md / AGENTS.md 不动（Harold 还没想清楚里面该放什么）」）。
 - 「只跑一部分」「单条蒸馏」照旧：只起对应的那个 agent；单条蒸馏交给设计规范维护 agent。
 - 执行段不拆：人批过的行仍由 dreaming 照提议表执行，写 `DESIGN.md` 的措辞仍然要人确认才落笔。
+
+### 7 dreaming 定时跑，截图对账做增量
+
+PR 审核第 1 轮之后加的（讨论记录：[[2026-10-23-design-truth-after-freeze]] 的「PR 审核里加的增量对账」一节；Harold：「增量对账并进这个 PR」）。
+
+- **定时**：`/idea-loop:setup` 照 seo-setup 建 seo-scan 定时任务的写法，问人后在 Claude 桌面 app 里建一个每周的定时任务，prompt 是 `/idea-loop:dreaming`；不在桌面 app 里就把 prompt 交给人自建。dreaming 仍是 `disable-model-invocation`，只由人或定时任务触发（Harold：「Q1 同意」）。
+- **基准点**：取 dreaming 定时任务最近一次状态为 succeeded 的执行，用它的开始时间找 `origin/<基准分支>` 在那一刻的提交，从它到现在改过的文件就是这次的增量。没有定时任务、或没有一次成功的执行：全量。人手敲的那次用同一个基准，不推进基准。已知缺口：上次执行「成功」但截图那一波没跑成，基准照样前推；没跑成的批写在提议表末尾，人看到了下次说「全量」（Harold：「Q2 同意」）。
+- **挑哪些状态**：改过的文件是某个页面登记的代码，这一页的状态都挑；是某个组件登记的代码，用到它的状态都挑（反查）；被这些页面或组件的代码直接 import 的数据、静态资源、样式改了，也算它们改了。只对挑中的状态跑实时波（Harold：「Q2同意」）。组件只作为页面区域出现的（如每页顶部的导航栏），它改了，摆着它的页面的全部状态都挑；「直接 import」只认相对路径，别名与第三方包不跟，是已知限制，靠人说「全量」补（Harold：「区域组件按 A，别名 import 接受成已知限制」，2026-10-26，实现后加）。这条选法做成档案查询的一种问法，给一个提交，交回受影响的状态清单，可单测。
+- **全量**：只在人调用时明确说「全量」，或没有基准点时（Harold：「Q3 人明确说全量」）。全量还是增量、为什么、对了几个状态，写在提议表开头一行。
+- **源码波每次全量**：不开浏览器，只读文件，抓的正是删了、改名了这类变化（Harold：「Q4 同意」）。
+- **上一张提议表还没批又到点**：照跑，新提议表开头写一行「上一次（日期）的提议表还没处理」，两张表不合并（Harold：「Q3 同意」）。
 
 ## 技术方案总览
 
@@ -183,7 +195,7 @@ dreaming 只做：起环境（从 `origin/<基准分支>` 切 worktree）、派�
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：提议表校验脚本认 `漏归档` 行与它的处置闭集；删钩子后 hooks 注册的断言改成「PreToolUse 只剩 SEO 检查，写文件之后的钩子都在」。照各脚本旁边现有的单测写 |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：提议表校验脚本认 `漏归档` 行与它的处置闭集；档案查询新增「给一个提交，交回受影响的状态」的问法（页面代码、组件代码、直接 import 三条）；删钩子后 hooks 注册的断言改成「PreToolUse 只剩 SEO 检查，写文件之后的钩子都在」。照各脚本旁边现有的单测写 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：改的是 skill 与 agent 的说明文字；`idea-loop/evals/` 只钉了 uiux-research |
@@ -207,7 +219,7 @@ dreaming 只做：起环境（从 `origin/<基准分支>` 切 worktree）、派�
 - 没有设计稿的 UI 改动：实现者照旧记「最小差异」到 `delta/`。
 - 让网页上点合并、在别的会话里合并也走归档：已知缺口，由 dreaming 的漏归档兜底（Harold 已定）。
 - `CLAUDE.md` / `AGENTS.md` 该放什么、要不要对账：Harold 还没想清楚，这次只把它们从 dreaming 的扫描里拿掉。
-- ui-reviewer 对账模式本身的判法、全站初扫的写法：不改。
+- ui-reviewer 对账模式实时波的判法、全站初扫的写法：不改（对账模式多接一段源码波，见实现决策 6，PR 审核第 1 轮 S3 后来改的）。
 
 ## 关联
 

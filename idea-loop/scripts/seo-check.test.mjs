@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -163,4 +163,26 @@ test('hook helpers: touchedSince and errorsOnly', () => {
   assert.equal(touchedSince(join(root, 'missing'), 0), false);
   const report = '  /a\n    [WARN ] [Bing] Title thin\n  /b\n    [ERROR] [Both] Missing <title>.\nSummary: 1 error';
   assert.equal(errorsOnly(report), '/b\n    [ERROR] [Both] Missing <title>.\nSummary: 1 error');
+});
+
+test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write hooks are all there, and the pre-merge hook is gone', () => {
+  const hooks = JSON.parse(readFileSync(join(here, '..', 'hooks', 'hooks.json'), 'utf8')).hooks;
+  assert.deepEqual(hooks.PreToolUse, [
+    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
+  ]);
+  assert.deepEqual(hooks.PostToolUse, [
+    {
+      matcher: 'Write|Edit',
+      hooks: ['design-lint-hook', 'design-md-hook', 'glossary-check-hook'].map((n) => ({
+        type: 'command',
+        command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/${n}.mjs"`,
+      })),
+    },
+    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
+  ]);
+  assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse']);
+  assert.doesNotMatch(JSON.stringify(hooks), /merge-gate/);
+  for (const gone of ['merge-gate-hook.mjs', 'merge-gate-hook.test.mjs']) {
+    assert.equal(existsSync(join(here, gone)), false, `${gone} should be deleted`);
+  }
 });

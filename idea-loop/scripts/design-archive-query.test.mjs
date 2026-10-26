@@ -1,11 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
 import { loadArchive } from './design-archive.mjs';
 import {
   QueryError,
+  affectedByFiles,
   enterState,
   query,
   queryDiff,
@@ -677,4 +680,183 @@ test('diff: a section added is reported under its own id, and an edge `from` cha
   const files = { ...base, [`docs/design/tmp/${SPEC_SLUG}/delta/pages/${MKT}/${MKT_ENTRY}.md`]: edited };
   const fields = queryDiff(writeRepo(files), SPEC_SLUG).changed[0].fields.map((f) => f.field);
   assert.deepEqual(fields, ['sections[faq]', 'edges[footer-terms].from']);
+});
+
+// ---------- 给一个提交，交回受影响的状态 ----------
+
+/** The source files the fixture's `code:` fields point at, some of them importing other files. */
+const CODE = {
+  'src/pages/cookbook.tsx':
+    "import recipes from '../data/recipes.json';\nimport './cookbook.css';\nimport { fmt } from '../lib/format';\nimport React from 'react';\nimport Icon from '@/icons/star';\nexport default 1;\n",
+  'src/pages/pantry.tsx': 'export default 2;\n',
+  'src/components/SearchBox.tsx': "import '../styles/search.css';\nconst Lazy = () => import('./SearchHints');\n",
+  'src/components/NavBar.tsx': "const logo = require('../assets/logo.svg');\n",
+  'src/components/RecipeCard.tsx': "export { star } from './star.js';\nimport tokens from '../tokens';\n",
+  'src/components/SaveButton.tsx': "import '../styles/save.css';\n",
+  'src/components/RetryButton.tsx': '// retry\n',
+  // imported by the cookbook page; what *it* imports is two hops from the page
+  'src/lib/format.ts': "import units from './units.json';\n",
+};
+const withCode = (extra = {}) => ({ ...compliantFiles(), ...CODE, ...extra });
+const affected = (files, extra) => affectedByFiles(loadArchive(writeRepo(withCode(extra))), files);
+const stateIds = (r) => r.states.map((s) => s.id);
+const COOKBOOK_STATES = ['cookbook--list', 'cookbook--recipe-saved', 'cookbook--search-failed', 'cookbook--search-loading', 'cookbook--search-results'];
+const PANTRY_STATES = ['pantry--empty', 'pantry--overview'];
+
+test("affected: a file that is a page's registered code puts every state of that page in, and only that page", () => {
+  const r = affected(['src/pages/pantry.tsx']);
+  assert.deepEqual(stateIds(r), PANTRY_STATES);
+  assert.deepEqual(r.matched, [{ object: 'pantry', kind: 'page', file: 'src/pages/pantry.tsx', rule: 'code' }]);
+  assert.deepEqual(r.states[0], { id: 'pantry--empty', page: 'pantry', via: ['pantry'] });
+  assert.equal(r.totalStates, 7);
+});
+
+test("affected: a file that is a component's registered code puts in the states that use it — listed on the state, or on one of its edges", () => {
+  // SaveButton sits on the edges of one state
+  assert.deepEqual(stateIds(affected(['src/components/SaveButton.tsx'])), ['cookbook--search-results']);
+  // Toast is listed by one state and laid out by no page
+  const toast = {
+    [P('components/Toast/Toast.md')]: compliantFiles()[P('components/RetryButton/RetryButton.md')].replaceAll('RetryButton', 'Toast'),
+    [P('pages/pantry/pantry--empty.md')]: compliantFiles()[P('pages/pantry/pantry--empty.md')].replace('edges: []', 'components: ["[[Toast]]"]\nedges: []'),
+    'src/components/Toast.tsx': '// toast\n',
+  };
+  assert.deepEqual(stateIds(affected(['src/components/Toast.tsx'], toast)), ['pantry--empty']);
+  const r = affected(['src/components/RetryButton.tsx']);
+  assert.deepEqual(stateIds(r), ['cookbook--search-failed']);
+  assert.deepEqual(r.matched, [{ object: 'RetryButton', kind: 'component', file: 'src/components/RetryButton.tsx', rule: 'code' }]);
+});
+
+test('affected: a component a page lays out as a region is in every state of that page', () => {
+  // NavBar and RecipeCard are regions of both pages
+  assert.deepEqual(stateIds(affected(['src/components/NavBar.tsx'])), [...COOKBOOK_STATES, ...PANTRY_STATES]);
+  assert.deepEqual(stateIds(affected(['src/components/RecipeCard.tsx'])), [...COOKBOOK_STATES, ...PANTRY_STATES]);
+});
+
+test("affected: a file a page's code imports directly counts as the page changing — data, style, anything", () => {
+  const data = affected(['src/data/recipes.json']);
+  assert.deepEqual(stateIds(data), COOKBOOK_STATES);
+  assert.deepEqual(data.matched, [{ object: 'cookbook', kind: 'page', file: 'src/data/recipes.json', rule: 'import', via: 'src/pages/cookbook.tsx' }]);
+  assert.deepEqual(stateIds(affected(['src/pages/cookbook.css'])), COOKBOOK_STATES);
+});
+
+test("affected: a file a component's code imports directly counts as that component changing", () => {
+  // SaveButton is on the edges of one state
+  const r1 = affected(['src/styles/save.css']);
+  assert.deepEqual(stateIds(r1), ['cookbook--search-results']);
+  assert.deepEqual(r1.matched, [{ object: 'SaveButton', kind: 'component', file: 'src/styles/save.css', rule: 'import', via: 'src/components/SaveButton.tsx' }]);
+  // SearchBox is a region of the cookbook page
+  assert.deepEqual(stateIds(affected(['src/styles/search.css'])), COOKBOOK_STATES);
+  // NavBar, through require()
+  const r = affected(['src/assets/logo.svg']);
+  assert.equal(r.matched[0].object, 'NavBar');
+  assert.equal(r.states.length, 7);
+});
+
+test('affected: imports are followed one hop only — what an imported file imports does not count', () => {
+  assert.deepEqual(stateIds(affected(['src/lib/units.json'])), []);
+  assert.deepEqual(stateIds(affected(['src/lib/format.ts'])), COOKBOOK_STATES); // the imported file itself does
+});
+
+test('affected: an import without an extension resolves to the file or to its index, and a .js import to the .ts source', () => {
+  const page = { 'src/pages/pantry.tsx': "import a from './pantry-data';\nimport b from './widgets';\nimport c from './util.js';\n" };
+  for (const changed of ['src/pages/pantry-data.ts', 'src/pages/widgets/index.tsx', 'src/pages/util.ts']) {
+    assert.deepEqual(stateIds(affected([changed], page)), PANTRY_STATES, changed);
+  }
+  assert.deepEqual(stateIds(affected(['src/pages/other.ts'], page)), []);
+});
+
+test('affected: packages and aliased paths are not followed; files nobody registered change nothing', () => {
+  assert.deepEqual(stateIds(affected(['node_modules/react/index.js', 'src/icons/star.tsx', 'README.md', 'docs/index.md'])), []);
+});
+
+test('affected: a registered file that is gone from disk (deleted) still counts — the registered path is what matches', () => {
+  const r = affected(['src/components/SaveButton.tsx'], { 'src/components/SaveButton.tsx': null });
+  assert.deepEqual(stateIds(r), ['cookbook--search-results']);
+});
+
+test('affected: a state several changes reach lists all of them', () => {
+  const r = affected(['src/pages/cookbook.tsx', 'src/components/SaveButton.tsx', 'src/data/recipes.json']);
+  assert.deepEqual(stateIds(r), COOKBOOK_STATES);
+  assert.deepEqual(r.states.find((s) => s.id === 'cookbook--search-results').via, ['cookbook', 'SaveButton']);
+  assert.equal(r.matched.length, 3);
+});
+
+test('affected: no changed files is an empty answer that still says how many states there are', () => {
+  const r = affected([]);
+  assert.deepEqual(r.states, []);
+  assert.deepEqual(r.matched, []);
+  assert.equal(r.totalStates, 7);
+});
+
+test('affected: a path written with ./ is the same file', () => {
+  assert.deepEqual(stateIds(affected(['./src/pages/pantry.tsx'])), PANTRY_STATES);
+});
+
+// ---------- from a commit: git underneath ----------
+
+const git = (root, ...args) => {
+  const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' });
+  assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+  return r.stdout.trim();
+};
+const write = (root, rel, text) => {
+  mkdirSync(dirname(join(root, rel)), { recursive: true });
+  writeFileSync(join(root, rel), text);
+};
+
+/** The fixture with its code as a repository of two commits, `change(root)` being the second. */
+function twoCommits(change) {
+  const root = writeRepo(withCode());
+  git(root, 'init', '-q');
+  git(root, 'add', '-A');
+  git(root, 'commit', '-q', '-m', 'one');
+  const first = git(root, 'rev-parse', 'HEAD');
+  change(root);
+  git(root, 'add', '-A');
+  git(root, 'commit', '-q', '-m', 'two');
+  return { root, first };
+}
+
+test('affected: from a commit, the files changed since it pick the states — the module and the command line give one answer', () => {
+  const { root, first } = twoCommits((r) => {
+    write(r, 'src/components/SaveButton.tsx', '// restyled\n');
+    write(r, 'src/data/recipes.json', '{}\n');
+    write(r, 'docs/notes.md', 'unrelated\n');
+  });
+  const r = query(root, 'affected', first.slice(0, 8)); // an abbreviated sha is fine; it comes back resolved
+  assert.equal(r.since, first.slice(0, 8));
+  assert.equal(r.commit, first);
+  assert.equal(r.changedFileCount, 3);
+  assert.deepEqual(stateIds(r), COOKBOOK_STATES);
+  assert.equal(r.totalStates, 7);
+
+  const out = cli(root, 'affected', first);
+  assert.equal(out.status, 0, out.stderr);
+  assert.deepEqual(JSON.parse(out.stdout).states, r.states);
+});
+
+test('affected: HEAD~1 works as the starting point; nothing changed since HEAD is an empty answer', () => {
+  const { root } = twoCommits((r) => write(r, 'src/pages/pantry.tsx', 'export default 3;\n'));
+  assert.deepEqual(stateIds(query(root, 'affected', 'HEAD~1')), PANTRY_STATES);
+  assert.deepEqual(stateIds(query(root, 'affected', 'HEAD')), []);
+});
+
+test('affected: a rename counts the old path as changed too', () => {
+  const { root, first } = twoCommits((r) => git(r, 'mv', 'src/components/RetryButton.tsx', 'src/components/RetryButton2.tsx'));
+  assert.deepEqual(stateIds(query(root, 'affected', first)), ['cookbook--search-failed']);
+});
+
+test('affected: a commit that is not there, or one that looks like an option, is an error that says so', () => {
+  const { root } = twoCommits((r) => write(r, 'src/pages/pantry.tsx', 'x\n'));
+  assert.throws(() => query(root, 'affected', 'no-such-commit'), (e) => e instanceof QueryError && e.code === 'not-found' && /no-such-commit/.test(e.message));
+  assert.throws(() => query(root, 'affected', '--output=x'), (e) => e instanceof QueryError && e.code === 'usage');
+  const missing = cli(root, 'affected', 'no-such-commit');
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /no-such-commit/);
+  assert.equal(missing.stdout, '');
+});
+
+test('affected: a directory that is not a git repository says so', () => {
+  const root = writeRepo(withCode());
+  assert.throws(() => query(root, 'affected', 'HEAD'), (e) => e instanceof QueryError && /git/.test(e.message));
 });

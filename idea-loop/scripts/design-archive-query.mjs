@@ -1,5 +1,5 @@
 /**
- * Reading the design archive: six entries, one module (skills/design/design-archive/references/query.md).
+ * Reading the design archive: seven entries, one module (skills/design/design-archive/references/query.md).
  *
  *   queryPage(archive, name)      a page: regions and components, every state and its edges, the journeys
  *                                 through it, the motions it uses, all decisions and candidates
@@ -9,6 +9,9 @@
  *   queryRefs(archive, name)      who refers to a component (by name or code path), a motion, a section
  *                                 (`<page>#<section>`) or every section of a type (`#<type>`)
  *   queryKeyword(archive, text)   objects whose name / summary / body match, best position first
+ *   queryAffected(archive, commit) the states the code changed since a commit reaches: a page's code (all its
+ *                                 states), a component's code (the states using it), or a file those code files
+ *                                 import directly (counts as them changing); `affectedByFiles` takes the file list
  *   enterState(archive, id)       the shortest way in (the state entry's `enter`), usable on its own
  *
  * Every entry except `queryDiff` takes an archive from `loadArchive(root, { delta })`, so each can read
@@ -18,10 +21,11 @@
  *
  * The engine is file reading and text matching — no embedding, no model, no clock.
  *
- *   node design-archive-query.mjs <repo-root> <page|state|journey|diff|refs|keyword> <arg> [--delta <spec-slug>]
+ *   node design-archive-query.mjs <repo-root> <page|state|journey|diff|refs|keyword|affected> <arg> [--delta <spec-slug>]
  */
 
-import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
@@ -655,6 +659,138 @@ export function queryDiff(root, slug) {
   };
 }
 
+// ---------- 受影响的状态 ----------
+
+const SOURCE_EXTS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.mts', '.cts', '.json', '.css', '.scss', '.sass', '.less', '.vue', '.svelte'];
+const JS_TO_TS = { '.js': ['.ts', '.tsx'], '.jsx': ['.tsx'], '.mjs': ['.mts'], '.cjs': ['.cts'] };
+const IMPORT_PATTERNS = [
+  /\bfrom\s*(['"])([^'"\n]+)\1/g, // import … from 'x' / export … from 'x'
+  /\bimport\s*(['"])([^'"\n]+)\1/g, // import 'x'
+  /\bimport\s*\(\s*(['"])([^'"\n]+)\1/g, // import('x')
+  /\brequire\s*\(\s*(['"])([^'"\n]+)\1/g, // require('x')
+];
+const posix = (p) => p.split('\\').join('/');
+
+/**
+ * The repository paths a relative import in `source` (the text of `codeFile`) can mean: the path as
+ * written, with each source extension, as a directory's index, and — for a `.js` import — the `.ts`
+ * file it stands for. Packages and aliased paths (`react`, `@/x`) are not followed.
+ */
+function importCandidates(codeFile, source) {
+  const out = new Set();
+  for (const re of IMPORT_PATTERNS) {
+    for (const m of source.matchAll(re)) {
+      const spec = m[2];
+      if (!spec.startsWith('./') && !spec.startsWith('../')) continue;
+      const base = posix(normalize(join(dirname(codeFile), spec.split(/[?#]/)[0])));
+      const ext = Object.keys(JS_TO_TS).find((e) => base.endsWith(e));
+      out.add(base);
+      for (const e of SOURCE_EXTS) {
+        out.add(base + e);
+        out.add(`${base}/index${e}`);
+      }
+      if (ext) for (const t of JS_TO_TS[ext]) out.add(base.slice(0, -ext.length) + t);
+    }
+  }
+  return out;
+}
+
+/** The text of a registered code file, or '' when it is not a readable file (deleted, a directory). */
+function readCode(root, file) {
+  try {
+    return readFileSync(join(root, file), 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Which states a set of changed files reaches: the file is a page's registered code (every state of
+ * the page), a component's registered code (every state that uses it), or is imported directly by
+ * one of those code files (counts as that page or component having changed; one hop, relative
+ * imports only). `files` are paths relative to the repository root.
+ *
+ * `matched` is one entry per (object, file): `rule: 'code'`, or `rule: 'import'` with `via`, the
+ * registered code file that imports it. `states` carry `via`: the ids of the pages / components that
+ * put them in. `totalStates` is how many states the archive has, so a caller can say "n of m".
+ */
+export function affectedByFiles(archive, files) {
+  const changed = new Set(files.map(normalizeCode));
+  const matched = [];
+  const stateVia = new Map();
+  const put = (stateId, objectId) => {
+    if (!stateVia.has(stateId)) stateVia.set(stateId, []);
+    if (!stateVia.get(stateId).includes(objectId)) stateVia.get(stateId).push(objectId);
+  };
+
+  /** Record every changed file that is `o`'s code or one of its code files' direct imports; true if any. */
+  const claim = (o) => {
+    const code = asList(o.fm.code).map(normalizeCode);
+    const own = code.filter((c) => changed.has(c));
+    for (const file of own) matched.push({ object: o.id, kind: o.kind, file, rule: 'code' });
+    let imported = false;
+    for (const codeFile of code) {
+      for (const cand of importCandidates(codeFile, readCode(archive.root, codeFile))) {
+        if (!changed.has(cand) || own.includes(cand)) continue;
+        if (matched.some((m) => m.object === o.id && m.file === cand)) continue;
+        matched.push({ object: o.id, kind: o.kind, file: cand, rule: 'import', via: codeFile });
+        imported = true;
+      }
+    }
+    return own.length > 0 || imported;
+  };
+
+  for (const page of sortById(objectsOfKind(archive, 'page'))) {
+    if (claim(page)) for (const s of statesOfPage(archive, page.id)) put(s.id, page.id);
+  }
+
+  const regionPages = (componentId) =>
+    sortById(objectsOfKind(archive, 'page').filter((p) => asList(p.fm.regions).some((r) => wikilinkTarget(r?.component) === componentId)));
+  for (const comp of sortById(objectsOfKind(archive, 'component'))) {
+    if (!claim(comp)) continue;
+    // the states that list it or have an edge through it (the reverse lookup), and every state of a
+    // page that lays it out as a region
+    for (const s of queryRefs(archive, comp.id).states) put(s.id, comp.id);
+    for (const p of regionPages(comp.id)) for (const s of statesOfPage(archive, p.id)) put(s.id, comp.id);
+  }
+
+  const states = sortById(
+    [...stateVia].map(([id, via]) => ({ id, page: pageOfState(archive.objects.get(id)), via })),
+  );
+  return { matched, states, totalStates: objectsOfKind(archive, 'state').length };
+}
+
+/**
+ * What changed since a commit, as the states to look at again: `git diff --name-only <commit> HEAD`
+ * (renames as a delete plus an add, so the old path counts too; paths relative to `root`), fed to
+ * `affectedByFiles`. `since` is anything git resolves to a commit — a sha, a branch, `HEAD~3`; the
+ * answer carries the full sha it resolved to (`commit`) and how many files changed.
+ */
+export function queryAffected(archive, since) {
+  const rev = String(since ?? '').trim();
+  if (!rev) throw new QueryError('提交是空的', 'usage');
+  if (rev.startsWith('-')) throw new QueryError(`「${rev}」不是提交`, 'usage');
+  const git = (...args) => execFileSync('git', ['-C', archive.root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  let commit;
+  try {
+    commit = git('rev-parse', '--verify', '--quiet', `${rev}^{commit}`).trim();
+  } catch {
+    try {
+      git('rev-parse', '--is-inside-work-tree');
+    } catch {
+      throw new QueryError(`${archive.root} 不在 git 仓库里：按提交挑状态要读 git 历史`, 'no-repo');
+    }
+    throw new QueryError(`找不到提交「${rev}」`);
+  }
+  let files;
+  try {
+    files = git('diff', '--name-only', '--no-renames', '--relative', '-z', commit, 'HEAD', '--').split('\0').filter(Boolean);
+  } catch (e) {
+    throw new QueryError(`读不出 ${rev} 到 HEAD 的改动：${String(e.stderr ?? e.message).trim()}`);
+  }
+  return { since: rev, commit, changedFileCount: files.length, ...affectedByFiles(archive, files) };
+}
+
 // ---------- the entries by name, and the command line ----------
 
 export const ENTRIES = {
@@ -663,6 +799,7 @@ export const ENTRIES = {
   journey: { run: (archive, arg) => queryJourney(archive, arg), arg: '用户路径名' },
   refs: { run: (archive, arg) => queryRefs(archive, arg), arg: '组件名、组件代码路径、动效名、<页面>#<段> 或 #<段类型>' },
   keyword: { run: (archive, arg) => queryKeyword(archive, arg), arg: '一段文字' },
+  affected: { run: (archive, arg) => queryAffected(archive, arg), arg: '提交（SHA、分支名、HEAD~N）：自它以来改过的代码牵到的状态' },
   diff: { run: null, arg: 'spec 名', root: true },
 };
 

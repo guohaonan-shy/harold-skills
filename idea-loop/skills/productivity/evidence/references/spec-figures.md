@@ -127,7 +127,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archi
 
 - **问题图**（「问题」一节）：跟复现截图一起进 raw 目录。
 - **设计图**（「前端交互」一节）：从冻结画布派生，跟画布放在一起，`docs/design/tmp/<spec-slug>/canvas/flows/flow-<n>-<page>--<state>.png`，JSON 和截图源放在 `flows/src/`，画布改了能重新生成。**文件名里的 `<page>--<state>` 是这张图第一格的档案状态名**，归档脚本靠它判断图属于哪个页面；`<n>` 是这份 spec 里的序号。spec 里用相对路径引用。这些图随冻结经设计 PR 进主分支；实现 PR 合并前归档时，归档脚本把图挪进 `prod/pages/<page>/assets/flows/`，同时把 spec 里指向它们的链接改写成新路径。
-- **每一格对回档案里的状态**：JSON 里每一步可以带 `state`（档案里的状态名，如 `cookbook--search-loading`），指向 `delta/` 里那个状态文件。脚本把它印在截图下的小字里、写进 HTML 的 `data-state`，并在 PNG 旁多存一份同名的 `.states.json`（哪一行哪一步是哪个状态）。输出文件按 `flow-<n>-…` 起名时，脚本要求名字就是 `flow-<n>-<第一格的状态名>.png`，对不上退出码 2；别的名字（问题图等）不受限。带 `--archive <仓库根> --delta <spec-slug>` 时，脚本还会核对每个 id 在档案（叠上这个需求的 `delta/`）里是否存在，不存在就退出码 2。问题图、没有档案的项目不带 `state`，输出里也就没有这些。
+- **每一格对回档案里的状态**：JSON 里每一步可以带 `state`（档案里的状态名，如 `cookbook--search-loading`），指向这个状态（合并前归档时它在 `delta/` 里有状态文件）。脚本把它印在截图下的小字里、写进 HTML 的 `data-state`，并在 PNG 旁多存一份同名的 `.states.json`（哪一行哪一步是哪个状态）。输出文件按 `flow-<n>-…` 起名时，脚本要求名字就是 `flow-<n>-<第一格的状态名>.png`，对不上退出码 2；别的名字（问题图等）不受限。带 `--archive <仓库根> --delta <spec-slug>` 时，脚本还会核对每个 id 在档案（叠上这个需求的 `delta/`）里是否存在，不存在就退出码 2。问题图、没有档案的项目不带 `state`，输出里也就没有这些。
 
 ### 设计冻结之前
 

@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再开设计 PR。画布只由 designer 改，签字只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。下文的 `imagine/`、`canvas/`、`delta/`、`research/` 都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下：打磨时只在本地，冻结结果经设计 PR 提交。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。下文的 `imagine/`、`canvas/`、`research/` 都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下：打磨时只在本地，冻结结果经设计 PR 提交。
 
 几个词：**ledger** 是 `canvas/work/ledger.md`，designer 每交付一版落一行的打磨记录；**块的 job** 是方向说明「结构」节给每块写的内容责任，归为状态 / 结果 / 身份 / 氛围之一；**register** 是这块界面属于营销页还是产品内（in-app），记在方向说明里；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。
 
@@ -98,17 +98,19 @@ designer 交付「冻结」后，你核对：
 
 - spec 仍是 `正式`；「实现决策」里的冻结摘要五样齐（画布指针指向签字的那一版；五样见 [`references/freeze.md`](references/freeze.md) 的「改 spec」）。
 - 「前端交互」的交互图都在，能打开。
-- `delta/` 过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" "$(git rev-parse --show-toplevel)" --delta <spec-slug> --no-used-by`（designer 列出的改不动的违规除外）。
+- `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
 都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后开**设计 PR** 把冻结结果合进主分支：实现阶段从最新主分支切分支，拿不到你这里的本地文件。
 
 1. 当前 worktree 应该是从主分支开出的（issue 会话在设计阶段就是）。分支还不叫 `design/<spec-slug>` 的，改名 `git branch -m design/<spec-slug>`；不在这种 worktree 里的，从最新主分支开一个，把下面这些文件带过去再提交。
-2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas docs/design/tmp/<spec-slug>/delta`（`tmp/` 被排除在 git 之外，要强制加）。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进。
+2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas`（`tmp/` 被排除在 git 之外，要强制加）：签字的画布、冻结记录、交互图。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进，也没有 `delta/`。
 3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写），`git push -u origin design/<spec-slug>`，`gh pr create`。
-4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」），合并前的钩子也放行它。失败就告诉人。
+4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。失败就告诉人。
 
 告诉人：设计已冻结并合进主分支。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
+
+**冻结之后设计变了**：不回 refine，也不重起 designer。人接受了一处跟画布不同的设计，由当时的编排者（`idea-loop:implement` 或 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」，过程与冻结记录怎么记见 `idea-loop:design-change-sync`。
 
 **部分冻结**：designer 交付后就结束了。关掉预览服务器，告诉人跑 `/idea-loop:uiux-imagine` 重开回推的那几块；第二轮发散之后再调 refine，起一个**新的** designer，任务「起手」，它会接到已冻结的画布上。
 
