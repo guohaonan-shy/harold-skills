@@ -73,10 +73,10 @@ idea-loop 从这几处读项目配置：
 - `docs/` 骨架：`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`index.md`，只建不存在的。
 - `.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
-- `## issue 分类` 一节照模板写进 `AGENTS.md`；没有 `AGENTS.md`，写进有 `## idea-loop` 块的那份。脚本照格式读它：父类、子类各一行，名字放反引号里，后面「：」接说明，子类缩进两格；「保留的 label」一行列出别的要留的 label，名字放反引号里，第一个永远是 `retro`；这一节到下一个 `##` 标题为止。父类说明末尾的「（独立队列，上限 N）」让这个分类的 issue 在调度里单独排队、最多同时开 N 个会话；已有的括注原样保留，新加只在人要求时（`seo-setup` 会给 `seo` 加）。
+- `## issue 分类` 一节照模板写进 `AGENTS.md`；没有 `AGENTS.md`，写进有 `## idea-loop` 块的那份。脚本照格式读它：父类、子类各一行，名字放反引号里，后面「：」接说明，子类缩进两格；「保留的 label」一行列出别的要留的 label，名字放反引号里；这一节到下一个 `##` 标题为止。父类说明末尾的「（独立队列，上限 N）」让这个分类的 issue 在调度里单独排队、最多同时开 N 个会话；已有的括注原样保留，新加只在人要求时（`seo-setup` 会给 `seo` 加）。
 - 旧状态：`check` 报了旧状态的，照 `idea-loop:spec-status` 的「从旧状态机迁移」迁。
 - label，按顺序：
-  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*`、`type:*` 和 `retro`，列出多余的 label 和各自在用的 open issue 数。
+  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*` 和 `type:*`，列出多余的 label 和各自在用的 open issue 数。
   2. 人定了要迁成分类的，对每个用着它的 issue 跑 `issues.mjs type docs <号> <分类>`。
   3. 把多余 label 的清单给人看，人确认后 `issues.mjs labels docs --prune` 删掉，issue 上的也一起去掉。
 - GitHub App：在 `~/.idea-loop/github-apps.json` 里加 `"<owner/repo>": { "appId": <id>, "privateKeyPath": "<路径>" }`。只写路径，私钥文件不打开。
