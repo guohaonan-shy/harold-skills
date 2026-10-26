@@ -77,9 +77,9 @@ implement 开出 PR 并转成 open 后，用 Skill 工具调 `idea-loop:pr-revie
 人的原话逐字记下，逐条处理：
 
 - **不要的条目**：`issues drop <docs> <spec-slug> <号>`（关成 not planned，同时从 spec 里移出），撤掉对应的改动，提交进同一个 PR。
-- **要讨论的条目**：`issues unhandoff <docs> <spec-slug> <号>`（移出 spec，回待验证），再 `gh issue edit <号> --remove-label retro`，撤掉对应的改动。它回到普通队列，走正常的验证和 grill。
+- **要讨论的条目**：issue 已随 spec 关掉的（整批都判为「不存在」时），先 `gh issue reopen <号>`，调度只看开着的 issue。然后 `issues unhandoff <docs> <spec-slug> <号>`（移出 spec，回待验证），再 `gh issue edit <号> --remove-label retro`，撤掉对应的改动。它回到普通队列，走正常的验证和 grill。这种整批已做掉的情形没有代码改动带它进主分支，移出 spec 的改动走一个只改 `docs/` 的 PR，检查全过就合并。
 - **推翻确认清单里的某条**：按人的意思改，其余照 `idea-loop:pr-review` 处理批示的做法。
-- **没有代码 PR**（每条都是「不存在」，spec 已「完成」、issue 已关掉）：没有要合并的，人看完没有别的话，就照 `idea-loop:issue-session` 的「收尾」：调 `idea-loop:retro`，确认工作区干净，`archive_session` 归档自己，worktree 随归档清掉。这一步不能省：会话不归档，调度就一直不出这个仓库的下一张整合卡片。人推翻某条「不存在」的，按上面「要讨论的条目」办，其余照常归档。
+- **没有代码 PR**（每条都是「不存在」，spec 已「完成」、issue 已关掉）：没有要合并的，人看完没有别的话，就照 `idea-loop:issue-session` 的「收尾」：调 `idea-loop:retro`，确认工作区干净，`archive_session` 归档自己，worktree 随归档清掉。这一步不能省：会话不归档，调度就一直不出这个仓库的下一张整合卡片。人推翻某条「不存在」的，按上面「要讨论的条目」办（先重新打开那条 issue），其余照常归档。
 - **合并**：人说合并，由 `idea-loop:pr-review` 合并。合并后照 `idea-loop:issue-session` 的「换阶段」「收尾」：`issues advance` 关掉其余 issue，调 `idea-loop:retro`，确认工作区干净，归档自己。
 
 ## 边界

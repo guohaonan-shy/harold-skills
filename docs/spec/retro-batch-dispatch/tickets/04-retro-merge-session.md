@@ -44,4 +44,4 @@
 - [x] review 第 1 轮 S3（2026-10-26）：`issue-dispatch` 的 description 不再说「一个 issue 一张」，改成跟新做法一致（普通 issue 一个一张，retro issue 凑成 retro 整合出整合卡片），仍只做路由
 - [x] review 第 1 轮 C1（2026-10-26）：整合会话 skill 里起草、切工单与实现、证明生效、review 这几步各以一个「完成条件」结尾（writing-for-agents：「每一步都以一个完成条件结尾」）
 - [x] review 第 1 轮 S2（2026-10-26）：一次 retro 整合里每条都已被别的改动做掉、没有代码 PR 时，整合会话照样停下给人看；人看完后照 `issue-session` 的「收尾」归档自己（worktree 随归档清掉），调度下一天照常出整合卡片。「人回复后」要覆盖这种情形。人的原话：「retro issue也要开开发环境，不能直接在主分支做掉吧。如果在worktree，我理解就走到正常的归档步骤吧。」
-- [ ] review 第 2 轮 S1（2026-10-26）：一次 retro 整合整批都判为已做掉、issue 已随 spec 关掉后，人推翻其中一条要讨论时：先把那条 issue 重新打开，再从 spec 里移出、摘掉 `retro`，移出 spec 的改动走一个只改 `docs/` 的 PR 合进主分支，让它回到普通队列的待验证。人的原话：「S1 补一句」
+- [x] review 第 2 轮 S1（2026-10-26）：一次 retro 整合整批都判为已做掉、issue 已随 spec 关掉后，人推翻其中一条要讨论时：先把那条 issue 重新打开，再从 spec 里移出、摘掉 `retro`，移出 spec 的改动走一个只改 `docs/` 的 PR 合进主分支，让它回到普通队列的待验证。人的原话：「S1 补一句」

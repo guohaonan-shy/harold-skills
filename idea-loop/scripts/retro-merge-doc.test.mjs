@@ -133,6 +133,15 @@ test('retro-merge has a way to end when every candidate was already done and the
   assert.match(section(b, '开场'), /worktree/, 'the session still has its own worktree to be cleared on archive');
 });
 
+test('retro-merge reopens a closed issue the human wants to discuss, and lands the spec change by a docs-only PR', () => {
+  const after = section(body(merge), '人回复后');
+  const bullet = after.split('\n').find((l) => /要讨论的条目/.test(l)) ?? '';
+  assert.ok(bullet, '「人回复后」has no bullet for 要讨论的条目');
+  assert.match(bullet, /issues unhandoff/);
+  assert.match(bullet, /gh issue reopen/, 'an issue already closed with the spec is reopened, or the scheduler (open issues only) never sees it');
+  assert.match(bullet, /只改 `docs\/` 的 PR/, 'with no code PR the change that removes it from the spec reaches main by a docs-only PR');
+});
+
 test('the README, the root AGENTS.md and the plugin version know the new skill', () => {
   const readme = read('README.md');
   assert.match(readme, /\| `idea-loop:retro-merge` \|/, 'skills table row');
