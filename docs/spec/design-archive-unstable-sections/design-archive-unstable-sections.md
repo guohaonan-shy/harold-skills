@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, ui-archive, design-archive-sections]
 summary: 设计档案的分段拍图对脚本动画、轮播、悬停暂停、滚动驱动的段也拍得稳、拍得对，对账不误报也不漏报
 related: ["[[2026-10-26-unstable-sections]]", "[[design-archive-sections]]", "[[dreaming-design-reconcile]]", "[[ui-state-archive]]"]
