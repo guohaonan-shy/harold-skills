@@ -7,9 +7,17 @@
  * the plain logic plus the code handed to the browser, split off the way `ui-measure.mjs` (browser) and
  * `ui-compare.mjs` (pure) are:
  *
- *   measure    prints the code the headless Playwright MCP runs (`browser_run_code_unsafe`): put a page clock
- *              under the page, find what scrolls (the document when it is taller than the screen, else the biggest
- *              visible element with its own scroll: an app shell's <main>) and scroll it through once (lazy islands
+ *   time       prints the code that starts the page's time (装时间): the page clock and the CSS animation timeline
+ *              are both stopped at a fixed start, the page is reloaded, and a fixed run of steps lets it come up.
+ *              Run it once after `browser_navigate` to the entry, before any interaction. From then on page time
+ *              only moves when a step moves it, so the page is in the same place on every run however long the
+ *              agent thinks between tool calls.
+ *   step       prints the code that moves the page time on by N ms (拨一步): the page clock runs N ms and every
+ *              animation that is still running is moved on N ms with it, so an animation plays to its end, fires its
+ *              end event, just at a fixed page time. For waiting after an interaction.
+ *   measure    prints the code the headless Playwright MCP runs (`browser_run_code_unsafe`): start the page time if
+ *              `time` was not run, find what scrolls (the document when it is taller than the screen, else the biggest
+ *              visible element with its own scroll: an app shell's <main>) and scroll it through once in fixed steps (lazy islands
  *              hydrate, entrances finish, fixed elements show where they appear), locate each section with the accessibility tree, box the top-level
  *              blocks (a `display: contents` wrapper is looked through), every heading and every clickable
  *              element with its full accessible name and whether a role + name finds it.
@@ -17,12 +25,16 @@
  *              the ones that fall in none ("落空"), the sections that could not be located, the ones that
  *              overlap. Exit 1 on any of them.
  *   shoot      attribution JSON → the code that shoots each section by itself: scroll to it, wait until its
- *              content has all appeared and stopped changing, freeze the page clock, shoot its range, one
- *              PNG per section, `<entry state id>@<section id>.png`. A tall section is one tall picture.
+ *              content has all appeared and stopped changing, shoot its range, one PNG per section,
+ *              `<entry state id>@<section id>.png`. A tall section is one tall picture. The page time is not moved;
+ *              each shot is taken twice, 500 ms of real time apart, and a shot whose two differ is `uncontrolled`
+ *              (something the page time cannot hold is moving in it) and comes with the box where they differ.
  *
  * The browser side is covered by design-archive-sections-browser.test.mjs (skipped when no Chromium is
  * found) and by a real run; `attribute` and the target arithmetic are pure functions over data.
  *
+ *   node design-archive-sections.mjs time <repo-root> [settings]
+ *   node design-archive-sections.mjs step <ms>
  *   node design-archive-sections.mjs measure <repo-root> <entry-state> [--delta <spec-slug>] [--for <state> --section <id>] [settings]
  *   node design-archive-sections.mjs measure <repo-root> --state <entry-state> --page <page>
  *        (--sections '<json list>' | --sections-file <file>) [--for <state> --section <id>] [settings]
@@ -46,26 +58,140 @@ import { loadArchive, pageOfState, parseSectionRef, sectionLocate, sectionsOfSta
 const compact = (fn) => fn.toString().split('\n').filter((l) => l.trim() && !/^\s*\/\//.test(l)).join('\n');
 
 /**
- * Runs inside the Playwright MCP's `browser_run_code_unsafe`, serialised with `toString()`, so it has
- * to stand alone: everything it needs arrives in `C` (the config) or is created inside. Returns the
- * measurement `attribute` reads (and leaves it in `window.__dsMeasure`, where `browser_evaluate` with a
- * `filename` can save it). Positions are page coordinates in CSS pixels, taken at scroll 0.
+ * The page's time, as code for the browser. Two things keep a page moving: its clock (timers, requestAnimationFrame,
+ * Date, performance.now) and the CSS animation timeline (animations and transitions, which no page clock governs).
+ * Both are stopped at a fixed start and only move when `step` moves them, together: the clock runs N ms and every
+ * animation still running is set N ms further on, so it plays to its end and fires its end event, at a fixed page time.
+ * Whatever hovers, pauses or waits for an event keeps its own rules (a paused animation is not moved).
+ *
+ * Returned by a function with no arguments so it serialises into the code of `time`, `step`, `measure` and `shoot`
+ * alike; the marker `page.__dsTime` (the page's CDP session) says the time was started on this tab.
  */
-async function measurePage(page, C) {
+function timeKit() {
+  const T0 = Date.UTC(2026, 0, 1);
+  const START = 1000;
+  const BOOT = { steps: 4, ms: 250 };
+  const kit = {
+    startsAt: new Date(T0 + START).toISOString(),
+    ready: (page) => !!page.__dsTime,
+    // the clock and the animation timeline stopped at the fixed start; the page has to be reloaded for its own scripts to run on it
+    install: async (page) => {
+      const ctx = page.context();
+      await ctx.clock.install({ time: T0 });
+      await ctx.clock.pauseAt(T0 + START);
+      let cdp = page.__dsTime && page.__dsTime.cdp;
+      const stop = async (c) => {
+        await c.send('Animation.enable');
+        await c.send('Animation.setPlaybackRate', { playbackRate: 0 });
+      };
+      try {
+        await stop(cdp);
+      } catch (e) {
+        cdp = await ctx.newCDPSession(page);
+        await stop(cdp);
+      }
+      page.__dsTime = { cdp };
+    },
+    // move the page time on by `ms`; with no page time started, real time passes instead
+    step: async (page, ms) => {
+      if (!page.__dsTime) {
+        await page.waitForTimeout(ms);
+        return;
+      }
+      await page.clock.runFor(ms);
+      for (const f of page.frames()) {
+        await f.evaluate(async (n) => {
+          for (const a of document.getAnimations()) if (a.playState === 'running') a.currentTime = (a.currentTime ?? 0) + n;
+          // two real frames: the end events of what was just moved are sent, and what they start has started
+          const b = globalThis.__pwClock && (globalThis.__pwClock.builtins || globalThis.__pwClock.builtin);
+          if (b && b.requestAnimationFrame) await Promise.race([new Promise((r) => b.requestAnimationFrame(() => b.requestAnimationFrame(r))), new Promise((r) => b.setTimeout(r, 300))]);
+        }, ms).catch(() => {});
+      }
+    },
+    // let a page that has just loaded come up: wait for what real time brings (network, fonts), then a fixed run of steps
+    boot: async (page) => {
+      try {
+        await page.waitForLoadState('networkidle', { timeout: 5000 });
+      } catch (e) {
+        // a page that never goes quiet is started as it stands
+      }
+      await page.evaluate(() => document.fonts.ready);
+      for (let i = 0; i < BOOT.steps; i += 1) await kit.step(page, BOOT.ms);
+    },
+  };
+  return kit;
+}
+
+/** `time`: viewport and colours, the page time started, the page reloaded under it, a fixed run of steps. */
+async function timePage(page, C, T) {
+  await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
+  await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
+  await T.install(page);
+  await page.reload();
+  await T.boot(page);
+  return { installed: true, startsAt: T.startsAt, viewport: C.viewport, theme: C.theme, motion: C.motion };
+}
+
+/** `step`: move the page time on by `C.ms`. */
+async function stepPage(page, C, T) {
+  if (!T.ready(page)) throw new Error('页面时间还没装：先跑「装时间」（design-archive-sections.mjs time）再拨');
+  await T.step(page, C.ms);
+  return { stepped: C.ms };
+}
+
+/** What `shoot` needs of the time: only whether it was started. It never moves it, so the code that moves it is not in its code. */
+function timeProbe() {
+  return { ready: (page) => !!page.__dsTime };
+}
+
+/** The text of a function `browser_run_code_unsafe` takes: `fn(page, C, T)` with the time kit built inside it. */
+const withTime = (fn, C, kit = timeKit) => `async (page) => { const T = (${compact(kit)})(); return (${compact(fn)})(page, ${JSON.stringify(C)}, T); }`;
+
+/** The code for `time`; `config` is `{ viewport: {width, height}, theme, motion }`. */
+export function buildTimeCode(config) {
+  return withTime(timePage, { viewport: config.viewport, theme: config.theme, motion: config.motion ?? 'default' });
+}
+
+/** The code for `step`: the page time on by `ms` milliseconds (a positive whole number, at most a minute). */
+export function buildStepCode(ms) {
+  if (!Number.isInteger(ms) || ms <= 0 || ms > 60000) throw new Error(`拨的毫秒数要是 1 到 60000 的整数（现在是 ${ms}）`);
+  return withTime(stepPage, { ms });
+}
+
+/**
+ * Runs inside the Playwright MCP's `browser_run_code_unsafe`, serialised with `toString()`, so it has
+ * to stand alone: everything it needs arrives in `C` (the config), `T` (the time kit) or is created inside.
+ * Returns the measurement `attribute` reads (and leaves it in `window.__dsMeasure`, where `browser_evaluate` with a
+ * `filename` can save it). Positions are page coordinates in CSS pixels, taken at scroll 0.
+ *
+ * Where the old code waited in real time for the page to settle it now steps the page time by a fixed amount and looks again;
+ * the steps and their number are constants, so every run takes the page through the same moments. Waiting for the network
+ * and for fonts stays in real time: the page clock does not govern them. A state reached by interacting (`reload: false`) gets one
+ * small step to finish drawing and no more: the carousel must not get the time to move off the state that was clicked.
+ */
+async function measurePage(page, C, T) {
   await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
   await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
 
-  // 1 a page clock under the page, so the shot can freeze it later; it has to be there before the page's own scripts run
-  let clock = 'present';
-  if (!(await page.evaluate(() => !!globalThis.__pwClock))) {
-    await page.clock.install();
-    if (C.reload) {
-      await page.reload();
-      clock = 'installed, page reloaded';
-    } else {
-      clock = 'installed late: timers the page started before this keep running';
-    }
+  // 1 the page time: started by `time` (kept), else started here — an entry state is reloaded under it, a state reached by interacting cannot be
+  let clock;
+  if (T.ready(page)) {
+    clock = 'present: the page time was started by `time` and is stepped, not run';
+  } else if (C.reload) {
+    await T.install(page);
+    await page.reload();
+    await T.boot(page);
+    clock = 'installed, page reloaded';
+  } else {
+    clock = '装晚了: the page time was not started before this state was reached, so timers and CSS animations the page started keep running and the picture of it is whatever moment it is shot at';
   }
+  // a fixed step of page time; in a state reached by interacting no time moves (one small step above), but a CSS transition the scrolling starts is let finish
+  const tick = async (ms) => {
+    if (C.reload) await T.step(page, ms);
+    else await page.evaluate(() => document.getAnimations().forEach((a) => { if (a instanceof CSSTransition) a.finish(); }));
+    await page.waitForTimeout(100);
+  };
+  if (!C.reload) await T.step(page, 100);
 
   // 2 helpers inside the page, reused by the evaluations below
   await page.evaluate((clickSelector) => {
@@ -173,16 +299,16 @@ async function measurePage(page, C) {
     window.__ds = ds;
   }, C.clickSelector);
 
-  // 3 scroll the page through once, in half-viewport steps: lazy islands hydrate, scroll-triggered entrances
-  //   finish, and a fixed element that only shows in one place is seen there. Islands hydrate after the load
-  //   event and may swap their nodes, so wait for the page to go quiet first and identify a fixed element by
+  // 3 scroll the page through once, in half-viewport steps (each followed by a fixed step of page time): lazy islands hydrate,
+  //   scroll-triggered entrances finish, and a fixed element that only shows in one place is seen there. Islands hydrate after
+  //   the load event and may swap their nodes, so wait for the page to go quiet first and identify a fixed element by
   //   its role, name and place among the same ones, not by a mark on the node.
   try {
     await page.waitForLoadState('networkidle', { timeout: 5000 });
   } catch (e) {
     // a page that never goes quiet is measured as it stands
   }
-  await page.waitForTimeout(500);
+  await tick(500);
   // what scrolls: the document when it is taller than the screen, else the biggest visible element with its own scroll, <body> among them (an app shell with a <main> that scrolls, or a <body> inside a locked <html>)
   await page.evaluate(() => {
     const ds = window.__ds;
@@ -193,7 +319,7 @@ async function measurePage(page, C) {
   const step = Math.max(150, Math.floor((await page.evaluate(() => window.__ds.visibleHeight())) * 0.5));
   for (let y = 0; y < (await page.evaluate(() => window.__ds.scrollHeight())); y += step) {
     await page.evaluate((v) => window.__ds.scrollTo(v), y);
-    await page.waitForTimeout(200);
+    await tick(200);
     const seen = await page.evaluate(() => {
       const ds = window.__ds;
       return ds.fixedList().flatMap(({ el, key }) => {
@@ -205,7 +331,7 @@ async function measurePage(page, C) {
     for (const f of seen) if (!appeared[f.key]) appeared[f.key] = { scrollY: f.scrollY, top: f.top, bottom: f.bottom };
   }
   await page.evaluate(() => window.__ds.scrollTo(window.__ds.scrollHeight()));
-  await page.waitForTimeout(300);
+  await tick(300);
   try {
     await page.waitForLoadState('networkidle', { timeout: 5000 });
   } catch (e) {
@@ -217,11 +343,11 @@ async function measurePage(page, C) {
     const h = await page.evaluate(() => window.__ds.scrollHeight());
     if (h === height) break;
     height = h;
-    await page.waitForTimeout(500);
+    await tick(500);
   }
   await page.evaluate(() => window.__ds.scrollTo(0));
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(300);
+  await tick(300);
 
   // 4 mark what the accessibility tree calls banner / contentinfo, then box the top-level blocks, headings and clickables
   for (const role of ['banner', 'contentinfo']) {
@@ -354,8 +480,8 @@ const CLICK_SELECTOR = [
  * @param {{ state?: string, entry?: string, section?: string, page?: string, sections: {id, locate}[],
  *   viewport: {width, height}, theme: string, motion?: string, reload?: boolean }} config
  *   `state` is whose picture it is (the entry state, or — with `section` — a state inside one of its sections);
- *   `reload` lets the code reload the page once to put the page clock under it (an entry state; a state reached by
- *   interacting must not be reloaded, so there the clock goes in late).
+ *   `reload` lets the code start the page time itself and reload the page once when `time` was not run (an entry state);
+ *   a state reached by interacting must not be reloaded, so there a page whose time was not started is reported as 装晚了.
  */
 export function buildMeasureCode(config) {
   const C = {
@@ -370,32 +496,32 @@ export function buildMeasureCode(config) {
     reload: config.reload ?? true,
     clickSelector: CLICK_SELECTOR,
   };
-  return `async (page) => (${compact(measurePage)})(page, ${JSON.stringify(C)})`;
+  return withTime(measurePage, C);
 }
 
 /**
  * Shoots each target by itself, inside `browser_run_code_unsafe`. Per target: walk down the section
- * (lazy content, entrances), come back to its top, wait until two shots of it, 300 ms apart, are the same
- * (content has all appeared), freeze the page clock, shoot twice more and keep the second (they are the same
- * when nothing moves on its own), let the clock run again. The shots are `fullPage` with a `clip`, so the
- * clip is in page coordinates and may be taller than the viewport; Playwright's `animations: 'disabled'`
- * settles CSS animations and transitions (finite ones to their end, infinite ones to their start).
+ * (lazy content, entrances), come back to its top, let the CSS transitions the scrolling started finish, wait until two shots of it,
+ * 300 ms apart, are the same (images and fonts that real time brings have all arrived), shoot it and keep that shot,
+ * wait 500 ms of real time and shoot it again. The page time is not moved at all (no step, no pause, no resume): with
+ * it stopped the two shots differ only if something the page time cannot hold is moving in the picture (a video, a canvas
+ * fed by a worker, a push over the network). Then the shot is `uncontrolled` and `diffBox` is the one box, in the
+ * picture's own pixels, that holds every pixel where the two differ. The shots are `fullPage` with a `clip`, so the
+ * clip is in page coordinates and may be taller than the viewport; they do not ask Playwright to settle animations
+ * (its `animations` option set to disabled would fast-forward a finite CSS animation to its end and fire its end
+ * event: a carousel moves on).
  *
  * When the page scrolls inside a container (the measurement's `scroller` is an element: an app shell whose
  * `<main>` scrolls) the page shot cannot reach what the container clips. A section inside it is shot a
  * screen at a time: the container scrolls one visible height, the visible part of the container is shot,
  * and the screens are put together into one picture as wide as the container; a bar pinned to the top of the
- * container is stood below on every screen. The stability check and the frozen clock cover all the screens
+ * container is stood below on every screen. The stability check and the second shot cover all the screens
  * of a section. A section above the container (the shell's top bar) is a page shot as before.
  */
-async function shootPage(page, C) {
+async function shootPage(page, C, T) {
   await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
   await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
-  let clock = 'present';
-  if (!(await page.evaluate(() => !!globalThis.__pwClock))) {
-    await page.clock.install();
-    clock = 'installed late: timers the page started before this keep running';
-  }
+  const clock = T.ready(page) ? 'present: the page time is stopped, nothing here moves it' : '装晚了: the page time was never started on this tab (run `time` first), so what the page runs on its own moves while it is shot';
   await page.evaluate(() => document.fonts.ready);
   const vh = C.viewport.height;
   const sc = C.scroller && C.scroller.kind === 'element' ? C.scroller : null;
@@ -449,7 +575,7 @@ async function shootPage(page, C) {
       const skip = Math.round(at - top);
       const rows = Math.min(g.height - skip, c1 - at, vh - (g.y + skip));
       if (rows <= 0) break;
-      const buf = await page.screenshot({ clip: { x: g.x, y: g.y + skip, width: g.width, height: rows }, animations: 'disabled' });
+      const buf = await page.screenshot({ clip: { x: g.x, y: g.y + skip, width: g.width, height: rows } });
       strips.push({ buf, rows, width: g.width });
       at += rows;
     }
@@ -470,12 +596,60 @@ async function shootPage(page, C) {
       await tab.setViewportSize({ width, height: Math.min(height, 8000) });
       await tab.setContent('<body style="margin:0"><div id="s" style="position:relative;overflow:hidden;width:' + width + 'px;height:' + height + 'px">' + imgs.join('') + '</div></body>');
       await tab.evaluate(() => Promise.all([...document.images].map((i) => i.decode())));
-      await tab.locator('#s').screenshot({ path: file, animations: 'disabled' });
+      await tab.locator('#s').screenshot({ path: file });
     } finally {
       await tab.close();
     }
   };
   const sameScreens = (a, b) => a.length === b.length && a.every((x, i) => x.buf.equals(b[i].buf));
+  // the one box, in the picture's pixels, that holds every pixel where the pairs of pictures differ; 'same' when no pixel does, undefined when it cannot be worked out
+  const diffBoxOf = async (pairs) => {
+    const tab = await page.context().newPage();
+    try {
+      return await tab.evaluate(async (items) => {
+        const load = async (b64) => {
+          const img = new Image();
+          img.src = 'data:image/png;base64,' + b64;
+          await img.decode();
+          return img;
+        };
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -1;
+        let y1 = -1;
+        for (const it of items) {
+          const [ia, ib] = [await load(it.a), await load(it.b)];
+          const w = Math.max(ia.width, ib.width);
+          const h = Math.max(ia.height, ib.height);
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          const g = c.getContext('2d', { willReadFrequently: true });
+          g.drawImage(ia, 0, 0);
+          const da = g.getImageData(0, 0, w, h).data;
+          g.clearRect(0, 0, w, h);
+          g.drawImage(ib, 0, 0);
+          const db = g.getImageData(0, 0, w, h).data;
+          for (let y = 0; y < h; y += 1) {
+            for (let x = 0; x < w; x += 1) {
+              const o = (y * w + x) * 4;
+              if (da[o] !== db[o] || da[o + 1] !== db[o + 1] || da[o + 2] !== db[o + 2] || da[o + 3] !== db[o + 3]) {
+                if (x < x0) x0 = x;
+                if (x > x1) x1 = x;
+                if (it.y + y < y0) y0 = it.y + y;
+                if (it.y + y > y1) y1 = it.y + y;
+              }
+            }
+          }
+        }
+        return x1 < 0 ? 'same' : { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
+      }, pairs.map((x) => ({ a: x.a.toString('base64'), b: x.b.toString('base64'), y: x.y })));
+    } catch (e) {
+      return undefined;
+    } finally {
+      await tab.close();
+    }
+  };
 
   if (sc) {
     await must();
@@ -519,6 +693,8 @@ async function shootPage(page, C) {
       await scrollTo(t.start - inset);
       await page.waitForTimeout(300);
     }
+    // a CSS transition that scrolling started (a bar that changes once the page has moved) is taken to its end: the animation timeline does not run
+    await page.evaluate(() => document.getAnimations().forEach((a) => { if (a instanceof CSSTransition) a.finish(); }));
     try {
       await page.waitForLoadState('networkidle', { timeout: 3000 });
     } catch (e) {
@@ -556,7 +732,7 @@ async function shootPage(page, C) {
       }
     }
     const clip = { x: 0, y: top, width: C.viewport.width, height: bottom - top };
-    const snap = (path) => page.screenshot({ path, fullPage: true, clip, animations: 'disabled' });
+    const snap = (path) => page.screenshot({ path, fullPage: true, clip });
     const take = (path) => (inside ? screens(c0, c1) : snap(path));
     const same = (a, b) => (inside ? sameScreens(a, b) : a.equals(b));
     let previous = await take();
@@ -567,32 +743,26 @@ async function shootPage(page, C) {
       settled = same(current, previous);
       previous = current;
     }
-    let frozen = false;
-    let clockError = null;
-    // the clock runs while we ask, so a target a little ahead of "now" may already be behind by the time it arrives
-    for (const ahead of [60, 250, 1000, 4000]) {
-      try {
-        const now = await page.evaluate(() => Date.now());
-        await page.clock.pauseAt(now + ahead);
-        frozen = true;
-        clockError = null;
-        break;
-      } catch (e) {
-        clockError = String(e.message).split('\n')[0];
-      }
+    // the shot that is kept, then — the page time not moved — the same shot again 500 ms of real time later: they differ only if something the page time cannot hold is moving
+    const kept = await take(`${C.outDir}/${t.file}`);
+    await page.waitForTimeout(500);
+    const again = await take();
+    let uncontrolled = !same(kept, again);
+    let diffBox = null;
+    if (uncontrolled) {
+      const pairs = inside
+        ? kept.map((x, k) => ({ a: x.buf, b: again[k] && again[k].buf, y: kept.slice(0, k).reduce((n, z) => n + z.rows, 0) })).filter((x) => x.b)
+        : [{ a: kept, b: again, y: 0 }];
+      diffBox = await diffBoxOf(pairs);
+      if (diffBox === 'same') uncontrolled = false;
     }
-    await page.waitForTimeout(150);
-    const first = await take();
-    await page.waitForTimeout(250);
-    const second = await take(`${C.outDir}/${t.file}`);
-    if (frozen) await page.clock.resume();
     if (inside) {
-      if (!second.length) throw new Error(t.id + ': the scroll container showed nothing to shoot');
-      await stitch(second, `${C.outDir}/${t.file}`);
+      if (!kept.length) throw new Error(t.id + ': the scroll container showed nothing to shoot');
+      await stitch(kept, `${C.outDir}/${t.file}`);
     }
-    const width = inside ? second[0].width : C.viewport.width;
-    const height = inside ? second.reduce((n, x) => n + x.rows, 0) : bottom - top;
-    shots.push({ id: t.id, file: t.file, y0: top, y1: bottom, width, height, ...(inside ? { screens: second.length } : {}), settled, clockFrozen: frozen, ...(clockError ? { clockError } : {}), ...(clipNote ? { note: clipNote } : {}), stable: same(first, second), heightDrift: heightNow - C.pageHeight });
+    const width = inside ? kept[0].width : C.viewport.width;
+    const height = inside ? kept.reduce((n, x) => n + x.rows, 0) : bottom - top;
+    shots.push({ id: t.id, file: t.file, y0: top, y1: bottom, width, height, ...(inside ? { screens: kept.length } : {}), settled, uncontrolled, ...(uncontrolled ? { diffBox: diffBox || { x: 0, y: 0, width, height } } : {}), ...(clipNote ? { note: clipNote } : {}), heightDrift: heightNow - C.pageHeight });
   }
   if (sc) await scrollIn(0);
   else await scrollTo(0);
@@ -611,7 +781,7 @@ export function buildShootCode(config) {
     include: config.include ?? null,
     scroller: config.scroller ?? null,
   };
-  return `async (page) => (${compact(shootPage)})(page, ${JSON.stringify(C)})`;
+  return withTime(shootPage, C, timeProbe);
 }
 
 // ---------- ranges and ownership ----------
@@ -789,18 +959,23 @@ export function shootTargets(attribution, { only = null } = {}) {
 
 /** The subcommands and the options each one takes — the docs' command lines are checked against this. */
 export const COMMAND_FLAGS = {
+  time: ['--viewport', '--theme', '--locale', '--motion'],
+  step: [],
   measure: ['--delta', '--state', '--page', '--sections', '--sections-file', '--for', '--section', '--viewport', '--theme', '--locale', '--motion'],
   attribute: [],
   shoot: ['--out', '--section', '--include'],
 };
 
 const USAGE = `用法：
+  node design-archive-sections.mjs time <仓库根> [设置]
+  node design-archive-sections.mjs step <毫秒数>
   node design-archive-sections.mjs measure <仓库根> <入口状态 id> [--delta <spec-slug>] [--for <段内状态 id> --section <段 id>] [设置]
   node design-archive-sections.mjs measure <仓库根> --state <入口状态 id> --page <页面> (--sections '<JSON 列表>' | --sections-file <文件>) [--for <段内状态 id> --section <段 id>] [设置]
   node design-archive-sections.mjs attribute <测量结果.json>
   node design-archive-sections.mjs shoot <归属结果.json> --out <目录> [--section <段 id,段 id>] [--include '<JSON 定位>']
 设置：--viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce（默认取 docs/design/prod/index.md 的 frontmatter）
-measure / shoot 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对或重叠时退出码 1。`;
+time / step / measure / shoot 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对或重叠时退出码 1。
+time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用。`;
 
 class UsageError extends Error {}
 
@@ -837,6 +1012,37 @@ function settingsOf(archive, flags) {
   const motion = flags.motion ?? idx.motion ?? 'default';
   if (motion !== 'default' && motion !== 'reduce') throw new UsageError(`motion 只能是 default 或 reduce（现在是 ${motion}）`);
   return { viewport: { width: Number(m[1]), height: Number(m[2]) }, theme, motion, locale: flags.locale ?? idx.locale ?? null };
+}
+
+function timeCommand(positional, flags) {
+  if (!positional.length) throw new UsageError('缺少仓库根');
+  if (positional.length > 1) throw new UsageError(`time 只要一个仓库根（多出 ${positional.slice(1).join(' ')}）`);
+  const root = resolve(positional[0]);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
+  let archive;
+  try {
+    archive = loadArchive(root);
+  } catch (e) {
+    throw new UsageError(e.message);
+  }
+  const settings = settingsOf(archive, flags);
+  console.log(buildTimeCode(settings));
+  console.error(`time: 视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}；在 browser_navigate 到入口之后、做任何交互之前跑一次：页面时钟和 CSS 动画时间线停在固定的起点，重载一次，再按固定步长拨一段让页面起来。之后页面时间只在 step 和 measure 里按固定步长走`);
+  return 0;
+}
+
+function stepCommand(positional) {
+  if (positional.length !== 1) throw new UsageError('step 要一个毫秒数（拨多少页面时间）');
+  const ms = /^\d+$/.test(positional[0]) ? Number(positional[0]) : NaN;
+  let code;
+  try {
+    code = buildStepCode(ms);
+  } catch (e) {
+    throw new UsageError(`step 的毫秒数不对：${e.message}`);
+  }
+  console.log(code);
+  console.error(`step: 页面时间往前拨 ${ms} 毫秒（页面时钟和还在播的动画一起）；要先跑过 time`);
+  return 0;
 }
 
 function measureCommand(positional, flags) {
@@ -887,7 +1093,7 @@ function measureCommand(positional, flags) {
   const settings = settingsOf(archive, flags);
   const code = buildMeasureCode({ state, entry: stateId, section, page, sections, ...settings, reload: !flags.for });
   console.log(code);
-  console.error(`measure: ${sections.length} 段，视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}${flags.for ? `；给段内状态 ${state}（在 ${section} 段）量，不重载页面` : '；第一次会装页面时钟并重载一次页面'}；结果也留在 window.__dsMeasure，用 browser_evaluate 的 filename 存成文件`);
+  console.error(`measure: ${sections.length} 段，视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}${flags.for ? `；给段内状态 ${state}（在 ${section} 段）量，不重载页面，只拨一小步让界面画完（页面时间要是 time 装好的，没装就说「装晚了」）` : '；页面时间 time 装过就不再装，没装过的自己装并重载一次页面'}；结果也留在 window.__dsMeasure，用 browser_evaluate 的 filename 存成文件`);
   return 0;
 }
 
@@ -959,6 +1165,8 @@ function main(argv) {
   try {
     if (!Object.hasOwn(COMMAND_FLAGS, command ?? '')) throw new UsageError(command ? `没有「${command}」这个子命令` : '缺少子命令');
     const { flags, positional } = parseArgs(command, rest);
+    if (command === 'time') return timeCommand(positional, flags);
+    if (command === 'step') return stepCommand(positional);
     if (command === 'measure') return measureCommand(positional, flags);
     if (command === 'attribute') return attributeCommand(positional);
     if (command === 'shoot') return shootCommand(positional, flags);

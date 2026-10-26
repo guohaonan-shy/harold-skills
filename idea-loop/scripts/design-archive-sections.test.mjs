@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { BASE, MKT, MKT_ENTRY, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, buildShootCode, shootTargets } from './design-archive-sections.mjs';
+import { attribute, buildMeasureCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
 const run = (...args) => spawnSync('node', [CLI, ...args], { encoding: 'utf8' });
@@ -250,17 +250,19 @@ test('shootTargets: for a state inside a section it is the one section, named af
   assert.throws(() => shootTargets({ ...a, section: null }), /在哪一段/);
 });
 
-test('buildShootCode: a single async function of `page` that freezes the page clock and shoots with a clip in page coordinates', () => {
+test('buildShootCode: a single async function of `page` that shoots with a clip in page coordinates and never moves the page time', () => {
   const targets = shootTargets(attribute(measurement(ALL))).targets;
   const code = buildShootCode({ targets, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' });
   const fn = runInNewContext(code);
   assert.equal(fn.constructor.name, 'AsyncFunction');
-  assert.match(code, /pauseAt/);
-  assert.match(code, /resume/);
   assert.match(code, /fullPage: true/);
-  assert.match(code, /animations: 'disabled'/);
   assert.match(code, /\/tmp\/shots/);
   assert.match(code, new RegExp(`${MKT_ENTRY}@feature-a\\.png`));
+  assert.doesNotMatch(code, /pauseAt|resume\(|runFor|clock\.install/, 'shoot does not freeze, resume or step the page clock');
+  assert.doesNotMatch(code, /animations: 'disabled'/, 'a shot that fast-forwards CSS animations to their end flips a carousel away');
+  assert.match(code, /uncontrolled/);
+  assert.doesNotMatch(code, /\bstable\b/, '`stable` is replaced by `uncontrolled`');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
 });
 
 test('cli attribute: prints the result as JSON; exit 0 with nothing orphaned, 1 with orphans or an unlocated section, 2 for bad input', () => {
@@ -318,6 +320,30 @@ test('buildMeasureCode: reduced motion is only asked for when the settings say s
   const base = { sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'dark' };
   assert.match(buildMeasureCode({ ...base, motion: 'reduce' }), /"motion":"reduce"/);
   assert.match(buildMeasureCode(base), /"motion":"default"/);
+});
+
+test('buildTimeCode: a single async function of `page` that stops the page clock and the CSS animation timeline, reloads, and steps the page a fixed amount', () => {
+  const code = buildTimeCode({ viewport: { width: 1440, height: 900 }, theme: 'dark', motion: 'default' });
+  const fn = runInNewContext(code);
+  assert.equal(fn.constructor.name, 'AsyncFunction');
+  assert.match(code, /"viewport":\{"width":1440,"height":900\}/);
+  assert.match(code, /"theme":"dark"/);
+  assert.match(code, /clock\.install/);
+  assert.match(code, /pauseAt/);
+  assert.match(code, /Animation\.setPlaybackRate/);
+  assert.match(code, /playbackRate: 0/);
+  assert.match(code, /reload\(\)/);
+  assert.match(code, /runFor/);
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+  assert.match(buildTimeCode({ viewport: { width: 1, height: 1 }, theme: 'light', motion: 'reduce' }), /"motion":"reduce"/);
+});
+
+test('buildStepCode: steps the page time by the given milliseconds, and only a positive whole number of them', () => {
+  const code = buildStepCode(500);
+  assert.equal(runInNewContext(code).constructor.name, 'AsyncFunction');
+  assert.match(code, /"ms":500/);
+  assert.match(code, /runFor/);
+  for (const bad of [0, -5, 1.5, NaN, '200', 120000]) assert.throws(() => buildStepCode(bad), /毫秒/, String(bad));
 });
 
 // ---------- the command line: measure ----------
@@ -408,6 +434,40 @@ test('cli measure: with --delta the sections come from the requirement\'s delta/
   assert.doesNotMatch(run('measure', root, MKT_ENTRY).stdout, /"id":"faq"/);
   assert.match(run('measure', root, MKT_ENTRY, '--delta', 'demo-spec').stdout, /"id":"faq"/);
   assert.ok(existsSync(root));
+});
+
+test('cli time: prints the code that starts the page time, with the settings from prod/index.md or the flags; a missing viewport or theme is an error', () => {
+  const root = writeRepo(marketingFiles());
+  const r = run('time', root);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"viewport":\{"width":1440,"height":900\}/);
+  assert.match(r.stdout, /"theme":"light"/);
+  assert.match(r.stderr, /browser_navigate/, 'says when to run it: after navigating to the entry, before any interaction');
+  const flagged = run('time', root, '--viewport', '1280x800', '--theme', 'dark', '--motion', 'reduce');
+  assert.match(flagged.stdout, /"viewport":\{"width":1280,"height":800\}/);
+  assert.match(flagged.stdout, /"motion":"reduce"/);
+  const files = marketingFiles();
+  files[`${BASE}/index.md`] = files[`${BASE}/index.md`].replace('viewport: 1440x900\n', '');
+  const bare = run('time', writeRepo(files));
+  assert.equal(bare.status, 2);
+  assert.match(bare.stderr, /viewport/);
+  assert.equal(run('time', writeRepo(files), '--viewport', '1440x900').status, 0);
+  assert.equal(run('time').status, 2);
+  assert.equal(run('time', root, '--bogus', 'x').status, 2);
+  assert.equal(run('time', writeRepo({ 'README.md': 'x' })).status, 2);
+});
+
+test('cli step: prints the code that moves the page time on by N milliseconds; anything but a positive whole number is a usage error', () => {
+  const r = run('step', '400');
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"ms":400/);
+  for (const args of [[], ['0'], ['-3'], ['1.5'], ['abc'], ['400', '500'], ['400', '--ms', '5']]) {
+    const bad = run('step', ...args);
+    assert.equal(bad.status, 2, args.join(' '));
+    assert.match(bad.stderr, /毫秒|不认识/, args.join(' '));
+  }
 });
 
 test('cli measure --for: a state inside a section is measured as it stands (no reload), named after the state, with its section from the archive or --section', () => {
