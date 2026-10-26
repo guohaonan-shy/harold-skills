@@ -140,7 +140,7 @@ dreaming 只做：起环境（从 `origin/<基准分支>` 切 worktree）、派�
 | spec → ADR | 原「知识库对账」：判 spec 上线没有、起草 ADR、标被取代的旧 ADR 小节、找出已合并却还留着的工单；次要检查：`docs/domain/`、参考手册、`GLOSSARY.md`、`REVIEW.md` 的过期 | 提议表「文档」一节的行 | sonnet · high | Harold 原话「知识库对账与 ADR 起草合成一个……sonnet · high」；次要检查归它，审核会话里定（「同意」） |
 | 设计规范维护 | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它，量 token 的机械活可在内部再派 sonnet | 「候选」「DESIGN.md 条目」两节的行 | opus · high | Harold 原话「合成一个，避免对同一份文件提互相打架的修改」；模型审核会话里定（「同意」） |
 
-- **漏归档**（dreaming 自己做，不起 agent）：`origin/<基准分支>` 上 `docs/design/tmp/<spec-slug>/` 里还有设计产物（`research/` 之外），而这份 spec 已是「完成」、或已经没有 spec 目录，就是绕过合并步骤合进去的需求。提议表多一类行 `漏归档`，处置闭集「补归档 · 丢弃」：补归档是在 dreaming 的 worktree 里对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`，跟执行段的其余改动同一个 PR；丢弃是删掉 `tmp/<spec-slug>/`。依据：Harold 原话「靠每周 dreaming 兜底」；提议表「闭集里找不到合适的……先补闭集和校验脚本的单测」（现有原文）。
+- **漏归档**（dreaming 自己做，不起 agent）：`origin/<基准分支>` 上 `docs/design/tmp/<spec-slug>/` 里还有设计产物（`research/` 之外），而这份 spec 已是「完成」、或已经没有 spec 目录，就是绕过合并步骤合进去的需求。提议表多一类行 `漏归档`，处置闭集「补归档 · 丢弃」：补归档是在 dreaming 的 worktree 里对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`，跟执行段的其余改动同一个 PR；丢弃是删掉 `tmp/<spec-slug>/`。已知限制：spec 目录已经删掉的遗留需求，补归档时新页面的入口没有来源；新页面从档案已有页面点不进去时归档核不过，这一行不执行、原样交给人（Harold：「S2 选 A」，PR 审核第 2 轮，2026-10-26）。依据：Harold 原话「靠每周 dreaming 兜底」；提议表「闭集里找不到合适的……先补闭集和校验脚本的单测」（现有原文）。
 - **项目级文档**：`GLOSSARY.md` 与 `REVIEW.md` 纳入；`CLAUDE.md` 与 `AGENTS.md` 从扫描范围里拿掉（Harold 原话：「CLAUDE.md / AGENTS.md 不动（Harold 还没想清楚里面该放什么）」）。
 - 「只跑一部分」「单条蒸馏」照旧：只起对应的那个 agent；单条蒸馏交给设计规范维护 agent。
 - 执行段不拆：人批过的行仍由 dreaming 照提议表执行，写 `DESIGN.md` 的措辞仍然要人确认才落笔。

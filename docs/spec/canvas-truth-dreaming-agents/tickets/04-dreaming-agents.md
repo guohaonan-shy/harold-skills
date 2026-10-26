@@ -18,6 +18,8 @@
 
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」6。
 
+> 人的决定（2026-10-26）：review 第 2 轮 S2 选 A——spec 目录已删的漏归档需求，补归档时新页面入口没有来源，接受成已知限制。
+
 ## 验收标准
 - [x] 新增两个 agent 定义：spec → ADR（sonnet · high）、设计规范维护（opus · high），各写明输入、只读、交回的行
 - [x] dreaming 的 SKILL 写明只编排、三个 agent 并行起、漏归档由它自己查；扫描范围含 `GLOSSARY.md`、`REVIEW.md`，不含 `CLAUDE.md`、`AGENTS.md`
