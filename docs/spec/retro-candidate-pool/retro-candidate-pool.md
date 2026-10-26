@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, retro, dreaming]
 summary: retro 批的候选由人选进候选池或开 issue；dreaming 数池里同一类出现超过两次的，提议开成 issue
 related: ["[[2026-10-26-retro-candidate-pool-grill]]", "[[retro]]", "[[retro-batch-dispatch]]", "[[108]]"]
