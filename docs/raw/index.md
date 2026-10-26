@@ -23,6 +23,7 @@
 | [decisions/55](decisions/55.md) | conversation | 2026-10-26 | 决定记录 —— #55 的 issue 会话：冻结后画布为唯一真相、dreaming 拆分与增量对账，摆过的题与 retro 候选的结果 |
 | [decisions/57](decisions/57.md) | conversation | 2026-10-26 | 决定记录 —— #57 的 issue 会话：结束整个任务的入口用 X，摆过的题与 retro 候选的结果 |
 | [decisions/108](decisions/108.md) | conversation | 2026-10-26 | 决定记录 —— #108 / #106 的 issue 会话：调度只数 issue 会话、retro 整合（当天撤回）、retro 候选改进 docs 候选池 |
+| [decisions/115](decisions/115.md) | conversation | 2026-10-26 | 决定记录 —— #115 的 issue 会话：retro 批的候选进候选池、dreaming 数次数，摆过的题与 retro 候选的结果 |
 
 > `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
 
