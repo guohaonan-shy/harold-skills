@@ -9,11 +9,14 @@
  */
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { createServer } from 'node:http';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { attribute, buildMeasureCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
+import { fileURLToPath } from 'node:url';
+import { attribute, buildMeasureCode, buildPinnedCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
 import { comparePngs, decodePng } from './ui-png-compare.mjs';
 
 const home = homedir();
@@ -623,6 +626,269 @@ browserTest('browser time: a CSS animation stepped to its end ends the way it wo
     assert.equal(await now(), 'One', '1.5 s of a 3 s line plus the 1 s the page was started with');
     await runOn(p, buildStepCode(1000));
     assert.equal(await now(), 'Two', 'the line ended at 3 s');
+  } finally {
+    await p.context().close();
+  }
+});
+
+// ---------- scroll-driven sections: a screen pinned in the viewport while the page scrolls under it ----------
+//
+//   800×600 viewport · a bar 60 tall, then intro 400 · steps 2400 (an 800-tall element `position: sticky` at the top of the screen
+//   that shows step 1, 2 or 3 by how far the section has been scrolled) · cards 2400 (the same pin, but a conveyor: every scroll
+//   event while the pin is held turns the next card up, and it never turns back) · after 500 · a footer of 100
+//   (page coordinates: steps 460–2860, cards 2860–5260).
+
+const STEP_BG = ['#fdd', '#dfd', '#ddf'];
+const STEP_RGB = [[255, 221, 221], [221, 255, 221], [221, 221, 255]];
+const CARD_BG = ['#ffd', '#dff', '#fdf'];
+const CARD_RGB = [[255, 255, 221], [221, 255, 255], [255, 221, 255]];
+
+const PIN_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 16px sans-serif; }
+  header { height: 60px; background: #eee; }
+  main > section { display: block; box-sizing: border-box; }
+  #intro { height: 400px; padding: 20px; background: #fff; }
+  #steps, #cards { height: 2400px; }
+  .pin { position: sticky; top: 0; height: 800px; padding: 20px; box-sizing: border-box; }
+  #after { height: 500px; padding: 20px; background: #eee; }
+  footer { height: 100px; background: #ccc; }
+</style></head><body>
+<header><a href="/">Home</a></header>
+<main>
+<section id="intro"><h1>Intro</h1><p>Scroll down.</p></section>
+<section id="steps"><div class="pin" id="pin1" style="background:${STEP_BG[0]}"><h2>How it works</h2><div id="step">Step 1</div></div></section>
+<section id="cards"><div class="pin" id="pin2" style="background:${CARD_BG[0]}"><h2>Why it happens</h2><div id="card">Card 1</div></div></section>
+<section id="after"><h2>After</h2><button>Done</button></section>
+</main>
+<footer><a href="/terms">Terms</a></footer>
+<script>
+let card = 0;
+const show = () => {
+  const r = steps.getBoundingClientRect();
+  const k = Math.min(2, Math.floor(Math.min(1, Math.max(0, -r.top / (r.height - 800))) * 3));
+  step.textContent = 'Step ' + (k + 1); pin1.style.background = ${JSON.stringify(STEP_BG)}[k];
+  const c = cards.getBoundingClientRect();
+  if (c.top < -1 && c.bottom > innerHeight + 1) card = Math.min(2, card + 1);
+  document.getElementById('card').textContent = 'Card ' + (card + 1); pin2.style.background = ${JSON.stringify(CARD_BG)}[card];
+};
+addEventListener('scroll', show);
+</script></body></html>`;
+
+// a thin sticky bar, a narrow sticky sidebar and a fixed background in a tall wrapper: none of them is a pin
+const NO_PIN_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 16px sans-serif; }
+  #app { height: 3000px; position: relative; }
+  #bg { position: fixed; inset: 0; background: #def; z-index: -1; }
+  #bar { position: sticky; top: 0; height: 60px; background: #ccc; }
+  #side { position: sticky; top: 0; width: 120px; height: 500px; background: #999; }
+  h1 { margin: 0; }
+</style></head><body><div id="app"><div id="bg"></div><div id="bar"><a href="/">Home</a></div><div id="side"></div><h1>Plain</h1></div></body></html>`;
+
+const PIN_SECTIONS = [
+  { id: 'header', locate: { role: 'banner' } },
+  { id: 'hero', locate: { role: 'heading', name: 'Intro' } },
+  { id: 'how-it-works', locate: { role: 'heading', name: 'How it works' } },
+  { id: 'problem', locate: { role: 'heading', name: 'Why it happens' } },
+  { id: 'faq', locate: { role: 'heading', name: 'After' } },
+  { id: 'footer', locate: { role: 'contentinfo' } },
+];
+const DRIVEN = PIN_SECTIONS.map((x) => (x.id === 'how-it-works' || x.id === 'problem' ? { ...x, scrollDriven: true } : x));
+const PIN_ENTRY = 'p-home--entry';
+const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
+const pinUrl = () => `data:text/html;charset=utf-8,${encodeURIComponent(PIN_PAGE)}`;
+
+/** A fresh tab on the pin page with the page time started. */
+async function pinSession() {
+  const p = await freshPage();
+  await p.goto(pinUrl());
+  await runOn(p, buildTimeCode(SETTINGS));
+  return p;
+}
+const measurePin = (p, sections) => runOn(p, buildMeasureCode({ state: PIN_ENTRY, page: 'p-home', sections, ...SETTINGS }));
+const attributeCli = (m) => {
+  const file = join(mkdtempSync(join(tmpdir(), 'sections-attribute-')), 'measurement.json');
+  writeFileSync(file, JSON.stringify(m));
+  return spawnSync('node', [CLI, 'attribute', file], { encoding: 'utf8' });
+};
+const rgbAt = (file, x, y) => {
+  const img = decodePng(readFileSync(file));
+  const o = (y * img.width + x) * 4;
+  return [img.data[o], img.data[o + 1], img.data[o + 2]];
+};
+
+browserTest('browser measure: the two sections that hold a pinned screen are detected as scroll-driven, with what was seen; without `scrollDriven` declared `attribute` exits 1, declared it exits 0', async () => {
+  const p = await pinSession();
+  try {
+    const m = await measurePin(p, PIN_SECTIONS);
+    assert.equal(m.pins.length, 2, JSON.stringify(m.pins));
+    const [one, two] = m.pins;
+    assert.deepEqual([one.kind, one.tag, one.height, one.container], ['sticky', 'div', 800, { top: 460, bottom: 2860 }]);
+    assert.deepEqual(two.container, { top: 2860, bottom: 5260 });
+    assert.deepEqual(one.texts.map((t) => t.replace(/^How it works /, '')), ['Step 1', 'Step 2', 'Step 3'], 'the pinned text changed with the scroll');
+    const a = attribute(m);
+    assert.deepEqual(a.undeclaredScrollDriven.map((x) => x.id), ['how-it-works', 'problem']);
+    assert.equal(a.ok, false);
+    assert.deepEqual([a.orphans, a.notFound, a.overlaps, a.outOfOrder], [[], [], [], []], 'only the scroll-driven sections are in the way');
+    const cli = attributeCli(m);
+    assert.equal(cli.status, 1, cli.stderr);
+    assert.match(cli.stderr, /how-it-works.*scrollDriven: true/);
+
+    const declaredM = await measurePin(p, DRIVEN);
+    const done = attribute(declaredM);
+    assert.equal(done.ok, true, JSON.stringify(done.undeclaredScrollDriven));
+    assert.deepEqual(done.scrollDriven.map((x) => [x.id, x.detected, x.declared]), [['how-it-works', true, true], ['problem', true, true]]);
+    const declaredCli = attributeCli(declaredM);
+    assert.equal(declaredCli.status, 0, declaredCli.stderr);
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser measure: a thin sticky bar, a narrow sticky sidebar and a fixed background are not pins — a page with only those has no scroll-driven section', async () => {
+  const p = await freshPage();
+  try {
+    await p.goto(`data:text/html;charset=utf-8,${encodeURIComponent(NO_PIN_PAGE)}`);
+    await runOn(p, buildTimeCode(SETTINGS));
+    const m = await runOn(p, buildMeasureCode({ state: 'q--entry', page: 'q', sections: [{ id: 'hero', locate: { role: 'heading', name: 'Plain' } }], ...SETTINGS }));
+    assert.deepEqual(m.pins, []);
+    assert.equal(attribute(m).ok, true);
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser measure: the pages of the earlier tests — pinned bars, fixed tables of contents, carousels, an iframe — have no scroll-driven section either', async () => {
+  const a = attribute(await measure());
+  assert.deepEqual([a.scrollDriven, a.undeclaredScrollDriven], [[], []]);
+  const { one } = await twoRuns();
+  assert.deepEqual([one.a.scrollDriven, one.a.undeclaredScrollDriven], [[], []]);
+});
+
+browserTest('browser shoot: a scroll-driven section is one screen tall and shows its first step, with no blank under it — and the sections around it are shot whole as before', async () => {
+  const p = await pinSession();
+  try {
+    const a = attribute(await measurePin(p, DRIVEN));
+    assert.equal(await p.evaluate(() => document.getElementById('card').textContent), 'Card 3', 'the scroll-through left the conveyor on its last card');
+    const out = mkdtempSync(join(tmpdir(), 'sections-pin-'));
+    const { targets, scroller } = shootTargets(a);
+    const r = await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+    assert.deepEqual(r.shots.map((s) => s.id), ['header', 'hero', 'how-it-works', 'problem', 'faq', 'footer'], 'in the order of the sections');
+    const sizes = Object.fromEntries(r.shots.map((s) => [s.id, pngSize(join(out, s.file))]));
+    assert.deepEqual(sizes, { header: [800, 60], hero: [800, 400], 'how-it-works': [800, 600], problem: [800, 600], faq: [800, 500], footer: [800, 100] });
+    const steps = join(out, `${PIN_ENTRY}@how-it-works.png`);
+    for (const y of [0, 300, 599]) assert.deepEqual(rgbAt(steps, 400, y), STEP_RGB[0], `row ${y}: step 1, not blank`);
+    const cards = join(out, `${PIN_ENTRY}@problem.png`);
+    for (const y of [0, 300, 599]) assert.deepEqual(rgbAt(cards, 400, y), CARD_RGB[0], `row ${y}: card 1, not the card the scroll-through left on screen`);
+    assert.deepEqual(r.shots.filter((s) => s.scrollDriven).map((s) => s.id), ['how-it-works', 'problem']);
+    assert.ok(r.shots.every((s) => s.uncontrolled === false), JSON.stringify(r.shots));
+    assert.deepEqual(r.shots.map((s) => s.heightDrift), [0, 0, 0, 0, 0, 0]);
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser shoot: a page that was scrolled into the section before the shot is not given that scroll position back by the reload — the conveyor still starts on its first card', async () => {
+  // served over http: a browser keeps the scroll position of a page across a reload for a real address, not for a data: URL
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'text/html; charset=utf-8');
+    res.end(PIN_PAGE);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const p = await freshPage();
+  try {
+    await p.goto(`http://127.0.0.1:${server.address().port}/`);
+    await runOn(p, buildTimeCode(SETTINGS));
+    const a = attribute(await measurePin(p, DRIVEN));
+    await p.evaluate(() => window.scrollTo(0, 2860 + 1000));
+    await runOn(p, buildStepCode(100));
+    const out = mkdtempSync(join(tmpdir(), 'sections-pin-'));
+    const { targets, scroller } = shootTargets(a, { only: ['problem'] });
+    await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+    assert.deepEqual(rgbAt(join(out, `${PIN_ENTRY}@problem.png`), 400, 300), CARD_RGB[0]);
+  } finally {
+    await p.context().close();
+    server.close();
+  }
+});
+
+browserTest('browser shoot: the first step is the same picture however long the agent waited between the steps', async () => {
+  const shoot = async (gap) => {
+    const p = await pinSession();
+    try {
+      const a = attribute(await measurePin(p, DRIVEN));
+      await p.waitForTimeout(gap);
+      const out = mkdtempSync(join(tmpdir(), 'sections-pin-'));
+      const { targets, scroller } = shootTargets(a, { only: ['how-it-works', 'problem'] });
+      await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+      return out;
+    } finally {
+      await p.context().close();
+    }
+  };
+  const [one, two] = [await shoot(300), await shoot(2500)];
+  for (const id of ['how-it-works', 'problem']) {
+    const c = comparePngs(readFileSync(join(one, `${PIN_ENTRY}@${id}.png`)), readFileSync(join(two, `${PIN_ENTRY}@${id}.png`)));
+    assert.equal(c.percent, 0, `${id}: ${c.reason}`);
+  }
+});
+
+browserTest('browser pinned: after the page is scrolled to the second step, the pinned command shoots that screen as it stands, named after the state', async () => {
+  const p = await pinSession();
+  try {
+    await p.evaluate(() => window.scrollTo(0, 460 + 800));
+    await runOn(p, buildStepCode(100));
+    assert.equal(await p.evaluate(() => document.getElementById('step').textContent), 'Step 2');
+    const out = mkdtempSync(join(tmpdir(), 'sections-pin-'));
+    const r = await runOn(p, buildPinnedCode({ state: 'p-home--how-it-works-step-2', ...SETTINGS, outDir: out }));
+    assert.equal(r.shots.length, 1);
+    const [shot] = r.shots;
+    assert.deepEqual([shot.id, shot.file, shot.width, shot.height, shot.uncontrolled, shot.scrollY], ['p-home--how-it-works-step-2', 'p-home--how-it-works-step-2.png', 800, 600, false, 1260]);
+    assert.match(r.clock, /present/);
+    const file = join(out, shot.file);
+    assert.deepEqual(pngSize(file), [800, 600]);
+    for (const y of [0, 300, 599]) assert.deepEqual(rgbAt(file, 400, y), STEP_RGB[1], `row ${y}: step 2`);
+    assert.equal(await p.evaluate(() => Math.round(window.scrollY)), 1260, 'the page was not scrolled');
+    assert.equal(await p.evaluate(() => document.getElementById('step').textContent), 'Step 2');
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser pinned: a conveyor turned to its second card is shot as the second card — and flagged uncontrolled when something the page time cannot hold moves in it', async () => {
+  const p = await pinSession();
+  try {
+    await p.evaluate(() => window.scrollTo(0, 2860 + 300));
+    await runOn(p, buildStepCode(100));
+    assert.equal(await p.evaluate(() => document.getElementById('card').textContent), 'Card 2');
+    const out = mkdtempSync(join(tmpdir(), 'sections-pin-'));
+    const r = await runOn(p, buildPinnedCode({ state: 'p-home--problem-card-2', ...SETTINGS, outDir: out }));
+    assert.equal(r.shots[0].uncontrolled, false);
+    assert.deepEqual(rgbAt(join(out, 'p-home--problem-card-2.png'), 400, 300), CARD_RGB[1]);
+    // a Worker counts real milliseconds into the pinned screen: nothing the page clock can hold
+    await p.evaluate(() => {
+      const live = document.createElement('div');
+      live.id = 'live';
+      live.style.cssText = 'position:fixed;left:300px;top:200px;font:48px sans-serif;background:#fff';
+      document.body.appendChild(live);
+      const w = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postMessage(Math.floor(performance.now() / 30)), 30)'])));
+      w.onmessage = (e) => { live.textContent = 'tick ' + e.data; };
+    });
+    await p.waitForTimeout(200);
+    const moving = await runOn(p, buildPinnedCode({ state: 'p-home--problem-card-2', ...SETTINGS, outDir: out }));
+    const [shot] = moving.shots;
+    assert.equal(shot.uncontrolled, true);
+    assert.ok(shot.diffBox.width > 0 && shot.diffBox.x >= 300 && shot.diffBox.y >= 200, JSON.stringify(shot.diffBox));
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser pinned: a page whose time was never started is said to have come too late', async () => {
+  const p = await freshPage();
+  try {
+    await p.goto(pinUrl());
+    const r = await runOn(p, buildPinnedCode({ state: 'p-home--late', ...SETTINGS, outDir: mkdtempSync(join(tmpdir(), 'sections-pin-')) }));
+    assert.match(r.clock, /装晚了/);
   } finally {
     await p.context().close();
   }

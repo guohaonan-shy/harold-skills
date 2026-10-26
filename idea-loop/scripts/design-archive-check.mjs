@@ -16,7 +16,7 @@
  *   4 consecutive states of a journey are joined by an edge; with several, `via` names one
  *   5 state files carry no 「决定」; every decision has 为什么 / 否掉过 / 来源; every candidate 并进 / 为什么 / 证据
  *   6 literal motion values carry `deviates`; `usedBy` matches the references actually found
- *   7 sections of a long entry state: closed type set, ids, `locate` shapes, `from` / `section` references, `user` edges name their section
+ *   7 sections of a long entry state: closed type set, ids, `locate` shapes, `from` / `section` references, `user` edges name their section, `scrollDriven` only `true`
  * Rule 0 is the structure the rules stand on: files that cannot be read as objects, required fields.
  *
  * With `--delta <spec-slug>` the requirement's `tmp/<slug>/delta/` is laid over `prod/` first
@@ -323,6 +323,9 @@ function sectionRules(archive, v) {
       if (x.id !== null) seen.add(x.id);
       if (!x.by) {
         v(7, s.file, `${at}.locate`, 'locate 只能是 { role: heading, name: <完整标题> }、{ role: banner } / { role: contentinfo }、{ position: N } 三种之一');
+      }
+      if (x.scrollDriven !== undefined && x.scrollDriven !== true) {
+        v(7, s.file, `${at}.scrollDriven`, `scrollDriven 只能写 true（现在是 ${JSON.stringify(x.scrollDriven)}）：不是滚动驱动的段不写这个字段`);
       }
     }
     // the same type more than once: every one of them carries a qualifier

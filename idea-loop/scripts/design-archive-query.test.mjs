@@ -604,6 +604,26 @@ test('page: a slice that exists on disk is reported as existing', () => {
   assert.equal(hero.screenshotExists, true);
 });
 
+const withScrollDriven = () => {
+  const files = marketingFiles();
+  files[MKT_ENTRY_FILE] = files[MKT_ENTRY_FILE].replace('  - { id: feature-a, locate: { role: heading, name: 无限菜谱 } }', '  - { id: feature-a, locate: { role: heading, name: 无限菜谱 }, scrollDriven: true }');
+  assert.match(files[MKT_ENTRY_FILE], /scrollDriven: true/);
+  return mktArchive(files);
+};
+
+test('page and refs: a section declared scrollDriven says so everywhere it is shown — the others carry no such field', () => {
+  const a = withScrollDriven();
+  const by = Object.fromEntries(queryPage(a, MKT).sections.map((x) => [x.id.split('#')[1], x]));
+  assert.equal(by['feature-a'].scrollDriven, true);
+  assert.equal(Object.hasOwn(by.hero, 'scrollDriven'), false);
+  assert.equal(queryRefs(a, `${MKT}#feature-a`).target.scrollDriven, true);
+  assert.equal(Object.hasOwn(queryRefs(a, `${MKT}#hero`).target, 'scrollDriven'), false);
+  assert.equal(queryRefs(a, '#feature').sections.find((x) => x.id === `${MKT}#feature-a`).scrollDriven, true);
+  // everything else about the section is as before
+  assert.deepEqual(by['feature-a'].incoming.map((e) => e.id), ['see-features']);
+  assert.equal(by['feature-a'].screenshot, `${BASE}/pages/${MKT}/assets/${MKT_ENTRY}@feature-a.png`);
+});
+
 test('refs: <page>#<section> returns the edges out of it and into it, the states inside it and the journeys through them', () => {
   const r = queryRefs(mktArchive(), `${MKT}#feature-b`);
   assert.deepEqual(r.target, {

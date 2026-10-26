@@ -467,7 +467,10 @@ export function sectionLocate(locate) {
   return null;
 }
 
-/** The `sections` a state declares, normalised and in page order: `{ index, id, type, qualifier, idError, locate, by }`. */
+/**
+ * The `sections` a state declares, normalised and in page order: `{ index, id, type, qualifier, idError, locate, by, scrollDriven }`.
+ * `scrollDriven` is the declared value as written (undefined when absent): rule 7 judges it, the shooting reads it.
+ */
 export function sectionsOfState(state) {
   const raw = state.fm.sections;
   if (!Array.isArray(raw)) return [];
@@ -483,6 +486,7 @@ export function sectionsOfState(state) {
       idError: parsed.error ?? null,
       locate: it.locate ?? null,
       by: sectionLocate(it.locate),
+      scrollDriven: it.scrollDriven,
       state: state.id,
     };
   });

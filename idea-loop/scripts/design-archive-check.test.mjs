@@ -456,6 +456,26 @@ for (const [name, edits, field, needle, renames] of BREAKS) {
   });
 }
 
+const SCROLL_DRIVEN = (value) => ({ [MKT_ENTRY_FILE]: sub('  - { id: feature-a, locate: { role: heading, name: 无限菜谱 } }', `  - { id: feature-a, locate: { role: heading, name: 无限菜谱 }, scrollDriven: ${value} }`) });
+
+for (const [shown, value] of [['`false`', 'false'], ['a string "yes"', '"yes"'], ['the number 1', '1']]) {
+  test(`rule 7: \`scrollDriven: ${value}\` (${shown}) → one rule 7 violation naming the file and the field`, () => {
+    const r = run(bendMkt(SCROLL_DRIVEN(value)));
+    const v = r.violations.filter((x) => x.rule === 7);
+    assert.equal(v.length, 1, JSON.stringify(r.violations));
+    assert.ok(v[0].file === MKT_ENTRY_FILE, v[0].file);
+    assert.equal(v[0].field, 'sections[2].scrollDriven');
+    assert.match(v[0].message, /只能写 true/);
+    assert.deepEqual(r.violations.filter((x) => x.rule !== 7), [], 'only rule 7 is broken');
+  });
+}
+
+test('rule 7: `scrollDriven: true` is accepted, with no violation and no note', () => {
+  const r = run(bendMkt(SCROLL_DRIVEN('true')));
+  assert.deepEqual(r.violations, []);
+  assert.deepEqual(r.notes, []);
+});
+
 test('rule 7: two entry states of one page both declaring sections is reported', () => {
   const files = marketingFiles();
   files[`${BASE}/pages/${MKT}/${MKT}--second-entry.md`] = files[MKT_ENTRY_FILE]

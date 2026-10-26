@@ -147,8 +147,66 @@ function timeProbe() {
   return { ready: (page) => !!page.__dsTime };
 }
 
-/** The text of a function `browser_run_code_unsafe` takes: `fn(page, C, T)` with the time kit built inside it. */
-const withTime = (fn, C, kit = timeKit) => `async (page) => { const T = (${compact(kit)})(); return (${compact(fn)})(page, ${JSON.stringify(C)}, T); }`;
+/**
+ * The picture-comparing half of a shot, as code for the browser: the one box, in the pictures' own pixels, that holds every
+ * pixel where pairs of pictures (`{ a, b, y }`: two PNG buffers and the row the pair starts at in the finished picture) differ;
+ * 'same' when no pixel does, undefined when it cannot be worked out. `shoot` and `pinned` both take a shot twice and need it.
+ */
+function diffKit() {
+  return {
+    boxOf: async (page, pairs) => {
+      const tab = await page.context().newPage();
+      try {
+        return await tab.evaluate(async (items) => {
+          const load = async (b64) => {
+            const img = new Image();
+            img.src = 'data:image/png;base64,' + b64;
+            await img.decode();
+            return img;
+          };
+          let x0 = Infinity;
+          let y0 = Infinity;
+          let x1 = -1;
+          let y1 = -1;
+          for (const it of items) {
+            const [ia, ib] = [await load(it.a), await load(it.b)];
+            const w = Math.max(ia.width, ib.width);
+            const h = Math.max(ia.height, ib.height);
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            const g = c.getContext('2d', { willReadFrequently: true });
+            g.drawImage(ia, 0, 0);
+            const da = g.getImageData(0, 0, w, h).data;
+            g.clearRect(0, 0, w, h);
+            g.drawImage(ib, 0, 0);
+            const db = g.getImageData(0, 0, w, h).data;
+            for (let y = 0; y < h; y += 1) {
+              for (let x = 0; x < w; x += 1) {
+                const o = (y * w + x) * 4;
+                if (da[o] !== db[o] || da[o + 1] !== db[o + 1] || da[o + 2] !== db[o + 2] || da[o + 3] !== db[o + 3]) {
+                  if (x < x0) x0 = x;
+                  if (x > x1) x1 = x;
+                  if (it.y + y < y0) y0 = it.y + y;
+                  if (it.y + y > y1) y1 = it.y + y;
+                }
+              }
+            }
+          }
+          return x1 < 0 ? 'same' : { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
+        }, pairs.map((x) => ({ a: x.a.toString('base64'), b: x.b.toString('base64'), y: x.y })));
+      } catch (e) {
+        return undefined;
+      } finally {
+        await tab.close();
+      }
+    },
+  };
+}
+
+/** The text of a function `browser_run_code_unsafe` takes: `fn(page, C, T)` (and `D`, the picture kit, when asked for) with the kits built inside it. */
+const withTime = (fn, C, kit = timeKit, withDiff = false) =>
+  `async (page) => { const T = (${compact(kit)})(); ${withDiff ? `const D = (${compact(diffKit)})(); ` : ''}return (${compact(fn)})(page, ${JSON.stringify(C)}, T${withDiff ? ', D' : ''}); }`;
 
 /** The code for `time`; `config` is `{ viewport: {width, height}, theme, motion }`. */
 export function buildTimeCode(config) {
@@ -252,6 +310,62 @@ async function measurePage(page, C, T) {
         for (let p = el; p && p.nodeType === 1 && p !== sc; p = p.parentElement) if (getComputedStyle(p).position === 'fixed') return true;
         return false;
       },
+      pins: new Map(),
+      seenText: (root) => {
+        const box = root.getBoundingClientRect();
+        const walk = (node) => {
+          if (node.nodeType === 3) return node.nodeValue;
+          if (node.nodeType !== 1 || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(node.tagName)) return '';
+          const cs = getComputedStyle(node);
+          if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) return '';
+          const r = node.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0 && (r.right <= box.left || r.left >= box.right || r.bottom <= box.top || r.top >= box.bottom)) return '';
+          return [...node.childNodes].map(walk).join(' ');
+        };
+        return ds.norm(walk(root));
+      },
+      samplePins: () => {
+        const vh = ds.visibleHeight();
+        const vw = window.innerWidth;
+        const y = ds.scrollTop();
+        for (const el of document.querySelectorAll('body *')) {
+          if (ds.pins.has(el)) continue;
+          const pos = getComputedStyle(el).position;
+          const parent = el.parentElement;
+          if (!parent || /^(BODY|HTML)$/.test(parent.tagName)) continue;
+          if (pos !== 'sticky' && pos !== 'fixed' && !/pin-spacer/.test(String(parent.className))) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width < vw * 0.5 || r.height < vh * 0.5) continue;
+          if (parent.getBoundingClientRect().height < r.height + vh * 0.5) continue;
+          ds.pins.set(el, { samples: [] });
+        }
+        for (const [el, pin] of ds.pins) {
+          if (!el.isConnected) continue;
+          const r = el.getBoundingClientRect();
+          pin.tag = el.tagName.toLowerCase();
+          pin.height = ds.px(r.height);
+          pin.container = ds.box(el.parentElement);
+          pin.samples.push({ y, pos: getComputedStyle(el).position, top: Math.round(r.top), text: ds.seenText(el) });
+        }
+      },
+      pinList: () => [...ds.pins.values()].flatMap((pin) => {
+        const byTop = new Map();
+        for (const s of pin.samples) if (s.pos === 'sticky' || s.pos === 'fixed') byTop.set(s.top, [...(byTop.get(s.top) || []), s]);
+        const stuck = [...byTop.values()].sort((a, b) => b.length - a.length)[0] || [];
+        const ys = [...new Set(stuck.map((s) => s.y))].sort((a, b) => a - b);
+        const sticky = stuck.some((s) => s.pos === 'sticky');
+        if (ys.length < 2 || (!sticky && !pin.samples.some((s) => s.pos !== 'fixed'))) return [];
+        const texts = [...new Set(stuck.map((s) => s.text))];
+        return [{
+          kind: sticky ? 'sticky' : 'fixed',
+          tag: pin.tag,
+          label: (texts[0] || '').slice(0, 40),
+          height: pin.height,
+          container: pin.container,
+          stuck: { from: ys[0], to: ys[ys.length - 1], count: ys.length },
+          texts: texts.slice(0, 6).map((t) => t.slice(0, 60)),
+        }];
+      }),
       fixedList: () => {
         const count = {};
         return [...document.querySelectorAll(ds.clickSelector)].filter(ds.fixed).map((el) => {
@@ -332,9 +446,11 @@ async function measurePage(page, C, T) {
       });
     });
     for (const f of seen) if (!appeared[f.key]) appeared[f.key] = { scrollY: f.scrollY, top: f.top, bottom: f.bottom };
+    await page.evaluate(() => window.__ds.samplePins());
   }
   await page.evaluate(() => window.__ds.scrollTo(window.__ds.scrollHeight()));
   await tick(300);
+  await page.evaluate(() => window.__ds.samplePins());
   try {
     await page.waitForLoadState('networkidle', { timeout: 5000 });
   } catch (e) {
@@ -434,7 +550,7 @@ async function measurePage(page, C, T) {
   // 6 locate each declared section through the accessibility tree
   const sections = [];
   for (const sec of C.sections) {
-    const entry = { id: sec.id, locate: sec.locate };
+    const entry = { id: sec.id, locate: sec.locate, ...(sec.scrollDriven === true ? { declaredScrollDriven: true } : {}) };
     if (sec.locate.position !== undefined) {
       const b = base.blocks[sec.locate.position - 1];
       sections.push(b
@@ -455,7 +571,8 @@ async function measurePage(page, C, T) {
     sections.push({ ...entry, found: true, ...r });
   }
 
-  // 7 clean the marks off
+  // 7 the pins the scroll-through saw, then clean the marks off
+  const pins = await page.evaluate(() => window.__ds.pinList());
   await page.evaluate(() => {
     document.querySelectorAll('[data-ds-block],[data-ds-lm]').forEach((el) => {
       el.removeAttribute('data-ds-block');
@@ -466,7 +583,7 @@ async function measurePage(page, C, T) {
   const result = {
     state: C.state, entry: C.entry, section: C.section, page: C.page, viewport: C.viewport, theme: C.theme, motion: C.motion, clock,
     scroller: base.scroller, pageSize: base.pageSize, blocks: base.blocks, contentinfo: base.contentinfo,
-    sections, headings, clickables, env: base.env,
+    sections, pins, headings, clickables, env: base.env,
   };
   await page.evaluate((r) => { window.__dsMeasure = r; }, result);
   return result;
@@ -492,7 +609,7 @@ export function buildMeasureCode(config) {
     entry: config.entry ?? config.state ?? null,
     section: config.section ?? null,
     page: config.page ?? null,
-    sections: config.sections.map((s) => ({ id: s.id, locate: s.locate })),
+    sections: config.sections.map((s) => ({ id: s.id, locate: s.locate, ...(s.scrollDriven === true ? { scrollDriven: true } : {}) })),
     viewport: config.viewport,
     theme: config.theme,
     motion: config.motion ?? 'default',
@@ -521,7 +638,7 @@ export function buildMeasureCode(config) {
  * container is stood below on every screen. The stability check and the second shot cover all the screens
  * of a section. A section above the container (the shell's top bar) is a page shot as before.
  */
-async function shootPage(page, C, T) {
+async function shootPage(page, C, T, D) {
   await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
   await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
   const clock = T.ready(page) ? 'present: the page time is stopped, nothing here moves it' : '装晚了: the page time was never started on this tab (run `time` first), so what the page runs on its own moves while it is shot';
@@ -605,61 +722,64 @@ async function shootPage(page, C, T) {
     }
   };
   const sameScreens = (a, b) => a.length === b.length && a.every((x, i) => x.buf.equals(b[i].buf));
-  // the one box, in the picture's pixels, that holds every pixel where the pairs of pictures differ; 'same' when no pixel does, undefined when it cannot be worked out
-  const diffBoxOf = async (pairs) => {
-    const tab = await page.context().newPage();
-    try {
-      return await tab.evaluate(async (items) => {
-        const load = async (b64) => {
-          const img = new Image();
-          img.src = 'data:image/png;base64,' + b64;
-          await img.decode();
-          return img;
-        };
-        let x0 = Infinity;
-        let y0 = Infinity;
-        let x1 = -1;
-        let y1 = -1;
-        for (const it of items) {
-          const [ia, ib] = [await load(it.a), await load(it.b)];
-          const w = Math.max(ia.width, ib.width);
-          const h = Math.max(ia.height, ib.height);
-          const c = document.createElement('canvas');
-          c.width = w;
-          c.height = h;
-          const g = c.getContext('2d', { willReadFrequently: true });
-          g.drawImage(ia, 0, 0);
-          const da = g.getImageData(0, 0, w, h).data;
-          g.clearRect(0, 0, w, h);
-          g.drawImage(ib, 0, 0);
-          const db = g.getImageData(0, 0, w, h).data;
-          for (let y = 0; y < h; y += 1) {
-            for (let x = 0; x < w; x += 1) {
-              const o = (y * w + x) * 4;
-              if (da[o] !== db[o] || da[o + 1] !== db[o + 1] || da[o + 2] !== db[o + 2] || da[o + 3] !== db[o + 3]) {
-                if (x < x0) x0 = x;
-                if (x > x1) x1 = x;
-                if (it.y + y < y0) y0 = it.y + y;
-                if (it.y + y > y1) y1 = it.y + y;
-              }
-            }
-          }
-        }
-        return x1 < 0 ? 'same' : { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
-      }, pairs.map((x) => ({ a: x.a.toString('base64'), b: x.b.toString('base64'), y: x.y })));
-    } catch (e) {
-      return undefined;
-    } finally {
-      await tab.close();
-    }
-  };
-
   if (sc) {
     await must();
     await scrollIn(0);
   }
-  const shots = [];
-  for (const t of C.targets) {
+  const byIndex = [];
+  const heightOf = async () => {
+    if (!sc) return page.evaluate(() => document.documentElement.scrollHeight);
+    const g = await boxIn();
+    return contentTop + g.content;
+  };
+  // the sections that hold a screen while the page scrolls under them are shot last: each one puts the page time back at its fixed start and reloads
+  const order = [...C.targets.filter((t) => !t.scrollDriven), ...C.targets.filter((t) => t.scrollDriven)];
+  for (const t of order) {
+    if (t.scrollDriven) {
+      await T.install(page);
+      // a reload gives the page back the scroll position it had, and a section that counts the scrolling it has seen would count it again
+      await page.evaluate(() => {
+        history.scrollRestoration = 'manual';
+        window.scrollTo(0, 0);
+      });
+      await page.reload();
+      await T.boot(page);
+      if (sc) {
+        await must();
+        await scrollIn(Math.max(0, t.start - contentTop));
+      } else {
+        await scrollTo(t.start);
+      }
+      for (let i = 0; i < 8; i += 1) await T.step(page, 250);
+      await page.waitForTimeout(100);
+      await page.evaluate(() => document.getAnimations().forEach((a) => { if (a instanceof CSSTransition) a.finish(); }));
+      try {
+        await page.waitForLoadState('networkidle', { timeout: 3000 });
+      } catch (e) {
+        // keep going: the stability check below is the one that decides
+      }
+      const view = { x: 0, y: 0, width: C.viewport.width, height: C.viewport.height };
+      const snap = (path) => page.screenshot({ path, clip: view });
+      let previous = await snap();
+      let settled = false;
+      for (let i = 0; i < 8 && !settled; i += 1) {
+        await page.waitForTimeout(300);
+        const current = await snap();
+        settled = current.equals(previous);
+        previous = current;
+      }
+      const kept = await snap(`${C.outDir}/${t.file}`);
+      await page.waitForTimeout(500);
+      const again = await snap();
+      let uncontrolled = !kept.equals(again);
+      let diffBox = null;
+      if (uncontrolled) {
+        diffBox = await D.boxOf(page, [{ a: kept, b: again, y: 0 }]);
+        if (diffBox === 'same') uncontrolled = false;
+      }
+      byIndex[C.targets.indexOf(t)] = { id: t.id, file: t.file, y0: t.start, y1: t.end, width: view.width, height: view.height, settled, uncontrolled, ...(uncontrolled ? { diffBox: diffBox || { x: 0, y: 0, width: view.width, height: view.height } } : {}), scrollDriven: true, heightDrift: (await heightOf()) - C.pageHeight };
+      continue;
+    }
     const inside = !!(sc && t.inScroller);
     let c0 = t.start - contentTop;
     let c1 = t.end - contentTop;
@@ -719,11 +839,6 @@ async function shootPage(page, C, T) {
         }
       }
     }
-    const heightOf = async () => {
-      if (!sc) return page.evaluate(() => document.documentElement.scrollHeight);
-      const g = await boxIn();
-      return contentTop + g.content;
-    };
     const heightNow = await heightOf();
     // a shot of a section outside the container is a page shot, which cannot reach below the one screen the document is
     let clipNote = null;
@@ -756,7 +871,7 @@ async function shootPage(page, C, T) {
       const pairs = inside
         ? kept.map((x, k) => ({ a: x.buf, b: again[k] && again[k].buf, y: kept.slice(0, k).reduce((n, z) => n + z.rows, 0) })).filter((x) => x.b)
         : [{ a: kept, b: again, y: 0 }];
-      diffBox = await diffBoxOf(pairs);
+      diffBox = await D.boxOf(page, pairs);
       if (diffBox === 'same') uncontrolled = false;
     }
     if (inside) {
@@ -765,11 +880,11 @@ async function shootPage(page, C, T) {
     }
     const width = inside ? kept[0].width : C.viewport.width;
     const height = inside ? kept.reduce((n, x) => n + x.rows, 0) : bottom - top;
-    shots.push({ id: t.id, file: t.file, y0: top, y1: bottom, width, height, ...(inside ? { screens: kept.length } : {}), settled, uncontrolled, ...(uncontrolled ? { diffBox: diffBox || { x: 0, y: 0, width, height } } : {}), ...(clipNote ? { note: clipNote } : {}), heightDrift: heightNow - C.pageHeight });
+    byIndex[C.targets.indexOf(t)] = { id: t.id, file: t.file, y0: top, y1: bottom, width, height, ...(inside ? { screens: kept.length } : {}), settled, uncontrolled, ...(uncontrolled ? { diffBox: diffBox || { x: 0, y: 0, width, height } } : {}), ...(clipNote ? { note: clipNote } : {}), heightDrift: heightNow - C.pageHeight };
   }
   if (sc) await scrollIn(0);
   else await scrollTo(0);
-  return { out: C.outDir, clock, shots };
+  return { out: C.outDir, clock, shots: C.targets.map((t, i) => byIndex[i]) };
 }
 
 /** The code for `shoot`: `targets` are `{ id, file, start, end, inScroller }`, `scroller` is the attribution's scroll container; see `shootTargets`. */
@@ -784,7 +899,54 @@ export function buildShootCode(config) {
     include: config.include ?? null,
     scroller: config.scroller ?? null,
   };
-  return withTime(shootPage, C, timeProbe);
+  return withTime(shootPage, C, C.targets.some((t) => t.scrollDriven) ? timeKit : timeProbe, true);
+}
+
+/**
+ * Shoots the screen as it stands, inside `browser_run_code_unsafe`: no scrolling, no stepping of the page time, no reload. For a state inside a
+ * scroll-driven section (the page was scrolled to a later step, or a wheel turned the next card up): the pinned screen is the viewport.
+ * Waits until two shots 300 ms apart are the same, keeps one as `<state>.png`, takes another 500 ms of real time later, and
+ * says `uncontrolled` with the box where they differ when something the page time cannot hold is moving in it — the same
+ * signals as `shoot`, in the same shape.
+ */
+async function pinnedPage(page, C, T, D) {
+  await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
+  await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
+  const clock = T.ready(page) ? 'present: the page time is stopped, nothing here moves it' : '装晚了: the page time was never started on this tab (run `time` first), so what the page runs on its own moves while it is shot';
+  await page.evaluate(() => document.fonts.ready);
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 3000 });
+  } catch (e) {
+    // keep going: the stability check below is the one that decides
+  }
+  const view = { x: 0, y: 0, width: C.viewport.width, height: C.viewport.height };
+  const snap = (path) => page.screenshot({ path, clip: view });
+  let previous = await snap();
+  let settled = false;
+  for (let i = 0; i < 8 && !settled; i += 1) {
+    await page.waitForTimeout(300);
+    const current = await snap();
+    settled = current.equals(previous);
+    previous = current;
+  }
+  const file = C.file;
+  const kept = await snap(`${C.outDir}/${file}`);
+  await page.waitForTimeout(500);
+  const again = await snap();
+  let uncontrolled = !kept.equals(again);
+  let diffBox = null;
+  if (uncontrolled) {
+    diffBox = await D.boxOf(page, [{ a: kept, b: again, y: 0 }]);
+    if (diffBox === 'same') uncontrolled = false;
+  }
+  const scrolledTo = await page.evaluate(() => Math.round(window.scrollY));
+  return { out: C.outDir, clock, shots: [{ id: C.state, file, scrollY: scrolledTo, width: view.width, height: view.height, settled, uncontrolled, ...(uncontrolled ? { diffBox: diffBox || { x: 0, y: 0, width: view.width, height: view.height } } : {}) }] };
+}
+
+/** The code for `pinned`: `state` is whose picture it is (the file is `<state>.png`). */
+export function buildPinnedCode(config) {
+  const C = { state: config.state, file: `${config.state}.png`, viewport: config.viewport, theme: config.theme, motion: config.motion ?? 'default', outDir: config.outDir };
+  return withTime(pinnedPage, C, timeProbe, true);
 }
 
 /**
@@ -921,8 +1083,10 @@ export function attribute(m) {
     return { level: h.level, name: h.name, byRole: h.byRole ?? null, matches: h.matches ?? null, y, section: owner ? owner.id : null };
   });
 
+  const { scrollDriven, undeclaredScrollDriven, declaredNotDetected } = scrollDrivenOf(m.pins ?? [], found, ranges, ref);
+
   return {
-    ok: orphans.length === 0 && notFound.length === 0 && outOfOrder.length === 0 && overlaps.length === 0,
+    ok: orphans.length === 0 && notFound.length === 0 && outOfOrder.length === 0 && overlaps.length === 0 && undeclaredScrollDriven.length === 0,
     state: m.state ?? null,
     entry: m.entry ?? m.state ?? null,
     section: m.section ?? null,
@@ -943,7 +1107,52 @@ export function attribute(m) {
     notFound,
     outOfOrder,
     overlaps,
+    scrollDriven,
+    undeclaredScrollDriven,
+    declaredNotDetected,
     coverage: { gaps, overlaps },
+  };
+}
+
+/**
+ * Which sections are scroll-driven (skills/design/design-archive/references/sections.md, 滚动驱动的段). The measurement lists
+ * the pins it saw while the page was scrolled through (a `position: sticky` element, or a fixed one a library such as GSAP
+ * pins, big enough to hold a screen and inside a container taller than itself); a pin belongs to the section whose range
+ * holds its container's vertical centre. A section is scroll-driven when a pin belongs to it. `declared` is the section's
+ * `scrollDriven: true`. Detected but not declared fails the run (the section would be shot as one tall picture with blank
+ * under the first step); declared but not detected is only a hint.
+ */
+function scrollDrivenOf(pins, found, ranges, ref) {
+  const evidenceOf = (pin) => {
+    const how = pin.kind === 'sticky' ? 'position: sticky' : '固定定位钉住（容器里的 fixed 元素）';
+    const held = pin.stuck ? `，滚动 ${pin.stuck.from}–${pin.stuck.to} 之间钉在视口里` : '';
+    const label = pin.label ? `「${pin.label}」` : '';
+    const text = (pin.texts ?? []).length > 1 ? `；钉住时的可见文字随滚动变了（${pin.texts.length} 种）` : '';
+    return `${how} 的 <${pin.tag}>${label}高 ${roundPx(pin.height)}px，容器高 ${roundPx(pin.container.bottom - pin.container.top)}px${held}${text}`;
+  };
+  const evidence = new Map();
+  const pinTop = new Map(); // where the first pin of the section starts holding its screen: the top of its container
+  for (const pin of pins) {
+    const y = (pin.container.top + pin.container.bottom) / 2;
+    const owner = ranges.find((r) => r.by !== 'landmark' && y >= r.start && y < r.end);
+    if (owner) {
+      evidence.set(owner.id, [...(evidence.get(owner.id) ?? []), evidenceOf(pin)]);
+      pinTop.set(owner.id, Math.min(pinTop.get(owner.id) ?? Infinity, roundPx(pin.container.top)));
+    }
+  }
+  const declaredIds = new Set(found.filter((s) => s.declaredScrollDriven === true).map((s) => s.id));
+  const scrollDriven = ranges
+    .filter((r) => evidence.has(r.id) || declaredIds.has(r.id))
+    .map((r) => ({ id: r.id, ref: r.ref, detected: evidence.has(r.id), declared: declaredIds.has(r.id), evidence: evidence.get(r.id) ?? [], ...(pinTop.has(r.id) ? { pinTop: pinTop.get(r.id) } : {}) }));
+  return {
+    scrollDriven,
+    undeclaredScrollDriven: scrollDriven.filter((x) => x.detected && !x.declared).map((x) => ({
+      id: x.id, ref: x.ref, evidence: x.evidence,
+      reason: `${x.id} 是滚动驱动的段（钉在视口里的内容随滚动变化），分段声明里没写：给它加 scrollDriven: true，并照 sections.md「滚动驱动的段」把每一步建成段内状态`,
+    })),
+    declaredNotDetected: scrollDriven.filter((x) => x.declared && !x.detected).map((x) => ({
+      id: x.id, ref: x.ref, reason: `${x.id} 声明了 scrollDriven，但测量没检出钉在视口里的元素：按声明拍（只截段顶起一个视口高），确认这一段真是滚动驱动的`,
+    })),
   };
 }
 
@@ -953,6 +1162,8 @@ export function attribute(m) {
  * The shots an attribution asks for: `{ id, ref, file, start, end, inScroller }` per section, clipped to the page,
  * and the `scroller` the page was measured with. `inScroller` is true for a section that starts inside a
  * scroll container (not the document): that one is shot from the container, screen by screen.
+ * A section declared `scrollDriven` is the one screen its pin holds: from the top of the pin's container (the section's top when the pin starts there)
+ * for the viewport's height, `scrollDriven: true`.
  * For an entry state, one per section (or only those in `only`), `<entry>@<section>.png`. For a state inside
  * a section (the measurement was made `--for` it), the one section it sits in, named after the state:
  * `<state>.png`. A section with no height is skipped and named in `skipped`.
@@ -972,17 +1183,27 @@ export function shootTargets(attribution, { only = null } = {}) {
     wanted = wanted.filter((r) => only.includes(r.id));
   }
   const scroller = attribution.scroller ?? null;
+  // a scroll-driven section of an entry state is shot as the one screen it holds at its top; a state inside it is shot as any section
+  const pinned = new Map(inSection ? [] : (attribution.scrollDriven ?? []).filter((x) => x.declared).map((x) => [x.id, x.pinTop]));
+  const screenHeight = attribution.viewport?.height;
   const targets = [];
   const skipped = [];
   for (const r of wanted) {
-    const start = Math.max(0, r.start);
-    const end = attribution.pageHeight ? Math.min(attribution.pageHeight, r.end) : r.end;
+    let start = Math.max(0, r.start);
+    let end = attribution.pageHeight ? Math.min(attribution.pageHeight, r.end) : r.end;
     if (end <= start) {
       skipped.push({ id: r.id, reason: `范围 ${r.start}–${r.end} 没有高度，或在页面（高 ${attribution.pageHeight}）之外` });
       continue;
     }
+    const scrollDriven = pinned.has(r.id) && screenHeight > 0;
+    if (scrollDriven) {
+      // the screen it holds starts where the pin does: the section's top, or — when something comes before the pin in the section — the top of the pin's container
+      const at = pinned.get(r.id);
+      if (Number.isFinite(at) && at > start && at < end) start = at;
+      end = start + screenHeight;
+    }
     const inScroller = scroller?.kind === 'element' && start >= Math.round(scroller.top);
-    targets.push({ id: r.id, ref: r.ref, file: inSection ? `${attribution.state}.png` : `${entry}@${r.id}.png`, start, end, inScroller });
+    targets.push({ id: r.id, ref: r.ref, file: inSection ? `${attribution.state}.png` : `${entry}@${r.id}.png`, start, end, inScroller, ...(scrollDriven ? { scrollDriven: true } : {}) });
   }
   return { targets, skipped, scroller };
 }
@@ -997,6 +1218,7 @@ export const COMMAND_FLAGS = {
   attribute: [],
   shoot: ['--out', '--section', '--include'],
   screen: ['--out', '--viewport', '--theme', '--locale', '--motion'],
+  pinned: ['--out', '--viewport', '--theme', '--locale', '--motion'],
 };
 
 const USAGE = `用法：
@@ -1007,9 +1229,12 @@ const USAGE = `用法：
   node design-archive-sections.mjs attribute <测量结果.json>
   node design-archive-sections.mjs shoot <归属结果.json> --out <目录> [--section <段 id,段 id>] [--include '<JSON 定位>']
   node design-archive-sections.mjs screen <仓库根> <状态 id> --out <目录> [设置]
+  node design-archive-sections.mjs pinned <仓库根> <状态 id> --out <目录> [设置]
 设置：--viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce（默认取 docs/design/prod/index.md 的 frontmatter）
-time / step / measure / shoot / screen 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对或重叠时退出码 1。
-time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用；screen：不分段的单屏状态，不用先 measure / attribute。`;
+time / step / measure / shoot / screen / pinned 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对、重叠，或检出了滚动驱动的段而分段声明里没写 scrollDriven 时退出码 1。
+time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用；
+screen：不分段的单屏状态，先滚到页顶再截主视口，不用先 measure / attribute；
+pinned：滚动驱动的段里第 2 步起的状态，到了这一步之后不滚动、不拨时间，直接截当前视口，图叫 <状态 id>.png。`;
 
 class UsageError extends Error {}
 
@@ -1108,7 +1333,8 @@ function measureCommand(positional, flags) {
   sections = sections.map((s, i) => {
     const by = sectionLocate(s?.locate);
     if (typeof s?.id !== 'string' || !by) throw new UsageError(`第 ${i + 1} 段的 id 或 locate 不对（locate 只能是 heading + name、banner / contentinfo、position 三种之一）`);
-    return { id: s.id, locate: s.locate };
+    if (s.scrollDriven !== undefined && s.scrollDriven !== true) throw new UsageError(`第 ${i + 1} 段（${s.id}）的 scrollDriven 只能写 true（现在是 ${JSON.stringify(s.scrollDriven)}）`);
+    return { id: s.id, locate: s.locate, ...(s.scrollDriven === true ? { scrollDriven: true } : {}) };
   });
 
   // a state inside one of the entry state's sections: shot as it stands now (no reload), named after the state
@@ -1131,6 +1357,26 @@ function measureCommand(positional, flags) {
   return 0;
 }
 
+function pinnedCommand(positional, flags) {
+  if (!positional.length) throw new UsageError('缺少仓库根');
+  if (positional.length < 2) throw new UsageError('缺少状态 id（图叫 <状态 id>.png）');
+  if (positional.length > 2) throw new UsageError(`pinned 只要仓库根和一个状态 id（多出 ${positional.slice(2).join(' ')}）`);
+  if (!flags.out) throw new UsageError('pinned 要 --out <目录>（Playwright 只能写它的工作区根目录里）');
+  const root = resolve(positional[0]);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
+  let archive;
+  try {
+    archive = loadArchive(root);
+  } catch (e) {
+    throw new UsageError(e.message);
+  }
+  const settings = settingsOf(archive, flags);
+  const out = resolve(flags.out);
+  console.log(buildPinnedCode({ state: positional[1], viewport: settings.viewport, theme: settings.theme, motion: settings.motion, outDir: out }));
+  console.error(`pinned: ${positional[1]}.png 写到 ${out}（视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}` : ''}）；不滚动、不拨页面时间，截此刻的视口——先把页面带到这一步，再跑`);
+  return 0;
+}
+
 function safeParse(text) {
   try {
     return JSON.parse(text);
@@ -1145,8 +1391,10 @@ function attributeCommand(positional) {
   console.log(JSON.stringify(result, null, 2));
   if (result.hidden.length) console.error(`attribute: ${result.hidden.length} 个可点元素看不见（透明度为 0，或固定在屏幕上却从没出现），不参与归属`);
   if (result.roleUnresolved.length) console.error(`attribute: ${result.roleUnresolved.length} 个可点元素按「角色 + 名字」定位不到（roleUnresolved），边的 locate 对它们改写 { text: <完整文字> }`);
+  for (const x of result.declaredNotDetected) console.error(`attribute: ${x.id} 声明了 scrollDriven 但测量没检出钉住的元素（只提示）：按声明拍，确认这一段真是滚动驱动的`);
+  for (const x of result.undeclaredScrollDriven) console.error(`attribute: ${x.id} 是滚动驱动的段（${x.evidence.join('；')}），分段声明里没写：给它加 scrollDriven: true，并照 sections.md「滚动驱动的段」把每一步建成段内状态`);
   if (!result.ok) {
-    console.error(`attribute: 落空 ${result.orphans.length} 个，定位失败 ${result.notFound.length} 段，顺序不对 ${result.outOfOrder.length} 段，重叠 ${result.overlaps.length} 处——补分段或改定位后重测，清零再写档案`);
+    console.error(`attribute: 落空 ${result.orphans.length} 个，定位失败 ${result.notFound.length} 段，顺序不对 ${result.outOfOrder.length} 段，重叠 ${result.overlaps.length} 处，滚动驱动没声明 ${result.undeclaredScrollDriven.length} 段——补分段、改定位或补 scrollDriven 后重测，清零再写档案`);
     return 1;
   }
   return 0;
@@ -1158,7 +1406,10 @@ function shootCommand(positional, flags) {
   const attribution = readJson(positional[0], '归属结果');
   if (!Array.isArray(attribution.ranges)) throw new UsageError('归属结果里没有 ranges：先跑 attribute，把它的输出存成文件');
   if (!attribution.viewport || !attribution.theme) throw new UsageError('归属结果里没有 viewport / theme：用这一版 measure 量、再 attribute');
-  if (attribution.ok === false) throw new UsageError('归属结果没通过（有落空、定位失败、顺序不对或重叠）：补分段后重测，清零了再拍');
+  if (attribution.ok === false) {
+    const lost = (attribution.undeclaredScrollDriven ?? []).map((x) => x.id);
+    throw new UsageError(`归属结果没通过（有落空、定位失败、顺序不对或重叠${lost.length ? `；滚动驱动的段 ${lost.join('、')} 没写 scrollDriven` : ''}）：补分段后重测，清零了再拍`);
+  }
   let include = null;
   if (flags.include) {
     include = safeParseIn(flags.include);
@@ -1233,6 +1484,7 @@ function main(argv) {
     if (command === 'attribute') return attributeCommand(positional);
     if (command === 'shoot') return shootCommand(positional, flags);
     if (command === 'screen') return screenCommand(positional, flags);
+    if (command === 'pinned') return pinnedCommand(positional, flags);
     return 2;
   } catch (e) {
     if (!(e instanceof UsageError)) throw e;
