@@ -8,7 +8,8 @@
 | [raw](raw/index.md) | 素材与事实，忠实不编辑 | 4 份（design-workflow 桶） |
 | [spec](spec/index.md) | 还没了结的规格，一份一个目录，做完即删 | 空 |
 | [adr](adr/index.md) | spec 的归档总结，永久 | 2 条，均生效 |
+| [records](records/index.md) | 运营台账，会话起头、之后由人持续更新 | 1 个：`retro-candidates/`（retro 的候选池） |
 
-尚未建立的层（契约里有，本仓库还没用上）：`domain/`（领域知识）、`reference/`（常驻约定与手册）、`records/`（周期快照）、`testing/`。
+尚未建立的层（契约里有，本仓库还没用上）：`domain/`（领域知识）、`reference/`（常驻约定与手册）、`testing/`。
 
 > 索引表体从各文件的 frontmatter 生成，不手工维护。引用某一层请写路径，**不要写指向 index 的 wikilink** —— 各层的 `index.md` 是 slug 唯一性的豁免项，靠这条纪律维持。

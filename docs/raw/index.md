@@ -23,27 +23,7 @@
 | [decisions/55](decisions/55.md) | conversation | 2026-10-26 | 决定记录 —— #55 的 issue 会话：冻结后画布为唯一真相、dreaming 拆分与增量对账，摆过的题与 retro 候选的结果 |
 | [decisions/57](decisions/57.md) | conversation | 2026-10-26 | 决定记录 —— #57 的 issue 会话：结束整个任务的入口用 X，摆过的题与 retro 候选的结果 |
 | [decisions/108](decisions/108.md) | conversation | 2026-10-26 | 决定记录 —— #108 / #106 的 issue 会话：调度只数 issue 会话、retro 整合（当天撤回）、retro 候选改进 docs 候选池 |
-| [[retro-candidate-82]] | issue | 2026-10-26 | retro 候选 #82：idea-loop issue-verify：起草前分清 issue 的核心诉求和它点名的实现手段 |
-| [[retro-candidate-83]] | issue | 2026-10-26 | retro 候选 #83：idea-loop grill：推荐的做法靠的可行性也是推断，摆出推荐前先验 |
-| [[retro-candidate-84]] | issue | 2026-10-26 | retro 候选 #84：idea-loop retro：落点表加「人的全局偏好」一层，批了的直接写进全局 CLAUDE.md |
-| [[retro-candidate-92]] | issue | 2026-10-26 | retro 候选 #92：seo-brief：角度候选没有和站内已有文章的论点对照，推荐的角度可能和已有博客重合 |
-| [[retro-candidate-94]] | issue | 2026-10-26 | retro 候选 #94：idea-loop：to-spec 模板加「评测」一节（评测影响 / 花费） |
-| [[retro-candidate-95]] | issue | 2026-10-26 | retro 候选 #95：idea-loop：决定题贴给人之前跑生词检查（review-loop lint），让「陌生记号先解释」起作用 |
-| [[retro-candidate-96]] | issue | 2026-10-26 | retro 候选 #96：idea-loop：issue-session 里人问 spec 怎么跑时，先核 spec 原文、配一张走一遍的图 |
-| [[retro-candidate-97]] | issue | 2026-10-26 | retro 候选 #97：idea-loop：GLOSSARY.md 只用 Write/Edit 改（不绕 hook）；implement 推送后看 PR 检查 |
-| [[retro-candidate-98]] | issue | 2026-10-26 | retro 候选 #98：idea-loop pr：review 汇报的「要你决定」里，流程内部的叫法要落到一个具体对象上 |
-| [[retro-candidate-100]] | issue | 2026-10-26 | retro 候选 #100：idea-loop issue-verify：issue 正文里对现状的说法也是推断，起草 spec 前先核过 |
-| [[retro-candidate-102]] | issue | 2026-10-26 | retro 候选 #102：idea-loop decision-rules：PR 流程里能指出不丢东西的边缘情形，照规则接受成已知限制 |
-| [[retro-candidate-103]] | issue | 2026-10-26 | retro 候选 #103：idea-loop decision-rules：执行方已按推荐做了、不削弱 spec 目标的 spec 缺口，照规则沿用 |
-| [[retro-candidate-109]] | issue | 2026-10-26 | retro 候选 #109：idea-loop to-spec：往给 agent 读的参考文件加规则时，写明候选落点各由谁、在哪一步读到 |
-| [[retro-candidate-86]] | issue | 2026-10-26 | retro 候选 #86：idea-loop：每个 issue 会话要知道相关的在飞工作，按需 handoff，别让多个会话做同一件事（待讨论） |
-| [[2026-10-26-digest-skip-opening-task]] | conversation | 2026-10-26 | retro 候选：读会话记录的脚本跳过开场的任务说明 |
-| [[2026-10-26-archive-components-own-repo]] | conversation | 2026-10-26 | retro 候选：设计档案挑组件只处理本仓库内的实现（别名 import 待讨论） |
-| [[2026-10-26-seo-outreach-directory-submission]] | conversation | 2026-10-26 | retro 候选：外链 skill 覆盖「AI 工具目录提交」，分工写清，代填表用真实浏览器 |
-| [[2026-10-26-seo-outreach-paid-link-threshold]] | conversation | 2026-10-26 | retro 候选：付费必须过一组量化的外链质量门槛 |
-| [[2026-10-26-seo-outreach-verify-autofilled-fields]] | conversation | 2026-10-26 | retro 候选：代填第三方表单时，自动抓取、自动勾选的每一项都要核，选项附网站自己的定义 |
-| [[2026-10-26-seo-outreach-check-status-after-submit]] | conversation | 2026-10-26 | retro 候选：人点完提交后，先看对方后台的状态页再汇报 |
 
 > `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
 
-> `retro-candidates/`：retro 里人批过、原先开成 issue 的规则候选，2026-10-26 随 retro 整合撤回关闭后原文存在这里，一个 issue 一份；它们以后由谁、怎么判断能不能进 skill，见 #115。
+> `retro-candidates/` 已搬到 `docs/records/retro-candidates/`（2026-10-26 随 #115）：候选池要加「出现」、改「状态」，跟这一层「忠实，不编辑」冲突。收什么、谁写谁读见 `docs/records/index.md`。

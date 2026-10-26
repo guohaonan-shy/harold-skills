@@ -16,11 +16,11 @@ retro 批了、人选「进候选池」的规则候选，要有一个统一的�
 
 ## 验收标准
 
-- [ ] `docs/raw/retro-candidates/` 不存在；`docs/records/retro-candidates/` 下 20 份，`git log --follow` 能追到原文件
-- [ ] 计数脚本对整个池跑一遍：零问题、退出码 0，每份都有次数
-- [ ] 单元测试覆盖：一条 3 次其中 1 次已推翻 → 2 次不过；一条 3 次都成立 → 过；同一会话出现两行只算 1 次；缺「出现」→ 报问题；状态不在闭集 → 报问题
-- [ ] `docs/` 下所有 `[[...]]` 链接都指得到文件（link sweep）
-- [ ] `docs/records/index.md` 写明收什么、谁写谁读
+- [x] `docs/raw/retro-candidates/` 不存在；`docs/records/retro-candidates/` 下 20 份，`git log --follow` 能追到原文件
+- [x] 计数脚本对整个池跑一遍：零问题、退出码 0，每份都有次数
+- [x] 单元测试覆盖：一条 3 次其中 1 次已推翻 → 2 次不过；一条 3 次都成立 → 过；同一会话出现两行只算 1 次；缺「出现」→ 报问题；状态不在闭集 → 报问题
+- [x] `docs/` 下所有 `[[...]]` 链接都指得到文件（link sweep）
+- [x] `docs/records/index.md` 写明收什么、谁写谁读
 
 ## 选中的存量回归
 
