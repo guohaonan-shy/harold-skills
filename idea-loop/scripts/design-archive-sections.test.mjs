@@ -715,6 +715,15 @@ test('cli shoot: an attribution that failed because of an undeclared scroll-driv
   assert.match(r.stderr, /滚动驱动/);
 });
 
+test('cli shoot: a section declared scrollDriven goes into the printed code as scroll-driven — the flag that makes the shot reload and scroll straight to the pin — and the others do not carry it', () => {
+  const f = join(tmp(), 'driven-attribution.json');
+  writeFileSync(f, JSON.stringify(attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN], viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default' }))));
+  const r = run('shoot', f, '--out', join(tmp(), 'shots'));
+  assert.equal(r.status, 0, r.stderr);
+  const targets = JSON.parse(r.stdout.match(/"targets":(\[.*?\]),"viewport"/)[1]);
+  assert.deepEqual(targets.map((t) => [t.id, t.scrollDriven === true]), [['header', false], ['hero', false], ['feature-a', true], ['feature-b', false], ['footer', false]]);
+});
+
 // ---------- pinned: the screen a scroll-driven section holds, shot where the page stands ----------
 
 test('buildPinnedCode: a single async function of `page` that shoots the viewport as it stands, named after the state, and never moves the page time or the scroll', () => {

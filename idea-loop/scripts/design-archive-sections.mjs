@@ -335,9 +335,9 @@ async function measurePage(page, C, T) {
           if (!parent || /^(BODY|HTML)$/.test(parent.tagName)) continue;
           if (pos !== 'sticky' && pos !== 'fixed' && !/pin-spacer/.test(String(parent.className))) continue;
           const r = el.getBoundingClientRect();
-          if (r.width < vw * 0.5 || r.height < vh * 0.5) continue;
           if (parent.getBoundingClientRect().height < r.height + vh * 0.5) continue;
-          ds.pins.set(el, { samples: [] });
+          // a pin that holds a screen is one by its size; a smaller one (a text column beside the pictures that scroll past) only when its text changes
+          ds.pins.set(el, { samples: [], big: r.width >= vw * 0.5 && r.height >= vh * 0.5 });
         }
         for (const [el, pin] of ds.pins) {
           if (!el.isConnected) continue;
@@ -348,7 +348,8 @@ async function measurePage(page, C, T) {
           pin.samples.push({ y, pos: getComputedStyle(el).position, top: Math.round(r.top), text: ds.seenText(el) });
         }
       },
-      pinList: () => [...ds.pins.values()].flatMap((pin) => {
+      pinText: (index) => ds.seenText([...ds.pins.keys()][index]),
+      pinList: () => [...ds.pins.values()].flatMap((pin, index) => {
         const byTop = new Map();
         for (const s of pin.samples) if (s.pos === 'sticky' || s.pos === 'fixed') byTop.set(s.top, [...(byTop.get(s.top) || []), s]);
         const stuck = [...byTop.values()].sort((a, b) => b.length - a.length)[0] || [];
@@ -356,6 +357,9 @@ async function measurePage(page, C, T) {
         const sticky = stuck.some((s) => s.pos === 'sticky');
         if (ys.length < 2 || (!sticky && !pin.samples.some((s) => s.pos !== 'fixed'))) return [];
         const texts = [...new Set(stuck.map((s) => s.text))];
+        if (!pin.big && texts.length < 2) return [];
+        // where each text was seen first: the measurement goes back there to check the text belongs to the place, not to the time
+        const probes = pin.big ? [] : texts.slice(0, 4).map((t) => ({ y: stuck.find((s) => s.text === t).y, text: t }));
         return [{
           kind: sticky ? 'sticky' : 'fixed',
           tag: pin.tag,
@@ -364,6 +368,7 @@ async function measurePage(page, C, T) {
           container: pin.container,
           stuck: { from: ys[0], to: ys[ys.length - 1], count: ys.length },
           texts: texts.slice(0, 6).map((t) => t.slice(0, 60)),
+          ...(pin.big ? {} : { byText: true, index, probes }),
         }];
       }),
       fixedList: () => {
@@ -572,7 +577,24 @@ async function measurePage(page, C, T) {
   }
 
   // 7 the pins the scroll-through saw, then clean the marks off
-  const pins = await page.evaluate(() => window.__ds.pinList());
+  // a pin too small to hold a screen counts when the text in it changed with the scroll — and changes the same way when the page goes back to the places
+  // it was seen at (a banner that rotates its messages on a timer changes too, but not where the scroll put it)
+  const pins = [];
+  let probed = false;
+  for (const { probes, index, ...pin } of await page.evaluate(() => window.__ds.pinList())) {
+    let sameThere = true;
+    for (const probe of pin.byText ? probes : []) {
+      probed = true;
+      await page.evaluate((v) => window.__ds.scrollTo(v), probe.y);
+      await tick(200);
+      if ((await page.evaluate((i) => window.__ds.pinText(i), index)) !== probe.text) {
+        sameThere = false;
+        break;
+      }
+    }
+    if (sameThere) pins.push(pin);
+  }
+  if (probed) await page.evaluate(() => window.__ds.scrollTo(0));
   await page.evaluate(() => {
     document.querySelectorAll('[data-ds-block],[data-ds-lm]').forEach((el) => {
       el.removeAttribute('data-ds-block');
@@ -1117,7 +1139,8 @@ export function attribute(m) {
 /**
  * Which sections are scroll-driven (skills/design/design-archive/references/sections.md, 滚动驱动的段). The measurement lists
  * the pins it saw while the page was scrolled through (a `position: sticky` element, or a fixed one a library such as GSAP
- * pins, big enough to hold a screen and inside a container taller than itself); a pin belongs to the section whose range
+ * pins, inside a container taller than itself, big enough to hold a screen — or smaller, when the text in it changed with the
+ * scroll and changes the same way where the scroll is put back); a pin belongs to the section whose range
  * holds its container's vertical centre. A section is scroll-driven when a pin belongs to it. `declared` is the section's
  * `scrollDriven: true`. Detected but not declared fails the run (the section would be shot as one tall picture with blank
  * under the first step); declared but not detected is only a hint.
@@ -1128,7 +1151,8 @@ function scrollDrivenOf(pins, found, ranges, ref) {
     const held = pin.stuck ? `，滚动 ${pin.stuck.from}–${pin.stuck.to} 之间钉在视口里` : '';
     const label = pin.label ? `「${pin.label}」` : '';
     const text = (pin.texts ?? []).length > 1 ? `；钉住时的可见文字随滚动变了（${pin.texts.length} 种）` : '';
-    return `${how} 的 <${pin.tag}>${label}高 ${roundPx(pin.height)}px，容器高 ${roundPx(pin.container.bottom - pin.container.top)}px${held}${text}`;
+    const small = pin.byText ? '；它不到半屏，按「钉住时的文字随滚动变了」认定' : '';
+    return `${how} 的 <${pin.tag}>${label}高 ${roundPx(pin.height)}px，容器高 ${roundPx(pin.container.bottom - pin.container.top)}px${held}${text}${small}`;
   };
   const evidence = new Map();
   const pinTop = new Map(); // where the first pin of the section starts holding its screen: the top of its container
@@ -1423,7 +1447,8 @@ function shootCommand(positional, flags) {
   }
   if (!picked.targets.length) throw new UsageError(`没有要拍的段：${picked.skipped.map((s) => `${s.id}（${s.reason}）`).join('；') || '归属结果的 ranges 是空的'}`);
   const code = buildShootCode({
-    targets: picked.targets.map(({ id, file, start, end, inScroller }) => ({ id, file, start, end, inScroller })),
+    // `scrollDriven` goes along: it is what makes the shot reload and scroll straight to the pin instead of through the page
+    targets: picked.targets.map(({ id, file, start, end, inScroller, scrollDriven }) => ({ id, file, start, end, inScroller, ...(scrollDriven ? { scrollDriven: true } : {}) })),
     scroller: picked.scroller,
     viewport: attribution.viewport,
     theme: attribution.theme,

@@ -14,7 +14,7 @@ description: 设计档案（docs/design/prod/）的结构、校验、查询与�
   - **用户行为**（`kind: user`）：在某个组件上做某个操作。边上引用这个组件，用 ARIA 角色和名字定位它（`locate`），写出操作（`action`）。
   - **系统行为**（`kind: system`）：不经过组件的变化（2 秒后、请求失败、轮询发现完成）。边上写触发条件（`trigger`）和怎么让它发生（`how`：拦哪个请求、等多久）。
 - **跨页跳转也是边**：A 页的某个状态连到 B 页的某个状态。边只写在状态文件里。
-- **分段 = 长页面的入口状态在空间上的组成部分**：状态是时间维度，分段是空间维度。页面的滚动容器（文档自己在滚就是文档；应用外壳里内容在内层容器滚就是那个容器）的内容比它的可见区高时，入口状态声明 `sections`，每段有图。分段**不是节点**，不进图的拓扑：往下滚不改状态，可达、进入方式、用户路径都照旧只看状态和边。边写从本页哪一段出发（`from`）、落到目标状态的哪一段（`section`）；页内锚点是入口状态的自环加落点段；段内的交互（FAQ 展开、切标签）仍是页面的另一个状态，状态写它在哪一段（`section`）。写法、校验规则 7 和每段怎么拍，读 [references/sections.md](references/sections.md)；钉在视口里随滚动换内容的段（`scrollDriven`）每一步建成一个段内状态，也在那里。
+- **分段 = 长页面的入口状态在空间上的组成部分**：状态是时间维度，分段是空间维度。页面的滚动容器（文档自己在滚就是文档；应用外壳里内容在内层容器滚就是那个容器）的内容比它的可见区高时，入口状态声明 `sections`，每段有图。分段**不是节点**，不进图的拓扑：往下滚不改状态，可达、进入方式、用户路径都照旧只看状态和边。边写从本页哪一段出发（`from`）、落到目标状态的哪一段（`section`）；页内锚点是入口状态的自环加落点段；段内的交互（FAQ 展开、切标签）仍是页面的另一个状态，状态写它在哪一段（`section`）。写法、校验规则 7 和每段怎么拍，读 [references/sections.md](references/sections.md)。
 - **可引用对象**——节点和边用 wikilink 引用，它们本身不进图的拓扑：
   - **组件**：一个前端组件 = 一份组件文件，挂代码路径。**每个代码组件都单独存**，不论几个页面用；页面只记「哪个区域用哪个组件」。展示类组件同样存档，只是不出现在边上。
   - **动效**：每个具体动效一份文件，写参数与理由。边引用的是「切换时怎么动」，节点引用的是「这一屏常驻的动」（加载转圈）。具体动效只落在档案里；`DESIGN.md` 的 Motion 章只收全局原则。
@@ -53,7 +53,7 @@ docs/design/
 - **basename 在 `docs/` 下全局唯一**（`idea-loop:wiki-conventions` 的「slug 与链接」），由校验查；工单文件与 `index.md` 豁免。
 - **`tmp/<spec-slug>/`** 放进行中需求的全部设计过程产物：`imagine/` 方向说明，`canvas/` 画布、冻结记录与完整验收矩阵，`delta/` 对 `prod/` 的差异。目标项目把 `tmp/` 排除出 git；冻结时，签字的画布、冻结记录和交互图经设计 PR 用 `git add -f` 提交进主分支，实现从主分支开 worktree 就拿得到。**冻结之后，`canvas/` 是唯一的设计真相**：设计变了由 designer 改画布并记进冻结记录的「冻结后的变更」（`idea-loop:uiux-refine`），不改 `delta/`；`delta/` 只在合并前由 ui-reviewer 的归档模式从最终画布加实现整份写出。没有设计稿的 UI 改动没有画布，实现者在 `delta/` 记「最小差异」，那就是它唯一的设计真相。放弃的需求不上线，有价值的结论写回 spec 或 issue。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行一条，`- [[<id>]]`（后面可跟一句原因）。归档 = 覆盖 + 删除。
-- **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置写在 `prod/index.md` 的 frontmatter，见下面「`prod/index.md` 的设置键」；单屏状态用分段脚本的 `screen` 命令拍，页面时间停住，见 `references/sections.md`）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
+- **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置写在 `prod/index.md` 的 frontmatter，见下面「`prod/index.md` 的设置键」）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
 - **素材走 Git LFS**：目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/` 下的 png / gif / webm。
 - **写档案只写 `tmp/<spec-slug>/delta/`**（合并前归档由 ui-reviewer 写，没有设计稿的改动由实现者写最小差异）；`prod/` 只由归档脚本在人批过之后写（「归档」）。
 - `docs/design/` 下 `tmp/`、`prod/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。
@@ -84,7 +84,6 @@ motions: ["[[spinner-ring]]"]     # 可选：这一屏常驻的动效
 sections:                         # 只有入口节点写，且只在滚动容器的内容比它的可见区高时写；自上而下
   - { id: header, locate: { role: banner } }
   - { id: faq, locate: { role: heading, name: 常见问题 } }
-  - { id: how-it-works, locate: { role: heading, name: 三步上手 }, scrollDriven: true }   # 可选：钉在视口里随滚动换内容的段，只能写 true
 section: mkt-pricing#faq          # 可选：段内交互的状态写它发生在本页哪一段（入口节点不写）
 edges:
   - id: search                    # 在本状态内唯一
@@ -180,7 +179,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--del
 | 4 用户路径 | `path` 相邻两个状态之间有边；有多条时写了 `via`，且 `via` 是其中一条的 id |
 | 5 决定与候选 | 状态文件没有「决定」；其余对象两节都在，每条决定三项齐全，每条候选三项齐全 |
 | 6 动效 | 字面值的 `duration` / `easing` 都带 `deviates`；`usedBy` 与反向引用一致（字段缺失视为未生成，照样报出来） |
-| 7 分段 | 分段的类型、`id` 写法、定位形状、`scrollDriven` 只能写 `true`，边的 `from` / `section` 与状态的 `section` 指向声明过的段（逐条见 [references/sections.md](references/sections.md)「校验规则 7」） |
+| 7 分段 | 分段的类型、`id` 写法、定位形状，边的 `from` / `section` 与状态的 `section` 指向声明过的段（逐条见 [references/sections.md](references/sections.md)「校验规则 7」） |
 | 0 结构 | 读不出的文件、不认识的 `type`、规则依赖的必填字段（边的 `id` / `to` / `kind`，`user` 边的 `component` / `locate`（`role` + `name`，或只有 `text`）/ `action`，`system` 边的 `trigger` / `how`，`blocked` 的 `missing` / `tried`，入口的 `url` 等）、写了就不能为空的 `when`；`prod/index.md` 声明了 `workspaces` 时，每个组件文件名要带其中一个前缀 |
 
 ## 查询模块

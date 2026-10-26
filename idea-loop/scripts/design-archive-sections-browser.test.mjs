@@ -757,6 +757,137 @@ browserTest('browser measure: a thin sticky bar, a narrow sticky sidebar and a f
   }
 });
 
+// a narrow sticky text column beside pictures that scroll past (800×600 viewport): the column is 340 wide, a pin too small to hold a screen,
+// and its text — and its colour, for the pixel checks — change with the scroll: three steps, one per 700 px
+const STORY_BG = ['#fde68a', '#93c5fd', '#fca5a5'];
+const STORY_RGB = [[253, 230, 138], [147, 197, 253], [252, 165, 165]];
+const STORY_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 22px sans-serif; }
+  header { height: 60px; background: #eee; }
+  main > section { display: block; box-sizing: border-box; }
+  #intro { height: 400px; padding: 20px; background: #fff; }
+  #story { display: flex; gap: 20px; padding: 0 20px; }
+  #text { position: sticky; top: 0; width: 340px; height: 420px; align-self: flex-start; padding: 20px; box-sizing: border-box; background: ${STORY_BG[0]}; }
+  #pics { flex: 1; } .pic { height: 700px; margin-bottom: 20px; background: #ddd; }
+  #after { height: 500px; padding: 20px; background: #eee; }
+  footer { height: 100px; background: #ccc; }
+</style></head><body>
+<header><a href="/">Home</a></header>
+<main>
+<section id="intro"><h1>Intro</h1></section>
+<section id="story"><div id="text"><h2>How it works</h2><p id="step">Step 1: record</p></div><div id="pics"><div class="pic"></div><div class="pic"></div><div class="pic"></div></div></section>
+<section id="after"><h2>After</h2><button>Done</button></section>
+</main>
+<footer><a href="/terms">Terms</a></footer>
+<script>
+const L = ['Step 1: record', 'Step 2: score', 'Step 3: improve'];
+addEventListener('scroll', () => {
+  const k = Math.max(0, Math.min(2, Math.floor((-story.getBoundingClientRect().top + 100) / 700)));
+  step.textContent = L[k]; text.style.background = ${JSON.stringify(STORY_BG)}[k];
+});
+</script></body></html>`;
+const STORY_SECTIONS = [
+  { id: 'header', locate: { role: 'banner' } },
+  { id: 'hero', locate: { role: 'heading', name: 'Intro' } },
+  { id: 'how-it-works', locate: { role: 'heading', name: 'How it works' } },
+  { id: 'faq', locate: { role: 'heading', name: 'After' } },
+  { id: 'footer', locate: { role: 'contentinfo' } },
+];
+const STORY_ENTRY = 's-home--entry';
+
+// a sticky bar that holds the same text wherever the page is, with paragraphs that fade in as they are scrolled to: nothing here changes what a screen of it says
+const FADE_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 20px sans-serif; }
+  #wrap { height: 3000px; }
+  #bar { position: sticky; top: 0; width: 300px; height: 80px; background: #ccc; }
+  p { opacity: 0; transition: opacity .3s; height: 300px; margin: 0; } p.on { opacity: 1; }
+</style></head><body><div id="wrap"><h1>Fading</h1><div id="bar">Reading list</div>
+<p>One</p><p>Two</p><p>Three</p><p>Four</p><p>Five</p><p>Six</p><p>Seven</p><p>Eight</p></div>
+<script>
+const show = () => document.querySelectorAll('p').forEach((p) => p.classList.toggle('on', p.getBoundingClientRect().top < innerHeight * 0.8));
+addEventListener('scroll', show); show();
+</script></body></html>`;
+
+// a sticky banner whose message changes on a timer: it changes while the page is scrolled through, but not because of where it is scrolled to
+const BANNER_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 20px sans-serif; }
+  #wrap { height: 3000px; }
+  #banner { position: sticky; top: 0; width: 300px; height: 80px; background: #ffd; }
+</style></head><body><div id="wrap"><h1>Promo</h1><div id="banner">Free shipping</div><p>Body</p></div>
+<script>
+const M = ['Free shipping', 'New arrivals', 'Gift cards', 'Sale ends soon'];
+let i = 0; setInterval(() => { banner.textContent = M[++i % M.length]; }, 330);
+</script></body></html>`;
+
+async function loadWith(html, sections, entry) {
+  const p = await freshPage();
+  await p.goto(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  await runOn(p, buildTimeCode(SETTINGS));
+  return { p, m: await runOn(p, buildMeasureCode({ state: entry, page: entry.split('--')[0], sections, ...SETTINGS })) };
+}
+
+browserTest('browser measure: a pinned text column narrower than half the screen, whose text changes as the page scrolls, is detected as scroll-driven — undeclared, `attribute` exits 1; declared, it exits 0', async () => {
+  const { p, m } = await loadWith(STORY_PAGE, STORY_SECTIONS, STORY_ENTRY);
+  try {
+    assert.equal(m.pins.length, 1, JSON.stringify(m.pins));
+    const [pin] = m.pins;
+    assert.deepEqual([pin.kind, pin.tag, pin.height, pin.byText, pin.container.top], ['sticky', 'div', 420, true, 460]);
+    assert.deepEqual(pin.texts.map((t) => t.replace(/^How it works /, '')), ['Step 1: record', 'Step 2: score', 'Step 3: improve']);
+    const a = attribute(m);
+    assert.deepEqual(a.undeclaredScrollDriven.map((x) => x.id), ['how-it-works']);
+    assert.equal(a.ok, false);
+    const cli = attributeCli(m);
+    assert.equal(cli.status, 1, cli.stderr);
+    assert.match(cli.stderr, /how-it-works.*scrollDriven: true/);
+    const declared = await runOn(p, buildMeasureCode({ state: STORY_ENTRY, page: 's-home', sections: STORY_SECTIONS.map((x) => (x.id === 'how-it-works' ? { ...x, scrollDriven: true } : x)), ...SETTINGS }));
+    assert.equal(attributeCli(declared).status, 0);
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser shoot: the narrow-column section is one screen tall and shows step 1; the screen after a scroll to step 2 is shot as step 2', async () => {
+  const { p, m } = await loadWith(STORY_PAGE, STORY_SECTIONS.map((x) => (x.id === 'how-it-works' ? { ...x, scrollDriven: true } : x)), STORY_ENTRY);
+  try {
+    const a = attribute(m);
+    assert.equal(a.ok, true, JSON.stringify(a.undeclaredScrollDriven));
+    const out = mkdtempSync(join(tmpdir(), 'sections-story-'));
+    const { targets, scroller } = shootTargets(a, { only: ['how-it-works'] });
+    await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+    const first = join(out, `${STORY_ENTRY}@how-it-works.png`);
+    assert.deepEqual(pngSize(first), [800, 600]);
+    assert.deepEqual(rgbAt(first, 100, 300), STORY_RGB[0]);
+    await p.evaluate(() => window.scrollTo(0, 460 + 700));
+    await runOn(p, buildStepCode(100));
+    const r = await runOn(p, buildPinnedCode({ state: 's-home--how-it-works-step-2', ...SETTINGS, outDir: out }));
+    assert.equal(r.shots[0].uncontrolled, false);
+    assert.deepEqual(rgbAt(join(out, 's-home--how-it-works-step-2.png'), 100, 300), STORY_RGB[1]);
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser measure: a sticky bar with the same text everywhere, on a page whose paragraphs fade in as they are scrolled to, is not a pin', async () => {
+  const { p, m } = await loadWith(FADE_PAGE, [{ id: 'fading', locate: { role: 'heading', name: 'Fading' } }], 'f--entry');
+  try {
+    assert.deepEqual(m.pins, []);
+    const a = attribute(m);
+    assert.deepEqual([a.ok, a.scrollDriven], [true, []]);
+  } finally {
+    await p.context().close();
+  }
+});
+
+browserTest('browser measure: a sticky banner whose text changes on a timer is not a pin — its text is not the same where the scroll puts it back', async () => {
+  const { p, m } = await loadWith(BANNER_PAGE, [{ id: 'promo', locate: { role: 'heading', name: 'Promo' } }], 'b--entry');
+  try {
+    assert.deepEqual(m.pins, []);
+    assert.deepEqual(attribute(m).scrollDriven, []);
+  } finally {
+    await p.context().close();
+  }
+});
+
 browserTest('browser measure: the pages of the earlier tests — pinned bars, fixed tables of contents, carousels, an iframe — have no scroll-driven section either', async () => {
   const a = attribute(await measure());
   assert.deepEqual([a.scrollDriven, a.undeclaredScrollDriven], [[], []]);
@@ -808,6 +939,29 @@ browserTest('browser shoot: a page that was scrolled into the section before the
   } finally {
     await p.context().close();
     server.close();
+  }
+});
+
+browserTest('browser shoot (the command line, as the docs tell an agent to run it): the attribution `attribute` printed goes to `shoot`, and the conveyor still starts on its first card, not the last one the scroll-through left', async () => {
+  const p = await pinSession();
+  try {
+    const m = await measurePin(p, DRIVEN);
+    const cli = attributeCli(m);
+    assert.equal(cli.status, 0, cli.stderr);
+    assert.equal(await p.evaluate(() => document.getElementById('card').textContent), 'Card 3', 'the scroll-through left the conveyor on its last card');
+    const dir = mkdtempSync(join(tmpdir(), 'sections-pin-cli-'));
+    const attribution = join(dir, 'attribution.json');
+    writeFileSync(attribution, cli.stdout);
+    const out = join(dir, 'shots');
+    const sh = spawnSync('node', [CLI, 'shoot', attribution, '--out', out, '--section', 'how-it-works,problem'], { encoding: 'utf8' });
+    assert.equal(sh.status, 0, sh.stderr);
+    const r = await runOn(p, sh.stdout.trim());
+    assert.deepEqual(r.shots.filter((s) => s.scrollDriven).map((s) => s.id), ['how-it-works', 'problem']);
+    assert.deepEqual(pngSize(join(out, `${PIN_ENTRY}@problem.png`)), [800, 600]);
+    for (const y of [0, 300, 599]) assert.deepEqual(rgbAt(join(out, `${PIN_ENTRY}@problem.png`), 400, y), CARD_RGB[0], `row ${y}: card 1, not the last card`);
+    for (const y of [0, 300, 599]) assert.deepEqual(rgbAt(join(out, `${PIN_ENTRY}@how-it-works.png`), 400, y), STEP_RGB[0], `row ${y}: step 1`);
+  } finally {
+    await p.context().close();
   }
 });
 
