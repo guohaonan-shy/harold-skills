@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, ui-archive, dreaming]
 summary: 分段脚本认出真正在滚的元素：内层容器滚动的页面也能量全高、按段拍到首屏以下
 related: ["[[2026-10-26-inner-scroll-shot]]", "[[design-archive-sections]]", "[[ui-state-archive]]", "[[dreaming-design-reconcile]]"]
