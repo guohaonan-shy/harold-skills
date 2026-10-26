@@ -206,6 +206,7 @@ function sectionView(archive, pageId, entry, x) {
     locate: x.locate,
     locateBy: x.by?.kind ?? null,
     declaredBy: entry.id,
+    ...(x.scrollDriven === true ? { scrollDriven: true } : {}),
     outgoing: archive.edges.filter((e) => e.fromSection === ref).map(edgeView),
     incoming: archive.edges.filter((e) => e.toSection === ref).map(edgeView),
     states: sortById(statesOfPage(archive, pageId).filter((s) => s.fm.section === ref)).map((s) => s.id),
@@ -446,7 +447,7 @@ function refsOfSectionType(archive, type) {
   return {
     target: { kind: 'section-type', type },
     matchedBy: 'type',
-    sections: sections.map((x) => ({ page: x.page, id: x.id, type: x.type, qualifier: x.qualifier, locate: x.locate, declaredBy: x.declaredBy })),
+    sections: sections.map((x) => ({ page: x.page, id: x.id, type: x.type, qualifier: x.qualifier, locate: x.locate, declaredBy: x.declaredBy, ...(x.scrollDriven ? { scrollDriven: true } : {}) })),
   };
 }
 
@@ -468,7 +469,7 @@ function refsOfSection(archive, ref) {
   );
   return {
     target: clean({
-      id: view.id, kind: 'section', page: pageId, type: view.type, qualifier: view.qualifier, locate: view.locate, declaredBy: view.declaredBy,
+      id: view.id, kind: 'section', page: pageId, type: view.type, qualifier: view.qualifier, locate: view.locate, declaredBy: view.declaredBy, scrollDriven: view.scrollDriven,
     }),
     matchedBy: 'section',
     outgoing: view.outgoing,

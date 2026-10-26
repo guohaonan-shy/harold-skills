@@ -11,8 +11,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { BASE, MKT, MKT_ENTRY, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, buildShootCode, shootTargets } from './design-archive-sections.mjs';
+import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
+import { attribute, buildMeasureCode, buildPinnedCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, screenTargets, shootTargets } from './design-archive-sections.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
 const run = (...args) => spawnSync('node', [CLI, ...args], { encoding: 'utf8' });
@@ -207,6 +207,137 @@ test('shootTargets: one per section named <entry>@<section>.png, the 3600-tall o
   assert.deepEqual(shootTargets(flat).skipped.map((s) => s.id), ['tail']);
 });
 
+// ---------- scroll-driven sections: a pin that holds a screen while the page scrolls under it ----------
+//
+// feature-a (900–4500) holds a 800-tall element pinned to the top of the screen inside a 2400-tall container (1000–3400)
+
+const PIN = {
+  kind: 'sticky', tag: 'div', label: 'Step 1', height: 800, container: { top: 1000, bottom: 3400 },
+  stuck: { from: 1000, to: 2600, count: 5 }, texts: ['Step 1', 'Step 2', 'Step 3'],
+};
+const declared = (s) => ({ ...s, declaredScrollDriven: true });
+
+test('attribute: a pinned element inside a section makes it scroll-driven; without `scrollDriven` declared it fails the run and says why', () => {
+  const r = attribute(measurement(ALL, { pins: [PIN] }));
+  assert.equal(r.ok, false);
+  assert.deepEqual(r.scrollDriven.map((x) => [x.id, x.ref, x.detected, x.declared]), [['feature-a', `${MKT}#feature-a`, true, false]]);
+  assert.deepEqual(r.undeclaredScrollDriven.map((x) => [x.id, x.ref]), [['feature-a', `${MKT}#feature-a`]]);
+  const evidence = r.undeclaredScrollDriven[0].evidence.join('；');
+  assert.match(evidence, /position: sticky/);
+  assert.match(evidence, /800/, 'how tall the pinned element is');
+  assert.match(evidence, /2400/, 'how tall its container is');
+  assert.match(evidence, /3 种/, 'the pinned text changed with the scroll');
+  assert.match(r.undeclaredScrollDriven[0].reason, /scrollDriven: true/);
+  assert.deepEqual(r.orphans, []);
+  assert.deepEqual(r.declaredNotDetected, []);
+});
+
+test('attribute: a scroll-driven section that is declared passes, and the evidence is still given', () => {
+  const r = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN] }));
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.undeclaredScrollDriven, []);
+  assert.deepEqual(r.scrollDriven.map((x) => [x.id, x.detected, x.declared]), [['feature-a', true, true]]);
+  assert.ok(r.scrollDriven[0].evidence.length > 0);
+});
+
+test('attribute: declared but not detected only gets a hint — it does not fail the run', () => {
+  const r = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER]));
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.declaredNotDetected.map((x) => x.id), ['feature-a']);
+  assert.deepEqual(r.scrollDriven.map((x) => [x.id, x.detected, x.declared]), [['feature-a', false, true]]);
+});
+
+test('attribute: a pin is given to the section its container sits in; one outside every section is nobody\'s; no pins at all is as before', () => {
+  const inFeatureB = { ...PIN, container: { top: 4600, bottom: 5200 } };
+  assert.deepEqual(attribute(measurement(ALL, { pins: [inFeatureB] })).undeclaredScrollDriven.map((x) => x.id), ['feature-b']);
+  const nowhere = { ...PIN, container: { top: 7000, bottom: 9400 } };
+  const r = attribute(measurement(ALL, { pins: [nowhere] }));
+  assert.equal(r.ok, true);
+  assert.deepEqual([r.scrollDriven, r.undeclaredScrollDriven, r.declaredNotDetected], [[], [], []]);
+  const plain = attribute(measurement(ALL));
+  assert.equal(plain.ok, true);
+  assert.deepEqual([plain.scrollDriven, plain.undeclaredScrollDriven, plain.declaredNotDetected], [[], [], []]);
+});
+
+test('attribute: a pin whose text never changed is still evidence — the pinned screen can change in ways that are not text', () => {
+  const r = attribute(measurement(ALL, { pins: [{ ...PIN, texts: ['Step 1'] }] }));
+  assert.equal(r.ok, false);
+  assert.doesNotMatch(r.undeclaredScrollDriven[0].evidence.join('；'), /随滚动变了/);
+});
+
+test('shootTargets: a section declared scroll-driven is shot as the one screen its pin holds, from the top of the pin\'s container — not its whole range — and the others as before', () => {
+  const a = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN], viewport: { width: 1440, height: 900 }, theme: 'light' }));
+  const { targets } = shootTargets(a);
+  assert.deepEqual(targets.map((t) => [t.id, t.start, t.end, t.scrollDriven === true]), [
+    ['header', 0, 100, false], ['hero', 100, 900, false], ['feature-a', 1000, 1900, true], ['feature-b', 4500, 5800, false], ['footer', 5800, 6000, false],
+  ]);
+  assert.equal(targets.find((t) => t.id === 'feature-a').file, `${MKT_ENTRY}@feature-a.png`);
+  assert.deepEqual(shootTargets(a, { only: ['feature-a'] }).targets.map((t) => t.id), ['feature-a']);
+});
+
+test('shootTargets: the screen is the viewport\'s height whatever the section\'s range, starts at the section\'s top when the pin does, and a state inside a scroll-driven section is shot as the section it sits in', () => {
+  const viewport = { width: 1440, height: 900 };
+  const a = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN], viewport, theme: 'light' }));
+  assert.equal(a.ranges.find((r) => r.id === 'feature-a').end, 4500, 'the range is still the whole block');
+  assert.equal(shootTargets(a).targets.find((t) => t.id === 'feature-a').end, 1900);
+  const atTop = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [{ ...PIN, container: { top: 900, bottom: 3300 } }], viewport, theme: 'light' }));
+  assert.deepEqual(shootTargets(atTop).targets.find((t) => t.id === 'feature-a'), { id: 'feature-a', ref: `${MKT}#feature-a`, file: `${MKT_ENTRY}@feature-a.png`, start: 900, end: 1800, inScroller: false, scrollDriven: true });
+  const noPin = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { viewport, theme: 'light' }));
+  assert.deepEqual(shootTargets(noPin).targets.find((t) => t.id === 'feature-a').start, 900, 'declared but not detected: shot from the section\'s top');
+  const inside = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN], viewport, theme: 'light', state: `${MKT}--feature-a-step-2`, entry: MKT_ENTRY, section: 'feature-a' }));
+  const t = shootTargets(inside).targets;
+  assert.deepEqual(t.map((x) => [x.id, x.file, x.start, x.end, x.scrollDriven === true]), [['feature-a', `${MKT}--feature-a-step-2.png`, 900, 4500, false]]);
+});
+
+test('buildShootCode: a scroll-driven target brings the page time with it — put back at its fixed start and reloaded for the shot — and no other shot does', () => {
+  const viewport = { width: 1440, height: 900 };
+  const a = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN], viewport, theme: 'light' }));
+  const code = buildShootCode({ targets: shootTargets(a).targets, viewport, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' });
+  assert.equal(runInNewContext(code).constructor.name, 'AsyncFunction');
+  assert.match(code, /"scrollDriven":true/);
+  assert.match(code, /clock\.install/);
+  assert.match(code, /reload\(\)/);
+  const plain = shootTargets(attribute(measurement(ALL, { viewport, theme: 'light' }))).targets;
+  assert.doesNotMatch(buildShootCode({ targets: plain, viewport, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' }), /clock\.install|runFor/);
+});
+
+test('cli attribute: an undeclared scroll-driven section is exit 1 and names the section and the field to add; declared is exit 0; declared but not detected is a hint at exit 0', () => {
+  const dir = tmp();
+  const write = (name, m) => {
+    const f = join(dir, name);
+    writeFileSync(f, JSON.stringify(m));
+    return f;
+  };
+  const bad = run('attribute', write('undeclared.json', measurement(ALL, { pins: [PIN] })));
+  assert.equal(bad.status, 1);
+  assert.equal(JSON.parse(bad.stdout).undeclaredScrollDriven.length, 1);
+  assert.match(bad.stderr, /滚动驱动/);
+  assert.match(bad.stderr, /feature-a/);
+  assert.match(bad.stderr, /scrollDriven: true/);
+  const ok = run('attribute', write('declared.json', measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN] })));
+  assert.equal(ok.status, 0, ok.stderr);
+  const hint = run('attribute', write('hint.json', measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER])));
+  assert.equal(hint.status, 0, hint.stderr);
+  assert.match(hint.stderr, /feature-a/);
+  assert.match(hint.stderr, /没检出/);
+});
+
+test('cli measure: `scrollDriven` on a section of the entry state is passed to the code; on a section given by --sections it has to be `true`', () => {
+  const files = marketingFiles();
+  files[MKT_ENTRY_FILE] = files[MKT_ENTRY_FILE].replace('  - { id: feature-a, locate: { role: heading, name: 无限菜谱 } }', '  - { id: feature-a, locate: { role: heading, name: 无限菜谱 }, scrollDriven: true }');
+  const r = run('measure', writeRepo(files), MKT_ENTRY);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /"id":"feature-a","locate":\{"role":"heading","name":"无限菜谱"\},"scrollDriven":true/);
+  assert.doesNotMatch(r.stdout, /"id":"hero","locate":\{[^}]*\},"scrollDriven"/);
+  const root = writeRepo(marketingFiles());
+  const given = run('measure', root, '--state', MKT_ENTRY, '--page', MKT, '--sections', '[{"id":"hero","locate":{"position":1},"scrollDriven":true}]');
+  assert.equal(given.status, 0, given.stderr);
+  assert.match(given.stdout, /"scrollDriven":true/);
+  const wrong = run('measure', root, '--state', MKT_ENTRY, '--page', MKT, '--sections', '[{"id":"hero","locate":{"position":1},"scrollDriven":"yes"}]');
+  assert.equal(wrong.status, 2);
+  assert.match(wrong.stderr, /scrollDriven.*true/);
+});
+
 const SHELL_SCROLLER = { kind: 'element', selector: 'body > div:nth-child(1) > main:nth-child(2)', tag: 'main', top: 60, left: 0, width: 800, contentHeight: 2100, visibleHeight: 540, others: [] };
 
 test('attribute: carries the scroll container the page was measured with, for `shoot` to scroll — null for an older measurement', () => {
@@ -250,17 +381,45 @@ test('shootTargets: for a state inside a section it is the one section, named af
   assert.throws(() => shootTargets({ ...a, section: null }), /在哪一段/);
 });
 
-test('buildShootCode: a single async function of `page` that freezes the page clock and shoots with a clip in page coordinates', () => {
+test('buildShootCode: a single async function of `page` that shoots with a clip in page coordinates and never moves the page time', () => {
   const targets = shootTargets(attribute(measurement(ALL))).targets;
   const code = buildShootCode({ targets, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', pageHeight: 6000, outDir: '/tmp/shots' });
   const fn = runInNewContext(code);
   assert.equal(fn.constructor.name, 'AsyncFunction');
-  assert.match(code, /pauseAt/);
-  assert.match(code, /resume/);
   assert.match(code, /fullPage: true/);
-  assert.match(code, /animations: 'disabled'/);
   assert.match(code, /\/tmp\/shots/);
   assert.match(code, new RegExp(`${MKT_ENTRY}@feature-a\\.png`));
+  assert.doesNotMatch(code, /pauseAt|resume\(|runFor|clock\.install/, 'shoot does not freeze, resume or step the page clock');
+  assert.doesNotMatch(code, /animations: 'disabled'/, 'a shot that fast-forwards CSS animations to their end flips a carousel away');
+  assert.match(code, /uncontrolled/);
+  assert.doesNotMatch(code, /\bstable\b/, '`stable` is replaced by `uncontrolled`');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+});
+
+test('screenTargets: a state with no sections is one section, the main viewport, named after the state', () => {
+  const { targets, skipped, scroller, pageHeight } = screenTargets({ state: `${MKT}--entry`, viewport: { width: 1440, height: 900 } });
+  assert.deepEqual(targets, [{ id: `${MKT}--entry`, ref: `${MKT}--entry`, file: `${MKT}--entry.png`, start: 0, end: 900, inScroller: false }]);
+  assert.deepEqual(skipped, []);
+  assert.equal(scroller, null);
+  assert.equal(pageHeight, 900);
+  for (const bad of [{ state: '', viewport: { width: 1, height: 1 } }, { state: 'a/b', viewport: { width: 1, height: 1 } }, { state: '.x', viewport: { width: 1, height: 1 } }, { state: 'x', viewport: { width: 1, height: 0 } }, { state: 'x' }]) {
+    assert.throws(() => screenTargets(bad), /状态|视口/, JSON.stringify(bad));
+  }
+});
+
+test('buildScreenCode: the same code `shoot` runs — a single async function that shoots one clip, flags what the page time cannot hold, and never moves or fast-forwards the page time', () => {
+  const code = buildScreenCode({ state: `${MKT}--entry`, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', outDir: '/tmp/shots' });
+  const fn = runInNewContext(code);
+  assert.equal(fn.constructor.name, 'AsyncFunction');
+  assert.match(code, new RegExp(`${MKT}--entry\\.png`));
+  assert.match(code, /\/tmp\/shots/);
+  assert.match(code, /"pageHeight":900/);
+  assert.match(code, /fullPage: true/);
+  assert.match(code, /uncontrolled/);
+  assert.doesNotMatch(code, /pauseAt|resume\(|runFor|clock\.install/, 'it does not freeze, resume or step the page clock');
+  assert.doesNotMatch(code, /animations: 'disabled'/);
+  assert.doesNotMatch(code, /animation: none/, 'no style that switches animations off is put into the page');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
 });
 
 test('cli attribute: prints the result as JSON; exit 0 with nothing orphaned, 1 with orphans or an unlocated section, 2 for bad input', () => {
@@ -318,6 +477,30 @@ test('buildMeasureCode: reduced motion is only asked for when the settings say s
   const base = { sections: SECTIONS, viewport: { width: 1440, height: 900 }, theme: 'dark' };
   assert.match(buildMeasureCode({ ...base, motion: 'reduce' }), /"motion":"reduce"/);
   assert.match(buildMeasureCode(base), /"motion":"default"/);
+});
+
+test('buildTimeCode: a single async function of `page` that stops the page clock and the CSS animation timeline, reloads, and steps the page a fixed amount', () => {
+  const code = buildTimeCode({ viewport: { width: 1440, height: 900 }, theme: 'dark', motion: 'default' });
+  const fn = runInNewContext(code);
+  assert.equal(fn.constructor.name, 'AsyncFunction');
+  assert.match(code, /"viewport":\{"width":1440,"height":900\}/);
+  assert.match(code, /"theme":"dark"/);
+  assert.match(code, /clock\.install/);
+  assert.match(code, /pauseAt/);
+  assert.match(code, /Animation\.setPlaybackRate/);
+  assert.match(code, /playbackRate: 0/);
+  assert.match(code, /reload\(\)/);
+  assert.match(code, /runFor/);
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+  assert.match(buildTimeCode({ viewport: { width: 1, height: 1 }, theme: 'light', motion: 'reduce' }), /"motion":"reduce"/);
+});
+
+test('buildStepCode: steps the page time by the given milliseconds, and only a positive whole number of them', () => {
+  const code = buildStepCode(500);
+  assert.equal(runInNewContext(code).constructor.name, 'AsyncFunction');
+  assert.match(code, /"ms":500/);
+  assert.match(code, /runFor/);
+  for (const bad of [0, -5, 1.5, NaN, '200', 120000]) assert.throws(() => buildStepCode(bad), /毫秒/, String(bad));
 });
 
 // ---------- the command line: measure ----------
@@ -410,6 +593,40 @@ test('cli measure: with --delta the sections come from the requirement\'s delta/
   assert.ok(existsSync(root));
 });
 
+test('cli time: prints the code that starts the page time, with the settings from prod/index.md or the flags; a missing viewport or theme is an error', () => {
+  const root = writeRepo(marketingFiles());
+  const r = run('time', root);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"viewport":\{"width":1440,"height":900\}/);
+  assert.match(r.stdout, /"theme":"light"/);
+  assert.match(r.stderr, /browser_navigate/, 'says when to run it: after navigating to the entry, before any interaction');
+  const flagged = run('time', root, '--viewport', '1280x800', '--theme', 'dark', '--motion', 'reduce');
+  assert.match(flagged.stdout, /"viewport":\{"width":1280,"height":800\}/);
+  assert.match(flagged.stdout, /"motion":"reduce"/);
+  const files = marketingFiles();
+  files[`${BASE}/index.md`] = files[`${BASE}/index.md`].replace('viewport: 1440x900\n', '');
+  const bare = run('time', writeRepo(files));
+  assert.equal(bare.status, 2);
+  assert.match(bare.stderr, /viewport/);
+  assert.equal(run('time', writeRepo(files), '--viewport', '1440x900').status, 0);
+  assert.equal(run('time').status, 2);
+  assert.equal(run('time', root, '--bogus', 'x').status, 2);
+  assert.equal(run('time', writeRepo({ 'README.md': 'x' })).status, 2);
+});
+
+test('cli step: prints the code that moves the page time on by N milliseconds; anything but a positive whole number is a usage error', () => {
+  const r = run('step', '400');
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"ms":400/);
+  for (const args of [[], ['0'], ['-3'], ['1.5'], ['abc'], ['400', '500'], ['400', '--ms', '5']]) {
+    const bad = run('step', ...args);
+    assert.equal(bad.status, 2, args.join(' '));
+    assert.match(bad.stderr, /毫秒|不认识/, args.join(' '));
+  }
+});
+
 test('cli measure --for: a state inside a section is measured as it stands (no reload), named after the state, with its section from the archive or --section', () => {
   const root = writeRepo(marketingFiles());
   const r = run('measure', root, MKT_ENTRY, '--for', `${MKT}--feature-b-expanded`);
@@ -489,4 +706,101 @@ test('cli shoot: an attribution made for a state inside a section shoots that se
   assert.match(r.stdout, new RegExp(`${MKT}--feature-b-expanded\\.png`));
   assert.doesNotMatch(r.stdout, /@hero/);
   assert.match(r.stderr, /1 张/);
+});
+
+test('cli shoot: an attribution that failed because of an undeclared scroll-driven section is refused, and the reason says so', () => {
+  const f = attributionFile({ ok: false, undeclaredScrollDriven: [{ id: 'feature-a', ref: `${MKT}#feature-a`, evidence: [], reason: 'x' }] });
+  const r = run('shoot', f, '--out', join(tmp(), 'shots'));
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /滚动驱动/);
+});
+
+test('cli shoot: a section declared scrollDriven goes into the printed code as scroll-driven — the flag that makes the shot reload and scroll straight to the pin — and the others do not carry it', () => {
+  const f = join(tmp(), 'driven-attribution.json');
+  writeFileSync(f, JSON.stringify(attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN], viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default' }))));
+  const r = run('shoot', f, '--out', join(tmp(), 'shots'));
+  assert.equal(r.status, 0, r.stderr);
+  const targets = JSON.parse(r.stdout.match(/"targets":(\[.*?\]),"viewport"/)[1]);
+  assert.deepEqual(targets.map((t) => [t.id, t.scrollDriven === true]), [['header', false], ['hero', false], ['feature-a', true], ['feature-b', false], ['footer', false]]);
+});
+
+// ---------- pinned: the screen a scroll-driven section holds, shot where the page stands ----------
+
+test('buildPinnedCode: a single async function of `page` that shoots the viewport as it stands, named after the state, and never moves the page time or the scroll', () => {
+  const code = buildPinnedCode({ state: `${MKT}--feature-a-step-2`, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', outDir: '/tmp/shots' });
+  assert.equal(runInNewContext(code).constructor.name, 'AsyncFunction');
+  assert.match(code, new RegExp(`${MKT}--feature-a-step-2\\.png`));
+  assert.match(code, /uncontrolled/);
+  assert.doesNotMatch(code, /pauseAt|runFor|clock\.install|scrollTo|animations: 'disabled'/);
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+});
+
+test('cli pinned: prints the code with the settings from prod/index.md or the flags and says which file it will write; a missing state, --out or an unknown option is a usage error', () => {
+  const root = writeRepo(marketingFiles());
+  const out = join(tmp(), 'shots');
+  const r = run('pinned', root, `${MKT}--feature-a-step-2`, '--out', out);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"viewport":\{"width":\d+,"height":\d+\}/);
+  assert.ok(r.stdout.includes(JSON.stringify(out)));
+  assert.match(r.stderr, new RegExp(`${MKT}--feature-a-step-2\\.png`));
+  const flags = run('pinned', root, 'x--y', '--out', out, '--viewport', '800x600', '--theme', 'dark');
+  assert.match(flags.stdout, /"viewport":\{"width":800,"height":600\}/);
+  assert.match(flags.stdout, /"theme":"dark"/);
+  for (const [args, pattern] of [
+    [['pinned'], /仓库根/],
+    [['pinned', root], /状态/],
+    [['pinned', root, 'x--y'], /--out/],
+    [['pinned', root, 'x--y', '--out', out, '--bogus', '1'], /不认识的选项/],
+    [['pinned', root, 'x--y', 'z', '--out', out], /多出/],
+    [['pinned', tmp(), 'x--y', '--out', out], /docs/],
+  ]) {
+    const e = run(...args);
+    assert.equal(e.status, 2, args.join(' '));
+    assert.match(e.stderr, pattern, args.join(' '));
+  }
+});
+
+// ---------- the command line: screen ----------
+
+test('cli screen: prints the code that shoots a state with no sections as one screen — no measure or attribute first — with the settings from prod/index.md or the flags', () => {
+  const root = writeRepo(marketingFiles());
+  const out = join(tmp(), 'shots');
+  const r = run('screen', root, 's-login--entry', '--out', out);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /s-login--entry\.png/);
+  assert.match(r.stdout, /"viewport":\{"width":1440,"height":900\}/);
+  assert.match(r.stdout, /"theme":"light"/);
+  assert.match(r.stdout, /"pageHeight":900/);
+  assert.ok(r.stdout.includes(JSON.stringify(out)), 'the output directory is written into the code');
+  assert.match(r.stderr, /1 张/);
+  assert.match(r.stderr, /装时间|time/, 'says the page time has to be started first');
+  const flagged = run('screen', root, 's-login--entry', '--out', out, '--viewport', '390x844', '--theme', 'dark', '--motion', 'reduce');
+  assert.match(flagged.stdout, /"viewport":\{"width":390,"height":844\}/);
+  assert.match(flagged.stdout, /"pageHeight":844/);
+  assert.match(flagged.stdout, /"motion":"reduce"/);
+});
+
+test('cli screen: usage errors exit 2 and say why', () => {
+  const root = writeRepo(marketingFiles());
+  const out = join(tmp(), 'shots');
+  const files = marketingFiles();
+  files[`${BASE}/index.md`] = files[`${BASE}/index.md`].replace('viewport: 1440x900\n', '');
+  const cases = [
+    [['screen'], /仓库根/],
+    [['screen', root], /状态 id/],
+    [['screen', root, 's-login--entry'], /--out/],
+    [['screen', root, 's-login--entry', 'extra', '--out', out], /多出/],
+    [['screen', root, 'a/b', '--out', out], /状态/],
+    [['screen', writeRepo(files), 's-login--entry', '--out', out], /viewport/],
+    [['screen', root, 's-login--entry', '--out', out, '--bogus', 'x'], /不认识的选项/],
+    [['screen', writeRepo({ 'README.md': 'x' }), 's-login--entry', '--out', out], /docs/],
+  ];
+  for (const [args, pattern] of cases) {
+    const r = run(...args);
+    assert.equal(r.status, 2, args.join(' '));
+    assert.match(r.stderr, pattern, args.join(' '));
+  }
+  assert.equal(run('screen', writeRepo(files), 's-login--entry', '--out', out, '--viewport', '1440x900').status, 0);
 });
