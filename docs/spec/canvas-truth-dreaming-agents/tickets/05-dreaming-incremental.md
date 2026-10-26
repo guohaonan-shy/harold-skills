@@ -17,6 +17,8 @@
 
 依据与全貌：spec `docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md` 的「实现决策」7。
 
+> 人的决定（2026-10-26）：区域组件按 A，别名 import 接受成已知限制，起第 2 轮。
+
 ## 验收标准
 - [x] setup 写明建 dreaming 每周定时任务的步骤（查有没有、问人、建、不在桌面 app 时交 prompt、app 关着补跑），跟 seo-setup 的写法一致
 - [x] 档案查询多一种问法「给一个提交，交回受影响的状态」，三条规则（页面代码、组件代码反查、直接 import）各有单测，先红后绿；命令行与 MCP 两个入口都能用（若 MCP 包装其余问法）
