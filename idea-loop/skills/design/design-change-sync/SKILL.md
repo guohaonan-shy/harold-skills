@@ -25,7 +25,7 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 - 状态名与锚点名是契约，改格不改名；人要的是新增一格，用新名字，加进冻结摘要的状态矩阵。
 - 改过的格重截，覆盖 `assets/` 里同名的矩阵截图；用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" <v<N+1>.html 的路径>` 过一遍。
 - 人的原话与画布、方向说明矛盾时，照人的原话改，交回时点出矛盾。不落 ledger：`work/` 在冻结时已经清掉，这一次的记录在冻结记录的「冻结后的变更」里，由编排者记。
-- 评委意见交回来时，编排者用 SendMessage 接着这个 designer，改成 `v<N+2>`。
+- 评委意见交回来时，编排者用 SendMessage 接着这个 designer，从上一版再复制出下一版（`v<N+2>`、`v<N+3>`……），只改意见指到的格。**终版**写作 `v<终>`：评委判「通过」的那一版，可能是第一次改出的，也可能是退回后再改的；下面提交、记冻结记录、给工单追加格，指的都是它，不是第一次改出来的那一版。
 
 交回照 `designer.md` 的「交付」格式：新一版的版本号；改动的每一格的截图路径，放 `canvas/work/change-<序号>/`（不提交）；「改了什么」写清改了哪几格、没动的格已比对一致。
 
@@ -52,7 +52,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<canvas>/work/change-<序
 
 编排者：
 
-1. 提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<N+1>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到当前分支：实现期间是集成分支，review 期间是 PR 分支。
+1. 提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<终>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和评委退回的中间版不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到当前分支：实现期间是集成分支，review 期间是 PR 分支。
 2. 冻结记录「冻结后的变更」记一行，跟画布同一个提交（第一次记时把冻结时写的「无」换成表头）：
 
    ```
@@ -61,5 +61,5 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<canvas>/work/change-<序
    | 2026-10-24 | v6 | cookbook--search-loading | 「加载态不要骨架屏，一条细进度条就够」 | 9 |
    ```
 
-   「改了哪几格」写状态名，多格用逗号；「评委分」是最后一轮 `critic-score.mjs` 的分数；「画布版本」是这一行之后的最终画布：它与冻结摘要里的画布指针不同时，以这一节最后一行的版本为准。
+   「改了哪几格」写状态名，多格用逗号；「评委分」是最后一轮 `critic-score.mjs` 的分数；「画布版本」写 `v<终>`，是这一行之后的最终画布：它与冻结摘要里的画布指针不同时，以这一节最后一行的版本为准。
 3. 回到调用方 skill：代码跟新画布不一致、而且来源不是「接受实现」的，由它派实现者照新画布做；人不再单独看新画的那几格，实现出来后在 review 里照常看到。
