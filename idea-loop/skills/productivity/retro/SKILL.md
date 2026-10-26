@@ -1,9 +1,9 @@
 ---
 name: retro
-description: 从这场会话里人的纠正、选择和说出的方向提炼规则候选，批了的开成 issue。issue 会话收尾、或人说「retro 一下」时用。
+description: 从这场会话里人的纠正、选择和说出的方向提炼规则候选，逐条摆给人批。issue 会话收尾、或人说「retro 一下」时用。
 ---
 
-人在会话里纠正过、选过、定过方向的东西，会话一归档就丢了。你读这场会话的记录，挑出该变成规则的，逐条摆给人；人批了的开成待验证的 issue。**你自己不改任何规则文件。**
+人在会话里纠正过、选过、定过方向的东西，会话一归档就丢了。你读这场会话的记录，挑出该变成规则的，逐条摆给人；人批了的，由人当场选：先进候选池攒着，或直接开成待验证的 issue。**你自己不改任何规则文件。**
 
 下文 `digest` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/session-digest.mjs"`，`<docs>` 指目标仓库的 `docs/`。
 
@@ -15,8 +15,9 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 2. 退出码为 2（没有文件含标记，或有几份差不多时间写的）：调 `mcp__ccd_session_mgmt__export_transcript`（`session_id: self`）导出，解开 zip 里的会话记录文件当下一步的输入。工具不可用就停下告诉人，不凭上下文里记得的补。
 3. 压缩：`digest digest <文件> > .tmp/retro/<YYYY-MM-DD>-<主题>/digest.md`，只读这份。它是人的每一条发言，每条前面带着上一条 AI 回复的结论（前略的部分是被截掉的开头）；工具调用和输出都没有。压缩点在里面有一行标出。
 4. 读 `<docs>/raw/decisions/` 下以前留下的决定记录（格式见 [references/decision-record.md](references/decision-record.md)）；目录不存在就是还没有。
+5. 读候选池：当前仓库的 `<docs>/records/retro-candidates/`，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <docs>/records/retro-candidates` 列出每份的标题、落点、状态、次数；目录不存在就是还没有。当前仓库不是插件所在的 `guohaonan-shy/harold-skills` 时，再读它的池（`gh` 远程读，不检出；怎么读见 [references/candidate-pool.md](references/candidate-pool.md)）。池里的形状见同一份。
 
-做完的条件：`digest.md` 已生成并读完，压缩点的位置你说得出来；`raw/decisions/` 下的记录要么读完、要么确认目录不存在。
+做完的条件：`digest.md` 已生成并读完，压缩点的位置你说得出来；`raw/decisions/` 下的记录要么读完、要么确认目录不存在；候选池（要读的几处）要么读完、要么确认不存在。
 
 ## 2. 找三种信号
 
@@ -53,36 +54,47 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 - 落点：<插件 skill 名 / 目标仓库的哪个文件 / 哪个检查>
 - 旧文：<现在写的，原文；没有就写「无」>
 - 新文：<改成的，原文>
+- 同类：池里的 <那一份的文件名>，这是第 <N> 次 / 池里没有
 ```
+
+「同类」的 N 是那一份现在的次数加 1，次数以计数脚本为准。判同一类按决定记录里「情形 / 处置」的读法（[references/decision-record.md](references/decision-record.md) 的「读它的规矩」）：落点相同，再读池里那一份的旧文、新文、例子，核对要改的是不是同一件事，不看措辞像不像；拿不准就写「池里没有」，宁可多一份，不并错。
 
 「人自己说的方向」没法替人选落点：落点写成「问你」，列三层各自会怎么写。没有候选，说一句「这次无事」。
 
-做完的条件：每条候选的六项都填了，原话逐字对过 digest；对不上的已经撤掉。
+做完的条件：每条候选的七项都填了，原话逐字对过 digest；「同类」写的那一份，你打开读过；对不上的已经撤掉。
 
 ## 4. 逐条摆给人
 
-候选在会话里逐条摆，每条后面等人回**批**、**不批**或**改成…**。不要攒成一整张表一次问完；也不要替人批。
+候选在会话里逐条摆，每条后面等人回四种之一：**批·进候选池**（先攒着，由 dreaming 数次数）、**批·开 issue**（马上进流程）、**不批**、**改成…**。不要攒成一整张表一次问完；也不要替人批。
 
-做完的条件：每条候选都有人的回复，是批、不批或改成…三者之一；回了「改成…」的，改完的版本再摆一次、得到批或不批。
+- **去处由人定，你不给推荐。** 依据是人的原话：「我觉得retro过程中进入候选还是直接进入issue需要由我来判断」。
+- 人只回了「批」、没说去处，问一句去哪；人用了别的说法（例：「留在候选吧」）按意思归到两个去处之一，拿不准就问。
+- 回了「改成…」的，改完再摆一次，同样二选一。
 
-## 5. 批了的开成 issue
+做完的条件：每条候选都有人的回复：不批，或批并选定了去处，或改成…（改完再摆一次、得到不批或批加去处）。
 
-照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（查重、不打 `status:*`）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
+## 5. 批了的：开 issue，或进候选池
 
-做完的条件：每条批了的候选都有 issue 链接，或一句开不成的原因；没有批了的，就没有这一步。
+**选开 issue 的**：照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（查重、不打 `status:*`）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
+
+**选进候选池的**：不开 issue。池按落点分仓库：落点是插件的，进 `guohaonan-shy/harold-skills` 的池；落点是目标仓库自己规则文件的，进当前仓库的池。「同类」写了那一份的，在那一份的「出现」里加一行（状态不动）；否则新建一份。文件的形状、怎么加、怎么备好要远程写的那份，见 [references/candidate-pool.md](references/candidate-pool.md)。
+
+做完的条件：每条批了的候选要么有 issue 链接，要么有池里那一份的链接（要远程写进 harold-skills 的，先记备好的文件路径，链接在第 6 步合并后补），或一句开不成的原因；没有批了的，就没有这一步。
 
 ## 6. 写决定记录
 
-这场会话里摆给人的每道题，以及每条候选的结果（批 / 不批 / 改成），记成 `<docs>/raw/decisions/<issue 号>.md`；没有 issue 号，用 `<YYYY-MM-DD>-<主题>.md`。格式见 [references/decision-record.md](references/decision-record.md)。没有摆过题也没有候选，就不写。
+这场会话里摆给人的每道题，以及每条候选的结果（`批·进候选池（<池里那一份的链接>，第 N 次）` / `批·开 issue（<链接>）` / 不批 / 改成），记成 `<docs>/raw/decisions/<issue 号>.md`；没有 issue 号，用 `<YYYY-MM-DD>-<主题>.md`。格式见 [references/decision-record.md](references/decision-record.md)。没有摆过题也没有候选，就不写。
 
-这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「不自动的」）。`<docs>/raw/index.md` 加一行，新建 `<docs>/raw/decisions/` 时 `index.md` 里说明它收什么。
+这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「不自动的」）。`<docs>/raw/index.md` 加一行，新建 `<docs>/raw/decisions/` 时 `index.md` 里说明它收什么。当前仓库的池里这次的改动（新建的、追加「出现」的），跟决定记录在同一个 PR 里。
+
+进了 harold-skills 的池、而 retro 又不在 harold-skills 里跑的，再给 harold-skills 开一个只改 `docs/` 的 PR：`gh` 远程建分支、写文件、开 PR，不检出，检查全过就合并（做法见 [references/candidate-pool.md](references/candidate-pool.md)）。开不成的，记下原因，把那条候选的全文留在这场的决定记录里交给人。retro 就跑在 harold-skills 里时，两个池是同一个，只有上面那一个 PR。
 
 收工时删 `.tmp/retro/<YYYY-MM-DD>-<主题>/`。
 
-做完的条件：摆过的每道题、每条候选的结果都在记录里，PR 已合并（`gh pr view` 的状态是 MERGED），临时目录已删；没有摆过题也没有候选时，这一步直接算完成。
+做完的条件：摆过的每道题、每条候选的结果都在记录里，PR 已合并（`gh pr view` 的状态是 MERGED）；有写进别的仓库池的，那个 PR 也已合并，或原因和候选全文已记在决定记录里；临时目录已删；没有摆过题也没有候选时，这一步直接算完成。
 
 ## 边界
 
-- 不读这场以外的会话；以前的靠 `raw/decisions/`。
+- 不读这场以外的会话；以前的靠 `raw/decisions/` 和候选池。
 - 不改规则文件、不写 ADR、不动 spec。
 - 摆给人的原话必须逐字取自 digest，核过再写；对不上的候选撤掉。

@@ -18,10 +18,10 @@
 
 ## 验收标准
 
-- [ ] retro 的 SKILL.md 第 1、4、5、6 步按上面改完，第 5 步的「做完的条件」改成：每条批了的候选要么有 issue 链接、要么有池里那一份的链接（或一句开不成的原因）
-- [ ] description 不再说「批了的开成 issue」
-- [ ] 决定记录 reference 的「结果」一行有两种批的写法
-- [ ] 新回放用例通过 `idea-loop/scripts/retro-case.test.mjs` 的形状校验
+- [x] retro 的 SKILL.md 第 1、4、5、6 步按上面改完，第 5 步的「做完的条件」改成：每条批了的候选要么有 issue 链接、要么有池里那一份的链接（或一句开不成的原因）
+- [x] description 不再说「批了的开成 issue」
+- [x] 决定记录 reference 的「结果」一行有两种批的写法
+- [x] 新回放用例通过 `idea-loop/scripts/retro-case.test.mjs` 的形状校验
 - [ ] ⏭ 延后 → 人：回放的改前「否」改后「是」，交出命令夜里跑
 
 ## 选中的存量回归
