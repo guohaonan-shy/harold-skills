@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, issue-dispatch, retro]
 summary: 调度只数 issue 会话；retro issue 按 plugin 每天做一次 retro 整合，自动做到 PR，人第二天看
 related: ["[[2026-10-26-retro-merge-grill]]", "[[retro]]"]
