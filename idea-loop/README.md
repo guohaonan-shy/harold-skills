@@ -340,7 +340,7 @@ idea-loop/
 │   │   │   references/freeze.md, motion-stage.md, asset-stage.md, pinned-findings.md  # read only on their branch: sign-off, motion, marketing assets, a pinned finding
 │   │   ├── uiux-research/SKILL.md    # human-run design research — only the calling mechanism; the work is in agents/uiux-researcher.md
 │   │   │   references/research-backend.md
-│   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, modeling choices, directories and tmp/prod split, frontmatter shapes, body sections, the seven validation rules, the six query entries
+│   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, modeling choices, directories and tmp/prod split, frontmatter shapes, body sections, the seven validation rules, the seven query entries (page, state, journey, requirement diff, reverse lookup, keyword, and `affected`: pick the states hit since a commit)
 │   │   │   references/query.md, archive-script.md, sections.md  # query return shapes; the archive script's steps; a long page's sections (type table, locating, rule 7, shooting section by section)
 │   │   └── design-change-sync/SKILL.md    # shared, model-invoked — a design change after the freeze, called by `implement` and `pr-review` sessions: the designer edits only the affected cells of the canvas, a fresh ui-master scores only those cells (same `critic-score.mjs`), then commit, push and one row in the freeze record's "changes after the freeze"
 │   └── productivity/

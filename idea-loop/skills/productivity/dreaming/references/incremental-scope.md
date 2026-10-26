@@ -20,7 +20,7 @@ dreaming 每周由桌面 app 的定时任务自己跑一次（`/idea-loop:setup`
 
 ## 基准提交
 
-1. 任务 id 是 `dreaming-<仓库名>`，仓库名取主 checkout 的目录名（`git rev-parse --show-toplevel` 的最后一段），跟 `/idea-loop:setup` 建任务时用的一样。`list_scheduled_tasks` 里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
+1. 任务 id 是 `dreaming-<仓库名>`，仓库名取主 checkout 的目录名，跟 `/idea-loop:setup` 建任务时用的一样。dreaming 在自己切的 worktree 里跑，`git rev-parse --show-toplevel` 取到的是这个 worktree 的目录名，会找不到任务；改从 git 的公共目录往上取：`basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`，在主 checkout 和任何 worktree 里得到的都是主 checkout 的目录名。`list_scheduled_tasks` 里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
 2. `mcp__scheduled-tasks__list_task_runs`，`taskId` 填上面的 id，`limit` 取 50，从新到旧找第一条 `status` 是 `succeeded` 的，记下它的 `started_at`。这一次自己若就是定时任务起的，它的状态是 `running`，不会被选中。
 3. 起环境时已经 `git fetch`。找 `origin/<基准分支>` 在那一刻的提交：`git rev-list -1 --first-parent --before="<started_at>" origin/<基准分支>`。输出为空（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
 

@@ -25,8 +25,8 @@
 - [x] dreaming 写明基准点怎么从定时任务执行历史取、没有就全量、手敲不推进；只把挑中的状态交给实时波，源码波全量；人说「全量」就全量
 - [x] 提议表 reference 写明开头一行（全量还是增量、为什么、几个状态）与「上一张还没处理」的提醒；末尾没跑成的批带「下次可说全量」
 - [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
-- [ ] review 第 2 轮 S3（2026-10-26）：dreaming 在自己切的 worktree 里找定时任务时，用的仓库名要跟 setup 建任务时一致（取主 checkout 的目录名，不取当前 worktree 的目录名），定时执行与手敲都能从执行记录取到基准。依据：spec「人手敲的那次用同一个基准，不推进基准」
-- [ ] review 第 2 轮 C1（2026-10-26）：插件 README 目录树里设计档案的查询入口写成七个，点出新加的「按提交挑受影响的状态」。规则原文：AGENTS.md「改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同步改的是它自己的 README.md」
+- [x] review 第 2 轮 S3（2026-10-26）：dreaming 在自己切的 worktree 里找定时任务时，用的仓库名要跟 setup 建任务时一致（取主 checkout 的目录名，不取当前 worktree 的目录名），定时执行与手敲都能从执行记录取到基准。依据：spec「人手敲的那次用同一个基准，不推进基准」
+- [x] review 第 2 轮 C1（2026-10-26）：插件 README 目录树里设计档案的查询入口写成七个，点出新加的「按提交挑受影响的状态」。规则原文：AGENTS.md「改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同步改的是它自己的 README.md」
 
 ## 选中的存量回归
 - `design-archive-query.test.mjs`：新问法加在查询模块里，现有六种问法不能被带坏
