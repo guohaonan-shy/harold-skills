@@ -11,6 +11,7 @@
 | [[dreaming-design-reconcile]] | dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏 |
 | [[end-task-close-icon]] | 设计参考加一条规则：结束整个任务的入口用 X 并写明结束什么，后退箭头只用于无害地回一步 |
 | [[idea-loop-seo]] | idea-loop 新开 seo 分类：蒸馏 OpenSEO 做发现，扫描结果提成 issue，按原有流程解决 |
+| [[native-summary-locate]] | 原生折叠标题按角色定位不到、FAQ 展开写不成边：验证为不存在，已在 design-archive-sections 里做掉 |
 | [[pr-review-report-followups]] | 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板 |
 | [[retro]] | retro：从会话里的纠正与决定提炼规则候选，批了开 issue，改 skill 要回放证明生效 |
 | [[ui-state-archive]] | docs/design 分 tmp / prod，prod 是一张按页面状态建的图，设计与验证共用，合并前归档 |
