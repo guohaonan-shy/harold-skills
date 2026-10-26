@@ -1,6 +1,6 @@
 ---
 name: issue-dispatch
-description: issue 的调度者：在项目固定的调度会话里起一个 loop，按间隔给待验证的 issue 出会话卡片，一个 issue 一张。
+description: issue 的调度者：在项目固定的调度会话里起一个 loop，按间隔给待验证的 issue 出会话卡片：普通 issue 一个一张，retro 开出的 issue 凑成 retro 整合出整合卡片。
 argument-hint: "<间隔，如 30m>"
 ---
 

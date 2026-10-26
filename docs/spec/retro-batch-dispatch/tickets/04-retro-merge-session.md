@@ -21,7 +21,7 @@
 3. **切工单、实现**：`to-ticket`、`implement`。落到同一个 skill 同一段的几条合成一张工单，照 `writing-for-agents` 的写法跟现有内容合并，不往后 append；改完的 SKILL.md 主体仍 < 5000 字，超了在 PR 里标出。
 4. **证明生效**：照 implementer「改规则的工单：怎么证明 skill 真的变了」；回放用例的材料从 issue 正文、`docs/raw/decisions/<号>.md`、来源 PR 里拼，拼不出来的在 PR 里标「无法回放」，不硬编用例。小用例当场跑，大用例进夜间队列。
 5. **review**：`pr-review` 跑两轴 review，Spec 轴对照这份 spec（它的内容来自这批 issue 的候选和新文）。
-6. **全程不停下等人**：spec 里的「待定」、implement 要人决定的工单、review 里的「要你决定」，都按推荐先做（spec 里写成「按推荐先定，待人确认」），收集起来。
+6. **全程不停下等人**：spec 里的「待定」、to-ticket 切法要人点头、implement 要人决定的工单、review 里的「要你决定」，都按推荐先做（spec 里写成「按推荐先定，待人确认」），收集起来。
 7. **停下给人看**：最后在会话里先摆「要你确认」（上一步收集的，每条一句：做了什么、推荐的依据），再摆改动点（每个 issue → 落到哪个文件哪一节）、review 结果、回放结果，等人。
 8. **人回复后**：哪条不要——不做的 `issues drop` 关成 not planned、撤掉对应改动；要讨论的 `issues unhandoff` 移出 spec、摘掉 `retro`，回普通队列。人说合并，由 `pr-review` 合并，再照 `issue-session` 的「换阶段」「收尾」关掉其余 issue、retro、归档自己。
 
@@ -40,6 +40,6 @@
 ## 选中的存量回归
 
 - `idea-loop/scripts/issues.test.mjs`：整合卡片依赖 02 的命令，跑一遍确认没被这一刀碰坏
-- [ ] review 第 1 轮 S1（2026-10-26）：整合会话在切工单这一步也不等人点头（to-ticket 原本要「把切法摆给人看、迭代到人点头」），按推荐先切、记进确认清单；「全程不停下等人」列出的几处要包含切工单这一处。依据：人的原话「这些 issue 合并成一个 spec -> 拆分工单 -> pr-review / skill test 这些不需要经过我同意，你直接做即可」
-- [ ] review 第 1 轮 S3（2026-10-26）：`issue-dispatch` 的 description 不再说「一个 issue 一张」，改成跟新做法一致（普通 issue 一个一张，retro issue 凑成 retro 整合出整合卡片），仍只做路由
-- [ ] review 第 1 轮 C1（2026-10-26）：整合会话 skill 里起草、切工单与实现、证明生效、review 这几步各以一个「完成条件」结尾（writing-for-agents：「每一步都以一个完成条件结尾」）
+- [x] review 第 1 轮 S1（2026-10-26）：整合会话在切工单这一步也不等人点头（to-ticket 原本要「把切法摆给人看、迭代到人点头」），按推荐先切、记进确认清单；「全程不停下等人」列出的几处要包含切工单这一处。依据：人的原话「这些 issue 合并成一个 spec -> 拆分工单 -> pr-review / skill test 这些不需要经过我同意，你直接做即可」
+- [x] review 第 1 轮 S3（2026-10-26）：`issue-dispatch` 的 description 不再说「一个 issue 一张」，改成跟新做法一致（普通 issue 一个一张，retro issue 凑成 retro 整合出整合卡片），仍只做路由
+- [x] review 第 1 轮 C1（2026-10-26）：整合会话 skill 里起草、切工单与实现、证明生效、review 这几步各以一个「完成条件」结尾（writing-for-agents：「每一步都以一个完成条件结尾」）

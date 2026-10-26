@@ -101,6 +101,28 @@ test('retro-merge never stops for the human until the last step, and collects wh
   assert.match(after, /idea-loop:pr-review/, 'the merge goes through pr-review');
 });
 
+test('issue-dispatch description routes both kinds of card, not "one card per issue"', () => {
+  const desc = dispatch.match(/^description: (.+)$/m)?.[1] ?? '';
+  assert.match(desc, /整合/, 'the description mentions the retro 整合 card');
+  assert.doesNotMatch(desc, /一个 issue 一张。$/, 'no longer says every issue gets a card of its own');
+  assert.ok(desc.length <= 140, `description must stay one routing line, got ${desc.length} characters`);
+});
+
+test('retro-merge ends every working step with a completion condition', () => {
+  const b = body(merge);
+  for (const h of ['开场', '起草', '切工单、实现', '证明生效', 'review']) {
+    const lines = section(b, h).split('\n').map((l) => l.trim()).filter(Boolean);
+    assert.match(lines.at(-1), /^完成条件：/, `"## ${h}" does not end with 完成条件：`);
+  }
+});
+
+test('retro-merge does not wait for the human to approve the ticket split either', () => {
+  const b = body(merge);
+  assert.match(section(b, '切工单、实现'), /切法/, 'the slicing step says what happens to to-ticket\'s show-the-split step');
+  assert.match(section(b, '切工单、实现'), /不等人点头/);
+  assert.match(section(b, '全程不停下'), /切法/, '全程不停下 lists the slicing step among the stops it removes');
+});
+
 test('the README, the root AGENTS.md and the plugin version know the new skill', () => {
   const readme = read('README.md');
   assert.match(readme, /\| `idea-loop:retro-merge` \|/, 'skills table row');
