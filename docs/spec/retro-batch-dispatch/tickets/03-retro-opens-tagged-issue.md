@@ -15,9 +15,9 @@ idea-loop 的 `retro` skill 第 5 步把人批了的候选开成待验证 issue�
 
 ## 验收标准
 
-- [ ] `retro` 第 5 步写明打 `type:<plugin>` 和 `retro`、正文多写三样、哪几类例外不打 `retro`
-- [ ] SKILL.md 主体仍 < 5000 字
-- [ ] 照 implementer「改规则的工单：怎么证明 skill 真的变了」证明生效：能机械判定的做成检查，否则写回放用例；用例材料取 #102 的来源（`docs/raw/decisions/55.md` 与它开出的 #102），verified 里写结果或「回放在队列里」
+- [x] `retro` 第 5 步写明打 `type:<plugin>` 和 `retro`、正文多写三样、哪几类例外不打 `retro`
+- [x] SKILL.md 主体仍 < 5000 字
+- [ ] 照 implementer「改规则的工单：怎么证明 skill 真的变了」证明生效：能机械判定的做成检查，否则写回放用例；用例材料取 #102 的来源（`docs/raw/decisions/55.md` 与它开出的 #102），verified 里写结果或「回放在队列里」 ⏭ 延后 → PR 交付验收：回放用例 `retro-issue-replay-material` 已写好、格式检查过，但本机 `claude -p` 未登录（OAuth 过期），当场没跑成；登录后跑 `node ~/.idea-loop/bin/retro-replay.mjs --case retro-issue-replay-material --worktree <worktree>`，或由编排者放进夜间队列
 
 ## 选中的存量回归
 
