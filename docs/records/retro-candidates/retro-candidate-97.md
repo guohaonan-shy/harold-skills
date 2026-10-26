@@ -11,13 +11,9 @@ tags: [retro-candidates]
 
 - 信号：纠正与追问
 - 落点：`glossary` skill；`implement` skill 的「落地」
-**旧文**（glossary）：「格式由 `glossary-check.mjs` 机械校验：plugin 的 PostToolUse hook 在每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件时自动跑它，违规写到 stderr、退出码 2，当场改到通过。」
-**新文**（glossary，接在旧文后）：「改 `GLOSSARY.md` 只用 Write / Edit，不用 shell 或脚本改：后者绕过这个 hook。不得不用脚本改时，改完手动跑一次 `glossary-check.mjs`，过了再提交。」
-**新文**（implement · 落地，加一条）：「每次推送集成分支后，看一次 PR 的检查（`gh pr checks <号>`）。有失败的，先查是不是这次推送引入的；是就当场修，修好再派下一张；不是就记进停下汇报。不要攒到停下汇报或 review 才看。」
-
-- 例子：
-
-**问题**：编排者用 shell 脚本改了 `GLOSSARY.md`，绕过了插件在 Write / Edit 时跑 `glossary-check.mjs` 的 hook，一个超过两句的词条推了上去；之后推送集成分支时没看 PR 检查，Docs Lint 连续失败 6 次，人被失败邮件提醒才发现。
+- 旧文：（glossary）「格式由 `glossary-check.mjs` 机械校验：plugin 的 PostToolUse hook 在每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件时自动跑它，违规写到 stderr、退出码 2，当场改到通过。」
+- 新文：（glossary，接在旧文后）「改 `GLOSSARY.md` 只用 Write / Edit，不用 shell 或脚本改：后者绕过这个 hook。不得不用脚本改时，改完手动跑一次 `glossary-check.mjs`，过了再提交。」；（implement · 落地，加一条）「每次推送集成分支后，看一次 PR 的检查（`gh pr checks <号>`）。有失败的，先查是不是这次推送引入的；是就当场修，修好再派下一张；不是就记进停下汇报。不要攒到停下汇报或 review 才看。」
+- 例子：编排者用 shell 脚本改了 `GLOSSARY.md`，绕过了插件在 Write / Edit 时跑 `glossary-check.mjs` 的 hook，一个超过两句的词条推了上去；之后推送集成分支时没看 PR 检查，Docs Lint 连续失败 6 次，人被失败邮件提醒才发现。
 
 - 状态：在池里
 

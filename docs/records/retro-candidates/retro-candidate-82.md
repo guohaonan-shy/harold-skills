@@ -13,8 +13,7 @@ tags: [retro-candidates]
 - 落点：插件的 `issue-verify`，起草之前（人在 #51 的 retro 里批的）
 - 旧文：无。
 - 新文：「issue 里点名的实现手段（某个 skill、某种数据源）先当成手段、不当成需求：起草时把核心诉求单独写一句；手段是不是定死的，判不了就作为『需要 grill』的第一个问题。」
-
-例子：#51 的标题和正文写着「让 dreaming 定期回看已合并 PR 的 review loop 归档」。issue 会话把「dreaming」「PR 归档」当前提，第一版 spec 整份建在上面（读 PR 归档、dreaming 多一节提议表）。人一开口就推翻了：核心诉求是「在实际决策中把问题和决策点整理成规则、迭代 skill」，用不用 dreaming 不重要。spec 重写了一遍（见 `docs/raw/idea-loop-decisions/2026-10-22-retro-grill.md` 的 U1）。
+- 例子：#51 的标题和正文写着「让 dreaming 定期回看已合并 PR 的 review loop 归档」。issue 会话把「dreaming」「PR 归档」当前提，第一版 spec 整份建在上面（读 PR 归档、dreaming 多一节提议表）。人一开口就推翻了：核心诉求是「在实际决策中把问题和决策点整理成规则、迭代 skill」，用不用 dreaming 不重要。spec 重写了一遍（见 `docs/raw/idea-loop-decisions/2026-10-22-retro-grill.md` 的 U1）。
 
 - 状态：在池里
 
