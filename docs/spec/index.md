@@ -13,6 +13,7 @@
 | [[idea-loop-seo]] | idea-loop 新开 seo 分类：蒸馏 OpenSEO 做发现，扫描结果提成 issue，按原有流程解决 |
 | [[pr-review-report-followups]] | 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板 |
 | [[retro]] | retro：从会话里的纠正与决定提炼规则候选，批了开 issue，改 skill 要回放证明生效 |
+| [[sections-inner-scroll]] | 分段脚本认出真正在滚的元素：内层容器滚动的页面也能量全高、按段拍到首屏以下 |
 | [[ui-state-archive]] | docs/design 分 tmp / prod，prod 是一张按页面状态建的图，设计与验证共用，合并前归档 |
 | [[uiux-imagine-agent]] | uiux-imagine 的执行抽成专职 uiux-imaginer agent，会话只编排和摆结果 |
 
