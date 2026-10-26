@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, ui-reviewer, designer, pr-review, dreaming, design-archive]
 summary: 冻结后画布是唯一设计真相，设计变更由 designer 改画布；dreaming 拆成编排者加专职 agent
 related: ["[[2026-10-23-design-truth-after-freeze]]", "[[ui-state-archive]]", "[[design-archive-sections]]", "[[dreaming-design-reconcile]]"]
