@@ -345,7 +345,7 @@ idea-loop/
 │   │   └── design-change-sync/SKILL.md    # shared, model-invoked — a design change after the freeze, called by `implement` and `pr-review` sessions: the designer edits only the affected cells of the canvas, a fresh ui-master scores only those cells (same `critic-score.mjs`), then commit, push and one row in the freeze record's "changes after the freeze"
 │   └── productivity/
 │       ├── grill/SKILL.md
-│       ├── retro/SKILL.md            # model-invoked — end-of-session retro: rule candidates from the human's corrections, choices and directions; references/decision-record.md, references/candidate-pool.md (the pool file shape, and reading / writing harold-skills' pool remotely)
+│       ├── retro/SKILL.md            # model-invoked — end-of-session retro: rule candidates from the human's corrections, choices and directions; references/decision-record.md, references/candidate-pool.md (the pool file shape, judging the same kind, the human's replies, reading / writing harold-skills' pool remotely), references/session-digest.md (locating and compressing the transcript)
 │       ├── writing-for-agents/       # shared, model-invoked; SKILL.md + SKILL-MECHANICS.md translated into Chinese from mattpocock/skills (MIT, see its LICENSE)
 │       ├── glossary/SKILL.md         # shared, model-invoked — GLOSSARY.md: what goes in, format, who writes (grill; dreaming corrects with approval), who reads; references/target-repo-setup.md for the AGENTS.md block and CI snippet
 │       ├── wiki-conventions/SKILL.md # shared, model-invoked — the docs/ contract — directories, frontmatter, status enums; references/migrate-flat-layout.md

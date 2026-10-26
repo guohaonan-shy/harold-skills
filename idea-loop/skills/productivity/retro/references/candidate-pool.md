@@ -32,6 +32,21 @@ tags: [retro-candidates]
 - 文件名：`<YYYY-MM-DD>-<主题 slug>.md`；slug 在 `docs/` 里全局唯一（建之前 grep 一遍）。
 - 次数不靠人数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <池目录>`，按 JSON 输出每份的次数和是否过门槛（≥3），形状不对的列成问题、退出码 2。写完一份就对那个池跑一遍，确认没有问题。
 
+## 判同类
+
+候选「同类」写池里的哪一份，按决定记录「情形 / 处置」的读法（[decision-record.md](decision-record.md) 的「读它的规矩」）：落点相同，再读池里那一份的旧文、新文、例子，核对要改的是不是同一件事，不看措辞像不像。拿不准就写「池里没有」，宁可多一份，不并错。「同类」的 N 是那一份现在的次数加 1，次数以计数脚本为准。
+
+## 摆给人时怎么回
+
+- **去处由人定，你不给推荐。** 依据是人的原话：「我觉得retro过程中进入候选还是直接进入issue需要由我来判断」。
+- 人只回了「批」、没说去处，问一句去哪；人用了别的说法（例：「留在候选吧」）按意思归到「批·进候选池」或「批·开 issue」，拿不准就问。
+- 回了「改成…」的，改完再摆一次，同样二选一。
+- 候选「同类」写了池里的一份时，摆的时候说出来：「这是第 N 次，并进 <那一份>」。
+
+## 读当前仓库的池
+
+列出每份的标题、落点、状态、次数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前仓库的池和 harold-skills 的池是同一个，不用再远程读。
+
 ## 写进当前仓库的池
 
 - 新建一份：按上面的形状写，「出现」一行，是这场会话。
@@ -51,6 +66,8 @@ gh api -H 'Accept: application/vnd.github.raw' repos/<R>/contents/docs/records/r
 ```
 
 把读到的文件放进 `.tmp/retro/<YYYY-MM-DD>-<主题>/harold-pool/`，再对那个目录跑计数脚本。
+
+备好要写的文件（第 5 步）：新建的按上面的形状写在 `harold-pool/` 下；追加的，在读下来的那份末尾加一行「出现」。先记下文件路径，池里那一份的链接（`https://github.com/<R>/blob/<D>/docs/records/retro-candidates/<文件名>`）在第 6 步合并后补进决定记录的「结果」。
 
 写（第 6 步，只改 `docs/` 的 PR）：
 
