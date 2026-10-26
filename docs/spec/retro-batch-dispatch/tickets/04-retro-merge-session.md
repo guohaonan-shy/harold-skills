@@ -40,3 +40,6 @@
 ## 选中的存量回归
 
 - `idea-loop/scripts/issues.test.mjs`：整合卡片依赖 02 的命令，跑一遍确认没被这一刀碰坏
+- [ ] review 第 1 轮 S1（2026-10-26）：整合会话在切工单这一步也不等人点头（to-ticket 原本要「把切法摆给人看、迭代到人点头」），按推荐先切、记进确认清单；「全程不停下等人」列出的几处要包含切工单这一处。依据：人的原话「这些 issue 合并成一个 spec -> 拆分工单 -> pr-review / skill test 这些不需要经过我同意，你直接做即可」
+- [ ] review 第 1 轮 S3（2026-10-26）：`issue-dispatch` 的 description 不再说「一个 issue 一张」，改成跟新做法一致（普通 issue 一个一张，retro issue 凑成 retro 整合出整合卡片），仍只做路由
+- [ ] review 第 1 轮 C1（2026-10-26）：整合会话 skill 里起草、切工单与实现、证明生效、review 这几步各以一个「完成条件」结尾（writing-for-agents：「每一步都以一个完成条件结尾」）
