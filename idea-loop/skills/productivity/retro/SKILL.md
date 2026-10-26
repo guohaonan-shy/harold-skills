@@ -67,9 +67,14 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 ## 5. 批了的开成 issue
 
-照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（查重、不打 `status:*`）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
+照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（查重、不打 `status:*`）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。用 `idea-loop:glossary` 的叫法命名。
 
-做完的条件：每条批了的候选都有 issue 链接，或一句开不成的原因；没有批了的，就没有这一步。
+- **打标**：`--label` 带落点所在 plugin 的分类 `type:<plugin>`，有贴切的子类就带 `type:<plugin>/<子类>`（父类一起打）；开到目标仓库的项目级问题，照那个仓库 `AGENTS.md`（或 `CLAUDE.md`）「issue 分类」一节打。再加保留 label `retro`：带它的 issue 不单独出会话卡片，攒着交给 retro 整合。落点是脚本或检查（落点表「能机械判定」那一行），或候选是结构性改动、要讨论的方向的，不打 `retro`，作为普通待验证 issue 开出：它们要走完整的审核，不进 retro 整合。
+- **正文**写给没有上下文的人看：候选、落点、旧文新文、会话里的原话，再加三样，后面写回放用例（`evals/retro/cases/`）要用：决策发生时的提交（按这条发言的时间，在会话所在分支上取：`git rev-list -1 --before=<发言时间> HEAD`）、让 skill 产出那个东西的那句话（digest 里触发它的那条人的发言，逐字）、skill 把东西交给人的那一刻（那条发言前面的 AI 回复停在哪）。三样里取不到的，写「取不到」加原因，不编。
+
+开不成的，记下原因交给人。
+
+做完的条件：每条批了的候选都有 issue 链接，或一句开不成的原因；每个 issue 带分类，带 `retro` 或属于上面的例外，正文有那三样（或取不到的原因）；没有批了的，就没有这一步。
 
 ## 6. 写决定记录
 
