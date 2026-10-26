@@ -13,7 +13,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'no
 import { createRequire } from 'node:module';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { attribute, buildMeasureCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
+import { attribute, buildMeasureCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
 import { comparePngs, decodePng } from './ui-png-compare.mjs';
 
 const home = homedir();
@@ -626,4 +626,130 @@ browserTest('browser time: a CSS animation stepped to its end ends the way it wo
   } finally {
     await p.context().close();
   }
+});
+
+// ---------- a state on a page that is not taller than the screen: shot as one screen, on the same stopped time ----------
+//
+//   800×600 viewport · a bar 60 tall, then two bands of 180: tabs (every 2 s a setInterval shows the next tab) and
+//   css (a 1 s progress line per tab; when it ends — `animationend` — the next tab is shown); `live` adds a band
+//   fed by a Worker that counts real milliseconds. The whole page is 520 tall: one screen.
+
+const screenPage = ({ live = false } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 16px sans-serif; }
+  header { height: 60px; background: #eee; }
+  section { height: 180px; box-sizing: border-box; padding: 20px; }
+  #tabs { background: #eef; }
+  #css { background: #efe; }
+  #live { height: 100px; background: #ffe; }
+  .tab, .c { display: inline-block; width: 120px; height: 36px; margin: 0 4px 0 0; padding: 0; border: 0; background: #fff; color: #000; font: 16px sans-serif; text-align: left; vertical-align: top; }
+  .tab[aria-selected=true], .c[aria-selected=true] { background: #333; color: #fff; }
+  .c { position: relative; }
+  .prog { position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: #06c; }
+  .on .prog { animation: fill 1s linear forwards; }
+  @keyframes fill { to { width: 100%; } }
+  .panel { font-size: 28px; margin-top: 16px; }
+</style></head><body>
+<header><a href="/">Home</a></header>
+<section id="tabs"><div role="tablist" id="tl"><button role="tab" class="tab" aria-selected="true">Listen</button><button role="tab" class="tab" aria-selected="false">Speak</button><button role="tab" class="tab" aria-selected="false">Write</button></div><div class="panel" id="panel">Listen panel</div></section>
+<section id="css"><div role="tablist" id="ct"><button role="tab" class="c on" aria-selected="true">One<span class="prog"></span></button><button role="tab" class="c" aria-selected="false">Two<span class="prog"></span></button><button role="tab" class="c" aria-selected="false">Three<span class="prog"></span></button></div><div class="panel" id="cpanel">One panel</div></section>
+${live ? '<section id="live"><div id="feed" style="font-size:40px">0</div></section>' : ''}
+<script>
+const tabs = [...document.querySelectorAll('.tab')]; let i = 0;
+const show = (k) => { i = k; tabs.forEach((t, j) => t.setAttribute('aria-selected', String(j === k))); panel.textContent = tabs[k].textContent + ' panel'; };
+tabs.forEach((t, k) => t.addEventListener('click', () => show(k)));
+setInterval(() => show((i + 1) % 3), 2000);
+const cs = [...document.querySelectorAll('.c')];
+const cshow = (k) => { cs.forEach((t, j) => { t.classList.toggle('on', j === k); t.setAttribute('aria-selected', String(j === k)); }); cpanel.textContent = cs[k].firstChild.textContent + ' panel'; };
+cs.forEach((t, k) => { t.addEventListener('click', () => cshow(k)); t.querySelector('.prog').addEventListener('animationend', () => cshow((k + 1) % 3)); });
+${live ? "const w = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postMessage(Math.floor(performance.now() / 30)), 30)']))); w.onmessage = (e) => { feed.textContent = 'tick ' + e.data; };" : ''}
+</script></body></html>`;
+
+const SCREEN_STATE = 's-login--entry';
+const screenUrl = (variant) => `data:text/html;charset=utf-8,${encodeURIComponent(screenPage(variant))}`;
+
+/** The way a single-screen state used to be shot: wait for the network, put the no-animation style in, shoot; the page's own time runs. */
+async function oldWayShot(gap) {
+  const p = await freshPage();
+  try {
+    await p.goto(screenUrl());
+    try {
+      await p.waitForLoadState('networkidle', { timeout: 5000 });
+    } catch (e) {
+      // as it stands
+    }
+    await p.evaluate(() => document.fonts.ready);
+    await p.addStyleTag({ content: '*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important }' });
+    await p.waitForTimeout(gap);
+    return await p.screenshot();
+  } finally {
+    await p.context().close();
+  }
+}
+
+/** Start the page time, do `beforeShot`, wait `gap` ms of real time (an agent thinking), shoot the screen. */
+async function screenShot(gap, { variant, state = SCREEN_STATE, beforeShot } = {}) {
+  const p = await freshPage();
+  try {
+    await p.goto(screenUrl(variant));
+    await runOn(p, buildTimeCode(SETTINGS));
+    if (beforeShot) await beforeShot(p);
+    await p.waitForTimeout(gap);
+    const out = mkdtempSync(join(tmpdir(), 'sections-screen-'));
+    const r = await runOn(p, buildScreenCode({ state, ...SETTINGS, outDir: out }));
+    return { out, r, file: join(out, `${state}.png`) };
+  } finally {
+    await p.context().close();
+  }
+}
+
+browserTest('browser screen: a single-screen state on a page that moves on its own — a timer carousel and a CSS progress line — is the same picture however long the agent waits; the old way, with the no-animation style and no stopped time, is not', async () => {
+  const one = await screenShot(1000);
+  const two = await screenShot(4000);
+  const c = comparePngs(readFileSync(one.file), readFileSync(two.file));
+  assert.equal(c.within, true, c.reason);
+  assert.equal(c.percent, 0, c.reason);
+  for (const run of [one, two]) {
+    assert.equal(run.r.shots.length, 1);
+    assert.equal(run.r.shots[0].uncontrolled, false);
+    assert.equal(run.r.shots[0].diffBox, undefined);
+    assert.equal(run.r.shots[0].stable, undefined);
+  }
+  const old = comparePngs(await oldWayShot(200), await oldWayShot(2800));
+  assert.equal(old.within, false, `the timer carousel has moved on between the two old-way shots: ${old.reason}`);
+});
+
+browserTest('browser screen: the picture is as big as the main viewport and is named after the state', async () => {
+  const { r, file } = await screenShot(0);
+  assert.deepEqual(pngSize(file), [800, 600]);
+  assert.deepEqual(r.shots.map((s) => [s.id, s.file, s.width, s.height]), [[SCREEN_STATE, `${SCREEN_STATE}.png`, 800, 600]]);
+  assert.equal(r.shots[0].heightDrift, 0, 'the page is one screen: it is not taller than the viewport');
+  assert.match(r.clock, /present/);
+});
+
+browserTest('browser screen: a state reached by clicking is the state in the picture — a step of page time after the click, then however long the agent waits', async () => {
+  const click = async (p) => {
+    await p.getByRole('tab', { name: 'Write' }).click();
+    await runOn(p, buildStepCode(200));
+  };
+  const { r, file } = await screenShot(3500, { beforeShot: click });
+  const img = decodePng(readFileSync(file));
+  const at = (x, y) => [0, 1, 2].map((k) => img.data[(y * img.width + x) * 4 + k]);
+  const p = await freshPage();
+  let boxes;
+  try {
+    await p.goto(screenUrl());
+    boxes = await p.locator('#tl .tab').evaluateAll((els) => els.map((e) => { const b = e.getBoundingClientRect(); return { x: Math.round(b.left) + 4, y: Math.round(b.top) + 4 }; }));
+  } finally {
+    await p.context().close();
+  }
+  assert.deepEqual(boxes.map((b) => at(b.x, b.y)), [[255, 255, 255], [255, 255, 255], [51, 51, 51]], 'Write is the dark one');
+  assert.equal(r.shots[0].uncontrolled, false);
+});
+
+browserTest('browser screen: something the page time cannot hold (a Worker counting real time) is flagged on the screen shot, with the box where the two shots differ', async () => {
+  const { r } = await screenShot(0, { variant: { live: true } });
+  const [s] = r.shots;
+  assert.equal(s.uncontrolled, true);
+  assert.ok(s.diffBox && s.diffBox.width > 0 && s.diffBox.height > 0, JSON.stringify(s));
+  assert.ok(s.diffBox.y >= 420, `the counter is in the band below the two carousels: ${JSON.stringify(s.diffBox)}`);
 });

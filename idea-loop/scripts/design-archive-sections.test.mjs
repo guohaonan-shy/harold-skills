@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { BASE, MKT, MKT_ENTRY, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
+import { attribute, buildMeasureCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, screenTargets, shootTargets } from './design-archive-sections.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
 const run = (...args) => spawnSync('node', [CLI, ...args], { encoding: 'utf8' });
@@ -262,6 +262,32 @@ test('buildShootCode: a single async function of `page` that shoots with a clip 
   assert.doesNotMatch(code, /animations: 'disabled'/, 'a shot that fast-forwards CSS animations to their end flips a carousel away');
   assert.match(code, /uncontrolled/);
   assert.doesNotMatch(code, /\bstable\b/, '`stable` is replaced by `uncontrolled`');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+});
+
+test('screenTargets: a state with no sections is one section, the main viewport, named after the state', () => {
+  const { targets, skipped, scroller, pageHeight } = screenTargets({ state: `${MKT}--entry`, viewport: { width: 1440, height: 900 } });
+  assert.deepEqual(targets, [{ id: `${MKT}--entry`, ref: `${MKT}--entry`, file: `${MKT}--entry.png`, start: 0, end: 900, inScroller: false }]);
+  assert.deepEqual(skipped, []);
+  assert.equal(scroller, null);
+  assert.equal(pageHeight, 900);
+  for (const bad of [{ state: '', viewport: { width: 1, height: 1 } }, { state: 'a/b', viewport: { width: 1, height: 1 } }, { state: '.x', viewport: { width: 1, height: 1 } }, { state: 'x', viewport: { width: 1, height: 0 } }, { state: 'x' }]) {
+    assert.throws(() => screenTargets(bad), /状态|视口/, JSON.stringify(bad));
+  }
+});
+
+test('buildScreenCode: the same code `shoot` runs — a single async function that shoots one clip, flags what the page time cannot hold, and never moves or fast-forwards the page time', () => {
+  const code = buildScreenCode({ state: `${MKT}--entry`, viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', outDir: '/tmp/shots' });
+  const fn = runInNewContext(code);
+  assert.equal(fn.constructor.name, 'AsyncFunction');
+  assert.match(code, new RegExp(`${MKT}--entry\\.png`));
+  assert.match(code, /\/tmp\/shots/);
+  assert.match(code, /"pageHeight":900/);
+  assert.match(code, /fullPage: true/);
+  assert.match(code, /uncontrolled/);
+  assert.doesNotMatch(code, /pauseAt|resume\(|runFor|clock\.install/, 'it does not freeze, resume or step the page clock');
+  assert.doesNotMatch(code, /animations: 'disabled'/);
+  assert.doesNotMatch(code, /animation: none/, 'no style that switches animations off is put into the page');
   assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
 });
 
@@ -549,4 +575,48 @@ test('cli shoot: an attribution made for a state inside a section shoots that se
   assert.match(r.stdout, new RegExp(`${MKT}--feature-b-expanded\\.png`));
   assert.doesNotMatch(r.stdout, /@hero/);
   assert.match(r.stderr, /1 张/);
+});
+
+// ---------- the command line: screen ----------
+
+test('cli screen: prints the code that shoots a state with no sections as one screen — no measure or attribute first — with the settings from prod/index.md or the flags', () => {
+  const root = writeRepo(marketingFiles());
+  const out = join(tmp(), 'shots');
+  const r = run('screen', root, 's-login--entry', '--out', out);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /s-login--entry\.png/);
+  assert.match(r.stdout, /"viewport":\{"width":1440,"height":900\}/);
+  assert.match(r.stdout, /"theme":"light"/);
+  assert.match(r.stdout, /"pageHeight":900/);
+  assert.ok(r.stdout.includes(JSON.stringify(out)), 'the output directory is written into the code');
+  assert.match(r.stderr, /1 张/);
+  assert.match(r.stderr, /装时间|time/, 'says the page time has to be started first');
+  const flagged = run('screen', root, 's-login--entry', '--out', out, '--viewport', '390x844', '--theme', 'dark', '--motion', 'reduce');
+  assert.match(flagged.stdout, /"viewport":\{"width":390,"height":844\}/);
+  assert.match(flagged.stdout, /"pageHeight":844/);
+  assert.match(flagged.stdout, /"motion":"reduce"/);
+});
+
+test('cli screen: usage errors exit 2 and say why', () => {
+  const root = writeRepo(marketingFiles());
+  const out = join(tmp(), 'shots');
+  const files = marketingFiles();
+  files[`${BASE}/index.md`] = files[`${BASE}/index.md`].replace('viewport: 1440x900\n', '');
+  const cases = [
+    [['screen'], /仓库根/],
+    [['screen', root], /状态 id/],
+    [['screen', root, 's-login--entry'], /--out/],
+    [['screen', root, 's-login--entry', 'extra', '--out', out], /多出/],
+    [['screen', root, 'a/b', '--out', out], /状态/],
+    [['screen', writeRepo(files), 's-login--entry', '--out', out], /viewport/],
+    [['screen', root, 's-login--entry', '--out', out, '--bogus', 'x'], /不认识的选项/],
+    [['screen', writeRepo({ 'README.md': 'x' }), 's-login--entry', '--out', out], /docs/],
+  ];
+  for (const [args, pattern] of cases) {
+    const r = run(...args);
+    assert.equal(r.status, 2, args.join(' '));
+    assert.match(r.stderr, pattern, args.join(' '));
+  }
+  assert.equal(run('screen', writeRepo(files), 's-login--entry', '--out', out, '--viewport', '1440x900').status, 0);
 });

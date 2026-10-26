@@ -9,7 +9,7 @@
 
 对象的格式完全照设计档案：用 Skill 工具调 `idea-loop:design-archive`（目录、frontmatter、正文、进入方式、「进不去」的写法；长页面再读它的 `references/sections.md`）。这份只写扫的做法、产物放哪、怎么进提议表、批了怎么落。
 
-环境（worktree、端口、浏览器锁、dreaming 的 tmp 目录 `docs/design/tmp/dreaming-<日期>/`）与 [archive-reconcile.md](archive-reconcile.md) 的「环境」相同。截图前的环境照 `idea-loop:ui-measure` 的「三条环境约定」（同 viewport 与 DPR、等字体、关动画与过渡）。
+环境（worktree、端口、浏览器锁、dreaming 的 tmp 目录 `docs/design/tmp/dreaming-<日期>/`）与 [archive-reconcile.md](archive-reconcile.md) 的「环境」相同。截图前的环境：同 viewport 与 DPR、等字体；动画与过渡不关，页面时间停住、只按固定步长拨（下面第 7 步），所以隔多久拍都是同一张。设计档案的拍图不用 `idea-loop:ui-measure` 的「三条环境约定」，那三条只留给 UI 实现环。
 
 ## 一页一页扫
 
@@ -29,6 +29,7 @@
    - **拍**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out <目录>` 打印第二段代码，交给 Playwright 跑：**每段单独截**（滚到这一段、等内容全部出现并稳定、不拨页面时间，隔 500ms 再截一张比一比），每段一张放进入口状态同目录的 `assets/`，不存整页长图。返回里 `uncontrolled: true` 的段（页面时间管不到的东西在动：视频、WebGL、网络推送；`diffBox` 指出是哪一块），在状态文件「这一屏」里写明「这一段有页面时间管不到的动态内容：<是什么>，截图是某一刻」。文件路径要落在 Playwright 的工作区根目录里（`references/sections.md` 的「拍图：分段脚本」）。
    - 入口状态的「这一屏」按段排开（每段一个 `###` 小标题、这一段的图、一两句描述）。
    - **段内交互**（FAQ 展开、切标签）是另一个状态，状态写 `section`，只拍那一段：先进入这个状态（照它的进入方式点出来；已经装过时间，点完要等界面变化时用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" step <毫秒数>` 拨小步），再量 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <worktree 根> --state <入口状态 id> --page <页面> --sections-file <分段.json> --for <段内状态 id> --section <段 id> --viewport 1440x900 --theme light`（这一次不重载页面，段的高度按此刻算），存成文件、`attribute` 之后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out <目录>`，图叫 `<段内状态 id>.png`。浮层越出所在段（顶栏下拉菜单比顶栏高）时，先把浮层打开，`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out <目录> --include '{"role":"menu"}'` 把浮层一起拍进去。
+   - **不分段的单屏状态**（页面不比主视口高）同样用页面时间停住的拍法，不往页面注入关动画与过渡的样式：`browser_navigate` 进入口、做任何交互之前先装时间（同上，一个标签页只装一次）；按状态的进入方式走到这个状态，交互之后要等界面变化时用 `step <毫秒数>` 拨小步，拨到这一屏的「应看到什么」成立为止；要停在瞬态（加载中）的，照旧先拦住那条请求再拨小步；然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <worktree 根> <状态 id> --out <目录> --viewport 1440x900 --theme light` 打印代码、交给 Playwright 跑（不用先 `measure` / `attribute`；`--viewport` 与 `--theme` 的取值同上）：当成只有一段、范围是主视口，不拨时间，图叫 `<状态 id>.png`，放进对象同目录的 `assets/`。返回里 `uncontrolled: true` 的，在状态文件「这一屏」里写明「这一屏有页面时间管不到的动态内容：<是什么>，截图是某一刻」（`diffBox` 指出是哪一块）。`heightDrift` 不是 0，说明页面比主视口高，是长页面，改走上面的分段。
    - 每个有动效的边或节点一张 GIF（`idea-loop:evidence` 的交付证据（动图），没有用户感觉得到的动效就不录；动效太快截不住时放慢播放再录，并写明倍率）。完整矩阵（主题 × 视口 × 语言）默认不拍；人要才拍，放 `docs/design/tmp/dreaming-<日期>/matrix/`，不进 `delta/`，随目录清掉。截图放对象同目录的 `assets/`，状态文件「这一屏」里内嵌它，「应看到什么」写成几条可判定的话。
 8. **动效对象**：边引用的、能从代码里量出参数的具体动效，建 `motions/<名>.md`（参数、理由、减少动效下怎么退）；量不出来的、太细的，不在初扫里硬建，记进 `未扫`。**状态文件不写决定**；页面、组件的「决定」「设计法候选」两节没有内容各写一行「无」——初扫是从实现建的，没有当初的设计理由，**不编**，需求归档时再补。动效的参数是字面值时 `deviates` 照样必填：写「从实现量出，偏离站内 token 的原因没有记录」，不编原因。
 

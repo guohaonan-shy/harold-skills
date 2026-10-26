@@ -53,7 +53,7 @@ docs/design/
 - **basename 在 `docs/` 下全局唯一**（`idea-loop:wiki-conventions` 的「slug 与链接」），由校验查；工单文件与 `index.md` 豁免。
 - **`tmp/<spec-slug>/`** 放进行中需求的全部设计过程产物：`imagine/` 方向说明，`canvas/` 画布、冻结记录与完整验收矩阵，`delta/` 对 `prod/` 的差异。目标项目把 `tmp/` 排除出 git；冻结时，签字的画布、冻结记录和交互图经设计 PR 用 `git add -f` 提交进主分支，实现从主分支开 worktree 就拿得到。**冻结之后，`canvas/` 是唯一的设计真相**：设计变了由 designer 改画布并记进冻结记录的「冻结后的变更」（`idea-loop:uiux-refine`），不改 `delta/`；`delta/` 只在合并前由 ui-reviewer 的归档模式从最终画布加实现整份写出。没有设计稿的 UI 改动没有画布，实现者在 `delta/` 记「最小差异」，那就是它唯一的设计真相。放弃的需求不上线，有价值的结论写回 spec 或 issue。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行一条，`- [[<id>]]`（后面可跟一句原因）。归档 = 覆盖 + 删除。
-- **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置写在 `prod/index.md` 的 frontmatter，见下面「`prod/index.md` 的设置键」）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
+- **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置写在 `prod/index.md` 的 frontmatter，见下面「`prod/index.md` 的设置键」；单屏状态用分段脚本的 `screen` 命令拍，页面时间停住，见 `references/sections.md`）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。截图是派生物，随时可重拍。
 - **素材走 Git LFS**：目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/` 下的 png / gif / webm。
 - **写档案只写 `tmp/<spec-slug>/delta/`**（合并前归档由 ui-reviewer 写，没有设计稿的改动由实现者写最小差异）；`prod/` 只由归档脚本在人批过之后写（「归档」）。
 - `docs/design/` 下 `tmp/`、`prod/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。

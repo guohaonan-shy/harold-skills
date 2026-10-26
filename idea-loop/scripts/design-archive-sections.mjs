@@ -29,6 +29,8 @@
  *              `<entry state id>@<section id>.png`. A tall section is one tall picture. The page time is not moved;
  *              each shot is taken twice, 500 ms of real time apart, and a shot whose two differ is `uncontrolled`
  *              (something the page time cannot hold is moving in it) and comes with the box where they differ.
+ *   screen     a state with no sections (a page not taller than the main viewport): the code `shoot` runs, handed the one
+ *              section that is the main viewport, `<state>.png`. No `measure` / `attribute` first; same `uncontrolled`.
  *
  * The browser side is covered by design-archive-sections-browser.test.mjs (skipped when no Chromium is
  * found) and by a real run; `attribute` and the target arithmetic are pure functions over data.
@@ -40,6 +42,7 @@
  *        (--sections '<json list>' | --sections-file <file>) [--for <state> --section <id>] [settings]
  *   node design-archive-sections.mjs attribute <measurement.json>
  *   node design-archive-sections.mjs shoot <attribution.json> --out <dir> [--section <id,id>] [--include '<json locator>']
+ *   node design-archive-sections.mjs screen <repo-root> <state> --out <dir> [settings]
  *   settings: --viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce
  *             (default: the frontmatter of docs/design/prod/index.md)
  *
@@ -784,6 +787,35 @@ export function buildShootCode(config) {
   return withTime(shootPage, C, timeProbe);
 }
 
+/**
+ * The shot a state with no sections asks for — a page that is not taller than the main viewport (the "single screen"
+ * states: a login page with a carousel on its first screen). It is one section whose range is the main viewport,
+ * and the picture is named after the state: `<state>.png`. Nothing is measured or attributed first.
+ */
+export function screenTargets({ state, viewport } = {}) {
+  if (typeof state !== 'string' || !state || /[\\/]/.test(state) || state.startsWith('.')) throw new Error(`状态 id 不对（它会成为图的文件名）：${JSON.stringify(state ?? null)}`);
+  if (!viewport || !(viewport.width > 0) || !(viewport.height > 0)) throw new Error('没有视口：单屏状态的范围是主视口');
+  return { targets: [{ id: state, ref: state, file: `${state}.png`, start: 0, end: viewport.height, inScroller: false }], skipped: [], scroller: null, pageHeight: viewport.height };
+}
+
+/**
+ * The code for `screen`: the code `shoot` runs, handed that one section — the same wait for images and fonts, the same
+ * second shot 500 ms later, the same `uncontrolled` and `diffBox`. The page time is not moved and the page is not
+ * given a style that switches animations off, so the picture is of the state as the stopped time leaves it.
+ */
+export function buildScreenCode(config) {
+  const { targets, scroller, pageHeight } = screenTargets({ state: config.state, viewport: config.viewport });
+  return buildShootCode({
+    targets: targets.map(({ id, file, start, end, inScroller }) => ({ id, file, start, end, inScroller })),
+    scroller,
+    viewport: config.viewport,
+    theme: config.theme,
+    motion: config.motion,
+    pageHeight,
+    outDir: config.outDir,
+  });
+}
+
 // ---------- ranges and ownership ----------
 
 const roundPx = (v) => Math.round(v);
@@ -964,6 +996,7 @@ export const COMMAND_FLAGS = {
   measure: ['--delta', '--state', '--page', '--sections', '--sections-file', '--for', '--section', '--viewport', '--theme', '--locale', '--motion'],
   attribute: [],
   shoot: ['--out', '--section', '--include'],
+  screen: ['--out', '--viewport', '--theme', '--locale', '--motion'],
 };
 
 const USAGE = `用法：
@@ -973,9 +1006,10 @@ const USAGE = `用法：
   node design-archive-sections.mjs measure <仓库根> --state <入口状态 id> --page <页面> (--sections '<JSON 列表>' | --sections-file <文件>) [--for <段内状态 id> --section <段 id>] [设置]
   node design-archive-sections.mjs attribute <测量结果.json>
   node design-archive-sections.mjs shoot <归属结果.json> --out <目录> [--section <段 id,段 id>] [--include '<JSON 定位>']
+  node design-archive-sections.mjs screen <仓库根> <状态 id> --out <目录> [设置]
 设置：--viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce（默认取 docs/design/prod/index.md 的 frontmatter）
-time / step / measure / shoot 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对或重叠时退出码 1。
-time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用。`;
+time / step / measure / shoot / screen 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对或重叠时退出码 1。
+time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用；screen：不分段的单屏状态，不用先 measure / attribute。`;
 
 class UsageError extends Error {}
 
@@ -1152,6 +1186,34 @@ function shootCommand(positional, flags) {
   return 0;
 }
 
+function screenCommand(positional, flags) {
+  if (!positional.length) throw new UsageError('缺少仓库根');
+  if (positional.length < 2) throw new UsageError('缺少状态 id（要拍的单屏状态）');
+  if (positional.length > 2) throw new UsageError(`screen 只要一个仓库根和一个状态 id（多出 ${positional.slice(2).join(' ')}）`);
+  if (!flags.out) throw new UsageError('screen 要 --out <目录>（Playwright 只能写它的工作区根目录里）');
+  const root = resolve(positional[0]);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
+  let archive;
+  try {
+    archive = loadArchive(root);
+  } catch (e) {
+    throw new UsageError(e.message);
+  }
+  const settings = settingsOf(archive, flags);
+  const outDir = resolve(flags.out);
+  let code;
+  let file;
+  try {
+    file = screenTargets({ state: positional[1], viewport: settings.viewport }).targets[0].file;
+    code = buildScreenCode({ state: positional[1], viewport: settings.viewport, theme: settings.theme, motion: settings.motion, outDir });
+  } catch (e) {
+    throw new UsageError(e.message);
+  }
+  console.log(code);
+  console.error(`screen: 1 张（${file}）写到 ${outDir}；范围是主视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}；页面时间要是装过时间（time）的，到了这个状态再拍，拍的时候不拨时间；返回里 uncontrolled 为 true 的，页面时间管不到的东西在动，diffBox 是哪一块`);
+  return 0;
+}
+
 function safeParseIn(text) {
   try {
     return JSON.parse(text);
@@ -1170,6 +1232,7 @@ function main(argv) {
     if (command === 'measure') return measureCommand(positional, flags);
     if (command === 'attribute') return attributeCommand(positional);
     if (command === 'shoot') return shootCommand(positional, flags);
+    if (command === 'screen') return screenCommand(positional, flags);
     return 2;
   } catch (e) {
     if (!(e instanceof UsageError)) throw e;
