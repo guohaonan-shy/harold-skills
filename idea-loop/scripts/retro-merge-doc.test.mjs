@@ -123,6 +123,16 @@ test('retro-merge does not wait for the human to approve the ticket split either
   assert.match(section(b, '全程不停下'), /切法/, '全程不停下 lists the slicing step among the stops it removes');
 });
 
+test('retro-merge has a way to end when every candidate was already done and there is no code PR', () => {
+  const b = body(merge);
+  const after = section(b, '人回复后');
+  const bullet = after.split('\n').find((l) => /没有代码 PR/.test(l)) ?? '';
+  assert.ok(bullet, '「人回复后」has no bullet for the no-code-PR case');
+  assert.match(bullet, /idea-loop:issue-session/, 'the ending is issue-session\'s 收尾');
+  assert.match(bullet, /归档/, 'the session archives itself, so the next 整合 card can be issued');
+  assert.match(section(b, '开场'), /worktree/, 'the session still has its own worktree to be cleared on archive');
+});
+
 test('the README, the root AGENTS.md and the plugin version know the new skill', () => {
   const readme = read('README.md');
   assert.match(readme, /\| `idea-loop:retro-merge` \|/, 'skills table row');
