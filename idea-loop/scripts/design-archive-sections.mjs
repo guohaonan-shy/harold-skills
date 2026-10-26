@@ -85,12 +85,14 @@ async function measurePage(page, C) {
         else window.scrollTo({ top: v, behavior: 'instant' });
       },
       pathOf: (el) => {
+        if (el === document.body) return 'body';
         if (el.id && document.querySelectorAll('#' + CSS.escape(el.id)).length === 1) return '#' + CSS.escape(el.id);
         const parts = [];
         for (let p = el; p && p !== document.body; p = p.parentElement) parts.unshift(p.tagName.toLowerCase() + ':nth-child(' + ([...p.parentElement.children].indexOf(p) + 1) + ')');
         return 'body > ' + parts.join(' > ');
       },
-      candidates: () => [...document.querySelectorAll('body *')]
+      // the page body counts too: a shell that locks <html> and lets <body> scroll has no element inside it that does
+      candidates: () => [document.body, ...document.querySelectorAll('body *')]
         .flatMap((el) => {
           if (/^(TEXTAREA|SELECT|INPUT)$/.test(el.tagName) || el.clientHeight === 0 || el.scrollHeight <= el.clientHeight) return [];
           if (!/^(auto|scroll)$/.test(getComputedStyle(el).overflowY) || !ds.shown(el)) return [];
@@ -181,7 +183,7 @@ async function measurePage(page, C) {
     // a page that never goes quiet is measured as it stands
   }
   await page.waitForTimeout(500);
-  // what scrolls: the document when it is taller than the screen, else the biggest visible element with its own scroll (an app shell with a <main> that scrolls)
+  // what scrolls: the document when it is taller than the screen, else the biggest visible element with its own scroll, <body> among them (an app shell with a <main> that scrolls, or a <body> inside a locked <html>)
   await page.evaluate(() => {
     const ds = window.__ds;
     const pick = document.documentElement.scrollHeight > window.innerHeight ? null : ds.candidates()[0];

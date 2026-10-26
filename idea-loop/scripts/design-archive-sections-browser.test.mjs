@@ -324,3 +324,58 @@ browserTest('browser shoot: the picture of a band in the scroll container is as 
   assert.deepEqual(sizes, { header: [800, 60], hero: [600, 700], list: [600, 900], form: [600, 500] });
   assert.deepEqual(pixelAt(join(out, 'app-home--entry@list.png'), 450, 0), [221, 255, 221]);
 });
+
+// ---------- the page body scrolls: <html> is locked at the screen height, <body> scrolls and holds everything ----------
+//
+//   800×600 viewport · <html> height 100% and overflow hidden · <body> height 100% and overflow-y auto ·
+//   a bar 60 tall, then three bands 700 / 900 / 500 tall — the same page coordinates as the app shell above
+
+const bodyPage = () => `<!doctype html><html lang="en" style="height:100%;overflow:hidden"><head><meta charset="utf-8"><style>
+  body { margin: 0; height: 100%; overflow-y: auto; font: 16px sans-serif; }
+  header { height: 60px; background: #eee; }
+  main section { padding: 20px; box-sizing: border-box; }
+  #a { height: 700px; background: #fdd; }
+  #b { height: 900px; background: #dfd; }
+  #c { height: 500px; background: #ddf; }
+</style></head><body>
+<header><a href="/">Home</a></header>
+<main>
+  <section id="a"><h1>Practice</h1></section>
+  <section id="b"><h2>History</h2></section>
+  <section id="c"><h2>Settings</h2><button>Save</button></section>
+</main></body></html>`;
+
+let bodyMeasured = null;
+async function measureBody() {
+  if (!bodyMeasured) {
+    await page.goto(`data:text/html;charset=utf-8,${encodeURIComponent(bodyPage())}`);
+    bodyMeasured = await runCode(buildMeasureCode({ state: 'app-home--entry', page: 'app-home', sections: SHELL_SECTIONS, ...SETTINGS }));
+  }
+  return bodyMeasured;
+}
+
+browserTest('browser measure: a page whose <html> is locked and whose <body> scrolls has <body> as its scroll container — the page height is all the content', async () => {
+  const m = await measureBody();
+  assert.equal(m.scroller.kind, 'element');
+  assert.equal(m.scroller.tag, 'body');
+  assert.deepEqual([m.scroller.top, m.scroller.contentHeight, m.scroller.visibleHeight], [0, 2160, 600]);
+  assert.equal(m.pageSize.height, 2160);
+  const a = attribute(m);
+  assert.deepEqual(a.ranges.map((r) => [r.id, r.start, r.end]), [['header', 0, 60], ['hero', 60, 760], ['list', 760, 1660], ['form', 1660, 2160]]);
+  assert.equal(a.clickables.find((c) => c.name === 'Save').section, 'form');
+  assert.equal(a.ok, true, JSON.stringify([a.orphans, a.notFound, a.overlaps, a.outOfOrder]));
+});
+
+browserTest('browser shoot: a page that scrolls in <body> gives one whole picture per section', async () => {
+  const a = attribute(await measureBody());
+  await page.goto(`data:text/html;charset=utf-8,${encodeURIComponent(bodyPage())}`);
+  const out = mkdtempSync(join(tmpdir(), 'sections-shoot-'));
+  const { targets, scroller, skipped } = shootTargets(a);
+  assert.deepEqual(skipped, []);
+  const r = await runCode(buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+  const sizes = Object.fromEntries(r.shots.map((s) => [s.id, pngSize(join(out, s.file))]));
+  assert.deepEqual(sizes, { header: [800, 60], hero: [800, 700], list: [800, 900], form: [800, 500] });
+  const list = join(out, 'app-home--entry@list.png');
+  for (const y of [10, 450, 890]) assert.deepEqual(pixelAt(list, y), [221, 255, 221], `row ${y} of the list band`);
+  assert.deepEqual(pixelAt(join(out, 'app-home--entry@header.png'), 30), [238, 238, 238]);
+});
