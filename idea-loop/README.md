@@ -418,7 +418,7 @@ idea-loop/
     ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
     ├── spec-status.mjs               # the only writer of a spec's status — checks each step, re-indexes
     ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, the index
-    ├── issues.mjs                    # the only writer of an issue's status:* and type:* labels — hand-over into spec frontmatter, reconcile, advance, label pruning
+    ├── issues.mjs                    # the only writer of an issue's status:* and type:* labels — hand-over into spec frontmatter, reconcile, advance, label pruning; `candidates` skips `retro` issues, `retro-batch` picks the next retro 整合 (the oldest retro issue's plugin, its oldest 5)
     ├── issues.test.mjs               # its unit tests against a fake gh
     ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
     ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit

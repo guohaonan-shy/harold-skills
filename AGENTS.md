@@ -154,4 +154,4 @@ issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类
 - `interview-coach`：interview-coach plugin 的 issue
 - `happy-life`：happy-life plugin 的 issue
 
-保留的 label：无
+保留的 label：`retro`（retro 开出的 issue 带它；不走一个 issue 一张会话卡片，按 plugin 凑成一次 retro 整合）

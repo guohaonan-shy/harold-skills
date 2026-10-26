@@ -32,10 +32,11 @@
  *
  * Usage (<docs> is the target project's docs/ directory; gh runs there, so it acts on that repo; a
  * target is an issue number or a spec slug, which stands for every issue the spec lists):
- *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels; lists the rest, --prune deletes them
+ *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels and `retro`; lists the rest, --prune deletes them
  *   node issues.mjs type       <docs> <n> <parent[/child]>...  → sets #n's type:* labels from the project's categories
  *   node issues.mjs advance    <docs> <spec-slug>              → after a PR of the spec landed: its issues move on to 设计中 / 实现中, or close
  *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]  → JSON: 待验证 issues no spec lists, oldest first; main queue, or category c's own
+ *   node issues.mjs retro-batch <docs>                         → JSON: the next retro 整合: the oldest retro issue's parent category and its oldest 5 unhandled retro issues; the uncategorised ones apart
  *   node issues.mjs queues     <docs> [<n>]                    → JSON: every queue (cap, sidebar sections), or the one issue #n is in
  *   node issues.mjs queue      <docs> <待设计|待实现>           → JSON: specs whose issues wait in that state, and the mismatches
  *   node issues.mjs set        <docs> <state> <target>...      → checked flip: claim, a session opening or giving up, 搁置
@@ -85,6 +86,9 @@ export function stateOf(labels) {
   return own.length === 1 ? own[0] : own.join(' + ');
 }
 
+/** Filed by retro; never dispatched one by one: retroBatch groups them per plugin for one 整合 session. */
+export const RETRO = 'retro';
+export const RETRO_BATCH_MAX = 5;
 export const TYPE_PREFIX = 'type:';
 export const TYPES_HEADING = 'issue 分类';
 const QUEUE_NOTE = /\s*[（(]独立队列[，,]\s*上限\s*(\d+)\s*[)）]/;
@@ -155,7 +159,7 @@ export function queueOf(types, labels) {
 
 /** The labels a project keeps: the status states, its categories, and its keep-list. */
 export function keptLabels(types) {
-  return new Set([...STATES.map(label), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
+  return new Set([...STATES.map(label), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? []), RETRO]);
 }
 
 /** The type:* labels an issue should carry for the given values (`seo`, `seo/blog`); a child brings its parent. */
@@ -314,6 +318,7 @@ export function ensureLabels(gh, types = null, { prune = false } = {}) {
   const want = [
     ...STATES.map((s) => ({ name: label(s), color: COLORS[s], about: s === '搁置' ? 'idea-loop 不接手' : `idea-loop：${s}` })),
     ...typeLabels(types),
+    { name: RETRO, color: 'ededed', about: 'idea-loop：retro 开出的 issue，按 plugin 合成一次 retro 整合' },
   ];
   const made = [];
   for (const l of want) {
@@ -357,11 +362,30 @@ export function listedIssues(docs) {
 export function candidates(gh, limit = 100, listed = new Set(), { types = null, queue = null } = {}) {
   if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
   return openIssues(gh)
-    .filter((i) => stateOf(i.labels) === UNLABELLED && !listed.has(i.number) && !isSpecIssue(i.title))
+    .filter((i) => stateOf(i.labels) === UNLABELLED && !listed.has(i.number) && !isSpecIssue(i.title) && !i.labels.includes(RETRO))
     .filter((i) => queueOf(types, i.labels).name === queue)
     .sort((a, b) => a.number - b.number)
     .slice(0, limit)
     .map(({ number, title }) => ({ number, title }));
+}
+
+/**
+ * The next retro 整合: open issues labelled `retro` with no status:* label, grouped by parent category
+ * (the first segment of any type:* label). The batch is the parent of the oldest such issue and its
+ * oldest `limit` issues; "oldest" is the lowest number, as in `candidates`. Retro issues with no
+ * category go to `unclassified` for the dispatcher to report; they never join a batch.
+ */
+export function retroBatch(gh, limit = RETRO_BATCH_MAX) {
+  const pending = openIssues(gh)
+    .filter((i) => i.labels.includes(RETRO) && stateOf(i.labels) === UNLABELLED)
+    .sort((a, b) => a.number - b.number);
+  const parentsOf = (i) => [...new Set(i.labels.filter((l) => l.startsWith(TYPE_PREFIX)).map((l) => l.slice(TYPE_PREFIX.length).split('/')[0]))];
+  const brief = ({ number, title }) => ({ number, title });
+  const unclassified = pending.filter((i) => !parentsOf(i).length).map(brief);
+  const first = pending.find((i) => parentsOf(i).length);
+  if (!first) return { parent: null, issues: [], unclassified };
+  const parent = parentsOf(first)[0];
+  return { parent, issues: pending.filter((i) => parentsOf(i).includes(parent)).slice(0, limit).map(brief), unclassified };
 }
 
 /** The specs a loop picks up for 待设计 or 待实现: those whose open issues carry it, oldest issue first. */
@@ -496,7 +520,7 @@ const num = (v, what) => {
   return Number(v);
 };
 
-const COMMANDS = ['labels', 'type', 'candidates', 'queues', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
+const COMMANDS = ['labels', 'type', 'candidates', 'retro-batch', 'queues', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
 
 function main() {
   const [cmd, docs, a, b, ...rest] = process.argv.slice(2);
@@ -518,6 +542,10 @@ function main() {
     const limit = args.find((x) => !x.startsWith('--'));
     const opts = { types: readTypes(docs), queue: flag ? flag.slice('--queue='.length) : null };
     return console.log(JSON.stringify(candidates(gh, limit ? num(limit, 'limit') : undefined, listedIssues(docs), opts), null, 2));
+  }
+  if (cmd === 'retro-batch') {
+    if (a !== undefined) throw new Error('usage: issues.mjs retro-batch <docs>');
+    return console.log(JSON.stringify(retroBatch(gh), null, 2));
   }
   if (cmd === 'queues') {
     const types = readTypes(docs);

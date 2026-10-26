@@ -13,11 +13,11 @@ retro 开出的 issue 要带一个保留 label `retro`，分类照常按 plugin 
 
 ## 验收标准
 
-- [ ] 单测：一组假 issue（带 / 不带 `retro`、不同 `type:*`、不同号码），候选命令只列不带 `retro` 的；先看到它红再改绿
-- [ ] 单测：凑整合的命令在「idea-loop 有 7 个、excalidrawer 有 2 个，最早的是 idea-loop 的」时返回 idea-loop 最早的 5 个；在只有 excalidrawer 2 个时返回那 2 个；带 `status:*` 的 retro issue 不算；没有分类的 retro issue 单列
-- [ ] 单测：建 label 时含 `retro`，`retro` 不在多余 label 里
-- [ ] 本仓库 `AGENTS.md` 的「保留的 label」写上 `retro`；`setup` 的「issue 分类」模板写上 `retro`
-- [ ] 脚本已有的全部单测仍过
+- [x] 单测：一组假 issue（带 / 不带 `retro`、不同 `type:*`、不同号码），候选命令只列不带 `retro` 的；先看到它红再改绿
+- [x] 单测：凑整合的命令在「idea-loop 有 7 个、excalidrawer 有 2 个，最早的是 idea-loop 的」时返回 idea-loop 最早的 5 个；在只有 excalidrawer 2 个时返回那 2 个；带 `status:*` 的 retro issue 不算；没有分类的 retro issue 单列
+- [x] 单测：建 label 时含 `retro`，`retro` 不在多余 label 里
+- [x] 本仓库 `AGENTS.md` 的「保留的 label」写上 `retro`；`setup` 的「issue 分类」模板写上 `retro`
+- [x] 脚本已有的全部单测仍过
 
 ## 选中的存量回归
 
