@@ -29,11 +29,11 @@
 
 ## 验收标准
 
-- [ ] `issue-dispatch` 写明出整合卡片的条件、标题、prompt，第 4 步认整合会话，汇报含整合卡片一行
-- [ ] 新 skill 的 SKILL.md 写齐上面 8 步，description 只做路由（`AGENTS.md` SKILL.md 编写约定 §1），主体 < 5000 字
-- [ ] 新 skill 照分类目录放好，不用改 `plugin.json` 的 `skills` 登记（已有分类）；`plugin.json` 版本 0.1.4
-- [ ] README 与仓库 `AGENTS.md` 同步
-- [ ] 照 implementer「改规则的工单」证明 `issue-dispatch` 的新规则生效：能机械判定的做成检查，否则写回放用例；跑不了的写明原因进 verified
+- [x] `issue-dispatch` 写明出整合卡片的条件、标题、prompt，第 4 步认整合会话，汇报含整合卡片一行
+- [x] 新 skill 的 SKILL.md 写齐上面 8 步，description 只做路由（`AGENTS.md` SKILL.md 编写约定 §1），主体 < 5000 字
+- [x] 新 skill 照分类目录放好，不用改 `plugin.json` 的 `skills` 登记（已有分类）；`plugin.json` 版本 0.1.4
+- [x] README 与仓库 `AGENTS.md` 同步
+- [x] 照 implementer「改规则的工单」证明 `issue-dispatch` 的新规则生效：能机械判定的做成检查，否则写回放用例；跑不了的写明原因进 verified
 
 ## 选中的存量回归
 
