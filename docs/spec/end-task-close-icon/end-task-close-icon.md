@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, design, uiux-refine, design-reference]
 summary: 设计参考加一条规则：结束整个任务的入口用 X 并写明结束什么，后退箭头只用于无害地回一步
 related: ["[[confirm-only-on-loss]]"]
