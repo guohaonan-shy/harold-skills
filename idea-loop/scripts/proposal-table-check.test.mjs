@@ -43,6 +43,7 @@ const ROWS = {
   候选: [['候选：卡片内边距统一 16px（组件 PromoCard、OrderCard 重复，共 2 次）', '与已有规则「卡片内边距 12px」矛盾', `${IMG_CARD} 并进：Components · 卡片；旧：「卡片内边距 12px」→ 新：「卡片内边距 16px」`, '改写已有规则', OPTS]],
   'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「明确不进 DESIGN.md 的内容」里的带日期的先例', '删除', OPTS]],
   漏归档: [['docs/design/tmp/cart-promo/', 'spec 已是「完成」，origin/main 上 tmp/cart-promo/ 里还留着画布与 delta（绕过合并步骤合进去的）', 'git ls-tree origin/main docs/design/tmp/cart-promo/；spec 状态：完成', '补归档', OPTS]],
+  'retro 候选': [['候选：下单前先核对自动填好的字段（落点 `idea-loop:seo-outreach`）', '出现 3 次（harold-skills#108、#112、#115）；无已推翻；无反例', '#108：「留在候选吧。」；决定记录：[[108]]', '开 issue：改 skill', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -264,6 +265,33 @@ test('every row type and disposition the reference lists is one the script accep
   }
 });
 
+test('a retro-candidate row with a legal disposition passes — all four of them', () => {
+  for (const d of ['开 issue：机械检查', '开 issue：改 skill', '留在池里', '驳回', '驳回（理由已写在候选文件里）']) {
+    const r = run(sample({ 'retro 候选': withDisposition('retro 候选', d) }));
+    assert.equal(r.status, 0, `${d}: ${r.out}`);
+  }
+});
+
+test('a retro-candidate row that proposes 改进 skill is outside the closed set: non-zero exit, names the section, the cell and the legal set', () => {
+  const r = run(sample({ 'retro 候选': withDisposition('retro 候选', '改进 skill') }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /retro 候选/);
+  assert.match(r.out, /「改进 skill」/);
+  assert.match(r.out, /开 issue：机械检查 \/ 开 issue：改 skill \/ 留在池里 \/ 驳回/);
+});
+
+test('a retro-candidate row with an empty 证据 cell fails — the human checks the count against the verbatim words', () => {
+  const r = run(sample({ 'retro 候选': withEvidence('retro 候选', '') }));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /retro 候选/);
+  assert.match(r.out, /证据/);
+});
+
+test('a disposition of the other candidate section does not carry over to retro 候选', () => {
+  const r = run(sample({ 'retro 候选': withDisposition('retro 候选', '起草通用原则 issue') }));
+  assert.equal(r.status, 2, r.out);
+});
+
 const EMPTY_SECTIONS =(placeholder) => TYPES.map((t) => `## ${t}\n\n${placeholder}\n`).join('\n');
 
 test('a table with no rows anywhere is empty: valid, and reported as empty so the run pushes one sentence', () => {
@@ -277,7 +305,7 @@ test('a table with no rows anywhere is empty: valid, and reported as empty so th
 });
 
 test('a table with even one row is not empty', () => {
-  const r = run(sample({ 候选: [], 缺陷: [], 档案状态: [], 初扫页面: [], 档案对象: [], 'DESIGN.md 条目': [] }), '--json');
+  const r = run(sample({ 候选: [], 缺陷: [], 档案状态: [], 初扫页面: [], 档案对象: [], 'DESIGN.md 条目': [], 'retro 候选': [] }), '--json');
   assert.equal(r.status, 0, r.out);
   const parsed = JSON.parse(r.out);
   assert.equal(parsed.empty, false);

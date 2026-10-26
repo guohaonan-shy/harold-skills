@@ -1,6 +1,5 @@
 ---
-type: raw
-source_type: conversation
+type: record
 captured: 2026-10-26
 title: "retro 候选：代填第三方表单时，自动抓取、自动勾选的每一项都要核，选项附网站自己的定义"
 tags: [retro-candidates]
@@ -9,7 +8,12 @@ tags: [retro-candidates]
 > 来自 Tofelair#538 的 retro（2026-10-26），原记录在 Tofelair `docs/raw/decisions/538.md` 的「候选 3」。人批了，去处选「留在候选」，等 dreaming 整合（见 #115）。
 
 - 信号：纠正与追问
-- 原话：「1  category的选择，writing & translation我觉得没有任何问题，conversation AI 指的是？\n2 付费那里，一次性购买是指一次性买断，还是像我们一样一次买几个月」；「我们这个能ai agent 吗？其他两个问题我没有问题了」；「关于我们speaking相关的功能在category中有没有对应的内容啊？我看了下貌似没有」
 - 落点：插件 `idea-loop:seo-outreach`（候选 1 的「目录提交」一节）
 - 旧文：无
 - 新文：代填时，网站自动抓取或预先勾选的每一项（文字、分类、开关、标签、图片）都当成「未核」：文字和图片对照线上页面核，对不上的换掉，图片要打开看。停下给人看时，把「照提交稿填的」和「表单多出来、由会话选的」分开列；后者每个选项附上网站对它的原文定义（分类页、提示文字、FAQ），没写就说没写，再说为什么选它、哪些相近的没选。表单里没有对应我们核心能力的选项时，主动说出来，并说明靠哪几栏补。
+- 例子：无
+- 状态：在池里
+
+## 出现
+
+- Tofelair#538（2026-10-26）：「1  category的选择，writing & translation我觉得没有任何问题，conversation AI 指的是？\n2 付费那里，一次性购买是指一次性买断，还是像我们一样一次买几个月」；「我们这个能ai agent 吗？其他两个问题我没有问题了」；「关于我们speaking相关的功能在category中有没有对应的内容啊？我看了下貌似没有」；决定记录：Tofelair `docs/raw/decisions/538.md` 候选 3
