@@ -94,7 +94,7 @@ In the same Gate 2 pass, read [heuristics-checklist.md](heuristics-checklist.md)
 
 ### Practical craft checklist
 
-Forms, touch, performance, navigation, destructive actions, leave / end confirmations, copy.
+Forms, touch, performance, navigation, destructive actions, end-task entries, leave / end confirmations, copy.
 
 - **Forms**: set the correct `autocomplete` on every input that maps to a known field type; allow
   `paste` in every field (blocking it breaks password managers and legitimate copy-paste); show a
@@ -114,6 +114,21 @@ Forms, touch, performance, navigation, destructive actions, leave / end confirma
   possible (`design-core.md`, "Copy construction"). Whether a confirmation belongs at all is
   decided by **Leave / end confirmations**: a confirmation earns its place only when something is
   at risk.
+- **End-task entries**: for every leave, end or close entry (back, close, end session, cancel,
+  navigate away), before judging confirmations:
+  1. Tell what a click does: step back one step, or end the whole task (abandon the practice, exit
+     the whole flow, discard the session).
+  2. An entry that ends the whole task uses a close symbol (X), not a back arrow. A back arrow
+     here is a finding.
+  3. Give that X a hover / focus tip and an accessible name that says what it ends (for example
+     "End practice"), not just "Close".
+  4. Keep the back arrow for entries that really go back one step without abandoning the whole
+     task.
+  5. Whether a click needs a confirmation is decided by **Leave / end confirmations**, next; do
+     not repeat it here.
+
+  Why: an arrow looks like an ordinary back, so users do not realize a click ends the whole task;
+  an X tells them this button deserves care.
 - **Leave / end confirmations**: for every leave, end or close entry (back, close, end session,
   cancel, navigate away):
   1. Write down what a click right now would lose: submitted answers, non-whitespace text in an

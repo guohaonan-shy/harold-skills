@@ -23,10 +23,10 @@ Why：箭头看起来像普通后退，用户不会意识到点下去会结束�
 
 ## 验收标准
 
-- [ ] Practical craft checklist 里 Leave / end confirmations 之前有一条 End-task entries，含上面五点和一段 Why，英文，格式跟 Leave / end confirmations 一致
-- [ ] 这一节开头的目录行列了 end-task entries，在 leave / end confirmations 之前
-- [ ] Leave / end confirmations 及这份文件其余内容原样未动（diff 只有新增条目和目录行）
-- [ ] 这份清单文件里搜 Toeflair / TOEFLAIR / #478 无结果
+- [x] Practical craft checklist 里 Leave / end confirmations 之前有一条 End-task entries，含上面五点和一段 Why，英文，格式跟 Leave / end confirmations 一致
+- [x] 这一节开头的目录行列了 end-task entries，在 leave / end confirmations 之前
+- [x] Leave / end confirmations 及这份文件其余内容原样未动（diff 只有新增条目和目录行）
+- [x] 这份清单文件里搜 Toeflair / TOEFLAIR / #478 无结果
 
 ## 选中的存量回归
 
