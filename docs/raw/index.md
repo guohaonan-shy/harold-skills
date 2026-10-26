@@ -39,6 +39,10 @@
 | [[retro-candidate-86]] | issue | 2026-10-26 | retro 候选 #86：idea-loop：每个 issue 会话要知道相关的在飞工作，按需 handoff，别让多个会话做同一件事（待讨论） |
 | [[2026-10-26-digest-skip-opening-task]] | conversation | 2026-10-26 | retro 候选：读会话记录的脚本跳过开场的任务说明 |
 | [[2026-10-26-archive-components-own-repo]] | conversation | 2026-10-26 | retro 候选：设计档案挑组件只处理本仓库内的实现（别名 import 待讨论） |
+| [[2026-10-26-seo-outreach-directory-submission]] | conversation | 2026-10-26 | retro 候选：外链 skill 覆盖「AI 工具目录提交」，分工写清，代填表用真实浏览器 |
+| [[2026-10-26-seo-outreach-paid-link-threshold]] | conversation | 2026-10-26 | retro 候选：付费必须过一组量化的外链质量门槛 |
+| [[2026-10-26-seo-outreach-verify-autofilled-fields]] | conversation | 2026-10-26 | retro 候选：代填第三方表单时，自动抓取、自动勾选的每一项都要核，选项附网站自己的定义 |
+| [[2026-10-26-seo-outreach-check-status-after-submit]] | conversation | 2026-10-26 | retro 候选：人点完提交后，先看对方后台的状态页再汇报 |
 
 > `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
 
