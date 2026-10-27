@@ -12,6 +12,7 @@
 | [[2026-10-19-pr-decision-friction]] | conversation | 2026-10-19 | 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么 |
 | [[2026-10-21-seo-workflow-discussion]] | conversation | 2026-10-21 | 讨论 —— SEO 工作流重新设计：五个方向、项目内插件（位置与队列已被次日推翻） |
 | [[2026-10-22-grill-idea-loop-seo]] | conversation | 2026-10-22 | grill —— SEO 能力放进 idea-loop：OpenSEO 负责发现，idea-loop 负责解决 |
+| [[2026-10-27-brand-terms-cannibalization]] | conversation | 2026-10-27 | #81 审核：自相蚕食的定义，品牌词放进 SEO.md 新开的「品牌」节 |
 | [[2026-10-21-setup-design]] | document | 2026-10-21 | idea-loop setup 设计稿：项目配置集中到根目录的几份文件 |
 | [[2026-10-21-skill-audit]] | document | 2026-10-21 | skill 审查：对照 writing-for-agents 审 23 个 skill |
 | [[2026-10-21-skill-writing-report]] | document | 2026-10-21 | Skill / Agent 怎么写：claude-seo、mattpocock/skills、cursor/plugins 三个仓库的对照 |
@@ -28,6 +29,7 @@
 | [decisions/68](decisions/68.md) | conversation | 2026-10-26 | 决定记录 —— #68 的 issue 会话：内层容器滚动页的段图逐屏截拼接，摆过的题与 retro 候选的结果 |
 | [decisions/65](decisions/65.md) | conversation | 2026-10-26 | 决定记录 —— #65 的 issue 会话：设计档案拍不稳的段停住页面时间、滚动驱动段建成段内状态，摆过的题与 retro 候选的结果 |
 | [decisions/93](decisions/93.md) | conversation | 2026-10-27 | 决定记录 —— #93 的 issue 会话：dreaming SKILL.md 超长验证为不存在，摆过的题与 retro 候选的结果 |
+| [decisions/81](decisions/81.md) | conversation | 2026-10-27 | 决定记录 —— #81 的 issue 会话：页面优化的蚕食规则排除 SEO.md 里写的品牌词，摆过的题与 retro 候选的结果 |
 
 > `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
 
