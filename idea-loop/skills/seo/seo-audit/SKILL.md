@@ -29,7 +29,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出六节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
+1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，报告以它为根：业务是做什么的，决定哪些发现要紧、那「一件事」该是什么。
 3. 这个 skill 需要 `business_overview`。为空时：
    - 人在场：做最小的现场补齐：从站点推断业务，用一个问题和人确认，用 `update_project_context` 写回，再继续审计。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。

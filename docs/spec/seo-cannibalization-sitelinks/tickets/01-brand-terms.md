@@ -32,14 +32,14 @@
 
 ## 验收标准
 
-- [ ] 解析脚本读一份「品牌」节写了 `toeflair`；`toefl air` 的 `SEO.md`，品牌词数组是这两个词，有单元测试
-- [ ] 解析脚本读一份没有「品牌」节的 `SEO.md`，品牌词是空数组、不报错，有单元测试
-- [ ] `SEO.md` 格式定义的模板、「每节读的人」表、小节数都含「品牌」节
-- [ ] seo-setup 问品牌词：推荐值从域名推、带出处，只在空时问；完成条件写七节
-- [ ] page-optimizer 的 `cannibalization` 判定和 keyword-clustering 第 6 步含同一段排除文字，写明没填品牌词时不排除、只作用于蚕食
-- [ ] 插件里不再有「读出六节」这类指 `SEO.md` 六节的说法
-- [ ] 改动不硬编码 Toeflair：示例用格式定义里现有的 `cookbook.example` 一类示例域名
-- [ ] 全量测试通过
+- [x] 解析脚本读一份「品牌」节写了 `toeflair`；`toefl air` 的 `SEO.md`，品牌词数组是这两个词，有单元测试
+- [x] 解析脚本读一份没有「品牌」节的 `SEO.md`，品牌词是空数组、不报错，有单元测试
+- [x] `SEO.md` 格式定义的模板、「每节读的人」表、小节数都含「品牌」节
+- [x] seo-setup 问品牌词：推荐值从域名推、带出处，只在空时问；完成条件写七节
+- [x] page-optimizer 的 `cannibalization` 判定和 keyword-clustering 第 6 步含同一段排除文字，写明没填品牌词时不排除、只作用于蚕食
+- [x] 插件里不再有「读出六节」这类指 `SEO.md` 六节的说法
+- [x] 改动不硬编码 Toeflair：示例用格式定义里现有的 `cookbook.example` 一类示例域名
+- [x] 全量测试通过
 - [ ] 在 Toeflair 上用改后的插件只跑 seo-scan 的 pages 方向，`SEO.md` 写了品牌词 `toeflair` 时，`pages.json` 里没有 targets 指向「toeflair」查询的 `cannibalization`（⏭ 延后 → 人：要在 Toeflair 仓库跑一次真实扫描）
 
 ## 选中的存量回归

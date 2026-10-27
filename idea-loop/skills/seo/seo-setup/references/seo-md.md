@@ -2,7 +2,7 @@
 
 目标仓库根目录的 `SEO.md` 是 seo 分类所有 skill、agent、脚本读的项目配置。`seo-setup` 照这份模板写；人之后可以直接改。脚本（`scripts/seo-md.mjs`）按下面的格式读它：
 
-- 六个 `## ` 小节，标题照写，顺序不限；少了的小节当作空。
+- 七个 `## ` 小节，标题照写，顺序不限；少了的小节当作空。
 - 每项一行：`- <键>：<值>`（中文冒号或英文冒号都行）。值里的域名、网址、路径、id 放反引号里。
 - 一个小节到下一个 `## ` 为止；不认识的行忽略，可以写说明文字。
 
@@ -37,6 +37,9 @@
 - 失败案例：`docs/reference/writing-failures.md`
 - 类型字段：`category`
 - 类型映射：`COMPARISON` → 对比与研究；`DATA` → 数据研究；`STORY` → 故事；`HOW-TO` → 教程
+
+## 品牌
+- 品牌词：`cookbook`；`cook book`
 ```
 
 ## 每节读的人
@@ -49,6 +52,7 @@
 | 重点页面 | 每行一个：反引号里的网址，冒号后可写「头词 `<词>`」 | `seo-context.mjs`、`seo-baseline.mjs`，技术、页面方向 |
 | 构建与检查 | 产物目录（相对仓库根）、检查参数（原样传给 `seo-check.mjs`） | 检查 hook |
 | 写作 | 文风、失败案例（项目文件路径）、类型字段（文章 frontmatter 里记类型的字段名）、类型映射（项目的取值 → 通用类型：对比与研究 / 数据研究 / 故事 / 教程） | `seo-writing`、`seo-brief`、`seo-outreach` |
+| 品牌 | 品牌词（站点名的各种写法，每个放反引号里，`；` 分隔；没写读成空，蚕食判定不排除任何查询） | `page-optimizer`、`keyword-clustering`（判蚕食时排除含品牌词的查询） |
 
 方向名固定为 `technical`、`pages`、`keywords`、`backlinks`、`geo`，和「issue 分类」里 `seo` 的子类同名。
 

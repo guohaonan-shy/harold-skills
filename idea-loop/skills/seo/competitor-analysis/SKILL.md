@@ -31,7 +31,7 @@ description: 竞品分析：深挖一个竞品的自然流量、排名词、内�
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出六节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
+1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，分析以它为根：已存的竞品说明这个域名是否早已知道、以前对它下过什么结论。
 3. 这个 skill 需要竞品。SEO.md 和项目上下文里都没有时：
    - 人在场：做最小的现场补齐：存下正在分析的这家，问人（或从 `find_serp_competitors` 推断再确认）还有没有别家；先写进 SEO.md 的「竞品」，再用 `update_project_context`（`addCompetitors`）写回，然后继续分析。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
