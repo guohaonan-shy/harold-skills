@@ -19,12 +19,12 @@
 
 ## 验收标准
 
-- [ ] 新的绊线测试在改文本之前是红的，报出五处 `CLAUDE_PROJECT_DIR`
-- [ ] idea-loop 插件的 `skills/`、`agents/` 下没有一处出现 `CLAUDE_PROJECT_DIR`
-- [ ] `uiux-imagine` 的 SKILL.md：目录约定那句写明 `imagine/`、`canvas/`、`research/` 在 worktree 根（`git rev-parse --show-toplevel`）下的 `docs/design/tmp/<spec-slug>/`；方向说明校验命令以 worktree 根为前缀
-- [ ] `uiux-refine` 的 SKILL.md：目录约定那句同上；开工前提里的方向说明校验命令和评分命令都以 worktree 根为前缀
-- [ ] 插件全部脚本测试通过（`node --test` 跑 idea-loop 的 `scripts/`）
-- [ ] 插件版本已递增
+- [x] 新的绊线测试在改文本之前是红的，报出五处 `CLAUDE_PROJECT_DIR`（实际报出六处：imagine 开工前提里还有一处 `issues.mjs set` 的命令，工单漏数，一并改了）
+- [x] idea-loop 插件的 `skills/`、`agents/` 下没有一处出现 `CLAUDE_PROJECT_DIR`
+- [x] `uiux-imagine` 的 SKILL.md：目录约定那句写明 `imagine/`、`canvas/`、`research/` 在 worktree 根（`git rev-parse --show-toplevel`）下的 `docs/design/tmp/<spec-slug>/`；方向说明校验命令以 worktree 根为前缀
+- [x] `uiux-refine` 的 SKILL.md：目录约定那句同上；开工前提里的方向说明校验命令和评分命令都以 worktree 根为前缀
+- [x] 插件全部脚本测试通过（`node --test` 跑 idea-loop 的 `scripts/`）
+- [x] 插件版本已递增
 - [ ] 人验 ⏭ 延后 → 人：下一次在 worktree 会话里跑 imagine，主 checkout 的 `docs/design/tmp/` 下没有新目录
 
 ## 选中的存量回归

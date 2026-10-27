@@ -7,12 +7,12 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 你是这次 imagine 的编排者：起一个 `idea-loop:uiux-imaginer` 出变种，把每一轮摆给人，把人的回复分好类交回去，直到人说方向没有要补的了，再让它写方向说明、导出交接画布。变种板只由 uiux-imaginer 改，方向定没定只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。下文的 `imagine/`、`canvas/`、`research/` 都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，本地、不进 git。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`，本地、不进 git；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
 
 ## 开工前
 
 - spec 是 `正式`、「前端交互」不是「不涉及」、「实现决策」里还没有冻结摘要，才往下走（状态的含义见 `idea-loop:spec-status`）。还在 `审核中` 的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
-- 它覆盖的 issue 应该是「设计中」：issue 会话换到设计阶段时已经翻过。人直接调 imagine、issue 还是「待设计」的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "${CLAUDE_PROJECT_DIR}/docs" 设计中 <spec-slug>`。
+- 它覆盖的 issue 应该是「设计中」：issue 会话换到设计阶段时已经翻过。人直接调 imagine、issue 还是「待设计」的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<worktree 根>/docs" 设计中 <spec-slug>`。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 
 ## 起步
@@ -62,7 +62,7 @@ uiux-imaginer 交付一轮之后：
 
 1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格原样摆给人确认；人的确认或改写交回去，任务「按确认改」。
 2. 任务「导出交接画布」。它交付后你核对：
-   - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
+   - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
    - spec 没被动过（`git status` 里没有它），状态仍是 `正式`；
    - 在内嵌浏览器里打开 `<预览地址>/handoff/index.html`，换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
 
