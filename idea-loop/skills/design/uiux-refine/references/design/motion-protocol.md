@@ -121,7 +121,7 @@ passed the gates is written as a candidate in the freeze record's `设计法候�
 motion object it will hang on (`idea-loop:design-modeling`, section 设计法候选的形态) — the
 rule behind it, shaped to join the Motion chapter as a global principle. The motion file itself, with
 the specific parameters and the candidate, is written from the final canvas at the pre-merge archive
-(object shape in `idea-loop:design-archive`, sections frontmatter and 正文); nothing is written under `delta/` at freeze. A new motion goes **only** into the
+(object shape in `idea-loop:design-archive`: its 「图的实体」 and 「写对象文件」); nothing is written under `delta/` at freeze. A new motion goes **only** into the
 motion file and the candidate, never straight into `DESIGN.md`. This protocol never writes
 `DESIGN.md`; `dreaming` puts the candidate to the human — that IS the admission process. A new
 pattern shipping with no candidate is the failure mode.

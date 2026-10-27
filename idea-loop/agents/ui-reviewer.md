@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（目录、frontmatter、正文、进入方式、查询、归档，长页面再读它的 `references/sections.md`）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
+用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
 下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs"`，`check` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs"`。
 
@@ -103,7 +103,7 @@ effort: high
    - **边**：`user` 边的 `locate`（`role` + `name`）取自第一步记下的真实 DOM；`system` 边写 `trigger` 与 `how`（在真应用里怎么让它发生：拦哪个请求、等多久，照你核的时候实际做的）。走不通的边带 `blocked`（`missing` + `tried`）。
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域、代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`；`usedBy` 由归档脚本生成，不写。
-   - **长页面**（滚动容器的内容比它的可见区高）的入口状态照 `idea-loop:design-archive` 的「长页面的分段」写 `sections` 与边的 `from`；下面第 2 步按它拍图。
+   - **长页面**（滚动容器的内容比它的可见区高）的入口状态照 `idea-loop:design-archive` 的「图的实体」「写对象文件」写 `sections` 与边的 `from`；下面第 2 步按它拍图。
 2. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`。拍之前关掉开发服务器的调试浮层（框架的开发工具条、错误浮层），不然它们进每张图。
    - **长页面的入口状态**（滚动容器的内容比它的可见区高）**按段拍**，照 `idea-loop:design-archive` 的「长页面的分段」的「拍图：分段脚本」：没声明分段的先在 `delta/` 的状态文件里补上；`browser_navigate` 到入口后、做任何交互之前，先跑 `time <仓库根>` 打印的代码（装时间：页面时间从加载前停住、只按固定步长拨；带 `--viewport` 与 `--theme` 同下）；`measure … --delta <spec-slug>`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格）→ `attribute`，落空、定位失败、重叠清零了才往下（归属结果顺带给出每条 `user` 边的 `from`，和哪些元素要写 `{ text }` 定位）→ `shoot`。**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`。段内交互的状态只拍那一段：装过时间之后点出来，点完要等界面变化用 `step <毫秒数>` 拨小步，再 `measure … --for <段内状态 id>`。`shoot` 返回里 `uncontrolled: true` 的段，状态文件那一段的描述里写明「这一段有页面时间管不到的动态内容：<是什么，看 `diffBox`>，截图是某一刻」。**`attribute` 因为「滚动驱动没声明」退出码 1 的段**（钉在视口里随滚动换内容）：照 `idea-loop:design-archive` 的「长页面的分段」里的「滚动驱动的段」补 `scrollDriven: true`，第 2 步起的每一步建成段内状态（边按「滚轮一下换一张」或「按滚动位置切换」写），这些状态的图进到那一步之后用 `pinned <仓库根> <状态 id> --out <目录>` 拍（不滚动、不拨时间，图高等于视口），不用 `measure --for`。
    - **单屏状态**（页面不比主视口高，不分段）同样用页面时间停住的拍法，不往页面注入关动画与过渡的样式：`browser_navigate` 到入口后、做任何交互之前先装时间（同上）；按状态的进入方式走到这个状态，交互之后要等界面变化时用 `step <毫秒数>` 拨小步，拨到这一屏的「应看到什么」成立为止；要停在瞬态（加载中）的，照旧先拦住请求再拨小步。然后跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录>` 打印的代码（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格；不用先 `measure` / `attribute`），图叫 `<状态 id>.png`，放进它所在对象的 `assets/`。返回里 `uncontrolled: true` 的，状态文件「这一屏」里写明「这一屏有页面时间管不到的动态内容：<是什么，看 `diffBox`>，截图是某一刻」。`heightDrift` 不是 0，说明页面比主视口高，是长页面，改走上一条的分段。

@@ -1,4 +1,16 @@
-# 查询：每个入口返回什么
+# 查询
+
+读档案用查询，不自己翻文件。七个入口，每个都能用 `--delta <spec-slug>` 叠上某个需求的 `delta/`，读改完之后的样子（`diff` 除外）：
+
+```
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入口> <参数> [--delta <spec-slug>]
+```
+
+同样的七个入口也是只读 MCP 工具 `design_page` / `design_state` / `design_journey` / `design_diff` / `design_refs` / `design_keyword` / `design_affected`（各问什么、什么时候用，以工具的 description 为准），返回同一份 JSON。
+
+退出码：名字对不上时 1，stderr 说清这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象（分段对不上时列出这一页现有的段）；`keyword` 一条都没命中同样是 1；`affected` 的提交 git 认不出也是 1。用法错误、不是仓库根、`diff` 带了 `--delta` 是 2。
+
+## 每个入口返回什么
 
 命令行打印 JSON；MCP 工具（`design_<入口>`）原样转发同一份 JSON。
 
@@ -18,7 +30,7 @@
 
 ## 进入方式
 
-`state` 的 `enter`、`journey` 的 `start` 按「进入方式从图上推导」给出：
+`state` 的 `enter`、`journey` 的 `start` 按 SKILL.md 的「进入方式从图上推导」给出：
 
 - 进得去：`{ reachable: true, entry: { state, url, preconditions }, steps: [边…] }`。`steps` 里 `user` 边带 `component` / `locate` / `action`，`system` 边带 `trigger` / `how`，都可能带 `motion`；入口节点本身 `steps` 为空。最短路径相同时取 id 较小的入口、先写的边。
 - 进不去：`{ reachable: false, verdict: '进不去', blocked: [边 + missing + tried…], undeclared }`。`blocked` 是这个状态的入边和它上游（走到入口能到达的状态为止）所有带 `blocked` 的边；一条都没有时 `undeclared: true`，表示没有路径也没人解释，校验规则 1 会报它。

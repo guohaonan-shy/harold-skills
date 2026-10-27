@@ -30,14 +30,14 @@
 
 ## 验收标准
 
-- [ ] 开工前读过 `idea-loop:writing-for-agents`；PR 描述里每条删句的理由引它的条目名（「单一事实来源」「环境缓存」「空操作」），每处重排说明依据（「信息层级」「就近归置」）
-- [ ] 新文档测试：design-archive 的 SKILL.md 去掉 frontmatter 后按 UTF-8 字符数 < 5000；在改之前的主分支内容上它是红的（11386），改完是绿的
-- [ ] 新文档测试：插件 skills 与 agents 下每一处「`idea-loop:design-archive` 的「X」」，X 都是这份 SKILL.md 的一个标题或它 `references/` 下某份文件的一个标题；在只改了节名、没改外部入口时它是红的
-- [ ] 旧主体的每一节都能在新主体或某份 references 里找到；删掉的每一句在 PR 描述里有去处或删的理由
-- [ ] 字段名、规则编号、命令行、选项、退出码跟改前逐一对得上（对着旧文 diff 核）
-- [ ] 外部入口照「要建什么」最后一条改完
-- [ ] 插件 `scripts/` 下全部测试照旧通过
-- [ ] 改了 skill 内容，`idea-loop/README.md` 里要是提到这份 skill 的结构，同步改
+- [x] 开工前读过 `idea-loop:writing-for-agents`；PR 描述里每条删句的理由引它的条目名（「单一事实来源」「环境缓存」「空操作」），每处重排说明依据（「信息层级」「就近归置」）
+- [x] 新文档测试：design-archive 的 SKILL.md 去掉 frontmatter 后按 UTF-8 字符数 < 5000；在改之前的主分支内容上它是红的（11386），改完是绿的
+- [x] 新文档测试：插件 skills 与 agents 下每一处「`idea-loop:design-archive` 的「X」」，X 都是这份 SKILL.md 的一个标题或它 `references/` 下某份文件的一个标题；在只改了节名、没改外部入口时它是红的
+- [x] 旧主体的每一节都能在新主体或某份 references 里找到；删掉的每一句在 PR 描述里有去处或删的理由
+- [x] 字段名、规则编号、命令行、选项、退出码跟改前逐一对得上（对着旧文 diff 核）
+- [x] 外部入口照「要建什么」最后一条改完
+- [x] 插件 `scripts/` 下全部测试照旧通过
+- [x] 改了 skill 内容，`idea-loop/README.md` 里要是提到这份 skill 的结构，同步改
 
 ## 选中的存量回归
 
