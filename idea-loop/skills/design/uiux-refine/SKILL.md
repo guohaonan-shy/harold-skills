@@ -6,14 +6,14 @@ disable-model-invocation: true
 
 你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再开设计 PR。画布只由 designer 改，签字只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。下文的 `imagine/`、`canvas/`、`research/` 都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下：打磨时只在本地，冻结结果经设计 PR 提交。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果经设计 PR 提交；交给 designer 的目录也用这个前缀写成绝对路径。
 
 几个词：**ledger** 是 `canvas/work/ledger.md`，designer 每交付一版落一行的打磨记录；**块的 job** 是方向说明「结构」节给每块写的内容责任，归为状态 / 结果 / 身份 / 氛围之一；**register** 是这块界面属于营销页还是产品内（in-app），记在方向说明里；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。
 
 ## 开工前
 
 - spec 是 `正式`，「实现决策」里还没有冻结摘要（状态的含义见 `idea-loop:spec-status`）。
-- `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
+- `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人「这份 spec 没有交接画布，会从方向说明重建」。
 
 ## 起步
@@ -32,7 +32,7 @@ designer 交付一版之后：
 3. **评分**：把评委的 `findings`、`score` 和之前每一轮的分数（`history`，从旧到新）写成 `canvas/work/round-<N>.json`，跑：
 
    ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
    ```
 
    退出码 `2` 是评委的输出不合格式：作废这一轮，新起一个 ui-master 重评。按它的停止判定走：
