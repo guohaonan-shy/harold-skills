@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, seo, page-optimizer, cannibalization]
 summary: SEO.md 新开「品牌」一节，蚕食判定排除含品牌词的查询，不再把站点链接报成蚕食
 related: ["[[2026-10-27-brand-terms-cannibalization]]", "[[idea-loop-seo]]"]
