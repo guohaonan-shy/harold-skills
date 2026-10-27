@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
  * Reads a project's SEO.md — the one config file every seo skill, agent and script reads. Its format
- * is defined in skills/seo/seo-setup/references/seo-md.md: six `## ` sections, one `- key：value`
+ * is defined in skills/seo/seo-setup/references/seo-md.md: seven `## ` sections, one `- key：value`
  * item per line, domains / URLs / paths / ids in backticks. Missing sections read as empty, unknown
  * lines are ignored, so a human can write notes in between.
  *
- * Usage: node seo-md.mjs <SEO.md>   → JSON of the six sections
+ * Usage: node seo-md.mjs <SEO.md>   → JSON of the seven sections
  * Exit: 0 = parsed, 1 = unreadable file (reason on stderr).
  */
 
@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 export const DIRECTIONS = ['technical', 'pages', 'keywords', 'backlinks', 'geo'];
 export const PAGE_TYPES = ['对比与研究', '数据研究', '故事', '教程'];
 
-const SECTIONS = ['站点', 'OpenSEO', '竞品', '重点页面', '构建与检查', '写作'];
+const SECTIONS = ['站点', 'OpenSEO', '竞品', '重点页面', '构建与检查', '写作', '品牌'];
 
 /** The section bodies by heading: lines between `## <heading>` and the next `#`/`##` heading. */
 function sections(md) {
@@ -125,6 +125,11 @@ function parseWriting(lines) {
   return { voice: firstTick(kv['文风'] ?? ''), failures: firstTick(kv['失败案例'] ?? ''), typeField: firstTick(kv['类型字段'] ?? ''), typeMap };
 }
 
+/** `` - 品牌词：`a`；`b` `` → { terms: ['a', 'b'] }; no section, no key or no backticks → []. */
+function parseBrand(lines) {
+  return { terms: ticks(pairs(lines)['品牌词'] ?? '') };
+}
+
 export function parseSeoMd(md) {
   const s = sections(md);
   return {
@@ -134,6 +139,7 @@ export function parseSeoMd(md) {
     keyPages: parseKeyPages(s['重点页面']),
     build: parseBuild(s['构建与检查']),
     writing: parseWriting(s['写作']),
+    brand: parseBrand(s['品牌']),
   };
 }
 

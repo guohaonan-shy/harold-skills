@@ -30,7 +30,7 @@ description: 关键词研究：从种子话题发现机会词，评估指标和 
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出六节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
+1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，研究以它为根：业务、目标、市场，以及已经存下的竞品和重点页面。
 3. 这个 skill 需要 `business_overview` 和 `current_goal`。任一为空时：
    - 人在场：做最小的现场补齐：问人，或从站点推断再确认，补到够用为止，用 `update_project_context` 写回，再继续研究。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。

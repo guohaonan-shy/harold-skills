@@ -22,7 +22,7 @@ description: SEO 教练模式：讲清 seo 分类里各个流程做什么、推�
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出六节（站点、OpenSEO 项目、竞品、重点页面等）。竞品和重点页面以 SEO.md 为准。再调 `get_project_context`（项目 id 取 SEO.md「OpenSEO」节；没有就用 `list_projects` 解析），教练以两者为根：业务、目标、定位、竞品、重点页面告诉你人下一步真正需要什么。站点是做什么的从这里读，不再从头问人。
+1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节（站点、OpenSEO 项目、竞品、重点页面等）。竞品和重点页面以 SEO.md 为准。再调 `get_project_context`（项目 id 取 SEO.md「OpenSEO」节；没有就用 `list_projects` 解析），教练以两者为根：业务、目标、定位、竞品、重点页面告诉你人下一步真正需要什么。站点是做什么的从这里读，不再从头问人。
 2. 这个 skill 不要求哪一节必须有。有什么读什么，让 `missingSections` 清单影响建议。没有 SEO.md、或项目上下文基本为空，下一步通常就是从零配置项目：征得人同意后用 Skill 工具调 `idea-loop:seo-setup`。不要一上来做完整访谈。
 3. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
 4. 收尾时写回经得住时间的东西：人告诉你的业务、目标或定位，用 `update_project_context` 写回；人提到的竞品、重点页面，经人同意先写进 SEO.md 的对应小节，再写进项目上下文，两边一致。会话花了 credits 就追加一条研究日志：`{ appendResearchLog: { summary: "<what>: <inputs>. Verdict: <conclusion>" } }`。

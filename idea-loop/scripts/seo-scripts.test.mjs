@@ -36,9 +36,12 @@ const SEO_MD = `# SEO
 - 文风：\`docs/reference/voice.md\`
 - 类型字段：\`category\`
 - 类型映射：\`COMPARISON\` → 对比与研究；\`HOW-TO\` → 教程
+
+## 品牌
+- 品牌词：\`cookbook\`；\`cook book\`
 `;
 
-test('SEO.md: six sections parse into the shape the scripts read', () => {
+test('SEO.md: seven sections parse into the shape the scripts read', () => {
   const s = parseSeoMd(SEO_MD);
   assert.equal(s.site.domain, 'cookbook.example');
   assert.deepEqual(s.site.languages, [{ code: 'en', prefix: '/' }, { code: 'zh-CN', prefix: '/zh/' }]);
@@ -55,6 +58,14 @@ test('SEO.md: six sections parse into the shape the scripts read', () => {
   ]);
   assert.deepEqual(s.build, { distDir: 'apps/site/dist', checkArgs: ['--title-max=70', '--desc-max=160'] });
   assert.deepEqual(s.writing.typeMap, { COMPARISON: '对比与研究', 'HOW-TO': '教程' });
+  assert.deepEqual(s.brand.terms, ['cookbook', 'cook book']);
+});
+
+test('SEO.md: a missing 品牌 section, a missing 品牌词 key or a value without backticks reads as no brand terms', () => {
+  assert.deepEqual(parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n').brand.terms, []);
+  assert.deepEqual(parseSeoMd('## 品牌\n- 说明：随便写点什么\n').brand.terms, []);
+  assert.deepEqual(parseSeoMd('## 品牌\n- 品牌词：cookbook\n').brand.terms, []);
+  assert.deepEqual(parseSeoMd('## 品牌\n- 品牌词：\n').brand.terms, []);
 });
 
 test('SEO.md: missing sections read as empty, unknown directions and page types are refused', () => {

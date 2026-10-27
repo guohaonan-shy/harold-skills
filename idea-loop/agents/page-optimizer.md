@@ -15,7 +15,7 @@ tools: Read, Grep, Glob, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
 
 提示里有五行：SEO.md 路径、OpenSEO 项目、本次额度、运行目录、今天。
 
-`node ${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs <SEO.md>` 读出配置，用其中的「站点」「竞品」「重点页面」「写作」（只用类型字段和类型映射）。
+`node ${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs <SEO.md>` 读出配置，用其中的「站点」「竞品」「重点页面」「品牌」「写作」（只用类型字段和类型映射）。
 
 ## 做
 
@@ -25,7 +25,9 @@ tools: Read, Grep, Glob, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
    |---|---|
    | `striking-distance` | 平均排名 5–20、展现 ≥ 50 |
    | `low-ctr` | 平均排名 ≤ 10，点击 / 展现低于本站同一取整排名的中位数的一半；带 `ratio` |
-   | `cannibalization` | 同一个查询有两个及以上页面各有 ≥ 20 次展现 |
+   | `cannibalization` | 同一个查询有两个及以上页面各有 ≥ 20 次展现；含品牌词的查询不判，见表后 |
+
+   **蚕食判定排除品牌查询**：SEO.md「品牌」节写了品牌词时，查询和每个品牌词都转小写、去掉空格和连字符后，查询包含任一品牌词的，不判蚕食（品牌词 `cookbook` 时，「cookbook」「Cook Book pricing」「best cook-book app」不判，「weeknight dinner ideas」照常判）。没写品牌词：不排除，蚕食照常判，不从域名推。只作用于蚕食判定：其他判定（如 `striking-distance`、`low-ctr`）照常包含品牌词查询。
 
 2. **内链缺口**（免费）：对重点页面和上一步 `striking-distance` 的页面调 `get_audit_pages`（`urlContains`），站内入链数不超过 2 的记 `internal-link-gap`。没有审计：记缺口。
 3. **对比文是否超期**：在仓库里找类型字段映射到「对比与研究」的文章，读它写下的核实日期；距今天超过 90 天、或没写核实日期的，记 `stale-comparison`，`fix` 写「需要诊断：重新试用竞品并更新核实日期」。SEO.md 没写类型字段：跳过并记缺口。
