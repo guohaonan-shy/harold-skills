@@ -19,7 +19,7 @@ issues: [77]
 
 ### 1. 设计过程产物落进主 checkout，或落到磁盘根目录
 
-`uiux-imagine` 说 `imagine/`、`canvas/`、`research/` 都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，收工前的方向说明校验命令也用这个前缀拼路径；`uiux-refine` 同样有三处（目录约定、方向说明校验、评分命令）。两份 skill 一共五处，仓库里别的 skill、agent、hook、脚本都没有用到这个变量（2026-10-27 对 `origin/main 8491043` 用 `git grep` 核过）。
+`uiux-imagine` 说 `imagine/`、`canvas/`、`research/` 都在 `${CLAUDE_PROJECT_DIR}/docs/design/tmp/<spec-slug>/` 下，收工前的方向说明校验命令也用这个前缀拼路径；`uiux-refine` 同样有三处（目录约定、方向说明校验、评分命令）。两份 skill 一共五处（后来实现时发现是六处：imagine 开工前把 issue 翻成「设计中」的命令也用这个变量拼 `docs/` 路径，见 review 第 1 轮），仓库里别的 skill、agent、hook、脚本都没有用到这个变量（2026-10-27 对 `origin/main 8491043` 用 `git grep` 核过）。
 
 本次复现（2026-10-27，本仓库的 worktree 会话 `gracious-fermat-d727e8`）：
 
@@ -46,7 +46,7 @@ issues: [77]
 
 | 入口 | 纳入 / 排除 |
 |---|---|
-| `uiux-imagine` 的目录约定、方向说明校验命令 | 纳入 |
+| `uiux-imagine` 的目录约定、方向说明校验命令、开工前把 issue 翻成「设计中」的命令 | 纳入 |
 | `uiux-refine` 的目录约定、方向说明校验命令、评分命令 | 纳入 |
 | `uiux-research` 的落图目录 | 已经按 `git rev-parse --show-toplevel` 定，不改 |
 | refine 的冻结、`design-change-sync`、`ui-reviewer`、`implementer` 里相对写的 `docs/design/tmp/<spec-slug>/` | 排除：它们在 worktree 根下按相对路径用，或由编排者给绝对路径，不经过 `CLAUDE_PROJECT_DIR`，没有这个问题 |
@@ -62,7 +62,7 @@ issues: [77]
 
 1. **「当前 worktree 根」怎么取**：`git rev-parse --show-toplevel`。依据：产品已有统一做法，`uiux-research` 的「定落图目录」写「项目根 = `git rev-parse --show-toplevel`」，`wiki-conventions` 的「中间产物」写「`<worktree 根>` 取 `git rev-parse --show-toplevel`」。两份 skill 沿用「worktree 根」这个叫法，在目录约定那一句定义一次，后面的命令用它当前缀。
 2. **不在 skill 里再用 `CLAUDE_PROJECT_DIR` 拼 `docs/` 下的路径**：它在 worktree 会话里指主 checkout、在 Bash 里为空，两种都错（「问题」1）。依据：本次复现。
-3. **范围只到这五处**：其余入口逐个看过，不经过这个变量（见「方案」的表）。依据：自己定的四条之「默认改动最小」。
+3. **范围只到这六处**：其余入口逐个看过，不经过这个变量（见「方案」的表）。依据：自己定的四条之「默认改动最小」。
 4. **issue 的「相关」一节不做**：钩子已删（见「根因」的修正）。
 
 ## 技术方案总览
@@ -92,7 +92,7 @@ issues: [77]
 
 - **seam**：插件里 skill 与 agent 的 Markdown 文本，用 `node:test` 读文件断言。能抓到：有人再用 `CLAUDE_PROJECT_DIR` 拼路径、或 imagine / refine 丢了「worktree 根取 `git rev-parse --show-toplevel`」这句。漏掉：执行方实际跑命令时是否照做，这只能在真实的 worktree 会话里看。
 - **增量功能测试**：
-  - 前置：idea-loop 插件目录。步骤：扫 `skills/` 与 `agents/` 下全部 Markdown。期望：没有一处出现 `CLAUDE_PROJECT_DIR`；`uiux-imagine`、`uiux-refine` 的 SKILL.md 都写明设计过程目录在 worktree 根（`git rev-parse --show-toplevel`）下的 `docs/design/tmp/<spec-slug>/`。覆盖：期望行为 1。改之前这条测试是红的（五处命中）。
+  - 前置：idea-loop 插件目录。步骤：扫 `skills/` 与 `agents/` 下全部 Markdown。期望：没有一处出现 `CLAUDE_PROJECT_DIR`；`uiux-imagine`、`uiux-refine` 的 SKILL.md 都写明设计过程目录在 worktree 根（`git rev-parse --show-toplevel`）下的 `docs/design/tmp/<spec-slug>/`。覆盖：期望行为 1。改之前这条测试是红的（六处命中）。
   - 人验（不自动）：下一次在 worktree 会话里跑 imagine，看主 checkout 的 `docs/design/tmp/` 下没有新目录。
 - **prompt / eval 变动**：两份 SKILL.md 的路径前缀改写，无 eval 变动。
 - **照着谁写**：`idea-loop/scripts/dreaming-incremental-doc.test.mjs`（读 skill 文本断言步骤在场）；`seo-check.test.mjs` 里断言 `merge-gate-hook` 不再存在的那段（断言某个东西不出现）。
@@ -107,5 +107,5 @@ issues: [77]
 ## 关联
 
 - 覆盖的 issue：#77 uiux-imagine / uiux-refine 在 worktree 会话里把设计产出写进主 checkout
-- 相关 spec：[[uiux-imagine-agent]]（实现中，imagine 交给 uiux-imaginer 的那一版；没有工单在做，不改这五处，无重叠）、[[design-research-agent]]（实现中，`uiux-research` 已按 worktree 根定落图目录，本 spec 沿用它的写法，无重叠）
+- 相关 spec：[[uiux-imagine-agent]]（实现中，imagine 交给 uiux-imaginer 的那一版；没有工单在做，不改这六处，无重叠）、[[design-research-agent]]（实现中，`uiux-research` 已按 worktree 根定落图目录，本 spec 沿用它的写法，无重叠）
 - 相邻还没完成的 issue：#87 retro 的 session-digest locate 换了当前目录后找到别的会话的记录，同属「会话位置取错」一类，但在 retro 脚本里、取的是会话记录不是工作区根，无重叠，不分先后
