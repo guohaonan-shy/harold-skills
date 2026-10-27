@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The deterministic half of shooting a long page for the design archive (skills/design/design-archive/references/sections.md, 拍图).
+ * The deterministic half of shooting a long page for the design archive (skills/design/design-archive/references/shooting.md).
  *
  * A long entry state declares `sections` (design-archive.mjs). Writing it into the archive takes a
  * browser for the measuring and the shooting, and plain logic for everything else; this file is
@@ -1007,7 +1007,7 @@ const roundPx = (v) => Math.round(v);
 /**
  * Measurement → ranges, the section each clickable element belongs to, and what does not fit.
  *
- * Ranges (skills/design/design-archive/references/sections.md, 怎么定位): a section found by heading starts at the top of the
+ * Ranges (skills/design/design-archive/references/writing.md, 分段 `sections`): a section found by heading starts at the top of the
  * top-level block that holds the heading — at the heading itself when that block holds another declared
  * heading — and runs to where the next declared section starts (the last one: the top of the page's
  * first contentinfo, declared or not, else the page bottom). A landmark or `position` section is that
@@ -1137,7 +1137,7 @@ export function attribute(m) {
 }
 
 /**
- * Which sections are scroll-driven (skills/design/design-archive/references/sections.md, 滚动驱动的段). The measurement lists
+ * Which sections are scroll-driven (skills/design/design-archive/references/shooting.md, 滚动驱动的段). The measurement lists
  * the pins it saw while the page was scrolled through (a `position: sticky` element, or a fixed one a library such as GSAP
  * pins, inside a container taller than itself, big enough to hold a screen — or smaller, when the text in it changed with the
  * scroll and changes the same way where the scroll is put back); a pin belongs to the section whose range
@@ -1172,7 +1172,7 @@ function scrollDrivenOf(pins, found, ranges, ref) {
     scrollDriven,
     undeclaredScrollDriven: scrollDriven.filter((x) => x.detected && !x.declared).map((x) => ({
       id: x.id, ref: x.ref, evidence: x.evidence,
-      reason: `${x.id} 是滚动驱动的段（钉在视口里的内容随滚动变化），分段声明里没写：给它加 scrollDriven: true，并照 sections.md「滚动驱动的段」把每一步建成段内状态`,
+      reason: `${x.id} 是滚动驱动的段（钉在视口里的内容随滚动变化），分段声明里没写：给它加 scrollDriven: true，并照 design-archive 的「拍档案截图」里的「滚动驱动的段」把每一步建成段内状态`,
     })),
     declaredNotDetected: scrollDriven.filter((x) => x.declared && !x.detected).map((x) => ({
       id: x.id, ref: x.ref, reason: `${x.id} 声明了 scrollDriven，但测量没检出钉在视口里的元素：按声明拍（只截段顶起一个视口高），确认这一段真是滚动驱动的`,
@@ -1416,7 +1416,7 @@ function attributeCommand(positional) {
   if (result.hidden.length) console.error(`attribute: ${result.hidden.length} 个可点元素看不见（透明度为 0，或固定在屏幕上却从没出现），不参与归属`);
   if (result.roleUnresolved.length) console.error(`attribute: ${result.roleUnresolved.length} 个可点元素按「角色 + 名字」定位不到（roleUnresolved），边的 locate 对它们改写 { text: <完整文字> }`);
   for (const x of result.declaredNotDetected) console.error(`attribute: ${x.id} 声明了 scrollDriven 但测量没检出钉住的元素（只提示）：按声明拍，确认这一段真是滚动驱动的`);
-  for (const x of result.undeclaredScrollDriven) console.error(`attribute: ${x.id} 是滚动驱动的段（${x.evidence.join('；')}），分段声明里没写：给它加 scrollDriven: true，并照 sections.md「滚动驱动的段」把每一步建成段内状态`);
+  for (const x of result.undeclaredScrollDriven) console.error(`attribute: ${x.id} 是滚动驱动的段（${x.evidence.join('；')}），分段声明里没写：给它加 scrollDriven: true，并照 design-archive 的「拍档案截图」里的「滚动驱动的段」把每一步建成段内状态`);
   if (!result.ok) {
     console.error(`attribute: 落空 ${result.orphans.length} 个，定位失败 ${result.notFound.length} 段，顺序不对 ${result.outOfOrder.length} 段，重叠 ${result.overlaps.length} 处，滚动驱动没声明 ${result.undeclaredScrollDriven.length} 段——补分段、改定位或补 scrollDriven 后重测，清零再写档案`);
     return 1;

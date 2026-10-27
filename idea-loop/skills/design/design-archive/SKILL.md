@@ -93,7 +93,7 @@ docs/design/
 | 要做什么 | 读 |
 |---|---|
 | 写一个对象文件 | [references/writing.md](references/writing.md)：完整的 frontmatter 示例与必填字段、分段的 `id` 与 `locate`、正文、建模的取舍、截图矩阵与 `prod/index.md` 的设置键 |
-| 拍档案截图 | [references/sections.md](references/sections.md) |
+| 拍档案截图（单屏、长页面、段内交互、滚动驱动的段） | [references/shooting.md](references/shooting.md)：每种情形的步骤，和「看到什么 → 做什么」 |
 | 查档案 | MCP 工具 `design_*`（用法以工具的 description 为准）；命令行、退出码与返回字段在 [references/query.md](references/query.md) |
 | 校验 | [references/check.md](references/check.md)：命令、退出码、规则表、「写完 `delta/` 的标志」 |
 | 归档 | [references/archive-script.md](references/archive-script.md) |

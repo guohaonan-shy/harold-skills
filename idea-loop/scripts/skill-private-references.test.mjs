@@ -18,12 +18,6 @@ import { fileURLToPath } from 'node:url';
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skillsRoot = join(pluginRoot, 'skills');
 
-/**
- * Reads that predate the rule and that the owner publishes on purpose: design-archive's SKILL.md
- * names `references/sections.md` for long pages itself, and dreaming's initial scan follows it.
- */
-const KNOWN = new Set(['skills/productivity/dreaming/references/initial-scan.md -> design-archive']);
-
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
@@ -82,7 +76,6 @@ test('no skill reads another skill\'s private references', () => {
     for (const file of walk(dir).filter((f) => f.endsWith('.md'))) {
       const text = readFileSync(file, 'utf8');
       for (const [other, excerpt] of foreignReferenceReads(text, slug)) {
-        if (KNOWN.has(`${relative(pluginRoot, file)} -> ${other}`)) continue;
         violations.push(`${relative(pluginRoot, file)} reads ${other}'s references: ${excerpt}`);
       }
     }

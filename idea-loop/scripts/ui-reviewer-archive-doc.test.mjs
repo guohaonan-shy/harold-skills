@@ -2,9 +2,9 @@
  * Tripwire — the archive-mode section of the UI reviewer's definition points at another
  * capability by name plus section title, never by a file path into its references.
  *
- * writing-for-agents: "不写文件路径：目录一挪路径就断，名字不变". The archive step reuses the long-page
- * sections method that lives under design-archive; a path like `references/sections.md` breaks the day
- * that folder moves, while "idea-loop:design-archive 的「长页面的分段」" does not.
+ * writing-for-agents: "不写文件路径：目录一挪路径就断，名字不变". The archive step reuses the
+ * screenshot method that lives under design-archive; a path like `references/shooting.md` breaks the day
+ * that folder moves, while "idea-loop:design-archive 的「拍档案截图」" does not.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,8 +31,8 @@ test('archive mode does not point at a references/ file path', () => {
   assert.deepEqual(hits, [], `archive mode names a file path; point at the capability and section title instead:\n${hits.join('\n')}`);
 });
 
-test('archive mode still names the long-page sections method it relies on', () => {
+test('archive mode still names the screenshot method it relies on', () => {
   const text = section('归档模式').map((l) => l.text).join('\n');
-  assert.match(text, /idea-loop:design-archive[^\n]*「长页面的分段」/);
-  assert.match(text, /idea-loop:design-archive[^\n]*「拍图：分段脚本」/);
+  assert.match(text, /idea-loop:design-archive[^\n]*「拍档案截图」/);
+  assert.match(text, /idea-loop:design-archive[^\n]*「长页面的入口状态」/);
 });

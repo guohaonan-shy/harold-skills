@@ -97,7 +97,7 @@ async:                            # 这一屏发起了异步动作时必填
 |---|---|---|
 | 有标题 | `{ role: heading, name: <完整名字> }`，精确匹配 | 从标题所在的顶层分块的上沿起（这个分块里还有别的分段标题时，从标题本身的上沿起），到下一个分段的起点为止 |
 | 顶栏、页脚 | `{ role: banner }` / `{ role: contentinfo }` | 这个 landmark 元素自己的框 |
-| 没有标题的段（首屏、纯图片带） | `{ position: N }` | 第 N 个顶层分块自己的框；校验给提示：这条定位比较脆，页面加一个分块就会错位 |
+| 没有标题的段（首屏、纯图片带） | `{ position: N }` | 第 N 个顶层分块自己的框；校验给提示：这条定位比较脆，页面加一个分块就会错位；页面全套在一个无语义的包装元素里时它用处不大，改用标题或 landmark 定位 |
 
 **顶层分块** = `<main>` 的直接子元素（没有 `<main>` 时取 `<body>` 去掉 banner / contentinfo 之后的直接子元素），只算可见、高度大于 0 的；自身不占位置的包装层（`display: contents`，例如 Astro 的岛）不算一块，往里看，用它的子元素。
 
@@ -164,6 +164,6 @@ path:
 
 ## 截图矩阵与 `prod/index.md` 的设置键
 
-**`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置在 `prod/index.md` 的 frontmatter，见下）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。拍法见 [sections.md](sections.md)。
+**`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置在 `prod/index.md` 的 frontmatter，见下）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。拍法见 [shooting.md](shooting.md)。
 
 **`prod/index.md` 的设置键**（项目定一次，归档脚本原样保留）：`viewport`（如 `1440x900`）、`theme`（`light` / `dark`）、`locale`、`motion`（`default` 是默认动效、拍之前把整页滚一遍让内容出现，`reduce` 是减少动效；不写是 `default`）、`workspaces`（可选：项目有不止一个前端时，组件文件名的工作区前缀列表，如 `[mkt, app]`）。

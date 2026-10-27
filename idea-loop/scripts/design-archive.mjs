@@ -405,7 +405,7 @@ function swapFile(files, id, oldFile, newFile) {
 // ---------- sections of a long entry state ----------
 
 /**
- * The section types: a closed set, shared by every project (skills/design/design-archive/references/sections.md). A section
+ * The section types: a closed set, shared by every project (skills/design/design-archive/references/writing.md, 分段 `sections`). A section
  * id is `<type>` or `<type>-<qualifier>`; the value here is the one-line meaning that decides which type
  * a block of the page is. Growing the set means editing this table, its test and the reference.
  */

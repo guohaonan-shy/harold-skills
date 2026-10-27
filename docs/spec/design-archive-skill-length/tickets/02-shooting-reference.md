@@ -24,15 +24,15 @@
 
 ## 验收标准
 
-- [ ] 开工前读过 `idea-loop:writing-for-agents`；PR 描述里每条删句的理由引它的条目名（「单一事实来源」「环境缓存」「空操作」），每处重排说明依据（「信息层级」「就近归置」）
-- [ ] 新的拍图参考按四种情形各有一串带完成条件的步骤，有一张「看到什么 → 做什么」表，共用规矩各只出现一次
-- [ ] `references/sections.md` 不存在；它原来的每一句，要么在主体、写法参考、`check.md`、拍图参考里，要么在 PR 描述里有去处或删的理由
-- [ ] 子命令、选项、退出码、输出字段名跟改前逐一对得上（对着旧文 diff 核）
-- [ ] `design-archive-sections-doc` 测试通过：文档里每条分段脚本命令行的子命令与选项都是脚本认的，七个子命令都出现过；它按路径读 `references/sections.md` 的那条换成新的拍图参考
-- [ ] `ui-reviewer-archive-doc` 测试断言的两个标题换成新的拍图参考的标题后通过；归档模式里仍然不出现 `references/...md` 的路径
-- [ ] `skill-private-references` 测试通过；dreaming 初扫改成按名字指之后，它 `KNOWN` 里那条豁免要是不再用得上就删掉
-- [ ] 工单 01 加的「外部节名都指得到」测试与主体长度测试照旧通过；插件 `scripts/` 下全部测试通过
-- [ ] `idea-loop/README.md` 里提到 `sections.md` 的地方同步改
+- [x] 开工前读过 `idea-loop:writing-for-agents`；PR 描述里每条删句的理由引它的条目名（「单一事实来源」「环境缓存」「空操作」），每处重排说明依据（「信息层级」「就近归置」）
+- [x] 新的拍图参考按四种情形各有一串带完成条件的步骤，有一张「看到什么 → 做什么」表，共用规矩各只出现一次
+- [x] `references/sections.md` 不存在；它原来的每一句，要么在主体、写法参考、`check.md`、拍图参考里，要么在 PR 描述里有去处或删的理由
+- [x] 子命令、选项、退出码、输出字段名跟改前逐一对得上（对着旧文 diff 核）
+- [x] `design-archive-sections-doc` 测试通过：文档里每条分段脚本命令行的子命令与选项都是脚本认的，七个子命令都出现过；它按路径读 `references/sections.md` 的那条换成新的拍图参考
+- [x] `ui-reviewer-archive-doc` 测试断言的两个标题换成新的拍图参考的标题后通过；归档模式里仍然不出现 `references/...md` 的路径
+- [x] `skill-private-references` 测试通过；dreaming 初扫改成按名字指之后，它 `KNOWN` 里那条豁免要是不再用得上就删掉
+- [x] 工单 01 加的「外部节名都指得到」测试与主体长度测试照旧通过；插件 `scripts/` 下全部测试通过
+- [x] `idea-loop/README.md` 里提到 `sections.md` 的地方同步改
 
 ## 选中的存量回归
 
