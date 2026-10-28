@@ -76,7 +76,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 
 - **执行方开工**：读目标仓库的 `CODING_STANDARDS.md` 和它链接的文档（跟 review 读的同一套）；看工单内容自己挑要用的 skill，不再有固定清单；spec 全文可读，这次做什么以工单为准。
 - **工单卡住、人做完决定**：只要原执行方还联系得上、它的 worktree 还在，编排者用 SendMessage 让它带着原来的上下文接着做；联系不上再照现在的做法新起一个，从半成品分支接上。
-- **issue-session 进实现阶段**：翻完 label、移完 section、切完分支，先停下，请人敲 `/compact` 压缩上下文，再让人重新调起 issue-session，然后才切工单。
+- **issue-session 进实现阶段**：切完工单、开始实现之前，先停下，请人敲 `/compact` 压缩上下文，再让人重新调起 issue-session，然后才调 implement。
 
 同一行为的其他入口：
 
@@ -97,7 +97,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 2. 执行方能读 spec 里工单要用的部分（如「方案」里的内容 brief），编排者不用往工单里补「可以读 X」。
 3. 执行方开工就读目标仓库的 `CODING_STANDARDS.md` 和它链接的文档；第 1 轮 review 里不再出现「实现时就能读到的规则没照着写」这一类问题。
 4. 工单卡住、人做完决定后，原执行方带着自己的上下文接着做；它联系不上时才新起一个。
-5. issue-session 进实现阶段前一定先压缩上下文，切工单时编排者不再背着审核阶段的对话。
+5. issue-session 切完工单、开始实现前一定先压缩上下文，implement 的编排者不再背着审核阶段的对话。
 
 ## 实现决策
 
@@ -138,13 +138,13 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 
 ### 进实现前压缩上下文（#153）
 
-依据：人的原话：「进入实现之前一定要compact上下文」。
+依据：人的原话：「进入实现之前一定要compact上下文」；位置按人后来的原话：「我倾向于切分工单之后，实现之前压缩」。
 
-- 位置：issue-session 的「换阶段」，`issues advance` 翻到「实现中」、`move_sessions` 移进实现中的 section、切出 `impl/<spec-slug>` 分支之后，切工单之前。从「审核」或「设计」进实现都这样。
+- 位置：issue-session 的「实现」一节，`idea-loop:to-ticket` 切完工单（工单已提交）之后，调 `idea-loop:implement` 之前。从「审核」或「设计」进实现都这样。切工单要读 spec，留在压缩前做；implement 只读磁盘上的 spec 和工单，压缩后做。
 - 谁来压缩：`/compact` 只能人敲，agent 自己调不了。所以会话停下，给人两条要敲的命令：
-  1. `/compact 保留 issue #<号>、spec <slug>、当前分支 impl/<slug> 和 worktree 路径；审核和设计阶段的讨论已经写进 spec，不用保留`
+  1. `/compact 保留 issue #<号>、spec <slug>、当前分支 impl/<slug> 和 worktree 路径、工单已切好；审核和设计阶段的讨论已经写进 spec，不用保留`
   2. `/idea-loop:issue-session <号>`
-- 为什么要再调一次 issue-session：压缩之后，skill 的原文不一定还在上下文里。重新调起时，「开场」读到 issue 状态是「实现中」、是人直接调的，就照现有规则去「实现」。归位那几步重跑一次也不出错。
+- 为什么要再调一次 issue-session：压缩之后，skill 的原文不一定还在上下文里。重新调起时，「开场」读到 issue 状态是「实现中」、是人直接调的，就照现有规则去「实现」。归位那几步重跑一次也不出错。「实现」一节因此要写明：spec 的 `tickets/` 下已经有工单，就不再切，直接调 implement。
 - 用 PushNotification 发一句话，告诉人要压缩，然后停下等。
 
 ### 已经落地的工单照旧新起，只复用卡住的
@@ -160,7 +160,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 不涉及：没有服务端。改动只在编排顺序上：
 
 - 卡住的工单：编排者（implement）→ pending 记 agent id → 人回复 → 决定写进工单并提交 → SendMessage 叫回原执行方（失败就新起）→ 交回 → 核对、落地、回收。
-- 进实现：issue-session 换阶段（advance、移 section、切分支）→ 停下，通知人 → 人敲 `/compact`、再敲 `/idea-loop:issue-session <号>` → 开场照状态进「实现」→ to-ticket → implement。
+- 进实现：issue-session 换阶段（advance、移 section、切分支）→ to-ticket 切工单并提交 → 停下，通知人 → 人敲 `/compact`、再敲 `/idea-loop:issue-session <号>` → 开场照状态进「实现」→ 已有工单，跳过切票 → implement。
 
 ### 前端内部
 
@@ -182,7 +182,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
 
 - **seam**：
-  - 文档检查（`node --test` 跑的 `*.test.mjs`，读插件文件断言文字）。能抓到：定义里还写着固定的三 skill 清单、还写着「只读测试决策」、没指向 `CODING_STANDARDS.md`；pending 的字段里没有 agent id；implement 的「人回复后」没有「先 SendMessage、失败再新起」；issue-session 的换阶段进实现前没有停下请人压缩。抓不到：执行方实际挑不挑对 skill、编排者实际会不会叫回原执行方。
+  - 文档检查（`node --test` 跑的 `*.test.mjs`，读插件文件断言文字）。能抓到：定义里还写着固定的三 skill 清单、还写着「只读测试决策」、没指向 `CODING_STANDARDS.md`；pending 的字段里没有 agent id；implement 的「人回复后」没有「先 SendMessage、失败再新起」；issue-session 的「实现」在切完工单、调 implement 之前没有停下请人压缩，已有工单时还会再切。抓不到：执行方实际挑不挑对 skill、编排者实际会不会叫回原执行方。
   - retro 回放（`idea-loop/evals/retro/`）。能抓到：同一张历史工单，改前和改后，执行方在工单没点名时有没有读写法规范、调对 skill。抓不到：回放没覆盖的工单类型。
 - **增量功能测试**：
   - 文档检查：先在改前的 `origin/main` 上跑，看到它红；改完变绿。覆盖：期望行为 1、2、3、4、5 的文字部分。
