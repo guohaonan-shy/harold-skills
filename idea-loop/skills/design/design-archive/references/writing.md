@@ -14,8 +14,6 @@ regions:                          # 区域 → 组件
   - { name: 工具栏, component: "[[NavBar]]" }
 ```
 
-页面的状态由带这个页面前缀的文件决定，页面文件里不列。
-
 ## 状态与边 `type: design-state`
 
 ```yaml
