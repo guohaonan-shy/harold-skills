@@ -35,3 +35,4 @@
 > `decisions/`：`idea-loop:retro` 在 issue 会话收尾时写的决定记录，一个 issue 一份（没有 issue 号时 `<日期>-<主题>.md`）。下一次 retro 靠它数「对题的选择」同一类出现了几次、认出驳回过的候选。
 
 > `retro-candidates/` 已搬到 `docs/records/retro-candidates/`（2026-10-26 随 #115）：候选池要加「出现」、改「状态」，跟这一层「忠实，不编辑」冲突。收什么、谁写谁读见 `docs/records/index.md`。
+| [decisions/125](decisions/125.md) | conversation | 2026-10-28 | 决定记录 —— #125 的 issue 会话：design-archive 主体以图的实体为中心、拍图参考按情形排步骤，摆过的题与 retro 候选的结果 |
