@@ -22,11 +22,11 @@ issue 会话（`idea-loop:issue-session`）现在把审核、grill、写 spec、
 
 ## 验收标准
 
-- [ ] 一个文档检查：issue-session 的「实现」在调 to-ticket 之后、调 implement 之前，有停下请人压缩的一步：打出填好的压缩指令（模板写在 issue-session 里，含「下一步」「保留」「丢掉」三部分），请人执行后说「继续」；写明工单目录下已有工单时跳过切票。先在改前的文字上看到它失败，再改到通过
-- [ ] 人重敲 issue-session 的路径也走得通：对着 issue-session「开场」的现有规则核一遍，「实现中」状态、人直接调起时会进「实现」，归位那几步重跑不出错（照文字核对，写进交回的 verified）
-- [ ] 插件 README 里描述 issue-session 各阶段的地方提到这个停点
-- [ ] issue-session 的 SKILL.md 主体仍在 5000 字以内（按字符数，去掉 frontmatter）
-- [ ] 插件全量测试是绿的
+- [x] 一个文档检查：issue-session 的「实现」在调 to-ticket 之后、调 implement 之前，有停下请人压缩的一步：打出填好的压缩指令（模板写在 issue-session 里，含「下一步」「保留」「丢掉」三部分），请人执行后说「继续」；写明工单目录下已有工单时跳过切票。先在改前的文字上看到它失败，再改到通过
+- [x] 人重敲 issue-session 的路径也走得通：对着 issue-session「开场」的现有规则核一遍，「实现中」状态、人直接调起时会进「实现」，归位那几步重跑不出错（照文字核对，写进交回的 verified）
+- [x] 插件 README 里描述 issue-session 各阶段的地方提到这个停点
+- [x] issue-session 的 SKILL.md 主体仍在 5000 字以内（按字符数，去掉 frontmatter）
+- [x] 插件全量测试是绿的
 
 ## 选中的存量回归
 

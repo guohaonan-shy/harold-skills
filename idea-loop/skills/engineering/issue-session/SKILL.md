@@ -39,7 +39,16 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 实现
 
-用 Skill 工具调 `idea-loop:to-ticket` 切工单，再调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后接 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
+1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，并把工单提交进当前分支。
+2. **停下，请人压缩**：进实现时上下文里是整段审核、grill、设计的历史，编排者每一轮都要重读。`/compact` 只有人能敲，压缩也不会开启新的一轮，所以：用 PushNotification 发一句话说要压缩，然后停下，把下面的指令里的 `<号>`、`<slug>`、`<绝对路径>`（当前 worktree）换成这一次的值，打出来给人复制执行，请人压缩完说一句「继续」。压缩后会话里调过的 skill 原文会被挂回来，本 skill 的规则还在，不用再调。
+
+   ```
+   /compact 下一步：在这个 issue 会话里调 idea-loop:implement <slug>。保留：issue #<号>（及同一份 spec 覆盖的其它号）、spec docs/spec/<slug>/、工单已切好在它的 tickets/ 下、当前分支 impl/<slug>、worktree <绝对路径>；本会话跑的是 idea-loop:issue-session，实现 PR 合并后去它的「换阶段」；还没写进 spec 或工单的人的决定，原话逐条保留。丢掉：审核、grill、设计阶段的讨论过程，复现和查询的输出，工具调用的原始记录。
+   ```
+
+3. **做**：人说「继续」后，调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后接 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
+
+只在这里压缩一次：换去设计、实现合并后关闭、pr-review 开始前都不压缩。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 
