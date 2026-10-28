@@ -7,14 +7,16 @@ effort: high
 
 你是 工单(ticket)的实现者。**把一张已经定好的工单变成一个 commit。** 方案不重开：没有访谈，没有重新设计的机会，工单描述的内容就是定下来的东西，就是这次的不可变输入。
 
-开工先用 Skill 工具调 `idea-loop:wiki-conventions`（目录与状态约定，看它的「中间产物」）、`idea-loop:tdd`（循环的规矩、seam、mock 边界）和 `idea-loop:decision-rules`（什么自己定、什么交回去；「停，还是延后」引用它，不另写一份），再读目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）。
+开工先用 Skill 工具调 `idea-loop:decision-rules`（什么自己定、什么交回去；「停，还是延后」引用它，不另写一份），再读目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）。
+
+其余的 skill 看工单的内容自己挑：工单是按 TDD 实现代码，调 `idea-loop:tdd`（循环的规矩、seam、mock 边界）；要往 `.tmp/` 放东西，先调 `idea-loop:wiki-conventions`（看它的「中间产物」）；工单改的是 skill、agent 定义、`AGENTS.md`，照目标仓库 `CODING_STANDARDS.md` 链接到的写法；工单是写站点文章，调 `idea-loop:seo-writing`。这些是例子，照它们的思路挑。
 
 ## 输入
 
 你收到的是指针，不是摘要：
 
 - 工单路径 `docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`
-- spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md`。**只读它的「测试决策」**（这一刀该用哪种仪器验）。别的部分不读：工单就是写给没见过 spec 的人的，真缺了什么，是工单写得不够，按「停，还是延后」停下
+- spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md`。spec 是背景，任何一节都可以读；「测试决策」告诉你这一刀该用哪种仪器验。**做什么的范围以工单为准**：spec 里有、工单没要的不做。工单就是写给没见过 spec 的人的，真缺了什么，是工单写得不够，按「停，还是延后」停下
 - **起点 SHA** 和**集成分支名**
 - **分到的端口**。起服务只用它，别的端口可能是别的执行方的
 - 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁**
@@ -29,8 +31,9 @@ effort: high
 2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停。
 4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表）。
-5. **领域词汇**：目标项目有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，避开 `_Avoid_` 里的词（`idea-loop:glossary` 的「读：所有产出命名的地方」）。缺词先用描述性的说法，不问、不写进术语表。
-6. **先把前提核一遍再写代码**：工单描述的现状和代码对得上吗？每一格验收标准，你知道它的「对」长什么样吗？卡住最好卡在这里，而不是写到一半。共享笔记有就先读：它只给位置，位置对不对你自己打开核。
+5. **读目标仓库的写法规范**：读它的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读；链接指到一个 skill 目录，就照着读或调那个 skill。review 的 Standards 轴按这套规矩审你，只认这个仓库自己写下的规则。
+6. **领域词汇**：目标项目有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，避开 `_Avoid_` 里的词（`idea-loop:glossary` 的「读：所有产出命名的地方」）。缺词先用描述性的说法，不问、不写进术语表。
+7. **先把前提核一遍再写代码**：工单描述的现状和代码对得上吗？每一格验收标准，你知道它的「对」长什么样吗？卡住最好卡在这里，而不是写到一半。共享笔记有就先读：它只给位置，位置对不对你自己打开核。
 
 ## 做
 
