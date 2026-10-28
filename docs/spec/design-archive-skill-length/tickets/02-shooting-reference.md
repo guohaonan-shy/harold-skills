@@ -33,6 +33,8 @@
 - [x] `skill-private-references` 测试通过；dreaming 初扫改成按名字指之后，它 `KNOWN` 里那条豁免要是不再用得上就删掉
 - [x] 工单 01 加的「外部节名都指得到」测试与主体长度测试照旧通过；插件 `scripts/` 下全部测试通过
 - [x] `idea-loop/README.md` 里提到 `sections.md` 的地方同步改
+- [ ] review 第 1 轮 S1（2026-10-28）：拍图参考里每一步都以一个可检查的完成条件结尾，包括长页面的「装时间」、段内交互的「`attribute` 清零」、滚动驱动的段的检出、建状态和边、拍第 1 步、拍后面每一步（writing-for-agents「步骤与完成条件」）
+- [ ] review 第 1 轮 C1（2026-10-28）：「`scrollDriven` 只能写 `true`」只在主体的分段小节写一次，拍图参考里删掉或改成指回主体（writing-for-agents「单一事实来源」）
 
 ## 选中的存量回归
 
