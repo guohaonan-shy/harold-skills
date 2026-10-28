@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 完成
 tags: [idea-loop, design-archive, skill-length]
 summary: design-archive 主体 11386 字超 5000、sections.md 1.55 万字：主体只讲图的实体，写法、拍图、命令走 references
 related: ["[[2026-10-27-design-archive-skill-length-grill]]", "[[dreaming-skill-length]]", "[[retro-skill-length]]"]
@@ -115,7 +115,7 @@ issues: [125]
 ## User Stories
 
 1. 期望行为（对应问题 1）：`idea-loop:design-archive` 的 SKILL.md 去掉 frontmatter 后按字符数少于 5000；调用方读完主体就知道图里有哪些实体、怎么关联，要写对象、校验、查询、归档时各自只沿一个指针读到那份参考；原来主体里的每条规则都还能在主体或它的 `references/` 里找到，删掉的有去处。
-2. 期望行为（对应问题 2）：要拍档案截图的调用方读一份按情形排好步骤的拍图参考，照着跑就知道下一条命令、哪些输出要处理、怎么处理；写分段的规范跟别的实体写法在一处；`sections.md` 的规则、子命令、选项、输出字段名都还在，删掉的脚本内部实现可以在脚本源码里找到。
+2. 期望行为（对应问题 2）：要拍档案截图的调用方读一份按情形排好步骤的拍图参考，照着跑就知道下一条命令、哪些输出要处理、怎么处理；写分段的规范跟别的实体写法在一处；`sections.md` 的规则、子命令、选项都还在，输出字段名在脚本里不改，拍图参考只收要 agent 处理的输出，删掉的脚本内部实现与不用处理的字段说明可以在脚本源码里找到（review 第 1 轮 S2，人的原话「S2 接受」）。
 
 ## 实现决策
 

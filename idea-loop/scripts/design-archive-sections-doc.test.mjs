@@ -49,7 +49,7 @@ test('every doc line that runs design-archive-sections names a real subcommand a
 
 test('the places that shoot the design archive send a single-screen state to the sections script\'s `screen` command, and no longer put a no-animation style into the page', () => {
   const bad = [];
-  for (const rel of ['agents/ui-reviewer.md', 'skills/productivity/dreaming/references/initial-scan.md', 'skills/design/design-archive/references/sections.md']) {
+  for (const rel of ['agents/ui-reviewer.md', 'skills/productivity/dreaming/references/initial-scan.md', 'skills/design/design-archive/references/shooting.md']) {
     const text = readFileSync(join(pluginRoot, rel), 'utf8');
     if (!/design-archive-sections\.mjs"?\s+screen\b/.test(text)) bad.push(`${rel}: 没有指向 screen 子命令的命令行`);
     if (/animation:\s*none/.test(text)) bad.push(`${rel}: 还在教注入「animation: none」的关动画样式`);

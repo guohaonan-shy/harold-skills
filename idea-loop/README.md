@@ -340,8 +340,8 @@ idea-loop/
 │   │   │   references/freeze.md, motion-stage.md, asset-stage.md, pinned-findings.md  # read only on their branch: sign-off, motion, marketing assets, a pinned finding
 │   │   ├── uiux-research/SKILL.md    # human-run design research — only the calling mechanism; the work is in agents/uiux-researcher.md
 │   │   │   references/research-backend.md
-│   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph model, modeling choices, directories and tmp/prod split, frontmatter shapes, body sections, the seven validation rules, the seven query entries (page, state, journey, requirement diff, reverse lookup, keyword, and `affected`: pick the states hit since a commit)
-│   │   │   references/query.md, archive-script.md, sections.md  # query return shapes; the archive script's steps; a long page's sections (type table, locating, rule 7, shooting section by section)
+│   │   ├── design-archive/SKILL.md   # shared, model-invoked — the design archive (docs/design/prod): the graph's entities and how they relate (page, state, edge, section, component, motion, journey; sources vs derived), directories and naming, the way-in derivation, and a read-on-demand table pointing at the references
+│   │   │   references/writing.md, check.md, query.md, archive-script.md, shooting.md  # writing an object file (frontmatter shapes and required fields, section ids and locating, body, modeling choices, screenshot matrix); the seven validation rules with command and exit codes; the seven query entries' command, exit codes and return shapes; the archive script; shooting the archive screenshots (single screen, long page by section, in-section states, scroll-driven sections)
 │   │   └── design-change-sync/SKILL.md    # shared, model-invoked — a design change after the freeze, called by `implement` and `pr-review` sessions: the designer edits only the affected cells of the canvas, a fresh ui-master scores only those cells (same `critic-score.mjs`), then commit, push and one row in the freeze record's "changes after the freeze"
 │   └── productivity/
 │       ├── grill/SKILL.md
@@ -377,6 +377,7 @@ idea-loop/
     ├── design-archive-sections.test.mjs # hand-written measurements: ranges, orphans, hidden and fixed elements, overlaps, unlocated sections, the shots asked for, the command line
     ├── design-archive-sections-browser.test.mjs # the generated code run for real in Chromium (skipped when no Playwright + Chromium is found)
     ├── design-archive-sections-doc.test.mjs # tripwire: every doc line that runs the sections script names a real subcommand and only its own options
+    ├── design-archive-skill-doc.test.mjs # tripwire: design-archive's SKILL.md body stays under 5000 characters, and every section title other skills and agents quote after `idea-loop:design-archive` is a heading of its SKILL.md or references/
     ├── design-archive-write.mjs      # the archive script — the only writer of docs/design/prod/: validate, fold delta/ in, drop removed.md, regenerate usedBy + index.md, move interaction figures and re-point the spec's links, say what LFS / .gitignore lack, empty tmp/<spec-slug>/; --dry-run writes nothing
     ├── design-archive-write.test.mjs # one requirement end to end, refuse-writes-nothing, dry-run, hints, and the pieces
     ├── mini-yaml.mjs                 # the dependency-free YAML subset the archive's frontmatter uses

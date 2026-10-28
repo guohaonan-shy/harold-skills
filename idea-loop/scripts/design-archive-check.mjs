@@ -288,7 +288,7 @@ function badSectionRef(raw, wantPage, declared, what) {
   return null;
 }
 
-/** Rule 7 — see skills/design/design-archive/references/sections.md, 校验规则 7. */
+/** Rule 7 — see skills/design/design-archive/references/check.md, 规则 7 的逐条违规与提示. */
 function sectionRules(archive, v) {
   const states = objectsOfKind(archive, 'state').sort((a, b) => (a.id < b.id ? -1 : 1));
   const declaring = new Map(); // page id → the entry state whose `sections` count

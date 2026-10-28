@@ -58,7 +58,7 @@ effort: high
 
 ### UI 工单与设计档案
 
-写之前用 Skill 工具调 `idea-loop:design-archive`，看它的「目录与分工」到「进入方式从图上推导」（档案的结构、frontmatter 与校验）。
+写之前用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」（档案的结构）；写对象文件时再看它的「写对象文件」（frontmatter 与必填字段、正文），自检命令在它的「校验」。
 
 - **冻结画布从 tmp 绝对路径的 `canvas/` 下读**。
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
