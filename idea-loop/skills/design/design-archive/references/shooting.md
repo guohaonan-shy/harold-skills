@@ -41,7 +41,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 
 每段单独截一张，不拍整页长图，也不从长图里切；比视口高的段整张截下来。图叫 `<入口状态 id>@<段 id>.png`。
 
-1. 装时间。
+1. 装时间。完成：返回 `installed: true`。
 2. `browser_navigate` 进入口状态（前置条件、登录态都在这一步备好），跑 `measure` 打印的代码。分段取自档案里这个入口状态（`--delta` 时取需求的 delta）；初扫时档案里还没有这个状态，用第二种形式，`--sections-file` 是 JSON 列表 `[{ "id": "hero", "locate": { … } }, …]`。完成：返回的 `clock` 是 `present`。
 3. 存测量结果：代码的返回值只印在工具输出里，存不成文件；用 `browser_evaluate`（函数 `() => window.__dsMeasure`，带 `filename`）把它存成文件。边的 `locate.name`、分段标题的 `name` 照抄测量结果里每个标题、可点元素的完整名字（`name`），不用逐个试。完成：测量结果 JSON 在 Playwright 工作区里。
 4. `attribute <测量结果.json>`，输出存成文件。它给出每段的范围、每个可点元素归哪一段（照它给边填 `from`）、每个标题的完整名字与所在段（`headings`）。**写档案之前清零**：退出码 1 就照下表清零、重测。完成：退出码 0。
@@ -56,22 +56,22 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 
 1. 页面时间要是 `time` 装好的。点出这个状态（照它的进入方式；要等界面变化用 `step`）。完成：「应看到什么」成立。
 2. `measure <仓库根> <入口状态 id> --for <段内状态 id>`（档案里这个状态已写 `section` 就够；初扫时还没写，再给 `--section <段 id>`），存结果同上。**这一次不重载页面**（重载会丢掉刚点出来的状态），段的高度按此刻算（FAQ 展开后更高）。完成：返回的 `clock` 是 `present`。
-3. `attribute`，清零同上。
+3. `attribute`，清零同上。完成：退出码 0。
 4. `shoot <归属结果.json> --out <目录>`。完成：一张图，放进 `assets/`。
 
 ## 滚动驱动的段
 
 有的段钉在视口里随滚动换内容：每滚一次滚轮换一张卡片的原因段，按滚动位置逐条点亮批注的演示段。整段范围里只有第 1 步那一屏画在页面上，其余是留给滚动的空白，照常整段拍只得到「第 1 步加一大片空白」，后面几步档案里没有图。这类段每一步建成一个状态。
 
-1. **检出**：长页面入口的 `attribute` 因为 `undeclaredScrollDriven` 退出码 1，该段列在里面（`scrollDriven` 逐段给出依据）。
-2. **声明**：这一段在分段声明里加 `scrollDriven: true`（只能写 `true`）。完成：重测，`undeclaredScrollDriven` 空。
+1. **检出**：长页面入口的 `attribute` 因为 `undeclaredScrollDriven` 退出码 1，该段列在里面（`scrollDriven` 逐段给出依据）。完成：`undeclaredScrollDriven` 里列出了要声明的段。
+2. **声明**：这一段在分段声明里加 `scrollDriven: true`。完成：重测，`undeclaredScrollDriven` 空。
 3. **建状态和边**：第 2 步起每一步一个状态，写 `section: <页面>#<段>`；结构相同的步骤只记第一个。边按页面怎么驱动它写：
    - 滚轮一下换一张：`user` 边，`action` 写「在钉住的这一段上向下滚一次滚轮」，`component` 与 `locate` 指这一段的组件和它的标题；
    - 按滚动位置切换：`system` 边，`trigger` 写「页面滚到这一段的第 n 步」，`how` 写滚到这一段的百分之几。
    
-   段是照标题切的：介绍和钉住的内容在一个顶层分块里时，让钉住的内容有自己的标题定位（它的标题所在的位置就是这一段的起点），别把整块算成一段。
-4. **第 1 步**：照长页面的 `shoot` 拍。声明了 `scrollDriven` 的段它只截钉住的那一屏（图高等于视口高，从 `scrollDriven[].pinTop` 起，返回里这一张带 `scrollDriven: true`）；拍这一段前它会把页面重载回起点，点出来的状态会丢。
-5. **后面每一步**：把页面带到这一步（滚到那个位置、转一下滚轮；要等界面变化用 `step`），跑 `pinned`。它不滚动、不拨页面时间，直接截当前视口，图叫 `<状态 id>.png`；返回形状同 `shoot`（`shots` 里一张，带 `settled`、`uncontrolled`、`diffBox`，另有此刻的 `scrollY`）。别拿它拍单屏状态：`pinned` 拍的是页面此刻停在哪就是哪，单屏状态用 `screen`。
+   段是照标题切的：介绍和钉住的内容在一个顶层分块里时，让钉住的内容有自己的标题定位（它的标题所在的位置就是这一段的起点），别把整块算成一段。完成：每个会变的步骤都有状态和边，`design-archive-check.mjs` 退出码 0（命令见 [check.md](check.md)）。
+4. **第 1 步**：照长页面的 `shoot` 拍。声明了 `scrollDriven` 的段它只截钉住的那一屏（图高等于视口高，从 `scrollDriven[].pinTop` 起）；拍这一段前它会把页面重载回起点，点出来的状态会丢。完成：这一段的返回带 `scrollDriven: true`，图高等于视口高。
+5. **后面每一步**：把页面带到这一步（滚到那个位置、转一下滚轮；要等界面变化用 `step`），跑 `pinned`。它不滚动、不拨页面时间，直接截当前视口，图叫 `<状态 id>.png`；返回形状同 `shoot`（带 `settled`、`uncontrolled`、`diffBox`，另有此刻的 `scrollY`）。别拿它拍单屏状态：`pinned` 拍的是页面此刻停在哪就是哪，单屏状态用 `screen`。完成：这一步的「应看到什么」成立，`shots` 里一张，`uncontrolled` 照下表处理；放进 `assets/`。
 
 ## 看到什么 → 做什么
 
