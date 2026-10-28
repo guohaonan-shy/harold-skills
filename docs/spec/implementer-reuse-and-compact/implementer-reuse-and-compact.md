@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, implement, implementer, issue-session, token]
 summary: implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；进 implement 前压缩上下文
 related: ["[[pr-review-report-followups]]", "[[design-archive-skill-length]]"]
