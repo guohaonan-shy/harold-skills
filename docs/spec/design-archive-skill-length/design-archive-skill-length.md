@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, design-archive, skill-length]
 summary: design-archive 主体 11386 字超 5000、sections.md 1.55 万字：主体只讲图的实体，写法、拍图、命令走 references
 related: ["[[2026-10-27-design-archive-skill-length-grill]]", "[[dreaming-skill-length]]", "[[retro-skill-length]]"]
