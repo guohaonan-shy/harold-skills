@@ -8,23 +8,26 @@
 issue 会话（`idea-loop:issue-session`）现在把审核、grill、写 spec、切工单、实现、review 放在同一个会话里，进实现时上下文原样带着，编排者每一轮都用 Opus 重读整段审核历史（本机统计：进实现时上下文中位约 23 万 token）。改成在「实现」一节里加一个停点：
 
 - **位置**：to-ticket 切完工单（工单已提交）之后、调 implement 之前。从「审核」或「设计」进实现都走这里。
-- **停下要做的**：用 PushNotification 发一句话，然后停下，给人两条要敲的命令：
-  1. `/compact 保留 issue #<号>、spec <slug>、当前分支 impl/<slug> 和 worktree 路径、工单已切好；审核和设计阶段的讨论已经写进 spec，不用保留`
-  2. `/idea-loop:issue-session <号>`
-- **为什么要人敲**：`/compact` 只能人敲，agent 调不了；压缩之后 skill 原文不一定还在上下文里，所以再调起一次 issue-session。它的「开场」读到 issue 是「实现中」、是人直接调的，就照现有规则去「实现」。
-- **重新调起后不重切**：「实现」一节写明，spec 的工单目录下已经有工单，就跳过切票，直接调 implement。
+- **停下要做的**：用 PushNotification 发一句话，然后停下，打出一条填好的压缩指令给人复制执行，再请人说一句「继续」。指令是写在 issue-session 里的一份通用模板，停下时把 `<号>`、`<slug>`、`<绝对路径>` 换成这一次的值。模板原文（照抄进 issue-session）：
+
+  ```
+  /compact 下一步：在这个 issue 会话里调 idea-loop:implement <slug>。保留：issue #<号>（及同一份 spec 覆盖的其它号）、spec docs/spec/<slug>/、工单已切好在它的 tickets/ 下、当前分支 impl/<slug>、worktree <绝对路径>；本会话跑的是 idea-loop:issue-session，实现 PR 合并后去它的「换阶段」；还没写进 spec 或工单的人的决定，原话逐条保留。丢掉：审核、grill、设计阶段的讨论过程，复现和查询的输出，工具调用的原始记录。
+  ```
+
+- **为什么要人敲、为什么说「继续」就够**：`/compact` 只能人敲，agent 调不了，压缩也不会开启新的一轮，所以要人说一句话。压缩后 Claude Code 会把会话里调过的 skill 原文挂回来（`invoked_skills` 附件），issue-session 的规则还在，不用再调一次。
+- **重敲 issue-session 也不出错**：万一人重敲了 `/idea-loop:issue-session <号>`，它的「开场」读到 issue 是「实现中」、是人直接调的，照现有规则去「实现」；「实现」一节写明 spec 的工单目录下已经有工单就跳过切票，直接调 implement。
 - 停点只在进实现前。换到设计、实现合并后关闭、pr-review 开始前都不压缩；人直接敲 `/idea-loop:implement`、不经 issue-session 时也不管。
 
 人的决定（来自 spec）：「进入实现之前一定要compact上下文」，位置是「切分工单之后，实现之前压缩」。
 
 ## 验收标准
 
-- [ ] 一个文档检查：issue-session 的「实现」在调 to-ticket 之后、调 implement 之前，有停下请人压缩的一步，给出 `/compact` 和重新调起 issue-session 两条命令；写明工单目录下已有工单时跳过切票。先在改前的文字上看到它失败，再改到通过
-- [ ] 重新调起的路径走得通：对着 issue-session「开场」的现有规则核一遍，「实现中」状态、人直接调起时会进「实现」，归位那几步重跑不出错（照文字核对，写进交回的 verified）
+- [ ] 一个文档检查：issue-session 的「实现」在调 to-ticket 之后、调 implement 之前，有停下请人压缩的一步：打出填好的压缩指令（模板写在 issue-session 里，含「下一步」「保留」「丢掉」三部分），请人执行后说「继续」；写明工单目录下已有工单时跳过切票。先在改前的文字上看到它失败，再改到通过
+- [ ] 人重敲 issue-session 的路径也走得通：对着 issue-session「开场」的现有规则核一遍，「实现中」状态、人直接调起时会进「实现」，归位那几步重跑不出错（照文字核对，写进交回的 verified）
 - [ ] 插件 README 里描述 issue-session 各阶段的地方提到这个停点
 - [ ] issue-session 的 SKILL.md 主体仍在 5000 字以内（按字符数，去掉 frontmatter）
 - [ ] 插件全量测试是绿的
 
 ## 选中的存量回归
 
-- `session-digest.test.mjs`：它按 `/idea-loop:issue-session <号>` 的形状解析会话记录，这张让人在压缩后重新敲这条命令，形状不能变
+- `session-digest.test.mjs`：它按 `/idea-loop:issue-session <号>` 的形状解析会话记录；这张改了 issue-session 的「实现」，人重敲这条命令时形状不能变
