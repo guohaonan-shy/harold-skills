@@ -20,6 +20,8 @@ issue 会话（`idea-loop:issue-session`）现在把审核、grill、写 spec、
 
 人的决定（来自 spec）：「进入实现之前一定要compact上下文」，位置是「切分工单之后，实现之前压缩」。
 
+> 人的决定（2026-10-29）：「03 我同意B，但我建议在这个PR里面修复」——B 指：把「提交工单」写进 `idea-loop:to-ticket` 自己的落盘一步（人直接调 to-ticket 也覆盖），issue-session「实现」第 1 步里「并把工单提交进当前分支」那句删掉，在这个 PR 里做。
+
 ## 验收标准
 
 - [x] 一个文档检查：issue-session 的「实现」在调 to-ticket 之后、调 implement 之前，有停下请人压缩的一步：打出填好的压缩指令（模板写在 issue-session 里，含「下一步」「保留」「丢掉」三部分），请人执行后说「继续」；写明工单目录下已有工单时跳过切票。先在改前的文字上看到它失败，再改到通过
@@ -27,6 +29,7 @@ issue 会话（`idea-loop:issue-session`）现在把审核、grill、写 spec、
 - [x] 插件 README 里描述 issue-session 各阶段的地方提到这个停点
 - [x] issue-session 的 SKILL.md 主体仍在 5000 字以内（按字符数，去掉 frontmatter）
 - [x] 插件全量测试是绿的
+- [ ] 人的决定（2026-10-29）：to-ticket 的「落盘」写明人点头、工单全部落盘、spec 翻成「实现中」之后，把工单和 spec 的改动提交进当前分支（执行方的 worktree 从这条分支切出，不提交就读不到）；issue-session「实现」第 1 步不再自己写提交，只调 to-ticket。文档检查覆盖这两处（先在当前文字上看到它失败）；README 里 to-ticket 的描述如提到落盘就同步；插件全量测试是绿的
 
 ## 选中的存量回归
 
