@@ -7,6 +7,10 @@
  * drop), waits for the human to say 「继续」, and only then calls implement; tickets that already exist
  * are not cut again (so re-typing /idea-loop:issue-session lands in the right place); the README's
  * issue-session row mentions the stop; and the SKILL.md body stays under 5000 characters.
+ *
+ * Who commits the tickets: to-ticket's 「落盘」 does, after the human nods, the tickets are all written and
+ * the spec is flipped to 实现中 (the executors' worktrees are cut from the current branch, so uncommitted
+ * tickets are invisible to them); issue-session's 「实现」 only calls to-ticket and writes no commit of its own.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -57,10 +61,37 @@ test('tickets that already exist are not cut again', () => {
   assert.match(impl, /跳过切票|不再切|不用再切/, '「实现」 must say to skip to-ticket when the tickets exist');
 });
 
+test('to-ticket 落盘 commits the tickets and the 实现中 flip to the current branch', () => {
+  const ticketSkill = read('skills', 'engineering', 'to-ticket', 'SKILL.md');
+  // the ticket template inside 「落盘」 has its own "## …" headings, so cut at 「下一环」, not at the next "## "
+  const from = ticketSkill.indexOf('\n## 落盘');
+  const to = ticketSkill.indexOf('\n## 下一环');
+  assert.ok(from >= 0 && to > from, 'to-ticket has no 「落盘」 … 「下一环」 span');
+  const save = ticketSkill.slice(from, to);
+  const flip = save.indexOf('实现中');
+  assert.ok(flip >= 0, '「落盘」 no longer flips the spec to 实现中');
+  const after = save.slice(flip);
+  assert.match(after, /提交/, '「落盘」 must commit the tickets and the spec change after flipping to 实现中');
+  assert.match(after, /当前分支/, '「落盘」 must say the commit goes onto the current branch');
+  assert.match(after, /worktree/, '「落盘」 must say why: the executors\' worktrees are cut from the current branch');
+});
+
+test('issue-session 「实现」 step 1 only calls to-ticket and does not commit the tickets itself', () => {
+  const step1 = impl.split('\n').find((l) => l.includes('idea-loop:to-ticket'));
+  assert.ok(step1, '「实现」 has no line calling idea-loop:to-ticket');
+  assert.ok(!/提交/.test(step1), '「实现」 step 1 must not commit the tickets itself; to-ticket 「落盘」 does it');
+});
+
 test('the README row for issue-session mentions the compact stop', () => {
   const row = readme.split('\n').find((l) => l.startsWith('| `idea-loop:issue-session`'));
   assert.ok(row, 'README has no issue-session row in the Skills table');
   assert.ok(row.includes('/compact'), 'the issue-session row must mention the /compact stop before implementation');
+});
+
+test('the README row for to-ticket mentions the commit', () => {
+  const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:to-ticket`'));
+  assert.ok(row, 'README has no to-ticket row in the Skills table');
+  assert.match(row, /commit/i, 'the to-ticket row must say it commits the tickets onto the current branch');
 });
 
 test('issue-session SKILL.md body is under 5000 characters', () => {

@@ -39,7 +39,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 实现
 
-1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，并把工单提交进当前分支。
+1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
 2. **停下，请人压缩**：进实现时上下文里是整段审核、grill、设计的历史，编排者每一轮都要重读。`/compact` 只有人能敲，压缩也不会开启新的一轮，所以：用 PushNotification 发一句话说要压缩，然后停下，把下面的指令里的 `<号>`、`<slug>`、`<绝对路径>`（当前 worktree）换成这一次的值，打出来给人复制执行，请人压缩完说一句「继续」。压缩后会话里调过的 skill 原文会被挂回来，本 skill 的规则还在，不用再调。
 
    ```
