@@ -92,7 +92,8 @@ test('a review round that still asks the human something, or has not said what w
 });
 
 // A stop report is judged like a review round: it waits for the human only when it asks something
-// (a 需要你决定 section) or carries delivery items still unticked; otherwise saying what was done settles it.
+// (a 需要你决定 section); otherwise saying what was done settles it. Unticked delivery items do not hold it:
+// they go to the human in the final review report (pr-review's 交审核报告), not mid-implementation.
 const pauseEntry = (body) => `<!-- idea-loop-entry {"kind":"pause","round":2} -->
 ## 第 2 次停下 · 落地 2 张，已按规则处理 1 件，等你决定 0 件
 
@@ -116,10 +117,10 @@ test('a stop report that still asks the human a decision question stays unsettle
   assert.equal(parseLoop(pauseEntry(`${asks}\n### 你的批示（2026-10-20 10:00）\n> 03 选 A\n\n### 做了什么\n- 03 按 A 做了\n`))[0].settled, true);
 });
 
-test('a stop report with a delivery item the human has not ticked stays unsettled; ticked, it is settled', () => {
+test('a stop report whose delivery items are still unticked is settled by its 做了什么: they wait for the review report', () => {
   const open = '\n### 交付验收\n\n#### 03 · 标题\n\n**动效**\n- [ ] 展开是否顺\n\n  ![..](x.gif)\n\n### 做了什么\n- 继续\n';
-  assert.equal(parseLoop(pauseEntry(open))[0].settled, false);
-  assert.equal(parseLoop(pauseEntry(open.replace('- [ ]', '- [x]')))[0].settled, true);
+  assert.equal(parseLoop(pauseEntry(open))[0].settled, true);
+  assert.equal(parseLoop(pauseEntry(open.replace(/### 做了什么[\s\S]*$/, '')))[0].settled, false);
 });
 
 test('a stop report with no decision question that has not yet said what was done is unsettled', () => {

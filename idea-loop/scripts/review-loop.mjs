@@ -24,10 +24,11 @@
  *
  * An entry is settled once every 你的批示 has a 做了什么 after it. An entry that asks the human nothing
  * has no ruling to wait for and is settled by its 做了什么 alone: a review round with no 要你决定 in it
- * (every finding handled by rule), and a stop report with no 需要你决定 section and no unticked box
- * under 交付验收. So the orchestrator can tell "everything is handled" and carry on without waiting for a
- * nod (implement's stops; pr-review, section 一轮之后往哪走). A stop report that does ask, or still
- * has delivery items to tick, waits for the human's ruling as before. Overturning
+ * (every finding handled by rule), and a stop report with no 需要你决定 section. Unticked boxes under
+ * 交付验收 do not hold a stop report: the human checks them in the final review report (pr-review,
+ * 交审核报告), not mid-implementation. So the orchestrator can tell "everything is handled" and carry on
+ * without waiting for a nod (implement's stops; pr-review, section 一轮之后往哪走). A stop report that
+ * does ask waits for the human's ruling as before. Overturning
  * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
  *
@@ -62,12 +63,6 @@ const ENTRY = /^<!-- idea-loop-entry (\{.*?\}) -->$/;
 const ARCHIVED = /<!-- idea-loop-archive (\{.*?\}) -->/;
 const MAX_BODY = 65000;
 
-/** Unticked boxes inside a stop report's 交付验收 section (up to the next ### heading). */
-const hasOpenDelivery = (body) => {
-  const m = body.match(/^### 交付验收[^\n]*\n([\s\S]*?)(?=^### |(?![\s\S]))/m);
-  return !!m && /^\s*- \[ \]/m.test(m[1]);
-};
-
 /** Entries of a review-loop file, in order. Lines before the first entry (the title) are ignored. */
 export function parseLoop(text = '') {
   const entries = [];
@@ -87,9 +82,9 @@ export function parseLoop(text = '') {
     const acted = (s) => /^### 做了什么/m.test(s);
     // An entry that asks the human nothing has no ruling to wait for: it is settled once it says what was
     // done. A review round asks when it carries a 要你决定; a stop report asks when it carries a 需要你决定
-    // section or a delivery item (交付验收) still unticked; a replay asks when something failed (it carries a
-    // 要你决定 until the human has ruled). A report that asks something needs the human's ruling.
-    const asksHuman = /\*\*要你决定\*\*/.test(body) || (kind === 'pause' && (/^#{2,4}\s*需要你决定/m.test(body) || hasOpenDelivery(body)));
+    // section (its unticked 交付验收 items wait for the review report instead); a replay asks when something
+    // failed (it carries a 要你决定 until the human has ruled). A report that asks something needs the human's ruling.
+    const asksHuman = /\*\*要你决定\*\*/.test(body) || (kind === 'pause' && /^#{2,4}\s*需要你决定/m.test(body));
     const askedNothing = rulings === 0 && !asksHuman;
     const settled = rulings > 0 ? acted(body.slice(body.lastIndexOf('### 你的批示'))) : askedNothing && acted(body);
     return { kind, round, body, rulings, settled };
