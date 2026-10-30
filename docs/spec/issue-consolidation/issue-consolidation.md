@@ -151,6 +151,7 @@ issues: [165]
 人在本会话定下（2026-10-30）：「是，这一轮都按推荐」。
 
 - 调度出卡片、会话认领时，根和全部子 issue 一起翻成「验证中」。之后每个子 issue 跟着自己的 spec 走各自的阶段。
+> 后来改了（2026-10-30，#131 的实现）：根也有一份薄的根 spec（子 spec 清单与跨 spec 约定），见 [[no-decision-autopilot]]「根 issue 也有一份 spec」。下一行的「根没有自己的 spec」作废，状态仍跟着最慢的子 issue。
 - 根没有自己的 spec，它的 `status:*` 跟着阶段最靠前（最慢）的那个子 issue；最后一个子 issue 关闭时，会话关掉根（GitHub 不会自动关父 issue）。
 - spec frontmatter 的 `issues:` 只写它对应的那一个子 issue，`reconcile` / `advance` 不用为整合改。
 - 只整合待验证的 issue；验证中及以后的不动。例：#157 待验证、#147 已实现中，同改 implementer，也不把 #157 并进 #147 那组。
