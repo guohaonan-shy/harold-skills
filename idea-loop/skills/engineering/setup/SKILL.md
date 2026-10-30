@@ -59,7 +59,7 @@ idea-loop 从这几处读项目配置：
 
 ## 夜间规则回放
 
-改规则的 PR 里有大的回放用例时，它们排进 `~/.idea-loop/replay-queue/`，每晚由一个计划任务跑。装的是整台机器共用的东西，已经装过的核对、不重复建。三件事、逐步的写法在 [references/nightly-replay.md](references/nightly-replay.md)：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-install.mjs"` 装 runner 到 `~/.idea-loop/bin/`；用 `create_scheduled_task` 建 `idea-loop-retro-replay`（`7 1 * * *`，prompt 用脚本打印的原文）；把脚本打印的允许规则原样给人，**setup 不改权限设置**。
+改规则的 PR 里有大的回放用例时，要装夜间回放的 runner 和计划任务，步骤读 [references/nightly-replay.md](references/nightly-replay.md)。
 
 完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；计划任务在 `list_scheduled_tasks` 里；允许规则已打印给人。
 
