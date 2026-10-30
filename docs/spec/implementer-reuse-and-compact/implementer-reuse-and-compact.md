@@ -190,8 +190,8 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
   - 文档检查（`node --test` 跑的 `*.test.mjs`，读插件文件断言文字）。能抓到：定义里还写着固定的三 skill 清单、还写着「只读测试决策」、没指向 `CODING_STANDARDS.md`；pending 的字段里没有 agent id；implement 的「人回复后」没有「先 SendMessage、失败再新起」；issue-session 的「实现」在切完工单、调 implement 之前没有停下请人压缩，已有工单时还会再切。抓不到：执行方实际挑不挑对 skill、编排者实际会不会叫回原执行方。
   - retro 回放（`idea-loop/evals/retro/`）。能抓到：同一张历史工单，改前和改后，执行方在工单没点名时有没有读写法规范、调对 skill。抓不到：回放没覆盖的工单类型。
 - **增量功能测试**：
-  - 文档检查：先在改前的 `origin/main` 上跑，看到它红；改完变绿。覆盖：期望行为 1、2、3、4、5 的文字部分。
-  - 回放：拿 #125 的一张改 skill 文档的工单，把它手写的「开工前调 writing-for-agents」去掉当输入，停在执行方交回那一刻。是/否题出自 #147：「执行方没被工单点名，也照 `CODING_STANDARDS.md` 链接读了 writing-for-agents 吗？」改前应答否，改后应答是。会起子代理，算大的，进夜间队列。覆盖：期望行为 3，顺带 1。
+  - 文档检查：先在改前的 `origin/main` 上跑，看到它红；改完变绿。覆盖：期望行为 1、2、3、4 的文字部分（5 已移除）。
+  - 回放：拿 design-tmp-worktree-root 的工单 01（commit e01b537）当输入：它改的全是 skill 文本，工单和 spec 都没点名 writing-for-agents，当时的 `CODING_STANDARDS.md` 已经链接了它；停在执行方交回那一刻。（后来改了：原先写的是拿 #125 的一张工单、去掉手写的「开工前调 writing-for-agents」，但那张工单正文和 spec 里还有好几处点名 writing-for-agents，改前的执行方照样去读，抓不住问题，且执行方跑超时；人在 review 第 1 轮 S2 接受换成现在的输入。）是/否题出自 #147：「执行方没被工单点名，也照 `CODING_STANDARDS.md` 链接读了 writing-for-agents 吗？」改前应答否，改后应答是。会起子代理，算大的，进夜间队列。覆盖：期望行为 3，顺带 1。
 - **prompt / eval 变动**：改 `agents/implementer.md`、`implement`、`issue-session`；加一个 retro 回放用例。
 - **照着谁写**：文档检查照 `idea-loop/scripts/design-archive-skill-doc.test.mjs`、`ui-reviewer-archive-doc.test.mjs`；回放用例照 `idea-loop/evals/retro/cases/` 下已有的。
 
