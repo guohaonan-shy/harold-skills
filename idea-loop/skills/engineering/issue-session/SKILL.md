@@ -44,27 +44,22 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 实现
 
-根还是单个 issue 都**按 spec 开子会话**（`start_session`），一份 spec 一个，并行做。分工：
+不管是根还是单个 issue，都**按 spec 开子会话**（`start_session`），一份 spec 一个，并行做：
 
-| | 根的会话 | 子会话（一份 spec 一个） |
-|---|---|---|
-| 做什么 | 前期 grill 全部 spec；根代表一个版本时，集成过程中的 pr-review 和合回主分支；最后一个子 issue 关闭后关根 | 切票、实现、它那个 PR 的 pr-review 和合并 |
-| 人在哪说话 | grill、集成 PR 上的事 | 这份 spec 实现中的一切问题、它的审核报告、说合并 |
-
-- 参数：`context: fresh`，`use_worktree: true`，`source_branch` 是最新的主分支；`initiation` 人已说开始实现的用 `user_asked`，否则用 `own_initiative`（出卡片，人点了才开）。**子会话的标题不用「<仓库名>#<号>」格式**（如「实现 <slug>」）：调度靠这个格式数占位的会话，子会话不占位。
-- 简报（`prompt` 与 `background`）写清四件事：spec 路径；PR 合到哪（下面）；issue 的状态归根的会话翻，子会话不跑 `issues set` / `advance`，合并后给根的会话发一条会话间消息（PR 号、spec slug）；下面的两步、停点和「规则回放的结果」。
+- 参数：`context: fresh`，`use_worktree: true`，`source_branch` 是最新的主分支；`initiation` 人已说开始实现的用 `user_asked`，否则用 `own_initiative`（出卡片，人点了才开）。**子会话的标题不用「<仓库名>#<号>」格式**（如「实现 <spec-slug>」）：调度靠这个格式数占位的会话，子会话不占位。
+- 简报（`prompt` 与 `background`）写清四件事：spec 路径；PR 合到哪（下面）；issue 的状态归根的会话翻，子会话不跑 `issues set` / `advance`，合并后给根的会话发一条会话间消息（PR 号、spec slug）；下面这两步和「规则回放的结果」的处理。
 
 子会话照这两步做（原样写进简报）：
 
-1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（重敲进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
+1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
 2. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并。
 
-**停点**（写进简报）：spec 不碰 UI 的，子会话只在决定题、生产操作、合并前停；收工交审核报告，停下等人在子会话里读、追问、说合并。碰 UI 的照旧每处停。
+子会话自己切工单、实现、开 PR、跑它那个 PR 的 review，人在子会话里读审核报告、追问、说合并。根的会话不替它做。
 
-**PR 合到哪、谁来合**：子会话的 PR 由人在子会话里说「合并」，子会话的 pr-review 合进集成分支（版本根）或主分支（模块根）。
+**PR 合到哪**：
 
-- 根代表一个版本（要一起发）：先从最新主分支开集成分支（如 `release/<plugin>-<版本>`），子会话的 PR 合进它；第一个子 PR 合进后，根的会话开「集成分支 → 主分支」的 draft PR，之后每合进一个子 PR（子会话合并后发消息来），根的会话对它跑一轮 `idea-loop:pr-review`（查几份 spec 合在一起有没有冲突）；全部合完、人说合并后，由根的会话合回主分支并升版本。
-- 根代表一个页面或模块：各自合进主分支，有依赖的按依赖顺序合；根的会话只管前期 grill 和最后关根，集成阶段不跑 review。
+- 根代表一个版本（要一起发）：先从最新主分支开集成分支（如 `release/<plugin>-<版本>`），子会话的 PR 合进它；第一个子 PR 合进后，开「集成分支 → 主分支」的 draft PR，之后每合进一个子 PR，对它跑一轮 `idea-loop:pr-review`（查几份 spec 合在一起有没有冲突）；全部合完、人说合并后，由根的会话合回主分支并升版本。
+- 根代表一个页面或模块：各自合进主分支，有前置依赖的按依赖顺序合；集成阶段不跑 review。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进开这个 PR 的子会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 
