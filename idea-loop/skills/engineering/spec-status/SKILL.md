@@ -41,14 +41,27 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 
 「搁置」用 `issues resume` 恢复：按主分支上的 spec 算出它该回哪个状态，没有 spec 就回「待验证」。
 
+### 根 issue 和子 issue
+
+几个相关的 issue 可以挂在一个根 issue 下面（GitHub 原生 sub-issue）：有子 issue 的是「根」，有父 issue 的是「子 issue」。一组按一个会话走，脚本这样认它：
+
+- **候选**：`candidates` 只出根，不出子 issue（它们跟着根）；也不出开了不到 6 小时的 issue（整合定时任务每 6 小时跑一次，等它至少看过一次）。根不受 6 小时限制。
+- **认领 / 翻状态**：`issues set` 给根号，根和它开着的子 issue 一起翻，每个都照上表核；有一个翻不了（比如子 issue 是「搁置」），整组都不动。
+- **根的状态跟着最慢的子 issue**：顺序是 待验证 < 验证中 < 审核中 < 待设计 < 设计中 < 待实现 < 实现中。对账和 `advance` 把根的 `status:*` 重算成它开着的、没搁置的子 issue 里最靠前的那个；子 issue 全都搁置时根不动，根自己是「搁置」也不动。
+- **关根**：根还开着、有子 issue、却没有开着的子 issue 时，对账和 `advance` 把它关成 completed，评论写「子 issue 都已关闭」。
+- **根不是孤儿**：没有 spec 列着根，是正常的。对账和 `queue` 都不把它报成「没有 spec 列着它」。
+- **spec 只写子 issue**：spec 的 `issues:` 只列它对应的那一个子 issue，所以按 spec 翻的逻辑不变。
+- **查一组**：`issues group <docs> <号>`，根号或任一子 issue 号都行，返回根（号、标题）和根下开着的子 issue（号、标题、状态）；不在任何组里的 issue，根就是它自己、子 issue 为空。
+
 ```bash
 issues labels     <docs> [--prune]             # 建出缺的 status:* 和 type:* label；列出多余的，--prune 才删
 issues type       <docs> <号> <父类[/子类]>...  # 给 issue 打分类，换掉它原有的 type:*
-issues candidates <docs> [<limit>]             # 待验证的 issue，最早的在前（JSON）；不含 spec issue 和主分支上已有 spec 列着的
+issues candidates <docs> [<limit>]             # 待验证的 issue，最早的在前（JSON）；不含 spec issue、主分支上已有 spec 列着的、子 issue、开了不到 6 小时的（根不受限）
+issues group      <docs> <号>                   # 根号或子 issue 号都行：根和根下开着的子 issue（JSON）；不在组里的 issue，根就是它自己
 issues queue      <docs> <待设计|待实现>        # 等在这个状态的 spec，最早的 issue 在前（JSON），加上 label 和主分支对不上的问题
-issues set        <docs> <状态> <号 | slug>...  # 按上表翻；给 slug 就是它列的所有 issue
-issues reconcile  <docs>                       # 对账：主分支已经决定了的翻法
-issues advance    <docs> <slug>                # 一份 spec 的 PR 合并后：照主分支翻到下一段并认领，或关掉；末行写下一段
+issues set        <docs> <状态> <号 | slug>...  # 按上表翻；给 slug 就是它列的所有 issue；给根号连同它开着的子 issue 一起翻
+issues reconcile  <docs>                       # 对账：主分支已经决定了的翻法；根跟着最慢的子 issue，子 issue 全关了就关根
+issues advance    <docs> <slug>                # 一份 spec 的 PR 合并后：照主分支翻到下一段并认领，或关掉（它的根也照上面的规则跟着）；末行写下一段
 issues resume     <docs> <号 | slug>...         # 搁置 → 主分支说它该在的地方
 issues handoff    <docs> <slug> <号>           # 把 #号 写进 spec frontmatter，不碰 GitHub
 issues open       <docs> <slug>                # spec 没覆盖任何 issue：开一个标题以「spec：」开头的 spec issue，号码写进 frontmatter
