@@ -18,6 +18,7 @@
 | [[implementer-reuse-and-compact]] | implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；进 implement 前压缩上下文 |
 | [[issue-consolidation]] | cloud 定时任务每 6 小时把改同一文件或模块的 issue 挂到新开的根 issue 下；调度按根出会话，子 issue 各一份 spec、子会话并行实现 |
 | [[native-summary-locate]] | 原生折叠标题按角色定位不到、FAQ 展开写不成边：验证为不存在，已在 design-archive-sections 里做掉 |
+| [[no-decision-autopilot]] | 实现阶段没有决定题就不停：切票直接落盘、停下汇报无决定题即放行、review 无事不等；只在生产操作和合并前停，交一份写给不知情者的审核报告 |
 | [[pr-review-report-followups]] | 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板 |
 | [[retro]] | retro：从会话里的纠正与决定提炼规则候选，批了开 issue，改 skill 要回放证明生效 |
 | [[retro-batch-dispatch]] | 调度只数 issue 会话；retro issue 按 plugin 每天做一次 retro 整合，自动做到 PR，人第二天看 |
