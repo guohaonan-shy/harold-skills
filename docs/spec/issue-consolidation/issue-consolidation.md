@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 完成
 tags: [idea-loop, issue-dispatch, issue-session, scheduling]
 summary: cloud 定时任务每 6 小时把改同一文件或模块的 issue 挂到新开的根 issue 下；调度按根出会话，子 issue 各一份 spec、子会话并行实现
 related: ["[[2026-10-30-issue-consolidation-grill]]", "[[implementer-reuse-and-compact]]"]

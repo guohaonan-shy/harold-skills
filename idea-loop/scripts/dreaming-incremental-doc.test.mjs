@@ -26,6 +26,7 @@ function section(doc, title) {
 }
 
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
+const weeklySteps = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
 const seoSetup = read('skills', 'seo', 'seo-setup', 'SKILL.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 const scope = read('skills', 'productivity', 'dreaming', 'references', 'incremental-scope.md');
@@ -33,7 +34,9 @@ const proposal = read('skills', 'productivity', 'dreaming', 'references', 'propo
 const reconcile = read('skills', 'productivity', 'dreaming', 'references', 'archive-reconcile.md');
 
 test('setup creates the weekly dreaming task the way seo-setup creates the seo-scan one', () => {
-  const mine = section(setup, '每周对账');
+  // the steps live in setup's own reference (SKILL.md keeps its body short); the SKILL.md section must point at it
+  assert.ok(section(setup, '每周对账').includes('references/weekly-dreaming.md'));
+  const mine = weeklySteps;
   const theirs = section(seoSetup, '8. 每周扫描');
   // the same moving parts, in the same order: look, (not in the desktop app → hand the prompt over), ask, create, tell
   for (const part of ['list_scheduled_tasks', '不在桌面 app', 'AskUserQuestion', 'create_scheduled_task', '分钟避开 0 和 30', '补跑']) {
