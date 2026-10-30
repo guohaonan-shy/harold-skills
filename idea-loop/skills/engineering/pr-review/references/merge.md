@@ -5,9 +5,9 @@
 ## 合并
 
 1. `review-loop check .tmp/review-loop/<PR 号>.md` 列出没处理完的条目，再看 PR 描述「要你做的事」还有没有没勾的。有就提醒人一句，人仍然说合并就继续。
-2. **有设计产物就先归档**：走下面的「合并前归档」，走完再到第 3 步；没有就直接第 3 步。冻结时经设计 PR 提交的画布和冻结记录就在 `tmp/<spec-slug>/` 里。**归档是合并步骤里的一步，没有任何钩子替你拦**：已知缺口是在网页上点合并、或在别的会话里合并会绕过这一步，由每周的 `/idea-loop:dreaming` 的「漏归档」兜底；所以合并统一在 issue 会话里走这份 reference。只有调研目录的需求不归档：调研页随 `tmp/` 的生命周期删，想早点清就手动删；用进设计的调研结论已经写在方向说明或冻结记录里，随设计一起归档。
+2. **有设计产物就先归档**：走下面的「合并前归档」，走完再到第 3 步；没有就直接第 3 步。冻结时经设计 PR 提交的画布和冻结记录就在 `tmp/<spec-slug>/` 里。**归档是合并步骤里的一步，没有任何钩子替你拦**：已知缺口是在网页上点合并、或在别的会话里合并会绕过这一步，由每周的 `/idea-loop:dreaming` 的「漏归档」兜底；所以合并统一在走这份 reference 的会话里做：issue 会话，或它按 spec 开出的实现子会话。只有调研目录的需求不归档：调研页随 `tmp/` 的生命周期删，想早点清就手动删；用进设计的调研结论已经写在方向说明或冻结记录里，随设计一起归档。
 3. **归档 review loop**：`review-loop archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每次停下、每轮 review 各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`idea-loop:pr` 的「review loop」）。中途失败直接重跑，贴过的不会重复。
-4. **spec 翻完成、删工单**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个只改 `docs/` 的提交（`docs(spec): <spec-slug> 完成`），推送到这个已经通过审核的 PR 分支，跟着这次合并进主分支。它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
+4. **spec 翻完成、删工单**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个只改 `docs/` 的提交（`docs(spec): <spec-slug> 完成`），推送到这个已经通过审核的 PR 分支，跟着这次合并进主分支。它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；在实现子会话里的，不翻 issue 状态（不跑 `issues set` / `advance`），合并后给根的会话发一条会话间消息（PR 号、spec slug），由根的会话换阶段；都不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
 5. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md` 的「分支」节。
 6. 做「合并后的清理」。
 
