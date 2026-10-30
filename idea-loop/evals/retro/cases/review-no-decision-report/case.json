@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#77 的 review 第 1 轮（PR #140）：0 件要你决定、1 件已按规则同步改，人回「合并」（决定记录 docs/raw/decisions/77.md 题 3）；同类的 Toeflair#418 全程只有推迁移和合并要人做",
+  "commit": "4c5f0bc",
+  "prompt": "/idea-loop:pr-review 我是 guohaonan-shy/harold-skills 的 PR #140（design-tmp-worktree-root）的编排者，第 1 轮 review 的汇报已经交回，下面是它的结论，当作已经记进 review loop 文件、「跑一轮」的第 1~6 步已完成，你接着往下判下一步：\n\n- 汇报结论：Spec 1 条、Standards 0 条；1 条已按规则处理（spec 里的「五处」同步改成六处，依据是 uiux-research 与 wiki-conventions 里现存的写法，已提交并推送，提交 4c5f0bc）；0 条要你决定；机械检查全绿。\n- 没有设计产物，没有人验素材，没有排队中的回放，没有生产写操作，没有要修的代码。\n- 工单 01 已落地，spec 当前状态是「实现中」，PR 是 open。\n\n这是回放，不要真的往外发东西：不要执行 gh 的写操作、git push，不要起 Agent；要跑的命令把它原样写在最后一段回复里，当作已经完成。要写进工作区的文件照常写。最后一段回复写明：接下来这一步你做了什么、跑了哪些命令、有没有在等我、等我什么。",
+  "stop_at": "这一轮没有要人定的事，编排者决定下一步的那一刻：要么停下等人回复，要么往下做并交出东西；最后一段回复写明它做了什么、有没有在等人",
+  "question": "这一轮 0 件要你决定、没有要修的，编排者有没有不停下问人要不要合并或再跑一轮，而是往下做了 spec 翻完成、删工单的 docs 提交，并把审核报告交给了人？",
+  "quote": "合并",
+  "size": "small",
+  "size_basis": "只驱动 pr-review 一个 skill，汇报结论由 prompt 给出，不起插件 agent、不开浏览器；prompt 禁了 gh 写操作和 Agent，没有付费外部服务"
+}

@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#77 的 to-ticket：只切一张工单的切法摆给人，人回「切法可以，开工实现。」（决定记录 docs/raw/decisions/77.md 题 1、候选 2）；同类放行见 #51 题 10、#55 题 8、#108 题 7、#68 题 2、#115 题 2",
+  "commit": "570e135",
+  "prompt": "/idea-loop:to-ticket design-tmp-worktree-root 这是 guohaonan-shy/harold-skills#77 对应的 spec（docs/spec/design-tmp-worktree-root/design-tmp-worktree-root.md，状态「正式」，不碰 UI），把它切成工单。\n\n这是回放，我（人）不在场，不会回复你：不要 git commit、git push、gh 的任何写操作，不要调 implement。工单文件和 spec 状态的改动，照 skill 的规则该写就写进工作区。最后一段回复写明你停在哪一步：是把切法摆出来在等我回答，还是工单文件已经写好、spec 状态已经翻了。",
+  "stop_at": "切完工单的那一刻：skill 要么把切法摆给人、等人回答，要么已把工单文件写进 docs/spec/design-tmp-worktree-root/tickets/、并把 spec 翻到「实现中」",
+  "question": "切完票后没有停下等人点头，直接落盘了（工单文件已写进 tickets/，spec 已翻到「实现中」），而不是把切法摆出来等人回答？",
+  "quote": "切法可以，开工实现。",
+  "size": "small",
+  "size_basis": "只驱动 to-ticket 一个 skill 到工单落盘或摆出切法的那一刻，不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送和 gh 写操作，没有付费外部服务"
+}

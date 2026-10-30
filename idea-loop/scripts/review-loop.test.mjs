@@ -89,8 +89,41 @@ test('a review round that still asks the human something, or has not said what w
   const asks = ruledOnly.replace('### 做了什么', '#### S1 · 标题\n**要你决定**：A，还是 B？\n\n### 做了什么');
   assert.equal(parseLoop(asks)[0].settled, false);
   assert.equal(parseLoop(ruledOnly.replace(/### 做了什么[\s\S]*$/, ''))[0].settled, false);
-  // a stop report is not covered by this: its delivery items always wait for the human
-  assert.equal(parseLoop(ruledOnly.replace('"kind":"review"', '"kind":"pause"'))[0].settled, false);
+});
+
+// A stop report is judged like a review round: it waits for the human only when it asks something
+// (a 需要你决定 section) or carries delivery items still unticked; otherwise saying what was done settles it.
+const pauseEntry = (body) => `<!-- idea-loop-entry {"kind":"pause","round":2} -->
+## 第 2 次停下 · 落地 2 张，已按规则处理 1 件，等你决定 0 件
+
+### 已按规则处理（不同意的，说「推翻某条」）
+- **03 · 标题**：文案沿用全站写法。依据：首页的同类按钮
+${body}`;
+
+test('a stop report with no decision question, no unticked delivery item, and a 做了什么 is settled without a ruling', () => {
+  const [e] = parseLoop(pauseEntry('\n### 交付验收\n\n#### 03 · 标题\n无需人看\n\n### 做了什么\n- 继续下一批（提交链接）\n'));
+  assert.deepEqual([e.rulings, e.settled], [0, true]);
+  assert.deepEqual(unsettled([e]), []);
+  assert.equal(parseLoop(pauseEntry('\n### 做了什么\n- 继续（提交链接）\n'))[0].settled, true); // no delivery section at all
+});
+
+test('a stop report that still asks the human a decision question stays unsettled until ruled on', () => {
+  const asks = '\n### 需要你决定\n\n#### 03 · 卡在哪\n缺的是什么。\n\n- **A**：做法——代价\n- **B**：做法——代价\n\n推荐 A：理由\n\n### 做了什么\n- 其余继续\n';
+  const [e] = parseLoop(pauseEntry(asks));
+  assert.deepEqual([e.rulings, e.settled], [0, false]);
+  assert.deepEqual(unsettled([e]), [{ kind: 'pause', round: 2 }]);
+  // ruled on and acted on: settled as before
+  assert.equal(parseLoop(pauseEntry(`${asks}\n### 你的批示（2026-10-20 10:00）\n> 03 选 A\n\n### 做了什么\n- 03 按 A 做了\n`))[0].settled, true);
+});
+
+test('a stop report with a delivery item the human has not ticked stays unsettled; ticked, it is settled', () => {
+  const open = '\n### 交付验收\n\n#### 03 · 标题\n\n**动效**\n- [ ] 展开是否顺\n\n  ![..](x.gif)\n\n### 做了什么\n- 继续\n';
+  assert.equal(parseLoop(pauseEntry(open))[0].settled, false);
+  assert.equal(parseLoop(pauseEntry(open.replace('- [ ]', '- [x]')))[0].settled, true);
+});
+
+test('a stop report with no decision question that has not yet said what was done is unsettled', () => {
+  assert.equal(parseLoop(pauseEntry('\n### 交付验收\n\n#### 03 · 标题\n无需人看\n'))[0].settled, false);
 });
 
 test('overturning a handled-by-rule item is one more ruling in the same entry, and re-opens it until it is acted on', () => {

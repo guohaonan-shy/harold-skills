@@ -5,7 +5,7 @@ description: 把一份已切好工单的 spec 实现完。spec 进了「实现�
 
 **把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
 
-开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（停下汇报、PR 描述的四节）和 `idea-loop:decision-rules`（执行方交回的「按现有做法定的」、本次修的存量、为无关存量开 issue、停下汇报的决定题都按它）。
+开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（停下汇报、PR 描述的七节）和 `idea-loop:decision-rules`（执行方交回的「按现有做法定的」、本次修的存量、为无关存量开 issue、停下汇报的决定题都按它）。
 
 ## 前提
 
@@ -82,7 +82,9 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
    - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：PR 开出来后，把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。停下汇报里写明哪些用例在队列、几点以后有结果。
 2. 照 `idea-loop:pr` 的「停下汇报」写：handled 的每一条进「已按规则处理」，新落地工单的人验素材进交付验收，pending 的每一条写成决定题。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md pause`，追加成新条目，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。
-4. 照 `idea-loop:pr` 的「review loop」在会话里按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。
+4. **先看有没有要人的东西**：pending 不空（有等决定的事），或这次新落地工单的 `human_verify` 有素材（有没勾的人验项）。
+   - **有**：照 `idea-loop:pr` 的「review loop」在会话里按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。停下等人，见下面「人回复后」。
+   - **都没有**：不停，不等回复。第 2 步写进文件的条目就是留痕：已按规则处理照样列（人想推翻哪条，之后随时说，照「人回复后」的推翻处理），交付验收只写一行「无需人看」，条目末尾直接记一节「做了什么」（逐点：这次落地了什么、按规则处理了什么，带提交链接），不写「你的批示」。会话里只说一句落地了几张、已按规则处理几件，不发推送通知，然后往下走下面「全部落地」那一步（有排队中的回放时，那一步自己会让 PR 留在 draft）。依据：`idea-loop:decision-rules` 的「不自动的」只列了人验素材和决定题，没有「放行一份无事的汇报」；`review-loop.mjs check` 对这样的条目，记了「做了什么」就算处理完。
 
 **人回复后**：原话逐字记进那个条目的「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
@@ -101,20 +103,11 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的 `pause`、没有排队中的回放**（`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件 `<owner>__<repo>-<PR 号>.json`；有就是夜里的结果还没出，PR 留在 draft，告诉人等结果，不进 review；结果发回来时，见 `idea-loop:issue-session` 的「规则回放的结果」）：照 `idea-loop:pr` 的「PR 描述的四节」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，然后用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的 `pause`、没有排队中的回放**（`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件 `<owner>__<repo>-<PR 号>.json`；有就是夜里的结果还没出，PR 留在 draft，告诉人等结果，不进 review；结果发回来时，见 `idea-loop:issue-session` 的「规则回放的结果」）：照 `idea-loop:pr` 的「PR 描述的节」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，然后用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
 
 ## 设计变更：人接受了跟画布不同的设计
 
-冻结之后画布是唯一的设计真相。PR 开出前，人接受了一处跟画布不同的设计（来源：停下汇报里接受了实现者给的改法，或人自己改主意；review 里接受实现归 `idea-loop:pr-review`），不手改 `delta/`，也不手改画布，由 designer 改：
-
-1. 用 Skill 工具调 `idea-loop:design-change-sync`，照它做：起 designer 改画布那几格、起 ui-master 评、过了提交并推送到**集成分支**、冻结记录记一行。给 designer 的相关截图用执行方的素材，或人给的。
-2. 评委判了 `瓶颈` 或 `方向`（`idea-loop:design-change-sync` 的「评与停」）：停下，写进 pending 当决定题，带上评委意见与新旧两版截图。
-3. 过了之后，画布已提交，往下。
-4. 代码跟新画布不一致的（来源不是「接受实现」），在归属工单的验收标准末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<终>.html 做，比对脚本对这一版`（`v<终>` 是评委通过的那一版，写成它的实际版本号），提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派。已落地的工单要改，就按 `idea-loop:pr-review` 的「修」那条路追加一格再派。
-
-人不再单独看新画的那几格：他接受的是改动的方向，具体样子由评委把关，实现出来后在 review 里照常看到。
-
-没有设计稿的 UI 改动不走这一条：它没有画布，`delta/` 里实现者记的「最小差异」就是唯一的设计真相。
+PR 开出前，人接受了一处跟冻结画布不同的设计（停下汇报里接受了实现者给的改法，或人自己改主意）：用 Skill 工具调 `idea-loop:design-change-sync` 照它做。与 `idea-loop:pr-review` 的差别：提交推送到**集成分支**；给 designer 的相关截图用执行方的素材，或人给的；评委判 `瓶颈` / `方向` 就写进 pending 当决定题，带评委意见与新旧两版截图；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派，已落地的工单按 `idea-loop:pr-review` 的「回工单」再派。
 
 ## 回收
 
