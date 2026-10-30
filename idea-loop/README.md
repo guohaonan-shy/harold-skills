@@ -318,7 +318,7 @@ idea-loop/
 │   │   ├── spec-status/SKILL.md      # shared, model-invoked — the issue state machine (the loop's queue) and the spec state machine (document maturity)
 │   │   ├── browser/SKILL.md          # shared, model-invoked — headless Playwright for your own capture and measuring, the built-in browser for showing the human; static serving, logging in, measuring from the real DOM
 │   │   ├── ui-measure/SKILL.md       # shared, model-invoked — implementation vs frozen canvas, cell by cell: the three environment rules (for the UI implementation loop only — the design archive's shots stop the page time instead), default tolerances, the matrix, when to stop
-│   │   ├── pr/SKILL.md               # shared, model-invoked — what the human reads on a PR: the description's four sections, stop reports and review rounds, the review loop file (+ references/)
+│   │   ├── pr/SKILL.md               # shared, model-invoked — what the human reads on a PR: the description's seven sections (the review report: one sentence, problem, how it was fixed, how it was verified, issues filed, your to-do, folded reference), stop reports and review rounds, the review loop file (+ references/)
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md, the CLAUDE.md / AGENTS.md block and the AGENTS.md issue-category section, plus the step-by-step material the SKILL.md keeps out of its body (preflight table, survey list, question list, nightly replay, weekly dreaming) and the cloud consolidation task's prompt
 │   │   ├── issue-dispatch/SKILL.md   # the issue dispatcher — schedules its own loop, one session card per 待验证 group (a root, or an unconsolidated issue), a cap per queue
 │   │   ├── issue-session/SKILL.md    # one group's session from verification to close (a root with its sub-issues, or one issue) — moves itself through the sidebar sections
@@ -330,7 +330,8 @@ idea-loop/
 │   │   └── pr-review/SKILL.md        # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   │       references/review-standards.md    # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
 │   │       references/codex-spec.md, codex-standards.md  # the fixed Codex prompts per axis, filled by scripts/codex-prompt.mjs
-│   │       references/merge.md       # merge, the pre-merge design archive, the post-merge cleanup
+│   │       references/deliver.md     # a round with nothing for the human: push the spec-done docs commit, wait for CI, write the review report into the PR description, stop; and what to do when the human asks for changes after the report
+│   │       references/merge.md       # merge (no spec-done step, no CI wait), the pre-merge design archive, the post-merge cleanup
 │   │       references/ui-walkthrough.md  # read only when the PR has design output: starting the ui-reviewer next to the pr-reviewer, and what to do when it returns incomplete
 │   ├── design/
 │   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes

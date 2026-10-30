@@ -89,3 +89,19 @@ test('sections a person reads refuse code-level references; image and link addre
   assert.deepEqual(readerProblems('changes', '![重试流程](https://github.com/a/b/blob/idea-loop-evidence-pr-1/pr-retry_flow.png?raw=true) 见 [停下汇报](https://github.com/a/b/pull/1#discussion_r1)'), []);
   assert.deepEqual(readerProblems('reference', '01 · 缓存 | a1b2c3d | src/cache.ts'), []); // lookup only
 });
+
+test('writing 怎么验证 first, then the other sections, leaves hand-written text and the attribution line exactly as they were', () => {
+  const human = '这个 PR 修复学生重试多扣一次的问题。';
+  const sign = '🤖 Generated with [Claude Code](https://claude.com/claude-code)';
+  let body = `${human}\n\n${sign}`;
+  for (const n of ['verification', 'problem', 'changes', 'issues', 'your-todo']) {
+    body = setSection(body, n, `内容 ${n}`);
+    assert.equal(body.split(sign).length - 1, 1, `after ${n}: attribution line appears once`);
+    assert.equal(body.split(human).length - 1, 1, `after ${n}: hand-written text appears once`);
+    assert.ok(body.endsWith(`${human}\n\n${sign}\n`), `after ${n}: text outside the sections is unchanged and last`);
+  }
+  body = setSection(body, 'verification', '更新后的验证');
+  assert.ok(body.endsWith(`${human}\n\n${sign}\n`));
+  assert.equal(getSection(body, 'verification'), '更新后的验证');
+  assert.match(getSection(body, 'problem'), /内容 problem/);
+});

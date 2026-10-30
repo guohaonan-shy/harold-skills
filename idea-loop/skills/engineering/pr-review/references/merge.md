@@ -18,11 +18,11 @@
 
 1. **起 UI 审查（归档模式）**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：spec 名、集成 worktree 的绝对路径、分到的端口、模式「归档」、图的前缀 `r<最近一轮的轮次>-ui-merge-`、草稿存放处 `.tmp/pr-review/<PR 号>/archive/`，和这个 PR 的 review loop 文件 `.tmp/review-loop/<PR 号>.md`（它从里面取人的批示写进「决定」）。
 2. **看它核得过不过**：
-   - **不通过**（`status: failed`，什么都没写）：把它交回的 `failed.json` 里的条目，按 `idea-loop:pr` 的「review 汇报」的 Spec 条目格式记成 review loop 的一条新条目（轮次取 `review-loop next … pause`，标题「第 N 次停下 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（改实现 / 接受实现，走设计变更 / 不修），照 SKILL.md 的「处理条目」处理；处理完人再说合并，从「合并」第 1 步重来。
+   - **不通过**（`status: failed`，什么都没写）：把它交回的 `failed.json` 里的条目，按 `idea-loop:pr` 的「review 汇报」的 Spec 条目格式记成 review loop 的一条新条目（轮次取 `review-loop next … pause`，标题「第 N 次停下 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（改实现 / 接受实现，走设计变更 / 不修）。人批示要改（不论改实现还是设计变更），**先**照 [`deliver.md`](deliver.md) 的「报告之后人提了要改的」撤回那个只改 docs 的提交，恢复工单和 spec 状态，**再**照 SKILL.md 的「处理条目」处理；人批示不修的，不用撤回。处理完人再说合并，从「合并」第 1 步重来（那里会重推 docs 提交、等 CI）。
    - **未完成**（服务起不来、页面打不开）：照实告诉人缺什么，**不合并、不归档**，不当成通过。
    - **通过**：往下。
 3. **在会话里给人看草稿**：把 `draft.md` 作为新条目记进 review loop 文件（`pause` 类，标题「第 N 次停下 · 归档设计档案，等你过目草稿」），按条目一段一段贴，截图和动图跟在对应那条的文字后面，发推送通知。人要改，就把批示原话（记进「你的批示」）用 SendMessage 转回**同一个** ui-reviewer，它改完交回再贴，直到人说通过。
-4. **人通过后跑归档脚本**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <集成 worktree> <spec-slug>`。它先校验再写，退出码 1 是拒绝（`prod/`、spec 和 `tmp/` 都没动）：把它列的违规或冲突回到 review loop 按「归档被拦下」处理，**不合并**。退出码 0 之后，输出里提示的缺失项（`.gitattributes` 没管素材、`.gitignore` 没忽略 `tmp/`、`prod/index.md` 没定视口 / 主题 / 语言）如实告诉人：脚本不改它们，补不补由人定。
+4. **人通过后跑归档脚本**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <集成 worktree> <spec-slug>`。它先校验再写，退出码 1 是拒绝（`prod/`、spec 和 `tmp/` 都没动）：把它列的违规或冲突回到 review loop 按「归档被拦下」处理（第 2 步「不通过」那一支：人要改的先撤回 docs 提交再处理），**不合并**。退出码 0 之后，输出里提示的缺失项（`.gitattributes` 没管素材、`.gitignore` 没忽略 `tmp/`、`prod/index.md` 没定视口 / 主题 / 语言）如实告诉人：脚本不改它们，补不补由人定。
 5. **提交并推送到 PR 分支**：`git add -A docs/design/prod docs/spec/<spec-slug>`（被改写的 spec 图片链接也在里面），再 `git add -u docs/design/tmp/<spec-slug>`（冻结时提交过的画布和冻结记录，旧流程冻结的还有 `delta/`，被归档脚本清掉了，这一步把删除也提交上；新写出的 `delta/` 在被排除的 `tmp/` 里，不进提交），提交信息「归档 <spec-slug> 的设计差异」，推送。工作区应当干净。
 6. **等归档提交触发的 CI 全绿**（它也是推到 PR 分支的提交，会让 CI 重跑；`gh pr checks <PR 号> --watch`），然后回到「合并」第 3 步：`tmp/` 已清空。
 

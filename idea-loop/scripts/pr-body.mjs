@@ -57,7 +57,7 @@ export const TITLES = {
 // inside the markers, and they must not survive next to the new heading.
 const OLD_TITLES = { changes: ['改了什么'] };
 export const SECTIONS = Object.keys(TITLES);
-const LEGACY = ['review', 'links', 'before-merge', 'after-merge', 'before-after', 'decisions', 'verification'];
+const LEGACY = ['review', 'links', 'before-merge', 'after-merge', 'before-after', 'decisions'];
 const LOOKUP_ONLY = ['reference'];
 
 /** Code-level references in a section a person reads; link and image addresses are not text. */
@@ -115,8 +115,11 @@ export function setSection(body, name, content) {
   }
   const sections = parse(body);
   let rest = body ?? '';
-  for (const n of [...Object.keys(sections), ...Object.keys(parse(body, LEGACY))]) {
-    rest = rest.slice(0, rest.indexOf(open(n))) + rest.slice(rest.indexOf(close(n)) + close(n).length);
+  for (const n of new Set([...Object.keys(sections), ...Object.keys(parse(body, LEGACY))])) {
+    const start = rest.indexOf(open(n));
+    const end = rest.indexOf(close(n));
+    if (start === -1 || end < start) continue;
+    rest = rest.slice(0, start) + rest.slice(end + close(n).length);
   }
   rest = rest.trim();
   for (const n of Object.keys(sections)) sections[n] = strip(n, sections[n]);
