@@ -57,8 +57,8 @@ human read-through: once nothing in it waits for a human (a `需要 grill` line,
 main, so no session moves on to work main does not yet hold; the `中` labels are set by the issue
 session, through `issues.mjs advance` after each of its PRs lands. Every flip goes through `scripts/issues.mjs` or `scripts/spec-status.mjs`, which check
 the precondition before writing. Issues can hang under a **root issue** (GitHub sub-issues): the script offers the root as the candidate and never its sub-issues
-(nor an issue opened under 6 hours ago), `set` on a root's number flips the root and its open sub-issues together, the root's label follows its slowest open sub-issue
-(`reconcile` / `advance`), the root closes when its last sub-issue does, and `issues.mjs group <docs> <n>` names a group. **The bracket is the whole design side, and it is conditional**: a spec
+(nor an issue opened under 6 hours ago), `set` on a root's number flips the root and its open sub-issues together, a group is one spec and one session (the spec's `issues:` lists every sub-issue, never the root), so when `reconcile` / `advance` flips the spec's sub-issues the root goes to the same state,
+and when the spec closes them the root closes with them (a sub-issue outside the spec, or sub-issues headed for different states, leave the root put and are reported), and `issues.mjs group <docs> <n>` names a group. **The bracket is the whole design side, and it is conditional**: a spec
 that touches UI waits in 待设计 until a design PR lands its freeze on main.
 `dreaming` is a **batch reconciliation** over the whole vault: the docs, the design archive and
 `DESIGN.md`. The human runs it by hand; when and whether to schedule it is up to them. It is not the

@@ -29,7 +29,7 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 
 ### 根 issue 和子 issue
 
-有子 issue 的是「根」，有父 issue 的是「子 issue」（GitHub 原生 sub-issue），一组按一个会话走。给根号 `issues set` 就整组翻，`issues group` 查一组；候选只出根，不出开了不到 6 小时的；根的状态跟着开着的、没搁置的子 issue 里最靠前的那个，子 issue 全关了就关根，都由脚本自己做。spec 的 `issues:` 只写它对应的那一个子 issue。
+有子 issue 的是「根」，有父 issue 的是「子 issue」（GitHub 原生 sub-issue），一组按一个会话走。给根号 `issues set` 就整组翻，`issues group` 查一组；候选只出根，不出开了不到 6 小时的；一个根下的全部子 issue 由**一份** spec 覆盖，一个会话走完：spec 的 `issues:` 写全部子 issue，不写根。`reconcile` / `advance` 翻这份 spec 的子 issue 时，根跟着翻到同一个状态；spec 让子 issue 关闭（完成或不存在）时，根随着关闭（completed），评论写明随哪份 spec。根下有开着的子 issue 不在这份 spec 里、或子 issue 要翻的去向不一致时，根不动，脚本把它作为问题报出来（出现了说明分组和 spec 对不上）。
 
 ```bash
 issues labels     <docs> [--prune]             # 建缺的 status:* type:* label；多余的只列出

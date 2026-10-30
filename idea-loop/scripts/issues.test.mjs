@@ -346,9 +346,9 @@ test('advance relabels and closes, and says the next phase', () => {
   const docs = docsWith({ a: spec({ issues: '[1]', ui: UI }), b: spec({ status: '完成', issues: '[2]' }) });
   const issues = { 1: open(1, ['status:验证中', 'type:seo']), 2: open(2, ['status:实现中']) };
   const { gh } = fakeGh(issues);
-  assert.deepEqual(advance(gh, docs, 'a'), { done: ['#1: 验证中 → 设计中'], phase: '设计中' });
+  assert.deepEqual(advance(gh, docs, 'a'), { done: ['#1: 验证中 → 设计中'], phase: '设计中', problems: [] });
   assert.deepEqual(issues[1].labels, ['type:seo', 'status:设计中']);
-  assert.deepEqual(advance(gh, docs, 'b'), { done: ['#2: 实现中 → 关闭（completed）'], phase: '关闭' });
+  assert.deepEqual(advance(gh, docs, 'b'), { done: ['#2: 实现中 → 关闭（completed）'], phase: '关闭', problems: [] });
   assert.equal(issues[2].reason, 'completed');
 });
 
@@ -402,22 +402,56 @@ test('set on a root number flips the root and its open sub-issues together, chec
   assert.deepEqual(issues[6].labels, ['status:验证中']);
 });
 
-test('reconcile: the root takes the earliest state among its open, unparked sub-issues', () => {
-  const docs = docsWith({ a: spec({ status: '审核中', issues: '[2]' }), b: spec({ status: '实现中', issues: '[3]' }) });
-  const issues = { 1: open(1, ['status:实现中']), 2: sub(2, 1, ['status:审核中']), 3: sub(3, 1, ['status:实现中']), 4: sub(4, 1, ['status:搁置']) };
+test('reconcile: a spec that lists all of a root\'s sub-issues flips the root to the same state, parked sub-issues aside', () => {
+  const docs = docsWith({ a: spec({ issues: '[2, 3, 4]' }) });
+  const issues = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:审核中']), 4: sub(4, 1, ['status:搁置']) };
   const { gh } = fakeGh(issues);
   const { done, problems } = reconcile(gh, docs);
-  assert.deepEqual(done, ['#1: 实现中 → 审核中']);
+  assert.deepEqual(done, ['#2: 验证中 → 待实现', '#3: 审核中 → 待实现', '#1: 验证中 → 待实现']);
   assert.deepEqual(problems, []);
-  assert.deepEqual(issues[1].labels, ['status:审核中']);
+  assert.deepEqual(issues[1].labels, ['status:待实现']);
 });
 
-test('reconcile: the root follows sub-issues moved in the same run, and an unlabelled sub-issue pulls it back to 待验证', () => {
-  const docs = docsWith({ a: spec({ issues: '[2, 3]' }) });
-  const issues = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:审核中']), 4: sub(4, 1) };
+test('reconcile: a root whose sub-issues no spec lists yet is left alone, with no problem', () => {
+  const docs = docsWith({ a: spec({ issues: '[9]' }) });
+  const issues = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:审核中']), 9: open(9) };
   const { gh } = fakeGh(issues);
-  assert.deepEqual(reconcile(gh, docs).done, ['#2: 验证中 → 待实现', '#3: 审核中 → 待实现', '#1: 验证中 → 待验证']);
-  assert.deepEqual(issues[1].labels, []);
+  const { done, problems } = reconcile(gh, docs);
+  assert.deepEqual(done, ['#9: 待验证 → 待实现']);
+  assert.deepEqual(problems, []);
+  assert.deepEqual(issues[1].labels, ['status:验证中']);
+});
+
+test('reconcile: a sub-issue outside the spec, or two sub-issues in different specs, leaves the root put and is reported', () => {
+  const docs = docsWith({ a: spec({ issues: '[2]' }), b: spec({ issues: '[6]' }) });
+  const issues = {
+    1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:验证中']),
+    5: open(5, ['status:验证中']), 6: sub(6, 5, ['status:验证中']), 7: sub(7, 5, ['status:验证中']),
+  };
+  const { gh } = fakeGh(issues);
+  const { done, problems } = reconcile(gh, docs);
+  assert.deepEqual(done, ['#2: 验证中 → 待实现', '#6: 验证中 → 待实现']);
+  assert.equal(problems.length, 2);
+  assert.match(problems[0], /#1 .*#3/);
+  assert.match(problems[1], /#5 .*#7/);
+  assert.deepEqual(issues[1].labels, ['status:验证中']);
+  assert.deepEqual(issues[5].labels, ['status:验证中']);
+
+  // two specs each listing a sub-issue of the same root
+  const split = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:验证中']) };
+  const second = reconcile(fakeGh(split).gh, docsWith({ a: spec({ issues: '[2]' }), b: spec({ issues: '[3]' }) }));
+  assert.match(second.problems.join('\n'), /#1 /);
+  assert.deepEqual(split[1].labels, ['status:验证中']);
+});
+
+test('reconcile: sub-issues that would end up in different states leave the root put and are reported', () => {
+  const docs = docsWith({ a: spec({ issues: '[2, 3]' }) });
+  const issues = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:实现中']) };
+  const { gh } = fakeGh(issues);
+  const { done, problems } = reconcile(gh, docs);
+  assert.deepEqual(done, ['#2: 验证中 → 待实现']);
+  assert.match(problems.join('\n'), /#1 /);
+  assert.deepEqual(issues[1].labels, ['status:验证中']);
 });
 
 test('reconcile leaves the root alone while every sub-issue is parked', () => {
@@ -438,26 +472,56 @@ test('reconcile closes a root once none of its sub-issues is open', () => {
   assert.ok(calls.some((c) => c[1] === 'close' && c.join(' ').includes('子 issue 都已关闭')));
 });
 
-test('reconcile closes the root in the same run that closes its last sub-issue', () => {
-  const docs = docsWith({ a: spec({ status: '完成', issues: '[2]' }) });
-  const issues = { 1: open(1, ['status:实现中']), 2: sub(2, 1, ['status:实现中']) };
-  const { gh } = fakeGh(issues);
-  assert.deepEqual(reconcile(gh, docs).done, ['#2: 实现中 → 关闭（completed）', '#1: 实现中 → 关闭（completed）']);
+test('reconcile closes the root in the same run that closes its sub-issues, the comment names the spec', () => {
+  const docs = docsWith({ a: spec({ status: '完成', issues: '[2, 3]' }) });
+  const issues = { 1: open(1, ['status:实现中']), 2: sub(2, 1, ['status:实现中']), 3: sub(3, 1, ['status:实现中']) };
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(reconcile(gh, docs).done, ['#2: 实现中 → 关闭（completed）', '#3: 实现中 → 关闭（completed）', '#1: 实现中 → 关闭（completed）']);
   assert.equal(issues[1].state, 'CLOSED');
+  assert.equal(issues[1].reason, 'completed');
+  assert.ok(calls.some((c) => c[1] === 'close' && c[2] === '1' && c.join(' ').includes('`a`')));
 });
 
-test('advance: closing the last open sub-issue closes the root, the root follows the others otherwise', () => {
-  const docs = docsWith({ a: spec({ status: '完成', issues: '[3]' }) });
-  const issues = { 1: open(1, ['status:实现中']), 2: sub(2, 1, [], { state: 'CLOSED' }), 3: sub(3, 1, ['status:实现中']) };
+test('reconcile closes the root when the spec marks all its sub-issues 不存在', () => {
+  const docs = docsWith({ a: spec({ issues: '[2, 3]', verdict: { 2: '不存在', 3: '不存在' } }) });
+  const issues = { 1: open(1, ['status:审核中']), 2: sub(2, 1, ['status:审核中']), 3: sub(3, 1, ['status:审核中']) };
   const { gh } = fakeGh(issues);
-  assert.deepEqual(advance(gh, docs, 'a'), { done: ['#3: 实现中 → 关闭（completed）', '#1: 实现中 → 关闭（completed）'], phase: '关闭' });
+  assert.deepEqual(reconcile(gh, docs).done, ['#2: 审核中 → 关闭（not planned）', '#3: 审核中 → 关闭（not planned）', '#1: 审核中 → 关闭（completed）']);
   assert.equal(issues[1].reason, 'completed');
+});
 
-  const more = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:审核中']) };
-  const second = fakeGh(more);
-  const docs2 = docsWith({ a: spec({ issues: '[2]' }) });
-  assert.deepEqual(advance(second.gh, docs2, 'a').done, ['#2: 验证中 → 实现中', '#1: 验证中 → 审核中']);
-  assert.deepEqual(more[1].labels, ['status:审核中']);
+test('advance: the spec flips its sub-issues from 验证中 to 实现中 and the root goes with them', () => {
+  const docs = docsWith({ a: spec({ issues: '[2, 3]' }) });
+  const issues = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:验证中']) };
+  const { gh } = fakeGh(issues);
+  assert.deepEqual(advance(gh, docs, 'a'), {
+    done: ['#2: 验证中 → 实现中', '#3: 验证中 → 实现中', '#1: 验证中 → 实现中'], phase: '实现中', problems: [],
+  });
+  assert.deepEqual(issues[1].labels, ['status:实现中']);
+});
+
+test('advance: when the spec is done its sub-issues and the root close, the root comment points at the spec', () => {
+  const docs = docsWith({ a: spec({ status: '完成', issues: '[2, 3]' }) });
+  const issues = { 1: open(1, ['status:实现中']), 2: sub(2, 1, ['status:实现中']), 3: sub(3, 1, ['status:实现中']), 4: sub(4, 1, [], { state: 'CLOSED' }) };
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(advance(gh, docs, 'a'), {
+    done: ['#2: 实现中 → 关闭（completed）', '#3: 实现中 → 关闭（completed）', '#1: 实现中 → 关闭（completed）'], phase: '关闭', problems: [],
+  });
+  assert.equal(issues[1].state, 'CLOSED');
+  assert.equal(issues[1].reason, 'completed');
+  assert.ok(calls.some((c) => c[1] === 'close' && c[2] === '1' && c.join(' ').includes('`a`')));
+});
+
+test('advance: a sub-issue outside the spec leaves the root where it is and is reported', () => {
+  const docs = docsWith({ a: spec({ issues: '[2]' }) });
+  const issues = { 1: open(1, ['status:验证中']), 2: sub(2, 1, ['status:验证中']), 3: sub(3, 1, ['status:验证中']) };
+  const { gh } = fakeGh(issues);
+  const { done, phase, problems } = advance(gh, docs, 'a');
+  assert.deepEqual(done, ['#2: 验证中 → 实现中']);
+  assert.equal(phase, '实现中');
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /#1 .*#3/);
+  assert.deepEqual(issues[1].labels, ['status:验证中']);
 });
 
 test('a root is not an orphan: no problem in reconcile or in the 待实现 / 待设计 pick-ups', () => {

@@ -20,11 +20,15 @@
  * `advance`: the same flips `reconcile` would make for that one spec, then the claim of the next 中 state.
  *
  * Issues can be grouped under a root: GitHub's native sub-issues. A root is an issue that has sub-issues, a
- * sub-issue one that has a parent. The group moves as one session: `candidates` offers the root and never
- * its sub-issues, `set` on the root's number flips the root and its open sub-issues together, and the
- * root's own label is not worked on but follows the slowest open, unparked sub-issue (`reconcile` and
- * `advance` recompute it); when no sub-issue is open any more the root is closed. A root is never an orphan:
- * no spec lists it, and that is not reported. `group` names the root and the open sub-issues of any member.
+ * sub-issue one that has a parent. The group is one spec and one session: the spec's `issues:` lists every
+ * sub-issue (never the root). `candidates` offers the root and never its sub-issues, `set` on the root's
+ * number flips the root and its open sub-issues together, and the root's own label is not worked on but
+ * moves with the spec: when `reconcile` or `advance` flips the spec's sub-issues the root goes to the same
+ * state, and when the spec closes them the root is closed as completed, its comment naming the spec. A
+ * root with an open sub-issue the spec does not list (or another spec lists), or whose sub-issues would
+ * end up in different states, stays put and is reported as a problem. A root none of whose sub-issues a
+ * spec lists yet is left alone. A root is never an orphan: no spec lists it, and that is not reported.
+ * `group` names the root and the open sub-issues of any member.
  *
  * Besides its status an issue carries category labels, `type:<parent>` and optionally
  * `type:<parent>/<child>`. The project lists them in the「issue 分类」section of its AGENTS.md (or
@@ -87,8 +91,6 @@ export const NEXT = {
   搁置: [],
 };
 
-/** The order the work moves in; a root follows the earliest state among its open, unparked sub-issues. */
-export const STAGE_ORDER = [UNLABELLED, '验证中', '审核中', '待设计', '设计中', '待实现', '实现中'];
 /** An issue opened less than this long ago waits: the consolidation task runs every 6 hours and should have seen it once. */
 export const NEW_ISSUE_WAIT_MS = 6 * 3600_000;
 
@@ -217,11 +219,13 @@ export function targetOf(md, n) {
 export function reconcilePlan(specs, issues) {
   const open = new Map(issues.map((i) => [i.number, i]));
   const listed = new Set();
+  const specOf = new Map();
   const actions = [];
   const problems = [];
   for (const { slug, md } of specs) {
     for (const n of issuesOf(md)) {
       listed.add(n);
+      specOf.set(n, [...(specOf.get(n) ?? []), slug]);
       const it = open.get(n);
       if (!it) continue;
       const cur = stateOf(it.labels);
@@ -242,7 +246,9 @@ export function reconcilePlan(specs, issues) {
     const cur = stateOf(it.labels);
     if (['待设计', '设计中', '待实现', '实现中'].includes(cur) && !listed.has(it.number) && !(it.subCount > 0)) problems.push(`#${it.number} 是「${cur}」，但主分支上没有 spec 列着它`);
   }
-  actions.push(...rootPlan(issues, changesOf(actions)));
+  const roots = rootPlan(issues, changesOf(actions), specOf);
+  actions.push(...roots.actions);
+  problems.push(...roots.problems);
   return { actions, problems };
 }
 
@@ -278,31 +284,53 @@ export function advancePlan(md, issues) {
 }
 
 /**
- * What the roots do once `changes` (issue number → `{ to }` or `{ close: true }`) are applied: a root with
- * no open sub-issue left is closed as completed; otherwise its label moves to the earliest state among its
- * open, unparked sub-issues, and stays put while all of them are parked. A parked root is left alone.
+ * What the roots do once `changes` (issue number → `{ to }` or `{ close: true }`) are applied. A root's
+ * sub-issues are covered by one spec: `specOf` maps an issue number to the slugs of the specs listing it.
+ * When the spec closes all the open sub-issues the root is closed as completed; otherwise the root goes to
+ * the state its sub-issues end up in (parked ones aside, and it stays put while all are parked). A root
+ * with an open sub-issue the spec does not list, with sub-issues in different specs, or whose sub-issues
+ * end up in different states stays put and is reported. A root none of whose sub-issues is listed by a
+ * spec is left alone; a root with no open sub-issue left is closed. A parked root is left alone.
  * `only` limits it to those root numbers. `issues` are the open issues ({ number, labels, parent?, subCount? }).
+ * Returns `{ actions, problems }`.
  */
-export function rootPlan(issues, changes = new Map(), only = null) {
+export function rootPlan(issues, changes = new Map(), specOf = new Map(), only = null) {
   const kids = new Map();
   for (const i of issues) if (i.parent) kids.set(i.parent, [...(kids.get(i.parent) ?? []), i]);
   const actions = [];
+  const problems = [];
   for (const root of issues) {
     if (!(root.subCount > 0) || (only && !only.has(root.number))) continue;
     if (changes.get(root.number)?.close) continue;
     const cur = stateOf(root.labels);
-    if (cur === '搁置' || !STAGE_ORDER.concat(STATES).includes(cur)) continue;
-    const alive = (kids.get(root.number) ?? []).filter((k) => !changes.get(k.number)?.close);
-    if (!alive.length) {
+    if (cur === '搁置' || ![UNLABELLED, ...STATES].includes(cur)) continue;
+    const open = kids.get(root.number) ?? [];
+    if (!open.length) {
       actions.push({ n: root.number, close: 'completed', why: 'children', from: cur });
       continue;
     }
-    const states = alive.map((k) => changes.get(k.number)?.to ?? stateOf(k.labels)).filter((st) => STAGE_ORDER.includes(st));
-    if (!states.length) continue;
-    const to = states.reduce((a, b) => (STAGE_ORDER.indexOf(b) < STAGE_ORDER.indexOf(a) ? b : a));
-    if (to !== cur) actions.push({ n: root.number, from: cur, to, root: true });
+    const listed = open.filter((k) => specOf.has(k.number));
+    if (!listed.length) continue;
+    const slugs = [...new Set(listed.flatMap((k) => specOf.get(k.number)))];
+    if (listed.length < open.length || slugs.length > 1) {
+      const outside = open.filter((k) => !specOf.has(k.number)).map((k) => `#${k.number}`);
+      const why = outside.length ? `${outside.join('、')} 不在 spec ${slugs.join('、')} 里` : `子 issue 分在 spec ${slugs.join('、')} 里`;
+      problems.push(`#${root.number} 的子 issue 没有都在同一份 spec 里（${why}），根没有动；分组和 spec 对不上`);
+      continue;
+    }
+    const alive = open.filter((k) => !changes.get(k.number)?.close);
+    if (!alive.length) {
+      actions.push({ n: root.number, close: 'completed', why: 'spec', slug: slugs[0], from: cur });
+      continue;
+    }
+    const states = [...new Set(alive.map((k) => changes.get(k.number)?.to ?? stateOf(k.labels)).filter((st) => st !== '搁置'))];
+    if (states.length > 1) {
+      problems.push(`#${root.number} 的子 issue 要翻去的状态不一致（${states.join(' / ')}），根没有动；分组和 spec 对不上`);
+      continue;
+    }
+    if (states.length && states[0] !== cur) actions.push({ n: root.number, from: cur, to: states[0], root: true });
   }
-  return actions;
+  return { actions, problems };
 }
 
 const changesOf = (actions) => new Map(actions.map((a) => [a.n, a.close ? { close: true } : { to: a.to }]));
@@ -481,6 +509,7 @@ function apply(gh, actions, byNumber, slug = null) {
   for (const a of actions) {
     const labels = byNumber.get(a.n)?.labels ?? [];
     if (a.why === 'children') close(gh, a.n, labels, 'completed', ROOT_CLOSED);
+    else if (a.why === 'spec') close(gh, a.n, labels, 'completed', `子 issue 随 spec \`${a.slug}\` 关闭，根随着关闭。`);
     else if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${a.slug ?? slug}\`（\`docs/spec/${a.slug ?? slug}/${a.slug ?? slug}.md\` 的「验证」）。`);
     else if (a.close === 'completed') close(gh, a.n, labels, 'completed', `spec \`${a.slug ?? slug}\` 已实现并合并。`);
     else relabel(gh, a.n, labels, a.to);
@@ -499,11 +528,11 @@ export function advance(gh, docs, slug) {
   const { md } = readSpec(docs, slug);
   const open = openIssues(gh);
   const { actions, phase } = advancePlan(md, open);
-  // the roots of this spec's issues follow them: a root moves with its slowest sub-issue, and closes with the last
+  // the roots of this spec's issues move with them: to the same state, or closed when the spec closes them
   const listed = new Set(issuesOf(md));
   const roots = new Set(open.filter((i) => listed.has(i.number) && i.parent).map((i) => i.parent));
-  const all = [...actions, ...rootPlan(open, changesOf(actions), roots)];
-  return { done: apply(gh, all, new Map(open.map((i) => [i.number, i])), slug), phase };
+  const plan = rootPlan(open, changesOf(actions), new Map([...listed].map((n) => [n, [slug]])), roots);
+  return { done: apply(gh, [...actions, ...plan.actions], new Map(open.map((i) => [i.number, i])), slug), phase, problems: plan.problems };
 }
 
 /** The group #n belongs to: its root (a root's own number, or its sub-issue's parent) and the root's open sub-issues. */
@@ -627,8 +656,9 @@ function main() {
     return console.log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);
   }
   if (cmd === 'advance') {
-    const { done, phase } = advance(gh, docs, a);
+    const { done, phase, problems } = advance(gh, docs, a);
     print(done);
+    print(problems.map((p) => `问题：${p}`));
     return console.log(`下一段：${phase}`);
   }
   if (cmd === 'set') {
