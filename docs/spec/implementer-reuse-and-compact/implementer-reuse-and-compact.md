@@ -7,7 +7,7 @@ related: ["[[pr-review-report-followups]]", "[[design-archive-skill-length]]"]
 issues: [147, 149]
 ---
 
-# implementer：按工单挑 skill、读写法规范、复用原执行方；进实现前压缩上下文
+# implementer：按工单挑 skill、读写法规范、复用原执行方；切完工单提交进分支
 
 ## 验证
 
@@ -84,8 +84,8 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 |---|---|
 | `implement` 的「人回复后」：决定、推翻、设计变更之后重派卡住的工单 | 纳入：能复用就复用 |
 | `implement`「人回复后」的人验反馈、pr-review 的「修」：工单已经落地 | 排除：照旧新起，见「已经落地的工单照旧新起，只复用卡住的」 |
-| issue-session 从「审核」或「设计」换到「实现」 | 纳入：都先压缩 |
-| issue-session 换到「设计」、实现合并后的「关闭」 | 排除：人只要求进实现前压缩；设计阶段要用审核时的讨论 |
+| issue-session 从「审核」或「设计」换到「实现」 | ~~纳入：都先压缩~~ （已移除，2026-10-30：依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」） |
+| issue-session 换到「设计」、实现合并后的「关闭」 | ~~排除：人只要求进实现前压缩；设计阶段要用审核时的讨论~~ （已移除，2026-10-30：依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」） |
 | 人直接敲 `/idea-loop:implement`，不经 issue-session | 排除：上下文归人自己管，implement 不强制 |
 | pr-review 开始前 | 排除：人只要求进实现前；review 要用 implement 阶段的停下汇报和批示 |
 
@@ -187,7 +187,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
 
 - **seam**：
-  - 文档检查（`node --test` 跑的 `*.test.mjs`，读插件文件断言文字）。能抓到：定义里还写着固定的三 skill 清单、还写着「只读测试决策」、没指向 `CODING_STANDARDS.md`；pending 的字段里没有 agent id；implement 的「人回复后」没有「先 SendMessage、失败再新起」；issue-session 的「实现」在切完工单、调 implement 之前没有停下请人压缩，已有工单时还会再切。抓不到：执行方实际挑不挑对 skill、编排者实际会不会叫回原执行方。
+  - 文档检查（`node --test` 跑的 `*.test.mjs`，读插件文件断言文字）。能抓到：定义里还写着固定的三 skill 清单、还写着「只读测试决策」、没指向 `CODING_STANDARDS.md`；pending 的字段里没有 agent id；implement 的「人回复后」没有「先 SendMessage、失败再新起」；issue-session 的「实现」已有工单时还会再切；切工单后没把工单提交进分支（原先还查「没有停下请人压缩」，已移除，2026-10-30：依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」，改成查「实现」里没有压缩停点）。抓不到：执行方实际挑不挑对 skill、编排者实际会不会叫回原执行方。
   - retro 回放（`idea-loop/evals/retro/`）。能抓到：同一张历史工单，改前和改后，执行方在工单没点名时有没有读写法规范、调对 skill。抓不到：回放没覆盖的工单类型。
 - **增量功能测试**：
   - 文档检查：先在改前的 `origin/main` 上跑，看到它红；改完变绿。覆盖：期望行为 1、2、3、4 的文字部分（5 已移除）。
@@ -198,16 +198,15 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 ## Out of scope
 
 - 删掉 implementer、改派通用子代理：人决定先不做。
-- issue-session 换到「设计」、关闭时压缩，pr-review 开始前压缩：人只要求进实现前。
-- 人直接敲 `/idea-loop:implement` 时强制压缩：不经 issue-session 时，上下文归人管。
+- 任何阶段的上下文压缩：进实现前压缩（已移除，2026-10-30：依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」）；其余阶段原本就不做。
 - Toeflair `blog-publisher` 的描述（写着「in the main thread with the user present」）：在 Toeflair 仓库里，这里改不了。
 - implementer 开工时 `git reset --hard <起点 SHA>` 被 auto mode 分类器拦（本机最近两天 6 次）：跟这三个 issue 无关，另开 issue。
 
 ## 关联
 
-- 覆盖：#147 idea-loop implementer 不读目标仓库的 CODING_STANDARDS.md，照不到它链接的写法规范；#149 idea-loop：去掉 implementer agent，implement 用通用子代理 + 薄提示词派工，skill 由子代理自己判断；#153 idea-loop issue-session：进 implement 之前压缩上下文，编排者不再背着审核阶段的历史。
+- 覆盖：#147 idea-loop implementer 不读目标仓库的 CODING_STANDARDS.md，照不到它链接的写法规范；#149 idea-loop：去掉 implementer agent，implement 用通用子代理 + 薄提示词派工，skill 由子代理自己判断。原先还覆盖 #153（进 implement 之前压缩上下文），压缩（已移除，2026-10-30：依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」），#153 已按人的决定 drop（关成 not planned）。
 - 相邻还没完成的：
   - [[pr-review-report-followups]]（实现中）：定了执行方「停 / 沿用 / 存量」的规矩，没有工单碰到这次改的几处。没有重叠。
   - [[design-archive-skill-length]]（#125）：PR #152 已合并，它改的是 implementer 定义写档案那段的节名，跟这次改的「开工前」「输入」不在同一处。没有重叠。
-  - #131（没有决定题的 issue 一路做到 PR）：它改调度和停点；这次在换阶段加了一个「停下请人压缩」的停点，#131 要把它算进去。#131 后做。
+  - #131（没有决定题的 issue 一路做到 PR）：它改调度和停点；原先这次在换阶段加了一个「停下请人压缩」的停点、#131 要算进去；压缩（已移除，2026-10-30：依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」），这次不再加停点，没有重叠。
   - #137（其余 10 份 SKILL.md 超 5000 字）：issue-session 和 implement 会各多几行，实现时要量字数。
