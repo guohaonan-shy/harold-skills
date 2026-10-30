@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, readme, pr-review, agents]
 summary: idea-loop README 目录树里 pr-reviewer 的模型与思考强度改成跟定义一致（opus · high）
 related: ["[[pr-review-report-followups]]"]
