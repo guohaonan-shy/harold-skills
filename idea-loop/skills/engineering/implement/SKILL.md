@@ -12,7 +12,7 @@ description: 把一份已切好工单的 spec 实现完。spec 进了「实现�
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
 - **当前 worktree 就是集成分支**：一份 spec 一条分支、一个 PR，这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局，spec 是「实现中」，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。
-- 每张工单的执行方都是新上下文，人不用在工单之间 `/clear`。
+- 每张工单第一次派出时是新上下文，人不用在工单之间 `/clear`；卡住的工单在人做完决定后，可能被叫回原执行方（见「人回复后」）。
 
 scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不改 scope、不删工单（删工单在合并前，归 `idea-loop:pr-review`），也不合并 PR。
 
@@ -21,7 +21,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 不另建状态文件：
 
 - **已落地**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。用这个脚本，不用 git 的 trailer 读法：环境会在 message 末尾另起一段追加署名，按 trailer 读会读空。
-- **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项、推荐、半成品的 worktree 和分支。丢了就从 review loop 文件还原（停下汇报里有批示和「做了什么」的就算已决定）。
+- **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项、推荐、半成品的 worktree 和分支、原执行方的 agent id（起它时 Agent 工具返回的那个；会话压缩或重启后靠它找回）。丢了就从 review loop 文件还原（停下汇报里有批示和「做了什么」的就算已决定）。
 - **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进停下汇报后清空。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（MCP 浏览器锁）。在跑的执行方只记在会话里。
 
@@ -33,7 +33,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 **第一次派工、可派的有两张以上**：先用 Agent 工具起 `idea-loop:explorer`，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、这批工单路径、spec 路径、笔记目录 `.tmp/implement/<spec-slug>/notes/` 的绝对路径，等它交回。
 
-每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD` 作起点 SHA；用 Agent 工具起 `idea-loop:implementer`，`isolation: "worktree"`、`run_in_background: true`，**只给指针，不转述工单**：
+每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD` 作起点 SHA；用 Agent 工具起 `idea-loop:implementer`，`isolation: "worktree"`、`run_in_background: true`，记下它返回的 agent id，**只给指针，不转述工单**：
 
 - 工单与 spec 的仓库内路径
 - 起点 SHA、集成分支名、分到的端口
@@ -72,7 +72,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 ## 卡住一张，别的接着做
 
-`blocked` / `failed`：连同它的全部下游记进 pending；拷出素材、停它的服务、强制释放浏览器锁，**worktree 和分支留着**；发一条推送通知说哪张卡在哪；回到「派工」。
+`blocked` / `failed`：连同它的 agent id 和全部下游记进 pending；拷出素材、停它的服务、强制释放浏览器锁，**worktree 和分支留着**；发一条推送通知说哪张卡在哪；回到「派工」。
 
 ## 没活了就停下
 
@@ -86,12 +86,18 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 **人回复后**：原话逐字记进那个条目的「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
-- **决定**：决定里有设计变更（人接受了实现者做不下去时给的改法，或人自己改了主意）的，先走下面的「设计变更」，过了再写工单，`> 人的决定` 里指向新画布的版本。工单 `要建什么` 末尾加 `> 人的决定（<日期>）：<原文>`，验收格随之增删，提交 `docs(tickets): <NN> — 人的决定`，从 pending 删掉。工单回到可派，派时带上半成品分支；它落地后旧 worktree 和分支一并回收。
+- **决定**：决定里有设计变更（人接受了实现者做不下去时给的改法，或人自己改了主意）的，先走下面的「设计变更」，过了再写工单，`> 人的决定` 里指向新画布的版本。工单 `要建什么` 末尾加 `> 人的决定（<日期>）：<原文>`，验收格随之增删，提交 `docs(tickets): <NN> — 人的决定`，从 pending 删掉（先取下它的 agent id 和 worktree）。工单回到可派，按下面的「重派」；它落地后旧 worktree 和分支一并回收。
 - **推翻**「已按规则处理」里按现有做法定的、或本次修的存量那条：当作一条人的决定。那条所属的工单，`要建什么` 末尾加 `> 人的决定（<日期>）：推翻「<那条做了什么>」：<原文>`，验收末尾追加 `- [ ] 人推翻（<日期>）：<人要的样子>`，提交 `docs(tickets): <NN> — 人的决定`；工单回到可派重派（同一 trailer，带上「人的决定已写进工单」）。
 - **推翻**开了 issue 的那条：不回工单、不派执行方。在那个 issue 上留一条说明并关掉（`--reason "not planned"`）；人要别的处理（比如这次就修），要修的按上一条写回所属工单。
 - **人验对**：在文件里勾上。**不对**：验收末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，工单回到可派重派（同一 trailer，素材同名覆盖）。
 - **疑问**：直接答；要改方案的，说明要回 `idea-loop:grill`。
 - **要求改写汇报**（「写成我看得懂的样子」）：改文件里那个条目的汇报部分，在会话里重贴，改了什么写进汇总。
+
+**重派**（决定、设计变更、推翻写进工单并提交之后，工单要重新做时）：
+
+- **先叫回原执行方。** 这张工单卡住时 pending 记了 agent id、它的 worktree 还在，就用 SendMessage 叫它回来，占一个执行方的位置。消息只给指针：「人的决定已写进工单 `<路径>`，提交 `<SHA>`」，加上要它先合进来的集成分支最新提交。它照常交回，核对、落地、回收照上面做。
+- **叫不回就新起。** SendMessage 报错（id 找不到、会话重启过）或没记 id：照「派工」新起一个，带上半成品分支。
+- **已经落地的工单照旧新起。** 人验反馈、review 里的修、推翻已落地的工单，那时执行方的 worktree 已经回收（「回收」的时机不改），不叫回，新起。
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
