@@ -71,10 +71,10 @@ idea-loop 从这几处读项目配置：
 
 ## 整合定时任务
 
-一个跑在 Claude cloud 上的定时任务（claude.ai/code/routines；每次运行是一个会话，列在桌面 app 侧边栏的 Scheduled 组），每 6 小时把开着的、改同一个文件或同一个页面 / 模块的待验证 issue 挂到一个根 issue 下。规则全在任务的 prompt 里：[references/consolidation-prompt.md](references/consolidation-prompt.md)，建任务时原样写进去，`<仓库>` 换成目标仓库。
+一个跑在 Claude cloud 上的定时任务（claude.ai/code/routines；每次运行是一个会话，列在桌面 app 侧边栏的 Scheduled 组），每 6 小时把开着的、改同一个文件或同一个页面 / 模块的待验证 issue 挂到一个根 issue 下。规则全在任务的 prompt 里：[references/consolidation-prompt.md](references/consolidation-prompt.md)，建任务时原样写进去，`<仓库>` 换成目标仓库的 `owner/name`：在跑 setup 的这个 checkout 里取 `gh repo view --json nameWithOwner -q .nameWithOwner`（即 `origin` 指向的仓库）。
 
 1. 打印 `https://github.com/apps/claude/installations/new`，说明**只装在要整合的这个仓库上**，这一步只能人在 GitHub 上点，等人说装好。
-2. 用 `RemoteTrigger` 建 cloud 定时任务：cron `7 */6 * * *`（按 UTC 读，偏开整点），仓库是目标仓库，prompt 是上面那份。
+2. 用 `RemoteTrigger` 建 cloud 定时任务：cron `7 */6 * * *`（按 UTC 读，偏开整点），仓库填 `https://github.com/<owner/name>`（同上一步取的），prompt 是上面那份。
 3. 建完清掉任务上挂的全部连接器：新建的任务默认挂上账号在 claude.ai 上连的所有连接器，这个任务一个都不用。
 4. 「Run now」跑一次冒烟，告诉人去侧边栏 Scheduled 组看那次运行的会话、核对合并结果。
 5. 没有 `RemoteTrigger`，或人拒绝：把 prompt 和以上设置原样给人，这一步记「未做」及原因。
