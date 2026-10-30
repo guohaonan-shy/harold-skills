@@ -53,6 +53,19 @@ test('the pick sentence gives examples, including a skill-doc ticket following t
   assert.match(pick, /不是清单|只是例子|例子/, '要说明这些是例子，不是清单');
 });
 
+test('every skill example in the pick sentence is written as "用 Skill 工具调 `<插件>:<名字>`"', () => {
+  const pick = opening.split('\n').find((l) => /看工单|按工单|工单的内容/.test(l));
+  assert.ok(pick, '找不到「怎么挑」那一段');
+  const names = [...pick.matchAll(/`(idea-loop:[a-z-]+)`/g)].map((m) => m[1]);
+  assert.ok(names.length >= 3, '例子里的 skill 名找不到');
+  for (const name of names) {
+    assert.ok(
+      pick.includes(`用 Skill 工具调 \`${name}\``),
+      `例子里的 ${name} 要写成「用 Skill 工具调 \`${name}\`」（writing-for-agents 的 SKILL-MECHANICS.md：要 agent 当场用上另一个 skill 的写法）`,
+    );
+  }
+});
+
 test('the spec is readable background and the ticket sets the scope', () => {
   const inputs = section(doc, '输入');
   assert.doesNotMatch(doc, /只读它的「测试决策」/, '不再规定 spec 只读测试决策');
