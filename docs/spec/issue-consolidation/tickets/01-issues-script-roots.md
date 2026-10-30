@@ -18,6 +18,15 @@ idea-loop 的 issue 状态脚本（`issues`）今天把每个 issue 当成独立
 
 spec 的 frontmatter `issues:` 只写它对应的那一个子 issue，所以按 spec 翻的逻辑不变。
 
+> 人的决定（2026-10-30）：「你先按照上面对于每个章节的意见来修改吧～」——spec-status 的 SKILL.md 按 writing-for-agents 的剪枝大幅简化，不靠挪进 references：
+> - issue 状态表删掉「谁、什么时候翻」一列；「待」字头那段收成一句：「待」只由对账照主分支挂，「中」由会话挂。
+> - `issues set` 的放行表整张删（脚本拒绝时会列出能翻成什么）。
+> - 「根 issue 和子 issue」收成两句：给根号整组翻、`group` 查一组；根跟着最慢的子 issue、关根由脚本自己做。
+> - 命令块保留，注释砍到半行。
+> - spec 状态表删掉「脚本核的前提」一列，删掉放行规则那一行。
+> - 「从旧状态机迁移」整节删掉，同时改掉别处指向它的两处（setup 与 dreaming 提议表参考资料里的指向）。
+> - 「issue 的分类」「开一个待验证的 issue」保留（别的 skill 指向它们）。
+
 ## 验收标准
 
 - [x] 一个根挂着两个待验证子 issue、另有一个开了 1 小时的待验证 issue 时，取候选只出根，不出两个子 issue，也不出开了 1 小时的那个（单元测试，假 `gh`）
@@ -28,6 +37,7 @@ spec 的 frontmatter `issues:` 只写它对应的那一个子 issue，所以按 
 - [x] 有状态 label 的根不出现在对账的「没有 spec 列着它」问题里，也不出现在待实现 / 待设计队列的问题里（单元测试）
 - [x] `group` 对根号、对子 issue 号返回同一组；对不在组里的 issue 返回它自己（单元测试）
 - [x] `issues.test.mjs` 全部通过；`spec-status` SKILL.md 写明新规则与 `group` 命令
+- [ ] 人的决定（2026-10-30）：spec-status SKILL.md 照上面的剪法改完，主体回到 5000 字以内（预计 3000 左右）；别处指向被删小节的引用都已改掉，没有悬空的「spec-status 的「…」」指向
 
 ## 选中的存量回归
 
