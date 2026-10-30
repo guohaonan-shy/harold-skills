@@ -39,7 +39,7 @@ idea-loop 的调度（`issue-dispatch`）和 issue 会话（`issue-session`）�
 - [x] 三份 SKILL.md 主体都在 5000 字以内；description 只做路由
 - [x] 文中用到的脚本命令（`group`、对根号 `set`）与 01 落地的行为一致
 - [x] 人的决定（2026-10-30）：pr-review 的合并步骤说明写明实现子会话也可合并、合并后不翻 issue 状态而是通知根的会话；与 issue-session 里子会话简报的写法一致
-- [ ] review 第 1 轮 C1（2026-10-30）：idea-loop 插件 README 里流程总览和目录树注释中「一个 issue 一个会话 / 一个待验证 issue 一张卡片 / 一个 issue 的会话」的说法改成按组的说法（一组一个会话、一张卡片）
+- [x] review 第 1 轮 C1（2026-10-30）：idea-loop 插件 README 里流程总览和目录树注释中「一个 issue 一个会话 / 一个待验证 issue 一张卡片 / 一个 issue 的会话」的说法改成按组的说法（一组一个会话、一张卡片）
 
 ## 选中的存量回归
 
