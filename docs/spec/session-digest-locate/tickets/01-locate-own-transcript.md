@@ -18,14 +18,14 @@ idea-loop 的 retro 收尾时用 `session-digest.mjs locate` 找「这场会话�
 
 ## 验收标准
 
-- [ ] 命令行测试（子进程跑脚本，控制 `HOME`、当前目录、环境变量）：两个项目目录，A 放本会话记录（第一条人的发言含标记），B 放调度会话记录（标记只在 `tool_use` 参数里）；当前目录指向 B、不设 id，`locate --marker <标记>` 交回 A 的文件、退出码 0。改前先看到它红。
-- [ ] 同上前置，`CLAUDE_CODE_SESSION_ID` 设为 A 的 id，不带参数的 `locate` 交回 A 的文件；`--session <A 的 id>` 同样。
-- [ ] 两个项目目录各一份第一条人的发言都含标记的记录：`locate --marker` 退出码 2，stderr 提到 `export_transcript` 并列出两份。
-- [ ] id 指向不存在的文件、且没有文件对上标记：退出码 2。
-- [ ] 第一条人的发言是调度卡片原文（「用 Skill 工具调 idea-loop:issue-session，参数 87，按它从开场做起。」）的记录，用参考资料写的 issue 会话标记 `locate --marker` 找得到。
-- [ ] 现有 resumed-session 那条用例改成断言多份对上退出码 2；`session-digest.test.mjs` 全绿。
-- [ ] retro 参考资料、脚本用法注释、README 中对 `locate` 的描述与新行为一致（不再写 `issue-session <号>` 这种开场里不存在的标记）。
-- [ ] 人验：在一个真实会话里 cd 到别的目录，跑不带参数的 `locate`，交回的是这个会话自己的记录。⏭ 延后 → 人在 PR 上验
+- [x] 命令行测试（子进程跑脚本，控制 `HOME`、当前目录、环境变量）：两个项目目录，A 放本会话记录（第一条人的发言含标记），B 放调度会话记录（标记只在 `tool_use` 参数里）；当前目录指向 B、不设 id，`locate --marker <标记>` 交回 A 的文件、退出码 0。改前先看到它红。
+- [x] 同上前置，`CLAUDE_CODE_SESSION_ID` 设为 A 的 id，不带参数的 `locate` 交回 A 的文件；`--session <A 的 id>` 同样。
+- [x] 两个项目目录各一份第一条人的发言都含标记的记录：`locate --marker` 退出码 2，stderr 提到 `export_transcript` 并列出两份。
+- [x] id 指向不存在的文件、且没有文件对上标记：退出码 2。
+- [x] 第一条人的发言是调度卡片原文（「用 Skill 工具调 idea-loop:issue-session，参数 87，按它从开场做起。」）的记录，用参考资料写的 issue 会话标记 `locate --marker` 找得到。
+- [x] 现有 resumed-session 那条用例改成断言多份对上退出码 2；`session-digest.test.mjs` 全绿。
+- [x] retro 参考资料、脚本用法注释、README 中对 `locate` 的描述与新行为一致（不再写 `issue-session <号>` 这种开场里不存在的标记）。
+- [ ] 人验：在一个真实会话里 cd 到别的目录，跑不带参数的 `locate`，交回的是这个会话自己的记录。⏭ 延后 → PR 交付验收：要人在真实会话里确认 `CLAUDE_CODE_SESSION_ID` 每次都设了
 
 ## 选中的存量回归
 
