@@ -309,7 +309,7 @@ idea-loop/
 │   ├── adr-reconciler.md             # dreaming's spec → ADR reconciler (idea-loop:adr-reconciler) — `sonnet` alias, effort high, read-only, returns the `文档` rows
 │   ├── design-steward.md             # dreaming's keeper of DESIGN.md (idea-loop:design-steward) — `opus` alias, effort high, read-only, returns the `候选` and `DESIGN.md 条目` rows; the only source of proposed DESIGN.md changes
 │   ├── explorer.md                   # implement's scout (idea-loop:explorer) — `haiku` alias, effort high, pointer-only shared notes before a parallel dispatch
-│   ├── pr-reviewer.md                # pr-review's reviewer (idea-loop:pr-reviewer) — `sonnet` alias, effort xhigh, one per round, started together with the ui-reviewer; it waits for the UI findings file inside its 20-minute Codex budget
+│   ├── pr-reviewer.md                # pr-review's reviewer (idea-loop:pr-reviewer) — `opus` alias, effort high, one per round, started together with the ui-reviewer; it waits for the UI findings file inside its 20-minute Codex budget
 │   └── technical-auditor.md, page-optimizer.md, keyword-miner.md, backlink-analyst.md, geo-analyst.md  # seo-scan's direction agents — `sonnet`, effort medium, read-only, one per direction per run
 ├── README.md (this file)
 ├── skills/                          # four categories, each listed in plugin.json — rules in AGENTS.md; seo/README.md lists the seo skills and their upstream sources
