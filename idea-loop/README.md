@@ -102,16 +102,17 @@ now lives.
 /idea-loop:implement <spec-slug>
 ```
 
-One spec, one integration branch, one PR. The PR is written for one reader — the person deciding
-whether it merges — and every time they open it they should see at once what they must decide and
-what they must look at. The description is written for a reader with no context (the work was delegated)
-and reads top-down: one sentence; what changed, one block per page end to end (plus the backend
-flow behind it) or per backend flow, each block carrying its before → after shot specially before
-the PR opens (screenshots, GIFs or annotated screen flows for the front end, sequence diagrams for
-the back end), the decisions implementers made there on their own and how it was verified; what the
-human has to review, decide and prepare before going live; and a folded reference. No code lines,
-variable names or paths outside that reference — `scripts/pr-body.mjs` refuses them. It never
-carries review. Layout: `skills/engineering/pr/SKILL.md`.
+One spec, one integration branch, one PR. The PR description is the **review
+report**, written for a reader who never followed the work (it was delegated) and meant to be enough to
+decide the merge: one sentence; the problem (what was seen, with numbers); how it was fixed (the
+rules applied and their grounds, the slicing into tickets with what blocks what, each page or flow
+end to end with its before → after shot); how it was verified (what was verified, what was not and
+why, what the review rounds concluded); the issues filed on the way; and what the human has to do
+(review, decide, prepare before going live, then say "merge"); plus a folded reference. No code lines,
+variable names or paths outside that reference — `scripts/pr-body.mjs` refuses them. When a review round has
+nothing for the human to decide and nothing left to fix, the orchestrator does not wait: it pushes the
+docs-only "spec done, tickets deleted" commit, waits for its CI, writes the report and stops there; merging
+afterwards needs no further CI wait. Layout: `skills/engineering/pr/SKILL.md`.
 
 **The review loop lives in the session, not on GitHub** (`skills/engineering/pr/SKILL.md`, section "review loop"). Only one
 person reads the reports and decides, and they are already in the Claude session (desktop or
@@ -425,8 +426,8 @@ idea-loop/
     ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, the index
     ├── issues.mjs                    # the only writer of an issue's status:* and type:* labels — hand-over into spec frontmatter, reconcile, advance, label pruning
     ├── issues.test.mjs               # its unit tests against a fake gh
-    ├── pr-body.mjs                   # PR description, four fixed sections (one sentence / what changed / your to-do / reference); no review, no code references outside reference
-    ├── pr-body.test.mjs              # fixed order, untouched neighbours, size limit
+    ├── pr-body.mjs                   # PR description = the review report, seven fixed sections (one sentence / problem / how it was fixed / how it was verified / issues filed / your to-do / reference); no code references outside reference
+    ├── pr-body.test.mjs              # fixed order, new sections, old headings, untouched neighbours, size limit
     ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge
     ├── evidence.test.mjs             # owner-prefixed names, image types, size cap
     ├── browser-lock.mjs              # one lock for the session's MCP browser, so parallel implementers take turns

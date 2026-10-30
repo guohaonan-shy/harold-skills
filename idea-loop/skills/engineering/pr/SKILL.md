@@ -16,13 +16,16 @@ description: 一个 PR 上给人看的东西怎么写、放在哪：PR 描述、
 
 汇报在会话里给人看、人在会话里回复，同样的内容记进本地的 review loop 文件，合并时按停下和轮次归档成 PR 上的评论（「review loop」）。
 
-PR 描述是常驻的总览，**不放 review**。读它的人打开时没有上下文：活是委托出去的，spec 他可能只记得个大概。所以描述从「这是什么」往下读到「要我做什么」，越往下越可以不读，只为查证的东西折叠在最后。
+PR 描述是**审核报告**：review 全部过完、没有要人定的了，由 `idea-loop:pr-review` 的编排者写进来，人读它就能决定合不合并。每一轮 review 的汇报仍各是一份，在会话里给人看；报告里只收它们的结论。读它的人打开时没有上下文：活是委托出去的，spec 他可能只记得个大概。所以描述从「这是什么」往下读到「要我做什么」，一份讲完，越往下越可以不读，只为查证的东西折叠在最后。
 
 | 节 | 标题 | 写入方 |
 |---|---|---|
-| `summary` | 一句话 | `idea-loop:implement`：开 draft 时写，转 open 前按落地结果重写 |
-| `changes` | 改了什么 | `idea-loop:implement` 转 open 前写，对照图专门拍 |
-| `your-todo` | 要你做的事 | `idea-loop:implement` 转 open 前写；`idea-loop:pr-review` 的编排者在人的批示带出新事项时更新 |
+| `summary` | 一句话 | `idea-loop:implement`：开 draft 时写，转 open 前按落地结果重写；交报告时 `idea-loop:pr-review` 的编排者再核一遍 |
+| `problem` | 问题 | `idea-loop:pr-review` 的编排者，交报告时写 |
+| `changes` | 怎么修 | `idea-loop:implement` 转 open 前先写各点的之前 → 之后；`idea-loop:pr-review` 的编排者交报告时补全 |
+| `verification` | 怎么验证 | `idea-loop:pr-review` 的编排者，交报告时写 |
+| `issues` | 顺带开的 issue | `idea-loop:pr-review` 的编排者，交报告时写 |
+| `your-todo` | 要你做的事 | `idea-loop:implement` 转 open 前写；`idea-loop:pr-review` 的编排者在人的批示带出新事项、交报告时更新 |
 | `reference` | 参考 | `idea-loop:implement`：开 draft 时写，每次停下更新 |
 
 每节夹在隐藏标记之间，由脚本按固定顺序写入，**标题由脚本加**，内容文件里不用写：
@@ -33,7 +36,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/pr-body.mjs" set <owner/repo> <PR 号> <节�
 
 写入前脚本会查折叠的「参考」以外有没有代码层面的指称，查到就拒写（图片和链接的地址不算）。每个写入方只重写自己负责的节；标记以外的文字（人手写的说明、署名行）保留在所有节的下方。改描述只走这个脚本：`gh pr edit --body` 整体覆盖会把别人的节一起冲掉。描述由 gh 当前登录的账号写：它是 PR 的一部分，不是一条发言。
 
-## PR 描述的四节
+## PR 描述的节
 
 每节的格式：[`references/description.md`](references/description.md)。
 

@@ -1,19 +1,45 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getSection, setSection, readerProblems, SECTIONS } from './pr-body.mjs';
+import { getSection, setSection, readerProblems, SECTIONS, TITLES } from './pr-body.mjs';
 
-test('the description has exactly the four sections, and none of them is review', () => {
-  assert.deepEqual(SECTIONS, ['summary', 'changes', 'your-todo', 'reference']);
+test('the description is the review report: one sentence, then its five parts, then the folded reference', () => {
+  assert.deepEqual(SECTIONS, ['summary', 'problem', 'changes', 'verification', 'issues', 'your-todo', 'reference']);
+  assert.deepEqual(
+    ['problem', 'changes', 'verification', 'issues', 'your-todo'].map((n) => TITLES[n]),
+    ['问题', '怎么修', '怎么验证', '顺带开的 issue', '要你做的事'],
+  );
   assert.throws(() => setSection('', 'review', '第 1 轮'), /unknown section/);
 });
 
 test('sections come out in the fixed order whatever order they were written in', () => {
+  const written = ['reference', 'your-todo', 'issues', 'verification', 'summary', 'changes', 'problem'];
   let body = '';
-  body = setSection(body, 'your-todo', 'T');
-  body = setSection(body, 'summary', 'S');
-  body = setSection(body, 'changes', 'C');
-  const order = ['summary', 'changes', 'your-todo'].map((n) => body.indexOf(`section ${n} -->`));
+  for (const n of written) body = setSection(body, n, `内容 ${n}`);
+  const order = SECTIONS.map((n) => body.indexOf(`<!-- idea-loop:section ${n} -->`));
+  assert.ok(order.every((i) => i >= 0), 'every section is written');
   assert.deepEqual([...order].sort((a, b) => a - b), order);
+});
+
+test('the new sections write their own headings and are rewritten alone', () => {
+  let body = setSection('', 'problem', '学生重试失败的题会被多扣一次');
+  body = setSection(body, 'verification', '- 重试一次只扣一次：端到端，通过');
+  body = setSection(body, 'issues', '- 旧报告缓存不清：已开 [#12](https://github.com/a/b/issues/12)');
+  assert.match(body, /## 问题\n\n学生重试/);
+  assert.match(body, /## 怎么验证\n\n- 重试一次/);
+  assert.match(body, /## 顺带开的 issue\n\n- 旧报告/);
+  body = setSection(body, 'problem', '重试失败的题多扣两次');
+  assert.equal(getSection(body, 'problem'), '重试失败的题多扣两次');
+  assert.match(getSection(body, 'verification'), /端到端/);
+  assert.equal(body.match(/## 问题/g).length, 1);
+});
+
+test('a description written before the report shape keeps its old 改了什么 heading out of the rewritten section', () => {
+  const old = '<!-- idea-loop:section changes -->\n## 改了什么\n\n### 重试页\n\n之前 → 之后\n<!-- /idea-loop:section changes -->';
+  assert.equal(getSection(old, 'changes'), '### 重试页\n\n之前 → 之后');
+  const body = setSection(old, 'problem', '重试多扣次数');
+  assert.doesNotMatch(body, /## 改了什么/);
+  assert.match(body, /## 怎么修\n\n### 重试页/);
+  assert.ok(body.indexOf('section problem -->') < body.indexOf('section changes -->'));
 });
 
 test('the script writes each heading itself; a writer that included it is not doubled', () => {
@@ -56,6 +82,10 @@ test('a body over the GitHub limit is refused before it is sent', () => {
 test('sections a person reads refuse code-level references; image and link addresses do not count', () => {
   assert.throws(() => setSection('', 'changes', '重试时不再调 `retryAnalysis`'), /say it in words/);
   assert.throws(() => setSection('', 'your-todo', '- [ ] 看 src/report/player.tsx:42'), /say it in words/);
+  // the report's new sections are read by a person too
+  assert.throws(() => setSection('', 'problem', '`retryAnalysis` 多扣了次数'), /say it in words/);
+  assert.throws(() => setSection('', 'verification', '- 单测 src/report/retry.test.ts 通过'), /say it in words/);
+  assert.throws(() => setSection('', 'issues', '- 见 a1b2c3d 的提交'), /say it in words/);
   assert.deepEqual(readerProblems('changes', '![重试流程](https://github.com/a/b/blob/idea-loop-evidence-pr-1/pr-retry_flow.png?raw=true) 见 [停下汇报](https://github.com/a/b/pull/1#discussion_r1)'), []);
   assert.deepEqual(readerProblems('reference', '01 · 缓存 | a1b2c3d | src/cache.ts'), []); // lookup only
 });
