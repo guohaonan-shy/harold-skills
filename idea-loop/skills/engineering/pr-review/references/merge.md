@@ -18,7 +18,7 @@
 
 1. **起 UI 审查（归档模式）**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：spec 名、集成 worktree 的绝对路径、分到的端口、模式「归档」、图的前缀 `r<最近一轮的轮次>-ui-merge-`、草稿存放处 `.tmp/pr-review/<PR 号>/archive/`，和这个 PR 的 review loop 文件 `.tmp/review-loop/<PR 号>.md`（它从里面取人的批示写进「决定」）。
 2. **看它核得过不过**：
-   - **不通过**（`status: failed`，什么都没写）：把它交回的 `failed.json` 里的条目，按 `idea-loop:pr` 的「review 汇报」的 Spec 条目格式记成 review loop 的一条新条目（轮次取 `review-loop next … pause`，标题「第 N 次停下 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（改实现 / 接受实现，走设计变更 / 不修），照 SKILL.md 的「人批示之后」处理；处理完人再说合并，从「合并」第 1 步重来。
+   - **不通过**（`status: failed`，什么都没写）：把它交回的 `failed.json` 里的条目，按 `idea-loop:pr` 的「review 汇报」的 Spec 条目格式记成 review loop 的一条新条目（轮次取 `review-loop next … pause`，标题「第 N 次停下 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（改实现 / 接受实现，走设计变更 / 不修），照 SKILL.md 的「处理条目」处理；处理完人再说合并，从「合并」第 1 步重来。
    - **未完成**（服务起不来、页面打不开）：照实告诉人缺什么，**不合并、不归档**，不当成通过。
    - **通过**：往下。
 3. **在会话里给人看草稿**：把 `draft.md` 作为新条目记进 review loop 文件（`pause` 类，标题「第 N 次停下 · 归档设计档案，等你过目草稿」），按条目一段一段贴，截图和动图跟在对应那条的文字后面，发推送通知。人要改，就把批示原话（记进「你的批示」）用 SendMessage 转回**同一个** ui-reviewer，它改完交回再贴，直到人说通过。

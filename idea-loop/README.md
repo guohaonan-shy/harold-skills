@@ -331,6 +331,7 @@ idea-loop/
 │   │       references/review-standards.md    # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
 │   │       references/codex-spec.md, codex-standards.md  # the fixed Codex prompts per axis, filled by scripts/codex-prompt.mjs
 │   │       references/merge.md       # merge, the pre-merge design archive, the post-merge cleanup
+│   │       references/ui-walkthrough.md  # read only when the PR has design output: starting the ui-reviewer next to the pr-reviewer, and what to do when it returns incomplete
 │   ├── design/
 │   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
 │   │   │   references/chapters.md, new.md, distill.md, reconcile.md  # each chapter; creating, distilling, reconciling DESIGN.md

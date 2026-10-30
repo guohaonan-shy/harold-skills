@@ -26,7 +26,7 @@
  * has no ruling to wait for and is settled by its 做了什么 alone: a review round with no 要你决定 in it
  * (every finding handled by rule), and a stop report with no 需要你决定 section and no unticked box
  * under 交付验收. So the orchestrator can tell "everything is handled" and carry on without waiting for a
- * nod (implement's stops; pr-review, section 下一轮：什么时候自己起). A stop report that does ask, or still
+ * nod (implement's stops; pr-review, section 一轮之后往哪走). A stop report that does ask, or still
  * has delivery items to tick, waits for the human's ruling as before. Overturning
  * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
