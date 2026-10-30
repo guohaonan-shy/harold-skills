@@ -48,7 +48,7 @@ idea-loop 从这几处读项目配置：
 - `.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - `## issue 分类` 一节照模板写进 `AGENTS.md`（没有就写进有 `## idea-loop` 块的那份）；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
-- 旧状态：`check` 报了旧状态的，照 `idea-loop:spec-status` 的「从旧状态机迁移」迁。
+- 旧状态：`check` 报了旧状态的，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" migrate docs`。
 - label，按顺序：
   1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*` 和 `type:*`，列出多余的 label 和各自在用的 open issue 数。
   2. 人定了要迁成分类的，对每个用着它的 issue 跑 `issues.mjs type docs <号> <分类>`。

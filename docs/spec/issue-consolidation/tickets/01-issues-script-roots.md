@@ -37,7 +37,7 @@ spec 的 frontmatter `issues:` 只写它对应的那一个子 issue，所以按 
 - [x] 有状态 label 的根不出现在对账的「没有 spec 列着它」问题里，也不出现在待实现 / 待设计队列的问题里（单元测试）
 - [x] `group` 对根号、对子 issue 号返回同一组；对不在组里的 issue 返回它自己（单元测试）
 - [x] `issues.test.mjs` 全部通过；`spec-status` SKILL.md 写明新规则与 `group` 命令
-- [ ] 人的决定（2026-10-30）：spec-status SKILL.md 照上面的剪法改完，主体回到 5000 字以内（预计 3000 左右）；别处指向被删小节的引用都已改掉，没有悬空的「spec-status 的「…」」指向
+- [x] 人的决定（2026-10-30）：spec-status SKILL.md 照上面的剪法改完，主体回到 5000 字以内（预计 3000 左右）；别处指向被删小节的引用都已改掉，没有悬空的「spec-status 的「…」」指向
 
 ## 选中的存量回归
 
