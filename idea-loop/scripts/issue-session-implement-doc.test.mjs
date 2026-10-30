@@ -3,7 +3,7 @@
  *
  * Spec implementer-reuse-and-compact, ticket 03. History: the ticket first added a stop between to-ticket and
  * implement (PushNotification + a filled-in /compact instruction, wait for 「继续」); the human then decided to
- * drop it (implementation runs in a child session, spec 「进实现前压缩上下文」 was dropped, #153). What stays:
+ * drop it (spec 「进实现前压缩上下文」 was dropped, #153; implementation runs in the issue session itself, issue-consolidation ticket 05). What stays:
  * tickets already under the spec's tickets/ are not cut again (so re-typing /idea-loop:issue-session lands in
  * the right place), 「实现」 calls to-ticket → implement → pr-review as 「用 Skill 工具调 <插件>:<名字>」, and the
  * SKILL.md body stays under 5000 characters.
