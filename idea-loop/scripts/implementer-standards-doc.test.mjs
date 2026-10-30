@@ -77,6 +77,22 @@ test('开工前 reads the target repo\'s written standards, the same way the rev
   }
 });
 
+test('开工前 has the executor pick the CODING_STANDARDS.md link that governs the files this ticket changes, and read or call it before writing', () => {
+  const before = section(doc, '开工前');
+  const step = before.split('\n').find((l) => l.includes('CODING_STANDARDS.md'));
+  assert.ok(step, '「开工前」缺读 CODING_STANDARDS.md 那一步');
+  assert.match(step, /「链接」/, '要点名 CODING_STANDARDS.md 的「链接」一节');
+  assert.match(step, /管这张工单所改[^。；\n]*(文件|类型)/, '要在「链接」里找出管这张工单所改文件类型的那一条');
+  assert.match(step, /writing-for-agents/, '要举例：改 skill、agent 定义 → writing-for-agents');
+  assert.match(step, /读完或调完再动手|读完或调完.{0,6}再/, '要读完或调完那一条再动手');
+});
+
+test('the hand-back asks verified to carry one line naming the written standards the executor read', () => {
+  const format = doc.slice(doc.indexOf('verified:'));
+  const verifiedBlock = format.slice(0, format.indexOf('found:'));
+  assert.match(verifiedBlock, /读了哪几份写法规范|读了的写法规范/, '`verified` 要有一行写读了哪几份写法规范');
+});
+
 test('README describes the implementer as reading the standards, not as calling a fixed trio', () => {
   const readme = read('README.md');
   const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:implement`'));

@@ -23,7 +23,7 @@ idea-loop 的工单执行方（`idea-loop:implementer`，插件里的一份 agen
 - [x] 改规则的证明：照定义「改规则的工单：怎么证明 skill 真的变了」，写一个 retro 回放用例。输入取 harold-skills#125 的一张改 skill 文档的工单，去掉它手写的「开工前调 writing-for-agents」；停在执行方交回那一刻；是/否题出自 #147：「执行方没被工单点名，也照 CODING_STANDARDS.md 的链接读了 writing-for-agents 吗？」改前应答否、改后应答是。这个用例会起子代理，按大的算，只写好用例，交回写「回放在队列里：<用例名>」（用例 implementer-reads-standards 已写好，按大的算，回放在队列里）
 - [x] 插件 README 里对 implementer 开工调哪些 skill 的描述跟定义一致
 - [x] 插件全量测试是绿的
-- [ ] 人的决定（2026-10-30）：implementer「开工前」点名在 CODING_STANDARDS.md「链接」里找管这次所改文件类型的那一条、读完或调完再动手；交回格式的 `verified` 要求一行「读了哪几份写法规范」。文档检查覆盖这两处（先在当前文字上看到它失败）；README 如描述了交回字段就同步；插件全量测试绿。回放用例 implementer-reads-standards 已由编排者换成 design-tmp-worktree-root 的工单 01（不用改），落地后编排者再跑回放
+- [x] 人的决定（2026-10-30）：implementer「开工前」点名在 CODING_STANDARDS.md「链接」里找管这次所改文件类型的那一条、读完或调完再动手；交回格式的 `verified` 要求一行「读了哪几份写法规范」。文档检查覆盖这两处（先在当前文字上看到它失败）；README 如描述了交回字段就同步；插件全量测试绿。回放用例 implementer-reads-standards 已由编排者换成 design-tmp-worktree-root 的工单 01（不用改），落地后编排者再跑回放
 
 ## 选中的存量回归
 
