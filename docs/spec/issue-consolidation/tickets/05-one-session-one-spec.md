@@ -19,12 +19,12 @@
 
 ## 验收标准
 
-- [ ] issue-session 写明：整组认领；一组调一次 issue-verify、一份 spec；实现在本会话里做（已经切过工单就不再切、Skill 工具调 to-ticket / implement / pr-review）；没有子会话简报、没有两种合并去向、没有集成 review；规则回放结果发进本会话
-- [ ] issue-verify 写明在根的会话里对一组调一次、一份 spec 覆盖全部子 issue、不重复认领
-- [ ] pr-review 合并步骤说明里没有实现子会话和「通知根的会话」
-- [ ] issue-dispatch 不再提实现会话；README 相关行（issue-session、issue-verify、issue-dispatch、pr-review）与合并缺口段一致，流程总览「每段经自己的 PR 进主分支」没有例外
-- [ ] setup 的 issue 追踪模板写「一组一个会话」
-- [ ] 守结构的文字检查改成守新结构并通过；issue-session 现有的「已经切过工单就不再切」「Skill 工具调」检查照过；改过的 SKILL.md 主体都在 5000 字以内；全量测试通过
+- [x] issue-session 写明：整组认领；一组调一次 issue-verify、一份 spec；实现在本会话里做（已经切过工单就不再切、Skill 工具调 to-ticket / implement / pr-review）；没有子会话简报、没有两种合并去向、没有集成 review；规则回放结果发进本会话
+- [x] issue-verify 写明在根的会话里对一组调一次、一份 spec 覆盖全部子 issue、不重复认领
+- [x] pr-review 合并步骤说明里没有实现子会话和「通知根的会话」
+- [x] issue-dispatch 不再提实现会话；README 相关行（issue-session、issue-verify、issue-dispatch、pr-review）与合并缺口段一致，流程总览「每段经自己的 PR 进主分支」没有例外
+- [x] setup 的 issue 追踪模板写「一组一个会话」
+- [x] 守结构的文字检查改成守新结构并通过；issue-session 现有的「已经切过工单就不再切」「Skill 工具调」检查照过；改过的 SKILL.md 主体都在 5000 字以内；全量测试通过
 
 ## 选中的存量回归
 

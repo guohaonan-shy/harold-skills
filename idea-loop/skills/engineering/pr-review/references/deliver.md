@@ -10,7 +10,7 @@
 
 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个只改 `docs/` 的提交（`docs(spec): <spec-slug> 完成`），推送到 PR 分支。
 
-它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；在实现子会话里的，不翻 issue 状态（不跑 `issues set` / `advance`），合并后给根的会话发一条会话间消息（PR 号、spec slug），由根的会话换阶段；都不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
+它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
 
 **这个提交要在交报告之前推**：只改 `docs/` 的提交，对 pull_request 的 `paths` 按整个 PR 的 diff 判，也会让整条 PR 的 CI 重跑；放到人说合并之后推，就是让人再等一轮 CI。推上去之后等这次推送触发的检查全绿（`gh pr checks <PR 号> --watch`；这个 PR 上没有检查就不等）。CI 红了或卡住，不交报告：查原因，是这次改动引入的，按 `../SKILL.md` 的「回工单」处理（先照下面第 5 点恢复工单）；与这次无关的，开 issue，在报告里写明。
 
