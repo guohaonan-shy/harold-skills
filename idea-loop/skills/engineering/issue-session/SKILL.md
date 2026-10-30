@@ -46,7 +46,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
    /compact 下一步：在这个 issue 会话里调 idea-loop:implement <slug>。保留：issue #<号>（及同一份 spec 覆盖的其它号）、spec docs/spec/<slug>/、工单已切好在它的 tickets/ 下、当前分支 impl/<slug>、worktree <绝对路径>；本会话跑的是 idea-loop:issue-session，实现 PR 合并后去它的「换阶段」；还没写进 spec 或工单的人的决定，原话逐条保留。丢掉：审核、grill、设计阶段的讨论过程，复现和查询的输出，工具调用的原始记录。
    ```
 
-3. **做**：人说「继续」后，调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后接 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
+3. **做**：人说「继续」后，用 Skill 工具调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
 
 只在这里压缩一次：换去设计、实现合并后关闭、pr-review 开始前都不压缩。
 

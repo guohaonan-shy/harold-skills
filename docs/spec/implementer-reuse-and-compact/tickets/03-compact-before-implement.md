@@ -30,7 +30,7 @@ issue 会话（`idea-loop:issue-session`）现在把审核、grill、写 spec、
 - [x] issue-session 的 SKILL.md 主体仍在 5000 字以内（按字符数，去掉 frontmatter）
 - [x] 插件全量测试是绿的
 - [x] 人的决定（2026-10-29）：to-ticket 的「落盘」写明人点头、工单全部落盘、spec 翻成「实现中」之后，把工单和 spec 的改动提交进当前分支（执行方的 worktree 从这条分支切出，不提交就读不到）；issue-session「实现」第 1 步不再自己写提交，只调 to-ticket。文档检查覆盖这两处（先在当前文字上看到它失败）；README 里 to-ticket 的描述如提到落盘就同步；插件全量测试是绿的
-- [ ] review 第 1 轮 C2（2026-10-30）：issue-session「实现」的「做」那一步，开始实现和接 review 两处都写成「用 Skill 工具调 `<插件>:<名字>`」（规则原文同上：「要 agent 当场用上另一个 skill：写『用 Skill 工具调 <插件>:<名字>』」）；照抄进 issue-session 的压缩指令模板原文不动
+- [x] review 第 1 轮 C2（2026-10-30）：issue-session「实现」的「做」那一步，开始实现和接 review 两处都写成「用 Skill 工具调 `<插件>:<名字>`」（规则原文同上：「要 agent 当场用上另一个 skill：写『用 Skill 工具调 <插件>:<名字>』」）；照抄进 issue-session 的压缩指令模板原文不动
 
 ## 选中的存量回归
 
