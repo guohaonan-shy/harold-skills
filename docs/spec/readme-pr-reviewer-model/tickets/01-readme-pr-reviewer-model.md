@@ -12,7 +12,7 @@ idea-loop 插件的 README 有一棵目录树，`agents/` 下每个 agent 一行
 - [x] README 目录树里 pr-reviewer 那一行写「`opus` alias, effort high」，原来的「`sonnet` alias, effort xhigh」不再出现在这一行
 - [x] 这一行除模型别名和 effort 之外的文字与改前一字不差
 - [x] 对 `agents/` 下全部定义逐个取 `model` / `effort`，跟 README 目录树里对应行比，全部一致
-- [x] 这次提交只改了 idea-loop 的 README 一个文件
+- [x] 这次提交里产品内容的改动只有 idea-loop 的 README 一个文件（勾好的工单随同提交不算）
 
 ## 选中的存量回归
 无（仓库没有覆盖 README 的测试）
