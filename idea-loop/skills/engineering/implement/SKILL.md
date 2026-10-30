@@ -82,7 +82,9 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
    - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：PR 开出来后，把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。停下汇报里写明哪些用例在队列、几点以后有结果。
 2. 照 `idea-loop:pr` 的「停下汇报」写：handled 的每一条进「已按规则处理」，新落地工单的人验素材进交付验收，pending 的每一条写成决定题。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md pause`，追加成新条目，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。
-4. 照 `idea-loop:pr` 的「review loop」在会话里按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。
+4. **先看有没有要人的东西**：pending 不空（有等决定的事），或这次新落地工单的 `human_verify` 有素材（有没勾的人验项）。
+   - **有**：照 `idea-loop:pr` 的「review loop」在会话里按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。停下等人，见下面「人回复后」。
+   - **都没有**：不停，不等回复。第 2 步写进文件的条目就是留痕：已按规则处理照样列（人想推翻哪条，之后随时说，照「人回复后」的推翻处理），交付验收只写一行「无需人看」，条目末尾直接记一节「做了什么」（逐点：这次落地了什么、按规则处理了什么，带提交链接），不写「你的批示」。会话里只说一句落地了几张、已按规则处理几件，不发推送通知，然后往下走下面「全部落地」那一步（有排队中的回放时，那一步自己会让 PR 留在 draft）。依据：`idea-loop:decision-rules` 的「不自动的」只列了人验素材和决定题，没有「放行一份无事的汇报」；`review-loop.mjs check` 对这样的条目，记了「做了什么」就算处理完。
 
 **人回复后**：原话逐字记进那个条目的「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
