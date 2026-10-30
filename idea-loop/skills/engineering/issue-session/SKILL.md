@@ -47,9 +47,12 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 不管是根还是单个 issue，都**按 spec 开子会话**（`start_session`），一份 spec 一个，并行做：
 
 - 参数：`context: fresh`，`use_worktree: true`，`source_branch` 是最新的主分支；`initiation` 人已说开始实现的用 `user_asked`，否则用 `own_initiative`（出卡片，人点了才开）。**子会话的标题不用「<仓库名>#<号>」格式**（如「实现 <spec-slug>」）：调度靠这个格式数占位的会话，子会话不占位。
-- 简报（`prompt` 与 `background`）写清四件事：spec 路径；PR 合到哪（下面）；issue 的状态归根的会话翻，子会话不跑 `issues set` / `advance`，合并后给根的会话发一条会话间消息（PR 号、spec slug）；下面这段话和「规则回放的结果」的处理。
+- 简报（`prompt` 与 `background`）写清四件事：spec 路径；PR 合到哪（下面）；issue 的状态归根的会话翻，子会话不跑 `issues set` / `advance`，合并后给根的会话发一条会话间消息（PR 号、spec slug）；下面这两步和「规则回放的结果」的处理。
 
-> 用 Skill 工具调 `idea-loop:to-ticket` 切工单，再调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后接 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并。
+子会话照这两步做（原样写进简报）：
+
+1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
+2. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并。
 
 子会话自己切工单、实现、开 PR、跑它那个 PR 的 review，人在子会话里读审核报告、追问、说合并。根的会话不替它做。
 
