@@ -28,6 +28,8 @@ idea-loop 的调度（`issue-dispatch`）和 issue 会话（`issue-session`）�
 
 - 写明在根的会话里会被逐个子 issue 调起：每次只处理一个子 issue、交回它那份 spec 的 slug；认领已由会话整组做过，不重复认领。
 
+> 人的决定（2026-10-30）：「第一个问题按照推荐进行处理」——即：pr-review 合并步骤说明里「合并统一在 issue 会话里走」「由 issue 会话的换阶段跑 advance」两句，改成合并也可以在实现子会话里走；子会话合并后不翻 issue 状态（不跑 `issues set` / `advance`），发消息给根的会话，由根的会话换阶段。
+
 ## 验收标准
 
 - [x] issue-dispatch 写明一个根一张卡片、prompt 带子 issue 号、子 issue 算在根的会话名下不报「没有会话」
@@ -36,6 +38,7 @@ idea-loop 的调度（`issue-dispatch`）和 issue 会话（`issue-session`）�
 - [x] issue-verify 写明在根的会话里被逐个调起、不重复认领
 - [x] 三份 SKILL.md 主体都在 5000 字以内；description 只做路由
 - [x] 文中用到的脚本命令（`group`、对根号 `set`）与 01 落地的行为一致
+- [ ] 人的决定（2026-10-30）：pr-review 的合并步骤说明写明实现子会话也可合并、合并后不翻 issue 状态而是通知根的会话；与 issue-session 里子会话简报的写法一致
 
 ## 选中的存量回归
 
