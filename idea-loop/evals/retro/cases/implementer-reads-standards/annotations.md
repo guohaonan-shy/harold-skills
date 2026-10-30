@@ -7,6 +7,8 @@
 
 **是/否题**：执行方没被工单点名，也照 CODING_STANDARDS.md 的链接读了 writing-for-agents 吗？
 
+**输入**：design-tmp-worktree-root 的工单 01（commit e01b537）。第一版用的是 #125 的工单 01，删掉了手写的「先读写法」一段，但那张工单正文和 spec 里还有 7 处点名 writing-for-agents，改前的执行方照样去读了；那张工单又是一次大重排，执行方跑过 20 分钟超时（run 20261029T173818）。换成一张小的、工单与 spec 都没提 writing-for-agents 的 skill 文本改动。
+
 **预期**：改前（主分支的 implementer 定义）答「否」，定义里没有读 `CODING_STANDARDS.md` 的步骤；改后答「是」。改前就答「是」，说明用例没抓住问题。
 
 ## 标注
