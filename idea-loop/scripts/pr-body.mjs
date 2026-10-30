@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 /**
- * PR description, section by section — four fixed sections, nothing about review.
+ * PR description = the review report, section by section.
  *
  * The reader is the person who decides the merge, opening the PR with no context: the work was
- * delegated, and they may only half remember the spec. So the description reads top-down from
- * "what is this" to "what do I have to do", and everything that is only for looking things up sits
- * folded at the bottom. Review findings never go here: they live in the PR's review loop (the
- * session and its local file, review-loop.mjs), archived to the PR as comments when it merges. Sections live between hidden markers, always appear in this order whatever order
- * they were written in, and each carries a fixed heading the script writes itself:
+ * delegated, and they may only half remember the spec. The description is the report written for
+ * that reader, one document start to finish: what the problem was, how it was fixed, how that was
+ * verified, what else got filed, what is left for them. Everything that is only for looking things up
+ * sits folded at the bottom. Round-by-round review reports live in the PR's review loop (the session
+ * and its local file, review-loop.mjs), archived to the PR as comments when it merges; their
+ * conclusion is folded into the report. Sections live between hidden markers, always appear in this
+ * order whatever order they were written in, and each carries a fixed heading the script writes itself:
  *
- *   summary    一句话        who can now do what, or what got fixed
- *   changes    改了什么      one block per page (end to end) or per backend flow: before → after shown,
- *                            the backend flow change, and how it was verified, one behaviour per line
- *                            (what was left unverified included); no decisions the implementer made
- *   your-todo  要你做的事    what to review, what to decide, what to prepare before going live
- *   reference  参考          folded: change map by module, spec & tickets, ledger, cleanup
+ *   summary       一句话          who can now do what, or what got fixed
+ *   problem       问题            what was wrong (reproduced behaviour + the numbers), for a reader who never followed it
+ *   changes       怎么修          how it was fixed: the rules applied and their grounds, the slicing (each ticket's
+ *                                 title, what blocks it, its end-to-end behaviour); before → after shown for pages
+ *   verification  怎么验证        one behaviour per line: how checked and the result, what was left unverified
+ *                                 and why, what the review rounds concluded
+ *   issues        顺带开的 issue   pre-existing problems found on the way and filed, one line each
+ *   your-todo     要你做的事      what to review, what to decide, what to prepare before going live
+ *   reference     参考            folded: change map by module, spec & tickets, ledger, cleanup
  *
  * Everything outside `reference` is for a person, not for whoever fixes the code: a section carrying
  * a code-level reference (backticks, file:line, a path, a snake_case name, a commit hash, a section
@@ -41,12 +46,18 @@ import { codeRefs } from './review-check.mjs';
 
 export const TITLES = {
   summary: '一句话',
-  changes: '改了什么',
+  problem: '问题',
+  changes: '怎么修',
+  verification: '怎么验证',
+  issues: '顺带开的 issue',
   'your-todo': '要你做的事',
   reference: '参考',
 };
+// Headings a section used to carry: a description written before the report shape still has them
+// inside the markers, and they must not survive next to the new heading.
+const OLD_TITLES = { changes: ['改了什么'] };
 export const SECTIONS = Object.keys(TITLES);
-const LEGACY = ['review', 'links', 'before-merge', 'after-merge', 'before-after', 'decisions', 'verification'];
+const LEGACY = ['review', 'links', 'before-merge', 'after-merge', 'before-after', 'decisions'];
 const LOOKUP_ONLY = ['reference'];
 
 /** Code-level references in a section a person reads; link and image addresses are not text. */
@@ -79,7 +90,10 @@ function parse(body = '', names = SECTIONS) {
 /** Section content without the heading the script adds; a writer that included it anyway is forgiven. */
 const strip = (name, text) => {
   const t = text.trim();
-  return (t.startsWith(heading(name)) ? t.slice(heading(name).length) : t).trim();
+  for (const h of [heading(name), ...(OLD_TITLES[name] ?? []).map((title) => `## ${title}`)]) {
+    if (t.startsWith(h)) return t.slice(h.length).trim();
+  }
+  return t;
 };
 
 export function getSection(body, name) {
@@ -101,8 +115,11 @@ export function setSection(body, name, content) {
   }
   const sections = parse(body);
   let rest = body ?? '';
-  for (const n of [...Object.keys(sections), ...Object.keys(parse(body, LEGACY))]) {
-    rest = rest.slice(0, rest.indexOf(open(n))) + rest.slice(rest.indexOf(close(n)) + close(n).length);
+  for (const n of new Set([...Object.keys(sections), ...Object.keys(parse(body, LEGACY))])) {
+    const start = rest.indexOf(open(n));
+    const end = rest.indexOf(close(n));
+    if (start === -1 || end < start) continue;
+    rest = rest.slice(0, start) + rest.slice(end + close(n).length);
   }
   rest = rest.trim();
   for (const n of Object.keys(sections)) sections[n] = strip(n, sections[n]);

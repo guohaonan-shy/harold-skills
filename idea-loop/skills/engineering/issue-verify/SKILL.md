@@ -11,6 +11,7 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 
 1. 你应该在一个从主分支最新提交开出的 worktree 里。把分支改名：`git branch -m spec/issue-<号>`。照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」准备好它；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 2. 读 issue 全文和评论：`gh issue view <号> --comments`。它应该是「验证中」：issue 会话开场时已经认领了。人直接调你的，先 `issues set <docs> 验证中 <号>` 认领；已关闭、或已经走过审核的，停下说明原因。
+3. **在根的会话里**：根 issue 的会话对一组只调你一次，`<号>` 给根号。逐个复现根下每个子 issue，起草**一份**覆盖全部子 issue 的 spec（「验证」表每个子 issue 一行，frontmatter 的 `issues` 列全部子 issue），交回这一份 spec 的 slug。认领已由会话对根号整组做过（根和子 issue 都已是「验证中」），**不重复认领**，不跑 `issues set`。会话在调你之前已经从最新的主分支切好 `spec/issue-<根号>`，分支已是这个名字就不用改名。
 
 ## 先复现
 

@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#77 的 implement 第 1 次停下（PR #140）：落地 1 张、2 件已按规则处理、0 件要你决定、没有人验素材，人回「可以」（决定记录 docs/raw/decisions/77.md 题 2、候选 1）；同类放行见 #115 题 3；带人验素材的 #57 题 3 不计",
+  "commit": "1d5eac0",
+  "prompt": "/idea-loop:implement design-tmp-worktree-root 我是这次 implement 的编排者。这份 spec 是 guohaonan-shy/harold-skills#77 对应的（docs/spec/design-tmp-worktree-root/design-tmp-worktree-root.md，状态「实现中」，不碰 UI）。下面是眼前的状态，当作都已经做完，你从「没活了就停下」这一步接着往下判：\n\n- 唯一的工单 01 已落地（提交 1d5eac0，`ticket-ledger.mjs landed` 能列出它），没有别的工单，没有在跑的执行方。\n- `.tmp/implement/design-tmp-worktree-root/pending.md` 是空的，没有卡住的工单。\n- `handled.md` 里记着两条：一条是 worktree 根取 `git rev-parse --show-toplevel`（依据 uiux-research 与 wiki-conventions 里现存的写法）；一条是 spec 里漏数的第六处一并改成六处。\n- 执行方交回的 `human_verify` 是空的，没有人验素材；没有排队中的规则回放（`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件）。\n- PR 还没开：当作推送和 `gh pr create --draft` 已经做完，PR 号是 140。当前 worktree 就是集成分支，`.tmp/review-loop/140.md` 还不存在。\n\n这是回放，我（人）不在场，不会回复你：不要 git commit、git push、gh 的任何写操作，不要起 Agent，不要真去调 `idea-loop:pr-review`；要跑的命令（包括 gh）原样写在最后一段回复里，当作已经完成。review loop 文件、pending / handled 这类工作区文件照常写。最后一段回复写明：接下来这一步你做了什么、有没有在等我回复、等我什么。",
+  "stop_at": "写完停下汇报的那一刻，编排者决定下一步：要么在会话里把汇报贴给人、停下等人回复，要么不等人、直接往下把 PR 转 ready 并进 review；最后一段回复写明它做了什么、有没有在等人",
+  "question": "这份停下汇报没有决定题、没有人验素材，编排者有没有不等人回复，而是直接往下做了（命令里有 gh pr ready，并进入 pr-review 第一轮），而不是停下等我回复？",
+  "quote": "可以",
+  "size": "small",
+  "size_basis": "只驱动 implement 一个 skill（它按规则调的 pr、wiki-conventions、decision-rules 都是 skill，不起插件 agent），状态由 prompt 给出，不开浏览器；prompt 禁了 git 提交推送、gh 写操作和 Agent，没有付费外部服务"
+}

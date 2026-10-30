@@ -2,7 +2,7 @@
 
 这个仓库的需求以 GitHub issue 的形式进来。所有操作用 `gh`，在仓库的 checkout 里跑，仓库由 `git remote` 推出来。
 
-issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个待验证的 issue 出一张会话卡片，人点开后，一个 issue 一个会话，从验证、设计一路走到实现合并。要做的事写在 spec 里（`docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
+issue 是需求的入口，也是工作的队列：idea-loop 的调度给每组待验证的 issue（一个根 issue，或一个没被整合的 issue）出一张会话卡片，人点开后，一组（一个根 issue 加它的子 issue，或一个没被整合的 issue）一个会话，从验证、设计一路走到实现合并。要做的事写在 spec 里（`docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
 
 ## 操作
 

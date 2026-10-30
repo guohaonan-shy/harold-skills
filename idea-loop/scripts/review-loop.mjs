@@ -22,9 +22,13 @@
  *   ### 你的批示（<time>）         ← Harold's words, verbatim
  *   ### 做了什么                   ← what was done, with commit links
  *
- * An entry is settled once every 你的批示 has a 做了什么 after it; a review round that asks the human
- * nothing (every finding handled by rule, no 要你决定 in it) is settled by its 做了什么 alone, so the
- * orchestrator can tell "everything is handled" and start the next round (pr-review, section 下一轮：什么时候自己起). Overturning
+ * An entry is settled once every 你的批示 has a 做了什么 after it. An entry that asks the human nothing
+ * has no ruling to wait for and is settled by its 做了什么 alone: a review round with no 要你决定 in it
+ * (every finding handled by rule), and a stop report with no 需要你决定 section. Unticked boxes under
+ * 交付验收 do not hold a stop report: the human checks them in the final review report (pr-review,
+ * 交审核报告), not mid-implementation. So the orchestrator can tell "everything is handled" and carry on
+ * without waiting for a nod (implement's stops; pr-review, section 一轮之后往哪走). A stop report that
+ * does ask waits for the human's ruling as before. Overturning
  * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
  *
@@ -76,12 +80,12 @@ export function parseLoop(text = '') {
     const body = lines.join('\n').trim();
     const rulings = (body.match(/^### 你的批示/gm) ?? []).length;
     const acted = (s) => /^### 做了什么/m.test(s);
-    // A review round whose findings were all settled by rule (decision-rules.md) never asks the human
-    // anything, so there is no ruling to wait for: it is settled once it says what was done. A round
-    // that still carries a 要你决定 needs the human's ruling as before; a stop report always does.
-    // A replay entry is the nightly runner's record of a rule-change replay: all passed → it says so under
-    // 做了什么 and is settled; something failed → it carries a 要你决定 until the human has ruled.
-    const askedNothing = (kind === 'review' || kind === 'replay') && rulings === 0 && !/\*\*要你决定\*\*/.test(body);
+    // An entry that asks the human nothing has no ruling to wait for: it is settled once it says what was
+    // done. A review round asks when it carries a 要你决定; a stop report asks when it carries a 需要你决定
+    // section (its unticked 交付验收 items wait for the review report instead); a replay asks when something
+    // failed (it carries a 要你决定 until the human has ruled). A report that asks something needs the human's ruling.
+    const asksHuman = /\*\*要你决定\*\*/.test(body) || (kind === 'pause' && /^#{2,4}\s*需要你决定/m.test(body));
+    const askedNothing = rulings === 0 && !asksHuman;
     const settled = rulings > 0 ? acted(body.slice(body.lastIndexOf('### 你的批示'))) : askedNothing && acted(body);
     return { kind, round, body, rulings, settled };
   });

@@ -38,11 +38,19 @@ test('design-change-sync: defines which version is final', () => {
   assert.match(sync, /v<终>[^\n]*(通过|评委)/);
 });
 
+test('design-change-sync: the ticket cell it has the caller append points at the final version', () => {
+  const line = sync.split('\n').find((l) => l.includes('设计变更（<日期>）'));
+  assert.ok(line, 'design-change-sync has no appended-cell line');
+  assert.doesNotMatch(line, /v<N\+\d+>/, 'the cell pins a specific attempt');
+  assert.match(line, /canvas\/v<终>\.html/);
+});
+
+// implement and pr-review keep one sentence each and point at the single source for the cell text.
 for (const [name, doc] of [['implement', implement], ['pr-review', prReview]]) {
-  test(`${name}: the appended ticket cell points at the final version`, () => {
-    const line = doc.split('\n').find((l) => l.includes('设计变更（<日期>）'));
-    assert.ok(line, `${name} has no appended-cell line`);
-    assert.doesNotMatch(line, /v<N\+\d+>/, 'the cell pins a specific attempt');
-    assert.match(line, /canvas\/v<终>\.html/);
+  test(`${name}: the design-change section points at design-change-sync and does not restate the cell`, () => {
+    const text = section(doc, '设计变更');
+    assert.match(text, /idea-loop:design-change-sync/, `${name} does not call design-change-sync`);
+    assert.doesNotMatch(text, /v<N\+\d+>/, 'the section pins a specific attempt');
+    assert.doesNotMatch(text, /canvas\/v<终>\.html/, 'the cell text lives only in design-change-sync');
   });
 }
