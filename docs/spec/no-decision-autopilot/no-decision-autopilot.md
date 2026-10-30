@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, issue-session, to-ticket, implement, pr-review]
 summary: 实现阶段没有决定题就不停：切票直接落盘、停下汇报无决定题即放行、review 无事不等；只在生产操作和合并前停，交一份写给不知情者的审核报告
 related: ["[[2026-10-30-issue-consolidation-grill]]", "[[issue-consolidation]]"]
