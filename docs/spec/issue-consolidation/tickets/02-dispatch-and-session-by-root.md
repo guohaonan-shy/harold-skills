@@ -30,12 +30,12 @@ idea-loop 的调度（`issue-dispatch`）和 issue 会话（`issue-session`）�
 
 ## 验收标准
 
-- [ ] issue-dispatch 写明一个根一张卡片、prompt 带子 issue 号、子 issue 算在根的会话名下不报「没有会话」
-- [ ] issue-session 写明开场整组认领（对根号翻验证中）、审核阶段每个子 issue 一次 issue-verify、实现阶段一律按 spec 开子会话且子会话标题不用「<仓库名>#<号>」、PR 合进集成分支或主分支的两种情形、最后一个子 issue 关闭时根关闭
-- [ ] issue-session 的停点规则（「要人拍板的就停下等人」等）原样保留，没有被改写
-- [ ] issue-verify 写明在根的会话里被逐个调起、不重复认领
-- [ ] 三份 SKILL.md 主体都在 5000 字以内；description 只做路由
-- [ ] 文中用到的脚本命令（`group`、对根号 `set`）与 01 落地的行为一致
+- [x] issue-dispatch 写明一个根一张卡片、prompt 带子 issue 号、子 issue 算在根的会话名下不报「没有会话」
+- [x] issue-session 写明开场整组认领（对根号翻验证中）、审核阶段每个子 issue 一次 issue-verify、实现阶段一律按 spec 开子会话且子会话标题不用「<仓库名>#<号>」、PR 合进集成分支或主分支的两种情形、最后一个子 issue 关闭时根关闭
+- [x] issue-session 的停点规则（「要人拍板的就停下等人」等）原样保留，没有被改写
+- [x] issue-verify 写明在根的会话里被逐个调起、不重复认领
+- [x] 三份 SKILL.md 主体都在 5000 字以内；description 只做路由
+- [x] 文中用到的脚本命令（`group`、对根号 `set`）与 01 落地的行为一致
 
 ## 选中的存量回归
 
