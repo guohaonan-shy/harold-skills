@@ -18,7 +18,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 ## 前提
 
-- PR 是 **open**。还是 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。例外：版本根的集成 PR（集成分支 → 主分支）一直是草稿，照 [`references/integration-review.md`](references/integration-review.md) 跑，那里跟这份不一样的地方都写了。
+- PR 是 **open**。还是 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - 回放排队的事 implement 进 review 前已核过。之后 `review-loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
 - 当前 worktree 是这个 PR 的集成分支，工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于 PR 的 head。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前把它说的缺什么告诉人。

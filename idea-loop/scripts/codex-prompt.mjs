@@ -10,11 +10,8 @@
  * decision-rules are filled in here, from the plugin's own layout. A placeholder left unfilled, or a key
  * the template does not use, is refused, so a prompt never goes out half-written.
  *
- * A third template, `integration`, is the Spec axis of a release root's integration PR: it takes several
- * specs (`specs=`) and asks only about clashes between them.
- *
  * Usage:
- *   node codex-prompt.mjs <spec|standards|integration> <out-file> key=value...
+ *   node codex-prompt.mjs <spec|standards> <out-file> key=value...
  * Exit: 0 = written, 1 = refused (the reason on stderr).
  */
 
@@ -45,7 +42,7 @@ export function render(template, values) {
 
 function main() {
   const [axis, out, ...pairs] = process.argv.slice(2);
-  if (!['spec', 'standards', 'integration'].includes(axis) || !out) throw new Error('usage: codex-prompt.mjs <spec|standards|integration> <out-file> key=value...');
+  if (!['spec', 'standards'].includes(axis) || !out) throw new Error('usage: codex-prompt.mjs <spec|standards> <out-file> key=value...');
   const values = { ...BUILTIN };
   for (const p of pairs) {
     const i = p.indexOf('=');

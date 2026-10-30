@@ -19,8 +19,6 @@ effort: high
 - Codex companion 的路径
 - UI 走查的发现文件 `ui-findings.json` 的路径（可选；没给就是这一轮没有 UI 走查）。**给了路径不等于文件已经在**：UI 走查（`idea-loop:ui-reviewer`）跟你同时起，文件写好前不存在；这一轮的工作目录里出现 `ui-incomplete.md`，是编排者写明它交回了未完成
 
-**集成 PR**（编排者给的是几份 spec 的路径、没有工单目录，PR 是集成分支 → 主分支）这一轮只查几份 spec 合在一起的冲突，跟上面不一样的做法读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/integration-review.md`：用集成模板起一个 Codex 进程，不起 Standards 进程。
-
 这一轮的工作目录是 `.tmp/pr-review/<PR 号>/round-<N>/`，配图放 `.tmp/pr-review/<PR 号>/evidence/`。
 
 ## 开跑前
