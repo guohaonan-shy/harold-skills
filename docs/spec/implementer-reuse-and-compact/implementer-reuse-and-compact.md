@@ -2,9 +2,9 @@
 type: spec
 status: 实现中
 tags: [idea-loop, implement, implementer, issue-session, token]
-summary: implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；进 implement 前压缩上下文
+summary: implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；to-ticket 落盘后提交工单（进实现前压缩已移除）
 related: ["[[pr-review-report-followups]]", "[[design-archive-skill-length]]"]
-issues: [147, 149, 153]
+issues: [147, 149]
 ---
 
 # implementer：按工单挑 skill、读写法规范、复用原执行方；进实现前压缩上下文
@@ -76,7 +76,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 
 - **执行方开工**：读目标仓库的 `CODING_STANDARDS.md` 和它链接的文档（跟 review 读的同一套）；看工单内容自己挑要用的 skill，不再有固定清单；spec 全文可读，这次做什么以工单为准。
 - **工单卡住、人做完决定**：只要原执行方还联系得上、它的 worktree 还在，编排者用 SendMessage 让它带着原来的上下文接着做；联系不上再照现在的做法新起一个，从半成品分支接上。
-- **issue-session 进实现阶段**：切完工单、开始实现之前，先停下，打出一条填好的 `/compact` 指令让人复制执行，人说「继续」之后才调 implement。
+- **issue-session 进实现阶段**：切完工单、开始实现之前，先停下，打出一条填好的 `/compact` 指令让人复制执行，人说「继续」之后才调 implement。**已移除（2026-10-30），依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」。**
 
 同一行为的其他入口：
 
@@ -97,7 +97,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 2. 执行方能读 spec 里工单要用的部分（如「方案」里的内容 brief），编排者不用往工单里补「可以读 X」。
 3. 执行方开工就读目标仓库的 `CODING_STANDARDS.md` 和它链接的文档；第 1 轮 review 里不再出现「实现时就能读到的规则没照着写」这一类问题。
 4. 工单卡住、人做完决定后，原执行方带着自己的上下文接着做；它联系不上时才新起一个。
-5. issue-session 切完工单、开始实现前一定先压缩上下文，implement 的编排者不再背着审核阶段的对话。
+5. ~~issue-session 切完工单、开始实现前一定先压缩上下文，implement 的编排者不再背着审核阶段的对话。~~ 已移除（2026-10-30），依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」。
 
 ## 实现决策
 
@@ -138,6 +138,8 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 
 ### 进实现前压缩上下文（#153）
 
+> **已移除（2026-10-30），依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」。** 这一节保留作由来。其中「to-ticket 落盘后把工单和 spec 提交进当前分支」（人 2026-10-29 的决定，见工单 03）跟压缩无关，保留。#153 按人的决定 drop（关成 not planned）。
+
 依据：人的原话：「进入实现之前一定要compact上下文」；位置按人后来的原话：「我倾向于切分工单之后，实现之前压缩」。
 
 - 位置：issue-session 的「实现」一节，`idea-loop:to-ticket` 切完工单（工单已提交）之后，调 `idea-loop:implement` 之前。从「审核」或「设计」进实现都这样。切工单要读 spec，留在压缩前做；implement 只读磁盘上的 spec 和工单，压缩后做。
@@ -163,7 +165,7 @@ implement 要用的东西都在磁盘上：spec、工单、review loop 文件。
 不涉及：没有服务端。改动只在编排顺序上：
 
 - 卡住的工单：编排者（implement）→ pending 记 agent id → 人回复 → 决定写进工单并提交 → SendMessage 叫回原执行方（失败就新起）→ 交回 → 核对、落地、回收。
-- 进实现：issue-session 换阶段（advance、移 section、切分支）→ to-ticket 切工单并提交 → 停下，通知人，打出填好的压缩指令 → 人复制执行 `/compact …`、说「继续」→ implement（人重敲 issue-session 时，已有工单，跳过切票）。
+- 进实现：issue-session 换阶段（advance、移 section、切分支）→ to-ticket 切工单并提交 → implement（压缩停点已移除（2026-10-30），依据见 harold-skills#165 的 spec issue-consolidation「实现一律放在子会话里」）（人重敲 issue-session 时，已有工单，跳过切票）。
 
 ### 前端内部
 
