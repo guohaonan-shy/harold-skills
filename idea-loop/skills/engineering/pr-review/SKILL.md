@@ -43,7 +43,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 | **修**、**恢复** | 回工单；不等落地，继续往下 | 追加那一格的提交；落地后补修复提交 | 同一工单再追加 `- [ ] review 第 <N> 轮 <编号>（推翻，<日期>）：<人要的样子>`，回工单；没落地的那格一并说清 |
 | **同步改** | spec、工单、说明文字跟已定做法对不上，直接改（spec 里交代由来的历史段落保留，标明后来改了） | 那个提交 | 提交改回去，或按人的意思重写 |
 | **接受并补记** | 代码不动，偏差补记进 spec 或工单（例外清单、验收标准、改过的路径） | 那个提交 | 同上 |
-| **开 issue**（「进 backlog」） | 照 `idea-loop:spec-status` 的「开一个待验证的 issue」 | issue 链接 | issue 上留说明并关掉（`--reason "not planned"`），人要别的就照做 |
+| **开 issue**（「进 backlog」） | 用 Skill 工具调 `idea-loop:spec-status`，看它的「开一个待验证的 issue」 | issue 链接 | issue 上留说明并关掉（`--reason "not planned"`），人要别的就照做 |
 | **不修**（人批示） | 记下，下一轮不再报，除非有新证据 | | |
 
 人批示里还有几种：

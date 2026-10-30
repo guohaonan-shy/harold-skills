@@ -16,7 +16,7 @@
 
 ## 3. 写审核报告
 
-用 `pr-body.mjs set` 写进 PR 描述（`idea-loop:pr` 的「PR 描述的节」；格式与每节怎么写在它的 `references/description.md`）：`problem`、`changes`、`verification`、`issues`、`your-todo` 各节，`summary` 核一遍。读者是没跟过这件事的人，一份讲完（问题 → 怎么修 → 怎么验证 → 顺带开的 issue → 要你做的事）：
+用 `pr-body.mjs set` 写进 PR 描述（用 Skill 工具调 `idea-loop:pr`，看它的「PR 描述的节」，节名、顺序、每节怎么写都照它）：`problem`、`changes`、`verification`、`issues`、`your-todo` 各节，`summary` 核一遍。读者是没跟过这件事的人，一份讲完（问题 → 怎么修 → 怎么验证 → 顺带开的 issue → 要你做的事）：
 
 - 素材：spec 的「问题」和「方案」，工单（标题、被谁挡着、端到端行为），review loop 文件里每次停下和每一轮的「已按规则处理」「做了什么」，`idea-loop:implement` 期间开的 issue。
 - review 的结论收进 `verification`（几轮、中途修了什么），照规则定的做法和依据收进 `changes`，不再另贴一份。
