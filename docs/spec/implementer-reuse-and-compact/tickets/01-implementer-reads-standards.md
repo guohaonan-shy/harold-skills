@@ -24,6 +24,7 @@ idea-loop 的工单执行方（`idea-loop:implementer`，插件里的一份 agen
 - [x] 插件 README 里对 implementer 开工调哪些 skill 的描述跟定义一致
 - [x] 插件全量测试是绿的
 - [x] 人的决定（2026-10-30）：implementer「开工前」点名在 CODING_STANDARDS.md「链接」里找管这次所改文件类型的那一条、读完或调完再动手；交回格式的 `verified` 要求一行「读了哪几份写法规范」。文档检查覆盖这两处（先在当前文字上看到它失败）；README 如描述了交回字段就同步；插件全量测试绿。回放用例 implementer-reads-standards 已由编排者换成 design-tmp-worktree-root 的工单 01（不用改），落地后编排者再跑回放
+- [ ] review 第 1 轮 C1（2026-10-30）：implementer 定义里「其余的 skill 看工单挑」那句的例子，要 agent 当场用上另一个 skill 的都写成「用 Skill 工具调 `<插件>:<名字>`」（writing-for-agents 的机制说明原文：「要 agent 当场用上另一个 skill：写『用 Skill 工具调 <插件>:<名字>』」）
 
 ## 选中的存量回归
 
