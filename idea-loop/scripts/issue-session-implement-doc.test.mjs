@@ -1,12 +1,12 @@
 /**
- * Tripwire — issue-session stops before implementation and asks the human to compact the context.
+ * Tripwire — issue-session 「实现」 has no compact stop; it cuts tickets (skipping when they exist) and calls implement.
  *
- * Spec implementer-reuse-and-compact, 「进实现前压缩上下文」. The behaviour lives in skill text, so these
- * checks pin the steps a reader has to be able to follow: in 「实现」 the session cuts the tickets
- * (to-ticket), then stops with a notification and a filled-in /compact instruction (next step / keep /
- * drop), waits for the human to say 「继续」, and only then calls implement; tickets that already exist
- * are not cut again (so re-typing /idea-loop:issue-session lands in the right place); the README's
- * issue-session row mentions the stop; and the SKILL.md body stays under 5000 characters.
+ * Spec implementer-reuse-and-compact, ticket 03. History: the ticket first added a stop between to-ticket and
+ * implement (PushNotification + a filled-in /compact instruction, wait for 「继续」); the human then decided to
+ * drop it (implementation runs in a child session, spec 「进实现前压缩上下文」 was dropped, #153). What stays:
+ * tickets already under the spec's tickets/ are not cut again (so re-typing /idea-loop:issue-session lands in
+ * the right place), 「实现」 calls to-ticket → implement → pr-review as 「用 Skill 工具调 <插件>:<名字>」, and the
+ * SKILL.md body stays under 5000 characters.
  *
  * Who commits the tickets: to-ticket's 「落盘」 does, after the human nods, the tickets are all written and
  * the spec is flipped to 实现中 (the executors' worktrees are cut from the current branch, so uncommitted
@@ -34,26 +34,14 @@ const skill = read('skills', 'engineering', 'issue-session', 'SKILL.md');
 const readme = read('README.md');
 const impl = section(skill, '实现');
 
-test('「实现」 stops between to-ticket and implement and asks the human to compact', () => {
+test('「实现」 has no compact stop: no /compact, no PushNotification, no wait for 「继续」', () => {
+  assert.ok(!/\/compact/.test(impl), '「实现」 must not hand the human a /compact instruction');
+  assert.ok(!/PushNotification/.test(impl), '「实现」 must not notify the human before implement');
+  assert.ok(!/继续/.test(impl), '「实现」 must not wait for the human to say 「继续」');
+  assert.ok(!/压缩/.test(skill), 'issue-session must not mention a compaction stop anywhere');
   const ticket = impl.indexOf('idea-loop:to-ticket');
-  const compact = impl.indexOf('/compact');
   const implement = impl.indexOf('idea-loop:implement');
-  assert.ok(ticket >= 0, '「实现」 no longer calls idea-loop:to-ticket');
-  assert.ok(compact >= 0, '「实现」 has no /compact instruction to hand the human');
-  assert.ok(implement >= 0, '「实现」 no longer calls idea-loop:implement');
-  assert.ok(ticket < compact && compact < implement, '「实现」 must go to-ticket → /compact stop → implement');
-  assert.match(impl, /PushNotification/, '「实现」 must notify the human with PushNotification before stopping');
-  assert.match(impl, /继续/, '「实现」 must ask the human to say 「继续」 after compacting');
-});
-
-test('the /compact template has the next step, what to keep and what to drop, with placeholders to fill', () => {
-  const tpl = impl.split('\n').map((l) => l.trim()).find((l) => l.startsWith('/compact'));
-  assert.ok(tpl, '「实现」 has no line starting with /compact (the template)');
-  for (const part of ['下一步', '保留', '丢掉']) assert.ok(tpl.includes(part), `template lacks 「${part}」`);
-  for (const ph of ['<号>', '<slug>', '<绝对路径>']) assert.ok(tpl.includes(ph), `template lacks the placeholder ${ph}`);
-  assert.ok(tpl.includes('idea-loop:implement <slug>'), 'template must name the next step: idea-loop:implement <slug>');
-  assert.ok(tpl.includes('换阶段'), 'template must keep the pointer to 「换阶段」 for after the PR merges');
-  assert.ok(tpl.includes('原话'), 'template must keep undecided human decisions verbatim');
+  assert.ok(ticket >= 0 && implement > ticket, '「实现」 must go to-ticket → implement');
 });
 
 test('tickets that already exist are not cut again', () => {
@@ -82,18 +70,19 @@ test('issue-session 「实现」 step 1 only calls to-ticket and does not commit
   assert.ok(!/提交/.test(step1), '「实现」 step 1 must not commit the tickets itself; to-ticket 「落盘」 does it');
 });
 
-test('「实现」 step 3 invokes implement and pr-review as 「用 Skill 工具调 <插件>:<名字>」', () => {
+test('「实现」 step 2 invokes implement and pr-review as 「用 Skill 工具调 <插件>:<名字>」', () => {
   // writing-for-agents: to make an agent use another skill on the spot, write 「用 Skill 工具调 <插件>:<名字>」.
-  const step3 = impl.split('\n').find((l) => /^3\.\s/.test(l.trim()));
-  assert.ok(step3, '「实现」 has no step 3 (the do step)');
-  assert.match(step3, /用 Skill 工具调 `idea-loop:implement`/, 'step 3 must start implement with 「用 Skill 工具调 `idea-loop:implement`」');
-  assert.match(step3, /用 Skill 工具调 `idea-loop:pr-review`/, 'step 3 must hand over to review with 「用 Skill 工具调 `idea-loop:pr-review`」');
+  const step3 = impl.split('\n').find((l) => /^2\.\s/.test(l.trim()));
+  assert.ok(step3, '「实现」 has no step 2 (the do step)');
+  assert.match(step3, /用 Skill 工具调 `idea-loop:implement`/, 'step 2 must start implement with 「用 Skill 工具调 `idea-loop:implement`」');
+  assert.match(step3, /用 Skill 工具调 `idea-loop:pr-review`/, 'step 2 must hand over to review with 「用 Skill 工具调 `idea-loop:pr-review`」');
 });
 
-test('the README row for issue-session mentions the compact stop', () => {
+test('the README row for issue-session does not mention a compact stop', () => {
   const row = readme.split('\n').find((l) => l.startsWith('| `idea-loop:issue-session`'));
   assert.ok(row, 'README has no issue-session row in the Skills table');
-  assert.ok(row.includes('/compact'), 'the issue-session row must mention the /compact stop before implementation');
+  assert.ok(!row.includes('/compact'), 'the issue-session row must not mention a /compact stop');
+  assert.match(row, /already cut are not cut again/, 'the row must keep saying tickets already cut are not cut again');
 });
 
 test('the README row for to-ticket mentions the commit', () => {
