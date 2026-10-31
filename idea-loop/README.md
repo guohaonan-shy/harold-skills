@@ -422,8 +422,8 @@ idea-loop/
     ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
     ├── github-app.mjs                # the bot's identity: GitHub App installation token, else the gh login
     ├── github-app.test.mjs           # config lookup, signed JWT, token exchange
-    ├── session-digest.mjs            # squeezes a session transcript to the human's utterances + the AI conclusion before each; locates the transcript file (retro)
-    ├── session-digest.test.mjs       # compaction markers, what is dropped, the conclusion rule, locating the file
+    ├── session-digest.mjs            # squeezes a session transcript to the human's utterances + the AI conclusion before each; locates this session's own transcript file (retro): by session id (`CLAUDE_CODE_SESSION_ID` / `--session`) across all project directories, else by a marker in the first human utterance; zero or several matches exit 2
+    ├── session-digest.test.mjs       # compaction markers, what is dropped, the conclusion rule, locating the file (by id, by the first human utterance's marker, exit 2 on zero or several)
     ├── review-loop.mjs               # the PR's local review loop (entries: pause / review / the nightly runner's replay): next round, unsettled entries, archive to PR comments at merge (figures uploaded)
     ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
     ├── spec-status.mjs               # the only writer of a spec's status — checks each step, re-indexes

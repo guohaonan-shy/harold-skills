@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, utimesSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, writeFileSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { digest, parseJsonl, pickSession, projectDirName, renderDigest } from './session-digest.mjs';
+import { digest, parseJsonl, pickSession, renderDigest } from './session-digest.mjs';
 
 // All samples are made up. The record shapes (type / subtype / isMeta / isCompactSummary / message.content blocks)
 // follow what Claude Code writes to ~/.claude/projects/<project>/<session>.jsonl.
@@ -97,33 +97,32 @@ test('rendered digest lists utterances numbered, with the AI conclusion quoted a
 
 // ---------- locating the file ----------
 
-const f = (path, mtimeMs, hasMarker) => ({ path, mtimeMs, hasMarker });
-
-test('with a marker, the newest file that holds it wins (a resumed session is a new file carrying the old history)', () => {
-  const r = pickSession([f('old', 1000, true), f('resumed', 5000, true), f('other', 9000, false)], true);
-  assert.deepEqual(r, { ok: true, path: 'resumed' });
+test('exactly one candidate is the answer, however many sessions exist elsewhere', () => {
+  assert.deepEqual(pickSession(['mine']), { ok: true, path: 'mine' });
 });
 
-test('with a marker nothing holds, there is no answer', () => {
-  assert.deepEqual(pickSession([f('a', 1, false)], true), { ok: false, reason: 'none', candidates: [] });
+test('no candidate: no answer', () => {
+  assert.deepEqual(pickSession([]), { ok: false, reason: 'none', candidates: [] });
 });
 
-test('without a marker, the newest file wins only if no other file was written around the same time', () => {
-  assert.deepEqual(pickSession([f('mine', 10_000_000, true), f('old', 1_000, true)], false), { ok: true, path: 'mine' });
-  const r = pickSession([f('mine', 10_000_000, true), f('parallel', 9_900_000, true)], false);
-  assert.equal(r.ok, false);
-  assert.equal(r.reason, 'ambiguous');
-  assert.deepEqual(r.candidates, ['mine', 'parallel']);
-});
-
-test('project directory name is the working directory with every non-alphanumeric turned into a dash', () => {
-  assert.equal(projectDirName('/Users/a/proj/.claude/worktrees/x-y'), '-Users-a-proj--claude-worktrees-x-y');
+test('several candidates: no answer, and never "the newest" (a resumed session is a second file carrying the old history)', () => {
+  assert.deepEqual(pickSession(['old', 'resumed']), { ok: false, reason: 'ambiguous', candidates: ['old', 'resumed'] });
 });
 
 // ---------- command line ----------
 
 const SCRIPT = new URL('./session-digest.mjs', import.meta.url).pathname;
-const run = (...args) => spawnSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8' });
+
+// The script reads CLAUDE_CODE_SESSION_ID from its environment; tests set it on purpose or not at all, whatever
+// session the tests themselves run in.
+const run = (...args) => runIn({ args });
+function runIn({ args, home, cwd, sessionId }) {
+  const env = { ...process.env };
+  delete env.CLAUDE_CODE_SESSION_ID;
+  if (home) env.HOME = home;
+  if (sessionId) env.CLAUDE_CODE_SESSION_ID = sessionId;
+  return spawnSync(process.execPath, [SCRIPT, ...args], { encoding: 'utf8', env, cwd });
+}
 
 test('cli: locate then digest, on a directory of session files', () => {
   const dir = mkdtempSync(join(tmpdir(), 'session-digest-'));
@@ -131,7 +130,7 @@ test('cli: locate then digest, on a directory of session files', () => {
     writeFileSync(join(dir, name), records.map((r) => JSON.stringify(r)).join('\n'));
     utimesSync(join(dir, name), mtime, mtime);
   };
-  write('a.jsonl', [human('opening MARKER-51'), say('收到')], 1_000_000);
+  write('a.jsonl', [human('an older session'), say('收到')], 1_000_000);
   write('b.jsonl', [human('opening MARKER-51'), say('收到'), human('后来的话')], 2_000_000);
   write('c.jsonl', [human('another session')], 3_000_000);
 
@@ -146,4 +145,159 @@ test('cli: locate then digest, on a directory of session files', () => {
   const missing = run('locate', '--dir', dir, '--marker', 'NOT-THERE');
   assert.equal(missing.status, 2);
   assert.match(missing.stderr, /export_transcript/);
+});
+
+// ---------- cli: locating this session's own transcript ----------
+
+const MARKER = 'issue-session，参数 87';
+const CARD_TASK = '用 Skill 工具调 idea-loop:issue-session，参数 87，按它从开场做起。';
+
+/** A fake HOME with ~/.claude/projects/<project>/<id>.jsonl files; `put` returns the path it wrote. */
+function fakeHome() {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'locate-')));
+  const home = join(root, 'home');
+  const cwd = (name) => {
+    const d = join(root, name);
+    mkdirSync(d, { recursive: true });
+    return d;
+  };
+  const put = (project, id, records) => {
+    const dir = join(home, '.claude', 'projects', project);
+    mkdirSync(dir, { recursive: true });
+    const path = join(dir, `${id}.jsonl`);
+    writeFileSync(path, records.map((r) => JSON.stringify(r)).join('\n') + '\n');
+    return path;
+  };
+  return { home, cwd, put };
+}
+
+// The dispatcher session: the marker is only inside a tool_use input (the card prompt the AI wrote).
+const dispatcherRecords = [
+  human('/idea-loop:issue-dispatch'),
+  ai([{ type: 'tool_use', id: 'x', name: 'start_session', input: { prompt: CARD_TASK } }]),
+];
+
+test('cli: after cd-ing to the dispatcher project directory, the marker still finds this session, not the dispatcher', () => {
+  const { home, cwd, put } = fakeHome();
+  const own = put('-wt', 'self-id', [human(CARD_TASK), say('收到')]);
+  put('-main', 'dispatch-id', dispatcherRecords);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home, cwd: cwd('main') });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), own);
+});
+
+test('cli: the session id comes first, from the environment or --session, wherever the current directory is', () => {
+  const { home, cwd, put } = fakeHome();
+  const own = put('-wt', 'self-id', [human(CARD_TASK)]);
+  put('-main', 'dispatch-id', dispatcherRecords);
+  const fromEnv = runIn({ args: ['locate'], home, cwd: cwd('main'), sessionId: 'self-id' });
+  assert.equal(fromEnv.status, 0, fromEnv.stderr);
+  assert.equal(fromEnv.stdout.trim(), own);
+  const explicit = runIn({ args: ['locate', '--session', 'self-id'], home, cwd: cwd('main') });
+  assert.equal(explicit.status, 0, explicit.stderr);
+  assert.equal(explicit.stdout.trim(), own);
+});
+
+test('cli: the id wins over a marker that points at another file', () => {
+  const { home, put } = fakeHome();
+  const own = put('-wt', 'self-id', [human('something else entirely')]);
+  put('-other', 'other-id', [human(CARD_TASK)]);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home, sessionId: 'self-id' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), own);
+});
+
+test('cli: an id with no file falls back to the marker', () => {
+  const { home, put } = fakeHome();
+  const own = put('-wt', 'self-id', [human(CARD_TASK)]);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home, sessionId: 'gone-id' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), own);
+});
+
+test('cli: the same id in two project directories is not an answer', () => {
+  const { home, put } = fakeHome();
+  const a = put('-one', 'dup-id', [human('x')]);
+  const b = put('-two', 'dup-id', [human('x')]);
+  const r = runIn({ args: ['locate'], home, sessionId: 'dup-id' });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /dup-id/);
+  assert.ok(r.stderr.includes(a) && r.stderr.includes(b), r.stderr);
+  assert.match(r.stderr, /export_transcript/);
+});
+
+test('cli: two project directories whose first human utterance holds the marker: exit 2, both listed', () => {
+  const { home, put } = fakeHome();
+  const a = put('-one', 'id-a', [human(CARD_TASK)]);
+  const b = put('-two', 'id-b', [human(CARD_TASK)]);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /export_transcript/);
+  assert.ok(r.stderr.includes(a) && r.stderr.includes(b), r.stderr);
+  assert.match(r.stderr, /marker/);
+});
+
+test('cli: a resumed session (a second file carrying the old history) is ambiguous, not "the newest wins"', () => {
+  const { home, put } = fakeHome();
+  const old = put('-wt', 'old-id', [human(CARD_TASK), say('收到')]);
+  const resumed = put('-wt', 'resumed-id', [human(CARD_TASK), say('收到'), human('后来的话')]);
+  utimesSync(old, 1_000_000, 1_000_000);
+  utimesSync(resumed, 2_000_000, 2_000_000);
+  for (const extra of [[], ['--dir', join(home, '.claude', 'projects', '-wt')]]) {
+    const r = runIn({ args: ['locate', '--marker', MARKER, ...extra], home });
+    assert.equal(r.status, 2, r.stdout);
+    assert.match(r.stderr, /export_transcript/);
+    assert.ok(r.stderr.includes(old) && r.stderr.includes(resumed), r.stderr);
+  }
+});
+
+test('cli: nothing matches the id and nothing matches the marker: exit 2, and the message says what was looked for', () => {
+  const { home, put } = fakeHome();
+  put('-wt', 'self-id', [human('unrelated')]);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home, sessionId: 'gone-id' });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /gone-id/);
+  assert.ok(r.stderr.includes(MARKER), r.stderr);
+  assert.match(r.stderr, /export_transcript/);
+  assert.equal(runIn({ args: ['locate'], home, sessionId: 'gone-id' }).status, 2);
+});
+
+test('cli: with neither an id nor a marker there is nothing to look for: exit 2', () => {
+  const { home, put } = fakeHome();
+  put('-wt', 'self-id', [human('hello')]);
+  const r = runIn({ args: ['locate'], home });
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /export_transcript/);
+});
+
+test('cli: only the first human utterance counts for the marker', () => {
+  const { home, put } = fakeHome();
+  put('-later', 'later-id', [human('开场白'), say('好'), human(CARD_TASK)]);
+  put('-reminder', 'reminder-id', [human(`<system-reminder>\n${CARD_TASK}\n</system-reminder>开场白`)]);
+  put('-notice', 'notice-id', [human(`<task-notification>${CARD_TASK}</task-notification>`), human('开场白')]);
+  put('-tool', 'tool-id', [human('开场白'), call('t1'), result('t1', CARD_TASK)]);
+  assert.equal(runIn({ args: ['locate', '--marker', MARKER], home }).status, 2);
+  // ... and the first human utterance is the first one that is not injected by the harness:
+  const own = put('-own', 'own-id', [human('<task-notification>x</task-notification>'), human('<local-command-stdout>y</local-command-stdout>'), human(CARD_TASK)]);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), own);
+});
+
+test('cli: the first human utterance is found even when the lines around it are huge', () => {
+  const { home, put } = fakeHome();
+  const big = 'x'.repeat(300_000);
+  const own = put('-big', 'big-id', [ai([{ type: 'text', text: big }]), human(CARD_TASK), ai([{ type: 'text', text: big }])]);
+  const r = runIn({ args: ['locate', '--marker', MARKER], home });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), own);
+});
+
+test('cli: --dir keeps the search to that one directory', () => {
+  const { home, put } = fakeHome();
+  const inside = put('-in', 'in-id', [human(CARD_TASK)]);
+  put('-out', 'out-id', [human(CARD_TASK)]);
+  const r = runIn({ args: ['locate', '--dir', join(home, '.claude', 'projects', '-in'), '--marker', MARKER], home });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), inside);
 });

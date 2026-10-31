@@ -14,23 +14,29 @@
  *
  * Usage:
  *   session-digest.mjs digest <file.jsonl> [--ai-max N]       the digest, as text
- *   session-digest.mjs locate [--dir D] [--marker TEXT]       the transcript file of this session
+ *   session-digest.mjs locate [--session ID] [--marker TEXT] [--dir D]
+ *                                                             the transcript file of this session
  *
- * `locate` takes the newest file that contains the marker (a resumed session is a new file that carries the
- * old history, so the newest one is the longest). Without a marker it takes the newest file only when no other
- * file was written close to it. Exit 2 when it cannot name exactly one file: the caller falls back to
- * export_transcript.
+ * `locate` names this session's own transcript, never "the newest one that looks right". By session id first:
+ * `--session ID`, else the CLAUDE_CODE_SESSION_ID Claude Code sets in the environment of the commands a session
+ * runs (the value is the file name without `.jsonl`); it looks for `<ID>.jsonl` in every project directory under
+ * ~/.claude/projects, wherever the current directory is. With no id, or no such file, it falls back to
+ * `--marker`: the files in every project directory whose FIRST human utterance contains the marker (only the head
+ * of each file is read, up to that utterance; a marker that only sits in an AI tool call, as in the dispatcher
+ * session that wrote a card task, does not count). `--dir D` limits both searches to that one directory.
+ * Exactly one file is the answer (printed, exit 0). Zero or several (a resumed session is a second file carrying
+ * the old history) exit 2 with the candidates on stderr: the caller falls back to export_transcript.
  *
- * Deterministic core (digest, renderDigest, pickSession, projectDirName) is pure and unit-tested; the file and
- * command-line parts are at the bottom.
+ * Deterministic core (digest, renderDigest, pickSession) is pure and unit-tested; the file and command-line parts
+ * are at the bottom.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readdirSync, readFileSync, readSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 import { pathToFileURL } from 'node:url';
 
 const AI_MAX_DEFAULT = 1500;
-const PARALLEL_WINDOW_MS = 10 * 60 * 1000;
 
 // User-role records that a human did not type.
 const NOT_HUMAN_PREFIXES = ['<task-notification>', '<local-command-', '<bash-input>', '<bash-stdout>', '<bash-stderr>', 'Another Claude session sent a message'];
@@ -69,6 +75,12 @@ function humanText(content) {
     } else cleaned.push(text);
   }
   return cleaned.join('\n').trim();
+}
+
+/** The text a human typed in this record, or '' when the record is not a human utterance. */
+function humanUtterance(r) {
+  if (!r || r.isSidechain || r.type !== 'user' || r.isMeta || r.isCompactSummary) return '';
+  return humanText(r.message?.content);
 }
 
 function clip(text, max) {
@@ -110,8 +122,7 @@ export function digest(records, { aiMax = AI_MAX_DEFAULT } = {}) {
       }
       continue;
     }
-    if (r.type !== 'user' || r.isMeta || r.isCompactSummary) continue;
-    const text = humanText(r.message?.content);
+    const text = humanUtterance(r);
     if (!text) continue;
     const turn = { index: turns.length + 1, timestamp: r.timestamp, human: text, ai: clip(conclusion(), aiMax) };
     resetAi();
@@ -138,39 +149,79 @@ export function renderDigest({ turns, events, compactions }) {
 }
 
 /**
- * entries: [{ path, mtimeMs, hasMarker }]; withMarker: whether a marker was asked for.
+ * paths: the files that match. Exactly one is the answer.
  * -> { ok: true, path } | { ok: false, reason: 'none' | 'ambiguous', candidates }
  */
-export function pickSession(entries, withMarker) {
-  const pool = withMarker ? entries.filter((e) => e.hasMarker) : entries;
-  if (!pool.length) return { ok: false, reason: 'none', candidates: [] };
-  const sorted = [...pool].sort((a, b) => b.mtimeMs - a.mtimeMs);
-  if (withMarker) return { ok: true, path: sorted[0].path };
-  const close = sorted.filter((e) => sorted[0].mtimeMs - e.mtimeMs <= PARALLEL_WINDOW_MS);
-  if (close.length > 1) return { ok: false, reason: 'ambiguous', candidates: close.map((e) => e.path) };
-  return { ok: true, path: sorted[0].path };
+export function pickSession(paths) {
+  if (!paths.length) return { ok: false, reason: 'none', candidates: [] };
+  if (paths.length > 1) return { ok: false, reason: 'ambiguous', candidates: paths };
+  return { ok: true, path: paths[0] };
 }
 
-export const projectDirName = (cwd) => cwd.replace(/[^A-Za-z0-9]/g, '-');
-
 // ---------- io / command line ----------
+
+const READ_CHUNK = 64 * 1024;
+
+/** The first human utterance of a transcript file, reading only as far as it. '' when the file has none. */
+export function firstHumanUtterance(path) {
+  const fd = openSync(path, 'r');
+  const buffer = Buffer.alloc(READ_CHUNK);
+  const decoder = new StringDecoder('utf8');
+  let pending = '';
+  const inLine = (line) => {
+    if (!line.trim()) return '';
+    try {
+      return humanUtterance(JSON.parse(line));
+    } catch {
+      return ''; // a half-written line, or noise: skip
+    }
+  };
+  try {
+    for (;;) {
+      const n = readSync(fd, buffer, 0, buffer.length, null);
+      if (n === 0) return inLine(pending);
+      pending += decoder.write(buffer.subarray(0, n));
+      const lines = pending.split('\n');
+      pending = lines.pop();
+      for (const line of lines) {
+        const text = inLine(line);
+        if (text) return text;
+      }
+    }
+  } finally {
+    closeSync(fd);
+  }
+}
 
 function option(args, name) {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : undefined;
 }
 
-function locate(args) {
-  const dir = option(args, '--dir') ?? join(homedir(), '.claude', 'projects', projectDirName(process.cwd()));
+const subdirectories = (root) =>
+  existsSync(root) ? readdirSync(root, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => join(root, e.name)) : [];
+
+/** -> { ...pickSession result, looked: what was looked for, where: where it was looked } */
+function locate(args, env) {
+  const root = join(homedir(), '.claude', 'projects');
+  const dirOption = option(args, '--dir');
+  const dirs = dirOption ? [dirOption] : subdirectories(root);
+  const where = dirOption ?? `${dirs.length} project directories under ${root}`;
+  const id = option(args, '--session') ?? env.CLAUDE_CODE_SESSION_ID;
   const marker = option(args, '--marker');
-  if (!existsSync(dir)) return { ok: false, reason: 'none', candidates: [], dir };
-  const entries = readdirSync(dir)
-    .filter((n) => n.endsWith('.jsonl'))
-    .map((n) => {
-      const path = join(dir, n);
-      return { path, mtimeMs: statSync(path).mtimeMs, hasMarker: marker ? readFileSync(path, 'utf8').includes(marker) : true };
-    });
-  return { ...pickSession(entries, Boolean(marker)), dir };
+  const looked = [];
+
+  if (id) {
+    looked.push(`session id ${id}`);
+    const byId = dirs.map((d) => join(d, `${id}.jsonl`)).filter((p) => existsSync(p));
+    if (byId.length || !marker) return { ...pickSession(byId), looked, where };
+  }
+  if (marker) {
+    looked.push(`marker "${marker}" in the first human utterance`);
+    const byMarker = dirs.flatMap((d) => (existsSync(d) ? readdirSync(d) : []).filter((n) => n.endsWith('.jsonl')).map((n) => join(d, n))).filter((p) => firstHumanUtterance(p).includes(marker));
+    return { ...pickSession(byMarker), looked, where };
+  }
+  return { ok: false, reason: 'none', candidates: [], looked: ['nothing (no session id in CLAUDE_CODE_SESSION_ID or --session, no --marker)'], where };
 }
 
 function main() {
@@ -181,14 +232,15 @@ function main() {
     return console.log(renderDigest(result));
   }
   if (cmd === 'locate') {
-    const found = locate(args);
+    const found = locate(args, process.env);
     if (found.ok) return console.log(found.path);
-    const why = found.reason === 'none' ? `no transcript in ${found.dir} holds the marker` : `several transcripts in ${found.dir} were written at about the same time: ${found.candidates.join(', ')}`;
+    const looked = found.looked.join(', then ');
+    const why = found.reason === 'none' ? `no transcript found for ${looked} in ${found.where}` : `${found.candidates.length} transcripts match ${looked} in ${found.where}: ${found.candidates.join(', ')}`;
     console.error(`${why}; fall back to export_transcript`);
     process.exitCode = 2;
     return;
   }
-  throw new Error('usage: session-digest.mjs digest <file.jsonl> [--ai-max N] | locate [--dir D] [--marker TEXT]');
+  throw new Error('usage: session-digest.mjs digest <file.jsonl> [--ai-max N] | locate [--session ID] [--marker TEXT] [--dir D]');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

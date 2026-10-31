@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 完成
 tags: [idea-loop, retro, session-digest]
 summary: retro 取会话记录时按会话自己的 id 找；退回标记时只认第一条人的发言，对不上不报成功
 related: ["[[retro]]", "[[design-tmp-worktree-root]]"]
