@@ -17,3 +17,4 @@ tags: [retro-candidates]
 ## 出现
 
 - harold-skills#142（2026-10-31）：「稍等，我暂时没太get到这个spec想解决的问题是什么，是seo.md中关键信息（比如品牌、竞品）是要怎么获取？」（审 spec 时）；决定记录：[[142]]
+- harold-skills#180（2026-10-31）：「S1 我看了下目前to-spec的写法，我其实比较好奇的点是，为什么要在to-spec里面调用writing-for-agents 以及 evidence」「S2 通用文档指的是什么？」（审 PR #213 第 1 轮 review 汇报时）；人批开 issue，并进 https://github.com/guohaonan-shy/harold-skills/issues/216 ；决定记录：[[180]]
