@@ -42,3 +42,4 @@
 | [decisions/168](decisions/168.md) | conversation | 2026-10-30 | 决定记录 —— #168 根 issue 的会话（覆盖 #165、#131，发 0.1.8）：cloud 整合任务、一组一份 spec 一个会话、人验素材挪到审核报告，摆过的题与 retro 候选的结果 |
 | [decisions/89](decisions/89.md) | conversation | 2026-10-31 | 决定记录 —— #89 的 issue 会话：README 目录树里 pr-reviewer 的模型改成跟定义一致，摆过的题（合并），无 retro 候选 |
 | [decisions/87](decisions/87.md) | conversation | 2026-10-31 | 决定记录 —— #87 的 issue 会话：session-digest locate 只认这场会话自己的记录，摆过的题（合并），无 retro 候选 |
+| [decisions/121](decisions/121.md) | conversation | 2026-10-31 | 决定记录 —— #121 的 issue 会话：link sweep 跳过代码里的格式示例，摆过的题（合并），无 retro 候选 |
