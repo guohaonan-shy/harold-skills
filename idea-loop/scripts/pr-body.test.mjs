@@ -3,16 +3,17 @@ import assert from 'node:assert/strict';
 import { getSection, setSection, readerProblems, SECTIONS, TITLES } from './pr-body.mjs';
 
 test('the description is the review report: one sentence, then its five parts, then the folded reference', () => {
-  assert.deepEqual(SECTIONS, ['summary', 'problem', 'changes', 'verification', 'issues', 'your-todo', 'reference']);
+  assert.deepEqual(SECTIONS, ['summary', 'problem', 'changes', 'verification', 'rollback', 'your-todo', 'reference']);
   assert.deepEqual(
-    ['problem', 'changes', 'verification', 'issues', 'your-todo'].map((n) => TITLES[n]),
-    ['问题', '怎么修', '怎么验证', '顺带开的 issue', '要你做的事'],
+    ['problem', 'changes', 'verification', 'rollback', 'your-todo'].map((n) => TITLES[n]),
+    ['问题', '怎么修', '怎么验证', '能否回滚', '要你做的事'],
   );
+  assert.equal(Object.values(TITLES).includes('顺带开的 issue'), false, 'issues filed on the way live inside 能否回滚 now');
   assert.throws(() => setSection('', 'review', '第 1 轮'), /unknown section/);
 });
 
 test('sections come out in the fixed order whatever order they were written in', () => {
-  const written = ['reference', 'your-todo', 'issues', 'verification', 'summary', 'changes', 'problem'];
+  const written = ['reference', 'your-todo', 'rollback', 'verification', 'summary', 'changes', 'problem'];
   let body = '';
   for (const n of written) body = setSection(body, n, `内容 ${n}`);
   const order = SECTIONS.map((n) => body.indexOf(`<!-- idea-loop:section ${n} -->`));
@@ -23,10 +24,10 @@ test('sections come out in the fixed order whatever order they were written in',
 test('the new sections write their own headings and are rewritten alone', () => {
   let body = setSection('', 'problem', '学生重试失败的题会被多扣一次');
   body = setSection(body, 'verification', '- 重试一次只扣一次：端到端，通过');
-  body = setSection(body, 'issues', '- 旧报告缓存不清：已开 [#12](https://github.com/a/b/issues/12)');
+  body = setSection(body, 'rollback', '**能不能撤回**：能，撤销合并即可。');
   assert.match(body, /## 问题\n\n学生重试/);
   assert.match(body, /## 怎么验证\n\n- 重试一次/);
-  assert.match(body, /## 顺带开的 issue\n\n- 旧报告/);
+  assert.match(body, /## 能否回滚\n\n\*\*能不能撤回\*\*/);
   body = setSection(body, 'problem', '重试失败的题多扣两次');
   assert.equal(getSection(body, 'problem'), '重试失败的题多扣两次');
   assert.match(getSection(body, 'verification'), /端到端/);
@@ -85,7 +86,7 @@ test('sections a person reads refuse code-level references; image and link addre
   // the report's new sections are read by a person too
   assert.throws(() => setSection('', 'problem', '`retryAnalysis` 多扣了次数'), /say it in words/);
   assert.throws(() => setSection('', 'verification', '- 单测 src/report/retry.test.ts 通过'), /say it in words/);
-  assert.throws(() => setSection('', 'issues', '- 见 a1b2c3d 的提交'), /say it in words/);
+  assert.throws(() => setSection('', 'rollback', '- 见 a1b2c3d 的提交'), /say it in words/);
   assert.deepEqual(readerProblems('changes', '![重试流程](https://github.com/a/b/blob/idea-loop-evidence-pr-1/pr-retry_flow.png?raw=true) 见 [停下汇报](https://github.com/a/b/pull/1#discussion_r1)'), []);
   assert.deepEqual(readerProblems('reference', '01 · 缓存 | a1b2c3d | src/cache.ts'), []); // lookup only
 });
@@ -94,7 +95,7 @@ test('writing 怎么验证 first, then the other sections, leaves hand-written t
   const human = '这个 PR 修复学生重试多扣一次的问题。';
   const sign = '🤖 Generated with [Claude Code](https://claude.com/claude-code)';
   let body = `${human}\n\n${sign}`;
-  for (const n of ['verification', 'problem', 'changes', 'issues', 'your-todo']) {
+  for (const n of ['verification', 'problem', 'changes', 'rollback', 'your-todo']) {
     body = setSection(body, n, `内容 ${n}`);
     assert.equal(body.split(sign).length - 1, 1, `after ${n}: attribution line appears once`);
     assert.equal(body.split(human).length - 1, 1, `after ${n}: hand-written text appears once`);
@@ -104,4 +105,32 @@ test('writing 怎么验证 first, then the other sections, leaves hand-written t
   assert.ok(body.endsWith(`${human}\n\n${sign}\n`));
   assert.equal(getSection(body, 'verification'), '更新后的验证');
   assert.match(getSection(body, 'problem'), /内容 problem/);
+});
+
+// A description opened before 能否回滚 existed carries a 顺带开的 issue section. It is folded into 能否回滚 the
+// next time anything is written, under the same label the new section uses, and never lost afterwards.
+const legacyIssues = '<!-- idea-loop:section issues -->\n## 顺带开的 issue\n\n- [旧报告缓存不清](https://github.com/a/b/issues/12)：不是这次引入的\n<!-- /idea-loop:section issues -->';
+
+test('an old 顺带开的 issue section is folded into 能否回滚 on the next write, and the old heading goes', () => {
+  const body = setSection(`${legacyIssues}\n\n人写的说明`, 'summary', 'S');
+  assert.doesNotMatch(body, /section issues|## 顺带开的 issue/);
+  assert.match(body, /## 能否回滚\n\n\*\*顺带开的 issue\*\*\n\n- \[旧报告缓存不清\]/);
+  assert.match(body, /人写的说明/);
+  assert.ok(body.indexOf('section summary -->') < body.indexOf('section rollback -->'));
+});
+
+test('writing 能否回滚 on top of a folded-in issue list keeps the list unless the new text carries its own', () => {
+  const folded = setSection(legacyIssues, 'summary', 'S');
+  const kept = setSection(folded, 'rollback', '**能不能撤回**：能，撤销合并即可。');
+  assert.match(getSection(kept, 'rollback'), /^\*\*能不能撤回\*\*[\s\S]*\*\*顺带开的 issue\*\*\n\n- \[旧报告缓存不清\]/);
+  const own = setSection(folded, 'rollback', '**能不能撤回**：能。\n\n**顺带开的 issue**\n\n- [另一个](https://github.com/a/b/issues/13)');
+  assert.doesNotMatch(getSection(own, 'rollback'), /旧报告缓存不清/);
+  assert.match(getSection(own, 'rollback'), /另一个/);
+  assert.equal(getSection(own, 'rollback').match(/顺带开的 issue/g).length, 1);
+});
+
+test('an old issues section that only said there were none is dropped, not folded in', () => {
+  const none = '<!-- idea-loop:section issues -->\n## 顺带开的 issue\n\n无\n<!-- /idea-loop:section issues -->';
+  const body = setSection(none, 'summary', 'S');
+  assert.doesNotMatch(body, /section issues|顺带开的 issue|section rollback/);
 });

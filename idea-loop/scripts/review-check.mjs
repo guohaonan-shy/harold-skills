@@ -36,13 +36,13 @@
  * the round's report lists discards in one folded line each.
  *
  * Admitted candidates are then checked for the shape the round's report is written in, because it
- * is read by the person who decides, not by the person who fixes: a Spec finding has a title that
- * states the consequence, the problem, the user impact, and a decision (one line of context, options,
- * a recommendation); a Standards finding has now / impact / suggestion; and none of that reader-facing text may carry a
- * code-level reference — backticks, file:line, a path, a snake_case name, a commit hash, a section
+ * is read by the person who decides, not by the person who fixes: a finding has a title that states the
+ * consequence, the situation now, the impact, and, unless it is ruled, a decision (options that each say what
+ * they do, what they cost and whether they can be undone, and a recommendation) - the same on both axes;
+ * and none of that reader-facing text may carry a code-level reference — backticks, file:line, a path, a snake_case name, a commit hash, a section
  * number like §4.7. Those belong in `locations`, which only the fixer sees. Shape problems are not
  * discards: the finding stands, its wording has to be redone (`rewrite`). Rules:
- * skills/engineering/pr-review/references/review-standards.md, skills/engineering/pr/references/review-round.md.
+ * skills/engineering/pr-review/references/review-standards.md, skills/engineering/pr/references/review-report.md.
  *
  * Deterministic core (normalize, contains, snippetInDiff, codeRefs, shapeProblems, admit) is pure
  * and unit-tested.
@@ -134,12 +134,35 @@ function ruledProblems(c, axis) {
   return problems;
 }
 
-/** What is wrong with the wording of one admitted finding; empty when it can be posted as is. */
+/** What is wrong with the 要你决定 block of a finding: options (each with its cost and whether it can be undone) and a recommendation. */
+function decideProblems(decide) {
+  const problems = [];
+  const options = decide?.options;
+  if (!Array.isArray(options) || options.length < 2) problems.push('「要你决定」至少要列两个选项');
+  for (const [i, o] of (Array.isArray(options) ? options : []).entries()) {
+    const at = `选项 ${String.fromCharCode(65 + i)}`;
+    if (typeof o !== 'object' || o === null) {
+      problems.push(`${at}：选项要写成 { do, cost, rollback }：做法、代价、能否回滚`);
+      continue;
+    }
+    for (const [key, label] of [['do', '做法'], ['cost', '代价'], ['rollback', '能否回滚']]) {
+      if (!filled(o[key])) problems.push(`${at}：缺${label}`);
+      else for (const hit of codeRefs(o[key])) problems.push(`${at}「${label}」里有代码层面的指称：${hit}`);
+    }
+  }
+  if (!filled(decide?.recommend)) problems.push('「要你决定」没给建议');
+  else for (const hit of codeRefs(decide.recommend)) problems.push(`「要你决定」的建议里有代码层面的指称：${hit}`);
+  return problems;
+}
+
+/**
+ * What is wrong with the wording of one admitted finding; empty when it can be posted as is. A 要你决定 item
+ * has one shape whichever axis it comes from: title, now (what it is and where it is from: a Standards
+ * finding puts the rule's words here), impact, evidence, options, recommendation.
+ */
 export function shapeProblems(c, axis) {
   const problems = [];
-  const fields = axis === 'spec'
-    ? { title: '标题', problem: '问题', user_impact: '对用户的影响', example: '例子' }
-    : { title: '标题', now: '现状', impact: '影响', suggestion: '建议' };
+  const fields = { title: '标题', now: '现状', impact: axis === 'spec' ? '对用户的影响' : '影响', example: '例子' };
   for (const [key, label] of Object.entries(fields)) {
     if (key === 'example' && !filled(c[key])) continue; // optional: a figure may carry the evidence instead
     if (!filled(c[key])) problems.push(`缺「${label}」`);
@@ -156,16 +179,8 @@ export function shapeProblems(c, axis) {
       problems.push('界面上看得到的问题要配取自实现的截图：单点差别用之前 / 之后截图，多步流程用截图拼的流程，动起来的用动图；表格、时序图、例子只能补充。确实拍不到（比如只有真机能复现），在 no_screenshot 里写一句为什么');
     }
     if (filled(c.no_screenshot)) for (const hit of codeRefs(c.no_screenshot)) problems.push(`「为什么没有截图」里有代码层面的指称：${hit}`);
-    if (!isRuled(c)) {
-      if (!filled(c.decide?.context)) problems.push('「要你决定」缺一句前提（和 spec 或工单哪条规定对不上）');
-      const options = c.decide?.options;
-      if (!Array.isArray(options) || options.filter(filled).length < 2) problems.push('「要你决定」至少要列两个选项');
-      if (!filled(c.decide?.recommend)) problems.push('「要你决定」没给建议');
-      for (const t of [c.decide?.context, ...(Array.isArray(options) ? options : []), c.decide?.recommend]) {
-        for (const hit of codeRefs(t)) problems.push(`「要你决定」里有代码层面的指称：${hit}`);
-      }
-    }
   }
+  if (!isRuled(c)) problems.push(...decideProblems(c.decide));
   return problems;
 }
 

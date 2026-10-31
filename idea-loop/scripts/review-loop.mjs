@@ -6,29 +6,35 @@
  * is built for many people answering asynchronously, and moving each of his answers from GitHub
  * back into the session took a bot identity, round markers, a background watcher and a wake-up —
  * all to carry one person's words to the session he was already in. So every report the loop makes
- * (implement's stops, pr-review's rounds) is shown in the session and appended, in the same words,
+ * (a Review 汇报: implement's stops and pr-review's rounds are one kind of report) is shown in the session and appended, in the same words,
  * to one file per PR; his rulings and what was done about them are appended under it. The file is
  * the loop's memory: a session that was compacted or reopened reads it and carries on. When Harold
  * says merge, each report is posted to the PR as one plain comment — a record, not a conversation —
- * and the local file is deleted. Layout and wording: skills/engineering/pr/references/review-loop.md,
- * skills/engineering/pr/references/stop-report.md and review-round.md.
+ * and the local file is deleted. Layout and wording: skills/engineering/pr/references/review-loop.md and
+ * review-report.md.
  *
  * File: <worktree root>/.tmp/review-loop/<PR>.md
  *
  *   # PR #<N> 的 review loop
  *
- *   <!-- idea-loop-entry {"kind":"pause","round":1} -->
- *   ## 第 1 次停下 · …            ← the report, exactly as shown in the session
+ *   <!-- idea-loop-entry {"kind":"review","round":1,"from":"impl"} -->
+ *   ## 第 1 次 · 来自实现中 · …    ← the report, exactly as shown in the session
  *   ### 你的批示（<time>）         ← Harold's words, verbatim
  *   ### 做了什么                   ← what was done, with commit links
  *
+ * Kinds: `review` is the one report the human reads, `from` says where it came from ("impl": written while
+ * implementing, e.g. a ticket stuck; absent or "review": a review round). Rounds count per source, so the
+ * first review round is round 1 whatever came before it. `pause` is the older kind for what is now a
+ * `review` with from=impl: files already written keep reading, and so do the comments already archived
+ * under its marker. `replay` is the nightly runner's.
+ *
  * An entry is settled once every 你的批示 has a 做了什么 after it. An entry that asks the human nothing
- * has no ruling to wait for and is settled by its 做了什么 alone: a review round with no 要你决定 in it
- * (every finding handled by rule), and a stop report with no 需要你决定 section. Unticked boxes under
- * 交付验收 do not hold a stop report: the human checks them in the final review report (pr-review,
- * 交审核报告), not mid-implementation. So the orchestrator can tell "everything is handled" and carry on
- * without waiting for a nod (implement's stops; pr-review, section 一轮之后往哪走). A stop report that
- * does ask waits for the human's ruling as before. Overturning
+ * has no ruling to wait for and is settled by its 做了什么 alone: a report with no 要你决定 section in it
+ * (every finding handled by rule). Unticked boxes under 要你看的 do not hold a report: the human checks
+ * them in the PR description's 要你做的事 (pr-review, 交审核报告), not mid-implementation. So the
+ * orchestrator can tell "everything is handled" and carry on without waiting for a nod (implement's
+ * stops; pr-review, section 一轮之后往哪走). A report that does ask waits for the human's ruling as
+ * before. Overturning
  * a handled-by-rule item is just one more 你的批示 in the same entry. `check` lists the unsettled ones
  * so the orchestrator can say so before a merge; it does not block the merge — Harold decides that.
  *
@@ -46,7 +52,7 @@
  * pure and unit-tested.
  *
  * Usage:
- *   node review-loop.mjs next    <file> <pause|review|replay> → prints the next round number
+ *   node review-loop.mjs next    <file> <review [impl]|replay> → prints the next round number (pause = review impl)
  *   node review-loop.mjs check   <file>                       → JSON: entries, and which are unsettled
  *   node review-loop.mjs archive <file> <owner/repo> <pr>     → posts each entry not yet on the PR
  * Exit: 0 = done, 1 = usage / io / API error.
@@ -59,6 +65,9 @@ import { publish } from './evidence.mjs';
 import { repoApi } from './github-app.mjs';
 
 export const KINDS = ['pause', 'review', 'replay'];
+export const FROMS = ['impl', 'review'];
+/** Where an entry's report came from. The older `pause` kind was always written during implementation. */
+const sourceOf = (kind, from) => (kind === 'review' ? from ?? 'review' : kind === 'pause' ? 'impl' : kind);
 const ENTRY = /^<!-- idea-loop-entry (\{.*?\}) -->$/;
 const ARCHIVED = /<!-- idea-loop-archive (\{.*?\}) -->/;
 const MAX_BODY = 65000;
@@ -70,40 +79,54 @@ export function parseLoop(text = '') {
     const m = line.match(ENTRY);
     if (m) {
       const rec = JSON.parse(m[1]);
-      if (!KINDS.includes(rec.kind) || !Number.isSafeInteger(rec.round)) throw new Error(`bad entry marker: ${line}`);
-      entries.push({ kind: rec.kind, round: rec.round, lines: [] });
+      if (!KINDS.includes(rec.kind) || !Number.isSafeInteger(rec.round) || (rec.from !== undefined && !FROMS.includes(rec.from))) {
+        throw new Error(`bad entry marker: ${line}`);
+      }
+      entries.push({ kind: rec.kind, round: rec.round, source: sourceOf(rec.kind, rec.from), lines: [] });
     } else if (entries.length) {
       entries.at(-1).lines.push(line);
     }
   }
-  return entries.map(({ kind, round, lines }) => {
+  return entries.map(({ kind, round, source, lines }) => {
     const body = lines.join('\n').trim();
     const rulings = (body.match(/^### 你的批示/gm) ?? []).length;
     const acted = (s) => /^### 做了什么/m.test(s);
     // An entry that asks the human nothing has no ruling to wait for: it is settled once it says what was
-    // done. A review round asks when it carries a 要你决定; a stop report asks when it carries a 需要你决定
-    // section (its unticked 交付验收 items wait for the review report instead); a replay asks when something
-    // failed (it carries a 要你决定 until the human has ruled). A report that asks something needs the human's ruling.
-    const asksHuman = /\*\*要你决定\*\*/.test(body) || (kind === 'pause' && /^#{2,4}\s*需要你决定/m.test(body));
+    // done. A report asks when it carries a 要你决定 section (its unticked 要你看的 items wait for the PR
+    // description's 要你做的事 instead); a replay asks when something failed (it carries a 要你决定 until the
+    // human has ruled). Older files marked it with a bold **要你决定** inside an item, or, for a stop report,
+    // a 需要你决定 heading: still read. A report that asks something needs the human's ruling.
+    const asksHuman = /^#{2,4}\s*(?:需要|要)你决定|\*\*要你决定\*\*/m.test(body);
     const askedNothing = rulings === 0 && !asksHuman;
     const settled = rulings > 0 ? acted(body.slice(body.lastIndexOf('### 你的批示'))) : askedNothing && acted(body);
-    return { kind, round, body, rulings, settled };
+    return { kind, round, source, body, rulings, settled };
   });
 }
 
-export const nextRound = (entries, kind) => Math.max(0, ...entries.filter((e) => e.kind === kind).map((e) => e.round)) + 1;
+/**
+ * The next round number. `review` counts review rounds, `review` with from=impl counts the reports written
+ * while implementing (the older `pause` entries included), `replay` counts replays.
+ */
+export const nextRound = (entries, kind, from) => {
+  const source = sourceOf(kind === 'pause' ? 'review' : kind, kind === 'pause' ? 'impl' : from);
+  return Math.max(0, ...entries.filter((e) => e.source === source).map((e) => e.round)) + 1;
+};
 
 export const unsettled = (entries) => entries.filter((e) => !e.settled).map(({ kind, round }) => ({ kind, round }));
 
-export const archiveMarker = (kind, round) => `<!-- idea-loop-archive ${JSON.stringify({ kind, round })} -->`;
+// An entry is told apart by what it is (kind), where it came from and its round, so that review round 2 and
+// implementation report 2 are two entries, and a marker written before the kinds were merged still matches.
+const keyOf = (kind, from, round) => `${kind}:${sourceOf(kind, from)}:${round}`;
+
+export const archiveMarker = (kind, round, from) => `<!-- idea-loop-archive ${JSON.stringify(from ? { kind, round, from } : { kind, round })} -->`;
 
 /** Entries not yet posted to the PR, judged by the markers on its existing comments. */
 export function toArchive(entries, comments) {
   const posted = new Set(comments.map((c) => c.body?.match(ARCHIVED)?.[1]).filter(Boolean).map((j) => {
     const r = JSON.parse(j);
-    return `${r.kind}:${r.round}`;
+    return keyOf(r.kind, r.from, r.round);
   }));
-  return entries.filter((e) => !posted.has(`${e.kind}:${e.round}`));
+  return entries.filter((e) => !posted.has(keyOf(e.kind, e.source === 'impl' && e.kind === 'review' ? 'impl' : undefined, e.round)));
 }
 
 const FIGURE = /!\[([^\]]*)\]\(([^)\s]+)\)/g;
@@ -124,8 +147,9 @@ export function withAuthorship(body, identity) {
 }
 
 export function archiveBody(entry, identity) {
-  const label = { pause: `第 ${entry.round} 次停下`, review: `review 第 ${entry.round} 轮`, replay: `规则回放第 ${entry.round} 次` }[entry.kind];
-  const body = `${archiveMarker(entry.kind, entry.round)}\n${withAuthorship(`> 记录：${label}在会话里进行，下面是原样的汇报、批示和处理结果。\n\n${entry.body}`, identity)}`;
+  const impl = entry.kind === 'review' && entry.source === 'impl';
+  const label = impl ? `实现中第 ${entry.round} 次汇报` : { pause: `第 ${entry.round} 次停下`, review: `review 第 ${entry.round} 轮`, replay: `规则回放第 ${entry.round} 次` }[entry.kind];
+  const body = `${archiveMarker(entry.kind, entry.round, impl ? 'impl' : undefined)}\n${withAuthorship(`> 记录：${label}在会话里进行，下面是原样的汇报、批示和处理结果。\n\n${entry.body}`, identity)}`;
   if (body.length > MAX_BODY) throw new Error(`${label} is ${body.length} characters (limit ${MAX_BODY}); fold detail in the file before archiving`);
   return body;
 }
@@ -136,10 +160,12 @@ const read = (file) => (existsSync(file) ? readFileSync(file, 'utf8') : '');
 
 async function main() {
   const [cmd, file, ...rest] = process.argv.slice(2);
-  if (cmd === 'next' && file && KINDS.includes(rest[0])) return console.log(nextRound(parseLoop(read(file)), rest[0]));
+  if (cmd === 'next' && file && KINDS.includes(rest[0]) && [undefined, 'impl'].includes(rest[1])) {
+    return console.log(nextRound(parseLoop(read(file)), rest[0], rest[1]));
+  }
   if (cmd === 'check' && file) {
     const entries = parseLoop(read(file));
-    return console.log(JSON.stringify({ entries: entries.map(({ kind, round, rulings, settled }) => ({ kind, round, rulings, settled })), unsettled: unsettled(entries) }, null, 2));
+    return console.log(JSON.stringify({ entries: entries.map(({ kind, round, source, rulings, settled }) => ({ kind, round, source, rulings, settled })), unsettled: unsettled(entries) }, null, 2));
   }
   const [repo, pr] = rest;
   if (cmd === 'archive' && file && /^[\w.-]+\/[\w.-]+$/.test(repo ?? '') && /^\d+$/.test(pr ?? '')) {
@@ -156,7 +182,7 @@ async function main() {
     }
     return console.log(JSON.stringify({ posted, identity: api.identity }, null, 2));
   }
-  throw new Error('usage: review-loop.mjs next <file> <pause|review|replay> | check <file> | archive <file> <owner/repo> <pr>');
+  throw new Error('usage: review-loop.mjs next <file> <review [impl]|replay> | check <file> | archive <file> <owner/repo> <pr>');
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

@@ -154,7 +154,7 @@ retro 的设计前提是「批了就该进 skill」（spec [[retro]]；撤回的
   2. 前置：一张提议表，`retro 候选` 一节有一行处置写「改进 skill」。步骤：跑校验。期望：非零退出，报处置不在闭集里。覆盖：dreaming 看候选池 3。
   3. retro 回放用例如上。覆盖：retro 里批候选 1、2、4。
 - **prompt / eval 变动**：retro、dreaming 的 SKILL.md 与新 reference 是 prompt 改动；加一个 retro 回放用例。
-- **照着谁写**：`idea-loop/scripts/` 下各 `*.test.mjs`（如 `issues.test.mjs`）；回放用例照 `idea-loop/evals/retro/cases/explain-mechanism`。
+- **照着谁写**：`idea-loop/scripts/` 下各 `*.test.mjs`（如 `issues.test.mjs`）；回放用例照 `idea-loop/evals/retro/cases/explain-mechanism`（该用例 2026-10-31 随 #80 撤掉，现在照 `retro-pool-choice`）。
 
 ## Out of scope
 

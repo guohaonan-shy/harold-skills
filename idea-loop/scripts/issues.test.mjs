@@ -10,7 +10,9 @@ import {
 
 const UI = '- 点重试 → 只重跑这一题';
 
-const spec = ({ status = '正式', issues, ui = '不涉及。', freeze = false, verdict } = {}) => `---
+// Verdicts are quoted lines right under the title (the current template); `legacy: true` writes the older
+// 「验证」 table instead, which is still read.
+const spec = ({ status = '正式', issues, ui = '不涉及。', freeze = false, verdict, legacy = false } = {}) => `---
 type: spec
 status: ${status}
 summary: 重试不消耗配额
@@ -18,13 +20,15 @@ related: []${issues ? `\nissues: ${issues}` : ''}
 ---
 
 # 重试不消耗配额
-
+${legacy ? `
 ## 验证
 
 | issue | 结论 | 证据 |
 |---|---|---|
 ${Object.entries(verdict ?? {}).map(([n, v]) => `| #${n} | ${v} | 复现 |`).join('\n')}
-
+` : `
+${Object.entries(verdict ?? {}).map(([n, v]) => `> #${n} ${v}：复现过`).join('\n')}
+`}
 ## 实现决策
 ${freeze ? '\n### 冻结摘要\n- 画布\n' : '\n无分歧。\n'}
 ### 前端交互
@@ -223,6 +227,9 @@ test('set does the flips a session or a person makes, and refuses the 待 states
 test('targetOf reads the spec on main: verdict, status, UI and freeze', () => {
   assert.equal(targetOf(spec({ status: '草稿' }), 1), null);
   assert.deepEqual(targetOf(spec({ verdict: { 1: '不存在' } }), 1), { close: 'not planned' });
+  assert.deepEqual(targetOf(spec({ legacy: true, verdict: { 1: '不存在' } }), 1), { close: 'not planned' });
+  assert.deepEqual(targetOf(spec({ verdict: { 1: '存在' } }), 1), { state: '待实现' });
+  assert.deepEqual(targetOf(spec({ legacy: true, verdict: { 1: '存在' } }), 1), { state: '待实现' });
   assert.deepEqual(targetOf(spec({ status: '完成' }), 1), { close: 'completed' });
   assert.deepEqual(targetOf(spec({ ui: UI }), 1), { state: '待设计' });
   assert.deepEqual(targetOf(spec({ ui: UI, freeze: true }), 1), { state: '待实现' });
@@ -254,6 +261,15 @@ test('reconcilePlan moves only finished or unstarted work, and leaves 搁置 and
   assert.equal(problems.length, 2);
   assert.match(problems[0], /#8 的 label「在飞」/);
   assert.match(problems[1], /#9 是「待实现」，但主分支上没有 spec/);
+});
+
+test('reconcile closes an issue the older 验证 table marks 不存在, with the same comment', () => {
+  const docs = docsWith({ a: spec({ legacy: true, issues: '[1, 2]', verdict: { 1: '存在', 2: '不存在' } }) });
+  const issues = { 1: open(1, ['status:验证中']), 2: open(2, ['status:验证中']) };
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(reconcile(gh, docs).done, ['#1: 验证中 → 待实现', '#2: 验证中 → 关闭（not planned）']);
+  assert.equal(issues[2].reason, 'not planned');
+  assert.ok(calls.some((c) => c[1] === 'close' && c.join(' ').includes('docs/spec/a/a.md')));
 });
 
 test('reconcile relabels and closes with a comment pointing at the spec', () => {

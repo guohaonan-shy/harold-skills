@@ -34,15 +34,21 @@ test('a snippet counts only if every non-blank line was added in this diff', () 
   assert.equal(snippetInDiff("import { db } from '../db/client';\nconst old = 1;", added), false);
 });
 
+// Every 要你决定 item has the same shape on both axes: title, now (with where it is from), impact, evidence,
+// options (each with its cost and whether it can be undone), recommendation.
+const options = [
+  { do: '修：重试不扣次数', cost: '重试路径要多一次判断', rollback: '能，改回去即可，没有数据迁移' },
+  { do: '不修：改工单，承认重试要扣次数', cost: '学生失败一次就少一次机会', rollback: '能，工单可以再改回来' },
+];
 const specWords = {
-  problem: '分析失败后点重试，每次都扣一次当天的练习次数；main 上重试不扣。',
-  user_impact: '连续失败几次的学生会提前用完当天的练习次数，网络差的学生最容易碰到。',
-  decide: { context: '工单要求重试不消耗次数，用来保证失败不变成学生的成本。', options: ['修：重试不扣次数', '不修：改工单'], recommend: '修，这是用户能感到的损失。' },
+  now: '工单要求重试不消耗次数，用来保证失败不变成学生的成本；现在分析失败后点重试，每次都扣一次当天的练习次数，main 上重试不扣。',
+  impact: '连续失败几次的学生会提前用完当天的练习次数，网络差的学生最容易碰到。',
+  decide: { options, recommend: '修，这是用户能感到的损失。' },
 };
 const standardsWords = {
-  now: '分析接口在处理请求时直接查了数据库，没有经过业务层。',
+  now: '后端的分层规则写明路由层不直接访问数据库；分析接口在处理请求时直接查了数据库，没有经过业务层。',
   impact: '以后换存储或加缓存时，这一处会被漏掉。',
-  suggestion: '把查询挪进业务层，接口只调它。',
+  decide: { options: [{ do: '修：把查询挪进业务层', cost: '多一个函数和一处测试', rollback: '能，纯代码改动' }, { do: '开 issue：这次不动', cost: '分层规则在这一处继续不成立', rollback: '能，随时可以再改' }], recommend: '修，改动很小。' },
 };
 const S1 = { id: 'S1', title: '连续失败的学生会提前用完当天的练习次数', behavior: true, on_screen: true, quote: { file: 'docs/spec/practice-retry/tickets/03-retry.md', text: '只重新分析这一题， 不消耗配额' }, figure: 'r1-retry-quota.png', ...specWords };
 const C1 = { id: 'C1', title: '接口直接查数据库', rule: { file: 'docs/reference/code-layering.md', text: '路由层不直接访问数据库' }, code: { path: 'src/api/handler.ts', snippet: "import { db } from '../db/client';" }, locations: ['src/api/handler.ts:2'], ...standardsWords };
@@ -80,13 +86,13 @@ test('code-level references in reader-facing text are found: backticks, file:lin
 });
 
 test('a finding missing a part, a decision, or written in code terms goes to rewrite, not to discard', () => {
-  const bad = { ...S1, user_impact: '', problem: 'spec §4.7 写的是…', decide: { options: ['修'] } };
+  const bad = { ...S1, impact: '', now: 'spec §4.7 写的是…', decide: { options: [{ do: '修', cost: '', rollback: '能' }] } };
   const problems = shapeProblems(bad, 'spec');
   assert.ok(problems.some((p) => /缺「对用户的影响」/.test(p)));
-  assert.ok(problems.some((p) => /缺一句前提/.test(p)));
   assert.ok(problems.some((p) => /章节编号「§4.7」/.test(p)));
   assert.ok(problems.some((p) => /两个选项/.test(p)));
   assert.ok(problems.some((p) => /没给建议/.test(p)));
+  assert.ok(problems.some((p) => /缺代价/.test(p)), 'every option says what it costs');
   const r = admit({ spec: [bad], standards: [{ ...C1, now: '`handler` 里 import 了 db' }] }, io, { round: 1 });
   assert.deepEqual([r.spec.length, r.standards.length, r.discarded.length], [1, 1, 0]);
   assert.deepEqual(r.rewrite.map((x) => x.id), ['S1', 'C1']);
@@ -114,7 +120,7 @@ test('each ungrounded candidate is discarded with its reason', () => {
 
 const basisRule = { kind: '规则原文', file: 'docs/reference/wording.md', text: '按钮名称统一用两个字的动词', summary: '仓库的文案规定写明按钮名称统一用两个字的动词。' };
 const S_RULED = { ...S1, id: 'S3', disposition: '照规则', basis: basisRule, action: '同步改', decide: undefined };
-const C_RULED = { ...C1, disposition: '照规则', action: '修' };
+const C_RULED = { ...C1, disposition: '照规则', action: '修', decide: undefined };
 const run = (c, axis = 'spec') => admit({ [axis]: [c] }, io, { round: 1 });
 
 test('a ruled Spec finding with a basis and an action needs no options and no recommendation', () => {
@@ -155,6 +161,20 @@ test('an unknown disposition goes to rewrite; no disposition keeps the old 要�
   assert.match(run({ ...S1, disposition: '随便' }).rewrite[0].problems.join(), /处置只能是/);
   assert.deepEqual(run({ ...S1, disposition: '要你决定' }).rewrite, []);
   assert.ok(run({ ...S1, decide: undefined }).rewrite[0].problems.some((p) => /要你决定/.test(p)));
+});
+
+test('a 要你决定 item has the same shape on both axes: each option names its cost and whether it can be undone', () => {
+  for (const [axis, c] of [['spec', S1], ['standards', C1]]) {
+    assert.deepEqual(run(c, axis).rewrite, [], `${axis}: the shared shape is admitted`);
+    const noRollback = { ...c, decide: { ...c.decide, options: [c.decide.options[0], { ...c.decide.options[1], rollback: '' }] } };
+    assert.match(run(noRollback, axis).rewrite[0].problems.join(), /缺能否回滚/, axis);
+    assert.match(run({ ...c, decide: undefined }, axis).rewrite[0].problems.join(), /要你决定/, axis);
+    assert.match(run({ ...c, decide: { ...c.decide, options: ['修', '不修'] } }, axis).rewrite[0].problems.join(), /选项要写成/, axis);
+    const codey = { ...c, decide: { ...c.decide, options: [{ ...c.decide.options[0], cost: '要改 src/api/handler.ts' }, c.decide.options[1]] } };
+    assert.match(run(codey, axis).rewrite[0].problems.join(), /代码层面的指称/, axis);
+  }
+  // a Standards finding no longer carries a single "suggestion": the options are the suggestion
+  assert.deepEqual(run({ ...C1, suggestion: undefined }, 'standards').rewrite, []);
 });
 
 test('a ruled Standards finding stands on its rule, and still needs an action', () => {

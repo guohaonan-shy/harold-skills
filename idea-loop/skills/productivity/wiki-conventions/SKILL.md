@@ -75,7 +75,7 @@ docs/
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删
 ├── dreaming/<YYYY-MM-DD>/        这一次运行的提议表 proposal.md 与中间物 —— 执行段完成后删
 ├── retro/<YYYY-MM-DD>-<主题>/    压缩过的会话记录 digest.md —— retro 收工时删
-└── review-loop/<PR 号>.md        这个 PR 的 review loop（`idea-loop:pr` 的「review loop」）—— 合并时归档进 PR 后删
+└── review-loop/<PR 号>.md        这个 PR 的 review loop（`idea-loop:pr` 的「review loop 文件」）—— 合并时归档进 PR 后删
 ```
 
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。

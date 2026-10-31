@@ -71,7 +71,7 @@ spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff
 | 实现中 | 工单已切 | `idea-loop:to-ticket` 切完时 |
 | 完成 | 实现合并了，或覆盖的 issue 全都验证为不存在 | `idea-loop:pr-review` 合并前；`route` |
 
-脚本拒绝不允许的翻法时会说原因。「验证」表的格式脚本要读：每行 `| #12 … | 存在 | … |` 或 `| #12 … | 不存在 | … |`，写法见 `idea-loop:to-spec` 的模板。
+脚本拒绝不允许的翻法时会说原因。spec 标题下的结论格式脚本要读：每个 issue 一行 `> #12 存在：…` 或 `> #12 不存在：…`，写法见 `idea-loop:to-spec` 的模板；旧 spec 的「验证」表（每行 `| #12 … | 存在 | … |`）仍然认得。
 
 ```bash
 spec-status set     <docs> <slug> <状态>   # 核前提 → 写 status → 刷索引

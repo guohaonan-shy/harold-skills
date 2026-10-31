@@ -17,8 +17,9 @@
  *                                 title, what blocks it, its end-to-end behaviour); before → after shown for pages
  *   verification  怎么验证        one behaviour per line: how checked and the result, what was left unverified
  *                                 and why, what the review rounds concluded
- *   issues        顺带开的 issue   pre-existing problems found on the way and filed, one line each
- *   your-todo     要你做的事      what to review, what to decide, what to prepare before going live
+ *   rollback      能否回滚        if this turns out wrong after merging: can it be undone, how, what it touches; what to
+ *                                 prepare before going live; the pre-existing problems found on the way and filed
+ *   your-todo     要你做的事      what to review, what to decide
  *   reference     参考            folded: change map by module, spec & tickets, ledger, cleanup
  *
  * Everything outside `reference` is for a person, not for whoever fixes the code: a section carrying
@@ -26,8 +27,10 @@
  * number) is refused before it is written. Link and image addresses are not checked.
  *
  * Each writer rewrites only its own sections, so none clobbers another. The legacy `review` section
- * and the 0.0.16 drafts' sections are dropped on the next write;
- * legacy `header` / `ledger` blocks are left as text.
+ * and the 0.0.16 drafts' sections are dropped on the next write; legacy `header` / `ledger` blocks are
+ * left as text. A description opened when 顺带开的 issue was a section of its own still has it: the next
+ * write folds its list into 能否回滚, under the label ISSUES_LABEL, and that list survives later writes of
+ * 能否回滚 unless the new text brings its own.
  * Layout and who writes what: skills/engineering/pr/SKILL.md.
  *
  * Deterministic core (getSection, setSection, readerProblems) is pure and unit-tested. The CLI is the gh boundary;
@@ -49,7 +52,7 @@ export const TITLES = {
   problem: '问题',
   changes: '怎么修',
   verification: '怎么验证',
-  issues: '顺带开的 issue',
+  rollback: '能否回滚',
   'your-todo': '要你做的事',
   reference: '参考',
 };
@@ -58,6 +61,9 @@ export const TITLES = {
 const OLD_TITLES = { changes: ['改了什么'] };
 export const SECTIONS = Object.keys(TITLES);
 const LEGACY = ['review', 'links', 'before-merge', 'after-merge', 'before-after', 'decisions'];
+// The section that became part of 能否回滚; its list is folded in rather than dropped.
+const FOLDED = { name: 'issues', heading: '## 顺带开的 issue' };
+export const ISSUES_LABEL = '**顺带开的 issue**';
 const LOOKUP_ONLY = ['reference'];
 
 /** Code-level references in a section a person reads; link and image addresses are not text. */
@@ -76,6 +82,20 @@ const open = (name) => `<!-- idea-loop:section ${name} -->`;
 const close = (name) => `<!-- /idea-loop:section ${name} -->`;
 
 const heading = (name) => `## ${TITLES[name]}`;
+
+/** The list of an old 顺带开的 issue section, without its heading; null when it was empty or said "无". */
+function issuesToFold(body) {
+  const text = parse(body, [FOLDED.name])[FOLDED.name];
+  if (text == null) return null;
+  const list = (text.startsWith(FOLDED.heading) ? text.slice(FOLDED.heading.length) : text).trim();
+  return list && !/^[（(]?无[）)]?$/.test(list) ? list : null;
+}
+
+/** The labelled issue list at the end of a 能否回滚 section, if it has one. */
+function issuesBlock(text) {
+  const i = text?.indexOf(ISSUES_LABEL) ?? -1;
+  return i === -1 ? null : text.slice(i).trim();
+}
 
 function parse(body = '', names = SECTIONS) {
   const found = {};
@@ -114,8 +134,9 @@ export function setSection(body, name, content) {
     throw new Error(`section ${name} is read by a person; say it in words, put code locations in reference:\n${problems.join('\n')}`);
   }
   const sections = parse(body);
+  const folded = issuesToFold(body);
   let rest = body ?? '';
-  for (const n of new Set([...Object.keys(sections), ...Object.keys(parse(body, LEGACY))])) {
+  for (const n of new Set([...Object.keys(sections), ...Object.keys(parse(body, [...LEGACY, FOLDED.name]))])) {
     const start = rest.indexOf(open(n));
     const end = rest.indexOf(close(n));
     if (start === -1 || end < start) continue;
@@ -123,8 +144,18 @@ export function setSection(body, name, content) {
   }
   rest = rest.trim();
   for (const n of Object.keys(sections)) sections[n] = strip(n, sections[n]);
+  const before = sections.rollback;
   if (content && strip(name, content)) sections[name] = strip(name, content);
   else delete sections[name];
+  // the issue list outlives a rewrite of 能否回滚 that does not mention issues itself
+  const carried = name === 'rollback' ? issuesBlock(before) : null;
+  if (name === 'rollback' && sections.rollback && carried && !sections.rollback.includes(ISSUES_LABEL)) {
+    sections.rollback = `${sections.rollback}\n\n${carried}`;
+  }
+  if (folded) {
+    const own = sections.rollback ?? '';
+    if (!own.includes(ISSUES_LABEL)) sections.rollback = own ? `${own}\n\n${ISSUES_LABEL}\n\n${folded}` : `${ISSUES_LABEL}\n\n${folded}`;
+  }
   const out = SECTIONS.filter((n) => sections[n]).map((n) => `${open(n)}\n${heading(n)}\n\n${sections[n]}\n${close(n)}`);
   if (rest) out.push(rest);
   const next = out.join('\n\n') + '\n';

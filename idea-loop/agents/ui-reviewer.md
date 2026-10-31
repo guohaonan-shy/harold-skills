@@ -67,15 +67,15 @@ effort: high
 ```json
 {
   "spec": [ { "id": "U1", "title": "…", "quote": { "file": "…", "text": "…" }, "behavior": true,
-              "on_screen": true, "figure": "r2-ui-….png", "problem": "…", "user_impact": "…",
-              "decide": { "context": "…", "options": ["改实现：…", "接受实现，走设计变更：…"], "recommend": "…" },
+              "on_screen": true, "figure": "r2-ui-….png", "now": "…", "impact": "…",
+              "decide": { "options": [{ "do": "改实现：…", "cost": "…", "rollback": "…" }, { "do": "接受实现，走设计变更：…", "cost": "…", "rollback": "…" }], "recommend": "…" },
               "locations": "…" } ],
   "coverage": { "walked": ["…"], "unreachable": ["…"], "human": ["…"], "notRun": ["…"] }
 }
 ```
 
 - `quote` 引**冻结下来的原文**（`file` 写相对集成 worktree 根的路径）：优先是冻结记录里那一格的描述，或「冻结后的变更」里人的原话，画布 HTML 里写明的文字也行；最小差异的需求引 `delta/` 状态文件的「应看到什么」或边的描述；都没有就引 spec 或工单。引不到原文的，不是发现。
-- 写法照 `idea-loop:pr` 的「review 汇报」：`title` 是用户能感到的后果，`problem` / `user_impact` / `decide` 用话说行为，位置只放 `locations`。选项至少两个，典型是「改实现」（让实现照画布做）与「接受实现，走设计变更」（实现的样子留着，由 designer 改画布）；这两个选项的文字照这一条的内容写，并给建议。**你只摆这两条路，不替人选。**真正的故障（控制台报错、请求失败、点了没反应、走不通）照旧是发现，不是设计变更的事，选项写修法。
+- 写法照 `idea-loop:pr` 的「Review 汇报」：`title` 是用户能感到的后果，`now` / `impact` / `decide` 用话说行为，位置只放 `locations`；`decide.options` 每个写 `do` / `cost` / `rollback`（做法、代价、能否回滚）。选项至少两个，典型是「改实现」（让实现照画布做）与「接受实现，走设计变更」（实现的样子留着，由 designer 改画布）；这两个选项的文字照这一条的内容写，并给建议。**你只摆这两条路，不替人选。**真正的故障（控制台报错、请求失败、点了没反应、走不通）照旧是发现，不是设计变更的事，选项写修法。
 - **每条都是界面上看得到的行为问题，必须有你自己在实现上拍的截图**：单点差别用之前 / 之后（画布或档案的图在左，实现在右），多步流程用截图拼的流程，动起来的用动图（`idea-loop:evidence` 的交付证据：三种形态、动图）。确实拍不到的，在 `no_screenshot` 里写为什么。复现不了的不算发现，写进 `coverage.notRun`。
 - `coverage` 给 pr-reviewer 写折叠区用：走过哪些状态与边、哪些进不去、哪些标了「人看」、哪些没来得及跑。已经由设计变更改过的格，按最新一版画布核；别把已经接受过的差别再报一次。
 
