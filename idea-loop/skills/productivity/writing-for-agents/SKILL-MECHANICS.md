@@ -19,6 +19,7 @@
 - 那个 skill 只能由人调用：Skill 工具调不到它，写「告诉人跑 `/<插件>:<名字>`」。
 - 只是顺口提到：写名字就行。
 - skill 读自己 `references/` 下的文件，照旧写相对路径。别的 skill 不读它的 `references/`，要用就调这个 skill，由它指过去。
+- skill 起的 subagent 读这个 skill 的 `references/`：agent 定义里写插件根下的完整路径（如 `${CLAUDE_PLUGIN_ROOT}/…/references/<文件>`），因为 agent 的位置和 skill 目录不在一处，写相对路径找不到。这只开给起它的那个 skill 的参考：别的 agent 和别的 skill 照旧调这个 skill、给节名。
 - subagent 的 `tools` 是白名单时，要用别的 skill 就把 `Skill` 加进去，不然调不到。
 
 ## 按调用方式拆

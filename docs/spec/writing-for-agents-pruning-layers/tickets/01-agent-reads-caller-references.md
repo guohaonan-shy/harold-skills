@@ -16,10 +16,10 @@
 
 ## 验收标准
 
-- [ ] `SKILL-MECHANICS.md`「引用另一个 skill」有一条写 skill 起的 subagent 按插件根下完整路径读这个 skill 的参考；这条里没有 idea-loop 的目录名或 agent 名
-- [ ] 扩展后的检查先在一个故意写错的输入上红过两次：一次路径不存在，一次读了不起它的 skill 的参考（在测试里用构造的文本断言，或先改坏一个 agent 定义看它红再改回），报错指出 agent 和路径
-- [ ] 对现在的 13 个 agent 定义，检查是绿的
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 绿
+- [x] `SKILL-MECHANICS.md`「引用另一个 skill」有一条写 skill 起的 subagent 按插件根下完整路径读这个 skill 的参考；这条里没有 idea-loop 的目录名或 agent 名
+- [x] 扩展后的检查先在一个故意写错的输入上红过两次：一次路径不存在，一次读了不起它的 skill 的参考（在测试里用构造的文本断言，或先改坏一个 agent 定义看它红再改回），报错指出 agent 和路径
+- [x] 对现在的 13 个 agent 定义，检查是绿的
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 绿
 
 ## 选中的存量回归
 
