@@ -30,6 +30,7 @@ const TELLS = [
   /retired-ink|tamed-aceternity/i,
   /\breal (product )?project\b/i,
   /\bthat project('s)?\b/i,
+  /IntroTrialCTA|HomePage\.astro|btn-brand-inverse/,
 ];
 
 function files(path) {
