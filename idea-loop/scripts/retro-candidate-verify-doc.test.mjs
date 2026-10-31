@@ -36,18 +36,25 @@ test('retro\'s candidate block has a 验证 field between 归并 and 同类', ()
   );
 });
 
-test('the 验证 field names its three ways of writing: replay case (commit, prompt, yes/no question), a check, 判不了 with a reason', () => {
+test('the 验证 field names its three ways in the template line and says what each writes once, in the paragraph below', () => {
   assert.ok(block, 'no candidate block');
   const line = block[1].split('\n').find((l) => l.startsWith('- 验证：'));
   assert.ok(line, 'no 验证 line');
+  // template line: only the choice and the three names
+  assert.match(line, /三选一/);
   assert.match(line, /回放用例/);
-  assert.match(line, /提交/);
-  assert.match(line, /prompt/);
-  assert.match(line, /是\/否题/);
   assert.match(line, /检查/);
-  assert.match(line, /先在历史错误上看它红/);
   assert.match(line, /判不了/);
-  assert.match(line, /原因/);
+  assert.doesNotMatch(line, /先在历史错误上看它红|是\/否题/, '三种写法的内容只在下面那一段写一次，不在模板行重复');
+  // the paragraph after the block: what each one writes
+  const para = skill.slice(skill.indexOf('```', skill.indexOf(block[1]) + block[1].length)).split('\n').find((l) => l.startsWith('「验证」按规则的性质选'));
+  assert.ok(para, '候选格式后面没有「验证」按规则的性质选 那一段');
+  assert.match(para, /提交/);
+  assert.match(para, /prompt/);
+  assert.match(para, /是\/否题/);
+  assert.match(para, /先在历史错误上看它红/);
+  assert.match(para, /判不了/);
+  assert.match(para, /原因/);
 });
 
 test('the 做完的条件 of the candidate section counts nine items and checks the 验证 field', () => {

@@ -34,5 +34,5 @@
 
 - `idea-loop/scripts/decision-rules-who-decides-doc.test.mjs`：把 `decision-record` 的候选块当重复格式核对，加栏要让它照旧过
 - `idea-loop/scripts/retro-pool-count.test.mjs`：数候选池文件的字段
-- [ ] review 第 1 轮 C1（2026-10-31）：retro 候选格式里「验证」的三种写法只在一处说明：候选模板那一行只留「三选一」和三种的名字，每种写什么、按什么选都在下面那一段（写作规则「单一事实来源」：每个意思只放在一个权威的位置）
-- [ ] review 第 1 轮 C2（2026-10-31）：插件 README 里 retro 那一行写明每条候选还写明改完怎么验证（REVIEW.md：改了插件的 skill，同一个改动里同步插件说明）
+- [x] review 第 1 轮 C1（2026-10-31）：retro 候选格式里「验证」的三种写法只在一处说明：候选模板那一行只留「三选一」和三种的名字，每种写什么、按什么选都在下面那一段（写作规则「单一事实来源」：每个意思只放在一个权威的位置）
+- [x] review 第 1 轮 C2（2026-10-31）：插件 README 里 retro 那一行写明每条候选还写明改完怎么验证（REVIEW.md：改了插件的 skill，同一个改动里同步插件说明）
