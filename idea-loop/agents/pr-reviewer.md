@@ -69,13 +69,13 @@ node "<companion>" task --model gpt-5.6-sol --effort high --prompt-file <工作�
    - **行为问题**：真的走一遍，把复现结果做成最快能让人看懂的证据，标明 `on_screen`；界面上看得到的必须有取自实现的截图。**复现不了的不做证据**，让它在第 5 步被校验掉，原因写「没复现：<卡在哪>」。
    - **非行为问题**：用 diff 核实，没有证据块。
 3. **给每条候选标处置**，照 `review-standards` 的「每条候选标处置」，每条都要标。改动行以外的存量只在「Standards 轴」那两种例外下报。
-4. **写成拍板的人读得懂的样子**：照 `review-standards` 的「每条写成拍板的人读得懂的样子」和 `idea-loop:pr` 的「review 汇报」。位置全放 `locations`。
+4. **写成拍板的人读得懂的样子**：照 `review-standards` 的「每条写成拍板的人读得懂的样子」和 `idea-loop:pr` 的「Review 汇报」。位置全放 `locations`。
 5. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-base> <证据目录> <N>`。`discarded` 进「丢弃的候选」。`rewrite` 不为空（退出码 2）就改写那几条再跑，直到为空。只有 `spec` 与 `standards` 里的条目进汇报。
 6. **编号**：UI 走查条目原来的 `U1` 等编号作废，Spec 依次 `S1`、`S2`……，Standards 依次 `C1`、`C2`……。
 
 ## 写出汇报
 
-照 `idea-loop:pr` 的「review 汇报」写，存成 `.tmp/pr-review/<PR 号>/round-<N>/report.md`：
+照 `idea-loop:pr` 的「Review 汇报」写（来自 review），存成 `.tmp/pr-review/<PR 号>/round-<N>/report.md`：
 
 - 第一行是 review loop 的条目标记 `<!-- idea-loop-entry {"kind":"review","round":<N>} -->`。
 - 「已按规则处理」一节每条照规则的候选一行，行尾留 `〔链接〕` 占位（之后补成提交或 issue 链接）；列进这一节的不在下面重复。

@@ -59,17 +59,17 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 ### 每条写成拍板的人读得懂的样子
 
-汇报的格式见 `idea-loop:pr` 的「review 汇报」。候选里就按那几块写，不留到发帖时再改：
+汇报的格式见 `idea-loop:pr` 的「Review 汇报」；「要你决定」的条目，Spec 和 Standards 是同一个格式。候选里就按那几块写，不留到发帖时再改：
 
 | 字段 | 写什么 |
 |---|---|
 | `title` | 后果：用户能感到的那句话；不是 bug 的就说是什么 |
-| `problem` | 问题：一两句，是什么、跟 main 哪里不一样 |
-| `user_impact` | 对用户的影响：谁、在什么情况下、多常见；碰不到就写「用户感受不到」 |
+| `now` | 现状：是什么、跟 main 哪里不一样；要你决定的，同时说清和 spec 或工单的哪条规定对不上、那条规定是干什么用的（Standards 的把规则原文写在这里） |
+| `impact` | 对用户的影响：谁、在什么情况下、多常见；碰不到就写「用户感受不到」 |
 | `on_screen` | 行为问题在界面上看不看得到；看得到的，`figure` 必须是取自实现的截图（之前 / 之后、截图流程、动图） |
 | `figure` / `example` | 证据：图的文件名，或直接写进正文的表格 / 例子；非行为问题都不填 |
 | `no_screenshot` | 界面上看得到却拍不到时，一句为什么（比如只有真机能复现）；其余不填 |
-| `decide` | **要你决定**的才写：`context`（一句前提：和哪条规定对不上，那条规定是干什么用的）+ `options`（至少两个）+ `recommend`（建议和一句理由）。照规则的不写 |
+| `decide` | **要你决定**的才写（Spec、Standards 同一个格式）：`options`（至少两个，每个 `{ do, cost, rollback }`：做法、代价、能否回滚）+ `recommend`（建议和一句理由）。照规则的不写 |
 | `disposition` / `basis` / `action` | 处置：`照规则` 或 `要你决定`（不写就是后者）。照规则的写 `basis`（`kind`：规则原文 / 人的决定 / 现有做法；`file` 与 `text`：出处与原文，脚本会核；`summary`：给人读的一句依据）和 `action`（修 / 同步改 / 接受并补记 / 恢复 / 开 issue） |
 | `locations` | 给修复方的位置：文件:行号、提交号。**只有这个字段可以写代码** |
 
@@ -97,7 +97,7 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 - 违反了哪条规则：**规则原文 + 规则文件**（`rule`）
 - 违反的代码：**diff 新增行里的那几行**，原样（`code`），只用于校验和折叠区，不进正文
-- 现状（`now`）、影响（`impact`）、建议（`suggestion`）：各一两句，用话说，同样不写代码层面的指称；位置放 `locations`
+- 现状（`now`，带上规则原文的意思）、影响（`impact`）：各一两句，用话说，同样不写代码层面的指称；要你决定的另写 `decide`（选项各带代价和能否回滚，加建议）；位置放 `locations`
 
 规则只用在 diff 里的代码上。**改动行以外的存量问题不报，也不去找**（跟这次无关的存量另有人开 issue，`idea-loop:decision-rules` 的「自己定的四条」第 2 条）。两种例外要报，处置一律是「照规则 · 修」：
 
@@ -120,14 +120,14 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
     "id": "S1", "title": "…", "behavior": true, "on_screen": true,
     "quote": { "file": "docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
     "figure": "r1-….png", "example": "（界面上看不到时可以只有它：一张小表或一行例子）",
-    "problem": "…", "user_impact": "…",
-    "decide": { "context": "…", "options": ["…", "…"], "recommend": "…" },
+    "now": "…", "impact": "…",
+    "decide": { "options": [{ "do": "…", "cost": "…", "rollback": "…" }, { "do": "…", "cost": "…", "rollback": "…" }], "recommend": "…" },
     "locations": ["src/…:42", "提交 2daa0bae"]
   },
   {
     "id": "S2", "title": "…", "behavior": false, "disposition": "照规则",
     "quote": { "file": "docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
-    "problem": "…", "user_impact": "用户感受不到",
+    "now": "…", "impact": "用户感受不到",
     "basis": { "kind": "人的决定", "file": "docs/spec/<spec-slug>/<spec-slug>.md", "text": "人的原话", "summary": "人在 spec 里已经定过……" },
     "action": "同步改",
     "locations": ["docs/spec/….md:88"]
@@ -136,7 +136,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
     "id": "C1", "title": "…", "disposition": "照规则", "action": "修",
     "rule": { "file": "CODING_STANDARDS.md", "text": "规则原文" },
     "code": { "path": "src/….ts", "snippet": "原样的几行" },
-    "now": "…", "impact": "…", "suggestion": "…",
+    "now": "…", "impact": "…",
     "locations": ["src/….ts:17"]
   }]
 }
@@ -154,9 +154,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 
 再查**写得对不对**，没过的不丢弃，进 `rewrite`，审查者改写后重跑，直到它为空（脚本退出码 2 表示还有要改写的）：
 
-- Spec 的标题、问题、对用户的影响都在，「要你决定」有前提、至少两个选项、有建议；`behavior` 标了；非行为问题没带配图；行为问题标了 `on_screen`，界面上看得到的有截图，或在 `no_screenshot` 里写了为什么没有。
+- 标题、现状、影响都在；「要你决定」（两轴同一个格式）有至少两个选项，每个都写了做法、代价、能否回滚，并有建议；Spec 的 `behavior` 标了；非行为问题没带配图；行为问题标了 `on_screen`，界面上看得到的有截图，或在 `no_screenshot` 里写了为什么没有。
 - **照规则**的有依据（种类是三种之一、出处和原文都给了、有一句给人读的依据）和动作（修 / 同步改 / 接受并补记 / 恢复 / 开 issue 之一），**不带**「要你决定」；存量例外的动作是修、带 `pollutes`。处置只能是「照规则」或「要你决定」。
-- Standards 的现状、影响、建议都在。
 - 这些给人读的字段里没有代码层面的指称：反引号、「文件:行号」、路径、代码文件名、章节编号、提交号、下划线命名、函数调用。
 
 只有站得住、写得对的才进这一轮的汇报。

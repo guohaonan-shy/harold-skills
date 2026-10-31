@@ -31,6 +31,7 @@ const loop = `# PR #12 的 review loop
 test('entries come out in order with their kind, round and body', () => {
   const e = parseLoop(loop);
   assert.deepEqual(e.map((x) => [x.kind, x.round, x.rulings]), [['pause', 1, 1], ['review', 1, 2]]);
+  assert.deepEqual(e.map((x) => x.source), ['impl', 'review'], 'a legacy pause entry is a report from implementation');
   assert.match(e[0].body, /^## 第 1 次停下/);
   assert.doesNotMatch(e[0].body, /review loop/); // the title is not part of an entry
 });
@@ -47,6 +48,50 @@ test('the next round counts per kind, starting at 1 for an empty file', () => {
   assert.equal(nextRound(e, 'review'), 2);
   assert.equal(nextRound(e, 'pause'), 2);
   assert.equal(nextRound(parseLoop(''), 'review'), 1);
+});
+
+// One kind of report: stops during implementation and review rounds are both a Review 汇报. The marker says
+// where it came from; rounds are counted per source, so review rounds keep starting at 1 and the two-round
+// automatic cap is not eaten by implementation stops.
+const merged = `${loop}
+<!-- idea-loop-entry {"kind":"review","round":2,"from":"impl"} -->
+## 第 3 次 · 来自实现中
+**结论**：落地 2 张。
+
+### 做了什么
+- 继续下一批
+`;
+
+test('a Review 汇报 from implementation is a review entry with from=impl, counted apart from review rounds', () => {
+  const e = parseLoop(merged);
+  assert.deepEqual(e.map((x) => [x.kind, x.source, x.round]), [['pause', 'impl', 1], ['review', 'review', 1], ['review', 'impl', 2]]);
+  assert.equal(nextRound(e, 'review'), 2, 'implementation stops do not use up a review round');
+  assert.equal(nextRound(e, 'review', 'impl'), 3, 'the legacy pause counts as an implementation report');
+  assert.equal(nextRound(parseLoop(''), 'review', 'impl'), 1);
+  assert.throws(() => parseLoop('<!-- idea-loop-entry {"kind":"review","round":1,"from":"nowhere"} -->'), /bad entry marker/);
+});
+
+test('an implementation report is archived under its own marker and label; the same round number of another source is not mistaken for it', () => {
+  const e = parseLoop(merged);
+  const body = archiveBody(e[2], 'app');
+  assert.ok(body.startsWith(archiveMarker('review', 2, 'impl')));
+  assert.match(body, /实现中第 2 次汇报在会话里进行/);
+  // legacy markers, written before the kinds were merged, still mark their entries as posted
+  const posted = [{ body: archiveMarker('pause', 1) }, { body: archiveMarker('review', 1) }];
+  assert.deepEqual(toArchive(e, posted).map((x) => [x.kind, x.source, x.round]), [['review', 'impl', 2]]);
+  // a review round 2 is not the implementation report 2
+  assert.equal(toArchive(e, [{ body: archiveMarker('review', 2) }]).length, 3);
+});
+
+test('the one 要你决定 heading holds an entry for a ruling; the older bold mark and the old 需要你决定 heading still do', () => {
+  const entry = (body) => `<!-- idea-loop-entry {"kind":"review","round":3,"from":"impl"} -->\n## 第 3 次 · 来自实现中\n${body}`;
+  const asks = (heading) => `${entry(`\n${heading}\n\n#### T03 · 卡在哪\n现状……\n\n### 做了什么\n- 其余继续\n`)}`;
+  assert.equal(parseLoop(asks('### 要你决定'))[0].settled, false);
+  assert.equal(parseLoop(asks('### 需要你决定'))[0].settled, false);
+  assert.equal(parseLoop(asks('#### S1 · 标题\n**要你决定**：A，还是 B？'))[0].settled, false);
+  assert.equal(parseLoop(entry('\n### 已按规则处理\n- 一条\n\n### 做了什么\n- 继续\n'))[0].settled, true);
+  // and once ruled on and acted on, it is settled as before
+  assert.equal(parseLoop(`${asks('### 要你决定')}\n### 你的批示（2026-11-01 10:00）\n> T03 选 A\n\n### 做了什么\n- 03 按 A 做了\n`)[0].settled, true);
 });
 
 test('a malformed marker is an error, not a silently dropped entry', () => {
