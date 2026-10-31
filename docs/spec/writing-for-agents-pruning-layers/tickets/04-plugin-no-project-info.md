@@ -34,3 +34,4 @@
 
 - `idea-loop/scripts/to-spec-by-deliverable-doc.test.mjs`：改 to-spec 的示例会碰到它守的节表和字数（整文件 ≤5000 UTF-8 字符）
 - `idea-loop/scripts/no-project-leak.test.mjs`：本次扩它，原有词表不能删
+- [ ] review 第 1 轮 C3（2026-10-31）：插件 README 的脚本清单里，项目名检查那一行写的是现在扫的范围（skill、agent、插件 docs、README、插件 AGENTS.md）和有意不扫的两处（回放用例、测试夹具）（REVIEW.md：改了脚本，同一个改动里同步插件说明）
