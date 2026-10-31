@@ -24,6 +24,8 @@
 
 dreaming 的两份参考里「交给人时出候选卡 / 维护卡」是 dreaming 自己的步骤名，不改。
 
+> 人的决定（2026-10-31）：「explain-mechanism的回放中，这个用例撤掉」。原因：它测的「机制第一次出现讲清」写在人的全局 CLAUDE.md，回放的 `claude -p` 两边都读它，用例分不出插件改动（改前改后都判「是」）。
+
 ## 验收标准
 
 - [x] 在 `idea-loop/` 下搜「交给人时」和「handing-to-human」，只剩 dreaming 那两处同名步骤；`decision-rules` 下没有 references 目录
@@ -35,6 +37,7 @@ dreaming 的两份参考里「交给人时出候选卡 / 维护卡」是 dreamin
 - [x] 回放用例 prompt 已改；按仓库的回放流程跑一次改前 / 改后（小用例，当场跑），结果文件路径写进 hand-back；判定是什么都如实写
 - [x] 一个新的文档测试（`node --test`）断言：插件里没有指向「交给人时」或那份参考的文字；`writing-for-agents` 有先归并一条；`retro` 候选格式有归并一栏。改前跑它是红的
 - [x] 仓库现有的全部 `node --test idea-loop/scripts/` 通过
+- [ ] 人的决定（2026-10-31）：回放用例 explain-mechanism 整个目录删掉；仓库里引用它的地方（用例清单、README、文档测试）同步；全量测试通过
 
 ## 选中的存量回归
 
