@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#80 的 retro：候选 2、3、4 摆给人之前的那一刻（决定记录 docs/raw/decisions/80.md 候选 2、3、4）；是/否题的原话来自 writing-for-agents-pruning-layers 的 scope grill（docs/raw/idea-loop-decisions/2026-10-31-writing-for-agents-scope-grill.md）",
+  "commit": "571969a",
+  "prompt": "/idea-loop:retro 这是 guohaonan-shy/harold-skills#80 这场 issue 会话的 retro，当前仓库就是 harold-skills。会话记录已经压缩好了，不要 locate、不要导出：下面就是 digest 里人纠正过 skill 的三条发言（其余与本次无关，已略），当作 digest.md 直接用，第 1 步的 1–3 小步算已完成。\n\n1. 人（审全局 CLAUDE.md 草稿时，说到草稿放的位置）：「claude.md的草稿，我没办法在file打开的面板上直接修改」\n2. 人（读 AI 摆的题时，说到题里的「我」「你」）：「claude.md草稿中的我、你具体代指的是谁，方便我继续写后面的内容。」\n3. 人（审同一份草稿的例子时）：「这个能不能尽可能通俗一些、去项目化一些，里面有很具体我的项目信息和我导读场景」\n\n三条都按「纠正与追问」处理。落点：第 1 条给 `idea-loop:writing-for-agents` 或 `idea-loop:evidence` 里你认为合适的那个；第 2 条给 `idea-loop:evidence`；第 3 条给 `idea-loop:writing-for-agents`。\n\n这是回放，我（人）不在场，不会逐条回复你：不要等我的回复，不要执行 gh issue create、gh pr create、gh api 的写操作、git push，也不进第 5 步。第 1–3 步照做，然后把第 3 步生成的每条候选，按 skill 里候选的格式逐字段原样写在最后一段回复里，就当作它们已经逐条摆给我了。",
+  "stop_at": "第 4 步开始的那一刻：每条候选已按格式写好，摆给人，等人回复；不进第 5 步",
+  "question": "每条候选都写了「验证」一栏，且写的是可跑的用例三样（当时的提交、让 skill 产出东西的那句 prompt、一道是/否题）、检查的名字，或「判不了」加原因吗？",
+  "quote": "要结合candidate分析，这个内容到底可以和现有的skill怎么结合，以及这块内容要如何验证这个改动确实对于之前的问题解决了",
+  "size": "small",
+  "size_basis": "只驱动 retro 一个 skill 到第 4 步摆出候选的那一刻，不起插件 agent、不开浏览器；prompt 里禁了 gh 的写操作和 git push，没有付费外部服务"
+}
