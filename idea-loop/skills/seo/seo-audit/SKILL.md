@@ -31,7 +31,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
 
 1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，报告以它为根：业务是做什么的，决定哪些发现要紧、那「一件事」该是什么。
-3. 这个 skill 需要 `business_overview`。为空时：
+3. 这个 skill 需要 `business_overview`。它写着「无」（人明确说过不需要）时，就当作没有这项信息：不推断、不问、不写回，人在场、无人值守都一样；在 `assumptions` 里写明没法按业务判断哪些发现要紧、那「一件事」该是什么，只交回核实过的问题，人在场就写在报告里；无人值守且没有发现可挂时，把同样的话写进 `uncollected`。其余为空时：
    - 人在场：做最小的现场补齐：从站点推断业务，用一个问题和人确认，用 `update_project_context` 写回，再继续审计。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
    - 无人值守：缺了不推断，不从站点猜一段业务来用，不写回。在 `assumptions` 里写明缺 `business_overview`、哪部分因此没做（没法按业务判断哪些发现要紧、那「一件事」该是什么，只交回核实过的问题）；没有发现可挂时，把同样的话写进 `uncollected`。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。

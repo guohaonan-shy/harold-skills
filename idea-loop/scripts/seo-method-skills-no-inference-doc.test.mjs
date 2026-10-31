@@ -111,7 +111,56 @@ test('competitor-analysis: a caller-named competitor is still analysed unattende
   assert.match(inputs, /无人值守时用调用方点名的/);
 });
 
-test('keyword-research: seeds without business_overview fall back to the key-page head terms', () => {
+test('keyword-research: seeds without business_overview (empty or 「无」) fall back to the key-page head terms', () => {
   const inputs = section(read('keyword-research'), '必需输入');
-  assert.match(inputs, /`business_overview` 为空就只取头词/);
+  assert.match(inputs, /`business_overview` 为空或写着「无」就只取头词/);
 });
+
+// Review round 1, S3: a project fact the human explicitly said they do not need is written down as 「无」. The four
+// skills read it as "no such information": no inference, no question (also when a human is present), no write-back;
+// the hand-back (or the report, when a human is present) says which part was therefore not done.
+function step3Lead(slug) {
+  const ctx = section(read(slug), '项目上下文');
+  const line = ctx.split('\n').find((l) => /^3\.\s/.test(l));
+  assert.ok(line, `${slug}: 「项目上下文」 has no step 3`);
+  return line;
+}
+
+const noneCases = [
+  {
+    slug: 'keyword-research',
+    needs: [/`business_overview`/, /`current_goal`/],
+    notDone: [/没法按业务筛种子词/, /没法按目标给机会排优先级/],
+  },
+  {
+    slug: 'seo-audit',
+    needs: [/`business_overview`/],
+    notDone: [/没法按业务判断哪些发现要紧/],
+  },
+  {
+    slug: 'link-prospecting',
+    needs: [/`positioning`/, /竞品/],
+    notDone: [/未按主张定角度/, /未挖竞品外链/],
+  },
+  {
+    slug: 'competitor-analysis',
+    needs: [/竞品/],
+    notDone: [/竞品分析因此没做/],
+  },
+];
+
+for (const c of noneCases) {
+  test(`${c.slug}: a fact written as 「无」 is read as absent — no inference, no question, no write-back, say what was not done`, () => {
+    const lead = step3Lead(c.slug);
+    assert.match(lead, /写着「无」/, 'step 3 must name the 「无」 case');
+    assert.match(lead, /当作没有/, 'read 「无」 as no such information');
+    assert.match(lead, /不推断、不问、不写回/, '「无」 means no inference, no question, no write-back');
+    assert.match(lead, /人在场、无人值守都一样/, 'same for a present human and an unattended run');
+    assert.match(lead, /`assumptions`/, 'what was not done goes into `assumptions`');
+    for (const re of c.needs) assert.match(lead, re, 'must name the fact(s) this skill reads');
+    for (const re of c.notDone) assert.match(lead, re, 'must say which part was therefore not done');
+    // the 「为空」 branches below are the ones that ask / infer; they stay
+    const { present } = step3(c.slug);
+    assert.match(present, /update_project_context/);
+  });
+}

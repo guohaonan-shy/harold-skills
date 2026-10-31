@@ -33,7 +33,7 @@ description: 竞品分析：深挖一个竞品的自然流量、排名词、内�
 
 1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，分析以它为根：已存的竞品说明这个域名是否早已知道、以前对它下过什么结论。
-3. 这个 skill 需要竞品。SEO.md 和项目上下文里都没有时：
+3. 这个 skill 需要竞品。竞品写着「无」（人明确说过不需要；SEO.md「竞品」节是一行 `- 无`，脚本读出 `competitors` 为空、`confirmed.competitors` 为 true）时，就当作没有竞品可用：不推断、不问、不写回，人在场、无人值守都一样；调用方或人点名了一家，照常分析那一家，没点名就在 `assumptions` 里写明竞品写着无、竞品分析因此没做，人在场就写在报告里；无人值守且没有发现可挂时，把同样的话写进 `uncollected`。其余 SEO.md 和项目上下文里都没有时：
    - 人在场：做最小的现场补齐：存下正在分析的这家，问人（或从 `find_serp_competitors` 推断再确认）还有没有别家；先写进 SEO.md 的「竞品」，再用 `update_project_context`（`addCompetitors`）写回，然后继续分析。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
    - 无人值守：只分析调用方点名的那家，照常做；没点名、也没有竞品可用时，缺了不推断，不用 `find_serp_competitors` 找竞品来分析，不写回。在 `assumptions` 里写明缺竞品、竞品分析因此没做；没有发现可挂时，把同样的话写进 `uncollected`。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
