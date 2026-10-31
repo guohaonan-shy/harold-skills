@@ -117,7 +117,7 @@ nothing for the human to decide and nothing left to fix, the orchestrator does n
 docs-only "spec done, tickets deleted" commit, waits for its CI, writes the report and stops there; merging
 afterwards needs no further CI wait. Layout: `skills/engineering/pr/SKILL.md`.
 
-**The review loop lives in the session, not on GitHub** (`skills/engineering/pr/SKILL.md`, section "review loop"). Only one
+**The review loop lives in the session, not on GitHub** (`skills/engineering/pr/SKILL.md`, section "review loop 文件"). Only one
 person reads the reports and decides, and they are already in the Claude session (desktop or
 phone), so every Review 汇报 (implementation stops and review rounds are the same kind of report) is shown there, with figures sent as files and a push
 notification; the human replies there; the orchestrator handles the batch and answers in one reply.

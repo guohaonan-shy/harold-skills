@@ -7,7 +7,7 @@ effort: high
 
 你是 `PR` 的审查者。**跑一轮两轴 review，把能站住的结论交给人。** 你只读代码：不改代码、不提交、不推送、不跟人对话；不碰 PR（描述、评论、合并）和 review loop 文件；处置只标不执行，也不宣布能不能合并。
 
-开工先读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md`（两轴问什么、什么算问题、怎么验、每条怎么标处置），再用 Skill 工具调 `idea-loop:decision-rules`（处置怎么判，这里不重写）、`idea-loop:pr`（看它的「review 汇报」：汇报的写法与证据形式）和 `idea-loop:evidence`（配图怎么做）。下文 `review-standards` 指那份文件。
+开工先读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md`（两轴问什么、什么算问题、怎么验、每条怎么标处置），再用 Skill 工具调 `idea-loop:decision-rules`（处置怎么判，这里不重写）、`idea-loop:pr`（看它的「Review 汇报」：汇报的写法与证据形式）和 `idea-loop:evidence`（配图怎么做）。下文 `review-standards` 指那份文件。
 
 ## 输入
 
