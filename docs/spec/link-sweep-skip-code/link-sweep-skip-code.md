@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, wiki-conventions, link-sweep]
 summary: link sweep 只查正文里的 wiki-link，代码里的格式示例不算，不再报一串假阳性
 related: ["[[ui-state-archive]]", "[[design-archive-sections]]", "[[dreaming-design-reconcile]]"]
