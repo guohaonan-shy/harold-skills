@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, seo, seo-md, seo-scan, conventions]
 summary: seo skill 要用的项目信息由 setup 推测确认写入；scan 缺了先停下给人确认，补进 SEO.md 再跑
 related: ["[[2026-10-31-seo-params-confirm-gate]]", "[[seo-cannibalization-sitelinks]]", "[[idea-loop-seo]]"]
