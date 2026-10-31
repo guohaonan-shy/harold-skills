@@ -37,7 +37,7 @@
 - [x] 全部 `node --test idea-loop/scripts/` 通过
 - [x] 人的决定（2026-10-31）：开头引用块写每个 issue 存在与否；`spec-status`、`issues.mjs`、`issue-verify` 改读它并仍认旧「验证」表，各自的测试覆盖新旧两种写法
 - [x] 人的决定（2026-10-31）：「问题陈述」节名；「方案」开头有交互时序图的位置说明，后端 / 前端内部 / 前端交互是它的子小节
-- [ ] review 第 1 轮 S2（2026-10-31）：插件 README 里写 to-spec 的那一行，「现状的陈述带出处」改指 idea-loop:evidence 的共用写法，不再指 decision-rules
+- [x] review 第 1 轮 S2（2026-10-31）：插件 README 里写 to-spec 的那一行，「现状的陈述带出处」改指 idea-loop:evidence 的共用写法，不再指 decision-rules
 
 ## 选中的存量回归
 
