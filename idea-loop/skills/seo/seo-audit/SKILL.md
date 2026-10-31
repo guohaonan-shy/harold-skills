@@ -15,7 +15,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
 
 - **人在场**（默认）：照下文原样，可以问、可以存、可以出报告。
 - **无人值守**：调用方提示的第一行是「无人值守，交回发现清单。」，后面给出 SEO.md 路径、OpenSEO 项目、本次额度和今天的日期。这时：
-  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`。
+  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`；项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步。
   - 不写入、不保存：不调 `update_project_context`（研究日志也不追加），不改 SEO.md，不建项目。
   - 不出报告：工作流第 6–10 步不做，改做「无人值守的交回」一节。
   - 花费不超过调用方给的额度：每次付费调用后用 `whoami` 核已花的数，再花一次可能超额就停，没做的写进 `assumptions`。
@@ -33,7 +33,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
 2. 调 `get_project_context`，报告以它为根：业务是做什么的，决定哪些发现要紧、那「一件事」该是什么。
 3. 这个 skill 需要 `business_overview`。为空时：
    - 人在场：做最小的现场补齐：从站点推断业务，用一个问题和人确认，用 `update_project_context` 写回，再继续审计。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
-   - 无人值守：从站点推断，写进 `assumptions`，不写回。
+   - 无人值守：缺了不推断，不从站点猜一段业务来用，不写回。在 `assumptions` 里写明缺 `business_overview`、哪部分因此没做（没法按业务判断哪些发现要紧、那「一件事」该是什么，只交回核实过的问题）；没有发现可挂时，把同样的话写进 `uncollected`。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
 5. 收尾时（只限人在场）写回经得住时间的东西：修正过的 `business_overview`；报告单独点名的页面，经人同意先加进 SEO.md 的「重点页面」，再用 `addKeyPages` 写进项目上下文，两边一致；并追加一条研究日志：`{ appendResearchLog: { summary: "Site audit: <domain>. Verdict: <conclusion>" } }`。
 
@@ -85,7 +85,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
   "ratio": { "numerator": 3, "denominator": 40 },
   "repro": "照着就能重跑：哪个工具、什么参数；或用什么 UA 请求哪个网址、看哪一行",
   "fix": "建议的修法；没定的写「需要诊断」或「需要决定：…」",
-  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值"] }
+  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值；缺的项目信息及因此没做的部分"] }
 ```
 
 - `direction`：状态码、跳转、可索引性、sitemap、robots、证书、速度归 `technical`；title、description、标题层级、正文、内链、图片 alt 归 `pages`；外链概览得出的缺口归 `backlinks`。`kind` 是问题种类的短名，小写连字符，同一方向内唯一；同一种问题的多页合成一条，`targets` 列全。

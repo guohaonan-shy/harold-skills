@@ -13,7 +13,7 @@ description: 关键词研究：从种子话题发现机会词，评估指标和 
 
 - **人在场**（默认）：照下文原样，可以问、可以存、可以出报告。
 - **无人值守**：调用方提示的第一行是「无人值守，交回发现清单。」，后面给出 SEO.md 路径、OpenSEO 项目、本次额度和今天的日期。这时：
-  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`。
+  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`；项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步。
   - 不写入、不保存：不调 `save_keywords`、`update_project_context`（研究日志也不追加），不改 SEO.md。
   - 不出报告：工作流第 9–10 步不做，改做「无人值守的交回」一节。
   - 花费不超过调用方给的额度：每次付费调用后用 `whoami` 核已花的数，再花一次可能超额就停，没做的写进 `assumptions`。
@@ -21,7 +21,7 @@ description: 关键词研究：从种子话题发现机会词，评估指标和 
 ## 必需输入
 
 - `projectId`：SEO.md「OpenSEO」节的项目；没有 SEO.md 时先用 `list_projects`。
-- 一个或多个种子：话题、产品、页面、竞品或受众的问题。无人值守时取 SEO.md「重点页面」的头词，加上 `business_overview` 里的核心话题。
+- 一个或多个种子：话题、产品、页面、竞品或受众的问题。无人值守时取 SEO.md「重点页面」的头词，加上 `business_overview` 里的核心话题（`business_overview` 为空就只取头词，见「项目上下文」第 3 步）。
 - 可选的市场 / 地区 / 语言。
 
 目标市场、地区、语言不清楚、又会实质影响关键词指标时：人在场就问人；无人值守按 SEO.md「站点」节的语言取，没有就用 MCP 默认值。其余情况用 MCP 工具的默认值。
@@ -34,7 +34,7 @@ description: 关键词研究：从种子话题发现机会词，评估指标和 
 2. 调 `get_project_context`，研究以它为根：业务、目标、市场，以及已经存下的竞品和重点页面。
 3. 这个 skill 需要 `business_overview` 和 `current_goal`。任一为空时：
    - 人在场：做最小的现场补齐：问人，或从站点推断再确认，补到够用为止，用 `update_project_context` 写回，再继续研究。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
-   - 无人值守：从站点推断，写进 `assumptions`，不写回。
+   - 无人值守：缺了不推断，不从站点猜业务或目标来用，不写回。在 `assumptions` 里写明缺 `business_overview` 还是 `current_goal`、哪部分因此没做（缺 `business_overview`：没法按业务筛种子词；缺 `current_goal`：没法按目标给机会排优先级），其余照常做完；没有发现可挂时，把同样的话写进 `uncollected`。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
 5. 收尾时（只限人在场）写回经得住时间的东西：磨得更准的 `business_overview` 或 `current_goal`；在 SERP 里反复出现的竞品、关键词该落到的页面，经人同意先加进 SEO.md 的「竞品」「重点页面」，再用 `addCompetitors`、`addKeyPages` 写进项目上下文，两边一致；并追加一条研究日志：`{ appendResearchLog: { summary: "Keyword research: <seeds/market>. Verdict: <conclusion>" } }`。
 
@@ -94,7 +94,7 @@ description: 关键词研究：从种子话题发现机会词，评估指标和 
   "evidence": { "what": "research_keywords，seeds=[…]，location=…", "when": "YYYY-MM-DD", "values": "搜索量 / KD / 意图，一两句" },
   "repro": "照着就能重跑：哪个工具、什么参数",
   "fix": "建议的修法；没定的写「需要决定：…」",
-  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值"],
+  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值；缺的项目信息及因此没做的部分"],
   "content": { "keyword": "weeknight dinner ideas", "pageType": "教程", "mode": "new" } }
 ```
 

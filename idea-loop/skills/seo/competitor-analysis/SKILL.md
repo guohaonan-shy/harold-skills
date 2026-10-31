@@ -15,7 +15,7 @@ description: 竞品分析：深挖一个竞品的自然流量、排名词、内�
 
 - **人在场**（默认）：照下文原样，可以问、可以存、可以出报告。
 - **无人值守**：调用方提示的第一行是「无人值守，交回发现清单。」，后面给出 SEO.md 路径、OpenSEO 项目、本次额度和今天的日期。这时：
-  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`。
+  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`；项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步。
   - 不写入、不保存：不调 `update_project_context`（研究日志也不追加），不改 SEO.md。
   - 不出报告：「输出格式」不做，改做「无人值守的交回」一节。
   - 花费不超过调用方给的额度：每次付费调用后用 `whoami` 核已花的数，再花一次可能超额就停，没做的写进 `assumptions`。
@@ -35,7 +35,7 @@ description: 竞品分析：深挖一个竞品的自然流量、排名词、内�
 2. 调 `get_project_context`，分析以它为根：已存的竞品说明这个域名是否早已知道、以前对它下过什么结论。
 3. 这个 skill 需要竞品。SEO.md 和项目上下文里都没有时：
    - 人在场：做最小的现场补齐：存下正在分析的这家，问人（或从 `find_serp_competitors` 推断再确认）还有没有别家；先写进 SEO.md 的「竞品」，再用 `update_project_context`（`addCompetitors`）写回，然后继续分析。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
-   - 无人值守：只分析调用方点名的那家；没点名就用 `find_serp_competitors` 推断，写进 `assumptions`，不写回。
+   - 无人值守：只分析调用方点名的那家，照常做；没点名、也没有竞品可用时，缺了不推断，不用 `find_serp_competitors` 找竞品来分析，不写回。在 `assumptions` 里写明缺竞品、竞品分析因此没做；没有发现可挂时，把同样的话写进 `uncollected`。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
 5. 收尾时（只限人在场）写回经得住时间的东西：这家竞品的一句强项和软肋，经人同意先写进 SEO.md 的「竞品」，再用 `update_project_context` 的 `addCompetitors` 写进项目上下文，两边一致；并追加一条研究日志：`{ appendResearchLog: { summary: "Competitor analysis: <domain>. Verdict: <conclusion>" } }`。
 
@@ -104,7 +104,7 @@ description: 竞品分析：深挖一个竞品的自然流量、排名词、内�
   "evidence": { "what": "get_ranked_keywords，target=recipebox.example，maxRank=10，…", "when": "YYYY-MM-DD", "values": "竞品在这些词上的排名和流量，我们的排名，一两句" },
   "repro": "照着就能重跑：哪个工具、什么参数",
   "fix": "建议的修法；没定的写「需要决定：…」",
-  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值"],
+  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值；缺的项目信息及因此没做的部分"],
   "content": { "keyword": "recipebox alternatives", "pageType": "对比与研究", "mode": "new" } }
 ```
 
