@@ -23,12 +23,12 @@
 
 ## 验收标准
 
-- [ ] 检查的范围内（`skills/`、`agents/`、README、插件 `docs/`、插件 `AGENTS.md`）搜 `Toeflair`、`备考`、`错题`、`练习次数`、`听力` 都是 0 处
-- [ ] `to-spec` 的 User Story 示例和 `glossary` 的术语示例还在、是通用场景，形状不变
-- [ ] `to-spec`「测试决策」那段恢复了「工具用目标项目自己的。」，整文件仍 ≤5000 UTF-8 字符
-- [ ] 仓库 `AGENTS.md` 的规则写着插件里不出现任何项目的信息；「从一个真实项目（Toeflair）里通用化出来」那句还在
-- [ ] 扩过的 `no-project-leak` 先在改前的文本上红（指出 to-spec、glossary、README、插件 docs），改后绿
-- [ ] 全量测试绿
+- [x] 检查的范围内（`skills/`、`agents/`、README、插件 `docs/`、插件 `AGENTS.md`）搜 `Toeflair`、`备考`、`错题`、`练习次数`、`听力` 都是 0 处
+- [x] `to-spec` 的 User Story 示例和 `glossary` 的术语示例还在、是通用场景，形状不变
+- [x] `to-spec`「测试决策」那段恢复了「工具用目标项目自己的。」，整文件仍 ≤5000 UTF-8 字符
+- [x] 仓库 `AGENTS.md` 的规则写着插件里不出现任何项目的信息；「从一个真实项目（Toeflair）里通用化出来」那句还在
+- [x] 扩过的 `no-project-leak` 先在改前的文本上红（指出 to-spec、glossary、README、插件 docs），改后绿
+- [x] 全量测试绿
 
 ## 选中的存量回归
 

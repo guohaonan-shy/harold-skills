@@ -284,8 +284,8 @@ at 01:07 every night, and setup prints the permission rule `Bash(node ~/.idea-lo
 ## Portability
 
 Project rules and verification tools come from the current repository's root files written by
-`setup` — DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md — plus AGENTS.md / CLAUDE.md and what they link to. There is no inherited Toeflair/Fowler
-baseline. Plugin paths go through `${CLAUDE_PLUGIN_ROOT}` rather than being hardcoded,
+`setup` — DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md — plus AGENTS.md / CLAUDE.md and what they link to. No rule is inherited from
+any particular project. Plugin paths go through `${CLAUDE_PLUGIN_ROOT}` rather than being hardcoded,
 so this plugin should survive being copied to another project or machine as-is. The
 `openai-codex` companion script is found the same way: walk up from `${CLAUDE_PLUGIN_ROOT}`
 to the plugins root and look under either the marketplace clone or the versioned cache.
