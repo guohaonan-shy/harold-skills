@@ -34,5 +34,6 @@
 | [[ui-reviewer-archive-pointers]] | ui-reviewer 开工与对账模式用文件路径指向设计档案的分段写法：验证为不存在，已在 design-archive-skill-length 里改成能力名加节名 |
 | [[ui-state-archive]] | docs/design 分 tmp / prod，prod 是一张按页面状态建的图，设计与验证共用，合并前归档 |
 | [[uiux-imagine-agent]] | uiux-imagine 的执行抽成专职 uiux-imaginer agent，会话只编排和摆结果 |
+| [[writing-for-agents-pruning-layers]] | 改 agent 文档先诊断再定方案；按实体组织、参考同样剪枝、通用文档不带项目信息；retro 候选写明怎么验证 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
