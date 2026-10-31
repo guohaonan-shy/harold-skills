@@ -418,7 +418,7 @@ idea-loop/
     ├── design-lint-hook.test.mjs     # its tests — which paths it watches, spawned with a real payload
     ├── design-md-hook.mjs            # PostToolUse entry: official @google/design.md lint on any DESIGN.md, exit 2 on an error
     ├── design-md-hook.test.mjs       # its tests, against a fake CLI
-    ├── no-project-leak.test.mjs      # tripwire: skills/ and references/ carry no source-project names or examples
+    ├── no-project-leak.test.mjs      # tripwire: skills/, agents/, docs/, README and AGENTS.md carry no source-project names or examples (evals/ replay cases and test fixtures are left out on purpose)
     ├── glossary-check.mjs            # GLOSSARY.md format lint — single-file, zero-dep, so target-repo CI can curl it pinned
     ├── glossary-check.test.mjs       # its unit tests — one per rule, plus a well-formed baseline
     ├── glossary-check-hook.mjs       # PostToolUse entry: lints any file named GLOSSARY.md, exit 2 on a violation
