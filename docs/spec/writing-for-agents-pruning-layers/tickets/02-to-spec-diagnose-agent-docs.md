@@ -22,3 +22,5 @@
 ## 选中的存量回归
 
 - `idea-loop/scripts/to-spec-by-deliverable-doc.test.mjs`：to-spec 刚按交付物重写过，它守着节表和字数，本次加段落最容易碰到它
+
+> 人的决定（2026-10-31）：review 第 1 轮 S1 维持现状——括号里的举例不补 CLAUDE.md，开头「给 agent 读的文档」已包括它，to-spec 离 5000 字上限只剩 10 字。
