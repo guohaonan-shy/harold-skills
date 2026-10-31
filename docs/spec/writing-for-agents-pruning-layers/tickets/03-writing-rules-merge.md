@@ -24,10 +24,10 @@
   - 作用域：#80 那份全局 CLAUDE.md 草稿原文不在仓库里，取同类的第二次纠正作输入：#142 的 retro 候选 1（`docs/raw/decisions/142.md`「候选 1」，候选当时带着 #142 的 SEO 场景例子，人要求「例子去项目化」后才批）。提交取 4d4cdd8 之前，prompt 让 agent 照 `writing-for-agents` 把这条候选写进插件 `decision-rules` 的参考；是/否题「写进插件的文字里没有具体项目的页面名、文件名、工具名、场景吗？」，`quote` 用 #80 的原话「这个能不能尽可能通俗一些、去项目化一些，里面有很具体我的项目信息和我导读场景」（`docs/raw/decisions/80.md`）
   - 按大小当场跑或交回「回放在队列里」；runner 跑时传 `--base origin/main`（本地 `main` 是旧的）
 - [x] 全量测试绿
+- [x] review 第 1 轮 S2（2026-10-31）：「剪枝」相关性一条里，通用文档按读到它的范围定义：会在不止一个项目里被读到的（插件的 skill、agent、参考，用户级 `~/.claude/CLAUDE.md`）不带**任何**项目信息；只在一个项目里读的（项目根的 AGENTS.md / CLAUDE.md、项目 `docs/`）才带项目信息和 few-shot。这条里仍不点 idea-loop 的名；守它的文档 tripwire 同步核「任何」和按读到范围的定义
 
 ## 选中的存量回归
 
 - `idea-loop/scripts/decision-rules-who-decides-doc.test.mjs`：断言「剪枝」里有「先归并」「特例」「不加新条」，改写「剪枝」时不能碰掉
 
 > 人的决定（2026-10-31）：三处净增约 270 字（多于原定约 170 字）接受；多出的两句是回放逼出来的。
-- [x] review 第 1 轮 S2（2026-10-31）：「剪枝」相关性一条里，通用文档按读到它的范围定义：会在不止一个项目里被读到的（插件的 skill、agent、参考，用户级 `~/.claude/CLAUDE.md`）不带**任何**项目信息；只在一个项目里读的（项目根的 AGENTS.md / CLAUDE.md、项目 `docs/`）才带项目信息和 few-shot。这条里仍不点 idea-loop 的名；守它的文档 tripwire 同步核「任何」和按读到范围的定义
