@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, decision-rules, to-spec, pr, evidence, communication-style]
 summary: decision-rules 只管谁来定；讲给人看的写法进 evidence，to-spec 与 pr 按交付物重写，全局沟通风格从读者出发
 related: ["[[2026-10-31-handing-to-human-split-grill]]", "[[pr-review-report-followups]]", "[[51]]"]
