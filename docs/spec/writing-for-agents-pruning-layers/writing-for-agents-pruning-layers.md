@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 实现中
+status: 完成
 tags: [idea-loop, writing-for-agents]
 summary: 改 agent 文档先诊断再定方案；按实体组织、参考同样剪枝、通用文档不带项目信息；retro 候选写明怎么验证
 related: ["[[2026-10-31-writing-for-agents-scope-grill]]", "[[design-archive-skill-length]]", "[[decision-rules-who-decides]]", "[[ui-reviewer-archive-pointers]]", "[[2026-10-27-design-archive-skill-length-grill]]"]
