@@ -38,6 +38,7 @@ dreaming 的两份参考里「交给人时出候选卡 / 维护卡」是 dreamin
 - [x] 一个新的文档测试（`node --test`）断言：插件里没有指向「交给人时」或那份参考的文字；`writing-for-agents` 有先归并一条；`retro` 候选格式有归并一栏。改前跑它是红的
 - [x] 仓库现有的全部 `node --test idea-loop/scripts/` 通过
 - [x] 人的决定（2026-10-31）：回放用例 explain-mechanism 整个目录删掉；仓库里引用它的地方（用例清单、README、文档测试）同步；全量测试通过
+- [ ] review 第 3 轮 C1（2026-10-31）：要 agent 当场照 evidence 的写法做事的地方，写「用 Skill 工具调 `idea-loop:evidence`，看它的『写给人看的东西』」（规则原文：要 agent 当场用上另一个 skill，就写「用 Skill 工具调」它，只要其中一节就加上节名）；这张工单涉及切工单停下摆题那处、执行方交回 spec 缺口选项那处
 
 ## 选中的存量回归
 
