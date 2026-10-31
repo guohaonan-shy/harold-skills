@@ -15,4 +15,4 @@
 
 - 改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同一个改动里同步它自己的 `README.md`（`AGENTS.md` 的约定）。
 - `SKILL.md` 的 frontmatter description 只做路由，主体 < 5000 字，`allowed-tools` 收窄到具体命令模式（`AGENTS.md`「SKILL.md 编写约定」）。
-- 写进 idea-loop 的规则不硬编码 Toeflair（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。
+- idea-loop 插件里（`evals/` 和 `scripts/` 下测试的夹具除外）不出现任何项目的信息，例子用通用的（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。

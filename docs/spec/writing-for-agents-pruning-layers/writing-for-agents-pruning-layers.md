@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 完成
 tags: [idea-loop, writing-for-agents]
 summary: 改 agent 文档先诊断再定方案；按实体组织、参考同样剪枝、通用文档不带项目信息；retro 候选写明怎么验证
 related: ["[[2026-10-31-writing-for-agents-scope-grill]]", "[[design-archive-skill-length]]", "[[decision-rules-who-decides]]", "[[ui-reviewer-archive-pointers]]", "[[2026-10-27-design-archive-skill-length-grill]]"]
@@ -17,7 +17,7 @@ issues: [154, 155, 156, 198]
 |---|---|---|
 | #154 to-spec：改 agent 文档的 spec，方案先从 writing-for-agents 的诊断和调用方清单推出来 | 存在 | `to-spec` 的「探代码」一步和全文都没提 `writing-for-agents`；#125 的 spec 因此重写了两次，详情在「问题」1 |
 | #155 writing-for-agents：讲数据模型的文档，主体围绕实体与关联写，命令行与格式细节进参考 | 存在 | `writing-for-agents`「信息层级」只有「按分支判断内联还是外置」，没有说按什么切分支；详情在「问题」2 |
-| #156 writing-for-agents：外置的参考同样要剪枝，不复述脚本内部实现 | 存在 | 「剪枝」没点名参考文件，仓库的长度规则只管主体；插件 89 份参考里 37 份超过 5000 字，详情在「问题」3 |
+| #156 writing-for-agents：外置的参考同样要剪枝，不复述脚本内部实现 | 存在 | 「剪枝」没点名参考文件，仓库的长度规则只管主体；插件 90 份参考里 20 份超过 5000 字，详情在「问题」3 |
 | #198 idea-loop agents：多个 agent 定义用 ${CLAUDE_PLUGIN_ROOT} 文件路径直接读别的 skill 的 references/ | 存在 | 13 个 agent 定义按路径读 skill 的参考，全都符合插件规则，不符的是 `writing-for-agents` 的说法没写 agent 这一种；详情在「问题」4 |
 
 问题 5、6 不来自 issue：5 是 #80 的 retro 候选（#80 会话 2026-10-31 转来），6 是人在本会话审 spec 时给的方向（raw 的 U1），两条都在本会话里核过现状。
@@ -38,17 +38,17 @@ issues: [154, 155, 156, 198]
 
 仓库 `AGENTS.md` 只写「SKILL.md 主体保持精简（< 5000 字）」；`writing-for-agents`「剪枝」讲单一事实来源、环境即缓存、相关性、空操作，但没点名挪到指针后面的参考。现状：
 
-| 文件 | 字数（`wc -m`） |
+| 文件 | 字数（UTF-8 字符数） |
 |---|---|
-| `design-archive` 的 `sections.md`（#125 之前） | 26424 |
-| 它改写成的 `shooting.md`（6becd9e，2026-10-27） | 12563 |
-| `shooting.md` 现在（bde3b4a 之后，2026-10-28） | 12928 |
-| `design-archive` 主体现在 | 9098 |
-| 插件里超过 5000 字的参考 | 89 份里 37 份，最长 20587（`uiux-refine` 的 `design-core.md`） |
+| `design-archive` 的 `sections.md`（#125 改写之前，4e42c73） | 12506 |
+| 它改写成的 `shooting.md`（6becd9e，2026-10-27） | 6461 |
+| `shooting.md` 现在（bde3b4a 之后，2026-10-28） | 6658 |
+| `design-archive` 主体现在 | 4591 |
+| 插件里超过 5000 字的参考 | 90 份里 20 份，最长 20330（`uiux-refine` 的 `design-core.md`） |
 
-`sections.md` 大半是在复述脚本内部做了什么、常量和算法；#125 的第一版 spec 也只盯着主体，人说了「section.md我觉得也应该简化」才并进来（#146）。改写后的参考第二天又多了 365 字。
+`sections.md` 大半是在复述脚本内部做了什么、常量和算法；#125 的第一版 spec 也只盯着主体，人说了「section.md我觉得也应该简化」才并进来（#146）。改写后的参考第二天又多了 197 字。
 
-修正：issue 原文写「15534 字 → 12506 → 6461」，按 UTF-8 字符数实测是 26424 → 12563，现在 12928。量法用 UTF-8 字符数（`wc -m`），跟 [[decision-rules-who-decides]] 一致。
+字数是 UTF-8 字符数（`LC_ALL=en_US.UTF-8 wc -m`；不设 locale 时 macOS 的 `wc -m` 数的是字节，会差出近一倍）。
 
 ### 4. agent 读起它的 skill 的参考，两份文档说法不一
 
@@ -120,7 +120,7 @@ issues: [154, 155, 156, 198]
 | `writing-for-agents`「信息层级」「剪枝」 | 纳入：#155、#156 的落点 |
 | `SKILL-MECHANICS.md`「引用另一个 skill」 | 纳入：#198 |
 | 仓库 `AGENTS.md` 的长度规则（「SKILL.md 主体 < 5000 字」） | 排除：给参考定一个字数上限是另一件事，#156 要的是剪枝的判断，不是阈值 |
-| 现有 37 份超 5000 字的参考 | 排除：本次只改规则；逐份剪由以后改到它们的 spec 按新规则做 |
+| 现有 20 份超 5000 字的参考 | 排除：本次只改规则；逐份剪由以后改到它们的 spec 按新规则做 |
 | 13 个 agent 定义 | 排除：都合规，不改 |
 | `writing-for-agents`「剪枝」的相关性一条 | 纳入：问题 5 的落点 |
 | `to-spec` 的 User Story 示例、`glossary` 的术语示例、README「Portability」 | 纳入：换成通用例子，去掉 Toeflair |
@@ -199,7 +199,7 @@ issues: [154, 155, 156, 198]
 ## Out of scope
 
 - 清 `idea-loop/evals/` 里的项目信息：那是回放用例的固定输入。
-- 剪现有的 37 份超 5000 字的参考：本次只改规则，逐份剪由以后改到它们的 spec 做。
+- 剪现有的 20 份超 5000 字的参考：本次只改规则，逐份剪由以后改到它们的 spec 做。
 - 给参考定字数上限：改的是仓库 `AGENTS.md` 的长度规则，不是写法。
 - 改 13 个 agent 定义的路径写法：都合规。
 - `issue-verify`、`agent-builder`、`implementer` 的同类入口：理由见「方案」的同类入口表。

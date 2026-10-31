@@ -43,17 +43,17 @@ description: 目标项目 GLOSSARY.md 术语表：收什么、格式、谁能写
 
 ### {分组，可选}
 
-**Practice**：
-学生可以做的一条练习，属于四种题型之一。
-_Avoid_: exercise, drill
+**Task**：
+团队成员可以认领的一项工作，属于三种类型之一。
+_Avoid_: ticket, to-do
 
-**Cause layer**：
-一个错词被归到的错误发生位置，三层之一：发音、听力、表达。
-_Avoid_: error type, category（Issue 上另有一个也叫 category 的分类，指的是别的东西）
+**Severity**：
+一条告警的紧急程度，三级之一：提示、警告、严重。
+_Avoid_: level, priority（告警上另有一个也叫 priority 的字段，指的是别的东西）
 
 ## 歧义词
 
-- **status**：代码里有至少六套互不相关的 status。单独说 status 不成立，必须带上实体名（Practice status、Session status……）。
+- **status**：代码里有至少六套互不相关的 status。单独说 status 不成立，必须带上实体名（Task status、Session status……）。
 ```
 
 ### 词条规则

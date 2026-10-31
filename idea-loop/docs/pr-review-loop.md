@@ -44,7 +44,7 @@
 6. **自动修复的范围 = 本次改动引入的、验证为真的问题。** 不是本次引入的，写进目标仓库的
    `docs/quality-backlog.md` §线上问题，在轮次帖里标成不阻塞。
 7. **达到 mergeReady 只汇报，合并等 Harold 下令。**
-8. **发言身份用 GitHub App `toeflair-claude`**（App ID 4948428，装在 `guohaonan-shy/Tofelair`）。
+8. **发言身份用 GitHub App**（每个目标仓库装一个，App ID 与私钥路径写在用户目录的配置里）。
 9. **finding 改成结构化字段**（§6），由 helper 按固定模板渲染。
 
 ### 2.1 实现时补充的决定（Harold 2026-09-23 一并确认）
@@ -175,7 +175,7 @@ checkout 或 stash**。`api` / `browser` / `db` 类要在 scratchpad 副本上�
 
 ## 7 验证标准
 
-`instrument` 的取值对应目标仓库 `REVIEW.md` 的「Verification paths」表（Toeflair 已有）。
+`instrument` 的取值对应目标仓库 `REVIEW.md` 的「Verification paths」表。
 项目负责「在这里怎么跑」，plugin 只负责标准。
 
 **问题验证（这条 finding 是真的吗）**
@@ -216,11 +216,11 @@ checkout 或 stash**。`api` / `browser` / `db` 类要在 scratchpad 副本上�
 `api` / `browser` / `db` 类 finding 要在 merge-base 上另起一套环境，③ 约翻倍。Sonnet 5 · xhigh 相对 Opus 的
 提速没算进去，实测后再更新这张表。
 
-## 10 发言身份：toeflair-claude App
+## 10 发言身份：GitHub App
 
 - 配置放用户目录（plugin 目录只读）：`~/.idea-loop/github-apps.json`
   ```json
-  { "guohaonan-shy/Tofelair": { "appId": 4948428, "privateKeyPath": "~/projects/TOFEL-demo/toeflair-claude.pem" } }
+  { "<owner>/<repo>": { "appId": <App ID>, "privateKeyPath": "~/path/to/app-private-key.pem" } }
   ```
   pem 已确认被 gitignore、未被跟踪。
 - `github-review.mjs` 自己用 node `crypto` 签 RS256 JWT → `GET /repos/{o}/{r}/installation` →
@@ -254,7 +254,7 @@ checkout 或 stash**。`api` / `browser` / `db` 类要在 scratchpad 副本上�
   `~/.codex/config.toml` 的 `model_reasoning_effort`（当前是 `high`）；correctness 的包装 agent 先读这个值，不是 `high` 就不跑、报 incomplete。
   `review --model gpt-5.6-sol` 本身还没实跑过。
 - **Codex 额度。** 每轮 Codex 调用从 1 次变成 3 次；与 eval 判官共用周订阅额度，
-  2026-09-14 撞满过一次（Toeflair `quality-backlog.md` #29）。
+  2026-09-14 撞满过一次。
 - **Codex `task` 只读沙箱能做什么。** 设计里只让它判文字规则、不跑工具；实现前确认它在只读模式下
   能读完整仓库与 diff，且不会因为想跑命令而卡住。
 - **subagent 里调 Codex `task` 会不会被 auto mode 拦。** `review` 在 subagent 里稳定跑过 31 次；

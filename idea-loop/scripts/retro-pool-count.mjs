@@ -8,7 +8,7 @@
  * human checks when the line is written; what is left is arithmetic, so it lives here.
  *
  * A candidate file has the shape: frontmatter (type, captured, title, tags); bullets 信号 / 落点 / 旧文 /
- * 新文 / 例子; one bullet `- 状态：<在池里 | 已开 issue（<链接>） | 驳回（<理由>）>`; then a `## 出现` section,
+ * 新文 / 归并 / 验证 / 例子 (归并 and 验证 are not checked, older files lack them); one bullet `- 状态：<在池里 | 已开 issue（<链接>） | 驳回（<理由>）>`; then a `## 出现` section,
  * one bullet per occurrence:
  *
  *   - <repo>#<number>（<date>）：「<verbatim words>」；决定记录：<link>

@@ -63,7 +63,7 @@ import {
   appendReplayResults, decideQueueRun, makeQueueEntry, pushMessage, queueFileName, resultLine, reviewLoopPath, summarizeResults, validateQueueEntry,
 } from './queue.mjs';
 import {
-  buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, parseOverrides, parseVerdict,
+  buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, fileBody, parseOverrides, parseVerdict,
   relabelLarge, settleVerdicts,
 } from './replay.mjs';
 
@@ -168,7 +168,7 @@ function changedFiles(projectDir) {
     if (status.includes('D') || status.startsWith('R')) continue;
     const full = join(projectDir, path);
     if (!existsSync(full) || statSync(full).size > 200_000) continue;
-    files.push({ path, content: readFileSync(full, 'utf8') });
+    files.push({ path, content: fileBody(readFileSync(full)) });
   }
   return files;
 }

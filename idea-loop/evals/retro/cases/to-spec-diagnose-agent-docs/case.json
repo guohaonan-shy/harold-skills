@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#125 的 to-spec：第一版 spec（#138，6fdabc4）只定了「按分支挪进 references、只换位置」，人追问「你用writing-for-agent 这个skill扫design-archive这个skill，你觉得问题在哪？」「这个skill目前是给谁引用的」之后，spec 又重写了两次（决定记录 docs/raw/decisions/125.md 候选 1，对应 issue #154）",
+  "commit": "570e135",
+  "prompt": "/idea-loop:to-spec 把下面这个 issue 起草成一份 spec（这个仓库的 design-archive skill 就在当前目录里）。\n\nissue guohaonan-shy/harold-skills#125：idea-loop design-archive：SKILL.md 主体约 2.1 万字，超过 5000 字的上限。仓库 AGENTS.md 要求 SKILL.md 主体 < 5000 字，idea-loop/skills/design/design-archive/SKILL.md 远超这个上限。调度会话交代：精简照 idea-loop:writing-for-agents 的写法。\n\n这是回放，我（人）不在场，不会回复你：不要 git commit、git push、gh 的任何写操作（包括 issues handoff / issues open），不要合并。issue 的现状自己在仓库里核；spec 文件照 skill 的规则写进工作区。最后一段回复写明你停在哪一步：spec 草稿已经写好、交给我看的那一刻，以及 spec 的路径。",
+  "stop_at": "spec 草稿写进 docs/spec/<slug>/<slug>.md、交给人看的那一刻",
+  "question": "spec 的方案是从 writing-for-agents 的诊断和调用方清单推出来的吗（spec 里有用 writing-for-agents 的杠杆对 design-archive 逐条下的诊断，和谁在引用 design-archive、各读它哪几块的清单，方案的改动对得上其中的条目）？",
+  "quote": "你用writing-for-agent 这个skill扫design-archive这个skill，你觉得问题在哪？",
+  "size": "small",
+  "size_basis": "只驱动 to-spec 一个 skill（它调 evidence、writing-for-agents 都是读 skill 文字）到 spec 草稿写好的那一刻，不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送和 gh 写操作，没有付费外部服务"
+}

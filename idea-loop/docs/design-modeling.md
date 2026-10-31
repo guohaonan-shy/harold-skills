@@ -11,14 +11,14 @@
 
 `DESIGN.md` 的定位：**这个产品的视觉语言，用自然语言写，跨页都必须服从。** 它不是设计相关内容的总收件箱。plugin 的 `references/design/` 只写通用的 UI/UX 原则，不带任何项目特色；两边之间靠一张准入分层表（§4）分流。
 
-为什么要单独一个 skill：Toeflair 现在那份 609 行的 `DESIGN.md` 至少有六个写入口（imagine 语言高度、refine 的 Distill-back 与动效先例库、static-ui-protocol 的 Distill-back 与「没有就 bootstrap 一份」、expression-framework、component-protocol、人手动提交、旧 design-workflow 插件），每个入口的判断标准都不一样，结果是：
+为什么要单独一个 skill：一个项目里越积越长的 `DESIGN.md` 至少有六个写入口（imagine 语言高度、refine 的 Distill-back 与动效先例库、static-ui-protocol 的 Distill-back 与「没有就 bootstrap 一份」、expression-framework、component-protocol、人手动提交、旧 design-workflow 插件），每个入口的判断标准都不一样，结果是：
 
 | 文件里混进的内容 | 例子 | 本该去 |
 |---|---|---|
-| 身份底线、禁令 | One Voice、Retired-Ink | 留在 DESIGN.md |
+| 身份底线、禁令 | 全站只用一种语气、已退役的旧配色 | 留在 DESIGN.md |
 | 判例 | 第 7 节 9 条（其中一条是划掉的旧条目） | 留在 DESIGN.md，划掉的删 |
-| 现状盘点 | Marketing bands 表，带 `HomePage.astro:101` 这类行号 | 代码本身；需要的规则抽成一句话 |
-| 已知缺陷 | `.btn-brand-inverse` 3.98:1、`IntroTrialCTA` white/60 4.01:1 | `docs/quality-backlog.md` |
+| 现状盘点 | 营销区块盘点表，带某个页面源文件的行号 | 代码本身；需要的规则抽成一句话 |
+| 已知缺陷 | 某个反色按钮、某个半透明文字的对比度不达标 | `docs/quality-backlog.md` |
 | 迁移计划 | Legacy migration 一节 | spec / ticket |
 | 历史与实现细节 | 「What changed 2026-06-23」、token reconciliation、`.impeccable` sidecar | ADR / 代码注释 / git 历史 |
 
@@ -78,9 +78,9 @@
 | 一条判例已在两页以上被照着用过 | 提议并进对应章节的正文（变成那一节的规则），从 `## Case Law` 删掉 |
 | 被取代的判例、划掉的条目 | 直接删，历史留给 git |
 
-对账的健康信号借 mattpocock domain-modeling 作者自己承认的失效模式：**这份文件变短的次数应该和变长一样多**。只追加不收敛，它就会长回 609 行。
+对账的健康信号借 mattpocock domain-modeling 作者自己承认的失效模式：**这份文件变短的次数应该和变长一样多**。只追加不收敛，它就会重新长成总收件箱。
 
-Toeflair 第一次跑本 skill 就是对账。
+第一次在已有 `DESIGN.md` 的项目上跑本 skill，就是对账。
 
 ## 4 准入分层表
 
@@ -96,10 +96,10 @@ Toeflair 第一次跑本 skill 就是对账。
 
 两个用来校准的真实判例：
 
-- 「营销页图像语言 = 无人静物摄影」被判错：同一页就用了静物照、线稿、生成插图、代码动效四种，图像风格按每页内容选——**页面决定**，不是产品视觉语言。
-- 所有 intro 页共用的收尾渐变 `IntroTrialCTA` 从没进 `DESIGN.md`——它跨页、只属于本产品，**本该在产品视觉语言这一层**，漏了。
+- 「营销页图像语言 = 某一种固定画风」被判错：同一页里就并用了几种画风，图像风格按每页内容选——**页面决定**，不是产品视觉语言。
+- 所有引导页共用的收尾区块从没进 `DESIGN.md`——它跨页、只属于本产品，**本该在产品视觉语言这一层**，漏了。
 
-产品视觉语言这一层里，还收一类现在没有的内容：**页面家族的复用机制**（例如五个 intro 页共用的构图顺序）。它跨页、只属于本产品、又能被检查。
+产品视觉语言这一层里，还收一类现在没有的内容：**页面家族的复用机制**（例如几个引导页共用的构图顺序）。它跨页、只属于本产品、又能被检查。
 
 ## 5 DESIGN.md 写成什么样
 
@@ -122,7 +122,7 @@ Toeflair 第一次跑本 skill 就是对账。
 ### 5.3 已知不一致，迁移时一起处理
 
 - **eval fixture 不过官方 lint**：`idea-loop/evals/case/project/DESIGN.md` 的 frontmatter 把 `colors` 写成了字符串，`lint` 报 error（每个字符被当成一个颜色）。要改成合法的 token map。fixture 会被 imagine / refine 的 eval 读，改它要通知工作流会话重跑。
-- **Toeflair 的 DESIGN.md 格式上是过的**：0 error、9 warning（8 个 orphaned token，1 个 `button-primary` 白字压 `#137fec` 3.98:1）。它的问题在内容，不在格式——正好是对账模式的第一个案子。
+- **已有项目的 DESIGN.md 格式上是过的**：没有 error，只有 warning（有没被引用的 token，有一处按钮白字压在彩底上对比度不够）。它的问题在内容，不在格式——正好是对账模式的第一个案子。
 
 ## 6 「设计法候选」：与冻结记录的接口
 
@@ -201,9 +201,9 @@ allowed-tools 收窄到：`Read`、`Edit`、`Write`、`Bash(npx -y @google/desig
 
 **交给工作流优化会话**：`uiux-refine` 签字时写候选（§6）、动效先例库改写候选。`uiux-imagine` 语言高度改成调用本 skill 的那一处，2026-10-06 改由本会话做，已完成。
 
-**plugin references 去项目化（2026-10-06 定为同一批做）**：`references/` 与 `skills/` 里的项目示例全部换成虚构产品（Fieldnote、徒步 app 的路线卡片），`scripts/no-project-leak.test.mjs` grep 已知项目名当绊线；`evals/case/` 与 `docs/` 不扫。
+**plugin references 去项目化（2026-10-06 定为同一批做）**：`references/` 与 `skills/` 里的项目示例全部换成虚构产品（Fieldnote、徒步 app 的路线卡片），`scripts/no-project-leak.test.mjs` grep 已知项目名当绊线；2026-10-31 起 `agents/`、`docs/`、README、插件 `AGENTS.md` 也扫；`evals/`（回放用例取自真实会话）与 `scripts/` 下测试的夹具不扫。
 
-**项目侧，不进本 plugin 的 PR**：Toeflair 第一次对账。
+**项目侧，不进本 plugin 的 PR**：目标项目第一次对账。
 
 ## 10 与 domain-modeling（#21）对称
 
