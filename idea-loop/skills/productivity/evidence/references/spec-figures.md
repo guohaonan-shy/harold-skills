@@ -4,10 +4,10 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 
 | spec 的哪里 | 画什么 | 用什么画 | 谁画 |
 |---|---|---|---|
-| 问题 | 复现证据 | 截图 + 标注，按问题性质选形式 | `idea-loop:grill` 复现时截图，`idea-loop:to-spec` 排版 |
+| 问题陈述 | 复现证据 | 截图 + 标注，按问题性质选形式 | `idea-loop:grill` 复现时截图，`idea-loop:to-spec` 排版 |
 | User Stories | 每个场景一棵 story 树 | excalidrawer `tree` | `idea-loop:to-spec` |
-| 技术方案总览 · 后端 / 前端内部 | 时序图 | excalidrawer `sequence` | `idea-loop:to-spec` |
-| 技术方案总览 · 前端交互 | 交互图（screen flow） | 截图 + `flow-compose.mjs` | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
+| 方案 · 开头的交互时序图，以及后端 / 前端内部子小节 | 时序图 | excalidrawer `sequence` | `idea-loop:to-spec` |
+| 方案 · 前端交互子小节 | 交互图（screen flow） | 截图 + `flow-compose.mjs` | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
 
 **定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`idea-loop:wiki-conventions` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
 
@@ -50,8 +50,9 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 - **story 编号在每个场景内从 1 开始**，图和图下的文字一致。别处引用（比如测试决策的「覆盖」列）写「场景名 + 编号」（如「播放器 3」），不写全局编号。
 - 图放 raw 目录的 `assets/tree-user-stories-<n>-<场景 slug>.png`，只放 PNG；`.excalidraw` 和 sugar JSON 留在 `.tmp/to-spec/<spec-slug>/`，不进 git。
 
-## 时序图（技术方案总览的后端与前端内部）
+## 时序图（方案开头的交互图，以及后端与前端内部子小节）
 
+- **方案开头的交互图**：一张图让读者先看清前后端或模块之间谁和谁说话、按什么顺序。参与方按这份 spec 的实际取（浏览器、API、DB，或几个模块），新增或改动的消息标出来。后端、前端内部两个子小节是它的展开：涉及哪个就把那一段画细。
 - **后端**：参与方是浏览器、API、DB、对象存储 / 第三方（按实际取）。用 excalidrawer `sequence`。**本 spec 新增或改动的消息用红色**，响应用虚线。图下用几行文字列出接口变化：哪个接口加了 / 改了什么字段，有没有新接口。
 - **前端内部**：缓存、状态这类看不见的部分。参与方是各层存储与读写方（比如组件、页面内存、浏览器缓存、网络），画清楚读和写的顺序。图下写读路径、写路径各一句，以及每层的生命周期（关页面即失 / 跨标签页共享 / 多久过期）。
 - 图放 raw 目录的 `assets/sequence-<slug>.png`，只放 PNG；源文件同上，留在 `.tmp/` 不进 git。
@@ -125,8 +126,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archi
 
 ### 放哪
 
-- **问题图**（「问题」一节）：跟复现截图一起进 raw 目录。
-- **设计图**（「前端交互」一节）：从冻结画布派生，跟画布放在一起，`docs/design/tmp/<spec-slug>/canvas/flows/flow-<n>-<page>--<state>.png`，JSON 和截图源放在 `flows/src/`，画布改了能重新生成。**文件名里的 `<page>--<state>` 是这张图第一格的档案状态名**，归档脚本靠它判断图属于哪个页面；`<n>` 是这份 spec 里的序号。spec 里用相对路径引用。这些图随冻结经设计 PR 进主分支；实现 PR 合并前归档时，归档脚本把图挪进 `prod/pages/<page>/assets/flows/`，同时把 spec 里指向它们的链接改写成新路径。
+- **问题图**（「问题陈述」一节）：跟复现截图一起进 raw 目录。
+- **设计图**（「方案」下的「前端交互」小节）：从冻结画布派生，跟画布放在一起，`docs/design/tmp/<spec-slug>/canvas/flows/flow-<n>-<page>--<state>.png`，JSON 和截图源放在 `flows/src/`，画布改了能重新生成。**文件名里的 `<page>--<state>` 是这张图第一格的档案状态名**，归档脚本靠它判断图属于哪个页面；`<n>` 是这份 spec 里的序号。spec 里用相对路径引用。这些图随冻结经设计 PR 进主分支；实现 PR 合并前归档时，归档脚本把图挪进 `prod/pages/<page>/assets/flows/`，同时把 spec 里指向它们的链接改写成新路径。
 - **每一格对回档案里的状态**：JSON 里每一步可以带 `state`（档案里的状态名，如 `cookbook--search-loading`），指向这个状态（合并前归档时它在 `delta/` 里有状态文件）。脚本把它印在截图下的小字里、写进 HTML 的 `data-state`，并在 PNG 旁多存一份同名的 `.states.json`（哪一行哪一步是哪个状态）。输出文件按 `flow-<n>-…` 起名时，脚本要求名字就是 `flow-<n>-<第一格的状态名>.png`，对不上退出码 2；别的名字（问题图等）不受限。带 `--archive <仓库根> --delta <spec-slug>` 时，脚本还会核对每个 id 在档案（叠上这个需求的 `delta/`）里是否存在，不存在就退出码 2。问题图、没有档案的项目不带 `state`，输出里也就没有这些。
 
 ### 设计冻结之前

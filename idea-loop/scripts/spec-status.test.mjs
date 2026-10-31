@@ -9,7 +9,38 @@ import { allAbsent, forHuman, frontmatter, renderIndex, routeOf, scan, touchesUi
 
 const SCRIPT = fileURLToPath(new URL('./spec-status.mjs', import.meta.url));
 
-const spec = ({ status = '草稿', ui = '不涉及。', freeze = false, grill = false, fork = false, issues, verdict } = {}) => `---
+// The current template: verdicts are quoted lines right under the title; the front-end interaction is a
+// sub-section of 方案 and is left out when the spec touches no UI. `legacy: true` writes the older shape
+// instead: a 「验证」 table, and the sub-sections under 技术方案总览 (with 「不涉及」 spelled out).
+const spec = ({ status = '草稿', ui, freeze = false, grill = false, fork = false, issues, verdict, legacy = false } = {}) => {
+  const rows = Object.entries(verdict ?? {});
+  const opening = legacy ? '' : rows.map(([n, v]) => `> #${n} ${v}：${v === '存在' ? '重试一次就扣一次配额' : '上周 #9 已修，对着 main 核过'}`).join('\n');
+  const table = `## 验证
+
+| issue | 结论 | 证据 |
+|---|---|---|
+${rows.map(([n, v]) => `| #${n} | ${v} | 复现 |`).join('\n')}
+
+`;
+  const plan = `## 问题陈述
+
+重试会多扣一次配额。
+
+## 方案
+
+重试不再扣配额。
+${ui === undefined ? '' : `\n### 前端交互\n${ui}\n`}
+`;
+  const overview = `
+## 技术方案总览
+
+### 后端
+不涉及。
+
+### 前端交互
+${ui ?? '不涉及。'}
+`;
+  return `---
 type: spec
 status: ${status}
 tags: [retry]
@@ -18,25 +49,12 @@ related: []${issues ? `\nissues: ${issues}` : ''}
 ---
 
 # 重试不消耗配额
-${grill ? '\n> 需要 grill：要不要给重试单独的配额，条目里没定。\n' : ''}
-## 验证
-
-| issue | 结论 | 证据 |
-|---|---|---|
-${Object.entries(verdict ?? {}).map(([n, v]) => `| #${n} | ${v} | 复现 |`).join('\n')}
-
-## 实现决策
-${freeze ? '\n### 冻结摘要\n- 画布指针：docs/design/tmp/practice-retry/canvas/v3.html\n' : '\n无分歧。\n'}${fork ? '\n### 待定：重试要不要单独计配额\n- 选项 A：…\n' : ''}
-## 技术方案总览
-
-### 后端
-不涉及。
-
-### 前端交互
-${ui}
-
+${grill ? '\n> 需要 grill：要不要给重试单独的配额，条目里没定。\n' : ''}${opening ? `\n${opening}\n` : ''}
+${legacy ? table : plan}## 实现决策
+${freeze ? '\n### 冻结摘要\n- 画布指针：docs/design/tmp/practice-retry/canvas/v3.html\n' : '\n无分歧。\n'}${fork ? '\n### 待定：重试要不要单独计配额\n- 选项 A：…\n' : ''}${legacy ? overview : ''}
 ## 测试决策
 `;
+};
 
 const UI = '> 待补图：`uiux-refine` 冻结时按冻结画布补交互图，替换本节文字\n\n- 点重试 → 只重跑这一题';
 
@@ -51,17 +69,37 @@ test('withStatus rewrites only the status line', () => {
   assert.equal(out.replace('status: 正式', 'status: 草稿'), spec());
 });
 
-test('touchesUi reads 前端交互: 不涉及 means no UI', () => {
+test('touchesUi: a 前端交互 sub-section under 方案 means UI; no such sub-section means none', () => {
   assert.equal(touchesUi(spec()), false);
   assert.equal(touchesUi(spec({ ui: UI })), true);
 });
 
-test('verdicts read the 验证 table; allAbsent needs every listed issue marked 不存在', () => {
+test('touchesUi still reads an older spec: 不涉及 under 技术方案总览 means no UI', () => {
+  assert.equal(touchesUi(spec({ legacy: true })), false);
+  assert.equal(touchesUi(spec({ legacy: true, ui: UI })), true);
+});
+
+test('verdicts read the quoted lines under the title; allAbsent needs every listed issue marked 不存在', () => {
   const md = spec({ issues: '[1, 2]', verdict: { 1: '存在', 2: '不存在' } });
   assert.deepEqual([...verdicts(md)], [[1, '存在'], [2, '不存在']]);
   assert.equal(allAbsent(md), false);
   assert.equal(allAbsent(spec({ issues: '[1, 2]', verdict: { 1: '不存在', 2: '不存在' } })), true);
   assert.equal(allAbsent(spec()), false);
+});
+
+test('verdicts still read the older 验证 table', () => {
+  const md = spec({ legacy: true, issues: '[1, 2]', verdict: { 1: '存在', 2: '不存在' } });
+  assert.deepEqual([...verdicts(md)], [[1, '存在'], [2, '不存在']]);
+  assert.equal(allAbsent(spec({ legacy: true, issues: '[1, 2]', verdict: { 1: '不存在', 2: '不存在' } })), true);
+});
+
+test('a quoted line counts only up to the first section; the 需要 grill line and prose are not verdicts', () => {
+  const md = spec({ issues: '[1]', verdict: { 1: '存在' }, grill: true }).replace('## 方案', '## 方案\n\n> #1 不存在：这是方案里的引用，不算结论');
+  assert.deepEqual([...verdicts(md)], [[1, '存在']]);
+  // an ASCII colon works too, and an issue with no verdict stays unknown
+  const two = spec({ issues: '[1, 2]' }).replace('# 重试不消耗配额', '# 重试不消耗配额\n\n> #1 不存在: 试过了');
+  assert.deepEqual([...verdicts(two)], [[1, '不存在']]);
+  assert.equal(allAbsent(two), false);
 });
 
 test('forHuman lists what waits for a human', () => {
@@ -99,6 +137,10 @@ test('routeOf: absent → 完成, something for a human → 审核中, else 正�
   assert.equal(routeOf(spec({ issues: '[1]', verdict: { 1: '不存在' } })), '完成');
   assert.equal(routeOf(spec({ fork: true })), '审核中');
   assert.equal(routeOf(spec({ ui: UI })), '正式');
+  assert.equal(routeOf(spec({ issues: '[1]', verdict: { 1: '存在' } })), '正式');
+  assert.equal(routeOf(spec({ issues: '[1]', verdict: { 1: '存在' }, fork: true })), '审核中');
+  assert.equal(routeOf(spec({ legacy: true, issues: '[1]', verdict: { 1: '不存在' } })), '完成');
+  assert.equal(routeOf(spec({ legacy: true, issues: '[1]', verdict: { 1: '存在' } })), '正式');
 });
 
 test('old and unknown statuses are refused with the reason', () => {

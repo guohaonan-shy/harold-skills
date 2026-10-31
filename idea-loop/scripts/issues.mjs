@@ -6,7 +6,7 @@
  * with no `status:*` label is 待验证. The loop claims a batch (验证中) and opens a verification session,
  * which turns 审核中 when something needs the human. Every 待 state is set only by `reconcile`, from
  * what the main branch already has: a 正式 spec puts its issues in 待设计 (touches UI, no freeze yet) or
- * 待实现; a freeze on main moves 设计中 on to 待实现; an issue the spec's 「验证」 table marks 不存在 is
+ * 待实现; a freeze on main moves 设计中 on to 待实现; an issue the spec's opening lines (or an older spec's 「验证」 table) mark 不存在 is
  * closed as not planned; a 完成 spec closes the rest as completed. So whenever a loop sees a 待 label,
  * main has everything the next session needs. The 中 states are set when a session opens. 搁置 keeps
  * the loop away from an issue; `resume` puts it back where main says it belongs.
@@ -510,7 +510,7 @@ function apply(gh, actions, byNumber, slug = null) {
     const labels = byNumber.get(a.n)?.labels ?? [];
     if (a.why === 'children') close(gh, a.n, labels, 'completed', ROOT_CLOSED);
     else if (a.why === 'spec') close(gh, a.n, labels, 'completed', `子 issue 随 spec \`${a.slug}\` 关闭，根随着关闭。`);
-    else if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${a.slug ?? slug}\`（\`docs/spec/${a.slug ?? slug}/${a.slug ?? slug}.md\` 的「验证」）。`);
+    else if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${a.slug ?? slug}\`（\`docs/spec/${a.slug ?? slug}/${a.slug ?? slug}.md\` 开头写的结论）。`);
     else if (a.close === 'completed') close(gh, a.n, labels, 'completed', `spec \`${a.slug ?? slug}\` 已实现并合并。`);
     else relabel(gh, a.n, labels, a.to);
     done.push(a.close ? `#${a.n}: ${a.from} → 关闭（${a.close}）` : `#${a.n}: ${a.from} → ${a.to}`);

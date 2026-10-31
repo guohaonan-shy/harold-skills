@@ -7,7 +7,7 @@
  * something in it waits for a human (a 「需要 grill」 line, a 「待定」 fork under 实现决策) and the
  * human settles it in the session; 正式 once nothing waits, and design and implementation work from
  * it; 实现中 once its tickets are cut; 完成 once the implementation PR merges, or straight from the
- * draft when every issue it covers turned out not to exist (its 「验证」 table says so). Each step has
+ * draft when every issue it covers turned out not to exist (the quoted lines under its title say so; older specs say it in a 「验证」 table). Each step has
  * a precondition that can be read off the files, checked here before the status is written; the
  * index is refreshed in the same call. This script never touches GitHub.
  *
@@ -100,12 +100,25 @@ export function forHuman(md) {
   return out;
 }
 
-/** The 「验证」 table: one row per issue, `| #12 | 存在 | … |` or `| #12 | 不存在 | … |`. */
+/**
+ * Whether each covered issue exists. Current specs open with one quoted line per issue, straight under
+ * the title: `> #12 存在：…` or `> #12 不存在：…`. Specs written before that carry a 「验证」 table with
+ * a row per issue, `| #12 | 存在 | … |`; it is still read, and the opening lines win when both say something.
+ */
 export function verdicts(md) {
   const out = new Map();
+  const opening = [];
+  for (const line of String(md).replace(/^---\n[\s\S]*?\n---\n?/, '').split('\n')) {
+    if (/^##\s/.test(line)) break;
+    opening.push(line);
+  }
+  for (const line of opening) {
+    const m = line.match(/^>\s*#(\d+)\s*(不存在|存在)\s*[：:]/);
+    if (m) out.set(Number(m[1]), m[2]);
+  }
   for (const line of (section(md, '验证') ?? '').split('\n')) {
     const m = line.match(/^\|\s*#(\d+)\s*\|\s*(存在|不存在)\s*\|/);
-    if (m) out.set(Number(m[1]), m[2]);
+    if (m && !out.has(Number(m[1]))) out.set(Number(m[1]), m[2]);
   }
   return out;
 }
@@ -125,9 +138,9 @@ export function transitionError(from, to, md, ticketCount) {
   if (!NEXT[from].includes(to)) return `「${from}」不能直接翻成「${to}」（能翻成：${NEXT[from].join(' / ') || '无'}）`;
   if (to === '正式') {
     if (forHuman(md).length) return `spec 里还有等人定的：${forHuman(md).join('；')}`;
-    if (allAbsent(md)) return '「验证」里它覆盖的 issue 全都不存在——翻「完成」';
+    if (allAbsent(md)) return '开头的结论里它覆盖的 issue 全都不存在——翻「完成」';
   }
-  if (to === '完成' && from !== '实现中' && !allAbsent(md)) return '只有「验证」里它覆盖的 issue 全都不存在，才能不经实现直接翻「完成」';
+  if (to === '完成' && from !== '实现中' && !allAbsent(md)) return '只有开头的结论里它覆盖的 issue 全都不存在，才能不经实现直接翻「完成」';
   if (to === '实现中') {
     if (!ticketCount) return 'spec 目录下的 tickets/ 里一张工单都没有——切完工单才翻实现中';
     if (touchesUi(md) && !hasFreezeSummary(md)) return 'spec 碰 UI，「实现决策」里还没有「冻结摘要」——设计没冻结';
