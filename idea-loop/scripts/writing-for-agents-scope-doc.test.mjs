@@ -54,9 +54,11 @@ test('剪枝: the environment line covers references behind a pointer, and sedim
 test('剪枝: relevance is counted by scope — general docs carry no project info, project docs may', () => {
   const rel = bullet(section('剪枝'), '相关性');
   assert.match(rel, /作用域|会在哪/);
-  assert.match(rel, /通用的?文档[^。；]*不带项目信息/);
+  // 按读到它的范围定义：会在不止一个项目里被读到的 → 不带「任何」项目信息；只在一个项目里读的才带
+  assert.match(rel, /不止一个项目里被读到的[^。；]*不带任何项目信息/);
   assert.match(rel, /例子[^。；]*(任何项目|通用)/);
-  assert.match(rel, /项目级[^。；]*项目信息[^。；]*few-shot/);
+  assert.match(rel, /只在一个项目里读的[^。；]*项目信息[^。；]*few-shot/);
+  assert.match(rel, /AGENTS\.md/);
 });
 
 test('the three rewrites add no heading and no plugin- or project-specific name', () => {

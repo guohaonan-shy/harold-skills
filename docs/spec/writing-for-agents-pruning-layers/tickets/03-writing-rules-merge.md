@@ -30,4 +30,4 @@
 - `idea-loop/scripts/decision-rules-who-decides-doc.test.mjs`：断言「剪枝」里有「先归并」「特例」「不加新条」，改写「剪枝」时不能碰掉
 
 > 人的决定（2026-10-31）：三处净增约 270 字（多于原定约 170 字）接受；多出的两句是回放逼出来的。
-- [ ] review 第 1 轮 S2（2026-10-31）：「剪枝」相关性一条里，通用文档按读到它的范围定义：会在不止一个项目里被读到的（插件的 skill、agent、参考，用户级 `~/.claude/CLAUDE.md`）不带**任何**项目信息；只在一个项目里读的（项目根的 AGENTS.md / CLAUDE.md、项目 `docs/`）才带项目信息和 few-shot。这条里仍不点 idea-loop 的名；守它的文档 tripwire 同步核「任何」和按读到范围的定义
+- [x] review 第 1 轮 S2（2026-10-31）：「剪枝」相关性一条里，通用文档按读到它的范围定义：会在不止一个项目里被读到的（插件的 skill、agent、参考，用户级 `~/.claude/CLAUDE.md`）不带**任何**项目信息；只在一个项目里读的（项目根的 AGENTS.md / CLAUDE.md、项目 `docs/`）才带项目信息和 few-shot。这条里仍不点 idea-loop 的名；守它的文档 tripwire 同步核「任何」和按读到范围的定义
