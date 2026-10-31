@@ -15,16 +15,19 @@
 
 仓库根 `AGENTS.md` 的「不硬编码 Toeflair」一条现在写「Toeflair 只作为举例出现」，改成插件里不出现任何项目的信息、例子用通用的；前一句「idea-loop 是从一个真实项目（Toeflair）里通用化出来的」是仓库自己的历史，留着。
 
-再加一条 tripwire：扫插件的 skill、agent、参考和 README（不扫 `evals/`，那里的回放用例本来就取自真实会话），出现 Toeflair 或上面这几处场景词就红，指出文件和行。
+插件 `docs/` 下的两份设计文档（`design-modeling.md`、`pr-review-loop.md`）也点名 Toeflair 和它的 App、仓库名，同样换成通用说法。
+
+守它的检查已经有一条：插件 `scripts/` 下的 `no-project-leak` 测试，现在只扫 `skills/`，词表只有 Toeflair 等几个。扩它，不另起：范围扩到插件里所有给 agent 或人读的文本——`skills/`、`agents/`、README、插件 `docs/`、插件 `AGENTS.md`；不扫 `evals/`（回放用例本来就取自真实会话）和 `scripts/` 下测试的夹具（那是测试数据，不是给 agent 读的规则）。词表加上「备考」「错题」「练习次数」「听力」。仓库根 `REVIEW.md` 里提到这条检查的那句随之对齐。
 
 ## 验收标准
 
-- [ ] 插件（`evals/` 除外）里搜 `Toeflair`、`备考`、`错题`、`练习次数`、`听力` 都是 0 处
+- [ ] 检查的范围内（`skills/`、`agents/`、README、插件 `docs/`、插件 `AGENTS.md`）搜 `Toeflair`、`备考`、`错题`、`练习次数`、`听力` 都是 0 处
 - [ ] `to-spec` 的 User Story 示例和 `glossary` 的术语示例还在、是通用场景，形状不变
 - [ ] 仓库 `AGENTS.md` 的规则写着插件里不出现任何项目的信息；「从一个真实项目（Toeflair）里通用化出来」那句还在
-- [ ] tripwire 先在改前的文本上红（指出 to-spec、glossary、README），改后绿
+- [ ] 扩过的 `no-project-leak` 先在改前的文本上红（指出 to-spec、glossary、README、插件 docs），改后绿
 - [ ] 全量测试绿
 
 ## 选中的存量回归
 
-- `idea-loop/scripts/to-spec-by-deliverable-doc.test.mjs`：改 to-spec 的示例会碰到它守的节表和字数
+- `idea-loop/scripts/to-spec-by-deliverable-doc.test.mjs`：改 to-spec 的示例会碰到它守的节表和字数（整文件 ≤5000 UTF-8 字符）
+- `idea-loop/scripts/no-project-leak.test.mjs`：本次扩它，原有词表不能删

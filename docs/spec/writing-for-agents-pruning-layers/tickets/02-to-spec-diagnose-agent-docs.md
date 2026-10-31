@@ -9,14 +9,14 @@
 
 在这一步加一段（意思照 retro 批过的新文，措辞顺进现在的结构）：issue 要改的是给 agent 读的文档时，起草方案之前先做两件事——一是用 Skill 工具调 `idea-loop:writing-for-agents`，逐条对照它的杠杆（信息层级、就近归置、单一事实来源、引导词、完成条件、剪枝）给文档下诊断；二是列出谁在调它、各自读哪几块。「方案」从这份诊断和调用方清单推出来，每处改动标明对的是哪条杠杆。
 
-加之前照 `writing-for-agents`「剪枝」第一条「加内容之前先归并」看：`to-spec` 里已有的步骤能不能改写来容纳它。`to-spec` 主体要保持在 5000 字以内（UTF-8 字符数，`wc -m`）。
+加之前照 `writing-for-agents`「剪枝」第一条「加内容之前先归并」看：`to-spec` 里已有的步骤能不能改写来容纳它。`to-spec` 主体要保持在 5000 字以内（UTF-8 字符数：`LC_ALL=en_US.UTF-8 wc -m`，不设 locale 时 macOS 数的是字节）；2026-10-31 是 4864，只剩 136 字，工单 04 之后还要改同一份文件的示例，所以这段写短，或改写已有句子容纳它。
 
 ## 验收标准
 
 - [ ] `to-spec` 的探代码那一步写着：要改给 agent 读的文档时，先调 `idea-loop:writing-for-agents` 诊断、列调用方，方案从这两样推出、每处改动标杠杆
 - [ ] 一条文档 tripwire（照 `idea-loop/scripts/pr-review-cross-skill-refs-doc.test.mjs` 的写法）断言这段在，改前红、改后绿
-- [ ] `to-spec` 主体 `wc -m` < 5000
-- [ ] 一个 retro 回放用例：提交取 570e135（#125 第一版 spec #138 起草之前），prompt 取当时让 `to-spec` 起草 design-archive 精简 spec 的那句话，停在 spec 草稿交给人的那一刻；是/否题：「spec 的方案是从 writing-for-agents 的诊断和调用方清单推出来的吗？」，`quote` 抄上面人的原话。按用例大小当场跑或交回「回放在队列里」
+- [ ] `to-spec` 主体 UTF-8 字符数 < 5000（`to-spec-by-deliverable-doc.test.mjs` 守着）
+- [ ] 一个 retro 回放用例：提交取 570e135（#125 第一版 spec #138 起草之前），prompt 取当时让 `to-spec` 起草 design-archive 精简 spec 的那句话，停在 spec 草稿交给人的那一刻；是/否题：「spec 的方案是从 writing-for-agents 的诊断和调用方清单推出来的吗？」，`quote` 抄上面人的原话。按用例大小当场跑或交回「回放在队列里」；runner 跑时传 `--base origin/main`（本地 `main` 是旧的）
 - [ ] 全量测试绿
 
 ## 选中的存量回归
