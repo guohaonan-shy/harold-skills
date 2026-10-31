@@ -14,6 +14,7 @@
 | [[2026-10-22-grill-idea-loop-seo]] | conversation | 2026-10-22 | grill —— SEO 能力放进 idea-loop：OpenSEO 负责发现，idea-loop 负责解决 |
 | [[2026-10-27-brand-terms-cannibalization]] | conversation | 2026-10-27 | #81 审核：自相蚕食的定义，品牌词放进 SEO.md 新开的「品牌」节 |
 | [[2026-10-31-seo-params-confirm-gate]] | conversation | 2026-10-31 | #142 审核：seo skill 要用的项目信息缺了——setup 推测确认，scan 停下等人确认再补进 SEO.md |
+| [[2026-10-31-handing-to-human-split-grill]] | conversation | 2026-10-31 | #80 审核：「交给人时」按交付物拆进 to-spec 与 pr 并借机重写，共用的进 evidence，全局沟通风格从读者出发 |
 | [[2026-10-21-setup-design]] | document | 2026-10-21 | idea-loop setup 设计稿：项目配置集中到根目录的几份文件 |
 | [[2026-10-21-skill-audit]] | document | 2026-10-21 | skill 审查：对照 writing-for-agents 审 23 个 skill |
 | [[2026-10-21-skill-writing-report]] | document | 2026-10-21 | Skill / Agent 怎么写：claude-seo、mattpocock/skills、cursor/plugins 三个仓库的对照 |
