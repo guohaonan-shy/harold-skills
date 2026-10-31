@@ -16,10 +16,10 @@ idea-loop 的知识库约定（`idea-loop:wiki-conventions` 这个 skill 的「s
 
 ## 验收标准
 
-- [ ] wiki-conventions 的 link sweep 规则写明：行内代码和代码块里的 `[[...]]` 不算链接、不查；正文和 frontmatter 里的照旧查。
-- [ ] 照改后的规则对当前 `docs/` 跑一遍 link sweep，指不到的清单只有 `docs/records/retro-candidates/2026-10-31-handing-to-human-name-references.md` 里正文的 `[[577]]`（这条是真断链，归 #199，不在这张工单里修）；`ui-state-archive`、`design-archive-sections` 的 16 条示例都不出现。
-- [ ] 改动只在 wiki-conventions 这一个 skill 文件里；dreaming 的 SKILL.md 和 `references/proposal-table.md` 没动。
-- [ ] 那个 SKILL.md 主体仍在仓库 AGENTS.md 规定的 5000 字以内（改前已经超的，不因这次变得更长太多，并在交回里说明）。
+- [x] wiki-conventions 的 link sweep 规则写明：行内代码和代码块里的 `[[...]]` 不算链接、不查；正文和 frontmatter 里的照旧查。
+- [x] 照改后的规则对当前 `docs/` 跑一遍 link sweep，指不到的清单只有 `docs/records/retro-candidates/2026-10-31-handing-to-human-name-references.md` 里正文的 `[[577]]`（这条是真断链，归 #199，不在这张工单里修）；`ui-state-archive`、`design-archive-sections` 的 16 条示例都不出现。
+- [x] 改动只在 wiki-conventions 这一个 skill 文件里；dreaming 的 SKILL.md 和 `references/proposal-table.md` 没动。
+- [x] 那个 SKILL.md 主体仍在仓库 AGENTS.md 规定的 5000 字以内（改前已经超的，不因这次变得更长太多，并在交回里说明）。
 
 ## 选中的存量回归
 
