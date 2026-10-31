@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#125 的 spec 起草：第一版方案只挪 SKILL.md，人看到后说要连参考一起剪，并进 #125；retro 候选 3 落成 harold-skills#156（决定记录 docs/raw/decisions/125.md 题 2、候选 3）",
+  "commit": "570e135",
+  "prompt": "guohaonan-shy/harold-skills#125：idea-loop 插件里 design-archive 这个 skill（idea-loop/skills/design/design-archive/）的 SKILL.md 主体超过了 5000 字的上限。精简照 idea-loop:writing-for-agents 的写法（用 Skill 工具调它，写法以它为准，不要去读仓库里的那份文件）。请起草这份 spec 里「方案」一节：先把 design-archive 这个 skill 读一遍，再写出方案——主体围绕什么组织、各块内容放哪、哪些文件要动。\n\n这是回放，我（人）不在场，不会回复你：不要建任何文件，不要 git commit、git push、gh 的任何写操作，不要调 to-spec。最后一段回复就是方案本身。",
+  "stop_at": "把方案摆给人的那一刻：最后一段回复里的「方案」一节，不动任何文件",
+  "question": "spec 的范围包含参考文件的剪枝吗？",
+  "quote": "section.md我觉得也应该简化",
+  "size": "small",
+  "size_basis": "只驱动 writing-for-agents 一个 skill 读文档、出一段方案，不起插件 agent、不开浏览器；prompt 里禁了建文件、git 提交推送和 gh 写操作，没有付费外部服务"
+}
