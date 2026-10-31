@@ -39,3 +39,4 @@
 | [decisions/149](decisions/149.md) | conversation | 2026-10-30 | 决定记录 —— #149 的 issue 会话（覆盖 #147、#153）：保留 implementer、复用卡住的执行方、撤掉进实现前压缩，摆过的题与 retro 候选的结果 |
 | [decisions/168](decisions/168.md) | conversation | 2026-10-30 | 决定记录 —— #168 根 issue 的会话（覆盖 #165、#131，发 0.1.8）：cloud 整合任务、一组一份 spec 一个会话、人验素材挪到审核报告，摆过的题与 retro 候选的结果 |
 | [decisions/89](decisions/89.md) | conversation | 2026-10-31 | 决定记录 —— #89 的 issue 会话：README 目录树里 pr-reviewer 的模型改成跟定义一致，摆过的题（合并），无 retro 候选 |
+| [decisions/87](decisions/87.md) | conversation | 2026-10-31 | 决定记录 —— #87 的 issue 会话：session-digest locate 只认这场会话自己的记录，摆过的题（合并），无 retro 候选 |
