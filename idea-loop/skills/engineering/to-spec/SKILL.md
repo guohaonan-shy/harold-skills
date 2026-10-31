@@ -13,14 +13,14 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，正文照 [`references/raw-template.md`](references/raw-template.md)。frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`、`title`、`tags: [<topic>, <feature-slug>]`、`related: ["[[<spec-slug>]]"]`。
 
-3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能照 `idea-loop:evidence` 说清在哪、什么时候查的。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
+3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先用 Skill 工具调 `idea-loop:evidence`，看它的「写给人看的东西」。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
    seam 是测试观察行为的公共边界，测试从这里喂输入、读输出。优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置，每个带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认，不在场自己定。写进「测试决策」。
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`status: 草稿`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
 
    让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后由对账挂。
 
-   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。写给人看的方法（结论在前、最小视图、现状和选项怎么写）用 Skill 工具调 `idea-loop:evidence`，图照它的「spec 里的图」，这里不复述。能按规则判的自己定，写成已定的决定并注明依据，依据不成立的才写成选项（`idea-loop:decision-rules` 的「自己定的四条」）。
+   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。写给人看的方法（结论在前、最小视图、现状和选项怎么写）照第 3 步调过的 `idea-loop:evidence`，图照它的「spec 里的图」，这里不复述。能按规则判的自己定，写成已定的决定并注明依据，依据不成立的才写成选项（`idea-loop:decision-rules` 的「自己定的四条」）。
 
 5. **分流**：跑 `spec-status route <docs> <slug>`。覆盖的 issue 在开头那几行里全都「不存在」的，翻成 `完成`；还有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），翻成 `审核中` 并说出还剩哪几样；都没有就是 `正式`。人在场又是 `审核中`，就在这里接着定，定完删掉标记，`spec-status set <docs> <slug> 正式`。
 

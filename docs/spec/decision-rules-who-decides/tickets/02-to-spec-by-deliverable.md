@@ -38,7 +38,7 @@
 - [x] 人的决定（2026-10-31）：开头引用块写每个 issue 存在与否；`spec-status`、`issues.mjs`、`issue-verify` 改读它并仍认旧「验证」表，各自的测试覆盖新旧两种写法
 - [x] 人的决定（2026-10-31）：「问题陈述」节名；「方案」开头有交互时序图的位置说明，后端 / 前端内部 / 前端交互是它的子小节
 - [x] review 第 1 轮 S2（2026-10-31）：插件 README 里写 to-spec 的那一行，「现状的陈述带出处」改指 idea-loop:evidence 的共用写法，不再指 decision-rules
-- [ ] review 第 3 轮 C1（2026-10-31）：要 agent 当场照 evidence 的写法做事的地方，写「用 Skill 工具调 `idea-loop:evidence`，看它的『写给人看的东西』」（规则原文：要 agent 当场用上另一个 skill，就写「用 Skill 工具调」它，只要其中一节就加上节名）；这张工单涉及核验 issue 时核现状与写选项两处、起草 spec 时第一次用到的那一步（调用挪到那里）
+- [x] review 第 3 轮 C1（2026-10-31）：要 agent 当场照 evidence 的写法做事的地方，写「用 Skill 工具调 `idea-loop:evidence`，看它的『写给人看的东西』」（规则原文：要 agent 当场用上另一个 skill，就写「用 Skill 工具调」它，只要其中一节就加上节名）；这张工单涉及核验 issue 时核现状与写选项两处、起草 spec 时第一次用到的那一步（调用挪到那里）
 
 ## 选中的存量回归
 
