@@ -3,7 +3,9 @@
  * Reads a project's SEO.md — the one config file every seo skill, agent and script reads. Its format
  * is defined in skills/seo/seo-setup/references/seo-md.md: seven `## ` sections, one `- key：value`
  * item per line, domains / URLs / paths / ids in backticks. Missing sections read as empty, unknown
- * lines are ignored, so a human can write notes in between.
+ * lines are ignored, so a human can write notes in between. A human who answered "none" writes `无`
+ * (`- 品牌词：无`, or one `- 无` line under 竞品): it reads as empty and as `confirmed`, so callers can
+ * tell "confirmed empty" from "never written".
  *
  * Usage: node seo-md.mjs <SEO.md>   → JSON of the seven sections
  * Exit: 0 = parsed, 1 = unreadable file (reason on stderr).
@@ -52,6 +54,7 @@ function keyValue(item) {
   return [item.trim(), ''];
 }
 
+const NONE = '无';
 const ticks = (s) => [...String(s).matchAll(/`([^`]+)`/g)].map((m) => m[1]);
 const firstTick = (s) => ticks(s)[0] ?? null;
 const pairs = (lines) => Object.fromEntries(items(lines).map(keyValue));
@@ -125,21 +128,33 @@ function parseWriting(lines) {
   return { voice: firstTick(kv['文风'] ?? ''), failures: firstTick(kv['失败案例'] ?? ''), typeField: firstTick(kv['类型字段'] ?? ''), typeMap };
 }
 
-/** `` - 品牌词：`a`；`b` `` → { terms: ['a', 'b'] }; no section, no key or no backticks → []. */
+/** `` - 品牌词：`a`；`b` `` → { terms: ['a', 'b'] }; no section, no key, no backticks or `无` → []. */
 function parseBrand(lines) {
   return { terms: ticks(pairs(lines)['品牌词'] ?? '') };
 }
 
+/** Per item: written (a value, or an explicit `无`) vs never written. Empty-by-choice reads as confirmed. */
+function parseConfirmed(s, competitors, brand) {
+  const none = items(s['竞品']).some((it) => it === NONE);
+  return {
+    competitors: competitors.length > 0 || none,
+    brandTerms: brand.terms.length > 0 || (pairs(s['品牌'])['品牌词'] ?? '').trim() === NONE,
+  };
+}
+
 export function parseSeoMd(md) {
   const s = sections(md);
+  const competitors = parseCompetitors(s['竞品']);
+  const brand = parseBrand(s['品牌']);
   return {
     site: parseSite(s['站点']),
     openseo: parseOpenSeo(s['OpenSEO']),
-    competitors: parseCompetitors(s['竞品']),
+    competitors,
     keyPages: parseKeyPages(s['重点页面']),
     build: parseBuild(s['构建与检查']),
     writing: parseWriting(s['写作']),
-    brand: parseBrand(s['品牌']),
+    brand,
+    confirmed: parseConfirmed(s, competitors, brand),
   };
 }
 

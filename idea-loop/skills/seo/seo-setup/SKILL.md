@@ -22,7 +22,7 @@ disable-model-invocation: true
 
 ## 2. 读现状，备推荐值
 
-- `SEO.md` 在的话跑 `node S/seo-md.mjs SEO.md`，记下哪些小节、哪些键是空的。只问空的。
+- `SEO.md` 在的话跑 `node S/seo-md.mjs SEO.md`，记下哪些小节、哪些键是空的（输出的 `confirmed` 为 true 的不算空：写了值，或人写了 `无`）。只问空的。
 - `get_project_context`，原样存成 `.tmp/seo-setup/context.json`。它的竞品、重点页面、业务概述就是对应小节的推荐值；`missingSections` 里的几节，第 3 步一起问（问法见 [references/project-context.md](references/project-context.md)）。
 - 仓库里找其余小节的推荐值，每个记下出处：
   - **站点**：站点配置里的域名、i18n 路由（语言前缀）、`robots.txt`、`sitemap`。
@@ -40,14 +40,14 @@ disable-model-invocation: true
 - **OpenSEO**：项目 id 由第 1 步定，不用问。余额下限和各方向单次额度给推荐值；各方向之和超过 2,000 时，预算脚本会按 2,000 截，告诉人这一点。`geo` 的单次额度推荐 0：跟踪的花费在第 7 步单独批，扫描只读结果。
 - **竞品**：OpenSEO 里有、`SEO.md` 里没有的，逐个问留不留。第 5 步是单向同步，不留的会从 OpenSEO 删掉。
 - **重点页面**：要守的页面，10 到 30 个是常态，每个带头词。
-- **品牌**：品牌词，查询里含它的不算自相蚕食（站点链接会让品牌词查询看起来像几个页面在抢同一个词）。人可以照推荐、加别的写法（空格、连字符的变体不用加，比较时会去掉）或说留空；留空就是不排除，不自己从域名推一个写进去。
+- **品牌**：品牌词，查询里含它的不算自相蚕食（站点链接会让品牌词查询看起来像几个页面在抢同一个词）。人可以照推荐、加别的写法（空格、连字符的变体不用加，比较时会去掉）或说留空。推荐值经人确认才写，约定见 [references/seo-md.md](references/seo-md.md) 的「项目信息从哪来」。
 - 项目上下文缺的几节一起问（业务、目标、定位、写作偏好）。
 
 完成条件：每个空键都有人确认过的值，或人明确说留空。
 
 ## 4. 写 SEO.md
 
-照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。
+照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。
 
 完成条件：`node S/seo-md.mjs SEO.md` 解析成功，七节都在；`git diff SEO.md` 给人看过。
 

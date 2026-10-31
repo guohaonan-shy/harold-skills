@@ -68,6 +68,25 @@ test('SEO.md: a missing 品牌 section, a missing 品牌词 key or a value witho
   assert.deepEqual(parseSeoMd('## 品牌\n- 品牌词：\n').brand.terms, []);
 });
 
+test('SEO.md: 品牌词 写「无」读成没有品牌词并标成已确认；没写这个键是未确认', () => {
+  const none = parseSeoMd('## 品牌\n- 品牌词：无\n');
+  assert.deepEqual(none.brand.terms, []);
+  assert.equal(none.confirmed.brandTerms, true);
+  assert.equal(parseSeoMd('## 品牌\n- 说明：随便写点什么\n').confirmed.brandTerms, false);
+  assert.equal(parseSeoMd('# SEO\n').confirmed.brandTerms, false);
+  assert.equal(parseSeoMd('## 品牌\n- 品牌词：cookbook\n').confirmed.brandTerms, false, '没有反引号的值不算写了');
+  assert.equal(parseSeoMd(SEO_MD).confirmed.brandTerms, true, '写了品牌词也是已确认');
+});
+
+test('SEO.md: 竞品节写 `- 无` 读成没有竞品并标成已确认；节是空的是未确认', () => {
+  const none = parseSeoMd('## 竞品\n- 无\n\n## 品牌\n- 品牌词：无\n');
+  assert.deepEqual(none.competitors, []);
+  assert.equal(none.confirmed.competitors, true);
+  assert.equal(parseSeoMd('## 竞品\n\n## 品牌\n').confirmed.competitors, false);
+  assert.equal(parseSeoMd('# SEO\n').confirmed.competitors, false);
+  assert.equal(parseSeoMd(SEO_MD).confirmed.competitors, true);
+});
+
 test('SEO.md: missing sections read as empty, unknown directions and page types are refused', () => {
   const s = parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n');
   assert.deepEqual(s.competitors, []);

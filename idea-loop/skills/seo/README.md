@@ -6,7 +6,7 @@ SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，
 |---|---|
 | 接入 | `seo-setup`（人跑，写 SEO.md、同步 OpenSEO、建 issue 分类与独立队列、批 AI 可见性跟踪、建每周扫描的定时任务） |
 | 发现 | `seo-audit`、`keyword-research`、`keyword-clustering`、`competitor-analysis`、`link-prospecting`、`seo-geo`；agent `technical-auditor`、`page-optimizer`、`keyword-miner`、`backlink-analyst`、`geo-analyst` |
-| 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向）+ `scripts/seo-{due,budget,context,baseline,issues}.mjs`；issue 进调度的 `seo` 独立队列（上限 5） |
+| 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向）+ `scripts/seo-{due,gaps,budget,context,baseline,issues}.mjs`（开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 进调度的 `seo` 独立队列（上限 5） |
 | 解决 | `seo-brief`（审核阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段）、`seo-check`（发布前检查，构建后 hook 自动跑） |
 | 陪练 | `seo-coach` |
 

@@ -3,12 +3,12 @@ name: seo-scan
 description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue。每周的定时任务触发，人也可以手动跑。
 disable-model-invocation: true
 argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo）"
-allowed-tools: Read, Write, Agent, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context
+allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
-一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把它们交回的发现交给提 issue 脚本，最后在 OpenSEO 的研究日志里记一笔。产出只有 GitHub 上的 issue 和评论，加一条研究日志；仓库里什么都不提交。
+一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把它们交回的发现交给提 issue 脚本，最后在 OpenSEO 的研究日志里记一笔。产出只有 GitHub 上的 issue 和评论，加一条研究日志；仓库里什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
 
-这次运行可能没有人在场（定时任务触发）：任何一步缺数据，照下文写的记下来、接着往下走，跑到「交回」为止。只有开场的两种情形停下。
+这次运行可能没有人在场（定时任务触发）：任何一步缺数据，照下文写的记下来、接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
 下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`。脚本都输出 JSON 到 stdout，出错退出码 1、原因在 stderr。
 
@@ -28,9 +28,27 @@ allowed-tools: Read, Write, Agent, Bash(git rev-parse:*), Bash(git check-ignore:
 
 完成条件：一个方向列表（可以为空：为空就跳过预算、派 agent、提 issue，直接写研究日志）。
 
+## 缺口关卡
+
+这次方向要用的项目信息缺了，不拿推出来的值直接跑：推测、等人确认、写下来，再往下。约定和「每个方向要用的信息」表见格式定义（seo-setup 的 `references/seo-md.md`）。
+
+1. 方向列表为空：跳过。
+2. `node S/seo-gaps.mjs <仓库根>/SEO.md <运行目录>/context.json <方向>...`（没有 `context.json` 时第二个参数写 `-`），输出存到 `<运行目录>/gaps.json`。`gaps` 为空：进「预算」。
+3. 有缺口，逐项推测，每项带出处：
+   - 竞品：`find_serp_competitors`，花 credits。先按「预算」的做法跑一次 `whoami` 和 `seo-budget.mjs`；要竞品的方向没有一个 `allow` 大于 0，就不推，只问人要。
+   - 品牌词：「站点」域名去掉后缀。
+   - 业务概述、当前目标、定位：站点首页。
+4. 发桌面通知（`PushNotification`，例：「seo-scan 缺 竞品、定位，等你确认」），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
+5. 人回复后：
+   - `SEO.md` 的项（竞品、品牌词）用 Edit 改在工作区；人说留空的写 `无`。
+   - 项目上下文的项用 `update_project_context` 的 `{ section, content }` 写回。
+   - 重跑第 2 步：`gaps` 为空就从「预算」往下跑，还有缺口回到第 3 步。
+
+完成条件：`gaps` 为空，或已通知人并停下。
+
 ## 预算
 
-1. 调 `whoami`，读 `creditsRemaining`，记作「开始余额」。调用失败或返回 `null`：余额参数传 `null`，原因记下（脚本按读不到余额处理：付费调用全部不放行，免费的照跑）。
+1. 调 `whoami`，读 `creditsRemaining`，记作「开始余额」（关卡调过 `whoami` 的，用关卡那次读到的）。调用失败或返回 `null`：余额参数传 `null`，原因记下（脚本按读不到余额处理：付费调用全部不放行，免费的照跑）。
 2. `node S/seo-budget.mjs <仓库根>/SEO.md <余额> <方向>...`，输出存到 `<运行目录>/budget.json`。
 
 `allow` 里的每个方向都派，额度是它这次能花的 credits；额度为 0 的只做免费调用。`skipped` 里的每条原因原样进研究日志。
@@ -114,6 +132,15 @@ seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:seo-setup>
 - 花费：<n | 未知> credits
 - 研究日志：已写入 | 没写成（<原因>），摘要在 <log.txt 路径>
+- SEO.md：这次改了（<哪几项>）| 没改
+- 运行目录：<路径>
+```
+
+停在「缺口关卡」时，改用这个形状：
+
+```
+seo-scan <YYYY-MM-DD HH:MM> 停下等确认：<方向...>
+- 缺：<项>（<哪些方向要>）→ 推测：<值>（<出处>）；…
 - 运行目录：<路径>
 ```
 
