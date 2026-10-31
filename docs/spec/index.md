@@ -5,6 +5,7 @@
 |---|---|
 | [[canvas-truth-dreaming-agents]] | 冻结后画布是唯一设计真相，设计变更由 designer 改画布；dreaming 拆成编排者加专职 agent |
 | [[confirm-only-on-loss]] | 设计参考加一条可检查的规则：离开 / 结束入口只在会丢用户成果时才弹确认 |
+| [[decision-rules-who-decides]] | decision-rules 只管谁来定；讲给人看的写法进 evidence，to-spec 与 pr 按交付物重写，全局沟通风格从读者出发 |
 | [[design-archive-sections]] | 设计档案给长页面加可引用的分段：入口拍整页按段切图，边带出发段和落点段，按段比对 |
 | [[design-archive-skill-length]] | design-archive 主体 11386 字超 5000、sections.md 1.55 万字：主体只讲图的实体，写法、拍图、命令走 references |
 | [[design-archive-unstable-sections]] | 设计档案的分段拍图对脚本动画、轮播、悬停暂停、滚动驱动的段也拍得稳、拍得对，对账不误报也不漏报 |
