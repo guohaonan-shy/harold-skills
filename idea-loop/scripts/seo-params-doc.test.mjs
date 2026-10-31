@@ -85,6 +85,32 @@ test('seo-scan: the gate notifies, lists guesses with their source, stops withou
   assert.match(g, /从「预算」往下跑/);
 });
 
+test('seo-scan: after the human answers, the project context is fetched again before the gaps are rechecked (S1)', () => {
+  const g = section(SCAN, '缺口关卡');
+  const answered = g.slice(g.indexOf('人回复后'));
+  const refetch = answered.search(/重新调 `get_project_context`[^\n]*覆盖[^\n]*context\.json/);
+  const recheck = answered.search(/重跑第 2 步/);
+  assert.ok(refetch >= 0, 'the opening copy of context.json would still show the filled field as empty');
+  assert.ok(recheck > refetch, 'the recheck runs on the fresh copy');
+});
+
+test('seo-scan: credits the gate spent count toward the run, and 预算 reads the balance again (S2)', () => {
+  const g = section(SCAN, '缺口关卡');
+  assert.match(g, /find_serp_competitors[^\n]*调完再调一次[^\n]*`whoami`/, 'the gate reads the balance after the paid call');
+  const b = section(SCAN, '预算');
+  assert.match(b, /重新读/, '预算 reads creditsRemaining itself');
+  assert.ok(!/用关卡那次读到的/.test(b), 'the gate\'s reading is stale once it has spent');
+  assert.match(b, /--spent/);
+  assert.match(b, /开始余额[^\n]*第一次/, 'the run-start balance is the first reading, gate included');
+});
+
+test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
+  const g = section(SCAN, '缺口关卡');
+  assert.ok(!/seo-md\.md/.test(SCAN), 'seo-md.md is seo-setup\'s own reference');
+  assert.ok(!/格式定义/.test(g));
+  assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
+});
+
 test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
   assert.match(SCAN, /只有三种情形停下/);
   assert.ok(!/只有开场的两种情形停下/.test(SCAN));

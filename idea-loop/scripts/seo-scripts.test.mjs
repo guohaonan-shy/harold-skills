@@ -95,6 +95,18 @@ test('SEO.md: missing sections read as empty, unknown directions and page types 
   assert.throws(() => parseSeoMd('## 写作\n- 类型映射：`X` → 杂谈\n'), /杂谈/);
 });
 
+test('budget: credits already spent earlier in the run (the gate) count against the single-run cap', () => {
+  const o = { floor: 100, budgets: { technical: 0, pages: 1500, keywords: 1500 } };
+  const base = budgetPlan(o, 5000, ['pages', 'keywords']);
+  assert.deepEqual(base.allow, { pages: 1500, keywords: 500 });
+  const after = budgetPlan(o, 4800, ['pages', 'keywords'], 200);
+  assert.deepEqual(after.allow, { pages: 1500, keywords: 300 }, 'cap 2000 minus 200 spent, split in order');
+  assert.match(after.skipped[0].reason, /单次合计上限 2000/);
+  const nearFloor = budgetPlan(o, 250, ['pages'], 200);
+  assert.deepEqual(nearFloor.allow, { pages: 150 }, 'the floor is checked against the balance read after the spend');
+  assert.deepEqual(budgetPlan(o, 4800, ['pages'], 2500).allow, { pages: 0 }, 'a run that already spent the cap runs free calls only');
+});
+
 test('budget: below the floor nothing paid runs', () => {
   const r = budgetPlan({ floor: 1000, budgets: { technical: 200, pages: 300 } }, 800, ['technical', 'pages']);
   assert.deepEqual(r.allow, { technical: 0, pages: 0 });
