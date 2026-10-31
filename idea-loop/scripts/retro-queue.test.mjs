@@ -56,7 +56,7 @@ test('outside the window the time check comes first, even with an empty queue', 
 
 // ---------- the queue file ----------
 
-const entry = () => ({ repo: 'owner/proj', pr: 12, worktree: '/work/proj-impl', cases: ['explain-mechanism'], base: 'abc1234', queued_at: '2026-10-22T20:00:00.000Z' });
+const entry = () => ({ repo: 'owner/proj', pr: 12, worktree: '/work/proj-impl', cases: ['retro-pool-choice'], base: 'abc1234', queued_at: '2026-10-22T20:00:00.000Z' });
 
 test('a queue entry holds the repository, the PR number, the worktree path and the cases', () => {
   assert.deepEqual(validateQueueEntry(entry()), []);
@@ -74,8 +74,8 @@ test('one file per PR: the name comes from the repository and the PR number', ()
 
 test('queueing more cases for a PR that is already queued adds to its file instead of replacing it', () => {
   const first = makeQueueEntry({ ...entry(), queuedAt: '2026-10-22T20:00:00.000Z' });
-  const second = makeQueueEntry({ ...entry(), cases: ['explain-mechanism', 'other-case'], queuedAt: '2026-10-23T08:00:00.000Z', existing: first });
-  assert.deepEqual(second.cases, ['explain-mechanism', 'other-case']);
+  const second = makeQueueEntry({ ...entry(), cases: ['retro-pool-choice', 'other-case'], queuedAt: '2026-10-23T08:00:00.000Z', existing: first });
+  assert.deepEqual(second.cases, ['retro-pool-choice', 'other-case']);
   assert.equal(second.queued_at, '2026-10-22T20:00:00.000Z', 'the PR has been waiting since the first time');
   assert.deepEqual(validateQueueEntry(second), []);
 });

@@ -8,8 +8,8 @@
  * in the plugin that points at the old section or reference (dreaming's own step names excepted), the
  * reference gone, evidence opening with the reader model and covering the shared writing rules inside
  * 5000 characters, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
- * the places that repeat the format), the four pool candidates re-pointed, and the replay case driving
- * evidence.
+ * the places that repeat the format), the four pool candidates re-pointed, and the explain-mechanism replay
+ * case removed.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -123,13 +123,6 @@ test('the four pool candidates that pointed at handing-to-human now point at evi
   }
 });
 
-test('the explain-mechanism replay case drives evidence and keeps its question', () => {
-  const c = JSON.parse(read('evals', 'retro', 'cases', 'explain-mechanism', 'case.json'));
-  assert.match(c.prompt, /\/idea-loop:evidence/);
-  assert.doesNotMatch(c.prompt, /交给人时/);
-  assert.match(c.prompt, /子代理/);
-  assert.match(c.prompt, /claude -p/);
-  assert.equal(c.commit, '96d66f2');
-  assert.match(c.question, /子代理和 `claude -p` 各是什么/);
-  assert.equal(c.quote, '我理解跟claude -p是一样的，二者的区别能跟我讲一下吗？');
+test('the explain-mechanism replay case is removed (it could not tell plugin changes from the global CLAUDE.md)', () => {
+  assert.equal(existsSync(join(repoRoot, 'idea-loop', 'evals', 'retro', 'cases', 'explain-mechanism')), false);
 });
