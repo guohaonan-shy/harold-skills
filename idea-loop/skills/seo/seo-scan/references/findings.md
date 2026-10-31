@@ -26,7 +26,7 @@
 - `repro` 要能被一个没看过本次数据的人照着重跑：工具名加完整参数（含 `projectId`、日期范围），或一条 `curl -A '<UA>' <网址>` 加要看的那一行。issue 会话的审核阶段就照它独立复现。
 - `fix` 还没想清楚时写「需要诊断」或「需要决定：…」，这条照样交回：诊断和拍板在 issue 会话里有人做。
 - `content` 只给要新写或改写正文的发现，`pageType` 只取那四个值，`mode` 是新开页（`new`）还是改已有页（`update`）。
-- `assumptions` 写清无人时你替人选了什么：「SEO.md 没写目标市场，按 MCP 默认 United States / English」。
+- `assumptions` 写清无人时你替人选了什么：「SEO.md 没写目标市场，按 MCP 默认 United States / English」。缺的项目信息不推断着用，写清缺什么、哪部分因此没做：「SEO.md 竞品为空，未挖竞品外链」。
 
 例：
 

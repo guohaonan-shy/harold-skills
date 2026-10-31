@@ -68,12 +68,43 @@ test('SEO.md: a missing 品牌 section, a missing 品牌词 key or a value witho
   assert.deepEqual(parseSeoMd('## 品牌\n- 品牌词：\n').brand.terms, []);
 });
 
+test('SEO.md: 品牌词 写「无」读成没有品牌词并标成已确认；没写这个键是未确认', () => {
+  const none = parseSeoMd('## 品牌\n- 品牌词：无\n');
+  assert.deepEqual(none.brand.terms, []);
+  assert.equal(none.confirmed.brandTerms, true);
+  assert.equal(parseSeoMd('## 品牌\n- 说明：随便写点什么\n').confirmed.brandTerms, false);
+  assert.equal(parseSeoMd('# SEO\n').confirmed.brandTerms, false);
+  assert.equal(parseSeoMd('## 品牌\n- 品牌词：cookbook\n').confirmed.brandTerms, false, '没有反引号的值不算写了');
+  assert.equal(parseSeoMd(SEO_MD).confirmed.brandTerms, true, '写了品牌词也是已确认');
+});
+
+test('SEO.md: 竞品节写 `- 无` 读成没有竞品并标成已确认；节是空的是未确认', () => {
+  const none = parseSeoMd('## 竞品\n- 无\n\n## 品牌\n- 品牌词：无\n');
+  assert.deepEqual(none.competitors, []);
+  assert.equal(none.confirmed.competitors, true);
+  assert.equal(parseSeoMd('## 竞品\n\n## 品牌\n').confirmed.competitors, false);
+  assert.equal(parseSeoMd('# SEO\n').confirmed.competitors, false);
+  assert.equal(parseSeoMd(SEO_MD).confirmed.competitors, true);
+});
+
 test('SEO.md: missing sections read as empty, unknown directions and page types are refused', () => {
   const s = parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n');
   assert.deepEqual(s.competitors, []);
   assert.equal(s.build.distDir, null);
   assert.throws(() => parseSeoMd('## OpenSEO\n- 单次额度：social 100\n'), /social/);
   assert.throws(() => parseSeoMd('## 写作\n- 类型映射：`X` → 杂谈\n'), /杂谈/);
+});
+
+test('budget: credits already spent earlier in the run (the gate) count against the single-run cap', () => {
+  const o = { floor: 100, budgets: { technical: 0, pages: 1500, keywords: 1500 } };
+  const base = budgetPlan(o, 5000, ['pages', 'keywords']);
+  assert.deepEqual(base.allow, { pages: 1500, keywords: 500 });
+  const after = budgetPlan(o, 4800, ['pages', 'keywords'], 200);
+  assert.deepEqual(after.allow, { pages: 1500, keywords: 300 }, 'cap 2000 minus 200 spent, split in order');
+  assert.match(after.skipped[0].reason, /单次合计上限 2000/);
+  const nearFloor = budgetPlan(o, 250, ['pages'], 200);
+  assert.deepEqual(nearFloor.allow, { pages: 150 }, 'the floor is checked against the balance read after the spend');
+  assert.deepEqual(budgetPlan(o, 4800, ['pages'], 2500).allow, { pages: 0 }, 'a run that already spent the cap runs free calls only');
 });
 
 test('budget: below the floor nothing paid runs', () => {

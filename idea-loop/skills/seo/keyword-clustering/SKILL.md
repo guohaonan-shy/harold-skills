@@ -65,7 +65,7 @@ description: 关键词聚类：按搜索意图把词分组，映射到已有或�
    - 新页面建议：没有合适的已有页面时
    - 不瞄准 / 以后再说：弱或偏离策略时
 6. 找出蚕食风险：多个页面会瞄准同一个意图时。Search Console 已连接时用 `get_search_console_performance`（`dimensions: ["query","page"]`）从真实数据确认：同一个查询把展现分给了多个网址。
-   **蚕食判定排除品牌查询**：SEO.md「品牌」节写了品牌词时，查询和每个品牌词都转小写、去掉空格和连字符后，查询包含任一品牌词的，不判蚕食（品牌词 `cookbook` 时，「cookbook」「Cook Book pricing」「best cook-book app」不判，「weeknight dinner ideas」照常判）。没写品牌词：不排除，蚕食照常判，不从域名推。只作用于蚕食判定：其他判定（如 `striking-distance`、`low-ctr`）照常包含品牌词查询。
+   **蚕食判定排除品牌查询**：SEO.md「品牌」节写了品牌词时，查询和每个品牌词都转小写、去掉空格和连字符后，查询包含任一品牌词的，不判蚕食（品牌词 `cookbook` 时，「cookbook」「Cook Book pricing」「best cook-book app」不判，「weeknight dinner ideas」照常判）。没写品牌词，或写的是 `无`（人确认过没有）：不排除，蚕食照常判，不从域名推。只作用于蚕食判定：其他判定（如 `striking-distance`、`low-ctr`）照常包含品牌词查询。
 7. 用 `save_keywords` 打簇标签之前先问人。
 
 ## 输出格式

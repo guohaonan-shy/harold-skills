@@ -13,7 +13,7 @@ description: 外链拓展：从 SERP 和竞品外链里找可能引用我们的�
 
 - **人在场**（默认）：照下文原样，可以问、可以存、可以出报告。
 - **无人值守**：调用方提示的第一行是「无人值守，交回发现清单。」，后面给出 SEO.md 路径、OpenSEO 项目、本次额度和今天的日期。这时：
-  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`。
+  - 不提问：要问的值从 SEO.md 取，SEO.md 没有就用 MCP 默认值，写进那条发现的 `assumptions`；项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步。
   - 不写入、不保存：不调 `update_project_context`（研究日志也不追加），不改 SEO.md，不发任何消息。
   - 不出报告：工作流第 8–9 步（找联系途径、起草外联）和「输出格式」不做，改做「无人值守的交回」一节。联系途径和外联草稿由 issue 会话里的 seo-outreach 做。
   - 花费不超过调用方给的额度：每次付费调用后用 `whoami` 核已花的数，再花一次可能超额就停，没做的写进 `assumptions`。
@@ -32,9 +32,9 @@ description: 外链拓展：从 SERP 和竞品外链里找可能引用我们的�
 
 1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，外联以它为根：`positioning` 提供让人愿意给链接的那个主张，竞品就是要挖的外链档案。
-3. 这个 skill 需要 `positioning` 和竞品。任一为空时：
+3. 这个 skill 需要 `positioning` 和竞品。哪项写着「无」（人明确说过不需要；竞品是 SEO.md「竞品」节的一行 `- 无`，脚本读出 `competitors` 为空、`confirmed.competitors` 为 true），就当作没有这项信息：不推断、不问、不写回，人在场、无人值守都一样；在 `assumptions` 里写明哪部分因此没做（竞品：不挖竞品外链档案，只从自家资产找候选，写「SEO.md 竞品写着无，未挖竞品外链」；`positioning`：外联角度不按主张定，写「`positioning` 写着无，未按主张定角度」），人在场就写在报告里，其余照常做完；无人值守且没有发现可挂时，把同样的话写进 `uncollected`。其余任一为空时：
    - 人在场：做最小的现场补齐：问人为什么有人会引用他们、他们和谁竞争，或从站点和 `find_serp_competitors` 推断再确认；竞品先写进 SEO.md 的「竞品」，再和 `positioning` 一起用 `update_project_context` 写回，然后继续拓展。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
-   - 无人值守：从站点推断 `positioning`、用 `find_serp_competitors` 推断竞品，写进 `assumptions`，不写回。
+   - 无人值守：缺了不推断，不从站点猜 `positioning`、不用 `find_serp_competitors` 找竞品来用，不写回。在 `assumptions` 里写明缺什么、哪部分因此没做，其余照常做完：竞品为空，不挖竞品外链档案，只从自家资产找候选，写「SEO.md 竞品为空，未挖竞品外链」；`positioning` 为空，外联角度不按主张定，写「`positioning` 为空，未按主张定角度」。没有发现可挂时，把同样的话写进 `uncollected`。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
 5. 收尾时（只限人在场）写回经得住时间的东西：可被引用的资产、外链档案证明有用的竞品，经人同意先加进 SEO.md 的「重点页面」「竞品」，再用 `addKeyPages`、`addCompetitors` 写进项目上下文，两边一致；并追加一条研究日志：`{ appendResearchLog: { summary: "Link prospecting: <asset/target page>. Verdict: <conclusion>" } }`。
 
@@ -129,7 +129,7 @@ OpenSEO 找出好的拓展目标后，用手头非 OpenSEO 的浏览或搜索工
   "evidence": { "what": "get_serp_results，queries=[…]", "when": "YYYY-MM-DD", "values": "每个目标为什么相关、建议的角度，一两句" },
   "repro": "照着就能重跑：哪个工具、什么参数",
   "fix": "用 seo-outreach 给这些站点写外联草稿和跟进表，角度：…",
-  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值"] }
+  "acceptance": ["能逐条独立检查的验收标准"], "assumptions": ["代替提问用的默认值；缺的项目信息及因此没做的部分"] }
 ```
 
 - `kind` 小写连字符、同一方向内唯一：写 `outreach-<资产页面路径的末段>`（如上例），不同资产不会被合进同一个 issue。
