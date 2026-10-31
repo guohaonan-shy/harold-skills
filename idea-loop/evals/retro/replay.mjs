@@ -88,6 +88,11 @@ export function buildJudgePrompt(c, productA, productB) {
  * What a run left behind, as one text the judge can read: its closing words plus each file it wrote.
  * `perFile` caps one file, `total` caps the whole text.
  */
+/** What the judge sees of a file the run left behind: its text, or a one-line note for a binary file (a NUL byte means binary; raw bytes in the judge prompt make spawn throw). */
+export function fileBody(buf) {
+  return buf.includes(0) ? `（二进制文件，${buf.length} 字节，内容略）` : buf.toString('utf8');
+}
+
 export function buildArtifact({ resultText, files }, { perFile = 12_000, total = 60_000 } = {}) {
   const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里新增或改动的文件', ''];
   if (!files.length) parts.push('（没有新增或改动的文件）');

@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, parseOverrides, settleVerdicts,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -300,4 +300,14 @@ test('e2e: a case with a broken format is refused before any session starts', ()
   assert.equal(r.status, 2);
   assert.match(r.stderr + r.stdout, /question/);
   assert.deepEqual(r.calls, []);
+});
+
+test('fileBody gives the text of a text file and a one-line note for a binary one (no NUL byte reaches the judge prompt)', () => {
+  assert.equal(fileBody(Buffer.from('# 标题\n正文', 'utf8')), '# 标题\n正文');
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+  const note = fileBody(png);
+  assert.ok(!note.includes('\0'));
+  assert.match(note, /二进制文件，12 字节/);
+  // the judge prompt is passed to spawn as an argument; a NUL byte there throws
+  assert.ok(!buildJudgePrompt(smallCase(), buildArtifact({ resultText: 'r', files: [{ path: 'a.png', content: note }] }), 'B').includes('\0'));
 });

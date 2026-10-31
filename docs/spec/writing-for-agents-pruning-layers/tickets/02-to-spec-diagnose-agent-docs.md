@@ -13,11 +13,11 @@
 
 ## 验收标准
 
-- [ ] `to-spec` 的探代码那一步写着：要改给 agent 读的文档时，先调 `idea-loop:writing-for-agents` 诊断、列调用方，方案从这两样推出、每处改动标杠杆
-- [ ] 一条文档 tripwire（照 `idea-loop/scripts/pr-review-cross-skill-refs-doc.test.mjs` 的写法）断言这段在，改前红、改后绿
-- [ ] `to-spec` 主体 UTF-8 字符数 < 5000（`to-spec-by-deliverable-doc.test.mjs` 守着）
-- [ ] 一个 retro 回放用例：提交取 570e135（#125 第一版 spec #138 起草之前），prompt 取当时让 `to-spec` 起草 design-archive 精简 spec 的那句话，停在 spec 草稿交给人的那一刻；是/否题：「spec 的方案是从 writing-for-agents 的诊断和调用方清单推出来的吗？」，`quote` 抄上面人的原话。按用例大小当场跑或交回「回放在队列里」；runner 跑时传 `--base origin/main`（本地 `main` 是旧的）
-- [ ] 全量测试绿
+- [x] `to-spec` 的探代码那一步写着：要改给 agent 读的文档时，先调 `idea-loop:writing-for-agents` 诊断、列调用方，方案从这两样推出、每处改动标杠杆
+- [x] 一条文档 tripwire（照 `idea-loop/scripts/pr-review-cross-skill-refs-doc.test.mjs` 的写法）断言这段在，改前红、改后绿
+- [x] `to-spec` 主体 UTF-8 字符数 < 5000（`to-spec-by-deliverable-doc.test.mjs` 守着）
+- [x] 一个 retro 回放用例：提交取 570e135（#125 第一版 spec #138 起草之前），prompt 取当时让 `to-spec` 起草 design-archive 精简 spec 的那句话，停在 spec 草稿交给人的那一刻；是/否题：「spec 的方案是从 writing-for-agents 的诊断和调用方清单推出来的吗？」，`quote` 抄上面人的原话。按用例大小当场跑或交回「回放在队列里」；runner 跑时传 `--base origin/main`（本地 `main` 是旧的）
+- [x] 全量测试绿
 
 ## 选中的存量回归
 
