@@ -27,10 +27,10 @@ issue tracker 怎么用、状态 label 是什么意思，在目标仓库根目�
 
    让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`（不挂，loop 会把同一个 issue 再拿去验证一遍）；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后由对账挂。
 
-   frontmatter 之后第一行是 `# <标题>`，再往下照 `<spec-template>`。几条贯穿全文的规则在 `idea-loop:decision-rules`，模板里只写它落在哪一节：
-   - 现状的陈述都带出处，讲影响带规模数字（「现状先查清」）；
-   - 先写交付物，再写做法（「先写交付物，再列做法」）；
-   - 能按规则判的自己定，写成已定的决定并注明依据；依据不成立的才写成选项（「自己定的四条」「交给人时」）。
+   frontmatter 之后第一行是 `# <标题>`，再往下照 `<spec-template>`。几条贯穿全文的规则，模板里只写它落在哪一节：
+   - 现状的陈述都带出处，讲影响带规模数字（`idea-loop:evidence` 的共用写法）；
+   - 先写交付物，再写做法；
+   - 能按规则判的自己定，写成已定的决定并注明依据（`idea-loop:decision-rules` 的「自己定的四条」）；依据不成立的才写成选项，选项的写法照 `idea-loop:evidence` 的共用写法。
 
    图怎么画、放哪：用 Skill 工具调 `idea-loop:evidence`，照它的「spec 里的图」。
 

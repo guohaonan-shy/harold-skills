@@ -26,15 +26,15 @@ dreaming 的两份参考里「交给人时出候选卡 / 维护卡」是 dreamin
 
 ## 验收标准
 
-- [ ] 在 `idea-loop/` 下搜「交给人时」和「handing-to-human」，只剩 dreaming 那两处同名步骤；`decision-rules` 下没有 references 目录
-- [ ] `decision-rules` 除删掉的那一节和 description 外，正文与改前逐字相同（diff 只有这两处）
-- [ ] `evidence` 正文开头有读者模型，共用写法覆盖上面列的六条；原参考里每一条在 hand-back 里列出去向（并进哪条 / 归 02 / 删掉及理由）
-- [ ] `evidence` 主体按 UTF-8 字符数（`LC_ALL=en_US.UTF-8 wc -m`）在 5000 以内
-- [ ] `writing-for-agents` 有「先归并」那条；`retro` 的候选格式有「归并」一栏，retro 里其余引用候选格式的地方（决定记录、候选池的格式说明）同步
-- [ ] 候选池 4 条的「落点」已改，其余行未动
-- [ ] 回放用例 prompt 已改；按仓库的回放流程跑一次改前 / 改后（小用例，当场跑），结果文件路径写进 hand-back；判定是什么都如实写
-- [ ] 一个新的文档测试（`node --test`）断言：插件里没有指向「交给人时」或那份参考的文字；`writing-for-agents` 有先归并一条；`retro` 候选格式有归并一栏。改前跑它是红的
-- [ ] 仓库现有的全部 `node --test idea-loop/scripts/` 通过
+- [x] 在 `idea-loop/` 下搜「交给人时」和「handing-to-human」，只剩 dreaming 那两处同名步骤；`decision-rules` 下没有 references 目录
+- [x] `decision-rules` 除删掉的那一节和 description 外，正文与改前逐字相同（diff 只有这两处）
+- [x] `evidence` 正文开头有读者模型，共用写法覆盖上面列的六条；原参考里每一条在 hand-back 里列出去向（并进哪条 / 归 02 / 删掉及理由）
+- [x] `evidence` 主体按 UTF-8 字符数（`LC_ALL=en_US.UTF-8 wc -m`）在 5000 以内
+- [x] `writing-for-agents` 有「先归并」那条；`retro` 的候选格式有「归并」一栏，retro 里其余引用候选格式的地方（决定记录、候选池的格式说明）同步
+- [x] 候选池 4 条的「落点」已改，其余行未动
+- [x] 回放用例 prompt 已改；按仓库的回放流程跑一次改前 / 改后（小用例，当场跑），结果文件路径写进 hand-back；判定是什么都如实写
+- [x] 一个新的文档测试（`node --test`）断言：插件里没有指向「交给人时」或那份参考的文字；`writing-for-agents` 有先归并一条；`retro` 候选格式有归并一栏。改前跑它是红的
+- [x] 仓库现有的全部 `node --test idea-loop/scripts/` 通过
 
 ## 选中的存量回归
 
