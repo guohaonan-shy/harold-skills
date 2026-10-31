@@ -6,7 +6,7 @@
  * anything missing" by reading rules.
  *
  * Missing means: an SEO.md item that was never written (`无` counts as written), or an empty field in
- * the project context. Without a readable project context only the SEO.md items are checked, so an
+ * the project context (a field the human answered `无` is not empty: asked and not needed). Without a readable project context only the SEO.md items are checked, so an
  * unreachable OpenSEO never blocks a scan.
  *
  * The project context is get_project_context's raw return. A typed section (business_overview,

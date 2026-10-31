@@ -24,7 +24,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 ## 方向
 
 - `$ARGUMENTS` 不为空：就跑这几个，按给的顺序。不在 `technical pages keywords backlinks geo` 里的词，记成「不认识的方向」进研究日志，不跑。
-- 为空（定时任务就是这样调的）：`node S/seo-due.mjs <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：technical、pages 每次都跑，keywords、backlinks、geo 四周一次；它读研究日志里以前各次扫描「采集」那一行，所以下文研究日志的前两行格式不能改。没有 `context.json`：跑全部五个。
+- 为空（定时任务就是这样调的）：`node S/seo-due.mjs <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：technical、pages 每次都跑，keywords、backlinks、geo 四周一次；它读研究日志里以前各次扫描「采集」那一行，所以研究日志的前两行格式不能改。没有 `context.json`：跑全部五个。
 
 完成条件：一个方向列表（可以为空：为空就跳过预算、派 agent、提 issue，直接写研究日志）。
 
@@ -38,10 +38,10 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
    - 竞品：`find_serp_competitors`，花 credits。先按「预算」的做法跑一次 `whoami`（记作开始余额）和 `seo-budget.mjs`；要竞品的方向没有一个 `allow` 大于 0，就不推，只问人要。调完再调一次 `whoami`，差值是关卡花的。
    - 品牌词：「站点」域名去掉后缀。
    - 业务概述、当前目标、定位：站点首页。
-4. 发桌面通知（`PushNotification`，写明缺哪几项），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
+4. 发桌面通知（`PushNotification`，写明缺哪几项），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认，说「不需要」就是这项留空。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
 5. 人回复后：
    - `SEO.md` 的项（竞品、品牌词）用 Edit 改在工作区；人说留空的写 `无`。
-   - 项目上下文的项用 `update_project_context` 的 `{ section, content }` 写回。
+   - 项目上下文的项用 `update_project_context` 的 `{ section, content }` 写回；人说不需要的，那一节也写 `无`，下次缺口检查就不再报。
    - 重新调 `get_project_context` 覆盖 `<运行目录>/context.json`（开场那份是旧的，会把刚写回的项再报缺）。
    - 重跑第 2 步：`gaps` 为空就从「预算」往下跑，还有缺口回到第 3 步。
 
@@ -105,20 +105,7 @@ OpenSEO 项目：<projectId>
 ## 研究日志
 
 1. 再调一次 `whoami`，开始余额减去这次余额就是本次花费；任一次读不到写「未知」。
-2. 照下面的模板把摘要写到 `<运行目录>/log.txt`，`wc -m` 不超过 1000 字符（`appendResearchLog` 的上限）。超了先把 issue 标题删成只留编号，再把拒收原因合成一句。
-
-   ```
-   seo-scan <YYYY-MM-DD HH:MM>，方向：<方向...>
-   采集：<方向> <N> 条；<方向> 未采集（<原因>）；…
-   花费：<n | 未知> credits，余额 <n | 未知>；预算跳过：<方向（原因）| 无>
-   同步：<seo-context 的 summary | 无改动 | 失败：原因>
-   新建：#<号> <标题>；…（无则写「无」）
-   评论：#<号> <标题>；…
-   拒收：<标题>（<原因>）；…
-   <untyped 为 true 时加一行：项目没有 seo 分类，跑一次 seo-setup>
-   <提 issue 失败时加一行：提 issue 失败：原因>
-   ```
-
+2. 照 [references/research-log.md](references/research-log.md) 的模板把摘要写到 `<运行目录>/log.txt`，`wc -m` 不超过 1000 字符（`appendResearchLog` 的上限）。
 3. 调 `update_project_context`，`updates: [{ "appendResearchLog": { "summary": "<log.txt 的内容>" } }]`。失败就把 log.txt 的路径写进交回。
 
 完成条件：研究日志写入成功，或交回里写明了没写成的原因和 log.txt 路径。

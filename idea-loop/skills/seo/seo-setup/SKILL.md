@@ -23,7 +23,7 @@ disable-model-invocation: true
 ## 2. 读现状，备推荐值
 
 - `SEO.md` 在的话跑 `node S/seo-md.mjs SEO.md`，记下哪些小节、哪些键是空的（输出的 `confirmed` 为 true 的不算空：写了值，或人写了 `无`）。只问空的。
-- `get_project_context`，原样存成 `.tmp/seo-setup/context.json`。它的竞品、重点页面、业务概述就是对应小节的推荐值；`missingSections` 里的几节，第 3 步一起问（问法见 [references/project-context.md](references/project-context.md)）。
+- `get_project_context`，原样存成 `.tmp/seo-setup/context.json`。它的竞品、重点页面、业务概述就是对应小节的推荐值；`missingSections` 里的几节，第 3 步一起问（问法见 [references/project-context.md](references/project-context.md)）；写了 `无` 的节不再问。
 - 仓库里找其余小节的推荐值，每个记下出处：
   - **站点**：站点配置里的域名、i18n 路由（语言前缀）、`robots.txt`、`sitemap`。
   - **构建与检查**：营销站的构建命令和产物目录（`package.json`、框架配置）。
@@ -53,7 +53,7 @@ disable-model-invocation: true
 
 ## 5. 同步进 OpenSEO 项目上下文
 
-1. 第 3 步问到的业务、目标、定位、写作偏好，照 [references/project-context.md](references/project-context.md) 写成段落，用 `update_project_context` 写进对应 `section`。已有内容的节，把新答案并进原文，不整段替换。
+1. 第 3 步问到的业务、目标、定位、写作偏好，照 [references/project-context.md](references/project-context.md) 写成段落，用 `update_project_context` 写进对应 `section`。已有内容的节，把新答案并进原文，不整段替换。人说不需要的那一节写 `无`，跟 `SEO.md` 的键同一种记法。
 2. 重新 `get_project_context` 存成 `.tmp/seo-setup/context.json`，跑 `node S/seo-context.mjs SEO.md .tmp/seo-setup/context.json`。
 3. `updates` 非空：把 `summary`（加了谁、删了谁）给人看，人确认后原样作为 `update_project_context` 的 `updates` 写入。
 

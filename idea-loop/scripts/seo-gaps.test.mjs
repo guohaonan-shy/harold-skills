@@ -65,3 +65,17 @@ test('gaps: 项目上下文的节写成 { content } 或顶层键，非空都算�
 test('gaps: 不认识的方向抛错', () => {
   assert.throws(() => gaps(seo('', ''), CONTEXT, ['social']), /social/);
 });
+
+test('gaps: 项目上下文的节写 `无`（人说过不需要）→ 不报缺，各种返回形状都一样；纯空白仍算缺 (S3)', () => {
+  const shapes = [
+    { business_overview: '无', current_goal: '无', positioning: '无' },
+    { business_overview: { content: '无' }, current_goal: { content: ' 无 ' }, positioning: { content: '无' } },
+    { structuredContent: { sections: { business_overview: '无', current_goal: '无', positioning: '无' }, missingSections: [] } },
+    { sections: [{ section: 'business_overview', content: '无' }, { key: 'current_goal', content: '无' }, { name: 'positioning', content: '无' }] },
+  ];
+  for (const ctx of shapes) {
+    assert.deepEqual(gaps(seo('- 无', '- 品牌词：无'), ctx, ['technical', 'keywords', 'backlinks']).gaps, [], JSON.stringify(ctx));
+  }
+  const blank = { business_overview: '无', current_goal: '  ', positioning: '无' };
+  assert.deepEqual(gaps(seo('- 无', '- 品牌词：无'), blank, ['keywords']).gaps.map((g) => g.item), ['current_goal']);
+});

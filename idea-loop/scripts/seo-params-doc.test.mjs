@@ -19,6 +19,7 @@ const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
 const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
 const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
+const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
@@ -144,4 +145,31 @@ test('page-optimizer and keyword-clustering: 无 reads as no brand terms', () =>
 
 test('findings.md: assumptions also carries a missing project fact and the part left undone', () => {
   assert.match(FINDINGS, /缺的项目信息不推断着用，写清缺什么、哪部分因此没做/);
+});
+
+// review 第 1 轮 S3: 「不需要」 is recorded at the item's own store, for the project-context items too.
+test('seo-md.md: an item the human said is not needed is written 无 at its own store, and 无 in the project context is not a gap (S3)', () => {
+  const c = section(FORMAT, '项目信息从哪来[^\\n]*');
+  assert.match(c, /业务概述、当前目标、定位[^\n]*项目上下文对应的那一节[^\n]*内容就是 `无`/);
+  assert.match(c, /写着 `无` 就是问过、不要[^\n]*不再问/);
+  assert.match(c, /项目上下文的字段为空（写了 `无` 不算缺）/);
+});
+
+test('seo-scan: the gate writes 无 into the project-context section when the human says it is not needed (S3)', () => {
+  const g = section(SCAN, '缺口关卡');
+  assert.match(g, /项目上下文的项[^\n]*update_project_context[^\n]*人说不需要的[^\n]*写 `无`/);
+  assert.match(g, /不需要/, 'the question tells the human they may say 不需要');
+});
+
+test('seo-setup: a project-context section the human says is not needed is written 无, and 无 is not asked again (S3)', () => {
+  assert.match(section(SETUP, '5\\. 同步进 OpenSEO 项目上下文'), /人说不需要的那一节[\s\S]*写 `无`/);
+  assert.match(section(SETUP, '2\\. 读现状，备推荐值'), /写了 `无` 的节不再问/);
+});
+
+test('project-context.md: a section that is not needed is written as 无, nothing else (S3)', () => {
+  assert.match(PROJECT_CONTEXT, /人说这一节不需要[^\n]*整节写 `无`/);
+});
+
+test('seo-scan: the body stays within 5000 characters after the S3 additions (S3)', () => {
+  assert.ok([...body(SCAN)].length <= 5000, `${[...body(SCAN)].length} characters`);
 });
