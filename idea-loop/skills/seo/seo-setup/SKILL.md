@@ -1,6 +1,6 @@
 ---
 name: seo-setup
-description: 把一个站点接进 seo 分类：写代码仓库里的 SEO.md，同步 OpenSEO 项目上下文，在知识库里建 SEO 的 issue 分类和队列，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
+description: 把一个站点接进 seo 分类：写代码仓库里的 SEO.md，同步 OpenSEO 项目上下文，在知识库里建 SEO 的 issue 分类，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
 disable-model-invocation: true
 ---
 
@@ -64,15 +64,13 @@ disable-model-invocation: true
 项目的「`## issue 分类`」一节在 `AGENTS.md`；没有 `AGENTS.md`，在有 `## idea-loop` 块的那份 `CLAUDE.md`。这一节不存在，告诉人先跑 `/idea-loop:setup`，这一步记「未做」。存在就补上缺的行，格式照 setup 的模板：父类、子类各一行，名字放反引号里，「：」后接说明，子类缩进两格。
 
 ```markdown
-- `seo`：搜索可见性的问题：由 seo-scan 定时提出，或人按 SEO 问题提（独立队列，上限 5）
+- `seo`：搜索可见性的问题：由 seo-scan 定时提出，或人按 SEO 问题提
   - `technical`：技术 SEO 与索引：审计问题、索引、sitemap、重点页面相对上次审计的回退
   - `pages`：已有页面优化：排名 5–20 位的词、标题与点击率、自相蚕食、内链缺口
   - `keywords`：关键词挖掘与新内容：新词、聚类、并入已有页还是新开
   - `backlinks`：外链：竞品有、我们没有的引用域，外联候选
   - `geo`：AI 搜索可见性：被 AI 回答提到和引用的情况、schema、llms.txt
 ```
-
-「（独立队列，上限 5）」让 seo 的 issue 在调度里单独排队、最多同时开 5 个会话，扫描一次提出一批也挤不掉别的 issue（`idea-loop:issue-dispatch`）。`seo` 那行已经在、没有这个括注，补上；人改过上限的，留着人的数。
 
 然后跑 `node S/issues.mjs labels docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 `/idea-loop:setup`。
 

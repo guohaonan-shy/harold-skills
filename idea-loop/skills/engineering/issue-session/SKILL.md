@@ -14,15 +14,13 @@ argument-hint: "<根号或 issue 号>"
 | 设计 | 设计中 | 设计中 | 冻结结果经设计的知识库 PR 合进知识库的主分支 |
 | 实现 | 实现中 | 实现中 | 实现的 PR 全部合并（有几个代码仓库时，每个仓库一个 PR，再加知识库的一个） |
 
-section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
-
 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这个 skill 里的 `issues` 命令用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`（写 spec、切票、归档这些写的步骤由被调的 skill 自己取 `root --write`），`<主分支>` 取当前仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md` 时先看 `idea-loop:wiki-conventions` 的「会话开在知识库里」：会话开在知识库里就照那里做，不停；否则停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
 1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
 2. **认出这一组**：`issues group <docs> $ARGUMENTS`，`$ARGUMENTS` 是根号或任一子 issue 号都行，返回根和根下开着的子 issue。以下的「根号」是返回的根号（没被整合的 issue 就是它自己）。
-3. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上面换好的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<根号> <根标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话，所以会话标题用根号。
+3. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上表的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<根号> <根标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话，所以会话标题用根号。
 4. **认领**：对根号 `gh issue view <根号> --comments` 读全文和评论（子 issue 的在审核时一个个读），看它现在的状态（`idea-loop:spec-status` 的「issue 的状态」）：
    - 待验证：`issues set <docs> 验证中 <根号>`，根和开着的子 issue 一起进验证中（整组认领），从「审核」开始。
    - 已经是别的状态、你是调度卡片开出来的：别的会话已经在做它。告诉人，然后照「收尾」归档自己。
@@ -59,7 +57,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 1. `git fetch origin`，从最新的主分支切出下一段的分支：`git switch -c <下一段>/<spec-slug> origin/<主分支>`（设计用 `design/`，实现用 `impl/`）。
 2. `issues advance <docs> <spec-slug>`：照知识库主分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。
-3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进这一段的 section（先重跑一次 `issues queues <docs> <根号>`：审核时分类可能改了），去那一段。是「关闭」：去「收尾」。
+3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进这一段的 section，去那一段。是「关闭」：去「收尾」。
 
 ## 收尾
 
