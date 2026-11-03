@@ -169,7 +169,7 @@ open 的 issue 只有这几种：待验证（没有 `status:*`）、讨论中、
 - 应用：issue 会话开场的 worktree 分支叫 `issue/<根号>`，整条线不换分支；知识库那边用同名分支（F5 的 `root --write`）。issue-verify 不再改名成 `spec/issue-<号>`，换阶段不再 `git fetch` + 切新分支。
 - 按版本发布：版本会话的分支是 `release/<单元>-<版本>`；feature 的是 `feature/<slug>`，从 release 分支切出。依据：决定记录「发布」行与 release 计划「分支怎么走」节（现存实例）。
 - spec 定稿：`spec-status set 正式`（覆盖的 issue 全不存在的翻「完成」），只提交这份 spec 的目录、`docs/spec/index.md`、这次写的 raw，提交信息 `docs(spec): <slug> 定稿`；推送，知识库还没有这条线的 PR 就 `gh pr create --draft`。依据：决议「spec」行（U2 Q4、U7 Q25、U9）。
-- 设计冻结：uiux-refine 照旧在知识库里提交冻结结果（`docs(design): <slug> 冻结`），推送，不开设计 PR、不合并。
+- 设计冻结：uiux-refine 照旧在知识库里提交冻结结果（`design(<spec-slug>): 冻结`，沿用设计收敛一直用的标题），推送，不开设计 PR、不合并。
 - implement：代码 PR 照旧 `--draft` 开；知识库已有这条线的 draft PR 就用它，不另开。全部落地后**不转 ready**，直接调 pr-review 跑第一轮。
 - pr-review：前提从「PR 是 open（draft 说明没落地完）」改成「工单全部落地；PR 可以是 draft」；交审核报告时把这条线的每个 PR `gh pr ready`，再 `issues set 审核中`。人在报告之后要修的，照旧在 ready 的 PR 上修。
 - 合并：应用照旧；按版本发布时 feature 代码 PR 的 base 是 release，合进 release 后不跑 `advance`，等 release 合进主分支。
