@@ -41,6 +41,7 @@ idea-loop 插件多一个脚本 `knowledge-base.mjs`（放在插件的 `scripts/
 - [x] 有指针块、`projects.json` 里没有这个业务时，`root` 退出码 1，stderr 含知识库的 GitHub 名和 `/idea-loop:setup`
 - [x] 指针块在 `CLAUDE.md` 而 `AGENTS.md` 没有这一节时也认得
 - [x] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [ ] review 第 1 轮 S2（2026-11-03）：`root --write` 时 `.tmp/kb/` 已经存在但不在跟当前分支同名的分支上（会话从审核换到实现、切了新分支），要把它切到同名分支（本地或远端有就用，没有就从知识库 origin 默认分支开）；切不过去（有未提交改动）就报错退出、不改东西。单元测试复现：先在分支 A 上 `root --write`，代码 worktree 切到分支 B 再跑，`.tmp/kb` 在 B 上
 
 ## 选中的存量回归
 无：新脚本，不碰已有脚本。

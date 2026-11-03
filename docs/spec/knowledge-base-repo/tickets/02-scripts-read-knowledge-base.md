@@ -18,6 +18,7 @@ spec：`docs/spec/knowledge-base-repo/knowledge-base-repo.md` 的「issue 在哪
 - [x] 设计档案 MCP 在一个配进业务的代码仓库 worktree 里启动，`design_state` 之类的查询读到的是知识库 `docs/design/prod/` 的内容（测试用 01 的临时仓库夹具 + `IDEA_LOOP_HOME`）
 - [x] 设计档案 MCP 在没配进业务的仓库里启动，返回 `no-repo`，文字含 `/idea-loop:setup`
 - [x] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [ ] review 第 1 轮 S6（2026-11-03）：拼流程图脚本（flow-compose）给的档案目录不是知识库时，报错文字跟其余设计档案脚本一致，说「这不是知识库的根」
 
 ## 选中的存量回归
 - `issues.test.mjs`：`defaultGh` 被改，全部 issue 状态翻转都经它
