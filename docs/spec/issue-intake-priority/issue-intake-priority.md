@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 审核中
 tags: [idea-loop, issue-dispatch, issue-session, scheduling, priority]
 summary: 开 issue 时挂模块根、判 P0；调度只给 P0 和本期焦点出卡片；想法有入口；停 cloud 整合；implement 自动切票
 related: ["[[2026-11-02-issue-intake-priority-grill]]", "[[issue-consolidation]]", "[[no-decision-autopilot]]", "[[retro-candidate-pool]]"]
@@ -8,6 +8,8 @@ issues: [217]
 ---
 
 # issue 入口按价值收紧：开 issue 时挂模块、判 P0，调度只给 P0 和本期焦点出卡片
+
+> 需要 grill：人要重新讨论 issue 的调度（2026-11-03，原话「我想对issue的调度进行重新的讨论」），实现决策里调度相关的几节待重定
 
 > #217 存在：harold-skills 2026-10-31 三次 cloud 整合只合了 2 个 issue，#178 三次都判「不是同一处」；本 spec 停掉 cloud 整合，挂根移到开 issue 时，它要的「按版本 / 按模块聚合」定为按 plugin 聚合（见实现决策「按版本发布的仓库，模块就是 plugin」），翻页 403 和汇报语言两条随整合任务一起消失
 > #220 存在：调度按号先进先出、会话自动开非 P0 的存量 issue、新 issue 等 6 小时，对着 origin/main（877341b）的 idea-loop 0.1.9 核过仍是这样；两个仓库的开 / 关数与各段耗时见「问题」1 和 7
