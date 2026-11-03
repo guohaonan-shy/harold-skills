@@ -21,6 +21,7 @@
 - [x] 现有 `issue-session-implement-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`implement-reuse-blocked-doc.test.mjs`、`implementer-standards-doc.test.mjs` 改成守新说法后全绿
 - [x] 插件全量 `node --test idea-loop/scripts/` 全绿
 - [x] review 第 1 轮 S1（2026-11-03）：to-ticket 给工单定「仓库」时按知识库 `AGENTS.md` 的「## 仓库」一节判（一刀横跨几个仓库的照旧按仓库拆）；没有这一节而业务有几个仓库时，停下让人跑 setup 补。文档测试守住
+- [ ] review 第 2 轮 S2（2026-11-03）：一份 spec 有几个代码 PR 时，在最后一个 PR 合并之前、在知识库 PR 里把这份 spec 的工单全部删掉（不只删先交报告的那个仓库的工单）；「spec 已经是完成就跳过」不再让后面仓库的工单漏删。文档测试守住
 
 ## 选中的存量回归
 - `issue-session-implement-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`implement-reuse-blocked-doc.test.mjs`、`implementer-standards-doc.test.mjs`、`ticket-ledger.test.mjs`：守 implement / implementer / pr-review 现有规则
