@@ -143,24 +143,38 @@ test('wiki-conventions defines once what a session opened in the knowledge base 
   assert.match(rule, /knowledge-base\.mjs worktree <仓库名>/, '要写明 .tmp/repos/<仓库名>/ 怎么开：knowledge-base.mjs worktree');
 });
 
-test('issue-session, issue-verify and dreaming do not stop at a missing DEVELOPMENT.md when opened in the knowledge base', () => {
+test('issue-session, issue-verify and dreaming each keep one pointer sentence to the single definition', () => {
   const problems = [];
   for (const [name, text] of Object.entries(openings)) {
     const stops = text.split('\n').filter((l) => l.includes('DEVELOPMENT.md') && l.includes('/idea-loop:setup'));
     if (stops.length === 0) problems.push(`${name}: 找不到「没有 DEVELOPMENT.md 就停」的那一句，这条测试该跟着改`);
     for (const l of stops) {
-      if (!/会话开在知识库里/.test(l)) problems.push(`${name}: 停下的那一句没有「会话开在知识库里」的例外：${l.slice(0, 40)}…`);
-      if (!/idea-loop\.json/.test(l)) problems.push(`${name}: 例外要写明怎么认出（git 根有 idea-loop.json）`);
-      if (!/知识库远端的默认分支/.test(l)) problems.push(`${name}: 例外要写明主分支取知识库远端的默认分支`);
-      if (!/wiki-conventions/.test(l)) problems.push(`${name}: 例外要指向 wiki-conventions 的定义`);
+      if (!/会话开在知识库里就照那里做，不停/.test(l)) problems.push(`${name}: 指针句要写「会话开在知识库里就照那里做，不停」：${l.slice(0, 40)}…`);
+      if (!/`idea-loop:wiki-conventions` 的「会话开在知识库里」/.test(l)) problems.push(`${name}: 指针句要指向 wiki-conventions 的「会话开在知识库里」`);
+    }
+    // 单一事实来源：规则的内容只在 wiki-conventions 里，开场只留那一句指针
+    const mentions = text.split('\n').filter((l) => l.includes('会话开在知识库里'));
+    if (mentions.length !== 1) problems.push(`${name}: 提到「会话开在知识库里」的只该有那一行指针，现在有 ${mentions.length} 行`);
+    for (const l of mentions) {
+      for (const [re, what] of [
+        [/idea-loop\.json/, '怎么认出会话开在知识库里'],
+        [/知识库远端的默认分支/, '主分支怎么取'],
+        [/\.tmp\/repos\/<仓库名>/, '碰代码的步骤在哪个 worktree 里做'],
+      ]) {
+        if (re.test(l)) problems.push(`${name}: 不再各自展开「${what}」，只留指针，定义在 wiki-conventions`);
+      }
     }
   }
   assert.deepEqual(problems, []);
 });
 
-test('issue-verify reproduces in the ticket\'s repository when opened in the knowledge base', () => {
-  const line = openings['issue-verify'].split('\n').find((l) => l.includes('「开发服务器」'));
-  assert.ok(line, '缺：复现起服务的那一句');
-  assert.match(line, /会话开在知识库里/, '要写明会话开在知识库里时读哪个仓库的 DEVELOPMENT.md');
-  assert.match(line, /\.tmp\/repos\/<仓库名>\//, '要在 .tmp/repos/<仓库名>/ 里起');
+test('a session opened in the knowledge base ignores its own .tmp/ locally, defined in the same place', () => {
+  const start = wiki.indexOf('**会话开在知识库里**');
+  const rule = wiki.slice(start, wiki.indexOf('**知识库的改动走知识库自己的 PR', start));
+  assert.match(rule, /`\.tmp\/`[^\n]*本地忽略[^\n]*知识库的 `\.tmp\/`/, '会话开在知识库里：把知识库的 .tmp/ 加进本地忽略');
+  assert.match(rule, /git status --short/, '要写明不忽略会让 git status --short 自查过不了');
+  const ignore = wiki.slice(wiki.indexOf('**本地忽略**'));
+  const para = ignore.slice(0, ignore.indexOf('\n'));
+  assert.match(para, /会话开在知识库里时是知识库/, '「本地忽略」一段要覆盖知识库会话：忽略的是 worktree 所在仓库（可能是知识库）的 .tmp/');
+  assert.match(para, /info\/exclude/, '写在 info/exclude 里，不动仓库的 .gitignore');
 });

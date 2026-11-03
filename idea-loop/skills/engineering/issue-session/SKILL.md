@@ -16,7 +16,7 @@ argument-hint: "<根号或 issue 号>"
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
 
-下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这个 skill 里的 `issues` 命令用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`（写 spec、切票、归档这些写的步骤由被调的 skill 自己取 `root --write`），`<主分支>` 取当前仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。**例外：会话开在知识库里**（git 根有 `idea-loop.json`）时没有这份文件，不停：`<主分支>` 取知识库远端的默认分支，碰代码的步骤（实现）由被调的 skill 按工单写的仓库去读那个仓库自己的设置（`idea-loop:wiki-conventions` 的「会话开在知识库里」）。
+下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这个 skill 里的 `issues` 命令用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`（写 spec、切票、归档这些写的步骤由被调的 skill 自己取 `root --write`），`<主分支>` 取当前仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md` 时先看 `idea-loop:wiki-conventions` 的「会话开在知识库里」：会话开在知识库里就照那里做，不停；否则停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 

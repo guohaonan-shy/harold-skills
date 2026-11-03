@@ -20,7 +20,7 @@ disable-model-invocation: true
 
 **提议段**，只读不写：
 
-1. **起环境**：读目标仓库 `DEVELOPMENT.md` 的「分支」节拿基准分支（没有这份文件就停下，告诉人跑 `/idea-loop:setup`；**会话开在知识库里**（git 根有 `idea-loop.json`）时没有这份文件，不停：下面的 worktree 从知识库远端的默认分支切，代码要读的地方按业务里每个代码仓库各自的 `DEVELOPMENT.md` 与 `.tmp/repos/<仓库名>/` 做，见 `idea-loop:wiki-conventions` 的「会话开在知识库里」）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。文档在知识库里：`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出（这个 worktree 的 `.tmp/kb/`，分支同名，从知识库的主分支开），下文 `docs/…`、`DESIGN.md`、`GLOSSARY.md` 都相对它，`<docs>` 指 `<知识库>/docs`（`knowledge-base.mjs root --write` 的输出加 `/docs`），知识库的主分支记作 `<知识库主分支>`（`git -C <知识库> symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`），并在 `<知识库>` 里 `git fetch`。知识库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
+1. **起环境**：读目标仓库 `DEVELOPMENT.md` 的「分支」节拿基准分支（没有 `DEVELOPMENT.md` 时先看 `idea-loop:wiki-conventions` 的「会话开在知识库里」：会话开在知识库里就照那里做，不停；否则停下告诉人跑 `/idea-loop:setup`。）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。文档在知识库里：`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出（这个 worktree 的 `.tmp/kb/`，分支同名，从知识库的主分支开），下文 `docs/…`、`DESIGN.md`、`GLOSSARY.md` 都相对它，`<docs>` 指 `<知识库>/docs`（`knowledge-base.mjs root --write` 的输出加 `/docs`），知识库的主分支记作 `<知识库主分支>`（`git -C <知识库> symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`），并在 `<知识库>` 里 `git fetch`。知识库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
 2. **自己做、不起 agent**：
    - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查知识库主分支上还留着设计产物的已完成需求。
    - **retro 候选**：候选池里出现 ≥ 3 次的，照 [references/retro-candidates.md](references/retro-candidates.md) 摆进提议表；批了开成 issue，不改 skill。

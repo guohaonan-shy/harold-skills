@@ -25,6 +25,8 @@ description: 业务知识库与 worktree 下 .tmp/ 中间产物的约定：知�
 - **会话开在知识库里**（当前 git 根有 `idea-loop.json`；几个代码仓库的业务推荐这样）：知识库里没有 `DEVELOPMENT.md`，开场不因读不到它停下，也不叫人跑 `/idea-loop:setup`。
   - **主分支**取知识库远端的默认分支：先 `git fetch`，再 `git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`。只动知识库的步骤（核 issue、起草 spec、切票、对账文档）以它为准，在知识库自己的 worktree 里做。
   - **碰代码的步骤**（复现要起服务、实现、验证、按提交挑要重拍的界面）读工单写的那个仓库（核 issue 时是 issue 说的那块功能，按知识库 `AGENTS.md` 的「仓库」一节判）自己的 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`，在 `knowledge-base.mjs worktree <仓库名>` 开出的 `.tmp/repos/<仓库名>/` 里做；那个仓库的分支取它自己 `DEVELOPMENT.md` 的「分支」节。
+  - **中间产物目录**：会话的 `.tmp/` 就在知识库的 worktree 根下，第一次用时照「中间产物」的「本地忽略」把知识库的 `.tmp/` 加进它的本地忽略；不加，核 issue 开 PR 前的 `git status --short` 自查和会话收尾的「没有要留的改动」都会被它挡住。
+  - 会话本身的 worktree 就是知识库的，不需要 `DEVELOPMENT.md` 的「worktree 准备」；需要新切 worktree 的（每周整理）从上面那个默认分支切。
   - 会话开在代码仓库里：照旧读这个仓库的 `DEVELOPMENT.md`，没有就停下告诉人跑 `/idea-loop:setup`。
 - **知识库的改动走知识库自己的 PR，合进知识库的主分支**；`gh pr` 作用在知识库 PR 上时，在 `<知识库>`（`.tmp/kb/` 那个 worktree）里跑，不在代码仓库里跑。`idea-loop:decision-rules` 的「不自动的」里「检查全过就合并」的那一类 PR，就是这种知识库的 PR。
 
@@ -113,7 +115,7 @@ docs/
 - 设计侧的过程产物（工作区、方向说明、交接画布、评分、评委截图）在 `<知识库>/docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
 - `evidence/` 下是交付证据，过程中以本地文件发给人看，用到时才上传到 PR 的素材分支，不进代码分支和 `docs/`（`idea-loop:evidence`）。
 
-**本地忽略**：第一次用时确认代码仓库的 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。知识库的 `docs/design/tmp/` 不这样处理：由知识库自己的 `.gitignore` 管（`/idea-loop:setup` 建知识库时写进去），`knowledge-base.mjs` 开出来的知识库 worktree 同样被它管着。
+**本地忽略**：第一次用时确认当前 worktree 所在仓库（代码仓库；会话开在知识库里时是知识库）的 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。知识库的 `docs/design/tmp/` 不这样处理：由知识库自己的 `.gitignore` 管（`/idea-loop:setup` 建知识库时写进去），`knowledge-base.mjs` 开出来的知识库 worktree 同样被它管着。
 
 ## 从平铺布局迁移
 
