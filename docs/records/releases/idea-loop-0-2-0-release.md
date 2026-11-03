@@ -22,7 +22,7 @@ tags: [release, idea-loop-0-2-0, issue-workflow]
 
 | 顺序 | feature | 覆盖的 issue | 改什么 | 前置 | 状态 |
 |---|---|---|---|---|---|
-| 1 | F5 知识库独立成仓库 | #228 #222 | 知识库是单独的 git 仓库，按业务分；业务级设置在知识库根；`DEVELOPMENT.md` / `REVIEW.md` / `CODING_STANDARDS.md` 留在代码仓库；代码仓库的 AGENTS.md 留一个指向知识库的指针块；删「docs 在代码仓库里」，setup 带老项目迁移；多仓库需求每个仓库一个 PR | 无 | 进行中（PR #233） |
+| 1 | F5 知识库独立成仓库 | #228 #222 | 知识库是单独的 git 仓库，按业务分；业务级设置在知识库根；`DEVELOPMENT.md` / `REVIEW.md` / `CODING_STANDARDS.md` 留在代码仓库；代码仓库的 AGENTS.md 留一个指向知识库的指针块；删「docs 在代码仓库里」，setup 带老项目迁移；多仓库需求每个仓库一个 PR | 无 | 已合进 release（PR #233，f1e325c，2026-11-03） |
 | 2 | F1 入口与调度 | #220 #217 | 改 issue-intake-priority：模块细到 `idea-loop/<子类>`、seo 不再单独排队、删 Dreaming 的 P2 节、审核中不占名额、汇报列「等你的」；其余照原 spec | F5 合进 release | 待开工 |
 | 2 | F2 一个会话一条线 | #232 | 按版本发布的仓库走 release 分支、应用仓库一个会话一个 PR；`DEVELOPMENT.md`「分支」节加「发布方式」；spec / 设计不再单独开 PR；阶段改成讨论中 → 设计中 → 实现中 → 审核中 | F5 合进 release | 待开工 |
 | 2 | F4 工作环境 | #227 #222 | 新 skill `idea-loop:workspace`（`references/desktop.md`、`references/cmux.md`），两种执行环境平行、按项目选：Desktop（公司项目用 SSH 会话，claude 在虚拟机上，P0/P1 出卡片）、cmux（先只承接个人项目的 P2，本地跑，夜里每晚 5 个做到 PR + 一轮 review；公司 P2 暂走 Desktop 卡片，U26）；环境层不关心 issue 来源；`~/.idea-loop/projects.json` 记每个项目用哪个环境、在哪跑（决定记录 U25） | F5 合进 release | 待开工 |
