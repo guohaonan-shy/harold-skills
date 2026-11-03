@@ -21,6 +21,10 @@ function section(text, title) {
   return m ? m[1] : null;
 }
 
+test('setup SKILL.md body is under 5000 characters: long material lives in its references/', () => {
+  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
+});
+
 test('夜间回放 and 每周对账 completion conditions are stated only in the SKILL.md body', () => {
   for (const title of ['夜间规则回放', '每周对账']) assert.match(section(body, title), /^完成条件：/m, `${title}: body keeps its completion condition`);
   for (const f of ['nightly-replay.md', 'weekly-dreaming.md']) {

@@ -1,9 +1,9 @@
 ---
 name: implement
-description: 把一份已切好工单的 spec 实现完。spec 进了「实现中」、要开工时用。
+description: 把一份定稿的 spec 实现完，没切工单就先切。spec 定稿或进了「实现中」、要开工时用。
 ---
 
-**把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
+**把一份定稿的 spec 做完**（没切工单就先调 `idea-loop:to-ticket` 切）。 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
 
 开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指会话 worktree（会话所在仓库的集成分支 worktree）的 `.tmp/`；spec、工单、设计过程产物在知识库里，`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出，下文 `docs/…` 都相对它）、`idea-loop:pr`（Review 汇报、PR 描述的七节）和 `idea-loop:decision-rules`（执行方交回的「按现有做法定的」、本次修的存量、为无关存量开 issue、Review 汇报的决定题都按它）。
 
@@ -11,7 +11,7 @@ description: 把一份已切好工单的 spec 实现完。spec 进了「实现�
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
 - **当前 worktree 就是集成分支**：只有一个代码仓库的业务，一份 spec 一条分支、一个代码 PR（知识库的改动另走一个知识库 PR）；几个仓库的见下面「多个仓库」。这个 skill 不建、不切会话所在仓库的这条分支。工作区不干净或当前就是基准分支，停下告诉人。
-- `<docs>` 指知识库的 `docs/`：检查用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，改工单、设计过程产物用 `root --write` 的输出加 `/docs`。`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局，spec 是「实现中」，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。
+- `<docs>` 指知识库的 `docs/`：检查用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，改工单、设计过程产物用 `root --write` 的输出加 `/docs`。`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局（报了就停，照它提示的迁移）。spec 是「实现中」、`tickets/` 下有工单就开工；spec 是「正式」、还没切票，用 Skill 工具调 `idea-loop:to-ticket` 切完（它把 spec 翻成「实现中」），接着开工，不停下让人先切。别的状态停下告诉人。
 - 每张工单第一次派出时是新上下文，人不用在工单之间 `/clear`；卡住的工单在人做完决定后，可能被叫回原执行方（见「人回复后」）。
 
 scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不改 scope、不删工单（删工单在合并前，归 `idea-loop:pr-review`），也不合并 PR。

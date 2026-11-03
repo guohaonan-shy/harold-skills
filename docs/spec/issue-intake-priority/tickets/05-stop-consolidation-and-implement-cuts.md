@@ -11,10 +11,10 @@ setup 不再建 cloud 整合定时任务：删掉那一节、它的 prompt 参�
 
 ## 验收标准
 
-- [ ] setup 里没有「整合定时任务」，参考目录里没有整合 prompt；README 不再提整合任务
-- [ ] setup 正文长度与参考链接仍有测试守着
-- [ ] implement 的前提写明没工单自己调 to-ticket
-- [ ] 全量测试通过
+- [x] setup 里没有「整合定时任务」，参考目录里没有整合 prompt；README 不再提整合任务
+- [x] setup 正文长度与参考链接仍有测试守着
+- [x] implement 的前提写明没工单自己调 to-ticket
+- [x] 全量测试通过
 
 ## 选中的存量回归
 

@@ -71,18 +71,6 @@ disable-model-invocation: true
 
 完成条件：这个业务有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
-## 整合定时任务
-
-一个跑在 Claude cloud 上的定时任务（claude.ai/code/routines），每 6 小时把开着的、改同一个文件或同一个页面 / 模块的待验证 issue 挂到一个根 issue 下。规则全在 prompt 里：[references/consolidation-prompt.md](references/consolidation-prompt.md)，原样写进任务，`<仓库>` 换成 issue 所在的 GitHub 仓库 `owner/name`，即知识库 `idea-loop.json` 的 `issues`（「问人」里确认过的那个）。
-
-1. 打印 `https://github.com/apps/claude/installations/new`，说明**只装在 issue 所在的这个仓库上**，这一步只能人在 GitHub 上点，等人说装好。
-2. 用 `RemoteTrigger` 建 cloud 定时任务：cron `7 */6 * * *`（按 UTC 读，偏开整点），仓库填 `https://github.com/<owner/name>`（同上一步取的），prompt 是上面那份。
-3. 建完清掉任务上挂的全部连接器：任务默认继承账号的全部连接器，它一个都不用。
-4. 「Run now」跑一次冒烟，告诉人去侧边栏 Scheduled 组看那次运行的会话、核对合并结果。
-5. 没有 `RemoteTrigger` 或人拒绝：prompt 和设置原样给人，记「未做」及原因。
-
-完成条件：任务建好且连接器清空、冒烟跑过，或记下了「未做」的原因。
-
 ## 交回
 
 - 写了、改了知识库和代码仓库里的哪些文件，`projects.json` 写了什么（业务、知识库、`home`、仓库路径），建了、删了哪些 label，哪些 issue 迁了分类。
@@ -90,6 +78,5 @@ disable-model-invocation: true
 - 预检缺的必需项，各附修法命令。
 - 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
-- 整合任务：建没建（任务 id、cron）、连接器清没清、冒烟跑没跑；没建时 prompt 与设置原样给人。
 - 怎么起调度：在 `home` 的主 checkout 里开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`。
 - 留给人的事：装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检表）；创建 GitHub App；往 `CODING_STANDARDS.md` 写规则。
