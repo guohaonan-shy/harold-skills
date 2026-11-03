@@ -18,7 +18,7 @@
 | [[idea-loop-seo]] | idea-loop 新开 seo 分类：蒸馏 OpenSEO 做发现，扫描结果提成 issue，按原有流程解决 |
 | [[implementer-reuse-and-compact]] | implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；to-ticket 落盘后提交工单（进实现前压缩已移除） |
 | [[issue-consolidation]] | cloud 定时任务每 6 小时把改同一文件或模块的 issue 挂到新开的根 issue 下；调度按根出会话，一个根一份 spec、一个会话从审核做到合并 |
-| [[issue-intake-priority]] | 开 issue 时挂模块根、判 P0；调度只给 P0 和本期焦点出卡片；想法有入口；停 cloud 整合；implement 自动切票 |
+| [[issue-intake-priority]] | 开 issue 时挂模块根、判 P0；调度只出 P0 和本期焦点、审核中不占名额、每天列等你的；seo 不再单独排队；想法有入口；停 cloud 整合；implement 自动切票 |
 | [[knowledge-base-repo]] | 知识库独立成 git 仓库、按业务分；代码仓库只留指针块和仓库级设置；setup 带老项目迁移 |
 | [[link-sweep-skip-code]] | link sweep 只查正文里的 wiki-link，代码里的格式示例不算，不再报一串假阳性 |
 | [[native-summary-locate]] | 原生折叠标题按角色定位不到、FAQ 展开写不成边：验证为不存在，已在 design-archive-sections 里做掉 |
