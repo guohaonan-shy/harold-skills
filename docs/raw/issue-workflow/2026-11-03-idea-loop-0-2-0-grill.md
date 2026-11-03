@@ -291,6 +291,14 @@ multica 调研（笔记在共享笔记目录 multica-research-2026-11-03.md）�
 
 定了（以 multica 实测通过为前提）：issue 只有一个数据源：公司在 Linear、个人在 GitHub；multica 只当执行器，不在它里面建 issue，状态流转只在数据源里，由 idea-loop 的平台层（F3）写；multica 上只有每次运行的记录。实测要核：idea-loop 插件能否在 multica 起的 claude 里整套生效、grill 能否来回、`autopilot trigger` 能否每次带不同的 issue 号。
 
+## U24
+
+浏览器，我可以在虚拟机多开一些端口。我觉得没必要引入multica
+
+## A24
+
+撤回 U23 的 multica 方案。浏览器访问虚拟机上的服务：人倾向在虚拟机开 TCP 端口（Dawn 的端口对整个互联网开放），备选 ssh -L 端口转发。追问：公司项目用 Desktop 的 SSH 会话还是 cmux。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -319,7 +327,7 @@ multica 调研（笔记在共享笔记目录 multica-research-2026-11-03.md）�
 | 知识库 | 单独一个 git 仓库，按业务分；公司的只在虚拟机，个人的只在个人电脑 | U6 Q20 |
 | 仓库级设置 | `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 留在代码仓库根目录，知识库不设 `repos/<仓库名>/`；以后再考虑把通用部分拆到业务层。代码仓库的 AGENTS.md 由人维护，加一个指针块写所属业务和知识库仓库地址，会话靠它找知识库；setup 必须问清 | U7 Q22、U11、U12 |
 | 知识库 PR | 不 review，人说合并最后一个代码 PR 后由会话做完设计归档、检查全过就 squash 合并 | U22 |
-| multica | 只当执行器（autopilot Run only 或 chat），不建 issue；issue 只有一个数据源（公司 Linear、个人 GitHub），状态只在数据源里流转；daemon 公司装虚拟机、个人用 Mac 桌面端自带的；以实测通过为前提，不通过就回到 cmux 方案 | U23 |
+| multica | 不引入（U23 的方案由 U24 撤回） | U23、U24 |
 | 业务的仓库说明 | 知识库根 `AGENTS.md` 的「## 仓库」一节：每个仓库的名字、GitHub 名、管哪块功能、依赖；会话可以开在知识库里（多仓库业务推荐），主分支取知识库默认分支，碰代码读工单所在仓库的开发设置 | U16 |
 | 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
 | 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
