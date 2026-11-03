@@ -115,3 +115,52 @@ test('every skill that uses <docs> defines it, and the definition names knowledg
   assert.ok(defined > 0, 'found no <docs> definition at all — is the pattern still right?');
   assert.deepEqual(problems, []);
 });
+
+// ---- a session opened in the knowledge base (spec 「多仓库需求」, PR review round 1 S1) ----
+//
+// A business with several code repositories recommends opening the session in the knowledge base. A knowledge base has
+// no `DEVELOPMENT.md` (repository-level settings stay in each code repository), so the three openings that used to
+// read it and stop must not stop there: the main branch is the knowledge base's default branch, and the steps that
+// touch code read the ticket's repository's own settings in `.tmp/repos/<仓库名>/`.
+
+const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
+const wiki = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md');
+const openings = {
+  'issue-session': read('skills', 'engineering', 'issue-session', 'SKILL.md'),
+  'issue-verify': read('skills', 'engineering', 'issue-verify', 'SKILL.md'),
+  dreaming: read('skills', 'productivity', 'dreaming', 'SKILL.md'),
+};
+
+test('wiki-conventions defines once what a session opened in the knowledge base does', () => {
+  const start = wiki.indexOf('**会话开在知识库里**');
+  assert.ok(start >= 0, '缺：「会话开在知识库里」的定义');
+  const rule = wiki.slice(start, wiki.indexOf('**知识库的改动走知识库自己的 PR', start));
+  assert.match(rule, /idea-loop\.json/, '要写明怎么认出会话开在知识库里：git 根有 idea-loop.json');
+  assert.match(rule, /不因读不到它停下/, '要写明：读不到 DEVELOPMENT.md 不停下');
+  assert.match(rule, /refs\/remotes\/origin\/HEAD/, '主分支取知识库远端的默认分支，要写出怎么取');
+  assert.match(rule, /DEVELOPMENT\.md[^\n]*REVIEW\.md[^\n]*CODING_STANDARDS\.md/, '碰代码的步骤读那个仓库自己的 DEVELOPMENT / REVIEW / CODING_STANDARDS');
+  assert.match(rule, /\.tmp\/repos\/<仓库名>\//, '碰代码的步骤在 .tmp/repos/<仓库名>/ 里做');
+  assert.match(rule, /knowledge-base\.mjs worktree <仓库名>/, '要写明 .tmp/repos/<仓库名>/ 怎么开：knowledge-base.mjs worktree');
+});
+
+test('issue-session, issue-verify and dreaming do not stop at a missing DEVELOPMENT.md when opened in the knowledge base', () => {
+  const problems = [];
+  for (const [name, text] of Object.entries(openings)) {
+    const stops = text.split('\n').filter((l) => l.includes('DEVELOPMENT.md') && l.includes('/idea-loop:setup'));
+    if (stops.length === 0) problems.push(`${name}: 找不到「没有 DEVELOPMENT.md 就停」的那一句，这条测试该跟着改`);
+    for (const l of stops) {
+      if (!/会话开在知识库里/.test(l)) problems.push(`${name}: 停下的那一句没有「会话开在知识库里」的例外：${l.slice(0, 40)}…`);
+      if (!/idea-loop\.json/.test(l)) problems.push(`${name}: 例外要写明怎么认出（git 根有 idea-loop.json）`);
+      if (!/知识库远端的默认分支/.test(l)) problems.push(`${name}: 例外要写明主分支取知识库远端的默认分支`);
+      if (!/wiki-conventions/.test(l)) problems.push(`${name}: 例外要指向 wiki-conventions 的定义`);
+    }
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('issue-verify reproduces in the ticket\'s repository when opened in the knowledge base', () => {
+  const line = openings['issue-verify'].split('\n').find((l) => l.includes('「开发服务器」'));
+  assert.ok(line, '缺：复现起服务的那一句');
+  assert.match(line, /会话开在知识库里/, '要写明会话开在知识库里时读哪个仓库的 DEVELOPMENT.md');
+  assert.match(line, /\.tmp\/repos\/<仓库名>\//, '要在 .tmp/repos/<仓库名>/ 里起');
+});

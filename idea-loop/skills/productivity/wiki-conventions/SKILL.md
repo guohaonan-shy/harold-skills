@@ -22,6 +22,10 @@ description: 业务知识库与 worktree 下 .tmp/ 中间产物的约定：知�
   - 写（写 spec、工单、设计、raw、记录，删工单，归档）：`root --write`。保证 `.tmp/kb/` 是知识库的一个 worktree、分支名跟当前分支相同，输出它；当前 checkout 就是知识库时输出它自己。
   - 业务里的别的代码仓库：`worktree <仓库名>`，开在 `.tmp/repos/<仓库名>/`，分支同当前分支。
   - 查不到业务（仓库没有指针块，或本机还没 clone 知识库）它报「先跑 `/idea-loop:setup`」并非 0 退出：照这个停下，不在老位置凑合。
+- **会话开在知识库里**（当前 git 根有 `idea-loop.json`；几个代码仓库的业务推荐这样）：知识库里没有 `DEVELOPMENT.md`，开场不因读不到它停下，也不叫人跑 `/idea-loop:setup`。
+  - **主分支**取知识库远端的默认分支：先 `git fetch`，再 `git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`。只动知识库的步骤（核 issue、起草 spec、切票、对账文档）以它为准，在知识库自己的 worktree 里做。
+  - **碰代码的步骤**（复现要起服务、实现、验证、按提交挑要重拍的界面）读工单写的那个仓库（核 issue 时是 issue 说的那块功能，按知识库 `AGENTS.md` 的「仓库」一节判）自己的 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`，在 `knowledge-base.mjs worktree <仓库名>` 开出的 `.tmp/repos/<仓库名>/` 里做；那个仓库的分支取它自己 `DEVELOPMENT.md` 的「分支」节。
+  - 会话开在代码仓库里：照旧读这个仓库的 `DEVELOPMENT.md`，没有就停下告诉人跑 `/idea-loop:setup`。
 - **知识库的改动走知识库自己的 PR，合进知识库的主分支**；`gh pr` 作用在知识库 PR 上时，在 `<知识库>`（`.tmp/kb/` 那个 worktree）里跑，不在代码仓库里跑。`idea-loop:decision-rules` 的「不自动的」里「检查全过就合并」的那一类 PR，就是这种知识库的 PR。
 
 ## 文件在不在，就是状态
