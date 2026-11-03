@@ -27,7 +27,7 @@
 - [x] 新文档测试：迁移参考写了 `git subtree split --prefix=docs`、`git subtree add --prefix=docs`、`gh repo create` 先给人看、删文件走 PR、三项核对
 - [x] 问人的问题清单（`references/questions.md`）有业务名、知识库仓库、会话在哪跑、issue 仓库四题，各带推荐与出处
 - [x] 插件全量 `node --test idea-loop/scripts/` 全绿
-- [ ] review 第 1 轮 S1（2026-11-03）：业务里有两个以上代码仓库时（新建时就有，或往已有业务加第二个仓库时），setup 在知识库根 `AGENTS.md` 写「## 仓库」一节，每个仓库一条：仓库名、GitHub 名、管哪块功能、跟别的仓库怎么依赖；「管哪块功能」「依赖」先从各仓库的 README / 目录结构推一个推荐答案再问人；只有一个仓库的业务不写这一节。「会话在哪跑」几个仓库时推荐知识库。文档测试守住
+- [x] review 第 1 轮 S1（2026-11-03）：业务里有两个以上代码仓库时（新建时就有，或往已有业务加第二个仓库时），setup 在知识库根 `AGENTS.md` 写「## 仓库」一节，每个仓库一条：仓库名、GitHub 名、管哪块功能、跟别的仓库怎么依赖；「管哪块功能」「依赖」先从各仓库的 README / 目录结构推一个推荐答案再问人；只有一个仓库的业务不写这一节。「会话在哪跑」几个仓库时推荐知识库。文档测试守住
 
 ## 选中的存量回归
 - `setup-single-source.test.mjs`、`setup-consolidation-doc.test.mjs`：守 setup 的现有说法

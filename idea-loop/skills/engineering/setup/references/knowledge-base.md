@@ -6,7 +6,7 @@
 <知识库>/
 ├── idea-loop.json          业务名、issue 所在的 GitHub 仓库、业务里的代码仓库
 ├── PRODUCT.md  GLOSSARY.md  DESIGN.md  ISSUE_TRACKER.md
-├── AGENTS.md               「issue 分类」一节
+├── AGENTS.md               「issue 分类」一节；两个以上代码仓库的业务另有「仓库」一节
 └── docs/                   spec/ adr/ design/ raw/ domain/ records/ index.md
 ```
 
@@ -24,7 +24,16 @@
 
   `issues` 是 issue 所在的 GitHub 仓库，`issues.mjs` 读它。`repos` 的键是仓库名（`origin` 的仓库名），值是它的 GitHub 名。往已有业务加仓库时，只在 `repos` 里添这一项，别的不动。
 - **`PRODUCT.md`、`ISSUE_TRACKER.md`**：按 [product.md](product.md)、[issue-tracker.md](issue-tracker.md) 的模板写到知识库根。
-- **`AGENTS.md`**：只放一句「这是 `<业务>` 的知识库」和 `## issue 分类` 一节（模板 [issue-types.md](issue-types.md)，格式 [issue-category-format.md](issue-category-format.md)）。
+- **`AGENTS.md`**：放一句「这是 `<业务>` 的知识库」和 `## issue 分类` 一节（模板 [issue-types.md](issue-types.md)，格式 [issue-category-format.md](issue-category-format.md)）；业务里有两个以上代码仓库时再加 `## 仓库` 一节，见下。
+- **`## 仓库`**（业务里有两个以上代码仓库时才写；只有一个仓库的业务不写）：每个代码仓库一条。`idea-loop.json` 的 `repos` 给脚本读名字，这一节给会话读意思：会话开在知识库里时它随 `AGENTS.md` 进上下文，切工单时按它决定每张工单落在哪个仓库。
+
+  ```markdown
+  ## 仓库
+
+  - `<仓库名>`（`<owner/name>`）：<管哪块功能>。依赖：<跟别的仓库怎么依赖，如「调 `<另一个仓库名>` 的接口」；不依赖别的写「无」>
+  ```
+
+  仓库名、GitHub 名取自 `repos`；「管哪块功能」「依赖」先按 [survey.md](survey.md) 读到的 README 与目录结构推一个答案，问人确认（题见 [questions.md](questions.md)）后才写，一个仓库一条，写成人读得懂的一句话。往已有业务加第二个仓库时，把这一节建出来：加进来的这个、原来的第一个各写一条（第一个的功能与依赖同样先推荐再问）；之后每加一个仓库添一条，别的条不动。
 - **`docs/` 骨架**：`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`records/`、`index.md`，只建不存在的。
 - **`.gitattributes`**：`docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - **`.gitignore`**：`docs/design/tmp/`。

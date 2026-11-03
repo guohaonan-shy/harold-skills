@@ -2,6 +2,7 @@
 
 - 代码仓库里的 `CLAUDE.md`、`AGENTS.md`、`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`CONTRIBUTING.md`、`README`；老布局下代码仓库里还有的 `ISSUE_TRACKER.md`
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" business`：已配的业务、知识库、`home`、各仓库；本机 `~/.idea-loop/projects.json` 里已有哪些业务（业务名的备选）；业务的知识库已存在时，读它根目录的 `idea-loop.json`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`AGENTS.md`
+- 业务里有两个以上代码仓库时（或这次加进来的是第二个）：每个仓库的 `README` 与顶层目录结构（本机路径取自 `knowledge-base.mjs business`；本机没 clone 的只读 GitHub 上的 README），推「管哪块功能」「跟别的仓库的依赖」的推荐答案；知识库 `AGENTS.md` 里已有 `## 仓库` 一节的，读它
 - CI 配置（`.github/workflows/`）、`package.json` 的 scripts、锁文件、`.worktreeinclude`
 - `git log --merges -20 --oneline` 和最近合并的 PR（`gh pr list --state merged --limit 10`），看合并方式
 - `docs/` 目录树（老布局在代码仓库里，否则在知识库里）、`.gitignore`、`.gitattributes`

@@ -16,6 +16,7 @@ disable-model-invocation: true
 | `## idea-loop` 块（`AGENTS.md`，没有就 `CLAUDE.md`） | 代码仓库 | 指针：业务名、知识库的 GitHub 名 | [agents-block.md](references/agents-block.md) |
 | `ISSUE_TRACKER.md` | 知识库根 | issue 怎么读写、`status:*` 的意思 | [issue-tracker.md](references/issue-tracker.md) |
 | `## issue 分类`（`AGENTS.md`） | 知识库根 | 分类 label（`type:*`）、要保留的别的 label | [issue-types.md](references/issue-types.md) |
+| `## 仓库`（`AGENTS.md`） | 知识库根 | 两个以上仓库时：各管哪块功能、怎么依赖 | [knowledge-base.md](references/knowledge-base.md) |
 | `PRODUCT.md` | 知识库根 | 用户、产品目标、品牌性格 | [product.md](references/product.md) |
 | `idea-loop.json`、`~/.idea-loop/projects.json` | 知识库根、本机 | 业务名、issue 仓库；本机路径、会话在哪跑 | [knowledge-base.md](references/knowledge-base.md) |
 
@@ -37,7 +38,7 @@ disable-model-invocation: true
 
 ## 问人
 
-只问还没写的。每个问题给推荐和出处，一次最多三个，人说「照推荐」就算确认。先问业务与知识库四题，再问仓库级的；往已有业务加仓库时，业务选已有的，知识库那几题不再问。问题清单在 [references/questions.md](references/questions.md)。
+只问还没写的。每个问题给推荐和出处，一次最多三个，人说「照推荐」就算确认。先问业务与知识库四题，再问仓库级的；往已有业务加仓库时，业务选已有的，知识库那几题不再问；加到两个以上仓库时，补问「会话在哪跑」和「仓库」一节的两题。问题清单在 [references/questions.md](references/questions.md)。
 
 完成条件：清单上每一项都有人确认过的答案。
 
@@ -45,7 +46,7 @@ disable-model-invocation: true
 
 新业务、加仓库、重跑更新走这里；老布局先走「迁移」，再回来写 label。
 
-- **知识库**（没有就先建仓库、clone，`gh repo create` 先把命令给人看）：`idea-loop.json`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`docs/` 骨架等怎么写见 [references/knowledge-base.md](references/knowledge-base.md)。`## issue 分类` 一节照模板写进知识库根的 `AGENTS.md`，格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
+- **知识库**（没有就先建仓库、clone，`gh repo create` 先给人看）：`idea-loop.json`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`docs/` 骨架等怎么写见 [references/knowledge-base.md](references/knowledge-base.md)。`## issue 分类` 一节照模板写进知识库根的 `AGENTS.md`，格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。两个以上代码仓库时，再写 `## 仓库` 一节（见 [references/knowledge-base.md](references/knowledge-base.md)）。
 - **代码仓库**：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 按模板写进仓库根目录。`## idea-loop` 指针块写进 `AGENTS.md`；没有 `AGENTS.md` 就写进 `CLAUDE.md`；两份都没有，问人建哪份；块已存在就原地更新。`.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。业务级设置不写在这里。
 - **本机映射**：`~/.idea-loop/projects.json` 合并写入这个业务的知识库、`home`、这个仓库的本机路径，不覆盖别的业务；都写好后在主 checkout 里跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root`，输出知识库才算对。
 - label（`<知识库>` 即上面 `root` 的输出；`issues.mjs` 从 `idea-loop.json` 取 issue 仓库）：`node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels <知识库>/docs` 建出缺的 `status:*`、`type:*`，列出多余的 label 和各自在用的 open issue 数；人定了迁成分类的，对每个 issue 跑 `issues.mjs type <知识库>/docs <号> <分类>`；多余 label 的清单给人看，确认后 `issues.mjs labels <知识库>/docs --prune` 删掉，issue 上的一起去掉。
@@ -54,9 +55,9 @@ disable-model-invocation: true
 
 ## 迁移
 
-预检发现老布局（代码仓库里还有 `docs/`，或根目录有 `PRODUCT.md`、`ISSUE_TRACKER.md` 这类业务级设置）时，读 [references/migrate-to-knowledge-base.md](references/migrate-to-knowledge-base.md)：`docs/` 带历史搬进知识库，代码仓库开一个 PR 删旧文件、换指针块，交给人合并，setup 不合并。
+预检发现老布局时，读 [references/migrate-to-knowledge-base.md](references/migrate-to-knowledge-base.md)：`docs/` 带历史搬进知识库，代码仓库开一个 PR 删旧文件、换指针块，交给人合并，setup 不合并。
 
-完成条件：迁移参考里的三项核对都过，代码仓库的 PR 链接交给了人。
+完成条件：三项核对都过，PR 链接交给了人。
 
 ## 夜间规则回放
 
@@ -66,7 +67,7 @@ disable-model-invocation: true
 
 ## 每周对账
 
-`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次（只由人或这个任务触发）。必须在这个业务的 `home`（`knowledge-base.mjs business` 里的 `home`，会话在哪跑）里做，任务 id 叫 `dreaming-<仓库名>`，仓库名取 `home` 主 checkout 的目录名。步骤（没有工具时的退路、问人的选项、`create_scheduled_task` 的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次。必须在这个业务的 `home`（`knowledge-base.mjs business` 里的 `home`，会话在哪跑）里做，任务 id 叫 `dreaming-<仓库名>`，仓库名取 `home` 主 checkout 的目录名。步骤（没有工具时的退路、问人的选项、`create_scheduled_task` 的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
 完成条件：这个业务有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
@@ -76,7 +77,7 @@ disable-model-invocation: true
 
 1. 打印 `https://github.com/apps/claude/installations/new`，说明**只装在 issue 所在的这个仓库上**，这一步只能人在 GitHub 上点，等人说装好。
 2. 用 `RemoteTrigger` 建 cloud 定时任务：cron `7 */6 * * *`（按 UTC 读，偏开整点），仓库填 `https://github.com/<owner/name>`（同上一步取的），prompt 是上面那份。
-3. 建完清掉任务上挂的全部连接器：新任务默认继承账号在 claude.ai 上连的所有连接器，这个任务一个都不用。
+3. 建完清掉任务上挂的全部连接器：任务默认继承账号的全部连接器，它一个都不用。
 4. 「Run now」跑一次冒烟，告诉人去侧边栏 Scheduled 组看那次运行的会话、核对合并结果。
 5. 没有 `RemoteTrigger` 或人拒绝：prompt 和设置原样给人，记「未做」及原因。
 
@@ -91,4 +92,4 @@ disable-model-invocation: true
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
 - 整合任务：建没建（任务 id、cron）、连接器清没清、冒烟跑没跑；没建时 prompt 与设置原样给人。
 - 怎么起调度：在 `home` 的主 checkout 里开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`。
-- 留给人的事：装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检表）；创建 GitHub App；往 `CODING_STANDARDS.md` 写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建（在知识库根），`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。
+- 留给人的事：装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检表）；创建 GitHub App；往 `CODING_STANDARDS.md` 写规则。

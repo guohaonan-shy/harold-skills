@@ -160,6 +160,40 @@ test('the weekly dreaming task and the hand-back follow the business home and re
   assert.match(handback, /`home` 的主 checkout/, 'the scheduler is started in the home checkout');
 });
 
+test('a business with two or more code repositories gets a「仓库」section in the knowledge base AGENTS.md, written from a recommendation the human confirms', () => {
+  // The settings table lists it as a knowledge-base file, not a code-repository one.
+  const row = body.split('\n').find((l) => l.startsWith('|') && l.includes('`## 仓库`')) ?? '';
+  assert.match(row, /知识库根/, 'the table row puts 仓库 at the knowledge base root');
+  assert.doesNotMatch(row, /代码仓库根目录/);
+
+  // The write step points at it and states the threshold.
+  const kbBullet = (section(body, '写') ?? '').split('\n').find((l) => l.startsWith('- ') && l.includes('**知识库**')) ?? '';
+  assert.match(kbBullet, /## 仓库/);
+  assert.match(kbBullet, /两个以上/);
+
+  // The knowledge-base reference gives the shape: one entry per repository with the four things, none for a single repository.
+  const kb = read('references', 'knowledge-base.md');
+  assert.match(kb, /```markdown\n\s*## 仓库\n[\s\S]*?```/, 'a template of the section');
+  for (const field of ['仓库名', 'GitHub 名', '管哪块功能', '依赖']) assert.ok(kb.includes(field), `each entry says ${field}`);
+  assert.match(kb, /只有一个(代码)?仓库的业务不写/, 'a single-repository business does not get the section');
+  assert.match(kb, /加第二个仓库[^\n]*第一个/, 'adding the second repository also writes the first one into the section');
+
+  // The questions: 管哪块功能 and 依赖, each with a recommendation inferred from README / directory structure, and `home` recommends the knowledge base for several.
+  const q = read('references', 'questions.md');
+  for (const key of ['**管哪块功能**', '**跟别的仓库的依赖**']) {
+    const line = q.split('\n').find((l) => l.startsWith('- ') && l.includes(key));
+    assert.ok(line, `question missing: ${key}`);
+    assert.match(line, /推荐[：:]/, `${key} has a recommendation`);
+    assert.match(line, /出处[：:][^\n]*README/, `${key} cites the README`);
+    assert.match(line, /目录/, `${key} cites the directory structure`);
+  }
+  const home = q.split('\n').find((l) => l.startsWith('- ') && l.includes('**会话在哪跑')) ?? '';
+  assert.match(home, /几个(代码)?仓库[^\n]*知识库/, 'several repositories → knowledge base');
+
+  // The survey reads each repository's README and directory structure.
+  assert.match(read('references', 'survey.md'), /README[^\n]*目录/);
+});
+
 test('every references/ file linked from SKILL.md or another reference exists', () => {
   const files = [{ dir: setupDir, text: skill }, ...references.map((r) => ({ dir: join(setupDir, 'references'), text: r.text })), { dir: join(setupDir, 'references'), text: read('references', MIGRATE) }];
   const missing = [];
