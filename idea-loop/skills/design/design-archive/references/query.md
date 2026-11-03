@@ -3,7 +3,7 @@
 读档案用查询，不自己翻文件。七个入口，每个都能用 `--delta <spec-slug>` 叠上某个需求的 `delta/`，读改完之后的样子（`diff` 除外）：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入口> <参数> [--delta <spec-slug>]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <知识库> <入口> <参数> [--delta <spec-slug>]
 ```
 
 同样的七个入口也是只读 MCP 工具 `design_page` / `design_state` / `design_journey` / `design_diff` / `design_refs` / `design_keyword` / `design_affected`（各问什么、什么时候用，以工具的 description 为准），返回同一份 JSON。

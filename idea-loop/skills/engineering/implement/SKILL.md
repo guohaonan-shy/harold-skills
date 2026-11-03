@@ -5,13 +5,13 @@ description: 把一份已切好工单的 spec 实现完。spec 进了「实现�
 
 **把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
 
-开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（Review 汇报、PR 描述的七节）和 `idea-loop:decision-rules`（执行方交回的「按现有做法定的」、本次修的存量、为无关存量开 issue、Review 汇报的决定题都按它）。
+开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`；spec、工单、设计过程产物在知识库里，`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出，下文 `docs/…` 都相对它）、`idea-loop:pr`（Review 汇报、PR 描述的七节）和 `idea-loop:decision-rules`（执行方交回的「按现有做法定的」、本次修的存量、为无关存量开 issue、Review 汇报的决定题都按它）。
 
 ## 前提
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
 - **当前 worktree 就是集成分支**：一份 spec 一条分支、一个 PR，这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
-- `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局，spec 是「实现中」，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。
+- `<docs>` 指知识库的 `docs/`：检查用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，改工单、设计过程产物用 `root --write` 的输出加 `/docs`。`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局，spec 是「实现中」，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。
 - 每张工单第一次派出时是新上下文，人不用在工单之间 `/clear`；卡住的工单在人做完决定后，可能被叫回原执行方（见「人回复后」）。
 
 scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不改 scope、不删工单（删工单在合并前，归 `idea-loop:pr-review`），也不合并 PR。
@@ -35,10 +35,10 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD` 作起点 SHA；用 Agent 工具起 `idea-loop:implementer`，`isolation: "worktree"`、`run_in_background: true`，记下它返回的 agent id，**只给指针，不转述工单**：
 
-- 工单与 spec 的仓库内路径
+- 工单与 spec 的路径（`docs/spec/…`，相对知识库）和 `<知识库>` 的绝对路径
 - 起点 SHA、集成分支名、分到的端口
 - 集成分支 worktree 的绝对路径
-- tmp 绝对路径：集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径（还不存在也照给）
+- tmp 绝对路径：`<知识库>/docs/design/tmp/<spec-slug>/` 的绝对路径（还不存在也照给）
 - 已落地的提交列表
 - 有的话：「人的决定已写进工单」、上次的半成品分支
 

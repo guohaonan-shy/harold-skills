@@ -26,7 +26,7 @@
 
 - **证据格放旧文与新文并排**，写「依据：」点名标准，要求见 [proposal-table.md](proposal-table.md) 的「证据格要有的东西」。依据只认三种：design-modeling 的具体一节或一条，官方 design.md 规范的某一条，或这次 lint 实际输出里的规则名（如 `orphaned-tokens`、`contrast-ratio`）。说不出依据的修改不提：那是品味，不是维护。
 - **交给人时出维护卡**：格式见 [review-page.md](review-page.md) 的「维护卡」；法和代码对不上时必须带取自实现的实测截图。
-- 「法对代码错」的缺陷起草成目标仓库的 GitHub issue（哪条规则、现在是什么样、本该是什么样、一段引文），怎么开见 [proposal-table.md](proposal-table.md) 执行段的 `缺陷` 一行。
+- 「法对代码错」的缺陷起草成业务的 GitHub issue（哪条规则、现在是什么样、本该是什么样、一段引文），怎么开见 [proposal-table.md](proposal-table.md) 执行段的 `缺陷` 一行。
 - **健康信号**（「对账」末段）：这份文件变短的次数应该和变长一样多。一次对账提议全是加、没有减，多半是把盘点当成了法，回头再过一遍。
 
 ## 执行段

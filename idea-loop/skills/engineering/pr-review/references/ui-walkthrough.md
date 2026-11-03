@@ -6,7 +6,7 @@
 
 和 `idea-loop:pr-reviewer` **同一条消息**起 `idea-loop:ui-reviewer`（每轮走查模式），不等走查走完才起 pr-reviewer。
 
-- 给 ui-reviewer 的指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。
+- 给 ui-reviewer 的指针：spec 名、集成 worktree 的绝对路径、`<知识库>` 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。
 - 给 pr-reviewer 的多一个指针：将来的发现文件路径 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`。此时文件还不存在，pr-reviewer 自己等它。
 
 ## 盯着它交回

@@ -173,4 +173,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 
 ## 缺词
 
-读目标仓库的 `GLOSSARY.md`（或 `GLOSSARY-MAP.md` 列出的每一份），标题和正文里的领域概念用它的标准叫法。这次 PR 引入或改名、术语表却没收的概念，列进这一轮汇报的「缺词」节：写概念和推荐叫法，不当问题、不阻塞、不写进术语表（新词由 `idea-loop:grill` 加）。
+读知识库根的 `GLOSSARY.md`（或 `GLOSSARY-MAP.md` 列出的每一份），标题和正文里的领域概念用它的标准叫法。这次 PR 引入或改名、术语表却没收的概念，列进这一轮汇报的「缺词」节：写概念和推荐叫法，不当问题、不阻塞、不写进术语表（新词由 `idea-loop:grill` 加）。

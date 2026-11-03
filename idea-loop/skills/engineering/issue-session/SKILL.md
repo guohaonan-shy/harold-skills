@@ -10,13 +10,13 @@ argument-hint: "<根号或 issue 号>"
 
 | 阶段 | 侧边栏 section | issue 的 label | 这一段做完的标志 |
 |---|---|---|---|
-| 审核 | 审核中 | 验证中 → 审核中 | spec 合进主分支 |
-| 设计 | 设计中 | 设计中 | 冻结结果经设计 PR 合进主分支 |
+| 审核 | 审核中 | 验证中 → 审核中 | spec 经知识库的 PR 合进知识库的主分支 |
+| 设计 | 设计中 | 设计中 | 冻结结果经设计的知识库 PR 合进知识库的主分支 |
 | 实现 | 实现中 | 实现中 | 实现 PR 合并 |
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
 
-下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
+下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这个 skill 里的 `issues` 命令用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`（写 spec、切票、归档这些写的步骤由被调的 skill 自己取 `root --write`），`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
@@ -40,7 +40,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人。
 
-人设计完、`/idea-loop:uiux-refine` 把冻结结果经设计 PR 合进主分支之后，去「换阶段」。
+人设计完、`/idea-loop:uiux-refine` 把冻结结果经设计的知识库 PR 合进知识库的主分支之后，去「换阶段」。
 
 ## 实现
 
@@ -58,14 +58,14 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 每个 PR 合并后做一遍：
 
 1. `git fetch origin`，从最新的主分支切出下一段的分支：`git switch -c <下一段>/<spec-slug> origin/<主分支>`（设计用 `design/`，实现用 `impl/`）。
-2. `issues advance <docs> <spec-slug>`：照主分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。
+2. `issues advance <docs> <spec-slug>`：照知识库主分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。
 3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进这一段的 section（先重跑一次 `issues queues <docs> <根号>`：审核时分类可能改了），去那一段。是「关闭」：去「收尾」。
 
 ## 收尾
 
 这一组关了（spec 完成，根和子 issue 一起关；没被整合的 issue 关了），或人说先放着（`issues set <docs> 搁置 <号>`，根和子 issue 一起搁置）之后：
 
-1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录的 docs PR 合并之后，才往下走。
+1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录的知识库 PR 合并之后，才往下走。
 2. `git status --short` 里没有要留的改动；有就先问人。
 3. 用 `archive_session`（`session_id: self`，reason 写「#<根号> 已关闭」或「#<根号> 搁置」）归档自己，worktree 随归档清掉。
 

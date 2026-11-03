@@ -5,9 +5,9 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 把一份 spec 切成若干工单：每张是一颗 tracer bullet 式的**垂直切片**，写明挡着它的那几张。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:spec-status`（状态只走脚本）。下文 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
+先用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:spec-status`（状态只走脚本）。下文 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指知识库的 `docs/`：这个 skill 切票，写 spec 状态，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出（`<知识库>`）加 `/docs`，也就是 `.tmp/kb/docs`。
 
-工单是**临时凭据**：开工时才建，合并前由合并的人删掉，删除跟着这一刀的 PR 进主分支（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
+工单是**临时凭据**：开工时才建，合并前由合并的人删掉，删除跟着这一刀的知识库 PR 进知识库的主分支（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
 
 工单也是写给失忆者的信：拿起它的执行方从没见过那份 spec，只读这一张，做不下去只会停下交回。你写时觉得「显而易见所以不用写」的东西，对它并不显而易见。所以每张工单：
 
@@ -30,7 +30,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 ## 探代码库
 
-看清工单要描述的现状，直到每张工单的「要建什么」都能对着代码说清起点。目标项目有 `GLOSSARY.md` 就读它，工单的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词；缺词不问、不写，先用描述性的说法（`idea-loop:pr-review` 会把缺词列出来）。
+看清工单要描述的现状，直到每张工单的「要建什么」都能对着代码说清起点。知识库根有 `GLOSSARY.md` 就读它，工单的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词；缺词不问、不写，先用描述性的说法（`idea-loop:pr-review` 会把缺词列出来）。
 
 顺手找**预重构**的机会：让改动变容易，然后做那个容易的改动。
 
@@ -102,7 +102,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 工单全部落盘之后，直接跑 `spec-status set <docs> <spec-slug> 实现中`，不等人确认。这一翻只归这一步：它同时说明设计已冻结、工单已切。脚本会再核一遍冻结摘要和工单在不在，拒绝就照它说的原因处理。翻完后，把上面「切法直接落盘，不停下」要求的切法清单交回。
 
-翻完之后，把工单和 spec 的改动提交进当前分支：`idea-loop:implement` 派出的执行方，worktree 都是从这条分支切出来的，不提交就读不到工单。
+翻完之后，把工单和 spec 的改动提交进 `<知识库>` 的当前分支（`root --write` 开的同名分支）：`idea-loop:implement` 派出的执行方在自己的 worktree 里读知识库的这条分支，不提交就读不到工单。
 
 ## 下一环
 

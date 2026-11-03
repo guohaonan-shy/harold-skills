@@ -51,7 +51,7 @@
 | `档案状态` | 实时重新驱动后，一个有话要说的状态 | 替换档案 · 改进入方式 · 补进不去说明 |
 | `初扫页面` | 全站初扫建出来的一整页（人按页面批） | 新增页面 |
 | `候选` | 一条待蒸馏的设计法候选 | 改写已有规则 · 追加新规则 · 已覆盖不加 · 留在原处 · 起草通用原则 issue · 起草缺陷 issue · 驳回 |
-| `漏归档` | 基准分支上 `docs/design/tmp/<spec-slug>/` 里还留着设计产物、而 spec 已完成或已没有 spec 目录的一个需求（绕过合并步骤合进去的），见 [missed-archive.md](missed-archive.md) | 补归档 · 丢弃 |
+| `漏归档` | 知识库主分支上 `docs/design/tmp/<spec-slug>/` 里还留着设计产物、而 spec 已完成或已没有 spec 目录的一个需求（绕过合并步骤合进去的），见 [missed-archive.md](missed-archive.md) | 补归档 · 丢弃 |
 | `retro 候选` | 候选池（`docs/records/retro-candidates/`）里出现 ≥ 3 次、还在池里的一条候选，见 [retro-candidates.md](retro-candidates.md) | 开 issue：机械检查 · 开 issue：改 skill · 留在池里 · 驳回 |
 | `DESIGN.md 条目` | `DESIGN.md` 里对账出问题的一处 | 改法 · 移出 · 删除 · 改写为全局规则 · 合并为一条 · 新建 DESIGN.md · 处理 lint 警告 · 交人裁决 |
 | `缺陷` | 一条要开到目标仓库的 issue 草稿 | 开 issue · 已有 #N（N 是已开着的那条的编号） |
@@ -156,5 +156,5 @@
 
 档案对象文件的任何改动都走 `delta/` 加归档脚本，包括「处理完的候选从档案对象里删掉」：把改过的对象全文放进 `delta/`，随同一次归档并进 `prod/`。
 
-3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。开一个 PR（`gh pr create`，标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、哪些没批留着、开出去的 issue 编号）。
+3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然它留在 `origin/<知识库主分支>` 上，下一次 dreaming 会把它当成漏归档。在 `<知识库>` 里开一个知识库的 PR（`gh pr create`，标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、哪些没批留着、开出去的 issue 编号）。
 4. 结果摆给人：动了什么、留了什么、为什么留。

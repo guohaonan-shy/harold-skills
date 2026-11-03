@@ -14,12 +14,12 @@ idea-loop 插件里的 skill、参考文档、agent 定义，凡是说「目标�
 4. 插件 `README.md` 里说 `docs/` 在目标仓库的地方同步改。
 
 ## 验收标准
-- [ ] 新加一个文档测试：插件的 `skills/`、`agents/` 下（不含 `setup` skill，它归 04）不再出现「目标仓库的 `docs/`」「当前 worktree 的 `docs/`」「主 checkout 的 `docs/`」「仓库根目录」指向 idea-loop 设置文件这几类说法（测试列出命中的文件与行）
-- [ ] 文档测试：`wiki-conventions` 的 SKILL.md 写了 `knowledge-base.mjs root`、`root --write`、`.tmp/kb/`，且写明 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 在代码仓库根目录
-- [ ] 文档测试：每个定义了 `<docs>` 的 skill（`grep -l "<docs>"`）都在定义处提到 `knowledge-base.mjs`
-- [ ] 现有的 `*-doc.test.mjs` 因措辞变化失败的，改断言使其守的意思不变，不删测试
-- [ ] `no-project-leak.test.mjs` 仍绿：举例不用真实项目名
-- [ ] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [x] 新加一个文档测试：插件的 `skills/`、`agents/` 下（不含 `setup` skill，它归 04）不再出现「目标仓库的 `docs/`」「当前 worktree 的 `docs/`」「主 checkout 的 `docs/`」「仓库根目录」指向 idea-loop 设置文件这几类说法（测试列出命中的文件与行）
+- [x] 文档测试：`wiki-conventions` 的 SKILL.md 写了 `knowledge-base.mjs root`、`root --write`、`.tmp/kb/`，且写明 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 在代码仓库根目录
+- [x] 文档测试：每个定义了 `<docs>` 的 skill（`grep -l "<docs>"`）都在定义处提到 `knowledge-base.mjs`
+- [x] 现有的 `*-doc.test.mjs` 因措辞变化失败的，改断言使其守的意思不变，不删测试
+- [x] `no-project-leak.test.mjs` 仍绿：举例不用真实项目名
+- [x] 插件全量测试全绿（仓库声明的命令 `node --test '*/scripts/*.test.mjs'`；`node --test idea-loop/scripts/` 在 Node 22 跑不了）
 
 ## 选中的存量回归
 - `no-project-leak.test.mjs`：改了大量 skill 文字

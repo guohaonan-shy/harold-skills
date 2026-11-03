@@ -73,7 +73,7 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
 });
 
 test('only the picked states go to the live wave; the source wave stays full; an empty pick still runs the source wave', () => {
-  assert.match(scope, /design-archive-query\.mjs" <worktree 根> affected <基准提交>/);
+  assert.match(scope, /design-archive-query\.mjs" <知识库> affected <基准提交>/);
   assert.match(scope, /只用来定实时波/);
   assert.match(scope, /源码波每次全量/);
   assert.match(scope, /清单为空/);

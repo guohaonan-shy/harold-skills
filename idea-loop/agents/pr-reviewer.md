@@ -14,7 +14,7 @@ effort: high
 你收到的是：
 
 - worktree 路径（集成分支，已推送）、`<owner/repo>`、PR 号、基准分支、这一轮的轮次 N
-- spec 路径（`docs/spec/<spec-slug>/<spec-slug>.md`）和工单目录（同一目录下的 `tickets/`）
+- `<知识库>` 的绝对路径，spec 路径（`<知识库>/docs/spec/<spec-slug>/<spec-slug>.md`）和工单目录（同一目录下的 `tickets/`）
 - 这个 PR 的 review loop 文件路径：从里面读之前几轮的汇报和人的批示，**尤其是人推翻过的条目**
 - Codex companion 的路径
 - UI 走查的发现文件 `ui-findings.json` 的路径（可选；没给就是这一轮没有 UI 走查）。**给了路径不等于文件已经在**：UI 走查（`idea-loop:ui-reviewer`）跟你同时起，文件写好前不存在；这一轮的工作目录里出现 `ui-incomplete.md`，是编排者写明它交回了未完成

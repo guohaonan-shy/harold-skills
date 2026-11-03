@@ -1,14 +1,14 @@
 # 漏归档：绕过合并步骤合进去的需求
 
-`idea-loop:pr-review` 的合并步骤先归档、再合并，没有钩子拦：在网页上点合并、或在别的会话里合并，会绕过归档，设计产物就留在基准分支的 `docs/design/tmp/<spec-slug>/` 里。dreaming 兜这个缺口。这一项由 dreaming 自己机械地查，不起 agent。
+`idea-loop:pr-review` 的合并步骤先归档、再合并，没有钩子拦：在网页上点合并、或在别的会话里合并，会绕过归档，设计产物就留在知识库主分支的 `docs/design/tmp/<spec-slug>/` 里。dreaming 兜这个缺口。这一项由 dreaming 自己机械地查，不起 agent。
 
 ## 怎么查
 
-对 `origin/<基准分支>`，不对本地工作树：
+对知识库的 `origin/<知识库主分支>`（在 `<知识库>` 里跑，`<知识库>` 见 [`../SKILL.md`](../SKILL.md)「起环境」），不对本地工作树：
 
-1. 列出 `docs/design/tmp/` 下的目录：`git ls-tree --name-only origin/<基准分支> docs/design/tmp/`。目录名 `research` 跳过（没有 spec 时的调研页放那里，不算设计产物）。
-2. 每个目录 `<名>`，看它里面有没有 `research/` 之外的东西：`git ls-tree -r --name-only origin/<基准分支> docs/design/tmp/<名>/`，滤掉 `docs/design/tmp/<名>/research/` 开头的路径，还剩文件才算有设计产物。
-3. 有设计产物的，看它的 spec：`git show origin/<基准分支>:docs/spec/<名>/<名>.md` 的 frontmatter `status`。
+1. 列出 `docs/design/tmp/` 下的目录：`git ls-tree --name-only origin/<知识库主分支> docs/design/tmp/`。目录名 `research` 跳过（没有 spec 时的调研页放那里，不算设计产物）。
+2. 每个目录 `<名>`，看它里面有没有 `research/` 之外的东西：`git ls-tree -r --name-only origin/<知识库主分支> docs/design/tmp/<名>/`，滤掉 `docs/design/tmp/<名>/research/` 开头的路径，还剩文件才算有设计产物。
+3. 有设计产物的，看它的 spec：`git show origin/<知识库主分支>:docs/spec/<名>/<名>.md` 的 frontmatter `status`。
    - 读不到（已经没有 spec 目录），或 `status` 是 `完成`：**漏归档**，出一行。
    - 其余状态（`草稿` 到 `实现中`）：需求还在走，不出行。
 
@@ -36,10 +36,10 @@
 2. 起 `idea-loop:ui-reviewer`，模式「归档」，输入照 `idea-loop:pr-review` 合并 reference 的「合并前归档」第 1 步：spec 名、dreaming worktree、端口、图的前缀 `dreaming-<日期>-merge-`。没有 PR：输入里「PR 号」一格填 `dreaming-<日期>-<spec-slug>`，图和草稿就落在 `.tmp/pr-review/dreaming-<日期>-<spec-slug>/` 下；没有 review loop 文件，「决定」取自冻结记录。
 3. 核不过（`failed`）或未完成：这一行不执行，把它交回的条目原样告诉人，留着等下一次或交人。
 4. 通过：把 `draft.md` 摆给人看，人要改就把原话转回同一个 ui-reviewer，直到人说通过。
-5. 人通过后跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> <spec-slug>`（先 `--dry-run`）。脚本并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规告诉人，这一行不执行。
+5. 人通过后跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <知识库> <spec-slug>`（先 `--dry-run`）。脚本并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规告诉人，这一行不执行。
 
 `dreaming-<日期>/` 这类没有画布的残留：它的 `delta/` 本来就是归档脚本的输入，不起 ui-reviewer，直接照 [archive-reconcile.md](archive-reconcile.md) 的「执行段」第 2、3 步校验、归档。
 
-**丢弃**：`git rm -r docs/design/tmp/<名>/`（冻结时经设计 PR 提交的东西是被跟踪的）。
+**丢弃**：`git rm -r docs/design/tmp/<名>/`（冻结时经设计的知识库 PR 提交的东西是被跟踪的）。
 
-两种处置后 `docs/design/tmp/<名>/` 都不应还在；它的删除随这次 PR 进基准分支。
+两种处置后 `docs/design/tmp/<名>/` 都不应还在；它的删除随这次知识库的 PR 进知识库的主分支。

@@ -4,7 +4,7 @@
 
 两波：先**源码波**（不开浏览器），再**实时波**（源码波干净也跑）。**两波都由 `idea-loop:ui-reviewer` 的对账模式做**，dreaming 只派工、汇它交回的行；源码波怎么查、怎么写，在它的定义里（「对账模式」的「源码波」）。只有 `prod/` 为空时的全站初扫留在 dreaming 自己手里，见 [initial-scan.md](initial-scan.md)。
 
-用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根>`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，人批了才由归档脚本并进 `prod/`。
+用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <知识库>`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，人批了才由归档脚本并进 `prod/`。
 
 ## 环境
 
@@ -56,10 +56,10 @@ dreaming 拿到它交回的结果后：
 只执行批了的行。先收拾 delta、再校验、再归档：
 
 1. **先删掉没批的对象**：没批的行对应的文件从 dreaming 的 tmp 目录里删掉：`替换档案` / `改进入方式` / `补进不去说明` 的状态文件与它的图（在 `delta/` 里），`改代码路径` 的对象全文；`evidence/` 不动。人回「改成…」的，按他的话改 delta 里那个文件。
-2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 批了的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，按人说的在 delta 里改掉（改指向别的组件，或删边）；人没说清就不执行这一行。
-3. **归档**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`.gitignore` 没忽略 `docs/design/tmp/`、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进 PR 正文：那两个文件不是知识库文件，不在这个 PR 里改，交人处理。
+2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <知识库> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 批了的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，按人说的在 delta 里改掉（改指向别的组件，或删边）；人没说清就不执行这一行。
+3. **归档**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <知识库> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`.gitignore` 没忽略 `docs/design/tmp/`、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进 PR 正文：那两个文件不是知识库文件，不在这个 PR 里改，交人处理。
 4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档脚本写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、没人批的档案行，不产生任何素材提交。
-5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。
+5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然它留在 `origin/<知识库主分支>` 上，下一次 dreaming 会把它当成漏归档。
 
 ## 边界
 

@@ -7,7 +7,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）和 `idea-loop:decision-rules`（哪些条目不等人）。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
 
-`review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指集成 worktree 的 `docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西。
+`review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指 `<知识库>/docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西；`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出，`<docs>` 指 `<知识库>/docs`，下文 `docs/…` 都相对它；spec、工单、归档的提交在那里做，推到知识库的 PR 分支。
 
 ## 什么时候跑
 
@@ -26,7 +26,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 ## 跑一轮
 
 1. 轮次取 `review-loop next .tmp/review-loop/<PR 号>.md review`；工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。
-2. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md` 与同目录 `tickets/`、review loop 文件路径、companion 路径。有设计产物时，同一条消息里多起 ui-reviewer，先读 [`references/ui-walkthrough.md`](references/ui-walkthrough.md)。
+2. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、`<知识库>` 的绝对路径、spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md`（相对知识库）与同目录 `tickets/`、review loop 文件路径、companion 路径。有设计产物时，同一条消息里多起 ui-reviewer，先读 [`references/ui-walkthrough.md`](references/ui-walkthrough.md)。
 3. 等 pr-reviewer 交回汇报，再往下。
 4. **先记文件**：把汇报原样追加进 review loop 文件为新条目。
 5. **处理照规则的条目**（「处理条目」），不等人。
