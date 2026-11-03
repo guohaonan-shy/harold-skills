@@ -13,11 +13,11 @@
 spec：`docs/spec/knowledge-base-repo/knowledge-base-repo.md` 的「issue 在哪个 GitHub 仓库」「同一行为的其他入口」。
 
 ## 验收标准
-- [ ] `issues.mjs` 的单元测试：临时知识库根有 `idea-loop.json`（`issues: "o/app"`），用默认 `gh` 工厂起一个命令（把 `gh` 换成记录环境的假可执行文件，或直接测工厂产出的 env），看到 `GH_REPO=o/app`；没有 `idea-loop.json` 时不设 `GH_REPO`
-- [ ] `seo-issues.mjs` 用同一个工厂，不另写一套
-- [ ] 设计档案 MCP 在一个配进业务的代码仓库 worktree 里启动，`design_state` 之类的查询读到的是知识库 `docs/design/prod/` 的内容（测试用 01 的临时仓库夹具 + `IDEA_LOOP_HOME`）
-- [ ] 设计档案 MCP 在没配进业务的仓库里启动，返回 `no-repo`，文字含 `/idea-loop:setup`
-- [ ] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [x] `issues.mjs` 的单元测试：临时知识库根有 `idea-loop.json`（`issues: "o/app"`），用默认 `gh` 工厂起一个命令（把 `gh` 换成记录环境的假可执行文件，或直接测工厂产出的 env），看到 `GH_REPO=o/app`；没有 `idea-loop.json` 时不设 `GH_REPO`
+- [x] `seo-issues.mjs` 用同一个工厂，不另写一套
+- [x] 设计档案 MCP 在一个配进业务的代码仓库 worktree 里启动，`design_state` 之类的查询读到的是知识库 `docs/design/prod/` 的内容（测试用 01 的临时仓库夹具 + `IDEA_LOOP_HOME`）
+- [x] 设计档案 MCP 在没配进业务的仓库里启动，返回 `no-repo`，文字含 `/idea-loop:setup`
+- [x] 插件全量 `node --test idea-loop/scripts/` 全绿
 
 ## 选中的存量回归
 - `issues.test.mjs`：`defaultGh` 被改，全部 issue 状态翻转都经它

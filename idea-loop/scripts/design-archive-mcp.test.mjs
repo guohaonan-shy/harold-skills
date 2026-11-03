@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
 
@@ -15,9 +15,12 @@ const TOOLS = ['design_page', 'design_state', 'design_journey', 'design_diff', '
 
 // ---------- a stdio client: send every line, close stdin, read every response back ----------
 
-/** The compliant fixture (plus optionally more files) as a real git repository; returns its realpath. */
+/** What marks a git repository as a business's knowledge base (knowledge-base.mjs). */
+const CONFIG = JSON.stringify({ business: 'biz', issues: 'o/app', repos: { app: 'o/app' } });
+
+/** The compliant fixture (plus optionally more files) as a knowledge base: a real git repository with an idea-loop.json; returns its realpath. */
 function gitRepo(extra = {}) {
-  const root = realpathSync(writeRepo({ ...compliantFiles(), ...extra }));
+  const root = realpathSync(writeRepo({ 'idea-loop.json': CONFIG, ...compliantFiles(), ...extra }));
   assert.equal(spawnSync('git', ['init', '-q'], { cwd: root }).status, 0);
   return root;
 }
@@ -29,10 +32,17 @@ const INIT = { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVe
 const call = (id, name, args) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name, arguments: args } });
 const LIST = { jsonrpc: '2.0', id: 2, method: 'tools/list' };
 
-/** Runs the server in `cwd` against these messages (objects or raw lines); responses by id. */
-function session(cwd, messages) {
+/** The machine-level mapping the tests use instead of the real ~/.idea-loop: an empty one unless `projects` says where the business lives. */
+function ideaLoopHome(projects = {}) {
+  const home = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-home-')));
+  writeFileSync(join(home, 'projects.json'), JSON.stringify(projects));
+  return home;
+}
+
+/** Runs the server in `cwd` against these messages (objects or raw lines); responses by id. `home`: its IDEA_LOOP_HOME. */
+function session(cwd, messages, { home = ideaLoopHome() } = {}) {
   const input = messages.map((m) => (typeof m === 'string' ? m : JSON.stringify(m))).join('\n') + '\n';
-  const r = spawnSync('node', [SERVER], { cwd, input, encoding: 'utf8', timeout: 20000 });
+  const r = spawnSync('node', [SERVER], { cwd, input, encoding: 'utf8', timeout: 20000, env: { ...process.env, IDEA_LOOP_HOME: home } });
   const out = r.stdout.split('\n').filter(Boolean).map((l) => JSON.parse(l));
   return { status: r.status, stderr: r.stderr, out, byId: Object.fromEntries(out.map((o) => [o.id, o])) };
 }
@@ -188,7 +198,7 @@ test('tools/call with delta reads the archive as it will be after the requiremen
   assert.deepEqual(JSON.parse(textOf(s.byId[4])), cliJson(root, 'page', 'cookbook', '--delta', SPEC_SLUG));
 });
 
-test('the repository root is the git top level of the working directory, also from a subdirectory', () => {
+test('the knowledge base is the git top level of the working directory when that is the knowledge base, also from a subdirectory', () => {
   const root = gitRepo();
   const s = session(join(root, 'docs', 'design'), [INIT, call(2, 'design_state', { name: 'cookbook--list' })]);
   assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
@@ -215,7 +225,7 @@ test('an unknown object is an MCP error result that says what exists, and the ne
   assert.ok(!s.byId[6].result.isError);
 });
 
-test('outside a git repository every tool returns a clear error result instead of crashing', () => {
+test('outside a git repository every tool returns an error result that says to run setup, instead of crashing', () => {
   const bare = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-nogit-')));
   const s = session(bare, [INIT, LIST, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))]);
   assert.equal(s.status, 0);
@@ -223,16 +233,84 @@ test('outside a git repository every tool returns a clear error result instead o
   TOOLS.forEach((n, i) => {
     const res = s.byId[10 + i];
     assert.equal(res.result.isError, true, n);
-    assert.match(textOf(res), /git/, n);
+    assert.match(textOf(res), /\/idea-loop:setup/, n);
   });
 });
 
-test('a git repository without docs/ is reported, not crashed on', () => {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-nodocs-')));
+test('a knowledge base without docs/ is reported, not crashed on', () => {
+  const root = realpathSync(writeRepo({ 'idea-loop.json': CONFIG }));
   spawnSync('git', ['init', '-q'], { cwd: root });
   const s = session(root, [INIT, call(2, 'design_page', { name: 'x' })]);
   assert.equal(s.byId[2].result.isError, true);
   assert.match(textOf(s.byId[2]), /docs/);
+});
+
+// ---------- a code repository reads the business's knowledge base ----------
+
+const POINTER = '# app\n\n## idea-loop\n\n- 业务：`biz`\n- 知识库：`o/biz-kb`\n\n这个仓库的 spec、设计档案都在知识库里。\n';
+const commitAll = (cwd) => {
+  const g = (...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd, encoding: 'utf8' });
+  assert.equal(g('add', '-A').status, 0);
+  assert.equal(g('commit', '-q', '-m', 'init').status, 0);
+  return g;
+};
+
+/** A code repository with no docs/ at all (AGENTS.md says `pointer`, null: no AGENTS.md) and a worktree of it. */
+function codeRepo(pointer) {
+  const app = realpathSync(writeRepo({ 'README.md': 'app', ...(pointer === null ? {} : { 'AGENTS.md': pointer }) }));
+  assert.equal(spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: app }).status, 0);
+  const g = commitAll(app);
+  const worktree = join(app, '.tmp', 'wt');
+  assert.equal(g('worktree', 'add', '-q', '-b', 'feature/x', worktree).status, 0);
+  return { app, worktree };
+}
+
+test('in a code repository configured into a business, the queries read the knowledge base\'s docs/design/prod, from the main checkout and from a worktree', () => {
+  const kb = gitRepo();
+  const { app, worktree } = codeRepo(POINTER);
+  assert.ok(!existsSync(join(app, 'docs')), 'the code repository has no docs/ of its own');
+  const home = ideaLoopHome({ biz: { knowledgeBase: kb, home: app, repos: { app } } });
+  for (const cwd of [app, worktree]) {
+    const s = session(cwd, [INIT, call(2, 'design_state', { name: 'cookbook--list' }), call(3, 'design_page', { name: 'cookbook' })], { home });
+    assert.ok(!s.byId[2].result.isError, `${cwd}: ${JSON.stringify(s.byId[2])}`);
+    assert.deepEqual(JSON.parse(textOf(s.byId[2])), cliJson(kb, 'state', 'cookbook--list'), cwd);
+    assert.deepEqual(JSON.parse(textOf(s.byId[3])), cliJson(kb, 'page', 'cookbook'), cwd);
+  }
+});
+
+test('an open .tmp/kb of the session\'s worktree is read before the main knowledge base checkout', () => {
+  const kb = gitRepo();
+  const g = commitAll(kb);
+  const { app, worktree } = codeRepo(POINTER);
+  const open = join(worktree, '.tmp', 'kb');
+  assert.equal(g('worktree', 'add', '-q', '-b', 'feature/x', open).status, 0);
+  mkdirSync(dirname(join(open, SHARE)), { recursive: true });
+  writeFileSync(join(open, SHARE), shareSheet.replace('分享面板。', '这一支分支新加的分享面板。'));
+  const home = ideaLoopHome({ biz: { knowledgeBase: kb, home: app, repos: { app } } });
+  const s = session(worktree, [INIT, call(2, 'design_state', { name: 'cookbook--share-sheet', delta: SPEC_SLUG })], { home });
+  assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
+  assert.match(textOf(s.byId[2]), /这一支分支新加的分享面板/);
+});
+
+test('in a repository that is not configured into any business, every tool says to run /idea-loop:setup', () => {
+  const kb = gitRepo();
+  const home = ideaLoopHome({ biz: { knowledgeBase: kb, home: kb, repos: {} } });
+  for (const pointer of [null, '# app\n\n## idea-loop\n\n- 默认分支：main\n']) {
+    const { app } = codeRepo(pointer);
+    const s = session(app, [INIT, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))], { home });
+    TOOLS.forEach((n, i) => {
+      const res = s.byId[10 + i];
+      assert.equal(res.result.isError, true, n);
+      assert.match(textOf(res), /\/idea-loop:setup/, n);
+    });
+  }
+});
+
+test('a pointer to a business this machine has no knowledge base for says to run /idea-loop:setup', () => {
+  const { app } = codeRepo(POINTER);
+  const s = session(app, [INIT, call(2, 'design_page', { name: 'cookbook' })], { home: ideaLoopHome({}) });
+  assert.equal(s.byId[2].result.isError, true);
+  assert.match(textOf(s.byId[2]), /\/idea-loop:setup/);
 });
 
 test('bad input: missing argument is an error result, unknown tool is a protocol error, garbage line is a parse error', () => {

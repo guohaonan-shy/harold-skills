@@ -9,19 +9,21 @@
  *
  * Zero dependencies: the three methods an MCP client needs (initialize, tools/list, tools/call) plus
  * ping are spoken by hand as newline-delimited JSON-RPC 2.0. The plugin's `.mcp.json` starts it, so a
- * target project configures nothing; the repository is the git top level of the working directory the
- * session started in. A name that matches nothing, a directory outside git, a missing argument: each is
- * an MCP error *result* (`isError: true`) that says what is wrong, never a dead process.
+ * target project configures nothing; the archive it reads is the business's knowledge base, found from the
+ * working directory the session started in the way every script finds it (`knowledge-base.mjs root`: the
+ * knowledge base itself, an open `.tmp/kb/`, else the one `~/.idea-loop/projects.json` names). A name that
+ * matches nothing, a directory in no configured business (the error says to run /idea-loop:setup), a missing
+ * argument: each is an MCP error *result* (`isError: true`) that says what is wrong, never a dead process.
  *
  *   node design-archive-mcp.mjs        (speaks MCP on stdin / stdout)
  */
 
-import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { QueryError, query } from './design-archive-query.mjs';
+import { KnowledgeBaseError, knowledgeBaseRoot } from './knowledge-base.mjs';
 
 const SUPPORTED_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER_INFO = { name: 'design-archive', version: '1.0.0' };
@@ -120,20 +122,17 @@ const textResult = (text, isError = false) => ({
   ...(isError ? { isError: true } : {}),
 });
 
-/** The git top level of the working directory, or a thrown QueryError that says why not. */
+/** The knowledge base to read from the working directory (`knowledge-base.mjs root`), or a thrown QueryError that says why not. */
 function repoRoot(cwd = process.cwd()) {
   let root;
   try {
-    root = execFileSync('git', ['rev-parse', '--show-toplevel'], {
-      cwd,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
-  } catch {
-    throw new QueryError(`当前目录 ${cwd} 不在 git 仓库里：设计档案只读目标仓库的 docs/design，请在仓库里启动会话`, 'no-repo');
+    root = knowledgeBaseRoot(cwd);
+  } catch (e) {
+    if (!(e instanceof KnowledgeBaseError)) throw e;
+    throw new QueryError(e.message, 'no-repo');
   }
-  if (!root || !existsSync(join(root, 'docs'))) {
-    throw new QueryError(`${root || cwd} 下没有 docs/：这个 git 仓库里没有设计档案`, 'no-repo');
+  if (!existsSync(join(root, 'docs'))) {
+    throw new QueryError(`知识库 ${root} 下没有 docs/：这个知识库里没有设计档案`, 'no-repo');
   }
   return root;
 }

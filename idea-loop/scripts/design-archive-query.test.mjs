@@ -523,7 +523,7 @@ test('cli: usage errors and a directory that is not a repository root exit 2', (
   assert.equal(cli(root, 'keyword', '   ').status, 2);
   const bare = cli(writeRepo({ 'README.md': 'x' }), 'page', 'cookbook');
   assert.equal(bare.status, 2);
-  assert.match(bare.stderr, /不是目标仓库的根/);
+  assert.match(bare.stderr, /不是知识库的根/);
 });
 
 test('every other entry can read the archive after the change', () => {
