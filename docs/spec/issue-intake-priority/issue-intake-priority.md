@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, issue-dispatch, issue-session, scheduling, priority, idea-loop-0-2-0]
 summary: 开 issue 时挂模块根、判 P0；调度只出 P0 和本期焦点、审核中不占名额、每天列等你的；seo 不再单独排队；想法有入口；停 cloud 整合；implement 自动切票
 related: ["[[2026-11-02-issue-intake-priority-grill]]", "[[2026-11-03-idea-loop-0-2-0-grill]]", "[[idea-loop-0-2-0-release]]", "[[issue-consolidation]]", "[[no-decision-autopilot]]", "[[knowledge-base-repo]]"]
