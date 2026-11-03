@@ -11,7 +11,7 @@ issues: [228]
 
 > #228 存在：2026-11-03 对着 release/idea-loop-0.2.0（da85785，idea-loop 0.1.9）核过，setup 只会往代码仓库根目录写设置、建 `docs/`，skill 和脚本都在当前 checkout 里找它们，一个需求跨几个仓库时没有地方放共用的 spec，详情在「问题陈述」
 
-这是 idea-loop 0.2.0 的 F5（release 计划 [[idea-loop-0-2-0-release]]），也覆盖 #222 的第 3 个需求点。决定全部出自 [[2026-11-03-idea-loop-0-2-0-grill]] 的「本轮决议」表，本 spec 不重开；其中「代码仓库不留 idea-loop 文件」一条，人在 2026-11-03 改为保留代码仓库的 `AGENTS.md`、在里面放指向知识库的指针（决定记录 U11），本 spec 已照改；「仓库级设置进知识库 `repos/<仓库名>/`」一条，人在同一天改为留在代码仓库（见「实现决策」的「业务级与仓库级的划分」）。
+这是 idea-loop 0.2.0 的 F5（release 计划 [[idea-loop-0-2-0-release]]），也覆盖 #222 的第 3 个需求点。决定全部出自 [[2026-11-03-idea-loop-0-2-0-grill]] 的「本轮决议」表，本 spec 不重开；其中「代码仓库不留 idea-loop 文件」一条，人在 2026-11-03 改为保留代码仓库的 `AGENTS.md`、在里面放指向知识库的指针（决定记录 U11），本 spec 已照改；「仓库级设置进知识库 `repos/<仓库名>/`」一条，人在同一天改为留在代码仓库（决定记录 U12，见「实现决策」的「业务级与仓库级的划分」）。
 
 ## 问题陈述
 
@@ -171,7 +171,7 @@ issues: [228]
 
 业务级，进知识库根：`PRODUCT.md`、`GLOSSARY.md`、`DESIGN.md`、`ISSUE_TRACKER.md`、「issue 分类」（写在知识库根的 `AGENTS.md`）。仓库级，留在代码仓库根目录：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`。
 
-依据：grill 决议原定「仓库级设置进知识库 `repos/<仓库名>/`」（U7 Q22），人 2026-11-03 原话（本会话）：「我觉得DEVELOPMENT.md、REVIEW.md、CODING_STANDARDS.md 这些仍然放在project 纬度吧，之后再考虑将一部分通用的内容拆分到业务这块。」其中通用的部分以后再考虑拆到业务级，不在本 spec。`GLOSSARY.md` 的「业务」词条写明一个业务共用 spec、ADR、设计档案、产品说明、issue 分类。分支、合并方式、验证命令、代码规范随仓库的语言和工具链不同，所以按仓库分。`DESIGN.md` 跟设计档案一样描述线上界面，归业务。
+依据：grill 决议原定「仓库级设置进知识库 `repos/<仓库名>/`」（U7 Q22），人 2026-11-03 原话（决定记录 U12）：「我觉得DEVELOPMENT.md、REVIEW.md、CODING_STANDARDS.md 这些仍然放在project 纬度吧，之后再考虑将一部分通用的内容拆分到业务这块。」其中通用的部分以后再考虑拆到业务级，不在本 spec。`GLOSSARY.md` 的「业务」词条写明一个业务共用 spec、ADR、设计档案、产品说明、issue 分类。分支、合并方式、验证命令、代码规范随仓库的语言和工具链不同，所以按仓库分。`DESIGN.md` 跟设计档案一样描述线上界面，归业务。
 
 ### 「issue 分类」留在知识库根的 `AGENTS.md`
 
