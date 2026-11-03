@@ -8,7 +8,7 @@
 
 ## 2. 先推 spec 翻完成、删工单的 docs 提交，等 CI 绿
 
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <知识库>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样在 `<知识库>` 里作为一个只改知识库的提交（`docs(spec): <spec-slug> 完成`），推送到 PR 分支。
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <知识库>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样在 `<知识库>` 里作为一个只改知识库的提交（`docs(spec): <spec-slug> 完成`），推送到知识库的 PR 分支。一份 spec 有几个 PR 时只做一次（见 [`multi-repo.md`](multi-repo.md)）：spec 已经是「完成」就跳过。
 
 它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在知识库的主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
 

@@ -11,6 +11,7 @@
 3. **归档 review loop**：`review-loop archive .tmp/review-loop/<PR 号>.md <owner/repo> <PR 号>`，每份汇报各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`idea-loop:pr` 的「review loop 文件」）。中途失败直接重跑，贴过的不会重复。
 4. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md` 的「分支」节。
 5. 做「合并后的清理」。
+6. 这份 spec 有几个 PR 时，合完这一个就照 [`multi-repo.md`](multi-repo.md) 的「全部合并才算完」查其余的：全合了才 `issues advance`，否则汇报里写还剩哪几个没合。
 
 ## 合并前归档
 
@@ -30,7 +31,7 @@
 
 ## 合并后的清理
 
-合并之后逐项做，PR 描述「参考」里的清理清单就是这几项加上这个 PR 特有的：
+合并之后逐项做（一份 spec 有几个 PR 时，临时目录和 worktree 的收法见 [`multi-repo.md`](multi-repo.md)），PR 描述「参考」里的清理清单就是这几项加上这个 PR 特有的：
 
 1. **删素材分支**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`。
 2. **收掉还留着的执行方 worktree**（卡住过、没被回收的）：目标仓库 `DEVELOPMENT.md` 的「清理」写了命令就先跑它；停掉它端口上的服务，`git worktree remove --force <路径>`，`git branch -D <它的分支>`。

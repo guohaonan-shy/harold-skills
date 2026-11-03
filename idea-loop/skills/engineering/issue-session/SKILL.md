@@ -12,7 +12,7 @@ argument-hint: "<根号或 issue 号>"
 |---|---|---|---|
 | 审核 | 审核中 | 验证中 → 审核中 | spec 经知识库的 PR 合进知识库的主分支 |
 | 设计 | 设计中 | 设计中 | 冻结结果经设计的知识库 PR 合进知识库的主分支 |
-| 实现 | 实现中 | 实现中 | 实现 PR 合并 |
+| 实现 | 实现中 | 实现中 | 实现的 PR 全部合并（有几个代码仓库时，每个仓库一个 PR，再加知识库的一个） |
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
 
@@ -45,7 +45,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 ## 实现
 
 1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
-2. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
+2. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，这一段的 PR 全部合并之后去「换阶段」；合了一个、还有没合的，pr-review 的汇报里写还剩哪几个没合，这里不换阶段，等人说合并下一个。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 
@@ -55,7 +55,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 换阶段
 
-每个 PR 合并后做一遍：
+每一段的 PR 全部合并后做一遍（实现这一段有几个 PR，见上面「实现」）：
 
 1. `git fetch origin`，从最新的主分支切出下一段的分支：`git switch -c <下一段>/<spec-slug> origin/<主分支>`（设计用 `design/`，实现用 `impl/`）。
 2. `issues advance <docs> <spec-slug>`：照知识库主分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。

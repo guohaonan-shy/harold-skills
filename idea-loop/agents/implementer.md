@@ -17,20 +17,20 @@ effort: high
 
 - **知识库的绝对路径**（下称 `<知识库>`，是 `knowledge-base.mjs root --write` 的输出）和工单路径 `docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`（相对 `<知识库>`；下文 `docs/…` 都相对它）
 - spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md`。spec 是背景，任何一节都可以读；「测试决策」告诉你这一刀该用哪种仪器验。**做什么的范围以工单为准**：spec 里有、工单没要的不做。工单就是写给没见过 spec 的人的，真缺了什么，是工单写得不够，按「停，还是延后」停下
-- **起点 SHA** 和**集成分支名**
+- **起点 SHA** 和**集成分支名**（业务有两个以上代码仓库时，是这张工单「仓库」那一行指的仓库的）
 - **分到的端口**。起服务只用它，别的端口可能是别的执行方的
-- 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁**
+- 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁**。业务有两个以上代码仓库时，这是工单所在仓库的集成 worktree，另给一个会话 worktree 的绝对路径，笔记和锁在会话 worktree 里
 - **tmp 绝对路径**：`<知识库>/docs/design/tmp/<spec-slug>/` 的绝对路径。`tmp/` 不进版本库，你自己的 worktree 里没有它，画布和最小差异都用这个绝对路径读写；目录不存在就自己建
-- 这份 spec 前面已经落地的工单的提交列表。要看前一张怎么做的，用 `git show`
+- 这份 spec 前面已经落地的工单的提交列表（多个仓库时按仓库分开列）。要看前一张怎么做的，用 `git show`（在那个提交所在的仓库里）
 - 上次卡住留下的半成品分支（可选）。有就在 reset 之后 `git merge --squash <分支>` 拿回来当起点，不提交，接着做
 - 这张工单不是第一次做时的原因：上次卡住后人做了决定（工单里有 `> 人的决定`），或人验反馈、review 批示要修（验收标准末尾新追加了 `人验反馈` / `review 第 N 轮` / `人推翻` 的未勾格）。可能是同一个你被 SendMessage 叫回来：worktree 还在，不用再 reset，先把集成分支的最新提交合进来。**这时只做没勾的那几格**，已勾的格对应的行为保持不坏：存量回归和全量套件照样要全绿
 
 ## 开工前
 
-1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先 `git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
+1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先 `git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。**工单写了「仓库」，且不是派你时的 worktree 所在仓库**：派你时的 worktree 用不上，不动它；从给你的那个仓库的集成 worktree 开自己的：`git -C <集成 worktree> worktree add <路径> -b <分支名> <起点 SHA>`（路径放在该集成 worktree 的 `.tmp/implement/<spec-slug>/t<NN>/` 下），之后读写代码、`DEVELOPMENT.md`、`REVIEW.md`、下面第 5 步读的写法规范、测试、commit 都在这个 worktree 里、用这个仓库的。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
 2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停。
-4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表）。
+4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表，各仓库的都看）。
 5. **读目标仓库的写法规范，动手前先读完或调完管这张工单的那一条**：读它的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**别把链接埋在一长串要读的文件里略过**：先在 `CODING_STANDARDS.md` 的「链接」里，找出管这张工单所改文件类型的那一条（例：工单改 skill、agent 定义、`AGENTS.md`，就找到指向 `writing-for-agents` 的那条），链接指到一个 skill 目录，就照着读或调那个 skill，读完或调完再动手；一条都对不上就算了，不硬凑。review 的 Standards 轴按这套规矩审你，只认这个仓库自己写下的规则。
 6. **领域词汇**：知识库根有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，避开 `_Avoid_` 里的词（`idea-loop:glossary` 的「读：所有产出命名的地方」）。缺词先用描述性的说法，不问、不写进术语表。
 7. **先把前提核一遍再写代码**：工单描述的现状和代码对得上吗？每一格验收标准，你知道它的「对」长什么样吗？卡住最好卡在这里，而不是写到一半。共享笔记有就先读：它只给位置，位置对不对你自己打开核。
@@ -122,7 +122,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 
 全部满足才算完成：
 
-1. 验收标准**每一格**要么 `- [x]`（你知道是哪个测试、哪条命令、哪轮测量证明了它），要么带着 `⏭ 延后 → <接手方>`。
+1. 验收标准**每一格**要么 `- [x]`（你知道是哪个测试、哪条命令、哪轮测量证明了它），要么带着 `⏭ 延后 → <接手方>`。勾格写在 `<知识库>` 里那份工单文件上（见下面「工单文件不进 commit」）。
 2. 选中的存量回归全部跑过，是绿的。
 3. 全量套件、typecheck、lint 都是绿的，用的是仓库声明的命令。
 4. UI 工单：测量脚本最后一轮是绿的。
@@ -132,13 +132,15 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 1. 先把全部改动提交一次，message 随意。
 2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突照 `DEVELOPMENT.md` 的「worktree 准备」，不手工合并。
 3. 依赖按锁文件核对一遍（`DEVELOPMENT.md` 的「worktree 准备」），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
-4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部改动，加上勾好框的工单文件（以及被你追加了继承格的那张工单）。message 用仓库的风格写，**末尾带一行 trailer**：
+4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部代码改动，不含工单文件。message 用仓库的风格写，**末尾带一行 trailer**：
 
    ```
    Ticket: <NN>-<slug>
    ```
 
    这一行是这张工单已落地的凭据，必须一字不差地等于工单的文件名去掉 `.md`，自成一行。署名行（`Co-Authored-By:` 之类）放在它后面；环境把署名另起一段追加也没关系。提交后自己核一遍：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of HEAD` 要输出这张工单的名字。
+
+**工单文件不进 commit**：工单在知识库里，不在代码仓库的 worktree 里。上面四条都满足、要交回 `landed` 之前，把勾好的框写回 `<知识库>` 里的那份工单文件（延后给后续工单的，也在知识库里给那张工单追加 `（继承自 NN）` 一格）；交回的 `acceptance` 说明勾了哪几格、给哪张工单追加了什么。编排者落地时在知识库里提交它们。`blocked` / `failed` 不写工单文件，免得知识库里留下没落地的勾格。
 
 **第 2 步到第 4 步之间用钉住的那个 `$T`，不重新取集成分支**：它中途前进了的话，`reset --soft` 到新提交会把别人刚落地的改动悄悄撤掉。因为 fast-forward 不了被退回时，从第 2 步再做一遍。
 
@@ -154,7 +156,7 @@ ticket: <NN>-<slug>
 branch: <你的分支名>
 worktree: <你的 worktree 绝对路径>
 commit: <完整 SHA>                       # landed 才有，它的父提交就是第 2 步钉住的 T
-acceptance: <已勾 x / 共 y>，延后：<每条：格 → 接手方>
+acceptance: <已勾 x / 共 y>，勾了：<哪几格，写回了知识库里的哪份工单>，延后：<每条：格 → 接手方>
 by_existing_practice:                    # 工单没说、按产品已有做法定的；没有就写「无」
   - <做了什么> | <现存实例在哪：页面、组件或文案出处，至少一处>
 human_verify:                            # 要人看的素材，一项一条

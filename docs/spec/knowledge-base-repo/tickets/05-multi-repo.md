@@ -14,12 +14,12 @@
 - **issue-session**：「实现」一段收尾的条件同上（全部 PR 合并才进下一段）。
 
 ## 验收标准
-- [ ] 文档测试：to-ticket 的工单模板有「仓库」一行，且写明只有一个代码仓库时不写
-- [ ] 文档测试：implement 写了 `knowledge-base.mjs worktree`、每个仓库一个 PR、知识库一个 PR、`reference` 列全部 PR
-- [ ] 文档测试：pr-review 的合并写了「全部合并才 `issues advance`」与「还剩哪几个没合」
-- [ ] 文档测试：implementer 写了勾格写回知识库的工单、不进代码提交
-- [ ] 现有 `issue-session-implement-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`implement-reuse-blocked-doc.test.mjs`、`implementer-standards-doc.test.mjs` 改成守新说法后全绿
-- [ ] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [x] 文档测试：to-ticket 的工单模板有「仓库」一行，且写明只有一个代码仓库时不写
+- [x] 文档测试：implement 写了 `knowledge-base.mjs worktree`、每个仓库一个 PR、知识库一个 PR、`reference` 列全部 PR
+- [x] 文档测试：pr-review 的合并写了「全部合并才 `issues advance`」与「还剩哪几个没合」
+- [x] 文档测试：implementer 写了勾格写回知识库的工单、不进代码提交
+- [x] 现有 `issue-session-implement-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`implement-reuse-blocked-doc.test.mjs`、`implementer-standards-doc.test.mjs` 改成守新说法后全绿
+- [x] 插件全量 `node --test idea-loop/scripts/` 全绿
 
 ## 选中的存量回归
 - `issue-session-implement-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`implement-reuse-blocked-doc.test.mjs`、`implementer-standards-doc.test.mjs`、`ticket-ledger.test.mjs`：守 implement / implementer / pr-review 现有规则

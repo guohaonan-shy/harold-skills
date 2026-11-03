@@ -3,7 +3,7 @@ name: pr-review
 description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards）并处理人的批示，或在人说合并时归档并合并它。implement 全部落地后、人说再跑一轮、人说合并时用。
 ---
 
-**一次调用跑一轮。** 调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、人说合并时合并。审查归 `idea-loop:pr-reviewer`（只读，结论不被它自己的修法影响），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
+**一次调用跑一轮。** 调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、合并。审查归 `idea-loop:pr-reviewer`（只读，结论不被它自己的修法影响），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
 
 开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）和 `idea-loop:decision-rules`（哪些条目不等人）。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
 
@@ -14,14 +14,14 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 - `idea-loop:implement` 全部落地、PR 刚转 open：第 1 轮。
 - 「一轮之后往哪走」判出自动起下一轮。
 - 人调 `/idea-loop:pr-review` 或说「再跑一轮」：随时，不受两轮上限约束，计入轮次。
-- 人说合并：照 [`references/merge.md`](references/merge.md)。合并只由人决定。
+- 人说合并：照 [`references/merge.md`](references/merge.md)；几个 PR 见 [`multi-repo.md`](references/multi-repo.md)。合并只由人决定。
 
 ## 前提
 
 - PR 是 **open**。还是 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - 回放排队的事 implement 进 review 前已核过。之后 `review-loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
 - 当前 worktree 是这个 PR 的集成分支，工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于 PR 的 head。
-- `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前把它说的缺什么告诉人。
+- `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前告诉人它说缺什么。
 
 ## 跑一轮
 
@@ -30,8 +30,8 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 3. 等 pr-reviewer 交回汇报，再往下。
 4. **先记文件**：把汇报原样追加进 review loop 文件为新条目。
 5. **处理照规则的条目**（「处理条目」），不等人。
-6. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，一个不剩，文件里的条目同步改成一字不差的同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另把 implement 期间开的存量问题 issue 补进这一节：从 review loop 文件各次停下的「已按规则处理」里找出带 issue 链接的行，原样列进来。
-7. **给人看**：照 `idea-loop:pr` 的「在会话里给人看」按条目贴，「已按规则处理」在最前，每条文字后紧跟它的证据图。汇报里有缺词，念出来（概念加推荐叫法），问人要不要开一轮 `idea-loop:grill` 定下来。
+6. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，文件里的条目同步改成一字不差的同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另把 review loop 文件各次停下的「已按规则处理」里带 issue 链接的行（implement 期间开的存量问题）原样列进这一节。
+7. **给人看**：照 `idea-loop:pr` 的「在会话里给人看」按条目贴，「已按规则处理」在最前，每条文字后紧跟它的证据图。汇报里有缺词，念出来（概念加推荐叫法），问人要不要开一轮 `idea-loop:grill`。
 8. 发一条推送通知：第几轮、几条已按规则处理、几条要你决定；未完成的轴或检查明说。
 
 ## 处理条目
