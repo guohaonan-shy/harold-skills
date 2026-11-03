@@ -271,3 +271,69 @@ test('a new session branch starts from the knowledge base default branch on orig
   assert.equal(git(r.out, 'rev-parse', 'HEAD'), git(w.kb, 'rev-parse', 'origin/main'));
   assert.equal(existsSync(join(r.out, 'docs/spec/unrelated.md')), false);
 });
+
+test('root --write follows the session branch: .tmp/kb opened on branch A moves to branch B when the code worktree switches (cut from origin default, or reused if it exists)', () => {
+  const w = world();
+  const dest = join(w.appWt, '.tmp', 'kb');
+  assert.equal(kbCli(w, ['root', '--write'], w.appWt).out, dest);
+  assert.equal(git(dest, 'branch', '--show-current'), 'feature/x');
+
+  // the session moves from review to implementation: a new branch in the code worktree
+  git(w.appWt, 'switch', '-q', '-c', 'impl/my-spec', 'main');
+  const moved = kbCli(w, ['root', '--write'], w.appWt);
+  assert.equal(moved.status, 0, moved.err);
+  assert.equal(moved.out, dest);
+  assert.equal(git(dest, 'branch', '--show-current'), 'impl/my-spec');
+  assert.equal(git(dest, 'rev-parse', 'HEAD'), git(w.kb, 'rev-parse', 'origin/main'), 'a branch that did not exist is cut from the default branch');
+
+  // switching back to a knowledge base branch that already exists reuses it, with its commits
+  commit(dest, 'docs/spec/impl.md', 'written on impl/my-spec');
+  git(w.appWt, 'switch', '-q', 'feature/x');
+  assert.equal(kbCli(w, ['root', '--write'], w.appWt).status, 0);
+  assert.equal(git(dest, 'branch', '--show-current'), 'feature/x');
+  git(w.appWt, 'switch', '-q', 'impl/my-spec');
+  assert.equal(kbCli(w, ['root', '--write'], w.appWt).status, 0);
+  assert.equal(git(dest, 'branch', '--show-current'), 'impl/my-spec');
+  assert.ok(existsSync(join(dest, 'docs/spec/impl.md')), 'the existing branch was reused');
+});
+
+test('root --write: when the branch only exists on origin, .tmp/kb switches onto it', () => {
+  const w = world();
+  const dest = join(w.appWt, '.tmp', 'kb');
+  assert.equal(kbCli(w, ['root', '--write'], w.appWt).status, 0);
+  const pusher = join(w.base, 'pusher');
+  git(w.base, 'clone', '-q', join(w.base, 'biz-kb-origin.git'), pusher);
+  git(pusher, 'checkout', '-q', '-b', 'impl/remote');
+  commit(pusher, 'docs/spec/r.md', 'pushed from another machine');
+  git(pusher, 'push', '-q', 'origin', 'impl/remote');
+  git(w.appWt, 'switch', '-q', '-c', 'impl/remote', 'main');
+  const r = kbCli(w, ['root', '--write'], w.appWt);
+  assert.equal(r.status, 0, r.err);
+  assert.equal(git(dest, 'branch', '--show-current'), 'impl/remote');
+  assert.ok(existsSync(join(dest, 'docs/spec/r.md')), 'the origin branch was used');
+});
+
+test('root --write: .tmp/kb with uncommitted changes cannot follow the branch: exit 1, nothing changed', () => {
+  const w = world();
+  const dest = join(w.appWt, '.tmp', 'kb');
+  assert.equal(kbCli(w, ['root', '--write'], w.appWt).status, 0);
+  commit(dest, 'docs/spec/a.md', 'v1');
+  writeFileSync(join(dest, 'docs/spec/a.md'), 'v2 not committed yet');
+  git(w.appWt, 'switch', '-q', '-c', 'impl/my-spec', 'main');
+
+  const r = kbCli(w, ['root', '--write'], w.appWt);
+  assert.equal(r.status, 1);
+  assert.ok(r.err.includes('feature/x') && r.err.includes('impl/my-spec'), 'names both branches');
+  assert.equal(git(dest, 'branch', '--show-current'), 'feature/x', 'still on the old branch');
+  assert.equal(git(dest, 'status', '--porcelain'), 'M docs/spec/a.md', 'the uncommitted change is untouched');
+  assert.equal(git(w.kb, 'branch', '--list', 'impl/my-spec'), '', 'no branch was created');
+});
+
+test('worktree <repo> follows the session branch too', () => {
+  const w = world();
+  const dest = join(w.appWt, '.tmp', 'repos', 'api');
+  assert.equal(kbCli(w, ['worktree', 'api'], w.appWt).out, dest);
+  git(w.appWt, 'switch', '-q', '-c', 'impl/my-spec', 'main');
+  assert.equal(kbCli(w, ['worktree', 'api'], w.appWt).status, 0);
+  assert.equal(git(dest, 'branch', '--show-current'), 'impl/my-spec');
+});

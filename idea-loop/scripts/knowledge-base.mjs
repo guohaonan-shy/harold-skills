@@ -153,15 +153,32 @@ function baseRef(repo) {
 }
 
 /**
- * Makes sure `dest` is a worktree of the repository whose main checkout is `repo`, on `branch`: an existing one is
- * returned as it is; otherwise stale worktree records are pruned, then the branch is used if it exists locally or on
- * origin, and cut from the default branch if not. Returns `dest`.
+ * Makes sure `dest` is a worktree of the repository whose main checkout is `repo`, on `branch`. An existing one on
+ * that branch is returned as it is; on another branch (the session moved on, e.g. from review to implementation) it is
+ * switched, refusing before any change when it has uncommitted changes to tracked files. Otherwise stale worktree
+ * records are pruned, then the branch is used if it exists locally or on origin, and cut from the default branch if
+ * not. Returns `dest`.
  */
 export function ensureWorktree(repo, dest, branch) {
   if (existsSync(dest)) {
     const same = git(dest, ['rev-parse', '--path-format=absolute', '--git-common-dir'], { allowFail: true });
-    if (same && real(dirname(same)) === real(repo)) return dest;
-    throw new KnowledgeBaseError(`${dest} 已经存在，但不是 ${repo} 的 worktree：删掉它再重试`);
+    if (!same || real(dirname(same)) !== real(repo)) {
+      throw new KnowledgeBaseError(`${dest} 已经存在，但不是 ${repo} 的 worktree：删掉它再重试`);
+    }
+    const current = git(dest, ['branch', '--show-current']);
+    if (current === branch) return dest;
+    if (git(dest, ['status', '--porcelain', '--untracked-files=no'])) {
+      throw new KnowledgeBaseError(`${dest} 在分支 ${current || '（detached HEAD）'} 上有没提交的改动，切不到当前会话的分支 ${branch}：先在那里提交或丢弃，再重试`);
+    }
+    git(repo, ['fetch', '--quiet', 'origin'], { allowFail: true });
+    if (branchExists(repo, `refs/heads/${branch}`)) {
+      git(dest, ['switch', '--quiet', branch]);
+    } else if (branchExists(repo, `refs/remotes/origin/${branch}`)) {
+      git(dest, ['switch', '--quiet', '-c', branch, `origin/${branch}`]);
+    } else {
+      git(dest, ['switch', '--quiet', '--no-track', '-c', branch, baseRef(repo)]);
+    }
+    return dest;
   }
   git(repo, ['worktree', 'prune']);
   git(repo, ['fetch', '--quiet', 'origin'], { allowFail: true });
