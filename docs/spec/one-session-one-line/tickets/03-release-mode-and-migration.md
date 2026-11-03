@@ -16,3 +16,5 @@ setup 写 `DEVELOPMENT.md` 时「分支」节多「发布方式」（应用 / �
 
 ## 选中的存量回归
 - `setup-single-source.test.mjs`、`setup-knowledge-base-doc.test.mjs`、`setup-consolidation-doc.test.mjs`：断言了 setup 的结构
+- [x] review 第 1 轮 S1（2026-11-03）：按版本发布的 feature，实现开的代码 PR base 是 release 分支；版本会话里验证只管这个 feature 的子 issue
+- [x] review 第 1 轮 C1（2026-11-03）：插件说明的 issue 会话一条和目录树写上按版本发布时一组分成多份 spec

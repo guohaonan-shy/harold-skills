@@ -6,7 +6,7 @@
 
 1. 讨论阶段照常调 `idea-loop:issue-verify` 复现、跟人 grill，但要定的是这一版有哪些 feature（每个 feature 覆盖哪几个子 issue）和版本号：版本号由人定，推荐按改动大小走 semver（不兼容的改动升次版本号以上）。
 2. 定了就从最新的 `<主分支>` 切出 `release/<单元>-<版本>`（只有一个单元的写 `release/<版本>`）并推送；会话分支就改成它。计划写进知识库 `docs/records/releases/<单元>-<版本>-release.md`：分支规则、feature 表（顺序、覆盖的 issue、改什么、前置、状态）、没定的事，提交在知识库同名分支上。
-3. 每个 feature 一份 spec、一条 `feature/<slug>` 分支（从 release 切出），走一遍应用仓库那条线（讨论 → 定稿 → 设计 → 实现 → review 第一轮 → 审核中），只是代码 PR 的 base 是 release 分支。feature 可以在别的会话里做（怎么开会话归 `idea-loop:workspace`），也可以在这个会话里一个一个做；feature 会话做到审核中就停，等版本会话。
+3. 每个 feature 一份 spec（调 `idea-loop:issue-verify` 时说明只管这个 feature 的几个子 issue）、一条 `feature/<slug>` 分支（从 release 切出），走一遍应用仓库那条线（讨论 → 定稿 → 设计 → 实现 → review 第一轮 → 审核中），只是代码 PR 的 base 是 release 分支。feature 可以在别的会话里做（怎么开会话归 `idea-loop:workspace`），也可以在这个会话里一个一个做；feature 会话做到审核中就停，等版本会话。
 
 ## 合并
 

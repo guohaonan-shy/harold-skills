@@ -87,7 +87,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
-1. 还没有 PR：**每个有落地提交的代码仓库各推送、各开一个 draft PR**（在它的集成 worktree 里 `gh pr create --draft --base <该仓库的基准分支>`），知识库有改动（工单勾格总会有）也推送：这条线的知识库 draft PR 在 spec 定稿时已经开了，就用它，没有才开一个（在 `<知识库>` 里，`--draft`）；标题用 spec 标题，带署名行。每个 PR 都用 `pr-body.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`），**`reference` 区列出这份 spec 的全部 PR**（每个代码仓库的、知识库的，一个一行，写 `<owner/repo>` 和 PR 链接）：全部开完再写，pr-review 合并时靠它查其余的 PR 合并了没有。
+1. 还没有 PR：**每个有落地提交的代码仓库各推送、各开一个 draft PR**（在它的集成 worktree 里 `gh pr create --draft --base <该仓库的基准分支>`；按版本发布的 feature，会话所在仓库的 base 是这个版本的 release 分支，见 `idea-loop:issue-session` 的「按版本发布」），知识库有改动（工单勾格总会有）也推送：这条线的知识库 draft PR 在 spec 定稿时已经开了，就用它，没有才开一个（在 `<知识库>` 里，`--draft`）；标题用 spec 标题，带署名行。每个 PR 都用 `pr-body.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`），**`reference` 区列出这份 spec 的全部 PR**（每个代码仓库的、知识库的，一个一行，写 `<owner/repo>` 和 PR 链接）：全部开完再写，pr-review 合并时靠它查其余的 PR 合并了没有。
    - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：PR 开出来后，把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（多个仓库时对每个有用例的 PR 各跑一次，worktree 是那个 PR 所在仓库的集成 worktree；本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。Review 汇报里写明哪些用例在队列、几点以后有结果。
 2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现中）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
 3. 更新每个 PR 的 `reference` 执行记录，推送。
