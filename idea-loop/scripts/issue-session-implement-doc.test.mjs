@@ -79,9 +79,10 @@ test('「实现」 step 2 invokes implement and pr-review as 「用 Skill 工具
 });
 
 test('「实现」 hands over to 换阶段 only after all of the spec\'s PRs are merged (one PR per code repository plus the knowledge base\'s)', () => {
-  const step2 = impl.split('\n').find((l) => /^2\.\s/.test(l.trim()));
-  assert.match(step2, /PR 全部合并之后去「换阶段」/, 'step 2 must change stage only after every PR is merged');
-  assert.match(step2, /还剩哪几个没合/, 'step 2 must say a partial merge reports which are left and does not change stage');
+  // step 3 (审核): the stage changes only after every PR of the line is merged
+  const step3 = impl.split('\n').find((l) => /^3\.\s/.test(l.trim()));
+  assert.match(step3, /PR 全部合并之后去「换阶段」/, 'step 3 must change stage only after every PR is merged');
+  assert.match(step3, /还剩哪几个没合/, 'step 3 must say a partial merge reports which are left and does not change stage');
 });
 
 test('the README row for issue-session does not mention a compact stop', () => {

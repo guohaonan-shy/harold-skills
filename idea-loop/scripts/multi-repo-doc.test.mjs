@@ -77,12 +77,13 @@ test('implement: landed, reclaim and the ledger are per repository; ticks and do
   assert.match(reclaim, /在它那个仓库里做/, '回收在工单所在的仓库里做');
 });
 
-test('implement: every repository with landed commits gets its own draft PR, the knowledge base one more, and each reference lists them all', () => {
+test('implement: every repository with landed commits gets its own draft PR, the line\'s knowledge-base draft PR is reused, each reference lists them all, and they stay draft', () => {
   const stop = implement.slice(implement.indexOf('## 没活了就停下'), implement.indexOf('## 设计变更'));
   assert.match(stop, /每个有落地提交的代码仓库各推送、各开一个 draft PR/, '缺：每个有落地提交的代码仓库各推送、各开一个 draft PR');
-  assert.match(stop, /知识库有改动[^\n]*也推送、开一个/, '缺：知识库有改动也推送、开一个');
+  assert.match(stop, /知识库有改动[^\n]*也推送[^\n]*已经开了，就用它/, '缺：知识库有改动也推送，复用定稿时开的 draft PR');
   assert.match(stop, /`reference` 区列出这份 spec 的全部 PR/, '缺：reference 区列出这份 spec 的全部 PR');
-  assert.match(stop, /每个 PR 各 `gh pr ready`/, '每个 PR 各 gh pr ready');
+  assert.doesNotMatch(stop, /各 `gh pr ready`/, '进 review 前不转 ready');
+  assert.match(stop, /PR 留在 draft/, 'PR 留在 draft，交审核报告时才转 ready');
 });
 
 test('implement: the ticket file is read from the knowledge base when checking a landing, not from the commit', () => {
@@ -165,13 +166,13 @@ test('pr-review: the knowledge base PR is merged by the session itself, squash, 
 });
 
 test('issue-session: the implementation stage ends, and the stage changes, only when all the spec\'s PRs are merged', () => {
-  const row = line(issueSession, '| 实现 | 实现中 | 实现中 |');
-  assert.ok(row, '阶段表缺实现一行');
-  assert.match(row, /PR 全部合并/, '实现这一段做完的标志：PR 全部合并');
-  assert.match(issueSession, /这一段的 PR 全部合并之后去「换阶段」/, '「实现」缺：全部合并之后才去换阶段');
+  const row = line(issueSession, '| 审核 | 审核中 |');
+  assert.ok(row, '阶段表缺审核一行');
+  assert.match(row, /PR 全部合并/, '审核这一段做完的标志：PR 全部合并');
+  assert.match(issueSession, /这条线的 PR 全部合并之后去「换阶段」/, '「实现」缺：全部合并之后才去换阶段');
   assert.match(issueSession, /还剩哪几个没合/, '「实现」缺：还有没合的，不换阶段');
   const change = issueSession.slice(issueSession.indexOf('## 换阶段'));
-  assert.match(change, /全部合并后做一遍/, '「换阶段」缺：全部合并后才做');
+  assert.match(change, /全部 PR 合并之后各做一遍/, '「换阶段」缺：全部合并后才做');
 });
 
 test('README says the same for to-ticket, implement, pr-review and issue-session', () => {

@@ -11,14 +11,14 @@ description: 在一个 PR 上跑一轮两轴 review（Spec / Standards）并处�
 
 ## 什么时候跑
 
-- `idea-loop:implement` 全部落地：第 1 轮，PR 还是 draft。
+- `idea-loop:implement` 全部落地：第 1 轮。
 - 「一轮之后往哪走」判出自动起下一轮。
 - 人调 `/idea-loop:pr-review` 或说「再跑一轮」：随时，不受两轮上限约束，计入轮次。
 - 人说合并：照 [`references/merge.md`](references/merge.md)；几个 PR 见 [`multi-repo.md`](references/multi-repo.md)。代码 PR 只由人决定合并。
 
 ## 前提
 
-- 工单全部落地、没有等决定的事；没落地完的回 `idea-loop:implement`。PR 是 draft 还是 ready 都行：第 1 轮在 draft 上跑，交审核报告时才转 ready（[`references/deliver.md`](references/deliver.md)），之后人要的轮次在 ready 上跑。
+- 工单全部落地、没有等决定的事，否则回 `idea-loop:implement`。第 1 轮在 draft 上跑，交报告时才转 ready。
 - 回放排队的事 implement 进 review 前已核过。之后 `review-loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
 - 当前 worktree 是这个 PR 的集成分支，工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于 PR 的 head。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前告诉人它说缺什么。
