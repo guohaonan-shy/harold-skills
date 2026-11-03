@@ -271,6 +271,26 @@ Q36 作为F6
 
 F5 的落法（F5 转述）：每份 spec 实现完有代码 PR 和知识库 PR；知识库 PR 由会话自己合：人说合并最后一个代码 PR 后，会话做完设计归档（有设计照旧给人过目草稿）、检查全过就 squash 合并，不 review、不归档 review 记录。
 
+## U23
+
+（cmux 实测：cmux ssh 打字有延迟；mosh 因 Dawn 只能开 TCP 端口、UDP 不通而走不通；cmux ssh 的 cmuxd-remote 上传失败，原因未查清。人转而考虑 multica-ai/multica。中间几轮人的原话：）
+
+我想想，如果用multica，那我就需要mac下载一个桌面端，daemon放在虚拟机上？
+
+issue来源能自定义吗？即backlog
+
+不同项目的配置能区分吗？比如某些项目我是维护在远端服务器上的，某些是本地
+
+issue的维护不能走外部数据源吗？
+
+如果不记录issue，那multica上会有状态流转吗？我的核心目的还是觉得issue只有一个数据源
+
+## A23
+
+multica 调研（笔记在共享笔记目录 multica-research-2026-11-03.md）：daemon 装在虚拟机上、主动连服务端、token 登录、不开入站端口；Mac 桌面端自带本机 daemon；agent 绑 runtime，公司 agent 绑虚拟机、个人 agent 绑 Mac；它不同步 GitHub issue、没提 Linear；autopilot 有「Run only」模式，不建 issue 只开运行。
+
+定了（以 multica 实测通过为前提）：issue 只有一个数据源：公司在 Linear、个人在 GitHub；multica 只当执行器，不在它里面建 issue，状态流转只在数据源里，由 idea-loop 的平台层（F3）写；multica 上只有每次运行的记录。实测要核：idea-loop 插件能否在 multica 起的 claude 里整套生效、grill 能否来回、`autopilot trigger` 能否每次带不同的 issue 号。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -299,6 +319,7 @@ F5 的落法（F5 转述）：每份 spec 实现完有代码 PR 和知识库 PR�
 | 知识库 | 单独一个 git 仓库，按业务分；公司的只在虚拟机，个人的只在个人电脑 | U6 Q20 |
 | 仓库级设置 | `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 留在代码仓库根目录，知识库不设 `repos/<仓库名>/`；以后再考虑把通用部分拆到业务层。代码仓库的 AGENTS.md 由人维护，加一个指针块写所属业务和知识库仓库地址，会话靠它找知识库；setup 必须问清 | U7 Q22、U11、U12 |
 | 知识库 PR | 不 review，人说合并最后一个代码 PR 后由会话做完设计归档、检查全过就 squash 合并 | U22 |
+| multica | 只当执行器（autopilot Run only 或 chat），不建 issue；issue 只有一个数据源（公司 Linear、个人 GitHub），状态只在数据源里流转；daemon 公司装虚拟机、个人用 Mac 桌面端自带的；以实测通过为前提，不通过就回到 cmux 方案 | U23 |
 | 业务的仓库说明 | 知识库根 `AGENTS.md` 的「## 仓库」一节：每个仓库的名字、GitHub 名、管哪块功能、依赖；会话可以开在知识库里（多仓库业务推荐），主分支取知识库默认分支，碰代码读工单所在仓库的开发设置 | U16 |
 | 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
 | 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
