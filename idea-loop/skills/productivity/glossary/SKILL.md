@@ -1,9 +1,9 @@
 ---
 name: glossary
-description: 业务知识库根的 GLOSSARY.md 术语表：收什么、格式、谁能写、怎么读。新增、改名、订正术语，或给产出里的领域概念起名时用。
+description: 目标项目 GLOSSARY.md 术语表：收什么、格式、谁能写、怎么读。新增、改名、订正术语，或给产出里的领域概念起名时用。
 ---
 
-知识库根的 `GLOSSARY.md`（`idea-loop:wiki-conventions` 的「知识库」）是一份术语表，别的什么都不是。每条只回答两件事：这个东西在本项目里叫什么，它是什么。它最常见的坏法是膨胀：把「写进术语表」当成「把每个答案都存下来」，几个月后变成一份 spec。下面的规则都为挡住这一点。
+目标项目根目录的 `GLOSSARY.md` 是一份术语表，别的什么都不是。每条只回答两件事：这个东西在本项目里叫什么，它是什么。它最常见的坏法是膨胀：把「写进术语表」当成「把每个答案都存下来」，几个月后变成一份 spec。下面的规则都为挡住这一点。
 
 ## 收什么：三问全过才收
 
@@ -27,8 +27,8 @@ description: 业务知识库根的 GLOSSARY.md 术语表：收什么、格式、
 
 ### 位置
 
-- 单一上下文（多数业务）：知识库根一份 `GLOSSARY.md`。
-- 多上下文：知识库根一份 `GLOSSARY-MAP.md`，指向各上下文自己的 `GLOSSARY.md`。先拿子标题分组撑着，只有当文件已经精简、仍然覆盖两块读者不会同时需要的领域时才拆：一份膨胀的文件拆开，只会得到几份膨胀的文件。
+- 单一上下文（多数项目）：仓库根目录一份 `GLOSSARY.md`。
+- 多上下文：根目录一份 `GLOSSARY-MAP.md`，指向各上下文自己的 `GLOSSARY.md`。先拿子标题分组撑着，只有当文件已经精简、仍然覆盖两块读者不会同时需要的领域时才拆：一份膨胀的文件拆开，只会得到几份膨胀的文件。
 - 第一个术语定下来时才建文件。
 - 它在 `docs/` 之外，不是 vault 的一部分：不带 frontmatter，不参与 slug 唯一性。
 
@@ -63,7 +63,7 @@ _Avoid_: level, priority（告警上另有一个也叫 priority 的字段，指�
 - **要有主见**：一个概念只留一个标准叫法，其余叫法进 `_Avoid_`。`_Avoid_` 里的词可以带一个括号，说清它其实指什么。
 - **正文是纯文字**：反引号、文件路径、链接、「数字=含义」这类取值映射一出现，几乎一定是「收什么」里该挪走的东西。
 - 自然成簇就用 `###` 分组，否则平铺。二级标题只有 `## 术语` 和 `## 歧义词` 两个。
-- 定义用知识库文档的语言写。
+- 定义用目标项目文档的语言写。
 
 ### 歧义词规则
 
@@ -103,6 +103,6 @@ _Avoid_: level, priority（告警上另有一个也叫 priority 的字段，指�
 
 术语表不存在就照常干活，也不提醒人去建。
 
-知识库第一次有术语表、或人要求接入（知识库根 `AGENTS.md` 的读取规则、CI 兜底）时，照 [references/target-repo-setup.md](references/target-repo-setup.md)。
+目标项目第一次有术语表、或人要求接入（`AGENTS.md` 的读取规则、CI 兜底）时，照 [references/target-repo-setup.md](references/target-repo-setup.md)。
 
 来源：改写自 [mattpocock/skills](https://github.com/mattpocock/skills) 的 `domain-modeling`（v1.3），MIT License，Copyright (c) Matt Pocock。

@@ -1301,7 +1301,7 @@ function timeCommand(positional, flags) {
   if (!positional.length) throw new UsageError('缺少仓库根');
   if (positional.length > 1) throw new UsageError(`time 只要一个仓库根（多出 ${positional.slice(1).join(' ')}）`);
   const root = resolve(positional[0]);
-  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是知识库的根`);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
   let archive;
   try {
     archive = loadArchive(root);
@@ -1331,7 +1331,7 @@ function stepCommand(positional) {
 function measureCommand(positional, flags) {
   if (!positional.length) throw new UsageError('缺少仓库根');
   const root = resolve(positional[0]);
-  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是知识库的根`);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
   let archive;
   try {
     archive = loadArchive(root, { delta: flags.delta ?? null });
@@ -1387,7 +1387,7 @@ function pinnedCommand(positional, flags) {
   if (positional.length > 2) throw new UsageError(`pinned 只要仓库根和一个状态 id（多出 ${positional.slice(2).join(' ')}）`);
   if (!flags.out) throw new UsageError('pinned 要 --out <目录>（Playwright 只能写它的工作区根目录里）');
   const root = resolve(positional[0]);
-  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是知识库的根`);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
   let archive;
   try {
     archive = loadArchive(root);
@@ -1468,7 +1468,7 @@ function screenCommand(positional, flags) {
   if (positional.length > 2) throw new UsageError(`screen 只要一个仓库根和一个状态 id（多出 ${positional.slice(2).join(' ')}）`);
   if (!flags.out) throw new UsageError('screen 要 --out <目录>（Playwright 只能写它的工作区根目录里）');
   const root = resolve(positional[0]);
-  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是知识库的根`);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
   let archive;
   try {
     archive = loadArchive(root);

@@ -8,7 +8,7 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 - **issue 的状态**说工作排到了哪，写在 GitHub label 上。`idea-loop:issue-dispatch` 的 loop 和 `idea-loop:issue-session` 只看它。
 - **spec 的状态**说这份文档成熟到哪一步，写在 spec 的 frontmatter 里，只在 idea-loop 内部用。
 
-改状态只走脚本，label、frontmatter 的 `status` 行和 `docs/spec/index.md` 都由它写：脚本先核前提再写，前提不满足就拒绝并说明原因，照原因处理。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：`check`、`index`、`issues` 的读取类命令用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，写 status 的命令（`set`、`route`、`migrate`、`issues set` 等）用 `root --write` 的输出加 `/docs`。
+改状态只走脚本，label、frontmatter 的 `status` 行和 `docs/spec/index.md` 都由它写：脚本先核前提再写，前提不满足就拒绝并说明原因，照原因处理。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
 ## issue 的状态
 
@@ -51,11 +51,11 @@ spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff
 
 ## issue 的分类
 
-除了状态，issue 还带分类 label：父类 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上。项目有哪些分类、另外保留哪些 label，写在知识库根的 `AGENTS.md`（`<docs>` 的上一层）的「issue 分类」一节，`/idea-loop:setup` 建它。分类由 `idea-loop:issue-verify` 验证时打，走 `issues type`；`issues labels` 照这一节建出分类 label，不在状态、分类和保留清单里的 label 只列出来，`--prune` 才删。父类那行注了「（独立队列，上限 N）」的，它的 issue 在调度里单独排队（`issues queues`）。
+除了状态，issue 还带分类 label：父类 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上。项目有哪些分类、另外保留哪些 label，写在根目录 `AGENTS.md`（或 `CLAUDE.md`）的「issue 分类」一节，`/idea-loop:setup` 建它。分类由 `idea-loop:issue-verify` 验证时打，走 `issues type`；`issues labels` 照这一节建出分类 label，不在状态、分类和保留清单里的 label 只列出来，`--prune` 才删。父类那行注了「（独立队列，上限 N）」的，它的 issue 在调度里单独排队（`issues queues`）。
 
 ## 开一个待验证的 issue
 
-流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开成待验证 issue（开在 `<知识库>/idea-loop.json` 的 `issues` 指的 GitHub 仓库上），loop 会接手：
+流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开成目标仓库的待验证 issue，loop 会接手：
 
 1. 先查重：`gh issue list --state open --search "<关键词>"`。已有同一个问题的，就用那一条，写「已有 #N」。
 2. 没有就 `gh issue create`，不打 `status:*` label。标题写问题本身；正文写给一个没有上下文的人看：是什么、在哪、怎么复现或怎么看到、为什么这次不做。

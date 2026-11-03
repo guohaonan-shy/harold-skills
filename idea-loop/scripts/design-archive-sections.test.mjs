@@ -580,7 +580,7 @@ test('cli measure: usage errors exit 2 and say why', () => {
   }
   const bare = run('measure', writeRepo({ 'README.md': 'x' }), 'a--entry');
   assert.equal(bare.status, 2);
-  assert.match(bare.stderr, /不是知识库的根/);
+  assert.match(bare.stderr, /不是目标仓库的根/);
 });
 
 test('cli measure: with --delta the sections come from the requirement\'s delta/', () => {

@@ -259,10 +259,8 @@ test('cli: without state ids and without --archive nothing extra is written', ()
   assert.ok(!existsSync(join(c.work, 'flow-1.states.json')));
 });
 
-test('cli: --archive that is not a knowledge base root is a usage error that says so', () => {
+test('cli: --archive that is not a repository root is a usage error', () => {
   const c = cliCase(['cookbook--list', 'cookbook--search-loading']);
   const res = compose(c, '--archive', join(c.work, 'nope'));
   assert.equal(res.status, 1);
-  assert.match(res.stderr, /不是知识库的根/);
-  assert.doesNotMatch(res.stderr, /仓库根/);
 });

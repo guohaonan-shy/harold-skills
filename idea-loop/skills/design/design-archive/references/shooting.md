@@ -7,14 +7,14 @@
 ## 命令
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" time <知识库> [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" time <仓库根> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" step <毫秒数>
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <知识库> <状态 id> --out <目录> [设置]
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <知识库> <入口状态 id> [--delta <spec-slug>] [--for <段内状态 id> --section <段 id>] [设置]
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <知识库> --state <入口状态 id> --page <页面> --sections-file <分段列表.json> [--for <段内状态 id> --section <段 id>] [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录> [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> <入口状态 id> [--delta <spec-slug>] [--for <段内状态 id> --section <段 id>] [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> --state <入口状态 id> --page <页面> --sections-file <分段列表.json> [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" attribute <测量结果.json>
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属结果.json> --out <目录> [--section <段 id,段 id>] [--include '<JSON 定位>']
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <知识库> <状态 id> --out <目录> [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库根> <状态 id> --out <目录> [设置]
 ```
 
 `[设置]` 是 `--viewport <WxH> --theme <light|dark> --motion <default|reduce>`。除 `step` 和 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给 `browser_run_code_unsafe` 跑；`attribute` 打印 JSON。
@@ -55,7 +55,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <知识�
 图叫 `<段内状态 id>.png`，只拍那一段。
 
 1. 页面时间要是 `time` 装好的。点出这个状态（照它的进入方式；要等界面变化用 `step`）。完成：「应看到什么」成立。
-2. `measure <知识库> <入口状态 id> --for <段内状态 id>`（档案里这个状态已写 `section` 就够；初扫时还没写，再给 `--section <段 id>`），存结果同上。**这一次不重载页面**（重载会丢掉刚点出来的状态），段的高度按此刻算（FAQ 展开后更高）。完成：返回的 `clock` 是 `present`。
+2. `measure <仓库根> <入口状态 id> --for <段内状态 id>`（档案里这个状态已写 `section` 就够；初扫时还没写，再给 `--section <段 id>`），存结果同上。**这一次不重载页面**（重载会丢掉刚点出来的状态），段的高度按此刻算（FAQ 展开后更高）。完成：返回的 `clock` 是 `present`。
 3. `attribute`，清零同上。完成：退出码 0。
 4. `shoot <归属结果.json> --out <目录>`。完成：一张图，放进 `assets/`。
 

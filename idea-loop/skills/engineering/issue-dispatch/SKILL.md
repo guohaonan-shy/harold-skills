@@ -13,7 +13,7 @@ issue 可以挂在一个根 issue 下成为子 issue（`idea-loop:spec-status` �
 ## 前提与边界
 
 - 工作目录是主 checkout（`git worktree list` 的第一行），在默认分支上（`git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`，下文叫「主分支」）。不是就停下，在汇报里说明，这一轮什么都不做。
-- 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这里只读，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，也就是这个业务的知识库主 checkout，`<仓库名>` 取 `gh repo view --json name -q .name`。
+- 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指主 checkout 的 `docs/`，`<仓库名>` 取 `gh repo view --json name -q .name`。
 - 主 checkout 跟别的会话共用，你在这里只读：不切分支、不建 worktree、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。
 - issue 的状态只走 `issues`。侧边栏只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话：会话自己归位、自己收尾。
 
@@ -28,7 +28,7 @@ loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由�
 
 ## 每一轮
 
-1. **对账**：`git -C <知识库> pull --ff-only`（`<知识库>` 是 `root` 的输出；知识库跟主 checkout 一样只读）；`issues labels <docs>` 建出缺的 label（它列出的多余 label 记进汇报，不删）；`issues reconcile <docs>`，报的问题原样记进汇报。
+1. **对账**：`git pull --ff-only`；`issues labels <docs>` 建出缺的 label（它列出的多余 label 记进汇报，不删）；`issues reconcile <docs>`，报的问题原样记进汇报。
 2. **队列与 section**：`issues queues <docs>` 列出每个队列的 `name`（主队列是 `null`）、`cap` 和三个 `sections`。`list_sections` 里缺的用 `create_section` 建。
 3. **数开着的会话**：每个队列的三个 section 各用 `mcp__ccd_session_mgmt__list_sessions`（`group` 写 section 名，`limit: 100`）列出没归档的会话；section 自带的计数含已归档的，不用它。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：section 跨项目共用，总数也跨项目算），加起来是这个队列开着的会话数；标题是「<仓库名>#<号> …」的就是这个仓库那一组的会话，号是根号（没被整合的 issue 就是它自己的号）。标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个 section 里，但不占位：按队列记下个数，写进汇报。判别用标题，不用会话的 `startedBy`：点调度卡片开出的 issue 会话，`startedBy` 也是调度会话，跟子会话分不出来；issue 会话开场会把自己的标题改成这个格式，所以都能被数到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，这个队列可能多出一张卡片；只多一个会话，不丢东西，接受。
 4. **没有会话的 issue**：label 是验证中、审核中、待设计、设计中、待实现、实现中，却没有对应标题的会话，记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或翻回去。先用 `issues group <docs> <号>` 找到它的根：子 issue 算在它根的会话名下，根有会话，子 issue 就不报；根自己也要有会话，没有才报。

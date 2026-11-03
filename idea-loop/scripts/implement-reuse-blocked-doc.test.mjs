@@ -81,13 +81,6 @@ test('the implementer\'s definition says it may be called back, and to merge the
   assert.ok(line.indexOf('合进来') < line.indexOf('只做没勾'), '先合进来，再只做没勾的格');
 });
 
-test('the human\'s decision is written into the ticket in the knowledge base before the implementer is called back', () => {
-  const multi = from(implement, '## 多个仓库', 'implement/SKILL.md');
-  assert.match(multi, /`docs\(tickets\)` 提交[^。\n]*都在知识库里做/, '决定写进工单的 docs(tickets) 提交在知识库里做，叫回的执行方读到的是知识库里那份');
-  const after = from(implement, '**人回复后**', 'implement/SKILL.md');
-  assert.match(after, /提交 `docs\(tickets\): <NN> — 人的决定`/, '「人回复后」仍然先把决定提交成 docs(tickets)');
-});
-
 test('README describes the redispatch the same way', () => {
   const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:implement`'));
   assert.ok(row, 'README 缺 implement 那一行');

@@ -108,11 +108,6 @@ test('the shared writing rules are cited from evidence, not restated in the pr s
   }
 });
 
-test('implement lists every PR of the spec in each PR\'s reference section, through the pr skill\'s pr-body.mjs', () => {
-  const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
-  assert.match(implement, /`pr-body\.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`），\*\*`reference` 区列出这份 spec 的全部 PR\*\*/, 'reference 区列出这份 spec 的全部 PR');
-});
-
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
     if (['node_modules', '.git', 'evals', 'docs'].includes(name)) continue;

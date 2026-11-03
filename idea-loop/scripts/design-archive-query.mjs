@@ -11,10 +11,7 @@
  *   queryKeyword(archive, text)   objects whose name / summary / body match, best position first
  *   queryAffected(archive, commit) the states the code changed since a commit reaches: a page's code (all its
  *                                 states), a component's code (the states using it), or a file those code files
- *                                 import directly (counts as them changing); `affectedByFiles` takes the file list.
- *                                 The changes and the code files are read from the *code repository* (`codeRoot`,
- *                                 `--code` on the command line), the states from the archive: in a knowledge base
- *                                 the two are different repositories
+ *                                 import directly (counts as them changing); `affectedByFiles` takes the file list
  *   enterState(archive, id)       the shortest way in (the state entry's `enter`), usable on its own
  *
  * Every entry except `queryDiff` takes an archive from `loadArchive(root, { delta })`, so each can read
@@ -24,7 +21,7 @@
  *
  * The engine is file reading and text matching — no embedding, no model, no clock.
  *
- *   node design-archive-query.mjs <kb-root> <page|state|journey|diff|refs|keyword|affected> <arg> [--delta <spec-slug>] [--code <code-repo-root>]
+ *   node design-archive-query.mjs <repo-root> <page|state|journey|diff|refs|keyword|affected> <arg> [--delta <spec-slug>]
  */
 
 import { execFileSync } from 'node:child_process';
@@ -673,8 +670,6 @@ const IMPORT_PATTERNS = [
   /\bimport\s*\(\s*(['"])([^'"\n]+)\1/g, // import('x')
   /\brequire\s*\(\s*(['"])([^'"\n]+)\1/g, // require('x')
 ];
-/** What marks a root as a business's knowledge base (knowledge-base.mjs `CONFIG_FILE`). */
-const KNOWLEDGE_BASE_CONFIG = 'idea-loop.json';
 const posix = (p) => p.split('\\').join('/');
 
 /**
@@ -701,7 +696,7 @@ function importCandidates(codeFile, source) {
   return out;
 }
 
-/** The text of a registered code file under the code repository `root`, or '' when it is not a readable file (deleted, a directory). */
+/** The text of a registered code file, or '' when it is not a readable file (deleted, a directory). */
 function readCode(root, file) {
   try {
     return readFileSync(join(root, file), 'utf8');
@@ -719,11 +714,8 @@ function readCode(root, file) {
  * `matched` is one entry per (object, file): `rule: 'code'`, or `rule: 'import'` with `via`, the
  * registered code file that imports it. `states` carry `via`: the ids of the pages / components that
  * put them in. `totalStates` is how many states the archive has, so a caller can say "n of m".
- *
- * `codeRoot` is where the code files are read from (to find what they import); the archive's own root by default,
- * which is right only when the archive sits in the code repository.
  */
-export function affectedByFiles(archive, files, { codeRoot = archive.root } = {}) {
+export function affectedByFiles(archive, files) {
   const changed = new Set(files.map(normalizeCode));
   const matched = [];
   const stateVia = new Map();
@@ -739,7 +731,7 @@ export function affectedByFiles(archive, files, { codeRoot = archive.root } = {}
     for (const file of own) matched.push({ object: o.id, kind: o.kind, file, rule: 'code' });
     let imported = false;
     for (const codeFile of code) {
-      for (const cand of importCandidates(codeFile, readCode(codeRoot, codeFile))) {
+      for (const cand of importCandidates(codeFile, readCode(archive.root, codeFile))) {
         if (!changed.has(cand) || own.includes(cand)) continue;
         if (matched.some((m) => m.object === o.id && m.file === cand)) continue;
         matched.push({ object: o.id, kind: o.kind, file: cand, rule: 'import', via: codeFile });
@@ -774,15 +766,12 @@ export function affectedByFiles(archive, files, { codeRoot = archive.root } = {}
  * (renames as a delete plus an add, so the old path counts too; paths relative to `root`), fed to
  * `affectedByFiles`. `since` is anything git resolves to a commit — a sha, a branch, `HEAD~3`; the
  * answer carries the full sha it resolved to (`commit`) and how many files changed.
- *
- * The history and the code are the *code repository's* (`codeRoot`, defaulting to the archive root for an archive that
- * lives in the code repository): a knowledge base has none of them, so asking it without a `codeRoot` is refused by `query`.
  */
-export function queryAffected(archive, since, { codeRoot = archive.root } = {}) {
+export function queryAffected(archive, since) {
   const rev = String(since ?? '').trim();
   if (!rev) throw new QueryError('提交是空的', 'usage');
   if (rev.startsWith('-')) throw new QueryError(`「${rev}」不是提交`, 'usage');
-  const git = (...args) => execFileSync('git', ['-C', codeRoot, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const git = (...args) => execFileSync('git', ['-C', archive.root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   let commit;
   try {
     commit = git('rev-parse', '--verify', '--quiet', `${rev}^{commit}`).trim();
@@ -790,7 +779,7 @@ export function queryAffected(archive, since, { codeRoot = archive.root } = {}) 
     try {
       git('rev-parse', '--is-inside-work-tree');
     } catch {
-      throw new QueryError(`${codeRoot} 不在 git 仓库里：按提交挑状态要读代码仓库的 git 历史`, 'no-repo');
+      throw new QueryError(`${archive.root} 不在 git 仓库里：按提交挑状态要读 git 历史`, 'no-repo');
     }
     throw new QueryError(`找不到提交「${rev}」`);
   }
@@ -800,7 +789,7 @@ export function queryAffected(archive, since, { codeRoot = archive.root } = {}) 
   } catch (e) {
     throw new QueryError(`读不出 ${rev} 到 HEAD 的改动：${String(e.stderr ?? e.message).trim()}`);
   }
-  return { since: rev, commit, changedFileCount: files.length, ...affectedByFiles(archive, files, { codeRoot }) };
+  return { since: rev, commit, changedFileCount: files.length, ...affectedByFiles(archive, files) };
 }
 
 // ---------- the entries by name, and the command line ----------
@@ -811,18 +800,15 @@ export const ENTRIES = {
   journey: { run: (archive, arg) => queryJourney(archive, arg), arg: '用户路径名' },
   refs: { run: (archive, arg) => queryRefs(archive, arg), arg: '组件名、组件代码路径、动效名、<页面>#<段> 或 #<段类型>' },
   keyword: { run: (archive, arg) => queryKeyword(archive, arg), arg: '一段文字' },
-  affected: { run: (archive, arg, opts) => queryAffected(archive, arg, opts), arg: '提交（SHA、分支名、HEAD~N）：自它以来改过的代码牵到的状态；代码取自 --code 给的代码仓库', code: true },
+  affected: { run: (archive, arg) => queryAffected(archive, arg), arg: '提交（SHA、分支名、HEAD~N）：自它以来改过的代码牵到的状态' },
   diff: { run: null, arg: 'spec 名', root: true },
 };
 
 /**
  * One call for every entry: `query(root, 'page', 'cookbook', { delta })`. `delta` lays that requirement's
- * `delta/` over `prod/` first (not for `diff`, which compares the two itself). `code` is the code repository's
- * root, used by `affected` only: its changes and code files come from there. Without it `affected` reads the
- * archive root as the code repository — right for an ordinary repository that keeps `docs/` beside its code, refused
- * for a knowledge base (a root with `idea-loop.json`), which has no code.
+ * `delta/` over `prod/` first (not for `diff`, which compares the two itself).
  */
-export function query(root, entry, arg, { delta = null, code = null } = {}) {
+export function query(root, entry, arg, { delta = null } = {}) {
   const e = ENTRIES[entry];
   if (!e) throw new QueryError(`没有「${entry}」这个入口；可用：${Object.keys(ENTRIES).join('、')}`, 'usage');
   if (e.root) {
@@ -835,39 +821,31 @@ export function query(root, entry, arg, { delta = null, code = null } = {}) {
   } catch (err) {
     throw new QueryError(err.message);
   }
-  if (!e.code) return e.run(archive, arg);
-  if (!code && existsSync(join(root, KNOWLEDGE_BASE_CONFIG))) {
-    throw new QueryError(`${root} 是知识库（有 ${KNOWLEDGE_BASE_CONFIG}），里面没有代码：按提交挑状态要给 --code <代码仓库根>`, 'usage');
-  }
-  return e.run(archive, arg, { codeRoot: code ? resolve(code) : root });
+  return e.run(archive, arg);
 }
 
-const USAGE = `用法：node design-archive-query.mjs <知识库根> <入口> <参数> [--delta <spec-slug>] [--code <代码仓库根>]
+const USAGE = `用法：node design-archive-query.mjs <repo-root> <入口> <参数> [--delta <spec-slug>]
 入口：
 ${Object.entries(ENTRIES).map(([k, v]) => `  ${k.padEnd(8)}${v.arg}`).join('\n')}
---code 只给 affected 用：自某个提交以来的改动和代码文件从这个代码仓库取（知识库里没有代码，所以档案根是知识库时必须给）。
 输出 JSON；找不到对象退出码 1（原因在 stderr），用法错误或不是仓库根退出码 2。`;
 
 function main(argv) {
   const args = argv.slice(2);
   const di = args.indexOf('--delta');
   const delta = di >= 0 ? args[di + 1] : null;
-  const ci = args.indexOf('--code');
-  const code = ci >= 0 ? args[ci + 1] : null;
-  const isFlag = (a, i) => a === '--delta' || a === '--code' || args[i - 1] === '--delta' || args[i - 1] === '--code';
-  const positional = args.filter((a, i) => !isFlag(a, i));
-  if (positional.length !== 3 || (di >= 0 && !delta) || (ci >= 0 && !code) || !ENTRIES[positional[1]]) {
+  const positional = args.filter((a, i) => !(a === '--delta' || args[i - 1] === '--delta'));
+  if (positional.length !== 3 || (di >= 0 && !delta) || !ENTRIES[positional[1]]) {
     console.error(USAGE);
     return 2;
   }
   const [rootArg, entry, arg] = positional;
   const root = resolve(rootArg);
   if (!existsSync(join(root, 'docs'))) {
-    console.error(`${root} 下没有 docs/：这不是知识库的根`);
+    console.error(`${root} 下没有 docs/：这不是目标仓库的根`);
     return 2;
   }
   try {
-    const result = query(root, entry, arg, { delta, code });
+    const result = query(root, entry, arg, { delta });
     if (entry === 'keyword' && !result.matches.length) {
       console.error(`没有对象匹配「${result.query}」`);
       return 1;

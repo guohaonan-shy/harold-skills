@@ -3,7 +3,7 @@ name: design-archive
 description: 设计档案（docs/design/prod/）的结构、校验、查询与归档。写档案对象、查某个页面或状态的现状、跑档案校验或归档时用。
 ---
 
-知识库的 `docs/design/prod/`（`idea-loop:wiki-conventions` 的「知识库」；下文脚本的第一个参数 `<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出，写档案的步骤取 `root --write`）是一张图，记录**线上现在的样子**：每个页面有哪些状态、状态之间怎么跳、用到哪些组件和动效、当初为什么这样定。读、写、查档案都以这一份为准。
+目标项目的 `docs/design/prod/` 是一张图，记录**线上现在的样子**：每个页面有哪些状态、状态之间怎么跳、用到哪些组件和动效、当初为什么这样定。读、写、查档案都以这一份为准。
 
 档案只写**源头**：页面、状态、边、组件、动效、用户路径。进入方式、`usedBy`、`prod/index.md` 的清单、截图都是**派生**物，由脚本或查询算出来，不手写。
 
@@ -75,7 +75,7 @@ docs/design/
 
 - **状态文件名带页面前缀**（`<page>--<state>`）：wikilink 按 basename 解析，不同页面都有 `loading` 时靠前缀区分。项目有不止一个前端时，**组件文件名一律带工作区前缀**（`mkt-SiteFooter`、`app-SiteFooter`），前缀在 `prod/index.md` 的 `workspaces` 里声明，校验认它。
 - **basename 在 `docs/` 下全局唯一**（`idea-loop:wiki-conventions` 的「slug 与链接」），由校验查。
-- 素材（状态截图、动效 GIF）走 Git LFS，知识库的 `.gitattributes` 管 `docs/design/prod/**/assets/`。
+- 素材（状态截图、动效 GIF）走 Git LFS，目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/`。
 - `tmp/<spec-slug>/` 的生命周期见 `idea-loop:wiki-conventions` 的「目录」。**冻结之后 `canvas/` 是唯一的设计真相**：设计变了由 designer 改画布并记进冻结记录的「冻结后的变更」（`idea-loop:uiux-refine`），不改 `delta/`；`delta/` 只在合并前由 ui-reviewer 的归档模式从最终画布加实现整份写出。没有设计稿的 UI 改动没有画布，实现者在 `delta/` 记「最小差异」，那就是它唯一的设计真相。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行 `- [[<id>]]`（后面可跟一句原因）。
 - **`prod/` 只由归档脚本在人批过之后写**；agent 只写 `tmp/<spec-slug>/delta/`。

@@ -1,6 +1,9 @@
 ## idea-loop
 
-- 业务：`<业务>`
-- 知识库：`<owner/name>`
-
-这个仓库的 spec、设计档案、产品说明、issue 分类都在知识库里；开发设置（`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`）在本仓库根目录。本机路径用 idea-loop 的 `knowledge-base.mjs root` 取。
+- 本地开发（分支、worktree、开发服务器）：`DEVELOPMENT.md`
+- 验证命令与 review 要求：`REVIEW.md`
+- 代码规范：`CODING_STANDARDS.md`
+- 需求从哪进来、issue 的状态 label：`ISSUE_TRACKER.md`
+- issue 的分类 label：`AGENTS.md` 的「issue 分类」一节
+- 产品是给谁的、要做成什么样：`PRODUCT.md`
+- 术语：`GLOSSARY.md`（有就读）

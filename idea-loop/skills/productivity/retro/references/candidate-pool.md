@@ -72,7 +72,7 @@ gh api -H 'Accept: application/vnd.github.raw' repos/<R>/contents/docs/records/r
 
 备好要写的文件（第 5 步）：新建的按上面的形状写在 `harold-pool/` 下；追加的，在读下来的那份末尾加一行「出现」。先记下文件路径，池里那一份的链接（`https://github.com/<R>/blob/<D>/docs/records/retro-candidates/<文件名>`）在第 6 步合并后补进决定记录的「结果」。
 
-写（第 6 步，知识库的 PR）：
+写（第 6 步，只改 `docs/` 的 PR）：
 
 ```
 gh api repos/<R>/git/ref/heads/<D> --jq .object.sha

@@ -521,7 +521,7 @@ function main(argv) {
   }
   const root = resolve(positional[0]);
   if (!existsSync(join(root, 'docs'))) {
-    console.error(`${root} 下没有 docs/：这不是知识库的根`);
+    console.error(`${root} 下没有 docs/：这不是目标仓库的根`);
     return 2;
   }
   let result;

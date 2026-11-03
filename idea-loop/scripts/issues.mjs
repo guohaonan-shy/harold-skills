@@ -41,8 +41,7 @@
  * has no cap) cannot crowd out the rest. A queue's sessions sit in its own sidebar sections, the stage
  * names prefixed with the category (`seo 审核中`), which is how the loop counts them apart.
  *
- * Usage (<docs> is the knowledge base's docs/ directory. gh runs with GH_REPO set to the `issues` of the
- * idea-loop.json one level up, so it acts on the business's issue repository, not on the knowledge base's own; a
+ * Usage (<docs> is the target project's docs/ directory; gh runs there, so it acts on that repo; a
  * target is an issue number or a spec slug, which stands for every issue the spec lists):
  *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels; lists the rest, --prune deletes them
  *   node issues.mjs type       <docs> <n> <parent[/child]>...  → sets #n's type:* labels from the project's categories
@@ -66,7 +65,6 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { CONFIG_FILE, readBusinessConfig } from './knowledge-base.mjs';
 import { frontmatter, hasFreezeSummary, issuesOf, scan, touchesUi, verdicts } from './spec-status.mjs';
 
 export { issuesOf };
@@ -339,22 +337,7 @@ const changesOf = (actions) => new Map(actions.map((a) => [a.n, a.close ? { clos
 
 // ---------- gh boundary ----------
 
-/**
- * The environment `gh` runs in for the knowledge base whose `docs/` is <docs>: the knowledge base root (one level up)
- * names, in its `idea-loop.json`, the GitHub repository the business's issues live in (`issues`: "owner/name"), which
- * goes into GH_REPO. Without that file or that field, nothing is added and `gh` acts on the repository it runs in.
- */
-export function ghEnv(docs, env = process.env) {
-  const root = dirname(resolve(docs));
-  if (!existsSync(join(root, CONFIG_FILE))) return env;
-  const { issues } = readBusinessConfig(root);
-  return issues ? { ...env, GH_REPO: issues } : env;
-}
-
-export const defaultGh = (docs) => {
-  const env = ghEnv(docs);
-  return (args) => execFileSync('gh', args, { cwd: docs, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-};
+export const defaultGh = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 function issue(gh, n) {
   const v = JSON.parse(gh(['issue', 'view', String(n), '--json', 'number,state,title,labels']));
@@ -527,7 +510,7 @@ function apply(gh, actions, byNumber, slug = null) {
     const labels = byNumber.get(a.n)?.labels ?? [];
     if (a.why === 'children') close(gh, a.n, labels, 'completed', ROOT_CLOSED);
     else if (a.why === 'spec') close(gh, a.n, labels, 'completed', `子 issue 随 spec \`${a.slug}\` 关闭，根随着关闭。`);
-    else if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${a.slug ?? slug}\`（知识库的 \`docs/spec/${a.slug ?? slug}/${a.slug ?? slug}.md\` 开头写的结论）。`);
+    else if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${a.slug ?? slug}\`（\`docs/spec/${a.slug ?? slug}/${a.slug ?? slug}.md\` 开头写的结论）。`);
     else if (a.close === 'completed') close(gh, a.n, labels, 'completed', `spec \`${a.slug ?? slug}\` 已实现并合并。`);
     else relabel(gh, a.n, labels, a.to);
     done.push(a.close ? `#${a.n}: ${a.from} → 关闭（${a.close}）` : `#${a.n}: ${a.from} → ${a.to}`);
@@ -598,7 +581,7 @@ export function openSpecIssue(gh, docs, slug) {
   const body = [
     frontmatter(md).summary ?? '',
     '',
-    `spec：知识库的 \`docs/spec/${slug}/${slug}.md\`。spec 文件是真相，这个 issue 是它在 tracker 上的入口：spec 合进主分支后挂上状态 label，实现合并后关闭。`,
+    `spec：\`docs/spec/${slug}/${slug}.md\`。spec 文件是真相，这个 issue 是它在 tracker 上的入口：spec 合进主分支后挂上状态 label，实现合并后关闭。`,
   ].join('\n');
   const out = String(gh(['issue', 'create', '--title', `${SPEC_ISSUE}${title}`, '--body', body])).trim();
   const n = Number(out.match(/\/issues\/(\d+)$/)?.[1]);

@@ -52,7 +52,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<canvas>/work/change-<序
 
 编排者：
 
-1. 在 `<知识库>`（`knowledge-base.mjs root --write` 的输出）里提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<终>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和评委退回的中间版不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到知识库的当前分支：实现期间是集成分支在知识库里的同名分支，review 期间是知识库的 PR 分支。
+1. 提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<终>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和评委退回的中间版不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到当前分支：实现期间是集成分支，review 期间是 PR 分支。
 2. 冻结记录「冻结后的变更」记一行，跟画布同一个提交（第一次记时把冻结时写的「无」换成表头）：
 
    ```

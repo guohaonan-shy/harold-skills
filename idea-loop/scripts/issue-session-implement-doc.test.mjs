@@ -78,12 +78,6 @@ test('「实现」 step 2 invokes implement and pr-review as 「用 Skill 工具
   assert.match(step3, /用 Skill 工具调 `idea-loop:pr-review`/, 'step 2 must hand over to review with 「用 Skill 工具调 `idea-loop:pr-review`」');
 });
 
-test('「实现」 hands over to 换阶段 only after all of the spec\'s PRs are merged (one PR per code repository plus the knowledge base\'s)', () => {
-  const step2 = impl.split('\n').find((l) => /^2\.\s/.test(l.trim()));
-  assert.match(step2, /PR 全部合并之后去「换阶段」/, 'step 2 must change stage only after every PR is merged');
-  assert.match(step2, /还剩哪几个没合/, 'step 2 must say a partial merge reports which are left and does not change stage');
-});
-
 test('the README row for issue-session does not mention a compact stop', () => {
   const row = readme.split('\n').find((l) => l.startsWith('| `idea-loop:issue-session`'));
   assert.ok(row, 'README has no issue-session row in the Skills table');

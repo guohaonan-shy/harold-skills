@@ -15,7 +15,7 @@ effort: high
 
 指针，不是摘要：
 
-- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的）和 `<知识库>` 的绝对路径（`DESIGN.md`、`GLOSSARY.md`、设计档案都在知识库里）
+- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的）
 - 这次运行的中间物目录 `.tmp/dreaming/<YYYY-MM-DD>/`；截图放它下面的 `shots/`
 - 浏览器锁目录、开发服务可用的端口（要从实现里截图或量 token 时才用）
 - 范围：「候选」「对账」或两者都做；或「单条蒸馏」加那一条规则的原话

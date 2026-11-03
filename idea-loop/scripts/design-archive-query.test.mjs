@@ -523,7 +523,7 @@ test('cli: usage errors and a directory that is not a repository root exit 2', (
   assert.equal(cli(root, 'keyword', '   ').status, 2);
   const bare = cli(writeRepo({ 'README.md': 'x' }), 'page', 'cookbook');
   assert.equal(bare.status, 2);
-  assert.match(bare.stderr, /不是知识库的根/);
+  assert.match(bare.stderr, /不是目标仓库的根/);
 });
 
 test('every other entry can read the archive after the change', () => {
@@ -879,79 +879,4 @@ test('affected: a commit that is not there, or one that looks like an option, is
 test('affected: a directory that is not a git repository says so', () => {
   const root = writeRepo(withCode());
   assert.throws(() => query(root, 'affected', 'HEAD'), (e) => e instanceof QueryError && /git/.test(e.message));
-});
-
-// ---------- 档案在知识库里、代码在另一个仓库：--code ----------
-
-/** A knowledge base: the archive only (an idea-loop.json at its root), none of the code its pages register. */
-const knowledgeBase = () => writeRepo({ 'idea-loop.json': JSON.stringify({ business: 'biz', issues: 'o/app', repos: { app: 'o/app' } }), ...compliantFiles() });
-
-/** The code the archive registers, alone in its own repository of two commits, `change(root)` being the second. */
-function codeRepoOfTwoCommits(change) {
-  const root = writeRepo(CODE);
-  git(root, 'init', '-q');
-  git(root, 'add', '-A');
-  git(root, 'commit', '-q', '-m', 'one');
-  const first = git(root, 'rev-parse', 'HEAD');
-  change(root);
-  git(root, 'add', '-A');
-  git(root, 'commit', '-q', '-m', 'two');
-  return { code: root, first };
-}
-
-test('affected --code: the changes and the imports are read from the code repository, the states from the knowledge base', () => {
-  const kb = knowledgeBase();
-  const { code, first } = codeRepoOfTwoCommits((r) => {
-    write(r, 'src/components/SaveButton.tsx', '// restyled\n'); // a component's own code
-    write(r, 'src/data/recipes.json', '{}\n'); // imported by the cookbook page's code: one hop, found only by reading the code
-    write(r, 'src/pages/pantry.tsx', 'export default 3;\n');
-  });
-  const r = query(kb, 'affected', first, { code });
-  assert.equal(r.commit, first);
-  assert.equal(r.changedFileCount, 3);
-  assert.deepEqual(stateIds(r), [...COOKBOOK_STATES, ...PANTRY_STATES]);
-  assert.ok(r.matched.some((m) => m.rule === 'import' && m.file === 'src/data/recipes.json' && m.via === 'src/pages/cookbook.tsx'));
-  assert.equal(r.totalStates, 7);
-
-  const out = cli(kb, 'affected', first, '--code', code);
-  assert.equal(out.status, 0, out.stderr);
-  assert.deepEqual(JSON.parse(out.stdout), r);
-});
-
-test('affected --code: the import hop needs the code repository — the knowledge base has none of the code files to read', () => {
-  const kb = knowledgeBase();
-  const { code, first } = codeRepoOfTwoCommits((r) => write(r, 'src/pages/cookbook.css', 'a{}\n'));
-  assert.deepEqual(stateIds(query(kb, 'affected', first, { code })), COOKBOOK_STATES);
-});
-
-test('affected: a knowledge base asked without --code is refused and the message says to give it', () => {
-  const kb = knowledgeBase();
-  assert.throws(() => query(kb, 'affected', 'HEAD'), (e) => e instanceof QueryError && e.code === 'usage' && /--code/.test(e.message));
-  const out = cli(kb, 'affected', 'HEAD');
-  assert.notEqual(out.status, 0);
-  assert.match(out.stderr, /--code/);
-  assert.equal(out.stdout, '');
-});
-
-test('affected --code: a code directory that is not a git repository, or a commit it does not have, says so', () => {
-  const kb = knowledgeBase();
-  const notGit = writeRepo(CODE);
-  assert.throws(() => query(kb, 'affected', 'HEAD', { code: notGit }), (e) => e instanceof QueryError && /git/.test(e.message));
-  const { code } = codeRepoOfTwoCommits((r) => write(r, 'src/pages/pantry.tsx', 'x\n'));
-  assert.throws(() => query(kb, 'affected', 'no-such-commit', { code }), (e) => e instanceof QueryError && /no-such-commit/.test(e.message));
-});
-
-test('affected: an ordinary repository (docs/ beside its code, no idea-loop.json) needs no --code, and one given there is honoured', () => {
-  const { root, first } = twoCommits((r) => write(r, 'src/pages/pantry.tsx', 'export default 3;\n'));
-  assert.deepEqual(stateIds(query(root, 'affected', first)), PANTRY_STATES);
-  assert.deepEqual(stateIds(query(root, 'affected', first, { code: root })), PANTRY_STATES);
-  const out = cli(root, 'affected', first, '--code', root);
-  assert.equal(out.status, 0, out.stderr);
-  assert.deepEqual(stateIds(JSON.parse(out.stdout)), PANTRY_STATES);
-});
-
-test('cli: --code without a path is a usage error', () => {
-  const out = cli(knowledgeBase(), 'affected', 'HEAD', '--code');
-  assert.equal(out.status, 2);
-  assert.match(out.stderr, /--code/);
 });

@@ -65,7 +65,7 @@ async:                            # 这一屏发起了异步动作时必填
 
 **`id`**：写 `<类型>` 或 `<类型>-<限定词>`，限定词按内容起、kebab-case。**同一页同一类型出现多次，每个都要加限定词**（`feature-listen` 和 `feature-write`，不能一个 `feature` 一个 `feature-write`）；只出现一次时建议不加，校验不拦。类型按最长前缀认：`feature-grid` 是类型 `feature-grid`，`feature-grid-pricing` 是它加限定词 `pricing`，所以 `feature` 不能用 `grid` 当限定词。
 
-类型取自下面这张闭集表（跨项目通用，不进业务的 `DESIGN.md`；校验与反查读的是 `design-archive.mjs` 里的同一份常量 `SECTION_TYPES`）。两类判不准时按「这一段主要在回答什么」定：「为什么信你」归 `trust`，「多少人在用」归 `social-proof`。闭集要扩，改常量、校验的单测和这张表，不在档案里自造。
+类型取自下面这张闭集表（跨项目通用，不进目标项目的 `DESIGN.md`；校验与反查读的是 `design-archive.mjs` 里的同一份常量 `SECTION_TYPES`）。两类判不准时按「这一段主要在回答什么」定：「为什么信你」归 `trust`，「多少人在用」归 `social-proof`。闭集要扩，改常量、校验的单测和这张表，不在档案里自造。
 
 | 类型 | 是什么 |
 |---|---|

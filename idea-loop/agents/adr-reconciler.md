@@ -10,13 +10,13 @@ tools: Read, Grep, Glob, Bash, Write, Skill, Agent
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、frontmatter）、`idea-loop:spec-status`（`spec-status.mjs check` 顺带报旧平铺布局与非法状态）、`idea-loop:decision-rules`；知识库根有 `GLOSSARY.md` 时再调 `idea-loop:glossary`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
+用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、frontmatter）、`idea-loop:spec-status`（`spec-status.mjs check` 顺带报旧平铺布局与非法状态）、`idea-loop:decision-rules`；目标项目有 `GLOSSARY.md` 时再调 `idea-loop:glossary`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
 
 ## 你收到的
 
 指针，不是摘要：
 
-- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的，核对代码用它，不在本地工作树上判）和基准分支名；`<知识库>` 的绝对路径和知识库主分支名（文档、ADR、spec 都在那里，核对用 `origin/<知识库主分支>`，`docs/…` 都相对它）
+- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的，核对用它，不在本地工作树上判）和基准分支名
 - 这次运行的中间物目录 `.tmp/dreaming/<YYYY-MM-DD>/`
 - 范围（可选）：只对账哪几份
 

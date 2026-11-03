@@ -18,12 +18,12 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 ## 定落图目录
 
-`<知识库>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出。第一次用确认 `<知识库>/docs/design/tmp/` 被 git 忽略（在 `<知识库>` 里 `git check-ignore`；它由知识库自己的 `.gitignore` 管，见 `idea-loop:wiki-conventions` 的「本地忽略」）：落图目录只在本地。
+项目根 = `git rev-parse --show-toplevel`。第一次用确认 `docs/design/tmp/` 被 git 忽略（`git check-ignore`），不在就照 `idea-loop:wiki-conventions` 的「目录」追加到 `$(git rev-parse --git-common-dir)/info/exclude`：落图目录只在本地。
 
 | 情况 | 落图目录（绝对路径） |
 |---|---|
-| **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<知识库>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
-| **没有 spec**：普通对话 | `<知识库>/docs/design/tmp/research/<问题短名>/` |
+| **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<项目根>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
+| **没有 spec**：普通对话 | `<项目根>/docs/design/tmp/research/<问题短名>/` |
 
 拿不准是哪份 spec（有好几份在设计中、人也没点名）就按没有 spec 放，并在最后一句说明。
 
@@ -33,7 +33,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 1. 人的原话（一字不改）；
 2. 具名问题；
-3. 产品上下文：知识库根的 `DESIGN.md` 路径（有就给）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
+3. 产品上下文：目标项目的 `DESIGN.md` 路径（有就给）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
 4. 落图目录的绝对路径。
 
 方向、参考图、上一轮的结论、你的倾向都不给：它从零查。它每次新起，做完就结束。

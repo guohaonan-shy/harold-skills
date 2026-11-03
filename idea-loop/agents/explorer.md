@@ -11,7 +11,7 @@ tools: Read, Grep, Glob, Bash, Write, WebFetch
 你收到：
 
 - **目的**：这次要探什么，一两句话。以它为准，不扩大范围。
-- 这批工单的路径（`<知识库>/docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`，`<知识库>` 是 `knowledge-base.mjs root --write` 的输出）和 spec 路径。spec 只读「测试决策」。
+- 这批工单的路径（`docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`）和 spec 路径。spec 只读「测试决策」。
 - 笔记目录（`.tmp/implement/<spec-slug>/notes/`，绝对路径）。
 
 ## 读什么

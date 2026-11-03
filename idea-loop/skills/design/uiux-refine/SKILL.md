@@ -6,20 +6,20 @@ disable-model-invocation: true
 
 你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再开设计 PR。画布只由 designer 改，签字只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。`<知识库>` = `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出（设计过程产物写在知识库里；不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 `<知识库>` 下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果经设计的知识库 PR 提交；交给 designer 的目录也用这个前缀写成绝对路径。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果经设计 PR 提交；交给 designer 的目录也用这个前缀写成绝对路径。
 
 几个词：**ledger** 是 `canvas/work/ledger.md`，designer 每交付一版落一行的打磨记录；**块的 job** 是方向说明「结构」节给每块写的内容责任，归为状态 / 结果 / 身份 / 氛围之一；**register** 是这块界面属于营销页还是产品内（in-app），记在方向说明里；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。
 
 ## 开工前
 
 - spec 是 `正式`，「实现决策」里还没有冻结摘要（状态的含义见 `idea-loop:spec-status`）。
-- `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<知识库>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
+- `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人「这份 spec 没有交接画布，会从方向说明重建」。
 
 ## 起步
 
 1. 在 `canvas/`（没有就建）后台起一个静态服务器，活到这次 refine 结束。
-2. 用 Agent 工具起 `idea-loop:designer`，给它：spec 路径与 `<spec-slug>`、方向说明路径、交接画布路径（不在就写「没有」）、知识库根的 `DESIGN.md` / `PRODUCT.md` 路径、画布目录与预览地址，任务是「起手」。人调用时附的话先照「人的回复」分好类：执行性的随第一次「按意见改」交给它，跟方向说明矛盾的先问人。方向只在方向说明里，你不转述。
+2. 用 Agent 工具起 `idea-loop:designer`，给它：spec 路径与 `<spec-slug>`、方向说明路径、交接画布路径（不在就写「没有」）、目标项目的 `DESIGN.md` / `PRODUCT.md` 路径、画布目录与预览地址，任务是「起手」。人调用时附的话先照「人的回复」分好类：执行性的随第一次「按意见改」交给它，跟方向说明矛盾的先问人。方向只在方向说明里，你不转述。
 
 这一个 designer 活过整个 refine：之后的任务都用 SendMessage 接着它的上下文交，不重起。
 
@@ -32,7 +32,7 @@ designer 交付一版之后：
 3. **评分**：把评委的 `findings`、`score` 和之前每一轮的分数（`history`，从旧到新）写成 `canvas/work/round-<N>.json`，跑：
 
    ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<知识库>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
    ```
 
    退出码 `2` 是评委的输出不合格式：作废这一轮，新起一个 ui-master 重评。按它的停止判定走：
@@ -101,14 +101,14 @@ designer 交付「冻结」后，你核对：
 - `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
-都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后开**设计 PR**（知识库的 PR，以下在 `<知识库>` 里跑，`gh` 作用在知识库上）把冻结结果合进知识库的主分支：实现阶段从知识库的最新主分支读，拿不到你这里的本地文件。
+都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后开**设计 PR** 把冻结结果合进主分支：实现阶段从最新主分支切分支，拿不到你这里的本地文件。
 
-1. `<知识库>` 应该是从知识库主分支开出的 worktree（issue 会话在设计阶段就是）。分支还不叫 `design/<spec-slug>` 的，改名 `git -C <知识库> branch -m design/<spec-slug>`；不在这种 worktree 里的，从知识库的最新主分支开一个，把下面这些文件带过去再提交。
+1. 当前 worktree 应该是从主分支开出的（issue 会话在设计阶段就是）。分支还不叫 `design/<spec-slug>` 的，改名 `git branch -m design/<spec-slug>`；不在这种 worktree 里的，从最新主分支开一个，把下面这些文件带过去再提交。
 2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas`（`tmp/` 被排除在 git 之外，要强制加）：签字的画布、冻结记录、交互图。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进，也没有 `delta/`。
 3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写），`git push -u origin design/<spec-slug>`，`gh pr create`。
-4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：知识库的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。失败就告诉人。
+4. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`：只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。失败就告诉人。
 
-告诉人：设计已冻结并合进知识库的主分支。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
+告诉人：设计已冻结并合进主分支。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
 
 **冻结之后设计变了**：不回 refine，也不重起 designer。人接受了一处跟画布不同的设计，由当时的编排者（`idea-loop:implement` 或 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」，过程与冻结记录怎么记见 `idea-loop:design-change-sync`。
 
