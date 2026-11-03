@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, issue-workflow, idea-loop-0-2-0]
 summary: 一个会话一条线：spec、设计、实现同一条分支，阶段改成讨论中→设计中→实现中→审核中
 related: ["[[2026-11-03-idea-loop-0-2-0-grill]]", "[[idea-loop-0-2-0-release]]", "[[knowledge-base-repo]]", "[[issue-intake-priority]]"]
