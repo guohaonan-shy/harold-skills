@@ -37,4 +37,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <知识库> <入�
 
 ## MCP 工具
 
-插件自己的 `.mcp.json` 启动 `design-archive`，目标项目零配置。入参是入口的参数（`name`、`spec`、`text` 或 `commit`；`design_refs` 的 `name` 也接 `<页面>#<段>` 与 `#<类型>`），除 `design_diff` 外都可选带 `delta`（需求名）。仓库根取会话工作目录的 git 顶层。名字对不上、不在 git 仓库里、缺参数，都返回错误结果（`isError`，原因写在文本里）。
+插件自己的 `.mcp.json` 启动 `design-archive`，目标项目零配置。入参是入口的参数（`name`、`spec`、`text` 或 `commit`；`design_refs` 的 `name` 也接 `<页面>#<段>` 与 `#<类型>`），除 `design_diff` 外都可选带 `delta`（需求名）。档案根取知识库的根（`knowledge-base.mjs root`：会话 worktree 下开着 `.tmp/kb/` 就是它，否则是知识库主 checkout）；`design_affected` 比对的改动取会话工作目录所在的代码仓库。名字对不上、不在 git 仓库里、缺参数，都返回错误结果（`isError`，原因写在文本里）。

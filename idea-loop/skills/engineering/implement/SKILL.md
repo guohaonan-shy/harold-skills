@@ -10,7 +10,7 @@ description: 把一份已切好工单的 spec 实现完。spec 进了「实现�
 ## 前提
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
-- **当前 worktree 就是集成分支**：一份 spec 一条分支、一个 PR，这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
+- **当前 worktree 就是集成分支**：只有一个代码仓库的业务，一份 spec 一条分支、一个代码 PR（知识库的改动另走一个知识库 PR）；几个仓库的见下面「多个仓库」。这个 skill 不建、不切会话所在仓库的这条分支。工作区不干净或当前就是基准分支，停下告诉人。
 - `<docs>` 指知识库的 `docs/`：检查用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，改工单、设计过程产物用 `root --write` 的输出加 `/docs`。`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" check <docs>` 不报旧布局，spec 是「实现中」，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。
 - 每张工单第一次派出时是新上下文，人不用在工单之间 `/clear`；卡住的工单在人做完决定后，可能被叫回原执行方（见「人回复后」）。
 
