@@ -31,16 +31,16 @@ idea-loop 插件多一个脚本 `knowledge-base.mjs`（放在插件的 `scripts/
 > 人的决定（2026-11-03）：「我觉得DEVELOPMENT.md、REVIEW.md、CODING_STANDARDS.md 这些仍然放在project 纬度吧，之后再考虑将一部分通用的内容拆分到业务这块。」——仓库级设置留在代码仓库，知识库里没有 `repos/<仓库名>/`，不做 `repo` 子命令。
 
 ## 验收标准
-- [ ] 单元测试在临时目录建真 git 仓库：代码仓库 `app`（`AGENTS.md` 带指针块；主 checkout + 分支 `feature/x` 的 worktree）、知识库 `biz-kb`（带 `idea-loop.json`、有 `origin` 远端）、`IDEA_LOOP_HOME` 下的 `projects.json`
-- [ ] 在 `app` 的 worktree 里：`root` → `biz-kb` 主 checkout；`root --write` → `<worktree>/.tmp/kb`，且它是 `biz-kb` 的 `feature/x` 分支；之后 `root` → `.tmp/kb`
-- [ ] `root --write` 再跑一次不报错、输出同一路径（幂等）；`.tmp/kb` 被删掉后再跑能重开（靠 prune）
-- [ ] 在 `biz-kb` 的主 checkout 或它的任一 worktree 里：`root` 和 `root --write` 都输出那个 checkout 的 git 根
-- [ ] 业务里配了第二个仓库 `api` 时，`worktree api` 在 `app` 的 worktree 里开出 `.tmp/repos/api`，是 `api` 的 `feature/x` 分支
-- [ ] `business` 输出的 JSON 含业务名、知识库、home、每个仓库的本机路径与 GitHub 名
-- [ ] `app` 没有指针块时，`root` 退出码 1，stderr 含 `/idea-loop:setup`
-- [ ] 有指针块、`projects.json` 里没有这个业务时，`root` 退出码 1，stderr 含知识库的 GitHub 名和 `/idea-loop:setup`
-- [ ] 指针块在 `CLAUDE.md` 而 `AGENTS.md` 没有这一节时也认得
-- [ ] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [x] 单元测试在临时目录建真 git 仓库：代码仓库 `app`（`AGENTS.md` 带指针块；主 checkout + 分支 `feature/x` 的 worktree）、知识库 `biz-kb`（带 `idea-loop.json`、有 `origin` 远端）、`IDEA_LOOP_HOME` 下的 `projects.json`
+- [x] 在 `app` 的 worktree 里：`root` → `biz-kb` 主 checkout；`root --write` → `<worktree>/.tmp/kb`，且它是 `biz-kb` 的 `feature/x` 分支；之后 `root` → `.tmp/kb`
+- [x] `root --write` 再跑一次不报错、输出同一路径（幂等）；`.tmp/kb` 被删掉后再跑能重开（靠 prune）
+- [x] 在 `biz-kb` 的主 checkout 或它的任一 worktree 里：`root` 和 `root --write` 都输出那个 checkout 的 git 根
+- [x] 业务里配了第二个仓库 `api` 时，`worktree api` 在 `app` 的 worktree 里开出 `.tmp/repos/api`，是 `api` 的 `feature/x` 分支
+- [x] `business` 输出的 JSON 含业务名、知识库、home、每个仓库的本机路径与 GitHub 名
+- [x] `app` 没有指针块时，`root` 退出码 1，stderr 含 `/idea-loop:setup`
+- [x] 有指针块、`projects.json` 里没有这个业务时，`root` 退出码 1，stderr 含知识库的 GitHub 名和 `/idea-loop:setup`
+- [x] 指针块在 `CLAUDE.md` 而 `AGENTS.md` 没有这一节时也认得
+- [x] 插件全量 `node --test idea-loop/scripts/` 全绿
 
 ## 选中的存量回归
 无：新脚本，不碰已有脚本。
