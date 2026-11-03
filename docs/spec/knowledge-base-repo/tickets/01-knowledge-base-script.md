@@ -19,7 +19,6 @@ idea-loop 插件多一个脚本 `knowledge-base.mjs`（放在插件的 `scripts/
 |---|---|
 | `root` | 当前 checkout 是知识库（git 根有 `idea-loop.json`）→ 它的 git 根；当前 git 根下 `.tmp/kb/` 是知识库 → 它；否则 → 业务的 `knowledgeBase` |
 | `root --write` | 当前 checkout 是知识库 → 它的 git 根；否则保证 `<当前 git 根>/.tmp/kb/` 是知识库的 worktree、分支名同当前分支（先 `git worktree prune`；分支本地或远端已存在就用它，否则从知识库 `origin` 的默认分支开），输出它 |
-| `repo [<仓库名>]` | `<root 的输出>/repos/<仓库名>`，不给仓库名就是当前 checkout 那个仓库（映射里路径对上的那个名字）；当前 checkout 是知识库且没给名字时报错 |
 | `worktree <仓库名>` | 保证 `<当前 git 根>/.tmp/repos/<仓库名>/` 是那个代码仓库（映射里的路径）的 worktree、分支同当前分支，输出它 |
 | `business` | JSON：`{business, knowledgeBase, home, repos: {<仓库名>: {path, github}}}`，`github` 取自知识库 `idea-loop.json` 的 `repos` |
 
@@ -29,12 +28,13 @@ idea-loop 插件多一个脚本 `knowledge-base.mjs`（放在插件的 `scripts/
 
 脚本同时导出这些逻辑的函数，供 `issues.mjs`、设计档案 MCP 复用（如 `knowledgeBaseRoot(cwd)`、`readBusinessConfig(kbRoot)`）。
 
+> 人的决定（2026-11-03）：「我觉得DEVELOPMENT.md、REVIEW.md、CODING_STANDARDS.md 这些仍然放在project 纬度吧，之后再考虑将一部分通用的内容拆分到业务这块。」——仓库级设置留在代码仓库，知识库里没有 `repos/<仓库名>/`，不做 `repo` 子命令。
+
 ## 验收标准
 - [ ] 单元测试在临时目录建真 git 仓库：代码仓库 `app`（`AGENTS.md` 带指针块；主 checkout + 分支 `feature/x` 的 worktree）、知识库 `biz-kb`（带 `idea-loop.json`、有 `origin` 远端）、`IDEA_LOOP_HOME` 下的 `projects.json`
 - [ ] 在 `app` 的 worktree 里：`root` → `biz-kb` 主 checkout；`root --write` → `<worktree>/.tmp/kb`，且它是 `biz-kb` 的 `feature/x` 分支；之后 `root` → `.tmp/kb`
 - [ ] `root --write` 再跑一次不报错、输出同一路径（幂等）；`.tmp/kb` 被删掉后再跑能重开（靠 prune）
 - [ ] 在 `biz-kb` 的主 checkout 或它的任一 worktree 里：`root` 和 `root --write` 都输出那个 checkout 的 git 根
-- [ ] `repo` 在 `app` 里输出 `<root>/repos/app`；`repo api` 输出 `<root>/repos/api`
 - [ ] 业务里配了第二个仓库 `api` 时，`worktree api` 在 `app` 的 worktree 里开出 `.tmp/repos/api`，是 `api` 的 `feature/x` 分支
 - [ ] `business` 输出的 JSON 含业务名、知识库、home、每个仓库的本机路径与 GitHub 名
 - [ ] `app` 没有指针块时，`root` 退出码 1，stderr 含 `/idea-loop:setup`
