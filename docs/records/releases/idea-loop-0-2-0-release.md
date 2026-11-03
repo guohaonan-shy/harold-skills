@@ -22,7 +22,7 @@ tags: [release, idea-loop-0-2-0, issue-workflow]
 
 | 顺序 | feature | 覆盖的 issue | 改什么 | 前置 | 状态 |
 |---|---|---|---|---|---|
-| 1 | F5 知识库独立成仓库 | #228 #222 | 知识库是单独的 git 仓库，按业务分；业务级设置在根、仓库级设置在 `repos/<仓库名>/`；代码仓库不留 idea-loop 文件；删「docs 在代码仓库里」，setup 带老项目迁移；多仓库需求每个仓库一个 PR | 无 | 待开工 |
+| 1 | F5 知识库独立成仓库 | #228 #222 | 知识库是单独的 git 仓库，按业务分；业务级设置在根、仓库级设置在 `repos/<仓库名>/`；代码仓库的 AGENTS.md 留一个指向知识库的指针块；删「docs 在代码仓库里」，setup 带老项目迁移；多仓库需求每个仓库一个 PR | 无 | 待开工 |
 | 2 | F1 入口与调度 | #220 #217 | 改 issue-intake-priority：模块细到 `idea-loop/<子类>`、seo 不再单独排队、删 Dreaming 的 P2 节、审核中不占名额、汇报列「等你的」；其余照原 spec | F5 合进 release | 待开工 |
 | 2 | F2 一个会话一条线 | #232 | 按版本发布的仓库走 release 分支、应用仓库一个会话一个 PR；`DEVELOPMENT.md`「分支」节加「发布方式」；spec / 设计不再单独开 PR；阶段改成讨论中 → 设计中 → 实现中 → 审核中 | F5 合进 release | 待开工 |
 | 2 | F4 工作环境 | #227 #222 | 新 skill `idea-loop:workspace`（`references/desktop.md`、`references/cmux.md`）；setup 选 Desktop / cmux，默认 cmux；cmux 下调度在 Mac 的 cmux 里全自动开会话（公司经 `cmux ssh`），P2 夜里每晚 5 个做到 PR + 一轮 review；`~/.idea-loop/projects.json`；只改怎么开会话、怎么分组，不改出哪些 issue | F5 合进 release；人实测 cmux | 待开工 |
