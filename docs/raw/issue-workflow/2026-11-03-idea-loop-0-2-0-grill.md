@@ -233,6 +233,18 @@ F5 会话追问后人选定（F5 转述，非原话）：会话可以开在知�
 
 定了：虚拟机上的 claude 也登录这个账号，公司和个人共用额度；超了就开 credits，或者由 cmux 里的调度改开 Codex 终端。F4 要加：两个业务各自的会话上限；Codex 作为额度不够时的另一种执行方（怎么跑 idea-loop 的流程待 F4 定）。
 
+## U18
+
+现在ultra 也没有5小时限流了。idea-loop支持codex我记得，里面有什么信息是强耦合claude的吗？
+
+## A18
+
+idea-loop 现在只在 review 时由 Claude 调 Codex（pr-reviewer 起两个只读 Codex 进程），不能让 Codex 当主角跑。强耦合 Claude Code 的：41 份 SKILL.md 靠 Skill 工具互调、15 个子代理定义钉了 Claude 模型、82 处 `${CLAUDE_PLUGIN_ROOT}`、4 个挂在 Claude 工具名上的 hook、AskUserQuestion / TaskCreate / SendMessage / Desktop 工具名、`disable-model-invocation` 与 `allowed-tools`、评估回放起 `claude -p`。问 Codex 兜底与分业务上限这一期做不做。
+
+## U19
+
+codex 本期先不做了
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -249,7 +261,7 @@ F5 会话追问后人选定（F5 转述，非原话）：会话可以开在知�
 | 调度：对账 | 补挂根、补判 P0 | U4 Q6.2 |
 | 调度：名额与汇报 | 审核中不占名额；汇报每天列「等你的」，按阶段、带等了多久 | U5 Q6.3 |
 | 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
-| 账号与额度 | 虚拟机上也登录这个账号，公司与个人共用额度；两个业务各有会话上限；超了开 credits，或调度改开 Codex 终端 | U17 |
+| 账号与额度 | 虚拟机上也登录这个账号，公司与个人共用额度；超了开 credits。Codex 兜底本期不做；分业务会话上限 F4 开工时再定（Ultra 已无 5 小时限流） | U17、U18、U19 |
 | 调度在哪跑 | Mac 的 cmux 里一个调度，按业务读不同来源（公司 Linear、个人 GitHub）；个人项目的会话全在本地，公司项目的会话全在虚拟机上（`cmux ssh`，claude 用这个账号在虚拟机上登录）；先不上云端 | U4 Q11、U14、U15 |
 | 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json`（只放跟机器有关的） | U5 Q13、U11 |
 | Linear | 按项目选；Linear 不会自己触发，自动的部分由 cmux 里的调度读 Linear API；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28、U15 |
@@ -262,4 +274,4 @@ F5 会话追问后人选定（F5 转述，非原话）：会话可以开在知�
 | 业务的仓库说明 | 知识库根 `AGENTS.md` 的「## 仓库」一节：每个仓库的名字、GitHub 名、管哪块功能、依赖；会话可以开在知识库里（多仓库业务推荐），主分支取知识库默认分支，碰代码读工单所在仓库的开发设置 | U16 |
 | 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
 | 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
-| 没定的 | 挂载方式；Linear 映射；cmux 实测（`new-workspace`、relay 调 `cmux open`）；Codex 终端怎么跑 idea-loop 的流程（F4） | U7 Q21、U8 Q28、U17 |
+| 没定的 | 挂载方式；Linear 映射；cmux 实测（`new-workspace`、relay 调 `cmux open`）；分业务会话上限要不要（F4） | U7 Q21、U8 Q28、U19 |
