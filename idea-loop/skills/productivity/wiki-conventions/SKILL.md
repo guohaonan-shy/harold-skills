@@ -65,7 +65,7 @@ docs/
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 了结后的总结 —— 永久
 ├── design/
-│   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果经设计 PR 提交
+│   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果提交在这条线的分支上
 │   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部结构归 `idea-loop:uiux-imagine`
 │   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图；冻结后唯一的设计真相 —— 内部结构归 `idea-loop:uiux-refine`
 │   │   ├── delta/        对 prod/ 的差异：合并前归档时从最终画布加实现写出（没有设计稿的改动由实现者记最小差异）—— 结构见 `idea-loop:design-archive`
@@ -86,7 +86,7 @@ docs/
 
 - **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
   - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布，有价值的结论写回 spec 或 issue。
-  - 冻结时，签字的画布、冻结记录和交互图经设计的知识库 PR 提交进知识库的主分支（在 `<知识库>` 里 `git add -f`），实现从知识库的主分支就拿得到。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着实现 PR 进主分支。
+  - 冻结时，签字的画布、冻结记录和交互图提交在这条线的知识库分支上（在 `<知识库>` 里 `git add -f`），实现在同一条分支上就拿得到。冻结之后设计变了，由 designer 改画布、冻结记录记一行，照样提交在这条分支上。它们留到合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着这条线的知识库 PR 进主分支。
   - **`research/` 不算设计产物**：从不归档；只做过调研的需求不起 UI 审查，合并也不走归档。用进设计的调研结论已经以文字写在方向说明或冻结记录里，随设计归档。
 - **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（人批过之后），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `idea-loop:design-archive`。
 
@@ -146,7 +146,7 @@ related: ["[[other-slug]]"]
 | `adr` | `生效` · `已被取代（→ ADR-NNNN）` |
 | `raw` | 无（改用 `source_type` + `captured`） |
 
-spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置`，dreaming 靠这个 label 区分被遗忘和被故意搁置。工作排到了哪（待设计、待实现……）也记在 issue 的 label 上。
+spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置`，dreaming 靠这个 label 区分被遗忘和被故意搁置。工作走到了哪一段（讨论中、设计中、实现中、审核中）也记在 issue 的 label 上。
 
 `design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉。`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `tmp/<spec-slug>/delta/` 同构），都不带 `status`，结构字段见 `idea-loop:design-archive` 的「图的实体」。
 

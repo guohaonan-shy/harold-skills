@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec，经 PR 合进主分支。讨论收尾要落成 spec 时用。
+description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec，定稿后单独提交。讨论收尾要落成 spec 时用。
 ---
 
 把当前上下文和你对代码库的理解综合成一份 spec。不访谈，只写已知的。综合时发现思考本身有洞，停下，用 Skill 工具调 `idea-loop:grill` 把洞问清，spec 只写问清了的。
@@ -18,13 +18,13 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`status: 草稿`、`tags`、`summary`（≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
 
-   让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后由对账挂。
+   让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue，它当场挂「讨论中」：写这份 spec 的对话就是它的会话。
 
    frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。写给人看的方法（结论在前、最小视图、现状和选项怎么写）和图（它的「spec 里的图」）都照第 3 步调过的 `idea-loop:evidence`。能按规则判的自己定，写成已定的决定并注明依据，依据不成立的才写成选项（`idea-loop:decision-rules` 的「自己定的四条」）。
 
 5. **分流**：跑 `spec-status route <docs> <slug>`。覆盖的 issue 在开头那几行里全都「不存在」的，翻成 `完成`；还有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），翻成 `审核中` 并说出还剩哪几样；都没有就是 `正式`。人在场又是 `审核中`，就在这里接着定，定完删掉标记，`spec-status set <docs> <slug> 正式`。
 
-6. **合并并收工**：spec 先经知识库的 PR 合并，再告诉人到了哪个状态；怎么提交、合并、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交和合并由它来做的（比如 `idea-loop:issue-verify`），这一步留给它。
+6. **定稿并收工**：spec 定稿时单独提交一次，推送并开出知识库的 draft PR，不合并，再告诉人到了哪个状态；怎么提交、接着往下走，见 [`references/finalize.md`](references/finalize.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-verify`），这一步留给它。
 
 工单归 `idea-loop:to-ticket`，ADR 归 `/idea-loop:dreaming`，这里只写 spec。
 

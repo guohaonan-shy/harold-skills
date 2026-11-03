@@ -11,7 +11,7 @@ setup 建 cloud 定时任务时，把下面四个反引号围起来的整段原�
 
 - 列开着的 issue：`GET repos/<仓库>/issues?state=open&per_page=100`，翻页到取完。响应里带 `pull_request` 字段的是 PR，跳过。
 - 候选必须同时满足：没有任何以 `status:` 开头的 label（这是「待验证」）；`parent_issue_url` 为空（还没有父 issue）；`sub_issues_summary.total` 为 0（自己不是根）。
-- 验证中及以后的（带 `status:` label 的）不动，已关闭的不回溯，已经是子 issue 的不动。
+- 讨论中及以后的（带 `status:` label 的）不动，已关闭的不回溯，已经是子 issue 的不动。
 
 ## 什么算同一组
 
@@ -24,7 +24,7 @@ setup 建 cloud 定时任务时，把下面四个反引号围起来的整段原�
 
 ## 合的方式
 
-1. 先看有没有现成的根：开着的、自己没有父 issue、`sub_issues_summary.total` 大于 0、**自己没有任何以 `status:` 开头的 label**（还没开工）的 issue，并且它的标题和正文覆盖这个文件或这个页面 / 模块。有，就把候选挂到它下面。根已经带了 `status:` label（验证中及以后，说明这一组已经有人在做）就不挂，当作没有现成的根；它名下的子 issue 也别动。
+1. 先看有没有现成的根：开着的、自己没有父 issue、`sub_issues_summary.total` 大于 0、**自己没有任何以 `status:` 开头的 label**（还没开工）的 issue，并且它的标题和正文覆盖这个文件或这个页面 / 模块。有，就把候选挂到它下面。根已经带了 `status:` label（讨论中及以后，说明这一组已经有人在做）就不挂，当作没有现成的根；它名下的子 issue 也别动。
 2. 没有现成的根，且这一组至少两个候选，就新开一个根（新根不带 label，所以下次运行它仍是现成的根）：`POST repos/<仓库>/issues`，只给 `title` 和 `body`，不带 label。标题写改的是哪个页面或模块（不照抄某个子 issue 的标题）；正文**第一行**写「由整合定时任务开出」，之后主要写这一组要改哪个页面、哪个模块；具体要改什么留在子 issue 里，不重复，也不在正文里列子 issue 的号。
 3. 挂子 issue：`POST repos/<仓库>/issues/<根号>/sub_issues`，参数 `sub_issue_id` 是子 issue 的数据库 id（列表响应里的 `id`，一个很大的整数），不是 issue 号；用 `-F` 传整数。
 4. 一组挂几个不设上限。同一个候选只挂一个根。

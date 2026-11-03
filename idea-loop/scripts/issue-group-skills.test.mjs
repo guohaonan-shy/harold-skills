@@ -36,7 +36,7 @@ test('issue-dispatch：一个根一张卡片，卡片带子 issue 号，子 issu
 test('issue-session：整组认领、一组调一次 issue-verify、一份 spec、本会话里切票实现 review 合并、关根', () => {
   const md = skill('issue-session');
   assert.match(md, /issues group/);
-  assert.match(md, /issues set <docs> 验证中 <根号>/);
+  assert.match(md, /issues set <docs> 讨论中 <根号>/);
   assert.match(md, /调\*{0,2} ?一次\*{0,2}[^。\n]*issue-verify|issue-verify[^。\n]*一次/);
   assert.match(md, /一份 spec/);
   // 实现在本会话里做
@@ -87,9 +87,9 @@ test('setup 的 issue 追踪模板：一组一个会话', () => {
   assert.doesNotMatch(md, /一个 issue 一个会话/);
 });
 
-test('README：流程总览没有版本分支的例外，合并缺口段只认 issue 会话', () => {
+test('README：流程总览是一个会话一条线，合并缺口段只认 issue 会话', () => {
   const md = readFileSync(join(root, 'README.md'), 'utf8');
-  assert.match(md, /every stage lands on the main branch through its own PR/);
+  assert.match(md, /one session carries it on one line/);
   assert.doesNotMatch(md, /implementation child session/);
   for (const k of ['issue-session', 'issue-verify', 'issue-dispatch']) {
     const row = md.split('\n').find((l) => l.startsWith(`| \`idea-loop:${k}\``) || l.startsWith(`| \`/idea-loop:${k}\``));

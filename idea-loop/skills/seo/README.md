@@ -1,6 +1,6 @@
 # seo 分类
 
-SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，`seo-scan` 把问题提成待验证的 issue（`type:seo/<方向>`），之后照 idea-loop 的 issue 会话走审核、实现。项目配置只有根目录的一份 `SEO.md`（格式：[seo-setup/references/seo-md.md](seo-setup/references/seo-md.md)）。设计见 spec `idea-loop-seo`。
+SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，`seo-scan` 把问题提成待验证的 issue（`type:seo/<方向>`），之后照 idea-loop 的 issue 会话走讨论、实现。项目配置只有根目录的一份 `SEO.md`（格式：[seo-setup/references/seo-md.md](seo-setup/references/seo-md.md)）。设计见 spec `idea-loop-seo`。
 
 | 层 | skill / agent |
 |---|---|

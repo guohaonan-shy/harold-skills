@@ -5,7 +5,7 @@
 ## 每个 PR 各跑 review
 
 - **每个有代码的 PR 各跑 review**，轮次和上限互相独立。跑某个 PR 时，「当前 worktree」是它所在仓库的集成 worktree（会话所在仓库就是会话 worktree，别的仓库是 `.tmp/repos/<仓库名>/`），review loop 文件也记在那个 worktree 的 `.tmp/review-loop/` 下；spec 和工单仍在知识库里读。
-- **知识库 PR 不跑 review 轮，也不等人说合并**：它只有工单、设计、归档的文档改动，跟只含文档的 spec PR、设计 PR 一样（`idea-loop:decision-rules` 的「不自动的」）；它的内容在各代码 PR 的审核报告里一起交，合并由会话自己做（[`merge.md`](merge.md) 的「知识库 PR」）。
+- **知识库 PR 不跑 review 轮，也不等人说合并**：它只有 spec、工单、设计、归档的文档改动（`idea-loop:decision-rules` 的「不自动的」）；它的内容在各代码 PR 的审核报告里一起交，合并由会话自己做（[`merge.md`](merge.md) 的「知识库 PR」）。
 - 修复回工单照 `../SKILL.md` 的「回工单」：`git blame` 在对应仓库里做，派 implementer 时带上那张工单所在仓库的集成 worktree。
 
 ## 全部合并才算完

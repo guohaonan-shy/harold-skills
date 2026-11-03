@@ -93,12 +93,12 @@ test('how to write for a human is a pointer to evidence, not restated rules', ()
 
 test('the process is six steps, and the raw template moved into the skill\'s own references', () => {
   const steps = body.match(/^\d+\. \*\*[^*]+\*\*/gm) ?? [];
-  assert.deepEqual(steps.map((s) => s.replace(/^\d+\. /, '')), ['**开工**', '**落 raw**', '**探代码并谈 seam**', '**写 spec**', '**分流**', '**合并并收工**']);
+  assert.deepEqual(steps.map((s) => s.replace(/^\d+\. /, '')), ['**开工**', '**落 raw**', '**探代码并谈 seam**', '**写 spec**', '**分流**', '**定稿并收工**']);
   assert.doesNotMatch(body, /<raw-template>/);
   assert.ok(existsSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'raw-template.md')));
   assert.match(body, /references\/raw-template\.md/);
-  assert.ok(existsSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'land-on-main.md')));
-  assert.match(body, /references\/land-on-main\.md/);
+  assert.ok(existsSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'finalize.md')));
+  assert.match(body, /references\/finalize\.md/);
 });
 
 test('a spec written from the template\'s own lines is routed by spec-status: 存在 → 正式, 待定 → 审核中, 不存在 → 完成', () => {
@@ -126,7 +126,7 @@ test('a spec written from the template\'s own lines is routed by spec-status: �
 
 test('issue-verify\'s self-check names the sections the new template has', () => {
   const verify = read('skills', 'engineering', 'issue-verify', 'SKILL.md');
-  const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定「审核中」的'));
+  const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定 spec 里待定的'));
   assert.ok(check.length > 100, '找不到「自己校验」');
   const titles = sections(template).slice(1).map((s) => s.title).concat(['根因']);
   // every section-like name it quotes is a section of the template

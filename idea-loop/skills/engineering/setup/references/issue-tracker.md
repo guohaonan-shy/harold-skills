@@ -19,15 +19,15 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每组�
 | issue 的状态 | GitHub 上 | 意思 |
 |---|---|---|
 | 待验证 | open，没有 `status:*` | 新进来，调度会给它出会话卡片 |
-| 验证中 | `status:验证中` | 在复现，看问题是否真实存在，起草 spec |
-| 审核中 | `status:审核中` | spec 里有要人定的，人在 issue 会话里 grill |
-| 待设计 / 设计中 | `status:待设计` / `status:设计中` | spec 定稿、碰 UI，等设计 / 在设计 |
-| 待实现 / 实现中 | `status:待实现` / `status:实现中` | 等实现 / 在实现 |
+| 讨论中 | `status:讨论中` | issue 会话在复现、起草 spec、跟人 grill |
+| 设计中 | `status:设计中` | spec 定稿、碰 UI，在设计 |
+| 实现中 | `status:实现中` | 在切工单、实现、跑 review 第一轮 |
+| 审核中 | `status:审核中` | PR 已开出、review 过一轮、转了 ready，等人读 |
 | 搁置 | `status:搁置` | 先放着，loop 不碰 |
 | 关闭·不存在 | closed，not planned | 验证发现问题不成立，或人决定不做 |
-| 关闭·完成 | closed，completed | 实现合并了 |
+| 关闭·完成 | closed，completed | 这条线的 PR 全部合并了 |
 
-「中」开头的 label 由 issue 会话挂：每个 PR 合并后，它照主分支把 issue 翻到下一段，或关掉。「待」开头的 label 只在上一段的产出合进主分支之后才挂，由调度每轮对账时按主分支挂上，接住没在会话里的 issue；问题不存在、实现已合并的，也在对账时关掉。spec 覆盖了哪几个 issue，记在 spec frontmatter 的 `issues: [12, 15]` 里；一个都没覆盖的 spec（从对话里写的），会开一个标题以「spec：」开头的 issue 作为它在这里的入口。
+一个 issue 会话从讨论到合并只在一条分支上，label 全由它挂：开场认领讨论中，spec 定稿、设计冻结后照会话分支上的 spec 翻到设计中或实现中，交审核报告、PR 转 ready 时翻审核中，全部合并后关掉。调度每轮对账只兜底关掉知识库主分支上已经完成或验证为不存在的。spec 覆盖了哪几个 issue，记在 spec frontmatter 的 `issues: [12, 15]` 里；一个都没覆盖的 spec（从对话里写的），会开一个标题以「spec：」开头的 issue 作为它在这里的入口，当场挂讨论中。
 
 ## 分类 label
 

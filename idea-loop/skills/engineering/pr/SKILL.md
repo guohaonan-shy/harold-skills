@@ -20,12 +20,12 @@ description: 一个 PR 上给人看的两份东西怎么写、放在哪：GitHub
 
 | 节 | 这一节给读者什么 | 谁写 |
 |---|---|---|
-| 一句话 `summary` | 谁现在能做什么、修好了什么 | `idea-loop:implement` 开 draft 时写，转 open 前按落地结果重写；`idea-loop:pr-review` 的编排者交报告时再核 |
+| 一句话 `summary` | 谁现在能做什么、修好了什么 | `idea-loop:implement` 开 draft 时写，进 review 前按落地结果重写；`idea-loop:pr-review` 的编排者交报告时再核 |
 | 问题 `problem` | 没跟过的人明白为什么要做：用户碰到的现象、复现出来的样子、影响多大 | `idea-loop:pr-review` 的编排者，交报告时写 |
-| 怎么修 `changes` | 这次做成了什么样：照规则定下的做法各带依据，每个页面或流程的之前 → 之后 | `idea-loop:implement` 转 open 前先写，`idea-loop:pr-review` 的编排者交报告时补全 |
+| 怎么修 `changes` | 这次做成了什么样：照规则定下的做法各带依据，每个页面或流程的之前 → 之后 | `idea-loop:implement` 进 review 前先写，`idea-loop:pr-review` 的编排者交报告时补全 |
 | 怎么验证 `verification` | 凭什么说修对了：每个行为怎么验的、哪些没验成、review 的结论 | `idea-loop:pr-review` 的编排者，交报告时写 |
 | 能否回滚 `rollback` | 合并后发现错了，能不能撤、怎么撤、影响面多大；上线前要人注意的事；顺带开的 issue | `idea-loop:pr-review` 的编排者，交报告时写；人的批示带出上线前的事时追加 |
-| 要你做的事 `your-todo` | 轮到他的事：要看的人验素材（素材只放这里）、要定的事、说「合并」即可 | `idea-loop:implement` 转 open 前写，`idea-loop:pr-review` 的编排者更新 |
+| 要你做的事 `your-todo` | 轮到他的事：要看的人验素材（素材只放这里）、要定的事、说「合并」即可 | `idea-loop:implement` 进 review 前写，`idea-loop:pr-review` 的编排者更新 |
 | 参考 `reference` | 折叠：想追溯的人查证（改动地图、spec 与工单、执行记录、合并后的清理） | `idea-loop:implement` 开 draft 时写，每次汇报更新 |
 
 每节夹在隐藏标记之间，由脚本按固定顺序写入，**标题由脚本加**，内容文件里不用写：

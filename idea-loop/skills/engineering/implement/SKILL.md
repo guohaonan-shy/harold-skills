@@ -87,7 +87,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
-1. 还没有 PR：**每个有落地提交的代码仓库各推送、各开一个 draft PR**（在它的集成 worktree 里 `gh pr create --draft --base <该仓库的基准分支>`），知识库有改动（工单勾格总会有）也推送、开一个（在 `<知识库>` 里）；标题用 spec 标题，带署名行。每个 PR 都用 `pr-body.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`），**`reference` 区列出这份 spec 的全部 PR**（每个代码仓库的、知识库的，一个一行，写 `<owner/repo>` 和 PR 链接）：全部开完再写，pr-review 合并时靠它查其余的 PR 合并了没有。
+1. 还没有 PR：**每个有落地提交的代码仓库各推送、各开一个 draft PR**（在它的集成 worktree 里 `gh pr create --draft --base <该仓库的基准分支>`），知识库有改动（工单勾格总会有）也推送：这条线的知识库 draft PR 在 spec 定稿时已经开了，就用它，没有才开一个（在 `<知识库>` 里，`--draft`）；标题用 spec 标题，带署名行。每个 PR 都用 `pr-body.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`），**`reference` 区列出这份 spec 的全部 PR**（每个代码仓库的、知识库的，一个一行，写 `<owner/repo>` 和 PR 链接）：全部开完再写，pr-review 合并时靠它查其余的 PR 合并了没有。
    - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：PR 开出来后，把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（多个仓库时对每个有用例的 PR 各跑一次，worktree 是那个 PR 所在仓库的集成 worktree；本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。Review 汇报里写明哪些用例在队列、几点以后有结果。
 2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现中）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
 3. 更新每个 PR 的 `reference` 执行记录，推送。
@@ -112,7 +112,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有排队中的回放**（`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件 `<owner>__<repo>-<PR 号>.json`；有就是夜里的结果还没出，PR 留在 draft，告诉人等结果，不进 review；结果发回来时，见 `idea-loop:issue-session` 的「规则回放的结果」）：照 `idea-loop:pr` 的「PR 描述」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 各 `gh pr ready`，然后用 Skill 工具调 `idea-loop:pr-review`，给每个有代码的 PR 各跑第一轮（知识库 PR 只有工单、设计、归档的文档改动，不跑 review 轮，同 spec PR、设计 PR）。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有排队中的回放**（`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件 `<owner>__<repo>-<PR 号>.json`；有就是夜里的结果还没出，PR 留在 draft，告诉人等结果，不进 review；结果发回来时，见 `idea-loop:issue-session` 的「规则回放的结果」）：照 `idea-loop:pr` 的「PR 描述」写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），**PR 留在 draft**，用 Skill 工具调 `idea-loop:pr-review`，给每个有代码的 PR 各跑第一轮（知识库 PR 只有 spec、工单、设计、归档的文档改动，不跑 review 轮）；转 ready 在 pr-review 交审核报告时做，ready 的 PR 就是等人读的。提一句交付验收还有几项没勾。
 
 ## 设计变更：人接受了跟画布不同的设计
 

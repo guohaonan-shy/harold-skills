@@ -12,34 +12,34 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 
 ## issue 的状态
 
-| 状态 | GitHub 上 | 意思 |
-|---|---|---|
-| 待验证 | open，没有 `status:*` | 新进来，还没人看 |
-| 验证中 | `status:验证中` | 在复现、起草 |
-| 审核中 | `status:审核中` | spec 里有要人定的，人在 issue 会话里 grill |
-| 待设计 | `status:待设计` | spec 是「正式」、碰 UI，等设计 |
-| 设计中 | `status:设计中` | 在设计阶段 |
-| 待实现 | `status:待实现` | spec 是「正式」、不碰 UI，或设计冻结已经合进主分支 |
-| 实现中 | `status:实现中` | 在切工单、实现、等合并 |
-| 搁置 | `status:搁置` | 先放着，loop 不碰 |
-| 关闭·不存在 | closed，not planned | 验证为不存在；或人决定不做（`drop`） |
-| 关闭·完成 | closed，completed | 实现合并了 |
+一个 issue 会话从开场到合并只在一条分支上（代码仓库的会话分支，和知识库里同名的分支），中途不把 spec、设计合进主分支；label 说的是这条线走到了哪一段。
 
-「待」字头的状态只由对账（`issues reconcile`）照主分支上的 spec 挂，所以看到它，主分支上一定已经有下一段要用的东西；「中」字头的由 issue 会话挂。`advance` 是只管一份 spec 的对账：它的 PR 合并、切到最新主分支之后跑，翻完立刻认领下一段，或关掉 issue。`issues set` 拒绝不允许的翻法时会列出能翻成什么。「搁置」用 `resume` 恢复：回到主分支上的 spec 该在的状态，没有 spec 就回「待验证」。
+| 状态 | GitHub 上 | 意思 | 谁翻 |
+|---|---|---|---|
+| 待验证 | open，没有 `status:*` | 新进来，还没有会话 | |
+| 讨论中 | `status:讨论中` | 会话在复现、起草 spec、跟人 grill | 会话开场认领（`issues set`） |
+| 设计中 | `status:设计中` | spec 定稿了、碰 UI，在设计 | `advance` |
+| 实现中 | `status:实现中` | 在切工单、实现、跑 review 第一轮 | `advance` |
+| 审核中 | `status:审核中` | PR 已开出、review 跑过一轮、转了 ready，等人读 | 交审核报告时（`issues set`） |
+| 搁置 | `status:搁置` | 先放着，loop 不碰 | `issues set` |
+| 关闭·不存在 | closed，not planned | 验证为不存在；或人决定不做（`drop`） | `advance`、`drop` |
+| 关闭·完成 | closed，completed | 这条线的 PR 全部合并了 | `advance` |
+
+`advance` 读传给它的那份 `<docs>`：会话里就是会话分支上的知识库（`knowledge-base.mjs root` 有 `.tmp/kb/` 时给的就是它），不用等合进主分支。spec 定稿（「正式」）后跑，按碰不碰 UI 进设计中或实现中；冻结提交之后再跑，进实现中；已在审核中的留在审核中；合并之后跑，spec「完成」或结论「不存在」的关掉。`reconcile` 是调度每轮的兜底：只按知识库主分支上的 spec 关掉该关的，不挂任何状态。`issues set` 拒绝不允许的翻法时会列出能翻成什么。「搁置」用 `resume` 恢复：知识库主分支上的 spec 说关就关，没有就回「待验证」。
 
 ### 根 issue 和子 issue
 
-有子 issue 的是「根」，有父 issue 的是「子 issue」（GitHub 原生 sub-issue），一组按一个会话走。给根号 `issues set` 就整组翻，`issues group` 查一组；候选只出根，不出开了不到 6 小时的；一个根下的全部子 issue 由**一份** spec 覆盖，一个会话走完：spec 的 `issues:` 写全部子 issue，不写根。`reconcile` / `advance` 翻这份 spec 的子 issue 时，根跟着翻到同一个状态；spec 让子 issue 关闭（完成或不存在）时，根随着关闭（completed），评论写明随哪份 spec。根下有开着的子 issue 不在这份 spec 里、或子 issue 要翻的去向不一致时，根不动，脚本把它作为问题报出来（出现了说明分组和 spec 对不上）。
+有子 issue 的是「根」，有父 issue 的是「子 issue」（GitHub 原生 sub-issue），一组按一个会话走。给根号 `issues set` 就整组翻，`issues group` 查一组；候选只出根，不出开了不到 6 小时的。应用仓库里一个根下的全部子 issue 由**一份** spec 覆盖：spec 的 `issues:` 写全部子 issue，不写根；`advance` / `reconcile` 翻这份 spec 的子 issue 时，根跟着翻到同一个状态。按版本发布的仓库里一组是一个版本，子 issue 分在几个 feature 的 spec 里，根留在版本会话认领时的讨论中、不跟着翻（`DEVELOPMENT.md` 的「发布方式」）。子 issue 全部关闭时，根随着关闭（completed），评论写明随哪份 spec。只有一份 spec、根下却有开着的子 issue 不在里面，或子 issue 的状态不一致时，`reconcile` 不动根、把它作为问题报出来（出现了说明分组和 spec 对不上）；`advance` 只看一份 spec，遇到这种根不动也不报。
 
 ```bash
 issues labels     <docs> [--prune]             # 建缺的 status:* type:* label；多余的只列出
 issues type       <docs> <号> <父类[/子类]>...  # 打分类，换掉原有的 type:*
 issues candidates <docs> [<limit>]             # 待验证的候选，最早的在前（JSON）
 issues group      <docs> <号>                   # 根号或子 issue 号：根和开着的子 issue（JSON）
-issues queue      <docs> <待设计|待实现>        # 等在这个状态的 spec，加上 label 对不上的问题
 issues set        <docs> <状态> <号 | slug>...  # 翻状态；根号连子 issue 一起翻
-issues reconcile  <docs>                       # 对账：照主分支翻；根跟着子 issue
-issues advance    <docs> <slug>                # 一份 spec 合并后推进；末行写下一段
+issues reconcile  <docs>                       # 兜底：照知识库主分支关掉该关的；根跟着子 issue
+issues advance    <docs> <slug>                # 照这份 docs 里的 spec 推进或关闭；末行写下一段
+issues migrate    <docs> [--apply]             # 老 label 换成四段：先列清单，--apply 才改
 issues resume     <docs> <号 | slug>...         # 搁置 → 该在的地方
 issues handoff    <docs> <slug> <号>           # 把 #号 写进 spec frontmatter，不碰 GitHub
 issues open       <docs> <slug>                # spec 没覆盖任何 issue：开一个「spec：」issue
@@ -47,7 +47,9 @@ issues unhandoff  <docs> <slug> <号>           # 从 spec 移出 #号，回到�
 issues drop       <docs> <slug> <号>           # 从 spec 移出 #号，关成 not planned
 ```
 
-spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件、`open` 开的 issue 不挂 label：spec 的 PR 没合并时，GitHub 上不该有 label 指向主分支上没有的 spec。
+spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件；`open` 开的 spec issue 当场挂「讨论中」：写这份 spec 的对话就是它的会话。
+
+升级到四段之前的项目还带着老 label（验证中、审核中当时指 spec 在 grill、待设计、待实现）。`issues migrate <docs>` 列出每个 open issue 要从什么换成什么（验证中、老的审核中 → 讨论中，待设计 → 设计中，待实现 → 实现中）和要删的老 label；给人看过、人说做，再加 `--apply`。仓库里没有 `status:验证中` / `待设计` / `待实现` 这三个 label 就算迁过，再跑什么也不做，新的审核中不会被当成老的。由 `/idea-loop:setup` 带着做。
 
 ## issue 的分类
 
@@ -66,8 +68,8 @@ spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff
 | 状态 | 意思 | 谁翻 |
 |---|---|---|
 | 草稿 | 在写 | `idea-loop:to-spec` 新建时 |
-| 审核中 | 有要人定的：开头的「> 需要 grill：…」，或「实现决策」下标题以「待定」开头的小节 | `route` |
-| 正式 | 定稿了，设计和实现都照它做 | `route`；或审核中定完时 |
+| 审核中 | 有要人定的：开头的「> 需要 grill：…」，或「实现决策」下标题以「待定」开头的小节（跟 issue 的「审核中」同名不同义：这里说文档还有待定） | `route` |
+| 正式 | 定稿了，设计和实现都照它做；翻它的那次提交就是定稿提交（`idea-loop:to-spec`） | `route`；或审核中定完时 |
 | 实现中 | 工单已切 | `idea-loop:to-ticket` 切完时 |
 | 完成 | 实现合并了，或覆盖的 issue 全都验证为不存在 | `idea-loop:pr-review` 合并前；`route` |
 
