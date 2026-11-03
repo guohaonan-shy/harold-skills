@@ -2,16 +2,16 @@
 type: spec
 status: 实现中
 tags: [idea-loop, knowledge-base, setup, idea-loop-0-2-0]
-summary: 知识库独立成一个 git 仓库、按业务分；代码仓库不留 idea-loop 文件；setup 带老项目迁移
+summary: 知识库独立成一个 git 仓库、按业务分；代码仓库只留 AGENTS.md 的指针；setup 带老项目迁移
 related: ["[[2026-11-03-idea-loop-0-2-0-grill]]", "[[idea-loop-0-2-0-release]]", "[[issue-intake-priority]]"]
 issues: [228]
 ---
 
-# 知识库独立成仓库：按业务分，代码仓库里不留 idea-loop 的文件
+# 知识库独立成仓库：按业务分，代码仓库只留一个指向它的指针
 
 > #228 存在：2026-11-03 对着 release/idea-loop-0.2.0（da85785，idea-loop 0.1.9）核过，setup 只会往代码仓库根目录写设置、建 `docs/`，skill 和脚本都在当前 checkout 里找它们，一个需求跨几个仓库时没有地方放共用的 spec，详情在「问题陈述」
 
-这是 idea-loop 0.2.0 的 F5（release 计划 [[idea-loop-0-2-0-release]]），也覆盖 #222 的第 3 个需求点。决定全部出自 [[2026-11-03-idea-loop-0-2-0-grill]] 的「本轮决议」表，本 spec 不重开。
+这是 idea-loop 0.2.0 的 F5（release 计划 [[idea-loop-0-2-0-release]]），也覆盖 #222 的第 3 个需求点。决定全部出自 [[2026-11-03-idea-loop-0-2-0-grill]] 的「本轮决议」表，本 spec 不重开；其中「代码仓库不留 idea-loop 文件」一条，人在 2026-11-03 改为保留代码仓库的 `AGENTS.md`、在里面放指向知识库的指针（决定记录 U10），本 spec 已照改。
 
 ## 问题陈述
 
@@ -23,7 +23,7 @@ issues: [228]
 
 例子：公司的一个业务由前端、后端、配置三个仓库组成。人想把这个业务的 spec 和设计档案放一处，现在只能挑一个仓库放 `docs/`，在另外两个仓库里开的会话找不到它；三个仓库各跑一次 setup，就是三份互不相干的 `PRODUCT.md`。人的原话（2026-11-03）：「我不想让每一个仓库都留一个docs/，而且公司我维护的很多repo是一个大业务，每次改一个需求，可能需要改几个仓库。上下文可能不再是一个仓库，而是几个仓库」。
 
-本该：一个业务一份知识库，放在自己的 git 仓库里；哪个仓库里开的会话都找得到它；代码仓库里只有代码。
+本该：一个业务一份知识库，放在自己的 git 仓库里；哪个仓库里开的会话都找得到它；代码仓库里除了人维护的 `AGENTS.md` 里一个指向知识库的指针，只有代码。
 
 ### 2. 一个需求只能落在一个仓库里
 
@@ -45,8 +45,8 @@ issues: [228]
 改完 Harold 得到：
 
 - 每个业务一个知识库仓库。个人业务的知识库只在个人电脑上，公司业务的只在虚拟机上（grill U6 Q20）。
-- 代码仓库里没有 idea-loop 的任何文件：没有 `docs/`、没有 `DEVELOPMENT.md` 这类设置、`CLAUDE.md` / `AGENTS.md` 里没有 idea-loop 的块。
-- 已经装过 idea-loop 的仓库（harold-skills、Toeflair）升级插件后重跑 `/idea-loop:setup`，setup 问清业务、知识库仓库、会话在哪跑，把 `docs/` 和设置搬进知识库，再开一个 PR 把它们从代码仓库删掉。「docs 在代码仓库里」这种做法不再支持：没迁的仓库跑任何 idea-loop skill，都会被告知先跑 setup。
+- 代码仓库里只剩 `AGENTS.md` 里一个指针块（这个仓库属于哪个业务、知识库仓库在 GitHub 上叫什么）；没有 `docs/`、没有 `DEVELOPMENT.md` 这类设置。`AGENTS.md` 的其余内容由人照常维护。
+- 已经装过 idea-loop 的仓库（harold-skills、Toeflair）升级插件后重跑 `/idea-loop:setup`，setup 问清业务、知识库仓库、会话在哪跑，把 `docs/` 和设置搬进知识库，再开一个 PR 把它们从代码仓库删掉、写上指针块。「docs 在代码仓库里」这种做法不再支持：没迁的仓库跑任何 idea-loop skill，都会被告知先跑 setup。
 
 ### 知识库仓库长什么样
 
@@ -63,7 +63,22 @@ issues: [228]
 - **仓库级**（每个代码仓库一份）：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`，在 `repos/<仓库名>/`。`<仓库名>` 是 GitHub 上的仓库名（不带 owner）。
 - `idea-loop.json` 是知识库的标记：一个 git 仓库根目录有它，就是知识库。
 
-### 每台机器怎么找到它：`~/.idea-loop/projects.json`
+### 代码仓库怎么指向它：`AGENTS.md` 的指针块
+
+代码仓库的 `AGENTS.md`（没有就是 `CLAUDE.md`）里一节：
+
+```markdown
+## idea-loop
+
+- 业务：`<业务>`
+- 知识库：`<owner/name>`
+
+这个仓库的 spec、设计档案、产品说明和开发设置（`repos/<仓库名>/`）都在知识库里。本机路径用 idea-loop 的 `knowledge-base.mjs root` 取。
+```
+
+块里只写跟机器无关的两样：业务名和知识库的 GitHub 名；本机路径因机器而异，不写进仓库。setup 写这一块，迁移老项目时把原来的 `## idea-loop` 块换成它。
+
+### 每台机器把它放在哪：`~/.idea-loop/projects.json`
 
 ```json
 {
@@ -75,7 +90,7 @@ issues: [228]
 }
 ```
 
-每台机器一份，setup 写。`home` 是「会话在哪跑」：调度在这个 checkout 里起，调度出的 issue 会话也开在它下面；只有一个代码仓库的业务推荐填那个代码仓库，几个仓库的推荐填知识库。F4（工作环境）往同一个业务里再加 cmux group、ssh 主机这些字段，本 spec 只定这三个。
+每台机器一份，setup 写，只放跟机器有关的项：知识库和各代码仓库 clone 在本机哪里、会话在哪跑。「这个仓库属于哪个业务」不在这里查，看代码仓库的指针块。`home` 是「会话在哪跑」：调度在这个 checkout 里起，调度出的 issue 会话也开在它下面；只有一个代码仓库的业务推荐填那个代码仓库，几个仓库的推荐填知识库。F4（工作环境）往同一个业务里再加 cmux group、ssh 主机这些字段，本 spec 只定这三个。
 
 ### 一个会话怎么拿到知识库：`knowledge-base.mjs`
 
@@ -89,7 +104,7 @@ issues: [228]
 | `worktree <仓库名>` | 保证 `.tmp/repos/<仓库名>/` 是那个代码仓库的 worktree、分支名同当前分支，输出它 |
 | `business` | JSON：业务名、知识库、`home`、每个代码仓库的 GitHub 名和本机路径 |
 
-当前 checkout 属于哪个业务，按它的主 checkout（`git rev-parse --git-common-dir` 的上一层）在 `projects.json` 里查：等于某个业务的 `knowledgeBase` 或 `repos` 里的某个路径。查不到就报「这个仓库还没配进任何业务，跑 `/idea-loop:setup`」，退出码非 0。
+当前 checkout 属于哪个业务，读它 git 根下 `AGENTS.md`（或 `CLAUDE.md`）的指针块；再到 `projects.json` 里取这个业务的知识库在本机的路径。没有指针块，报「这个仓库还没配进任何业务：跑 `/idea-loop:setup`」；有指针块、本机没有这个业务，报「这台机器还没 clone 知识库 `<owner/name>`：跑 `/idea-loop:setup`」；都非 0 退出。`<仓库名>` 是当前仓库 `origin` 的 GitHub 名在知识库 `idea-loop.json` 的 `repos` 里对上的那个名字，对不上就取 `origin` 的仓库名。
 
 读的地方（调度对账、`spec-status check`、设计档案查询）用 `root`；写的地方（to-spec 写 spec、to-ticket 切票、uiux-refine 冻结、pr-review 删工单和归档）用 `root --write`。这样会话 worktree 的 `.tmp/kb/` 就是这个需求在知识库里的分支，lifecycle 跟着会话 worktree 走。
 
@@ -121,8 +136,8 @@ issues: [228]
 
 ### 场景：新项目配置
 
-1. 作为 Harold，我想要 setup 先问这个仓库属于哪个业务、知识库仓库是哪个，以便一个业务的几个仓库共用一份知识库
-2. 作为 Harold，我想要 setup 把业务级设置写到知识库根目录、仓库级设置写到 `repos/<仓库名>/`，以便代码仓库里一个 idea-loop 文件都不多
+1. 作为 Harold，我想要 setup 先问这个仓库属于哪个业务、知识库仓库是哪个，并在代码仓库的 `AGENTS.md` 写一个指向知识库的指针块，以便一个业务的几个仓库共用一份知识库、换台机器也认得出
+2. 作为 Harold，我想要 setup 把业务级设置写到知识库根目录、仓库级设置写到 `repos/<仓库名>/`，以便代码仓库里除了那个指针块不多一个 idea-loop 文件
 3. 作为 Harold，我想要 setup 问清会话在哪跑并记进 `~/.idea-loop/projects.json`，以便调度和 issue 会话在对的 checkout 里起
 4. 作为 Harold，我想要往已有业务里加一个代码仓库时，setup 只补这个仓库的 `repos/<仓库名>/` 和本机映射，以便不重写业务级设置
 
@@ -182,10 +197,10 @@ setup 对老项目：
 2. 在代码仓库里 `git subtree split --prefix=docs` 出一条只含 `docs/` 历史的分支，在知识库里 `git subtree add --prefix=docs` 接进来：路径不变，历史保留。
 3. 设置文件复制进知识库（业务级到根，仓库级到 `repos/<仓库名>/`），写 `idea-loop.json`、知识库的 `AGENTS.md`、`.gitattributes`（设计档案图片走 LFS）、`.gitignore`（`docs/design/tmp/`）；提交、推送到知识库主分支（知识库是新建的，没有要 review 的旧内容）。
 4. 写 `~/.idea-loop/projects.json`。
-5. 在代码仓库开一个分支，删掉 `docs/`、7 份设置、`CLAUDE.md` / `AGENTS.md` 里的 idea-loop 块和「issue 分类」一节、`.gitattributes` 与 `.gitignore` 里 `docs/` 的行；推送、开 PR，交给人合并。代码仓库 `AGENTS.md` 里人写的别的内容原样留着。
+5. 在代码仓库开一个分支，删掉 `docs/`、6 份设置文件、`AGENTS.md` 里的「issue 分类」一节、`.gitattributes` 与 `.gitignore` 里 `docs/` 的行，把 `CLAUDE.md` / `AGENTS.md` 里原来的 `## idea-loop` 块换成指针块；推送、开 PR，交给人合并。代码仓库 `AGENTS.md` 里人写的别的内容原样留着。
 6. 核对：`spec-status check <知识库>/docs` 与迁移前同一组 spec、零问题；`issues labels <知识库>/docs` 不建也不列出新 label；在代码仓库主 checkout 跑 `knowledge-base.mjs root` 输出知识库。
 
-依据：grill 决议「老做法删掉；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁）」（U7 Q24、U8 Q24b）。历史保留：dreaming 判一份 spec 上线没有要翻它的提交历史（`idea-loop:dreaming` 的对账）。`git subtree` 是 git 自带的，不用装 `git filter-repo`。
+依据：grill 决议「老做法删掉；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁）」（U7 Q24、U8 Q24b）；指针块：人 2026-11-03 原话「我倾向于仓库的agent.md仍然维护，但是知识库可以一个指针指向对应的地方即可～」（决定记录 U10）。历史保留：dreaming 判一份 spec 上线没有要翻它的提交历史（`idea-loop:dreaming` 的对账）。`git subtree` 是 git 自带的，不用装 `git filter-repo`。
 
 ### 老布局在哪被拦下
 
@@ -199,17 +214,17 @@ implement 开 PR 时把这份 spec 的每个 PR（每个代码仓库的、知识
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | `knowledge-base.mjs`：查业务、`root` 的三种结果、`--write` 开 worktree、`repo` / `worktree` / `business`、查不到时的报错；`issues.mjs` 从 `idea-loop.json` 取 `GH_REPO` |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | `knowledge-base.mjs`：读指针块查业务、`root` 的三种结果、`--write` 开 worktree、`repo` / `worktree` / `business`、查不到时的报错；`issues.mjs` 从 `idea-loop.json` 取 `GH_REPO` |
 | API 契约（路由、schema、序列化） | TDD API 测试 | `projects.json` 与 `idea-loop.json` 的形状由 `knowledge-base.mjs` 的单元测试覆盖 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：本仓库对 skill 跳过量化 eval（AGENTS.md §5）；改了路径说法的 skill 由文档测试守「不再出现当前 checkout 的 `docs/`」 |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及；换成 harold-skills 合并 0.2.0 后由人重跑 setup 迁移，那一次就是端到端验收 |
 
-- **seam**：`knowledge-base.mjs` 的命令行。测试在临时目录里建真 git 仓库（代码仓库、知识库）和一份临时 `projects.json`（`IDEA_LOOP_HOME` 环境变量指过去），跑子命令读输出。抓得到：业务查错、`.tmp/kb/` 开在错的分支、查不到时没报错；漏掉：真 GitHub 上建仓库与推送。
+- **seam**：`knowledge-base.mjs` 的命令行。测试在临时目录里建真 git 仓库（带指针块的代码仓库、知识库）和一份临时 `projects.json`（`IDEA_LOOP_HOME` 环境变量指过去），跑子命令读输出。抓得到：业务查错、`.tmp/kb/` 开在错的分支、查不到时没报错；漏掉：真 GitHub 上建仓库与推送。
 - **增量功能测试**：
-  - 前置：临时目录里一个代码仓库 `app`（在分支 `feature/x` 的 worktree）、一个知识库 `biz-kb`、`projects.json` 把两者配进业务 `biz`。步骤：在 `app` 的 worktree 里跑 `root`，再跑 `root --write`，再跑 `root`。期望：第一次输出 `biz-kb` 主 checkout；第二次输出 `<worktree>/.tmp/kb`，那里是 `biz-kb` 的 `feature/x` 分支；第三次输出 `.tmp/kb`。覆盖：日常一个需求 1。
-  - 前置：同上但 `projects.json` 里没有 `app`。步骤：跑 `root`。期望：非 0 退出，输出里有「/idea-loop:setup」。覆盖：老项目迁移 4。
+  - 前置：临时目录里一个代码仓库 `app`（`AGENTS.md` 的指针块写业务 `biz`；在分支 `feature/x` 的 worktree）、一个知识库 `biz-kb`、`projects.json` 写了 `biz` 的知识库路径。步骤：在 `app` 的 worktree 里跑 `root`，再跑 `root --write`，再跑 `root`。期望：第一次输出 `biz-kb` 主 checkout；第二次输出 `<worktree>/.tmp/kb`，那里是 `biz-kb` 的 `feature/x` 分支；第三次输出 `.tmp/kb`。覆盖：日常一个需求 1。
+  - 前置：同上但 `app` 没有指针块；另一次是有指针块、`projects.json` 里没有 `biz`。步骤：各跑 `root`。期望：都非 0 退出，输出里有「/idea-loop:setup」，第二次还点名知识库的 GitHub 名。覆盖：老项目迁移 4。
   - 前置：`biz-kb/idea-loop.json` 的 `issues` 是 `o/app`。步骤：`issues.mjs` 用默认 `gh` 起一次（假 `gh` 记下环境）。期望：`GH_REPO=o/app`。覆盖：日常一个需求 3。
   - 前置：业务里有 `app`、`api` 两个仓库。步骤：在 `app` 的 worktree 跑 `worktree api`。期望：`.tmp/repos/api` 是 `api` 的 `feature/x` 分支。覆盖：多仓库需求 2。
 - **照着谁写**：`idea-loop/scripts/retro-install.test.mjs`（临时目录里建真 git 仓库）、`idea-loop/scripts/issues.test.mjs`（假 `gh`）、`idea-loop/scripts/*-doc.test.mjs`（对 skill 文本的断言）。
