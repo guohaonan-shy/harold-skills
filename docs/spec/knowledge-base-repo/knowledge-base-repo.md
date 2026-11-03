@@ -210,7 +210,7 @@ setup 对老项目：
 
 ### 每份 spec 什么时候算全部合并
 
-implement 开 PR 时把这份 spec 的每个 PR（每个代码仓库的、知识库的）写进 PR 描述的 `reference` 区；pr-review 合并一个 PR 后，`gh pr view` 逐个查其余的，全合了才 `issues advance`。依据：grill 决议「全部合并 spec 才完成」（U7 Q23）；PR 描述已经是 pr-review 每轮读的东西（`idea-loop:pr`），不另建状态文件（`idea-loop:implement` 的「账本」：不另建状态文件）。
+implement 开 PR 时把这份 spec 的每个 PR（每个代码仓库的、知识库的）写进 PR 描述的 `reference` 区；pr-review 合并一个 PR 后，`gh pr view` 逐个查其余的，全合了才 `issues advance`。实现阶段的知识库 PR 不跑 review、由会话自己合：人说合并最后一个代码 PR 后，会话先做设计归档（有设计时照旧给人过目草稿），检查全过就 squash 合并，不查、不归档 review 记录，合并方式不从代码仓库的开发设置取；只有一个代码仓库的业务同样如此（决定记录 U22，人 2026-11-03 原话：「知识库PR不用review 直接合并即可」）。依据：grill 决议「全部合并 spec 才完成」（U7 Q23）；PR 描述已经是 pr-review 每轮读的东西（`idea-loop:pr`），不另建状态文件（`idea-loop:implement` 的「账本」：不另建状态文件）。
 
 ## 测试决策
 
