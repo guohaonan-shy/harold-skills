@@ -307,6 +307,14 @@ Q43 我倾向于A，然后cmux 我可能让它来承接p2问题，这里面有�
 
 定了：公司项目用 Claude Desktop 的 SSH 会话（claude 在虚拟机上）；cmux 作为跟 Desktop 平行的一种执行环境，承接 P2 的自动处理。执行环境（Desktop / cmux）和 issue 来源（GitHub / Linear）是两层、互不依赖：环境只负责「在哪开会话、跑 `/idea-loop:issue-session <issue>`」，各来源的状态、优先级、issue 号格式由 F3 的平台层按项目映射。浏览器看虚拟机上的服务推荐 ssh -L 转发，不在 Dawn 开公网端口。
 
+## U26
+
+A 先只承接个人项目，linear上不一定有优先级划分
+
+## A26
+
+定了：cmux 先只承接个人项目的 P2（本地跑）；公司项目的 P2 暂走 Desktop 出卡片，等 cmux 连远端的问题（打字延迟、cmuxd-remote 上传失败）解决再交给它。Linear 上团队不一定用优先级：公司项目怎么判 P0、判了记在哪（写进 Linear 的优先级字段，还是不写、调度每轮现算），留给 F3 会话在人连上 Linear、看过团队实际用法后定。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -325,9 +333,9 @@ Q43 我倾向于A，然后cmux 我可能让它来承接p2问题，这里面有�
 | 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
 | 账号与额度 | 虚拟机上也登录这个账号，公司与个人共用额度；超了开 credits；分业务会话上限 F4 开工时再定（Ultra 已无 5 小时限流） | U17、U18 |
 | Codex | 0.2.0 的 F6（#237）：Codex 能跑完整个 issue 会话，cmux 调度可开 Codex 终端；排在 F4 之后（推翻 U19「本期不做」） | U20、U21 |
-| 调度在哪跑 | 执行环境两种平行：Claude Desktop（公司项目用它的 SSH 会话，claude 在虚拟机上；P0/P1 出卡片等人点）与 cmux（承接 P2 自动处理）；按项目选；执行环境与 issue 来源两层互不依赖 | U4 Q11、U14、U15、U25 |
+| 调度在哪跑 | 执行环境两种平行：Claude Desktop（公司项目用它的 SSH 会话，claude 在虚拟机上；P0/P1 出卡片等人点；公司 P2 暂时也走这里）与 cmux（先只承接个人项目的 P2，本地跑）；按项目选；执行环境与 issue 来源两层互不依赖 | U4 Q11、U14、U15、U25、U26 |
 | 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json`（只放跟机器有关的） | U5 Q13、U11 |
-| Linear | 按项目选；Linear 不会自己触发，自动的部分由 cmux 里的调度读 Linear API；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28、U15 |
+| Linear | 按项目选；Linear 不会自己触发，自动的部分由 cmux 里的调度读 Linear API；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28、U15 |；团队不一定用优先级，公司项目的 P0 怎么判、记在哪由 F3 定（U26）
 | 环境 | Desktop 与 cmux 都支持，setup 让人选；环境内容抽成 `idea-loop:workspace` skill，两种做法各一份 reference | U8 Q27、U9 |
 | 给人看文件 | PR 是主路；cmux 里用 `cmux open`；远端文件靠 Mac 挂载虚拟机的知识库与临时区，挂载方式以后定 | U6 Q16、U7 Q21 |
 | Dreaming | 不加「P2 与想法」一节；想法人自己开会话 | U6 Q18 |
