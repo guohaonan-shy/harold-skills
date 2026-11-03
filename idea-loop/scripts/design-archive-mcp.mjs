@@ -23,7 +23,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { QueryError, query } from './design-archive-query.mjs';
-import { KnowledgeBaseError, knowledgeBaseRoot } from './knowledge-base.mjs';
+import { CONFIG_FILE, KnowledgeBaseError, gitRoot, knowledgeBaseRoot } from './knowledge-base.mjs';
 
 const SUPPORTED_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER_INFO = { name: 'design-archive', version: '1.0.0' };
@@ -98,6 +98,7 @@ const TOOLS = [
     arg: 'commit',
     description:
       '给一个提交，交回自它以来改过的代码牵到的状态：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了。同时给出每个状态是被哪个页面或组件牵进来的（via），和档案一共多少个状态。' +
+      '改动取自会话所在的代码仓库（MCP 启动在哪个 checkout，就比对哪个仓库；在知识库里启动会报错，要到代码仓库里问）。' +
       '什么时候用：只想对「上次以来代码动过的界面」重新走一遍（增量截图对账），不想把整个档案都重跑时。',
     properties: { commit: nameProp('起点提交：SHA、分支名或 HEAD~N；改动取从它到 HEAD'), delta: DELTA_PROP },
   },
@@ -137,6 +138,20 @@ function repoRoot(cwd = process.cwd()) {
   return root;
 }
 
+/**
+ * The code repository `design_affected` compares: the git top of the working directory the session started in (the
+ * checkout the code under work is in). A knowledge base has no code, so a session started in one is told to ask from a
+ * code repository.
+ */
+function codeRoot(cwd) {
+  const top = gitRoot(cwd);
+  if (!top) throw new QueryError(`${cwd} 不在 git 仓库里：按提交挑状态要读代码仓库的 git 历史`, 'no-repo');
+  if (existsSync(join(top, CONFIG_FILE))) {
+    throw new QueryError(`${top} 是知识库，里面没有代码：按提交挑状态要在代码仓库里问（在要比对的代码仓库的 checkout 里启动会话）`, 'no-repo');
+  }
+  return top;
+}
+
 /** One tools/call. Returns an MCP result; every expected failure is an `isError` result. */
 export function callTool(tool, args, cwd = process.cwd()) {
   const input = args && typeof args === 'object' && !Array.isArray(args) ? args : {};
@@ -149,7 +164,9 @@ export function callTool(tool, args, cwd = process.cwd()) {
   }
   const delta = input.delta ?? null;
   try {
-    const result = query(repoRoot(cwd), tool.entry, value, { delta });
+    const root = repoRoot(cwd);
+    const code = tool.entry === 'affected' ? codeRoot(cwd) : null;
+    const result = query(root, tool.entry, value, { delta, code });
     // the command line treats "nothing matched" as a failure; so does the tool
     if (tool.entry === 'keyword' && !result.matches.length) return textResult(`没有对象匹配「${result.query}」`, true);
     return textResult(JSON.stringify(result, null, 2));

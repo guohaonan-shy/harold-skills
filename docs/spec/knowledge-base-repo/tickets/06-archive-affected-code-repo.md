@@ -17,12 +17,12 @@
 spec：`docs/spec/knowledge-base-repo/knowledge-base-repo.md`「同一行为的其他入口」里「设计档案的 MCP 与查询……」一行。
 
 ## 验收标准
-- [ ] 单元测试：知识库（带 `idea-loop.json` 与 `docs/design/prod/`，页面登记 `code: src/pages/a.tsx`）+ 代码仓库（有 `src/pages/a.tsx`，两个提交间改了它）。`affected <第一个提交> --code <代码仓库>` 交回那个页面的全部状态；import 的一跳也从代码仓库读
-- [ ] 单元测试：档案根是知识库、没给 `--code`，退出码非 0，报错说要给 `--code`
-- [ ] 单元测试：老布局夹具（仓库根有 `docs/`）不给 `--code`，结果跟改动前一样（现有 `affected` 测试不改断言仍绿）
-- [ ] MCP 测试：在配进业务的代码仓库 worktree 里启动，`design_affected` 交回代码改动牵到的状态；在知识库里启动，返回说明要在代码仓库里问的错误
-- [ ] 文档：`incremental-scope.md` 的命令带 `--code`，并写了多仓库的已知限制
-- [ ] 全量 `node --test '*/scripts/*.test.mjs'` 全绿
+- [x] 单元测试：知识库（带 `idea-loop.json` 与 `docs/design/prod/`，页面登记 `code: src/pages/a.tsx`）+ 代码仓库（有 `src/pages/a.tsx`，两个提交间改了它）。`affected <第一个提交> --code <代码仓库>` 交回那个页面的全部状态；import 的一跳也从代码仓库读
+- [x] 单元测试：档案根是知识库、没给 `--code`，退出码非 0，报错说要给 `--code`
+- [x] 单元测试：老布局夹具（仓库根有 `docs/`）不给 `--code`，结果跟改动前一样（现有 `affected` 测试不改断言仍绿）
+- [x] MCP 测试：在配进业务的代码仓库 worktree 里启动，`design_affected` 交回代码改动牵到的状态；在知识库里启动，返回说明要在代码仓库里问的错误
+- [x] 文档：`incremental-scope.md` 的命令带 `--code`，并写了多仓库的已知限制
+- [x] 全量 `node --test '*/scripts/*.test.mjs'` 全绿
 
 ## 选中的存量回归
 - `design-archive-query.test.mjs`：`affected` 的现有用例

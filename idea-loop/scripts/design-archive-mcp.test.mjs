@@ -131,25 +131,7 @@ test('tools/call returns what the command line prints, for the six lookups that 
   });
 });
 
-test('tools/call: design_affected returns what the command line prints, and a commit that is not there is an error result', () => {
-  const root = gitRepo();
-  const git = (...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' });
-  mkdirSync(join(root, 'src', 'pages'), { recursive: true });
-  writeFileSync(join(root, 'src', 'pages', 'pantry.tsx'), 'one\n');
-  git('add', '-A');
-  git('commit', '-q', '-m', 'one');
-  const first = git('rev-parse', 'HEAD').stdout.trim();
-  writeFileSync(join(root, 'src', 'pages', 'pantry.tsx'), 'two\n');
-  git('add', '-A');
-  git('commit', '-q', '-m', 'two');
-  const s = session(root, [INIT, call(2, 'design_affected', { commit: first }), call(3, 'design_affected', { commit: 'no-such-commit' })]);
-  assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
-  const answer = JSON.parse(textOf(s.byId[2]));
-  assert.deepEqual(answer, cliJson(root, 'affected', first));
-  assert.deepEqual(answer.states.map((x) => x.id), ['pantry--empty', 'pantry--overview']);
-  assert.equal(s.byId[3].result.isError, true);
-  assert.match(textOf(s.byId[3]), /no-such-commit/);
-});
+// design_affected compares the code repository the session started in; its tests are with the code repository ones below.
 
 test('tools/call: design_refs with a section id or a section type returns what the command line prints; design_page lists the sections', () => {
   const root = gitRepo(marketingExtra());
@@ -311,6 +293,43 @@ test('a pointer to a business this machine has no knowledge base for says to run
   const s = session(app, [INIT, call(2, 'design_page', { name: 'cookbook' })], { home: ideaLoopHome({}) });
   assert.equal(s.byId[2].result.isError, true);
   assert.match(textOf(s.byId[2]), /\/idea-loop:setup/);
+});
+
+/** A code repository (pointer to the business `biz`) with two commits changing a registered page's code, and a worktree of it. */
+function codeRepoWithHistory() {
+  const app = realpathSync(writeRepo({ 'README.md': 'app', 'AGENTS.md': POINTER, 'src/pages/pantry.tsx': 'one\n' }));
+  assert.equal(spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: app }).status, 0);
+  const g = commitAll(app);
+  const first = g('rev-parse', 'HEAD').stdout.trim();
+  writeFileSync(join(app, 'src', 'pages', 'pantry.tsx'), 'two\n');
+  commitAll(app);
+  const worktree = join(app, '.tmp', 'wt');
+  assert.equal(g('worktree', 'add', '-q', '-b', 'feature/x', worktree).status, 0);
+  return { app, worktree, first };
+}
+
+test('design_affected in a code repository configured into a business: the code changes of that checkout pick the states of the knowledge base, from the main checkout and from a worktree', () => {
+  const kb = gitRepo();
+  const { app, worktree, first } = codeRepoWithHistory();
+  const home = ideaLoopHome({ biz: { knowledgeBase: kb, home: app, repos: { app } } });
+  for (const cwd of [app, worktree]) {
+    const s = session(cwd, [INIT, call(2, 'design_affected', { commit: first }), call(3, 'design_affected', { commit: 'no-such-commit' })], { home });
+    assert.ok(!s.byId[2].result.isError, `${cwd}: ${JSON.stringify(s.byId[2])}`);
+    const answer = JSON.parse(textOf(s.byId[2]));
+    assert.deepEqual(answer, cliJson(kb, 'affected', first, '--code', cwd), cwd);
+    assert.equal(answer.changedFileCount, 1, cwd);
+    assert.deepEqual(answer.states.map((x) => x.id), ['pantry--empty', 'pantry--overview'], cwd);
+    assert.equal(s.byId[3].result.isError, true);
+    assert.match(textOf(s.byId[3]), /no-such-commit/);
+  }
+});
+
+test('design_affected in the knowledge base itself says to ask from a code repository; the other tools still work there', () => {
+  const kb = gitRepo();
+  const s = session(kb, [INIT, call(2, 'design_affected', { commit: 'HEAD' }), call(3, 'design_state', { name: 'cookbook--list' })]);
+  assert.equal(s.byId[2].result.isError, true);
+  assert.match(textOf(s.byId[2]), /要在代码仓库里问/);
+  assert.ok(!s.byId[3].result.isError);
 });
 
 test('bad input: missing argument is an error result, unknown tool is a protocol error, garbage line is a parse error', () => {

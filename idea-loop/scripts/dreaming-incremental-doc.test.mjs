@@ -81,6 +81,15 @@ test('only the picked states go to the live wave; the source wave stays full; an
   assert.match(reconcile, /增量时它也每次全量/);
 });
 
+test('the picking command reads the changes from the code repository (--code), says the base commit is the code repository\'s, and writes the multi-repo limit down', () => {
+  // the archive is in the knowledge base and the code is not: without --code the diff would be empty and the scope silently zero
+  assert.match(scope, /affected <基准提交> --code <代码 worktree 根>/);
+  assert.match(scope, /<基准提交>` 是\*\*代码仓库\*\*的提交/);
+  assert.match(scope, /不给 `--code` 会报错/);
+  assert.match(scope, /已知限制（多仓库的业务）/);
+  assert.match(scope, /只比对 `--code` 给的那一个代码仓库/);
+});
+
 test('the proposal table opens with the scope line, flags an unprocessed earlier table, and ends a failed batch with the full-run hint', () => {
   assert.match(proposal, /对账范围：增量——/);
   assert.match(proposal, /三样都要写：全量还是增量、为什么、对了几个状态/);
