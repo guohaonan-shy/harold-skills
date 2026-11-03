@@ -245,6 +245,32 @@ idea-loop 现在只在 review 时由 Claude 调 Codex（pr-reviewer 起两个只
 
 codex 本期先不做了
 
+## U20
+
+其实做也行，单开一个spec，然后cmux 也可以支持codex的terminal
+
+## A20
+
+问两题：Codex 做到哪一步（A 只接单张工单的实现 / B 跑完整个 issue 会话，等于把 A18 的耦合表全改一遍）；放不放进 0.2.0（作为 F6 排在 F4 之后 / 下一版）。推荐 A、F6。
+
+## U21
+
+Q35 我倾向于B
+
+Q36 作为F6
+
+## A21
+
+定了：Codex 能跑完整个 issue 会话（审核到合并），cmux 调度可开 Codex 终端；作为 0.2.0 的 F6，排在 F4 之后。开了子 issue #237 挂在 #220 下，状态审核中、分类 idea-loop/engineering。
+
+## U22
+
+（人在 F5 会话里说，PR #233 review 第 2 轮 S1，由 F5 会话转来）知识库PR不用review 直接合并即可
+
+## A22
+
+F5 的落法（F5 转述）：每份 spec 实现完有代码 PR 和知识库 PR；知识库 PR 由会话自己合：人说合并最后一个代码 PR 后，会话做完设计归档（有设计照旧给人过目草稿）、检查全过就 squash 合并，不 review、不归档 review 记录。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -261,7 +287,8 @@ codex 本期先不做了
 | 调度：对账 | 补挂根、补判 P0 | U4 Q6.2 |
 | 调度：名额与汇报 | 审核中不占名额；汇报每天列「等你的」，按阶段、带等了多久 | U5 Q6.3 |
 | 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
-| 账号与额度 | 虚拟机上也登录这个账号，公司与个人共用额度；超了开 credits。Codex 兜底本期不做；分业务会话上限 F4 开工时再定（Ultra 已无 5 小时限流） | U17、U18、U19 |
+| 账号与额度 | 虚拟机上也登录这个账号，公司与个人共用额度；超了开 credits；分业务会话上限 F4 开工时再定（Ultra 已无 5 小时限流） | U17、U18 |
+| Codex | 0.2.0 的 F6（#237）：Codex 能跑完整个 issue 会话，cmux 调度可开 Codex 终端；排在 F4 之后（推翻 U19「本期不做」） | U20、U21 |
 | 调度在哪跑 | Mac 的 cmux 里一个调度，按业务读不同来源（公司 Linear、个人 GitHub）；个人项目的会话全在本地，公司项目的会话全在虚拟机上（`cmux ssh`，claude 用这个账号在虚拟机上登录）；先不上云端 | U4 Q11、U14、U15 |
 | 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json`（只放跟机器有关的） | U5 Q13、U11 |
 | Linear | 按项目选；Linear 不会自己触发，自动的部分由 cmux 里的调度读 Linear API；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28、U15 |
@@ -271,6 +298,7 @@ codex 本期先不做了
 | 业务 | 共用一份知识库的一组仓库叫「业务」（`GLOSSARY.md`） | U6 Q19 |
 | 知识库 | 单独一个 git 仓库，按业务分；公司的只在虚拟机，个人的只在个人电脑 | U6 Q20 |
 | 仓库级设置 | `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 留在代码仓库根目录，知识库不设 `repos/<仓库名>/`；以后再考虑把通用部分拆到业务层。代码仓库的 AGENTS.md 由人维护，加一个指针块写所属业务和知识库仓库地址，会话靠它找知识库；setup 必须问清 | U7 Q22、U11、U12 |
+| 知识库 PR | 不 review，人说合并最后一个代码 PR 后由会话做完设计归档、检查全过就 squash 合并 | U22 |
 | 业务的仓库说明 | 知识库根 `AGENTS.md` 的「## 仓库」一节：每个仓库的名字、GitHub 名、管哪块功能、依赖；会话可以开在知识库里（多仓库业务推荐），主分支取知识库默认分支，碰代码读工单所在仓库的开发设置 | U16 |
 | 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
 | 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
