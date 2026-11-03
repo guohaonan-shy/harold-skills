@@ -4,7 +4,7 @@ import { chmodSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import {
-  advance, advancePlan, candidates, defaultGh, dropIssue, ensureLabels, group, handoffIssue, issuesOf, openSpecIssue, p0Plan, parseFocus, parseTypes, queue, readFocus, readTypes, reconcile,
+  advance, advancePlan, candidates, defaultGh, dropIssue, ensureLabels, group, handoffIssue, issuesOf, mount, openSpecIssue, p0Plan, parseFocus, parseTypes, queue, readFocus, readTypes, reconcile,
   reconcilePlan, resume, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
@@ -50,6 +50,18 @@ function fakeGh(issues, labels = []) {
   const gh = (args) => {
     const [noun, verb, n] = args;
     if (noun === 'label' && verb === 'list') return JSON.stringify(labels.map((name) => ({ name })));
+    if (noun === 'api' && verb === '-X') {
+      // hanging a sub-issue: `api -X POST repos/{owner}/{repo}/issues/<root>/sub_issues -F sub_issue_id=<id>`
+      calls.push(args);
+      const root = Number(args[3].match(/issues\/(\d+)\/sub_issues$/)[1]);
+      const id = Number(args[5].split('=')[1]);
+      Object.values(issues).find((i) => (i.id ?? i.number * 1000) === id).parent = root;
+      return '{}';
+    }
+    if (noun === 'api' && /issues\/\d+$/.test(verb)) {
+      const i = issues[verb.match(/(\d+)$/)[1]];
+      return JSON.stringify({ number: i.number, id: i.id ?? i.number * 1000 });
+    }
     if (noun === 'api') {
       // the repo-wide REST list the script reads open issues from: `repos/{owner}/{repo}/issues?state=open&per_page=N&page=P`
       const q = new URL(`http://gh/${verb}`).searchParams;
@@ -388,7 +400,7 @@ test('candidates: P0 first, then the roots in focus, each oldest first; sub-issu
 
 test('candidates --p2: the rest, oldest first', () => {
   const { gh } = fakeGh(priorityIssues());
-  assert.deepEqual(candidates(gh, 100, new Set(), { focus: ['Email 报告'], p2: true }).map((i) => i.number), [3, 7]);
+  assert.deepEqual(candidates(gh, 100, new Set(), { focus: ['Email 报告'], p2: true }), [{ number: 3, title: '付款', root: true }, { number: 7, title: 'issue 7', root: false }]);
 });
 
 test('candidates without a focus offer P0 only', () => {
@@ -426,6 +438,33 @@ test('reconcile lifts a sub-issue\'s P0 onto its root', () => {
   assert.deepEqual(reconcile(gh, docs).done, ['#2: 子 issue 是 P0 → 根加上 priority:P0']);
   assert.ok(issues[2].labels.includes('priority:P0'));
   assert.deepEqual(calls.map((c) => c.join(' ')), ['issue edit 2 --add-label priority:P0']);
+});
+
+test('mount hangs an issue under its module\'s open, unstarted root, the oldest of them', () => {
+  const issues = {
+    1: { ...open(1, ['status:实现中']), title: '付款' }, 2: sub(2, 1, ['status:实现中']),
+    3: { ...open(3), title: '付款' }, 4: sub(4, 3),
+    5: { ...open(5), title: '付款' },
+    9: open(9),
+  };
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(mount(gh, 9, ' 付款 '), { root: 3, made: false });
+  assert.equal(issues[9].parent, 3);
+  assert.deepEqual(calls.map((c) => c.join(' ')), ['api -X POST repos/{owner}/{repo}/issues/3/sub_issues -F sub_issue_id=9000']);
+});
+
+test('mount opens a root titled with the module when it has none, and refuses a sub-issue or a root', () => {
+  const issues = { 1: { ...open(1, ['status:验证中']), title: 'idea-loop/engineering' }, 2: sub(2, 1), 9: open(9) };
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(mount(gh, 9, 'idea-loop/engineering'), { root: 10, made: true });
+  assert.equal(issues[10].title, 'idea-loop/engineering');
+  assert.match(issues[10].body, /^模块根，由 idea-loop 开出/);
+  assert.deepEqual(issues[10].labels, []);
+  assert.equal(issues[9].parent, 10);
+  assert.equal(calls[0][1], 'create');
+  assert.throws(() => mount(gh, 9, '付款'), /已经挂在 #10 下/);
+  assert.throws(() => mount(gh, 1, '付款'), /自己是根/);
+  assert.throws(() => mount(gh, 9, ' '), /没给模块名/);
 });
 
 test('ensureLabels creates priority:P0 and Idea, and keeps them whatever their case', () => {

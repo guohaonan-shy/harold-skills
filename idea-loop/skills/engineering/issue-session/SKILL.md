@@ -69,5 +69,5 @@ argument-hint: "<根号或 issue 号>"
 
 ## 边界
 
-- 只做这一组。路上发现的别的问题，照 `idea-loop:spec-status` 的「开一个待验证的 issue」开出去，调度会接手。
+- 只做这一组。路上发现的别的问题：P0 的照 `idea-loop:spec-status` 的「开一个待验证的 issue」当场开；不是 P0 的告诉人是什么、在哪，人说开才开（`idea-loop:decision-rules` 第 2 条）。
 - issue 的状态只走 `issues`；侧边栏只移动你自己。

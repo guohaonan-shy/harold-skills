@@ -75,9 +75,11 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 | `verified` | PR 描述 |
 | `by_existing_practice`、标「存量本次修」的 `found` | handled |
 | 标「spec 缺口」的 `found` | pending，当决定题 |
-| 其余 `found`（跟这次无关的存量） | 开 issue，见下 |
+| 其余 `found`（跟这次无关的存量） | P0 开 issue，其余进 pending，见下 |
 
-**跟这次无关的存量问题自动开 issue**（`idea-loop:decision-rules` 的「自己定的四条」第 2 条）：逐条照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（为什么不做：它跟这张工单无关）。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次 Review 汇报（来自实现中）和第 1 轮 review 汇报的「已按规则处理」都带它。开不成的也记进 handled，让人在 Review 汇报里看到。
+**跟这次无关的存量问题**（`idea-loop:decision-rules` 的「自己定的四条」第 2 条）：逐条判是不是 P0（`idea-loop:spec-status` 的「优先级」）。
+- **P0**：照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（为什么不做：它跟这张工单无关）。把「做了什么 + 依据（它跟这张工单无关、是 P0）+ issue 链接」记进 handled，下次 Review 汇报（来自实现中）和第 1 轮 review 汇报的「已按规则处理」都带它。开不成的也记进 handled，让人在 Review 汇报里看到。
+- **不是 P0**：记进 pending，当一道「要你决定」：写清是什么、在哪、为什么跟这次无关，选项是「开 issue」和「不开」。不为它停下派工，跟别的决定题一起在 Review 汇报里给人；人批了「开 issue」才照上面的入口开。
 
 ## 卡住一张，别的接着做
 

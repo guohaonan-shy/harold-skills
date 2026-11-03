@@ -36,6 +36,7 @@ issues labels     <docs> [--prune]             # 建缺的 status:* type:* label
 issues type       <docs> <号> <父类[/子类]>...  # 打分类，换掉原有的 type:*
 issues candidates <docs> [<limit>] [--p2]      # 待验证的候选：P0 在前、再接本期焦点的根（JSON）；--p2 出其余的
 issues group      <docs> <号>                   # 根号或子 issue 号：根和开着的子 issue（JSON）
+issues mount      <docs> <号> <模块名>          # 挂到这个模块开着、没开工的根下；没有就开一个根
 issues queue      <docs> <待设计|待实现>        # 等在这个状态的 spec，加上 label 对不上的问题
 issues set        <docs> <状态> <号 | slug>...  # 翻状态；根号连子 issue 一起翻
 issues reconcile  <docs>                       # 对账：照主分支翻；根跟着子 issue
@@ -63,11 +64,17 @@ spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff
 
 ## 开一个待验证的 issue
 
-流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开成待验证 issue（开在 `<知识库>/idea-loop.json` 的 `issues` 指的 GitHub 仓库上），loop 会接手：
+所有开 issue 的流程都照这里开（开在 `<知识库>/idea-loop.json` 的 `issues` 指的 GitHub 仓库上）：人批了的（review 里批了「开 issue」、retro、对账发现的产品缺陷）、P0 的存量问题、人在会话里说要开的。会话路上发现、不是 P0 的存量问题，先写进汇报的「要你决定」，人批了才开（`idea-loop:decision-rules` 第 2 条）。
 
 1. 先查重：`gh issue list --state open --search "<关键词>"`。已有同一个问题的，就用那一条，写「已有 #N」。
 2. 没有就 `gh issue create`，不打 `status:*` label。标题写问题本身；正文写给一个没有上下文的人看：是什么、在哪、怎么复现或怎么看到、为什么这次不做。
-3. 开不成（`gh` 失败）的，记下没开成和原因，交给人。
+3. **判 P0**：照上面「优先级」的定义，确定是 P0 才 `gh issue edit <号> --add-label priority:P0`；拿不准不标。
+4. **挂模块根**：判它属于哪个模块，`issues mount <docs> <号> <模块名>` 挂到这个模块开着、还没开工的根下（没有就开一个标题是模块名的根）。拿不准属于哪个模块的不挂：它就是 P2，等人归。判模块：
+   - 知识库根 `AGENTS.md` 的「issue 分类」一节里有一行以「模块按分类」开头的，分类就是模块：先照分类一节选好分类、`issues type` 打上，模块名是分类的路径，有子类写 `<父类>/<子类>`，父类下没有子类写 `<父类>`。
+   - 其余的按改的东西判，满足一条就是同一个模块：**改同一个文件**（md 和代码都算，例：几个 issue 都改同一份 SKILL.md）；**改同一个页面或同一个功能模块**（例：「Email 报告」「Email 批注」「Email 打分」是同一个 Email 功能，两个讲付款回调的是同一个付款回调）。要读标题和正文，不能只看分类 label：分类切的往往是性质（缺陷、功能），不是模块。模块名用人一眼认得的页面或功能名，已有根的沿用它的标题。
+5. 开不成（`gh` 失败）的，记下没开成和原因，交给人。
+
+脚本开的 issue（如 seo-scan 的）和人直接在 GitHub 上开的，第 3、4 步由调度对账时补（`idea-loop:issue-dispatch`）。
 
 ## spec 的状态
 

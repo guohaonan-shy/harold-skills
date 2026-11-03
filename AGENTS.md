@@ -145,6 +145,8 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 
 issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类>`，子类打成 `type:<父类>/<子类>`，打子类时父类一起打。idea-loop 验证 issue 时打，人也可以手动打。父类按 issue 落在哪个 plugin 分。
 
+模块按分类：分类就是模块，模块根的标题写分类路径（有子类写 `idea-loop/engineering`，没有写 `excalidrawer`），本期焦点也写它。
+
 - `idea-loop`：idea-loop plugin 的 issue
   - `engineering`：spec、工单、实现、review、issue 调度这条从想法到合并的流程
   - `design`：设计调研、设计发散与收敛、设计档案、`DESIGN.md`

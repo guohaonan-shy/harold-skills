@@ -36,6 +36,10 @@
  * and P1 only, `--p2` the rest; an issue labelled `Idea` is never offered, and `reconcile` lifts a
  * sub-issue's P0 onto its root.
  *
+ * A module is a root issue titled with the module's name. `mount` hangs a new issue under its module's root:
+ * the oldest open one with that exact title that has no parent and no status yet (a started root takes no
+ * more sub-issues), or a new root when there is none. Which module an issue belongs to is the opener's call.
+ *
  * Besides its status an issue carries category labels, `type:<parent>` and optionally
  * `type:<parent>/<child>`. The project lists them in the「issue 分类」section of its AGENTS.md (or
  * CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes every label outside the
@@ -50,6 +54,7 @@
  *   node issues.mjs candidates <docs> [<limit>] [--p2]         → JSON: 待验证 groups no spec lists: P0 first, then the roots in focus, each oldest first;
  *                                                                 --p2 the rest (no P0, not in focus), oldest first. Sub-issues and ideas never come out
  *   node issues.mjs group      <docs> <n>                      → JSON: the root of #n (the root's number or any sub-issue's) and its open sub-issues
+ *   node issues.mjs mount      <docs> <n> <module>             → hangs #n under the module's open, unstarted root (titled <module>); opens one when there is none
  *   node issues.mjs queue      <docs> <待设计|待实现>           → JSON: specs whose issues wait in that state, and the mismatches
  *   node issues.mjs set        <docs> <state> <target>...      → checked flip: claim, a session opening or giving up, 搁置; a root's number flips its open sub-issues too
  *   node issues.mjs reconcile  <docs>                          → the flips main already decides: 待设计 / 待实现, closing
@@ -481,7 +486,8 @@ export function listedIssues(docs) {
 /**
  * The 待验证 groups the dispatcher may offer: a root, or an issue with no parent, that no spec lists, is not a
  * spec issue and not an idea. P0 first, then the roots whose title is in `focus`, each oldest first; with
- * `p2`, the rest (no P0, not in focus), oldest first.
+ * `p2`, the rest (no P0, not in focus), oldest first. `root` says whether it is a module root; one that is
+ * not has not been hung under a module yet.
  */
 export function candidates(gh, limit = 100, listed = new Set(), { focus = [], p2 = false } = {}) {
   const inFocus = (i) => i.subCount > 0 && focus.includes(String(i.title).trim());
@@ -492,7 +498,7 @@ export function candidates(gh, limit = 100, listed = new Set(), { focus = [], p2
     .filter((i) => (p2 ? tier(i) === 2 : tier(i) < 2))
     .sort((a, b) => tier(a) - tier(b) || a.number - b.number)
     .slice(0, limit)
-    .map(({ number, title }) => ({ number, title }));
+    .map(({ number, title, subCount }) => ({ number, title, root: subCount > 0 }));
 }
 
 /** The roots that should carry P0: a root without it, with an open sub-issue that carries it. */
@@ -581,6 +587,35 @@ export function advance(gh, docs, slug) {
   return { done: apply(gh, [...actions, ...plan.actions], new Map(open.map((i) => [i.number, i])), slug), phase, problems: plan.problems };
 }
 
+export const ROOT_BODY = '模块根，由 idea-loop 开出。这个模块的 issue 挂在它下面，一组一份 spec、一个会话。';
+
+/**
+ * Hangs #n under the root of `module`: the oldest open issue titled exactly `module`, without a parent and
+ * without a status label; a new root (title `module`, no label) when there is none. Refuses an issue that
+ * already has a parent or is a root itself. Returns `{ root, made }`.
+ */
+export function mount(gh, n, module) {
+  const name = String(module ?? '').trim();
+  if (!name) throw new Error('没给模块名');
+  const open = openIssues(gh);
+  const it = open.find((i) => i.number === n);
+  if (!it) throw new Error(`#${n} 不是开着的 issue`);
+  if (it.parent) throw new Error(`#${n} 已经挂在 #${it.parent} 下`);
+  if (it.subCount > 0) throw new Error(`#${n} 自己是根，不挂`);
+  const found = open
+    .filter((i) => i.number !== n && !i.parent && String(i.title).trim() === name && stateOf(i.labels) === UNLABELLED)
+    .sort((a, b) => a.number - b.number)[0];
+  let root = found?.number;
+  if (!root) {
+    const out = String(gh(['issue', 'create', '--title', name, '--body', ROOT_BODY])).trim();
+    root = Number(out.match(/\/issues\/(\d+)$/)?.[1]);
+    if (!root) throw new Error(`gh issue create 没返回 issue 地址：${out}`);
+  }
+  const id = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}`])).id;
+  gh(['api', '-X', 'POST', `repos/{owner}/{repo}/issues/${root}/sub_issues`, '-F', `sub_issue_id=${id}`]);
+  return { root, made: !found };
+}
+
 /** The group #n belongs to: its root (a root's own number, or its sub-issue's parent) and the root's open sub-issues. */
 export function group(gh, n) {
   const open = openIssues(gh);
@@ -662,7 +697,7 @@ const num = (v, what) => {
   return Number(v);
 };
 
-const COMMANDS = ['labels', 'type', 'candidates', 'group', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
+const COMMANDS = ['labels', 'type', 'candidates', 'group', 'mount', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
 
 function main() {
   const [cmd, docs, a, b, ...rest] = process.argv.slice(2);
@@ -694,6 +729,11 @@ function main() {
   if (!a) throw new Error(`usage: issues.mjs ${cmd} <docs> …`);
   if (cmd === 'queue') return console.log(JSON.stringify(queue(gh, docs, a), null, 2));
   if (cmd === 'group') return console.log(JSON.stringify(group(gh, num(a, 'issue')), null, 2));
+  if (cmd === 'mount') {
+    if (b === undefined) throw new Error('usage: issues.mjs mount <docs> <issue 号> <模块名>');
+    const { root, made } = mount(gh, num(a, 'issue'), [b, ...rest].join(' '));
+    return console.log(`#${a} → #${root}（${[b, ...rest].join(' ')}${made ? '，新开的根' : ''}）`);
+  }
   if (cmd === 'type') {
     if (b === undefined) throw new Error('usage: issues.mjs type <docs> <issue 号> <父类[/子类]>...');
     return console.log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);

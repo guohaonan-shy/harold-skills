@@ -281,7 +281,8 @@ Dreaming 不加「P2 与想法」一节：想法由人自己开会话（决定�
 
 不涉及。插件只有 skill 文本和 `issues.mjs`。脚本的变化：
 
-- `issues candidates`：读 `ISSUE_TRACKER.md` 的「本期焦点」；只出 `priority:P0` 和焦点里的根；跳过 `Idea`；删 6 小时等待；`--p2` 出其余的；删 `--queue`。
+- `issues candidates`：读 `ISSUE_TRACKER.md` 的「本期焦点」；只出 `priority:P0` 和焦点里的根；跳过 `Idea`；删 6 小时等待；`--p2` 出其余的；删 `--queue`。每条带 `root`，调度补挂时靠它挑出还没挂根的。
+- `issues mount <号> <模块名>`：挂到这个模块开着、没开工（没有 `status:*`）的根下，最早的那个；没有就开一个标题是模块名、正文第一行「模块根，由 idea-loop 开出」的根再挂。只做机械的那一半：判哪个模块仍是开 issue 那一方的事。（实现时加的：挂 sub-issue 要先取 issue 的数据库 id 再 POST，整合 prompt 为此专门写了一段，放进脚本比让每个会话照着做稳。）
 - `issues labels`：建 `priority:P0` 与 `Idea`，两者都不算多余 label。
 - `issues reconcile`：子 issue 带 P0、根不带时，给根加 `priority:P0`。
 - `issues queues`：删；分类一节不再解析「（独立队列，上限 N）」。
@@ -313,6 +314,7 @@ Dreaming 不加「P2 与想法」一节：想法由人自己开会话（决定�
   - 前置：焦点行写 `本期焦点：idea-loop/engineering`，根 #2 的标题是 `idea-loop/engineering`、根 #3 是 `idea-loop/design`。期望：出 #2、不出 #3。覆盖：issue 进来 8。
   - 前置：分类一节里 `seo` 那行带「（独立队列，上限 5）」，有一个 `type:seo` 的 P0 issue 和一个 `type:seo` 的焦点根。期望：都按主队列出，P0 在前；括注不再生成队列。覆盖：调度出卡片 7。
   - 前置：根 #2 无 P0，它的子 #4 带 P0。步骤：`reconcile`。期望：#2 加上 `priority:P0`。覆盖：调度出卡片 2、5。
+  - 前置：模块「付款」有一个已开工的根和两个没开工的根。步骤：`mount <号> 付款`。期望：挂到没开工的那两个里号小的。模块没有没开工的根时：开一个标题「付款」的根再挂。已有父 issue 的、自己是根的拒绝。覆盖：issue 进来 2、3。
   - 前置：仓库里没有 `priority:P0`、`Idea`。步骤：`labels`。期望：两个都建出，不出现在多余 label 里。覆盖：issue 进来 1，想法 1。
   - 规则回放：`decision-rules` 第 2 条与 `implement` 自动开 issue 的改动，照 `evals/retro/` 取一个历史上自动开出非 P0 存量 issue 的决策点，改前「开了」、改后「写进要你决定」。覆盖：issue 进来 5。按仓库约定，回放是大用例时放夜间队列，不在白天跑。
 - **prompt / eval 变动**：无 prompt/eval 变动（skill 文本不算 prompt eval；回放用例见上）。

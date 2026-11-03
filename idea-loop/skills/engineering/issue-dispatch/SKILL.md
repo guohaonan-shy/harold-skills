@@ -6,16 +6,16 @@ argument-hint: "<间隔，如 30m>"
 
 你是项目的 **issue 的调度者**，在一个固定的调度会话里跑一个 loop。人敲 `/idea-loop:issue-dispatch <间隔>`（如 `30m`）起这个 loop：照「起 loop」排好定时，再立刻做第一轮。之后定时每到点以不带参数的 `/idea-loop:issue-dispatch` 调你，那是同一个 loop 的下一轮，照「每一轮」做。
 
-人通常不在场：要人决定的事写进汇报，接着做完这一轮。
+人通常不在场：要人决定的事写进汇报，接着做完这一轮。人在这个会话里说「开个 issue：…」，照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（判 P0、挂模块根都做），不用等下一轮。
 
-issue 可以挂在一个根 issue 下成为子 issue（`idea-loop:spec-status` 的「根 issue 和子 issue」）。一组按一个 issue 会话（`idea-loop:issue-session`）走：根和它的子 issue 一个会话，没被整合的 issue 自己是一组、一个会话，会话从验证陪到关闭，会话按阶段待在侧边栏的三个 section 里：「审核中」「设计中」「实现中」。所有 issue 一个队列，开着的会话上限 10。你只负责把新的一组交出去：**定时触发的轮次不能开会话，你出卡片**，人点了卡片会话才开。
+issue 可以挂在一个根 issue 下成为子 issue（`idea-loop:spec-status` 的「根 issue 和子 issue」）。一组按一个 issue 会话（`idea-loop:issue-session`）走：根和它的子 issue 一个会话，没被整合的 issue 自己是一组、一个会话，会话从验证陪到关闭，会话按阶段待在侧边栏的三个 section 里：「审核中」「设计中」「实现中」。所有 issue 一个队列，开着的会话上限 10，「审核中」里的不算（等人看 PR 的会话不占名额）。出哪些按价值：P0 和本期焦点的才出卡片（`idea-loop:spec-status` 的「优先级」），其余的（P2）不出、也不关。你只负责把新的一组交出去：**定时触发的轮次不能开会话，你出卡片**，人点了卡片会话才开。
 
 ## 前提与边界
 
 - 工作目录是主 checkout（`git worktree list` 的第一行），在默认分支上（`git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`，下文叫「主分支」）。不是就停下，在汇报里说明，这一轮什么都不做。
 - 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这里只读，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，也就是这个业务的知识库主 checkout，`<仓库名>` 取 `gh repo view --json name -q .name`。
 - 主 checkout 跟别的会话共用，你在这里只读：不切分支、不建 worktree、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。
-- issue 的状态只走 `issues`。侧边栏只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话：会话自己归位、自己收尾。
+- issue 的状态只走 `issues`。改 GitHub 上的 `priority:P0`、挂子 issue 跟对账同类，允许。侧边栏只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话：会话自己归位、自己收尾。
 
 ## 起 loop
 
@@ -29,10 +29,11 @@ loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由�
 ## 每一轮
 
 1. **对账**：`git -C <知识库> pull --ff-only`（`<知识库>` 是 `root` 的输出；知识库跟主 checkout 一样只读）；`issues labels <docs>` 建出缺的 label（它列出的多余 label 记进汇报，不删）；`issues reconcile <docs>`，报的问题原样记进汇报。
-2. **section**：「审核中」「设计中」「实现中」三个，`list_sections` 里缺的用 `create_section` 建。
-3. **数开着的会话**：三个 section 各用 `mcp__ccd_session_mgmt__list_sessions`（`group` 写 section 名，`limit: 100`）列出没归档的会话；section 自带的计数含已归档的，不用它。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：section 跨项目共用，总数也跨项目算），加起来是开着的会话数；标题是「<仓库名>#<号> …」的就是这个仓库那一组的会话，号是根号（没被整合的 issue 就是它自己的号）。标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个 section 里，但不占位：记下个数，写进汇报。判别用标题，不用会话的 `startedBy`：点调度卡片开出的 issue 会话，`startedBy` 也是调度会话，跟子会话分不出来；issue 会话开场会把自己的标题改成这个格式，所以都能被数到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，可能多出一张卡片；只多一个会话，不丢东西，接受。
-4. **没有会话的 issue**：label 是验证中、审核中、待设计、设计中、待实现、实现中，却没有对应标题的会话，记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或翻回去。先用 `issues group <docs> <号>` 找到它的根：子 issue 算在它根的会话名下，根有会话，子 issue 就不报；根自己也要有会话，没有才报。
-5. **出卡片**：空位 = 10 − 开着的会话 − 还没点的卡片（你出过、issue 还是待验证的；上一轮汇报里记着）。空位 ≤ 0 就跳过。否则取候选（脚本按 `idea-loop:spec-status` 的「优先级」给：P0 在前、再接本期焦点的根，不含子 issue 和想法）：`issues candidates <docs> <空位>`；跳过还没点的卡片已经占着的，每个根（或没被整合的 issue）出一张卡片，先对它跑 `issues group <docs> <号>` 查出子 issue，一轮最多 3 张：
+2. **补挂、补判**：`issues candidates <docs> 100` 和 `issues candidates <docs> 100 --p2` 两份里 `root` 是 false 的（还没挂到任何模块根下的），逐个读标题和正文，照 `idea-loop:spec-status`「开一个待验证的 issue」的第 3、4 步补：是 P0 就加 `priority:P0`，判得出模块就 `issues mount`（按分类定模块的，没打分类的先 `issues type`）。判不出的不动，记进汇报，之后的轮次不再判它（人归了它就不会再出现在这里）。这些是人直接在 GitHub 上开的、脚本开的 issue；补上了 P0 或挂到焦点模块的，这一轮就会进候选。补了哪些记进汇报。
+3. **section**：「审核中」「设计中」「实现中」三个，`list_sections` 里缺的用 `create_section` 建。
+4. **数开着的会话**：三个 section 各用 `mcp__ccd_session_mgmt__list_sessions`（`group` 写 section 名，`limit: 100`）列出没归档的会话；section 自带的计数含已归档的，不用它。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：section 跨项目共用，总数也跨项目算），「设计中」「实现中」两个加起来是开着的会话数：「审核中」的是等人看 PR 的会话，不占名额，只在「等你的」里列；标题是「<仓库名>#<号> …」的就是这个仓库那一组的会话，号是根号（没被整合的 issue 就是它自己的号）。标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个 section 里，但不占位：记下个数，写进汇报。判别用标题，不用会话的 `startedBy`：点调度卡片开出的 issue 会话，`startedBy` 也是调度会话，跟子会话分不出来；issue 会话开场会把自己的标题改成这个格式，所以都能被数到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，可能多出一张卡片；只多一个会话，不丢东西，接受。
+5. **没有会话的 issue**：label 是验证中、审核中、待设计、设计中、待实现、实现中，却没有对应标题的会话，记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或翻回去。先用 `issues group <docs> <号>` 找到它的根：子 issue 算在它根的会话名下，根有会话，子 issue 就不报；根自己也要有会话，没有才报。
+6. **出卡片**：空位 = 10 − 开着的会话 − 还没点的卡片（你出过、issue 还是待验证的；上一轮汇报里记着）。空位 ≤ 0 就跳过。否则取候选（脚本按 `idea-loop:spec-status` 的「优先级」给：P0 在前、再接本期焦点的根，不含子 issue 和想法）：`issues candidates <docs> <空位>`。知识库根 `ISSUE_TRACKER.md` 的「本期焦点」没写，候选就只有 P0，汇报里写「没有本期焦点，只出了 P0」。跳过还没点的卡片已经占着的，每个根（或没被整合的 issue）出一张卡片，先对它跑 `issues group <docs> <号>` 查出子 issue，一轮最多 3 张：
    - `start_session`：`initiation: own_initiative`，`context: fresh`，`use_worktree: true`（会话要有自己的 worktree 才能从你这里脱离出去），标题「<仓库名>#<根号> <根标题>」（没被整合的 issue 就是它自己）。
    - `prompt`：`你是 <仓库名>#<根号>（<根标题>）的 issue 会话，由 issue 调度会话的卡片开出；这一组还有子 issue <子 issue 号>（没有就省掉这半句）。用 Skill 工具调 idea-loop:issue-session，参数 <根号>，按它从开场做起。`
    - `background`：这个仓库用 idea-loop 处理 issue，一组 issue（一个根加它的子 issue，或一个没被整合的 issue）一个会话，会话按阶段待在侧边栏的「审核中」「设计中」「实现中」里，人在会话里 grill 和拍板；这一组的子 issue 号是 <子 issue 号>。
@@ -42,8 +43,10 @@ loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由�
 
 三行（你的上下文会随每轮累积）：
 
-- 对账做了什么（哪些 issue 进了哪个状态、关了哪些）
+- 对账做了什么（哪些 issue 进了哪个状态、关了哪些，补了哪些 P0、挂了哪些根）
 - 开着的会话 / 上限；子会话 N 个（不占位）；这一轮出的卡片；还没点的卡片（issue 号，下一轮要读）
 - 要人处理的事（对账报的问题、多余的 label、没有会话的 issue、出卡片失败），没有就写「无」
+
+**每天第一轮**（本地日期跟上一份带「等你的」的汇报不同，或这是 loop 的第一轮）多一节「等你的」：三个 section 里标题匹配「<仓库名>#<号> …」、`list_sessions` 里 `isRunning` 是 false 的会话，按 section 分组，每行写会话标题和等了多久（现在减 `lastActivityAt`，到小时），等得最久的在前；没有就写「无」。它们停着等人回话，人照这一节挑先回哪个。
 
 出了新卡片或有要人处理的事，用 PushNotification 发一句话：有几张卡片等点 / 要处理什么。
