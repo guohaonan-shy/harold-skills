@@ -301,7 +301,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   let hasState = null;
   if (flags.archive) {
     if (!existsSync(join(flags.archive, 'docs'))) {
-      console.error(`flow-compose: ${flags.archive} 不是仓库根（下面没有 docs/）`);
+      console.error(`flow-compose: ${flags.archive} 下面没有 docs/：这不是知识库的根`);
       process.exit(1);
     }
     const { loadArchive } = await import('./design-archive.mjs');

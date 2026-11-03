@@ -1,5 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { delimiter, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { apply, marker, plan, rejection } from './seo-issues.mjs';
 import { parseTypes } from './issues.mjs';
 
@@ -117,4 +122,24 @@ test('apply: comments go to the open issue, nothing is created', () => {
   assert.deepEqual(r.created, []);
   assert.deepEqual(r.commented, [{ number: 9, title: 'old' }]);
   assert.ok(calls.some((a) => a[1] === 'comment' && a[2] === '9'));
+});
+
+test('the command line runs gh through the same factory as issues.mjs: GH_REPO comes from the knowledge base\'s idea-loop.json', () => {
+  const base = mkdtempSync(join(tmpdir(), 'seo-issues-'));
+  const docs = join(base, 'kb', 'docs');
+  mkdirSync(docs, { recursive: true });
+  writeFileSync(join(base, 'kb', 'idea-loop.json'), JSON.stringify({ business: 'biz', issues: 'o/app', repos: {} }));
+  const bin = join(base, 'bin');
+  mkdirSync(bin);
+  const log = join(base, 'gh.log');
+  writeFileSync(join(bin, 'gh'), `#!/bin/sh\necho "\${GH_REPO:--} $*" >> '${log}'\necho '[]'\n`);
+  chmodSync(join(bin, 'gh'), 0o755);
+  const findings = join(base, 'findings.json');
+  writeFileSync(findings, JSON.stringify([finding()]));
+  const script = fileURLToPath(new URL('./seo-issues.mjs', import.meta.url));
+  const env = { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH}` };
+  delete env.GH_REPO;
+  const r = spawnSync('node', [script, docs, findings, '--dry-run'], { encoding: 'utf8', env });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['o/app issue list --state open --limit 1000 --json number,title,body']);
 });

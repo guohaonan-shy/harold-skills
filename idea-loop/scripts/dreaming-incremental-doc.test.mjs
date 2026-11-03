@@ -73,12 +73,21 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
 });
 
 test('only the picked states go to the live wave; the source wave stays full; an empty pick still runs the source wave', () => {
-  assert.match(scope, /design-archive-query\.mjs" <worktree 根> affected <基准提交>/);
+  assert.match(scope, /design-archive-query\.mjs" <知识库> affected <基准提交>/);
   assert.match(scope, /只用来定实时波/);
   assert.match(scope, /源码波每次全量/);
   assert.match(scope, /清单为空/);
   assert.match(reconcile, /增量时就是 `query affected <基准提交>` 交回的 `states`/);
   assert.match(reconcile, /增量时它也每次全量/);
+});
+
+test('the picking command reads the changes from the code repository (--code), says the base commit is the code repository\'s, and writes the multi-repo limit down', () => {
+  // the archive is in the knowledge base and the code is not: without --code the diff would be empty and the scope silently zero
+  assert.match(scope, /affected <基准提交> --code <代码 worktree 根>/);
+  assert.match(scope, /<基准提交>` 是\*\*代码仓库\*\*的提交/);
+  assert.match(scope, /不给 `--code` 会报错/);
+  assert.match(scope, /已知限制（多仓库的业务）/);
+  assert.match(scope, /只比对 `--code` 给的那一个代码仓库/);
 });
 
 test('the proposal table opens with the scope line, flags an unprocessed earlier table, and ends a failed batch with the full-run hint', () => {

@@ -106,6 +106,13 @@ test('the hand-back asks verified to carry one line naming the written standards
   assert.match(verifiedBlock, /读了哪几份写法规范|读了的写法规范/, '`verified` 要有一行写读了哪几份写法规范');
 });
 
+test('a ticket in another code repository is built from that repository\'s own standards', () => {
+  const before = section(doc, '开工前');
+  const step = before.split('\n').find((l) => l.includes('**工单写了「仓库」，且不是派你时的 worktree 所在仓库**'));
+  assert.ok(step, '「开工前」缺：工单在别的仓库时开自己的 worktree');
+  assert.match(step, /写法规范[^。]*用这个仓库的/,'读哪个仓库的写法规范：工单所在仓库的，不是派你时那个');
+});
+
 test('README describes the implementer as reading the standards, not as calling a fixed trio', () => {
   const readme = read('README.md');
   const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:implement`'));

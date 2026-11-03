@@ -1,6 +1,6 @@
 ---
 name: seo-setup
-description: 把一个站点接进 seo 分类：写仓库根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类和队列，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
+description: 把一个站点接进 seo 分类：写代码仓库里的 SEO.md，同步 OpenSEO 项目上下文，在知识库里建 SEO 的 issue 分类和队列，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
 disable-model-invocation: true
 ---
 

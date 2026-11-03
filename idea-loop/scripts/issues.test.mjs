@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import {
-  advance, advancePlan, candidates, dropIssue, ensureLabels, group, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, queueOf, queues, readTypes, reconcile,
+  advance, advancePlan, candidates, defaultGh, dropIssue, ensureLabels, group, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, queueOf, queues, readTypes, reconcile,
   reconcilePlan, resume, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
@@ -564,4 +564,68 @@ test('group gives the same root and open sub-issues for the root and for any sub
   assert.deepEqual(group(gh, 2), whole);
   assert.deepEqual(group(gh, 3), whole);
   assert.deepEqual(group(gh, 5), { root: { number: 5, title: 'issue 5' }, children: [] });
+});
+
+// ---------- gh runs against the business's issue repository ----------
+
+/** A knowledge base root in a temp directory (with idea-loop.json when `config` is given) and its docs/; returns docs. */
+function knowledgeBase(config) {
+  const root = mkdtempSync(join(tmpdir(), 'issues-kb-'));
+  mkdirSync(join(root, 'docs'));
+  if (config !== undefined) writeFileSync(join(root, 'idea-loop.json'), typeof config === 'string' ? config : JSON.stringify(config));
+  return join(root, 'docs');
+}
+
+/** Runs `fn` with a fake `gh` first on PATH that writes the GH_REPO it sees (or "-") and its arguments to a log; returns the log lines. */
+function withFakeGh(fn, ambientRepo) {
+  const bin = mkdtempSync(join(tmpdir(), 'issues-fakegh-'));
+  const log = join(bin, 'log');
+  writeFileSync(join(bin, 'gh'), `#!/bin/sh\necho "\${GH_REPO:--} $*" >> '${log}'\necho '[]'\n`);
+  chmodSync(join(bin, 'gh'), 0o755);
+  const saved = { PATH: process.env.PATH, GH_REPO: process.env.GH_REPO };
+  process.env.PATH = `${bin}${delimiter}${saved.PATH}`;
+  if (ambientRepo === undefined) delete process.env.GH_REPO;
+  else process.env.GH_REPO = ambientRepo;
+  try {
+    fn();
+  } finally {
+    process.env.PATH = saved.PATH;
+    if (saved.GH_REPO === undefined) delete process.env.GH_REPO;
+    else process.env.GH_REPO = saved.GH_REPO;
+  }
+  return readFileSync(log, 'utf8').trim().split('\n');
+}
+
+test('defaultGh: a knowledge base whose idea-loop.json names the issue repository runs gh with GH_REPO set to it', () => {
+  const docs = knowledgeBase({ business: 'biz', issues: 'o/app', repos: {} });
+  const lines = withFakeGh(() => {
+    const gh = defaultGh(docs);
+    assert.equal(gh(['issue', 'list']).trim(), '[]');
+    gh(['api', 'repos/{owner}/{repo}/issues']);
+  });
+  assert.deepEqual(lines, ['o/app issue list', 'o/app api repos/{owner}/{repo}/issues']);
+});
+
+test('defaultGh: without an idea-loop.json, or without an issues field in it, GH_REPO is not set and an existing one is left alone', () => {
+  for (const config of [undefined, { business: 'biz', repos: {} }]) {
+    const docs = knowledgeBase(config);
+    assert.deepEqual(withFakeGh(() => defaultGh(docs)(['issue', 'list'])), ['- issue list'], JSON.stringify(config));
+    assert.deepEqual(withFakeGh(() => defaultGh(docs)(['issue', 'list']), 'x/ambient'), ['x/ambient issue list'], JSON.stringify(config));
+  }
+});
+
+test('defaultGh: an idea-loop.json that is not JSON is refused with the file named, not ignored', () => {
+  const docs = knowledgeBase('{ nope');
+  assert.throws(() => defaultGh(docs), /idea-loop\.json/);
+});
+
+test('openSpecIssue: the issue body says the spec is in the knowledge base', () => {
+  const docs = knowledgeBase({ business: 'biz', issues: 'o/app', repos: {} });
+  mkdirSync(join(docs, 'spec', 'a'), { recursive: true });
+  writeFileSync(join(docs, 'spec', 'a', 'a.md'), spec({ status: '草稿' }));
+  const calls = [];
+  const gh = (args) => { calls.push(args); return 'https://github.com/o/app/issues/42'; };
+  assert.equal(openSpecIssue(gh, docs, 'a'), 42);
+  const body = calls[0][calls[0].indexOf('--body') + 1];
+  assert.match(body, /知识库的 `docs\/spec\/a\/a\.md`/);
 });

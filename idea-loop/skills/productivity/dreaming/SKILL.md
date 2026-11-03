@@ -8,21 +8,21 @@ disable-model-invocation: true
 
 **dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、做审核页、等人批、执行段。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:spec-status`（翻状态只走 `spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:spec-status`（翻状态只走 `spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。知识库根有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
 ## 纪律
 
-- **所有核实对 `origin/<基准分支>`**，不对本地工作树：本地会落后，在落后的树上判「未实现」就是误判。派给 agent 的指针也是这个 worktree。
+- **所有核实对 `origin/<基准分支>`**（代码）和 `origin/<知识库主分支>`（文档），不对本地工作树：本地会落后，在落后的树上判「未实现」就是误判。派给 agent 的指针也是这个 worktree 和下面的 `<知识库>`。
 - **每个判定都靠这一次跑出来的证据**，不凭记忆、不凭文档自己的旧结论。存疑就留着不动。
-- **扫描范围**：`docs/`、`GLOSSARY.md`、`REVIEW.md`、`DESIGN.md`、仓库里各插件的 references。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。
+- **扫描范围**：知识库的 `docs/`、知识库根的 `GLOSSARY.md` 与 `DESIGN.md`，代码仓库根的 `REVIEW.md`、仓库里各插件的 references。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。
 
 ## 流程：两段，中间停在人身上
 
 **提议段**，只读不写：
 
-1. **起环境**：读目标仓库 `DEVELOPMENT.md` 的「分支」节拿基准分支（没有这份文件就停下，告诉人跑 `/idea-loop:setup`）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。目标仓库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
+1. **起环境**：读目标仓库 `DEVELOPMENT.md` 的「分支」节拿基准分支（没有 `DEVELOPMENT.md` 时先看 `idea-loop:wiki-conventions` 的「会话开在知识库里」：会话开在知识库里就照那里做，不停；否则停下告诉人跑 `/idea-loop:setup`。）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。文档在知识库里：`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出（这个 worktree 的 `.tmp/kb/`，分支同名，从知识库的主分支开），下文 `docs/…`、`DESIGN.md`、`GLOSSARY.md` 都相对它，`<docs>` 指 `<知识库>/docs`（`knowledge-base.mjs root --write` 的输出加 `/docs`），知识库的主分支记作 `<知识库主分支>`（`git -C <知识库> symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`），并在 `<知识库>` 里 `git fetch`。知识库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
 2. **自己做、不起 agent**：
-   - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查基准分支上还留着设计产物的已完成需求。
+   - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查知识库主分支上还留着设计产物的已完成需求。
    - **retro 候选**：候选池里出现 ≥ 3 次的，照 [references/retro-candidates.md](references/retro-candidates.md) 摆进提议表；批了开成 issue，不改 skill。
    - **对账范围**（`prod/` 有对象时）：dreaming 每周由 `/idea-loop:setup` 建的定时任务自己跑，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
    - **全站初扫**（`prod/` 为空时）：照 [references/initial-scan.md](references/initial-scan.md)。`prod/` 有对象时不做全站初扫，档案对账整个交给下面的 ui-reviewer；项目没有设计档案目录、也不打算建，这一项和档案对账整个跳过。
@@ -37,9 +37,9 @@ disable-model-invocation: true
    项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。
 4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才交出去。`候选` 与 `DESIGN.md 条目` 有行时，另做一页审核页，照 [references/review-page.md](references/review-page.md)。完成条件：校验通过，表或「这次无事」已经交到人面前。
 
-**执行段**，人逐行批过之后：只执行批了的行，照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」做，结果是一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的 PR。执行段不拆给 agent。最后报告：动了什么、留了什么、为什么留；这张表处理完（批了的行执行了，或每一行都回了「不批」）就删掉它的 `.tmp/dreaming/<日期>/`，下一次靠它判断上一张有没有处理。
+**执行段**，人逐行批过之后：只执行批了的行，照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」做，结果是一个知识库的 PR（只改 `docs/`、`DESIGN.md`、`GLOSSARY.md`，在 `<知识库>` 里提交，`gh` 作用在知识库上）。执行段不拆给 agent。最后报告：动了什么、留了什么、为什么留；这张表处理完（批了的行执行了，或每一行都回了「不批」）就删掉它的 `.tmp/dreaming/<日期>/`，下一次靠它判断上一张有没有处理。
 
-**写 `DESIGN.md` 和开 issue 都停在人身上**：提议段只把旧文和新文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）起草成目标仓库的 GitHub issue，人批了才开。
+**写 `DESIGN.md` 和开 issue 都停在人身上**：提议段只把旧文和新文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）起草成 GitHub issue（开在 `<知识库>/idea-loop.json` 的 `issues` 指的仓库上），人批了才开。
 
 **幂等**：同一批文档重跑一次，提议表应为空。不为空说明上一次没处理干净。
 

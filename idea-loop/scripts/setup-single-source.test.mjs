@@ -37,6 +37,6 @@ test('夜间规则回放 in the body is a pointer, not a summary of the three st
 });
 
 test('which file the issue-category section is written into is stated only in the SKILL.md body', () => {
-  assert.match(body, /`## issue 分类` 一节[^\n]*写进 `AGENTS\.md`/);
+  assert.match(body, /`## issue 分类` 一节[^\n]*写进知识库根的 `AGENTS\.md`/);
   assert.doesNotMatch(read('references', 'issue-category-format.md'), /写进/, 'issue-category-format.md repeats where the section is written');
 });

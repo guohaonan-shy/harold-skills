@@ -1,7 +1,34 @@
 ---
 name: wiki-conventions
-description: 目标仓库 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定：目录、frontmatter、slug 与链接、什么由人拍板。动 docs/ 或往 .tmp/ 放东西之前用。
+description: 业务知识库与 worktree 下 .tmp/ 中间产物的约定：知识库在哪、目录、frontmatter、slug 与链接、什么由人拍板。动 docs/ 或往 .tmp/ 放东西之前用。
 ---
+
+## 知识库
+
+一个业务一个知识库，是它自己的 git 仓库，不在代码仓库里。下文和别的 skill 里所有 `docs/…` 路径都相对**知识库根**，写作 `<知识库>/docs/…`；各 skill 里的 `<docs>` 指 `<知识库>/docs`，`<知识库>` 取自 `knowledge-base.mjs`（读用 `root`，写用 `root --write`，见下）。
+
+```
+<知识库>/
+├── idea-loop.json          业务名、issue 所在的 GitHub 仓库、业务里的代码仓库；有它，这个 git 仓库就是知识库
+├── PRODUCT.md  GLOSSARY.md  DESIGN.md  ISSUE_TRACKER.md   业务级设置，整个业务一份
+├── AGENTS.md               「issue 分类」一节
+└── docs/                   下面「目录」那一节
+```
+
+- **业务级设置**（`PRODUCT.md`、`GLOSSARY.md`、`DESIGN.md`、`ISSUE_TRACKER.md`、「issue 分类」）在知识库根。**仓库级设置**（`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`）不在知识库，照旧在代码仓库根目录；多仓库需求里，在哪个仓库的 worktree 里做事就读那个仓库的这三份。
+- 代码仓库的 `AGENTS.md`（没有就是 `CLAUDE.md`）里有一节 `## idea-loop`，是指针块：业务名和知识库的 GitHub 名。本机路径因机器而异，不写进仓库，放在 `~/.idea-loop/projects.json`。
+- **`<知识库>` 一律问 `knowledge-base.mjs`**，不自己猜它在哪（`node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs"`）：
+  - 读（对账、查、检查）：`root`。当前 checkout 就是知识库 → 它自己；当前 worktree 下有 `.tmp/kb/` → 它；否则 → 这个业务的知识库主 checkout。
+  - 写（写 spec、工单、设计、raw、记录，删工单，归档）：`root --write`。保证 `.tmp/kb/` 是知识库的一个 worktree、分支名跟当前分支相同，输出它；当前 checkout 就是知识库时输出它自己。
+  - 业务里的别的代码仓库：`worktree <仓库名>`，开在 `.tmp/repos/<仓库名>/`，分支同当前分支。
+  - 查不到业务（仓库没有指针块，或本机还没 clone 知识库）它报「先跑 `/idea-loop:setup`」并非 0 退出：照这个停下，不在老位置凑合。
+- **会话开在知识库里**（当前 git 根有 `idea-loop.json`；几个代码仓库的业务推荐这样）：知识库里没有 `DEVELOPMENT.md`，开场不因读不到它停下，也不叫人跑 `/idea-loop:setup`。
+  - **主分支**取知识库远端的默认分支：先 `git fetch`，再 `git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`。只动知识库的步骤（核 issue、起草 spec、切票、对账文档）以它为准，在知识库自己的 worktree 里做。
+  - **碰代码的步骤**（复现要起服务、实现、验证、按提交挑要重拍的界面）读工单写的那个仓库（核 issue 时是 issue 说的那块功能，按知识库 `AGENTS.md` 的「仓库」一节判）自己的 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`，在 `knowledge-base.mjs worktree <仓库名>` 开出的 `.tmp/repos/<仓库名>/` 里做；那个仓库的分支取它自己 `DEVELOPMENT.md` 的「分支」节。
+  - **中间产物目录**：会话的 `.tmp/` 就在知识库的 worktree 根下，第一次用时照「中间产物」的「本地忽略」把知识库的 `.tmp/` 加进它的本地忽略；不加，核 issue 开 PR 前的 `git status --short` 自查和会话收尾的「没有要留的改动」都会被它挡住。
+  - 会话本身的 worktree 就是知识库的，不需要 `DEVELOPMENT.md` 的「worktree 准备」；需要新切 worktree 的（每周整理）从上面那个默认分支切。
+  - 会话开在代码仓库里：照旧读这个仓库的 `DEVELOPMENT.md`，没有就停下告诉人跑 `/idea-loop:setup`。
+- **知识库的改动走知识库自己的 PR，合进知识库的主分支**；`gh pr` 作用在知识库 PR 上时，在 `<知识库>`（`.tmp/kb/` 那个 worktree）里跑，不在代码仓库里跑。`idea-loop:decision-rules` 的「不自动的」里「检查全过就合并」的那一类 PR，就是这种知识库的 PR。
 
 ## 文件在不在，就是状态
 
@@ -26,6 +53,8 @@ skill 做机械的事：建目录和文件、写 frontmatter、移动、删除�
 
 ## 目录
 
+下面的 `docs/` 是 `<知识库>/docs/`。
+
 ```
 docs/
 ├── index.md              顶层导航
@@ -48,7 +77,7 @@ docs/
 
 `raw/`、`spec/`、`adr/` 是会话产物；`domain/` 是知识库存量，不由单次会话产生；`records/` 由会话建、由人改，文件用 `type: record`，不进 spec 的生命周期，也不在 dreaming 里删。
 
-项目级的规则放在仓库根目录，一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`（`/idea-loop:setup` 建），`GLOSSARY.md`、`DESIGN.md`。
+设置文件一份管一件事，在哪见上面「知识库」：`PRODUCT.md`、`GLOSSARY.md`、`DESIGN.md`、`ISSUE_TRACKER.md` 在知识库根，`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 在代码仓库根目录（都由 `/idea-loop:setup` 建）。
 
 - **spec 文件与目录同名**：`docs/spec/<spec-slug>/<spec-slug>.md`。wiki-link 按文件名解析，都叫 `spec.md` 的话 `[[<spec-slug>]]` 就指不到。
 - **工单住在自己 spec 的目录里**，编号在每份 spec 内从 `01` 起。找一份 spec 的工单，看它目录下的 `tickets/`。
@@ -57,7 +86,7 @@ docs/
 
 - **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
   - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布，有价值的结论写回 spec 或 issue。
-  - 冻结时，签字的画布、冻结记录和交互图经设计 PR 提交进主分支（`git add -f`），实现从主分支开 worktree 就拿得到。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着实现 PR 进主分支。
+  - 冻结时，签字的画布、冻结记录和交互图经设计的知识库 PR 提交进知识库的主分支（在 `<知识库>` 里 `git add -f`），实现从知识库的主分支就拿得到。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着实现 PR 进主分支。
   - **`research/` 不算设计产物**：从不归档；只做过调研的需求不起 UI 审查，合并也不走归档。用进设计的调研结论已经以文字写在方向说明或冻结记录里，随设计归档。
 - **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（人批过之后），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `idea-loop:design-archive`。
 
@@ -65,10 +94,12 @@ docs/
 
 ## 中间产物
 
-不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在当前 worktree 根的 `.tmp/` 下，按 skill 与对象分子目录：
+不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在当前 worktree 根的 `.tmp/` 下，按 skill 与对象分子目录。`.tmp/kb/`（知识库的 worktree）和 `.tmp/repos/<仓库名>/`（别的代码仓库的 worktree）也开在这里，是 `knowledge-base.mjs` 建的，不是中间文件，别手动改它的结构：
 
 ```
 <worktree 根>/.tmp/
+├── kb/                           知识库的 worktree，分支同会话分支（`knowledge-base.mjs root --write`）
+├── repos/<仓库名>/               业务里别的代码仓库的 worktree（`knowledge-base.mjs worktree <仓库名>`）
 ├── grill/<YYYY-MM-DD>-<topic>/   复现过程的截图、网络日志、trace —— grill 收工时删
 ├── to-spec/<spec-slug>/          spec 图的 excalidrawer 源文件（sugar JSON、.excalidraw）—— 只有 PNG 进 docs/，spec 定稿后可删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（浏览器锁）—— PR 合并后删
@@ -81,10 +112,10 @@ docs/
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
 - 生命周期跟着 worktree，所以不放系统 `/tmp`：那里重启会清，不同 worktree、不同会话的东西也分不清归谁。一次性的、跑完即弃、不跨步骤的东西仍然可以用系统临时目录；spec 图的源文件定稿前还要改好几轮，算跨步骤。
 - 按 `<spec-slug>` / `<topic>` 分子目录：同一个 worktree 里先后跑两份 spec，固定文件名放在共享的顶层会悄无声息地互相覆盖。
-- 设计侧的过程产物（工作区、方向说明、交接画布、评分、评委截图）在 `docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
+- 设计侧的过程产物（工作区、方向说明、交接画布、评分、评委截图）在 `<知识库>/docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
 - `evidence/` 下是交付证据，过程中以本地文件发给人看，用到时才上传到 PR 的素材分支，不进代码分支和 `docs/`（`idea-loop:evidence`）。
 
-**本地忽略**：第一次用时确认 `.tmp/` 和 `docs/design/tmp/` 都在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。
+**本地忽略**：第一次用时确认当前 worktree 所在仓库（代码仓库；会话开在知识库里时是知识库）的 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。知识库的 `docs/design/tmp/` 不这样处理：由知识库自己的 `.gitignore` 管（`/idea-loop:setup` 建知识库时写进去），`knowledge-base.mjs` 开出来的知识库 worktree 同样被它管着。
 
 ## 从平铺布局迁移
 
@@ -130,7 +161,7 @@ spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置
   - `index.md`：每层都有一个。引某一层写路径，`[[index]]` 永远不写。
 - spec 的 slug 与它 raw 素材的 slug 不同，不然 `[[x]]` 有歧义。
 - 移动不打断 basename 链接，删除会。**每次删除后跑 link sweep**：grep `\[\[` 提取全部 slug，逐个确认文件存在。行内代码（一对反引号之间）和代码块（三个反引号围起来的段落，含缩进的）里的 `[[...]]` 是格式示例，不算链接、不查；正文和 frontmatter（`"[[...]]"`）里的照旧查。
-- 文档正文语言：跟目标仓库已有的文档一致。
+- 文档正文语言：跟知识库已有的文档一致。
 
 ## index.md
 

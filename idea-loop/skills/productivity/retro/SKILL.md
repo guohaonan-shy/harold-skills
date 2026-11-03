@@ -5,7 +5,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 人在会话里纠正过、选过、定过方向的东西，会话一归档就丢了。你读这场会话的记录，挑出该变成规则的，逐条摆给人；人批了的，进候选池或开成待验证的 issue，由人选。**你自己不改任何规则文件。**
 
-`<docs>` 指目标仓库的 `docs/`。
+`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：读决定记录、候选池用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`，写决定记录用 `root --write` 的输出加 `/docs`。
 
 ## 1. 读会话记录，不读自己的上下文
 
@@ -13,7 +13,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 1. 取这场会话的记录、压缩成 `.tmp/retro/<YYYY-MM-DD>-<主题>/digest.md`，只读这份；怎么取、digest 里有什么、取不到怎么办见 [session-digest](references/session-digest.md)。
 2. 读 `<docs>/raw/decisions/` 下以前留下的决定记录（格式见 [decision-record](references/decision-record.md)）；目录不存在就是还没有。
-3. 读候选池（当前仓库的；不在 `guohaonan-shy/harold-skills` 里跑时，再读它的），做法见 [candidate-pool](references/candidate-pool.md)。
+3. 读候选池（当前知识库的；不在 harold-skills 里跑时，再读它的），做法见 [candidate-pool](references/candidate-pool.md)。
 
 做完的条件：`digest.md` 已生成并读完，压缩点的位置你说得出来；`raw/decisions/` 下的记录要么读完、要么确认目录不存在；候选池要么读完、要么确认不存在。
 
@@ -81,7 +81,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 这场会话里摆给人的每道题，以及每条候选的结果，记成 `<docs>/raw/decisions/<issue 号>.md`；没有 issue 号，用 `<YYYY-MM-DD>-<主题>.md`。格式见 [decision-record](references/decision-record.md)。没有摆过题也没有候选，就不写。
 
-这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「不自动的」）。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
+这份文件走知识库的 PR（在 `root --write` 开出的 `.tmp/kb/` 里提交，`gh` 作用在知识库上）：从知识库最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「不自动的」）。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
 
 收工时删 `.tmp/retro/<YYYY-MM-DD>-<主题>/`。
 

@@ -1,11 +1,13 @@
 /**
- * Tripwire — the design process directory is located from the current worktree root.
+ * Tripwire — the design process directory is located from a computed root, never from an environment variable.
  *
- * Spec design-tmp-worktree-root. `${CLAUDE_PROJECT_DIR}` in skill text becomes the main checkout in a
- * worktree session, and is empty in a Bash environment; neither is the worktree. imagine / refine must
- * say "worktree root = `git rev-parse --show-toplevel`" and build every path off it. The behaviour is
- * skill text, so this reads the text: it catches someone putting the variable back, or imagine / refine
- * dropping the sentence that defines the root. It cannot see whether an executor follows it.
+ * Spec design-tmp-worktree-root, moved to the knowledge base by spec knowledge-base-repo. `${CLAUDE_PROJECT_DIR}`
+ * in skill text becomes the main checkout in a worktree session, and is empty in a Bash environment; neither is
+ * this session's worktree. imagine / refine must say "`<知识库>` = `knowledge-base.mjs root --write`" (the
+ * knowledge base worktree of this session; the design process directory is `docs/design/tmp/<spec-slug>/` in it)
+ * and build every path off it. The behaviour is skill text, so this reads the text: it catches someone putting
+ * the variable back, or imagine / refine dropping the sentence that defines the root. It cannot see whether an
+ * executor follows it.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,15 +40,15 @@ test('no skill or agent text builds a path from CLAUDE_PROJECT_DIR', () => {
 });
 
 for (const skill of ['uiux-imagine', 'uiux-refine']) {
-  test(`${skill} defines the worktree root and puts the design tmp directory under it`, () => {
+  test(`${skill} defines the knowledge base root and puts the design tmp directory under it`, () => {
     const text = readFileSync(join(pluginRoot, 'skills', 'design', skill, 'SKILL.md'), 'utf8');
-    assert.match(text, /worktree 根 = `git rev-parse --show-toplevel`/, 'worktree root must be defined by git rev-parse --show-toplevel');
-    assert.match(text, /`imagine\/`、`canvas\/`、`research\/` 都在 worktree 根下的 `docs\/design\/tmp\/<spec-slug>\/`/);
-    // every command that reads those files is prefixed with the worktree root, not a bare docs/ path
+    assert.match(text, /`<知识库>` = `node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/knowledge-base\.mjs" root --write`/, 'the root must be defined by knowledge-base.mjs root --write');
+    assert.match(text, /`imagine\/`、`canvas\/`、`research\/` 都在 `<知识库>` 下的 `docs\/design\/tmp\/<spec-slug>\/`/);
+    // every command that reads those files is prefixed with the knowledge base root, not a bare docs/ path
     const commands = text.split('\n').filter((l) => /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/(direction-note-check|critic-score|issues)\.mjs"/.test(l));
     assert.ok(commands.length > 0, 'no commands found to check');
     for (const line of commands) {
-      assert.match(line, /<worktree 根>\/docs/, `command not anchored on the worktree root: ${line.trim()}`);
+      assert.match(line, /<知识库>\/docs/, `command not anchored on the knowledge base root: ${line.trim()}`);
     }
   });
 }

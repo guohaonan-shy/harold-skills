@@ -3,10 +3,10 @@
 写完 `delta/`、初扫写完草稿、校验报错要看懂时读。
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--delta <spec-slug>] [--no-used-by] [--workspaces <前缀,前缀>] [--json]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <知识库> [--delta <spec-slug>] [--no-used-by] [--workspaces <前缀,前缀>] [--json]
 ```
 
-退出码 0 = 通过（可以带「提示」），1 = 有违规（逐条指名文件与字段），2 = 用法错误或不是仓库根。`--delta` 把 `tmp/<spec-slug>/delta/` 叠到 `prod/` 上（同 id 的对象以 `delta/` 为准，按 `removed.md` 去掉对象），判叠完之后的样子。`--no-used-by` 跳过规则 6 里 `usedBy` 那一半。`--workspaces mkt,app` 把组件文件名的工作区前缀交给校验（初扫时 `prod/index.md` 还不存在，没处声明）。
+退出码 0 = 通过（可以带「提示」），1 = 有违规（逐条指名文件与字段），2 = 用法错误或不是知识库根。`--delta` 把 `tmp/<spec-slug>/delta/` 叠到 `prod/` 上（同 id 的对象以 `delta/` 为准，按 `removed.md` 去掉对象），判叠完之后的样子。`--no-used-by` 跳过规则 6 里 `usedBy` 那一半。`--workspaces mkt,app` 把组件文件名的工作区前缀交给校验（初扫时 `prod/index.md` 还不存在，没处声明）。
 
 **写完 `delta/` 的标志**：`--delta <spec-slug> --no-used-by` 退出码 0。
 

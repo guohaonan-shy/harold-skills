@@ -15,24 +15,24 @@ effort: high
 
 你收到的是指针，不是摘要：
 
-- 工单路径 `docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`
+- **知识库的绝对路径**（下称 `<知识库>`，是 `knowledge-base.mjs root --write` 的输出）和工单路径 `docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`（相对 `<知识库>`；下文 `docs/…` 都相对它）
 - spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md`。spec 是背景，任何一节都可以读；「测试决策」告诉你这一刀该用哪种仪器验。**做什么的范围以工单为准**：spec 里有、工单没要的不做。工单就是写给没见过 spec 的人的，真缺了什么，是工单写得不够，按「停，还是延后」停下
-- **起点 SHA** 和**集成分支名**
+- **起点 SHA** 和**集成分支名**（业务有两个以上代码仓库时，是这张工单「仓库」那一行指的仓库的）
 - **分到的端口**。起服务只用它，别的端口可能是别的执行方的
-- 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁**
-- **tmp 绝对路径**：集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径。`tmp/` 不进版本库，你自己的 worktree 里没有它，画布和最小差异都用这个绝对路径读写；目录不存在就自己建
-- 这份 spec 前面已经落地的工单的提交列表。要看前一张怎么做的，用 `git show`
+- 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁**。业务有两个以上代码仓库时，这是工单所在仓库的集成 worktree，另给一个会话 worktree 的绝对路径，笔记和锁在会话 worktree 里
+- **tmp 绝对路径**：`<知识库>/docs/design/tmp/<spec-slug>/` 的绝对路径。`tmp/` 不进版本库，你自己的 worktree 里没有它，画布和最小差异都用这个绝对路径读写；目录不存在就自己建
+- 这份 spec 前面已经落地的工单的提交列表（多个仓库时按仓库分开列）。要看前一张怎么做的，用 `git show`（在那个提交所在的仓库里）
 - 上次卡住留下的半成品分支（可选）。有就在 reset 之后 `git merge --squash <分支>` 拿回来当起点，不提交，接着做
 - 这张工单不是第一次做时的原因：上次卡住后人做了决定（工单里有 `> 人的决定`），或人验反馈、review 批示要修（验收标准末尾新追加了 `人验反馈` / `review 第 N 轮` / `人推翻` 的未勾格）。可能是同一个你被 SendMessage 叫回来：worktree 还在，不用再 reset，先把集成分支的最新提交合进来。**这时只做没勾的那几格**，已勾的格对应的行为保持不坏：存量回归和全量套件照样要全绿
 
 ## 开工前
 
-1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先 `git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
+1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先 `git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。**工单写了「仓库」，且不是派你时的 worktree 所在仓库**：派你时的 worktree 用不上，不动它；从给你的那个仓库的集成 worktree 开自己的：`git -C <集成 worktree> worktree add <路径> -b <分支名> <起点 SHA>`（路径放在该集成 worktree 的 `.tmp/implement/<spec-slug>/t<NN>/` 下），之后读写代码、`DEVELOPMENT.md`、`REVIEW.md`、下面第 5 步读的写法规范、测试、commit 都在这个 worktree 里、用这个仓库的。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
 2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停。
-4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表）。
+4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表，各仓库的都看）。
 5. **读目标仓库的写法规范，动手前先读完或调完管这张工单的那一条**：读它的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**别把链接埋在一长串要读的文件里略过**：先在 `CODING_STANDARDS.md` 的「链接」里，找出管这张工单所改文件类型的那一条（例：工单改 skill、agent 定义、`AGENTS.md`，就找到指向 `writing-for-agents` 的那条），链接指到一个 skill 目录，就照着读或调那个 skill，读完或调完再动手；一条都对不上就算了，不硬凑。review 的 Standards 轴按这套规矩审你，只认这个仓库自己写下的规则。
-6. **领域词汇**：目标项目有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，避开 `_Avoid_` 里的词（`idea-loop:glossary` 的「读：所有产出命名的地方」）。缺词先用描述性的说法，不问、不写进术语表。
+6. **领域词汇**：知识库根有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，避开 `_Avoid_` 里的词（`idea-loop:glossary` 的「读：所有产出命名的地方」）。缺词先用描述性的说法，不问、不写进术语表。
 7. **先把前提核一遍再写代码**：工单描述的现状和代码对得上吗？每一格验收标准，你知道它的「对」长什么样吗？卡住最好卡在这里，而不是写到一半。共享笔记有就先读：它只给位置，位置对不对你自己打开核。
 
 ## 做
@@ -67,8 +67,8 @@ effort: high
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
   - **范围**：只写这张工单碰到的状态、边、组件文件。
   - **写法**：照 `idea-loop:design-archive` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，保留别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
-  - **自检**：以集成 worktree 当仓库根，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
-- **要进某个状态去复现或写测试时，先查档案**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <集成 worktree> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
+  - **自检**：以 `<知识库>` 当知识库根，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <知识库> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
+- **要进某个状态去复现或写测试时，先查档案**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <知识库> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
 - **只写 tmp 路径下的 `delta/`**：`docs/design/prod/` 只由合并前的归档脚本写。
 
 ## 停，还是延后
@@ -80,7 +80,7 @@ effort: high
 | **行为没定，产品里也没有现成做法**：不知道这个情况下结果该是什么，又指不出一处现存实例 | 这个边界算不算 in scope；工单描述的现状跟代码对不上；全部失败时出不出结果；UI 环判了瓶颈而且残留差异是设计决策 | **停**，交回 `blocked` |
 | **工单和 spec 没说，但产品里已有统一做法**（能指出至少一处现存实例） | 文案大小写沿用全站写法；分数颜色沿用现有规则 | **沿用，不停**。写进交回的 `by_existing_practice`：做了什么 + 现存实例在哪。找不到现存实例，或几处做法彼此不一致，就不算，按上一行停 |
 | **行为定了，但这张工单里证明不了** | 端到端检查要等后面那张工单的接口落地；动效顺不顺要人看 | **延后**，必须写明接手方（下面） |
-| **存量问题，不是这张工单引入的** | 旧代码里本来就有的 bug | 不修，记进交回的 `found`，写给一个没有上下文的人看（它会变成目标仓库的一个 issue）：是什么、在哪、为什么跟这张工单无关。**例外**：它污染了这张工单的输入或结论，或让 CI 变红，这次就得修，在 `found` 里标「spec 缺口 · 存量本次修」 |
+| **存量问题，不是这张工单引入的** | 旧代码里本来就有的 bug | 不修，记进交回的 `found`，写给一个没有上下文的人看（它会变成业务的一个 issue）：是什么、在哪、为什么跟这张工单无关。**例外**：它污染了这张工单的输入或结论，或让 CI 变红，这次就得修，在 `found` 里标「spec 缺口 · 存量本次修」 |
 
 **依据要核对得了。** 「按现有做法」必须指得出实例，「大概全站都是这样」不算；规则有歧义、实例互相矛盾的，停下（`idea-loop:decision-rules` 的「依据不成立：交给人」）。其余没有依据的，也停：「停」是你替代不了人在场追问的唯一出口，也是工单能被安全自动派发的前提。
 
@@ -122,7 +122,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 
 全部满足才算完成：
 
-1. 验收标准**每一格**要么 `- [x]`（你知道是哪个测试、哪条命令、哪轮测量证明了它），要么带着 `⏭ 延后 → <接手方>`。
+1. 验收标准**每一格**要么 `- [x]`（你知道是哪个测试、哪条命令、哪轮测量证明了它），要么带着 `⏭ 延后 → <接手方>`。勾格写在 `<知识库>` 里那份工单文件上（见下面「工单文件不进 commit」）。
 2. 选中的存量回归全部跑过，是绿的。
 3. 全量套件、typecheck、lint 都是绿的，用的是仓库声明的命令。
 4. UI 工单：测量脚本最后一轮是绿的。
@@ -132,13 +132,15 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 1. 先把全部改动提交一次，message 随意。
 2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突照 `DEVELOPMENT.md` 的「worktree 准备」，不手工合并。
 3. 依赖按锁文件核对一遍（`DEVELOPMENT.md` 的「worktree 准备」），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
-4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部改动，加上勾好框的工单文件（以及被你追加了继承格的那张工单）。message 用仓库的风格写，**末尾带一行 trailer**：
+4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部代码改动，不含工单文件。message 用仓库的风格写，**末尾带一行 trailer**：
 
    ```
    Ticket: <NN>-<slug>
    ```
 
    这一行是这张工单已落地的凭据，必须一字不差地等于工单的文件名去掉 `.md`，自成一行。署名行（`Co-Authored-By:` 之类）放在它后面；环境把署名另起一段追加也没关系。提交后自己核一遍：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of HEAD` 要输出这张工单的名字。
+
+**工单文件不进 commit**：工单在知识库里，不在代码仓库的 worktree 里。上面四条都满足、要交回 `landed` 之前，把勾好的框写回 `<知识库>` 里的那份工单文件（延后给后续工单的，也在知识库里给那张工单追加 `（继承自 NN）` 一格）；交回的 `acceptance` 说明勾了哪几格、给哪张工单追加了什么。编排者落地时在知识库里提交它们。`blocked` / `failed` 不写工单文件，免得知识库里留下没落地的勾格。
 
 **第 2 步到第 4 步之间用钉住的那个 `$T`，不重新取集成分支**：它中途前进了的话，`reset --soft` 到新提交会把别人刚落地的改动悄悄撤掉。因为 fast-forward 不了被退回时，从第 2 步再做一遍。
 
@@ -154,7 +156,7 @@ ticket: <NN>-<slug>
 branch: <你的分支名>
 worktree: <你的 worktree 绝对路径>
 commit: <完整 SHA>                       # landed 才有，它的父提交就是第 2 步钉住的 T
-acceptance: <已勾 x / 共 y>，延后：<每条：格 → 接手方>
+acceptance: <已勾 x / 共 y>，勾了：<哪几格，写回了知识库里的哪份工单>，延后：<每条：格 → 接手方>
 by_existing_practice:                    # 工单没说、按产品已有做法定的；没有就写「无」
   - <做了什么> | <现存实例在哪：页面、组件或文案出处，至少一处>
 human_verify:                            # 要人看的素材，一项一条
