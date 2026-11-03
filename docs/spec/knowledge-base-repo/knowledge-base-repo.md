@@ -1,6 +1,6 @@
 ---
 type: spec
-status: 正式
+status: 实现中
 tags: [idea-loop, knowledge-base, setup, idea-loop-0-2-0]
 summary: 知识库独立成一个 git 仓库、按业务分；代码仓库不留 idea-loop 文件；setup 带老项目迁移
 related: ["[[2026-11-03-idea-loop-0-2-0-grill]]", "[[idea-loop-0-2-0-release]]", "[[issue-intake-priority]]"]
