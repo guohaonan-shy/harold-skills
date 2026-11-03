@@ -299,6 +299,14 @@ multica 调研（笔记在共享笔记目录 multica-research-2026-11-03.md）�
 
 撤回 U23 的 multica 方案。浏览器访问虚拟机上的服务：人倾向在虚拟机开 TCP 端口（Dawn 的端口对整个互联网开放），备选 ssh -L 端口转发。追问：公司项目用 Desktop 的 SSH 会话还是 cmux。
 
+## U25
+
+Q43 我倾向于A，然后cmux 我可能让它来承接p2问题，这里面有个问题就是不同项目issue定义可能不一样（比如linear和github），cmux的实现我倾向于当作跟claude desktop平行的一种执行环境支持。
+
+## A25
+
+定了：公司项目用 Claude Desktop 的 SSH 会话（claude 在虚拟机上）；cmux 作为跟 Desktop 平行的一种执行环境，承接 P2 的自动处理。执行环境（Desktop / cmux）和 issue 来源（GitHub / Linear）是两层、互不依赖：环境只负责「在哪开会话、跑 `/idea-loop:issue-session <issue>`」，各来源的状态、优先级、issue 号格式由 F3 的平台层按项目映射。浏览器看虚拟机上的服务推荐 ssh -L 转发，不在 Dawn 开公网端口。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -317,7 +325,7 @@ multica 调研（笔记在共享笔记目录 multica-research-2026-11-03.md）�
 | 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
 | 账号与额度 | 虚拟机上也登录这个账号，公司与个人共用额度；超了开 credits；分业务会话上限 F4 开工时再定（Ultra 已无 5 小时限流） | U17、U18 |
 | Codex | 0.2.0 的 F6（#237）：Codex 能跑完整个 issue 会话，cmux 调度可开 Codex 终端；排在 F4 之后（推翻 U19「本期不做」） | U20、U21 |
-| 调度在哪跑 | Mac 的 cmux 里一个调度，按业务读不同来源（公司 Linear、个人 GitHub）；个人项目的会话全在本地，公司项目的会话全在虚拟机上（`cmux ssh`，claude 用这个账号在虚拟机上登录）；先不上云端 | U4 Q11、U14、U15 |
+| 调度在哪跑 | 执行环境两种平行：Claude Desktop（公司项目用它的 SSH 会话，claude 在虚拟机上；P0/P1 出卡片等人点）与 cmux（承接 P2 自动处理）；按项目选；执行环境与 issue 来源两层互不依赖 | U4 Q11、U14、U15、U25 |
 | 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json`（只放跟机器有关的） | U5 Q13、U11 |
 | Linear | 按项目选；Linear 不会自己触发，自动的部分由 cmux 里的调度读 Linear API；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28、U15 |
 | 环境 | Desktop 与 cmux 都支持，setup 让人选；环境内容抽成 `idea-loop:workspace` skill，两种做法各一份 reference | U8 Q27、U9 |
