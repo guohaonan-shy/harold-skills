@@ -8,7 +8,7 @@
 | [raw](raw/index.md) | 素材与事实，忠实不编辑 | 4 份（design-workflow 桶） |
 | [spec](spec/index.md) | 还没了结的规格，一份一个目录，做完即删 | 空 |
 | [adr](adr/index.md) | spec 的归档总结，永久 | 2 条，均生效 |
-| [records](records/index.md) | 运营台账，会话起头、之后由人持续更新 | 1 个：`retro-candidates/`（retro 的候选池） |
+| [records](records/index.md) | 运营台账，会话起头、之后由人持续更新 | 2 个：`retro-candidates/`（retro 的候选池）、`releases/`（版本的 release 计划） |
 
 尚未建立的层（契约里有，本仓库还没用上）：`domain/`（领域知识）、`reference/`（常驻约定与手册）、`testing/`。
 

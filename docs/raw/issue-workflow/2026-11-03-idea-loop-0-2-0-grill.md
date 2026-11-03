@@ -1,0 +1,193 @@
+---
+type: raw
+source_type: conversation
+captured: 2026-11-03
+title: 讨论 —— #220 这一组做成 idea-loop 0.2.0：release 分支、5 个 feature、知识库按业务独立成仓库、cmux 全自动调度
+tags: [issue-workflow, release, idea-loop-0-2-0]
+related: ["[[issue-intake-priority]]", "[[idea-loop-0-2-0-release]]"]
+---
+
+> 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现，取证过程略去。末尾一张「本轮决议」表。
+>
+> 讨论在 harold-skills#220 的 issue 会话里进行，这一组：根 #220，子 issue #217 #222 #226 #227 #228 #232。开场时 spec issue-intake-priority（#220 #217）已在主分支、状态审核中；#222 那一支有一份没提交的草稿 setup-platform-env 和交接笔记（共享笔记目录，不在仓库里）；#232 刚认领。事实对着 origin/main 9a33407（idea-loop 0.1.9）与本机取。
+
+## A0
+
+开场摆了两道题：这一组的 spec 怎么分（一份分三部分 / 拆成三份），以及「重新讨论调度」要谈 spec 里的哪一条。
+
+#232 核过存在：idea-loop 0.1.9 有 19 份 skill 与脚本把「spec / 设计先经只改 docs 的 PR 合进主分支」当阶段门；本仓库最近合并的 60 个 PR 里 40 个是 `docs(...)`。
+
+## U1
+
+我们可以将这个会话的发布定为下一个patch版本，然后将这些issue拆分成feature，合并到release分支。最后统一由该会话合并到main。
+
+## A1
+
+事实：idea-loop 当时 0.1.9；仓库没有 release 分支、没有 CI（`.github/workflows` 不存在）、main 没开分支保护；marketplace 装的是 main，release 分支合并前本机跑的插件不变；`issues advance` 读传进去的那份 `docs/`，不写死 main。
+
+提了六题：这是通用流程还是这一组的做法；拆成 5 个 feature（F1 入口与调度 #220 #217、F2 一个会话一条线 #232、F3 Linear #226、F4 工作环境 #227、F5 知识库 #228；#222 是 #226–#228 的上一层）；分支名与版本号；spec 放哪；谁来做（全在本会话 / 本会话拍板、feature 各开会话）；调度要重谈哪条。
+
+## U2
+
+Q1 我觉的没问题的，这块有个更深的问题就是，这个信息需要放在哪里，一个新的deployment文件还是项目根的agents.md
+
+Q2 F4和F1也算有关系，因为桌面端的loop调度只能创建人物卡片，但是任务卡片需要人点击，我倾向于P2优先级的问题可以不需要我点击就让claude开始自动化的处理，我理解是不是claude cli + cmux 就可以
+
+Q3 按照patch吧
+
+Q4 同意
+
+Q5 B
+
+Q6 你这几个点我都没太明白，我们一个一个grill吧～
+
+## A2
+
+事实：Desktop 定时 loop 那一轮调 `start_session` 被拒（2026-10-22 实测），只能出卡片；本机有 `claude` CLI 2.1.299；harold-skills 开着 46 个 issue，38 个没有 `status:*`（待验证）。
+
+追问：「发布方式」写在 `DEVELOPMENT.md`「分支」节 / 新建 `DEPLOYMENT.md` / `AGENTS.md`；P2 自动做到开 PR 前还是一路到合并；先在本机试后台 `claude -p`，cmux 等人装好再试，P2 只在夜里跑；调度第一条「只出 P0 和焦点模块」的含义，并指出 harold-skills 的 issue 几乎都在 idea-loop 下，按插件分模块过滤不掉东西，推荐细到 `idea-loop/<子类>`。
+
+## U3
+
+linear主要是公司场景，不过我看linear得desktop是可以支持用loop直接驱动claude code cli的？我在想能否让我的虚拟机安装linear desktop，然后调度在mac上通过cmux命令行创建claude code terminal？https://linear.app/docs/assigning-issues#collapsible-914243845565
+
+Q7 如果是这样的话，development.md文件就算是本地开发+线上部署了
+
+Q8 我倾向于可以一路做到B，这是我的最终目的，不过我倾向于先做到PR前吧
+
+Q9 cmux 我已经安装了，我倾向于按照项目状态，讨论中、设计中、实现中、审核中重新调整section/workspace group。seo我也倾向于不在单独开设队列
+
+Q6.1 同意
+
+## A3
+
+Linear（读 assigning-issues、open-issues-with-custom-scripts、agents-in-linear）：desktop 的「Work on issue」只能人点或快捷键触发；能开的终端只列 macOS 的系统默认、Ghostty、Warp、iTerm，没提 cmux、没写 Linux；custom script 经 `~/.linear/coding-tools.json` 拿到 issue 号、分支名、prompt；会自动开工的只有装在 Linear 平台上的 agent，不是本地 CLI。
+
+cmux（本机 0.64.22，CLI 在 `/Applications/cmux.app/Contents/Resources/bin/cmux`，不在 PATH）：`new-workspace` 有 `--name --cwd --command --group`；从 Desktop 会话调 `cmux ping` 被拒，只有在 cmux 里起的进程能连（也可配 socket 密码）；help 里没有建、改 workspace group 的命令。
+
+追问：Linear desktop 只当手动入口、自动的由调度读 API 再经 cmux 开会话；公司场景调度跑在 Mac（`cmux ssh` 开虚拟机会话）还是虚拟机（经 relay 调本地 cmux，文档没写能不能）；四段阶段名的对应；调度第二条「对账时补挂根、补判 P0」的含义。
+
+## U4
+
+cmux 我记得是默认支持Ghostty的
+
+Q10 这个问题比较复杂，我来拆分下。issue 的来源我希望除了github以外，可以按照项目纬度配置支持linear，linear我可以用桌面端，通过cmux调度。还有一个场景就是github的低优先级issue我会让cmux + claude cli 完全接管，这里面有个需求点就是，不同的workspace group下的workspace命令可能不一样，个人的基本上就是本地命令，公司的需要加上ssh。cmux 现在能做到这么复杂的吗？
+
+Q11 我选择A
+
+Q12 我倾向于打开PR并完成一轮review，然后我会在白天阅读pr 里面的内容
+
+Q6.2 同意
+
+## A4
+
+cmux 用的是 Ghostty 的终端引擎、包里带一个 `ghostty`，但它是独立 app（`com.cmuxterm.app`）；本机没装 Ghostty.app，Linear 里选 Ghostty 大概率开不到 cmux（未实测），稳的接法是 custom script 调 `cmux new-workspace`。
+
+cmux 的 `cmux.json` 能按目录给 workspace group 配颜色、图标、+ 按钮的右键菜单（手动新建时可按 group 给不同命令），但命令行建 workspace 时不按 group 套命令。结论：「个人本地、公司 ssh」由调度按每个项目的配置拼命令，cmux 只执行。
+
+追问：issue 来源与会话在哪跑各放哪；调度搬进 cmux 后用不了 Desktop 的卡片，P0/P1 也自动开（停在讨论中通知人）还是 Desktop 另留一个调度；四段名字；调度第三条「汇报不加在等你的会话」在 P2 自动后要改。
+
+## U5
+
+Q13 同意
+
+Q14 我倾向于A
+
+Q15 同意
+
+Q6.3 没问题
+
+另外有个点就是cmux的cli是否支持打开markdown预览 或者yazi或者其他的md预览工具是否支持命令行调度，方便llm调度。本地好说，如果是远端虚拟机要怎么调度本地文件让cmux预览
+
+## A5
+
+cmux 有 `cmux markdown open <路径>`（排好版、文件变了自动刷新）；yazi 本机有，但它是要按键的终端文件管理器，不适合 LLM 调度。cmux 的 ssh 文档写了 relay 让虚拟机上的进程调本地 cmux 命令、浏览器面板走虚拟机网络、拖文件经 scp 上传，没写 `markdown open` 能不能读远端路径。
+
+追问：远端文件怎么给人看（PR 是主路，cmux 预览是顺手看）；P2 每晚几个；Dreaming 的「P2 与想法」一节还要不要；几个仓库共用一份知识库的单位叫什么（推荐「业务」）；知识库是单独 git 仓库还是同步盘。
+
+## U6
+
+cmux也可以打开图片吗？
+
+Q16 我理解虚拟机上的Claude进程会跟mac 上的cmux 进程有通信渠道吧？我觉的远端的内容，本地没办法通过cmux，我理解是否可以在本地开放一个挂载区域，挂到对应的知识库 + 临时文件区域，这样cmux在本地就可以直接预览文件、图片
+
+Q17 每晚上先定5个吧，顺利的话再慢慢增加吞吐
+
+Q18 dreaming这些先不要了，想法我直接自己开会话
+
+Q19 业务这个词用得好
+
+Q20 知识库分开吧，虚拟机上都是公司的，个人的全在个人电脑。你的理解是对的
+
+## A6
+
+`cmux open <路径>` 按类型开：md 进 markdown 预览，html 进浏览器面板，png / jpg / pdf 进文件预览 tab。本机没装 sshfs 与 macFUSE（`/Library/Filesystems` 只有 NetFSPlugins），macOS 26.5.1。「业务」写进 `GLOSSARY.md`（首建）。
+
+追问：挂载用 sshfs + macFUSE / 虚拟机开 SMB / 单向同步；仓库级设置放知识库的 `repos/<仓库名>/` 还是留在代码仓库；多仓库需求每个仓库一个 PR；docs 留在代码仓库里的老做法留不留；一个 PR 里人拍板 spec 留在哪。
+
+## U7
+
+Q21到时候再说
+
+Q22 我觉的合理，那这个选择是一定要在setup做好的
+
+Q23 是
+
+Q24 我倾向于升级plugin之后，顺手迁移了
+
+Q25 是
+
+## A7
+
+追问：老做法是删掉还是两种都留；5 个 feature 的顺序（改的文件有重叠：F5 碰 59 份文件的路径，F1 与 F4 都碰 `issue-dispatch` 与 `issues.mjs`）；Desktop 这个环境还支持吗；Linear 什么时候连；5 份 spec 谁写。
+
+## U8
+
+Q24b 我希望A，之后我们就可以基于知识库上包装索引和图谱之类的搜索哈哈哈
+
+Q26 没问题
+
+Q27 我倾向于支持desktop，这个可以选择在setup让用户选择，关于desktop/cmux这些工作环境的内容可以单独抽成skill或者reference。
+
+Q28 到时候在F3会话，我来进行连接。另外，如果你需要虚拟机，我会先临时用证书连接。（此处人转贴了一段同事关于公司虚拟机临时证书登录的说明，涉及公司内部环境，不收录。要点：虚拟机目前只认 12 小时证书，过期了回页面重领；新模板上线后可直接用公钥登录。）
+
+Q29 同意
+
+额外一句话，我觉的我们这个改动貌似巨大，要不升级为0.2.0？而不是一个小patch
+
+## A8
+
+同意升 0.2.0：知识库搬出代码仓库、阶段名改、老做法删，装了旧版的项目升级后都要重跑 setup 迁移。追问：工作环境写成一个 skill（`idea-loop:workspace`，正文写开会话、分组、通知、定时、给人看文件这几个动作，`references/desktop.md` / `references/cmux.md` 各写一种做法，同 `idea-loop:browser` 的组织方式）。
+
+## U9
+
+Q30同意
+
+## 本轮决议
+
+| 议题 | 决议 | 依据 |
+|---|---|---|
+| 发布 | 这一组做成 idea-loop 0.2.0：`release/idea-loop-0.2.0` 从 main 切出，feature PR 合进它，最后由这个会话合进 main，版本号只在这次合并里改 | U1、U8 |
+| 通用流程 | 按版本发布的仓库：一个会话一个版本一条 release 分支；应用仓库：一个会话一个 PR（#232） | U2 Q1 |
+| 发布方式写哪 | `DEVELOPMENT.md` 的「分支」节，它从此管本地开发与线上部署 | U3 Q7 |
+| feature | F1 入口与调度（#220 #217）、F2 一个会话一条线（#232）、F3 Linear（#226）、F4 工作环境（#227）、F5 知识库（#228）；#222 是 F3–F5 的上一层 | U2 Q2 |
+| 顺序 | F5 先；合进 release 后 F1、F2、F4 并行（F4 只改怎么开会话、怎么分组，F1 只改出哪些 issue）；F3 最后 | U8 Q26 |
+| 谁做 | 本会话 grill、拍板、review、合进 release 与 main；每个 feature 一个会话 | U2 Q5 |
+| spec | 每个 feature 的 spec 与实现在同一个 feature PR 里；spec 定稿单独提交一次、翻正式；PR draft 到「审核中」才 ready；issue-intake-priority 由 F1 改 | U2 Q4、U7 Q25、U9 |
+| 阶段 | 讨论中 → 设计中 → 实现中 → 审核中（PR 开出且 review 过一轮）；`status:*`、Desktop section、cmux workspace group 同名 | U3 Q9、U5 Q15 |
+| 调度：出哪些 | P0 在前、再出本期焦点的；harold-skills 的模块细到 `idea-loop/<子类>`（推翻 spec 里「模块就是 plugin」）；seo 不再单独排队 | U3 Q6.1、Q9 |
+| 调度：对账 | 补挂根、补判 P0 | U4 Q6.2 |
+| 调度：名额与汇报 | 审核中不占名额；汇报每天列「等你的」，按阶段、带等了多久 | U5 Q6.3 |
+| 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
+| 调度在哪跑 | Mac 的 cmux 里；公司会话经 `cmux ssh` 开在虚拟机上 | U4 Q11 |
+| 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json` | U5 Q13 |
+| Linear | 按项目选；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28 |
+| 环境 | Desktop 与 cmux 都支持，setup 让人选；环境内容抽成 `idea-loop:workspace` skill，两种做法各一份 reference | U8 Q27、U9 |
+| 给人看文件 | PR 是主路；cmux 里用 `cmux open`；远端文件靠 Mac 挂载虚拟机的知识库与临时区，挂载方式以后定 | U6 Q16、U7 Q21 |
+| Dreaming | 不加「P2 与想法」一节；想法人自己开会话 | U6 Q18 |
+| 业务 | 共用一份知识库的一组仓库叫「业务」（`GLOSSARY.md`） | U6 Q19 |
+| 知识库 | 单独一个 git 仓库，按业务分；公司的只在虚拟机，个人的只在个人电脑 | U6 Q20 |
+| 仓库级设置 | 进知识库 `repos/<仓库名>/`，代码仓库不留 idea-loop 文件；setup 必须问清 | U7 Q22 |
+| 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
+| 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
+| 没定的 | 挂载方式；Linear 映射；cmux 实测（`new-workspace`、relay 调 `cmux open`） | U7 Q21、U8 Q28 |
