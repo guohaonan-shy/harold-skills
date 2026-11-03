@@ -18,3 +18,8 @@
 
 ## 选中的存量回归
 - `to-spec-by-deliverable-doc.test.mjs`、`pr-review-cross-skill-refs-doc.test.mjs`、`issue-group-skills.test.mjs`、`issue-session-implement-doc.test.mjs`、`knowledge-base-doc.test.mjs`：断言了这些 skill 里的句子
+- [x] review 第 1 轮 S3（2026-11-03）：插件说明里调度那一条的侧边栏分区是四段
+- [x] review 第 1 轮 S4（2026-11-03）：设计师冻结时读的参考不再写设计 PR，冻结结果提交在这条线的知识库分支上
+- [x] review 第 1 轮 S5（2026-11-03）：交报告后人要回工单重做一大块时，PR 转回 draft、issue 翻回实现中；平常的批示修复留在审核中
+- [x] review 第 1 轮 C2（2026-11-03）：验证与写 spec 两个 skill 的路由描述不写流程步骤（AGENTS.md「流程、产物格式、模型名不写」）
+- [x] review 第 1 轮 C3（2026-11-03）：spec 状态 skill 正文在 5000 字以内

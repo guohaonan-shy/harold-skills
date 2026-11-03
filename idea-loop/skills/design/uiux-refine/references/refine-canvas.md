@@ -4,7 +4,7 @@ refine 的画布是这份 spec 定稿用的高保真设计：方向说明的那�
 
 ## 放在哪
 
-一份 spec 一个目录，位置见 `idea-loop:wiki-conventions` 的「目录」（`design/tmp/<spec-slug>/canvas/`）。打磨时只在本地；冻结时删掉没签字的版本和 `work/`，其余经设计 PR 提交（[freeze.md](freeze.md)）：
+一份 spec 一个目录，位置见 `idea-loop:wiki-conventions` 的「目录」（`design/tmp/<spec-slug>/canvas/`）。打磨时只在本地；冻结时删掉没签字的版本和 `work/`，其余提交在这条线的知识库分支上（[freeze.md](freeze.md)）：
 
 ```
 canvas/

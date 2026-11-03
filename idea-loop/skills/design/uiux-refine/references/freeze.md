@@ -20,7 +20,7 @@ docs/design/tmp/<spec-slug>/
 
 记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 `idea-loop:wiki-conventions` 的「frontmatter」，`type: design`。
 
-这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 由编排者经设计 PR 强制提交进主分支，实现从主分支开 worktree 就拿得到；它留到实现 PR 合并前的归档（归档模式从最终画布加实现写出 `delta/`，归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
+这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 由编排者强制提交在这条线的知识库分支上（不开设计 PR），实现在同一条分支上就拿得到；它留到这条线合并前的归档（归档模式从最终画布加实现写出 `delta/`，归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
 
 冻结记录正文六节，短：
 
@@ -55,7 +55,7 @@ docs/design/tmp/<spec-slug>/
 
 ## 不提交，输出
 
-spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排者：它核对冻结结果之后开。
+spec 的状态不翻，冻结后仍是 `正式`。提交归编排者：它核对冻结结果之后提交、推送。
 
 写完「改 spec」就停下输出：「要看哪里」列交互图的路径；画布里碰到的、spec 没写入口的新页面，列进「要人判的取舍」。
 
@@ -64,7 +64,7 @@ spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排�
 人说「这几块可以冻结了，那几块回去重新发散」时：
 
 1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。
-2. spec 不动：不写冻结摘要，也不开设计 PR——`idea-loop:to-ticket` 只认整份冻结。
+2. spec 不动：不写冻结摘要，也不提交冻结结果——`idea-loop:to-ticket` 只认整份冻结。
 3. 回推的那几块记进冻结记录的签字节（分流回 `/idea-loop:uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
 4. 停下输出，然后你就结束了。下一个 designer 从「部分冻结后重开」接上。
 

@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec，定稿后单独提交。讨论收尾要落成 spec 时用。
+description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec。讨论收尾要落成 spec 时用。
 ---
 
 把当前上下文和你对代码库的理解综合成一份 spec。不访谈，只写已知的。综合时发现思考本身有洞，停下，用 Skill 工具调 `idea-loop:grill` 把洞问清，spec 只写问清了的。
