@@ -2,7 +2,13 @@
 
 这个仓库的需求以 GitHub issue 的形式进来。所有操作用 `gh`。issue 所在的 GitHub 仓库写在知识库 `idea-loop.json` 的 `issues`，idea-loop 的脚本（`issues.mjs`）读它；手敲 `gh` 时加 `--repo <那个仓库>`。
 
-issue 是需求的入口，也是工作的队列：idea-loop 的调度给每组待验证的 issue（一个根 issue，或一个没被整合的 issue）出一张会话卡片，人点开后，一组（一个根 issue 加它的子 issue，或一个没被整合的 issue）一个会话，从验证、设计一路走到实现合并。要做的事写在 spec 里（知识库里 `docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
+issue 是需求的入口，也是工作的队列：idea-loop 的调度给 P0 和本期焦点里每组待验证的 issue（一个根 issue，或一个没被整合的 issue）出一张会话卡片，人点开后，一组（一个根 issue 加它的子 issue，或一个没被整合的 issue）一个会话，从验证、设计一路走到实现合并。要做的事写在 spec 里（知识库里 `docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
+
+## 本期焦点
+
+本期焦点：
+
+调度只给 P0（`priority:P0`，线上坏了或安全问题）和上面这一行里的模块出会话卡片。一行模块名，用顿号隔开，每个名字跟模块根 issue 的标题一模一样，例：`本期焦点：Email 报告、付款`。空着就只出 P0。换焦点改这一行，调度下一轮就按新的出。
 
 ## 操作
 

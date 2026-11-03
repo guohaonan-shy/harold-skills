@@ -4,7 +4,7 @@ import { chmodSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import {
-  advance, advancePlan, candidates, defaultGh, dropIssue, ensureLabels, group, handoffIssue, issuesOf, openSpecIssue, parseTypes, queue, readTypes, reconcile,
+  advance, advancePlan, candidates, defaultGh, dropIssue, ensureLabels, group, handoffIssue, issuesOf, openSpecIssue, p0Plan, parseFocus, parseTypes, queue, readFocus, readTypes, reconcile,
   reconcilePlan, resume, setState, setTypes, stateOf, targetOf, typeSet, unhandoffIssue, withIssues,
 } from './issues.mjs';
 
@@ -183,7 +183,8 @@ test('setTypes replaces the issue\'s type labels and leaves the rest', () => {
 
 test('candidates are 待验证 issues, oldest first, skipping spec issues and issues a spec already lists', () => {
   const docs = docsWith({ a: spec({ issues: '[4]' }) });
-  const { gh } = fakeGh({ 5: open(5), 2: open(2), 3: open(3, ['status:验证中']), 4: open(4), 6: { ...open(6), title: 'spec：重试' } });
+  const P = ['priority:P0'];
+  const { gh } = fakeGh({ 5: open(5, P), 2: open(2, P), 3: open(3, ['status:验证中', ...P]), 4: open(4, P), 6: { ...open(6, P), title: 'spec：重试' } });
   assert.deepEqual(candidates(gh, 100, new Set([4])).map((i) => i.number), [2, 5]);
   assert.ok(docs);
 });
@@ -193,7 +194,7 @@ test('a 独立队列 note is plain description text: every issue waits in the on
   assert.equal(types.parents[1].about, '搜索（独立队列，上限 5）');
   assert.equal(types.parents[1].queue, undefined);
   const { gh } = fakeGh({ 1: open(1, ['type:seo', 'type:seo/pages']), 2: open(2, ['type:bug']), 3: open(3), 4: open(4, ['type:seo']) });
-  assert.deepEqual(candidates(gh, 100, new Set()).map((i) => i.number), [1, 2, 3, 4]);
+  assert.deepEqual(candidates(gh, 100, new Set(), { p2: true }).map((i) => i.number), [1, 2, 3, 4]);
 });
 
 test('set does the flips a session or a person makes, and refuses the 待 states reconcile owns', () => {
@@ -357,36 +358,84 @@ test('advance relabels and closes, and says the next phase', () => {
 
 // ---------- 根 issue 与子 issue ----------
 
-const NOW = Date.parse('2026-10-30T12:00:00Z');
-const hoursAgo = (h) => new Date(NOW - h * 3600_000).toISOString();
-
 test('reading open issues pages through the repo list and skips pull requests', () => {
   const issues = {};
   for (let n = 1; n <= 230; n += 1) issues[n] = open(n);
   issues[231] = open(231, [], { pull: true });
   const { gh } = fakeGh(issues);
-  assert.equal(candidates(gh, 1000, new Set(), { now: NOW }).length, 230);
+  assert.equal(candidates(gh, 1000, new Set(), { p2: true }).length, 230);
 });
 
-test('candidates: a root comes out once, its sub-issues and issues younger than six hours do not', () => {
-  const { gh } = fakeGh({
-    1: open(1, [], { createdAt: hoursAgo(30) }),
-    2: sub(2, 1, [], { createdAt: hoursAgo(30) }),
-    3: sub(3, 1, [], { createdAt: hoursAgo(30) }),
-    4: open(4, [], { createdAt: hoursAgo(1) }),
-    5: open(5, [], { createdAt: hoursAgo(7) }),
-  });
-  assert.deepEqual(candidates(gh, 100, new Set(), { now: NOW }).map((i) => i.number), [1, 5]);
+// ---------- 优先级：P0、本期焦点、P2 ----------
+
+/** The spec's fixture: #1 P0, #2 / #3 roots, #4 #2's sub-issue, #5 an idea, #6 P0 opened a minute ago, #7 in no module. */
+const priorityIssues = () => ({
+  1: open(1, ['priority:P0']),
+  2: { ...open(2), title: 'Email 报告' },
+  3: { ...open(3), title: '付款' },
+  4: sub(4, 2),
+  5: open(5, ['idea']),
+  6: open(6, ['priority:P0'], { createdAt: new Date().toISOString() }),
+  7: open(7),
+  8: sub(8, 3),
 });
 
-test('candidates: the six-hour wait ends at six hours, and a fresh root is not held back', () => {
-  const { gh } = fakeGh({
-    1: open(1, [], { createdAt: hoursAgo(6) }),
-    2: open(2, [], { createdAt: hoursAgo(5.99) }),
-    3: open(3, [], { createdAt: hoursAgo(0.1) }),
-    4: sub(4, 3, [], { createdAt: hoursAgo(0.1) }),
-  });
-  assert.deepEqual(candidates(gh, 100, new Set(), { now: NOW }).map((i) => i.number), [1, 3]);
+test('candidates: P0 first, then the roots in focus, each oldest first; sub-issues, ideas and P2 stay out, nothing waits six hours', () => {
+  const { gh } = fakeGh(priorityIssues());
+  assert.deepEqual(candidates(gh, 100, new Set(), { focus: ['Email 报告'] }).map((i) => i.number), [1, 6, 2]);
+  assert.deepEqual(candidates(gh, 2, new Set(), { focus: ['Email 报告'] }).map((i) => i.number), [1, 6]);
+});
+
+test('candidates --p2: the rest, oldest first', () => {
+  const { gh } = fakeGh(priorityIssues());
+  assert.deepEqual(candidates(gh, 100, new Set(), { focus: ['Email 报告'], p2: true }).map((i) => i.number), [3, 7]);
+});
+
+test('candidates without a focus offer P0 only', () => {
+  const { gh } = fakeGh(priorityIssues());
+  assert.deepEqual(candidates(gh, 100, new Set()).map((i) => i.number), [1, 6]);
+});
+
+test('a focus names a module root by its whole title: idea-loop/engineering is not idea-loop/design', () => {
+  const { gh } = fakeGh({ 2: { ...open(2), title: 'idea-loop/engineering' }, 3: { ...open(3), title: 'idea-loop/design' }, 4: sub(4, 2), 5: sub(5, 3), 6: { ...open(6), title: 'idea-loop' } });
+  assert.deepEqual(candidates(gh, 100, new Set(), { focus: ['idea-loop/engineering'] }).map((i) => i.number), [2]);
+});
+
+test('a seo issue is offered like any other: P0 first, then its root in focus', () => {
+  const { gh } = fakeGh({ 1: { ...open(1, ['type:seo']), title: '首页' }, 2: sub(2, 1, ['type:seo']), 3: open(3, ['type:seo', 'priority:P0']) });
+  assert.deepEqual(candidates(gh, 100, new Set(), { focus: ['首页'] }).map((i) => i.number), [3, 1]);
+});
+
+test('parseFocus reads the 本期焦点 line of its section; readFocus finds ISSUE_TRACKER.md next to docs/', () => {
+  assert.deepEqual(parseFocus('# Issue tracker\n\n## 本期焦点\n\n本期焦点：Email 报告、付款 , idea-loop/engineering\n\n## 操作\n本期焦点：别的\n'), ['Email 报告', '付款', 'idea-loop/engineering']);
+  assert.deepEqual(parseFocus('## 本期焦点\n\n本期焦点：\n'), []);
+  assert.deepEqual(parseFocus('# x\n本期焦点：甲\n'), []);
+  const root = mkdtempSync(join(tmpdir(), 'issues-focus-'));
+  const docs = join(root, 'docs');
+  mkdirSync(docs);
+  assert.deepEqual(readFocus(docs), []);
+  writeFileSync(join(root, 'ISSUE_TRACKER.md'), '## 本期焦点\n\n本期焦点：付款\n');
+  assert.deepEqual(readFocus(docs), ['付款']);
+});
+
+test('reconcile lifts a sub-issue\'s P0 onto its root', () => {
+  const docs = docsWith({});
+  const issues = { 2: { ...open(2), title: 'Email 报告' }, 4: sub(4, 2, ['priority:P0']), 9: open(9, ['priority:P0']), 10: sub(10, 9, ['priority:P0']) };
+  assert.deepEqual(p0Plan(Object.values(issues)), [2]);
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(reconcile(gh, docs).done, ['#2: 子 issue 是 P0 → 根加上 priority:P0']);
+  assert.ok(issues[2].labels.includes('priority:P0'));
+  assert.deepEqual(calls.map((c) => c.join(' ')), ['issue edit 2 --add-label priority:P0']);
+});
+
+test('ensureLabels creates priority:P0 and Idea, and keeps them whatever their case', () => {
+  const { gh } = fakeGh({}, ['idea']);
+  const { made, surplus } = ensureLabels(gh, parseTypes('## issue 分类\n\n- `bug`：缺陷\n'));
+  assert.ok(made.includes('priority:P0'));
+  assert.ok(!made.includes('Idea'));
+  assert.deepEqual(surplus, []);
+  const fresh = fakeGh({}, []);
+  assert.ok(ensureLabels(fresh.gh, null).made.includes('Idea'));
 });
 
 test('set on a root number flips the root and its open sub-issues together, checking each against the allowed flips', () => {

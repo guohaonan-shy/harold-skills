@@ -15,13 +15,13 @@
 
 ## 验收标准
 
-- [ ] 假 gh 给出 #1（P0，无父）、#2（根「Email 报告」）、#3（根「付款」）、#4（#2 的子 issue）、#5（`Idea`）、#6（无父、P0、刚开 1 分钟）、#7（无父、无 label），焦点「Email 报告」：候选是 [1, 6, 2]
-- [ ] 同一组数据取 P2：[3, 7]
-- [ ] 没有「本期焦点」一节：只出 P0
-- [ ] 焦点 `idea-loop/engineering`，根 `idea-loop/engineering` 出、根 `idea-loop/design` 不出
-- [ ] 根 #2 不带 P0、子 #4 带：对账给 #2 加 `priority:P0`
-- [ ] 仓库里没有 `priority:P0`、`Idea`：建 label 时两个都建出，不列为多余
-- [ ] 全量测试通过
+- [x] 假 gh 给出 #1（P0，无父）、#2（根「Email 报告」）、#3（根「付款」）、#4（#2 的子 issue）、#5（`Idea`）、#6（无父、P0、刚开 1 分钟）、#7（无父、无 label），焦点「Email 报告」：候选是 [1, 6, 2]
+- [x] 同一组数据取 P2：[3, 7]
+- [x] 没有「本期焦点」一节：只出 P0
+- [x] 焦点 `idea-loop/engineering`，根 `idea-loop/engineering` 出、根 `idea-loop/design` 不出
+- [x] 根 #2 不带 P0、子 #4 带：对账给 #2 加 `priority:P0`
+- [x] 仓库里没有 `priority:P0`、`Idea`：建 label 时两个都建出，不列为多余
+- [x] 全量测试通过
 
 ## 选中的存量回归
 

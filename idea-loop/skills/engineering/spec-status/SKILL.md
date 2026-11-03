@@ -29,12 +29,12 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 
 ### 根 issue 和子 issue
 
-有子 issue 的是「根」，有父 issue 的是「子 issue」（GitHub 原生 sub-issue），一组按一个会话走。给根号 `issues set` 就整组翻，`issues group` 查一组；候选只出根，不出开了不到 6 小时的；一个根下的全部子 issue 由**一份** spec 覆盖，一个会话走完：spec 的 `issues:` 写全部子 issue，不写根。`reconcile` / `advance` 翻这份 spec 的子 issue 时，根跟着翻到同一个状态；spec 让子 issue 关闭（完成或不存在）时，根随着关闭（completed），评论写明随哪份 spec。根下有开着的子 issue 不在这份 spec 里、或子 issue 要翻的去向不一致时，根不动，脚本把它作为问题报出来（出现了说明分组和 spec 对不上）。
+有子 issue 的是「根」，有父 issue 的是「子 issue」（GitHub 原生 sub-issue），一组按一个会话走。给根号 `issues set` 就整组翻，`issues group` 查一组；候选只出根（或没有父 issue 的 issue），不出子 issue；一个根下的全部子 issue 由**一份** spec 覆盖，一个会话走完：spec 的 `issues:` 写全部子 issue，不写根。`reconcile` / `advance` 翻这份 spec 的子 issue 时，根跟着翻到同一个状态；spec 让子 issue 关闭（完成或不存在）时，根随着关闭（completed），评论写明随哪份 spec。根下有开着的子 issue 不在这份 spec 里、或子 issue 要翻的去向不一致时，根不动，脚本把它作为问题报出来（出现了说明分组和 spec 对不上）。
 
 ```bash
 issues labels     <docs> [--prune]             # 建缺的 status:* type:* label；多余的只列出
 issues type       <docs> <号> <父类[/子类]>...  # 打分类，换掉原有的 type:*
-issues candidates <docs> [<limit>]             # 待验证的候选，最早的在前（JSON）
+issues candidates <docs> [<limit>] [--p2]      # 待验证的候选：P0 在前、再接本期焦点的根（JSON）；--p2 出其余的
 issues group      <docs> <号>                   # 根号或子 issue 号：根和开着的子 issue（JSON）
 issues queue      <docs> <待设计|待实现>        # 等在这个状态的 spec，加上 label 对不上的问题
 issues set        <docs> <状态> <号 | slug>...  # 翻状态；根号连子 issue 一起翻
@@ -48,6 +48,14 @@ issues drop       <docs> <slug> <号>           # 从 spec 移出 #号，关成 
 ```
 
 spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件、`open` 开的 issue 不挂 label：spec 的 PR 没合并时，GitHub 上不该有 label 指向主分支上没有的 spec。
+
+### 优先级
+
+- **P0**：线上坏了，或安全问题（权限、付款、数据越权）。存成 `priority:P0` label，由开 issue 的一方判，拿不准不标；人可以手动加减。子 issue 带、根不带的，`reconcile` 给根补上。
+- **P1**：标题在「本期焦点」里的根。焦点写在知识库根 `ISSUE_TRACKER.md` 的「本期焦点」一节，一行 `本期焦点：甲、乙`，根的标题与其中一个完全相同才算；每轮现算，不存 label。
+- **P2**：其余的。不出卡片，也不关。
+
+`Idea` label 标想法：带它的不进候选（`--p2` 也不出）。`priority:P0` 和 `Idea` 由 `issues labels` 建，不算多余 label。
 
 ## issue 的分类
 

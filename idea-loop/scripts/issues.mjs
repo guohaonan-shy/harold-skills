@@ -30,6 +30,12 @@
  * spec lists yet is left alone. A root is never an orphan: no spec lists it, and that is not reported.
  * `group` names the root and the open sub-issues of any member.
  *
+ * Priority is by value. P0 (broken in production, or a security problem) is the one stored as a label,
+ * `priority:P0`; P1 / P2 are worked out every round: P1 is a root whose title (the module's name) is listed
+ * in the「本期焦点」line of ISSUE_TRACKER.md next to <docs>, P2 is everything else. `candidates` offers P0
+ * and P1 only, `--p2` the rest; an issue labelled `Idea` is never offered, and `reconcile` lifts a
+ * sub-issue's P0 onto its root.
+ *
  * Besides its status an issue carries category labels, `type:<parent>` and optionally
  * `type:<parent>/<child>`. The project lists them in the「issue 分类」section of its AGENTS.md (or
  * CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes every label outside the
@@ -41,8 +47,8 @@
  *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels; lists the rest, --prune deletes them
  *   node issues.mjs type       <docs> <n> <parent[/child]>...  → sets #n's type:* labels from the project's categories
  *   node issues.mjs advance    <docs> <spec-slug>              → after a PR of the spec landed: its issues move on to 设计中 / 实现中, or close
- *   node issues.mjs candidates <docs> [<limit>]                → JSON: 待验证 issues no spec lists, oldest first;
- *                                                                 sub-issues and issues opened under 6 hours ago are skipped (a root is never held back)
+ *   node issues.mjs candidates <docs> [<limit>] [--p2]         → JSON: 待验证 groups no spec lists: P0 first, then the roots in focus, each oldest first;
+ *                                                                 --p2 the rest (no P0, not in focus), oldest first. Sub-issues and ideas never come out
  *   node issues.mjs group      <docs> <n>                      → JSON: the root of #n (the root's number or any sub-issue's) and its open sub-issues
  *   node issues.mjs queue      <docs> <待设计|待实现>           → JSON: specs whose issues wait in that state, and the mismatches
  *   node issues.mjs set        <docs> <state> <target>...      → checked flip: claim, a session opening or giving up, 搁置; a root's number flips its open sub-issues too
@@ -86,8 +92,38 @@ export const NEXT = {
   搁置: [],
 };
 
-/** An issue opened less than this long ago waits: the consolidation task runs every 6 hours and should have seen it once. */
-export const NEW_ISSUE_WAIT_MS = 6 * 3600_000;
+export const P0 = 'priority:P0';
+export const IDEA = 'Idea';
+/** The labels idea-loop keeps besides the states and the categories (GitHub compares label names ignoring case). */
+const MANAGED = [
+  { name: P0, color: 'b60205', about: 'idea-loop：线上坏了或安全问题' },
+  { name: IDEA, color: 'fef2c0', about: 'idea-loop：想法，不进调度' },
+];
+const isIdea = (labels) => labels.some((l) => l.toLowerCase() === IDEA.toLowerCase());
+
+export const FOCUS_HEADING = '本期焦点';
+
+/**
+ * The modules in focus, from the「本期焦点」section of ISSUE_TRACKER.md: its line `本期焦点：甲、乙` (the
+ * names split on 、，, and trimmed). An empty list when the section, the line or the names are missing.
+ */
+export function parseFocus(md) {
+  const lines = String(md).split('\n');
+  const start = lines.findIndex((l) => l.trim() === `## ${FOCUS_HEADING}`);
+  if (start < 0) return [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,2} /.test(line)) break;
+    const m = line.trim().match(new RegExp(`^${FOCUS_HEADING}[：:](.*)$`));
+    if (m) return m[1].split(/[、，,]/).map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+/** The focus of the business <docs> belongs to: ISSUE_TRACKER.md one level up. */
+export function readFocus(docs) {
+  const file = join(dirname(resolve(docs)), 'ISSUE_TRACKER.md');
+  return existsSync(file) ? parseFocus(readFileSync(file, 'utf8')) : [];
+}
 
 /** An issue's state from its labels: the status:* label, 待验证 when there is none. */
 export function stateOf(labels) {
@@ -148,7 +184,7 @@ export function typeLabels(types) {
 
 /** The labels a project keeps: the status states, its categories, and its keep-list. */
 export function keptLabels(types) {
-  return new Set([...STATES.map(label), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
+  return new Set([...STATES.map(label), ...MANAGED.map((l) => l.name), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
 }
 
 /** The type:* labels an issue should carry for the given values (`seo`, `seo/blog`); a child brings its parent. */
@@ -340,8 +376,8 @@ const PAGE = 100;
 
 /**
  * Every open issue (pull requests left out) from the repo-wide REST list, page by page, with what the list
- * gives for free: when it was opened, its parent (the number, or null) and how many sub-issues it has (open
- * or closed; above 0 makes it a root).
+ * gives for free: its parent (the number, or null) and how many sub-issues it has (open or closed; above 0
+ * makes it a root).
  */
 function openIssues(gh) {
   const out = [];
@@ -353,7 +389,6 @@ function openIssues(gh) {
         number: i.number,
         title: i.title,
         labels: i.labels.map((l) => l.name),
-        createdAt: Date.parse(i.created_at),
         parent: Number(String(i.parent_issue_url ?? '').match(/\/issues\/(\d+)$/)?.[1]) || null,
         subCount: i.sub_issues_summary?.total ?? 0,
       });
@@ -400,11 +435,13 @@ export function ensureLabels(gh, types = null, { prune = false } = {}) {
   const have = new Set(JSON.parse(gh(['label', 'list', '--limit', '500', '--json', 'name'])).map((l) => l.name));
   const want = [
     ...STATES.map((s) => ({ name: label(s), color: COLORS[s], about: s === '搁置' ? 'idea-loop 不接手' : `idea-loop：${s}` })),
+    ...MANAGED,
     ...typeLabels(types),
   ];
+  const haveLower = new Set([...have].map((l) => l.toLowerCase()));
   const made = [];
   for (const l of want) {
-    if (have.has(l.name)) continue;
+    if (haveLower.has(l.name.toLowerCase())) continue;
     gh(['label', 'create', l.name, '--color', l.color, '--description', l.about || 'idea-loop：分类']);
     made.push(l.name);
   }
@@ -412,10 +449,10 @@ export function ensureLabels(gh, types = null, { prune = false } = {}) {
     if (prune) throw new Error(`没有「${TYPES_HEADING}」一节，不知道该留哪些 label，不清理`);
     return { made, surplus: [], deleted: [] };
   }
-  const kept = keptLabels(types);
+  const kept = new Set([...keptLabels(types)].map((l) => l.toLowerCase()));
   const uses = new Map();
   for (const i of openIssues(gh)) for (const l of i.labels) uses.set(l, (uses.get(l) ?? 0) + 1);
-  const surplus = [...have].filter((l) => !kept.has(l)).sort().map((name) => ({ name, openIssues: uses.get(name) ?? 0 }));
+  const surplus = [...have].filter((l) => !kept.has(l.toLowerCase())).sort().map((name) => ({ name, openIssues: uses.get(name) ?? 0 }));
   const deleted = [];
   if (prune) {
     for (const { name } of surplus) {
@@ -441,13 +478,27 @@ export function listedIssues(docs) {
   return new Set(specsOn(docs).flatMap((s) => issuesOf(s.md)));
 }
 
-export function candidates(gh, limit = 100, listed = new Set(), { now = Date.now() } = {}) {
+/**
+ * The 待验证 groups the dispatcher may offer: a root, or an issue with no parent, that no spec lists, is not a
+ * spec issue and not an idea. P0 first, then the roots whose title is in `focus`, each oldest first; with
+ * `p2`, the rest (no P0, not in focus), oldest first.
+ */
+export function candidates(gh, limit = 100, listed = new Set(), { focus = [], p2 = false } = {}) {
+  const inFocus = (i) => i.subCount > 0 && focus.includes(String(i.title).trim());
+  const tier = (i) => (i.labels.includes(P0) ? 0 : inFocus(i) ? 1 : 2);
   return openIssues(gh)
     .filter((i) => stateOf(i.labels) === UNLABELLED && !listed.has(i.number) && !isSpecIssue(i.title))
-    .filter((i) => !i.parent && (i.subCount > 0 || !(now - i.createdAt < NEW_ISSUE_WAIT_MS)))
-    .sort((a, b) => a.number - b.number)
+    .filter((i) => !i.parent && !isIdea(i.labels))
+    .filter((i) => (p2 ? tier(i) === 2 : tier(i) < 2))
+    .sort((a, b) => tier(a) - tier(b) || a.number - b.number)
     .slice(0, limit)
     .map(({ number, title }) => ({ number, title }));
+}
+
+/** The roots that should carry P0: a root without it, with an open sub-issue that carries it. */
+export function p0Plan(issues) {
+  const kids = new Set(issues.filter((i) => i.parent && i.labels.includes(P0)).map((i) => i.parent));
+  return issues.filter((i) => kids.has(i.number) && !i.labels.includes(P0)).map((i) => i.number);
 }
 
 /** The specs a loop picks up for 待设计 or 待实现: those whose open issues carry it, oldest issue first. */
@@ -511,7 +562,12 @@ function apply(gh, actions, byNumber, slug = null) {
 export function reconcile(gh, docs) {
   const open = openIssues(gh);
   const { actions, problems } = reconcilePlan(specsOn(docs), open);
-  return { done: apply(gh, actions, new Map(open.map((i) => [i.number, i]))), problems };
+  const done = apply(gh, actions, new Map(open.map((i) => [i.number, i])));
+  for (const n of p0Plan(open)) {
+    gh(['issue', 'edit', String(n), '--add-label', P0]);
+    done.push(`#${n}: 子 issue 是 P0 → 根加上 ${P0}`);
+  }
+  return { done, problems };
 }
 
 export function advance(gh, docs, slug) {
@@ -622,7 +678,14 @@ function main() {
     if (surplus.length) print([`不在状态、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
     return;
   }
-  if (cmd === 'candidates') return console.log(JSON.stringify(candidates(gh, a ? num(a, 'limit') : undefined, listedIssues(docs)), null, 2));
+  if (cmd === 'candidates') {
+    const args = [a, b, ...rest].filter((x) => x !== undefined);
+    const bad = args.find((x) => x.startsWith('--') && x !== '--p2');
+    if (bad) throw new Error(`不认识的参数「${bad}」（usage: issues.mjs candidates <docs> [<limit>] [--p2]）`);
+    const limit = args.find((x) => !x.startsWith('--'));
+    const opts = { focus: readFocus(docs), p2: args.includes('--p2') };
+    return console.log(JSON.stringify(candidates(gh, limit ? num(limit, 'limit') : undefined, listedIssues(docs), opts), null, 2));
+  }
   if (cmd === 'reconcile') {
     const { done, problems } = reconcile(gh, docs);
     print(done);
