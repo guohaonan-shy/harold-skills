@@ -23,7 +23,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 开场
 
-1. **自己的 worktree 和分支**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。分支改名 `git branch -m issue/<根号>`（根号见第 2 步），整条线就用它；知识库那边由写的步骤用 `root --write` 开同名分支。
+1. **自己的 worktree 和分支**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。分支改名 `git branch -m issue/<根号>`（根号见第 2 步），整条线就用它；知识库那边由写的步骤用 `root --write` 开同名分支。`DEVELOPMENT.md` 的「分支」节写着「发布方式：按版本发布」的，这个会话是版本会话，分支和合并照 [`references/release.md`](references/release.md) 走，下文的讨论、实现、换阶段按它改。
 2. **认出这一组**：`issues group <docs> $ARGUMENTS`，`$ARGUMENTS` 是根号或任一子 issue 号都行，返回根和根下开着的子 issue。以下的「根号」是返回的根号（没被整合的 issue 就是它自己）。
 3. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上面换好的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<根号> <根标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话，所以会话标题用根号。
 4. **认领**：对根号 `gh issue view <根号> --comments` 读全文和评论（子 issue 的在讨论时一个个读），看它现在的状态（`idea-loop:spec-status` 的「issue 的状态」）：

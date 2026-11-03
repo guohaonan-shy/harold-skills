@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 | 文件 | 在哪 | 管什么 | 模板 |
 |---|---|---|---|
-| `DEVELOPMENT.md` | 代码仓库根目录 | 分支、合并方式、worktree 准备、开发服务器 | [development.md](references/development.md) |
+| `DEVELOPMENT.md` | 代码仓库根目录 | 分支、合并与发布方式、worktree 准备、开发服务器 | [development.md](references/development.md) |
 | `REVIEW.md` | 代码仓库根目录 | 验证命令、review 的额外要求 | [review.md](references/review.md) |
 | `CODING_STANDARDS.md` | 代码仓库根目录 | 代码该怎么写 | [coding-standards.md](references/coding-standards.md) |
 | `## idea-loop` 块（`AGENTS.md`，没有就 `CLAUDE.md`） | 代码仓库 | 指针：业务名、知识库的 GitHub 名 | [agents-block.md](references/agents-block.md) |
@@ -55,9 +55,11 @@ disable-model-invocation: true
 
 ## 迁移
 
-预检发现老布局时，读 [references/migrate-to-knowledge-base.md](references/migrate-to-knowledge-base.md)：`docs/` 带历史搬进知识库，代码仓库开一个 PR 删旧文件、换指针块，交给人合并，setup 不合并。
+预检发现老布局时，读 [references/migrate-to-knowledge-base.md](references/migrate-to-knowledge-base.md)：`docs/` 带历史搬进知识库，代码仓库开一个 PR 删旧文件、换指针块，由人合并，setup 不合。
 
-完成条件：三项核对都过，PR 链接交给了人。
+老阶段 label 照 [migrate-stages.md](references/migrate-stages.md) 换。
+
+完成条件：三项核对都过，PR 链接交给了人，老阶段 label 已换。
 
 ## 夜间规则回放
 
@@ -67,16 +69,16 @@ disable-model-invocation: true
 
 ## 每周对账
 
-`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次。必须在这个业务的 `home`（`knowledge-base.mjs business` 里的 `home`，会话在哪跑）里做，任务 id 叫 `dreaming-<仓库名>`，仓库名取 `home` 主 checkout 的目录名。步骤（没有工具时的退路、问人的选项、`create_scheduled_task` 的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次。必须在这个业务的 `home`（`knowledge-base.mjs business` 里的 `home`，会话在哪跑）里做，任务 id 叫 `dreaming-<仓库名>`，仓库名取 `home` 主 checkout 的目录名。步骤在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
 完成条件：这个业务有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
 ## 整合定时任务
 
-一个跑在 Claude cloud 上的定时任务（claude.ai/code/routines），每 6 小时把开着的、改同一个文件或同一个页面 / 模块的待验证 issue 挂到一个根 issue 下。规则全在 prompt 里：[references/consolidation-prompt.md](references/consolidation-prompt.md)，原样写进任务，`<仓库>` 换成 issue 所在的 GitHub 仓库 `owner/name`，即知识库 `idea-loop.json` 的 `issues`（「问人」里确认过的那个）。
+一个跑在 Claude cloud 上的定时任务（claude.ai/code/routines），每 6 小时把开着的、改同一个文件或同一个页面 / 模块的待验证 issue 挂到一个根 issue 下。规则全在 prompt 里：[references/consolidation-prompt.md](references/consolidation-prompt.md)，原样写进任务，`<仓库>` 换成 issue 所在的 GitHub 仓库 `owner/name`，即知识库 `idea-loop.json` 的 `issues`。
 
-1. 打印 `https://github.com/apps/claude/installations/new`，说明**只装在 issue 所在的这个仓库上**，这一步只能人在 GitHub 上点，等人说装好。
-2. 用 `RemoteTrigger` 建 cloud 定时任务：cron `7 */6 * * *`（按 UTC 读，偏开整点），仓库填 `https://github.com/<owner/name>`（同上一步取的），prompt 是上面那份。
+1. 打印 `https://github.com/apps/claude/installations/new`，说明**只装在 issue 所在的这个仓库上**，只能人在 GitHub 上点，等人说装好。
+2. 用 `RemoteTrigger` 建 cloud 定时任务：cron `7 */6 * * *`（按 UTC 读，偏开整点），仓库填 `https://github.com/<owner/name>`，prompt 是上面那份。
 3. 建完清掉任务上挂的全部连接器：任务默认继承账号的全部连接器，它一个都不用。
 4. 「Run now」跑一次冒烟，告诉人去侧边栏 Scheduled 组看那次运行的会话、核对合并结果。
 5. 没有 `RemoteTrigger` 或人拒绝：prompt 和设置原样给人，记「未做」及原因。
@@ -92,4 +94,4 @@ disable-model-invocation: true
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
 - 整合任务：建没建（任务 id、cron）、连接器清没清、冒烟跑没跑；没建时 prompt 与设置原样给人。
 - 怎么起调度：在 `home` 的主 checkout 里开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`。
-- 留给人的事：装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检表）；创建 GitHub App；往 `CODING_STANDARDS.md` 写规则。
+- 留给人的事：装或登录 `gh`、Codex；用户级配 Playwright 和 Refero（命令见预检表）；创建 GitHub App；往 `CODING_STANDARDS.md` 写规则。

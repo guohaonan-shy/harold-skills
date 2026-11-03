@@ -14,13 +14,14 @@
 4. **合并**：`gh pr merge <PR 号> --<合并方式>`，合并方式取目标仓库 `DEVELOPMENT.md` 的「分支」节。
 5. 做「合并后的清理」。
 6. 这份 spec 有几个 PR 时，合完这一个就照 [`multi-repo.md`](multi-repo.md) 的「全部合并才算完」查其余的：只剩知识库 PR 没合，就接着做下面的「知识库 PR」；全合了才 `issues advance`，否则汇报里写还剩哪几个没合。
+7. **PR 的 base 是 release 分支**（`DEVELOPMENT.md` 写着「发布方式：按版本发布」，这是一个 feature）：合完就停在这里，不合知识库 PR、不 `issues advance`，issue 留在审核中，汇报里写「已合进 release」。知识库 PR 和关 issue 等 release 合进主分支后由版本会话做（`idea-loop:issue-session` 的「按版本发布」）。release → 主分支的那个 PR 照上面合，合并提交里改版本号。
 
 ## 知识库 PR
 
 实现阶段的知识库 PR（工单删除、spec 翻完成、设计归档都在里面）**由会话自己合，不 review**：人说合并代码 PR 就是批准了这一刀，知识库 PR 只是把这一段定下的东西放进知识库主分支（`idea-loop:decision-rules` 的「不自动的」）。一个代码仓库的业务（一个代码 PR 加一个知识库 PR）同样适用。
 
 1. **归档先走**：上面「合并」的第 2 步（有设计产物时，含给人过目草稿）在合并最后一个代码 PR 之前做完，归档提交推在知识库 PR 的分支上。
-2. **其余 PR 都合了，且知识库 PR 的检查全过**（`gh pr checks <PR 号> --repo <知识库 owner/repo>`），就合：`gh pr merge <PR 号> --repo <知识库 owner/repo> --squash`。**合并方式固定是 squash，不取 `DEVELOPMENT.md` 的「分支」节**（那一节管代码仓库）。检查没全过，不合，在汇报里写哪条没过。
+2. **其余 PR 都合了（按版本发布的 feature：release 已合进主分支），且知识库 PR 的检查全过**（`gh pr checks <PR 号> --repo <知识库 owner/repo>`），就合：`gh pr merge <PR 号> --repo <知识库 owner/repo> --squash`。**合并方式固定是 squash，不取 `DEVELOPMENT.md` 的「分支」节**（那一节管代码仓库）。检查没全过，不合，在汇报里写哪条没过。
 3. **不查 review loop 文件，不归档 review 记录**：知识库 PR 没有 review 轮，没有 `.tmp/review-loop/<PR 号>.md` 可查可归档。
 4. 合完做「合并后的清理」，再 `issues advance`（或照 `idea-loop:issue-session` 的「换阶段」）。
 

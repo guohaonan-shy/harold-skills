@@ -6,6 +6,8 @@ idea-loop 的 agent 照这份文件选分支、准备 worktree、起服务。小
 
 - 基准分支：`main`
 - 合并方式：`merge`
+- 发布方式：按版本发布
+- 版本号：每个 plugin 是一个单元，版本号在 `<plugin>/.claude-plugin/plugin.json`（如 `idea-loop`：`idea-loop/.claude-plugin/plugin.json`）；release 分支叫 `release/<plugin>-<版本>`
 
 ## worktree 准备
 

@@ -181,7 +181,7 @@ open 的 issue 只有这几种：待验证（没有 `status:*`）、讨论中、
 
 ### 版本会话的根 issue：一组多份 spec
 
-按版本发布时一组 issue 是一个版本，每个 feature 一份 spec，根下的子 issue 分在几份 spec 里（0.2.0：#220 下 F1–F6 各一份）。`reconcile` / `advance` 遇到子 issue 分在两份以上 spec 里的根，不再报「分组和 spec 对不上」，根不动，留在版本会话认领时的讨论中；子 issue 全部关掉时根照旧随着关闭。只有一份 spec、却有子 issue 不在里面的，照旧报（应用仓库里那是分组错了；版本会话里第二份 spec 还没写出来时也会报，是过渡期的提示，不改动任何东西）。依据：决议「通用流程」行「一个会话一个版本」与 release 计划的 feature 表（现存实例）。
+按版本发布时一组 issue 是一个版本，每个 feature 一份 spec，根下的子 issue 分在几份 spec 里（0.2.0：#220 下 F1–F6 各一份）。`reconcile` / `advance` 遇到子 issue 分在两份以上 spec 里的根，不再报「分组和 spec 对不上」，根不动，留在版本会话认领时的讨论中；子 issue 全部关掉时根照旧随着关闭。只有一份 spec、却有子 issue 不在里面的，`reconcile` 照旧报（应用仓库里那是分组错了）；`advance` 只看传给它的那一份 spec，版本里别的 feature 在别的分支上，所以它遇到这种根不动也不报。依据：决议「通用流程」行「一个会话一个版本」与 release 计划的 feature 表（现存实例）。
 
 ### `发布方式` 写在哪、谁写
 

@@ -48,3 +48,17 @@ test('issue-session walks the four stages on one branch; PRs turn ready only wit
   assert.match(deliver, /issues\.mjs" set <docs> 审核中/);
 });
 
+test('DEVELOPMENT.md says how the repository releases; setup asks it and migrates the older labels', () => {
+  const dev = read('skills', 'engineering', 'setup', 'references', 'development.md');
+  assert.match(dev, /- 发布方式：/);
+  assert.match(dev, /- 版本号：/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'questions.md'), /\*\*发布方式\*\*/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'preflight-table.md'), /老阶段 label/);
+  assert.match(read('skills', 'engineering', 'setup', 'SKILL.md'), /references\/migrate-stages\.md/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'migrate-stages.md'), /issues\.mjs" migrate <知识库>\/docs/);
+  assert.match(read('skills', 'engineering', 'issue-session', 'SKILL.md'), /references\/release\.md/);
+  const release = read('skills', 'engineering', 'issue-session', 'references', 'release.md');
+  assert.match(release, /release\/<单元>-<版本>/);
+  assert.match(release, /feature\/<slug>/);
+  assert.match(read('skills', 'engineering', 'pr-review', 'references', 'merge.md'), /base 是 release 分支/);
+});

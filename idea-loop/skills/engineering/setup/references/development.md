@@ -6,6 +6,13 @@ idea-loop 的 agent 照这份文件选分支、准备 worktree、起服务。小
 
 - 基准分支：`<main>`
 - 合并方式：`<squash | merge | rebase>`
+- 发布方式：`<应用 | 按版本发布>`
+- 版本号：`<单元>`：`<存版本号的文件>`（只有「按版本发布」写；每个独立发版的单元一行，只有一个单元的写一行文件路径）
+
+发布方式决定一个 issue 会话怎么开分支、PR 合到哪（`idea-loop:issue-session`、`idea-loop:pr-review`）：
+
+- **应用**：一个会话一条线，分支 `issue/<根号>` 从基准分支开出，代码 PR 合进基准分支。
+- **按版本发布**：一个会话对应一个版本、一条 `release/<单元>-<版本>` 分支（只有一个单元的写 `release/<版本>`）；版本里每个 feature 一份 spec、一条从 release 开出的 `feature/<slug>`、一个 base 是 release 的 PR；全部 feature 合进 release 后，会话把 release 合进基准分支，版本号只在这次合并里改「版本号」那一行写的文件。
 
 ## worktree 准备
 
