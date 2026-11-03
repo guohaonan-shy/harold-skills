@@ -46,6 +46,17 @@ test('to-ticket: a ticket lands in one repository and the order between reposito
   assert.match(cut, /Blocked by/, '跨仓库的先后只看 Blocked by');
 });
 
+test('to-ticket: which repository a ticket lands in is judged from the knowledge base AGENTS.md "## 仓库" section; without it the slicing stops', () => {
+  const rule = line(toTicket, '**仓库**一行');
+  assert.match(rule, /`AGENTS\.md` 的「## 仓库」一节/, '仓库一行要按知识库 AGENTS.md 的「## 仓库」一节判');
+  const probe = line(toTicket, '「## 仓库」一节');
+  assert.ok(probe, '缺：探代码库时读「## 仓库」一节');
+  const explore = toTicket.slice(toTicket.indexOf('## 探代码库'), toTicket.indexOf('## 切垂直切片'));
+  assert.match(explore, /`<知识库>\/AGENTS\.md` 的「## 仓库」一节/, '探代码库：有两个以上仓库时读知识库根的 AGENTS.md 的「## 仓库」一节');
+  assert.match(explore, /没有这一节[^\n]*停下[^\n]*\/idea-loop:setup/, '没有这一节而业务有几个仓库：停下让人跑 setup 补，不猜');
+  assert.match(rule, /按仓库拆/, '一刀横跨几个仓库的照旧按仓库拆');
+});
+
 test('implement: the other repositories\' integration worktrees come from knowledge-base.mjs worktree, one integration branch per repository', () => {
   assert.match(implement, /knowledge-base\.mjs worktree <仓库名>/, '缺：别的仓库用 knowledge-base.mjs worktree <仓库名> 开');
   assert.match(implement, /\.tmp\/repos\/<仓库名>\//, '缺：它输出的 .tmp/repos/<仓库名>/');
