@@ -130,6 +130,40 @@ test('pr-review: deleting the tickets and archiving the design happen in the kno
   assert.ok(prReviewDir.every((t) => t.length > 0));
 });
 
+test('pr-review: the first report deletes every ticket of the spec, and a later report is not skipped while tickets remain', () => {
+  const deliver = read('skills', 'engineering', 'pr-review', 'references', 'deliver.md');
+  const step2 = deliver.slice(deliver.indexOf('## 2.'), deliver.indexOf('## 3.'));
+  assert.match(step2, /删掉这份 spec 的\*\*全部\*\*工单文件/, '第 2 步删的是这份 spec 的全部工单，不是这个 PR 落地的那几张');
+  assert.match(step2, /所有仓库的工单/, '要写明：有几个 PR 时是所有仓库的工单');
+  assert.doesNotMatch(step2, /删掉这个 PR 落地的工单文件/, '不再只删这个 PR 落地的工单');
+  assert.match(step2, /「完成」、`tickets\/` 也已经删掉了才跳过/, '跳过要同时看 spec 是完成和 tickets/ 已删，不能只看 spec 状态');
+  assert.match(step2, /工单还在，要补删/, '状态翻了而工单还在，要补删');
+  const timing = multiRepo.slice(multiRepo.indexOf('## 删工单与归档的时机'));
+  assert.match(timing, /删的是这份 spec 的全部工单\*\*，不只是这个 PR 所在仓库的那几张/, 'multi-repo 的时机一节：删全部工单');
+  assert.match(timing, /spec 是「完成」且 `tickets\/` 已经没有了，才跳过/, 'multi-repo：跳过的条件含 tickets/ 已删');
+  assert.match(timing, /工单还在就补删/, 'multi-repo：工单还在就补删');
+});
+
+test('pr-review: the knowledge base PR is merged by the session itself, squash, no review and no review-record archive', () => {
+  const merge = read('skills', 'engineering', 'pr-review', 'references', 'merge.md');
+  const section = merge.slice(merge.indexOf('## 知识库 PR'), merge.indexOf('## 合并前归档'));
+  assert.ok(section.length > 0, 'merge.md 缺「## 知识库 PR」一节');
+  assert.match(section, /由会话自己合，不 review/, '知识库 PR 由会话自己合，不 review');
+  assert.match(section, /gh pr merge <PR 号> --repo <知识库 owner\/repo> --squash/, '用 --squash 合');
+  assert.match(section, /不取 `DEVELOPMENT\.md` 的「分支」节/, '合并方式不从开发设置取');
+  assert.match(section, /检查全过/, '检查全过才合');
+  assert.match(section, /不查 review loop 文件，不归档 review 记录/, '不查、不归档 review 记录');
+  assert.match(section, /一个代码仓库的业务[^\n]*同样适用/, '单仓库业务同样适用');
+  assert.match(section, /`issues advance`/, '合完再 issues advance');
+  assert.match(section.slice(0, section.indexOf('1. ')), /不 review/, '先说清不 review');
+  assert.match(merge, /归档先走|第 2 步[^\n]*合并最后一个代码 PR 之前做完/, '设计归档在合并最后一个代码 PR 之前');
+  assert.match(merge, /只剩知识库 PR 没合，就接着做下面的「知识库 PR」/, '代码 PR 合完只剩知识库 PR 时接着合它');
+  assert.match(multiRepo, /只剩知识库 PR 没合[^\n]*会话自己合它[^\n]*`--squash`/, 'multi-repo：只剩知识库 PR 没合，会话自己合它');
+  assert.match(multiRepo, /知识库 PR 不跑 review 轮，也不等人说合并/, 'multi-repo：知识库 PR 不 review、不等人');
+  assert.match(prReview, /代码 PR 只由人决定合并/, 'SKILL.md：只有代码 PR 的合并由人决定（知识库 PR 在 merge.md 里由会话合）');
+  assert.match(readme, /session merges it itself once the code PRs are merged/, 'README 同步');
+});
+
 test('issue-session: the implementation stage ends, and the stage changes, only when all the spec\'s PRs are merged', () => {
   const row = line(issueSession, '| 实现 | 实现中 | 实现中 |');
   assert.ok(row, '阶段表缺实现一行');

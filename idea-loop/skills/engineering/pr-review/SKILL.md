@@ -3,9 +3,9 @@ name: pr-review
 description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards）并处理人的批示，或在人说合并时归档并合并它。implement 全部落地后、人说再跑一轮、人说合并时用。
 ---
 
-**一次调用跑一轮。** 调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、合并。审查归 `idea-loop:pr-reviewer`（只读，结论不被它自己的修法影响），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
+**一次调用跑一轮。** 调用这个 skill 的会话是**编排者**：起审查者、处理条目、给人看汇报、派修复、合并。审查归 `idea-loop:pr-reviewer`（只读，结论不被它自己的修法影响），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
 
-开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）和 `idea-loop:decision-rules`（哪些条目不等人）。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
+开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）和 `idea-loop:decision-rules`（哪些条目不等人）。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
 
 `review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指 `<知识库>/docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西；`<知识库>` 取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root --write` 的输出，`<docs>` 指 `<知识库>/docs`，下文 `docs/…` 都相对它；spec、工单、归档的提交在那里做，推到知识库的 PR 分支。
 
@@ -14,7 +14,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 - `idea-loop:implement` 全部落地、PR 刚转 open：第 1 轮。
 - 「一轮之后往哪走」判出自动起下一轮。
 - 人调 `/idea-loop:pr-review` 或说「再跑一轮」：随时，不受两轮上限约束，计入轮次。
-- 人说合并：照 [`references/merge.md`](references/merge.md)；几个 PR 见 [`multi-repo.md`](references/multi-repo.md)。合并只由人决定。
+- 人说合并：照 [`references/merge.md`](references/merge.md)；几个 PR 见 [`multi-repo.md`](references/multi-repo.md)。代码 PR 只由人决定合并。
 
 ## 前提
 
