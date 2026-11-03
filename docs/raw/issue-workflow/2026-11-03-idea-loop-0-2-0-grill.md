@@ -163,6 +163,22 @@ Q29 同意
 
 Q30同意
 
+## U10
+
+如果这样的话，plugin以后我是不是可以全局只需要安装一份了，各个项目只需要单独维护项目纬度的agent.md即可
+
+## A10
+
+插件已经只装一份：idea-loop 在用户级 `~/.claude/settings.json` 的 `enabledPlugins` 里打开，代码在 `~/.claude/plugins/cache/`，各项目共用。F5 之后各项目多出来的东西分三处：业务级在知识库根、仓库级在知识库 `repos/<仓库名>/`、「这个仓库属于哪个业务、会话在哪跑」在每台机器的 `~/.idea-loop/projects.json`；按 Q22，代码仓库里不留 idea-loop 文件。
+
+## U11
+
+我倾向于仓库的agent.md仍然维护，但是知识库可以一个指针指向对应的地方即可～
+
+## A11
+
+改 Q22：代码仓库的 AGENTS.md 照旧由人维护，加一个指针块写这个仓库属于哪个业务、知识库仓库在哪（不写本机路径）；会话靠它找知识库，`projects.json` 只留跟机器有关的项。已转给 F5 的会话。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -180,14 +196,14 @@ Q30同意
 | 调度：名额与汇报 | 审核中不占名额；汇报每天列「等你的」，按阶段、带等了多久 | U5 Q6.3 |
 | 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
 | 调度在哪跑 | Mac 的 cmux 里；公司会话经 `cmux ssh` 开在虚拟机上 | U4 Q11 |
-| 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json` | U5 Q13 |
+| 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json`（只放跟机器有关的） | U5 Q13、U11 |
 | Linear | 按项目选；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28 |
 | 环境 | Desktop 与 cmux 都支持，setup 让人选；环境内容抽成 `idea-loop:workspace` skill，两种做法各一份 reference | U8 Q27、U9 |
 | 给人看文件 | PR 是主路；cmux 里用 `cmux open`；远端文件靠 Mac 挂载虚拟机的知识库与临时区，挂载方式以后定 | U6 Q16、U7 Q21 |
 | Dreaming | 不加「P2 与想法」一节；想法人自己开会话 | U6 Q18 |
 | 业务 | 共用一份知识库的一组仓库叫「业务」（`GLOSSARY.md`） | U6 Q19 |
 | 知识库 | 单独一个 git 仓库，按业务分；公司的只在虚拟机，个人的只在个人电脑 | U6 Q20 |
-| 仓库级设置 | 进知识库 `repos/<仓库名>/`，代码仓库不留 idea-loop 文件；setup 必须问清 | U7 Q22 |
+| 仓库级设置 | 进知识库 `repos/<仓库名>/`；setup 必须问清。代码仓库的 AGENTS.md 由人维护，加一个指针块写所属业务和知识库仓库地址，会话靠它找知识库 | U7 Q22、U11 |
 | 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
 | 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
 | 没定的 | 挂载方式；Linear 映射；cmux 实测（`new-workspace`、relay 调 `cmux open`） | U7 Q21、U8 Q28 |
