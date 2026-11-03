@@ -20,6 +20,7 @@ idea-loop 插件里的 skill、参考文档、agent 定义，凡是说「目标�
 - [x] 现有的 `*-doc.test.mjs` 因措辞变化失败的，改断言使其守的意思不变，不删测试
 - [x] `no-project-leak.test.mjs` 仍绿：举例不用真实项目名
 - [x] 插件全量测试全绿（仓库声明的命令 `node --test '*/scripts/*.test.mjs'`；`node --test idea-loop/scripts/` 在 Node 22 跑不了）
+- [ ] review 第 1 轮 S1（2026-11-03）：会话开在知识库里时（当前 checkout 就是知识库），issue 会话、核 issue、dreaming 的开场不因读不到 `DEVELOPMENT.md` 停下：主分支取知识库远端的默认分支；碰代码的步骤读工单写的那个仓库自己的 `DEVELOPMENT.md` / `REVIEW.md`，在它的 `.tmp/repos/<仓库名>/` worktree 里做。文档测试守住这几处开场的说法
 
 ## 选中的存量回归
 - `no-project-leak.test.mjs`：改了大量 skill 文字
