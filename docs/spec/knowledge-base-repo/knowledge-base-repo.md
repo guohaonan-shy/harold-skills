@@ -11,7 +11,7 @@ issues: [228]
 
 > #228 存在：2026-11-03 对着 release/idea-loop-0.2.0（da85785，idea-loop 0.1.9）核过，setup 只会往代码仓库根目录写设置、建 `docs/`，skill 和脚本都在当前 checkout 里找它们，一个需求跨几个仓库时没有地方放共用的 spec，详情在「问题陈述」
 
-这是 idea-loop 0.2.0 的 F5（release 计划 [[idea-loop-0-2-0-release]]），也覆盖 #222 的第 3 个需求点。决定全部出自 [[2026-11-03-idea-loop-0-2-0-grill]] 的「本轮决议」表，本 spec 不重开；其中「代码仓库不留 idea-loop 文件」一条，人在 2026-11-03 改为保留代码仓库的 `AGENTS.md`、在里面放指向知识库的指针（决定记录 U10），本 spec 已照改。
+这是 idea-loop 0.2.0 的 F5（release 计划 [[idea-loop-0-2-0-release]]），也覆盖 #222 的第 3 个需求点。决定全部出自 [[2026-11-03-idea-loop-0-2-0-grill]] 的「本轮决议」表，本 spec 不重开；其中「代码仓库不留 idea-loop 文件」一条，人在 2026-11-03 改为保留代码仓库的 `AGENTS.md`、在里面放指向知识库的指针（决定记录 U11），本 spec 已照改。
 
 ## 问题陈述
 
@@ -200,7 +200,7 @@ setup 对老项目：
 5. 在代码仓库开一个分支，删掉 `docs/`、6 份设置文件、`AGENTS.md` 里的「issue 分类」一节、`.gitattributes` 与 `.gitignore` 里 `docs/` 的行，把 `CLAUDE.md` / `AGENTS.md` 里原来的 `## idea-loop` 块换成指针块；推送、开 PR，交给人合并。代码仓库 `AGENTS.md` 里人写的别的内容原样留着。
 6. 核对：`spec-status check <知识库>/docs` 与迁移前同一组 spec、零问题；`issues labels <知识库>/docs` 不建也不列出新 label；在代码仓库主 checkout 跑 `knowledge-base.mjs root` 输出知识库。
 
-依据：grill 决议「老做法删掉；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁）」（U7 Q24、U8 Q24b）；指针块：人 2026-11-03 原话「我倾向于仓库的agent.md仍然维护，但是知识库可以一个指针指向对应的地方即可～」（决定记录 U10）。历史保留：dreaming 判一份 spec 上线没有要翻它的提交历史（`idea-loop:dreaming` 的对账）。`git subtree` 是 git 自带的，不用装 `git filter-repo`。
+依据：grill 决议「老做法删掉；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁）」（U7 Q24、U8 Q24b）；指针块：人 2026-11-03 原话「我倾向于仓库的agent.md仍然维护，但是知识库可以一个指针指向对应的地方即可～」（决定记录 U11）。历史保留：dreaming 判一份 spec 上线没有要翻它的提交历史（`idea-loop:dreaming` 的对账）。`git subtree` 是 git 自带的，不用装 `git filter-repo`。
 
 ### 老布局在哪被拦下
 
