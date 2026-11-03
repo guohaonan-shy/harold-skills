@@ -205,6 +205,18 @@ Q30同意
 
 撤回 U13 的「Desktop 管公司与个人 P0/P1」：不管公司同不同意，工作环境和入口都是 cmux，调度入口是 Linear 调度 cmux。追问三处：Linear 调度是否只管公司项目、个人 GitHub 项目仍由自己的调度在 cmux 里开；「claude 仍然在本地」是指 claude 进程跑在哪；哪些会话放到云端。
 
+## U15
+
+Q31 你认为的对，只不过就是不同的业务（公司和个人）调度入口不一样吧了
+
+Q32 我倾向于A
+
+Q33 个人项目不管优先级先都在本地，公司项目不管优先级先都在远端
+
+## A15
+
+定了：cmux 里一个调度，按业务读不同的 issue 来源（公司读 Linear、个人读 GitHub），公司多一个 Linear「Work on issue」经 custom script 调 cmux 的手动入口；公司的 claude 跑在虚拟机上（`cmux ssh`，用这个账号登录），个人的跑在本地；先不上云端。F4、F3 的设计不再等付费决策，只有公司项目能不能真用等公司那边。
+
 ## 本轮决议
 
 | 议题 | 决议 | 依据 |
@@ -221,9 +233,9 @@ Q30同意
 | 调度：对账 | 补挂根、补判 P0 | U4 Q6.2 |
 | 调度：名额与汇报 | 审核中不占名额；汇报每天列「等你的」，按阶段、带等了多久 | U5 Q6.3 |
 | 自动化 | cmux 环境下一个调度、全部自动开会话：P0/P1 到讨论中 `cmux notify`；P2 只在夜里跑，每晚 5 个，做到开 PR 并 review 一轮；最终目标是一路到合并 | U3 Q8、U4 Q12、U5 Q14、U6 Q17 |
-| 调度在哪跑 | Mac 的 cmux 里；公司会话经 `cmux ssh` 开在虚拟机上 | U4 Q11 |
+| 调度在哪跑 | Mac 的 cmux 里一个调度，按业务读不同来源（公司 Linear、个人 GitHub）；个人项目的会话全在本地，公司项目的会话全在虚拟机上（`cmux ssh`，claude 用这个账号在虚拟机上登录）；先不上云端 | U4 Q11、U14、U15 |
 | 配置 | issue 来源（GitHub / Linear）写 `ISSUE_TRACKER.md`；会话在哪跑、cmux group、挂载路径对照写 `~/.idea-loop/projects.json`（只放跟机器有关的） | U5 Q13、U11 |
-| Linear | 按项目选；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28 |
+| Linear | 按项目选；Linear 不会自己触发，自动的部分由 cmux 里的调度读 Linear API；desktop 的「Work on issue」经 custom script 调 cmux，作手动入口；映射在 F3 会话里人连上 Linear 后再定 | U4 Q10、U8 Q28、U15 |
 | 环境 | Desktop 与 cmux 都支持，setup 让人选；环境内容抽成 `idea-loop:workspace` skill，两种做法各一份 reference | U8 Q27、U9 |
 | 给人看文件 | PR 是主路；cmux 里用 `cmux open`；远端文件靠 Mac 挂载虚拟机的知识库与临时区，挂载方式以后定 | U6 Q16、U7 Q21 |
 | Dreaming | 不加「P2 与想法」一节；想法人自己开会话 | U6 Q18 |
@@ -232,4 +244,4 @@ Q30同意
 | 仓库级设置 | `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 留在代码仓库根目录，知识库不设 `repos/<仓库名>/`；以后再考虑把通用部分拆到业务层。代码仓库的 AGENTS.md 由人维护，加一个指针块写所属业务和知识库仓库地址，会话靠它找知识库；setup 必须问清 | U7 Q22、U11、U12 |
 | 多仓库需求 | 每个仓库一个 PR，知识库一个 PR；先后由工单「被谁挡着」定；全部合并 spec 才完成 | U7 Q23 |
 | 老做法 | 删掉「docs 在代码仓库里」；老项目重跑 setup 迁移（harold-skills、Toeflair 都迁） | U7 Q24、U8 Q24b |
-| 没定的 | 挂载方式；Linear 映射；cmux 实测（`new-workspace`、relay 调 `cmux open`）；公司付费方式定了之后，Desktop 是否改管公司项目与个人 P0/P1、cmux 只管个人 P2（影响「调度在哪跑」「自动化」两行与 Linear 入口） | U7 Q21、U8 Q28、U13 |
+| 没定的 | 挂载方式；Linear 映射；cmux 实测（`new-workspace`、relay 调 `cmux open`）；公司是否允许在虚拟机上登录这个账号（只影响公司项目能不能用，不影响设计；U13 的 Desktop 分工已由 U14 撤回） | U7 Q21、U8 Q28、U13、U14 |
