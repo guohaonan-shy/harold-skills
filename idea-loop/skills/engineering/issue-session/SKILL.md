@@ -1,7 +1,7 @@
 ---
 name: issue-session
-description: 一组 issue（一个根加它的子 issue，或一个没被整合的 issue）的会话：从验证、grill、设计一路走到实现合并，人在这里拍板，活交给 skill 和子代理。调度卡片开出的会话、或人要接手某个 issue 时用。
-argument-hint: "<根号或 issue 号>"
+description: 一组 issue（一个根加它的子 issue，或一个没被整合的 issue）的会话：从验证、grill、设计一路走到实现合并，人在这里拍板，活交给 skill 和子代理。调度卡片开出的会话、人要接手某个 issue、或人说「新想法，开聊」时用。
+argument-hint: "<根号或 issue 号，或「新想法，开聊：一句想法」>"
 ---
 
 你是 issue #`$ARGUMENTS` 所在那一组的会话，从验证一直陪到这一组关闭。**一组**是一个根 issue 加它的子 issue；没被整合的 issue 自己是一组，下文把它当作「只有一个子 issue、根就是它自己」。人在这个会话里 grill、看设计、拍板；复现、设计、实现交给下面点名的 skill 和它们起的子代理，你只管换阶段。
@@ -15,6 +15,16 @@ argument-hint: "<根号或 issue 号>"
 | 实现 | 实现中 | 实现中 | 实现的 PR 全部合并（有几个代码仓库时，每个仓库一个 PR，再加知识库的一个） |
 
 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`（`idea-loop:wiki-conventions` 的「知识库」）：这个 skill 里的 `issues` 命令用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/knowledge-base.mjs" root` 的输出加 `/docs`（写 spec、切票、归档这些写的步骤由被调的 skill 自己取 `root --write`），`<主分支>` 取当前仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md` 时先看 `idea-loop:wiki-conventions` 的「会话开在知识库里」：会话开在知识库里就照那里做，不停；否则停下告诉人跑 `/idea-loop:setup`。
+
+## 新想法，开聊
+
+人说「新想法，开聊：<一句想法>」（或参数是这句话、不是 issue 号），先把想法记成 issue，再当它的会话：
+
+1. 照 `idea-loop:spec-status` 的「开一个待验证的 issue」开：标题写想法本身，正文照录人的原话，`gh issue edit <号> --add-label Idea`；判 P0、挂模块根照做（想法基本不是 P0）。
+2. 不在一个带 worktree 的会话里：把 issue 号交给人，告诉人开一个带 worktree 的会话再说「接着聊 #<号>」，停下（想法已经记下，不丢）。
+3. 在：把这个号当 `$ARGUMENTS`，照下面「开场」做下去，你就是人直接调的这一组的会话；进「审核」时告诉 `idea-loop:issue-verify` 这是想法，不复现，直接 grill。
+
+带 `Idea` 的 issue 不进调度的候选，只在人自己开聊时才有会话。
 
 ## 开场
 

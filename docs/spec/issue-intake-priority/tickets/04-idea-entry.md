@@ -11,9 +11,9 @@
 
 ## 验收标准
 
-- [ ] issue 会话的 description 带「新想法，开聊」触发词，正文有这条入口的步骤
-- [ ] issue-verify 写明带 `Idea` 的不复现及结论写法
-- [ ] 全量测试通过
+- [x] issue 会话的 description 带「新想法，开聊」触发词，正文有这条入口的步骤
+- [x] issue-verify 写明带 `Idea` 的不复现及结论写法
+- [x] 全量测试通过
 
 ## 选中的存量回归
 
