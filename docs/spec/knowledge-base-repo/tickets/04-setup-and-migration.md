@@ -22,11 +22,11 @@
 > 人的决定（2026-11-03，#220 会话转达）：「我倾向于仓库的agent.md仍然维护，但是知识库可以一个指针指向对应的地方即可～」
 
 ## 验收标准
-- [ ] `setup-single-source.test.mjs` 等现有 setup 文档测试改成守新说法后全绿
-- [ ] 新文档测试：setup 的 SKILL.md 与 references 不再把 `PRODUCT.md`、`ISSUE_TRACKER.md`、「issue 分类」、`docs/` 骨架写进代码仓库；`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 仍写在代码仓库根目录；`agents-block.md` 是含「业务」「知识库」两行的指针块；写了 `idea-loop.json`、`projects.json`、迁移参考的指针
-- [ ] 新文档测试：迁移参考写了 `git subtree split --prefix=docs`、`git subtree add --prefix=docs`、`gh repo create` 先给人看、删文件走 PR、三项核对
-- [ ] 问人的问题清单（`references/questions.md`）有业务名、知识库仓库、会话在哪跑、issue 仓库四题，各带推荐与出处
-- [ ] 插件全量 `node --test idea-loop/scripts/` 全绿
+- [x] `setup-single-source.test.mjs` 等现有 setup 文档测试改成守新说法后全绿
+- [x] 新文档测试：setup 的 SKILL.md 与 references 不再把 `PRODUCT.md`、`ISSUE_TRACKER.md`、「issue 分类」、`docs/` 骨架写进代码仓库；`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md` 仍写在代码仓库根目录；`agents-block.md` 是含「业务」「知识库」两行的指针块；写了 `idea-loop.json`、`projects.json`、迁移参考的指针
+- [x] 新文档测试：迁移参考写了 `git subtree split --prefix=docs`、`git subtree add --prefix=docs`、`gh repo create` 先给人看、删文件走 PR、三项核对
+- [x] 问人的问题清单（`references/questions.md`）有业务名、知识库仓库、会话在哪跑、issue 仓库四题，各带推荐与出处
+- [x] 插件全量 `node --test idea-loop/scripts/` 全绿
 
 ## 选中的存量回归
 - `setup-single-source.test.mjs`、`setup-consolidation-doc.test.mjs`：守 setup 的现有说法

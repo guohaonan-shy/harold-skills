@@ -192,7 +192,7 @@ issues: [228]
 setup 对老项目：
 
 1. 问人：业务名（推荐仓库名）、知识库仓库（推荐 `<owner>/<业务>-kb`，私有）、知识库在本机 clone 到哪（推荐跟代码仓库主 checkout 同级的 `<业务>-kb/`）、会话在哪跑（见上面 `home` 的推荐）。建 GitHub 仓库前，把要跑的 `gh repo create` 原样给人看，人说建才建（它在 GitHub 上立刻生效）。
-2. 在代码仓库里 `git subtree split --prefix=docs` 出一条只含 `docs/` 历史的分支，在知识库里 `git subtree add --prefix=docs` 接进来：路径不变，历史保留。
+2. 在代码仓库里 `git subtree split --prefix=docs` 出一条只含 `docs/` 历史的分支，在知识库里 `git subtree add --prefix=docs` 接进来：路径不变，历史保留。`git subtree add` 要求知识库已有至少一个提交、工作区干净：刚建的空仓库，先把第 3 步的 `idea-loop.json` 提交成第一个 commit，再接 `docs/`（其余设置文件在 `subtree add` 之后补，一并提交）。
 3. 业务级设置文件复制进知识库根（仓库级的三份不动），写 `idea-loop.json`、知识库的 `AGENTS.md`、`.gitattributes`（设计档案图片走 LFS）、`.gitignore`（`docs/design/tmp/`）；提交、推送到知识库主分支（知识库是新建的，没有要 review 的旧内容）。
 4. 写 `~/.idea-loop/projects.json`。
 5. 在代码仓库开一个分支，删掉 `docs/`、业务级设置文件（`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`）、`AGENTS.md` 里的「issue 分类」一节、`.gitattributes` 与 `.gitignore` 里 `docs/` 的行，把 `CLAUDE.md` / `AGENTS.md` 里原来的 `## idea-loop` 块换成指针块；推送、开 PR，交给人合并。代码仓库 `AGENTS.md` 里人写的别的内容原样留着。
