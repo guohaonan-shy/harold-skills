@@ -122,7 +122,7 @@ issues: [228]
 | 入口 | 纳入 / 排除 |
 |---|---|
 | `seo-issues.mjs`（seo 扫描结果开成 issue） | 纳入：跟 `issues.mjs` 共用同一个 `gh`，一起改 |
-| 设计档案的 MCP 与查询、写入、校验、分区截图脚本 | 纳入：它们的「仓库根」默认取 `knowledge-base.mjs root` |
+| 设计档案的 MCP 与查询、写入、校验、分区截图脚本 | 纳入：它们的「仓库根」默认取 `knowledge-base.mjs root`；其中「按提交挑状态」（`affected`）比的是代码改动，改动和代码文件从代码仓库取、档案从知识库取 |
 | `design-lint-hook`（写画布时的检查） | 纳入：按路径里的 `docs/design/tmp/<slug>/canvas/` 认画布，搬进知识库后路径照样匹配，不用改 |
 | 夜间规则回放（`retro-replay`）、GitHub App 代发 PR 评论 | 排除：它们作用在 PR 上，PR 在哪个仓库就在哪个仓库，跟知识库位置无关 |
 | idea-loop 插件自己的 `idea-loop/docs/`（插件说明） | 排除：那是插件源码的一部分，不是哪个业务的知识库 |
