@@ -4,6 +4,7 @@
 | 目录 | 收什么 | 谁写 | 谁读 |
 |---|---|---|---|
 | `retro-candidates/` | `idea-loop:retro` 里人批了、选「进候选池」的规则候选，一条候选一份文件。落点是插件（idea-loop 的 skill、agent、reference、脚本）的，在 harold-skills 的池里；落点是项目自己规则文件的，在项目自己的池里 | retro 写入新的一份，或在已有那份的「出现」里追加一行；人批了、推翻了的也在 retro 里改 | dreaming 读它、数次数、把攒够的提议开成 issue，并改「状态」 |
+| `releases/` | 按版本发布的仓库，一个版本一份 release 计划：feature、覆盖的 issue、顺序、前置、状态 | 起头的 issue 会话建；feature 合进 release 时由它改「状态」 | 各 feature 会话开工前读 |
 
 ## `retro-candidates/` 里一份文件的形状
 

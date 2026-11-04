@@ -46,3 +46,5 @@
 | [decisions/121](decisions/121.md) | conversation | 2026-10-31 | 决定记录 —— #121 的 issue 会话：link sweep 跳过代码里的格式示例，摆过的题（合并），无 retro 候选 |
 | [decisions/142](decisions/142.md) | conversation | 2026-10-31 | 决定记录 —— #142 的 issue 会话：seo 项目信息由人确认写入、扫描缺了停下等确认、说不需要写「无」，摆过的题与 retro 候选的结果 |
 | [decisions/180](decisions/180.md) | conversation | 2026-10-31 | 决定记录 —— #180 的 issue 会话：writing-for-agents 归并改写、通用文档不带项目信息、retro 候选加验证，摆过的题与 retro 候选的结果 |
+| [[2026-11-03-idea-loop-0-2-0-grill]] | conversation | 2026-11-03 | #220 这一组做成 idea-loop 0.2.0：release 分支、5 个 feature、知识库按业务独立成仓库、cmux 全自动调度 |
+| [[2026-11-04-idea-loop-0-2-0-restructure-grill]] | conversation | 2026-11-04 | grill —— 0.2.0 改成一次重构：issue 为唯一真相、分拣单独成步、业务的知识库仓库、拆成三个插件；取代前一天的 0.2.0 计划 |
