@@ -9,7 +9,7 @@
  * (and in the next spec) looks the same. Rules and placement: skills/productivity/evidence/references/spec-figures.md, section 交互图.
  *
  * The input is one JSON per figure. Its shape is deliberately the same as a flow in the design
- * archive (docs/design/prod/, skills/design/design-archive/SKILL.md), so figures can move there unchanged.
+ * archive (docs/design/prod/, design/skills/design-archive/SKILL.md), so figures can move there unchanged.
  *
  * A step may also say which archive state it shows (`state`, the state's name, e.g.
  * `cookbook--search-loading`). The id is kept in the output — a tag under the caption, a
@@ -304,7 +304,15 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
       console.error(`flow-compose: ${flags.archive} 不是仓库根（下面没有 docs/）`);
       process.exit(1);
     }
-    const { loadArchive } = await import('./design-archive.mjs');
+    // The archive belongs to the design plugin; without it --archive cannot check anything.
+    const { importFrom } = await import('./plugin-root.mjs');
+    let loadArchive;
+    try {
+      ({ loadArchive } = await importFrom('design', 'design-archive.mjs'));
+    } catch (e) {
+      console.error(`flow-compose: --archive 要 design 插件：${e.message}`);
+      process.exit(1);
+    }
     const archive = loadArchive(resolve(flags.archive), { delta: flags.delta ?? null });
     hasState = (id) => archive.objects.get(id)?.kind === 'state';
   }

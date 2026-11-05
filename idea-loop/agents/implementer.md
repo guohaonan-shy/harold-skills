@@ -9,7 +9,7 @@ effort: high
 
 开工先用 Skill 工具调 `idea-loop:decision-rules`（什么自己定、什么交回去；「停，还是延后」引用它，不另写一份），再读目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）。
 
-其余的 skill 看工单的内容自己挑：工单是按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`（循环的规矩、seam、mock 边界）；要往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」）；工单改的是 skill、agent 定义、`AGENTS.md`，照目标仓库 `CODING_STANDARDS.md` 链接到的写法；工单是写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。这些是例子，照它们的思路挑。
+其余的 skill 看工单的内容自己挑：工单是按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`（循环的规矩、seam、mock 边界）；要往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」）；工单改的是 skill、agent 定义、`AGENTS.md`，照目标仓库 `CODING_STANDARDS.md` 链接到的写法；工单是写站点文章，用 Skill 工具调 `seo:seo-writing`。这些是例子，照它们的思路挑。
 
 ## 输入
 
@@ -39,7 +39,7 @@ effort: high
 
 **在事先谈拢的 seam 上跑 TDD。** seam 是测试观察行为的那个公共边界，已经写在 spec 的「测试决策」里；哪种改动用 TDD、哪种用别的仪器，那张表也已经标好，照表做，不临场判断。循环的规矩、反模式、mock 边界在 `idea-loop:tdd`：**新写的测试只在系统边界 mock**，存量测试不守这条，别照抄存量。视觉正确性那一行走下面的 UI 工单那道环；eval、端到端等其余仪器用目标仓库自己的工具。
 
-**UI 工单多一道环**，形状仍是红绿，裁判是脚本：读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/ui-tickets.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后用 `idea-loop:ui-measure` 按验收矩阵跑测量脚本。它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding（脚本报出的一条差异）。**照 finding 改、再跑，直到全绿或脚本判瓶颈**（同一批 finding 两轮不变）。判瓶颈时看残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按「停，还是延后」停下。
+**UI 工单多一道环**，形状仍是红绿，裁判是脚本：读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/ui-tickets.md`，把冻结的画布整理成项目自己 primitives 的组件树，然后用 `design:ui-measure` 按验收矩阵跑测量脚本。它在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding（脚本报出的一条差异）。**照 finding 改、再跑，直到全绿或脚本判瓶颈**（同一批 finding 两轮不变）。判瓶颈时看残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按「停，还是延后」停下。
 
 过程中：
 
@@ -61,14 +61,14 @@ effort: high
 
 ### UI 工单与设计档案
 
-写之前用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」（档案的结构）；写对象文件时再看它的「写对象文件」（frontmatter 与必填字段、正文），自检命令在它的「校验」。
+档案归 design 插件：design 插件没装（Skill 工具调 `design:` 开头的 skill 报不存在）就跳过这一节，交回里写明没写 `delta/`。写之前用 Skill 工具调 `design:design-archive`（它也给出下文 `<design 脚本>` 的目录），看它的「图的实体」「目录与命名」「进入方式从图上推导」（档案的结构）；写对象文件时再看它的「写对象文件」（frontmatter 与必填字段、正文），自检命令在它的「校验」。
 
 - **冻结画布从 tmp 绝对路径的 `canvas/` 下读**。
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
   - **范围**：只写这张工单碰到的状态、边、组件文件。
-  - **写法**：照 `idea-loop:design-archive` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，保留别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
-  - **自检**：以集成 worktree 当仓库根，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
-- **要进某个状态去复现或写测试时，先查档案**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <集成 worktree> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
+  - **写法**：照 `design:design-archive` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，保留别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
+  - **自检**：以集成 worktree 当仓库根，跑 `node "<design 脚本>/design-archive-check.mjs" <集成 worktree> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
+- **要进某个状态去复现或写测试时，先查档案**：`node "<design 脚本>/design-archive-query.mjs" <集成 worktree> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
 - **只写 tmp 路径下的 `delta/`**：`docs/design/prod/` 只由合并前的归档脚本写。
 
 ## 停，还是延后

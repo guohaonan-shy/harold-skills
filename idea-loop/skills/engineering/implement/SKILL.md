@@ -107,7 +107,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 ## 设计变更：人接受了跟画布不同的设计
 
-PR 开出前，人接受了一处跟冻结画布不同的设计（Review 汇报里接受了实现者给的改法，或人自己改主意）：用 Skill 工具调 `idea-loop:design-change-sync` 照它做。与 `idea-loop:pr-review` 的差别：提交推送到**集成分支**；给 designer 的相关截图用执行方的素材，或人给的；评委判 `瓶颈` / `方向` 就写进 pending 当决定题，带评委意见与新旧两版截图；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派，已落地的工单按 `idea-loop:pr-review` 的「回工单」再派。
+PR 开出前，人接受了一处跟冻结画布不同的设计（Review 汇报里接受了实现者给的改法，或人自己改主意）：用 Skill 工具调 `design:design-change-sync` 照它做；design 插件没装（Skill 工具调 `design:` 开头的 skill 报不存在）就告诉人画布没跟着改，记进 PR 描述。与 `idea-loop:pr-review` 的差别：提交推送到**集成分支**；给 designer 的相关截图用执行方的素材，或人给的；评委判 `瓶颈` / `方向` 就写进 pending 当决定题，带评委意见与新旧两版截图；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派，已落地的工单按 `idea-loop:pr-review` 的「回工单」再派。
 
 ## 回收
 

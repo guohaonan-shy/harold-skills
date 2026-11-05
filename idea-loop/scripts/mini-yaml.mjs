@@ -1,8 +1,12 @@
 /**
  * A small YAML reader for the design archive's frontmatter.
  *
- * The archive's object files carry their structure in YAML frontmatter (skills/design/design-archive/SKILL.md),
- * and the plugin ships no dependencies, so this reads the subset those files actually use:
+ * Two identical copies: design/scripts/ (the archive scripts and its MCP server) and idea-loop/scripts/
+ * (retro-pool-count.mjs). Plugins do not import each other at load time; a repository test keeps the
+ * copies the same.
+ *
+ * The archive's object files carry their structure in YAML frontmatter (design/skills/design-archive/SKILL.md),
+ * and the plugins ship no dependencies, so this reads the subset those files actually use:
  *
  *   - block mappings and block sequences, nested by indentation (a sequence may sit at the same
  *     indent as its key); `- key: value` list items continue as a mapping

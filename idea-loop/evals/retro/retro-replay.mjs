@@ -13,7 +13,7 @@
  * problem ("用例没抓住问题"), which is not a pass. A human can overrule a judgement: see --settle.
  *
  * Why `claude -p` and not a sub-agent: a sub-agent loads the installed plugin, not the branch being checked;
- * `--plugin-dir` is what points a session at a branch.
+ * `--plugin-dir` is what points a session at a branch; the design and seo plugins next to idea-loop are loaded with it.
  *
  *   node idea-loop/evals/retro/retro-replay.mjs --list
  *   node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] [--repo <dir>] [--out <dir>] [--model <alias>]
@@ -136,6 +136,11 @@ function resolveTargets(o, { needPlugin = true, needCases = true } = {}) {
   return t;
 }
 
+/** design and seo depend on idea-loop: a session loads them with it, from the same tree (their sibling directories). */
+const COMPANIONS = ['design', 'seo'];
+export const companionsOf = (plugin) =>
+  COMPANIONS.map((n) => join(dirname(plugin), n)).filter((d) => existsSync(join(d, '.claude-plugin', 'plugin.json')));
+
 function sh(cwd, cmd, args, input) {
   const r = spawnSync(cmd, args, { cwd, input, maxBuffer: 1 << 30 });
   if (r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed: ${r.stderr?.toString()}`);
@@ -234,8 +239,14 @@ async function executeReplay(opts, t, c, { queue = false } = {}) {
   if (!beforePlugin) {
     const pluginRepo = git(afterPlugin, 'rev-parse', '--show-toplevel').toString('utf8').trim();
     const prefix = git(afterPlugin, 'rev-parse', '--show-prefix').toString('utf8').trim();
-    beforePlugin = join(runDir, 'before-plugin');
+    beforePlugin = join(runDir, 'before-plugins', 'idea-loop');
     extractArchive(pluginRepo, `${opts.base ?? 'main'}:${prefix}`.replace(/:$/, ''), beforePlugin);
+    // The companions as of the same base, when that tree has them (before the split it does not).
+    const up = prefix.replace(/[^/]+\/$/, '');
+    for (const n of COMPANIONS) {
+      const at = `${opts.base ?? 'main'}:${up}${n}`;
+      if (spawnSync('git', ['cat-file', '-e', at], { cwd: pluginRepo }).status === 0) extractArchive(pluginRepo, at, join(runDir, 'before-plugins', n));
+    }
   }
 
   const sides = [{ side: 'before', plugin: beforePlugin }, { side: 'after', plugin: afterPlugin }];
@@ -246,7 +257,7 @@ async function executeReplay(opts, t, c, { queue = false } = {}) {
     const project = join(dir, 'project');
     mkdirSync(dir, { recursive: true });
     prepareProject(t.repo, c.commit, project);
-    const args = ['-p', buildWorkerPrompt(c), '--plugin-dir', s.plugin, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
+    const args = ['-p', buildWorkerPrompt(c), ...[s.plugin, ...companionsOf(s.plugin)].flatMap((d) => ['--plugin-dir', d]), '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
     if (opts.model) args.push('--model', opts.model);
     const streamPath = join(dir, 'run.stream.jsonl');
     process.stdout.write(`— ${s.side}: ${s.plugin} …`);

@@ -4,17 +4,21 @@
  * the text is a capability of its own — promote it to a skill, or move it into the skill that really
  * uses it, and call it by name.
  *
- * Mechanical form: in a skill's SKILL.md or its own references, "`idea-loop:<other>` 的 `references/…`"
- * or a path through `skills/<category>/<other>/references/` is a read of that other skill's private
+ * Mechanical form: in a skill's SKILL.md or its own references, "`<plugin>:<other>` 的 `references/…`"
+ * or a path through `skills/[<category>/]<other>/references/` is a read of that other skill's private
  * references. (A skill that says "read it, then its `references/x.md` for the long case" is routing
  * you through its own body and is not this pattern.)
  *
  * Agents: an agent definition may read a skill's `references/` by the full path under the plugin root
- * (`${CLAUDE_PLUGIN_ROOT}/skills/<category>/<slug>/references/…`), because an agent does not sit next
+ * (`${CLAUDE_PLUGIN_ROOT}/skills/[<category>/]<slug>/references/…`), because an agent does not sit next
  * to the skill directory. Two things must hold for every such path: it exists (a moved directory
  * breaks it silently), and the skill in it is one that starts this agent — i.e. some text of that
- * skill (SKILL.md or its references) names `idea-loop:<agent>`. An agent reading a skill that never
+ * skill (SKILL.md or its references) names `<plugin>:<agent>`. An agent reading a skill that never
  * starts it is the same foreign read as above.
+ *
+ * The rule covers the three plugins split out of idea-loop (idea-loop, design, seo): idea-loop keeps
+ * category directories, design and seo put skills straight under `skills/`. A path in an agent
+ * resolves against the agent's own plugin, so it can only reach a skill of that plugin.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,8 +26,9 @@ import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const skillsRoot = join(pluginRoot, 'skills');
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const PLUGINS = ['idea-loop', 'design', 'seo'];
+const NAME = `(?:${PLUGINS.join('|')})`;
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -32,48 +37,50 @@ function walk(dir) {
   });
 }
 
-/** Every skill directory: `skills/<category>/<slug>/` holding a SKILL.md. */
+/** Every skill directory of every plugin: `skills/[<category>/]<slug>/` holding a SKILL.md. */
 function skillDirs() {
   const dirs = [];
-  for (const cat of readdirSync(skillsRoot)) {
-    const catDir = join(skillsRoot, cat);
-    if (!statSync(catDir).isDirectory()) continue;
-    for (const slug of readdirSync(catDir)) {
-      if (existsSync(join(catDir, slug, 'SKILL.md'))) dirs.push({ slug, dir: join(catDir, slug) });
+  const look = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const d = join(dir, name);
+      if (!statSync(d).isDirectory()) continue;
+      if (existsSync(join(d, 'SKILL.md'))) dirs.push({ slug: name, dir: d });
+      else look(d);
     }
-  }
+  };
+  for (const plugin of PLUGINS) look(join(repoRoot, plugin, 'skills'));
   return dirs;
 }
 
 /** Other skills whose private `references/` this text reads, as `[otherSlug, excerpt]`. */
 export function foreignReferenceReads(text, ownSlug) {
   const hits = [];
-  // "`idea-loop:<other>` 的 `references/…`"
-  const byName = /idea-loop:([a-z][a-z0-9-]*)`?\s*的\s*`?\[?`?references\/[\w./-]*/g;
+  // "`<plugin>:<other>` 的 `references/…`"
+  const byName = new RegExp(`${NAME}:([a-z][a-z0-9-]*)\`?\\s*的\\s*\`?\\[?\`?references\\/[\\w./-]*`, 'g');
   for (const m of text.matchAll(byName)) {
     if (m[1] !== ownSlug) hits.push([m[1], m[0]]);
   }
   // a path through another skill's directory
-  const byPath = /skills\/[a-z]+\/([a-z][a-z0-9-]*)\/references\//g;
+  const byPath = /skills\/(?:[a-z]+\/)?([a-z][a-z0-9-]*)\/references\//g;
   for (const m of text.matchAll(byPath)) {
     if (m[1] !== ownSlug) hits.push([m[1], m[0]]);
   }
   return hits;
 }
 
-/** Skills whose own text (SKILL.md and its references) names `idea-loop:<agent>`, as a Set of slugs. */
+/** Skills whose own text (SKILL.md and its references) names `<plugin>:<agent>`, as a Set of slugs. */
 export function startersOf(agent, skillTexts) {
-  const named = new RegExp(`idea-loop:${agent}(?![a-z0-9-])`);
+  const named = new RegExp(`${NAME}:${agent}(?![a-z0-9-])`);
   return new Set(skillTexts.filter(({ text }) => named.test(text)).map(({ slug }) => slug));
 }
 
 /**
  * Problems with the skill-reference paths in one agent definition. `starters` is the set of skill
- * slugs that start this agent; `exists(relPath)` says whether a path under the plugin root exists.
+ * slugs that start this agent; `exists(relPath)` says whether a path under the agent's plugin root exists.
  */
 export function agentReferenceProblems(agent, text, starters, exists) {
   const problems = [];
-  const path = /skills\/[a-z]+\/([a-z][a-z0-9-]*)\/references(?:\/[A-Za-z0-9_.-]*)*/g;
+  const path = /skills\/(?:[a-z]+\/)?([a-z][a-z0-9-]*)\/references(?:\/[A-Za-z0-9_.-]*)*/g;
   for (const m of text.matchAll(path)) {
     const rel = m[0].replace(/\.+$/, '');
     const slug = m[1];
@@ -95,7 +102,7 @@ function skillTexts() {
 }
 
 test('foreignReferenceReads: names a skill reading another skill\'s references', () => {
-  const text = '做法见 `idea-loop:uiux-refine` 的 `references/freeze.md` 的「冻结之后的设计变更」。';
+  const text = '做法见 `design:uiux-refine` 的 `references/freeze.md` 的「冻结之后的设计变更」。';
   assert.deepEqual(foreignReferenceReads(text, 'implement').map(([slug]) => slug), ['uiux-refine']);
   assert.deepEqual(foreignReferenceReads(text, 'uiux-refine'), []);
 });
@@ -106,7 +113,7 @@ test('foreignReferenceReads: a skill name in one sentence and references/ in the
 });
 
 test('foreignReferenceReads: a path into another skill\'s references', () => {
-  const text = '${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-refine/references/freeze.md';
+  const text = '${CLAUDE_PLUGIN_ROOT}/skills/uiux-refine/references/freeze.md';
   assert.deepEqual(foreignReferenceReads(text, 'implement').map(([slug]) => slug), ['uiux-refine']);
 });
 
@@ -116,7 +123,7 @@ test('no skill reads another skill\'s private references', () => {
     for (const file of walk(dir).filter((f) => f.endsWith('.md'))) {
       const text = readFileSync(file, 'utf8');
       for (const [other, excerpt] of foreignReferenceReads(text, slug)) {
-        violations.push(`${relative(pluginRoot, file)} reads ${other}'s references: ${excerpt}`);
+        violations.push(`${relative(repoRoot, file)} reads ${other}'s references: ${excerpt}`);
       }
     }
   }
@@ -124,9 +131,9 @@ test('no skill reads another skill\'s private references', () => {
 });
 
 test('agentReferenceProblems: a path that does not exist is reported with the agent and the path', () => {
-  const text = '开工先读 `${CLAUDE_PLUGIN_ROOT}/skills/seo/seo-scan/references/gone.md`。';
+  const text = '开工先读 `${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/references/gone.md`。';
   const problems = agentReferenceProblems('geo-analyst', text, new Set(['seo-scan']), () => false);
-  assert.deepEqual(problems, ['agents/geo-analyst.md reads skills/seo/seo-scan/references/gone.md: no such path']);
+  assert.deepEqual(problems, ['agents/geo-analyst.md reads skills/seo-scan/references/gone.md: no such path']);
 });
 
 test('agentReferenceProblems: reading a skill that does not start the agent is reported', () => {
@@ -140,24 +147,24 @@ test('agentReferenceProblems: reading a skill that does not start the agent is r
 
 test('agentReferenceProblems: an existing path in a skill that starts the agent is fine, a directory and trailing dot too', () => {
   const text = [
-    '读 `${CLAUDE_PLUGIN_ROOT}/skills/seo/seo-scan/references/findings.md`。',
-    '在 `${CLAUDE_PLUGIN_ROOT}/skills/seo/seo-scan/references/` 下。',
-    '见 ${CLAUDE_PLUGIN_ROOT}/skills/seo/seo-scan/references/findings.md.',
+    '读 `${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/references/findings.md`。',
+    '在 `${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/references/` 下。',
+    '见 ${CLAUDE_PLUGIN_ROOT}/skills/seo-scan/references/findings.md.',
   ].join('\n');
   const seen = [];
   const exists = (p) => (seen.push(p), true);
   assert.deepEqual(agentReferenceProblems('geo-analyst', text, new Set(['seo-scan']), exists), []);
   assert.deepEqual(seen, [
-    'skills/seo/seo-scan/references/findings.md',
-    'skills/seo/seo-scan/references/',
-    'skills/seo/seo-scan/references/findings.md',
+    'skills/seo-scan/references/findings.md',
+    'skills/seo-scan/references/',
+    'skills/seo-scan/references/findings.md',
   ]);
 });
 
 test('startersOf: whole-name match, so one agent name that prefixes another does not count', () => {
   const texts = [
-    { slug: 'a', text: '起 `idea-loop:designer`。' },
-    { slug: 'b', text: '调 `idea-loop:design-archive`。' },
+    { slug: 'a', text: '起 `design:designer`。' },
+    { slug: 'b', text: '调 `design:design-archive`。' },
     { slug: 'c', text: '什么都没起' },
   ];
   assert.deepEqual([...startersOf('designer', texts)], ['a']);
@@ -167,11 +174,13 @@ test('startersOf: whole-name match, so one agent name that prefixes another does
 test('every skill reference an agent definition reads exists and belongs to a skill that starts it', () => {
   const texts = skillTexts();
   const problems = [];
-  const agentsDir = join(pluginRoot, 'agents');
-  for (const file of readdirSync(agentsDir).filter((f) => f.endsWith('.md'))) {
-    const agent = file.replace(/\.md$/, '');
-    const text = readFileSync(join(agentsDir, file), 'utf8');
-    problems.push(...agentReferenceProblems(agent, text, startersOf(agent, texts), (p) => existsSync(join(pluginRoot, p))));
+  for (const plugin of PLUGINS) {
+    const agentsDir = join(repoRoot, plugin, 'agents');
+    for (const file of readdirSync(agentsDir).filter((f) => f.endsWith('.md'))) {
+      const agent = file.replace(/\.md$/, '');
+      const text = readFileSync(join(agentsDir, file), 'utf8');
+      problems.push(...agentReferenceProblems(agent, text, startersOf(agent, texts), (p) => existsSync(join(repoRoot, plugin, p))));
+    }
   }
   assert.deepEqual(problems, []);
 });

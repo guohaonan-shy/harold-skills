@@ -1,0 +1,24 @@
+{
+  "name": "design",
+  "displayName": "Design",
+  "version": "0.2.0",
+  "description": "UI design for idea-loop projects: research how other products handle a UX problem, diverge into directions, refine a canvas to freeze, measure the implementation against the frozen canvas, and keep a design archive and DESIGN.md. Requires idea-loop.",
+  "author": {
+    "name": "Harold"
+  },
+  "skills": [
+    "./skills/"
+  ],
+  "dependencies": [
+    "idea-loop"
+  ],
+  "keywords": [
+    "design",
+    "design-system",
+    "ui",
+    "ux-research",
+    "canvas",
+    "design-archive",
+    "lint"
+  ]
+}

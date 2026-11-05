@@ -1,12 +1,12 @@
 # UI 走查：有设计产物时多起一个 ui-reviewer
 
-`../SKILL.md` 的「跑一轮」第 2 步在**有设计产物**时读这份；没有设计产物的 PR 不读。
+`../SKILL.md` 的「跑一轮」第 2 步在**有设计产物**时读这份；没有设计产物的 PR 不读。ui-reviewer 属于 design 插件：design 插件没装（Skill 工具调 `design:` 开头的 skill 报不存在）就不起它，这一轮的汇报里写明「没装 design，没做 UI 走查」。
 
 ## 起的时候
 
-和 `idea-loop:pr-reviewer` **同一条消息**起 `idea-loop:ui-reviewer`（每轮走查模式），不等走查走完才起 pr-reviewer。
+和 `idea-loop:pr-reviewer` **同一条消息**起 `design:ui-reviewer`（每轮走查模式），不等走查走完才起 pr-reviewer。
 
-- 给 ui-reviewer 的指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。
+- 给 ui-reviewer 的指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录，和 [`review-standards.md`](review-standards.md) 的绝对路径（它在 idea-loop 插件里，ui-reviewer 自己找不到）。
 - 给 pr-reviewer 的多一个指针：将来的发现文件路径 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`。此时文件还不存在，pr-reviewer 自己等它。
 
 ## 盯着它交回

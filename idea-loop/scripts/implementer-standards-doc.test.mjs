@@ -49,14 +49,14 @@ test('the pick sentence gives examples, including a skill-doc ticket following t
   assert.match(pick, /idea-loop:tdd/, '例子缺：按 TDD 实现代码的工单调 tdd');
   assert.match(pick, /idea-loop:wiki-conventions/, '例子缺：往 .tmp/ 放东西前调 wiki-conventions');
   assert.match(pick, /CODING_STANDARDS\.md/, '例子缺：改 skill、agent 定义、AGENTS.md 的工单照 CODING_STANDARDS.md 链接到的写法');
-  assert.match(pick, /idea-loop:seo-writing/, '例子缺：写站点文章调 seo-writing');
+  assert.match(pick, /seo:seo-writing/, '例子缺：写站点文章调 seo-writing');
   assert.match(pick, /不是清单|只是例子|例子/, '要说明这些是例子，不是清单');
 });
 
 test('every skill example in the pick sentence is written as "用 Skill 工具调 `<插件>:<名字>`"', () => {
   const pick = opening.split('\n').find((l) => /看工单|按工单|工单的内容/.test(l));
   assert.ok(pick, '找不到「怎么挑」那一段');
-  const names = [...pick.matchAll(/`(idea-loop:[a-z-]+)`/g)].map((m) => m[1]);
+  const names = [...pick.matchAll(/`((?:idea-loop|design|seo):[a-z-]+)`/g)].map((m) => m[1]);
   assert.ok(names.length >= 3, '例子里的 skill 名找不到');
   for (const name of names) {
     assert.ok(
