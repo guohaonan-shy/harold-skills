@@ -60,7 +60,7 @@ designer 交付一版之后：
 
 按顺序走，每一步 designer 交付一版后照「每一轮」评：
 
-1. **动效**：判据见 [`references/motion-stage.md`](references/motion-stage.md) 的「开不开」（有块的 job 是四值之一才开）。开就给 designer 任务「动效」，评委看动效；做完先停下给人看跑起来的样子。不开就跳过。
+1. **动效**：判据见 [`references/design/motion.md`](references/design/motion.md) 的「开不开」（有块的 job 是四值之一才开）。开就给 designer 任务「动效」，评委看动效；做完先停下给人看跑起来的样子。不开就跳过。
 2. **素材**：判据见 [`references/asset-stage.md`](references/asset-stage.md) 的「闸门」（营销 register、块的 job 是身份或氛围）。开就给 designer 任务「素材单」，素材单摆给人，由人交给生成管线；缺素材不挡后面的步骤。
 3. **减法**：评委这一轮看减法，意见交给 designer 改。
 4. **清 AI tells**：给 designer 任务「清 AI tells」，改完照常评一次。
