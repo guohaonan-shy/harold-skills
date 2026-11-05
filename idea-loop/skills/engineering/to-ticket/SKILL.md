@@ -7,7 +7,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 先用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:spec-status`（状态只走脚本）。下文 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
-工单是**临时凭据**：开工时才建，合并前由合并的人删掉，删除跟着这一刀的 PR 进主分支（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
+工单是**临时凭据**：开工时才建，提交在需求的工作分支上，合并前由合并的人删掉，删除跟着同一个 PR 进主分支（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
 
 工单也是写给失忆者的信：拿起它的执行方从没见过那份 spec，只读这一张，做不下去只会停下交回。你写时觉得「显而易见所以不用写」的东西，对它并不显而易见。所以每张工单：
 

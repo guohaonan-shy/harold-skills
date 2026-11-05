@@ -10,9 +10,9 @@ argument-hint: "<根号或 issue 号>"
 
 | 阶段 | 侧边栏 section | issue 的 label | 这一段做完的标志 |
 |---|---|---|---|
-| 审核 | 审核中 | 验证中 → 审核中 | spec 合进主分支 |
-| 设计 | 设计中 | 设计中 | 冻结结果经设计 PR 合进主分支 |
-| 实现 | 实现中 | 实现中 | 实现 PR 合并 |
+| 审核 | 审核中 | 验证中 → 审核中 | spec 提交在这一组的分支上 |
+| 设计 | 设计中 | 设计中 | 冻结结果提交在同一个分支上 |
+| 实现 | 实现中 | 实现中 | 实现 PR（连同 spec 和设计）合并 |
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
 
@@ -32,15 +32,15 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 审核
 
-用 Skill 工具调 `idea-loop:issue-verify`，对这一组**只调一次**，`<号>` 给根号，并告诉它这是根的会话、认领已经做过。它逐个复现根下每个子 issue，起草**一份**覆盖全部子 issue 的 spec，在这里跟人 grill，最后把这份 spec 合进主分支，交回 spec 的 slug。没被整合的 issue 照旧调一次。
+用 Skill 工具调 `idea-loop:issue-verify`，对这一组**只调一次**，`<号>` 给根号，并告诉它这是根的会话、认领已经做过。它逐个复现根下每个子 issue，起草**一份**覆盖全部子 issue 的 spec，在这里跟人 grill，最后把这份 spec 提交在这一组的分支上，交回 spec 的 slug。没被整合的 issue 照旧调一次。
 
-调之前先 `git fetch origin`，从最新的主分支切出分支：`git switch -c spec/issue-<根号> origin/<主分支>`。交回「已关闭」「搁置」的，这一组就没有 spec，去「收尾」；否则去「换阶段」。
+调之前先 `git fetch origin`，从最新的主分支切出这一组的分支：`git switch -c issue-<根号> origin/<主分支>`。spec、设计、工单和代码都提交在这一个分支上，最后一个 PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。交回「已关闭」「搁置」的，这一组就没有 spec，去「收尾」；否则去「换阶段」。
 
 ## 设计
 
 读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人。
 
-人设计完、`/idea-loop:uiux-refine` 把冻结结果经设计 PR 合进主分支之后，去「换阶段」。
+人设计完、`/idea-loop:uiux-refine` 把冻结结果提交在这个分支上之后，去「换阶段」。
 
 ## 实现
 
@@ -55,10 +55,10 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 换阶段
 
-每个 PR 合并后做一遍：
+每一段做完后做一遍：
 
-1. `git fetch origin`，从最新的主分支切出下一段的分支：`git switch -c <下一段>/<spec-slug> origin/<主分支>`（设计用 `design/`，实现用 `impl/`）。
-2. `issues advance <docs> <spec-slug>`：照主分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。
+1. 不切新分支：下一段接着在这一组的分支上做。
+2. `issues advance <docs> <spec-slug>`：照这个分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。
 3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进这一段的 section（先重跑一次 `issues queues <docs> <根号>`：审核时分类可能改了），去那一段。是「关闭」：去「收尾」。
 
 ## 收尾
