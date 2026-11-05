@@ -97,3 +97,5 @@ docs/design/
 | 查档案 | MCP 工具 `design_*`（用法以工具的 description 为准）；命令行、退出码与返回字段在 [references/query.md](references/query.md) |
 | 校验 | [references/check.md](references/check.md)：命令、退出码、规则表、「写完 `delta/` 的标志」 |
 | 归档 | [references/archive-script.md](references/archive-script.md) |
+| UI 审查的归档模式（`idea-loop:ui-reviewer` 被起成「归档」时） | [references/review-archive.md](references/review-archive.md)：通过的条件、整份写出 `delta/`、重拍精简矩阵、决定与候选、自检、给人的草稿 |
+| UI 审查的对账模式（`idea-loop:ui-reviewer` 被起成「对账」时） | [references/review-reconcile.md](references/review-reconcile.md)：输入、源码波、逐个状态进核拍比、五种判定、三条不变量、结果文件 |

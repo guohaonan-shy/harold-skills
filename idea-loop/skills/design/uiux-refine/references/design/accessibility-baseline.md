@@ -1,7 +1,7 @@
 # Accessibility baseline — the compliance floor an artifact must clear
 
 Universal rules for the legal floor of accessibility, plus craft commitments that go beyond it.
-The "A11y floors" line in `design-core.md`'s "Brand floors" is the one-sentence summary always in scope; this file is
+The "A11y floors" line in `design-law.md`'s "Brand floors" is the one-sentence summary always in scope; this file is
 what backs it up when a surface needs more than the summary — contrast/touch-target numbers,
 keyboard semantics, ARIA discipline, and the mistakes that most often slip past a review.
 
@@ -128,8 +128,7 @@ Never invent ARIA attributes or roles.
 The non-negotiable floor: WCAG 2.3.1 (Level A) — flashing more than three times per one-second
 period is non-conformant unless the flash area stays below the general/red flash thresholds
 (photosensitive epilepsy is the protected concern). The animation-timing half of reduced motion
-(duration/easing fallback mechanics) is the job of `motion-spec.md`'s "Reduced motion" once a surface reaches
-`motion-protocol`; this file owns the flashing floor, not the fallback implementation.
+(duration/easing fallback mechanics) is the job of [motion.md](motion.md)'s "Reduced motion"; this file owns the flashing floor, not the fallback implementation.
 
 ## Native mobile parity
 
