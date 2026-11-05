@@ -11,8 +11,8 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 ## 开工前
 
-- spec 是 `正式`、有「前端交互」小节（旧 spec 里它不是「不涉及」）、「实现决策」里还没有冻结摘要，才往下走（状态的含义见 `idea-loop:spec-status`）。还在 `审核中` 的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
-- 它覆盖的 issue 应该是「设计中」：issue 会话换到设计阶段时已经翻过。人直接调 imagine、issue 还是「待设计」的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<worktree 根>/docs" 设计中 <spec-slug>`。
+- spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节（旧 spec 里它不是「不涉及」）、「实现决策」里还没有冻结摘要，才往下走。还有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
+- 它覆盖的 issue 应该在 triage（设计在 triage 里做，issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<worktree 根>/docs" triage <号>`；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 
 ## 起步
@@ -63,7 +63,7 @@ uiux-imaginer 交付一轮之后：
 1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格原样摆给人确认；人的确认或改写交回去，任务「按确认改」。
 2. 任务「导出交接画布」。它交付后你核对：
    - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
-   - spec 没被动过（`git status` 里没有它），状态仍是 `正式`；
+   - spec 没被动过（`git status` 里没有它）；
    - 在内嵌浏览器里打开 `<预览地址>/handoff/index.html`，换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
 
    不过就把问题交回去，它补完再核。

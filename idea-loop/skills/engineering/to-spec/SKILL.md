@@ -9,20 +9,20 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 ## 过程
 
-1. **开工**：issue tracker 怎么用在目标仓库根目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:spec-status`（状态只走脚本）。下文 `spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指目标项目的 `docs/`。先跑 `spec-status check <docs>`，报的问题照 `idea-loop:spec-status` 处理。
+1. **开工**：issue tracker 怎么用在目标仓库根目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指目标项目的 `docs/`。先跑 `spec check <docs>`，报的问题照 `idea-loop:issues` 处理。
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，正文照 [`references/raw-template.md`](references/raw-template.md)。frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`、`title`、`tags: [<topic>, <feature-slug>]`、`related: ["[[<spec-slug>]]"]`。
 
 3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
    seam 是测试观察行为的公共边界，测试从这里喂输入、读输出。优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置，每个带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认，不在场自己定。写进「测试决策」。
 
-4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`status: 草稿`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
+4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
 
-   让 spec 在 tracker 上有入口：覆盖了已有的 issue，每个跑一次 `issues handoff <docs> <slug> <号>`，号码进 frontmatter 的 `issues`；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 spec issue。两条都只写号码，label 等合进主分支后由对账挂。
+   spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 issue，号码它自己写进去。
 
    frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步调过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
 
-5. **分流**：跑 `spec-status route <docs> <slug>`。覆盖的 issue 在开头那几行里全都「不存在」的，翻成 `完成`；还有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），翻成 `审核中` 并说出还剩哪几样；都没有就是 `正式`。人在场又是 `审核中`，就在这里接着定，定完删掉标记，`spec-status set <docs> <slug> 正式`。
+5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时脚本核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `spec index <docs>` 刷 `docs/spec/index.md`。
 
 6. **合并并收工**：spec 提交在需求的工作分支上，跟代码同一个 PR 合进主分支，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交和合并由它来做的（比如 `idea-loop:issue-verify`），这一步留给它。
 

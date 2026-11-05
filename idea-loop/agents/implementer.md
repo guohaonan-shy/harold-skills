@@ -132,7 +132,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 1. 先把全部改动提交一次，message 随意。
 2. 钉住集成分支此刻的提交，合进来：`T=$(git rev-parse <集成分支名>)`，`git merge $T`。有冲突在这里解决；锁文件冲突照 `DEVELOPMENT.md` 的「worktree 准备」，不手工合并。
 3. 依赖按锁文件核对一遍（`DEVELOPMENT.md` 的「worktree 准备」），然后把上面四条重新过一遍：合进来的别人的改动可能碰坏你的。
-4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部改动，加上勾好框的工单文件（以及被你追加了继承格的那张工单）。message 用仓库的风格写，**末尾带一行 trailer**：
+4. `git reset --soft $T`，再提交成**一个** commit：这张工单的全部改动，加上勾好框的工单文件（以及被你追加了继承格的那张工单）；你的 worktree 里没有工单文件（工单属于别的仓库）时，commit 只含代码，勾框和继承格留给编排者，`acceptance` 照实写。message 用仓库的风格写，**末尾带一行 trailer**：
 
    ```
    Ticket: <NN>-<slug>

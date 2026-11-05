@@ -15,11 +15,11 @@
 - `review-loop.mjs`、`proposal-table-check.mjs` 里的旧状态名换掉。
 
 ## 验收标准
-- [ ] to-spec 的模板与步骤不再出现 spec 的 `status` 和 `spec-status` 命令
-- [ ] implement 写明开工即开 draft PR、多仓库各一个、ready 时翻 in-review
-- [ ] pr-review 的 merge 写明全部 PR 合并后 `set done`，deliver 不翻 spec 状态
-- [ ] 本刀碰的 skill 与脚本里没有旧中文状态名、`spec-status`
-- [ ] 相关文档测试全绿
+- [x] to-spec 的模板与步骤不再出现 spec 的 `status` 和 `spec-status` 命令
+- [x] implement 写明开工即开 draft PR、多仓库各一个、ready 时翻 in-review
+- [x] pr-review 的 merge 写明全部 PR 合并后 `set done`，deliver 不翻 spec 状态
+- [x] 本刀碰的 skill 与脚本里没有旧中文状态名、`spec-status`
+- [x] 相关文档测试全绿
 
 ## 选中的存量回归
 - `to-spec-by-deliverable-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`pr-review-cross-skill-refs-doc.test.mjs`、`pr-review-slim-doc.test.mjs`：钉着 to-spec / pr / pr-review 的写法。

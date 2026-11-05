@@ -25,7 +25,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 | **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<项目根>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
 | **没有 spec**：普通对话 | `<项目根>/docs/design/tmp/research/<问题短名>/` |
 
-拿不准是哪份 spec（有好几份在设计中、人也没点名）就按没有 spec 放，并在最后一句说明。
+拿不准是哪份 spec（有好几份 spec 在做设计、人也没点名）就按没有 spec 放，并在最后一句说明。
 
 ## 起 uiux-researcher
 
