@@ -1,7 +1,7 @@
 /**
  * The design archive, parsed — the reusable layer under validation, queries, MCP and archiving.
  *
- * `docs/design/prod/` is a graph (skills/design/design-archive/SKILL.md): page states are the nodes, the
+ * `docs/design/prod/` is a graph (skills/design-archive/SKILL.md): page states are the nodes, the
  * `edges` written in each state file are the edges, and pages / components / motions / journeys are
  * objects the nodes and edges point at. This module reads a repository root and returns every object,
  * edge and reference in one structure; the validator (design-archive-check.mjs) is a layer on it, and
@@ -405,7 +405,7 @@ function swapFile(files, id, oldFile, newFile) {
 // ---------- sections of a long entry state ----------
 
 /**
- * The section types: a closed set, shared by every project (skills/design/design-archive/references/writing.md, 分段 `sections`). A section
+ * The section types: a closed set, shared by every project (skills/design-archive/references/writing.md, 分段 `sections`). A section
  * id is `<type>` or `<type>-<qualifier>`; the value here is the one-line meaning that decides which type
  * a block of the page is. Growing the set means editing this table, its test and the reference.
  */

@@ -119,9 +119,9 @@ function main() {
   }
   console.error(
     [
-      `构建产物 ${t.dist} 有 SEO error（idea-loop:seo-check）：`,
+      `构建产物 ${t.dist} 有 SEO error（seo:seo-check）：`,
       errorsOnly(res.stdout),
-      '改完重新构建；每条规则的理由见 idea-loop:seo-check。',
+      '改完重新构建；每条规则的理由见 seo:seo-check。',
     ].join('\n'),
   );
   return 2;

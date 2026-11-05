@@ -9,7 +9,7 @@
 1. 过「准入分层表」，给出去向和一句理由。
 2. 按去向处理：
    - **产品设计系统**：按「维护原则」落——先在已有章节里找被它影响的内容，矛盾的统一、过时的改写、已覆盖的不加，只有缺口才新增，新增时同步 front matter 的 token。候选里的「并进」是建议，最终落在哪由这一步定。
-   - **通用设计原则**：起草成 idea-loop 插件仓库的 issue 文字（标题 + 原则 + 来源 + 建议落在 `/idea-loop:uiux-refine` 设计协议的哪一份），问人要不要开；人同意后才跑 `gh issue create -R guohaonan-shy/harold-skills`。
+   - **通用设计原则**：起草成 idea-loop 插件仓库的 issue 文字（标题 + 原则 + 来源 + 建议落在 `/design:uiux-refine` 设计协议的哪一份），问人要不要开；人同意后才跑 `gh issue create -R guohaonan-shy/harold-skills`。
    - **页面或组件的决定**：留在设计档案里对象的「决定」，`DESIGN.md` 不动。
    - **现状、缺陷**：起草一个目标仓库的 GitHub issue（标题 + 现状 + 在哪 + 来源），人同意后才跑 `gh issue create`。
    - **驳回**：写一句理由。

@@ -1,5 +1,5 @@
 /**
- * Reading the design archive: seven entries, one module (skills/design/design-archive/references/query.md).
+ * Reading the design archive: seven entries, one module (skills/design-archive/references/query.md).
  *
  *   queryPage(archive, name)      a page: regions and components, every state and its edges, the journeys
  *                                 through it, the motions it uses, all decisions and candidates

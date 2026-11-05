@@ -37,7 +37,7 @@ implementer 做 **UI 工单**时读这份。这一环是 TDD 的红绿环，**�
 画布上的每个具体值（`#0a0a0a`、`14px`、`8px` 圆角）在项目里都要落成**项目自己的 token 名**，来源是目标项目根的 `DESIGN.md`。
 
 - 项目里已有对应 token → 用那个名字。
-- 项目里没有 → 先确认它是不是该有。一个一次性的边角值用行内任意值（Tailwind 的 `text-[15px]` 这类）是对的；一个会复用的值该不该进 DESIGN.md，停下交人判断，要进的写成候选（形态见 `idea-loop:design-modeling` 的「设计法候选的形态」）。代码里不留魔法数，DESIGN.md 也不直接改。
+- 项目里没有 → 先确认它是不是该有。一个一次性的边角值用行内任意值（Tailwind 的 `text-[15px]` 这类）是对的；一个会复用的值该不该进 DESIGN.md，停下交人判断，要进的写成候选（形态见 `design:design-modeling` 的「设计法候选的形态」）。代码里不留魔法数，DESIGN.md 也不直接改。
 - **token 归因要写得出来**：任何一个视觉值，你都要能说出它是哪个 token、出处在 DESIGN.md 哪一行。说不出来，就是在项目里新开了一套没人知道的样式。
 
 ### 画布的 CSS 只翻译，不搬进项目
@@ -79,7 +79,7 @@ implementer 做 **UI 工单**时读这份。这一环是 TDD 的红绿环，**�
 
 ### dev 专用状态 harness（每栈的守卫机制）
 
-矩阵里每个状态是一帧，本地侧靠 `?state=` 切（`idea-loop:ui-measure` 的「三条环境约定」第 3 条）。这需要目标项目提供一条**只在开发构建里注册**的路由：按 `?state=` 用 fixture 数据把 surface 渲染到指定状态。
+矩阵里每个状态是一帧，本地侧靠 `?state=` 切（`design:ui-measure` 的「三条环境约定」第 3 条）。这需要目标项目提供一条**只在开发构建里注册**的路由：按 `?state=` 用 fixture 数据把 surface 渲染到指定状态。
 
 **生产构建里这条路由必须不存在，并且有一个测试断言它在 prod 模式下 404。** 这个断言属于目标项目自己的测试套件，不属于本 plugin。
 
@@ -95,4 +95,4 @@ prod 404 断言的形状（栈无关）：以生产模式构建并启动，请�
 
 ## 比对
 
-落完代码，用 Skill 工具调 `idea-loop:ui-measure`，把实现和冻结画布逐格比，直到全绿或停在瓶颈。它就是测试决策里「视觉正确性」那一行的红绿测试。目标项目是 React / Tailwind 时，落代码前再读 [`react-port.md`](react-port.md)。
+落完代码，用 Skill 工具调 `design:ui-measure`，把实现和冻结画布逐格比，直到全绿或停在瓶颈。它就是测试决策里「视觉正确性」那一行的红绿测试。design 插件没装（Skill 工具调 `design:` 开头的 skill 报不存在）就不比，交回里写明这张工单没做逐格比对。目标项目是 React / Tailwind 时，落代码前再读 [`react-port.md`](react-port.md)。

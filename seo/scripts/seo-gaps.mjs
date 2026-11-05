@@ -2,7 +2,7 @@
 /**
  * Which project facts the directions of one seo-scan run need but nobody has written down yet. The
  * list of what each direction needs is the 「每个方向要用的信息」 table in
- * skills/seo/seo-setup/references/seo-md.md; this is that table as code, so a scan never judges "is
+ * skills/seo-setup/references/seo-md.md; this is that table as code, so a scan never judges "is
  * anything missing" by reading rules.
  *
  * Missing means: an SEO.md item that was never written (`无` counts as written), or an empty field in

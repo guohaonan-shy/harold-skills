@@ -154,7 +154,7 @@ The human review list includes:
 - test cases derived from the state matrix;
 - generalizable product decisions, written as candidates in the freeze record's `设计法候选` section,
   naming the component (or page) archive object they will hang on (the object file is written at the
-  pre-merge archive, not under `delta/` at freeze), in the format of `idea-loop:design-modeling`, section 设计法候选的形态 (static-ui-protocol H); this protocol never
+  pre-merge archive, not under `delta/` at freeze), in the format of `design:design-modeling`, section 设计法候选的形态 (static-ui-protocol H); this protocol never
   writes `DESIGN.md`.
 
 The component preview remains the static source for `motion-protocol`; direct React iteration is not a

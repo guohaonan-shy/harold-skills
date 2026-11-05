@@ -304,7 +304,15 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
       console.error(`flow-compose: ${flags.archive} 不是仓库根（下面没有 docs/）`);
       process.exit(1);
     }
-    const { loadArchive } = await import('./design-archive.mjs');
+    // The archive belongs to the design plugin; without it --archive cannot check anything.
+    const { importFrom } = await import('./plugin-root.mjs');
+    let loadArchive;
+    try {
+      ({ loadArchive } = await importFrom('design', 'design-archive.mjs'));
+    } catch (e) {
+      console.error(`flow-compose: --archive 要 design 插件：${e.message}`);
+      process.exit(1);
+    }
     const archive = loadArchive(resolve(flags.archive), { delta: flags.delta ?? null });
     hasState = (id) => archive.objects.get(id)?.kind === 'state';
   }

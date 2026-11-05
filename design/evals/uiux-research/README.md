@@ -37,13 +37,13 @@ evals/uiux-research/
 ## 怎么跑
 
 ```bash
-node idea-loop/evals/uiux-research/run.mjs --list                    # 看有哪些 case 和它们的 prompt
-node idea-loop/evals/uiux-research/run.mjs --only leave-confirm      # 跑一个（冒烟）
-node idea-loop/evals/uiux-research/run.mjs                           # 跑全部六个（会真的调 Refero，花钱，夜里跑）
-node idea-loop/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-min 30
+node design/evals/uiux-research/run.mjs --list                    # 看有哪些 case 和它们的 prompt
+node design/evals/uiux-research/run.mjs --only leave-confirm      # 跑一个（冒烟）
+node design/evals/uiux-research/run.mjs                           # 跑全部六个（会真的调 Refero，花钱，夜里跑）
+node design/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-min 30
 ```
 
-每个 case 都在 `/tmp/idea-loop-uiux-research/<case>/` 下重新起一份项目副本（git 仓库），用工作树里的 `idea-loop/`
+每个 case 都在 `/tmp/idea-loop-uiux-research/<case>/` 下重新起一份项目副本（git 仓库），用工作树里的 `design/` 与 `idea-loop/`
 （不是装好的那份）把 default prompt 敲给 `claude -p`，prompt 末尾只加一句「无人值守，不要提问」。跑完留下：
 
 - `output/index.html` 和 `output/shots/`——**产物，人打开这个**（`file://` 能直接开，也能在内嵌浏览器里开）
@@ -57,7 +57,7 @@ node idea-loop/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-
 1. 打开 `output/index.html`，对着页面顶部的「研究问题」（人的原话）和具名问题看：它回答了吗？通用结论成立吗？每个来源的场景和设计逻辑有用吗？截图点得开吗？最后「要我们决策的问题」抓住了真正没定的事吗（答不了的时间 / 行为问题有没有照实写、没有硬凑）？（内嵌浏览器对 `file://` 只显示静态快照，点不了；要在里面看就在 `output/` 起一个本地静态服务。）
 2. 在 `cases/<case>/annotations.md` 追加一段：哪里缺了什么、多了什么、错在哪、希望它怎么样。
 3. 重复几次之后，把反复出现的标注收成一条「产物应该（不该）包含什么」，写回 `agents/uiux-researcher.md` 或
-   `skills/design/uiux-research/references/research-backend.md`；收敛到一定程度，再决定哪些值得变成 `research-check` 的机械检查。
+   `skills/uiux-research/references/research-backend.md`；收敛到一定程度，再决定哪些值得变成 `research-check` 的机械检查。
 
 脚本里唯一跑的机械检查是已有的 `scripts/research-check.mjs`（页面形状：顶部的「研究问题」/ 具名问题 / 上下文、通用结论，每个来源的两段齐不齐，图在不在、点不点得开，章节顺序对不对：研究问题与上下文 → 通用结论 → 各来源 → 要我们决策的问题，决策块是最后一块、之后没有别的块；章节里面写什么不查），它红了说明形状坏了，
 绿了**不说明**内容好。内容好不好只有人说了算。

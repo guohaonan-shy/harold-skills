@@ -7,7 +7,7 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 | 问题陈述 | 复现证据 | 截图 + 标注，按问题性质选形式 | `idea-loop:grill` 复现时截图，`idea-loop:to-spec` 排版 |
 | User Stories | 每个场景一棵 story 树 | excalidrawer `tree` | `idea-loop:to-spec` |
 | 方案 · 开头的交互时序图，以及后端 / 前端内部子小节 | 时序图 | excalidrawer `sequence` | `idea-loop:to-spec` |
-| 方案 · 前端交互子小节 | 交互图（screen flow） | 截图 + `flow-compose.mjs` | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
+| 方案 · 前端交互子小节 | 交互图（screen flow） | 截图 + `flow-compose.mjs` | 冻结前写文字；冻结时 `/design:uiux-refine` 补图 |
 
 **定稿后 `docs/` 里只留 PNG。** 交付给人的一直是 PNG；grill / spec 定稿之后，excalidrawer 的 `.excalidraw` 源文件和它的 sugar JSON 就用不上了，不进 git。还在改的时候，它们放在 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`idea-loop:wiki-conventions` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。存量 spec 旁边已经有的 `.excalidraw` 不用专门去删。
 
@@ -132,4 +132,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archi
 
 ### 设计冻结之前
 
-「前端交互」先用文字列出交互变化（每个场景一行：触发 → 变化），小节开头标「待补图：`/idea-loop:uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。
+「前端交互」先用文字列出交互变化（每个场景一行：触发 → 变化），小节开头标「待补图：`/design:uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。

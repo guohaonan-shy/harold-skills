@@ -165,22 +165,16 @@ test('hook helpers: touchedSince and errorsOnly', () => {
   assert.equal(errorsOnly(report), '/b\n    [ERROR] [Both] Missing <title>.\nSummary: 1 error');
 });
 
-test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write hooks are all there, and the pre-merge hook is gone', () => {
-  const hooks = JSON.parse(readFileSync(join(here, '..', 'hooks', 'hooks.json'), 'utf8')).hooks;
-  assert.deepEqual(hooks.PreToolUse, [
-    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
-  ]);
-  assert.deepEqual(hooks.PostToolUse, [
-    {
-      matcher: 'Write|Edit',
-      hooks: ['design-lint-hook', 'design-md-hook', 'glossary-check-hook'].map((n) => ({
-        type: 'command',
-        command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/${n}.mjs"`,
-      })),
-    },
-    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
-  ]);
-  assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse']);
+test('the plugin hooks: seo runs only the SEO check, the post-write hooks moved to design and idea-loop, and the pre-merge hook is gone', () => {
+  const read = (plugin) => JSON.parse(readFileSync(join(here, '..', '..', plugin, 'hooks', 'hooks.json'), 'utf8')).hooks;
+  const cmd = (n) => ({ type: 'command', command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/${n}.mjs"` });
+  const hooks = read('seo');
+  assert.deepEqual(hooks, {
+    PreToolUse: [{ matcher: 'Bash', hooks: [cmd('seo-check-hook')] }],
+    PostToolUse: [{ matcher: 'Bash', hooks: [cmd('seo-check-hook')] }],
+  });
+  assert.deepEqual(read('design'), { PostToolUse: [{ matcher: 'Write|Edit', hooks: [cmd('design-lint-hook'), cmd('design-md-hook')] }] });
+  assert.deepEqual(read('idea-loop'), { PostToolUse: [{ matcher: 'Write|Edit', hooks: [cmd('glossary-check-hook')] }] });
   assert.doesNotMatch(JSON.stringify(hooks), /merge-gate/);
   for (const gone of ['merge-gate-hook.mjs', 'merge-gate-hook.test.mjs']) {
     assert.equal(existsSync(join(here, gone)), false, `${gone} should be deleted`);

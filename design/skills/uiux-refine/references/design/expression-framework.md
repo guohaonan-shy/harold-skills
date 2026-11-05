@@ -128,5 +128,5 @@ one argument about step 2 — and rank has a right answer where taste doesn't.
 
 New generalizable treatment decisions become candidates at static-ui-protocol's Distill-back step
 and never edit the project's `DESIGN.md` from here; `idea-loop:dreaming` processes them under
-`idea-loop:design-modeling`. This file defines the ladders and the procedure; DESIGN.md records the
+`design:design-modeling`. This file defines the ladders and the procedure; DESIGN.md records the
 decided instances.

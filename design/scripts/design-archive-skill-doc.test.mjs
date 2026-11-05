@@ -4,9 +4,9 @@
  *
  * 1. The SKILL.md body (frontmatter stripped, counted in UTF-8 characters) is under 5000: the repo rule is
  *    "SKILL.md 主体 < 5000 字"; long reference material lives in the skill's own `references/`.
- * 2. Other skills and agents call the skill by name plus a section title (`idea-loop:design-archive` 的「X」),
+ * 2. Other skills and agents call the skill by name plus a section title (`design:design-archive` 的「X」),
  *    never by file path. When a section is renamed or moved, those titles silently go stale. Every title quoted
- *    right after a `idea-loop:design-archive` mention must be a heading of the SKILL.md or of one of its
+ *    right after a `design:design-archive` mention must be a heading of the SKILL.md or of one of its
  *    `references/` files.
  */
 import { test } from 'node:test';
@@ -16,7 +16,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const skillDir = join(pluginRoot, 'skills', 'design', 'design-archive');
+const skillDir = join(pluginRoot, 'skills', 'design-archive');
 const MAX_BODY_CHARS = 5000;
 
 function mdFiles(dir) {
@@ -53,8 +53,8 @@ test('every section of design-archive that a skill or agent quotes exists as a h
   const known = [join(skillDir, 'SKILL.md'), ...mdFiles(join(skillDir, 'references'))].flatMap((f) => headings(readFileSync(f, 'utf8')));
   const exists = (title) => known.some((h) => h === title || h.startsWith(`${title}：`) || h.startsWith(`${title}（`));
 
-  // `idea-loop:design-archive` 的「A」「B」 / ，看它的「A」到「B」 / （看它的「A」 / 的 `references/x.md`「A」 / 的「A」里的「B」
-  const POINTER = /`idea-loop:design-archive`(?:，看它的|（看它的|\s*的\s*(?:`references\/[\w.-]+\.md`)?)((?:「[^」]+」(?:里的|的|、|到|和)?)+)/g;
+  // `design:design-archive` 的「A」「B」 / ，看它的「A」到「B」 / （看它的「A」 / 的 `references/x.md`「A」 / 的「A」里的「B」
+  const POINTER = /`design:design-archive`(?:，看它的|（看它的|\s*的\s*(?:`references\/[\w.-]+\.md`)?)((?:「[^」]+」(?:里的|的|、|到|和)?)+)/g;
 
   const bad = [];
   let seen = 0;

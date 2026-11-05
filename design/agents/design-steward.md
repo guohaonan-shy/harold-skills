@@ -9,7 +9,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:browser`、`idea-loop:evidence`、`idea-loop:decision-rules`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
+用 Skill 工具调 `design:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`design:design-archive`（查询档案对象）、`idea-loop:browser`、`idea-loop:evidence`、`idea-loop:decision-rules`。然后读 dreaming 给你的 `references/` 目录 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
 
 ## 你收到的
 
@@ -18,6 +18,7 @@ effort: high
 - dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的）
 - 这次运行的中间物目录 `.tmp/dreaming/<YYYY-MM-DD>/`；截图放它下面的 `shots/`
 - 浏览器锁目录、开发服务可用的端口（要从实现里截图或量 token 时才用）
+- 三个绝对路径（它们在 idea-loop 插件里，不在你这个插件）：dreaming 的 `references/` 目录、`proposal-table.md`、`proposal-table-check.mjs`
 - 范围：「候选」「对账」或两者都做；或「单条蒸馏」加那一条规则的原话
 
 ## 做
@@ -31,7 +32,7 @@ effort: high
 
 **单条蒸馏**：只处理人给的那一条，不开浏览器、不起开发服务、不出提议表，照 `candidate-distillation.md` 的「单条蒸馏」做到「旧新并排、等人确认」，把草稿交回。
 
-完成条件：每一行的证据格都满足 `proposal-table.md` 的要求；各节写进文件后用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <文件>` 校验，退出码 0。
+完成条件：每一行的证据格都满足 `proposal-table.md` 的要求；各节写进文件后用 `node "<dreaming 给的 proposal-table-check.mjs>" <文件>` 校验，退出码 0。
 
 ## 交回
 

@@ -3,7 +3,7 @@ name: seo-scan
 description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue。每周的定时任务触发，人也可以手动跑。
 disable-model-invocation: true
 argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo）"
-allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
+allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node -e:*), mcp__plugin_seo_openseo__whoami, mcp__plugin_seo_openseo__get_project_context, mcp__plugin_seo_openseo__update_project_context, mcp__plugin_seo_openseo__find_serp_competitors
 ---
 
 一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把发现交给提 issue 脚本，最后在研究日志里记一笔。产出只有 issue、评论和一条研究日志；仓库里什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
@@ -14,8 +14,8 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 开场
 
-1. 仓库根 = `git rev-parse --show-toplevel`。`<仓库根>/SEO.md` 不存在：停下，交回「这个仓库没有 SEO.md，先由人跑 `/idea-loop:seo-setup`」。
-2. `node S/seo-md.mjs <仓库根>/SEO.md`，记下 `openseo.projectId`。报错或项目 id 为空：停下，交回脚本的原因和同一句「跑 `/idea-loop:seo-setup`」。
+1. 仓库根 = `git rev-parse --show-toplevel`。`<仓库根>/SEO.md` 不存在：停下，交回「这个仓库没有 SEO.md，先由人跑 `/seo:seo-setup`」。
+2. `node S/seo-md.mjs <仓库根>/SEO.md`，记下 `openseo.projectId`。报错或项目 id 为空：停下，交回脚本的原因和同一句「跑 `/seo:seo-setup`」。
 3. **运行目录**：`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（`date +%Y%m%d-%H%M`），`mkdir -p` 建好。照 `idea-loop:wiki-conventions` 的「本地忽略」确认 `.tmp/` 被忽略。
 4. **项目上下文**：调 `get_project_context`（`projectId`），原始返回原样写到 `<运行目录>/context.json`。失败：原因记下，下面挑方向和同步都当作没有上下文。
 
@@ -69,11 +69,11 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 | 方向 | agent |
 |---|---|
-| `technical` | `idea-loop:technical-auditor` |
-| `pages` | `idea-loop:page-optimizer` |
-| `keywords` | `idea-loop:keyword-miner` |
-| `backlinks` | `idea-loop:backlink-analyst` |
-| `geo` | `idea-loop:geo-analyst` |
+| `technical` | `seo:technical-auditor` |
+| `pages` | `seo:page-optimizer` |
+| `keywords` | `seo:keyword-miner` |
+| `backlinks` | `seo:backlink-analyst` |
+| `geo` | `seo:geo-analyst` |
 
 在**同一条消息里**用 Agent 工具把 `allow` 里的方向全部起好，让它们并行。每个的提示照这个模板填，不加别的：
 
@@ -117,7 +117,7 @@ OpenSEO 项目：<projectId>
 ```
 seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - <方向>：<N> 条发现 | 未采集（<原因>） | 预算跳过（<原因>）
-- issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:seo-setup>
+- issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /seo:seo-setup>
 - 花费：<n | 未知> credits
 - 研究日志：已写入 | 没写成（<原因>），摘要在 <log.txt 路径>
 - SEO.md：这次改了（<哪几项>）| 没改

@@ -14,7 +14,10 @@
  *
  * There is no cap on the number of issues: issue-dispatch limits how many sessions run at once.
  *
+ * issues.mjs is idea-loop's (seo depends on idea-loop); plugin-root.mjs finds it.
+ *
  * Usage: node seo-issues.mjs <docs> <findings.json> [--dry-run]
+ *        node seo-issues.mjs labels <docs>   — idea-loop's `issues labels`: creates missing status:* / type:* labels
  *   → { "created": [{number,title}], "commented": [{number,title}], "rejected": [{title,reason}], "untyped": bool }
  *   (--dry-run: the same shape, numbers null, nothing written)
  * Exit: 0 = done, 1 = bad input / gh error (reason on stderr).
@@ -22,8 +25,10 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { defaultGh, readTypes, setTypes, typeSet } from './issues.mjs';
+import { importFrom } from './plugin-root.mjs';
 import { DIRECTIONS } from './seo-md.mjs';
+
+const { defaultGh, ensureLabels, readTypes, setTypes, typeSet } = await importFrom('idea-loop', 'issues.mjs');
 
 export const DIRECTION_NAMES = {
   technical: '技术 SEO 与索引',
@@ -91,18 +96,18 @@ export function issueBody(g) {
   if (g.content) {
     const c = g.content;
     parts.push(
-      `## 审核阶段\n\n内容类：目标词「${text(c.keyword)}」，页面类型「${text(c.pageType)}」，${c.mode === 'update' ? '改已有页' : '新开页'}。起草 spec 时用 \`idea-loop:seo-brief\` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 \`idea-loop:seo-writing\` 按 brief 写。`,
+      `## 审核阶段\n\n内容类：目标词「${text(c.keyword)}」，页面类型「${text(c.pageType)}」，${c.mode === 'update' ? '改已有页' : '新开页'}。起草 spec 时用 \`seo:seo-brief\` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 \`seo:seo-writing\` 按 brief 写。`,
     );
   }
-  if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出只改 `docs/` 的 PR。邮件由人发送，任何会话都不发。');
-  parts.push(`---\n由 \`idea-loop:seo-scan\` 提出。\n\n${marker(g)}`);
+  if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `seo:seo-outreach` 起草邮件和跟进表，产出只改 `docs/` 的 PR。邮件由人发送，任何会话都不发。');
+  parts.push(`---\n由 \`seo:seo-scan\` 提出。\n\n${marker(g)}`);
   return parts.join('\n\n');
 }
 
 export function commentBody(g, known) {
   const fresh = g.targets.filter((t) => !known.includes(t));
   return [
-    `\`idea-loop:seo-scan\` 本次又发现了同一个问题。`,
+    `\`seo:seo-scan\` 本次又发现了同一个问题。`,
     `**本次证据**\n\n${g.evidences.map(evidenceLine).join('\n')}${ratioLine(g.ratio)}`,
     fresh.length ? `**新增的受影响处**\n\n${list(fresh)}` : '受影响处没有新增。',
   ].join('\n\n');
@@ -157,6 +162,14 @@ export function apply(gh, types, p) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   try {
+    if (process.argv[2] === 'labels') {
+      const docs = process.argv[3];
+      if (!docs || process.argv.length > 4) throw new Error('usage: seo-issues.mjs labels <docs>');
+      const { made, surplus } = ensureLabels(defaultGh(docs), readTypes(docs));
+      for (const l of made) console.log(`created ${l}`);
+      for (const l of surplus) console.log(`surplus ${l.name}`);
+      process.exit(0);
+    }
     const [docs, file, flag] = process.argv.slice(2);
     if (!docs || !file || (flag && flag !== '--dry-run')) throw new Error('usage: seo-issues.mjs <docs> <findings.json> [--dry-run]');
     const findings = JSON.parse(readFileSync(file, 'utf8'));

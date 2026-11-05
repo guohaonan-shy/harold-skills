@@ -14,7 +14,7 @@ the session from the start, and it is small enough to always be present.
 wins on any brand/token conflict — this file never restates its values, only names its floors ("Brand floors").
 When the target project has no `DESIGN.md`, this file's generic law ("The Design Read", "Anti-slop law",
 "Close-out protocol", "Craft methodology") is the default, the example floors in "Brand floors" are
-illustration only, and the skill should suggest creating a `DESIGN.md` by running `idea-loop:uiux-imagine`
+illustration only, and the skill should suggest creating a `DESIGN.md` by running `design:uiux-imagine`
 (no live UI) or `idea-loop:dreaming` (live UI) — a missing doc is a degradation, never an abort. What this
 file adds is the *generic* anti-slop law and the forced protocols ("The Design Read", "Close-out protocol")
 that no brand doc carries.
@@ -324,5 +324,5 @@ Distilled from taste-skill (upstream `Leonxlnx/taste-skill`), the open-design pr
 design-lib research repository's `design-landing` / `design-landing-plan` skills, and the target
 project's `DESIGN.md`; sections marked *(verbatim)* are lifted, not paraphrased. Every gate runs on
 this plugin's own scripts and references, with no runtime read of an external skill or tool; the
-one live dependency is `idea-loop:uiux-research`'s Refero research, run only when the human asks,
+one live dependency is `design:uiux-research`'s Refero research, run only when the human asks,
 never a gate.

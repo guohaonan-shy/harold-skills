@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkFlow, flowFileName, layout, renderHtml, stateMap } from './flow-compose.mjs';
-import { compliantFiles, writeRepo } from './design-archive-fixture.mjs';
+import { compliantFiles, writeRepo } from '../../design/scripts/design-archive-fixture.mjs';
 
 /** A well-formed flow: a main row, a branch off its second step, an unconnected 「同一规则」 row. */
 const flow = () => ({

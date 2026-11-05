@@ -30,10 +30,10 @@ description: 关键词聚类：按搜索意图把词分组，映射到已有或�
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
+1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `seo:seo-setup`，照常往下做。
 2. 调 `get_project_context`，映射以它为根：重点页面就是簇要映射到的已有页面，业务和目标决定哪些簇值得瞄准。
 3. 这个 skill 需要重点页面。SEO.md 和项目上下文里都没有时：
-   - 人在场：做最小的现场补齐：问人哪些页面要紧，或从站点、审计、Search Console 提一份短名单再确认，先写进 SEO.md 的「重点页面」，再用 `update_project_context`（`addKeyPages`）写回，然后继续聚类。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
+   - 人在场：做最小的现场补齐：问人哪些页面要紧，或从站点、审计、Search Console 提一份短名单再确认，先写进 SEO.md 的「重点页面」，再用 `update_project_context`（`addKeyPages`）写回，然后继续聚类。不要一上来做完整访谈；收尾时建议跑 `seo:seo-setup` 补其余。
    - 无人值守：从 Search Console 或排名数据里拿已有展现的页面当作已有页面，写进 `assumptions`，不写回。
 4. 花 credits 之前查研究日志：30 天内跑过同样的研究，就复用那次结果并说明，不重买。
 5. 收尾时（只限人在场）写回经得住时间的东西：新的或修正过的重点页面及每个页面现在瞄准的话题，经人同意先改 SEO.md 的「重点页面」（头词），再用 `update_project_context` 的 `addKeyPages` 写进项目上下文，两边一致；并追加一条研究日志：`{ appendResearchLog: { summary: "Keyword clustering: <keyword set>. Verdict: <conclusion>" } }`。

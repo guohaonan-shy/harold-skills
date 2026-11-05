@@ -16,8 +16,8 @@
 | 段 | 谁写 | 放哪 |
 |---|---|---|
 | 文档 | `idea-loop:adr-reconciler` | `.tmp/dreaming/<YYYY-MM-DD>/rows-docs.md` |
-| 候选、DESIGN.md 条目，及它们牵出的缺陷行 | `idea-loop:design-steward` | `.tmp/dreaming/<YYYY-MM-DD>/rows-design.md` |
-| 档案对象、档案状态，及产品坏了的缺陷行 | `idea-loop:ui-reviewer` 的对账模式（[archive-reconcile.md](archive-reconcile.md)：源码波出 `档案对象`，实时波出 `档案状态` 与缺陷） | dreaming 自己的 tmp 目录与交回的结果文件 |
+| 候选、DESIGN.md 条目，及它们牵出的缺陷行 | `design:design-steward` | `.tmp/dreaming/<YYYY-MM-DD>/rows-design.md` |
+| 档案对象、档案状态，及产品坏了的缺陷行 | `design:ui-reviewer` 的对账模式（[archive-reconcile.md](archive-reconcile.md)：源码波出 `档案对象`，实时波出 `档案状态` 与缺陷） | dreaming 自己的 tmp 目录与交回的结果文件 |
 | 初扫页面 | dreaming 自己（[initial-scan.md](initial-scan.md)：`prod/` 为空，或 reviewer 报了 `补扫页面`） | dreaming 自己的 tmp 目录 |
 | 漏归档 | dreaming 自己机械地查 | 直接写进表 |
 | retro 候选 | dreaming 自己（[retro-candidates.md](retro-candidates.md)：读候选池、调计数脚本） | 直接写进表 |
@@ -120,7 +120,7 @@
 
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
 |---|---|---|---|---|
-| 候选：下单前先核对自动填好的字段（落点 `idea-loop:seo-outreach`；docs/records/retro-candidates/2026-10-26-seo-outreach-verify-autofilled-fields.md） | 出现 3 次（acme-shop#12、#19、#23）；已推翻 0 条；无反例 | acme-shop#12：「提交前先看一眼自动填的邮箱对不对。」，决定记录：[[12]]；acme-shop#19：「又是自动填错了邮箱。」，决定记录：[[19]]；acme-shop#23：「还是先核对再提交。」，决定记录：[[23]] | 开 issue：改 skill | 批 / 留在池里 / 驳回 / 改成… |
+| 候选：下单前先核对自动填好的字段（落点 `seo:seo-outreach`；docs/records/retro-candidates/2026-10-26-seo-outreach-verify-autofilled-fields.md） | 出现 3 次（acme-shop#12、#19、#23）；已推翻 0 条；无反例 | acme-shop#12：「提交前先看一眼自动填的邮箱对不对。」，决定记录：[[12]]；acme-shop#19：「又是自动填错了邮箱。」，决定记录：[[19]]；acme-shop#23：「还是先核对再提交。」，决定记录：[[23]] | 开 issue：改 skill | 批 / 留在池里 / 驳回 / 改成… |
 
 ## DESIGN.md 条目
 
@@ -151,7 +151,7 @@
 | `缺陷` | 照 `idea-loop:spec-status` 的「开一个待验证的 issue」开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
 | `retro 候选` | 照 [retro-candidates.md](retro-candidates.md) 的「执行段」：批了开 issue 的，开到落点所在的仓库，并把候选文件的状态改成 `已开 issue（<链接>）`；驳回的改成 `驳回（<理由>）`；留在池里的不动。dreaming 不改 skill |
 | `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`；丢弃是 `git rm -r docs/design/tmp/<spec-slug>/`。都跟其余改动同一个 PR |
-| `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照 `idea-loop:design-modeling` 的「蒸馏」 |
+| `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照 `design:design-modeling` 的「蒸馏」 |
 | `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：先删掉没批的对象，再跑档案的归档脚本整目录并进 `prod/`。步骤见 [archive-reconcile.md](archive-reconcile.md) 的「执行段」与 [initial-scan.md](initial-scan.md) 的「执行段」 |
 
 档案对象文件的任何改动都走 `delta/` 加归档脚本，包括「处理完的候选从档案对象里删掉」：把改过的对象全文放进 `delta/`，随同一次归档并进 `prod/`。

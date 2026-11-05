@@ -23,7 +23,7 @@ function section(doc, title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
-const reviewer = read('agents', 'ui-reviewer.md');
+const reviewer = read('..', 'design', 'agents', 'ui-reviewer.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 
 test('the reconcile mode of ui-reviewer carries the source wave and returns 档案对象 rows', () => {
@@ -44,7 +44,7 @@ test('dreaming does not run the source wave itself: its mechanical-check step is
 
 test('dreaming hands the source wave to the ui-reviewer row and keeps the whole-site initial scan', () => {
   const flow = section(dreaming, '流程：两段，中间停在人身上');
-  const reviewerRow = flow.split('\n').find((l) => l.includes('idea-loop:ui-reviewer')) ?? '';
+  const reviewerRow = flow.split('\n').find((l) => l.includes('design:ui-reviewer')) ?? '';
   assert.match(reviewerRow, /源码波/);
   assert.match(flow, /initial-scan\.md/);
 });

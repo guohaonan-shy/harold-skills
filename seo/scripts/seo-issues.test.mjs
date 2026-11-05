@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { apply, marker, plan, rejection } from './seo-issues.mjs';
-import { parseTypes } from './issues.mjs';
+import { importFrom } from './plugin-root.mjs';
+
+const { parseTypes } = await importFrom('idea-loop', 'issues.mjs');
 
 const finding = (over = {}) => ({
   direction: 'technical',
@@ -63,9 +65,9 @@ test('uncollected placeholders are skipped; content and backlink issues carry th
     [],
   );
   assert.equal(p.create.length, 2);
-  assert.match(p.create[0].body, /idea-loop:seo-brief/);
+  assert.match(p.create[0].body, /seo:seo-brief/);
   assert.match(p.create[0].body, /需要 grill：选题角度和论点/);
-  assert.match(p.create[1].body, /idea-loop:seo-outreach/);
+  assert.match(p.create[1].body, /seo:seo-outreach/);
   assert.match(p.create[1].body, /由人发送/);
   assert.deepEqual(p.rejected, []);
 });

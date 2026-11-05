@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The deterministic half of shooting a long page for the design archive (skills/design/design-archive/references/shooting.md).
+ * The deterministic half of shooting a long page for the design archive (skills/design-archive/references/shooting.md).
  *
  * A long entry state declares `sections` (design-archive.mjs). Writing it into the archive takes a
  * browser for the measuring and the shooting, and plain logic for everything else; this file is
@@ -1007,7 +1007,7 @@ const roundPx = (v) => Math.round(v);
 /**
  * Measurement → ranges, the section each clickable element belongs to, and what does not fit.
  *
- * Ranges (skills/design/design-archive/references/writing.md, 分段 `sections`): a section found by heading starts at the top of the
+ * Ranges (skills/design-archive/references/writing.md, 分段 `sections`): a section found by heading starts at the top of the
  * top-level block that holds the heading — at the heading itself when that block holds another declared
  * heading — and runs to where the next declared section starts (the last one: the top of the page's
  * first contentinfo, declared or not, else the page bottom). A landmark or `position` section is that
@@ -1137,7 +1137,7 @@ export function attribute(m) {
 }
 
 /**
- * Which sections are scroll-driven (skills/design/design-archive/references/shooting.md, 滚动驱动的段). The measurement lists
+ * Which sections are scroll-driven (skills/design-archive/references/shooting.md, 滚动驱动的段). The measurement lists
  * the pins it saw while the page was scrolled through (a `position: sticky` element, or a fixed one a library such as GSAP
  * pins, inside a container taller than itself, big enough to hold a screen — or smaller, when the text in it changed with the
  * scroll and changes the same way where the scroll is put back); a pin belongs to the section whose range

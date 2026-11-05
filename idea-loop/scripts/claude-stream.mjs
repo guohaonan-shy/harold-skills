@@ -1,7 +1,7 @@
 /**
  * Reading a `claude -p --output-format stream-json --verbose` event stream.
  *
- * The two eval runners (`evals/uiux-research/run.mjs`, `evals/retro/retro-replay.mjs`) both start headless
+ * The two eval runners (`design/evals/uiux-research/run.mjs`, `evals/retro/retro-replay.mjs`) both start headless
  * Claude Code sessions and need to know afterwards (or while it runs) what the session did: which tools it
  * called, whether a sub-agent or a browser got involved, what it cost. That reading lives here once.
  *

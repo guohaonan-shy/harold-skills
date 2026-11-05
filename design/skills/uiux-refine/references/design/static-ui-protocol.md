@@ -1,8 +1,8 @@
 # 静态 UI protocol —— 在浏览器里把一个 surface 的静态设计做完
 
 **按需加载。** 与 [surface-protocol.md](surface-protocol.md) / [module-protocol.md](module-protocol.md) /
-[component-protocol.md](component-protocol.md) 同一模式：这不是入口，是 `idea-loop:uiux-refine` 走到"静态视觉"这一段时读的
-protocol。入口在 `idea-loop:uiux-imagine` / `idea-loop:uiux-refine`，由它们决定要不要降到这一层。
+[component-protocol.md](component-protocol.md) 同一模式：这不是入口，是 `design:uiux-refine` 走到"静态视觉"这一段时读的
+protocol。入口在 `design:uiux-imagine` / `design:uiux-refine`，由它们决定要不要降到这一层。
 
 动效与原生交互在 [motion-protocol.md](motion-protocol.md)；把签字通过的画布落成代码是
 `idea-loop:implement` 的活，不在这里。
@@ -57,7 +57,7 @@ altitude.
   the project root, plus `PRODUCT.md` (project root) when present.
   If the project has no `DESIGN.md`, fall back to this plugin's built-in defaults (design-core
   floors + anti-slop law), note that no project design law was found, and suggest running
-  `idea-loop:uiux-imagine` (no live UI) or `idea-loop:dreaming` (live UI) to create one — never abort over a missing doc.
+  `design:uiux-imagine` (no live UI) or `idea-loop:dreaming` (live UI) to create one — never abort over a missing doc.
 - The route protocols supply only the instructions needed at the affected altitudes; the Landing/IA
   route additionally reads [landing-ia.md](landing-ia.md) (see the route table in stage A).
 - Two reference files load on demand rather than at Setup: when a compliance question goes beyond
@@ -70,7 +70,7 @@ altitude.
 Every route closes through deterministic lint, isolated critique with persisted evidence, real-DOM
 checks, a context-appropriate visual matrix, and human sign-off. A direction/slop finding returns to
 concept or composition; a craft finding is fixed in the preview. Signed-off generalizable decisions
-become candidates (format: `idea-loop:design-modeling`, section 设计法候选的形态); this protocol never writes `DESIGN.md`.
+become candidates (format: `design:design-modeling`, section 设计法候选的形态); this protocol never writes `DESIGN.md`.
 `idea-loop:dreaming` processes them under that reference and puts each one to the human before anything is
 written.
 
@@ -82,7 +82,7 @@ Before stage A:
 2. Read [expression-framework.md](expression-framework.md).
 3. Read the target project root's `DESIGN.md` and `PRODUCT.md` —
    each **if present**. Missing files are not errors: continue with the plugin's generic defaults
-   and recommend creating `DESIGN.md` through `idea-loop:uiux-imagine` or `idea-loop:dreaming` (see "The core is always on" above).
+   and recommend creating `DESIGN.md` through `design:uiux-imagine` or `idea-loop:dreaming` (see "The core is always on" above).
 4. Read the real code, data/domain model, and sibling shipped components at the target scope.
 5. Before any browser call, load `idea-loop:browser` with the Skill tool and read [replication.md](replication.md).
 
@@ -134,9 +134,9 @@ Follow the selected protocol's R section:
   sources; do not build a page replica merely because the component already ships.
 - Brand-new work: there is nothing to replicate; build an honest context frame from real siblings
   and tokens instead.
-- **Starting from an imagine handoff canvas** (`idea-loop:uiux-refine`): the baseline was already cloned from
+- **Starting from an imagine handoff canvas** (`design:uiux-refine`): the baseline was already cloned from
   production during imagine and lives in `handoff/`. Do not re-capture production or restart the
-  app; verify the copy against the handoff canvas instead (the 「起手」 section of the `idea-loop:designer` agent).
+  app; verify the copy against the handoff canvas instead (the 「起手」 section of the `design:designer` agent).
 
 The judge here is fidelity, not improvement. Record a one-line fidelity/context note.
 
@@ -172,7 +172,7 @@ Instead it writes the question down as a **suggested research question**: one se
 plus the executor's **recommended answer**. That goes into the round's hand-back
 (`designer`'s 「建议调研的问题」), and the executor carries on **without stopping**, working from the
 recommendation. Whether the question is worth researching is the human's call — the human may run
-`idea-loop:uiux-research`, read the page it produces, and forward some of its conclusions back as **text**.
+`design:uiux-research`, read the page it produces, and forward some of its conclusions back as **text**.
 
 - User-provided sources still come first: anything the human attached is read here and now, as input,
   not as research.
@@ -184,7 +184,7 @@ recommendation. Whether the question is worth researching is the human's call �
 - **reference-averaging** (`ui-craft-checklist.md`'s "Visual slop catalog") still applies to forwarded conclusions: when
   sources disagree, that is a decision for the human, not a midpoint.
 
-How research is run and what the page looks like is `idea-loop:uiux-research`'s business, not this stage's.
+How research is run and what the page looks like is `design:uiux-research`'s business, not this stage's.
 
 ### W · Freeze the appropriate low-cost artifact
 
@@ -273,17 +273,17 @@ On sign-off, perform **Distill-back before handoff**, and it only writes candida
 1. Write each decision that might generalize as a candidate in the freeze record's `设计法候选`
    section, one line each naming the archive object it will hang on (page, component, motion or
    journey; the object file itself is written from the final canvas at the pre-merge archive, nothing
-   goes under `delta/` at freeze), in the format `idea-loop:design-modeling`, section 设计法候选的形态 defines — a
+   goes under `delta/` at freeze), in the format `design:design-modeling`, section 设计法候选的形态 defines — a
    one-line rule already shaped for `DESIGN.md` (no date, no page name), which chapter it joins, why,
    evidence. An empty Distill-back is valid only when stated explicitly: the freeze record's section then holds
    one line, 「无」.
 2. Stop there. `idea-loop:dreaming` later runs every candidate through the admission table in
-   `idea-loop:design-modeling`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
+   `design:design-modeling`, section 准入分层表 with the human — product design system goes to `DESIGN.md`, method
    that holds for any product goes back to this plugin as an issue, a single page's choice stays in
    its object's 「决定」.
 
 This protocol never writes `DESIGN.md` and never bootstraps one; a project without a `DESIGN.md`
-gets one through `idea-loop:uiux-imagine` (at its start) or `idea-loop:dreaming`.
+gets one through `design:uiux-imagine` (at its start) or `idea-loop:dreaming`.
 
 The approved preview HTML + concept + state contract pass to [motion-protocol.md](motion-protocol.md). Do not port to React in
 this protocol.

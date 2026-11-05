@@ -81,7 +81,7 @@ description: 站点文章的写法：按 brief 写新文或改写、局部润色
 
 ## 5. 检查，交回
 
-改了 title、description、FAQ、结构化数据或新增了页面，构建站点：构建后 hook 会自动跑 seo-check，有 error 会交回给你。想看 warn、或只看这篇的路由，用 Skill 工具调 `idea-loop:seo-check` 手动跑。
+改了 title、description、FAQ、结构化数据或新增了页面，构建站点：构建后 hook 会自动跑 seo-check，有 error 会交回给你。想看 warn、或只看这篇的路由，用 Skill 工具调 `seo:seo-check` 手动跑。
 
 改动留在工作区，交回调用方：改了哪些文件、类型和它的来源、SERP 重查的结果、没对上的规则、需要人决定的事。
 

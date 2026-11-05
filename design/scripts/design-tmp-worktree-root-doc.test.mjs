@@ -39,7 +39,7 @@ test('no skill or agent text builds a path from CLAUDE_PROJECT_DIR', () => {
 
 for (const skill of ['uiux-imagine', 'uiux-refine']) {
   test(`${skill} defines the worktree root and puts the design tmp directory under it`, () => {
-    const text = readFileSync(join(pluginRoot, 'skills', 'design', skill, 'SKILL.md'), 'utf8');
+    const text = readFileSync(join(pluginRoot, 'skills', skill, 'SKILL.md'), 'utf8');
     assert.match(text, /worktree 根 = `git rev-parse --show-toplevel`/, 'worktree root must be defined by git rev-parse --show-toplevel');
     assert.match(text, /`imagine\/`、`canvas\/`、`research\/` 都在 worktree 根下的 `docs\/design\/tmp\/<spec-slug>\/`/);
     // every command that reads those files is prefixed with the worktree root, not a bare docs/ path

@@ -27,7 +27,7 @@ function section(doc, title) {
 
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
 const weeklySteps = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
-const seoSetup = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+const seoSetup = read('..', 'seo', 'skills', 'seo-setup', 'SKILL.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 const scope = read('skills', 'productivity', 'dreaming', 'references', 'incremental-scope.md');
 const proposal = read('skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');

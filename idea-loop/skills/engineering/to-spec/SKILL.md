@@ -100,7 +100,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 | API 契约（路由、schema、序列化） | TDD API 测试 | |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了哪些 prompt、要加或改哪些 eval |
-| 视觉正确性 | UI 实现环（`idea-loop:ui-measure`，逐格比对冻结画布） | |
+| 视觉正确性 | UI 实现环（`design:ui-measure`，逐格比对冻结画布；没装 design 插件就写「不涉及：没装 design」） | |
 | 端到端用户流程 | 浏览器端到端测试 | |
 
 判据是能不能先写出一个会红的测试：前三行能，走 TDD（`idea-loop:tdd`）；后三行输出不确定、靠感知或跨系统，换别的仪器。prompt 产出的结构（schema、字段、枚举闭集）走 TDD。工具用目标项目自己的。然后写：

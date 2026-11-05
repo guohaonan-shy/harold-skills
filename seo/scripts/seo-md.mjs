@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Reads a project's SEO.md — the one config file every seo skill, agent and script reads. Its format
- * is defined in skills/seo/seo-setup/references/seo-md.md: seven `## ` sections, one `- key：value`
+ * is defined in skills/seo-setup/references/seo-md.md: seven `## ` sections, one `- key：value`
  * item per line, domains / URLs / paths / ids in backticks. Missing sections read as empty, unknown
  * lines are ignored, so a human can write notes in between. A human who answered "none" writes `无`
  * (`- 品牌词：无`, or one `- 无` line under 竞品): it reads as empty and as `confirmed`, so callers can

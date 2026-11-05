@@ -1,5 +1,5 @@
 /**
- * Guard for the uiux-research baseline (idea-loop/evals/uiux-research/).
+ * Guard for the uiux-research baseline (design/evals/uiux-research/).
  *
  * The baseline is a set of default prompts taken from real design sessions, a minimal product context,
  * and one file per case where the human writes down what is wrong with the page the researcher produced.
@@ -23,7 +23,7 @@ test('there are six cases, each with a prompt that starts the skill and a compar
     assert.match(c.name, /^[a-z]+(-[a-z]+){0,3}$/, `case name ${c.name}`);
     assert.ok(!names.has(c.name), `duplicate case ${c.name}`);
     names.add(c.name);
-    assert.ok(c.prompt.startsWith('/idea-loop:uiux-research '), `${c.name}: prompt must call the skill`);
+    assert.ok(c.prompt.startsWith('/design:uiux-research '), `${c.name}: prompt must call the skill`);
     assert.ok(c.last_time.length > 10, `${c.name}: missing comparison line`);
   }
 });

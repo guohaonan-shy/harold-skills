@@ -46,7 +46,7 @@
 
 ## 调方法 skill
 
-方向 agent 用 Skill 工具调方法 skill（`idea-loop:seo-audit` 等）时，`args` 照这个模板填，第一行原样：
+方向 agent 用 Skill 工具调方法 skill（`seo:seo-audit` 等）时，`args` 照这个模板填，第一行原样：
 
 ```
 无人值守，交回发现清单。

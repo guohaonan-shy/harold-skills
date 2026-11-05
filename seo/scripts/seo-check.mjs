@@ -3,7 +3,7 @@
  * Two-platform (Google + Bing) SEO check over a built site: scans every `index.html` under the build
  * output — exactly what a non-JS crawler sees — and reports per-route findings, each tagged with the
  * platform that cares: [Bing], [Google] or [Both]. The standards behind each check live in
- * skills/seo/seo-check/SKILL.md; this file only encodes them.
+ * skills/seo-check/SKILL.md; this file only encodes them.
  *
  * Width, not character count: Bing counts raw characters and its recommendations assume Latin text,
  * so a visually full CJK title trips "too short". Correctness is judged on width (a CJK / full-width

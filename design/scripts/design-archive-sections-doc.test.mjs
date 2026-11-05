@@ -49,16 +49,16 @@ test('every doc line that runs design-archive-sections names a real subcommand a
 
 test('the places that shoot the design archive send a single-screen state to the sections script\'s `screen` command, and no longer put a no-animation style into the page', () => {
   const bad = [];
-  for (const rel of ['agents/ui-reviewer.md', 'skills/productivity/dreaming/references/initial-scan.md', 'skills/design/design-archive/references/shooting.md']) {
+  for (const rel of ['agents/ui-reviewer.md', '../idea-loop/skills/productivity/dreaming/references/initial-scan.md', 'skills/design-archive/references/shooting.md']) {
     const text = readFileSync(join(pluginRoot, rel), 'utf8');
     if (!/design-archive-sections\.mjs"?\s+screen\b/.test(text)) bad.push(`${rel}: 没有指向 screen 子命令的命令行`);
     if (/animation:\s*none/.test(text)) bad.push(`${rel}: 还在教注入「animation: none」的关动画样式`);
-    if (/照\s*`idea-loop:ui-measure`\s*的「三条环境约定」/.test(text)) bad.push(`${rel}: 还在叫人照 ui-measure 的「三条环境约定」拍（那三条只留给 UI 实现环）`);
+    if (/照\s*`design:ui-measure`\s*的「三条环境约定」/.test(text)) bad.push(`${rel}: 还在叫人照 ui-measure 的「三条环境约定」拍（那三条只留给 UI 实现环）`);
   }
   assert.deepEqual(bad, [], bad.join('\n'));
 });
 
 test('ui-measure says its three environment conventions are for the UI implementation loop, and that the design archive\'s shots do not use them', () => {
-  const text = readFileSync(join(pluginRoot, 'skills/engineering/ui-measure/SKILL.md'), 'utf8');
+  const text = readFileSync(join(pluginRoot, 'skills/ui-measure/SKILL.md'), 'utf8');
   assert.match(text, /设计档案的拍图不用/);
 });

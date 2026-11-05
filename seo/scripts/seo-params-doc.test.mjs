@@ -15,12 +15,12 @@ import { fileURLToPath } from 'node:url';
 const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 
-const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
-const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
-const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
-const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
-const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
+const SCAN = read('skills', 'seo-scan', 'SKILL.md');
+const SETUP = read('skills', 'seo-setup', 'SKILL.md');
+const FORMAT = read('skills', 'seo-setup', 'references', 'seo-md.md');
+const CLUSTERING = read('skills', 'keyword-clustering', 'SKILL.md');
+const PROJECT_CONTEXT = read('skills', 'seo-setup', 'references', 'project-context.md');
+const FINDINGS = read('skills', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
 /** The body of `## <title>` (up to the next `## ` heading), or '' when the heading is missing. */
@@ -121,7 +121,7 @@ test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md chang
 
 test('seo-scan: allowed-tools has what the gate uses', () => {
   const tools = frontmatterField(SCAN, 'allowed-tools');
-  for (const t of ['PushNotification', 'Edit', 'Bash(node *seo-gaps.mjs:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
+  for (const t of ['PushNotification', 'Edit', 'Bash(node *seo-gaps.mjs:*)', 'mcp__plugin_seo_openseo__find_serp_competitors']) {
     assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
   }
 });

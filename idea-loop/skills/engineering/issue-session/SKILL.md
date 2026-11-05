@@ -38,9 +38,11 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 设计
 
-读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人。
+设计归 design 插件。design 插件没装（Skill 工具调 `design:` 开头的 skill 报不存在）：不进设计，告诉人这份 spec 碰 UI、要设计得先装 design，人说不设计直接实现，就去「换阶段」把它当不碰 UI 的走。
 
-人设计完、`/idea-loop:uiux-refine` 把冻结结果经设计 PR 合进主分支之后，去「换阶段」。
+读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。告诉人设计从 `/design:uiux-imagine` 开始（只能人调），停下等人。
+
+人设计完、`/design:uiux-refine` 把冻结结果经设计 PR 合进主分支之后，去「换阶段」。
 
 ## 实现
 

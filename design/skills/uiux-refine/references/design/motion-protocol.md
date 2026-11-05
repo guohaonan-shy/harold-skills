@@ -1,7 +1,7 @@
 # 动效 protocol —— 在浏览器里把动效与原生交互做完并验过
 
 **按需加载。** 与 [surface-protocol.md](surface-protocol.md) / [module-protocol.md](module-protocol.md) /
-[component-protocol.md](component-protocol.md) 同一模式：这不是入口，是 `idea-loop:uiux-refine` 走到"这个 surface 确实需要真动效"
+[component-protocol.md](component-protocol.md) 同一模式：这不是入口，是 `design:uiux-refine` 走到"这个 surface 确实需要真动效"
 时才读的 protocol。静态那一段在 [static-ui-protocol.md](static-ui-protocol.md)。
 
 ---
@@ -50,7 +50,7 @@ an unsettled layout wastes both stages.
    project's Motion chapter (global principles, bans, house duration/easing tokens — it holds no list
    of specific animations) vs the livelier marketing register. With no Motion chapter, use the
    default whitelist in motion-spec's "The in-app whitelist vs marketing". If the project has no `DESIGN.md`, use the motion-spec tokens
-   as the default law, note it, and suggest running `idea-loop:uiux-imagine` (no live UI) or `idea-loop:dreaming`
+   as the default law, note it, and suggest running `design:uiux-imagine` (no live UI) or `idea-loop:dreaming`
    (live UI) to create one — never abort over a missing doc.
 3. The sibling shipped components whose interactions you must match or extend.
 
@@ -118,10 +118,10 @@ rule. **Do not enter React until the user approves.**
 
 **Distill-back on sign-off** (as in static-ui-protocol H): a genuinely new in-app motion pattern that
 passed the gates is written as a candidate in the freeze record's `设计法候选` section, naming the
-motion object it will hang on (`idea-loop:design-modeling`, section 设计法候选的形态) — the
+motion object it will hang on (`design:design-modeling`, section 设计法候选的形态) — the
 rule behind it, shaped to join the Motion chapter as a global principle. The motion file itself, with
 the specific parameters and the candidate, is written from the final canvas at the pre-merge archive
-(object shape in `idea-loop:design-archive`: its 「图的实体」 and 「写对象文件」); nothing is written under `delta/` at freeze. A new motion goes **only** into the
+(object shape in `design:design-archive`: its 「图的实体」 and 「写对象文件」); nothing is written under `delta/` at freeze. A new motion goes **only** into the
 motion file and the candidate, never straight into `DESIGN.md`. This protocol never writes
 `DESIGN.md`; `dreaming` puts the candidate to the human — that IS the admission process. A new
 pattern shipping with no candidate is the failure mode.

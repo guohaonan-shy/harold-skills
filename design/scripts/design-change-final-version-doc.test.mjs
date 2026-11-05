@@ -15,9 +15,9 @@ import { fileURLToPath } from 'node:url';
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 
-const sync = read('skills', 'design', 'design-change-sync', 'SKILL.md');
-const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
-const prReview = read('skills', 'engineering', 'pr-review', 'SKILL.md');
+const sync = read('skills', 'design-change-sync', 'SKILL.md');
+const implement = read('..', 'idea-loop', 'skills', 'engineering', 'implement', 'SKILL.md');
+const prReview = read('..', 'idea-loop', 'skills', 'engineering', 'pr-review', 'SKILL.md');
 
 function section(doc, title) {
   const lines = doc.split('\n');
@@ -49,7 +49,7 @@ test('design-change-sync: the ticket cell it has the caller append points at the
 for (const [name, doc] of [['implement', implement], ['pr-review', prReview]]) {
   test(`${name}: the design-change section points at design-change-sync and does not restate the cell`, () => {
     const text = section(doc, '设计变更');
-    assert.match(text, /idea-loop:design-change-sync/, `${name} does not call design-change-sync`);
+    assert.match(text, /design:design-change-sync/, `${name} does not call design-change-sync`);
     assert.doesNotMatch(text, /v<N\+\d+>/, 'the section pins a specific attempt');
     assert.doesNotMatch(text, /canvas\/v<终>\.html/, 'the cell text lives only in design-change-sync');
   });

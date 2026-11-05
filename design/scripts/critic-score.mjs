@@ -1,7 +1,7 @@
 /**
  * One round of the design critic loop: checks the critic's output and decides whether to stop.
  *
- * The critic (`idea-loop:ui-master`) is a senior designer from a top studio. It names the biggest
+ * The critic (`design:ui-master`) is a senior designer from a top studio. It names the biggest
  * gaps between this version and what such a studio would ship, and puts one score on the round:
  * 10 when there is nothing it would touch, 9 and up when the studio would ship it as-is. The score
  * is its judgement; this file does not second-guess it. It only holds the output to a closed shape

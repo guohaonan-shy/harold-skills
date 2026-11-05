@@ -2,7 +2,7 @@
 /**
  * The design archive's MCP server: the query module's seven entries as seven read-only tools, over stdio.
  *
- * A thin forwarder (skills/design/design-archive/references/query.md): each tool calls `query()` from
+ * A thin forwarder (skills/design-archive/references/query.md): each tool calls `query()` from
  * design-archive-query.mjs with the same arguments the command line takes and returns the same JSON,
  * so a tool call and the command line cannot drift apart. Nothing here writes — there is no tool that
  * touches the archive; `prod/` is changed only by the archiving script after a human has approved.

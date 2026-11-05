@@ -12,7 +12,7 @@ description: 站点在 AI 搜索里的可见性：被哪些 AI 回答提到和�
 | | 人在场 | 被 geo-analyst 调用（提示里写明「无人值守，交回发现清单」） |
 |---|---|---|
 | 花钱 | 付费检查（`run_ai_visibility_check`、`explore_prompt`）先估价、人批了才跑 | 只读已有的跟踪结果，不发起任何付费检查 |
-| 没有跟踪 | 用 `estimate_ai_visibility_cost` 报价，人批了照 seo-setup 第 7 步建；或告诉人跑 `/idea-loop:seo-setup` | 跳过第 2 步，在交回里写明「AI 引用数据未采集：没有 AI 可见性跟踪，跑一次 seo-setup」；第 3 步的站点自检照跑（不花钱），它的发现照常交回 |
+| 没有跟踪 | 用 `estimate_ai_visibility_cost` 报价，人批了照 seo-setup 第 7 步建；或告诉人跑 `/seo:seo-setup` | 跳过第 2 步，在交回里写明「AI 引用数据未采集：没有 AI 可见性跟踪，跑一次 seo-setup」；第 3 步的站点自检照跑（不花钱），它的发现照常交回 |
 | 写入 | 人要求时可以改跟踪的提示词 | 不写入、不保存任何东西 |
 | 产出 | 给人的报告（见「交回」） | 发现清单，格式照调用方给的 |
 

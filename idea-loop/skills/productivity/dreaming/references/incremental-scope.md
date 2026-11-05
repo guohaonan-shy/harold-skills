@@ -31,7 +31,7 @@ dreaming 每周由桌面 app 的定时任务自己跑一次（`/idea-loop:setup`
 增量时，在这次的 worktree 里跑档案查询的 `affected`：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根> affected <基准提交>
+node "<design 脚本>/design-archive-query.mjs" <worktree 根> affected <基准提交>
 ```
 
 它交回从基准提交到现在（这个 worktree 的 HEAD 就是 `origin/<基准分支>`）受影响的状态清单：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算（列在状态里的、边上用到的、页面区域里摆着它的）；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了（只追一跳、只认相对路径）。返回里的 `states` 就是交给实时波的清单，`totalStates` 是档案一共多少个状态；MCP 里同一个问法叫 `design_affected`。

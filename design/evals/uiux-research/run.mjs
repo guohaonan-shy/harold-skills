@@ -8,10 +8,10 @@
  * the page: the only numbers it prints are facts about the run (did the calling session touch Refero,
  * did the shape check pass, what it cost), never a score.
  *
- *   node idea-loop/evals/uiux-research/run.mjs --list
- *   node idea-loop/evals/uiux-research/run.mjs --only leave-confirm
- *   node idea-loop/evals/uiux-research/run.mjs                      # all six cases
- *   node idea-loop/evals/uiux-research/run.mjs --out <dir> --model <alias> --timeout-min 30
+ *   node design/evals/uiux-research/run.mjs --list
+ *   node design/evals/uiux-research/run.mjs --only leave-confirm
+ *   node design/evals/uiux-research/run.mjs                      # all six cases
+ *   node design/evals/uiux-research/run.mjs --out <dir> --model <alias> --timeout-min 30
  *
  * Output (default `/tmp/idea-loop-uiux-research/<case>/`, overwritten by the next run of that case):
  *   output/index.html + output/shots/   the page and its screenshots (open index.html)
@@ -20,7 +20,7 @@
  *   run.stream.jsonl                    the raw event stream (large; screenshots are base64)
  * The human's annotations live in the repo, next to the case: cases/<case>/annotations.md.
  *
- * `--plugin-dir` points at the working tree's idea-loop/, not the installed copy: a run against the
+ * `--plugin-dir` points at the working tree's design/ and idea-loop/ (design depends on it), not the installed copies: a run against the
  * installed plugin says nothing about the change in front of you.
  */
 
@@ -28,14 +28,15 @@ import { closeSync, cpSync, existsSync, mkdirSync, openSync, readdirSync, readFi
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { digestStream, fileLines } from '../../scripts/claude-stream.mjs';
+import { digestStream, fileLines } from '../../../idea-loop/scripts/claude-stream.mjs';
 
-// Reading the event stream lives in scripts/claude-stream.mjs, shared with the retro runner.
+// Reading the event stream lives in idea-loop/scripts/claude-stream.mjs, shared with the retro runner.
 // Re-exported here so existing importers (research-baseline.test.mjs) keep working.
 export { digestStream };
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
+const IDEA_LOOP_ROOT = resolve(PLUGIN_ROOT, '..', 'idea-loop');
 const DEFAULT_OUT = '/tmp/idea-loop-uiux-research';
 
 /** Appended to the human's words so an unattended run does not stop at a question nobody will answer. */
@@ -99,7 +100,7 @@ function runCase(c, opts) {
   git(projectDir, 'add', '-A');
   git(projectDir, 'commit', '-q', '-m', 'baseline project');
 
-  const args = ['-p', buildPrompt(c), '--plugin-dir', PLUGIN_ROOT, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
+  const args = ['-p', buildPrompt(c), '--plugin-dir', IDEA_LOOP_ROOT, '--plugin-dir', PLUGIN_ROOT, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
   if (opts.model) args.push('--model', opts.model);
   const streamPath = join(caseDir, 'run.stream.jsonl');
   const out = openSync(streamPath, 'w');

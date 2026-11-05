@@ -4,7 +4,7 @@ description: 调研别人怎么处理一个 UX 问题：流程、某类页面的
 allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(git ls-files:*), Bash(ls:*), Bash(node *research-check.mjs:*)
 ---
 
-回答一个具名问题：别人怎么做的、为什么这样做，给人一页能直接打开的 HTML。你只管收问题、起调研、把页面交给人；怎么查、页面长什么样归 `idea-loop:uiux-researcher`。查不查、转不转、用哪个来源，都由人定。
+回答一个具名问题：别人怎么做的、为什么这样做，给人一页能直接打开的 HTML。你只管收问题、起调研、把页面交给人；怎么查、页面长什么样归 `design:uiux-researcher`。查不查、转不转、用哪个来源，都由人定。
 
 人要的是视觉风格参考（配色、字体、气质）时，如实说这个 skill 不做：那是 `DESIGN.md` 和发散段随机种子的事。
 
@@ -29,7 +29,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 ## 起 uiux-researcher
 
-用 Agent 工具起 `idea-loop:uiux-researcher`，交给它的只有：
+用 Agent 工具起 `design:uiux-researcher`，交给它的只有：
 
 1. 人的原话（一字不改）；
 2. 具名问题；

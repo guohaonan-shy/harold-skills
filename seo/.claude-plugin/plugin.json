@@ -1,0 +1,23 @@
+{
+  "name": "seo",
+  "displayName": "SEO",
+  "version": "0.2.0",
+  "description": "SEO for idea-loop projects: OpenSEO-backed audits, keyword and competitor research, a weekly scan that files findings as issues, content briefs, writing, outreach drafts and a pre-publish check. Requires idea-loop.",
+  "author": {
+    "name": "Harold"
+  },
+  "skills": [
+    "./skills/"
+  ],
+  "dependencies": [
+    "idea-loop"
+  ],
+  "keywords": [
+    "seo",
+    "openseo",
+    "geo",
+    "keywords",
+    "content",
+    "backlinks"
+  ]
+}

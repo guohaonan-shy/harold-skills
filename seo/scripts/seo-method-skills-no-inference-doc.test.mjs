@@ -17,7 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const seoDir = process.env.SEO_SKILLS_DIR ?? join(pluginRoot, 'skills', 'seo');
+const seoDir = process.env.SEO_SKILLS_DIR ?? join(pluginRoot, 'skills');
 const read = (slug) => readFileSync(join(seoDir, slug, 'SKILL.md'), 'utf8');
 
 function section(doc, title) {

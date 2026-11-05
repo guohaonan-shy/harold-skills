@@ -3,7 +3,7 @@ name: design-change-sync
 description: 设计已冻结的需求里，人接受了一处跟画布不同的设计，要把这处改进画布时用。
 ---
 
-冻结之后，`docs/design/tmp/<spec-slug>/canvas/` 是这个需求唯一的设计真相，`idea-loop:designer` 是它唯一的修改者：编排者不手改画布，不手改 `delta/`。人接受了一处跟画布不同的设计，来源三种：review 里人接受了实现；实现者做不下去、Review 汇报里人接受了改法；人自己改主意。
+冻结之后，`docs/design/tmp/<spec-slug>/canvas/` 是这个需求唯一的设计真相，`design:designer` 是它唯一的修改者：编排者不手改画布，不手改 `delta/`。人接受了一处跟画布不同的设计，来源三种：review 里人接受了实现；实现者做不下去、Review 汇报里人接受了改法；人自己改主意。
 
 调用这个 skill 的会话是**编排者**：PR 开出前是 `idea-loop:implement` 的会话，开出后是 `idea-loop:pr-review` 的会话。调用方的 skill 说清停下后怎么交人、代码不一致时怎么派实现者；这里只讲画布怎么改、怎么评、怎么记。
 
@@ -11,7 +11,7 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 ## designer 做
 
-编排者用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：
+编排者用 Agent 工具新起 `design:designer`，任务「设计变更」，给：
 
 - 画布路径（`canvas/` 里最新一版）
 - 人的原话
@@ -31,7 +31,7 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 ## 评与停
 
-编排者新起一个 `idea-loop:ui-master`，跑完即弃，只给：改动那几格的截图、冻结记录「意图」节的那句话、这一轮看静态。
+编排者新起一个 `design:ui-master`，跑完即弃，只给：改动那几格的截图、冻结记录「意图」节的那句话、这一轮看静态。
 
 把评委的 `findings`、`score` 和这一次变更自己前几轮的分数（`history`，从旧到新；打磨期的分数不带进来）写成 `canvas/work/change-<序号>/round-<N>.json`，跑：
 

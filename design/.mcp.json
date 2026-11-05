@@ -5,10 +5,6 @@
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs"
       ]
-    },
-    "openseo": {
-      "type": "http",
-      "url": "https://app.openseo.so/mcp"
     }
   }
 }

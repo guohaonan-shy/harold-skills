@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -268,11 +268,13 @@ test('read only: nothing but the seven lookups is offered, and a write-shaped ca
 
 // ---------- the plugin's MCP configuration ----------
 
-test('.mcp.json: the plugin ships the archive server and OpenSEO; Playwright and Refero are user-level', () => {
+test('.mcp.json: design ships only the archive server; OpenSEO is the seo plugin\'s, Playwright and Refero are user-level', () => {
   const cfg = JSON.parse(readFileSync(MCP_JSON, 'utf8'));
   const archive = cfg.mcpServers['design-archive'];
   assert.equal(archive.command, 'node');
   assert.deepEqual(archive.args, ['${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs']);
-  assert.deepEqual(cfg.mcpServers.openseo, { type: 'http', url: 'https://app.openseo.so/mcp' });
-  assert.deepEqual(Object.keys(cfg.mcpServers), ['design-archive', 'openseo']);
+  assert.deepEqual(Object.keys(cfg.mcpServers), ['design-archive']);
+  const seo = JSON.parse(readFileSync(fileURLToPath(new URL('../../seo/.mcp.json', import.meta.url)), 'utf8'));
+  assert.deepEqual(seo.mcpServers, { openseo: { type: 'http', url: 'https://app.openseo.so/mcp' } });
+  assert.equal(existsSync(fileURLToPath(new URL('../../idea-loop/.mcp.json', import.meta.url))), false);
 });

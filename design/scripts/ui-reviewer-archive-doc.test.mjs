@@ -4,7 +4,7 @@
  *
  * writing-for-agents: "不写文件路径：目录一挪路径就断，名字不变". The archive step reuses the
  * screenshot method that lives under design-archive; a path like `references/shooting.md` breaks the day
- * that folder moves, while "idea-loop:design-archive 的「拍档案截图」" does not.
+ * that folder moves, while "design:design-archive 的「拍档案截图」" does not.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -33,6 +33,6 @@ test('archive mode does not point at a references/ file path', () => {
 
 test('archive mode still names the screenshot method it relies on', () => {
   const text = section('归档模式').map((l) => l.text).join('\n');
-  assert.match(text, /idea-loop:design-archive[^\n]*「拍档案截图」/);
-  assert.match(text, /idea-loop:design-archive[^\n]*「长页面的入口状态」/);
+  assert.match(text, /design:design-archive[^\n]*「拍档案截图」/);
+  assert.match(text, /design:design-archive[^\n]*「长页面的入口状态」/);
 });

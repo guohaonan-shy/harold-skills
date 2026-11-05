@@ -1,6 +1,6 @@
 # 冻结
 
-designer 收到人的签字（全部或一部分）时从头读到「不提交，输出」，部分冻结读「部分冻结」；接手一份已经冻结过一部分的 spec 时读「部分冻结后重开」。冻结之后的设计变更不在这里：照 `idea-loop:design-change-sync`。
+designer 收到人的签字（全部或一部分）时从头读到「不提交，输出」，部分冻结读「部分冻结」；接手一份已经冻结过一部分的 spec 时读「部分冻结后重开」。冻结之后的设计变更不在这里：照 `design:design-change-sync`。
 
 ## 在 `docs/design/tmp/<spec-slug>/` 落齐
 
@@ -16,7 +16,7 @@ docs/design/tmp/<spec-slug>/
 │   └── work/                      打磨过程的临时件：ledger、每轮评分 JSON、评委截图（冻结时清）
 ```
 
-冻结不写 `delta/`：之后的需求周期里，「设计长什么样」只看 `canvas/`，它是唯一的设计真相。对设计档案的差异 `delta/` 只在合并前由 `idea-loop:ui-reviewer` 的归档模式从最终画布加实现整份写出。
+冻结不写 `delta/`：之后的需求周期里，「设计长什么样」只看 `canvas/`，它是唯一的设计真相。对设计档案的差异 `delta/` 只在合并前由 `design:ui-reviewer` 的归档模式从最终画布加实现整份写出。
 
 记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 `idea-loop:wiki-conventions` 的「frontmatter」，`type: design`。
 
@@ -29,7 +29,7 @@ docs/design/tmp/<spec-slug>/
 - **打磨轨迹**：ledger 全文搬进来；素材单在里面；人转来并用上了的调研结论也记在这里，场景 / 设计逻辑 / 对我们 / 不能回答什么一起记，文字，不带图。
 - **设计法候选**：签字时从画布里提炼出的、可能成为设计法的规律（Distill-back），每条一行：规则全文 + 它将挂在哪个档案对象上（页面、组件、动效或用户路径的名字，不加链接：对象文件要到合并前归档才写出）；没有就一行「无」。
 - **签字**：人的原话，静态与动效两次各记一次；人的方向修订；被分流回发散那一段的 note。
-- **冻结后的变更**：冻结之后每次设计变更记一行（行格式在 `idea-loop:design-change-sync` 的「过了之后」，由那时的编排者记）。冻结时这一节写一行「无」。
+- **冻结后的变更**：冻结之后每次设计变更记一行（行格式在 `design:design-change-sync` 的「过了之后」，由那时的编排者记）。冻结时这一节写一行「无」。
 
 落完清掉 `tmp/<spec-slug>/imagine/`（交接画布 `handoff/` 在里面，一起删）、`tmp/<spec-slug>/canvas/work/`（ledger 已经在记录里），以及没签字的画布版本：静态和动效各只留签字的那一版。`canvas/` 其余全部保留，它们要进 git。
 
@@ -41,11 +41,11 @@ docs/design/tmp/<spec-slug>/
 
 - **画布指针**：`docs/design/tmp/<spec-slug>/canvas/` 里画布 HTML 的路径（写路径，不写 wikilink）。跑过动效段的，同一条指针把动效 preview 与帧证据一并带上。
 - **矩阵**：每格的 viewport × 主题 × 语言 × 状态，标「人看」的格照标。
-- **mismatch 阈值**：沿用 `idea-loop:ui-measure` 的「默认容差」；按格覆盖的写覆盖值和理由。
+- **mismatch 阈值**：沿用 `design:ui-measure` 的「默认容差」；按格覆盖的写覆盖值和理由。
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更**：画布上有、项目现在渲染不出来的字段逐条列出。
 
-**「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它 spec 图里的「交互图（screen flow）」，一个场景一张，截图取自冻结画布，规格照它的「两类共用的」，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
+**「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它 spec 图里的「交互图（screen flow）」，一个场景一张，截图取自冻结画布，规格照它的「两类共用的」，用它写的 `flow-compose.mjs` 命令拼（脚本在 idea-loop 插件里），PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
 
 - **每一步带 `state`**，填这一格对应的状态名（画布 `?state=<名字>` 的名字，与冻结摘要的状态矩阵同名）。**不带** `--archive` / `--delta`：冻结不写 `delta/`，档案里还没有这些状态，脚本核不了；对回档案状态由合并前的归档做。
 - **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图脚本退出码 2。
@@ -65,7 +65,7 @@ spec 的状态不翻，冻结后仍是 `正式`。提交和设计 PR 归编排�
 
 1. 把签过字的状态记进冻结记录，签字节注明「第一段 · 已签」和人的原话；矩阵截图照落；ledger 到此为止的部分搬进记录。
 2. spec 不动：不写冻结摘要，也不开设计 PR——`idea-loop:to-ticket` 只认整份冻结。
-3. 回推的那几块记进冻结记录的签字节（分流回 `/idea-loop:uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
+3. 回推的那几块记进冻结记录的签字节（分流回 `/design:uiux-imagine` 的 note）。`tmp/<spec-slug>/imagine/`（含 `handoff/`，第二轮发散会改写它）与 `tmp/<spec-slug>/canvas/work/` **保留**。
 4. 停下输出，然后你就结束了。下一个 designer 从「部分冻结后重开」接上。
 
 ## 部分冻结后重开

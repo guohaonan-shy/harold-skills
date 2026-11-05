@@ -72,7 +72,7 @@ test('the UI walkthrough lives in its own reference, with the condition for read
 
 test('the design change is a pointer to design-change-sync, not a procedure', () => {
   const text = section('设计变更');
-  assert.match(text, /idea-loop:design-change-sync/);
+  assert.match(text, /design:design-change-sync/);
   assert.match(text, /PR 分支/);
   assert.ok([...text].length <= 400, 'the steps live in design-change-sync; keep only how this stage differs');
 });

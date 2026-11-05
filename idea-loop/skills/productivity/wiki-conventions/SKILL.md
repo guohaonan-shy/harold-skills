@@ -37,10 +37,10 @@ docs/
 ├── adr/NNNN-<slug>.md    spec 了结后的总结 —— 永久
 ├── design/
 │   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果经设计 PR 提交
-│   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部结构归 `idea-loop:uiux-imagine`
-│   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图；冻结后唯一的设计真相 —— 内部结构归 `idea-loop:uiux-refine`
-│   │   ├── delta/        对 prod/ 的差异：合并前归档时从最终画布加实现写出（没有设计稿的改动由实现者记最小差异）—— 结构见 `idea-loop:design-archive`
-│   │   └── research/<问题短名>/  `idea-loop:uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
+│   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部结构归 `design:uiux-imagine`
+│   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图；冻结后唯一的设计真相 —— 内部结构归 `design:uiux-refine`
+│   │   ├── delta/        对 prod/ 的差异：合并前归档时从最终画布加实现写出（没有设计稿的改动由实现者记最小差异）—— 结构见 `design:design-archive`
+│   │   └── research/<问题短名>/  `design:uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 业务机制、规则、数据结论
 └── records/<kind>/       运营台账 —— 会话起头、之后由人持续更新（如外联跟进表 `records/outreach/`）
@@ -55,11 +55,11 @@ docs/
 
 `design/` 分两层，生命周期相反：
 
-- **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
+- **`design/tmp/<spec-slug>/`** 跟着需求走：`/design:uiux-imagine` 写 `imagine/`，`/design:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`design:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
   - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布，有价值的结论写回 spec 或 issue。
   - 冻结时，签字的画布、冻结记录和交互图经设计 PR 提交进主分支（`git add -f`），实现从主分支开 worktree 就拿得到。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着实现 PR 进主分支。
   - **`research/` 不算设计产物**：从不归档；只做过调研的需求不起 UI 审查，合并也不走归档。用进设计的调研结论已经以文字写在方向说明或冻结记录里，随设计归档。
-- **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（人批过之后），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `idea-loop:design-archive`。
+- **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（人批过之后），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `design:design-archive`。
 
 按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。
 
@@ -117,7 +117,7 @@ related: ["[[other-slug]]"]
 
 spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置`，dreaming 靠这个 label 区分被遗忘和被故意搁置。工作排到了哪（待设计、待实现……）也记在 issue 的 label 上。
 
-`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉。`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `tmp/<spec-slug>/delta/` 同构），都不带 `status`，结构字段见 `idea-loop:design-archive` 的「图的实体」。
+`design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉。`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `tmp/<spec-slug>/delta/` 同构），都不带 `status`，结构字段见 `design:design-archive` 的「图的实体」。
 
 **ADR 按小节取代**：一份 ADR 常含多条决策（引用写 `ADR-NNNN §n`），新决策通常只推翻其中一节。部分取代记在那一节标题后（`⚠️ 已被取代 → ADR-<new> §<n>`），文件仍是 `生效`；全部小节都作废时，frontmatter 才翻成 `已被取代（→ ADR-<new>）`。写新 ADR 前先搜 `docs/adr/` 有没有同话题的旧决策。
 

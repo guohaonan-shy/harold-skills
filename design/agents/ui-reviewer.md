@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
+用 Skill 工具调 `design:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`design:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
 下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs"`，`check` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs"`。
 
@@ -50,7 +50,7 @@ effort: high
 5. **逐个状态进去**：对清单里每个状态：`prod/` 里已有的跑 `query <集成 worktree> state <状态名>`（只有最小差异或旧流程 `delta/` 的需求，带 `--delta <spec-slug>`；对账：对输入里的每个状态 id，不带 `--delta`），按返回的进入方式走；`prod/` 里没有的新状态，从 spec 写的入口和 `prod/` 里已有的边出发，在真实应用里自己找路（每走通一跳的出发状态、操作的元素、到的状态都记进 `coverage`）；找不到记「进不去」，附上试过什么。返回的进入方式是这样走的：入口地址与前置条件，沿途每一步（`user` 边照 `locate` 与 `action` 操作，`system` 边照 `how` 让它发生）。**进不去**（`reachable: false`）先判是档案缺口还是环境问题：照返回里的前置条件和试过的做法做仍然进不去，就如实记「进不去」，附上缺什么、试过什么。
 6. **走每条新增或改动的边**：从出发状态照边的定位和操作触发，看实际到的画面是不是边指向的那个状态（它的「应看到什么」成立吗）。有画布的需求，边取自进入新状态的那几跳，加上 spec 交互图（`canvas/flows/`）里画出的每一步；最小差异的需求，`added` 里的边，目标状态存在、可达、`blocked` 标得对不对，也在这里核。
 7. **对画面**：
-   - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`idea-loop:ui-measure` 的「矩阵怎么写」；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对报出的差异就是对不上的画面。状态切换页（harness）覆盖不了的格标「人看」，列出来。
+   - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`design:ui-measure` 的「矩阵怎么写」；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对报出的差异就是对不上的画面。状态切换页（harness）覆盖不了的格标「人看」，列出来。
    - 没有冻结画布（implementer 记的最小差异）：对着实际画面逐条核 `delta/` 状态文件「应看到什么」里可判定的每一条。
 
    `ui-measure.mjs` 判了瓶颈，或残留差异是设计决策层面的，照实记下交回。
@@ -62,7 +62,7 @@ effort: high
 
 你与 pr-reviewer 同时被起：它在等你的发现文件。**发现文件写完整了再放到位**：先写成 `ui-findings.json.tmp`，再 `mv` 成 `ui-findings.json`，别让它读到写了一半的。没有发现也交回文件；交回 `incomplete`（服务起不来、页面打不开、锁拿不到）时可以没有这个文件，编排者会把未完成写进这一轮的工作目录，pr-reviewer 据此记 UI 这一轴「未完成」。
 
-发现写成 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`，形状沿用 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md` 的「Spec 轴」与「准入：机械校验」里的 Spec 候选，让 pr-reviewer 能原样并进去：
+发现写成 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`，形状沿用 pr-review 给你的 `review-standards.md`（idea-loop 插件里，绝对路径在指针里） 的「Spec 轴」与「准入：机械校验」里的 Spec 候选，让 pr-reviewer 能原样并进去：
 
 ```json
 {
@@ -103,13 +103,13 @@ effort: high
    - **边**：`user` 边的 `locate`（`role` + `name`）取自第一步记下的真实 DOM；`system` 边写 `trigger` 与 `how`（在真应用里怎么让它发生：拦哪个请求、等多久，照你核的时候实际做的）。走不通的边带 `blocked`（`missing` + `tried`）。
    - **页面** `delta/pages/<page>/<page>.md`（新页面，或区域、代码变了）、**组件** `delta/components/<Component>/<Component>.md`（画布碰到的每个代码组件，`code` 取自 spec 或项目里同名组件）、**动效** `delta/motions/<motion>.md`（签过字的每条新动效：`duration` / `easing` 引用 token，字面值要写 `deviates`；`properties`、`iterations`、`reducedMotion`）、**用户路径**（spec 写了关键用户意图才写）。
    - **删除**的对象 id 列进 `delta/removed.md`，一行 `- [[<id>]] —— 原因`；`usedBy` 由归档脚本生成，不写。
-   - **长页面**（滚动容器的内容比它的可见区高）的入口状态照 `idea-loop:design-archive` 的「图的实体」「写对象文件」写 `sections` 与边的 `from`；下面第 2 步按它拍图。
+   - **长页面**（滚动容器的内容比它的可见区高）的入口状态照 `design:design-archive` 的「图的实体」「写对象文件」写 `sections` 与边的 `from`；下面第 2 步按它拍图。
 2. **重拍精简矩阵**：每个新增或改动的状态拍一张主视口截图（主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter；没定就取画布矩阵的默认格并在交回里说明），放进它所在对象的 `assets/`。拍之前关掉开发服务器的调试浮层（框架的开发工具条、错误浮层），不然它们进每张图。
-   - **长页面的入口状态**（滚动容器的内容比它的可见区高）**按段拍**，照 `idea-loop:design-archive` 的「拍档案截图」的「长页面的入口状态」：没声明分段的先在 `delta/` 的状态文件里补上；`measure` 带 `--delta <spec-slug>`；`prod/index.md` 还没定视口或主题时，`time`、`measure` 带 `--viewport` 与 `--theme`，值取画布矩阵的默认格。`attribute` 给出每条 `user` 边的 `from`，和哪些元素要写 `{ text }` 定位。**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`。段内交互的状态照「段内交互的状态」只拍那一段；`attribute` 因为 `undeclaredScrollDriven` 退出码 1 的段，照「滚动驱动的段」补 `scrollDriven: true`、建段内状态、用 `pinned` 拍。`uncontrolled`、`heightDrift` 一类输出照该参考的「看到什么 → 做什么」处理。
-   - **单屏状态**（页面不比主视口高，不分段）照 `idea-loop:design-archive` 的「拍档案截图」的「单屏状态」：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录>`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格），图叫 `<状态 id>.png`，放进它所在对象的 `assets/`。
+   - **长页面的入口状态**（滚动容器的内容比它的可见区高）**按段拍**，照 `design:design-archive` 的「拍档案截图」的「长页面的入口状态」：没声明分段的先在 `delta/` 的状态文件里补上；`measure` 带 `--delta <spec-slug>`；`prod/index.md` 还没定视口或主题时，`time`、`measure` 带 `--viewport` 与 `--theme`，值取画布矩阵的默认格。`attribute` 给出每条 `user` 边的 `from`，和哪些元素要写 `{ text }` 定位。**只放改了的段**：逐段用 `ui-png-compare.mjs` 比 `prod/` 里的那一段，容差内的段不放进 `delta/`。段内交互的状态照「段内交互的状态」只拍那一段；`attribute` 因为 `undeclaredScrollDriven` 退出码 1 的段，照「滚动驱动的段」补 `scrollDriven: true`、建段内状态、用 `pinned` 拍。`uncontrolled`、`heightDrift` 一类输出照该参考的「看到什么 → 做什么」处理。
+   - **单屏状态**（页面不比主视口高，不分段）照 `design:design-archive` 的「拍档案截图」的「单屏状态」：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录>`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`，值取画布矩阵的默认格），图叫 `<状态 id>.png`，放进它所在对象的 `assets/`。
    - 每个有动效的边或节点录一张 GIF（`idea-loop:evidence` 的交付证据：动图），一个 GIF 只讲一件事，放进对应动效的 `assets/`。图取自实现。用户感觉不到的动效、没有动效的状态不录。
 3. **补齐状态文件**：「这一屏」照实现拍的图写这一屏是什么样（内嵌刚拍的截图或 GIF；有分段的入口状态按段排开，每段一个 `###` 小标题、这一段的图、一两句描述），「应看到什么」照最终画布写成几条可判定的话。决定不写在状态文件里。
-4. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。素材取自冻结记录（意图、打磨轨迹、签字、设计法候选汇总、「冻结后的变更」一节，记录里没有这一节就跳过）、工单、和 review loop 文件 `.tmp/review-loop/<PR 号>.md` 里人的批示（「你的批示」，原话）：决定写为什么、否掉过、来源；候选按 `idea-loop:design-modeling` 的「设计法候选的形态」。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。**拿不准的留在草稿的「待你定」里**，不替人编。
+4. **决定与候选**：页面、组件、动效、用户路径文件的「决定」「设计法候选」两节都在，没有内容写「无」。素材取自冻结记录（意图、打磨轨迹、签字、设计法候选汇总、「冻结后的变更」一节，记录里没有这一节就跳过）、工单、和 review loop 文件 `.tmp/review-loop/<PR 号>.md` 里人的批示（「你的批示」，原话）：决定写为什么、否掉过、来源；候选按 `design:design-modeling` 的「设计法候选的形态」。对象是已有的，原有的决定全文带过去，新决定接着编号，规则变了原地改写。**拿不准的留在草稿的「待你定」里**，不替人编。
 5. **自检**：`check <集成 worktree> --delta <spec-slug> --no-used-by` 与 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <集成 worktree> <spec-slug> --dry-run` 都通过。归档脚本你只跑 `--dry-run`。自己写出来的违规自己改到过；改不动的（比如 spec 没写入口又找不到）按「不通过」处理，写进 `failed.json` 交回 `status: failed`。
 
 **第三步：写草稿给人看**，存成 `.tmp/pr-review/<PR 号>/archive/draft.md`。读的人是拍板的人：
@@ -164,7 +164,7 @@ effort: high
 
 1. **进**：`query <仓库根> state <id>`，按返回的进入方式走（「共用的步骤」第 5 步）。档案里标了「进不去」的状态，不再走一遍路径，但仍然试一次入边最后那一步，看这次通了没有。入口状态的 `steps` 是空的：**要停在哪一屏的做法写在状态文件的「这一屏」里**（比如加载态要把那条请求拦住才停得住），照着做；失败态、空态靠它入边的 `how`。
 2. **核「应看到什么」**：每一条可判定的，对着实际画面逐条判成立 / 不成立。
-3. **拍**：主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。按状态的情形照 `idea-loop:design-archive` 的「拍档案截图」拍。**入口状态声明了 `sections` 的，不拍一张主视口图**，照「长页面的入口状态」每段单独截（`prod/index.md` 还没定视口或主题时 `time`、`measure` 带 `--viewport` 与 `--theme`），`shoot` 的 `--out` 用 `.tmp/dreaming/<日期>/shots/<状态 id>`；段内交互的状态（带 `section`）照「段内交互的状态」只拍那一段；所在段是 `scrollDriven` 的，入口那一步照 `shoot` 拍，第 2 步起的状态按它的入边进到那一步后照「滚动驱动的段」用 `pinned`；**不分段的单屏状态**照「单屏状态」跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out .tmp/dreaming/<日期>/shots`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`）。拍到 `.tmp/dreaming/<日期>/shots/` 下，图叫 `<状态 id>.png`（有分段的入口状态每段 `<入口状态 id>@<段 id>.png`）。
+3. **拍**：主视口、主题、语言、动效模式取 `prod/index.md` 的 frontmatter（没定就取项目默认并在交回里说明）。按状态的情形照 `design:design-archive` 的「拍档案截图」拍。**入口状态声明了 `sections` 的，不拍一张主视口图**，照「长页面的入口状态」每段单独截（`prod/index.md` 还没定视口或主题时 `time`、`measure` 带 `--viewport` 与 `--theme`），`shoot` 的 `--out` 用 `.tmp/dreaming/<日期>/shots/<状态 id>`；段内交互的状态（带 `section`）照「段内交互的状态」只拍那一段；所在段是 `scrollDriven` 的，入口那一步照 `shoot` 拍，第 2 步起的状态按它的入边进到那一步后照「滚动驱动的段」用 `pinned`；**不分段的单屏状态**照「单屏状态」跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out .tmp/dreaming/<日期>/shots`（`prod/index.md` 还没定视口或主题时带 `--viewport` 与 `--theme`）。拍到 `.tmp/dreaming/<日期>/shots/` 下，图叫 `<状态 id>.png`（有分段的入口状态每段 `<入口状态 id>@<段 id>.png`）。
 4. **比**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-png-compare.mjs" <prod 里这个状态的截图> <刚拍的图> --json`。它用 `ui-measure.mjs` 同一套像素层容差（抗锯齿 0.1、像素差 ≤ 1%），不放宽、不收紧。尺寸不同算容差外。**有分段的入口状态逐段比**：每段用它的图（`<状态 id>@<段 id>.png`）各比一次；`shoot` 返回里 `uncontrolled: true` 的段（单屏状态是 `screen` 返回的整张；页面时间管不到的东西在动：视频、WebGL、网络推送；`diffBox` 指出是哪一块），容差外时不按像素判：对着这一段的「应看到什么」逐条核，都成立判「一致」，并在交回里注明这一段没按像素比、为什么；有不成立的才按下面的判法走。不再「再拍一次」。哪一段超出容差，只这一段判后续，只重拍、只写这一段；整页都在容差内照旧「一致」。`attribute` 报了定位失败（多半是标题改名了）：判「进入方式过期」，在页面的可访问性快照里找到改了名的标题，提议新的 `locate`，写进 `delta/` 里入口状态的 `sections`，改完再测一遍；新出现了落空的可点元素（页面多了一块内容）：当作画面变了，按「档案过期 / 产品坏了」原来的判法走，判档案过期时一并提议新的分段。截图是 Git LFS 指针、取不下来（退出码 2），记进交回，这个状态记「未完成」，不判。
 5. **看信号**：控制台的错误、失败的请求、空白页、点了没反应。状态本来就该有的错误（失败态的红字、它那条失败请求）以「应看到什么」为准，没写到的异常才算。
 

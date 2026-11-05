@@ -2,15 +2,13 @@
   "name": "idea-loop",
   "displayName": "Idea Loop",
   "version": "0.1.9",
-  "description": "Harold's idea-to-merge loop for real engineering: grilling, specs and tickets, UI design from exploration to freeze, ticket-by-ticket implementation, two-axis PR review, and a docs/ knowledge base that outlives each change. The human decides; agents do the rest.",
+  "description": "Harold's idea-to-merge loop for real engineering: grilling, specs and tickets, ticket-by-ticket implementation, two-axis PR review, and a docs/ knowledge base that outlives each change. UI design lives in the design plugin, SEO in the seo plugin. The human decides; agents do the rest.",
   "author": {
     "name": "Harold"
   },
   "skills": [
     "./skills/engineering/",
-    "./skills/design/",
-    "./skills/productivity/",
-    "./skills/seo/"
+    "./skills/productivity/"
   ],
   "keywords": [
     "docs",
@@ -22,14 +20,12 @@
     "workflow",
     "pr-review",
     "codex",
-    "design",
-    "design-system",
-    "lint",
     "browser",
     "glossary",
     "subagent",
-    "github-app",
-    "seo",
-    "openseo"
+    "github-app"
+  ],
+  "dependencies": [
+    "excalidrawer"
   ]
 }

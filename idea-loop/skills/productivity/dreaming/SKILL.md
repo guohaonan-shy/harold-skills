@@ -30,11 +30,11 @@ disable-model-invocation: true
 
    | agent | 做什么 | 交回 |
    |---|---|---|
-   | `idea-loop:ui-reviewer`（对账模式，sonnet · high） | UI 档案对账：源码波（不开浏览器）加实时波，照 [references/archive-reconcile.md](references/archive-reconcile.md)；状态清单按对账范围定；状态多要分批时，同一条消息起第一批（只有它跑源码波），后面的批等它交回 | 结果文件，进 `档案对象`、`档案状态` 与 `缺陷` |
+   | `design:ui-reviewer`（对账模式，sonnet · high） | UI 档案对账：源码波（不开浏览器）加实时波，照 [references/archive-reconcile.md](references/archive-reconcile.md)；状态清单按对账范围定；状态多要分批时，同一条消息起第一批（只有它跑源码波），后面的批等它交回 | 结果文件，进 `档案对象`、`档案状态` 与 `缺陷` |
    | `idea-loop:adr-reconciler`（sonnet · high） | spec → ADR：判 spec 上线没有、起草 ADR、标被取代的 ADR 小节、找漏网的工单；次要查 `docs/domain/`、参考手册、`GLOSSARY.md`、`REVIEW.md` 的过期，方法在 [references/docs-reconcile.md](references/docs-reconcile.md) | `rows-docs.md`（`文档` 一节） |
-   | `idea-loop:design-steward`（opus · high） | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它 | `rows-design.md`（`候选`、`DESIGN.md 条目` 与牵出的 `缺陷` 行） |
+   | `design:design-steward`（opus · high） | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它 | `rows-design.md`（`候选`、`DESIGN.md 条目` 与牵出的 `缺陷` 行） |
 
-   项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。
+   项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。design 插件没装（Skill 工具调 `design:` 开头的 skill 报不存在）时 ui-reviewer、design-steward 都不起，漏归档、全站初扫也不做，提议表开头写一句「没装 design，设计部分没对账」。起 design-steward 时指针里多给三个绝对路径：本 skill 的 `references/` 目录、`proposal-table.md`、`${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs`。
 4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才交出去。`候选` 与 `DESIGN.md 条目` 有行时，另做一页审核页，照 [references/review-page.md](references/review-page.md)。完成条件：校验通过，表或「这次无事」已经交到人面前。
 
 **执行段**，人逐行批过之后：只执行批了的行，照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」做，结果是一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的 PR。执行段不拆给 agent。最后报告：动了什么、留了什么、为什么留；这张表处理完（批了的行执行了，或每一行都回了「不批」）就删掉它的 `.tmp/dreaming/<日期>/`，下一次靠它判断上一张有没有处理。
