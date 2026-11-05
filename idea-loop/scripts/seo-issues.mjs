@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The only place seo-scan writes GitHub: turns one run's findings into issues. A new issue carries no
- * status:* label, so it simply is 待验证 and issue-dispatch hands it out like any other; its body
+ * status:* label, so it simply is backlog, like an issue opened by hand; its body
  * carries the evidence and how to reproduce it, because the issue session re-runs that independently.
  *
  *   reject  — no evidence, no repro, empty acceptance, or a percentage without numerator/denominator;

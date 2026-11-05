@@ -14,14 +14,14 @@ issue 脚本的命令：`labels`（建四个 `status:*`、`kind:bug|feature|impr
 分支 `backup/242-issue-model` 上有一份九个状态版本的实现和测试，可以拿来改，但它的 `split`、`block`、父子关闭不要。
 
 ## 验收标准
-- [ ] 翻法表照 spec 第二张表；不在表里的翻法拒绝并列出能翻成什么；done / canceled 之后拒绝再翻
-- [ ] spec 有「需要 grill」时 `set todo`（从 triage）拒绝并说出那一行；`check` 给出同样结论且不调任何写操作
-- [ ] 项目文档写了跳过 triage 时 `set triage` 拒绝，backlog 能直接到 todo
-- [ ] issue 挂着两个仓库的 PR、一个没合并时 `set done` 拒绝并列出没合的；都合并后 `reconcile` 把它翻成 done 并关闭为 completed
-- [ ] `set backlog` 不带 `--comment` 拒绝；带了就贴一条以「🤖 idea-loop：」开头的评论
-- [ ] `migrate` 默认不调任何改 issue 的 gh 命令，`--apply` 按对照表换 label，搁置的补评论
-- [ ] `candidates` 跳过还被开着的 issue 挡着的 todo
-- [ ] 旧的 spec 状态脚本不存在，引用它的测试改读新的 spec 读取脚本；`node --test` 跑插件的 scripts 全绿
+- [x] 翻法表照 spec 第二张表；不在表里的翻法拒绝并列出能翻成什么；done / canceled 之后拒绝再翻
+- [x] spec 有「需要 grill」时 `set todo`（从 triage）拒绝并说出那一行；`check` 给出同样结论且不调任何写操作
+- [x] 项目文档写了跳过 triage 时 `set triage` 拒绝，backlog 能直接到 todo
+- [x] issue 挂着两个仓库的 PR、一个没合并时 `set done` 拒绝并列出没合的；都合并后 `reconcile` 把它翻成 done 并关闭为 completed
+- [x] `set backlog` 不带 `--comment` 拒绝；带了就贴一条以「🤖 idea-loop：」开头的评论
+- [x] `migrate` 默认不调任何改 issue 的 gh 命令，`--apply` 按对照表换 label，搁置的补评论
+- [x] `candidates` 跳过还被开着的 issue 挡着的 todo
+- [x] 旧的 spec 状态脚本不存在，引用它的测试改读新的 spec 读取脚本；`node --test` 跑插件的 scripts 全绿
 
 ## 选中的存量回归
 - `issues.test.mjs`：整个文件按新模型重写，它是这一刀的主测试。

@@ -20,6 +20,7 @@ issue 会话和调度照 spec「一个 issue 一个会话，PR 从实现开始�
 - [ ] issue-dispatch 只派 todo，section 名、没有会话的判定、对账都按新状态
 - [ ] 两个 skill 与 issue-verify 里没有旧中文状态名、根 / 子 issue、整合、`advance` / `group`
 - [ ] 现有关于这几个 skill 的文档测试改成新模型后全绿
+- [ ] `issue-group-skills.test.mjs` 里「文中写到的 issues 命令」那条测试中给已删命令（advance、group、drop 等）开的豁免删掉，三份 skill 里不再写它们（继承自 01）
 
 ## 选中的存量回归
 - `issue-group-skills.test.mjs`：钉着「一组」的说法，要改成「一个 issue」的版本。
