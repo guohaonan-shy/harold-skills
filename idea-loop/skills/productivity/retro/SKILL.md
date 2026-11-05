@@ -27,7 +27,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 - **纠正等不起第二次**：skill 已经做错了。「对题的选择」要数次数：这场会话里的加上 `docs/raw/decisions/` 里以前的，按「情形 / 处置」认同一类，不凭印象。
 - **反例**：同一类里有人选了别的。反例的原话能说出它跟其余几次差在哪，就提成「规则 + 例外」；说不出差别的不提。
-- **「不自动的」**（见 `idea-loop:decision-rules`）：照样记进决定记录，不提成「自己定」的规则。
+- **「护栏」里的**（见 `idea-loop:decision-rules`）：照样记进决定记录，不提成「自己定」的规则。
 - **已经有这条规则了**：先在规则文件里搜。有，而 skill 还是做错了，候选是「这条规则没起作用」（加强、或做成检查），不是新写一条。
 - **没有门槛的东西不提**：一次性的取舍、只对这个 issue 成立的决定，只记进决定记录。
 
@@ -81,7 +81,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 这场会话里摆给人的每道题，以及每条候选的结果，记成 `<docs>/raw/decisions/<issue 号>.md`；没有 issue 号，用 `<YYYY-MM-DD>-<主题>.md`。格式见 [decision-record](references/decision-record.md)。没有摆过题也没有候选，就不写。
 
-这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「不自动的」）。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
+这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「护栏」）。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
 
 收工时删 `.tmp/retro/<YYYY-MM-DD>-<主题>/`。
 

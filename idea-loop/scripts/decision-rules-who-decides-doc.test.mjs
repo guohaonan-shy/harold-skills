@@ -51,7 +51,7 @@ test('decision-rules has no references directory and its description no longer r
   assert.doesNotMatch(bodyOf(raw), /^## 交给人时/m);
 });
 
-test('evidence opens with the reader model and carries the six shared writing rules', () => {
+test('evidence opens with the reader model and carries the shared writing rules', () => {
   const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   const body = bodyOf(raw);
   const description = raw.match(/^description: (.*)$/m)[1];
@@ -62,23 +62,16 @@ test('evidence opens with the reader model and carries the six shared writing ru
   assert.match(firstBlock, /不清楚实现细节/, '正文开头要写读者模型');
   assert.match(firstBlock, /快速/, '读者模型要写读者要的是快速看懂、拿到证据、决定');
 
+  // spec decision-evidence-principles (#245) moved 「要人定的写成一道题」 into decision-rules
   for (const [name, re] of [
     ['结论在前', /结论在前/],
     ['最小一种视图', /最小/],
     ['现状带出处和规模数字', /出处[\s\S]*规模数字|规模数字[\s\S]*出处/],
     ['陌生叫法第一次出现说清', /第一次出现/],
     ['比对同条件', /同条件/],
-    ['要人定的写成一道题（推荐、真实例子、评判标准）', /一道题[\s\S]*推荐|推荐[\s\S]*一道题/],
   ]) assert.match(body, re, `共用写法缺：${name}`);
-  assert.match(body, /真实例子/);
-  assert.match(body, /评判标准/);
   assert.match(body, /裸编号/);
   assert.match(body, /最新基准/);
-
-  // the two kinds of figures and what both share are still there
-  assert.match(body, /references\/spec-figures\.md/);
-  assert.match(body, /references\/delivery\.md/);
-  assert.match(body, /^## 两类共用的/m);
 });
 
 test('the evidence body is at most 5000 characters (UTF-8 characters, not bytes)', () => {

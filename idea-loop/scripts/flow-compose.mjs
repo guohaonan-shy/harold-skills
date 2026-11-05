@@ -6,7 +6,7 @@
  * left to right, the trigger written on the arrow, one line under each step, branches dropping
  * down from the step they fork at, red rings on what to look at. excalidrawer has no image node
  * yet, so this script is THE way those figures get made — one recipe, so every figure in a spec
- * (and in the next spec) looks the same. Rules and placement: skills/productivity/evidence/references/spec-figures.md, section 交互图.
+ * (and in the next spec) looks the same. Rules: skills/productivity/evidence/references/ui-flow.md; placement is up to the caller.
  *
  * The input is one JSON per figure. Its shape is deliberately the same as a flow in the design
  * archive (docs/design/prod/, skills/design/design-archive/SKILL.md), so figures can move there unchanged.

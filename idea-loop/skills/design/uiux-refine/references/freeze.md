@@ -45,7 +45,7 @@ docs/design/tmp/<spec-slug>/
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更**：画布上有、项目现在渲染不出来的字段逐条列出。
 
-**「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它 spec 图里的「交互图（screen flow）」，一个场景一张，截图取自冻结画布，规格照它的「两类共用的」，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
+**「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它的 UI flow（`references/ui-flow.md`），一个场景一张，截图取自冻结画布，规格照它的「UI 页面标注」，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
 
 - **每一步带 `state`**，填这一格对应的状态名（画布 `?state=<名字>` 的名字，与冻结摘要的状态矩阵同名）。**不带** `--archive` / `--delta`：冻结不写 `delta/`，档案里还没有这些状态，脚本核不了；对回档案状态由合并前的归档做。
 - **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图脚本退出码 2。
