@@ -1,6 +1,6 @@
 # seo 插件
 
-给跑 [idea-loop](../idea-loop/README.md) 的项目做 SEO。0.2.0 从 idea-loop 拆出来：不是每个项目都做 SEO，而 Claude Code 只能整个插件开关，留在 idea-loop 里就让每个项目都多 14 个 skill、5 个 agent 和一个 OpenSEO 连接。seo 在 `plugin.json` 的 `dependencies` 里**依赖 idea-loop**，装它会连带装上 idea-loop。
+给跑 [idea-loop](../idea-loop/README.md) 的项目做 SEO。0.2.0 从 idea-loop 拆出来：不是每个项目都做 SEO，而 Claude Code 只能整个插件开关，留在 idea-loop 里就让每个项目都多 13 个 skill、5 个 agent 和一个 OpenSEO 连接。seo 在 `plugin.json` 的 `dependencies` 里**依赖 idea-loop**，装它会连带装上 idea-loop。
 
 ## 安装
 

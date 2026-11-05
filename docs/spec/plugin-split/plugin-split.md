@@ -9,7 +9,7 @@ issues: [241]
 
 # idea-loop 拆成 idea-loop、design、seo 三个插件
 
-> #241 存在：装 idea-loop 就连带装上 7 个设计 skill、14 个 seo skill、11 个设计 / seo agent 和 OpenSEO 的 MCP 连接，不做设计或 SEO 的项目也关不掉（对着 release/idea-loop-0.2.0 1a7496b，2026-11-05）
+> #241 存在：装 idea-loop 就连带装上 7 个设计 skill、13 个 seo skill、11 个设计 / seo agent 和 OpenSEO 的 MCP 连接，不做设计或 SEO 的项目也关不掉（对着 release/idea-loop-0.2.0 1a7496b，2026-11-05）
 
 ## 问题陈述
 
@@ -17,7 +17,7 @@ issues: [241]
 
 idea-loop 0.1.9 的 `plugin.json` 把 `skills/engineering|design|productivity|seo` 四个目录都登记进一个插件；`.mcp.json` 同时起设计档案和 OpenSEO 两个 MCP；`hooks.json` 里 seo-check、design-lint、design-md 三个 hook 每次 Bash / Write 都跑。Claude Code 能开关的最小单位是整个插件，`skillOverrides` 不管插件里的 skill（决定记录 A1），所以一个只要 spec → 实现 → review 的项目，skill 列表里照样多出 21 个它用不上的 skill，每个会话多一个 OpenSEO 连接。
 
-量（2026-11-05 对 1a7496b 数）：idea-loop 41 个 skill 里 design 6 个 + `ui-measure`、seo 14 个；15 个 agent 里设计 6 个、seo 5 个。
+量（2026-11-05 对 1a7496b 数）：idea-loop 41 个 skill 里 design 6 个 + `ui-measure`、seo 13 个（issue 和决定记录写的 14，按目录数是 13）；15 个 agent 里设计 6 个、seo 5 个。
 
 ### 根因
 
@@ -47,7 +47,7 @@ sequenceDiagram
 |---|---|---|---|
 | idea-loop | engineering、productivity 两类（去掉 `ui-measure`） | adr-reconciler、explorer、implementer、pr-reviewer | glossary-check hook |
 | design | uiux-imagine、uiux-refine、uiux-research、design-change-sync、design-archive、design-modeling、ui-measure | uiux-imaginer、uiux-researcher、designer、ui-master、ui-reviewer、design-steward | 设计档案 MCP；design-lint、design-md hook |
-| seo | 14 个 seo skill | 5 个方向分析员 | OpenSEO MCP；seo-check hook |
+| seo | 13 个 seo skill | 5 个方向分析员 | OpenSEO MCP；seo-check hook |
 
 调用名改了：被搬走的 skill / agent 一律从 `idea-loop:<名>` 改成 `design:<名>` / `seo:<名>`。
 
