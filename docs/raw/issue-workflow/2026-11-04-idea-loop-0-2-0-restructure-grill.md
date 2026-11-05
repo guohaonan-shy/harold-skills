@@ -201,6 +201,20 @@ Q40 同意按照A
 
 开始收工
 
+## U12
+
+稍等下，我们还没有聊清楚刚才worktree那个问题，这个app纬度的全局setting我理解是对机器纬度的，都会按照{worktree_dir}/{project}/{worktree}来划分，像现在harold-skills、toeflair是没有这类问题的，只有一个space下面有多个仓库的时候会有这个问题。
+
+我看了下claude app的项目环境配置，有一句这个提醒The session starts in the first folder. Claude can also read and edit the other folders. 我的终极目标是这样的idea-loop这些我们自定义的文件，我是希望暂时不要进入公司的repo的，同时我希望的是，一个feature中对于不同项目的改动，是可以分开会话的，最后在父会话进行合并测试的。
+
+## A12
+
+（2026-11-05，实现阶段）worktree 开在业务根目录外面时，单仓库在 `docs/` 搬出后同样读不到业务根的说明文件（#244 实测）。用 `--add-dir` 模拟 App 的第二个文件夹实测（Claude Code 2.1.299）：业务根放 CLAUDE.md 且设环境变量 `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` 才读得到，放 AGENTS.md 读不到；App 多文件夹在 `start_session` 开会话时会不会带上、第二个文件夹会不会也开 worktree，未验证。出 Q44–Q46。
+
+## U13
+
+没问题，对于解决方法我都同意，没有疑问了。
+
 ## 本轮决议
 
 | 主题 | 决议 | 出处 |
@@ -235,4 +249,7 @@ Q40 同意按照A
 | 版本范围 | 0.2.0 只做重构；Linear、cmux、Codex 放到之后 0.2.x 的某个补丁版本 | Q38 |
 | 需求拆分 | 7 个需求，各一个 issue、一份 spec、一个 PR，挂 milestone「idea-loop 0.2.0」：issue 模型与状态、issue-triage、业务与知识库、插件拆分、decision 与 evidence、design 整合、迁移；顺序 1 → 2、3 → 7，其余并行；#220 那一组 8 个 issue 关闭，链到这份记录 | Q39 |
 | 分支 | 从最新 main 重开 `release/idea-loop-0.2.0`（旧的备份为 `backup/0.2.0-release-old`），7 个需求的 PR 合进它，最后一次合进 main 发版 | Q40 |
+| 跨仓库的需求 | 父 issue 负责 spec、设计、拆分；每个仓库的改动是一个子 issue、一个子会话、一个 PR（先不合） | Q44 |
+| 子会话看到业务根目录 | 沿用 #244 的会话启动 hook；App 多文件夹加环境变量作为人手动开会话时的补充，待验证 | Q45 |
+| 父会话联调 | 子 PR 都开出后，父会话在业务根下为每个仓库开联调 worktree，切到各子分支一起测；通过后人逐个说合并，先合各仓库 PR，最后合知识库分支；问题发回子会话修；顺带核实 `.tmp/` 不进公司仓库、第二个文件夹是否开 worktree | Q46 |
 | spec 谁写 | 7 份 spec 由各自 issue 的会话写，这场 grill 只留这份记录和术语表 | 收工 |
