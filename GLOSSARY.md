@@ -23,3 +23,7 @@ _Avoid_: 待完成
 **子 issue**：
 从一个父 issue 拆出来、能单独交一个 PR 的部分；版本和模块不用父子关系表达，分别用 milestone（或 Linear 的 Release）和分类 label（或 Linear 的 Project）。
 _Avoid_: 整合, 根 issue 下的组
+
+**工单**：
+一个 PR 里的一个切片，写在 spec 目录下，一张一个 commit；几张工单一起 review、一起合并，不上 issue 平台。要单独 review、单独合并的一块是子 issue，不是工单。
+_Avoid_: ticket 当成 issue 用, 子任务
