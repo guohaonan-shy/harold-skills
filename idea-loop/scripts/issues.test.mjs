@@ -166,7 +166,7 @@ test('flips in the table pass; others are refused with the choices; done and can
   const ok = [['backlog', 'triage'], ['backlog', 'todo'], ['todo', 'in-progress'], ['in-progress', 'in-review'], ['in-review', 'in-progress'], ['in-review', 'done'], ['in-progress', 'canceled'], ['triage', 'canceled']];
   for (const [from, to] of ok) assert.equal(transitionError(from, to, { prs, comment: 'x', spec: spec() }), null, `${from} → ${to}`);
   assert.match(transitionError('backlog', 'in-progress'), /能翻成：triage \/ todo \/ canceled/);
-  assert.match(transitionError('in-progress', 'done', { prs }), /能翻成：in-review \/ backlog \/ canceled/);
+  assert.match(transitionError('in-progress', 'done', { prs }), /能翻成：in-review \/ triage \/ backlog \/ canceled/);
   assert.match(transitionError('todo', 'triage'), /能翻成：in-progress \/ backlog \/ canceled/);
   assert.match(transitionError('done', 'todo'), /能翻成：无/);
   assert.match(transitionError('canceled', 'backlog', { comment: 'x' }), /能翻成：无/);

@@ -79,7 +79,7 @@ export const NEXT = {
   backlog: ['triage', 'todo', 'canceled'],
   triage: ['todo', 'backlog', 'canceled'],
   todo: ['in-progress', 'backlog', 'canceled'],
-  'in-progress': ['in-review', 'backlog', 'canceled'],
+  'in-progress': ['in-review', 'triage', 'backlog', 'canceled'],
   'in-review': ['in-progress', 'done', 'backlog', 'canceled'],
   done: [],
   canceled: [],
