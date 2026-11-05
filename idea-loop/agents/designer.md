@@ -30,7 +30,7 @@ effort: high
 - **这份 spec 已经冻结过一部分**：照 `freeze.md` 的「部分冻结后重开」。
 - **画布已有版本、还没签字**：上一个 designer 中断了，从最新一版和 ledger 接着做。
 
-然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议人跑 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-ui-protocol.md`；调浏览器前用 Skill 工具调 `idea-loop:browser`；复刻线上界面和截图评审照 `design/replication.md`。
+然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议人跑 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-protocol.md`（它先让你读 `design/design-law.md`，复刻线上界面和截图评审也在里面）；调浏览器前用 Skill 工具调 `idea-loop:browser`。`design/` 下其余几份到用时才读：`critique.md` 管评审清单，`motion.md` 管动效，`accessibility-baseline.md` 与 `laws-of-ux.md` 只在碰到对应问题时读。
 
 ## 按意见改
 
@@ -41,10 +41,10 @@ effort: high
 
 ## 其它任务
 
-- **动效**：照 `motion-stage.md` 做，从签过字的静态版本起 `motion-v1.html`。
+- **动效**：照 `design/motion.md` 做，从签过字的静态版本起 `motion-v1.html`。
 - **素材单**：照 `asset-stage.md` 写，生成交给人。
-- **清 AI tells**：对着 `design/design-core.md` 的「Anti-slop law」与 `design/ui-craft-checklist.md` 的「Visual slop catalog」逐条过，改出下一版。
-- **签字前检查**：这几项都要过，没过的改掉再交：`design-lint.mjs` 的 P0 清零；`design/heuristics-checklist.md`；对比度与 a11y 按 `design/accessibility-baseline.md` 从真 DOM 的 computed style 读；`design/ui-craft-checklist.md` 的「DESIGN.md drift check」；验收矩阵每一格看过；三条约定都在。画布里总结出的、可能成为设计法的规律写成候选（写进冻结记录的「设计法候选」，注明它将挂在哪个档案对象上；对象文件到合并前归档才写出），没有就写「无」；改 `DESIGN.md` 只走候选。
+- **清 AI tells**：对着 `design/design-law.md` 的「Anti-slop law」与 `design/critique.md` 的「Visual slop catalog」逐条过，改出下一版。
+- **签字前检查**：这几项都要过，没过的改掉再交：`design-lint.mjs` 的 P0 清零；`design/critique.md` 的 Nielsen 十条、认知负荷与五人格三项；对比度与 a11y 按 `design/accessibility-baseline.md` 从真 DOM 的 computed style 读；`design/critique.md` 的「DESIGN.md drift check」；验收矩阵每一格看过；三条约定都在。画布里总结出的、可能成为设计法的规律写成候选（写进冻结记录的「设计法候选」，注明它将挂在哪个档案对象上；对象文件到合并前归档才写出），没有就写「无」；改 `DESIGN.md` 只走候选。
 - **冻结 / 部分冻结**：照 `freeze.md` 做。冻结只交画布、冻结记录和交互图，不写 `delta/`。
 - **设计变更**：冻结之后人接受了一处跟画布不同的设计（review 里接受了实现、实现者做不下去而人接受了改法、人自己改主意），编排者交给你。你拿到：画布路径、人的原话、受影响的状态名、相关截图。只改这几格，别的格一字不动；先用 Skill 工具调 `idea-loop:design-change-sync`，做法、版本怎么递增、没动的格怎么比对照它的「designer 做」。交回新的一版画布与改动那几格的截图。冻结之后画布只由你改，没有别人手改它。
 

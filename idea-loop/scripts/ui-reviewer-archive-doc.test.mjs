@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const doc = readFileSync(join(pluginRoot, 'agents', 'ui-reviewer.md'), 'utf8');
+// The archive mode's body lives in design-archive's review-archive reference (#246).
+const archiveDoc = readFileSync(join(pluginRoot, 'skills', 'design', 'design-archive', 'references', 'review-archive.md'), 'utf8');
 
 function section(title) {
   const lines = doc.split('\n');
@@ -31,8 +33,13 @@ test('archive mode does not point at a references/ file path', () => {
   assert.deepEqual(hits, [], `archive mode names a file path; point at the capability and section title instead:\n${hits.join('\n')}`);
 });
 
-test('archive mode still names the screenshot method it relies on', () => {
+test('archive mode points at its body in design-archive by name and section', () => {
   const text = section('归档模式').map((l) => l.text).join('\n');
+  assert.match(text, /idea-loop:design-archive[^\n]*「UI 审查的归档模式」/);
+});
+
+test('archive mode still names the screenshot method it relies on', () => {
+  const text = archiveDoc;
   assert.match(text, /idea-loop:design-archive[^\n]*「拍档案截图」/);
   assert.match(text, /idea-loop:design-archive[^\n]*「长页面的入口状态」/);
 });

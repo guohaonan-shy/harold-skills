@@ -2,11 +2,11 @@
 
 Universal cognitive, perceptual, and behavioral heuristics that decide what a UI *composes* — how
 many pricing tiers fit on a screen, where a primary action anchors in scanning order, when a
-progress indicator earns its place, why a settings list needs grouping. `design-core.md` decides
-brand/taste and the anti-slop floor; `expression-framework.md` already encodes several of these
+progress indicator earns its place, why a settings list needs grouping. `design-law.md` decides
+brand/taste and the anti-slop floor; the expression framework (`design-law.md`) already encodes several of these
 laws as prescriptive ladders and budgets (see the cross-references below — this file names the
-underlying research, `expression-framework.md` operationalizes a subset of it). This file's job is
-the laws `expression-framework.md` doesn't already cover: Gestalt grouping, decision framing,
+underlying research, the expression framework (`design-law.md`) operationalizes a subset of it). This file's job is
+the laws the expression framework (`design-law.md`) doesn't already cover: Gestalt grouping, decision framing,
 memory/recall, motor/interaction timing, and behavioral expectation.
 
 Distilled from primary sources: Wertheimer (1923) for proximity/similarity/Prägnanz, Palmer
@@ -18,11 +18,11 @@ Peak-End, Zeigarnik (1927), Fitts (1954), Doherty & Thadani (1982), Csíkszentmi
 Parkinson (1955), Sweller (1988).
 
 **These are guidance, applied by the reviewer and the agent — not auto-checked** by
-`design-lint.mjs`, unlike the mechanical rules in `design-core.md`'s "Anti-slop law".
+`design-lint.mjs`, unlike the mechanical rules in `design-law.md`'s "Anti-slop law".
 
 ## Already operationalized elsewhere — don't re-derive
 
-`expression-framework.md` already turns four of the best-known laws into this plugin's actual
+the expression framework (`design-law.md`) already turns four of the best-known laws into this plugin's actual
 ladders and budgets: **Selective Attention** and **Von Restorff Effect** → its congestion budget
 ("Congestion budgets", "reserve the strongest contrast for the single goal-relevant signal"); **Hick's Law** and
 **Choice Overload** → its priority ranking ("The procedure" step 2, "≤1 primary, 2–3 secondary") and decision-
@@ -31,7 +31,7 @@ screen caps. Cite the law name if it clarifies a review comment; don't restate t
 ## Perception and visual grouping
 
 Five Gestalt laws govern how the eye groups elements before the brain reads them — none of these
-are covered by `expression-framework.md`'s ladders, which assume weight is already assigned and
+are covered by the expression framework's ladders, which assume weight is already assigned and
 answer a different question (how loud, not how grouped).
 
 - **Law of Proximity** (Wertheimer, 1923). Objects near each other read as a group — the cheapest
@@ -55,7 +55,7 @@ answer a different question (how loud, not how grouped).
 - **Aesthetic-Usability Effect** (Kurosu & Kashimura, Hitachi Design Center, 1995). Visual polish
   biases perceived usability — refined typography, generous whitespace, a calm palette earn the
   benefit of the doubt for minor friction. Never a substitute for measurable usability or for the
-  runtime-states contract (`design-core.md`'s "Runtime & fallback states").
+  runtime-states contract (`design-law.md`'s "Runtime & fallback states").
 
 ## Decision-making
 
@@ -88,7 +88,7 @@ answer a different question (how loud, not how grouped).
   Memory of an experience is dominated by the emotional peak and the ending, not the average. Stage
   a high-effort celebratory success state; let intermediate steps stay calm. The peak belongs at
   the *end* of a flow, not as arbitrary mid-flow motion — the "motion must mean something" rule in
-  `motion-spec.md`'s "First principles" already rejects motion that performs rather than confirms a state change.
+  `motion.md`'s "First principles" already rejects motion that performs rather than confirms a state change.
 - **Zeigarnik Effect** (Zeigarnik, 1927). Uncompleted tasks create cognitive tension that pulls the
   user back. Visible progress ("3 of 5 steps", greyed-out next sections) converts that tension into
   completion pressure. Reserve for genuinely beneficial flows like onboarding — applying the same
@@ -104,7 +104,7 @@ answer a different question (how loud, not how grouped).
   users in flow; latency above ~1s breaks attention. Working directive: no indicator under 300ms;
   skeleton 300ms–2s; labelled spinner 2–10s; determinate bar with cancel 10–60s; stop and offer
   error/retry past 60s — this is also the loading-state timing under the runtime/fallback model
-  (`design-core.md`'s "Runtime & fallback states").
+  (`design-law.md`'s "Runtime & fallback states").
 - **Flow** (Csíkszentmihályi, 1975). Flow sits in the balance between challenge and skill — too
   hard breeds frustration, too easy breeds boredom. Continuous feedback and a clear sense of
   control keep the user inside the state; system friction and latency are the fastest ways to
@@ -136,11 +136,11 @@ answer a different question (how loud, not how grouped).
   saved state) so a flow finishes faster than the user expected.
 - **Cognitive Load** (Sweller, 1988). Total mental effort splits into intrinsic (the task's
   inherent difficulty) and extraneous (poor layout, jargon, inconsistent patterns, visual noise).
-  Extraneous load is what a designer controls — `design-core.md`'s restraint law ("Anti-slop law", "Close-out protocol") and the
+  Extraneous load is what a designer controls — `design-law.md`'s restraint law ("Anti-slop law", "Close-out protocol") and the
   expression framework's congestion budgets are the concrete levers; this entry names the cost
   those levers exist to reduce.
 
 ## Provenance
 
 Distilled from an external product repository's `craft/laws-of-ux.md`, minus the four laws
-`expression-framework.md` already operationalizes.
+the expression framework (`design-law.md`) already operationalizes.

@@ -1,6 +1,7 @@
 /**
  * Tripwire — the design archive's source wave (the half of the reconcile that needs no browser:
  * code paths, references, routes) belongs to the ui-reviewer's reconcile mode, not to dreaming itself.
+ * The reconcile mode's body lives in design-archive's review-reconcile reference (#246); the agent points at it.
  *
  * Spec canvas-truth-dreaming-agents, implementation decision 6 (changed in PR review round 1, S3):
  * dreaming only collects the `档案对象` rows the reviewer hands back; the whole-site initial scan stays in dreaming.
@@ -24,10 +25,12 @@ function section(doc, title) {
 }
 
 const reviewer = read('agents', 'ui-reviewer.md');
+const reconcileDoc = read('skills', 'design', 'design-archive', 'references', 'review-reconcile.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 
 test('the reconcile mode of ui-reviewer carries the source wave and returns 档案对象 rows', () => {
-  const reconcile = section(reviewer, '对账模式');
+  assert.match(section(reviewer, '对账模式'), /idea-loop:design-archive[^\n]*「UI 审查的对账模式」/);
+  const reconcile = reconcileDoc;
   assert.match(reconcile, /源码波/);
   for (const d of ['改代码路径', '删对象', '补扫页面', '标进入方式过期']) {
     assert.ok(reconcile.includes(d), `reconcile mode does not name the 档案对象 disposition ${d}`);
