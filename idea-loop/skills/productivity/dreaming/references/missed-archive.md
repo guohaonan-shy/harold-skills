@@ -40,6 +40,6 @@
 
 `dreaming-<日期>/` 这类没有画布的残留：它的 `delta/` 本来就是归档脚本的输入，不起 ui-reviewer，直接照 [archive-reconcile.md](archive-reconcile.md) 的「执行段」第 2、3 步校验、归档。
 
-**丢弃**：`git rm -r docs/design/tmp/<名>/`（冻结时经设计 PR 提交的东西是被跟踪的）。
+**丢弃**：`git rm -r docs/design/tmp/<名>/`（冻结时提交的东西是被跟踪的）。
 
 两种处置后 `docs/design/tmp/<名>/` 都不应还在；它的删除随这次 PR 进基准分支。

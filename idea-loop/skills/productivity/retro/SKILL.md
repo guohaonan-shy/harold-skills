@@ -81,7 +81,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 这场会话里摆给人的每道题，以及每条候选的结果，记成 `<docs>/raw/decisions/<issue 号>.md`；没有 issue 号，用 `<YYYY-MM-DD>-<主题>.md`。格式见 [decision-record](references/decision-record.md)。没有摆过题也没有候选，就不写。
 
-这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「护栏」）。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
+这份文件照 `idea-loop:wiki-conventions` 的「知识库落地」：在 issue 会话里、还有 PR 没合的，提交在这一组的分支上，跟它一起合；没有可跟的，走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
 
 收工时删 `.tmp/retro/<YYYY-MM-DD>-<主题>/`。
 
