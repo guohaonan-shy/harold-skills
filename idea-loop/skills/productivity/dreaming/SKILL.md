@@ -1,7 +1,6 @@
 ---
 name: dreaming
-description: 把知识库、设计档案、DESIGN.md 和术语表跟代码对账，提议该订正、归档、删除的内容，人批过才执行。
-disable-model-invocation: true
+description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账：提议该订正、归档、删除的内容，人批过才执行。人要对账、说文档过期了、或说 dreaming 时用。
 ---
 
 文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后**提议**处置；人批过的才执行。

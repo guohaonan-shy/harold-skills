@@ -67,7 +67,7 @@ idea-loop 从这几处读项目配置：
 
 ## 每周对账
 
-`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次（只由人或这个任务触发）。必须在本仓库的主 checkout 里做，任务 id 叫 `dreaming-<仓库名>`。步骤（没有工具时的退路、问人的选项、`create_scheduled_task` 的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次（人在对话里要对账时模型也会起它）。必须在本仓库的主 checkout 里做，任务 id 叫 `dreaming-<仓库名>`。步骤（没有工具时的退路、问人的选项、`create_scheduled_task` 的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
 完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
