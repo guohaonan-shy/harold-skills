@@ -25,3 +25,4 @@ issue 会话和调度照 spec「一个 issue 一个会话，PR 从实现开始�
 ## 选中的存量回归
 - `issue-group-skills.test.mjs`：钉着「一组」的说法，要改成「一个 issue」的版本。
 - `issue-session-implement-doc.test.mjs`：钉着会话进实现阶段的写法。
+- [ ] review 第 1 轮 S3（2026-11-05）：in-progress 的说明改成「会话在做，spec 提交后开 draft PR」（保留认领就翻 in-progress），spec 状态表、项目 issue 文档模板与本仓库那份、skill issues 的状态表、建 label 时写的说明一起改，不再说「PR 已开」
