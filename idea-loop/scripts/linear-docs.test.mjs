@@ -60,14 +60,15 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   assert.match(steps, /人确认再写/);
 });
 
-test('session, dispatch and triage (skill and agent) each point at linear.md; none repeats tool parameters', () => {
+test('session, dispatch and triage (skill and agent) each point at the issues skill\'s Linear way; none repeats tool parameters', () => {
   for (const [name, md] of [
     ['issue-session', eng('issue-session', 'SKILL.md')],
     ['issue-dispatch', eng('issue-dispatch', 'SKILL.md')],
     ['issue-triage', eng('issue-triage', 'SKILL.md')],
     ['issue-triager', read('agents', 'issue-triager.md')],
   ]) {
-    assert.match(md, /linear\.md/, `${name} does not point at linear.md`);
+    assert.match(md, /`idea-loop:issues` 的 Linear 做法/, `${name} does not point at the issues skill's Linear way`);
+    assert.doesNotMatch(md, /references\/linear\.md/, `${name} reads another skill's private reference`);
     assert.doesNotMatch(md, /includeRelations|addLabels|removeLabels|orderBy/, `${name} repeats tool parameters`);
   }
   assert.match(eng('issue-dispatch', 'SKILL.md'), /Linear 项目跳过 `issues labels` 与 `issues reconcile`/);

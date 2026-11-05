@@ -12,7 +12,7 @@ tools: Read, Grep, Glob, Bash, Write, Skill
 
 用 Skill 工具调 `idea-loop:issues`（状态、正文格式）和 `idea-loop:decision-rules`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指你收到的知识库 `docs/` 的绝对路径。
 
-Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 `references/linear.md`，不跑 `gh` 和 `issues note` / `type`；号形如 `ENG-123`。
+Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），不跑 `gh` 和 `issues note` / `type`；号形如 `ENG-123`。
 
 你收到：issue 号、`<docs>` 路径、一个已切到最新主分支的 worktree 绝对路径（查代码、跑复现都在这里）。`gh issue view <号> --comments` 读全文和评论；DEVELOPMENT.md 的「开发服务器」告诉你复现要起服务时怎么起，收工前全部停掉。
 

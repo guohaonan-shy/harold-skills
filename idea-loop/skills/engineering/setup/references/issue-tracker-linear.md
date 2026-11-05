@@ -1,6 +1,6 @@
 # Issue tracker：Linear
 
-这个项目的需求以 Linear issue 的形式进来。读写 issue 用 Linear 的 MCP，做法见 `idea-loop:issues` 的 `references/linear.md`；翻状态的前提、PR 怎么算、正文格式仍由 idea-loop 的 `issues.mjs` 判。
+这个项目的需求以 Linear issue 的形式进来。读写 issue 用 Linear 的 MCP，做法见 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；翻状态的前提、PR 怎么算、正文格式仍由 idea-loop 的 `issues.mjs` 判。
 
 issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 todo 的 issue 出一张会话卡片，人点开后，一个 issue 一个会话，从评估、设计一路走到实现合并。要做的事写在 spec 里（`docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
 
