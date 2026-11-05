@@ -24,7 +24,7 @@
 
 idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是这个仓库自己用的开发流程。在它上面工作时：
 
-- **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
+- **本仓库的 `docs/` 也按 idea-loop 管**：issue 的状态（`status:*` label）只走 `idea-loop/scripts/issues.mjs`，不手改 label；spec 没有自己的状态，frontmatter 只留 `issues:`。
 - **插件里不出现任何项目的信息**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；举例用任何项目都读得懂的通用例子，不用真实项目的名字和场景（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。
 - 下面五处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
   1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `dreaming` / `setup` / `agent-builder` / `seo-setup` / `seo-scan` 设 `disable-model-invocation: true`（`seo-scan` 由 seo-setup 建的每周定时任务以斜杠命令触发）——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。
@@ -143,7 +143,7 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 
 ## issue 分类
 
-issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类>`，子类打成 `type:<父类>/<子类>`，打子类时父类一起打。idea-loop 验证 issue 时打，人也可以手动打。父类按 issue 落在哪个 plugin 分。
+issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类>`，子类打成 `type:<父类>/<子类>`，打子类时父类一起打。idea-loop 验证 issue 时打，人也可以手动打。父类按 issue 落在哪个 plugin 分。另外每个 issue 带一个类型 label：`kind:bug`、`kind:feature`、`kind:improvement` 三选一。
 
 - `idea-loop`：idea-loop plugin 的 issue
   - `engineering`：spec、工单、实现、review、issue 调度这条从想法到合并的流程

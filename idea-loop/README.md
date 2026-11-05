@@ -49,7 +49,7 @@ tickets are committed there next to the code, and one PR takes them all to main 
 design PR; `skills/productivity/wiki-conventions/SKILL.md`, section 知识库落地). Only work with no code
 to ride along — a parent issue once it is split, an issue found absent, a dreaming run — lands through
 its own docs-only PR.
-Two state machines, each for one thing (`skills/engineering/spec-status/SKILL.md`). **The issue label
+Two state machines, each for one thing (`skills/engineering/issues/SKILL.md`). **The issue label
 is the queue**, read by the dispatcher and the issue sessions: 待验证 (no label) → 验证中 → (审核中 →) 待设计 →
 设计中 → 待实现 → 实现中 → closed, plus 搁置 to keep the loop away. One group — a root issue with its sub-issues, or an unconsolidated issue on its own — gets one session, which
 carries it through those states and through the sidebar sections 审核中 / 设计中 / 实现中. Besides its
@@ -317,7 +317,7 @@ idea-loop/
 ├── skills/                          # four categories, each listed in plugin.json — rules in AGENTS.md; seo/README.md lists the seo skills and their upstream sources
 │   ├── engineering/
 │   │   ├── tdd/SKILL.md              # shared, model-invoked — red→green loop, seams, mock boundary
-│   │   ├── spec-status/SKILL.md      # shared, model-invoked — the issue state machine (the loop's queue) and the spec state machine (document maturity)
+│   │   ├── issues/SKILL.md           # shared, model-invoked — the issue entity: the seven states and who flips them, the body format, backlog / blocked by, the issues.mjs commands; + references/github.md and linear.md, one per platform
 │   │   ├── browser/SKILL.md          # shared, model-invoked — headless Playwright for your own capture and measuring, the built-in browser for showing the human; static serving, logging in, measuring from the real DOM
 │   │   ├── ui-measure/SKILL.md       # shared, model-invoked — implementation vs frozen canvas, cell by cell: the three environment rules (for the UI implementation loop only — the design archive's shots stop the page time instead), default tolerances, the matrix, when to stop
 │   │   ├── pr/SKILL.md               # shared, model-invoked — what the human reads on a PR: the two deliverables, each with a table of sections and what each gives the reader: the description's seven sections (the review report: one sentence, problem, how it was fixed, how it was verified, whether it can be rolled back, your to-do, folded reference) and the Review 汇报 (stops during implementation and review rounds are one report); the review loop file keeps the latter (+ references/)
@@ -433,6 +433,7 @@ idea-loop/
     ├── spec-status.test.mjs          # its unit tests — legal steps, refused steps, the index
     ├── issues.mjs                    # the only writer of an issue's status:* and type:* labels — hand-over into spec frontmatter, reconcile, advance, label pruning
     ├── issues.test.mjs               # its unit tests against a fake gh
+    ├── issues-skill-doc.test.mjs     # tripwire — the issues skill, its two platform references, and the tracker templates carry the seven states
     ├── pr-body.mjs                   # PR description = the review report, seven fixed sections (one sentence / problem / how it was fixed / how it was verified / can it be rolled back / your to-do / reference; an old issues section is folded into the rollback one); no code references outside reference
     ├── pr-body.test.mjs              # fixed order, new sections, old headings, untouched neighbours, size limit
     ├── evidence.mjs                  # delivery evidence: one orphan branch per PR, upload → image URLs that open full size, cleanup on merge

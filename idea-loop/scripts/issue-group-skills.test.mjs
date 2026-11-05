@@ -83,10 +83,10 @@ test('issue-dispatch：汇报里的子会话只剩设计阶段的会话，不提
   assert.match(md, /子会话/);
 });
 
-test('setup 的 issue 追踪模板：一组一个会话', () => {
+test('setup 的 issue 追踪模板：一个 issue 一个会话', () => {
   const md = readFileSync(join(root, 'skills/engineering/setup/references/issue-tracker.md'), 'utf8');
-  assert.match(md, /一组[^。\n]*一个会话/);
-  assert.doesNotMatch(md, /一个 issue 一个会话/);
+  assert.match(md, /一个 issue 一个会话/);
+  assert.doesNotMatch(md, /一组/);
 });
 
 test('README：流程总览没有版本分支的例外，合并缺口段只认 issue 会话', () => {

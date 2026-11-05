@@ -142,8 +142,8 @@ test('issue-verify\'s self-check names the sections the new template has', () =>
   assert.match(verify, /idea-loop:evidence/);
 });
 
-test('spec-status and issues still read the older 验证 table (documented where the format is)', () => {
-  const doc = read('skills', 'engineering', 'spec-status', 'SKILL.md');
+test('spec.mjs still reads the older 验证 table (documented in the issues skill, where the format is)', () => {
+  const doc = read('skills', 'engineering', 'issues', 'SKILL.md');
   assert.match(doc, /> #12 存在：/);
   assert.match(doc, /「验证」表.*仍然认得/);
 });

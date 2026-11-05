@@ -19,11 +19,11 @@ skill `spec-status` 改名 `issues`，正文写通用的 issue 实体，读完�
 同时把项目侧的说明换掉：setup 写进目标仓库的 `ISSUE_TRACKER.md` 模板换成七个状态的表，加一行「triage：用 / 跳过」，加「仓库」一节（仓库名、本地路径、主分支、管什么，第一行是知识库所在的仓库）；harold-skills 根目录的 `ISSUE_TRACKER.md` 照模板改；根 `AGENTS.md` 的「issue 分类」加类型（`kind:*`）一句，并把「参考资料归谁」等处的 `spec-status` 名字换成 `issues`（含 `idea-loop/AGENTS.md`）。
 
 ## 验收标准
-- [ ] skill `issues` 存在、`spec-status` 不存在；description 只做路由
-- [ ] 正文写了七个状态与翻法、正文格式（四个必填节）、先放着、blocked by、脚本命令
-- [ ] GitHub 与 Linear 两份 reference 各自写清状态、类型、模块、PR 挂 issue 的表达
-- [ ] `ISSUE_TRACKER.md` 模板与 harold-skills 根目录那份都是七个状态、带 triage 用不用和「仓库」节
-- [ ] 插件里没有别处再指向 `idea-loop:spec-status`（02–05 合起来满足，这一格查本刀碰的文件）
+- [x] skill `issues` 存在、`spec-status` 不存在；description 只做路由
+- [x] 正文写了七个状态与翻法、正文格式（四个必填节）、先放着、blocked by、脚本命令
+- [x] GitHub 与 Linear 两份 reference 各自写清状态、类型、模块、PR 挂 issue 的表达
+- [x] `ISSUE_TRACKER.md` 模板与 harold-skills 根目录那份都是七个状态、带 triage 用不用和「仓库」节
+- [x] 插件里没有别处再指向 `idea-loop:spec-status`（02–05 合起来满足，这一格查本刀碰的文件）
 
 ## 选中的存量回归
 - `setup-single-source.test.mjs`：setup 模板的单一来源检查，改模板可能触发。
