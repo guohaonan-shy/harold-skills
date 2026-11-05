@@ -344,7 +344,7 @@ export function ensureLabels(gh, types = null, { prune = false } = {}) {
 /** Leaves #n carrying exactly the type:* labels of `values`. */
 export function setTypes(gh, types, n, values) {
   const want = typeSet(types, values);
-  const it = issue(gh, n);
+  const it = { labels: JSON.parse(gh(['issue', 'view', String(n), '--json', 'labels'])).labels.map((l) => l.name) };
   const add = want.filter((l) => !it.labels.includes(l));
   const remove = it.labels.filter((l) => l.startsWith(TYPE_PREFIX) && !want.includes(l));
   if (add.length || remove.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);

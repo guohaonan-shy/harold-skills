@@ -62,6 +62,7 @@ function fakeGh(issues, labels = [], milestones = {}) {
   const gh = (args) => {
     const [noun, verb, n] = args;
     if (noun === 'label' && verb === 'list') return JSON.stringify(labels.map((name) => ({ name })));
+    if (noun === 'issue' && verb === 'view') return JSON.stringify({ labels: issues[n].labels.map((name) => ({ name })) });
     if (noun === 'api' && verb !== '-X') {
       const url = new URL(`http://gh/${verb}`);
       const path = url.pathname.replace('/repos/%7Bowner%7D/%7Brepo%7D/', '').replace('/repos/{owner}/{repo}/', '');
