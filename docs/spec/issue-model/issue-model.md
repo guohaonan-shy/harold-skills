@@ -10,8 +10,6 @@ issues: [242]
 
 > #242 存在：未完成的 spec 里多数 frontmatter 写「实现中」，它们的 issue 早已关闭；子 issue 被拿来归组而不是拆分；状态名只有 GitHub 上的一套中文 label，Linear 团队对不上，详情在「问题陈述」
 
-> 需要 grill：「待定」开头的三节（迁移、类型与模块的 label 名、blocked 与先放着）
-
 ## 问题陈述
 
 对着 main（b4c612a，idea-loop 0.1.9）、GitHub 上 harold-skills 与 Tofelair 的 issue、Linear 工作区 Hanabi AI 的 Agent Platform（FA）核，取数日期 2026-11-05，过程在 [[2026-11-05-issue-model-regrill]]。
@@ -157,9 +155,9 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 - `pr-review` 一轮 review 看全部 PR，汇报按仓库分节；合并逐个做，最后一个合并后 `set done`。
 - 已知限制：不支持各仓库知识库各自一份；跨仓库的联调（先合哪个、灰度）写在 spec 里由人定，脚本不排序。0.1.10 发版后拿 FA-577 dogfood（U4）。
 
-### 待定：已在用仓库的旧 label
+### 已在用仓库的旧 label
 
-Tofelair 开着的 issue 里有实现中 4、审核中 2、待实现 2、搁置 7；harold-skills 有搁置 5、`status:todo` 7。升到 0.1.10 后旧 label 调度认不出。推荐 `issues migrate <docs> [--apply]`：默认只列出会怎么改，`--apply` 才改，对照如下；发版时在 harold-skills 上跑，Tofelair 先把列表给人看再跑。
+Tofelair 开着的 issue 里有实现中 4、审核中 2、待实现 2、搁置 7；harold-skills 有搁置 5、`status:todo` 7。升到 0.1.10 后旧 label 调度认不出。加 `issues migrate <docs> [--apply]`：默认只列出会怎么改，`--apply` 才改，对照如下；发版时在 harold-skills 上跑，Tofelair 先把列表给人看再跑。
 
 | 旧 | 新 |
 |---|---|
@@ -171,15 +169,15 @@ Tofelair 开着的 issue 里有实现中 4、审核中 2、待实现 2、搁置 
 | spec frontmatter 的 `status` | 删掉这一行 |
 | 整合出来的根与子 issue | 解除父子关系；根若只为归组而开，关成 not planned |
 
-另两种做法：留给 #247（0.1.10 前 Tofelair 不能升级）；或脚本把旧 label 当别名读（双轨一直留着）。
+没选的两种：留给 #247（0.1.10 前 Tofelair 不能升级）；脚本把旧 label 当别名读（双轨一直留着）。依据：人 2026-11-05「都按推荐」。
 
-### 待定：类型与模块的 GitHub label 名
+### 类型与模块的 GitHub label 名
 
-实体里类型（Bug / Feature / Improvement）和模块是两个字段，Linear 上 FA 用的是 `type` 单选组和模块 label。GitHub 上现在 `type:*` 表达的是模块（harold-skills 的 `type:idea-loop/engineering`）。推荐模块照旧用 `type:*`（不改已有的 54 个 issue），类型用新的 `kind:bug` / `kind:feature` / `kind:improvement`。另一种做法：模块改名 `module:*`、类型用 `type:*`，名字跟 Linear 一致，代价是迁移时改全部已打的分类 label。
+实体里类型（Bug / Feature / Improvement）和模块是两个字段，Linear 上 FA 用的是 `type` 单选组和模块 label。GitHub 上现在 `type:*` 表达的是模块（harold-skills 的 `type:idea-loop/engineering`）。模块照旧用 `type:*`（不改已有的 54 个 issue），类型用新的 `kind:bug` / `kind:feature` / `kind:improvement`，`issues labels` 建这三个。没选的：模块改名 `module:*`、类型用 `type:*`，名字跟 Linear 一致，代价是迁移时改全部已打的分类 label。依据：人 2026-11-05「都按推荐」。
 
-### 待定：blocked 与先放着
+### blocked 与先放着
 
-推荐不设状态：被别的 issue 挡用平台的 blocked by（GitHub dependencies、Linear blocks），调度跳过还被挡着的 todo；等人给条件的在 issue 上评论「等你：X」并回 backlog。先放着回 backlog，评论写停在哪个阶段、分支名；人重新放进 todo 后，新会话读评论接上分支。
+不设状态：被别的 issue 挡用平台的 blocked by（GitHub dependencies、Linear blocks），调度跳过还被挡着的 todo；等人给条件的在 issue 上评论「等你：X」并回 backlog。先放着回 backlog，评论写停在哪个阶段、分支名；人重新放进 todo 后，新会话读评论接上分支。依据：人 2026-11-05「都按推荐」。
 
 ### 平台差异
 

@@ -73,6 +73,14 @@ Agent Platform（FA）的摸底，2026-11-05，最近 60 天新建的 250 个 is
 
 必填没问题。多仓库我觉得FA-577这个issue作为dog food将0.1.10进行使用后测试。」
 
+## A4
+
+spec 写好，留三处待定：已在用仓库的旧 label（推荐 `issues migrate`，默认只列出、`--apply` 才改）、类型与模块的 GitHub label 名（推荐模块照旧 `type:*`、类型用 `kind:*`）、blocked 与先放着（推荐不设状态：blocked by 关系 + 回 backlog 带评论）。
+
+## U5
+
+「都按推荐」
+
 ## 本轮决议
 
 | 话题 | 决议 | 出处 |
@@ -84,3 +92,6 @@ Agent Platform（FA）的摸底，2026-11-05，最近 60 天新建的 250 个 is
 | PR | 开始实现时就开 PR；Linear 靠标题、正文里的 issue 号挂上，状态由集成推 | U3、U4 |
 | 多仓库 | 一个 issue 每个仓库各一个 PR，这一期就做；0.1.10 发版后拿 FA-577 dogfood | U3、U4 |
 | issue 正文 | 问题、证据、影响范围、从哪发现必填；背景、已确认原因可选 | U3、U4 |
+| 旧 label | `issues migrate` 默认只列出，`--apply` 才改；harold-skills 发版时跑，Tofelair 先给人看 | U5 |
+| 类型与模块 | 模块照旧 `type:*`，类型用 `kind:bug` / `kind:feature` / `kind:improvement` | U5 |
+| blocked、先放着 | 不设状态：blocked by 关系；先放着回 backlog 带评论 | U5 |
