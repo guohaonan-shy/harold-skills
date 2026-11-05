@@ -5,7 +5,7 @@ description: 验证一个 GitHub issue 描述的问题是否真实存在，打�
 
 验证一个 issue：先复现，判断问题是否真实存在，打上分类，用 `idea-loop:to-spec` 起草一份 spec 记下验证结论。规则判不了、要人定的，就在这个会话里跟人 grill。最后经只改 `docs/` 的 PR 合进主分支，把 spec 的 slug 交回给调用你的 `idea-loop:issue-session`，issue 的下一段由它翻。
 
-issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`。先用 Skill 工具调 `idea-loop:spec-status`（spec 和 issue 的状态）和 `idea-loop:decision-rules`（能按「自己定的四条」判的自己定，依据不成立的才留给人）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指当前 worktree 的 `docs/`。
+issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`。先用 Skill 工具调 `idea-loop:spec-status`（spec 和 issue 的状态）和 `idea-loop:decision-rules`（依据明确的照标准做，依据冲突或没有的才留给人）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指当前 worktree 的 `docs/`。
 
 ## 开场
 
@@ -20,12 +20,12 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 | issue 的性质 | 复现手段 | spec 里写什么 |
 |---|---|---|
 | 逻辑、数据、API 行为 | 一个会红的测试，不提交：测试代码和输出放 `.tmp/to-spec/<spec-slug>/repro/`，正式的测试由 `idea-loop:implement` 写 | 白话写测了什么、看到什么、本该是什么，带一个具体例子 |
-| 看得见的界面问题 | 一张截图，标注照 `idea-loop:evidence` 里「问题的复现证据」 | 截图本身 |
+| 看得见的界面问题 | 一张截图加标注（`idea-loop:evidence` 的「配什么图」），放进 spec 目录下的 `assets/problem-<n>-<slug>.png` | 截图本身 |
 | 线上数据、日志、性能 | 一条查询或一段日志，写明查的是什么、什么时候查的 | 查的范围和时间，加结果；数字能列成小表就列 |
 
 **复现的输出留在文件里。** 服务日志、测试的失败输出、堆栈、查询结果都重定向进 `.tmp/to-spec/<spec-slug>/repro/` 下的文件，只读回判断要用的那一两行：人要在这个会话里 grill，那时上下文里该是 issue、结论和 spec。
 
-方案、选项、范围依赖的现状也在这时核清：用 Skill 工具调 `idea-loop:evidence`，看它的「写给人看的东西」。issue 是不是已经被做掉了，也靠这一步查出来。
+方案、选项、范围依赖的现状也在这时核清：用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。issue 是不是已经被做掉了，也靠这一步查出来。
 
 得出一个结论，写成 spec 标题下的一行引用（`> #<号> 存在：…` 或 `> #<号> 不存在：…`，模板在 `idea-loop:to-spec`）：
 
@@ -54,7 +54,7 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 3. **存在的复现过**：标「存在」的，「问题陈述」里写了本次复现到的现象。只有 issue 原文、没有本次复现的，不算。
 4. **正文里没有机器的原始输出**：`grep -nE 'AssertionError|expected .* to |^\s+at |\[repro\]|^\s*(SELECT|FROM|WHERE) ' <spec>` 有输出就回去改写。
 5. **每条都有期望行为**：只修问题的 spec，「User Stories」里每个问题一行「期望行为」，编号跟「问题陈述」的小节对得上。
-6. **选项都是真分歧**：每条「待定」写明了为什么「自己定」的依据不成立；选项的写法照 `idea-loop:evidence` 的「写给人看的东西」（上面已调过）。
+6. **选项都是真分歧**：每条「待定」写明了依据为什么冲突或没有；选项的写法照 `idea-loop:decision-rules` 的「要人定的写成一道题」（上面已调过）。
 7. **现状和范围查清了**：同一行为的其他入口，每个都在「方案」里标了纳入还是排除；「关联」列了相邻还没完成的 spec 与 issue，没有写「无」。
 8. **改动只在该在的地方**：`git status --short` 里只有这份 spec 的目录和 `docs/spec/index.md`。
 
@@ -71,7 +71,7 @@ spec 是「审核中」：`issues set <docs> 审核中 <号>`，用 PushNotifica
 ## 合进主分支
 
 1. 只 `git add` 这份 spec 的目录和 `docs/spec/index.md`，提交（`docs(spec): 起草 <slug>`），`git push -u origin <分支>`，`gh pr create --base <主分支>`，正文写 slug、状态、覆盖的 `#号`。
-2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；失败就停下告诉人。只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。
+2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；失败就停下告诉人。只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「护栏」）。
 
 ## 交回
 

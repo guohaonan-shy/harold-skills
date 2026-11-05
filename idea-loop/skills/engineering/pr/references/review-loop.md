@@ -42,7 +42,7 @@
 node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" archive <文件> <owner/repo> <PR 号>
 ```
 
-每个条目贴成 PR 上的一条普通评论，开头标明「这是记录，往来在会话里进行」。条目里引用的本地图上传到这个 PR 的素材分支（`idea-loop:evidence` 的交付证据），地址换成点开能看原图的链接。已经贴过的条目不再贴，中途失败可以直接重跑。
+每个条目贴成 PR 上的一条普通评论，开头标明「这是记录，往来在会话里进行」。条目里引用的本地图上传到这个 PR 的素材分支（[`delivery-evidence.md`](delivery-evidence.md)），地址换成点开能看原图的链接。已经贴过的条目不再贴，中途失败可以直接重跑。
 
 归档的评论以项目 bot 的身份发：仓库在 `~/.idea-loop/github-apps.json` 里配了 GitHub App（通常叫 `<project>-claude`）时，用它的安装令牌，令牌只活在脚本进程里，不打印、不写盘、不交给 agent；没配时借用 gh 当前登录的账号，每条开头写明「由 Claude 代发，不是本人所写」。**不以人的身份说话。**
 

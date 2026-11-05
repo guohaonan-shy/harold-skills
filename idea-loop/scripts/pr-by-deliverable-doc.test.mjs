@@ -72,8 +72,10 @@ test('the skill body is at most 5000 characters (UTF-8 characters, not bytes), a
 });
 
 test('the pr skill has three reference files and they total no more than the four it replaced', () => {
-  const files = readdirSync(join(prDir, 'references')).sort();
-  assert.deepEqual(files, ['description.md', 'review-loop.md', 'review-report.md']);
+  // delivery-evidence.md moved in from evidence (spec decision-evidence-principles, #245); it is not one of the two deliverables
+  const all = readdirSync(join(prDir, 'references')).sort();
+  assert.deepEqual(all, ['delivery-evidence.md', 'description.md', 'review-loop.md', 'review-report.md']);
+  const files = all.filter((f) => f !== 'delivery-evidence.md');
   // the four references before the rewrite: 2491 + 2888 + 1654 + 2444 characters
   const total = files.reduce((n, f) => n + chars(readFileSync(join(prDir, 'references', f), 'utf8')), 0);
   assert.ok(total <= 9477, `references total ${total} characters`);
