@@ -6,9 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { check, parseArgs, render, visualWidth } from './seo-check.mjs';
-import { errorsOnly, seoMdFor, touchedSince } from './seo-check-hook.mjs';
-import { execFileSync } from 'node:child_process';
-import { realpathSync } from 'node:fs';
+import { errorsOnly, touchedSince } from './seo-check-hook.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const script = join(here, 'seo-check.mjs');
@@ -182,26 +180,9 @@ test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write 
     },
     { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
   ]);
-  assert.deepEqual(hooks.SessionStart, [
-    { hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/business-context-hook.mjs"' }] },
-  ]);
-  assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse', 'SessionStart']);
+  assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse']);
   assert.doesNotMatch(JSON.stringify(hooks), /merge-gate/);
   for (const gone of ['merge-gate-hook.mjs', 'merge-gate-hook.test.mjs']) {
     assert.equal(existsSync(join(here, gone)), false, `${gone} should be deleted`);
   }
-});
-
-test('hook finds SEO.md in the repo, else in the business root above it', () => {
-  const top = realpathSync(mkdtempSync(join(tmpdir(), 'seo-biz-')));
-  const biz = join(top, 'biz');
-  const app = join(biz, 'app');
-  mkdirSync(app, { recursive: true });
-  execFileSync('git', ['init', '-q'], { cwd: biz });
-  execFileSync('git', ['init', '-q'], { cwd: app });
-  assert.equal(seoMdFor(app), null);
-  writeFileSync(join(biz, 'SEO.md'), '# SEO\n');
-  assert.equal(seoMdFor(app), join(biz, 'SEO.md'));
-  writeFileSync(join(app, 'SEO.md'), '# SEO\n');
-  assert.equal(seoMdFor(app), join(app, 'SEO.md'));
 });

@@ -1,6 +1,6 @@
 # 探查读什么
 
-- 业务根目录和每个代码仓库的 `CLAUDE.md`、`AGENTS.md`（`business.mjs instructions`），业务根目录的 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`ISSUE_TRACKER.md`、`CONTRIBUTING.md`、`README`
+- `CLAUDE.md`、`AGENTS.md`、`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`ISSUE_TRACKER.md`、`CONTRIBUTING.md`、`README`
 - CI 配置（`.github/workflows/`）、`package.json` 的 scripts、锁文件、`.worktreeinclude`
 - `git log --merges -20 --oneline` 和最近合并的 PR（`gh pr list --state merged --limit 10`），看合并方式
 - `docs/` 目录树、`.gitignore`、`.gitattributes`

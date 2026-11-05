@@ -65,7 +65,6 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { issueRepo } from './business.mjs';
 import { frontmatter, hasFreezeSummary, issuesOf, scan, touchesUi, verdicts } from './spec-status.mjs';
 
 export { issuesOf };
@@ -338,12 +337,7 @@ const changesOf = (actions) => new Map(actions.map((a) => [a.n, a.close ? { clos
 
 // ---------- gh boundary ----------
 
-/** gh run in <docs>; the repo comes from ISSUE_TRACKER.md when it names one (the knowledge base's remote is not where issues live). */
-export const defaultGh = (cwd) => {
-  const repo = issueRepo(cwd);
-  const env = repo ? { ...process.env, GH_REPO: repo } : process.env;
-  return (args) => execFileSync('gh', args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-};
+export const defaultGh = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 function issue(gh, n) {
   const v = JSON.parse(gh(['issue', 'view', String(n), '--json', 'number,state,title,labels']));

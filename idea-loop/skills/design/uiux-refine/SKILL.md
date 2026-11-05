@@ -1,12 +1,12 @@
 ---
 name: uiux-refine
-description: 设计收敛：把定下的方向打磨到人签字冻结，冻结结果提交在需求的知识库分支上。
+description: 设计收敛：把定下的方向打磨到人签字冻结，冻结结果提交在需求的工作分支上，跟代码一起合进主分支。
 disable-model-invocation: true
 ---
 
-你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再把冻结结果提交在知识库分支上。画布只由 designer 改，签字只由人宣布。
+你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再把冻结结果提交在需求的工作分支上。画布只由 designer 改，签字只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。worktree 根 = 这个需求的知识库 worktree，`node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" kb issue-<号>` 输出的 `path`（`idea-loop:wiki-conventions` 的「知识库落地」；知识库还在代码仓库里的旧布局下就是 `git rev-parse --show-toplevel`；不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果提交在知识库分支上；交给 designer 的目录也用这个前缀写成绝对路径。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果提交在需求的工作分支上；交给 designer 的目录也用这个前缀写成绝对路径。
 
 几个词：**ledger** 是 `canvas/work/ledger.md`，designer 每交付一版落一行的打磨记录；**块的 job** 是方向说明「结构」节给每块写的内容责任，归为状态 / 结果 / 身份 / 氛围之一；**register** 是这块界面属于营销页还是产品内（in-app），记在方向说明里；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。
 
@@ -101,12 +101,13 @@ designer 交付「冻结」后，你核对：
 - `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
-都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后把冻结结果提交在这个需求的知识库分支上，不开 PR（`idea-loop:wiki-conventions` 的「知识库落地」）：
+都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后把冻结结果提交在需求的工作分支上，不开设计 PR：实现在同一个分支上接着做，最后跟代码一个 PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
 
-1. 在知识库 worktree 里（`node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" kb issue-<号>`，画布本来就在这里），`git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas`（`tmp/` 被排除在 git 之外，要强制加）：签字的画布、冻结记录、交互图。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进，也没有 `delta/`。
-2. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写）。分支什么时候合进知识库 main 照「知识库落地」：父 issue 拆完子 issue 就合，其余跟着实现 PR。
+1. 当前 worktree 应该是这个需求的工作分支（issue 会话里就是这一组的分支）；不在的，从最新主分支开一个，把下面这些文件带过去再提交。
+2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas`（`tmp/` 被排除在 git 之外，要强制加）：签字的画布、冻结记录、交互图。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进，也没有 `delta/`。
+3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写）。父 issue 要拆子 issue 的，拆完后照「知识库落地」开只改 `docs/` 的 PR 先合。
 
-告诉人：设计已冻结，提交在知识库分支上。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
+告诉人：设计已冻结，提交在工作分支上。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
 
 **冻结之后设计变了**：不回 refine，也不重起 designer。人接受了一处跟画布不同的设计，由当时的编排者（`idea-loop:implement` 或 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」，过程与冻结记录怎么记见 `idea-loop:design-change-sync`。
 

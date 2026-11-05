@@ -37,7 +37,7 @@ disable-model-invocation: true
    项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。
 4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才交出去。`候选` 与 `DESIGN.md 条目` 有行时，另做一页审核页，照 [references/review-page.md](references/review-page.md)。完成条件：校验通过，表或「这次无事」已经交到人面前。
 
-**执行段**，人逐行批过之后：只执行批了的行，照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」做，结果是知识库分支 `dreaming-<日期>` 上的一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的提交，做完合进知识库 main，不开 PR（`idea-loop:wiki-conventions` 的「知识库落地」）。执行段不拆给 agent。最后报告：动了什么、留了什么、为什么留；这张表处理完（批了的行执行了，或每一行都回了「不批」）就删掉它的 `.tmp/dreaming/<日期>/`，下一次靠它判断上一张有没有处理。
+**执行段**，人逐行批过之后：只执行批了的行，照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」做，结果是一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的 PR。执行段不拆给 agent。最后报告：动了什么、留了什么、为什么留；这张表处理完（批了的行执行了，或每一行都回了「不批」）就删掉它的 `.tmp/dreaming/<日期>/`，下一次靠它判断上一张有没有处理。
 
 **写 `DESIGN.md` 和开 issue 都停在人身上**：提议段只把旧文和新文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）起草成目标仓库的 GitHub issue，人批了才开。
 

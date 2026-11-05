@@ -20,7 +20,7 @@ docs/design/tmp/<spec-slug>/
 
 记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 `idea-loop:wiki-conventions` 的「frontmatter」，`type: design`。
 
-这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 由编排者强制提交在需求的知识库分支上，实现读同一个知识库 worktree；它留到实现 PR 合并前的归档（归档模式从最终画布加实现写出 `delta/`，归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
+这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 由编排者强制提交在需求的工作分支上，实现在同一个分支上接着做；它留到实现 PR 合并前的归档（归档模式从最终画布加实现写出 `delta/`，归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
 
 冻结记录正文六节，短：
 

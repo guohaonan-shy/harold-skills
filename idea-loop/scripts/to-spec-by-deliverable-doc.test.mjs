@@ -93,7 +93,7 @@ test('how to write for a human is a pointer to evidence, not restated rules', ()
 
 test('the process is six steps, and the raw template moved into the skill\'s own references', () => {
   const steps = body.match(/^\d+\. \*\*[^*]+\*\*/gm) ?? [];
-  assert.deepEqual(steps.map((s) => s.replace(/^\d+\. /, '')), ['**开工**', '**落 raw**', '**探代码并谈 seam**', '**写 spec**', '**分流**', '**落地并收工**']);
+  assert.deepEqual(steps.map((s) => s.replace(/^\d+\. /, '')), ['**开工**', '**落 raw**', '**探代码并谈 seam**', '**写 spec**', '**分流**', '**合并并收工**']);
   assert.doesNotMatch(body, /<raw-template>/);
   assert.ok(existsSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'raw-template.md')));
   assert.match(body, /references\/raw-template\.md/);

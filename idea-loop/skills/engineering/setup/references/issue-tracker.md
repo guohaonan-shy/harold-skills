@@ -1,8 +1,6 @@
 # Issue tracker：GitHub
 
-这个业务的需求以 GitHub issue 的形式进来。所有操作用 `gh`；issue 所在的仓库写在下面一行，`gh` 不在那个仓库的 checkout 里跑时加 `-R <owner/name>`（`issues.mjs` 自己读这一行）。
-
-- issue 所在仓库：`<owner/name>`
+这个仓库的需求以 GitHub issue 的形式进来。所有操作用 `gh`，在仓库的 checkout 里跑，仓库由 `git remote` 推出来。
 
 issue 是需求的入口，也是工作的队列：idea-loop 的调度给每组待验证的 issue（一个根 issue，或一个没被整合的 issue）出一张会话卡片，人点开后，一组（一个根 issue 加它的子 issue，或一个没被整合的 issue）一个会话，从验证、设计一路走到实现合并。要做的事写在 spec 里（`docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
 
@@ -29,7 +27,7 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每组�
 | 关闭·不存在 | closed，not planned | 验证发现问题不成立，或人决定不做 |
 | 关闭·完成 | closed，completed | 实现合并了 |
 
-「中」开头的 label 由 issue 会话挂：每个 PR 合并后，它照知识库 main把 issue 翻到下一段，或关掉。「待」开头的 label 只在上一段的产出合进知识库 main之后才挂，由调度每轮对账时按知识库 main挂上，接住没在会话里的 issue；问题不存在、实现已合并的，也在对账时关掉。spec 覆盖了哪几个 issue，记在 spec frontmatter 的 `issues: [12, 15]` 里；一个都没覆盖的 spec（从对话里写的），会开一个标题以「spec：」开头的 issue 作为它在这里的入口。
+「中」开头的 label 由 issue 会话挂：每个 PR 合并后，它照主分支把 issue 翻到下一段，或关掉。「待」开头的 label 只在上一段的产出合进主分支之后才挂，由调度每轮对账时按主分支挂上，接住没在会话里的 issue；问题不存在、实现已合并的，也在对账时关掉。spec 覆盖了哪几个 issue，记在 spec frontmatter 的 `issues: [12, 15]` 里；一个都没覆盖的 spec（从对话里写的），会开一个标题以「spec：」开头的 issue 作为它在这里的入口。
 
 ## 分类 label
 

@@ -70,15 +70,18 @@ gh api -H 'Accept: application/vnd.github.raw' repos/<R>/contents/docs/records/r
 
 把读到的文件放进 `.tmp/retro/<YYYY-MM-DD>-<主题>/harold-pool/`，再对那个目录跑计数脚本。
 
-备好要写的文件（第 5 步）：新建的按上面的形状写在 `harold-pool/` 下；追加的，在读下来的那份末尾加一行「出现」。先记下文件路径，池里那一份的链接（`https://github.com/<R>/blob/<D>/docs/records/retro-candidates/<文件名>`）在第 6 步写进之后补进决定记录的「结果」。
+备好要写的文件（第 5 步）：新建的按上面的形状写在 `harold-pool/` 下；追加的，在读下来的那份末尾加一行「出现」。先记下文件路径，池里那一份的链接（`https://github.com/<R>/blob/<D>/docs/records/retro-candidates/<文件名>`）在第 6 步合并后补进决定记录的「结果」。
 
-写（第 6 步）：池在 harold-skills 的知识库里，知识库的改动不开 PR（`idea-loop:wiki-conventions` 的「知识库落地」）。人批过的一份候选是一次完整的改动，直接提交到它的默认分支：
+写（第 6 步，只改 `docs/` 的 PR）：
 
 ```
+gh api repos/<R>/git/ref/heads/<D> --jq .object.sha
+gh api repos/<R>/git/refs -f ref=refs/heads/docs/retro-pool-<日期>-<主题> -f sha=<上一步的 sha>
 # 新建：不带 sha；追加：带上现有文件的 sha（contents 接口返回里的 .sha）
 gh api -X PUT repos/<R>/contents/docs/records/retro-candidates/<文件名> \
-  -f message='docs(records): retro 候选 <一句话>' -f branch=<D> \
+  -f message='docs(records): retro 候选 <一句话>' -f branch=docs/retro-pool-<日期>-<主题> \
   -f content="$(base64 < <备好的文件>)" [-f sha=<现有文件的 sha>]
+gh pr create -R <R> --head docs/retro-pool-<日期>-<主题> --base <D> --title ... --body ...
 ```
 
-任何一步写不成（没有权限、sha 过期），记下原因，把这条候选的全文留在这场的决定记录里交给人，不重试到成功为止。
+检查全过就合并（`gh pr checks`，再 `gh pr merge`；合并方式照 harold-skills 的 `DEVELOPMENT.md`「分支」一节）。任何一步开不成（没有权限、检查红、冲突），记下原因，把这条候选的全文留在这场的决定记录里交给人，不重试到成功为止。

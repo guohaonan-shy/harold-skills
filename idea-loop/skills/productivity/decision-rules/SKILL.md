@@ -48,7 +48,7 @@ description: 碰到「这条该怎么处置」时先对它：哪些能照规则�
 - 方案形状被人提出第三条路的
 - 对外发布
 - 动生产业务数据
-- 合并改了代码的 PR。知识库的改动不开 PR，照 `idea-loop:wiki-conventions` 的「知识库落地」合进知识库 main，不用问人
+- 合并改了代码的 PR。spec、设计不单独开 PR，跟代码同一个 PR；没有代码可跟的只改 `docs/` 的 PR（`idea-loop:wiki-conventions` 的「知识库落地」）检查全过就合并
 
 ## 照规则的处置，人能推翻
 

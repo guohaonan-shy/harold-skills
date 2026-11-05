@@ -1,15 +1,16 @@
 ---
 name: wiki-conventions
-description: 业务的知识库（业务根目录下的 docs/ 与规则文件）与 worktree 下 .tmp/ 中间产物的约定：知识库在哪、改动怎么落地、目录、frontmatter、slug 与链接、什么由人拍板。动 docs/ 或往 .tmp/ 放东西之前用。
+description: 目标仓库 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定：目录、frontmatter、slug 与链接、知识库改动怎么合进主分支、什么由人拍板。动 docs/ 或往 .tmp/ 放东西之前用。
 ---
-
-## 业务与知识库
-
-知识库是业务根目录那个 git 仓库，业务的代码仓库 clone 在它下面。下文的 `docs/` 和规则文件都相对业务根目录（开了知识库分支的，相对自己的知识库 worktree），不是相对代码仓库：各 skill 里写 `<worktree 根>/docs/…`、「当前 worktree 的 `docs/`」的，`docs/` 都在知识库那边，`.tmp/` 留在代码 worktree。业务根目录在哪、多个仓库怎么分节、说明文件，见 [references/knowledge-base.md](references/knowledge-base.md) 的「业务根目录」。
 
 ## 知识库落地
 
-知识库的改动不开 PR：一个需求一个知识库分支，跟着需求合进知识库 main。别的 skill 说「照 `idea-loop:wiki-conventions` 的『知识库落地』」，就是读 [references/knowledge-base.md](references/knowledge-base.md) 的「知识库落地」照做。
+一个需求在 `docs/` 里的改动（spec、raw、冻结的设计、工单、设计档案归档）提交在这个需求的工作分支上，跟代码在同一个分支、同一个 PR 里合进主分支，不单独开 spec PR 或设计 PR。改到一半不进主分支，别的 worktree 不会读到半成品。别的 skill 说「照 `idea-loop:wiki-conventions` 的『知识库落地』」，就是照这一节做。
+
+没有代码 PR 可跟的，才自己开一个只改 `docs/` 的 PR，检查全过就合并：
+
+- 父 issue 拆完子 issue（spec 与设计定稿）：子 issue 的会话从主分支读父 spec，所以父 issue 的这些改动先合；
+- 没有代码的活：验证为不存在、或人决定不做的 issue，dreaming 的执行段，不在 issue 会话里的 retro 决定记录。
 
 ## 文件在不在，就是状态
 
@@ -44,7 +45,7 @@ docs/
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 了结后的总结 —— 永久
 ├── design/
-│   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果提交在知识库分支上
+│   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果提交在需求分支上
 │   │   ├── imagine/      发散段：变种板、方向说明、交接画布 —— 内部结构归 `idea-loop:uiux-imagine`
 │   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图；冻结后唯一的设计真相 —— 内部结构归 `idea-loop:uiux-refine`
 │   │   ├── delta/        对 prod/ 的差异：合并前归档时从最终画布加实现写出（没有设计稿的改动由实现者记最小差异）—— 结构见 `idea-loop:design-archive`
@@ -56,7 +57,7 @@ docs/
 
 `raw/`、`spec/`、`adr/` 是会话产物；`domain/` 是知识库存量，不由单次会话产生；`records/` 由会话建、由人改，文件用 `type: record`，不进 spec 的生命周期，也不在 dreaming 里删。
 
-业务的规则放在业务根目录，一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`（`/idea-loop:setup` 建），`GLOSSARY.md`、`DESIGN.md`。
+项目级的规则放在仓库根目录，一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`（`/idea-loop:setup` 建），`GLOSSARY.md`、`DESIGN.md`。
 
 - **spec 文件与目录同名**：`docs/spec/<spec-slug>/<spec-slug>.md`。wiki-link 按文件名解析，都叫 `spec.md` 的话 `[[<spec-slug>]]` 就指不到。
 - **工单住在自己 spec 的目录里**，编号在每份 spec 内从 `01` 起。找一份 spec 的工单，看它目录下的 `tickets/`。
@@ -65,7 +66,7 @@ docs/
 
 - **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
   - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布，有价值的结论写回 spec 或 issue。
-  - 冻结时，签字的画布、冻结记录和交互图提交在这个需求的知识库分支上（`git add -f`），实现读同一个知识库 worktree。冻结之后设计变了，由 designer 改画布、冻结记录记一行，提交在同一个分支。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些改动跟着知识库分支合进 main（「知识库落地」）。
+  - 冻结时，签字的画布、冻结记录和交互图提交在需求的工作分支上（`git add -f`），实现在同一个分支上接着做，跟代码一起合进主分支（「知识库落地」）。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着同一个 PR 进主分支。
   - **`research/` 不算设计产物**：从不归档；只做过调研的需求不起 UI 审查，合并也不走归档。用进设计的调研结论已经以文字写在方向说明或冻结记录里，随设计归档。
 - **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（人批过之后），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `idea-loop:design-archive`。
 
@@ -92,7 +93,7 @@ docs/
 - 设计侧的过程产物（工作区、方向说明、交接画布、评分、评委截图）在 `docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
 - `evidence/` 下是交付证据，过程中以本地文件发给人看，用到时才上传到 PR 的素材分支，不进代码分支和 `docs/`（`idea-loop:evidence`）。
 
-**本地忽略**：第一次用时确认 `.tmp/` 在代码仓库、`docs/design/tmp/` 在知识库的 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。
+**本地忽略**：第一次用时确认 `.tmp/` 和 `docs/design/tmp/` 都在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。
 
 ## 从平铺布局迁移
 

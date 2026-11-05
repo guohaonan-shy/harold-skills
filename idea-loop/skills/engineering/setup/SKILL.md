@@ -1,12 +1,12 @@
 ---
 name: setup
-description: 把一个业务配置成 idea-loop 能用的样子：业务根目录（知识库仓库）的规则文件与说明文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 的定时任务、issue 整合的 cloud 定时任务。每个仓库跑一次，项目配置变了再跑。
+description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 的定时任务、issue 整合的 cloud 定时任务。每个仓库跑一次，项目配置变了再跑。
 disable-model-invocation: true
 ---
 
-在业务根目录跑：知识库所在的 git 仓库，代码仓库 clone 在它下面（`idea-loop:wiki-conventions` 的「业务与知识库」；还没有的，照 [references/business-root.md](references/business-root.md) 先建）。旧布局（知识库还在代码仓库里）照旧在代码仓库的主 checkout 根目录跑。已有文件只补缺的小节，人写过的内容原样保留；改动留在工作区，人说提交才提交。GitHub 上删 label 是例外：它立刻生效，人确认过清单才删。
+在目标仓库的主 checkout 根目录跑。已有文件只补缺的小节，人写过的内容原样保留；改动留在工作区，人说提交才提交。GitHub 上删 label 是例外：它立刻生效，人确认过清单才删。
 
-idea-loop 从业务根目录的这几处读配置；多个仓库时，各仓库不同的小节在同一份文件里按 `## <仓库名>` 分节：
+idea-loop 从这几处读项目配置：
 
 | 文件 | 管什么 | 模板 |
 |---|---|---|
@@ -14,9 +14,9 @@ idea-loop 从业务根目录的这几处读配置；多个仓库时，各仓库�
 | `REVIEW.md` | 验证命令、review 的额外要求 | [references/review.md](references/review.md) |
 | `CODING_STANDARDS.md` | 分层、文件划分、命名：代码该怎么写 | [references/coding-standards.md](references/coding-standards.md) |
 | `ISSUE_TRACKER.md` | 需求从 GitHub issue 进来：怎么读写 issue、`status:*` label 是什么意思 | [references/issue-tracker.md](references/issue-tracker.md) |
-| 业务说明文件里的 `## issue 分类` 一节 | issue 的分类 label（`type:*`）和要保留的别的 label | [references/issue-types.md](references/issue-types.md) |
+| `AGENTS.md` 里的 `## issue 分类` 一节 | issue 的分类 label（`type:*`）和要保留的别的 label | [references/issue-types.md](references/issue-types.md) |
 | `PRODUCT.md` | 用户、产品要做成什么、品牌性格、设计原则：访谈和设计做判断的依据 | [references/product.md](references/product.md) |
-| 业务说明文件（`CLAUDE.md` 或 `AGENTS.md`）里的 `## idea-loop` 块 | 指向上面几份，常驻 | [references/agents-block.md](references/agents-block.md) |
+| `CLAUDE.md` 或 `AGENTS.md` 里的 `## idea-loop` 块 | 指向上面几份，常驻 | [references/agents-block.md](references/agents-block.md) |
 
 ## 预检
 
@@ -42,11 +42,12 @@ idea-loop 从业务根目录的这几处读配置；多个仓库时，各仓库�
 
 ## 写
 
-- 这几份文件按模板写进业务根目录。文件已存在就只补模板里它缺的小节。代码仓库里只留它自己的 `AGENTS.md` / `CLAUDE.md`，idea-loop 不往里写。
-- **业务根目录与说明文件**（`.gitignore`、业务说明文件放哪一份、「两份都读」、issue 所在仓库）：照 [references/business-root.md](references/business-root.md)。
-- `.tmp/` 追加进每个代码仓库的 `$(git rev-parse --git-common-dir)/info/exclude`。
+- 这几份文件按模板写进仓库根目录。文件已存在就只补模板里它缺的小节。
+- `## idea-loop` 块写进 `CLAUDE.md`；没有 `CLAUDE.md` 就写进 `AGENTS.md`；两份都没有，问人建哪份。块已存在就原地更新。
+- `docs/` 骨架：`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`index.md`，只建不存在的。
+- `.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
-- `## issue 分类` 一节照模板写进业务说明文件；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
+- `## issue 分类` 一节照模板写进 `AGENTS.md`（没有就写进有 `## idea-loop` 块的那份）；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
 - 旧状态：`check` 报了旧状态的，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" migrate docs`。
 - label，按顺序：
   1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*` 和 `type:*`，列出多余的 label 和各自在用的 open issue 数。
@@ -54,7 +55,7 @@ idea-loop 从业务根目录的这几处读配置；多个仓库时，各仓库�
   3. 把多余 label 的清单给人看，人确认后 `issues.mjs labels docs --prune` 删掉，issue 上的也一起去掉。
 - GitHub App：在 `~/.idea-loop/github-apps.json` 里加 `"<owner/repo>": { "appId": <id>, "privateKeyPath": "<路径>" }`。只写路径，私钥文件不打开。
 
-完成条件：这几份文件都在业务根目录，模板里的小节一个不缺；混用时开关已开或那一段已给人；`git diff` 给人看过；`issues.mjs labels docs` 不再列出多余的 label。
+完成条件：这几份文件都在，模板里的小节一个不缺；`git diff` 给人看过；`issues.mjs labels docs` 不再列出多余的 label。
 
 ## 夜间规则回放
 

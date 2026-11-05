@@ -30,7 +30,7 @@ description: 关键词聚类：按搜索意图把词分组，映射到已有或�
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" <业务根目录>/SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
+1. 先读目标仓库根目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出七节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，映射以它为根：重点页面就是簇要映射到的已有页面，业务和目标决定哪些簇值得瞄准。
 3. 这个 skill 需要重点页面。SEO.md 和项目上下文里都没有时：
    - 人在场：做最小的现场补齐：问人哪些页面要紧，或从站点、审计、Search Console 提一份短名单再确认，先写进 SEO.md 的「重点页面」，再用 `update_project_context`（`addKeyPages`）写回，然后继续聚类。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
