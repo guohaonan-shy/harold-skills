@@ -53,7 +53,7 @@
  *   node issues.mjs show       <docs> <n>                             → JSON: #n's state, title, categories, its PRs (repo, draft / ready / merged), the spec that covers it, its branch
  *   node issues.mjs check      <docs> <state> <n> [--from=<state>] [--comment=<text>] [--skip-design] → only checks the flip's preconditions; writes nothing; --from: the issue is not read (n may be a Linear key)
  *   node issues.mjs set        <docs> <state> <n>... [--comment=<text>] [--skip-design] → checked flip; done / canceled close the issue first, then drop the label
- *   node issues.mjs new        <docs> <title> <body-file> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=<k>] [--type=<c>]... → opens an issue after checking the body; prints its number
+ *   node issues.mjs new        <docs> <title> <body-file> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=<k>] [--type=<c>]... [--repo=<owner/repo>] → opens an issue after checking the body (in <owner/repo> when given, else the current repo); prints its number
  *   node issues.mjs body       <docs> <body-file>                     → only checks the body's four required sections
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
@@ -493,11 +493,11 @@ const row = (i) => {
 
 const PAGE = 100;
 
-/** Every open issue (pull requests left out) from the repo-wide REST list, page by page. */
-function openIssues(gh) {
+/** Every open issue (pull requests left out) from the repo-wide REST list, page by page; of `repo` (owner/name) when given. */
+function openIssues(gh, repo = null) {
   const out = [];
   for (let page = 1; ; page += 1) {
-    const rows = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues?state=open&per_page=${PAGE}&page=${page}`]));
+    const rows = JSON.parse(gh(['api', `repos/${repo ?? '{owner}/{repo}'}/issues?state=open&per_page=${PAGE}&page=${page}`]));
     for (const i of rows) if (!i.pull_request) out.push(row(i));
     if (rows.length < PAGE) return out;
   }
@@ -632,7 +632,7 @@ export function backlog(gh, limit = 100) {
  * `todo` comes with a priority, and no open issue has the same title. Labels: `status:todo` for todo (backlog
  * has none), `priority:*`, `kind:*`, `type:*`. Returns the new number. Nothing is created unless every check passed.
  */
-export function newIssue(gh, types, { title, body, state = 'backlog', priority = null, kind = null, typeValues = [] }) {
+export function newIssue(gh, types, { title, body, state = 'backlog', priority = null, kind = null, typeValues = [], repo = null }) {
   if (!String(title ?? '').trim()) throw new Error('没给标题');
   if (!['backlog', 'todo'].includes(state)) throw new Error(`--state 只能是 backlog 或 todo（给的是「${state}」）`);
   if (priority !== null && !PRIORITIES.includes(priority)) throw new Error(`--priority 只能是 ${PRIORITIES.join(' / ')}（给的是「${priority}」）`);
@@ -641,10 +641,11 @@ export function newIssue(gh, types, { title, body, state = 'backlog', priority =
   const errors = bodyErrors(body);
   if (errors.length) throw new Error(`正文不合格，没开：${errors.join('；')}`);
   const typeLabelsOf = typeSet(types, typeValues);
-  const same = openIssues(gh).find((i) => i.title.trim() === String(title).trim());
+  if (repo !== null && !/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error(`--repo 要写成 owner/name（给的是「${repo}」）`);
+  const same = openIssues(gh, repo).find((i) => i.title.trim() === String(title).trim());
   if (same) throw new Error(`已经有同标题的 open issue #${same.number}，没开`);
   const labels = [...(state === 'todo' ? [label('todo')] : []), ...(priority ? [`${PRIORITY_PREFIX}${priority}`] : []), ...(kind ? [`${KIND_PREFIX}${kind}`] : []), ...typeLabelsOf];
-  const out = String(gh(['issue', 'create', '--title', String(title).trim(), '--body', body, ...labels.flatMap((l) => ['--label', l])])).trim();
+  const out = String(gh(['issue', 'create', ...(repo ? ['-R', repo] : []), '--title', String(title).trim(), '--body', body, ...labels.flatMap((l) => ['--label', l])])).trim();
   const n = Number(out.match(/\/issues\/(\d+)$/)?.[1]);
   if (!n) throw new Error(`gh issue create 没返回 issue 地址：${out}`);
   return n;
@@ -888,7 +889,8 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
   if (!docs || !existsSync(docs)) throw new Error(`usage: issues.mjs <${COMMANDS.join('|')}> <docs> …（${docs ?? '没给 docs'} 不存在）`);
   if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」（${COMMANDS.join(' / ')}）`);
   const linear = platformOf(readTracker(docs)) === 'linear';
-  if (linear && (GITHUB_ONLY.has(cmd) || (cmd === 'queues' && a))) throw new Error(linearRefusal(cmd));
+  // `new --repo=…` names a GitHub repository itself (retro opens plugin issues that way), so a Linear project may use it
+  if (linear && ((GITHUB_ONLY.has(cmd) && !(cmd === 'new' && flags.repo)) || (cmd === 'queues' && a))) throw new Error(linearRefusal(cmd));
   gh ??= defaultGh(docs);
   const print = (lines) => lines.forEach((l) => log(l));
   const json = (v) => log(JSON.stringify(v, null, 2));
@@ -919,8 +921,8 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
     return log('正文齐了');
   }
   if (cmd === 'new') {
-    if (b === undefined) throw new Error('usage: issues.mjs new <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=bug|feature|improvement] [--type=<分类>]...');
-    const n = newIssue(gh, readTypes(docs), { title: a, body: bodyFile(b), state: text(flags, 'state') ?? 'backlog', priority: text(flags, 'priority'), kind: text(flags, 'kind'), typeValues: typeFlags });
+    if (b === undefined) throw new Error('usage: issues.mjs new <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=bug|feature|improvement] [--type=<分类>]... [--repo=<owner/repo>]');
+    const n = newIssue(gh, readTypes(docs), { title: a, body: bodyFile(b), state: text(flags, 'state') ?? 'backlog', priority: text(flags, 'priority'), kind: text(flags, 'kind'), typeValues: typeFlags, repo: text(flags, 'repo') });
     return log(String(n));
   }
   if (cmd === 'priority') {

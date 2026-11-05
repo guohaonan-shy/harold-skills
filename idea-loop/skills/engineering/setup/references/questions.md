@@ -11,6 +11,7 @@
   - **仓库外的目录（或单独一个仓库）**：仓库要照别的标准维护、放不进这套文件时选。不在仓库里建 `docs/` 骨架，只在 `## idea-loop` 块里记下位置，人在那里照 `idea-loop:wiki-conventions` 的格式自己维护；idea-loop 的 skill 只读写仓库里的 `docs/`，所以 spec、设计、dreaming 这些流程在这个仓库里用不了。
   - **不要**：不建骨架，不记位置；同样用不了那些流程。
 - **做不做 UI 设计**：做的话一起配设计档案的忽略规则和 LFS。
+- **issue 在哪个平台**：GitHub 或 Linear。推荐 GitHub；会话里有 Linear MCP 连接（能调 `list_teams`）、或人提到 Linear 时推荐 Linear。选 Linear 的，团队、状态、label 由 SKILL 的「写」里 Linear 那一步读出来给人确认，不在这里问。
 - **GitHub App 代发评论**：要的话给 appId 和私钥文件路径。
 - **团队用不用 triage**：triage 是验证过的 issue 等人评估（grill、设计）的那一段。推荐「用」；团队的 issue 平台没开 triage、或所有 issue 都不要人评估的选「跳过」，backlog 直接到 todo，grill 与设计在 todo 的会话里做。答案写进 `ISSUE_TRACKER.md` 的 `triage：用` / `triage：跳过` 那一行。
 - **这个产品的 issue 会改到哪几个仓库**：每个仓库的 `owner/name`、本地路径、主分支、管产品的哪一块。推荐只填当前仓库一行（从 `git remote` 和基准分支推出）；人说还有别的仓库再加。答案写进 `ISSUE_TRACKER.md` 的「仓库」表，第一行是知识库所在的仓库，模板里的占位行删掉。

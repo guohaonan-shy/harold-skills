@@ -14,7 +14,8 @@ const SCRIPT = fileURLToPath(new URL('./spec.mjs', import.meta.url));
 // instead: a 「验证」 table, and the sub-sections under 技术方案总览 (with 「不涉及」 spelled out).
 const spec = ({ status, ui, freeze = false, grill = false, fork = false, issues, verdict, legacy = false } = {}) => {
   const rows = Object.entries(verdict ?? {});
-  const opening = legacy ? '' : rows.map(([n, v]) => `> #${n} ${v}：${v === '存在' ? '重试一次就扣一次配额' : '上周 #9 已修，对着 main 核过'}`).join('\n');
+  const tag = (n) => (/^\d+$/.test(n) ? `#${n}` : n);
+  const opening = legacy ? '' : rows.map(([n, v]) => `> ${tag(n)} ${v}：${v === '存在' ? '重试一次就扣一次配额' : '上周 #9 已修，对着 main 核过'}`).join('\n');
   const table = `## 验证
 
 | issue | 结论 | 证据 |
@@ -82,6 +83,15 @@ test('verdicts read the quoted lines under the title; allAbsent needs every list
   assert.equal(allAbsent(md), false);
   assert.equal(allAbsent(spec({ issues: '[1, 2]', verdict: { 1: '不存在', 2: '不存在' } })), true);
   assert.equal(allAbsent(spec()), false);
+});
+
+test('verdicts read a Linear key as a string, matching what issuesOf returns, and allAbsent follows', () => {
+  const md = spec({ issues: '[FA-577, 12]', verdict: { 'FA-577': '存在', 12: '不存在' } });
+  assert.equal(verdicts(md).get('FA-577'), '存在');
+  assert.equal(verdicts(md).get(12), '不存在');
+  assert.equal(allAbsent(md), false);
+  assert.equal(allAbsent(spec({ issues: '[ENG-9, 12]', verdict: { 'ENG-9': '不存在', 12: '不存在' } })), true);
+  assert.equal(allAbsent(spec({ issues: '[ENG-9]', verdict: { 'ENG-8': '不存在' } })), false);
 });
 
 test('verdicts still read the older 验证 table', () => {

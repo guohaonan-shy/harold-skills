@@ -15,7 +15,7 @@ argument-hint: "<issue 号>"
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo in-progress」）。
 
-下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
+**Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 [references/linear.md](../issues/references/linear.md)；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
@@ -47,7 +47,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 1. **开 draft PR**：spec 已提交在分支上（上一步保证）。多个仓库的 issue：`ISSUE_TRACKER.md` 的「仓库」一节列出了几个仓库、spec 的「实现决策」写了要改哪些，就在每个要改的、不是当前 worktree 所在的仓库里开同名分支的 worktree：`git -C <那个仓库的本地路径> worktree add <路径> -b issue/<号>-<slug> origin/<那个仓库的主分支>`，把路径记进 spec 的「实现决策」并提交。没有这一节的项目就是一个仓库，不用开。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」给每个要改的仓库开 PR（已有就跳过）。
 2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
-3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。转 ready、进 in-review 在这两个 skill 里。
+3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 

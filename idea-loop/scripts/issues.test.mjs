@@ -713,6 +713,53 @@ test('the command line: new opens the issue and prints its number; body only che
   assert.equal(calls.length, 1, 'body wrote nothing');
 });
 
+test('new --repo opens the issue in that repository and checks for a duplicate there; without it nothing changes', () => {
+  // a gh that knows two repos: the current one (o/r) has an open issue titled 同名, plugin/repo has none
+  const calls = [];
+  const gh = (args) => {
+    calls.push(args);
+    if (args[0] === 'api') return JSON.stringify(args[1].startsWith('repos/plugin/repo/') ? [] : [{ number: 5, title: '同名', state: 'open', labels: [] }]);
+    if (args[0] === 'issue' && args[1] === 'create') return 'https://github.com/plugin/repo/issues/9\n';
+    return '';
+  };
+  assert.equal(newIssue(gh, null, { title: '同名', body: GOOD_BODY, repo: 'plugin/repo' }), 9);
+  assert.ok(calls.some((c) => c[0] === 'api' && c[1].startsWith('repos/plugin/repo/issues?')), 'duplicate check reads the named repo');
+  assert.ok(!calls.some((c) => c[0] === 'api' && c[1].startsWith('repos/{owner}/{repo}/')), 'not the current repo');
+  const create = calls.find((c) => c[0] === 'issue');
+  assert.deepEqual(create.slice(0, 4), ['issue', 'create', '-R', 'plugin/repo']);
+  // the same title already open in the named repo is still refused
+  const taken = (args) => (args[0] === 'api' ? JSON.stringify([{ number: 3, title: '同名', state: 'open', labels: [] }]) : '');
+  assert.throws(() => newIssue(taken, null, { title: '同名', body: GOOD_BODY, repo: 'plugin/repo' }), /#3/);
+  // without --repo: the current repo, no -R
+  calls.length = 0;
+  assert.throws(() => newIssue(gh, null, { title: '同名', body: GOOD_BODY }), /#5/);
+  assert.ok(calls.every((c) => !c.includes('-R')));
+  assert.throws(() => newIssue(gh, null, { title: 'x', body: GOOD_BODY, repo: 'plugin' }), /owner\/name/);
+});
+
+test('in a Linear project new is refused, except with --repo, which names a GitHub repository itself', () => {
+  const docs = docsWith({}, '# Issue tracker：Linear\n');
+  const calls = [];
+  const gh = (args) => {
+    calls.push(args);
+    return args[0] === 'api' ? '[]' : 'https://github.com/plugin/repo/issues/4\n';
+  };
+  assert.throws(() => cli(gh, ['new', docs, '标题', fileWith(GOOD_BODY)]), /Linear/);
+  assert.equal(calls.length, 0);
+  assert.deepEqual(cli(gh, ['new', docs, '标题', fileWith(GOOD_BODY), '--repo=plugin/repo']), ['4']);
+});
+
+test('the command line: new --repo passes the repository on', () => {
+  const docs = docsWith();
+  const calls = [];
+  const gh = (args) => {
+    calls.push(args);
+    return args[0] === 'api' ? '[]' : 'https://github.com/plugin/repo/issues/4\n';
+  };
+  assert.deepEqual(cli(gh, ['new', docs, '插件里的问题', fileWith(GOOD_BODY), '--repo=plugin/repo']), ['4']);
+  assert.deepEqual(calls.at(-1).slice(0, 4), ['issue', 'create', '-R', 'plugin/repo']);
+});
+
 test('priority replaces the issue\'s priority:* label; none only removes it; nothing to change means no gh edit', () => {
   const issues = { 1: open(1, ['status:todo', 'priority:P2', 'bug']), 2: open(2, ['priority:P0']), 3: open(3, []) };
   const { gh, calls } = fakeGh(issues);

@@ -71,7 +71,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 ## 5. 批了的：开 issue，或进候选池
 
-**开 issue**：照 `idea-loop:issues` 的「开一个 issue」开（查重、不打 `status:*`，就是 backlog）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
+**开 issue**：照 `idea-loop:issues` 的「开一个 issue」开（查重、不打 `status:*`，就是 backlog）。开到哪：插件的问题开到插件仓库，即 `issues new … --repo=guohaonan-shy/harold-skills`；项目的问题开到目标仓库，不带 `--repo`（Linear 项目照 `idea-loop:issues` 的 `references/linear.md` 开）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
 
 **进候选池**：不开 issue，写进池，做法见 [candidate-pool](references/candidate-pool.md)。
 

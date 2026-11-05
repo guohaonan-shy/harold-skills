@@ -75,7 +75,7 @@ export function forHuman(md) {
 
 /**
  * Whether each covered issue exists. Current specs open with one quoted line per issue, straight under
- * the title: `> #12 存在：…` or `> #12 不存在：…`. Specs written before that carry a 「验证」 table with
+ * the title: `> #12 存在：…` or `> #12 不存在：…` (a Linear issue by its key: `> FA-577 存在：…`, read as the string `'FA-577'`). Specs written before that carry a 「验证」 table with
  * a row per issue, `| #12 | 存在 | … |`; it is still read, and the opening lines win when both say something.
  */
 export function verdicts(md) {
@@ -86,8 +86,8 @@ export function verdicts(md) {
     opening.push(line);
   }
   for (const line of opening) {
-    const m = line.match(/^>\s*#(\d+)\s*(不存在|存在)\s*[：:]/);
-    if (m) out.set(Number(m[1]), m[2]);
+    const m = line.match(/^>\s*(?:#(\d+)|([A-Za-z][A-Za-z0-9]*-\d+))\s*(不存在|存在)\s*[：:]/);
+    if (m) out.set(m[1] ? Number(m[1]) : m[2], m[3]);
   }
   for (const line of (section(md, '验证') ?? '').split('\n')) {
     const m = line.match(/^\|\s*#(\d+)\s*\|\s*(存在|不存在)\s*\|/);

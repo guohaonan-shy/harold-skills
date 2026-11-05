@@ -7,7 +7,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 状态改只走脚本：下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`。脚本先核前提再写，拒绝时会说原因和能翻成什么，照原因处理。
 
-平台上各字段怎么表达、脚本调哪个接口：GitHub 读 [references/github.md](references/github.md)；Linear 读 [references/linear.md](references/linear.md)（只有对照，脚本还不接）。
+平台上各字段怎么表达、读写用什么：GitHub 用脚本，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `issues check` 核。项目在哪个平台，看 `ISSUE_TRACKER.md` 第一个标题。
 
 ## 实体
 
@@ -86,6 +86,8 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 3. 判断是 P0 的，开成 backlog 后调 `/idea-loop:issue-triage P0 <号>`，当场复现。
 4. 正文被拒（缺节或节是空的）就补上再开；开不成（`gh` 失败）的，记下没开成和原因，交给人。
 
+Linear 项目没有 `issues new`：`issues body` 校验正文，再照 [references/linear.md](references/linear.md) 的「开 issue」用 MCP 开。
+
 ## 分类
 
 除了状态，issue 还带模块和类型两种 label：模块是 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上；类型是 `kind:bug` / `kind:feature` / `kind:improvement` 之一。项目有哪些模块、另外保留哪些 label，写在根目录 `AGENTS.md`（或 `CLAUDE.md`）的「issue 分类」一节，`/idea-loop:setup` 建它。`issues type` 打模块，会替换原有的 `type:*`；类型用 `gh issue edit --add-label`。父类那行注了「（独立队列，上限 N）」的，它的 issue 在调度里单独排队（`issues queues`）。
@@ -96,9 +98,9 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 issues labels     <docs> [--prune]                 # 建缺的 status:*、kind:*、type:* label；多余的只列出，--prune 删
 issues type       <docs> <号> <父类[/子类]>...      # 打模块，换掉原有的 type:*
 issues show       <docs> <号>                      # JSON：状态、标题、分类、挂着的 PR（仓库、draft / ready / merged）、覆盖它的 spec 与分支
-issues check      <docs> <状态> <号>               # 只核翻法的前提、不改；平台无关，Linear 上先跑它再用 MCP 翻
+issues check      <docs> <状态> <号> [--from=<现在的状态>]   # 只核翻法的前提、不改；Linear 上必带 --from，先跑它再用 MCP 翻
 issues set        <docs> <状态> <号>... [--comment=<文字>] [--skip-design]   # 核过再翻；done、canceled 同时关闭
-issues new        <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=…] [--type=…]...   # 校验正文、查重、开；默认 backlog，todo 必带 --priority；输出新号
+issues new        <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=…] [--type=…]... [--repo=<owner/repo>]   # 校验正文、查重、开；默认 backlog，todo 必带 --priority；--repo 开到别的仓库；输出新号
 issues body       <docs> <正文文件>                # 只校验正文，不开；Linear 上先跑它再用 MCP 开
 issues priority   <docs> <P0|P1|P2|none> <号>...   # 换掉原有的优先级
 issues backlog    <docs> [<上限>]                  # 开着的 backlog issue，最早的在前（JSON）；跳过分拣问过「还要你补」、之后没人动过的
