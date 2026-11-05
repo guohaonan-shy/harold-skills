@@ -1,11 +1,11 @@
 ---
 name: issue-verify
-description: 验证一个 GitHub issue 描述的问题是否真实存在，打上分类，存在的起草成 spec、不存在的留下证据，要人定的跟人 grill，spec 合进主分支。issue 会话的审核阶段、或人要核一个 issue 时用。
+description: 验证一个 GitHub issue 描述的问题是否真实存在，打上分类，存在的起草成 spec、不存在的留下证据，要人定的跟人 grill，spec 落进业务的知识库。issue 会话的审核阶段、或人要核一个 issue 时用。
 ---
 
-验证一个 issue：先复现，判断问题是否真实存在，打上分类，用 `idea-loop:to-spec` 起草一份 spec 记下验证结论。规则判不了、要人定的，就在这个会话里跟人 grill。最后经只改 `docs/` 的 PR 合进主分支，把 spec 的 slug 交回给调用你的 `idea-loop:issue-session`，issue 的下一段由它翻。
+验证一个 issue：先复现，判断问题是否真实存在，打上分类，用 `idea-loop:to-spec` 起草一份 spec 记下验证结论。规则判不了、要人定的，就在这个会话里跟人 grill。最后提交在这个 issue 的知识库分支上，把 spec 的 slug 交回给调用你的 `idea-loop:issue-session`，issue 的下一段由它翻。
 
-issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRACKER.md`。先用 Skill 工具调 `idea-loop:spec-status`（spec 和 issue 的状态）和 `idea-loop:decision-rules`（能按「自己定的四条」判的自己定，依据不成立的才留给人）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指当前 worktree 的 `docs/`。
+issue 怎么读、label 是什么意思，见业务根目录的 `ISSUE_TRACKER.md`。先用 Skill 工具调 `idea-loop:spec-status`（spec 和 issue 的状态）和 `idea-loop:decision-rules`（能按「自己定的四条」判的自己定，依据不成立的才留给人）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec-status` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs"`，`<docs>` 指这个 issue 的知识库 worktree 下的 `docs/`（`node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" kb issue-<号>` 给出，根的会话用根号；`idea-loop:wiki-conventions` 的「知识库落地」）。
 
 ## 开场
 
@@ -38,7 +38,7 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 
 ## 起草
 
-用 Skill 工具调 `idea-loop:to-spec`，上下文就是这个 issue 和你的复现结论。没人在场时 seam 自己定；它「合进主分支」那一步留给你，下面做。
+用 Skill 工具调 `idea-loop:to-spec`，上下文就是这个 issue 和你的复现结论。没人在场时 seam 自己定；它「落地」那一步留给你，下面做。
 
 - **功能级的**，标题下第一行写「> 需要 grill：<为什么>」。功能级是修完多了一个原来没有的能力，或者 issue 里写着还没定的设计问题。
 - **验证为不存在的**，spec 只有开头的结论和「关联」。
@@ -47,7 +47,7 @@ issue 怎么读、label 是什么意思，见目标仓库根目录的 `ISSUE_TRA
 
 ## 自己校验
 
-开 PR 之前逐项核对。哪项不过，回去改 spec 或补跑那一步，改完再核一遍。
+提交之前逐项核对。哪项不过，回去改 spec 或补跑那一步，改完再核一遍。
 
 1. **状态与结构**：`spec-status check <docs>` 的 `problems` 为空；spec 跑过 `route`。
 2. **有着落**：issue 在 spec frontmatter 的 `issues` 里，标题下有它的一行结论。
@@ -64,20 +64,19 @@ spec 是「审核中」：`issues set <docs> 审核中 <号>`，用 PushNotifica
 
 - 「需要 grill」：用 Skill 工具调 `idea-loop:grill`，按结果改 spec，删掉这一行。
 - 「待定」：人定了，把小节改写成定下的决定，写上依据（人的原话），删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
-- 人决定不做：`issues drop <docs> <slug> <号>`（关成 not planned），删掉这份 spec 的目录，不合并，交回「已关闭」。
-- 人说先放着：`issues set <docs> 搁置 <号>`，spec 不合并，交回「搁置」。
-- 都定完了：`spec-status set <docs> <slug> 正式`（issue 不存在的翻「完成」），去「合进主分支」。
+- 人决定不做：`issues drop <docs> <slug> <号>`（关成 not planned），删掉这份 spec 的目录，交回「已关闭」。
+- 人说先放着：`issues set <docs> 搁置 <号>`，知识库分支留着不合，交回「搁置」。
+- 都定完了：`spec-status set <docs> <slug> 正式`（issue 不存在的翻「完成」），去「落进知识库」。
 
-## 合进主分支
+## 落进知识库
 
-1. 只 `git add` 这份 spec 的目录和 `docs/spec/index.md`，提交（`docs(spec): 起草 <slug>`），`git push -u origin <分支>`，`gh pr create --base <主分支>`，正文写 slug、状态、覆盖的 `#号`。
-2. `gh pr checks <号> --watch` 全过就 `gh pr merge <号> --squash --delete-branch`；失败就停下告诉人。只改 `docs/` 的 PR 检查过了就合并（`idea-loop:decision-rules` 的「不自动的」）。
+在知识库 worktree 里只 `git add` 这份 spec 的目录和 `docs/spec/index.md`，提交（`docs(spec): 起草 <slug>`）。不开 PR；分支什么时候合进知识库 main，照 `idea-loop:wiki-conventions` 的「知识库落地」（issue 不存在、被关掉的，这时就合）。
 
 ## 交回
 
-交回 spec 的 slug 和合并的 PR 号，或「已关闭」「搁置」。不是 issue 会话调的你，告诉人用 `/idea-loop:issue-session <号>` 接上后面的阶段。
+交回 spec 的 slug 和知识库分支名，或「已关闭」「搁置」。不是 issue 会话调的你，告诉人用 `/idea-loop:issue-session <号>` 接上后面的阶段。
 
 ## 边界
 
-- 只改 worktree 里 `docs/spec/` 下的文件和 `.tmp/`。不改代码；复现用的测试代码不提交。
-- GitHub 上：issue 的状态和分类只走 `issues`；只开 spec 的 PR，只合并只改 `docs/` 的 PR。
+- 只改知识库 worktree 里 `docs/spec/` 下的文件和代码 worktree 的 `.tmp/`。不改代码；复现用的测试代码不提交。
+- GitHub 上：issue 的状态和分类只走 `issues`；不开 PR、不合并 PR。

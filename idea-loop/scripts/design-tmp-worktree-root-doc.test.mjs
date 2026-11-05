@@ -40,7 +40,8 @@ test('no skill or agent text builds a path from CLAUDE_PROJECT_DIR', () => {
 for (const skill of ['uiux-imagine', 'uiux-refine']) {
   test(`${skill} defines the worktree root and puts the design tmp directory under it`, () => {
     const text = readFileSync(join(pluginRoot, 'skills', 'design', skill, 'SKILL.md'), 'utf8');
-    assert.match(text, /worktree 根 = `git rev-parse --show-toplevel`/, 'worktree root must be defined by git rev-parse --show-toplevel');
+    assert.match(text, /worktree 根 = 这个需求的知识库 worktree，`node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/business\.mjs" kb issue-<号>`/, 'worktree root must be the knowledge-base worktree business.mjs kb gives');
+    assert.match(text, /旧布局下就是 `git rev-parse --show-toplevel`/, 'the legacy layout falls back to git rev-parse --show-toplevel');
     assert.match(text, /`imagine\/`、`canvas\/`、`research\/` 都在 worktree 根下的 `docs\/design\/tmp\/<spec-slug>\/`/);
     // every command that reads those files is prefixed with the worktree root, not a bare docs/ path
     const commands = text.split('\n').filter((l) => /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/(direction-note-check|critic-score|issues)\.mjs"/.test(l));

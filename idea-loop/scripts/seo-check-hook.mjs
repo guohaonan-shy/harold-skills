@@ -51,14 +51,30 @@ function repoRoot(cwd) {
   return res.status === 0 ? res.stdout.trim() : null;
 }
 
-/** The build output dir and check args SEO.md declares for the repo around cwd, or null. */
+/**
+ * Where SEO.md is: the repo root, else the business root above the main checkout (the nearest enclosing
+ * git repo, where the knowledge base and its rule files live; skills/productivity/wiki-conventions,
+ * section 业务与知识库). Kept inline so this hook has no imports outside the seo scripts.
+ */
+export function seoMdFor(root) {
+  if (existsSync(join(root, 'SEO.md'))) return join(root, 'SEO.md');
+  const common = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: root, encoding: 'utf8' });
+  const main = common.status === 0 && common.stdout.trim().endsWith('/.git') ? dirname(common.stdout.trim()) : root;
+  for (let d = dirname(main); d !== dirname(d); d = dirname(d)) {
+    if (existsSync(join(d, '.git'))) return existsSync(join(d, 'SEO.md')) ? join(d, 'SEO.md') : null;
+  }
+  return null;
+}
+
+/** The build output dir and check args SEO.md declares for the repo around cwd, or null. The dir is relative to the repo. */
 export function target(cwd) {
   if (!cwd || !existsSync(cwd)) return null;
   const root = repoRoot(cwd);
-  if (!root || !existsSync(join(root, 'SEO.md'))) return null;
+  const seoMd = root && seoMdFor(root);
+  if (!seoMd) return null;
   let build;
   try {
-    build = readSeoMd(join(root, 'SEO.md')).build;
+    build = readSeoMd(seoMd).build;
   } catch {
     return null;
   }

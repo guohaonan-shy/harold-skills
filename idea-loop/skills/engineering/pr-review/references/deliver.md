@@ -1,18 +1,18 @@
 # 交审核报告
 
-`../SKILL.md` 的「一轮之后往哪走」判出「交审核报告」时走这份。目的：人说「合并」时，PR 上已经没有别的要做，CI 也已经绿了。`review-loop`、设计产物的意思同 `../SKILL.md`。
+`../SKILL.md` 的「一轮之后往哪走」判出「交审核报告」时走这份。目的：人说「合并」时，PR 上已经没有别的要做。`review-loop`、设计产物的意思同 `../SKILL.md`。
 
 ## 1. 记下这一轮做了什么
 
 最新一轮条目末尾记一节「做了什么」（没有修复就写「没有要修的，进审核报告」），`review-loop check .tmp/review-loop/<PR 号>.md` 才不再列它。
 
-## 2. 先推 spec 翻完成、删工单的 docs 提交，等 CI 绿
+## 2. 在知识库分支上提交 spec 翻完成、删工单
 
-`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <集成 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个只改 `docs/` 的提交（`docs(spec): <spec-slug> 完成`），推送到 PR 分支。
+在这个需求的知识库 worktree（`node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" kb issue-<号>`）里：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec-status.mjs" set <知识库 worktree>/docs <spec-slug> 完成`；删掉这个 PR 落地的工单文件，`docs/spec/<spec-slug>/tickets/` 删空了就连目录一起删（spec 目录本身留着，等 `/idea-loop:dreaming` 写完 ADR 后整个删）。这两样作为一个提交（`docs(spec): <spec-slug> 完成`），留在知识库分支上，不推到代码 PR，合并时跟着代码 PR 合进知识库 main（[`merge.md`](merge.md) 第 5 步）。
 
 它覆盖的 issue 在合并后关掉：在 issue 会话里的，由会话的「换阶段」跑 `issues.mjs advance`；不在的，`idea-loop:issue-dispatch` 下一轮对账关掉，项目没跑 loop 的，合并后在主 checkout 上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" reconcile <docs>`。
 
-**这个提交要在交报告之前推**：只改 `docs/` 的提交，对 pull_request 的 `paths` 按整个 PR 的 diff 判，也会让整条 PR 的 CI 重跑；放到人说合并之后推，就是让人再等一轮 CI。推上去之后等这次推送触发的检查全绿（`gh pr checks <PR 号> --watch`；这个 PR 上没有检查就不等）。CI 红了或卡住，不交报告：查原因，是这次改动引入的，按 `../SKILL.md` 的「回工单」处理（先照下面第 5 点恢复工单）；与这次无关的，开 issue，在报告里写明。
+**这个提交要在交报告之前做**：人说合并时，知识库这边已经没有要补的。
 
 ## 3. 写审核报告
 
@@ -30,4 +30,4 @@
 
 ## 5. 报告之后人提了要改的
 
-报告交出去时 spec 已经是「完成」、工单已经删了。人这时批示要修、说某项人验素材不对、要设计变更或说「再跑一轮」（人说合并之后，设计归档核不过、人选了改实现或设计变更，也走这里，见 `merge.md` 的「合并前归档」）：先 `git revert --no-edit <第 2 步的提交>` 推送，把工单和 spec 状态恢复，再照 `../SKILL.md` 的「处理条目」处理（人验素材不对的，在所属工单验收末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，照「回工单」处理）；全部处理完，从第 1 步重来（重推 docs 提交、等 CI、更新报告）。
+报告交出去时 spec 已经是「完成」、工单已经删了。人这时批示要修、说某项人验素材不对、要设计变更或说「再跑一轮」（人说合并之后，设计归档核不过、人选了改实现或设计变更，也走这里，见 `merge.md` 的「合并前归档」）：先在知识库 worktree 里 `git revert --no-edit <第 2 步的提交>`，把工单和 spec 状态恢复，再照 `../SKILL.md` 的「处理条目」处理（人验素材不对的，在所属工单验收末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，照「回工单」处理）；全部处理完，从第 1 步重来（重做第 2 步的提交、更新报告）。

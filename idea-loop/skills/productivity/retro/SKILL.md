@@ -81,11 +81,11 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 这场会话里摆给人的每道题，以及每条候选的结果，记成 `<docs>/raw/decisions/<issue 号>.md`；没有 issue 号，用 `<YYYY-MM-DD>-<主题>.md`。格式见 [decision-record](references/decision-record.md)。没有摆过题也没有候选，就不写。
 
-这份文件走一个只改 `docs/` 的 PR：从最新的主分支切出分支，提交，开 PR，检查全过就合并（`idea-loop:decision-rules`「不自动的」）。`raw/index.md` 要加的行见格式那份。池里的改动同走这个 PR，进别的仓库的池的另开一个（见 [candidate-pool](references/candidate-pool.md)）。
+这份文件落进知识库，不开 PR：在 issue 会话里的，提交在这个 issue 的知识库分支上，跟着它合；不在的，分支用 `retro-<YYYY-MM-DD>`，提交后就合（`idea-loop:wiki-conventions` 的「知识库落地」）。`raw/index.md` 要加的行见格式那份。池里的改动同在这个提交里，进 harold-skills 的池的直接写进它的知识库（见 [candidate-pool](references/candidate-pool.md)）。
 
 收工时删 `.tmp/retro/<YYYY-MM-DD>-<主题>/`。
 
-做完的条件：摆过的每道题、每条候选的结果都在记录里，PR 已合并（`gh pr view` 的状态是 MERGED；另开的同理，或已记原因），临时目录已删；没有摆过题也没有候选时，这一步直接算完成。
+做完的条件：摆过的每道题、每条候选的结果都在记录里，已提交在知识库分支上（不在 issue 会话里的已合进知识库 main；写进 harold-skills 池的已写进，或已记原因），临时目录已删；没有摆过题也没有候选时，这一步直接算完成。
 
 ## 边界
 

@@ -14,8 +14,8 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 开场
 
-1. 仓库根 = `git rev-parse --show-toplevel`。`<仓库根>/SEO.md` 不存在：停下，交回「这个仓库没有 SEO.md，先由人跑 `/idea-loop:seo-setup`」。
-2. `node S/seo-md.mjs <仓库根>/SEO.md`，记下 `openseo.projectId`。报错或项目 id 为空：停下，交回脚本的原因和同一句「跑 `/idea-loop:seo-setup`」。
+1. 仓库根 = `git rev-parse --show-toplevel`，业务根目录 = `node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" root` 的 `root`（`idea-loop:wiki-conventions` 的「业务与知识库」；旧布局下两者相同）。`SEO.md` 和 `docs/` 在业务根目录，`.tmp/` 在仓库根。`<业务根目录>/SEO.md` 不存在：停下，交回「这个仓库没有 SEO.md，先由人跑 `/idea-loop:seo-setup`」。
+2. `node S/seo-md.mjs <业务根目录>/SEO.md`，记下 `openseo.projectId`。报错或项目 id 为空：停下，交回脚本的原因和同一句「跑 `/idea-loop:seo-setup`」。
 3. **运行目录**：`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（`date +%Y%m%d-%H%M`），`mkdir -p` 建好。照 `idea-loop:wiki-conventions` 的「本地忽略」确认 `.tmp/` 被忽略。
 4. **项目上下文**：调 `get_project_context`（`projectId`），原始返回原样写到 `<运行目录>/context.json`。失败：原因记下，下面挑方向和同步都当作没有上下文。
 
@@ -33,7 +33,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 这次方向要用的项目信息缺了，不拿推出来的值直接跑：推测、等人确认、写下来，再往下。
 
 1. 方向列表为空：跳过。
-2. `node S/seo-gaps.mjs <仓库根>/SEO.md <运行目录>/context.json <方向>...`（没有 `context.json` 时第二个参数写 `-`），输出存到 `<运行目录>/gaps.json`。`gaps` 为空：进「预算」。
+2. `node S/seo-gaps.mjs <业务根目录>/SEO.md <运行目录>/context.json <方向>...`（没有 `context.json` 时第二个参数写 `-`），输出存到 `<运行目录>/gaps.json`。`gaps` 为空：进「预算」。
 3. 有缺口，逐项推测，每项带出处：
    - 竞品：`find_serp_competitors`，花 credits。先按「预算」的做法跑一次 `whoami`（记作开始余额）和 `seo-budget.mjs`；要竞品的方向没有一个 `allow` 大于 0，就不推，只问人要。调完再调一次 `whoami`，差值是关卡花的。
    - 品牌词：「站点」域名去掉后缀。
@@ -50,7 +50,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 ## 预算
 
 1. 重新读一次余额：调 `whoami` 读 `creditsRemaining`，记作「余额」（不沿用关卡那次）。「开始余额」是本次扫描第一次读到的（关卡调过就是它那次），「已花」= 开始余额 − 余额（关卡没花是 0）。读不到或 `null`：余额传 `null`，原因记下（付费全不放行，免费的照跑）。
-2. `node S/seo-budget.mjs <仓库根>/SEO.md <余额> <方向>... --spent <已花>`，输出存到 `<运行目录>/budget.json`。已花算进单次上限。
+2. `node S/seo-budget.mjs <业务根目录>/SEO.md <余额> <方向>... --spent <已花>`，输出存到 `<运行目录>/budget.json`。已花算进单次上限。
 
 `allow` 里的方向都派，额度是它能花的 credits；为 0 的只做免费调用。`skipped` 里的每条原因原样进研究日志。
 
@@ -58,7 +58,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 竞品与重点页面同步
 
-1. `node S/seo-context.mjs <仓库根>/SEO.md <运行目录>/context.json`（没有 `context.json` 就跳过这一节，记「同步失败：读不到项目上下文」）。
+1. `node S/seo-context.mjs <业务根目录>/SEO.md <运行目录>/context.json`（没有 `context.json` 就跳过这一节，记「同步失败：读不到项目上下文」）。
 2. `updates` 非空：调 `update_project_context`，`updates` 就用脚本给的数组，原样。为空就不写。
 
 名单以 SEO.md 为准、只往 OpenSEO 写，OpenSEO 里多出来的竞品被删是预期结果。任一步失败：把原因记下，跳过同步，继续派 agent（agent 读的是 SEO.md，不受影响）。
@@ -78,7 +78,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 在**同一条消息里**用 Agent 工具把 `allow` 里的方向全部起好，让它们并行。每个的提示照这个模板填，不加别的：
 
 ```
-SEO.md：<仓库根>/SEO.md
+SEO.md：<业务根目录>/SEO.md
 OpenSEO 项目：<projectId>
 本次额度：<allow 里这个方向的数> credits
 运行目录：<运行目录绝对路径>
@@ -97,7 +97,7 @@ OpenSEO 项目：<projectId>
    node -e 'const fs=require("fs"),[d,...ds]=process.argv.slice(1);fs.writeFileSync(d+"/findings.json",JSON.stringify(ds.flatMap(x=>JSON.parse(fs.readFileSync(d+"/"+x+".json","utf8"))).filter(f=>!f.uncollected),null,2))' <运行目录> <派出去的方向>...
    ```
 
-2. `node S/seo-issues.mjs <仓库根>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue。
+2. `node S/seo-issues.mjs <业务根目录>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue。
 3. 脚本失败（例如 `gh` 没登录）：原因记下，进研究日志；不重试、不改用手动建。
 
 完成条件：`issues.json` 存在，或失败原因已记下。

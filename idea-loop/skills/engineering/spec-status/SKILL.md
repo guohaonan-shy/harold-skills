@@ -19,13 +19,13 @@ description: issue 的状态（loop 的队列）和 spec 的状态（文档成�
 | 审核中 | `status:审核中` | spec 里有要人定的，人在 issue 会话里 grill |
 | 待设计 | `status:待设计` | spec 是「正式」、碰 UI，等设计 |
 | 设计中 | `status:设计中` | 在设计阶段 |
-| 待实现 | `status:待实现` | spec 是「正式」、不碰 UI，或设计冻结已经合进主分支 |
+| 待实现 | `status:待实现` | spec 是「正式」、不碰 UI，或设计冻结已经合进知识库 main |
 | 实现中 | `status:实现中` | 在切工单、实现、等合并 |
 | 搁置 | `status:搁置` | 先放着，loop 不碰 |
 | 关闭·不存在 | closed，not planned | 验证为不存在；或人决定不做（`drop`） |
 | 关闭·完成 | closed，completed | 实现合并了 |
 
-「待」字头的状态只由对账（`issues reconcile`）照主分支上的 spec 挂，所以看到它，主分支上一定已经有下一段要用的东西；「中」字头的由 issue 会话挂。`advance` 是只管一份 spec 的对账：它的 PR 合并、切到最新主分支之后跑，翻完立刻认领下一段，或关掉 issue。`issues set` 拒绝不允许的翻法时会列出能翻成什么。「搁置」用 `resume` 恢复：回到主分支上的 spec 该在的状态，没有 spec 就回「待验证」。
+「待」字头的状态只由对账（`issues reconcile`）照知识库 main上的 spec 挂，所以看到它，知识库 main上一定已经有下一段要用的东西；「中」字头的由 issue 会话挂。`advance` 是只管一份 spec 的对账：它的 PR 合并、切到最新知识库 main之后跑，翻完立刻认领下一段，或关掉 issue。`issues set` 拒绝不允许的翻法时会列出能翻成什么。「搁置」用 `resume` 恢复：回到知识库 main上的 spec 该在的状态，没有 spec 就回「待验证」。
 
 ### 根 issue 和子 issue
 
@@ -38,7 +38,7 @@ issues candidates <docs> [<limit>]             # 待验证的候选，最早的�
 issues group      <docs> <号>                   # 根号或子 issue 号：根和开着的子 issue（JSON）
 issues queue      <docs> <待设计|待实现>        # 等在这个状态的 spec，加上 label 对不上的问题
 issues set        <docs> <状态> <号 | slug>...  # 翻状态；根号连子 issue 一起翻
-issues reconcile  <docs>                       # 对账：照主分支翻；根跟着子 issue
+issues reconcile  <docs>                       # 对账：照知识库 main翻；根跟着子 issue
 issues advance    <docs> <slug>                # 一份 spec 合并后推进；末行写下一段
 issues resume     <docs> <号 | slug>...         # 搁置 → 该在的地方
 issues handoff    <docs> <slug> <号>           # 把 #号 写进 spec frontmatter，不碰 GitHub
@@ -47,7 +47,7 @@ issues unhandoff  <docs> <slug> <号>           # 从 spec 移出 #号，回到�
 issues drop       <docs> <slug> <号>           # 从 spec 移出 #号，关成 not planned
 ```
 
-spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件、`open` 开的 issue 不挂 label：spec 的 PR 没合并时，GitHub 上不该有 label 指向主分支上没有的 spec。
+spec 覆盖的 issue 记在它 frontmatter 的 `issues: [12, 15]` 里。`handoff` 只写本地文件、`open` 开的 issue 不挂 label：spec 的知识库分支没合进 main 时，GitHub 上不该有 label 指向知识库 main 上没有的 spec。
 
 ## issue 的分类
 

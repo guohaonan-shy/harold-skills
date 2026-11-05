@@ -7,7 +7,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 你是这次 imagine 的编排者：起一个 `idea-loop:uiux-imaginer` 出变种，把每一轮摆给人，把人的回复分好类交回去，直到人说方向没有要补的了，再让它写方向说明、导出交接画布。变种板只由 uiux-imaginer 改，方向定没定只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`，本地、不进 git；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。worktree 根 = 这个需求的知识库 worktree，`node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" kb issue-<号>` 输出的 `path`（`idea-loop:wiki-conventions` 的「知识库落地」；知识库还在代码仓库里的旧布局下就是 `git rev-parse --show-toplevel`；不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`，本地、不进 git；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
 
 ## 开工前
 

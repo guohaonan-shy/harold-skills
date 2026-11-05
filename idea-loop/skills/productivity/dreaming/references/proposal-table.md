@@ -139,7 +139,7 @@
 
 ## 执行段
 
-只执行批了的行，在提议段同一个 worktree 里做，PR 也从它开。顺序：
+只执行批了的行，在知识库分支 `dreaming-<日期>` 的 worktree 里做（`node "${CLAUDE_PLUGIN_ROOT}/scripts/business.mjs" kb dreaming-<日期>`），不开 PR。顺序：
 
 1. 先处理会删掉东西的行，再处理会改写的行，最后跑 link sweep、刷各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）。
 2. 每类行这样执行：
@@ -150,11 +150,11 @@
 | `候选` / `DESIGN.md 条目` | 照 [candidate-distillation.md](candidate-distillation.md) 与 [design-md-reconcile.md](design-md-reconcile.md) 的「执行段」 |
 | `缺陷` | 照 `idea-loop:spec-status` 的「开一个待验证的 issue」开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
 | `retro 候选` | 照 [retro-candidates.md](retro-candidates.md) 的「执行段」：批了开 issue 的，开到落点所在的仓库，并把候选文件的状态改成 `已开 issue（<链接>）`；驳回的改成 `驳回（<理由>）`；留在池里的不动。dreaming 不改 skill |
-| `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`；丢弃是 `git rm -r docs/design/tmp/<spec-slug>/`。都跟其余改动同一个 PR |
+| `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`；丢弃是 `git rm -r docs/design/tmp/<spec-slug>/`。都跟其余改动同一个提交 |
 | `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照 `idea-loop:design-modeling` 的「蒸馏」 |
 | `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：先删掉没批的对象，再跑档案的归档脚本整目录并进 `prod/`。步骤见 [archive-reconcile.md](archive-reconcile.md) 的「执行段」与 [initial-scan.md](initial-scan.md) 的「执行段」 |
 
 档案对象文件的任何改动都走 `delta/` 加归档脚本，包括「处理完的候选从档案对象里删掉」：把改过的对象全文放进 `delta/`，随同一次归档并进 `prod/`。
 
-3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。开一个 PR（`gh pr create`，标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、哪些没批留着、开出去的 issue 编号）。
+3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然它留在知识库 main 上，下一次 dreaming 会把它当成漏归档。提交（标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、哪些没批留着、开出去的 issue 编号），再 `business.mjs land dreaming-<日期>` 合进知识库 main。
 4. 结果摆给人：动了什么、留了什么、为什么留。

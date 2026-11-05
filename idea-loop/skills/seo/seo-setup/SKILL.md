@@ -1,10 +1,10 @@
 ---
 name: seo-setup
-description: 把一个站点接进 seo 分类：写仓库根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类和队列，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
+description: 把一个站点接进 seo 分类：写业务根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类和队列，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
 disable-model-invocation: true
 ---
 
-在目标仓库的主 checkout 根目录跑，人在场。`SEO.md` 已存在就只补缺的小节，人写过的原样保留；仓库里的改动留在工作区，人说提交才提交。写进 OpenSEO 的东西（项目、上下文、跟踪）立刻生效，每一笔先给人看、人确认了才写。
+在业务根目录跑（`idea-loop:wiki-conventions` 的「业务与知识库」；知识库还在代码仓库里的旧布局下就是主 checkout 根目录），人在场。`SEO.md` 已存在就只补缺的小节，人写过的原样保留；仓库里的改动留在工作区，人说提交才提交。写进 OpenSEO 的东西（项目、上下文、跟踪）立刻生效，每一笔先给人看、人确认了才写。
 
 下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`，工作文件放 `.tmp/seo-setup/`（不进 git）。`SEO.md` 的格式只有一份定义：[references/seo-md.md](references/seo-md.md)，照它写。
 
@@ -47,7 +47,7 @@ disable-model-invocation: true
 
 ## 4. 写 SEO.md
 
-照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。
+照 [references/seo-md.md](references/seo-md.md) 写进业务根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。
 
 完成条件：`node S/seo-md.mjs SEO.md` 解析成功，七节都在；`git diff SEO.md` 给人看过。
 

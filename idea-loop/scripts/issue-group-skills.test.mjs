@@ -89,7 +89,7 @@ test('setup 的 issue 追踪模板：一组一个会话', () => {
 
 test('README：流程总览没有版本分支的例外，合并缺口段只认 issue 会话', () => {
   const md = readFileSync(join(root, 'README.md'), 'utf8');
-  assert.match(md, /every stage lands on the main branch through its own PR/);
+  assert.match(md, /the implementation PR is the only PR/);
   assert.doesNotMatch(md, /implementation child session/);
   for (const k of ['issue-session', 'issue-verify', 'issue-dispatch']) {
     const row = md.split('\n').find((l) => l.startsWith(`| \`idea-loop:${k}\``) || l.startsWith(`| \`/idea-loop:${k}\``));
