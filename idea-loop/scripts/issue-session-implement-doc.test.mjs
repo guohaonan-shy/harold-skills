@@ -70,12 +70,12 @@ test('issue-session 「实现」 step 1 only calls to-ticket and does not commit
   assert.ok(!/提交/.test(step1), '「实现」 step 1 must not commit the tickets itself; to-ticket 「落盘」 does it');
 });
 
-test('「实现」 step 2 invokes implement and pr-review as 「用 Skill 工具调 <插件>:<名字>」', () => {
+test('「实现」 step 3 invokes implement and pr-review as 「用 Skill 工具调 <插件>:<名字>」', () => {
   // writing-for-agents: to make an agent use another skill on the spot, write 「用 Skill 工具调 <插件>:<名字>」.
-  const step3 = impl.split('\n').find((l) => /^2\.\s/.test(l.trim()));
-  assert.ok(step3, '「实现」 has no step 2 (the do step)');
-  assert.match(step3, /用 Skill 工具调 `idea-loop:implement`/, 'step 2 must start implement with 「用 Skill 工具调 `idea-loop:implement`」');
-  assert.match(step3, /用 Skill 工具调 `idea-loop:pr-review`/, 'step 2 must hand over to review with 「用 Skill 工具调 `idea-loop:pr-review`」');
+  const step3 = impl.split('\n').find((l) => /^3\.\s/.test(l.trim()));
+  assert.ok(step3, '「实现」 has no step 3 (the do step)');
+  assert.match(step3, /用 Skill 工具调 `idea-loop:implement`/, 'step 3 must start implement with 「用 Skill 工具调 `idea-loop:implement`」');
+  assert.match(step3, /用 Skill 工具调 `idea-loop:pr-review`/, 'step 3 must hand over to review with 「用 Skill 工具调 `idea-loop:pr-review`」');
 });
 
 test('the README row for issue-session does not mention a compact stop', () => {

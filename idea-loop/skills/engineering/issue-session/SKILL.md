@@ -43,10 +43,11 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## 实现
 
-多个仓库的 issue：`ISSUE_TRACKER.md` 的「仓库」一节列出了几个仓库、spec 的「实现决策」写了要改哪些，就在每个要改的、不是当前 worktree 所在的仓库里开同名分支的 worktree：`git -C <那个仓库的本地路径> worktree add <路径> -b issue/<号>-<slug> origin/<那个仓库的主分支>`，把路径记进 spec 的「实现决策」，每张工单写明改哪个仓库。没有这一节的项目就是一个仓库，不用开。
+顺序是 spec 提交 → 开 draft PR → 切工单 → 做：平台从 spec 提交起就能在 issue 上看到 PR。
 
-1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
-2. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。PR 的开法、转 ready、进 in-review 都在这两个 skill 里。
+1. **开 draft PR**：spec 已提交在分支上（上一步保证）。多个仓库的 issue：`ISSUE_TRACKER.md` 的「仓库」一节列出了几个仓库、spec 的「实现决策」写了要改哪些，就在每个要改的、不是当前 worktree 所在的仓库里开同名分支的 worktree：`git -C <那个仓库的本地路径> worktree add <路径> -b issue/<号>-<slug> origin/<那个仓库的主分支>`，把路径记进 spec 的「实现决策」并提交。没有这一节的项目就是一个仓库，不用开。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」给每个要改的仓库开 PR（已有就跳过）。
+2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
+3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。转 ready、进 in-review 在这两个 skill 里。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 

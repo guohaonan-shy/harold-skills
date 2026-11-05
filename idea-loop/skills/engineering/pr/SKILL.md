@@ -14,19 +14,27 @@ description: 一个 PR 上给人看的两份东西怎么写、放在哪：GitHub
 | **PR 描述** | GitHub 上这个 PR 的正文 | 实现一开始开 draft 时起头；review 全部过完、没有要人定的事了，写成审核报告，人读它就能决定合不合并 |
 | **Review 汇报** | 对话里，同样的内容记进 review loop 文件 | 实现卡住要人定时一份（来自实现）；review 每跑完一轮一份（来自 review）。没有要人定的事时只留痕不等人（见 `idea-loop:implement`） |
 
+## 开 draft PR
+
+PR 从 spec 提交就挂着，不等工单：平台据此在 issue 上看到它改到了哪。spec 提交在分支上之后、切工单之前开（`idea-loop:issue-session` 的「实现」第 1 步；人直接调 `idea-loop:implement` 而还没有 PR 的，implement 开工时回到这里）。`.tmp/implement/<spec-slug>/prs.md` 已在就是开过了，跳过。
+
+1. **数仓库**：读 spec 的「实现决策」里写的要改哪些仓库，不等工单；没写就是当前仓库（知识库所在，`ISSUE_TRACKER.md`「仓库」节的第一行）。**每个要改的仓库各开一个 PR**。当前仓库的分支就是集成分支；别的仓库的分支同名，worktree 的路径写在 spec 的「实现决策」里。
+2. **每个仓库**：在它的 worktree 里推分支，`gh pr create --draft --repo <owner/repo> --base <基准分支>`，标题用 spec 标题（带署名行）。正文写 `Refs <owner>/<repo>#<号>`，指向 issue 所在的仓库和号，不写 `Closes`（合一个 PR 就会关掉 issue）。Linear 上的 issue：标题加前缀 `[<号>]`，正文第一行写 `Linear: <号>`。然后用 `pr-body.mjs set` 写 `summary` 和 `reference`（工单还没切，`reference` 先放 spec 的链接，工单切好后 `idea-loop:implement` 补），`Refs` 那行在标记以外，不会被冲掉。
+3. **记下 PR**：每个仓库的 PR 号、worktree 路径记进 `.tmp/implement/<spec-slug>/prs.md`，账本之外的恢复靠它。
+
 ## PR 描述
 
 读它的人打开时没有上下文：活是委托出去的，spec 他可能只记得个大概，各轮 Review 汇报也没跟过。所以从「这是什么」往下读到「要我做什么」，一份讲完，越往下越可以不读。每一节的格式：[`references/description.md`](references/description.md)。
 
 | 节 | 这一节给读者什么 | 谁写 |
 |---|---|---|
-| 一句话 `summary` | 谁现在能做什么、修好了什么 | `idea-loop:implement` 开 draft 时写，转 open 前按落地结果重写；`idea-loop:pr-review` 的编排者交报告时再核 |
+| 一句话 `summary` | 谁现在能做什么、修好了什么 | 开 draft PR 时写，转 open 前按落地结果重写；`idea-loop:pr-review` 的编排者交报告时再核 |
 | 问题 `problem` | 没跟过的人明白为什么要做：用户碰到的现象、复现出来的样子、影响多大 | `idea-loop:pr-review` 的编排者，交报告时写 |
 | 怎么修 `changes` | 这次做成了什么样：照规则定下的做法各带依据，每个页面或流程的之前 → 之后 | `idea-loop:implement` 转 open 前先写，`idea-loop:pr-review` 的编排者交报告时补全 |
 | 怎么验证 `verification` | 凭什么说修对了：每个行为怎么验的、哪些没验成、review 的结论 | `idea-loop:pr-review` 的编排者，交报告时写 |
 | 能否回滚 `rollback` | 合并后发现错了，能不能撤、怎么撤、影响面多大；上线前要人注意的事；顺带开的 issue | `idea-loop:pr-review` 的编排者，交报告时写；人的批示带出上线前的事时追加 |
 | 要你做的事 `your-todo` | 轮到他的事：要看的人验素材（素材只放这里）、要定的事、说「合并」即可 | `idea-loop:implement` 转 open 前写，`idea-loop:pr-review` 的编排者更新 |
-| 参考 `reference` | 折叠：想追溯的人查证（改动地图、spec 与工单、执行记录、合并后的清理） | `idea-loop:implement` 开 draft 时写，每次汇报更新 |
+| 参考 `reference` | 折叠：想追溯的人查证（改动地图、spec 与工单、执行记录、合并后的清理） | 开 draft PR 时写，每次汇报更新 |
 
 几个仓库各有一个 PR 时，每个 PR 的描述都照上表写，讲自己仓库的改动；`your-todo` 只写在主 PR 上，别的 PR 写一句「见主 PR」。
 

@@ -18,12 +18,12 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 ## 开工：先开 PR
 
-PR 从实现开始就挂着，不等做完：平台据此在 issue 上看到它改到了哪。第一次进来、还没有 PR 时（接着上次的会话时已经有了，跳过），先于派工：
+PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看到它改到了哪。issue 会话已经在切工单之前开了（`.tmp/implement/<spec-slug>/prs.md` 在，接着上次的会话时也在），先于派工核一遍：
 
-1. **数仓库**：工单头的 `**仓库**` 收齐，去重；都没写，就是当前这个仓库（知识库所在，`ISSUE_TRACKER.md`「仓库」节的第一行）。**每个要改的仓库各开一个 PR**。当前仓库的分支就是集成分支；别的仓库的分支同名，worktree 的路径写在 spec 的「实现决策」里（会话开出来的），没有就 `git -C <路径> worktree add <worktree 路径> -b <集成分支名> <该仓库主分支>` 开出来，并把路径补进 spec 的「实现决策」。
-2. **每个仓库**：在它的 worktree 里推分支，`gh pr create --draft --repo <owner/repo> --base <基准分支>`，标题用 spec 标题（带署名行）。正文写 `Refs <owner>/<repo>#<号>`，指向 issue 所在的仓库和号，不写 `Closes`（合一个 PR 就会关掉 issue）。Linear 上的 issue：标题加前缀 `[<号>]`，正文第一行写 `Linear: <号>`。然后用 `pr-body.mjs set` 写 `summary` 和 `reference`（`idea-loop:pr`），`Refs` 那行在标记以外，不会被冲掉。
-3. **翻状态**：todo 会话认领时已经翻成 in-progress，是的就跳过；不是的（人直接调进来），`issues set <docs> in-progress <号>`。Linear 上 PR 一开集成就推，不手翻。
-4. **记下 PR**：每个仓库的 PR 号、worktree 路径记进 `.tmp/implement/<spec-slug>/prs.md`，账本之外的恢复靠它。知识库所在仓库的 PR 是**主 PR**：review loop 文件、Review 汇报的存档以它的号命名（下文 `<PR 号>` 都指它），别的 PR 的描述写自己仓库的改动，`your-todo` 写一句「见主 PR」。
+1. **PR 都在**：`prs.md` 列的仓库覆盖了工单头 `**仓库**` 收齐的那些（都没写就是当前仓库）。没有 `prs.md`（人直接调进来的），或工单用到了没开 PR 的仓库，照 `idea-loop:pr` 的「开 draft PR」补开：`gh pr create --draft`，正文 `Refs <owner>/<repo>#<号>`，Linear 上的 issue 标题加前缀 `[<号>]`、正文第一行 `Linear: <号>`，每个要改的仓库各一个。
+2. **翻状态**：todo 会话认领时已经翻成 in-progress，是的就跳过；不是的（人直接调进来），`issues set <docs> in-progress <号>`。Linear 上 PR 一开集成就推，不手翻。
+3. **补 `reference`**：开 PR 时工单还没切，`reference` 只有 spec 的链接；工单切好后，用 `pr-body.mjs set` 把 spec 与工单补进去。
+4. **主 PR**：知识库所在仓库的 PR 是主 PR：review loop 文件、Review 汇报的存档以它的号命名（下文 `<PR 号>` 都指它），别的 PR 的描述写自己仓库的改动，`your-todo` 写一句「见主 PR」。
 
 ## 账本
 
@@ -32,7 +32,7 @@ PR 从实现开始就挂着，不等做完：平台据此在 issue 上看到它�
 - **已落地**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。用这个脚本，不用 git 的 trailer 读法：环境会在 message 末尾另起一段追加署名，按 trailer 读会读空。
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项（各带代价和能否回滚）、推荐、半成品的 worktree 和分支、原执行方的 agent id（起它时 Agent 工具返回的那个；会话压缩或重启后靠它找回）。丢了就从 review loop 文件还原（Review 汇报里有批示和「做了什么」的就算已决定）。
 - **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进 Review 汇报后清空。
-- **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（「开工：先开 PR」写的）。
+- **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（`idea-loop:pr` 的「开 draft PR」写的）。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（MCP 浏览器锁）。在跑的执行方只记在会话里。
 
 **可派的工单**：没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。等决定的工单的下游因此也不派。会话断了：重算可派的工单；`git worktree list` 里 pending 没记着的执行方 worktree 照「回收」收掉后重派。
@@ -88,7 +88,7 @@ PR 从实现开始就挂着，不等做完：平台据此在 issue 上看到它�
 
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
-1. 把每个仓库的分支推上去（PR 在「开工：先开 PR」就开了，主 PR 的号取 `prs.md`）。
+1. 把每个仓库的分支推上去（PR 在 spec 提交后就开了，主 PR 的号取 `prs.md`）。
    - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。Review 汇报里写明哪些用例在队列、几点以后有结果。
 2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。

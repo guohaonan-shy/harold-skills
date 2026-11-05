@@ -84,15 +84,37 @@ test('to-ticket: does not flip the spec; a ticket names the repository it change
   assert.match(md, /「仓库」/);
 });
 
-test('implement: the first move is a draft PR per repository, Refs in the body, in-progress; ready flips to in-review', () => {
-  const md = read('skills/engineering/implement/SKILL.md');
-  const open = section(md, '## 开工：先开 PR');
-  assert.ok(md.indexOf('## 开工：先开 PR') < md.indexOf('## 派工'), 'opening the PR comes before dispatching');
-  assert.match(open, /每个(要改的)?仓库[^。\n]*(各|一)[^。\n]*(draft|PR)/);
+test('pr: 「开 draft PR」 reads the repositories from the spec (not the tickets), one draft PR each, Refs in the body', () => {
+  const md = read('skills/engineering/pr/SKILL.md');
+  const open = section(md, '## 开 draft PR');
+  assert.match(open, /spec 的「实现决策」[^。\n]*仓库[^。\n]*不等工单/);
+  assert.match(open, /每个要改的仓库各开一个 PR/);
   assert.match(open, /gh pr create --draft/);
   assert.match(open, /`Refs <owner>\/<repo>#<号>`/);
   assert.match(open, /\[<号>\]/);
   assert.match(open, /`Linear: <号>`/);
+  assert.match(open, /prs\.md/);
+});
+
+test('issue-session 「实现」 runs spec commit → draft PR → cut tickets → implement, in that order', () => {
+  const md = read('skills/engineering/issue-session/SKILL.md');
+  const impl = section(md, '## 实现');
+  const pr = impl.indexOf('开 draft PR');
+  const tickets = impl.indexOf('idea-loop:to-ticket');
+  const implement = impl.indexOf('idea-loop:implement');
+  assert.ok(pr >= 0 && pr < tickets && tickets < implement, 'draft PR, then to-ticket, then implement');
+  assert.match(impl, /^1\. \*\*开 draft PR\*\*/m);
+  assert.match(impl, /^2\. \*\*切工单\*\*/m);
+  assert.match(impl, /^3\. \*\*做\*\*/m);
+  assert.match(impl, /idea-loop:pr`，照它的「开 draft PR」/);
+});
+
+test('implement: before dispatching it checks the PRs are there (opening any that are missing), in-progress; ready flips to in-review', () => {
+  const md = read('skills/engineering/implement/SKILL.md');
+  const open = section(md, '## 开工：先开 PR');
+  assert.ok(md.indexOf('## 开工：先开 PR') < md.indexOf('## 派工'), 'the PR check comes before dispatching');
+  assert.match(open, /「开 draft PR」/);
+  assert.match(open, /每个要改的仓库各一个/);
   assert.match(open, /issues set <docs> in-progress/);
   const ending = section(md, '## 没活了就停下');
   assert.doesNotMatch(ending, /还没有 PR/, 'the PR is opened at the start, not at the end');
