@@ -41,7 +41,7 @@
  *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, oldest first; main queue, or category c's own
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
  *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
- *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, sub-issue links) would change; --apply changes them
+ *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply changes them
  *   node issues.mjs open       <docs> <spec-slug>                     → the spec covers no issue: opens a spec issue in status:todo, writes its number into the spec
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
@@ -393,6 +393,7 @@ const row = (i) => {
     number: i.number,
     id: i.id,
     title: i.title,
+    body: i.body ?? '',
     open,
     reason: i.state_reason ?? null,
     labels,
@@ -571,11 +572,17 @@ export function reconcile(gh, docs = null) {
   return { done, problems };
 }
 
+const CONSOLIDATION_MARK = '由整合定时任务开出';
+
+/** True for a root the old consolidation task opened: it has sub-issues and line 1 of its body names that task. Roots a human split are not. */
+export const isConsolidationRoot = (it) => it.subTotal > 0 && String(it.body ?? '').split('\n')[0].trim().startsWith(CONSOLIDATION_MARK);
+
 /**
  * Plans, and with `apply` makes, the move off the old model: the old Chinese status labels become the new
- * ones (搁置 also gets a comment), `status:` lines leave the specs' frontmatter, and the sub-issue links the
- * old grouping made are removed. A root left without sub-issues is only listed: whether it existed just to
- * group is the human's call. Without `apply` nothing is written.
+ * ones (搁置 also gets a comment), `status:` lines leave the specs' frontmatter, and the sub-issue links under
+ * the roots the consolidation task opened are removed; those roots, which existed only to group, are closed
+ * as not planned with a comment (one already carrying a status:* label is being worked on: unlinked, not closed).
+ * Parent-child links a human made are left alone. Without `apply` nothing is written.
  */
 export function migrate(gh, docs, { apply = false } = {}) {
   const open = openIssues(gh);
@@ -583,14 +590,16 @@ export function migrate(gh, docs, { apply = false } = {}) {
   for (const it of open) {
     if (it.labels.includes(label('实现中')) && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo, reposFor(docs, it.repo)));
   }
-  const children = new Map(open.filter((i) => i.subTotal > 0).map((i) => [i.number, subIssues(gh, i.number)]));
+  const roots = open.filter(isConsolidationRoot);
+  const children = new Map(roots.map((i) => [i.number, subIssues(gh, i.number)]));
+  const closing = roots.filter((r) => !r.labels.some((l) => l.startsWith(PREFIX)));
   const plan = migratePlan(open, prs, children);
   const specs = scan(docs).specs.filter((s) => frontmatter(readFileSync(s.file, 'utf8')).status !== undefined);
   const lines = [
     ...plan.relabels.map((r) => `#${r.n}: ${label(r.from)} → ${r.add[0] ?? '回 backlog（去掉 status:*）'}${r.comment ? '，补评论' : ''}`),
     ...specs.map((s) => `spec ${s.slug}: 删掉 frontmatter 的 status 行`),
     ...plan.unlinks.map((u) => `#${u.child}: 解除 #${u.parent} 的子 issue 关系`),
-    ...[...children.keys()].map((p) => `#${p}: 解除后没有子 issue 了——若它只为归组而开，由人决定是否关成 not planned`),
+    ...roots.map((r) => (closing.includes(r) ? `#${r.number}: 整合开出的根，解除后关成 not planned（补评论）` : `#${r.number}: 整合开出的根，但已有 status:* label（有人在做），解除关系后不关`)),
     ...plan.problems.map((p) => `问题：${p}`),
   ];
   if (!apply) return { applied: false, lines };
@@ -600,6 +609,7 @@ export function migrate(gh, docs, { apply = false } = {}) {
   }
   for (const s of specs) writeFileSync(s.file, withoutStatus(readFileSync(s.file, 'utf8')));
   for (const u of plan.unlinks) gh(['api', '-X', 'DELETE', `repos/{owner}/{repo}/issues/${u.parent}/sub_issue`, '-F', `sub_issue_id=${u.childId}`]);
+  for (const r of closing) move(gh, r, 'canceled', '整合定时任务开出的归组 issue；issue 模型换了，不再用父子关系归组，子 issue 已解除关系，关成 not planned。');
   return { applied: true, lines };
 }
 

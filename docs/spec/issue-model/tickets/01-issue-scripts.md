@@ -28,4 +28,4 @@ issue 脚本的命令：`labels`（建四个 `status:*`、`kind:bug|feature|impr
 - `seo-issues.test.mjs`：seo 开 issue 的脚本读 issue 脚本导出的东西，换状态后可能断。
 - `to-spec-by-deliverable-doc.test.mjs`：读 spec 模板的测试，原来 import 旧 spec 状态脚本。
 - `review-loop.test.mjs`、`proposal-table-check.test.mjs`：脚本里提到旧状态名，确认没断。
-- [ ] review 第 1 轮 S1（2026-11-05）：迁移只解除整合开出的根（正文第一行「由整合定时任务开出」）下的父子关系，并把这些根关成 not planned（带评论）；人自己拆的父子关系不动、不列为要解除
+- [x] review 第 1 轮 S1（2026-11-05）：迁移只解除整合开出的根（正文第一行「由整合定时任务开出」）下的父子关系，并把这些根关成 not planned（带评论）；人自己拆的父子关系不动、不列为要解除

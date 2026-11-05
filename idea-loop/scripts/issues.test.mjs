@@ -63,6 +63,7 @@ function fakeGh(issues, labels = [], prs = {}) {
     number: i.number,
     id: 1000 + i.number,
     title: i.title,
+    body: i.body ?? '',
     state: i.state === 'OPEN' ? 'open' : 'closed',
     state_reason: i.state === 'OPEN' ? null : i.reason ?? 'completed',
     labels: i.labels.map((name) => ({ name })),
@@ -363,14 +364,13 @@ test('migratePlan maps the old labels; 实现中 is in-review only with a ready 
   assert.equal(problems.length, 2);
 });
 
-test('migrate lists by default and calls no gh write; --apply swaps the labels, comments on 搁置, drops spec status lines and sub-issue links', () => {
+test('migrate lists by default and calls no gh write; --apply swaps the labels, comments on 搁置, drops spec status lines', () => {
   const docs = docsWith({ retry: spec({ issues: '[1]', status: '实现中' }) });
   const issues = {
     1: open(1, ['status:实现中', 'type:bug']),
     2: open(2, ['status:搁置']),
     3: open(3, ['status:待实现']),
     10: open(10, ['status:验证中']),
-    11: open(11, [], { subOf: 10 }),
   };
   const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(50, 'Refs #1')] });
   const dry = migrate(gh, docs);
@@ -382,8 +382,6 @@ test('migrate lists by default and calls no gh write; --apply swaps the labels, 
     '#3: status:待实现 → status:todo',
     '#10: status:验证中 → status:triage',
     'spec retry: 删掉 frontmatter 的 status 行',
-    '#11: 解除 #10 的子 issue 关系',
-    '#10: 解除后没有子 issue 了——若它只为归组而开，由人决定是否关成 not planned',
   ]);
   assert.match(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8'), /^status: 实现中$/m);
   const done = migrate(gh, docs, { apply: true });
@@ -393,10 +391,46 @@ test('migrate lists by default and calls no gh write; --apply swaps the labels, 
   assert.deepEqual(comments(calls, 2).length, 1);
   assert.match(comments(calls, 2)[0], /^🤖 idea-loop：从搁置迁回/);
   assert.deepEqual(issues[3].labels, ['status:todo']);
-  assert.equal(issues[11].subOf, undefined);
   assert.doesNotMatch(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8'), /^status:/m);
   assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8')), [1]);
   assert.ok(issues[1].state === 'OPEN');
+});
+
+test('migrate only unlinks and closes roots the consolidation task opened (body line 1); parent-child links a human made stay', () => {
+  const docs = docsWith({});
+  const issues = {
+    // opened by the consolidation task: sub-issues unlinked, the root closed as not planned with a comment
+    10: open(10, [], { body: '由整合定时任务开出\n\n改的是设计档案页面' }),
+    11: open(11, [], { subOf: 10 }),
+    12: open(12, [], { subOf: 10 }),
+    // a human split this one: links stay, issue stays open
+    20: open(20, ['status:验证中'], { body: '把重试拆开做\n\n由整合定时任务开出 只是正文里提到' }),
+    21: open(21, [], { subOf: 20 }),
+    // a consolidation root somebody has since taken into verification: unlinked, but not closed
+    30: open(30, ['status:设计中'], { body: '由整合定时任务开出' }),
+    31: open(31, [], { subOf: 30 }),
+  };
+  const { gh, calls } = fakeGh(issues);
+  const dry = migrate(gh, docs);
+  assert.deepEqual(writes(calls), []);
+  assert.deepEqual(dry.lines.filter((l) => /子 issue|not planned|关/.test(l)), [
+    '#11: 解除 #10 的子 issue 关系',
+    '#12: 解除 #10 的子 issue 关系',
+    '#31: 解除 #30 的子 issue 关系',
+    '#10: 整合开出的根，解除后关成 not planned（补评论）',
+    '#30: 整合开出的根，但已有 status:* label（有人在做），解除关系后不关',
+  ]);
+  assert.ok(!dry.lines.some((l) => /#21|#20: 解除/.test(l)), 'the human-made link is not listed');
+  migrate(gh, docs, { apply: true });
+  assert.equal(issues[11].subOf, undefined);
+  assert.equal(issues[12].subOf, undefined);
+  assert.equal(issues[31].subOf, undefined);
+  assert.equal(issues[21].subOf, 20);
+  assert.equal(issues[10].state, 'CLOSED');
+  assert.equal(issues[10].reason, 'not_planned');
+  assert.match(comments(calls, 10)[0], /^🤖 idea-loop：/);
+  assert.equal(issues[20].state, 'OPEN');
+  assert.equal(issues[30].state, 'OPEN');
 });
 
 test('withoutStatus drops only the frontmatter status line', () => {
