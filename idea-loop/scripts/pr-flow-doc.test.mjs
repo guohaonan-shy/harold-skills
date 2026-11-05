@@ -114,7 +114,11 @@ test('implement: before dispatching it checks the PRs are there (opening any tha
   const open = section(md, '## 开工：先开 PR');
   assert.ok(md.indexOf('## 开工：先开 PR') < md.indexOf('## 派工'), 'the PR check comes before dispatching');
   assert.match(open, /「开 draft PR」/);
-  assert.match(open, /每个要改的仓库各一个/);
+  // 开 draft PR 的命令、正文写法、Linear 前缀、一仓库一个只在 pr 里写一次，implement 只指过去
+  assert.doesNotMatch(open, /gh pr create/);
+  assert.doesNotMatch(open, /Refs <owner>/);
+  assert.doesNotMatch(open, /Linear: <号>/);
+  assert.doesNotMatch(open, /各一个/);
   assert.match(open, /issues set <docs> in-progress/);
   const ending = section(md, '## 没活了就停下');
   assert.doesNotMatch(ending, /还没有 PR/, 'the PR is opened at the start, not at the end');
