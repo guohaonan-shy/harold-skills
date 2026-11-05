@@ -82,7 +82,7 @@ docs/
 - 生命周期跟着 worktree，所以不放系统 `/tmp`：那里重启会清，不同 worktree、不同会话的东西也分不清归谁。一次性的、跑完即弃、不跨步骤的东西仍然可以用系统临时目录；spec 图的源文件定稿前还要改好几轮，算跨步骤。
 - 按 `<spec-slug>` / `<topic>` 分子目录：同一个 worktree 里先后跑两份 spec，固定文件名放在共享的顶层会悄无声息地互相覆盖。
 - 设计侧的过程产物（工作区、方向说明、交接画布、评分、评委截图）在 `docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
-- `evidence/` 下是交付证据，过程中以本地文件发给人看，用到时才上传到 PR 的素材分支，不进代码分支和 `docs/`（`idea-loop:evidence`）。
+- `evidence/` 下是交付证据，过程中以本地文件发给人看，用到时才上传到 PR 的素材分支，不进代码分支和 `docs/`（`idea-loop:pr` 的交付证据）。
 
 **本地忽略**：第一次用时确认 `.tmp/` 和 `docs/design/tmp/` 都在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。
 

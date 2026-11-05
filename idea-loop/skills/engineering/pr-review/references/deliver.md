@@ -20,7 +20,7 @@
 
 - 素材：spec 的「问题陈述」和「方案」，工单（标题、被谁挡着、端到端行为），review loop 文件里每份汇报的「已按规则处理」「做了什么」，`idea-loop:implement` 期间开的 issue。
 - review 的结论收进 `verification`（几轮、中途修了什么），照规则定的做法和依据收进 `changes`，不再另贴一份。
-- **人验素材**：review loop 文件里「要你看的」中还没勾的项，全部收进 `your-todo` 的「要你审的」，一项一个复选框：「看什么」+ 素材（素材只放这里，`verification` 里不重复），素材按 `idea-loop:evidence` 的交付证据做（流程图、动图、并排截图），用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish` 上传后贴进描述，人在 PR 上直接看。会话里照 `idea-loop:pr` 的「在会话里给人看」一项一段，文字后紧跟它的图。
+- **人验素材**：review loop 文件里「要你看的」中还没勾的项，全部收进 `your-todo` 的「要你审的」，一项一个复选框：「看什么」+ 素材（素材只放这里，`verification` 里不重复），素材照 `idea-loop:pr` 的交付证据做（流程图、动图、并排截图），用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish` 上传后贴进描述，人在 PR 上直接看。会话里照 `idea-loop:pr` 的「在会话里给人看」一项一段，文字后紧跟它的图。
 - `rollback` 对着整个 PR 判：能不能撤回、怎么撤、影响面；要人在上线前做的（例：推迁移，写明为什么要人来做）；`idea-loop:implement` 和 review 期间开的 issue，列在「顺带开的 issue」下。
 - `your-todo` 里写清要人做的事：要审的人验素材（上面那些复选框）、会话里还没批示的事，末尾一句「说合并即可」。人看了说对，勾上；人直接说合并，视为人验素材都看过、都对。
 

@@ -3,13 +3,13 @@ type: spec
 status: 草稿
 tags: [idea-loop, design, uiux-refine, designer, ui-reviewer]
 summary: 16 份设计原则合成 6 份、内容全留；ui-reviewer 按模式按需读，designer 一次 refine 少读三成
-related: ["[[2026-11-04-idea-loop-0-2-0-restructure-grill]]", "[[design-md-write-entry]]", "[[confirm-only-on-loss]]", "[[end-task-close-icon]]"]
+related: ["[[design-md-write-entry]]", "[[confirm-only-on-loss]]", "[[end-task-close-icon]]"]
 issues: [246]
 ---
 
 # 设计部分读得太多：16 份设计原则合成 6 份，ui-reviewer 按模式按需读
 
-> #246 存在：designer 在一次 refine 里要读 12–15 份设计原则、约 122–130KB；ui-reviewer 每次被起都读整份 36KB，其中三分之二是另外两种模式的内容。2026-11-05 对着 `release/idea-loop-0.2.0`（`1a7496b`）逐份量字节、逐份读引用链核的。
+> #246 存在：designer 在一次 refine 里要读 12–15 份设计原则、约 122–130KB；ui-reviewer 每次被起都读整份 36KB，其中三分之二是另外两种模式的内容。2026-11-05 对着 `main`（`9a33407`）逐份量字节、逐份读引用链核的。
 
 **结论**：内容一条没删，文件少了一半，designer 一次完整 refine 要读的设计原则从 **130KB 降到 91KB（−30%）**，只做静态那一段从 **73KB 降到 50KB（−31%）**；ui-reviewer 每轮走查从 **36KB 降到 13KB（−63%）**。
 
@@ -59,7 +59,7 @@ designer 一次 refine                     ui-reviewer 一次被起
 
 ### 逐个文件：合并前 → 合并后
 
-字节数是 `wc -c`，改前取 `release/idea-loop-0.2.0` 的 `1a7496b`，改后取本 PR 的头。
+字节数是 `wc -c`，改前取 `main` 的 `9a33407`，改后取本 PR 的头。
 
 | 合并前（`uiux-refine/references/`） | 字节 | 去向 |
 |---|---:|---|
@@ -166,6 +166,7 @@ designer 一次 refine                     ui-reviewer 一次被起
 
 ## 关联
 
-- 决定记录：[[2026-11-04-idea-loop-0-2-0-restructure-grill]]「本轮决议」的 design 一行（Q26、Q29、Q30、Q34）。
-- 相邻 issue：#241 插件拆分会把 `skills/design/` 和设计 agent 搬进 design 插件。本 spec 在原位置改；谁后合进 `release/idea-loop-0.2.0`，谁解冲突。其余 #242–#245、#247 不碰这些文件。
+- 决定记录：[2026-11-04 idea-loop 0.2.0 重构 grill](https://github.com/guohaonan-shy/harold-skills/blob/release/idea-loop-0.2.0/docs/raw/issue-workflow/2026-11-04-idea-loop-0-2-0-restructure-grill.md)「本轮决议」的 design 一行（Q26、Q29、Q30、Q34）；它在 `release/idea-loop-0.2.0` 上，不在 `main`。
+- 发版：这次改动作为 idea-loop 0.1.x 的补丁合进 `main`，不跟 0.2.0 耦合；版本号这次不升，等 #245 也从 0.2.0 挪出来后一起升（Harold，2026-11-05）。
+- 相邻 issue：#241 插件拆分会把 `skills/design/` 和设计 agent 搬进 design 插件。本次先进 `main`，`release/idea-loop-0.2.0` 同步 `main` 时带进来；#241 搬目录时，照共享笔记里那份文件清单跟着改。#242–#245、#247 不碰这些文件。
 - 相邻 spec：[[confirm-only-on-loss]]、[[end-task-close-icon]] 当时改的是 `ui-craft-checklist.md`，那两条规则原文搬进了 `critique.md` 的「Practical craft checklist」。
