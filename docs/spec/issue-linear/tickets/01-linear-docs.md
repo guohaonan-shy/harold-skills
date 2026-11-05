@@ -15,6 +15,8 @@ Linear 团队的人跑 `/idea-loop:setup`，被问 issue 在哪；选 Linear 的
 - [ ] `issue-session`：认领、翻回 triage、先放着、收尾核 Done 在 Linear 项目上各一句指向 linear.md（不在 skill 里复述工具参数）
 - [ ] `issue-dispatch`：候选在 Linear 项目上照 linear.md 取（Todo、去掉被挡的、按优先级和创建时间排），对账一步 Linear 项目跳过 `issues reconcile`（集成推状态）
 - [ ] `issue-triage` 与 `issue-triager`：取 backlog、贴评论、打 label、翻状态在 Linear 项目上指向 linear.md
+- [ ] `spec.mjs` 的 `verdicts` / `allAbsent` 认 `> FA-577 存在：…` / `不存在：…` 的开头结论行（与 `issuesOf` 返回的字符串号对得上），加单元测试
+- [ ] `issues new` 加 `--repo=<owner/repo>`：查重与 `gh issue create` 都作用于那个仓库（`-R`），不带时照旧；`retro` 第 5 步「开到插件仓库」改成 `issues new … --repo=<插件仓库>`，不再出现 `gh issue create -R`；加单元测试
 - [ ] `idea-loop/README.md`：说明支持 Linear（setup 经 MCP 接入）
 - [ ] 文档测试：setup 问平台且有 Linear 模板；linear.md 点名上面的 MCP 工具和 `--from`；会话、调度、分拣都提到 linear.md；`no-project-leak.test.mjs` 过（模板与例子不用 FA、Hanabi 这类真实名字）
 
