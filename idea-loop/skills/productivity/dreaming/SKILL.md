@@ -1,14 +1,13 @@
 ---
 name: dreaming
-description: 把知识库、设计档案、DESIGN.md 和术语表跟代码对账，提议该订正、归档、删除的内容，人批过才执行。
-disable-model-invocation: true
+description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账：提议该订正、归档、删除的内容，人批过才执行。人要对账、说文档过期了、或说 dreaming 时用。
 ---
 
 文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后**提议**处置；人批过的才执行。
 
 **dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、做审核页、等人批、执行段。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:spec-status`（翻状态只走 `spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:issues`（issue 的状态只走 `issues.mjs`，spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
 ## 纪律
 

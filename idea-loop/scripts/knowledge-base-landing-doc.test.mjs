@@ -51,8 +51,8 @@ test('which work has no code to ride along is listed only in wiki-conventions', 
 
 test('an issue session keeps one branch from spec to implementation', () => {
   const session = read('skills/engineering/issue-session/SKILL.md');
-  assert.match(session, /git switch -c issue-<根号> origin\/<主分支>/);
-  assert.match(session, /不切新分支：下一段接着在这一组的分支上做/);
+  assert.match(session, /git switch -c issue\/<号>-<slug> origin\/<主分支>/);
+  assert.match(session, /spec、设计、工单和代码都提交在这一条分支上/);
   assert.doesNotMatch(session, /git switch -c <下一段>/);
 });
 

@@ -10,7 +10,7 @@ tools: Read, Grep, Glob, Bash, Write, Skill, Agent
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、frontmatter）、`idea-loop:spec-status`（`spec-status.mjs check` 顺带报旧平铺布局与非法状态）、`idea-loop:decision-rules`；目标项目有 `GLOSSARY.md` 时再调 `idea-loop:glossary`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
+用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、frontmatter）、`idea-loop:issues`（issue 的状态；spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局与还带 `status` 行的 spec）、`idea-loop:decision-rules`；目标项目有 `GLOSSARY.md` 时再调 `idea-loop:glossary`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
 
 ## 你收到的
 

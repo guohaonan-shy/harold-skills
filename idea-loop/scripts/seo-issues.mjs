@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The only place seo-scan writes GitHub: turns one run's findings into issues. A new issue carries no
- * status:* label, so it simply is 待验证 and issue-dispatch hands it out like any other; its body
+ * status:* label, so it simply is backlog, like an issue opened by hand; its body
  * carries the evidence and how to reproduce it, because the issue session re-runs that independently.
  *
  *   reject  — no evidence, no repro, empty acceptance, or a percentage without numerator/denominator;
@@ -87,11 +87,11 @@ export function issueBody(g) {
     `## 建议的修法\n\n${text(g.fix) || '需要诊断'}`,
     `## 验收标准\n\n${g.acceptance.map((a) => `- [ ] ${a}`).join('\n')}`,
   ];
-  if (g.assumptions.length) parts.push(`## 扫描时的假设\n\n无人值守时代替提问用的默认值，审核时核一下：\n\n${list(g.assumptions)}`);
+  if (g.assumptions.length) parts.push(`## 扫描时的假设\n\n无人值守时代替提问用的默认值，triage 时核一下：\n\n${list(g.assumptions)}`);
   if (g.content) {
     const c = g.content;
     parts.push(
-      `## 审核阶段\n\n内容类：目标词「${text(c.keyword)}」，页面类型「${text(c.pageType)}」，${c.mode === 'update' ? '改已有页' : '新开页'}。起草 spec 时用 \`idea-loop:seo-brief\` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 \`idea-loop:seo-writing\` 按 brief 写。`,
+      `## triage 阶段\n\n内容类：目标词「${text(c.keyword)}」，页面类型「${text(c.pageType)}」，${c.mode === 'update' ? '改已有页' : '新开页'}。起草 spec 时用 \`idea-loop:seo-brief\` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 \`idea-loop:seo-writing\` 按 brief 写。`,
     );
   }
   if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出只改 `docs/` 的 PR。邮件由人发送，任何会话都不发。');

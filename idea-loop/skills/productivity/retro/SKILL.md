@@ -3,7 +3,7 @@ name: retro
 description: 从这场会话里人的纠正、选择和说出的方向提炼规则候选，逐条摆给人批。issue 会话收尾、或人说「retro 一下」时用。
 ---
 
-人在会话里纠正过、选过、定过方向的东西，会话一归档就丢了。你读这场会话的记录，挑出该变成规则的，逐条摆给人；人批了的，进候选池或开成待验证的 issue，由人选。**你自己不改任何规则文件。**
+人在会话里纠正过、选过、定过方向的东西，会话一归档就丢了。你读这场会话的记录，挑出该变成规则的，逐条摆给人；人批了的，进候选池或开成 backlog 的 issue，由人选。**你自己不改任何规则文件。**
 
 `<docs>` 指目标仓库的 `docs/`。
 
@@ -71,7 +71,7 @@ description: 从这场会话里人的纠正、选择和说出的方向提炼规�
 
 ## 5. 批了的：开 issue，或进候选池
 
-**开 issue**：照 `idea-loop:spec-status` 的「开一个待验证的 issue」开（查重、不打 `status:*`）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
+**开 issue**：照 `idea-loop:issues` 的「开一个 issue」开（查重、不打 `status:*`，就是 backlog）。开到哪：插件的问题开到 `guohaonan-shy/harold-skills`，项目的问题开到目标仓库（`gh issue create -R <owner/repo>`）。正文写给没有上下文的人看：候选、落点、旧文新文、会话里的原话。用 `idea-loop:glossary` 的叫法命名。开不成的，记下原因交给人。
 
 **进候选池**：不开 issue，写进池，做法见 [candidate-pool](references/candidate-pool.md)。
 

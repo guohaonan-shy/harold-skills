@@ -14,6 +14,7 @@
 | [[design-reading-load]] | 16 份设计原则合成 6 份、内容全留；ui-reviewer 按模式按需读，designer 一次 refine 少读三成 |
 | [[design-research-agent]] | 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看 |
 | [[design-tmp-worktree-root]] | imagine / refine 的设计过程目录改按当前 worktree 根定位，不再用 CLAUDE_PROJECT_DIR |
+| [[docs-ride-code-pr]] | spec、设计、工单跟代码一个 PR 合进主分支；setup 问要不要知识库、放在哪 |
 | [[dreaming-design-reconcile]] | dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏 |
 | [[dreaming-skill-length]] | dreaming 的 SKILL.md 主体超 5000 字：验证为不存在，issue 量到的是字节数，按字符数是 3525 |
 | [[end-task-close-icon]] | 设计参考加一条规则：结束整个任务的入口用 X 并写明结束什么，后退箭头只用于无害地回一步 |
@@ -21,6 +22,7 @@
 | [[implementer-reuse-and-compact]] | implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；to-ticket 落盘后提交工单（进实现前压缩已移除） |
 | [[issue-consolidation]] | cloud 定时任务每 6 小时把改同一文件或模块的 issue 挂到新开的根 issue 下；调度按根出会话，一个根一份 spec、一个会话从审核做到合并 |
 | [[issue-intake-priority]] | 开 issue 时挂模块根、判 P0；调度只给 P0 和本期焦点出卡片；想法有入口；停 cloud 整合；implement 自动切票 |
+| [[issue-model]] | issue 状态是唯一真相：六个状态对上 Linear，triage 按团队可跳过，实现开始就开 PR，一个 issue 每个仓库一个 PR，正文格式统一 |
 | [[link-sweep-skip-code]] | link sweep 只查正文里的 wiki-link，代码里的格式示例不算，不再报一串假阳性 |
 | [[native-summary-locate]] | 原生折叠标题按角色定位不到、FAQ 展开写不成边：验证为不存在，已在 design-archive-sections 里做掉 |
 | [[no-decision-autopilot]] | 实现阶段没有决定题就不停：切票直接落盘、停下汇报无决定题即放行、review 无事不等；只在生产操作和合并前停，交一份写给不知情者的审核报告 |

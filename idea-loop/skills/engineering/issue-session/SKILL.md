@@ -1,51 +1,53 @@
 ---
 name: issue-session
-description: 一组 issue（一个根加它的子 issue，或一个没被整合的 issue）的会话：从验证、grill、设计一路走到实现合并，人在这里拍板，活交给 skill 和子代理。调度卡片开出的会话、或人要接手某个 issue 时用。
-argument-hint: "<根号或 issue 号>"
+description: 一个 issue 的会话：triage 会话陪人评估它（验证、spec、grill、设计），todo 会话把它做到合并。调度卡片开出的会话、或人要接手某个 issue 时用。
+argument-hint: "<issue 号>"
 ---
 
-你是 issue #`$ARGUMENTS` 所在那一组的会话，从验证一直陪到这一组关闭。**一组**是一个根 issue 加它的子 issue；没被整合的 issue 自己是一组，下文把它当作「只有一个子 issue、根就是它自己」。人在这个会话里 grill、看设计、拍板；复现、设计、实现交给下面点名的 skill 和它们起的子代理，你只管换阶段。
+你是 issue #`$ARGUMENTS` 的会话。一个 issue 一个会话、一份 spec（frontmatter 的 `issues:` 写它的号）、一条分支 `issue/<号>-<slug>`。人在这个会话里 grill、看设计、拍板；复现、设计、实现交给下面点名的 skill 和它们起的子代理，你只管换阶段。状态怎么翻、前提是什么，读 `idea-loop:issues`。
 
-一组一份 spec，`issues:` 写这一组全部子 issue（没被整合的 issue 就写它自己）；根和子 issue 一起认领、一起翻状态、spec 完成时一起关，都由脚本做（`idea-loop:spec-status` 的「根 issue 和子 issue」）。
+会话有两条路，认领时 issue 的状态决定走哪条：
 
-| 阶段 | 侧边栏 section | issue 的 label | 这一段做完的标志 |
-|---|---|---|---|
-| 审核 | 审核中 | 验证中 → 审核中 | spec 提交在这一组的分支上 |
-| 设计 | 设计中 | 设计中 | 冻结结果提交在同一个分支上 |
-| 实现 | 实现中 | 实现中 | 实现 PR（连同 spec 和设计）合并 |
+| 会话 | 谁开的 | 认领成 | 侧边栏 section | 做什么 | 做完 |
+|---|---|---|---|---|---|
+| triage 会话 | 人 | triage | triage | 验证、起草 spec、grill、设计 | push 分支，`set todo`，归档 |
+| todo 会话 | 调度卡片 | in-progress | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，归档 |
 
-section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo 审核中」）。下文说「某某 section」都照这个换。
+section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo in-progress」）。
 
 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
 1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
-2. **认出这一组**：`issues group <docs> $ARGUMENTS`，`$ARGUMENTS` 是根号或任一子 issue 号都行，返回根和根下开着的子 issue。以下的「根号」是返回的根号（没被整合的 issue 就是它自己）。
-3. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上面换好的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<根号> <根标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话，所以会话标题用根号。
-4. **认领**：对根号 `gh issue view <根号> --comments` 读全文和评论（子 issue 的在审核时一个个读），看它现在的状态（`idea-loop:spec-status` 的「issue 的状态」）：
-   - 待验证：`issues set <docs> 验证中 <根号>`，根和开着的子 issue 一起进验证中（整组认领），从「审核」开始。
-   - 已经是别的状态、你是调度卡片开出来的：别的会话已经在做它。告诉人，然后照「收尾」归档自己。
-   - 已经是别的状态、人直接调的你：人在接手一个没有会话的 issue。照状态接上：待设计、设计中去「设计」，待实现、实现中去「实现」，验证中、审核中去「审核」；需要时先对根号 `issues set` 认领成对应的「中」状态。
+2. **认领**：`gh issue view $ARGUMENTS --comments` 读全文和评论（最近一条「🤖 idea-loop：」写着上次停在哪、分支叫什么），`issues show <docs> $ARGUMENTS` 看状态、挂着的 PR、spec、分支。按状态走：
+   - backlog：人在接手它。`issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`issues set` 拒绝 triage），`set todo` 再 `set in-progress`，走 todo 会话。
+   - triage：人在接着评估，走 triage 会话。
+   - todo：`issues set <docs> in-progress $ARGUMENTS`，走 todo 会话。
+   - in-progress、in-review：别的会话已经在做。你是调度卡片开出来的，告诉人，然后照「收尾」归档自己；人直接调的，是在接手一个没有会话的 issue，不翻状态，按 PR、spec、工单在哪接上；in-review 里人批了要改的，先 `set in-progress`。
+   - 已关闭：停下说明。
+3. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上面换好的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<号> <标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话。
+4. **接分支**：`git fetch origin`。`show` 返回了分支，就在它上面接着做（`git switch -c issue/<号>-<slug> --track origin/issue/<号>-<slug>`）；没有就 `git switch -c issue/<号>-<slug> origin/<主分支>`，`<slug>` 取标题的几个词。spec、设计、工单和代码都提交在这一条分支上，PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
 
-完成条件：会话在当前阶段的 section 里，根和子 issue 的 label 都是这一阶段的「中」状态。
+完成条件：会话在当前路的 section 里，issue 的状态是这条路认领成的那个，worktree 在这个 issue 的分支上。
 
-## 审核
+## triage 会话
 
-用 Skill 工具调 `idea-loop:issue-verify`，对这一组**只调一次**，`<号>` 给根号，并告诉它这是根的会话、认领已经做过。它逐个复现根下每个子 issue，起草**一份**覆盖全部子 issue 的 spec，在这里跟人 grill，最后把这份 spec 提交在这一组的分支上，交回 spec 的 slug。没被整合的 issue 照旧调一次。
+1. **审核**：用 Skill 工具调 `idea-loop:issue-verify`，只调一次，告诉它认领和分支已经做过。它复现、起草 spec、在这里跟人 grill，把 spec 提交在分支上，交回 spec 的 slug。交回「已关闭」去「收尾」，交回「先放着」去「先放着」。
+2. **设计**：读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。不碰 UI 的 spec 跳过。碰 UI 的告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人；人设计完、`/idea-loop:uiux-refine` 把冻结结果提交在这个分支上之后，往下。
+3. **交给调度**：`git push -u origin issue/<号>-<slug>`，`issues set <docs> todo $ARGUMENTS --comment=<分支名，spec 与设计已提交>`，去「收尾」。`set todo` 被拒时说出了还差什么（spec 里没定完的行、没冻结的设计），回去补。
 
-调之前先 `git fetch origin`，从最新的主分支切出这一组的分支：`git switch -c issue-<根号> origin/<主分支>`。spec、设计、工单和代码都提交在这一个分支上，最后一个 PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。交回「已关闭」「搁置」的，这一组就没有 spec，去「收尾」；否则去「换阶段」。
+## todo 会话
 
-## 设计
-
-读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人。
-
-人设计完、`/idea-loop:uiux-refine` 把冻结结果提交在这个分支上之后，去「换阶段」。
+分支上已有 spec（triage 会话留下的，或先放着时留下的），读它；没有就用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，提交在分支上。起草中冒出了要人定的（spec 里要写「需要 grill」「待定」），把已写的提交并 push，`issues set <docs> triage $ARGUMENTS --comment=<要人定什么、分支名>`，去「收尾」，人在 triage 里定。项目跳过 triage 的，没法翻回去，就在这个会话里跟人 grill、做设计，写法同 triage 会话的 1、2 步。spec 就绪后去「实现」。
 
 ## 实现
 
-1. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
-2. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完、开 PR；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并，合并之后去「换阶段」。
+顺序是 spec 提交 → 开 draft PR → 切工单 → 做：平台从 spec 提交起就能在 issue 上看到 PR。
+
+1. **开 draft PR**：spec 已提交在分支上（上一步保证）。多个仓库的 issue：`ISSUE_TRACKER.md` 的「仓库」一节列出了几个仓库、spec 的「实现决策」写了要改哪些，就在每个要改的、不是当前 worktree 所在的仓库里开同名分支的 worktree：`git -C <那个仓库的本地路径> worktree add <路径> -b issue/<号>-<slug> origin/<那个仓库的主分支>`，把路径记进 spec 的「实现决策」并提交。没有这一节的项目就是一个仓库，不用开。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」给每个要改的仓库开 PR（已有就跳过）。
+2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
+3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。转 ready、进 in-review 在这两个 skill 里。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 
@@ -53,23 +55,19 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 - **有不过的**：停下，不进 review。把没过的用例、判定会话在改前改后各答了什么和出处摆给人，选项就是条目里的三个处理（判定对 / 判定错 / 用例有问题），等人批示；人的批示照 `idea-loop:implement` 里「人回复后」处理。
 - 会话收到消息时正忙着别的，先做完手上这一步再处理；消息没发来（会话归档过、任务没跑）时，人会收到 macOS 通知，结果照样在文件里。
 
-## 换阶段
+## 先放着
 
-每一段做完后做一遍：
-
-1. 不切新分支：下一段接着在这一组的分支上做。
-2. `issues advance <docs> <spec-slug>`：照这个分支上的 spec 把这一组的 issue 翻到下一段并认领，或关掉；spec 完成时根随子 issue 一起关。最后一行写着「下一段」。
-3. 下一段是「设计中」或「实现中」：`move_sessions`（`self`）移进这一段的 section（先重跑一次 `issues queues <docs> <根号>`：审核时分类可能改了），去那一段。是「关闭」：去「收尾」。
+人说先放着，在哪一步都一样：已写的改动提交，`git push -u origin issue/<号>-<slug>`，`issues set <docs> backlog $ARGUMENTS --comment=<停在哪个阶段、分支名>`，去「收尾」。下一个会话读这条评论接上分支。
 
 ## 收尾
 
-这一组关了（spec 完成，根和子 issue 一起关；没被整合的 issue 关了），或人说先放着（`issues set <docs> 搁置 <号>`，根和子 issue 一起搁置）之后：
+issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage，或先放着之后：
 
 1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录的 docs PR 合并之后，才往下走。
 2. `git status --short` 里没有要留的改动；有就先问人。
-3. 用 `archive_session`（`session_id: self`，reason 写「#<根号> 已关闭」或「#<根号> 搁置」）归档自己，worktree 随归档清掉。
+3. 用 `archive_session`（`session_id: self`，reason 写「#<号> done」「#<号> 交给调度」「#<号> 先放着」之类）归档自己，worktree 随归档清掉。
 
 ## 边界
 
-- 只做这一组。路上发现的别的问题，照 `idea-loop:spec-status` 的「开一个待验证的 issue」开出去，调度会接手。
+- 只做这一个 issue。路上发现的别的问题，照 `idea-loop:issues` 的「开一个 issue」开出去。
 - issue 的状态只走 `issues`；侧边栏只移动你自己。

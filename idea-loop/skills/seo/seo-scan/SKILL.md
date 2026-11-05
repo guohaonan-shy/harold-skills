@@ -97,7 +97,7 @@ OpenSEO 项目：<projectId>
    node -e 'const fs=require("fs"),[d,...ds]=process.argv.slice(1);fs.writeFileSync(d+"/findings.json",JSON.stringify(ds.flatMap(x=>JSON.parse(fs.readFileSync(d+"/"+x+".json","utf8"))).filter(f=>!f.uncollected),null,2))' <运行目录> <派出去的方向>...
    ```
 
-2. `node S/seo-issues.mjs <仓库根>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue。
+2. `node S/seo-issues.mjs <仓库根>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；开出的 issue 不打 `status:*`，就是 backlog，等人分拣。
 3. 脚本失败（例如 `gh` 没登录）：原因记下，进研究日志；不重试、不改用手动建。
 
 完成条件：`issues.json` 存在，或失败原因已记下。

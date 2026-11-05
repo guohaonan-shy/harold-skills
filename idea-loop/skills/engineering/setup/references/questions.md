@@ -12,5 +12,7 @@
   - **不要**：不建骨架，不记位置；同样用不了那些流程。
 - **做不做 UI 设计**：做的话一起配设计档案的忽略规则和 LFS。
 - **GitHub App 代发评论**：要的话给 appId 和私钥文件路径。
+- **团队用不用 triage**：triage 是验证过的 issue 等人评估（grill、设计）的那一段。推荐「用」；团队的 issue 平台没开 triage、或所有 issue 都不要人评估的选「跳过」，backlog 直接到 todo，grill 与设计在 todo 的会话里做。答案写进 `ISSUE_TRACKER.md` 的 `triage：用` / `triage：跳过` 那一行。
+- **这个产品的 issue 会改到哪几个仓库**：每个仓库的 `owner/name`、本地路径、主分支、管产品的哪一块。推荐只填当前仓库一行（从 `git remote` 和基准分支推出）；人说还有别的仓库再加。答案写进 `ISSUE_TRACKER.md` 的「仓库」表，第一行是知识库所在的仓库，模板里的占位行删掉。
 - **issue 分类**：有哪些父类，每个父类下有没有子类；推荐从现有 label 和 issue 推出。名字里不能有 `/`（它分隔子类），比如 `UI/UX` 写成 `uiux`。
 - **别的 label**：现有 label 里，状态和分类之外哪些要留（写进「保留的 label」）；还有 open issue 在用、又不留的，各迁成哪个分类，或直接去掉。

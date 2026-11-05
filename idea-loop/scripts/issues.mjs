@@ -1,63 +1,48 @@
 #!/usr/bin/env node
 /**
- * The one way a GitHub issue's status changes (skills/engineering/spec-status/SKILL.md, section issue 的状态).
+ * The one way an issue's status changes. The issue's status is the only record of how far a piece of work
+ * has got: a spec is a document without a status of its own, and is done once every issue its frontmatter
+ * lists (`issues: [12]`) is closed.
  *
- * The issue label is where the work is queued, and the dispatch loops read nothing else. An open issue
- * with no `status:*` label is 待验证. The loop claims a batch (验证中) and opens a verification session,
- * which turns 审核中 when something needs the human. Every 待 state is set only by `reconcile`, from
- * what the main branch already has: a 正式 spec puts its issues in 待设计 (touches UI, no freeze yet) or
- * 待实现; a freeze on main moves 设计中 on to 待实现; an issue the spec's opening lines (or an older spec's 「验证」 table) mark 不存在 is
- * closed as not planned; a 完成 spec closes the rest as completed. So whenever a loop sees a 待 label,
- * main has everything the next session needs. The 中 states are set when a session opens. 搁置 keeps
- * the loop away from an issue; `resume` puts it back where main says it belongs.
+ * Seven states. The four open ones each have a `status:<name>` label: triage (verified, a human is
+ * assessing it: grill, design), todo (ready for dispatch), in-progress (a session is on it; once the spec is
+ * committed it opens draft PRs), in-review (the PRs are ready, waiting for the human). backlog is open with no `status:*`
+ * label: new, not yet verified, or put aside. done and canceled are the closed states and carry no label:
+ * GitHub's close reason says which (completed / not planned). `set` checks every flip against NEXT and,
+ * where the flip depends on something outside the issue, against that: triage → todo needs a spec with
+ * nothing left for a human (and the design frozen when it touches UI, or an explicit --skip-design), done
+ * needs every PR that references the issue merged, a project that skips triage (its ISSUE_TRACKER.md says
+ * 「triage：跳过」) cannot `set triage`, and putting an issue back in backlog needs a comment saying where the
+ * work stopped, since the next session picks up from it.
  *
- * The link from a spec to its issues lives in the spec's frontmatter (`issues: [12, 15]`). A spec that
- * covers no issue (one written from a conversation) gets a spec issue from `open` before its PR, so the
- * number travels with the PR; it has no label until `reconcile` sees the spec on main, and `candidates`
- * never offers it.
+ * A PR belongs to an issue when its body says `Refs <owner>/<repo>#<n>` (a bare `Refs #<n>` counts for a PR
+ * in the issue's own repo). The repositories searched are the ones in the 「仓库」 section of ISSUE_TRACKER.md
+ * (its first column; the issue's own repo is always searched), or only the issue's repo when there is none.
  *
- * An issue session carries one issue from verification to merge. After each of its PRs lands it calls
- * `advance`: the same flips `reconcile` would make for that one spec, then the claim of the next 中 state.
+ * Order between issues is GitHub's native "blocked by" relation: `candidates` leaves out a todo that an open
+ * issue still blocks. Versions are milestones, modules are categories. There is no parent / child logic.
  *
- * Issues can be grouped under a root: GitHub's native sub-issues. A root is an issue that has sub-issues, a
- * sub-issue one that has a parent. The group is one spec and one session: the spec's `issues:` lists every
- * sub-issue (never the root). `candidates` offers the root and never its sub-issues, `set` on the root's
- * number flips the root and its open sub-issues together, and the root's own label is not worked on but
- * moves with the spec: when `reconcile` or `advance` flips the spec's sub-issues the root goes to the same
- * state, and when the spec closes them the root is closed as completed, its comment naming the spec. A
- * root with an open sub-issue the spec does not list (or another spec lists), or whose sub-issues would
- * end up in different states, stays put and is reported as a problem. A root none of whose sub-issues a
- * spec lists yet is left alone. A root is never an orphan: no spec lists it, and that is not reported.
- * `group` names the root and the open sub-issues of any member.
- *
- * Besides its status an issue carries category labels, `type:<parent>` and optionally
- * `type:<parent>/<child>`. The project lists them in the「issue 分类」section of its AGENTS.md (or
- * CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes every label outside the
- * status states, the categories and that keep-list.
+ * Besides its status an issue carries category labels, `type:<parent>` and optionally `type:<parent>/<child>`,
+ * and one kind label, `kind:bug|feature|improvement`. The project lists the categories in the「issue 分类」
+ * section of its AGENTS.md (or CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes
+ * every label outside the status labels, the kinds, the categories and that keep-list.
  *
  * The dispatch loop hands out sessions from queues, each with its own cap on open sessions. Every issue
  * is in the main queue (cap 10) unless its parent category is marked「（独立队列，上限 N）」in that
- * section: then it waits in that category's own queue, so a category that files issues in bulk (seo-scan
- * has no cap) cannot crowd out the rest. A queue's sessions sit in its own sidebar sections, the stage
- * names prefixed with the category (`seo 审核中`), which is how the loop counts them apart.
+ * section: then it waits in that category's own queue. A queue's sessions sit in its own sidebar
+ * sections, one per working state, prefixed with the category (`seo in-progress`).
  *
- * Usage (<docs> is the target project's docs/ directory; gh runs there, so it acts on that repo; a
- * target is an issue number or a spec slug, which stands for every issue the spec lists):
- *   node issues.mjs labels     <docs> [--prune]                → creates the missing status:* and type:* labels; lists the rest, --prune deletes them
- *   node issues.mjs type       <docs> <n> <parent[/child]>...  → sets #n's type:* labels from the project's categories
- *   node issues.mjs advance    <docs> <spec-slug>              → after a PR of the spec landed: its issues move on to 设计中 / 实现中, or close
- *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]  → JSON: 待验证 issues no spec lists, oldest first; main queue, or category c's own;
- *                                                                 sub-issues and issues opened under 6 hours ago are skipped (a root is never held back)
- *   node issues.mjs group      <docs> <n>                      → JSON: the root of #n (the root's number or any sub-issue's) and its open sub-issues
- *   node issues.mjs queues     <docs> [<n>]                    → JSON: every queue (cap, sidebar sections), or the one issue #n is in
- *   node issues.mjs queue      <docs> <待设计|待实现>           → JSON: specs whose issues wait in that state, and the mismatches
- *   node issues.mjs set        <docs> <state> <target>...      → checked flip: claim, a session opening or giving up, 搁置; a root's number flips its open sub-issues too
- *   node issues.mjs reconcile  <docs>                          → the flips main already decides: 待设计 / 待实现, closing
- *   node issues.mjs resume     <docs> <target>...              → 搁置 → where main says the issue belongs
- *   node issues.mjs handoff    <docs> <spec-slug> <n>          → adds #n to the spec's frontmatter (GitHub untouched)
- *   node issues.mjs open       <docs> <spec-slug>              → the spec covers no issue: opens a spec issue, writes its number into the spec
- *   node issues.mjs unhandoff  <docs> <spec-slug> <n>          → takes #n off the spec and its label off → 待验证
- *   node issues.mjs drop       <docs> <spec-slug> <n>          → takes #n off the spec and closes it as not planned (the human decided)
+ * Usage (<docs> is the docs/ directory; gh runs there, so it acts on that repo):
+ *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, kind:* and type:* labels; lists the rest, --prune deletes them
+ *   node issues.mjs type       <docs> <n> <parent[/child]>...         → sets #n's type:* labels from the project's categories
+ *   node issues.mjs show       <docs> <n>                             → JSON: #n's state, title, categories, its PRs (repo, draft / ready / merged), the spec that covers it
+ *   node issues.mjs check      <docs> <state> <n> [--comment=<text>] [--skip-design] → only checks the flip's preconditions; writes nothing
+ *   node issues.mjs set        <docs> <state> <n>... [--comment=<text>] [--skip-design] → checked flip; done / canceled also close the issue
+ *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, oldest first; main queue, or category c's own
+ *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
+ *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
+ *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply changes them
+ *   node issues.mjs open       <docs> <spec-slug>                     → the spec covers no issue: opens a spec issue in status:todo, writes its number into the spec
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
 
@@ -65,40 +50,85 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { frontmatter, hasFreezeSummary, issuesOf, scan, touchesUi, verdicts } from './spec-status.mjs';
+import { forHuman, frontmatter, hasFreezeSummary, issuesOf, scan, touchesUi } from './spec.mjs';
 
 export { issuesOf };
 
 export const PREFIX = 'status:';
 export const label = (state) => `${PREFIX}${state}`;
-export const UNLABELLED = '待验证';
-/** The states an open issue can carry as a label; 待验证 is the absence of one. */
-export const STATES = ['验证中', '审核中', '待设计', '设计中', '待实现', '实现中', '搁置'];
-const COLORS = { 验证中: 'fbca04', 审核中: '1d76db', 待设计: 'd4c5f9', 设计中: '5319e7', 待实现: 'c2e0c6', 实现中: '0e8a16', 搁置: 'bfbfbf' };
+/** Every state, in the order work goes through them. */
+export const STATES = ['backlog', 'triage', 'todo', 'in-progress', 'in-review', 'done', 'canceled'];
+/** The four open states that carry a label; backlog is open without one, done and canceled are closed. */
+export const LABELED = ['triage', 'todo', 'in-progress', 'in-review'];
+export const CLOSED = { done: 'completed', canceled: 'not planned' };
+/** The states a session works in: each has a sidebar section of that name. */
+export const WORKING = ['triage', 'in-progress', 'in-review'];
+const ABOUT = {
+  triage: '验证过，要人评估（grill、设计）',
+  todo: '可以被调度派成会话',
+  'in-progress': '会话在做，spec 提交后开 draft PR',
+  'in-review': 'PR 都转 ready，等人看',
+};
+const COLORS = { triage: '1d76db', todo: '0e8a16', 'in-progress': 'fbca04', 'in-review': 'd93f0b' };
+export const KINDS = ['bug', 'feature', 'improvement'];
+export const KIND_PREFIX = 'kind:';
+const KIND_COLORS = { bug: 'd73a4a', feature: 'a2eeef', improvement: '7057ff' };
 
-/**
- * The flips `set` allows. The 待 states are missing on purpose: only `reconcile` sets them, from main.
- * 搁置 leaves through `resume`.
- */
+/** The flips `set` allows. done and canceled are final: reopening is the human's call. */
 export const NEXT = {
-  待验证: ['验证中', '搁置'],
-  验证中: ['审核中', '待验证', '搁置'],
-  审核中: ['待验证', '搁置'],
-  待设计: ['设计中', '搁置'],
-  设计中: ['待设计', '搁置'],
-  待实现: ['实现中', '搁置'],
-  实现中: ['待实现', '搁置'],
-  搁置: [],
+  backlog: ['triage', 'todo', 'canceled'],
+  triage: ['todo', 'backlog', 'canceled'],
+  todo: ['in-progress', 'backlog', 'canceled'],
+  'in-progress': ['in-review', 'triage', 'backlog', 'canceled'],
+  'in-review': ['in-progress', 'done', 'backlog', 'canceled'],
+  done: [],
+  canceled: [],
 };
 
-/** An issue opened less than this long ago waits: the consolidation task runs every 6 hours and should have seen it once. */
-export const NEW_ISSUE_WAIT_MS = 6 * 3600_000;
+/** Flips that must say, in a comment on the issue, where the work stopped. */
+export const NEEDS_COMMENT = new Set(['backlog']);
+/** Prefix of every comment idea-loop writes on an issue. */
+export const AI_PREFIX = '🤖 idea-loop：';
 
-/** An issue's state from its labels: the status:* label, 待验证 when there is none. */
-export function stateOf(labels) {
+/**
+ * An issue's state: closed ones by their close reason (not planned = canceled, anything else = done), open
+ * ones by the status:* label, backlog when there is none. A label that is not a state (the old Chinese
+ * ones), or two status labels, come back as that text, so callers can tell the issue is outside the machine.
+ */
+export function stateOf(labels, { open = true, reason = null } = {}) {
+  if (!open) return reason === 'not_planned' || reason === 'not planned' ? 'canceled' : 'done';
   const own = labels.filter((l) => l.startsWith(PREFIX)).map((l) => l.slice(PREFIX.length));
-  if (!own.length) return UNLABELLED;
+  if (!own.length) return 'backlog';
   return own.length === 1 ? own[0] : own.join(' + ');
+}
+
+/**
+ * Why flipping an issue from `from` to `to` is refused, or null. `spec` is the text of the spec that covers
+ * the issue, or null when there is none. `prs` are the issue's PRs ({ repo, number, state }), needed only
+ * for → done. `skipTriage` is the project's choice not to use triage.
+ */
+export function transitionError(from, to, { spec = null, prs = null, comment = '', skipDesign = false, skipTriage = false } = {}) {
+  if (!STATES.includes(to)) return `「${to}」不是 issue 的状态（${STATES.join(' / ')}）`;
+  if (!STATES.includes(from)) return `issue 现在的状态「${from}」不在状态机里（旧状态机留下的先跑 issues.mjs migrate）`;
+  if (from === to) return `issue 已经是「${to}」`;
+  const choices = NEXT[from].filter((s) => !(skipTriage && s === 'triage'));
+  if (to === 'triage' && skipTriage) return `项目文档（ISSUE_TRACKER.md）写了跳过 triage：不翻 triage，backlog 直接翻 todo（能翻成：${choices.join(' / ') || '无'}）`;
+  if (!NEXT[from].includes(to)) return `「${from}」不能翻成「${to}」（能翻成：${choices.join(' / ') || '无'}）`;
+  if (NEEDS_COMMENT.has(to) && !String(comment).trim()) return '翻「backlog」要带 --comment：写清停在哪个阶段、分支叫什么，下一个会话靠它接上';
+  if (from === 'triage' && to === 'todo') {
+    if (!spec) return '没有 spec 的 issues: 列着这个 issue——triage 的产出是 spec，写好才翻 todo';
+    if (forHuman(spec).length) return `spec 里还有等人定的：${forHuman(spec).join('；')}`;
+    if (touchesUi(spec) && !hasFreezeSummary(spec) && !skipDesign) {
+      return 'spec 碰 UI，「实现决策」里还没有「冻结摘要」——先设计；没装 design 插件时带 --skip-design，并在汇报里写明跳过了设计';
+    }
+  }
+  if (to === 'done') {
+    const live = (prs ?? []).filter((p) => p.state !== 'closed');
+    if (!live.length) return '没有 PR 挂在这个 issue 上（PR 正文要有 `Refs <owner>/<repo>#<号>`）——全部 PR 合并才能翻 done';
+    const open = live.filter((p) => p.state !== 'merged');
+    if (open.length) return `还有 PR 没合并：${open.map((p) => `${p.repo}#${p.number}（${p.state}）`).join('、')}`;
+  }
+  return null;
 }
 
 export const TYPE_PREFIX = 'type:';
@@ -155,7 +185,7 @@ export function typeLabels(types) {
 }
 
 export const MAIN_CAP = 10;
-export const STAGE_SECTIONS = ['审核中', '设计中', '实现中'];
+export const STAGE_SECTIONS = [...WORKING];
 
 /** The dispatch queues: the main one (`name: null`) first, then one per category marked 独立队列. */
 export function queues(types) {
@@ -169,9 +199,9 @@ export function queueOf(types, labels) {
   return own.find((q) => labels.includes(`${TYPE_PREFIX}${q.name}`)) ?? main;
 }
 
-/** The labels a project keeps: the status states, its categories, and its keep-list. */
+/** The labels a project keeps: the status labels, the kinds, its categories, and its keep-list. */
 export function keptLabels(types) {
-  return new Set([...STATES.map(label), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
+  return new Set([...LABELED.map(label), ...KINDS.map((k) => `${KIND_PREFIX}${k}`), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
 }
 
 /** The type:* labels an issue should carry for the given values (`seo`, `seo/blog`); a child brings its parent. */
@@ -190,7 +220,6 @@ export function typeSet(types, values) {
 }
 
 export const SPEC_ISSUE = 'spec：';
-const isSpecIssue = (title) => String(title ?? '').startsWith(SPEC_ISSUE);
 
 export function withIssues(md, list) {
   const m = String(md).match(/^(---\n[\s\S]*?)(\n---)([\s\S]*)$/);
@@ -200,214 +229,228 @@ export function withIssues(md, list) {
   return head + m[2] + m[3];
 }
 
-/** Where main says an issue of this spec belongs: a state, a closing, or null for nothing main decides. */
-export function targetOf(md, n) {
-  const status = frontmatter(md).status;
-  if (!['正式', '实现中', '完成'].includes(status)) return null;
-  if (verdicts(md).get(n) === '不存在') return { close: 'not planned' };
-  if (status === '完成') return { close: 'completed' };
-  if (status === '实现中') return { state: '待实现' };
-  return { state: touchesUi(md) && !hasFreezeSummary(md) ? '待设计' : '待实现' };
+// ---------- project document (ISSUE_TRACKER.md) ----------
+
+/** The project's issue tracker document: ISSUE_TRACKER.md next to docs/. Empty when there is none. */
+export function readTracker(docs) {
+  const file = join(dirname(resolve(docs)), 'ISSUE_TRACKER.md');
+  return existsSync(file) ? readFileSync(file, 'utf8') : '';
 }
 
 /**
- * The flips main already decides. `specs` are the specs on main ({ slug, md }), `issues` the open issues
- * ({ number, title, labels }). An issue moves only out of a state whose work is done or never started:
- * 待验证 / 验证中 / 审核中 into its 待 state, 待设计 / 设计中 on to 待实现 once the freeze is on main; it is
- * closed from any state but 搁置. An issue carrying a 待 / 中 state that no spec on main lists is a problem.
+ * Whether the project does without the triage state: a line `triage：跳过` (a list item, a bold label or a
+ * table row `| triage | 跳过 |` also do). The template's own `triage：用 / 跳过` is not a choice yet.
  */
-export function reconcilePlan(specs, issues) {
-  const open = new Map(issues.map((i) => [i.number, i]));
-  const listed = new Set();
-  const specOf = new Map();
+export function skipsTriage(md) {
+  return /^\s*(?:[-*]\s*)?(?:\|\s*)?(?:\*\*)?triage(?:\*\*)?\s*(?:[：:]|\|)\s*(?:\*\*)?跳过/im.test(String(md));
+}
+
+/**
+ * The repositories the project's issues are worked in: the first cell (or first backticked name) of each row
+ * or bullet under「## 仓库」. Null when the section is missing. A name without an owner takes `owner`'s.
+ */
+export function parseRepos(md, owner = null) {
+  const lines = String(md).split('\n');
+  const start = lines.findIndex((l) => l.trim() === '## 仓库');
+  if (start < 0) return null;
+  const out = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,2} /.test(line)) break;
+    let name = null;
+    if (/^\s*\|/.test(line)) {
+      const cell = line.split('|')[1]?.trim().replace(/`/g, '') ?? '';
+      if (cell && !/^[-: ]+$/.test(cell) && !/^仓库(名)?$/.test(cell)) name = cell;
+    } else {
+      name = line.match(/^\s*[-*]\s*`([^`]+)`/)?.[1] ?? null;
+    }
+    if (!name || !/^[\w.-]+(\/[\w.-]+)?$/.test(name)) continue;
+    out.push(name.includes('/') || !owner ? name : `${owner}/${name}`);
+  }
+  return out;
+}
+
+// ---------- PRs ----------
+
+/** Whether a PR body attaches the PR to issue #n of `issueRepo`: `Refs <owner>/<repo>#n`, or a bare `Refs #n` in the issue's own repo. */
+export function refsIssue(body, n, issueRepo, prRepo) {
+  const re = /\bRefs\s+(?:([\w.-]+\/[\w.-]+))?#(\d+)(?!\d)/gi;
+  for (const m of String(body ?? '').matchAll(re)) {
+    if (Number(m[2]) !== n) continue;
+    if (m[1] ? m[1].toLowerCase() === issueRepo.toLowerCase() : prRepo.toLowerCase() === issueRepo.toLowerCase()) return true;
+  }
+  return false;
+}
+
+/** draft / ready / merged, or closed for a PR closed without merging. */
+export const prState = (p) => (p.state === 'MERGED' ? 'merged' : p.state === 'CLOSED' ? 'closed' : p.isDraft ? 'draft' : 'ready');
+
+/** The PRs that attach to issue #n (of `issueRepo`) in each of `repos`, each { repo, number, url, state }. */
+export function prsOf(gh, n, issueRepo, repos) {
+  const out = [];
+  for (const repo of [...new Set([issueRepo, ...repos])]) {
+    const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${n} in:body`, '--json', 'number,body,state,isDraft,url', '--limit', '100']));
+    for (const p of rows) if (refsIssue(p.body, n, issueRepo, repo)) out.push({ repo, number: p.number, url: p.url ?? null, state: prState(p) });
+  }
+  return out;
+}
+
+/** The repositories to look for PRs in, for an issue of `issueRepo`. */
+export function reposFor(docs, issueRepo) {
+  const owner = issueRepo.split('/')[0];
+  return parseRepos(readTracker(docs), owner) ?? [];
+}
+
+// ---------- plans ----------
+
+/**
+ * The flips that need no one's judgement. `issues` are the open issues ({ number, labels }); `prs` maps an
+ * issue's number to its PRs ({ state }). An issue in in-progress or in-review whose PRs (closed ones aside)
+ * are all merged goes to done; one in in-progress whose PRs are all ready or merged goes to in-review. An
+ * issue with a label outside the states, or two status:* labels, is a problem.
+ */
+export function reconcilePlan(issues, prs = new Map()) {
   const actions = [];
   const problems = [];
-  for (const { slug, md } of specs) {
-    for (const n of issuesOf(md)) {
-      listed.add(n);
-      specOf.set(n, [...(specOf.get(n) ?? []), slug]);
-      const it = open.get(n);
-      if (!it) continue;
-      const cur = stateOf(it.labels);
-      if (cur === '搁置') continue;
-      if (![UNLABELLED, ...STATES].includes(cur)) {
-        problems.push(`#${n} 的 label「${cur}」不是 issue 的状态（旧状态机留下的就先迁移）`);
-        continue;
-      }
-      const t = targetOf(md, n);
-      if (!t) continue;
-      if (t.close) actions.push({ n, slug, close: t.close, from: cur });
-      else if ([UNLABELLED, '验证中', '审核中'].includes(cur) || (t.state === '待实现' && ['待设计', '设计中'].includes(cur))) {
-        if (cur !== t.state) actions.push({ n, slug, from: cur, to: t.state });
-      }
-    }
-  }
   for (const it of issues) {
     const cur = stateOf(it.labels);
-    if (['待设计', '设计中', '待实现', '实现中'].includes(cur) && !listed.has(it.number) && !(it.subCount > 0)) problems.push(`#${it.number} 是「${cur}」，但主分支上没有 spec 列着它`);
+    if (!STATES.includes(cur)) {
+      problems.push(it.labels.filter((l) => l.startsWith(PREFIX)).length > 1
+        ? `#${it.number} 有两个 status:* label（${cur}）：留一个，其余去掉`
+        : `#${it.number} 的 label「${cur}」不是 issue 的状态（旧状态机留下的先跑 issues.mjs migrate）`);
+      continue;
+    }
+    if (cur !== 'in-progress' && cur !== 'in-review') continue;
+    const live = (prs.get(it.number) ?? []).filter((p) => p.state !== 'closed');
+    if (!live.length) continue;
+    if (live.every((p) => p.state === 'merged')) actions.push({ n: it.number, from: cur, to: 'done', why: `PR ${live.map((p) => `${p.repo}#${p.number}`).join('、')} 都已合并` });
+    else if (cur === 'in-progress' && live.every((p) => p.state !== 'draft')) actions.push({ n: it.number, from: cur, to: 'in-review', why: `PR ${live.map((p) => `${p.repo}#${p.number}`).join('、')} 都已 ready` });
   }
-  const roots = rootPlan(issues, changesOf(actions), specOf);
-  actions.push(...roots.actions);
-  problems.push(...roots.problems);
   return { actions, problems };
 }
 
-/**
- * What `advance` does for one spec on main: each open issue goes where main says, and a 待 state is
- * claimed on the spot (待设计 → 设计中, 待实现 → 实现中), since the session asking is the one that works
- * on it. `phase` is where the session goes next: 设计中, 实现中, or 关闭 once every issue is closed.
- */
-export function advancePlan(md, issues) {
-  const open = new Map(issues.map((i) => [i.number, i]));
-  const status = frontmatter(md).status;
-  const actions = [];
-  const phases = new Set();
-  for (const n of issuesOf(md)) {
-    const it = open.get(n);
-    if (!it) continue;
-    const cur = stateOf(it.labels);
-    if (cur === '搁置') throw new Error(`#${n} 是「搁置」，先 resume`);
-    if (![UNLABELLED, ...STATES].includes(cur)) throw new Error(`#${n} 的 label「${cur}」不是 issue 的状态（旧状态机留下的就先迁移）`);
-    const t = targetOf(md, n);
-    if (!t) throw new Error(`spec 在这份 docs 里是「${status}」，主分支上还没有下一段要用的东西（advance 要在 PR 合并、切到最新主分支之后跑）`);
-    if (t.close) {
-      actions.push({ n, from: cur, close: t.close });
-      continue;
-    }
-    const to = t.state === '待设计' ? '设计中' : '实现中';
-    if (to === '设计中' && ['实现中', '待实现'].includes(cur)) throw new Error(`#${n} 已经是「${cur}」，spec 却还要设计`);
-    phases.add(to);
-    if (cur !== to) actions.push({ n, from: cur, to });
-  }
-  const phase = phases.has('设计中') ? '设计中' : phases.has('实现中') ? '实现中' : '关闭';
-  return { actions, phase };
-}
+/** The old Chinese status labels and what each becomes (spec「已在用仓库的旧 label」). 实现中 is in-review when it has a ready PR. */
+export const OLD_STATES = { 验证中: 'triage', 审核中: 'triage', 待设计: 'triage', 设计中: 'triage', 待实现: 'todo', 实现中: 'in-progress', 搁置: 'backlog' };
 
 /**
- * What the roots do once `changes` (issue number → `{ to }` or `{ close: true }`) are applied. A root's
- * sub-issues are covered by one spec: `specOf` maps an issue number to the slugs of the specs listing it.
- * When the spec closes all the open sub-issues the root is closed as completed; otherwise the root goes to
- * the state its sub-issues end up in (parked ones aside, and it stays put while all are parked). A root
- * with an open sub-issue the spec does not list, with sub-issues in different specs, or whose sub-issues
- * end up in different states stays put and is reported. A root none of whose sub-issues is listed by a
- * spec is left alone; a root with no open sub-issue left is closed. A parked root is left alone.
- * `only` limits it to those root numbers. `issues` are the open issues ({ number, labels, parent?, subCount? }).
- * Returns `{ actions, problems }`.
+ * How the old labels would change. `issues` are the open issues ({ number, labels, subTotal }); `prs` maps an
+ * issue's number to its PRs; `children` maps a parent's number to its sub-issues ({ number, id }). Returns
+ * `relabels` ({ n, from, to, remove, add, comment }), `unlinks` ({ parent, child }) for the sub-issue links
+ * the grouping left behind, and `problems` (an issue mixing old and new labels, or an unknown status label).
  */
-export function rootPlan(issues, changes = new Map(), specOf = new Map(), only = null) {
-  const kids = new Map();
-  for (const i of issues) if (i.parent) kids.set(i.parent, [...(kids.get(i.parent) ?? []), i]);
-  const actions = [];
+export function migratePlan(issues, prs = new Map(), children = new Map()) {
+  const relabels = [];
   const problems = [];
-  for (const root of issues) {
-    if (!(root.subCount > 0) || (only && !only.has(root.number))) continue;
-    if (changes.get(root.number)?.close) continue;
-    const cur = stateOf(root.labels);
-    if (cur === '搁置' || ![UNLABELLED, ...STATES].includes(cur)) continue;
-    const open = kids.get(root.number) ?? [];
-    if (!open.length) {
-      actions.push({ n: root.number, close: 'completed', why: 'children', from: cur });
+  for (const it of issues) {
+    const own = it.labels.filter((l) => l.startsWith(PREFIX)).map((l) => l.slice(PREFIX.length));
+    const old = own.filter((s) => s in OLD_STATES);
+    const unknown = own.filter((s) => !(s in OLD_STATES) && !LABELED.includes(s));
+    if (unknown.length) problems.push(`#${it.number} 的 label「${unknown.join('、')}」既不是旧状态也不是新状态，不动`);
+    if (!old.length) continue;
+    if (own.length > 1) {
+      problems.push(`#${it.number} 有多个 status:* label（${own.join('、')}），先留一个再迁移`);
       continue;
     }
-    const listed = open.filter((k) => specOf.has(k.number));
-    if (!listed.length) continue;
-    const slugs = [...new Set(listed.flatMap((k) => specOf.get(k.number)))];
-    if (listed.length < open.length || slugs.length > 1) {
-      const outside = open.filter((k) => !specOf.has(k.number)).map((k) => `#${k.number}`);
-      const why = outside.length ? `${outside.join('、')} 不在 spec ${slugs.join('、')} 里` : `子 issue 分在 spec ${slugs.join('、')} 里`;
-      problems.push(`#${root.number} 的子 issue 没有都在同一份 spec 里（${why}），根没有动；分组和 spec 对不上`);
-      continue;
+    const from = old[0];
+    let to = OLD_STATES[from];
+    if (from === '实现中') {
+      const live = (prs.get(it.number) ?? []).filter((p) => p.state !== 'closed');
+      if (live.length && live.some((p) => p.state === 'ready') && live.every((p) => p.state !== 'draft')) to = 'in-review';
     }
-    const alive = open.filter((k) => !changes.get(k.number)?.close);
-    if (!alive.length) {
-      actions.push({ n: root.number, close: 'completed', why: 'spec', slug: slugs[0], from: cur });
-      continue;
-    }
-    const states = [...new Set(alive.map((k) => changes.get(k.number)?.to ?? stateOf(k.labels)).filter((st) => st !== '搁置'))];
-    if (states.length > 1) {
-      problems.push(`#${root.number} 的子 issue 要翻去的状态不一致（${states.join(' / ')}），根没有动；分组和 spec 对不上`);
-      continue;
-    }
-    if (states.length && states[0] !== cur) actions.push({ n: root.number, from: cur, to: states[0], root: true });
+    relabels.push({
+      n: it.number,
+      from,
+      to,
+      remove: [label(from)],
+      add: to === 'backlog' ? [] : [label(to)],
+      comment: from === '搁置' ? '从搁置迁回 backlog（issue 状态模型换了：先放着 = backlog，停在哪看这条之前的评论）。' : '',
+    });
   }
-  return { actions, problems };
+  const unlinks = [...children].flatMap(([parent, kids]) => kids.map((k) => ({ parent, child: k.number, childId: k.id })));
+  return { relabels, unlinks, problems };
 }
 
-const changesOf = (actions) => new Map(actions.map((a) => [a.n, a.close ? { close: true } : { to: a.to }]));
+/** `status:` lines left in the frontmatter of a spec: removed by migrate. */
+export function withoutStatus(md) {
+  const m = String(md).match(/^(---\n)([\s\S]*?)(\n---)([\s\S]*)$/);
+  if (!m || !/^status:/m.test(m[2])) return md;
+  return m[1] + m[2].split('\n').filter((l) => !/^status:/.test(l)).join('\n') + m[3] + m[4];
+}
 
 // ---------- gh boundary ----------
 
 export const defaultGh = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+const defaultGit = (cwd) => (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 function issue(gh, n) {
-  const v = JSON.parse(gh(['issue', 'view', String(n), '--json', 'number,state,title,labels']));
-  return { number: v.number, state: v.state, title: v.title, labels: v.labels.map((l) => l.name) };
+  const v = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}`]));
+  return row(v);
 }
+
+const row = (i) => {
+  const open = i.state === 'open' || i.state === 'OPEN';
+  const labels = (i.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name));
+  return {
+    number: i.number,
+    id: i.id,
+    title: i.title,
+    body: i.body ?? '',
+    open,
+    reason: i.state_reason ?? null,
+    labels,
+    state: stateOf(labels, { open, reason: i.state_reason ?? null }),
+    repo: String(i.repository_url ?? '').match(/repos\/([^/]+\/[^/]+)$/)?.[1] ?? null,
+    subTotal: i.sub_issues_summary?.total ?? 0,
+    blockedBy: i.issue_dependencies_summary?.blocked_by ?? 0,
+  };
+};
 
 const PAGE = 100;
 
-/**
- * Every open issue (pull requests left out) from the repo-wide REST list, page by page, with what the list
- * gives for free: when it was opened, its parent (the number, or null) and how many sub-issues it has (open
- * or closed; above 0 makes it a root).
- */
+/** Every open issue (pull requests left out) from the repo-wide REST list, page by page. */
 function openIssues(gh) {
   const out = [];
   for (let page = 1; ; page += 1) {
     const rows = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues?state=open&per_page=${PAGE}&page=${page}`]));
-    for (const i of rows) {
-      if (i.pull_request) continue;
-      out.push({
-        number: i.number,
-        title: i.title,
-        labels: i.labels.map((l) => l.name),
-        createdAt: Date.parse(i.created_at),
-        parent: Number(String(i.parent_issue_url ?? '').match(/\/issues\/(\d+)$/)?.[1]) || null,
-        subCount: i.sub_issues_summary?.total ?? 0,
-      });
-    }
+    for (const i of rows) if (!i.pull_request) out.push(row(i));
     if (rows.length < PAGE) return out;
   }
 }
 
-/** Leaves the issue carrying exactly the label of `state` (none for 待验证). */
+const subIssues = (gh, n) => JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}/sub_issues?per_page=100`])).map(row);
+
+/** Leaves the issue carrying exactly the label of `state` (none for backlog, done and canceled). */
 function relabel(gh, n, labels, state) {
-  const want = state === UNLABELLED ? [] : [label(state)];
+  const want = LABELED.includes(state) ? [label(state)] : [];
   const add = want.filter((l) => !labels.includes(l));
   const remove = labels.filter((l) => l.startsWith(PREFIX) && !want.includes(l));
   if (!add.length && !remove.length) return;
   gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
 }
 
-function close(gh, n, labels, reason, comment) {
-  relabel(gh, n, labels, UNLABELLED);
-  gh(['issue', 'close', String(n), '--reason', reason, '--comment', comment]);
+/** Moves #n to `state`: relabels, comments when there is something to say, closes for done / canceled. */
+function move(gh, it, state, comment = '') {
+  relabel(gh, it.number, it.labels, state);
+  const body = comment ? `${AI_PREFIX}${comment}` : '';
+  if (CLOSED[state]) gh(['issue', 'close', String(it.number), '--reason', CLOSED[state], ...(body ? ['--comment', body] : [])]);
+  else if (body) gh(['issue', 'comment', String(it.number), '--body', body]);
 }
 
-const specFile = (docs, slug) => join(docs, 'spec', slug, `${slug}.md`);
-
-function readSpec(docs, slug) {
-  const file = specFile(docs, slug);
-  if (!existsSync(file)) throw new Error(`没有 ${file}`);
-  return { file, md: readFileSync(file, 'utf8') };
-}
-
-const specsOn = (docs) => scan(docs).specs.map((s) => ({ slug: s.slug, md: readFileSync(s.file, 'utf8') }));
-
-/** Issue numbers named by targets: a number stands for itself, a spec slug for every issue it lists. */
-function expand(docs, targets) {
-  return [...new Set(targets.flatMap((t) => (/^\d+$/.test(String(t)) ? [Number(t)] : issuesOf(readSpec(docs, t).md))))];
+/** The spec under <docs> whose `issues:` lists #n; null when none does. */
+export function specFor(docs, n) {
+  const specs = scan(docs).specs.map((s) => ({ slug: s.slug, md: readFileSync(s.file, 'utf8') }));
+  return specs.find((s) => issuesOf(s.md).includes(n)) ?? null;
 }
 
 /**
- * Creates the missing status:* and type:* labels, and returns the labels outside the kept set with how
- * many open issues carry each; with `prune` they are deleted. Without categories nothing is pruned: the
+ * Creates the missing status:*, kind:* and type:* labels, and returns the labels outside the kept set with
+ * how many open issues carry each; with `prune` they are deleted. Without categories nothing is pruned: the
  * keep-list lives in the same section, so every project label would look surplus.
  */
 export function ensureLabels(gh, types = null, { prune = false } = {}) {
   const have = new Set(JSON.parse(gh(['label', 'list', '--limit', '500', '--json', 'name'])).map((l) => l.name));
   const want = [
-    ...STATES.map((s) => ({ name: label(s), color: COLORS[s], about: s === '搁置' ? 'idea-loop 不接手' : `idea-loop：${s}` })),
+    ...LABELED.map((s) => ({ name: label(s), color: COLORS[s], about: `idea-loop：${ABOUT[s]}` })),
+    ...KINDS.map((k) => ({ name: `${KIND_PREFIX}${k}`, color: KIND_COLORS[k], about: `idea-loop：类型 ${k}` })),
     ...typeLabels(types),
   ];
   const made = [];
@@ -437,176 +480,152 @@ export function ensureLabels(gh, types = null, { prune = false } = {}) {
 /** Leaves #n carrying exactly the type:* labels of `values`. */
 export function setTypes(gh, types, n, values) {
   const want = typeSet(types, values);
-  const it = issue(gh, n);
+  const it = { labels: JSON.parse(gh(['issue', 'view', String(n), '--json', 'labels'])).labels.map((l) => l.name) };
   const add = want.filter((l) => !it.labels.includes(l));
   const remove = it.labels.filter((l) => l.startsWith(TYPE_PREFIX) && !want.includes(l));
   if (add.length || remove.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
   return want;
 }
 
-/** Issue numbers some spec under <docs> lists. */
-export function listedIssues(docs) {
-  return new Set(specsOn(docs).flatMap((s) => issuesOf(s.md)));
-}
-
-export function candidates(gh, limit = 100, listed = new Set(), { types = null, queue = null, now = Date.now() } = {}) {
+/** The todo issues a dispatch round may hand out: none an open issue still blocks, oldest first. */
+export function candidates(gh, limit = 100, { types = null, queue = null } = {}) {
   if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
   return openIssues(gh)
-    .filter((i) => stateOf(i.labels) === UNLABELLED && !listed.has(i.number) && !isSpecIssue(i.title))
-    .filter((i) => !i.parent && (i.subCount > 0 || !(now - i.createdAt < NEW_ISSUE_WAIT_MS)))
+    .filter((i) => i.state === 'todo' && !(i.blockedBy > 0))
     .filter((i) => queueOf(types, i.labels).name === queue)
     .sort((a, b) => a.number - b.number)
     .slice(0, limit)
     .map(({ number, title }) => ({ number, title }));
 }
 
-/** The specs a loop picks up for 待设计 or 待实现: those whose open issues carry it, oldest issue first. */
-export function queue(gh, docs, state) {
-  if (!['待设计', '待实现'].includes(state)) throw new Error(`queue 只给「待设计」「待实现」（待验证用 candidates），不是「${state}」`);
-  const specs = specsOn(docs);
-  const picked = new Map();
-  const problems = [];
-  for (const it of openIssues(gh).filter((i) => stateOf(i.labels) === state).sort((a, b) => a.number - b.number)) {
-    if (it.subCount > 0) continue;
-    const spec = specs.find((s) => issuesOf(s.md).includes(it.number));
-    if (!spec) problems.push(`#${it.number} 是「${state}」，但主分支上没有 spec 列着它`);
-    else if (frontmatter(spec.md).status !== '正式') problems.push(`#${it.number} 是「${state}」，主分支上的 [[${spec.slug}]] 却是「${frontmatter(spec.md).status}」`);
-    else if (!picked.has(spec.slug)) picked.set(spec.slug, { slug: spec.slug, issues: issuesOf(spec.md) });
+/** The branches of #n: `issue/<n>-<slug>`, local or remote, in the repo <docs> is in. */
+function branchesOf(git, n) {
+  try {
+    const names = String(git(['branch', '-a', '--format=%(refname:short)'])).split('\n').map((s) => s.trim()).filter(Boolean);
+    return [...new Set(names.map((b) => b.replace(/^origin\//, '')).filter((b) => b.startsWith(`issue/${n}-`)))];
+  } catch {
+    return [];
   }
-  return { specs: [...picked.values()], problems: [...new Set(problems)] };
 }
 
-export function setState(gh, docs, state, targets) {
-  if (![UNLABELLED, ...STATES].includes(state)) throw new Error(`「${state}」不是 issue 的状态（${[UNLABELLED, ...STATES].join(' / ')}）`);
-  // A root's number stands for the root and its open sub-issues. Every flip is checked before any is made,
-  // so a sub-issue that cannot move leaves the whole group where it was.
-  const numeric = new Set(targets.filter((t) => /^\d+$/.test(String(t))).map(Number));
-  const open = numeric.size ? openIssues(gh) : [];
-  const numbers = [...new Set(expand(docs, targets).flatMap((n) => [n, ...(numeric.has(n) ? open.filter((i) => i.parent === n).map((i) => i.number) : [])]))];
-  const flips = [];
-  for (const n of numbers) {
-    const it = issue(gh, n);
-    if (it.state !== 'OPEN') continue;
-    const cur = stateOf(it.labels);
-    if (cur === state) continue;
-    if (!(NEXT[cur] ?? []).includes(state)) {
-      const hint = ['待设计', '待实现'].includes(state) ? '——待设计 / 待实现只由 reconcile 按主分支挂' : '';
-      throw new Error(`#${n} 是「${cur}」，不能翻成「${state}」（能翻成：${(NEXT[cur] ?? []).join(' / ') || '无'}）${hint}`);
-    }
-    flips.push({ n, cur, labels: it.labels });
-  }
-  return flips.map(({ n, cur, labels }) => {
-    relabel(gh, n, labels, state);
-    return `#${n}: ${cur} → ${state}`;
-  });
-}
-
-const ROOT_CLOSED = '子 issue 都已关闭。';
-
-/** Applies the actions of a plan: label flips and closings (a closing says why, in a comment on the issue). */
-function apply(gh, actions, byNumber, slug = null) {
-  const done = [];
-  for (const a of actions) {
-    const labels = byNumber.get(a.n)?.labels ?? [];
-    if (a.why === 'children') close(gh, a.n, labels, 'completed', ROOT_CLOSED);
-    else if (a.why === 'spec') close(gh, a.n, labels, 'completed', `子 issue 随 spec \`${a.slug}\` 关闭，根随着关闭。`);
-    else if (a.close === 'not planned') close(gh, a.n, labels, 'not planned', `验证为不存在，证据见 spec \`${a.slug ?? slug}\`（\`docs/spec/${a.slug ?? slug}/${a.slug ?? slug}.md\` 开头写的结论）。`);
-    else if (a.close === 'completed') close(gh, a.n, labels, 'completed', `spec \`${a.slug ?? slug}\` 已实现并合并。`);
-    else relabel(gh, a.n, labels, a.to);
-    done.push(a.close ? `#${a.n}: ${a.from} → 关闭（${a.close}）` : `#${a.n}: ${a.from} → ${a.to}`);
-  }
-  return done;
-}
-
-export function reconcile(gh, docs) {
-  const open = openIssues(gh);
-  const { actions, problems } = reconcilePlan(specsOn(docs), open);
-  return { done: apply(gh, actions, new Map(open.map((i) => [i.number, i]))), problems };
-}
-
-export function advance(gh, docs, slug) {
-  const { md } = readSpec(docs, slug);
-  const open = openIssues(gh);
-  const { actions, phase } = advancePlan(md, open);
-  // the roots of this spec's issues move with them: to the same state, or closed when the spec closes them
-  const listed = new Set(issuesOf(md));
-  const roots = new Set(open.filter((i) => listed.has(i.number) && i.parent).map((i) => i.parent));
-  const plan = rootPlan(open, changesOf(actions), new Map([...listed].map((n) => [n, [slug]])), roots);
-  return { done: apply(gh, [...actions, ...plan.actions], new Map(open.map((i) => [i.number, i])), slug), phase, problems: plan.problems };
-}
-
-/** The group #n belongs to: its root (a root's own number, or its sub-issue's parent) and the root's open sub-issues. */
-export function group(gh, n) {
-  const open = openIssues(gh);
-  const rootN = open.find((i) => i.number === n)?.parent ?? n;
-  const root = open.find((i) => i.number === rootN) ?? issue(gh, rootN);
+/** #n with what a session needs to know where it is: state, categories, PRs, the spec that covers it, its branch. */
+export function show(gh, docs, n, { git = defaultGit(docs) } = {}) {
+  const it = issue(gh, n);
+  const spec = specFor(docs, n);
+  const prs = it.repo ? prsOf(gh, n, it.repo, reposFor(docs, it.repo)) : [];
   return {
-    root: { number: root.number, title: root.title },
-    children: open.filter((i) => i.parent === rootN).sort((a, b) => a.number - b.number).map((i) => ({ number: i.number, title: i.title, state: stateOf(i.labels) })),
+    number: it.number,
+    title: it.title,
+    state: it.state,
+    open: it.open,
+    categories: it.labels.filter((l) => l.startsWith(TYPE_PREFIX)),
+    kind: it.labels.find((l) => l.startsWith(KIND_PREFIX))?.slice(KIND_PREFIX.length) ?? null,
+    prs: prs.map(({ repo, number, url, state }) => ({ repo, number, url, state })),
+    spec: spec?.slug ?? null,
+    branch: branchesOf(git, n)[0] ?? null,
   };
 }
 
-export function resume(gh, docs, targets) {
-  const specs = specsOn(docs);
-  const done = [];
-  for (const n of expand(docs, targets)) {
-    const it = issue(gh, n);
-    if (it.state !== 'OPEN' || stateOf(it.labels) !== '搁置') throw new Error(`#${n} 不是「搁置」`);
-    const spec = specs.find((s) => issuesOf(s.md).includes(n));
-    const t = spec ? targetOf(spec.md, n) : null;
-    if (t?.close) close(gh, n, it.labels, t.close, `从搁置恢复：spec \`${spec.slug}\` 已经${t.close === 'completed' ? '实现' : '验证为不存在'}。`);
-    else relabel(gh, n, it.labels, t?.state ?? UNLABELLED);
-    done.push(`#${n}: 搁置 → ${t?.close ? `关闭（${t.close}）` : t?.state ?? UNLABELLED}`);
-  }
-  return done;
-}
-
-export function handoffIssue(gh, docs, slug, n) {
-  const { file, md } = readSpec(docs, slug);
-  const other = specsOn(docs).find((s) => s.slug !== slug && issuesOf(s.md).includes(n));
-  if (other) throw new Error(`#${n} 已经在 [[${other.slug}]] 里`);
-  if (issuesOf(md).includes(n)) return;
+/** Everything that can refuse the flip of #n to `state`, nothing written. Returns { it, cur } or throws. */
+function checkFlip(gh, docs, state, n, { comment = '', skipDesign = false } = {}) {
   const it = issue(gh, n);
-  if (it.state !== 'OPEN') throw new Error(`#${n} 是 ${it.state}，不移交`);
-  const cur = stateOf(it.labels);
-  if (![UNLABELLED, '验证中'].includes(cur)) throw new Error(`#${n} 已经是「${cur}」，不移交`);
-  writeFileSync(file, withIssues(md, [...issuesOf(md), n]));
+  const cur = it.state;
+  if (!it.open) throw new Error(`#${n} 已关闭（${cur}），done / canceled 之后不再翻；重开是人的事`);
+  const tracker = readTracker(docs);
+  const prs = state === 'done' && it.repo ? prsOf(gh, n, it.repo, reposFor(docs, it.repo)) : null;
+  const why = transitionError(cur, state, { spec: specFor(docs, n)?.md ?? null, prs, comment, skipDesign, skipTriage: skipsTriage(tracker) });
+  if (why) throw new Error(`#${n}：${why}`);
+  return { it, cur };
 }
 
-/** Opens a spec issue for a spec that covers none, without a label; returns its number, or null when the spec already lists issues. */
+/** Whether #n may flip to `state`: the reason when it may not, nothing written either way. */
+export function checkState(gh, docs, state, n, opts = {}) {
+  try {
+    const { cur } = checkFlip(gh, docs, state, n, opts);
+    return { ok: true, line: `#${n}: ${cur} → ${state} 可以翻` };
+  } catch (error) {
+    return { ok: false, reason: error.message };
+  }
+}
+
+/** Checked flips: every one is checked before any is made, so one refusal leaves them all where they were. */
+export function setState(gh, docs, state, numbers, opts = {}) {
+  const flips = numbers.map((n) => checkFlip(gh, docs, state, n, opts));
+  return flips.map(({ it, cur }) => {
+    move(gh, it, state, opts.comment);
+    return `#${it.number}: ${cur} → ${state}${CLOSED[state] ? `（关闭，${CLOSED[state]}）` : ''}`;
+  });
+}
+
+export function reconcile(gh, docs = null) {
+  const open = openIssues(gh);
+  const prs = new Map();
+  for (const it of open) {
+    if ((it.state === 'in-progress' || it.state === 'in-review') && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo, docs ? reposFor(docs, it.repo) : []));
+  }
+  const { actions, problems } = reconcilePlan(open, prs);
+  const byNumber = new Map(open.map((i) => [i.number, i]));
+  const done = actions.map((a) => {
+    move(gh, byNumber.get(a.n), a.to, `${a.why}，翻成 ${a.to}。`);
+    return `#${a.n}: ${a.from} → ${a.to}（${a.why}）`;
+  });
+  return { done, problems };
+}
+
+const CONSOLIDATION_MARK = '由整合定时任务开出';
+
+/** True for a root the old consolidation task opened: it has sub-issues and line 1 of its body names that task. Roots a human split are not. */
+export const isConsolidationRoot = (it) => it.subTotal > 0 && String(it.body ?? '').split('\n')[0].trim().startsWith(CONSOLIDATION_MARK);
+
+/**
+ * Plans, and with `apply` makes, the move off the old model: the old Chinese status labels become the new
+ * ones (搁置 also gets a comment), `status:` lines leave the specs' frontmatter, and the sub-issue links under
+ * the roots the consolidation task opened are removed; those roots, which existed only to group, are closed
+ * as not planned with a comment (one already carrying a status:* label is being worked on: unlinked, not closed).
+ * Parent-child links a human made are left alone. Without `apply` nothing is written.
+ */
+export function migrate(gh, docs, { apply = false } = {}) {
+  const open = openIssues(gh);
+  const prs = new Map();
+  for (const it of open) {
+    if (it.labels.includes(label('实现中')) && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo, reposFor(docs, it.repo)));
+  }
+  const roots = open.filter(isConsolidationRoot);
+  const children = new Map(roots.map((i) => [i.number, subIssues(gh, i.number)]));
+  const closing = roots.filter((r) => !r.labels.some((l) => l.startsWith(PREFIX)));
+  const plan = migratePlan(open, prs, children);
+  const specs = scan(docs).specs.filter((s) => frontmatter(readFileSync(s.file, 'utf8')).status !== undefined);
+  const lines = [
+    ...plan.relabels.map((r) => `#${r.n}: ${label(r.from)} → ${r.add[0] ?? '回 backlog（去掉 status:*）'}${r.comment ? '，补评论' : ''}`),
+    ...specs.map((s) => `spec ${s.slug}: 删掉 frontmatter 的 status 行`),
+    ...plan.unlinks.map((u) => `#${u.child}: 解除 #${u.parent} 的子 issue 关系`),
+    ...roots.map((r) => (closing.includes(r) ? `#${r.number}: 整合开出的根，解除后关成 not planned（补评论）` : `#${r.number}: 整合开出的根，但已有 status:* label（有人在做），解除关系后不关`)),
+    ...plan.problems.map((p) => `问题：${p}`),
+  ];
+  if (!apply) return { applied: false, lines };
+  for (const r of plan.relabels) {
+    gh(['issue', 'edit', String(r.n), ...r.add.flatMap((l) => ['--add-label', l]), ...r.remove.flatMap((l) => ['--remove-label', l])]);
+    if (r.comment) gh(['issue', 'comment', String(r.n), '--body', `${AI_PREFIX}${r.comment}`]);
+  }
+  for (const s of specs) writeFileSync(s.file, withoutStatus(readFileSync(s.file, 'utf8')));
+  for (const u of plan.unlinks) gh(['api', '-X', 'DELETE', `repos/{owner}/{repo}/issues/${u.parent}/sub_issue`, '-F', `sub_issue_id=${u.childId}`]);
+  for (const r of closing) move(gh, r, 'canceled', '整合定时任务开出的归组 issue；issue 模型换了，不再用父子关系归组，子 issue 已解除关系，关成 not planned。');
+  return { applied: true, lines };
+}
+
+/** Opens a spec issue for a spec that covers none, in status:todo; returns its number, or null when the spec already lists issues. */
 export function openSpecIssue(gh, docs, slug) {
-  const { file, md } = readSpec(docs, slug);
+  const file = join(docs, 'spec', slug, `${slug}.md`);
+  if (!existsSync(file)) throw new Error(`没有 ${file}`);
+  const md = readFileSync(file, 'utf8');
   if (issuesOf(md).length) return null;
   const title = String(md).match(/^# (.+)$/m)?.[1].trim() || slug;
-  const body = [
-    frontmatter(md).summary ?? '',
-    '',
-    `spec：\`docs/spec/${slug}/${slug}.md\`。spec 文件是真相，这个 issue 是它在 tracker 上的入口：spec 合进主分支后挂上状态 label，实现合并后关闭。`,
-  ].join('\n');
-  const out = String(gh(['issue', 'create', '--title', `${SPEC_ISSUE}${title}`, '--body', body])).trim();
+  const body = [frontmatter(md).summary ?? '', '', `spec：\`docs/spec/${slug}/${slug}.md\`。这个 issue 是它在 tracker 上的入口，状态看这里的 label。`].join('\n');
+  const out = String(gh(['issue', 'create', '--title', `${SPEC_ISSUE}${title}`, '--body', body, '--label', label('todo')])).trim();
   const n = Number(out.match(/\/issues\/(\d+)$/)?.[1]);
   if (!n) throw new Error(`gh issue create 没返回 issue 地址：${out}`);
   writeFileSync(file, withIssues(md, [n]));
   return n;
-}
-
-function takeOff(gh, docs, slug, n) {
-  const { file, md } = readSpec(docs, slug);
-  const list = issuesOf(md);
-  if (!list.includes(n)) throw new Error(`#${n} 不在 [[${slug}]] 的 issues 里`);
-  writeFileSync(file, withIssues(md, list.filter((x) => x !== n)));
-  return issue(gh, n);
-}
-
-export function unhandoffIssue(gh, docs, slug, n) {
-  const it = takeOff(gh, docs, slug, n);
-  relabel(gh, n, it.labels, UNLABELLED);
-  gh(['issue', 'comment', String(n), '--body', `从 spec \`${slug}\` 里移出，回到待验证。`]);
-}
-
-export function dropIssue(gh, docs, slug, n) {
-  const it = takeOff(gh, docs, slug, n);
-  close(gh, n, it.labels, 'not planned', `审核 spec \`${slug}\` 时决定不做。`);
 }
 
 // ---------- cli ----------
@@ -616,63 +635,56 @@ const num = (v, what) => {
   return Number(v);
 };
 
-const COMMANDS = ['labels', 'type', 'candidates', 'group', 'queues', 'queue', 'set', 'reconcile', 'advance', 'resume', 'handoff', 'open', 'unhandoff', 'drop'];
+const COMMANDS = ['labels', 'type', 'show', 'check', 'set', 'candidates', 'reconcile', 'queues', 'migrate', 'open'];
 
 function main() {
-  const [cmd, docs, a, b, ...rest] = process.argv.slice(2);
+  const argv = process.argv.slice(2);
+  const flags = Object.fromEntries(argv.filter((x) => x.startsWith('--')).map((x) => { const [k, ...v] = x.slice(2).split('='); return [k, v.length ? v.join('=') : true]; }));
+  const [cmd, docs, a, b, ...rest] = argv.filter((x) => !x.startsWith('--'));
   if (!docs || !existsSync(docs)) throw new Error(`usage: issues.mjs <${COMMANDS.join('|')}> <docs> …（${docs ?? '没给 docs'} 不存在）`);
-  if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」`);
+  if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」（${COMMANDS.join(' / ')}）`);
   const gh = defaultGh(docs);
   const print = (lines) => lines.forEach((l) => console.log(l));
+  const json = (v) => console.log(JSON.stringify(v, null, 2));
+  const opts = { comment: typeof flags.comment === 'string' ? flags.comment : '', skipDesign: !!flags['skip-design'] };
   if (cmd === 'labels') {
-    if (a !== undefined && a !== '--prune') throw new Error('usage: issues.mjs labels <docs> [--prune]');
-    const { made, surplus, deleted } = ensureLabels(gh, readTypes(docs), { prune: a === '--prune' });
+    const { made, surplus, deleted } = ensureLabels(gh, readTypes(docs), { prune: !!flags.prune });
     print(made.map((l) => `created ${l}`));
-    if (a === '--prune') return print(deleted.map((l) => `deleted ${l}`));
-    if (surplus.length) print([`不在状态、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
+    if (flags.prune) return print(deleted.map((l) => `deleted ${l}`));
+    if (surplus.length) print([`不在状态、类型、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
     return;
   }
-  if (cmd === 'candidates') {
-    const args = [a, b, ...rest].filter((x) => x !== undefined);
-    const flag = args.find((x) => x.startsWith('--queue='));
-    const limit = args.find((x) => !x.startsWith('--'));
-    const opts = { types: readTypes(docs), queue: flag ? flag.slice('--queue='.length) : null };
-    return console.log(JSON.stringify(candidates(gh, limit ? num(limit, 'limit') : undefined, listedIssues(docs), opts), null, 2));
-  }
+  if (cmd === 'candidates') return json(candidates(gh, a ? num(a, 'limit') : undefined, { types: readTypes(docs), queue: typeof flags.queue === 'string' ? flags.queue : null }));
   if (cmd === 'queues') {
     const types = readTypes(docs);
-    return console.log(JSON.stringify(a ? queueOf(types, issue(gh, num(a, 'issue')).labels) : queues(types), null, 2));
+    return json(a ? queueOf(types, issue(gh, num(a, 'issue')).labels) : queues(types));
   }
   if (cmd === 'reconcile') {
     const { done, problems } = reconcile(gh, docs);
     print(done);
     return print(problems.map((p) => `问题：${p}`));
   }
+  if (cmd === 'migrate') return print(migrate(gh, docs, { apply: !!flags.apply }).lines);
   if (!a) throw new Error(`usage: issues.mjs ${cmd} <docs> …`);
-  if (cmd === 'queue') return console.log(JSON.stringify(queue(gh, docs, a), null, 2));
-  if (cmd === 'group') return console.log(JSON.stringify(group(gh, num(a, 'issue')), null, 2));
+  if (cmd === 'show') return json(show(gh, docs, num(a, 'issue')));
   if (cmd === 'type') {
     if (b === undefined) throw new Error('usage: issues.mjs type <docs> <issue 号> <父类[/子类]>...');
     return console.log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);
   }
-  if (cmd === 'advance') {
-    const { done, phase, problems } = advance(gh, docs, a);
-    print(done);
-    print(problems.map((p) => `问题：${p}`));
-    return console.log(`下一段：${phase}`);
+  if (cmd === 'check') {
+    if (b === undefined) throw new Error('usage: issues.mjs check <docs> <状态> <issue 号> [--comment=<文字>] [--skip-design]');
+    const r = checkState(gh, docs, a, num(b, 'issue'), opts);
+    if (!r.ok) throw new Error(r.reason);
+    return console.log(r.line);
   }
   if (cmd === 'set') {
-    if (b === undefined) throw new Error('usage: issues.mjs set <docs> <state> <issue 号 | spec-slug>...');
-    return print(setState(gh, docs, a, [b, ...rest]));
+    if (b === undefined) throw new Error('usage: issues.mjs set <docs> <状态> <issue 号>... [--comment=<文字>] [--skip-design]');
+    return print(setState(gh, docs, a, [b, ...rest].map((x) => num(x, 'issue')), opts));
   }
-  if (cmd === 'resume') return print(resume(gh, docs, [a, b, ...rest].filter((x) => x !== undefined)));
-  if (cmd === 'handoff') return handoffIssue(gh, docs, a, num(b, 'issue'));
   if (cmd === 'open') {
     const n = openSpecIssue(gh, docs, a);
     return console.log(n ? `#${n} ← spec ${a}` : `spec ${a} 已经列了 issue，不另开`);
   }
-  if (cmd === 'unhandoff') return unhandoffIssue(gh, docs, a, num(b, 'issue'));
-  if (cmd === 'drop') return dropIssue(gh, docs, a, num(b, 'issue'));
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

@@ -54,8 +54,8 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
   assert.match(setup, /##\s*交回[\s\S]*每周对账/);
 });
 
-test('dreaming stays human-or-task invoked and points at the scope reference', () => {
-  assert.match(dreaming, /^disable-model-invocation: true$/m);
+test('dreaming can be invoked by the model and points at the scope reference', () => {
+  assert.doesNotMatch(dreaming, /^disable-model-invocation: true$/m);
   assert.match(dreaming, /references\/incremental-scope\.md/);
 });
 

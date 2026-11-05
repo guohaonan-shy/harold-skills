@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 ## 开工前
 
-- spec 是 `正式`，「实现决策」里还没有冻结摘要（状态的含义见 `idea-loop:spec-status`）。
+- spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），「实现决策」里还没有冻结摘要。
 - `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人「这份 spec 没有交接画布，会从方向说明重建」。
 
@@ -96,7 +96,7 @@ designer 交付一版之后：
 
 designer 交付「冻结」后，你核对：
 
-- spec 仍是 `正式`；「实现决策」里的冻结摘要五样齐（画布指针指向签字的那一版；五样见 [`references/freeze.md`](references/freeze.md) 的「改 spec」）。
+- 「实现决策」里的冻结摘要五样齐（画布指针指向签字的那一版；五样见 [`references/freeze.md`](references/freeze.md) 的「改 spec」）。
 - 「前端交互」的交互图都在，能打开。
 - `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。

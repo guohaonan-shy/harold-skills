@@ -8,14 +8,15 @@
  * table, 问题陈述, a 方案 that opens with an interaction sequence diagram and carries 后端 / 前端内部 /
  * 前端交互 as sub-sections, no 技术方案总览); 方案 spells out the four points of "write what the user gets
  * before how"; the how-to-write-for-a-human rules live in evidence only; the body is inside 5000
- * characters; and a spec written from the template's own lines is routed correctly by spec-status.
+ * characters; and a spec written from the template's own lines is read correctly by spec.mjs (verdicts,
+ * what still waits for a human, whether it touches UI), which issues.mjs checks a flip out of triage against.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { allAbsent, forHuman, routeOf, touchesUi, verdicts } from './spec-status.mjs';
+import { allAbsent, forHuman, touchesUi, verdicts } from './spec.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
@@ -93,7 +94,7 @@ test('how to write for a human is a pointer to evidence, not restated rules', ()
 
 test('the process is six steps, and the raw template moved into the skill\'s own references', () => {
   const steps = body.match(/^\d+\. \*\*[^*]+\*\*/gm) ?? [];
-  assert.deepEqual(steps.map((s) => s.replace(/^\d+\. /, '')), ['**开工**', '**落 raw**', '**探代码并谈 seam**', '**写 spec**', '**分流**', '**合并并收工**']);
+  assert.deepEqual(steps.map((s) => s.replace(/^\d+\. /, '')), ['**开工**', '**落 raw**', '**探代码并谈 seam**', '**写 spec**', '**交代等人定的**', '**合并并收工**']);
   assert.doesNotMatch(body, /<raw-template>/);
   assert.ok(existsSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'raw-template.md')));
   assert.match(body, /references\/raw-template\.md/);
@@ -101,7 +102,7 @@ test('the process is six steps, and the raw template moved into the skill\'s own
   assert.match(body, /references\/land-on-main\.md/);
 });
 
-test('a spec written from the template\'s own lines is routed by spec-status: 存在 → 正式, 待定 → 审核中, 不存在 → 完成', () => {
+test('a spec written from the template\'s own lines is read by spec.mjs: verdicts, 待定 waits for a human, 不存在 everywhere is all absent', () => {
   const opening = sections(template)[0].text;
   const quote = (word) => opening.split('\n').find((l) => l.startsWith(`> #<号> ${word}：`)).replace('<号>', '1');
   const titles = sections(template).slice(1).map((s) => s.title);
@@ -109,16 +110,15 @@ test('a spec written from the template\'s own lines is routed by spec-status: �
     const plan = `重试不再扣配额。\n${ui ? '\n### 前端交互\n- 点重试 → 只重跑这一题\n' : ''}`;
     const decisions = fork ? '\n### 待定：重试要不要单独计配额\n- 选项 A：…\n' : '\n无分歧。\n';
     return [
-      '---', 'type: spec', 'status: 草稿', 'summary: 重试不消耗配额', 'related: []', 'issues: [1]', '---', '',
+      '---', 'type: spec', 'summary: 重试不消耗配额', 'related: []', 'issues: [1]', '---', '',
       '# 重试不消耗配额', '', quote(word), '',
       ...titles.flatMap((t) => [`## ${t}`, '', t === '方案' ? plan : t === '实现决策' ? decisions : '…', '']),
     ].join('\n');
   };
   assert.deepEqual([...verdicts(build({ word: '存在' }))], [[1, '存在']]);
-  assert.equal(routeOf(build({ word: '存在' })), '正式');
-  assert.equal(routeOf(build({ word: '存在', fork: true })), '审核中');
+  assert.deepEqual(forHuman(build({ word: '存在' })), []);
   assert.deepEqual(forHuman(build({ word: '存在', fork: true })).length, 1);
-  assert.equal(routeOf(build({ word: '不存在' })), '完成');
+  assert.equal(allAbsent(build({ word: '存在' })), false);
   assert.equal(allAbsent(build({ word: '不存在' })), true);
   assert.equal(touchesUi(build({ word: '存在' })), false);
   assert.equal(touchesUi(build({ word: '存在', ui: true })), true);
@@ -126,7 +126,7 @@ test('a spec written from the template\'s own lines is routed by spec-status: �
 
 test('issue-verify\'s self-check names the sections the new template has', () => {
   const verify = read('skills', 'engineering', 'issue-verify', 'SKILL.md');
-  const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定「审核中」的'));
+  const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定要 grill 的'));
   assert.ok(check.length > 100, '找不到「自己校验」');
   const titles = sections(template).slice(1).map((s) => s.title).concat(['根因']);
   // every section-like name it quotes is a section of the template
@@ -142,8 +142,8 @@ test('issue-verify\'s self-check names the sections the new template has', () =>
   assert.match(verify, /idea-loop:evidence/);
 });
 
-test('spec-status and issues still read the older 验证 table (documented where the format is)', () => {
-  const doc = read('skills', 'engineering', 'spec-status', 'SKILL.md');
+test('spec.mjs still reads the older 验证 table (documented in the issues skill, where the format is)', () => {
+  const doc = read('skills', 'engineering', 'issues', 'SKILL.md');
   assert.match(doc, /> #12 存在：/);
   assert.match(doc, /「验证」表.*仍然认得/);
 });

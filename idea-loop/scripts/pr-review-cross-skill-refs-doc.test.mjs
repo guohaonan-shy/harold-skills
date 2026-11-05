@@ -24,12 +24,12 @@ test('deliver.md reaches the PR description format only through the pr skill sec
   assert.match(deliver, /用 Skill 工具调 `idea-loop:pr`[^\n]*「PR 描述」/);
 });
 
-test('the 开 issue row of the action table says to call spec-status with the Skill tool and names the section', () => {
+test('the 开 issue row of the action table says to call the issues skill with the Skill tool and names the section', () => {
   const row = skill.split('\n').find((l) => /^\| \*\*开 issue/.test(l));
   assert.ok(row, 'no 开 issue row');
-  assert.match(row, /用 Skill 工具调 `idea-loop:spec-status`/);
-  assert.match(row, /「开一个待验证的 issue」/);
-  assert.doesNotMatch(row, /照 `idea-loop:spec-status`/);
+  assert.match(row, /用 Skill 工具调 `idea-loop:issues`/);
+  assert.match(row, /「开一个 issue」/);
+  assert.doesNotMatch(row, /照 `idea-loop:issues`/);
 });
 
 test('every 「…」 that follows `idea-loop:pr` in a skill or agent doc is a heading that exists in the pr skill', () => {

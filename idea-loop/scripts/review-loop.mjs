@@ -18,7 +18,7 @@
  *   # PR #<N> 的 review loop
  *
  *   <!-- idea-loop-entry {"kind":"review","round":1,"from":"impl"} -->
- *   ## 第 1 次 · 来自实现中 · …    ← the report, exactly as shown in the session
+ *   ## 第 1 次 · 来自实现 · …    ← the report, exactly as shown in the session
  *   ### 你的批示（<time>）         ← Harold's words, verbatim
  *   ### 做了什么                   ← what was done, with commit links
  *
@@ -148,7 +148,7 @@ export function withAuthorship(body, identity) {
 
 export function archiveBody(entry, identity) {
   const impl = entry.kind === 'review' && entry.source === 'impl';
-  const label = impl ? `实现中第 ${entry.round} 次汇报` : { pause: `第 ${entry.round} 次停下`, review: `review 第 ${entry.round} 轮`, replay: `规则回放第 ${entry.round} 次` }[entry.kind];
+  const label = impl ? `实现阶段第 ${entry.round} 次汇报` : { pause: `第 ${entry.round} 次停下`, review: `review 第 ${entry.round} 轮`, replay: `规则回放第 ${entry.round} 次` }[entry.kind];
   const body = `${archiveMarker(entry.kind, entry.round, impl ? 'impl' : undefined)}\n${withAuthorship(`> 记录：${label}在会话里进行，下面是原样的汇报、批示和处理结果。\n\n${entry.body}`, identity)}`;
   if (body.length > MAX_BODY) throw new Error(`${label} is ${body.length} characters (limit ${MAX_BODY}); fold detail in the file before archiving`);
   return body;

@@ -46,7 +46,7 @@
 
 | 节（行类型） | 一行是什么 | 建议处置的闭集 |
 |---|---|---|
-| `文档` | 文档对账（`adr-reconciler`）里一份有话要说的文档 | 写 ADR 删 spec · 写 ADR 未采纳删 spec · 报警 · 订正 · 标注被取代 · 删漏网工单 · 标搁置 · 去审核 · 去设计 · 问人 · 迁移布局 · 删除 |
+| `文档` | 文档对账（`adr-reconciler`）里一份有话要说的文档 | 写 ADR 删 spec · 写 ADR 未采纳删 spec · 报警 · 订正 · 标注被取代 · 删漏网工单 · 问人 · 迁移布局 · 删除 |
 | `档案对象` | 设计档案里源码一侧查出问题的一个对象 | 改代码路径 · 删对象 · 补扫页面 · 标进入方式过期 |
 | `档案状态` | 实时重新驱动后，一个有话要说的状态 | 替换档案 · 改进入方式 · 补进不去说明 |
 | `初扫页面` | 全站初扫建出来的一整页（人按页面批） | 新增页面 |
@@ -88,7 +88,7 @@
 
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
 |---|---|---|---|---|
-| docs/spec/cart-promo/cart-promo.md | 自称 实现中；促销徽章组件与接口都已在树上，PR 标题对得上 | src/cart/promo.ts、PR 已合并 | 写 ADR 删 spec | 批 / 不批 / 改成… |
+| docs/spec/cart-promo/cart-promo.md | 它 `issues:` 里的 #31 还开着；促销徽章组件与接口都已在树上，PR 标题对得上 | src/cart/promo.ts、PR 已合并 | 写 ADR 删 spec | 批 / 不批 / 改成… |
 
 ## 档案对象
 
@@ -141,14 +141,14 @@
 
 只执行批了的行，在提议段同一个 worktree 里做，PR 也从它开。顺序：
 
-1. 先处理会删掉东西的行，再处理会改写的行，最后跑 link sweep、刷各层 `index.md`（`docs/spec/index.md` 用 `spec-status.mjs index <docs>`）。
+1. 先处理会删掉东西的行，再处理会改写的行，最后跑 link sweep、刷各层 `index.md`（`docs/spec/index.md` 用 `spec.mjs index <docs>`）。
 2. 每类行这样执行：
 
 | 行类型 | 怎么执行 |
 |---|---|
 | `文档` | 照 [docs-reconcile.md](docs-reconcile.md) 的「几种情况怎么处置」：先写 ADR（提议段把草稿放在 `adr-drafts/`），再 `git rm` 整个 spec 目录；写 ADR、删 spec 时，顺带把设计档案里「决定」的来源链接 `[[<spec-slug>]]` 改指新 ADR（编号不复用、原地改写）。迁移布局照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」 |
 | `候选` / `DESIGN.md 条目` | 照 [candidate-distillation.md](candidate-distillation.md) 与 [design-md-reconcile.md](design-md-reconcile.md) 的「执行段」 |
-| `缺陷` | 照 `idea-loop:spec-status` 的「开一个待验证的 issue」开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
+| `缺陷` | 照 `idea-loop:issues` 的「开一个 issue」开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
 | `retro 候选` | 照 [retro-candidates.md](retro-candidates.md) 的「执行段」：批了开 issue 的，开到落点所在的仓库，并把候选文件的状态改成 `已开 issue（<链接>）`；驳回的改成 `驳回（<理由>）`；留在池里的不动。dreaming 不改 skill |
 | `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、人看草稿、归档脚本并进 `prod/`；丢弃是 `git rm -r docs/design/tmp/<spec-slug>/`。都跟其余改动同一个 PR |
 | `候选` 的「起草通用原则 issue」 | 同样人批了才开，开到 harold-skills 仓库，命令照 `idea-loop:design-modeling` 的「蒸馏」 |

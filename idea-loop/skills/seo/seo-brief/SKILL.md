@@ -1,6 +1,6 @@
 ---
 name: seo-brief
-description: 为一个目标词写内容 brief：新开一页，或改写已有页面。审核阶段为内容类 SEO issue 起草 spec 的「方案」时用，人直接要一份 brief 时也用；按 brief 写正文用兄弟 skill seo-writing。
+description: 为一个目标词写内容 brief：新开一页，或改写已有页面。triage 会话为内容类 SEO issue 起草 spec 的「方案」时用，人直接要一份 brief 时也用；按 brief 写正文用兄弟 skill seo-writing。
 ---
 
 brief 是写正文之前的研究结论：这个词的搜索者要什么、排在前面的页面写了什么又漏了什么、我们能拿出什么别人没有的、页面该长什么样。它不替人定选题角度和论点：给出候选和推荐，由人在 grill 里定。

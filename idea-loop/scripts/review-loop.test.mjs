@@ -55,7 +55,7 @@ test('the next round counts per kind, starting at 1 for an empty file', () => {
 // automatic cap is not eaten by implementation stops.
 const merged = `${loop}
 <!-- idea-loop-entry {"kind":"review","round":2,"from":"impl"} -->
-## 第 3 次 · 来自实现中
+## 第 3 次 · 来自实现
 **结论**：落地 2 张。
 
 ### 做了什么
@@ -75,7 +75,7 @@ test('an implementation report is archived under its own marker and label; the s
   const e = parseLoop(merged);
   const body = archiveBody(e[2], 'app');
   assert.ok(body.startsWith(archiveMarker('review', 2, 'impl')));
-  assert.match(body, /实现中第 2 次汇报在会话里进行/);
+  assert.match(body, /实现阶段第 2 次汇报在会话里进行/);
   // legacy markers, written before the kinds were merged, still mark their entries as posted
   const posted = [{ body: archiveMarker('pause', 1) }, { body: archiveMarker('review', 1) }];
   assert.deepEqual(toArchive(e, posted).map((x) => [x.kind, x.source, x.round]), [['review', 'impl', 2]]);
@@ -84,7 +84,7 @@ test('an implementation report is archived under its own marker and label; the s
 });
 
 test('the one 要你决定 heading holds an entry for a ruling; the older bold mark and the old 需要你决定 heading still do', () => {
-  const entry = (body) => `<!-- idea-loop-entry {"kind":"review","round":3,"from":"impl"} -->\n## 第 3 次 · 来自实现中\n${body}`;
+  const entry = (body) => `<!-- idea-loop-entry {"kind":"review","round":3,"from":"impl"} -->\n## 第 3 次 · 来自实现\n${body}`;
   const asks = (heading) => `${entry(`\n${heading}\n\n#### T03 · 卡在哪\n现状……\n\n### 做了什么\n- 其余继续\n`)}`;
   assert.equal(parseLoop(asks('### 要你决定'))[0].settled, false);
   assert.equal(parseLoop(asks('### 需要你决定'))[0].settled, false);

@@ -3,7 +3,7 @@ name: pr-review
 description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards）并处理人的批示，或在人说合并时归档并合并它。implement 全部落地后、人说再跑一轮、人说合并时用。
 ---
 
-**一次调用跑一轮。** 调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、人说合并时合并。审查归 `idea-loop:pr-reviewer`（只读，结论不被它自己的修法影响），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
+**一次调用跑一轮。** 一轮看这个 issue 的全部 PR（`prs.md` 列着，知识库所在仓库的是主 PR）。调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、人说合并时合并。审查归 `idea-loop:pr-reviewer`（只读，结论不被它自己的修法影响），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
 
 开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）和 `idea-loop:decision-rules`（哪些条目不等人）。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
 
@@ -11,23 +11,24 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 ## 什么时候跑
 
-- `idea-loop:implement` 全部落地、PR 刚转 open：第 1 轮。
+- `idea-loop:implement` 全部落地、全部 PR 刚转 ready：第 1 轮。
 - 「一轮之后往哪走」判出自动起下一轮。
 - 人调 `/idea-loop:pr-review` 或说「再跑一轮」：随时，不受两轮上限约束，计入轮次。
 - 人说合并：照 [`references/merge.md`](references/merge.md)。合并只由人决定。
 
 ## 前提
 
-- PR 是 **open**。还是 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
+- 每个 PR 都是 **ready**（open、不是 draft）。有 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - 回放排队的事 implement 进 review 前已核过。之后 `review-loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
-- 当前 worktree 是这个 PR 的集成分支，工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于 PR 的 head。
+- 每个 PR 的 worktree 工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于该 PR 的 head。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前把它说的缺什么告诉人。
 
 ## 跑一轮
 
-1. 轮次取 `review-loop next .tmp/review-loop/<PR 号>.md review`；工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。
+1. 轮次取 `review-loop next .tmp/review-loop/<PR 号>.md review`（下文 `<PR 号>` 都是主 PR 的号）；工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。
 2. 用 Agent 工具起 `idea-loop:pr-reviewer`，**只给指针**：worktree 路径、`<owner/repo>`、PR 号、基准分支、轮次、spec 路径 `docs/spec/<spec-slug>/<spec-slug>.md` 与同目录 `tickets/`、review loop 文件路径、companion 路径。有设计产物时，同一条消息里多起 ui-reviewer，先读 [`references/ui-walkthrough.md`](references/ui-walkthrough.md)。
-3. 等 pr-reviewer 交回汇报，再往下。
+   每个 PR 各起一个 pr-reviewer，并行，给各自的 worktree、`<owner/repo>`、PR 号、基准分支。
+3. 等 pr-reviewer 交回汇报，再往下。几个仓库的，合成一份，格式见 `idea-loop:pr` 的「Review 汇报」。
 4. **先记文件**：把汇报原样追加进 review loop 文件为新条目。
 5. **处理照规则的条目**（「处理条目」），不等人。
 6. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，一个不剩，文件里的条目同步改成一字不差的同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另把 implement 期间开的存量问题 issue 补进这一节：从 review loop 文件各次停下的「已按规则处理」里找出带 issue 链接的行，原样列进来。
@@ -43,7 +44,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 | **修**、**恢复** | 回工单；不等落地，继续往下 | 追加那一格的提交；落地后补修复提交 | 同一工单再追加 `- [ ] review 第 <N> 轮 <编号>（推翻，<日期>）：<人要的样子>`，回工单；没落地的那格一并说清 |
 | **同步改** | spec、工单、说明文字跟已定做法对不上，直接改（spec 里交代由来的历史段落保留，标明后来改了） | 那个提交 | 提交改回去，或按人的意思重写 |
 | **接受并补记** | 代码不动，偏差补记进 spec 或工单（例外清单、验收标准、改过的路径） | 那个提交 | 同上 |
-| **开 issue**（「进 backlog」） | 用 Skill 工具调 `idea-loop:spec-status`，看它的「开一个待验证的 issue」 | issue 链接 | issue 上留说明并关掉（`--reason "not planned"`），人要别的就照做 |
+| **开 issue**（「进 backlog」） | 用 Skill 工具调 `idea-loop:issues`，看它的「开一个 issue」 | issue 链接 | issue 上留说明并关掉（`--reason "not planned"`），人要别的就照做 |
 | **不修**（人批示） | 记下，下一轮不再报，除非有新证据 | | |
 
 人批示里还有几种：
