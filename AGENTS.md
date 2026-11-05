@@ -14,7 +14,9 @@
 当前 plugins（每个做什么、有哪些 skill、怎么用、文件放哪，以各自的 `README.md` 为准，这里不复述）：
 - `excalidrawer/` — code-first 的 Excalidraw 图表生成
 - `content-creator/` — 短视频 / 社交 feed 内容创作
-- `idea-loop/` — 从 idea 到工程落地的闭环：grill → spec → 设计 → 工单 → 实现 → review
+- `idea-loop/` — 从 idea 到工程落地的闭环：grill → spec → 工单 → 实现 → review
+- `design/` — idea-loop 的 UI 设计：调研、发散、打磨到冻结、逐格量实现、设计档案与 `DESIGN.md`（依赖 idea-loop）
+- `seo/` — idea-loop 的 SEO：OpenSEO 取数、每周扫描提 issue、brief / 写作 / 外联 / 发布前检查（依赖 idea-loop）
 - `interview-coach/` — AI 工程方向的面试陪练
 - `happy-life/` — 个人生活小仪式
 
@@ -22,16 +24,17 @@
 
 ### idea-loop 的约定与刻意例外
 
-idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是这个仓库自己用的开发流程。在它上面工作时：
+idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是这个仓库自己用的开发流程。design、seo 是从它拆出来的两个可选插件（`plugin.json` 的 `dependencies` 依赖 idea-loop；idea-loop 依赖 excalidrawer），下面说 idea-loop 的约定对这三个插件都成立。在它们上面工作时：
 
 - **本仓库的 `docs/` 也按 idea-loop 管**：spec 状态只走 `idea-loop/scripts/spec-status.mjs`，issue 的 `status:*` label 只走 `idea-loop/scripts/issues.mjs`，不手改 frontmatter 的 `status` 和 label。
+- **三个插件之间按名字调**：skill 写 `design:<名>` / `seo:<名>` / `idea-loop:<名>`，agent 同理；idea-loop 调 design 的地方先看 design 在不在，不在就跳过并在汇报里写明。脚本不跨插件 import，例外只有 `plugin-root.mjs` 找到的两处（seo 的 `seo-issues.mjs` 用 idea-loop 的 `issues.mjs`、`flow-compose.mjs --archive` 用 design 的档案脚本）；要共用的小模块各复制一份，`idea-loop/scripts/plugin-split.test.mjs` 守着一致。
 - **插件里不出现任何项目的信息**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；举例用任何项目都读得懂的通用例子，不用真实项目的名字和场景（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。
 - 下面五处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
-  1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `dreaming` / `setup` / `agent-builder` / `seo-setup` / `seo-scan` 设 `disable-model-invocation: true`（`seo-scan` 由 seo-setup 建的每周定时任务以斜杠命令触发）——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。
+  1. **调用方式按出口定**：`design:uiux-imagine` / `design:uiux-refine` / `dreaming` / `setup` / `agent-builder` / `seo:seo-setup` / `seo:seo-scan` 设 `disable-model-invocation: true`（`seo-scan` 由 seo-setup 建的每周定时任务以斜杠命令触发）——它们每个出口都停在人身上，不该在无关对话里被触发。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。
   2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
-  3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。`.mcp.json` 里的 OpenSEO 是远程 MCP，装了 idea-loop 的项目都会多一个它的连接；没连上时只有 seo 分类受影响。
-  4. **唯一带 `evals/`**：理由见下面 §5。
-  5. **skill 按分类目录放、没有 plugin 级 `references/`**：`skills/{engineering,design,productivity,seo}/<slug>/`，每份参考资料归一个 skill；规则在 `idea-loop/AGENTS.md`。
+  3. **只有这三个插件带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。hook 与 MCP 跟着用它的插件走：idea-loop 只有 glossary-check hook；design 带设计档案 MCP 和 design-lint、design-md hook；seo 带 OpenSEO（远程 MCP，只有装了 seo 的项目才多这个连接）和 seo-check hook。
+  4. **只有 idea-loop、design 带 `evals/`**：理由见下面 §5。
+  5. **没有 plugin 级 `references/`**：每份参考资料归一个 skill；idea-loop 按分类目录放 `skills/{engineering,productivity}/<slug>/`，design、seo 直接放 `skills/<slug>/`；规则在 `idea-loop/AGENTS.md`。
 
 ## 标准 plugin 目录结构
 
@@ -43,10 +46,10 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
-├── evals/                           # 可选 —— 钉住的 baseline 与回放用例（只有 idea-loop 有，见 §5 的两个有意例外）
-├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
-├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
-├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
+├── evals/                           # 可选 —— 钉住的 baseline 与回放用例（只有 idea-loop、design 有，见 §5 的两个有意例外）
+├── hooks/hooks.json                 # 可选 —— 事件钩子，如 design 的 design-lint
+├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 design 的设计档案、seo 的 OpenSEO
+├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 design 的 designer、idea-loop 的 implementer
 └── skills/
     └── <skill-name>/
         ├── SKILL.md                 # 主体 < 5000 字
@@ -102,7 +105,7 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 
 这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可，所有 plugin 都一样。
 
-**第一个有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
+**第一个有意例外：`design` 的 `uiux-research`**（baseline 在 `design/evals/uiux-research/`）。
 理由不是它更重要，是它的**产物形状还在跟人一起收敛**：它交出一页给人看的 HTML，这一页该包含什么、怎么写才对，现在没人能先写成断言。
 所以那里不判好坏、不打分：钉一组取自真实设计会话的 default prompt 加一份最小的产品上下文，一条命令跑，每个 case 把页面留在固定位置、旁边放一个文件让人标注问题，
 标注留档，逐步收敛出产物该包含什么。改了调研 agent、契约或 skill，就对着同一组问题再跑一遍给人看。

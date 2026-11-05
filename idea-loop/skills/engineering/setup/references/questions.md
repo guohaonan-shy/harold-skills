@@ -6,7 +6,9 @@
 - **验证命令**：类型检查、单个测试文件、全量测试、lint。推荐取自 CI 和 `package.json`。
 - **已有的代码规范文档**（`CONTRIBUTING.md`、`docs/reference/` 之类）：由 `CODING_STANDARDS.md` 链接过去，还是把内容搬进来。
 - **产品**（没有 `PRODUCT.md` 时）：照模板一节一节问。纯后端项目也要，访谈里的产品判断靠它。
-- **做不做 UI 设计**：做的话一起配设计档案的忽略规则和 LFS。
+- **做不做 UI 设计**：做的话一起配设计档案的忽略规则和 LFS，没装 design 插件就请人装（`claude plugin install design@harold-skills`）；不做就不装，issue 会话、实现、review 碰到设计时跳过。
+- **做不做 SEO**：做的话请人装 seo 插件（`claude plugin install seo@harold-skills`），装完跑 `/seo:seo-setup`；不做就不装。
+- **excalidrawer 没装时**（预检表）：请人装上（`claude plugin install excalidrawer@harold-skills`），还是 spec 的图就用 mermaid。推荐装上。
 - **GitHub App 代发评论**：要的话给 appId 和私钥文件路径。
 - **issue 分类**：有哪些父类，每个父类下有没有子类；推荐从现有 label 和 issue 推出。名字里不能有 `/`（它分隔子类），比如 `UI/UX` 写成 `uiux`。
 - **别的 label**：现有 label 里，状态和分类之外哪些要留（写进「保留的 label」）；还有 open issue 在用、又不留的，各迁成哪个分类，或直接去掉。

@@ -11,7 +11,9 @@ Default English version: [README.md](./README.md)
 | [`excalidrawer/`](./excalidrawer/) | Code-first Excalidraw 图表生成：流程图、时间线、架构图、序列图。 | Ready |
 | [`content-creator/`](./content-creator/) | 面向短视频 / 社交 feed 创作者的内容工具集，当前包含 `thumbnail-gen`。 | Ready |
 | [`happy-life/`](./happy-life/) | 面向日常仪式感和个人 taste memory 的生活类 skills，当前包含 `daily-coffee-oracle`。 | Ready |
-| [`idea-loop/`](./idea-loop/) | 从 idea 到工程落地的闭环——设计树访谈 → spec → ［设计发散 → 设计收敛］ → tracer-bullet ticket → TDD 实现 → 三轴 PR review（Correctness / Standards / Spec）→ 知识库对账。方括号那两段只在 spec 碰 UI 时才走。从一个真实项目里通用化出来，读目标仓库自己的约定，不硬编码。 | Ready |
+| [`idea-loop/`](./idea-loop/) | 从 idea 到工程落地的闭环——设计树访谈 → spec → ［设计发散 → 设计收敛］ → tracer-bullet ticket → TDD 实现 → 三轴 PR review（Correctness / Standards / Spec）→ 知识库对账。方括号那两段来自 `design` 插件，装了它、spec 又碰 UI 时才走。从一个真实项目里通用化出来，读目标仓库自己的约定，不硬编码。依赖 `excalidrawer`。 | Ready |
+| [`design/`](./design/) | 给 idea-loop 项目做 UI 设计：调研、发散、打磨到冻结、逐格量实现、设计档案与 `DESIGN.md`。依赖 `idea-loop`。 | Ready |
+| [`seo/`](./seo/) | 给 idea-loop 项目做 SEO：OpenSEO 取数、每周扫描提 issue、brief、写作、外联、发布前检查。依赖 `idea-loop`。 | Ready |
 
 更多 plugin 会陆续加入。
 
@@ -30,6 +32,8 @@ Default English version: [README.md](./README.md)
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
 /plugin install idea-loop@harold-skills
+/plugin install design@harold-skills   # 可选，连带装 idea-loop
+/plugin install seo@harold-skills      # 可选，连带装 idea-loop
 ```
 
 ## 仓库结构
@@ -47,7 +51,7 @@ harold-skills/
     ├── README.md             # plugin 介绍、安装说明、用法示例
     ├── references/           # plugin 级共享参考，可选
     ├── workflows/            # 可选 —— Workflow 工具脚本（.mjs），如 idea-loop 的 PR review 闭环
-    ├── evals/                # 可选 —— 钉住的 baseline eval（只有 idea-loop 有）
+    ├── evals/                # 可选 —— 钉住的 baseline eval（只有 idea-loop 和 design 有）
     └── skills/
         └── <skill-name>/
             ├── SKILL.md

@@ -32,4 +32,5 @@ description: 写给人看的东西（spec、PR 描述、汇报、要人定的题
 - **截图只截那个组件**，必要时连同它弹出的浮层。整页截图会把要看的东西缩到看不清。2 倍像素密度，用 spec 的主语言，手机宽度默认 390。
 - **截图来源看要判断的是什么**：问题图取自复现，设计图取自冻结画布，交付证据取自实现本身。不重画。
 - **流程图只用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼**：截图横排，箭头上写触发条件，截图下一句状态，红色光圈圈出要看的地方。同一个 spec、下一个 spec 的图都要长得一样。构图规则和 JSON 格式在 [`references/spec-figures.md`](references/spec-figures.md) 的「交互图（screen flow）」。
+- **story 树、时序图用 excalidrawer 画**（idea-loop 依赖的插件）；它没装（Skill 工具调 `excalidrawer:` 开头的 skill 报不存在），就用 mermaid 写在 markdown 里，不出 PNG。
 - **叠上去的东西要说明**：为了让人看懂而叠加的光圈、鼠标位置点、角落的秒表都不属于产品，在这一组图的开头用一句话说明。
