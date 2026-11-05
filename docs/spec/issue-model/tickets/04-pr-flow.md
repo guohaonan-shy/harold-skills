@@ -25,3 +25,4 @@
 - `to-spec-by-deliverable-doc.test.mjs`、`pr-by-deliverable-doc.test.mjs`、`pr-review-cross-skill-refs-doc.test.mjs`、`pr-review-slim-doc.test.mjs`：钉着 to-spec / pr / pr-review 的写法。
 - `review-loop.test.mjs`、`proposal-table-check.test.mjs`：脚本改了状态名。
 - `knowledge-base-landing-doc.test.mjs`：钉着「spec、设计跟代码一个 PR」，不能被改坏。
+- [ ] review 第 1 轮 S2（2026-11-05）：spec 提交后先给每个要改的仓库开 draft PR，再切工单；要改哪些仓库从 spec 的「实现决策」读，不等工单。issue-session 的 todo 会话段落顺序一起改成「spec 提交 → 开 draft PR → 切工单 → 实现」
