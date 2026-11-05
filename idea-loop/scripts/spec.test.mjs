@@ -61,6 +61,8 @@ test('frontmatter reads summary and issues, ignoring a trailing comment', () => 
   assert.equal(frontmatter(spec()).summary, '重试不消耗配额');
   assert.equal(frontmatter('---\nsummary: 重试   # 起草 routine\n---\n').summary, '重试');
   assert.deepEqual(issuesOf(spec({ issues: '[12, 15]' })), [12, 15]);
+  assert.deepEqual(issuesOf(spec({ issues: '[FA-577, 12]' })), ['FA-577', 12]);
+  assert.deepEqual(issuesOf(spec({ issues: '[FA-577]' })), ['FA-577']);
   assert.deepEqual(issuesOf(spec()), []);
 });
 

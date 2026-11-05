@@ -2,7 +2,9 @@
 /**
  * The only place seo-scan writes GitHub: turns one run's findings into issues. A new issue carries no
  * status:* label, so it simply is backlog, like an issue opened by hand; its body
- * carries the evidence and how to reproduce it, because the issue session re-runs that independently.
+ * has the four sections every issue needs (问题 / 证据 / 影响范围 / 从哪发现, checked with issues.mjs's
+ * `bodyErrors` before anything is created) plus how to reproduce it, because the issue session re-runs that
+ * independently.
  *
  *   reject  — no evidence, no repro, empty acceptance, or a percentage without numerator/denominator;
  *             rejected findings only go back in the result (seo-scan writes them to the research log)
@@ -14,7 +16,7 @@
  *
  * There is no cap on the number of issues: issue-dispatch limits how many sessions run at once.
  *
- * Usage: node seo-issues.mjs <docs> <findings.json> [--dry-run]
+ * Usage: node seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]   (the date of the scan, today by default)
  *   → { "created": [{number,title}], "commented": [{number,title}], "rejected": [{title,reason}], "untyped": bool }
  *   (--dry-run: the same shape, numbers null, nothing written)
  * Exit: 0 = done, 1 = bad input / gh error (reason on stderr).
@@ -22,7 +24,7 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { defaultGh, readTypes, setTypes, typeSet } from './issues.mjs';
+import { bodyErrors, defaultGh, readTypes, setTypes, typeSet } from './issues.mjs';
 import { DIRECTIONS } from './seo-md.mjs';
 
 export const DIRECTION_NAMES = {
@@ -79,10 +81,20 @@ const list = (xs) => xs.map((x) => `- ${x}`).join('\n');
 
 export const issueTitle = (g) => `SEO（${DIRECTION_NAMES[g.direction]}）：${g.title}`;
 
-export function issueBody(g) {
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** 影响范围: how many places, the share when the finding has one, and the list. */
+const scope = (g) => {
+  const share = g.ratio ? `，占 ${g.ratio.numerator} / ${g.ratio.denominator}` : '';
+  return g.targets.length ? `受影响 ${g.targets.length} 处${share}：\n\n${list(g.targets)}` : `没有列出具体的处${share}，范围见证据。`;
+};
+
+export function issueBody(g, date = today()) {
   const parts = [
-    `## 问题\n\n${g.title}\n\n受影响的${g.targets.length} 处：\n\n${list(g.targets)}`,
+    `## 问题\n\n${g.title}`,
     `## 证据\n\n${g.evidences.map(evidenceLine).join('\n')}${ratioLine(g.ratio)}`,
+    `## 影响范围\n\n${scope(g)}`,
+    `## 从哪发现\n\nseo-scan ${date} 的 ${g.direction} 方向`,
     `## 怎么复现\n\n${g.repros.join('\n\n')}`,
     `## 建议的修法\n\n${text(g.fix) || '需要诊断'}`,
     `## 验收标准\n\n${g.acceptance.map((a) => `- [ ] ${a}`).join('\n')}`,
@@ -108,8 +120,8 @@ export function commentBody(g, known) {
   ].join('\n\n');
 }
 
-/** What to do with a run's findings, given the open issues ({ number, title, body }). */
-export function plan(findings, openIssues) {
+/** What to do with a run's findings, given the open issues ({ number, title, body }). `date` is the scan's. */
+export function plan(findings, openIssues, { date = today() } = {}) {
   const rejected = [];
   const ok = [];
   for (const f of findings) {
@@ -128,7 +140,12 @@ export function plan(findings, openIssues) {
   for (const g of merge(ok)) {
     const hit = byMarker.get(`${g.direction}/${g.kind}`);
     if (hit) comment.push({ number: hit.number, title: hit.title, body: commentBody(g, String(hit.body ?? '')) });
-    else create.push({ direction: g.direction, title: issueTitle(g), body: issueBody(g) });
+    else {
+      const body = issueBody(g, date);
+      const errors = bodyErrors(body);
+      if (errors.length) rejected.push({ title: issueTitle(g), reason: `正文不合格：${errors.join('；')}` });
+      else create.push({ direction: g.direction, title: issueTitle(g), body });
+    }
   }
   return { create, comment, rejected };
 }
@@ -157,13 +174,17 @@ export function apply(gh, types, p) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   try {
-    const [docs, file, flag] = process.argv.slice(2);
-    if (!docs || !file || (flag && flag !== '--dry-run')) throw new Error('usage: seo-issues.mjs <docs> <findings.json> [--dry-run]');
+    const args = process.argv.slice(2);
+    const [docs, file] = args.filter((x) => !x.startsWith('--'));
+    const flags = args.filter((x) => x.startsWith('--'));
+    const date = flags.find((x) => x.startsWith('--date='))?.slice('--date='.length);
+    const flag = flags.find((x) => x === '--dry-run');
+    if (!docs || !file || flags.some((x) => x !== '--dry-run' && !/^--date=\d{4}-\d{2}-\d{2}$/.test(x))) throw new Error('usage: seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]');
     const findings = JSON.parse(readFileSync(file, 'utf8'));
     if (!Array.isArray(findings)) throw new Error(`${file} 不是发现清单（要一个 JSON 数组）`);
     const gh = defaultGh(docs);
     const types = readTypes(docs);
-    const p = plan(findings, openIssues(gh));
+    const p = plan(findings, openIssues(gh), date ? { date } : {});
     if (flag === '--dry-run') {
       let untyped = false;
       try {

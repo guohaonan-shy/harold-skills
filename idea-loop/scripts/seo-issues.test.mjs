@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { apply, marker, plan, rejection } from './seo-issues.mjs';
-import { parseTypes } from './issues.mjs';
+import { bodyErrors, parseTypes } from './issues.mjs';
 
 const finding = (over = {}) => ({
   direction: 'technical',
@@ -117,4 +117,38 @@ test('apply: comments go to the open issue, nothing is created', () => {
   assert.deepEqual(r.created, []);
   assert.deepEqual(r.commented, [{ number: 9, title: 'old' }]);
   assert.ok(calls.some((a) => a[1] === 'comment' && a[2] === '9'));
+});
+
+test('an issue body has the four required sections, none empty, and the list of targets sits under 影响范围', () => {
+  const f = finding({ targets: ['https://cookbook.example/a', 'https://cookbook.example/b'], ratio: { numerator: 2, denominator: 40 } });
+  const [c] = plan([f], [], { date: '2026-11-06' }).create;
+  assert.deepEqual(bodyErrors(c.body), []);
+  const sections = Object.fromEntries(c.body.split(/^## /m).slice(1).map((s) => [s.split('\n')[0], s.split('\n').slice(1).join('\n')]));
+  assert.match(sections['影响范围'], /受影响 2 处，占 2 \/ 40/);
+  assert.match(sections['影响范围'], /- https:\/\/cookbook\.example\/a/);
+  assert.doesNotMatch(sections['问题'], /cookbook\.example/);
+  assert.match(sections['从哪发现'], /seo-scan 2026-11-06 的 technical 方向/);
+  assert.match(sections['证据'], /metaDescription 为空/);
+  assert.match(c.body, /## 怎么复现/);
+  assert.match(c.body, /## 验收标准/);
+});
+
+test('a finding with no listed targets still gets a filled 影响范围', () => {
+  const [c] = plan([finding({ targets: [] })], []).create;
+  assert.deepEqual(bodyErrors(c.body), []);
+});
+
+test('the date of the scan defaults to today', () => {
+  const [c] = plan([finding()], []).create;
+  assert.match(c.body, new RegExp(`seo-scan ${new Date().toISOString().slice(0, 10)} 的 technical 方向`));
+});
+
+test('apply: the issue is opened with a body that passes bodyErrors and no status:* label', () => {
+  const { gh, calls } = fakeGh();
+  const p = plan([finding()], [], { date: '2026-11-06' });
+  apply(gh, TYPES, p);
+  const create = calls.find((a) => a[0] === 'issue' && a[1] === 'create');
+  assert.deepEqual(bodyErrors(create[create.indexOf('--body') + 1]), []);
+  assert.ok(!create.includes('--label'), 'no status label at creation');
+  assert.ok(!calls.flat().some((a) => String(a).startsWith('status:')));
 });

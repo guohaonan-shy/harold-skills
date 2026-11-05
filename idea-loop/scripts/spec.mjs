@@ -31,11 +31,14 @@ export function frontmatter(md = '') {
   return out;
 }
 
-/** The issues a spec covers: frontmatter `issues: [12, 15]`. */
+/**
+ * The issues a spec covers: frontmatter `issues: [12, 15]`. A GitHub issue is a number; an issue on Linear
+ * keeps its key as a string (`issues: [FA-577, 12]` → `['FA-577', 12]`).
+ */
 export function issuesOf(md) {
   const raw = frontmatter(md).issues;
   if (!raw) return [];
-  return [...raw.matchAll(/\d+/g)].map((m) => Number(m[0]));
+  return [...raw.matchAll(/[A-Za-z][A-Za-z0-9]*-\d+|\d+/g)].map((m) => (/^\d+$/.test(m[0]) ? Number(m[0]) : m[0]));
 }
 
 /** Body of the first heading whose text includes `title`, up to the next heading of the same or higher level. */
