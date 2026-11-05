@@ -31,7 +31,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | backlog | 新进来、没验证；或人说先放着 |
 | triage | 验证过，要人评估（grill、设计）；做完翻 todo |
 | todo | 可以被调度派成会话 |
-| in-progress | 会话在做，PR 已开（draft） |
+| in-progress | 会话在做，spec 提交后开 draft PR |
 | in-review | PR 全部转 ready，等人看 |
 | done | 全部 PR 合并 |
 | canceled | 不做；验证为不存在；重复 |

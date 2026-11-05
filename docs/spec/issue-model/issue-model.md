@@ -53,7 +53,7 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 | backlog | 新进来、没验证；或先放着 | open，没有 `status:*` | Backlog |
 | triage | 验证过，要人评估（grill、设计） | `status:triage` | Triage；团队没开就跳过 |
 | todo | 可以被调度 | `status:todo` | Todo |
-| in-progress | 会话在做，PR 已开（draft） | `status:in-progress` | In Progress（集成推） |
+| in-progress | 会话在做，spec 提交后开 draft PR | `status:in-progress` | In Progress（集成推） |
 | in-review | PR 转 ready、等人看 | `status:in-review` | In Review（集成推） |
 | done | 全部 PR 合并 | closed，completed | Done（集成推） |
 | canceled | 不做；验证为不存在；重复 | closed，not planned | Canceled / Duplicate |

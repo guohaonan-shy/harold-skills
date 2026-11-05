@@ -21,7 +21,7 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 
 | backlog | open，没有 `status:*` | 新进来、没验证；或先放着 |
 | triage | `status:triage` | 验证过，要人评估（grill、设计） |
 | todo | `status:todo` | 可以被调度派成会话 |
-| in-progress | `status:in-progress` | 会话在做，PR 已开（draft） |
+| in-progress | `status:in-progress` | 会话在做，spec 提交后开 draft PR |
 | in-review | `status:in-review` | PR 全部转 ready，等人看 |
 | done | closed，completed | 全部 PR 合并 |
 | canceled | closed，not planned | 不做；验证为不存在；重复 |

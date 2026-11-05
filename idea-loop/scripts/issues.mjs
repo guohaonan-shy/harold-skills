@@ -5,8 +5,8 @@
  * lists (`issues: [12]`) is closed.
  *
  * Seven states. The four open ones each have a `status:<name>` label: triage (verified, a human is
- * assessing it: grill, design), todo (ready for dispatch), in-progress (a session is on it, its PRs are
- * open as drafts), in-review (the PRs are ready, waiting for the human). backlog is open with no `status:*`
+ * assessing it: grill, design), todo (ready for dispatch), in-progress (a session is on it; once the spec is
+ * committed it opens draft PRs), in-review (the PRs are ready, waiting for the human). backlog is open with no `status:*`
  * label: new, not yet verified, or put aside. done and canceled are the closed states and carry no label:
  * GitHub's close reason says which (completed / not planned). `set` checks every flip against NEXT and,
  * where the flip depends on something outside the issue, against that: triage → todo needs a spec with
@@ -66,7 +66,7 @@ export const WORKING = ['triage', 'in-progress', 'in-review'];
 const ABOUT = {
   triage: '验证过，要人评估（grill、设计）',
   todo: '可以被调度派成会话',
-  'in-progress': '会话在做，PR 已开（draft）',
+  'in-progress': '会话在做，spec 提交后开 draft PR',
   'in-review': 'PR 都转 ready，等人看',
 };
 const COLORS = { triage: '1d76db', todo: '0e8a16', 'in-progress': 'fbca04', 'in-review': 'd93f0b' };
