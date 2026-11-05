@@ -63,7 +63,7 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 | （新开） | backlog | agent 或人开的；没有 `status:*` 的开着的 issue 也算 |
 | backlog | triage / todo / canceled | 每周分拣后人定（#243）；不要人评估的直接 todo |
 | triage | todo | 人评估完：spec 里没有「需要 grill」「待定」，碰 UI 的设计已冻结 |
-| todo | in-progress | 调度派出的会话认领，开 draft PR |
+| todo | in-progress | 调度派出的会话认领；spec 提交后开 draft PR |
 | in-progress | in-review | PR 全部转 ready，第一轮 Review 汇报交给人 |
 | in-progress | triage | todo 会话起草 spec 时冒出要人定的：评论停在哪，人在 triage 里定 |
 | in-review | in-progress | 人批了要改、会话回去改（Linear 上集成照样推） |
