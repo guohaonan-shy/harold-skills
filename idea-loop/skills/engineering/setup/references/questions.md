@@ -6,6 +6,10 @@
 - **验证命令**：类型检查、单个测试文件、全量测试、lint。推荐取自 CI 和 `package.json`。
 - **已有的代码规范文档**（`CONTRIBUTING.md`、`docs/reference/` 之类）：由 `CODING_STANDARDS.md` 链接过去，还是把内容搬进来。
 - **产品**（没有 `PRODUCT.md` 时）：照模板一节一节问。纯后端项目也要，访谈里的产品判断靠它。
+- **要不要知识库，放在哪**：三选一。推荐「仓库里的 `docs/`」；仓库已有 `docs/spec/` 或 `docs/adr/`，就是它。
+  - **仓库里的 `docs/`**：照旧建骨架，idea-loop 的 spec、设计、dreaming 都读写它。
+  - **仓库外的目录（或单独一个仓库）**：仓库要照别的标准维护、放不进这套文件时选。不在仓库里建 `docs/` 骨架，只在 `## idea-loop` 块里记下位置，人在那里照 `idea-loop:wiki-conventions` 的格式自己维护；idea-loop 的 skill 只读写仓库里的 `docs/`，所以 spec、设计、dreaming 这些流程在这个仓库里用不了。
+  - **不要**：不建骨架，不记位置；同样用不了那些流程。
 - **做不做 UI 设计**：做的话一起配设计档案的忽略规则和 LFS。
 - **GitHub App 代发评论**：要的话给 appId 和私钥文件路径。
 - **issue 分类**：有哪些父类，每个父类下有没有子类；推荐从现有 label 和 issue 推出。名字里不能有 `/`（它分隔子类），比如 `UI/UX` 写成 `uiux`。

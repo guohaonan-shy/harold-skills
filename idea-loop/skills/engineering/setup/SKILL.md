@@ -36,7 +36,7 @@ idea-loop 从这几处读项目配置：
 
 ## 问人
 
-只问这几份文件里还没写的。每个问题给推荐答案和出处，一次最多三个，人一句「照推荐」就算确认。问题清单（基准分支与合并方式、worktree 准备、开发服务器、验证命令、已有的规范文档、产品、UI 设计、GitHub App、issue 分类、别的 label）在 [references/questions.md](references/questions.md)。
+只问这几份文件里还没写的。每个问题给推荐答案和出处，一次最多三个，人一句「照推荐」就算确认。问题清单（基准分支与合并方式、worktree 准备、开发服务器、验证命令、已有的规范文档、产品、知识库、UI 设计、GitHub App、issue 分类、别的 label）在 [references/questions.md](references/questions.md)。
 
 完成条件：清单上每一项都有人确认过的答案。
 
@@ -44,7 +44,7 @@ idea-loop 从这几处读项目配置：
 
 - 这几份文件按模板写进仓库根目录。文件已存在就只补模板里它缺的小节。
 - `## idea-loop` 块写进 `CLAUDE.md`；没有 `CLAUDE.md` 就写进 `AGENTS.md`；两份都没有，问人建哪份。块已存在就原地更新。
-- `docs/` 骨架：`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`index.md`，只建不存在的。
+- `docs/` 骨架：人选了「仓库里的 `docs/`」才建，`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`index.md`，只建不存在的。选了仓库外的，`## idea-loop` 块里加一行「知识库：`<位置>`（仓库外，人维护）」；选了不要的，什么都不写。
 - `.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - `## issue 分类` 一节照模板写进 `AGENTS.md`（没有就写进有 `## idea-loop` 块的那份）；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
@@ -85,6 +85,7 @@ idea-loop 从这几处读项目配置：
 
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
 - 预检缺的必需项，各附修法命令。
+- 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
 - 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
 - 整合任务：建没建（任务 id、cron）、连接器清没清、冒烟跑没跑；没建时 prompt 与设置原样给人。
