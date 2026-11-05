@@ -130,6 +130,7 @@ function fakeGh(issues, labels = [], prs = {}) {
       issues[number] = { number, title: all('--title')[0], body: all('--body')[0], state: 'OPEN', labels: all('--label') };
       return `https://github.com/o/r/issues/${number}\n`;
     }
+    if (noun === 'issue' && verb === 'comment') return `https://github.com/o/r/issues/${n}#issuecomment-${calls.length}\n`;
     return '';
   };
   return { gh, calls };
@@ -814,8 +815,18 @@ test('note comments with the AI prefix, once', () => {
   noteIssue(gh, 4, '🤖 idea-loop：还要你补：复现步骤');
   assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：已查清：重复了 #3', '🤖 idea-loop：还要你补：复现步骤']);
   assert.throws(() => noteIssue(gh, 4, '  \n'), /空的/);
-  assert.deepEqual(cli(gh, ['note', docsWith(), '4', fileWith('行')]), ['#4: 已评论']);
+  assert.equal(cli(gh, ['note', docsWith(), '4', fileWith('行')]).length, 1);
   assert.equal(comments(calls, 4).at(-1), '🤖 idea-loop：行');
+});
+
+test('note returns the comment URL gh prints and shows it, so the triager can hand it back', () => {
+  const { gh } = fakeGh({ 4: open(4) });
+  const url = noteIssue(gh, 4, '已查清');
+  assert.match(url, /^https:\/\/github\.com\/o\/r\/issues\/4#issuecomment-\d+$/);
+  const [line] = cli(gh, ['note', docsWith(), '4', fileWith('行')]);
+  assert.match(line, /^#4: 已评论 https:\/\/github\.com\/o\/r\/issues\/4#issuecomment-\d+$/);
+  // a gh that prints nothing: no URL, still commented
+  assert.equal(noteIssue(() => '', 4, 'x'), null);
 });
 
 test('labels creates priority:P0 / P1 / P2 and keeps them', () => {
@@ -948,6 +959,16 @@ test('check in a Linear project without --from is refused, saying --from is need
   const { gh, seen } = spied({});
   assert.throws(() => cli(gh, ['check', docs, 'todo', 'FA-577']), /--from/);
   assert.deepEqual(seen, []);
+});
+
+test('a Linear project whose ISSUE_TRACKER.md has no 仓库 section looks for PRs in the repo gh runs in, as the GitHub side does', () => {
+  const docs = docsWith({}, '# Issue tracker：Linear\n\n## 团队\n\nFish（key `FA`）\n');
+  const prs = { 'o/r': [linearPr(1, '[FA-577] x', '', 'MERGED'), linearPr(2, '[FA-1] y', '', 'OPEN')] };
+  const { gh, seen } = spied({}, [], prs);
+  assert.deepEqual(cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), ['FA-577: in-review → done 可以翻']);
+  assert.ok(seen.some((a) => a[0] === 'repo' && a[1] === 'view'));
+  const v = JSON.parse(cli(spied({}, [], prs).gh, ['show', docs, 'FA-577'], { git: () => '' }).join('\n'));
+  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'merged']]);
 });
 
 test('check --from in a GitHub project reads no issue either: the PRs are found by Refs in the repo gh runs in', () => {

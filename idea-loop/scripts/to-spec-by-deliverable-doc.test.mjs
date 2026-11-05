@@ -143,7 +143,7 @@ test('draft-spec\'s self-check names the sections the new template has', () => {
 });
 
 test('spec.mjs still reads the older 验证 table (documented in the issues skill, where the format is)', () => {
-  const doc = read('skills', 'engineering', 'issues', 'SKILL.md');
+  const doc = read('skills', 'engineering', 'issues', 'references', 'category-and-spec.md');
   assert.match(doc, /> #12 存在：/);
   assert.match(doc, /「验证」表.*仍然认得/);
 });

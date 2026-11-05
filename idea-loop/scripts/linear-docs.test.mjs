@@ -81,6 +81,15 @@ test('retro opens plugin issues through issues new --repo, not gh issue create',
   assert.doesNotMatch(md, /gh issue create -R/);
 });
 
+test('linear.md: newest first so the oldest takes the last page; duplicates go to the Duplicate state with duplicateOf', () => {
+  const md = read('skills', 'engineering', 'issues', 'references', 'linear.md');
+  assert.match(md, /新的在前/);
+  assert.match(md, /hasNextPage/);
+  assert.match(md, /duplicateOf/);
+  assert.match(md, /Duplicate/);
+  assert.match(eng('setup', 'references', 'issue-tracker-linear.md'), /duplicateOf/);
+});
+
 test('README says Linear is supported through the MCP', () => {
   const md = read('README.md');
   assert.match(md, /Linear MCP/);

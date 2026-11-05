@@ -75,3 +75,9 @@ test('the repo ISSUE_TRACKER.md has a choice for triage and a first repository t
   assert.ok(md.match(/^triage：(用|跳过)\s*$/m));
   assert.equal(parseRepos(md, 'owner')[0], 'guohaonan-shy/harold-skills');
 });
+
+test('the issues SKILL.md body stays under 5000 characters; category and spec details live in its own references', () => {
+  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
+  assert.match(body, /references\/category-and-spec\.md/);
+  assert.ok(existsSync(join(skillDir, 'references', 'category-and-spec.md')));
+});

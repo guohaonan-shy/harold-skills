@@ -181,6 +181,13 @@ test('issue-triager：sonnet、medium、只读不翻状态，五步、复现手�
   assert.match(md, /不翻状态/);
 });
 
+test('issue-triager 不设 tools 白名单（继承会话全部工具，浏览器与 Linear MCP 才拿得到），skill 都写「用 Skill 工具调」，评论链接取自 issues note 的输出', () => {
+  const md = readFileSync(join(root, 'agents/issue-triager.md'), 'utf8');
+  assert.doesNotMatch(front(md), /^tools:/m);
+  for (const k of ['idea-loop:browser', 'idea-loop:evidence']) assert.match(md, new RegExp(`用 Skill 工具调 \`${k}\``), `${k} 没写「用 Skill 工具调」`);
+  assert.match(md, /已评论 <链接>/);
+});
+
 // 插件里（除 docs/raw 与 evals 的历史记录）不再有 issue-verify 与 issues open；开 issue 都指向 idea-loop:issues 的「开一个 issue」
 function walk(dir, out = []) {
   for (const f of readdirSync(dir)) {

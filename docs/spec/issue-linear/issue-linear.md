@@ -55,6 +55,7 @@ Linear 只在 `idea-loop:issues` 里有一张字段对照表；接入方式（�
   - `check <docs> <状态> <号> --from=<现在的状态>`：不查 issue，用 `--from` 给的当前状态，照常核 spec 与 PR。→ done 时 PR 在「仓库」表的每个仓库里按标题 `[<号>]` 或正文 `Linear: <号>` 找。
   - `show <docs> <号>`：给 spec、PR、分支，`state` 为 null（状态由 MCP 读）。
   - `body` 照常校验正文（[[issue-triage]] 加的）。
+  - 带 `--repo` 的 `new` 不拒：它自己点名了一个 GitHub 仓库（retro 把插件的问题开到插件仓库用），Linear 项目也能用。
 - **`spec.mjs` 认 Linear 号**：`issues: [FA-577]` 读成 `['FA-577']`，数字仍读成数字。
 - **`references/linear.md` 从「只是对照」改成「怎么做」**：每个操作对应哪个 MCP 工具、参数怎么填、状态名从 `ISSUE_TRACKER.md` 的表取。会话、调度、分拣的 skill 在用 `issues` 的地方加一句「Linear 项目照 references/linear.md 用 MCP」，不各写一遍。
 
@@ -107,7 +108,7 @@ Linear 只在 `idea-loop:issues` 里有一张字段对照表；接入方式（�
 | in-progress | <In Progress> | PR 一开集成推；会话认领时先用 MCP 翻 |
 | in-review | <In Review> | 集成按 PR 转 ready 推 |
 | done | <Done> | 集成在全部 PR 合并后推 |
-| canceled | <Canceled>、<Duplicate> | 会话用 MCP 翻 |
+| canceled | <Canceled>、<Duplicate> | 会话用 MCP 翻：重复的翻 Duplicate（`save_issue` 带 `duplicateOf` 指向原 issue），其余翻 Canceled |
 triage：用 / 跳过
 
 ## 优先级
@@ -131,17 +132,17 @@ PR：标题前缀 `[<号>]`，正文第一行 `Linear: <号>`。
 
 ### 调度在 Linear 上（按推荐）
 
-`list_issues`（`team`、`state` 取 todo 那一行的名字、`fields`: priority、createdAt、labels），每个再 `get_issue`（`includeRelations: true`）去掉 blocked by 还没关的；按 P0 → P1 → P2 → 没有，同级按 `createdAt`。独立队列照「issue 分类」一节，父类名就是 Linear label 名。会话数、卡片照旧。
+`list_issues`（`team`、`state` 取 todo 那一行的名字、`fields`: priority、createdAt、labels）；结果按 `createdAt` 是新的在前，要翻到最后一页（`cursor` 直到 `hasNextPage` 为 false）才取全；每个再 `get_issue`（`includeRelations: true`）去掉 blocked by 还没关的；按 P0 → P1 → P2 → 没有，同级按 `createdAt`。独立队列照「issue 分类」一节，父类名就是 Linear label 名。会话数、卡片照旧。
 
 ### 会话在 Linear 上
 
 - 认领：`issues check <docs> in-progress <号> --from=todo` 过了，`save_issue`（`id`、`state`: in-progress 那一行的名字）。
-- 翻回 triage、先放着、canceled：先 `check --from=…`，再 `save_issue`，评论用 `save_comment`（带前缀）。
+- 翻回 triage、先放着、canceled：先 `check --from=…`，再 `save_issue`，评论用 `save_comment`（带前缀）。canceled 里重复的翻团队的 Duplicate 状态（`save_issue` 带 `duplicateOf` 指向原 issue），其余翻 Canceled。
 - in-review、done 不手翻；收尾时 `get_issue` 核一次 Done。
 
 ### 分拣在 Linear 上
 
-取 backlog：`list_issues`（`state` 取 backlog 那一行，`orderBy: createdAt`）里最早的 15 个；跳过规则同 GitHub（最新一条带前缀的评论含「还要你补」、之后没更新）。翻状态、priority、类型 label 都用 `save_issue`（`addLabels` / `removeLabels`、`priority`）。开 issue：`issues body` 校验正文，再 `save_issue`（`team`、`title`、`description`、`state` 取 backlog）。
+取 backlog：`list_issues`（`state` 取 backlog 那一行，`orderBy: createdAt`）；结果是新的在前，翻到最后一页（`cursor` 直到 `hasNextPage` 为 false），从末尾取最早的 15 个；跳过规则同 GitHub（最新一条带前缀的评论含「还要你补」、之后没更新）。翻状态、priority、类型 label 都用 `save_issue`（`addLabels` / `removeLabels`、`priority`）。开 issue：`issues body` 校验正文，再 `save_issue`（`team`、`title`、`description`、`state` 取 backlog）。
 
 ### MCP 不放进 plugin（按推荐）
 

@@ -662,11 +662,12 @@ export function setPriority(gh, n, p) {
   return want;
 }
 
-/** Comments on #n with the AI prefix (not doubled when the text already starts with it). */
+/** Comments on #n with the AI prefix (not doubled when the text already starts with it). Returns the comment's URL (what `gh issue comment` prints), or null. */
 export function noteIssue(gh, n, text) {
   const t = String(text ?? '').trim();
   if (!t) throw new Error('评论是空的');
-  gh(['issue', 'comment', String(n), '--body', t.startsWith(AI_PREFIX) ? t : `${AI_PREFIX}${t}`]);
+  const out = String(gh(['issue', 'comment', String(n), '--body', t.startsWith(AI_PREFIX) ? t : `${AI_PREFIX}${t}`]) ?? '');
+  return out.match(/https?:\/\/\S+/)?.[0] ?? null;
 }
 
 /** The branches of #n: `issue/<n>-<slug>`, local or remote, in the repo <docs> is in. */
@@ -690,7 +691,11 @@ function currentRepo(gh) {
 
 /** The PRs of issue `n` (a number, or a Linear key): by `Refs` for a GitHub number, by title / `Linear:` line for a key, in the 「仓库」 repos. */
 function prsFor(gh, docs, n, issueRepo) {
-  if (typeof n === 'string') return prsOfLinear(gh, n, parseRepos(readTracker(docs)) ?? []);
+  if (typeof n === 'string') {
+    // a tracker without a 「仓库」 section: the PRs are in the repo the script runs in, as on the GitHub side
+    const repos = parseRepos(readTracker(docs)) ?? [currentRepo(gh)].filter(Boolean);
+    return prsOfLinear(gh, n, repos);
+  }
   const repo = issueRepo ?? currentRepo(gh);
   if (!repo) throw new Error(`查不到 #${n} 所在的仓库（gh repo view 失败），没法核它的 PR`);
   return prsOf(gh, n, repo, reposFor(docs, repo));
@@ -935,8 +940,8 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
   }
   if (cmd === 'note') {
     if (b === undefined) throw new Error('usage: issues.mjs note <docs> <issue 号> <正文文件>');
-    noteIssue(gh, num(a, 'issue'), bodyFile(b));
-    return log(`#${num(a, 'issue')}: 已评论`);
+    const url = noteIssue(gh, num(a, 'issue'), bodyFile(b));
+    return log(`#${num(a, 'issue')}: 已评论${url ? ` ${url}` : ''}`);
   }
   if (cmd === 'show') return json(show(gh, docs, linear ? ref(a, 'issue') : num(a, 'issue'), git ? { git } : {}));
   if (cmd === 'type') {

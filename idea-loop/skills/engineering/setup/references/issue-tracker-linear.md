@@ -20,7 +20,7 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 
 | in-progress | `<In Progress 状态名>` | PR 一开集成推；会话认领时先用 MCP 翻 |
 | in-review | `<In Review 状态名>` | 集成按 PR 转 ready 推 |
 | done | `<Done 状态名>` | 集成在全部 PR 合并后推 |
-| canceled | `<Canceled 状态名>`、`<Duplicate 状态名，没有就不写>` | 会话用 MCP 翻 |
+| canceled | `<Canceled 状态名>`、`<Duplicate 状态名，没有就不写>` | 会话用 MCP 翻：重复的翻 Duplicate（`save_issue` 带 `duplicateOf` 指向原 issue），其余翻 Canceled |
 
 triage：用 / 跳过
 
