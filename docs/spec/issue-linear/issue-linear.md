@@ -57,7 +57,7 @@ Linear 只在 `idea-loop:issues` 里有一张字段对照表；接入方式（�
   - `body` 照常校验正文（[[issue-triage]] 加的）。
   - 带 `--repo` 的 `new` 不拒：它自己点名了一个 GitHub 仓库（retro 把插件的问题开到插件仓库用），Linear 项目也能用。
 - **`spec.mjs` 认 Linear 号**：`issues: [FA-577]` 读成 `['FA-577']`，数字仍读成数字。
-- **`references/linear.md` 从「只是对照」改成「怎么做」**：每个操作对应哪个 MCP 工具、参数怎么填、状态名从 `ISSUE_TRACKER.md` 的表取。会话、调度、分拣的 skill 在用 `issues` 的地方加一句「Linear 项目照 references/linear.md 用 MCP」，不各写一遍。
+- **`references/linear.md` 从「只是对照」改成「怎么做」**：每个操作对应哪个 MCP 工具、参数怎么填、状态名从 `ISSUE_TRACKER.md` 的表取。会话、调度、分拣的 skill 在用 `issues` 的地方加一句「Linear 项目照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）」，`references/linear.md` 只由 `issues` 自己读，不各写一遍。
 
 同一行为的其他入口，逐个标：
 
@@ -155,7 +155,7 @@ PR：标题前缀 `[<号>]`，正文第一行 `Linear: <号>`。
 | 纯逻辑、数据转换、状态机 | TDD 单元测试 | `platformOf`；Linear 项目上写命令被拒；`check --from` 不调 `gh issue`、核 spec 与 PR；按标题与 `Linear:` 找 PR；`issuesOf` 读 `FA-577` |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
-| LLM 输出质量（prompt 改动） | eval（确定性断言） | 不加 eval（顶层 AGENTS.md §5）；文档测试钉住 setup 问平台、有 Linear 模板、linear.md 点名 MCP 工具、会话 / 调度 / 分拣都指向 linear.md |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | 不加 eval（顶层 AGENTS.md §5）；文档测试钉住 setup 问平台、有 Linear 模板、linear.md 点名 MCP 工具、会话 / 调度 / 分拣都指向 `idea-loop:issues` 的 Linear 做法 |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及；0.1.10 发版后拿 FA-577 dogfood（人定的，U4） |
 
