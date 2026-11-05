@@ -8,9 +8,9 @@
 
 1. 列出 `docs/design/tmp/` 下的目录：`git ls-tree --name-only origin/<基准分支> docs/design/tmp/`。目录名 `research` 跳过（没有 spec 时的调研页放那里，不算设计产物）。
 2. 每个目录 `<名>`，看它里面有没有 `research/` 之外的东西：`git ls-tree -r --name-only origin/<基准分支> docs/design/tmp/<名>/`，滤掉 `docs/design/tmp/<名>/research/` 开头的路径，还剩文件才算有设计产物。
-3. 有设计产物的，看它的 spec：`git show origin/<基准分支>:docs/spec/<名>/<名>.md` 的 frontmatter `status`。
-   - 读不到（已经没有 spec 目录），或 `status` 是 `完成`：**漏归档**，出一行。
-   - 其余状态（`草稿` 到 `实现中`）：需求还在走，不出行。
+3. 有设计产物的，看它的 spec：`git show origin/<基准分支>:docs/spec/<名>/<名>.md` 的 frontmatter `issues:`，逐个 `gh issue view <号> --json state` 查。
+   - 读不到（已经没有 spec 目录），或 `issues:` 里的 issue 全关了：**漏归档**，出一行。
+   - 还有 issue 开着：需求还在走，不出行。`issues:` 是空的，判不了，不出行。
 
 上一次 dreaming 没清干净而留在基准分支上的 `dreaming-<日期>/` 也走这三步：它没有 spec 目录，会被查出来。
 
@@ -21,8 +21,8 @@
 | 列 | 写什么 |
 |---|---|
 | 对象 | `docs/design/tmp/<名>/` |
-| 发现 | spec 是「完成」或已经没有 spec 目录；里面还留着哪些设计产物（`canvas/`、`delta/`……） |
-| 证据 | 上面的 `git ls-tree` 输出摘要与 spec 状态 |
+| 发现 | spec 的 issue 全关了或已经没有 spec 目录；里面还留着哪些设计产物（`canvas/`、`delta/`……） |
+| 证据 | 上面的 `git ls-tree` 输出摘要与 issue 状态 |
 | 建议处置 | `补归档` 或 `丢弃`（闭集） |
 | 选项 | 批 / 不批 / 改成… |
 

@@ -15,10 +15,10 @@
 - 整合的文档测试改写成新模型的 tripwire：扫插件全部文件，没有 `spec-status`、八个旧中文状态名、「整合」的旧用法、`consolidation-prompt.md`。
 
 ## 验收标准
-- [ ] tripwire 测试存在，在本刀之前的代码上会红、本刀之后绿
-- [ ] setup 不再装整合定时任务，问 triage 用不用
-- [ ] dreaming / adr-reconciler 判了结用 issue 的关闭
-- [ ] 插件 scripts 的 `node --test` 全绿
+- [x] tripwire 测试存在，在本刀之前的代码上会红、本刀之后绿
+- [x] setup 不再装整合定时任务，问 triage 用不用
+- [x] dreaming / adr-reconciler 判了结用 issue 的关闭
+- [x] 插件 scripts 的 `node --test` 全绿
 
 ## 选中的存量回归
 - `setup-consolidation-doc.test.mjs`：改写成 tripwire 的那一个。

@@ -126,7 +126,7 @@ test('a spec written from the template\'s own lines is read by spec.mjs: verdict
 
 test('issue-verify\'s self-check names the sections the new template has', () => {
   const verify = read('skills', 'engineering', 'issue-verify', 'SKILL.md');
-  const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定「审核中」的'));
+  const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定要 grill 的'));
   assert.ok(check.length > 100, '找不到「自己校验」');
   const titles = sections(template).slice(1).map((s) => s.title).concat(['根因']);
   // every section-like name it quotes is a section of the template

@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 **dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、做审核页、等人批、执行段。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:spec-status`（翻状态只走 `spec-status.mjs`；`check` 顺带报旧平铺布局和非法状态）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:issues`（issue 的状态只走 `issues.mjs`，spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
 ## 纪律
 

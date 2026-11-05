@@ -17,7 +17,7 @@ description: 目标仓库 docs/ 知识库与 worktree 下 .tmp/ 中间产物的�
 `docs/` 没有草稿 / 冻结 / 归档三态目录，一份文档了结到哪，看它还在不在：
 
 ```
-spec 目录存在               = 还没了结（走到哪一步看 frontmatter 的 status）
+spec 目录存在               = 还没了结（走到哪一步看它 frontmatter `issues:` 里的 issue：全关了才算了结）
 spec 目录消失 + ADR 存在     = 已了结（做了 → why/how/result；决定不做 → why-not）
 spec 目录消失 + 无 ADR       = 不值得记
 spec 存在 + 活已合并 + 无 ADR = 等下一次 dreaming 对账（正常状态）
@@ -97,7 +97,7 @@ docs/
 
 ## 从平铺布局迁移
 
-`spec-status.mjs check` 报出旧平铺布局（`docs/spec/<slug>.md` 平铺，或共用的 `docs/spec/tickets/`）时，先照 [references/migrate-flat-layout.md](references/migrate-flat-layout.md) 一次性迁过去，再跑 `idea-loop:to-spec`、`idea-loop:to-ticket` 或 `idea-loop:implement`。
+`spec.mjs check` 报出旧平铺布局（`docs/spec/<slug>.md` 平铺，或共用的 `docs/spec/tickets/`）时，先照 [references/migrate-flat-layout.md](references/migrate-flat-layout.md) 一次性迁过去，再跑 `idea-loop:to-spec`、`idea-loop:to-ticket` 或 `idea-loop:implement`。
 
 ## frontmatter
 
@@ -109,7 +109,8 @@ docs/
 ```yaml
 ---
 type: raw | spec | adr | design | design-page | design-state | design-component | design-motion | design-journey | domain | reference | record
-status: <见下表>                 # raw / design / design-* / reference / domain 省略
+status: <见下表>                 # spec / raw / design / design-* / reference / domain 省略
+issues: [<号>]                   # 只有 spec 有：它覆盖的 issue
 tags: [<topic>, <feature-slug>]
 summary: <一句话，≤60 字>
 related: ["[[other-slug]]"]
@@ -120,11 +121,10 @@ related: ["[[other-slug]]"]
 
 | type | 合法 status |
 |---|---|
-| `spec` | `草稿` · `审核中` · `正式` · `实现中` · `完成`；谁写、前提是什么见 `idea-loop:spec-status`，只走 `spec-status.mjs` 改，不手改这一行 |
 | `adr` | `生效` · `已被取代（→ ADR-NNNN）` |
 | `raw` | 无（改用 `source_type` + `captured`） |
 
-spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置`，dreaming 靠这个 label 区分被遗忘和被故意搁置。工作排到了哪（待设计、待实现……）也记在 issue 的 label 上。
+`spec` 没有 `status`：它只是文档，工作走到哪看它 `issues:` 里的 issue 的状态（`idea-loop:issues`），spec 了结 = 这些 issue 全关了。先放着的是 issue（回 backlog），dreaming 靠 backlog 区分被遗忘和被故意放着。
 
 `design` 是需求的冻结记录（`design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`），随 `tmp/` 清掉。`design-page` / `design-state` / `design-component` / `design-motion` / `design-journey` 是设计档案的五种对象，每份文件一个对象，住在 `design/prod/`（与 `tmp/<spec-slug>/delta/` 同构），都不带 `status`，结构字段见 `idea-loop:design-archive` 的「图的实体」。
 
@@ -154,7 +154,7 @@ spec 没有「搁置」：先放着的是它覆盖的 issue，挂 `status:搁置
 | [[slug]] | 生效 | <取自 frontmatter.summary> |
 ```
 
-- `docs/spec/index.md` 由 `spec-status.mjs index <docs>` 生成，只有「文件」「summary」两列：spec 的状态在各段 PR 里变，几个 PR 同时开着会在状态列上冲突。要看状态看各 spec 的 frontmatter，看全貌跑 `spec-status.mjs check`。
+- `docs/spec/index.md` 由 `spec.mjs index <docs>` 生成，只有「文件」「summary」两列：spec 没有状态，工作走到哪看它 `issues:` 里的 issue。看全貌跑 `spec.mjs check`。
 - 设计档案的索引是 `docs/design/prod/index.md`，由归档脚本生成，没有 `docs/design/index.md`。它的契约行：「设计档案里现有的页面、组件、动效、用户路径各一张清单，`usedBy` 由脚本反向生成；frontmatter 里定主视口 / 主题 / 语言 / 动效模式（`motion`，项目定一次）。不收 `tmp/` 里进行中的需求。」它是唯一带 frontmatter 的 `index.md`，主视口 / 主题 / 语言 / 动效模式要被脚本读。
 
 ## spec 和工单怎么写
