@@ -1,6 +1,6 @@
 ---
 name: issue-session
-description: 一个 issue 的会话：triage 会话陪人评估它（验证、spec、grill、设计），todo 会话把它做到合并。调度卡片开出的会话、或人要接手某个 issue 时用。
+description: 一个 issue 的会话：triage 会话陪人评估它（spec、grill、设计），todo 会话把它做到合并。调度卡片开出的会话、或人要接手某个 issue 时用。
 argument-hint: "<issue 号>"
 ---
 
@@ -10,7 +10,7 @@ argument-hint: "<issue 号>"
 
 | 会话 | 谁开的 | 认领成 | 侧边栏 section | 做什么 | 做完 |
 |---|---|---|---|---|---|
-| triage 会话 | 人 | triage | triage | 验证、起草 spec、grill、设计 | push 分支，`set todo`，归档 |
+| triage 会话 | 人 | triage | triage | 起草 spec、grill、设计 | push 分支，`set todo`，归档 |
 | todo 会话 | 调度卡片 | in-progress | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，归档 |
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo in-progress」）。
@@ -33,13 +33,13 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## triage 会话
 
-1. **审核**：用 Skill 工具调 `idea-loop:issue-verify`，只调一次，告诉它认领和分支已经做过。它复现、起草 spec、在这里跟人 grill，把 spec 提交在分支上，交回 spec 的 slug。交回「已关闭」去「收尾」，交回「先放着」去「先放着」。
+1. **起草**：读 issue 全文和分拣贴的证据评论（`gh issue view $ARGUMENTS --comments`，「🤖 idea-loop：」开头的那条），用 Skill 工具调 `idea-loop:to-spec` 起草，再照 [references/draft-spec.md](references/draft-spec.md) 自校验、在这里跟人 grill、把 spec 提交在分支上。起草时发现已被做掉的（它会把 issue 关成 canceled）、人决定不做的，去「收尾」；人说先放着，去「先放着」。
 2. **设计**：读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。不碰 UI 的 spec 跳过。碰 UI 的告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人；人设计完、`/idea-loop:uiux-refine` 把冻结结果提交在这个分支上之后，往下。
 3. **交给调度**：`git push -u origin issue/<号>-<slug>`，`issues set <docs> todo $ARGUMENTS --comment=<分支名，spec 与设计已提交>`，去「收尾」。`set todo` 被拒时说出了还差什么（spec 里没定完的行、没冻结的设计），回去补。
 
 ## todo 会话
 
-分支上已有 spec（triage 会话留下的，或先放着时留下的），读它；没有就用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，提交在分支上。起草中冒出了要人定的（spec 里要写「需要 grill」「待定」），把已写的提交并 push，`issues set <docs> triage $ARGUMENTS --comment=<要人定什么、分支名>`，去「收尾」，人在 triage 里定。项目跳过 triage 的，没法翻回去，就在这个会话里跟人 grill、做设计，写法同 triage 会话的 1、2 步。spec 就绪后去「实现」。
+分支上已有 spec（triage 会话留下的，或先放着时留下的），读它；没有就用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，再照 [references/draft-spec.md](references/draft-spec.md) 做，提交在分支上。起草中冒出了要人定的（spec 里要写「需要 grill」「待定」），把已写的提交并 push，`issues set <docs> triage $ARGUMENTS --comment=<要人定什么、分支名>`，去「收尾」，人在 triage 里定。项目跳过 triage 的，没法翻回去，就在这个会话里跟人 grill、做设计，写法同 triage 会话的 1、2 步。spec 就绪后去「实现」。
 
 ## 实现
 

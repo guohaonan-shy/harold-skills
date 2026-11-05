@@ -124,8 +124,8 @@ test('a spec written from the template\'s own lines is read by spec.mjs: verdict
   assert.equal(touchesUi(build({ word: '存在', ui: true })), true);
 });
 
-test('issue-verify\'s self-check names the sections the new template has', () => {
-  const verify = read('skills', 'engineering', 'issue-verify', 'SKILL.md');
+test('draft-spec\'s self-check names the sections the new template has', () => {
+  const verify = read('skills', 'engineering', 'issue-session', 'references', 'draft-spec.md');
   const check = verify.slice(verify.indexOf('## 自己校验'), verify.indexOf('## 跟人定要 grill 的'));
   assert.ok(check.length > 100, '找不到「自己校验」');
   const titles = sections(template).slice(1).map((s) => s.title).concat(['根因']);
@@ -133,7 +133,7 @@ test('issue-verify\'s self-check names the sections the new template has', () =>
   const sectionLike = new Set(['验证', '问题', '问题陈述', '方案', 'User Stories', '实现决策', '测试决策', 'Out of scope', '关联', '根因', '技术方案总览', '前端交互']);
   for (const [, name] of verify.matchAll(/「([^」]+)」/g)) {
     if (!sectionLike.has(name)) continue;
-    assert.ok(titles.includes(name) || name === '前端交互', `issue-verify 引用的「${name}」不是新模板的节`);
+    assert.ok(titles.includes(name) || name === '前端交互', `draft-spec 引用的「${name}」不是新模板的节`);
   }
   // the verdict is written as the opening quoted line, and the old table is gone from the instructions
   assert.match(verify, /> #<号> 存在：/);

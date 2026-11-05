@@ -30,6 +30,10 @@ triage：用 / 跳过
 
 （选一个写在这一行：「triage：用」，或「triage：跳过」——跳过的项目 backlog 直接到 todo，grill 与设计在 todo 的会话里做。）
 
+## 优先级
+
+issue 的优先级是 `priority:P0`、`priority:P1`、`priority:P2` 三个 label，一个 issue 最多一个，没有就是没有优先级。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判；开出疑似 P0 的 issue 时当场复现，复现到了翻 todo 并通知人。调度按 P0 → P1 → P2 → 没有优先级派 todo，同一级里最早的先派。
+
 ## 仓库
 
 这个产品的 issue 要改的仓库，第一行是知识库（`docs/`）所在的仓库。没有这一节的项目就是一个仓库。
@@ -42,4 +46,4 @@ triage：用 / 跳过
 
 ## 分类 label
 
-issue 还带两种分类 label：模块 `type:<父类>`，可选的子类 `type:<父类>/<子类>`；类型 `kind:bug`、`kind:feature`、`kind:improvement`。有哪些模块、另外保留哪些 label，写在 `AGENTS.md` 的「issue 分类」一节；分类由 idea-loop 验证 issue 时打。不在状态、分类和保留清单里的 label 会被清掉，要留的写进那一节。
+issue 还带两种分类 label：模块 `type:<父类>`，可选的子类 `type:<父类>/<子类>`；类型 `kind:bug`、`kind:feature`、`kind:improvement`。有哪些模块、另外保留哪些 label，写在 `AGENTS.md` 的「issue 分类」一节；分类由 idea-loop 分拣 issue 时打。不在状态、分类和保留清单里的 label 会被清掉，要留的写进那一节。

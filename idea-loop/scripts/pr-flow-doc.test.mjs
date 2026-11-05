@@ -72,7 +72,8 @@ test('to-spec: no status in the frontmatter, no handoff / route / spec status fl
   assert.match(md, /`issues`/);
   assert.match(md, /需要 grill/);
   assert.match(md, /待定/);
-  assert.match(md, /issues open/, 'a spec that covers no issue still gets an entry in the tracker');
+  assert.match(md, /issues new/, 'a spec that covers no issue still gets an entry in the tracker');
+  assert.doesNotMatch(md, /issues open|issue-verify/);
   const land = read('skills/engineering/to-spec/references/land-on-main.md');
   assert.doesNotMatch(land, /advance|reconcile/, 'labels are not attached by this step any more');
 });

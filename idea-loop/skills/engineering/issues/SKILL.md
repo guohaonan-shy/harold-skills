@@ -17,7 +17,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 状态 | 下面七个之一 |
 | 类型 | Bug / Feature / Improvement 三选一 |
 | 模块 | issue 落在项目的哪一块，项目自己定（`AGENTS.md` 的「issue 分类」） |
-| 优先级 | 平台的字段，取值不在这里定 |
+| 优先级 | P0 / P1 / P2，最多一个，没有就是没有；GitHub 上是 `priority:P0` / `priority:P1` / `priority:P2` label。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判 |
 | blocked by | 挡着它的 issue |
 | 挂着的 PR | 这个 issue 要改的每个仓库各一个，状态各自是 draft / ready / merged |
 | 评论 | 停在哪、等什么、为什么关；idea-loop 写的带「🤖 idea-loop：」前缀 |
@@ -28,7 +28,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 | 状态 | 意思 |
 |---|---|
-| backlog | 新进来、没验证；或人说先放着 |
+| backlog | 新进来、没验证（每周由 `idea-loop:issue-triage` 分拣）；或人说先放着 |
 | triage | 验证过，要人评估（grill、设计）；做完翻 todo |
 | todo | 可以被调度派成会话 |
 | in-progress | 会话在做，spec 提交后开 draft PR |
@@ -39,7 +39,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 从 | 到 | 谁、什么时候 |
 |---|---|---|
 | （新开） | backlog | agent 或人开的；没有 `status:*` 的开着的 GitHub issue 也算 |
-| backlog | triage / todo / canceled | 分拣后人定；不要人评估的直接 todo |
+| backlog | triage / todo / canceled | `idea-loop:issue-triage` 分拣后人定；不要人评估的直接 todo |
 | triage | todo | 人评估完：spec 里没有「需要 grill」「待定」，碰 UI 的设计已冻结 |
 | todo | in-progress | 调度派出的会话认领；spec 提交后开 draft PR |
 | in-progress | in-review | PR 全部转 ready，第一轮 Review 汇报交给人 |
@@ -79,11 +79,12 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 ## 开一个 issue
 
-流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开成 backlog：
+流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `issues new`，它先校验正文四个必填节、再查重（同标题开着的 issue 已有就拒绝并报号）：
 
-1. 先查重：`gh issue list --state open --search "<关键词>"`。已有同一个问题的，就用那一条，写「已有 #N」。
-2. 没有就 `gh issue create`，不打 `status:*`（没有就是 backlog）；正文照「正文」的格式写，写给一个没有上下文的人看。
-3. 开不成（`gh` 失败）的，记下没开成和原因，交给人。
+1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看。
+2. `issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
+3. 判断是 P0 的，开成 backlog 后调 `/idea-loop:issue-triage P0 <号>`，当场复现。
+4. 正文被拒（缺节或节是空的）就补上再开；开不成（`gh` 失败）的，记下没开成和原因，交给人。
 
 ## 分类
 
@@ -97,11 +98,15 @@ issues type       <docs> <号> <父类[/子类]>...      # 打模块，换掉原
 issues show       <docs> <号>                      # JSON：状态、标题、分类、挂着的 PR（仓库、draft / ready / merged）、覆盖它的 spec 与分支
 issues check      <docs> <状态> <号>               # 只核翻法的前提、不改；平台无关，Linear 上先跑它再用 MCP 翻
 issues set        <docs> <状态> <号>... [--comment=<文字>] [--skip-design]   # 核过再翻；done、canceled 同时关闭
-issues candidates <docs> [<上限>] [--queue=<分类>]  # 能派的 todo：没有开着的 blocked by，最早的在前（JSON）
+issues new        <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=…] [--type=…]...   # 校验正文、查重、开；默认 backlog，todo 必带 --priority；输出新号
+issues body       <docs> <正文文件>                # 只校验正文，不开；Linear 上先跑它再用 MCP 开
+issues priority   <docs> <P0|P1|P2|none> <号>...   # 换掉原有的优先级
+issues backlog    <docs> [<上限>]                  # 开着的 backlog issue，最早的在前（JSON）；跳过分拣问过「还要你补」、之后没人动过的
+issues note       <docs> <号> <正文文件>           # 贴一条带「🤖 idea-loop：」前缀的评论
+issues candidates <docs> [<上限>] [--queue=<分类>]  # 能派的 todo：没有开着的 blocked by，先按优先级 P0 → P1 → P2 → 没有，再按号（JSON）
 issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label 与两个 status:* 作为问题报出
 issues queues     <docs> [<号>]                    # 调度的队列、上限、侧边栏 section
 issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出
-issues open       <docs> <spec-slug>               # spec 没覆盖任何 issue：开一个 todo 的「spec：」issue
 ```
 
 PR 正文怎么挂到 issue 上，平台各有写法，见两份 reference。

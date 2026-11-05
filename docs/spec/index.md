@@ -21,7 +21,6 @@
 | [[idea-loop-seo]] | idea-loop 新开 seo 分类：蒸馏 OpenSEO 做发现，扫描结果提成 issue，按原有流程解决 |
 | [[implementer-reuse-and-compact]] | implementer 不再写死 skill 清单、可读 spec 全文、读 CODING_STANDARDS；卡住的工单复用原执行方；to-ticket 落盘后提交工单（进实现前压缩已移除） |
 | [[issue-consolidation]] | cloud 定时任务每 6 小时把改同一文件或模块的 issue 挂到新开的根 issue 下；调度按根出会话，一个根一份 spec、一个会话从审核做到合并 |
-| [[issue-intake-priority]] | 开 issue 时挂模块根、判 P0；调度只给 P0 和本期焦点出卡片；想法有入口；停 cloud 整合；implement 自动切票 |
 | [[issue-linear]] | issue 在 Linear 上的项目：setup 经 MCP 授权、把团队状态整理进 ISSUE_TRACKER.md，会话、调度、分拣用 MCP 读写同一个实体 |
 | [[issue-model]] | issue 状态是唯一真相：六个状态对上 Linear，triage 按团队可跳过，实现开始就开 PR，一个 issue 每个仓库一个 PR，正文格式统一 |
 | [[issue-triage]] | backlog 每周由子代理逐个核过、人批一张表定去向；开 issue 校验正文；优先级决定派发顺序；issue-verify 删掉 |

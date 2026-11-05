@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 的定时任务。每个仓库跑一次，项目配置变了再跑。
+description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 和每周分拣的定时任务。每个仓库跑一次，项目配置变了再跑。
 disable-model-invocation: true
 ---
 
@@ -52,7 +52,7 @@ idea-loop 从这几处读项目配置：
 - 仓库：把人对「会改到哪几个仓库」的回答填进 `ISSUE_TRACKER.md` 的「仓库」表，模板里的占位行（尖括号那行）删掉。
 - 旧状态：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate docs` 只列出会怎么改，给人看，人确认后加 `--apply`。
 - label，按顺序：
-  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*` 和 `type:*`，列出多余的 label 和各自在用的 open issue 数。
+  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*`、`kind:*`、`type:*` 和 `priority:*`（`priority:P0`、`priority:P1`、`priority:P2`），列出多余的 label 和各自在用的 open issue 数。
   2. 人定了要迁成分类的，对每个用着它的 issue 跑 `issues.mjs type docs <号> <分类>`。
   3. 把多余 label 的清单给人看，人确认后 `issues.mjs labels docs --prune` 删掉，issue 上的也一起去掉。
 - GitHub App：在 `~/.idea-loop/github-apps.json` 里加 `"<owner/repo>": { "appId": <id>, "privateKeyPath": "<路径>" }`。只写路径，私钥文件不打开。
@@ -71,6 +71,12 @@ idea-loop 从这几处读项目配置：
 
 完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
+## 每周分拣
+
+`/idea-loop:issue-triage` 可以由桌面 app 的定时任务每周自己跑一次，把最早的 15 个 backlog issue 查完、摆一张表等人批。必须在本仓库的主 checkout 里做，任务 id 叫 `triage-<仓库名>`。步骤在 [references/weekly-triage.md](references/weekly-triage.md)。
+
+完成条件：本仓库有一个开着的 `triage-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
+
 ## 交回
 
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
@@ -78,5 +84,6 @@ idea-loop 从这几处读项目配置：
 - 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
 - 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
+- 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
 - 怎么起调度：在主 checkout 开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`（间隔照需要改）。
 - 留给人的事：安装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检的表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。
