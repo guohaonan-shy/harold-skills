@@ -59,7 +59,6 @@ issues: [243]
 - **纳入**：问题 1 那张表里的 6 个由 agent 开 issue 的入口；`issue-session` 的 spec 阶段（原来调 `issue-verify`）；`issue-dispatch` 的派发顺序；`setup` 加装每周分拣的定时任务；`ISSUE_TRACKER.md` 模板加优先级一节；harold-skills 根目录的 `ISSUE_TRACKER.md`；`README.md`。
 - **排除**：
   - 人在 GitHub 上直接开的：平台上没法插一步。它开出来不带 `status:*`，#242 已经定了「开着、没有 `status:*` 的也算 backlog」，每周分拣照样会取到它。
-  - #242 的 `issues split`（父 issue 拆子 issue）：子 issue 是父 spec 定稿后拆出来的，按 #242 的规则开在 todo，不走分拣。
   - 「本期焦点」：release 分支上没有这一节（加它的 PR guohaonan-shy/harold-skills#240 已关闭、没合），没东西可删。
 
 ### 后端
