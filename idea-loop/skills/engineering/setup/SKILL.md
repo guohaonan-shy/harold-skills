@@ -49,6 +49,7 @@ idea-loop 从这几处读项目配置：
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - `## issue 分类` 一节照模板写进 `AGENTS.md`（没有就写进有 `## idea-loop` 块的那份）；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
 - triage：把人对「团队用不用 triage」的回答写进 `ISSUE_TRACKER.md` 状态表后面那一行（`triage：用` 或 `triage：跳过`），模板里的「用 / 跳过」占位不算选了。
+- 仓库：把人对「会改到哪几个仓库」的回答填进 `ISSUE_TRACKER.md` 的「仓库」表，模板里的占位行（尖括号那行）删掉。
 - 旧状态：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate docs` 只列出会怎么改，给人看，人确认后加 `--apply`。
 - label，按顺序：
   1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*` 和 `type:*`，列出多余的 label 和各自在用的 open issue 数。
