@@ -7,7 +7,7 @@ designer 在静态构图冻结之后（跑动效段的，在动效段之后）�
 | 条件 | 判据 |
 |---|---|
 | register 是**营销** | 方向说明里记的 register；in-app surface 整段跳过 |
-| 块的 job 是**身份**或**氛围** | [motion-stage.md](motion-stage.md)「开不开」那张表的后两行。状态与结果这两个 job 不解锁素材 |
+| 块的 job 是**身份**或**氛围** | [design/motion.md](design/motion.md)「开不开」那张表的后两行。状态与结果这两个 job 不解锁素材 |
 
 ## 你做判定和写单
 
