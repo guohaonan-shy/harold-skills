@@ -32,7 +32,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | spec | 写 spec、grill | 会话认领一个没有父 issue 的 issue |
 | design | 设计 | spec 定稿、碰 UI |
 | implement | 实现；父 issue 在这里等子 issue | spec 定稿不碰 UI，或设计冻结；子 issue 被认领；父 issue 拆完 |
-| review | PR 等人看；等联调的子 PR 也停在这 | PR 转 ready、第一轮 Review 汇报交给人 |
+| review | PR 等人看 | PR 转 ready、第一轮 Review 汇报交给人 |
 | blocked | 被别的 issue 或等人给的条件挡着；不占会话 | `block`；或带评论翻进来 |
 | done | 做完，关闭为 completed | PR 合并；父 issue 的子 issue 全关 |
 | canceled | 不做，关闭为 not planned | 人决定不做；验证为不存在 |
@@ -46,10 +46,10 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 ## 父 issue、子 issue 与工单
 
 - **不拆**：一个 PR 装得下的，一个会话从 spec 做到 PR。
-- **拆**：spec 定稿（碰 UI 的设计冻结）之后，一个 PR 装不下、或要跨仓库，父会话照 spec 的「子 issue」一节逐块 `issues split`。子 issue 开在 todo，带父 issue 的分类、优先级、milestone；块之间的先后用 `issues block`。父 issue 翻 implement，等子 issue 做完。
-- **子 issue** 的会话从 implement 开始，照父 spec 做，走 implement → review → done。spec 测试计划写「联调：要」的，子 PR 停在 review 等父会话联调；「联调：不要」的各自合。
+- **拆**：spec 定稿（碰 UI 的设计冻结）之后，一个 PR 装不下，父会话照 spec 的「子 issue」一节逐块 `issues split`。子 issue 开在 todo，带父 issue 的分类、优先级、milestone；块之间的先后用 `issues block`。父 issue 翻 implement，父会话收尾归档。
+- **子 issue** 的会话从 implement 开始，照父 spec 做，走 implement → review → done；子 PR 各自 review、各自合，不等别的子 PR。
 - **工单**是一个 PR 里的切片，写在 spec 目录的 `tickets/` 下（子 issue 的在 `tickets/<子号>/`），不上 issue 平台。
-- 子 issue 全关了，父 issue 由父会话或 `issues reconcile` 关成 done。
+- 子 issue 全关了，父 issue 由调度的 `issues reconcile` 关成 done。
 
 ## 分类
 

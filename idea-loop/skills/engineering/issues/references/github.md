@@ -14,4 +14,3 @@
 
 - 列表接口会混进 PR（带 `pull_request` 字段），脚本跳过它们。
 - 一个父 issue 最多 100 个子 issue、最多 8 层；idea-loop 只用两层。
-- 子 issue 和挡路的 issue 可以在同一个 owner 下的别的仓库；跨仓库的需求仍把子 issue 开在业务的 issue 仓库里，正文写改哪个代码仓库。

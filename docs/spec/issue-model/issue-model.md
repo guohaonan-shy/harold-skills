@@ -58,8 +58,8 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 | spec | implement | spec 定稿、不碰 UI（或没装 design 插件，汇报里写明跳过了设计）；父 issue 拆完子 issue 也是这一步 |
 | design | implement | 设计冻结 |
 | implement | review | PR 转 ready、第一轮 Review 汇报交给人 |
-| review | done | PR 合并（人说「合并」）；等联调的子 PR 停在 review |
-| implement | done | 父 issue：子 PR 全部合完（父会话翻），或子 issue 全关后由调度对账补关 |
+| review | done | PR 合并（人说「合并」） |
+| implement | done | 父 issue：子 issue 全关后由调度对账关 |
 | spec / design / implement / review | backlog | 人说先放着：会话评论停在哪个阶段、分支名，然后归档 |
 | 任意开着的 | blocked | 被别的 issue 挡（记成 blocked by 关系）或等人给条件（评论「等你：X」）；会话评论停在哪后归档 |
 | blocked | todo | 挡路的 issue 全关了，调度对账翻；等人给条件的由人翻 |
@@ -68,7 +68,7 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 同一行为的其他入口，逐个标：
 
 - **纳入**：`issues.mjs`（重写）；`spec-status.mjs`（删，读 spec 内容的函数挪进新的 `spec.mjs`）；skill `spec-status` → `issues`；`issue-session`、`issue-dispatch` 的分组与阶段；`issue-verify`、`to-spec`、`to-ticket`、`implement`、`pr-review`（deliver、merge）、`uiux-imagine`、`uiux-refine`、`dreaming` 与 `adr-reconciler`、`wiki-conventions`、`retro`、`seo-setup`、`seo-issues.mjs` 里读写 spec 状态或旧 issue 状态的句子；`setup`：删整合定时任务与 `consolidation-prompt.md`，`issue-tracker.md` 模板换状态表，`survey.md` 不再查 spec 状态；harold-skills 根目录的 `ISSUE_TRACKER.md`、`AGENTS.md`「issue 分类」；`README.md`。
-- **排除**：开 issue 的统一写法、backlog 的每周分拣、优先级、调度的派发顺序，归 #243（`issue-triage`）；这里只把「开一个待验证的 issue」改成开进 backlog，文字留给 #243 重写。知识库落地（分支、合进知识库 main），归 #244；这里不改「合进主分支」那些句子的落点，只改其中翻状态的部分。已在用的仓库怎么迁（旧 label 换新、spec 去 `status`、解散整合的组），归 #247；这里给出对照表。
+- **排除**：跨仓库的需求与父会话联调（撤出 0.2.0，见「实现决策」）。开 issue 的统一写法、backlog 的每周分拣、优先级、调度的派发顺序，归 #243（`issue-triage`）；这里只把「开一个待验证的 issue」改成开进 backlog，文字留给 #243 重写。知识库落地（分支、合进知识库 main），归 #244；这里不改「合进主分支」那些句子的落点，只改其中翻状态的部分。已在用的仓库怎么迁（旧 label 换新、spec 去 `status`、解散整合的组），归 #247；这里给出对照表。
 
 ### 后端
 
@@ -106,7 +106,7 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 2. 作为人，我想要装不下的需求由父会话在 spec 定稿后拆成子 issue、拆法写进汇报，以便我能推翻拆法
 3. 作为人，我想要子 issue 一开出来就在 todo、被调度派成子会话、子会话直接从 implement 开始，以便不重复验证和写 spec
 4. 作为人，我想要子 issue 之间的先后用 blocked by 表达，挡路的合了才派后面的，以便子会话不在没合的代码上开工
-5. 作为人，我想要 spec 测试计划写「联调：要」时子 PR 开出先不合、父会话联调后我逐个说合并，写「联调：不要」时子 PR 各自合，以便只在接口跨仓库时等待
+5. 作为人，我想要每个子 PR 各自 review、我说合并就合，以便一块做完就能先合进去
 6. 作为人，我想要子 issue 全关后父 issue 自动关，以便父 issue 的进度条和状态不落后
 
 ### 场景：issue 的分类（harold-skills）
@@ -130,16 +130,16 @@ spec 的 frontmatter `status`（草稿 → 审核中 → 正式 → 实现中 �
 ### 父 issue 与子 issue
 
 - **子 issue** 是从父 issue 拆出、能单独交一个 PR 的一块；**工单**是一个 PR 里的切片（`GLOSSARY.md`）。父子只有两层：子 issue 不再拆。
-- **何时拆**（Q3）：父会话在 spec 定稿（碰 UI 的设计冻结）后判断一个 PR 装不装得下；跨仓库一定拆（Q44）；AI 判，拆法写进汇报，人能推翻。拆了的 spec 加一节「子 issue」：每块一行，写范围、在哪个仓库、被哪块挡着。
+- **何时拆**（Q3）：父会话在 spec 定稿（碰 UI 的设计冻结）后判断一个 PR 装不装得下；AI 判，拆法写进汇报，人能推翻。拆了的 spec 加一节「子 issue」：每块一行，写范围、被哪块挡着。
 - **子 issue 的路径**（Q4）：`issues split` 开在 todo；子会话认领 todo → implement，走 implement → review → done。工单由子会话自己切，放父 spec 目录的 `tickets/<子号>/`，几个子会话的知识库分支不碰同一个文件；子 PR 合并时只删自己那个目录。
-- **父 issue**（Q5）：拆完翻 implement，会话不归档；联调（要的话）由父会话做；子 PR 全部合完父会话翻 done。父会话没了（被人归档）时，子 issue 全关后 `reconcile` 补关。
-- **合到哪**（U2）：子 PR 各自合进所在仓库的主分支，不开父级集成分支。
-- **联调**（Q9）：to-spec 在测试决策里写一行「联调：要。<要一起测的仓库和场景>」或「联调：不要」，grill 时人能改。父会话拆子 issue 时读它：要的，子会话开出 PR 后停在 review 不合，等父会话；不要的，子 PR 各自 review、人说合并就合。联调本身怎么开 worktree 照 Q46，写在 `issue-session` 的父 issue 一节。
+- **父 issue**（Q5）：拆完翻 implement，父会话照「收尾」归档；子 issue 全关后，调度每轮的 `reconcile` 把父 issue 关成 done。
+- **合到哪**（U2）：子 PR 各自 review、各自合进主分支，不开父级集成分支，也不等别的子 PR。
+- **跨仓库与联调不在 0.2.0**：Q44–Q46 定的「跨仓库按仓库拆子 issue、父会话联调、子 PR 等联调再合」随「0.2.0 不搬知识库」撤出（决定记录 U14、U15，41c07de），本场的 Q9（测试计划写「联调」一行）一起撤；留给以后单独处理知识库的 issue。
 - spec 的 `issues:` 写父 issue 的号（没有父子的写它自己）；子 issue 不写进去，从平台的父子关系找到。spec 了结 = `issues:` 里的全关了：dreaming（`adr-reconciler`）按这个判上线、写 ADR、删目录，取代「spec 是完成」。
 
 ### issue-session 与 issue-dispatch
 
-- **会话认的单位从「组」改成一个 issue**：会话标题「<仓库名>#<号> <标题>」，号就是它自己的号。会话按 issue 的种类走三条路：没有父子的（spec → design → implement → review → done）；父 issue（spec → design → 拆 → 等子 PR / 联调 → done）；子 issue（implement → review → done）。开场 `issues show` 看它是哪一种、现在在哪。
+- **会话认的单位从「组」改成一个 issue**：会话标题「<仓库名>#<号> <标题>」，号就是它自己的号。会话按 issue 的种类走三条路：没有父子的（spec → design → implement → review → done）；父 issue（spec → design → 拆 → implement，会话归档，子 issue 全关后对账关）；子 issue（implement → review → done）。开场 `issues show` 看它是哪一种、现在在哪。
 - **侧边栏 section** 换成状态名：spec、design、implement、review。独立队列照旧在前面加分类名。
 - **调度** 一个 todo issue 一张卡片，卡片的 prompt 和 background 写明是父、子还是单个；子 issue 的卡片写父号和父 spec。「没有会话的 issue」报的是 spec、design、implement、review 却没有同号会话的；blocked、backlog、todo 本来就没有会话，不报。每轮对账跑 `issues reconcile`。
 - 调度谁先派、出几张归 #243；这里只改分组、阶段名和卡片内容。
@@ -178,8 +178,6 @@ skill `issues` 正文只讲通用的实体：号、标题、正文、状态、�
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
 
-联调：不要。
-
 - **seam**：`issues.mjs` 导出的纯函数（`NEXT`、`transitionError`、`reconcilePlan`、`candidatesOf`）加注入假 `gh` 的命令函数，照现有 `issues.test.mjs` 的写法；文档用 tripwire 测试读 skill 文本。能抓到状态机、前提、gh 参数写错；漏掉真 GitHub 上 sub-issue 与 dependencies 接口的行为，靠实现时在本仓库对一个临时 issue 手跑一次 `split` 和 `block` 补上。
 - **增量功能测试**：
   - 前置：spec 有「需要 grill」，issue 在 spec。步骤：`set implement`。期望：拒绝并说出还等人定的那一行。覆盖：问题 1。
@@ -198,6 +196,6 @@ skill `issues` 正文只讲通用的实体：号、标题、正文、状态、�
 
 ## 关联
 
-- raw：[[2026-11-05-issue-model-grill]]，[[2026-11-04-idea-loop-0-2-0-restructure-grill]]（Q1–Q3、Q17、Q19、Q24、Q37、Q44–Q46）。
+- raw：[[2026-11-05-issue-model-grill]]，[[2026-11-04-idea-loop-0-2-0-restructure-grill]]（Q1–Q3、Q17、Q19、Q24、Q37）。
 - 被取代：[[issue-consolidation]]（整合定时任务、按根出会话）。
 - 相邻：#243 建在本 spec 的状态机上，排在后面；#244（PR #251）改了 `issues.mjs` 的 gh 仓库来源和多处「合进主分支」，本 PR 在它合进 release 后重放；#241（PR #250）搬走 design、seo 目录，本 PR 对那两处的改动跟着搬；#245（PR #249）改了 `issue-verify`、`to-spec`、`retro`、`wiki-conventions` 的其他段落，冲突时保留它的段落、只换状态相关的句子；#247 用本 spec 的迁移对照。

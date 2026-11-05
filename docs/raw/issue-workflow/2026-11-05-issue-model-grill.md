@@ -54,18 +54,22 @@ Q7 我倾向于就叫issues
 
 没问题
 
+## A3
+
+（2026-11-05，起头的会话转来）决定记录 41c07de 补了 U14、U15：0.2.0 不搬知识库，公司项目照旧在单个仓库里维护，Q44–Q46（跨仓库按仓库拆子 issue、父会话联调）撤出 0.2.0。据此：本场 Q9（测试计划的「联调」一行）一起撤；Q5 退回最初的推荐：父会话拆完子 issue 就归档，子 issue 全关后由调度对账关父 issue；子 PR 各自合。下表相应几行已改，改前的写法见本文件的 git 历史。
+
 ## 本轮决议
 
 | 议题 | 决议 | 出处 |
 |---|---|---|
 | 搁置 | 「先放着」回 backlog：会话归档前在 issue 上评论停在哪个阶段、分支名，分支留着；周汇总时人重新放行回 todo，新会话从评论接上；没有单独的搁置状态 | Q1 |
 | blocked | 被一个具体的东西挡住：别的 issue（用平台的 blocked by 关系记）或等人给条件（评论「等你：X」）。blocked 不占会话，会话照 Q1 评论后归档；挡路的 issue 全关了，调度对账把它翻回 todo；等人给条件的由人翻回 todo | Q2 |
-| 何时拆子 issue | 父会话里 spec 定稿（碰 UI 的设计冻结）之后；判据是一个 PR 装不装得下，跨仓库一定拆；AI 判，汇报里写拆法，人能推翻；spec 加一节「子 issue」写每块范围，先后用 blocked by | Q3、U1 |
+| 何时拆子 issue | 父会话里 spec 定稿（碰 UI 的设计冻结）之后；判据是一个 PR 装不装得下；AI 判，汇报里写拆法，人能推翻；spec 加一节「子 issue」写每块范围，先后用 blocked by | Q3、U1 |
 | 子 issue 与工单 | 子 issue 单独 review、单独合并，一个子会话一个 PR；工单是一个 PR 里的切片 | U1 |
 | 子 issue 的出生与路径 | 直接开在 todo，优先级随父；子会话认领直接进 implement：todo → implement → review → done；工单由子会话自己切，放父 spec 目录的 `tickets/<子号>/` | Q4 |
-| 父 issue 拆完后 | 翻 implement，父会话不归档；要联调的等子 PR 都开出后联调、人逐个合并，全部合完父 issue 翻 done、父会话收尾；子 issue 全关而父还开着的，由调度对账补关 | Q5 |
-| 子 PR 合到哪 | 各自 review、各自合进所在仓库的主分支，不开父级集成分支 | U2 |
-| 要不要联调 | 由 spec 测试计划的「联调」一行定，不按仓库数：「联调：要。<仓库与场景>」或「联调：不要」；要的子 PR 开出先不合，不要的各自合，先后靠 blocked by | U2、Q8、Q9 |
-| review | PR 转 ready、第一轮 Review 汇报交给人时 implement → review；人批了要改仍留 review；合并后 done；等联调的子 PR 也停在 review | Q6 |
+| 父 issue 拆完后 | 翻 implement，父会话归档；子 issue 全关后由调度对账关成 done | Q5、A3 |
+| 子 PR 合到哪 | 各自 review、各自合进主分支，不开父级集成分支，不等别的子 PR | U2、A3 |
+| 联调 | 撤出 0.2.0，随跨仓库需求留给以后处理知识库的 issue | A3 |
+| review | PR 转 ready、第一轮 Review 汇报交给人时 implement → review；人批了要改仍留 review；合并后 done | Q6 |
 | 命名 | `spec-status` skill 改名 `issues`，跟唯一写入口 `issues.mjs` 同名 | Q7 |
 | harold-skills 分类 | 按 #241 拆完后的最终形状：父类插件名，子类 skill 或 agent 名（如 `type:design/ui-reviewer`），跨几个的只打父类 | Q7 |
