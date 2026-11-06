@@ -14,6 +14,7 @@
 - [ ] tripwire 测试先在一个故意写死工具名的夹具上看到红，再对插件全绿。
 - [ ] 放行只有两类：runtime 的 references、frontmatter 的工具声明行；测试注释写明为什么放行。
 - [ ] README 写了：支持 claude-desktop 与 magi；命令行与 IDE 按 claude-desktop 判、缺的能力走退路；`IDEA_LOOP_RUNTIME` 强制；能力清单指向 `idea-loop:runtime`。
+- [ ] magi reference 与 spec 里 `magi cron` 的时区写成人的时区，不再写 UTC。
 - [ ] `idea-loop/.claude-plugin/plugin.json` 的 version 是 0.1.11。
 - [ ] `node --test '*/scripts/*.test.mjs'` 全绿。
 
@@ -21,3 +22,5 @@
 
 - `no-project-leak.test.mjs`：同类 tripwire，新测试的扫描范围与它对齐，别互相漏扫。
 - 全量套件：收缩这一步最后一次确认 02、03 没留尾巴。
+
+> 按规则定（2026-11-06，编排者，依据实测）：`magi cron` 的表达式按人的时区解析，不是 UTC（实测：`magi cron create … --expr "7 3 * * 1"` 后 `magi cron show` 显示 `when 7 3 * * 1 (Asia/Shanghai)`；`magi help cron` 写的 UTC 与实际不符）。`magi cron show` 有 `last ran` 字段、不带成败。magi reference 与 spec 里写「按 UTC」的地方改成「按人在 magi 设的时区（`magi cron show` 的 when 一行会显示）」；顺带改 README 第 29 行 issue-triage 还写的「weekly desktop task」（03 交回的存量）。
