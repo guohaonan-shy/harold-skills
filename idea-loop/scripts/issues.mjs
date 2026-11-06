@@ -61,7 +61,7 @@
  *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, P0 → P1 → P2 → none, lower numbers first within a priority; main queue, or category c's own
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
  *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
- *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply changes them
+ *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply creates the missing labels, then changes them
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
 
@@ -505,13 +505,21 @@ function openIssues(gh, repo = null) {
 
 const subIssues = (gh, n) => JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}/sub_issues?per_page=100`])).map(row);
 
+/**
+ * Adds, then removes, in two calls. One `gh issue edit` carrying both sends the removals first: when the add then
+ * fails (a label the repo lacks, a dropped connection) the issue is left with neither label, which reads as backlog.
+ */
+function editLabels(gh, n, add, remove) {
+  if (add.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l])]);
+  if (remove.length) gh(['issue', 'edit', String(n), ...remove.flatMap((l) => ['--remove-label', l])]);
+}
+
 /** Leaves the issue carrying exactly the label of `state` (none for backlog, done and canceled). */
 function relabel(gh, n, labels, state) {
   const want = LABELED.includes(state) ? [label(state)] : [];
   const add = want.filter((l) => !labels.includes(l));
   const remove = labels.filter((l) => l.startsWith(PREFIX) && !want.includes(l));
-  if (!add.length && !remove.length) return;
-  gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
+  editLabels(gh, n, add, remove);
 }
 
 /**
@@ -579,7 +587,7 @@ export function setTypes(gh, types, n, values) {
   const it = { labels: JSON.parse(gh(['issue', 'view', String(n), '--json', 'labels'])).labels.map((l) => l.name) };
   const add = want.filter((l) => !it.labels.includes(l));
   const remove = it.labels.filter((l) => l.startsWith(TYPE_PREFIX) && !want.includes(l));
-  if (add.length || remove.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
+  editLabels(gh, n, add, remove);
   return want;
 }
 
@@ -658,7 +666,7 @@ export function setPriority(gh, n, p) {
   const want = p === 'none' ? [] : [`${PRIORITY_PREFIX}${p}`];
   const add = want.filter((l) => !have.includes(l));
   const remove = have.filter((l) => l.startsWith(PRIORITY_PREFIX) && !want.includes(l));
-  if (add.length || remove.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
+  editLabels(gh, n, add, remove);
   return want;
 }
 
@@ -825,8 +833,9 @@ export function migrate(gh, docs, { apply = false } = {}) {
     ...plan.problems.map((p) => `问题：${p}`),
   ];
   if (!apply) return { applied: false, lines };
+  ensureLabels(gh);
   for (const r of plan.relabels) {
-    gh(['issue', 'edit', String(r.n), ...r.add.flatMap((l) => ['--add-label', l]), ...r.remove.flatMap((l) => ['--remove-label', l])]);
+    editLabels(gh, r.n, r.add, r.remove);
     if (r.comment) gh(['issue', 'comment', String(r.n), '--body', `${AI_PREFIX}${r.comment}`]);
   }
   for (const s of specs) writeFileSync(s.file, withoutStatus(readFileSync(s.file, 'utf8')));
