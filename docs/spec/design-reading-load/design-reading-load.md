@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 草稿
 tags: [idea-loop, design, uiux-refine, designer, ui-reviewer]
 summary: 16 份设计原则合成 6 份、内容全留；ui-reviewer 按模式按需读，designer 一次 refine 少读三成
 related: ["[[design-md-write-entry]]", "[[confirm-only-on-loss]]", "[[end-task-close-icon]]"]

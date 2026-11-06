@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 正式
 tags: [idea-loop, decision-rules, evidence]
 summary: decision-rules 只讲依据与护栏，evidence 只讲证据是什么和整体风格；配什么图交给模型，放哪归调用方
 related: ["[[decision-rules-who-decides]]"]

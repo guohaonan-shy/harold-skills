@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 完成
 tags: [idea-loop, ui-archive]
 summary: 原生折叠标题按角色定位不到、FAQ 展开写不成边：验证为不存在，已在 design-archive-sections 里做掉
 related: ["[[design-archive-sections]]"]

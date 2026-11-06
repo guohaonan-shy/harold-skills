@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 完成
 tags: [idea-loop, retro, skill-length]
 summary: retro 的 SKILL.md 主体按字符数约 3200 字，没超 5000：验证为不存在，原数是按字节数的
 related: []

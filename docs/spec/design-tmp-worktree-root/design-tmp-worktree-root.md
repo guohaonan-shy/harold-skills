@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 完成
 tags: [idea-loop, uiux-imagine, uiux-refine]
 summary: imagine / refine 的设计过程目录改按当前 worktree 根定位，不再用 CLAUDE_PROJECT_DIR
 related: ["[[uiux-imagine-agent]]", "[[design-research-agent]]"]

@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 正式
 tags: [idea-loop, idea-loop-seo, seo]
 summary: idea-loop 新开 seo 分类：蒸馏 OpenSEO 做发现，扫描结果提成 issue，按原有流程解决
 related: ["[[2026-10-22-grill-idea-loop-seo]]", "[[2026-10-21-seo-workflow-discussion]]"]

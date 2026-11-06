@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 完成
 tags: [idea-loop, dreaming, skill-writing]
 summary: dreaming 的 SKILL.md 主体超 5000 字：验证为不存在，issue 量到的是字节数，按字符数是 3525
 related: []
