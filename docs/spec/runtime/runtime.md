@@ -37,7 +37,7 @@ issues: [262]
 在 magi（一个管理 Claude Code / Codex 会话的工具）启动的会话里实测：
 
 - 会话管理、定时任务、`Artifact`、`AskUserQuestion` 的工具都不存在；`CronCreate` 被 `CLAUDE_CODE_DISABLE_CRON` 禁用。
-- magi 用命令给出对应的能力：`magi cron`（定时开会话）、`magi wake`（会话内定时）、`magi sessions list/start/send/show/archive`、`magi browser`（每个会话自带的匿名浏览器：开页面、读元素树、点击填表、等待、截图、手机视口与深色、网络请求、元素盒子；不能执行任意 JS）、`magi artifact push`（发布页面，页面里 `magi.reply` 把人的回复送回会话）、`magi mcp call`（magi 托管的 MCP，如 Linear）。
+- magi 用命令给出对应的能力：`magi cron`（定时开会话）、`magi wake`（会话内定时）、`magi sessions list/start/send/show/stop`、`magi browser`（每个会话自带的匿名浏览器：开页面、读元素树、点击填表、等待、截图、手机视口与深色、网络请求、元素盒子；不能执行任意 JS）、`magi artifact push`（发布页面，页面里 `magi.reply` 把人的回复送回会话）、`magi mcp call`（magi 托管的 MCP，如 Linear）。
 - 由别的会话开出的会话能再 `magi sessions start` 开会话，也能在 `magi sessions list` 里列出人的其他会话（只列不读）。
 
 结果：setup 每处都要人在会话外逐条翻译；`issue-dispatch` 在 magi 里跑不起来。
@@ -84,7 +84,7 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 1. 作为 magi 用户，我想要 setup 用 `magi cron` 建每周分拣，以便不用在会话外翻译
 2. 作为 magi 用户，我想要调度由 cron 每轮新开一个会话来跑、直接开出 issue 会话，以便不用常驻一个 loop 会话
 3. 作为 magi 用户，我想要调度照旧守上限（主队列 10、每轮最多 3），以便不会一次开出一堆会话
-4. 作为 magi 用户，我想要 issue 会话收尾时归档自己，以便会话列表不越积越多
+4. 作为 magi 用户，我想要 issue 会话收尾时停掉自己，以便不占会话上限、不空耗资源
 5. 作为 magi 用户，我想要读写 Linear 先走 magi 托管的 MCP、没有再用原生工具，以便授权由 magi 统一管
 6. 作为 magi 用户，我想要 browser 用 `magi browser` 截图、走用户路径，而不是因为缺 Playwright MCP 停下
 7. 作为 magi 用户，我想要 dreaming、seo 的审阅页用 `magi artifact push` 发布并收回批示
@@ -144,11 +144,11 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 
 | | claude-desktop（照旧） | magi |
 |---|---|---|
-| 怎么一轮一轮跑 | 常驻调度会话里的会话内循环，7 天到期提醒重起 | `magi cron` 每轮新开一个调度会话（定时任务能力），跑完一轮 `magi sessions archive` 归档自己；没有 7 天到期 |
-| 怎么数开着的会话 | 各 section 里标题匹配「<仓库名>#<号> …」的 | `magi sessions list` 里未归档、slug 前缀 `<仓库名>-<号>` 的 |
+| 怎么一轮一轮跑 | 常驻调度会话里的会话内循环，7 天到期提醒重起 | `magi cron` 每轮新开一个调度会话（定时任务能力），跑完一轮 `magi sessions stop` 停掉自己（会话不能归档自己，实测）；没有 7 天到期 |
+| 怎么数开着的会话 | 各 section 里标题匹配「<仓库名>#<号> …」的 | `magi sessions list` 里 slug 前缀 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的 |
 | 怎么交出 issue | 出卡片，人点了才开；还没点的卡片占位 | `magi sessions start --cwd <主 checkout> --slug <仓库名>-<号> <prompt>` 直接开，不等人（人定）；没有「还没点的卡片」，空位 = 上限 − 开着的会话 |
 
-magi 里 issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issue 取消）后 `magi sessions archive` 归档自己。setup 在 magi 里建调度用定时任务能力，id `dispatch-<仓库名>`，间隔由人定。
+magi 里 issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issue 取消）后 `magi sessions stop` 停掉自己；停掉的会话由人在 magi 或 Dawn 里归档（实测 2026-11-06：`magi sessions archive` 拒绝归档会话自己，只收它开出的 helper；`stop` 对自己可用）。setup 在 magi 里建调度用定时任务能力，id `dispatch-<仓库名>`，间隔由人定。
 
 ### 定时任务的 prompt
 
@@ -180,7 +180,7 @@ claude-desktop 的 reference 收的是现有正文里的写法原样（工具名
   - 前置：magi 会话，装 0.1.11。步骤：跑检测脚本。期望：打印 `magi`；设 `IDEA_LOOP_RUNTIME=claude-desktop` 后打印 `claude-desktop`；设成 `foo` 退出码非 0。覆盖：写新流程 3。
   - 前置：同上，新开会话。期望：上下文里有一行当前运行环境。覆盖：magi 里跑通 1–7 的前提。
   - 前置：一个已 setup 的目标仓库（magi）。步骤：让 setup 建每周分拣。期望：`magi cron list` 里出现 `triage-<仓库名>`，prompt 是「用 Skill 工具调 idea-loop:issue-triage」。覆盖：magi 里跑通 1。
-  - 前置：同上，有一个 todo issue。步骤：手动触发一轮调度（`magi cron` 的一次运行，或在会话里调 issue-dispatch）。期望：开出 slug 为 `<仓库名>-<号>` 的会话，调度会话归档自己；再触发一轮不重复开。覆盖：magi 里跑通 2、3。
+  - 前置：同上，有一个 todo issue。步骤：手动触发一轮调度（`magi cron` 的一次运行，或在会话里调 issue-dispatch）。期望：开出 slug 为 `<仓库名>-<号>` 的会话，调度会话停掉自己；再触发一轮不重复开。覆盖：magi 里跑通 2、3。
   - 前置：在通用 skill 里写一行 `create_scheduled_task`。期望：tripwire 变红并指到那一行。覆盖：写新流程 2。
   - 前置：桌面端（人）。步骤：照常跑一次 setup 的每周分拣与一轮调度。期望：与 0.1.10 相同。覆盖：桌面端照旧 1。
 - **照着谁写**：tripwire 照 `no-project-leak.test.mjs`；结构测试照 `issues-skill-doc.test.mjs`、`pr-review-slim-doc.test.mjs` 这类读文档断言的测试。
