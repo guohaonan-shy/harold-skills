@@ -16,6 +16,7 @@ productivity、design、seo 分类下的 skill 与 references 里，写死运行
 - [ ] dreaming 的增量范围在 magi 里能照 runtime 读出上次成功运行时间（`magi cron show`），桌面端照旧读任务运行记录。
 - [ ] 审阅页在 magi 里照 runtime 用 `magi artifact push` 发布、`magi.reply` 收回批示；桌面端照旧。
 - [ ] 只能由人调用的 skill（seo-scan 等）在 magi 里建定时任务时走退路（不能用「用 Skill 工具调」起），步骤里写清。
+- [ ] design-archive 拍档案截图在 magi 下走退路，步骤写清；magi reference 的『浏览器』写明不能执行任意 JS 时哪些流程走退路。
 - [ ] 改到的 SKILL.md 主体仍 < 5000 字；README 同步。
 - [ ] `node --test '*/scripts/*.test.mjs'` 全绿。
 
@@ -24,3 +25,5 @@ productivity、design、seo 分类下的 skill 与 references 里，写死运行
 - `proposal-table-check` 相关测试：dreaming 的提议表格式断言，改审阅页措辞可能牵动。
 - `dreaming-skill-length`、`design-archive-skill-length` 一类长度测试：改写后字数可能越线。
 - `no-project-leak.test.mjs`：改写例子时最容易带进真实项目名。
+
+> 按规则定（2026-11-06，编排者，依据 spec「退路」）：design-archive 拍档案截图要在浏览器里执行任意 JS，magi 的浏览器做不到：magi 下这一步走退路（把要拍的状态清单交给人、记「未做：运行环境 magi 没有『浏览器』的执行任意 JS」）。自起 chromium 的脚本（测量、拼流程图、录动图）不受影响，照旧。magi reference 的『浏览器』小节同步写明这一限制。
