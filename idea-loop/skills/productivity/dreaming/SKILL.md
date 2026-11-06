@@ -23,7 +23,7 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 2. **自己做、不起 agent**：
    - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查基准分支上还留着设计产物的已完成需求。
    - **retro 候选**：候选池里出现 ≥ 3 次的，照 [references/retro-candidates.md](references/retro-candidates.md) 摆进提议表；批了开成 issue，不改 skill。
-   - **对账范围**（`prod/` 有对象时）：dreaming 每周由 `/idea-loop:setup` 建的定时任务自己跑，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
+   - **对账范围**（`prod/` 有对象时）：dreaming 每周由 `/idea-loop:setup` 建的『定时任务』自己跑，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
    - **全站初扫**（`prod/` 为空时）：照 [references/initial-scan.md](references/initial-scan.md)。`prod/` 有对象时不做全站初扫，档案对账整个交给下面的 ui-reviewer；项目没有设计档案目录、也不打算建，这一项和档案对账整个跳过。
 3. **派工**：下面三个互不依赖，**在同一条消息里并行起**，只给指针（worktree、基准分支、中间物目录、范围；要开浏览器的再给各自的空闲端口与同一个浏览器锁目录，锁 owner 各写自己的名字）。
 

@@ -49,7 +49,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
    ```
 
    不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。
-2. **把页面摆给人看**：照 `idea-loop:browser` 的「给人看」，在落图目录起静态服务器，用内嵌浏览器打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
+2. **把页面摆给人看**：照 `idea-loop:browser` 的「给人看」，在落图目录起静态服务器，打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
 3. 到此为止。要不要用、用哪些来源、转不转给谁，是人看完之后的话。
 
 ## 边界

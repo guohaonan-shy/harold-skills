@@ -64,7 +64,7 @@ uiux-imaginer 交付一轮之后：
 2. 任务「导出交接画布」。它交付后你核对：
    - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
    - spec 没被动过（`git status` 里没有它）；
-   - 在内嵌浏览器里打开 `<预览地址>/handoff/index.html`，换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
+   - 用『浏览器』打开 `<预览地址>/handoff/index.html`（照 `idea-loop:browser`），换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
 
    不过就把问题交回去，它补完再核。
 3. 主动问人要不要把变种板再看一遍：清掉之后就看不到了，留着又会让下一段误以为它们是真值。人说看完了，任务「清」；它交付后关掉静态服务器。

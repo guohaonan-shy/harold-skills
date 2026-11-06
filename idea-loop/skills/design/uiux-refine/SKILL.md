@@ -101,16 +101,8 @@ designer 交付「冻结」后，你核对：
 - `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
-都过了，在内嵌浏览器里打开交互图给人看，关掉预览服务器，然后把冻结结果提交在需求的工作分支上，不开设计 PR：实现在同一个分支上接着做，最后跟代码一个 PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
+都过了，照 `idea-loop:browser` 的「给人看」把交互图给人看，关掉预览服务器，然后把冻结结果提交在需求的工作分支上，不开设计 PR：实现在同一个分支上接着做，最后跟代码一个 PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
 
-1. 当前 worktree 应该是这个需求的工作分支（issue 会话里就是这一组的分支）；不在的，从最新主分支开一个，把下面这些文件带过去再提交。
-2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas`（`tmp/` 被排除在 git 之外，要强制加）：签字的画布、冻结记录、交互图。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进，也没有 `delta/`。
-3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写）。父 issue 要拆子 issue 的，拆完后照「知识库落地」开只改 `docs/` 的 PR 先合。
+提交的步骤和之后告诉人的话见 [`references/after-freeze.md`](references/after-freeze.md)。
 
-告诉人：设计已冻结，提交在工作分支上。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
-
-**冻结之后设计变了**：不回 refine，也不重起 designer。人接受了一处跟画布不同的设计，由当时的编排者（`idea-loop:implement` 或 `idea-loop:pr-review` 的会话）起 designer 做任务「设计变更」，过程与冻结记录怎么记见 `idea-loop:design-change-sync`。
-
-**部分冻结**：designer 交付后就结束了。关掉预览服务器，告诉人跑 `/idea-loop:uiux-imagine` 重开回推的那几块；第二轮发散之后再调 refine，起一个**新的** designer，任务「起手」，它会接到已冻结的画布上。
-
-**会话中断或重开**：designer 接不回来。下次调 refine 起一个新的，任务「起手」：画布的最新一版、ledger 与方向说明就是恢复点。
+**冻结之后设计变了、部分冻结、会话中断或重开**：各自怎么办见 [`references/after-freeze.md`](references/after-freeze.md)。

@@ -35,18 +35,21 @@ test('三份 skill 里没有旧中文状态名、根 / 子 issue、整合、一�
   }
 });
 
-test('issue-dispatch：只派 todo，一个 issue 一张卡片，section 与没有会话的判定都按新状态', () => {
+test('issue-dispatch：只派 todo，一个 issue 一个会话，对账、队列与上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
   const md = skill('issue-dispatch');
   assert.match(front(md), /todo/);
-  assert.match(front(md), /一个 issue 一张/);
+  assert.match(front(md), /一个 issue 一个会话/);
   assert.match(md, /只派 `todo`/);
   assert.match(md, /issues candidates/);
   assert.match(md, /issues reconcile/);
-  assert.match(md, /triage、in-progress、in-review/);
-  assert.match(md, /seo in-progress/);
+  assert.match(md, /issues queues <docs>/);
   assert.match(md, /status:<状态>/);
   assert.match(md, /没有同号会话的记进汇报/);
-  assert.match(md, /每个 issue 出一张卡片/);
+  assert.match(md, /一轮所有队列合计最多 3 个/);
+  assert.match(md, /idea-loop:runtime/);
+  for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
+  // the how is no longer in the body: no sidebar section, card or in-session loop
+  assert.doesNotMatch(md, /section|卡片|CronCreate|会话内循环|(?<![\w-])loop(?![\w-])/, 'dispatch 正文还写着 section、卡片或会话内循环的做法');
 });
 
 test('issue-dispatch：汇报里的子会话只剩设计阶段的会话，不提实现会话', () => {
@@ -163,7 +166,7 @@ test('issue-triage：三种调用、同时最多 5 个 issue-triager、15 个一
   assert.match(md, /issues backlog <docs> 15/);
   assert.match(md, /issues note/);
   assert.match(md, /同时最多 5 个/);
-  assert.match(md, /PushNotification/);
+  assert.match(md, /『推送』/);
   assert.match(md, /docs\/records\/out-of-scope\/<slug>\.md/);
   for (const k of ['todo + P1 或 P2', 'triage + P1 或 P2', 'canceled', '留在 backlog']) assert.ok(md.includes(k), `缺去向 ${k}`);
   assert.match(md, /跳过 triage/);
