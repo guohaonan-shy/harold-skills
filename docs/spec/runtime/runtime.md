@@ -101,7 +101,7 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 
 | 能力 | 通用流程要它做什么 | claude-desktop | magi |
 |---|---|---|---|
-| 定时任务 | 按时间开一个新会话跑一段 prompt；列出已有的；读上次成功运行的时间 | 定时任务 MCP（create / list / update / list_task_runs），原样照搬现有参数 | `magi cron create <id> --expr … --action create_session --cwd <主 checkout> --prompt …`（表达式按 UTC，现有的「分钟避开 0 和 30」照旧）；`magi cron list` / `show` 读上次运行 |
+| 定时任务 | 按时间开一个新会话跑一段 prompt；列出已有的；读上次成功运行的时间 | 定时任务 MCP（create / list / update / list_task_runs），原样照搬现有参数 | `magi cron create <id> --expr … --action create_session --cwd <主 checkout> --prompt …`（表达式按人在 magi 设的时区，`magi cron show` 的 when 一行会显示；现有的「分钟避开 0 和 30」照旧）；`magi cron list` / `show` 读上次运行 |
 | 会话内循环 | 在当前会话里每隔一段时间再叫自己一次 | `CronCreate` / `CronList` / `CronDelete` | `magi wake every` / `list` / `cancel`；调度在 magi 里不用它（见下） |
 | 会话管理 | 列会话；开一个 issue 会话；给别的会话发消息；读一个会话的记录；会话收尾 | 会话管理 MCP 的 list_sessions / send_message / export_transcript；`start_session` 出卡片；侧边栏 section 分组 | `magi sessions list` / `start` / `send` / `show -o` / `archive`；**分组：没有** |
 | 浏览器 | 无头地开页面、量、截图、走用户路径；把一页摆给人看 | 用户级 Playwright MCP（无头、隔离）；Claude Browser 面板 | `magi browser`（会话自带的匿名浏览器）两种用途都用它；子 agent 各自 `window new` 并带 `--tab`；不能执行任意 JS，量值用元素盒子与截图 |

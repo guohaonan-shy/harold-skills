@@ -11,12 +11,12 @@
 
 ## 验收标准
 
-- [ ] tripwire 测试先在一个故意写死工具名的夹具上看到红，再对插件全绿。
-- [ ] 放行只有两类：runtime 的 references、frontmatter 的工具声明行；测试注释写明为什么放行。
-- [ ] README 写了：支持 claude-desktop 与 magi；命令行与 IDE 按 claude-desktop 判、缺的能力走退路；`IDEA_LOOP_RUNTIME` 强制；能力清单指向 `idea-loop:runtime`。
-- [ ] magi reference 与 spec 里 `magi cron` 的时区写成人的时区，不再写 UTC。
-- [ ] `idea-loop/.claude-plugin/plugin.json` 的 version 是 0.1.11。
-- [ ] `node --test '*/scripts/*.test.mjs'` 全绿。
+- [x] tripwire 测试先在一个故意写死工具名的夹具上看到红，再对插件全绿。
+- [x] 放行只有两类：runtime 的 references、frontmatter 的工具声明行；测试注释写明为什么放行。
+- [x] README 写了：支持 claude-desktop 与 magi；命令行与 IDE 按 claude-desktop 判、缺的能力走退路；`IDEA_LOOP_RUNTIME` 强制；能力清单指向 `idea-loop:runtime`。
+- [x] magi reference 与 spec 里 `magi cron` 的时区写成人的时区，不再写 UTC。
+- [x] `idea-loop/.claude-plugin/plugin.json` 的 version 是 0.1.11。
+- [x] `node --test '*/scripts/*.test.mjs'` 全绿。
 
 ## 选中的存量回归
 

@@ -106,7 +106,7 @@ test('the claude-desktop reference carries every desktop tool name the 0.1.10 bo
 test('the magi reference carries the spec table\'s commands and the dispatch shape', () => {
   const text = read('references', 'magi.md');
   const needs = [
-    'magi cron create', '--action create_session', '--cwd', '--expr', 'UTC', 'magi cron list', 'magi cron show',
+    'magi cron create', '--action create_session', '--cwd', '--expr', '人在 magi 设的时区', 'magi cron list', 'magi cron show',
     'magi wake every', 'magi wake list', 'magi wake cancel',
     'magi sessions list', 'magi sessions start', 'magi sessions send', 'magi sessions show', '-o', 'magi sessions stop', '分组：没有',
     'magi browser', 'window new', '--tab', '不能执行任意 JS', '元素盒子',
@@ -115,6 +115,8 @@ test('the magi reference carries the spec table\'s commands and the dispatch sha
     'dispatch-<仓库名>', '--slug <仓库名>-<号>', '用 Skill 工具调 idea-loop:',
   ];
   assert.deepEqual(needs.filter((n) => !text.includes(n)), []);
+  // measured 2026-11-06: magi cron reads the expression in the human's timezone, not UTC
+  assert.ok(!text.includes('UTC'), 'magi cron expressions are not UTC');
   const dispatch = text.slice(text.indexOf('### 调度'));
   // a session cannot archive itself (measured 2026-11-06); it stops itself instead
   assert.ok(!dispatch.includes('归档自己'), 'magi sessions cannot archive themselves');
