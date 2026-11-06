@@ -8,7 +8,7 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 - **创建**：`magi cron create <id> --expr "<5 段 cron>" --action create_session --cwd <主 checkout> --prompt …`。表达式按 UTC，分钟避开 0 和 30（跟桌面端一样）。创建者自己的任务最短每 5 分钟跑一次。
 - **列出**：`magi cron list`。
-- **读上次运行**：`magi cron list` / `magi cron show <id>` 里的上次运行。
+- **读上次运行**：`magi cron list` / `magi cron show <id>` 里的上次运行时间。不带每次的成败，流程要「上次成功运行」的，就用这个时间；会话自己就是这个任务起的，这个时间不早于本会话开始的，当作没有。
 - **改、停、删**：`magi cron edit <id> [--expr …] [--enable|--disable] [--prompt …]`，`magi cron delete <id>`。
 
 行为：到点开出一个新会话，目录是 `--cwd`，所以 `--cwd` 填目标仓库的主 checkout。
@@ -53,7 +53,7 @@ issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issu
 - 开页面、读页面：`magi browser open <地址>`，`snapshot`（元素树，给出 `@bN` 引用），`get url|title|text|box`。
 - 操作：`click`、`fill`、`type`、`key`、`scroll`、`select`、`wait`。
 - 看：`screenshot [-o 文件.png]`，`network`（已完成的请求，看不到头和体），`emulate --tab <tN> --color-scheme dark|light`、`--device phone|tablet`（手机视口与深色）。
-- **不能执行任意 JS**：量值用元素盒子（`get box`）与截图。
+- **不能执行任意 JS**：量值用元素盒子（`get box`）与截图。需要在页面里跑一段 JS 的流程，在 magi 里走 `SKILL.md` 的退路（把要做的事交给人，记「未做：运行环境 magi 没有『浏览器』的执行任意 JS」）：design-archive 拍档案截图与测量（脚本打印的是一段 `async (page) => …` 代码）、uiux-imagine 在线上 UI 上取 `outerHTML` 与整页 CSS、uiux-refine 里 `__maTimeline.seek(t)` 与 `getComputedStyle` 的验证。自起 chromium 的脚本（测量、拼流程图、录动图）不受影响，照旧。
 - **子 agent 各自开窗口**：先 `magi browser window new`，之后每条命令都带 `--tab <tN>`，不碰别的 agent 的标签页。所以不需要锁目录。
 - **造慢网络、失败的请求：没有**。`network` 只读已完成的请求，不能拦截。需要这种状态的格走退路，交给人。
 - **把一页摆给人看：没有**。匿名浏览器只有本会话看得到，人看不到。退路：截一张图，经「发文件给人」发出，并附上页面的 URL，让人自己打开；说明这样看不到动效和交互。

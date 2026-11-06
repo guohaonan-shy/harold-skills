@@ -76,6 +76,7 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 - 它拒绝 `file:` 地址；`file://` 下 ES 模块和 fetch 也会坏。本地文件同样经静态服务器打开。
 - 它只能往工作区里写文件：截图先存进工作区，再挪到要放的位置。
 - 跑 Playwright 代码的那个工具（`browser_run_code*`，如 `browser_run_code_unsafe`）写不了文件，也没有 `setTimeout`，等待用 `page.waitForTimeout(ms)`。代码的返回值只印在工具输出里；要存成文件，用 `browser_evaluate`（函数 `() => window.<变量>`，带 `filename`）。
+- 在页面里跑脚本打印的一段 `async (page) => …` 代码（如 design-archive 的 `design-archive-sections.mjs`）：入口用 `browser_navigate` 打开，代码交给 `browser_run_code_unsafe` 跑；代码长就存成文件、用 `filename` 参数传，代码文件和输出目录要在 Playwright 的工作区根目录里，否则报「outside allowed roots」。读页面变量存成文件用 `browser_evaluate`，结果 JSON 就在 Playwright 的工作区里；页面里量值同样用它（如 `browser_evaluate(getComputedStyle)`、`__maTimeline.seek(t)`）。
 - 慢网络、失败用请求拦截造：慢的在 `page.route` 里先等再 `continue`，失败用 `route.fulfill({ status: 500 })` 或 `route.abort()`。
 - 很多页面要登录，isolated 的浏览器每次都没有登录态，每次照目标项目给的测试账号走一遍登录。
 

@@ -1,6 +1,10 @@
 # 拍档案截图
 
-拍档案里状态的截图时读。四种情形各一串步骤，每步以完成条件收尾；输出里要处理的东西汇在「看到什么 → 做什么」。分段怎么声明（`id`、`locate`）见 [writing.md](writing.md) 的「分段 `sections`」，校验规则 7 见 [check.md](check.md)。
+拍档案里状态的截图时读。
+
+**先看运行环境能不能做**：下面每一步都靠在页面里执行任意 JS（脚本打印的是一段 `async (page) => …` 代码）。用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『浏览器』：它写不能执行任意 JS（如 magi）的，整串步骤走 `idea-loop:runtime` 的退路，不拍：把要拍的状态清单（状态 id、入口、视口与主题）交给人，汇报里记「未做：运行环境 <名> 没有『浏览器』的执行任意 JS」。
+
+四种情形各一串步骤，每步以完成条件收尾；输出里要处理的东西汇在「看到什么 → 做什么」。分段怎么声明（`id`、`locate`）见 [writing.md](writing.md) 的「分段 `sections`」，校验规则 7 见 [check.md](check.md)。
 
 **情形怎么选**：状态所在页面不比主视口高 → 单屏状态；入口状态的滚动容器内容比它的可见区高（要声明分段）→ 长页面的入口状态；这个状态带 `section`（FAQ 展开、切标签）→ 段内交互的状态；所在段声明了 `scrollDriven` 且是第 2 步起 → 滚动驱动的段。
 
@@ -17,12 +21,12 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属�
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库根> <状态 id> --out <目录> [设置]
 ```
 
-`[设置]` 是 `--viewport <WxH> --theme <light|dark> --motion <default|reduce>`。除 `step` 和 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给 `browser_run_code_unsafe` 跑；`attribute` 打印 JSON。
+`[设置]` 是 `--viewport <WxH> --theme <light|dark> --motion <default|reduce>`。除 `step` 和 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给『浏览器』里执行代码的那一项跑（做法见『浏览器』）；`attribute` 打印 JSON。
 
 ## 共用的规矩
 
-- **一个标签页装一次时间**：`browser_navigate` 到入口之后、做任何交互之前先跑 `time` 打印的代码；换标签页，或去另一个入口页，再装一次。页面时间从此停住，只有 `step` 会让它走：点击、输入、滚动都不动它，所以点出来的状态不会被轮播切走。点完要等界面变化（加载、提示出现、动画播完），用小步（`step 200`）拨，拨到这一屏的「应看到什么」成立为止，别多拨：每多一步，轮播就可能多走一格。页面时钟停在 2026-01-01，按「今天」「本周」算出来的内容固定显示那一天。
-- **代码文件与 `--out` 目录要在 Playwright 的工作区根目录里**，否则报「outside allowed roots」。代码长，存成文件、用 `filename` 参数传。
+- **一个标签页装一次时间**：用『浏览器』打开入口之后、做任何交互之前先跑 `time` 打印的代码；换标签页，或去另一个入口页，再装一次。页面时间从此停住，只有 `step` 会让它走：点击、输入、滚动都不动它，所以点出来的状态不会被轮播切走。点完要等界面变化（加载、提示出现、动画播完），用小步（`step 200`）拨，拨到这一屏的「应看到什么」成立为止，别多拨：每多一步，轮播就可能多走一格。页面时钟停在 2026-01-01，按「今天」「本周」算出来的内容固定显示那一天。
+- **代码文件与 `--out` 目录要放在『浏览器』允许写文件的位置**（做法见『浏览器』）。代码长，存成文件传给它。
 - **视口、主题、动效模式**取 `prod/index.md` 的 frontmatter，`[设置]` 的参数可覆盖；`prod/index.md` 缺视口或主题又没给参数，退出码 2，不猜。**语言**脚本管不到：浏览器先按 `locale` 打开页面（测量结果的 `env` 里是实际的 `navigator.language`，核一眼）。
 - **不给截图带 `animations: 'disabled'`，不往页面注入关动画与过渡的样式**：它们会把有限次的 CSS 动画拨到结尾、当场触发结束事件，轮播就切走了。
 - 拍之前**关掉开发服务器的调试浮层**（框架的开发工具条、错误浮层、热更新提示），否则它们被拍进每张图，换个环境对账时全是像素差。
@@ -42,8 +46,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 每段单独截一张，不拍整页长图，也不从长图里切；比视口高的段整张截下来。图叫 `<入口状态 id>@<段 id>.png`。
 
 1. 装时间。完成：返回 `installed: true`。
-2. `browser_navigate` 进入口状态（前置条件、登录态都在这一步备好），跑 `measure` 打印的代码。分段取自档案里这个入口状态（`--delta` 时取需求的 delta）；初扫时档案里还没有这个状态，用第二种形式，`--sections-file` 是 JSON 列表 `[{ "id": "hero", "locate": { … } }, …]`。完成：返回的 `clock` 是 `present`。
-3. 存测量结果：代码的返回值只印在工具输出里，存不成文件；用 `browser_evaluate`（函数 `() => window.__dsMeasure`，带 `filename`）把它存成文件。边的 `locate.name`、分段标题的 `name` 照抄测量结果里每个标题、可点元素的完整名字（`name`），不用逐个试。完成：测量结果 JSON 在 Playwright 工作区里。
+2. 用『浏览器』打开入口状态（前置条件、登录态都在这一步备好），跑 `measure` 打印的代码。分段取自档案里这个入口状态（`--delta` 时取需求的 delta）；初扫时档案里还没有这个状态，用第二种形式，`--sections-file` 是 JSON 列表 `[{ "id": "hero", "locate": { … } }, …]`。完成：返回的 `clock` 是 `present`。
+3. 存测量结果：代码的返回值只印在工具输出里，存不成文件；用『浏览器』里读页面变量的那一项，读 `window.__dsMeasure` 存成文件。边的 `locate.name`、分段标题的 `name` 照抄测量结果里每个标题、可点元素的完整名字（`name`），不用逐个试。完成：测量结果 JSON 在『浏览器』允许写的位置里。
 4. `attribute <测量结果.json>`，输出存成文件。它给出每段的范围、每个可点元素归哪一段（照它给边填 `from`）、每个标题的完整名字与所在段（`headings`）。**写档案之前清零**：退出码 1 就照下表清零、重测。完成：退出码 0。
 5. `shoot <归属结果.json> --out <目录>`（`shoot` 不收没通过的归属结果）。完成：每段一张图，`uncontrolled`、`heightDrift`、`note` 照下表处理；放进 `assets/`。
    - `--section` 只拍列出的几段，对账时用来只拍变了的那几段。
@@ -95,7 +99,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 | `scroller.others` 不空 | 页面上还有第二个窗格自己在滚，它超出可见区的内容拍不到；在状态文件的描述里用文字写明 |
 | `uncontrolled: true`（带 `diffBox`：两张有差异的像素的外接框，图自己的像素坐标） | 这一段里有页面时间管不到的东西在动（视频、WebGL、Worker 里按真实时间算的内容、网络推送）。状态文件「这一屏」里写明「这一段有页面时间管不到的动态内容：<是什么，看 `diffBox`>，截图是某一刻」；对账按「应看到什么」逐条核，不按像素判 |
 | `heightDrift` 不是 0 | 页面自己在变高变矮（打字机文案、慢到的内容），图可能整体错位。长页面：重新 `measure` 再拍；单屏状态：页面其实比主视口高，改成声明分段 |
-| `clock` 是「装晚了」 | 页面时间没装过，早先起的计时器和 CSS 动画在真实时间里走，图可能拍到别的状态。从入口重来：`browser_navigate`、`time`、再点出这个状态 |
+| `clock` 是「装晚了」 | 页面时间没装过，早先起的计时器和 CSS 动画在真实时间里走，图可能拍到别的状态。从入口重来：重新打开入口、`time`、再点出这个状态 |
 | 一张图的返回带 `note`（这一段伸进了滚动容器） | 不是图拍坏了：这一段要在容器顶切成两段，见下 |
 
 ## 已知限制

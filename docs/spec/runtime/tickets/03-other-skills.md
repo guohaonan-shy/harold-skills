@@ -11,14 +11,14 @@ productivity、design、seo 分类下的 skill 与 references 里，写死运行
 
 ## 验收标准
 
-- [ ] 这三个分类的正文与 references 里不再出现运行环境专用写法（照 spec「tripwire 的名单」grep，frontmatter 的工具声明行除外）；交回里贴 grep 结果。
-- [ ] 每处删掉的桌面端写法都能在 claude-desktop reference 里找到（交回里列对照）；缺的补进 reference。
-- [ ] dreaming 的增量范围在 magi 里能照 runtime 读出上次成功运行时间（`magi cron show`），桌面端照旧读任务运行记录。
-- [ ] 审阅页在 magi 里照 runtime 用 `magi artifact push` 发布、`magi.reply` 收回批示；桌面端照旧。
-- [ ] 只能由人调用的 skill（seo-scan 等）在 magi 里建定时任务时走退路（不能用「用 Skill 工具调」起），步骤里写清。
-- [ ] design-archive 拍档案截图在 magi 下走退路，步骤写清；magi reference 的『浏览器』写明不能执行任意 JS 时哪些流程走退路。
-- [ ] 改到的 SKILL.md 主体仍 < 5000 字；README 同步。
-- [ ] `node --test '*/scripts/*.test.mjs'` 全绿。
+- [x] 这三个分类的正文与 references 里不再出现运行环境专用写法（照 spec「tripwire 的名单」grep，frontmatter 的工具声明行除外）；交回里贴 grep 结果。
+- [x] 每处删掉的桌面端写法都能在 claude-desktop reference 里找到（交回里列对照）；缺的补进 reference。
+- [x] dreaming 的增量范围在 magi 里能照 runtime 读出上次成功运行时间（`magi cron show`），桌面端照旧读任务运行记录。
+- [x] 审阅页在 magi 里照 runtime 用 `magi artifact push` 发布、`magi.reply` 收回批示；桌面端照旧。
+- [x] 只能由人调用的 skill（seo-scan 等）在 magi 里建定时任务时走退路（不能用「用 Skill 工具调」起），步骤里写清。
+- [x] design-archive 拍档案截图在 magi 下走退路，步骤写清；magi reference 的『浏览器』写明不能执行任意 JS 时哪些流程走退路。
+- [x] 改到的 SKILL.md 主体仍 < 5000 字；README 同步。
+- [x] `node --test '*/scripts/*.test.mjs'` 全绿。
 
 ## 选中的存量回归
 

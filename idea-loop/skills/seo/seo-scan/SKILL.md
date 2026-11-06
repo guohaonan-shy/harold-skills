@@ -38,7 +38,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
    - 竞品：`find_serp_competitors`，花 credits。先按「预算」的做法跑一次 `whoami`（记作开始余额）和 `seo-budget.mjs`；要竞品的方向没有一个 `allow` 大于 0，就不推，只问人要。调完再调一次 `whoami`，差值是关卡花的。
    - 品牌词：「站点」域名去掉后缀。
    - 业务概述、当前目标、定位：站点首页。
-4. 发桌面通知（`PushNotification`，写明缺哪几项），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认，说「不需要」就是这项留空。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
+4. 用『推送』提醒（写明缺哪几项；做法照 `idea-loop:runtime`），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认，说「不需要」就是这项留空。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
 5. 人回复后：
    - `SEO.md` 的项（竞品、品牌词）用 Edit 改在工作区；人说留空的写 `无`。
    - 项目上下文的项用 `update_project_context` 的 `{ section, content }` 写回；人说不需要的，那一节也写 `无`，下次缺口检查就不再报。
@@ -132,4 +132,4 @@ seo-scan <YYYY-MM-DD HH:MM> 停下等确认：<方向...>
 - 运行目录：<路径>
 ```
 
-不发布 Artifact、不写周报或「洞察」：issue 就是交付物。
+不发布审阅页、不写周报或「洞察」：issue 就是交付物。

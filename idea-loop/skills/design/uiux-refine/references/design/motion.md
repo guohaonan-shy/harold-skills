@@ -166,7 +166,7 @@ motion-anything's `MA_RUNTIME`)*:
    ```
    WAAPI/CSS animations are seekable via `document.getAnimations()`; pure rAF/JS-clock motion is not
    — prefer WAAPI/CSS for choreography, or expose the JS clock through the same `seek(t)`.
-2. **Verify by seeking, not by waiting**: `browser_evaluate` → `__maTimeline.seek(t)` at t = 0 / mid /
+2. **Verify by seeking, not by waiting**: run `__maTimeline.seek(t)` in the page (arbitrary JS via the browser capability; if the runtime can't, take the `idea-loop:runtime` fallback) at t = 0 / mid /
    end (+ keyframes of interest) → screenshot each → confirm the frames DIFFER and match the intended
    choreography. Identical frames = the animation never played. For scroll-driven or pointer
    interactions the timeline can't cover, capture before / during / after instead.
@@ -212,7 +212,7 @@ the sibling shipped components whose interactions you must match or extend.
    written down and sent back to the static loop, never quietly re-skinned.
 4. **Expose the freezable timeline.**
 5. **Reduced motion**, per its section.
-6. Serve it locally and drive it with Playwright: load `idea-loop:browser` first (it sets the default
+6. Serve it locally and drive it with the browser capability: load `idea-loop:browser` first (it sets the default
    headless server), then navigate, interact, capture.
 
 ### B · Review gates to convergence
@@ -261,7 +261,7 @@ ownership, data-contract changes, token attribution, the measurement loop). What
 - **Reuse, don't reimplement** — extend the real shipped component (keep its existing interactions);
   use the project's `ui/` + `motion`/`gsap`; carry the motion faithfully — same tokens, same
   choreography.
-- **Re-verify in the live app** with Playwright (the port can regress timing or break reduced
+- **Re-verify in the live app** with the browser capability (the port can regress timing or break reduced
   motion): the Gate 3 frame check (the `__maTimeline` handle behind a dev flag, or capture over time),
   across the inherited context matrix.
 - **Freeze record**: export key states to PNG under the project's design source-of-truth dir (e.g.

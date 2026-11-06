@@ -1,6 +1,6 @@
 # 对账范围：截图对账这次对哪些状态
 
-dreaming 每周由桌面 app 的定时任务自己跑一次（`/idea-loop:setup` 建的）。截图对账要把档案里的状态一个个重新驱动、拍图、比对，状态多了很贵，所以**只对上次以来代码动过的状态做**；档案对象的源码检查不开浏览器，每次都是全量。
+dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的）。『定时任务』等运行环境的能力，用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的这一节。截图对账要把档案里的状态一个个重新驱动、拍图、比对，状态多了很贵，所以**只对上次以来代码动过的状态做**；档案对象的源码检查不开浏览器，每次都是全量。
 
 只在项目有设计档案、`prod/` 里有对象、要起 ui-reviewer 的时候做这一步。项目没有设计档案、或 `prod/` 为空（走全站初扫），这一步和提议表开头的那一行都不用写。
 
@@ -11,8 +11,8 @@ dreaming 每周由桌面 app 的定时任务自己跑一次（`/idea-loop:setup`
 | 条件 | 范围 | 提议表那一行写的原因 |
 |---|---|---|
 | 人调用时明确说了「全量」 | 全量 | 人说了全量 |
-| 取不到定时任务（会话里没有 `mcp__scheduled-tasks__list_scheduled_tasks`，或没有 `dreaming-<仓库名>` 这个任务） | 全量 | 没有定时任务 |
-| 定时任务没有一次状态为 `succeeded` 的执行 | 全量 | 定时任务还没有成功跑过 |
+| 取不到定时任务（运行环境没有『定时任务』，或列出的任务里没有 `dreaming-<仓库名>`） | 全量 | 没有定时任务 |
+| 定时任务没有一次成功的执行 | 全量 | 定时任务还没有成功跑过 |
 | 找不到基准提交（见下） | 全量 | 找不到那一刻的提交，并写出为什么 |
 | 以上都不是 | 增量 | 自哪天的哪个提交起 |
 
@@ -20,8 +20,8 @@ dreaming 每周由桌面 app 的定时任务自己跑一次（`/idea-loop:setup`
 
 ## 基准提交
 
-1. 任务 id 是 `dreaming-<仓库名>`，仓库名取主 checkout 的目录名，跟 `/idea-loop:setup` 建任务时用的一样。dreaming 在自己切的 worktree 里跑，`git rev-parse --show-toplevel` 取到的是这个 worktree 的目录名，会找不到任务；改从 git 的公共目录往上取：`basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`，在主 checkout 和任何 worktree 里得到的都是主 checkout 的目录名。`list_scheduled_tasks` 里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
-2. `mcp__scheduled-tasks__list_task_runs`，`taskId` 填上面的 id，`limit` 取 50，从新到旧找第一条 `status` 是 `succeeded` 的，记下它的 `started_at`。这一次自己若就是定时任务起的，它的状态是 `running`，不会被选中。
+1. 任务 id 是 `dreaming-<仓库名>`，仓库名取主 checkout 的目录名，跟 `/idea-loop:setup` 建任务时用的一样。dreaming 在自己切的 worktree 里跑，`git rev-parse --show-toplevel` 取到的是这个 worktree 的目录名，会找不到任务；改从 git 的公共目录往上取：`basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`，在主 checkout 和任何 worktree 里得到的都是主 checkout 的目录名。列出的任务里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
+2. 用『定时任务』读这个任务上次成功运行的时间，记下来当 `started_at`。这一次自己若就是定时任务起的，它还没跑完，不能算上次成功运行。
 3. 起环境时已经 `git fetch`。找 `origin/<基准分支>` 在那一刻的提交：`git rev-list -1 --first-parent --before="<started_at>" origin/<基准分支>`。输出为空（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
 
 得到的提交就是**基准提交**。
