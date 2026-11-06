@@ -34,9 +34,12 @@ test('the body names every state, the four required body sections, backlog / blo
   assert.match(body, /先放着/);
   assert.match(body, /blocked by/);
   assert.match(body, /--comment=/);
-  for (const c of ['labels', 'type', 'show', 'check', 'set', 'candidates', 'reconcile', 'queues', 'migrate', 'open']) {
+  for (const c of ['labels', 'type', 'show', 'check', 'set', 'candidates', 'reconcile', 'queues', 'migrate', 'new', 'body', 'priority', 'backlog', 'note']) {
     assert.match(body, new RegExp(`^issues ${c} `, 'm'), `command ${c}`);
   }
+  assert.doesNotMatch(body, /^issues open /m, 'issues open is gone');
+  assert.match(body, /`issues new`/, '「开一个 issue」 goes through issues new');
+  assert.doesNotMatch(body, /gh issue create/);
   assert.doesNotMatch(body, /\b(advance|resume|handoff|unhandoff)\b/);
 });
 
@@ -71,4 +74,10 @@ test('the repo ISSUE_TRACKER.md has a choice for triage and a first repository t
   assert.equal(skipsTriage(md), false);
   assert.ok(md.match(/^triage：(用|跳过)\s*$/m));
   assert.equal(parseRepos(md, 'owner')[0], 'guohaonan-shy/harold-skills');
+});
+
+test('the issues SKILL.md body stays under 5000 characters; category and spec details live in its own references', () => {
+  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
+  assert.match(body, /references\/category-and-spec\.md/);
+  assert.ok(existsSync(join(skillDir, 'references', 'category-and-spec.md')));
 });

@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  KINDS, NEXT, STATES, candidates, checkState, ensureLabels, issuesOf, keptLabels, migrate, migratePlan, openSpecIssue, parseRepos, parseTypes, prState, queueOf, queues,
-  readTypes, reconcile, reconcilePlan, refsIssue, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withIssues, withoutStatus,
+  COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseRepos, parseTypes, platformOf,
+  prState, priorityOf, queueOf, queues, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
 } from './issues.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./issues.mjs', import.meta.url));
@@ -67,6 +67,8 @@ function fakeGh(issues, labels = [], prs = {}) {
     state: i.state === 'OPEN' ? 'open' : 'closed',
     state_reason: i.state === 'OPEN' ? null : i.reason ?? 'completed',
     labels: i.labels.map((name) => ({ name })),
+    created_at: i.createdAt ?? '2026-01-01T00:00:00Z',
+    updated_at: i.updatedAt ?? i.createdAt ?? '2026-01-01T00:00:00Z',
     repository_url: 'https://api.github.com/repos/o/r',
     sub_issues_summary: { total: Object.values(issues).filter((c) => c.subOf === i.number).length },
     issue_dependencies_summary: { blocked_by: (i.blockedBy ?? []).filter((b) => issues[b]?.state === 'OPEN').length, total_blocked_by: (i.blockedBy ?? []).length },
@@ -77,6 +79,7 @@ function fakeGh(issues, labels = [], prs = {}) {
     if (noun === 'label' && verb === 'list') return JSON.stringify(labels.map((name) => ({ name })));
     if (noun === 'issue' && verb === 'view') return JSON.stringify({ labels: issues[n].labels.map((name) => ({ name })) });
     if (noun === 'pr' && verb === 'list') return JSON.stringify(prs[args[args.indexOf('--repo') + 1]] ?? []);
+    if (noun === 'repo' && verb === 'view') return JSON.stringify({ nameWithOwner: 'o/r' });
     if (noun === 'api' && verb !== '-X') {
       const url = new URL(`http://gh/${verb}`);
       const path = url.pathname.replace('/repos/%7Bowner%7D/%7Brepo%7D/', '').replace('/repos/{owner}/{repo}/', '');
@@ -87,7 +90,13 @@ function fakeGh(issues, labels = [], prs = {}) {
         const list = Object.values(issues).filter((i) => i.state === 'OPEN');
         return JSON.stringify(list.slice((page - 1) * perPage, page * perPage).map(rest));
       }
-      let m = path.match(/^issues\/(\d+)$/);
+      let m = path.match(/^issues\/(\d+)\/comments$/);
+      if (m) {
+        const perPage = Number(url.searchParams.get('per_page'));
+        const page = Number(url.searchParams.get('page') ?? 1);
+        return JSON.stringify((issues[m[1]].comments ?? []).slice((page - 1) * perPage, page * perPage));
+      }
+      m = path.match(/^issues\/(\d+)$/);
       if (m) {
         if (!issues[m[1]]) throw Object.assign(new Error('not found'), { stderr: `no issue ${m[1]}` });
         return JSON.stringify(rest(issues[m[1]]));
@@ -121,6 +130,7 @@ function fakeGh(issues, labels = [], prs = {}) {
       issues[number] = { number, title: all('--title')[0], body: all('--body')[0], state: 'OPEN', labels: all('--label') };
       return `https://github.com/o/r/issues/${number}\n`;
     }
+    if (noun === 'issue' && verb === 'comment') return `https://github.com/o/r/issues/${n}#issuecomment-${calls.length}\n`;
     return '';
   };
   return { gh, calls };
@@ -129,13 +139,24 @@ function fakeGh(issues, labels = [], prs = {}) {
 const open = (number, labels = [], extra = {}) => ({ number, title: `issue ${number}`, state: 'OPEN', labels, ...extra });
 const closed = (number, extra = {}) => ({ number, title: `issue ${number}`, state: 'CLOSED', labels: [], ...extra });
 const comments = (calls, n) => calls.filter((c) => (c[1] === 'comment' && c[2] === String(n)) || (c[1] === 'close' && c[2] === String(n))).map((c) => c[c.length - 1]);
+/** Makes gh throw (a dropped connection, say) on the calls `fails` picks out; everything else goes through. */
+const failing = (gh, fails) => (args) => {
+  if (fails(args)) throw Object.assign(new Error('gh failed'), { stderr: 'Post "https://api.github.com/graphql": EOF' });
+  return gh(args);
+};
+/** Runs a command line through `run` with the fake gh; the lines it printed. */
+const cli = (gh, argv, extra = {}) => {
+  const out = [];
+  run(argv, { gh, log: (l) => out.push(l), ...extra });
+  return out;
+};
 const writes = (calls) => calls.filter((c) => c[0] === 'issue' || c[0] === 'label' || c[0] === 'api');
 const pr = (number, body, state = 'OPEN', isDraft = false) => ({ number, body, state, isDraft, url: `https://github.com/pr/${number}` });
 
-test('issuesOf / withIssues round-trip, adding the line when it is missing', () => {
-  const md = withIssues(spec(), [15, 12, 12]);
-  assert.deepEqual(issuesOf(md), [12, 15]);
-  assert.deepEqual(issuesOf(withIssues(md, [3])), [3]);
+test('issuesOf reads the issues line, numbers as numbers and Linear keys as strings', () => {
+  assert.deepEqual(issuesOf(spec({ issues: '[12, 15]' })), [12, 15]);
+  assert.deepEqual(issuesOf(spec({ issues: '[FA-577, 12]' })), ['FA-577', 12]);
+  assert.deepEqual(issuesOf(spec()), []);
 });
 
 test('seven states; no status label is backlog; a closed issue is done or canceled by its reason; two labels are reported as such', () => {
@@ -250,6 +271,7 @@ test('set relabels, comments with the AI prefix, and closes done and canceled wi
   assert.equal(issues[2].state, 'CLOSED');
   assert.equal(issues[2].reason, 'completed');
   assert.deepEqual(issues[2].labels, []);
+  assert.deepEqual(comments(calls, 2), ['🤖 idea-loop：合并的 PR：o/r#5。']);
   setState(gh, docs, 'backlog', [3], { comment: '先放着：等 0.2.x' });
   assert.deepEqual(issues[3].labels, []);
   assert.deepEqual(comments(calls, 3), ['🤖 idea-loop：先放着：等 0.2.x']);
@@ -457,6 +479,22 @@ test('candidates are todo issues no open issue blocks, oldest first', () => {
   assert.deepEqual(candidates(gh, 1).map((i) => i.number), [2]);
 });
 
+test('candidates hand out P0 first, then P1, P2, none; the lower number first within a priority', () => {
+  const { gh } = fakeGh({
+    3: open(3, ['status:todo']),
+    5: open(5, ['status:todo', 'priority:P2']),
+    9: open(9, ['status:todo', 'priority:P0']),
+    4: open(4, ['status:todo', 'priority:P1']),
+    2: open(2, ['status:todo', 'priority:P1']),
+    11: open(11, ['status:triage', 'priority:P0']),
+    12: open(12, ['status:todo', 'priority:P0'], { blockedBy: [3] }),
+  });
+  assert.deepEqual(candidates(gh).map((i) => i.number), [9, 2, 4, 5, 3]);
+  assert.deepEqual(candidates(gh, 2).map((i) => [i.number, i.priority]), [[9, 'P0'], [2, 'P1']]);
+  assert.equal(priorityOf(['priority:P2', 'priority:P0']), 'P0');
+  assert.equal(priorityOf(['priority:high', 'bug']), null);
+});
+
 test('show: state, title, categories, kind, each PR with its repo and draft / ready / merged, the covering spec, the branch', () => {
   const docs = docsWith({ retry: spec({ issues: '[10]' }) }, TRACKER_TWO_REPOS);
   const issues = { 10: open(10, ['status:in-progress', 'type:seo', 'type:seo/blog', 'kind:bug']), 13: open(13) };
@@ -475,17 +513,6 @@ test('show: state, title, categories, kind, each PR with its repo and draft / re
   assert.deepEqual(none.prs, []);
   assert.equal(none.spec, null);
   assert.equal(none.branch, null);
-});
-
-test('open gives a spec that covers no issue a spec issue in status:todo', () => {
-  const docs = docsWith({ retry: spec() });
-  const issues = {};
-  const { gh } = fakeGh(issues);
-  assert.equal(openSpecIssue(gh, docs, 'retry'), 1);
-  assert.deepEqual(issues[1].labels, ['status:todo']);
-  assert.match(issues[1].title, /^spec：/);
-  assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8')), [1]);
-  assert.equal(openSpecIssue(gh, docs, 'retry'), null);
 });
 
 test('reading open issues pages through the repo list and skips pull requests', () => {
@@ -596,4 +623,391 @@ test('the command line refuses the commands of the old model', () => {
   for (const cmd of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split', 'block']) {
     assert.throws(() => execFileSync('node', [SCRIPT, cmd, docs, '1'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), /不认识的命令/, cmd);
   }
+});
+
+// ---------- issue body, new, body, priority, backlog, note (spec issue-triage) ----------
+
+const GOOD_BODY = '## 问题\n\n重试会重复扣配额\n\n## 证据\n\n无，待验证\n\n## 影响范围\n\n所有点过重试的用户\n\n## 从哪发现\n\n#242 的复现\n\n## 背景\n\n可选的一节\n';
+const withoutSection = (name) => GOOD_BODY.replace(new RegExp(`## ${name}\\n\\n[^#]*`), '');
+
+/** A file with `text` in a fresh temp directory; its path. */
+function fileWith(text) {
+  const f = join(mkdtempSync(join(tmpdir(), 'issues-body-')), 'body.md');
+  writeFileSync(f, text);
+  return f;
+}
+
+/** The fake gh, with every call it gets (reads too) recorded in `seen`. */
+function spied(issues, labels = [], prs = {}) {
+  const fake = fakeGh(issues, labels, prs);
+  const seen = [];
+  return { ...fake, gh: (args) => { seen.push(args); return fake.gh(args); }, seen };
+}
+
+test('bodyErrors: the four sections must be there and not blank; optional sections and other headings are left alone', () => {
+  assert.deepEqual(bodyErrors(GOOD_BODY), []);
+  assert.deepEqual(bodyErrors(withoutSection('从哪发现')), ['缺「从哪发现」一节（## 从哪发现）']);
+  assert.deepEqual(bodyErrors('## 问题\n\nx\n'), ['缺「证据」一节（## 证据）', '缺「影响范围」一节（## 影响范围）', '缺「从哪发现」一节（## 从哪发现）']);
+  assert.deepEqual(bodyErrors(GOOD_BODY.replace('所有点过重试的用户', ' \n\t')), ['「影响范围」一节是空的']);
+  assert.deepEqual(bodyErrors('## 问题\n\n## 证据\n\nx\n## 影响范围\nx\n## 从哪发现\nx'), ['「问题」一节是空的']);
+  assert.deepEqual(bodyErrors(GOOD_BODY.replace('## 背景\n\n可选的一节\n', '')), []);
+  // text under a sub-heading is content; a 三级 heading with a required name does not start a section
+  assert.deepEqual(bodyErrors('## 问题\n\n### 细节\n\nx\n\n## 证据\n\n### 影响范围\n\n## 影响范围\n\nx\n## 从哪发现\nx'), []);
+  assert.equal(bodyErrors('').length, 4);
+  assert.equal(bodyErrors(undefined).length, 4);
+});
+
+test('new refuses a body that misses a section without calling gh issue create, and says which', () => {
+  const { gh, calls } = fakeGh({});
+  assert.throws(() => newIssue(gh, null, { title: '重试重复扣配额', body: withoutSection('从哪发现') }), /从哪发现/);
+  assert.deepEqual(writes(calls), []);
+});
+
+test('new refuses a title an open issue already has, naming its number', () => {
+  const issues = { 5: open(5, ['status:todo']) };
+  const { gh, calls } = fakeGh(issues);
+  assert.throws(() => newIssue(gh, null, { title: 'issue 5', body: GOOD_BODY }), /#5/);
+  assert.deepEqual(writes(calls), []);
+  // a closed issue with the same title does not count
+  const { gh: gh2, calls: calls2 } = fakeGh({ 6: closed(6) });
+  assert.equal(newIssue(gh2, null, { title: 'issue 6', body: GOOD_BODY }), 7);
+  assert.equal(calls2.length, 1);
+});
+
+test('new --state=todo needs a priority; unknown state, priority, kind and category are refused before anything is created', () => {
+  const { gh, calls } = fakeGh({});
+  const types = parseTypes(TYPES);
+  assert.throws(() => newIssue(gh, types, { title: 't', body: GOOD_BODY, state: 'todo' }), /--priority/);
+  assert.throws(() => newIssue(gh, types, { title: 't', body: GOOD_BODY, state: 'in-progress' }), /backlog 或 todo/);
+  assert.throws(() => newIssue(gh, types, { title: 't', body: GOOD_BODY, priority: 'P3' }), /P0 \/ P1 \/ P2/);
+  assert.throws(() => newIssue(gh, types, { title: 't', body: GOOD_BODY, kind: 'chore' }), /bug \/ feature \/ improvement/);
+  assert.throws(() => newIssue(gh, types, { title: 't', body: GOOD_BODY, typeValues: ['ai'] }), /不是这个项目的分类/);
+  assert.throws(() => newIssue(gh, types, { title: '  ', body: GOOD_BODY }), /标题/);
+  assert.deepEqual(writes(calls), []);
+});
+
+test('new: todo carries status:todo, backlog carries no status:*; priority, kind and type labels follow the arguments; returns the number', () => {
+  const issues = { 3: open(3, []) };
+  const { gh } = fakeGh(issues);
+  const types = parseTypes(TYPES);
+  const todo = newIssue(gh, types, { title: '新的一条', body: GOOD_BODY, state: 'todo', priority: 'P1', kind: 'bug', typeValues: ['seo/blog'] });
+  assert.equal(todo, 4);
+  assert.deepEqual(issues[4].labels.sort(), ['kind:bug', 'priority:P1', 'status:todo', 'type:seo', 'type:seo/blog']);
+  assert.equal(issues[4].body, GOOD_BODY);
+  const second = newIssue(gh, types, { title: '另一条', body: GOOD_BODY });
+  assert.deepEqual(issues[second].labels, []);
+  const urgent = newIssue(gh, types, { title: '第三条', body: GOOD_BODY, priority: 'P0' });
+  assert.deepEqual(issues[urgent].labels, ['priority:P0']);
+});
+
+test('the command line: new opens the issue and prints its number; body only checks', () => {
+  const docs = docsWith();
+  writeFileSync(join(docs, '..', 'AGENTS.md'), TYPES);
+  const { gh, calls } = fakeGh({});
+  const out = cli(gh, ['new', docs, '重试重复扣配额', fileWith(GOOD_BODY), '--state=todo', '--priority=P0', '--kind=bug', '--type=billing', '--type=seo/blog']);
+  assert.deepEqual(out, ['1']);
+  assert.deepEqual(calls[0].filter((a, i) => calls[0][i - 1] === '--label').sort(), ['kind:bug', 'priority:P0', 'status:todo', 'type:billing', 'type:seo', 'type:seo/blog']);
+  assert.deepEqual(cli(gh, ['body', docs, fileWith(GOOD_BODY)]), ['正文齐了']);
+  assert.throws(() => cli(gh, ['body', docs, fileWith(withoutSection('证据'))]), /缺「证据」/);
+  assert.throws(() => cli(gh, ['body', docs, join(docs, 'no-such.md')]), /没有正文文件/);
+  assert.throws(() => cli(gh, ['new', docs, 'x', fileWith(GOOD_BODY), '--state']), /--state 要带值/);
+  assert.equal(calls.length, 1, 'body wrote nothing');
+});
+
+test('new --repo opens the issue in that repository and checks for a duplicate there; without it nothing changes', () => {
+  // a gh that knows two repos: the current one (o/r) has an open issue titled 同名, plugin/repo has none
+  const calls = [];
+  const gh = (args) => {
+    calls.push(args);
+    if (args[0] === 'api') return JSON.stringify(args[1].startsWith('repos/plugin/repo/') ? [] : [{ number: 5, title: '同名', state: 'open', labels: [] }]);
+    if (args[0] === 'issue' && args[1] === 'create') return 'https://github.com/plugin/repo/issues/9\n';
+    return '';
+  };
+  assert.equal(newIssue(gh, null, { title: '同名', body: GOOD_BODY, repo: 'plugin/repo' }), 9);
+  assert.ok(calls.some((c) => c[0] === 'api' && c[1].startsWith('repos/plugin/repo/issues?')), 'duplicate check reads the named repo');
+  assert.ok(!calls.some((c) => c[0] === 'api' && c[1].startsWith('repos/{owner}/{repo}/')), 'not the current repo');
+  const create = calls.find((c) => c[0] === 'issue');
+  assert.deepEqual(create.slice(0, 4), ['issue', 'create', '-R', 'plugin/repo']);
+  // the same title already open in the named repo is still refused
+  const taken = (args) => (args[0] === 'api' ? JSON.stringify([{ number: 3, title: '同名', state: 'open', labels: [] }]) : '');
+  assert.throws(() => newIssue(taken, null, { title: '同名', body: GOOD_BODY, repo: 'plugin/repo' }), /#3/);
+  // without --repo: the current repo, no -R
+  calls.length = 0;
+  assert.throws(() => newIssue(gh, null, { title: '同名', body: GOOD_BODY }), /#5/);
+  assert.ok(calls.every((c) => !c.includes('-R')));
+  assert.throws(() => newIssue(gh, null, { title: 'x', body: GOOD_BODY, repo: 'plugin' }), /owner\/name/);
+});
+
+test('in a Linear project new is refused, except with --repo, which names a GitHub repository itself', () => {
+  const docs = docsWith({}, '# Issue tracker：Linear\n');
+  const calls = [];
+  const gh = (args) => {
+    calls.push(args);
+    return args[0] === 'api' ? '[]' : 'https://github.com/plugin/repo/issues/4\n';
+  };
+  assert.throws(() => cli(gh, ['new', docs, '标题', fileWith(GOOD_BODY)]), /Linear/);
+  assert.equal(calls.length, 0);
+  assert.deepEqual(cli(gh, ['new', docs, '标题', fileWith(GOOD_BODY), '--repo=plugin/repo']), ['4']);
+});
+
+test('the command line: new --repo passes the repository on', () => {
+  const docs = docsWith();
+  const calls = [];
+  const gh = (args) => {
+    calls.push(args);
+    return args[0] === 'api' ? '[]' : 'https://github.com/plugin/repo/issues/4\n';
+  };
+  assert.deepEqual(cli(gh, ['new', docs, '插件里的问题', fileWith(GOOD_BODY), '--repo=plugin/repo']), ['4']);
+  assert.deepEqual(calls.at(-1).slice(0, 4), ['issue', 'create', '-R', 'plugin/repo']);
+});
+
+test('priority replaces the issue\'s priority:* label; none only removes it; nothing to change means no gh edit', () => {
+  const issues = { 1: open(1, ['status:todo', 'priority:P2', 'bug']), 2: open(2, ['priority:P0']), 3: open(3, []) };
+  const { gh, calls } = fakeGh(issues);
+  assert.deepEqual(setPriority(gh, 1, 'P0'), ['priority:P0']);
+  assert.deepEqual(issues[1].labels.sort(), ['bug', 'priority:P0', 'status:todo']);
+  setPriority(gh, 2, 'none');
+  assert.deepEqual(issues[2].labels, []);
+  const before = calls.length;
+  setPriority(gh, 3, 'none');
+  setPriority(gh, 1, 'P0');
+  assert.equal(calls.length, before);
+  assert.throws(() => setPriority(gh, 1, 'P3'), /P0 \/ P1 \/ P2 \/ none/);
+  assert.deepEqual(cli(gh, ['priority', docsWith(), 'P1', '1', '3']), ['#1: priority:P1', '#3: priority:P1']);
+  assert.deepEqual(issues[3].labels, ['priority:P1']);
+});
+
+test('backlog: open issues without status:*, oldest first, up to the limit; one whose latest comment is triage\'s 还要你补 and that nobody touched since is left out', () => {
+  const ask = { body: '🤖 idea-loop：查过了，还要你补：复现步骤', created_at: '2026-10-20T00:00:00Z' };
+  const issues = {
+    7: open(7, [], { updatedAt: '2026-10-20T00:00:30Z', comments: [ask] }),
+    8: open(8, [], { updatedAt: '2026-10-25T00:00:00Z', comments: [ask] }),
+    9: open(9, ['type:seo'], { comments: [] }),
+    10: open(10, ['status:todo']),
+    11: open(11, [], { comments: [{ body: '🤖 idea-loop：已查清：重复了 #3', created_at: '2026-10-20T00:00:00Z' }], updatedAt: '2026-10-20T00:00:00Z' }),
+    12: open(12, [], { comments: [{ body: '人写的：还要你补一句也不算', created_at: '2026-10-20T00:00:00Z' }], updatedAt: '2026-10-20T00:00:00Z' }),
+    13: open(13, [], { updatedAt: '2026-10-20T00:01:01Z', comments: [ask] }),
+    14: open(14, [], { updatedAt: '2026-10-20T00:01:00Z', comments: [ask] }),
+    15: open(15, ['status:triage']),
+    16: closed(16),
+  };
+  const { gh, seen } = spied(issues);
+  assert.deepEqual(backlog(gh).map((i) => i.number), [8, 9, 11, 12, 13]);
+  assert.deepEqual(backlog(gh)[1], { number: 9, title: 'issue 9', labels: ['type:seo'], createdAt: '2026-01-01T00:00:00Z' });
+  assert.deepEqual(backlog(gh, 1).map((i) => i.number), [8], 'the skipped #7 does not use up the limit');
+  seen.length = 0;
+  assert.deepEqual(backlog(gh, 2).map((i) => i.number), [8, 9]);
+  const read = seen.filter((a) => /\/comments/.test(a[1] ?? '')).map((a) => a[1].match(/issues\/(\d+)\//)[1]);
+  assert.deepEqual([...new Set(read)], ['7', '8', '9'], 'comments are read only for the issues that are candidates');
+  assert.deepEqual(JSON.parse(cli(gh, ['backlog', docsWith(), '1']).join('\n')).map((i) => i.number), [8]);
+});
+
+test('backlog reads the newest comment even past the first page', () => {
+  const many = Array.from({ length: 101 }, (_, k) => ({ body: `c${k}`, created_at: '2026-10-01T00:00:00Z' }));
+  many[100] = { body: '🤖 idea-loop：还要你补', created_at: '2026-10-02T00:00:00Z' };
+  const { gh } = fakeGh({ 1: open(1, [], { updatedAt: '2026-10-02T00:00:10Z', comments: many }) });
+  assert.deepEqual(backlog(gh), []);
+});
+
+test('note comments with the AI prefix, once', () => {
+  const { gh, calls } = fakeGh({ 4: open(4) });
+  noteIssue(gh, 4, '已查清：重复了 #3\n');
+  noteIssue(gh, 4, '🤖 idea-loop：还要你补：复现步骤');
+  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：已查清：重复了 #3', '🤖 idea-loop：还要你补：复现步骤']);
+  assert.throws(() => noteIssue(gh, 4, '  \n'), /空的/);
+  assert.equal(cli(gh, ['note', docsWith(), '4', fileWith('行')]).length, 1);
+  assert.equal(comments(calls, 4).at(-1), '🤖 idea-loop：行');
+});
+
+test('note returns the comment URL gh prints and shows it, so the triager can hand it back', () => {
+  const { gh } = fakeGh({ 4: open(4) });
+  const url = noteIssue(gh, 4, '已查清');
+  assert.match(url, /^https:\/\/github\.com\/o\/r\/issues\/4#issuecomment-\d+$/);
+  const [line] = cli(gh, ['note', docsWith(), '4', fileWith('行')]);
+  assert.match(line, /^#4: 已评论 https:\/\/github\.com\/o\/r\/issues\/4#issuecomment-\d+$/);
+  // a gh that prints nothing: no URL, still commented
+  assert.equal(noteIssue(() => '', 4, 'x'), null);
+});
+
+test('labels creates priority:P0 / P1 / P2 and keeps them', () => {
+  const { gh, calls } = fakeGh({}, ['priority:P0']);
+  const { made, surplus } = ensureLabels(gh, parseTypes(TYPES));
+  assert.deepEqual(made.filter((l) => l.startsWith('priority:')), ['priority:P1', 'priority:P2']);
+  assert.ok(calls.some((c) => c.includes('priority:P1')));
+  assert.ok(!surplus.some((s) => s.name.startsWith('priority:')));
+  for (const p of ['P0', 'P1', 'P2']) assert.ok(keptLabels(parseTypes(TYPES)).has(`priority:${p}`));
+});
+
+// ---------- closing: close first, label after ----------
+
+test('done and canceled close first and drop the label after; a close that fails leaves the issue as it was, with its label', () => {
+  const docs = docsWith();
+  const issues = { 2: open(2, ['status:in-review']), 3: open(3, ['status:todo']) };
+  const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(5, 'Refs o/r#2', 'MERGED')] });
+  const broken = failing(gh, (a) => a[0] === 'issue' && a[1] === 'close');
+  assert.throws(() => setState(broken, docs, 'done', [2]), /gh failed/);
+  assert.throws(() => setState(broken, docs, 'canceled', [3], { comment: '不做了' }), /gh failed/);
+  assert.ok(!calls.some((c) => c[0] === 'issue' && c[1] === 'edit'), 'gh issue edit was not called');
+  assert.equal(issues[2].state, 'OPEN');
+  assert.deepEqual(issues[2].labels, ['status:in-review']);
+  assert.deepEqual(issues[3].labels, ['status:todo']);
+  // the retry works, and closes before it relabels
+  setState(gh, docs, 'done', [2]);
+  const verbs = calls.map((c) => c[1]);
+  assert.ok(verbs.indexOf('close') < verbs.indexOf('edit'));
+  assert.deepEqual(issues[2].labels, []);
+  assert.equal(issues[2].state, 'CLOSED');
+});
+
+test('reconcile closes before it relabels too', () => {
+  const issues = { 8: open(8, ['status:in-review']) };
+  const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #8', 'MERGED')] });
+  assert.throws(() => reconcile(failing(gh, (a) => a[1] === 'close'), docsWith()), /gh failed/);
+  assert.deepEqual(issues[8].labels, ['status:in-review']);
+  assert.deepEqual(calls, []);
+});
+
+test('set done opens its comment with the merged PRs; a --comment follows; closed-unmerged PRs are not listed', () => {
+  const docs = docsWith({}, TRACKER_TWO_REPOS);
+  const issues = { 4: open(4, ['status:in-review']), 5: open(5, ['status:in-review']) };
+  const prs = { 'o/r': [pr(10, 'Refs o/r#4\nRefs o/r#5', 'MERGED'), pr(12, 'Refs o/r#4', 'CLOSED')], 'o/api': [pr(20, 'Refs o/r#4', 'MERGED')] };
+  const { gh, calls } = fakeGh(issues, [], prs);
+  setState(gh, docs, 'done', [4]);
+  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：合并的 PR：o/r#10、o/api#20。']);
+  setState(gh, docs, 'done', [5], { comment: '另见 #9' });
+  assert.deepEqual(comments(calls, 5), ['🤖 idea-loop：合并的 PR：o/r#10。另见 #9']);
+});
+
+// ---------- Linear projects (spec issue-linear) ----------
+
+const LINEAR_TRACKER = `# Issue tracker：Linear
+
+## 团队
+
+Fish（key \`FA\`），issue 号形如 \`FA-123\`
+
+## 仓库
+
+| 仓库 | 本地路径 | 主分支 | 管什么 |
+|---|---|---|---|
+| o/r | ~/code/r | main | 知识库、worker |
+| o/api | ~/code/api | main | 接口 |
+`;
+
+const linearPr = (number, title, body, state = 'OPEN', isDraft = false) => ({ number, title, body, state, isDraft, url: `https://github.com/pr/${number}` });
+
+test('platformOf: a first level-1 heading that names Linear is linear; anything else, and no file, is github', () => {
+  assert.equal(platformOf('# Issue tracker：Linear\n\n## 团队\n'), 'linear');
+  assert.equal(platformOf('\n# Issue tracker：Linear\n'), 'linear');
+  assert.equal(platformOf('# Issue tracker：GitHub\n\n## 仓库\n用 Linear 的人\n'), 'github');
+  assert.equal(platformOf('## Linear 小节\n'), 'github');
+  assert.equal(platformOf(''), 'github');
+  assert.equal(platformOf(TRACKER_TWO_REPOS), 'github');
+});
+
+test('in a Linear project the commands that write GitHub are refused, naming Linear and references/linear.md, and gh is never called', () => {
+  const docs = docsWith({}, LINEAR_TRACKER);
+  const gh = () => assert.fail('gh was called');
+  const body = fileWith(GOOD_BODY);
+  const lines = {
+    labels: ['labels', docs], type: ['type', docs, '1', 'seo'], set: ['set', docs, 'todo', '1'], candidates: ['candidates', docs],
+    reconcile: ['reconcile', docs], migrate: ['migrate', docs], new: ['new', docs, '标题', body], priority: ['priority', docs, 'P0', '1'],
+    backlog: ['backlog', docs], note: ['note', docs, '1', body],
+  };
+  for (const [cmd, argv] of Object.entries(lines)) assert.throws(() => run(argv, { gh, log() {} }), (e) => /Linear/.test(e.message) && /references\/linear\.md/.test(e.message) && e.message.includes(`「${cmd}」`), cmd);
+  assert.throws(() => run(['queues', docs, '5'], { gh, log() {} }), /Linear/);
+  assert.equal(linearRefusal('set').includes('references/linear.md'), true);
+  // what does not touch GitHub issues still works
+  assert.deepEqual(cli(gh, ['body', docs, body]), ['正文齐了']);
+  assert.deepEqual(JSON.parse(cli(gh, ['queues', docs]).join('\n')).map((q) => q.name), [null]);
+});
+
+test('check --from does not read the issue, takes a Linear key, and reads the spec: a 待定 still waits', () => {
+  const docs = docsWith({ retry: spec({ issues: '[FA-577]', fork: true }) }, LINEAR_TRACKER);
+  const { gh, seen } = spied({});
+  assert.throws(() => cli(gh, ['check', docs, 'todo', 'FA-577', '--from=triage']), /FA-577：spec 里还有等人定的.*待定/);
+  assert.deepEqual(seen, [], 'no gh call at all');
+  writeFileSync(join(docs, 'spec', 'retry', 'retry.md'), spec({ issues: '[FA-577]' }));
+  assert.deepEqual(cli(gh, ['check', docs, 'todo', 'FA-577', '--from=triage']), ['FA-577: triage → todo 可以翻']);
+  assert.ok(!seen.some((a) => a[0] === 'api'), 'the issue API was not called');
+  // a flip the table does not allow, and a state that is not in the machine, are still refused
+  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=todo']), /能翻成/);
+  assert.throws(() => cli(gh, ['check', docs, 'todo', 'FA-577', '--from=实现中']), /不在状态机里/);
+  assert.throws(() => cli(gh, ['check', docs, 'todo', 'nope', '--from=triage']), /不是 GitHub 的号/);
+});
+
+test('check done --from in a Linear project finds the PRs by title [KEY] or a Linear: line in the 仓库 repos, and refuses while one is not merged', () => {
+  const docs = docsWith({}, LINEAR_TRACKER);
+  const prs = {
+    'o/r': [linearPr(1, '[FA-577] 改 worker', '', 'MERGED'), linearPr(2, '[FA-5770] 别的', '', 'OPEN'), linearPr(3, '提到 FA-577 但不是前缀', '没有那一行', 'OPEN')],
+    'o/api': [linearPr(4, '接口', '说明\nLinear: FA-577\n', 'OPEN', true), linearPr(5, '接口', 'Linear: FA-57', 'OPEN')],
+  };
+  const { gh, seen } = spied({}, [], prs);
+  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), /还有 PR 没合并：o\/api#4（draft）/);
+  prs['o/api'][0].isDraft = false;
+  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), /o\/api#4（ready）/);
+  prs['o/api'][0].state = 'MERGED';
+  assert.deepEqual(cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), ['FA-577: in-review → done 可以翻']);
+  assert.ok(seen.every((a) => a[0] === 'pr'), 'only PRs were searched');
+  assert.ok(seen.some((a) => a.includes('FA-577 in:title')) && seen.some((a) => a.includes('FA-577 in:body')));
+  // no PR at all
+  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-999', '--from=in-review']), /没有 PR 挂在/);
+});
+
+test('check in a Linear project without --from is refused, saying --from is needed', () => {
+  const docs = docsWith({}, LINEAR_TRACKER);
+  const { gh, seen } = spied({});
+  assert.throws(() => cli(gh, ['check', docs, 'todo', 'FA-577']), /--from/);
+  assert.deepEqual(seen, []);
+});
+
+test('a Linear project whose ISSUE_TRACKER.md has no 仓库 section looks for PRs in the repo gh runs in, as the GitHub side does', () => {
+  const docs = docsWith({}, '# Issue tracker：Linear\n\n## 团队\n\nFish（key `FA`）\n');
+  const prs = { 'o/r': [linearPr(1, '[FA-577] x', '', 'MERGED'), linearPr(2, '[FA-1] y', '', 'OPEN')] };
+  const { gh, seen } = spied({}, [], prs);
+  assert.deepEqual(cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), ['FA-577: in-review → done 可以翻']);
+  assert.ok(seen.some((a) => a[0] === 'repo' && a[1] === 'view'));
+  const v = JSON.parse(cli(spied({}, [], prs).gh, ['show', docs, 'FA-577'], { git: () => '' }).join('\n'));
+  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'merged']]);
+});
+
+test('check --from in a GitHub project reads no issue either: the PRs are found by Refs in the repo gh runs in', () => {
+  const docs = docsWith({});
+  const { gh, seen } = spied({}, [], { 'o/r': [pr(1, 'Refs #5', 'MERGED')] });
+  assert.deepEqual(cli(gh, ['check', docs, 'done', '5', '--from=in-review']), ['#5: in-review → done 可以翻']);
+  assert.ok(!seen.some((a) => a[0] === 'api'));
+  // without --from the issue is read, as before
+  const { gh: gh2, seen: seen2 } = spied({ 5: open(5, ['status:in-review']) }, [], { 'o/r': [pr(1, 'Refs #5', 'MERGED')] });
+  assert.deepEqual(cli(gh2, ['check', docs, 'done', '5']), ['#5: in-review → done 可以翻']);
+  assert.ok(seen2.some((a) => a[0] === 'api'));
+});
+
+test('refsLinear: a [KEY] title prefix or a whole line Linear: KEY, not a longer key, not a mention', () => {
+  assert.equal(refsLinear('[FA-577] x', '', 'FA-577'), true);
+  assert.equal(refsLinear(' [fa-577] x', '', 'FA-577'), true);
+  assert.equal(refsLinear('x', 'a\nLinear: FA-577\nb', 'FA-577'), true);
+  assert.equal(refsLinear('x', 'Linear: FA-577', 'FA-577'), true);
+  assert.equal(refsLinear('[FA-5770] x', 'Linear: FA-5771', 'FA-577'), false);
+  assert.equal(refsLinear('see [FA-577]', 'also Linear: FA-577 here', 'FA-577'), false);
+  assert.equal(refsLinear(null, null, 'FA-577'), false);
+});
+
+test('show in a Linear project: state null, the spec, the PRs and the branch of the key', () => {
+  const docs = docsWith({ retry: spec({ issues: '[FA-577, 12]' }) }, LINEAR_TRACKER);
+  const { gh, seen } = spied({}, [], { 'o/r': [linearPr(1, '[FA-577] x', '', 'OPEN', true)], 'o/api': [linearPr(2, 'y', 'Linear: FA-577', 'MERGED')] });
+  const v = JSON.parse(cli(gh, ['show', docs, 'FA-577'], { git: () => 'main\nissue/FA-577-retry\norigin/issue/FA-577-retry\n' }).join('\n'));
+  assert.equal(v.state, null);
+  assert.equal(v.number, 'FA-577');
+  assert.equal(v.spec, 'retry');
+  assert.equal(v.branch, 'issue/FA-577-retry');
+  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'draft'], ['o/api', 2, 'merged']]);
+  assert.ok(!seen.some((a) => a[0] === 'api'));
+});
+
+test('the usage in the header lists exactly the commands the script has; open is gone', () => {
+  const head = readFileSync(SCRIPT, 'utf8').split('*/')[0];
+  const listed = [...head.matchAll(/node issues\.mjs (\w+)\s/g)].map((m) => m[1]);
+  assert.deepEqual([...listed].sort(), [...COMMANDS].sort());
+  assert.ok(!COMMANDS.includes('open'));
+  assert.throws(() => execFileSync('node', [SCRIPT, 'open', docsWith(), 'retry'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), /不认识的命令/);
 });

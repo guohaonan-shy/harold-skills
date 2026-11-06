@@ -1,6 +1,6 @@
 ---
 name: issue-session
-description: 一个 issue 的会话：triage 会话陪人评估它（验证、spec、grill、设计），todo 会话把它做到合并。调度卡片开出的会话、或人要接手某个 issue 时用。
+description: 一个 issue 的会话：triage 会话陪人评估它（spec、grill、设计），todo 会话把它做到合并。调度卡片开出的会话、或人要接手某个 issue 时用。
 argument-hint: "<issue 号>"
 ---
 
@@ -10,12 +10,12 @@ argument-hint: "<issue 号>"
 
 | 会话 | 谁开的 | 认领成 | 侧边栏 section | 做什么 | 做完 |
 |---|---|---|---|---|---|
-| triage 会话 | 人 | triage | triage | 验证、起草 spec、grill、设计 | push 分支，`set todo`，归档 |
+| triage 会话 | 人 | triage | triage | 起草 spec、grill、设计 | push 分支，`set todo`，归档 |
 | todo 会话 | 调度卡片 | in-progress | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，归档 |
 
 section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo in-progress」）。
 
-下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
+**Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
@@ -33,13 +33,13 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 ## triage 会话
 
-1. **审核**：用 Skill 工具调 `idea-loop:issue-verify`，只调一次，告诉它认领和分支已经做过。它复现、起草 spec、在这里跟人 grill，把 spec 提交在分支上，交回 spec 的 slug。交回「已关闭」去「收尾」，交回「先放着」去「先放着」。
+1. **起草**：读 issue 全文和分拣贴的证据评论（`gh issue view $ARGUMENTS --comments`，「🤖 idea-loop：」开头的那条），用 Skill 工具调 `idea-loop:to-spec` 起草，再照 [references/draft-spec.md](references/draft-spec.md) 自校验、在这里跟人 grill、把 spec 提交在分支上。起草时发现已被做掉的（它会把 issue 关成 canceled）、人决定不做的，去「收尾」；人说先放着，去「先放着」。
 2. **设计**：读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。不碰 UI 的 spec 跳过。碰 UI 的告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人；人设计完、`/idea-loop:uiux-refine` 把冻结结果提交在这个分支上之后，往下。
 3. **交给调度**：`git push -u origin issue/<号>-<slug>`，`issues set <docs> todo $ARGUMENTS --comment=<分支名，spec 与设计已提交>`，去「收尾」。`set todo` 被拒时说出了还差什么（spec 里没定完的行、没冻结的设计），回去补。
 
 ## todo 会话
 
-分支上已有 spec（triage 会话留下的，或先放着时留下的），读它；没有就用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，提交在分支上。起草中冒出了要人定的（spec 里要写「需要 grill」「待定」），把已写的提交并 push，`issues set <docs> triage $ARGUMENTS --comment=<要人定什么、分支名>`，去「收尾」，人在 triage 里定。项目跳过 triage 的，没法翻回去，就在这个会话里跟人 grill、做设计，写法同 triage 会话的 1、2 步。spec 就绪后去「实现」。
+分支上已有 spec（triage 会话留下的，或先放着时留下的），读它；没有就用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，再照 [references/draft-spec.md](references/draft-spec.md) 做，提交在分支上。起草中冒出了要人定的（spec 里要写「需要 grill」「待定」），把已写的提交并 push，`issues set <docs> triage $ARGUMENTS --comment=<要人定什么、分支名>`，去「收尾」，人在 triage 里定。项目跳过 triage 的，没法翻回去，就在这个会话里跟人 grill、做设计，写法同 triage 会话的 1、2 步。spec 就绪后去「实现」。
 
 ## 实现
 
@@ -47,7 +47,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 1. **开 draft PR**：spec 已提交在分支上（上一步保证）。多个仓库的 issue：`ISSUE_TRACKER.md` 的「仓库」一节列出了几个仓库、spec 的「实现决策」写了要改哪些，就在每个要改的、不是当前 worktree 所在的仓库里开同名分支的 worktree：`git -C <那个仓库的本地路径> worktree add <路径> -b issue/<号>-<slug> origin/<那个仓库的主分支>`，把路径记进 spec 的「实现决策」并提交。没有这一节的项目就是一个仓库，不用开。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」给每个要改的仓库开 PR（已有就跳过）。
 2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
-3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。转 ready、进 in-review 在这两个 skill 里。
+3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
 **规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
 

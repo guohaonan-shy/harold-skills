@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 的定时任务。每个仓库跑一次，项目配置变了再跑。
+description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 和每周分拣的定时任务。每个仓库跑一次，项目配置变了再跑。
 disable-model-invocation: true
 ---
 
@@ -13,7 +13,7 @@ idea-loop 从这几处读项目配置：
 | `DEVELOPMENT.md` | 基准分支、合并方式、worktree 准备、开发服务器、清理 | [references/development.md](references/development.md) |
 | `REVIEW.md` | 验证命令、review 的额外要求 | [references/review.md](references/review.md) |
 | `CODING_STANDARDS.md` | 分层、文件划分、命名：代码该怎么写 | [references/coding-standards.md](references/coding-standards.md) |
-| `ISSUE_TRACKER.md` | 需求从 GitHub issue 进来：怎么读写 issue、`status:*` label 是什么意思、团队用不用 triage | [references/issue-tracker.md](references/issue-tracker.md) |
+| `ISSUE_TRACKER.md` | 需求从哪个平台的 issue 进来（第一个标题写 GitHub 或 Linear）：怎么读写 issue、状态是什么意思、团队用不用 triage | GitHub：[references/issue-tracker.md](references/issue-tracker.md)；Linear：[references/issue-tracker-linear.md](references/issue-tracker-linear.md) |
 | `AGENTS.md` 里的 `## issue 分类` 一节 | issue 的分类 label（`type:*`）和要保留的别的 label | [references/issue-types.md](references/issue-types.md) |
 | `PRODUCT.md` | 用户、产品要做成什么、品牌性格、设计原则：访谈和设计做判断的依据 | [references/product.md](references/product.md) |
 | `CLAUDE.md` 或 `AGENTS.md` 里的 `## idea-loop` 块 | 指向上面几份，常驻 | [references/agents-block.md](references/agents-block.md) |
@@ -36,7 +36,7 @@ idea-loop 从这几处读项目配置：
 
 ## 问人
 
-只问这几份文件里还没写的。每个问题给推荐答案和出处，一次最多三个，人一句「照推荐」就算确认。问题清单（基准分支与合并方式、worktree 准备、开发服务器、验证命令、已有的规范文档、产品、知识库、UI 设计、GitHub App、issue 分类、别的 label）在 [references/questions.md](references/questions.md)。
+只问这几份文件里还没写的。每个问题给推荐答案和出处，一次最多三个，人一句「照推荐」就算确认。问题清单（基准分支与合并方式、worktree 准备、开发服务器、验证命令、已有的规范文档、产品、知识库、UI 设计、issue 在哪个平台、GitHub App、issue 分类、别的 label）在 [references/questions.md](references/questions.md)。
 
 完成条件：清单上每一项都有人确认过的答案。
 
@@ -48,16 +48,17 @@ idea-loop 从这几处读项目配置：
 - `.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - `## issue 分类` 一节照模板写进 `AGENTS.md`（没有就写进有 `## idea-loop` 块的那份）；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
+- **Linear 项目**（人选了 Linear）：连 MCP、选团队、读状态与 label 组、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
 - triage：把人对「团队用不用 triage」的回答写进 `ISSUE_TRACKER.md` 状态表后面那一行（`triage：用` 或 `triage：跳过`），模板里的「用 / 跳过」占位不算选了。
 - 仓库：把人对「会改到哪几个仓库」的回答填进 `ISSUE_TRACKER.md` 的「仓库」表，模板里的占位行（尖括号那行）删掉。
-- 旧状态：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate docs` 只列出会怎么改，给人看，人确认后加 `--apply`。
-- label，按顺序：
-  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*` 和 `type:*`，列出多余的 label 和各自在用的 open issue 数。
+- 旧状态（GitHub 项目）：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate docs` 只列出会怎么改，给人看，人确认后加 `--apply`。
+- label（GitHub 项目），按顺序：
+  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels docs`：建出缺的 `status:*`、`kind:*`、`type:*` 和 `priority:*`（`priority:P0`、`priority:P1`、`priority:P2`），列出多余的 label 和各自在用的 open issue 数。
   2. 人定了要迁成分类的，对每个用着它的 issue 跑 `issues.mjs type docs <号> <分类>`。
   3. 把多余 label 的清单给人看，人确认后 `issues.mjs labels docs --prune` 删掉，issue 上的也一起去掉。
 - GitHub App：在 `~/.idea-loop/github-apps.json` 里加 `"<owner/repo>": { "appId": <id>, "privateKeyPath": "<路径>" }`。只写路径，私钥文件不打开。
 
-完成条件：这几份文件都在，模板里的小节一个不缺；`git diff` 给人看过；`issues.mjs labels docs` 不再列出多余的 label。
+完成条件：这几份文件都在，模板里的小节一个不缺；`git diff` 给人看过；GitHub 项目的 `issues.mjs labels docs` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好、状态表里每个状态名都是团队里真有的。
 
 ## 夜间规则回放
 
@@ -71,6 +72,12 @@ idea-loop 从这几处读项目配置：
 
 完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
+## 每周分拣
+
+`/idea-loop:issue-triage` 可以由桌面 app 的定时任务每周自己跑一次，把最早的 15 个 backlog issue 查完、摆一张表等人批。必须在本仓库的主 checkout 里做，任务 id 叫 `triage-<仓库名>`。步骤在 [references/weekly-triage.md](references/weekly-triage.md)。
+
+完成条件：本仓库有一个开着的 `triage-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
+
 ## 交回
 
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
@@ -78,5 +85,6 @@ idea-loop 从这几处读项目配置：
 - 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
 - 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
+- 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
 - 怎么起调度：在主 checkout 开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`（间隔照需要改）。
 - 留给人的事：安装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检的表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

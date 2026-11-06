@@ -2,7 +2,7 @@
 // 判会话怎么走得对不靠这里（没有 eval），这里只守：停点句没被动、字数、引用的脚本命令真存在、关键结构写了、旧模型的说法没回来。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,7 +10,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = (name) => readFileSync(join(root, 'skills/engineering', name, 'SKILL.md'), 'utf8');
 const front = (md) => md.match(/^---\n([\s\S]*?)\n---\n/)[1];
 const body = (md) => md.replace(/^---\n[\s\S]*?\n---\n/, '');
-const NAMES = ['issue-dispatch', 'issue-session', 'issue-verify'];
+const NAMES = ['issue-dispatch', 'issue-session', 'issue-triage'];
 const OLD_STATES = ['待验证', '验证中', '审核中', '待设计', '设计中', '待实现', '实现中', '搁置'];
 
 test('三份 SKILL.md 主体都在 5000 字以内', () => {
@@ -67,11 +67,21 @@ test('issue-session：triage 会话与 todo 会话两条路，认领成 triage /
   assert.match(md, /issue\/<号>-<slug>/);
 });
 
-test('issue-session：triage 会话调一次 issue-verify；todo 会话没有分支就自己起草 spec，冒出要人定的翻回 triage', () => {
+test('issue-session：triage 会话读证据评论、调 to-spec 起草并照 draft-spec；todo 会话没有分支就自己起草 spec，冒出要人定的翻回 triage', () => {
   const md = skill('issue-session');
-  assert.match(md, /调\*{0,2} ?`idea-loop:issue-verify`[^。\n]*只调一次/);
-  assert.match(md, /用 Skill 工具调 `idea-loop:to-spec` 起草/);
+  assert.match(md, /证据评论/);
+  assert.match(md, /用 Skill 工具调 `idea-loop:to-spec` 起草，再照 \[references\/draft-spec\.md\]/);
+  assert.match(md, /用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，再照 \[references\/draft-spec\.md\]/);
   assert.match(md, /issues set <docs> triage \$ARGUMENTS --comment=/);
+});
+
+test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做掉的就 canceled 并删草稿；没有「验证为不存在」的落地 PR', () => {
+  const md = readFileSync(join(root, 'skills/engineering/issue-session/references/draft-spec.md'), 'utf8');
+  assert.match(md, /## 自己校验/);
+  assert.match(md, /## 跟人定要 grill 的/);
+  assert.match(md, /issues set <docs> canceled <号> --comment=/);
+  assert.match(md, /删掉这份 spec 的草稿/);
+  assert.doesNotMatch(md, /gh pr create|gh pr merge/, '不存在的 issue 在分拣里就关了，不再有它的落地 PR');
 });
 
 test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上分支', () => {
@@ -135,7 +145,7 @@ test('README：流程总览没有版本分支的例外，三个 skill 的行没�
   const md = readFileSync(join(root, 'README.md'), 'utf8');
   assert.match(md, /one PR takes them all to main/);
   assert.doesNotMatch(md, /implementation child session/);
-  for (const k of ['issue-session', 'issue-verify', 'issue-dispatch']) {
+  for (const k of ['issue-session', 'issue-triage', 'issue-dispatch']) {
     const row = md.split('\n').find((l) => l.startsWith(`| \`idea-loop:${k}\``) || l.startsWith(`| \`/idea-loop:${k}\``));
     assert.ok(row, `README 缺 ${k} 一行`);
     assert.doesNotMatch(row, /child session(s)? per spec|integration branch|once per sub-issue|root issue|sub-issue|unconsolidated|\bgroup\b/, `${k} 行还留着一组 / 根 / 子会话结构`);
@@ -143,14 +153,71 @@ test('README：流程总览没有版本分支的例外，三个 skill 的行没�
   }
 });
 
-test('issue-verify：只在 triage 会话里用，一份 spec，认领与分支已做过不重复，收尾不走 advance', () => {
-  const md = skill('issue-verify');
-  assert.match(front(md), /triage 会话/);
-  assert.match(md, /一份 spec/);
-  assert.match(md, /不重复认领/);
-  assert.match(md, /issue\/<号>-<slug>/);
-  assert.match(md, /idea-loop:issues/);
-  assert.match(md, /spec.mjs/);
-  assert.match(md, /issues set <docs> canceled <号> --comment=/);
-  assert.doesNotMatch(md, /逐个调你|每次只处理一个子 issue|根的会话/);
+test('issue-triage：三种调用、同时最多 5 个 issue-triager、15 个一批、表好了通知、「不做」写进 records', () => {
+  const md = skill('issue-triage');
+  assert.match(front(md), /每周分拣/);
+  assert.match(front(md), /P0/);
+  assert.doesNotMatch(front(md), /disable-model-invocation/, '可被模型调用');
+  for (const k of ['不带参数', '`全部`', '`P0 <号>`']) assert.ok(md.includes(k), `缺调用 ${k}`);
+  assert.match(md, /idea-loop:issue-triager/);
+  assert.match(md, /issues backlog <docs> 15/);
+  assert.match(md, /issues note/);
+  assert.match(md, /同时最多 5 个/);
+  assert.match(md, /PushNotification/);
+  assert.match(md, /docs\/records\/out-of-scope\/<slug>\.md/);
+  for (const k of ['todo + P1 或 P2', 'triage + P1 或 P2', 'canceled', '留在 backlog']) assert.ok(md.includes(k), `缺去向 ${k}`);
+  assert.match(md, /跳过 triage/);
+});
+
+test('issue-triager：sonnet、medium、只读不翻状态，五步、复现手段表、输出放 .tmp/triage、交回一行 JSON', () => {
+  const md = readFileSync(join(root, 'agents/issue-triager.md'), 'utf8');
+  assert.match(front(md), /^model: sonnet$/m);
+  assert.match(front(md), /^effort: medium$/m);
+  for (const k of ['查重', '「不做」清单', '是否已实现', '复现', '打分类']) assert.ok(md.includes(k), `缺步骤 ${k}`);
+  for (const k of ['一个会红的测试', '一张截图加标注', '一条查询或一段日志']) assert.ok(md.includes(k), `缺复现手段 ${k}`);
+  assert.match(md, /\.tmp\/triage\/<号>\//);
+  assert.match(md, /issues note/);
+  assert.match(md, /交回一行 JSON/);
+  assert.match(md, /不翻状态/);
+});
+
+test('issue-triager 不设 tools 白名单（继承会话全部工具，浏览器与 Linear MCP 才拿得到），skill 都写「用 Skill 工具调」，评论链接取自 issues note 的输出', () => {
+  const md = readFileSync(join(root, 'agents/issue-triager.md'), 'utf8');
+  assert.doesNotMatch(front(md), /^tools:/m);
+  for (const k of ['idea-loop:browser', 'idea-loop:evidence']) assert.match(md, new RegExp(`用 Skill 工具调 \`${k}\``), `${k} 没写「用 Skill 工具调」`);
+  assert.match(md, /已评论 <链接>/);
+});
+
+// 插件里（除 docs/raw 与 evals 的历史记录）不再有 issue-verify 与 issues open；开 issue 都指向 idea-loop:issues 的「开一个 issue」
+function walk(dir, out = []) {
+  for (const f of readdirSync(dir)) {
+    const p = join(dir, f);
+    if (statSync(p).isDirectory()) {
+      if (['node_modules', 'evals', 'raw'].includes(f)) continue;
+      walk(p, out);
+    } else if (/\.(md|mjs|json)$/.test(f) && !/\.test\.mjs$/.test(f)) out.push(p);
+  }
+  return out;
+}
+
+test('插件里没有 issue-verify，也没有 issues open', () => {
+  for (const f of walk(root)) {
+    const md = readFileSync(f, 'utf8');
+    assert.doesNotMatch(md, /issue-verify/, `${f} 还提到 issue-verify`);
+    assert.doesNotMatch(md, /issues(\.mjs)? open\b/, `${f} 还提到 issues open`);
+  }
+});
+
+test('implement、pr-review、retro、dreaming、issue-session 的开 issue 都指向 idea-loop:issues 的「开一个 issue」', () => {
+  const files = [
+    'skills/engineering/implement/SKILL.md',
+    'skills/engineering/pr-review/SKILL.md',
+    'skills/productivity/retro/SKILL.md',
+    'skills/productivity/dreaming/references/retro-candidates.md',
+    'skills/engineering/issue-session/SKILL.md',
+  ];
+  for (const f of files) {
+    const md = readFileSync(join(root, f), 'utf8');
+    assert.match(md, /`idea-loop:issues`[^\n]{0,12}「开一个 issue」/, `${f} 的开 issue 没指向「开一个 issue」`);
+  }
 });

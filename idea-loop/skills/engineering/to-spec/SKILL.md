@@ -18,13 +18,13 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
 
-   spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖，跑 `issues open <docs> <slug>` 开一个 issue，号码它自己写进去。
+   spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `issues new` 开成 todo，号码写进 `issues`；不在场，停下问人。
 
    frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步调过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
 
 5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时脚本核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `spec index <docs>` 刷 `docs/spec/index.md`。
 
-6. **合并并收工**：spec 提交在需求的工作分支上，跟代码同一个 PR 合进主分支，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交和合并由它来做的（比如 `idea-loop:issue-verify`），这一步留给它。
+6. **合并并收工**：spec 提交在需求的工作分支上，跟代码同一个 PR 合进主分支，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交和合并由它来做的（比如 `idea-loop:issue-session`），这一步留给它。
 
 工单归 `idea-loop:to-ticket`，ADR 归 `/idea-loop:dreaming`，这里只写 spec。
 

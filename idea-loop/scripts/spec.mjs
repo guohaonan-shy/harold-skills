@@ -31,11 +31,14 @@ export function frontmatter(md = '') {
   return out;
 }
 
-/** The issues a spec covers: frontmatter `issues: [12, 15]`. */
+/**
+ * The issues a spec covers: frontmatter `issues: [12, 15]`. A GitHub issue is a number; an issue on Linear
+ * keeps its key as a string (`issues: [FA-577, 12]` → `['FA-577', 12]`).
+ */
 export function issuesOf(md) {
   const raw = frontmatter(md).issues;
   if (!raw) return [];
-  return [...raw.matchAll(/\d+/g)].map((m) => Number(m[0]));
+  return [...raw.matchAll(/[A-Za-z][A-Za-z0-9]*-\d+|\d+/g)].map((m) => (/^\d+$/.test(m[0]) ? Number(m[0]) : m[0]));
 }
 
 /** Body of the first heading whose text includes `title`, up to the next heading of the same or higher level. */
@@ -72,7 +75,7 @@ export function forHuman(md) {
 
 /**
  * Whether each covered issue exists. Current specs open with one quoted line per issue, straight under
- * the title: `> #12 存在：…` or `> #12 不存在：…`. Specs written before that carry a 「验证」 table with
+ * the title: `> #12 存在：…` or `> #12 不存在：…` (a Linear issue by its key: `> FA-577 存在：…`, read as the string `'FA-577'`). Specs written before that carry a 「验证」 table with
  * a row per issue, `| #12 | 存在 | … |`; it is still read, and the opening lines win when both say something.
  */
 export function verdicts(md) {
@@ -83,8 +86,8 @@ export function verdicts(md) {
     opening.push(line);
   }
   for (const line of opening) {
-    const m = line.match(/^>\s*#(\d+)\s*(不存在|存在)\s*[：:]/);
-    if (m) out.set(Number(m[1]), m[2]);
+    const m = line.match(/^>\s*(?:#(\d+)|([A-Za-z][A-Za-z0-9]*-\d+))\s*(不存在|存在)\s*[：:]/);
+    if (m) out.set(m[1] ? Number(m[1]) : m[2], m[3]);
   }
   for (const line of (section(md, '验证') ?? '').split('\n')) {
     const m = line.match(/^\|\s*#(\d+)\s*\|\s*(存在|不存在)\s*\|/);

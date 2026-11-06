@@ -21,6 +21,21 @@
  *
  * Order between issues is GitHub's native "blocked by" relation: `candidates` leaves out a todo that an open
  * issue still blocks. Versions are milestones, modules are categories. There is no parent / child logic.
+ * Among the todo issues that nothing blocks, `candidates` hands out the higher priority first: an issue carries at
+ * most one `priority:P0|P1|P2` label (none = last), and within a priority the smaller number goes first.
+ *
+ * Issues are opened only through `new`, which refuses a body that lacks one of the four required sections
+ * (问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
+ * backlog issues the weekly triage should look at; `note` posts a comment with the AI prefix. Closing comes
+ * first: `set … done|canceled` closes the issue and only then drops its status label, so a failed close leaves
+ * the issue where it was; a flip to done opens its comment with the PRs that were merged.
+ *
+ * A project whose issues are on Linear says so in the first heading of its ISSUE_TRACKER.md
+ * (`# Issue tracker：Linear`, see `platformOf`). There the commands that write GitHub are refused (the work is
+ * done with the Linear MCP, skills/engineering/issues/references/linear.md); `check <docs> <state> <n>
+ * --from=<state>` takes the state from the caller instead of reading the issue, and `n` may be a Linear key
+ * (`FA-577`); `show` gives the spec, the PRs and the branch with `state: null`. A Linear issue's PRs are the ones
+ * in the 「仓库」 repositories whose title starts with `[<key>]` or whose body has a line `Linear: <key>`.
  *
  * Besides its status an issue carries category labels, `type:<parent>` and optionally `type:<parent>/<child>`,
  * and one kind label, `kind:bug|feature|improvement`. The project lists the categories in the「issue 分类」
@@ -33,16 +48,20 @@
  * sections, one per working state, prefixed with the category (`seo in-progress`).
  *
  * Usage (<docs> is the docs/ directory; gh runs there, so it acts on that repo):
- *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, kind:* and type:* labels; lists the rest, --prune deletes them
+ *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, priority:*, kind:* and type:* labels; lists the rest, --prune deletes them
  *   node issues.mjs type       <docs> <n> <parent[/child]>...         → sets #n's type:* labels from the project's categories
- *   node issues.mjs show       <docs> <n>                             → JSON: #n's state, title, categories, its PRs (repo, draft / ready / merged), the spec that covers it
- *   node issues.mjs check      <docs> <state> <n> [--comment=<text>] [--skip-design] → only checks the flip's preconditions; writes nothing
- *   node issues.mjs set        <docs> <state> <n>... [--comment=<text>] [--skip-design] → checked flip; done / canceled also close the issue
- *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, oldest first; main queue, or category c's own
+ *   node issues.mjs show       <docs> <n>                             → JSON: #n's state, title, categories, its PRs (repo, draft / ready / merged), the spec that covers it, its branch
+ *   node issues.mjs check      <docs> <state> <n> [--from=<state>] [--comment=<text>] [--skip-design] → only checks the flip's preconditions; writes nothing; --from: the issue is not read (n may be a Linear key)
+ *   node issues.mjs set        <docs> <state> <n>... [--comment=<text>] [--skip-design] → checked flip; done / canceled close the issue first, then drop the label
+ *   node issues.mjs new        <docs> <title> <body-file> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=<k>] [--type=<c>]... [--repo=<owner/repo>] → opens an issue after checking the body (in <owner/repo> when given, else the current repo); prints its number
+ *   node issues.mjs body       <docs> <body-file>                     → only checks the body's four required sections
+ *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
+ *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
+ *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
+ *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, P0 → P1 → P2 → none, lower numbers first within a priority; main queue, or category c's own
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
  *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
  *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply changes them
- *   node issues.mjs open       <docs> <spec-slug>                     → the spec covers no issue: opens a spec issue in status:todo, writes its number into the spec
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
 
@@ -73,6 +92,18 @@ const COLORS = { triage: '1d76db', todo: '0e8a16', 'in-progress': 'fbca04', 'in-
 export const KINDS = ['bug', 'feature', 'improvement'];
 export const KIND_PREFIX = 'kind:';
 const KIND_COLORS = { bug: 'd73a4a', feature: 'a2eeef', improvement: '7057ff' };
+export const PRIORITIES = ['P0', 'P1', 'P2'];
+export const PRIORITY_PREFIX = 'priority:';
+const PRIORITY_COLORS = { P0: 'b60205', P1: 'd93f0b', P2: 'fbca04' };
+/** The priority an issue carries (the highest when it wrongly has several), or null. */
+export function priorityOf(labels) {
+  const own = labels.filter((l) => l.startsWith(PRIORITY_PREFIX)).map((l) => l.slice(PRIORITY_PREFIX.length));
+  return PRIORITIES.find((p) => own.includes(p)) ?? null;
+}
+const priorityRank = (labels) => {
+  const p = priorityOf(labels);
+  return p === null ? PRIORITIES.length : PRIORITIES.indexOf(p);
+};
 
 /** The flips `set` allows. done and canceled are final: reopening is the human's call. */
 export const NEXT = {
@@ -199,9 +230,9 @@ export function queueOf(types, labels) {
   return own.find((q) => labels.includes(`${TYPE_PREFIX}${q.name}`)) ?? main;
 }
 
-/** The labels a project keeps: the status labels, the kinds, its categories, and its keep-list. */
+/** The labels a project keeps: the status labels, the priorities, the kinds, its categories, and its keep-list. */
 export function keptLabels(types) {
-  return new Set([...LABELED.map(label), ...KINDS.map((k) => `${KIND_PREFIX}${k}`), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
+  return new Set([...LABELED.map(label), ...PRIORITIES.map((p) => `${PRIORITY_PREFIX}${p}`), ...KINDS.map((k) => `${KIND_PREFIX}${k}`), ...typeLabels(types).map((t) => t.name), ...(types?.keep ?? [])]);
 }
 
 /** The type:* labels an issue should carry for the given values (`seo`, `seo/blog`); a child brings its parent. */
@@ -219,14 +250,30 @@ export function typeSet(types, values) {
   return [...out];
 }
 
-export const SPEC_ISSUE = 'spec：';
+// ---------- issue body ----------
 
-export function withIssues(md, list) {
-  const m = String(md).match(/^(---\n[\s\S]*?)(\n---)([\s\S]*)$/);
-  if (!m) throw new Error('spec has no frontmatter');
-  const line = `issues: [${[...new Set(list)].sort((a, b) => a - b).join(', ')}]`;
-  const head = /^issues:/m.test(m[1]) ? m[1].replace(/^issues:.*$/m, line) : `${m[1]}\n${line}`;
-  return head + m[2] + m[3];
+/** The sections every issue body must have, filled. */
+export const REQUIRED_SECTIONS = ['问题', '证据', '影响范围', '从哪发现'];
+
+/**
+ * What is wrong with an issue body: one line per required section (`## 问题` …) that is missing or holds
+ * only whitespace. Sections are cut at `## <name>` headings; optional ones and other headings are not
+ * looked at. 「无，待验证」 under 证据 counts as filled. Empty when the body is fine.
+ */
+export function bodyErrors(md) {
+  const sections = new Map();
+  let current = null;
+  for (const line of String(md ?? '').split('\n')) {
+    const h = line.match(/^## +(.+?)\s*$/);
+    if (h) {
+      current = h[1];
+      if (!sections.has(current)) sections.set(current, []);
+    } else if (current !== null) sections.get(current).push(line);
+  }
+  return REQUIRED_SECTIONS.flatMap((name) => {
+    if (!sections.has(name)) return [`缺「${name}」一节（## ${name}）`];
+    return sections.get(name).join('\n').trim() ? [] : [`「${name}」一节是空的`];
+  });
 }
 
 // ---------- project document (ISSUE_TRACKER.md) ----------
@@ -236,6 +283,21 @@ export function readTracker(docs) {
   const file = join(dirname(resolve(docs)), 'ISSUE_TRACKER.md');
   return existsSync(file) ? readFileSync(file, 'utf8') : '';
 }
+
+/**
+ * Where the project's issues live: `linear` when the first level-1 heading of its ISSUE_TRACKER.md names
+ * Linear (`# Issue tracker：Linear`), otherwise `github` (a missing file counts).
+ */
+export function platformOf(md) {
+  const title = String(md).match(/^# (.+)$/m)?.[1] ?? '';
+  return /linear/i.test(title) ? 'linear' : 'github';
+}
+
+/** The refusal for a command that writes GitHub, run in a project whose issues are on Linear. */
+export const linearRefusal = (cmd) => `「${cmd}」写的是 GitHub 上的 issue，而这个项目的 issue 在 Linear 上（ISSUE_TRACKER.md 第一个标题写了 Linear）：改用 Linear MCP，做法见 idea-loop:issues 的 references/linear.md`;
+
+/** The commands that only make sense on GitHub. */
+export const GITHUB_ONLY = new Set(['labels', 'type', 'set', 'candidates', 'reconcile', 'migrate', 'new', 'priority', 'backlog', 'note']);
 
 /**
  * Whether the project does without the triage state: a line `triage：跳过` (a list item, a bold label or a
@@ -290,6 +352,29 @@ export function prsOf(gh, n, issueRepo, repos) {
   for (const repo of [...new Set([issueRepo, ...repos])]) {
     const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${n} in:body`, '--json', 'number,body,state,isDraft,url', '--limit', '100']));
     for (const p of rows) if (refsIssue(p.body, n, issueRepo, repo)) out.push({ repo, number: p.number, url: p.url ?? null, state: prState(p) });
+  }
+  return out;
+}
+
+/** Whether a PR belongs to the Linear issue `key`: its title starts with `[<key>]`, or its body has a line `Linear: <key>`. */
+export function refsLinear(title, body, key) {
+  const k = String(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^\\s*\\[${k}\\]`, 'i').test(String(title ?? '')) || new RegExp(`^\\s*Linear:\\s*${k}\\s*$`, 'im').test(String(body ?? ''));
+}
+
+/** The PRs of the Linear issue `key` in each of `repos`, each { repo, number, url, state }. */
+export function prsOfLinear(gh, key, repos) {
+  const out = [];
+  for (const repo of [...new Set(repos)]) {
+    const seen = new Set();
+    for (const where of ['title', 'body']) {
+      const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${key} in:${where}`, '--json', 'number,title,body,state,isDraft,url', '--limit', '100']));
+      for (const p of rows) {
+        if (seen.has(p.number) || !refsLinear(p.title, p.body, key)) continue;
+        seen.add(p.number);
+        out.push({ repo, number: p.number, url: p.url ?? null, state: prState(p) });
+      }
+    }
   }
   return out;
 }
@@ -399,6 +484,8 @@ const row = (i) => {
     labels,
     state: stateOf(labels, { open, reason: i.state_reason ?? null }),
     repo: String(i.repository_url ?? '').match(/repos\/([^/]+\/[^/]+)$/)?.[1] ?? null,
+    createdAt: i.created_at ?? null,
+    updatedAt: i.updated_at ?? null,
     subTotal: i.sub_issues_summary?.total ?? 0,
     blockedBy: i.issue_dependencies_summary?.blocked_by ?? 0,
   };
@@ -406,11 +493,11 @@ const row = (i) => {
 
 const PAGE = 100;
 
-/** Every open issue (pull requests left out) from the repo-wide REST list, page by page. */
-function openIssues(gh) {
+/** Every open issue (pull requests left out) from the repo-wide REST list, page by page; of `repo` (owner/name) when given. */
+function openIssues(gh, repo = null) {
   const out = [];
   for (let page = 1; ; page += 1) {
-    const rows = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues?state=open&per_page=${PAGE}&page=${page}`]));
+    const rows = JSON.parse(gh(['api', `repos/${repo ?? '{owner}/{repo}'}/issues?state=open&per_page=${PAGE}&page=${page}`]));
     for (const i of rows) if (!i.pull_request) out.push(row(i));
     if (rows.length < PAGE) return out;
   }
@@ -427,22 +514,30 @@ function relabel(gh, n, labels, state) {
   gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
 }
 
-/** Moves #n to `state`: relabels, comments when there is something to say, closes for done / canceled. */
+/**
+ * Moves #n to `state`. done / canceled close first (the comment goes with the close) and drop the label only
+ * once the close went through: a gh call that fails (a dropped connection) then leaves the issue as it was,
+ * not open with no label, which reads as backlog. The open states relabel, then comment.
+ */
 function move(gh, it, state, comment = '') {
-  relabel(gh, it.number, it.labels, state);
   const body = comment ? `${AI_PREFIX}${comment}` : '';
-  if (CLOSED[state]) gh(['issue', 'close', String(it.number), '--reason', CLOSED[state], ...(body ? ['--comment', body] : [])]);
-  else if (body) gh(['issue', 'comment', String(it.number), '--body', body]);
+  if (CLOSED[state]) {
+    gh(['issue', 'close', String(it.number), '--reason', CLOSED[state], ...(body ? ['--comment', body] : [])]);
+    relabel(gh, it.number, it.labels, state);
+    return;
+  }
+  relabel(gh, it.number, it.labels, state);
+  if (body) gh(['issue', 'comment', String(it.number), '--body', body]);
 }
 
-/** The spec under <docs> whose `issues:` lists #n; null when none does. */
+/** The spec under <docs> whose `issues:` lists #n (a number, or a Linear key); null when none does. */
 export function specFor(docs, n) {
   const specs = scan(docs).specs.map((s) => ({ slug: s.slug, md: readFileSync(s.file, 'utf8') }));
-  return specs.find((s) => issuesOf(s.md).includes(n)) ?? null;
+  return specs.find((s) => issuesOf(s.md).some((x) => String(x) === String(n))) ?? null;
 }
 
 /**
- * Creates the missing status:*, kind:* and type:* labels, and returns the labels outside the kept set with
+ * Creates the missing status:*, priority:*, kind:* and type:* labels, and returns the labels outside the kept set with
  * how many open issues carry each; with `prune` they are deleted. Without categories nothing is pruned: the
  * keep-list lives in the same section, so every project label would look surplus.
  */
@@ -450,6 +545,7 @@ export function ensureLabels(gh, types = null, { prune = false } = {}) {
   const have = new Set(JSON.parse(gh(['label', 'list', '--limit', '500', '--json', 'name'])).map((l) => l.name));
   const want = [
     ...LABELED.map((s) => ({ name: label(s), color: COLORS[s], about: `idea-loop：${ABOUT[s]}` })),
+    ...PRIORITIES.map((p) => ({ name: `${PRIORITY_PREFIX}${p}`, color: PRIORITY_COLORS[p], about: `idea-loop：优先级 ${p}` })),
     ...KINDS.map((k) => ({ name: `${KIND_PREFIX}${k}`, color: KIND_COLORS[k], about: `idea-loop：类型 ${k}` })),
     ...typeLabels(types),
   ];
@@ -487,15 +583,91 @@ export function setTypes(gh, types, n, values) {
   return want;
 }
 
-/** The todo issues a dispatch round may hand out: none an open issue still blocks, oldest first. */
+/** The todo issues a dispatch round may hand out: none an open issue still blocks; P0 → P1 → P2 → none, the lower number first within a priority. */
 export function candidates(gh, limit = 100, { types = null, queue = null } = {}) {
   if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
   return openIssues(gh)
     .filter((i) => i.state === 'todo' && !(i.blockedBy > 0))
     .filter((i) => queueOf(types, i.labels).name === queue)
-    .sort((a, b) => a.number - b.number)
+    .sort((a, b) => priorityRank(a.labels) - priorityRank(b.labels) || a.number - b.number)
     .slice(0, limit)
-    .map(({ number, title }) => ({ number, title }));
+    .map(({ number, title, labels }) => ({ number, title, priority: priorityOf(labels) }));
+}
+
+const MINUTE = 60 * 1000;
+
+/** The newest comment of #n, or null. */
+function lastComment(gh, n) {
+  let last = null;
+  for (let page = 1; ; page += 1) {
+    const rows = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}/comments?per_page=${PAGE}&page=${page}`]));
+    if (rows.length) last = rows.at(-1);
+    if (rows.length < PAGE) return last;
+  }
+}
+
+/** Triage's comment that asks the human for more. */
+const asksForMore = (c) => String(c?.body ?? '').startsWith(AI_PREFIX) && String(c.body).includes('还要你补');
+
+/**
+ * The open issues with no status:* label (backlog), oldest first, at most `limit`. One whose newest comment
+ * is triage's 「还要你补」 and that has not been updated since (up to a minute after the comment, which the
+ * comment itself causes) is left out and does not use up the limit: nobody has answered, asking again is
+ * noise. Comments are read only for the issues that would otherwise be listed.
+ */
+export function backlog(gh, limit = 100) {
+  const out = [];
+  const waiting = openIssues(gh).filter((i) => i.state === 'backlog').sort((a, b) => a.number - b.number);
+  for (const it of waiting) {
+    if (out.length >= limit) break;
+    const last = lastComment(gh, it.number);
+    if (asksForMore(last) && Date.parse(it.updatedAt) - Date.parse(last.created_at) <= MINUTE) continue;
+    out.push({ number: it.number, title: it.title, labels: it.labels, createdAt: it.createdAt });
+  }
+  return out;
+}
+
+/**
+ * Opens an issue after checking it: the body has its four sections (`bodyErrors`), the categories exist,
+ * `todo` comes with a priority, and no open issue has the same title. Labels: `status:todo` for todo (backlog
+ * has none), `priority:*`, `kind:*`, `type:*`. Returns the new number. Nothing is created unless every check passed.
+ */
+export function newIssue(gh, types, { title, body, state = 'backlog', priority = null, kind = null, typeValues = [], repo = null }) {
+  if (!String(title ?? '').trim()) throw new Error('没给标题');
+  if (!['backlog', 'todo'].includes(state)) throw new Error(`--state 只能是 backlog 或 todo（给的是「${state}」）`);
+  if (priority !== null && !PRIORITIES.includes(priority)) throw new Error(`--priority 只能是 ${PRIORITIES.join(' / ')}（给的是「${priority}」）`);
+  if (kind !== null && !KINDS.includes(kind)) throw new Error(`--kind 只能是 ${KINDS.join(' / ')}（给的是「${kind}」）`);
+  if (state === 'todo' && !priority) throw new Error('开成 todo 要带 --priority（P0 / P1 / P2）');
+  const errors = bodyErrors(body);
+  if (errors.length) throw new Error(`正文不合格，没开：${errors.join('；')}`);
+  const typeLabelsOf = typeSet(types, typeValues);
+  if (repo !== null && !/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error(`--repo 要写成 owner/name（给的是「${repo}」）`);
+  const same = openIssues(gh, repo).find((i) => i.title.trim() === String(title).trim());
+  if (same) throw new Error(`已经有同标题的 open issue #${same.number}，没开`);
+  const labels = [...(state === 'todo' ? [label('todo')] : []), ...(priority ? [`${PRIORITY_PREFIX}${priority}`] : []), ...(kind ? [`${KIND_PREFIX}${kind}`] : []), ...typeLabelsOf];
+  const out = String(gh(['issue', 'create', ...(repo ? ['-R', repo] : []), '--title', String(title).trim(), '--body', body, ...labels.flatMap((l) => ['--label', l])])).trim();
+  const n = Number(out.match(/\/issues\/(\d+)$/)?.[1]);
+  if (!n) throw new Error(`gh issue create 没返回 issue 地址：${out}`);
+  return n;
+}
+
+/** Leaves #n carrying `priority:<p>` (none: no priority label); returns the labels it ends with. */
+export function setPriority(gh, n, p) {
+  if (p !== 'none' && !PRIORITIES.includes(p)) throw new Error(`优先级只能是 ${PRIORITIES.join(' / ')} / none（给的是「${p}」）`);
+  const have = JSON.parse(gh(['issue', 'view', String(n), '--json', 'labels'])).labels.map((l) => l.name);
+  const want = p === 'none' ? [] : [`${PRIORITY_PREFIX}${p}`];
+  const add = want.filter((l) => !have.includes(l));
+  const remove = have.filter((l) => l.startsWith(PRIORITY_PREFIX) && !want.includes(l));
+  if (add.length || remove.length) gh(['issue', 'edit', String(n), ...add.flatMap((l) => ['--add-label', l]), ...remove.flatMap((l) => ['--remove-label', l])]);
+  return want;
+}
+
+/** Comments on #n with the AI prefix (not doubled when the text already starts with it). Returns the comment's URL (what `gh issue comment` prints), or null. */
+export function noteIssue(gh, n, text) {
+  const t = String(text ?? '').trim();
+  if (!t) throw new Error('评论是空的');
+  const out = String(gh(['issue', 'comment', String(n), '--body', t.startsWith(AI_PREFIX) ? t : `${AI_PREFIX}${t}`]) ?? '');
+  return out.match(/https?:\/\/\S+/)?.[0] ?? null;
 }
 
 /** The branches of #n: `issue/<n>-<slug>`, local or remote, in the repo <docs> is in. */
@@ -508,8 +680,45 @@ function branchesOf(git, n) {
   }
 }
 
-/** #n with what a session needs to know where it is: state, categories, PRs, the spec that covers it, its branch. */
+/** The repo `gh` runs in (owner/name), or null when it cannot tell. */
+function currentRepo(gh) {
+  try {
+    return JSON.parse(gh(['repo', 'view', '--json', 'nameWithOwner'])).nameWithOwner ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** The PRs of issue `n` (a number, or a Linear key): by `Refs` for a GitHub number, by title / `Linear:` line for a key, in the 「仓库」 repos. */
+function prsFor(gh, docs, n, issueRepo) {
+  if (typeof n === 'string') {
+    // a tracker without a 「仓库」 section: the PRs are in the repo the script runs in, as on the GitHub side
+    const repos = parseRepos(readTracker(docs)) ?? [currentRepo(gh)].filter(Boolean);
+    return prsOfLinear(gh, n, repos);
+  }
+  const repo = issueRepo ?? currentRepo(gh);
+  if (!repo) throw new Error(`查不到 #${n} 所在的仓库（gh repo view 失败），没法核它的 PR`);
+  return prsOf(gh, n, repo, reposFor(docs, repo));
+}
+
+/**
+ * #n with what a session needs to know where it is: state, categories, PRs, the spec that covers it, its branch.
+ * In a Linear project the issue is not read (`state: null`, no title or categories): `n` is its key.
+ */
 export function show(gh, docs, n, { git = defaultGit(docs) } = {}) {
+  if (platformOf(readTracker(docs)) === 'linear' || typeof n === 'string') {
+    return {
+      number: n,
+      title: null,
+      state: null,
+      open: null,
+      categories: [],
+      kind: null,
+      prs: prsFor(gh, docs, n, null).map(({ repo, number, url, state }) => ({ repo, number, url, state })),
+      spec: specFor(docs, n)?.slug ?? null,
+      branch: branchesOf(git, n)[0] ?? null,
+    };
+  }
   const it = issue(gh, n);
   const spec = specFor(docs, n);
   const prs = it.repo ? prsOf(gh, n, it.repo, reposFor(docs, it.repo)) : [];
@@ -526,33 +735,46 @@ export function show(gh, docs, n, { git = defaultGit(docs) } = {}) {
   };
 }
 
-/** Everything that can refuse the flip of #n to `state`, nothing written. Returns { it, cur } or throws. */
-function checkFlip(gh, docs, state, n, { comment = '', skipDesign = false } = {}) {
-  const it = issue(gh, n);
-  const cur = it.state;
-  if (!it.open) throw new Error(`#${n} 已关闭（${cur}），done / canceled 之后不再翻；重开是人的事`);
+/**
+ * Everything that can refuse the flip of #n to `state`, nothing written. Returns { it, cur, prs } or throws.
+ * With `from` the issue is not read: `from` is the state the caller says it is in (`it` is null), and `n` may
+ * be a Linear key; the PRs are then looked for in the 「仓库」 repositories.
+ */
+function checkFlip(gh, docs, state, n, { comment = '', skipDesign = false, from = undefined } = {}) {
+  let it = null;
+  let cur = from;
+  if (from === undefined) {
+    it = issue(gh, n);
+    cur = it.state;
+    if (!it.open) throw new Error(`#${n} 已关闭（${cur}），done / canceled 之后不再翻；重开是人的事`);
+  }
   const tracker = readTracker(docs);
-  const prs = state === 'done' && it.repo ? prsOf(gh, n, it.repo, reposFor(docs, it.repo)) : null;
+  const prs = state === 'done' && (from !== undefined || it.repo) ? prsFor(gh, docs, n, it?.repo ?? null) : null;
   const why = transitionError(cur, state, { spec: specFor(docs, n)?.md ?? null, prs, comment, skipDesign, skipTriage: skipsTriage(tracker) });
-  if (why) throw new Error(`#${n}：${why}`);
-  return { it, cur };
+  if (why) throw new Error(`${typeof n === 'string' ? n : `#${n}`}：${why}`);
+  return { it, cur, prs };
 }
 
 /** Whether #n may flip to `state`: the reason when it may not, nothing written either way. */
 export function checkState(gh, docs, state, n, opts = {}) {
   try {
     const { cur } = checkFlip(gh, docs, state, n, opts);
-    return { ok: true, line: `#${n}: ${cur} → ${state} 可以翻` };
+    return { ok: true, line: `${typeof n === 'string' ? n : `#${n}`}: ${cur} → ${state} 可以翻` };
   } catch (error) {
     return { ok: false, reason: error.message };
   }
 }
 
-/** Checked flips: every one is checked before any is made, so one refusal leaves them all where they were. */
+/**
+ * Checked flips: every one is checked before any is made, so one refusal leaves them all where they were.
+ * A flip to done opens its comment with the PRs that were merged (「合并的 PR：o/r#10、o/api#20。」); a
+ * `comment` the caller gave follows.
+ */
 export function setState(gh, docs, state, numbers, opts = {}) {
   const flips = numbers.map((n) => checkFlip(gh, docs, state, n, opts));
-  return flips.map(({ it, cur }) => {
-    move(gh, it, state, opts.comment);
+  return flips.map(({ it, cur, prs }) => {
+    const merged = state === 'done' ? (prs ?? []).filter((p) => p.state === 'merged').map((p) => `${p.repo}#${p.number}`) : [];
+    move(gh, it, state, `${merged.length ? `合并的 PR：${merged.join('、')}。` : ''}${opts.comment ?? ''}`);
     return `#${it.number}: ${cur} → ${state}${CLOSED[state] ? `（关闭，${CLOSED[state]}）` : ''}`;
   });
 }
@@ -613,20 +835,6 @@ export function migrate(gh, docs, { apply = false } = {}) {
   return { applied: true, lines };
 }
 
-/** Opens a spec issue for a spec that covers none, in status:todo; returns its number, or null when the spec already lists issues. */
-export function openSpecIssue(gh, docs, slug) {
-  const file = join(docs, 'spec', slug, `${slug}.md`);
-  if (!existsSync(file)) throw new Error(`没有 ${file}`);
-  const md = readFileSync(file, 'utf8');
-  if (issuesOf(md).length) return null;
-  const title = String(md).match(/^# (.+)$/m)?.[1].trim() || slug;
-  const body = [frontmatter(md).summary ?? '', '', `spec：\`docs/spec/${slug}/${slug}.md\`。这个 issue 是它在 tracker 上的入口，状态看这里的 label。`].join('\n');
-  const out = String(gh(['issue', 'create', '--title', `${SPEC_ISSUE}${title}`, '--body', body, '--label', label('todo')])).trim();
-  const n = Number(out.match(/\/issues\/(\d+)$/)?.[1]);
-  if (!n) throw new Error(`gh issue create 没返回 issue 地址：${out}`);
-  writeFileSync(file, withIssues(md, [n]));
-  return n;
-}
 
 // ---------- cli ----------
 
@@ -635,26 +843,72 @@ const num = (v, what) => {
   return Number(v);
 };
 
-const COMMANDS = ['labels', 'type', 'show', 'check', 'set', 'candidates', 'reconcile', 'queues', 'migrate', 'open'];
+/** An issue reference: a GitHub number, or a Linear key such as `FA-577`. */
+const ref = (v, what) => {
+  if (/^\d+$/.test(String(v ?? ''))) return Number(v);
+  if (/^[A-Za-z][A-Za-z0-9]*-\d+$/.test(String(v ?? ''))) return String(v);
+  throw new Error(`${what}「${v ?? ''}」不是 GitHub 的号（12）也不是 Linear 的号（FA-577）`);
+};
 
-function main() {
-  const argv = process.argv.slice(2);
-  const flags = Object.fromEntries(argv.filter((x) => x.startsWith('--')).map((x) => { const [k, ...v] = x.slice(2).split('='); return [k, v.length ? v.join('=') : true]; }));
-  const [cmd, docs, a, b, ...rest] = argv.filter((x) => !x.startsWith('--'));
+export const COMMANDS = ['labels', 'type', 'show', 'check', 'set', 'new', 'body', 'priority', 'backlog', 'note', 'candidates', 'reconcile', 'queues', 'migrate'];
+
+/** argv split into `--flag[=value]`s (`--type` may repeat) and the plain words. */
+function parseArgs(argv) {
+  const flags = {};
+  const types = [];
+  const words = [];
+  for (const x of argv) {
+    if (!x.startsWith('--')) {
+      words.push(x);
+      continue;
+    }
+    const [k, ...v] = x.slice(2).split('=');
+    const value = v.length ? v.join('=') : true;
+    if (k === 'type') {
+      if (value === true) throw new Error('--type 要带分类：--type=seo/blog');
+      types.push(value);
+    } else flags[k] = value;
+  }
+  return { flags, types, words };
+}
+
+/** A flag that takes text: the text, null when absent. */
+const text = (flags, k) => {
+  if (flags[k] === undefined) return null;
+  if (flags[k] === true) throw new Error(`--${k} 要带值：--${k}=<…>`);
+  return flags[k];
+};
+
+const bodyFile = (file) => {
+  if (!file || !existsSync(file)) throw new Error(`没有正文文件「${file ?? ''}」`);
+  return readFileSync(file, 'utf8');
+};
+
+/**
+ * Runs one command line (without `node issues.mjs`). `gh` and `git` are injected in tests; output goes
+ * through `log`. Throws the reason when it refuses.
+ */
+export function run(argv, { gh = null, git = null, log = console.log } = {}) {
+  const { flags, types: typeFlags, words } = parseArgs(argv);
+  const [cmd, docs, a, b, ...rest] = words;
   if (!docs || !existsSync(docs)) throw new Error(`usage: issues.mjs <${COMMANDS.join('|')}> <docs> …（${docs ?? '没给 docs'} 不存在）`);
   if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」（${COMMANDS.join(' / ')}）`);
-  const gh = defaultGh(docs);
-  const print = (lines) => lines.forEach((l) => console.log(l));
-  const json = (v) => console.log(JSON.stringify(v, null, 2));
+  const linear = platformOf(readTracker(docs)) === 'linear';
+  // `new --repo=…` names a GitHub repository itself (retro opens plugin issues that way), so a Linear project may use it
+  if (linear && ((GITHUB_ONLY.has(cmd) && !(cmd === 'new' && flags.repo)) || (cmd === 'queues' && a))) throw new Error(linearRefusal(cmd));
+  gh ??= defaultGh(docs);
+  const print = (lines) => lines.forEach((l) => log(l));
+  const json = (v) => log(JSON.stringify(v, null, 2));
   const opts = { comment: typeof flags.comment === 'string' ? flags.comment : '', skipDesign: !!flags['skip-design'] };
   if (cmd === 'labels') {
     const { made, surplus, deleted } = ensureLabels(gh, readTypes(docs), { prune: !!flags.prune });
     print(made.map((l) => `created ${l}`));
     if (flags.prune) return print(deleted.map((l) => `deleted ${l}`));
-    if (surplus.length) print([`不在状态、类型、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
+    if (surplus.length) print([`不在状态、优先级、类型、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
     return;
   }
   if (cmd === 'candidates') return json(candidates(gh, a ? num(a, 'limit') : undefined, { types: readTypes(docs), queue: typeof flags.queue === 'string' ? flags.queue : null }));
+  if (cmd === 'backlog') return json(backlog(gh, a ? num(a, 'limit') : undefined));
   if (cmd === 'queues') {
     const types = readTypes(docs);
     return json(a ? queueOf(types, issue(gh, num(a, 'issue')).labels) : queues(types));
@@ -666,30 +920,51 @@ function main() {
   }
   if (cmd === 'migrate') return print(migrate(gh, docs, { apply: !!flags.apply }).lines);
   if (!a) throw new Error(`usage: issues.mjs ${cmd} <docs> …`);
-  if (cmd === 'show') return json(show(gh, docs, num(a, 'issue')));
+  if (cmd === 'body') {
+    const errors = bodyErrors(bodyFile(a));
+    if (errors.length) throw new Error(`正文不合格：${errors.join('；')}`);
+    return log('正文齐了');
+  }
+  if (cmd === 'new') {
+    if (b === undefined) throw new Error('usage: issues.mjs new <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=bug|feature|improvement] [--type=<分类>]... [--repo=<owner/repo>]');
+    const n = newIssue(gh, readTypes(docs), { title: a, body: bodyFile(b), state: text(flags, 'state') ?? 'backlog', priority: text(flags, 'priority'), kind: text(flags, 'kind'), typeValues: typeFlags, repo: text(flags, 'repo') });
+    return log(String(n));
+  }
+  if (cmd === 'priority') {
+    if (b === undefined) throw new Error('usage: issues.mjs priority <docs> <P0|P1|P2|none> <issue 号>...');
+    return print([b, ...rest].map((x) => {
+      const n = num(x, 'issue');
+      const labels = setPriority(gh, n, a);
+      return `#${n}: ${labels.length ? labels.join(' ') : '没有优先级'}`;
+    }));
+  }
+  if (cmd === 'note') {
+    if (b === undefined) throw new Error('usage: issues.mjs note <docs> <issue 号> <正文文件>');
+    const url = noteIssue(gh, num(a, 'issue'), bodyFile(b));
+    return log(`#${num(a, 'issue')}: 已评论${url ? ` ${url}` : ''}`);
+  }
+  if (cmd === 'show') return json(show(gh, docs, linear ? ref(a, 'issue') : num(a, 'issue'), git ? { git } : {}));
   if (cmd === 'type') {
     if (b === undefined) throw new Error('usage: issues.mjs type <docs> <issue 号> <父类[/子类]>...');
-    return console.log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);
+    return log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);
   }
   if (cmd === 'check') {
-    if (b === undefined) throw new Error('usage: issues.mjs check <docs> <状态> <issue 号> [--comment=<文字>] [--skip-design]');
-    const r = checkState(gh, docs, a, num(b, 'issue'), opts);
+    if (b === undefined) throw new Error('usage: issues.mjs check <docs> <状态> <issue 号> [--from=<现在的状态>] [--comment=<文字>] [--skip-design]');
+    const from = text(flags, 'from');
+    if (linear && from === null) throw new Error('这个项目的 issue 在 Linear 上，check 读不到它的状态：带 --from=<它现在的状态>（从 Linear 读），做法见 idea-loop:issues 的 references/linear.md');
+    const r = checkState(gh, docs, a, from === null ? num(b, 'issue') : ref(b, 'issue'), { ...opts, ...(from === null ? {} : { from }) });
     if (!r.ok) throw new Error(r.reason);
-    return console.log(r.line);
+    return log(r.line);
   }
   if (cmd === 'set') {
     if (b === undefined) throw new Error('usage: issues.mjs set <docs> <状态> <issue 号>... [--comment=<文字>] [--skip-design]');
     return print(setState(gh, docs, a, [b, ...rest].map((x) => num(x, 'issue')), opts));
   }
-  if (cmd === 'open') {
-    const n = openSpecIssue(gh, docs, a);
-    return console.log(n ? `#${n} ← spec ${a}` : `spec ${a} 已经列了 issue，不另开`);
-  }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   try {
-    main();
+    run(process.argv.slice(2));
   } catch (error) {
     console.error(error.stderr ? String(error.stderr).trim() || error.message : error.message);
     process.exitCode = 1;

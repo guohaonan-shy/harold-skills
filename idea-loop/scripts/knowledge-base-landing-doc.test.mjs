@@ -33,7 +33,7 @@ test('no skill, agent or the README opens a separate spec PR or design PR', () =
 test('the places that used to land a stage on its own point at wiki-conventions「知识库落地」', () => {
   for (const f of [
     'skills/engineering/to-spec/references/land-on-main.md',
-    'skills/engineering/issue-verify/SKILL.md',
+    'skills/engineering/issue-session/references/draft-spec.md',
     'skills/engineering/issue-session/SKILL.md',
     'skills/design/uiux-refine/SKILL.md',
     'skills/productivity/decision-rules/SKILL.md',
