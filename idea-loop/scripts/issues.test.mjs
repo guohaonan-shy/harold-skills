@@ -56,8 +56,10 @@ const TRACKER_TWO_REPOS = `# Issue tracker：GitHub
  * A fake gh over an in-memory set of issues and PRs, answering the reads the script makes and recording every
  * write. An issue: { number, title, state: 'OPEN' | 'CLOSED', labels, reason?, subOf?, blockedBy?: [n], pull? }.
  * `prs` maps a repo to its PRs: { number, body, state: 'OPEN' | 'MERGED' | 'CLOSED', isDraft }.
+ * With `strictLabels`, an edit behaves as GitHub did on a repo missing the label: the removals go through,
+ * then adding a label the repo does not have throws; `label create` adds to the repo's labels.
  */
-function fakeGh(issues, labels = [], prs = {}) {
+function fakeGh(issues, labels = [], prs = {}, { strictLabels = false } = {}) {
   const calls = [];
   const rest = (i) => ({
     number: i.number,
@@ -114,10 +116,15 @@ function fakeGh(issues, labels = [], prs = {}) {
       }
       return '{}';
     }
+    if (noun === 'label' && verb === 'create') labels.push(n);
     if (noun === 'issue' && verb === 'edit') {
       for (let k = 3; k < args.length; k += 2) {
-        if (args[k] === '--add-label') issues[n].labels.push(args[k + 1]);
         if (args[k] === '--remove-label') issues[n].labels = issues[n].labels.filter((l) => l !== args[k + 1]);
+      }
+      for (let k = 3; k < args.length; k += 2) {
+        if (args[k] !== '--add-label') continue;
+        if (strictLabels && !labels.includes(args[k + 1])) throw Object.assign(new Error('failed'), { stderr: `'${args[k + 1]}' not found` });
+        issues[n].labels.push(args[k + 1]);
       }
     }
     if (noun === 'issue' && verb === 'close') {
@@ -416,6 +423,34 @@ test('migrate lists by default and calls no gh write; --apply swaps the labels, 
   assert.doesNotMatch(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8'), /^status:/m);
   assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8')), [1]);
   assert.ok(issues[1].state === 'OPEN');
+});
+
+test('migrate --apply creates the new status labels first, so a repo that never ran `issues labels` keeps every issue labelled', () => {
+  const docs = docsWith({});
+  const issues = { 1: open(1, ['status:设计中']), 2: open(2, ['status:实现中']) };
+  const labels = ['status:设计中', 'status:实现中'];
+  const { gh } = fakeGh(issues, labels, {}, { strictLabels: true });
+  migrate(gh, docs, { apply: true });
+  assert.deepEqual(issues[1].labels, ['status:triage']);
+  assert.deepEqual(issues[2].labels, ['status:in-progress']);
+});
+
+test('a label swap adds before it removes: when the add fails the issue keeps its old label instead of reading as backlog', () => {
+  const issues = { 1: open(1, ['status:设计中']), 2: open(2, ['status:todo']) };
+  const labels = ['status:设计中', 'status:todo', 'status:triage', 'status:in-progress'];
+  const { gh } = fakeGh(issues, labels, {}, { strictLabels: true });
+  // the connection drops on the call that adds a label, after any removal sent with it went through
+  const dropping = (args) => {
+    if (args[0] === 'issue' && args[1] === 'edit' && args.includes('--add-label')) {
+      for (let k = 3; k < args.length; k += 2) if (args[k] === '--remove-label') issues[args[2]].labels = issues[args[2]].labels.filter((l) => l !== args[k + 1]);
+      throw Object.assign(new Error('failed'), { stderr: 'unexpected EOF' });
+    }
+    return gh(args);
+  };
+  assert.throws(() => migrate(dropping, docsWith({}), { apply: true }));
+  assert.deepEqual(issues[1].labels, ['status:设计中']);
+  assert.throws(() => setState(dropping, docsWith({}), 'in-progress', [2], { skipDesign: true }));
+  assert.deepEqual(issues[2].labels, ['status:todo']);
 });
 
 test('migrate only unlinks and closes roots the consolidation task opened (body line 1); parent-child links a human made stay', () => {
