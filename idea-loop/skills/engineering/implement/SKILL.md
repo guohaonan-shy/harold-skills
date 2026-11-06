@@ -33,7 +33,7 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项（各带代价和能否回滚）、推荐、半成品的 worktree 和分支、原执行方的 agent id（起它时 Agent 工具返回的那个；会话压缩或重启后靠它找回）。丢了就从 review loop 文件还原（Review 汇报里有批示和「做了什么」的就算已决定）。
 - **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进 Review 汇报后清空。
 - **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（`idea-loop:pr` 的「开 draft PR」写的）。
-- 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（MCP 浏览器锁）。在跑的执行方只记在会话里。
+- 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（浏览器锁，运行环境用得到时才有）。在跑的执行方只记在会话里。
 
 **可派的工单**：没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。等决定的工单的下游因此也不派。会话断了：重算可派的工单；`git worktree list` 里 pending 没记着的执行方 worktree 照「回收」收掉后重派。
 

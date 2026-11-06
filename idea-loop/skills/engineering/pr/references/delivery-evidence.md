@@ -13,7 +13,7 @@
   node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish <owner/repo> <PR 号> <文件>...
   ```
 
-  输出每个文件名对应的地址，形如 `https://github.com/<owner>/<repo>/blob/idea-loop-evidence-pr-<N>/<文件名>?raw=true`，PR 描述里的之前 → 之后对照、合并时归档进 PR 的汇报，都用它做图片地址：`![图说](<地址>)`。过程中的汇报不用上传：图写本地路径，在会话里用发送文件的工具发给人（聊天界面加载不了私有仓库的图），归档时由 `review-loop.mjs archive` 统一上传、换成地址。文件名以归属开头：工单素材用 `tNN-`（`t03-flow-sentence-failed.png`），review 第 N 轮的图用 `rN-`（`r2-spec-1-quota.png`），PR 描述的对照图用 `pr-`。分支里的文件是平铺的，不带归属就会互相覆盖，脚本会拒收。同名再传会替换原文件，地址不变，所以重录一张动图不用改已经贴出去的地址。单个文件不超过 10MB。
+  输出每个文件名对应的地址，形如 `https://github.com/<owner>/<repo>/blob/idea-loop-evidence-pr-<N>/<文件名>?raw=true`，PR 描述里的之前 → 之后对照、合并时归档进 PR 的汇报，都用它做图片地址：`![图说](<地址>)`。过程中的汇报不用上传：图写本地路径，在会话里用『发文件给人』能力发给人（做法照 `idea-loop:runtime`）（聊天界面加载不了私有仓库的图），归档时由 `review-loop.mjs archive` 统一上传、换成地址。文件名以归属开头：工单素材用 `tNN-`（`t03-flow-sentence-failed.png`），review 第 N 轮的图用 `rN-`（`r2-spec-1-quota.png`），PR 描述的对照图用 `pr-`。分支里的文件是平铺的，不带归属就会互相覆盖，脚本会拒收。同名再传会替换原文件，地址不变，所以重录一张动图不用改已经贴出去的地址。单个文件不超过 10MB。
 - **点开能看大图**：图片地址用上面那种 `blob/…?raw=true`：GitHub 给评论里的图包的链接会跳到 `raw.githubusercontent.com`，浏览器直接显示原图、能放大。宽的流程图、时序图在评论里会被缩小，全靠这一点看清。
 - **删除**：PR 合并或关闭后跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" cleanup <owner/repo> <PR 号>`，时机与 `idea-loop:to-ticket` 删工单相同。它删掉素材分支，顺带删掉旧版留下的同名 draft release。漏网的由 `/idea-loop:dreaming` 扫：PR 已经 MERGED 或 CLOSED，`idea-loop-evidence-pr-<N>` 分支（或旧版的 release）却还在。
 

@@ -38,19 +38,30 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
   assert.ok(section(setup, '每周对账').includes('references/weekly-dreaming.md'));
   const mine = weeklySteps;
   const theirs = section(seoSetup, '8. 每周扫描');
-  // the same moving parts, in the same order: look, (not in the desktop app → hand the prompt over), ask, create, tell
-  for (const part of ['list_scheduled_tasks', '不在桌面 app', 'AskUserQuestion', 'create_scheduled_task', '分钟避开 0 和 30', '补跑']) {
-    assert.ok(theirs.includes(part), `seo-setup no longer says "${part}"; update this test with it`);
-    assert.ok(mine.includes(part), `setup's weekly dreaming step does not say "${part}"`);
+  // the same moving parts, in the same order: look, (no capability → hand the prompt over), ask, create, tell.
+  // setup's step names the capabilities; seo-setup's may still name the tools of the desktop runtime or already name the
+  // capabilities, so each part lists what either way would say (the ticket that rewrites seo-setup can tighten this).
+  const parts = [
+    ['list', ['list_scheduled_tasks', '『定时任务』']],
+    ['ask', ['AskUserQuestion', '『向人提问』']],
+    ['create', ['create_scheduled_task', '『定时任务』']],
+    ['minute', ['分钟避开 0 和 30']],
+  ];
+  for (const [name, words] of parts) {
+    assert.ok(words.some((w) => theirs.includes(w)), `seo-setup no longer says the "${name}" part; update this test with it`);
   }
-  assert.ok(mine.indexOf('list_scheduled_tasks') < mine.indexOf('AskUserQuestion'));
-  assert.ok(mine.indexOf('AskUserQuestion') < mine.indexOf('create_scheduled_task'));
-  // the prompt is the slash command, and the app being closed is told to the human
-  assert.match(mine, /`prompt`：`\/idea-loop:dreaming`/);
-  assert.match(mine, /app 关着时到点不跑/);
-  // a refusal and a missing desktop app are both recorded, not silently skipped
+  assert.ok(mine.includes('分钟避开 0 和 30'));
+  assert.ok(mine.indexOf('列出已有的任务') < mine.indexOf('用『向人提问』问人'));
+  assert.ok(mine.indexOf('用『向人提问』问人') < mine.indexOf('用『定时任务』创建'));
+  // no desktop tool name left: the how is in idea-loop:runtime
+  assert.doesNotMatch(mine, /list_scheduled_tasks|AskUserQuestion|create_scheduled_task|桌面 app/);
+  assert.match(mine, /idea-loop:runtime/);
+  // the prompt starts the skill (the way to write it is the runtime's), and what the runtime does at a missed run is told to the human
+  assert.match(mine, /prompt：调起 `idea-loop:dreaming`/);
+  assert.match(mine, /补不补跑[\s\S]*「行为」/);
+  // a refusal and a missing capability are both recorded, not silently skipped
   assert.match(mine, /人拒绝/);
-  assert.match(mine, /未做：不在桌面 app/);
+  assert.match(mine, /未做：运行环境 <名> 没有『定时任务』/);
   assert.match(setup, /##\s*交回[\s\S]*每周对账/);
 });
 

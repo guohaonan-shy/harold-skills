@@ -6,7 +6,7 @@ argument-hint: "[全部 | P0 <issue 号>]"
 
 backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triager` 一个个查完，把结论拼成一张表摆给人，人逐行批去向，你照批的翻状态。状态怎么翻、前提是什么，读 `idea-loop:issues`。
 
-下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
+推送等运行环境的能力，用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『<能力>』。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 **Linear 项目**（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，取 backlog、贴评论、打 label、翻状态用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）做，不跑 `issues backlog` / `note` / `set` / `priority` / `type`；翻状态前仍先 `issues check <docs> <状态> <号> --from=<现在>`。
 
@@ -33,7 +33,7 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
    | 留在 backlog | 什么都不做 |
 
    项目跳过 triage 的（`ISSUE_TRACKER.md` 写了「triage：跳过」），没有 triage 这一行。结论里标了「疑似 P0」的，建议优先级写 P1，人可以改成 P0。
-5. **等人批**：表摆在会话里，用 PushNotification 发「N 个 issue 等你批」，停下。人逐行回「是」或改去向、改优先级，你照批的执行；没回的行不动。
+5. **等人批**：表摆在会话里，用『推送』能力发「N 个 issue 等你批」，停下。人逐行回「是」或改去向、改优先级，你照批的执行；没回的行不动。
 6. **记「不做」**：人拒掉一个需求（不是重复、已实现、复现不出），把它写进 `docs/records/out-of-scope/<slug>.md`：`type: record`，一个概念一份文件，写是什么、为什么不做（人的原话）、相关 issue 号；同一个概念再被提，往同一份里追加号码。文件走只改 `docs/` 的 PR，检查全过就合并（`idea-loop:wiki-conventions` 的「知识库落地」）。
 7. **收尾**：删掉第 1 步的 worktree。`全部` 还有没处理的，回第 2 步跑下一批。
 
@@ -43,7 +43,7 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
 
 「开一个 issue」开出疑似 P0（线上坏了、安全问题）的 backlog issue 后调到这里。备环境同上，只起一个 `idea-loop:issue-triager`：
 
-- 复现到了：`issues set <docs> todo <号>`，`issues priority <docs> P0 <号>`，用 PushNotification 通知人。
+- 复现到了：`issues set <docs> todo <号>`，`issues priority <docs> P0 <号>`，用『推送』能力通知人。
 - 没复现到：留在 backlog，`issues note <docs> <号> <文件>` 贴一条「疑似 P0，没复现到」，写试了什么。
 
 ## 边界

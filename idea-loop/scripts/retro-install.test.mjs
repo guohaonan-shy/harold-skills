@@ -71,12 +71,14 @@ test('the scheduled task prompt starts the runner in the background and waits fo
   assert.match(prompt, /不要.{0,6}(轮询|sleep|反复)/, 'no polling while it runs');
 });
 
-test('the scheduled task prompt runs the one command, forwards each result line to its session with the session-management send_message tool, and falls back to the notification', () => {
+test('the scheduled task prompt runs the one command, forwards each result line to its session with the 会话管理 capability, and falls back to the notification', () => {
   const home = '/Users/someone';
   const dest = '/Users/someone/.idea-loop/bin';
   const prompt = taskPrompt(dest, home);
   assert.ok(prompt.includes(taskCommand(dest, home)));
-  assert.match(prompt, /mcp__ccd_session_mgmt__send_message/, 'a scheduled task session cannot reach another session with SendMessage; this tool can');
+  assert.match(prompt, /『会话管理』/, 'the prompt names the capability, not a runtime-specific tool');
+  assert.match(prompt, /idea-loop:runtime/, 'and says where the way to do it is');
+  assert.doesNotMatch(prompt, /mcp__ccd_session_mgmt|SendMessage|ToolSearch/, 'no runtime-specific tool name in the prompt');
   assert.match(prompt, /回放结果/);
   assert.match(prompt, /session/);
   assert.ok(prompt.includes('node ~/.idea-loop/bin/retro-replay.mjs --notify'), 'the fallback is the same runner, so one permission rule covers it');

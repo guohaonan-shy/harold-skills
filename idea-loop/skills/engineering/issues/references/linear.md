@@ -1,6 +1,6 @@
 # Linear 上的 issue
 
-项目的 `ISSUE_TRACKER.md` 第一个标题写 `Linear`，issue 就在 Linear 上。读写 issue 用 Linear 的 MCP，工具只写名字（前缀随连接方式不同，到工具列表里找）；**翻状态之前的前提、PR 怎么算、正文格式仍由 `issues` 判**。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`，`<号>` 是 Linear 的 issue 号（形如 `ENG-123`）。
+项目的 `ISSUE_TRACKER.md` 第一个标题写 `Linear`，issue 就在 Linear 上。读写 issue 用 Linear 的 MCP，调用经『调用 MCP』能力（用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的这一节；工具名和参数名不随运行环境变），工具只写名字（前缀随连接方式不同，到工具列表里找）；**翻状态之前的前提、PR 怎么算、正文格式仍由 `issues` 判**。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`，`<号>` 是 Linear 的 issue 号（形如 `ENG-123`）。
 
 **状态名、label 组名从 `ISSUE_TRACKER.md` 取**：下面写 `<某状态的名字>` 的，都是它的状态表里那一行「Linear 上」一列的字，团队改过名也照那一列。`list_issue_statuses`（`team`）能看团队实际有哪些。
 

@@ -108,15 +108,17 @@ test('the magi reference carries the spec table\'s commands and the dispatch sha
   const needs = [
     'magi cron create', '--action create_session', '--cwd', '--expr', 'UTC', 'magi cron list', 'magi cron show',
     'magi wake every', 'magi wake list', 'magi wake cancel',
-    'magi sessions list', 'magi sessions start', 'magi sessions send', 'magi sessions show', '-o', 'magi sessions archive', '分组：没有',
+    'magi sessions list', 'magi sessions start', 'magi sessions send', 'magi sessions show', '-o', 'magi sessions stop', '分组：没有',
     'magi browser', 'window new', '--tab', '不能执行任意 JS', '元素盒子',
-    '编号选项', 'magi artifact push', 'magi.reply', 'PushNotification',
+    '编号选项', 'magi artifact push', 'magi.reply', 'PushNotification', '把一页摆给人看：没有', '截一张图',
     'magi mcp list', 'magi mcp call', 'key=value', 'Integrations → MCP servers', '/plugin', '$CLAUDE_CONFIG_DIR/settings.json',
     'dispatch-<仓库名>', '--slug <仓库名>-<号>', '用 Skill 工具调 idea-loop:',
   ];
   assert.deepEqual(needs.filter((n) => !text.includes(n)), []);
   const dispatch = text.slice(text.indexOf('### 调度'));
-  for (const word of ['每轮新开', '归档自己', '没有 7 天到期', '前缀', '主队列 10', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
+  // a session cannot archive itself (measured 2026-11-06); it stops itself instead
+  assert.ok(!dispatch.includes('归档自己'), 'magi sessions cannot archive themselves');
+  for (const word of ['每轮新开', '停掉自己', '没有 7 天到期', '前缀', 'stopped / exited / dead', '主队列 10', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
 });
 
 test('the skill is findable: lives under productivity, with the two references and no stray files', () => {

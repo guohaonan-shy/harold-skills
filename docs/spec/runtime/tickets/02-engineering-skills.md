@@ -13,14 +13,14 @@ issue-dispatch 拆成通用部分与运行环境部分：对账、队列与上�
 
 ## 验收标准
 
-- [ ] engineering 下的正文与 references 里不再出现运行环境专用写法（照 spec「tripwire 的名单」grep，frontmatter 的工具声明行除外）；在交回里贴 grep 结果。
-- [ ] 每处删掉的桌面端写法都能在 claude-desktop reference 里找到（交回里列对照）；发现缺的，补进 reference，不留在正文。
-- [ ] issue-dispatch 正文不再写 section、卡片、会话内循环的具体做法；在 magi 里照 runtime 能读出完整的一轮（cron 新开、按 slug 与状态计数、直接开、停掉自己）。
-- [ ] setup 在 magi 里建每周分拣的步骤能照 runtime 做出 `magi cron create triage-<仓库名> … --action create_session … --prompt "用 Skill 工具调 idea-loop:issue-triage"`。
-- [ ] browser 不再写「Playwright MCP 不在就停下」，改为照 runtime 的『浏览器』能力；magi 里用 `magi browser`；magi 下「摆给人看」走退路（截图经『发文件给人』发出并附 URL），magi reference 同步写明。
-- [ ] 夜间回放脚本打印的 prompt 不含运行环境专用工具名；它的测试相应更新。
-- [ ] 改到的 SKILL.md 主体仍 < 5000 字；README 里对应的描述同步。
-- [ ] `node --test '*/scripts/*.test.mjs'` 全绿。
+- [x] engineering 下的正文与 references 里不再出现运行环境专用写法（照 spec「tripwire 的名单」grep，frontmatter 的工具声明行除外）；在交回里贴 grep 结果。
+- [x] 每处删掉的桌面端写法都能在 claude-desktop reference 里找到（交回里列对照）；发现缺的，补进 reference，不留在正文。
+- [x] issue-dispatch 正文不再写 section、卡片、会话内循环的具体做法；在 magi 里照 runtime 能读出完整的一轮（cron 新开、按 slug 与状态计数、直接开、停掉自己）。
+- [x] setup 在 magi 里建每周分拣的步骤能照 runtime 做出 `magi cron create triage-<仓库名> … --action create_session … --prompt "用 Skill 工具调 idea-loop:issue-triage"`。
+- [x] browser 不再写「Playwright MCP 不在就停下」，改为照 runtime 的『浏览器』能力；magi 里用 `magi browser`；magi 下「摆给人看」走退路（截图经『发文件给人』发出并附 URL），magi reference 同步写明。
+- [x] 夜间回放脚本打印的 prompt 不含运行环境专用工具名；它的测试相应更新。
+- [x] 改到的 SKILL.md 主体仍 < 5000 字；README 里对应的描述同步。
+- [x] `node --test '*/scripts/*.test.mjs'` 全绿。
 
 ## 选中的存量回归
 

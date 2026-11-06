@@ -41,13 +41,13 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 - **读一个会话的记录**：`mcp__ccd_session_mgmt__export_transcript`，`session_id: self`，导出一个 zip，解开里面的会话记录文件。
 - **本会话 id**：`get_session`（`self`），是 `local_…` 那一串。
 - **会话收尾**：`archive_session`，`session_id: self`，`reason` 写「#<号> done」「#<号> 交给调度」「#<号> 先放着」之类；worktree 随归档清掉。
-- **分组（侧边栏 section）**：`list_sections` 列，缺的用 `create_section` 建；会话自己归位：`detach_session`（`self`）变成顶层会话（报错说不是被别的会话开出来的，就跳过），再 `move_sessions`（`self`）移进对应 section；`set_session_title` 改标题。调度会话只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话。
+- **分组（侧边栏 section）**：issue 会话按状态待在三个 section 里：triage、in-progress、in-review；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`）就用它返回的 `sections`，即前面加了分类名的同名 section（如「seo in-progress」）。`list_sections` 列，缺的用 `create_section` 建。会话自己归位：`detach_session`（`self`）变成顶层会话（报错说不是被别的会话开出来的，就跳过），按认领后的状态找到对应的 section（triage 会话在 triage；todo 会话在 in-progress，PR 全部转 ready 后移到 in-review），再 `move_sessions`（`self`）移进去；标题不是「<仓库名>#<号> <标题>」的，`set_session_title` 改成这样：调度会话靠它数会话。调度会话只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话。
 
 ### 调度（issue-dispatch 的三处）
 
-- **怎么一轮一轮跑**：常驻调度会话里的会话内循环，`/idea-loop:issue-dispatch` 每到点不带参数调一次；7 天到期，由到期提醒叫人重起。
-- **怎么数开着的会话**：每个队列的三个 section（triage、in-progress、in-review；独立队列的 section 名前加分类名）各用 `list_sessions` 列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：section 跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个 section 里，但不占位，按队列记下个数。判别用标题，不用会话的 `startedBy`：点调度卡片开出的 issue 会话，`startedBy` 也是调度会话，跟子会话分不出来；issue 会话开场会把自己的标题改成这个格式，所以都能被数到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，这个队列可能多出一张卡片；只多一个会话，不丢东西，接受。
-- **怎么交出 issue**：出卡片，人点了才开。空位 = 队列上限 − 它开着的会话 − 它还没点的卡片（调度出过、issue 还是 todo 的；上一轮汇报里记着）。卡片的 `background`：这个仓库用 idea-loop 处理 issue，一个 issue 一个会话，会话按状态待在侧边栏的 triage、in-progress、in-review 里（独立队列的 issue 待在加了分类名的同名 section 里），你派的是 todo 的 issue，会话认领后从 spec 做到 PR 合并。
+- **怎么一轮一轮跑**：常驻调度会话里的会话内循环（步骤见「会话内循环」），`/idea-loop:issue-dispatch <间隔>` 起，之后每到点不带参数调一次，prompt 是 `/idea-loop:issue-dispatch`；7 天到期，由到期提醒叫人重起（提醒的 prompt 里写 `/idea-loop:issue-dispatch <间隔>`）。起好后汇报里写下次运行和到期的时间。
+- **怎么数开着的会话**：`issues queues <docs>` 给出每个队列的三个 `sections`（triage、in-progress、in-review；独立队列的 section 名前加分类名）；缺的先用 `create_section` 建，再各用 `list_sessions` 列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：section 跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个 section 里，但不占位，按队列记下个数。判别用标题，不用会话的 `startedBy`：点调度卡片开出的 issue 会话，`startedBy` 也是调度会话，跟子会话分不出来；issue 会话开场会把自己的标题改成这个格式，所以都能被数到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，这个队列可能多出一张卡片；只多一个会话，不丢东西，接受。
+- **怎么交出 issue**：出卡片，人点了才开。空位 = 队列上限 − 它开着的会话 − 它还没点的卡片（调度出过、issue 还是 todo 的；上一轮汇报里记着）。卡片一周不点会过期：过期的从「还没点的卡片」里去掉，下一轮会重新出。卡片的 `prompt`：`你是 <仓库名>#<号>（<标题>）的 issue 会话，由 issue 调度会话的卡片开出。用 Skill 工具调 idea-loop:issue-session，参数 <号>，按它从开场做起。`卡片的 `background`：这个仓库用 idea-loop 处理 issue，一个 issue 一个会话，会话按状态待在侧边栏的 triage、in-progress、in-review 里（独立队列的 issue 待在加了分类名的同名 section 里），你派的是 todo 的 issue，会话认领后从 spec 做到 PR 合并。
 
 ## 浏览器
 
@@ -113,6 +113,6 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 告诉人怎么接：
 
 - **MCP**：桌面 app 在设置的 Connectors 里加；命令行 `claude mcp add --scope user …`（如 `claude mcp add --transport http --scope user linear https://mcp.linear.app/mcp`），再在 `claude` 里 `/mcp` 授权。查有没有：`claude mcp get <名字>`。
-- **Playwright MCP**：用户级，参数带 `--headless --isolated`：`claude mcp add --scope user playwright -- npx -y @playwright/mcp --headless --isolated`。
-- **Refero MCP**：用户级、http、`https://api.refero.design/mcp`；token 由人自己配：`claude mcp add --scope user --transport http refero https://api.refero.design/mcp --header "Authorization: Bearer <token>"`。
+- **Playwright MCP**（必需）：查 `claude mcp get playwright`，要用户级、参数带 `--headless --isolated`；修法 `claude mcp add --scope user playwright -- npx -y @playwright/mcp --headless --isolated`。
+- **Refero MCP**（可选，设计调研用）：查 `claude mcp get refero`，要用户级、http、`https://api.refero.design/mcp`；token 由人自己配，修法 `claude mcp add --scope user --transport http refero https://api.refero.design/mcp --header "Authorization: Bearer <token>"`。
 - **允许规则**：人自己加进 `~/.claude/settings.json` 的 `permissions.allow`；这边只打印规则，不替人改权限设置。
