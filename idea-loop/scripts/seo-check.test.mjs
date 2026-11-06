@@ -165,7 +165,7 @@ test('hook helpers: touchedSince and errorsOnly', () => {
   assert.equal(errorsOnly(report), '/b\n    [ERROR] [Both] Missing <title>.\nSummary: 1 error');
 });
 
-test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write hooks are all there, and the pre-merge hook is gone', () => {
+test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write hooks are all there, SessionStart is the only other event, and the pre-merge hook is gone', () => {
   const hooks = JSON.parse(readFileSync(join(here, '..', 'hooks', 'hooks.json'), 'utf8')).hooks;
   assert.deepEqual(hooks.PreToolUse, [
     { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
@@ -180,7 +180,7 @@ test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write 
     },
     { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
   ]);
-  assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse']);
+  assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse', 'SessionStart']);
   assert.doesNotMatch(JSON.stringify(hooks), /merge-gate/);
   for (const gone of ['merge-gate-hook.mjs', 'merge-gate-hook.test.mjs']) {
     assert.equal(existsSync(join(here, gone)), false, `${gone} should be deleted`);

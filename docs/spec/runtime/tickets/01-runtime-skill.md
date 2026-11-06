@@ -13,13 +13,13 @@ idea-loop 有一个共享 skill `idea-loop:runtime`：正文列出能力清单�
 
 ## 验收标准
 
-- [ ] 检测脚本：`IDEA_LOOP_RUNTIME` 为已知名时打印它；未设时有 `MAGI_SESSION_ID` 打印 `magi`，否则打印 `claude-desktop`；`IDEA_LOOP_RUNTIME` 为未知值时退出码非 0 且说明已知名单。有单元测试（先红后绿）。
-- [ ] hooks 里注册了 `SessionStart`，命令跑检测脚本并只输出一行；有测试断言它注册了且输出一行。
-- [ ] `idea-loop:runtime` 的 SKILL.md：frontmatter description 只做路由；正文有能力清单（闭集）、检测规则、统一退路（含两个例外与「向人提问缺了改在对话里问」）；主体 < 5000 字。
-- [ ] 两份 reference 的能力小节一一对应、名字与 SKILL.md 的清单一致；有结构测试断言（缺一个能力或多一个都红）。
-- [ ] claude-desktop reference 收齐了现有正文里的桌面端写法：对 0.1.10 正文 grep 出的每个桌面端工具名，在这份 reference 里都找得到（在交回里列出对照）。
-- [ ] magi reference 的每个做法与 spec 能力清单表的 magi 列一致；调度一节写清 cron 每轮新开会话、按 slug 计数、直接开会话、归档自己、上限照旧。
-- [ ] `node --test '*/scripts/*.test.mjs'` 全绿。
+- [x] 检测脚本：`IDEA_LOOP_RUNTIME` 为已知名时打印它；未设时有 `MAGI_SESSION_ID` 打印 `magi`，否则打印 `claude-desktop`；`IDEA_LOOP_RUNTIME` 为未知值时退出码非 0 且说明已知名单。有单元测试（先红后绿）。
+- [x] hooks 里注册了 `SessionStart`，命令跑检测脚本并只输出一行；有测试断言它注册了且输出一行。
+- [x] `idea-loop:runtime` 的 SKILL.md：frontmatter description 只做路由；正文有能力清单（闭集）、检测规则、统一退路（含两个例外与「向人提问缺了改在对话里问」）；主体 < 5000 字。
+- [x] 两份 reference 的能力小节一一对应、名字与 SKILL.md 的清单一致；有结构测试断言（缺一个能力或多一个都红）。
+- [x] claude-desktop reference 收齐了现有正文里的桌面端写法：对 0.1.10 正文 grep 出的每个桌面端工具名，在这份 reference 里都找得到（在交回里列出对照）。
+- [x] magi reference 的每个做法与 spec 能力清单表的 magi 列一致；调度一节写清 cron 每轮新开会话、按 slug 计数、直接开会话、归档自己、上限照旧。
+- [x] `node --test '*/scripts/*.test.mjs'` 全绿。
 
 ## 选中的存量回归
 
