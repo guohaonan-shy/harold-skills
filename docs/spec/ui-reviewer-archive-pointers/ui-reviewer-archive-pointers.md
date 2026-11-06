@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 完成
 tags: [idea-loop, ui-archive]
 summary: ui-reviewer 开工与对账模式用文件路径指向设计档案的分段写法：验证为不存在，已在 design-archive-skill-length 里改成能力名加节名
 related: ["[[design-archive-skill-length]]", "[[canvas-truth-dreaming-agents]]"]

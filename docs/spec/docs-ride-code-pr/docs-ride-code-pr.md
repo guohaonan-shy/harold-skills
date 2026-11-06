@@ -1,6 +1,5 @@
 ---
 type: spec
-status: 正式
 tags: [issue-workflow, idea-loop-0-1-10, knowledge-base]
 summary: spec、设计、工单跟代码一个 PR 合进主分支；setup 问要不要知识库、放在哪
 related: []
