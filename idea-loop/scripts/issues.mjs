@@ -21,8 +21,10 @@
  *
  * Order between issues is GitHub's native "blocked by" relation: `candidates` leaves out a todo that an open
  * issue still blocks. Versions are milestones, modules are categories. There is no parent / child logic.
- * Among the todo issues that nothing blocks, `candidates` hands out the higher priority first: an issue carries at
- * most one `priority:P0|P1|P2` label (none = last), and within a priority the smaller number goes first.
+ * Among the todo issues that nothing blocks, `candidates` goes by whose they are first: the ones assigned to me (the
+ * `gh` login) alone, higher priority first (an issue carries at most one `priority:P0|P1|P2` label, none = last, and
+ * within a priority the smaller number goes first); someone else's never; the unassigned ones only when none of mine
+ * can go, the longest in todo first.
  *
  * Issues are opened only through `new`, which refuses a body that lacks one of the four required sections
  * (问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
@@ -58,7 +60,7 @@
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
  *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
- *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, P0 → P1 → P2 → none, lower numbers first within a priority; main queue, or category c's own
+ *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (longest in todo first); someone else's never; main queue, or category c's own
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
  *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
  *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply creates the missing labels, then changes them
@@ -482,6 +484,7 @@ const row = (i) => {
     open,
     reason: i.state_reason ?? null,
     labels,
+    assignees: (i.assignees ?? []).map((a) => a.login),
     state: stateOf(labels, { open, reason: i.state_reason ?? null }),
     repo: String(i.repository_url ?? '').match(/repos\/([^/]+\/[^/]+)$/)?.[1] ?? null,
     createdAt: i.created_at ?? null,
@@ -591,15 +594,36 @@ export function setTypes(gh, types, n, values) {
   return want;
 }
 
-/** The todo issues a dispatch round may hand out: none an open issue still blocks; P0 → P1 → P2 → none, the lower number first within a priority. */
+/** When #n last got the `status:todo` label (an ISO time), from the issue's events; null when the events never show it. */
+function inTodoSince(gh, n) {
+  let since = null;
+  for (let page = 1; ; page += 1) {
+    const rows = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}/events?per_page=${PAGE}&page=${page}`]));
+    for (const e of rows) if (e.event === 'labeled' && e.label?.name === label('todo') && (!since || e.created_at > since)) since = e.created_at;
+    if (rows.length < PAGE) return since;
+  }
+}
+
+/**
+ * The todo issues a dispatch round may hand out, in the order to take them: none an open issue still blocks.
+ * Whose it is decides first. Those assigned to me (the login `gh` runs as) come alone, P0 → P1 → P2 → none, the
+ * lower number first within a priority; someone else's are never handed out. Only when none of mine can go do the
+ * unassigned ones, the longest in todo first (since `status:todo` was last added; the creation time when the events
+ * never show it), the lower number on a tie. The login is read only when an issue has an assignee, and the events
+ * only for the unassigned ones that have to be sorted (more than one, none of them mine).
+ */
 export function candidates(gh, limit = 100, { types = null, queue = null } = {}) {
   if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
-  return openIssues(gh)
-    .filter((i) => i.state === 'todo' && !(i.blockedBy > 0))
-    .filter((i) => queueOf(types, i.labels).name === queue)
-    .sort((a, b) => priorityRank(a.labels) - priorityRank(b.labels) || a.number - b.number)
-    .slice(0, limit)
-    .map(({ number, title, labels }) => ({ number, title, priority: priorityOf(labels) }));
+  const free = openIssues(gh).filter((i) => i.state === 'todo' && !(i.blockedBy > 0) && queueOf(types, i.labels).name === queue);
+  const me = free.some((i) => i.assignees.length) ? JSON.parse(gh(['api', 'user'])).login : null;
+  const mine = free.filter((i) => i.assignees.includes(me)).sort((a, b) => priorityRank(a.labels) - priorityRank(b.labels) || a.number - b.number);
+  let pick = mine;
+  if (!mine.length) {
+    const unassigned = free.filter((i) => !i.assignees.length);
+    const since = new Map(unassigned.length > 1 ? unassigned.map((i) => [i.number, inTodoSince(gh, i.number) ?? i.createdAt ?? '']) : []);
+    pick = unassigned.sort((a, b) => String(since.get(a.number) ?? '').localeCompare(String(since.get(b.number) ?? '')) || a.number - b.number);
+  }
+  return pick.slice(0, limit).map(({ number, title, labels }) => ({ number, title, priority: priorityOf(labels), assignee: mine.length ? 'me' : null }));
 }
 
 const MINUTE = 60 * 1000;

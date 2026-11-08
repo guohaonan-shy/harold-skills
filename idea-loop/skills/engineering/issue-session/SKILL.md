@@ -20,14 +20,14 @@ argument-hint: "<issue 号>"
 ## 开场
 
 1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
-2. **认领**：`gh issue view $ARGUMENTS --comments` 读全文和评论（最近一条「🤖 idea-loop：」写着上次停在哪、分支叫什么），`issues show <docs> $ARGUMENTS` 看状态、挂着的 PR、spec、分支。按状态走：
+2. **认领**：`gh issue view $ARGUMENTS --comments` 读全文和评论（最近一条「🤖 idea-loop：」写着上次停在哪、分支叫什么），`issues show <docs> $ARGUMENTS` 看状态、挂着的 PR、spec、分支。**Linear 项目**这里读 issue、读状态、翻状态都不用 `gh` 和 `issues set`，用 Skill 工具调 `idea-loop:issues`，照它的 Linear 做法。按状态走：
    - backlog：人在接手它。`issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`issues set` 拒绝 triage），`set todo` 再 `set in-progress`，走 todo 会话。
    - triage：人在接着评估，走 triage 会话。
    - todo：`issues set <docs> in-progress $ARGUMENTS`，走 todo 会话。
    - in-progress、in-review：别的会话已经在做。你是调度开出来的，告诉人，然后照「收尾」收尾；人直接调的，是在接手一个没有会话的 issue，不翻状态，按 PR、spec、工单在哪接上；in-review 里人批了要改的，先 `set in-progress`。
    - 已关闭：停下说明。
 3. **归位**：用『会话管理』的「分组」把自己归到认领后状态对应的分组，标题改成「<仓库名>#<号> <标题>」；没有分组的运行环境跳过。
-4. **接分支**：`git fetch origin`。`show` 返回了分支，就在它上面接着做（`git switch -c issue/<号>-<slug> --track origin/issue/<号>-<slug>`）；没有就 `git switch -c issue/<号>-<slug> origin/<主分支>`，`<slug>` 取标题的几个词。spec、设计、工单和代码都提交在这一条分支上，PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
+4. **接分支**：`git fetch origin`。`git branch --show-current` 已经是 `issue/<号>-<slug>`（调度建 worktree 时开好的）就接着做，不再切。否则 `show` 返回了分支，就在它上面接着做（`git switch -c issue/<号>-<slug> --track origin/issue/<号>-<slug>`）；没有就 `git switch -c issue/<号>-<slug> origin/<主分支>`，`<slug>` 取标题的几个词。spec、设计、工单和代码都提交在这一条分支上，PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
 
 完成条件：会话在当前路的分组里（没有分组就免），issue 的状态是这条路认领成的那个，worktree 在这个 issue 的分支上。
 
@@ -49,11 +49,7 @@ argument-hint: "<issue 号>"
 2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
 3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
-**规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（一条「From …」的消息，第一行是 `<仓库> #<PR> 的规则回放：…`，后面是结果文件路径）。收到后：读那份 review loop 文件里的 `规则回放` 条目核实，再按结果走：
-
-- **全过**：条目已是处理完的状态（`review-loop.mjs check` 不列它）。回到 `idea-loop:implement` 的「没活了就停下」：没有别的挡着就 `gh pr ready` 进 `idea-loop:pr-review`。
-- **有不过的**：停下，不进 review。把没过的用例、判定会话在改前改后各答了什么和出处摆给人，选项就是条目里的三个处理（判定对 / 判定错 / 用例有问题），等人批示；人的批示照 `idea-loop:implement` 里「人回复后」处理。
-- 会话收到消息时正忙着别的，先做完手上这一步再处理；消息没发来（会话已收尾、任务没跑）时，人会收到 macOS 通知，结果照样在文件里。
+**规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（第一行是 `<仓库> #<PR> 的规则回放：…`）。收到后读 [references/replay-result.md](references/replay-result.md)，照它处理。
 
 ## 先放着
 

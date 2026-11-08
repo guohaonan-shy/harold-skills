@@ -32,7 +32,7 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 用 `magi sessions`：
 
 - **列会话**：`magi sessions list`。
-- **开一个 issue 会话**：`magi sessions start --cwd <主 checkout> --slug <前缀> <prompt>`。直接开，不等人点；打印 `<slug> <id>`。
+- **开一个 issue 会话**：`magi sessions start --cwd <目录> --slug <前缀> --cap <能力>… <prompt>`。直接开，不等人点；打印 `<slug> <id>`。会话只拿到 `--cap` 列出的能力（默认只有 magi），而且不会比开它的会话多；issue 会话开在它自己的 worktree 里，怎么建、带哪些能力见「调度」的「怎么交出 issue」。
 - **给别的会话发消息**：`magi sessions send <会话> <文本 | ->`。
 - **读一个会话的记录**：`magi sessions show <会话> -o <文件>`，`-o` 写出整份。
 - **会话收尾**：`magi sessions stop <会话>`，对自己可用，会话停掉自己。会话不能归档自己（`magi sessions archive` 只收它开出的 helper）；停掉的会话由人在 magi 或 Dawn 里归档。
@@ -42,7 +42,13 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 - **怎么一轮一轮跑**：`magi cron`（「定时任务」）每轮新开一个调度会话来跑 `idea-loop:issue-dispatch`，id `dispatch-<仓库名>`，间隔由人定；跑完一轮 `magi sessions stop` 停掉自己。没有 7 天到期，也不用常驻会话。人带间隔手敲 `/idea-loop:issue-dispatch <间隔>`：用「定时任务」建（已有就 `magi cron edit`）这个任务，prompt 是 `用 Skill 工具调 idea-loop:issue-dispatch`，再立刻做第一轮。
 - **怎么数开着的会话**：`magi sessions list` 里 slug 前缀是 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的。不是这个前缀的会话（如 issue 会话开出的子会话）不占位，按队列记下个数。每个队列各数各的：会话属于哪个队列，用它的号跑 `issues queues <docs> <号>`，看返回的 `name`。
-- **怎么交出 issue**：`magi sessions start --cwd <主 checkout> --slug <仓库名>-<号> <prompt>`，直接开，不等人。没有「还没点的卡片」，空位 = 队列上限 − 开着的会话。上限照旧：主队列 10，每轮最多开 3 个。
+- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。没有「还没点的卡片」，空位 = 队列上限 − 开着的会话。上限照旧：主队列 10，每轮最多开 3 个。
+  1. **建 worktree**（桌面端 `start_session` 的 `use_worktree` 对应的做法；会话不再开在主 checkout，多个会话不互相踩）：
+     `git -C <主 checkout> worktree add <主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug> -b issue/<号>-<slug> origin/<基准分支>`。路径在主 checkout 外面（它的同级），所以主 checkout 的工作区和分支都不动，调度在主 checkout 只读的前提不变。`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）；`<slug>` 取 issue 标题的几个词，小写、连字符。`issues show` 已给出 issue 的分支（triage 会话留下的）：用它，`-b <那条分支> origin/<那条分支>`，不新起。路径已经存在、就是这条分支的 worktree（上一轮建了没开起来）：直接用。
+  2. **开会话**：`magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi --cap <issue 平台的 MCP 服务器名> --cap browser <prompt>`。
+  3. **worktree 准备**不由调度做：issue 会话开场照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」做。
+
+  **`--cap` 的能力名**：`magi`（会话要用 `magi sessions stop` 收尾、`magi mcp call`、`magi artifact`）、`browser`（`magi browser`）、issue 平台在 magi 里托管的 MCP 服务器名，取 `magi mcp list` 里的名字，原样照写（Linear 项目是 `linear`）。GitHub 项目用 `gh`，没有这一项。调度会话自己没有的能力给不出；`start` 因此被拒，就是「交出失败」，在汇报里写缺哪个，不重试。
 
 issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issue 取消）后 `magi sessions stop` 停掉自己。
 

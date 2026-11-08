@@ -16,7 +16,7 @@ argument-hint: "<间隔，如 30m>"
 
 - 工作目录是主 checkout（`git worktree list` 的第一行），在默认分支上（`git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`，下文叫「主分支」）。不是就停下，在汇报里说明，这一轮什么都不做。
 - 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指主 checkout 的 `docs/`，`<仓库名>` 取 `gh repo view --json name -q .name`。
-- 主 checkout 跟别的会话共用，你在这里只读：不切分支、不建 worktree、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。
+- 主 checkout 跟别的会话共用，你在这里只读：不切分支、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。『怎么交出 issue』要你建 worktree 的（建在主 checkout 外面），只那一步，不改主 checkout 的工作区与分支。
 - issue 的状态只走 `issues`；**Linear 项目**（`ISSUE_TRACKER.md` 第一个标题写 Linear）里读 issue 用 MCP，做法是 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），下文标「Linear 项目」的几处照它。你不移动、不收尾别的会话：会话自己归位、自己收尾。
 
 ## 起调度
@@ -29,7 +29,7 @@ argument-hint: "<间隔，如 30m>"
 2. **队列**：`issues queues <docs>` 列出每个队列的 `name`（主队列是 `null`）和 `cap`。
 3. **数开着的会话**：照「怎么数开着的会话」，每个队列各数各的；加起来是这个队列开着的会话数。issue 会话开出的子会话（如设计阶段并行开的 imagine 会话）不占位：按队列记下个数，写进汇报。
 4. **没有会话的 issue**（Linear 项目：issue 照 `idea-loop:issues` 的 Linear 做法按状态取，翻回 backlog 用 `save_issue`）：`gh issue list --state open --label status:<状态> --json number,title`，状态依次取 triage、in-progress、in-review，对照上一步数到的会话里的号；没有同号会话的记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或 `issues set <docs> backlog <号> --comment=…` 放回去。
-5. **交出 issue**：每个队列分开算。空位按「怎么交出 issue」算（队列的 `cap` − 开着的会话 − 交出去、会话还没开起来的；后者上一轮汇报里按队列记着）。空位 ≤ 0 就跳过这个队列。否则取排在最前的 todo（Linear 项目没有 `issues candidates`：候选照 `idea-loop:issues` 的 Linear 做法取 Todo、去掉被挡的、按优先级和创建时间排；GitHub 项目候选由脚本给，已经不含还被挡着的，按 P0 → P1 → P2 → 没有优先级排，同一级里最早的在前）：主队列 `issues candidates <docs> <空位>`，独立队列 `issues candidates <docs> <空位> --queue=<name>`；跳过交出去还没开起来的已经占着的，每个 issue 交出一次：一轮所有队列合计最多 3 个，主队列先交。会话的标题与 prompt：
+5. **交出 issue**：每个队列分开算。空位按「怎么交出 issue」算（队列的 `cap` − 开着的会话 − 交出去、会话还没开起来的；后者上一轮汇报里按队列记着）。空位 ≤ 0 就跳过这个队列。否则取排在最前的 todo（Linear 项目没有 `issues candidates`：候选照 `idea-loop:issues` 的 Linear 做法取；GitHub 项目候选由脚本给，已经不含还被挡着的）。候选的顺序，两个平台一样：指派给本人的在前，按 P0 → P1 → P2 → 没有优先级排，同一级里最早的在前；本人名下没有可派的，才轮到未指派的，按在 todo 里停留的时间排，久的在前；指派给别人的不派：主队列 `issues candidates <docs> <空位>`，独立队列 `issues candidates <docs> <空位> --queue=<name>`；跳过交出去还没开起来的已经占着的，每个 issue 交出一次：一轮所有队列合计最多 3 个，主队列先交。会话的标题与 prompt：
    - 标题「<仓库名>#<号> <标题>」。
    - prompt：`你是 <仓库名>#<号>（<标题>）的 issue 会话，由 issue 调度会话开出。用 Skill 工具调 idea-loop:issue-session，参数 <号>，按它从开场做起。`
    - 其余参数（工作目录、worktree、背景等）和交出的方式照「怎么交出 issue」。
