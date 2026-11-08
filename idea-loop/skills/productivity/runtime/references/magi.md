@@ -52,6 +52,8 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issue 取消）后 `magi sessions stop` 停掉自己。
 
+**worktree 的清理**：issue 会话做完、停掉自己之前，先回收自己的 worktree：`git -C <主 checkout> worktree remove <worktree>`，再 `git -C <主 checkout> branch -D <分支>`（分支已合并或 issue 已取消才删）。同一个目录可能有两个路径（例如主目录挂在两个名字下），git 记下的是建它时的那个，换个路径删会报「does not point back」：先 `git -C <worktree> status --porcelain` 确认没有未提交的改动，再删掉这个目录、`git -C <主 checkout> worktree prune`。建和删用同一个主 checkout 路径（`git -C` 后面写的那个），就碰不到这个问题。
+
 ## 浏览器
 
 用 `magi browser`：每个会话自带一个匿名浏览器，无头测量用它。
