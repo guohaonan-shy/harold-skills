@@ -52,7 +52,8 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
     assert.ok(theirs.includes(word), `seo-setup no longer says the "${name}" part; update this test with it`);
   }
   assert.doesNotMatch(theirs, /list_scheduled_tasks|AskUserQuestion|create_scheduled_task|桌面 app/);
-  assert.match(theirs, /只能由人调用/);
+  // seo-scan is model-invocable (2026-11-08), so no runtime needs a fallback for a human-invoked-only skill
+  assert.doesNotMatch(theirs, /只能由人调用/);
   assert.ok(mine.includes('分钟避开 0 和 30'));
   assert.ok(mine.indexOf('列出已有的任务') < mine.indexOf('用『向人提问』问人'));
   assert.ok(mine.indexOf('用『向人提问』问人') < mine.indexOf('用『定时任务』创建'));

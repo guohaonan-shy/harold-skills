@@ -59,7 +59,7 @@ const TRACKER_TWO_REPOS = `# Issue tracker：GitHub
  * With `strictLabels`, an edit behaves as GitHub did on a repo missing the label: the removals go through,
  * then adding a label the repo does not have throws; `label create` adds to the repo's labels.
  */
-function fakeGh(issues, labels = [], prs = {}, { strictLabels = false } = {}) {
+function fakeGh(issues, labels = [], prs = {}, { strictLabels = false, login = 'me' } = {}) {
   const calls = [];
   const rest = (i) => ({
     number: i.number,
@@ -69,6 +69,7 @@ function fakeGh(issues, labels = [], prs = {}, { strictLabels = false } = {}) {
     state: i.state === 'OPEN' ? 'open' : 'closed',
     state_reason: i.state === 'OPEN' ? null : i.reason ?? 'completed',
     labels: i.labels.map((name) => ({ name })),
+    assignees: (i.assignees ?? []).map((l) => ({ login: l })),
     created_at: i.createdAt ?? '2026-01-01T00:00:00Z',
     updated_at: i.updatedAt ?? i.createdAt ?? '2026-01-01T00:00:00Z',
     repository_url: 'https://api.github.com/repos/o/r',
@@ -92,7 +93,14 @@ function fakeGh(issues, labels = [], prs = {}, { strictLabels = false } = {}) {
         const list = Object.values(issues).filter((i) => i.state === 'OPEN');
         return JSON.stringify(list.slice((page - 1) * perPage, page * perPage).map(rest));
       }
-      let m = path.match(/^issues\/(\d+)\/comments$/);
+      if (path === '/user') return JSON.stringify({ login });
+      let m = path.match(/^issues\/(\d+)\/events$/);
+      if (m) {
+        const perPage = Number(url.searchParams.get('per_page'));
+        const page = Number(url.searchParams.get('page') ?? 1);
+        return JSON.stringify((issues[m[1]].events ?? []).slice((page - 1) * perPage, page * perPage));
+      }
+      m = path.match(/^issues\/(\d+)\/comments$/);
       if (m) {
         const perPage = Number(url.searchParams.get('per_page'));
         const page = Number(url.searchParams.get('page') ?? 1);
@@ -514,20 +522,97 @@ test('candidates are todo issues no open issue blocks, oldest first', () => {
   assert.deepEqual(candidates(gh, 1).map((i) => i.number), [2]);
 });
 
-test('candidates hand out P0 first, then P1, P2, none; the lower number first within a priority', () => {
+test('candidates: the ones assigned to me hand out P0 first, then P1, P2, none; the lower number first within a priority', () => {
+  const mine = { assignees: ['me'] };
   const { gh } = fakeGh({
-    3: open(3, ['status:todo']),
-    5: open(5, ['status:todo', 'priority:P2']),
-    9: open(9, ['status:todo', 'priority:P0']),
-    4: open(4, ['status:todo', 'priority:P1']),
-    2: open(2, ['status:todo', 'priority:P1']),
-    11: open(11, ['status:triage', 'priority:P0']),
-    12: open(12, ['status:todo', 'priority:P0'], { blockedBy: [3] }),
+    3: open(3, ['status:todo'], mine),
+    5: open(5, ['status:todo', 'priority:P2'], mine),
+    9: open(9, ['status:todo', 'priority:P0'], mine),
+    4: open(4, ['status:todo', 'priority:P1'], mine),
+    2: open(2, ['status:todo', 'priority:P1'], mine),
+    11: open(11, ['status:triage', 'priority:P0'], mine),
+    12: open(12, ['status:todo', 'priority:P0'], { ...mine, blockedBy: [3] }),
   });
   assert.deepEqual(candidates(gh).map((i) => i.number), [9, 2, 4, 5, 3]);
-  assert.deepEqual(candidates(gh, 2).map((i) => [i.number, i.priority]), [[9, 'P0'], [2, 'P1']]);
+  assert.deepEqual(candidates(gh, 2).map((i) => [i.number, i.priority, i.assignee]), [[9, 'P0', 'me'], [2, 'P1', 'me']]);
   assert.equal(priorityOf(['priority:P2', 'priority:P0']), 'P0');
   assert.equal(priorityOf(['priority:high', 'bug']), null);
+});
+
+/** An event line of the issue's timeline: the label `name` added at `at`. */
+const labeled = (name, at) => ({ event: 'labeled', label: { name }, created_at: at });
+/** A fake gh that also remembers every read it was asked for. */
+const readSpy = (gh) => {
+  const seen = [];
+  return { gh: (args) => { seen.push(args.join(' ')); return gh(args); }, seen };
+};
+
+test('candidates: what is assigned to me goes first and alone; unassigned ones wait until none of mine can be handed out; someone else\'s never', () => {
+  const t = ['status:todo'];
+  const { gh } = fakeGh({
+    1: open(1, [...t, 'priority:P0']),
+    2: open(2, [...t, 'priority:P2'], { assignees: ['me'] }),
+    3: open(3, [...t, 'priority:P0'], { assignees: ['other'] }),
+    4: open(4, [...t, 'priority:P1'], { assignees: ['other', 'me'] }),
+    5: open(5, t, { assignees: ['other'], blockedBy: [2] }),
+  });
+  assert.deepEqual(candidates(gh).map((i) => [i.number, i.assignee]), [[4, 'me'], [2, 'me']], 'P1 before P2; the unassigned P0 and the other\'s P0 are not handed out');
+  const noneOfMine = fakeGh({ 1: open(1, t), 3: open(3, t, { assignees: ['other'] }), 4: open(4, t, { assignees: ['other'], blockedBy: [3] }), 6: open(6, ['status:triage'], { assignees: ['me'] }) }).gh;
+  assert.deepEqual(candidates(noneOfMine).map((i) => [i.number, i.assignee]), [[1, null]], 'mine is blocked or not todo: the unassigned goes');
+  const onlyOthers = fakeGh({ 3: open(3, t, { assignees: ['other'] }) }).gh;
+  assert.deepEqual(candidates(onlyOthers), []);
+});
+
+test('candidates: unassigned ones of one priority, when none is mine, go by how long they have been in todo, the longest first', () => {
+  const t = ['status:todo'];
+  const { gh } = fakeGh({
+    1: open(1, t, { createdAt: '2026-01-01T00:00:00Z', events: [labeled('status:todo', '2026-03-01T00:00:00Z')] }),
+    2: open(2, t, { createdAt: '2026-02-01T00:00:00Z', events: [labeled('status:todo', '2026-02-02T00:00:00Z')] }),
+    3: open(3, t, { createdAt: '2026-01-05T00:00:00Z', events: [labeled('status:todo', '2026-01-06T00:00:00Z'), labeled('status:in-progress', '2026-01-07T00:00:00Z'), labeled('status:todo', '2026-02-20T00:00:00Z')] }),
+    4: open(4, t, { createdAt: '2026-01-10T00:00:00Z', events: [labeled('priority:P0', '2026-01-11T00:00:00Z'), labeled('status:todo', '2026-01-12T00:00:00Z'), labeled('priority:P1', '2026-04-01T00:00:00Z')] }),
+    5: open(5, t, { createdAt: '2026-01-20T00:00:00Z' }),
+  });
+  // 4 since Jan 12 (the later label that is not status:todo does not count), 5 has no event: created Jan 20, 2 since Feb 2, 3 re-entered Feb 20 (the last time counts), 1 since Mar 1
+  assert.deepEqual(candidates(gh).map((i) => i.number), [4, 5, 2, 3, 1]);
+  assert.deepEqual(candidates(gh, 2).map((i) => [i.number, i.assignee]), [[4, null], [5, null]]);
+});
+
+test('candidates: unassigned ones go by priority first, and by time in todo only within a priority', () => {
+  const t = ['status:todo'];
+  const at = (day) => ({ events: [labeled('status:todo', `2026-02-${day}T00:00:00Z`)] });
+  const { gh } = fakeGh({
+    1: open(1, [...t, 'priority:P2'], at('01')),
+    2: open(2, t, at('02')),
+    3: open(3, [...t, 'priority:P0'], at('20')),
+    4: open(4, [...t, 'priority:P1'], at('10')),
+    5: open(5, [...t, 'priority:P1'], at('05')),
+    6: open(6, [...t, 'priority:P0'], at('25')),
+  });
+  assert.deepEqual(candidates(gh).map((i) => [i.number, i.priority]), [[3, 'P0'], [6, 'P0'], [5, 'P1'], [4, 'P1'], [1, 'P2'], [2, null]]);
+  assert.deepEqual(candidates(gh, 1).map((i) => i.number), [3], 'a P0 that has waited less still goes before a P2 that has waited more');
+});
+
+test('candidates: reads only what the order needs, the user once, and an issue\'s events only while unassigned ones have to be sorted', () => {
+  const t = ['status:todo'];
+  const ev = { events: [labeled('status:todo', '2026-02-01T00:00:00Z')] };
+  const reads = (issues) => { const s = readSpy(fakeGh(issues).gh); candidates(s.gh); return s.seen.filter((c) => /^api user$|\/events/.test(c)); };
+  assert.deepEqual(reads({ 1: open(1, t, ev), 2: open(2, t, ev) }).map((c) => c.replace(/\?.*/, '')), ['api repos/{owner}/{repo}/issues/1/events', 'api repos/{owner}/{repo}/issues/2/events'], 'nobody is assigned: no user read, events of the two to sort');
+  assert.deepEqual(reads({ 1: open(1, t, ev) }), [], 'a single unassigned one needs no order');
+  assert.deepEqual(reads({ 1: open(1, [...t, 'priority:P0'], ev), 2: open(2, [...t, 'priority:P1'], ev), 3: open(3, t, ev) }), [], 'different priorities: nothing to break a tie of');
+  assert.deepEqual(reads({ 1: open(1, [...t, 'priority:P0'], ev), 2: open(2, [...t, 'priority:P1'], ev), 3: open(3, [...t, 'priority:P1'], ev) }).map((c) => c.replace(/\?.*/, '')), ['api repos/{owner}/{repo}/issues/2/events', 'api repos/{owner}/{repo}/issues/3/events'], 'only those that share a priority');
+  assert.deepEqual(reads({ 1: open(1, t, ev), 2: open(2, t, { assignees: ['me'] }), 3: open(3, t, ev) }), ['api user'], 'one of mine: the user is read, no events');
+  assert.deepEqual(reads({ 1: open(1, t, { ...ev, assignees: ['x'] }) }), ['api user'], 'an assignee: the user is read to tell whether it is me');
+  assert.deepEqual(reads({ 1: open(1, ['status:triage'], { assignees: ['me'] }), 2: open(2, t, ev) }), [], 'issues that are not candidates cost nothing');
+});
+
+test('candidates: an issue with more events than a page is read page by page', () => {
+  const t = ['status:todo'];
+  const noise = Array.from({ length: 120 }, (_, k) => labeled('priority:P1', `2026-01-${String((k % 28) + 1).padStart(2, '0')}T00:00:00Z`));
+  const { gh } = fakeGh({
+    1: open(1, t, { createdAt: '2026-01-01T00:00:00Z', events: [...noise, labeled('status:todo', '2026-05-01T00:00:00Z')] }),
+    2: open(2, t, { createdAt: '2026-01-01T00:00:00Z', events: [labeled('status:todo', '2026-04-01T00:00:00Z')] }),
+  });
+  assert.deepEqual(candidates(gh).map((i) => i.number), [2, 1]);
 });
 
 test('show: state, title, categories, kind, each PR with its repo and draft / ready / merged, the covering spec, the branch', () => {

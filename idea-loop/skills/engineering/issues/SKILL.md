@@ -101,7 +101,7 @@ issues body       <docs> <正文文件>                # 只校验正文，不�
 issues priority   <docs> <P0|P1|P2|none> <号>...   # 换掉原有的优先级
 issues backlog    <docs> [<上限>]                  # 开着的 backlog issue，最早的在前（JSON）；跳过分拣问过「还要你补」、之后没人动过的
 issues note       <docs> <号> <正文文件>           # 贴一条带「🤖 idea-loop：」前缀的评论
-issues candidates <docs> [<上限>] [--queue=<分类>]  # 能派的 todo：没有开着的 blocked by，先按优先级 P0 → P1 → P2 → 没有，再按号（JSON）
+issues candidates <docs> [<上限>] [--queue=<分类>]  # 能派的 todo：没有开着的 blocked by；指派给本人的单独排在前（P0 → P1 → P2 → 没有，再按号），本人名下没有可派的才给未指派的（同样先按优先级，同一优先级里在 todo 里停留久的先），指派给别人的不给（JSON）
 issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label 与两个 status:* 作为问题报出
 issues queues     <docs> [<号>]                    # 调度的队列、上限、各队列的分组名（sections）
 issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出，--apply 先建缺的 label

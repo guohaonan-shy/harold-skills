@@ -14,5 +14,6 @@
 
 - **PR 挂 issue 写 `Refs`，不写 `Closes`**：一个 issue 在几个仓库各有一个 PR，写 `Closes` 的 PR 一合并就把 issue 关了。不带仓库的 `Refs #<号>` 只在 issue 自己的仓库里认。
 - **改哪些仓库**：`ISSUE_TRACKER.md` 的「仓库」一节第一列列出的仓库，脚本在这些仓库里找挂着的 PR；没有这一节就只找 issue 所在的仓库。
+- **指派人**：`issues candidates` 按指派人排候选。本人是 `gh api user` 的登录；指派给别人的不派；未指派的先按优先级排，同一优先级里按在 todo 里停留的时间排，时间取 issue events 里最后一次加上 `status:todo` 的时刻，没有这条事件就用创建时间，只对与别的未指派 issue 同一优先级的读 events。
 - 列表接口会混进 PR（带 `pull_request` 字段），脚本跳过它们。
 - 人在 GitHub 上直接开的 issue 没有 `status:*`，就是 backlog。旧的中文 `status:*` label 调度认不出，`issues migrate` 换成上表的。

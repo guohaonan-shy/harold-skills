@@ -3,7 +3,7 @@ type: spec
 tags: [idea-loop, runtime]
 summary: 运行环境从通用流程里抽出来：能力清单加每个运行环境一份做法，支持 Claude 桌面端与 magi
 related: ["[[2026-11-06-runtime-grill]]", "[[issue-linear]]"]
-issues: [262]
+issues: [262, 264]
 ---
 
 # runtime：把运行环境从 idea-loop 的通用流程里抽出来，按检测到的运行环境加载做法
@@ -103,7 +103,7 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 |---|---|---|---|
 | 定时任务 | 按时间开一个新会话跑一段 prompt；列出已有的；读上次成功运行的时间 | 定时任务 MCP（create / list / update / list_task_runs），原样照搬现有参数 | `magi cron create <id> --expr … --action create_session --cwd <主 checkout> --prompt …`（表达式按人在 magi 设的时区，`magi cron show` 的 when 一行会显示；现有的「分钟避开 0 和 30」照旧）；`magi cron list` / `show` 读上次运行 |
 | 会话内循环 | 在当前会话里每隔一段时间再叫自己一次 | `CronCreate` / `CronList` / `CronDelete` | `magi wake every` / `list` / `cancel`；调度在 magi 里不用它（见下） |
-| 会话管理 | 列会话；开一个 issue 会话；给别的会话发消息；读一个会话的记录；会话收尾 | 会话管理 MCP 的 list_sessions / send_message / export_transcript；`start_session` 出卡片；侧边栏 section 分组 | `magi sessions list` / `start` / `send` / `show -o` / `archive`；**分组：没有** |
+| 会话管理 | 列会话；开一个 issue 会话；给别的会话发消息；读一个会话的记录；会话收尾 | 会话管理 MCP 的 list_sessions / send_message / export_transcript；`start_session` 出卡片；侧边栏 section 分组 | `magi sessions list` / `start` / `send` / `show -o` / `stop`（会话停掉自己，不能归档自己）；**分组：没有** |
 | 浏览器 | 无头地开页面、量、截图、走用户路径；把一页摆给人看 | 用户级 Playwright MCP（无头、隔离）；Claude Browser 面板 | `magi browser`（会话自带的匿名浏览器）两种用途都用它；子 agent 各自 `window new` 并带 `--tab`；不能执行任意 JS，量值用元素盒子与截图 |
 | 向人提问 | 给 2–4 个选项的单选题 | `AskUserQuestion` | 在对话里用编号选项问，等人回 |
 | 发布审阅页 | 发布一页 HTML 给人看，收回人的批示 | `Artifact` | `magi artifact push <文件或目录>`，页面里 `magi.reply({text, data})` 把批示送回会话 |
@@ -113,6 +113,20 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 | 装与设置 | 告诉人怎么接 MCP、装插件、加允许规则 | 桌面 app 的 Connectors；`claude mcp add --scope user …`；`~/.claude/settings.json` | 人在 magi 网页 Integrations → MCP servers 里加；在 magi 会话里 `/plugin`；`$CLAUDE_CONFIG_DIR/settings.json` |
 
 能力名就是表里第一列，写进 `idea-loop:runtime` 后是闭集：通用流程只引用这些名字；要新能力先改这张表。
+
+### 合并后补审定下的（2026-11-08，人定）
+
+- seo-scan 改成可被模型调用：两个运行环境的每周定时任务都能起它（magi 的定时任务只能写「用 Skill 工具调」）。桌面端新建的扫描任务写斜杠命令，与仓库约定一致；这是桌面端相对 0.1.10 的一处写法差别。
+- magi 的定时任务读不出每次成败：流程要「上次成功运行」时当作没有基准。dreaming 只在项目有设计档案时做截图对账，没有设计内容就不走这段对账。
+- magi 里 issue 会话做完先回收自己的 worktree 再停掉自己；同一目录有两个路径时 git 校验对不上，按 magi reference 的退路删（实测 2026-11-08）。
+- 仍算 0.1.11，不升版本号。
+
+出自 #264（人定，2026-11-08）：
+
+- **调度按指派人取候选**：顺序是指派给本人 > 未指派，指派给别人的不派（先不抢）；本人名下没有可派的，才派未指派的。每一档里都先按 issue 的优先级排（P0 / Urgent → P1 / High → P2 / Medium → 没有）：本人名下优先级之后照旧按号（Linear 按创建时间）；未指派的优先级之后，同一优先级里按在 todo 里停留的时间排，久的先（人补充，同日）。「停留时间」指 issue 在当前状态放了多久没动。Backlog 不按这条直接派，照旧先经每周分拣、再跟人讨论要不要进 Todo。GitHub 上本人是 `gh` 当前登录，停留时间取 issue events 里最后一次加上 `status:todo` 的时刻（`issues.mjs candidates`）；Linear 上用 `list_issues` 的 `assignee: "me"` / `"null"`，停留时间用 `updatedAt`（Linear 不给进入状态的时间）；GitHub 只对与别的未指派 issue 同一优先级的读 events。
+- **magi 里开 issue 会话先建 worktree**：调度先 `git -C <主 checkout> worktree add <主 checkout 同级>/<仓库名>-worktrees/<号>-<slug> -b issue/<号>-<slug> origin/<基准分支>`，再 `--cwd` 到这个 worktree；对应桌面端 `start_session` 的 `use_worktree`。主 checkout 的工作区与分支不动，调度在主 checkout 只读的前提保持；worktree 准备由 issue 会话开场照 `DEVELOPMENT.md` 做。原来会话开在主 checkout 上、多个会话互相踩，是首次在 magi 跑 issue 会话时撞到的阻塞问题。
+- **magi 里开 issue 会话带能力**：`magi sessions start` 加 `--cap`：`magi`、`browser`、issue 平台在 magi 里托管的 MCP 服务器名（取 `magi mcp list` 里的名字，Linear 项目是 `linear`）。
+- **issue-session 指向 Linear 做法**：开场读 issue、翻状态那一步写明 Linear 项目照 `idea-loop:issues` 的 Linear 做法，不在 issue-session 里重复 MCP 细节。
 
 ### 与 0.2.0 计划的关系
 
@@ -146,7 +160,7 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 |---|---|---|
 | 怎么一轮一轮跑 | 常驻调度会话里的会话内循环，7 天到期提醒重起 | `magi cron` 每轮新开一个调度会话（定时任务能力），跑完一轮 `magi sessions stop` 停掉自己（会话不能归档自己，实测）；没有 7 天到期 |
 | 怎么数开着的会话 | 各 section 里标题匹配「<仓库名>#<号> …」的 | `magi sessions list` 里 slug 前缀 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的 |
-| 怎么交出 issue | 出卡片，人点了才开；还没点的卡片占位 | `magi sessions start --cwd <主 checkout> --slug <仓库名>-<号> <prompt>` 直接开，不等人（人定）；没有「还没点的卡片」，空位 = 上限 − 开着的会话 |
+| 怎么交出 issue | 出卡片，人点了才开；还没点的卡片占位 | 先建 worktree，再 `magi sessions start --cwd <worktree> --slug <仓库名>-<号> --cap … <prompt>` 直接开，不等人（人定；worktree 与 `--cap` 见「合并后补审定下的」）；没有「还没点的卡片」，空位 = 上限 − 开着的会话 |
 
 magi 里 issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issue 取消）后 `magi sessions stop` 停掉自己；停掉的会话由人在 magi 或 Dawn 里归档（实测 2026-11-06：`magi sessions archive` 拒绝归档会话自己，只收它开出的 helper；`stop` 对自己可用）。setup 在 magi 里建调度用定时任务能力，id `dispatch-<仓库名>`，间隔由人定。
 

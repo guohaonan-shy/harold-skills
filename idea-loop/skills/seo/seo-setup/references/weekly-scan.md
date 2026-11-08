@@ -12,5 +12,4 @@
    - 时间：人定的，换成运行环境要的时区，分钟避开 0 和 30
    - 目录：本仓库的主 checkout
    - prompt：调起 `idea-loop:seo-scan`，不带参数，写法照『定时任务』里的 prompt 写法；后面接一句「照它跑到「交回」。没有人在场：不提问，缺什么照 skill 写的记下来往下走。」
-   - **seo-scan 只能由人调用**（`disable-model-invocation: true`）。『定时任务』写了 prompt 里不能用「用 Skill 工具调」起它的运行环境（如 magi）：不建，走 `idea-loop:runtime` 的退路，把上面的 prompt 和要它做的事给人，这一步记「未做：运行环境 <名> 起不了只能由人调用的 skill」。
 5. 告诉人：到点没跑上时补不补跑、跑完的会话在哪看，照『定时任务』里的「行为」。
