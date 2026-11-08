@@ -122,7 +122,7 @@ skill 正文把「做什么」（通用流程）和「用什么工具做」（�
 
 出自 #264（人定，2026-11-08）：
 
-- **调度按指派人取候选**：顺序是指派给本人 > 未指派，指派给别人的不派（先不抢）；本人名下没有可派的，才派未指派的，按在 todo 里停留的时间排，久的先；本人名下的照旧按优先级、再按号。「停留时间」指 issue 在当前状态放了多久没动。Backlog 不按这条直接派，照旧先经每周分拣、再跟人讨论要不要进 Todo。GitHub 上本人是 `gh` 当前登录，停留时间取 issue events 里最后一次加上 `status:todo` 的时刻（`issues.mjs candidates`）；Linear 上用 `list_issues` 的 `assignee: "me"` / `"null"`，停留时间用 `updatedAt`（Linear 不给进入状态的时间）。
+- **调度按指派人取候选**：顺序是指派给本人 > 未指派，指派给别人的不派（先不抢）；本人名下没有可派的，才派未指派的。每一档里都先按 issue 的优先级排（P0 / Urgent → P1 / High → P2 / Medium → 没有）：本人名下优先级之后照旧按号（Linear 按创建时间）；未指派的优先级之后，同一优先级里按在 todo 里停留的时间排，久的先（人补充，同日）。「停留时间」指 issue 在当前状态放了多久没动。Backlog 不按这条直接派，照旧先经每周分拣、再跟人讨论要不要进 Todo。GitHub 上本人是 `gh` 当前登录，停留时间取 issue events 里最后一次加上 `status:todo` 的时刻（`issues.mjs candidates`）；Linear 上用 `list_issues` 的 `assignee: "me"` / `"null"`，停留时间用 `updatedAt`（Linear 不给进入状态的时间）；GitHub 只对与别的未指派 issue 同一优先级的读 events。
 - **magi 里开 issue 会话先建 worktree**：调度先 `git -C <主 checkout> worktree add <主 checkout 同级>/<仓库名>-worktrees/<号>-<slug> -b issue/<号>-<slug> origin/<基准分支>`，再 `--cwd` 到这个 worktree；对应桌面端 `start_session` 的 `use_worktree`。主 checkout 的工作区与分支不动，调度在主 checkout 只读的前提保持；worktree 准备由 issue 会话开场照 `DEVELOPMENT.md` 做。原来会话开在主 checkout 上、多个会话互相踩，是首次在 magi 跑 issue 会话时撞到的阻塞问题。
 - **magi 里开 issue 会话带能力**：`magi sessions start` 加 `--cap`：`magi`、`browser`、issue 平台在 magi 里托管的 MCP 服务器名（取 `magi mcp list` 里的名字，Linear 项目是 `linear`）。
 - **issue-session 指向 Linear 做法**：开场读 issue、翻状态那一步写明 Linear 项目照 `idea-loop:issues` 的 Linear 做法，不在 issue-session 里重复 MCP 细节。

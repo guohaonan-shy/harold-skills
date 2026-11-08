@@ -563,11 +563,11 @@ test('candidates: what is assigned to me goes first and alone; unassigned ones w
   assert.deepEqual(candidates(onlyOthers), []);
 });
 
-test('candidates: unassigned ones, when none is mine, go by how long they have been in todo, the longest first', () => {
+test('candidates: unassigned ones of one priority, when none is mine, go by how long they have been in todo, the longest first', () => {
   const t = ['status:todo'];
   const { gh } = fakeGh({
-    1: open(1, [...t, 'priority:P0'], { createdAt: '2026-01-01T00:00:00Z', events: [labeled('status:todo', '2026-03-01T00:00:00Z')] }),
-    2: open(2, [...t, 'priority:P2'], { createdAt: '2026-02-01T00:00:00Z', events: [labeled('status:todo', '2026-02-02T00:00:00Z')] }),
+    1: open(1, t, { createdAt: '2026-01-01T00:00:00Z', events: [labeled('status:todo', '2026-03-01T00:00:00Z')] }),
+    2: open(2, t, { createdAt: '2026-02-01T00:00:00Z', events: [labeled('status:todo', '2026-02-02T00:00:00Z')] }),
     3: open(3, t, { createdAt: '2026-01-05T00:00:00Z', events: [labeled('status:todo', '2026-01-06T00:00:00Z'), labeled('status:in-progress', '2026-01-07T00:00:00Z'), labeled('status:todo', '2026-02-20T00:00:00Z')] }),
     4: open(4, t, { createdAt: '2026-01-10T00:00:00Z', events: [labeled('priority:P0', '2026-01-11T00:00:00Z'), labeled('status:todo', '2026-01-12T00:00:00Z'), labeled('priority:P1', '2026-04-01T00:00:00Z')] }),
     5: open(5, t, { createdAt: '2026-01-20T00:00:00Z' }),
@@ -577,12 +577,29 @@ test('candidates: unassigned ones, when none is mine, go by how long they have b
   assert.deepEqual(candidates(gh, 2).map((i) => [i.number, i.assignee]), [[4, null], [5, null]]);
 });
 
+test('candidates: unassigned ones go by priority first, and by time in todo only within a priority', () => {
+  const t = ['status:todo'];
+  const at = (day) => ({ events: [labeled('status:todo', `2026-02-${day}T00:00:00Z`)] });
+  const { gh } = fakeGh({
+    1: open(1, [...t, 'priority:P2'], at('01')),
+    2: open(2, t, at('02')),
+    3: open(3, [...t, 'priority:P0'], at('20')),
+    4: open(4, [...t, 'priority:P1'], at('10')),
+    5: open(5, [...t, 'priority:P1'], at('05')),
+    6: open(6, [...t, 'priority:P0'], at('25')),
+  });
+  assert.deepEqual(candidates(gh).map((i) => [i.number, i.priority]), [[3, 'P0'], [6, 'P0'], [5, 'P1'], [4, 'P1'], [1, 'P2'], [2, null]]);
+  assert.deepEqual(candidates(gh, 1).map((i) => i.number), [3], 'a P0 that has waited less still goes before a P2 that has waited more');
+});
+
 test('candidates: reads only what the order needs, the user once, and an issue\'s events only while unassigned ones have to be sorted', () => {
   const t = ['status:todo'];
   const ev = { events: [labeled('status:todo', '2026-02-01T00:00:00Z')] };
   const reads = (issues) => { const s = readSpy(fakeGh(issues).gh); candidates(s.gh); return s.seen.filter((c) => /^api user$|\/events/.test(c)); };
   assert.deepEqual(reads({ 1: open(1, t, ev), 2: open(2, t, ev) }).map((c) => c.replace(/\?.*/, '')), ['api repos/{owner}/{repo}/issues/1/events', 'api repos/{owner}/{repo}/issues/2/events'], 'nobody is assigned: no user read, events of the two to sort');
   assert.deepEqual(reads({ 1: open(1, t, ev) }), [], 'a single unassigned one needs no order');
+  assert.deepEqual(reads({ 1: open(1, [...t, 'priority:P0'], ev), 2: open(2, [...t, 'priority:P1'], ev), 3: open(3, t, ev) }), [], 'different priorities: nothing to break a tie of');
+  assert.deepEqual(reads({ 1: open(1, [...t, 'priority:P0'], ev), 2: open(2, [...t, 'priority:P1'], ev), 3: open(3, [...t, 'priority:P1'], ev) }).map((c) => c.replace(/\?.*/, '')), ['api repos/{owner}/{repo}/issues/2/events', 'api repos/{owner}/{repo}/issues/3/events'], 'only those that share a priority');
   assert.deepEqual(reads({ 1: open(1, t, ev), 2: open(2, t, { assignees: ['me'] }), 3: open(3, t, ev) }), ['api user'], 'one of mine: the user is read, no events');
   assert.deepEqual(reads({ 1: open(1, t, { ...ev, assignees: ['x'] }) }), ['api user'], 'an assignee: the user is read to tell whether it is me');
   assert.deepEqual(reads({ 1: open(1, ['status:triage'], { assignees: ['me'] }), 2: open(2, t, ev) }), [], 'issues that are not candidates cost nothing');

@@ -24,7 +24,7 @@
  * Among the todo issues that nothing blocks, `candidates` goes by whose they are first: the ones assigned to me (the
  * `gh` login) alone, higher priority first (an issue carries at most one `priority:P0|P1|P2` label, none = last, and
  * within a priority the smaller number goes first); someone else's never; the unassigned ones only when none of mine
- * can go, the longest in todo first.
+ * can go, by priority too, and within a priority the longest in todo first.
  *
  * Issues are opened only through `new`, which refuses a body that lacks one of the four required sections
  * (问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
@@ -60,7 +60,7 @@
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
  *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
- *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (longest in todo first); someone else's never; main queue, or category c's own
+ *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (P0 → P1 → P2 → none, then longest in todo first); someone else's never; main queue, or category c's own
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
  *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
  *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply creates the missing labels, then changes them
@@ -608,9 +608,9 @@ function inTodoSince(gh, n) {
  * The todo issues a dispatch round may hand out, in the order to take them: none an open issue still blocks.
  * Whose it is decides first. Those assigned to me (the login `gh` runs as) come alone, P0 → P1 → P2 → none, the
  * lower number first within a priority; someone else's are never handed out. Only when none of mine can go do the
- * unassigned ones, the longest in todo first (since `status:todo` was last added; the creation time when the events
+ * unassigned ones, by priority first as well and, within a priority, the longest in todo first (since `status:todo` was last added; the creation time when the events
  * never show it), the lower number on a tie. The login is read only when an issue has an assignee, and the events
- * only for the unassigned ones that have to be sorted (more than one, none of them mine).
+ * only for the unassigned ones that share a priority with another unassigned one (none of mine can go).
  */
 export function candidates(gh, limit = 100, { types = null, queue = null } = {}) {
   if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
@@ -620,8 +620,9 @@ export function candidates(gh, limit = 100, { types = null, queue = null } = {})
   let pick = mine;
   if (!mine.length) {
     const unassigned = free.filter((i) => !i.assignees.length);
-    const since = new Map(unassigned.length > 1 ? unassigned.map((i) => [i.number, inTodoSince(gh, i.number) ?? i.createdAt ?? '']) : []);
-    pick = unassigned.sort((a, b) => String(since.get(a.number) ?? '').localeCompare(String(since.get(b.number) ?? '')) || a.number - b.number);
+    const sharing = unassigned.filter((i) => unassigned.some((o) => o !== i && priorityRank(o.labels) === priorityRank(i.labels)));
+    const since = new Map(sharing.map((i) => [i.number, inTodoSince(gh, i.number) ?? i.createdAt ?? '']));
+    pick = unassigned.sort((a, b) => priorityRank(a.labels) - priorityRank(b.labels) || String(since.get(a.number) ?? '').localeCompare(String(since.get(b.number) ?? '')) || a.number - b.number);
   }
   return pick.slice(0, limit).map(({ number, title, labels }) => ({ number, title, priority: priorityOf(labels), assignee: mine.length ? 'me' : null }));
 }

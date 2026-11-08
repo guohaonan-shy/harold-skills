@@ -57,7 +57,7 @@
 
 - **派发候选**：先取指派给本人的，再取未指派的，指派给别人的不取。
   1. `list_issues`（`team`、`state`: todo 的名字、`assignee`: `"me"`、`fields`: `priority`、`createdAt`、`labels`），结果是新的在前，要翻到最后一页（`cursor` 直到 `hasNextPage` 为 false）才取全；每个再 `get_issue`（`includeRelations: true`）去掉 blocked by 还没关的；按 P0 → P1 → P2 → 没有排，同级按 `createdAt` 早的在前。
-  2. 这一步剩下的是空的（没有指派给本人、又没被挡着的），才取未指派的：`list_issues` 同上，`assignee` 换成 `"null"`，`fields` 加 `updatedAt`；同样去掉被挡的；按 `updatedAt` 早的在前排，不看优先级。Linear 不给「进入当前状态的时间」，`updatedAt`（最近一次改动，评论、改字段、翻状态都算）是最接近「在 Todo 里放了多久没动」的字段。
+  2. 这一步剩下的是空的（没有指派给本人、又没被挡着的），才取未指派的：`list_issues` 同上，`assignee` 换成 `"null"`，`fields` 加 `updatedAt`；同样去掉被挡的；按 P0 → P1 → P2 → 没有排，同级按 `updatedAt` 早的在前。Linear 不给「进入当前状态的时间」，`updatedAt`（最近一次改动，评论、改字段、翻状态都算）是最接近「在 Todo 里放了多久没动」的字段。
 
   独立队列按 `labels` 里有没有那个父类名分，主队列是不带任何独立队列父类的。
 - **分拣取 backlog**：`list_issues`（`state`: backlog 的名字、`orderBy`: `createdAt`），结果是新的在前，翻到最后一页（`cursor` 直到 `hasNextPage` 为 false），从末尾取最早的 15 个；最近一条带前缀的评论含「还要你补」、之后没人更新的，跳过、不占这 15 个的名额。
