@@ -76,7 +76,7 @@ test('seo-scan: the gate notifies, lists guesses with their source, stops withou
   assert.match(g, /seo-gaps\.mjs/);
   assert.match(g, /find_serp_competitors/);
   assert.match(g, /allow` 大于 0，就不推/, 'competitors are only inferred when the budget lets it');
-  assert.match(g, /PushNotification/);
+  assert.match(g, /『推送』/);
   assert.match(g, /推测值、出处/);
   assert.match(g, /一次最多三个问题/);
   assert.match(g, /不派任何方向 agent/);

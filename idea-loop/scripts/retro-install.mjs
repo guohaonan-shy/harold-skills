@@ -11,7 +11,7 @@
  *                         (evals/retro/*.mjs, scripts/claude-stream.mjs), so no import needs rewriting.
  *
  * It prints the permission rule and the scheduled task's command. It does not touch any settings file: the rule is
- * the human's to add to ~/.claude/settings.json. Running it again replaces the copy with the plugin's current one.
+ * the human's to add to the runtime's permission settings. Running it again replaces the copy with the plugin's current one.
  */
 
 import { copyFileSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -47,7 +47,7 @@ export const notifyCommand = (dest, home) => `node ${displayPath(join(dest, ENTR
 
 /**
  * The scheduled task's whole prompt. The runner prints one `回放结果 {json}` line per finished PR; the session this task
- * starts cannot be reached by the runner (it is a script), so this prompt has the agent forward each line (with the session-management send_message tool: SendMessage does not reach another session from a scheduled-task session).
+ * starts cannot be reached by the runner (it is a script), so this prompt has the agent forward each line with the session-management capability (written as a capability name, done as idea-loop:runtime says).
  */
 export function taskPrompt(dest, home) {
   return [
@@ -57,7 +57,7 @@ export function taskPrompt(dest, home) {
     taskCommand(dest, home),
     '',
     '它的输出里，每一行以「回放结果 」开头、后面跟一段 JSON 的，是一个 PR 的回放结果。逐行处理：',
-    '- JSON 里的 `session` 是一个会话 id：用 `mcp__ccd_session_mgmt__send_message`（还没加载就先用 ToolSearch 的 `select:mcp__ccd_session_mgmt__send_message` 加载），`session_id` 填这个 id，`message` 填 JSON 里 `message` 字段的原文，不改写。不要用 SendMessage：计划任务起的会话用它发不到别的会话（实测报错）；',
+    '- JSON 里的 `session` 是一个会话 id：用『会话管理』能力给这个会话发消息（用 Skill 工具调 `idea-loop:runtime`，读当前运行环境『会话管理』里的「给别的会话发消息」），会话填这个 id，消息填 JSON 里 `message` 字段的原文，不改写；',
     `- 发不出去（会话已归档、找不到、报错）：改跑 \`${notifyCommand(dest, home)} "<message 的第一行>"\`，发一条 macOS 通知；`,
     '- `session` 是 null 的行：runner 已经自己发过通知，不用处理。',
     '',
@@ -93,8 +93,8 @@ function main() {
   const { entry } = install(dest);
   console.log(`runner 已装到 ${entry}`);
   console.log(`计划任务的命令：${taskCommand(dest)}`);
-  console.log(`计划任务的 prompt（create_scheduled_task / update_scheduled_task 的 prompt 原文）：\n----\n${taskPrompt(dest)}\n----`);
-  console.log(`允许规则（请你自己加进 ~/.claude/settings.json 的 permissions.allow，这个脚本不改权限设置）：\n  ${allowRule(dest)}`);
+  console.log(`计划任务的 prompt（『定时任务』能力创建或更新任务时的 prompt 原文）：\n----\n${taskPrompt(dest)}\n----`);
+  console.log(`允许规则（请你自己加进运行环境的 permissions.allow，位置见 idea-loop:runtime 的『装与设置』，这个脚本不改权限设置）：\n  ${allowRule(dest)}`);
   return 0;
 }
 

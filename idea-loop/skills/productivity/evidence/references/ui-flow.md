@@ -58,4 +58,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archi
 
 - 脚本先校验，不合规就退出码 2，逐条列出问题。
 - 输出文件按 `flow-<n>-…` 起名时，脚本要求名字就是 `flow-<n>-<第一格的状态名>.png`，对不上退出码 2；别的名字不受限。带 `--archive <仓库根> --delta <spec-slug>` 时，还会核对每个 `state` 在档案（叠上这个需求的 `delta/`）里是否存在。
-- 脚本生成一个自包含的 HTML（截图内联），用目标项目的 playwright 截成 PNG。目标项目解析不到 playwright 时，只写出 `out.html`，截图改用 Playwright MCP：它只开 http 地址，所以在 HTML 所在目录起一个静态服务器（`python3 -m http.server <port>`），打开 `http://127.0.0.1:<port>/out.html`，等 `document.body.dataset.ready === "1"`，对 `#flow` 截图，截完关掉服务器。MCP 只能往工作区里写文件，截图先存进工作区再挪到目标位置。
+- 脚本生成一个自包含的 HTML（截图内联），用目标项目的 playwright 截成 PNG。目标项目解析不到 playwright 时，只写出 `out.html`，截图改用『浏览器』（`idea-loop:browser`）：本地文件要经静态服务器打开，所以在 HTML 所在目录起一个静态服务器（`python3 -m http.server <port>`），打开 `http://127.0.0.1:<port>/out.html`，等 `document.body.dataset.ready === "1"`，对 `#flow` 截图，截完关掉服务器。浏览器往哪写文件有限制（见『浏览器』），截图先存进允许的位置再挪到目标位置。

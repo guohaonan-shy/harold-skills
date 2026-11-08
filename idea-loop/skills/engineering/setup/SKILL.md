@@ -64,19 +64,25 @@ idea-loop 从这几处读项目配置：
 
 改规则的 PR 里有大的回放用例时，要装夜间回放的 runner 和计划任务，步骤读 [references/nightly-replay.md](references/nightly-replay.md)。
 
-完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；计划任务在 `list_scheduled_tasks` 里；允许规则已打印给人。
+完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；夜间回放的计划任务已建（『定时任务』里能列出）；允许规则已打印给人。
 
 ## 每周对账
 
-`/idea-loop:dreaming` 可以由桌面 app 的定时任务每周自己跑一次（人在对话里要对账时模型也会起它）。必须在本仓库的主 checkout 里做，任务 id 叫 `dreaming-<仓库名>`。步骤（没有工具时的退路、问人的选项、`create_scheduled_task` 的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次（人在对话里要对账时模型也会起它）。必须在本仓库的主 checkout 里做，任务 id 叫 `dreaming-<仓库名>`。步骤（没有能力时的退路、问人的选项、任务的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
 完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
 ## 每周分拣
 
-`/idea-loop:issue-triage` 可以由桌面 app 的定时任务每周自己跑一次，把最早的 15 个 backlog issue 查完、摆一张表等人批。必须在本仓库的主 checkout 里做，任务 id 叫 `triage-<仓库名>`。步骤在 [references/weekly-triage.md](references/weekly-triage.md)。
+`idea-loop:issue-triage` 可以由『定时任务』每周自己跑一次，把最早的 15 个 backlog issue 查完、摆一张表等人批。必须在本仓库的主 checkout 里做，任务 id 叫 `triage-<仓库名>`。步骤在 [references/weekly-triage.md](references/weekly-triage.md)。
 
 完成条件：本仓库有一个开着的 `triage-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
+
+## 调度
+
+`idea-loop:issue-dispatch` 一轮一轮交出 todo 的 issue，怎么起因运行环境而异；按 [references/dispatch.md](references/dispatch.md) 做。
+
+完成条件：调度的起法告诉了人，或建好了调度任务，或人拒绝了。
 
 ## 交回
 
@@ -84,7 +90,7 @@ idea-loop 从这几处读项目配置：
 - 预检缺的必需项，各附修法命令。
 - 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
 - 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
-- 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
-- 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（不在桌面 app / 人拒绝）；没建时 prompt 原样给人。
-- 怎么起调度：在主 checkout 开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`（间隔照需要改）。
-- 留给人的事：安装或登录 `gh`、Codex；在用户级配 Playwright 和 Refero（命令见预检的表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。
+- 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
+- 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
+- 调度：怎么起、建没建（按 `references/dispatch.md`）。
+- 留给人的事：安装或登录 `gh`、Codex；装浏览器和 Refero（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

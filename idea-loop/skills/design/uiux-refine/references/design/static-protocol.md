@@ -275,9 +275,9 @@ close-out protocol.
    `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/v<N>.html`
    when needed). Fix or explicitly justify P1s.
 2. **Isolated critique** over the served preview URL: read [critique.md](critique.md), screenshot
-   each section (`browser_take_screenshot`), record findings against it. Route direction findings to
+   each section, record findings against it. Route direction findings to
    B/W, craft findings to F. On the real DOM: computed contrast via
-   `browser_evaluate(getComputedStyle)` (ratios, no approximation) and a clean console. Verify with
+   `getComputedStyle` run in the page (ratios, no approximation; arbitrary JS, so a runtime without it takes the `idea-loop:runtime` fallback) and a clean console. Verify with
    screenshots and measured values, never by reading the code alone.
 3. **Context matrix** for the route, never a one-size viewport:
 
@@ -307,7 +307,7 @@ candidates".
 
 **Handoff to motion.** The preview HTML **is** the artifact; no export step. The approved preview +
 concept + state contract pass to [motion.md](motion.md), which layers motion on this file and ports
-to React last, pulling exact values from `browser_evaluate(getComputedStyle)`, never off a
+to React last, pulling exact values from `getComputedStyle` run in the page, never off a
 screenshot. Direct React iteration is no substitute for resolving visual choices here.
 
 ## What this protocol is not

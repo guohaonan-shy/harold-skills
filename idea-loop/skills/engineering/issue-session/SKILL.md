@@ -1,6 +1,6 @@
 ---
 name: issue-session
-description: 一个 issue 的会话：triage 会话陪人评估它（spec、grill、设计），todo 会话把它做到合并。调度卡片开出的会话、或人要接手某个 issue 时用。
+description: 一个 issue 的会话：triage 会话陪人评估它（spec、grill、设计），todo 会话把它做到合并。调度开出的会话、或人要接手某个 issue 时用。
 argument-hint: "<issue 号>"
 ---
 
@@ -8,12 +8,12 @@ argument-hint: "<issue 号>"
 
 会话有两条路，认领时 issue 的状态决定走哪条：
 
-| 会话 | 谁开的 | 认领成 | 侧边栏 section | 做什么 | 做完 |
-|---|---|---|---|---|---|
-| triage 会话 | 人 | triage | triage | 起草 spec、grill、设计 | push 分支，`set todo`，归档 |
-| todo 会话 | 调度卡片 | in-progress | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，归档 |
+| 会话 | 谁开的 | 认领成 | 做什么 | 做完 |
+|---|---|---|---|---|
+| triage 会话 | 人 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
+| todo 会话 | 调度 | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，收尾 |
 
-section 名是主队列的；issue 在独立队列里（`issues queues <docs> <号>` 返回的 `name` 不是 `null`），用它返回的 `sections`，即前面加了分类名的同名 section（如「seo in-progress」）。
+会话管理、推送等运行环境的能力，用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『<能力>』，下文只写能力名。
 
 **Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
@@ -24,12 +24,12 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
    - backlog：人在接手它。`issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`issues set` 拒绝 triage），`set todo` 再 `set in-progress`，走 todo 会话。
    - triage：人在接着评估，走 triage 会话。
    - todo：`issues set <docs> in-progress $ARGUMENTS`，走 todo 会话。
-   - in-progress、in-review：别的会话已经在做。你是调度卡片开出来的，告诉人，然后照「收尾」归档自己；人直接调的，是在接手一个没有会话的 issue，不翻状态，按 PR、spec、工单在哪接上；in-review 里人批了要改的，先 `set in-progress`。
+   - in-progress、in-review：别的会话已经在做。你是调度开出来的，告诉人，然后照「收尾」收尾；人直接调的，是在接手一个没有会话的 issue，不翻状态，按 PR、spec、工单在哪接上；in-review 里人批了要改的，先 `set in-progress`。
    - 已关闭：停下说明。
-3. **归位**：调 `detach_session`（`self`）变成顶层会话；报错说你不是被别的会话开出来的，就跳过。按上面换好的 section 名用 `list_sections` 找到当前阶段的那个，没有就 `create_section`，再 `move_sessions`（`self`）移进去。标题不是「<仓库名>#<号> <标题>」的，用 `set_session_title` 改成这样：调度会话靠它数会话。
+3. **归位**：用『会话管理』的「分组」把自己归到认领后状态对应的分组，标题改成「<仓库名>#<号> <标题>」；没有分组的运行环境跳过。
 4. **接分支**：`git fetch origin`。`show` 返回了分支，就在它上面接着做（`git switch -c issue/<号>-<slug> --track origin/issue/<号>-<slug>`）；没有就 `git switch -c issue/<号>-<slug> origin/<主分支>`，`<slug>` 取标题的几个词。spec、设计、工单和代码都提交在这一条分支上，PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
 
-完成条件：会话在当前路的 section 里，issue 的状态是这条路认领成的那个，worktree 在这个 issue 的分支上。
+完成条件：会话在当前路的分组里（没有分组就免），issue 的状态是这条路认领成的那个，worktree 在这个 issue 的分支上。
 
 ## triage 会话
 
@@ -53,7 +53,7 @@ section 名是主队列的；issue 在独立队列里（`issues queues <docs> <�
 
 - **全过**：条目已是处理完的状态（`review-loop.mjs check` 不列它）。回到 `idea-loop:implement` 的「没活了就停下」：没有别的挡着就 `gh pr ready` 进 `idea-loop:pr-review`。
 - **有不过的**：停下，不进 review。把没过的用例、判定会话在改前改后各答了什么和出处摆给人，选项就是条目里的三个处理（判定对 / 判定错 / 用例有问题），等人批示；人的批示照 `idea-loop:implement` 里「人回复后」处理。
-- 会话收到消息时正忙着别的，先做完手上这一步再处理；消息没发来（会话归档过、任务没跑）时，人会收到 macOS 通知，结果照样在文件里。
+- 会话收到消息时正忙着别的，先做完手上这一步再处理；消息没发来（会话已收尾、任务没跑）时，人会收到 macOS 通知，结果照样在文件里。
 
 ## 先放着
 
@@ -65,9 +65,9 @@ issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage�
 
 1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录的 docs PR 合并之后，才往下走。
 2. `git status --short` 里没有要留的改动；有就先问人。
-3. 用 `archive_session`（`session_id: self`，reason 写「#<号> done」「#<号> 交给调度」「#<号> 先放着」之类）归档自己，worktree 随归档清掉。
+3. 用『会话管理』的「会话收尾」收尾自己，reason 写「#<号> done」「#<号> 交给调度」「#<号> 先放着」之类。
 
 ## 边界
 
 - 只做这一个 issue。路上发现的别的问题，照 `idea-loop:issues` 的「开一个 issue」开出去。
-- issue 的状态只走 `issues`；侧边栏只移动你自己。
+- issue 的状态只走 `issues`；分组只移动你自己。
