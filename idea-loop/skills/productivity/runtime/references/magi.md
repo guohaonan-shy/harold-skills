@@ -8,7 +8,7 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 - **创建**：`magi cron create <id> --expr "<5 段 cron>" --action create_session --cwd <主 checkout> --prompt …`。表达式按人在 magi 设的时区（`magi cron show` 的 when 一行会显示），分钟避开 0 和 30（跟桌面端一样）。创建者自己的任务最短每 5 分钟跑一次。
 - **列出**：`magi cron list`。
-- **读上次运行**：`magi cron list` / `magi cron show <id>` 里的上次运行时间。不带每次的成败，流程要「上次成功运行」的，就用这个时间；会话自己就是这个任务起的，这个时间不早于本会话开始的，当作没有。
+- **读上次运行**：`magi cron list` / `magi cron show <id>` 里的上次运行时间。不带每次的成败：流程要「上次成功运行」的，magi 给不出，当作没有（流程按没有基准处理，如 dreaming 的截图对账做全量；项目没有设计档案时 dreaming 本来就不做截图对账）。
 - **改、停、删**：`magi cron edit <id> [--expr …] [--enable|--disable] [--prompt …]`，`magi cron delete <id>`。
 
 行为：到点开出一个新会话，目录是 `--cwd`，所以 `--cwd` 填目标仓库的主 checkout。

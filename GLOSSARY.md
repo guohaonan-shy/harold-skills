@@ -7,7 +7,7 @@ Harold 的 Claude Code skills 集合；这里的词条是在这些 plugin 的通
 ### 运行环境
 
 **运行环境**：
-跑 idea-loop 会话的宿主，它决定会话里有哪些工具可用，例如 Claude 桌面端、magi。
+idea-loop 的本地运行环境：跑 idea-loop 会话的那个程序，它决定会话里有哪些工具可用，例如 Claude 桌面端、magi。
 _Avoid_: 环境（单说会跟开发环境、dev 环境混）, 工作环境、执行环境（0.2.0 计划里的旧叫法）, workspace, 宿主, host, platform
 
 **能力**：
