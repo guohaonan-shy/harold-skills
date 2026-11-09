@@ -14,6 +14,7 @@
 | [[design-reading-load]] | 16 份设计原则合成 6 份、内容全留；ui-reviewer 按模式按需读，designer 一次 refine 少读三成 |
 | [[design-research-agent]] | 把 Refero 设计调研抽成单独的调研 agent，参考图落本地给人看 |
 | [[design-tmp-worktree-root]] | imagine / refine 的设计过程目录改按当前 worktree 根定位，不再用 CLAUDE_PROJECT_DIR |
+| [[dispatch-triage-cards]] | 调度也给 triage 的 issue 出会话卡片，人点了才开 triage 会话；todo 照旧 |
 | [[docs-ride-code-pr]] | spec、设计、工单跟代码一个 PR 合进主分支；setup 问要不要知识库、放在哪 |
 | [[dreaming-design-reconcile]] | dreaming 每周对账设计档案与 DESIGN.md：重新驱动抓漂移、全站初扫、候选蒸馏 |
 | [[dreaming-skill-length]] | dreaming 的 SKILL.md 主体超 5000 字：验证为不存在，issue 量到的是字节数，按字符数是 3525 |
