@@ -80,7 +80,7 @@ idea-loop 从这几处读项目配置：
 
 ## 调度
 
-`idea-loop:issue-dispatch` 一轮一轮交出 todo 的 issue，怎么起因运行环境而异；按 [references/dispatch.md](references/dispatch.md) 做。
+`idea-loop:issue-dispatch` 一轮一轮交出 todo 和 triage 的 issue，怎么起因运行环境而异；按 [references/dispatch.md](references/dispatch.md) 做。
 
 完成条件：调度的起法告诉了人，或建好了调度任务，或人拒绝了。
 

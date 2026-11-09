@@ -17,13 +17,13 @@ spec：`docs/spec/dispatch-triage-cards/dispatch-triage-cards.md`（「方案」
 
 ## 验收标准
 
-- [ ] `issues candidates <docs> [<上限>] --state=triage` 只返回开着、没有被挡、状态是 triage 的 issue，顺序同 todo，未指派的按 `status:triage` 最后一次加上的时间排；不带 `--state` 仍是 todo；`--state` 给别的值报错。有单元测试。
-- [ ] `issues queues <docs>` 返回一个对象：`cap` 10、`triageCap` 3、`sections` 为 triage / in-progress / in-review；`--queue` 和按号查队列的用法没有了。有单元测试。
-- [ ] 分类行带「（独立队列，上限 N）」注时，解析出的分类说明里没有这段注，也不再产生第二个队列。有单元测试。
-- [ ] issue-dispatch 每一轮的步骤写明：分两份数会话、先交 todo 再交 triage、一轮最多 3 张、还没点的卡片按状态记；第 4 步不再报没有会话的 triage issue。
-- [ ] runtime 的 claude-desktop 与 magi 两份 reference 的调度做法照上面改（两个上限、section 不带分类名、卡片 background 写派的是 todo 或 triage、magi 按 issue 状态分两份数）。
-- [ ] 新增的 doc 测试断言：issue-dispatch 不再写「由人自己开会话」、有交出 triage 的一步；issue-triage 的 triage 那一行不再写「人自己开 triage 会话」；`idea-loop/skills/` 与 idea-loop README 里不出现「独立队列」。
-- [ ] `node --test idea-loop/scripts/*.test.mjs` 全绿（含 no-project-leak）。
+- [x] `issues candidates <docs> [<上限>] --state=triage` 只返回开着、没有被挡、状态是 triage 的 issue，顺序同 todo，未指派的按 `status:triage` 最后一次加上的时间排；不带 `--state` 仍是 todo；`--state` 给别的值报错。有单元测试。
+- [x] `issues queues <docs>` 返回一个对象：`cap` 10、`triageCap` 3、`sections` 为 triage / in-progress / in-review；`--queue` 和按号查队列的用法没有了。有单元测试。
+- [x] 分类行带「（独立队列，上限 N）」注时，解析出的分类说明里没有这段注，也不再产生第二个队列。有单元测试。
+- [x] issue-dispatch 每一轮的步骤写明：分两份数会话、先交 todo 再交 triage、一轮最多 3 张、还没点的卡片按状态记；第 4 步不再报没有会话的 triage issue。
+- [x] runtime 的 claude-desktop 与 magi 两份 reference 的调度做法照上面改（两个上限、section 不带分类名、卡片 background 写派的是 todo 或 triage、magi 按 issue 状态分两份数）。
+- [x] 新增的 doc 测试断言：issue-dispatch 不再写「由人自己开会话」、有交出 triage 的一步；issue-triage 的 triage 那一行不再写「人自己开 triage 会话」；`idea-loop/skills/` 与 idea-loop README 里不出现「独立队列」。
+- [x] `node --test idea-loop/scripts/*.test.mjs` 全绿（含 no-project-leak）。
 
 ## 选中的存量回归
 

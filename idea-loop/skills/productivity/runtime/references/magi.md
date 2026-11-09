@@ -41,8 +41,8 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 ### 调度（issue-dispatch 的三处）
 
 - **怎么一轮一轮跑**：`magi cron`（「定时任务」）每轮新开一个调度会话来跑 `idea-loop:issue-dispatch`，id `dispatch-<仓库名>`，间隔由人定；跑完一轮 `magi sessions stop` 停掉自己。没有 7 天到期，也不用常驻会话。人带间隔手敲 `/idea-loop:issue-dispatch <间隔>`：用「定时任务」建（已有就 `magi cron edit`）这个任务，prompt 是 `用 Skill 工具调 idea-loop:issue-dispatch`，再立刻做第一轮。
-- **怎么数开着的会话**：`magi sessions list` 里 slug 前缀是 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的。不是这个前缀的会话（如 issue 会话开出的子会话）不占位，按队列记下个数。每个队列各数各的：会话属于哪个队列，用它的号跑 `issues queues <docs> <号>`，看返回的 `name`。
-- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。没有「还没点的卡片」，空位 = 队列上限 − 开着的会话。上限照旧：主队列 10，每轮最多开 3 个。
+- **怎么数开着的会话**：`magi sessions list` 里 slug 前缀是 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的。不是这个前缀的会话（如 issue 会话开出的子会话）不占位，记下个数。magi 没有 section，按会话对应 issue 的状态分两份数：用 slug 里的号跑 `issues show <docs> <号>`，状态是 triage 的算 `triageCap` 那一份，其余算 `cap`（`issues queues <docs>` 给出）那一份。
+- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。没有「还没点的卡片」，空位 = 上限 − 开着的会话，两份各算各的：todo 用 `cap`（10），triage 用 `triageCap`（3），triage 也直接开。每轮最多开 3 个，todo 先开。triage 会话开场起草 spec、自校验，碰到要人定的就推送一句话停下等人（`idea-loop:issue-session`「跟人定要 grill 的」）。
   1. **建 worktree**（桌面端 `start_session` 的 `use_worktree` 对应的做法；会话不再开在主 checkout，多个会话不互相踩）：
      `git -C <主 checkout> worktree add <主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug> -b issue/<号>-<slug> origin/<基准分支>`。路径在主 checkout 外面（它的同级），所以主 checkout 的工作区和分支都不动，调度在主 checkout 只读的前提不变。`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）；`<slug>` 取 issue 标题的几个词，小写、连字符。`issues show` 已给出 issue 的分支（triage 会话留下的）：用它，`-b <那条分支> origin/<那条分支>`，不新起。路径已经存在、就是这条分支的 worktree（上一轮建了没开起来）：直接用。
   2. **开会话**：`magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi --cap <issue 平台的 MCP 服务器名> --cap browser <prompt>`。

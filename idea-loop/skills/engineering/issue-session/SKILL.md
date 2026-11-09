@@ -10,7 +10,7 @@ argument-hint: "<issue 号>"
 
 | 会话 | 谁开的 | 认领成 | 做什么 | 做完 |
 |---|---|---|---|---|
-| triage 会话 | 人 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
+| triage 会话 | 人或调度卡片 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
 | todo 会话 | 调度 | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，收尾 |
 
 会话管理、推送等运行环境的能力，用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『<能力>』，下文只写能力名。

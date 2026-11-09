@@ -21,10 +21,11 @@
  *
  * Order between issues is GitHub's native "blocked by" relation: `candidates` leaves out a todo that an open
  * issue still blocks. Versions are milestones, modules are categories. There is no parent / child logic.
- * Among the todo issues that nothing blocks, `candidates` goes by whose they are first: the ones assigned to me (the
+ * Among the todo issues that nothing blocks (`--state=triage`: the triage ones, in the same order), `candidates`
+ * goes by whose they are first: the ones assigned to me (the
  * `gh` login) alone, higher priority first (an issue carries at most one `priority:P0|P1|P2` label, none = last, and
  * within a priority the smaller number goes first); someone else's never; the unassigned ones only when none of mine
- * can go, by priority too, and within a priority the longest in todo first.
+ * can go, by priority too, and within a priority the longest in that state first.
  *
  * Issues are opened only through `new`, which refuses a body that lacks one of the four required sections
  * (问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
@@ -44,10 +45,9 @@
  * section of its AGENTS.md (or CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes
  * every label outside the status labels, the kinds, the categories and that keep-list.
  *
- * The dispatch loop hands out sessions from queues, each with its own cap on open sessions. Every issue
- * is in the main queue (cap 10) unless its parent category is marked「（独立队列，上限 N）」in that
- * section: then it waits in that category's own queue. A queue's sessions sit in its own sidebar
- * sections, one per working state, prefixed with the category (`seo in-progress`).
+ * The dispatch loop hands out sessions from one queue for every issue, with two caps on open sessions: 10 for
+ * the in-progress and in-review sessions (and the todo cards not yet opened), 3 for the triage ones. The
+ * sessions sit in three sidebar sections, one per working state.
  *
  * Usage (<docs> is the docs/ directory; gh runs there, so it acts on that repo):
  *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, priority:*, kind:* and type:* labels; lists the rest, --prune deletes them
@@ -60,9 +60,9 @@
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
  *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
- *   node issues.mjs candidates <docs> [<limit>] [--queue=<c>]         → JSON: todo issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (P0 → P1 → P2 → none, then longest in todo first); someone else's never; main queue, or category c's own
+ *   node issues.mjs candidates <docs> [<limit>] [--state=todo|triage] → JSON: todo (or triage) issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (P0 → P1 → P2 → none, then longest in that state first); someone else's never
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
- *   node issues.mjs queues     <docs> [<n>]                           → JSON: every queue (cap, sidebar sections), or the one issue #n is in
+ *   node issues.mjs queues     <docs>                                 → JSON: the caps (cap, triageCap) and the sidebar sections
  *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply creates the missing labels, then changes them
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
@@ -166,14 +166,15 @@ export function transitionError(from, to, { spec = null, prs = null, comment = '
 
 export const TYPE_PREFIX = 'type:';
 export const TYPES_HEADING = 'issue 分类';
-const QUEUE_NOTE = /\s*[（(]独立队列[，,]\s*上限\s*(\d+)\s*[)）]/;
+/** An old note on a parent category: kept out of the label text, no longer a queue. */
+const QUEUE_NOTE = /\s*[（(]独立队列[，,]\s*上限\s*\d+\s*[)）]/;
 const TYPE_COLORS = { parent: '0052cc', child: 'c5def5' };
 
 /**
  * The project's categories from its「issue 分类」section: a bullet per parent (`` - `seo`：搜索流量 ``),
  * indented bullets for its children, and a line starting「保留的 label」that names, in backticks, the
- * other labels to keep. A parent whose line carries「（独立队列，上限 N）」gets `queue: N` (the note is
- * not part of its label description). Null when the section is missing.
+ * other labels to keep. An old note「（独立队列，上限 N）」on a parent's line is dropped from its label
+ * description and means nothing else. Null when the section is missing.
  */
 export function parseTypes(md) {
   const lines = String(md).split('\n');
@@ -187,8 +188,7 @@ export function parseTypes(md) {
     if (item) {
       const [, indent, name, about = ''] = item;
       if (name.includes('/')) throw new Error(`分类「${name}」里有「/」：它留给子类分隔，换个名字`);
-      const own = about.match(QUEUE_NOTE);
-      if (!indent) parents.push({ name, about: about.replace(QUEUE_NOTE, '').trim(), children: [], ...(own ? { queue: Number(own[1]) } : {}) });
+      if (!indent) parents.push({ name, about: about.replace(QUEUE_NOTE, '').trim(), children: [] });
       else if (parents.length) parents.at(-1).children.push({ name, about });
       continue;
     }
@@ -218,18 +218,12 @@ export function typeLabels(types) {
 }
 
 export const MAIN_CAP = 10;
+export const TRIAGE_CAP = 3;
 export const STAGE_SECTIONS = [...WORKING];
 
-/** The dispatch queues: the main one (`name: null`) first, then one per category marked 独立队列. */
-export function queues(types) {
-  const own = (types?.parents ?? []).filter((p) => p.queue).map((p) => ({ name: p.name, cap: p.queue, sections: STAGE_SECTIONS.map((s) => `${p.name} ${s}`) }));
-  return [{ name: null, cap: MAIN_CAP, sections: [...STAGE_SECTIONS] }, ...own];
-}
-
-/** The queue an issue with these labels waits in: the first own queue whose `type:<parent>` it carries, else main. */
-export function queueOf(types, labels) {
-  const [main, ...own] = queues(types);
-  return own.find((q) => labels.includes(`${TYPE_PREFIX}${q.name}`)) ?? main;
+/** What the dispatch loop reads from one place: the cap of in-progress / in-review sessions, the cap of triage ones, the sidebar sections. */
+export function queues() {
+  return { cap: MAIN_CAP, triageCap: TRIAGE_CAP, sections: [...STAGE_SECTIONS] };
 }
 
 /** The labels a project keeps: the status labels, the priorities, the kinds, its categories, and its keep-list. */
@@ -594,34 +588,36 @@ export function setTypes(gh, types, n, values) {
   return want;
 }
 
-/** When #n last got the `status:todo` label (an ISO time), from the issue's events; null when the events never show it. */
-function inTodoSince(gh, n) {
+/** When #n last got the `status:<state>` label (an ISO time), from the issue's events; null when the events never show it. */
+function inStateSince(gh, n, state) {
   let since = null;
   for (let page = 1; ; page += 1) {
     const rows = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}/events?per_page=${PAGE}&page=${page}`]));
-    for (const e of rows) if (e.event === 'labeled' && e.label?.name === label('todo') && (!since || e.created_at > since)) since = e.created_at;
+    for (const e of rows) if (e.event === 'labeled' && e.label?.name === label(state) && (!since || e.created_at > since)) since = e.created_at;
     if (rows.length < PAGE) return since;
   }
 }
 
 /**
- * The todo issues a dispatch round may hand out, in the order to take them: none an open issue still blocks.
+ * The issues of one state (`todo` by default, or `triage`) a dispatch round may hand out, in the order to take them: none an open issue still blocks.
  * Whose it is decides first. Those assigned to me (the login `gh` runs as) come alone, P0 → P1 → P2 → none, the
  * lower number first within a priority; someone else's are never handed out. Only when none of mine can go do the
- * unassigned ones, by priority first as well and, within a priority, the longest in todo first (since `status:todo` was last added; the creation time when the events
+ * unassigned ones, by priority first as well and, within a priority, the longest in the state first (since its `status:<state>` was last added; the creation time when the events
  * never show it), the lower number on a tie. The login is read only when an issue has an assignee, and the events
  * only for the unassigned ones that share a priority with another unassigned one (none of mine can go).
  */
-export function candidates(gh, limit = 100, { types = null, queue = null } = {}) {
-  if (queue !== null && !queues(types).some((q) => q.name === queue)) throw new Error(`「${queue}」不是独立队列（${queues(types).slice(1).map((q) => q.name).join(' / ') || '这个项目没有独立队列'}）`);
-  const free = openIssues(gh).filter((i) => i.state === 'todo' && !(i.blockedBy > 0) && queueOf(types, i.labels).name === queue);
+export const DISPATCH_STATES = ['todo', 'triage'];
+
+export function candidates(gh, limit = 100, { state = 'todo' } = {}) {
+  if (!DISPATCH_STATES.includes(state)) throw new Error(`--state 只能是 ${DISPATCH_STATES.join(' / ')}，不是「${state}」`);
+  const free = openIssues(gh).filter((i) => i.state === state && !(i.blockedBy > 0));
   const me = free.some((i) => i.assignees.length) ? JSON.parse(gh(['api', 'user'])).login : null;
   const mine = free.filter((i) => i.assignees.includes(me)).sort((a, b) => priorityRank(a.labels) - priorityRank(b.labels) || a.number - b.number);
   let pick = mine;
   if (!mine.length) {
     const unassigned = free.filter((i) => !i.assignees.length);
     const sharing = unassigned.filter((i) => unassigned.some((o) => o !== i && priorityRank(o.labels) === priorityRank(i.labels)));
-    const since = new Map(sharing.map((i) => [i.number, inTodoSince(gh, i.number) ?? i.createdAt ?? '']));
+    const since = new Map(sharing.map((i) => [i.number, inStateSince(gh, i.number, state) ?? i.createdAt ?? '']));
     pick = unassigned.sort((a, b) => priorityRank(a.labels) - priorityRank(b.labels) || String(since.get(a.number) ?? '').localeCompare(String(since.get(b.number) ?? '')) || a.number - b.number);
   }
   return pick.slice(0, limit).map(({ number, title, labels }) => ({ number, title, priority: priorityOf(labels), assignee: mine.length ? 'me' : null }));
@@ -929,7 +925,7 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
   if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」（${COMMANDS.join(' / ')}）`);
   const linear = platformOf(readTracker(docs)) === 'linear';
   // `new --repo=…` names a GitHub repository itself (retro opens plugin issues that way), so a Linear project may use it
-  if (linear && ((GITHUB_ONLY.has(cmd) && !(cmd === 'new' && flags.repo)) || (cmd === 'queues' && a))) throw new Error(linearRefusal(cmd));
+  if (linear && GITHUB_ONLY.has(cmd) && !(cmd === 'new' && flags.repo)) throw new Error(linearRefusal(cmd));
   gh ??= defaultGh(docs);
   const print = (lines) => lines.forEach((l) => log(l));
   const json = (v) => log(JSON.stringify(v, null, 2));
@@ -941,12 +937,9 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
     if (surplus.length) print([`不在状态、优先级、类型、分类和保留清单里的 label（--prune 删掉它们，issue 上的也一起去掉）：`, ...surplus.map((s) => `  ${s.name}（${s.openIssues} 个 open issue 在用）`)]);
     return;
   }
-  if (cmd === 'candidates') return json(candidates(gh, a ? num(a, 'limit') : undefined, { types: readTypes(docs), queue: typeof flags.queue === 'string' ? flags.queue : null }));
+  if (cmd === 'candidates') return json(candidates(gh, a ? num(a, 'limit') : undefined, { state: flags.state === undefined ? 'todo' : text(flags, 'state') }));
   if (cmd === 'backlog') return json(backlog(gh, a ? num(a, 'limit') : undefined));
-  if (cmd === 'queues') {
-    const types = readTypes(docs);
-    return json(a ? queueOf(types, issue(gh, num(a, 'issue')).labels) : queues(types));
-  }
+  if (cmd === 'queues') return json(queues());
   if (cmd === 'reconcile') {
     const { done, problems } = reconcile(gh, docs);
     print(done);
