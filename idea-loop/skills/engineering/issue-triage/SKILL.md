@@ -28,7 +28,7 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
    | 建议 | 人批了之后 |
    |---|---|
    | todo + P1 或 P2 | `issues set <docs> todo <号>`，`issues priority <docs> <P1 或 P2> <号>` |
-   | triage + P1 或 P2 | `issues set <docs> triage <号>`，`issues priority <docs> <P1 或 P2> <号>`；人自己开 triage 会话 |
+   | triage + P1 或 P2 | `issues set <docs> triage <号>`，`issues priority <docs> <P1 或 P2> <号>`；调度会给它出会话卡片，人点了才开 triage 会话 |
    | canceled | `issues set <docs> canceled <号> --comment=<理由>` |
    | 留在 backlog | 什么都不做 |
 

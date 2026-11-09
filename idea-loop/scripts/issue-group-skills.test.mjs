@@ -35,17 +35,17 @@ test('三份 skill 里没有旧中文状态名、根 / 子 issue、整合、一�
   }
 });
 
-test('issue-dispatch：只派 todo，一个 issue 一个会话，对账、队列与上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
+test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、两个上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
   const md = skill('issue-dispatch');
   assert.match(front(md), /todo/);
   assert.match(front(md), /一个 issue 一个会话/);
-  assert.match(md, /只派 `todo`/);
+  assert.match(md, /`todo` 和 `triage` 的 issue/);
   assert.match(md, /issues candidates/);
   assert.match(md, /issues reconcile/);
   assert.match(md, /issues queues <docs>/);
   assert.match(md, /status:<状态>/);
   assert.match(md, /没有同号会话的记进汇报/);
-  assert.match(md, /一轮所有队列合计最多 3 个/);
+  assert.match(md, /合计最多交出 3 个/);
   assert.match(md, /idea-loop:runtime/);
   for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
   // the how is no longer in the body: no sidebar section, card or in-session loop

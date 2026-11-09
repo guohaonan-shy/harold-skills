@@ -1,6 +1,6 @@
 # 调度的起法
 
-`idea-loop:issue-dispatch` 一轮一轮地把 todo 的 issue 交出去。怎么一轮一轮跑，因运行环境而异：用 Skill 工具调 `idea-loop:runtime`，读当前运行环境『会话管理』里「调度」的「怎么一轮一轮跑」，照它做。
+`idea-loop:issue-dispatch` 一轮一轮地把 todo 和 triage 的 issue 交出去。怎么一轮一轮跑，因运行环境而异：用 Skill 工具调 `idea-loop:runtime`，读当前运行环境『会话管理』里「调度」的「怎么一轮一轮跑」，照它做。
 
 1. 那里写的是常驻会话里循环的：不在这里建任何东西。告诉人：在主 checkout 开一个固定的会话，敲 `/idea-loop:issue-dispatch 30m`（间隔照需要改）。
 2. 那里写的是用『定时任务』每轮新开会话的：

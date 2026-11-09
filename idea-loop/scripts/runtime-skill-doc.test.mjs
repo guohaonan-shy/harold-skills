@@ -120,7 +120,7 @@ test('the magi reference carries the spec table\'s commands and the dispatch sha
   const dispatch = text.slice(text.indexOf('### 调度'));
   // a session cannot archive itself (measured 2026-11-06); it stops itself instead
   assert.ok(!dispatch.includes('归档自己'), 'magi sessions cannot archive themselves');
-  for (const word of ['每轮新开', '停掉自己', '没有 7 天到期', '前缀', 'stopped / exited / dead', '主队列 10', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
+  for (const word of ['每轮新开', '停掉自己', '没有 7 天到期', '前缀', 'stopped / exited / dead', 'triageCap', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
 });
 
 test('the skill is findable: lives under productivity, with the two references and no stray files', () => {

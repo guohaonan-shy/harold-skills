@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseRepos, parseTypes, platformOf,
-  prState, priorityOf, queueOf, queues, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
+  prState, priorityOf, queues, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
 } from './issues.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./issues.mjs', import.meta.url));
@@ -716,26 +716,69 @@ test('setTypes replaces the issue\'s type labels and leaves the rest', () => {
   assert.deepEqual(issues[1].labels.sort(), ['Idea', 'kind:bug', 'status:triage', 'type:seo', 'type:seo/blog']);
 });
 
-test('a category marked 独立队列 gets its own queue, cap and sections; its note stays out of the label text', () => {
+test('a category marked 独立队列 is no queue of its own: the note stays out of the label text and nothing else changes', () => {
   const types = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索可见性（独立队列，上限 5）\n  - `technical`：技术\n');
   assert.equal(types.parents[1].about, '搜索可见性');
-  assert.deepEqual(queues(types), [
-    { name: null, cap: 10, sections: ['triage', 'in-progress', 'in-review'] },
-    { name: 'seo', cap: 5, sections: ['seo triage', 'seo in-progress', 'seo in-review'] },
-  ]);
-  assert.equal(queueOf(types, ['type:seo', 'type:seo/technical']).name, 'seo');
-  assert.equal(queueOf(types, ['type:bug']).name, null);
-  assert.deepEqual(queues(null).map((q) => q.name), [null]);
+  assert.equal('queue' in types.parents[1], false, 'the note no longer makes a queue');
+  assert.deepEqual(types.parents.map((p) => p.name), ['bug', 'seo']);
+  assert.deepEqual(queues(), { cap: 10, triageCap: 3, sections: ['triage', 'in-progress', 'in-review'] });
 });
 
-test('candidates of the main queue skip own-queue issues; --queue takes only those', () => {
-  const types = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索（独立队列，上限 5）\n');
+test('candidates: an issue of a category once marked 独立队列 goes in the same order as every other', () => {
   const t = ['status:todo'];
   const { gh } = fakeGh({ 1: open(1, [...t, 'type:seo', 'type:seo/pages']), 2: open(2, [...t, 'type:bug']), 3: open(3, t), 4: open(4, [...t, 'type:seo']) });
-  assert.deepEqual(candidates(gh, 100, { types }).map((i) => i.number), [2, 3]);
-  assert.deepEqual(candidates(gh, 100, { types, queue: 'seo' }).map((i) => i.number), [1, 4]);
-  assert.deepEqual(candidates(gh, 1, { types, queue: 'seo' }).map((i) => i.number), [1]);
-  assert.throws(() => candidates(gh, 100, { types, queue: 'bug' }), /不是独立队列/);
+  assert.deepEqual(candidates(gh).map((i) => i.number), [1, 2, 3, 4]);
+});
+
+test('candidates --state=triage: open triage issues nothing blocks, ordered like todo; the default is still todo', () => {
+  const tr = ['status:triage'];
+  const issues = {
+    1: open(1, [...tr, 'priority:P2']),
+    2: open(2, tr),
+    3: open(3, [...tr, 'priority:P0']),
+    4: open(4, tr, { blockedBy: [5] }),
+    5: open(5, ['status:in-progress']),
+    6: open(6, ['status:todo', 'priority:P0']),
+    7: open(7, [...tr, 'priority:P1']),
+    8: open(8),
+  };
+  const { gh } = fakeGh(issues);
+  assert.deepEqual(candidates(gh, 100, { state: 'triage' }).map((i) => [i.number, i.priority]), [[3, 'P0'], [7, 'P1'], [1, 'P2'], [2, null]]);
+  assert.deepEqual(candidates(gh, 2, { state: 'triage' }).map((i) => i.number), [3, 7]);
+  assert.deepEqual(candidates(gh).map((i) => i.number), [6], 'no state: todo');
+  assert.deepEqual(candidates(gh, 100, { state: 'todo' }).map((i) => i.number), [6]);
+  assert.throws(() => candidates(gh, 100, { state: 'in-progress' }), /state/);
+  assert.throws(() => candidates(gh, 100, { state: 'backlog' }), /triage.*todo|todo.*triage/);
+});
+
+test('candidates --state=triage: mine first and alone, someone else\'s never, the unassigned by how long they have been in triage', () => {
+  const tr = ['status:triage'];
+  const at = (day) => ({ events: [labeled('status:triage', `2026-02-${day}T00:00:00Z`), labeled('status:todo', '2026-03-30T00:00:00Z')] });
+  const { gh } = fakeGh({
+    1: open(1, tr, at('20')),
+    2: open(2, tr, at('02')),
+    3: open(3, [...tr, 'priority:P0'], { assignees: ['other'] }),
+    4: open(4, tr, at('10')),
+  });
+  assert.deepEqual(candidates(gh, 100, { state: 'triage' }).map((i) => [i.number, i.assignee]), [[2, null], [4, null], [1, null]], 'since status:triage was last added, not status:todo; the other\'s P0 is not handed out');
+  const withMine = fakeGh({ 1: open(1, tr, at('20')), 2: open(2, [...tr, 'priority:P2'], { assignees: ['me'] }), 3: open(3, [...tr, 'priority:P0'], { assignees: ['other'] }) }).gh;
+  assert.deepEqual(candidates(withMine, 100, { state: 'triage' }).map((i) => [i.number, i.assignee]), [[2, 'me']]);
+});
+
+test('candidates --state: the command line takes todo or triage and refuses anything else', () => {
+  const docs = docsWith();
+  const { gh } = fakeGh({ 1: open(1, ['status:todo']), 2: open(2, ['status:triage', 'priority:P1']), 3: open(3, ['status:triage']) });
+  assert.deepEqual(JSON.parse(cli(gh, ['candidates', docs, '--state=triage']).join('\n')).map((i) => i.number), [2, 3]);
+  assert.deepEqual(JSON.parse(cli(gh, ['candidates', docs, '1', '--state=triage']).join('\n')).map((i) => i.number), [2]);
+  assert.deepEqual(JSON.parse(cli(gh, ['candidates', docs]).join('\n')).map((i) => i.number), [1]);
+  assert.throws(() => cli(gh, ['candidates', docs, '--state=done']), /state/);
+  assert.throws(() => cli(gh, ['candidates', docs, '--state']), /state/);
+});
+
+test('queues: one object with both caps and the three sidebar sections, no per-issue lookup', () => {
+  const docs = docsWith();
+  const { gh } = fakeGh({});
+  assert.deepEqual(JSON.parse(cli(gh, ['queues', docs]).join('\n')), { cap: 10, triageCap: 3, sections: ['triage', 'in-progress', 'in-review'] });
 });
 
 test('the command line refuses the commands of the old model', () => {
@@ -1035,11 +1078,10 @@ test('in a Linear project the commands that write GitHub are refused, naming Lin
     backlog: ['backlog', docs], note: ['note', docs, '1', body],
   };
   for (const [cmd, argv] of Object.entries(lines)) assert.throws(() => run(argv, { gh, log() {} }), (e) => /Linear/.test(e.message) && /references\/linear\.md/.test(e.message) && e.message.includes(`「${cmd}」`), cmd);
-  assert.throws(() => run(['queues', docs, '5'], { gh, log() {} }), /Linear/);
   assert.equal(linearRefusal('set').includes('references/linear.md'), true);
   // what does not touch GitHub issues still works
   assert.deepEqual(cli(gh, ['body', docs, body]), ['正文齐了']);
-  assert.deepEqual(JSON.parse(cli(gh, ['queues', docs]).join('\n')).map((q) => q.name), [null]);
+  assert.deepEqual(JSON.parse(cli(gh, ['queues', docs]).join('\n')).sections, ['triage', 'in-progress', 'in-review']);
 });
 
 test('check --from does not read the issue, takes a Linear key, and reads the spec: a 待定 still waits', () => {
