@@ -78,3 +78,9 @@ test('no skill and no README speaks of an independent queue', () => {
   const hits = files.filter((f) => readFileSync(f, 'utf8').includes('独立队列'));
   assert.deepEqual(hits, [], '「独立队列」 is gone from the docs');
 });
+
+test('handing out triage skips issues that already have a session or an unopened card: a triage session leaves the issue in triage', () => {
+  const step = dispatch.split('\n').find((l) => /^\d+\.\s+\*\*交出 triage\*\*/.test(l));
+  assert.ok(/跳过.*同号会话/.test(step) && /还没开起来/.test(step), 'the triage step must skip same-number sessions and unopened cards');
+  assert.ok(/triage 也直接开，跳过已有同号会话/.test(magi), 'magi must not start a second session for a triage issue');
+});

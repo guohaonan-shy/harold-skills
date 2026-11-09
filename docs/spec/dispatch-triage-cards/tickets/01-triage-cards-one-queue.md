@@ -24,6 +24,7 @@ spec：`docs/spec/dispatch-triage-cards/dispatch-triage-cards.md`（「方案」
 - [x] runtime 的 claude-desktop 与 magi 两份 reference 的调度做法照上面改（两个上限、section 不带分类名、卡片 background 写派的是 todo 或 triage、magi 按 issue 状态分两份数）。
 - [x] 新增的 doc 测试断言：issue-dispatch 不再写「由人自己开会话」、有交出 triage 的一步；issue-triage 的 triage 那一行不再写「人自己开 triage 会话」；`idea-loop/skills/` 与 idea-loop README 里不出现「独立队列」。
 - [x] `node --test idea-loop/scripts/*.test.mjs` 全绿（含 no-project-leak）。
+- [x] review 第 1 轮 S1：交出 triage 时跳过已有同号会话和还没点的卡片（triage 会话开着时 issue 仍是 triage）；magi 不给已有会话的 triage issue 再开一个。
 
 ## 选中的存量回归
 
