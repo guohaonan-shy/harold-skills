@@ -25,6 +25,8 @@ spec：`docs/spec/dispatch-triage-cards/dispatch-triage-cards.md`（「方案」
 - [x] 新增的 doc 测试断言：issue-dispatch 不再写「由人自己开会话」、有交出 triage 的一步；issue-triage 的 triage 那一行不再写「人自己开 triage 会话」；`idea-loop/skills/` 与 idea-loop README 里不出现「独立队列」。
 - [x] `node --test idea-loop/scripts/*.test.mjs` 全绿（含 no-project-leak）。
 - [x] review 第 1 轮 S1：交出 triage 时跳过已有同号会话和还没点的卡片（triage 会话开着时 issue 仍是 triage）；magi 不给已有会话的 triage issue 再开一个。
+- [x] review 第 2 轮 S1：先跳过已有会话和还没点卡片的 triage issue，再取够空位个数（magi 同理）。
+- [x] review 第 2 轮 S2：magi 在 Linear 项目上用 Linear 的读 issue 工具读状态来分两份数。
 
 ## 选中的存量回归
 

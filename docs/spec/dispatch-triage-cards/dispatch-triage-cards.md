@@ -52,7 +52,7 @@ issues: [266]
 2. 数开着的会话：三个 section 照旧都数，但分两份记：in-progress、in-review 的算进上限 10，triage 的算进 triage 上限 3。
 3. 没有会话的 issue：只报 in-progress、in-review 的；triage 的不再报，它们会拿到卡片。
 4. 交出 todo，照旧。
-5. **新**：交出 triage。候选是 `issues candidates <docs> <空位> --state=triage`：没有同号会话、没有还没点的卡片的 triage issue，顺序跟 todo 一样（指派给本人的在前，按优先级，同一级里在 triage 停得久的在前；指派给别人的不派）。空位 = triage 上限 3 − triage section 里开着的会话 − 还没点的 triage 卡片（见「实现决策」）。
+5. **新**：交出 triage。候选是 `issues candidates <docs> --state=triage` 取全部、跳过有同号会话或还没点卡片的之后的前 <空位> 个（review 第 2 轮改：先跳过再截断，否则开着的会话占掉名额）：顺序跟 todo 一样（指派给本人的在前，按优先级，同一级里在 triage 停得久的在前；指派给别人的不派）。空位 = triage 上限 3 − triage section 里开着的会话 − 还没点的 triage 卡片（见「实现决策」）。
 6. 一轮最多 3 张卡片不变，todo 先交，剩下的给 triage。
 
 同一行为的其他入口：

@@ -34,7 +34,7 @@ test('issue-dispatch no longer leaves triage sessions to the human, and has a st
   assert.ok(!/由人自己开会话/.test(dispatch), 'issue-dispatch must not say triage sessions are opened by the human on their own');
   const step = dispatch.split('\n').find((l) => /^\d+\.\s+\*\*交出 triage\*\*/.test(l));
   assert.ok(step, 'issue-dispatch has no numbered step 「交出 triage」');
-  assert.match(step, /issues candidates <docs> <空位> --state=triage/, 'the triage step must take its candidates with --state=triage');
+  assert.match(step, /issues candidates <docs> --state=triage/, 'the triage step must take its candidates with --state=triage');
   assert.match(step, /triageCap/, 'the triage step must count its free slots against triageCap');
   const todoAt = dispatch.indexOf('**交出 todo**');
   assert.ok(todoAt >= 0 && todoAt < dispatch.indexOf('**交出 triage**'), 'todo is handed out before triage');
@@ -83,4 +83,15 @@ test('handing out triage skips issues that already have a session or an unopened
   const step = dispatch.split('\n').find((l) => /^\d+\.\s+\*\*交出 triage\*\*/.test(l));
   assert.ok(/跳过.*同号会话/.test(step) && /还没开起来/.test(step), 'the triage step must skip same-number sessions and unopened cards');
   assert.ok(/triage 也直接开，跳过已有同号会话/.test(magi), 'magi must not start a second session for a triage issue');
+});
+
+test('handing out triage skips before it takes as many as there are free slots, so open sessions do not eat the slots', () => {
+  const step = dispatch.split('\n').find((l) => /^\d+\.\s+\*\*交出 triage\*\*/.test(l));
+  assert.ok(!/candidates <docs> <空位> --state=triage/.test(step), 'the triage candidates must not be cut to the free slots before skipping');
+  assert.ok(/先跳过.*再.*取前 <空位> 个/.test(step), 'skip first, then take the free slots');
+  assert.ok(/先跳过再取够空位个数/.test(magi), 'magi: skip first, then fill the slots');
+});
+
+test('magi reads a Linear issue\'s state with get_issue when it counts triage sessions', () => {
+  assert.ok(/Linear 项目 `issues show` 不读状态.*get_issue/.test(magi), 'magi on Linear must not count by issues show, which has no state there');
 });

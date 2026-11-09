@@ -30,7 +30,7 @@ argument-hint: "<间隔，如 30m>"
 3. **数开着的会话**：照「怎么数开着的会话」，分两份数：in-progress、in-review 的会话是 `cap` 那一份，triage 的会话是 `triageCap` 那一份。issue 会话开出的子会话（如设计阶段并行开的 imagine 会话）不占位：记下个数，写进汇报。
 4. **没有会话的 issue**（Linear 项目：issue 照 `idea-loop:issues` 的 Linear 做法按状态取，翻回 backlog 用 `save_issue`）：`gh issue list --state open --label status:<状态> --json number,title`，状态依次取 in-progress、in-review，对照上一步数到的会话里的号；没有同号会话的记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或 `issues set <docs> backlog <号> --comment=…` 放回去。
 5. **交出 todo**：空位按「怎么交出 issue」算（`cap` − in-progress、in-review 的会话 − 交出去、会话还没开起来的 todo；后者上一轮汇报里按状态记着）。空位 ≤ 0 就跳过。否则取排在最前的 todo（Linear 项目没有 `issues candidates`：候选照 `idea-loop:issues` 的 Linear 做法取；GitHub 项目候选由脚本给，已经不含还被挡着的）。候选的顺序，两个平台一样：指派给本人的在前，按 P0 → P1 → P2 → 没有优先级排，同一级里最早的在前；本人名下没有可派的，才轮到未指派的，也先按优先级排，同一优先级里按在 todo 里停留的时间排，久的在前；指派给别人的不派：`issues candidates <docs> <空位>`。跳过交出去还没开起来的已经占着的，每个 issue 交出一次。
-6. **交出 triage**：空位 = `triageCap` − triage 的会话 − 交出去、会话还没开起来的 triage（也按状态记着）。空位 ≤ 0，或这一轮前面已交出 3 个，就跳过。否则 `issues candidates <docs> <空位> --state=triage`（Linear 项目：Triage 状态的 issue 照 `idea-loop:issues` 的 Linear 做法取；跳过 triage 的项目没有候选）。顺序同 todo，同一优先级里按在 triage 停留的时间排，久的在前。triage 的 issue 开了会话后状态仍是 triage，所以候选里跳过第 3 步数到的同号会话和交出去还没开起来的，每个 issue 交出一次。
+6. **交出 triage**：空位 = `triageCap` − triage 的会话 − 交出去、会话还没开起来的 triage（也按状态记着）。空位 ≤ 0，或这一轮前面已交出 3 个，就跳过。否则 `issues candidates <docs> --state=triage` 取全部、不带上限（Linear 项目：Triage 状态的 issue 照 `idea-loop:issues` 的 Linear 做法取；跳过 triage 的项目没有候选）。顺序同 todo，同一优先级里按在 triage 停留的时间排，久的在前。triage 的 issue 开了会话后状态仍是 triage，所以先跳过第 3 步数到的同号会话和交出去还没开起来的，再从剩下的里按顺序取前 <空位> 个，每个 issue 交出一次。
 
 一轮的第 5、6 步合计最多交出 3 个，todo 先交，剩下的给 triage。会话的标题与 prompt（todo 和 triage 一样，会话开场按 issue 的状态走）：
 
