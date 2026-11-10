@@ -49,7 +49,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
 └── skills/
     └── <skill-name>/
-        ├── SKILL.md                 # 主体 < 5000 字
+        ├── SKILL.md                 # 主体 < 5000 字（量法见下面「要点」第一条）
         ├── references/              # skill 自己的深度参考（按需，如 cases.md）
         └── scripts/                 # 可执行模板（按需，如 R/Python）
 ```
@@ -62,6 +62,9 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 
 要点：
 - SKILL.md 主体保持精简（< 5000 字），把长篇领域知识、真实案例放 `skills/<name>/references/`
+  - 主体 = 去掉文件开头 frontmatter（两条 `---` 之间）之后的部分；「字」= UTF-8 字符数，一个汉字、一个字母、一个空格各算 1
+  - 量法：`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`
+  - 不带 `LC_ALL` 的 `wc -m` 在 C locale（Claude Code 的 shell 默认）下数的是字节，一个汉字算 3
 - 跨 skill 共享约定（提问方式、文件覆盖、语言切换、文件名约定等）写到 plugin 级 `references/conventions.md`，每个 SKILL.md 在 §0 必读约定 段引用
 - skill 运行时产物分两类，按性质选位置：
   - **任务产物（per-project）** → 用户当前工作目录的固定语义文件名（gstack 风格，下游 skill 通过文件名 Read 衔接，**不用** `outputs/<timestamp>/` 子目录）

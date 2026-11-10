@@ -20,10 +20,10 @@
 
 ## 验收标准
 
-- [ ] `AGENTS.md` 那条要点写明了主体从哪算起、「字」怎么数、那条命令和 C locale 的提醒。
-- [ ] 量法在仓库根目录的文档里只出现在这一处；目录树注释和 `REVIEW.md` 那条都只是指针，`REVIEW.md` 指向的节名与要点实际所在的节一致。
-- [ ] 在 `LANG`、`LC_ALL` 为空的 shell 里，把文档里的命令原样套到 `idea-loop/skills/productivity/dreaming/SKILL.md` 上跑，再加 `LC_ALL=C` 前缀跑一次：两次结果相同，且等于用 Node 读文件、去掉 frontmatter 后 `[...s].length` 的值。
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过。
+- [x] `AGENTS.md` 那条要点写明了主体从哪算起、「字」怎么数、那条命令和 C locale 的提醒。
+- [x] 量法在仓库根目录的文档里只出现在这一处；目录树注释和 `REVIEW.md` 那条都只是指针，`REVIEW.md` 指向的节名与要点实际所在的节一致。
+- [x] 在 `LANG`、`LC_ALL` 为空的 shell 里，把文档里的命令原样套到 `idea-loop/skills/productivity/dreaming/SKILL.md` 上跑，再加 `LC_ALL=C` 前缀跑一次：两次结果相同，且等于用 Node 读文件、去掉 frontmatter 后 `[...s].length` 的值。
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过。
 
 ## 选中的存量回归
 
