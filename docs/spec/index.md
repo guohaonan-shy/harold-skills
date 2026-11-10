@@ -28,6 +28,7 @@
 | [[link-sweep-skip-code]] | link sweep 只查正文里的 wiki-link，代码里的格式示例不算，不再报一串假阳性 |
 | [[native-summary-locate]] | 原生折叠标题按角色定位不到、FAQ 展开写不成边：验证为不存在，已在 design-archive-sections 里做掉 |
 | [[no-decision-autopilot]] | 实现阶段没有决定题就不停：切票直接落盘、停下汇报无决定题即放行、review 无事不等；只在生产操作和合并前停，交一份写给不知情者的审核报告 |
+| [[orphan-capability-fix-or-remove]] | 起草修坏能力的 spec 时先查有没有调用方；一个都查不到，把「修好还是删掉」写成待定，不默认按修 |
 | [[pr-review-report-followups]] | 判得出的 agent 自己定，交给人的题先做完功课，少审 spec 的来回与 PR 里的拍板 |
 | [[readme-pr-reviewer-model]] | idea-loop README 目录树里 pr-reviewer 的模型与思考强度改成跟定义一致（opus · high） |
 | [[retro]] | retro：从会话里的纠正与决定提炼规则候选，批了开 issue，改 skill 要回放证明生效 |
