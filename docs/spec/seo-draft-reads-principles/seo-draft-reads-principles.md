@@ -37,7 +37,7 @@ issues: [151]
 
 ## 方案
 
-起草 spec 的会话（triage 会话或 todo 会话）拿到一个带 `type:seo/<方向>` 的 issue 时，先读这个方向对应的 SEO skill 和它 `references/` 里的原则文件，再写选项和推荐；讲到某种做法有没有用，引原则文件的结论和出处。原则文件没覆盖的才自己查一手来源，查不到的标成猜测。人看到的题因此带着插件已有的结论，不再出现「说法不一」。
+起草 spec 的会话（triage 会话或 todo 会话）拿到一个带 `type:seo/<方向>` 的 issue 时，先用 Skill 工具调这个方向对应的 SEO skill、只读它写修法前要读的原则（由那个 skill 指过去，不直接翻它的 `references/`，也不跑它的检查步骤），再写选项和推荐；讲到某种做法有没有用，引原则文件的结论和出处。原则文件没覆盖的才自己查一手来源，查不到的标成猜测。人看到的题因此带着插件已有的结论，不再出现「说法不一」。
 
 改动两处：
 
@@ -61,7 +61,8 @@ issues: [151]
 
 ## 实现决策
 
-- **draft-spec「输入」新增一项**，在「issue 写的现状也要核一遍」之后：「issue 带 `type:seo/<方向>` 的：先读这个方向的 agent 调的 SEO skill（方向与 agent 的对应在 `seo-scan` 的 SKILL.md，agent 调哪个 skill 在它的定义里），连同那个 skill 的 `references/`。选项和推荐讲到某种做法有没有用时，引那里的结论和出处，不写「说法不一」这类没核过的话；原则文件没覆盖的才自己查一手来源，查不到的标成猜测。」措辞允许实现时为通顺小改，意思不变。
+- **draft-spec「输入」新增一项**，在「issue 写的现状也要核一遍」之后：「issue 带 `type:seo/<方向>` 的：先用 Skill 工具调这个方向的 agent 调的那个 SEO skill（方向与 agent 的对应在 `seo-scan` 的 SKILL.md，agent 调哪个 skill 在它的定义里），只读它写修法建议前要读的原则，不跑它的检查步骤。选项和推荐讲到某种做法有没有用时，引那里的结论和出处，不写「说法不一」这类没核过的话；原则没覆盖的才自己查一手来源，查不到的标成猜测。」措辞允许实现时为通顺小改，意思不变。
+  - 修正（PR #278 review 第 1 轮 C1，人 2026-11-10 定「C1 选 A」）：起初这里写的是「连同那个 skill 的 `references/`」，让起草会话直接翻别的 skill 的参考资料，与 writing-for-agents 的「别的 skill 不读它的 `references/`，要用就调这个 skill，由它指过去」和 idea-loop/AGENTS.md「参考资料归谁」冲突，改成调 skill、由它指过去。要写明「只读原则、不跑检查步骤」：seo-geo 的检查里有付费的 AI 可见性步骤。
 - **不写死方向 → skill 的表，指向已有的对应关系**。依据：`seo-scan` 的 SKILL.md 已有方向 → agent 表，五个 agent 定义各自写了调哪个方法 skill（geo → `seo-geo`，technical → `seo-audit`，pages → `competitor-analysis`，keywords → `keyword-research` / `keyword-clustering`，backlinks → `link-prospecting` / `seo-outreach`）；再抄一份会跟它们漂移。
 - **新增文字不举真实项目的例子**。依据：仓库 AGENTS.md「插件里不出现任何项目的信息」，`no-project-leak.test.mjs` 守着；issue 原文的项目名不带进插件。
 - **principles.md 补的一段**：「Lighthouse 的 Agentic Browsing 评分（实验室评分，不是 Google 搜索信号）有一项 `llms-txt`：4xx 不计分；5xx 或取不到判不通过；返回 200 时要有一级标题、至少一个 markdown 链接、不少于 50 个字符，否则不通过。所以对不存在的 `/llms.txt` 返回 200 加 HTML 外壳在那里算不通过，修法是返回真 404，或放一个合格的真文件（上面的最小示例就合格）。出处：Lighthouse 13.5.0 源码，经 claude-seo 的 `scripts/lighthouse_agentic.py` 转述，2026-11-10 核对。」依据：问题 2 的一手来源；示例本身有一级标题、两条链接、超过 50 字符。
