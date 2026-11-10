@@ -39,6 +39,7 @@
 | [[seo-cannibalization-sitelinks]] | SEO.md 新开「品牌」一节，蚕食判定排除含品牌词的查询，不再把站点链接报成蚕食 |
 | [[seo-params-from-seo-md]] | seo skill 要用的项目信息由 setup 推测确认写入；scan 缺了先停下给人确认，补进 SEO.md 再跑 |
 | [[session-digest-locate]] | retro 取会话记录时按会话自己的 id 找；退回标记时只认第一条人的发言，对不上不报成功 |
+| [[skill-length-measure]] | 「SKILL.md 主体 < 5000 字」写明量法：去掉 frontmatter、按 UTF-8 字符数，给一条照抄就对的命令 |
 | [[ui-reviewer-archive-pointers]] | ui-reviewer 开工与对账模式用文件路径指向设计档案的分段写法：验证为不存在，已在 design-archive-skill-length 里改成能力名加节名 |
 | [[ui-state-archive]] | docs/design 分 tmp / prod，prod 是一张按页面状态建的图，设计与验证共用，合并前归档 |
 | [[uiux-imagine-agent]] | uiux-imagine 的执行抽成专职 uiux-imaginer agent，会话只编排和摆结果 |
