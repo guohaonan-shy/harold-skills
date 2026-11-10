@@ -26,11 +26,11 @@
 再加一条文档测试（`idea-loop/scripts/` 下按已有 `*-doc.test.mjs` 的写法），守住「账本」里这句：先判已做完的、当交回 `landed` 落地，回收重派只给不是这样的。
 
 ## 验收标准
-- [ ] 「账本」里以「会话断了：」开头的句子与上面引文逐字一致，旧句不再出现
-- [ ] 新回放用例目录在，`case.json` 过 `idea-loop/evals/retro/cases.mjs` 的校验（commit、prompt、stop_at、question、quote、size 齐全），带 `annotations.md`
-- [ ] 回放用例已放进夜间队列，或说明为何没放
-- [ ] 新文档测试先在旧文上红、改后绿
-- [ ] `idea-loop/scripts/` 下全部测试绿（含 `no-project-leak.test.mjs`）
+- [x] 「账本」里以「会话断了：」开头的句子与上面引文逐字一致，旧句不再出现
+- [x] 新回放用例目录在，`case.json` 过 `idea-loop/evals/retro/cases.mjs` 的校验（commit、prompt、stop_at、question、quote、size 齐全），带 `annotations.md`
+- [x] 回放用例已放进夜间队列，或说明为何没放（没放：size 是 small，已当场跑过两次，改前改后都答「是」，用例没抓住问题；原因写在用例的 annotations.md「已知的局限」，交回 verified 里也标了）
+- [x] 新文档测试先在旧文上红、改后绿
+- [x] `idea-loop/scripts/` 下全部测试绿（含 `no-project-leak.test.mjs`）
 
 ## 选中的存量回归
 - `idea-loop/scripts/no-project-leak.test.mjs`：插件文字里不能出现项目信息，新句和用例 prompt 要过它（用例在 evals 下，看它是否被扫）。
