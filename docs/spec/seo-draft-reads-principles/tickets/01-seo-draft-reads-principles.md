@@ -14,9 +14,9 @@ idea-loop 插件里两段给 agent 读的规则文字：
 
 ## 验收标准
 
-- [ ] 起草参考的「输入」有 `type:seo/<方向>` 一项，指向 seo-scan 的方向表和 agent 定义，含「引那里的结论和出处」与「标成猜测」两层意思
-- [ ] seo-geo 原则文件「llms.txt」一节含：4xx 不计分、5xx 不通过、一级标题 / markdown 链接 / 50 字符三条、「不是 Google 搜索信号」、修法（真 404 或合格真文件）、出处
-- [ ] `node --test idea-loop/scripts/no-project-leak.test.mjs idea-loop/scripts/issue-group-skills.test.mjs` 通过
+- [x] 起草参考的「输入」有 `type:seo/<方向>` 一项，指向 seo-scan 的方向表和 agent 定义，含「引那里的结论和出处」与「标成猜测」两层意思
+- [x] seo-geo 原则文件「llms.txt」一节含：4xx 不计分、5xx 不通过、一级标题 / markdown 链接 / 50 字符三条、「不是 Google 搜索信号」、修法（真 404 或合格真文件）、出处
+- [x] `node --test idea-loop/scripts/no-project-leak.test.mjs idea-loop/scripts/issue-group-skills.test.mjs` 通过
 
 ## 选中的存量回归
 
