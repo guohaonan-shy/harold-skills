@@ -19,10 +19,10 @@ issue 会话照 issue-session 的「起草 spec」参考起草 spec 时，提交
 
 ## 验收标准
 
-- [ ] 「起草 spec」参考的「自己校验」第 7 条含上面那句（调用方的四类、查不到写待定、两个选项各配例子和代价、不默认按修），其他条目不变
-- [ ] 回放用例 `draft-spec-orphan-capability` 的 `case.json` 通过用例格式校验（`node --test` 跑 retro 的测试全绿），旁边有 `annotations.md`
-- [ ] 当场跑一次回放：改前「否」、改后「是」，判定的出处摘进交回；没过就照实交回，不改规则硬凑
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 全绿（含插件不出现项目信息的检查；`evals/` 下的用例是允许的例外）
+- [x] 「起草 spec」参考的「自己校验」第 7 条含上面那句（调用方的四类、查不到写待定、两个选项各配例子和代价、不默认按修），其他条目不变
+- [x] 回放用例 `draft-spec-orphan-capability` 的 `case.json` 通过用例格式校验（`node --test` 跑 retro 的测试全绿），旁边有 `annotations.md`
+- [x] 当场跑一次回放：改前「否」、改后「是」，判定的出处摘进交回；没过就照实交回，不改规则硬凑
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 全绿（含插件不出现项目信息的检查；`evals/` 下的用例是允许的例外）
 
 ## 选中的存量回归
 
