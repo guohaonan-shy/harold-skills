@@ -11,9 +11,9 @@ spec 给的文字（可为通顺小改，意思不变）：「条数超出项目
 加在 FAQ 那一条的末尾，同一个列表项里；不另开 reference 文件，不升 plugin 版本，不动别的条目。文字里不出现任何具体项目的名字或场景。
 
 ## 验收标准
-- [ ] seo-writing 第 4 步 FAQ 那一条包含：超出项目规范、近 3 个月、`get_search_console_performance`、删掉的判据（无可见搜索词且内容重复）、「需要人决定的事」、逐条对照的三列、两点限制、拉不到数据时直接交给人
-- [ ] 第 4 步其它条目和 skill 其它部分没有改动
-- [ ] `node --test idea-loop/scripts/no-project-leak.test.mjs` 通过
+- [x] seo-writing 第 4 步 FAQ 那一条包含：超出项目规范、近 3 个月、`get_search_console_performance`、删掉的判据（无可见搜索词且内容重复）、「需要人决定的事」、逐条对照的三列、两点限制、拉不到数据时直接交给人
+- [x] 第 4 步其它条目和 skill 其它部分没有改动
+- [x] `node --test idea-loop/scripts/no-project-leak.test.mjs` 通过
 
 ## 选中的存量回归
 - `idea-loop/scripts/no-project-leak.test.mjs`：新文字是插件规则，有带进项目名或真实场景的风险。
