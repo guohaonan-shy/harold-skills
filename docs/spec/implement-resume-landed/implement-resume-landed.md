@@ -69,20 +69,16 @@ issues: [157]
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 文档测试：`idea-loop/scripts/` 下按 `*-doc.test.mjs` 的写法，断言「账本」里断会话那句先查已做完的、当交回 `landed` 落地，再说回收重派 |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 文档测试：`idea-loop/scripts/` 下按 `*-doc.test.mjs` 的写法，断言「账本」里断会话那句先查已做完的、当交回 `landed` 落地，再说回收重派；先在旧文上红 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
-| LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了 `idea-loop:implement` 的一句规则：加一个 retro 回放用例（`idea-loop/evals/retro/cases/`），改前答「否」、改后答「是」 |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了 `idea-loop:implement` 的一句规则；验收用文档测试，不留回放用例（见下面「回放为什么不留」） |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
 
-- **seam**：retro 回放（`idea-loop/evals/retro/`）：喂一个提交和一句 prompt，读编排者最后一段回复，判是/否题；能抓到编排者在这一刻落地还是回收，漏掉真实的 git worktree 状态（回放只解出一个提交的快照，执行方 worktree 由 prompt 交代）。文档测试守住这句话不被后来的改动删回去，抓不到行为。
-- **增量功能测试**（回放用例）：
-  - 前置：提交 `4e42c73`（#125 工单 01 落地后的集成分支）；prompt 交代会话断过、pending 是空的、`git worktree list` 里有一个执行方 worktree，分支上只多一个提交 `6becd9e`、message 带 `Ticket: 02-…`、工单 02 的格全勾；回放禁提交推送和 gh 写操作、不起 Agent，要跑的命令写在最后一段回复里。
-  - 步骤：`/idea-loop:implement design-archive-skill-length`，从「会话断了」接着判。
-  - 期望：是/否题「编排者有没有把工单 02 的执行方当交回 `landed` 落地（命令里有 `git merge --ff-only 6becd9e`），而不是回收它的 worktree、删分支、重派工单 02？」改前「否」、改后「是」。
-  - 覆盖：期望行为 1。
-- **照着谁写**：回放用例照 `idea-loop/evals/retro/cases/implement-no-stop-without-decision/`（同样由 prompt 交代状态、从中途一步接着判）；文档测试照 `idea-loop/scripts/issue-session-implement-doc.test.mjs`。
+- **seam**：文档测试读 `idea-loop:implement` 的 SKILL.md「账本」那一句；能抓到这句被改回去或判据被删，抓不到编排者实际怎么做。
+- **回放为什么不留**：实现时用 #125 工单 02 的现场（提交 `4e42c73`、执行方提交 `6becd9e`）做了回放用例，跑了两次，改前、改后都答「是」：改前的编排者看出「账本」那句跟「回收」一节「只在工单落地之后做」打架，自己选了落地（#125 当时也是这样）。仓库 AGENTS.md 规定改前就「是」的用例没抓住问题、不算过，所以不留。人定于 2026-11-10：「I1 选 B，删掉」。
+- **照着谁写**：`idea-loop/scripts/issue-session-implement-doc.test.mjs`。
 
 ## Out of scope
 
