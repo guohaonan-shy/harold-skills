@@ -7,6 +7,7 @@
 - issue 全文和评论：`gh issue view <号> --comments`。
 - 分拣的证据评论（「🤖 idea-loop：」开头）：复现、分类、结论都在里面，当证据用，在 spec 里引它的出处（评论链接、日期）。没有这条评论的（人直接开成 todo 的），自己先复现：手段表在 `${CLAUDE_PLUGIN_ROOT}/agents/issue-triager.md` 的「复现」，输出留在 `.tmp/to-spec/<spec-slug>/repro/`，只读回判断要用的一两行。
 - issue 写的现状也要核一遍，再写进 spec：用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。
+- issue 带 `type:seo/<方向>` 的：先用 Skill 工具调这个方向的 agent 调的那个 SEO skill（方向与 agent 的对应在 `idea-loop:seo-scan` 的 SKILL.md 的「派方向 agent」表，agent 调哪个 skill 写在 `${CLAUDE_PLUGIN_ROOT}/agents/` 下它自己的定义里），只读它写修法建议前要读的原则（由那个 skill 指过去，不直接翻它的 `references/`），不跑它的检查步骤。选项和推荐讲到某种做法有没有用时，引那里的结论和出处，不写「说法不一」这类没核过的话；原则文件没覆盖的才自己查一手来源，查不到的标成猜测。
 
 ## 结论行
 

@@ -38,6 +38,7 @@
 | [[runtime]] | 运行环境从通用流程里抽出来：能力清单加每个运行环境一份做法，支持 Claude 桌面端与 magi |
 | [[sections-inner-scroll]] | 分段脚本认出真正在滚的元素：内层容器滚动的页面也能量全高、按段拍到首屏以下 |
 | [[seo-cannibalization-sitelinks]] | SEO.md 新开「品牌」一节，蚕食判定排除含品牌词的查询，不再把站点链接报成蚕食 |
+| [[seo-draft-reads-principles]] | 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据 |
 | [[seo-params-from-seo-md]] | seo skill 要用的项目信息由 setup 推测确认写入；scan 缺了先停下给人确认，补进 SEO.md 再跑 |
 | [[seo-writing-faq-trim]] | FAQ 条数超出项目规范时，seo-writing 先拿 Search Console 搜索词逐条评估能删哪些，删完仍超才交给人 |
 | [[session-digest-locate]] | retro 取会话记录时按会话自己的 id 找；退回标记时只认第一条人的发言，对不上不报成功 |

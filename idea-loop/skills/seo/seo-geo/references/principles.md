@@ -48,3 +48,5 @@ Google 的 AI 优化指南（Search Central：`developers.google.com/search/docs
 - [工作日晚饭](https://cookbook.example/blog/weeknight-dinners)：一周五天不重样的快手菜
 - [订阅](https://cookbook.example/pricing)：会员能用的功能
 ```
+
+Lighthouse 的 Agentic Browsing 评分（实验室评分，不是 Google 搜索信号）有一项 `llms-txt`：4xx 不计分；5xx 或取不到判不通过；返回 200 时要有一级标题、至少一个 markdown 链接、不少于 50 个字符，否则不通过。所以对不存在的 `/llms.txt` 返回 200 加 HTML 外壳在那里算不通过，修法是返回真 404，或放一个合格的真文件（上面的最小示例就合格）。出处：Lighthouse 13.5.0 源码，经 claude-seo 的 `scripts/lighthouse_agentic.py` 转述，2026-11-10 核对。
