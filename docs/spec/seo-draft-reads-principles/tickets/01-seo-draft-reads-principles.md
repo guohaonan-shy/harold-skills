@@ -17,7 +17,7 @@ idea-loop 插件里两段给 agent 读的规则文字：
 - [x] 起草参考的「输入」有 `type:seo/<方向>` 一项，指向 seo-scan 的方向表和 agent 定义，含「引那里的结论和出处」与「标成猜测」两层意思
 - [x] seo-geo 原则文件「llms.txt」一节含：4xx 不计分、5xx 不通过、一级标题 / markdown 链接 / 50 字符三条、「不是 Google 搜索信号」、修法（真 404 或合格真文件）、出处
 - [x] `node --test idea-loop/scripts/no-project-leak.test.mjs idea-loop/scripts/issue-group-skills.test.mjs` 通过
-- [ ] review 第 1 轮 C1（2026-11-10）：起草参考「输入」里 seo 那一项不再让起草会话直接读别的 skill 的 `references/`，改成「用 Skill 工具调这个方向的 agent 调的那个 SEO skill，只读它写修法建议前要读的原则，不跑它的检查步骤」，方向表与 agent 定义的指针、「引那里的结论和出处」「查不到标成猜测」保持不变。要遵守的规则原文：「别的 skill 不读它的 `references/`，要用就调这个 skill，由它指过去。」（「要建什么」第 1 条里「连同那个 skill 的 `references/`」以这一格为准）
+- [x] review 第 1 轮 C1（2026-11-10）：起草参考「输入」里 seo 那一项不再让起草会话直接读别的 skill 的 `references/`，改成「用 Skill 工具调这个方向的 agent 调的那个 SEO skill，只读它写修法建议前要读的原则，不跑它的检查步骤」，方向表与 agent 定义的指针、「引那里的结论和出处」「查不到标成猜测」保持不变。要遵守的规则原文：「别的 skill 不读它的 `references/`，要用就调这个 skill，由它指过去。」（「要建什么」第 1 条里「连同那个 skill 的 `references/`」以这一格为准）
 
 ## 选中的存量回归
 
