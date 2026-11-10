@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-26
 title: 内层容器滚动页的段图怎么拍（#68 审核会话）
 tags: [idea-loop-decisions, sections-inner-scroll]
-related: ["[[sections-inner-scroll]]"]
+related: ["[[0006-sections-inner-scroll]]"]
 ---
 
 #68 审核会话里对 spec 初稿那条「待定：段比容器可见区高时怎么拍成一张」的讨论。U 是人的原话，逐字保留；A 是 AI 的结论与发现。

@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-31
 title: #180 writing-for-agents 审 spec：按作用域分能带什么，retro 候选要写怎么结合、怎么验证
 tags: [idea-loop-decisions, writing-for-agents-pruning-layers]
-related: ["[[writing-for-agents-pruning-layers]]"]
+related: ["[[0034-writing-for-agents-pruning-layers]]"]
 ---
 
 U 是人的原话，逐字保留；A 是 AI 的结论，只留结论与发现。

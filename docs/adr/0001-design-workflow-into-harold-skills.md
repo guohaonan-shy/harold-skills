@@ -28,7 +28,7 @@ design 这条工作流当时散落在四处：`design-lib` 仓库的 `plugins/de
 
 原决策：design 不是独立的 frontier，是产品功能 frontier 里挂着的**子树** —— `grill` 的设计子树长出来后一次性 handoff 给总入口，跑完整条流水线，产物回访谈里由人判定满不满意。
 
-### 2.3 DESIGN.md 换成固定八节格式
+### 2.3 DESIGN.md 换成固定八节格式 ⚠️ 已被取代（部分：`## Case Law` 一句）→ [[0013-design-md-write-entry]] §2
 
 `DESIGN.md` 采用 `google-labs-code/design.md` 规范：frontmatter 必填 `name`，固定章节顺序 Overview → Colors → Typography → Layout → Elevation & Depth → Shapes → Components → Do's and Don'ts，未知/自定义标题保留不报错。
 
@@ -48,7 +48,7 @@ design 这条工作流当时散落在四处：`design-lib` 仓库的 `plugins/de
 
 原决策：`design-ui` 与 `design-motion` 维持两个独立 skill，动效作为只在静态签字之后才进入的 Stage 2，其四道 gate 保持不变。
 
-### 2.7 研究后端与 references 重组
+### 2.7 研究后端与 references 重组 ⚠️ 已被取代（部分：refero 三层研究后端）→ [[0016-design-research-agent]]
 
 `refero-design` 的三层研究（styles / screens / flows）接成构建段的研究后端。`open-design` **不建立任何机器可读的路径依赖**，只作为一次性灵感来源，把它 craft 部分里品牌无关的规则蒸馏出来，与 refero 相关内容、既有已泛化的 references 一起，重整成职责单一的独立 reference 文件，各 skill 用 prose 显式点名要读哪几个。
 

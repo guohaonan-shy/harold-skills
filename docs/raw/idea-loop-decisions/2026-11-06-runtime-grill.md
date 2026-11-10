@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-06
 title: 把运行环境从 idea-loop 的通用流程里抽出来（#262 的 grill）
 tags: [idea-loop-decisions, runtime]
-related: ["[[runtime]]"]
+related: ["[[0026-runtime]]"]
 ---
 
 U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在一个由 magi 启动的 Claude Code 会话里：人在这个运行环境里跑 `/idea-loop:setup`，逐处遇到流程写死了 Claude 桌面端工具的地方。

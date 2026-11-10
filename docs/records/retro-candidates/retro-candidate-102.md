@@ -22,7 +22,7 @@ tags: [retro-candidates]
 
 **张力**：原节是有意设的保险（「用户会不会丢东西这个判断本身可能判错，判错的代价是丢用户的数据」）。这条只放宽「不丢东西能被具体指出来」的那部分；指不出来的仍是「要你决定」。决定记录：`docs/raw/decisions/55.md`。
 
-- 状态：在池里
+- 状态：已开 issue（https://github.com/guohaonan-shy/harold-skills/issues/280）
 
 ## 出现
 

@@ -4,7 +4,7 @@ source_type: document
 captured: 2026-10-19
 title: DESIGN.md 写入标准（Harold 已认可）
 tags: [design-md, idea-loop, design-md-write-entry]
-related: ["[[design-md-write-entry]]", "[[2026-10-17-design-md-survey]]"]
+related: ["[[0013-design-md-write-entry]]", "[[2026-10-17-design-md-survey]]"]
 ---
 
 > 来源：ui-state-archive 审核会话的共享笔记 design-md-standard.md，由调研会话与 Harold 定稿，抓取于 2026-10-19。以下为原文，未编辑。文中「同目录 design-md-survey.md」即 [[2026-10-17-design-md-survey]]。

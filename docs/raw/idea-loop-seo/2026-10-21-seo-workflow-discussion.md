@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-21
 title: SEO 工作流重新设计讨论（替代 growth-weekly）
 tags: [idea-loop-seo, seo-workflow]
-related: ["[[idea-loop-seo]]", "[[2026-10-22-grill-idea-loop-seo]]"]
+related: ["[[0020-idea-loop-seo]]", "[[2026-10-22-grill-idea-loop-seo]]"]
 ---
 
 # SEO 工作流重新设计讨论（2026-10-21）

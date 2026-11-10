@@ -24,6 +24,8 @@ v1 的接法是：`grill` 的设计子树长出来后，一次性 handoff 给独
 
 ## 2 决策
 
+> 状态词已被 [[0022-issue-model]] 取代，决定不变：§2.3、§2.4、§2.6 里的 spec 状态 `等设计冻结`、`在飞` 已不存在，现在对应 issue 从 triage 翻 todo 的前提「碰 UI 的设计已冻结」。
+
 ### 2.1 设计拆成两次触碰，放在两个不同时机
 
 | 触碰 | 时机 | 回答什么 | 产物 | 强制吗 |
@@ -37,13 +39,13 @@ v1 的接法是：`grill` 的设计子树长出来后，一次性 handoff 给独
 
 不留别名、兼容层或过渡期双份安装。marketplace 条目移除，`design/` 目录删除。设计侧的 taste 与 craft references 住进 `idea-loop/references/design/`，确定性 design-lint hook 与脚本住进 `hooks/` 与 `scripts/`，headless Playwright 走 plugin 自带的 `.mcp.json`。
 
-### 2.3 uiux-imagine：发散，准出一份方向说明
+### 2.3 uiux-imagine：发散，准出一份方向说明 ⚠️ 已被取代（部分）→ [[0015-uiux-imagine-agent]]
 
 只能人调。spec 停在 `等设计冻结` 之后才跑。在**还没定下来的最高高度**上出几个真正不同的变种（随机种子 / ambition / 已有 DESIGN.md 三种起点），人看着变种给方向性 note，模型**调向**到人说「方向没有要补的了」。
 
 准出物**只有一份方向说明**（固定七节，写进 spec §4），形状由 `direction-note-check.mjs` 校验。变种的渲染只服务于人当下的反应，不留存、不往下传。项目没有 `DESIGN.md` 的，语言在这一段被选出来并写成文件。原 `design-brief` 溶解在这里。
 
-### 2.4 uiux-refine：收敛，准出一个 HTML 画布
+### 2.4 uiux-refine：收敛，准出一个 HTML 画布 ⚠️ 已被取代（部分）→ [[0015-uiux-imagine-agent]]
 
 也只能人调，且要一个全新会话。它读 spec 里那份方向说明，在 `DESIGN.md` 之下**从方向说明重建** preview（绝不从 imagine 的渲染物继续），执行者对评委跑双模型打磨环 —— **评委只收截图，分数从 finding 推导**，由 `critic-score.mjs` 对着它自己的 finding 复算。静态构图冻结之后才接动效段与素材段，再各跑一轮减法与 AI tells。
 
