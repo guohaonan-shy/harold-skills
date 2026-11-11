@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-23
 title: 冻结之后设计以谁为准、UI 审查只走查（#55 审核会话）
 tags: [idea-loop-decisions, canvas-truth-dreaming-agents]
-related: ["[[canvas-truth-dreaming-agents]]"]
+related: ["[[0010-canvas-truth-dreaming-agents]]"]
 ---
 
 #55 审核会话里对 spec 初稿的 grill。初稿照 #55 正文写成「ui-reviewer 每轮照实现改写 `delta/`」，Harold 在这里推翻了它。U 是人的原话，逐字保留；A 是 AI 的结论与发现。

@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-22
 title: grill —— retro：从实际决策里把问题和决策点整理成规则，迭代 skill
 tags: [idea-loop-decisions, retro]
-related: ["[[retro]]"]
+related: ["[[0028-retro]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在 #51 的 issue 会话里，起草的第一版 spec（dreaming 读 PR 归档）被这场 grill 推翻。

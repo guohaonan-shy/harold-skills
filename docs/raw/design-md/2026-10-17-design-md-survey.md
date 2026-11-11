@@ -4,7 +4,7 @@ source_type: document
 captured: 2026-10-17
 title: DESIGN.md 写法调研（Google 规范 + VoltAgent 84 份样本）
 tags: [design-md, idea-loop, design-md-write-entry]
-related: ["[[design-md-write-entry]]", "[[2026-10-19-design-md-standard]]"]
+related: ["[[0013-design-md-write-entry]]", "[[2026-10-19-design-md-standard]]"]
 ---
 
 > 来源：ui-state-archive 审核会话的共享笔记 design-md-survey.md，调研会话产出，抓取于 2026-10-19。以下为原文，未编辑。

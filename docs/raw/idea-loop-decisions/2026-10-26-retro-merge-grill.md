@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-26
 title: grill —— retro 开的 issue 按 plugin 做 retro 整合，调度只数 issue 会话
 tags: [idea-loop-decisions, retro-batch-dispatch]
-related: ["[[retro-batch-dispatch]]"]
+related: ["[[0029-retro-batch-dispatch]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在 harold-skills#108（同时覆盖 #106）的 issue 会话里，审核阶段。

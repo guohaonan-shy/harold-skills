@@ -2,7 +2,7 @@
 type: spec
 tags: [idea-loop, seo, issue-session, seo-geo]
 summary: 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据
-related: ["[[idea-loop-seo]]", "[[issue-model]]"]
+related: ["[[0020-idea-loop-seo]]", "[[0022-issue-model]]"]
 issues: [151]
 ---
 
@@ -95,5 +95,5 @@ issues: [151]
 
 ## 关联
 
-- 相关 spec：[[idea-loop-seo]]（seo-scan 与方向 agent 的设计）、[[issue-model]]（issue 会话的起草流程）。
+- 相关 spec：[[0020-idea-loop-seo]]（seo-scan 与方向 agent 的设计）、[[0022-issue-model]]（issue 会话的起草流程）。
 - 相邻还没完成的 issue：#234（issue-verify 和 seo-outreach 的 description）也提到 issue-verify，但改的是 description 写法，不碰起草输入，无重叠；#164（方向 agent 的 OpenSEO 工具白名单）改 agent 定义的 tools 行，不碰本次指向的「调哪个 skill」，无先后依赖。

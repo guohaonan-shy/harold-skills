@@ -4,14 +4,14 @@ source_type: conversation
 captured: 2026-10-22
 title: grill —— SEO 能力放进 idea-loop：OpenSEO 负责发现，idea-loop 负责解决
 tags: [idea-loop-seo, idea-loop]
-related: ["[[idea-loop-seo]]", "[[2026-10-21-seo-workflow-discussion]]"]
+related: ["[[0020-idea-loop-seo]]", "[[2026-10-21-seo-workflow-discussion]]"]
 ---
 
 # grill：SEO 能力放进 idea-loop（2026-10-22）
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 是 AI 的回应，只留结论与发现，取证过程略去。末尾「本轮决议」一行一个议题。
 > 前一天的讨论见 [[2026-10-21-seo-workflow-discussion]]，当时定的是项目内插件加独立队列；这一场把位置、队列和分工重新定了。
-> 本目录 `assets/` 里是 spec [[idea-loop-seo]] 的图：六张 story 树（`tree-user-stories-<n>-<场景>.png`，每个场景一张，内容与 spec「User Stories」的编号列表一致），三张时序图（`sequence-seo-scan.png`：一次扫描从 routine 触发到提 issue、写研究日志的消息顺序；`sequence-seo-issue-flow.png`：一个 SEO issue 从提出到 PR 合并经过的调度、issue 会话和人；`sequence-seo-check-hook.png`：一条命令结束后检查 hook 读 SEO.md、看产物目录、跑检查脚本并把 error 交回模型的顺序）。
+> 本目录 `assets/` 里是 spec [[0020-idea-loop-seo]] 的图：六张 story 树（`tree-user-stories-<n>-<场景>.png`，每个场景一张，内容与 spec「User Stories」的编号列表一致），三张时序图（`sequence-seo-scan.png`：一次扫描从 routine 触发到提 issue、写研究日志的消息顺序；`sequence-seo-issue-flow.png`：一个 SEO issue 从提出到 PR 合并经过的调度、issue 会话和人；`sequence-seo-check-hook.png`：一条命令结束后检查 hook 读 SEO.md、看产物目录、跑检查脚本并把 error 交回模型的顺序）。
 
 ## U1
 

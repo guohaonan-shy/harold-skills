@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-27
 title: #81 审核：自相蚕食的定义与品牌词放在 SEO.md 哪里
 tags: [idea-loop-seo, seo-cannibalization-sitelinks]
-related: ["[[seo-cannibalization-sitelinks]]"]
+related: ["[[0043-seo-cannibalization-sitelinks]]"]
 ---
 
 # #81 审核：自相蚕食的定义与品牌词放在 SEO.md 哪里（2026-10-27）

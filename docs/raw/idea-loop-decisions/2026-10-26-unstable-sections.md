@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-26
 title: #65 拍不稳的段：复现、对上 TOEFLAIR 营销站的组件、人把两条待定交给推荐
 tags: [idea-loop-decisions, design-archive-unstable-sections]
-related: ["[[design-archive-unstable-sections]]"]
+related: ["[[0005-design-archive-unstable-sections]]"]
 ---
 
 U 是人的原话，A 是 AI 的结论（取证过程略去，复现材料在 spec 里指出）。

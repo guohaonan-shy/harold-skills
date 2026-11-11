@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-31
 title: #142 审核：seo skill 要用的项目信息缺了怎么办——setup 推测确认，scan 停下等人
 tags: [idea-loop-seo, seo-params-from-seo-md]
-related: ["[[seo-params-from-seo-md]]"]
+related: ["[[0044-seo-params-from-seo-md]]"]
 ---
 
 # #142 审核：seo skill 要用的项目信息缺了怎么办（2026-10-31）

@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-27
 title: #125 design-archive 精简：主体以图的实体为中心，命令行走 references
 tags: [idea-loop-decisions, design-archive-skill-length]
-related: ["[[design-archive-skill-length]]"]
+related: ["[[0009-design-archive-skill-length]]"]
 ---
 
 U 是人的原话，逐字保留；A 是 AI 的结论，只留结论与发现。

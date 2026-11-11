@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-19
 title: 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么
 tags: [idea-loop, pr-review, to-spec, decision-rules]
-related: ["[[pr-review-report-followups]]"]
+related: ["[[0038-pr-review-report-followups]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现，取证过程/工具调用/中间推演略去。外部产物留链接不复制正文。末尾一张「本轮决议」表。

@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-30
 title: 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现
 tags: [issue-workflow, issue-consolidation]
-related: ["[[issue-consolidation]]"]
+related: ["[[0021-issue-consolidation]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现，取证过程/工具调用/中间推演略去。外部产物留链接不复制正文。末尾一张「本轮决议」表。

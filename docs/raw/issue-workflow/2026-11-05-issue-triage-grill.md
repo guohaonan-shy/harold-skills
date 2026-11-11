@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-05
 title: grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批
 tags: [issue-workflow, issue-triage]
-related: ["[[issue-triage]]", "[[2026-11-04-idea-loop-0-2-0-restructure-grill]]", "[[issue-model]]"]
+related: ["[[0023-issue-triage]]", "[[2026-11-04-idea-loop-0-2-0-restructure-grill]]", "[[0022-issue-model]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现。题号 Q1–Q6 是这场会话出题的编号，跟 [[2026-11-04-idea-loop-0-2-0-restructure-grill]] 的 Q1–Q43 不是一套。事实对着 origin/release/idea-loop-0.2.0 1a7496b、#242 的 spec（提交 e84fa07）与 GitHub 上 harold-skills 的 issue 取，日期 2026-11-05。末尾一张「本轮决议」表。

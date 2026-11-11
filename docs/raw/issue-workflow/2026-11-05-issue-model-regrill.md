@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-05
 title: grill —— #242 重定 issue 模型：七个状态对上 Linear，triage 可跳过，实现开始即开 PR，一个仓库一个 PR，issue 正文格式
 tags: [issue-workflow, issue-model, linear]
-related: ["[[issue-model]]"]
+related: ["[[0022-issue-model]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现。这是 #242、#243、#226 放进同一个会话、基于 main（b4c612a，idea-loop 0.1.9）做 0.1.10 时的重新 grill；同日早些时候的 [2026-11-05 九个状态的 grill](https://github.com/guohaonan-shy/harold-skills/blob/claude/optimistic-northcutt-c71462/docs/raw/issue-workflow/2026-11-05-issue-model-grill.md)（九个状态）被这一场取代。末尾一张「本轮决议」表。

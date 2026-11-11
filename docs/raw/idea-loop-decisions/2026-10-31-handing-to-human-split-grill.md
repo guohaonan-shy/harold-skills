@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-31
 title: "#80 审核：「交给人时」拆开归位、to-spec 与 pr 按交付物重写、全局沟通风格从读者出发"
 tags: [idea-loop-decisions, decision-rules-who-decides]
-related: ["[[decision-rules-who-decides]]"]
+related: ["[[0036-decision-rules-who-decides]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现。

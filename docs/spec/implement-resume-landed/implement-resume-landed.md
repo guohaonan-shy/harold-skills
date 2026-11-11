@@ -2,7 +2,7 @@
 type: spec
 tags: [idea-loop, implement]
 summary: 会话断了以后，执行方已做完的工单先当交回 landed 落地，不再回收重派
-related: ["[[design-archive-skill-length]]"]
+related: ["[[0009-design-archive-skill-length]]"]
 issues: [157]
 ---
 

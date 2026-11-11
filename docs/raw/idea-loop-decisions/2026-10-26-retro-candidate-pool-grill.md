@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-10-26
 title: grill —— retro 候选池放在哪个仓库、哪个目录
 tags: [idea-loop-decisions, retro-candidate-pool]
-related: ["[[retro-candidate-pool]]"]
+related: ["[[0030-retro-candidate-pool]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在 harold-skills#115 的 issue 会话里，审核阶段。#115 正文与 Tofelair#538 的评论已定下的方向（批时人选去处、dreaming 数超过两次、dreaming 不改 skill 而开 issue）不在这里重复。
