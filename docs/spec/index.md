@@ -3,6 +3,7 @@
 
 | 文件 | summary |
 |---|---|
+| [[design-archive-loaded-sections]] | 不分段的长状态，首屏以下会连出边的组件按屏补拍进截图 |
 | [[docs-ride-code-pr]] | spec、设计、工单跟代码一个 PR 合进主分支；setup 问要不要知识库、放在哪 |
 | [[dreaming-triage-autonomous]] | dreaming 只问人 DESIGN.md 和文档冲突，其余自己执行并合并；每周分拣按建议直接翻状态 |
 | [[implement-resume-landed]] | 会话断了以后，执行方已做完的工单先当交回 landed 落地，不再回收重派 |

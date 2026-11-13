@@ -31,6 +31,7 @@
 | [decisions/115](decisions/115.md) | conversation | 2026-10-26 | 决定记录 —— #115 的 issue 会话：retro 批的候选进候选池、dreaming 数次数，摆过的题与 retro 候选的结果 |
 | [decisions/68](decisions/68.md) | conversation | 2026-10-26 | 决定记录 —— #68 的 issue 会话：内层容器滚动页的段图逐屏截拼接，摆过的题与 retro 候选的结果 |
 | [decisions/65](decisions/65.md) | conversation | 2026-10-26 | 决定记录 —— #65 的 issue 会话：设计档案拍不稳的段停住页面时间、滚动驱动段建成段内状态，摆过的题与 retro 候选的结果 |
+| [decisions/69](decisions/69.md) | conversation | 2026-11-13 | 决定记录 —— #69 的 triage 会话：长状态首屏以下会连出边的组件按屏补拍进截图，摆过的题与 retro 候选的结果 |
 | [decisions/93](decisions/93.md) | conversation | 2026-10-27 | 决定记录 —— #93 的 issue 会话：dreaming SKILL.md 超长验证为不存在，摆过的题与 retro 候选的结果 |
 | [decisions/81](decisions/81.md) | conversation | 2026-10-27 | 决定记录 —— #81 的 issue 会话：页面优化的蚕食规则排除 SEO.md 里写的品牌词，摆过的题与 retro 候选的结果 |
 | [decisions/77](decisions/77.md) | conversation | 2026-10-27 | 决定记录 —— #77 的 issue 会话：imagine / refine 的设计目录按 worktree 根定位，摆过的题与 retro 候选的结果（并入 #131） |
