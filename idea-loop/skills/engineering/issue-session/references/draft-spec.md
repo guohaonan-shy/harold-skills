@@ -38,7 +38,7 @@ spec 里还有「需要 grill」或「待定」：用『推送』能力发一句
 
 - 「需要 grill」：用 Skill 工具调 `idea-loop:grill`，按结果改 spec，删掉这一行。
 - 「待定」：人定了，把小节改写成定下的决定，写上依据（人的原话），删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
-- 人决定不做：`issues set <docs> canceled <号> --comment=<人的原话>`，删掉这份 spec 的目录，不提交，回会话的「收尾」。
+- 人决定不做：`issues set <docs> canceled <号> --comment=<人的原话>`，再记进「不做」清单 `docs/records/out-of-scope/<slug>.md`（目录没有就建）：`type: record`，一个概念一份文件，写是什么、为什么不做（人的原话）、相关 issue 号；同一个概念已有记录，往里追加号码。记录在另一个从 `<主分支>` 切出的分支上写，不混进这个 issue 的分支，走只改 `docs/` 的 PR，检查全过就合并（`idea-loop:wiki-conventions` 的「知识库落地」）。然后删掉这份 spec 的目录，不提交，回会话的「收尾」。
 - 人说先放着：回会话的「先放着」。
 - 都定完了：提交。
 

@@ -21,12 +21,12 @@
 
 ## 验收标准
 
-- [ ] `issue-triage` 里没有「等人批」「人逐行」的步骤；四种去向各自怎么执行写明
-- [ ] 「拿不准值不值得做的翻 triage，不 canceled」写在 `issue-triage` 里
-- [ ] 推送的两种情况、疑似 P0 的处理写明
-- [ ] `out-of-scope` 记录的写法（frontmatter、写什么、追加号码、走只改 `docs/` 的 PR）在 issue-session 的「人决定不做」里；`issue-triage` 只留一句指针：记录在 `docs/records/out-of-scope/<slug>.md`，由 triage 会话里人决定不做时写（这句路径被存量测试钉着，要保留）。目录现在还不存在，第一次写记录时建
-- [ ] `issues` 与 `issue-triage` 两份 skill 主体都 < 5000 字（`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`）
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [x] `issue-triage` 里没有「等人批」「人逐行」的步骤；四种去向各自怎么执行写明
+- [x] 「拿不准值不值得做的翻 triage，不 canceled」写在 `issue-triage` 里
+- [x] 推送的两种情况、疑似 P0 的处理写明
+- [x] `out-of-scope` 记录的写法（frontmatter、写什么、追加号码、走只改 `docs/` 的 PR）在 issue-session 的「人决定不做」里；`issue-triage` 只留一句指针：记录在 `docs/records/out-of-scope/<slug>.md`，由 triage 会话里人决定不做时写（这句路径被存量测试钉着，要保留）。目录现在还不存在，第一次写记录时建
+- [x] `issues` 与 `issue-triage` 两份 skill 主体都 < 5000 字（`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`）
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
 
 ## 选中的存量回归
 
