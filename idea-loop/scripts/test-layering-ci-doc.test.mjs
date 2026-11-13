@@ -128,7 +128,7 @@ test('the README no longer says a ticket is done when the full suite is green', 
   assert.match(readme, /the full suite runs once, in CI/);
 });
 
-test('idea-loop is at 0.1.13', () => {
+test('idea-loop is at 0.1.14', () => {
   const manifest = JSON.parse(read('.claude-plugin', 'plugin.json'));
-  assert.equal(manifest.version, '0.1.13');
+  assert.equal(manifest.version, '0.1.14');
 });

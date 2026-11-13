@@ -34,6 +34,7 @@ edges:
     component: "[[SearchBox]]"
     locate: { role: searchbox, name: 搜索菜谱 }
     action: 输入关键词并回车
+    shot: cookbook--list@search.png   # 可选：组件不在主视口图里、在这张补拍图里（不分段的长状态上写）
     when: 已登录时               # 可选：一句话的条件（同一个操作按环境去不同状态时，拆成几条边各写）
     from: mkt-pricing#hero        # 可选：从本页哪一段出发（有分段的入口状态上，user 边必写）
     section: mkt-pricing#faq      # 可选：落到目标状态（入口状态）的哪一段；页内锚点就是 to 指向自己再加 section
@@ -58,6 +59,7 @@ async:                            # 这一屏发起了异步动作时必填
 - 必填：每条边的 `id` / `to` / `kind`；`user` 边的 `component`、`locate`、`action`；`system` 边的 `trigger`、`how`；入口的 `url`。`locate` 写 `role` + `name`；按角色 + 名字定位不到的元素（例如原生折叠标题 `<summary>`）才改写成 `{ text: <完整文字> }`，两种不混写。`when` 写了就不能为空。
 - `blocked` 的 `missing` 与 `tried` 都必填。
 - `sections`、`from`、`section` 只在长页面上出现，单屏页面都不写。
+- `shot`（`user` 边可选）：写 `<出发状态 id>@<边 id>.png`，意思是这条边的组件不在主视口图 `<状态 id>.png` 里，在这张补拍图里；图放在出发状态自己的 `assets/`。没写 `shot` 的边，组件就在主视口图里。几条边的组件在同一屏时指向同一张图，图用那一屏第一条边的 id 命名。`system` 边不写（它不经过组件），声明了 `sections` 的状态也不写（分段页的边用 `from` 挂在段上）。校验是规则 8，见 [check.md](check.md)。
 - `async` 三项各是一个状态引用，或字符串「不适用」；引用的状态可以在别的页面。
 - 状态文件的正文见下面「正文」。
 

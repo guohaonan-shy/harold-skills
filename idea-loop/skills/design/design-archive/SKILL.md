@@ -78,7 +78,7 @@ docs/design/
 - 素材（状态截图、动效 GIF）走 Git LFS，目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/`。
 - `tmp/<spec-slug>/` 的生命周期见 `idea-loop:wiki-conventions` 的「目录」。**冻结之后 `canvas/` 是唯一的设计真相**：设计变了由 designer 改画布并记进冻结记录的「冻结后的变更」（`idea-loop:uiux-refine`），不改 `delta/`；`delta/` 只在合并前由 ui-reviewer 的归档模式从最终画布加实现整份写出。没有设计稿的 UI 改动没有画布，实现者在 `delta/` 记「最小差异」，那就是它唯一的设计真相。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行 `- [[<id>]]`（后面可跟一句原因）。
-- **`prod/` 只由归档脚本在人批过之后写**；agent 只写 `tmp/<spec-slug>/delta/`。
+- **`prod/` 只由归档脚本写**，需求合并前要人批过；dreaming 对账的档案行是例外，自动执行不等人批。agent 只写 `tmp/<spec-slug>/delta/`。
 - `docs/design/` 下 `tmp/`、`prod/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。
 
 ## 进入方式从图上推导
@@ -93,7 +93,7 @@ docs/design/
 | 要做什么 | 读 |
 |---|---|
 | 写一个对象文件 | [references/writing.md](references/writing.md)：完整的 frontmatter 示例与必填字段、分段的 `id` 与 `locate`、正文、建模的取舍、截图矩阵与 `prod/index.md` 的设置键 |
-| 拍档案截图（单屏、长页面、段内交互、滚动驱动的段） | [references/shooting.md](references/shooting.md)：每种情形的步骤，和「看到什么 → 做什么」 |
+| 拍档案截图（单屏、比主视口高不分段、长页面、段内交互、滚动驱动的段） | [references/shooting.md](references/shooting.md)：每种情形的步骤，和「看到什么 → 做什么」 |
 | 查档案 | MCP 工具 `design_*`（用法以工具的 description 为准）；命令行、退出码与返回字段在 [references/query.md](references/query.md) |
 | 校验 | [references/check.md](references/check.md)：命令、退出码、规则表、「写完 `delta/` 的标志」 |
 | 归档 | [references/archive-script.md](references/archive-script.md) |

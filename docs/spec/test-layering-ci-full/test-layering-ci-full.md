@@ -77,7 +77,7 @@ PR 转 ready 之后 CI 又在 PR 上跑同一套全量。真实例子是 Tofelai
 5. **pr-review 的前提**多一条：每个 PR 的 head 上 CI 已跑完且全绿（或没有检查）。还在跑就 `--watch` 等；红了照第 4 条的「红了」处理，修完再起这一轮。「一轮之后往哪走」里修复落地推送后，起下一轮之前同样等 CI。
 6. **审查者的机械检查**：`REVIEW.md` 的全量测试命令、以及 CI 已在这个 head 上跑过的测试，不在本机跑，读 CI 结论写进 `checks.md`（`<检查名> | CI 结论 | 链接`，没跑完的写「CI 未完成」，不算通过）；typecheck、lint 照旧本机跑并过改动行过滤。PR 上没有检查时照旧本机跑全量。核实某条发现要跑测试时，只跑那几个。
 7. **setup 的 `REVIEW.md` 模板**第 5 行改成：写代码时常跑前两条和 lint，测试只跑改动涉及的；全量由 PR 转 ready 后的 CI 跑，review 读 CI 结果。
-8. **版本**：idea-loop 升 patch，`0.1.12` → `0.1.13`（人要求，issue 写明）。
+8. **版本**：idea-loop 升 patch，`0.1.12` → `0.1.13`（人要求，issue 写明）。合并前主分支已被别的 PR 升到 `0.1.13`，这次跟着升到 `0.1.14`。
 
 ## 测试决策
 
@@ -96,7 +96,7 @@ PR 转 ready 之后 CI 又在 PR 上跑同一套全量。真实例子是 Tofelai
   - implement 的「核对与落地」没有「重跑全量套件」；「全部落地」那段在 `gh pr ready` 之后、起 pr-review 之前有 `gh pr checks`，写了红了回工单、没有检查本机跑一次。覆盖：期望行为 1。
   - pr-review 的「前提」写了 CI；`review-standards` 的「机械检查」写了全量测试读 CI 结论、没有检查才本机跑。覆盖：期望行为 1。
   - setup 的 `REVIEW.md` 模板没有「提交前跑全量」。覆盖：期望行为 1。
-  - `idea-loop/.claude-plugin/plugin.json` 的版本是 `0.1.13`。
+  - `idea-loop/.claude-plugin/plugin.json` 的版本是 `0.1.14`（原定 `0.1.13`，见实现决策第 8 条）。
 - **照着谁写**：`idea-loop/scripts/dreaming-incremental-doc.test.mjs`（按小节读 skill 文字、断言必含与禁用的说法）。
 
 ## Out of scope

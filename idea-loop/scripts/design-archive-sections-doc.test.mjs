@@ -58,6 +58,31 @@ test('the places that shoot the design archive send a single-screen state to the
   assert.deepEqual(bad, [], bad.join('\n'));
 });
 
+test('the shooting reference offers a case for a state taller than the main viewport with no sections, and every place that shoots single-screen states runs `cover` for it', () => {
+  const bad = [];
+  const read = (rel) => readFileSync(join(pluginRoot, rel), 'utf8');
+  const shooting = read('skills/design/design-archive/references/shooting.md');
+  const choose = shooting.split('\n').find((line) => line.startsWith('**情形怎么选**')) ?? '';
+  if (!choose.includes('比主视口高、不分段的状态')) bad.push('shooting.md:「情形怎么选」里没有「比主视口高、不分段的状态」');
+  if (!/^## 比主视口高、不分段的状态$/m.test(shooting)) bad.push('shooting.md: 没有「## 比主视口高、不分段的状态」这一节');
+  for (const rel of ['skills/design/design-archive/references/shooting.md', 'skills/design/design-archive/references/review-reconcile.md', 'skills/design/design-archive/references/review-archive.md', 'skills/productivity/dreaming/references/initial-scan.md']) {
+    if (!/design-archive-sections\.mjs"?\s+cover\b/.test(read(rel))) bad.push(`${rel}: 拍单屏 / 不分段状态的地方没有指向 cover 子命令的命令行`);
+  }
+  const route = read('skills/design/design-archive/SKILL.md').split('\n').find((line) => line.includes('references/shooting.md')) ?? '';
+  if (!route.includes('比主视口高')) bad.push('SKILL.md: 「按需读」表里拍档案截图那一行没有列这种情形');
+  const step7 = read('skills/productivity/dreaming/references/initial-scan.md').split('\n').find((line) => line.startsWith('7. **只拍精简矩阵**')) ?? '';
+  if (!step7.includes('比主视口高、不分段的状态')) bad.push('initial-scan.md: 第 7 步的情形列表里没有「比主视口高、不分段的状态」');
+  assert.deepEqual(bad, [], bad.join('\n'));
+});
+
+test('the reconcile reference compares the cover pictures one by one with the same-named pictures in prod/, and calls a changed grouping a stale archive whose `shot` is rewritten', () => {
+  const text = readFileSync(join(pluginRoot, 'skills/design/design-archive/references/review-reconcile.md'), 'utf8');
+  const bad = [];
+  if (!/补拍图逐张/.test(text)) bad.push('没有写补拍图逐张跟 prod/ 里同名的图比');
+  if (!/分组[^。]*档案过期[^。]*shot|分组[^。]*shot[^。]*档案过期/.test(text)) bad.push('没有写 cover 的分组跟 prod/ 里的 shot 不一样时判档案过期、按新分组重写 shot');
+  assert.deepEqual(bad, [], bad.join('\n'));
+});
+
 test('ui-measure says its three environment conventions are for the UI implementation loop, and that the design archive\'s shots do not use them', () => {
   const text = readFileSync(join(pluginRoot, 'skills/engineering/ui-measure/SKILL.md'), 'utf8');
   assert.match(text, /设计档案的拍图不用/);

@@ -56,5 +56,5 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根> aff
 
 ## 两个例外
 
-- **上一张提议表还没批又到点了**：照常跑，不合并两张表。新提议表在范围那一行后面再写一行「上一次（<日期>）的提议表还没处理」。怎么知道还没处理：每次的提议表放在各自 worktree 的 `.tmp/dreaming/<日期>/proposal.md`，处理完（执行了批了的行，或人把每一行都回了「不批」）就删掉那个日期目录，空表交出「这次无事」后也删；所以在 `git worktree list` 列出的别的 worktree 里，`.tmp/dreaming/<别的日期>/proposal.md` 还在、跑 `proposal-table-check.mjs --json` 的 `empty` 是 `false`，就是上一张还没处理，日期取目录名。多张取最近一张。没有就不写这一行。
+- **上一张提议表还没处理又到点了**（问人的行人还没回，或自动那份的 PR 没合成）：照常跑，不合并两张表。新提议表在范围那一行后面再写一行「上一次（<日期>）的提议表还没处理」。怎么知道还没处理：每次的提议表放在各自 worktree 的 `.tmp/dreaming/<日期>/proposal.md`，处理完（自动那份已合并，问人的行批了的执行了、或每行都回了「不批」）就删掉那个日期目录，空表也删；所以在 `git worktree list` 列出的别的 worktree 里，`.tmp/dreaming/<别的日期>/proposal.md` 还在、跑 `proposal-table-check.mjs --json` 的 `empty` 是 `false`，就是上一张还没处理，日期取目录名。多张取最近一张。没有就不写这一行。
 - **没跑成的批**：实时波交回 `incomplete` 的批，写在提议表末尾（见 [archive-reconcile.md](archive-reconcile.md)「实时波」第 3 步），后面附一句「下次可说全量补上」。基准是按定时任务「成功」前推的，一次执行成功了但这一波没跑成，基准照样往前走：这是已知缺口，靠这一行让人看到，下次调用时说「全量」补上。

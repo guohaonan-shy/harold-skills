@@ -408,6 +408,34 @@ path:
   return f;
 }
 
+export const SHOT_STATE = 'cookbook--search-results';
+export const SHOT_STATE_FILE = `${BASE}/pages/cookbook/${SHOT_STATE}.md`;
+
+/**
+ * The compliant fixture with a state whose `user` edges carry `shot` (the component is in a supplementary
+ * image rather than in the main viewport image): `cookbook--search-results` has three — `save` and `save-key`
+ * share `cookbook--search-results@save.png` (merged by screen), `save-all` has its own. The state does
+ * not declare `sections`. No image files are written; a test adds the ones it wants under the state's `assets/`.
+ */
+export function shotFiles() {
+  const f = compliantFiles();
+  f[SHOT_STATE_FILE] = f[SHOT_STATE_FILE]
+    .replace('    action: click\n    motion: "[[save-pop]]"', `    action: click\n    shot: ${SHOT_STATE}@save.png\n    motion: "[[save-pop]]"`)
+    .replace(
+      '    action: 聚焦后按回车',
+      `    action: 聚焦后按回车
+    shot: ${SHOT_STATE}@save.png
+  - id: save-all
+    to: "[[cookbook--recipe-saved]]"
+    kind: user
+    component: "[[SaveButton]]"
+    locate: { role: button, name: 全部保存 }
+    action: click
+    shot: ${SHOT_STATE}@save-all.png`,
+    );
+  return f;
+}
+
 /** Write a {relativePath: content} map under a fresh temp dir; returns the root. */
 export function writeRepo(files, root = mkdtempSync(join(tmpdir(), 'design-archive-'))) {
   for (const [rel, content] of Object.entries(files)) {
