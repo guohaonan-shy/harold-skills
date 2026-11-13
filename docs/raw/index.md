@@ -30,6 +30,7 @@
 | [decisions/57](decisions/57.md) | conversation | 2026-10-26 | 决定记录 —— #57 的 issue 会话：结束整个任务的入口用 X，摆过的题与 retro 候选的结果 |
 | [decisions/108](decisions/108.md) | conversation | 2026-10-26 | 决定记录 —— #108 / #106 的 issue 会话：调度只数 issue 会话、retro 整合（当天撤回）、retro 候选改进 docs 候选池 |
 | [decisions/115](decisions/115.md) | conversation | 2026-10-26 | 决定记录 —— #115 的 issue 会话：retro 批的候选进候选池、dreaming 数次数，摆过的题与 retro 候选的结果 |
+| [decisions/128](decisions/128.md) | conversation | 2026-11-13 | 决定记录 —— #128 的 issue 会话：滚动驱动只认整段钉住、每步一张图，摆过的题与 retro 候选的结果 |
 | [decisions/68](decisions/68.md) | conversation | 2026-10-26 | 决定记录 —— #68 的 issue 会话：内层容器滚动页的段图逐屏截拼接，摆过的题与 retro 候选的结果 |
 | [decisions/65](decisions/65.md) | conversation | 2026-10-26 | 决定记录 —— #65 的 issue 会话：设计档案拍不稳的段停住页面时间、滚动驱动段建成段内状态，摆过的题与 retro 候选的结果 |
 | [decisions/93](decisions/93.md) | conversation | 2026-10-27 | 决定记录 —— #93 的 issue 会话：dreaming SKILL.md 超长验证为不存在，摆过的题与 retro 候选的结果 |
