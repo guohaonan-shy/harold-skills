@@ -6,6 +6,7 @@
  * The fake reads `<plugin-dir>/MARK` to decide what a worker session does:
  *   "reply: X"        final text X, and a file docs/out.md containing X
  *   "agentreply: X"   the same, but the session starts an Agent tool call first (a large case)
+ *   "skill: S"        the session also calls the Skill tool for S
  * With no --plugin-dir it is the judge: yes for a product containing FIXED, else no.
  */
 import { test } from 'node:test';
@@ -34,6 +35,7 @@ if (pd) {
   const mark = fs.readFileSync(path.join(pd, 'MARK'), 'utf8');
   const m = /^(agent)?reply: (.*)$/m.exec(mark);
   const text = m ? m[2] : 'nothing';
+  for (const u of mark.matchAll(/^skill: (.*)$/gm)) emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'u1', name: 'Skill', input: { skill: u[1] } }] } });
   if (m && m[1]) emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 't0', name: 'Agent', input: {} }] } });
   fs.mkdirSync('docs', { recursive: true });
   fs.writeFileSync('docs/out.md', text);
@@ -74,7 +76,7 @@ const gitIn = (cwd, ...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.
  * A PR worktree: a git repo whose `idea-loop/` plugin was "plain" at the base (branch base-point) and is `after` now,
  * with replay cases under idea-loop/evals/retro/cases. Also the fake `claude` and its log.
  */
-function setup({ after = 'reply: FIXED', cases = { 'demo-case': {} } } = {}) {
+function setup({ after = 'reply: FIXED', cases = { 'demo-case': {} }, afterFiles = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'retro-run-large-'));
   const wt = join(root, 'wt');
   mkdirSync(join(wt, 'idea-loop'), { recursive: true });
@@ -92,6 +94,10 @@ function setup({ after = 'reply: FIXED', cases = { 'demo-case': {} } } = {}) {
     writeFileSync(join(dir, 'annotations.md'), '# case\n');
   }
   writeFileSync(join(wt, 'idea-loop', 'MARK'), after);
+  for (const [rel, text] of Object.entries(afterFiles)) {
+    mkdirSync(dirname(join(wt, 'idea-loop', rel)), { recursive: true });
+    writeFileSync(join(wt, 'idea-loop', rel), text);
+  }
   gitIn(wt, 'add', '-A');
   gitIn(wt, 'commit', '-q', '-m', 'the rule change');
   const bin = join(root, 'fake-claude');
@@ -259,4 +265,48 @@ test('single-case use from the fixed path: --worktree stands for repo, plugin an
   const r = runner(env, ['--case', 'demo-case', '--worktree', env.wt, '--base', 'base-point', '--out', env.out, '--timeout-min', '1']);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /过/);
+});
+
+const DEMO_SKILL = { 'skills/engineering/demo/SKILL.md': '# demo\n' };
+
+test('--run-large: the rule change touched a skill and the run called it -> pass, and the entry says what was hit', () => {
+  const env = setup({ after: 'reply: FIXED\nskill: idea-loop:demo', afterFiles: DEMO_SKILL });
+  const r = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const entry = readFileSync(reviewLoopPath(env.wt, 12), 'utf8');
+  assert.match(entry, /改动核对：用上了（调了 skill idea-loop:demo）/);
+  assert.deepEqual(loopCheck(env.wt, 12).unsettled, []);
+});
+
+test('--run-large: the run did not use the changed skill -> "用例没测到改动", exit 1, listed like any case that did not pass, three ways to handle it', () => {
+  const env = setup({ after: 'reply: FIXED', afterFiles: DEMO_SKILL });
+  const r = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 12)]);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stdout, /0\/1 个用例过/);
+  const entry = readFileSync(reviewLoopPath(env.wt, 12), 'utf8');
+  assert.match(entry, /`demo-case`：用例没测到改动/);
+  assert.match(entry, /改动核对：没用上/);
+  assert.match(entry, /评委：Codex/, 'the judge still ran and is named');
+  assert.match(entry, /改前：否/);
+  assert.match(entry, /\*\*要你决定\*\*：`demo-case` 没过/);
+  assert.match(entry, /- A：[\s\S]*- B：[\s\S]*- C：/);
+  assert.doesNotMatch(entry, /夜间|队列/);
+  assert.deepEqual(loopCheck(env.wt, 12).unsettled, [{ kind: 'replay', round: 1 }], 'review-loop check lists it');
+});
+
+test('--run-large: a change that touched only scripts is n/a for the check and the judge decides', () => {
+  const env = setup();
+  const r = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(readFileSync(reviewLoopPath(env.wt, 12), 'utf8'), /改动核对：不适用/);
+});
+
+test('a stand-in claude without RETRO_CODEX_COMPANION never reaches a Codex: the stand-in judges, --run-large too', () => {
+  const env = setup();
+  const noCodexEnv = { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log };
+  delete noCodexEnv.RETRO_CODEX_COMPANION;
+  const r = spawnSync(process.execPath, [RUNNER, '--case', 'demo-case', '--run-large', ...runLargeArgs(env, 12)], { encoding: 'utf8', env: noCodexEnv, timeout: 120_000 });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /没找到 Codex，评委用 Claude/);
+  assert.match(readFileSync(reviewLoopPath(env.wt, 12), 'utf8'), /评委：Claude/);
 });

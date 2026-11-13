@@ -6,7 +6,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { appendReplayResults, buildReplayEntry, reviewLoopPath, summarizeResults } from '../evals/retro/queue.mjs';
+import { appendReplayResults, buildReplayEntry, describeExercised, reviewLoopPath, summarizeResults } from '../evals/retro/queue.mjs';
 import { nextRound, parseLoop, unsettled } from './review-loop.mjs';
 
 const at = (h, m = 0, day = 23) => new Date(2026, 9, day, h, m, 0);
@@ -118,4 +118,25 @@ test('appending to no file at all starts one with the usual title', () => {
 
 test('the review loop file of a PR is .tmp/review-loop/<PR>.md under the worktree', () => {
   assert.equal(reviewLoopPath('/work/proj-impl', 12), '/work/proj-impl/.tmp/review-loop/12.md');
+});
+
+test('a case the run did not exercise is listed as "用例没测到改动", with the check line, and the entry stays unsettled with three ways to handle it', () => {
+  const missed = { ...pass('a'), outcome: 'not-exercised', reason: '用例没测到改动：改后那一遍没有读过、调过、起过这次改动涉及的任何 skill、agent 定义或参考文件', exercised: { status: 'miss', changed: 2 } };
+  const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([missed]) });
+  assert.match(text, /`a`：用例没测到改动/);
+  assert.match(text, /改动核对：没用上（改动了 2 个/);
+  const [e] = parseLoop(text);
+  assert.equal(e.settled, false);
+  assert.match(e.body, /- A：[\s\S]*- B：[\s\S]*- C：/);
+  assert.equal(summarizeResults([missed]).passed, 0, 'not a pass');
+});
+
+test('the check line says which file, skill or agent was hit, or that it does not apply', () => {
+  assert.equal(describeExercised({ status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 1 }), '用上了（调了 skill idea-loop:demo）');
+  assert.equal(describeExercised({ status: 'hit', via: 'read', name: 'skills/a/SKILL.md', changed: 1 }), '用上了（读了 skills/a/SKILL.md）');
+  assert.equal(describeExercised({ status: 'hit', via: 'agent', name: 'idea-loop:helper', changed: 1 }), '用上了（起了 agent idea-loop:helper）');
+  assert.match(describeExercised({ status: 'na', changed: 0 }), /^不适用/);
+  assert.equal(describeExercised(undefined), null);
+  const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
+  assert.doesNotMatch(text, /改动核对/, 'a result with no check recorded says nothing about one');
 });

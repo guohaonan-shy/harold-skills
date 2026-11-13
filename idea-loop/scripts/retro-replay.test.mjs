@@ -13,10 +13,10 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { projectName } from '../evals/retro/retro-replay.mjs';
+import { changeSetOf, projectName } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -187,6 +187,10 @@ if (pd) {
   } else {
     const m = /^reply: (.*)$/m.exec(mark);
     const text = m ? m[1] : 'nothing';
+    for (const u of mark.matchAll(/^(skill|read): (.*)$/gm)) {
+      const input = u[1] === 'skill' ? { skill: u[2] } : { file_path: path.join(pd, u[2]) };
+      emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'u1', name: u[1] === 'skill' ? 'Skill' : 'Read', input }] } });
+    }
     fs.mkdirSync('docs', { recursive: true });
     fs.writeFileSync('docs/out.md', text);
     emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 't1', name: 'Write', input: {} }] } });
@@ -202,7 +206,8 @@ if (pd) {
 
 // A fake Codex companion: `node <it> task --model … --effort … --prompt-file F --cwd D`. It answers like the fake judge does
 // (yes for a product containing FIXED), with some prose around the JSON the way a real one talks; FAKE_CODEX_FAIL makes it exit 2.
-const FAKE_CODEX = `const fs = require('node:fs');
+const FAKE_CODEX = `// task
+const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
 fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
@@ -215,7 +220,7 @@ console.log('我读完了两份产物。');
 console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
 `;
 
-function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
+function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
   mkdirSync(repo);
@@ -229,6 +234,10 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   for (const [name, mark] of [['before', before], ['after', after]]) {
     mkdirSync(join(root, name, 'idea-loop'), { recursive: true });
     writeFileSync(join(root, name, 'idea-loop', 'MARK'), mark);
+    for (const [rel, text] of Object.entries(pluginFiles[name] ?? {})) {
+      mkdirSync(dirname(join(root, name, 'idea-loop', rel)), { recursive: true });
+      writeFileSync(join(root, name, 'idea-loop', rel), text);
+    }
   }
   const casesRoot = join(root, 'evals');
   const caseDir = join(casesRoot, 'cases', caseName);
@@ -250,8 +259,18 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
 /** What the fake `claude` was started with, one entry per session. */
 const sessions = (env) => (existsSync(`${env.log}.json`) ? readFileSync(`${env.log}.json`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 
+/** A Claude config dir with a Codex companion in the place the runner would look for the real one (a fake that logs "codex"). */
+function realCodexLookalike(env) {
+  const dir = join(env.root, 'claude-config');
+  const script = join(dir, 'plugins', 'marketplaces', 'openai-codex', 'plugins', 'codex', 'scripts', 'codex-companion.mjs');
+  mkdirSync(dirname(script), { recursive: true });
+  writeFileSync(script, readFileSync(env.codex, 'utf8'));
+  return dir;
+}
+
 /**
- * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the companion path does not exist), 'fails' (it exits 2).
+ * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the companion path does not exist), 'fails' (it exits 2),
+ * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
  * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
  */
 function run(env, extra = [], { codex = 'fake', order } = {}) {
@@ -264,6 +283,7 @@ function run(env, extra = [], { codex = 'fake', order } = {}) {
     env: {
       ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
       RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
+      ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
       ...(order ? { RETRO_JUDGE_ORDER: order } : { RETRO_JUDGE_ORDER: '' }),
     },
@@ -549,4 +569,201 @@ test('fileBody gives the text of a text file and a one-line note for a binary on
   assert.match(note, /二进制文件，12 字节/);
   // the judge prompt is passed to spawn as an argument; a NUL byte there throws
   assert.ok(!buildJudgePrompt(smallCase(), buildArtifact({ resultText: 'r', files: [{ path: 'a.png', content: note }] }), 'B').includes('\0'));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Spec replay-run-large-now, ticket 05: did the post-change run use what the change touched?
+// ---------------------------------------------------------------------------------------------
+
+const tool = (name, input, parent = null) => ({ type: 'assistant', parent_tool_use_id: parent, message: { content: [{ type: 'tool_use', id: 'x', name, input }] } });
+const CHANGE = {
+  files: ['skills/engineering/demo/SKILL.md', 'skills/engineering/demo/references/more.md', 'agents/helper.md'],
+  skills: ['idea-loop:demo'],
+  agents: ['idea-loop:helper'],
+};
+const ROOTS = ['/tmp/ab12/idea-loop', '/private/tmp/ab12/idea-loop'];
+
+test('exercisedBy: a Read of a changed file under the post-change plugin dir counts, and says which file', () => {
+  const r = exercisedBy([tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/demo/references/more.md' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual(r, { status: 'hit', via: 'read', name: 'skills/engineering/demo/references/more.md', changed: 3 });
+  const real = exercisedBy([tool('Read', { file_path: '/private/tmp/ab12/idea-loop/agents/helper.md' })], CHANGE, { roots: ROOTS });
+  assert.equal(real.name, 'agents/helper.md', 'the other spelling of the same dir (/tmp vs /private/tmp) counts too');
+});
+
+test('exercisedBy: a Skill call for the skill a changed SKILL.md or reference belongs to counts', () => {
+  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:demo' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual(r, { status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 3 });
+});
+
+test('exercisedBy: an Agent call for the agent a changed definition is counts', () => {
+  const r = exercisedBy([tool('Agent', { subagent_type: 'idea-loop:helper' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual(r, { status: 'hit', via: 'agent', name: 'idea-loop:helper', changed: 3 });
+  assert.equal(exercisedBy([tool('Task', { subagent_type: 'idea-loop:helper' })], CHANGE, { roots: ROOTS }).status, 'hit', 'Task is the older name of the same tool');
+});
+
+test('exercisedBy: a hit inside a sub-agent counts like one in the main session', () => {
+  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:demo' }, 'toolu_parent')], CHANGE, { roots: ROOTS });
+  assert.equal(r.status, 'hit');
+});
+
+test('exercisedBy: a Bash command that reads a changed file by its full path counts', () => {
+  const r = exercisedBy([tool('Bash', { command: 'cat /tmp/ab12/idea-loop/skills/engineering/demo/SKILL.md | head' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual([r.status, r.via, r.name], ['hit', 'read', 'skills/engineering/demo/SKILL.md']);
+});
+
+test('exercisedBy: a prompt that starts with the changed skill\'s slash command counts: the harness loaded it, no tool call shows it', () => {
+  const r = exercisedBy([], CHANGE, { roots: ROOTS, prompt: '/idea-loop:demo 做这件事' });
+  assert.deepEqual([r.status, r.via, r.name], ['hit', 'skill', 'idea-loop:demo']);
+  assert.equal(exercisedBy([], CHANGE, { roots: ROOTS, prompt: '/idea-loop:other 做这件事' }).status, 'miss');
+});
+
+test('exercisedBy: nothing used, or only things the change did not touch: not used', () => {
+  const events = [
+    tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/other/SKILL.md' }),
+    tool('Read', { file_path: '/elsewhere/idea-loop/skills/engineering/demo/SKILL.md' }),
+    tool('Skill', { skill: 'idea-loop:other' }),
+    tool('Skill', { skill: 'other-plugin:demo' }),
+    tool('Agent', { subagent_type: 'idea-loop:other' }),
+    tool('Bash', { command: 'ls /tmp/ab12/idea-loop/skills' }),
+    { type: 'result', result: 'done' },
+  ];
+  assert.deepEqual(exercisedBy(events, CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
+  assert.deepEqual(exercisedBy([], CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
+});
+
+test('exercisedBy: an empty change set (only scripts changed) is not applicable, whatever the run did', () => {
+  assert.deepEqual(exercisedBy([tool('Skill', { skill: 'idea-loop:demo' })], { files: [], skills: [], agents: [] }, { roots: ROOTS }), { status: 'na', changed: 0 });
+});
+
+test('applyExercised: not used turns any judged outcome into "not-exercised" and keeps what the judge said; used or n/a leaves it', () => {
+  const pass = decideOutcome({ before: 'no', after: 'yes' });
+  const miss = applyExercised(pass, { status: 'miss', changed: 2 });
+  assert.equal(miss.outcome, 'not-exercised');
+  assert.match(miss.reason, /用例没测到改动/);
+  assert.equal(miss.judgedOutcome, 'pass');
+  assert.match(miss.reason, /改前答「否」/, 'the judge\'s own reason stays readable');
+  assert.equal(applyExercised(decideOutcome({ before: 'no', after: 'no' }), { status: 'miss', changed: 2 }).outcome, 'not-exercised');
+  assert.deepEqual(applyExercised(pass, { status: 'hit', via: 'read', name: 'a', changed: 1 }), pass);
+  assert.deepEqual(applyExercised(pass, { status: 'na', changed: 0 }), pass);
+  assert.deepEqual(applyExercised(pass, undefined), pass, 'a result written before this check existed');
+});
+
+test('changeSetOf: files added or modified under skills/ and agents/, the skills and agents they belong to, nothing else', () => {
+  const root = mkdtempSync(join(tmpdir(), 'changeset-'));
+  const put = (dir, rel, text) => {
+    mkdirSync(dirname(join(root, dir, rel)), { recursive: true });
+    writeFileSync(join(root, dir, rel), text);
+  };
+  for (const dir of ['before', 'after']) {
+    put(dir, 'skills/engineering/same/SKILL.md', 'same');
+    put(dir, 'skills/engineering/edited/SKILL.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'skills/engineering/refs/SKILL.md', 'same');
+    put(dir, 'skills/engineering/refs/references/a.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'agents/kept.md', 'same');
+    put(dir, 'agents/edited.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'scripts/tool.mjs', dir === 'before' ? 'old' : 'new');
+  }
+  put('after', 'skills/productivity/brand-new/SKILL.md', 'x');
+  put('after', 'skills/productivity/brand-new/references/deep/b.md', 'x');
+  put('after', 'agents/added.md', 'x');
+  put('after', 'skills/engineering/same/.DS_Store', 'junk');
+  put('before', 'skills/engineering/gone/SKILL.md', 'deleted in the change');
+  put('after', '.claude-plugin/plugin.json', '{"name":"my-plugin"}');
+  const c = changeSetOf(join(root, 'before'), join(root, 'after'));
+  assert.deepEqual(c.files, [
+    'agents/added.md', 'agents/edited.md', 'skills/engineering/edited/SKILL.md', 'skills/engineering/refs/references/a.md',
+    'skills/productivity/brand-new/SKILL.md', 'skills/productivity/brand-new/references/deep/b.md',
+  ]);
+  assert.deepEqual(c.skills, ['my-plugin:brand-new', 'my-plugin:edited', 'my-plugin:refs']);
+  assert.deepEqual(c.agents, ['my-plugin:added', 'my-plugin:edited']);
+  // a plugin with no manifest is named after its directory
+  const noManifest = join(root, 'plain-plugin');
+  mkdirSync(join(noManifest, 'skills', 'x', 'y'), { recursive: true });
+  writeFileSync(join(noManifest, 'skills', 'x', 'y', 'SKILL.md'), 'x');
+  assert.deepEqual(changeSetOf(join(root, 'empty-before'), noManifest).skills, ['plain-plugin:y']);
+  // nothing changed under skills/ and agents/: an empty set
+  const same = changeSetOf(join(root, 'before'), join(root, 'before'));
+  assert.deepEqual([same.files, same.skills, same.agents], [[], [], []]);
+});
+
+const SKILL_FILE = { 'skills/engineering/demo/SKILL.md': '# demo\n' };
+
+test('e2e: the post-change plugin changed a skill and the post-change run called it -> pass, the result and the report say what was hit', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED\nskill: idea-loop:demo', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.outcome, 'pass');
+  assert.deepEqual(res.exercised, { status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 1 });
+  assert.match(r.stdout, /改动核对：用上了（调了 skill idea-loop:demo）/);
+});
+
+test('e2e: the post-change run read the changed file instead of calling the skill -> also used', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED\nread: skills/engineering/demo/SKILL.md', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(resultJson(env, r.stdout).exercised, { status: 'hit', via: 'read', name: 'skills/engineering/demo/SKILL.md', changed: 1 });
+});
+
+test('e2e: the changed skill was neither called nor read -> not-exercised, exit 1, not a pass, and the judge still ran', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.outcome, 'not-exercised');
+  assert.equal(res.judgedOutcome, 'pass', 'the judge\'s own verdict is kept for the human');
+  assert.deepEqual(res.verdicts.map((v) => v.answer), ['no', 'yes']);
+  assert.equal(res.exercised.status, 'miss');
+  assert.ok(r.calls.includes('codex'), 'the judge ran although nothing was exercised');
+  assert.match(r.stdout, /用例没测到改动（not-exercised）/);
+  assert.match(r.stdout, /改动核对：没用上/);
+});
+
+test('e2e: the check comes before the judge: it is printed before the judging starts', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  const said = r.stdout.indexOf('改动核对：');
+  assert.ok(said >= 0 && said < r.stdout.indexOf('— 判定'), r.stdout);
+});
+
+test('e2e: only scripts changed (nothing under skills/ or agents/) -> the check is n/a and the judge decides', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(resultJson(env, r.stdout).exercised, { status: 'na', changed: 0 });
+  assert.match(r.stdout, /改动核对：不适用/);
+});
+
+test('e2e: a prompt that starts with the changed skill\'s slash command loads it: used, without any tool call showing it', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  c.prompt = '/idea-loop:demo 把这件事摆给我';
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify(c));
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(resultJson(env, r.stdout).exercised.via, 'skill');
+});
+
+test('e2e: --settle keeps "not-exercised" even when the human overrules the judge', () => {
+  const env = setup({ before: 'reply: FIXED', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const runId = resultJson(env, r.stdout).runId;
+  assert.equal(resultJson(env, r.stdout).outcome, 'not-exercised');
+  writeFileSync(join(env.caseDir, 'annotations.md'), `# demo\n\n- 推翻 ${runId} 改前=否 ｜ 判定会话看错了\n`);
+  const s = spawnSync(process.execPath, [RUNNER, '--settle', 'demo-case', '--run', dir, '--cases-root', env.casesRoot], { encoding: 'utf8' });
+  assert.equal(s.status, 1, s.stdout + s.stderr);
+  const settled = JSON.parse(readFileSync(join(dir, 'result.json'), 'utf8'));
+  assert.equal(settled.outcome, 'not-exercised');
+  assert.equal(settled.judgedOutcome, 'pass', 'the override still reached the judged answers');
+});
+
+test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not go looking for the real Codex, the stand-in judges', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env, [], { codex: 'unset' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.ok(!r.calls.includes('codex'), `a Codex that would have been found was started: ${r.calls}`);
+  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker'], 'the judging session is the fake claude');
+  assert.equal(resultJson(env, r.stdout).judge, 'claude');
+  assert.match(r.stdout, /没找到 Codex，评委用 Claude/);
 });

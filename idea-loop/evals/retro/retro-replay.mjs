@@ -14,6 +14,14 @@
  *      nothing also falls back to Claude. `result.json` records `judge` (`codex` / `claude`) and `afterIs` (the letter the
  *      post-change product had), which is how the answers are turned back into pre-change / post-change.
  *
+ * Before the judge, the runner checks that the post-change run used the change: the change set is the files added or modified
+ * under the plugin's `skills/` and `agents/` between the pre-change and the post-change plugin; the run used it when its event
+ * stream (main session and sub-agents) reads one of them (a Read, or a Bash command naming its full path), calls a skill one of them
+ * belongs to (Skill tool, or a prompt that starts with that skill's slash command), or starts an agent one of them defines (Agent
+ * tool). Used: the judge's answer decides as before, and `result.json` records what was hit (`exercised`). Not used: the judge still
+ * runs (its answers stay in the result for the human) but the outcome is `not-exercised` ("用例没测到改动"), exit 1, not a pass.
+ * An empty change set (only scripts changed) is recorded as "不适用" and the judge decides.
+ *
  * The input is only the human's words: the two runs get exactly the case's `prompt` (a case whose prompt says it is a
  * test is refused), and each runs in `<tmp dir>/<random>/<project name>`, a path with nothing about retro, replay, before
  * or after in it. The plugin it loads is copied to `<tmp dir>/<random>/<plugin dir name>` first (`--plugin-dir` points there,
@@ -52,15 +60,16 @@
  * Exit codes: 0 all passed · 1 some did not · 2 no `--pr`, no case, or a case that does not exist or is
  * malformed (no session is started) · 4 / 5 when a judge or a session gave nothing (5 wins over 4, 4 over 1).
  *
- * Exit codes of the other modes: 0 pass · 1 not a pass (the change did not fix it / the case missed the problem) ·
+ * Exit codes of the other modes: 0 pass · 1 not a pass (the change did not fix it / the case missed the problem / the run did not use the change) ·
  *             2 bad arguments or a malformed case · 3 a large case, left to `--run-large` · 4 judge gave no usable answer ·
  *             5 a session produced no result.
  *
  * `RETRO_CLAUDE_BIN` replaces the `claude` command, `RETRO_CODEX_COMPANION` the Codex companion script (a path that does
- * not exist means "no Codex"), and `RETRO_JUDGE_ORDER` (`after-first` / `before-first`) fixes the A/B order: the tests use these.
+ * not exist means "no Codex"; with `RETRO_CLAUDE_BIN` set and this one not, the runner does not look for a real Codex either: a stand-in
+ * `claude` means a test, and the stand-in judges), and `RETRO_JUDGE_ORDER` (`after-first` / `before-first`) fixes the A/B order: the tests use these.
  */
 
-import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { randomBytes, randomInt } from 'node:crypto';
 import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -69,9 +78,9 @@ import { spawn, spawnSync } from 'node:child_process';
 import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
 import { findCompanion } from '../../scripts/codex-companion.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
-import { appendReplayResults, reviewLoopPath, summarizeResults } from './queue.mjs';
+import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
-  buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, fileBody, parseOverrides, parseVerdict,
+  applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, parseOverrides, parseVerdict,
   productsInOrder, relabelLarge, settleVerdicts, verdictsBySide,
 } from './replay.mjs';
 
@@ -211,6 +220,65 @@ function changedFiles(projectDir) {
   return files;
 }
 
+/** Every file under `dir`, as paths relative to it with `/` (none when `dir` is not there); dot-files are skipped. */
+function filesUnder(dir, prefix = '') {
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith('.')) continue;
+    if (e.isDirectory()) out.push(...filesUnder(join(dir, e.name), `${prefix}${e.name}/`));
+    else if (e.isFile()) out.push(`${prefix}${e.name}`);
+  }
+  return out.sort();
+}
+
+/** The name a plugin goes by in `<plugin>:<skill>`: its manifest's `name`, else `fallback`, else its directory's name. */
+function pluginNameOf(dir, fallback) {
+  try {
+    const name = JSON.parse(readFileSync(join(dir, '.claude-plugin', 'plugin.json'), 'utf8')).name;
+    if (typeof name === 'string' && name) return name;
+  } catch {
+    /* no manifest: named after its directory */
+  }
+  return fallback ?? basename(dir);
+}
+
+/**
+ * What the change touched, for the exercised check: the files added or modified under `skills/` and `agents/` between the
+ * pre-change plugin dir and the post-change one (a deleted file is not "used"), the skills those files belong to
+ * (`<plugin>:<dir holding the nearest SKILL.md above the file>`) and the agents among them (`<plugin>:<file name without .md>`).
+ * Sorted, so the result reads the same every time.
+ */
+export function changeSetOf(beforeDir, afterDir, pluginName) {
+  const plugin = pluginNameOf(afterDir, pluginName);
+  const files = ['skills', 'agents'].flatMap((top) => filesUnder(join(afterDir, top), `${top}/`)).filter((rel) => {
+    const old = join(beforeDir, rel);
+    return !existsSync(old) || !readFileSync(old).equals(readFileSync(join(afterDir, rel)));
+  }).sort();
+  const skills = new Set();
+  const agents = new Set();
+  for (const rel of files) {
+    const parts = rel.split('/');
+    if (parts[0] === 'agents' && parts.length === 2 && parts[1].endsWith('.md')) agents.add(`${plugin}:${parts[1].slice(0, -3)}`);
+    if (parts[0] !== 'skills') continue;
+    for (let n = parts.length - 1; n >= 2; n--) {
+      if (existsSync(join(afterDir, ...parts.slice(0, n), 'SKILL.md'))) {
+        skills.add(`${plugin}:${parts[n - 1]}`);
+        break;
+      }
+    }
+  }
+  return { files, skills: [...skills].sort(), agents: [...agents].sort() };
+}
+
+/** The parsed events of a stream file, one at a time. */
+function* eventsOf(path) {
+  for (const line of fileLines(path)) {
+    const ev = parseEvent(line);
+    if (ev) yield ev;
+  }
+}
+
 /**
  * Run one `claude -p` to the end. With `watch`, the first plugin-agent or browser tool call in the event
  * stream kills the session at once and is returned as `escalation`.
@@ -259,6 +327,7 @@ function runClaude({ args, cwd, streamPath, timeoutMs, watch }) {
 export function locateCodex() {
   const override = process.env.RETRO_CODEX_COMPANION;
   if (override !== undefined) return override && existsSync(override) ? override : null;
+  if (process.env.RETRO_CLAUDE_BIN) return null; // a stand-in claude means a test: it must not reach the real Codex
   const starts = [PLUGIN_ROOT, join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'plugins')];
   for (const start of starts) {
     const { path } = findCompanion(start);
@@ -328,6 +397,8 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   }
 
   const sides = [{ side: 'before', plugin: beforePlugin }, { side: 'after', plugin: afterPlugin }];
+  const change = changeSetOf(beforePlugin, afterPlugin);
+  let exercised = null;
   const products = {};
   const costs = {};
   for (const s of sides) {
@@ -367,6 +438,12 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       writeFileSync(join(dir, 'digest.json'), JSON.stringify({ session: digest.session, subagents: digest.subagents, result: { ...digest.result, text: undefined } }, null, 2));
       writeFileSync(join(dir, 'artifact.md'), products[s.side]);
       console.log(` 完成，${usd(digest.result.cost)}`);
+      if (s.side === 'after') {
+        // before the judge: did this run use what the change touched? (the paths in its stream are the staged copy's)
+        const roots = [...new Set([staged.dir, realpathSync(staged.dir)])];
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c) });
+        console.log(`改动核对：${describeExercised(exercised)}`);
+      }
     } finally {
       // the plugin copy and the work dir are only for the run: nothing of them stays in the temp dir
       staged.remove();
@@ -415,9 +492,9 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const verdict = parseVerdict(judgeText);
   const verdicts = verdictsBySide(verdict, afterIs);
   const judged = { before: verdicts?.[0].answer, after: verdicts?.[1].answer };
-  const decision = decideOutcome(judged);
+  const decision = applyExercised(decideOutcome(judged), exercised);
   const cost = Object.values(costs).reduce((a, b) => a + (b ?? 0), 0);
-  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, ...decision, costs, cost, settled: false };
+  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, exercised, ...decision, costs, cost, settled: false };
   writeFileSync(join(runDir, 'result.json'), JSON.stringify(result, null, 2));
   return { code: report(result, runDir, c.name, t.casesRoot), result, runDir };
 }
@@ -444,15 +521,16 @@ async function replay(opts, t) {
 }
 
 function report(result, runDir, name, casesRoot) {
-  const label = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论' }[result.outcome];
+  const label = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论', 'not-exercised': '用例没测到改动' }[result.outcome];
   console.log(`\n${name}: ${label}（${result.outcome}）\n  ${result.reason}`);
   if (result.judge) console.log(`  评委：${result.judge === 'codex' ? 'Codex' : 'Claude'}`);
+  if (result.exercised) console.log(`  改动核对：${describeExercised(result.exercised)}`);
   for (const v of result.verdicts ?? []) console.log(`  ${v.side === 'before' ? '改前' : '改后'}：${v.answer === 'yes' ? '是' : '否'}  出处：${v.cite}`);
   const judgeCost = result.judge === 'codex' ? 'Codex，不占 Claude 额度' : usd(result.costs.judge);
   console.log(`  实际花费：${usd(result.cost)}（改前 ${usd(result.costs.before)}，改后 ${usd(result.costs.after)}，判定 ${judgeCost}）`);
   console.log(`  产物：${runDir}/{before,after}/artifact.md`);
   console.log(`  不同意判定？在 ${join(casesRoot, 'cases', name, 'annotations.md')} 里记一行「- 推翻 ${result.runId} 改前=是|否 ｜ 理由」，再跑 --settle ${name} --run ${runDir}`);
-  return { pass: 0, fail: 1, 'case-missed': 1, inconclusive: 4 }[result.outcome];
+  return { pass: 0, fail: 1, 'case-missed': 1, 'not-exercised': 1, inconclusive: 4 }[result.outcome];
 }
 
 function settle(opts, t) {
@@ -465,7 +543,7 @@ function settle(opts, t) {
   const notes = join(t.casesRoot, 'cases', opts.settle, 'annotations.md');
   const overrides = existsSync(notes) ? parseOverrides(readFileSync(notes, 'utf8')) : {};
   const judged = settleVerdicts(result.judged, overrides, result.runId);
-  const decision = decideOutcome(judged);
+  const decision = applyExercised(decideOutcome(judged), result.exercised);
   const next = { ...result, judged, ...decision, settled: Boolean(overrides[result.runId]), overridden: overrides[result.runId] ?? null };
   writeFileSync(file, JSON.stringify(next, null, 2));
   return report(next, opts.run, opts.settle, t.casesRoot);
@@ -490,7 +568,7 @@ async function replayLarge(t, name, opts) {
   try {
     const r = await executeReplay(opts, t, c, { runLarge: true });
     if (r.result) {
-      return { case: name, outcome: r.result.outcome, reason: r.result.reason, judge: r.result.judge, verdicts: r.result.verdicts ?? undefined, cost: r.result.cost, runDir: r.runDir };
+      return { case: name, outcome: r.result.outcome, reason: r.result.reason, judge: r.result.judge, exercised: r.result.exercised, verdicts: r.result.verdicts ?? undefined, cost: r.result.cost, runDir: r.runDir };
     }
     return { case: name, outcome: 'no-result', reason: r.message ?? '没有产出结果', runDir: r.runDir };
   } catch (e) {

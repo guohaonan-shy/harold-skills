@@ -25,15 +25,25 @@ export function summarizeResults(results) {
   return { total: results.length, passed, notPassed: results.length - passed, allPassed: results.length > 0 && passed === results.length, cost: Math.round(cost * 100) / 100 };
 }
 
-const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论', 'no-result': '没跑出结果', 'bad-case': '用例有问题，没能跑' };
+const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论', 'not-exercised': '用例没测到改动', 'no-result': '没跑出结果', 'bad-case': '用例有问题，没能跑' };
 const YESNO = { yes: '是', no: '否' };
 const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
 
 const JUDGE = { codex: 'Codex', claude: 'Claude' };
 
+/** What the check "did the post-change run use the change" found, as one line (null for a result written before the check existed). */
+export function describeExercised(ex) {
+  if (!ex) return null;
+  if (ex.status === 'na') return '不适用（这次只改了脚本，skills/、agents/ 下没有改动的文件）';
+  if (ex.status === 'miss') return `没用上（改动了 ${ex.changed} 个 skill、agent 或参考文件，改后那一遍没读过它们，也没调到所属的 skill、没起对应的 agent）`;
+  const what = { read: '读了', skill: '调了 skill', agent: '起了 agent' }[ex.via] ?? ex.via;
+  return `用上了（${what} ${ex.name}）`;
+}
+
 function describeCase(r) {
   const lines = [`- \`${r.case}\`：${LABEL[r.outcome] ?? r.outcome}`, `  - ${r.reason}`];
   if (r.judge) lines.push(`  - 评委：${JUDGE[r.judge] ?? r.judge}`);
+  if (r.exercised) lines.push(`  - 改动核对：${describeExercised(r.exercised)}`);
   for (const v of r.verdicts ?? []) lines.push(`  - ${v.side === 'before' ? '改前' : '改后'}：${YESNO[v.answer] ?? v.answer}　出处：${v.cite}`);
   if (r.runDir) lines.push(`  - 产物（改前、改后各一份）：\`${r.runDir}/{before,after}/artifact.md\`；花费 ${usd(r.cost)}`);
   lines.push(`  - 不同意判定？在用例旁的 \`annotations.md\` 里记「- 推翻 <run-id> 改前=是|否 ｜ 理由」，再跑 \`--settle ${r.case} --run <run 目录>\``);
@@ -61,9 +71,9 @@ export function buildReplayEntry({ round, ranAt, results }) {
     const bad = results.filter((r) => r.outcome !== 'pass').map((r) => `\`${r.case}\``).join('、');
     lines.push(
       `**要你决定**：${bad} 没过，不会自动重跑。`,
-      '- A：判定对，规则改动没达到目的 —— 回到规则，接着改，再跑一次回放。',
+      '- A：判定对，规则改动没达到目的（含「用例没测到改动」：改动没被触发到）—— 回到规则，接着改，再跑一次回放。',
       '- B：判定错了 —— 在用例旁的 `annotations.md` 里推翻，再跑 `--settle`。',
-      '- C：用例本身有问题（没抓住问题、写不清）—— 先修用例再跑。',
+      '- C：用例本身有问题（没抓住问题、没测到改动、写不清）—— 先修用例再跑。',
     );
   }
   return `${lines.join('\n')}\n`;
