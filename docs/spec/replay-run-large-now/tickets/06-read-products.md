@@ -15,10 +15,10 @@
 
 ## 验收标准
 
-- [ ] 文档测试：`replay-result.md` 写了读两份产物、自己答、与评委对照、不一致停下摆给人（含三个处理）
-- [ ] 文档测试：implementer 定义的小用例那段写了同样的对照，不一致按 `blocked` 交回
-- [ ] implement 的 SKILL.md 主体不变长
-- [ ] 全量测试通过（命令见 REVIEW.md）
+- [x] 文档测试：`replay-result.md` 写了读两份产物、自己答、与评委对照、不一致停下摆给人（含三个处理）
+- [x] 文档测试：implementer 定义的小用例那段写了同样的对照，不一致按 `blocked` 交回
+- [x] implement 的 SKILL.md 主体不变长
+- [x] 全量测试通过（命令见 REVIEW.md）
 
 ## 选中的存量回归
 

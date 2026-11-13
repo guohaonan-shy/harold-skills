@@ -55,9 +55,9 @@ effort: high
 - **能机械判定的**（格式、必含的字段、禁用的写法）：做成检查（脚本或校验的单测），并**先在复现那次历史错误的输入上看到它失败**，再让它过。没见它失败过的检查什么也证明不了。
 - **要判断的**（摆出来的东西讲没讲清、有没有遗漏）：写一个回放用例 `idea-loop/evals/retro/cases/<用例>/`（`case.json` 加 `annotations.md`，格式见 `idea-loop/evals/retro/cases.mjs`，`retro-replay.mjs --list` 会指出格式问题）：
   - 提交号取决策发生时的仓库状态；prompt 取当时让 skill 产出东西的那句话；「停在哪」取 skill 把东西交给人的那一刻；是/否题从人当时的原话写出，原话抄进 `quote`；大小按机械判据填（只驱动一个 skill、不起插件 agent、不开浏览器、不调付费外部服务的是小，碰任何一样是大）并写依据。
-  - **小的**：实现完当场跑 `node ~/.idea-loop/bin/retro-replay.mjs --case <用例> --worktree <你的 worktree>`（固定路径的 runner，允许规则只认这个开头；比较的是主分支的插件和你这条分支的插件）。`~/.idea-loop/bin/` 里没有它，说明 `/idea-loop:setup` 的「规则回放 runner」那一步还没做，按 `failed` 交回。**跑之前**在交回里写一句预计花多少（runner 开跑时也会打印；一个用例两次 `claude -p` 加一次判定，量级 1 到 3.5 美元）。过了才算数；「用例没抓住问题」（改前就答是）先修用例再跑；不过就接着改规则。跑的结果和实际花费写进 `verified`。
+  - **小的**：实现完当场跑 `node ~/.idea-loop/bin/retro-replay.mjs --case <用例> --worktree <你的 worktree>`（固定路径的 runner，允许规则只认这个开头；比较的是主分支的插件和你这条分支的插件）。`~/.idea-loop/bin/` 里没有它，说明 `/idea-loop:setup` 的「规则回放 runner」那一步还没做，按 `failed` 交回。**跑之前**在交回里写一句预计花多少（runner 开跑时也会打印；一个用例两次 `claude -p` 加一次判定，量级 1 到 3.5 美元）。**拿到结果先读产物、跟评委对照**：读 runner 输出里给的 run 目录下改前、改后各一份 `artifact.md`，和用例 `case.json` 的 `question`，自己对那道是/否题各答一次并找出处，再看评委的答案与出处。两边一致，照下面往下走；有一边不一致（哪怕判了过），不自己改判，按 `blocked` 交回，`question` 里写明用例、那道题、评委的答案与出处、你的答案与出处，选项是判定对 / 判定错 / 用例有问题，推荐写你的读法。一致后：过了才算数；「用例没抓住问题」（改前就答是）先修用例再跑；不过就接着改规则。跑的结果和实际花费写进 `verified`。
   - **大的**（或 runner 跑到一半发现起了 agent、开了浏览器，它会自己中止并把用例改标成大，退出码 3）：只写好用例（提交进你的 commit），不在这里跑。交回 `verified` 里写「大用例待跑：<用例>」，用例名逐个写全。PR 号和集成 worktree 要等 PR 开出来才齐，所以编排者在 PR 开出后当场跑它（`retro-replay.mjs --run-large`），你不跑；PR 等结果处理完才进 review。
-- 判定会话的结论你不同意时，不自己改判：在交回里说明分歧。推翻由人做，记在用例的 `annotations.md`，再跑 `--settle`。
+- 判定会话的结论你不同意时，不自己改判：按 `blocked` 交回，说明分歧（上面那一步）。推翻由人做，记在用例的 `annotations.md`，再跑 `--settle`。
 
 ### UI 工单与设计档案
 

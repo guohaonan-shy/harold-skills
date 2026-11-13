@@ -272,7 +272,9 @@ background (a foreground Bash call is cut at 10 minutes). The runner runs the ca
 stopped for starting an agent or opening a browser (the session timeout is 45 minutes unless `--timeout-min` says otherwise),
 and appends one `replay` entry to the PR's review loop file (`review-loop.mjs check` reads it; a case that did not pass leaves it
 unsettled). It sends no session message and no notification: the orchestrator waits for the exit, reads the output and the file,
-and handles the result as `idea-loop:implement`'s `references/replay-result.md` says. The PR stays a draft until the replays
+and handles the result as `idea-loop:implement`'s `references/replay-result.md` says: first it reads the two products itself, answers
+the case's yes/no question on each, and compares with the judge; a disagreement stops the run and goes to the human (a small
+case's implementer does the same and hands a disagreement back as `blocked`). The PR stays a draft until the replays
 are handled. Exit codes: 0 all passed, 1 some did not, 2 no `--pr` / no case / a case that is missing or malformed (no session
 is started). A runner copy at `~/.idea-loop/bin/` from before this option does not know it: run `scripts/retro-install.mjs` again.
 
