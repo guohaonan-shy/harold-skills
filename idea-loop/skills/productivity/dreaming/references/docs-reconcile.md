@@ -1,6 +1,6 @@
 # 文档对账：spec → ADR
 
-文档写下时是对的，代码往前走了，没人回头改那一行。这份是 `idea-loop:adr-reconciler` 的工作方法：拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，**提议**处置；提议表里的行怎么写见 [proposal-table.md](proposal-table.md)，人批过才执行。
+文档写下时是对的，代码往前走了，没人回头改那一行。这份是 `idea-loop:adr-reconciler` 的工作方法：拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，判处置；提议表里的行怎么写见 [proposal-table.md](proposal-table.md)。表里的行按风险分：哪些行问人，以 `proposal-table-check.mjs --split-ask` 的拆表为准，问人的行人批才执行，其余行按建议处置自己执行。
 
 ## 纪律
 

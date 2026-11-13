@@ -74,7 +74,7 @@ idea-loop 从这几处读项目配置：
 
 ## 每周分拣
 
-`idea-loop:issue-triage` 可以由『定时任务』每周自己跑一次，把最早的 15 个 backlog issue 查完、摆一张表等人批。必须在本仓库的主 checkout 里做，任务 id 叫 `triage-<仓库名>`。步骤在 [references/weekly-triage.md](references/weekly-triage.md)。
+`idea-loop:issue-triage` 可以由『定时任务』每周自己跑一次，把最早的 15 个 backlog issue 查完，按建议去向翻好状态。必须在本仓库的主 checkout 里做，任务 id 叫 `triage-<仓库名>`。步骤在 [references/weekly-triage.md](references/weekly-triage.md)。
 
 完成条件：本仓库有一个开着的 `triage-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
 
