@@ -13,10 +13,10 @@
 
 ## 验收标准
 
-- [ ] 根目录 `AGENTS.md` 里「Repository Purpose」到「### idea-loop 的约定与刻意例外」之间含上面新文全文，逐字一致
-- [ ] 新段落位于「改了某个 plugin 的 …，不是这里。」那一行之后
-- [ ] 这次提交只改了根目录 `AGENTS.md`（加工单格的勾选），没有动任何插件目录
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 仍全部通过
+- [x] 根目录 `AGENTS.md` 里「Repository Purpose」到「### idea-loop 的约定与刻意例外」之间含上面新文全文，逐字一致
+- [x] 新段落位于「改了某个 plugin 的 …，不是这里。」那一行之后
+- [x] 这次提交只改了根目录 `AGENTS.md`（加工单格的勾选），没有动任何插件目录
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs'` 仍全部通过
 
 ## 选中的存量回归
 
