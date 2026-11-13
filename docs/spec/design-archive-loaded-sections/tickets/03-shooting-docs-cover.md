@@ -12,10 +12,12 @@
 1. **拍图手册**（`design-archive` 的 shooting 参考文件）：
    - 「情形怎么选」加一种情形「比主视口高、不分段的状态」，单独一节写步骤：装时间 → 走到这个状态 → 跑 `screen` → 跑 `cover`（`--out` 同目录）→ 按返回的 `shot` 给每条边写上；有 `unlocated` 时怎么办（多半是 `locate` 写错了或组件改名了，修 `locate` 再跑）。
    - 「单屏状态」一节补一句：不知道页面高不高时跑一次 `cover`，返回空就是单屏状态。
-   - 「命令」表加 `cover`。
+   - 「看到什么 → 做什么」里 `heightDrift` 不是 0 那一行，单屏状态的说法从「改成声明分段」改成：不分段的照新情形补拍（入口状态是营销页那种结构化长页面的，才改成声明分段）。
+   - （「命令」代码块的 `cover` 那一行已由 02 加上。）
 2. **dreaming 对账**（`design-archive` 的 review-reconcile 参考文件）第 3 步「拍」、第 4 步「比」：不分段的状态 `screen` 之后加 `cover`；补拍图逐张跟 `prod/` 里同名的图比，比法和分段图一样；`cover` 合出来的分组跟 `prod/` 里的 `shot` 不一样（内容变了），判「档案过期」，按新的分组重写 `shot`。
 3. **合并前归档**（`design-archive` 的 review-archive 参考文件）里拍单屏状态的地方，跟着加 `cover` 与写 `shot`。
-4. **dreaming 初扫**（`dreaming` 的 initial-scan 参考文件）第 7 步：情形列表里加这种情形，拍法照拍图手册。
+4. **design-archive 的 SKILL.md**：「按需读」表里拍档案截图那一行的情形列表加上这种情形（主体保持 < 5000 字，现在 4785）。
+5. **dreaming 初扫**（`dreaming` 的 initial-scan 参考文件）第 7 步：情形列表里加这种情形，拍法照拍图手册。
 
 文档里出现的每一行 `design-archive-sections.mjs cover …` 调用都要是真实子命令和它自己的选项（现有 doc 测试会核）。
 
