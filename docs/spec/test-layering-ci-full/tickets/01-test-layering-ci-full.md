@@ -19,18 +19,18 @@ idea-loop 插件的流程规则改成测试按阶段分层，一个 PR 的全量
 
 ## 验收标准
 
-- [ ] 新增一个文档检查测试（照 `dreaming-incremental-doc.test.mjs` 的写法，按小节读文字断言），先对着改前的文字跑、看到它红，改完变绿
-- [ ] 执行方定义的「做」「完成标准」和被叫回来修的那句里不再要求跑全量套件；写了只跑改动涉及的单元测试、涉及的 API 测试、选中的存量回归、typecheck、lint，以及全量交给 CI
-- [ ] 执行方定义写了「涉及的 API」怎么挑、共用底层也不扩成全量、`REVIEW.md` 只取命令、真实凭据的工作照旧本机跑
-- [ ] 执行方交回格式的 `verified` 有「跑了哪些测试」一行
-- [ ] implement 落地 ff 不了时不再「重跑全量套件」
-- [ ] implement「全部落地」那段在 `gh pr ready` 之后、起 pr-review 之前有等 CI（`gh pr checks`），写了红了怎么回工单、无关失败开 issue、没有检查时本机跑一次全量
-- [ ] pr-review 的前提写了 head 上的 CI 全绿或没有检查，「一轮之后往哪走」起下一轮前等 CI
-- [ ] `review-standards` 的「机械检查」和 pr-reviewer 定义的「机械检查」写了全量测试读 CI 结论、没有检查才本机跑、核实发现只跑对应测试
-- [ ] setup 的 `REVIEW.md` 模板不再有「提交前跑全量」
-- [ ] 插件 `README.md` 同步，不再说工单完成要 full suite 绿
-- [ ] idea-loop 版本是 `0.1.13`
-- [ ] 全量 `node --test '*/scripts/*.test.mjs'` 绿（这个仓库 PR 上没有 CI，按新规则由编排者兜底；执行方跑新测试和 `no-project-leak.test.mjs` 即可）；改到的 `SKILL.md` 主体仍 < 5000 字
+- [x] 新增一个文档检查测试（照 `dreaming-incremental-doc.test.mjs` 的写法，按小节读文字断言），先对着改前的文字跑、看到它红，改完变绿
+- [x] 执行方定义的「做」「完成标准」和被叫回来修的那句里不再要求跑全量套件；写了只跑改动涉及的单元测试、涉及的 API 测试、选中的存量回归、typecheck、lint，以及全量交给 CI
+- [x] 执行方定义写了「涉及的 API」怎么挑、共用底层也不扩成全量、`REVIEW.md` 只取命令、真实凭据的工作照旧本机跑
+- [x] 执行方交回格式的 `verified` 有「跑了哪些测试」一行
+- [x] implement 落地 ff 不了时不再「重跑全量套件」
+- [x] implement「全部落地」那段在 `gh pr ready` 之后、起 pr-review 之前有等 CI（`gh pr checks`），写了红了怎么回工单、无关失败开 issue、没有检查时本机跑一次全量
+- [x] pr-review 的前提写了 head 上的 CI 全绿或没有检查，「一轮之后往哪走」起下一轮前等 CI
+- [x] `review-standards` 的「机械检查」和 pr-reviewer 定义的「机械检查」写了全量测试读 CI 结论、没有检查才本机跑、核实发现只跑对应测试
+- [x] setup 的 `REVIEW.md` 模板不再有「提交前跑全量」
+- [x] 插件 `README.md` 同步，不再说工单完成要 full suite 绿
+- [x] idea-loop 版本是 `0.1.13`
+- [x] 全量 `node --test '*/scripts/*.test.mjs'` 绿（这个仓库 PR 上没有 CI，按新规则由编排者兜底；执行方跑新测试和 `no-project-leak.test.mjs` 即可）；改到的 `SKILL.md` 主体仍 < 5000 字
 
 ## 选中的存量回归
 
