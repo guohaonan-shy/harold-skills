@@ -30,8 +30,9 @@ idea-loop 插件的流程规则改成测试按阶段分层，一个 PR 的全量
 - [x] setup 的 `REVIEW.md` 模板不再有「提交前跑全量」
 - [x] 插件 `README.md` 同步，不再说工单完成要 full suite 绿
 - [x] idea-loop 版本是 `0.1.13`
-- [x] 全量 `node --test '*/scripts/*.test.mjs'` 绿（这个仓库 PR 上没有 CI，按新规则由编排者兜底；执行方跑新测试和 `no-project-leak.test.mjs` 即可）；改到的 `SKILL.md` 主体仍 < 5000 字
+- [x] 全量 `node --test '*/scripts/*.test.mjs'` 绿（这个仓库 PR 上没有 CI，按新规则由编排者兜底；执行方跑新测试和 `no-project-leak.test.mjs` 即可）；pr-review 的 `SKILL.md` 主体 < 5000 字；implement 的改前已是 9019 字、本次后 9589 字，不在这里缩，交给 #137（人定于 review 第 1 轮 S1）
 - [x] review 第 1 轮 C1（2026-11-13）：pr-review 前提里 CI 红了的处理写成显式调用：「用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」」，不只写「照 implement 的「等 CI」处理」；规则原文（writing-for-agents）：要 agent 当场用上另一个 skill，写「用 Skill 工具调 <插件>:<名字>」，只要其中一节就加上节名；pr-review 正文仍 < 5000 字
+- [ ] review 第 1 轮 S2（2026-11-13）：pr-review 的 `SKILL.md` 里，凡是为守 5000 字而删改、跟测试分层无关的句子，恢复成改动前（main 上）的原文，包括「人触发的轮次也计入」「上限只约束自动起，不约束人」「（有用例没过）」「一律单独提交」，以及修 C1 时压掉的「进 review 前」「照它处理」等措辞；本工单新加的 CI 相关句子保留。人的原话：「先都不压」。恢复后正文会超过 5000 字：把守 pr-review 字数的测试从「≤ 5000」改成「不超过恢复后的字数」（棘轮，注明收回 5000 由 #137 做），其余测试保持绿
 
 ## 选中的存量回归
 
