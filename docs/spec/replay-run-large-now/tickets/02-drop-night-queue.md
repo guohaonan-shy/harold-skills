@@ -21,13 +21,13 @@ idea-loop 的规则回放（`evals/retro/` 下的 runner）现在有一条夜间
 
 ## 验收标准
 
-- [ ] 端到端（假 `claude`）：`--run-large` 跑大用例写一条 review loop 条目，条目文字不含「夜间」「队列」；`--queue`、`--enqueue`、`--notify` 都报未知参数、退出码 2
-- [ ] 端到端：不带 `--run-large` 的大用例退出码 3，提示里有 `--run-large --pr`
-- [ ] `retro-install.mjs` 的测试：只装 runner、打印允许规则，输出里没有计划任务 prompt
-- [ ] 文档测试：implement 的「没活了就停下」写了报三样（个数、3×45 分钟、1.05–3.50 美元）、不等点头、后台跑 `--run-large`、照 `replay-result.md` 处理；issue-session 没有「规则回放的结果」；setup 写了删计划任务 `idea-loop-retro-replay` 和队列目录
-- [ ] 全仓库除 `docs/adr/`、`docs/raw/`、`docs/records/`、`docs/spec/` 外搜不到 `--enqueue`、`replay-queue`（setup 删除那句除外）、`--queue`、`回放结果`、`夜间队列`
-- [ ] issue-session、setup 的 SKILL.md 主体 < 5000 字；implement 的 SKILL.md 主体不比改前长
-- [ ] 全量测试通过（命令见 REVIEW.md）
+- [x] 端到端（假 `claude`）：`--run-large` 跑大用例写一条 review loop 条目，条目文字不含「夜间」「队列」；`--queue`、`--enqueue`、`--notify` 都报未知参数、退出码 2
+- [x] 端到端：不带 `--run-large` 的大用例退出码 3，提示里有 `--run-large --pr`
+- [x] `retro-install.mjs` 的测试：只装 runner、打印允许规则，输出里没有计划任务 prompt
+- [x] 文档测试：implement 的「没活了就停下」写了报三样（个数、3×45 分钟、1.05–3.50 美元）、不等点头、后台跑 `--run-large`、照 `replay-result.md` 处理；issue-session 没有「规则回放的结果」；setup 写了删计划任务 `idea-loop-retro-replay` 和队列目录
+- [x] 全仓库除 `docs/adr/`、`docs/raw/`、`docs/records/`、`docs/spec/` 外搜不到 `--enqueue`、`replay-queue`（setup 删除那句除外）、`--queue`、`回放结果`、`夜间队列`
+- [x] issue-session、setup 的 SKILL.md 主体 < 5000 字；implement 的 SKILL.md 主体不比改前长
+- [x] 全量测试通过（命令见 REVIEW.md）
 
 ## 选中的存量回归
 

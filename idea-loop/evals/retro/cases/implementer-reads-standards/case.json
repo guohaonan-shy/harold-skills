@@ -6,5 +6,5 @@
   "question": "执行方没被工单点名，也照 CODING_STANDARDS.md 的链接读了 writing-for-agents 吗？",
   "quote": "实现者照不到的规范，要等 review 才被指出来，多一轮返工。",
   "size": "large",
-  "size_basis": "要起插件 agent（idea-loop:implementer 子代理），按「碰任何一样是大」算大，只进夜间队列，不在实现时当场跑"
+  "size_basis": "要起插件 agent（idea-loop:implementer 子代理），按「碰任何一样是大」算大，由编排者在 PR 开出后当场跑，不在实现时跑"
 }

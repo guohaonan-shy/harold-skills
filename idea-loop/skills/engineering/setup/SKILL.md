@@ -1,6 +1,6 @@
 ---
 name: setup
-description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装夜间规则回放的 runner 和计划任务、每周 dreaming 和每周分拣的定时任务。每个仓库跑一次，项目配置变了再跑。
+description: 把一个目标仓库配置成 idea-loop 能用的样子：根目录的项目规则文件、issue 分类、docs/ 骨架、GitHub label；顺带装规则回放的 runner、每周 dreaming 和每周分拣的定时任务。每个仓库跑一次，项目配置变了再跑。
 disable-model-invocation: true
 ---
 
@@ -60,11 +60,11 @@ idea-loop 从这几处读项目配置：
 
 完成条件：这几份文件都在，模板里的小节一个不缺；`git diff` 给人看过；GitHub 项目的 `issues.mjs labels docs` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好、状态表里每个状态名都是团队里真有的。
 
-## 夜间规则回放
+## 规则回放 runner
 
-改规则的 PR 里有大的回放用例时，要装夜间回放的 runner 和计划任务，步骤读 [references/nightly-replay.md](references/nightly-replay.md)。
+改规则的 PR 要跑回放用例时，装 runner，步骤读 [references/replay-runner.md](references/replay-runner.md)。
 
-完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；夜间回放的计划任务已建（『定时任务』里能列出）；允许规则已打印给人。
+完成条件：`~/.idea-loop/bin/retro-replay.mjs` 在；旧的 `idea-loop-retro-replay` 计划任务和旧的队列目录都没了；允许规则已打印给人。
 
 ## 每周对账
 
@@ -89,7 +89,7 @@ idea-loop 从这几处读项目配置：
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
 - 预检缺的必需项，各附修法命令。
 - 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
-- 夜间回放：runner 装在哪、计划任务建没建（taskId 与时间）、**要人自己加的允许规则**（原样一行）。没加这条规则，夜里的任务会被拦下，队列里的回放不会跑。
+- 规则回放：runner 装在哪、旧计划任务和队列目录删没删、**要人自己加的允许规则**（原样一行）。没加这条规则，无人值守的回放会被拦下。
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 调度：怎么起、建没建（按 `references/dispatch.md`）。

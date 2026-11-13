@@ -9,7 +9,7 @@
 
 ## 怎么跑（只能当场跑）
 
-用例的提交 `b9602e50` 在 Toeflair 仓库（GitHub `guohaonan-shy/Tofelair`），不在本仓库，夜间队列按 PR 所在 worktree 取仓库，取不到它。只能用 `--repo` 指到 Toeflair 的本地 checkout：
+用例的提交 `b9602e50` 在 Toeflair 仓库（GitHub `guohaonan-shy/Tofelair`），不在本仓库，`--run-large` 按 `--worktree` 所在仓库取提交，取不到它。只能用 `--repo` 指到 Toeflair 的本地 checkout：
 
 ```
 node ~/.idea-loop/bin/retro-replay.mjs --case draft-spec-orphan-capability --repo <Toeflair 本地 checkout> --worktree <本 worktree>

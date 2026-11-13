@@ -89,12 +89,12 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
 1. 把每个仓库的分支推上去（PR 在 spec 提交后就开了，主 PR 的号取 `prs.md`）。
-   - **有 `回放在队列里`**（落地的交回里 `verified` 写了）：把这些用例放进夜间队列：`node ~/.idea-loop/bin/retro-replay.mjs --enqueue --slug <owner/repo> --pr <PR 号> --worktree <集成 worktree 绝对路径> --cases <用例,用例> --session <本会话 id>`（本会话 id 用 `get_session`（`self`）取，是 `local_…` 那一串；同一个 PR 再加用例就再跑一次，会并进它的文件）。夜里的任务跑完，会把结果用会话间消息发回这个会话，没带 `--session` 就只有 macOS 通知。Review 汇报里写明哪些用例在队列、几点以后有结果。
+   - **有 `大用例待跑`**（落地的交回里 `verified` 写了）：在会话里先告诉人几个用例、每个最长约 3×45 分钟、每个约 1.05–3.50 美元（起 agent 的更高）乘以个数，不等人点头，用 Bash 的 `run_in_background: true` 起 `node ~/.idea-loop/bin/retro-replay.mjs --cases <用例,用例> --run-large --pr <PR 号> --worktree <集成 worktree 绝对路径>`（不设 timeout），等它退出，不轮询；照 [references/replay-result.md](references/replay-result.md) 处理结果。
 2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。
 4. **先看有没有要人定的事**：pending 不空（有等决定的事）。人验素材不算：它们照第 2 步列进「要你看的」（不勾），实现中途不停，最后收进 PR 描述的「要你做的事」，人在 PR 上一起看。
    - **有**：照 `idea-loop:pr` 的「在会话里给人看」按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。停下等人，见下面「人回复后」。
-   - **都没有**：不停，不等回复。第 2 步写进文件的条目就是留痕：已按规则处理照样列（人想推翻哪条，之后随时说，照「人回复后」的推翻处理），「要你看的」照常列（有人验素材的不勾，写明「留到 PR 描述的「要你做的事」看」；没有的不写这一节），条目末尾直接记一节「做了什么」（逐点：这次落地了什么、按规则处理了什么，带提交链接），不写「你的批示」。会话里只说一句落地了几张、已按规则处理几件，不发推送通知，然后往下走下面「全部落地」那一步（有排队中的回放时，那一步自己会让 PR 留在 draft）。依据：`idea-loop:decision-rules` 的「护栏」里没有「放行一份无事的汇报」，要人定的只有决定题；人验素材仍由人判，只是挪到 PR 描述里判（人定于 2026-10-30：「人验素材收进最终审核报告，实现中途不停」）；`review-loop.mjs check` 对没有「要你决定」这一节的条目，记了「做了什么」就算处理完。
+   - **都没有**：不停，不等回复。第 2 步写进文件的条目就是留痕：已按规则处理照样列（人想推翻哪条，之后随时说，照「人回复后」的推翻处理），「要你看的」照常列（有人验素材的不勾，写明「留到 PR 描述的「要你做的事」看」；没有的不写这一节），条目末尾直接记一节「做了什么」（逐点：这次落地了什么、按规则处理了什么，带提交链接），不写「你的批示」。会话里只说一句落地了几张、已按规则处理几件，不发推送通知，然后往下走下面「全部落地」那一步。依据：`idea-loop:decision-rules` 的「护栏」里没有「放行一份无事的汇报」，要人定的只有决定题；人验素材仍由人判，只是挪到 PR 描述里判（人定于 2026-10-30：「人验素材收进最终审核报告，实现中途不停」）；`review-loop.mjs check` 对没有「要你决定」这一节的条目，记了「做了什么」就算处理完。
 
 **人回复后**：原话逐字记进那个条目的「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
 
@@ -113,7 +113,7 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有排队中的回放**（`~/.idea-loop/replay-queue/` 里没有这个 PR 的文件 `<owner>__<repo>-<PR 号>.json`；有就是夜里的结果还没出，PR 留在 draft，告诉人等结果，不进 review；结果发回来时，见 `idea-loop:issue-session` 的「规则回放的结果」）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
 
 ## 多个仓库
 

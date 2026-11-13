@@ -120,12 +120,11 @@ test('issue-session：没有实现子会话、简报、两种合并去向、集�
   assert.doesNotMatch(md, /根没有自己的 spec/);
 });
 
-test('issue-session：停点规则原样保留，规则回放结果发进本会话', () => {
+test('issue-session：停点规则原样保留，不再收夜里发来的规则回放消息', () => {
   const md = skill('issue-session');
   assert.ok(md.includes('要人拍板的就停下等人'));
   assert.ok(md.includes('人说合并时由 pr-review'));
-  assert.ok(md.includes('**规则回放的结果**'));
-  assert.match(md, /结果发进这个会话/);
+  assert.ok(!md.includes('规则回放的结果'));
 });
 
 test('pr-review 合并说明：合并统一在 issue 会话里做，没有实现子会话和通知根的会话', () => {

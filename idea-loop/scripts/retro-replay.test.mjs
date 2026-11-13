@@ -256,25 +256,26 @@ test('e2e: the worker sees the project as of the case commit and what it wrote i
   assert.match(readFileSync(join(dir, 'after', 'artifact.md'), 'utf8'), /docs\/out\.md/);
 });
 
-test('e2e: a small case whose run starts an agent is stopped, relabelled large, and sent to the nightly queue', () => {
+test('e2e: a small case whose run starts an agent is stopped, relabelled large, and left to --run-large', () => {
   const env = setup({ before: 'agent', after: 'reply: FIXED' });
   const started = Date.now();
   const r = run(env);
   assert.equal(r.status, 3, r.stdout + r.stderr);
   assert.ok(Date.now() - started < 30_000, 'the run was killed, not waited out');
-  assert.match(r.stdout, /要进夜间队列/);
+  assert.match(r.stdout, /编排者在 PR 开出后用 --run-large --pr/);
+  assert.doesNotMatch(r.stdout, /夜间|队列/);
   const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
   assert.equal(c.size, 'large');
   assert.match(c.size_basis, /起了 agent/);
   assert.ok(!r.calls.includes('judge'), 'no judge for an aborted replay');
 });
 
-test('e2e: a case already marked large is not run at all, it goes to the nightly queue', () => {
+test('e2e: a case already marked large is not run at all, it is left to --run-large', () => {
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED', size: 'large' });
   const r = run(env);
   assert.equal(r.status, 3);
   assert.deepEqual(r.calls, [], 'no claude session was started');
-  assert.match(r.stdout, /要进夜间队列/);
+  assert.match(r.stdout, /编排者在 PR 开出后用 --run-large --pr/);
   assert.ok(!existsSync(join(env.root, 'out')), 'nothing was set up either');
 });
 
