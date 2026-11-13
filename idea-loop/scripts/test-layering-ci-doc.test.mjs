@@ -100,6 +100,8 @@ test('pr-review requires the head\'s CI to be done and green (or no checks), bef
   assert.match(pre, /CI/);
   assert.match(pre, /全绿（或没有检查）/);
   assert.match(pre, /gh pr checks/);
+  // 红了要显式调 implement 的「等 CI」，不只写「照 … 处理」
+  assert.match(pre, /用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」/);
   const next = section(prReview, '一轮之后往哪走');
   assert.match(next, /修复[^。\n]*先等 CI[^。\n]*起下一轮/);
 });
