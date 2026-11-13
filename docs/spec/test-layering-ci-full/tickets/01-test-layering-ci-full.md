@@ -31,6 +31,7 @@ idea-loop 插件的流程规则改成测试按阶段分层，一个 PR 的全量
 - [x] 插件 `README.md` 同步，不再说工单完成要 full suite 绿
 - [x] idea-loop 版本是 `0.1.13`
 - [x] 全量 `node --test '*/scripts/*.test.mjs'` 绿（这个仓库 PR 上没有 CI，按新规则由编排者兜底；执行方跑新测试和 `no-project-leak.test.mjs` 即可）；改到的 `SKILL.md` 主体仍 < 5000 字
+- [ ] review 第 1 轮 C1（2026-11-13）：pr-review 前提里 CI 红了的处理写成显式调用：「用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」」，不只写「照 implement 的「等 CI」处理」；规则原文（writing-for-agents）：要 agent 当场用上另一个 skill，写「用 Skill 工具调 <插件>:<名字>」，只要其中一节就加上节名；pr-review 正文仍 < 5000 字
 
 ## 选中的存量回归
 
