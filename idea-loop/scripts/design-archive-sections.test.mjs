@@ -902,6 +902,52 @@ test('cli cover: a state that declares sections exits 2 and points to measure / 
   assert.match(r.stderr, /shoot/);
 });
 
+test('cli cover: with --delta a state that is only in delta/ is read with its user edges; without --delta it exits 2 as before', () => {
+  const files = compliantFiles();
+  const src = files[`${BASE}/pages/cookbook/cookbook--list.md`];
+  // a state that exists only in the requirement's delta/: the list page's state under a new id, with its own edge
+  files['docs/design/tmp/demo-spec/delta/pages/cookbook/cookbook--list-long.md'] = src
+    .replace('summary: 菜谱主页的默认一屏', 'summary: 菜谱主页加载完的长页面')
+    .replace('id: search\n', 'id: share-all\n')
+    .replace('# cookbook--list\n', '# cookbook--list-long\n');
+  const root = writeRepo(files);
+  const out = join(tmp(), 'shots');
+  const r = run('cover', root, 'cookbook--list-long', '--out', out, '--delta', 'demo-spec');
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"id":"share-all"/, 'the user edge of the delta-only state');
+  assert.match(r.stdout, /"id":"open-pantry"/);
+  assert.doesNotMatch(r.stdout, /"id":"search"/);
+  const without = run('cover', root, 'cookbook--list-long', '--out', out);
+  assert.equal(without.status, 2);
+  assert.match(without.stderr, /没有状态/);
+});
+
+test('cli cover: with --delta a user edge added in delta/ to a state that is in prod/ is read; delta/ wins over prod/, and a delta that does not exist exits 2', () => {
+  const files = compliantFiles();
+  const src = files[`${BASE}/pages/cookbook/cookbook--list.md`];
+  files['docs/design/tmp/demo-spec/delta/pages/cookbook/cookbook--list.md'] = src.replace(
+    'async:',
+    `  - id: export
+    to: "[[pantry--overview]]"
+    kind: user
+    component: "[[NavBar]]"
+    locate: { role: button, name: 导出菜谱 }
+    action: click
+async:`,
+  );
+  const root = writeRepo(files);
+  const out = join(tmp(), 'shots');
+  assert.doesNotMatch(run('cover', root, 'cookbook--list', '--out', out).stdout, /"id":"export"/, 'prod/ alone does not have the new edge');
+  const r = run('cover', root, 'cookbook--list', '--out', out, '--delta', 'demo-spec');
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /"id":"export"/);
+  assert.match(r.stdout, /"id":"search"/);
+  const missing = run('cover', root, 'cookbook--list', '--out', out, '--delta', 'no-such-spec');
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /设计差异/);
+});
+
 test('cli cover: usage errors exit 2 and say why', () => {
   const root = writeRepo(compliantFiles());
   const out = join(tmp(), 'shots');

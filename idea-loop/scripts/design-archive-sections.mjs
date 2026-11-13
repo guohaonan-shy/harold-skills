@@ -36,6 +36,7 @@
  *              rest from the top down into screens and shoots each with the code `shoot` runs, `<state>@<first edge of the
  *              screen>.png`. It returns `shot` (edge id → picture) for each edge, `unlocated` (not found, or not found once)
  *              and `exit: 1` when there are unlocated ones. Everything inside the main viewport: nothing shot, `shot` empty.
+ *              `--delta <spec-slug>` reads `docs/design/tmp/<slug>/delta/` over `prod/`, as `measure` does (delta/ wins).
  *              Like `screen`, the page is not reloaded and its time not moved.
  *
  * The browser side is covered by design-archive-sections-browser.test.mjs (skipped when no Chromium is
@@ -49,7 +50,7 @@
  *   node design-archive-sections.mjs attribute <measurement.json>
  *   node design-archive-sections.mjs shoot <attribution.json> --out <dir> [--section <id,id>] [--include '<json locator>']
  *   node design-archive-sections.mjs screen <repo-root> <state> --out <dir> [settings]
- *   node design-archive-sections.mjs cover <repo-root> <state> --out <dir> [settings]
+ *   node design-archive-sections.mjs cover <repo-root> <state> [--delta <spec-slug>] --out <dir> [settings]
  *   settings: --viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce
  *             (default: the frontmatter of docs/design/prod/index.md)
  *
@@ -1402,7 +1403,7 @@ export const COMMAND_FLAGS = {
   attribute: [],
   shoot: ['--out', '--section', '--include'],
   screen: ['--out', '--viewport', '--theme', '--locale', '--motion'],
-  cover: ['--out', '--viewport', '--theme', '--locale', '--motion'],
+  cover: ['--delta', '--out', '--viewport', '--theme', '--locale', '--motion'],
   pinned: ['--out', '--viewport', '--theme', '--locale', '--motion'],
 };
 
@@ -1414,13 +1415,13 @@ const USAGE = `用法：
   node design-archive-sections.mjs attribute <测量结果.json>
   node design-archive-sections.mjs shoot <归属结果.json> --out <目录> [--section <段 id,段 id>] [--include '<JSON 定位>']
   node design-archive-sections.mjs screen <仓库根> <状态 id> --out <目录> [设置]
-  node design-archive-sections.mjs cover <仓库根> <状态 id> --out <目录> [设置]
+  node design-archive-sections.mjs cover <仓库根> <状态 id> [--delta <spec-slug>] --out <目录> [设置]
   node design-archive-sections.mjs pinned <仓库根> <状态 id> --out <目录> [设置]
 设置：--viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce（默认取 docs/design/prod/index.md 的 frontmatter）
 time / step / measure / shoot / screen / cover / pinned 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对、重叠，或检出了滚动驱动的段而分段声明里没写 scrollDriven 时退出码 1。
 time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用；
 screen：不分段的单屏状态，先滚到页顶再截主视口，不用先 measure / attribute；
-cover：不分段、比主视口高的状态，按屏补拍首屏以下会连出边的组件，不重载页面、不拨页面时间；返回里 shot 是每条边该写的图，unlocated 非空时 exit 为 1；声明了 sections 的状态退出码 2；
+cover：不分段、比主视口高的状态，按屏补拍首屏以下会连出边的组件，不重载页面、不拨页面时间；状态或它的边还只在 delta/ 里（合并前归档、初扫的草稿）时带 --delta（写法同 measure）；返回里 shot 是每条边该写的图，unlocated 非空时 exit 为 1；声明了 sections 的状态退出码 2；
 pinned：滚动驱动的段里第 2 步起的状态，到了这一步之后不滚动、不拨时间，直接截当前视口，图叫 <状态 id>.png。`;
 
 class UsageError extends Error {}
@@ -1662,7 +1663,7 @@ function coverCommand(positional, flags) {
   if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
   let archive;
   try {
-    archive = loadArchive(root);
+    archive = loadArchive(root, { delta: flags.delta ?? null });
   } catch (e) {
     throw new UsageError(e.message);
   }

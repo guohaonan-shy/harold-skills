@@ -13,10 +13,10 @@
 
 ## 验收标准
 
-- [ ] 单元（CLI）先红后绿：一个只在 `delta/` 里的不分段状态，`cover <仓库根> <状态 id> --delta <slug> --out <目录>` 退出码 0，打印的代码里带着这个状态的 `user` 边；不带 `--delta` 时照旧退出码 2。
-- [ ] 单元（CLI）：状态在 `prod/`、`delta/` 里给它加了一条新 `user` 边，带 `--delta` 时打印的代码里有这条新边。
-- [ ] 拍图手册、合并前归档、初扫三处不再写「`cover` 读不到 `delta/`」「不补拍」，换成带 `--delta` 的命令行；现有 doc 测试「每行命令只用自己的选项」通过（`cover` 的选项表里有 `--delta`）。
-- [ ] sections 单元测试、doc 测试、no-project-leak 测试全绿；`measure` 的 `--delta` 行为不变。
+- [x] 单元（CLI）先红后绿：一个只在 `delta/` 里的不分段状态，`cover <仓库根> <状态 id> --delta <slug> --out <目录>` 退出码 0，打印的代码里带着这个状态的 `user` 边；不带 `--delta` 时照旧退出码 2。
+- [x] 单元（CLI）：状态在 `prod/`、`delta/` 里给它加了一条新 `user` 边，带 `--delta` 时打印的代码里有这条新边。
+- [x] 拍图手册、合并前归档、初扫三处不再写「`cover` 读不到 `delta/`」「不补拍」，换成带 `--delta` 的命令行；现有 doc 测试「每行命令只用自己的选项」通过（`cover` 的选项表里有 `--delta`）。
+- [x] sections 单元测试、doc 测试、no-project-leak 测试全绿；`measure` 的 `--delta` 行为不变。
 
 ## 选中的存量回归
 

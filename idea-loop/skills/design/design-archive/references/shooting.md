@@ -14,7 +14,7 @@
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" time <仓库根> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" step <毫秒数>
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录> [设置]
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <仓库根> <状态 id> --out <目录> [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <仓库根> <状态 id> [--delta <spec-slug>] --out <目录> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> <入口状态 id> [--delta <spec-slug>] [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> --state <入口状态 id> --page <页面> --sections-file <分段列表.json> [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" attribute <测量结果.json>
@@ -55,7 +55,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
    - `unlocated` 非空（`exit` 为 1）：多半是边的 `locate` 写错了，或组件改名了、页面上同名的有好几个。在页面的可访问性快照里找到现在的名字，改边的 `locate`，再跑 `cover`。
 5. 按返回的 `shot`（`{ 边 id: 图名 }`）给每条边写上 `shot`；`shot` 里没有的边组件在主视口图里，不写。图放进 `assets/`。完成：`shot` 里的每条边都写好了，`design-archive-check.mjs` 退出码 0（规则 8，命令见 [check.md](check.md)）。
 
-`cover` 只读 `prod/` 里的状态与边，没有 `--delta`：状态或它的边还只在 `delta/` 里（合并前归档、初扫的草稿）时，它读不到新的内容，状态不在 `prod/` 里则退出码 2。这时不补拍，在状态文件「这一屏」里用文字写明首屏以下会连出边的组件，边先不写 `shot`，汇报里记「未做：`cover` 读不到 `delta/`」；状态进了 `prod/` 之后，第一次对账补拍。
+状态或它的边还只在 `delta/` 里（合并前归档、初扫的草稿）时，`cover` 带 `--delta <spec-slug>`：`prod/` 叠上 `docs/design/tmp/<spec-slug>/delta/` 一起读，`delta/` 里的状态和边优先，写法同 `measure` 的 `--delta`。不带它只读 `prod/`，状态不在 `prod/` 里时退出码 2。
 
 ## 长页面的入口状态
 

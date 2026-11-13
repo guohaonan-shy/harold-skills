@@ -28,7 +28,7 @@
    - **初扫时档案里还没有这个状态**，`measure` 用 `--state <入口状态 id> --page <页面> --sections-file <分段.json>` 的形式，分段列表从命令行给。
    - **`prod/index.md` 还没定视口和主题**，`time`、`measure`、`screen`、`cover`、`pinned` 缺视口或主题又没给参数就退出码 2、不猜，所以 `--viewport` 与 `--theme` 要把提议表里的值传进去（空档案的默认格是 `--viewport 1440x900 --theme light`，换成你提议的；动效模式默认 `default`，要改再加 `--motion`）。
    - 图放进对象同目录的 `assets/`，例如单屏状态：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <worktree 根> <状态 id> --out <目录> --viewport 1440x900 --theme light`。
-   - **比主视口高、不分段的状态**（加载完的报告页）：`screen` 之后在同一屏上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <worktree 根> <状态 id> --out <目录> --viewport 1440x900 --theme light`，按返回的 `shot` 给每条边写 `shot`。`cover` 只读 `prod/`，初扫时状态还只在草稿里，读不到：不补拍，「这一屏」用文字写明首屏以下会连出边的组件，提议表里记「未做：`cover` 读不到草稿」，批了落进 `prod/` 之后第一次对账补拍。
+   - **比主视口高、不分段的状态**（加载完的报告页）：`screen` 之后在同一屏上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <worktree 根> <状态 id> --delta dreaming-<日期> --out <目录> --viewport 1440x900 --theme light`，按返回的 `shot` 给每条边写 `shot`。初扫时状态还只在草稿（`docs/design/tmp/dreaming-<日期>/delta/`）里，所以 `cover` 带 `--delta`。
    - 入口状态的「这一屏」按段排开（每段一个 `###` 小标题、这一段的图、一两句描述）。
    - 每个有动效的边或节点一张 GIF（`idea-loop:evidence` 的动图，没有用户感觉得到的动效就不录；动效太快截不住时放慢播放再录，并写明倍率）。完整矩阵（主题 × 视口 × 语言）默认不拍；人要才拍，放 `docs/design/tmp/dreaming-<日期>/matrix/`，不进 `delta/`，随目录清掉。截图放对象同目录的 `assets/`，状态文件「这一屏」里内嵌它，「应看到什么」写成几条可判定的话。
 8. **动效对象**：边引用的、能从代码里量出参数的具体动效，建 `motions/<名>.md`（参数、理由、减少动效下怎么退）；量不出来的、太细的，不在初扫里硬建，记进 `未扫`。**状态文件不写决定**；页面、组件的「决定」「设计法候选」两节没有内容各写一行「无」——初扫是从实现建的，没有当初的设计理由，**不编**，需求归档时再补。动效的参数是字面值时 `deviates` 照样必填：写「从实现量出，偏离站内 token 的原因没有记录」，不编原因。
