@@ -39,14 +39,14 @@ test('the reconcile mode of ui-reviewer carries the source wave and returns 档�
 });
 
 test('dreaming does not run the source wave itself: its mechanical-check step is the missed-archive check only', () => {
-  const flow = section(dreaming, '流程：两段，中间停在人身上');
+  const flow = section(dreaming, '流程：提议段，之后自动与问人分开走');
   const step2 = flow.split('\n').filter((l) => /^2\. /.test(l) || /^ {3}- /.test(l)).join('\n');
   assert.ok(step2.length > 0, 'could not find the mechanical-check step');
   assert.doesNotMatch(step2, /源码波/);
 });
 
 test('dreaming hands the source wave to the ui-reviewer row and keeps the whole-site initial scan', () => {
-  const flow = section(dreaming, '流程：两段，中间停在人身上');
+  const flow = section(dreaming, '流程：提议段，之后自动与问人分开走');
   const reviewerRow = flow.split('\n').find((l) => l.includes('idea-loop:ui-reviewer')) ?? '';
   assert.match(reviewerRow, /源码波/);
   assert.match(flow, /initial-scan\.md/);

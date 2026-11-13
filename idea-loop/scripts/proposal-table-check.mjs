@@ -347,7 +347,7 @@ export function renderReport(result, file) {
   if (!result.valid) {
     return [`proposal-table: 校验失败${file ? ` (${file})` : ''} —— 先补齐再交给人：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
   }
-  if (result.empty) return `proposal-table: 空表 ✓${file ? ` (${file})` : ''} —— 本周无事：只推一句话，不发 Artifact`;
+  if (result.empty) return `proposal-table: 空表 ✓${file ? ` (${file})` : ''} —— 本周无事：什么都不用做，也不推送`;
   const total = Object.values(result.counts).reduce((a, b) => a + b, 0);
   return `proposal-table: green ✓${file ? ` (${file})` : ''} —— ${total} 行：${Object.entries(result.counts).filter(([, n]) => n > 0).map(([t, n]) => `${t} ${n}`).join('、')}`;
 }

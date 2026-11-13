@@ -22,12 +22,12 @@
 
 ## 验收标准
 
-- [ ] dreaming 的 skill 和 references 里，没有一处还要求自动类的行等人批（逐处读改后的文字核对；`grep` 「人批」「逐行批」剩下的每一处都只关于问人那两类、或与 dreaming 无关）
-- [ ] skill 主体 < 5000 字（`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`），description 只做路由
-- [ ] 问人 / 自动的判据在文字里只指向 01 的脚本，没有第二份规则清单与脚本对不上
-- [ ] 自己合并的检查清单写的是「目标仓库 `REVIEW.md` 的验证命令」等通用说法，不出现任何项目的命令或名字；全量测试 `node --test '*/scripts/*.test.mjs'` 通过
-- [ ] 推送三种情况、回滚、中间物目录何时删，都在文字里写明
-- [ ] 根 `AGENTS.md` 与插件 README 的描述跟新流程一致（README 也写了 issue-triage 不再等人批）
+- [x] dreaming 的 skill 和 references 里，没有一处还要求自动类的行等人批（逐处读改后的文字核对；`grep` 「人批」「逐行批」剩下的每一处都只关于问人那两类、或与 dreaming 无关）
+- [x] skill 主体 < 5000 字（`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`），description 只做路由
+- [x] 问人 / 自动的判据在文字里只指向 01 的脚本，没有第二份规则清单与脚本对不上
+- [x] 自己合并的检查清单写的是「目标仓库 `REVIEW.md` 的验证命令」等通用说法，不出现任何项目的命令或名字；全量测试 `node --test '*/scripts/*.test.mjs'` 通过
+- [x] 推送三种情况、回滚、中间物目录何时删，都在文字里写明
+- [x] 根 `AGENTS.md` 与插件 README 的描述跟新流程一致（README 也写了 issue-triage 不再等人批）
 
 ## 选中的存量回归
 
