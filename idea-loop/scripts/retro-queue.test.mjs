@@ -63,6 +63,14 @@ test('every case is listed with the judge\'s answer on each side, the quote it f
   assert.match(text, /annotations\.md/, 'says where to overrule a judgement');
 });
 
+test('each case says who judged it: Codex, or Claude when no Codex was found', () => {
+  const viaCodex = buildReplayEntry({ round: 1, ...ENTRY_INPUT([{ ...pass('a'), judge: 'codex' }]) });
+  assert.match(viaCodex, /评委：Codex/);
+  const viaClaude = buildReplayEntry({ round: 1, ...ENTRY_INPUT([{ ...pass('a'), judge: 'claude' }]) });
+  assert.match(viaClaude, /评委：Claude/);
+  assert.doesNotMatch(buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) }), /评委：/, 'a result with no judge recorded says nothing about one');
+});
+
 test('a case that produced no result, or could not be run, is a result too: not passed, with the reason', () => {
   const none = { case: 'c', outcome: 'no-result', reason: '改后那一遍没有产出 result（超时）' };
   const bad = { case: 'e', outcome: 'bad-case', reason: '用例 e 不存在' };

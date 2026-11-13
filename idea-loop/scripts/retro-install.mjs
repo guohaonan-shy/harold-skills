@@ -8,7 +8,7 @@
  * What lands in <dest>:
  *   retro-replay.mjs      the entry. Its path is the one the permission rule uses.
  *   runtime/              a copy of the runner and what it imports, in the plugin's own layout
- *                         (evals/retro/*.mjs, scripts/claude-stream.mjs), so no import needs rewriting.
+ *                         (evals/retro/*.mjs, scripts/claude-stream.mjs, scripts/codex-companion.mjs), so no import needs rewriting.
  *
  * It prints the permission rule. It does not touch any settings file: the rule is the human's to add to the runtime's
  * permission settings. Running it again replaces the copy with the plugin's current one.
@@ -24,7 +24,7 @@ const PLUGIN_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ENTRY_NAME = 'retro-replay.mjs';
 const RUNTIME_FILES = [
   ['evals/retro', ['retro-replay.mjs', 'queue.mjs', 'replay.mjs', 'cases.mjs']],
-  ['scripts', ['claude-stream.mjs']],
+  ['scripts', ['claude-stream.mjs', 'codex-companion.mjs']],
 ];
 
 const ENTRY = `#!/usr/bin/env node

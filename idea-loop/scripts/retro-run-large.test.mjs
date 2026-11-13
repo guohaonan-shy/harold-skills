@@ -46,6 +46,17 @@ if (pd) {
 }
 `;
 
+// A fake Codex companion that answers like the fake judge (yes for a product containing FIXED): the judge of every replay here.
+const FAKE_CODEX = `const fs = require('node:fs');
+const args = process.argv.slice(2);
+const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
+fs.appendFileSync(process.env.FAKE_LOG, 'judge\\n');
+const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
+const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
+const ans = (s) => (s.includes('FIXED') ? '是' : '否');
+console.log(JSON.stringify({ A: { answer: ans(a), cite: 'fake cite A' }, B: { answer: ans(b), cite: 'fake cite B' } }));
+`;
+
 const smallCase = (over = {}) => ({
   commit: 'a1b2c3d',
   prompt: '/idea-loop:some-skill 把这件事摆给我',
@@ -86,15 +97,17 @@ function setup({ after = 'reply: FIXED', cases = { 'demo-case': {} } } = {}) {
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
   chmodSync(bin, 0o755);
+  const codex = join(root, 'fake-codex.cjs');
+  writeFileSync(codex, FAKE_CODEX);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
-  return { root, wt, bin, log, out: join(root, 'out') };
+  return { root, wt, bin, codex, log, out: join(root, 'out') };
 }
 
 function runner(env, args) {
   const r = spawnSync(process.execPath, [RUNNER, ...args], {
     encoding: 'utf8',
-    env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log },
+    env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, RETRO_CODEX_COMPANION: env.codex, FAKE_LOG: env.log },
     timeout: 120_000,
   });
   const calls = readFileSync(env.log, 'utf8').split('\n').filter(Boolean);
@@ -120,6 +133,7 @@ test('--run-large runs a large case in the daytime: three sessions, exit 0, a se
   const entry = readFileSync(reviewLoopPath(env.wt, 12), 'utf8');
   assert.match(entry, /big-case/);
   assert.match(entry, /当场跑完/);
+  assert.match(entry, /评委：Codex/, 'the entry says who judged');
   assert.doesNotMatch(entry, /夜间|队列/, 'the entry does not mention a night or a queue');
   assert.ok(r.stdout.includes(reviewLoopPath(env.wt, 12)), 'says which file the result went into');
   assert.doesNotMatch(r.stdout, /回放结果|推送/, 'the calling session reads the output itself: no result line, no push');

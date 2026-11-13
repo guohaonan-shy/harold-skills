@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { projectName } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, fileBody, parseOverrides, settleVerdicts,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -101,6 +101,23 @@ test('the judge prompt carries the question and both products, and does not say 
   assert.match(p, /出处/);
 });
 
+test('the whole judge prompt, products included, has no 改前 / 改后 / 新 / 旧 in it', () => {
+  const a = buildArtifact({ resultText: '最后一句', files: [{ path: 'docs/a.md', content: '正文' }] });
+  const b = buildArtifact({ resultText: '另一句', files: [] });
+  const p = buildJudgePrompt(smallCase(), a, b);
+  assert.doesNotMatch(p, /改前|改后|新|旧/);
+});
+
+test('products are lettered by a recorded order and the verdict is turned back into pre-change / post-change', () => {
+  const products = { before: 'BEFORE-BODY', after: 'AFTER-BODY' };
+  assert.deepEqual(productsInOrder(products, 'A'), { A: 'AFTER-BODY', B: 'BEFORE-BODY' });
+  assert.deepEqual(productsInOrder(products, 'B'), { A: 'BEFORE-BODY', B: 'AFTER-BODY' });
+  const verdict = { A: { answer: 'yes', cite: 'ca' }, B: { answer: 'no', cite: 'cb' } };
+  assert.deepEqual(verdictsBySide(verdict, 'A'), [{ side: 'before', answer: 'no', cite: 'cb' }, { side: 'after', answer: 'yes', cite: 'ca' }]);
+  assert.deepEqual(verdictsBySide(verdict, 'B'), [{ side: 'before', answer: 'yes', cite: 'ca' }, { side: 'after', answer: 'no', cite: 'cb' }]);
+  assert.equal(verdictsBySide(null, 'A'), null);
+});
+
 test('buildArtifact lists the final reply and each file the run left behind, and trims long ones', () => {
   const a = buildArtifact({ resultText: '最后一句', files: [{ path: 'docs/a.md', content: 'x'.repeat(50) }, { path: 'docs/b.md', content: 'y'.repeat(30_000) }] }, { perFile: 100 });
   assert.match(a, /最后一句/);
@@ -111,7 +128,7 @@ test('buildArtifact lists the final reply and each file the run left behind, and
 });
 
 test('buildArtifact says so when the run left no files', () => {
-  assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有新增或改动的文件/);
+  assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有写下或改动的文件/);
 });
 
 test('the cost estimate is a range, scales with cases, and is stated in dollars', () => {
@@ -159,7 +176,7 @@ const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd() }) + '\\n');
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
 if (pd) {
@@ -183,6 +200,21 @@ if (pd) {
 }
 `;
 
+// A fake Codex companion: `node <it> task --model … --effort … --prompt-file F --cwd D`. It answers like the fake judge does
+// (yes for a product containing FIXED), with some prose around the JSON the way a real one talks; FAKE_CODEX_FAIL makes it exit 2.
+const FAKE_CODEX = `const fs = require('node:fs');
+const args = process.argv.slice(2);
+const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
+fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd() }) + '\\n');
+if (process.env.FAKE_CODEX_FAIL) process.exit(2);
+const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
+const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
+const ans = (s) => (s.includes('FIXED') ? '是' : '否');
+console.log('我读完了两份产物。');
+console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
+`;
+
 function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
@@ -193,9 +225,10 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   g('add', '-A');
   g('commit', '-q', '-m', 'decision state');
   const commit = g('rev-parse', 'HEAD').stdout.trim();
+  // the plugins, each in a dir called idea-loop (as the real one is) under a side's own dir
   for (const [name, mark] of [['before', before], ['after', after]]) {
-    mkdirSync(join(root, name), { recursive: true });
-    writeFileSync(join(root, name, 'MARK'), mark);
+    mkdirSync(join(root, name, 'idea-loop'), { recursive: true });
+    writeFileSync(join(root, name, 'idea-loop', 'MARK'), mark);
   }
   const casesRoot = join(root, 'evals');
   const caseDir = join(casesRoot, 'cases', caseName);
@@ -205,22 +238,37 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
   chmodSync(bin, 0o755);
+  const codex = join(root, 'fake-codex.cjs');
+  writeFileSync(codex, FAKE_CODEX);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
   // where the runs work: a temp dir whose own path says nothing about a test
   const tmp = mkdtempSync(join(tmpdir(), 'sbx-'));
-  return { root, repo, casesRoot, caseDir, bin, log, tmp };
+  return { root, repo, casesRoot, caseDir, bin, codex, log, tmp };
 }
 
 /** What the fake `claude` was started with, one entry per session. */
 const sessions = (env) => (existsSync(`${env.log}.json`) ? readFileSync(`${env.log}.json`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 
-function run(env, extra = []) {
+/**
+ * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the companion path does not exist), 'fails' (it exits 2).
+ * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
+ */
+function run(env, extra = [], { codex = 'fake', order } = {}) {
   const r = spawnSync(process.execPath, [
     RUNNER, '--case', 'demo-case', '--repo', env.repo, '--cases-root', env.casesRoot,
-    '--before-plugin', join(env.root, 'before'), '--after-plugin', join(env.root, 'after'),
+    '--before-plugin', join(env.root, 'before', 'idea-loop'), '--after-plugin', join(env.root, 'after', 'idea-loop'),
     '--out', join(env.root, 'out'), '--timeout-min', '1', ...extra,
-  ], { encoding: 'utf8', env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp }, timeout: 60_000 });
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
+      RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
+      ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
+      ...(order ? { RETRO_JUDGE_ORDER: order } : { RETRO_JUDGE_ORDER: '' }),
+    },
+    timeout: 60_000,
+  });
   const calls = readFileSync(env.log, 'utf8').split('\n').filter(Boolean);
   return { ...r, calls };
 }
@@ -234,9 +282,10 @@ test('e2e: pre-change run misses it, post-change run has it -> pass, exit 0, thr
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
   const r = run(env);
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker']);
+  assert.deepEqual(r.calls.sort(), ['codex', 'worker', 'worker'], 'the judge is Codex: no third claude session');
   const res = resultJson(env, r.stdout);
   assert.equal(res.outcome, 'pass');
+  assert.equal(res.judge, 'codex');
   assert.deepEqual(res.verdicts.map((v) => v.answer), ['no', 'yes']);
   assert.ok(res.cost > 0, 'cost is read from the event streams');
   assert.match(r.stdout, /预计花费/, 'says what it expects to spend before it starts');
@@ -287,8 +336,129 @@ test('e2e: both runs get exactly the case prompt, in a work dir that does not sa
 test('e2e: the judge is told where the thing is handed to the human', () => {
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
   run(env);
-  const judge = sessions(env).find((x) => x.kind === 'judge');
+  const judge = sessions(env).find((x) => x.kind === 'codex');
   assert.ok(judge.prompt.includes(smallCase().stop_at));
+  const viaClaude = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  run(viaClaude, [], { codex: 'missing' });
+  assert.ok(sessions(viaClaude).find((x) => x.kind === 'judge').prompt.includes(smallCase().stop_at));
+});
+
+test('e2e: the judge is the fake Codex: its answer decides, the result and the report say judge codex, no claude judging session, nothing writable', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.judge, 'codex');
+  assert.deepEqual(res.verdicts.map((v) => [v.side, v.answer, v.cite.startsWith('codex cite')]), [['before', 'no', true], ['after', 'yes', true]]);
+  assert.match(r.stdout, /评委：Codex/);
+  assert.match(r.stdout, /不占 Claude 额度/);
+  assert.ok(!sessions(env).some((x) => x.kind === 'judge'), 'no claude judging session');
+  const [codex] = sessions(env).filter((x) => x.kind === 'codex');
+  assert.equal(codex.args[0], 'task');
+  assert.ok(codex.args.includes('--prompt-file'));
+  assert.ok(!codex.args.includes('--write'), 'Codex gets no write permission');
+  // the answer of a Codex that finds the post-change product lacking is a fail, the other way round a case that missed the problem
+  const failing = setup({ before: 'reply: plain', after: 'reply: plain' });
+  const f = run(failing);
+  assert.equal(f.status, 1);
+  assert.equal(resultJson(failing, f.stdout).outcome, 'fail');
+});
+
+test('e2e: whichever letter the post-change product gets, the answers are turned back into the right side', () => {
+  for (const [order, afterIs] of [['after-first', 'A'], ['before-first', 'B']]) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env, [], { order });
+    assert.equal(r.status, 0, `${order}: ${r.stdout}${r.stderr}`);
+    const res = resultJson(env, r.stdout);
+    assert.equal(res.afterIs, afterIs, 'the order is recorded');
+    assert.deepEqual(res.judged, { before: 'no', after: 'yes' });
+    assert.equal(res.outcome, 'pass');
+    const prompt = sessions(env).find((x) => x.kind === 'codex').prompt;
+    const sectionA = /产物 A[\s\S]*?(?=产物 B)/.exec(prompt)[0];
+    assert.equal(sectionA.includes('FIXED'), afterIs === 'A', `the post-change product is ${afterIs} in the prompt`);
+    // the other way: the problem shows in the post-change product only
+    const bad = setup({ before: 'reply: FIXED', after: 'reply: plain' });
+    const b = run(bad, [], { order });
+    assert.deepEqual(resultJson(bad, b.stdout).judged, { before: 'yes', after: 'no' });
+    assert.equal(resultJson(bad, b.stdout).outcome, 'case-missed');
+  }
+});
+
+test('e2e: with no order given, the order is not always the same one', () => {
+  const seen = new Set();
+  for (let i = 0; i < 12 && seen.size < 2; i++) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env);
+    const res = resultJson(env, r.stdout);
+    assert.equal(res.outcome, 'pass');
+    seen.add(res.afterIs);
+  }
+  assert.deepEqual([...seen].sort(), ['A', 'B'], 'twelve replays in a row with the same order would happen once in two thousand');
+});
+
+test('e2e: no Codex: says so before any session starts, judges with the fake claude, the result says judge claude', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env, [], { codex: 'missing' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const said = r.stdout.indexOf('没找到 Codex，评委用 Claude');
+  assert.ok(said >= 0, r.stdout);
+  assert.ok(said < r.stdout.indexOf('— before'), 'said before the first session starts');
+  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker']);
+  assert.equal(resultJson(env, r.stdout).judge, 'claude');
+  assert.match(r.stdout, /评委：Claude/);
+});
+
+test('e2e: a Codex that gives nothing at judging time hands the judging to claude, said out loud, recorded as judge claude', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env, [], { codex: 'fails' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /Codex 没给出判定（退出码 2），评委退回 Claude/);
+  assert.deepEqual(r.calls.sort(), ['codex', 'judge', 'worker', 'worker']);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.judge, 'claude');
+  assert.equal(res.outcome, 'pass');
+});
+
+test('e2e: the judging prompt, whichever judge reads it, has no 改前 / 改后 / 新 / 旧 and no before / after', () => {
+  for (const codex of ['fake', 'missing']) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    run(env, [], { codex });
+    const p = sessions(env).find((x) => x.kind === (codex === 'fake' ? 'codex' : 'judge')).prompt;
+    assert.match(p, /出处/);
+    assert.doesNotMatch(p, /改前|改后|新|旧|before|after/i);
+  }
+});
+
+test('e2e: the estimate before the run says the judge runs on Codex and does not use Claude quota', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.match(r.stdout, /预计花费约 \$\d+\.\d\d–\$\d+\.\d\d.*评委走 Codex/);
+  assert.match(r.stdout, /评委：Codex/);
+});
+
+test('e2e: both plugins are copied to <tmp>/<random>/<plugin dir name> for --plugin-dir, a path without retro, replay, before, after or eval, and removed afterwards', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [w1, w2] = sessions(env).filter((x) => x.kind === 'worker');
+  for (const w of [w1, w2]) {
+    assert.equal(basename(w.pluginDir), 'idea-loop', 'the plugin keeps its own dir name');
+    assert.ok(w.pluginDir.startsWith(env.tmp), 'under the temp dir');
+    assert.doesNotMatch(w.pluginDir, /retro|replay|回放|before|after|eval/i, `--plugin-dir ${w.pluginDir}`);
+    assert.ok(!existsSync(dirname(w.pluginDir)), 'the copy is gone once the run is over');
+  }
+  assert.notEqual(dirname(w1.pluginDir), dirname(w2.pluginDir), 'one random dir per side');
+  assert.ok(!w1.pluginDir.includes(env.root) && !w2.pluginDir.includes(env.root), 'not the source paths');
+});
+
+test('e2e: the plugin copy and the work dir are removed even when a session was stopped', () => {
+  const env = setup({ before: 'reply: plain', after: 'nothing-here' });
+  writeFileSync(join(env.root, 'before', 'idea-loop', 'MARK'), 'agent');
+  const r = run(env);
+  assert.equal(r.status, 3);
+  const [w] = sessions(env).filter((x) => x.kind === 'worker');
+  assert.ok(!existsSync(dirname(w.pluginDir)));
+  assert.ok(!existsSync(dirname(w.cwd)));
 });
 
 test('e2e: a case whose prompt says it is a test is refused with exit 2 before any session starts; --list names it', () => {

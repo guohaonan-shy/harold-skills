@@ -19,13 +19,13 @@
 
 ## 验收标准
 
-- [ ] 端到端（假 `claude`、假 Codex）：评委由假 Codex 回答，结果写 `judge: codex`，过 / 不过判得对
-- [ ] 端到端：A/B 顺序被打乱时（测试里固定随机种子或注入顺序）仍还原正确的改前 / 改后答案
-- [ ] 端到端：假 Codex 不存在时打印退回提示，评委走假 `claude`，结果 `judge: claude`
-- [ ] 评委 prompt 里不出现「改前」「改后」「新」「旧」字样
-- [ ] 继承自 03：改前、改后两份插件都拷到 `<临时目录>/<随机串>/<插件目录名>` 下再传给 `--plugin-dir`，跑完清理；被测 agent 调 skill 时看到的插件路径里不含 retro、replay、回放、before、after、eval（端到端测试断言 `--plugin-dir` 的值）。依据：spec 期望行为 2「看不出在被测」，03 只管了输入和工作目录，skill 的「Base directory」会露出插件路径
-- [ ] 继承自 03：implementer 定义里教写回放用例的那句补上：prompt 只放人当时的原话，不加「这是回放 / 人不在场」之类的说明（校验会拒绝含回放、eval、judge 等词的 prompt）；「停在哪」只给评委看
-- [ ] 全量测试通过（命令见 REVIEW.md）
+- [x] 端到端（假 `claude`、假 Codex）：评委由假 Codex 回答，结果写 `judge: codex`，过 / 不过判得对
+- [x] 端到端：A/B 顺序被打乱时（测试里固定随机种子或注入顺序）仍还原正确的改前 / 改后答案
+- [x] 端到端：假 Codex 不存在时打印退回提示，评委走假 `claude`，结果 `judge: claude`
+- [x] 评委 prompt 里不出现「改前」「改后」「新」「旧」字样
+- [x] 继承自 03：改前、改后两份插件都拷到 `<临时目录>/<随机串>/<插件目录名>` 下再传给 `--plugin-dir`，跑完清理；被测 agent 调 skill 时看到的插件路径里不含 retro、replay、回放、before、after、eval（端到端测试断言 `--plugin-dir` 的值）。依据：spec 期望行为 2「看不出在被测」，03 只管了输入和工作目录，skill 的「Base directory」会露出插件路径
+- [x] 继承自 03：implementer 定义里教写回放用例的那句补上：prompt 只放人当时的原话，不加「这是回放 / 人不在场」之类的说明（校验会拒绝含回放、eval、judge 等词的 prompt）；「停在哪」只给评委看
+- [x] 全量测试通过（命令见 REVIEW.md）
 
 ## 选中的存量回归
 

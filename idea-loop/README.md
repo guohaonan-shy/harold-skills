@@ -257,12 +257,20 @@ node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <dir> # re-dec
 ```
 
 The runner copies the project as of the case's commit into a temp dir, runs `claude -p` with `--plugin-dir` pointing at the base
-branch's plugin and again at this working tree's plugin (a sub-agent cannot do this: it loads the installed copy), then starts a
-judging `claude -p` that reads both products anonymously and answers the question with a quote. **The input is only the human's
+branch's plugin and again at this working tree's plugin (a sub-agent cannot do this: it loads the installed copy), then has a
+judge read both products anonymously and answer the question with a quote. **The judge is Codex** (a different model family from
+the two runs), run through the Codex companion's `task` (found the way `pr-review` finds it; read-only, never `--write`), with the
+products lettered A and B in a random order each time; the order is recorded as `afterIs` in `result.json` and turned back into
+pre-change / post-change when the answers are read, and `result.json`, the terminal report and the review loop entry all say who
+judged (`judge: codex` or `judge: claude`). It uses no Claude quota (the cost estimate printed up front still follows the old
+formula and says the judge runs on Codex). When no Codex is found, the runner prints 没找到 Codex，评委用 Claude before it starts
+and judges with `claude -p` as before (a Codex that gives nothing at judging time falls back the same way, said out loud); a
+replay is an acceptance check, not a gate, so it falls back instead of stopping, and the entry shows it. **The input is only the human's
 words**: each run is given exactly the case's `prompt` (nothing added, no note that it is a test, no stop point: an agent that hands
 its work to the human ends its turn, and the timeout is the backstop) and works in `<tmp dir>/<random>/<project name>`, a path with
-nothing about retro, replay, before or after in it; what the runs leave behind is kept under the run dir, where the agent does not
-look. A case whose `prompt` contains 回放, eval, judge, rubric, benchmark, 评测, 评委 or 判定 (any case) is malformed: `--list`
+nothing about retro, replay, before or after in it, and the plugin it loads is copied to `<tmp dir>/<random>/<plugin dir name>`
+first (`--plugin-dir` points there, so a skill's "Base directory" shows no such word either) and the copy is deleted afterwards;
+what the runs leave behind is kept under the run dir, where the agent does not look. A case whose `prompt` contains 回放, eval, judge, rubric, benchmark, 评测, 评委 or 判定 (any case) is malformed: `--list`
 reports it and `--case` / `--run-large` exit 2 without starting a session. Pre-change "no" and post-change
 "yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. Details and
 the exit codes: the header of `evals/retro/retro-replay.mjs`.
@@ -373,7 +381,7 @@ idea-loop/
 │       ├── decision-rules/SKILL.md   # shared, model-invoked — solve the spec's problem by its plan; three kinds of basis, follow and list when clear, stop and ask on conflict, guardrails, how a question is written
 │       └── dreaming/SKILL.md         # + references/ — proposal-table (shape, the ask-or-auto split, execution and self-merge), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, both run by the ui-reviewer; five verdicts), initial-scan, candidate-distillation, design-md-reconcile, docs-reconcile (the adr-reconciler's method), missed-archive, retro-candidates (the pool section of the table), incremental-scope (full vs incremental screenshot pass, the baseline from the scheduled task's runs)
 ├── evals/uiux-research/              # baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
-├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judging session answer its yes/no question; `--run-large` runs the large ones on the spot once the PR is open (`queue.mjs` holds how a result is written into the review loop file) (see below)
+├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judge (Codex, `claude -p` when none is found) answer its yes/no question over the two products in a random A/B order; `--run-large` runs the large ones on the spot once the PR is open (`queue.mjs` holds how a result is written into the review loop file) (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
 │   └── design-modeling.md            # design record of the first design-modeling skill — its rules were folded into dreaming, then split back out as skills/design/design-modeling/SKILL.md; kept as history
@@ -413,7 +421,8 @@ idea-loop/
     ├── retro-run-large.test.mjs      # the runner's `--run-large` end to end against a fake `claude`: a large case run in the daytime, the entry in the review loop file, exit codes 0 / 1 / 2 / 3, and the flags of the removed night queue refused as unknown arguments
     ├── retro-install.mjs             # copies the replay runner to the fixed path `~/.idea-loop/bin/` and prints the permission rule; no scheduled task; never touches settings
     ├── retro-install.test.mjs        # the installed copy works from there; installing again replaces it; nothing about a scheduled task is printed
-    ├── retro-replay.test.mjs         # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude`
+    ├── retro-replay.test.mjs         # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude` and a fake Codex: who judges, the A/B order turned back, the fall back to Claude, the plugin path a run is given and a fake Codex: who judges, the A/B order turned back, the fall back to Claude, the plugin path a run is given
+    ├── replay-codex-judge-doc.test.mjs # doc test — the implementer's line on a case's prompt (only the human's words, the stop point for the judge alone), and the README / runner header naming the Codex judge
     ├── direction-note-check.mjs      # uiux-imagine's exit gate: the seven fixed sections + each chosen variant's composition list
     ├── direction-note-check.test.mjs # its unit tests — one per droppable section / composition item
     ├── proposal-table-check.mjs      # dreaming's exit gate: row types, per-type disposition sets, two pictures on archive rows, a delete-object row names its referrers, an unreachable-state row says what was missing and tried, "product broken" never replaces the archive, a candidate row carries a picture, a missed-archive row's disposition is 补归档 or 丢弃, a `retro 候选` row's is one of 开 issue：机械检查 / 开 issue：改 skill / 留在池里 / 驳回 with its 证据 filled, DESIGN.md-bound rows carry old → new and a DESIGN.md row names its basis, empty-table test; `--split-ask[=<file>]` (the single place the ask-or-auto rule lives) pulls out the rows that need a human as a small table of the same shape, or says there are none

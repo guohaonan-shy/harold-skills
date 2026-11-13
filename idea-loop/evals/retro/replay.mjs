@@ -67,6 +67,21 @@ export function buildWorkerPrompt(c) {
   return c.prompt;
 }
 
+/**
+ * Which anonymous letter each product gets. `afterIs` is the letter of the post-change product ("A" or "B"), chosen at random for
+ * every replay so the judge cannot learn a fixed order; the runner records it in the result.
+ */
+export function productsInOrder({ before, after }, afterIs) {
+  return afterIs === 'A' ? { A: after, B: before } : { A: before, B: after };
+}
+
+/** The judge's verdict, keyed by letter, turned back into one answer per side: `[{side: 'before', ...}, {side: 'after', ...}]`. */
+export function verdictsBySide(verdict, afterIs) {
+  if (!verdict) return null;
+  const [before, after] = afterIs === 'A' ? [verdict.B, verdict.A] : [verdict.A, verdict.B];
+  return [{ side: 'before', ...before }, { side: 'after', ...after }];
+}
+
 /** The two products are anonymous (A, B): the judge is not told which one the changed plugin made. */
 export function buildJudgePrompt(c, productA, productB) {
   return [
@@ -98,8 +113,8 @@ export function fileBody(buf) {
 }
 
 export function buildArtifact({ resultText, files }, { perFile = 12_000, total = 60_000 } = {}) {
-  const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里新增或改动的文件', ''];
-  if (!files.length) parts.push('（没有新增或改动的文件）');
+  const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里写下或改动的文件', ''];
+  if (!files.length) parts.push('（没有写下或改动的文件）');
   for (const f of files) {
     const body = f.content.length > perFile ? `${f.content.slice(0, perFile)}\n…（已截断，原长 ${f.content.length} 字）` : f.content;
     parts.push(`### ${f.path}`, '', body, '');

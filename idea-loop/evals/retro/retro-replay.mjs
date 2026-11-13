@@ -6,13 +6,18 @@
  *   1. copies the project as it was at the case's commit into /tmp, twice (one copy per side);
  *   2. runs `claude -p` in each copy with the case's prompt, once with the PRE-change plugin (the base
  *      branch's idea-loop/) and once with the POST-change plugin (this working tree's idea-loop/);
- *   3. starts a judging `claude -p` that reads both products (anonymised as A and B) and answers the
+ *   3. starts a judge that reads both products (anonymised as A and B, in a random order each time) and answers the
  *      case's yes/no question, quoting where in the product it found the answer; only the judge is told
- *      where the skill hands the thing to the human (the case's `stop_at`).
+ *      where the skill hands the thing to the human (the case's `stop_at`). The judge is Codex (a different model family
+ *      from the two runs): the companion's `task`, read-only, with the prompt in a file. When no Codex is found the runner says
+ *      so before it starts ("没找到 Codex，评委用 Claude") and judges with `claude -p` as before; a Codex judge that gives
+ *      nothing also falls back to Claude. `result.json` records `judge` (`codex` / `claude`) and `afterIs` (the letter the
+ *      post-change product had), which is how the answers are turned back into pre-change / post-change.
  *
  * The input is only the human's words: the two runs get exactly the case's `prompt` (a case whose prompt says it is a
  * test is refused), and each runs in `<tmp dir>/<random>/<project name>`, a path with nothing about retro, replay, before
- * or after in it. What the runs leave behind (the project copy, event streams, products, results) is under the run dir,
+ * or after in it. The plugin it loads is copied to `<tmp dir>/<random>/<plugin dir name>` first (`--plugin-dir` points there,
+ * so a skill's "Base directory" shows no such word either) and the copy is deleted when the run is over. What the runs leave behind (the project copy, event streams, products, results) is under the run dir,
  * where the agent does not look. No run is told where to stop: an agent that hands its work to the human ends its turn,
  * and the timeout is the backstop.
  * Pre-change "no" and post-change "yes" is a pass. Pre-change "yes" means the case never showed the
@@ -51,27 +56,31 @@
  *             2 bad arguments or a malformed case · 3 a large case, left to `--run-large` · 4 judge gave no usable answer ·
  *             5 a session produced no result.
  *
- * `RETRO_CLAUDE_BIN` replaces the `claude` command (the tests use a fake).
+ * `RETRO_CLAUDE_BIN` replaces the `claude` command, `RETRO_CODEX_COMPANION` the Codex companion script (a path that does
+ * not exist means "no Codex"), and `RETRO_JUDGE_ORDER` (`after-first` / `before-first`) fixes the A/B order: the tests use these.
  */
 
 import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
-import { tmpdir } from 'node:os';
+import { randomBytes, randomInt } from 'node:crypto';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
+import { findCompanion } from '../../scripts/codex-companion.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
   buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, fileBody, parseOverrides, parseVerdict,
-  relabelLarge, settleVerdicts,
+  productsInOrder, relabelLarge, settleVerdicts, verdictsBySide,
 } from './replay.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
 const DEFAULT_OUT = '/tmp/idea-loop-retro';
 const CLAUDE = process.env.RETRO_CLAUDE_BIN || 'claude';
+/** The model and effort the Codex judge runs with: the same the pr-reviewer's Codex processes use. */
+const CODEX_ARGS = ['--model', 'gpt-5.6-sol', '--effort', 'high'];
 /** A session's timeout in minutes: 20 for a small case, 45 for `--run-large` (large cases take longer). */
 const DEFAULT_TIMEOUT_MIN = 20;
 const RUN_LARGE_TIMEOUT_MIN = 45;
@@ -163,15 +172,29 @@ export function projectName(repo) {
   const r = spawnSync('git', ['remote', 'get-url', 'origin'], { cwd: repo, encoding: 'utf8' });
   if (r.status === 0) candidates.push(r.stdout.trim().replace(/\/+$/, '').replace(/\.git$/, '').split(/[/:]/).pop());
   candidates.push(basename(repo));
-  const plain = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n ?? '') && !revealingWordsIn(n).length && !/retro|replay|before|after/i.test(n);
-  return candidates.find(plain) ?? 'project';
+  return candidates.find(isPlainName) ?? 'project';
 }
+
+/** A name that does not tell a run it is being tested (nothing about retro, replay, before, after, eval and the like in it). */
+const isPlainName = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n ?? '') && !revealingWordsIn(n).length && !/retro|replay|before|after/i.test(n);
 
 /** A fresh `<tmp dir>/<random>/<name>` for a run to work in; the random part keeps the two runs of a case apart. */
 function workDirFor(name) {
   const dir = join(tmpdir(), randomBytes(8).toString('hex'), name);
   mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+/**
+ * A copy of a plugin at `<tmp dir>/<random>/<plugin dir name>`, which is what a run is given as `--plugin-dir` and what a skill's
+ * "Base directory" shows it. Both sides get the same dir name (the plugin's own, `project`-style fallback when it would give the
+ * test away) under their own random dir, so nothing in the path says retro, replay, before, after or eval. `remove()` deletes the copy.
+ */
+function stagePlugin(src, afterPlugin) {
+  const own = basename(afterPlugin);
+  const dir = workDirFor(isPlainName(own) ? own : 'plugin');
+  cpSync(src, dir, { recursive: true });
+  return { dir, remove: () => rmSync(dirname(dir), { recursive: true, force: true }) };
 }
 
 function changedFiles(projectDir) {
@@ -228,6 +251,55 @@ function runClaude({ args, cwd, streamPath, timeoutMs, watch }) {
   });
 }
 
+/**
+ * The Codex companion script that can run the judge, or null. `RETRO_CODEX_COMPANION` replaces the search (the tests point it at
+ * a fake, or at a path that does not exist); otherwise it is looked for the way pr-review does: from this plugin, then from the
+ * plugins directory of the Claude config (an installed copy of the runner has no plugins directory above it).
+ */
+export function locateCodex() {
+  const override = process.env.RETRO_CODEX_COMPANION;
+  if (override !== undefined) return override && existsSync(override) ? override : null;
+  const starts = [PLUGIN_ROOT, join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'plugins')];
+  for (const start of starts) {
+    const { path } = findCompanion(start);
+    if (path) return path;
+  }
+  return null;
+}
+
+/** The letter ("A" or "B") the post-change product gets this time: random, unless `RETRO_JUDGE_ORDER` fixes it (the tests do). */
+function pickAfterLetter() {
+  const fixed = { 'after-first': 'A', 'before-first': 'B' }[process.env.RETRO_JUDGE_ORDER ?? ''];
+  return fixed ?? (randomInt(2) === 0 ? 'A' : 'B');
+}
+
+/**
+ * The judging session on Codex: `task` with the prompt in a file, never `--write` (the companion's default is read-only).
+ * Resolves `{text}` with what it printed, or `{text: null, why}` when it could not start, exited non-zero or printed nothing.
+ */
+function runCodexJudge({ companion, promptFile, cwd, outPath, timeoutMs }) {
+  return new Promise((resolvePromise) => {
+    const child = spawn(process.execPath, [companion, 'task', ...CODEX_ARGS, '--prompt-file', promptFile, '--cwd', cwd], { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGKILL');
+    }, timeoutMs);
+    child.stdout.on('data', (d) => { stdout += d; });
+    child.stderr.on('data', (d) => { stderr += d; });
+    child.on('error', (e) => { stderr += String(e); });
+    child.on('close', (status) => {
+      clearTimeout(timer);
+      writeFileSync(outPath, stdout);
+      if (stderr) writeFileSync(`${outPath}.stderr.log`, stderr);
+      const why = timedOut ? '超时' : status !== 0 ? `退出码 ${status}` : !stdout.trim() ? '没有输出' : null;
+      resolvePromise(why ? { text: null, why } : { text: stdout });
+    });
+  });
+}
+
 const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
 
 /**
@@ -236,7 +308,9 @@ const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
  */
 async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const est = estimateCostUsd(1);
-  console.log(`${c.name}: ${c.size === 'large' ? '大' : '小'}用例，当场跑。预计花费约 ${usd(est.low)}–${usd(est.high)}（改前、改后各一次 claude -p，加一次判定；空跑一次约 $0.3–0.5，完整跑一个 skill 约 $1.5）`);
+  const companion = locateCodex();
+  console.log(`${c.name}: ${c.size === 'large' ? '大' : '小'}用例，当场跑。预计花费约 ${usd(est.low)}–${usd(est.high)}（改前、改后各一次 claude -p，加一次判定；空跑一次约 $0.3–0.5，完整跑一个 skill 约 $1.5；评委走 Codex 时判定不占 Claude 额度，估计仍按这个算）`);
+  console.log(companion ? `评委：Codex（${companion}）` : '没找到 Codex，评委用 Claude');
 
   const runId = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*$/, '');
   const runDir = join(opts.out, c.name, runId);
@@ -259,65 +333,91 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   for (const s of sides) {
     const dir = join(runDir, s.side);
     const project = workDirFor(projectName(t.repo));
-    mkdirSync(dir, { recursive: true });
-    prepareProject(t.repo, c.commit, project);
-    const args = ['-p', buildWorkerPrompt(c), '--plugin-dir', s.plugin, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
-    if (opts.model) args.push('--model', opts.model);
-    const streamPath = join(dir, 'run.stream.jsonl');
-    process.stdout.write(`— ${s.side}: ${s.plugin} …`);
-    const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge });
-    const keepProject = () => {
-      // the run is over: what it left is kept under the run dir for a human to look at, and the work dir goes
-      cpSync(project, join(dir, 'project'), { recursive: true });
-      rmSync(dirname(project), { recursive: true, force: true });
-    };
-    if (r.escalation) {
+    const staged = stagePlugin(s.plugin, afterPlugin);
+    try {
+      mkdirSync(dir, { recursive: true });
+      prepareProject(t.repo, c.commit, project);
+      const args = ['-p', buildWorkerPrompt(c), '--plugin-dir', staged.dir, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
+      if (opts.model) args.push('--model', opts.model);
+      const streamPath = join(dir, 'run.stream.jsonl');
+      process.stdout.write(`— ${s.side}: ${s.plugin} …`);
+      const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge });
+      // the run is over: what it left is kept under the run dir for a human to look at (the work dir itself goes in `finally`)
+      const keepProject = () => cpSync(project, join(dir, 'project'), { recursive: true });
+      if (r.escalation) {
+        keepProject();
+        console.log(` 中止：${r.escalation.kind === 'agent' ? '起了 agent' : '开了浏览器'}（${r.escalation.tool}）`);
+        const file = join(t.casesRoot, 'cases', c.name, 'case.json');
+        writeFileSync(file, `${JSON.stringify(relabelLarge(c, r.escalation), null, 2)}\n`);
+        writeFileSync(join(runDir, 'aborted.json'), JSON.stringify({ side: s.side, ...r.escalation }, null, 2));
+        console.log(`大用例由编排者在 PR 开出后用 --run-large --pr <N> 跑：${c.name} 原标成小，跑到一半发现不是；已把 ${file} 改标成大。`);
+        return { code: 3, runDir };
+      }
+      const digest = digestStream(fileLines(streamPath));
+      if (r.stderr) writeFileSync(join(dir, 'run.stderr.log'), r.stderr);
+      products[s.side] = digest.result ? buildArtifact({ resultText: digest.result.text, files: changedFiles(project) }) : null;
       keepProject();
-      console.log(` 中止：${r.escalation.kind === 'agent' ? '起了 agent' : '开了浏览器'}（${r.escalation.tool}）`);
-      const file = join(t.casesRoot, 'cases', c.name, 'case.json');
-      writeFileSync(file, `${JSON.stringify(relabelLarge(c, r.escalation), null, 2)}\n`);
-      writeFileSync(join(runDir, 'aborted.json'), JSON.stringify({ side: s.side, ...r.escalation }, null, 2));
-      console.log(`大用例由编排者在 PR 开出后用 --run-large --pr <N> 跑：${c.name} 原标成小，跑到一半发现不是；已把 ${file} 改标成大。`);
-      return { code: 3, runDir };
+      if (!digest.result) {
+        const why = r.timedOut ? '超时' : `退出码 ${r.status}`;
+        console.log(` 没有产出 result（${why}），见 ${dir}`);
+        return { code: 5, runDir, message: `${s.side === 'before' ? '改前' : '改后'}那一遍没有产出 result（${why}），现场在 ${dir}` };
+      }
+      costs[s.side] = digest.result.cost;
+      writeFileSync(join(dir, 'result.txt'), digest.result.text);
+      writeFileSync(join(dir, 'digest.json'), JSON.stringify({ session: digest.session, subagents: digest.subagents, result: { ...digest.result, text: undefined } }, null, 2));
+      writeFileSync(join(dir, 'artifact.md'), products[s.side]);
+      console.log(` 完成，${usd(digest.result.cost)}`);
+    } finally {
+      // the plugin copy and the work dir are only for the run: nothing of them stays in the temp dir
+      staged.remove();
+      rmSync(dirname(project), { recursive: true, force: true });
     }
-    const digest = digestStream(fileLines(streamPath));
-    if (r.stderr) writeFileSync(join(dir, 'run.stderr.log'), r.stderr);
-    products[s.side] = digest.result ? buildArtifact({ resultText: digest.result.text, files: changedFiles(project) }) : null;
-    keepProject();
-    if (!digest.result) {
-      const why = r.timedOut ? '超时' : `退出码 ${r.status}`;
-      console.log(` 没有产出 result（${why}），见 ${dir}`);
-      return { code: 5, runDir, message: `${s.side === 'before' ? '改前' : '改后'}那一遍没有产出 result（${why}），现场在 ${dir}` };
-    }
-    costs[s.side] = digest.result.cost;
-    writeFileSync(join(dir, 'result.txt'), digest.result.text);
-    writeFileSync(join(dir, 'digest.json'), JSON.stringify({ session: digest.session, subagents: digest.subagents, result: { ...digest.result, text: undefined } }, null, 2));
-    writeFileSync(join(dir, 'artifact.md'), products[s.side]);
-    console.log(` 完成，${usd(digest.result.cost)}`);
   }
 
   const judgeDir = join(runDir, 'judge');
   mkdirSync(judgeDir, { recursive: true });
-  const jArgs = ['-p', buildJudgePrompt(c, products.before, products.after), '--output-format', 'stream-json', '--verbose'];
-  if (opts.model) jArgs.push('--model', opts.model);
-  const jStream = join(judgeDir, 'run.stream.jsonl');
-  process.stdout.write('— 判定 …');
-  const j = await runClaude({ args: jArgs, cwd: judgeDir, streamPath: jStream, timeoutMs: opts.timeoutMin * 60_000, watch: false });
-  const jDigest = digestStream(fileLines(jStream));
-  if (!jDigest.result) {
-    console.log(` 没有产出 result（退出码 ${j.status}），见 ${judgeDir}`);
-    return { code: 5, runDir, message: `判定会话没有产出 result（退出码 ${j.status}），现场在 ${judgeDir}` };
+  // the products are lettered A and B in a random order, so the judge learns nothing from the position; `afterIs` turns the answers back
+  const afterIs = pickAfterLetter();
+  const { A, B } = productsInOrder(products, afterIs);
+  const judgePrompt = buildJudgePrompt(c, A, B);
+  let judge = companion ? 'codex' : 'claude';
+  let judgeText = null;
+  if (judge === 'codex') {
+    const promptFile = join(judgeDir, 'prompt.md');
+    writeFileSync(promptFile, judgePrompt);
+    process.stdout.write('— 判定（Codex）…');
+    const cx = await runCodexJudge({ companion, promptFile, cwd: judgeDir, outPath: join(judgeDir, 'codex.stdout.txt'), timeoutMs: opts.timeoutMin * 60_000 });
+    if (cx.text) {
+      judgeText = cx.text;
+      console.log(' 完成（不占 Claude 额度）');
+    } else {
+      console.log(` Codex 没给出判定（${cx.why}），评委退回 Claude`);
+      judge = 'claude';
+    }
   }
-  costs.judge = jDigest.result.cost;
-  console.log(` 完成，${usd(jDigest.result.cost)}`);
-  writeFileSync(join(judgeDir, 'result.txt'), jDigest.result.text);
+  if (judge === 'claude') {
+    const jArgs = ['-p', judgePrompt, '--output-format', 'stream-json', '--verbose'];
+    if (opts.model) jArgs.push('--model', opts.model);
+    const jStream = join(judgeDir, 'run.stream.jsonl');
+    process.stdout.write('— 判定 …');
+    const j = await runClaude({ args: jArgs, cwd: judgeDir, streamPath: jStream, timeoutMs: opts.timeoutMin * 60_000, watch: false });
+    const jDigest = digestStream(fileLines(jStream));
+    if (!jDigest.result) {
+      console.log(` 没有产出 result（退出码 ${j.status}），见 ${judgeDir}`);
+      return { code: 5, runDir, message: `判定会话没有产出 result（退出码 ${j.status}），现场在 ${judgeDir}` };
+    }
+    costs.judge = jDigest.result.cost;
+    console.log(` 完成，${usd(jDigest.result.cost)}`);
+    judgeText = jDigest.result.text;
+  }
+  writeFileSync(join(judgeDir, 'result.txt'), judgeText);
 
-  const verdict = parseVerdict(jDigest.result.text);
-  const verdicts = verdict && [{ side: 'before', ...verdict.A }, { side: 'after', ...verdict.B }];
-  const judged = { before: verdict?.A.answer, after: verdict?.B.answer };
+  const verdict = parseVerdict(judgeText);
+  const verdicts = verdictsBySide(verdict, afterIs);
+  const judged = { before: verdicts?.[0].answer, after: verdicts?.[1].answer };
   const decision = decideOutcome(judged);
   const cost = Object.values(costs).reduce((a, b) => a + (b ?? 0), 0);
-  const result = { case: c.name, runId, commit: c.commit, question: c.question, verdicts, judged, ...decision, costs, cost, settled: false };
+  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, ...decision, costs, cost, settled: false };
   writeFileSync(join(runDir, 'result.json'), JSON.stringify(result, null, 2));
   return { code: report(result, runDir, c.name, t.casesRoot), result, runDir };
 }
@@ -346,8 +446,10 @@ async function replay(opts, t) {
 function report(result, runDir, name, casesRoot) {
   const label = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论' }[result.outcome];
   console.log(`\n${name}: ${label}（${result.outcome}）\n  ${result.reason}`);
+  if (result.judge) console.log(`  评委：${result.judge === 'codex' ? 'Codex' : 'Claude'}`);
   for (const v of result.verdicts ?? []) console.log(`  ${v.side === 'before' ? '改前' : '改后'}：${v.answer === 'yes' ? '是' : '否'}  出处：${v.cite}`);
-  console.log(`  实际花费：${usd(result.cost)}（改前 ${usd(result.costs.before)}，改后 ${usd(result.costs.after)}，判定 ${usd(result.costs.judge)}）`);
+  const judgeCost = result.judge === 'codex' ? 'Codex，不占 Claude 额度' : usd(result.costs.judge);
+  console.log(`  实际花费：${usd(result.cost)}（改前 ${usd(result.costs.before)}，改后 ${usd(result.costs.after)}，判定 ${judgeCost}）`);
   console.log(`  产物：${runDir}/{before,after}/artifact.md`);
   console.log(`  不同意判定？在 ${join(casesRoot, 'cases', name, 'annotations.md')} 里记一行「- 推翻 ${result.runId} 改前=是|否 ｜ 理由」，再跑 --settle ${name} --run ${runDir}`);
   return { pass: 0, fail: 1, 'case-missed': 1, inconclusive: 4 }[result.outcome];
@@ -388,7 +490,7 @@ async function replayLarge(t, name, opts) {
   try {
     const r = await executeReplay(opts, t, c, { runLarge: true });
     if (r.result) {
-      return { case: name, outcome: r.result.outcome, reason: r.result.reason, verdicts: r.result.verdicts ?? undefined, cost: r.result.cost, runDir: r.runDir };
+      return { case: name, outcome: r.result.outcome, reason: r.result.reason, judge: r.result.judge, verdicts: r.result.verdicts ?? undefined, cost: r.result.cost, runDir: r.runDir };
     }
     return { case: name, outcome: 'no-result', reason: r.message ?? '没有产出结果', runDir: r.runDir };
   } catch (e) {
@@ -436,7 +538,7 @@ async function runLarge(opts, t) {
   }
   const worktree = opts.worktree ?? opts.repo ?? repo;
   const est = estimateCostUsd(names.length);
-  console.log(`--run-large：${names.length} 个用例（${names.join('、')}），大的也跑，起 agent、开浏览器都不中止。每个用例改前、改后、判定各一个会话，每个会话超时 ${opts.timeoutMin} 分钟，一个用例最长约 3×${opts.timeoutMin} 分钟；预计花费约 ${usd(est.low)}–${usd(est.high)}（起 agent 的会比这高）。`);
+  console.log(`--run-large：${names.length} 个用例（${names.join('、')}），大的也跑，起 agent、开浏览器都不中止。每个用例改前、改后、判定各一个会话，每个会话超时 ${opts.timeoutMin} 分钟，一个用例最长约 3×${opts.timeoutMin} 分钟；预计花费约 ${usd(est.low)}–${usd(est.high)}（起 agent 的会比这高；评委走 Codex 时判定不占 Claude 额度，估计仍按这个算）。`);
 
   const results = [];
   for (const c of found) results.push(await replayLarge({ ...t, repo }, c.name, { ...opts, base: opts.base ?? 'main' }));

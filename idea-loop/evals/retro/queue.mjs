@@ -29,8 +29,11 @@ const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问�
 const YESNO = { yes: '是', no: '否' };
 const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
 
+const JUDGE = { codex: 'Codex', claude: 'Claude' };
+
 function describeCase(r) {
   const lines = [`- \`${r.case}\`：${LABEL[r.outcome] ?? r.outcome}`, `  - ${r.reason}`];
+  if (r.judge) lines.push(`  - 评委：${JUDGE[r.judge] ?? r.judge}`);
   for (const v of r.verdicts ?? []) lines.push(`  - ${v.side === 'before' ? '改前' : '改后'}：${YESNO[v.answer] ?? v.answer}　出处：${v.cite}`);
   if (r.runDir) lines.push(`  - 产物（改前、改后各一份）：\`${r.runDir}/{before,after}/artifact.md\`；花费 ${usd(r.cost)}`);
   lines.push(`  - 不同意判定？在用例旁的 \`annotations.md\` 里记「- 推翻 <run-id> 改前=是|否 ｜ 理由」，再跑 \`--settle ${r.case} --run <run 目录>\``);
@@ -48,7 +51,7 @@ export function buildReplayEntry({ round, ranAt, results }) {
   const head = `## 规则回放 第 ${round} 次 · ${s.total} 个用例，${s.passed} 个过${s.notPassed ? `，${s.notPassed} 个没过` : ''}`;
   const lines = [
     `<!-- idea-loop-entry ${JSON.stringify({ kind: 'replay', round })} -->`, head, '',
-    `当场跑完，${when} 出结果，花费 ${usd(s.cost)}。判定会话答的是「改前否、改后是」才算过。`, '',
+    `当场跑完，${when} 出结果，花费 ${usd(s.cost)}。评委答的是「改前否、改后是」才算过。`, '',
   ];
   for (const r of results) lines.push(...describeCase(r));
   lines.push('');

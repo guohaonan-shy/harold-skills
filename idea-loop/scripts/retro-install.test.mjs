@@ -30,6 +30,15 @@ test('installed runner has no plugin of its own to test, and says which flag to 
   assert.match(r.stderr, /--worktree/);
 });
 
+test('the installed copy carries the Codex companion finder the judge needs, and starts with it', () => {
+  const dest = fresh();
+  const { entry } = install(dest);
+  assert.ok(existsSync(join(dest, 'runtime', 'scripts', 'codex-companion.mjs')));
+  const r = run(entry, ['--bogus']);
+  assert.equal(r.status, 2, 'it starts (every import resolves) and rejects the argument itself');
+  assert.match(r.stderr, /unknown argument/);
+});
+
 test('installed runner does not know the queue flags any more', () => {
   const { entry } = install(fresh());
   for (const flag of ['--queue', '--enqueue', '--notify']) {
