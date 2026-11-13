@@ -260,7 +260,7 @@ branch's plugin and again at this working tree's plugin (a sub-agent cannot do t
 judging `claude -p` that reads both products anonymously and answers the question with a quote. Pre-change "no" and post-change
 "yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. A small case
 that turns out to start a plugin agent or open a browser is stopped, relabelled large in its `case.json`, and reported as
-needing the nightly queue (exit code 3). Details and the exit codes: the header of `evals/retro/retro-replay.mjs`.
+needing the nightly queue (exit code 3; a large case named with `--case` is not run and the output says how to run it now: `--run-large --pr <N>`). Details and the exit codes: the header of `evals/retro/retro-replay.mjs`.
 
 ### The nightly queue
 
@@ -276,6 +276,17 @@ cases the way a single case runs, appends the result to that PR's review loop fi
 the "session management" capability (written as a capability name in the prompt; how is in `idea-loop:runtime`) (the arrival wakes it: all passed, it carries on; not all passed, it stops and puts the result to the human) and runs
 `retro-replay.mjs --notify` (a macOS notification) when the session cannot be reached; a PR queued without a session id gets the
 notification from the runner itself. A case that did not pass is not rerun: the result is the human's to rule on.
+
+**Running large cases now.** The queue only starts between 00:00 and 07:00. When the human says "run it now" in the issue session,
+`retro-replay.mjs --cases a,b --run-large --pr <N> --worktree <dir>` runs those cases at once, in any hour, the way the night run
+does (nothing is stopped for starting an agent or opening a browser; the session timeout is 45 minutes unless `--timeout-min` says
+otherwise), and appends one `replay` entry to the PR's review loop file in the night's layout (its wording says it was run on the spot, not by the night queue, and names the cases it took out of the queue, if any). It sends no session message and no
+notification and prints no result line: the issue session that started it (in the background, since a foreground Bash call is cut at
+10 minutes) waits for it to exit, reads the output and the file, and handles the result as it handles the night's
+(`issue-session`'s `references/replay-result.md`, 「当场跑」). Cases of that worktree and PR that are in the queue are taken out of it,
+so the night run does not repeat them. Exit codes: 0 all passed, 1 some did not, 2 no `--pr` / no case / a case that is missing or
+malformed (no session is started). A runner copy at `~/.idea-loop/bin/` from before this option does not know it: run
+`scripts/retro-install.mjs` again.
 
 `/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed path,
 the one small replays use too), a scheduled task (the "scheduled task" capability) `idea-loop-retro-replay` runs `node ~/.idea-loop/bin/retro-replay.mjs --queue`
@@ -403,7 +414,7 @@ idea-loop/
     ├── claude-stream.test.mjs
     ├── retro-case.test.mjs           # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name; the shipped cases are well-formed
     ├── retro-queue.test.mjs          # the nightly queue's decisions: the 00:00–07:00 window (09:12 runs nothing, an empty queue exits at once), the queue file, and the result as a review-loop entry that `check` reads
-    ├── retro-queue-run.test.mjs      # the runner's `--queue` / `--enqueue` end to end against a fake `claude`: pass and not-pass both clear the queue file, the clock passing 07:00 mid-queue, a bad queue file
+    ├── retro-queue-run.test.mjs      # the runner's `--queue` / `--enqueue` end to end against a fake `claude`: pass and not-pass both clear the queue file, the clock passing 07:00 mid-queue, a bad queue file; `--run-large` (a large case run in the daytime, the entry in the review loop file, the cases taken out of the queue, exit codes 0 / 1 / 2 / 3)
     ├── retro-install.mjs             # copies the replay runner to the fixed path `~/.idea-loop/bin/` and prints the permission rule and the scheduled task's command and prompt (written with capability names); never touches settings
     ├── retro-install.test.mjs        # the installed copy works from there; installing again replaces it
     ├── retro-replay.test.mjs         # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude`

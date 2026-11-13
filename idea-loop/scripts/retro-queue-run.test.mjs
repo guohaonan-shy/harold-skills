@@ -1,6 +1,6 @@
 /**
- * The replay runner's queue mode end to end (`retro-replay.mjs --queue`, `--enqueue`), against a fake `claude`:
- * no real session, no real clock. The decisions themselves (time window, queue contents, result format) are
+ * The replay runner's queue mode end to end (`retro-replay.mjs --queue`, `--enqueue`) and its `--run-large` (large cases run
+ * now, at any hour, on the human's word), against a fake `claude`: no real session, no real clock. The decisions themselves (time window, queue contents, result format) are
  * unit-tested in retro-queue.test.mjs.
  *
  * The fake reads `<plugin-dir>/MARK` to decide what a worker session does:
@@ -327,5 +327,152 @@ test('--notify sends the one-line notification and nothing else: the fallback wh
   const r = runner(env, ['--notify', 'owner/proj #12 的规则回放：1 个用例全过']);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(r.pushes, ['owner/proj #12 的规则回放：1 个用例全过']);
+  assert.deepEqual(r.calls, []);
+});
+
+// ---------- --run-large: the human said "run it now" ----------
+
+const runLargeArgs = (env, n, pr, extra = []) => [
+  '--worktree', env.worktrees[n], '--base', 'base-point', '--out', env.out, '--queue-dir', env.queueDir, '--timeout-min', '1',
+  ...(pr === null ? [] : ['--pr', String(pr)]), ...extra,
+];
+const bigCase = { 'big-case': { size: 'large', size_basis: '起插件 agent' } };
+const queueFiles = (env) => (existsSync(env.queueDir) ? readdirSync(env.queueDir).sort() : []);
+const queueFile = (env, name, entry) => {
+  mkdirSync(env.queueDir, { recursive: true });
+  writeFileSync(join(env.queueDir, name), JSON.stringify({ queued_at: '2026-10-22T20:00:00.000Z', base: 'base-point', ...entry }));
+};
+
+test('--run-large runs a large case in the daytime: three sessions, exit 0, a settled replay entry, no result line, no push', () => {
+  const env = nightSetup({ after: 'agentreply: FIXED', cases: bigCase });
+  const r = runner(env, ['--case', 'big-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker']);
+  const check = loopCheck(env.worktrees[0], 12);
+  assert.deepEqual(check.entries.map((e) => [e.kind, e.round, e.settled]), [['replay', 1, true]]);
+  assert.deepEqual(check.unsettled, []);
+  assert.match(readFileSync(reviewLoopPath(env.worktrees[0], 12), 'utf8'), /big-case/);
+  assert.ok(r.stdout.includes(reviewLoopPath(env.worktrees[0], 12)), 'says which file the result went into');
+  assert.deepEqual(resultLines(r.stdout), [], 'the calling session reads the output itself: no 回放结果 line');
+  assert.deepEqual(r.pushes, [], 'no notification either');
+  const entry = readFileSync(reviewLoopPath(env.worktrees[0], 12), 'utf8');
+  assert.match(entry, /当场跑（--run-large）在 .* 跑完/);
+  assert.doesNotMatch(entry, /夜间队列|队列文件/, 'the entry does not say the night queue ran it');
+  const c = JSON.parse(readFileSync(join(env.worktrees[0], 'idea-loop', 'evals', 'retro', 'cases', 'big-case', 'case.json'), 'utf8'));
+  assert.equal(c.size, 'large');
+});
+
+test('--run-large with --cases a,b runs both and writes one entry for the PR', () => {
+  const env = nightSetup({ cases: { 'demo-case': {}, 'other-case': {} } });
+  const r = runner(env, ['--cases', 'demo-case,other-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(r.calls.length, 6);
+  const text = readFileSync(reviewLoopPath(env.worktrees[0], 12), 'utf8');
+  assert.match(text, /`demo-case`：过/);
+  assert.match(text, /`other-case`：过/);
+  assert.deepEqual(loopCheck(env.worktrees[0], 12).entries.map((e) => [e.kind, e.round]), [['replay', 1]]);
+});
+
+test('--run-large takes what it ran out of the queue: the PR\'s file is gone and the night run starts nothing', () => {
+  const env = nightSetup({ cases: bigCase, after: 'agentreply: FIXED' });
+  assert.equal(enqueue(env, 0, ['big-case']).status, 0);
+  assert.deepEqual(queueFiles(env), ['owner__proj-12.json']);
+  const r = runner(env, ['--case', 'big-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(queueFiles(env), []);
+  assert.equal(runner(env, queueArgs(env, NIGHT)).calls.length, 3, 'no new sessions at night');
+  assert.match(readFileSync(reviewLoopPath(env.worktrees[0], 12), 'utf8'), /夜间队列里这个 PR 的 `big-case` 已拿掉/, 'the entry says what it took out of the queue');
+});
+
+test('--run-large removes only the cases it ran; another PR\'s file, and the same PR number in another worktree, stay as they were', () => {
+  const env = nightSetup({ prs: 2, cases: { 'demo-case': {}, 'other-case': {} } });
+  enqueue(env, 0, ['demo-case', 'other-case'], 12);
+  queueFile(env, 'owner__proj-13.json', { repo: 'owner/proj', pr: 13, worktree: env.worktrees[0], cases: ['demo-case'] });
+  queueFile(env, 'owner__elsewhere-12.json', { repo: 'owner/elsewhere', pr: 12, worktree: env.worktrees[1], cases: ['demo-case'] });
+  const others = ['owner__proj-13.json', 'owner__elsewhere-12.json'].map((f) => readFileSync(join(env.queueDir, f), 'utf8'));
+  const r = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(JSON.parse(readFileSync(join(env.queueDir, 'owner__proj-12.json'), 'utf8')).cases, ['other-case']);
+  assert.deepEqual(['owner__proj-13.json', 'owner__elsewhere-12.json'].map((f) => readFileSync(join(env.queueDir, f), 'utf8')), others);
+});
+
+test('--run-large where the change did not fix it: exit 1, the entry is left unsettled for the human', () => {
+  const env = nightSetup({ after: 'reply: plain' });
+  const r = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.deepEqual(loopCheck(env.worktrees[0], 12).unsettled, [{ kind: 'replay', round: 1 }]);
+  assert.match(readFileSync(reviewLoopPath(env.worktrees[0], 12), 'utf8'), /仍然答「否」/);
+});
+
+test('--run-large without --pr, without a case name, or with a case that is missing or malformed: exit 2 and no session', () => {
+  const env = nightSetup();
+  const noPr = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 0, null)]);
+  assert.equal(noPr.status, 2);
+  assert.match(noPr.stderr, /--pr/);
+  const noCase = runner(env, ['--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(noCase.status, 2);
+  const missing = runner(env, ['--cases', 'demo-case,nope-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /nope-case/);
+  const file = join(env.worktrees[0], 'idea-loop', 'evals', 'retro', 'cases', 'demo-case', 'case.json');
+  const c = JSON.parse(readFileSync(file, 'utf8'));
+  delete c.question;
+  writeFileSync(file, JSON.stringify(c));
+  const bad = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(bad.status, 2);
+  assert.match(bad.stderr, /question/);
+  assert.deepEqual(bad.calls, [], 'not one claude session in any of the four');
+  assert.equal(existsSync(reviewLoopPath(env.worktrees[0], 12)), false);
+});
+
+test('a large case with only --case still exits 3 and says how to run it now', () => {
+  const env = nightSetup({ cases: bigCase });
+  const r = runner(env, ['--case', 'big-case', '--worktree', env.worktrees[0], '--base', 'base-point', '--out', env.out]);
+  assert.equal(r.status, 3, r.stdout + r.stderr);
+  assert.deepEqual(r.calls, []);
+  assert.match(r.stdout, /要进夜间队列/);
+  assert.match(r.stdout, /--run-large --pr <N>/);
+});
+
+test('--run-large runs a small case that starts an agent to the end: not stopped, not relabelled', () => {
+  const env = nightSetup({ after: 'agentreply: FIXED' });
+  const r = runner(env, ['--case', 'demo-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(r.calls.length, 3);
+  const c = JSON.parse(readFileSync(join(env.worktrees[0], 'idea-loop', 'evals', 'retro', 'cases', 'demo-case', 'case.json'), 'utf8'));
+  assert.equal(c.size, 'small');
+  assert.equal(c.size_basis, '只驱动 some-skill 一个 skill');
+});
+
+test('--run-large times out after 45 minutes unless --timeout-min says otherwise; the plain --case keeps 20', () => {
+  const env = nightSetup();
+  const base = ['--case', 'demo-case', '--worktree', env.worktrees[0], '--base', 'base-point', '--out', env.out, '--queue-dir', env.queueDir];
+  assert.match(runner(env, [...base, '--run-large', '--pr', '12']).stdout, /超时 45 分钟/);
+  assert.match(runner(env, [...base, '--run-large', '--pr', '12', '--timeout-min', '7']).stdout, /超时 7 分钟/);
+  assert.doesNotMatch(runner(env, base).stdout, /超时 45 分钟/);
+});
+
+test('--run-large says up front how many cases, how long at most and what it expects to spend', () => {
+  const env = nightSetup({ cases: { 'demo-case': {}, 'other-case': {} } });
+  const r = runner(env, ['--cases', 'demo-case,other-case', '--run-large', ...runLargeArgs(env, 0, 12)]);
+  assert.match(r.stdout, /2 个用例/);
+  assert.match(r.stdout, /预计花费约 \$\d+\.\d\d–\$\d+\.\d\d/);
+});
+
+test('--run-large takes the review loop file\'s worktree from --repo when --worktree is not given', () => {
+  const env = nightSetup();
+  const wt = env.worktrees[0];
+  const r = runner(env, [
+    '--case', 'demo-case', '--run-large', '--pr', '12', '--repo', wt, '--after-plugin', join(wt, 'idea-loop'),
+    '--cases-root', join(wt, 'idea-loop', 'evals', 'retro'), '--base', 'base-point', '--out', env.out, '--queue-dir', env.queueDir, '--timeout-min', '1',
+  ]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.ok(existsSync(reviewLoopPath(wt, 12)));
+});
+
+test('--run-large does not combine with --queue, --enqueue or --settle', () => {
+  const env = nightSetup();
+  const r = runner(env, ['--case', 'demo-case', '--run-large', '--queue', ...runLargeArgs(env, 0, 12)]);
+  assert.equal(r.status, 2);
   assert.deepEqual(r.calls, []);
 });

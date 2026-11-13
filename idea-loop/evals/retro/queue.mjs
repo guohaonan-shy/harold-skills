@@ -102,23 +102,32 @@ function describeCase(r) {
 }
 
 /**
- * One review-loop entry for a night's replay of one PR. A replay entry is a record the runner wrote:
+ * One review-loop entry for the replay of one PR. A replay entry is a record the runner wrote:
  * when every case passed it says so under 做了什么 (nothing is waiting for the human); otherwise it carries a
  * 要你决定 and no 做了什么, so `review-loop.mjs check` lists it until the human has ruled and it was acted on.
+ *
+ * `source` says who ran it: `night` (default, the nightly queue) or `run-large` (the human said "run it now"; nothing came out
+ * of a queue unless `fromQueue` lists the cases it took out of the night queue, and only then is a queue mentioned).
  */
-export function buildReplayEntry({ round, ranAt, results }) {
+export function buildReplayEntry({ round, ranAt, results, source = 'night', fromQueue = [] }) {
   const s = summarizeResults(results);
+  const now = source === 'run-large';
   const when = `${ranAt.getFullYear()}-${pad(ranAt.getMonth() + 1)}-${pad(ranAt.getDate())} ${clock(ranAt)}`;
   const head = `## 规则回放 第 ${round} 次 · ${s.total} 个用例，${s.passed} 个过${s.notPassed ? `，${s.notPassed} 个没过` : ''}`;
-  const lines = [`<!-- idea-loop-entry ${JSON.stringify({ kind: 'replay', round })} -->`, head, '', `夜间队列在 ${when} 跑完，花费 ${usd(s.cost)}。判定会话答的是「改前否、改后是」才算过。`, ''];
+  const ran = now ? `当场跑（--run-large）在 ${when} 跑完` : `夜间队列在 ${when} 跑完`;
+  const lines = [`<!-- idea-loop-entry ${JSON.stringify({ kind: 'replay', round })} -->`, head, '', `${ran}，花费 ${usd(s.cost)}。判定会话答的是「改前否、改后是」才算过。`, ''];
   for (const r of results) lines.push(...describeCase(r));
   lines.push('');
+  const taken = now && fromQueue.length ? `夜间队列里这个 PR 的 ${fromQueue.map((c) => `\`${c}\``).join('、')} 已拿掉，夜里不会重跑。` : null;
   if (s.allPassed) {
-    lines.push('### 做了什么', '- 全部用例都过，没有要处理的；队列文件已删。');
+    lines.push('### 做了什么', now ? '- 全部用例都过，没有要处理的。' : '- 全部用例都过，没有要处理的；队列文件已删。');
+    if (taken) lines.push(`- ${taken}`);
   } else {
     const bad = results.filter((r) => r.outcome !== 'pass').map((r) => `\`${r.case}\``).join('、');
     lines.push(
-      `**要你决定**：${bad} 没过，队列里这个 PR 的回放已经跑完并删掉，不会自动重跑。`,
+      now
+        ? `**要你决定**：${bad} 没过，不会自动重跑。${taken ?? ''}`
+        : `**要你决定**：${bad} 没过，队列里这个 PR 的回放已经跑完并删掉，不会自动重跑。`,
       '- A：判定对，规则改动没达到目的 —— 回到规则，接着改，再排一次回放。',
       '- B：判定错了 —— 在用例旁的 `annotations.md` 里推翻，再跑 `--settle`。',
       '- C：用例本身有问题（没抓住问题、写不清）—— 先修用例再排。',
@@ -142,10 +151,10 @@ function nextReplayRound(text) {
 }
 
 /** The loop file's new text: everything that was there, then this replay as one more entry. */
-export function appendReplayResults(loopText, { pr, ranAt, results }) {
+export function appendReplayResults(loopText, { pr, ranAt, results, source, fromQueue }) {
   const round = nextReplayRound(loopText);
   const base = loopText && loopText.trim() ? `${loopText.replace(/\s*$/, '')}\n\n` : `# PR #${pr} 的 review loop\n\n`;
-  return { text: base + buildReplayEntry({ round, ranAt, results }), round };
+  return { text: base + buildReplayEntry({ round, ranAt, results, source, fromQueue }), round };
 }
 
 /** The one-line push after a PR's replay finished. */

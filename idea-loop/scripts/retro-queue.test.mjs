@@ -128,6 +128,28 @@ test('when a case does not pass, the entry hands the result to the human and sta
   assert.equal(done.settled, true);
 });
 
+test('an entry written by a run-now (`source: \'run-large\'`) never says the night queue ran it; the night wording is the default and is unchanged', () => {
+  const night = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
+  assert.match(night, /夜间队列在 2026-10-23 01:07 跑完/);
+  assert.match(night, /队列文件已删/);
+  const now = buildReplayEntry({ round: 1, source: 'run-large', ...ENTRY_INPUT([pass('a')]) });
+  assert.match(now, /当场跑（--run-large）在 2026-10-23 01:07 跑完/);
+  assert.doesNotMatch(now, /夜间队列|队列文件/, 'nothing came out of a queue, so no queue is mentioned');
+  const notPassed = buildReplayEntry({ round: 2, source: 'run-large', ...ENTRY_INPUT([fail('b')]) });
+  assert.doesNotMatch(notPassed, /夜间队列|队列/);
+  assert.match(notPassed, /不会自动重跑/);
+  assert.deepEqual(parseLoop(notPassed).map((e) => [e.kind, e.settled]), [['replay', false]], 'still unsettled until the human rules');
+});
+
+test('a run-now entry says what it took out of the night queue, only when it took something', () => {
+  const taken = buildReplayEntry({ round: 1, source: 'run-large', fromQueue: ['a', 'b'], ...ENTRY_INPUT([pass('a'), pass('b')]) });
+  assert.match(taken, /夜间队列里这个 PR 的 `a`、`b` 已拿掉/);
+  assert.deepEqual(parseLoop(taken).map((e) => e.settled), [true]);
+  const failed = buildReplayEntry({ round: 1, source: 'run-large', fromQueue: ['b'], ...ENTRY_INPUT([fail('b')]) });
+  assert.match(failed, /夜间队列里这个 PR 的 `b` 已拿掉/);
+  assert.doesNotMatch(buildReplayEntry({ round: 1, source: 'run-large', fromQueue: [], ...ENTRY_INPUT([pass('a')]) }), /队列/);
+});
+
 test('every case is listed with the judge\'s answer on each side, the quote it found, and where the products are', () => {
   const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
   assert.match(text, /`a`/);

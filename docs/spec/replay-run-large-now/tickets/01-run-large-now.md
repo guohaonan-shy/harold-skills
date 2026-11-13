@@ -20,15 +20,15 @@
 
 ## 验收标准
 
-- [ ] 端到端测试（假 `claude`）：标成大的用例，白天跑 `--case <它> --run-large --pr 12 --worktree <wt>`，起三次会话、退出码 0，review loop 文件里一条已处理的 `规则回放` 条目（`review-loop.mjs check` 读得出）
-- [ ] 端到端测试：先 `--enqueue` 了该用例，`--run-large` 跑完后队列里该 PR 的文件没了；同一 PR 队列里还有别的用例时只删掉跑了的那个
-- [ ] 端到端测试：改后仍答「否」时退出码 1，条目留作未处理
-- [ ] 端到端测试：`--run-large` 不带 `--pr` 退出码 2，不起会话
-- [ ] 端到端测试：只 `--case <大用例>` 退出码 3，输出提到 `--run-large`
-- [ ] 端到端测试：`--run-large` 跑一个起了 agent 的小用例，不中止、不改标用例
-- [ ] 文档测试：issue-session 的 SKILL.md 点名「现在就跑」与 replay-result.md 的「当场跑」；replay-result.md 的「当场跑」写了 `--run-large`、跑前告诉人多久与花多少、后台跑、重装 runner
-- [ ] issue-session SKILL.md 主体 < 5000 字
-- [ ] 仓库全部测试通过（命令见 REVIEW.md）
+- [x] 端到端测试（假 `claude`）：标成大的用例，白天跑 `--case <它> --run-large --pr 12 --worktree <wt>`，起三次会话、退出码 0，review loop 文件里一条已处理的 `规则回放` 条目（`review-loop.mjs check` 读得出）
+- [x] 端到端测试：先 `--enqueue` 了该用例，`--run-large` 跑完后队列里该 PR 的文件没了；同一 PR 队列里还有别的用例时只删掉跑了的那个
+- [x] 端到端测试：改后仍答「否」时退出码 1，条目留作未处理
+- [x] 端到端测试：`--run-large` 不带 `--pr` 退出码 2，不起会话
+- [x] 端到端测试：只 `--case <大用例>` 退出码 3，输出提到 `--run-large`
+- [x] 端到端测试：`--run-large` 跑一个起了 agent 的小用例，不中止、不改标用例
+- [x] 文档测试：issue-session 的 SKILL.md 点名「现在就跑」与 replay-result.md 的「当场跑」；replay-result.md 的「当场跑」写了 `--run-large`、跑前告诉人多久与花多少、后台跑、重装 runner
+- [x] issue-session SKILL.md 主体 < 5000 字
+- [x] 仓库全部测试通过（命令见 REVIEW.md）
 
 ## 选中的存量回归
 

@@ -24,9 +24,24 @@
  * on its own. Run from the plugin's own copy, with none of them given, it tests that copy. Run from the installed
  * copy (`~/.idea-loop/bin/`, see scripts/retro-install.mjs) it has no copy of its own to test and asks for one.
  *
- * Only small cases run by `--case`. A case marked large is not run: the runner says "要进夜间队列" and exits 3.
+ * Only small cases run by `--case`. A case marked large is not run: the runner says "要进夜间队列" (and, for when the
+ * human says "run it now", how: `--run-large --pr <N>`) and exits 3.
  * A case marked small whose run starts an agent or opens a browser is stopped on the spot, relabelled large
  * in its case.json, and also exits 3.
+ *
+ * Running cases now because the human said so (the night queue only starts between 00:00 and 07:00):
+ *
+ *   node ~/.idea-loop/bin/retro-replay.mjs --run-large --pr <N> --worktree <dir> (--case <name> | --cases a,b) [--base main] [--timeout-min 45]
+ *
+ * It runs the named cases (large or small) at any hour, one after the other, the way the night run does (the same function:
+ * nothing is stopped for starting an agent or opening a browser, no case.json is relabelled); `--timeout-min` defaults to 45
+ * here (20 everywhere else). `--pr` is required: the result is appended to that PR's review loop file
+ * (`<worktree>/.tmp/review-loop/<N>.md`, one `规则回放` entry in the night's layout whose wording says 当场跑 instead of the night queue, and names the cases it took out of the queue, if any; the directory is `--worktree`, else
+ * `--repo`, else the repository root of the current directory) and the output says which file. It sends no session message
+ * and no notification and prints no `回放结果` line: whoever started it reads its output and the file. Queue files in
+ * `--queue-dir` of the same worktree and PR lose the cases that ran (a file left empty is deleted), so the night run does
+ * not repeat them. Exit codes: 0 all passed · 1 some did not · 2 no `--pr`, no case, or a case that does not exist or is
+ * malformed (no session is started) · 4 / 5 when a judge or a session gave nothing (5 wins over 4, 4 over 1).
  *
  * The nightly queue (`~/.idea-loop/replay-queue/`, one file per PR waiting for its replays; format in queue.mjs):
  *
@@ -72,11 +87,14 @@ const PLUGIN_ROOT = resolve(HERE, '..', '..');
 const DEFAULT_OUT = '/tmp/idea-loop-retro';
 const DEFAULT_QUEUE_DIR = join(homedir(), '.idea-loop', 'replay-queue');
 const CLAUDE = process.env.RETRO_CLAUDE_BIN || 'claude';
+/** A session's timeout in minutes: 20 for a small case and the night run, 45 for `--run-large` (large cases take longer). */
+const DEFAULT_TIMEOUT_MIN = 20;
+const RUN_LARGE_TIMEOUT_MIN = 45;
 
 function parseArgs(argv) {
   const o = {
-    list: false, case: null, settle: null, run: null, base: null, repo: null, out: DEFAULT_OUT, model: null, timeoutMin: 20,
-    casesRoot: null, beforePlugin: null, afterPlugin: null, worktree: null,
+    list: false, case: null, settle: null, run: null, base: null, repo: null, out: DEFAULT_OUT, model: null, timeoutMin: null,
+    casesRoot: null, beforePlugin: null, afterPlugin: null, worktree: null, runLarge: false,
     queue: false, enqueue: false, session: null, notify: null, queueDir: DEFAULT_QUEUE_DIR, now: null, slug: null, pr: null, cases: null,
   };
   const val = (i) => {
@@ -98,6 +116,7 @@ function parseArgs(argv) {
     else if (a === '--before-plugin') o.beforePlugin = resolve(val(++i));
     else if (a === '--after-plugin') o.afterPlugin = resolve(val(++i));
     else if (a === '--worktree') o.worktree = resolve(val(++i));
+    else if (a === '--run-large') o.runLarge = true;
     else if (a === '--queue') o.queue = true;
     else if (a === '--enqueue') o.enqueue = true;
     else if (a === '--session') o.session = val(++i);
@@ -111,6 +130,7 @@ function parseArgs(argv) {
     else if (a === '--cases') o.cases = val(++i).split(',').map((x) => x.trim()).filter(Boolean);
     else throw new Error(`unknown argument: ${a}`);
   }
+  o.timeoutMin ??= o.runLarge ? RUN_LARGE_TIMEOUT_MIN : DEFAULT_TIMEOUT_MIN;
   return o;
 }
 
@@ -221,7 +241,7 @@ const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
  */
 async function executeReplay(opts, t, c, { queue = false } = {}) {
   const est = estimateCostUsd(1);
-  console.log(`${c.name}: 小用例，当场跑。预计花费约 ${usd(est.low)}–${usd(est.high)}（改前、改后各一次 claude -p，加一次判定；空跑一次约 $0.3–0.5，完整跑一个 skill 约 $1.5）`);
+  console.log(`${c.name}: ${c.size === 'large' ? '大' : '小'}用例，当场跑。预计花费约 ${usd(est.low)}–${usd(est.high)}（改前、改后各一次 claude -p，加一次判定；空跑一次约 $0.3–0.5，完整跑一个 skill 约 $1.5）`);
 
   const runId = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*$/, '');
   const runDir = join(opts.out, c.name, runId);
@@ -314,7 +334,7 @@ async function replay(opts, t) {
     return 2;
   }
   if (c.size === 'large') {
-    console.log(`要进夜间队列：${c.name}（标成大：${c.size_basis}）。这里不跑。`);
+    console.log(`要进夜间队列：${c.name}（标成大：${c.size_basis}）。这里不跑。人说现在就跑：加 --run-large --pr <N>。`);
     return 3;
   }
   const repo = t.repo ?? git(process.cwd(), 'rev-parse', '--show-toplevel').toString('utf8').trim();
@@ -362,8 +382,16 @@ function notify(message) {
 }
 
 /** One queued case of one PR, run as a night run. Always ends in a result record, never throws. */
-async function replayForQueue(entry, name, opts) {
+function replayForQueue(entry, name, opts) {
   const t = { repo: entry.worktree, afterPlugin: join(entry.worktree, 'idea-loop'), casesRoot: join(entry.worktree, 'idea-loop', 'evals', 'retro') };
+  return replayAsNight(t, name, { ...opts, base: entry.base ?? 'main', beforePlugin: null });
+}
+
+/**
+ * One named case, run the night way (nothing is stopped for starting an agent or opening a browser): the queue's runs and
+ * `--run-large` both go through here. Always ends in a result record, never throws.
+ */
+async function replayAsNight(t, name, opts) {
   let c;
   try {
     c = loadCases(t.casesRoot).find((x) => x.name === name);
@@ -374,7 +402,7 @@ async function replayForQueue(entry, name, opts) {
   const problems = validateCase(c);
   if (problems.length) return { case: name, outcome: 'bad-case', reason: `用例格式不对：${problems.map((p) => `${p.field}: ${p.message}`).join('；')}` };
   try {
-    const r = await executeReplay({ ...opts, base: entry.base ?? 'main', beforePlugin: null }, t, c, { queue: true });
+    const r = await executeReplay(opts, t, c, { queue: true });
     if (r.result) {
       return { case: name, outcome: r.result.outcome, reason: r.result.reason, verdicts: r.result.verdicts ?? undefined, cost: r.result.cost, runDir: r.runDir };
     }
@@ -382,6 +410,15 @@ async function replayForQueue(entry, name, opts) {
   } catch (e) {
     return { case: name, outcome: 'no-result', reason: `跑的时候出错：${e.message}` };
   }
+}
+
+/** Append one `规则回放` entry for a PR to its review loop file, creating the file when it is not there yet. Returns the entry's round. */
+function writeReplayEntry({ worktree, pr, ranAt, results, source, fromQueue }) {
+  const loopFile = reviewLoopPath(worktree, pr);
+  const { text, round } = appendReplayResults(existsSync(loopFile) ? readFileSync(loopFile, 'utf8') : '', { pr, ranAt, results, source, fromQueue });
+  mkdirSync(dirname(loopFile), { recursive: true });
+  writeFileSync(loopFile, text);
+  return round;
 }
 
 async function runQueue(opts) {
@@ -423,9 +460,7 @@ async function runQueue(opts) {
 
     const loopFile = reviewLoopPath(entry.worktree, entry.pr);
     try {
-      const { text, round } = appendReplayResults(existsSync(loopFile) ? readFileSync(loopFile, 'utf8') : '', { pr: entry.pr, ranAt: clockNow(), results });
-      mkdirSync(dirname(loopFile), { recursive: true });
-      writeFileSync(loopFile, text);
+      const round = writeReplayEntry({ worktree: entry.worktree, pr: entry.pr, ranAt: clockNow(), results });
       console.log(`结果写进 ${loopFile}（规则回放第 ${round} 次）`);
     } catch (e) {
       console.error(`${file}: 结果没能写进 ${loopFile}（${e.message}），留在队列里，等下一晚`);
@@ -441,6 +476,95 @@ async function runQueue(opts) {
     if (!entry.session) notify(pushMessage({ repo: entry.repo, pr: entry.pr, results }));
   }
   return skipped ? 1 : 0;
+}
+
+/**
+ * What running `ran` now takes out of the queue files of the same worktree and PR (matched on what the entry records, not
+ * on `--slug`): per file, the cases that go and the cases that stay. Nothing is changed here; `applyQueueDrop` does it, after
+ * the result is safely in the review loop file.
+ */
+function planQueueDrop({ queueDir, worktree, pr, ran }) {
+  if (!existsSync(queueDir)) return [];
+  const plan = [];
+  for (const file of readdirSync(queueDir).filter((f) => f.endsWith('.json')).sort()) {
+    const path = join(queueDir, file);
+    let entry;
+    try {
+      entry = JSON.parse(readFileSync(path, 'utf8'));
+    } catch {
+      continue;
+    }
+    if (!entry || typeof entry.worktree !== 'string' || resolve(entry.worktree) !== worktree || entry.pr !== pr || !Array.isArray(entry.cases)) continue;
+    const taken = entry.cases.filter((n) => ran.includes(n));
+    if (!taken.length) continue;
+    plan.push({ file, path, entry, taken, left: entry.cases.filter((n) => !ran.includes(n)) });
+  }
+  return plan;
+}
+
+/** Carry out a `planQueueDrop`: a file left with no case is deleted. Returns one log line per file. */
+function applyQueueDrop(plan) {
+  return plan.map(({ file, path, entry, taken, left }) => {
+    if (left.length) writeFileSync(path, `${JSON.stringify({ ...entry, cases: left }, null, 2)}\n`);
+    else unlinkSync(path);
+    return `${file}：拿掉 ${taken.join('、')}${left.length ? `，还剩 ${left.join('、')}` : '，没有用例了，文件已删'}`;
+  });
+}
+
+/**
+ * `--run-large`: the human said "run it now". The named cases (large or small) run the night way, one after the other, at any
+ * hour; the result goes into the PR's review loop file as one `规则回放` entry; the cases leave the queue. Nothing is sent
+ * anywhere: the session that called the runner reads this output and the file.
+ */
+async function runLarge(opts, t) {
+  const bad = (m) => {
+    console.error(m);
+    return 2;
+  };
+  if (!Number.isSafeInteger(opts.pr) || opts.pr < 1) return bad('--run-large 必带 --pr <PR 号>：结果要写进这个 PR 的 review loop 文件，没有 PR 号写不进去');
+  const names = [...new Set([...(opts.case ? [opts.case] : []), ...(opts.cases ?? [])])];
+  if (!names.length) return bad('--run-large 要用 --case <名字> 或 --cases a,b 说明跑哪些用例');
+  let known;
+  let repo = t.repo;
+  try {
+    known = new Map(loadCases(t.casesRoot).map((c) => [c.name, c]));
+    repo ??= git(process.cwd(), 'rev-parse', '--show-toplevel').toString('utf8').trim();
+  } catch (e) {
+    return bad(e.message);
+  }
+  // every case is checked before any session starts
+  const found = [];
+  for (const name of names) {
+    const c = known.get(name);
+    if (!c) return bad(`no case "${name}"; cases: ${[...known.keys()].join(', ') || '(none)'}`);
+    const problems = validateCase(c);
+    if (problems.length) return bad(problems.map((p) => `${name}: ${p.field}: ${p.message}`).join('\n'));
+    found.push(c);
+  }
+  const worktree = opts.worktree ?? opts.repo ?? repo;
+  const est = estimateCostUsd(names.length);
+  console.log(`--run-large：${names.length} 个用例（${names.join('、')}），当场跑，大的也跑，起 agent、开浏览器都不中止。每个用例改前、改后、判定各一个会话，每个会话超时 ${opts.timeoutMin} 分钟，一个用例最长约 3×${opts.timeoutMin} 分钟；预计花费约 ${usd(est.low)}–${usd(est.high)}（起 agent 的会比这高）。`);
+
+  const results = [];
+  for (const c of found) results.push(await replayAsNight({ ...t, repo }, c.name, { ...opts, base: opts.base ?? 'main' }));
+
+  const loopFile = reviewLoopPath(worktree, opts.pr);
+  const plan = planQueueDrop({ queueDir: opts.queueDir, worktree: resolve(worktree), pr: opts.pr, ran: names });
+  let round;
+  try {
+    round = writeReplayEntry({ worktree, pr: opts.pr, ranAt: new Date(), results, source: 'run-large', fromQueue: names.filter((n) => plan.some((p) => p.taken.includes(n))) });
+  } catch (e) {
+    console.error(`结果没能写进 ${loopFile}：${e.message}`);
+    return 1;
+  }
+  console.log(`\n结果写进 ${loopFile}（规则回放第 ${round} 次）`);
+  for (const line of applyQueueDrop(plan)) console.log(`夜间队列：${line}`);
+  const s = summarizeResults(results);
+  console.log(`${s.passed}/${s.total} 个用例过，花费 ${usd(s.cost)}`);
+  if (s.allPassed) return 0;
+  if (results.some((r) => r.outcome === 'no-result')) return 5;
+  if (results.some((r) => r.outcome === 'inconclusive')) return 4;
+  return 1;
 }
 
 /** Put a PR's cases into the queue (or add them to the file the PR already has). */
@@ -478,9 +602,13 @@ export async function main(argv = process.argv.slice(2)) {
   let t;
   try {
     opts = parseArgs(argv);
-    t = resolveTargets(opts, { needPlugin: Boolean(opts.case), needCases: !opts.queue && opts.notify === null });
+    t = resolveTargets(opts, { needPlugin: Boolean(opts.case) || opts.runLarge, needCases: !opts.queue && opts.notify === null });
   } catch (e) {
     console.error(e.message);
+    return 2;
+  }
+  if (opts.runLarge && (opts.queue || opts.enqueue || opts.settle || opts.list || opts.notify !== null)) {
+    console.error('--run-large 不跟 --list、--queue、--enqueue、--settle、--notify 一起用');
     return 2;
   }
   if (opts.list) {
@@ -493,11 +621,12 @@ export async function main(argv = process.argv.slice(2)) {
     notify(opts.notify);
     return 0;
   }
+  if (opts.runLarge) return runLarge(opts, t);
   if (opts.queue) return runQueue(opts);
   if (opts.enqueue) return enqueue(opts);
   if (opts.settle) return settle(opts, t);
   if (opts.case) return replay(opts, t);
-  console.error('usage: retro-replay.mjs --list | --case <name> | --settle <name> --run <dir> | --enqueue … | --queue');
+  console.error('usage: retro-replay.mjs --list | --case <name> | --settle <name> --run <dir> | --run-large --pr <N> (--case <name> | --cases a,b) | --enqueue … | --queue');
   return 2;
 }
 
