@@ -1337,3 +1337,15 @@ browserTest('browser cover: the document scrolls and a bar is pinned to the foot
   assert.deepEqual(r.shot, { see: `${COVER_STATE}@see.png`, deep: `${COVER_STATE}@deep.png` });
   assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
 });
+
+browserTest('browser cover: a tab bar laid over a <main> that runs to the foot of the screen (absolute, not fixed) — a button it covers is shot, the bar\'s own button is not', async () => {
+  // header 60, <main> from 60 to 600 (its own scroll, nothing below it), tab bar 540–600 laid over it: `See sample` is at 530–570
+  const url = s1Url('html, body { height: 100%; overflow: hidden; } main { position: absolute; top: 60px; bottom: 0; left: 0; right: 0; overflow: auto; } nav { z-index: 2; }',
+    `<header>Shell</header><main><div class="tall">${S1_BUTTONS}</div></main><nav><button>Home</button></nav>`);
+  const { out, r } = await coverRun({ url, edges: S1_EDGES });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(r.inViewport, ['begin', 'home']);
+  assert.deepEqual(r.shot, { see: `${COVER_STATE}@see.png`, deep: `${COVER_STATE}@deep.png` });
+  assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
+});
