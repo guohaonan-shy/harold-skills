@@ -16,7 +16,7 @@ import { createRequire } from 'node:module';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { attribute, buildMeasureCode, buildPinnedCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
+import { attribute, buildCoverCode, buildMeasureCode, buildPinnedCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, shootTargets } from './design-archive-sections.mjs';
 import { comparePngs, decodePng } from './ui-png-compare.mjs';
 
 const home = homedir();
@@ -1172,4 +1172,128 @@ browserTest('browser screen: something the page time cannot hold (a Worker count
   assert.equal(s.uncontrolled, true);
   assert.ok(s.diffBox && s.diffBox.width > 0 && s.diffBox.height > 0, JSON.stringify(s));
   assert.ok(s.diffBox.y >= 420, `the counter is in the band below the two carousels: ${JSON.stringify(s.diffBox)}`);
+});
+
+// ---------- cover: a state taller than the main viewport, with no sections ----------
+//
+//   800×600 viewport · a page 3000 tall (the document scrolls): a button `Begin` on the first screen, a button `Review` at 1200,
+//   four footer links at 2800–2960 (under the last whole screen of the page, which starts at 2400). Every one has an edge.
+
+const COVER_STATE = 'report--loaded';
+const coverPage = ({ twin = false } = {}) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; height: 3000px; position: relative; font: 16px sans-serif; }
+  a, button { position: absolute; left: 40px; width: 200px; height: 40px; display: block; border: 0; background: #06c; color: #fff; font: 16px sans-serif; }
+</style></head><body>
+<button style="top: 80px">Begin</button>
+<button style="top: 1200px">Review</button>
+${twin ? '<button style="top: 1400px">Twin</button><button style="top: 1440px">Twin</button>' : ''}
+<a href="/terms" style="top: 2800px">Terms</a><a href="/privacy" style="top: 2860px">Privacy</a><a href="/help" style="top: 2900px">Help</a><a href="/contact" style="top: 2920px">Contact</a>
+</body></html>`;
+const coverUrl = (variant) => `data:text/html;charset=utf-8,${encodeURIComponent(coverPage(variant))}`;
+const edge = (id, role, name) => ({ id, locate: { role, name } });
+const COVER_EDGES = [
+  edge('begin', 'button', 'Begin'),
+  edge('review', 'button', 'Review'),
+  edge('terms', 'link', 'Terms'),
+  edge('privacy', 'link', 'Privacy'),
+  edge('help', 'link', 'Help'),
+  edge('contact', 'link', 'Contact'),
+];
+
+/** Open the cover page, optionally start the page time, mark the page (a reload would lose the mark), run `cover`. */
+async function coverRun({ edges = COVER_EDGES, variant, url = coverUrl(variant), time = true } = {}) {
+  const p = await freshPage();
+  try {
+    await p.goto(url);
+    if (time) await runOn(p, buildTimeCode(SETTINGS));
+    await p.evaluate(() => {
+      window.__marked = 'kept';
+    });
+    const out = mkdtempSync(join(tmpdir(), 'sections-cover-'));
+    const r = await runOn(p, buildCoverCode({ state: COVER_STATE, edges, ...SETTINGS, outDir: out }));
+    const marked = await p.evaluate(() => window.__marked);
+    return { out, r, marked };
+  } finally {
+    await p.context().close();
+  }
+}
+
+browserTest('browser cover: the component on the first screen is left alone, the five below it are shot on two pictures, and each edge is told which picture it is on', async () => {
+  const { out, r, marked } = await coverRun();
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(r.inViewport, ['begin']);
+  assert.deepEqual(r.shot, {
+    review: `${COVER_STATE}@review.png`,
+    terms: `${COVER_STATE}@terms.png`,
+    privacy: `${COVER_STATE}@terms.png`,
+    help: `${COVER_STATE}@terms.png`,
+    contact: `${COVER_STATE}@terms.png`,
+  });
+  assert.deepEqual(r.shots.map((s) => [s.file, s.y0, s.y1, s.width, s.height]), [
+    [`${COVER_STATE}@review.png`, 1050, 1650, 800, 600],
+    [`${COVER_STATE}@terms.png`, 2400, 3000, 800, 600],
+  ]);
+  assert.deepEqual(readdirSync(out).sort(), [`${COVER_STATE}@review.png`, `${COVER_STATE}@terms.png`]);
+  for (const s of r.shots) {
+    assert.deepEqual(pngSize(join(out, s.file)), [800, 600]);
+    assert.equal(s.uncontrolled, false);
+  }
+  assert.match(r.clock, /present/);
+  assert.equal(marked, 'kept', 'the page was not reloaded');
+  // the pictures show the components: the blue box of a link is where the link is on the screen (`Contact` at 2920, in the screen that starts at 2400)
+  const pixel = (img, x, y) => [0, 1, 2].map((k) => img.data[(y * img.width + x) * 4 + k]);
+  const terms = decodePng(readFileSync(join(out, `${COVER_STATE}@terms.png`)));
+  assert.deepEqual(pixel(terms, 100, 2920 - 2400 + 10), [0, 102, 204]);
+  assert.deepEqual(pixel(terms, 100, 10), [255, 255, 255], 'above the footer links is the page');
+  const review = decodePng(readFileSync(join(out, `${COVER_STATE}@review.png`)));
+  assert.deepEqual(pixel(review, 100, 1200 - 1050 + 10), [0, 102, 204]);
+});
+
+browserTest('browser cover: a page time that was not started is said to be late', async () => {
+  const { r } = await coverRun({ time: false });
+  assert.match(r.clock, /装晚了/);
+  assert.equal(r.exit, 0);
+});
+
+browserTest('browser cover: an edge whose component is not on the page, or is on it twice, is unlocated and the exit is 1; the others are still shot', async () => {
+  const edges = [...COVER_EDGES, edge('gone', 'link', 'Nowhere'), edge('twin', 'button', 'Twin'), { id: 'text-only', locate: { text: 'Review' } }];
+  const { out, r } = await coverRun({ edges, variant: { twin: true } });
+  assert.equal(r.exit, 1);
+  assert.deepEqual(r.unlocated.map((u) => [u.id, u.matches]), [['gone', 0], ['twin', 2]]);
+  assert.equal(r.shot.review, `${COVER_STATE}@review.png`);
+  assert.equal(r.shot['text-only'], `${COVER_STATE}@review.png`, 'a { text } locate finds it by its text');
+  assert.equal(r.shot.gone, undefined);
+  assert.equal(r.shot.twin, undefined);
+  assert.ok(readdirSync(out).includes(`${COVER_STATE}@terms.png`));
+});
+
+browserTest('browser cover: every component inside the main viewport — nothing is shot', async () => {
+  const { out, r } = await coverRun({ edges: [COVER_EDGES[0]] });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.shot, {});
+  assert.deepEqual(r.shots, []);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(readdirSync(out), []);
+});
+
+// an app shell: the document is locked at one screen and a <main> scrolls
+const shellUrl = () => `data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><html><head><meta charset="utf-8"><style>
+  html, body { height: 100%; margin: 0; overflow: hidden; font: 16px sans-serif; }
+  header { height: 60px; background: #eee; }
+  main { position: absolute; top: 60px; bottom: 0; left: 0; right: 0; overflow: auto; }
+  .tall { position: relative; height: 3000px; }
+  button { position: absolute; left: 40px; width: 200px; height: 40px; border: 0; background: #06c; color: #fff; }
+</style></head><body><header>Shell</header><main><div class="tall"><button style="top: 20px">Begin</button><button style="top: 1500px">Deep</button></div></main></body></html>`)}`;
+
+browserTest('browser cover: on an app shell whose <main> scrolls, a component deep in it is shot inside the container', async () => {
+  const { out, r } = await coverRun({ url: shellUrl(), edges: [edge('begin', 'button', 'Begin'), edge('deep', 'button', 'Deep')] });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.inViewport, ['begin']);
+  assert.deepEqual(r.shot, { deep: `${COVER_STATE}@deep.png` });
+  assert.equal(r.shots.length, 1);
+  assert.deepEqual(pngSize(join(out, `${COVER_STATE}@deep.png`)), [800, 600]);
+  // `Deep` is at 60 + 1500 = 1560 on the page; the screen starts 150 above it, at 1410: the button is 150 down in the picture
+  const img = decodePng(readFileSync(join(out, `${COVER_STATE}@deep.png`)));
+  assert.deepEqual([0, 1, 2].map((k) => img.data[(160 * img.width + 100) * 4 + k]), [0, 102, 204]);
 });

@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { attribute, buildMeasureCode, buildPinnedCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, screenTargets, shootTargets } from './design-archive-sections.mjs';
+import { attribute, buildCoverCode, buildMeasureCode, buildPinnedCode, buildScreenCode, buildShootCode, buildStepCode, buildTimeCode, coverScreens, screenTargets, shootTargets } from './design-archive-sections.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));
 const run = (...args) => spawnSync('node', [CLI, ...args], { encoding: 'utf8' });
@@ -803,4 +803,124 @@ test('cli screen: usage errors exit 2 and say why', () => {
     assert.match(r.stderr, pattern, args.join(' '));
   }
   assert.equal(run('screen', writeRepo(files), 's-login--entry', '--out', out, '--viewport', '1440x900').status, 0);
+});
+
+// ---------- cover: the components below the first screen, shot a screen at a time ----------
+
+const comp = (id, top, height = 40) => ({ id, top, bottom: top + height });
+
+test('coverScreens: components below the main viewport are grouped from the top down, a screen starts a quarter of the viewport above its first component, and a screen near the page end is pulled up to a whole screen', () => {
+  const components = [comp('a', 1200), comp('b', 1500), comp('c', 3300), comp('d', 3350)];
+  const tall = coverScreens({ state: 'report--loaded', components, viewportHeight: 900, pageHeight: 5000 });
+  assert.deepEqual(tall.screens, [
+    { id: 'a', file: 'report--loaded@a.png', start: 975, end: 1875, edges: ['a', 'b'] },
+    { id: 'c', file: 'report--loaded@c.png', start: 3075, end: 3975, edges: ['c', 'd'] },
+  ]);
+  assert.deepEqual(tall.shot, { a: 'report--loaded@a.png', b: 'report--loaded@a.png', c: 'report--loaded@c.png', d: 'report--loaded@c.png' });
+  assert.deepEqual(tall.inViewport, []);
+
+  const short = coverScreens({ state: 'report--loaded', components, viewportHeight: 900, pageHeight: 3500 });
+  assert.deepEqual(short.screens.map((s) => [s.start, s.end, s.edges]), [[975, 1875, ['a', 'b']], [2600, 3500, ['c', 'd']]]);
+});
+
+test('coverScreens: a component that does not fit what is left of a screen starts the next one, and the order is by top, not by the order given', () => {
+  const r = coverScreens({ state: 's', components: [comp('late', 1800), comp('first', 1200), comp('mid', 1700)], viewportHeight: 900, pageHeight: 9000 });
+  // the screen of `first` is 975–1875: `mid` (1700–1740) fits, `late` (1800–1840) fits too
+  assert.deepEqual(r.screens.map((s) => [s.id, s.start, s.edges]), [['first', 975, ['first', 'mid', 'late']]]);
+  const wide = coverScreens({ state: 's', components: [comp('x', 1200), comp('y', 1850)], viewportHeight: 900, pageHeight: 9000 });
+  assert.deepEqual(wide.screens.map((s) => [s.id, s.start, s.edges]), [['x', 975, ['x']], ['y', 1625, ['y']]], 'y ends at 1890, past the end of the first screen (1875)');
+});
+
+test('coverScreens: a component whole inside the main viewport is not shot again; one only half in it is', () => {
+  const none = coverScreens({ state: 's', components: [comp('a', 100), comp('b', 860)], viewportHeight: 900, pageHeight: 3000 });
+  assert.deepEqual(none, { screens: [], shot: {}, inViewport: ['a', 'b'] });
+  const half = coverScreens({ state: 's', components: [comp('in', 100), comp('half', 880)], viewportHeight: 900, pageHeight: 3000 });
+  assert.deepEqual(half.inViewport, ['in']);
+  assert.deepEqual(half.shot, { half: 's@half.png' });
+  assert.equal(half.screens[0].start, 655);
+});
+
+test('coverScreens: the first screen never starts above the top of the page, and a component taller than a screen gets a screen of its own', () => {
+  const near = coverScreens({ state: 's', components: [comp('a', 950)], viewportHeight: 900, pageHeight: 3000 });
+  assert.equal(near.screens[0].start, 725);
+  const high = coverScreens({ state: 's', components: [comp('a', 905, 600)], viewportHeight: 400, pageHeight: 3000 });
+  assert.deepEqual(high.screens.map((s) => [s.start, s.end]), [[805, 1205]]);
+  const huge = coverScreens({ state: 's', components: [comp('big', 1000, 2000), comp('after', 3100)], viewportHeight: 900, pageHeight: 9000 });
+  assert.deepEqual(huge.screens.map((s) => s.edges), [['big'], ['after']]);
+  const shortPage = coverScreens({ state: 's', components: [comp('a', 1000)], viewportHeight: 900, pageHeight: 1100 });
+  assert.equal(shortPage.screens[0].start, 200);
+});
+
+test('coverScreens: bad input is refused', () => {
+  for (const bad of [
+    { state: '', components: [], viewportHeight: 900, pageHeight: 1 },
+    { state: 'a/b', components: [], viewportHeight: 900, pageHeight: 1 },
+    { state: 's', components: [], viewportHeight: 0, pageHeight: 1 },
+    { state: 's', components: 'x', viewportHeight: 900, pageHeight: 1 },
+  ]) assert.throws(() => coverScreens(bad), /状态|视口|组件/, JSON.stringify(bad));
+});
+
+test('buildCoverCode: a single async function of `page` that looks the edges up itself, shoots with the code `shoot` runs, and neither reloads the page nor moves its time', () => {
+  const code = buildCoverCode({ state: 'report--loaded', edges: [{ id: 'see-sample', locate: { role: 'link', name: '查看范文' } }], viewport: { width: 1440, height: 900 }, theme: 'light', motion: 'default', outDir: '/tmp/shots' });
+  assert.equal(runInNewContext(code).constructor.name, 'AsyncFunction');
+  assert.match(code, /see-sample/);
+  assert.match(code, /\/tmp\/shots/);
+  assert.match(code, /unlocated/);
+  assert.match(code, /uncontrolled/);
+  assert.match(code, /fullPage: true/);
+  assert.doesNotMatch(code, /pauseAt|resume\(|runFor|clock\.install|animations: 'disabled'/, 'no page time moved (that the page is not reloaded is checked in the browser test)');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'full-line comments are not sent to the tool');
+});
+
+// ---------- the command line: cover ----------
+
+test('cli cover: prints the code that shoots the components below the first screen of a state with no sections, with the settings from prod/index.md or the flags', () => {
+  const root = writeRepo(compliantFiles());
+  const out = join(tmp(), 'shots');
+  const r = run('cover', root, 'cookbook--list', '--out', out);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(typeof runInNewContext(r.stdout), 'function');
+  assert.match(r.stdout, /"id":"search"/);
+  assert.match(r.stdout, /"id":"open-pantry"/);
+  assert.doesNotMatch(r.stdout, /"id":"done"/, 'only user edges');
+  assert.match(r.stdout, /"viewport":\{"width":\d+,"height":\d+\}/);
+  assert.ok(r.stdout.includes(JSON.stringify(out)));
+  assert.match(r.stderr, /cover/);
+  assert.match(r.stderr, /装时间|time/);
+  const flagged = run('cover', root, 'cookbook--list', '--out', out, '--viewport', '390x844', '--theme', 'dark', '--motion', 'reduce');
+  assert.match(flagged.stdout, /"viewport":\{"width":390,"height":844\}/);
+  assert.match(flagged.stdout, /"theme":"dark"/);
+  assert.match(flagged.stdout, /"motion":"reduce"/);
+});
+
+test('cli cover: a state that declares sections exits 2 and points to measure / attribute / shoot', () => {
+  const root = writeRepo(marketingFiles());
+  const r = run('cover', root, MKT_ENTRY, '--out', join(tmp(), 'shots'));
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /measure/);
+  assert.match(r.stderr, /attribute/);
+  assert.match(r.stderr, /shoot/);
+});
+
+test('cli cover: usage errors exit 2 and say why', () => {
+  const root = writeRepo(compliantFiles());
+  const out = join(tmp(), 'shots');
+  const files = compliantFiles();
+  files[`${BASE}/index.md`] = files[`${BASE}/index.md`].replace(/viewport: .*\n/, '');
+  const cases = [
+    [['cover'], /仓库根/],
+    [['cover', root], /状态 id/],
+    [['cover', root, 'cookbook--list'], /--out/],
+    [['cover', root, 'cookbook--list', 'extra', '--out', out], /多出/],
+    [['cover', root, 'no-such-state', '--out', out], /没有状态/],
+    [['cover', writeRepo(files), 'cookbook--list', '--out', out], /viewport/],
+    [['cover', root, 'cookbook--list', '--out', out, '--bogus', 'x'], /不认识的选项/],
+    [['cover', writeRepo({ 'README.md': 'x' }), 'cookbook--list', '--out', out], /docs/],
+  ];
+  for (const [args, pattern] of cases) {
+    const r = run(...args);
+    assert.equal(r.status, 2, args.join(' '));
+    assert.match(r.stderr, pattern, args.join(' '));
+  }
+  assert.equal(run('cover', writeRepo(files), 'cookbook--list', '--out', out, '--viewport', '1440x900').status, 0);
 });

@@ -14,6 +14,7 @@
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" time <仓库根> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" step <毫秒数>
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录> [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <仓库根> <状态 id> --out <目录> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> <入口状态 id> [--delta <spec-slug>] [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> --state <入口状态 id> --page <页面> --sections-file <分段列表.json> [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" attribute <测量结果.json>
