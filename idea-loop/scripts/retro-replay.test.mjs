@@ -10,9 +10,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { projectName } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
   estimateCostUsd, fileBody, parseOverrides, settleVerdicts,
@@ -82,12 +83,14 @@ test('a small case that opened a browser is relabelled large too', () => {
   assert.match(c.size_basis, /开了浏览器/);
 });
 
-test('the worker prompt keeps the human words and tells the run to stop at the hand-over', () => {
+test('the worker prompt is the human words and nothing else: no note that it is a test, no stop point', () => {
   const c = smallCase();
-  const p = buildWorkerPrompt(c);
-  assert.ok(p.startsWith(c.prompt));
-  assert.ok(p.includes(c.stop_at));
-  assert.match(p, /无人值守/);
+  assert.equal(buildWorkerPrompt(c), c.prompt);
+});
+
+test('the judge prompt is told where the thing is handed to the human (stop_at), so it looks at that moment', () => {
+  const c = smallCase();
+  assert.ok(buildJudgePrompt(c, 'A-BODY', 'B-BODY').includes(c.stop_at));
 });
 
 test('the judge prompt carries the question and both products, and does not say which one is the new one', () => {
@@ -156,6 +159,7 @@ const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd() }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
 if (pd) {
@@ -203,15 +207,20 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   chmodSync(bin, 0o755);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
-  return { root, repo, casesRoot, caseDir, bin, log };
+  // where the runs work: a temp dir whose own path says nothing about a test
+  const tmp = mkdtempSync(join(tmpdir(), 'sbx-'));
+  return { root, repo, casesRoot, caseDir, bin, log, tmp };
 }
+
+/** What the fake `claude` was started with, one entry per session. */
+const sessions = (env) => (existsSync(`${env.log}.json`) ? readFileSync(`${env.log}.json`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 
 function run(env, extra = []) {
   const r = spawnSync(process.execPath, [
     RUNNER, '--case', 'demo-case', '--repo', env.repo, '--cases-root', env.casesRoot,
     '--before-plugin', join(env.root, 'before'), '--after-plugin', join(env.root, 'after'),
     '--out', join(env.root, 'out'), '--timeout-min', '1', ...extra,
-  ], { encoding: 'utf8', env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log }, timeout: 60_000 });
+  ], { encoding: 'utf8', env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp }, timeout: 60_000 });
   const calls = readFileSync(env.log, 'utf8').split('\n').filter(Boolean);
   return { ...r, calls };
 }
@@ -254,6 +263,65 @@ test('e2e: the worker sees the project as of the case commit and what it wrote i
   const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
   assert.equal(readFileSync(join(dir, 'after', 'project', 'README.md'), 'utf8'), 'project at the decision commit\n');
   assert.match(readFileSync(join(dir, 'after', 'artifact.md'), 'utf8'), /docs\/out\.md/);
+});
+
+test('e2e: both runs get exactly the case prompt, in a work dir that does not say it is a test, a different one each', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [w1, w2] = sessions(env).filter((x) => x.kind === 'worker');
+  for (const w of [w1, w2]) {
+    assert.equal(w.prompt, smallCase().prompt, 'the -p input is the case prompt, byte for byte');
+    assert.doesNotMatch(w.cwd, /retro|replay|回放|before|after|eval/i, `work dir ${w.cwd}`);
+    assert.equal(basename(w.cwd), 'repo', 'the project keeps the name of the repository it was copied from');
+  }
+  assert.notEqual(w1.cwd, w2.cwd);
+  assert.notEqual(dirname(w1.cwd), dirname(w2.cwd), 'one random dir per run');
+  // what the runs left behind stays under the run dir, where the agent does not look
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  assert.ok(existsSync(join(dir, 'before', 'project', 'docs', 'out.md')));
+  assert.ok(existsSync(join(dir, 'after', 'run.stream.jsonl')));
+  assert.ok(!existsSync(dirname(w1.cwd)), 'the work dir is gone once the run is over');
+});
+
+test('e2e: the judge is told where the thing is handed to the human', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  run(env);
+  const judge = sessions(env).find((x) => x.kind === 'judge');
+  assert.ok(judge.prompt.includes(smallCase().stop_at));
+});
+
+test('e2e: a case whose prompt says it is a test is refused with exit 2 before any session starts; --list names it', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  c.prompt = `${c.prompt}\n\n这是回放，人不在场`;
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify(c));
+  const r = run(env);
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /prompt/);
+  assert.match(r.stderr, /回放/);
+  assert.deepEqual(r.calls, []);
+  assert.deepEqual(sessions(env), []);
+  assert.ok(!existsSync(join(env.root, 'out')), 'nothing was set up either');
+  const l = spawnSync(process.execPath, [RUNNER, '--list', '--cases-root', env.casesRoot], { encoding: 'utf8' });
+  assert.match(l.stdout, /格式问题 demo-case: prompt/);
+});
+
+test('projectName: the repository\'s own name, else its directory, else "project" when the name would give the test away', () => {
+  const root = mkdtempSync(join(tmpdir(), 'name-'));
+  const mk = (dir, remote) => {
+    const d = join(root, dir);
+    mkdirSync(d, { recursive: true });
+    spawnSync('git', ['init', '-q'], { cwd: d });
+    if (remote) spawnSync('git', ['remote', 'add', 'origin', remote], { cwd: d });
+    return d;
+  };
+  assert.equal(projectName(mk('wt-1', 'git@github.com:acme/widgets.git')), 'widgets');
+  assert.equal(projectName(mk('wt-2', 'https://github.com/acme/gadgets')), 'gadgets');
+  assert.equal(projectName(mk('plain-dir')), 'plain-dir');
+  assert.equal(projectName(mk('retro-before')), 'project');
+  assert.equal(projectName(mk('my eval repo')), 'project');
+  assert.equal(projectName(mk('wt-3', 'git@github.com:acme/replay-lab.git')), 'wt-3', 'a remote name that gives it away is skipped, the directory is next');
 });
 
 test('e2e: a small case whose run starts an agent is stopped, relabelled large, and left to --run-large', () => {

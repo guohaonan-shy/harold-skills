@@ -15,6 +15,10 @@
 - **题的原话出处**：不是 #80 里说的，是 writing-for-agents-pruning-layers 的 scope grill 里人要求给候选加「验证」时说的（`docs/raw/idea-loop-decisions/2026-10-31-writing-for-agents-scope-grill.md`）；回放的输入是 #80 的 retro，因为那是一场真实的、有纠正的会话，改后的 retro 要在它上面多写一栏。
 - **改前预计答「否」**：改前的 retro 候选格式只有信号、原话、落点、旧文、新文、归并、同类七栏，没有「验证」。
 
+## prompt 改写记录
+
+- 2026-11-14（#174 工单 03）：回放的输入只给原话，用例格式校验拒绝 prompt 里的回放、eval、judge、rubric、benchmark、评测、评委、判定。这条 prompt 原来命中，改写：去掉「这是回放……」的字样，改成「我不在场，不会逐条回复你：」。
+
 ## 标注
 
 <!-- 推翻一次判定，一行一边，照这个形状：

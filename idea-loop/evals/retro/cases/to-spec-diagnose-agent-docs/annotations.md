@@ -16,6 +16,10 @@
 - **缺的**：第一版 spec 原来的措辞可在 `6fdabc4` 里看（`git show 6fdabc4:docs/spec/design-archive-skill-length/design-archive-skill-length.md`）；回放里写出什么由 skill 自己决定。
 - **判定依据**：看交回的最后一段回复和工作区里的 spec：有没有对 design-archive 逐条杠杆的诊断、有没有调用方清单（谁在引用 design-archive、各读哪几块）、方案每处改动是否标了对的杠杆。
 
+## prompt 改写记录
+
+- 2026-11-14（#174 工单 03）：回放的输入只给原话，用例格式校验拒绝 prompt 里的回放、eval、judge、rubric、benchmark、评测、评委、判定。这条 prompt 原来命中，改写：去掉「这是回放……」的字样，改成「我不在场，不会回复你：」。
+
 ## 标注
 
 <!-- 推翻一次判定，一行一边，照这个形状：

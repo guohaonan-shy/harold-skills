@@ -59,9 +59,12 @@ export function relabelLarge(c, escalation) {
   };
 }
 
-/** Appended to the human's words so an unattended run does not stop at a question nobody will answer, and stops where the case says. */
+/**
+ * What a run is given: the human's words, exactly. Nothing is added, so the run cannot tell it is being tested or where it is
+ * meant to stop; an agent that hands its work to the human ends its turn, and the session timeout is the backstop.
+ */
 export function buildWorkerPrompt(c) {
-  return `${c.prompt}\n\n（这是一次无人值守的回放，人不在场：不要向人提问，按你的判断直接做；做到「${c.stop_at}」就停下，不要继续往后；最后用一段话说明你交给人的是什么。）`;
+  return c.prompt;
 }
 
 /** The two products are anonymous (A, B): the judge is not told which one the changed plugin made. */
@@ -73,6 +76,7 @@ export function buildJudgePrompt(c, productA, productB) {
     '',
     `题：${c.question}`,
     `（这道题是从人当时的这句话写出来的：${c.quote}）`,
+    `（两份产物都是同一件事做到交给人的那一刻留下的，看产物里交给人的那一刻：${c.stop_at}）`,
     '',
     '最后一行只输出一个 JSON 对象，形如：{"A":{"answer":"是或否","cite":"出处，引原文"},"B":{"answer":"是或否","cite":"出处，引原文"}}',
     '',

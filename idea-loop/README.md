@@ -246,8 +246,9 @@ Output lands in `/tmp/idea-loop-uiux-research/<case>/output/index.html`. Details
 A rule written into a skill, agent or reference is only a claim until the skill is seen behaving differently. A rule that can be
 decided mechanically becomes a check (a script or a validator test) that is first seen **failing** on the input that reproduces
 the old mistake. A rule that needs judgement gets a **replay case** in `evals/retro/cases/<case>/`: the commit the decision
-happened at, the prompt that made the skill produce the thing, where it stops (the moment it hands the thing to the human), a
-yes/no question written from what the human said back then (with the words quoted), and its size (small or large) with the basis.
+happened at, the prompt that made the skill produce the thing, where it stops (the moment it hands the thing to the human; only
+the judging session is told), a yes/no question written from what the human said back then (with the words quoted), and its size
+(small or large) with the basis.
 
 ```
 node idea-loop/evals/retro/retro-replay.mjs --list                      # cases, sizes, format problems
@@ -255,9 +256,14 @@ node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] # one sm
 node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <dir> # re-decide after the human overruled a judgement
 ```
 
-The runner copies the project as of the case's commit into `/tmp`, runs `claude -p` with `--plugin-dir` pointing at the base
+The runner copies the project as of the case's commit into a temp dir, runs `claude -p` with `--plugin-dir` pointing at the base
 branch's plugin and again at this working tree's plugin (a sub-agent cannot do this: it loads the installed copy), then starts a
-judging `claude -p` that reads both products anonymously and answers the question with a quote. Pre-change "no" and post-change
+judging `claude -p` that reads both products anonymously and answers the question with a quote. **The input is only the human's
+words**: each run is given exactly the case's `prompt` (nothing added, no note that it is a test, no stop point: an agent that hands
+its work to the human ends its turn, and the timeout is the backstop) and works in `<tmp dir>/<random>/<project name>`, a path with
+nothing about retro, replay, before or after in it; what the runs leave behind is kept under the run dir, where the agent does not
+look. A case whose `prompt` contains 回放, eval, judge, rubric, benchmark, 评测, 评委 or 判定 (any case) is malformed: `--list`
+reports it and `--case` / `--run-large` exit 2 without starting a session. Pre-change "no" and post-change
 "yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. Details and
 the exit codes: the header of `evals/retro/retro-replay.mjs`.
 
@@ -402,7 +408,7 @@ idea-loop/
     ├── research-baseline.test.mjs    # keeps the uiux-research baseline well-formed: six cases, each with a prompt, a comparison line and an annotation file; the runner's stream digest
     ├── claude-stream.mjs             # reads a `claude -p` stream-json event stream — per-session tool counts, cost, and whether a plugin agent or a browser got involved; shared by both eval runners
     ├── claude-stream.test.mjs
-    ├── retro-case.test.mjs           # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name; the shipped cases are well-formed
+    ├── retro-case.test.mjs           # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name, and so is a prompt that gives away it is a test; the shipped cases are well-formed
     ├── retro-queue.test.mjs          # how a replay result is written into the review loop file (`queue.mjs`): an entry that says it ran on the spot, is settled only when every case passed, and is numbered among replays; `check` reads it
     ├── retro-run-large.test.mjs      # the runner's `--run-large` end to end against a fake `claude`: a large case run in the daytime, the entry in the review loop file, exit codes 0 / 1 / 2 / 3, and the flags of the removed night queue refused as unknown arguments
     ├── retro-install.mjs             # copies the replay runner to the fixed path `~/.idea-loop/bin/` and prints the permission rule; no scheduled task; never touches settings

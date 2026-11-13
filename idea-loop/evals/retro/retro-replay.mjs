@@ -5,10 +5,16 @@
  * For one replay case (cases/<case>/case.json) it
  *   1. copies the project as it was at the case's commit into /tmp, twice (one copy per side);
  *   2. runs `claude -p` in each copy with the case's prompt, once with the PRE-change plugin (the base
- *      branch's idea-loop/) and once with the POST-change plugin (this working tree's idea-loop/), each
- *      told to stop where the skill hands the thing to the human;
+ *      branch's idea-loop/) and once with the POST-change plugin (this working tree's idea-loop/);
  *   3. starts a judging `claude -p` that reads both products (anonymised as A and B) and answers the
- *      case's yes/no question, quoting where in the product it found the answer.
+ *      case's yes/no question, quoting where in the product it found the answer; only the judge is told
+ *      where the skill hands the thing to the human (the case's `stop_at`).
+ *
+ * The input is only the human's words: the two runs get exactly the case's `prompt` (a case whose prompt says it is a
+ * test is refused), and each runs in `<tmp dir>/<random>/<project name>`, a path with nothing about retro, replay, before
+ * or after in it. What the runs leave behind (the project copy, event streams, products, results) is under the run dir,
+ * where the agent does not look. No run is told where to stop: an agent that hands its work to the human ends its turn,
+ * and the timeout is the backstop.
  * Pre-change "no" and post-change "yes" is a pass. Pre-change "yes" means the case never showed the
  * problem ("用例没抓住问题"), which is not a pass. A human can overrule a judgement: see --settle.
  *
@@ -48,12 +54,14 @@
  * `RETRO_CLAUDE_BIN` replaces the `claude` command (the tests use a fake).
  */
 
-import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { cpSync, createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
-import { checkCasesDir, loadCases, validateCase } from './cases.mjs';
+import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
   buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, fileBody, parseOverrides, parseVerdict,
@@ -146,6 +154,26 @@ function prepareProject(repo, commit, dest) {
   git(dest, 'commit', '-q', '-m', `project at ${commit}`);
 }
 
+/**
+ * What the project a run works in is called: the repository's own name (its `origin` remote, else its directory), or `project`
+ * when there is none or the name would tell the run it is a test.
+ */
+export function projectName(repo) {
+  const candidates = [];
+  const r = spawnSync('git', ['remote', 'get-url', 'origin'], { cwd: repo, encoding: 'utf8' });
+  if (r.status === 0) candidates.push(r.stdout.trim().replace(/\/+$/, '').replace(/\.git$/, '').split(/[/:]/).pop());
+  candidates.push(basename(repo));
+  const plain = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n ?? '') && !revealingWordsIn(n).length && !/retro|replay|before|after/i.test(n);
+  return candidates.find(plain) ?? 'project';
+}
+
+/** A fresh `<tmp dir>/<random>/<name>` for a run to work in; the random part keeps the two runs of a case apart. */
+function workDirFor(name) {
+  const dir = join(tmpdir(), randomBytes(8).toString('hex'), name);
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 function changedFiles(projectDir) {
   const out = git(projectDir, 'status', '--porcelain', '--untracked-files=all', '-z').toString('utf8');
   const files = [];
@@ -230,7 +258,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const costs = {};
   for (const s of sides) {
     const dir = join(runDir, s.side);
-    const project = join(dir, 'project');
+    const project = workDirFor(projectName(t.repo));
     mkdirSync(dir, { recursive: true });
     prepareProject(t.repo, c.commit, project);
     const args = ['-p', buildWorkerPrompt(c), '--plugin-dir', s.plugin, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
@@ -238,7 +266,13 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     const streamPath = join(dir, 'run.stream.jsonl');
     process.stdout.write(`— ${s.side}: ${s.plugin} …`);
     const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge });
+    const keepProject = () => {
+      // the run is over: what it left is kept under the run dir for a human to look at, and the work dir goes
+      cpSync(project, join(dir, 'project'), { recursive: true });
+      rmSync(dirname(project), { recursive: true, force: true });
+    };
     if (r.escalation) {
+      keepProject();
       console.log(` 中止：${r.escalation.kind === 'agent' ? '起了 agent' : '开了浏览器'}（${r.escalation.tool}）`);
       const file = join(t.casesRoot, 'cases', c.name, 'case.json');
       writeFileSync(file, `${JSON.stringify(relabelLarge(c, r.escalation), null, 2)}\n`);
@@ -248,6 +282,8 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     }
     const digest = digestStream(fileLines(streamPath));
     if (r.stderr) writeFileSync(join(dir, 'run.stderr.log'), r.stderr);
+    products[s.side] = digest.result ? buildArtifact({ resultText: digest.result.text, files: changedFiles(project) }) : null;
+    keepProject();
     if (!digest.result) {
       const why = r.timedOut ? '超时' : `退出码 ${r.status}`;
       console.log(` 没有产出 result（${why}），见 ${dir}`);
@@ -256,7 +292,6 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     costs[s.side] = digest.result.cost;
     writeFileSync(join(dir, 'result.txt'), digest.result.text);
     writeFileSync(join(dir, 'digest.json'), JSON.stringify({ session: digest.session, subagents: digest.subagents, result: { ...digest.result, text: undefined } }, null, 2));
-    products[s.side] = buildArtifact({ resultText: digest.result.text, files: changedFiles(project) });
     writeFileSync(join(dir, 'artifact.md'), products[s.side]);
     console.log(` 完成，${usd(digest.result.cost)}`);
   }

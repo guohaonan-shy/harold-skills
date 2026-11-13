@@ -18,11 +18,11 @@
 
 ## 验收标准
 
-- [ ] 端到端（假 `claude` 记下收到的 `-p` 和 cwd）：两遍收到的 `-p` 与用例 prompt 逐字相同；cwd 不含 retro / replay / 回放 / before / after / eval，且两遍不同
-- [ ] 评委的输入里有 `stop_at`
-- [ ] 单元：用例 prompt 含禁用词时校验报错；端到端：`--case` 这种用例退出码 2、不起会话
-- [ ] `--list` 对仓库里现有全部用例不报格式问题
-- [ ] 全量测试通过（命令见 REVIEW.md）
+- [x] 端到端（假 `claude` 记下收到的 `-p` 和 cwd）：两遍收到的 `-p` 与用例 prompt 逐字相同；cwd 不含 retro / replay / 回放 / before / after / eval，且两遍不同
+- [x] 评委的输入里有 `stop_at`
+- [x] 单元：用例 prompt 含禁用词时校验报错；端到端：`--case` 这种用例退出码 2、不起会话
+- [x] `--list` 对仓库里现有全部用例不报格式问题
+- [x] 全量测试通过（命令见 REVIEW.md）
 
 ## 选中的存量回归
 

@@ -23,6 +23,10 @@ node ~/.idea-loop/bin/retro-replay.mjs --case draft-spec-orphan-capability --rep
 - **缺的**：当时的会话记录不在仓库里，人追问的原话取自 Toeflair 的决定记录。回放里写出什么由 skill 自己决定。
 - **判定依据**：看交回的最后一段回复和工作区里的 spec：「实现决策」里有没有一条「待定」，选项是修好和删掉；spec 里有没有写查过调用方、结论是一个都没有。
 
+## prompt 改写记录
+
+- 2026-11-14（#174 工单 03）：回放的输入只给原话，用例格式校验拒绝 prompt 里的回放、eval、judge、rubric、benchmark、评测、评委、判定。这条 prompt 原来命中，改写：去掉「这是回放，我（人）不在场……」的字样，改成「我不在场，不会回复你：」；issue 正文里的字段名 `global_evaluation` 含 eval，改写成「它自己的全局评价字段」。其余原文不动。
+
 ## 标注
 
 <!-- 推翻一次判定，一行一边，照这个形状：
