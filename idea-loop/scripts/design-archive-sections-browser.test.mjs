@@ -1349,3 +1349,18 @@ browserTest('browser cover: a tab bar laid over a <main> that runs to the foot o
   assert.deepEqual(r.shot, { see: `${COVER_STATE}@see.png`, deep: `${COVER_STATE}@deep.png` });
   assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
 });
+
+browserTest('browser cover: an action bar sticks to the foot of a <main> that scrolls and a tab bar sits under <main> — a button the action bar covers is shot, the bars\' own buttons are not', async () => {
+  // header 60, <main> from 60 to 540 (its own scroll), tab bar 540–600 outside it; inside <main> an action bar sticks to its foot (480–540,
+  // it never reaches the foot of the screen): `See sample` is at 470–510 and shows only its top 10px
+  const url = s1Url('html, body { height: 100%; overflow: hidden; } main { position: absolute; top: 60px; bottom: 60px; left: 0; right: 0; overflow: auto; } .actions { position: sticky; bottom: 0; height: 60px; background: #fc0; z-index: 2; } .actions button { top: 10px; background: #c60; } .tall button.see { top: 410px; }',
+    '<header>Shell</header><main><div class="tall"><button style="top: 20px">Begin</button><button class="see">See sample</button><button style="top: 1500px">Deep</button></div><div class="actions"><button>Save</button></div></main><nav><button>Home</button></nav>');
+  const { out, r } = await coverRun({ url, edges: [...S1_EDGES, edge('save', 'button', 'Save')] });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(r.inViewport, ['begin', 'home', 'save']);
+  assert.deepEqual(r.shot, { see: `${COVER_STATE}@see.png`, deep: `${COVER_STATE}@deep.png` });
+  assert.deepEqual(readdirSync(out).sort(), [`${COVER_STATE}@deep.png`, `${COVER_STATE}@see.png`]);
+  // the screen starts 150 above `See sample` (page 470): the button is 150 down in the picture
+  assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
+});
