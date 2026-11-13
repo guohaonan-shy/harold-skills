@@ -17,6 +17,8 @@
 
 - [ ] 单元：给定事件流和改动集，Read 命中、Skill 命中、Agent 命中、子代理里的命中各判为用上；都没有判为没用上；改动集为空判不适用
 - [ ] 端到端（假 `claude`）：改后插件改了某 skill，假 `claude` 改后那一遍调了它 → 过；没调也没读 → `not-exercised`、退出码 1、条目里列为没过
+- [ ] 继承自 04：测试不会碰到真 Codex：设了 `RETRO_CLAUDE_BIN`（换成假 claude）却没设 `RETRO_CODEX_COMPANION` 时，runner 不去找真的 Codex，评委走那个假 claude；端到端测试断言这一点。依据：04 交回时，一个漏设变量的测试挂在了真 Codex 上
+- [ ] 继承自 04：README 里「本机 runner 要重跑 setup 才换新版」那句补上：评委用的 Codex 查找脚本也随 runner 装进去，不重跑就用不上 Codex 评委
 - [ ] 全量测试通过（命令见 REVIEW.md）
 
 ## 选中的存量回归
