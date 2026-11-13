@@ -1364,3 +1364,21 @@ browserTest('browser cover: an action bar sticks to the foot of a <main> that sc
   // the screen starts 150 above `See sample` (page 470): the button is 150 down in the picture
   assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
 });
+
+browserTest('browser cover: round buttons, pill buttons and a link that wraps onto two lines, all whole on the first screen — none is shot, only the one far below is', async () => {
+  // the corners of a rounded button's box, and of a wrapped link's bounding box, are not drawn by the component: the page behind them answers there
+  const css = '.page { position: relative; height: 3000px; } button { position: absolute; left: 24px; width: 200px; height: 44px; border: 0; background: #06c; color: #fff; } p { position: absolute; top: 420px; left: 24px; width: 300px; margin: 0; line-height: 24px; }';
+  const url = s1Url(css, `<div class="page">
+    <button style="top: 100px">Square</button><button style="top: 180px; border-radius: 4px">Radius 4</button>
+    <button style="top: 260px; border-radius: 8px">Radius 8</button><button style="top: 340px; border-radius: 999px">Pill</button>
+    <p>Read the full <a href="#m">methodology and scoring notes for this report</a> before you share it.</p>
+    <button style="top: 1500px">Deep</button></div>`);
+  const edges = [edge('square', 'button', 'Square'), edge('radius-4', 'button', 'Radius 4'), edge('radius-8', 'button', 'Radius 8'), edge('pill', 'button', 'Pill'),
+    edge('methodology', 'link', 'methodology and scoring notes for this report'), edge('deep', 'button', 'Deep')];
+  const { out, r } = await coverRun({ url, edges });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(r.inViewport, ['square', 'radius-4', 'radius-8', 'pill', 'methodology']);
+  assert.deepEqual(r.shot, { deep: `${COVER_STATE}@deep.png` });
+  assert.deepEqual(readdirSync(out).sort(), [`${COVER_STATE}@deep.png`]);
+});

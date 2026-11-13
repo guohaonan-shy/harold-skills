@@ -1152,12 +1152,23 @@ async function coverPage(page, C, T, D, coverScreens, shootPage) {
               if (!hit) return true;
               return within(hit, el) || (within(el, hit) && hit.tagName === 'LABEL');
             };
-            const xs = [r.left + 1, r.left + r.width / 2, r.right - 1];
-            const ys = [r.top + 1, r.top + r.height * 0.25, r.top + r.height * 0.5, r.top + r.height * 0.75, r.bottom - 1];
+            // Only where the component is drawn is asked about: a line of a wrapped link is a box of its own (the corners of the box around all
+            // the lines are other text), and the corners of a rounded box are the page behind it. So the points sit on the middle of each box's
+            // top and bottom edges, and on three columns across its middle rows, set in from the sides by half the height (a pill's whole curve).
+            const lines = [...el.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
+            const points = (lines.length ? lines : [r]).flatMap((q) => {
+              const inset = Math.min(q.width, q.height) / 2;
+              const mid = q.left + q.width / 2;
+              return [
+                { y: q.top + 1, xs: [mid] },
+                ...[0.25, 0.5, 0.75].map((f) => ({ y: q.top + q.height * f, xs: [q.left + inset, mid, q.right - inset] })),
+                { y: q.bottom - 1, xs: [mid] },
+              ];
+            }).sort((a, b) => a.y - b.y);
             let visibleBottom = window.innerHeight;
-            for (let i = 0; i < ys.length; i += 1) {
-              if (!xs.every((x) => shows(x, ys[i]))) {
-                visibleBottom = i === 0 ? r.top : ys[i - 1];
+            for (let i = 0; i < points.length; i += 1) {
+              if (!points[i].xs.every((x) => shows(x, points[i].y))) {
+                visibleBottom = i === 0 ? r.top : points[i - 1].y;
                 break;
               }
             }
