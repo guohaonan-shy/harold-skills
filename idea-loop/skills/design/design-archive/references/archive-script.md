@@ -8,7 +8,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <仓库根> <spec-
 
 退出码 0 = 已归档（`--dry-run` 时是「可以归档」），1 = 拒绝（逐条列出违规或冲突，**什么都没写**），2 = 用法错误或 `tmp/<spec-slug>/` 不存在。
 
-**谁在什么时候跑**：不带 `--dry-run` 的归档只在合并前、UI 审查者的归档草稿经人批过之后跑（`idea-loop:pr-review` 的「合并前归档」）；写 `delta/` 的 agent 自检只跑 `--dry-run`。
+**谁在什么时候跑**：不带 `--dry-run` 的归档在合并前、UI 审查者的归档草稿经人批过之后跑（`idea-loop:pr-review` 的「合并前归档」），或由 dreaming 对账的档案行自动跑，不等人批；写 `delta/` 的 agent 自检只跑 `--dry-run`。
 
 ## 脚本做了什么
 

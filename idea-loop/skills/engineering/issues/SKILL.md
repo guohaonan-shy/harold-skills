@@ -39,7 +39,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 从 | 到 | 谁、什么时候 |
 |---|---|---|
 | （新开） | backlog | agent 或人开的；没有 `status:*` 的开着的 GitHub issue 也算 |
-| backlog | triage / todo / canceled | `idea-loop:issue-triage` 分拣后人定；不要人评估的直接 todo |
+| backlog | triage / todo / canceled | `idea-loop:issue-triage` 按子代理建议直接翻；不要人评估的直接 todo |
 | triage | todo | 人评估完：spec 里没有「需要 grill」「待定」，碰 UI 的设计已冻结 |
 | todo | in-progress | 调度派出的会话认领；spec 提交后开 draft PR |
 | in-progress | in-review | PR 全部转 ready，第一轮 Review 汇报交给人 |

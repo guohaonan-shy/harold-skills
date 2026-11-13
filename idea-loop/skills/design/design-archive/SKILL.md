@@ -78,7 +78,7 @@ docs/design/
 - 素材（状态截图、动效 GIF）走 Git LFS，目标仓库的 `.gitattributes` 管 `docs/design/prod/**/assets/`。
 - `tmp/<spec-slug>/` 的生命周期见 `idea-loop:wiki-conventions` 的「目录」。**冻结之后 `canvas/` 是唯一的设计真相**：设计变了由 designer 改画布并记进冻结记录的「冻结后的变更」（`idea-loop:uiux-refine`），不改 `delta/`；`delta/` 只在合并前由 ui-reviewer 的归档模式从最终画布加实现整份写出。没有设计稿的 UI 改动没有画布，实现者在 `delta/` 记「最小差异」，那就是它唯一的设计真相。
 - **`delta/` 与 `prod/` 同构**：新增或改动的对象放它改完之后的**全文**（路径与 `prod/` 里相同）；删除的对象 id 列在 `delta/removed.md`，一行 `- [[<id>]]`（后面可跟一句原因）。
-- **`prod/` 只由归档脚本在人批过之后写**；agent 只写 `tmp/<spec-slug>/delta/`。
+- **`prod/` 只由归档脚本写**，需求合并前要人批过；dreaming 对账的档案行是例外，自动执行不等人批。agent 只写 `tmp/<spec-slug>/delta/`。
 - `docs/design/` 下 `tmp/`、`prod/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。
 
 ## 进入方式从图上推导
