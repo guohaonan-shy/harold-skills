@@ -31,4 +31,5 @@
 ## 选中的存量回归
 
 - `idea-loop/scripts/no-project-leak.test.mjs`：改了插件文字
-- `idea-loop/scripts/issues.test.mjs`（如有）：`issues` skill 的状态表被脚本的前提检查引用，改字不能改出与脚本不一致的说法
+- `idea-loop/scripts/issues-skill-doc.test.mjs`：守着 `issues` skill 的文字与脚本一致，改状态表那一行可能碰到它
+- `idea-loop/scripts/issues.test.mjs`：状态翻转的前提检查，确认改字没有带出与脚本不一致的说法
