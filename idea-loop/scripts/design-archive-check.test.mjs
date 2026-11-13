@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
-import { check } from './design-archive-check.mjs';
+import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SHOT_STATE, SHOT_STATE_FILE, SPEC_SLUG, compliantFiles, marketingFiles, shotFiles, writeRepo } from './design-archive-fixture.mjs';
+import { RULES, check } from './design-archive-check.mjs';
 import { computeUsedBy, loadArchive, objectsOfKind, outgoingEdges, statesOfPage } from './design-archive.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-check.mjs', import.meta.url));
@@ -337,6 +339,78 @@ test('legacy layout: one note per old directory, nothing read, no violation', ()
   assert.deepEqual(r.violations, []);
   assert.equal(r.notes.length, 2);
   assert.match(r.notes[0], /docs\/design\/old-spec-a\/.*旧布局.*建议删/);
+});
+
+// ---------- rule 8: an edge's screenshot (`shot`) ----------
+
+/** The `shot` fixture (a state with three `user` edges carrying `shot`, two of them on one image) with edits applied. */
+function bendShot(edits) {
+  const files = shotFiles();
+  for (const [path, fn] of Object.entries(edits)) {
+    assert.ok(path in files, `fixture has no ${path}`);
+    const next = fn(files[path]);
+    assert.notEqual(next, files[path], `edit on ${path} changed nothing`);
+    files[path] = next;
+  }
+  return files;
+}
+const SHOT_SAVE = `shot: ${SHOT_STATE}@save.png`;
+
+test('rule 8: three `user` edges with `shot`, two sharing one image, pass with no violation and no note', () => {
+  const files = shotFiles();
+  assert.equal([...files[SHOT_STATE_FILE].matchAll(/^ {4}shot: /gm)].length, 3);
+  const r = run(files);
+  assert.deepEqual(r.violations, []);
+  assert.deepEqual(r.notes, []);
+});
+
+test('rule 8: an edge without `shot` is not judged — its component is in the main viewport image', () => {
+  assert.deepEqual(rules(run(compliantFiles())), []);
+  assert.deepEqual(rules(run(marketingFiles())), []);
+});
+
+test('rule 8: whether the image file exists is not checked (it may be an LFS pointer; the query reports it)', () => {
+  const root = writeRepo(shotFiles());
+  assert.equal(existsSync(join(root, BASE, 'pages/cookbook/assets', `${SHOT_STATE}@save.png`)), false);
+  assert.deepEqual(check(root).violations, []);
+});
+
+const BREAKS8 = [
+  ['`shot` named after another state', { [SHOT_STATE_FILE]: sub(SHOT_SAVE, 'shot: cookbook--list@save.png') }, 'edges[0].shot', '出发状态'],
+  ['`shot` with no state id in front', { [SHOT_STATE_FILE]: sub(SHOT_SAVE, 'shot: save.png') }, 'edges[0].shot', '<出发状态 id>@<边 id>.png'],
+  ['`shot` that is not a .png', { [SHOT_STATE_FILE]: sub(`${SHOT_STATE}@save-all.png`, `${SHOT_STATE}@save-all.jpg`) }, 'edges[2].shot', '.png'],
+  ['`shot` with an empty edge id', { [SHOT_STATE_FILE]: sub(`${SHOT_STATE}@save-all.png`, `${SHOT_STATE}@.png`) }, 'edges[2].shot', '<出发状态 id>@<边 id>.png'],
+  ['`shot` that is not a string', { [SHOT_STATE_FILE]: sub(`shot: ${SHOT_STATE}@save-all.png`, 'shot: 3') }, 'edges[2].shot', '<出发状态 id>@<边 id>.png'],
+  ['`shot` whose edge id is not an edge of the state', { [SHOT_STATE_FILE]: sub(`${SHOT_STATE}@save-all.png`, `${SHOT_STATE}@nowhere.png`) }, 'edges[2].shot', 'nowhere'],
+  ['`shot` on a `system` edge', { [LOADING]: sub('    trigger: 搜索请求完成', `    shot: cookbook--search-loading@done.png\n    trigger: 搜索请求完成`) }, 'edges[0].shot', 'system'],
+  ['`shot` on a state that declares `sections`', { [MKT_ENTRY_FILE]: sub('    locate: { role: link, name: 菜谱 }\n', `    locate: { role: link, name: 菜谱 }\n    shot: ${MKT_ENTRY}@nav-home.png\n`) }, 'edges[0].shot', 'sections'],
+];
+for (const [name, edits, field, needle] of BREAKS8) {
+  test(`rule 8: ${name} → one rule 8 violation naming the file and \`${field}\``, () => {
+    const files = MKT_ENTRY_FILE in edits ? bendMkt(edits) : bendShot(edits);
+    const r = run(files);
+    const v = r.violations.filter((x) => x.rule === 8);
+    assert.equal(v.length, 1, JSON.stringify(r.violations));
+    assert.ok(v[0].file.endsWith('.md') && v[0].field === field, JSON.stringify(v[0]));
+    assert.ok(v[0].message.includes(needle), v[0].message);
+    assert.deepEqual(r.violations.filter((x) => x.rule !== 8), [], 'only rule 8 is broken');
+  });
+}
+
+test('rule 8: cli prints the violation as 「违规 [规则 8 边的截图] 文件 · edges[n].shot：…」 and exits 1', () => {
+  const root = writeRepo(bendShot({ [SHOT_STATE_FILE]: sub(`${SHOT_STATE}@save-all.png`, `${SHOT_STATE}@nowhere.png`) }));
+  const r = spawnSync('node', [CLI, root], { encoding: 'utf8' });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /违规 \[规则 8 边的截图\] .*cookbook--search-results\.md · edges\[2\]\.shot：/);
+});
+
+test('rule 8: check.md, writing.md and query.md describe `shot`, and check.md lists exactly the script\'s rules under the script\'s names', () => {
+  const ref = (name) => readFileSync(fileURLToPath(new URL(`../skills/design/design-archive/references/${name}`, import.meta.url)), 'utf8');
+  const listed = Object.fromEntries([...ref('check.md').matchAll(/^\| (\d+) (\S+?) \|/gm)].map((m) => [m[1], m[2]]));
+  assert.deepEqual(listed, { ...RULES }, 'the rule table by number and name');
+  assert.match(ref('check.md'), /## 规则 8 的逐条违规与提示/);
+  assert.match(ref('writing.md'), /`shot`.*<出发状态 id>@<边 id>\.png/);
+  assert.match(ref('query.md'), /`shot`.*`shotExists`/);
 });
 
 // ---------- command line ----------
