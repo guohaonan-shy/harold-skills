@@ -16,7 +16,7 @@
 - 人说「回滚某次 dreaming」：开那个 PR 的 revert PR，同样规则合并。
 - 这次的中间物目录在问人的行处理完（或没有问人的行）、且自动那份已合并之后才删。
 
-要改到的地方：dreaming 的 description（删「人批过才执行」）与「流程」「执行段」「写 DESIGN.md 和开 issue 都停在人身上」；提议表 reference 的「放哪、谁看」「执行段」，加一张问人 / 自动的分类说明（指向脚本）；retro 候选、候选蒸馏、全站初扫、档案对账、漏归档几份 reference 里「人批了才…」的句子（`候选` 的两种 issue 仍是人批了才开，`缺陷` 不再是）；wiki-conventions 的「人机分工」（改成按风险分：问人的由人批，其余机械执行，点名 dreaming 只问哪两类）和「`design/prod/` 只走归档脚本（人批过之后）」那句（补 dreaming 对账的例外）；设计档案 skill 与归档脚本说明里同样的「人批过之后」（补同一例外）；setup 的每周对账那份里「提议表在那个会话里等人逐行批」；仓库根 `AGENTS.md` 第 1 条里 dreaming「出口仍停在人身上」和 seo-scan「仍由人分拣」两句；插件 README 里 dreaming 与 issue-triage 两行的描述。改这些给 agent 读的文档前用 Skill 工具调 `idea-loop:writing-for-agents`。
+要改到的地方：dreaming 的 description（删「人批过才执行」）与「流程」「执行段」「写 DESIGN.md 和开 issue 都停在人身上」；提议表 reference 的「放哪、谁看」「执行段」，加一张问人 / 自动的分类说明（指向脚本）；retro 候选、候选蒸馏、全站初扫、档案对账、漏归档几份 reference 里「人批了才…」的句子（`候选` 的两种 issue 仍是人批了才开，`缺陷` 不再是）；wiki-conventions 的「人机分工」（改成按风险分：问人的由人批，其余机械执行，点名 dreaming 只问哪两类）和「`design/prod/` 只走归档脚本（人批过之后）」那句（补 dreaming 对账的例外）；设计档案 skill 与归档脚本说明里同样的「人批过之后」（补同一例外）；setup 的每周对账那份里「提议表在那个会话里等人逐行批」；仓库根 `AGENTS.md` 第 1 条里 dreaming「出口仍停在人身上」和 seo-scan「仍由人分拣」两句；插件 README 里 dreaming 与 issue-triage 两行的描述。几处要一并改到的细节：漏归档的「补归档」原先要人看 UI 审查者的归档草稿、人通过才跑归档脚本，改成草稿过档案校验就归档，不等人；全站初扫「人按页面批」改成整页按建议执行；retro 候选里「只执行人批了的行」改成执行建议处置，「驳回」照现有规则只在候选文件里人说过驳回时才建议，理由取那句话。改这些给 agent 读的文档前用 Skill 工具调 `idea-loop:writing-for-agents`。
 
 不改：`decision-rules` 的护栏；`docs/adr/` 下的 ADR。
 

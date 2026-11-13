@@ -15,7 +15,7 @@
 - 原来「人拒掉一个需求就写进 `out-of-scope` 记录」那一步没有触发点了：挪到 issue 会话起草 spec 时「人决定不做」那一条（issue-session 的起草 spec reference），在那里写记录，走只改 `docs/` 的 PR、检查全过就合并。
 - 完成条件改成：这一批每一行都按建议去向处理了。
 
-要改到的地方：`issue-triage` 的开头一句、调用表里 `全部` 一行、分拣第 4–7 步、完成条件；issue-session 的起草 spec reference 的「人决定不做」；`issues` skill 状态表里「backlog → triage / todo / canceled：分拣后人定」那一行（只改字不加行：这份 skill 主体已近 5000 字）；setup 的「每周分拣」一段和每周分拣那份 reference 里「摆一张表等人批」「分拣表在那个会话里等人逐行批」「批完一张再跑下一张」。改这些给 agent 读的文档前用 Skill 工具调 `idea-loop:writing-for-agents`。
+要改到的地方：`issue-triage` 的开头一句、调用表里 `全部` 一行、分拣第 4–7 步、完成条件；issue-session 的起草 spec reference 的「人决定不做」；`issues` skill 状态转换表里「backlog → triage / todo / canceled：分拣后人定」那一行（只改字不加行：这份 skill 主体已近 5000 字）；setup 的「每周分拣」一段和每周分拣那份 reference 里「摆一张表等人批」「分拣表在那个会话里等人逐行批」「批完一张再跑下一张」。改这些给 agent 读的文档前用 Skill 工具调 `idea-loop:writing-for-agents`。
 
 不改：`issue-triager` 子代理定义（它的建议规则已经满足上面的边界）；仓库根 `AGENTS.md` 与插件 README（归 02）。
 
@@ -24,7 +24,7 @@
 - [ ] `issue-triage` 里没有「等人批」「人逐行」的步骤；四种去向各自怎么执行写明
 - [ ] 「拿不准值不值得做的翻 triage，不 canceled」写在 `issue-triage` 里
 - [ ] 推送的两种情况、疑似 P0 的处理写明
-- [ ] `out-of-scope` 记录的写法在 issue-session 的「人决定不做」里，`issue-triage` 里不再有
+- [ ] `out-of-scope` 记录的写法（frontmatter、写什么、追加号码、走只改 `docs/` 的 PR）在 issue-session 的「人决定不做」里；`issue-triage` 只留一句指针：记录在 `docs/records/out-of-scope/<slug>.md`，由 triage 会话里人决定不做时写（这句路径被存量测试钉着，要保留）。目录现在还不存在，第一次写记录时建
 - [ ] `issues` 与 `issue-triage` 两份 skill 主体都 < 5000 字（`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`）
 - [ ] 全量测试 `node --test '*/scripts/*.test.mjs'` 通过
 
