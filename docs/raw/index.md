@@ -23,6 +23,7 @@
 | [[2026-10-26-inner-scroll-shot]] | conversation | 2026-10-26 | #68：内层容器滚动页的段图在容器里逐屏截、拼成一张 |
 | [[2026-10-26-retro-merge-grill]] | conversation | 2026-10-26 | grill —— #108 / #106：retro 开的 issue 按 plugin 做 retro 整合，调度只数 issue 会话 |
 | [[2026-10-26-unstable-sections]] | conversation | 2026-10-26 | #65：拍不稳的段对上 TOEFLAIR 营销站组件，两条待定交给推荐 |
+| [[2026-11-13-scroll-driven-whole-pin-grill]] | conversation | 2026-11-13 | #128：滚动驱动只认整段钉住，每一步一张图 |
 | [[2026-11-05-issue-model-regrill]] | conversation | 2026-11-05 | grill —— #242 重定 issue 模型：七个状态对上 Linear，triage 可跳过，实现开始即开 PR，一个仓库一个 PR，issue 正文格式 |
 | [decisions/51](decisions/51.md) | conversation | 2026-10-23 | 决定记录 —— #51 retro 的 issue 会话：摆过的题与 retro 候选的结果 |
 | [decisions/55](decisions/55.md) | conversation | 2026-10-26 | 决定记录 —— #55 的 issue 会话：冻结后画布为唯一真相、dreaming 拆分与增量对账，摆过的题与 retro 候选的结果 |
