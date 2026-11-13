@@ -1297,3 +1297,43 @@ browserTest('browser cover: on an app shell whose <main> scrolls, a component de
   const img = decodePng(readFileSync(join(out, `${COVER_STATE}@deep.png`)));
   assert.deepEqual([0, 1, 2].map((k) => img.data[(160 * img.width + 100) * 4 + k]), [0, 102, 204]);
 });
+
+// the first screen is not the whole viewport when the page's foot has a bar pinned to it, or the scrolling container stops above the foot
+const STYLE_S1 = `html, body { margin: 0; font: 16px sans-serif; }
+  header { height: 60px; background: #eee; }
+  nav { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: #333; }
+  .tall { position: relative; height: 3000px; }
+  button { position: absolute; left: 40px; width: 200px; height: 40px; border: 0; background: #06c; color: #fff; }
+  nav button { top: 10px; background: #c60; }`;
+const s1Url = (css, body) => `data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><html><head><meta charset="utf-8"><style>${STYLE_S1}${css}</style></head><body>${body}</body></html>`)}`;
+const S1_BUTTONS = '<button style="top: 20px">Begin</button><button style="top: 470px">See sample</button><button style="top: 1500px">Deep</button>';
+const S1_EDGES = [edge('begin', 'button', 'Begin'), edge('see', 'button', 'See sample'), edge('deep', 'button', 'Deep'), edge('home', 'button', 'Home')];
+const bluePixel = (out, file, y) => {
+  const img = decodePng(readFileSync(join(out, file)));
+  return [0, 1, 2].map((k) => img.data[(y * img.width + 100) * 4 + k]);
+};
+
+browserTest('browser cover: a tab bar under a <main> that scrolls — a button against the lower edge of what the first screen shows is shot, the tab bar\'s own button is not', async () => {
+  // header 60, <main> from 60 to 540 (its own scroll), tab bar 540–600: `See sample` is at 530–570, the first screen shows only its top 10px
+  const url = s1Url('html, body { height: 100%; overflow: hidden; } main { position: absolute; top: 60px; bottom: 60px; left: 0; right: 0; overflow: auto; }',
+    `<header>Shell</header><main><div class="tall">${S1_BUTTONS}</div></main><nav><button>Home</button></nav>`);
+  const { out, r } = await coverRun({ url, edges: S1_EDGES });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(r.inViewport, ['begin', 'home']);
+  assert.deepEqual(r.shot, { see: `${COVER_STATE}@see.png`, deep: `${COVER_STATE}@deep.png` });
+  assert.deepEqual(readdirSync(out).sort(), [`${COVER_STATE}@deep.png`, `${COVER_STATE}@see.png`]);
+  // the screen starts 150 above `See sample` (page 530): the button is 150 down in the picture
+  assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
+});
+
+browserTest('browser cover: the document scrolls and a bar is pinned to the foot of the screen — a button it covers is shot, the bar\'s own button is not', async () => {
+  // `See sample` is at 530–570 and the fixed bar starts at 540
+  const url = s1Url('body { height: 3060px; } nav { position: fixed; }', `<header>Page</header><div class="tall">${S1_BUTTONS}</div><nav><button>Home</button></nav>`);
+  const { out, r } = await coverRun({ url, edges: S1_EDGES });
+  assert.equal(r.exit, 0);
+  assert.deepEqual(r.unlocated, []);
+  assert.deepEqual(r.inViewport, ['begin', 'home']);
+  assert.deepEqual(r.shot, { see: `${COVER_STATE}@see.png`, deep: `${COVER_STATE}@deep.png` });
+  assert.deepEqual(bluePixel(out, `${COVER_STATE}@see.png`, 160), [0, 102, 204]);
+});

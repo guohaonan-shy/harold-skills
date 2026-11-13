@@ -32,10 +32,11 @@
  *   screen     a state with no sections (a page not taller than the main viewport): the code `shoot` runs, handed the one
  *              section that is the main viewport, `<state>.png`. No `measure` / `attribute` first; same `uncontrolled`.
  *   cover      a state with no sections that is taller than the main viewport: the code that finds the component of each
- *              of the state's `user` edges (the edge's `locate`), leaves the ones whole inside the main viewport, groups the
+ *              of the state's `user` edges (the edge's `locate`), leaves the ones whole inside what the first screen really shows
+ *              (the main viewport, less what a bar pinned to the foot of the screen or the foot of a scrolling container hides), groups the
  *              rest from the top down into screens and shoots each with the code `shoot` runs, `<state>@<first edge of the
  *              screen>.png`. It returns `shot` (edge id → picture) for each edge, `unlocated` (not found, or not found once)
- *              and `exit: 1` when there are unlocated ones. Everything inside the main viewport: nothing shot, `shot` empty.
+ *              and `exit: 1` when there are unlocated ones. Everything inside what the first screen shows: nothing shot, `shot` empty.
  *              `--delta <spec-slug>` reads `docs/design/tmp/<slug>/delta/` over `prod/`, as `measure` does (delta/ wins).
  *              Like `screen`, the page is not reloaded and its time not moved.
  *
@@ -1015,8 +1016,11 @@ export function buildScreenCode(config) {
  * The screens `cover` shoots: the components below the first screen of a state with no sections, grouped from the top down.
  * Pure, and standalone — it is also sent into the browser as source (`compact(coverScreens)`), so it refers to nothing outside itself.
  *
- * `components` are `{ id, top, bottom }` (an edge's id and its component's box in page coordinates at scroll 0). A component whole inside
- * the main viewport (`bottom <= viewportHeight`) is in the first picture already: `inViewport`. One half in it is not. The rest are
+ * `components` are `{ id, top, bottom, visibleBottom? }` (an edge's id and its component's box in page coordinates at scroll 0).
+ * A component whole inside what the first picture really shows is in it already: `inViewport`. That is above the main viewport's
+ * height and, when given, above the component's own `visibleBottom` — the lowest line the first screen shows of it, which the page
+ * works out as the least of the visible bottom of the scroll container it sits in and the top of each bar pinned to the bottom of
+ * the screen that it is not part of. One half in it, or one the bottom bar or the container's edge hides, is not. The rest are
  * taken in order of `top`; a screen is `viewportHeight` tall, starts a quarter of it above its first component (not above the top of the
  * page, not below the last whole screen of the page, `pageHeight - viewportHeight`), and takes in the following components that fit in
  * it entire; the first one is always taken, whatever its height. The next component that does not fit starts the next screen.
@@ -1029,7 +1033,7 @@ export function coverScreens({ state, components, viewportHeight, pageHeight } =
   if (!(pageHeight > 0)) throw new Error('没有页面总高：最后一屏要往上收到整屏高');
   const inViewport = [];
   const rest = [];
-  components.forEach((c, i) => (c.bottom <= viewportHeight ? inViewport.push(c.id) : rest.push({ ...c, i })));
+  components.forEach((c, i) => (c.bottom <= Math.min(viewportHeight, Number.isFinite(c.visibleBottom) ? c.visibleBottom : viewportHeight) ? inViewport.push(c.id) : rest.push({ ...c, i })));
   rest.sort((a, b) => a.top - b.top || a.i - b.i);
   const margin = Math.round(viewportHeight / 4);
   const lastStart = Math.max(0, pageHeight - viewportHeight);
@@ -1092,6 +1096,13 @@ async function coverPage(page, C, T, D, coverScreens, shootPage) {
       for (let p = el; p && p !== document.body; p = p.parentElement) parts.unshift(p.tagName.toLowerCase() + ':nth-child(' + ([...p.parentElement.children].indexOf(p) + 1) + ')');
       return 'body > ' + parts.join(' > ');
     };
+    // bars pinned to the bottom of the screen (wide, in its lower half, reaching its foot): they hide what is under them on the first screen
+    window.__dsCoverBars = [...document.querySelectorAll('body *')].filter((el) => {
+      const cs = getComputedStyle(el);
+      if ((cs.position !== 'fixed' && cs.position !== 'sticky') || !shown(el) || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.01) return false;
+      const r = el.getBoundingClientRect();
+      return r.width >= window.innerWidth * 0.5 && r.top >= window.innerHeight / 2 && r.bottom >= window.innerHeight - 32;
+    });
     const ofDocument = { kind: 'document', selector: null, top: 0, pageHeight: document.documentElement.scrollHeight };
     if (document.documentElement.scrollHeight > window.innerHeight) return ofDocument;
     const best = [document.body, ...document.querySelectorAll('body *')]
@@ -1130,15 +1141,24 @@ async function coverPage(page, C, T, D, coverScreens, shootPage) {
         ? await by.evaluate((el, s) => {
             const r = el.getBoundingClientRect();
             if (!(r.width > 0 && r.height > 0)) return null;
+            const px = (v) => Math.round(v * 100) / 100;
             const holder = s ? document.querySelector(s) : null;
-            const shift = holder && holder !== el && holder.contains(el) ? holder.scrollTop : 0;
-            return { top: Math.round((r.top + window.scrollY + shift) * 100) / 100, bottom: Math.round((r.bottom + window.scrollY + shift) * 100) / 100 };
+            const inside = !!holder && holder !== el && holder.contains(el);
+            const shift = inside ? holder.scrollTop : 0;
+            // the lowest line of it the first screen shows: not below the screen, the container's visible foot, or a bottom bar it is not part of
+            let visibleBottom = window.innerHeight;
+            if (inside) visibleBottom = Math.min(visibleBottom, holder.getBoundingClientRect().top + holder.clientTop + holder.clientHeight);
+            for (const bar of window.__dsCoverBars || []) if (!bar.contains(el)) visibleBottom = Math.min(visibleBottom, bar.getBoundingClientRect().top);
+            return { top: px(r.top + window.scrollY + shift), bottom: px(r.bottom + window.scrollY + shift), visibleBottom: px(visibleBottom + window.scrollY) };
           }, sc && sc.selector)
         : null;
     if (box) components.push({ id: e.id, ...box });
     else unlocated.push({ id: e.id, locate: e.locate, matches });
   }
 
+  await page.evaluate(() => {
+    delete window.__dsCoverBars;
+  });
   const plan = coverScreens({ state: C.state, components, viewportHeight: C.viewport.height, pageHeight });
   const targets = plan.screens.map((s) => ({ id: s.id, file: s.file, start: s.start, end: s.end, inScroller: !!(sc && s.start >= Math.round(sc.top)) }));
   const done = await shootPage(page, { targets, viewport: C.viewport, theme: C.theme, motion: C.motion, pageHeight, outDir: C.outDir, include: null, scroller: sc }, T, D);
@@ -1683,7 +1703,7 @@ function coverCommand(positional, flags) {
     throw new UsageError(e.message);
   }
   console.log(code);
-  console.error(`cover: ${stateId} 的 ${edges.length} 条 user 边，在已经走到的这一屏上跑；主视口里放得下的组件不拍，其余按屏拍成 ${stateId}@<这一屏第一条边的 id>.png 写到 ${outDir}（视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}）；不重载页面、不拨页面时间（页面时间要先用 time 装好）；返回里 shot 是每条边该写的 shot，shot 为空就是都在主视口里，不用补拍；unlocated 非空时 exit 为 1（边的 locate 找不到或不唯一，先改 locate）；uncontrolled 为 true 的图，页面时间管不到的东西在动，diffBox 是哪一块`);
+  console.error(`cover: ${stateId} 的 ${edges.length} 条 user 边，在已经走到的这一屏上跑；首屏真正露出来、整个放得下的组件不拍（贴底固定栏或内容滚动区的下沿盖住、裁掉的，也拍），其余按屏拍成 ${stateId}@<这一屏第一条边的 id>.png 写到 ${outDir}（视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}）；不重载页面、不拨页面时间（页面时间要先用 time 装好）；返回里 shot 是每条边该写的 shot，shot 为空就是都在首屏图里，不用补拍；unlocated 非空时 exit 为 1（边的 locate 找不到或不唯一，先改 locate）；uncontrolled 为 true 的图，页面时间管不到的东西在动，diffBox 是哪一块`);
   return 0;
 }
 

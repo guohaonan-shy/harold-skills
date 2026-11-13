@@ -840,6 +840,19 @@ test('coverScreens: a component whole inside the main viewport is not shot again
   assert.equal(half.screens[0].start, 655);
 });
 
+test('coverScreens: a component the bottom bar or the container\'s foot hides is shot, though its box is inside the main viewport; one that is part of the bar, or has room above it, is not', () => {
+  // viewport 600: a bar pinned at 540 and a container whose visible foot is at 540 (`visibleBottom`) hide 530–570; the bar's own button (550–590) is not hidden by it
+  const components = [{ ...comp('shown', 20), visibleBottom: 540 }, { ...comp('hidden', 530), visibleBottom: 540 }, { ...comp('exact', 500), visibleBottom: 540 }, { ...comp('tab', 550), visibleBottom: 600 }, comp('free', 300)];
+  const r = coverScreens({ state: 's', components, viewportHeight: 600, pageHeight: 3000 });
+  assert.deepEqual(r.inViewport, ['shown', 'exact', 'tab', 'free']);
+  assert.deepEqual(r.shot, { hidden: 's@hidden.png' });
+  assert.deepEqual(r.screens.map((s) => [s.start, s.end]), [[380, 980]]);
+  // a `visibleBottom` below the viewport's height does not widen it; without one the viewport's height is the limit as before
+  const below = coverScreens({ state: 's', components: [{ ...comp('a', 590), visibleBottom: 900 }, comp('b', 590)], viewportHeight: 600, pageHeight: 3000 });
+  assert.deepEqual(below.inViewport, []);
+  assert.deepEqual(Object.keys(below.shot), ['a', 'b']);
+});
+
 test('coverScreens: the first screen never starts above the top of the page, and a component taller than a screen gets a screen of its own', () => {
   const near = coverScreens({ state: 's', components: [comp('a', 950)], viewportHeight: 900, pageHeight: 3000 });
   assert.equal(near.screens[0].start, 725);
