@@ -102,9 +102,19 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 誊写了冻结摘要的票，验收标准里至少有一格是比对项：矩阵每一格都跟画布对上，且在 mismatch 阈值之内。这是视觉正确性的红绿判据，实现靠它知道什么时候算做完。
 
+工单要改 skill、agent 定义或 skill 参考文件的，验收标准末尾多三格，见下面「改 skill 类文件的工单」。
+
 工单全部落盘之后，把上面「切法直接落盘，不停下」要求的切法清单交回。切票不翻任何状态：issue 的状态由 `idea-loop:implement` 开 PR 时翻 in-progress。
 
 落盘之后，把工单和 spec 的改动提交进当前分支：`idea-loop:implement` 派出的执行方，worktree 都是从这条分支切出来的，不提交就读不到工单。
+
+## 改 skill 类文件的工单
+
+工单要改 skill、agent 定义或 skill 参考文件的，验收标准末尾固定带下面三格，原文照抄。「这类文件」按路径认，落地时 `ticket-ledger.mjs skill-edit` 用同一条：路径以 `SKILL.md` 结尾；或在某个 `skills/` 目录下、以 `.md` 结尾；或是某个 `agents/` 目录下直接的 `.md` 文件（含 `.claude/agents/`）。工单文件（`docs/spec/*/tickets/`）不算。
+
+- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 下一环
 

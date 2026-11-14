@@ -17,14 +17,14 @@
 
 ## 验收标准
 
-- [ ] 子命令的纯函数部分单测（照 `ticket-ledger.test.mjs`）：#304 的提交 2be5d8e 改的文件列表加它的交回原文（取自 spec「问题陈述」2 引的那行；交回全文在本机 #303 会话记录里，搜 `2be5d8e147cc` 能找到）→ 不过，原因是方式只有「读」、pr-review 的 `SKILL.md` 没有杠杆行；同一提交、交回改成「调 · writing-for-agents」并带杠杆行 → 过；只改了脚本和工单文件的提交 → 过；agent 定义、skill 参考文件、`.claude/agents/` 下的文件都被认成这类文件，`docs/spec/*/tickets/` 下的不算。先见红再见绿
-- [ ] 子命令在真仓库上跑：对 2be5d8e 和那份交回原文退出码非零并列出两条原因（写进交回）
-- [ ] 文档检查（照 `implementer-standards-doc.test.mjs`），先对着改前文字见红：to-ticket 写了「这类文件」的判据和三格原文；implementer 第 5 步直接点名用 Skill 工具调 `idea-loop:writing-for-agents`，交回格式有杠杆行；implement「核对与落地」的 landed 核对调这个子命令
-- [ ] implement 的 `SKILL.md` 正文加完仍 < 5000 字（工单 01 的检查绿）
-- [ ] 插件 `README.md` 同步；idea-loop 版本是 `0.1.15`
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」
+- [x] 子命令的纯函数部分单测（照 `ticket-ledger.test.mjs`）：#304 的提交 2be5d8e 改的文件列表加它的交回原文（取自 spec「问题陈述」2 引的那行；交回全文在本机 #303 会话记录里，搜 `2be5d8e147cc` 能找到）→ 不过，原因是方式只有「读」、pr-review 的 `SKILL.md` 没有杠杆行；同一提交、交回改成「调 · writing-for-agents」并带杠杆行 → 过；只改了脚本和工单文件的提交 → 过；agent 定义、skill 参考文件、`.claude/agents/` 下的文件都被认成这类文件，`docs/spec/*/tickets/` 下的不算。先见红再见绿
+- [x] 子命令在真仓库上跑：对 2be5d8e 和那份交回原文退出码非零并列出两条原因（写进交回）
+- [x] 文档检查（照 `implementer-standards-doc.test.mjs`），先对着改前文字见红：to-ticket 写了「这类文件」的判据和三格原文；implementer 第 5 步直接点名用 Skill 工具调 `idea-loop:writing-for-agents`，交回格式有杠杆行；implement「核对与落地」的 landed 核对调这个子命令
+- [x] implement 的 `SKILL.md` 正文加完仍 < 5000 字（工单 01 的检查绿）
+- [x] 插件 `README.md` 同步；idea-loop 版本是 `0.1.15`
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」
 
 ## 选中的存量回归
 

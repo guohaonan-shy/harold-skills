@@ -57,7 +57,7 @@ PR 从 spec 提交就挂着，先于派工核一遍 PR 开齐、issue 在 in-pro
 
 | 交回 | 核对 |
 |---|---|
-| `landed` | 比集成分支只多一个 commit（`git rev-list --count HEAD..<commit>` 为 1），`ticket-ledger.mjs of <commit>` 输出的正是这张工单；`git show <commit>:<工单>` 里每格 `[x]` 或 `⏭ 延后 → <接手方>`；延后给后续工单的，那张有「继承自」格；延后给 PR 交付验收的，`human_verify` 有素材且文件在它的证据目录 |
+| `landed` | 比集成分支只多一个 commit（`git rev-list --count HEAD..<commit>` 为 1），`ticket-ledger.mjs of <commit>` 输出的正是这张工单；`git show <commit>:<工单>` 里每格 `[x]` 或 `⏭ 延后 → <接手方>`；延后给后续工单的，那张有「继承自」格；延后给 PR 交付验收的，`human_verify` 有素材且文件在它的证据目录；交回原文存成 `.tmp/implement/<spec-slug>/` 下的文件，`ticket-ledger.mjs skill-edit <commit> <该文件>` 退出码 0（不过会逐条列原因） |
 | `blocked` | 半成品已提交在它的分支上，worktree 干净 |
 | `failed` | 不核，直接进「卡住一张，别的接着做」 |
 
