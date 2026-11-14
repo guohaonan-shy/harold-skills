@@ -20,6 +20,8 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 
 const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
+// 「人回复后」 lives in the reference behind implement's 「没活了就停下」 pointer
+const stopRef = read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
 const implementer = read('agents', 'implementer.md');
 const readme = read('README.md');
 
@@ -45,7 +47,7 @@ test('a stopped ticket\'s agent id is written into pending when it stops', () =>
 });
 
 test('人回复后 calls the original implementer back first, and starts a new one only as the fallback', () => {
-  const after = from(implement, '**人回复后**', 'implement/SKILL.md');
+  const after = from(stopRef, '**人回复后**', 'implement/references/stop-and-resume.md');
   const call = after.indexOf('SendMessage');
   assert.ok(call >= 0, '「人回复后」缺：先用 SendMessage 叫回原执行方');
   assert.match(after, /agent id/, '「人回复后」要说明靠 pending 里的 agent id 找回它');
@@ -58,7 +60,7 @@ test('人回复后 calls the original implementer back first, and starts a new o
 });
 
 test('a landed ticket is still redone by a new implementer', () => {
-  const after = from(implement, '**人回复后**', 'implement/SKILL.md');
+  const after = from(stopRef, '**人回复后**', 'implement/references/stop-and-resume.md');
   assert.match(after, /已经落地的工单[^。\n]*(照旧)?新起|落地[^。\n]*照旧新起/, '「人回复后」缺：已经落地的工单照旧新起');
   assert.match(after, /人验反馈/, '要点名人验反馈属于落地后的返工');
 });

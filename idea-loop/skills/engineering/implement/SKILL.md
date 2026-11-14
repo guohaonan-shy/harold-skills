@@ -18,12 +18,9 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 ## 开工：先开 PR
 
-PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看到它改到了哪。issue 会话已经在切工单之前开了（`.tmp/implement/<spec-slug>/prs.md` 在，接着上次的会话时也在），先于派工核一遍：
+PR 从 spec 提交就挂着，先于派工核一遍 PR 开齐、issue 在 in-progress、`reference` 补全：不满足的，读 [references/start-of-run.md](references/start-of-run.md) 的「开工：先开 PR」。
 
-1. **PR 都在**：`prs.md` 列的仓库覆盖了工单头 `**仓库**` 收齐的那些（都没写就是当前仓库）。没有 `prs.md`（人直接调进来的），或工单用到了没开 PR 的仓库，照 `idea-loop:pr` 的「开 draft PR」补开。
-2. **翻状态**：todo 会话认领时已经翻成 in-progress，是的就跳过；不是的（人直接调进来），`issues set <docs> in-progress <号>`。Linear 上 PR 一开集成就推，不手翻。
-3. **补 `reference`**：开 PR 时工单还没切，`reference` 只有 spec 的链接；工单切好后，用 `pr-body.mjs set` 把 spec 与工单补进去。
-4. **主 PR**：知识库所在仓库的 PR 是主 PR：review loop 文件、Review 汇报的存档以它的号命名（下文 `<PR 号>` 都指它），别的 PR 的描述写自己仓库的改动，`your-todo` 写一句「见主 PR」。
+**主 PR**：知识库所在仓库的 PR 是主 PR：review loop 文件、Review 汇报的存档以它的号命名（下文 `<PR 号>` 都指它），别的 PR 的描述写自己仓库的改动，`your-todo` 写一句「见主 PR」。
 
 ## 账本
 
@@ -35,7 +32,7 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 - **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（`idea-loop:pr` 的「开 draft PR」写的）。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（浏览器锁，运行环境用得到时才有）。在跑的执行方只记在会话里。
 
-**可派的工单**：没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。等决定的工单的下游因此也不派。会话断了：先查 `git worktree list` 里 pending 没记着的执行方 worktree：它的分支上有一个带这张工单 `Ticket:` 的提交、比集成分支只多这一个、工单格全勾或带 `⏭ 延后`，就当它交回了 `landed`，照「核对与落地」落地再回收；不是这样的，才照「回收」收掉后重派。然后重算可派的工单。
+**可派的工单**：没落地、不在等决定、不在跑、`Blocked by` 全已落地的工单。等决定的工单的下游因此也不派。会话断了：读 [references/start-of-run.md](references/start-of-run.md) 的「会话断了」。
 
 ## 派工
 
@@ -66,9 +63,9 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 
 不过就 SendMessage 退回同一个执行方说清哪条，第二次还不过按 `failed`。
 
-`by_existing_practice` 每条必须带至少一处现存实例，没有的不收：退回执行方，要么补实例，要么改按「行为没定」停（`idea-loop:decision-rules` 的「依据冲突或没有：停下问人」）。
+`by_existing_practice` 没带现存实例、commit 快进不了（ff 不了）、`found` 里有跟这次无关的存量要自动开 issue：读 [references/landing-branches.md](references/landing-branches.md)。
 
-**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑它这张工单那组测试（工单写的或改到的单元测试、涉及的 API 测试、选中的存量回归），不跑全量，不算失败。落地后照「回收」收掉它的 worktree，再分拣它的交回：
+**落地**：`git merge --ff-only <commit>`。落地后照「回收」收掉它的 worktree，再分拣它的交回：
 
 | 交回字段 | 去哪 |
 |---|---|
@@ -78,61 +75,23 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 | 标「spec 缺口」的 `found` | pending，当决定题 |
 | 其余 `found`（跟这次无关的存量） | 开 issue，见下 |
 
-**跟这次无关的存量问题自动开 issue**（它不在这份 spec 的问题之内，`idea-loop:decision-rules` 的「核心」）：逐条照 `idea-loop:issues` 的「开一个 issue」开（为什么不做：它跟这张工单无关）。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次 Review 汇报（来自实现）和第 1 轮 review 汇报的「已按规则处理」都带它。开不成的也记进 handled，让人在 Review 汇报里看到。
-
 ## 卡住一张，别的接着做
 
 `blocked` / `failed`：连同它的 agent id 和全部下游记进 pending；拷出素材、停它的服务、强制释放浏览器锁，**worktree 和分支留着**；发一条推送通知说哪张卡在哪；回到「派工」。
 
 ## 没活了就停下
 
-没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
+没有在跑的、可派的也空了才停：读 [references/stop-and-resume.md](references/stop-and-resume.md)，照它的步骤推送、写 Review 汇报、等人（「人回复后」「重派」）、全部落地后转 ready。
 
-1. 把每个仓库的分支推上去（PR 在 spec 提交后就开了，主 PR 的号取 `prs.md`）。
-   - **有 `大用例待跑`**（落地的交回里 `verified` 写了）：在会话里先告诉人几个用例、每个最长约 3×45 分钟、每个约 1.05–3.50 美元（起 agent 的更高）乘以个数，不等人点头，用 Bash 的 `run_in_background: true` 起 `node ~/.idea-loop/bin/retro-replay.mjs --cases <用例,用例> --run-large --pr <PR 号> --worktree <集成 worktree 绝对路径>`（不设 timeout），等它退出，不轮询；照 [references/replay-result.md](references/replay-result.md) 处理结果。
-2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
-3. 更新 `reference` 的执行记录，推送。
-4. **先看有没有要人定的事**：pending 不空（有等决定的事）。人验素材不算：它们照第 2 步列进「要你看的」（不勾），实现中途不停，最后收进 PR 描述的「要你做的事」，人在 PR 上一起看。
-   - **有**：照 `idea-loop:pr` 的「在会话里给人看」按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。停下等人，见下面「人回复后」。
-   - **都没有**：不停，不等回复。第 2 步写进文件的条目就是留痕：已按规则处理照样列（人想推翻哪条，之后随时说，照「人回复后」的推翻处理），「要你看的」照常列（有人验素材的不勾，写明「留到 PR 描述的「要你做的事」看」；没有的不写这一节），条目末尾直接记一节「做了什么」（逐点：这次落地了什么、按规则处理了什么，带提交链接），不写「你的批示」。会话里只说一句落地了几张、已按规则处理几件，不发推送通知，然后往下走下面「全部落地」那一步。依据：`idea-loop:decision-rules` 的「护栏」里没有「放行一份无事的汇报」，要人定的只有决定题；人验素材仍由人判，只是挪到 PR 描述里判（人定于 2026-10-30：「人验素材收进最终审核报告，实现中途不停」）；`review-loop.mjs check` 对没有「要你决定」这一节的条目，记了「做了什么」就算处理完。
-
-**人回复后**：原话逐字记进那个条目的「你的批示」，逐点处理，会话里只回**一条**汇总（带提交链接），同样记进「做了什么」：
-
-- **决定**：决定里有设计变更（人接受了实现者做不下去时给的改法，或人自己改了主意）的，先走下面的「设计变更」，过了再写工单，`> 人的决定` 里指向新画布的版本。工单 `要建什么` 末尾加 `> 人的决定（<日期>）：<原文>`，验收格随之增删，提交 `docs(tickets): <NN> — 人的决定`，从 pending 删掉（先取下它的 agent id 和 worktree）。工单回到可派，按下面的「重派」；它落地后旧 worktree 和分支一并回收。
-- **推翻**「已按规则处理」里按现有做法定的、或本次修的存量那条：当作一条人的决定。那条所属的工单，`要建什么` 末尾加 `> 人的决定（<日期>）：推翻「<那条做了什么>」：<原文>`，验收末尾追加 `- [ ] 人推翻（<日期>）：<人要的样子>`，提交 `docs(tickets): <NN> — 人的决定`；工单回到可派重派（同一 trailer，带上「人的决定已写进工单」）。
-- **推翻**开了 issue 的那条：不回工单、不派执行方。在那个 issue 上留一条说明并关掉（`--reason "not planned"`）；人要别的处理（比如这次就修），要修的按上一条写回所属工单。
-- **人验对**（人中途主动看了，或在审核报告里看了）：在文件里勾上。**不对**：验收末尾追加 `- [ ] 人验反馈（<日期>）：<原话>`，提交，工单回到可派重派（同一 trailer，素材同名覆盖）。
-- **疑问**：直接答；要改方案的，说明要回 `idea-loop:grill`。
-- **要求改写汇报**（「写成我看得懂的样子」）：改文件里那个条目的汇报部分，在会话里重贴，改了什么写进汇总。
-
-**重派**（决定、设计变更、推翻写进工单并提交之后，工单要重新做时）：
-
-- **先叫回原执行方。** 这张工单卡住时 pending 记了 agent id、它的 worktree 还在，就用 SendMessage 叫它回来，占一个执行方的位置。消息只给指针：「人的决定已写进工单 `<路径>`，提交 `<SHA>`」，加上要它先合进来的集成分支最新提交。它照常交回，核对、落地、回收照上面做。
-- **叫不回就新起。** SendMessage 报错（id 找不到、会话重启过）或没记 id：照「派工」新起一个，带上半成品分支。
-- **已经落地的工单照旧新起。** 人验反馈、review 里的修、推翻已落地的工单，那时执行方的 worktree 已经回收（「回收」的时机不改），不叫回，新起。
-
-回到「派工」。下次停下追加新条目，不改旧的。
-
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
-
-**等 CI**：全量测试只在这里跑一遍。`gh pr checks <PR 号> --watch` 等这个 head 的检查跑完（每个 PR 各等）：
-
-- **全绿**：起 pr-review。
-- **红了**：`gh run view <run> --log-failed` 读失败的测试，对引入它的行 `git blame` 找到提交，`ticket-ledger.mjs of <提交>` 读出工单；在那张工单的验收末尾追加 `- [ ] CI（<日期>）：<失败的测试验的行为>`，提交 `docs(tickets): <NN> — CI 失败`，照「重派」新起执行方（已落地的工单 worktree 已回收），落地、推送后回到「等 CI」。
-- **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「跟这次无关的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
-- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `REVIEW.md`「验证命令」的全量命令，结果当 CI 结果用；红了同上。
+**等 CI**：`gh pr ready` 后 `gh pr checks <PR 号> --watch` 等这个 head 的检查跑完；全绿起 pr-review，其余读 [references/stop-and-resume.md](references/stop-and-resume.md) 的「等 CI」。
 
 ## 多个仓库
 
-工单头写了 `**仓库**` 的，那张工单属于那个仓库，在那个仓库的 worktree 里做；没写的属于当前仓库。派工时给执行方的起点 SHA、集成分支名、端口都取工单所属仓库的；spec、工单、笔记、tmp、浏览器锁的绝对路径仍是当前仓库（知识库所在）的。别的仓库的工单：
-
-- 用 `git -C <路径> worktree add <执行方 worktree 路径> -b <执行方分支> <起点 SHA>` 给它开 worktree，起 `idea-loop:implementer` 时不带 `isolation`，把这个路径当它的 worktree 给它；
-- 它的 commit 只含该仓库的代码（工单文件不在那个仓库里），带 `Ticket: <NN>-<slug>`；落地（`git -C <该仓库 worktree> merge --ff-only`）后由编排者照交回的 `acceptance` 勾好工单的框，提交 `docs(tickets): <NN> — 落地`；账本的「已落地」在那个仓库的 worktree 里跑 `ticket-ledger.mjs landed <base>`；
-- 其余核对、回收照常，回收的 `git worktree remove` 也在那个仓库里跑。
+工单头写了 `**仓库**`（工单属于别的仓库）：读 [references/multi-repo.md](references/multi-repo.md)。
 
 ## 设计变更：人接受了跟画布不同的设计
 
-PR 开出前，人接受了一处跟冻结画布不同的设计（Review 汇报里接受了实现者给的改法，或人自己改主意）：用 Skill 工具调 `idea-loop:design-change-sync` 照它做。与 `idea-loop:pr-review` 的差别：提交推送到**集成分支**；给 designer 的相关截图用执行方的素材，或人给的；评委判 `瓶颈` / `方向` 就写进 pending 当决定题，带评委意见与新旧两版截图；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，提交 `docs(tickets): <NN> — 设计变更`，工单回到可派重派，已落地的工单按 `idea-loop:pr-review` 的「回工单」再派。
+人接受了一处跟冻结画布不同的设计：读 [references/design-change.md](references/design-change.md)。
 
 ## 回收
 

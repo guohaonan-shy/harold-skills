@@ -356,6 +356,7 @@ idea-loop/
 │   │   ├── to-ticket/SKILL.md
 │   │   ├── implement/SKILL.md        # orchestrates a spec's tickets — the work is in agents/implementer.md
 │   │   │   references/ui-tickets.md, react-port.md  # UI tickets: canvas → the project's component tree, per-stack notes, the dev-only state harness
+│   │   │   references/stop-and-resume.md, start-of-run.md, landing-branches.md, multi-repo.md, design-change.md  # the branches only some runs reach, behind pointers in SKILL.md: the stop (waiting for the human, redispatch, CI), a session that broke or a PR not yet open, the odd landing cases, tickets of other repositories, an accepted design change
 │   │   └── pr-review/SKILL.md        # one two-axis round per call — the work is in agents/pr-reviewer.md
 │   │       references/review-standards.md    # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
 │   │       references/codex-spec.md, codex-standards.md  # the fixed Codex prompts per axis, filled by scripts/codex-prompt.mjs

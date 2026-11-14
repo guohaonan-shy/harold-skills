@@ -32,6 +32,9 @@ function section(doc, title) {
 const implementer = read('agents', 'implementer.md');
 const reviewer = read('agents', 'pr-reviewer.md');
 const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
+// the branches behind pointers live in implement's own references
+const implementLanding = read('skills', 'engineering', 'implement', 'references', 'landing-branches.md');
+const implementStop = read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
 const prReview = read('skills', 'engineering', 'pr-review', 'SKILL.md');
 const standards = read('skills', 'engineering', 'pr-review', 'references', 'review-standards.md');
 const reviewTemplate = read('skills', 'engineering', 'setup', 'references', 'review.md');
@@ -71,13 +74,13 @@ test('the implementer hands back a verified line listing which tests ran', () =>
 });
 
 test('implement sends a non-fast-forwardable commit back to re-run its own ticket tests, not the full suite', () => {
-  const land = section(implement, '核对与落地');
+  const land = section(implement, '核对与落地') + '\n' + implementLanding;
   assert.doesNotMatch(land, /重跑全量套件/);
   assert.match(land, /ff 不了[^。\n]*重跑[^。\n]*这张工单[^。\n]*测试/);
 });
 
 test('implement waits for CI between `gh pr ready` and pr-review, and says what to do when it is red, unrelated, or absent', () => {
-  const stop = section(implement, '没活了就停下');
+  const stop = implementStop;
   // the sentence that readies the PRs names the order: ready, then wait for CI, then pr-review
   const ready = stop.indexOf('gh pr ready');
   const sentenceEnd = stop.indexOf('\n', ready);
