@@ -136,7 +136,8 @@ test('the callers name the new sections: deliver.md writes rollback, not issues,
   const writes = deliver.match(/`problem`[^\n]*/)?.[0] ?? '';
   assert.match(writes, /`rollback`/);
   assert.doesNotMatch(writes, /`issues`/);
-  const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
+  // the steps of 「没活了就停下」 live in implement's own reference
+  const implement = read('skills', 'engineering', 'implement', 'SKILL.md') + '\n' + read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
   assert.match(implement, /Review 汇报/);
   assert.match(implement, /review-loop\.mjs" next[^\n]*review impl/);
   assert.doesNotMatch(implement, /next[^\n]* pause/);

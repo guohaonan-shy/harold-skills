@@ -37,7 +37,8 @@ const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
 const issueSession = read('skills', 'engineering', 'issue-session', 'SKILL.md');
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
 const setupRef = read('skills', 'engineering', 'setup', 'references', 'replay-runner.md');
-const stop = section(implement, '没活了就停下');
+// 「没活了就停下」 steps live in implement's own reference; SKILL.md keeps the title and a pointer
+const stop = read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
 
 test('implement 「没活了就停下」 runs the large cases waiting to run: tells the human three things, does not wait for a nod, runs --run-large in the background', () => {
   const line = stop.split('\n').find((l) => l.includes('大用例待跑'));
@@ -55,11 +56,11 @@ test('implement 「没活了就停下」 runs the large cases waiting to run: te
 });
 
 test('implement does not queue anything: no --enqueue, no queue directory, no night', () => {
-  assert.doesNotMatch(implement, /--enqueue|replay-queue|夜间|夜里|回放在队列里/);
+  assert.doesNotMatch(implement + stop, /--enqueue|replay-queue|夜间|夜里|回放在队列里/);
 });
 
 test('implement 「全部落地」 waits for runs and unsettled replays, not for a queue', () => {
-  const line = implement.split('\n').find((l) => l.startsWith('**全部落地'));
+  const line = stop.split('\n').find((l) => l.startsWith('**全部落地'));
   assert.ok(line, 'the 「全部落地」 paragraph is gone');
   assert.match(line, /没有在跑或未处理的回放/);
   assert.doesNotMatch(line, /队列/);

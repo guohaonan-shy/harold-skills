@@ -112,7 +112,11 @@ test('issue-session 「实现」 runs spec commit → draft PR → cut tickets �
 
 test('implement: before dispatching it checks the PRs are there (opening any that are missing), in-progress; ready flips to in-review', () => {
   const md = read('skills/engineering/implement/SKILL.md');
-  const open = section(md, '## 开工：先开 PR');
+  // the branches behind pointers live in implement's own references
+  const startOfRun = read('skills/engineering/implement/references/start-of-run.md');
+  const stopRef = read('skills/engineering/implement/references/stop-and-resume.md');
+  const landingRef = read('skills/engineering/implement/references/landing-branches.md');
+  const open = section(md, '## 开工：先开 PR') + '\n' + startOfRun;
   assert.ok(md.indexOf('## 开工：先开 PR') < md.indexOf('## 派工'), 'the PR check comes before dispatching');
   assert.match(open, /「开 draft PR」/);
   // 开 draft PR 的命令、正文写法、Linear 前缀、一仓库一个只在 pr 里写一次，implement 只指过去
@@ -121,16 +125,16 @@ test('implement: before dispatching it checks the PRs are there (opening any tha
   assert.doesNotMatch(open, /Linear: <号>/);
   assert.doesNotMatch(open, /各一个/);
   assert.match(open, /issues set <docs> in-progress/);
-  const ending = section(md, '## 没活了就停下');
+  const ending = section(md, '## 没活了就停下') + '\n' + stopRef;
   assert.doesNotMatch(ending, /还没有 PR/, 'the PR is opened at the start, not at the end');
-  assert.match(md, /gh pr ready/);
-  assert.match(md, /issues set <docs> in-review/);
-  assert.match(md, /idea-loop:issues[^\n]*开一个 issue/);
+  assert.match(md + stopRef, /gh pr ready/);
+  assert.match(md + stopRef, /issues set <docs> in-review/);
+  assert.match(md + landingRef, /idea-loop:issues[^\n]*开一个 issue/);
 });
 
 test('implement: a ticket of another repository is built in a worktree of that repository', () => {
   const md = read('skills/engineering/implement/SKILL.md');
-  const multi = section(md, '## 多个仓库');
+  const multi = section(md, '## 多个仓库') + '\n' + read('skills/engineering/implement/references/multi-repo.md');
   assert.match(multi, /git -C <路径> worktree add/);
   assert.match(multi, /工单[^。\n]*仓库/);
 });
