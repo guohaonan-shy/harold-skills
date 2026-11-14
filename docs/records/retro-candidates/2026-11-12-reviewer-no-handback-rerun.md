@@ -18,4 +18,4 @@ tags: [retro-candidates]
 
 ## 出现
 
-- guohaonan-shy/Tofelair#643（2026-11-12）：「做完了吗？」「那你重跑一边审核吧」（等第 1 轮 review 时）；决定记录：[[643]]
+- guohaonan-shy/Tofelair#643（2026-11-12）：「做完了吗？」「那你重跑一边审核吧」（等第 1 轮 review 时）；决定记录：guohaonan-shy/Tofelair `docs/raw/decisions/643.md`
