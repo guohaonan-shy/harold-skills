@@ -62,3 +62,14 @@ test('every markdown link inside a reference opens from the reference file\'s ow
     }
   }
 });
+
+// Review round 2: the 「等 CI」 rule was written in SKILL.md and again in the reference, so a change to one is easy to
+// miss in the other. The rule lives in the reference; SKILL.md keeps the title and a pointer, no command or outcome.
+test('the 「等 CI」 rule is written once: SKILL.md keeps the title and a pointer, the rule stays in the reference', () => {
+  const line = skill.split('\n').find((l) => l.startsWith('**等 CI**'));
+  assert.ok(line, 'no 「等 CI」 title');
+  assert.ok(!line.includes('gh pr checks'), 'SKILL.md repeats the wait command; the rule belongs in the reference only');
+  assert.match(line, /references\/stop-and-resume\.md/, '「等 CI」 must point at the reference');
+  const ref = readFileSync(join(skillDir, 'references', 'stop-and-resume.md'), 'utf8');
+  assert.match(ref, /\*\*等 CI\*\*：[^\n]*gh pr checks <PR 号> --watch/, 'the reference no longer holds the rule');
+});

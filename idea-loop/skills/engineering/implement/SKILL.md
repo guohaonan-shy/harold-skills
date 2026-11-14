@@ -83,7 +83,7 @@ PR 从 spec 提交就挂着，先于派工核一遍 PR 开齐、issue 在 in-pro
 
 没有在跑的、可派的也空了才停：读 [references/stop-and-resume.md](references/stop-and-resume.md)，照它的步骤推送、写 Review 汇报、等人（「人回复后」「重派」）、全部落地后转 ready。
 
-**等 CI**：`gh pr ready` 后 `gh pr checks <PR 号> --watch` 等这个 head 的检查跑完；全绿起 pr-review，其余读 [references/stop-and-resume.md](references/stop-and-resume.md) 的「等 CI」。
+**等 CI**：读 [references/stop-and-resume.md](references/stop-and-resume.md) 的「等 CI」。
 
 ## 多个仓库
 
