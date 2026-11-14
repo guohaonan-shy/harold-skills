@@ -76,7 +76,7 @@ test('implement 核对与落地: the landed check runs ticket-ledger.mjs skill-e
   assert.match(landed, /\.tmp\/implement\/<spec-slug>\//, '交回原文要存进 .tmp/implement/<spec-slug>/ 下的文件');
 });
 
-test('README rows for to-ticket and implement mention the cells and the skill-edit check; the version is 0.1.15', () => {
+test('README rows for to-ticket and implement mention the cells and the skill-edit check; the version is 0.2.0', () => {
   const readme = read('README.md');
   const ticketRow = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:to-ticket`'));
   assert.ok(ticketRow, 'README 缺 to-ticket 那一行');
@@ -86,5 +86,5 @@ test('README rows for to-ticket and implement mention the cells and the skill-ed
   assert.match(implementRow, /ticket-ledger\.mjs skill-edit/, 'implement 行要写 landed 核对跑 skill-edit');
   assert.match(implementRow, /杠杆|lever/, 'implement 行要写交回里的杠杆行');
   const plugin = JSON.parse(read('.claude-plugin', 'plugin.json'));
-  assert.equal(plugin.version, '0.1.15');
+  assert.equal(plugin.version, '0.2.0');
 });
