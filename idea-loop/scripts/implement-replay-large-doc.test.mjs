@@ -94,8 +94,8 @@ test('setup 「规则回放 runner」 installs the runner only; its reference re
   assert.ok(chars(setup) < 5000, `setup body is ${chars(setup)} characters`);
 });
 
-test('implement SKILL.md body is not longer than it was before this change (9019 characters)', () => {
-  assert.ok(chars(implement) <= 9019, `implement body is ${chars(implement)} characters`);
+test('implement SKILL.md body is not longer than it was before this change (9589 characters on main after #304)', () => {
+  assert.ok(chars(implement) <= 9589, `implement body is ${chars(implement)} characters`);
 });
 
 test('implementer: a large case is only written and committed; the result of `--run-large` is the orchestrator\'s', () => {
