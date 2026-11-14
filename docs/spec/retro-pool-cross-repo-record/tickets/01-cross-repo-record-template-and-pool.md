@@ -19,10 +19,10 @@ retro 把规则候选写进 `docs/records/retro-candidates/`，每份的「出�
 - [x] `candidate-pool.md` 的规则列表含上面第 1 条，没有真实项目名。
 - [x] 5 处改写后，行首的 `- <仓库>#<号>` 没动（计数脚本按它数）。
 - [x] 全量测试（`idea-loop/scripts/*.test.mjs`、`scripts/*.test.mjs`）全绿。
+- [x] 全量测试里唯一的红：#303 留下的一条测试把 idea-loop 版本钉在 0.1.14，升版即红，跟 `REVIEW.md`「改了插件就必须升版本」冲突。删掉它，「必须升」由 `scripts/plugin-version.test.mjs` 守。
 
 ## 选中的存量回归
 
 - `idea-loop/scripts/no-project-leak.test.mjs`：新增的规则文字不能带项目名。
 - `idea-loop/scripts/retro-pool-count.test.mjs` 与对真实池跑一遍 `retro-pool-count.mjs`：改写不影响计数、不报形状问题。
 - `scripts/plugin-version.test.mjs`：改了插件就得升版本。
-- [x] 全量测试里唯一的红：#303 留下的一条测试把 idea-loop 版本钉在 0.1.14，升版即红，跟 `REVIEW.md`「改了插件就必须升版本」冲突。删掉它，「必须升」由 `scripts/plugin-version.test.mjs` 守。
