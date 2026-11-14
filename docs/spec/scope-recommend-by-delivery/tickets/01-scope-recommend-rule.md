@@ -32,9 +32,9 @@ idea-loop 的 `plugin.json` 的 `version` 升一档 minor（改了问人时的�
 - [x] 用 runner 跑新用例：改前「否」、改后「是」，且改后那一遍用上了改动（`exercised`）；跑不成或结果不符，写明原因交回
 - [x] `REVIEW.md` 的验证命令全过（含插件版本检查、防项目信息泄漏检查、SKILL.md 字数）
 - [x] idea-loop 的 `version` 升了 minor
-- [ ] 人的决定（2026-11-14）：用例输入开头不再带 `/idea-loop:decision-rules`，格式校验仍过
-- [ ] 人的决定（2026-11-14）：用仓库里的 runner（不是 `~/.idea-loop/bin/` 里装的旧版）跑 3 次，每次记改前、改后、评委（应为 Codex）、改动核对（exercised）；按多数写结论进 `annotations.md`；多数不过照实交回
-- [ ] 人的决定（2026-11-14）：idea-loop 的 `version` 是 0.1.15（patch），plugin-version 检查仍过
+- [x] 人的决定（2026-11-14）：用例输入开头不再带 `/idea-loop:decision-rules`，格式校验仍过
+- [x] 人的决定（2026-11-14）：用仓库里的 runner（不是 `~/.idea-loop/bin/` 里装的旧版）跑 3 次，每次记改前、改后、评委（应为 Codex）、改动核对（exercised）；按多数写结论进 `annotations.md`；多数不过照实交回
+- [x] 人的决定（2026-11-14）：idea-loop 的 `version` 是 0.1.15（patch），plugin-version 检查仍过（对着 main 当时的 0.1.14 过；origin/main 现已到 0.1.17，合并前要从它重新升）
 
 ## 选中的存量回归
 
