@@ -18,4 +18,4 @@ tags: [retro-candidates]
 
 ## 出现
 
-- guohaonan-shy/Tofelair#522（2026-11-11）：「合并吧，先处理冲突在合并」（审核报告交出后、合并前）；决定记录：[[522]]
+- guohaonan-shy/Tofelair#522（2026-11-11）：「合并吧，先处理冲突在合并」（审核报告交出后、合并前）；决定记录：guohaonan-shy/Tofelair `docs/raw/decisions/522.md`
