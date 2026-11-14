@@ -10,6 +10,7 @@
 | [[plugin-version-by-change]] | 改了插件的 PR 按改动性质升 major / minor / patch，没升版本的测试会红 |
 | [[pr-merge-says-release]] | 说插件 PR 可以合并、或交它的审核报告时，一并说它合并后随哪个版本发 |
 | [[replay-run-large-now]] | 取消夜间回放队列，大用例在修改侧当场跑；回放输入不露题、Codex 当评委、核实改后用上了改动的 skill |
+| [[retro-destination-recommend]] | retro 摆候选时给去处推荐：默认进候选池，同类第 3 次起推荐开 issue，仍由人选 |
 | [[retro-pool-cross-repo-record]] | 候选池「出现」行引别的仓库的决定记录时写仓库加路径，不用 [[ ]]；修掉池里 5 条断链 |
 | [[seo-draft-reads-principles]] | 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据 |
 | [[skill-edit-acceptance]] | 改 skill 的工单自带三格验收，落地时脚本核对交回调过 writing-for-agents |
