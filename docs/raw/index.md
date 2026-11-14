@@ -55,3 +55,4 @@
 | [decisions/148](decisions/148.md) | conversation | 2026-11-10 | 决定记录 —— #148 的 issue 会话：起草修坏能力的 spec 时查调用方，review 里重复措辞保持现状、合并，retro 候选开成 #276 |
 | [decisions/151](decisions/151.md) | conversation | 2026-11-10 | 决定记录 —— #151 的 issue 会话：起草参考直读别的 skill 的 references/ 违反写法规范，照规范改成调 skill、合并，retro 无候选 |
 | [decisions/157](decisions/157.md) | conversation | 2026-11-10 | 决定记录 —— #157 的 issue 会话：会话断后已做完的工单先落地，回放用例抓不住删掉、交回记录缺失记成已知限制，合并；retro 候选不批 |
+| [decisions/303](decisions/303.md) | conversation | 2026-11-14 | 决定记录 —— #303 的 issue 会话：测试按阶段分层合并（0.1.14），review 里不压字数，skill 写法调研写进 #137、#292，retro 候选开成 #311 |
