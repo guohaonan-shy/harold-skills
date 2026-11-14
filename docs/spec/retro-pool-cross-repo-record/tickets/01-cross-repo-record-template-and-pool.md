@@ -9,7 +9,7 @@ retro 把规则候选写进 `docs/records/retro-candidates/`，每份的「出�
 
 做完后：
 
-1. `idea-loop/skills/productivity/retro/references/candidate-pool.md` 模板下的规则列表多一条：决定记录不在池所在的仓库时，写 `<仓库> \`docs/raw/decisions/<文件名>.md\``（「候选 N」照样跟在后面），不用 `[[ ]]`。只用 `<仓库>` 占位，不写真实项目名。
+1. `idea-loop/skills/productivity/retro/references/candidate-pool.md` 模板下的规则列表多一条：决定记录不在池所在的仓库时，写 `` <仓库> `docs/raw/decisions/<文件名>.md` ``（「候选 N」照样跟在后面），不用 `[[ ]]`。只用 `<仓库>` 占位，不写真实项目名。
 2. 池里 5 处 `[[577]]`、`[[731]]`、`[[712]]`、`[[522]]`、`[[643]]` 改成同样写法，仓库名照那一行行首写，后面的「候选 N」原样保留。
 3. `idea-loop/.claude-plugin/plugin.json` 的 `version` 0.1.14 → 0.1.15（patch）。
 
@@ -20,6 +20,7 @@ retro 把规则候选写进 `docs/records/retro-candidates/`，每份的「出�
 - [x] 5 处改写后，行首的 `- <仓库>#<号>` 没动（计数脚本按它数）。
 - [x] 全量测试（`idea-loop/scripts/*.test.mjs`、`scripts/*.test.mjs`）全绿。
 - [x] 全量测试里唯一的红：#303 留下的一条测试把 idea-loop 版本钉在 0.1.14，升版即红，跟 `REVIEW.md`「改了插件就必须升版本」冲突。删掉它，「必须升」由 `scripts/plugin-version.test.mjs` 守。
+- [ ] review 第 1 轮 丢弃项复核（2026-11-14）：规则里的写法示例用双反引号包住，原文不出现反斜杠，渲染后是一段完整的代码。
 
 ## 选中的存量回归
 
