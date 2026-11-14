@@ -212,7 +212,7 @@ test('插件里没有 issue-verify，也没有 issues open', () => {
 
 test('implement、pr-review、retro、dreaming、issue-session 的开 issue 都指向 idea-loop:issues 的「开一个 issue」', () => {
   const files = [
-    'skills/engineering/implement/SKILL.md',
+    'skills/engineering/implement/references/landing-branches.md',
     'skills/engineering/pr-review/SKILL.md',
     'skills/productivity/retro/SKILL.md',
     'skills/productivity/dreaming/references/retro-candidates.md',

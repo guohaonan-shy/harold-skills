@@ -58,3 +58,6 @@
 | [decisions/303](decisions/303.md) | conversation | 2026-11-14 | 决定记录 —— #303 的 issue 会话：测试按阶段分层合并（0.1.14），review 里不压字数，skill 写法调研写进 #137、#292，retro 候选开成 #311 |
 | [decisions/174](decisions/174.md) | conversation | 2026-11-14 | 决定记录 —— #174 的 issue 会话（并入 #173）：取消夜间回放队列、当场跑、输入不露题、Codex 评委，摆过的题与 retro 候选的结果 |
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
+| [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
+| [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
+| [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |

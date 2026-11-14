@@ -9,7 +9,7 @@ effort: high
 
 开工先用 Skill 工具调 `idea-loop:decision-rules`（什么自己定、什么交回去；「停，还是延后」引用它，不另写一份），再读目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）。
 
-其余的 skill 看工单的内容自己挑：工单是按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`（循环的规矩、seam、mock 边界）；要往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」）；工单改的是 skill、agent 定义、`AGENTS.md`，照目标仓库 `CODING_STANDARDS.md` 链接到的写法；工单是写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。这些是例子，照它们的思路挑。
+其余的 skill 看工单的内容自己挑：工单是按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`（循环的规矩、seam、mock 边界）；要往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」）；工单改的是 `AGENTS.md`，照目标仓库 `CODING_STANDARDS.md` 链接到的写法（改 skill、agent 定义、skill 参考文件的见「开工前」第 5 步）；工单是写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。这些是例子，照它们的思路挑。
 
 ## 输入
 
@@ -31,7 +31,7 @@ effort: high
 2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停。
 4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表）。
-5. **读目标仓库的写法规范，动手前先读完或调完管这张工单的那一条**：读它的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**别把链接埋在一长串要读的文件里略过**：先在 `CODING_STANDARDS.md` 的「链接」里，找出管这张工单所改文件类型的那一条（例：工单改 skill、agent 定义、`AGENTS.md`，就找到指向 `writing-for-agents` 的那条），链接指到一个 skill 目录，就照着读或调那个 skill，读完或调完再动手；一条都对不上就算了，不硬凑。review 的 Standards 轴按这套规矩审你，只认这个仓库自己写下的规则。
+5. **读目标仓库的写法规范，动手前先读完或调完管这张工单的那一条**：**工单改 skill、agent 定义、skill 参考文件的，直接用 Skill 工具调 `idea-loop:writing-for-agents`，读完再动手**，不再经 `CODING_STANDARDS.md` 的链接转一跳；其余写法规范照下面读。读它的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**别把链接埋在一长串要读的文件里略过**：先在 `CODING_STANDARDS.md` 的「链接」里，找出管这张工单所改文件类型的那一条（例：工单改 `AGENTS.md`，就找到指向 `writing-for-agents` 的那条），链接指到一个 skill 目录，就照着读或调那个 skill，读完或调完再动手；一条都对不上就算了，不硬凑。review 的 Standards 轴按这套规矩审你，只认这个仓库自己写下的规则。
 6. **领域词汇**：目标项目有 `GLOSSARY.md` 就读，新的类型名、函数名、测试名和 commit message 用它的标准叫法，避开 `_Avoid_` 里的词（`idea-loop:glossary` 的「读：所有产出命名的地方」）。缺词先用描述性的说法，不问、不写进术语表。
 7. **先把前提核一遍再写代码**：工单描述的现状和代码对得上吗？每一格验收标准，你知道它的「对」长什么样吗？卡住最好卡在这里，而不是写到一半。共享笔记有就先读：它只给位置，位置对不对你自己打开核。
 
@@ -165,7 +165,8 @@ verified:                                # 凭什么说它对：一个用户能�
   - <验证了什么行为> | <方式：单元 / 组件 / 浏览器端到端 / 测量比对 / 真实前后端 / 手动> | <结论>
   - <该验而没验成的> | 没验成：<为什么> | <谁补：后续工单 / PR 交付验收 / 人>
   - 跑了哪些测试 | 单元 / API / 存量回归 / typecheck / lint | <测试文件或目录逐个写；没跑全量就写「全量交给 CI」>
-  - 读了哪几份写法规范 | 读 / 调 | <文件或 skill 名，逗号分隔；「开工前」第 5 步读到的，没有就写「无」>
+  - 读了哪几份写法规范 | 读 / 调 | <文件或 skill 名，逗号分隔；「开工前」第 5 步读到的，没有就写「无」；用 Skill 工具调了的写「调」>
+  - 杠杆 | <文件> | <对的哪条杠杆，用 writing-for-agents 里的叫法>   # 每个改到的 skill、agent 定义、skill 参考文件各一行，第三栏不能空；落地前脚本核这两行
 found:                                   # 顺手发现的存量问题：是什么、在哪、为什么跟这张工单无关（没有标记的就是这一类）；spec 缺口开头标「spec 缺口」，附 A / B 和推荐（每个选项写代价和能否回滚）；
                                          # 污染了这张工单输入或结论、让 CI 变红的存量，开头标「spec 缺口 · 存量本次修」，写它怎么污染的、这次修了什么，不附选项
   - ...
