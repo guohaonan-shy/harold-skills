@@ -11,7 +11,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,4 +48,17 @@ test('every reference SKILL.md points at exists', () => {
   const pointed = [...skill.matchAll(/references\/([\w.-]+\.md)/g)].map((m) => m[1]);
   assert.ok(pointed.length > 0, 'SKILL.md points at no reference');
   for (const f of pointed) assert.ok(existsSync(join(skillDir, 'references', f)), `SKILL.md names references/${f}, which is not there`);
+});
+
+// Review round 1: a link moved into a reference is read from that reference's own directory, so
+// `references/x.md` inside `references/` pointed at `references/references/x.md`, which is not there.
+test('every markdown link inside a reference opens from the reference file\'s own directory', () => {
+  const refDir = join(skillDir, 'references');
+  for (const name of readdirSync(refDir).filter((f) => f.endsWith('.md'))) {
+    const text = readFileSync(join(refDir, name), 'utf8');
+    for (const m of text.matchAll(/\]\(([^)#\s]+)\)/g)) {
+      if (/^[a-z]+:/.test(m[1])) continue;
+      assert.ok(existsSync(join(refDir, m[1])), `references/${name} links to ${m[1]}, which does not open from there`);
+    }
+  }
 });
