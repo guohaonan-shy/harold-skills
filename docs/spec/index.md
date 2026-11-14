@@ -10,6 +10,7 @@
 | [[plugin-version-by-change]] | 改了插件的 PR 按改动性质升 major / minor / patch，没升版本的测试会红 |
 | [[pr-merge-says-release]] | 说插件 PR 可以合并、或交它的审核报告时，一并说它合并后随哪个版本发 |
 | [[replay-run-large-now]] | 取消夜间回放队列，大用例在修改侧当场跑；回放输入不露题、Codex 当评委、核实改后用上了改动的 skill |
+| [[scope-recommend-by-delivery]] | 范围题按「影不影响这份 spec 的实现、上线」推荐并进当前 PR 还是不进 |
 | [[seo-draft-reads-principles]] | 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据 |
 | [[test-layering-ci-full]] | 执行方只跑改动涉及的测试，全量测试交给 PR 转 ready 后的 CI，review 读 CI 结果不在本机重跑 |
 
