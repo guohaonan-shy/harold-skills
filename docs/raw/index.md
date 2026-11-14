@@ -31,6 +31,7 @@
 | [decisions/115](decisions/115.md) | conversation | 2026-10-26 | 决定记录 —— #115 的 issue 会话：retro 批的候选进候选池、dreaming 数次数，摆过的题与 retro 候选的结果 |
 | [decisions/68](decisions/68.md) | conversation | 2026-10-26 | 决定记录 —— #68 的 issue 会话：内层容器滚动页的段图逐屏截拼接，摆过的题与 retro 候选的结果 |
 | [decisions/65](decisions/65.md) | conversation | 2026-10-26 | 决定记录 —— #65 的 issue 会话：设计档案拍不稳的段停住页面时间、滚动驱动段建成段内状态，摆过的题与 retro 候选的结果 |
+| [decisions/69](decisions/69.md) | conversation | 2026-11-13 | 决定记录 —— #69 的 triage 与 todo 会话：长状态首屏以下会连出边的组件按屏补拍进截图（PR #300 四轮 review 后合并），摆过的题与 retro 候选的结果 |
 | [decisions/93](decisions/93.md) | conversation | 2026-10-27 | 决定记录 —— #93 的 issue 会话：dreaming SKILL.md 超长验证为不存在，摆过的题与 retro 候选的结果 |
 | [decisions/81](decisions/81.md) | conversation | 2026-10-27 | 决定记录 —— #81 的 issue 会话：页面优化的蚕食规则排除 SEO.md 里写的品牌词，摆过的题与 retro 候选的结果 |
 | [decisions/77](decisions/77.md) | conversation | 2026-10-27 | 决定记录 —— #77 的 issue 会话：imagine / refine 的设计目录按 worktree 根定位，摆过的题与 retro 候选的结果（并入 #131） |
@@ -49,6 +50,7 @@
 | [decisions/180](decisions/180.md) | conversation | 2026-10-31 | 决定记录 —— #180 的 issue 会话：writing-for-agents 归并改写、通用文档不带项目信息、retro 候选加验证，摆过的题与 retro 候选的结果 |
 | [decisions/266](decisions/266.md) | conversation | 2026-11-09 | 决定记录 —— #266 的 issue 会话：调度给 triage 出卡片、删独立队列，摆过的题与 retro 候选的结果（两条都不批） |
 | [decisions/298](decisions/298.md) | conversation | 2026-11-13 | 决定记录 —— #298 的 issue 会话：存量超字数本次不动、合并前升版本、合并，retro 候选「按语义化版本定版本号」开成 #305 |
+| [decisions/178](decisions/178.md) | conversation | 2026-11-13 | 决定记录 —— #178 的 issue 会话：合并；retro 无候选 |
 | [decisions/269](decisions/269.md) | conversation | 2026-11-09 | 决定记录 —— #269 的 issue 会话：分拣不等人批先不做（issue 关掉），改为给 harold-skills 建每日分拣定时，摆过的题（无 retro 候选） |
 | [decisions/148](decisions/148.md) | conversation | 2026-11-10 | 决定记录 —— #148 的 issue 会话：起草修坏能力的 spec 时查调用方，review 里重复措辞保持现状、合并，retro 候选开成 #276 |
 | [decisions/151](decisions/151.md) | conversation | 2026-11-10 | 决定记录 —— #151 的 issue 会话：起草参考直读别的 skill 的 references/ 违反写法规范，照规范改成调 skill、合并，retro 无候选 |

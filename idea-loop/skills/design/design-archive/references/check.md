@@ -19,6 +19,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--del
 | 5 决定与候选 | 状态文件没有「决定」；其余对象两节都在，每条决定三项齐全，每条候选三项齐全 |
 | 6 动效 | 字面值的 `duration` / `easing` 都带 `deviates`；`usedBy` 与反向引用一致（字段缺失视为未生成，照样报出来） |
 | 7 分段 | 分段的类型、`id` 写法、定位形状，边的 `from` / `section` 与状态的 `section` 指向声明过的段（逐条见下） |
+| 8 边的截图 | 边的 `shot` 写成 `<出发状态 id>@<边 id>.png`，边 id 是出发状态自己的边；不写在 `system` 边上，不写在声明了 `sections` 的状态上（逐条见下） |
 | 0 结构 | 读不出的文件、不认识的 `type`、缺了规则依赖的必填字段（逐项见 [writing.md](writing.md) 的「状态与边」）；`prod/index.md` 声明了 `workspaces` 时，每个组件文件名要带其中一个前缀 |
 
 ## 规则 7 的逐条违规与提示
@@ -28,3 +29,12 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--del
 - **违规**：类型不在闭集；`id` 写法不对（不是 `<类型>` 或 `<类型>-<限定词>`，kebab-case）；同页重名；同页同类型多次却没都加限定词；`sections` 写在非入口状态上；同页两个入口状态都声明分段；`locate` 不是 [writing.md](writing.md)「分段」里三种形状之一；边的 `from` 不是本页声明过的段；边的 `section` 不是 `to` 所指状态声明过的段（`to` 不是入口状态也算）；状态的 `section` 不是本页声明过的段（入口状态写 `section` 也算）；有分段的入口状态上，`user` 边没写 `from`；引用写成 wikilink；`scrollDriven` 写成 `true` 以外的值（`false`、字符串、数字都算，点名文件和 `sections[n].scrollDriven`）。
 - **提示**（打印、不拦，退出码照旧）：用 `content` 兜底；`position` 定位。landmark 不提示：一页只有一个 banner / contentinfo，不会错位。
 - 校验读的是档案文件，看不到页面：「滚动容器的内容比它的可见区高就要声明分段」和「每个可点元素都落在某一段里」放在拍图那一步判。
+
+## 规则 8 的逐条违规与提示
+
+一律点名文件与 `edges[n].shot`：
+
+- **违规**：`shot` 写法不是 `<出发状态 id>@<边 id>.png`（不是字符串、没有 `.png`、边 id 为空都算；前半写成别的状态的 id 也算）；`shot` 里的边 id 不是出发状态自己的某条边；`system` 边写了 `shot`（它不经过组件）；声明了 `sections` 的状态上写了 `shot`（分段页的边用 `from` 挂在段上）。
+- **允许**：几条边指向同一张图（补拍图按屏合并，用那一屏第一条边的 id 命名）。
+- **提示**：没有。
+- 校验不查图文件在不在（图可能是 LFS 指针）：在不在由查询报，即边的 `shotExists`（见 [query.md](query.md) 的「边的视图」）。「这条边的组件真在那张图里」校验也看不到，放在拍图那一步判。

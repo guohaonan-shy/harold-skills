@@ -20,6 +20,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 - 每个 PR 都是 **ready**（open、不是 draft）。有 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - 回放排队的事 implement 进 review 前已核过。之后 `review-loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
+- **每个 PR 的 head 上 CI 全绿（或没有检查）**：`gh pr checks <PR 号> --watch` 等；红了用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」，照它处理。
 - 每个 PR 的 worktree 工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于该 PR 的 head。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前把它说的缺什么告诉人。
 
@@ -75,6 +76,6 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 前提成立，三选一：
 
-1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`review-loop next` 给的下一轮编号不超过 2（人触发的轮次也计入），就自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。已跑满两轮、第 2 轮的修复刚落地且还没人看过，就停下，等人说「再跑一轮」或合并。上限只约束自动起，不约束人。
+1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`review-loop next` 给的下一轮编号不超过 2（人触发的轮次也计入），先等 CI（同前提），绿了就自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。已跑满两轮、第 2 轮的修复刚落地且还没人看过，就停下，等人说「再跑一轮」或合并。上限只约束自动起，不约束人。
 2. **没有修复，且没有要人定的事 → 不等人，交审核报告**。要人定的事：「要你决定」（含被降级的边缘情形）、未过的设计停点（冻结、`ui-measure` 瓶颈、归档设计档案的草稿过目，后者在人说合并后走，见 `references/merge.md` 的「合并前归档」）。`idea-loop:decision-rules`「护栏」里的不自己做：生产写操作（例：推迁移）写进报告「要你做的事」，未勾的人验素材写进报告给人审，合并只由人说。照 [`references/deliver.md`](references/deliver.md) 做，然后停下，人读报告、追问、说合并。
 3. 其余：停下等人。

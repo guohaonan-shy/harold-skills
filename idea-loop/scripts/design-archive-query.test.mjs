@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
+import { BASE, MKT, MKT_ENTRY, MKT_ENTRY_FILE, SHOT_STATE, SPEC_SLUG, compliantFiles, marketingFiles, shotFiles, writeRepo } from './design-archive-fixture.mjs';
 import { loadArchive } from './design-archive.mjs';
 import {
   QueryError,
@@ -538,6 +538,42 @@ test('every other entry can read the archive after the change', () => {
 // ---------- sections of a long entry state ----------
 
 const mktArchive = (files = marketingFiles(), opts) => loadArchive(writeRepo(files), opts);
+
+// ---------- 边的截图 shot ----------
+
+/** The `shot` fixture plus the image of `save` / `save-key` (shared) — `save-all`'s image is missing. */
+const shotArchive = () => archiveOf({ ...shotFiles(), [P(`pages/cookbook/assets/${SHOT_STATE}@save.png`)]: 'png' });
+
+test('page: an edge with `shot` carries it and `shotExists` (true when the image is in the state\'s assets/, false when not); an edge without has neither key', () => {
+  const r = queryPage(shotArchive(), 'cookbook');
+  const out = r.states.find((s) => s.id === SHOT_STATE).outgoing;
+  assert.deepEqual(out.map((e) => [e.id, e.shot, e.shotExists]), [
+    ['save', `${SHOT_STATE}@save.png`, true],
+    ['save-key', `${SHOT_STATE}@save.png`, true],
+    ['save-all', `${SHOT_STATE}@save-all.png`, false],
+  ]);
+  const list = r.states.find((s) => s.id === 'cookbook--list').outgoing;
+  assert.ok(list.every((e) => !('shot' in e) && !('shotExists' in e)), JSON.stringify(list));
+  // the same edge seen from the other end
+  const saved = r.states.find((s) => s.id === 'cookbook--recipe-saved').incoming;
+  assert.deepEqual(saved.map((e) => [e.id, e.shotExists]), [['save', true], ['save-key', true], ['save-all', false]]);
+});
+
+test("state: the way in shows `shot` / `shotExists` on the steps that carry them", () => {
+  const steps = queryState(shotArchive(), 'cookbook--recipe-saved').enter.steps;
+  const last = steps.at(-1);
+  assert.deepEqual([last.id, last.shot, last.shotExists], ['save', `${SHOT_STATE}@save.png`, true]);
+  assert.ok(steps.slice(0, -1).every((e) => !('shot' in e) && !('shotExists' in e)), JSON.stringify(steps));
+});
+
+test('diff: `shot` is compared like any other edge field', () => {
+  const base = shotFiles();
+  const changed = shotFiles();
+  const file = D(`pages/cookbook/${SHOT_STATE}.md`);
+  changed[file] = base[P(`pages/cookbook/${SHOT_STATE}.md`)].replace(`shot: ${SHOT_STATE}@save-all.png`, `shot: ${SHOT_STATE}@save.png`);
+  const r = queryDiff(writeRepo({ ...base, ...changed }), SPEC_SLUG);
+  assert.ok(JSON.stringify(r).includes('edges[save-all].shot'), JSON.stringify(r));
+});
 
 test('page: the sections of the entry state, each with its edges out and in, its states and the slice path', () => {
   const p = queryPage(mktArchive(), MKT);

@@ -29,7 +29,7 @@ effort: high
 
 ## 机械检查（Standards 轴的一半）
 
-照 `review-standards` 的「机械检查」：跑仓库声明的检查命令，每条输出过一遍 `node "${CLAUDE_PLUGIN_ROOT}/scripts/changed-lines.mjs" <merge-base>`。记下每条命令的退出码、只留改动行的诊断、其余的计数；跑不了的写「未运行：<原因>」。这些结果是事实，原样交给 Standards 进程。
+照 `review-standards` 的「机械检查」：全量测试命令、以及 CI 已在这个 head 上跑过的测试不在本机跑，读 CI 结论，写成 `<检查名> | CI 结论 | 链接`，没跑完写「CI 未完成」（不算通过）；PR 上没有检查时，全量测试照旧本机跑。typecheck、lint 照旧本机跑，每条输出过一遍 `node "${CLAUDE_PLUGIN_ROOT}/scripts/changed-lines.mjs" <merge-base>`，记下每条命令的退出码、只留改动行的诊断、其余的计数；跑不了的写「未运行：<原因>」。核实某条发现要跑测试时，只跑对应的那几个。这些结果是事实，原样交给 Standards 进程。
 
 ## 两个 Codex 进程，并行
 

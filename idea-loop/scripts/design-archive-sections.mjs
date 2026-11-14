@@ -31,6 +31,14 @@
  *              (something the page time cannot hold is moving in it) and comes with the box where they differ.
  *   screen     a state with no sections (a page not taller than the main viewport): the code `shoot` runs, handed the one
  *              section that is the main viewport, `<state>.png`. No `measure` / `attribute` first; same `uncontrolled`.
+ *   cover      a state with no sections that is taller than the main viewport: the code that finds the component of each
+ *              of the state's `user` edges (the edge's `locate`), leaves the ones whole inside what the first screen really shows
+ *              (the main viewport, less what a bar at the foot of the screen (fixed, sticky or laid over the content) or the foot of a scrolling container hides), groups the
+ *              rest from the top down into screens and shoots each with the code `shoot` runs, `<state>@<first edge of the
+ *              screen>.png`. It returns `shot` (edge id → picture) for each edge, `unlocated` (not found, or not found once)
+ *              and `exit: 1` when there are unlocated ones. Everything inside what the first screen shows: nothing shot, `shot` empty.
+ *              `--delta <spec-slug>` reads `docs/design/tmp/<slug>/delta/` over `prod/`, as `measure` does (delta/ wins).
+ *              Like `screen`, the page is not reloaded and its time not moved.
  *
  * The browser side is covered by design-archive-sections-browser.test.mjs (skipped when no Chromium is
  * found) and by a real run; `attribute` and the target arithmetic are pure functions over data.
@@ -43,17 +51,19 @@
  *   node design-archive-sections.mjs attribute <measurement.json>
  *   node design-archive-sections.mjs shoot <attribution.json> --out <dir> [--section <id,id>] [--include '<json locator>']
  *   node design-archive-sections.mjs screen <repo-root> <state> --out <dir> [settings]
+ *   node design-archive-sections.mjs cover <repo-root> <state> [--delta <spec-slug>] --out <dir> [settings]
  *   settings: --viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce
  *             (default: the frontmatter of docs/design/prod/index.md)
  *
  * Exit: 0 = done / nothing orphaned, 1 = `attribute` found orphans, unlocated, misordered or overlapping
- *       sections, 2 = usage error or unreadable input.
+ *       sections (what the code `cover` prints returns `exit: 1` when an edge's component was not found),
+ *       2 = usage error or unreadable input (a state that declares `sections` is one for `cover`).
  */
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { loadArchive, pageOfState, parseSectionRef, sectionLocate, sectionsOfState } from './design-archive.mjs';
+import { loadArchive, outgoingEdges, pageOfState, parseSectionRef, sectionLocate, sectionsOfState } from './design-archive.mjs';
 
 // ---------- the browser side: the code handed to Playwright ----------
 
@@ -1000,6 +1010,197 @@ export function buildScreenCode(config) {
   });
 }
 
+// ---------- cover: the components below the first screen ----------
+
+/**
+ * The screens `cover` shoots: the components below the first screen of a state with no sections, grouped from the top down.
+ * Pure, and standalone — it is also sent into the browser as source (`compact(coverScreens)`), so it refers to nothing outside itself.
+ *
+ * `components` are `{ id, top, bottom, visibleBottom? }` (an edge's id and its component's box in page coordinates at scroll 0).
+ * A component whole inside what the first picture really shows is in it already: `inViewport`. That is above the main viewport's
+ * height and, when given, above the component's own `visibleBottom` — the lowest line the first screen shows of it, which the page
+ * works out by asking the browser what is on top at points over the component's box (a bar, a popover or the foot of the container that
+ * holds it, whatever the way the page is written). One half in it, or one something hides or clips, is not. The rest are
+ * taken in order of `top`; a screen is `viewportHeight` tall, starts a quarter of it above its first component (not above the top of the
+ * page, not below the last whole screen of the page, `pageHeight - viewportHeight`), and takes in the following components that fit in
+ * it entire; the first one is always taken, whatever its height. The next component that does not fit starts the next screen.
+ * `shot` is what each edge writes: `{ edge id: '<state>@<first edge of its screen>.png' }`.
+ */
+export function coverScreens({ state, components, viewportHeight, pageHeight } = {}) {
+  if (typeof state !== 'string' || !state || /[\\/]/.test(state) || state.startsWith('.')) throw new Error(`状态 id 不对（它会成为图的文件名）：${JSON.stringify(state ?? null)}`);
+  if (!(viewportHeight > 0)) throw new Error('没有主视口高：补拍的一屏跟主视口一样高');
+  if (!Array.isArray(components)) throw new Error('组件位置要是一个列表：[{ id, top, bottom }, …]');
+  if (!(pageHeight > 0)) throw new Error('没有页面总高：最后一屏要往上收到整屏高');
+  const inViewport = [];
+  const rest = [];
+  components.forEach((c, i) => (c.bottom <= Math.min(viewportHeight, Number.isFinite(c.visibleBottom) ? c.visibleBottom : viewportHeight) ? inViewport.push(c.id) : rest.push({ ...c, i })));
+  rest.sort((a, b) => a.top - b.top || a.i - b.i);
+  const margin = Math.round(viewportHeight / 4);
+  const lastStart = Math.max(0, pageHeight - viewportHeight);
+  const screens = [];
+  const shot = {};
+  let k = 0;
+  while (k < rest.length) {
+    const first = rest[k];
+    const start = Math.max(0, Math.min(first.top - margin, lastStart));
+    const end = start + viewportHeight;
+    const edges = [first.id];
+    k += 1;
+    while (k < rest.length && rest[k].top >= start && rest[k].bottom <= end) {
+      edges.push(rest[k].id);
+      k += 1;
+    }
+    const file = `${state}@${first.id}.png`;
+    screens.push({ id: first.id, file, start, end, edges });
+    for (const id of edges) shot[id] = file;
+  }
+  return { screens, shot, inViewport };
+}
+
+/**
+ * `cover`, inside `browser_run_code_unsafe`: the page as it stands (not reloaded, its time not moved). Finds what scrolls the way `measure`
+ * does (the document when it is taller than the screen, else the biggest visible element with its own scroll), looks up each edge's
+ * component by its `locate` (found once, or it is `unlocated`), boxes it at scroll 0, lets `coverScreens` plan the screens and hands them
+ * to `shootPage` — the shooting `shoot` and `screen` use. `exit` is 1 when an edge is unlocated.
+ */
+async function coverPage(page, C, T, D, coverScreens, shootPage) {
+  await page.setViewportSize({ width: C.viewport.width, height: C.viewport.height });
+  await page.emulateMedia({ colorScheme: C.theme, reducedMotion: C.motion === 'reduce' ? 'reduce' : 'no-preference' });
+  await page.evaluate(() => document.fonts.ready);
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 3000 });
+  } catch (e) {
+    // a page that never goes quiet is looked at as it stands
+  }
+  // late content moves everything below it: wait until the height holds still
+  let height = -1;
+  for (let i = 0; i < 6; i += 1) {
+    const h = await page.evaluate(() => document.documentElement.scrollHeight);
+    if (h === height) break;
+    height = h;
+    await page.waitForTimeout(300);
+  }
+  // what scrolls, and where, at scroll 0 (the same pick as `measure`)
+  const scroller = await page.evaluate(() => {
+    const px = (v) => Math.round(v * 100) / 100;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    const shown = (el) => {
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none';
+    };
+    const pathOf = (el) => {
+      if (el === document.body) return 'body';
+      if (el.id && document.querySelectorAll('#' + CSS.escape(el.id)).length === 1) return '#' + CSS.escape(el.id);
+      const parts = [];
+      for (let p = el; p && p !== document.body; p = p.parentElement) parts.unshift(p.tagName.toLowerCase() + ':nth-child(' + ([...p.parentElement.children].indexOf(p) + 1) + ')');
+      return 'body > ' + parts.join(' > ');
+    };
+    const ofDocument = { kind: 'document', selector: null, top: 0, pageHeight: document.documentElement.scrollHeight };
+    if (document.documentElement.scrollHeight > window.innerHeight) return ofDocument;
+    const best = [document.body, ...document.querySelectorAll('body *')]
+      .flatMap((el) => {
+        if (/^(TEXTAREA|SELECT|INPUT)$/.test(el.tagName) || el.clientHeight === 0 || el.scrollHeight <= el.clientHeight) return [];
+        if (!/^(auto|scroll)$/.test(getComputedStyle(el).overflowY) || !shown(el)) return [];
+        const r = el.getBoundingClientRect();
+        const area = Math.max(0, Math.min(r.right, window.innerWidth) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+        return area > 0 ? [{ el, area }] : [];
+      })
+      .sort((a, b) => b.area - a.area)[0];
+    if (!best) return ofDocument;
+    best.el.scrollTo({ top: 0, behavior: 'instant' });
+    const r = best.el.getBoundingClientRect();
+    const top = px(r.top + best.el.clientTop + window.scrollY);
+    return { kind: 'element', selector: pathOf(best.el), top, pageHeight: px(top + best.el.scrollHeight) };
+  });
+  const pageHeight = scroller.pageHeight;
+  const sc = scroller.kind === 'element' ? { kind: 'element', selector: scroller.selector, top: scroller.top } : null;
+
+  // each edge's component: found by its `locate` exactly once, else the edge is unlocated
+  const unlocated = [];
+  const components = [];
+  for (const e of C.edges) {
+    const by = e.locate && e.locate.role ? page.getByRole(e.locate.role, e.locate.name ? { name: e.locate.name, exact: true } : {}) : e.locate && e.locate.text ? page.getByText(e.locate.text, { exact: true }) : null;
+    let matches = 0;
+    if (by) {
+      try {
+        matches = await by.count();
+      } catch (err) {
+        matches = 0;
+      }
+    }
+    const box =
+      matches === 1
+        ? await by.evaluate((el, s) => {
+            const r = el.getBoundingClientRect();
+            if (!(r.width > 0 && r.height > 0)) return null;
+            const px = (v) => Math.round(v * 100) / 100;
+            const holder = s ? document.querySelector(s) : null;
+            const inside = !!holder && holder !== el && holder.contains(el);
+            const shift = inside ? holder.scrollTop : 0;
+            // the lowest line of it the first screen really shows. Nothing is told apart by what the thing in front is (a bar, a container's foot, a
+            // popover): the browser is asked, over the box, what is on top of each point. A point is shown when that is the component itself, or
+            // something inside it, or the label it sits in; anything else covers it, and so does a clip (the point past the edge of the container
+            // that holds it hits whatever is behind the container). Points off the screen are not looked at: the rows under the screen are `bottom`'s business.
+            const within = (node, root) => {
+              for (let n = node; n; n = n.parentNode || n.host) if (n === root) return true;
+              return false;
+            };
+            const shows = (x, y) => {
+              if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return true;
+              const hit = document.elementFromPoint(x, y);
+              if (!hit) return true;
+              return within(hit, el) || (within(el, hit) && hit.tagName === 'LABEL');
+            };
+            // Only where the component is drawn is asked about: a line of a wrapped link is a box of its own (the corners of the box around all
+            // the lines are other text), and the corners of a rounded box are the page behind it. So the points sit on the middle of each box's
+            // top and bottom edges, and on three columns across its middle rows, set in from the sides by half the height (a pill's whole curve).
+            const lines = [...el.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
+            const points = (lines.length ? lines : [r]).flatMap((q) => {
+              const inset = Math.min(q.width, q.height) / 2;
+              const mid = q.left + q.width / 2;
+              return [
+                { y: q.top + 1, xs: [mid] },
+                ...[0.25, 0.5, 0.75].map((f) => ({ y: q.top + q.height * f, xs: [q.left + inset, mid, q.right - inset] })),
+                { y: q.bottom - 1, xs: [mid] },
+              ];
+            }).sort((a, b) => a.y - b.y);
+            let visibleBottom = window.innerHeight;
+            for (let i = 0; i < points.length; i += 1) {
+              if (!points[i].xs.every((x) => shows(x, points[i].y))) {
+                visibleBottom = i === 0 ? r.top : points[i - 1].y;
+                break;
+              }
+            }
+            return { top: px(r.top + window.scrollY + shift), bottom: px(r.bottom + window.scrollY + shift), visibleBottom: px(visibleBottom + window.scrollY) };
+          }, sc && sc.selector)
+        : null;
+    if (box) components.push({ id: e.id, ...box });
+    else unlocated.push({ id: e.id, locate: e.locate, matches });
+  }
+
+  const plan = coverScreens({ state: C.state, components, viewportHeight: C.viewport.height, pageHeight });
+  const targets = plan.screens.map((s) => ({ id: s.id, file: s.file, start: s.start, end: s.end, inScroller: !!(sc && s.start >= Math.round(sc.top)) }));
+  const done = await shootPage(page, { targets, viewport: C.viewport, theme: C.theme, motion: C.motion, pageHeight, outDir: C.outDir, include: null, scroller: sc }, T, D);
+  return { out: C.outDir, clock: done.clock, state: C.state, shot: plan.shot, shots: done.shots, inViewport: plan.inViewport, unlocated, exit: unlocated.length ? 1 : 0 };
+}
+
+/**
+ * The code for `cover`: `edges` are the state's `user` edges, `{ id, locate }`. It carries `coverScreens` and `shootPage` along as source, so
+ * what the tests run on the plain functions is what runs in the browser. Like `screen`, it only asks whether the page time was started.
+ */
+export function buildCoverCode(config) {
+  const C = {
+    state: config.state,
+    edges: config.edges.map(({ id, locate }) => ({ id, locate })),
+    viewport: config.viewport,
+    theme: config.theme,
+    motion: config.motion ?? 'default',
+    outDir: config.outDir,
+  };
+  return `async (page) => { const T = (${compact(timeProbe)})(); const D = (${compact(diffKit)})(); const coverScreens = (${compact(coverScreens)}); const shootPage = (${compact(shootPage)}); return (${compact(coverPage)})(page, ${JSON.stringify(C)}, T, D, coverScreens, shootPage); }`;
+}
+
 // ---------- ranges and ownership ----------
 
 const roundPx = (v) => Math.round(v);
@@ -1242,6 +1443,7 @@ export const COMMAND_FLAGS = {
   attribute: [],
   shoot: ['--out', '--section', '--include'],
   screen: ['--out', '--viewport', '--theme', '--locale', '--motion'],
+  cover: ['--delta', '--out', '--viewport', '--theme', '--locale', '--motion'],
   pinned: ['--out', '--viewport', '--theme', '--locale', '--motion'],
 };
 
@@ -1253,11 +1455,13 @@ const USAGE = `用法：
   node design-archive-sections.mjs attribute <测量结果.json>
   node design-archive-sections.mjs shoot <归属结果.json> --out <目录> [--section <段 id,段 id>] [--include '<JSON 定位>']
   node design-archive-sections.mjs screen <仓库根> <状态 id> --out <目录> [设置]
+  node design-archive-sections.mjs cover <仓库根> <状态 id> [--delta <spec-slug>] --out <目录> [设置]
   node design-archive-sections.mjs pinned <仓库根> <状态 id> --out <目录> [设置]
 设置：--viewport 1440x900 --theme light|dark --locale zh-CN --motion default|reduce（默认取 docs/design/prod/index.md 的 frontmatter）
-time / step / measure / shoot / screen / pinned 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对、重叠，或检出了滚动驱动的段而分段声明里没写 scrollDriven 时退出码 1。
+time / step / measure / shoot / screen / cover / pinned 打印交给 Playwright MCP「执行一段代码」的代码；attribute 有落空、定位失败、顺序不对、重叠，或检出了滚动驱动的段而分段声明里没写 scrollDriven 时退出码 1。
 time（装时间）：在 browser_navigate 到入口之后、做任何交互之前跑一次；step（拨一步）：交互之后等界面变化时用；
 screen：不分段的单屏状态，先滚到页顶再截主视口，不用先 measure / attribute；
+cover：不分段、比主视口高的状态，按屏补拍首屏以下会连出边的组件，不重载页面、不拨页面时间；状态或它的边还只在 delta/ 里（合并前归档、初扫的草稿）时带 --delta（写法同 measure）；返回里 shot 是每条边该写的图，unlocated 非空时 exit 为 1；声明了 sections 的状态退出码 2；
 pinned：滚动驱动的段里第 2 步起的状态，到了这一步之后不滚动、不拨时间，直接截当前视口，图叫 <状态 id>.png。`;
 
 class UsageError extends Error {}
@@ -1490,6 +1694,39 @@ function screenCommand(positional, flags) {
   return 0;
 }
 
+function coverCommand(positional, flags) {
+  if (!positional.length) throw new UsageError('缺少仓库根');
+  if (positional.length < 2) throw new UsageError('缺少状态 id（要补拍的状态）');
+  if (positional.length > 2) throw new UsageError(`cover 只要一个仓库根和一个状态 id（多出 ${positional.slice(2).join(' ')}）`);
+  if (!flags.out) throw new UsageError('cover 要 --out <目录>（Playwright 只能写它的工作区根目录里）');
+  const root = resolve(positional[0]);
+  if (!existsSync(join(root, 'docs'))) throw new UsageError(`${root} 下没有 docs/：这不是目标仓库的根`);
+  let archive;
+  try {
+    archive = loadArchive(root, { delta: flags.delta ?? null });
+  } catch (e) {
+    throw new UsageError(e.message);
+  }
+  const stateId = positional[1];
+  const state = archive.objects.get(stateId);
+  if (!state || state.kind !== 'state') throw new UsageError(`档案里没有状态「${stateId}」`);
+  if (state.fm.sections !== undefined) throw new UsageError(`${stateId} 声明了 sections：分段页每个可点元素已经归进某一段，用 measure / attribute / shoot 拍，不用 cover`);
+  const edges = outgoingEdges(archive, stateId).filter((e) => e.kind === 'user');
+  const nameless = edges.find((e) => !e.id);
+  if (nameless) throw new UsageError(`${stateId} 的第 ${nameless.index + 1} 条边没有 id（图名和 shot 都用边 id）`);
+  const settings = settingsOf(archive, flags);
+  const outDir = resolve(flags.out);
+  let code;
+  try {
+    code = buildCoverCode({ state: stateId, edges, viewport: settings.viewport, theme: settings.theme, motion: settings.motion, outDir });
+  } catch (e) {
+    throw new UsageError(e.message);
+  }
+  console.log(code);
+  console.error(`cover: ${stateId} 的 ${edges.length} 条 user 边，在已经走到的这一屏上跑；首屏真正露出来、整个放得下的组件不拍（被别的元素盖住、或被容器裁掉一部分的，也拍），其余按屏拍成 ${stateId}@<这一屏第一条边的 id>.png 写到 ${outDir}（视口 ${settings.viewport.width}×${settings.viewport.height}，${settings.theme}，motion ${settings.motion}${settings.locale ? `，语言 ${settings.locale}（浏览器要先按这个语言打开页面）` : ''}）；不重载页面、不拨页面时间（页面时间要先用 time 装好）；返回里 shot 是每条边该写的 shot，shot 为空就是都在首屏图里，不用补拍；unlocated 非空时 exit 为 1（边的 locate 找不到或不唯一，先改 locate）；uncontrolled 为 true 的图，页面时间管不到的东西在动，diffBox 是哪一块`);
+  return 0;
+}
+
 function safeParseIn(text) {
   try {
     return JSON.parse(text);
@@ -1509,6 +1746,7 @@ function main(argv) {
     if (command === 'attribute') return attributeCommand(positional);
     if (command === 'shoot') return shootCommand(positional, flags);
     if (command === 'screen') return screenCommand(positional, flags);
+    if (command === 'cover') return coverCommand(positional, flags);
     if (command === 'pinned') return pinnedCommand(positional, flags);
     return 2;
   } catch (e) {

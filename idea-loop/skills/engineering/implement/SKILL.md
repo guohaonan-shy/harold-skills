@@ -56,7 +56,7 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 
 ## 核对与落地
 
-只核能机械判断的；套件执行方交回前跑过，下一张和 pr-review 还会跑，这里不重跑：
+只核能机械判断的；测试执行方交回前跑过，全量由 PR 转 ready 后的 CI 跑，这里不重跑：
 
 | 交回 | 核对 |
 |---|---|
@@ -68,7 +68,7 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 
 `by_existing_practice` 每条必须带至少一处现存实例，没有的不收：退回执行方，要么补实例，要么改按「行为没定」停（`idea-loop:decision-rules` 的「依据冲突或没有：停下问人」）。
 
-**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑全量套件，不算失败。落地后照「回收」收掉它的 worktree，再分拣它的交回：
+**落地**：`git merge --ff-only <commit>`。ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑它这张工单那组测试（工单写的或改到的单元测试、涉及的 API 测试、选中的存量回归），不跑全量，不算失败。落地后照「回收」收掉它的 worktree，再分拣它的交回：
 
 | 交回字段 | 去哪 |
 |---|---|
@@ -113,7 +113,14 @@ PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看�
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+
+**等 CI**：全量测试只在这里跑一遍。`gh pr checks <PR 号> --watch` 等这个 head 的检查跑完（每个 PR 各等）：
+
+- **全绿**：起 pr-review。
+- **红了**：`gh run view <run> --log-failed` 读失败的测试，对引入它的行 `git blame` 找到提交，`ticket-ledger.mjs of <提交>` 读出工单；在那张工单的验收末尾追加 `- [ ] CI（<日期>）：<失败的测试验的行为>`，提交 `docs(tickets): <NN> — CI 失败`，照「重派」新起执行方（已落地的工单 worktree 已回收），落地、推送后回到「等 CI」。
+- **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「跟这次无关的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
+- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `REVIEW.md`「验证命令」的全量命令，结果当 CI 结果用；红了同上。
 
 ## 多个仓库
 

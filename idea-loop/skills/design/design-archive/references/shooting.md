@@ -4,9 +4,9 @@
 
 **先看运行环境能不能做**：下面每一步都靠在页面里执行任意 JS（脚本打印的是一段 `async (page) => …` 代码）。用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『浏览器』：它写不能执行任意 JS（如 magi）的，整串步骤走 `idea-loop:runtime` 的退路，不拍：把要拍的状态清单（状态 id、入口、视口与主题）交给人，汇报里记「未做：运行环境 <名> 没有『浏览器』的执行任意 JS」。
 
-四种情形各一串步骤，每步以完成条件收尾；输出里要处理的东西汇在「看到什么 → 做什么」。分段怎么声明（`id`、`locate`）见 [writing.md](writing.md) 的「分段 `sections`」，校验规则 7 见 [check.md](check.md)。
+五种情形各一串步骤，每步以完成条件收尾；输出里要处理的东西汇在「看到什么 → 做什么」。分段怎么声明（`id`、`locate`）见 [writing.md](writing.md) 的「分段 `sections`」，校验规则 7 见 [check.md](check.md)。
 
-**情形怎么选**：状态所在页面不比主视口高 → 单屏状态；入口状态的滚动容器内容比它的可见区高（要声明分段）→ 长页面的入口状态；这个状态带 `section`（FAQ 展开、切标签）→ 段内交互的状态；所在段声明了 `scrollDriven` 且是第 2 步起 → 滚动驱动的段。
+**情形怎么选**：状态所在页面不比主视口高 → 单屏状态；页面比主视口高，状态又不分段（加载完的报告页：入口是加载中，加载完是另一个状态，不能声明 `sections`）→ 比主视口高、不分段的状态；入口状态的滚动容器内容比它的可见区高（要声明分段）→ 长页面的入口状态；这个状态带 `section`（FAQ 展开、切标签）→ 段内交互的状态；所在段声明了 `scrollDriven` 且是第 2 步起 → 滚动驱动的段。
 
 ## 命令
 
@@ -14,6 +14,7 @@
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" time <仓库根> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" step <毫秒数>
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <仓库根> <状态 id> --out <目录> [设置]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <仓库根> <状态 id> [--delta <spec-slug>] --out <目录> [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> <入口状态 id> [--delta <spec-slug>] [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" measure <仓库根> --state <入口状态 id> --page <页面> --sections-file <分段列表.json> [--for <段内状态 id> --section <段 id>] [设置]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" attribute <测量结果.json>
@@ -40,6 +41,21 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 1. 装时间。完成：返回 `installed: true`。
 2. 按状态的进入方式走到这个状态；要等界面变化用 `step` 拨小步。要停在瞬态（加载中）的，先拦住那条请求，再拨小步让这一屏画完。完成：「应看到什么」成立。
 3. 跑 `screen` 打印的代码，不用先 `measure` / `attribute`。完成：返回 `shots` 里一张，`heightDrift` 为 0（不为 0 按下表）。
+
+不知道页面高不高时，在这一屏上再跑一次 `cover`：返回的 `shot` 为空就是单屏状态，没有补拍图要拍；不为空按下一节。
+
+## 比主视口高、不分段的状态
+
+主视口图 `<状态 id>.png` 之外，首屏以下会连出边的组件按屏补拍：每屏一张图，叫 `<状态 id>@<这一屏第一条边的 id>.png`，几条边的组件在同一屏就共用这一张。主视口图里真正露出来的组件不补拍；被别的元素（底部的栏、浮层）盖住一部分、或被容器的下沿裁掉一部分的，也补拍。`cover` 读的是档案里这个状态的 `user` 边（`component` 对应的 `locate`），所以边要先写好。
+
+1. 装时间。完成：返回 `installed: true`。
+2. 按状态的进入方式走到这个状态，要等界面变化用 `step` 拨小步（同「单屏状态」第 2 步）。完成：「应看到什么」成立。
+3. 跑 `screen` 拍主视口图。完成：`shots` 里一张。
+4. 就在这一屏上跑 `cover`，`--out` 与 `screen` 同一个目录。它不重载页面、不拨页面时间，所以第 2 步走到的状态不会丢。完成：返回的 `unlocated` 为空，`shots` 每张的 `uncontrolled` 照下表处理。
+   - `unlocated` 非空（`exit` 为 1）：多半是边的 `locate` 写错了，或组件改名了、页面上同名的有好几个。在页面的可访问性快照里找到现在的名字，改边的 `locate`，再跑 `cover`。
+5. 按返回的 `shot`（`{ 边 id: 图名 }`）给每条边写上 `shot`；`shot` 里没有的边组件在主视口图里，不写。图放进 `assets/`。完成：`shot` 里的每条边都写好了，`design-archive-check.mjs` 退出码 0（规则 8，命令见 [check.md](check.md)）。
+
+状态或它的边还只在 `delta/` 里（合并前归档、初扫的草稿）时，`cover` 带 `--delta <spec-slug>`：`prod/` 叠上 `docs/design/tmp/<spec-slug>/delta/` 一起读，`delta/` 里的状态和边优先，写法同 `measure` 的 `--delta`。不带它只读 `prod/`，状态不在 `prod/` 里时退出码 2。
 
 ## 长页面的入口状态
 
@@ -98,7 +114,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 | `byRole: false` 的元素，`attribute` 列在 `roleUnresolved`（原生折叠标题 `<summary>` 一类） | 它的边写 `locate: { text: <完整文字> }` |
 | `scroller.others` 不空 | 页面上还有第二个窗格自己在滚，它超出可见区的内容拍不到；在状态文件的描述里用文字写明 |
 | `uncontrolled: true`（带 `diffBox`：两张有差异的像素的外接框，图自己的像素坐标） | 这一段里有页面时间管不到的东西在动（视频、WebGL、Worker 里按真实时间算的内容、网络推送）。状态文件「这一屏」里写明「这一段有页面时间管不到的动态内容：<是什么，看 `diffBox`>，截图是某一刻」；对账按「应看到什么」逐条核，不按像素判 |
-| `heightDrift` 不是 0 | 页面自己在变高变矮（打字机文案、慢到的内容），图可能整体错位。长页面：重新 `measure` 再拍；单屏状态：页面其实比主视口高，改成声明分段 |
+| `heightDrift` 不是 0 | 页面自己在变高变矮（打字机文案、慢到的内容），图可能整体错位。长页面：重新 `measure` 再拍；单屏状态：页面其实比主视口高，不分段的照「比主视口高、不分段的状态」补拍；入口状态是营销页那种结构化长页面的，才改成声明分段 |
 | `clock` 是「装晚了」 | 页面时间没装过，早先起的计时器和 CSS 动画在真实时间里走，图可能拍到别的状态。从入口重来：重新打开入口、`time`、再点出这个状态 |
 | 一张图的返回带 `note`（这一段伸进了滚动容器） | 不是图拍坏了：这一段要在容器顶切成两段，见下 |
 
