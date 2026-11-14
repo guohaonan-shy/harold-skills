@@ -36,11 +36,11 @@ issues: [199]
 
 ## 方案
 
-改完后：retro 往池里写「出现」时，决定记录在池所在的仓库里，照旧写 `[[<文件名>]]`；在别的仓库里，写 `<仓库> \`docs/raw/decisions/<文件名>.md\``，不用 `[[ ]]`。池里现有 5 条断链改成后一种写法，本仓库 `docs/` 里 retro 候选不再有指不到的 `[[...]]`。
+改完后：retro 往池里写「出现」时，决定记录在池所在的仓库里，照旧写 `[[<文件名>]]`；在别的仓库里，写 `` <仓库> `docs/raw/decisions/<文件名>.md` ``，不用 `[[ ]]`。池里现有 5 条断链改成后一种写法，本仓库 `docs/` 里 retro 候选不再有指不到的 `[[...]]`。
 
 两处改动：
 
-1. `candidate-pool.md` 模板下的规则列表加一条：决定记录不在池所在的仓库时，写 `<仓库> \`docs/raw/decisions/<文件名>.md\``（可带「候选 N」），不用 `[[ ]]`：`[[ ]]` 只能指到同一个 `docs/` 里的文件。用 `<仓库>` 占位，不写真实项目名（防泄漏测试守着）。
+1. `candidate-pool.md` 模板下的规则列表加一条：决定记录不在池所在的仓库时，写 `` <仓库> `docs/raw/decisions/<文件名>.md` ``（可带「候选 N」），不用 `[[ ]]`：`[[ ]]` 只能指到同一个 `docs/` 里的文件。用 `<仓库>` 占位，不写真实项目名（防泄漏测试守着）。
 2. 池里 5 处改成同样写法，`<仓库>` 照那一行行首的仓库名写（`Tofelair` / `guohaonan-shy/Tofelair`），「候选 N」原样保留。
 
 对的杠杆（`idea-loop:writing-for-agents`）：读这份 reference 的是 retro 第 5、6 步写池的会话；它照模板填空，模板缺分支就会照默认填错。补的是一条显式分支，放在模板紧下面的规则列表里，跟「出现每次一行」等规则同处，不新增章节。
@@ -57,7 +57,7 @@ issues: [199]
 ## 实现决策
 
 - 写法选「仓库 + 路径」，不选 URL：池里已有 4 处这样写（538 那几份），读的人认得；URL 要带分支和组织名，写池的会话不一定拿得到。依据：分拣评论建议、现存实例。
-- `[[<号>]]` 后跟着的「候选 N」原样保留在路径后面，如 `guohaonan-shy/Tofelair \`docs/raw/decisions/731.md\` 候选 7`。
+- `[[<号>]]` 后跟着的「候选 N」原样保留在路径后面，如 `` guohaonan-shy/Tofelair `docs/raw/decisions/731.md` 候选 7 ``。
 - 「Tofelair#518 的 retro，不在本仓库」那几行不改：没有链接，不断。
 - 插件版本：`idea-loop` 0.1.14 → 0.1.15（patch：修说明里缺的分支，不改行为与用法，`REVIEW.md`「额外要求」）。README 不涉及：没改 skill、agent、hook、脚本或产物位置。
 
@@ -75,7 +75,7 @@ issues: [199]
 - **seam**：`docs/records/retro-candidates/` 下全部 `[[...]]` 的目标在 `docs/` 里存在；`candidate-pool.md` 的规则列表。
 - **增量功能测试**：
   - 前置：分支上的 `docs/`。步骤：取 `docs/records/retro-candidates/` 里全部 `[[x]]`，逐个找 `docs/` 下有无 `x.md`。期望：全部存在。覆盖：期望行为 1。
-  - 前置：分支上的 `candidate-pool.md`。步骤：读模板下的规则列表。期望：有一条写明别的仓库的决定记录写成 `<仓库> \`docs/raw/decisions/<文件名>.md\``、不用 `[[ ]]`。覆盖：期望行为 1。
+  - 前置：分支上的 `candidate-pool.md`。步骤：读模板下的规则列表。期望：有一条写明别的仓库的决定记录写成 `` <仓库> `docs/raw/decisions/<文件名>.md` ``、不用 `[[ ]]`。覆盖：期望行为 1。
   - `node --test idea-loop/scripts/*.test.mjs` 与 `scripts/*.test.mjs` 全过（含防泄漏、升版本、池计数）。
 - **照着谁写**：`retro-pool-count.mjs` 的现有测试；断链核对照分拣时的做法（逐个 `ls`）。
 
