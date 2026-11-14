@@ -49,8 +49,6 @@ argument-hint: "<issue 号>"
 2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
 3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
-**规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（第一行是 `<仓库> #<PR> 的规则回放：…`）。收到后读 [references/replay-result.md](references/replay-result.md)，照它处理。
-
 ## 先放着
 
 人说先放着，在哪一步都一样：已写的改动提交，`git push -u origin issue/<号>-<slug>`，`issues set <docs> backlog $ARGUMENTS --comment=<停在哪个阶段、分支名>`，去「收尾」。下一个会话读这条评论接上分支。

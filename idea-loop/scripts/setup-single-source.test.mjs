@@ -1,9 +1,9 @@
 /**
  * Tripwire — setup's SKILL.md body and the references split out of it say each thing once.
  *
- * The 夜间回放 / 每周对账 completion conditions and "which file the issue-category section is written into" live in
- * the SKILL.md body only; the references carry the steps / the format, not a second copy. The 夜间回放 section of
- * the body is one line on when to read the reference, not a three-step summary of it.
+ * The 规则回放 runner / 每周对账 completion conditions and "which file the issue-category section is written into" live in
+ * the SKILL.md body only; the references carry the steps / the format, not a second copy. The 规则回放 runner section of
+ * the body is one line on when to read the reference, not a summary of its steps.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,18 +21,18 @@ function section(text, title) {
   return m ? m[1] : null;
 }
 
-test('夜间回放 and 每周对账 completion conditions are stated only in the SKILL.md body', () => {
-  for (const title of ['夜间规则回放', '每周对账']) assert.match(section(body, title), /^完成条件：/m, `${title}: body keeps its completion condition`);
-  for (const f of ['nightly-replay.md', 'weekly-dreaming.md']) {
+test('规则回放 runner and 每周对账 completion conditions are stated only in the SKILL.md body', () => {
+  for (const title of ['规则回放 runner', '每周对账']) assert.match(section(body, title), /^完成条件：/m, `${title}: body keeps its completion condition`);
+  for (const f of ['replay-runner.md', 'weekly-dreaming.md']) {
     assert.doesNotMatch(read('references', f), /完成条件/, `${f} repeats a completion condition the body already states`);
   }
 });
 
-test('夜间规则回放 in the body is a pointer, not a summary of the three steps', () => {
-  const s = section(body, '夜间规则回放');
-  assert.ok(s.includes('references/nightly-replay.md'));
-  for (const detail of ['retro-install.mjs', 'create_scheduled_task', '7 1 * * *', 'idea-loop-retro-replay']) {
-    assert.ok(!s.includes(detail), `body 夜间规则回放 still summarises the reference (${detail})`);
+test('规则回放 runner in the body is a pointer, not a summary of the steps', () => {
+  const s = section(body, '规则回放 runner');
+  assert.ok(s.includes('references/replay-runner.md'));
+  for (const detail of ['retro-install.mjs', 'create_scheduled_task', '定时任务']) {
+    assert.ok(!s.includes(detail), `body 规则回放 runner still summarises the reference (${detail})`);
   }
 });
 

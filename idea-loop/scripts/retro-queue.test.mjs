@@ -1,101 +1,15 @@
 /**
- * The nightly replay queue's decisions (idea-loop/evals/retro/queue.mjs): when does the runner run, what does a
- * queue file hold, and what does a night's result look like in the PR's review loop file.
+ * How a replay's result is written into the PR's review loop file (idea-loop/evals/retro/queue.mjs): what one entry says,
+ * how its round is counted, and that it is settled only when nothing is waiting for the human.
  *
- * The runner's whole flow against a fake `claude` is in the second half of this file; the first half is pure
- * functions, which is where the time window, the queue contents and the result format get decided.
+ * The runner's whole flow against a fake `claude` is in retro-run-large.test.mjs; this file is pure functions.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
-import {
-  RESULT_PREFIX, appendReplayResults, buildReplayEntry, decideQueueRun, inNightWindow, makeQueueEntry, parseResultLine, pushMessage,
-  queueFileName, resultLine, reviewLoopPath, sessionMessage, summarizeResults, validateQueueEntry,
-} from '../evals/retro/queue.mjs';
+import { appendReplayResults, buildReplayEntry, describeExercised, reviewLoopPath, summarizeResults } from '../evals/retro/queue.mjs';
 import { nextRound, parseLoop, unsettled } from './review-loop.mjs';
 
-// Local-time constructors: the window is the machine's own clock, so the tests build times the same way.
 const at = (h, m = 0, day = 23) => new Date(2026, 9, day, h, m, 0);
-
-// ---------- the time window: 00:00 to 07:00, local time ----------
-
-test('the window is 00:00 up to (not including) 07:00 on the machine\'s own clock', () => {
-  assert.equal(inNightWindow(at(0, 0)), true);
-  assert.equal(inNightWindow(at(1, 7)), true);
-  assert.equal(inNightWindow(at(6, 59)), true);
-  assert.equal(inNightWindow(at(7, 0)), false);
-  assert.equal(inNightWindow(at(9, 12)), false);
-  assert.equal(inNightWindow(at(23, 59)), false);
-});
-
-test('at 09:12 the runner does not run, and says it is the time, not the queue, that stopped it', () => {
-  const d = decideQueueRun({ now: at(9, 12), files: ['a-1.json', 'b-2.json'] });
-  assert.equal(d.action, 'wait');
-  assert.match(d.reason, /09:12/);
-  assert.match(d.reason, /00:00.*07:00/);
-});
-
-test('in the window with an empty queue it exits at once', () => {
-  const d = decideQueueRun({ now: at(1, 7), files: [] });
-  assert.equal(d.action, 'empty');
-});
-
-test('in the window with queue files it runs them in file-name order, ignoring files that are not queue entries', () => {
-  const d = decideQueueRun({ now: at(1, 7), files: ['b__c-9.json', 'a__c-12.json', '.DS_Store', 'notes.txt'] });
-  assert.equal(d.action, 'run');
-  assert.deepEqual(d.files, ['a__c-12.json', 'b__c-9.json']);
-});
-
-test('outside the window the time check comes first, even with an empty queue', () => {
-  assert.equal(decideQueueRun({ now: at(12, 0), files: [] }).action, 'wait');
-});
-
-// ---------- the queue file ----------
-
-const entry = () => ({ repo: 'owner/proj', pr: 12, worktree: '/work/proj-impl', cases: ['retro-pool-choice'], base: 'abc1234', queued_at: '2026-10-22T20:00:00.000Z' });
-
-test('a queue entry holds the repository, the PR number, the worktree path and the cases', () => {
-  assert.deepEqual(validateQueueEntry(entry()), []);
-  for (const [field, bad] of [['repo', 'no-slash'], ['pr', 0], ['pr', '12'], ['worktree', 'relative/dir'], ['cases', []], ['cases', ['Bad Name']]]) {
-    const problems = validateQueueEntry({ ...entry(), [field]: bad });
-    assert.ok(problems.some((p) => p.field === field), `${field}=${JSON.stringify(bad)} should be reported`);
-  }
-  assert.ok(validateQueueEntry(null).length > 0);
-});
-
-test('one file per PR: the name comes from the repository and the PR number', () => {
-  assert.equal(queueFileName({ repo: 'owner/proj', pr: 12 }), 'owner__proj-12.json');
-  assert.notEqual(queueFileName({ repo: 'owner/proj', pr: 12 }), queueFileName({ repo: 'owner/proj', pr: 13 }));
-});
-
-test('queueing more cases for a PR that is already queued adds to its file instead of replacing it', () => {
-  const first = makeQueueEntry({ ...entry(), queuedAt: '2026-10-22T20:00:00.000Z' });
-  const second = makeQueueEntry({ ...entry(), cases: ['retro-pool-choice', 'other-case'], queuedAt: '2026-10-23T08:00:00.000Z', existing: first });
-  assert.deepEqual(second.cases, ['retro-pool-choice', 'other-case']);
-  assert.equal(second.queued_at, '2026-10-22T20:00:00.000Z', 'the PR has been waiting since the first time');
-  assert.deepEqual(validateQueueEntry(second), []);
-});
-
-test('a queue entry may name the issue session to send the result back to; without it the entry is still complete', () => {
-  assert.deepEqual(validateQueueEntry({ ...entry(), session: 'local_3fa9c1d2' }), []);
-  for (const bad of ['', '   ', 12, ['local_x'], 'two\nlines']) {
-    assert.ok(validateQueueEntry({ ...entry(), session: bad }).some((p) => p.field === 'session'), `session=${JSON.stringify(bad)} should be reported`);
-  }
-});
-
-test('the session id is kept in the file; queueing again without one keeps it, with one replaces it', () => {
-  const first = makeQueueEntry({ ...entry(), session: 'local_aaa', queuedAt: '2026-10-22T20:00:00.000Z' });
-  assert.equal(first.session, 'local_aaa');
-  assert.equal(makeQueueEntry({ ...entry(), cases: ['other-case'], queuedAt: 'later', existing: first }).session, 'local_aaa');
-  assert.equal(makeQueueEntry({ ...entry(), cases: ['other-case'], session: 'local_bbb', queuedAt: 'later', existing: first }).session, 'local_bbb');
-  assert.equal('session' in makeQueueEntry({ ...entry(), queuedAt: 'x' }), false, 'no session, no field');
-});
-
-// ---------- the result in the review loop file ----------
 
 const pass = (c) => ({ case: c, outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」', verdicts: [{ side: 'before', answer: 'no', cite: '没有讲机制' }, { side: 'after', answer: 'yes', cite: '第 2 段讲了' }], cost: 1.2, runDir: '/tmp/idea-loop-retro/c/20261023T010700' });
 const fail = (c) => ({ case: c, outcome: 'fail', reason: '不过：改后的插件跑出来仍然答「否」，规则改动没有让问题消失', verdicts: [{ side: 'before', answer: 'no', cite: 'x' }, { side: 'after', answer: 'no', cite: 'y' }], cost: 1.4, runDir: '/tmp/idea-loop-retro/d/20261023T010900' });
@@ -128,6 +42,16 @@ test('when a case does not pass, the entry hands the result to the human and sta
   assert.equal(done.settled, true);
 });
 
+test('an entry says the replay was run on the spot, and never mentions a night or a queue', () => {
+  const ok = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
+  assert.match(ok, /当场跑完，2026-10-23 01:07 出结果/);
+  assert.doesNotMatch(ok, /夜间|队列/);
+  const notOk = buildReplayEntry({ round: 2, ...ENTRY_INPUT([fail('b')]) });
+  assert.doesNotMatch(notOk, /夜间|队列/);
+  assert.match(notOk, /不会自动重跑/);
+  assert.deepEqual(parseLoop(notOk).map((e) => [e.kind, e.settled]), [['replay', false]], 'still unsettled until the human rules');
+});
+
 test('every case is listed with the judge\'s answer on each side, the quote it found, and where the products are', () => {
   const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
   assert.match(text, /`a`/);
@@ -137,6 +61,14 @@ test('every case is listed with the judge\'s answer on each side, the quote it f
   assert.match(text, /第 2 段讲了/);
   assert.match(text, /20261023T010700/);
   assert.match(text, /annotations\.md/, 'says where to overrule a judgement');
+});
+
+test('each case says who judged it: Codex, or Claude when no Codex was found', () => {
+  const viaCodex = buildReplayEntry({ round: 1, ...ENTRY_INPUT([{ ...pass('a'), judge: 'codex' }]) });
+  assert.match(viaCodex, /评委：Codex/);
+  const viaClaude = buildReplayEntry({ round: 1, ...ENTRY_INPUT([{ ...pass('a'), judge: 'claude' }]) });
+  assert.match(viaClaude, /评委：Claude/);
+  assert.doesNotMatch(buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) }), /评委：/, 'a result with no judge recorded says nothing about one');
 });
 
 test('a case that produced no result, or could not be run, is a result too: not passed, with the reason', () => {
@@ -174,7 +106,7 @@ test('appending to a loop file that has entries leaves them as they were and num
   assert.deepEqual(after.map((x) => [x.kind, x.round]), [['pause', 1], ['review', 1], ['replay', 1]]);
   assert.equal(nextRound(after, 'review'), 2, 'review rounds are not renumbered by a replay');
   assert.equal(nextRound(after, 'replay'), 2);
-  // a second night's result is round 2
+  // a second replay's result is round 2
   assert.equal(appendReplayResults(text, ENTRY_INPUT([fail('a')])).round, 2);
 });
 
@@ -188,46 +120,23 @@ test('the review loop file of a PR is .tmp/review-loop/<PR>.md under the worktre
   assert.equal(reviewLoopPath('/work/proj-impl', 12), '/work/proj-impl/.tmp/review-loop/12.md');
 });
 
-test('the push message says which PR, how many passed, and what is waiting for the human', () => {
-  assert.match(pushMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), pass('b')] }), /#12.*2.*过/);
-  const m = pushMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')] });
-  assert.match(m, /#12/);
-  assert.match(m, /1.*不过/);
+test('a case the run did not exercise is listed as "用例没测到改动", with the check line, and the entry stays unsettled with three ways to handle it', () => {
+  const missed = { ...pass('a'), outcome: 'not-exercised', reason: '用例没测到改动：改后那一遍没有读过、调过、起过这次改动涉及的任何 skill、agent 定义或参考文件', exercised: { status: 'miss', changed: 2 } };
+  const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([missed]) });
+  assert.match(text, /`a`：用例没测到改动/);
+  assert.match(text, /改动核对：没用上（改动了 2 个/);
+  const [e] = parseLoop(text);
+  assert.equal(e.settled, false);
+  assert.match(e.body, /- A：[\s\S]*- B：[\s\S]*- C：/);
+  assert.equal(summarizeResults([missed]).passed, 0, 'not a pass');
 });
 
-// ---------- the result line the scheduled task forwards to the issue session ----------
-
-test('the result line is one line, carries the session id, and reads back the same', () => {
-  const line = resultLine({ session: 'local_3fa9c1d2', repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')], worktree: '/work/proj-impl' });
-  assert.ok(line.startsWith(RESULT_PREFIX));
-  assert.equal(line.includes('\n'), false);
-  const got = parseResultLine(line);
-  assert.equal(got.session, 'local_3fa9c1d2');
-  assert.equal(got.repo, 'owner/proj');
-  assert.equal(got.pr, 12);
-  assert.equal(got.allPassed, false);
-  assert.equal(got.loop, '/work/proj-impl/.tmp/review-loop/12.md');
-  assert.equal(got.message.split('\n')[0], pushMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')] }));
-});
-
-test('an entry without a session id gives a line whose session is null: only the notification can carry it', () => {
-  const line = resultLine({ session: undefined, repo: 'owner/proj', pr: 12, results: [pass('a')], worktree: '/w' });
-  assert.equal(parseResultLine(line).session, null);
-  assert.equal(parseResultLine(line).allPassed, true);
-});
-
-test('lines that are not result lines are not parsed as one', () => {
-  assert.equal(parseResultLine('推送：owner/proj #12 的规则回放：1 个用例全过'), null);
-  assert.equal(parseResultLine(`${RESULT_PREFIX}{not json`), null);
-});
-
-test('the message for the issue session says what came out and where, and what to do with it', () => {
-  const ok = sessionMessage({ repo: 'owner/proj', pr: 12, results: [pass('a')], worktree: '/w' });
-  assert.match(ok.split('\n')[0], /#12.*全过/);
-  assert.match(ok, /\/w\/\.tmp\/review-loop\/12\.md/);
-  assert.match(ok, /接着走/);
-  const bad = sessionMessage({ repo: 'owner/proj', pr: 12, results: [pass('a'), fail('b')], worktree: '/w' });
-  assert.match(bad.split('\n')[0], /1.*不过/);
-  assert.match(bad, /停下/);
-  assert.match(bad, /摆给人/);
+test('the check line says which file, skill or agent was hit, or that it does not apply', () => {
+  assert.equal(describeExercised({ status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 1 }), '用上了（调了 skill idea-loop:demo）');
+  assert.equal(describeExercised({ status: 'hit', via: 'read', name: 'skills/a/SKILL.md', changed: 1 }), '用上了（读了 skills/a/SKILL.md）');
+  assert.equal(describeExercised({ status: 'hit', via: 'agent', name: 'idea-loop:helper', changed: 1 }), '用上了（起了 agent idea-loop:helper）');
+  assert.match(describeExercised({ status: 'na', changed: 0 }), /^不适用/);
+  assert.equal(describeExercised(undefined), null);
+  const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
+  assert.doesNotMatch(text, /改动核对/, 'a result with no check recorded says nothing about one');
 });

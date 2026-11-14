@@ -3,7 +3,9 @@
  * everything it has to decide from what those sessions produced is here, so it can be tested without them.
  */
 
-const ANSWERS = { 是: 'yes', yes: 'yes', y: 'yes', 否: 'no', no: 'no', n: 'no' };
+import { normalize } from 'node:path';
+
+const ANSWERS ={ 是: 'yes', yes: 'yes', y: 'yes', 否: 'no', no: 'no', n: 'no' };
 const normalizeAnswer = (a) => ANSWERS[String(a ?? '').trim().toLowerCase()];
 
 /**
@@ -17,6 +19,72 @@ export function decideOutcome({ before, after }) {
   if (b === 'yes') return { outcome: 'case-missed', reason: '用例没抓住问题：改前的插件跑出来就已经答「是」，先修用例' };
   if (a === 'no') return { outcome: 'fail', reason: '不过：改后的插件跑出来仍然答「否」，规则改动没有让问题消失' };
   return { outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」' };
+}
+
+/**
+ * Did the post-change run use what the change touched? `events` is the post-change run's event stream (parsed events, main
+ * session and sub-agents alike); `change` is `{files, skills, agents}` (see `changeSetOf` in the runner): the files added or
+ * modified under the plugin's `skills/` and `agents/`, relative to the plugin dir, the skills those files belong to
+ * (`<plugin>:<skill dir>`) and the agents among them (`<plugin>:<file name without .md>`). `roots` are the spellings of the
+ * dir the post-change plugin was loaded from, as a path in the stream would show it; `prompt` is what the run was given.
+ *
+ * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
+ * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
+ * harness loads that skill itself, no tool call shows it).
+ * Returns `{status: 'hit', via: 'read'|'skill'|'agent', name, changed}`, `{status: 'miss', changed}`, or
+ * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).
+ */
+export function exercisedBy(events, change, { roots = [], prompt = '' } = {}) {
+  const files = new Set(change?.files ?? []);
+  if (!files.size) return { status: 'na', changed: 0 };
+  const skills = new Set(change.skills ?? []);
+  const agents = new Set(change.agents ?? []);
+  const changed = files.size;
+  const hit = (via, name) => ({ status: 'hit', via, name, changed });
+  const slash = /^\s*\/(\S+)/.exec(String(prompt))?.[1];
+  if (slash && skills.has(slash)) return hit('skill', slash);
+  const changedFileAt = (path) => {
+    for (const root of roots) {
+      if (!path.startsWith(`${root}/`)) continue;
+      const rel = path.slice(root.length + 1);
+      if (files.has(rel)) return rel;
+    }
+    return null;
+  };
+  for (const ev of events) {
+    if (ev?.type !== 'assistant') continue;
+    for (const block of ev.message?.content ?? []) {
+      if (block?.type !== 'tool_use') continue;
+      const input = block.input ?? {};
+      if (block.name === 'Read' && typeof input.file_path === 'string') {
+        const rel = changedFileAt(normalize(input.file_path));
+        if (rel) return hit('read', rel);
+      } else if (block.name === 'Skill') {
+        if (skills.has(input.skill)) return hit('skill', input.skill);
+      } else if (block.name === 'Agent' || block.name === 'Task') {
+        if (agents.has(input.subagent_type)) return hit('agent', input.subagent_type);
+      } else if (block.name === 'Bash' && typeof input.command === 'string') {
+        for (const root of roots) {
+          const rel = [...files].find((f) => input.command.includes(`${root}/${f}`));
+          if (rel) return hit('read', rel);
+        }
+      }
+    }
+  }
+  return { status: 'miss', changed };
+}
+
+/**
+ * The outcome once the exercised check is in: a run that did not use the change cannot show the rule works, so whatever the
+ * judge said, the outcome is `not-exercised`. What the judge said is kept (`judgedOutcome`, and its reason in the text).
+ */
+export function applyExercised(decision, exercised) {
+  if (exercised?.status !== 'miss') return decision;
+  return {
+    outcome: 'not-exercised',
+    reason: `用例没测到改动：改后那一遍没有读过、调过、起过这次改动涉及的任何 skill、agent 定义或参考文件（改动了 ${exercised.changed} 个文件），说明不了规则生效。评委那边的结论：${decision.reason}`,
+    judgedOutcome: decision.outcome,
+  };
 }
 
 /**
@@ -59,9 +127,27 @@ export function relabelLarge(c, escalation) {
   };
 }
 
-/** Appended to the human's words so an unattended run does not stop at a question nobody will answer, and stops where the case says. */
+/**
+ * What a run is given: the human's words, exactly. Nothing is added, so the run cannot tell it is being tested or where it is
+ * meant to stop; an agent that hands its work to the human ends its turn, and the session timeout is the backstop.
+ */
 export function buildWorkerPrompt(c) {
-  return `${c.prompt}\n\n（这是一次无人值守的回放，人不在场：不要向人提问，按你的判断直接做；做到「${c.stop_at}」就停下，不要继续往后；最后用一段话说明你交给人的是什么。）`;
+  return c.prompt;
+}
+
+/**
+ * Which anonymous letter each product gets. `afterIs` is the letter of the post-change product ("A" or "B"), chosen at random for
+ * every replay so the judge cannot learn a fixed order; the runner records it in the result.
+ */
+export function productsInOrder({ before, after }, afterIs) {
+  return afterIs === 'A' ? { A: after, B: before } : { A: before, B: after };
+}
+
+/** The judge's verdict, keyed by letter, turned back into one answer per side: `[{side: 'before', ...}, {side: 'after', ...}]`. */
+export function verdictsBySide(verdict, afterIs) {
+  if (!verdict) return null;
+  const [before, after] = afterIs === 'A' ? [verdict.B, verdict.A] : [verdict.A, verdict.B];
+  return [{ side: 'before', ...before }, { side: 'after', ...after }];
 }
 
 /** The two products are anonymous (A, B): the judge is not told which one the changed plugin made. */
@@ -73,6 +159,7 @@ export function buildJudgePrompt(c, productA, productB) {
     '',
     `题：${c.question}`,
     `（这道题是从人当时的这句话写出来的：${c.quote}）`,
+    `（两份产物都是同一件事做到交给人的那一刻留下的，看产物里交给人的那一刻：${c.stop_at}）`,
     '',
     '最后一行只输出一个 JSON 对象，形如：{"A":{"answer":"是或否","cite":"出处，引原文"},"B":{"answer":"是或否","cite":"出处，引原文"}}',
     '',
@@ -94,8 +181,8 @@ export function fileBody(buf) {
 }
 
 export function buildArtifact({ resultText, files }, { perFile = 12_000, total = 60_000 } = {}) {
-  const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里新增或改动的文件', ''];
-  if (!files.length) parts.push('（没有新增或改动的文件）');
+  const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里写下或改动的文件', ''];
+  if (!files.length) parts.push('（没有写下或改动的文件）');
   for (const f of files) {
     const body = f.content.length > perFile ? `${f.content.slice(0, perFile)}\n…（已截断，原长 ${f.content.length} 字）` : f.content;
     parts.push(`### ${f.path}`, '', body, '');

@@ -9,7 +9,7 @@
 
 ## 怎么跑（只能当场跑）
 
-用例的提交 `b9602e50` 在 Toeflair 仓库（GitHub `guohaonan-shy/Tofelair`），不在本仓库，夜间队列按 PR 所在 worktree 取仓库，取不到它。只能用 `--repo` 指到 Toeflair 的本地 checkout：
+用例的提交 `b9602e50` 在 Toeflair 仓库（GitHub `guohaonan-shy/Tofelair`），不在本仓库，`--run-large` 按 `--worktree` 所在仓库取提交，取不到它。只能用 `--repo` 指到 Toeflair 的本地 checkout：
 
 ```
 node ~/.idea-loop/bin/retro-replay.mjs --case draft-spec-orphan-capability --repo <Toeflair 本地 checkout> --worktree <本 worktree>
@@ -22,6 +22,10 @@ node ~/.idea-loop/bin/retro-replay.mjs --case draft-spec-orphan-capability --rep
 - **改前预计答「否」**：改前的「自己校验」只要求把同一行为的其他入口标纳入或排除，没有要求查调用方；当时的会话就是这样按修好起草的。改后的第 7 条要求修坏能力的 spec 查调用方，查不到写成「待定：修好还是删掉」。
 - **缺的**：当时的会话记录不在仓库里，人追问的原话取自 Toeflair 的决定记录。回放里写出什么由 skill 自己决定。
 - **判定依据**：看交回的最后一段回复和工作区里的 spec：「实现决策」里有没有一条「待定」，选项是修好和删掉；spec 里有没有写查过调用方、结论是一个都没有。
+
+## prompt 改写记录
+
+- 2026-11-14（#174 工单 03）：回放的输入只给原话，用例格式校验拒绝 prompt 里的回放、eval、judge、rubric、benchmark、评测、评委、判定。这条 prompt 原来命中，改写：去掉「这是回放，我（人）不在场……」的字样，改成「我不在场，不会回复你：」；issue 正文里的字段名 `global_evaluation` 含 eval，改写成「它自己的全局评价字段」。其余原文不动。
 
 ## 标注
 

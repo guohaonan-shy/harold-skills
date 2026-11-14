@@ -10,12 +10,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { changeSetOf, projectName } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, fileBody, parseOverrides, settleVerdicts,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -82,12 +83,14 @@ test('a small case that opened a browser is relabelled large too', () => {
   assert.match(c.size_basis, /开了浏览器/);
 });
 
-test('the worker prompt keeps the human words and tells the run to stop at the hand-over', () => {
+test('the worker prompt is the human words and nothing else: no note that it is a test, no stop point', () => {
   const c = smallCase();
-  const p = buildWorkerPrompt(c);
-  assert.ok(p.startsWith(c.prompt));
-  assert.ok(p.includes(c.stop_at));
-  assert.match(p, /无人值守/);
+  assert.equal(buildWorkerPrompt(c), c.prompt);
+});
+
+test('the judge prompt is told where the thing is handed to the human (stop_at), so it looks at that moment', () => {
+  const c = smallCase();
+  assert.ok(buildJudgePrompt(c, 'A-BODY', 'B-BODY').includes(c.stop_at));
 });
 
 test('the judge prompt carries the question and both products, and does not say which one is the new one', () => {
@@ -96,6 +99,23 @@ test('the judge prompt carries the question and both products, and does not say 
   assert.ok(p.includes('BEFORE-BODY') && p.includes('AFTER-BODY'));
   assert.ok(!/改前|改后|before|after/i.test(p.replace('BEFORE-BODY', '').replace('AFTER-BODY', '')), 'no hint which side is the changed plugin');
   assert.match(p, /出处/);
+});
+
+test('the whole judge prompt, products included, has no 改前 / 改后 / 新 / 旧 in it', () => {
+  const a = buildArtifact({ resultText: '最后一句', files: [{ path: 'docs/a.md', content: '正文' }] });
+  const b = buildArtifact({ resultText: '另一句', files: [] });
+  const p = buildJudgePrompt(smallCase(), a, b);
+  assert.doesNotMatch(p, /改前|改后|新|旧/);
+});
+
+test('products are lettered by a recorded order and the verdict is turned back into pre-change / post-change', () => {
+  const products = { before: 'BEFORE-BODY', after: 'AFTER-BODY' };
+  assert.deepEqual(productsInOrder(products, 'A'), { A: 'AFTER-BODY', B: 'BEFORE-BODY' });
+  assert.deepEqual(productsInOrder(products, 'B'), { A: 'BEFORE-BODY', B: 'AFTER-BODY' });
+  const verdict = { A: { answer: 'yes', cite: 'ca' }, B: { answer: 'no', cite: 'cb' } };
+  assert.deepEqual(verdictsBySide(verdict, 'A'), [{ side: 'before', answer: 'no', cite: 'cb' }, { side: 'after', answer: 'yes', cite: 'ca' }]);
+  assert.deepEqual(verdictsBySide(verdict, 'B'), [{ side: 'before', answer: 'yes', cite: 'ca' }, { side: 'after', answer: 'no', cite: 'cb' }]);
+  assert.equal(verdictsBySide(null, 'A'), null);
 });
 
 test('buildArtifact lists the final reply and each file the run left behind, and trims long ones', () => {
@@ -108,7 +128,7 @@ test('buildArtifact lists the final reply and each file the run left behind, and
 });
 
 test('buildArtifact says so when the run left no files', () => {
-  assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有新增或改动的文件/);
+  assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有写下或改动的文件/);
 });
 
 test('the cost estimate is a range, scales with cases, and is stated in dollars', () => {
@@ -156,6 +176,7 @@ const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
 if (pd) {
@@ -166,6 +187,10 @@ if (pd) {
   } else {
     const m = /^reply: (.*)$/m.exec(mark);
     const text = m ? m[1] : 'nothing';
+    for (const u of mark.matchAll(/^(skill|read): (.*)$/gm)) {
+      const input = u[1] === 'skill' ? { skill: u[2] } : { file_path: path.join(pd, u[2]) };
+      emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'u1', name: u[1] === 'skill' ? 'Skill' : 'Read', input }] } });
+    }
     fs.mkdirSync('docs', { recursive: true });
     fs.writeFileSync('docs/out.md', text);
     emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 't1', name: 'Write', input: {} }] } });
@@ -179,7 +204,23 @@ if (pd) {
 }
 `;
 
-function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
+// A fake Codex companion: `node <it> task --model … --effort … --prompt-file F --cwd D`. It answers like the fake judge does
+// (yes for a product containing FIXED), with some prose around the JSON the way a real one talks; FAKE_CODEX_FAIL makes it exit 2.
+const FAKE_CODEX = `// task
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
+fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd() }) + '\\n');
+if (process.env.FAKE_CODEX_FAIL) process.exit(2);
+const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
+const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
+const ans = (s) => (s.includes('FIXED') ? '是' : '否');
+console.log('我读完了两份产物。');
+console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
+`;
+
+function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
   mkdirSync(repo);
@@ -189,9 +230,14 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   g('add', '-A');
   g('commit', '-q', '-m', 'decision state');
   const commit = g('rev-parse', 'HEAD').stdout.trim();
+  // the plugins, each in a dir called idea-loop (as the real one is) under a side's own dir
   for (const [name, mark] of [['before', before], ['after', after]]) {
-    mkdirSync(join(root, name), { recursive: true });
-    writeFileSync(join(root, name, 'MARK'), mark);
+    mkdirSync(join(root, name, 'idea-loop'), { recursive: true });
+    writeFileSync(join(root, name, 'idea-loop', 'MARK'), mark);
+    for (const [rel, text] of Object.entries(pluginFiles[name] ?? {})) {
+      mkdirSync(dirname(join(root, name, 'idea-loop', rel)), { recursive: true });
+      writeFileSync(join(root, name, 'idea-loop', rel), text);
+    }
   }
   const casesRoot = join(root, 'evals');
   const caseDir = join(casesRoot, 'cases', caseName);
@@ -201,17 +247,48 @@ function setup({ before, after, size = 'small', caseName = 'demo-case' }) {
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
   chmodSync(bin, 0o755);
+  const codex = join(root, 'fake-codex.cjs');
+  writeFileSync(codex, FAKE_CODEX);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
-  return { root, repo, casesRoot, caseDir, bin, log };
+  // where the runs work: a temp dir whose own path says nothing about a test
+  const tmp = mkdtempSync(join(tmpdir(), 'sbx-'));
+  return { root, repo, casesRoot, caseDir, bin, codex, log, tmp };
 }
 
-function run(env, extra = []) {
+/** What the fake `claude` was started with, one entry per session. */
+const sessions = (env) => (existsSync(`${env.log}.json`) ? readFileSync(`${env.log}.json`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
+
+/** A Claude config dir with a Codex companion in the place the runner would look for the real one (a fake that logs "codex"). */
+function realCodexLookalike(env) {
+  const dir = join(env.root, 'claude-config');
+  const script = join(dir, 'plugins', 'marketplaces', 'openai-codex', 'plugins', 'codex', 'scripts', 'codex-companion.mjs');
+  mkdirSync(dirname(script), { recursive: true });
+  writeFileSync(script, readFileSync(env.codex, 'utf8'));
+  return dir;
+}
+
+/**
+ * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the companion path does not exist), 'fails' (it exits 2),
+ * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
+ * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
+ */
+function run(env, extra = [], { codex = 'fake', order } = {}) {
   const r = spawnSync(process.execPath, [
     RUNNER, '--case', 'demo-case', '--repo', env.repo, '--cases-root', env.casesRoot,
-    '--before-plugin', join(env.root, 'before'), '--after-plugin', join(env.root, 'after'),
+    '--before-plugin', join(env.root, 'before', 'idea-loop'), '--after-plugin', join(env.root, 'after', 'idea-loop'),
     '--out', join(env.root, 'out'), '--timeout-min', '1', ...extra,
-  ], { encoding: 'utf8', env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log }, timeout: 60_000 });
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
+      RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
+      ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
+      ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
+      ...(order ? { RETRO_JUDGE_ORDER: order } : { RETRO_JUDGE_ORDER: '' }),
+    },
+    timeout: 60_000,
+  });
   const calls = readFileSync(env.log, 'utf8').split('\n').filter(Boolean);
   return { ...r, calls };
 }
@@ -225,9 +302,10 @@ test('e2e: pre-change run misses it, post-change run has it -> pass, exit 0, thr
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
   const r = run(env);
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker']);
+  assert.deepEqual(r.calls.sort(), ['codex', 'worker', 'worker'], 'the judge is Codex: no third claude session');
   const res = resultJson(env, r.stdout);
   assert.equal(res.outcome, 'pass');
+  assert.equal(res.judge, 'codex');
   assert.deepEqual(res.verdicts.map((v) => v.answer), ['no', 'yes']);
   assert.ok(res.cost > 0, 'cost is read from the event streams');
   assert.match(r.stdout, /预计花费/, 'says what it expects to spend before it starts');
@@ -256,25 +334,206 @@ test('e2e: the worker sees the project as of the case commit and what it wrote i
   assert.match(readFileSync(join(dir, 'after', 'artifact.md'), 'utf8'), /docs\/out\.md/);
 });
 
-test('e2e: a small case whose run starts an agent is stopped, relabelled large, and sent to the nightly queue', () => {
+test('e2e: both runs get exactly the case prompt, in a work dir that does not say it is a test, a different one each', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [w1, w2] = sessions(env).filter((x) => x.kind === 'worker');
+  for (const w of [w1, w2]) {
+    assert.equal(w.prompt, smallCase().prompt, 'the -p input is the case prompt, byte for byte');
+    assert.doesNotMatch(w.cwd, /retro|replay|回放|before|after|eval/i, `work dir ${w.cwd}`);
+    assert.equal(basename(w.cwd), 'repo', 'the project keeps the name of the repository it was copied from');
+  }
+  assert.notEqual(w1.cwd, w2.cwd);
+  assert.notEqual(dirname(w1.cwd), dirname(w2.cwd), 'one random dir per run');
+  // what the runs left behind stays under the run dir, where the agent does not look
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  assert.ok(existsSync(join(dir, 'before', 'project', 'docs', 'out.md')));
+  assert.ok(existsSync(join(dir, 'after', 'run.stream.jsonl')));
+  assert.ok(!existsSync(dirname(w1.cwd)), 'the work dir is gone once the run is over');
+});
+
+test('e2e: the judge is told where the thing is handed to the human', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  run(env);
+  const judge = sessions(env).find((x) => x.kind === 'codex');
+  assert.ok(judge.prompt.includes(smallCase().stop_at));
+  const viaClaude = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  run(viaClaude, [], { codex: 'missing' });
+  assert.ok(sessions(viaClaude).find((x) => x.kind === 'judge').prompt.includes(smallCase().stop_at));
+});
+
+test('e2e: the judge is the fake Codex: its answer decides, the result and the report say judge codex, no claude judging session, nothing writable', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.judge, 'codex');
+  assert.deepEqual(res.verdicts.map((v) => [v.side, v.answer, v.cite.startsWith('codex cite')]), [['before', 'no', true], ['after', 'yes', true]]);
+  assert.match(r.stdout, /评委：Codex/);
+  assert.match(r.stdout, /不占 Claude 额度/);
+  assert.ok(!sessions(env).some((x) => x.kind === 'judge'), 'no claude judging session');
+  const [codex] = sessions(env).filter((x) => x.kind === 'codex');
+  assert.equal(codex.args[0], 'task');
+  assert.ok(codex.args.includes('--prompt-file'));
+  assert.ok(!codex.args.includes('--write'), 'Codex gets no write permission');
+  // the answer of a Codex that finds the post-change product lacking is a fail, the other way round a case that missed the problem
+  const failing = setup({ before: 'reply: plain', after: 'reply: plain' });
+  const f = run(failing);
+  assert.equal(f.status, 1);
+  assert.equal(resultJson(failing, f.stdout).outcome, 'fail');
+});
+
+test('e2e: whichever letter the post-change product gets, the answers are turned back into the right side', () => {
+  for (const [order, afterIs] of [['after-first', 'A'], ['before-first', 'B']]) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env, [], { order });
+    assert.equal(r.status, 0, `${order}: ${r.stdout}${r.stderr}`);
+    const res = resultJson(env, r.stdout);
+    assert.equal(res.afterIs, afterIs, 'the order is recorded');
+    assert.deepEqual(res.judged, { before: 'no', after: 'yes' });
+    assert.equal(res.outcome, 'pass');
+    const prompt = sessions(env).find((x) => x.kind === 'codex').prompt;
+    const sectionA = /产物 A[\s\S]*?(?=产物 B)/.exec(prompt)[0];
+    assert.equal(sectionA.includes('FIXED'), afterIs === 'A', `the post-change product is ${afterIs} in the prompt`);
+    // the other way: the problem shows in the post-change product only
+    const bad = setup({ before: 'reply: FIXED', after: 'reply: plain' });
+    const b = run(bad, [], { order });
+    assert.deepEqual(resultJson(bad, b.stdout).judged, { before: 'yes', after: 'no' });
+    assert.equal(resultJson(bad, b.stdout).outcome, 'case-missed');
+  }
+});
+
+test('e2e: with no order given, the order is not always the same one', () => {
+  const seen = new Set();
+  for (let i = 0; i < 12 && seen.size < 2; i++) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env);
+    const res = resultJson(env, r.stdout);
+    assert.equal(res.outcome, 'pass');
+    seen.add(res.afterIs);
+  }
+  assert.deepEqual([...seen].sort(), ['A', 'B'], 'twelve replays in a row with the same order would happen once in two thousand');
+});
+
+test('e2e: no Codex: says so before any session starts, judges with the fake claude, the result says judge claude', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env, [], { codex: 'missing' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const said = r.stdout.indexOf('没找到 Codex，评委用 Claude');
+  assert.ok(said >= 0, r.stdout);
+  assert.ok(said < r.stdout.indexOf('— before'), 'said before the first session starts');
+  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker']);
+  assert.equal(resultJson(env, r.stdout).judge, 'claude');
+  assert.match(r.stdout, /评委：Claude/);
+});
+
+test('e2e: a Codex that gives nothing at judging time hands the judging to claude, said out loud, recorded as judge claude', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env, [], { codex: 'fails' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /Codex 没给出判定（退出码 2），评委退回 Claude/);
+  assert.deepEqual(r.calls.sort(), ['codex', 'judge', 'worker', 'worker']);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.judge, 'claude');
+  assert.equal(res.outcome, 'pass');
+});
+
+test('e2e: the judging prompt, whichever judge reads it, has no 改前 / 改后 / 新 / 旧 and no before / after', () => {
+  for (const codex of ['fake', 'missing']) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    run(env, [], { codex });
+    const p = sessions(env).find((x) => x.kind === (codex === 'fake' ? 'codex' : 'judge')).prompt;
+    assert.match(p, /出处/);
+    assert.doesNotMatch(p, /改前|改后|新|旧|before|after/i);
+  }
+});
+
+test('e2e: the estimate before the run says the judge runs on Codex and does not use Claude quota', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.match(r.stdout, /预计花费约 \$\d+\.\d\d–\$\d+\.\d\d.*评委走 Codex/);
+  assert.match(r.stdout, /评委：Codex/);
+});
+
+test('e2e: both plugins are copied to <tmp>/<random>/<plugin dir name> for --plugin-dir, a path without retro, replay, before, after or eval, and removed afterwards', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [w1, w2] = sessions(env).filter((x) => x.kind === 'worker');
+  for (const w of [w1, w2]) {
+    assert.equal(basename(w.pluginDir), 'idea-loop', 'the plugin keeps its own dir name');
+    assert.ok(w.pluginDir.startsWith(env.tmp), 'under the temp dir');
+    assert.doesNotMatch(w.pluginDir, /retro|replay|回放|before|after|eval/i, `--plugin-dir ${w.pluginDir}`);
+    assert.ok(!existsSync(dirname(w.pluginDir)), 'the copy is gone once the run is over');
+  }
+  assert.notEqual(dirname(w1.pluginDir), dirname(w2.pluginDir), 'one random dir per side');
+  assert.ok(!w1.pluginDir.includes(env.root) && !w2.pluginDir.includes(env.root), 'not the source paths');
+});
+
+test('e2e: the plugin copy and the work dir are removed even when a session was stopped', () => {
+  const env = setup({ before: 'reply: plain', after: 'nothing-here' });
+  writeFileSync(join(env.root, 'before', 'idea-loop', 'MARK'), 'agent');
+  const r = run(env);
+  assert.equal(r.status, 3);
+  const [w] = sessions(env).filter((x) => x.kind === 'worker');
+  assert.ok(!existsSync(dirname(w.pluginDir)));
+  assert.ok(!existsSync(dirname(w.cwd)));
+});
+
+test('e2e: a case whose prompt says it is a test is refused with exit 2 before any session starts; --list names it', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  c.prompt = `${c.prompt}\n\n这是回放，人不在场`;
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify(c));
+  const r = run(env);
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /prompt/);
+  assert.match(r.stderr, /回放/);
+  assert.deepEqual(r.calls, []);
+  assert.deepEqual(sessions(env), []);
+  assert.ok(!existsSync(join(env.root, 'out')), 'nothing was set up either');
+  const l = spawnSync(process.execPath, [RUNNER, '--list', '--cases-root', env.casesRoot], { encoding: 'utf8' });
+  assert.match(l.stdout, /格式问题 demo-case: prompt/);
+});
+
+test('projectName: the repository\'s own name, else its directory, else "project" when the name would give the test away', () => {
+  const root = mkdtempSync(join(tmpdir(), 'name-'));
+  const mk = (dir, remote) => {
+    const d = join(root, dir);
+    mkdirSync(d, { recursive: true });
+    spawnSync('git', ['init', '-q'], { cwd: d });
+    if (remote) spawnSync('git', ['remote', 'add', 'origin', remote], { cwd: d });
+    return d;
+  };
+  assert.equal(projectName(mk('wt-1', 'git@github.com:acme/widgets.git')), 'widgets');
+  assert.equal(projectName(mk('wt-2', 'https://github.com/acme/gadgets')), 'gadgets');
+  assert.equal(projectName(mk('plain-dir')), 'plain-dir');
+  assert.equal(projectName(mk('retro-before')), 'project');
+  assert.equal(projectName(mk('my eval repo')), 'project');
+  assert.equal(projectName(mk('wt-3', 'git@github.com:acme/replay-lab.git')), 'wt-3', 'a remote name that gives it away is skipped, the directory is next');
+});
+
+test('e2e: a small case whose run starts an agent is stopped, relabelled large, and left to --run-large', () => {
   const env = setup({ before: 'agent', after: 'reply: FIXED' });
   const started = Date.now();
   const r = run(env);
   assert.equal(r.status, 3, r.stdout + r.stderr);
   assert.ok(Date.now() - started < 30_000, 'the run was killed, not waited out');
-  assert.match(r.stdout, /要进夜间队列/);
+  assert.match(r.stdout, /编排者在 PR 开出后用 --run-large --pr/);
+  assert.doesNotMatch(r.stdout, /夜间|队列/);
   const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
   assert.equal(c.size, 'large');
   assert.match(c.size_basis, /起了 agent/);
   assert.ok(!r.calls.includes('judge'), 'no judge for an aborted replay');
 });
 
-test('e2e: a case already marked large is not run at all, it goes to the nightly queue', () => {
+test('e2e: a case already marked large is not run at all, it is left to --run-large', () => {
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED', size: 'large' });
   const r = run(env);
   assert.equal(r.status, 3);
   assert.deepEqual(r.calls, [], 'no claude session was started');
-  assert.match(r.stdout, /要进夜间队列/);
+  assert.match(r.stdout, /编排者在 PR 开出后用 --run-large --pr/);
   assert.ok(!existsSync(join(env.root, 'out')), 'nothing was set up either');
 });
 
@@ -310,4 +569,201 @@ test('fileBody gives the text of a text file and a one-line note for a binary on
   assert.match(note, /二进制文件，12 字节/);
   // the judge prompt is passed to spawn as an argument; a NUL byte there throws
   assert.ok(!buildJudgePrompt(smallCase(), buildArtifact({ resultText: 'r', files: [{ path: 'a.png', content: note }] }), 'B').includes('\0'));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Spec replay-run-large-now, ticket 05: did the post-change run use what the change touched?
+// ---------------------------------------------------------------------------------------------
+
+const tool = (name, input, parent = null) => ({ type: 'assistant', parent_tool_use_id: parent, message: { content: [{ type: 'tool_use', id: 'x', name, input }] } });
+const CHANGE = {
+  files: ['skills/engineering/demo/SKILL.md', 'skills/engineering/demo/references/more.md', 'agents/helper.md'],
+  skills: ['idea-loop:demo'],
+  agents: ['idea-loop:helper'],
+};
+const ROOTS = ['/tmp/ab12/idea-loop', '/private/tmp/ab12/idea-loop'];
+
+test('exercisedBy: a Read of a changed file under the post-change plugin dir counts, and says which file', () => {
+  const r = exercisedBy([tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/demo/references/more.md' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual(r, { status: 'hit', via: 'read', name: 'skills/engineering/demo/references/more.md', changed: 3 });
+  const real = exercisedBy([tool('Read', { file_path: '/private/tmp/ab12/idea-loop/agents/helper.md' })], CHANGE, { roots: ROOTS });
+  assert.equal(real.name, 'agents/helper.md', 'the other spelling of the same dir (/tmp vs /private/tmp) counts too');
+});
+
+test('exercisedBy: a Skill call for the skill a changed SKILL.md or reference belongs to counts', () => {
+  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:demo' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual(r, { status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 3 });
+});
+
+test('exercisedBy: an Agent call for the agent a changed definition is counts', () => {
+  const r = exercisedBy([tool('Agent', { subagent_type: 'idea-loop:helper' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual(r, { status: 'hit', via: 'agent', name: 'idea-loop:helper', changed: 3 });
+  assert.equal(exercisedBy([tool('Task', { subagent_type: 'idea-loop:helper' })], CHANGE, { roots: ROOTS }).status, 'hit', 'Task is the older name of the same tool');
+});
+
+test('exercisedBy: a hit inside a sub-agent counts like one in the main session', () => {
+  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:demo' }, 'toolu_parent')], CHANGE, { roots: ROOTS });
+  assert.equal(r.status, 'hit');
+});
+
+test('exercisedBy: a Bash command that reads a changed file by its full path counts', () => {
+  const r = exercisedBy([tool('Bash', { command: 'cat /tmp/ab12/idea-loop/skills/engineering/demo/SKILL.md | head' })], CHANGE, { roots: ROOTS });
+  assert.deepEqual([r.status, r.via, r.name], ['hit', 'read', 'skills/engineering/demo/SKILL.md']);
+});
+
+test('exercisedBy: a prompt that starts with the changed skill\'s slash command counts: the harness loaded it, no tool call shows it', () => {
+  const r = exercisedBy([], CHANGE, { roots: ROOTS, prompt: '/idea-loop:demo 做这件事' });
+  assert.deepEqual([r.status, r.via, r.name], ['hit', 'skill', 'idea-loop:demo']);
+  assert.equal(exercisedBy([], CHANGE, { roots: ROOTS, prompt: '/idea-loop:other 做这件事' }).status, 'miss');
+});
+
+test('exercisedBy: nothing used, or only things the change did not touch: not used', () => {
+  const events = [
+    tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/other/SKILL.md' }),
+    tool('Read', { file_path: '/elsewhere/idea-loop/skills/engineering/demo/SKILL.md' }),
+    tool('Skill', { skill: 'idea-loop:other' }),
+    tool('Skill', { skill: 'other-plugin:demo' }),
+    tool('Agent', { subagent_type: 'idea-loop:other' }),
+    tool('Bash', { command: 'ls /tmp/ab12/idea-loop/skills' }),
+    { type: 'result', result: 'done' },
+  ];
+  assert.deepEqual(exercisedBy(events, CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
+  assert.deepEqual(exercisedBy([], CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
+});
+
+test('exercisedBy: an empty change set (only scripts changed) is not applicable, whatever the run did', () => {
+  assert.deepEqual(exercisedBy([tool('Skill', { skill: 'idea-loop:demo' })], { files: [], skills: [], agents: [] }, { roots: ROOTS }), { status: 'na', changed: 0 });
+});
+
+test('applyExercised: not used turns any judged outcome into "not-exercised" and keeps what the judge said; used or n/a leaves it', () => {
+  const pass = decideOutcome({ before: 'no', after: 'yes' });
+  const miss = applyExercised(pass, { status: 'miss', changed: 2 });
+  assert.equal(miss.outcome, 'not-exercised');
+  assert.match(miss.reason, /用例没测到改动/);
+  assert.equal(miss.judgedOutcome, 'pass');
+  assert.match(miss.reason, /改前答「否」/, 'the judge\'s own reason stays readable');
+  assert.equal(applyExercised(decideOutcome({ before: 'no', after: 'no' }), { status: 'miss', changed: 2 }).outcome, 'not-exercised');
+  assert.deepEqual(applyExercised(pass, { status: 'hit', via: 'read', name: 'a', changed: 1 }), pass);
+  assert.deepEqual(applyExercised(pass, { status: 'na', changed: 0 }), pass);
+  assert.deepEqual(applyExercised(pass, undefined), pass, 'a result written before this check existed');
+});
+
+test('changeSetOf: files added or modified under skills/ and agents/, the skills and agents they belong to, nothing else', () => {
+  const root = mkdtempSync(join(tmpdir(), 'changeset-'));
+  const put = (dir, rel, text) => {
+    mkdirSync(dirname(join(root, dir, rel)), { recursive: true });
+    writeFileSync(join(root, dir, rel), text);
+  };
+  for (const dir of ['before', 'after']) {
+    put(dir, 'skills/engineering/same/SKILL.md', 'same');
+    put(dir, 'skills/engineering/edited/SKILL.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'skills/engineering/refs/SKILL.md', 'same');
+    put(dir, 'skills/engineering/refs/references/a.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'agents/kept.md', 'same');
+    put(dir, 'agents/edited.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'scripts/tool.mjs', dir === 'before' ? 'old' : 'new');
+  }
+  put('after', 'skills/productivity/brand-new/SKILL.md', 'x');
+  put('after', 'skills/productivity/brand-new/references/deep/b.md', 'x');
+  put('after', 'agents/added.md', 'x');
+  put('after', 'skills/engineering/same/.DS_Store', 'junk');
+  put('before', 'skills/engineering/gone/SKILL.md', 'deleted in the change');
+  put('after', '.claude-plugin/plugin.json', '{"name":"my-plugin"}');
+  const c = changeSetOf(join(root, 'before'), join(root, 'after'));
+  assert.deepEqual(c.files, [
+    'agents/added.md', 'agents/edited.md', 'skills/engineering/edited/SKILL.md', 'skills/engineering/refs/references/a.md',
+    'skills/productivity/brand-new/SKILL.md', 'skills/productivity/brand-new/references/deep/b.md',
+  ]);
+  assert.deepEqual(c.skills, ['my-plugin:brand-new', 'my-plugin:edited', 'my-plugin:refs']);
+  assert.deepEqual(c.agents, ['my-plugin:added', 'my-plugin:edited']);
+  // a plugin with no manifest is named after its directory
+  const noManifest = join(root, 'plain-plugin');
+  mkdirSync(join(noManifest, 'skills', 'x', 'y'), { recursive: true });
+  writeFileSync(join(noManifest, 'skills', 'x', 'y', 'SKILL.md'), 'x');
+  assert.deepEqual(changeSetOf(join(root, 'empty-before'), noManifest).skills, ['plain-plugin:y']);
+  // nothing changed under skills/ and agents/: an empty set
+  const same = changeSetOf(join(root, 'before'), join(root, 'before'));
+  assert.deepEqual([same.files, same.skills, same.agents], [[], [], []]);
+});
+
+const SKILL_FILE = { 'skills/engineering/demo/SKILL.md': '# demo\n' };
+
+test('e2e: the post-change plugin changed a skill and the post-change run called it -> pass, the result and the report say what was hit', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED\nskill: idea-loop:demo', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.outcome, 'pass');
+  assert.deepEqual(res.exercised, { status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 1 });
+  assert.match(r.stdout, /改动核对：用上了（调了 skill idea-loop:demo）/);
+});
+
+test('e2e: the post-change run read the changed file instead of calling the skill -> also used', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED\nread: skills/engineering/demo/SKILL.md', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(resultJson(env, r.stdout).exercised, { status: 'hit', via: 'read', name: 'skills/engineering/demo/SKILL.md', changed: 1 });
+});
+
+test('e2e: the changed skill was neither called nor read -> not-exercised, exit 1, not a pass, and the judge still ran', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.outcome, 'not-exercised');
+  assert.equal(res.judgedOutcome, 'pass', 'the judge\'s own verdict is kept for the human');
+  assert.deepEqual(res.verdicts.map((v) => v.answer), ['no', 'yes']);
+  assert.equal(res.exercised.status, 'miss');
+  assert.ok(r.calls.includes('codex'), 'the judge ran although nothing was exercised');
+  assert.match(r.stdout, /用例没测到改动（not-exercised）/);
+  assert.match(r.stdout, /改动核对：没用上/);
+});
+
+test('e2e: the check comes before the judge: it is printed before the judging starts', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  const said = r.stdout.indexOf('改动核对：');
+  assert.ok(said >= 0 && said < r.stdout.indexOf('— 判定'), r.stdout);
+});
+
+test('e2e: only scripts changed (nothing under skills/ or agents/) -> the check is n/a and the judge decides', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(resultJson(env, r.stdout).exercised, { status: 'na', changed: 0 });
+  assert.match(r.stdout, /改动核对：不适用/);
+});
+
+test('e2e: a prompt that starts with the changed skill\'s slash command loads it: used, without any tool call showing it', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  c.prompt = '/idea-loop:demo 把这件事摆给我';
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify(c));
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(resultJson(env, r.stdout).exercised.via, 'skill');
+});
+
+test('e2e: --settle keeps "not-exercised" even when the human overrules the judge', () => {
+  const env = setup({ before: 'reply: FIXED', after: 'reply: FIXED', pluginFiles: { after: SKILL_FILE } });
+  const r = run(env);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const runId = resultJson(env, r.stdout).runId;
+  assert.equal(resultJson(env, r.stdout).outcome, 'not-exercised');
+  writeFileSync(join(env.caseDir, 'annotations.md'), `# demo\n\n- 推翻 ${runId} 改前=否 ｜ 判定会话看错了\n`);
+  const s = spawnSync(process.execPath, [RUNNER, '--settle', 'demo-case', '--run', dir, '--cases-root', env.casesRoot], { encoding: 'utf8' });
+  assert.equal(s.status, 1, s.stdout + s.stderr);
+  const settled = JSON.parse(readFileSync(join(dir, 'result.json'), 'utf8'));
+  assert.equal(settled.outcome, 'not-exercised');
+  assert.equal(settled.judgedOutcome, 'pass', 'the override still reached the judged answers');
+});
+
+test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not go looking for the real Codex, the stand-in judges', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const r = run(env, [], { codex: 'unset' });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.ok(!r.calls.includes('codex'), `a Codex that would have been found was started: ${r.calls}`);
+  assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker'], 'the judging session is the fake claude');
+  assert.equal(resultJson(env, r.stdout).judge, 'claude');
+  assert.match(r.stdout, /没找到 Codex，评委用 Claude/);
 });
