@@ -71,8 +71,9 @@ issues: [305]
 2. **测试放仓库根 `scripts/`，不放 `idea-loop/scripts/`**：依据是 `pr-merge-says-release` 定下的先例——给本仓库自己规则写的测试放进插件，会随插件发给别的项目。全量测试命令现在是 `node --test '*/scripts/*.test.mjs'`，匹配不到根下的 `scripts/`，所以同步改成再带上 `'scripts/*.test.mjs'`。
 3. **比较基准**：改动用「当前分支与 `origin/main` 的分叉点」到当前工作区比（含未提交的改动，本机先跑能先红）；版本用 `origin/main` 上的 `plugin.json` 比。基准可以用环境变量换成别的 ref，用来在历史状态上演示红。`origin/main` 不存在（没 fetch 过的克隆）就跳过并打印原因，不报绿也不报红。版本按 `x.y.z` 三段数字比大小。
 4. **档位不做机械判断**：依据是 issue 原文「『该升哪一档』机械判不了」。由审查者对着 `REVIEW.md` 的三档和 PR 描述「参考」里写的理由核。
-5. **一个 PR 改了几个插件，每个都升**，各按各的改动定档。
-6. **这个 PR 自己**只改 `REVIEW.md`、根目录 `AGENTS.md`、根下 `scripts/` 和本 spec，不碰任何插件目录，不升版本。
+5. **删掉一个插件的 `plugin.json` 不要求升**（review 第 1 轮补记）：main 历史上删 `plugin.json` 的 4 个提交（`175e8e6`、`30aefeb`、`2ef7759`、`84d86ff`）全是插件退役、迁出或改名，没有版本可升；误删找不到真实实例，记成已知限制。
+6. **一个 PR 改了几个插件，每个都升**，各按各的改动定档。
+7. **这个 PR 自己**只改 `REVIEW.md`、根目录 `AGENTS.md`、根下 `scripts/` 和本 spec，不碰任何插件目录，不升版本。
 
 ## 测试决策
 
