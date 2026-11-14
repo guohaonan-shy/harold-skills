@@ -23,6 +23,8 @@
 
 idea-loop 的 `plugin.json` 的 `version` 升一档 minor（改了问人时的推荐方向，老用法照样能用；`REVIEW.md`「额外要求」）。idea-loop 的 `README.md` 若有描述 `decision-rules` 行为或列出回放用例的地方，同步。
 
+> 人的决定（2026-11-14）：「我选择B，然后版本用patch」。B = 用仓库里的新版 runner（Codex 当评委、自动核对改后那一遍用上了改动）对这个用例再跑 3 次，按多数定；跑之前去掉用例输入开头的 `/idea-loop:decision-rules` 斜杠命令，让会话自己决定读不读这条规则。版本改用 patch：idea-loop 从 main 上的 0.1.14 升到 0.1.15，不升 minor。
+
 ## 验收标准
 
 - [x] `decision-rules` 的「要人定的写成一道题」里有上面那条新文，位置在「给推荐和一句理由」之后，其余条目不变
@@ -30,6 +32,9 @@ idea-loop 的 `plugin.json` 的 `version` 升一档 minor（改了问人时的�
 - [x] 用 runner 跑新用例：改前「否」、改后「是」，且改后那一遍用上了改动（`exercised`）；跑不成或结果不符，写明原因交回
 - [x] `REVIEW.md` 的验证命令全过（含插件版本检查、防项目信息泄漏检查、SKILL.md 字数）
 - [x] idea-loop 的 `version` 升了 minor
+- [ ] 人的决定（2026-11-14）：用例输入开头不再带 `/idea-loop:decision-rules`，格式校验仍过
+- [ ] 人的决定（2026-11-14）：用仓库里的 runner（不是 `~/.idea-loop/bin/` 里装的旧版）跑 3 次，每次记改前、改后、评委（应为 Codex）、改动核对（exercised）；按多数写结论进 `annotations.md`；多数不过照实交回
+- [ ] 人的决定（2026-11-14）：idea-loop 的 `version` 是 0.1.15（patch），plugin-version 检查仍过
 
 ## 选中的存量回归
 
