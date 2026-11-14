@@ -167,7 +167,10 @@ it worked, but carried one person's words from GitHub back into the session they
   are always the human's (spec and design ride in the code PR; a docs-only
   PR for work with no code is merged once its checks pass). The same
   file says how a question for the human is written: options that differ where the reader feels it,
-  a real example each, a recommendation. How each flow disposes of findings (the reviewer's
+  a real example each, a recommendation. For a scope question (fold a surfaced change into the
+  current PR, or open it separately) the recommendation follows delivery, not PR size: a problem
+  that affects this spec's implementation, or has an effect once shipped, is recommended into the
+  current PR; the rest is not, and goes back to the caller's own process. How each flow disposes of findings (the reviewer's
   disposition table, the implementer's stop-or-defer table) lives with that flow. `skills/productivity/evidence/SKILL.md`
   says what counts as evidence (source, time, version, numbers, like-for-like comparisons) and the
   overall style (conclusion first, figure beside the sentence it supports); which figure to draw is
@@ -385,7 +388,7 @@ idea-loop/
 │       ├── wiki-conventions/SKILL.md # shared, model-invoked — the docs/ contract — directories, frontmatter, status enums; references/migrate-flat-layout.md
 │       ├── evidence/SKILL.md         # shared, model-invoked — what counts as evidence and the overall style for what a human reads; the figure kinds and their tools (UI screenshot marks, UI flow via flow-compose — references/ui-flow.md, excalidrawer charts or mermaid, GIFs — references/gif.md); where figures go is the caller's
 │       ├── runtime/SKILL.md          # shared, model-invoked — the capability list (closed set), runtime detection and the one fallback; references/claude-desktop.md and references/magi.md give each capability's concrete way
-│       ├── decision-rules/SKILL.md   # shared, model-invoked — solve the spec's problem by its plan; three kinds of basis, follow and list when clear, stop and ask on conflict, guardrails, how a question is written
+│       ├── decision-rules/SKILL.md   # shared, model-invoked — solve the spec's problem by its plan; three kinds of basis, follow and list when clear, stop and ask on conflict, guardrails, how a question is written (a scope question is recommended in by delivery impact, not PR size)
 │       └── dreaming/SKILL.md         # + references/ — proposal-table (shape, the ask-or-auto split, execution and self-merge), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, both run by the ui-reviewer; five verdicts), initial-scan, candidate-distillation, design-md-reconcile, docs-reconcile (the adr-reconciler's method), missed-archive, retro-candidates (the pool section of the table), incremental-scope (full vs incremental screenshot pass, the baseline from the scheduled task's runs)
 ├── evals/uiux-research/              # baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
 ├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judge (Codex, `claude -p` when none is found) answer its yes/no question over the two products in a random A/B order; `--run-large` runs the large ones on the spot once the PR is open (`queue.mjs` holds how a result is written into the review loop file; before the judge it checks the post-change run used the changed skills, agents or references) (see below)

@@ -25,11 +25,11 @@ idea-loop 的 `plugin.json` 的 `version` 升一档 minor（改了问人时的�
 
 ## 验收标准
 
-- [ ] `decision-rules` 的「要人定的写成一道题」里有上面那条新文，位置在「给推荐和一句理由」之后，其余条目不变
-- [ ] 新用例通过仓库的用例格式校验（`retro-case.test.mjs`）和 runner 的 `--list`
-- [ ] 用 runner 跑新用例：改前「否」、改后「是」，且改后那一遍用上了改动（`exercised`）；跑不成或结果不符，写明原因交回
-- [ ] `REVIEW.md` 的验证命令全过（含插件版本检查、防项目信息泄漏检查、SKILL.md 字数）
-- [ ] idea-loop 的 `version` 升了 minor
+- [x] `decision-rules` 的「要人定的写成一道题」里有上面那条新文，位置在「给推荐和一句理由」之后，其余条目不变
+- [x] 新用例通过仓库的用例格式校验（`retro-case.test.mjs`）和 runner 的 `--list`
+- [x] 用 runner 跑新用例：改前「否」、改后「是」，且改后那一遍用上了改动（`exercised`）；跑不成或结果不符，写明原因交回
+- [x] `REVIEW.md` 的验证命令全过（含插件版本检查、防项目信息泄漏检查、SKILL.md 字数）
+- [x] idea-loop 的 `version` 升了 minor
 
 ## 选中的存量回归
 
