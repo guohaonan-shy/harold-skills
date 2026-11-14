@@ -165,3 +165,34 @@ test('a lever row names the file by its path or by a path ending at a directory 
   assert.equal(checkSkillEdit({ files, handback: `${std}\n杠杆 | b/SKILL.md | 剪枝` }).length, 1);
   assert.equal(checkSkillEdit({ files, handback: `${std}\n杠杆 | xskills/a/SKILL.md | 剪枝` }).length, 1);
 });
+
+// ---- the template's own words 「读 / 调」 left in the method column do not count as having called it.
+
+// Commit 4417076's files, and the standards line its executor handed back with the template's 「读 / 调」 untouched
+// (spec skill-edit-acceptance, review round 2 C1: the executor only read, the check reported just the missing lever row).
+const FILES_4417076 = [
+  'docs/spec/skill-edit-acceptance/tickets/01-implement-slim.md',
+  'idea-loop/scripts/implement-slim-doc.test.mjs',
+  'idea-loop/scripts/test-layering-ci-doc.test.mjs',
+  'idea-loop/skills/engineering/implement/SKILL.md',
+];
+const HANDBACK_4417076 = [
+  'verified:',
+  '  - 读了哪几份写法规范 | 读 / 调 | idea-loop:decision-rules（skill）、DEVELOPMENT.md、review 第 2 轮汇报里 writing-for-agents「单一事实来源」那条（引文取自汇报）',
+].join('\n');
+
+test('4417076: the template 「读 / 调」 copied as the method is reported next to the missing lever row', () => {
+  const reasons = checkSkillEdit({ files: FILES_4417076, handback: HANDBACK_4417076 });
+  assert.equal(reasons.length, 2, reasons.join('\n'));
+  assert.match(reasons[0], /读 \/ 调/);
+  assert.match(reasons[1], /idea-loop\/skills\/engineering\/implement\/SKILL\.md/);
+});
+
+test('method column: 「调」 alone or listed beside other ways passes; the template string in any spacing does not', () => {
+  const files = ['idea-loop/skills/a/SKILL.md'];
+  const lever = '杠杆 | idea-loop/skills/a/SKILL.md | 剪枝';
+  for (const method of ['调', '调、读', '读、调', '读 + 调', '调 / 读 引文'])
+    assert.deepEqual(checkSkillEdit({ files, handback: `读了哪几份写法规范 | ${method} | writing-for-agents\n${lever}` }), [], method);
+  for (const method of ['读 / 调', '读/调', ' 读  /  调 ', '读 ／ 调'])
+    assert.equal(checkSkillEdit({ files, handback: `读了哪几份写法规范 | ${method} | writing-for-agents\n${lever}` }).length, 1, method);
+});

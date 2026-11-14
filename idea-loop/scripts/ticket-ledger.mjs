@@ -12,7 +12,7 @@
  *
  * It also checks a landed hand-back against its commit (`skill-edit`): a commit that changes skills, agent
  * definitions or skill reference files must come with a hand-back whose 「读了哪几份写法规范」 line says it
- * CALLED writing-for-agents, and one 「杠杆」 line per changed file. Only the hand-back's own words are checked,
+ * CALLED writing-for-agents (the template's own 「读 / 调」 left as is does not count), and one 「杠杆」 line per changed file. Only the hand-back's own words are checked,
  * not whether the lever named is the right one (review judges that).
  *
  * Deterministic core (ticketOf, parseLog, isSkillEditFile, parseHandback, checkSkillEdit) is pure and unit-tested.
@@ -79,6 +79,9 @@ export function parseHandback(text) {
   };
 }
 
+// The hand-back template offers 「读 / 调」 as the method; copied unchanged it says nothing about what was done.
+const isTemplateMethod = (method) => method.replace(/[\s／]+/g, (m) => (m.includes('／') ? '/' : '')) === '读/调';
+
 const sameFile = (a, b) => a === b || a.endsWith(`/${b}`) || b.endsWith(`/${a}`);
 
 /** Why a hand-back does not cover the files its commit changed: [] when it does, or when no such file changed. */
@@ -92,6 +95,8 @@ export function checkSkillEdit({ files, handback }) {
   } else {
     if (!standards.method.includes('调')) {
       reasons.push(`「读了哪几份写法规范」那一行的方式是「${standards.method}」，没有「调」：改 skill、agent 定义、skill 参考文件的工单要用 Skill 工具调 writing-for-agents，读一句引文不算`);
+    } else if (isTemplateMethod(standards.method)) {
+      reasons.push(`「读了哪几份写法规范」那一行的方式是模板原文「${standards.method}」，没改：调了写「调」（可以跟别的方式并列，如「调、读」），没调就别写「调」`);
     }
     if (!standards.names.includes('writing-for-agents')) {
       reasons.push('「读了哪几份写法规范」那一行的名单里没有 writing-for-agents');
