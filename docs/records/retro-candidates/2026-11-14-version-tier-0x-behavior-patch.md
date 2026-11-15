@@ -14,9 +14,10 @@ tags: [retro-candidates]
 - 归并：无（它改的是现有 minor 定义本身，不是哪条原则的特例）
 - 验证：判不了：落点是本仓库的 `REVIEW.md`，不是插件 skill 的文字，用不了回放用例；档位要判断，做不成检查
 - 例子：PR #319 让 retro 摆候选时给去处推荐，按旧文是「改了流程的行为」，我推荐 minor（0.1.15 → 0.2.0），人改定 patch（0.1.16）。「成批」没定到具体几个，新文只用例子示意。
-- 状态：在池里
+- 状态：已开 issue（https://github.com/guohaonan-shy/harold-skills/issues/327）
 
 ## 出现
 
 - guohaonan-shy/harold-skills#314（2026-11-14）：「这个你要升级minor吗？还是patch？」「patch，合并吧」（PR #319 合并前定版本）；retro 里：「我倾向于B」；决定记录：[[314]]
 - guohaonan-shy/harold-skills#311（2026-11-14）：「版本按照patch 算，然后合并」（PR #317 合并前定版本，原判 minor）；retro 里：「这个进入候选，我觉的现在我们还属于一个没有定整体框架的混沌期，其实绝大部分改动都可以成为patch，只有大范围的重构或者重大使用姿势上的改动我觉的用minor是比较合适的。」；决定记录：[[311]]
+- guohaonan-shy/harold-skills#313（2026-11-15）：「我选择B，然后版本用patch」（PR #321 定 D1 时，原判 minor）；retro 里：「批 开issue吧～」；决定记录：[[313]]
