@@ -65,7 +65,7 @@ issues: [326]
 - **`runtime` SKILL.md「怎么用」第 1 步改写**：主会话开场已注入本正文和当前运行环境的 reference，直接照做；子代理照现在的 1–3 步自己认环境、读 reference。
 - **`decision-rules` 不拆**：在注入那段的头行加一句适用范围：「核心」一节针对有 spec 的工作；没有 spec 的会话里，把「spec」读作人这次交代的事。依据：Harold 的用户级约定「先扩展已在用的工具，不为一件事新增组件」；拆成两份 skill 是新增组件，头行一句话就能消除误读（在这个仓库、任何装了 idea-loop 的项目的普通对话里，会话会读到「spec 之外的事不在这次做」）。
 - **规则回放的改动核对认注入**：`exercisedBy` 在改动集合含注入的三类文件之一时，记为用上，途径 `injected`。依据：runner 用 `--plugin-dir` 起被验会话，插件的 SessionStart 钩子每次都跑；不认这条路，改 `decision-rules` 的规则回放会被判「用例没测到改动」，因为会话不再去读它。已知限制：不从事件流核实钩子真的跑了（钩子报错时会误判为用上），钩子本身有单元测试守着。
-- **版本档**：minor（`REVIEW.md`「额外要求」：改了流程的行为，老用法照样能用）。#327（0.x 的行为改动升 patch）若先合，照它重新定档。
+- **版本档**：patch，0.1.19 → 0.1.20。人在 PR #330 合并前定（2026-11-15）：「升级为patch」。起草时按 `REVIEW.md`「额外要求」定的是 minor（改了流程的行为，老用法照样能用）；#327（0.x 的行为改动升 patch）还开着，这是同一类选择又一次选了 patch。
 - **README**：`idea-loop/README.md` 里 hooks.json、runtime-detect.mjs 两行的说明、`idea-loop:runtime` 一行同步改（`REVIEW.md`「额外要求」第一条）。
 
 ## 测试决策
