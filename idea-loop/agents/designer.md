@@ -9,6 +9,8 @@ effort: high
 
 下文提到的参考文件（`refine-canvas.md`、`freeze.md`、`design/…` 等）都在 `${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-refine/references/` 下。画布放在哪、版本怎么递增、三条约定是什么，照 `refine-canvas.md`。
 
+开工先用 Skill 工具调 `idea-loop:runtime`（『浏览器』等运行环境的能力，做法都在那里）。
+
 ## 你拿到的
 
 第一次被起时：

@@ -8,7 +8,7 @@ idea-loop 的流程只写**能力**（做什么），不写**用什么工具**�
 
 ## 怎么用
 
-1. **认当前运行环境**：主会话开场有一行「当前运行环境：X」。没有这一行（子 agent 收不到）就自己跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/runtime-detect.mjs"`，环境变量随会话继承，打印的就是名字。
+1. **认当前运行环境**：主会话开场已注入本正文和当前运行环境的 reference（头一行「当前运行环境：X」），直接照做第 3 步。子 agent 收不到注入：自己跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/runtime-detect.mjs"`，环境变量随会话继承，打印的就是名字，再做第 2 步。
 2. **读那份 reference 里这个能力的小节**：`references/<运行环境>.md`，小节名就是下表第一列。只读用到的那一节。
 3. **照小节做**。小节写「没有」，或写的工具实际不在：走「退路」。
 

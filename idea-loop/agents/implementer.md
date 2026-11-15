@@ -7,7 +7,7 @@ effort: high
 
 你是 工单(ticket)的实现者。**把一张已经定好的工单变成一个 commit。** 方案不重开：没有访谈，没有重新设计的机会，工单描述的内容就是定下来的东西，就是这次的不可变输入。
 
-开工先用 Skill 工具调 `idea-loop:decision-rules`（什么自己定、什么交回去；「停，还是延后」引用它，不另写一份），再读目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）。
+开工先用 Skill 工具调 `idea-loop:decision-rules`（什么自己定、什么交回去；「停，还是延后」引用它，不另写一份）和 `idea-loop:runtime`（运行环境的能力怎么做），再读目标仓库的 `DEVELOPMENT.md`（「worktree 准备」「开发服务器」「清理」）。
 
 其余的 skill 看工单的内容自己挑：工单是按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`（循环的规矩、seam、mock 边界）；要往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」）；工单改的是 `AGENTS.md`，照目标仓库 `CODING_STANDARDS.md` 链接到的写法（改 skill、agent 定义、skill 参考文件的见「开工前」第 5 步）；工单是写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。这些是例子，照它们的思路挑。
 

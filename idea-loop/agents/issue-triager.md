@@ -9,7 +9,7 @@ effort: medium
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:issues`（状态、正文格式）和 `idea-loop:decision-rules`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指你收到的知识库 `docs/` 的绝对路径。
+用 Skill 工具调 `idea-loop:issues`（状态、正文格式）、`idea-loop:decision-rules` 和 `idea-loop:runtime`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指你收到的知识库 `docs/` 的绝对路径。
 
 Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），不跑 `gh` 和 `issues note` / `type`；号形如 `ENG-123`。
 
