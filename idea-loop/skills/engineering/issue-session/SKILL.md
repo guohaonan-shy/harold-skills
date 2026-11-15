@@ -64,4 +64,5 @@ issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage�
 ## 边界
 
 - 只做这一个 issue。路上发现的别的问题，照 `idea-loop:issues` 的「开一个 issue」开出去。
+- 任何时候停下问人（包括讨论中冒出的范围题：并进当前 PR 还是另开），先对 `idea-loop:decision-rules`。
 - issue 的状态只走 `issues`；分组只移动你自己。

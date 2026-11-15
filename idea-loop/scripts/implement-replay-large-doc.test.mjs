@@ -110,7 +110,8 @@ test('implementer: a large case is only written and committed; the result of `--
 // ---------- nothing else still tells anyone to use the queue ----------
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.tmp']);
-const SKIP_PREFIXES = ['docs/adr/', 'docs/raw/', 'docs/records/', 'docs/spec/'];
+// retro replay cases quote the human's words as they were at an old commit, like the decision records
+const SKIP_PREFIXES = ['docs/adr/', 'docs/raw/', 'docs/records/', 'docs/spec/', 'idea-loop/evals/retro/cases/'];
 function* walk(dir) {
   for (const name of readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
@@ -122,7 +123,7 @@ function* walk(dir) {
   }
 }
 
-test('outside docs/adr, docs/raw, docs/records and docs/spec, no file mentions the night queue, --enqueue, --queue, a 回放结果 line or the queue directory', () => {
+test('outside docs/adr, docs/raw, docs/records, docs/spec and the retro replay cases, no file mentions the night queue, --enqueue, --queue, a 回放结果 line or the queue directory', () => {
   const banned = [/--enqueue/, /--queue/, /回放结果/, /夜间队列/, /replay-queue/];
   const hits = [];
   for (const [rel, full] of walk(repoRoot)) {
