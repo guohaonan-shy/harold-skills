@@ -14,6 +14,7 @@
 | [[retro-pool-cross-repo-record]] | 候选池「出现」行引别的仓库的决定记录时写仓库加路径，不用 [[ ]]；修掉池里 5 条断链 |
 | [[scope-recommend-by-delivery]] | 范围题按「影不影响这份 spec 的实现、上线」推荐并进当前 PR 还是不进 |
 | [[seo-draft-reads-principles]] | 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据 |
+| [[session-start-inject-rules]] | 会话开场由 SessionStart 钩子注入 decision-rules 与 runtime 正文，主会话不必再调 |
 | [[skill-edit-acceptance]] | 改 skill 的工单自带三格验收，落地时脚本核对交回调过 writing-for-agents |
 | [[test-layering-ci-full]] | 执行方只跑改动涉及的测试，全量测试交给 PR 转 ready 后的 CI，review 读 CI 结果不在本机重跑 |
 
