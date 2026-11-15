@@ -22,6 +22,14 @@ export function decideOutcome({ before, after }) {
 }
 
 /**
+ * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs runtime-detect.mjs --inject):
+ * the body of `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the reference of the current runtime. The runner
+ * starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
+ * Not checked: that the hook really ran (a hook that errors would still count as used); the hook itself has unit tests.
+ */
+const INJECTED = [/^skills\/productivity\/decision-rules\/SKILL\.md$/, /^skills\/productivity\/runtime\/SKILL\.md$/, /^skills\/productivity\/runtime\/references\/[^/]+\.md$/];
+
+/**
  * Did the post-change run use what the change touched? `events` is the post-change run's event stream (parsed events, main
  * session and sub-agents alike); `change` is `{files, skills, agents}` (see `changeSetOf` in the runner): the files added or
  * modified under the plugin's `skills/` and `agents/`, relative to the plugin dir, the skills those files belong to
@@ -30,8 +38,9 @@ export function decideOutcome({ before, after }) {
  *
  * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
  * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
- * harness loads that skill itself, no tool call shows it).
- * Returns `{status: 'hit', via: 'read'|'skill'|'agent', name, changed}`, `{status: 'miss', changed}`, or
+ * harness loads that skill itself, no tool call shows it), or a changed file the SessionStart hook injects (see `INJECTED`):
+ * the session has it from the start, so no tool call shows it either, and a read or call in the stream is reported in its place.
+ * Returns `{status: 'hit', via: 'read'|'skill'|'agent'|'injected', name, changed}`, `{status: 'miss', changed}`, or
  * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).
  */
 export function exercisedBy(events, change, { roots = [], prompt = '' } = {}) {
@@ -71,6 +80,8 @@ export function exercisedBy(events, change, { roots = [], prompt = '' } = {}) {
       }
     }
   }
+  const injected = [...files].find((f) => INJECTED.some((re) => re.test(f)));
+  if (injected) return hit('injected', injected);
   return { status: 'miss', changed };
 }
 

@@ -24,15 +24,15 @@
 
 ## 验收标准
 
-- [ ] 照 `hooks.json` 经 shell 跑全部 SessionStart 命令（设与不设 `MAGI_SESSION_ID` 各一遍）：恰好三段输出；每段 < 10,000 字；decision-rules 段含「## 护栏」、不含 frontmatter 的 `name:` 行；runtime 段第一行是「当前运行环境：<名>」；reference 段是对应运行环境那一份；输出里没有字面的 `${CLAUDE_PLUGIN_ROOT}`。单元测试覆盖。
-- [ ] SessionStart 钩子没有 matcher（单元测试断言）。
-- [ ] `IDEA_LOOP_RUNTIME=foo`：decision-rules 段照常输出；runtime 两段非零退出、stdout 为空（单元测试）。
-- [ ] 改动核对：改动集合只含 decision-rules 的 SKILL.md、事件流里没有任何读或调用时，返回用上、途径 `injected`；只含别的 skill 时仍是没用上（单元测试）。
-- [ ] 文档测试：`skills/` 下（这两个 skill 除外）不再出现「用 Skill 工具调 `idea-loop:decision-rules`」「用 Skill 工具调 `idea-loop:runtime`」；按上面判法会走到能力的每个 agent 定义都含开工调 `idea-loop:runtime`。
-- [ ] 全量测试通过（`REVIEW.md` 的全量测试命令），含 tripwire 与 no-project-leak。
-- [ ] 探针：用这个分支的插件起一个无头会话，要它不调任何工具复述 decision-rules「护栏」第一条，答对且事件流里没有工具调用。结果写进执行记录。
-- [ ] 回放趋势（不作门槛）：`decision-rules-scope-recommend` 用这个分支的插件跑 3 次，改后那一遍的改动核对结果记进该用例的 annotations.md。
-- [ ] README 与 `plugin.json` 的 version 已同步。
+- [x] 照 `hooks.json` 经 shell 跑全部 SessionStart 命令（设与不设 `MAGI_SESSION_ID` 各一遍）：恰好三段输出；每段 < 10,000 字；decision-rules 段含「## 护栏」、不含 frontmatter 的 `name:` 行；runtime 段第一行是「当前运行环境：<名>」；reference 段是对应运行环境那一份；输出里没有字面的 `${CLAUDE_PLUGIN_ROOT}`。单元测试覆盖。
+- [x] SessionStart 钩子没有 matcher（单元测试断言）。
+- [x] `IDEA_LOOP_RUNTIME=foo`：decision-rules 段照常输出；runtime 两段非零退出、stdout 为空（单元测试）。
+- [x] 改动核对：改动集合只含 decision-rules 的 SKILL.md、事件流里没有任何读或调用时，返回用上、途径 `injected`；只含别的 skill 时仍是没用上（单元测试）。
+- [x] 文档测试：`skills/` 下（这两个 skill 除外）不再出现「用 Skill 工具调 `idea-loop:decision-rules`」「用 Skill 工具调 `idea-loop:runtime`」；按上面判法会走到能力的每个 agent 定义都含开工调 `idea-loop:runtime`。
+- [x] 全量测试通过（`REVIEW.md` 的全量测试命令），含 tripwire 与 no-project-leak。
+- [x] 探针：用这个分支的插件起一个无头会话，要它不调任何工具复述 decision-rules「护栏」第一条，答对且事件流里没有工具调用。结果写进执行记录。
+- [x] 回放趋势（不作门槛）：`decision-rules-scope-recommend` 用这个分支的插件跑 3 次，改后那一遍的改动核对结果记进该用例的 annotations.md。
+- [x] README 与 `plugin.json` 的 version 已同步。
 
 ## 选中的存量回归
 
