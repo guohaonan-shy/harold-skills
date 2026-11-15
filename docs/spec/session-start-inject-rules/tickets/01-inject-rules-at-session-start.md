@@ -33,6 +33,7 @@
 - [x] 探针：用这个分支的插件起一个无头会话，要它不调任何工具复述 decision-rules「护栏」第一条，答对且事件流里没有工具调用。结果写进执行记录。
 - [x] 回放趋势（不作门槛）：`decision-rules-scope-recommend` 用这个分支的插件跑 3 次，改后那一遍的改动核对结果记进该用例的 annotations.md。
 - [x] README 与 `plugin.json` 的 version 已同步。
+- [ ] review 第 1 轮 S1（2026-11-15）：规则回放的改动核对只把被验会话所在运行环境的那一份 runtime reference 算作开场注入（运行环境按起被验会话时的环境变量、照检测规则判定）；另一份运行环境的 reference 照旧要被读到或调到才算用上。例：桌面端环境下改动只含 magi 那份 reference、事件流里没有读或调用，判「没用上」；改动只含桌面端那份，判「用上了，途径 injected」。
 
 ## 选中的存量回归
 
