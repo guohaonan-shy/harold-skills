@@ -23,11 +23,18 @@ export function decideOutcome({ before, after }) {
 
 /**
  * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs runtime-detect.mjs --inject):
- * the body of `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the reference of the current runtime. The runner
- * starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
+ * the body of `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the reference of the current runtime only. The
+ * runner starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
+ * `runtime` is the runtime the replayed session ran in (what `runtime-detect.mjs` gives for the runner's environment, which the
+ * session inherits), or null when that environment names no known runtime: then the hook prints `decision-rules` only.
+ * The other runtime's reference is not injected, so a change to it still has to be read or called to count.
  * Not checked: that the hook really ran (a hook that errors would still count as used); the hook itself has unit tests.
  */
-const INJECTED = [/^skills\/productivity\/decision-rules\/SKILL\.md$/, /^skills\/productivity\/runtime\/SKILL\.md$/, /^skills\/productivity\/runtime\/references\/[^/]+\.md$/];
+export function injectedFiles(runtime) {
+  const files = ['skills/productivity/decision-rules/SKILL.md'];
+  if (runtime) files.push('skills/productivity/runtime/SKILL.md', `skills/productivity/runtime/references/${runtime}.md`);
+  return files;
+}
 
 /**
  * Did the post-change run use what the change touched? `events` is the post-change run's event stream (parsed events, main
@@ -38,12 +45,13 @@ const INJECTED = [/^skills\/productivity\/decision-rules\/SKILL\.md$/, /^skills\
  *
  * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
  * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
- * harness loads that skill itself, no tool call shows it), or a changed file the SessionStart hook injects (see `INJECTED`):
- * the session has it from the start, so no tool call shows it either, and a read or call in the stream is reported in its place.
+ * harness loads that skill itself, no tool call shows it), or a changed file the SessionStart hook injects (see `injectedFiles`;
+ * `runtime` says which runtime's reference that is, without it only `decision-rules` counts): the session has it from the
+ * start, so no tool call shows it either, and a read or call in the stream is reported in its place.
  * Returns `{status: 'hit', via: 'read'|'skill'|'agent'|'injected', name, changed}`, `{status: 'miss', changed}`, or
  * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).
  */
-export function exercisedBy(events, change, { roots = [], prompt = '' } = {}) {
+export function exercisedBy(events, change, { roots = [], prompt = '', runtime = null } = {}) {
   const files = new Set(change?.files ?? []);
   if (!files.size) return { status: 'na', changed: 0 };
   const skills = new Set(change.skills ?? []);
@@ -80,7 +88,8 @@ export function exercisedBy(events, change, { roots = [], prompt = '' } = {}) {
       }
     }
   }
-  const injected = [...files].find((f) => INJECTED.some((re) => re.test(f)));
+  const injectedSet = injectedFiles(runtime);
+  const injected = [...files].find((f) => injectedSet.includes(f));
   if (injected) return hit('injected', injected);
   return { status: 'miss', changed };
 }

@@ -78,12 +78,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
 import { findCompanion } from '../../scripts/codex-companion.mjs';
+import { detect as detectRuntime } from '../../scripts/runtime-detect.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
   applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, parseOverrides, parseVerdict,
   productsInOrder, relabelLarge, settleVerdicts, verdictsBySide,
 } from './replay.mjs';
+
+/** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way. null for an unknown forced name. */
+function sessionRuntime() {
+  try {
+    return detectRuntime(process.env);
+  } catch {
+    return null;
+  }
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
@@ -442,7 +452,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       if (s.side === 'after') {
         // before the judge: did this run use what the change touched? (the paths in its stream are the staged copy's)
         const roots = [...new Set([staged.dir, realpathSync(staged.dir)])];
-        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c) });
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: sessionRuntime() });
         console.log(`改动核对：${describeExercised(exercised)}`);
       }
     } finally {
