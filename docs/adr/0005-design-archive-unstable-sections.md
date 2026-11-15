@@ -37,4 +37,4 @@ related: ["[[2026-10-26-unstable-sections]]", "[[0002-design-loop-v2-imagine-ref
 - 校验规则 7 认 `scrollDriven`，只能写 `true`。
 - 文档：`design-archive` skill 的 `references/shooting.md`（「共用的规矩」「滚动驱动的段」「看到什么 → 做什么」），`review-reconcile.md`（`uncontrolled` 的对账判法）、`review-archive.md`、dreaming 的 `initial-scan.md` 都已改用新信号。
 
-**已知限制（原 spec 的 Out of scope，仍有效）：** 页面时间管不到的内容只检出不做到按像素比；随滚动变的窄侧栏会让整段被认成滚动驱动、没有「不是滚动驱动」的声明（issue #128，仍开着，status:triage）；入口是加载中的长页面不能分段（issue #69，仍开着，status:triage）。
+**已知限制（原 spec 的 Out of scope，仍有效）：** 页面时间管不到的内容只检出不做到按像素比；随滚动变的窄侧栏会让整段被认成滚动驱动、没有「不是滚动驱动」的声明（issue #128，仍开着，status:todo）；入口是加载中的长页面不能分段（issue #69，仍开着，status:triage）⚠️ 已被取代（部分）→ [[0046-design-archive-loaded-sections]]。
