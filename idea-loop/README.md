@@ -300,7 +300,7 @@ and handles the result as `idea-loop:implement`'s `references/replay-result.md` 
 the case's yes/no question on each, and compares with the judge; a disagreement stops the run and goes to the human (a small
 case's implementer does the same and hands a disagreement back as `blocked`). The PR stays a draft until the replays
 are handled. Exit codes: 0 all passed, 1 some did not, 2 no `--pr` / no case / a case that is missing or malformed (no session
-is started). A runner copy at `~/.idea-loop/bin/` from before this option does not know it: run `scripts/retro-install.mjs` again (that is, `/idea-loop:setup`'s runner step: the installed copy only changes when setup is run again). The Codex lookup script (`scripts/codex-companion.mjs`) is installed with the runner, so a machine that has not run setup again has no Codex lookup either and cannot use the Codex judge; the same goes for the exercised check.
+is started). A runner copy at `~/.idea-loop/bin/` from before this option does not know it: run `scripts/retro-install.mjs` again (that is, `/idea-loop:setup`'s runner step: the installed copy only changes when setup is run again). The Codex lookup script (`scripts/codex-companion.mjs`) and the runtime detection script (`scripts/runtime-detect.mjs`, which the exercised check uses to tell which runtime the checked session ran in) are installed with the runner, so a machine that has not run setup again has neither: the installed runner does not start at all until setup is run again.
 
 `/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed
 path) and prints the permission rule `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` for the human to add to
