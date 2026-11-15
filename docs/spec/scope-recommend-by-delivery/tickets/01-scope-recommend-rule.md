@@ -25,16 +25,19 @@ idea-loop 的 `plugin.json` 的 `version` 升一档 minor（改了问人时的�
 
 > 人的决定（2026-11-14）：「我选择B，然后版本用patch」。B = 用仓库里的新版 runner（Codex 当评委、自动核对改后那一遍用上了改动）对这个用例再跑 3 次，按多数定；跑之前去掉用例输入开头的 `/idea-loop:decision-rules` 斜杠命令，让会话自己决定读不读这条规则。版本改用 patch：idea-loop 从 main 上的 0.1.14 升到 0.1.15，不升 minor。
 
+> 人的决定（2026-11-15）：「嗯嗯，我觉的runtime 以及 决策方式在session 开始的hook 注入我觉的是可以的，不在需要其他skill 调用了。单独开一个issue，p1 todo吧」。同意的提议：新版 runner 三次分不出改前改后，规则照合、回放用例留作抽样、不改输入；`issue-session` 的「边界」补一句「任何时候停下问人（包括讨论中冒出的范围题），先对 `idea-loop:decision-rules`」，作为过渡；开场注入另开 #326（P1 todo）。
+
 ## 验收标准
 
 - [x] `decision-rules` 的「要人定的写成一道题」里有上面那条新文，位置在「给推荐和一句理由」之后，其余条目不变
 - [x] 新用例通过仓库的用例格式校验（`retro-case.test.mjs`）和 runner 的 `--list`
-- [x] 用 runner 跑新用例：改前「否」、改后「是」，且改后那一遍用上了改动（`exercised`）；跑不成或结果不符，写明原因交回
+- [x] 用 runner 跑新用例：改前「否」、改后「是」，且改后那一遍用上了改动（`exercised`）；跑不成或结果不符，写明原因交回（结果不符：三次分不出改前改后，人 2026-11-15 定照合、用例留作抽样）
 - [x] `REVIEW.md` 的验证命令全过（含插件版本检查、防项目信息泄漏检查、SKILL.md 字数）
 - [x] idea-loop 的 `version` 升了 minor
 - [x] 人的决定（2026-11-14）：用例输入开头不再带 `/idea-loop:decision-rules`，格式校验仍过
 - [x] 人的决定（2026-11-14）：用仓库里的 runner（不是 `~/.idea-loop/bin/` 里装的旧版）跑 3 次，每次记改前、改后、评委（应为 Codex）、改动核对（exercised）；按多数写结论进 `annotations.md`；多数不过照实交回
 - [x] 人的决定（2026-11-14）：idea-loop 的 `version` 是 0.1.15（patch），plugin-version 检查仍过（对着 main 当时的 0.1.14 过；origin/main 现已到 0.1.17，合并前要从它重新升）
+- [x] 人的决定（2026-11-15）：`issue-session` 的「边界」有一句：任何时候停下问人（包括讨论中冒出的范围题），先对 `idea-loop:decision-rules`
 
 ## 选中的存量回归
 
