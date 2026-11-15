@@ -77,6 +77,12 @@ grill（按需 prototype）→ to-spec → [uiux-imagine → /clear → uiux-ref
 
 三个新 skill 被钉在 `evals/` 的一个真实 case 上，这是对本仓库「主观输出跳过 quantitative eval」约定的一处**有意例外**，理由写在根 `CLAUDE.md` §5。
 
+## 取代与演变
+
+- §2.1、§2.6 的 prototype：提交 1779ed6「grill 只管访谈，删除 prototype」删掉了 prototype skill。
+- §2.5「UI 实现标准是 reference 加脚本，不是 skill」：提交 a731b38 把它升成独立 skill `ui-measure`。
+- §2.2「Playwright 走插件自带 .mcp.json」：提交 236aaaf 改为用户级配置，插件 `.mcp.json` 里不再有 Playwright。
+
 ## 4 关联
 
 - 素材：[[2026-09-11-design-loop-prototype-critic]]、[[2026-09-11-aihero-prototype-skill]]、[[2026-09-11-lenny-ai-world-class-designer]]

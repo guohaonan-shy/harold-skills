@@ -32,7 +32,7 @@ related: ["[[2026-10-30-issue-consolidation-grill]]"]
 ## 3 结果（result）
 
 - `idea-loop/skills/engineering/to-ticket/SKILL.md` 有「切法直接落盘，不停下」一节。
-- `idea-loop/skills/engineering/implement/SKILL.md` 的停下步骤里，「都没有」分支不停、不推送通知，直接往下走。
+- `idea-loop/skills/engineering/implement/references/stop-and-resume.md` 的停下步骤里，「都没有」分支不停、不推送通知，直接往下走。
 - `idea-loop/scripts/review-loop.mjs` 对无「要你决定」的条目只看「做了什么」，由 `review-loop.test.mjs` 钉住。
 - `idea-loop/skills/engineering/pr-review/SKILL.md` 的「一轮之后往哪走」有「不等人，交审核报告」，具体做法在 `references/deliver.md`（先推删工单的 docs 提交并等 CI 绿，再写审核报告），`references/merge.md` 不再等 CI。
 - 回放用例 `implement-no-stop-without-decision`、`to-ticket-no-nod`、`review-no-decision-report` 在 `idea-loop/evals/retro/cases/`。
