@@ -17,5 +17,6 @@
 | [[session-start-inject-rules]] | 会话开场由 SessionStart 钩子注入 decision-rules 与 runtime 正文，主会话不必再调 |
 | [[skill-edit-acceptance]] | 改 skill 的工单自带三格验收，落地时脚本核对交回调过 writing-for-agents |
 | [[test-layering-ci-full]] | 执行方只跑改动涉及的测试，全量测试交给 PR 转 ready 后的 CI，review 读 CI 结果不在本机重跑 |
+| [[to-ticket-walk-request-chain]] | 切票前对着最新主分支，从用户进入的入口沿真实调用链走到底；spec 没覆盖的那一段按已有的停下规则处理 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
