@@ -193,7 +193,7 @@ test('local figures are found and swapped for their uploaded addresses; web addr
   assert.match(out, /example\.com/);
 });
 
-test('a nightly replay is a third kind of entry: numbered among replays, archived with its own label, and the old kinds read as before', () => {
+test('a replay is a third kind of entry: numbered among replays, archived with its own label, and the old kinds read as before', () => {
   const withReplay = `${loop}
 <!-- idea-loop-entry {"kind":"replay","round":1} -->
 ## 规则回放 第 1 次 · 1 个用例，1 个过

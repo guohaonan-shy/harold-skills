@@ -1,23 +1,26 @@
 /**
  * Proposal-table shape check — the deterministic gate at the end of `dreaming`'s proposal pass.
  *
- * A dreaming run is two passes with a human between them. The first writes every finding into one
- * proposal table and stops; the second executes only the rows the human approved. So the table is
- * the run's only output, and a malformed one is dangerous in a specific way: a row whose
- * disposition is not in the closed set is a row the execution pass cannot mechanically carry out,
- * and an archive row without both pictures is a row the human cannot judge at a glance.
+ * A dreaming run writes every finding into one full proposal table, then splits its rows by risk
+ * (`splitAskRows`): the rows that need a human's call are pulled out into a small table and put to
+ * the human, whose answer is executed as a follow-up; every other row is carried out as its own
+ * 建议处置 without asking. So the full table is the input to both, and a malformed one is dangerous
+ * in a specific way: a row whose disposition is not in the closed set is a row the execution pass
+ * cannot mechanically carry out, and an archive row without both pictures is a row the reader
+ * cannot judge at a glance.
  *
  * This file judges shape, never content — no model, no taste, no network. It checks: the row types
  * (the `##` sections) are a closed set; each row type has a closed set of dispositions; archive
  * rows carry two pictures, the second under `tmp/`; a "product broken" row never carries a
  * replace-the-archive disposition; every candidate row carries a picture of the UI it is about; a
  * candidate headed for DESIGN.md and every DESIGN.md row carry the old and new text side by side;
- * every DESIGN.md row names the standard it rests on; and whether the table is empty.
+ * every DESIGN.md row names the standard it rests on; and whether the table is empty. It also
+ * decides, from each row's own fields only, which rows go to the human (`splitAskRows`).
  *
- * Pure: the CLI at the bottom is the only thing that reads a file.
+ * Pure: the CLI at the bottom is the only thing that reads or writes a file.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 export const COLUMNS = ['对象', '发现', '证据', '建议处置', '选项'];
 
@@ -269,7 +272,7 @@ export function checkProposalTable(markdown) {
       errors.push(...evidenceProblems(s.title, row.cells).map((p) => `${where}${p}`));
       errors.push(...designMdProblems(s.title, row.cells).map((p) => `${where}${p}`));
       if (s.title === '初扫页面' && !/(^|[\s/(`])tmp\//.test(row.cells[2])) {
-        errors.push(`${where}的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，人批了才经归档脚本进 prod/`);
+        errors.push(`${where}的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，只有归档脚本写 prod/`);
       }
     }
   }
@@ -281,12 +284,70 @@ export function checkProposalTable(markdown) {
   return { valid, empty, errors, counts };
 }
 
+/**
+ * Whether a row of `type` is put to the human rather than carried out on its own. The rule lives
+ * here and nowhere else; it reads only the row's type, disposition and object cell:
+ *  - every row of 候选 and of DESIGN.md 条目;
+ *  - a 文档 row whose disposition is 报警 or 问人 (a note in parentheses after it is ignored);
+ *  - a 文档 row whose object starts with GLOSSARY.md — terms are decided by the human only,
+ *    whatever the disposition (a backtick around the file name is read through, so a quoted name
+ *    is not mistaken for an automatic row).
+ * Every other row type, and every other 文档 row, is carried out without asking.
+ */
+function isAskRow(type, cells) {
+  if (type === '候选' || type === 'DESIGN.md 条目') return true;
+  if (type !== '文档') return false;
+  const lead = leadingDisposition(cells[3]);
+  return lead === '报警' || lead === '问人' || /^`?GLOSSARY\.md/.test(cells[0]);
+}
+
+/** The `#` title line and the opening lines under it (scope of the pass, an unhandled earlier table). */
+function openingOf(markdown) {
+  const lines = String(markdown).split(/\r?\n/);
+  const at = lines.findIndex((l) => /^#\s+\S/.test(l));
+  if (at === -1) return [];
+  const opening = [lines[at].trimEnd()];
+  let fence = null;
+  for (const raw of lines.slice(at + 1)) {
+    const line = raw.trimEnd();
+    const mark = line.match(/^\s*(`{3,}|~{3,})/);
+    if (mark) fence = fence === null ? mark[1][0] : mark[1][0] === fence ? null : fence;
+    if (fence === null && /^#{2,6}\s/.test(line)) break;
+    if (fence === null && !mark && line.trim() !== '') opening.push(line);
+  }
+  return opening;
+}
+
+/** One table row back to markdown; a literal pipe in a cell is escaped again. */
+const renderRow = (cells) => `| ${cells.map((c) => c.replace(/\|/g, '\\|')).join(' | ')} |`;
+
+/**
+ * Pull the rows that need a human out of a proposal table into a small table of the same shape:
+ * the same `#` title and opening lines, the same five columns, one `##` section per row type that
+ * has at least one such row. Notes at the end of a section are not copied. The input has to have
+ * passed `checkProposalTable`.
+ * @returns { markdown, count }  `count` is 0 and `markdown` is '' when no row needs a human.
+ */
+export function splitAskRows(markdown) {
+  const blocks = [];
+  let count = 0;
+  for (const s of sections(markdown)) {
+    if (!(s.title in ROW_TYPES)) continue;
+    const rows = s.rows.filter((r) => r.cells.length === COLUMNS.length && isAskRow(s.title, r.cells));
+    if (rows.length === 0) continue;
+    count += rows.length;
+    blocks.push([`## ${s.title}`, '', `| ${COLUMNS.join(' | ')} |`, '|---|---|---|---|---|', ...rows.map((r) => renderRow(r.cells))].join('\n'));
+  }
+  if (count === 0) return { markdown: '', count: 0 };
+  return { markdown: `${openingOf(markdown).join('\n\n')}\n\n${blocks.join('\n\n')}\n`, count };
+}
+
 /** Human-readable render, same grouping the other scripts use. */
 export function renderReport(result, file) {
   if (!result.valid) {
     return [`proposal-table: 校验失败${file ? ` (${file})` : ''} —— 先补齐再交给人：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
   }
-  if (result.empty) return `proposal-table: 空表 ✓${file ? ` (${file})` : ''} —— 本周无事：只推一句话，不发 Artifact`;
+  if (result.empty) return `proposal-table: 空表 ✓${file ? ` (${file})` : ''} —— 本周无事：什么都不用做，也不推送`;
   const total = Object.values(result.counts).reduce((a, b) => a + b, 0);
   return `proposal-table: green ✓${file ? ` (${file})` : ''} —— ${total} 行：${Object.entries(result.counts).filter(([, n]) => n > 0).map(([t, n]) => `${t} ${n}`).join('、')}`;
 }
@@ -295,9 +356,11 @@ export function renderReport(result, file) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
+  const split = args.find((a) => a === '--split-ask' || a.startsWith('--split-ask='));
+  const splitFile = split?.includes('=') ? split.slice(split.indexOf('=') + 1) : null;
   const [file] = args.filter((a) => !a.startsWith('--'));
-  if (!file) {
-    console.error('usage: proposal-table-check.mjs <proposal-table.md> [--json]');
+  if (!file || splitFile === '') {
+    console.error('usage: proposal-table-check.mjs <proposal-table.md> [--json] [--split-ask[=<out.md>]]');
     process.exit(1);
   }
   let md;
@@ -308,6 +371,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   const result = checkProposalTable(md);
+  if (split && result.valid) {
+    // Only a valid table is split; an invalid one falls through and is reported exactly as without the option.
+    const ask = splitAskRows(md);
+    if (ask.count === 0) {
+      console.log(`proposal-table: 无问人的行 ✓ (${file}) —— 每一行都自动执行`);
+    } else if (splitFile) {
+      writeFileSync(splitFile, ask.markdown);
+      console.log(`proposal-table: ${ask.count} 行问人，小表写到 ${splitFile}`);
+    } else {
+      process.stdout.write(ask.markdown);
+    }
+    process.exit(0);
+  }
   if (json) console.log(JSON.stringify(result, null, 2));
   else console.log(renderReport(result, file));
   process.exit(result.valid ? 0 : 2);

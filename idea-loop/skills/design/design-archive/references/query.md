@@ -28,6 +28,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入�
 
 页面的 `outgoing` / `incoming`、进入方式的 `steps`、用户路径每一步的 `trigger`、反查的边，都带 `fromSection` / `toSection`（完整的 `<页面>#<段>`，没写就没有这两个键），照着进入方式走的人知道先滚到哪一段再点；写了 `when` 的边也带 `when`，同一个操作有几条边时靠它分清是哪种环境。文件里写的是 `from` / `section`，输出里不叫 `from`，因为边的 `from` 已经是「出发的状态」。
 
+写了 `shot` 的 `user` 边多带两个键：`shot`（原样）和 `shotExists`（那张补拍图在出发状态所在对象的 `assets/` 里存不存在；读 `--delta` 时，`prod/` 里有的同名图也算有）。没写 `shot` 的边两个键都没有，组件就在主视口图里。`diff` 不另列：`shot` 跟其它边字段一样进 `edges[<id>].shot`。
+
 ## 进入方式
 
 `state` 的 `enter`、`journey` 的 `start` 按 SKILL.md 的「进入方式从图上推导」给出：

@@ -76,8 +76,12 @@ function need(archive, name, kind) {
 
 // ---------- views of edges and states ----------
 
-/** An edge as the caller sees it: only the fields its kind uses. */
-function edgeView(e) {
+/**
+ * An edge as the caller sees it: only the fields its kind uses. An edge with `shot` also says whether
+ * that image is in the `assets/` next to its state (`shotExists`); an edge without has neither key.
+ */
+function edgeView(archive, e) {
+  const shot = typeof e.shot === 'string' ? assetOf(archive, archive.objects.get(e.from), e.shot) : null;
   return clean({
     id: e.id,
     from: e.from,
@@ -85,6 +89,8 @@ function edgeView(e) {
     kind: e.kind,
     component: e.component,
     locate: e.locate,
+    shot: e.shot,
+    shotExists: shot ? shot.exists : null,
     fromSection: e.fromSection,
     toSection: e.toSection,
     when: e.when,
@@ -149,7 +155,7 @@ export function enterState(archive, id) {
   const shouldSee = shouldSeeOf(target);
   if (via.has(id)) {
     const steps = [];
-    for (let at = id; via.get(at); at = via.get(at).from) steps.unshift(edgeView(via.get(at)));
+    for (let at = id; via.get(at); at = via.get(at).from) steps.unshift(edgeView(archive, via.get(at)));
     const first = states.get(origin.get(id));
     return {
       state: id,
@@ -168,7 +174,7 @@ export function enterState(archive, id) {
     for (const e of usable.filter((x) => x.to === at)) {
       if (hasBlocked(e)) {
         const b = typeof e.blocked === 'object' ? e.blocked : {};
-        blocked.push({ ...edgeView({ ...e, blocked: null }), missing: b.missing ?? null, tried: asList(b.tried) });
+        blocked.push({ ...edgeView(archive, { ...e, blocked: null }), missing: b.missing ?? null, tried: asList(b.tried) });
       }
       if (!via.has(e.from)) seen.add(e.from);
     }
@@ -187,9 +193,17 @@ const posixPath = (p) => p.split('\\').join('/');
  * when it is not, `path` is where it goes.
  */
 function sliceOf(archive, entry, sectionId) {
-  const home = posixPath(normalize(join(dirname(entry.file), 'assets', `${entry.id}@${sectionId}.png`)));
+  return assetOf(archive, entry, `${entry.id}@${sectionId}.png`);
+}
+
+/**
+ * The image `name` in the `assets/` next to `owner`'s file (a state's screenshot, a slice, an edge's `shot`).
+ * Same delta rule as `sliceOf`; `exists` says whether the file is there, and when it is not, `path` is where it goes.
+ */
+function assetOf(archive, owner, name) {
+  const home = posixPath(normalize(join(dirname(owner.file), 'assets', name)));
   const candidates = [home];
-  if (entry.source === 'delta' && archive.delta) candidates.push(home.replace(`docs/design/tmp/${archive.delta.slug}/delta/`, 'docs/design/prod/'));
+  if (owner.source === 'delta' && archive.delta) candidates.push(home.replace(`docs/design/tmp/${archive.delta.slug}/delta/`, 'docs/design/prod/'));
   const found = candidates.find((c) => existsSync(join(archive.root, c)));
   return { path: found ?? home, exists: found !== undefined };
 }
@@ -207,8 +221,8 @@ function sectionView(archive, pageId, entry, x) {
     locateBy: x.by?.kind ?? null,
     declaredBy: entry.id,
     ...(x.scrollDriven === true ? { scrollDriven: true } : {}),
-    outgoing: archive.edges.filter((e) => e.fromSection === ref).map(edgeView),
-    incoming: archive.edges.filter((e) => e.toSection === ref).map(edgeView),
+    outgoing: archive.edges.filter((e) => e.fromSection === ref).map((e) => edgeView(archive, e)),
+    incoming: archive.edges.filter((e) => e.toSection === ref).map((e) => edgeView(archive, e)),
     states: sortById(statesOfPage(archive, pageId).filter((s) => s.fm.section === ref)).map((s) => s.id),
     screenshot: slice.path,
     screenshotExists: slice.exists,
@@ -308,8 +322,8 @@ export function queryPage(archive, name) {
       entry: isEntry(s) ? { url: s.fm.entry.url, preconditions: s.fm.entry.preconditions ?? null } : null,
       components: idsOf(s.fm.components),
       motions: idsOf(s.fm.motions),
-      outgoing: outgoingEdges(archive, s.id).map(edgeView),
-      incoming: incomingEdges(archive, s.id).map(edgeView),
+      outgoing: outgoingEdges(archive, s.id).map((e) => edgeView(archive, e)),
+      incoming: incomingEdges(archive, s.id).map((e) => edgeView(archive, e)),
       ...(s.fm.section ? { section: String(s.fm.section) } : {}),
     })),
     sections: sectionViews(archive, page.id),
@@ -368,7 +382,7 @@ export function queryJourney(archive, name) {
       state: s.state,
       page: s.object ? pageOfState(s.object) : null,
       ...(s.object ? {} : { missing: true }),
-      trigger: s.edge ? edgeView(s.edge) : null,
+      trigger: s.edge ? edgeView(archive, s.edge) : null,
       ...(s.ambiguous ? { ambiguous: s.ambiguous } : {}),
       ...(s.noEdge ? { noEdge: true } : {}),
       shouldSee: s.object ? shouldSeeOf(s.object) : null,
@@ -425,7 +439,7 @@ export function queryRefs(archive, name) {
   return {
     target: clean({ id: target.id, kind: target.kind, code: target.fm.code ?? null }),
     matchedBy,
-    edges: edges.map(edgeView),
+    edges: edges.map((e) => edgeView(archive, e)),
     states: sortById(
       [...viaOf].map(([id, via]) => ({ id, page: pageOfState(archive.objects.get(id)), via })),
     ),

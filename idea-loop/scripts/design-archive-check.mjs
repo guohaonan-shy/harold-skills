@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Design archive validation — the seven rules, run over a parsed archive.
+ * Design archive validation — the eight rules, run over a parsed archive.
  *
  * `docs/design/prod/` is only trustworthy if the graph in it holds together: every state can be
  * reached (or says why not), every reference points at something, every journey follows real edges,
@@ -17,6 +17,7 @@
  *   5 state files carry no 「决定」; every decision has 为什么 / 否掉过 / 来源; every candidate 并进 / 为什么 / 证据
  *   6 literal motion values carry `deviates`; `usedBy` matches the references actually found
  *   7 sections of a long entry state: closed type set, ids, `locate` shapes, `from` / `section` references, `user` edges name their section, `scrollDriven` only `true`
+ *   8 an edge's `shot` is `<state id>@<edge id>.png` of an edge of that state; not on `system` edges, not on a state with `sections`
  * Rule 0 is the structure the rules stand on: files that cannot be read as objects, required fields.
  *
  * With `--delta <spec-slug>` the requirement's `tmp/<slug>/delta/` is laid over `prod/` first
@@ -63,6 +64,7 @@ export const RULES = {
   5: '决定与候选',
   6: '动效',
   7: '分段',
+  8: '边的截图',
 };
 
 const filled = (v) => typeof v === 'string' ? v.trim() !== '' : v !== null && v !== undefined && !(Array.isArray(v) && v.length === 0);
@@ -270,7 +272,41 @@ export function checkArchive(archive, { usedBy = true, workspaces = null } = {})
   // ---------- 7: sections ----------
   sectionRules(archive, v);
 
+  // ---------- 8: edge screenshots ----------
+  shotRules(archive, v);
+
   return out;
+}
+
+/**
+ * Rule 8 — see skills/design/design-archive/references/check.md, 规则 8 的逐条违规与提示.
+ * An edge's `shot` is `<state id>@<edge id>.png`: the supplementary image its component is in (an edge
+ * without `shot` has its component in the main viewport image). Several edges may name one image.
+ * Whether the file exists is not judged here (it may be an LFS pointer): the query reports it.
+ */
+function shotRules(archive, v) {
+  const FORM = '<出发状态 id>@<边 id>.png';
+  const states = objectsOfKind(archive, 'state').sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const s of states) {
+    const edges = archive.edges.filter((x) => x.from === s.id);
+    const ids = new Set(edges.map((e) => e.id).filter((x) => x !== null));
+    for (const e of edges) {
+      if (e.shot === null) continue;
+      const field = `edges[${e.index}].shot`;
+      if (e.kind === 'system') {
+        v(8, s.file, field, `system 边「${e.id}」不经过组件，不写 shot`);
+      } else if (s.fm.sections !== undefined) {
+        v(8, s.file, field, `${s.id} 声明了 sections，分段页的边用 from 挂在段上，不写 shot`);
+      } else if (typeof e.shot !== 'string' || !/^[^@\s]+@[^@\s]+\.png$/.test(e.shot)) {
+        v(8, s.file, field, `shot 写法不对，应为 ${FORM}（如 ${s.id}@${e.id ?? 'save'}.png），现在是 ${JSON.stringify(e.shot)}`);
+      } else if (!e.shot.startsWith(`${s.id}@`)) {
+        v(8, s.file, field, `shot「${e.shot}」的前半要是出发状态 ${s.id}（${FORM}），补拍图放在出发状态自己的 assets/ 里`);
+      } else if (!ids.has(e.shot.slice(s.id.length + 1, -'.png'.length))) {
+        const named = e.shot.slice(s.id.length + 1, -'.png'.length);
+        v(8, s.file, field, `shot「${e.shot}」里的边 id「${named}」不是 ${s.id} 的边${ids.size ? `；它现有的边：${[...ids].join('、')}` : ''}`);
+      }
+    }
+  }
 }
 
 const TYPE_LIST = Object.keys(SECTION_TYPES).join(' ');

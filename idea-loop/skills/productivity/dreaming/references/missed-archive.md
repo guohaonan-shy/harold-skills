@@ -26,7 +26,7 @@
 | 建议处置 | `补归档` 或 `丢弃`（闭集） |
 | 选项 | 批 / 不批 / 改成… |
 
-怎么建议：画布、冻结记录还在、对应的功能确实上线了，建议 `补归档`；需求已作废、画布与线上对不上、或是 `dreaming-<日期>/` 这类过程残留且 `delta/` 里没有要进档案的对象，建议 `丢弃`。拿不准就两种都写进「选项」，由人选。
+怎么建议：画布、冻结记录还在、对应的功能确实上线了，建议 `补归档`；需求已作废、画布与线上对不上、或是 `dreaming-<日期>/` 这类过程残留且 `delta/` 里没有要进档案的对象，建议 `丢弃`。拿不准的建议 `补归档`：它要过 reviewer 核对和归档脚本的校验，核不过就不执行，不会丢东西；丢弃只能靠 git 历史找回。
 
 ## 执行段
 
@@ -34,9 +34,8 @@
 
 1. 开发环境：从 dreaming 的 worktree（它就是基准分支）照 `DEVELOPMENT.md` 准备，自己挑一个空闲端口起服务；浏览器照 `idea-loop:browser` 的「并行时抢锁」，owner 写 `dreaming`。
 2. 起 `idea-loop:ui-reviewer`，模式「归档」，输入照 `idea-loop:pr-review` 合并 reference 的「合并前归档」第 1 步：spec 名、dreaming worktree、端口、图的前缀 `dreaming-<日期>-merge-`。没有 PR：输入里「PR 号」一格填 `dreaming-<日期>-<spec-slug>`，图和草稿就落在 `.tmp/pr-review/dreaming-<日期>-<spec-slug>/` 下；没有 review loop 文件，「决定」取自冻结记录。
-3. 核不过（`failed`）或未完成：这一行不执行，把它交回的条目原样告诉人，留着等下一次或交人。
-4. 通过：把 `draft.md` 摆给人看，人要改就把原话转回同一个 ui-reviewer，直到人说通过。
-5. 人通过后跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> <spec-slug>`（先 `--dry-run`）。脚本并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规告诉人，这一行不执行。
+3. 核不过（`failed`）或未完成：这一行不执行，把它交回的条目原样写进 PR 正文，用『推送』说这一部分没跑成，留着等下一次。
+4. 通过：不等人看草稿，直接跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> <spec-slug>`（先 `--dry-run`）。脚本先校验，再并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规写进 PR 正文，这一行不执行，也用『推送』说一句。
 
 `dreaming-<日期>/` 这类没有画布的残留：它的 `delta/` 本来就是归档脚本的输入，不起 ui-reviewer，直接照 [archive-reconcile.md](archive-reconcile.md) 的「执行段」第 2、3 步校验、归档。
 

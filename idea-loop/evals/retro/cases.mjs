@@ -4,8 +4,10 @@
  * `cases/<case>/case.json` records one decision point of a past session:
  *
  *   commit      the repository state the decision happened in (the runner copies the project from here)
- *   prompt      the sentence that, back then, made the skill produce the thing
- *   stop_at     where the skill hands the thing to the human: the run is told to stop there
+ *   prompt      the sentence that, back then, made the skill produce the thing. The run is given exactly this and nothing
+ *               else, so it must not say that this is a test: no 回放 / eval / judge / rubric / benchmark / 评测 / 评委 / 判定
+ *   stop_at     where the skill hands the thing to the human. Only the judging session is told (to look at that moment in
+ *               the product); the run is never told where to stop: an agent that hands its work to the human ends its turn
  *   question    one yes/no question, written from what the human said back then; a judging session
  *               answers it about the pre-change run and the post-change run
  *   quote       the human's original words the question was written from
@@ -26,6 +28,13 @@ const NAME = /^[a-z][a-z0-9]*(-[a-z0-9]+){0,5}$/;
 const COMMIT = /^[0-9a-f]{7,40}$/;
 const filled = (v) => typeof v === 'string' && v.trim().length > 0;
 
+/** Words that tell a run it is being tested. A case prompt that contains one (in any case, as part of a longer word too) is malformed. */
+export const REVEALING_WORDS = ['回放', 'eval', 'judge', 'rubric', 'benchmark', '评测', '评委', '判定'];
+const REVEALING = new RegExp(REVEALING_WORDS.join('|'), 'ig');
+
+/** The revealing words in a text, each once, as they are written there. */
+export const revealingWordsIn = (text) => [...new Set(String(text ?? '').match(REVEALING) ?? [])];
+
 /** @returns {{field: string, message: string}[]} empty when the case is complete */
 export function validateCase(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return [{ field: 'case', message: 'case.json 不是一个对象' }];
@@ -36,6 +45,10 @@ export function validateCase(c) {
   else if (!COMMIT.test(c.commit.trim())) need('commit', `提交号 "${c.commit}" 不是 7–40 位十六进制的提交 id`);
 
   if (!filled(c.prompt)) need('prompt', '缺 prompt：当时让 skill 产出东西的那句话');
+  else {
+    const hit = revealingWordsIn(c.prompt);
+    if (hit.length) need('prompt', `prompt 里出现了会让被测的 agent 看出自己在被测的词（${hit.map((w) => `「${w}」`).join('')}）：改写成人当时会说的话，别的说明不要加`);
+  }
   if (!filled(c.stop_at)) need('stop_at', '缺「停在哪」：skill 把东西交给人的那一刻');
 
   if (!filled(c.question)) need('question', '缺是/否题');

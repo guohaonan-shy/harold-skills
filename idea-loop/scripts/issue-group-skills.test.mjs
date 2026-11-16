@@ -120,12 +120,11 @@ test('issue-session：没有实现子会话、简报、两种合并去向、集�
   assert.doesNotMatch(md, /根没有自己的 spec/);
 });
 
-test('issue-session：停点规则原样保留，规则回放结果发进本会话', () => {
+test('issue-session：停点规则原样保留，不再收夜里发来的规则回放消息', () => {
   const md = skill('issue-session');
   assert.ok(md.includes('要人拍板的就停下等人'));
   assert.ok(md.includes('人说合并时由 pr-review'));
-  assert.ok(md.includes('**规则回放的结果**'));
-  assert.match(md, /结果发进这个会话/);
+  assert.ok(!md.includes('规则回放的结果'));
 });
 
 test('pr-review 合并说明：合并统一在 issue 会话里做，没有实现子会话和通知根的会话', () => {
@@ -213,7 +212,7 @@ test('插件里没有 issue-verify，也没有 issues open', () => {
 
 test('implement、pr-review、retro、dreaming、issue-session 的开 issue 都指向 idea-loop:issues 的「开一个 issue」', () => {
   const files = [
-    'skills/engineering/implement/SKILL.md',
+    'skills/engineering/implement/references/landing-branches.md',
     'skills/engineering/pr-review/SKILL.md',
     'skills/productivity/retro/SKILL.md',
     'skills/productivity/dreaming/references/retro-candidates.md',

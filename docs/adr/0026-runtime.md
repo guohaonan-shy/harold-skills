@@ -17,7 +17,7 @@ related: ["[[2026-11-06-runtime-grill]]"]
 ## 2 决策（how）
 
 - **能力清单是闭集**：新共享 skill `idea-loop:runtime` 列出十个能力——定时任务、会话内循环、会话管理、浏览器、向人提问、发布审阅页、推送、发文件给人、调用 MCP、装与设置——每个写“通用流程要它做什么、做不到怎么退”；通用流程只写能力名，要新能力先改这张表。每个运行环境一份 reference，逐能力写做法或写“没有”。
-- **检测**：`IDEA_LOOP_RUNTIME`（必须是已知名，未知值报错不猜）→ 有 `MAGI_SESSION_ID` 是 `magi` → 否则 `claude-desktop`。命令行、IDE 插件没有可靠标记变量，落到 claude-desktop，缺的工具走退路。主会话由 `SessionStart` hook 注入一行，子 agent 自己跑检测脚本；hook 不注入整份 reference，用到能力时才读。
+- **检测**：`IDEA_LOOP_RUNTIME`（必须是已知名，未知值报错不猜）→ 有 `MAGI_SESSION_ID` 是 `magi` → 否则 `claude-desktop`。命令行、IDE 插件没有可靠标记变量，落到 claude-desktop，缺的工具走退路。主会话由 `SessionStart` hook 注入一行，子 agent 自己跑检测脚本；hook 不注入整份 reference，用到能力时才读。⚠️ 已被取代（部分：注入范围）→ [[0057-session-start-inject-rules]]
 - **退路只写在 `runtime`**：把要做的事原样交给人并记“未做：运行环境 X 没有『能力』”；例外：调度缺会话管理就整轮停下，缺“分组”就跳过，缺“向人提问”改在对话里问。
 - **调度在 magi 里的形状**：通用部分留在 `issue-dispatch`，三处交给 runtime——怎么一轮一轮跑（桌面端是常驻会话里的会话内循环，magi 是 `magi cron` 每轮新开一个调度会话、跑完停掉自己）、怎么数开着的会话（section 标题 vs slug 前缀）、怎么交出 issue（卡片 vs 直接开）。magi 里先建 worktree 再开会话，并用 `--cap` 带上 `magi`、`browser`、issue 平台 MCP；magi 里状态分组本期不维护。
 - **调用 MCP 以 magi 托管的优先**（人定），没有再用原生工具。
@@ -31,7 +31,7 @@ related: ["[[2026-11-06-runtime-grill]]"]
 ## 3 结果（result）
 
 - skill：`idea-loop:runtime`（`references/claude-desktop.md`、`references/magi.md`，各十个能力小节）；`setup`、`issue-dispatch`、`issue-session`、`browser`、`dreaming` 等流程已改成引用能力名。
-- 脚本与钩子：`idea-loop/scripts/runtime-detect.mjs`，`idea-loop/hooks/hooks.json` 的 `SessionStart` 注入一行。
+- 脚本与钩子：`idea-loop/scripts/runtime-detect.mjs`，`idea-loop/hooks/hooks.json` 的 `SessionStart` 注入一行。⚠️ 已被取代（部分：注入范围）→ [[0057-session-start-inject-rules]]
 - 守护：`runtime-tripwire.test.mjs`、`runtime-detect.test.mjs`、`runtime-skill-doc.test.mjs`；术语表有“运行环境”“能力”两条。
 - 现状核对：skill / agent 正文里残留的工具名只剩 frontmatter 的 `allowed-tools`（`uiux-research`、`uiux-imagine`、`seo-scan`），属规定放行项。
 

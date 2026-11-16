@@ -4,7 +4,7 @@
 
 两波：先**源码波**（不开浏览器），再**实时波**（源码波干净也跑）。**两波都由 `idea-loop:ui-reviewer` 的对账模式做**，dreaming 只派工、汇它交回的行；源码波怎么查、怎么写，在它的定义里（「对账模式」的「源码波」）。只有 `prod/` 为空时的全站初扫留在 dreaming 自己手里，见 [initial-scan.md](initial-scan.md)。
 
-用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根>`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，人批了才由归档脚本并进 `prod/`。
+用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根>`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档脚本并进 `prod/`（这几类行是自动执行的，不等人批）。
 
 ## 环境
 
@@ -12,7 +12,7 @@
 - **开发服务**：照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」准备，用一个自己挑的空闲端口起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换）。前后端要互相指向的，改它读的那个配置，别人的端口不碰。
 - **浏览器**：和 `idea-loop:implement` 并行的执行方共用会话里那一个，照 `idea-loop:browser` 的「并行时抢锁」排队，owner 写 `dreaming`。锁目录默认放自己 worktree 的 `.tmp/dreaming/<日期>/browser.lock`；人说同一时间有 `idea-loop:implement` 在用同一个浏览器，就改用那一边的锁目录。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」）：
-  - `delta/`：要进档案的对象，与 `prod/` 同构，人批了才由归档脚本并进 `prod/`；
+  - `delta/`：要进档案的对象，与 `prod/` 同构，由归档脚本并进 `prod/`；
   - `evidence/`：只给人看、不进档案的图（产品坏了的现状）。
 
   比对用的草稿图放 `.tmp/dreaming/<日期>/shots/`：一致的状态在 `docs/design/tmp/` 里不留任何新图。进行中需求的 `tmp/<spec-slug>/` 不归 dreaming 管，一个字节不碰。
@@ -53,12 +53,12 @@ dreaming 拿到它交回的结果后：
 
 ## 执行段
 
-只执行批了的行。先收拾 delta、再校验、再归档：
+这几类行（`档案对象`、`档案状态`）都按自己的建议处置执行，不等人批。先收拾 delta、再校验、再归档：
 
-1. **先删掉没批的对象**：没批的行对应的文件从 dreaming 的 tmp 目录里删掉：`替换档案` / `改进入方式` / `补进不去说明` 的状态文件与它的图（在 `delta/` 里），`改代码路径` 的对象全文；`evidence/` 不动。人回「改成…」的，按他的话改 delta 里那个文件。
-2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 批了的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，按人说的在 delta 里改掉（改指向别的组件，或删边）；人没说清就不执行这一行。
+1. **先删掉不进表的产物**：提议段留在 `delta/` 里、但没有对应行的文件（reviewer 判为一致后留下的草稿，或这次不执行的行对应的状态文件、图、对象全文）从 dreaming 的 tmp 目录里删掉；`evidence/` 不动。
+2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，在 delta 里改掉（改指向它被替换成的组件，或删边）；看不出该改指向谁、又不能删边的，不执行这一行，在 PR 正文里写明留着、为什么。
 3. **归档**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`.gitignore` 没忽略 `docs/design/tmp/`、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进 PR 正文：那两个文件不是知识库文件，不在这个 PR 里改，交人处理。
-4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档脚本写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、没人批的档案行，不产生任何素材提交。
+4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档脚本写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、不执行的档案行，不产生任何素材提交。
 5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。
 
 ## 边界

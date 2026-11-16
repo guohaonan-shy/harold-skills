@@ -2,7 +2,7 @@
 type: spec
 tags: [idea-loop, seo, seo-scan, issue-triage, pr-review, decision-rules, seo-outreach, seo-setup]
 summary: SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱
-related: ["[[seo-draft-reads-principles]]", "[[0020-idea-loop-seo]]", "[[0022-issue-model]]"]
+related: ["[[0056-seo-draft-reads-principles]]", "[[0020-idea-loop-seo]]", "[[0022-issue-model]]"]
 issues: [291, 215]
 ---
 
@@ -197,7 +197,7 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 
 - 根目录 `AGENTS.md` 第 1 条里「seo-scan……它的出口是开成 backlog 的 issue，仍由人分拣」改成新的出口（分流后的 issue、效果报告 PR）。
 - `skills/seo/README.md`、`idea-loop/README.md` 同步。
-- 这个 issue 的 PR 合并时 idea-loop 升 patch 版本（`plugin.json` 当时的版本 +1；现在是 0.1.12）。
+- 这个 issue 的 PR 合并时 idea-loop 升 patch 版本（`plugin.json` 当时的版本 +1；现在是 0.1.20）。
 
 ## 测试决策
 
@@ -230,7 +230,7 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 
 ## 关联
 
-- #151 / [[seo-draft-reads-principles]]：已合并（PR #278），它在 `draft-spec.md`「输入」加了读方向原则文件；本 spec 在同一节并列加「内容原则」，不冲突。
+- #151 / [[0056-seo-draft-reads-principles]]：已合并（PR #278），它在 `draft-spec.md`「输入」加了读方向原则文件；本 spec 在同一节并列加「内容原则」，不冲突。
 - #235（seo-outreach 直接读 seo-setup 的私有参考文件，todo）：同改 `seo-outreach`，它改的是读 `seo-md.md` 的那句；本 spec 先合，它接着改。
 - #241（插件拆分会动 seo 分类，backlog）：会搬动本 spec 改的文件；本 spec 先合，拆分照新结构搬。
 - #286（dreaming 改「护栏」的另一条，triage）：同一小节两处改动，后合的解冲突。

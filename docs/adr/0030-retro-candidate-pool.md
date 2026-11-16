@@ -2,7 +2,7 @@
 type: adr
 status: 生效
 tags: [idea-loop, retro, dreaming]
-summary: retro 批的候选由人选进候选池或开 issue；dreaming 数池里出现达 3 次的，提议开成 issue，批了才开
+summary: retro 批的候选由人选进候选池或开 issue；dreaming 数池里出现达 3 次的，提议开成 issue，按建议处置直接开
 related: ["[[2026-10-26-retro-candidate-pool-grill]]"]
 ---
 
@@ -18,10 +18,10 @@ related: ["[[2026-10-26-retro-candidate-pool-grill]]"]
 
 ## 2 决策（how）
 
-- **批的时候由人选去处，retro 不给推荐。** 人的回复拆成「批·进候选池」「批·开 issue」，不批、改成不变。人的原话是进池还是直接开 issue 需要由他判断；两次现存实例也推不出「哪类该开 issue」的规则。
+- **批的时候由人选去处，retro 不给推荐。** 人的回复拆成「批·进候选池」「批·开 issue」，不批、改成不变。人的原话是进池还是直接开 issue 需要由他判断；两次现存实例也推不出「哪类该开 issue」的规则。⚠️ 已被取代（部分）→ [[0053-retro-destination-recommend]]
 - **一条候选一份文件，形状统一**：frontmatter 加信号、落点、旧文、新文等，外加「出现」节，每场会话一行逐字原话；状态闭集 `在池里` / `已开 issue` / `驳回`。次数 = 不同会话的行数，减去后来被推翻的行。
 - **同类归并在 retro 写入时做**（要读懂内容，写入时说出「这是第 N 次」让人核）；之后的计数机械化，交给脚本。
-- **dreaming 的门槛是出现 ≥ 3 次**（人的原话「超过两次」）。提议表新增「retro 候选」一节，处置闭集：`开 issue：机械检查` · `开 issue：改 skill` · `留在池里` · `驳回`；dreaming 自己做这一节不起 agent，批了才开 issue，不自己改 skill。
+- **dreaming 的门槛是出现 ≥ 3 次**（人的原话「超过两次」）。提议表新增「retro 候选」一节，处置闭集：`开 issue：机械检查` · `开 issue：改 skill` · `留在池里` · `驳回`；dreaming 自己做这一节不起 agent，批了才开 issue，不自己改 skill。⚠️ 已被取代（部分）→ [[0047-dreaming-triage-autonomous]]
 - **池按落点分仓库**：落点是插件的进 harold-skills 的池，是目标仓库规则文件的进目标仓库的池；dreaming 各看各的池，不跨仓库读。retro 在别的仓库跑、候选进 harold-skills 的池时，另开一个只改 `docs/` 的 PR。
 - **目录放 `docs/records/retro-candidates/`，类型 `record`**：池文件要加行、改状态，与 `raw/` 的「忠实、不编辑」冲突。
 

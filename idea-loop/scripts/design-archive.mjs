@@ -282,6 +282,7 @@ function normalizeEdges(state) {
       component: edge.component == null ? null : wikilinkTarget(edge.component) ?? String(edge.component),
       motion: edge.motion == null ? null : wikilinkTarget(edge.motion) ?? String(edge.motion),
       locate: edge.locate ?? null,
+      shot: edge.shot ?? null,
       fromSection: edge.from == null ? null : String(edge.from),
       toSection: edge.section == null ? null : String(edge.section),
       when: edge.when ?? null,

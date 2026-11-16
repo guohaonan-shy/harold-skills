@@ -13,7 +13,7 @@ argument-hint: "<issue 号>"
 | triage 会话 | 人或调度卡片 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
 | todo 会话 | 调度 | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，收尾 |
 
-会话管理、推送等运行环境的能力，用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『<能力>』，下文只写能力名。
+会话管理、推送等运行环境的能力，照『<能力>』（`idea-loop:runtime`），下文只写能力名。
 
 **Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
@@ -49,8 +49,6 @@ argument-hint: "<issue 号>"
 2. **切工单**：spec 的 `docs/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
 3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
-**规则回放的结果**：夜里的任务会用会话间消息把结果发进这个会话（第一行是 `<仓库> #<PR> 的规则回放：…`）。收到后读 [references/replay-result.md](references/replay-result.md)，照它处理。
-
 ## 先放着
 
 人说先放着，在哪一步都一样：已写的改动提交，`git push -u origin issue/<号>-<slug>`，`issues set <docs> backlog $ARGUMENTS --comment=<停在哪个阶段、分支名>`，去「收尾」。下一个会话读这条评论接上分支。
@@ -66,4 +64,5 @@ issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage�
 ## 边界
 
 - 只做这一个 issue。路上发现的别的问题，照 `idea-loop:issues` 的「开一个 issue」开出去。
+- 任何时候停下问人（包括讨论中冒出的范围题：并进当前 PR 还是另开），先对 `idea-loop:decision-rules`。
 - issue 的状态只走 `issues`；分组只移动你自己。

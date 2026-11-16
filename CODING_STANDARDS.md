@@ -8,7 +8,7 @@ review 按这份文件和它链接到的文档审代码规范。每条写成照�
 
 ## 文件划分
 
-照 `AGENTS.md` 的「标准 plugin 目录结构」；idea-loop 的 skill 按 `skills/{engineering,design,productivity}/<slug>/` 放，参考资料归一个 skill（见 `idea-loop/AGENTS.md`）。脚本放 `<plugin>/scripts/`，测试紧挨着写成同名 `*.test.mjs`。
+照 `AGENTS.md` 的「标准 plugin 目录结构」；idea-loop 的 skill 按 `skills/{engineering,design,productivity}/<slug>/` 放，参考资料归一个 skill（见 `idea-loop/AGENTS.md`）。脚本放 `<plugin>/scripts/`，测试紧挨着写成同名 `*.test.mjs`；守本仓库自己规则、不随插件发的脚本和测试放仓库根下的 `scripts/`（如 `plugin-version.test.mjs`）。
 
 ## 命名
 
