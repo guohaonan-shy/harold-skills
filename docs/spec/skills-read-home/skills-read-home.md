@@ -244,7 +244,7 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及，用 `claude -p` 代替，见下 |
 
 - **seam**：
-  - `where` 和 `commit` 的命令行。输入是 cwd、`IDEA_LOOP_HOME` 和参数，输出是 JSON 或 home 的 git 状态。测试在临时目录里建假 home、带远端的假代码仓库和它的 worktree。能抓到：项目目录判对没有、回退、只提交自己的文件。漏掉：skill 有没有真的照着用。
+  - `where` 和 `commit` 的命令行。输入是 cwd、`IDEA_LOOP_HOME` 和参数，输出是 JSON 或 home 的 git 状态。测试在临时目录里建假 home、带远端的假代码仓库和它的 worktree。能抓到：项目目录判对没有、没搬时停下、只提交自己的文件。漏掉：skill 有没有真的照着用。
   - `issues.mjs` 现有的 `gh` 注入点（测试传 stub）。能抓到：`-R` 传的是不是项目的仓库。漏掉：真 GitHub 上的行为，由端到端补。
   - 文档测试：在 skill、agent 的文字里 grep，「当前 worktree 的 `docs/`」「仓库根目录的 <引导文件>」「`git add -f`」都不能再出现。写法照 `no-project-leak.test.mjs`。能抓到：漏改的位置写法。漏掉：改了但改错了意思。
 - **增量功能测试**：
