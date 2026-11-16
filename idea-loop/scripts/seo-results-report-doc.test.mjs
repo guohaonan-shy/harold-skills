@@ -32,10 +32,15 @@ const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
 const README = read('README.md');
 const SEO_README = read('skills', 'seo', 'README.md');
 
-test('results-analyst is defined like the other direction agents: route-only description, pinned model and effort, its tools', () => {
+test('results-analyst is defined like the other direction agents: a description of its job and deliverable (not who starts it), pinned model and effort, its tools', () => {
   assert.ok(AGENT, 'agents/results-analyst.md does not exist');
   assert.equal(field(AGENT, 'name'), 'results-analyst');
-  assert.match(field(AGENT, 'description'), /^seo-scan 在一次扫描要跑 results（效果报告）方向时起它。$/);
+  const description = field(AGENT, 'description');
+  assert.match(description, /SEO 效果分析师/);
+  assert.match(description, /Search Console/);
+  assert.match(description, /效果报告/);
+  assert.match(description, /发现/);
+  assert.doesNotMatch(description, /seo-scan|起它/, 'AGENTS.md: an agent description is its job and deliverable, not who starts it');
   assert.equal(field(AGENT, 'model'), 'sonnet');
   assert.match(field(AGENT, 'effort'), /^(medium|high)$/);
   assert.match(field(AGENT, 'maxTurns'), /^\d+$/);

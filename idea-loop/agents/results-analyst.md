@@ -1,6 +1,6 @@
 ---
 name: results-analyst
-description: seo-scan 在一次扫描要跑 results（效果报告）方向时起它。
+description: SEO 效果分析师：读 Search Console、OpenSEO 排名和分析工具，回看站点近期的搜索流量和每个上线改动之后的变化，交回效果报告（markdown 加两张图）和发现清单。
 model: sonnet
 effort: medium
 maxTurns: 60
