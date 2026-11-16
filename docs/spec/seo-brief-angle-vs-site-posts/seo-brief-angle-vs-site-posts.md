@@ -76,12 +76,12 @@ issues: [188]
 
 分拣评论建议「改完要用 `idea-loop/evals` 的方式回放那两个历史点」。查下来有两个现成的障碍：
 
-- 回放用例的 `commit` 指的是 `--repo` 那个仓库的状态。现有 12 个用例都是本仓库的提交；这两个历史点在另一个站点仓库里，`implement` 排回放时固定传 `--worktree`（等于本仓库），跑不到那边。runner 允许拆开传 `--repo <站点仓库> --after-plugin <本 worktree>/idea-loop --cases-root …`，可以手动当场跑。
+- 回放用例的 `commit` 指的是 `--repo` 那个仓库的状态。现有 13 个用例都是本仓库的提交；这两个历史点在另一个站点仓库里，`implement` 排回放时只传 `--worktree`（等于本仓库），跑不到那边。2026-11-16 对着 main a032e45 读 `idea-loop/evals/retro/retro-replay.mjs`：`--worktree` 只补没给的参数（`t.repo ??= o.worktree`），所以 `--run-large --pr <N> --worktree <本 worktree> --repo <站点仓库> --case <名>` 能跑，结果照常写进 PR 的 review loop 文件；站点仓库本地有一份（remote `guohaonan-shy/Tofelair`），`5d7148f6`（2026-10-26）在里面。
 - seo-brief 第 3 步要用 OpenSEO 真查前 10 名（花 credits），改前改后各查一次；无头的 `claude -p` 里 OpenSEO 能不能连上，没试过。
 
 选项：
 
-- **A. 写回放用例，手动当场跑一次（推荐）**：用例取 2026-10-27 那次（「toefl speaking topics」新开页），`commit` 是站点仓库当时 main 上的 `5d7148f6`，prompt 是当时让 brief 产出的那句话，是/否题从人的原话写：「brief 的角度候选有没有逐篇对照站内同主题的已有文章、写明重合与否？」。实现时用拆开的参数当场跑，走一遍会看到：改前 brief 的角度候选没有对照行（判「否」），改后每条带「对照：…」（判「是」）。代价：两次 `claude -p` 约 1–3.5 美元，加两次 SERP 查询的 credits；OpenSEO 在无头会话里连不上就跑不出来，退到 B 并在 PR 里写明。理由：仓库 AGENTS.md §5 的回放例外就是为规则改动验收立的，这条正是「要判断的」规则。
+- **A. 写回放用例，手动当场跑一次（推荐）**：用例取 2026-10-27 那次（「toefl speaking topics」新开页），`commit` 是站点仓库当时 main 上的 `5d7148f6`，prompt 是当时让 brief 产出的那句话，是/否题从人的原话写：「brief 的角度候选有没有逐篇对照站内同主题的已有文章、写明重合与否？」。它用 OpenSEO（付费外部服务），是大用例；PR 开出后由 implement 的编排者用上面那条加了 `--repo` 的命令当场跑，走一遍会看到：改前 brief 的角度候选没有对照行（判「否」），改后每条带「对照：…」（判「是」）。代价：两次 `claude -p` 约 1–3.5 美元，加两次 SERP 查询的 credits；OpenSEO 在无头会话里连不上就跑不出来，退到 B 并在 PR 里写明。理由：仓库 AGENTS.md §5 的回放例外就是为规则改动验收立的，这条正是「要判断的」规则。
 - **B. 不回放，只做文字检查**：实现时只核三处文字写进去了、`no-project-leak` 测试通过；真正的验收等下一个新开页的内容类 SEO issue 起草 brief 时，人在 grill 里看角度候选带没带对照行。走一遍会看到：PR 里只有文字 diff，要到下一次 seo-scan 出新开页 issue（每周一次）才知道规则管不管用。代价为零，验收推迟、而且到时没有改前的对照。
 
 ## 测试决策
@@ -105,7 +105,7 @@ issues: [188]
 
 ## Out of scope
 
-- 给 runner 或 `implement` 的排回放加「用例在另一个仓库」的支持：只有这一个用例要它，手动拆参数能跑；第二个跨仓库用例出现时再开 issue。
+- 给 runner 或 `implement` 的排回放加「用例在另一个仓库」的支持：只有这一个用例要它，runner 现有的 `--repo` 已能跑，只是编排者要记得加；第二个跨仓库用例出现时再开 issue。
 - 「改已有页」模式下和别的文章撞论点：没有出现过的实例。
 
 ## 关联
