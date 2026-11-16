@@ -73,3 +73,4 @@
 | [[2026-10-30-issue-consolidation-grill]] | conversation | 2026-10-30 | 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现 |
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
 | [[2026-11-16-blog-workflow-grill]] | conversation | 2026-11-16 | grill —— #163 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用写作 lint、品牌取值扩 DESIGN.md |
+| [[163]] | conversation | 2026-11-16 | 决定记录 —— #163 blog-publisher 拆分：博客 workflow 进 idea-loop seo 组，摆过的题与 retro 候选的结果 |
