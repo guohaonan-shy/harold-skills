@@ -1,6 +1,6 @@
 # 合并
 
-人在会话里明确说合并时才走这份。没有 mergeReady 判定，也没有自动批准：人看过审核报告（PR 描述）和最新一轮的汇报，自己决定。`review-loop`、设计产物的意思同 [`../SKILL.md`](../SKILL.md)。
+人在会话里明确说合并时才走这份，唯一的例外是满足 [`seo-auto-merge.md`](seo-auto-merge.md) 全部条件的 SEO 内容 PR（不等人说，自动走）。没有 mergeReady 判定：其余情况人看过审核报告（PR 描述）和最新一轮的汇报，自己决定。`review-loop`、设计产物的意思同 [`../SKILL.md`](../SKILL.md)。
 
 **合并时不再做「删工单」，也不再等 CI**：这个 docs 提交在交审核报告之前已经推送，CI 已经绿（[`deliver.md`](deliver.md)）。
 

@@ -14,13 +14,13 @@
 - 上线后自查本身由下一张工单做；这一刀只要求合并后照现有合并流程走完。
 
 ## 验收标准
-- [ ] 单元测试：「内容路径」只列博客目录，喂一个改了博客 md 和一个 `.tsx` 的文件列表，判「不在范围内」并列出 `.tsx`
-- [ ] 单元测试：全部落在「内容路径」+ `docs/` + `SEO.md` 的判「只改内容」
-- [ ] 单元测试：`seo-md.mjs` 读出「内容路径」
-- [ ] decision-rules「护栏」有 SEO 例外的三条和 revert PR 那一条；pr-review 有 SEO 自动合并分支；各用 `*-doc.test.mjs` 钉住（先对改前原文看它红）
-- [ ] PR 描述能写「上线自查的网址」一节（`pr-body.mjs` 接受它，有测试）
-- [ ] pr-review、decision-rules 的 SKILL.md 主体字数不超过各自现有的字数测试/棘轮
-- [ ] idea-loop 全量测试通过
+- [x] 单元测试：「内容路径」只列博客目录，喂一个改了博客 md 和一个 `.tsx` 的文件列表，判「不在范围内」并列出 `.tsx`
+- [x] 单元测试：全部落在「内容路径」+ `docs/` + `SEO.md` 的判「只改内容」
+- [x] 单元测试：`seo-md.mjs` 读出「内容路径」
+- [x] decision-rules「护栏」有 SEO 例外的三条和 revert PR 那一条；pr-review 有 SEO 自动合并分支；各用 `*-doc.test.mjs` 钉住（先对改前原文看它红）
+- [x] PR 描述能写「上线自查的网址」一节（`pr-body.mjs` 接受它，有测试）
+- [x] pr-review、decision-rules 的 SKILL.md 主体字数不超过各自现有的字数测试/棘轮
+- [x] idea-loop 全量测试通过
 
 ## 选中的存量回归
 - pr-review 的字数棘轮测试（钉在 5108 字附近）：加分支最容易撑破它，超了把细节挪进 pr-review 自己的 references

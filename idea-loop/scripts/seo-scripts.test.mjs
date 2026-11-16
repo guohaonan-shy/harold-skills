@@ -39,6 +39,7 @@ const SEO_MD = `# SEO
 ## 构建与检查
 - 产物目录：\`apps/site/dist\`
 - 检查参数：\`--title-max=70 --desc-max=160\`
+- 内容路径：\`apps/site/src/content/blog/\`；\`apps/site/public/images/**\`；\`apps/site/public/llms.txt\`
 
 ## 写作
 - 文风：\`docs/reference/voice.md\`
@@ -66,9 +67,19 @@ test('SEO.md: seven sections parse into the shape the scripts read', () => {
     { url: 'https://cookbook.example/pricing', keyword: 'recipe app subscription' },
     { url: 'https://cookbook.example/blog/weeknight-dinners', keyword: null },
   ]);
-  assert.deepEqual(s.build, { distDir: 'apps/site/dist', checkArgs: ['--title-max=70', '--desc-max=160'] });
+  assert.deepEqual(s.build, {
+    distDir: 'apps/site/dist',
+    checkArgs: ['--title-max=70', '--desc-max=160'],
+    contentPaths: ['apps/site/src/content/blog/', 'apps/site/public/images/**', 'apps/site/public/llms.txt'],
+  });
   assert.deepEqual(s.writing.typeMap, { COMPARISON: '对比与研究', 'HOW-TO': '教程' });
   assert.deepEqual(s.brand.terms, ['cookbook', 'cook book']);
+});
+
+test('SEO.md: 内容路径 is read as a list of globs; a project that has not written it reads as none (only docs/ and SEO.md count as content)', () => {
+  assert.deepEqual(parseSeoMd('## 构建与检查\n- 产物目录：`dist`\n').build.contentPaths, []);
+  assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：无\n').build.contentPaths, []);
+  assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：`content/**/*.md`\n').build.contentPaths, ['content/**/*.md']);
 });
 
 test('SEO.md: 内容原则 reads one principle per line, with its source; no section reads as none, without an error', () => {

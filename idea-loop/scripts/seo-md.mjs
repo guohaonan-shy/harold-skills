@@ -146,7 +146,12 @@ function parseKeyPages(lines) {
 
 function parseBuild(lines) {
   const kv = pairs(lines);
-  return { distDir: firstTick(kv['产物目录'] ?? ''), checkArgs: ticks(kv['检查参数'] ?? '').join(' ').split(/\s+/).filter(Boolean) };
+  return {
+    distDir: firstTick(kv['产物目录'] ?? ''),
+    checkArgs: ticks(kv['检查参数'] ?? '').join(' ').split(/\s+/).filter(Boolean),
+    // globs of the files an SEO change may touch and still be "content only" (seo-content-scope.mjs)
+    contentPaths: ticks(kv['内容路径'] ?? ''),
+  };
 }
 
 function parseWriting(lines) {
