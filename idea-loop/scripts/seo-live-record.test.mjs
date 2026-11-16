@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { commentBody, liveChanges, marker, parseMarkers, recordOf } from './seo-live-record.mjs';
+import { cameFromRollback, commentBody, fromRollback, liveChanges, marker, parseMarkers, recordOf, ROLLBACK_LINE } from './seo-live-record.mjs';
 
 const item = (ok = true) => ({ ok, detail: '' });
 const result = (over = {}) => ({
@@ -90,4 +90,32 @@ test('liveChanges --since keeps the changes merged on or after that day', () => 
 test('marker(record) is the same text commentBody puts in the comment', () => {
   const rec = recordOf(result(), '2026-11-16');
   assert.ok(commentBody(result(), { mergedOn: '2026-11-16' }).includes(marker(rec)));
+});
+
+test('an issue whose body carries 由上线自查回滚而来 came from a rollback; an ordinary body, an empty one and a near miss did not', () => {
+  assert.equal(ROLLBACK_LINE, '由上线自查回滚而来');
+  assert.equal(cameFromRollback(`## 问题\n\n改了 /blog/meal-prep/ 的 title，上线后带了 noindex\n\n## 从哪发现\n\n合并后的上线自查，${ROLLBACK_LINE}。原 issue #12。`), true);
+  assert.equal(cameFromRollback(`${ROLLBACK_LINE}`), true);
+  assert.equal(cameFromRollback('## 问题\n\n/blog/meal-prep/ 的 title 太长，被截断'), false);
+  assert.equal(cameFromRollback('由上线自查回退而来'), false);
+  assert.equal(cameFromRollback(''), false);
+  assert.equal(cameFromRollback(null), false);
+  assert.equal(cameFromRollback(undefined), false);
+});
+
+test('fromRollback reads the issue body through gh and says whether it came from a rollback', () => {
+  const calls = [];
+  const gh = (body) => (args) => {
+    calls.push(args);
+    return JSON.stringify({ body });
+  };
+  assert.equal(fromRollback(gh(`从哪发现：上线自查。${ROLLBACK_LINE}`), 12), true);
+  assert.deepEqual(calls[0], ['issue', 'view', '12', '--json', 'body']);
+  assert.equal(fromRollback(gh('## 问题\n\n页面 title 太长'), 13), false);
+  assert.equal(fromRollback(gh(null), 14), false, 'an issue with no body is an ordinary one');
+});
+
+test('fromRollback does not guess: a key that is not an issue number, or a gh that fails, is an error', () => {
+  assert.throws(() => fromRollback(() => '{}', 'FA-577'), /issue 号/);
+  assert.throws(() => fromRollback(() => { throw new Error('gh: not found'); }, 12), /not found/);
 });

@@ -12,6 +12,7 @@
  * Usage:
  *   node seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>]   → the comment body (post it with `issues.mjs note`, which adds the 🤖 idea-loop： prefix); exit 1 unless the check passed
  *   node seo-live-record.mjs list <docs> [--since=<YYYY-MM-DD>]   → JSON: [{ issue, title, url, keyword, mergedOn, status, noindex, meta, sitemap }], one row per URL, oldest issue first
+ *   node seo-live-record.mjs from-rollback <docs> <issue>   → JSON: { issue, fromRollback }: whether the issue's body carries the sentence every rollback-opened issue carries, i.e. a failed check on it is the second failure
  * Exit: 0 = done, 1 = bad input / gh error (reason on stderr).
  */
 
@@ -20,7 +21,14 @@ import { pathToFileURL } from 'node:url';
 import { defaultGh } from './issues.mjs';
 import { ITEMS } from './seo-live-check.mjs';
 
-const MARKER_RE = /<!-- seo-live-check: (\{.*?\}) -->/gs;
+/**
+ * The sentence in the body of every issue a failed check opened after a rollback. A change that is rolled back,
+ * redone and fails again points at something the change did not cause (a site that was `noindex` all along), so a
+ * failed check on an issue whose body carries it is rolled back too but goes to the human, not back to the queue.
+ */
+export const ROLLBACK_LINE = '由上线自查回滚而来';
+
+const MARKER_RE =/<!-- seo-live-check: (\{.*?\}) -->/gs;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** `{ mergedOn, pages: [{ url, keyword, status, noindex, meta, sitemap }] }` from a passed check result. */
@@ -86,12 +94,21 @@ export function closedSeoIssues(gh) {
   return issues.sort((a, b) => a.number - b.number);
 }
 
+/** Whether an issue body carries `ROLLBACK_LINE`. */
+export const cameFromRollback = (body) => String(body ?? '').includes(ROLLBACK_LINE);
+
+/** Whether issue #n (a GitHub issue number) came from a rollback; throws when its body cannot be read. */
+export function fromRollback(gh, n) {
+  if (!/^\d+$/.test(String(n))) throw new Error(`「${n}」不是 issue 号，读不到正文`);
+  return cameFromRollback(JSON.parse(gh(['issue', 'view', String(n), '--json', 'body'])).body);
+}
+
 const flag = (args, name) => args.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   try {
     const args = process.argv.slice(2);
-    const [cmd, target] = args.filter((a) => !a.startsWith('--'));
+    const [cmd, target, issueArg] = args.filter((a) => !a.startsWith('--'));
     if (cmd === 'body' && target) {
       const pr = flag(args, 'pr');
       console.log(commentBody(JSON.parse(readFileSync(target, 'utf8')), { mergedOn: flag(args, 'merged'), pr: pr ? Number(pr) : undefined }));
@@ -99,7 +116,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
       const since = flag(args, 'since');
       if (since !== undefined && !DATE_RE.test(since)) throw new Error('--since 要 YYYY-MM-DD');
       console.log(JSON.stringify(liveChanges(closedSeoIssues(defaultGh(target)), { since }), null, 2));
-    } else throw new Error('usage: seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>] | list <docs> [--since=<YYYY-MM-DD>]');
+    } else if (cmd === 'from-rollback' && target && issueArg) {
+      console.log(JSON.stringify({ issue: Number(issueArg), fromRollback: fromRollback(defaultGh(target), issueArg) }));
+    } else throw new Error('usage: seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>] | list <docs> [--since=<YYYY-MM-DD>] | from-rollback <docs> <issue>');
   } catch (e) {
     console.error(e.message);
     process.exit(1);

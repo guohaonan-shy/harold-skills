@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ROLLBACK_LINE } from './seo-live-record.mjs';
 
 const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..');
 const path = (...p) => join(root, ...p);
@@ -90,6 +91,26 @@ test('有一项不过: revert the merge, merge the revert PR when checks pass, p
   assert.match(o, /--state=todo/);
   assert.match(o, /--type=/, 'the new issue keeps the original category');
   assert.match(o, /已回滚，后续见 #<新 issue 号>/);
+});
+
+test('第二次自查失败: the issue\'s body says whether it came from a rollback; if so the change is still rolled back, but the new issue goes to triage and the push asks the human', () => {
+  const o = outcome(CHECK, '`fail`');
+  assert.match(o, /seo-live-record\.mjs from-rollback/, 'asks the script whether the original issue came from a rollback');
+  assert.match(o, /fromRollback/);
+  const second = o.slice(o.indexOf('fromRollback'));
+  assert.match(second, /照样回滚/, 'the bad change does not stay live because it is the second time');
+  assert.match(second, /triage/, 'the new issue goes to triage, not todo');
+  assert.match(second, /第二次自查失败，已回滚，这条要你定/);
+  assert.match(second, /不开成 todo|不是 todo/, 'and it is not put in the todo queue');
+  assert.match(second, /读不出[^\n]*当作[^\n]*第二次/, 'a body that cannot be read is treated as the second failure, so it cannot loop');
+});
+
+test('every issue a rollback opens carries the sentence the script looks for, and the section quotes that same sentence', () => {
+  const o = outcome(CHECK, '`fail`');
+  assert.ok(ROLLBACK_LINE.length > 0);
+  assert.ok(o.includes(ROLLBACK_LINE), `merge.md's 上线后自查 never writes「${ROLLBACK_LINE}」into the new issue's body`);
+  assert.match(o, new RegExp(`正文[^\\n]*${ROLLBACK_LINE}`), 'in the body of the new issue');
+  assert.match(o, /不论是第几次/, 'both the todo issue and the triage issue carry it');
 });
 
 test('the check that could not run does not roll anything back', () => {
