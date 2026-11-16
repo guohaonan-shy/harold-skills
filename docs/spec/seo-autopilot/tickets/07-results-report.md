@@ -21,6 +21,7 @@
 - [x] results-analyst 定义存在，写明输入、改动清单的来源、两张图、报告三块和 14 天规则；seo-scan 写明 results 方向与报告落地；`*-doc.test.mjs` 钉住
 - [x] seo-setup 的定时任务是每天一次
 - [x] idea-loop 全量测试通过
+- [ ] review 第 1 轮 C1（2026-11-16）：效果报告 agent 的简介写它的职业身份和交付（读哪些数据、交回效果报告和发现），不写谁在什么时候起它。规则原文：仓库根 AGENTS.md「agent：写它的职业身份和交付，不写谁起它（调用方按名字起它）」
 
 ## 选中的存量回归
 - `seo-scripts.test.mjs`：`seo-due.mjs` 的节奏断言（28 天）要随之改
