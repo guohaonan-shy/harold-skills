@@ -106,4 +106,4 @@ implementer 定义里写死的是一条带「丢弃改动」语义的命令。�
 ## 关联
 
 - 起源：spec `implementer-reuse-and-compact`（已合并、目录已删）里查 token 时发现，那份 spec 当时把这条记为「另开 issue」。
-- 相邻还没完成的 spec 与 issue：`docs/spec/` 下当前没有别的 spec；查过开着的 issue，没有改 `implementer.md` 开工步骤的，无重叠。
+- 相邻还没完成的 spec 与 issue：`docs/spec/` 下当前没有别的 spec；2026-11-16 查过开着的 issue：#161（explorer 定义的读法）碰的是 explorer，不碰 implementer 的开工步骤，无重叠、不分先后；其余没有改 `implementer.md` 的。
