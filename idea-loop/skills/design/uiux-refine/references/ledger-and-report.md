@@ -58,7 +58,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.js
 
 ## 报告怎么发
 
-走运行环境的「发布审阅页」能力：用 Skill 工具调 `idea-loop:runtime`，看它的能力表和当前运行环境的参考（桌面端是 Artifact，magi 是 `magi artifact push`；都没有，就把 `report.html` 写在 `round-<N>/` 里，告诉人用浏览器打开）。不新增能力。
+照『发布审阅页』（`idea-loop:runtime`）把 `report.html` 发给人；当前运行环境做不了，就走它写的退路，`report.html` 留在 `round-<N>/` 里，告诉人用浏览器打开。不新增能力。
 
 对话里只放三样：报告链接、分数、要特别注意的项。其余留在页面里。Mobbin 没连上时报告照出，页面里写明「这一轮没有参考图：Mobbin 没连上」，你不重试，对话里也提一句。
 

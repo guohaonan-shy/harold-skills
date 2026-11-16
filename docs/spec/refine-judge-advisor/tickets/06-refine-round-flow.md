@@ -47,4 +47,4 @@
 - `direction-note-check.test.mjs`：方向说明校验里若有「人保留」的规则会被去掉
 - `design-change-final-version-doc.test.mjs`：它读 `design-change-sync` 和评委定义
 - `retro-case.test.mjs`：新用例的格式
-- [ ] 全量测试（2026-11-16）：`runtime-tripwire` 与 `session-inject-doc` 两条守卫红在「设计评审报告怎么发出」那段——规则文档里点了具体运行环境的工具名（桌面端的 Artifact、magi 的推送命令），还写了「用 Skill 工具调 runtime」；改成只写能力名「发布审阅页」，两条守卫转绿
+- [x] 全量测试（2026-11-16）：`runtime-tripwire` 与 `session-inject-doc` 两条守卫红在「设计评审报告怎么发出」那段——规则文档里点了具体运行环境的工具名（桌面端的 Artifact、magi 的推送命令），还写了「用 Skill 工具调 runtime」；改成只写能力名「发布审阅页」，两条守卫转绿
