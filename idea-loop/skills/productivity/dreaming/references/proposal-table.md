@@ -29,7 +29,7 @@
 | 档案对象、档案状态，及产品坏了的缺陷行 | `idea-loop:ui-reviewer` 的对账模式（[archive-reconcile.md](archive-reconcile.md)：源码波出 `档案对象`，实时波出 `档案状态` 与缺陷） | dreaming 自己的 tmp 目录与交回的结果文件 |
 | 初扫页面 | dreaming 自己（[initial-scan.md](initial-scan.md)：`prod/` 为空，或 reviewer 报了 `补扫页面`） | dreaming 自己的 tmp 目录 |
 | 漏归档 | dreaming 自己机械地查 | 直接写进表 |
-| 搁置设计 | dreaming 自己（[pending-designs.md](pending-designs.md)：读主 checkout 的 `pending/`） | 直接写进表 |
+| 暂缓设计 | dreaming 自己（[pending-designs.md](pending-designs.md)：读主 checkout 的 `pending/`） | 直接写进表 |
 | retro 候选 | dreaming 自己（[retro-candidates.md](retro-candidates.md)：读候选池、调计数脚本） | 直接写进表 |
 
 同一行类型只出现在一节里：`缺陷` 有两个来源，并成一节。并好后过校验脚本，退出码 0 才交出去。
@@ -64,7 +64,7 @@
 | `漏归档` | 基准分支上 `docs/design/tmp/<spec-slug>/` 里还留着设计产物、而 spec 已完成或已没有 spec 目录的一个需求（绕过合并步骤合进去的），见 [missed-archive.md](missed-archive.md) | 补归档 · 丢弃 |
 | `retro 候选` | 候选池（`docs/records/retro-candidates/`）里出现 ≥ 3 次、还在池里的一条候选，见 [retro-candidates.md](retro-candidates.md) | 开 issue：机械检查 · 开 issue：改 skill · 留在池里 · 驳回 |
 | `DESIGN.md 条目` | `DESIGN.md` 里对账出问题的一处 | 改法 · 移出 · 删除 · 改写为全局规则 · 合并为一条 · 新建 DESIGN.md · 处理 lint 警告 · 交人裁决 |
-| `搁置设计` | 主 checkout 的 `docs/design/pending/` 里搁置的一份设计，和它的 spec 是否已了结，见 [pending-designs.md](pending-designs.md) | 删除 · 留着 |
+| `暂缓设计` | 主 checkout 的 `docs/design/pending/` 里暂缓的一份设计，和它的 spec 是否已了结，见 [pending-designs.md](pending-designs.md) | 删除 · 留着 |
 | `缺陷` | 一条要开到目标仓库的 issue 草稿 | 开 issue · 已有 #N（N 是已开着的那条的编号） |
 
 ### 「发现」的开头是判定
@@ -79,7 +79,7 @@
 - **初扫行指向 `tmp/`**：`初扫页面` 的证据指向 `tmp/` 下这次建出来的页面草稿。
 - **删对象写引用**：`档案对象` 的 `删对象`，证据里写「引用：」，列出还引用它的节点与边；没有就写「引用：无」。
 - **`候选`**：证据里有图（这条规则说的那块界面，取自设计档案或实现）；实在没有界面写「无图：原因」。处置是 `改写已有规则` 或 `追加新规则` 的，还要写「并进：」（进哪一章哪一条）和旧文新文并排（`旧：「…」→ 新：「…」`，追加写 `旧：无`）。人可能不在场，并排的文字写在表里。
-- **`搁置设计`**：证据格写三样：主 checkout 的路径（`git worktree list` 第一行）、目录里有什么（`imagine/`、`canvas/` 到哪一版）、spec 是否了结的查法与结果（spec 目录还在不在、`issues:` 里的 issue 各什么状态）。
+- **`暂缓设计`**：证据格写三样：主 checkout 的路径（`git worktree list` 第一行）、目录里有什么（`imagine/`、`canvas/` 到哪一版）、spec 是否了结的查法与结果（spec 目录还在不在、`issues:` 里的 issue 各什么状态）。
 - **`retro 候选`**：证据格放各次出现的逐字原话和决定记录链接，不能空；它是开出去的 issue 的正文素材，也是这条候选攒够次数的凭据。
 - **`DESIGN.md 条目`**：证据里写「依据：」并点名那条标准（design-modeling 的哪一节，具体到哪条规则或哪一行；官方 design.md 规范；或 lint 规则名），还要有旧文（`旧：「…」`）和改后的样子（`→ 新：「…」`，删掉写 `→ 删`）。`新建 DESIGN.md` 没有旧文；`交人裁决` 的新文写在「选项」里，每个选项一份。
 
@@ -128,11 +128,11 @@
 |---|---|---|---|---|
 | docs/design/tmp/cart-promo/ | spec 已是「完成」；tmp 里还留着 canvas/ 与 delta/，没经过归档 | git ls-tree origin/main docs/design/tmp/cart-promo/ 列出 12 个文件；spec 状态：完成 | 补归档 | 批 / 不批 / 改成… |
 
-## 搁置设计
+## 暂缓设计
 
 | 对象 | 发现 | 证据 | 建议处置 | 选项 |
 |---|---|---|---|---|
-| docs/design/pending/menu-redesign/ | spec 还在：它 `issues:` 里的 #44 开着，设计先搁置着 | 主 checkout /work/shop；imagine/、canvas/ 到 v7；origin/main 上 docs/spec/menu-redesign/ 在，#44 open | 留着 | 删 / 留着 / 改成… |
+| docs/design/pending/menu-redesign/ | spec 还在：它 `issues:` 里的 #44 开着，设计先暂缓着 | 主 checkout /work/shop；imagine/、canvas/ 到 v7；origin/main 上 docs/spec/menu-redesign/ 在，#44 open | 留着 | 删 / 留着 / 改成… |
 
 ## retro 候选
 
@@ -174,7 +174,7 @@
 | `缺陷` | 照 `idea-loop:issues` 的「开一个 issue」开成 backlog issue，开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜；「已有 #N」的不开。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
 | `retro 候选` | 照 [retro-candidates.md](retro-candidates.md) 的「执行段」：建议开 issue 的，开到落点所在的仓库，并把候选文件的状态改成 `已开 issue（<链接>）`；建议驳回的改成 `驳回（<理由>）`；留在池里的不动。dreaming 不改 skill |
 | `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、草稿过档案校验、归档脚本并进 `prod/`；丢弃是 `git rm -r docs/design/tmp/<spec-slug>/`。都跟其余改动同一个 PR |
-| `搁置设计` | 照 [pending-designs.md](pending-designs.md) 的「执行段」：`留着` 不动；`删除` 只在人批了之后，从主 checkout 里删掉那一个目录。它不进 git，不在 PR 里，只在汇报里说删了哪几份 |
+| `暂缓设计` | 照 [pending-designs.md](pending-designs.md) 的「执行段」：`留着` 不动；`删除` 只在人批了之后，从主 checkout 里删掉那一个目录。它不进 git，不在 PR 里，只在汇报里说删了哪几份 |
 | `候选` 的「起草通用原则 issue」 | 人批了才开，开到 harold-skills 仓库，命令照 `idea-loop:design-modeling` 的「蒸馏」 |
 | `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：校验过，再跑档案的归档脚本整目录并进 `prod/`。步骤见 [archive-reconcile.md](archive-reconcile.md) 的「执行段」与 [initial-scan.md](initial-scan.md) 的「执行段」 |
 

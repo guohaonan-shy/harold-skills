@@ -71,11 +71,11 @@ test('uiux-refine after-freeze reference carries the 先不做 move: pending dir
 test('dreaming lists every pending design with whether its spec is settled, and proposes deleting the settled ones', () => {
   const ref = read('skills', 'productivity', 'dreaming', 'references', 'pending-designs.md');
   assert.match(ref, /git worktree list/);
-  assert.match(ref, /搁置设计/);
+  assert.match(ref, /暂缓设计/);
   assert.match(ref, /了结/);
   assert.match(ref, /删除/);
   const skill = read('skills', 'productivity', 'dreaming', 'SKILL.md');
   assert.match(skill, /pending-designs\.md/);
   const table = read('skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');
-  assert.match(table, /`搁置设计`/);
+  assert.match(table, /`暂缓设计`/);
 });
