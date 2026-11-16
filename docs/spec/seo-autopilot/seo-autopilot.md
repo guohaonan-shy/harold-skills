@@ -19,7 +19,7 @@ issues: [291, 215]
 
 现在的路径和四处停点（插件里的出处）：
 
-1. **每周分拣**：`seo-scan` 开出的 issue 不打 `status:*`，就是 backlog（`seo-scan/SKILL.md`「提 issue」第 2 步：「开出的 issue 不打 `status:*`，就是 backlog，等人分拣」）。`issue-triage` 第 5 步把结论拼成表，「用『推送』能力发『N 个 issue 等你批』，停下」。
+1. **每周分拣**：`seo-scan` 开出的 issue 不打 `status:*`，就是 backlog（`seo-scan/SKILL.md`「提 issue」第 2 步），要等到下一次每周 `issue-triage` 才被看。2026-11-13 主分支合了 `627ed37`，`issue-triage` 已改成照分拣员建议直接翻、不再摆表等人批；剩下的是两件事：最长要等一周才被分拣，而且分拣员拿不准的一律翻 triage 等人。
 2. **spec 待定题**：`issue-session/references/draft-spec.md`「跟人定要 grill 的」：spec 里还有「待定」就推送、停下等人。
 3. **合并**：`decision-rules`「护栏」写「合并改了代码的 PR」「对外发布」只由人定；`pr-review/references/merge.md` 开头「人在会话里明确说合并时才走这份」。
 4. **外联**：`seo-outreach` 的产出停在 `docs/records/outreach/` 下的草稿和跟进表，开头写「每封信都由人自己发：这个 skill 的产出到草稿和表格为止，任何邮件、表单、私信工具都不调」。
@@ -71,7 +71,7 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 
 做法分八块，每块标明对的是 `idea-loop:writing-for-agents` 的哪条杠杆：
 
-1. **扫描后当场分流**（`seo-scan` 新增「分流」一节，`issue-triage` 排除 `type:seo/*`）：提完 issue 后，对本次新建的每个 issue 起 `idea-loop:issue-triager`（同时最多 5 个），按它交回的 `route` 直接翻：canceled → `set canceled`；triage 且理由是要 UI 设计 → `set triage`；其余（todo、要 grill、判不了）→ `set todo`。SEO 的「要不要人」只看 UI，分拣员的去向表加一行 SEO 分支。每周 `issue-triage` 取 backlog 时排除 `type:seo/*`。杠杆：**单一事实来源**——「SEO 只有 UI 设计进 triage」只写在分拣员的去向表里，seo-scan 只照 `route` 翻。
+1. **扫描后当场分流**（`seo-scan` 新增「分流」一节）：提完 issue 后，对本次新建的每个 issue 起 `idea-loop:issue-triager`（同时最多 5 个），按它交回的 `route` 直接翻：canceled → `set canceled`；triage 且理由是要 UI 设计 → `set triage`；其余（todo、要 grill、判不了）→ `set todo`。SEO 的「要不要人」只看 UI，分拣员的去向表加一行 SEO 分支；每周 `issue-triage` 也照同一个分拣员的建议翻，所以漏到 backlog 的 SEO issue 在那里走的是同一条规则，不用排除。杠杆：**单一事实来源**——「SEO 只有 UI 设计进 triage」只写在分拣员的去向表里，seo-scan 和 issue-triage 都只照建议翻。
 2. **误报在扫描端消掉**（#215）：`key-page-meta-changed` 出发现之前，新脚本拿两次审计时间、变化页面的新 title/description，在主分支历史里找引入它的合并 PR；找到的不出发现，只在研究日志里记一行「有意改动：页面 → PR」。杠杆：**能机械判的做成检查**，不靠 agent 临场判断。
 3. **spec 照推荐定**（`draft-spec.md`「跟人定要 grill 的」加 SEO 分支，`SEO.md` 新增「内容原则」节）：SEO issue 起草时先读 `SEO.md`「内容原则」；「待定」照推荐改写成决定，依据写「AI 照推荐定：<理由>」，不推送、不停下。spec 有「前端交互」小节（要 UI 设计）的仍翻回 triage 等人，照 todo 会话现有的「冒出了要人定的」做法。杠杆：**信息层级**——只有 SEO issue 走到，写成一条带分支的规则，不进 to-spec 主体。
 4. **自动合并**（`decision-rules`「护栏」加 SEO 例外，`pr-review` 的「交审核报告」后加 SEO 分支）：三条全满足才由 Claude 合并：`REVIEW.md` 的检查与 `seo-check` 全过；两轴没有阻塞项（现有「最多两轮」不变）；新脚本判定改动只落在内容范围内。有一条不满足，照现在的流程停下交给人。杠杆：**护栏的正向写法**——例外写成可核对的三条，不写成「SEO 的可以不问」。
@@ -83,11 +83,11 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 ### 同一行为的其他入口
 
 - **人手动跑 `/idea-loop:seo-scan <方向>`**：纳入，分流同样跑（人在场也不需要再摆表）。
-- **人手动开的 SEO issue（不经扫描）**：纳入 3–5（spec 照推荐、自动合并、上线自查都看 `type:seo/*`）；不纳入 1 的当场分流，它照常进 backlog——每周 `issue-triage` 排除了 `type:seo/*`，所以 `issue-triage` 碰到没被分流的 SEO backlog 时，单独跑一次分流（同一个分拣员、同一张去向规则），不摆表。
+- **人手动开的 SEO issue（不经扫描）**：纳入 3–5（spec 照推荐、自动合并、上线自查都看 `type:seo/*`）；不纳入 1 的当场分流，它照常进 backlog，由每周 `issue-triage` 分拣——同一个分拣员、同一张去向规则（含 SEO 分支），结果与当场分流一致。
 - **SEO issue 被人直接接手（`/idea-loop:issue-session <号>`）**：纳入。人在场时照推荐定照样做，人可以推翻。
 - **非 SEO 的 issue**：排除，四处停点对它们不变。
 - **外链方向 `backlink-analyst`**：纳入「外链方向照常每周跑」，跟进表里已有的站点不再提名，现有规则不变。
-- **`dreaming` 改护栏的那条（#286）**：排除，它改的是另一行；两边都改「护栏」小节，谁后合谁解冲突。
+- **`dreaming` 改护栏的那条（#286，已合并）**：排除，它加的是「只改 `docs/` 的 PR 检查全过就合并」那一行；本 spec 在同一小节另加 SEO 例外。
 
 ## User Stories
 
@@ -98,7 +98,7 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 1. 作为人，我想要扫描开出的 SEO issue 在同一次运行里被验证并翻成 canceled / triage / todo，以便不用每周逐行批去向
 2. 作为人，我想要只有需要 UI 设计的 SEO issue 进 triage，以便我只在真正要判断的地方出现
 3. 作为人，我想要两次审计之间被已合并 PR 改过的 title/description 不再开成 issue，以便不再为误报占一个会话
-4. 作为人，我想要每周分拣的表里不再出现 SEO issue，以便分拣只处理要人判断的 issue
+4. 作为人，我想要人手动开的 SEO issue 在每周分拣里走同一条 SEO 去向规则，以便两条入口的结果一致
 
 ### 场景：spec 与合并
 
@@ -138,7 +138,8 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 - 分拣员照现有契约贴证据评论、交回一行 JSON；seo-scan 按 `route` 翻：`canceled` → `issues set canceled --comment=<结论>`；`triage` → `set triage`；`todo`、`backlog`（判不了）→ `set todo`。依据：#291「要改成」1 的「其余：todo，交给调度」。优先级照分拣员的建议打。
 - 分拣员的「建议去向」表加一句 SEO 分支：带 `type:seo/*` 的 issue，只有要新建或改组件、页面模板、样式时建议 triage；要 grill、要定方案的建议 todo（todo 会话照推荐定）。依据：#291「要改成」4。
 - 交回模板多一行「分流：todo <n>，triage <n>，canceled <n>」；研究日志模板对应加一行，前两行格式不动（`seo-due.mjs` 依赖）。
-- `issue-triage` 取 backlog 时排除 `type:seo/*`（`issues backlog` 加排除分类的参数）；`issue-triage` 另外对剩在 backlog 的 SEO issue 照 seo-scan 的「分流」逐个翻、不摆表——覆盖人手动开的 SEO issue。
+- `issue-triage` 不改：它已照分拣员建议直接翻（`627ed37`），SEO 分支写在分拣员里，两条路自然一致。依据：起草后主分支的这次改动让「排除 `type:seo/*` + 另跑分流」变成多余，AI 照推荐定：少一条规则、少一个 `issues backlog` 参数，人看到的结果一样。
+- SEO 分支与 `issue-triage`「不替人拒需求」的关系：canceled 仍只来自四种理由；SEO issue 判不了的翻 todo（决定⑥），不翻 triage。这一句写在分拣员的 SEO 分支里，issue-triage 的执行表照 todo 行执行。
 - 上线后对存量跑一次：项目里现存的 SEO backlog / triage issue（#291 举的 6 个）由合并后的清理步骤各跑一次分流。
 
 ### 误报（#215）
@@ -203,7 +204,7 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：`seo-due.mjs` 新节奏、`seo-budget.mjs` 周预算、`seo-md.mjs` 新键、新的 meta 出处脚本、内容范围脚本、上线自查脚本、改动清单读取、`issues backlog` 排除分类 |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：`seo-due.mjs` 新节奏、`seo-budget.mjs` 周预算、`seo-md.mjs` 新键、新的 meta 出处脚本、内容范围脚本、上线自查脚本、改动清单读取 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 碰到：results 方向的发现文件过 findings 的校验；上线自查评论的隐藏标记能被读回 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了 seo-scan、issue-triager、draft-spec、pr-review、merge、decision-rules、seo-outreach、seo-setup、新 agent 的文字；照仓库惯例用 `*-doc.test.mjs` 钉住关键句（不做 baseline eval，AGENTS.md §5） |
@@ -233,6 +234,6 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 - #151 / [[0056-seo-draft-reads-principles]]：已合并（PR #278），它在 `draft-spec.md`「输入」加了读方向原则文件；本 spec 在同一节并列加「内容原则」，不冲突。
 - #235（seo-outreach 直接读 seo-setup 的私有参考文件，todo）：同改 `seo-outreach`，它改的是读 `seo-md.md` 的那句；本 spec 先合，它接着改。
 - #241（插件拆分会动 seo 分类，backlog）：会搬动本 spec 改的文件；本 spec 先合，拆分照新结构搬。
-- #286（dreaming 改「护栏」的另一条，triage）：同一小节两处改动，后合的解冲突。
+- #286（dreaming 改「护栏」的另一条）：已合并，本 spec 在它之后改同一小节。
 - #238（外联 skill 写法）：已 canceled，无重叠。
 - ADR [[0020-idea-loop-seo]]（SEO 分类的设计）、[[0022-issue-model]]（issue 状态）：本 spec 不改状态模型，只改 SEO issue 在状态之间怎么走。
