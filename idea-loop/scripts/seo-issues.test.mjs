@@ -66,7 +66,8 @@ test('uncollected placeholders are skipped; content and backlink issues carry th
   assert.match(p.create[0].body, /idea-loop:seo-brief/);
   assert.match(p.create[0].body, /需要 grill：选题角度和论点/);
   assert.match(p.create[1].body, /idea-loop:seo-outreach/);
-  assert.match(p.create[1].body, /由人发送/);
+  assert.match(p.create[1].body, /草稿进人的草稿箱，人说「发」才发/);
+  assert.doesNotMatch(p.create[1].body, /任何会话都不发/);
   assert.deepEqual(p.rejected, []);
 });
 

@@ -56,6 +56,7 @@
 | [decisions/148](decisions/148.md) | conversation | 2026-11-10 | 决定记录 —— #148 的 issue 会话：起草修坏能力的 spec 时查调用方，review 里重复措辞保持现状、合并，retro 候选开成 #276 |
 | [decisions/151](decisions/151.md) | conversation | 2026-11-10 | 决定记录 —— #151 的 issue 会话：起草参考直读别的 skill 的 references/ 违反写法规范，照规范改成调 skill、合并，retro 无候选 |
 | [decisions/157](decisions/157.md) | conversation | 2026-11-10 | 决定记录 —— #157 的 issue 会话：会话断后已做完的工单先落地，回放用例抓不住删掉、交回记录缺失记成已知限制，合并；retro 候选不批 |
+| [decisions/291](decisions/291.md) | conversation | 2026-11-16 | 决定记录 —— #291 的 issue 会话（并入 #215）：spec 六条照草稿定；实现合并（PR #338），版本定 patch，AI 搜索可见性方向允许在额度内花钱；retro 两条候选都不批 |
 | [decisions/303](decisions/303.md) | conversation | 2026-11-14 | 决定记录 —— #303 的 issue 会话：测试按阶段分层合并（0.1.14），review 里不压字数，skill 写法调研写进 #137、#292，retro 候选开成 #311 |
 | [decisions/174](decisions/174.md) | conversation | 2026-11-14 | 决定记录 —— #174 的 issue 会话（并入 #173）：取消夜间回放队列、当场跑、输入不露题、Codex 评委，摆过的题与 retro 候选的结果 |
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
@@ -65,6 +66,7 @@
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
+| [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
 | [[2026-11-13-replay-verify-redesign]] | conversation | 2026-11-13 | 规则回放改造：取消夜间队列、当场跑，参考 poteto 的 eval playbook |
 | [[2026-10-31-writing-for-agents-scope-grill]] | conversation | 2026-10-31 | #180 writing-for-agents 审 spec：按作用域分能带什么，retro 候选要写怎么结合、怎么验证 |
 | [[2026-10-26-retro-candidate-pool-grill]] | conversation | 2026-10-26 | grill —— retro 候选池放在哪个仓库、哪个目录 |
