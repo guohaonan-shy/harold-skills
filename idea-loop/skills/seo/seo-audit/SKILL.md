@@ -1,6 +1,6 @@
 ---
 name: seo-audit
-description: 站点 SEO 审计：抓取站点、对着线上页面核实问题。人在场时出一页大白话报告，围绕一件这周就能做的事；被方向 agent 调用时交回发现清单。要审计、体检一个站点时用；分析竞品用 competitor-analysis。
+description: 站点 SEO 审计：抓取站点、对着线上页面核实问题。要审计、体检一个站点时用；分析竞品用 competitor-analysis。
 ---
 
 # SEO 审计
