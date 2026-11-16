@@ -32,6 +32,13 @@
  * Pre-change "no" and post-change "yes" is a pass. Pre-change "yes" means the case never showed the
  * problem ("用例没抓住问题"), which is not a pass. A human can overrule a judgement: see --settle.
  *
+ * No process the runner starts (the two runs, the judge, Codex) has a `gh` login: they get this process's environment without
+ * `GH_TOKEN` / `GITHUB_TOKEN` / `GH_ENTERPRISE_TOKEN` / `GITHUB_ENTERPRISE_TOKEN`, and with `GH_CONFIG_DIR` pointing at an empty dir
+ * under the run dir. The project copy stands at the case's commit, but a `gh` read would still answer from the machine's login with
+ * what happened after it (an issue closed since, a PR merged since); without a login every `gh` read fails. The environment is
+ * made by `replayChildEnv` in replay.mjs; this process's own environment and the machine's login are untouched. Not stopped:
+ * reading the public repository's web pages (WebFetch, `curl`).
+ *
  * Why `claude -p` and not a sub-agent: a sub-agent loads the installed plugin, not the branch being checked;
  * `--plugin-dir` is what points a session at a branch.
  *
@@ -83,7 +90,7 @@ import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './case
 import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
   applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, parseOverrides, parseVerdict,
-  productsInOrder, relabelLarge, settleVerdicts, verdictsBySide,
+  productsInOrder, relabelLarge, replayChildEnv, settleVerdicts, verdictsBySide,
 } from './replay.mjs';
 
 /** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way. null for an unknown forced name. */
@@ -294,9 +301,9 @@ function* eventsOf(path) {
  * Run one `claude -p` to the end. With `watch`, the first plugin-agent or browser tool call in the event
  * stream kills the session at once and is returned as `escalation`.
  */
-function runClaude({ args, cwd, streamPath, timeoutMs, watch }) {
+function runClaude({ args, cwd, streamPath, timeoutMs, watch, env }) {
   return new Promise((resolvePromise) => {
-    const child = spawn(CLAUDE, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(CLAUDE, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
     const out = createWriteStream(streamPath);
     let stderr = '';
     let pending = '';
@@ -357,9 +364,9 @@ function pickAfterLetter() {
  * The judging session on Codex: `task` with the prompt in a file, never `--write` (the companion's default is read-only).
  * Resolves `{text}` with what it printed, or `{text: null, why}` when it could not start, exited non-zero or printed nothing.
  */
-function runCodexJudge({ companion, promptFile, cwd, outPath, timeoutMs }) {
+function runCodexJudge({ companion, promptFile, cwd, outPath, timeoutMs, env }) {
   return new Promise((resolvePromise) => {
-    const child = spawn(process.execPath, [companion, 'task', ...CODEX_ARGS, '--prompt-file', promptFile, '--cwd', cwd], { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [companion, 'task', ...CODEX_ARGS, '--prompt-file', promptFile, '--cwd', cwd], { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     let timedOut = false;
@@ -397,6 +404,10 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   rmSync(runDir, { recursive: true, force: true });
   mkdirSync(runDir, { recursive: true });
   console.log(`run dir: ${runDir}`);
+  // the environment of every process started below: this one's, without a gh login (see the header)
+  const ghConfigDir = join(runDir, 'gh-config');
+  mkdirSync(ghConfigDir);
+  const childEnv = replayChildEnv(process.env, ghConfigDir);
 
   const afterPlugin = t.afterPlugin;
   let beforePlugin = opts.beforePlugin;
@@ -423,7 +434,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       if (opts.model) args.push('--model', opts.model);
       const streamPath = join(dir, 'run.stream.jsonl');
       process.stdout.write(`— ${s.side}: ${s.plugin} …`);
-      const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge });
+      const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge, env: childEnv });
       // the run is over: what it left is kept under the run dir for a human to look at (the work dir itself goes in `finally`)
       const keepProject = () => cpSync(project, join(dir, 'project'), { recursive: true });
       if (r.escalation) {
@@ -474,7 +485,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     const promptFile = join(judgeDir, 'prompt.md');
     writeFileSync(promptFile, judgePrompt);
     process.stdout.write('— 判定（Codex）…');
-    const cx = await runCodexJudge({ companion, promptFile, cwd: judgeDir, outPath: join(judgeDir, 'codex.stdout.txt'), timeoutMs: opts.timeoutMin * 60_000 });
+    const cx = await runCodexJudge({ companion, promptFile, cwd: judgeDir, outPath: join(judgeDir, 'codex.stdout.txt'), timeoutMs: opts.timeoutMin * 60_000, env: childEnv });
     if (cx.text) {
       judgeText = cx.text;
       console.log(' 完成（不占 Claude 额度）');
@@ -488,7 +499,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     if (opts.model) jArgs.push('--model', opts.model);
     const jStream = join(judgeDir, 'run.stream.jsonl');
     process.stdout.write('— 判定 …');
-    const j = await runClaude({ args: jArgs, cwd: judgeDir, streamPath: jStream, timeoutMs: opts.timeoutMin * 60_000, watch: false });
+    const j = await runClaude({ args: jArgs, cwd: judgeDir, streamPath: jStream, timeoutMs: opts.timeoutMin * 60_000, watch: false, env: childEnv });
     const jDigest = digestStream(fileLines(jStream));
     if (!jDigest.result) {
       console.log(` 没有产出 result（退出码 ${j.status}），见 ${judgeDir}`);

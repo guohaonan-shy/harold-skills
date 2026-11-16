@@ -15,10 +15,10 @@ runner 文件头部那段说明里，补一句子进程不带 gh 登录及原因
 
 ## 验收标准
 
-- [ ] 跑一个用例时，给 runner 的环境设上 `GH_TOKEN`、`GITHUB_TOKEN`、指向一个有内容目录的 `GH_CONFIG_DIR` 和一个无关变量：worker 两遍、Claude 判定、Codex 判定各自看到的环境里都没有这两个 token，`GH_CONFIG_DIR` 指向一个存在的空目录且不是传进来的那个，无关变量原样在（e2e，用现有的假 claude / 假 Codex 记下环境）
-- [ ] 造环境的函数单独测：四个 token 变量都被去掉、`GH_CONFIG_DIR` 被换、其余变量照传、传入的环境对象本身没被改动
-- [ ] 回放测试和 idea-loop 其余测试全绿
-- [ ] 本机实测：在这份环境下跑 `gh issue view 275 -R guohaonan-shy/harold-skills` 得到未登录、非零退出（记在交回里）
+- [x] 跑一个用例时，给 runner 的环境设上 `GH_TOKEN`、`GITHUB_TOKEN`、指向一个有内容目录的 `GH_CONFIG_DIR` 和一个无关变量：worker 两遍、Claude 判定、Codex 判定各自看到的环境里都没有这两个 token，`GH_CONFIG_DIR` 指向一个存在的空目录且不是传进来的那个，无关变量原样在（e2e，用现有的假 claude / 假 Codex 记下环境）
+- [x] 造环境的函数单独测：四个 token 变量都被去掉、`GH_CONFIG_DIR` 被换、其余变量照传、传入的环境对象本身没被改动
+- [x] 回放测试和 idea-loop 其余测试全绿
+- [x] 本机实测：在这份环境下跑 `gh issue view 275 -R guohaonan-shy/harold-skills` 得到未登录、非零退出（记在交回里）
 
 ## 选中的存量回归
 
