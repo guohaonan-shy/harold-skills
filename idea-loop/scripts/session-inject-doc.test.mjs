@@ -107,5 +107,5 @@ test('the reach rule finds a capability in the agent text, in a named skill, and
   assert.deepEqual(reachedBy('用 Skill 工具调 `idea-loop:browser`。', caps, dirs).map(([c]) => c), ['浏览器']);
   assert.deepEqual(reachedBy('读 skills/engineering/browser/SKILL.md', caps, dirs).map(([c]) => c), ['浏览器']);
   assert.deepEqual(reachedBy('什么也不碰。', caps, dirs), []);
-  assert.ok(capabilities().includes('浏览器') && capabilities().length === 10);
+  assert.ok(capabilities().includes('浏览器') && capabilities().length === 11);
 });
