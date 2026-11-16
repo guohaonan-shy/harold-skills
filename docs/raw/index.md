@@ -56,9 +56,7 @@
 | [decisions/148](decisions/148.md) | conversation | 2026-11-10 | 决定记录 —— #148 的 issue 会话：起草修坏能力的 spec 时查调用方，review 里重复措辞保持现状、合并，retro 候选开成 #276 |
 | [decisions/151](decisions/151.md) | conversation | 2026-11-10 | 决定记录 —— #151 的 issue 会话：起草参考直读别的 skill 的 references/ 违反写法规范，照规范改成调 skill、合并，retro 无候选 |
 | [decisions/157](decisions/157.md) | conversation | 2026-11-10 | 决定记录 —— #157 的 issue 会话：会话断后已做完的工单先落地，回放用例抓不住删掉、交回记录缺失记成已知限制，合并；retro 候选不批 |
-<<<<<<< HEAD
 | [decisions/291](decisions/291.md) | conversation | 2026-11-13 | 决定记录 —— #291 的 issue 会话：SEO 全托管的 spec 起草，六条实现决策照草稿定，并入 #215，retro 无候选 |
-=======
 | [decisions/303](decisions/303.md) | conversation | 2026-11-14 | 决定记录 —— #303 的 issue 会话：测试按阶段分层合并（0.1.14），review 里不压字数，skill 写法调研写进 #137、#292，retro 候选开成 #311 |
 | [decisions/174](decisions/174.md) | conversation | 2026-11-14 | 决定记录 —— #174 的 issue 会话（并入 #173）：取消夜间回放队列、当场跑、输入不露题、Codex 评委，摆过的题与 retro 候选的结果 |
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
@@ -75,4 +73,3 @@
 | [[2026-11-02-issue-intake-priority-grill]] | conversation | 2026-11-02 | 讨论 —— issue 越做越多：开 issue 时就挂模块、判 P0，调度只给 P0 和本期焦点出卡片，停掉 cloud 整合 |
 | [[2026-10-30-issue-consolidation-grill]] | conversation | 2026-10-30 | 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现 |
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
->>>>>>> origin/main
