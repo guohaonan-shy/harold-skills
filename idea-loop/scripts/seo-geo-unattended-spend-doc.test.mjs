@@ -83,3 +83,32 @@ test('both READMEs: geo-analyst may start a paid check on an existing tracker, w
   assert.match(README, /`geo-analyst` may start a paid[\s\S]{0,200}within its share/);
   assert.match(SEO_README, /geo[^|\n]*估价[^|\n]*额度|估价[^|\n]*额度[^|\n]*geo/);
 });
+
+/**
+ * Review round 2 S1 (the human's call, 2026-11-16: "S1 选 A"). Migrating an old 「单次额度」: every direction's number is
+ * copied into 「扫描」 except a `geo` whose old value is 0 (it used to be barred from spending) — that one gets the
+ * recommended value (the average of the scan share's other directions), confirmed with the human together with the
+ * other values. The three places that state the migration have to say the same thing.
+ */
+const MIGRATION = {
+  'seo-setup SKILL.md, step 2': () => SETUP.split('\n').find((l) => l.includes('旧的「单次额度」')),
+  'seo-setup SKILL.md, step 3': () => SETUP.split('\n').find((l) => l.startsWith('- **OpenSEO**')),
+  'seo-md.md': () => FORMAT.split('\n').find((l) => l.startsWith('- 旧的 `单次额度` 键')),
+};
+
+for (const [where, pick] of Object.entries(MIGRATION)) {
+  test(`migration (${where}): an old geo of 0 is not copied; it gets the average of the other directions as its recommendation`, () => {
+    const line = pick();
+    assert.ok(line, `${where}: the migration sentence is missing`);
+    assert.match(line, /geo[^。；]*(是|为) ?0|0[^。；]*geo/, 'does not single out a geo whose old value is 0');
+    assert.match(line, /不(照)?(搬|抄)|例外/, 'does not say the 0 is not copied');
+    assert.match(line, /平均/, 'does not say the replacement is the average of the other directions');
+    assert.match(line, /其余方向|其他方向|别的方向/, 'does not say the average is over the other directions');
+  });
+}
+
+test('migration: the geo recommendation is confirmed by the human before it is written, like the other two shares', () => {
+  const line = MIGRATION['seo-setup SKILL.md, step 2']();
+  assert.match(line, /经人确认才写/);
+  assert.match(line, /其余方向[^。；]*照搬|照搬[^。；]*其余方向|其余[^。；]*照旧/, 'does not keep the other directions copied as before');
+});
