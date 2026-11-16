@@ -6,6 +6,7 @@
 | [[design-archive-loaded-sections]] | 不分段的长状态，首屏以下会连出边的组件按屏补拍进截图 |
 | [[docs-ride-code-pr]] | spec、设计、工单跟代码一个 PR 合进主分支；setup 问要不要知识库、放在哪 |
 | [[dreaming-triage-autonomous]] | dreaming 只问人 DESIGN.md 和文档冲突，其余自己执行并合并；每周分拣按建议直接翻状态 |
+| [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
 | [[implement-resume-landed]] | 会话断了以后，执行方已做完的工单先当交回 landed 落地，不再回收重派 |
 | [[plugin-version-by-change]] | 改了插件的 PR 按改动性质升 major / minor / patch，没升版本的测试会红 |
 | [[pr-merge-says-release]] | 说插件 PR 可以合并、或交它的审核报告时，一并说它合并后随哪个版本发 |
