@@ -27,8 +27,8 @@
  * within a priority the smaller number goes first); someone else's never; the unassigned ones only when none of mine
  * can go, by priority too, and within a priority the longest in that state first.
  *
- * Issues are opened only through `new`, which refuses a body that lacks one of the four required sections
- * (问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
+ * Issues are opened only through `new`, which refuses a body that lacks one of the five required sections
+ * (背景 / 问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
  * backlog issues the weekly triage should look at; `note` posts a comment with the AI prefix. Closing comes
  * first: `set … done|canceled` closes the issue and only then drops its status label, so a failed close leaves
  * the issue where it was; a flip to done opens its comment with the PRs that were merged.
@@ -56,7 +56,7 @@
  *   node issues.mjs check      <docs> <state> <n> [--from=<state>] [--comment=<text>] [--skip-design] → only checks the flip's preconditions; writes nothing; --from: the issue is not read (n may be a Linear key)
  *   node issues.mjs set        <docs> <state> <n>... [--comment=<text>] [--skip-design] → checked flip; done / canceled close the issue first, then drop the label
  *   node issues.mjs new        <docs> <title> <body-file> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=<k>] [--type=<c>]... [--repo=<owner/repo>] → opens an issue after checking the body (in <owner/repo> when given, else the current repo); prints its number
- *   node issues.mjs body       <docs> <body-file>                     → only checks the body's four required sections
+ *   node issues.mjs body       <docs> <body-file>                     → only checks the body's five required sections
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
  *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
@@ -249,12 +249,12 @@ export function typeSet(types, values) {
 // ---------- issue body ----------
 
 /** The sections every issue body must have, filled. */
-export const REQUIRED_SECTIONS = ['问题', '证据', '影响范围', '从哪发现'];
+export const REQUIRED_SECTIONS = ['背景', '问题', '证据', '影响范围', '从哪发现'];
 
 /**
  * What is wrong with an issue body: one line per required section (`## 问题` …) that is missing or holds
  * only whitespace. Sections are cut at `## <name>` headings; optional ones and other headings are not
- * looked at. 「无，待验证」 under 证据 counts as filled. Empty when the body is fine.
+ * looked at. 「无，待验证」 under 证据 and 「无」 under 背景 count as filled. Empty when the body is fine.
  */
 export function bodyErrors(md) {
   const sections = new Map();

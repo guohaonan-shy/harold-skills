@@ -16,15 +16,15 @@ idea-loop 插件里，开 issue 有一个统一的正文校验：`issues new`（
 
 ## 验收标准
 
-- [ ] 一份四节齐、没有「背景」的正文跑 `issues body`：退出 1，输出含「背景」。先写这个测试，看它在改动前是红的。
-- [ ] 「背景」节存在但只有空白：被拒，报「「背景」一节是空的」。
-- [ ] 「背景」下写「无」：通过。
-- [ ] `issues new` 遇到缺「背景」的正文：拒绝，不调用 gh 创建。
-- [ ] seo-issues 拼出的正文过校验，且带「背景」一节，内容含扫描日期和方向中文名；seo-issues 现有测试全绿。
-- [ ] skill 文档钉子测试钉住：「正文」一节含「## 背景」且标必填，「开一个 issue」写的是五个必填节。
-- [ ] `idea-loop/scripts` 下全部测试绿（`node --test`）；`issues.mjs` 里描述必填节的注释同步成五节。
-- [ ] `idea-loop:issues` 的 SKILL.md 主体 < 5000 字（量法见仓库 `AGENTS.md`）。
-- [ ] `plugin.json` 版本按 minor 升了，`plugin-version` 测试绿。
+- [x] 一份四节齐、没有「背景」的正文跑 `issues body`：退出 1，输出含「背景」。先写这个测试，看它在改动前是红的。
+- [x] 「背景」节存在但只有空白：被拒，报「「背景」一节是空的」。
+- [x] 「背景」下写「无」：通过。
+- [x] `issues new` 遇到缺「背景」的正文：拒绝，不调用 gh 创建。
+- [x] seo-issues 拼出的正文过校验，且带「背景」一节，内容含扫描日期和方向中文名；seo-issues 现有测试全绿。
+- [x] skill 文档钉子测试钉住：「正文」一节含「## 背景」且标必填，「开一个 issue」写的是五个必填节。
+- [x] `idea-loop/scripts` 下全部测试绿（`node --test`）；`issues.mjs` 里描述必填节的注释同步成五节。
+- [x] `idea-loop:issues` 的 SKILL.md 主体 < 5000 字（量法见仓库 `AGENTS.md`）。
+- [x] `plugin.json` 版本按 minor 升了，`plugin-version` 测试绿。
 
 ## 选中的存量回归
 

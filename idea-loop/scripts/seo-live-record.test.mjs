@@ -96,6 +96,7 @@ test('an issue whose body carries 由上线自查回滚而来 came from a rollba
   assert.equal(ROLLBACK_LINE, '由上线自查回滚而来');
   assert.equal(cameFromRollback(`## 问题\n\n改了 /blog/meal-prep/ 的 title，上线后带了 noindex\n\n## 从哪发现\n\n合并后的上线自查，${ROLLBACK_LINE}。原 issue #12。`), true);
   assert.equal(cameFromRollback(`${ROLLBACK_LINE}`), true);
+  assert.equal(cameFromRollback(`## 背景\n\n原 issue 改的是 /blog/meal-prep/ 的 title；上线自查查的是状态码、noindex、meta、sitemap\n\n## 问题\n\n上线后带了 noindex\n\n## 从哪发现\n\n${ROLLBACK_LINE}`), true);
   assert.equal(cameFromRollback('## 问题\n\n/blog/meal-prep/ 的 title 太长，被截断'), false);
   assert.equal(cameFromRollback('由上线自查回退而来'), false);
   assert.equal(cameFromRollback(''), false);
