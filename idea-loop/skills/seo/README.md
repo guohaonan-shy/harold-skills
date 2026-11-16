@@ -6,8 +6,8 @@ SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，
 |---|---|
 | 接入 | `seo-setup`（人跑，写 SEO.md、同步 OpenSEO、建 issue 分类、批 AI 可见性跟踪、建每周扫描的定时任务） |
 | 发现 | `seo-audit`、`keyword-research`、`keyword-clustering`、`competitor-analysis`、`link-prospecting`、`seo-geo`；agent `technical-auditor`、`page-optimizer`、`keyword-miner`、`backlink-analyst`、`geo-analyst` |
-| 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向；提完 issue 后分流）+ `scripts/seo-{due,gaps,budget,context,baseline,meta-provenance,issues}.mjs`（OpenSEO 的套餐额度按周花完：`seo-budget.mjs` 读研究日志的「花费」行算本周预算，按 `SEO.md` 的每周分配拆给排名追踪、扫描、起草与验证三份；开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
-| 解决 | `seo-brief`（triage 阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段）、`seo-check`（发布前检查，构建后 hook 自动跑） |
+| 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向；提完 issue 后分流，结尾调用外联跟进）+ `scripts/seo-{due,gaps,budget,context,baseline,meta-provenance,issues}.mjs`（OpenSEO 的套餐额度按周花完：`seo-budget.mjs` 读研究日志的「花费」行算本周预算，按 `SEO.md` 的每周分配拆给排名追踪、扫描、起草与验证三份；开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
+| 解决 | `seo-brief`（triage 阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段起草，草稿进人的草稿箱；人说「发外联邮件」才发；每次扫描结尾读回信、追发；目录提交填到最后一步等人点）、`seo-check`（发布前检查，构建后 hook 自动跑） |
 | 陪练 | `seo-coach` |
 
 ## 出处

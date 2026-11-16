@@ -17,12 +17,12 @@
 - 插件里不出现任何项目或真实站点的名字。
 
 ## 验收标准
-- [ ] runtime 能力清单有『人的浏览器』，claude-desktop 与 magi 两份 reference 各有这一节（magi 写「没有」）；`*-doc.test.mjs` 钉住
-- [ ] seo-outreach 有四个分支，写明「发出和提交只在人说之后」「不注册账号、不输入密码」「没有邮件 MCP / 人的浏览器时的退法」；`*-doc.test.mjs` 钉住（先对改前原文看它红）
-- [ ] seo-outreach description 有「发外联邮件」触发词，且仍只做路由（仓库根 AGENTS.md「description 只做路由」）
-- [ ] 跟进表格式写明「草稿 id」「线程 id」两列
-- [ ] seo-outreach 的 SKILL.md 主体 < 5000 字；`no-project-leak.test.mjs` 通过
-- [ ] idea-loop 全量测试通过
+- [x] runtime 能力清单有『人的浏览器』，claude-desktop 与 magi 两份 reference 各有这一节（magi 写「没有」）；`*-doc.test.mjs` 钉住
+- [x] seo-outreach 有四个分支，写明「发出和提交只在人说之后」「不注册账号、不输入密码」「没有邮件 MCP / 人的浏览器时的退法」；`*-doc.test.mjs` 钉住（先对改前原文看它红）
+- [x] seo-outreach description 有「发外联邮件」触发词，且仍只做路由（仓库根 AGENTS.md「description 只做路由」）
+- [x] 跟进表格式写明「草稿 id」「线程 id」两列
+- [x] seo-outreach 的 SKILL.md 主体 < 5000 字；`no-project-leak.test.mjs` 通过
+- [x] idea-loop 全量测试通过
 
 ## 选中的存量回归
 - runtime 相关的文档测试（能力清单是闭集、两份 reference 小节一一对应），加能力最容易让它红

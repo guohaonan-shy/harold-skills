@@ -5,7 +5,7 @@ argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：
 allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
-一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把发现交给提 issue 脚本，最后在研究日志里记一笔。产出只有 issue（当场分流）、评论和一条研究日志；仓库里什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
+一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把发现交给提 issue 脚本，最后在研究日志里记一笔。产出只有 issue（当场分流）、评论、一条研究日志和外联跟进；仓库里除外联跟进表外什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
 
 这次运行可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
@@ -57,10 +57,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 竞品与重点页面同步
 
-1. `node S/seo-context.mjs <仓库根>/SEO.md <运行目录>/context.json`（没有 `context.json` 就跳过这一节，记「同步失败：读不到项目上下文」）。
-2. `updates` 非空：调 `update_project_context`，`updates` 就用脚本给的数组，原样。为空就不写。
-
-名单以 SEO.md 为准、只往 OpenSEO 写，多出来的竞品被删是预期。任一步失败：记下原因，跳过同步，继续派 agent（它们读 SEO.md）。
+步骤见 [references/context-sync.md](references/context-sync.md)；失败只记原因，不拦下面派 agent。
 
 完成条件：脚本的 `summary` 或失败原因已记下，供研究日志用。
 
@@ -109,6 +106,10 @@ OpenSEO 项目：<projectId>
 3. 调 `update_project_context`，`updates: [{ "appendResearchLog": { "summary": "<log.txt 的内容>" } }]`。失败就把 log.txt 的路径写进交回。
 
 完成条件：研究日志写入成功，或交回里写明了没写成的原因和 log.txt 路径。
+
+## 外联跟进
+
+`docs/records/outreach/` 下有跟进表时，用 Skill 工具调 `idea-loop:seo-outreach`，走它的「跟进」分支，不论这次跑了哪些方向；没有跟进表就跳过。
 
 ## 交回
 
