@@ -13,11 +13,24 @@
  * screenshotting. It has no unit tests on purpose — mocking a browser would test
  * the mock. It is covered by actually running it.
  *
+ * Two kinds of run, picked by the matrix:
+ *   - default: `canvas` vs `local`, cell by cell, findings with severities. Either
+ *     side may be an implementation route or a canvas address (a version of a
+ *     canvas), so two canvases compare the same way. A cell may carry
+ *     `shotAnchor: "<anchor>"` to compare only that anchor's area instead of the
+ *     viewport.
+ *   - `"mode": "canvas-diff"`: `before` vs `after` (two versions of one canvas),
+ *     the list of anchors that changed, each with the two area screenshots, and —
+ *     if the matrix has a `changeSet` — split into declared / undeclared.
+ *     The decisions live in ui-canvas-diff.mjs.
+ *
  * Usage:  node ui-measure.mjs <matrix.json> [--json] [--keep-open]
- * Exit:   0 = green (or only human-review cells left), 2 = findings.
+ * Exit:   0 = green (or only human-review cells left), 2 = findings. In
+ *         canvas-diff mode: 0 = nothing for a human to look at (no change, or only
+ *         changes the change set declared), 2 = otherwise.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -25,6 +38,9 @@ import {
   compareMeasurements, comparePixels, pixelFinding, sortFindings, renderFindings,
   DEFAULT_TOLERANCE, DEFAULT_ANTIALIAS_TOLERANCE, DEFAULT_PIXEL_THRESHOLD,
 } from './ui-compare.mjs';
+import {
+  regionBox, diffAnchors, parseChangeSet, classifyChanges, shotFileName, renderCanvasDiff, hasAttention,
+} from './ui-canvas-diff.mjs';
 
 /**
  * Resolve playwright from the TARGET PROJECT, not from this plugin.
@@ -114,8 +130,108 @@ async function toRgba(scratch, buffer) {
   }, buffer.toString('base64'));
 }
 
+/** Size of the whole page (CSS px) — the limit a region is cut down to. */
+const pageSize = (page) => page.evaluate(() => ({
+  width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
+}));
+
+/**
+ * Cut the same region out of both tabs. Page coordinates, so an anchor below the
+ * fold is cut like any other (hence fullPage). Returns null when there is no
+ * region (see regionBox).
+ */
+async function regionShots(tabA, tabB, rectA, rectB) {
+  const box = regionBox(rectA, rectB, await pageSize(tabA), await pageSize(tabB));
+  if (!box) return null;
+  const clip = { x: box.x, y: box.y, width: box.width, height: box.height };
+  return { box, a: await tabA.screenshot({ clip, fullPage: true }), b: await tabB.screenshot({ clip, fullPage: true }) };
+}
+
 /** Identity of a finding for 瓶颈 (bottleneck) detection — the defect, not its numbers. */
 const fingerprint = (f) => `${f.cell}|${f.id}|${f.anchor}|${f.property}`;
+
+/**
+ * Canvas-diff run: `before` and `after` are two versions of one canvas. Per cell,
+ * per anchor: measure both, compare, cut the anchor's area out of both and compare
+ * the pixels; anything that differs is a changed anchor and gets its two area
+ * screenshots written to disk. The change set (optional) splits the changes into
+ * declared / undeclared.
+ */
+async function runCanvasDiff({ matrix, matrixPath, base, browser, beforeTab, afterTab, scratch, asJson }) {
+  if (!matrix.before || !matrix.after) {
+    console.error('ui-measure: a canvas-diff matrix needs "before" and "after" (the two canvas addresses)');
+    process.exit(1);
+  }
+  let changeSet = null;
+  if (matrix.changeSet !== undefined) {
+    try {
+      changeSet = parseChangeSet(matrix.changeSet);
+    } catch (e) {
+      console.error(`ui-measure: ${e.message}`);
+      process.exit(1);
+    }
+  }
+  const shotsDir = resolve(dirname(matrixPath), matrix.shotsDir ?? 'ui-measure-shots');
+  const changed = [];
+  const states = new Set();
+  const humanCells = [];
+
+  try {
+    for (const cell of matrix.cells) {
+      if (cell.review === 'human') { humanCells.push(cell.name); continue; }
+      const state = cell.state ?? cell.name;
+      states.add(state);
+      // Two versions of a canvas: any pixel that visibly differs is a change, unless the matrix says otherwise.
+      const tol = { ...base, pixel: matrix.tolerance?.pixel ?? 0, ...(cell.tolerance ?? {}) };
+      await prepare(beforeTab, withState(matrix.before, cell.state), cell);
+      await prepare(afterTab, withState(matrix.after, cell.state), cell);
+      const beforeM = await beforeTab.evaluate(measureInPage, MEASURED_STYLES);
+      const afterM = await afterTab.evaluate(measureInPage, MEASURED_STYLES);
+
+      const byAnchor = new Map(
+        diffAnchors(beforeM, afterM, { position: tol.position, byAnchor: cell.byAnchor ?? {} }).map((c) => [c.anchor, c]),
+      );
+
+      for (const anchor of new Set([...Object.keys(beforeM), ...Object.keys(afterM)])) {
+        const shots = await regionShots(beforeTab, afterTab, beforeM[anchor], afterM[anchor]);
+        let pixelPercent = null;
+        if (shots) {
+          pixelPercent = comparePixels(
+            await toRgba(scratch, shots.a), await toRgba(scratch, shots.b), { antialias: tol.antialias },
+          );
+        }
+        const entry = byAnchor.get(anchor)
+          ?? (pixelPercent !== null && pixelPercent > tol.pixel ? { anchor, kind: 'changed', changes: [] } : null);
+        if (!entry) continue;
+        const item = { cell: cell.name, state, ...entry, pixelPercent, shots: null };
+        if (shots) {
+          mkdirSync(shotsDir, { recursive: true });
+          const before = resolve(shotsDir, shotFileName(cell.name, anchor, 'before'));
+          const after = resolve(shotsDir, shotFileName(cell.name, anchor, 'after'));
+          writeFileSync(before, shots.a);
+          writeFileSync(after, shots.b);
+          item.shots = { before, after };
+        }
+        changed.push(item);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+
+  const classified = changeSet
+    ? classifyChanges(changed, changeSet, [...states])
+    : { declared: [], undeclared: [], declaredUnchanged: [], unchecked: [] };
+  const report = { changed, ...classified };
+  if (asJson) {
+    console.log(JSON.stringify({ mode: 'canvas-diff', classified: changeSet !== null, ...report, humanReviewCells: humanCells }, null, 2));
+  } else {
+    console.log(renderCanvasDiff(report, changeSet !== null));
+    if (changed.some((c) => c.shots)) console.log(`\n区域截图（两版各一张）在 ${shotsDir}`);
+    if (humanCells.length) console.log(`\nHUMAN REVIEW (not green, not checked): ${humanCells.join(', ')}`);
+  }
+  process.exit(hasAttention(report, changeSet !== null) ? 2 : 0);
+}
 
 async function main() {
   const args = process.argv.slice(2);
@@ -145,6 +261,11 @@ async function main() {
   const findings = [];
   const humanCells = [];
 
+  if (matrix.mode === 'canvas-diff') {
+    await runCanvasDiff({ matrix, matrixPath, base, browser, beforeTab: canvasTab, afterTab: localTab, scratch, asJson });
+    return;
+  }
+
   try {
     for (const cell of matrix.cells) {
       if (cell.review === 'human') { humanCells.push(cell.name); continue; }
@@ -161,8 +282,25 @@ async function main() {
         { cell: cell.name },
       ));
 
-      const canvasPng = await toRgba(scratch, await canvasTab.screenshot());
-      const localPng = await toRgba(scratch, await localTab.screenshot());
+      // Default: the viewport frame. A cell with `shotAnchor` compares only that
+      // anchor's area (the same box cut from both tabs, so the sizes agree).
+      let canvasShot;
+      let localShot;
+      if (cell.shotAnchor) {
+        if (!canvasM[cell.shotAnchor] && !localM[cell.shotAnchor]) {
+          console.error(`ui-measure: cell "${cell.name}": shotAnchor "${cell.shotAnchor}" is on neither page`);
+          process.exit(1);
+        }
+        const shots = await regionShots(canvasTab, localTab, canvasM[cell.shotAnchor], localM[cell.shotAnchor]);
+        if (!shots) continue; // no area to look at; a missing anchor is already a finding above
+        canvasShot = shots.a;
+        localShot = shots.b;
+      } else {
+        canvasShot = await canvasTab.screenshot();
+        localShot = await localTab.screenshot();
+      }
+      const canvasPng = await toRgba(scratch, canvasShot);
+      const localPng = await toRgba(scratch, localShot);
       const percent = comparePixels(canvasPng, localPng, { antialias: tol.antialias });
       const pf = pixelFinding(percent, { cell: cell.name, threshold: tol.pixel });
       if (pf) findings.push(pf);

@@ -203,7 +203,7 @@ node --test '*/scripts/*.test.mjs'
 Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
 keeps it out of `.claude/` worktrees. Today it covers the design-lint rules,
-the two UI-loop comparators, the critic score check, the direction
+the two UI-loop comparators and the two-canvas-version diff logic (`ui-canvas-diff`), the critic score check, the direction
 note's seven-section shape, the glossary lint, the seo scripts (SEO.md parsing, the missing-facts check, budget, context sync, audit regressions, issue planning against a fake gh, the two-platform check and its post-build hook), the DESIGN.md lint hook (against a fake CLI, no
 network), and a tripwire that keeps `skills/` free of the source project's
 names and examples, all living in this plugin's `scripts/`; new
@@ -349,7 +349,7 @@ idea-loop/
 │   │   ├── tdd/SKILL.md              # shared, model-invoked — red→green loop, seams, mock boundary
 │   │   ├── issues/SKILL.md           # shared, model-invoked — the issue entity: the seven states and who flips them, the body format, backlog / blocked by, the issues.mjs commands; + references/github.md (driven by the script) and linear.md (read and written through the Linear MCP, tool by tool; `issues check --from` still gates every state flip), one per platform
 │   │   ├── browser/SKILL.md          # shared, model-invoked — the "browser" capability: headless for your own capture and measuring, and showing a page to the human (how each is done, and what is not available, is the runtime's); static serving, logging in, measuring from the real DOM
-│   │   ├── ui-measure/SKILL.md       # shared, model-invoked — implementation vs frozen canvas, cell by cell: the three environment rules (for the UI implementation loop only — the design archive's shots stop the page time instead), default tolerances, the matrix, when to stop
+│   │   ├── ui-measure/SKILL.md       # shared, model-invoked — implementation vs frozen canvas, cell by cell: the three environment rules (for the UI implementation loop only — the design archive's shots stop the page time instead), default tolerances, the matrix (a cell may cut one anchor's area), comparing two canvas versions for changes the change set did not declare, when to stop
 │   │   ├── pr/SKILL.md               # shared, model-invoked — what the human reads on a PR: the two deliverables, each with a table of sections and what each gives the reader: the description's seven sections (the review report: one sentence, problem, how it was fixed, how it was verified, whether it can be rolled back, your to-do, folded reference) and the Review 汇报 (stops during implementation and review rounds are one report); the review loop file keeps the latter (+ references/)
 │   │   ├── setup/SKILL.md            # human-invoked; + references/ — templates for DEVELOPMENT.md, REVIEW.md, CODING_STANDARDS.md, ISSUE_TRACKER.md, PRODUCT.md, the CLAUDE.md / AGENTS.md block and the AGENTS.md issue-category section, plus the step-by-step material the SKILL.md keeps out of its body (preflight table, survey list, question list, replay runner, weekly dreaming)
 │   │   ├── issue-dispatch/SKILL.md   # the issue dispatcher — rounds, the two caps, candidates (todo, then triage), at most 3 a round, the report; how rounds run, sessions are counted and issues handed over is in idea-loop:runtime
@@ -399,7 +399,9 @@ idea-loop/
 └── scripts/
     ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
     ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
-    ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
+    ├── ui-canvas-diff.mjs            # two canvas versions compared, the deterministic half: anchor-area crop box, which anchors changed, the change-set shape, declared vs undeclared
+    ├── ui-canvas-diff.test.mjs       # its unit tests
+    ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix (implementation vs canvas, or `canvas-diff` mode: two canvas versions)
     ├── critic-score.mjs              # checks the critic's JSON (findings / reasoning / score / note) against the canvas's state list and the human's reasoning ids, and points out the direction findings; decides nothing about stopping (+ its CLI)
     ├── critic-score.test.mjs         # its unit tests
     ├── ui-master-doc.test.mjs        # tripwire: the critic's definition names the new inputs and output shape, and gives no stop line
