@@ -66,7 +66,7 @@ idea-loop 处处假设知识库、引导文件和代码在同一个 git 仓库�
 
 ## 方案
 
-改完后，一个项目搬进 home 之后，idea-loop 在这个项目上的所有读写都落在 `~/home/projects/<名字>/`（下文叫**项目目录**）。代码仓库里不再出现 idea-loop 的文件。知识库的改动直接提交到 home 的 main，代码 PR 里只有代码。还没搬的项目，跟现在完全一样。
+改完后，一个项目搬进 home 之后，idea-loop 在这个项目上的所有读写都落在 `~/home/projects/<名字>/`（下文叫**项目目录**）。代码仓库里不再出现 idea-loop 的文件。知识库的改动直接提交到 home 的 main，代码 PR 里只有代码。插件里只有这一种布局：0.2.0 上线时就把用着 idea-loop 的项目全部搬进 home（#247），不留「没搬的项目照旧读仓库」的中间状态。在没搬的项目里调 idea-loop，它停下，让人先跑 `/idea-loop:setup` 迁移。
 
 决定一次读写落在哪的输入只有三样：
 
@@ -84,10 +84,10 @@ idea-loop 处处假设知识库、引导文件和代码在同一个 git 仓库�
 
 - **`where`**：输入是当前目录，或者 `--project <名字>`；可选 `IDEA_LOOP_HOME`。输出一份 JSON：项目名、项目目录、`docs`、代码仓库的 `owner/repo`、本地 clone 路径，以及「在不在 home」。判法：
   - 项目清单里有这个项目，且 `~/home/projects/<名字>/docs/` 存在：项目目录就是 `~/home/projects/<名字>/`。
-  - 否则：项目目录是当前目录的 git 顶层目录。这就是现在的行为：`<docs>` 是当前 worktree 的 `docs/`。
+  - 否则不给项目目录，退出码非 0，并说明原因：仓库根目录有 idea-loop 的引导文件或 `docs/` 的，说「这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移」；别的情况说「这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`」。调用它的 skill 和脚本照这句话停下，不去读代码仓库。
 - **`commit`**：把调用方列出的文件提交到 home 的 main，见下面的「改动怎么落进 home」。
 
-hook 注入项目地图时多注入一行：`项目目录：<路径>`。会话开在代码 worktree 里时，主会话从这一行拿到项目目录；开在 home 里时（父 issue 会话、`dreaming-home`），用 `where --project <名字>` 拿。
+hook 注入项目地图时多注入一行：`项目目录：<路径>`；`where` 认出「还没搬」的，hook 改为注入那句迁移提示。会话开在代码 worktree 里时，主会话从这一行拿到项目目录；开在 home 里时（父 issue 会话、`dreaming-home`），用 `where --project <名字>` 拿。
 
 **哪些东西在项目目录里**：`docs/`、`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md`。代码仓库的 `AGENTS.md` / `CLAUDE.md` 留在代码仓库（Q3）。现在写在代码仓库 `AGENTS.md` 里的「issue 分类」一节，改住在项目目录的 `ISSUE_TRACKER.md`「分类 label」一节。这一节现在只有一句话，指向 `AGENTS.md`。
 
@@ -97,7 +97,7 @@ skill、agent、脚本的文字统一改成：`<docs>` 是 `<项目目录>/docs/
 
 | 脚本 | 改成 |
 |---|---|
-| `issues.mjs` | 项目根取 `<docs>` 的上一级，这一点不变：搬家后它就是项目目录，`ISSUE_TRACKER.md` 和分类都在里面。`gh` 带 `-R <owner/repo>`，`owner/repo` 从项目清单里这个项目的远端取；不在 home 的项目照旧由 `<docs>` 所在的仓库推出。找 issue 分支的 `git` 在项目清单的本地 clone 里跑。 |
+| `issues.mjs` | 项目根取 `<docs>` 的上一级，这一点不变：搬家后它就是项目目录，`ISSUE_TRACKER.md` 和分类都在里面。`gh` 带 `-R <owner/repo>`，`owner/repo` 从项目清单里这个项目的远端取。找 issue 分支的 `git` 在项目清单的本地 clone 里跑。 |
 | `seo-check-hook.mjs`、`design-archive-mcp.mjs` | 用 `where` 取项目目录，不再用 git 顶层目录 |
 | `design-lint-hook.mjs` | 认画布路径时，不再要求路径以 `docs/` 开头、必须在仓库内；home 里的 `docs/design/tmp/<spec-slug>/canvas/` 也算 |
 | `spec.mjs`、`design-archive*.mjs`、`ticket-ledger.mjs` | 本来就收 `<docs>` 或根目录参数，不改；改的是调用它们的 skill 给的参数 |
@@ -136,13 +136,13 @@ Q12 定了：home 只有 main，直接提交，只 add 自己的文件。落到�
 `dreaming-home` 的形状和记忆那一段归 #332。这里管它跑完记忆之后的部分：按项目清单的顺序，对每个项目做一遍。
 
 1. **取项目**：`where --project <名字>`。在项目清单的本地 clone 里 `git fetch`，从 `origin/<主分支>` 切一个 worktree，放在 `~/home/.worktrees/` 下，对完删掉。`<主分支>` 取项目目录里 `DEVELOPMENT.md` 的「分支」一节。
-2. **对账**：在 home 里的项目已经在 home，`docs/` 也在 home，对的是上一步那个 worktree 里的代码；提议表、执行、问人的做法都跟现在一样，改动直接提交到 home。还没搬进 home 的项目照现在的做法对，开只改 `docs/` 的 PR。
+2. **对账**：`docs/` 在 home，对的是上一步那个 worktree 里的代码；提议表、执行、问人的做法都跟现在一样，改动直接提交到 home。
 3. **重写项目地图**：`projects/<名字>/AGENTS.md`，不超过 2000 字。模板跟 #252 setup 起草时用的是同一份：几层、每层放什么、什么问题去哪查，外加一行指向 `projects/<名字>/memory/MEMORY.md`（#332）。输入是项目目录的 `docs/index.md`、目录树和引导文件。
 4. 全部项目跑完，**重写 `~/home/AGENTS.md` 的「## 设备地图」一节**，不超过 2000 字。输入是 home 顶层的目录和项目清单。「## 项目」一节由 setup 维护，dreaming 不改。
 
 **增量范围**：基准点取 `dreaming-home` 上一次成功的执行（现在取的是 `dreaming-<仓库名>`）。一次执行里有任何一个项目没对完，这次就不算成功，下一次那个项目从更早的基准点算起。
 
-**跑不了的项目**：本地 clone 不存在或 fetch 失败的，跳过这个项目，在汇报里写一行，不挡后面的项目。
+**跑不了的项目**：本地 clone 不存在、fetch 失败、或 `where` 报「还没搬」的，跳过这个项目，在汇报里写一行，不挡后面的项目。
 
 ### setup 给新项目建文件
 
@@ -156,7 +156,7 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 
 现有的 12 个用例都钉在 home 出现之前的提交上，那时知识库在代码仓库里。
 
-- **老用例**：runner 跑这些用例时，把 `IDEA_LOOP_HOME` 指到一个空的临时目录。`where` 认不出 home，就落到「当前目录的 git 顶层目录」，改后的插件读的就是那个提交里的 `docs/`。
+- **老用例**：插件里没有回退，改后的插件在那些提交上会停下要求迁移。所以由 runner 在临时目录里现搭一份 home：把那个提交的 `docs/` 和引导文件复制进 `projects/<名字>/`，项目清单写上这个项目，`IDEA_LOOP_HOME` 指过去。改后的插件读到的就是那个提交的知识库；改前的插件照旧读代码仓库里的同一份，两边输入相同。判定会话读产物时，去这份临时 home 里找。这个转换只活在 runner 里，skill 和脚本里没有。
 - **新用例**：搬家后新录的用例，`case.json` 多记一个 `home_commit`。runner 在临时目录里从这个提交切一份 home，把 `IDEA_LOOP_HOME` 指过去，改前、改后两边读到的知识库相同。
 
 ### 同一行为的其他入口
@@ -171,7 +171,7 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 | Linear 项目 | 纳入：`ISSUE_TRACKER.md` 在项目目录里，`issues.mjs` 照样读 |
 | magi 运行环境 | 纳入：只读文件、跑 git，不依赖运行环境 |
 | 按文件名触发的 hook（`design-md-hook`、`glossary-check-hook`） | 不用改：它们看的是文件名，不看在哪个目录 |
-| 还没搬进 home 的项目、项目清单里没有的仓库 | 纳入：照现在的做法，`<docs>` 是当前 worktree 的 `docs/` |
+| 还没搬进 home 的项目、项目清单里没有的仓库 | 纳入：`where` 报错，skill 停下，让人先跑 `/idea-loop:setup`（迁移或接上） |
 | 搬已有项目的文件、删代码仓库里的 `## idea-loop` 段、本机取消 `dreaming-<仓库名>` | 排除：#247 |
 
 ## User Stories
@@ -208,14 +208,18 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 ![新项目与没搬的项目的 story 树](../../raw/issue-workflow/assets/tree-user-stories-read-home-4-fallback.png)
 
 1. 作为给一个全新项目跑 setup 的人，我想要引导文件和 `docs/` 直接建在 home 里，以便代码仓库里一开始就没有 idea-loop 的文件
-2. 作为还没把项目搬进 home 的人，我想要 idea-loop 照现在的做法读写代码仓库里的 `docs/`，以便升级插件和搬家之间这段时间不中断
+2. 作为升级了插件、还没迁移的人，我想要 idea-loop 一碰到这个项目就停下，告诉我先跑 `/idea-loop:setup` 迁移，以便不会有一部分东西写进代码仓库、一部分写进 home
 3. 作为跑规则回放的人，我想要钉在 home 出现之前的用例，改前、改后两边读到的都是那个提交里的知识库，以便老用例照样能验收规则改动
 
 ## 实现决策
 
 ### 已定
 
-- **没搬的项目照旧读代码仓库，判断按项目、一次判一个**：判据是 `~/home/projects/<名字>/docs/` 在不在。不逐个文件判断：#247 是整个项目一次搬，项目不会一半在 home、一半在仓库。依据有两条。一是 12 个回放用例都钉在 home 出现之前，只认 home 的话，改后的插件读不到知识库，这些用例就都跑不了。二是升级插件和跑迁移之间，没搬的项目不能中断。这一条原本摆成了一道题，Harold 问「迁移知识库和 skills 的调整那个先行？」：顺序 #331 已经定了（#333 在 #247 前面）；回退分支要不要长期留，由这条依据定下。决定记录 A1 写的「只保留 home 一种模式」说的是工作方式；这条回退管的是没搬的项目和历史提交，两者不冲突。可以推翻。
+- **只认 home，不留回退**：没搬的项目，skill 和脚本停下，让人先迁移；判据是 `~/home/projects/<名字>/docs/` 在不在。依据：Harold 原话「我在想能不能0.2.0上线的时候就把知识库迁移，省着我们自己还需要维护一个中间状态」，也跟决定记录 A1「只保留 home 一种模式」一致。代价有两处，都已接住：
+  - 升级插件到跑完迁移之间，idea-loop 在这个项目上用不了。所以 0.2.0 合进 main 后，本机和公司虚拟机都要紧接着跑迁移，写进 #247 的 spec。
+  - 12 个回放用例钉在 home 出现之前：由 runner 现搭临时 home 接住，见「规则回放」。
+
+  起草时先按「留回退」写过一版；Harold 先问了先后顺序（#331 已定：#333 在 #247 前面），再改成了上面这样。
 - **扩展 #252 的认项目脚本，不新增组件**：认项目（远端统一、项目清单解析）在 #252 已经有了，`where` 和 `commit` 都复用它。依据是 Q5 和「先扩展已在用的工具」。
 - **「issue 分类」挪进 `ISSUE_TRACKER.md`**：项目地图（项目目录的 `AGENTS.md`）每周由 dreaming 重写，放不了人维护的内容；分类本来就是 tracker 的配置，`ISSUE_TRACKER.md` 也已经有「分类 label」一节指向它。依据是 Q3：idea-loop 生成的东西进 home。
 - **「仓库」表并进项目清单，一个 issue 只改一个仓库**：`ISSUE_TRACKER.md` 删掉「仓库」一节，`owner/repo` 和本地路径从项目清单读，主分支从 `DEVELOPMENT.md` 读；implement 里「一个 issue 在几个仓库各开 PR」的分支一起删掉。依据：Q26 定了并进项目清单，Q29 定了多仓库按父 issue 拆子 issue；2026-11-16 核过，本机仅有的两个用 idea-loop 的项目（Toeflair、harold-skills），「仓库」表都只有一行，删掉的分支没有真实用法。
@@ -232,7 +236,7 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：`where`（在 home、不在 home、home 本身、`--project`、`IDEA_LOOP_HOME`）、`commit`（只提交列出的文件、`index.lock` 重试、没有 `origin`）、`issues.mjs` 的仓库来源、回放 runner 的 `IDEA_LOOP_HOME` |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：`where`（在 home、还没搬、没接上、home 本身、`--project`、`IDEA_LOOP_HOME`）、`commit`（只提交列出的文件、`index.lock` 重试、没有 `origin`）、`issues.mjs` 的仓库来源、回放 runner 现搭临时 home |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了大部分 skill 和 agent 的文字，按 `AGENTS.md` §5 不做 quantitative eval。文字里的位置写法由下面的文档测试守；行为由一次规则回放和一次端到端的 `claude -p` 验 |
@@ -246,9 +250,9 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 - **增量功能测试**：
   - 找到知识库 1、4：前置：假 home 登记了 `example-app`（远端 `acme/example-app`），`projects/example-app/docs/` 存在；在这个项目的一个 worktree 里，`gh` 用 stub。步骤：跑 `where`，再跑 `issues.mjs show <where 给的 docs> 7`。期望：项目目录是假 home 里的那个；`gh` 收到 `-R acme/example-app`。
   - 找到知识库 2：在假 home 里跑 `where --project example-app`。期望：跟上一条拿到的项目目录相同。
-  - 新项目与没搬的项目 2：前置同上，但删掉 `projects/example-app/docs/`。期望：`where` 给的是 worktree 的 git 顶层目录。
+  - 新项目与没搬的项目 2：前置同上，但删掉 `projects/example-app/docs/`，代码仓库根目录放一份 `DEVELOPMENT.md`。期望：`where` 退出码非 0，输出「这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移」；接着跑 `issues.mjs show`，同样停下，不读代码仓库。
   - 落进 home 4、5：两个文件已经写进假 home，只把其中一个交给 `commit`。期望：提交里只有它，另一个仍未提交；假 home 没有 `origin` 时退出码 0。
-  - 新项目与没搬的项目 3：用改后的插件跑一个现有的回放用例 `draft-spec-orphan-capability`（size small）。期望：判定会话的是/否题答「是」，跟改前插件的判定一致，spec 草稿写进那个提交的 `docs/`。
+  - 新项目与没搬的项目 3：用改后的插件跑一个现有的回放用例 `draft-spec-orphan-capability`（size small）。期望：runner 现搭的临时 home 里有那个提交的 `docs/`；判定会话的是/否题答「是」，跟改前插件的判定一致；spec 草稿写进临时 home。
   - 端到端（在本机，实现落地后做一次）：在临时目录里建一份假 home，把 harold-skills 的 `docs/` 和引导文件复制进去，并登记 harold-skills。在 harold-skills 的一个 worktree 里，用 `--plugin-dir` 装改后的插件、`IDEA_LOOP_HOME` 指到假 home，跑 `claude -p`：用 Skill 工具调 `idea-loop:issue-session`，参数一个真实的 triage issue，禁掉 `gh` 的写操作，停在 spec 草稿写好的那一刻。期望：spec 出现在假 home 里并已提交；代码 worktree 的 `git status` 是干净的。覆盖：找到知识库 1、落进 home 1、2。
 - **照着谁写**：`where` / `commit` 照 #252 的认项目脚本和 `runtime-detect.mjs`（导出纯函数加命令行入口）；在临时目录里建 git 仓库的测试照 `issues.test.mjs`；文档测试照 `no-project-leak.test.mjs` 和 `knowledge-base-landing-doc.test.mjs`（后者要改成新规则）。
 
@@ -265,7 +269,7 @@ home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 - raw：[[2026-11-15-home-repo-grill]]（Q3、Q5、Q12、Q25、Q26、Q29）。
 - [[home-bootstrap]]（#252，在 `origin/issue/252-home`，还没进集成分支）：这份 spec 扩展它的认项目脚本，用它的项目清单和项目地图模板。#252 先合。它的 token 测量结果决定要不要扩展 `design-archive` MCP。
 - [[device-memory]]（#332，在 `origin/issue/332-memory-one-per-device`）：`dreaming-home` 的形状和记忆一段归它，项目对账一段归这里。#332 先合，这里在它定的任务里接上项目对账。
-- #247（迁到 home，triage 中）：它负责搬家，这里负责搬家之后读写落对地方，并保证搬之前照旧能用。#247 在这份 spec 之后合。新项目由 setup 直接建在 home 里（这里）；已有项目由 setup 迁移（#247）。
+- #247（迁到 home，triage 中）：它负责搬家，这里负责搬家之后读写落对地方。插件里不留回退，所以 #247 的 spec 要写明：0.2.0 合进 main 后，本机和公司虚拟机都紧接着跑迁移，每个项目一次搬完。#247 在这份 spec 之后合。新项目由 setup 直接建在 home 里（这里）；已有项目由 setup 迁移（#247）。
 - [[docs-ride-code-pr]]（#244）：它的「spec 跟代码一个 PR」被 Q12 推翻，这里改掉 wiki-conventions 的「知识库落地」。删它的 spec 归 #247 迁移时的 dreaming。
 - [[dreaming-triage-autonomous]]（#298，已关）：dreaming「开只改 `docs/` 的 PR 自己合」，对已经在 home 的项目改成直接提交；没搬的项目保留原做法。
 - #334（走 main）：认父子 issue。跟这里没有代码上的重叠；它改 `issues.mjs`，跟这里的 `-R` 改动会碰到同一个文件，先合的那个不用等，后合的那个解冲突。
