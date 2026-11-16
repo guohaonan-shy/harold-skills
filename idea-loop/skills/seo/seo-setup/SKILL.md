@@ -22,7 +22,7 @@ disable-model-invocation: true
 
 ## 2. 读现状，备推荐值
 
-- `SEO.md` 在的话跑 `node S/seo-md.mjs SEO.md`，记下哪些小节、哪些键是空的（输出的 `confirmed` 为 true 的不算空：写了值，或人写了 `无`）。只问空的。
+- `SEO.md` 在的话跑 `node S/seo-md.mjs SEO.md`，记下哪些小节、哪些键是空的（输出的 `confirmed` 为 true 的不算空：写了值，或人写了 `无`）。只问空的（「内容原则」不问，见第 4 步）。
 - `get_project_context`，原样存成 `.tmp/seo-setup/context.json`。它的竞品、重点页面、业务概述就是对应小节的推荐值；`missingSections` 里的几节，第 3 步一起问（问法见 [references/project-context.md](references/project-context.md)）；写了 `无` 的节不再问。
 - 仓库里找其余小节的推荐值，每个记下出处：
   - **站点**：站点配置里的域名、i18n 路由（语言前缀）、`robots.txt`、`sitemap`。
@@ -47,9 +47,9 @@ disable-model-invocation: true
 
 ## 4. 写 SEO.md
 
-照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。
+照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。新建的 `SEO.md` 带上空的「内容原则」节（只有标题）：内容由项目自己填，不问人、不推测、不写任何原则；已有的文件缺这一节就补上标题。
 
-完成条件：`node S/seo-md.mjs SEO.md` 解析成功，七节都在；`git diff SEO.md` 给人看过。
+完成条件：`node S/seo-md.mjs SEO.md` 解析成功，八节都在；`git diff SEO.md` 给人看过。
 
 ## 5. 同步进 OpenSEO 项目上下文
 

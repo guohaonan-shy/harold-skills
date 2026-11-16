@@ -61,6 +61,30 @@ test('SEO.md: seven sections parse into the shape the scripts read', () => {
   assert.deepEqual(s.brand.terms, ['cookbook', 'cook book']);
 });
 
+test('SEO.md: 内容原则 reads one principle per line, with its source; no section reads as none, without an error', () => {
+  const md = `## 内容原则
+每行一条：原则（出处：人的原话或 issue 号）
+- 数据只当佐证，不罗列（出处：#12，「数据只当佐证」）
+- 拿不出能直接练的东西、跟已有文章大面积重合的，不开新页（出处：#30）
+- 没写出处的也读得出
+- 无
+`;
+  assert.deepEqual(parseSeoMd(md).principles, [
+    { text: '数据只当佐证，不罗列', source: '#12，「数据只当佐证」' },
+    { text: '拿不出能直接练的东西、跟已有文章大面积重合的，不开新页', source: '#30' },
+    { text: '没写出处的也读得出', source: '' },
+  ]);
+  assert.deepEqual(parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n').principles, []);
+  assert.deepEqual(parseSeoMd('## 内容原则\n\n## 品牌\n- 品牌词：`cookbook`\n').principles, []);
+  assert.deepEqual(parseSeoMd(SEO_MD).principles, [], 'a SEO.md written before the section existed has none');
+});
+
+test('SEO.md: 内容原则 does not leak into its neighbours, and the neighbours not into it', () => {
+  const s = parseSeoMd('## 内容原则\n- 写短句（出处：#1）\n\n## 品牌\n- 品牌词：`cookbook`\n');
+  assert.deepEqual(s.principles, [{ text: '写短句', source: '#1' }]);
+  assert.deepEqual(s.brand.terms, ['cookbook']);
+});
+
 test('SEO.md: a missing 品牌 section, a missing 品牌词 key or a value without backticks reads as no brand terms', () => {
   assert.deepEqual(parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n').brand.terms, []);
   assert.deepEqual(parseSeoMd('## 品牌\n- 说明：随便写点什么\n').brand.terms, []);

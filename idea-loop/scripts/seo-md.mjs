@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
  * Reads a project's SEO.md — the one config file every seo skill, agent and script reads. Its format
- * is defined in skills/seo/seo-setup/references/seo-md.md: seven `## ` sections, one `- key：value`
- * item per line, domains / URLs / paths / ids in backticks. Missing sections read as empty, unknown
+ * is defined in skills/seo/seo-setup/references/seo-md.md: eight `## ` sections, one `- key：value`
+ * item per line (内容原则 is the exception: one `- <principle>（出处：<source>）` per line), domains / URLs /
+ * paths / ids in backticks. Missing sections read as empty, unknown
  * lines are ignored, so a human can write notes in between. A human who answered "none" writes `无`
  * (`- 品牌词：无`, or one `- 无` line under 竞品): it reads as empty and as `confirmed`, so callers can
  * tell "confirmed empty" from "never written".
  *
- * Usage: node seo-md.mjs <SEO.md>   → JSON of the seven sections
+ * Usage: node seo-md.mjs <SEO.md>   → JSON of the eight sections
  * Exit: 0 = parsed, 1 = unreadable file (reason on stderr).
  */
 
@@ -17,7 +18,7 @@ import { pathToFileURL } from 'node:url';
 export const DIRECTIONS = ['technical', 'pages', 'keywords', 'backlinks', 'geo'];
 export const PAGE_TYPES = ['对比与研究', '数据研究', '故事', '教程'];
 
-const SECTIONS = ['站点', 'OpenSEO', '竞品', '重点页面', '构建与检查', '写作', '品牌'];
+const SECTIONS = ['站点', 'OpenSEO', '竞品', '重点页面', '构建与检查', '写作', '品牌', '内容原则'];
 
 /** The section bodies by heading: lines between `## <heading>` and the next `#`/`##` heading. */
 function sections(md) {
@@ -133,6 +134,19 @@ function parseBrand(lines) {
   return { terms: ticks(pairs(lines)['品牌词'] ?? '') };
 }
 
+/**
+ * `- <principle>（出处：<source>）` → { text, source }, one per line, in order. A line without the 出处 part keeps
+ * its whole text and an empty source; a lone `无` line is no principle; no section reads as [].
+ */
+function parsePrinciples(lines) {
+  return items(lines)
+    .filter((it) => it !== NONE)
+    .map((it) => {
+      const m = it.match(/^(.*?)\s*[（(]出处[：:]\s*(.+?)\s*[）)]$/);
+      return m ? { text: m[1].trim(), source: m[2].trim() } : { text: it, source: '' };
+    });
+}
+
 /** Per item: written (a value, or an explicit `无`) vs never written. Empty-by-choice reads as confirmed. */
 function parseConfirmed(s, competitors, brand) {
   const none = items(s['竞品']).some((it) => it === NONE);
@@ -154,6 +168,7 @@ export function parseSeoMd(md) {
     build: parseBuild(s['构建与检查']),
     writing: parseWriting(s['写作']),
     brand,
+    principles: parsePrinciples(s['内容原则']),
     confirmed: parseConfirmed(s, competitors, brand),
   };
 }

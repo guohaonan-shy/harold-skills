@@ -13,11 +13,11 @@
 - 插件里举例用通用例子，不出现任何真实项目的名字（`no-project-leak.test.mjs` 守着）。
 
 ## 验收标准
-- [ ] draft-spec 有 SEO 分支，写明两个条件（`type:seo/*`、没有「前端交互」）、「AI 照推荐定：」的依据写法、不推送不停下、有「前端交互」的翻回 triage；`*-doc.test.mjs` 钉住（先对改前原文看它红）
-- [ ] draft-spec「输入」有读「内容原则」这一项
-- [ ] `SEO.md` 格式参考有「内容原则」节的格式；`seo-md.mjs` 读得出这一节，没有这一节时返回空、不报错（单元测试）
-- [ ] `no-project-leak.test.mjs` 通过
-- [ ] idea-loop 全量测试通过
+- [x] draft-spec 有 SEO 分支，写明两个条件（`type:seo/*`、没有「前端交互」）、「AI 照推荐定：」的依据写法、不推送不停下、有「前端交互」的翻回 triage；`*-doc.test.mjs` 钉住（先对改前原文看它红）
+- [x] draft-spec「输入」有读「内容原则」这一项
+- [x] `SEO.md` 格式参考有「内容原则」节的格式；`seo-md.mjs` 读得出这一节，没有这一节时返回空、不报错（单元测试）
+- [x] `no-project-leak.test.mjs` 通过
+- [ ] idea-loop 全量测试通过 ⏭ 延后 → PR 交付验收：全量套件不在本机跑，PR 转 ready 后由 CI 在这个 head 上跑；本机跑了 SEO、文字钉子、runtime、issue 相关的 389 条，全绿
 
 ## 选中的存量回归
 - `seo-scripts.test.mjs`：`seo-md.mjs` 的节名表加「内容原则」会碰到它的解析用例

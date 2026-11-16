@@ -8,6 +8,7 @@
 - 分拣的证据评论（「🤖 idea-loop：」开头）：复现、分类、结论都在里面，当证据用，在 spec 里引它的出处（评论链接、日期）。没有这条评论的（人直接开成 todo 的），自己先复现：手段表在 `${CLAUDE_PLUGIN_ROOT}/agents/issue-triager.md` 的「复现」，输出留在 `.tmp/to-spec/<spec-slug>/repro/`，只读回判断要用的一两行。
 - issue 写的现状也要核一遍，再写进 spec：用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。
 - issue 带 `type:seo/<方向>` 的：先用 Skill 工具调这个方向的 agent 调的那个 SEO skill（方向与 agent 的对应在 `idea-loop:seo-scan` 的 SKILL.md 的「派方向 agent」表，agent 调哪个 skill 写在 `${CLAUDE_PLUGIN_ROOT}/agents/` 下它自己的定义里），只读它写修法建议前要读的原则（由那个 skill 指过去，不直接翻它的 `references/`），不跑它的检查步骤。选项和推荐讲到某种做法有没有用时，引那里的结论和出处，不写「说法不一」这类没核过的话；原则文件没覆盖的才自己查一手来源，查不到的标成猜测。
+- issue 带 `type:seo/*` 的，再读目标仓库根目录 `SEO.md` 的「内容原则」（`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 输出里的 `principles`，每条带出处），与上一条先读的方向原则并列：选项、推荐和「需要 grill」的答案都以两者为据。没有 `SEO.md`，或这一节是空的，就当没有这类原则。
 
 ## 结论行
 
@@ -34,7 +35,14 @@
 
 ## 跟人定要 grill 的
 
-spec 里还有「需要 grill」或「待定」：用『推送』能力发一句话说要人定什么，然后停下等人。人开口后逐条处理：
+issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、不停下，自己定完就提交；人在场接手时也照这条，人可以推翻。
+
+- 「待定」：逐条照推荐改写成决定，依据写「AI 照推荐定：<推荐的理由>」，删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
+- 「需要 grill」：照 spec 已有的结论和 `SEO.md`「内容原则」自己答完，删掉这一行。
+
+有「前端交互」小节的（要 UI 设计）不走这条：todo 会话照「起草中冒出了要人定的」那句 `issues set <docs> triage <号> --comment=<要人定什么、分支名>` 翻回 triage，triage 会话照下面的流程跟人定。
+
+其余的 issue，spec 里还有「需要 grill」或「待定」：用『推送』能力发一句话说要人定什么，然后停下等人。人开口后逐条处理：
 
 - 「需要 grill」：用 Skill 工具调 `idea-loop:grill`，按结果改 spec，删掉这一行。
 - 「待定」：人定了，把小节改写成定下的决定，写上依据（人的原话），删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
