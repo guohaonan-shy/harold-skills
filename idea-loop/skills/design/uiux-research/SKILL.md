@@ -36,11 +36,13 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 3. 产品上下文：目标项目的 `DESIGN.md` 路径（有就给）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
 4. 落图目录的绝对路径。
 
+当前运行环境里 researcher 收不到 Mobbin 的原生工具（`idea-loop:runtime` 的「调用 MCP」小节写的不是原生工具调用）：再加一条，把调 Mobbin 三个搜索工具（`search_screens`、`search_flows`、`search_sections`）的写法，照那一节原样放进提示。
+
 方向、参考图、上一轮的结论、你的倾向都不给：它从零查。它每次新起，做完就结束。
 
 ## 收到交回，摆给人
 
-交回应当只有 `index.html` 的绝对路径和一句结论。
+交回应当只有 `index.html` 的绝对路径和一句结论。researcher 说 **Mobbin 没连上**：整页调研到此停下，不换来源、不重试；告诉人怎么连，照 `idea-loop:runtime` 的「装与设置」里 Mobbin 那一条（要 Mobbin 付费计划），说明只有设计调研受影响。交回末尾带 `ai_usage_notice` 的话，原样转给人。
 
 1. **核对**：自己再跑一次校验：
 
@@ -54,5 +56,5 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 ## 边界
 
-- Refero 只在 uiux-researcher 里调：你不读搜索结果、不看截图。
+- Mobbin 只在 uiux-researcher 里调：你不读搜索结果、不看截图。
 - 不下方向结论；不改画布、变种板、方向说明、spec；落图目录里的东西不提交。

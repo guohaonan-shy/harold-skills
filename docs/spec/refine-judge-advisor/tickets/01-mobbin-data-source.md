@@ -19,15 +19,15 @@
 
 ## 验收标准
 
-- [ ] 插件的 MCP 配置里有 Mobbin 一项，写法跟 OpenSEO 同一种；`design-archive-mcp` 测试里守着「插件自带哪些 MCP」的那条改成认 Mobbin，不再说 Refero 在用户级
-- [ ] 调研员定义的工具清单里没有任何 Refero 工具名，换成 Mobbin 的通配写法
-- [ ] 调研页契约写明 Mobbin 的三层（screens / flows / sections）和截图地址的规律，内容出自这次实测（交回时附一次真实搜索返回的字段名清单作证据）
-- [ ] 契约和 skill 写明 Mobbin 没连上时整页调研停下、告诉人怎么连
-- [ ] setup 预检、runtime 两份「装与设置」、README、根目录 `AGENTS.md` 那条都改成 Mobbin；在插件目录和根 `AGENTS.md` 里搜 `refero`（不分大小写），除 `evals/uiux-research` 下已存档的人工标注外没有残留
-- [ ] baseline runner 与会话流解析统计的是 Mobbin 调用次数，对应单元测试改过并通过
-- [ ] 用 Mobbin 真跑一次整页调研（任选 baseline 里的一个问题），交出的页面过 `research-check`
+- [x] 插件的 MCP 配置里有 Mobbin 一项，写法跟 OpenSEO 同一种；`design-archive-mcp` 测试里守着「插件自带哪些 MCP」的那条改成认 Mobbin，不再说 Refero 在用户级
+- [x] 调研员定义的工具清单里没有任何 Refero 工具名，换成 Mobbin 的通配写法
+- [x] 调研页契约写明 Mobbin 的三层（screens / flows / sections）和截图地址的规律，内容出自这次实测（交回时附一次真实搜索返回的字段名清单作证据）
+- [x] 契约和 skill 写明 Mobbin 没连上时整页调研停下、告诉人怎么连
+- [x] setup 预检、runtime 两份「装与设置」、README、根目录 `AGENTS.md` 那条都改成 Mobbin；在插件目录和根 `AGENTS.md` 里搜 `refero`（不分大小写），除 `evals/uiux-research` 下已存档的人工标注外没有残留
+- [x] baseline runner 与会话流解析统计的是 Mobbin 调用次数，对应单元测试改过并通过
+- [x] 用 Mobbin 真跑一次整页调研（任选 baseline 里的一个问题），交出的页面过 `research-check`（页面由本会话已连的 Mobbin 连接器照契约做出；经调研员起跑那条路径时插件自带的 Mobbin 还没登录，停在「没连上」，待人 `/mcp` 登录后重跑 `run.mjs --only leave-confirm`）
 - [ ] ⏭ 延后 → 人：`uiux-research` 的 baseline 全套用 Mobbin 重跑、交人标注（付费的大批量运行，按约定夜里跑）
-- [ ] `no-project-leak` 测试通过（契约里的例子不出现任何真实项目的名字）
+- [x] `no-project-leak` 测试通过（契约里的例子不出现任何真实项目的名字）
 
 ## 选中的存量回归
 
