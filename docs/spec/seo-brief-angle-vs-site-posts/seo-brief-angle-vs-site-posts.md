@@ -72,17 +72,16 @@ issues: [188]
 - **主体字数**：现在 2668 字，加三处约 200 字，远低于 5000。
 - **版本**：不升 `plugin.json` 的 `version`，照仓库现有做法由集成时的 chore 提交统一升。
 
-### 待定：改完怎么证明规则真让 seo-brief 变了
+### 规则验收：写回放用例，PR 开出后当场跑（2026-11-16 人选 A）
 
-分拣评论建议「改完要用 `idea-loop/evals` 的方式回放那两个历史点」。查下来有两个现成的障碍：
+分拣评论建议「改完要用 `idea-loop/evals` 的方式回放那两个历史点」。查下来两点前提：
 
 - 回放用例的 `commit` 指的是 `--repo` 那个仓库的状态。现有 13 个用例都是本仓库的提交；这两个历史点在另一个站点仓库里，`implement` 排回放时只传 `--worktree`（等于本仓库），跑不到那边。2026-11-16 对着 main a032e45 读 `idea-loop/evals/retro/retro-replay.mjs`：`--worktree` 只补没给的参数（`t.repo ??= o.worktree`），所以 `--run-large --pr <N> --worktree <本 worktree> --repo <站点仓库> --case <名>` 能跑，结果照常写进 PR 的 review loop 文件；站点仓库本地有一份（remote `guohaonan-shy/Tofelair`），`5d7148f6`（2026-10-26）在里面。
 - seo-brief 第 3 步要用 OpenSEO 真查前 10 名（花 credits），改前改后各查一次；无头的 `claude -p` 里 OpenSEO 能不能连上，没试过。
 
-选项：
+人在 2026-11-16 的 triage 会话里在两个做法中选了 A（另一个是只做文字检查、等下一个新开页 issue 时人在 grill 里看，代价为零但验收推迟、没有改前对照）：
 
-- **A. 写回放用例，手动当场跑一次（推荐）**：用例取 2026-10-27 那次（「toefl speaking topics」新开页），`commit` 是站点仓库当时 main 上的 `5d7148f6`，prompt 是当时让 brief 产出的那句话，是/否题从人的原话写：「brief 的角度候选有没有逐篇对照站内同主题的已有文章、写明重合与否？」。它用 OpenSEO（付费外部服务），是大用例；PR 开出后由 implement 的编排者用上面那条加了 `--repo` 的命令当场跑，走一遍会看到：改前 brief 的角度候选没有对照行（判「否」），改后每条带「对照：…」（判「是」）。代价：两次 `claude -p` 约 1–3.5 美元，加两次 SERP 查询的 credits；OpenSEO 在无头会话里连不上就跑不出来，退到 B 并在 PR 里写明。理由：仓库 AGENTS.md §5 的回放例外就是为规则改动验收立的，这条正是「要判断的」规则。
-- **B. 不回放，只做文字检查**：实现时只核三处文字写进去了、`no-project-leak` 测试通过；真正的验收等下一个新开页的内容类 SEO issue 起草 brief 时，人在 grill 里看角度候选带没带对照行。走一遍会看到：PR 里只有文字 diff，要到下一次 seo-scan 出新开页 issue（每周一次）才知道规则管不管用。代价为零，验收推迟、而且到时没有改前的对照。
+- **做法**：用例取 2026-10-27 那次（「toefl speaking topics」新开页），`commit` 是站点仓库当时 main 上的 `5d7148f6`，prompt 是当时让 brief 产出的那句话，是/否题从人的原话写：「brief 的角度候选有没有逐篇对照站内同主题的已有文章、写明重合与否？」。它用 OpenSEO（付费外部服务），是大用例；PR 开出后由 implement 的编排者用上面那条加了 `--repo` 的命令当场跑，走一遍会看到：改前 brief 的角度候选没有对照行（判「否」），改后每条带「对照：…」（判「是」）。代价：两次 `claude -p` 约 1–3.5 美元，加两次 SERP 查询的 credits；OpenSEO 在无头会话里连不上就跑不出来，退到只做文字检查，并在 PR 里写明。理由：仓库 AGENTS.md §5 的回放例外就是为规则改动验收立的，这条正是「要判断的」规则。
 
 ## 测试决策
 
@@ -91,11 +90,11 @@ issues: [188]
 | 纯逻辑、数据转换、状态机 | TDD 单元测试 | 不涉及：只改 skill 文字 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
-| LLM 输出质量（prompt 改动） | eval（确定性断言） | 改的是 `seo-brief/SKILL.md` 三处；仓库 AGENTS.md §5 不做打分 eval，规则验收按「待定：改完怎么证明」定下的做 |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | 改的是 `seo-brief/SKILL.md` 三处；仓库 AGENTS.md §5 不做打分 eval，规则验收按「规则验收」一节写回放用例（大用例，PR 开出后当场跑） |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
 
-- **seam**：`seo-brief/SKILL.md` 的文字，加上已有的 `idea-loop/scripts/no-project-leak.test.mjs`。抓得到：三处写进去了、没带项目名；抓不到：下一次写 brief 时 agent 会不会照做（由待定那一题选的方式验）。
+- **seam**：`seo-brief/SKILL.md` 的文字，加上已有的 `idea-loop/scripts/no-project-leak.test.mjs`。抓得到：三处写进去了、没带项目名；抓不到：下一次写 brief 时 agent 会不会照做（由「规则验收」的回放验）。
 - **增量功能测试**：
   - 前置：本分支。
   - 步骤：读改后的 `seo-brief/SKILL.md` 第 2、4、6 步；跑 `node --test idea-loop/scripts/no-project-leak.test.mjs`；量主体字数 `awk 'f>=2; /^---$/{f++}' idea-loop/skills/seo/seo-brief/SKILL.md | LC_ALL=en_US.UTF-8 wc -m`。
