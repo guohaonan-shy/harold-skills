@@ -15,6 +15,7 @@
 | [[scope-recommend-by-delivery]] | 范围题按「影不影响这份 spec 的实现、上线」推荐并进当前 PR 还是不进 |
 | [[seo-draft-reads-principles]] | 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据 |
 | [[skill-edit-acceptance]] | 改 skill 的工单自带三格验收，落地时脚本核对交回调过 writing-for-agents |
+| [[skills-read-home]] | skill 与脚本从 home 的项目目录读写知识库，改动直接提交 home，dreaming-home 对账各项目 |
 | [[test-layering-ci-full]] | 执行方只跑改动涉及的测试，全量测试交给 PR 转 ready 后的 CI，review 读 CI 结果不在本机重跑 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
