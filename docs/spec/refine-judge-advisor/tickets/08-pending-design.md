@@ -32,3 +32,5 @@
 - `dreaming-autonomous-doc.test.mjs`、`dreaming-incremental-doc.test.mjs`：dreaming 加一类对账行
 - `knowledge-base-landing-doc.test.mjs`、`design-tmp-worktree-root-doc.test.mjs`：它们断言 wiki-conventions 与 uiux-* 里设计目录的写法
 - `proposal-table-check.test.mjs`：dreaming 的提议表若加新行类型要过它
+- [ ] 全量测试（2026-11-16）：`issue-model-tripwire` 与 `pr-flow-doc` 两条守卫红——「搁置」是旧状态机八个状态之一，插件里不许再出现；搁置的设计换一个不撞旧状态名的叫法（README、dreaming 提议表的行类型与校验脚本、uiux-imagine / uiux-refine 等处一并换），两条守卫转绿
+- [ ] 文档一致（2026-11-16）：根目录 `AGENTS.md` 写 dreaming「只问人两类（`DESIGN.md` 和文档里的冲突）」，这张工单让它又多问「要删的搁置设计」，跟 idea-loop README 的 dreaming 一行对不上；订正那一句
