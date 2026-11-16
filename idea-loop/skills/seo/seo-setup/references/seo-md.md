@@ -20,7 +20,7 @@
 - 项目：`00000000-0000-4000-8000-000000000000`
 - 余额下限：1000
 - 套餐额度：每月 10000，每月 1 日重置
-- 每周分配：排名追踪 300；扫描 technical 200，pages 300，keywords 600，backlinks 400，geo 0，results 100；起草与验证 400
+- 每周分配：排名追踪 300；扫描 technical 200，pages 300，keywords 600，backlinks 400，geo 200，results 100；起草与验证 400
 
 ## 竞品
 - `recipebox.example`：RecipeBox，按食材搜菜谱的订阅制 app
