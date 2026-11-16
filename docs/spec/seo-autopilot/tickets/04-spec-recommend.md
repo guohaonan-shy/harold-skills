@@ -20,5 +20,5 @@
 - [ ] idea-loop 全量测试通过
 
 ## 选中的存量回归
-- `seo-method-skills-no-inference-doc.test.mjs`：钉着起草时读方向原则文件的句子，同一节会被改
+- `seo-scripts.test.mjs`：`seo-md.mjs` 的节名表加「内容原则」会碰到它的解析用例
 - `no-project-leak.test.mjs`：新加的例子不能带项目名

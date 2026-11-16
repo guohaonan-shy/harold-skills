@@ -166,7 +166,7 @@ technical-auditor 第 3 步拿两次审计的页面跑 `seo-baseline.mjs`，重�
 
 - 新脚本：输入 `SEO.md`、构建产物目录、网址列表；对每个网址取线上页面，跟产物里对应 HTML 比 title / description，查 meta robots 与 `X-Robots-Tag` 有无 `noindex`、HTTP 状态、`sitemap.xml` 是否含它。输出每个网址的四项结果。
 - 等上线：每分钟跑一次，全部网址的 title 与产物一致即视为已上线，再做完整核对；等满 `SEO.md`「构建与检查」新增键「上线等待」（分钟，没写按 30）还没一致：不回滚，推送「部署可能没跑，<网址>」，issue 评论记「未上线」。
-- 回滚：`git revert -m 1 <合并提交>` 开 revert PR（描述引原 PR 和失败的项），`REVIEW.md` 检查过了就合并，推送「已回滚 #<PR>：<哪个网址哪一项>」；issue 翻回 todo 并评论原因。
+- 回滚：`git revert -m 1 <合并提交>` 开 revert PR（描述引原 PR 和失败的项），`REVIEW.md` 检查过了就合并，推送「已回滚 #<PR>：<哪个网址哪一项>」；原 issue 已是 done、状态机不允许翻回，所以另开一个同分类的新 issue（引原 issue、原 PR 和失败的项）直接翻 todo，原 issue 评论指过去。依据：本 spec 不改状态模型，AI 照规则定。
 - 记录：自查结果作为一条「🤖 idea-loop：」评论贴在 issue 上，带隐藏标记（网址、目标词、合并日期、四项结果），results-analyst 靠这个标记找改动清单。
 - 排名追踪：自查通过后，把目标词加进 OpenSEO 的排名追踪（`SEO.md`「OpenSEO」写的追踪器）；花费记进研究日志、计入本周「排名追踪」那一份。
 
