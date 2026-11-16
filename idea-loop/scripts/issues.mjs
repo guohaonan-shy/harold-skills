@@ -657,7 +657,7 @@ export function backlog(gh, limit = 100) {
 }
 
 /**
- * Opens an issue after checking it: the body has its four sections (`bodyErrors`), the categories exist,
+ * Opens an issue after checking it: the body has its five sections (`bodyErrors`), the categories exist,
  * `todo` comes with a priority, and no open issue has the same title. Labels: `status:todo` for todo (backlog
  * has none), `priority:*`, `kind:*`, `type:*`. Returns the new number. Nothing is created unless every check passed.
  */
