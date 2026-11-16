@@ -16,11 +16,11 @@ idea-loop 插件里有两个可被模型调用的 SEO skill：外联（seo-outre
 
 ## 验收标准
 
-- [ ] 加一条文档断言测试，放在守 seo-scan 同类问题（C1）的那个测试文件里，照它的写法：断言两份 SKILL.md 都不含 `seo-md.md`、不含指向 seo-setup 参考目录的文字，且都含 `seo-md.mjs`
-- [ ] 这条测试在改前的文本上是红的（用该测试文件支持的 `SEO_DOCS_ROOT` 指向改前副本，或先写测试后改文本），改后是绿的
-- [ ] 两份 SKILL.md 的读法与 seo-audit 的现存写法一致
-- [ ] 仓库 REVIEW.md 列的验证命令全过（含 no-project-leak 等插件测试）
-- [ ] idea-loop 的 `plugin.json` 版本升了补丁档
+- [x] 加一条文档断言测试，放在守 seo-scan 同类问题（C1）的那个测试文件里，照它的写法：断言两份 SKILL.md 都不含 `seo-md.md`、不含指向 seo-setup 参考目录的文字，且都含 `seo-md.mjs`
+- [x] 这条测试在改前的文本上是红的（用该测试文件支持的 `SEO_DOCS_ROOT` 指向改前副本，或先写测试后改文本），改后是绿的
+- [x] 两份 SKILL.md 的读法与 seo-audit 的现存写法一致
+- [x] 仓库 REVIEW.md 列的验证命令全过（含 no-project-leak 等插件测试）
+- [x] idea-loop 的 `plugin.json` 版本升了补丁档
 
 ## 选中的存量回归
 
