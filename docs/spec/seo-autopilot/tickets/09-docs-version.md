@@ -10,14 +10,13 @@
 - idea-loop 的 SEO 分类 README 和 idea-loop 的 README 同步：每天扫描、results 方向与 results-analyst、分流、自动合并与上线自查、外联四个分支、`SEO.md` 新键（内容原则、内容路径、上线等待、套餐额度与每周分配、分析）。
 - seo-brief 第 4 步「角度候选……留给人定」和第 6 步「确认『需要 grill：选题角度和论点』那一行在」跟 issue-session 起草参考新加的 SEO 分支（「需要 grill」照已有结论和内容原则自己答完）对着写：在这两处加一句，SEO issue 起草时走起草参考的 SEO 分支，角度照推荐定、依据写「AI 照推荐定」；人直接要一份 brief（不在 issue 起草里）时照旧留给人定。（04 落地时发现，编排者照「影响这次交付就在当前 PR 修」并进本工单）
 - seo-setup 的 SKILL.md 主体被本 PR 的 04、05 撑到 5311 字（主分支上 4591），超过 5000 字上限：把细节挪进 seo-setup 自己的 references，主体回到 5000 以内，行为不变。
-- `idea-loop/.claude-plugin/plugin.json` 的 `version` 升 patch（合并前主分支上的版本 +1；写这张工单时是 0.1.20）。版本档位规则见仓库根 `REVIEW.md`「额外要求」，若它要求 minor 就照它。
+- 版本不在这张工单里升：档位有争议（REVIEW.md 按字面可能是 major——旧 SEO.md 的「单次额度」现在会报错、要重跑 seo-setup 迁移；而 #327 记着人连续三次把这类改成 patch），由编排者交人定后再升。`plugin-version.test.mjs` 在这张里仍预期红。
 
 ## 验收标准
 - [ ] seo-setup 的 SKILL.md 主体 < 5000 字（量法见根 AGENTS.md），挪出去的内容在它自己的 references 里、SKILL.md 有指针
 - [ ] seo-brief 两处写明 SEO issue 起草时角度照推荐定，人直接要 brief 时照旧；`*-doc.test.mjs` 钉住（先对改前原文看它红）
 - [ ] 根 `AGENTS.md` 第 1 条不再说 SEO issue 等人分拣，写了新出口
 - [ ] 两份 README 覆盖上面列的每一项
-- [ ] `plugin.json` 版本已升，档位符合 `REVIEW.md`
 - [ ] idea-loop 全量测试通过
 
 ## 选中的存量回归
