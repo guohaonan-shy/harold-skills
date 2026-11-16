@@ -225,25 +225,18 @@ designer 和评委的上下文里不放参考图，也不放调研：人的原�
 - 设计档案的校验对 `pending/` 跳过。
 - `uiux-imagine`、`uiux-refine` 的「中断与恢复」认得 `pending/<slug>/`，从那里接着做。
 
-### 待定：搁置的设计放在哪个 checkout、怎么被找回和对账
+### 搁置的设计放在主 checkout
 
-pending 只在本地，可每个 issue 会话在自己的 worktree 里跑，worktree 用完会被清掉。triager 在 #289 上指出两个没定的点：dreaming 每次在新切的 worktree 里跑，看不到旧 worktree 里的 pending；另开 issue 做同一块界面时，新 worktree 里也没有它。
+pending 只在本地，可每个 issue 会话跑在自己的 worktree 里，worktree 用完会被清掉，所以搁置的设计固定放在主 checkout（`git worktree list` 的第一行）里。依据：人在 2026-11-16 对这道题的回答「待定1 我同意你说的」。
 
-- **A. 固定放在主 checkout（`git worktree list` 的第一行）里**（推荐）。挪的时候挪到主 checkout 的 `docs/design/pending/<slug>/`；接着做时从那里复制回当前 worktree；dreaming 读主 checkout 的 pending，列出每一份和它的 spec 是否已了结，spec 已了结的提议删。走一遍：#689 那样的设计停下时，被挪到主 checkout；三周后另开 issue，新会话在它的 worktree 里起 imagine，先看到「主 checkout 有一份 pending/l-r-report，要接着做吗」。
-- **B. 留在当时的 worktree 里**。不挪位置；dreaming 用 `git worktree list` 扫所有 worktree 的 pending。worktree 被清掉，设计就没了。
-- **C. 放到用户主目录下的固定位置（`~/.idea-loop/`）**。跨仓库、跨 worktree 都在，但离开了仓库，dreaming 和归档脚本要多认一个地方。
+- **挪**：人说「这块界面先不做」时，编排者把当前 worktree 的 `docs/design/tmp/<spec-slug>/` 挪到主 checkout 的 `docs/design/pending/<spec-slug>/`。
+- **找回**：`uiux-imagine`、`uiux-refine` 起手时先看主 checkout 的 `pending/` 里有没有同一块界面的设计，有就问人要不要接着做；要的话复制回当前 worktree 的 `tmp/`，再从「中断与恢复」接上。
+- **对账**：dreaming 读主 checkout 的 `pending/`，列出每一份和它的 spec 是否已了结；spec 已了结的，提议删。
+- 本地忽略规则是整个仓库共用的，主 checkout 里同样不提交。
 
-推荐 A：主 checkout 不会被清理，所有 worktree 都能用同一个路径找到；本地忽略规则是整个仓库共用的，主 checkout 里同样不提交。
+### 插件版本升 patch
 
-### 待定：插件版本升哪一档
-
-照 `REVIEW.md` 的升档规则：「装了它的项目不改自己的配置或用法就会坏」算 major（1.0.0）。Refero 换 Mobbin 正好落在这一档：只配了 Refero 的项目，不去登录 Mobbin，调研就用不了了。可是 minor（0.1.20 → 0.2.0）又跟正在进行的 `release/idea-loop-0.2.0` 撞号。
-
-- **A. 按 minor 升，版本号让开 0.2.0**（推荐）：从 main 当时的版本升 patch 位，在 PR 描述里写明「按规则应为 major / minor，因 0.2.0 已被发布分支占用而让开」。
-- **B. 按规则升 major，到 1.0.0**：插件第一次到 1.x，早于正在做的 0.2.0。
-- **C. 等 0.2.0 发布后再合，从 0.2.x 升 minor 到 0.3.0**：这份 spec 要排在 0.2.0 后面。
-
-推荐 A：0.x 期间行为改动本来就常走 patch（「0.x 行为改动升 patch」在 retro 候选池里出现了 3 次，见 #327）。0.2.0 留给已经立项的发布，不把这份 spec 卡在它后面。
+照 `REVIEW.md` 的升档规则，Refero 换 Mobbin 算 major：只配了 Refero 的项目，不去登录 Mobbin，调研就用不了了。这次按人的决定升 patch，从合并时 main 上的版本往上升一位。PR 描述的「参考」里写明：按规则本应是 major，人定了升 patch，一是 0.x 期间行为改动常走 patch（见 #327），二是让开正在做的 `release/idea-loop-0.2.0`。依据：人在 2026-11-16 的原话「待定2版本我倾向于生一个patch吧」。
 
 ### 文档改动的诊断
 
@@ -258,7 +251,7 @@ pending 只在本地，可每个 issue 会话在自己的 worktree 里跑，work
 | 调研员的 agent 定义、`uiux-research` 与它的调研页契约 | 调研员子代理；人或会话起它 | 工具换 Mobbin；**分支**：轻用法和整页调研是两个分支，主体只写分支怎么分，各自的交回格式放参考 |
 | `design-change-sync` | 冻结后的会话 | 删掉评委当关卡的判定表，换成「评委给意见，人定」 |
 | `to-ticket`、`issue-session` | 切票会话；issue 会话 | 加 triage 前提；对齐「换阶段」 |
-| `wiki-conventions`、`uiux-imagine`、`dreaming`、设计档案校验 | 各自的会话 | pending 目录、本地忽略、接着做、对账（落点等「待定」定了再写） |
+| `wiki-conventions`、`uiux-imagine`、`dreaming`、设计档案校验 | 各自的会话 | pending 放在主 checkout、本地忽略、起手时找回、对账 |
 
 ## 测试决策
 
@@ -297,7 +290,7 @@ pending 只在本地，可每个 issue 会话在自己的 worktree 里跑，work
 - #223：这份 spec 做它的第 1 条（只比锚点区域），合并后在 #223 上评论说明，第 2、3 条留在原 issue。它不写进 `issues:`，免得这份 spec 了结时把它关掉。
 - #288：不在这份 spec 里；它依赖这份 spec 先合并，作为新流程的第一次 dogfood。
 - #216、#299：跟这份 spec 一样，想让人看到可视化的改动，但范围覆盖全部 spec 和 PR，没有重叠的落点，谁先谁后无关。
-- `release/idea-loop-0.2.0`（#331）：不改同一批文件，只在版本号上相撞，见「待定：插件版本升哪一档」。
+- `release/idea-loop-0.2.0`（#331）：不改同一批文件，只在版本号上相撞，这次升 patch 让开它，见「插件版本升 patch」。
 - 相关 ADR（2026-11-16 查 `docs/adr/` 里的 refine、评委、critic、Refero）：
   - [[0002-design-loop-v2-imagine-refine]] §2.4：「执行者对评委跑双模型打磨环」和「静态构图冻结之后才接动效段与素材段，再各跑一轮减法与 AI tells」这两句被这份 spec 推翻：评委降为顾问，动效并进每轮决策，减法和 AI tells 变成每轮的常设角度。§2.7「人拥有方向，机器拥有执行」不变，这份 spec 是往这条原则上收。
   - [[0016-design-research-agent]] §2：「由人调起」被部分推翻：每轮的轻用法由会话自动起，整页调研仍只在人说「查一下」时起。它担心的「调研撑大会话」照旧守住：调研员仍是单独的 agent，会话只收一个文件；designer 和评委仍不调研。数据源从 Refero 换成 Mobbin。
