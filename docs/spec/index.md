@@ -3,6 +3,6 @@
 
 | 文件 | summary |
 |---|---|
-| [[browser-fake-mic]] | 要麦克风的流程用完整 Chromium 加假麦克风自动走完，不交给人验，也不碰本机真麦克风 |
+| [[browser-fake-mic]] | agent 用无头浏览器点着走完要麦克风的流程，授权与拒绝都能测，并往假麦克风里喂指定音频 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
