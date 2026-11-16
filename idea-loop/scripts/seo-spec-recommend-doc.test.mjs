@@ -74,7 +74,7 @@ test('seo-md.md: 「内容原则」 is a section of the format, with its line fo
   const example = FORMAT.match(/```markdown([\s\S]*?)```/)[1];
   assert.match(example, /## 内容原则\n- .+（出处：.+）/, 'the example shows one principle with its source');
   assert.match(FORMAT, /\| 内容原则 \|[^\n]*出处[^\n]*起草 SEO spec/);
-  assert.match(FORMAT, /八个 `## ` 小节/);
+  assert.match(FORMAT, /九个 `## ` 小节/);
 });
 
 test('seo-md.md: who appends a new principle, and that the plugin writes none of its own', () => {

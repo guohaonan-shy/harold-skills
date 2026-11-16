@@ -15,12 +15,12 @@
 - 排名、点击变差不自动回滚，只进报告和 issue。
 
 ## 验收标准
-- [ ] 单元测试：研究日志里 results 3 天前跑过、technical 6 天前跑过，`seo-due.mjs` 判 results 到期、technical 未到期；7 天前跑过的 technical 到期
-- [ ] 单元测试：results 方向的发现文件过 findings 的校验
-- [ ] 单元测试：`seo-md.mjs` 读「分析」节，缺省不报错
-- [ ] results-analyst 定义存在，写明输入、改动清单的来源、两张图、报告三块和 14 天规则；seo-scan 写明 results 方向与报告落地；`*-doc.test.mjs` 钉住
-- [ ] seo-setup 的定时任务是每天一次
-- [ ] idea-loop 全量测试通过
+- [x] 单元测试：研究日志里 results 3 天前跑过、technical 6 天前跑过，`seo-due.mjs` 判 results 到期、technical 未到期；7 天前跑过的 technical 到期
+- [x] 单元测试：results 方向的发现文件过 findings 的校验
+- [x] 单元测试：`seo-md.mjs` 读「分析」节，缺省不报错
+- [x] results-analyst 定义存在，写明输入、改动清单的来源、两张图、报告三块和 14 天规则；seo-scan 写明 results 方向与报告落地；`*-doc.test.mjs` 钉住
+- [x] seo-setup 的定时任务是每天一次
+- [x] idea-loop 全量测试通过
 
 ## 选中的存量回归
 - `seo-scripts.test.mjs`：`seo-due.mjs` 的节奏断言（28 天）要随之改

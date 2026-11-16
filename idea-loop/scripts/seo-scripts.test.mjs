@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseSeoMd } from './seo-md.mjs';
+import { parseSeoMd, DIRECTIONS, SCAN_DIRECTIONS } from './seo-md.mjs';
+import { gaps } from './seo-gaps.mjs';
 import { plan as budgetPlan, spendings, billingPeriod } from './seo-budget.mjs';
 import { syncPlan } from './seo-context.mjs';
 import { regressions } from './seo-baseline.mjs';
@@ -350,21 +351,67 @@ test('baseline: a key page missing from this audit is severe; unchanged pages gi
 
 const run = (date, collected) => ({ entryDate: date, summary: `seo-scan ${date} 22:05，方向：${collected}\n采集：${collected}\n花费：0 credits` });
 
-test('due: an empty log runs everything; a collected run waits its cadence, a skipped one does not', () => {
-  assert.deepEqual(due({ researchLog: [] }, '2026-10-25').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
+test('due: an empty log runs everything, results included; a collected run waits its cadence, a skipped one does not', () => {
+  assert.deepEqual(due({ researchLog: [] }, '2026-10-25').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo', 'results']);
   const log = [
-    run('2026-10-18', 'technical 3 条；pages 2 条'),
+    run('2026-10-23', 'technical 3 条；pages 2 条；results 1 条'),
     run('2026-10-04', 'technical 1 条；pages 0 条；keywords 4 条；backlinks 未采集（数据源不可用）；geo 0 条'),
     { entryDate: '2026-10-10', summary: 'Keyword research: weeknight dinners. Verdict: ...' },
   ];
   const r = due({ researchLog: log }, '2026-10-25');
-  assert.deepEqual(r.last, { technical: '2026-10-18', pages: '2026-10-18', keywords: '2026-10-04', backlinks: null, geo: '2026-10-04' });
-  assert.deepEqual(r.due, ['technical', 'pages', 'backlinks']);
-  assert.deepEqual(due({ researchLog: log }, '2026-10-31').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
+  assert.deepEqual(r.last, { technical: '2026-10-23', pages: '2026-10-23', keywords: '2026-10-04', backlinks: null, geo: '2026-10-04', results: '2026-10-23' });
+  assert.deepEqual(r.due, ['keywords', 'backlinks', 'geo'], 'technical and pages ran 2 days ago, results too: none of them is due; the others were last collected 21 days ago or never');
 });
 
-test('due: a weekly run a few minutes early still counts as a week', () => {
-  assert.deepEqual(due({ researchLog: [run('2026-10-18', 'technical 1 条；pages 1 条')] }, '2026-10-24').due.slice(0, 2), ['technical', 'pages']);
-  assert.ok(!due({ researchLog: [run('2026-10-18', 'technical 1 条；pages 1 条')] }, '2026-10-20').due.includes('technical'));
+test('due: results every 3 days, the other five every 7 — results 3 days ago is due while technical 6 days ago is not', () => {
+  const log = [run('2026-10-22', 'results 2 条'), run('2026-10-19', 'technical 1 条')];
+  const r = due({ researchLog: [...log, run('2026-10-10', 'pages 1 条；keywords 1 条；backlinks 1 条；geo 1 条')] }, '2026-10-25');
+  assert.ok(r.due.includes('results'), 'results ran 3 days ago');
+  assert.ok(!r.due.includes('technical'), 'technical ran 6 days ago');
+  const later = due({ researchLog: log }, '2026-10-26');
+  assert.ok(later.due.includes('technical'), 'technical ran 7 days ago');
+  assert.ok(!due({ researchLog: [run('2026-10-23', 'results 1 条')] }, '2026-10-25').due.includes('results'), 'results ran 2 days ago');
+});
+
+test('due: a day is a calendar date, so a run a few minutes early in the day still counts; a bad date is refused', () => {
+  const log = [run('2026-10-18', 'technical 1 条；pages 1 条')];
+  assert.deepEqual(due({ researchLog: log }, '2026-10-25').due.slice(0, 2), ['technical', 'pages']);
+  assert.ok(!due({ researchLog: log }, '2026-10-24').due.includes('technical'));
   assert.throws(() => due({}, '10/25'), /YYYY-MM-DD/);
+});
+
+test('due: a log with nothing due still reads — the run only writes its one line', () => {
+  const log = [run('2026-10-25', 'technical 1 条；pages 1 条；keywords 1 条；backlinks 1 条；geo 1 条；results 1 条')];
+  assert.deepEqual(due({ researchLog: log }, '2026-10-26').due, []);
+});
+
+test('SEO.md: 分析 is optional — tool, project id and dashboard link; no section, 无 or empty values read as none, without an error', () => {
+  const md = `## 分析
+- 工具：PostHog
+- 项目：\`12345\`
+- dashboard：\`https://analytics.example/project/12345/dashboard/7\`
+`;
+  assert.deepEqual(parseSeoMd(md).analytics, { tool: 'PostHog', projectId: '12345', dashboard: 'https://analytics.example/project/12345/dashboard/7' });
+  const none = { tool: null, projectId: null, dashboard: null };
+  assert.deepEqual(parseSeoMd(SEO_MD).analytics, none, 'a SEO.md written before the section existed');
+  assert.deepEqual(parseSeoMd('## 分析\n- 工具：无\n').analytics, none);
+  assert.deepEqual(parseSeoMd('## 分析\n- 说明：随便写点什么\n').analytics, none);
+  assert.deepEqual(parseSeoMd('## 分析\n- 工具：PostHog\n').analytics, { tool: 'PostHog', projectId: null, dashboard: null }, 'only the tool written');
+});
+
+test('SEO.md: 分析 does not leak into its neighbours, and the neighbours not into it', () => {
+  const s = parseSeoMd('## 品牌\n- 品牌词：`cookbook`\n\n## 分析\n- 工具：PostHog\n- 项目：`9`\n\n## 内容原则\n- 写短句（出处：#1）\n');
+  assert.deepEqual(s.analytics, { tool: 'PostHog', projectId: '9', dashboard: null });
+  assert.deepEqual(s.brand.terms, ['cookbook']);
+  assert.deepEqual(s.principles, [{ text: '写短句', source: '#1' }]);
+  assert.equal(s.openseo.projectId, null, '「项目」in 分析 is not the OpenSEO project');
+});
+
+test('results is a scan direction only: the budget and the gap check take it, a finding cannot be filed under it', () => {
+  assert.deepEqual(SCAN_DIRECTIONS, [...DIRECTIONS, 'results']);
+  assert.ok(!DIRECTIONS.includes('results'), 'findings keep the original direction; there is no type:seo/results');
+  const r = budgetPlan(OPENSEO, 20000, ['results'], { log: [], today: '2027-02-15' });
+  assert.ok(r.allow.results > 0, 'results has an allocation of its own');
+  assert.deepEqual(gaps(parseSeoMd(SEO_MD), null, ['results']).gaps, [], 'the report needs no project facts');
+  assert.throws(() => gaps(parseSeoMd(SEO_MD), null, ['nonsense']), /不认识的方向/);
 });

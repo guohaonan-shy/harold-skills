@@ -1,24 +1,27 @@
 #!/usr/bin/env node
 /**
  * Reads a project's SEO.md — the one config file every seo skill, agent and script reads. Its format
- * is defined in skills/seo/seo-setup/references/seo-md.md: eight `## ` sections, one `- key：value`
+ * is defined in skills/seo/seo-setup/references/seo-md.md: nine `## ` sections, one `- key：value`
  * item per line (内容原则 is the exception: one `- <principle>（出处：<source>）` per line), domains / URLs /
  * paths / ids in backticks. Missing sections read as empty, unknown
  * lines are ignored, so a human can write notes in between. A human who answered "none" writes `无`
  * (`- 品牌词：无`, or one `- 无` line under 竞品): it reads as empty and as `confirmed`, so callers can
  * tell "confirmed empty" from "never written".
  *
- * Usage: node seo-md.mjs <SEO.md>   → JSON of the eight sections
+ * Usage: node seo-md.mjs <SEO.md>   → JSON of the nine sections
  * Exit: 0 = parsed, 1 = unreadable file (reason on stderr).
  */
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
+/** The directions a finding can be filed under (`type:seo/<direction>`). */
 export const DIRECTIONS = ['technical', 'pages', 'keywords', 'backlinks', 'geo'];
+/** The directions one seo-scan run can take: the five above, plus `results` (the effect report). Its findings are filed under the direction of the change they are about, so it is not a finding direction. */
+export const SCAN_DIRECTIONS = [...DIRECTIONS, 'results'];
 export const PAGE_TYPES = ['对比与研究', '数据研究', '故事', '教程'];
 
-const SECTIONS = ['站点', 'OpenSEO', '竞品', '重点页面', '构建与检查', '写作', '品牌', '内容原则'];
+const SECTIONS = ['站点', 'OpenSEO', '竞品', '重点页面', '构建与检查', '写作', '品牌', '内容原则', '分析'];
 
 /** The section bodies by heading: lines between `## <heading>` and the next `#`/`##` heading. */
 function sections(md) {
@@ -75,8 +78,8 @@ function parseSite(lines) {
   };
 }
 
-/** The weekly allocation's scan names: the directions plus `results`, which only takes a share here. */
-export const ALLOCATION_SCAN = [...DIRECTIONS, 'results'];
+/** The weekly allocation's scan names: every direction a scan can take, `results` included. */
+export const ALLOCATION_SCAN = SCAN_DIRECTIONS;
 const number = (s) => Number(String(s).replace(/,/g, ''));
 
 /** `排名追踪 300；扫描 technical 200，pages 300；起草与验证 400` → { tracking, scan: { <direction>: n }, drafting }. */
@@ -190,6 +193,19 @@ function parsePrinciples(lines) {
     });
 }
 
+/**
+ * `分析` (optional): the analytics tool the effect report may read — `- 工具：<name>`, `- 项目：<id>`, `- dashboard：<link>`.
+ * No section, no key, or `无` reads as null; backticks around an id or link are dropped.
+ */
+function parseAnalytics(lines) {
+  const kv = pairs(lines);
+  const value = (key) => {
+    const raw = String(kv[key] ?? '').trim();
+    return raw === '' || raw === NONE ? null : (firstTick(raw) ?? raw);
+  };
+  return { tool: value('工具'), projectId: value('项目'), dashboard: value('dashboard') };
+}
+
 /** Per item: written (a value, or an explicit `无`) vs never written. Empty-by-choice reads as confirmed. */
 function parseConfirmed(s, competitors, brand) {
   const none = items(s['竞品']).some((it) => it === NONE);
@@ -212,6 +228,7 @@ export function parseSeoMd(md) {
     writing: parseWriting(s['写作']),
     brand,
     principles: parsePrinciples(s['内容原则']),
+    analytics: parseAnalytics(s['分析']),
     confirmed: parseConfirmed(s, competitors, brand),
   };
 }

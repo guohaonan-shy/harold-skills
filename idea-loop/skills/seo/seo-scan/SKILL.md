@@ -1,31 +1,30 @@
 ---
 name: seo-scan
-description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue。每周的定时任务触发，人也可以手动跑。
-argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo）"
-allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
+description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue，每 3 天出一份效果报告。每天的定时任务触发，人也可以手动跑。
+argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo results）"
+allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git branch:*), Bash(gh pr:*), Bash(cp:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
-一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把发现交给提 issue 脚本，最后在研究日志里记一笔。产出只有 issue（当场分流）、评论、一条研究日志和外联跟进；仓库里除外联跟进表外什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
+一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，发现交给提 issue 脚本，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；仓库里只提交外联跟进表和效果报告（关卡可能改 `SEO.md`，改在工作区）。
 
-这次运行可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
+可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
 下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`。脚本都输出 JSON 到 stdout，出错退出码 1、原因在 stderr。
 
 ## 开场
 
-1. 仓库根 = `git rev-parse --show-toplevel`。`<仓库根>/SEO.md` 不存在：停下，交回「这个仓库没有 SEO.md，先由人跑 `/idea-loop:seo-setup`」。
-2. `node S/seo-md.mjs <仓库根>/SEO.md`，记下 `openseo.projectId`。报错或项目 id 为空：停下，交回脚本的原因和同一句「跑 `/idea-loop:seo-setup`」。
-3. **运行目录**：`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（`date +%Y%m%d-%H%M`），`mkdir -p` 建好。照 `idea-loop:wiki-conventions` 的「本地忽略」确认 `.tmp/` 被忽略。
-4. **项目上下文**：调 `get_project_context`（`projectId`），原始返回原样写到 `<运行目录>/context.json`。失败：原因记下，下面挑方向和同步都当作没有上下文。
+1. 仓库根 = `git rev-parse --show-toplevel`。`<仓库根>/SEO.md` 不存在，或 `node S/seo-md.mjs <仓库根>/SEO.md` 报错、`openseo.projectId` 为空：停下，交回原因和「先由人跑 `/idea-loop:seo-setup`」。
+2. **运行目录**：`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（`date +%Y%m%d-%H%M`），`mkdir -p` 建好。照 `idea-loop:wiki-conventions` 的「本地忽略」确认 `.tmp/` 被忽略。
+3. **项目上下文**：调 `get_project_context`（`projectId`），原始返回原样写到 `<运行目录>/context.json`。失败：原因记下，下面挑方向和同步都当作没有上下文。
 
 完成条件：拿到项目 id、一个运行目录、`context.json` 或它的失败原因。
 
 ## 方向
 
-- `$ARGUMENTS` 不为空：就跑这几个，按给的顺序。不在 `technical pages keywords backlinks geo` 里的词，记成「不认识的方向」进研究日志，不跑。
-- 为空（定时任务就是这样调的）：`node S/seo-due.mjs <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：technical、pages 每次都跑，keywords、backlinks、geo 四周一次；它读研究日志里以前各次扫描「采集」那一行，所以研究日志的前两行格式不能改。没有 `context.json`：跑全部五个。
+- `$ARGUMENTS` 不为空：就跑这几个。不在 `technical pages keywords backlinks geo results` 里的词，记成「不认识的方向」进研究日志，不跑。
+- 为空（定时任务每天这样调一次）：`node S/seo-due.mjs <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：`results` 每 3 天，其余五个每 7 天；研究日志的前两行格式不能改（它读以前各次的「采集」行）。没有 `context.json`：跑全部六个。
 
-完成条件：一个方向列表（可以为空：为空就跳过预算、派 agent、提 issue，直接写研究日志）。
+完成条件：一个方向列表（可以为空：为空就跳过预算、派 agent、提 issue，研究日志只写一行）。
 
 ## 缺口关卡
 
@@ -41,7 +40,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 5. 人回复后：
    - `SEO.md` 的项（竞品、品牌词）用 Edit 改在工作区；人说留空的写 `无`。
    - 项目上下文的项用 `update_project_context` 的 `{ section, content }` 写回；人说不需要的，那一节也写 `无`，下次缺口检查就不再报。
-   - 重新调 `get_project_context` 覆盖 `<运行目录>/context.json`（开场那份是旧的，会把刚写回的项再报缺）。
+   - 重新调 `get_project_context` 覆盖 `<运行目录>/context.json`（开场那份是旧的）。
    - 重跑第 2 步：`gaps` 为空就从「预算」往下跑，还有缺口回到第 3 步。
 
 完成条件：`gaps` 为空，或已通知人并停下。
@@ -51,15 +50,13 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 1. 重新读一次余额：调 `whoami` 读 `creditsRemaining`。「开始余额」是本次扫描第一次读到的（关卡调过就是它那次），「已花」= 开始余额 − 余额。读不到或 `null`：余额传 `null`、记原因（付费全不放行）。
 2. `node S/seo-budget.mjs <仓库根>/SEO.md <余额> <方向>... --spent <已花> --context <运行目录>/context.json --today <YYYY-MM-DD>`，输出存到 `<运行目录>/budget.json`。额度按周算，读法见 [references/budget.md](references/budget.md)。
 
-`allow` 里的方向都派（额度是它能花的 credits，0 只做免费调用）。`skipped` 的原因原样进研究日志；本周份额不够的另用『推送』告诉人。
+`allow` 里的方向都派（额度是它能花的 credits，0 只做免费）。`skipped` 的原因原样进研究日志；本周份额不够的另用『推送』告诉人。
 
 完成条件：每个要跑的方向在 `allow` 里有数，或在 `skipped` 里有原因。
 
 ## 竞品与重点页面同步
 
 步骤见 [references/context-sync.md](references/context-sync.md)；失败只记原因，不拦下面派 agent。
-
-完成条件：脚本的 `summary` 或失败原因已记下，供研究日志用。
 
 ## 派方向 agent
 
@@ -70,8 +67,9 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 | `keywords` | `idea-loop:keyword-miner` |
 | `backlinks` | `idea-loop:backlink-analyst` |
 | `geo` | `idea-loop:geo-analyst` |
+| `results` | `idea-loop:results-analyst` |
 
-在**同一条消息里**用 Agent 工具把 `allow` 里的方向全部起好，让它们并行。每个的提示照这个模板填，不加别的：
+在**同一条消息里**用 Agent 工具把 `allow` 里的方向全部起好，并行跑。提示照这个模板填，不加别的：
 
 ```
 SEO.md：<仓库根>/SEO.md
@@ -81,15 +79,15 @@ OpenSEO 项目：<projectId>
 今天：<YYYY-MM-DD>
 ```
 
-每个 agent 交回一行（格式见 [references/findings.md](references/findings.md) 的「交回」）。逐个核对 `<运行目录>/<方向>.json`：文件不存在、不是 JSON 数组、或 agent 报错退出，你自己把它写成未采集：`[{"direction":"<方向>","uncollected":"<agent 的报错或「没有交回发现文件」>"}]`。
+每个 agent 交回一行（格式见 [references/findings.md](references/findings.md) 的「交回」）。逐个核对 `<运行目录>/<方向>.json`：文件不存在、不是 JSON 数组、或 agent 报错退出，你照 findings.md 的「未采集」替它写，原因写 agent 的报错或「没有交回发现文件」。
 
-完成条件：每个派出去的方向在运行目录里都有一个合法的 `<方向>.json`。
+完成条件：每个派出去的方向都有一个合法的 `<方向>.json`。
 
 ## 提 issue
 
 1. 合并：把各方向文件里的发现拼成 `<运行目录>/findings.json`、去掉 `uncollected` 对象，命令见 [references/merge-findings.md](references/merge-findings.md)。
 2. `node S/seo-issues.mjs <仓库根>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；新开的 issue 先是 backlog，下一节马上分流。
-3. 脚本失败（例如 `gh` 没登录）：原因记下，进研究日志；不重试、不改用手动建。
+3. 脚本失败：原因记下进研究日志，不重试、不手动建。
 
 完成条件：`issues.json` 存在，或失败原因已记下。
 
@@ -102,7 +100,7 @@ OpenSEO 项目：<projectId>
 ## 研究日志
 
 1. 再调一次 `whoami`，开始余额减去这次余额就是本次花费；任一次读不到写「未知」；份写 `扫描`。
-2. 照 [references/research-log.md](references/research-log.md) 的模板把摘要写到 `<运行目录>/log.txt`，`wc -m` 不超过 1000 字符（`appendResearchLog` 的上限）。
+2. 照 [references/research-log.md](references/research-log.md) 的模板把摘要写到 `<运行目录>/log.txt`，`wc -m` 不超过 1000 字符。
 3. 调 `update_project_context`，`updates: [{ "appendResearchLog": { "summary": "<log.txt 的内容>" } }]`。失败就把 log.txt 的路径写进交回。
 
 完成条件：研究日志写入成功，或交回里写明了没写成的原因和 log.txt 路径。
@@ -110,6 +108,10 @@ OpenSEO 项目：<projectId>
 ## 外联跟进
 
 `docs/records/outreach/` 下有跟进表时，用 Skill 工具调 `idea-loop:seo-outreach`，走它的「跟进」分支，不论这次跑了哪些方向；没有跟进表就跳过。
+
+## 效果报告
+
+跑了 `results` 且 `<运行目录>/results/<今天>.md` 写出来了：照 [references/results-report.md](references/results-report.md) 落成 `docs/records/seo-results/<日期>.md`，只改 `docs/` 的 PR，检查过了合并，推送链接。没跑、没有报告：跳过。失败只记原因。
 
 ## 交回
 
@@ -121,6 +123,7 @@ seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:seo-setup>
 - 分流：todo <n>，triage <n>，canceled <n>
 - 花费：<n | 未知> credits
+- 效果报告：<PR 链接 | 没跑 | 没落成（原因）>
 - 研究日志：已写入 | 没写成（<原因>），摘要在 <log.txt 路径>
 - SEO.md：这次改了（<哪几项>）| 没改
 - 运行目录：<路径>
@@ -134,4 +137,4 @@ seo-scan <YYYY-MM-DD HH:MM> 停下等确认：<方向...>
 - 运行目录：<路径>
 ```
 
-不发布审阅页、不写周报或「洞察」：issue 就是交付物。
+不发布审阅页：issue 和效果报告就是交付物。

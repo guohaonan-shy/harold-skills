@@ -35,7 +35,7 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { DIRECTIONS, readSeoMd } from './seo-md.mjs';
+import { SCAN_DIRECTIONS, readSeoMd } from './seo-md.mjs';
 
 export const SHARES = ['排名追踪', '扫描', '起草与验证'];
 
@@ -113,7 +113,7 @@ export function week({ monthly, resetDay, weekly }, log, today, { gateSpent = 0,
 
 export function plan(openseo, balance, directions, { log = [], today, spent = 0, logKnown = true } = {}) {
   const { floor } = openseo;
-  for (const d of directions) if (!DIRECTIONS.includes(d)) throw new Error(`不认识的方向「${d}」（只认 ${DIRECTIONS.join(' / ')}）`);
+  for (const d of directions) if (!SCAN_DIRECTIONS.includes(d)) throw new Error(`不认识的方向「${d}」（只认 ${SCAN_DIRECTIONS.join(' / ')}）`);
   const { ask, ...books } = week(openseo, log, today, { gateSpent: spent, logKnown });
   const floorRoom = Number.isFinite(balance) && floor != null ? Math.max(0, balance - floor) : 0;
   const out = { allow: {}, skipped: [], week: { ...books, floorRoom } };

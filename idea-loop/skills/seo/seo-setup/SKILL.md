@@ -1,6 +1,6 @@
 ---
 name: seo-setup
-description: 把一个站点接进 seo 分类：写仓库根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类，配 AI 可见性跟踪和每周扫描。每个站点跑一次，设定变了再跑。
+description: 把一个站点接进 seo 分类：写仓库根目录的 SEO.md，同步 OpenSEO 项目上下文，建 SEO 的 issue 分类，配 AI 可见性跟踪和每天扫描。每个站点跑一次，设定变了再跑。
 disable-model-invocation: true
 ---
 
@@ -49,7 +49,7 @@ disable-model-invocation: true
 
 ## 4. 写 SEO.md
 
-照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。「OpenSEO」节按新格式写；有旧的「单次额度」行（第 2 步的迁移），人确认每周分配和套餐额度后把它删掉。新建的 `SEO.md` 带上空的「内容原则」节（只有标题）：内容由项目自己填，不问人、不推测、不写任何原则；已有的文件缺这一节就补上标题。
+照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。「OpenSEO」节按新格式写；有旧的「单次额度」行（第 2 步的迁移），人确认每周分配和套餐额度后把它删掉。新建的 `SEO.md` 带上空的「内容原则」节（只有标题）：内容由项目自己填，不问人、不推测、不写任何原则；已有的文件缺这一节就补上标题。「分析」节可选：人主动说了分析工具（工具名、项目 id、dashboard 链接）才写，不问、不推测；没有就不建这一节，效果报告里那一块写「没有接分析工具」。
 
 完成条件：`node S/seo-md.mjs SEO.md` 解析成功，八节都在；`git diff SEO.md` 给人看过。
 
@@ -90,11 +90,11 @@ disable-model-invocation: true
 
 完成条件：跟踪已开着定期检查，或人明确拒绝且记下了。
 
-## 8. 每周扫描
+## 8. 每天扫描
 
-`idea-loop:seo-scan` 可以由『定时任务』每周自己调一次（不带参数，哪些方向这周该跑由它按研究日志定）。必须在本仓库的主 checkout 里做。步骤（没有能力时的退路、问人的选项、任务的参数、要告诉人的话）在 [references/weekly-scan.md](references/weekly-scan.md)。
+`idea-loop:seo-scan` 可以由『定时任务』每天自己调一次（不带参数，今天哪些方向该跑由它按研究日志定：效果报告每 3 天，其余五个方向每 7 天；当天没有到期的只写一行研究日志）。必须在本仓库的主 checkout 里做。步骤（没有能力时的退路、问人的选项、任务的参数、早先装的每周任务怎么改、要告诉人的话）在 [references/daily-scan.md](references/daily-scan.md)。
 
-完成条件：本仓库有一个开着的每周 seo-scan 定时任务，或人拒绝了，或记下了没建的原因。
+完成条件：本仓库有一个开着的每天 seo-scan 定时任务，或人拒绝了，或记下了没建的原因。
 
 ## 交回
 
@@ -104,4 +104,4 @@ disable-model-invocation: true
 - OpenSEO 里写了什么：项目（新建还是已有）、上下文各节、竞品和重点页面的增删、跟踪的提示词数与每月估价。
 - 建了哪些 label。
 - Search Console 有没有接上：`get_search_console_performance` 返回「未连接」，告诉人到 OpenSEO 项目的集成页去连。pages 方向靠它。
-- 接下来：装了定时任务的，它每周自己跑 `/idea-loop:seo-scan`；没装的，人自己按周敲它（不带参数，它会按节奏挑方向）；想马上看一次就手动敲；不知道从哪下手，用 `idea-loop:seo-coach`。
+- 接下来：装了定时任务的，它每天自己跑一次 `/idea-loop:seo-scan`；没装的，人自己隔几天敲一次（不带参数，它会按节奏挑方向）；想马上看一次就手动敲；不知道从哪下手，用 `idea-loop:seo-coach`。

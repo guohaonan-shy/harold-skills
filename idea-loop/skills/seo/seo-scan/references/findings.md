@@ -69,6 +69,8 @@ OpenSEO 项目：<projectId>
   [{ "direction": "pages", "uncollected": "OpenSEO 项目没有连 Search Console" }]
   ```
 
+  agent 没有交回合法文件（文件不存在、不是 JSON 数组、报错退出）时，调用方替它写成同样形状的未采集，原因写 agent 的报错或「没有交回发现文件」。`results`（效果报告）方向的发现用被它回看的那个改动的方向做 `direction`，只有它的未采集对象写 `"direction": "results"`。
+
   拿到了一部分就交回拿到的那部分发现，缺的那块写进交回那一句（例：geo 方向没有 AI 可见性跟踪时，引用数据没采集，免费的站点自检照常交回发现）。
 - 写完先验一遍：`node -e 'const a=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(!Array.isArray(a))process.exit(1)' <文件>`，退出码 0 才交回。
 
