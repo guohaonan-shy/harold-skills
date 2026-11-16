@@ -77,27 +77,31 @@ issues: [247]
 
 **0.2.0 装上后一次做完**（2026-11-16 人选的，见「实现决策」）：这一刀的 PR（setup 的搬家一节、脚本、测试）先合进 `release/idea-loop-0.2.0`；四个子 issue 都合完，`release/idea-loop-0.2.0` 合进 main，人把本机的 idea-loop 升到 0.2.0、在 Toeflair 主 checkout 跑过 #252 的 setup（建好 home、登记项目）之后，#247 的会话在本机一口气跑完下面五步。issue 等这五步跑完、两个代码仓库的删文件 PR 合并后才 done。
 
+**必须紧接着跑，没有中间状态**：#333 定了 0.2.0 的 skill 和脚本只认 home、不留回退（Harold 原话：「我在想能不能0.2.0上线的时候就把知识库迁移，省着我们自己还需要维护一个中间状态」）。一个项目还没搬，idea-loop 的 skill 和脚本在它里面会停下，让人先跑 `/idea-loop:setup` 迁移。所以 0.2.0 装上后，本机和公司虚拟机上已经在用 0.1.x 的每个项目都紧接着跑这一节；这期间本机的调度、分拣、dreaming 定时任务碰到没搬的项目都会停。判一个项目搬没搬，#333 只看 `~/home/projects/<名字>/docs/` 在不在，所以每个项目要一次搬完（第 2 步）。
+
 ### 五步
 
 setup 加一节「迁到 home」，步骤放进它自己的参考文件，SKILL.md 主体只加一行指针和完成条件（setup 的 SKILL.md 主体已超 5000 字，#252 定的做法）。机械部分交给 #252 的 home-config 脚本（扩展它，不新写脚本，见「实现决策」）。每一步都是「出表 → 人看 → 先备份 → 执行」，跟 #252 改用户级配置一样。
 
 1. **盘点**（只读）：照 aihero 文章的四类（共享、重复、仓库专属、安装来的），给每个已登记项目出一张盘点表：每份文件归哪类、去哪；另外三张小表——仓库自己工具里写死 `docs/` 的文件、还开着且改了 `docs/` 的 PR、要搬的记忆目录。人分轮定，定完的表存进 `~/home/.backup/<时间>/plan.json`。
-2. **复制知识库**：把每个项目 git 跟踪的引导文件和 `docs/` 复制进 `~/home/projects/<名字>/`，相对位置不变（`docs/` 还叫 `docs/`），提交到 home。项目地图里的路径改成新位置。
+2. **复制知识库**（一个项目一次搬完）：把每个项目 git 跟踪的 `docs/` 和 8 份引导文件（`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md`，有几份搬几份）复制进 `~/home/projects/<名字>/`，相对位置不变（`docs/` 还叫 `docs/`）。同时改两处（#333 定的位置）：代码仓库 `AGENTS.md` 的「issue 分类」一节挪进 home 里 `ISSUE_TRACKER.md` 的「分类 label」一节；`ISSUE_TRACKER.md` 的「仓库」一节删掉（改从项目清单读）。`docs/` 最后一个落位：先全部写进项目目录下的临时目录，引导文件就位后再把它改名成 `docs/`，中途失败就没有 `docs/`，#333 照旧当它没搬，重跑从头来。然后提交到 home，项目地图里的路径改成新位置。
 3. **记忆**：照 #252 定下的顺序，同一次里做完：
    1. 10 个目录的记忆复制进 `~/home/memory/`，文件名加项目前缀，10 份索引合成一份 `MEMORY.md`；旧目录不删；
    2. 只切 `autoMemoryDirectory` 一项（#252 的 home-config 支持只做其中几项）；
    3. 跑一次 #332 的压缩，把 `MEMORY.md` 压到 140 行内。
    三小步之间不开别的会话。
 4. **用户级 skill**：出一张 24 行的表（名字、留还是删、是不是软链、指向哪、近 30 天调用几次）给人确认；人确认后先把整个 `~/.claude/skills/` 备份进 `~/home/.backup/<时间>/skills/`，再把留下的 5 个复制进 `~/home/skills/`、删掉其余 19 个、把 `~/.claude/skills` 换成指向 `~/home/skills/` 的软链。
-5. **代码仓库的 PR**：每个代码仓库开一个从它主分支切的 PR：删掉搬走的引导文件和 `docs/`，去掉项目级启用 idea-loop，把仓库自己工具里写死的 `docs/` 路径改成 home 里的路径，`AGENTS.md` 里 idea-loop 写的那两节按 #333 的新模板改；harold-skills 的 PR 还要把两个读 `docs/` 的测试改成不依赖仓库的 `docs/`。人合。合之前对着主分支最新的 `docs/` 再复制一次（盖掉第 2 步之后进主分支的改动），提交到 home。
+5. **代码仓库的 PR**：每个代码仓库开一个从它主分支切的 PR：删掉搬走的引导文件和 `docs/`，去掉项目级启用 idea-loop，把仓库自己工具里写死的 `docs/` 路径改成 home 里的路径，`AGENTS.md` 删掉已挪走的「issue 分类」一节、idea-loop 写的那一节按 #333 的新模板改；harold-skills 的 PR 还要把两个读 `docs/` 的测试改成不依赖仓库的 `docs/`。人合。合之前对着主分支最新的 `docs/` 再复制一次（盖掉第 2 步之后进主分支的改动），提交到 home。
 
 harold-skills 的 `.claude/settings.local.json` 不进 git，第 5 步直接改本机文件（先备份进 `~/home/.backup/<时间>/`），不在 PR 里。
 
+搬完一个项目，停用本机给它建的 dreaming 定时任务（#333：对账改由 home 的一个任务做）：本机现在有 `dreaming-tofel-demo`（每周一）和 `dreaming-harold-skills`（每周日）两个（2026-11-16 列定时任务）。只停用不删，交回里写上名字，删由人点。
+
 ### 同一行为的其他入口
 
-- **新设备第一次跑 setup**：没有老位置要搬，盘点表是空的，不进「迁到 home」这一节。纳入（只是不触发）。
-- **同一台设备上 setup 再跑一次**：已经搬过的项目，盘点表里每行都是「已在 home」，什么都不做。纳入。
-- **公司虚拟机**：还没有用 idea-loop 的项目，这次不跑；它以后跑 setup 时走同一节。排除：本机以外不在这一刀验证。
+- **全新项目第一次跑 setup**：没有老位置要搬，setup 直接把文件建在 home 里，归 #333，不进「迁到 home」这一节。排除。
+- **同一台设备上 setup 再跑一次**：已经搬过的项目（`~/home/projects/<名字>/docs/` 在），盘点表里每行都是「已在 home」，什么都不做。纳入。
+- **公司虚拟机**：上面已经在用 0.1.x 的项目，0.2.0 装上后同样紧接着跑这一节（home 只在本地、不推远端，决定记录 Q1）。纳入，但这一刀只在本机真跑和验证；虚拟机上由人跑，交回里写一句。
 - **`~/.agents/skills/`**：用户级 skill 里 9 个软链指向这里，`~/.agents/skills/` 下还有 21 个目录，可能被别的工具读。排除：只动 `~/.claude/skills/`（决定记录 Q28、Q30 说的是它），`~/.agents/skills/` 不碰。
 - **空的记忆目录、旧记忆目录**：排除：空的不搬；有记忆的旧目录复制后不删（决定记录 Q14）。
 
@@ -180,9 +184,18 @@ harold-skills 的 `.claude/settings.local.json` 不进 git，第 5 步直接改�
 
 依据：决定记录 Q3「代码仓库只留自己的 `AGENTS.md` / `CLAUDE.md` 和自己的工具」、Q14「照文章四类盘点，人分轮定方案表」。
 
-### 项目目录里的布局跟着 #333
+### 项目目录里的布局照 #333
 
-`~/home/projects/<名字>/` 下保持代码仓库里的相对位置：引导文件在这一层，`docs/` 还叫 `docs/`，所以 `docs/` 里的相对链接和图片路径不用改。项目地图 `~/home/projects/<名字>/AGENTS.md`（#252）跟它们并排，不冲突：代码仓库自己的 `AGENTS.md` 不搬。#333 的 spec 若定了别的布局（skill 从 home 的哪里读），以 #333 为准：它先于这一刀合进集成分支。代码仓库 `AGENTS.md` 里 idea-loop 写的「idea-loop」「issue 分类」两节，同样按 #333 定的新模板改。
+`~/home/projects/<名字>/` 下保持代码仓库里的相对位置：8 份引导文件在这一层，`docs/` 还叫 `docs/`，所以 `docs/` 里的相对链接和图片路径不用改。项目地图 `~/home/projects/<名字>/AGENTS.md`（#252）跟它们并排，不冲突：代码仓库自己的 `AGENTS.md` 不搬。
+
+#333 定下、这一刀照做的（#333 的 spec `skills-read-home` 在分支 `issue/333-skills-read-home`；2026-11-16 它的会话发来的结论）：
+
+- 判一个项目搬没搬只看 `~/home/projects/<名字>/docs/` 在不在，所以 `docs/` 最后落位（第 2 步），一个项目不能先搬一半。
+- 代码仓库 `AGENTS.md` 的「issue 分类」一节挪进 `ISSUE_TRACKER.md` 的「分类 label」一节；`ISSUE_TRACKER.md` 的「仓库」一节删掉；`AGENTS.md` 里 idea-loop 写的那一节按 #333 的新模板改。
+- 插件只认 home、不留回退：没搬的项目里 skill 和脚本停下让人跑 setup，所以 0.2.0 装上后紧接着跑。
+- 全新项目由 setup 直接建在 home 里，归 #333；这一刀只管已经在用 0.1.x 的项目。
+
+#333 合并前若再改这些，以它合进集成分支的版本为准：它先于这一刀合。
 
 ### 仓库自己的工具里写死的 `docs/` 路径改成 home 的路径
 
@@ -217,6 +230,7 @@ Toeflair 的 21 个文件（本地插件 `toeflair-growth`、`practice-producer`
 ### 已知限制
 
 - harold-skills 的旧 `docs/` 在公开历史里一直看得到（上面「公开历史不改写」）。
+- 0.2.0 装上到每个项目搬完之间，本机的调度、分拣、dreaming 定时任务碰到没搬的项目会停下（#333 只认 home）：所以五步紧接着跑完，不隔夜。
 - 第 3 步合出来的索引在压缩完成前会顶到 200 行：三小步之间不开别的会话，压缩失败就把 `autoMemoryDirectory` 改回去（备份里有原值），记忆原件都还在旧目录。
 
 ## 测试决策
@@ -235,11 +249,12 @@ Toeflair 的 21 个文件（本地插件 `toeflair-growth`、`practice-producer`
   - setup 的文档测试：「迁到 home」一节在参考文件里、SKILL.md 主体只有一行指针、写明删除前出清单等人确认。
 - **增量功能测试**：
   - 搬知识库 1、2：前置——临时 home 登记了 `example-app`，它的仓库根有 `DEVELOPMENT.md`、`EVAL.md`，`docs/` 下两个跟踪的文件和一个被忽略的文件，`.gitattributes` 有一条 `docs/design/prod/**` 的 LFS 规则。步骤——出表，再按表执行。期望——出表不写文件、`EVAL.md` 一行归类为空；执行后 `projects/example-app/` 下有 `DEVELOPMENT.md` 和两个跟踪的文件、没有被忽略的那个，home 的 `.gitattributes` 有加了前缀的规则，home 多了一个提交。覆盖：搬知识库 1、2。
+  - 搬知识库 2（一次搬完）：前置——同上，再让复制 `docs/` 的第二个文件时失败。步骤——执行知识库项，再执行一次。期望——第一次失败后 `projects/example-app/docs/` 不存在；第二次执行后它在、文件齐全。另一个前置：仓库 `AGENTS.md` 有「issue 分类」一节、`ISSUE_TRACKER.md` 有「仓库」一节；执行后 home 里 `ISSUE_TRACKER.md` 的「分类 label」一节是原「issue 分类」的内容，「仓库」一节没了。覆盖：搬知识库 2。
   - 搬知识库 3、4：前置——假仓库里一个本地 skill 写着 `docs/records/weekly/`、一个写着外部网址 `https://example.com/docs/registry`；假 `gh` 返回一个改了 `docs/` 的开着的 PR。步骤——出表。期望——第一个进「写死 `docs/` 的文件」表，第二个不进；PR 进「开着的 PR」表。覆盖：搬知识库 3、4。
   - 合并记忆 1：前置——两个假记忆目录，各有 `MEMORY.md` 和一条记忆，其中一个的仓库 `origin` 对上项目清单。步骤——执行记忆项两次。期望——`~/home/memory/` 下两条带前缀的文件、一份分两节的 `MEMORY.md`、链接指向带前缀的文件名；旧目录原样；第二次什么都不改。覆盖：合并记忆 1。
   - 清理用户级 skill 1、2、3：前置——假 `~/.claude/skills/` 有一个留下的软链、一个留下的目录、两个要删的。步骤——出表，执行时只给一个要删的确认。期望——出表四行、标出软链指向；执行后备份里四个都在、留下的两个在 `~/home/skills/` 且是实体、确认过的那个删了、没确认的那个还在并报出来、`~/.claude/skills` 是指向 `~/home/skills/` 的软链。覆盖：清理用户级 skill 1、2、3。
   - 搬知识库 5：在 harold-skills 删掉 `docs/` 的分支上跑 `node --test`。期望——全过。覆盖：搬知识库 5。
-  - 在本机跑完 1、2（完成标准，在本机做一次）：前置——0.2.0 已装上，Toeflair 主 checkout 跑过 #252 的 setup。步骤——跑完五步；然后在 harold-skills 的一个 worktree 里开一个全新的 `claude -p` 会话，问「操作主 checkout 时 git 命令怎么跑」。期望——改前改后对照表：两个项目搬进 home 的文件数等于代码仓库里 git 跟踪的数（Toeflair 的 `docs/` 1595 个以真跑那天为准）、`~/home/memory/` 的记忆条数等于 10 个目录之和（今天 253 条，不含索引）、`MEMORY.md` ≤140 行、`~/.claude/skills` 下 5 个、两个删文件的 PR 已开；`claude -p` 的回答用到 Toeflair 那条「用 `git -C`」的记忆。对照表贴进 PR 描述并评论到 #331。覆盖：在本机跑完 1、2，合并记忆 2、3。
+  - 在本机跑完 1、2（完成标准，在本机做一次）：前置——0.2.0 已装上，Toeflair 主 checkout 跑过 #252 的 setup。步骤——跑完五步；然后在 harold-skills 的一个 worktree 里开一个全新的 `claude -p` 会话，问「操作主 checkout 时 git 命令怎么跑」。期望——改前改后对照表：两个项目搬进 home 的文件数等于代码仓库里 git 跟踪的数（Toeflair 的 `docs/` 1595 个以真跑那天为准）、`~/home/memory/` 的记忆条数等于 10 个目录之和（今天 253 条，不含索引）、`MEMORY.md` ≤140 行、`~/.claude/skills` 下 5 个、两个删文件的 PR 已开、`dreaming-tofel-demo` 和 `dreaming-harold-skills` 两个定时任务已停用；`claude -p` 的回答用到 Toeflair 那条「用 `git -C`」的记忆。对照表贴进 PR 描述并评论到 #331。覆盖：在本机跑完 1、2，合并记忆 2、3。
 - **照着谁写**：home-config 脚本的测试照 #252 的同一份测试（临时 `HOME`）；在临时目录里建 git 仓库照 `idea-loop/scripts/issues.test.mjs`；假 `gh` 照 `issues.test.mjs`；setup 的文档测试照 `idea-loop/scripts/setup-single-source.test.mjs`。
 
 ## Out of scope
@@ -255,7 +270,7 @@ Toeflair 的 21 个文件（本地插件 `toeflair-growth`、`practice-producer`
 - raw：[[2026-11-15-home-repo-grill]]（全部决议，迁移相关是 Q3、Q13、Q14、Q28、Q30）；这次 triage 的两道题记在 `docs/raw/decisions/247.md`。
 - [[home-bootstrap]]（#252，还在 `issue/252-home` 分支、没进集成分支）：home-config 脚本、项目清单、`~/home/.backup/` 都用它的；它定了记忆目录在这一刀的同一次里切。这一刀在它之后。
 - #332（记忆整台设备一份，triage）：第 3 步的压缩用它的；它先合。
-- #333（skill 从 home 读，triage）：项目目录里的布局、代码仓库 `AGENTS.md` 的新模板以它为准；它先合。
+- #333（skill 从 home 读，todo，spec `skills-read-home` 在分支 `issue/333-skills-read-home`）：只认 home、判搬没搬的标准、8 份引导文件、「issue 分类」挪进 `ISSUE_TRACKER.md`、取消各项目的 dreaming 任务，都照它定的；它先合。
 - 父 issue #331：四个子 issue 全合进 `release/idea-loop-0.2.0`、合进 main、本机装上 0.2.0 之后，这一刀才在本机真跑，所以 #247 是最后一个 done 的子 issue。
 - 旧 spec `upgrade-from-0-1`（只在分支 `backup/247-migration-spec` 上，没进过 main）：它迁的是 0.1.x 的状态 label、spec 的 `status`、整合出来的组，这些 0.1.x 的 `issues.mjs migrate` 已经做了（#247 2026-11-13 的分拣评论）；它的「先出计划表、人确认再一步一步做、改动有备份」沿用在这里，其余不再适用，不并进来。
 - #298、#291：走 main，不在 0.2.0。它们若在本机真跑之前合进 main、改了 harold-skills 的 `docs/`，第 5 步的再复制会带上。
