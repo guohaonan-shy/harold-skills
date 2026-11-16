@@ -400,8 +400,9 @@ idea-loop/
     ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
     ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
     ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
-    ├── critic-score.mjs              # the critic's output shape and the stop decision: direction / pass / plateau / continue (+ the CLI uiux-refine calls each round)
+    ├── critic-score.mjs              # checks the critic's JSON (findings / reasoning / score / note) against the canvas's state list and the human's reasoning ids, and points out the direction findings; decides nothing about stopping (+ its CLI)
     ├── critic-score.test.mjs         # its unit tests
+    ├── ui-master-doc.test.mjs        # tripwire: the critic's definition names the new inputs and output shape, and gives no stop line
     ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
     ├── design-archive-check.mjs      # the archive's eight validation rules (reachability, async, references, journeys, decisions/candidates, motions/usedBy, sections of a long entry state, edge screenshots), file and field named; structure also covers an edge's `when`, a `{ text }` locate and the workspace prefixes of component names (`prod/index.md` `workspaces`, or `--workspaces`); hints for `content` / `position` sections; exit 0/1
     ├── design-archive-check.test.mjs # one red fixture per rule (rule 7 on the marketing fixture: nine bends, two hints; rule 8 on a fixture whose state has three `shot` edges, two sharing one image: eight bends) + `when` / text locate / workspace prefixes + the delta overlay + the old-layout note
@@ -520,10 +521,12 @@ What came across:
 | The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
 | Design research | user-level `refero` MCP (the human adds it with their own token), checked by `setup` |
 
-The design critic (`agents/ui-master.md`) has no separate rubric: it judges the gap to what a top
-studio would ship, lists the biggest gaps first (each routed by `kind`: direction / pattern / craft)
-and scores 1–10, 9 and up meaning the studio would ship it as-is. `scripts/critic-score.mjs` checks
-the shape and turns the round into a stop decision (direction, pass, a three-round plateau, or continue).
+The design critic (`agents/ui-master.md`) is an advisor and has no separate rubric: it judges the gap to what a top
+studio would ship, lists the biggest gaps first (each routed by `kind`: direction / pattern / craft, each with a
+`reference` sentence), assesses every one of the human's numbered lines of reasoning, and scores 1–10 as a reference.
+It asks "what could go" and looks for AI tells on every round. Whether the loop stops is the human's signature, not
+the score. `scripts/critic-score.mjs` only checks the shape (against the canvas's state list and the reasoning ids the
+human wrote this round) and points out the direction findings; it prints no stop verdict.
 
 Nothing in `skills/design/uiux-refine/references/design/` is an entry point. They are loaded on demand by whichever
 step is running; the hooks are the only pieces that fire on their own. One fires only on a
