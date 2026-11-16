@@ -34,6 +34,7 @@
 - 产物目录：`apps/site/dist`
 - 检查参数：`--title-max=70 --desc-max=160`
 - 内容路径：`apps/site/src/content/blog/`；`apps/site/public/images/**`；`apps/site/public/robots.txt`；`apps/site/public/llms.txt`
+- 上线等待：30
 
 ## 写作
 - 文风：`docs/reference/voice.md`
@@ -56,7 +57,7 @@
 | OpenSEO | 项目（project id）、余额下限（credits）、套餐额度（每月多少、每月几号重置）、每周分配（排名追踪、各方向扫描、起草与验证三份，`；` 分隔；没列的方向或份为 0，只做免费调用）；规则见下一节 | `seo-scan`、`seo-budget.mjs`、issue 会话起草 spec |
 | 竞品 | 每行一个：反引号里的域名，冒号后是名字和一句定位（第一个逗号前是名字） | `seo-context.mjs`，页面、关键词、外链、GEO 方向 |
 | 重点页面 | 每行一个：反引号里的网址，冒号后可写「头词 `<词>`」 | `seo-context.mjs`、`seo-baseline.mjs`，技术、页面方向 |
-| 构建与检查 | 产物目录（相对仓库根）、检查参数（原样传给 `seo-check.mjs`）、内容路径（SEO 改动可以碰的文件：glob 列表，每个放反引号里，`；` 分隔，`*` 不跨目录、`**` 跨目录，写目录路径就含它下面所有文件；`docs/` 和根目录 `SEO.md` 不用写；`.astro`、`.tsx`、`.css` 这类要显式列出才算；没写或写 `无`，只有 `docs/` 和 `SEO.md` 算内容） | 检查 hook；内容路径：`seo-content-scope.mjs`（判一个 SEO PR 是不是只改内容） |
+| 构建与检查 | 产物目录（相对仓库根）、检查参数（原样传给 `seo-check.mjs`）、内容路径（SEO 改动可以碰的文件：glob 列表，每个放反引号里，`；` 分隔，`*` 不跨目录、`**` 跨目录，写目录路径就含它下面所有文件；`docs/` 和根目录 `SEO.md` 不用写；`.astro`、`.tsx`、`.css` 这类要显式列出才算；没写或写 `无`，只有 `docs/` 和 `SEO.md` 算内容）、上线等待（合并后最多等多少分钟，线上页面还没换成这次的构建就不算上线；写分钟数，没写或写 `无` 按 30） | 检查 hook；内容路径：`seo-content-scope.mjs`（判一个 SEO PR 是不是只改内容）；上线等待：`seo-live-check.mjs`（合并后的上线自查） |
 | 写作 | 文风、失败案例（项目文件路径）、类型字段（文章 frontmatter 里记类型的字段名）、类型映射（项目的取值 → 通用类型：对比与研究 / 数据研究 / 故事 / 教程） | `seo-writing`、`seo-brief`、`seo-outreach` |
 | 品牌 | 品牌词（站点名的各种写法，每个放反引号里，`；` 分隔；没写或写 `无` 都读成空，蚕食判定不排除任何查询；写 `无` 另外标成已确认） | `page-optimizer`、`keyword-clustering`（判蚕食时排除含品牌词的查询） |
 | 内容原则 | 每行一条原则，行尾 `（出处：<人的原话、哪个 issue>）`；没有这一节、节里没有条目或只写 `无`，都读成没有原则 | 起草 SEO spec 的 issue 会话（`draft-spec` 的「输入」与「跟人定要 grill 的」） |

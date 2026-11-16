@@ -71,6 +71,7 @@ test('SEO.md: seven sections parse into the shape the scripts read', () => {
     distDir: 'apps/site/dist',
     checkArgs: ['--title-max=70', '--desc-max=160'],
     contentPaths: ['apps/site/src/content/blog/', 'apps/site/public/images/**', 'apps/site/public/llms.txt'],
+    liveWait: 30,
   });
   assert.deepEqual(s.writing.typeMap, { COMPARISON: '对比与研究', 'HOW-TO': '教程' });
   assert.deepEqual(s.brand.terms, ['cookbook', 'cook book']);
@@ -80,6 +81,17 @@ test('SEO.md: 内容路径 is read as a list of globs; a project that has not wr
   assert.deepEqual(parseSeoMd('## 构建与检查\n- 产物目录：`dist`\n').build.contentPaths, []);
   assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：无\n').build.contentPaths, []);
   assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：`content/**/*.md`\n').build.contentPaths, ['content/**/*.md']);
+});
+
+test('SEO.md: 上线等待 is minutes to wait for a deploy after a merge; not written, 无 or not a positive number reads as 30', () => {
+  const wait = (v) => parseSeoMd(`## 构建与检查\n- 产物目录：\`dist\`\n${v === undefined ? '' : `- 上线等待：${v}\n`}`).build.liveWait;
+  assert.equal(wait(), 30);
+  assert.equal(wait('45'), 45);
+  assert.equal(wait('10 分钟'), 10);
+  assert.equal(wait('无'), 30);
+  assert.equal(wait('0'), 30);
+  assert.equal(wait('很久'), 30);
+  assert.equal(parseSeoMd('# SEO\n').build.liveWait, 30, 'no 构建与检查 section at all');
 });
 
 test('SEO.md: 内容原则 reads one principle per line, with its source; no section reads as none, without an error', () => {

@@ -7,7 +7,7 @@ SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，
 | 接入 | `seo-setup`（人跑，写 SEO.md（含「内容路径」）、同步 OpenSEO、建 issue 分类、批 AI 可见性跟踪、建每周扫描的定时任务） |
 | 发现 | `seo-audit`、`keyword-research`、`keyword-clustering`、`competitor-analysis`、`link-prospecting`、`seo-geo`；agent `technical-auditor`、`page-optimizer`、`keyword-miner`、`backlink-analyst`、`geo-analyst` |
 | 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向；提完 issue 后分流，结尾调用外联跟进）+ `scripts/seo-{due,gaps,budget,context,baseline,meta-provenance,issues}.mjs`（OpenSEO 的套餐额度按周花完：`seo-budget.mjs` 读研究日志的「花费」行算本周预算，按 `SEO.md` 的每周分配拆给排名追踪、扫描、起草与验证三份；开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
-| 解决 | `seo-brief`（triage 阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段起草，草稿进人的草稿箱；人说「发外联邮件」才发；每次扫描结尾读回信、追发；目录提交填到最后一步等人点）、`seo-check`（发布前检查，构建后 hook 自动跑）+ `scripts/seo-content-scope.mjs`（判一个 SEO PR 是不是只改内容：改动文件对 `SEO.md` 的「内容路径」加 `docs/` 和 `SEO.md`；只改内容、检查全过、两轴没有阻塞项的 SEO PR 由 Claude 合并，见 `pr-review/references/seo-auto-merge.md`） |
+| 解决 | `seo-brief`（triage 阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段起草，草稿进人的草稿箱；人说「发外联邮件」才发；每次扫描结尾读回信、追发；目录提交填到最后一步等人点）、`seo-check`（发布前检查，构建后 hook 自动跑）+ `scripts/seo-content-scope.mjs`（判一个 SEO PR 是不是只改内容：改动文件对 `SEO.md` 的「内容路径」加 `docs/` 和 `SEO.md`；只改内容、检查全过、两轴没有阻塞项的 SEO PR 由 Claude 合并，见 `pr-review/references/seo-auto-merge.md`）；`scripts/seo-live-{check,record}.mjs`（合并后的上线自查，写在 `pr-review/references/merge.md` 的「上线后自查」：每分钟取一次线上页面，等线上换成这次的构建（最久 `SEO.md`「构建与检查」的「上线等待」分钟，没写 30），再逐个网址核能打开、没有 noindex、title 与 description 同产物、在 sitemap 里；全过就在 issue 上贴带隐藏标记的评论并把目标词加进排名追踪，有一项不过就回滚合并并另开 todo issue，等满没上线只推送不回滚） |
 | 陪练 | `seo-coach` |
 
 ## 出处

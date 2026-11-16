@@ -144,13 +144,19 @@ function parseKeyPages(lines) {
     .filter(Boolean);
 }
 
+/** Minutes the post-deploy check waits for the live site to match the build when SEO.md does not say. */
+export const DEFAULT_LIVE_WAIT = 30;
+
 function parseBuild(lines) {
   const kv = pairs(lines);
+  const wait = Number(String(kv['上线等待'] ?? '').match(/\d+/)?.[0] ?? NaN);
   return {
     distDir: firstTick(kv['产物目录'] ?? ''),
     checkArgs: ticks(kv['检查参数'] ?? '').join(' ').split(/\s+/).filter(Boolean),
     // globs of the files an SEO change may touch and still be "content only" (seo-content-scope.mjs)
     contentPaths: ticks(kv['内容路径'] ?? ''),
+    // minutes the post-deploy check waits for the live site to match the build (seo-live-check.mjs)
+    liveWait: wait > 0 ? wait : DEFAULT_LIVE_WAIT,
   };
 }
 
