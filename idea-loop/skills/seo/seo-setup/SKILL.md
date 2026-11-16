@@ -63,30 +63,15 @@ disable-model-invocation: true
 
 ## 6. 加 SEO 的 issue 分类
 
-项目的「`## issue 分类`」一节在 `AGENTS.md`；没有 `AGENTS.md`，在有 `## idea-loop` 块的那份 `CLAUDE.md`。这一节不存在，告诉人先跑 `/idea-loop:setup`，这一步记「未做」。存在就补上缺的行，格式照 setup 的模板：父类、子类各一行，名字放反引号里，「：」后接说明，子类缩进两格。
-
-```markdown
-- `seo`：搜索可见性的问题：由 seo-scan 定时提出，或人按 SEO 问题提
-  - `technical`：技术 SEO 与索引：审计问题、索引、sitemap、重点页面相对上次审计的回退
-  - `pages`：已有页面优化：排名 5–20 位的词、标题与点击率、自相蚕食、内链缺口
-  - `keywords`：关键词挖掘与新内容：新词、聚类、并入已有页还是新开
-  - `backlinks`：外链：竞品有、我们没有的引用域，外联候选
-  - `geo`：AI 搜索可见性：被 AI 回答提到和引用的情况、schema、llms.txt
-```
+项目的「`## issue 分类`」一节在 `AGENTS.md`；没有 `AGENTS.md`，在有 `## idea-loop` 块的那份 `CLAUDE.md`。这一节不存在，告诉人先跑 `/idea-loop:setup`，这一步记「未做」。存在就补上缺的 `seo` 父类和五个方向子类（`technical`、`pages`、`keywords`、`backlinks`、`geo`）的行，要补的原文和格式在 [references/issue-labels.md](references/issue-labels.md)。
 
 然后跑 `node S/issues.mjs labels docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 `/idea-loop:setup`。
 
-完成条件：`git diff` 里这一节多了上面六行；`gh label list --search type:seo` 列出六个 label。
+完成条件：`git diff` 里这一节多了 [references/issue-labels.md](references/issue-labels.md) 里的六行；`gh label list --search type:seo` 列出六个 label。
 
 ## 7. AI 可见性跟踪
 
-扫描时 geo 方向只读这里建的跟踪，不花钱、不问人，所以付费在这一步由人批一次。
-
-1. `get_ai_visibility_tracker`。已配好且定期检查开着：报给人（提示词数、引擎、频率），这一步完成。
-2. 没配好：起一份提示词草稿。来源按顺序：人给的；重点页面的头词改写成用户会问 AI 的问题；人同意花一次模型调用的话用 `generate_ai_visibility_prompts`。提示词的原文经人确认，之后不再改写。
-3. `estimate_ai_visibility_cost`，`patch` 带上草稿的提示词和引擎，`scheduleInterval` 用人想要的频率（推荐 `weekly`）。把单次检查和每月的花费报给人。
-4. 人批了：`save_ai_visibility_tracker` 存提示词和引擎，再 `set_ai_visibility_schedule`（`enabled: true`，人定的频率）。首次开启会排一次基线检查，读那次的结果，不再另买 `run_ai_visibility_check`。人没批：什么都不存，记下「geo 方向会一直是未采集」。
-5. 这次花了 credits（`find_serp_competitors`、`generate_ai_visibility_prompts`），用 `update_project_context` 的 `appendResearchLog` 记一条：查了什么、花了多少，别的 skill 据此不重买。
+扫描时 geo 方向只读这里建的跟踪，不花钱、不问人，所以付费在这一步由人批一次。步骤（查现有跟踪、起提示词草稿、估价、人批了怎么存、花了 credits 怎么记）在 [references/ai-visibility.md](references/ai-visibility.md)。
 
 完成条件：跟踪已开着定期检查，或人明确拒绝且记下了。
 

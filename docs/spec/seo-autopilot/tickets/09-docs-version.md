@@ -13,11 +13,11 @@
 - 版本不在这张工单里升：档位有争议（REVIEW.md 按字面可能是 major——旧 SEO.md 的「单次额度」现在会报错、要重跑 seo-setup 迁移；而 #327 记着人连续三次把这类改成 patch），由编排者交人定后再升。`plugin-version.test.mjs` 在这张里仍预期红。
 
 ## 验收标准
-- [ ] seo-setup 的 SKILL.md 主体 < 5000 字（量法见根 AGENTS.md），挪出去的内容在它自己的 references 里、SKILL.md 有指针
-- [ ] seo-brief 两处写明 SEO issue 起草时角度照推荐定，人直接要 brief 时照旧；`*-doc.test.mjs` 钉住（先对改前原文看它红）
-- [ ] 根 `AGENTS.md` 第 1 条不再说 SEO issue 等人分拣，写了新出口
-- [ ] 两份 README 覆盖上面列的每一项
-- [ ] idea-loop 全量测试通过
+- [x] seo-setup 的 SKILL.md 主体 < 5000 字（量法见根 AGENTS.md），挪出去的内容在它自己的 references 里、SKILL.md 有指针
+- [x] seo-brief 两处写明 SEO issue 起草时角度照推荐定，人直接要 brief 时照旧；`*-doc.test.mjs` 钉住（先对改前原文看它红）
+- [x] 根 `AGENTS.md` 第 1 条不再说 SEO issue 等人分拣，写了新出口
+- [x] 两份 README 覆盖上面列的每一项
+- [x] idea-loop 全量测试通过（`plugin-version.test.mjs` 除外：版本这次不升，它预期红）
 
 ## 选中的存量回归
 - `no-project-leak.test.mjs`：README 里的例子不能带项目名
