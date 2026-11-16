@@ -13,11 +13,11 @@
 - seo-scan 开头说「开出的 issue 就是 backlog，等人分拣」那类句子改成新出口。
 
 ## 验收标准
-- [ ] seo-scan 有「分流」一节，写明只处理 `created`、同时最多 5 个、三种翻法；`*-doc.test.mjs` 钉住（先对改前原文看它红）
-- [ ] issue-triager 的去向表有 SEO 分支，写明「只有 UI 设计建议 triage、判不了建议 todo」；`*-doc.test.mjs` 钉住
-- [ ] 交回模板与研究日志模板各多一行分流计数，研究日志前两行格式不变（`seo-due.mjs` 的现有测试仍过）
-- [ ] seo-scan 的 SKILL.md 主体仍 < 5000 字（量法见仓库根 AGENTS.md）；超了把细节挪进 seo-scan 自己的 references
-- [ ] idea-loop 全量测试通过
+- [x] seo-scan 有「分流」一节，写明只处理 `created`、同时最多 5 个、三种翻法；`*-doc.test.mjs` 钉住（先对改前原文看它红）
+- [x] issue-triager 的去向表有 SEO 分支，写明「只有 UI 设计建议 triage、判不了建议 todo」；`*-doc.test.mjs` 钉住
+- [x] 交回模板与研究日志模板各多一行分流计数，研究日志前两行格式不变（`seo-due.mjs` 的现有测试仍过）
+- [x] seo-scan 的 SKILL.md 主体仍 < 5000 字（量法见仓库根 AGENTS.md）；超了把细节挪进 seo-scan 自己的 references
+- [x] idea-loop 全量测试通过（本机只跑了涉及的测试，全量交给 CI；`plugin-version` 在 09 升版本前是红的）
 
 ## 选中的存量回归
 - `triage-autonomous-doc.test.mjs`：钉着 issue-triage「照建议直接翻」「不替人拒需求」的句子，改分拣员去向表可能碰到

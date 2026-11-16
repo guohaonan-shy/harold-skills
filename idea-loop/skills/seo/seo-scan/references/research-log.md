@@ -9,6 +9,7 @@ seo-scan <YYYY-MM-DD HH:MM>，方向：<方向...>
 同步：<seo-context 的 summary | 无改动 | 失败：原因>
 新建：#<号> <标题>；…（无则写「无」）
 评论：#<号> <标题>；…
+分流：todo <n>，triage <n>，canceled <n>（没翻成的号：#<号>（<原因>））
 拒收：<标题>（<原因>）；…
 <untyped 为 true 时加一行：项目没有 seo 分类，跑一次 seo-setup>
 <提 issue 失败时加一行：提 issue 失败：原因>

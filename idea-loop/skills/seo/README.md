@@ -1,12 +1,12 @@
 # seo 分类
 
-SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，`seo-scan` 把问题提成 backlog 的 issue（`type:seo/<方向>`），之后照 idea-loop 的 issue 会话走 triage、实现。项目配置只有根目录的一份 `SEO.md`（格式：[seo-setup/references/seo-md.md](seo-setup/references/seo-md.md)）。设计见 spec `idea-loop-seo`。
+SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，`seo-scan` 把问题提成 issue（`type:seo/<方向>`）并当场分流：每个新 issue 起一个 `issue-triager`，只有要 UI 设计的进 triage，判不了的进 todo，重复、「不做」、已实现、复现不出的 canceled；之后照 idea-loop 的 issue 会话走 triage、实现。项目配置只有根目录的一份 `SEO.md`（格式：[seo-setup/references/seo-md.md](seo-setup/references/seo-md.md)）。设计见 spec `idea-loop-seo`。
 
 | 层 | skill / agent |
 |---|---|
 | 接入 | `seo-setup`（人跑，写 SEO.md、同步 OpenSEO、建 issue 分类、批 AI 可见性跟踪、建每周扫描的定时任务） |
 | 发现 | `seo-audit`、`keyword-research`、`keyword-clustering`、`competitor-analysis`、`link-prospecting`、`seo-geo`；agent `technical-auditor`、`page-optimizer`、`keyword-miner`、`backlink-analyst`、`geo-analyst` |
-| 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向）+ `scripts/seo-{due,gaps,budget,context,baseline,issues}.mjs`（开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
+| 入队 | `seo-scan`（每周定时，不带参数时按节奏挑方向；提完 issue 后分流）+ `scripts/seo-{due,gaps,budget,context,baseline,issues}.mjs`（开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
 | 解决 | `seo-brief`（triage 阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段）、`seo-check`（发布前检查，构建后 hook 自动跑） |
 | 陪练 | `seo-coach` |
 

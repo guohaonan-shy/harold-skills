@@ -2,12 +2,12 @@
 name: seo-scan
 description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue。每周的定时任务触发，人也可以手动跑。
 argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo）"
-allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
+allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
-一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把发现交给提 issue 脚本，最后在研究日志里记一笔。产出只有 issue、评论和一条研究日志；仓库里什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
+一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，把发现交给提 issue 脚本，最后在研究日志里记一笔。产出只有 issue（当场分流）、评论和一条研究日志；仓库里什么都不提交（关卡可能改 `SEO.md`，改在工作区）。
 
-这次运行可能没有人在场（定时任务触发）：任何一步缺数据，照下文记下来、接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
+这次运行可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
 下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`。脚本都输出 JSON 到 stdout，出错退出码 1、原因在 stderr。
 
@@ -60,7 +60,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 1. `node S/seo-context.mjs <仓库根>/SEO.md <运行目录>/context.json`（没有 `context.json` 就跳过这一节，记「同步失败：读不到项目上下文」）。
 2. `updates` 非空：调 `update_project_context`，`updates` 就用脚本给的数组，原样。为空就不写。
 
-名单以 SEO.md 为准、只往 OpenSEO 写，OpenSEO 里多出来的竞品被删是预期结果。任一步失败：把原因记下，跳过同步，继续派 agent（agent 读的是 SEO.md，不受影响）。
+名单以 SEO.md 为准、只往 OpenSEO 写，多出来的竞品被删是预期。任一步失败：记下原因，跳过同步，继续派 agent（它们读 SEO.md）。
 
 完成条件：脚本的 `summary` 或失败原因已记下，供研究日志用。
 
@@ -90,16 +90,17 @@ OpenSEO 项目：<projectId>
 
 ## 提 issue
 
-1. 合并：把各方向文件里的发现拼成一个数组，去掉 `uncollected` 对象：
-
-   ```
-   node -e 'const fs=require("fs"),[d,...ds]=process.argv.slice(1);fs.writeFileSync(d+"/findings.json",JSON.stringify(ds.flatMap(x=>JSON.parse(fs.readFileSync(d+"/"+x+".json","utf8"))).filter(f=>!f.uncollected),null,2))' <运行目录> <派出去的方向>...
-   ```
-
-2. `node S/seo-issues.mjs <仓库根>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；开出的 issue 不打 `status:*`，就是 backlog，等人分拣。
+1. 合并：把各方向文件里的发现拼成 `<运行目录>/findings.json`、去掉 `uncollected` 对象，命令见 [references/merge-findings.md](references/merge-findings.md)。
+2. `node S/seo-issues.mjs <仓库根>/docs <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；新开的 issue 先是 backlog，下一节马上分流。
 3. 脚本失败（例如 `gh` 没登录）：原因记下，进研究日志；不重试、不改用手动建。
 
 完成条件：`issues.json` 存在，或失败原因已记下。
+
+## 分流
+
+对 `issues.json` 里 `created` 的每个号（`commented` 的已在某个状态里，不分流）起一个 `idea-loop:issue-triager`，同时最多 5 个，照它交回的 `route` 翻：`canceled` 带结论翻 canceled，`triage` 翻 triage，`todo` 和判不了的 `backlog` 翻 todo，优先级照它的建议。备环境、命令、失败处理见 [references/routing.md](references/routing.md)。
+
+完成条件：`created` 的每个号都翻过或失败原因已记下；`created` 为空就跳过。
 
 ## 研究日志
 
@@ -117,6 +118,7 @@ OpenSEO 项目：<projectId>
 seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - <方向>：<N> 条发现 | 未采集（<原因>） | 预算跳过（<原因>）
 - issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:seo-setup>
+- 分流：todo <n>，triage <n>，canceled <n>
 - 花费：<n | 未知> credits
 - 研究日志：已写入 | 没写成（<原因>），摘要在 <log.txt 路径>
 - SEO.md：这次改了（<哪几项>）| 没改
