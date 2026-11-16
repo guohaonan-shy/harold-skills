@@ -3,5 +3,6 @@
 
 | 文件 | summary |
 |---|---|
+| [[skill-body-limit-backlog]] | 4 份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references，压回线内 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
