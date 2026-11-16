@@ -3,5 +3,6 @@
 
 | 文件 | summary |
 |---|---|
+| [[sections-browser-test-out-of-full-suite]] | 设计档案的浏览器测试移出全量测试命令、另给单独命令，每例加超时 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
