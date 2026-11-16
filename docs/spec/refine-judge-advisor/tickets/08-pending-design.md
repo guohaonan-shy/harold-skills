@@ -19,12 +19,12 @@
 
 ## 验收标准
 
-- [ ] `wiki-conventions` 的目录图和生命周期里有 `design/pending/<spec-slug>/`：放在主 checkout、只在本地、谁挪、谁读
-- [ ] `uiux-imagine`、`uiux-refine` 起手前查主 checkout 的 `pending/`，有同一块界面就问人；接着做时复制回当前 worktree 再从中断与恢复接上
-- [ ] 「这块界面先不做」的挪法写在设计流程里（含 spec 里留指针和理由）
-- [ ] `dreaming` 对账列出 pending 的每一份和 spec 是否已了结，已了结的提议删
-- [ ] 设计档案校验对 `pending/` 不报任何提示，有单元测试（在 `docs/design/` 下放一个 `pending/<slug>/` 的夹具）
-- [ ] uiux-refine、uiux-imagine 的 SKILL.md 主体仍 < 5000 字
+- [x] `wiki-conventions` 的目录图和生命周期里有 `design/pending/<spec-slug>/`：放在主 checkout、只在本地、谁挪、谁读
+- [x] `uiux-imagine`、`uiux-refine` 起手前查主 checkout 的 `pending/`，有同一块界面就问人；接着做时复制回当前 worktree 再从中断与恢复接上
+- [x] 「这块界面先不做」的挪法写在设计流程里（含 spec 里留指针和理由）
+- [x] `dreaming` 对账列出 pending 的每一份和 spec 是否已了结，已了结的提议删
+- [x] 设计档案校验对 `pending/` 不报任何提示，有单元测试（在 `docs/design/` 下放一个 `pending/<slug>/` 的夹具）
+- [x] uiux-refine、uiux-imagine 的 SKILL.md 主体仍 < 5000 字
 
 ## 选中的存量回归
 

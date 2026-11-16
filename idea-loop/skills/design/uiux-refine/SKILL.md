@@ -14,6 +14,7 @@ disable-model-invocation: true
 
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），「实现决策」里还没有冻结摘要。
 - `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过，停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
+- **搁置的设计**：主 checkout（`git worktree list` 第一行）的 `docs/design/pending/` 里有没有同一块界面的设计，有就问人要不要接着做。要的话把那个目录复制回当前 worktree 的 `docs/design/tmp/<spec-slug>/`（pending 那份留着），再从 [`references/after-freeze.md`](references/after-freeze.md) 的「会话中断或重开」接上；不要就照常往下。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人「这份 spec 没有交接画布，会从方向说明重建」。
 
 ## 起步
@@ -81,4 +82,4 @@ designer 交付「冻结」后，你核对：
 
 提交的步骤和之后告诉人的话见 [`references/after-freeze.md`](references/after-freeze.md)。
 
-**冻结之后设计变了、部分冻结、会话中断或重开**：各自怎么办见 [`references/after-freeze.md`](references/after-freeze.md)。
+**冻结之后设计变了、部分冻结、先不做、会话中断或重开**：各自怎么办见 [`references/after-freeze.md`](references/after-freeze.md)。

@@ -44,6 +44,7 @@ const ROWS = {
   'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「明确不进 DESIGN.md 的内容」里的带日期的先例', '删除', OPTS]],
   漏归档: [['docs/design/tmp/cart-promo/', 'spec 已是「完成」，origin/main 上 tmp/cart-promo/ 里还留着画布与 delta（绕过合并步骤合进去的）', 'git ls-tree origin/main docs/design/tmp/cart-promo/；spec 状态：完成', '补归档', OPTS]],
   'retro 候选': [['候选：下单前先核对自动填好的字段（落点 `idea-loop:seo-outreach`）', '出现 3 次（harold-skills#108、#112、#115）；无已推翻；无反例', '#108：「留在候选吧。」；决定记录：[[108]]', '开 issue：改 skill', OPTS]],
+  搁置设计: [['docs/design/pending/cart-promo/', 'spec 已了结：cart-promo 的 issue #31 已关；搁置的设计还在（imagine/、canvas/ 到 v7）', 'git worktree list 第一行：/work/shop；ls：imagine/ canvas/；spec 目录已不在 origin/main', '删除', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -467,4 +468,30 @@ test('a table that is not valid is reported as before, with the same exit code, 
   assert.doesNotMatch(withFlag.out, /^# 提议表/m);
   const unpath = (s) => s.replace(/\(\S*proposal\.md\)/g, '(file)'); // each run writes its own temp file
   assert.equal(unpath(withFlag.out), unpath(plain.out));
+});
+
+// ---------- 搁置设计：主 checkout 的 pending/ 里的每一份 ----------
+
+test('a shelved-design row takes 删除 or 留着 (a note in parentheses is fine) and nothing else', () => {
+  for (const d of ['删除', '留着', '留着（spec 还在，#31 开着）']) {
+    const r = run(sample({ 搁置设计: withDisposition('搁置设计', d) }));
+    assert.equal(r.status, 0, `${d}: ${r.out}`);
+  }
+  const bad = run(sample({ 搁置设计: withDisposition('搁置设计', '归档') }));
+  assert.equal(bad.status, 2, bad.out);
+  assert.match(bad.out, /搁置设计/);
+  assert.match(bad.out, /删除 \/ 留着/);
+});
+
+test('splitting: a shelved-design 删除 row goes to the human (local files, no git history), a 留着 row stays automatic', () => {
+  const keep = ['docs/design/pending/menu-redesign/', 'spec 还在：issue #44 开着', 'spec 目录在 origin/main；#44 open', '留着', OPTS];
+  const del = ['docs/design/pending/cart-promo/', 'spec 已了结', 'issue #31 closed', '删除（已了结）', OPTS];
+  const md = `# 提议表 2026-10-19\n\n${section('搁置设计', [keep, del])}`;
+  const r = run(md, ASK_FLAG);
+  assert.equal(r.status, 0, r.out);
+  assert.deepEqual(sectionTitles(r.out), ['搁置设计']);
+  assert.match(r.out, /cart-promo/);
+  assert.doesNotMatch(r.out, /menu-redesign/);
+  const onlyKeep = run(`# 提议表 2026-10-19\n\n${section('搁置设计', [keep])}`, ASK_FLAG);
+  assert.match(onlyKeep.out, /无问人的行/);
 });

@@ -50,6 +50,7 @@ docs/
 │   │   ├── canvas/       收敛段：画布各版本、冻结记录、交互图；冻结后唯一的设计真相 —— 内部结构归 `idea-loop:uiux-refine`
 │   │   ├── delta/        对 prod/ 的差异：合并前归档时从最终画布加实现写出（没有设计稿的改动由实现者记最小差异）—— 结构见 `idea-loop:design-archive`
 │   │   └── research/<问题短名>/  `idea-loop:uiux-research` 的调研页与参考截图；没有 spec 时放 `tmp/research/<问题短名>/`
+│   ├── pending/<spec-slug>/  搁置的设计：人说「这块界面先不做」时从 tmp/ 原样挪来，放在主 checkout，只在本地、不提交
 │   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 业务机制、规则、数据结论
 └── records/<kind>/       运营台账 —— 会话起头、之后由人持续更新（如外联跟进表 `records/outreach/`）
@@ -62,12 +63,16 @@ docs/
 - **spec 文件与目录同名**：`docs/spec/<spec-slug>/<spec-slug>.md`。wiki-link 按文件名解析，都叫 `spec.md` 的话 `[[<spec-slug>]]` 就指不到。
 - **工单住在自己 spec 的目录里**，编号在每份 spec 内从 `01` 起。找一份 spec 的工单，看它目录下的 `tickets/`。
 
-`design/` 分两层，生命周期相反：
+`design/` 分三处，生命周期各不相同：
 
 - **`design/tmp/<spec-slug>/`** 跟着需求走：`/idea-loop:uiux-imagine` 写 `imagine/`，`/idea-loop:uiux-refine` 写 `canvas/`，`delta/` 在合并前归档时写，`idea-loop:uiux-research` 写 `research/`（imagine 与 refine 共用这一处，imagine 收工清 `imagine/` 时它还在）。
-  - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布，有价值的结论写回 spec 或 issue。
+  - 过程产物只在本地（见下面「本地忽略」），放弃的需求只丢画布（只是先不做、以后可能再做的，挪去 `pending/`，见下），有价值的结论写回 spec 或 issue。
   - 冻结时，签字的画布、冻结记录和交互图提交在需求的工作分支上（`git add -f`），实现在同一个分支上接着做，跟代码一起合进主分支（「知识库落地」）。冻结之后设计变了，由 designer 改画布、冻结记录记一行，随实现分支提交。它们留到实现 PR 合并前的归档：`delta/` 此时才写出，归档脚本把要长期留下的并进 `prod/`，清掉整个 `tmp/<spec-slug>/`，这些删除跟着同一个 PR 进主分支。
   - **`research/` 不算设计产物**：从不归档；只做过调研的需求不起 UI 审查，合并也不走归档。用进设计的调研结论已经以文字写在方向说明或冻结记录里，随设计归档。
+- **`design/pending/<spec-slug>/`** 是搁置的设计：人说「这块界面先不做」时，一块界面已经 imagine / refine 了几轮，留在 `tmp/` 里会被当成进行中的设计、合并前归档时清掉，删掉又得从头 imagine。
+  - **放在主 checkout**（`git worktree list` 的第一行）的 `docs/design/pending/` 下，不放当前 worktree：每个 issue 会话跑在自己的 worktree 里，用完就清，放在里面等于没存。只在本地、不提交（见「本地忽略」）。
+  - **谁挪**：`uiux-imagine` 或 `uiux-refine` 的编排者。人说「先不做」时，把当前 worktree 的 `docs/design/tmp/<spec-slug>/` 原样挪到主 checkout 的 `docs/design/pending/<spec-slug>/`，里面的东西一个字节都不清理；目标目录已存在就停下问人，不覆盖。然后在 spec 里留一句指针和搁置理由：设计搁置在主 checkout 的 `docs/design/pending/<spec-slug>/`（只在本地），理由取人的原话。
+  - **谁读**：`uiux-imagine`、`uiux-refine` 起手时查它，同一块界面有就问人要不要接着做（步骤在各自的 SKILL.md）；`dreaming` 对账时列出每一份和它的 spec 是否已了结，已了结的提议删。设计档案校验跳过它。
 - **`design/prod/`** 是设计档案，提交，活得比 spec 长。写 `prod/` 只走归档脚本（需求合并前人批过之后；dreaming 对账的 `档案对象`、`档案状态`、`初扫页面`、`漏归档` 行是例外，它们按建议处置自动执行，不等人批），agent 只写 `tmp/<spec-slug>/delta/`。一个档案对象只在下一个需求归档时被覆盖或删除，所以 spec 删了，`prod/` 里的东西照旧留着。结构见 `idea-loop:design-archive`。
 
 按 `design/<spec-slug>/` 命名的旧目录是旧布局的冻结记录，`design-archive-check.mjs` 对每个只打一条提示（建议删），不读。
@@ -93,7 +98,7 @@ docs/
 - 设计侧的过程产物（工作区、方向说明、交接画布、评分、评委截图）在 `docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
 - `evidence/` 下是交付证据，过程中以本地文件发给人看，用到时才上传到 PR 的素材分支，不进代码分支和 `docs/`（`idea-loop:pr` 的交付证据）。
 
-**本地忽略**：第一次用时确认 `.tmp/` 和 `docs/design/tmp/` 都在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。
+**本地忽略**：第一次用时确认 `.tmp/`、`docs/design/tmp/` 和 `docs/design/pending/` 都在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。
 
 ## 从平铺布局迁移
 
