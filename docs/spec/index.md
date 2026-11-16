@@ -3,5 +3,6 @@
 
 | 文件 | summary |
 |---|---|
+| [[replay-snapshot-plugin-sync]] | 回放时把快照里被改动的插件文件换成这一边的版本，改前改后读到不同的规则 |
 
 > 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
