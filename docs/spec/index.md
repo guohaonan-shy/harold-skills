@@ -13,4 +13,5 @@
 | [[seo-skill-descriptions-route-only]] | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
 | [[skill-body-limit-backlog]] | idea-loop 两份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references |
 | [[subagent-handback-lost-turn]] | 交回后卡住是那一轮模型请求断了或挂住，被平台合成回复关掉；网络问题，idea-loop 不加机制 |
+| [[version-tier-0x-patch]] | 插件还在 0.x 时，改已有流程的行为升 patch；REVIEW.md 版本三档的 minor / patch 措辞改写 |
 | [[wiki-conventions-slim]] | wiki-conventions 主体从 7854 字缩到 5000 字以下：只有部分调用方用到的细节外置成 references |
