@@ -75,17 +75,49 @@ function parseSite(lines) {
   };
 }
 
+/** The weekly allocation's scan names: the directions plus `results`, which only takes a share here. */
+export const ALLOCATION_SCAN = [...DIRECTIONS, 'results'];
+const number = (s) => Number(String(s).replace(/,/g, ''));
+
+/** `排名追踪 300；扫描 technical 200，pages 300；起草与验证 400` → { tracking, scan: { <direction>: n }, drafting }. */
+function parseWeekly(value) {
+  const weekly = { tracking: 0, scan: {}, drafting: 0 };
+  for (const part of String(value).split(/[；;]/).map((p) => p.trim()).filter(Boolean)) {
+    const label = part.match(/^(排名追踪|扫描|起草与验证)\s*(.*)$/);
+    if (!label) throw new Error(`SEO.md「OpenSEO」的每周分配里有不认识的一份「${part}」（只认 排名追踪 / 扫描 / 起草与验证）`);
+    const [, name, rest] = label;
+    if (name === '扫描') {
+      for (const item of rest.split(/[，,]/).map((i) => i.trim()).filter(Boolean)) {
+        const m = item.match(/^([a-z]+)\s+(\d[\d,]*)$/);
+        if (!m) continue;
+        if (!ALLOCATION_SCAN.includes(m[1])) throw new Error(`SEO.md「OpenSEO」的每周分配里扫描有不认识的方向「${m[1]}」（只认 ${ALLOCATION_SCAN.join(' / ')}）`);
+        weekly.scan[m[1]] = number(m[2]);
+      }
+    } else {
+      const n = rest.match(/^(\d[\d,]*)$/);
+      if (n) weekly[name === '排名追踪' ? 'tracking' : 'drafting'] = number(n[1]);
+    }
+  }
+  return weekly;
+}
+
 function parseOpenSeo(lines) {
   const kv = pairs(lines);
-  const floor = Number(String(kv['余额下限'] ?? '').match(/\d+/)?.[0] ?? NaN);
-  const budgets = {};
-  for (const part of String(kv['单次额度'] ?? '').split(/[，,；;]/)) {
-    const m = part.trim().match(/^([a-z]+)\s+(\d+)$/);
-    if (!m) continue;
-    if (!DIRECTIONS.includes(m[1])) throw new Error(`SEO.md「OpenSEO」的单次额度里有不认识的方向「${m[1]}」（只认 ${DIRECTIONS.join(' / ')}）`);
-    budgets[m[1]] = Number(m[2]);
+  if ('单次额度' in kv) {
+    throw new Error('SEO.md「OpenSEO」写的是旧的「单次额度」：额度现在按周算，改成「套餐额度」和「每周分配」两项。跑 `/idea-loop:seo-setup` 迁移');
   }
-  return { projectId: firstTick(kv['项目'] ?? ''), floor: Number.isFinite(floor) ? floor : null, budgets };
+  const floor = Number(String(kv['余额下限'] ?? '').match(/\d+/)?.[0] ?? NaN);
+  const plan = String(kv['套餐额度'] ?? '');
+  const monthly = plan.match(/每月\s*(\d[\d,]*)(?=\s*(?:[，,；;]|$))/);
+  const reset = plan.match(/每月\s*(\d+)\s*日\s*重置/);
+  if (reset && !(Number(reset[1]) >= 1 && Number(reset[1]) <= 31)) throw new Error(`SEO.md「OpenSEO」的套餐额度里，重置日「${reset[1]}」不是 1 到 31 之间的日子`);
+  return {
+    projectId: firstTick(kv['项目'] ?? ''),
+    floor: Number.isFinite(floor) ? floor : null,
+    monthly: monthly ? number(monthly[1]) : null,
+    resetDay: reset ? Number(reset[1]) : null,
+    weekly: kv['每周分配'] === undefined ? null : parseWeekly(kv['每周分配']),
+  };
 }
 
 /** `` - `domain`：Name，one-line positioning `` → { domain, name, notes }. */

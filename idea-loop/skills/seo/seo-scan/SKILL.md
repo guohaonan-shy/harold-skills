@@ -48,12 +48,12 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 预算
 
-1. 重新读一次余额：调 `whoami` 读 `creditsRemaining`，记作「余额」（不沿用关卡那次）。「开始余额」是本次扫描第一次读到的（关卡调过就是它那次），「已花」= 开始余额 − 余额（关卡没花是 0）。读不到或 `null`：余额传 `null`，原因记下（付费全不放行，免费的照跑）。
-2. `node S/seo-budget.mjs <仓库根>/SEO.md <余额> <方向>... --spent <已花>`，输出存到 `<运行目录>/budget.json`。已花算进单次上限。
+1. 重新读一次余额：调 `whoami` 读 `creditsRemaining`。「开始余额」是本次扫描第一次读到的（关卡调过就是它那次），「已花」= 开始余额 − 余额。读不到或 `null`：余额传 `null`、记原因（付费全不放行）。
+2. `node S/seo-budget.mjs <仓库根>/SEO.md <余额> <方向>... --spent <已花> --context <运行目录>/context.json --today <YYYY-MM-DD>`，输出存到 `<运行目录>/budget.json`。额度按周算，读法见 [references/budget.md](references/budget.md)。
 
-`allow` 里的方向都派，额度是它能花的 credits；为 0 的只做免费调用。`skipped` 里的每条原因原样进研究日志。
+`allow` 里的方向都派（额度是它能花的 credits，0 只做免费调用）。`skipped` 的原因原样进研究日志；本周份额不够的另用『推送』告诉人。
 
-完成条件：每个要跑的方向要么在 `allow` 里有一个数，要么在 `skipped` 里有一条原因。
+完成条件：每个要跑的方向在 `allow` 里有数，或在 `skipped` 里有原因。
 
 ## 竞品与重点页面同步
 
@@ -104,7 +104,7 @@ OpenSEO 项目：<projectId>
 
 ## 研究日志
 
-1. 再调一次 `whoami`，开始余额减去这次余额就是本次花费；任一次读不到写「未知」。
+1. 再调一次 `whoami`，开始余额减去这次余额就是本次花费；任一次读不到写「未知」；份写 `扫描`。
 2. 照 [references/research-log.md](references/research-log.md) 的模板把摘要写到 `<运行目录>/log.txt`，`wc -m` 不超过 1000 字符（`appendResearchLog` 的上限）。
 3. 调 `update_project_context`，`updates: [{ "appendResearchLog": { "summary": "<log.txt 的内容>" } }]`。失败就把 log.txt 的路径写进交回。
 
