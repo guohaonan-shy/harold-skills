@@ -203,7 +203,7 @@ node --test '*/scripts/*.test.mjs'
 Node's own test runner, no test framework and no `package.json` — the glob is
 what keeps the command stable as plugins add suites, and the leading `*` is what
 keeps it out of `.claude/` worktrees. Today it covers the design-lint rules,
-the two UI-loop comparators and the two-canvas-version diff logic (`ui-canvas-diff`), the critic score check, the direction
+the two UI-loop comparators and the two-canvas-version diff logic (`ui-canvas-diff`), the critic score check, the design review report builder, the direction
 note's seven-section shape, the glossary lint, the seo scripts (SEO.md parsing, the missing-facts check, budget, context sync, audit regressions, issue planning against a fake gh, the two-platform check and its post-build hook), the DESIGN.md lint hook (against a fake CLI, no
 network), and a tripwire that keeps `skills/` free of the source project's
 names and examples, all living in this plugin's `scripts/`; new
@@ -406,6 +406,8 @@ idea-loop/
     ├── critic-score.mjs              # checks the critic's JSON (findings / reasoning / score / note) against the canvas's state list and the human's reasoning ids, and points out the direction findings; decides nothing about stopping (+ its CLI)
     ├── critic-score.test.mjs         # its unit tests
     ├── ui-master-doc.test.mjs        # tripwire: the critic's definition names the new inputs and output shape, and gives no stop line
+    ├── design-review-report.mjs      # builds one round's design review report as a single self-contained HTML page (pictures inlined) from the critic's JSON, the researcher's light-use file, the `canvas-diff` output and the canvas address: undeclared changes first (keep or undo), then each opinion (critic's words, user path and reference pictures, new design intent, ledger overturns marked, a canvas link to the version and state), the assessment of the human's reasoning, score and the critic's note; every entry numbered across the page. A `direction` opinion the session marks as one the human already said they dislike (with their words) recommends "回 imagine 重开这一块", otherwise 保留; with Mobbin not connected the page says so where the pictures would be. Prints the short text for the conversation (score and the items needing attention); the report's link is added by the session after it publishes the page (+ its CLI)
+    ├── design-review-report.test.mjs # its unit tests on a fixed set of three inputs, plus the CLI
     ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
     ├── design-archive-check.mjs      # the archive's eight validation rules (reachability, async, references, journeys, decisions/candidates, motions/usedBy, sections of a long entry state, edge screenshots), file and field named; structure also covers an edge's `when`, a `{ text }` locate and the workspace prefixes of component names (`prod/index.md` `workspaces`, or `--workspaces`); hints for `content` / `position` sections; exit 0/1
     ├── design-archive-check.test.mjs # one red fixture per rule (rule 7 on the marketing fixture: nine bends, two hints; rule 8 on a fixture whose state has three `shot` edges, two sharing one image: eight bends) + `when` / text locate / workspace prefixes + the delta overlay + the old-layout note
