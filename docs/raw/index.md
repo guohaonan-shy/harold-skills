@@ -66,6 +66,7 @@
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
 | [decisions/313](decisions/313.md) | conversation | 2026-11-15 | 决定记录 —— #313 的 issue 会话：范围题按「影不影响这次交付」推荐（PR #321），回放分不出差别照合，decision-rules 与 runtime 开场注入另开 #326，候选「0.x 行为改动升 patch」第 3 次、开 #327 |
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
+| [decisions/295](decisions/295.md) | conversation | 2026-11-17 | 决定记录 —— #295 的 issue 会话（triage）：runtime 本机覆盖放进 home、同名小节整段替换，挂到 0.2.0、被 #252 挡；retro 无候选 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
 | [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
