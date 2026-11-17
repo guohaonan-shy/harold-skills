@@ -37,8 +37,17 @@ related: ["[[ai-eval-plugin]]"]
 
 （选择题的回答）迁 ai-eval + 补规则 (推荐)
 
+## A2
+
+spec 草稿里留了一题：toeflair 那边的切换（更新 EVAL.md、改装法、删副本）谁来做。A 是另开 issue 做，B 是这个 issue 两个仓库各开一个 PR。推荐 A。
+
+## U2
+
+这个事儿在harold-skills 开issue，toeflair项目暂时用旧的，两个不相互冲突～
+
 ## 本轮决议
 
 | 议题 | 决议 |
 |---|---|
 | eval 写法放哪 | toeflair 的 `ai-eval` 整个迁成 harold-skills 的一个 plugin。pass¹/pass³、报错重跑写进它的准出与报告，回放型 eval 新开 skill `eval-replay`。to-spec 那一行指向它 |
+| toeflair 那边的切换 | 在 harold-skills 另开 issue（#361，被 #293 挡着）；迁移期间 toeflair 继续用旧副本 |

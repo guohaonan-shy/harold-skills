@@ -8,8 +8,6 @@ related: ["[[2026-11-17-ai-eval-shape]]"]
 
 # ai-eval 进 harold-skills：报数口径与回放型 eval
 
-> 需要 grill：要加一个新的 plugin 和一个新的 skill。形状已经由人定了（见「关联」里的 raw 记录），下面「待定」里还有一题要人定。
-
 > #293 存在：idea-loop 里讲 eval 的只有 to-spec「测试决策」表里的一行，写的是「LLM 输出质量（prompt 改动） → eval（确定性断言）」，在 `idea-loop/skills/engineering/to-spec/SKILL.md`。门槛怎么定、报什么数、平台报错怎么处理、回放型 eval 怎么写，这些插件里都没有。2026-11-17 对着 main `a032e45` 核过；分拣评论 2026-11-16 对着 `d3a8607` 核过，结论相同。
 
 ## 问题陈述
@@ -163,20 +161,13 @@ ai-eval 还没做到它自称的项目无关。6 个 skill 和脚本里有 60 �
 
 idea-loop to-spec「测试决策」表 eval 那一行的「仪器」列，改成：eval，门槛对线上基线，不写绝对值；装了 `ai-eval` 的项目，跑流水线的改动走 eval-run，多轮对话里的一步走 eval-replay。idea-loop 的版本按 `REVIEW.md` 定档（改了 to-spec 产出的内容，算 minor）。合并时 main 已经升过（比如 0.2.0 发布分支先合了），就从 main 的新版本重新按同一档升。
 
-### 待定：toeflair 那边谁来切
+### toeflair 那边的切换另开 issue
 
-harold-skills 的 PR 合并后，toeflair 要做三件事才算真正用上：
+harold-skills 的 PR 合并后，toeflair 要做三件事才算真正用上：用 eval-setup 更新 `EVAL.md`；`.claude/settings.json` 改成装 `ai-eval@harold-skills`；删掉仓库里的副本。这三件事不在这个 issue 里做，记在 harold-skills#361，它被 #293 挡着。迁移期间 toeflair 继续用旧副本，两份互不影响。依据是人的原话（2026-11-17）：「这个事儿在harold-skills 开issue，toeflair项目暂时用旧的，两个不相互冲突～」。
 
-1. 用 eval-setup 更新 `EVAL.md`，补上新加的「平台报错怎么重跑」那几项。
-2. `.claude/settings.json` 改成装 `ai-eval@harold-skills`。
-3. 删掉仓库里的 `.claude/plugins/ai-eval/` 副本。
+### issue 分类加一个模块
 
-这三件事都在另一个仓库里，本仓库的 `ISSUE_TRACKER.md`「仓库」一节只列了 harold-skills。
-
-- **A（推荐）**：这个 issue 合并后，在 toeflair 仓库开一个 issue 做切换，由 toeflair 自己的 idea-loop 流程去做。走一遍会看到：harold-skills 的 PR 只碰本仓库；toeflair 的 issue 里写清这三步和要对的提交号，在那边单独 review、合并。两边各自能回滚。
-- **B**：把 toeflair 加进本仓库 `ISSUE_TRACKER.md` 的「仓库」一节，这个 issue 同时在两个仓库各开一个 PR。走一遍会看到：一次 review 就能看全，但 harold-skills 的仓库表从此多出一个产品仓库，以后的 issue 都要判断碰不碰它。
-
-推荐 A：切换是 toeflair 自己的发布节奏，它的 `EVAL.md` 也只有它自己的会话最清楚。
+仓库 `AGENTS.md` 的「issue 分类」加 `ai-eval`（ai-eval plugin 的 issue），跟其它 plugin 一样一个 plugin 一个父类。依据：那一节写的是「父类按 issue 落在哪个 plugin 分」。合并后用 `issues labels` 建出 `type:ai-eval` label，给 #361 打上。
 
 ## 测试决策
 
@@ -204,7 +195,7 @@ harold-skills 的 PR 合并后，toeflair 要做三件事才算真正用上：
 
 ## Out of scope
 
-- toeflair 仓库里的切换：更新 `EVAL.md`、改装法、删副本。怎么安排，见上面的「待定：toeflair 那边谁来切」。
+- toeflair 仓库里的切换：更新 `EVAL.md`、改装法、删副本。这件事在 harold-skills#361 做。
 - 把 PostHog、Codex 抽象成可替换的后端。
 - 判官分数改用分组重抽：ai-eval 的样本本来就相互独立，`paired-stats.mjs` 不改。
 - 给 ai-eval 的 skill 做定量 eval（`AGENTS.md` §5）。
@@ -213,4 +204,4 @@ harold-skills 的 PR 合并后，toeflair 要做三件事才算真正用上：
 
 - raw：[[2026-11-17-ai-eval-shape]]（形状怎么定的）
 - 来源：harold-skills#293 的正文和分拣评论（2026-11-16）
-- 相邻还没完成的 spec 与 issue：查过 `docs/spec/`，现在没有别的 spec；开着的 issue 里搜 "eval"，只有 #293。idea-loop 0.2.0 发布分支（父 issue #331）会动 idea-loop 的版本号，跟这里改 to-spec 那一行只在版本号上可能冲突，处理办法见「to-spec 那一行」。
+- 相邻还没完成的 spec 与 issue：查过 `docs/spec/`，现在没有别的 spec；开着的 issue 里搜 "eval"，只有 #293，和从它拆出去、等它合并的 #361（toeflair 切换）。idea-loop 0.2.0 发布分支（父 issue #331）会动 idea-loop 的版本号，跟这里改 to-spec 那一行只在版本号上可能冲突，处理办法见「to-spec 那一行」。
