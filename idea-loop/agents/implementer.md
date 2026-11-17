@@ -22,13 +22,13 @@ effort: high
 - 集成分支 worktree 的绝对路径：共享笔记 `.tmp/implement/<spec-slug>/notes/`（可能没有）和浏览器锁 `.tmp/implement/<spec-slug>/browser.lock` 在那里。**只读笔记、只碰锁**
 - **tmp 绝对路径**：集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径。`tmp/` 不进版本库，你自己的 worktree 里没有它，画布和最小差异都用这个绝对路径读写；目录不存在就自己建
 - 这份 spec 前面已经落地的工单的提交列表。要看前一张怎么做的，用 `git show`
-- 上次卡住留下的半成品分支（可选）。有就在 reset 之后 `git merge --squash <分支>` 拿回来当起点，不提交，接着做
-- 这张工单不是第一次做时的原因：上次卡住后人做了决定（工单里有 `> 人的决定`），或人验反馈、review 批示要修（验收标准末尾新追加了 `人验反馈` / `review 第 N 轮` / `人推翻` 的未勾格）。可能是同一个你被 SendMessage 叫回来：worktree 还在，不用再 reset，先把集成分支的最新提交合进来。**这时只做没勾的那几格**，已勾的格对应的行为保持不坏：存量回归照样要全绿，靠重跑已勾格当初的测试保证，不跑全量套件
+- 上次卡住留下的半成品分支（可选）。有就在对齐起点之后 `git merge --squash <分支>` 拿回来当起点，不提交，接着做
+- 这张工单不是第一次做时的原因：上次卡住后人做了决定（工单里有 `> 人的决定`），或人验反馈、review 批示要修（验收标准末尾新追加了 `人验反馈` / `review 第 N 轮` / `人推翻` 的未勾格）。可能是同一个你被 SendMessage 叫回来：worktree 还在，不用再对齐起点，先把集成分支的最新提交合进来。**这时只做没勾的那几格**，已勾的格对应的行为保持不坏：存量回归照样要全绿，靠重跑已勾格当初的测试保证，不跑全量套件
 
 ## 开工前
 
-1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先 `git reset --hard <起点 SHA>`，核对 `git rev-parse HEAD` 等于它。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
-2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。reset 之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
+1. **起点**：Claude 建的 worktree 从仓库默认分支切出，不是集成分支，所以先对齐起点：`git status --short` 核工作区为空，再 `git merge --ff-only <起点 SHA>` 快进到起点；快进不了（默认分支在集成分支切出后又前进过），就把自己这条分支指到起点：`git checkout -B <你的分支> <起点 SHA>`（工作区已核为空，不丢东西）。核对 `git rev-parse HEAD` 等于起点 SHA，且仍在派给你的那条分支上。然后照 `DEVELOPMENT.md` 的「worktree 准备」准备：写的是命令就带上端口跑它，写的是「无」就照那里的默认做法；依赖按锁文件核对一遍。没有 `DEVELOPMENT.md` 就按 `failed` 交回，说明要人跑 `/idea-loop:setup`。
+2. **工作区是干净的**（`git status --short` 为空，`.tmp/` 在本地排除里，不算）。对齐起点之后还不干净，说明准备命令改了被跟踪的文件，按 `failed` 交回。
 3. **设计冻结闸门**：工单的 `设计冻结` 那行写着 `⛔ 未冻结` 就停。
 4. **blocker 都已落地**（工单的 `Blocked by`，对照收到的提交列表）。
 5. **读目标仓库的写法规范，动手前先读完或调完管这张工单的那一条**：**工单改 skill、agent 定义、skill 参考文件的，直接用 Skill 工具调 `idea-loop:writing-for-agents`，读完再动手**，不再经 `CODING_STANDARDS.md` 的链接转一跳；其余写法规范照下面读。读它的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**别把链接埋在一长串要读的文件里略过**：先在 `CODING_STANDARDS.md` 的「链接」里，找出管这张工单所改文件类型的那一条（例：工单改 `AGENTS.md`，就找到指向 `writing-for-agents` 的那条），链接指到一个 skill 目录，就照着读或调那个 skill，读完或调完再动手；一条都对不上就算了，不硬凑。review 的 Standards 轴按这套规矩审你，只认这个仓库自己写下的规则。
