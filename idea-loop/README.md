@@ -534,7 +534,7 @@ What came across:
 |---|---|
 | The taste/craft references | `skills/design/uiux-refine/references/design/` |
 | The two former design skills | `skills/design/uiux-refine/references/design/static-protocol.md` (surface, module and component altitudes in one file), `skills/design/uiux-refine/references/design/motion.md` — demoted to on-demand protocols |
-| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `skills/design/design-modeling/SKILL.md` |
+| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, the candidate format, who may write: `skills/design/design-modeling/SKILL.md`; how a write goes: `skills/design/design-modeling/references/write.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | the "browser" capability, done as the current runtime says (`skills/productivity/runtime/references/`; on the desktop a user-level `playwright` MCP, headless and isolated, checked by `setup`; in magi `magi browser`); how to use it: `skills/engineering/browser/SKILL.md` |
 | The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
