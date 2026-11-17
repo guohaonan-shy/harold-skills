@@ -48,11 +48,11 @@ test('an unknown IDEA_LOOP_RUNTIME exits non-zero, prints nothing on stdout and 
   assert.match(r.stderr, /magi/);
 });
 
-test('hooks.json registers SessionStart commands that all run runtime-detect.mjs --inject, one per section', () => {
+test('hooks.json registers three SessionStart commands that run runtime-detect.mjs --inject, one per section (the project map has its own command, see project-map.test.mjs)', () => {
   const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
   const entries = hooks.SessionStart;
   assert.ok(Array.isArray(entries) && entries.length > 0, 'SessionStart is registered');
-  const commands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
+  const commands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command).filter((c) => c.includes('runtime-detect.mjs'));
   assert.equal(commands.length, 3);
   for (const c of commands) assert.match(c, /runtime-detect\.mjs" --inject (decision-rules|runtime|reference)$/);
   assert.deepEqual(commands.map((c) => c.split('--inject ')[1]), ['decision-rules', 'runtime', 'reference']);

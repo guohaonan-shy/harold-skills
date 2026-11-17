@@ -20,14 +20,14 @@ home 的位置是 `~/home`，环境变量 `IDEA_LOOP_HOME` 可覆盖（只为测
 照仓库里运行环境检测脚本的写法：导出纯函数（远端统一、清单解析、判断）+ 命令行入口，测试在临时目录里建假 home、带远端的假 git 仓库和它的 worktree。同步 idea-loop 的 README 里 hook 那一段。
 
 ## 验收标准
-- [ ] 临时 home 登记了 `example-app`（远端 `https://github.com/acme/example-app`），在 `origin` 为 `git@github.com:acme/example-app.git` 的仓库的 worktree 里跑，stdout 含该项目地图全文
-- [ ] 在临时 home 本身跑，stdout 为空
-- [ ] 在远端不在清单里的仓库、不在 git 仓库的目录、没有 home 的情况下各跑一次，stdout 都为空
-- [ ] 项目地图 2500 字时，stdout 是前 2000 字加一行「已截断」提示
-- [ ] 登记了但地图文件不存在时，stdout 是一行指出目录位置、地图未写
-- [ ] 远端统一函数对 https / ssh / 带不带 `.git` / 主机名大小写的单元测试
-- [ ] hooks.json 的 SessionStart 下多出这一条命令；idea-loop README 同步
-- [ ] 全量测试通过（`plugin-version` 一条除外：这个 PR 按父 issue 的决定不升版本，见 spec「版本号」）
+- [x] 临时 home 登记了 `example-app`（远端 `https://github.com/acme/example-app`），在 `origin` 为 `git@github.com:acme/example-app.git` 的仓库的 worktree 里跑，stdout 含该项目地图全文
+- [x] 在临时 home 本身跑，stdout 为空
+- [x] 在远端不在清单里的仓库、不在 git 仓库的目录、没有 home 的情况下各跑一次，stdout 都为空
+- [x] 项目地图 2500 字时，stdout 是前 2000 字加一行「已截断」提示
+- [x] 登记了但地图文件不存在时，stdout 是一行指出目录位置、地图未写
+- [x] 远端统一函数对 https / ssh / 带不带 `.git` / 主机名大小写的单元测试
+- [x] hooks.json 的 SessionStart 下多出这一条命令；idea-loop README 同步
+- [x] 全量测试通过（`plugin-version` 一条除外：这个 PR 按父 issue 的决定不升版本，见 spec「版本号」）
 
 ## 选中的存量回归
 - 运行环境检测脚本的测试：同在 SessionStart 下，确认新命令没改它的输出
