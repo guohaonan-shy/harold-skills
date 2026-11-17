@@ -401,6 +401,8 @@ idea-loop/
     ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
     ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
     ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
+    ├── home-config.mjs               # the mechanical part of setup's three user-level changes: `plan` prints before/after (writes nothing), `apply` backs up settings.json + CLAUDE.md into `<home>/.backup/<time>/` then enables the plugin (key read off its install path), sets `autoMemoryDirectory`, and turns `~/.claude/CLAUDE.md` into a symlink to `<home>/AGENTS.md`; `--only 1,3` picks a subset, a second run changes nothing, a CLAUDE.md that links elsewhere is left for a human (`<home>` = `~/home` or `IDEA_LOOP_HOME`)
+    ├── home-config.test.mjs          # runs it under a temporary HOME: plan writes nothing, byte-identical backup, two keys changed, text moved whole, symlink, `.backup/` ignored, second run is a no-op, subsets, foreign symlink
     ├── critic-score.mjs              # the critic's output shape and the stop decision: direction / pass / plateau / continue (+ the CLI uiux-refine calls each round)
     ├── critic-score.test.mjs         # its unit tests
     ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
