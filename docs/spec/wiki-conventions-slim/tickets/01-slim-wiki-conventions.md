@@ -15,11 +15,11 @@ idea-loop 插件版本升一个 patch；插件 README 的文件树里补上新�
 
 ## 验收标准
 
-- [ ] 在改动前的 SKILL.md 上跑新测试，主体字数那一条红（7854 ≥ 5000）
-- [ ] 改完后新测试全绿：主体 < 5000 字；所有指名的节都存在
-- [ ] 已有文档测试全绿：知识库落地一节（`knowledge-base-landing-doc`）、`status` 闭集与 `issues:`（`issue-model-tripwire`）、「按风险分」「`dreaming` 只问两类」（`dreaming-autonomous-doc`）、设计档案 skill 的同类测试
-- [ ] 改前改后逐句对照：每条规则在主体或参考文件里仍能找到；删掉的句子逐条写明依据（设计档案 skill 有单一事实来源，或判为空操作），交回里列出
-- [ ] `plugin.json` 版本升一个 patch，README 文件树补上新参考文件
+- [x] 在改动前的 SKILL.md 上跑新测试，主体字数那一条红（7854 ≥ 5000）
+- [x] 改完后新测试全绿：主体 < 5000 字；所有指名的节都存在
+- [x] 已有文档测试全绿：知识库落地一节（`knowledge-base-landing-doc`）、`status` 闭集与 `issues:`（`issue-model-tripwire`）、「按风险分」「`dreaming` 只问两类」（`dreaming-autonomous-doc`）、设计档案 skill 的同类测试
+- [x] 改前改后逐句对照：每条规则在主体或参考文件里仍能找到；删掉的句子逐条写明依据（设计档案 skill 有单一事实来源，或判为空操作），交回里列出
+- [x] `plugin.json` 版本升一个 patch，README 文件树补上新参考文件
 
 ## 选中的存量回归
 
