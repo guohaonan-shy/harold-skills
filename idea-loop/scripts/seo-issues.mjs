@@ -2,7 +2,7 @@
 /**
  * The only place seo-scan writes GitHub: turns one run's findings into issues. A new issue carries no
  * status:* label, so it simply is backlog, like an issue opened by hand; its body
- * has the four sections every issue needs (问题 / 证据 / 影响范围 / 从哪发现, checked with issues.mjs's
+ * has the five sections every issue needs (背景 / 问题 / 证据 / 影响范围 / 从哪发现, checked with issues.mjs's
  * `bodyErrors` before anything is created) plus how to reproduce it, because the issue session re-runs that
  * independently.
  *
@@ -91,6 +91,7 @@ const scope = (g) => {
 
 export function issueBody(g, date = today()) {
   const parts = [
+    `## 背景\n\n这条 issue 是 seo-scan 在 ${date} 扫描「${DIRECTION_NAMES[g.direction]}」方向时提出的。「怎么复现」一节可以独立重跑，拿到的结果应该和「证据」一致；「建议的修法」是扫描时的判断，triage 时要先核实再采用。`,
     `## 问题\n\n${g.title}`,
     `## 证据\n\n${g.evidences.map(evidenceLine).join('\n')}${ratioLine(g.ratio)}`,
     `## 影响范围\n\n${scope(g)}`,
