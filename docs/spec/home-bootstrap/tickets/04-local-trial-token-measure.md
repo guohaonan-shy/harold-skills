@@ -9,7 +9,7 @@
 在本机按落地后的 setup 建好 home，验证 hook 真的把项目地图放进了会话上下文，并量一次「有地图」前后回答真实问题花的 token。
 
 - **改前**（本机跑 setup 之前）：在 harold-skills 的同一个提交上、同一个模型、每题一个全新的 `claude -p --output-format stream-json` 会话，问三题：「为什么每周分拣不等人批」、「改了插件的 PR 按什么升版本」、「为什么取消了夜间回放队列」。每次记总 token（输入含缓存读写、加输出）、工具调用次数、答案有没有引到对的出处。
-- **建 home**：按 setup 的「home」一节建 `~/home`、登记 harold-skills、起草项目地图；用户级配置只做启用插件、软链 `CLAUDE.md` 两处，`autoMemoryDirectory` 不动。用户级改动的改前改后先给人确认。
+- **建 home**：按 setup 的「home」一节建 `~/home`、登记 harold-skills、起草项目地图；用户级配置只软链 `CLAUDE.md`（见下面人的决定），`autoMemoryDirectory` 不动。用户级改动的改前改后先给人确认。
 - **改后**：同样三题再跑一遍。
 - 判定：三题改后都答对且引到出处、三题改后 token 中位数不高于改前 → 「地图够」；任一不满足 → 「不够」，开一个扩展 `design-archive` MCP 的 issue 挂到 #331 下。
 - 顺带看一眼：会话开在 home 里时，设备地图是否被加载了两次；重复就记进 spec 的「已知限制」。
