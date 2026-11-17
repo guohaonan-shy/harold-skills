@@ -26,6 +26,11 @@
 - [x] 提议表参考文件的样例表含 `记忆` 节且通过校验；参考文件总表的 `记忆` 闭集与脚本一致（现有两条测试仍绿）
 - [x] 文档测试（照 `dreaming-autonomous-doc.test.mjs` 写一份新的）：dreaming SKILL.md 有指向记忆参考文件的一行、写了「只跑记忆」，主体 < 5000 字；记忆参考文件写了闭集、「只 add」自己改的路径、home 里提交与 `git revert`；setup 的每周 dreaming（SKILL.md 那一节与参考文件）写的是 `dreaming-home`、不再出现 `dreaming-<仓库名>`；增量范围参考文件写的是 `dreaming-home`；setup 的 home 参考文件的 `.gitignore` 含 `.tmp/`
 - [x] 插件内不出现任何真实项目名（`no-project-leak.test.mjs` 绿）；`node --test` 跑改动涉及的测试全绿（plugin-version 那条除外）
+- [ ] review 第 1 轮 S1（2026-11-17）：根索引「## 项目」一节的指针必须指到 `<home>/projects/<名字>/memory/MEMORY.md` 这个位置的文件；指针少了记忆目录那一层（`../projects/<名字>/MEMORY.md`）或指回根索引自己（`MEMORY.md`），memory-check 都报错、退出码 2，各有一条测试
+- [ ] review 第 1 轮 C1（2026-11-17）：记忆整理参考文件里，取自 consolidate-memory 的三条做法只写在处置表里一处；讲为什么不调用它的那一节改成一句指回处置表，不再复述（文档测试仍能匹配）
+- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
