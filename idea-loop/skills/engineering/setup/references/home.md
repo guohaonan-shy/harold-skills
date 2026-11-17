@@ -1,6 +1,6 @@
 # home
 
-home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_LOOP_HOME` 可覆盖，下面都写 `~/home`）：设备地图、项目清单、各项目的地图和记忆住在里面。home 只有 main，改了直接提交（不照 SKILL.md 开头「人说提交才提交」），只 `git add` 自己写的文件，里面不放 `CLAUDE.md`。
+home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_LOOP_HOME` 可覆盖，下面都写 `~/home`）：设备地图、项目清单、各项目的地图和记忆住在里面。home 只有 main，改了直接提交，只 `git add` 自己写的文件，里面不放 `CLAUDE.md`。
 
 三步，按顺序；同一台设备上第二个项目跑 setup，第 1、3 步已经做完，只走第 2 步。
 
@@ -29,10 +29,10 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 做三件事：
 
 1. `## 项目` 里还没有这个名字的行，就加一行，格式一字不差：`<名字>（<是什么>）: <本地路径>. Clone from <远端> if missing.`，例：`example-app（记账小工具）: ~/projects/example-app. Clone from https://github.com/acme/example-app if missing.`。已有这一行的不动。
-2. 建 `projects/<名字>/`，没有 `AGENTS.md` 时照下面的项目地图模板起草第一版写进去；已有的不覆盖。
-3. 提交：`git add AGENTS.md projects/<名字>`。
+2. 建 `projects/<名字>/`（项目目录），没有 `AGENTS.md` 时照下面的项目地图模板起草第一版写进去；已有的不覆盖。
+3. 提交：`node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" commit "chore: 登记 <名字>" ~/home/AGENTS.md ~/home/projects/<名字>/AGENTS.md`（路径写成绝对路径）。
 
-起草项目地图：读这个项目现在的 `docs/index.md`、目录树和引导文件（`CLAUDE.md` / `AGENTS.md`），只写项目里实际有的层；路径指向东西现在在哪，也就是代码仓库的 `docs/`；全文 ≤ 2000 字。
+起草项目地图：读代码仓库的 `CLAUDE.md` / `AGENTS.md` 和 `README`，只写项目里实际有的层；`docs/` 的几层指向项目目录下的 `docs/`（SKILL.md 的「写」建它，新项目这时还空着），不指向代码仓库；全文 ≤ 2000 字。
 
 ## 3. 改三处用户级配置
 

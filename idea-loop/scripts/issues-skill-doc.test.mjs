@@ -72,15 +72,15 @@ test('each platform reference states status, type, module and how a PR attaches 
   assert.match(body, /references\/linear\.md/);
 });
 
-for (const [name, file] of [
-  ['setup template', join(pluginRoot, 'skills', 'engineering', 'setup', 'references', 'issue-tracker.md')],
-  ['repo ISSUE_TRACKER.md', join(pluginRoot, '..', 'ISSUE_TRACKER.md')],
+for (const [name, file, section] of [
+  ['setup template', join(pluginRoot, 'skills', 'engineering', 'setup', 'references', 'issue-tracker.md'), /^## 分类 label$/m],
+  ['repo ISSUE_TRACKER.md', join(pluginRoot, '..', 'ISSUE_TRACKER.md'), /^## 仓库$/m],
 ]) {
-  test(`${name} lists the seven states, the triage choice and the 仓库 section`, () => {
+  test(`${name} lists the seven states, the triage choice and its sections`, () => {
     const md = read(file);
     for (const s of STATES) assert.match(md, new RegExp(`\\| ${s} \\|`), `state ${s}`);
     assert.match(md, /^triage：/m);
-    assert.match(md, /^## 仓库$/m);
+    assert.match(md, section);
     for (const old of ['待验证', '验证中', '审核中', '待设计', '设计中', '待实现', '实现中', '搁置']) assert.ok(!md.includes(old), `old state ${old}`);
   });
 }

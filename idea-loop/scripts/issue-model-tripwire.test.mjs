@@ -112,8 +112,8 @@ test('setup asks whether the team uses triage and writes the answer into ISSUE_T
 
 test('setup reads specs through spec.mjs and migrates old labels through issues.mjs migrate', () => {
   const survey = readFileSync(join(setupDir, 'references', 'survey.md'), 'utf8');
-  assert.match(survey, /spec\.mjs" check docs/);
-  assert.match(body, /issues\.mjs" migrate docs/);
+  assert.match(survey, /spec\.mjs" check <docs>/);
+  assert.match(body, /issues\.mjs" migrate <docs>/);
   assert.match(body, /--apply/);
 });
 

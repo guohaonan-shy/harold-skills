@@ -114,11 +114,11 @@ test('dreaming, retro and the SEO results report commit straight to home', () =>
   assert.doesNotMatch(read('skills/seo/seo-scan/references/results-report.md'), /worktree add|gh pr create/);
 });
 
-test('setup asks whether there is a knowledge base and where, and builds docs/ only for the in-repo answer', () => {
+test('setup builds docs/ in the project directory and commits it to home; there is no question about keeping the knowledge base elsewhere', () => {
   const q = read('skills/engineering/setup/references/questions.md');
-  assert.match(q, /\*\*要不要知识库，放在哪\*\*/);
-  for (const answer of ['**仓库里的 `docs/`**', '**仓库外的目录（或单独一个仓库）**', '**不要**']) assert.ok(q.includes(answer), answer);
+  assert.doesNotMatch(q, /要不要知识库/);
   const setup = read('skills/engineering/setup/SKILL.md');
-  assert.match(setup, /`docs\/` 骨架：人选了「仓库里的 `docs\/`」才建/);
-  assert.match(setup, /知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs\/`/);
+  assert.match(setup, /`<docs>` 骨架：/);
+  assert.match(setup, /project-map\.mjs" commit/);
+  assert.doesNotMatch(setup, /知识库选了仓库外/);
 });

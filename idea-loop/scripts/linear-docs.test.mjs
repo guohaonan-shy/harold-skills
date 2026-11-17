@@ -45,7 +45,8 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   const tpl = eng('setup', 'references', 'issue-tracker-linear.md');
   assert.equal(platformOf(tpl), 'linear', 'the template names Linear in its first heading');
   assert.match(tpl, /^triage：用 \/ 跳过$/m);
-  assert.match(tpl, /^## 仓库$/m);
+  assert.doesNotMatch(tpl, /^## 仓库$/m);
+  assert.match(tpl, /^## 分类 label$/m);
   assert.match(tpl, /Linear: <号>/);
   assert.match(tpl, /Urgent/);
   const md = eng('setup', 'SKILL.md');

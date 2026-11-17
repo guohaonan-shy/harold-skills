@@ -89,7 +89,6 @@ test('one issue changes one repository: the multi-repository branches are gone',
   assert.ok(!existsSync(join(root, 'skills/engineering/implement/references/multi-repo.md')));
   const hits = [];
   for (const f of docs) {
-    if (f.includes(`${join('skills', 'engineering', 'setup')}`)) continue; // the setup templates belong to ticket 08
     const text = readFileSync(f, 'utf8');
     for (const re of [/「仓库」/, /多个仓库|几个仓库|多仓库/, /每个要改的仓库/, /\*\*仓库\*\*/, /主 PR/]) {
       if (re.test(text)) hits.push(`${relative(root, f)}: ${re}`);

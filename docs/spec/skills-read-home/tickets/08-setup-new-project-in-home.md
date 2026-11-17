@@ -17,11 +17,11 @@
 
 ## 验收标准
 
-- [ ] setup 的流程写明：全新项目的引导文件和 `docs/` 建在项目目录、提交到 home；代码仓库里不留 idea-loop 的文件
-- [ ] 0.1.x 项目被认出来时，setup 停在「要迁移」并指向迁移，不在代码仓库里补文件
-- [ ] `ISSUE_TRACKER.md` 模板没有「仓库」一节，「分类 label」一节直接装分类；代码仓库 `AGENTS.md` 的 `## idea-loop` 段模板不再被新项目使用
-- [ ] 02 的 issue 脚本能读到这份新模板生成的「分类 label」（拿模板生成一份跑一次 `labels` 的解析）
-- [ ] 改了的 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
+- [x] setup 的流程写明：全新项目的引导文件和 `docs/` 建在项目目录、提交到 home；代码仓库里不留 idea-loop 的文件
+- [x] 0.1.x 项目被认出来时，setup 停在「要迁移」并指向迁移，不在代码仓库里补文件
+- [x] `ISSUE_TRACKER.md` 模板没有「仓库」一节，「分类 label」一节直接装分类；代码仓库 `AGENTS.md` 的 `## idea-loop` 段模板不再被新项目使用
+- [x] 02 的 issue 脚本能读到这份新模板生成的「分类 label」（拿模板生成一份跑一次 `labels` 的解析）
+- [x] 改了的 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
 
 ## 选中的存量回归
 

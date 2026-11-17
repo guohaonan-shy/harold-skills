@@ -8,3 +8,13 @@
 | Codex companion | `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 退出码 0 | 是（review 用） |
 | 浏览器 | 照『浏览器』与『装与设置』（`idea-loop:runtime`）：要装什么、怎么查、修法都在那里 | 是 |
 | Refero MCP | 同上，读『装与设置』里 Refero 一条（查有没有、修法） | 可选（设计调研用） |
+| 项目接上了吗 | `node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where`，看退出码和输出（下表） | 是 |
+
+「项目接上了吗」的结论：
+
+| `where` 的结果 | 结论 | 往哪走 |
+|---|---|---|
+| 退出码 0，输出里有项目目录 | 已接上：项目目录里有 `docs/` | 往下走，只补缺的 |
+| 退出码非 0，「这个项目还没搬进 home」 | 要迁移：代码仓库根里有 idea-loop 的引导文件或 `docs/`，项目目录里没有 `docs/` | 走「迁移」 |
+| 退出码非 0，「这个仓库没接上 idea-loop」 | 全新项目 | 往下走：home 建好项目目录，「写」往里建 |
+| 退出码非 0，「当前目录是 home 本身」 | 跑错地方 | 让人去目标仓库的主 checkout 再跑 |
