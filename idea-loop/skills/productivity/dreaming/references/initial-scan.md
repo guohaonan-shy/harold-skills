@@ -66,7 +66,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <项目目录> --d
 在 [archive-reconcile.md](archive-reconcile.md)「执行段」的流程上，初扫行多这几件事：
 
 1. **整页删掉不进表的**：这次没写进提议表的页面（质量不够、中途放弃的），删 `delta/pages/<页面>/`，再删只被它们用到的组件、动效。
-2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档脚本会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进 PR 正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `design-archive-check … --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
+2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档脚本会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进提交消息正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `design-archive-check … --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
 3. 归档（`design-archive-write.mjs`，先 `--dry-run`），`tmp/` 清空。
 4. **首次归档之后**，`prod/index.md` 的 frontmatter 还没有主视口 / 主题 / 语言 / 动效模式：把提议表里写的那几个值（`viewport` / `theme` / `locale` / `motion`，有不止一个前端时再加 `workspaces`）补进去。**这是 dreaming 唯一一处直接改 `prod/` 里文件的地方，只改这几个键**——它们是项目定一次的设置，不是档案对象，归档脚本只保留、不生成（脚本就缺视口 / 主题 / 语言给出提示，`motion` 不写时按 `default`，`workspaces` 不写就不要求前缀）。
 5. 提交：`commit` 到 home 的一个提交（`docs/design/prod/` 里的页面、状态、组件、素材，和 `prod/index.md`）；归档脚本的其余提示（LFS、`.gitignore`）照 [archive-reconcile.md](archive-reconcile.md)「执行段」第 3 步写进提交消息正文。

@@ -67,9 +67,9 @@ test('the places that start a subagent hand it the project directory in the prom
     ['skills/engineering/pr-review/references/ui-walkthrough.md', /ui-reviewer 的指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/pr-review/references/merge.md', /ui-reviewer`，只给指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/issue-triage/SKILL.md', /idea-loop:issue-triager`，给 issue 号、项目目录的绝对路径/],
-    ['skills/productivity/dreaming/SKILL.md', /只给指针（项目目录的绝对路径、worktree/],
+    ['skills/productivity/dreaming/SKILL.md', /只给指针（项目目录和代码 worktree 的绝对路径/],
     ['skills/productivity/dreaming/references/archive-reconcile.md', /ui-reviewer`，只给指针：模式「对账」、项目目录的绝对路径/],
-    ['skills/productivity/dreaming/references/missed-archive.md', /spec 名、项目目录的绝对路径、dreaming worktree/],
+    ['skills/productivity/dreaming/references/missed-archive.md', /spec 名、项目目录的绝对路径、代码 worktree/],
   ];
   for (const [f, re] of cases) assert.match(read(f), re, `${f}: ${re}`);
 });

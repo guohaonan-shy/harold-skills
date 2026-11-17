@@ -1,16 +1,16 @@
 # retro 候选：候选池里攒够次数的，提议开成 issue
 
-`idea-loop:retro` 里人批了、选「进候选池」的规则候选，住在 `docs/records/retro-candidates/`，一条候选一份文件（形状见 `docs/records/index.md`）。这一项由 dreaming 自己做，不起 agent：读池、调计数脚本、补「发现」格，用不着专职 agent 的判断。**dreaming 不改 skill**，行按建议处置执行（不问人），开出去的只是 issue，改 skill 走 issue 流程。
+`idea-loop:retro` 里人批了、选「进候选池」的规则候选，住在项目目录的 `docs/records/retro-candidates/`，一条候选一份文件（形状见 `docs/records/index.md`）。这一项由 dreaming 自己做，不起 agent：读池、调计数脚本、补「发现」格，用不着专职 agent 的判断。**dreaming 不改 skill**，行按建议处置执行（不问人），开出去的只是 issue，改 skill 走 issue 流程。
 
-只数当前仓库自己的池：在 harold-skills 里跑，数的是插件的候选；在目标仓库里跑，数的是目标仓库自己的。不跨仓库读池。
+只数这个项目自己的池（项目目录的 `docs/records/retro-candidates/`）：harold-skills 的池是插件的候选，别的项目的池是它自己的。不跨项目读池。
 
 ## 提议段
 
-1. 池目录（`docs/records/retro-candidates/`，在 dreaming 的 worktree 里，也就是 `origin/<基准分支>`）不存在：这一节整个不写，没跑。
-2. 跑计数脚本：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" docs/records/retro-candidates`。次数、状态、过没过门槛（出现 ≥ 3 次）都取它输出的，不自己数。退出码 2 是有文件形状不对：它们没数，在这一节末尾写一行说明（哪几份、什么问题），不让这一节变成非空。
+1. 池目录（项目目录的 `docs/records/retro-candidates/`）不存在：这一节整个不写，没跑。
+2. 跑计数脚本：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <项目目录>/docs/records/retro-candidates`。次数、状态、过没过门槛（出现 ≥ 3 次）都取它输出的，不自己数。退出码 2 是有文件形状不对：它们没数，在这一节末尾写一行说明（哪几份、什么问题），不让这一节变成非空。
 3. 从输出里取**状态是 `在池里`、`passes` 为真**的候选。
    - 状态 `已开 issue`：不进表，已经处理过。
-   - 状态 `驳回`：只在驳回之后又有新的出现时再进表。判断交给脚本，不自己比日期：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-reopened.mjs" docs/records/retro-candidates/<文件>`。它从 git 历史取最近一次碰过 `- 状态：驳回（` 那行的提交（第二次驳回只换了理由也算），按提交先后比（不按日期，同一天分不出先后）：现在还成立、而那次提交时「出现」里没有的会话，是新的出现；`reopened` 为真才进表，「发现」里写这些新会话和上次驳回的理由。退出码 2（状态不是驳回，或驳回还没提交、历史里取不到）：不进表，在这一节末尾写一行说明。
+   - 状态 `驳回`：只在驳回之后又有新的出现时再进表。判断交给脚本，不自己比日期：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-reopened.mjs" <项目目录>/docs/records/retro-candidates/<文件>`。它从 git 历史取最近一次碰过 `- 状态：驳回（` 那行的提交（第二次驳回只换了理由也算），按提交先后比（不按日期，同一天分不出先后）：现在还成立、而那次提交时「出现」里没有的会话，是新的出现；`reopened` 为真才进表，「发现」里写这些新会话和上次驳回的理由。退出码 2（状态不是驳回，或驳回还没提交、历史里取不到）：不进表，在这一节末尾写一行说明。
 4. 每条取到的候选写一行，读它的文件，也读「出现」各行链到的决定记录：
    - **反例**：同一类里人选了相反处置的，在文件的「例子」、评论里或决定记录里找。说得出差别的，提成「规则 + 例外」，新文里把例外写出来；说不出差别的，在「发现」里写明有反例、说不出差别，建议处置给 `留在池里`。
    - **已推翻**的行：计数脚本已经去掉，「发现」里照实写有几条、推翻时的原话。

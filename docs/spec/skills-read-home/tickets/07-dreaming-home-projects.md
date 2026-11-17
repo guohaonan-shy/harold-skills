@@ -22,12 +22,12 @@
 
 ## 验收标准
 
-- [ ] dreaming skill 在记忆一段之后有「逐个对账项目」一段，写明上面 1–4 步、跑不了的项目怎么办、整次成功的判法
-- [ ] 项目地图模板含指向 `projects/<名字>/memory/MEMORY.md` 的一行，与 setup 起草第一版用同一份模板（不复制两份）
-- [ ] 设备地图重写只改「## 设备地图」一节，地图和设备地图都写明 2000 字上限
-- [ ] home 的 `.gitignore` 模板忽略 `.worktrees/`
-- [ ] 记忆一段的原文没被改动（#332 钉住的文档测试仍绿）
-- [ ] 改了的 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
+- [x] dreaming skill 在记忆一段之后有「逐个对账项目」一段，写明上面 1–4 步、跑不了的项目怎么办、整次成功的判法
+- [x] 项目地图模板含指向 `projects/<名字>/memory/MEMORY.md` 的一行，与 setup 起草第一版用同一份模板（不复制两份）
+- [x] 设备地图重写只改「## 设备地图」一节，地图和设备地图都写明 2000 字上限
+- [x] home 的 `.gitignore` 模板忽略 `.worktrees/`
+- [x] 记忆一段的原文没被改动（#332 钉住的文档测试仍绿）
+- [x] 改了的 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
 
 ## 选中的存量回归
 

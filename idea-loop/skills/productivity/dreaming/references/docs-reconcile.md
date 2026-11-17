@@ -10,7 +10,7 @@
 
 ## 扫描范围
 
-主要：`docs/spec/` 的每份 spec 与它的 `tickets/`、`docs/adr/`。次要：`docs/domain/`、仓库里各插件的 references（参考手册）、`GLOSSARY.md`、`REVIEW.md`。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。`docs/design/` 归档与 `DESIGN.md` 归别的 agent，这里不碰。
+知识库（`docs/`）、`GLOSSARY.md`、`REVIEW.md` 在项目目录，代码在代码 worktree：写进文档的代码物去 worktree 里查，文档的改动落在项目目录。主要：`docs/spec/` 的每份 spec 与它的 `tickets/`、`docs/adr/`。次要：`docs/domain/`、代码 worktree 里各插件的 references（参考手册）、`GLOSSARY.md`、`REVIEW.md`。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。`docs/design/` 归档与 `DESIGN.md` 归别的 agent，这里不碰。
 
 ## 判定可证伪
 
