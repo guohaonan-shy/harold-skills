@@ -16,7 +16,7 @@ description: 外链外联：给目标站点写外联邮件、发信、跟进回�
 - **一个外链类 issue**（issue 会话的实现阶段）：`gh issue view <号> --comments` 读全文。资产、候选站点（`targets`）、每个候选为什么相关和建议的角度都在证据里。
 - **人直接给**：资产页面的网址，加一组目标站点或页面。缺资产就问人一次；没给站点就先用 Skill 工具调 `idea-loop:link-prospecting` 找候选，再回到这里。
 
-再读目标仓库根的 `SEO.md`（格式见 `idea-loop:seo-setup` 的 references 里的 `seo-md.md`）：「站点」（我们是谁）、「竞品」（不给竞品写信，也不把竞品当角度里的贬低对象）、「写作」里的文风和失败案例两个文件。没有 `SEO.md`，停下告诉人先跑 `/idea-loop:seo-setup`。
+再读目标仓库根的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出各节，取「站点」（我们是谁）、「竞品」（不给竞品写信，也不把竞品当角度里的贬低对象）、「写作」里的文风和失败案例两个文件（`writing.voice`、`writing.failures`）。没有 `SEO.md`，停下告诉人先跑 `/idea-loop:seo-setup`。
 
 完成条件：说得出资产页面、目标站点清单，读过了文风文件（SEO.md 没写文风就记下「按通用语气」）。
 
