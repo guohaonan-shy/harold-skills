@@ -89,6 +89,16 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 3. 用完 `browser_close`，再 `node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release <锁目录> --owner <你的名字>`。
 4. 等了默认的 30 分钟还没拿到，就停下，在交回里写明卡在锁上。
 
+## 人的浏览器
+
+用 Claude in Chrome：人自己的 Chrome，带人的登录态，工具是 `mcp__claude-in-chrome__*`。跟「浏览器」里的两个不同：Playwright 每次是干净的、没有登录；内嵌浏览器是 Claude 桌面端自己的面板，也不是人的 Chrome 配置。
+
+- 工具是延迟加载的：一次 `ToolSearch` 用 `select:` 把要用的几个都加载（`tabs_context_mcp`、`tabs_create_mcp`、`navigate`、`read_page`、`find`、`form_input`、`computer`、`tabs_close_mcp`），不一个一个加载。
+- 先 `tabs_context_mcp` 看人开着哪些标签页；用 `tabs_create_mcp` 开新标签页干活，不动人已有的标签页，用完 `tabs_close_mcp` 关掉自己开的（要留给人点的那一页除外）。
+- 开页面 `navigate`，读页面 `read_page` / `get_page_text`，填表 `form_input`，截图 `computer` 的 `screenshot`。
+- 遇到登录页、验证码、支付页：停下，交给人；不替人输密码，不过人机验证。
+- 扩展没连上、工具不在：走 `SKILL.md` 的退路。
+
 ## 向人提问
 
 `AskUserQuestion`：2–4 个选项的单选题。选项装不下的分叉（要人评判的复合信息）不用它，用对话里的 markdown 问。

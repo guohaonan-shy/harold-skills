@@ -22,13 +22,13 @@ related: ["[[2026-10-22-retro-grill]]", "[[2026-10-19-pr-decision-friction]]"]
 - **只出候选，不改规则文件。** 候选逐条摆给人批；落点分三层：插件本身、目标仓库的规则文件、能机械判定的优先做成检查。
 - **决定记录进目标仓库。** 每个 issue 一份 `docs/raw/decisions/<号>.md`，记摆过的每道题和候选结果，供以后数次数、认出被驳回的候选。
 - **规则改动的验收分两种。** 能机械判定的做成检查，且先在历史错误上看它变红；要判断的写回放用例（决策发生时的提交、当时的 prompt、停在哪、一道从人原话写出的是/否题），用主分支与 PR 分支的插件各跑一遍再由判定会话作答，改前「否」、改后「是」才算过，改前就「是」判成用例没抓住问题；人可推翻判定，记入用例旁的 `annotations.md`。
-- **回放按大小分跑。** 只驱动一个 skill、不起 agent、不开浏览器、不调付费服务的是小的，实现完当场跑；其余是大的，进夜间队列，每晚本机时间 00:00–07:00 之间由 setup 建的计划任务跑，结果写进 PR 的 review loop 文件。
+- **回放按大小分跑。** 只驱动一个 skill、不起 agent、不开浏览器、不调付费服务的是小的，实现完当场跑；其余是大的，进夜间队列，每晚本机时间 00:00–07:00 之间由 setup 建的计划任务跑，结果写进 PR 的 review loop 文件。⚠️ 已被取代（部分：夜间队列）→ [[0052-replay-run-large-now]]
 - 仓库根 `AGENTS.md` §5 加第二个 eval 例外：回放不打分，只判一条规则对应的那个点，是规则改动的验收而非质量基线。
 
 ## 3 结果（result）
 
 - skill `idea-loop/skills/productivity/retro/`（可被模型调用，`issue-session` 收尾调它），参考资料分会话记录压缩、决定记录格式、候选池三份；压缩脚本 `session-digest.mjs`。
-- 回放：`idea-loop/evals/retro/`（runner、`cases.mjs` 用例格式校验、`queue.mjs` 队列、`cases/` 下的真实用例）；runner 由 `retro-install.mjs` 拷到 `~/.idea-loop/bin/` 固定路径，`setup` 的「夜间规则回放」一节建夜间计划任务并打印允许规则让人自己加；`implement` / `implementer` 对改规则的工单要求跑回放。
+- 回放：`idea-loop/evals/retro/`（runner、`cases.mjs` 用例格式校验、`queue.mjs` 队列、`cases/` 下的真实用例）；runner 由 `retro-install.mjs` 拷到 `~/.idea-loop/bin/` 固定路径，`setup` 的「夜间规则回放」一节建夜间计划任务并打印允许规则让人自己加；`implement` / `implementer` 对改规则的工单要求跑回放。⚠️ 已被取代（部分：夜间队列）→ [[0052-replay-run-large-now]]
 - 决定记录目录 `docs/raw/decisions/` 已在本仓库使用。
 
 ## 取代与演变
@@ -36,3 +36,4 @@ related: ["[[2026-10-22-retro-grill]]", "[[2026-10-19-pr-decision-friction]]"]
 - retro 批了就开 issue 这一步已被 `retro-candidate-pool` 的决定改为「进候选池或开 issue 由人选」，见 ADR-0030。
 - 取会话记录时按当前目录定位的做法已被 ADR-0032 取代。
 - spec 中引用的 `idea-loop:spec-status` 已在 issue 模型重做后并入 `idea-loop:issues`；不影响本决策。
+- 回放的夜间队列已取消（PR #308）：大用例在 PR 开出后当场跑，见 ADR-0052。

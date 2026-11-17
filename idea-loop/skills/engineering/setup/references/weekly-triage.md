@@ -2,7 +2,7 @@
 
 `idea-loop:issue-triage` 可以由『定时任务』每周自己跑一次：最早的 15 个 backlog issue 各由一个子代理查完、贴证据评论，按子代理的建议去向翻好状态。
 
-用到的能力（『定时任务』『向人提问』）：用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的这几节；任务建在哪个目录、时间用哪个时区、prompt 怎么起 skill，都在『定时任务』里。
+用到的能力（『定时任务』『向人提问』）：做法照 `idea-loop:runtime`；任务建在哪个目录、时间用哪个时区、prompt 怎么起 skill，都在『定时任务』里。
 
 1. 用『定时任务』列出已有的任务。运行环境没有这个能力：走 `idea-loop:runtime` 的退路，把下面第 4 步的 prompt 给人，同时告诉人任务 id 要叫 `triage-<仓库名>`（仓库名取主 checkout 的目录名，命令是 `basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`），这一步记「未做：运行环境 <名> 没有『定时任务』」。
 2. 已有 id 为 `triage-<仓库名>` 的任务：报给人（时间、是否开着），这一步完成。

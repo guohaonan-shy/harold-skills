@@ -790,7 +790,7 @@ test('the command line refuses the commands of the old model', () => {
 
 // ---------- issue body, new, body, priority, backlog, note (spec issue-triage) ----------
 
-const GOOD_BODY = '## 问题\n\n重试会重复扣配额\n\n## 证据\n\n无，待验证\n\n## 影响范围\n\n所有点过重试的用户\n\n## 从哪发现\n\n#242 的复现\n\n## 背景\n\n可选的一节\n';
+const GOOD_BODY = '## 背景\n\n「重试」按钮：把失败的任务按原参数再交给队列一次；配额按每次交给队列扣一次\n\n## 问题\n\n重试会重复扣配额\n\n## 证据\n\n无，待验证\n\n## 影响范围\n\n所有点过重试的用户\n\n## 从哪发现\n\n#242 的复现\n';
 const withoutSection = (name) => GOOD_BODY.replace(new RegExp(`## ${name}\\n\\n[^#]*`), '');
 
 /** A file with `text` in a fresh temp directory; its path. */
@@ -807,22 +807,35 @@ function spied(issues, labels = [], prs = {}) {
   return { ...fake, gh: (args) => { seen.push(args); return fake.gh(args); }, seen };
 }
 
-test('bodyErrors: the four sections must be there and not blank; optional sections and other headings are left alone', () => {
+test('bodyErrors: the five sections must be there and not blank; optional sections and other headings are left alone', () => {
   assert.deepEqual(bodyErrors(GOOD_BODY), []);
   assert.deepEqual(bodyErrors(withoutSection('从哪发现')), ['缺「从哪发现」一节（## 从哪发现）']);
-  assert.deepEqual(bodyErrors('## 问题\n\nx\n'), ['缺「证据」一节（## 证据）', '缺「影响范围」一节（## 影响范围）', '缺「从哪发现」一节（## 从哪发现）']);
+  assert.deepEqual(bodyErrors('## 问题\n\nx\n'), ['缺「背景」一节（## 背景）', '缺「证据」一节（## 证据）', '缺「影响范围」一节（## 影响范围）', '缺「从哪发现」一节（## 从哪发现）']);
   assert.deepEqual(bodyErrors(GOOD_BODY.replace('所有点过重试的用户', ' \n\t')), ['「影响范围」一节是空的']);
-  assert.deepEqual(bodyErrors('## 问题\n\n## 证据\n\nx\n## 影响范围\nx\n## 从哪发现\nx'), ['「问题」一节是空的']);
-  assert.deepEqual(bodyErrors(GOOD_BODY.replace('## 背景\n\n可选的一节\n', '')), []);
+  assert.deepEqual(bodyErrors('## 问题\n\n## 证据\n\nx\n## 影响范围\nx\n## 从哪发现\nx\n## 背景\nx'), ['「问题」一节是空的']);
+  // an optional section stays optional
+  assert.deepEqual(bodyErrors(`${GOOD_BODY}\n## 已确认原因\n\n`), []);
   // text under a sub-heading is content; a 三级 heading with a required name does not start a section
-  assert.deepEqual(bodyErrors('## 问题\n\n### 细节\n\nx\n\n## 证据\n\n### 影响范围\n\n## 影响范围\n\nx\n## 从哪发现\nx'), []);
-  assert.equal(bodyErrors('').length, 4);
-  assert.equal(bodyErrors(undefined).length, 4);
+  assert.deepEqual(bodyErrors('## 背景\n\n### 细节\n\nx\n\n## 问题\n\nx\n\n## 证据\n\n### 影响范围\n\n## 影响范围\n\nx\n## 从哪发现\nx'), []);
+  assert.equal(bodyErrors('').length, 5);
+  assert.equal(bodyErrors(undefined).length, 5);
+});
+
+test('背景 is required: missing is refused naming 背景, blank is refused as empty, 「无」 counts as filled', () => {
+  assert.deepEqual(bodyErrors(withoutSection('背景')), ['缺「背景」一节（## 背景）']);
+  assert.deepEqual(bodyErrors(GOOD_BODY.replace(/## 背景\n\n[^#]*/, '## 背景\n\n \n\t\n\n')), ['「背景」一节是空的']);
+  assert.deepEqual(bodyErrors(GOOD_BODY.replace(/## 背景\n\n[^#]*/, '## 背景\n\n无\n\n')), []);
 });
 
 test('new refuses a body that misses a section without calling gh issue create, and says which', () => {
   const { gh, calls } = fakeGh({});
   assert.throws(() => newIssue(gh, null, { title: '重试重复扣配额', body: withoutSection('从哪发现') }), /从哪发现/);
+  assert.deepEqual(writes(calls), []);
+});
+
+test('new refuses a body without 背景 and does not call gh issue create', () => {
+  const { gh, calls } = fakeGh({});
+  assert.throws(() => newIssue(gh, null, { title: '重试重复扣配额', body: withoutSection('背景') }), /缺「背景」/);
   assert.deepEqual(writes(calls), []);
 });
 
@@ -872,6 +885,7 @@ test('the command line: new opens the issue and prints its number; body only che
   assert.deepEqual(calls[0].filter((a, i) => calls[0][i - 1] === '--label').sort(), ['kind:bug', 'priority:P0', 'status:todo', 'type:billing', 'type:seo', 'type:seo/blog']);
   assert.deepEqual(cli(gh, ['body', docs, fileWith(GOOD_BODY)]), ['正文齐了']);
   assert.throws(() => cli(gh, ['body', docs, fileWith(withoutSection('证据'))]), /缺「证据」/);
+  assert.throws(() => cli(gh, ['body', docs, fileWith(withoutSection('背景'))]), /缺「背景」/);
   assert.throws(() => cli(gh, ['body', docs, join(docs, 'no-such.md')]), /没有正文文件/);
   assert.throws(() => cli(gh, ['new', docs, 'x', fileWith(GOOD_BODY), '--state']), /--state 要带值/);
   assert.equal(calls.length, 1, 'body wrote nothing');
