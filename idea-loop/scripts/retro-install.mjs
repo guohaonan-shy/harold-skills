@@ -24,7 +24,7 @@ const PLUGIN_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ENTRY_NAME = 'retro-replay.mjs';
 const RUNTIME_FILES = [
   ['evals/retro', ['retro-replay.mjs', 'queue.mjs', 'replay.mjs', 'cases.mjs']],
-  ['scripts', ['claude-stream.mjs', 'codex-companion.mjs', 'runtime-detect.mjs']],
+  ['scripts', ['claude-stream.mjs', 'codex-companion.mjs', 'project-map.mjs', 'runtime-detect.mjs']],
 ];
 
 const ENTRY = `#!/usr/bin/env node

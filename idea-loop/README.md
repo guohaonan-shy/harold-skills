@@ -284,6 +284,16 @@ cannot show that its rule works. An empty change set (only scripts changed) is r
 "yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. Details and
 the exit codes: the header of `evals/retro/retro-replay.mjs`.
 
+**The temporary home.** The knowledge base lives in idea-loop's home (`projects/<名字>/docs/`, `IDEA_LOOP_HOME` points at it), and the
+post-change plugin reads only home. So every session the runner starts gets its own temporary home (a git repo in a temp dir, a copy kept
+under the run dir as `<side>/home`) and `IDEA_LOOP_HOME` points at it; nothing of the machine's own home is reachable. An **old case**
+(no `home_commit`: its commit is from before the knowledge base moved) gets one built out of that commit: its `docs/` and bootstrap
+files copied into `projects/<名字>/`, the project list naming the project (the case repository's `origin`, the checkout the run works
+in); only the post-change run gets it, the pre-change plugin reads the same files from the code repository and gets an empty home. A
+case with the optional field **`home_commit`** (a commit of the home repository) gives both runs a copy cut from it, and
+`--home-repo <dir>` says where the home repository is (required for such a case). The judge sees the files a run wrote in its home as well
+as in the workspace. The conversion from `docs/` to a home lives only in the runner.
+
 **Who runs what, and when.** There is no night queue and no scheduled task: replays are run on the spot, by whoever has the
 change in hand. The implementer runs a small case itself (`--case`). A large case (it starts a plugin agent, opens a browser or
 calls a paid service) is not run by `--case`: the runner exits with code 3, and a small case that turns out to start a plugin

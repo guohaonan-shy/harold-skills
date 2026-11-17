@@ -13,10 +13,10 @@
 
 ## 验收标准
 
-- [ ] 单测：给一个带 `docs/` 和若干引导文件的假代码仓库提交，搭出的临时 home 有 `projects/<名字>/docs/` 和那几份引导文件、项目清单有这一行，01 的 `where` 在它的 worktree 里认得出来
-- [ ] 单测：有 `home_commit` 的用例，两侧都拿到同一个 `IDEA_LOOP_HOME`；没有的，只有改后一侧拿到
-- [ ] 用改后的插件跑一次现有用例 `draft-spec-orphan-capability`（size small）：临时 home 里有那个提交的 `docs/`，spec 草稿写进临时 home，判定会话的是/否题答「是」，与改前插件跑出的判定一致；跑不成的写明原因并 `⏭ 延后 → 10`
-- [ ] 用例格式的说明（runner 的参考或 README）写了 `home_commit`
+- [x] 单测：给一个带 `docs/` 和若干引导文件的假代码仓库提交，搭出的临时 home 有 `projects/<名字>/docs/` 和那几份引导文件、项目清单有这一行，01 的 `where` 在它的 worktree 里认得出来
+- [x] 单测：有 `home_commit` 的用例，两侧都拿到同一个 `IDEA_LOOP_HOME`；没有的，只有改后一侧拿到
+- [ ] 用改后的插件跑一次现有用例 `draft-spec-orphan-capability`（size small）：临时 home 里有那个提交的 `docs/`，spec 草稿写进临时 home，判定会话的是/否题答「是」，与改前插件跑出的判定一致；跑不成的写明原因并 `⏭ 延后 → 10` ⏭ 延后 → 10：跑成了，临时 home 里有那个提交的 `docs/` 和引导文件，判定答「是」且与改前一致（都答是，runner 报「用例没抓住问题」：改前插件是 main，它已含这条 draft-spec 规则）；但 spec 草稿写在工作区的 `docs/`、没写进临时 home，因为 04–08 还没落地，改后插件的 skill 还不认 home。等 04–08 落地后由 10 重跑确认
+- [x] 用例格式的说明（runner 的参考或 README）写了 `home_commit`
 
 ## 选中的存量回归
 
