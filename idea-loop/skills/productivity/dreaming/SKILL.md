@@ -15,6 +15,10 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 - **每个判定都靠这一次跑出来的证据**，不凭记忆、不凭文档自己的旧结论。存疑就留着不动。
 - **扫描范围**：`docs/`、`GLOSSARY.md`、`REVIEW.md`、`DESIGN.md`、仓库里各插件的 references。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。
 
+## 记忆一段（在提议段之前）
+
+设备上只有一份记忆（home 的 `memory/`）。全量调用时先整理它：量根索引、把项目事实挪进项目目录、直接提交到 home；步骤照 [references/memory-tidy.md](references/memory-tidy.md)。这一段开在 home 里也能跑，不需要 `DEVELOPMENT.md`；home 或它的 `memory/` 不存在就跳过。
+
 ## 流程：提议段，之后自动与问人分开走
 
 **提议段**，只读不写：
@@ -53,6 +57,6 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 ## 只跑一部分
 
-人调用时可以说只跑某一部分，只起对应的那个 agent（或只做漏归档），只出那几节：只跑 spec → ADR 起 `adr-reconciler`；只跑候选蒸馏或只跑 `DESIGN.md` 对账起 `design-steward`，范围写明哪一部分；只跑设计档案走档案那一路。
+人调用时可以说只跑某一部分，只起对应的那个 agent（或只做漏归档），只出那几节：只跑 spec → ADR 起 `adr-reconciler`；只跑候选蒸馏或只跑 `DESIGN.md` 对账起 `design-steward`，范围写明哪一部分；只跑设计档案走档案那一路；说「只跑记忆」就只做记忆一段，只出 `记忆` 一节。
 
 **单条蒸馏**：人在会话里口述了一条视觉规则、想当场落，调用时带上这条规则：只起 `design-steward`，范围「单条蒸馏」，不开浏览器、不跑其它部分、不出提议表，照 [references/candidate-distillation.md](references/candidate-distillation.md) 的「单条蒸馏」。没有单独调用的，这条规则记成候选，等下一次对账。

@@ -40,11 +40,15 @@ export const ROW_TYPES = {
   漏归档: ['补归档', '丢弃'],
   'retro 候选': ['开 issue：机械检查', '开 issue：改 skill', '留在池里', '驳回'],
   'DESIGN.md 条目': ['改法', '移出', '删除', '改写为全局规则', '合并为一条', '新建 DESIGN.md', '处理 lint 警告', '交人裁决'],
+  记忆: ['挪进项目', '合并', '订正', '毕业', '删除', '缩短索引行', '问人'],
   缺陷: ['开 issue', '已有 #N'],
 };
 // retro 候选: a rule candidate in the retro pool (docs/records/retro-candidates/) that has come up at
 // least 3 times. Dreaming reads the pool itself (no agent); the row's 证据 carries the verbatim words of
 // each occurrence, so it is checked only for being non-empty (the generic empty-cell rule).
+// 记忆: one memory file or index line of the device's memory (`<home>/memory/`) that dreaming's memory pass has
+// something to do with. Dreaming reads the index and each entry's frontmatter itself (no agent). Only a 问人 row —
+// two rules that give opposite answers to the same case — goes to the human; the rest are carried out as proposed.
 // 漏归档: a merged need whose docs/design/tmp/<spec-slug>/ still holds design output on the base
 // branch (it skipped pr-review's merge step). Dreaming finds it mechanically; no agent.
 
@@ -289,6 +293,7 @@ export function checkProposalTable(markdown) {
  * here and nowhere else; it reads only the row's type, disposition and object cell:
  *  - every row of 候选 and of DESIGN.md 条目;
  *  - a 文档 row whose disposition is 报警 or 问人 (a note in parentheses after it is ignored);
+ *  - a 记忆 row whose disposition is 问人 (two memory rules that contradict each other);
  *  - a 文档 row whose object starts with GLOSSARY.md — terms are decided by the human only,
  *    whatever the disposition (a backtick around the file name is read through, so a quoted name
  *    is not mistaken for an automatic row).
@@ -296,6 +301,7 @@ export function checkProposalTable(markdown) {
  */
 function isAskRow(type, cells) {
   if (type === '候选' || type === 'DESIGN.md 条目') return true;
+  if (type === '记忆') return leadingDisposition(cells[3]) === '问人';
   if (type !== '文档') return false;
   const lead = leadingDisposition(cells[3]);
   return lead === '报警' || lead === '问人' || /^`?GLOSSARY\.md/.test(cells[0]);

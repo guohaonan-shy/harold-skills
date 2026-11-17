@@ -6,11 +6,11 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 
 ## 1. 建 home
 
-`~/home` 已存在就只补缺的文件和小节，人写的原样保留，然后进第 2 步。不存在：
+`~/home` 已存在就只补缺的文件、小节和 `.gitignore` 里缺的那几行，人写的原样保留，补了的文件 `git add` 后提交一次（message `chore: 补 home`），然后进第 2 步。不存在：
 
 1. `git init -b main`，写下面这几样：
    - `AGENTS.md`：只有 `## 设备地图`（照下面的设备地图模板填）和 `## 项目`（空，第 2 步往里加行）两节。
-   - `.gitignore`：一行 `.backup/`。
+   - `.gitignore`：两行，`.backup/` 和 `.tmp/`（dreaming 的中间物放 `.tmp/`）。
    - `memory/`、`projects/` 两个目录，各放一个空的 `.gitkeep`（git 不跟踪空目录）。
 2. 提交：`git add AGENTS.md .gitignore memory projects`，message `chore: 建 home`。
 3. 用『向人提问』问人推不推到 GitHub 私有仓库，选项「推」「只留本地」。`gh auth status` 已登录推荐「推」，否则推荐「只留本地」；公司虚拟机这类不连远端的设备选「只留本地」。选推：`gh repo create home --private --source ~/home --remote origin --push`。
