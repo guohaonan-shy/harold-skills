@@ -10,7 +10,9 @@
  * nothing here is an opinion.
  *
  * Several matrices (e.g. language × color scheme) go to ONE invocation: they share
- * the browser and run up to --concurrency at a time, each in its own context.
+ * the browser, each in its own context. How many run at once is picked from the
+ * machine's free memory and idle cores, at most 4 (`ui-measure-concurrency.mjs`);
+ * --concurrency N overrides it, still capped at 4.
  * Do not start one process per matrix — every process is another browser.
  *
  * Screenshots are decoded here in node (`decodePng`, zlib) and compared by the
@@ -36,9 +38,9 @@ import {
   DEFAULT_TOLERANCE, DEFAULT_ANTIALIAS_TOLERANCE, DEFAULT_PIXEL_THRESHOLD,
 } from './ui-compare.mjs';
 import { decodePng } from './ui-png-compare.mjs';
+import { pickConcurrency, sampleIdleCores } from './ui-measure-concurrency.mjs';
+import { availableParallelism, cpus, freemem } from 'node:os';
 
-/** Matrices run at once when --concurrency is not given (see the skill for the measurement). */
-const DEFAULT_CONCURRENCY = 4;
 
 /**
  * Resolve playwright from the TARGET PROJECT, not from this plugin.
@@ -198,15 +200,15 @@ async function mapLimit(items, limit, task) {
 function parseArgs(argv) {
   const asJson = argv.includes('--json');
   const ci = argv.indexOf('--concurrency');
-  const concurrency = ci >= 0 ? Number(argv[ci + 1]) : DEFAULT_CONCURRENCY;
+  const requested = ci >= 0 ? Number(argv[ci + 1]) : undefined;
   const paths = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--concurrency');
-  return { asJson, concurrency, paths };
+  return { asJson, requested, paths };
 }
 
 async function main() {
-  const { asJson, concurrency, paths } = parseArgs(process.argv.slice(2));
+  const { asJson, requested, paths } = parseArgs(process.argv.slice(2));
   const usage = 'usage: ui-measure.mjs <matrix.json> [<matrix.json> …] [--json] [--concurrency N]';
-  if (!paths.length || !Number.isInteger(concurrency) || concurrency < 1) {
+  if (!paths.length || (requested !== undefined && (!Number.isInteger(requested) || requested < 1))) {
     console.error(usage);
     process.exit(1);
   }
@@ -216,6 +218,17 @@ async function main() {
     process.exit(1);
   }
   const matrices = paths.map((p) => JSON.parse(readFileSync(p, 'utf8')));
+
+  const { concurrency, reason } = pickConcurrency({
+    matrices: matrices.length,
+    requested,
+    cpus: availableParallelism(),
+    idleCores: await sampleIdleCores(cpus),
+    // freemem() on macOS counts only never-used pages; availableMemory() adds what
+    // the OS can reclaim, which is what a new browser context will actually get.
+    availableBytes: process.availableMemory?.() ?? freemem(),
+  });
+  console.error(`ui-measure: 同时跑 ${concurrency} 份矩阵（${reason}）`);
 
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch();
