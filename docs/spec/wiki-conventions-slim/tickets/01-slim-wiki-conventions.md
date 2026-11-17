@@ -7,7 +7,9 @@
 
 任何 skill 或 agent 调起知识库约定 skill（`idea-loop:wiki-conventions`），读到的主体少于 5000 字（量法：去掉 frontmatter 后按 UTF-8 字符数），只含每个调用方都要的约定；只有部分调用方用到的细节——设计目录两层的生命周期、`.tmp/` 每个子目录收什么和什么时候删、各层 index.md 的格式与特例、ADR 按小节取代——各挪进这个 skill 自己的一份参考文件，主体对应那一节末尾一行指过去。
 
-规则一条不改：路径、字段、闭集、生命周期都不动。主体现有的每个二级标题都保留（别处按「skill 名 + 节名」指过来，节名就是契约）。被挪走的内容如果有调用方专门指它（设计档案 skill 指「目录」看 `tmp/` 的生命周期、dreaming 的对账参考指「frontmatter」看 ADR 按小节取代），同一提交里改指到新参考文件里的标题。和设计档案 skill 重复的两句（`prod/` 只走归档脚本、旧 `design/<spec-slug>/` 目录只打提示）以及五种 `design-*` 类型的说明缩成一句指向设计档案 skill 的「图的实体」。
+规则一条不改：路径、字段、闭集、生命周期都不动。主体现有的每个二级标题都保留（别处按「skill 名 + 节名」指过来，节名就是契约）。被挪走的内容如果有调用方专门指它（设计档案 skill 指「目录」看 `tmp/` 的生命周期、dreaming 的对账参考指「frontmatter」看 ADR 按小节取代），同一提交里改指到新参考文件里的标题。
+
+> review 第 1 轮 S2（2026-11-18）同步改：上一句的做法被仓库规则「别的 skill 不读另一个 skill 的 `references/`」否掉；调用方照旧指正文节名，由正文那一节的指针行指进参考。和设计档案 skill 重复的两句（`prod/` 只走归档脚本、旧 `design/<spec-slug>/` 目录只打提示）以及五种 `design-*` 类型的说明缩成一句指向设计档案 skill 的「图的实体」。
 
 一个文档测试守住两件事：主体少于 5000 字；idea-loop 里所有写「`idea-loop:wiki-conventions` 的「X」」的地方，X 都是这个 skill 的 SKILL.md 或其参考文件里的标题。优先把设计档案 skill 已有的同类文档测试抽成按 skill 参数化、两者共用，而不是复制一份。
 
@@ -22,6 +24,8 @@ idea-loop 插件版本升一个 patch；插件 README 的文件树里补上新�
 - [x] `plugin.json` 版本升一个 patch，README 文件树补上新参考文件
 
 - [x] 全量（2026-11-18）：`skill-private-references` 测试——别的 skill 不直接指 wiki-conventions 的 `references/` 文件，只指主体节名，由主体那一节的指针行再指进参考
+
+- [ ] review 第 1 轮 S4（2026-11-18）：防「指到不存在的节」的文档测试扫描整个 idea-loop 插件下的所有 `.md` 与脚本（不只 skills、agents 与 spec.mjs），spec 的测试决策原话「以及 idea-loop 下所有 `.md` 与脚本」
 
 ## 选中的存量回归
 
