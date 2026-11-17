@@ -33,7 +33,7 @@
 
 ## 2. 判每一条
 
-读根索引和每份条目的 frontmatter；**只在要合并、要订正时读正文**。每条有话要说的，在 `~/home/.tmp/dreaming/<日期>/proposal.md` 里落一行，进提议表的 `记忆` 一节（形状照 [proposal-table.md](proposal-table.md)，对象写文件路径，证据写读到的原文或 frontmatter 字段）。没话要说的条目不进表；没有行就写一行 `无`。
+读根索引和每份条目的 frontmatter；**正文只在三种情形读**：要合并、要订正，或要判一条有项目出处（项目前缀、`originSessionId` 对得上某个项目）的条目归不归那个项目。没有项目出处的条目不为判归属读正文，留在根里。每条有话要说的，在 `~/home/.tmp/dreaming/<日期>/proposal.md` 里落一行，进提议表的 `记忆` 一节（形状照 [proposal-table.md](proposal-table.md)，对象写文件路径，证据写读到的原文或 frontmatter 字段）。没话要说的条目不进表；没有行就写一行 `无`。
 
 **判归属**（要不要挪进项目），先看出处，再看内容：
 

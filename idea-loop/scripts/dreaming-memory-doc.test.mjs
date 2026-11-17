@@ -50,10 +50,19 @@ test('the memory reference writes the steps in order: measure, judge, execute, a
   assert.ok(at.every((i) => i >= 0), `a step heading is missing: ${at}`);
   assert.deepEqual([...at].sort((a, b) => a - b), at);
   assert.match(memory, /memory-check/);
-  assert.match(memory, /只在要合并、要订正时读正文/);
   assert.match(memory, /originSessionId/);
   assert.match(memory, /先看出处，再看内容/);
   assert.match(memory, /判不准留在根里/);
+});
+
+test('judging reads a body only to merge, to correct, or to place an entry that has a project origin; an entry without one stays in the root unread', () => {
+  const judge = section(memory, '2\\. 判每一条');
+  assert.doesNotMatch(memory, /只在要合并、要订正时读正文/, 'the old rule contradicts reading content to judge ownership');
+  assert.match(judge, /正文只在三种情形读/);
+  assert.match(judge, /要合并/);
+  assert.match(judge, /要订正/);
+  assert.match(judge, /要判一条有项目出处（项目前缀、`originSessionId` 对得上某个项目）的条目归不归那个项目/);
+  assert.match(judge, /没有项目出处的条目不为判归属读正文，留在根里/);
 });
 
 test('the memory reference lists exactly the dispositions the proposal-table script accepts, each with what to do', () => {
