@@ -65,6 +65,15 @@ test('the memory reference lists exactly the dispositions the proposal-table scr
   assert.match(memory, /≤150 字/);
 });
 
+test('the three practices taken from consolidate-memory are written once, in the disposition table; the section on why it is not called points back at the table', () => {
+  assert.equal([...memory.matchAll(/≤150 字/g)].length, 1, 'the hook length limit is stated more than once');
+  assert.equal([...memory.matchAll(/保留内容更全/g)].length, 1, 'the merge practice is stated more than once');
+  assert.equal([...memory.matchAll(/绝对日期/g)].length, 1, 'the absolute-date practice is stated more than once');
+  const why = section(memory, '为什么不调 `consolidate-memory`');
+  assert.match(why, /处置表/);
+  assert.doesNotMatch(why, /^\s*-\s/m, 'the section lists the practices again');
+});
+
 test('execution adds only the paths it changed, commits once in home, pushes when there is an origin, and rolls back with git revert', () => {
   const exec = section(memory, '3\\. 执行');
   assert.match(exec, /只 add 自己改的路径/);

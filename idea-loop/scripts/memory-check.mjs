@@ -11,19 +11,23 @@
  *   - the root index is within 140 lines and within 25,000 bytes (both must hold);
  *   - every link in the root index and in each project index points at a file that exists;
  *   - every entry file in the root directory is listed in the root index;
- *   - every line of the root index's `## 项目` section points at an existing project memory index.
+ *   - every line of the root index's `## 项目` section points at an existing project memory index, and that index
+ *     sits at `<home>/projects/<名字>/memory/MEMORY.md` (the root index itself, or a file one layer up, does not count).
  *
  * Usage: memory-check.mjs [<memory directory>]   (default: `<home>/memory`, home is ~/home or IDEA_LOOP_HOME)
  * Exit: 0 all within limits, 2 problems (one line each), 1 unusable input.
  */
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { homeDir } from './home-config.mjs';
 
 export const MAX_LINES = 140;
 export const MAX_BYTES = 25000;
 const PROJECT_SECTION = '项目';
+const PROJECT_INDEX_SHAPE = 'projects/<名字>/memory/MEMORY.md';
+/** The only place a project's memory index may sit, relative to home (the parent of the memory directory). */
+const PROJECT_INDEX_PATH = /^projects\/[^/]+\/memory\/MEMORY\.md$/;
 
 /** Lines and bytes of an index text; a final newline does not add a line. */
 export function measureIndex(text) {
@@ -92,8 +96,11 @@ export function checkMemory(dir) {
     }
     for (const target of targets) {
       const path = resolve(dir, target);
-      if (isFile(path) && basename(path) === 'MEMORY.md') projectIndexes.push(path);
-      else problems.push(`「## ${PROJECT_SECTION}」的一行指到 ${target}，项目记忆索引不存在`);
+      if (!isFile(path)) {
+        problems.push(`「## ${PROJECT_SECTION}」的一行指到 ${target}，项目记忆索引不存在`);
+      } else if (!PROJECT_INDEX_PATH.test(relative(dirname(dir), path).split(sep).join('/'))) {
+        problems.push(`「## ${PROJECT_SECTION}」的一行指到 ${target}，不在 ${PROJECT_INDEX_SHAPE} 这个位置`);
+      } else projectIndexes.push(path);
     }
   }
 

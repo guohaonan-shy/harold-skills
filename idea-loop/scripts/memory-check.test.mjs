@@ -125,6 +125,29 @@ test('within the limits, every link and project pointer valid, nothing unlisted:
   assert.equal(r.status, 0, r.out);
 });
 
+test('a project pointer that skips the memory/ layer (../projects/<name>/MEMORY.md) is named even though that file exists, exit 2', () => {
+  const { home, memory } = newHome();
+  put(join(home, 'projects', 'acme-shop'), { 'MEMORY.md': '# acme-shop\n' });
+  put(memory, {
+    'MEMORY.md': '# Memory\n\n## 项目\n- [acme-shop 的项目记忆](../projects/acme-shop/MEMORY.md) — 1 条\n',
+  });
+  const r = run([memory]);
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /acme-shop\/MEMORY\.md/);
+  assert.match(r.out, /projects\/<名字>\/memory\/MEMORY\.md/);
+});
+
+test('a project pointer that points back at the root index itself (MEMORY.md) is named, exit 2', () => {
+  const { memory } = newHome();
+  put(memory, {
+    'MEMORY.md': '# Memory\n\n## 项目\n- [acme-shop 的项目记忆](MEMORY.md) — 1 条\n',
+  });
+  const r = run([memory]);
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /项目[^\n]*MEMORY\.md/);
+  assert.match(r.out, /projects\/<名字>\/memory\/MEMORY\.md/);
+});
+
 test('a broken link inside a project index is named, with the index it sits in', () => {
   const { home, memory } = newHome();
   put(join(home, 'projects', 'acme-shop', 'memory'), { 'MEMORY.md': '# acme-shop\n- [lost](lost.md) — x\n' });
