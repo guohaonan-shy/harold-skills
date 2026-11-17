@@ -24,13 +24,13 @@
 | [[0020-idea-loop-seo]] | 生效 | idea-loop 新开 seo 分类：蒸馏 OpenSEO 方法做发现，扫描结果提成 issue，按原有 issue 流程解决 |
 | [[0021-issue-consolidation]] | 已被取代（→ ADR-0022） | 用 cloud 定时任务把同处改动的 issue 挂成根加子 issue、按根出会话，0.1.8 上线，随后被 issue 模型重定取代 |
 | [[0022-issue-model]] | 生效 | issue 状态是唯一真相：七个状态对上 Linear，实现开始即开 draft PR，一个仓库一个 PR，不用父子归组，正文四节必填 |
-| [[0023-issue-triage]] | 生效 | backlog 每周由子代理逐个核实、人批一张表定去向；开 issue 必经校验；优先级决定派发顺序；issue-verify 删除 |
+| [[0023-issue-triage]] | 生效 | backlog 每周由子代理逐个核实、按建议去向直接翻状态；开 issue 必经校验；优先级决定派发顺序；issue-verify 删除 |
 | [[0024-issue-linear]] | 生效 | issue 在 Linear 上时 setup 经 MCP 接入、团队状态整理进 ISSUE_TRACKER.md，前提仍由 issues.mjs 判，读写走 MCP |
 | [[0025-dispatch-triage-cards]] | 生效 | 调度也给 triage 的 issue 出会话卡片（单独上限 3），人点了才开会话；删掉独立队列，所有 issue 一个队列 |
 | [[0026-runtime]] | 生效 | 运行环境从通用流程里抽出：能力清单加每个运行环境一份做法，自动检测，支持 Claude 桌面端与 magi，tripwire 防耦合回来 |
 | [[0028-retro]] | 生效 | 新增 retro skill 从会话记录提炼规则候选逐条给人批；改规则用回放用例（改前否、改后是）证明生效 |
 | [[0029-retro-batch-dispatch]] | 生效 | 调度只数标题为「仓库名#号」的 issue 会话，子会话不占位；曾设计的 retro 整合当天撤回 |
-| [[0030-retro-candidate-pool]] | 生效 | retro 批的候选由人选进候选池或开 issue；dreaming 数池里出现达 3 次的，提议开成 issue，批了才开 |
+| [[0030-retro-candidate-pool]] | 生效 | retro 批的候选由人选进候选池或开 issue；dreaming 数池里出现达 3 次的，提议开成 issue，按建议处置直接开 |
 | [[0032-session-digest-locate]] | 生效 | session-digest locate 先按会话自己的 id 找，退回标记时只认第一条人的发言，不唯一就退出码 2 |
 | [[0033-skill-length-measure]] | 生效 | 「SKILL.md 主体 < 5000 字」写明量法：去掉 frontmatter、按 UTF-8 字符数，附照抄就对的命令，只写一处 |
 | [[0034-writing-for-agents-pruning-layers]] | 生效 | 改 agent 文档先诊断；分支按调用方要的东西切；参考同样剪枝；通用文档不带项目信息；retro 候选写明怎么验证 |
@@ -45,3 +45,18 @@
 | [[0043-seo-cannibalization-sitelinks]] | 生效 | SEO.md 新开「品牌」节，蚕食判定排除含品牌词的查询，不再把站点链接报成蚕食 |
 | [[0044-seo-params-from-seo-md]] | 生效 | seo 要用的项目信息经「推测、人确认、写入」，扫描缺了先停下等人，skill 不再自己推着用 |
 | [[0045-seo-writing-faq-trim]] | 生效 | FAQ 条数超出项目规范时，seo-writing 先拿 Search Console 搜索词逐条评估，删完仍超才交给人 |
+| [[0046-design-archive-loaded-sections]] | 生效 | 比主视口高、不分段的状态，首屏以下会连出边的组件按屏补拍进截图，边用 shot 指向图 |
+| [[0047-dreaming-triage-autonomous]] | 生效 | dreaming 只问人 DESIGN.md 和文档冲突，其余自己执行并合并；每周分拣按建议直接翻状态 |
+| [[0048-implement-resume-landed]] | 生效 | 会话断了重进来，执行方已做完的工单先当交回 landed 核对落地，再回收，不再回收重派 |
+| [[0049-plugin-version-by-change]] | 生效 | 改了插件目录下任何文件的 PR 按改动性质升 major/minor/patch，没升版本的全量测试会红 |
+| [[0050-docs-ride-code-pr]] | 生效 | 一个需求的 spec、设计、工单跟代码同一个分支、同一个 PR 合进主分支；setup 问知识库放仓库里、仓库外还是不要 |
+| [[0051-pr-merge-says-release]] | 生效 | 说插件 PR 可以合并、交审核报告时，一并说它的版本去向；规则只放根 AGENTS.md 一处 |
+| [[0052-replay-run-large-now]] | 生效 | 规则回放取消夜间队列，大用例 PR 开出后当场跑；输入不露题、Codex 当评委、核对改后用上了改动 |
+| [[0053-retro-destination-recommend]] | 生效 | retro 摆候选时给去处推荐：同类前两次进候选池，第 3 次起推荐开 issue，仍由人选 |
+| [[0054-retro-pool-cross-repo-record]] | 生效 | 候选池里别的仓库的决定记录写成「仓库加路径」，不用 `[[ ]]`；池里 5 条断链已修 |
+| [[0055-scope-recommend-by-delivery]] | 生效 | 范围题按「影不影响这次交付」推荐：影响 spec 实现或上线的并进当前 PR，其余不进 |
+| [[0056-seo-draft-reads-principles]] | 生效 | 起草 seo issue 前先调对应 SEO skill 读原则、引一手结论；补 llms.txt 判据 |
+| [[0057-session-start-inject-rules]] | 生效 | SessionStart 钩子开场注入 decision-rules、runtime 正文与当前环境 reference |
+| [[0058-skill-edit-acceptance]] | 生效 | 改 skill 类文件的工单带三格验收，落地前脚本核对交回「调过」writing-for-agents |
+| [[0059-test-layering-ci-full]] | 生效 | 执行方只跑改动涉及的测试，全量交给 PR 转 ready 后的 CI；无 CI 时本机兜底 |
+| [[0060-to-ticket-walk-request-chain]] | 生效 | 切票前对着最新主分支，从用户入口沿调用链走到数据来源；spec 没覆盖的一段照「唯一会停的情况」处理 |

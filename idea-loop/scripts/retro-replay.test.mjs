@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { changeSetOf, projectName } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -131,6 +131,25 @@ test('buildArtifact says so when the run left no files', () => {
   assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有写下或改动的文件/);
 });
 
+test('replayChildEnv: the four gh token variables are gone, GH_CONFIG_DIR is the given empty dir, everything else is passed on, the input is untouched', () => {
+  const parent = {
+    GH_TOKEN: 't1', GITHUB_TOKEN: 't2', GH_ENTERPRISE_TOKEN: 't3', GITHUB_ENTERPRISE_TOKEN: 't4',
+    GH_CONFIG_DIR: '/home/me/.config/gh', PATH: '/usr/bin', HOME: '/home/me', CLAUDE_CONFIG_DIR: '/home/me/.claude',
+    IDEA_LOOP_RUNTIME: 'desktop', RETRO_JUDGE_ORDER: 'after-first', FAKE_LOG: '/x/log', GH_HOST: 'github.com',
+  };
+  const snapshot = structuredClone(parent);
+  const env = replayChildEnv(parent, '/run/dir/gh-config');
+  for (const k of ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN']) assert.ok(!(k in env), `${k} is removed`);
+  assert.equal(env.GH_CONFIG_DIR, '/run/dir/gh-config');
+  const { GH_TOKEN, GITHUB_TOKEN, GH_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_TOKEN, GH_CONFIG_DIR, ...rest } = parent;
+  assert.deepEqual({ ...env, GH_CONFIG_DIR: undefined }, { ...rest, GH_CONFIG_DIR: undefined }, 'every other variable passes through as it was');
+  assert.deepEqual(parent, snapshot, 'the object passed in was not changed');
+});
+
+test('replayChildEnv: when the parent has no gh variables at all, GH_CONFIG_DIR is still set to the empty dir', () => {
+  assert.deepEqual(replayChildEnv({ PATH: '/usr/bin' }, '/e'), { PATH: '/usr/bin', GH_CONFIG_DIR: '/e' });
+});
+
 test('the cost estimate is a range, scales with cases, and is stated in dollars', () => {
   const one = estimateCostUsd(1);
   assert.ok(one.low > 0 && one.high > one.low);
@@ -176,7 +195,9 @@ const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd }) + '\\n');
+const dirIn = process.env.GH_CONFIG_DIR;
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd, probe }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
 if (pd) {
@@ -211,7 +232,9 @@ const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
 fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd() }) + '\\n');
+const dirIn = process.env.GH_CONFIG_DIR;
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd(), probe }) + '\\n');
 if (process.env.FAKE_CODEX_FAIL) process.exit(2);
 const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
 const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
@@ -273,7 +296,7 @@ function realCodexLookalike(env) {
  * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
  * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
  */
-function run(env, extra = [], { codex = 'fake', order } = {}) {
+function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
   const r = spawnSync(process.execPath, [
     RUNNER, '--case', 'demo-case', '--repo', env.repo, '--cases-root', env.casesRoot,
     '--before-plugin', join(env.root, 'before', 'idea-loop'), '--after-plugin', join(env.root, 'after', 'idea-loop'),
@@ -281,7 +304,7 @@ function run(env, extra = [], { codex = 'fake', order } = {}) {
   ], {
     encoding: 'utf8',
     env: {
-      ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
+      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
       RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
       ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
@@ -351,6 +374,31 @@ test('e2e: both runs get exactly the case prompt, in a work dir that does not sa
   assert.ok(existsSync(join(dir, 'before', 'project', 'docs', 'out.md')));
   assert.ok(existsSync(join(dir, 'after', 'run.stream.jsonl')));
   assert.ok(!existsSync(dirname(w1.cwd)), 'the work dir is gone once the run is over');
+});
+
+test('e2e: every process the runner starts (both workers, the Codex judge, the Claude judge) has no gh login: no tokens, an existing empty config dir that is not the one passed in, the rest of the environment as it was', () => {
+  const given = mkdtempSync(join(tmpdir(), 'gh-given-'));
+  writeFileSync(join(given, 'hosts.yml'), 'github.com:\n  user: someone\n');
+  const parentEnv = { GH_TOKEN: 'secret-1', GITHUB_TOKEN: 'secret-2', GH_CONFIG_DIR: given, UNRELATED_VAR: 'stays' };
+  for (const codex of ['fake', 'missing']) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env, [], { codex, parentEnv });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const all = sessions(env);
+    const kinds = all.map((x) => x.kind).sort();
+    assert.deepEqual(kinds, codex === 'fake' ? ['codex', 'worker', 'worker'] : ['judge', 'worker', 'worker']);
+    const dirs = new Set();
+    for (const s of all) {
+      assert.equal(s.probe.GH_TOKEN, null, `${s.kind}: GH_TOKEN`);
+      assert.equal(s.probe.GITHUB_TOKEN, null, `${s.kind}: GITHUB_TOKEN`);
+      assert.notEqual(s.probe.GH_CONFIG_DIR, given, `${s.kind}: not the config dir that was passed in`);
+      assert.deepEqual(s.probe.ghDirEntries, [], `${s.kind}: GH_CONFIG_DIR exists and is empty`);
+      assert.equal(s.probe.UNRELATED, 'stays', `${s.kind}: other variables are passed on`);
+      dirs.add(s.probe.GH_CONFIG_DIR);
+    }
+    const runDir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+    assert.ok([...dirs].every((d) => d.startsWith(`${runDir}/`)), 'the empty dir lives under the run dir, and is kept with it');
+  }
 });
 
 test('e2e: the judge is told where the thing is handed to the human', () => {
@@ -629,6 +677,64 @@ test('exercisedBy: nothing used, or only things the change did not touch: not us
   ];
   assert.deepEqual(exercisedBy(events, CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
   assert.deepEqual(exercisedBy([], CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
+});
+
+// Spec session-start-inject-rules, ticket 01: the hook puts three kinds of file in the session at the start, so a run
+// does not need to read or call them for the change to reach it.
+const INJECTED_FILES = [
+  'skills/productivity/decision-rules/SKILL.md',
+  'skills/productivity/runtime/SKILL.md',
+  'skills/productivity/runtime/references/claude-desktop.md',
+  'skills/productivity/runtime/references/magi.md',
+];
+
+test('exercisedBy: a change to an injected file counts as used with no read or call in the stream, via "injected"', () => {
+  for (const [runtime, file] of [['claude-desktop', INJECTED_FILES[0]], ['claude-desktop', INJECTED_FILES[1]], ['claude-desktop', INJECTED_FILES[2]], ['magi', INJECTED_FILES[3]], ['magi', INJECTED_FILES[0]]]) {
+    const change = { files: [file], skills: [], agents: [] };
+    assert.deepEqual(exercisedBy([], change, { roots: ROOTS, runtime }), { status: 'hit', via: 'injected', name: file, changed: 1 }, `${runtime} ${file}`);
+  }
+  const decisionRules = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
+  const events = [tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/other/SKILL.md' }), { type: 'result', result: 'done' }];
+  assert.deepEqual(exercisedBy(events, decisionRules, { roots: ROOTS, runtime: 'magi' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[0], changed: 1 });
+});
+
+// Review round 1, S1: the hook injects only the reference of the session's own runtime.
+test("exercisedBy: the other runtime's reference is not injected: a change only to it needs a read or a call", () => {
+  const onlyMagi = { files: [INJECTED_FILES[3]], skills: ['idea-loop:runtime'], agents: [] };
+  assert.deepEqual(exercisedBy([], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 }, 'desktop session, only the magi reference changed, nothing read: not used');
+  const onlyDesktop = { files: [INJECTED_FILES[2]], skills: ['idea-loop:runtime'], agents: [] };
+  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 1 }, 'desktop session, the desktop reference changed: used, injected');
+  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'magi' }), { status: 'miss', changed: 1 }, 'and the other way round');
+  // read or called, it counts again
+  const read = tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/productivity/runtime/references/magi.md' });
+  const r = exercisedBy([read], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([r.status, r.via], ['hit', 'read']);
+  const s = exercisedBy([tool('Skill', { skill: 'idea-loop:runtime' })], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([s.status, s.via], ['hit', 'skill']);
+});
+
+test('exercisedBy: without a known runtime (unknown forced name, or none given) only decision-rules is injected', () => {
+  for (const file of [INJECTED_FILES[1], INJECTED_FILES[2], INJECTED_FILES[3]]) {
+    const change = { files: [file], skills: [], agents: [] };
+    assert.equal(exercisedBy([], change, { roots: ROOTS, runtime: null }).status, 'miss', file);
+    assert.equal(exercisedBy([], change, { roots: ROOTS }).status, 'miss', `${file} (no runtime given)`);
+  }
+  assert.equal(exercisedBy([], { files: [INJECTED_FILES[0]], skills: [], agents: [] }, { roots: ROOTS, runtime: null }).via, 'injected');
+});
+
+test('exercisedBy: when the stream also shows a read or a call, that is what is reported, not the injection', () => {
+  const change = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
+  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:decision-rules' })], change, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([r.status, r.via], ['hit', 'skill']);
+});
+
+test('exercisedBy: a change only to other skills, or to other files under the runtime skill, is still not used', () => {
+  assert.deepEqual(exercisedBy([], { files: ['skills/engineering/demo/SKILL.md'], skills: ['idea-loop:demo'], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 });
+  const nearby = ['skills/productivity/decision-rules/references/more.md', 'skills/productivity/runtime/notes.md', 'skills/productivity/runtime-extra/SKILL.md', 'agents/decision-rules.md'];
+  for (const file of nearby) assert.equal(exercisedBy([], { files: [file], skills: [], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }).status, 'miss', file);
+  // a change set that has one injected file among others is used through the injected one
+  const mixed = { files: ['skills/engineering/demo/SKILL.md', INJECTED_FILES[2]], skills: ['idea-loop:demo'], agents: [] };
+  assert.deepEqual(exercisedBy([], mixed, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 2 });
 });
 
 test('exercisedBy: an empty change set (only scripts changed) is not applicable, whatever the run did', () => {

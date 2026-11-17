@@ -2,7 +2,7 @@
 
 `idea-loop:dreaming` 可以由『定时任务』每周自己跑一次：提议段在那个会话里跑完，大部分行自己执行并合并，只有 `DESIGN.md` 和文档里的冲突两类才摆在会话里等人批；截图对账只对上次成功执行以来代码动过的状态做（`idea-loop:dreaming` 的「对账范围」）。人在普通对话里说要对账时，模型也会起 dreaming，流程相同。
 
-用到的能力（『定时任务』『向人提问』）：用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的这几节；任务建在哪个目录、时间用哪个时区、prompt 怎么起 skill，都在『定时任务』里。
+用到的能力（『定时任务』『向人提问』）：做法照 `idea-loop:runtime`；任务建在哪个目录、时间用哪个时区、prompt 怎么起 skill，都在『定时任务』里。
 
 1. 用『定时任务』列出已有的任务。运行环境没有这个能力：走 `idea-loop:runtime` 的退路，把下面第 4 步的 prompt 给人，同时告诉人任务 id 要叫 `dreaming-<仓库名>`（仓库名取主 checkout 的目录名，命令是 `basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`，dreaming 在自己的 worktree 里也用它取名；dreaming 靠这个 id 找执行记录），这一步记「未做：运行环境 <名> 没有『定时任务』」。
 2. 已有 id 为 `dreaming-<仓库名>` 的任务：报给人（时间、是否开着），这一步完成。

@@ -23,7 +23,7 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { DIRECTIONS, readSeoMd } from './seo-md.mjs';
+import { SCAN_DIRECTIONS, readSeoMd } from './seo-md.mjs';
 
 const SEO_MD = 'SEO.md';
 const CONTEXT = 'OpenSEO 项目上下文';
@@ -55,7 +55,7 @@ const listedMissing = (context, key) =>
   [context.missingSections, context.structuredContent?.missingSections].some((l) => Array.isArray(l) && l.includes(key));
 
 export function gaps(seo, context, directions) {
-  for (const d of directions) if (!DIRECTIONS.includes(d)) throw new Error(`不认识的方向「${d}」（只认 ${DIRECTIONS.join(' / ')}）`);
+  for (const d of directions) if (!SCAN_DIRECTIONS.includes(d)) throw new Error(`不认识的方向「${d}」（只认 ${SCAN_DIRECTIONS.join(' / ')}）`);
   const readable = context !== null && typeof context === 'object' && !Array.isArray(context);
   const written = { competitors: seo.confirmed.competitors, brand_terms: seo.confirmed.brandTerms };
   const out = [];

@@ -36,7 +36,7 @@ export function describeExercised(ex) {
   if (!ex) return null;
   if (ex.status === 'na') return '不适用（这次只改了脚本，skills/、agents/ 下没有改动的文件）';
   if (ex.status === 'miss') return `没用上（改动了 ${ex.changed} 个 skill、agent 或参考文件，改后那一遍没读过它们，也没调到所属的 skill、没起对应的 agent）`;
-  const what = { read: '读了', skill: '调了 skill', agent: '起了 agent' }[ex.via] ?? ex.via;
+  const what = { read: '读了', skill: '调了 skill', agent: '起了 agent', injected: '开场注入了' }[ex.via] ?? ex.via;
   return `用上了（${what} ${ex.name}）`;
 }
 
