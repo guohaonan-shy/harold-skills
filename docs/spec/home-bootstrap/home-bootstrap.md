@@ -86,7 +86,7 @@ home 里不放 `CLAUDE.md`（Q7）。
 
 ### setup
 
-setup 加一节「home」，步骤放进它自己的参考文件，SKILL.md 主体只留这一节的一行指针和完成条件（setup 的 SKILL.md 主体现在 8757 字，已经超过 5000 字的上限，不再往主体里加步骤）。三步：
+setup 加一节「home」，步骤放进它自己的参考文件，SKILL.md 主体只留这一节的一行指针和完成条件（setup 的 SKILL.md 主体改前 4949 字，贴着 5000 字的上限，不再往主体里加步骤）。三步：
 
 1. **建 home**（`~/home` 不存在时）：`git init`，写 `AGENTS.md`（只有 `## 设备地图`、`## 项目` 两节）、`.gitignore`（`.backup/`），建 `memory/`、`projects/`，提交。问人推不推到 GitHub 私有仓库：推荐「推」当 `gh auth status` 已登录，否则推荐「只留本地」；人选推，用 `gh repo create` 建私有仓库 `home` 并推上去。
 2. **登记当前项目**：`## 项目` 里还没有当前仓库这一行，就加一行（名字取远端的仓库名转小写，「是什么」从 `PRODUCT.md` 的第一句推、问人确认），建 `projects/<名字>/`，照模板起草第一版项目地图（见「实现决策」的「第一版项目地图由 setup 照模板起草」）。提交到 home。
@@ -159,7 +159,7 @@ setup 登记项目时，读这个项目现在的 `docs/index.md`、目录树和�
 
 ### 本机实测时不切记忆目录，等 #247 搬记忆时一起切
 
-setup 的三处改动照决定写全、有测试，home-config 脚本支持只做其中几处；这一刀合并后在本机实测，只启用插件、软链 `CLAUDE.md`，`autoMemoryDirectory` 不动。#252 到 #247 之间，在 Toeflair 开会话照旧读得到它的记忆索引。
+setup 的三处改动照决定写全、有测试，home-config 脚本支持只做其中几处；这一刀在本机实测，只软链 `CLAUDE.md`，`autoMemoryDirectory` 不动；用户级启用 idea-loop 等本机升到 0.2.0 再做（2026-11-17 人定：现装的 0.1.14 没有新 hook，启用只是把它铺到所有目录；原写「只启用插件、软链两处」）。#252 到 #247 之间，在 Toeflair 开会话照旧读得到它的记忆索引。
 
 什么时候切：#247 在本机跑迁移时，同一次里按「复制 10 个项目目录的记忆进 `~/home/memory/`（加项目前缀）→ 切 `autoMemoryDirectory` → 跑一次 dreaming 把索引压到 140 行内」的顺序做。压缩必须紧跟着切：本机 10 份 `MEMORY.md` 加起来正好 200 行（2026-11-16 `wc -l` 数），合成一份就顶到每轮只加载前 200 行的上限，也超过 Claude Code 要求的 140 行（决定记录 A4 的实测：超限后再写会报错、会话停下问人）；压缩的能力在 #332，按 #331 的顺序 #332 先于 #247 合进集成分支。这条顺序写进 #247 的 spec。
 
@@ -186,7 +186,7 @@ setup 的三处改动照决定写全、有测试，home-config 脚本支持只�
   - 会话开始 5：项目地图写 2500 字。期望——注入前 2000 字和一行「已截断」。覆盖：会话开始 5。
   - setup 3、4、5：临时 `HOME` 下放一份带 `env`、`enabledPlugins` 的 `settings.json` 和一份普通的 `CLAUDE.md`，出表再执行。期望——出表不写文件；执行后 `.backup/<时间>/` 下两份原文件逐字相同、`settings.json` 只多了两个键、`CLAUDE.md` 是软链、`~/home/AGENTS.md` 含原 `CLAUDE.md` 全文、`git status` 里 `.backup/` 不出现。覆盖：setup 3、4、5。
   - setup 6：同一个临时 `HOME` 再执行一次。期望——出表三项都是「已是」，执行什么都不改。覆盖：setup 6。
-  - 会话开始 4 与量 token 1（在本机，实现落地后做一次）：前置——本机按「本机实测时不切记忆目录」只做启用插件、软链 `CLAUDE.md` 两处跑完 setup，harold-skills 已登记、有项目地图。步骤——在 harold-skills 的同一个提交上，用同一个模型、每题一个全新的 `claude -p --output-format stream-json` 会话，问三个真实问题：「为什么每周分拣不等人批」（#298）、「改了插件的 PR 按什么升版本」（#305）、「为什么取消了夜间回放队列」（#174）；改前（本机跑 setup 之前）、改后各跑一遍。每次记总 token（输入含缓存读写、加输出）、工具调用次数、答案有没有引到对的出处。判定：三题改后都答对且引到出处、三题改后 token 的中位数不高于改前，算「地图够」；任一不满足算「不够」，开一个扩展 `design-archive` MCP 的 issue 挂到 #331 下，不在这一刀做。结果贴进 PR 描述并评论到 #331。覆盖：会话开始 4、量 token 1。
+  - 会话开始 4 与量 token 1（在本机，实现落地后做一次）：前置——本机按「本机实测时不切记忆目录」只软链 `CLAUDE.md` 跑完 setup（用户级启用等升到 0.2.0，测量用本分支的插件目录加载），harold-skills 已登记、有项目地图。步骤——在 harold-skills 的同一个提交上，用同一个模型、每题一个全新的 `claude -p --output-format stream-json` 会话，问三个真实问题：「为什么每周分拣不等人批」（#298）、「改了插件的 PR 按什么升版本」（#305）、「为什么取消了夜间回放队列」（#174）；改前（本机跑 setup 之前）、改后各跑一遍。每次记总 token（输入含缓存读写、加输出）、工具调用次数、答案有没有引到对的出处。判定：三题改后都答对且引到出处、三题改后 token 的中位数不高于改前，算「地图够」；任一不满足算「不够」，开一个扩展 `design-archive` MCP 的 issue 挂到 #331 下，不在这一刀做。结果贴进 PR 描述并评论到 #331。覆盖：会话开始 4、量 token 1。
 - **照着谁写**：hook 脚本照 `idea-loop/scripts/runtime-detect.mjs` 与它的测试（导出纯函数 + 命令行入口）；在临时目录里建 git 仓库的测试照 `idea-loop/scripts/issues.test.mjs`；setup 的文档测试照 `idea-loop/scripts/setup-single-source.test.mjs`。
 
 ## Out of scope
