@@ -45,7 +45,7 @@ docs/
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 了结后的总结 —— 永久
 ├── design/
-│   ├── tmp/<spec-slug>/  一个需求的设计过程（imagine/ canvas/ delta/ research/），生命周期见 references/design-layout.md
+│   ├── tmp/<spec-slug>/  一个需求的设计过程（imagine/ canvas/ delta/ research/）
 │   └── prod/             设计档案：线上现在的样子，提交 —— 结构见 `idea-loop:design-archive`
 ├── domain/               领域知识 —— 业务机制、规则、数据结论
 └── records/<kind>/       运营台账（如外联跟进表 `records/outreach/`）
@@ -57,14 +57,18 @@ docs/
 
 - **spec 文件与目录同名**：`docs/spec/<spec-slug>/<spec-slug>.md`。wiki-link 按文件名解析，都叫 `spec.md` 的话 `[[<spec-slug>]]` 就指不到。
 
+`design/` 两层的生命周期见 [references/design-layout.md](references/design-layout.md)。
+
 ## 中间产物
 
-不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在当前 worktree 根的 `.tmp/<skill>/<对象>/` 下，`<对象>` 如 `<spec-slug>`、PR 号。每个子目录收什么、什么时候删，见 [references/tmp-layout.md](references/tmp-layout.md)。
+不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在当前 worktree 根的 `.tmp/<skill>/<对象>/` 下，`<对象>` 如 `<spec-slug>`、PR 号。
 
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
 - 生命周期跟着 worktree，所以不放系统 `/tmp`：那里重启会清，不同 worktree、不同会话的东西也分不清归谁。跑完即弃、不跨步骤的东西仍可以用系统临时目录；spec 图的源文件定稿前还要改好几轮，算跨步骤。
 - 分到 `<对象>` 一层，不然同一个 worktree 里先后跑两份 spec 时，固定文件名会悄无声息地互相覆盖。
 - 设计侧的过程产物在 `docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
+
+每个子目录收什么、什么时候删，见 [references/tmp-layout.md](references/tmp-layout.md)。
 
 ### 本地忽略
 
