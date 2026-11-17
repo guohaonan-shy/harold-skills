@@ -47,7 +47,7 @@ effort: high
   - **「涉及的 API」怎么挑**：改动碰到哪些接口（路由、处理函数，或只有它们在用的下层代码），就跑那几个接口的 API 测试目录或文件，命令用「单个测试文件」那条换成这些路径。碰到被很多接口共用的底层（数据库层、公共中间件）也不扩成全量：挑直接调到它的那几个接口跑，其余交给 CI。
   - **要真实凭据的工作**（例：重录 API 测试的假模型数据）照旧在本机跑：CI 里没有凭据。
 - **服务只起在分到的端口上**，交回前停掉。
-- **要用会话的 MCP 浏览器时先抢锁**：用 Skill 工具调 `idea-loop:browser`，看它的「并行时抢锁」。锁目录是 `<集成分支 worktree>/.tmp/implement/<spec-slug>/browser.lock`，owner 写你的工单号 `<NN>`；等不到锁就按 `failed` 交回。
+- **要用会话的 MCP 浏览器时先抢锁**：用 Skill 工具调 `idea-loop:browser`，看它的「并行时」。锁目录是 `<集成分支 worktree>/.tmp/implement/<spec-slug>/browser.lock`，owner 写你的工单号 `<NN>`；等不到锁就按 `failed` 交回。
 - 工单「选中的存量回归」那节列的用例，也要跑。
 
 ### 改规则的工单：怎么证明 skill 真的变了
