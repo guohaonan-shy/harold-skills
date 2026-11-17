@@ -20,6 +20,10 @@
  *                each with the two area screenshots.
  *   canvas       { current, previous? }: the address of this version's canvas page (and the previous one).
  *                A canvas link can locate a version and a state, nothing finer: `<page>?state=<name>`.
+ *   thoughts     [{ id, quote }]: what the human wrote down this round, one entry per thought, with their own
+ *                words (`round-<N>/thoughts.md`, read by `parseThoughts`). Every thought the critic assessed
+ *                (`judge.reasoning[].id`) must have its words here, or the report is refused and the missing
+ *                ones are listed; thoughts nobody assessed (kept after discussion) are simply not shown.
  *   dissatisfied [{ opinion, quote }]: the session's mark that the human, in this refine, already said
  *                they are not satisfied with the block a `direction` opinion is about, with their own
  *                words. Whether they were is the session's call; this file only renders the mark.
@@ -48,6 +52,29 @@ const isText = (v) => typeof v === 'string' && v.trim() !== '';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/**
+ * Read `thoughts.md`: one thought per line, `<id> | <the human's words>`; a line that does not start with
+ * `<id> | ` continues the previous thought (the human wrote more than one line). Blank lines are skipped.
+ * @returns {{ id: string, quote: string }[]}
+ * @throws  Error naming the line when text comes before the first thought, or an id appears twice
+ */
+export function parseThoughts(text) {
+  const thoughts = [];
+  text.split(/\r?\n/).forEach((line, i) => {
+    if (line.trim() === '') return;
+    const m = line.match(/^(\S+) \| (.*)$/);
+    if (m) {
+      if (thoughts.some((t) => t.id === m[1])) throw new Error(`thoughts line ${i + 1}: thought ${m[1]} appears twice`);
+      thoughts.push({ id: m[1], quote: m[2].trim() });
+    } else if (thoughts.length) {
+      thoughts[thoughts.length - 1].quote += `\n${line.trim()}`;
+    } else {
+      throw new Error(`thoughts line ${i + 1}: expected "<id> | <the human's words>", got ${JSON.stringify(line)}`);
+    }
+  });
+  return thoughts;
+}
+
 /** `<page>?state=<name>`: the same way `ui-measure.mjs` addresses a state of a canvas. */
 export function canvasLink(url, state) {
   const u = new URL(url);
@@ -62,7 +89,7 @@ export function versionLabel(url) {
   return last ? last.replace(/\.[^.]+$/, '') : u.host;
 }
 
-function validateInputs({ judge, research, diff, canvas, dissatisfied }) {
+function validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts }) {
   const errors = [];
 
   if (!isObject(judge)) errors.push('judge must be the critic\'s JSON object');
@@ -102,6 +129,14 @@ function validateInputs({ judge, research, diff, canvas, dissatisfied }) {
       if (canvas[key] === undefined) continue;
       try { new URL(canvas[key]); } catch { errors.push(`canvas.${key} is not an absolute address: ${JSON.stringify(canvas[key])}`); }
     }
+  }
+
+  if (!Array.isArray(thoughts) || !thoughts.every((t) => isObject(t) && isText(String(t.id ?? '')) && typeof t.quote === 'string')) {
+    errors.push('thoughts must be an array of { id, quote } (the round\'s thoughts.md, read with parseThoughts)');
+  } else if (Array.isArray(judge?.reasoning)) {
+    const have = new Map(thoughts.map((t) => [String(t.id), t.quote]));
+    const missing = judge.reasoning.map((r) => String(r?.id)).filter((id) => !isText(have.get(id) ?? ''));
+    if (missing.length) errors.push(`thoughts has no words from the human for the thought${missing.length > 1 ? 's' : ''} the critic assessed: ${missing.join(', ')}`);
   }
 
   const count = Array.isArray(judge?.findings) ? judge.findings.length : 0;
@@ -161,8 +196,8 @@ function recommend(finding, item, mark) {
  *          The report's own link is added by the session after it publishes the page.
  * @throws  Error whose message lists every problem with the inputs
  */
-export function buildReport({ judge, research, diff, canvas, dissatisfied = [], readImage }) {
-  const errors = validateInputs({ judge, research, diff, canvas, dissatisfied });
+export function buildReport({ judge, research, diff, canvas, thoughts, dissatisfied = [], readImage }) {
+  const errors = validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts });
   if (errors.length) throw new Error(errors.join('\n'));
   const { itemOf, uncovered, errors: researchErrors } = indexResearch(research, judge.findings.length);
   if (researchErrors.length) throw new Error(researchErrors.join('\n'));
@@ -263,12 +298,15 @@ ${recLine}
 ${opinionCards.length ? opinionCards.join('\n') : '<p class="muted">评委这一轮没有提意见。</p>'}</section>`);
 
   // 3. the assessment of the human's own reasoning
+  const said = new Map(thoughts.map((t) => [String(t.id), t.quote]));
   const reasoningCards = judge.reasoning.map((r) => {
     const number = ++n;
-    entries.push({ n: number, section: 'reasoning', id: String(r.id), verdict: r.verdict });
+    const quote = said.get(String(r.id));
+    entries.push({ n: number, section: 'reasoning', id: String(r.id), verdict: r.verdict, quote });
     return `<article id="r${number}" data-n="${number}" data-kind="reasoning">
-<h3><span class="num">#${number}</span> 你的思路 ${esc(r.id)}：<span class="tag">${esc(r.verdict)}</span></h3>
-<p>${esc(r.why)}</p>
+<h3><span class="num">#${number}</span> 你的思路 ${esc(r.id)}</h3>
+<blockquote class="said"><p>你说：「${esc(quote).replace(/\n/g, '<br>')}」</p></blockquote>
+<p>→ 评委：<span class="tag">${esc(r.verdict)}</span>，理由：${esc(r.why)}</p>
 </article>`;
   });
   sections.push(`<section data-section="reasoning"><h2>评委对你这一轮思路的评估</h2>
@@ -334,7 +372,7 @@ export function renderSummary({ judge, entries, undeclaredCount }) {
 }
 
 // CLI: node design-review-report.mjs --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json>
-//        --canvas <this version's page address> [--previous <previous version's page address>]
+//        --thoughts <thoughts.md> --canvas <this version's page address> [--previous <previous version's page address>]
 //        [--dissatisfied <marks.json>] --out <report.html>
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
@@ -342,14 +380,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const at = args.indexOf(`--${name}`);
     return at >= 0 ? args[at + 1] : undefined;
   };
-  const need = ['judge', 'research', 'diff', 'canvas', 'out'].filter((k) => !flag(k));
+  const need = ['judge', 'research', 'diff', 'thoughts', 'canvas', 'out'].filter((k) => !flag(k));
   if (need.length) {
-    console.error(`usage: design-review-report.mjs --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --canvas <address> [--previous <address>] [--dissatisfied <marks.json>] --out <report.html>\n  missing: ${need.map((k) => `--${k}`).join(' ')}`);
+    console.error(`usage: design-review-report.mjs --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> [--previous <address>] [--dissatisfied <marks.json>] --out <report.html>\n  missing: ${need.map((k) => `--${k}`).join(' ')}`);
     process.exit(1);
   }
   const read = (path) => {
     try {
       return JSON.parse(readFileSync(path, 'utf8'));
+    } catch (e) {
+      console.error(`design-review-report: cannot read ${path}: ${e.message}`);
+      process.exit(1);
+    }
+  };
+  const readText = (path) => {
+    try {
+      return readFileSync(path, 'utf8');
     } catch (e) {
       console.error(`design-review-report: cannot read ${path}: ${e.message}`);
       process.exit(1);
@@ -366,6 +412,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       judge: read(flag('judge')),
       research,
       diff: read(flag('diff')),
+      thoughts: parseThoughts(readText(flag('thoughts'))),
       canvas: { current: flag('canvas'), ...(flag('previous') ? { previous: flag('previous') } : {}) },
       dissatisfied: flag('dissatisfied') ? read(flag('dissatisfied')) : [],
       readImage: (p) => {

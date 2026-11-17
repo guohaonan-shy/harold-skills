@@ -6,7 +6,7 @@ import { join, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
-  buildReport, canvasLink, versionLabel, NO_REFERENCE_MESSAGE, RECOMMEND_KEEP, RECOMMEND_REOPEN,
+  buildReport, parseThoughts, canvasLink, versionLabel, NO_REFERENCE_MESSAGE, RECOMMEND_KEEP, RECOMMEND_REOPEN,
 } from './design-review-report.mjs';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'design-review-report.mjs');
@@ -37,6 +37,14 @@ function fixtureJudge() {
     note: '整体接近，退出入口的取舍要人定',
   };
 }
+
+/** What the human wrote this round: the two thoughts the critic assessed, and one kept after discussion (not assessed). */
+const THOUGHTS_MD = `1 | 退出入口我想保持在一级，不要藏起来
+2 | 卡片阴影可以留一点，
+但不要太重
+3 | 三卡布局我就要这样
+`;
+const fixtureThoughts = () => parseThoughts(THOUGHTS_MD);
 
 function fixtureResearch() {
   return {
@@ -80,7 +88,7 @@ function fixtureDiff(undeclared) {
 }
 
 const build = (over = {}) => buildReport({
-  judge: fixtureJudge(), research: fixtureResearch(), diff: fixtureDiff(), canvas: CANVAS, readImage, ...over,
+  judge: fixtureJudge(), research: fixtureResearch(), diff: fixtureDiff(), canvas: CANVAS, thoughts: fixtureThoughts(), readImage, ...over,
 });
 
 const article = (html, n) => html.match(new RegExp(`<article id="r${n}"[\\s\\S]*?</article>`))?.[0];
@@ -240,6 +248,32 @@ test('a quiet round says there is nothing special to look at', () => {
   assert.match(html, /评委没有写总评/);
 });
 
+test('each assessed thought shows the human\'s own words, then the critic\'s verdict and reason', () => {
+  const { html, entries } = build();
+  const [first, second] = entries.filter((e) => e.section === 'reasoning');
+  const one = article(html, first.n);
+  assert.match(one, /你说：「退出入口我想保持在一级，不要藏起来」/);
+  assert.match(one, /→ 评委：<span class="tag">成立<\/span>，理由：保持一级入口符合人的意图/);
+  // words written over two lines stay together, and the thought nobody assessed is not shown
+  assert.match(article(html, second.n), /你说：「卡片阴影可以留一点，<br>但不要太重」/);
+  assert.match(article(html, second.n), /存疑/);
+  assert.ok(!html.includes('三卡布局我就要这样'));
+  assert.equal(first.quote, '退出入口我想保持在一级，不要藏起来');
+});
+
+test('a thought the critic assessed with no words written down is refused, every missing one listed', () => {
+  assert.throws(() => build({ thoughts: [{ id: '1', quote: '退出入口我想保持在一级' }] }), /no words from the human[\s\S]*: 2$/);
+  assert.throws(() => build({ thoughts: [] }), /thoughts the critic assessed: 1, 2/);
+  assert.throws(() => build({ thoughts: [{ id: '1', quote: '  ' }, { id: '2', quote: '有' }] }), /: 1$/);
+  assert.throws(() => build({ thoughts: undefined }), /thoughts must be an array/);
+});
+
+test('thoughts.md is read one thought per line, with continuation lines, and a bad file is refused', () => {
+  assert.deepEqual(parseThoughts('1 | 甲\n\n1.2 | 乙\n丙\n'), [{ id: '1', quote: '甲' }, { id: '1.2', quote: '乙\n丙' }]);
+  assert.throws(() => parseThoughts('开头没有编号\n1 | 甲'), /line 1: expected/);
+  assert.throws(() => parseThoughts('1 | 甲\n1 | 乙'), /thought 1 appears twice/);
+});
+
 test('score and note close the page', () => {
   const { html } = build();
   const score = html.match(/<section data-section="score">[\s\S]*?<\/section>/)[0];
@@ -293,6 +327,7 @@ function runCli(files, extra = []) {
   };
   for (const n of ['acme-1', 'acme-2', 'acme-3']) put(`research/shots/${n}.jpg`, PIXEL);
   put('shots/quiz-exit--footer--before.png', PIXEL);
+  const thoughtsFile = put('thoughts.md', files.thoughts ?? THOUGHTS_MD);
   put('shots/quiz-exit--footer--after.png', PIXEL);
   const diff = fixtureDiff();
   diff.undeclared[0].shots = { before: join(dir, 'shots/quiz-exit--footer--before.png'), after: join(dir, 'shots/quiz-exit--footer--after.png') };
@@ -300,10 +335,11 @@ function runCli(files, extra = []) {
     judge: put('judge.json', files.judge ?? fixtureJudge()),
     research: put('research/research-light.json', files.research ?? fixtureResearch()),
     diff: put('diff.json', files.diff ?? diff),
+    thoughts: thoughtsFile,
   };
   const out = join(dir, 'report.html');
   const result = spawnSync(process.execPath, [
-    SCRIPT, '--judge', paths.judge, '--research', paths.research, '--diff', paths.diff,
+    SCRIPT, '--judge', paths.judge, '--research', paths.research, '--diff', paths.diff, '--thoughts', paths.thoughts,
     '--canvas', CANVAS.current, '--previous', CANVAS.previous, '--out', out, ...extra,
   ], { encoding: 'utf8' });
   return { result, out };
@@ -326,6 +362,9 @@ test('the command line exits 2 with the problem when an input is unsound, and 1 
   const { result } = runCli({ research });
   assert.equal(result.status, 2);
   assert.match(result.stderr, /cannot read image .*missing\.jpg/);
+  const noThoughts = runCli({ thoughts: '2 | 只写了第二条' });
+  assert.equal(noThoughts.result.status, 2);
+  assert.match(noThoughts.result.stderr, /no words from the human[\s\S]*: 1/);
   const usage = spawnSync(process.execPath, [SCRIPT], { encoding: 'utf8' });
   assert.equal(usage.status, 1);
   assert.match(usage.stderr, /usage: design-review-report\.mjs/);

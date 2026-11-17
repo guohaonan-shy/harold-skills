@@ -11,7 +11,7 @@
 | `notes.md` | designer | 这一版的流水账：做了什么、遇到什么。不进 ledger |
 | `changeset.json` | designer | 改动集：`[{ "decision": "2.1", "states": [...], "anchors": [...] }]`，一条对应人上一轮的一条决策；第一轮写 `[]`。形状见 `idea-loop:ui-measure` 的「两版画布对比」 |
 | `shots/` | designer | 这一版每个状态的截图 |
-| `thoughts.md` | 你 | 人这一轮写下的每条思路，按顺序编成 `1`、`2`……，抄原话 |
+| `thoughts.md` | 你 | 人这一轮写下的每条思路，一条一行：`<编号> \| <人的原话>`，编号按顺序 `1`、`2`……；原话分了几行，后面的行直接接着写。报告脚本读它 |
 | `critic.json`、`context.json` | 你 | 评委的 JSON；`{ "states": [画布状态清单], "thoughts": [这一轮要评估的思路编号] }`，ledger 里标了「讨论后坚持」的思路不进 `thoughts` |
 | `matrix.json`、`canvas-diff.json` | 你 | 两版比对的矩阵和 `--json` 输出 |
 | `dissatisfied.json` | 你 | 人的不满标记，有才写 |
@@ -49,12 +49,14 @@
 脚本拼，不手写：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.json> --research <research/round-<N>/research-light.json> --diff <canvas-diff.json> --canvas <这一版的预览地址> [--previous <上一版的预览地址>] [--dissatisfied <dissatisfied.json>] --out <report.html>
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.json> --research <research/round-<N>/research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <这一版的预览地址> [--previous <上一版的预览地址>] [--dissatisfied <dissatisfied.json>] --out <report.html>
 ```
 
-三份输入的形状、页面顺序、`dissatisfied.json`（`[{ "opinion": <评委意见编号>, "quote": "<人的原话>" }]`，只对 `direction` 意见打）见脚本的头注释；退出码 `2` 是输入不对，输出会说哪一份、哪一项，补齐了重跑。脚本的输出摘要里有分数和要特别注意的项，对话里引用它。
+输入的形状、页面顺序、`dissatisfied.json`（`[{ "opinion": <评委意见编号>, "quote": "<人的原话>" }]`，只对 `direction` 意见打）见脚本的头注释；退出码 `2` 是输入不对，输出会说哪一份、哪一项，补齐了重跑。脚本的输出摘要里有分数和要特别注意的项，对话里引用它。
 
-页面里的顺序：没声明却变了的地方（有才有，排最前，由人定留还是撤）→ 评委意见逐条 → 对人思路的评估 → 分数与总评。每条有编号，人按编号回。
+`--thoughts` 读本轮的 `thoughts.md`：评委评估过的每条思路都要有人的原话，缺了脚本退出码 `2` 并列出缺的编号，先补 `thoughts.md` 再重跑（「讨论后坚持」的思路评委没评估，不用写进来）。
+
+页面里的顺序：没声明却变了的地方（有才有，排最前，由人定留还是撤）→ 评委意见逐条 → 对人思路的评估（每条先写「你说：『人的原话』」，再写「评委：成立 / 存疑，理由……」）→ 分数与总评。每条有编号，人按编号回。
 
 ## 报告怎么发
 
