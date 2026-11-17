@@ -57,7 +57,7 @@ node S/seo-live-check.mjs SEO.md <build 里的产物目录> --urls=.tmp/live-che
    2. 在 `.tmp/live-check/<PR 号>/revert` 用 `git worktree add` 从基准分支最新处开新分支 `revert/pr-<PR 号>`，`git revert -m 1 <合并提交>`（目标仓库 `DEVELOPMENT.md`「分支」节的合并方式不是 `merge` 时，合并提交不是 merge commit，去掉 `-m 1`），推送，开 PR：描述写原 PR 的链接、失败的网址和哪一项（原样引 `failed`），说明这是上线自查失败的自动回滚。
    3. 等这个 PR 的检查：`gh pr checks <revert PR 号> --watch`，`REVIEW.md` 的检查过了就 `gh pr merge <revert PR 号> --<合并方式>`（`idea-loop:decision-rules` 护栏的 revert PR 例外）。检查没过：不合并，用『推送』发「回滚 PR 的检查没过，线上还是坏的：<revert PR 链接>」，停下等人。
    4. 回滚合并后用『推送』发：第一次「已回滚 #<PR 号>：<网址> <哪一项>」；第二次「第二次自查失败，已回滚，这条要你定」，后面接同样的「#<PR 号>：<网址> <哪一项>」。
-   5. 原 issue 已是 done，状态机不允许翻回，所以另开一个 issue 接着做：`issues.mjs show <docs> <原 issue 号>` 读它的 `categories` 和 `kind`，正文照 `idea-loop:issues` 的「正文」写（问题：原 issue 做了什么、哪个网址哪一项没过；证据：`failed` 的原文；影响范围：这次改的网址；从哪发现：合并后的上线自查，原 issue 和原 PR 的链接，和 revert PR 的链接）。**不论是第几次**，正文里都单独写一行「由上线自查回滚而来」，下一次自查靠它认出这是第二次。去向：
+   5. 原 issue 已是 done，状态机不允许翻回，所以另开一个 issue 接着做：`issues.mjs show <docs> <原 issue 号>` 读它的 `categories` 和 `kind`，正文照 `idea-loop:issues` 的「正文」写（背景：原 issue 改的是什么、上线自查查的是什么；问题：原 issue 做了什么、哪个网址哪一项没过；证据：`failed` 的原文；影响范围：这次改的网址；从哪发现：合并后的上线自查，原 issue 和原 PR 的链接，和 revert PR 的链接）。**不论是第几次**，正文里都单独写一行「由上线自查回滚而来」，下一次自查靠它认出这是第二次。去向：
       - 第一次：`issues.mjs new <docs> <标题> <正文文件> --state=todo --priority=<原 issue 的 priority 标签，没有写 P1> --kind=<原 issue 的 kind> --type=<原 issue 的 seo 子类，如 seo/pages>`。
       - 第二次：不开成 todo，不进调度的队列。`new` 不带 `--state`（开成 backlog，其余参数同上），再 `issues.mjs set <docs> triage <新 issue 号>` 翻 triage，等人在 triage 里定。项目的 `ISSUE_TRACKER.md` 写了跳过 triage、`set` 不让翻的：留在 backlog，同样不会被重做。
    6. 原 issue 上评论「已回滚，后续见 #<新 issue 号>」（`issues.mjs note`）。新 issue 开不成（`gh` 失败）的，把原因告诉人，评论照写，写「没能开新 issue」。
