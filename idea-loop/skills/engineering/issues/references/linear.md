@@ -1,8 +1,8 @@
 # Linear 上的 issue
 
-项目的 `ISSUE_TRACKER.md` 第一个标题写 `Linear`，issue 就在 Linear 上。读写 issue 用 Linear 的 MCP，调用经『调用 MCP』能力（做法照 `idea-loop:runtime`；工具名和参数名不随运行环境变），工具只写名字（前缀随连接方式不同，到工具列表里找）；**翻状态之前的前提、PR 怎么算、正文格式仍由 `issues` 判**。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`，`<号>` 是 Linear 的 issue 号（形如 `ENG-123`）。
+项目的 `ISSUE_TRACKER.md` 第一个标题写 `Linear`，issue 就在 Linear 上。读写 issue 用 Linear 的 MCP，调用经『调用 MCP』能力（做法照 `idea-loop:runtime`；工具名和参数名不随运行环境变），工具只写名字（前缀随连接方式不同，到工具列表里找）；**翻状态之前的前提、PR 怎么算、正文格式仍由 `issues` 判**。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`，`<号>` 是 Linear 的 issue 号（形如 `ENG-123`）。
 
-**状态名、label 组名从 `ISSUE_TRACKER.md` 取**：下面写 `<某状态的名字>` 的，都是它的状态表里那一行「Linear 上」一列的字，团队改过名也照那一列。`list_issue_statuses`（`team`）能看团队实际有哪些。
+**状态名、label 组名从项目目录的 `ISSUE_TRACKER.md` 取**：下面写 `<某状态的名字>` 的，都是它的状态表里那一行「Linear 上」一列的字，团队改过名也照那一列。`list_issue_statuses`（`team`）能看团队实际有哪些。
 
 ## 字段
 
@@ -63,7 +63,7 @@
 ## 要知道的几件事
 
 - **Triage 团队可能没开**：没开的，`ISSUE_TRACKER.md` 写「triage：跳过」，backlog 直接到 todo。
-- **一个 issue 常在几个仓库各有一个 PR**，每个 PR 都带同一个号；全部合并才算 done，跟 GitHub 一致。
+- **PR 带 issue 的号**；PR 合并才算 done，跟 GitHub 一致。
 - **不读不写**：Linear 的 Project、Cycle、Estimate、父子关系。
-- Linear 的 PR 与 issue 是多对多的，idea-loop 仍按一个 issue 一个会话、每个仓库一个 PR 用。
+- Linear 的 PR 与 issue 是多对多的，idea-loop 仍按一个 issue 一个会话、一个 PR 用。
 - `issues` 里写 GitHub issue 的命令（`set`、`new`、`candidates`、`reconcile` 这些）在 Linear 项目上会被拒绝，就是要你改用上面的工具。例外是 `issues new … --repo=<owner/repo>`：它自己点名了一个 GitHub 仓库（比如把插件的问题开到插件仓库），Linear 项目也能用。

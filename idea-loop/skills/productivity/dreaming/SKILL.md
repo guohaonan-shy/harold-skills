@@ -7,13 +7,13 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 **dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:issues`（issue 的状态只走 `issues.mjs`，spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:issues`（issue 的状态只走 `issues.mjs`，spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
 ## 纪律
 
 - **所有核实对 `origin/<基准分支>`**，不对本地工作树：本地会落后，在落后的树上判「未实现」就是误判。派给 agent 的指针也是这个 worktree。
 - **每个判定都靠这一次跑出来的证据**，不凭记忆、不凭文档自己的旧结论。存疑就留着不动。
-- **扫描范围**：`docs/`、`GLOSSARY.md`、`REVIEW.md`、`DESIGN.md`、仓库里各插件的 references。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。
+- **扫描范围**：项目目录的 `docs/`、`GLOSSARY.md`、`REVIEW.md`、`DESIGN.md`，代码仓库里各插件的 references。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。
 
 ## 记忆一段（在提议段之前）
 
@@ -23,13 +23,13 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 **提议段**，只读不写：
 
-1. **起环境**：读目标仓库 `DEVELOPMENT.md` 的「分支」节拿基准分支（没有这份文件就停下，告诉人跑 `/idea-loop:setup`）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。目标仓库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
+1. **起环境**：读 `<项目目录>/DEVELOPMENT.md` 的「分支」节拿基准分支（`<docs>` 指 `<项目目录>/docs/`）（没有这份文件就停下，告诉人跑 `/idea-loop:setup`）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。知识库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
 2. **自己做、不起 agent**：
    - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查基准分支上还留着设计产物的已完成需求。
    - **retro 候选**：候选池里出现 ≥ 3 次的，照 [references/retro-candidates.md](references/retro-candidates.md) 摆进提议表；照建议处置开成 issue，不改 skill。
    - **对账范围**（`prod/` 有对象时）：dreaming 每周由 `/idea-loop:setup` 建的『定时任务』自己跑，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
    - **全站初扫**（`prod/` 为空时）：照 [references/initial-scan.md](references/initial-scan.md)。`prod/` 有对象时不做全站初扫，档案对账整个交给下面的 ui-reviewer；项目没有设计档案目录、也不打算建，这一项和档案对账整个跳过。
-3. **派工**：下面三个互不依赖，**在同一条消息里并行起**，只给指针（worktree、基准分支、中间物目录、范围；要开浏览器的再给各自的空闲端口与同一个浏览器锁目录，锁 owner 各写自己的名字）。
+3. **派工**：下面三个互不依赖，**在同一条消息里并行起**，只给指针（项目目录的绝对路径、worktree、基准分支、中间物目录、范围；要开浏览器的再给各自的空闲端口与同一个浏览器锁目录，锁 owner 各写自己的名字）。
 
    | agent | 做什么 | 交回 |
    |---|---|---|

@@ -4,7 +4,7 @@
 
 PR 从分支上有第一个提交起就挂着，不等工单做完：平台据此在 issue 上看到它改到了哪。issue 会话已经在切工单之前开了（`.tmp/implement/<spec-slug>/prs.md` 在，接着上次的会话时也在），先于派工核一遍：
 
-1. **PR 都在**：`prs.md` 列的仓库覆盖了工单头 `**仓库**` 收齐的那些（都没写就是当前仓库）。没有 `prs.md`（人直接调进来的），或工单用到了没开 PR 的仓库，照 `idea-loop:pr` 的「开 draft PR」补开。
+1. **PR 在**：`prs.md` 里有这个 PR。没有 `prs.md`（人直接调进来的），照 `idea-loop:pr` 的「开 draft PR」补开。
 2. **翻状态**：todo 会话认领时已经翻成 in-progress，是的就跳过；不是的（人直接调进来），`issues set <docs> in-progress <号>`。Linear 上 PR 一开集成就推，不手翻。
 3. **补 `reference`**：开 PR 时工单还没切，`reference` 只有 spec 的标题、home 里的路径和摘要；工单切好后，用 `pr-body.mjs set` 把 spec 与工单补进去。
 

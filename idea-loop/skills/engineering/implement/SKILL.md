@@ -11,7 +11,7 @@ description: 把一份已切好工单的 spec 实现完。spec 的工单已切�
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
 - **当前 worktree 就是集成分支**：一份 spec 一条分支、一个 PR，这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
-- `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs" check <docs>` 不报旧布局，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指集成分支 worktree 的 `docs/`，`<号>` 指 spec 的 `issues:` 里的 issue 号。
+- `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs" check <docs>` 不报旧布局，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<号>` 指 spec 的 `issues:` 里的 issue 号。
 - 每张工单第一次派出是新上下文，人不用在工单之间 `/clear`；卡住的工单在人做完决定后可能被叫回原执行方（见「人回复后」）。
 
 scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不改 scope、不删工单（删工单在合并成功后，归 `idea-loop:pr-review`），也不合并 PR。
@@ -20,7 +20,7 @@ scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不
 
 PR 从分支有第一个提交起就挂着，派工前核一遍 PR 开齐、issue 在 in-progress、`reference` 补全：不满足的，读 [references/start-of-run.md](references/start-of-run.md) 的「开工：先开 PR」。
 
-**主 PR**：知识库所在仓库的 PR 是主 PR：review loop 文件、Review 汇报的存档以它的号命名（下文 `<PR 号>` 都指它），别的 PR 的描述写自己仓库的改动，`your-todo` 写一句「见主 PR」。
+review loop 文件、Review 汇报的存档以这个 PR 的号命名（下文 `<PR 号>` 都指它）。
 
 ## 账本
 
@@ -38,14 +38,14 @@ PR 从分支有第一个提交起就挂着，派工前核一遍 PR 开齐、issu
 
 同时最多 **3** 个执行方（人可另定，串行就是 1）。有空位、有可派的工单，就按编号补派。
 
-**第一次派工、可派的有两张以上**：先用 Agent 工具起 `idea-loop:explorer`，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、这批工单路径、spec 路径、笔记目录 `.tmp/implement/<spec-slug>/notes/` 的绝对路径，等它交回。
+**第一次派工、可派的有两张以上**：先用 Agent 工具起 `idea-loop:explorer`，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、项目目录、这批工单路径、spec 路径、笔记目录 `.tmp/implement/<spec-slug>/notes/` 的绝对路径，等它交回。
 
 每派一张：挑一个没人在听、也没分出去的端口；记下 `git rev-parse HEAD` 作起点 SHA；用 Agent 工具起 `idea-loop:implementer`，`isolation: "worktree"`、`run_in_background: true`，记下它返回的 agent id，**只给指针，不转述工单**：
 
-- 项目目录，工单与 spec 在它里面的绝对路径（工单在 home 里，执行方的 worktree 读不到；工单也不进它的 commit）
+- 项目目录的绝对路径，工单与 spec 在它里面的绝对路径（工单在 home 里，执行方的 worktree 读不到；工单也不进它的 commit）
 - 起点 SHA、集成分支名、分到的端口
 - 集成分支 worktree 的绝对路径
-- tmp 绝对路径：集成 worktree 里 `docs/design/tmp/<spec-slug>/` 的绝对路径（还不存在也照给）
+- tmp 绝对路径：`<项目目录>/docs/design/tmp/<spec-slug>/` 的绝对路径（还不存在也照给）
 - 已落地的提交列表
 - 有的话：「人的决定已写进工单」、上次的半成品分支
 
@@ -85,17 +85,13 @@ PR 从分支有第一个提交起就挂着，派工前核一遍 PR 开齐、issu
 
 **等 CI**：读 [references/stop-and-resume.md](references/stop-and-resume.md) 的「等 CI」。
 
-## 多个仓库
-
-工单头写了 `**仓库**`（工单属于别的仓库）：读 [references/multi-repo.md](references/multi-repo.md)。
-
 ## 设计变更：人接受了跟画布不同的设计
 
 人接受了一处跟冻结画布不同的设计：读 [references/design-change.md](references/design-change.md)。
 
 ## 回收
 
-只在工单落地（fast-forward 进集成分支）之后做。目标仓库 `DEVELOPMENT.md` 的「清理」写了命令就先跑它，然后：
+只在工单落地（fast-forward 进集成分支）之后做。`<项目目录>/DEVELOPMENT.md` 的「清理」写了命令就先跑它，然后：
 
 1. 停掉这个 worktree 端口上的服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
 2. 它还持有浏览器锁就释放：`node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release .tmp/implement/<spec-slug>/browser.lock --force`。

@@ -4,12 +4,12 @@
 
 两波：先**源码波**（不开浏览器），再**实时波**（源码波干净也跑）。**两波都由 `idea-loop:ui-reviewer` 的对账模式做**，dreaming 只派工、汇它交回的行；源码波怎么查、怎么写，在它的定义里（「对账模式」的「源码波」）。只有 `prod/` 为空时的全站初扫留在 dreaming 自己手里，见 [initial-scan.md](initial-scan.md)。
 
-用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根>`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档脚本并进 `prod/`（这几类行是自动执行的，不等人批）。
+用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录>`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档脚本并进 `prod/`（这几类行是自动执行的，不等人批）。
 
 ## 环境
 
 - **worktree**：在 SKILL.md「起环境」那个从 `origin/<基准分支>` 新切的 worktree 里工作。开发环境跑基准分支的代码；`tmp/` 只在本地，放在自己的 worktree 里不会跟进行中需求的 `tmp/<spec-slug>/` 混。
-- **开发服务**：照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」准备，用一个自己挑的空闲端口起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换）。前后端要互相指向的，改它读的那个配置，别人的端口不碰。
+- **开发服务**：照 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」准备，用一个自己挑的空闲端口起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换）。前后端要互相指向的，改它读的那个配置，别人的端口不碰。
 - **浏览器**：和 `idea-loop:implement` 并行的执行方共用会话里那一个，照 `idea-loop:browser` 的「并行时抢锁」排队，owner 写 `dreaming`。锁目录默认放自己 worktree 的 `.tmp/dreaming/<日期>/browser.lock`；人说同一时间有 `idea-loop:implement` 在用同一个浏览器，就改用那一边的锁目录。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」）：
   - `delta/`：要进档案的对象，与 `prod/` 同构，由归档脚本并进 `prod/`；
@@ -31,7 +31,7 @@ dreaming 拿到它交回的结果后：
 
 对这次范围里的状态重新驱动一遍（全量是 `prod/` 里每个状态，增量只是上次成功执行以来代码牵到的那些，范围怎么定见 [incremental-scope.md](incremental-scope.md)），统一交给 `idea-loop:ui-reviewer` 的对账模式：起服务、进状态、比对跟 `idea-loop:pr-review` 用的是同一套。
 
-1. **派工**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：模式「对账」、仓库根（dreaming 的 worktree）、dreaming 的目录名、一组状态 id（不给需求差异；全量时清单取自 `prod/index.md` 的页面清单，对每页跑 `query page <页面名>` 拿它的状态，增量时就是 `query affected <基准提交>` 交回的 `states`）、源码波「跑」或「不跑」、端口、浏览器锁目录、草稿图目录、结果文件路径。状态多（几十个以上）就按页面分批，一批一个 reviewer、一份结果文件；批与批之间串行（共用一个浏览器与一个开发服务）。**源码波只在第一批跑**（增量时它也每次全量；增量清单为空，第一批的状态清单给空，只跑源码波），后面的批写「不跑」；第一批交回后，按它的 `sourceWave.addedToBatch` 从后面几批的清单里去掉那些状态再起下一批。
+1. **派工**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：模式「对账」、项目目录的绝对路径、dreaming 的 worktree（跑代码用）、dreaming 的目录名、一组状态 id（不给需求差异；全量时清单取自 `prod/index.md` 的页面清单，对每页跑 `query page <页面名>` 拿它的状态，增量时就是 `query affected <基准提交>` 交回的 `states`）、源码波「跑」或「不跑」、端口、浏览器锁目录、草稿图目录、结果文件路径。状态多（几十个以上）就按页面分批，一批一个 reviewer、一份结果文件；批与批之间串行（共用一个浏览器与一个开发服务）。**源码波只在第一批跑**（增量时它也每次全量；增量清单为空，第一批的状态清单给空，只跑源码波），后面的批写「不跑」；第一批交回后，按它的 `sourceWave.addedToBatch` 从后面几批的清单里去掉那些状态再起下一批。
 2. **它回什么**：每个状态一项：五种判定之一（一致 / 档案过期 / 进入方式过期 / 产品坏了 / 进不去）、截图比对结果、判定依据、写进 dreaming tmp 目录的文件。容差以内的状态什么都不写。
 3. **判定拿来用**：只在两种情况回头：它交回 `incomplete`（环境问题，这一批没判成，写进提议表末尾的说明行，后面附一句「下次可说全量补上」，不当成产品坏了）；或它的结果文件缺项、自相矛盾。
 
@@ -56,8 +56,8 @@ dreaming 拿到它交回的结果后：
 这几类行（`档案对象`、`档案状态`）都按自己的建议处置执行，不等人批。先收拾 delta、再校验、再归档：
 
 1. **先删掉不进表的产物**：提议段留在 `delta/` 里、但没有对应行的文件（reviewer 判为一致后留下的草稿，或这次不执行的行对应的状态文件、图、对象全文）从 dreaming 的 tmp 目录里删掉；`evidence/` 不动。
-2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，在 delta 里改掉（改指向它被替换成的组件，或删边）；看不出该改指向谁、又不能删边的，不执行这一行，在 PR 正文里写明留着、为什么。
-3. **归档**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`.gitignore` 没忽略 `docs/design/tmp/`、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进 PR 正文：那两个文件不是知识库文件，不在这个 PR 里改，交人处理。
+2. **校验**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <项目目录> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，在 delta 里改掉（改指向它被替换成的组件，或删边）；看不出该改指向谁、又不能删边的，不执行这一行，在 PR 正文里写明留着、为什么。
+3. **归档**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <项目目录> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`.gitignore` 没忽略 `docs/design/tmp/`、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进 PR 正文：那两个文件不是知识库文件，不在这个 PR 里改，交人处理。
 4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档脚本写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、不执行的档案行，不产生任何素材提交。
 5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。
 

@@ -11,11 +11,11 @@ argument-hint: "<issue 号>"
 | 会话 | 谁开的 | 认领成 | 做什么 | 做完 |
 |---|---|---|---|---|
 | triage 会话 | 人或调度卡片 | triage | 起草 spec、grill、设计 | `set todo`，收尾 |
-| todo 会话 | 调度 | in-progress，PR 全部转 ready 后 in-review | 读 spec（没有就自己起草），第一次写代码时才接分支，实现，review，合并 | 全部 PR 合并后 done，收尾 |
+| todo 会话 | 调度 | in-progress，PR 转 ready 后 in-review | 读 spec（没有就自己起草），第一次写代码时才接分支，实现，review，合并 | PR 合并后 done，收尾 |
 
 会话管理、推送等运行环境的能力，照『<能力>』（`idea-loop:runtime`），下文只写能力名。
 
-**Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
+**Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<主分支>` 取 `<项目目录>/DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 ## 开场
 
@@ -45,9 +45,9 @@ home 里已有 spec（triage 会话留下的，或先放着时留下的），读
 
 顺序是接分支 → 开 draft PR → 切工单 → 做：平台从第一次写代码起就能在 issue 上看到 PR。
 
-1. **接分支，开 draft PR**：spec 已提交到 home（上一步保证）。第一次要写代码，`git fetch origin`；`git branch --show-current` 已经是 `issue/<号>-<slug>`（调度建 worktree 时开好的）就接着做；`show` 返回了分支就在它上面接着做（`git switch -c issue/<号>-<slug> --track origin/issue/<号>-<slug>`）；都没有就 `git switch -c issue/<号>-<slug> origin/<主分支>`，`<slug>` 取标题的几个词，提一个空提交（`git commit --allow-empty -m "chore: 开工 #<号>"`，分支比主分支没有新提交时开不了 PR）再推送。多个仓库的 issue：`ISSUE_TRACKER.md` 的「仓库」一节列出了几个仓库、spec 的「实现决策」写了要改哪些，就在每个要改的、不是当前 worktree 所在的仓库里开同名分支的 worktree：`git -C <那个仓库的本地路径> worktree add <路径> -b issue/<号>-<slug> origin/<那个仓库的主分支>`，把路径记进 spec 的「实现决策」并 `commit` 到 home。没有这一节的项目就是一个仓库，不用开。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」给每个要改的仓库开 PR（已有就跳过）。
-2. **切工单**：spec 的 `docs/spec/<slug>/tickets/`（在 home 里）下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切，多仓库时每张工单写明改哪个仓库。
-3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 逐个合并；全部 PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
+1. **接分支，开 draft PR**：spec 已提交到 home（上一步保证）。第一次要写代码，`git fetch origin`；`git branch --show-current` 已经是 `issue/<号>-<slug>`（调度建 worktree 时开好的）就接着做；`show` 返回了分支就在它上面接着做（`git switch -c issue/<号>-<slug> --track origin/issue/<号>-<slug>`）；都没有就 `git switch -c issue/<号>-<slug> origin/<主分支>`，`<slug>` 取标题的几个词，提一个空提交（`git commit --allow-empty -m "chore: 开工 #<号>"`，分支比主分支没有新提交时开不了 PR）再推送。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」开 PR（已有就跳过）。
+2. **切工单**：spec 的 `<docs>/spec/<slug>/tickets/` 下已经有工单就跳过切票（人重敲本 skill 进来时就是这样）；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
+3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并；PR 合并后 issue 应已是 done，不是就 `issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，`get_issue` 核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
 ## 先放着
 

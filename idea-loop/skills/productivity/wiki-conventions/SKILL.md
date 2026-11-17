@@ -1,11 +1,20 @@
 ---
 name: wiki-conventions
-description: 目标仓库 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定：目录、frontmatter、slug 与链接、知识库改动怎么提交到 home、什么由人拍板。动 docs/ 或往 .tmp/ 放东西之前用。
+description: 项目 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定：项目目录、目录、frontmatter、slug 与链接、知识库改动怎么提交到 home、什么由人拍板。动 docs/ 或往 .tmp/ 放东西之前用。
 ---
+
+## 项目目录
+
+**项目目录**是这个项目在 home 里的目录 `<home>/projects/<名字>/`。`docs/`（别的 skill 里的 `<docs>`）和项目级规则 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` 都在它下面；代码仓库只留代码和自己的 `AGENTS.md` / `CLAUDE.md`。读写这些文件、给脚本的 `<docs>`，用项目目录里的路径；代码（读源码、跑测试、起服务、开分支和 PR）仍在代码 worktree 里。怎么拿到，看你是谁：
+
+- **主会话开在代码 worktree 里**：会话开场注入的「项目目录：<路径>」那一行；没有，在这个 worktree 里跑下面的 `where`（不带 `--project`）。
+- **主会话开在 home 里**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project <名字>`，取输出的 `projectDir`。
+- **子代理**：调用方在 prompt 里给的路径，不自己去找；prompt 里没有，就停下，交回写明缺项目目录。
+- **拿不到**（`where` 退出码非 0，或开场注入的是迁移提示）：照它输出的那句话停下告诉人（如先跑 `/idea-loop:setup` 迁移），不去读代码仓库里的同名文件。
 
 ## 知识库落地
 
-知识库在项目目录里（`<项目目录>/docs/`，项目目录在 home 里），不在代码仓库。一个需求在知识库里的改动不跟代码 PR 走：写好就用 `commit` 提交到 home 的 main，代码 PR 里只有代码，issue 分支只给代码用。别的 skill 说「照『知识库落地』」，就是照这一节做。
+一个需求在知识库里的改动不跟代码 PR 走：写好就用 `commit` 提交到 home 的 main，代码 PR 里只有代码，issue 分支只给代码用。别的 skill 说「照『知识库落地』」，就是照这一节做。
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" commit "<消息>" <文件>...
@@ -58,23 +67,17 @@ docs/
 │       └── tickets/NN-<slug>.md  这份 spec 的工单，单 PR 临时凭据 —— 合了即删
 ├── adr/NNNN-<slug>.md    spec 了结后的总结 —— 永久
 ├── design/
-│   ├── tmp/<spec-slug>/  一个需求的设计过程：过程产物只在本地，冻结结果提交到 home
-│   │   ├── imagine/      发散段 —— 内部结构归 `idea-loop:uiux-imagine`
-│   │   ├── canvas/       收敛段：冻结后唯一的设计真相 —— 内部结构归 `idea-loop:uiux-refine`
-│   │   ├── delta/        对 prod/ 的差异，合并前写好 —— 结构见 `idea-loop:design-archive`
-│   │   └── research/<问题短名>/  `idea-loop:uiux-research` 的调研页；没有 spec 时放 `tmp/research/<问题短名>/`
-│   └── prod/             设计档案：线上现在的样子（页面 / 状态 / 组件 / 动效 / 用户路径），提交 —— index.md 由归档脚本生成
+│   ├── tmp/<spec-slug>/  一个需求的设计过程：imagine/ canvas/ delta/ research/（谁写、何时提交与归档见 design-layers）
+│   └── prod/             设计档案：线上现在的样子，提交 —— index.md 由归档脚本生成
 ├── domain/               领域知识 —— 业务机制、规则、数据结论
 └── records/<kind>/       运营台账 —— 会话起头、之后由人持续更新（如外联跟进表 `records/outreach/`）
 ```
 
-`raw/`、`spec/`、`adr/` 是会话产物；`domain/` 是知识库存量，不由单次会话产生；`records/` 由会话建、由人改（`type: record`），不进 spec 的生命周期，dreaming 也不删。
-
-项目级的规则放在仓库根目录，一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`（`/idea-loop:setup` 建），`GLOSSARY.md`、`DESIGN.md`。
+`domain/` 是知识库存量；`records/` 由会话建、由人改（`type: record`），不进 spec 的生命周期，dreaming 不删。
 
 - **spec 文件与目录同名**：`docs/spec/<spec-slug>/<spec-slug>.md`，工单在它目录下的 `tickets/`，编号每份 spec 内从 `01` 起。wiki-link 按文件名解析，都叫 `spec.md` 就指不到。
 
-`design/` 分两层，生命周期相反：`tmp/<spec-slug>/` 跟着需求走（画布冻结后 `commit` 到 home，归档在代码 PR 合并后），`prod/` 是设计档案、活得比 spec 长（只由归档脚本写）。每个子目录归谁、冻结与归档的时点、`research/` 为什么不归档：[references/design-layers.md](references/design-layers.md)。
+`design/` 每个子目录归谁、冻结与归档的时点、`research/` 为什么不归档：[references/design-layers.md](references/design-layers.md)。
 
 ## 中间产物
 
@@ -82,7 +85,7 @@ docs/
 
 ## 从平铺布局迁移
 
-`spec.mjs check` 报出旧平铺布局（`docs/spec/<slug>.md` 平铺，或共用的 `docs/spec/tickets/`）时，先照 [references/migrate-flat-layout.md](references/migrate-flat-layout.md) 一次性迁过去，再往下走。
+`spec.mjs check` 报出旧平铺布局（`docs/spec/<slug>.md` 平铺，或共用的 `docs/spec/tickets/`）时，先照 [references/migrate-flat-layout.md](references/migrate-flat-layout.md) 迁过去，再往下走。
 
 ## frontmatter
 
@@ -123,5 +126,4 @@ wiki-link 按 basename 解析：`docs/` 下每个 slug 全局唯一（建文件�
 
 ## spec 和工单怎么写
 
-- **写接口、契约、行为、约束，不写具体文件路径和代码片段**：它们烂得最快。散文说不清的决策载体（状态机、schema、类型形状、taxonomy 的类别 id）可以内联，注明出处。
-- **描述行为，不描述过程**：写「`SkillConfig` 接受一个可选的 `schedule` 字段」，不写「打开 src/types/skill.ts 在第 42 行加字段」。
+写接口、契约、行为、约束，不写具体文件路径和代码片段；描述行为，不描述过程：[references/writing-specs.md](references/writing-specs.md)。

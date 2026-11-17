@@ -19,12 +19,12 @@ skill 和 agent 的文字把位置写死在代码仓库里：`<docs>` 定义为�
 
 ## 验收标准
 
-- [ ] engineering 和 productivity 下不再出现「当前 worktree 的 `docs/`」「仓库根（目录）的 <引导文件>」（新文档测试守）
-- [ ] wiki-conventions 写明项目目录是什么、主会话 / home 里的会话 / 子代理各从哪拿、拿不到就停
-- [ ] 起子代理的地方（implement、pr-review、issue-triage、dreaming、retro 等）给子代理的 prompt 里带项目目录
-- [ ] 多仓库分支已删，issue 分类的位置改成 `ISSUE_TRACKER.md`「分类 label」
-- [ ] 改了的每个 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
-- [ ] 现有文档测试全绿（钉着被改原话的，按新写法改测试，意图不变）
+- [x] engineering 和 productivity 下不再出现「当前 worktree 的 `docs/`」「仓库根（目录）的 <引导文件>」（新文档测试守）
+- [x] wiki-conventions 写明项目目录是什么、主会话 / home 里的会话 / 子代理各从哪拿、拿不到就停
+- [x] 起子代理的地方（implement、pr-review、issue-triage、dreaming、retro 等）给子代理的 prompt 里带项目目录
+- [x] 多仓库分支已删，issue 分类的位置改成 `ISSUE_TRACKER.md`「分类 label」
+- [x] 改了的每个 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
+- [x] 现有文档测试全绿（钉着被改原话的，按新写法改测试，意图不变）
 
 ## 选中的存量回归
 

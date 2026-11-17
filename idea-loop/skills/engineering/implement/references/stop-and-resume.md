@@ -2,7 +2,7 @@
 
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
-1. 把每个仓库的分支推上去（PR 在接分支后就开了，主 PR 的号取 `prs.md`）。
+1. 把分支推上去（PR 在接分支后就开了，号取 `prs.md`）。
    - **有 `大用例待跑`**（落地的交回里 `verified` 写了）：在会话里先告诉人几个用例、每个最长约 3×45 分钟、每个约 1.05–3.50 美元（起 agent 的更高）乘以个数，不等人点头，用 Bash 的 `run_in_background: true` 起 `node ~/.idea-loop/bin/retro-replay.mjs --cases <用例,用例> --run-large --pr <PR 号> --worktree <集成 worktree 绝对路径>`（不设 timeout），等它退出，不轮询；照 [references/replay-result.md](replay-result.md) 处理结果。
 2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。
@@ -27,11 +27,11 @@
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（带 `type:seo/*` 的 issue 另写「上线自查的网址」一节；之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给这个 PR 写齐描述（带 `type:seo/*` 的 issue 另写「上线自查的网址」一节；之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），`gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
 
-**等 CI**：全量测试只在这里跑一遍。`gh pr checks <PR 号> --watch` 等这个 head 的检查跑完（每个 PR 各等）：
+**等 CI**：全量测试只在这里跑一遍。`gh pr checks <PR 号> --watch` 等这个 head 的检查跑完：
 
 - **全绿**：起 pr-review。
 - **红了**：`gh run view <run> --log-failed` 读失败的测试，对引入它的行 `git blame` 找到提交，`ticket-ledger.mjs of <提交>` 读出工单；在那张工单的验收末尾追加 `- [ ] CI（<日期>）：<失败的测试验的行为>`，提交 `docs(tickets): <NN> — CI 失败`，照「重派」新起执行方（已落地的工单 worktree 已回收），落地、推送后回到「等 CI」。
 - **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「跟这次无关的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
-- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `REVIEW.md`「验证命令」的全量命令，结果当 CI 结果用；红了同上。
+- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `<项目目录>/REVIEW.md`「验证命令」的全量命令，结果当 CI 结果用；红了同上。

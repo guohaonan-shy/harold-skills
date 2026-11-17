@@ -181,7 +181,7 @@
 
 3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然下一次 dreaming 会把它当成漏归档。`commit` 到 home，只列这次改到的文件，消息「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、开出去的 issue 编号；问人那份另说哪些行人没批、留着。
 4. **提交前检查**：不等人看。依次：
-   - 本地跑目标仓库 `REVIEW.md` 的验证命令（那张表里的每一条）、`spec.mjs check <docs>`、link sweep；有设计档案时跑 `design-archive-check`。
+   - 本地跑 `<项目目录>/REVIEW.md` 的验证命令（那张表里的每一条）、`spec.mjs check <docs>`、link sweep；有设计档案时跑 `design-archive-check`。
    - 全过就第 3 步的 `commit`。有一条没过：不提交，改动留在工作区，用『推送』说哪一条没过。`commit` 报「home 没推上去」不算没过，在汇报里带上这一句，流程照走。
 5. **回滚**：人说「回滚某次 dreaming」，在 home 里 `git revert` 那次提交，有 `origin` 的接着推送。
 6. 最后报告给人的只有问人的小表和没提交成、没跑成的部分；已自动提交的行不出现在汇报里。

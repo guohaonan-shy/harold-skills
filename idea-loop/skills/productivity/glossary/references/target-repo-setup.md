@@ -1,35 +1,18 @@
-# 在目标项目里接上术语表
+# 在项目里接上术语表
 
-目标项目第一次有 `GLOSSARY.md`、或人要求接入时用这份。
+项目第一次有 `GLOSSARY.md`（建在项目目录里）、或人要求接入时用这份。
 
-## AGENTS.md 里的读取规则
+## 读取规则
 
-读取规则落在目标项目根的 `AGENTS.md`，用普通 markdown 链接（`@` 导入是 Claude Code 专有写法，Codex 不展开）。模板：
+读取规则靠两处，都不手写进代码仓库的 `AGENTS.md`：`GLOSSARY.md` 在项目目录里，代码仓库里的相对链接指不到它。
 
-```md
-## 领域词汇
+- 项目地图（项目目录的 `AGENTS.md`，会话开场注入）列出 `GLOSSARY.md`；地图由 dreaming 每周重写，不往里手加规则。
+- 产出命名的地方，各 skill 和 agent 按本 skill 的「读」去项目目录读它。
 
-[GLOSSARY.md](GLOSSARY.md) 是本项目的术语表。给领域概念起名前先读它：用标准叫法，不用 `_Avoid_` 里的词，
-歧义词按它说的带限定；缺词不自己造词，在产出里说明缺了什么。
+## 手改之后的检查
+
+plugin 的 hook 只管 agent 的写入：每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件，不论它在哪个目录，都会自动跑 `glossary-check.mjs`。人手改、别的工具改的，没有代码仓库的 CI 能挡（文件不在那里）；改完手动跑一遍：
+
 ```
-
-## CI 兜底
-
-plugin 的 hook 只管 agent 的写入；人手改、别的工具改，靠目标项目的 CI 挡。`glossary-check.mjs` 是单文件、零依赖，CI 按 commit sha 钉版本直接拉，不往目标项目里复制一份，升级就是改 sha：
-
-```yaml
-name: Glossary check
-on:
-  pull_request:
-    paths: ['**/GLOSSARY.md']
-jobs:
-  glossary:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: |
-          curl -fsSL https://raw.githubusercontent.com/guohaonan-shy/harold-skills/<sha>/idea-loop/scripts/glossary-check.mjs -o /tmp/glossary-check.mjs
-          git ls-files | grep -E '(^|/)GLOSSARY\.md$' | xargs -r -n1 node /tmp/glossary-check.mjs
+node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary-check.mjs" <项目目录>/GLOSSARY.md
 ```

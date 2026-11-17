@@ -94,19 +94,18 @@ test('issue-session：先放着 = set backlog 带评论，下一个会话读评�
   assert.match(md, /读这条评论接上/);
 });
 
-test('issue-session：多仓库时在每个要改的仓库里开同名分支的 worktree，路径记进 spec', () => {
+test('issue-session：一个 issue 只改一个仓库，不在别的仓库开 worktree', () => {
   const md = skill('issue-session');
-  assert.match(md, /git -C <那个仓库的本地路径> worktree add/);
-  assert.match(md, /「仓库」一节/);
-  assert.match(md, /记进 spec 的「实现决策」/);
+  assert.doesNotMatch(md, /git -C <那个仓库的本地路径> worktree add/);
+  assert.doesNotMatch(md, /「仓库」一节/);
 });
 
-test('issue-session：本会话里切票、实现、review，指向 implement 与 pr-review，全部 PR 合并后 done', () => {
+test('issue-session：本会话里切票、实现、review，指向 implement 与 pr-review，PR 合并后 done', () => {
   const md = skill('issue-session');
   for (const s of ['idea-loop:to-ticket', 'idea-loop:implement', 'idea-loop:pr-review']) assert.ok(md.includes(s), `缺 ${s}`);
   assert.match(md, /用 Skill 工具调 `idea-loop:implement`/);
   assert.match(md, /用 Skill 工具调 `idea-loop:pr-review`/);
-  assert.match(md, /全部 PR 合并后 issue 应已是 done/);
+  assert.match(md, /PR 合并后 issue 应已是 done/);
 });
 
 test('issue-session：没有实现子会话、简报、两种合并去向、集成分支与集成 review', () => {
@@ -167,7 +166,7 @@ test('issue-triage：三种调用、同时最多 5 个 issue-triager、15 个一
   assert.match(md, /issues note/);
   assert.match(md, /同时最多 5 个/);
   assert.match(md, /『推送』/);
-  assert.match(md, /docs\/records\/out-of-scope\/<slug>\.md/);
+  assert.match(md, /<docs>\/records\/out-of-scope\/<slug>\.md/);
   for (const k of ['todo + P1 或 P2', 'triage + P1 或 P2', 'canceled', '留在 backlog']) assert.ok(md.includes(k), `缺去向 ${k}`);
   assert.match(md, /跳过 triage/);
 });

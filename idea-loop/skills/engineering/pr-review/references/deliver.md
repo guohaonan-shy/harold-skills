@@ -14,7 +14,6 @@
 
 用 `pr-body.mjs set` 写进 PR 描述（用 Skill 工具调 `idea-loop:pr`，看它的「PR 描述」，节名、顺序、每节怎么写都照它）：`problem`、`changes`、`verification`、`rollback`、`your-todo` 各节，`summary` 核一遍。读者是没跟过这件事的人，一份讲完（问题 → 怎么修 → 怎么验证 → 能否回滚 → 要你做的事）：
 
-- 几个仓库各有一个 PR 的：每个 PR 的描述各写自己仓库的那部分，`your-todo` 只写在主 PR 上，别的 PR 写一句「见主 PR」。
 - 素材：spec 的「问题陈述」和「方案」，工单（标题、被谁挡着、端到端行为），review loop 文件里每份汇报的「已按规则处理」「做了什么」，`idea-loop:implement` 期间开的 issue。
 - review 的结论收进 `verification`（几轮、中途修了什么），照规则定的做法和依据收进 `changes`，不再另贴一份。
 - **人验素材**：review loop 文件里「要你看的」中还没勾的项，全部收进 `your-todo` 的「要你审的」，一项一个复选框：「看什么」+ 素材（素材只放这里，`verification` 里不重复），素材照 `idea-loop:pr` 的交付证据做（流程图、动图、并排截图），用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish` 上传后贴进描述，人在 PR 上直接看。会话里照 `idea-loop:pr` 的「在会话里给人看」一项一段，文字后紧跟它的图。

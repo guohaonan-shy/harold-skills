@@ -74,7 +74,7 @@ test('seo-auto-merge.md: when it applies, the three conditions, the 上线自查
   assert.match(AUTO, /review loop[^\n]*归档|归档[^\n]*review loop/, 'the review loop is archived as usual');
   assert.match(AUTO, /deliver\.md/, 'the report is written as usual first');
   assert.match(AUTO, /任一|缺一|有一条不满足|任何一条/, 'one failing condition stops');
-  assert.match(AUTO, /每个 PR/, 'several PRs: every one must meet it');
+  assert.doesNotMatch(AUTO, /每个 PR/, 'one issue has one PR: no several-PR rule');
 });
 
 test('merge.md: 人说合并 is still the way in, with the SEO exception named', () => {

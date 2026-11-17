@@ -5,7 +5,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 把一份 spec 切成若干工单：每张是一颗 tracer bullet 式的**垂直切片**，写明挡着它的那几张。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指目标项目的 `docs/`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。
 
 工单是**临时凭据**：开工时才建，切完提交到 home，代码 PR 合并后由 pr-review 的合并步骤删掉（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
 
@@ -34,7 +34,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 先 `git fetch`，对着 `origin/<主分支>` 读。从用户进入的入口开始（Web 应用里是地址，命令行里是命令），沿真实调用链一跳一跳走到数据来源（Web 应用里是路由 → 页面 → 接口），每一跳都对着代码说清它现在做什么，包括 spec 没点名的那几跳。再看 spec 文件最后一次提交以来、主分支上碰过这条链的提交，逐个说清它改了哪一跳。走出 spec 没覆盖的一段，就是下面「唯一会停的情况」里的「spec 没写清」，照那里办。
 
-目标项目有 `GLOSSARY.md` 就读它，工单的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词；缺词不问、不写，先用描述性的说法（`idea-loop:pr-review` 会把缺词列出来）。
+项目目录有 `GLOSSARY.md` 就读它，工单的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词；缺词不问、不写，先用描述性的说法（`idea-loop:pr-review` 会把缺词列出来）。
 
 顺手找**预重构**的机会：让改动变容易，然后做那个容易的改动。
 
@@ -44,7 +44,6 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 - 切完的一刀自己就能演示或验证。
 - 预重构排最前。
 - 一份 spec 塞得进一个 PR，就只切一张工单。至少一张。
-- 项目有多个仓库（`ISSUE_TRACKER.md` 有「仓库」一节）时，一刀只落在一个仓库；跨仓库的竖切拆成每个仓库一张，后一张写明被前一张挡着（接口先于调用方）。
 
 按层横切的工单每张都会反复返工，所以竖切不是审美偏好。
 
@@ -80,7 +79,6 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 # NN — <标题>
 
 **Blocked by**：<编号/标题>，或「无——可立即开工」
-**仓库**：<「仓库」一节里的仓库名>（项目只有一个仓库就不写这一行）
 **设计冻结**：不涉及 UI ｜ 已冻结（<画布指针> · <矩阵里这张工单范围内的格> · <mismatch 阈值> · <一行 ledger 摘要> · <状态矩阵与数据契约变更>）
 
 ## 要建什么

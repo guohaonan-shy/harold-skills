@@ -1,10 +1,10 @@
 # 分类，以及 issue 与 spec 的关系
 
-下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`。
+下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」）。
 
 ## 分类
 
-除了状态，issue 还带模块和类型两种 label：模块是 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上；类型是 `kind:bug` / `kind:feature` / `kind:improvement` 之一。项目有哪些模块、另外保留哪些 label，写在根目录 `AGENTS.md`（或 `CLAUDE.md`）的「issue 分类」一节，`/idea-loop:setup` 建它。`issues type` 打模块，会替换原有的 `type:*`；类型用 `gh issue edit --add-label`。
+除了状态，issue 还带模块和类型两种 label：模块是 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上；类型是 `kind:bug` / `kind:feature` / `kind:improvement` 之一。项目有哪些模块、另外保留哪些 label，写在项目目录 `ISSUE_TRACKER.md` 的「分类 label」一节，`/idea-loop:setup` 建它。`issues type` 打模块，会替换原有的 `type:*`；类型用 `gh issue edit --add-label`。
 
 ## spec 与 issue
 

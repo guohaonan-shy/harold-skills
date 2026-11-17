@@ -51,7 +51,7 @@ test('the ask-or-auto rule is written once, in the script: the docs point at it 
 
 test('the automatic part commits to home on generic checks, with no project command in the plugin', () => {
   const merge = proposal.split('4. **提交前检查**')[1].split('5. **回滚**')[0];
-  assert.match(merge, /`REVIEW\.md` 的验证命令/);
+  assert.match(merge, /REVIEW\.md` 的验证命令/);
   assert.match(merge, /spec\.mjs check/);
   assert.match(merge, /link sweep/);
   assert.match(merge, /design-archive-check/);

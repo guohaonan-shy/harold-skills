@@ -9,11 +9,11 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 ## 过程
 
-1. **开工**：issue tracker 怎么用在目标仓库根目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指目标项目的 `docs/`。先跑 `spec check <docs>`，报的问题照 `idea-loop:issues` 处理。
+1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `spec check <docs>`，报的问题照 `idea-loop:issues` 处理。
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，正文照 [`references/raw-template.md`](references/raw-template.md)。frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`、`title`、`tags: [<topic>, <feature-slug>]`、`related: ["[[<spec-slug>]]"]`。
 
-3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。目标项目有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
+3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。项目目录有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
    seam 是测试观察行为的公共边界，测试从这里喂输入、读输出。优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置，每个带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认，不在场自己定。写进「测试决策」。
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
