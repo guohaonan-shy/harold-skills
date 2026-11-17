@@ -28,6 +28,8 @@
 
 照着写：这个脚本现在的写法（导出纯函数加命令行入口），测试在临时目录里建假 home、带远端的假代码仓库和它的 worktree，`IDEA_LOOP_HOME` 指过去。
 
+> 人的决定（2026-11-17）：「选B，其实满打满算就只有harold-skills和toefl-demo哈哈哈」——「还没搬」的判法收窄为：代码仓库根有 8 份引导文件之一，或 `docs/` 里有 `spec/` 或 `adr/` 子目录；光有一个普通 `docs/` 不算（按「没接上」处理）。开会话的提示和 setup 的预检共用这一个判法。
+
 ## 验收标准
 
 - [x] 假 home 登记了 `example-app`（远端 `acme/example-app`），`projects/example-app/docs/` 存在：在它的 worktree 里跑 `where`，项目目录是假 home 里那个，`owner/repo` 是 `acme/example-app`
@@ -39,6 +41,7 @@
 - [x] `index.lock` 存在、一秒内被移走：`commit` 重试后成功
 - [x] hook 在已搬的项目里注入的内容含 `项目目录：<路径>` 一行；在还没搬的项目里注入迁移提示；home 不存在时什么都不输出、退出码 0
 - [x] 认项目脚本现有的测试全绿
+- [ ] 人的决定（2026-11-17）：只有普通 `docs/`（里面没有 `spec/`、`adr/`）、没有引导文件的仓库，`where` 报「没接上」、hook 不注入迁移提示、setup 的预检把它当全新项目；有 `docs/spec/` 或 `docs/adr/` 的仍报「还没搬」
 
 ## 选中的存量回归
 
