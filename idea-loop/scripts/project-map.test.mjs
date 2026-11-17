@@ -7,12 +7,12 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MAP_LIMIT, TRUNCATED_NOTICE, findProject, mapText, normalizeRemote, parseProjects } from './project-map.mjs';
+import { IN_HOME, MAP_LIMIT, NOT_CONNECTED, NOT_MOVED, TRUNCATED_NOTICE, findProject, mapText, normalizeRemote, parseProjects } from './project-map.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
@@ -211,4 +211,308 @@ test('findProject matches across spellings and returns null for no match', () =>
   assert.equal(findProject(projects, 'git@github.com:acme/example-app.git').name, 'example-app');
   assert.equal(findProject(projects, 'git@github.com:acme/else.git'), null);
   assert.equal(findProject(projects, null), null);
+});
+
+// ---- where, commit, and the 项目目录 line (spec skills-read-home, ticket 01) ----------------------------------------
+
+const script = join(pluginRoot, 'scripts', 'project-map.mjs');
+/** Run `project-map.mjs <args>` in `cwd` with exactly this env: the fake home, a HOME beside `cwd`, never the machine's own. */
+const cli = (args, cwd, home) =>
+  spawnSync('node', [script, ...args], { cwd, env: { PATH: process.env.PATH, HOME: dirname(cwd), IDEA_LOOP_HOME: home }, encoding: 'utf8' });
+
+/** A world whose project directory in home has a docs/, i.e. one that has moved; home has a committer identity. */
+function moved(opts = {}) {
+  const w = world(opts);
+  mkdirSync(join(w.home, 'projects', 'example-app', 'docs'), { recursive: true });
+  writeFileSync(join(w.home, 'projects', 'example-app', 'docs', 'index.md'), '# docs\n');
+  sh(w.home, 'config', 'user.name', 't');
+  sh(w.home, 'config', 'user.email', 't@example.com');
+  sh(w.home, 'config', 'commit.gpgsign', 'false');
+  sh(w.home, 'add', '-A');
+  sh(w.home, 'commit', '-q', '-m', 'project');
+  return w;
+}
+
+const subjects = (dir, ...rev) => sh(dir, 'log', '--format=%s', ...rev).split('\n');
+const filesOf = (dir, rev) => sh(dir, 'show', '--name-only', '--format=', rev).split('\n').filter(Boolean);
+const write = (dir, rel, text = 'x\n') => {
+  mkdirSync(dirname(join(dir, rel)), { recursive: true });
+  writeFileSync(join(dir, rel), text);
+};
+const DOCS = 'projects/example-app/docs';
+
+test('where, from a worktree of the code repository: the project directory in home, the owner/repo of the registered remote', () => {
+  const { code, home, root } = moved();
+  const worktree = join(root, 'worktrees', 'feature');
+  sh(code, 'worktree', 'add', '-q', '-b', 'feature', worktree);
+  const r = cli(['where'], worktree, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout), {
+    project: 'example-app',
+    projectDir: join(home, 'projects', 'example-app'),
+    docs: join(home, DOCS),
+    repo: 'acme/example-app',
+    clone: '~/projects/example-app',
+    cloneDir: join(dirname(worktree), 'projects', 'example-app'), // `~` is the HOME the child got
+    inHome: true,
+  });
+});
+
+test('where --project from home gives the same directory, and so does it from anywhere; without --project, home itself is refused', () => {
+  const { code, home, root } = moved();
+  const fromCode = JSON.parse(cli(['where'], code, home).stdout);
+  const named = cli(['where', '--project', 'example-app'], home, home);
+  assert.equal(named.status, 0, named.stderr);
+  assert.equal(JSON.parse(named.stdout).projectDir, fromCode.projectDir);
+  assert.equal(JSON.parse(cli(['where', '--project', 'example-app'], root, home).stdout).projectDir, fromCode.projectDir);
+  const bare = cli(['where'], home, home);
+  assert.notEqual(bare.status, 0);
+  assert.equal(bare.stderr.trim(), '当前目录是 home 本身，要带 --project <名字>');
+  assert.equal(bare.stdout, '');
+});
+
+test('where --project with a name that is not in the list, or that would leave projects/: exit non-zero, nothing on stdout', () => {
+  const { home } = moved();
+  for (const name of ['nope', '..', 'a/b']) {
+    const r = cli(['where', '--project', name], home, home);
+    assert.notEqual(r.status, 0, name);
+    assert.equal(r.stdout, '');
+    assert.ok(r.stderr.includes(NOT_CONNECTED), r.stderr);
+  }
+  assert.notEqual(cli(['where', '--project'], home, home).status, 0);
+});
+
+test('where, projects/<名字>/docs/ gone and a DEVELOPMENT.md in the repository root: not moved yet, run setup to migrate', () => {
+  const { code, home } = moved();
+  rmSync(join(home, DOCS), { recursive: true });
+  writeFileSync(join(code, 'DEVELOPMENT.md'), '# dev\n');
+  const r = cli(['where'], code, home);
+  assert.notEqual(r.status, 0);
+  assert.equal(r.stdout, '');
+  assert.equal(r.stderr.trim(), '这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移');
+  assert.equal(NOT_MOVED, '这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移');
+});
+
+test('where: any one bootstrap file, or a docs/ directory, in the repository root means not moved; an unregistered repository with one too', () => {
+  for (const file of ['DEVELOPMENT.md', 'REVIEW.md', 'CODING_STANDARDS.md', 'PRODUCT.md', 'ISSUE_TRACKER.md', 'GLOSSARY.md', 'DESIGN.md', 'SEO.md', 'docs/']) {
+    const { code, home } = world();
+    if (file.endsWith('/')) mkdirSync(join(code, 'docs'));
+    else writeFileSync(join(code, file), 'x\n');
+    const r = cli(['where'], code, home);
+    assert.notEqual(r.status, 0, file);
+    assert.ok(r.stderr.includes(NOT_MOVED), `${file}: ${r.stderr}`);
+  }
+  const { code, home } = world({ origin: 'git@github.com:acme/unregistered.git' });
+  writeFileSync(join(code, 'REVIEW.md'), 'x\n');
+  assert.ok(cli(['where'], code, home).stderr.includes(NOT_MOVED));
+});
+
+test('where for a repository that is not in the project list, has no origin, or is no repository: not connected to idea-loop', () => {
+  const unlisted = world({ origin: 'git@github.com:acme/unregistered.git' });
+  const noOrigin = repo(join(unlisted.root, 'code', 'local-only'), null);
+  const plain = join(unlisted.root, 'plain');
+  mkdirSync(plain);
+  for (const cwd of [unlisted.code, noOrigin, plain]) {
+    const r = cli(['where'], cwd, unlisted.home);
+    assert.notEqual(r.status, 0, cwd);
+    assert.equal(r.stdout, '');
+    assert.equal(r.stderr.trim(), '这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`');
+  }
+  assert.equal(NOT_CONNECTED, '这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`');
+  assert.ok(IN_HOME.includes('--project'));
+});
+
+test('where, a listed project with no docs/ in home and nothing to migrate in the clone: not connected, not "not moved"', () => {
+  const { code, home } = world();
+  assert.ok(cli(['where'], code, home).stderr.includes(NOT_CONNECTED));
+});
+
+test('an unknown command: usage on stderr, exit non-zero', () => {
+  const { home } = moved();
+  const r = cli(['frobnicate'], home, home);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /usage/);
+});
+
+test('the hook in a moved project: a 项目目录 line with the directory first, then the map', () => {
+  const { code, home } = moved();
+  const r = run(code, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.split('\n')[0], `项目目录：${join(home, 'projects', 'example-app')}`);
+  assert.ok(r.stdout.includes(MAP.trim()), r.stdout);
+});
+
+test('the hook in a moved project whose map is not written: the 项目目录 line, then the not-written line', () => {
+  const { code, home } = moved({ map: null });
+  const r = run(code, home);
+  assert.equal(r.stdout.split('\n')[0], `项目目录：${join(home, 'projects', 'example-app')}`);
+  assert.match(r.stdout, /还没写/);
+});
+
+test('the hook in a project that has not moved: the migration sentence and nothing else; exit 0', () => {
+  const { code, home } = moved();
+  rmSync(join(home, DOCS), { recursive: true });
+  writeFileSync(join(code, 'DEVELOPMENT.md'), '# dev\n');
+  const r = run(code, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, `${NOT_MOVED}\n`);
+});
+
+test('the hook with no home directory: nothing and exit 0, even in a repository that has not moved', () => {
+  const { code, root } = world();
+  writeFileSync(join(code, 'DEVELOPMENT.md'), '# dev\n');
+  const r = run(code, join(root, 'no-such-home'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, '');
+});
+
+test('the hook opened in home itself prints nothing even though home has a project with docs/', () => {
+  const { home } = moved();
+  assert.equal(run(home, home).stdout, '');
+});
+
+test('commit: two files written and a third staged by another session; only one handed over: the commit has just that one, the others stay as they were', () => {
+  const { home } = moved();
+  write(home, `${DOCS}/spec/a.md`);
+  write(home, `${DOCS}/spec/b.md`);
+  write(home, `${DOCS}/other-session.md`);
+  sh(home, 'add', `${DOCS}/other-session.md`);
+  const r = cli(['commit', 'docs(spec): a', `${DOCS}/spec/a.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(filesOf(home, 'HEAD'), [`${DOCS}/spec/a.md`]);
+  assert.equal(subjects(home)[0], 'docs(spec): a');
+  assert.equal(sh(home, 'diff', '--cached', '--name-only'), `${DOCS}/other-session.md`);
+  assert.equal(sh(home, 'ls-files', '--others', '--exclude-standard'), `${DOCS}/spec/b.md`);
+});
+
+test('commit: paths are relative to where it is run, absolute paths work, a deleted file is committed as a deletion', () => {
+  const { home } = moved();
+  const docs = join(home, DOCS);
+  write(home, `${DOCS}/gone.md`);
+  sh(home, 'add', '-A');
+  sh(home, 'commit', '-q', '-m', 'add gone');
+  rmSync(join(docs, 'gone.md'));
+  write(home, `${DOCS}/new.md`, 'a different text, so git does not call this a rename\n');
+  const r = cli(['commit', 'tidy', 'gone.md', join(docs, 'new.md')], docs, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(filesOf(home, 'HEAD').sort(), [`${DOCS}/gone.md`, `${DOCS}/new.md`]);
+  assert.equal(sh(home, 'status', '--porcelain'), '');
+});
+
+test('commit: a file outside home is refused and nothing is committed, not even the listed file that is inside', () => {
+  const { home, root } = moved();
+  write(home, `${DOCS}/inside.md`);
+  const before = sh(home, 'rev-parse', 'HEAD');
+  for (const bad of [join(root, 'code', 'example-app', 'README.md'), '../outside.md', join(root, 'home-evil', 'x.md')]) {
+    const r = cli(['commit', 'nope', `${DOCS}/inside.md`, bad], home, home);
+    assert.notEqual(r.status, 0, bad);
+    assert.ok(r.stderr.includes('不在 home'), r.stderr);
+  }
+  assert.equal(sh(home, 'rev-parse', 'HEAD'), before);
+  assert.equal(sh(home, 'diff', '--cached', '--name-only'), '');
+});
+
+test('commit without a message or without files: refused', () => {
+  const { home } = moved();
+  assert.notEqual(cli(['commit'], home, home).status, 0);
+  assert.notEqual(cli(['commit', 'only a message'], home, home).status, 0);
+});
+
+test('commit: a listed file with no change makes no commit and still exits 0', () => {
+  const { home } = moved();
+  const before = sh(home, 'rev-parse', 'HEAD');
+  const r = cli(['commit', 'nothing', `${DOCS}/index.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(sh(home, 'rev-parse', 'HEAD'), before);
+  assert.match(r.stdout, /没有改动/);
+});
+
+test('commit: home without an origin: exit 0, no complaint about not pushing', () => {
+  const { home } = moved();
+  write(home, `${DOCS}/a.md`);
+  const r = cli(['commit', 'a', `${DOCS}/a.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!r.stdout.includes('没推上去'), r.stdout);
+  assert.equal(subjects(home)[0], 'a');
+});
+
+test('commit: home with an origin that cannot be reached: exit 0, a line 「home 没推上去：…」, the commit is there', () => {
+  const { home, root } = moved();
+  sh(home, 'remote', 'add', 'origin', join(root, 'no-such-remote.git'));
+  write(home, `${DOCS}/a.md`);
+  const r = cli(['commit', 'a', `${DOCS}/a.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^home 没推上去：.+/m);
+  assert.equal(subjects(home)[0], 'a');
+});
+
+test('commit: home with a working origin that is still empty: pushed', () => {
+  const { home, root } = moved();
+  const remote = join(root, 'remote.git');
+  sh(root, 'init', '-q', '--bare', '-b', 'main', remote);
+  sh(home, 'remote', 'add', 'origin', remote);
+  write(home, `${DOCS}/a.md`);
+  const r = cli(['commit', 'a', `${DOCS}/a.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!r.stdout.includes('没推上去'), r.stdout);
+  assert.equal(subjects(remote, 'main')[0], 'a');
+});
+
+test('commit: the remote moved on meanwhile and another session has a file staged in home: rebased and pushed, the staged file is still staged and uncommitted', () => {
+  const { home, root } = moved();
+  const remote = join(root, 'remote.git');
+  sh(root, 'init', '-q', '--bare', '-b', 'main', remote);
+  sh(home, 'remote', 'add', 'origin', remote);
+  sh(home, 'push', '-q', '-u', 'origin', 'main');
+  const other = join(root, 'other-device');
+  sh(root, 'clone', '-q', remote, other);
+  sh(other, 'config', 'user.name', 'o');
+  sh(other, 'config', 'user.email', 'o@example.com');
+  write(other, `${DOCS}/from-other-device.md`);
+  sh(other, 'add', '-A');
+  sh(other, 'commit', '-q', '-m', 'other device');
+  sh(other, 'push', '-q', 'origin', 'main');
+
+  write(home, `${DOCS}/a.md`);
+  write(home, `${DOCS}/other-session.md`);
+  sh(home, 'add', `${DOCS}/other-session.md`);
+  const r = cli(['commit', 'a', `${DOCS}/a.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!r.stdout.includes('没推上去'), r.stdout);
+  assert.deepEqual(subjects(remote, 'main').slice(0, 2), ['a', 'other device']);
+  assert.ok(existsSync(join(home, DOCS, 'from-other-device.md')));
+  assert.equal(sh(home, 'diff', '--cached', '--name-only'), `${DOCS}/other-session.md`);
+});
+
+test('commit: a held index.lock that is gone within a second: retried, the commit succeeds', () => {
+  const { home } = moved();
+  write(home, `${DOCS}/a.md`);
+  const lock = join(home, '.git', 'index.lock');
+  writeFileSync(lock, '');
+  spawn('sh', ['-c', `sleep 0.3; rm -f "${lock}"`], { stdio: 'ignore', detached: true }).unref();
+  const r = cli(['commit', 'a', `${DOCS}/a.md`], home, home);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(subjects(home)[0], 'a');
+});
+
+test('commit: an index.lock that stays: one retry, then exit non-zero and nothing committed', () => {
+  const { home } = moved();
+  write(home, `${DOCS}/a.md`);
+  const before = sh(home, 'rev-parse', 'HEAD');
+  writeFileSync(join(home, '.git', 'index.lock'), '');
+  const r = cli(['commit', 'a', `${DOCS}/a.md`], home, home);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /index\.lock/);
+  rmSync(join(home, '.git', 'index.lock'));
+  assert.equal(sh(home, 'rev-parse', 'HEAD'), before);
+});
+
+test('commit: a home that is not a git repository: refused', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'project-map-')));
+  const home = join(root, 'home');
+  mkdirSync(home);
+  writeFileSync(join(home, 'a.md'), 'x\n');
+  const r = cli(['commit', 'a', 'a.md'], home, home);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /不是 git 仓库/);
 });

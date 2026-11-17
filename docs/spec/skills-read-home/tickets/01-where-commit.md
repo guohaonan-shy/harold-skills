@@ -30,15 +30,15 @@
 
 ## 验收标准
 
-- [ ] 假 home 登记了 `example-app`（远端 `acme/example-app`），`projects/example-app/docs/` 存在：在它的 worktree 里跑 `where`，项目目录是假 home 里那个，`owner/repo` 是 `acme/example-app`
-- [ ] 在假 home 里跑 `where --project example-app`，拿到的项目目录跟上一条相同；不带 `--project` 时退出码非 0
-- [ ] 删掉 `projects/example-app/docs/`、代码仓库根放一份 `DEVELOPMENT.md`：`where` 退出码非 0，输出「这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移」
-- [ ] 项目清单里没有的仓库：`where` 退出码非 0，输出「这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`」
-- [ ] 两个文件已写进假 home、另一个文件已被别人 add 进暂存区，只把其中一个交给 `commit`：提交里只有它；另两个仍未提交，被 add 的那个仍在暂存区
-- [ ] 假 home 没有 `origin`：`commit` 退出码 0；有 `origin` 但推送失败：退出码 0，输出「home 没推上去：…」
-- [ ] `index.lock` 存在、一秒内被移走：`commit` 重试后成功
-- [ ] hook 在已搬的项目里注入的内容含 `项目目录：<路径>` 一行；在还没搬的项目里注入迁移提示；home 不存在时什么都不输出、退出码 0
-- [ ] 认项目脚本现有的测试全绿
+- [x] 假 home 登记了 `example-app`（远端 `acme/example-app`），`projects/example-app/docs/` 存在：在它的 worktree 里跑 `where`，项目目录是假 home 里那个，`owner/repo` 是 `acme/example-app`
+- [x] 在假 home 里跑 `where --project example-app`，拿到的项目目录跟上一条相同；不带 `--project` 时退出码非 0
+- [x] 删掉 `projects/example-app/docs/`、代码仓库根放一份 `DEVELOPMENT.md`：`where` 退出码非 0，输出「这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移」
+- [x] 项目清单里没有的仓库：`where` 退出码非 0，输出「这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`」
+- [x] 两个文件已写进假 home、另一个文件已被别人 add 进暂存区，只把其中一个交给 `commit`：提交里只有它；另两个仍未提交，被 add 的那个仍在暂存区
+- [x] 假 home 没有 `origin`：`commit` 退出码 0；有 `origin` 但推送失败：退出码 0，输出「home 没推上去：…」
+- [x] `index.lock` 存在、一秒内被移走：`commit` 重试后成功
+- [x] hook 在已搬的项目里注入的内容含 `项目目录：<路径>` 一行；在还没搬的项目里注入迁移提示；home 不存在时什么都不输出、退出码 0
+- [x] 认项目脚本现有的测试全绿
 
 ## 选中的存量回归
 
