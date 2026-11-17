@@ -3,7 +3,7 @@
 
 | 文件 | summary |
 |---|---|
-| [[edge-case-known-limit]] | PR 流程里碰到时看得见、不丢东西的边缘情形照规则接受成已知限制，不再每次摆题 |
+| [[edge-case-known-limit]] | 删掉插件的 decision-rules，决策只在 home 写禁区和范围，其余交给模型判断、事后列出 |
 | [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
 | [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
 | [[replay-gh-isolation]] | 规则回放起的每个 claude / Codex 子进程都不带 gh 登录，读不到用例之后的线上 issue 与 PR |
