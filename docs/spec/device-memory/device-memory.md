@@ -2,7 +2,7 @@
 type: spec
 tags: [home, idea-loop-0-2-0, memory, dreaming]
 summary: 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录
-related: ["[[2026-11-15-home-repo-grill]]", "[[home-bootstrap]]", "[[dreaming-triage-autonomous]]"]
+related: ["[[2026-11-15-home-repo-grill]]", "[[home-bootstrap]]", "[[0047-dreaming-triage-autonomous]]"]
 issues: [332]
 ---
 
@@ -145,7 +145,7 @@ setup 的「每周 dreaming」一节改成：在建 home 的那一步之后建�
 - **不调用 `consolidate-memory`**：它是 Claude 桌面端自带的 skill（装在桌面端的 skills-plugin 目录下），能合并重复、改过期事实、收索引，最接近这件事；不调用它，因为：它只在桌面端有，公司虚拟机上的 CLI 会话和 magi 不一定有；它的规则跟这里的对不上（按 200 行收、把收工的项目条目退掉，而这里要按 140 行收、把项目条目挪进项目目录、矛盾要问人）。取用它的三条做法写进参考文件：合并时保留内容更全的那份的路径、相对时间改绝对日期、索引一行一句钩子。
 - **中间物放 `~/home/.tmp/dreaming/<日期>/`**：dreaming 开在 home 里，提议表跟着放 home；home 的 `.gitignore`（#252 的 setup 写）加 `.tmp/`。
 - **home 里不开 worktree、不开 PR**：home 只有 main、直接提交、只 add 自己写的文件（决定记录 Q12）。记忆一段只 add `memory/` 和 `projects/*/memory/` 下自己改的路径。
-- **版本号**：不升。#252 已在第一个子 PR 把 idea-loop 升到 0.2.0（它的 spec「版本号」一条），这个 PR 对着 main 比已经高过。
+- **版本号**：这个 PR 不升。0.2.0 的版本号由父会话在整条集成分支合进 main 的 PR 里统一升（父 issue #331）；plugin-version 测试在这个 PR 上红是预期内。
 - **已知限制**（找不到真实路径，不展开设计，人可以推翻）：dreaming 整理时正好有会话在写记忆，那一条这次不动、下周再整理，它对索引的改动不会被 dreaming 的提交带上（只 add 自己改的路径），但两边同时改同一行索引时以后写的为准；一条规矩同时属于两个项目、又不是全设备通用的，留在根里。
 
 ## 测试决策
@@ -182,7 +182,7 @@ setup 的「每周 dreaming」一节改成：在建 home 的那一步之后建�
 
 - raw：[[2026-11-15-home-repo-grill]]（「记忆」「迁移」「查询入口」几行决议）；这次 triage 的三道题记在 `docs/raw/decisions/332.md`。
 - 父 issue #331（0.2.0，集成分支 `release/idea-loop-0.2.0`）。
-- [[home-bootstrap]]（#252，还没合进集成分支，在 `origin/issue/252-home`）：这一刀依赖它的 home 骨架、项目清单、项目地图模板和 `.gitignore`；要它的模板加一行项目记忆指针、`.gitignore` 加 `.tmp/`。它先合。
+- [[home-bootstrap]]（#252，已合进集成分支）：这一刀依赖它的 home 骨架、项目清单、项目地图模板和 `.gitignore`；它的项目地图模板已有项目记忆指针那一行，`.gitignore` 加 `.tmp/` 由这一刀补。
 - #333（triage 中）：设备级 dreaming 的「逐个跑项目对账」和地图的维护归它；「设备上只有一个 dreaming 任务」这条已在 2026-11-16 告诉它的会话。没有代码上的重叠：这一刀只加 dreaming 的记忆一段和 setup 的任务形状。
 - #247（triage 中）：复制记忆、切目录、跑第一次整理、取消旧任务；它的 spec 要用这一刀的「只跑记忆」做第一次整理，所以这一刀先合（#252 的 spec 已写这个顺序）。
-- [[dreaming-triage-autonomous]]（#298，走 main）：定了 dreaming「只问两类、其余自动执行并合并」，这一刀的「只问矛盾」沿用它；home 上「直接提交、不开 PR」改的是它的「开 docs PR 自己合」，那部分归 #333。
+- [[0047-dreaming-triage-autonomous]]（#298，已合进 main）：定了 dreaming「只问两类、其余自动执行并合并」，这一刀的「只问矛盾」沿用它；home 上「直接提交、不开 PR」改的是它的「开 docs PR 自己合」，那部分归 #333。
