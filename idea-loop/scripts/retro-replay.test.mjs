@@ -16,7 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { changeSetOf, projectName } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -131,6 +131,25 @@ test('buildArtifact says so when the run left no files', () => {
   assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有写下或改动的文件/);
 });
 
+test('replayChildEnv: the four gh token variables are gone, GH_CONFIG_DIR is the given empty dir, everything else is passed on, the input is untouched', () => {
+  const parent = {
+    GH_TOKEN: 't1', GITHUB_TOKEN: 't2', GH_ENTERPRISE_TOKEN: 't3', GITHUB_ENTERPRISE_TOKEN: 't4',
+    GH_CONFIG_DIR: '/home/me/.config/gh', PATH: '/usr/bin', HOME: '/home/me', CLAUDE_CONFIG_DIR: '/home/me/.claude',
+    IDEA_LOOP_RUNTIME: 'desktop', RETRO_JUDGE_ORDER: 'after-first', FAKE_LOG: '/x/log', GH_HOST: 'github.com',
+  };
+  const snapshot = structuredClone(parent);
+  const env = replayChildEnv(parent, '/run/dir/gh-config');
+  for (const k of ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN']) assert.ok(!(k in env), `${k} is removed`);
+  assert.equal(env.GH_CONFIG_DIR, '/run/dir/gh-config');
+  const { GH_TOKEN, GITHUB_TOKEN, GH_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_TOKEN, GH_CONFIG_DIR, ...rest } = parent;
+  assert.deepEqual({ ...env, GH_CONFIG_DIR: undefined }, { ...rest, GH_CONFIG_DIR: undefined }, 'every other variable passes through as it was');
+  assert.deepEqual(parent, snapshot, 'the object passed in was not changed');
+});
+
+test('replayChildEnv: when the parent has no gh variables at all, GH_CONFIG_DIR is still set to the empty dir', () => {
+  assert.deepEqual(replayChildEnv({ PATH: '/usr/bin' }, '/e'), { PATH: '/usr/bin', GH_CONFIG_DIR: '/e' });
+});
+
 test('the cost estimate is a range, scales with cases, and is stated in dollars', () => {
   const one = estimateCostUsd(1);
   assert.ok(one.low > 0 && one.high > one.low);
@@ -176,7 +195,9 @@ const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd }) + '\\n');
+const dirIn = process.env.GH_CONFIG_DIR;
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd, probe }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
 if (pd) {
@@ -211,7 +232,9 @@ const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
 fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd() }) + '\\n');
+const dirIn = process.env.GH_CONFIG_DIR;
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd(), probe }) + '\\n');
 if (process.env.FAKE_CODEX_FAIL) process.exit(2);
 const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
 const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
@@ -273,7 +296,7 @@ function realCodexLookalike(env) {
  * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
  * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
  */
-function run(env, extra = [], { codex = 'fake', order } = {}) {
+function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
   const r = spawnSync(process.execPath, [
     RUNNER, '--case', 'demo-case', '--repo', env.repo, '--cases-root', env.casesRoot,
     '--before-plugin', join(env.root, 'before', 'idea-loop'), '--after-plugin', join(env.root, 'after', 'idea-loop'),
@@ -281,7 +304,7 @@ function run(env, extra = [], { codex = 'fake', order } = {}) {
   ], {
     encoding: 'utf8',
     env: {
-      ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
+      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
       RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
       ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
@@ -351,6 +374,31 @@ test('e2e: both runs get exactly the case prompt, in a work dir that does not sa
   assert.ok(existsSync(join(dir, 'before', 'project', 'docs', 'out.md')));
   assert.ok(existsSync(join(dir, 'after', 'run.stream.jsonl')));
   assert.ok(!existsSync(dirname(w1.cwd)), 'the work dir is gone once the run is over');
+});
+
+test('e2e: every process the runner starts (both workers, the Codex judge, the Claude judge) has no gh login: no tokens, an existing empty config dir that is not the one passed in, the rest of the environment as it was', () => {
+  const given = mkdtempSync(join(tmpdir(), 'gh-given-'));
+  writeFileSync(join(given, 'hosts.yml'), 'github.com:\n  user: someone\n');
+  const parentEnv = { GH_TOKEN: 'secret-1', GITHUB_TOKEN: 'secret-2', GH_CONFIG_DIR: given, UNRELATED_VAR: 'stays' };
+  for (const codex of ['fake', 'missing']) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env, [], { codex, parentEnv });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const all = sessions(env);
+    const kinds = all.map((x) => x.kind).sort();
+    assert.deepEqual(kinds, codex === 'fake' ? ['codex', 'worker', 'worker'] : ['judge', 'worker', 'worker']);
+    const dirs = new Set();
+    for (const s of all) {
+      assert.equal(s.probe.GH_TOKEN, null, `${s.kind}: GH_TOKEN`);
+      assert.equal(s.probe.GITHUB_TOKEN, null, `${s.kind}: GITHUB_TOKEN`);
+      assert.notEqual(s.probe.GH_CONFIG_DIR, given, `${s.kind}: not the config dir that was passed in`);
+      assert.deepEqual(s.probe.ghDirEntries, [], `${s.kind}: GH_CONFIG_DIR exists and is empty`);
+      assert.equal(s.probe.UNRELATED, 'stays', `${s.kind}: other variables are passed on`);
+      dirs.add(s.probe.GH_CONFIG_DIR);
+    }
+    const runDir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+    assert.ok([...dirs].every((d) => d.startsWith(`${runDir}/`)), 'the empty dir lives under the run dir, and is kept with it');
+  }
 });
 
 test('e2e: the judge is told where the thing is handed to the human', () => {

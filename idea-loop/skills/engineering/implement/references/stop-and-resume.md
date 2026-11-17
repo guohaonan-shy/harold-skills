@@ -27,7 +27,7 @@
 
 回到「派工」。下次停下追加新条目，不改旧的。
 
-**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
+**全部落地、pending 清空、`review-loop.mjs check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给每个 PR 写齐描述（带 `type:seo/*` 的 issue 另写「上线自查的网址」一节；之前 → 之后专门拍：基准分支用 `git worktree add .tmp/implement/<spec-slug>/base <基准分支>` 另起一份，拍完删），每个 PR 都 `gh pr ready`，然后 `issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
 
 **等 CI**：全量测试只在这里跑一遍。`gh pr checks <PR 号> --watch` 等这个 head 的检查跑完（每个 PR 各等）：
 

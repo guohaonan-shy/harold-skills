@@ -66,7 +66,8 @@ test('uncollected placeholders are skipped; content and backlink issues carry th
   assert.match(p.create[0].body, /idea-loop:seo-brief/);
   assert.match(p.create[0].body, /需要 grill：选题角度和论点/);
   assert.match(p.create[1].body, /idea-loop:seo-outreach/);
-  assert.match(p.create[1].body, /由人发送/);
+  assert.match(p.create[1].body, /草稿进人的草稿箱，人说「发」才发/);
+  assert.doesNotMatch(p.create[1].body, /任何会话都不发/);
   assert.deepEqual(p.rejected, []);
 });
 
@@ -119,11 +120,18 @@ test('apply: comments go to the open issue, nothing is created', () => {
   assert.ok(calls.some((a) => a[1] === 'comment' && a[2] === '9'));
 });
 
-test('an issue body has the four required sections, none empty, and the list of targets sits under 影响范围', () => {
+test('an issue body has the five required sections, none empty, 背景 first, and the list of targets sits under 影响范围', () => {
   const f = finding({ targets: ['https://cookbook.example/a', 'https://cookbook.example/b'], ratio: { numerator: 2, denominator: 40 } });
   const [c] = plan([f], [], { date: '2026-11-06' }).create;
   assert.deepEqual(bodyErrors(c.body), []);
+  assert.ok(c.body.startsWith('## 背景\n'), '背景 is the first section');
   const sections = Object.fromEntries(c.body.split(/^## /m).slice(1).map((s) => [s.split('\n')[0], s.split('\n').slice(1).join('\n')]));
+  assert.match(sections['背景'], /2026-11-06/);
+  assert.match(sections['背景'], /技术 SEO 与索引/);
+  assert.match(sections['背景'], /seo-scan/);
+  assert.match(sections['背景'], /怎么复现/);
+  assert.match(sections['背景'], /建议的修法/);
+  assert.match(sections['背景'], /triage/);
   assert.match(sections['影响范围'], /受影响 2 处，占 2 \/ 40/);
   assert.match(sections['影响范围'], /- https:\/\/cookbook\.example\/a/);
   assert.doesNotMatch(sections['问题'], /cookbook\.example/);
