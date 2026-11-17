@@ -1,6 +1,6 @@
 ---
 name: keyword-clustering
-description: 关键词聚类：按搜索意图把词分组，映射到已有或要新建的页面，查出蚕食。人在场时出映射表、经同意打标；被方向 agent 调用时交回发现清单。要把一批词落到页面上时用；找新词用 keyword-research。
+description: 关键词聚类：按搜索意图把词分组，映射到已有或要新建的页面，查出蚕食。要把一批词落到页面上时用；找新词用 keyword-research。
 ---
 
 # 关键词聚类

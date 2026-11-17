@@ -1,6 +1,6 @@
 ---
 name: link-prospecting
-description: 外链拓展：从 SERP 和竞品外链里找可能引用我们的页面和站点，查公开联系途径。人在场时出拓展表和外联草稿；被方向 agent 调用时交回发现清单。要给一个页面找外链机会时用；写外联邮件、跟进表用 seo-outreach。
+description: 外链拓展：从 SERP 和竞品外链里找可能引用我们的页面和站点，查公开联系途径。要给一个页面找外链机会时用；写外联邮件、跟进用 seo-outreach。
 ---
 
 # 外链拓展

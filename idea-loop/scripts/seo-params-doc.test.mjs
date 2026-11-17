@@ -17,6 +17,8 @@ const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 
 const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
 const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+const OUTREACH = read('skills', 'seo', 'seo-outreach', 'SKILL.md');
+const WRITING = read('skills', 'seo', 'seo-writing', 'SKILL.md');
 const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
 const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
@@ -110,6 +112,15 @@ test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
   assert.ok(!/seo-md\.md/.test(SCAN), 'seo-md.md is seo-setup\'s own reference');
   assert.ok(!/格式定义/.test(g));
   assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
+});
+
+test('seo-outreach and seo-writing: read SEO.md through seo-md.mjs, not through seo-setup\'s private references (#235)', () => {
+  for (const [name, doc] of [['seo-outreach', OUTREACH], ['seo-writing', WRITING]]) {
+    assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is seo-setup's own reference`);
+    assert.ok(!/seo-setup[^\n]*references/.test(doc), `${name}: points into seo-setup's references`);
+    assert.ok(!/格式见/.test(doc), `${name}: a format pointer is left over`);
+    assert.match(doc, /seo-md\.mjs/, `${name}: reads SEO.md through the parse script`);
+  }
 });
 
 test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
