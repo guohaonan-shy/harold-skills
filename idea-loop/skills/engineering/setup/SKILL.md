@@ -4,7 +4,7 @@ description: 把一个目标仓库配置成 idea-loop 能用的样子：根目�
 disable-model-invocation: true
 ---
 
-在目标仓库的主 checkout 根目录跑。已有文件只补缺的小节，人写过的内容原样保留；改动留在工作区，人说提交才提交。GitHub 上删 label 是例外：它立刻生效，人确认过清单才删。
+在目标仓库的主 checkout 根目录跑。已有文件只补缺的小节，人写过的内容原样保留；改动留在工作区，人说提交才提交。GitHub 上删 label 立刻生效，人确认过清单才删。
 
 idea-loop 从这几处读项目配置：
 
@@ -30,13 +30,13 @@ idea-loop 从这几处读项目配置：
 
 ## 探查
 
-给「问人」的每个问题备一个推荐答案，并记下出处。要读的东西（项目规则文件、CI、锁文件、合并历史、`docs/` 目录树、label 与 open issue、`spec.mjs check`、`PRODUCT.md` 等）列在 [references/survey.md](references/survey.md)。
+给「问人」的每个问题备一个推荐答案，并记下出处。要读的东西列在 [references/survey.md](references/survey.md)。
 
 完成条件：「问人」的每个问题都有推荐答案，或写明「探查不到」。
 
 ## 问人
 
-只问这几份文件里还没写的。每个问题给推荐答案和出处，一次最多三个，人一句「照推荐」就算确认。问题清单（基准分支与合并方式、worktree 准备、开发服务器、验证命令、已有的规范文档、产品、知识库、UI 设计、issue 在哪个平台、GitHub App、issue 分类、别的 label）在 [references/questions.md](references/questions.md)。
+只问这几份文件里还没写的。每个问题给推荐答案和出处，一次最多三个，人一句「照推荐」就算确认。问题清单在 [references/questions.md](references/questions.md)。
 
 完成条件：清单上每一项都有人确认过的答案。
 
@@ -48,7 +48,7 @@ idea-loop 从这几处读项目配置：
 - `.tmp/` 追加进 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`.gitignore` 追加 `docs/design/tmp/`；`.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - `## issue 分类` 一节照模板写进 `AGENTS.md`（没有就写进有 `## idea-loop` 块的那份）；格式脚本要读，见 [references/issue-category-format.md](references/issue-category-format.md)。
-- **Linear 项目**（人选了 Linear）：连 MCP、选团队、读状态与 label 组、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
+- **Linear 项目**（人选了 Linear）：连 MCP、选团队、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
 - triage：把人对「团队用不用 triage」的回答写进 `ISSUE_TRACKER.md` 状态表后面那一行（`triage：用` 或 `triage：跳过`），模板里的「用 / 跳过」占位不算选了。
 - 仓库：把人对「会改到哪几个仓库」的回答填进 `ISSUE_TRACKER.md` 的「仓库」表，模板里的占位行（尖括号那行）删掉。
 - 旧状态（GitHub 项目）：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate docs` 只列出会怎么改，给人看，人确认后加 `--apply`。
@@ -60,6 +60,12 @@ idea-loop 从这几处读项目配置：
 
 完成条件：这几份文件都在，模板里的小节一个不缺；`git diff` 给人看过；GitHub 项目的 `issues.mjs labels docs` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好、状态表里每个状态名都是团队里真有的。
 
+## home
+
+`~/home`（设备上跨项目的知识与记忆）、当前项目的登记、三处用户级配置，按 [references/home.md](references/home.md) 做。
+
+完成条件：`~/home` 在，当前项目在它的 `## 项目` 里有一行、`projects/<名字>/AGENTS.md` 在；三处用户级配置都是「已是」，或人拒绝了，或「要人处理」的项已交回。
+
 ## 规则回放 runner
 
 改规则的 PR 要跑回放用例时，装 runner，步骤读 [references/replay-runner.md](references/replay-runner.md)。
@@ -68,9 +74,9 @@ idea-loop 从这几处读项目配置：
 
 ## 每周对账
 
-`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次（人在对话里要对账时模型也会起它）。必须在本仓库的主 checkout 里做，任务 id 叫 `dreaming-<仓库名>`。步骤（没有能力时的退路、问人的选项、任务的参数、要告诉人的话）在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次。一台设备只有一个，在 home 那一步之后建，任务 id 叫 `dreaming-home`，目录是 home；不按仓库建。步骤在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
-完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
+完成条件：这台设备有一个开着的 `dreaming-home` 定时任务（已有就是已有），或人拒绝了，或记下了没建的原因。
 
 ## 每周分拣
 
@@ -89,8 +95,9 @@ idea-loop 从这几处读项目配置：
 - 写了、改了哪些文件，建了、删了哪些 label，哪些 issue 迁了分类。
 - 预检缺的必需项，各附修法命令。
 - 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
+- home：建没建、登记的项目名、三处配置各是已改 / 已是 / 人拒绝 / 要人处理，备份在哪。
 - 规则回放：runner 装在哪、旧计划任务和队列目录删没删、**要人自己加的允许规则**（原样一行）。没加这条规则，无人值守的回放会被拦下。
-- 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
+- 每周对账：设备级的 `dreaming-home` 定时任务建没建、还是已有（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 调度：怎么起、建没建（按 `references/dispatch.md`）。
 - 留给人的事：安装或登录 `gh`、Codex；装浏览器和 Refero（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

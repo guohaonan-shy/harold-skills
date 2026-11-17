@@ -5,7 +5,7 @@ description: 把一份已切好工单的 spec 实现完。spec 的工单已切�
 
 **把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
 
-开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（Review 汇报、PR 描述的七节）、`idea-loop:issues`（issue 的状态、开 issue）和 `idea-loop:decision-rules`（执行方交回的「按现有做法定的」、本次修的存量、Review 汇报的决定题都按它）。
+开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（Review 汇报、PR 描述的七节）和 `idea-loop:issues`（issue 的状态、开 issue）。执行方交回的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照 `idea-loop:decision-rules`。
 
 ## 前提
 

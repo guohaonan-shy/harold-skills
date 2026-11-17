@@ -1,15 +1,15 @@
 # docs
-> 这个仓库自己的知识库，按 `idea-loop` 的 wiki 契约维护（契约全文见 `idea-loop/references/wiki-conventions.md`）。
+> 这个仓库自己的知识库，按 `idea-loop` 的 wiki 契约维护（契约全文见 `idea-loop/skills/productivity/wiki-conventions/SKILL.md`）。
 >
-> **文件在不在，就是状态**：spec 目录存在 = 还没了结（走到哪一步看 status）；spec 目录消失 + ADR 存在 = 已了结；ticket 存在 = 有人正在做这一刀。
+> **文件在不在，就是状态**：spec 目录存在 = 还没了结（走到哪一步看它 frontmatter `issues:` 里的 issue）；spec 目录消失 + ADR 存在 = 已了结；ticket 存在 = 有人正在做这一刀。
 
 | 层 | 收什么 | 当前 |
 |---|---|---|
-| [raw](raw/index.md) | 素材与事实，忠实不编辑 | 4 份（design-workflow 桶） |
+| [raw](raw/index.md) | 素材与事实，忠实不编辑 | 65 份，6 个桶 |
 | [spec](spec/index.md) | 还没了结的规格，一份一个目录，做完即删 | 空 |
-| [adr](adr/index.md) | spec 的归档总结，永久 | 2 条，均生效 |
+| [adr](adr/index.md) | spec 的归档总结，永久 | 57 份 |
 | [records](records/index.md) | 运营台账，会话起头、之后由人持续更新 | 1 个：`retro-candidates/`（retro 的候选池） |
 
-尚未建立的层（契约里有，本仓库还没用上）：`domain/`（领域知识）、`reference/`（常驻约定与手册）、`testing/`。
+尚未用上的层：`domain/`（领域知识，目录已建、还没有文档）。
 
 > 索引表体从各文件的 frontmatter 生成，不手工维护。引用某一层请写路径，**不要写指向 index 的 wikilink** —— 各层的 `index.md` 是 slug 唯一性的豁免项，靠这条纪律维持。

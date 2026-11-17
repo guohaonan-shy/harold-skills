@@ -6,7 +6,7 @@ argument-hint: "[全部 | P0 <issue 号>]"
 
 backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triager` 一个个查完，按各自交回的建议去向直接翻状态。状态怎么翻、前提是什么，读 `idea-loop:issues`。
 
-推送等运行环境的能力，用 Skill 工具调 `idea-loop:runtime`，读当前运行环境的『<能力>』。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
+推送等运行环境的能力，照『<能力>』（`idea-loop:runtime`）。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
 **Linear 项目**（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，取 backlog、贴评论、打 label、翻状态用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）做，不跑 `issues backlog` / `note` / `set` / `priority` / `type`；翻状态前仍先 `issues check <docs> <状态> <号> --from=<现在>`。
 

@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）和 `idea-loop:evidence`（截图、流程图、动图怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
+用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）和 `idea-loop:runtime`（运行环境的能力怎么做）；读目标仓库 `DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
 下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs"`，`check` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs"`。
 

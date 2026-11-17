@@ -1,0 +1,10 @@
+{
+  "source": "Toeflair#719 的 issue 会话：spec writing-load-states（2026-11-01 起草，设计冻结提交 f2c19254）写成后，主分支合进了外层路由（a431dbc5，练习地址按「题型 + 短名」寻址、先按短名查题再进页面），切票（1d97cbd5）只核了 spec 点名的三个页面，四张工单挂在页面自己的取题上，实现期才补了一张工单；人的追问见 quote。对应 harold-skills#229。用例的提交在 Toeflair 仓库（GitHub guohaonan-shy/Tofelair），只能用 --case to-ticket-walk-request-chain --repo <Toeflair 本地 checkout> --worktree <本 worktree> 当场跑",
+  "commit": "f2c19254",
+  "prompt": "/idea-loop:to-ticket writing-load-states 这是 spec docs/spec/writing-load-states/writing-load-states.md（状态「正式」，设计已冻结），把它切成工单。\n\n我不在场，不会回复你：不要 git commit、git push、gh 的任何写操作，不要调 implement。工单文件照 skill 的规则该写就写进工作区。最后一段回复写明你停在哪一步：是工单文件已经写进 docs/spec/writing-load-states/tickets/，还是停下来在问我什么（问的是什么）。",
+  "stop_at": "工单文件写进 docs/spec/writing-load-states/tickets/ 的那一刻，或停下来问人的那一刻",
+  "question": "切票前有没有指出外层路由先按短名查题、spec 没覆盖这一段？",
+  "quote": "为什么不是短名直接获取题目信息（毕竟短名是存在后端的）",
+  "size": "small",
+  "size_basis": "只驱动 to-ticket 一个 skill 到工单落盘或停下问人的那一刻，不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送和 gh 写操作，没有付费外部服务"
+}

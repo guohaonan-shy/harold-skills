@@ -3,19 +3,12 @@
 
 | 文件 | summary |
 |---|---|
-| [[design-archive-loaded-sections]] | 不分段的长状态，首屏以下会连出边的组件按屏补拍进截图 |
-| [[docs-ride-code-pr]] | spec、设计、工单跟代码一个 PR 合进主分支；setup 问要不要知识库、放在哪 |
-| [[dreaming-triage-autonomous]] | dreaming 只问人 DESIGN.md 和文档冲突，其余自己执行并合并；每周分拣按建议直接翻状态 |
-| [[implement-resume-landed]] | 会话断了以后，执行方已做完的工单先当交回 landed 落地，不再回收重派 |
-| [[plugin-version-by-change]] | 改了插件的 PR 按改动性质升 major / minor / patch，没升版本的测试会红 |
-| [[pr-merge-says-release]] | 说插件 PR 可以合并、或交它的审核报告时，一并说它合并后随哪个版本发 |
-| [[replay-run-large-now]] | 取消夜间回放队列，大用例在修改侧当场跑；回放输入不露题、Codex 当评委、核实改后用上了改动的 skill |
-| [[retro-destination-recommend]] | retro 摆候选时给去处推荐：默认进候选池，同类第 3 次起推荐开 issue，仍由人选 |
-| [[retro-pool-cross-repo-record]] | 候选池「出现」行引别的仓库的决定记录时写仓库加路径，不用 [[ ]]；修掉池里 5 条断链 |
-| [[scope-recommend-by-delivery]] | 范围题按「影不影响这份 spec 的实现、上线」推荐并进当前 PR 还是不进 |
-| [[seo-draft-reads-principles]] | 起草 seo issue 的 spec 前先读对应方向 SEO skill 的原则文件，选项引一手结论；seo-geo 补 llms.txt 的 Lighthouse 判据 |
-| [[skill-edit-acceptance]] | 改 skill 的工单自带三格验收，落地时脚本核对交回调过 writing-for-agents |
+| [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
+| [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
+| [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
+| [[replay-gh-isolation]] | 规则回放起的每个 claude / Codex 子进程都不带 gh 登录，读不到用例之后的线上 issue 与 PR |
+| [[seo-autopilot]] | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱 |
+| [[seo-outreach-reads-seo-md]] | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
+| [[seo-skill-descriptions-route-only]] | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
 | [[skills-read-home]] | skill 与脚本从 home 的项目目录读写知识库，改动直接提交 home，dreaming-home 对账各项目 |
-| [[test-layering-ci-full]] | 执行方只跑改动涉及的测试，全量测试交给 PR 转 ready 后的 CI，review 读 CI 结果不在本机重跑 |
-
-> 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
+| [[subagent-handback-lost-turn]] | 交回后卡住是那一轮模型请求断了或挂住，被平台合成回复关掉；网络问题，idea-loop 不加机制 |
