@@ -59,7 +59,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --d
 
 - **整页按建议执行**：`初扫页面` 是自动的行，不等人批；这一次不扫的页面只在 `未扫` 里留名，不进 `delta/`。
 - 这一次**扫不完的页面留到下一次**：在 `初扫页面` 一节末尾写一行说明 `未扫：<页面 / 状态 / 入口>（原因）`。说明行不算「行」，不让表变成非空。**质量优先于扫完**：宁可少扫几页，也别建一份边写不准、截图拍在加载中的草稿。
-- 空档案时，表里另写一行说明，列出这次定的主视口 / 主题 / 语言 / 动效模式（「一页一页扫」第 7 步），有不止一个前端时再列工作区前缀 `workspaces`（第 5 步），都写进 PR 正文；人觉得不对，之后改 `prod/index.md` 的这几个键。
+- 空档案时，表里另写一行说明，列出这次定的主视口 / 主题 / 语言 / 动效模式（「一页一页扫」第 7 步），有不止一个前端时再列工作区前缀 `workspaces`（第 5 步），都写进提交消息正文；人觉得不对，之后改 `prod/index.md` 的这几个键。
 
 ## 执行段
 
@@ -69,7 +69,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --d
 2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档脚本会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进 PR 正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `design-archive-check … --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
 3. 归档（`design-archive-write.mjs`，先 `--dry-run`），`tmp/` 清空。
 4. **首次归档之后**，`prod/index.md` 的 frontmatter 还没有主视口 / 主题 / 语言 / 动效模式：把提议表里写的那几个值（`viewport` / `theme` / `locale` / `motion`，有不止一个前端时再加 `workspaces`）补进去。**这是 dreaming 唯一一处直接改 `prod/` 里文件的地方，只改这几个键**——它们是项目定一次的设置，不是档案对象，归档脚本只保留、不生成（脚本就缺视口 / 主题 / 语言给出提示，`motion` 不写时按 `default`，`workspaces` 不写就不要求前缀）。
-5. 提交：一个只改知识库的提交（`docs/design/prod/` 里的页面、状态、组件、素材，和 `prod/index.md`）；归档脚本的其余提示（LFS、`.gitignore`）照 [archive-reconcile.md](archive-reconcile.md)「执行段」第 3 步写进 PR 正文。
+5. 提交：`commit` 到 home 的一个提交（`docs/design/prod/` 里的页面、状态、组件、素材，和 `prod/index.md`）；归档脚本的其余提示（LFS、`.gitignore`）照 [archive-reconcile.md](archive-reconcile.md)「执行段」第 3 步写进提交消息正文。
 
 ## 边界
 

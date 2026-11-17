@@ -1,6 +1,6 @@
 ---
 name: to-spec
-description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec，跟这个需求的代码一起合进主分支。讨论收尾要落成 spec 时用。
+description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec。讨论收尾要落成 spec 时用。
 ---
 
 把当前上下文和你对代码库的理解综合成一份 spec。不访谈，只把已知的写下来。综合时发现思考本身有洞，停下，用 Skill 工具调 `idea-loop:grill` 把洞问清，spec 只写问清了的。
@@ -24,7 +24,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时脚本核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `spec index <docs>` 刷 `docs/spec/index.md`。
 
-6. **合并并收工**：spec 提交在需求的工作分支上，跟代码同一个 PR 合进主分支，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交和合并由它来做的（比如 `idea-loop:issue-session`），这一步留给它。
+6. **提交并收工**：spec 提交到 home，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-session`），这一步留给它。
 
 工单归 `idea-loop:to-ticket`，ADR 归 `/idea-loop:dreaming`，这里只写 spec。
 

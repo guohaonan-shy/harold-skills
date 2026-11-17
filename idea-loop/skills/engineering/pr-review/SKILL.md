@@ -5,7 +5,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 **一次调用跑一轮。** 一轮看这个 issue 的全部 PR（`prs.md` 列着，知识库所在仓库的是主 PR）。调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、人说合并时合并。审查归 `idea-loop:pr-reviewer`（只读），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
 
-开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）。哪些条目不等人，照 `idea-loop:decision-rules`。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
+开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）。哪些条目不等人，照 `idea-loop:decision-rules`。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独 `commit` 到 home（`docs(spec): …` / `docs(tickets): …`）。
 
 `review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指集成 worktree 的 `docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西。
 
@@ -21,7 +21,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 - 每个 PR 都是 **ready**（open、不是 draft）。有 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - 回放排队的事 implement 进 review 前已核过。之后 `review-loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
 - **每个 PR 的 head 上 CI 全绿（或没有检查）**：`gh pr checks <PR 号> --watch` 等；红了用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」，照它处理。
-- 每个 PR 的 worktree 工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送、等于该 PR 的 head。
+- 每个 PR 的 worktree 工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送且等于该 PR 的 head。
 - `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex-companion.mjs"` 打印 Codex companion 的路径。退出码 1 就在开跑前把它说的缺什么告诉人。
 
 ## 跑一轮
@@ -48,13 +48,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 | **开 issue**（「进 backlog」） | 用 Skill 工具调 `idea-loop:issues`，看它的「开一个 issue」 | issue 链接 | issue 上留说明并关掉（`--reason "not planned"`），人要别的就照做 |
 | **不修**（人批示） | 记下，下一轮不再报，除非有新证据 | | |
 
-人批示里还有几种：
-
-- **疑问**：直接回答。
-- **接受实现、走设计变更**（UI 走查条目），或人自己改了主意：见「设计变更」。
-- **批示带出上线前后的事**：要人在上线前做的，追加进 PR 描述 `rollback` 的「上线前要注意的」并写明为什么要人做；合并后 Claude 自己做的，追加进 `reference` 的清理清单（`pr-body.mjs set`，见 `idea-loop:pr` 的「PR 描述」）。
-- **推翻**（对「已按规则处理」里某条）：原话记进同一条目的「你的批示」，按上表最后一列撤回。
-- **要求改写汇报**：照 `idea-loop:pr` 的「Review 汇报」改写条目里的汇报部分，重贴，改了什么写进汇总。
+人批示除了上表这些动作，还有疑问、设计变更、带出上线前后的事、推翻、要求改写汇报几种：[references/other-directives.md](references/other-directives.md)。
 
 全部处理完，在会话里回**一条**汇总，逐点说做了什么、带提交链接；同样的内容记进这一轮条目的「做了什么」，PR 描述 `your-todo` 里已决定的几项勾上。修复没落地之前不记「做了什么」；这一轮本来就没有修复，直接记「没有要修的」。
 
@@ -63,19 +57,19 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 修复都走这一条，一处定义：
 
 1. **找归属工单**。Spec 条目：它引用的那张。Standards 条目：对代码片段所在的行 `git blame` 找到引入它的 commit，`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of <commit>` 读出工单。UI 走查条目：改了那个状态或组件的工单（读各工单的「要建什么」，或对实现那处 blame 看 `Ticket:`）。都找不到（比如不带 trailer 的修复），问人归哪张。
-2. 在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，写行为，不抄审查者给的文件、行号。`docs(tickets): <NN> — review 第 <N> 轮 <编号>` 提交。
+2. 在那张工单的验收标准末尾追加 `- [ ] review 第 <N> 轮 <编号>（<日期>）：<应有的行为，或要遵守的规则原文>`，写行为，不抄审查者给的文件、行号。`commit` 到 home，消息 `docs(tickets): <NN> — review 第 <N> 轮 <编号>`。
 3. 派 `idea-loop:implementer` 做这张工单：派工、核对、落地、回收用 Skill 工具调 `idea-loop:implement`，看它的「派工」「核对与落地」「回收」。它只做没勾的格，commit 带同一个 `Ticket:` trailer。同一张工单的几条一次写完再派，多张工单并行派；全部落地后推送。
 
 ## 设计变更
 
-人接受了跟冻结画布不同的设计（接受实现，或自己改了主意）：用 Skill 工具调 `idea-loop:design-change-sync` 照它做，不手改 `delta/` 和画布。与 implement 的差别：提交推送到 **PR 分支**；给 designer 的截图用 UI 走查发现里的图，或人给的；评委判 `瓶颈` / `方向` 就停下，把评委意见和新旧两版截图摆给人；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，回工单。画布提交后，提交链接记进「做了什么」。新画布与代码是否一致，在下一轮 UI 走查里核，第 2 轮之后人要核就说「再跑一轮」。
+人接受了跟冻结画布不同的设计（接受实现，或自己改了主意）：用 Skill 工具调 `idea-loop:design-change-sync` 照它做，不手改 `delta/` 和画布。与 implement 的差别：画布 `commit` 到 home，代码推送到 **PR 分支**；给 designer 的截图用 UI 走查发现里的图，或人给的；评委判 `瓶颈` / `方向` 就停下，把评委意见和新旧两版截图摆给人；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，回工单。提交链接记进「做了什么」；新画布与代码是否一致，下一轮 UI 走查里核（第 2 轮之后人说「再跑一轮」）。
 
 ## 一轮之后往哪走
 
-**前提：这一轮的条目都处理完。** 要修的都已落地并推送；`review-loop check .tmp/review-loop/<PR 号>.md` 没有未处理的条目（含 `replay`）；并且逐题核过：对着汇报数「要你决定」，每道都在「你的批示」里找得到人的批示（接受 / 修 / 不修 / 开 issue / 疑问已答清）。`check` 只判整轮，代替不了逐题核对，核不全就回头问人缺的那几道。前提不成立就等批示、等落地，齐了再判一次。
+**前提：这一轮的条目都处理完。** 要修的都已落地并推送；`review-loop check .tmp/review-loop/<PR 号>.md` 没有未处理的条目（含 `replay`）；并且逐题核过：对着汇报数「要你决定」，每道都在「你的批示」里找得到人的批示（接受 / 修 / 不修 / 开 issue / 疑问已答清）。`check` 只判整轮，代替不了逐题核对；核不全就回头问人缺的那几道。不成立就等批示、等落地，齐了再判。
 
 前提成立，三选一：
 
-1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`review-loop next` 给的下一轮编号不超过 2（人触发的轮次也计入），先等 CI（同前提），绿了就自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。已跑满两轮、第 2 轮的修复刚落地且还没人看过，就停下，等人说「再跑一轮」或合并。
-2. **没有修复，且没有要人定的事 → 不等人，交审核报告**。要人定的事：「要你决定」（含被降级的边缘情形）、未过的设计停点（冻结、`ui-measure` 瓶颈、归档设计档案的草稿过目，后者在人说合并后走，见 `references/merge.md` 的「合并前归档」）。`idea-loop:decision-rules`「护栏」里的不自己做：生产写操作（例：推迁移）、未勾的人验素材写进报告给人，合并只由人说。照 [`references/deliver.md`](references/deliver.md) 做，然后停下，人读报告、追问、说合并。`type:seo/*` 的 issue 例外：条件满足就不停下，自动合并（[`references/seo-auto-merge.md`](references/seo-auto-merge.md)）。
+1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`review-loop next` 给的下一轮编号不超过 2（人触发的轮次也计入），先等 CI（同前提），绿了就自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。已跑满两轮、第 2 轮的修复刚落地且没人看过，就停下，等人说「再跑一轮」或合并。
+2. **没有修复，且没有要人定的事 → 不等人，交审核报告**。要人定的事：「要你决定」（含被降级的边缘情形）、未过的设计停点（冻结、`ui-measure` 瓶颈、归档设计档案的草稿过目，后者在人说合并后走，见 `references/merge.md` 的「合并前归档」）。`idea-loop:decision-rules`「护栏」里的不自己做：生产写操作（例：推迁移）、未勾的人验素材写进报告，合并只由人说。照 [`references/deliver.md`](references/deliver.md) 做，然后停下，人读报告、追问、说合并。`type:seo/*` 的 issue 例外：条件满足就不停下，自动合并（[`references/seo-auto-merge.md`](references/seo-auto-merge.md)）。
 3. 其余：停下等人。

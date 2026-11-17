@@ -2,11 +2,12 @@
 
 ## 提交
 
-1. 当前 worktree 应该是这个需求的工作分支（issue 会话里就是这一组的分支）；不在的，从最新主分支开一个，把下面这些文件带过去再提交。
-2. `git add docs/spec/<spec-slug>`，再 `git add -f docs/design/tmp/<spec-slug>/canvas`（`tmp/` 被排除在 git 之外，要强制加）：签字的画布、冻结记录、交互图。`git status --short` 里暂存的只能是这几处，`imagine/`、`research/` 不进，也没有 `delta/`。
-3. 提交（`design(<spec-slug>): 冻结`，末尾加一行 `Co-Authored-By:`，照这个会话的署名要求写）。父 issue 要拆子 issue 的，拆完后照「知识库落地」开只改 `docs/` 的 PR 先合。
+1. 照 `idea-loop:wiki-conventions` 的「知识库落地」，一次 `commit` 到 home：`<项目目录>/docs/spec/<spec-slug>`、`<项目目录>/docs/design/tmp/<spec-slug>/canvas`（签字的画布、冻结记录、交互图）。`imagine/`、`research/` 不列，也没有 `delta/`。
+2. 消息 `design(<spec-slug>): 冻结`。输出里有「home 没推上去」，在告诉人的话里带上这一句，流程照走。
 
-告诉人：设计已冻结，提交在工作分支上。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
+父 issue 要拆子 issue 的，不用等：子 issue 的会话直接读 home 里的父 spec。
+
+告诉人：设计已冻结，已提交到 home。在 issue 会话里的，会话接着换到实现阶段（`idea-loop:issue-session` 的「换阶段」）；不在的，人用 `/idea-loop:issue-session <号>` 接上，或自己调 `idea-loop:to-ticket` 切工单开工。
 
 ## 三种情形
 

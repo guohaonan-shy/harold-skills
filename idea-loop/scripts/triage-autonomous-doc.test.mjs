@@ -59,7 +59,7 @@ test('issue-triage runs 全部 batch after batch, and completes when every row f
 test('the out-of-scope record is written in draft-spec where the human decides not to do it', () => {
   const line = draftSpec.split('\n').find((l) => l.startsWith('- 人决定不做'));
   assert.ok(line, 'draft-spec has no 「人决定不做」 bullet');
-  for (const k of ['docs/records/out-of-scope/<slug>.md', 'type: record', '追加', '只改 `docs/` 的 PR']) {
+  for (const k of ['docs/records/out-of-scope/<slug>.md', 'type: record', '追加', '`commit` 到 home']) {
     assert.ok(line.includes(k), `「人决定不做」 does not say「${k}」`);
   }
   assert.ok(triage.includes('docs/records/out-of-scope/<slug>.md'), 'issue-triage keeps the pointer to the record path');

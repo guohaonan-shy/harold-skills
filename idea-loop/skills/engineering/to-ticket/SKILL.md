@@ -7,7 +7,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 先用 Skill 工具调 `idea-loop:wiki-conventions`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指目标项目的 `docs/`。
 
-工单是**临时凭据**：开工时才建，提交在需求的工作分支上，合并前由合并的人删掉，删除跟着同一个 PR 进主分支（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
+工单是**临时凭据**：开工时才建，切完提交到 home，代码 PR 合并后由 pr-review 的合并步骤删掉（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
 
 工单也是写给失忆者的信：拿起它的执行方从没见过那份 spec，只读这一张，做不下去只会停下交回。你写时觉得「显而易见所以不用写」的东西，对它并不显而易见。所以每张工单：
 
@@ -110,7 +110,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 工单全部落盘之后，把上面「切法直接落盘，不停下」要求的切法清单交回。切票不翻任何状态：issue 的状态由 `idea-loop:implement` 开 PR 时翻 in-progress。
 
-落盘之后，把工单和 spec 的改动提交进当前分支：`idea-loop:implement` 派出的执行方，worktree 都是从这条分支切出来的，不提交就读不到工单。
+落盘之后，照 `idea-loop:wiki-conventions` 的「知识库落地」把工单和 spec 的改动 `commit` 到 home：`idea-loop:implement` 派出的执行方从代码分支切 worktree，读不到 home，所以派工时会把工单的绝对路径给它。
 
 ## 改 skill 类文件的工单
 

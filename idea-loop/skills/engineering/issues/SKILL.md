@@ -77,7 +77,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 - **被别的 issue 挡**：用平台的 blocked by。调度跳过还被挡着的 todo，挡路的关了它自然能派。
 - **等人给条件**：在 issue 上评论「等你：X」，回 backlog。
-- **先放着**：`issues set <docs> backlog <号> --comment=<停在哪个阶段、分支叫什么>`，评论必须带。人重新放进 todo 后，新会话读这条评论接上分支。
+- **先放着**：`issues set <docs> backlog <号> --comment=<停在哪个阶段、有分支就写分支名>`，评论必须带。人重新放进 todo 后，新会话读这条评论接上。
 
 ## 开一个 issue
 

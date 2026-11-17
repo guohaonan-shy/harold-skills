@@ -5,7 +5,7 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后判处置。**行按风险分两类**：会判错的（`DESIGN.md`、文档里的冲突）问人，其余按各自的建议处置自己执行、自己合并，不进汇报。
 
-**dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、拆出问人的小表、执行自动那份并合并、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
+**dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
 
 先用 Skill 工具调 `idea-loop:wiki-conventions`（目录、ADR、人机分工、link sweep 都按它）和 `idea-loop:issues`（issue 的状态只走 `issues.mjs`，spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
@@ -38,18 +38,18 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
    | `idea-loop:design-steward`（opus · high） | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它 | `rows-design.md`（`候选`、`DESIGN.md 条目` 与牵出的 `缺陷` 行） |
 
    项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。
-4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才往下走。完整表是执行段的输入和 PR 描述的来源，不摆给人。完成条件：校验通过。
+4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才往下走。完整表是执行段的输入和提交消息正文的来源，不摆给人。完成条件：校验通过。
 5. **拆表**：`proposal-table-check <表> --split-ask=<小表路径>` 抽出问人的行。问人的是哪几类行，只由脚本判，这里不另写一份；脚本报「无问人的行」就没有问人那份。
 
-**自动那份**（拆表后立刻做）：照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」，按完整表里每一行自己的建议处置执行（问人的行除外），开一个只改 `docs/`、`DESIGN.md`、`GLOSSARY.md` 的 PR（这一份不会碰后两个，它们的行都问人）。执行段不拆给 agent。再照该 reference 的「自己合并」检查并合并；没过就不合并，PR 留着。
+**自动那份**（拆表后立刻做）：照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」，按完整表里每一行自己的建议处置执行（问人的行除外），改动照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home，不开 PR（这一份不会碰 `DESIGN.md`、`GLOSSARY.md`，它们的行都问人）。执行段不拆给 agent。提交前照该 reference 的「提交前检查」过一遍；没过就不提交，改动留在工作区。
 
-**问人那份**（有行才有）：小表在会话里按节摆给人，`候选` 与 `DESIGN.md 条目` 有行时另做一页审核页，照 [references/review-page.md](references/review-page.md)；用『推送』通知人。人不回，不挡任何东西。人回了，只执行批了的那几行，另开一个只改知识库的 PR，同样规则合并。
+**问人那份**（有行才有）：小表在会话里按节摆给人，`候选` 与 `DESIGN.md 条目` 有行时另做一页审核页，照 [references/review-page.md](references/review-page.md)；用『推送』通知人。人不回，不挡任何东西。人回了，只执行批了的那几行，同样检查后 `commit` 到 home。
 
-**推送只有三种情况**：有问人的行、自动那份的 PR 没合成、哪一部分没跑成。都没有就不推送，「这次无事」也不发。
+**推送只有三种情况**：有问人的行、自动那份没提交成、哪一部分没跑成。都没有就不推送，「这次无事」也不发。
 
-**回滚**：人说「回滚某次 dreaming」，开那次 PR 的 revert PR，按同样规则合并。
+**回滚**：人说「回滚某次 dreaming」，在 home 里 `git revert` 那次提交。
 
-**中间物何时删**：问人的行处理完（批了的执行了，或每行都回了「不批」；没有问人的行就不用等），且自动那份已经合并（空表没有要合并的），才删 `.tmp/dreaming/<日期>/`。没删的，下一次靠它判断上一张还没处理。
+**中间物何时删**：问人的行处理完（批了的执行了，或每行都回了「不批」；没有问人的行就不用等），且自动那份已经提交（空表没有要提交的），才删 `.tmp/dreaming/<日期>/`。没删的，下一次靠它判断上一张还没处理。
 
 **写 `DESIGN.md` 停在人身上**：提议段只把旧文和新文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）起草成目标仓库的 GitHub issue，自动那份直接开成 backlog issue。
 

@@ -87,11 +87,11 @@ test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做
   assert.doesNotMatch(md, /gh pr create|gh pr merge/, '不存在的 issue 在分拣里就关了，不再有它的落地 PR');
 });
 
-test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上分支', () => {
+test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上', () => {
   const md = skill('issue-session');
   assert.match(md, /## 先放着/);
-  assert.match(md, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、分支名>/);
-  assert.match(md, /读这条评论接上分支/);
+  assert.match(md, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>/);
+  assert.match(md, /读这条评论接上/);
 });
 
 test('issue-session：多仓库时在每个要改的仓库里开同名分支的 worktree，路径记进 spec', () => {
@@ -145,7 +145,8 @@ test('setup 的 issue 追踪模板：一个 issue 一个会话', () => {
 
 test('README：流程总览没有版本分支的例外，三个 skill 的行没有一组 / 根 / 子会话结构', () => {
   const md = readFileSync(join(root, 'README.md'), 'utf8');
-  assert.match(md, /one PR takes them all to main/);
+  assert.match(md, /committed straight to home's main/);
+  assert.match(md, /the issue's branch and the code PR carry\s+code only/);
   assert.doesNotMatch(md, /implementation child session/);
   for (const k of ['issue-session', 'issue-triage', 'issue-dispatch']) {
     const row = md.split('\n').find((l) => l.startsWith(`| \`idea-loop:${k}\``) || l.startsWith(`| \`/idea-loop:${k}\``));

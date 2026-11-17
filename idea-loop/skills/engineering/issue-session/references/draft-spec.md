@@ -1,6 +1,6 @@
 # 起草 spec
 
-会话已认领、在 issue 的分支上时，用 Skill 工具调 `idea-loop:to-spec` 起草，再照这份做。一个 issue 一份 spec，frontmatter 的 `issues` 写这个号。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指当前 worktree 的 `docs/`。
+会话已认领时，用 Skill 工具调 `idea-loop:to-spec` 起草，再照这份做。一个 issue 一份 spec，frontmatter 的 `issues` 写这个号。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指当前 worktree 的 `docs/`。
 
 ## 输入
 
@@ -32,7 +32,7 @@
 5. **每条都有期望行为**：只修问题的 spec，「User Stories」里每个问题一行「期望行为」，编号跟「问题陈述」的小节对得上。
 6. **选项都是真分歧**：每条「待定」写明了依据为什么冲突或没有；选项的写法照 `idea-loop:decision-rules` 的「要人定的写成一道题」。
 7. **现状和范围查清了**：同一行为的其他入口，每个都在「方案」里标了纳入还是排除；「关联」列了相邻还没完成的 spec 与 issue，没有写「无」。spec 是修一个坏掉的能力的，还查过它有没有调用方（界面入口、前端请求、别的服务、脚本或定时任务），查到的写进「方案」；一个都查不到，「实现决策」里有一条「待定：修好还是删掉」，两个选项各配例子和代价，不默认按修起草。
-8. **改动只在该在的地方**：`git status --short` 里只有这份 spec 的目录和 `docs/spec/index.md`。
+8. **改动只在该在的地方**：要提交的只有这份 spec 的目录和 `docs/spec/index.md`（`raw` 里这次写的文件另算）。
 
 ## 跟人定要 grill 的
 
@@ -41,16 +41,16 @@ issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、�
 - 「待定」：逐条照推荐改写成决定，依据写「AI 照推荐定：<推荐的理由>」，删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
 - 「需要 grill」：照 spec 已有的结论和 `SEO.md`「内容原则」自己答完，删掉这一行。
 
-有「前端交互」小节的（要 UI 设计）不走这条：todo 会话照「起草中冒出了要人定的」那句 `issues set <docs> triage <号> --comment=<要人定什么、分支名>` 翻回 triage，triage 会话照下面的流程跟人定。
+有「前端交互」小节的（要 UI 设计）不走这条：todo 会话照「起草中冒出了要人定的」那句 `issues set <docs> triage <号> --comment=<要人定什么、spec 在 home 的提交号>` 翻回 triage，triage 会话照下面的流程跟人定。
 
 其余的 issue，spec 里还有「需要 grill」或「待定」：用『推送』能力发一句话说要人定什么，然后停下等人。人开口后逐条处理：
 
 - 「需要 grill」：用 Skill 工具调 `idea-loop:grill`，按结果改 spec，删掉这一行。
 - 「待定」：人定了，把小节改写成定下的决定，写上依据（人的原话），删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
-- 人决定不做：`issues set <docs> canceled <号> --comment=<人的原话>`，再记进「不做」清单 `docs/records/out-of-scope/<slug>.md`（目录没有就建）：`type: record`，一个概念一份文件，写是什么、为什么不做（人的原话）、相关 issue 号；同一个概念已有记录，往里追加号码。记录在另一个从 `<主分支>` 切出的分支上写，不混进这个 issue 的分支，走只改 `docs/` 的 PR，检查全过就合并（`idea-loop:wiki-conventions` 的「知识库落地」）。然后删掉这份 spec 的目录，不提交，回会话的「收尾」。
+- 人决定不做：`issues set <docs> canceled <号> --comment=<人的原话>`，再记进「不做」清单 `docs/records/out-of-scope/<slug>.md`（目录没有就建）：`type: record`，一个概念一份文件，写是什么、为什么不做（人的原话）、相关 issue 号；同一个概念已有记录，往里追加号码。记录写好就 `commit` 到 home，不经分支和 PR（`idea-loop:wiki-conventions` 的「知识库落地」）。然后删掉这份 spec 的目录，不提交，回会话的「收尾」。
 - 人说先放着：回会话的「先放着」。
 - 都定完了：提交。
 
 ## 提交
 
-照 `idea-loop:wiki-conventions` 的「知识库落地」：只 `git add` 这份 spec 的目录和 `docs/spec/index.md`（`spec index <docs>` 刷新它），提交（`docs(spec): 起草 <slug>`），留在这个分支上；设计和实现接着在这里做，最后跟代码一个 PR 合进主分支。
+照 `idea-loop:wiki-conventions` 的「知识库落地」：`commit` 这份 spec 的目录和 `docs/spec/index.md`（`spec index <docs>` 刷新它），消息 `docs(spec): 起草 <slug>`。不切分支、不进代码 PR：设计和实现接着做，代码 PR 里只有代码。

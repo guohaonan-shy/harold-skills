@@ -40,7 +40,7 @@ description: 碰到「这条该怎么处置」时先对它：自己定还是交�
 - 动生产数据
 - 真实支付
 - 对外发布
-- 合并改了代码的 PR。spec、设计不单独开 PR，跟代码同一个 PR；没有代码可跟的只改 `docs/` 的 PR（`idea-loop:wiki-conventions` 的「知识库落地」）检查全过就合并
+- 合并改了代码的 PR。知识库的改动不开 PR，直接提交到 home（`idea-loop:wiki-conventions` 的「知识库落地」）
 
 **SEO 例外**：`type:seo/*` 的 issue 的 PR，下面三条都满足，由 Claude 合并；缺一条回到「只由人定」：
 

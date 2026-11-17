@@ -2,7 +2,7 @@
 
 没有在跑的、可派的也空了才停（只剩等决定的及其下游，或全部落地）。
 
-1. 把每个仓库的分支推上去（PR 在 spec 提交后就开了，主 PR 的号取 `prs.md`）。
+1. 把每个仓库的分支推上去（PR 在接分支后就开了，主 PR 的号取 `prs.md`）。
    - **有 `大用例待跑`**（落地的交回里 `verified` 写了）：在会话里先告诉人几个用例、每个最长约 3×45 分钟、每个约 1.05–3.50 美元（起 agent 的更高）乘以个数，不等人点头，用 Bash 的 `run_in_background: true` 起 `node ~/.idea-loop/bin/retro-replay.mjs --cases <用例,用例> --run-large --pr <PR 号> --worktree <集成 worktree 绝对路径>`（不设 timeout），等它退出，不轮询；照 [references/replay-result.md](replay-result.md) 处理结果。
 2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs" next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
 3. 更新 `reference` 的执行记录，推送。

@@ -97,14 +97,14 @@ test('pr: 「开 draft PR」 reads the repositories from the spec (not the ticke
   assert.match(open, /prs\.md/);
 });
 
-test('issue-session 「实现」 runs spec commit → draft PR → cut tickets → implement, in that order', () => {
+test('issue-session 「实现」 runs cut the branch → draft PR → cut tickets → implement, in that order', () => {
   const md = read('skills/engineering/issue-session/SKILL.md');
   const impl = section(md, '## 实现');
   const pr = impl.indexOf('开 draft PR');
   const tickets = impl.indexOf('idea-loop:to-ticket');
   const implement = impl.indexOf('idea-loop:implement');
   assert.ok(pr >= 0 && pr < tickets && tickets < implement, 'draft PR, then to-ticket, then implement');
-  assert.match(impl, /^1\. \*\*开 draft PR\*\*/m);
+  assert.match(impl, /^1\. \*\*接分支，开 draft PR\*\*/m);
   assert.match(impl, /^2\. \*\*切工单\*\*/m);
   assert.match(impl, /^3\. \*\*做\*\*/m);
   assert.match(impl, /idea-loop:pr`，照它的「开 draft PR」/);
@@ -153,8 +153,9 @@ test('pr-review: a round looks at every PR of the issue; deliver does not flip a
   assert.match(skill, /全部 PR/);
   const deliver = read('skills/engineering/pr-review/references/deliver.md');
   assert.doesNotMatch(deliver, /spec-status|翻完成|docs\(spec\): <spec-slug> 完成/);
-  assert.match(deliver, /删掉这个 PR 落地的工单文件/);
+  assert.doesNotMatch(deliver, /删掉这个 PR 落地的工单文件/, 'the tickets are deleted after the code PR merged, not before the report');
   const merge = read('skills/engineering/pr-review/references/merge.md');
+  assert.match(merge, /删掉这份 spec 的 `<项目目录>\/docs\/spec\/<spec-slug>\/tickets\/`/);
   assert.match(merge, /逐个合并/);
   assert.match(merge, /最后一个[^。\n]*合并[^。\n]*set <docs> done/);
   assert.match(merge, /合并统一在[^。\n]*issue 会话/);

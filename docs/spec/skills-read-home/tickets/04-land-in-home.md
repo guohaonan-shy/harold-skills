@@ -29,14 +29,14 @@ home 只有 main，改了直接提交，只 add 自己的文件（决定记录 Q
 
 ## 验收标准
 
-- [ ] wiki-conventions 的「知识库落地」写的是上表的新规则，含 `commit` 只提交自己的文件、推送失败不挡
-- [ ] skill、agent、两份 README 里不再出现 `git add -f`、「跟代码同一个 PR / 同一个分支合进主分支」「开一个只改 `docs/` 的 PR」的写法（文档测试守）
-- [ ] issue-session：triage 会话不切分支、spec 提交到 home；todo 会话写代码前才切分支；`set todo` 评论写 home 的提交号
-- [ ] pr-review 合并步骤：代码 PR 合并成功后才跑归档脚本并提交 home、删 `tickets/` 并提交 home
-- [ ] pr skill：PR 描述的「参考」写 spec 标题、home 里路径、一句摘要，不放 spec 链接
-- [ ] dreaming、retro、SEO 扫描的效果报告：直接提交 home，不开 docs PR
-- [ ] 改了的每个 skill 调过 `idea-loop:writing-for-agents` 的写法（字数上限内：`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m` < 5000）
-- [ ] 知识库落地的文档测试按新规则改写并全绿
+- [x] wiki-conventions 的「知识库落地」写的是上表的新规则，含 `commit` 只提交自己的文件、推送失败不挡
+- [x] skill、agent、两份 README 里不再出现 `git add -f`、「跟代码同一个 PR / 同一个分支合进主分支」「开一个只改 `docs/` 的 PR」的写法（文档测试守）
+- [x] issue-session：triage 会话不切分支、spec 提交到 home；todo 会话写代码前才切分支；`set todo` 评论写 home 的提交号
+- [x] pr-review 合并步骤：代码 PR 合并成功后才跑归档脚本并提交 home、删 `tickets/` 并提交 home
+- [x] pr skill：PR 描述的「参考」写 spec 标题、home 里路径、一句摘要，不放 spec 链接
+- [x] dreaming、retro、SEO 扫描的效果报告：直接提交 home，不开 docs PR
+- [x] 改了的每个 skill 调过 `idea-loop:writing-for-agents` 的写法（字数上限内：`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m` < 5000）
+- [x] 知识库落地的文档测试按新规则改写并全绿
 
 ## 选中的存量回归
 

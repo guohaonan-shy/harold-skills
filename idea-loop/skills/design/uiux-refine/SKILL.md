@@ -1,12 +1,12 @@
 ---
 name: uiux-refine
-description: 设计收敛：把定下的方向打磨到人签字冻结，冻结结果提交在需求的工作分支上，跟代码一起合进主分支。
+description: 设计收敛：把定下的方向打磨到人签字冻结。
 disable-model-invocation: true
 ---
 
-你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再把冻结结果提交在需求的工作分支上。画布只由 designer 改，签字只由人宣布。
+你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再把冻结结果 `commit` 到 home。画布只由 designer 改，签字只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果提交在需求的工作分支上；交给 designer 的目录也用这个前缀写成绝对路径。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果 `commit` 到 home；交给 designer 的目录也用这个前缀写成绝对路径。
 
 几个词：**ledger** 是 `canvas/work/ledger.md`，designer 每交付一版落一行的打磨记录；**块的 job** 是方向说明「结构」节给每块写的内容责任，归为状态 / 结果 / 身份 / 氛围之一；**register** 是这块界面属于营销页还是产品内（in-app），记在方向说明里；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。
 
@@ -101,7 +101,7 @@ designer 交付「冻结」后，你核对：
 - `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
-都过了，照 `idea-loop:browser` 的「给人看」把交互图给人看，关掉预览服务器，然后把冻结结果提交在需求的工作分支上，不开设计 PR：实现在同一个分支上接着做，最后跟代码一个 PR 合进主分支（`idea-loop:wiki-conventions` 的「知识库落地」）。
+都过了，照 `idea-loop:browser` 的「给人看」把交互图给人看，关掉预览服务器，然后把冻结结果 `commit` 到 home（`idea-loop:wiki-conventions` 的「知识库落地」）：不开分支、不开 PR，实现在代码分支上做，画布不进代码分支。
 
 提交的步骤和之后告诉人的话见 [`references/after-freeze.md`](references/after-freeze.md)。
 

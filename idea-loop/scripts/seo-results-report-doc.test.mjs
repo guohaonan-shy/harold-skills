@@ -1,8 +1,7 @@
 /**
  * Pins the sentences that make "每 3 天一份 SEO 效果报告" true in the docs: the results-analyst definition (inputs, where
  * the change list comes from, the two charts, the three blocks of the report, the 14-day rule, the findings it raises
- * and that nothing is rolled back for them), seo-scan's results direction and how the report lands (a docs-only PR from
- * a temporary worktree), the daily scheduled task seo-setup installs, SEO.md's optional 分析 section, and the old
+ * and that nothing is rolled back for them), seo-scan's results direction and how the report lands (committed straight to home), the daily scheduled task seo-setup installs, SEO.md's optional 分析 section, and the old
  * "不写周报" sentence being gone.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail there first.
@@ -148,30 +147,28 @@ test('seo-scan lands the report: a section that points at the reference, after �
   const s = section(SCAN_BODY, '效果报告');
   assert.match(s, /references\/results-report\.md/);
   assert.match(s, /docs\/records\/seo-results\/<日期>\.md/);
-  assert.match(s, /只改 `docs\/` 的 PR/);
+  assert.match(s, /`commit` 到 home/);
   assert.match(SCAN_BODY, /- 效果报告：/);
 });
 
-test('the reference lands the report from a temporary worktree under .tmp, merges the docs-only PR once checks pass, removes the worktree, pushes the link', () => {
+test('the reference lands the report straight in home: copy into the project directory, commit only those files, push the path', () => {
   assert.ok(REPORT, 'references/results-report.md does not exist');
-  assert.match(REPORT, /\.tmp\//);
-  assert.match(REPORT, /git worktree add/);
-  assert.match(REPORT, /主分支/);
   assert.match(REPORT, /docs\/records\/seo-results\/<日期>\.md/);
-  assert.match(REPORT, /docs\/records\/seo-results\/assets\//);
-  assert.match(REPORT, /只提交 `docs\/`|只改 `docs\/`/);
-  assert.match(REPORT, /gh pr create/);
-  assert.match(REPORT, /gh pr checks/);
-  assert.match(REPORT, /gh pr merge/);
-  assert.match(REPORT, /git worktree remove/);
+  assert.match(REPORT, /docs\/records\/seo-results\/assets/);
+  assert.match(REPORT, /project-map\.mjs" commit/);
+  assert.match(REPORT, /只列这次放进去的文件/);
+  assert.match(REPORT, /home 没推上去/);
+  assert.doesNotMatch(REPORT, /git worktree|gh pr create|git push|git checkout/);
   assert.match(REPORT, /『推送』/);
   assert.match(REPORT, /idea-loop:wiki-conventions/);
   assert.match(REPORT, /type: record/, 'the report file carries the records frontmatter');
 });
 
-test('seo-scan can run what landing needs: allowed-tools has git add / commit / push and gh pr', () => {
+test('seo-scan can run what landing needs: allowed-tools has project-map.mjs (commit) and no longer git add / commit / push or gh pr', () => {
   const tools = field(SCAN, 'allowed-tools');
-  for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)', 'Bash(git worktree:*)']) assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
+  assert.ok(tools.includes('Bash(node *project-map.mjs:*)'), 'allowed-tools lacks project-map.mjs');
+  for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)']) assert.ok(!tools.includes(t), `allowed-tools still has ${t}`);
+  assert.ok(tools.includes('Bash(git worktree:*)'), 'triage still uses a worktree');
 });
 
 test('the scan names results-analyst, so its private references stay private to seo-scan and the agent it starts', () => {

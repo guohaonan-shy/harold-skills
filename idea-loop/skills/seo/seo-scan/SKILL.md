@@ -2,10 +2,10 @@
 name: seo-scan
 description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue，每 3 天出一份效果报告。每天的定时任务触发，人也可以手动跑。
 argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo results）"
-allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git branch:*), Bash(gh pr:*), Bash(cp:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
+allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(node *project-map.mjs:*), Bash(cp:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
-一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，发现交给提 issue 脚本，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；仓库里只提交外联跟进表和效果报告（关卡可能改 `SEO.md`，改在工作区）。
+一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，发现交给提 issue 脚本，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；home 里只提交外联跟进表和效果报告（关卡可能改 `SEO.md`，改在工作区）。
 
 可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
@@ -111,7 +111,7 @@ OpenSEO 项目：<projectId>
 
 ## 效果报告
 
-跑了 `results` 且 `<运行目录>/results/<今天>.md` 写出来了：照 [references/results-report.md](references/results-report.md) 落成 `docs/records/seo-results/<日期>.md`，只改 `docs/` 的 PR，检查过了合并，推送链接。没跑、没有报告：跳过。失败只记原因。
+跑了 `results` 且 `<运行目录>/results/<今天>.md` 写出来了：照 [references/results-report.md](references/results-report.md) 落成 `docs/records/seo-results/<日期>.md`，直接 `commit` 到 home，推送报告路径。没跑、没有报告：跳过。失败只记原因。
 
 ## 交回
 
@@ -123,7 +123,7 @@ seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:seo-setup>
 - 分流：todo <n>，triage <n>，canceled <n>
 - 花费：<n | 未知> credits
-- 效果报告：<PR 链接 | 没跑 | 没落成（原因）>
+- 效果报告：<报告路径 | 没跑 | 没落成（原因）>
 - 研究日志：已写入 | 没写成（<原因>），摘要在 <log.txt 路径>
 - SEO.md：这次改了（<哪几项>）| 没改
 - 运行目录：<路径>

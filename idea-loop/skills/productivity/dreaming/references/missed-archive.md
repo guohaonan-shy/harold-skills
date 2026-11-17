@@ -30,15 +30,15 @@
 
 ## 执行段
 
-**补归档**，跟执行段其余改动同一个 PR、同一个 worktree：
+**补归档**，跟执行段其余改动同一个 worktree、同一次 `commit`：
 
 1. 开发环境：从 dreaming 的 worktree（它就是基准分支）照 `DEVELOPMENT.md` 准备，自己挑一个空闲端口起服务；浏览器照 `idea-loop:browser` 的「并行时抢锁」，owner 写 `dreaming`。
 2. 起 `idea-loop:ui-reviewer`，模式「归档」，输入照 `idea-loop:pr-review` 合并 reference 的「合并前归档」第 1 步：spec 名、dreaming worktree、端口、图的前缀 `dreaming-<日期>-merge-`。没有 PR：输入里「PR 号」一格填 `dreaming-<日期>-<spec-slug>`，图和草稿就落在 `.tmp/pr-review/dreaming-<日期>-<spec-slug>/` 下；没有 review loop 文件，「决定」取自冻结记录。
-3. 核不过（`failed`）或未完成：这一行不执行，把它交回的条目原样写进 PR 正文，用『推送』说这一部分没跑成，留着等下一次。
-4. 通过：不等人看草稿，直接跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> <spec-slug>`（先 `--dry-run`）。脚本先校验，再并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规写进 PR 正文，这一行不执行，也用『推送』说一句。
+3. 核不过（`failed`）或未完成：这一行不执行，把它交回的条目原样写进提交消息正文，用『推送』说这一部分没跑成，留着等下一次。
+4. 通过：不等人看草稿，直接跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <worktree 根> <spec-slug>`（先 `--dry-run`）。脚本先校验，再并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规写进提交消息正文，这一行不执行，也用『推送』说一句。
 
 `dreaming-<日期>/` 这类没有画布的残留：它的 `delta/` 本来就是归档脚本的输入，不起 ui-reviewer，直接照 [archive-reconcile.md](archive-reconcile.md) 的「执行段」第 2、3 步校验、归档。
 
 **丢弃**：`git rm -r docs/design/tmp/<名>/`（冻结时提交的东西是被跟踪的）。
 
-两种处置后 `docs/design/tmp/<名>/` 都不应还在；它的删除随这次 PR 进基准分支。
+两种处置后 `docs/design/tmp/<名>/` 都不应还在；它的删除随这次 `commit` 进 home。
