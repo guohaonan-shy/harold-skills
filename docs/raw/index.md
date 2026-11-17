@@ -68,6 +68,7 @@
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
 | [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
 | [decisions/297](decisions/297.md) | conversation | 2026-11-17 | 决定记录 —— #297 的 issue 会话：issue 正文「背景」改必填，版本改 patch，retro 候选不批 |
+| [decisions/275](decisions/275.md) | conversation | 2026-11-17 | 决定记录 —— #275 的 issue 会话：先合并不实跑回放，录制重跑的设计先不开 issue，skill 不写工具用法另开 #356 |
 | [[2026-11-13-replay-verify-redesign]] | conversation | 2026-11-13 | 规则回放改造：取消夜间队列、当场跑，参考 poteto 的 eval playbook |
 | [[2026-10-31-writing-for-agents-scope-grill]] | conversation | 2026-10-31 | #180 writing-for-agents 审 spec：按作用域分能带什么，retro 候选要写怎么结合、怎么验证 |
 | [[2026-10-26-retro-candidate-pool-grill]] | conversation | 2026-10-26 | grill —— retro 候选池放在哪个仓库、哪个目录 |
