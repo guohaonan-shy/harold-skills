@@ -9,7 +9,7 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 `~/home` 已存在就只补缺的文件、小节和 `.gitignore` 里缺的那几行，人写的原样保留，补了的文件 `git add` 后提交一次（message `chore: 补 home`），然后进第 2 步。不存在：
 
 1. `git init -b main`，写下面这几样：
-   - `AGENTS.md`：只有 `## 设备地图`（照下面的设备地图模板填）和 `## 项目`（空，第 2 步往里加行）两节。
+   - `AGENTS.md`：只有 `## 设备地图`（照 `idea-loop:wiki-conventions` 的「home 里的两份地图」里的设备地图模板填）和 `## 项目`（空，第 2 步往里加行）两节。
    - `.gitignore`：三行，`.backup/`、`.tmp/` 和 `.worktrees/`（dreaming 的中间物放 `.tmp/`，对账用的代码 worktree 放 `.worktrees/`）。
    - `memory/`、`projects/` 两个目录，各放一个空的 `.gitkeep`（git 不跟踪空目录）。
 2. 提交：`git add AGENTS.md .gitignore memory projects`，message `chore: 建 home`。
@@ -29,7 +29,7 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 做三件事：
 
 1. `## 项目` 里还没有这个名字的行，就加一行，格式一字不差：`<名字>（<是什么>）: <本地路径>. Clone from <远端> if missing.`，例：`example-app（记账小工具）: ~/projects/example-app. Clone from https://github.com/acme/example-app if missing.`。已有这一行的不动。
-2. 建 `projects/<名字>/`（项目目录），没有 `AGENTS.md` 时照下面的项目地图模板起草第一版写进去；已有的不覆盖。
+2. 建 `projects/<名字>/`（项目目录），没有 `AGENTS.md` 时照 `idea-loop:wiki-conventions` 的「home 里的两份地图」里的项目地图模板起草第一版写进去；已有的不覆盖。
 3. 提交：`node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" commit "chore: 登记 <名字>" ~/home/AGENTS.md ~/home/projects/<名字>/AGENTS.md`（路径写成绝对路径）。
 
 起草项目地图：读代码仓库的 `CLAUDE.md` / `AGENTS.md` 和 `README`，只写项目里实际有的层；`docs/` 的几层指向项目目录下的 `docs/`（SKILL.md 的「写」建它，新项目这时还空着），不指向代码仓库；全文 ≤ 2000 字。
@@ -44,52 +44,3 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 4. 提交 home 里脚本写的文件：`git add AGENTS.md .gitignore`（`.backup/` 不进 git）。
 
 脚本需要 `~/home/AGENTS.md` 已存在，所以排在第 1 步之后。
-
-## 设备地图模板
-
-填进 `~/home/AGENTS.md` 的 `## 设备地图` 一节，≤ 2000 字。
-
-```markdown
-## 设备地图
-
-回答关于过去决定或项目事实的问题前，先按地图去查。
-
-home 里每一层放什么：
-
-- `AGENTS.md`（本文件）：设备地图、项目清单，以及人写的跨项目规矩。
-- `memory/`：跨项目的记忆，`memory/MEMORY.md` 是它的索引。
-- `projects/<名字>/`：`AGENTS.md` 是这个项目的项目地图，指出它的知识放在哪几层（会话开在已登记项目里时已经注入）；`memory/MEMORY.md` 是这个项目自己的记忆索引。
-- `.backup/`：setup 改用户级配置前的备份，不进 git，不用读。
-
-什么问题去哪查：
-
-- 项目事实、过去的决定：在 `## 项目` 里找到项目，读它的项目地图，再去地图指的那几层。
-- 跨项目的规矩和偏好：先读记忆索引，按行取对应的记忆文件。
-- `docs/raw/`（原始讨论和决定记录）：不每轮读，上面几层查不到才 grep。
-```
-
-## 项目地图模板
-
-写成 `~/home/projects/<名字>/AGENTS.md`，≤ 2000 字：几层、每层放什么、什么问题去哪查。层只写项目实际有的。
-
-```markdown
-# <名字> 项目地图
-
-<是什么，一句>。代码仓库：<本地路径>。
-
-## 几层
-
-- 记忆索引：`~/home/projects/<名字>/memory/MEMORY.md`，这个项目自己的记忆。
-- spec（每个需求的方案与 User Stories）：`~/home/projects/<名字>/docs/spec/`
-- 决策记录（为什么这样定）：`~/home/projects/<名字>/docs/adr/`
-- 设计档案（页面与状态现在长什么样）：`~/home/projects/<名字>/docs/design/prod/`
-- 领域文档：`~/home/projects/<名字>/docs/domain/`
-- 原始记录（讨论与决定的原话）：`~/home/projects/<名字>/docs/raw/`，不每轮读。
-
-## 什么问题去哪查
-
-- 「为什么这样做」「过去怎么决定的」：先读决策记录和 spec，查不到再 grep 原始记录。
-- 「某个页面现在长什么样」：设计档案。
-- 「这个词指什么」：领域文档。
-- 「我之前跟你说过什么偏好」：记忆索引。
-```

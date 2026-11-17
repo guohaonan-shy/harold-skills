@@ -6,8 +6,10 @@
  * - SKILL.md 「home」: a pointer to references/home.md plus a completion condition, nothing of the steps.
  * - references/home.md: the three steps; step 3 shows the three changes together, asks once, does all that
  *   are still to do, and does not ask about the ones already in place; no second copy of the completion condition.
- * - 设备地图模板 says to look the map up before answering about past decisions or project facts (≤ 2000 characters);
- *   项目地图模板 has a line pointing at the project's own memory index (≤ 2000 characters).
+ * - the two map templates live in the wiki-conventions skill's references/home-maps.md (setup and dreaming both use
+ *   them, so neither owns them): 设备地图模板 says to look the map up before answering about past decisions or project
+ *   facts (≤ 2000 characters); 项目地图模板 has a line pointing at the project's own memory index (≤ 2000 characters).
+ *   setup's home.md points at them by skill name.
  *
  * `SETUP_DOCS_ROOT` points the test at another copy of skills/engineering/setup (the text before the change),
  * to see that these checks fail on it.
@@ -25,6 +27,7 @@ const readIn = (...p) => readFileSync(join(setupDir, ...p), 'utf8');
 const skill = readIn('SKILL.md');
 const body = skill.split(/^---\s*$/m).slice(2).join('---');
 const home = (() => { try { return readIn('references', 'home.md'); } catch { return ''; } })();
+const maps = readFileSync(join(pluginRoot, 'skills', 'productivity', 'wiki-conventions', 'references', 'home-maps.md'), 'utf8');
 
 function section(text, title) {
   const m = text.match(new RegExp(`^## ${title}\\s*$([\\s\\S]*?)(?=^## |$(?![\\s\\S]))`, 'm'));
@@ -34,7 +37,7 @@ function section(text, title) {
 /** The text of the first fenced block after a heading (the block holds `## ` lines of its own, so it is not cut by section()). */
 function fenced(text, title) {
   const at = text.search(new RegExp(`^## ${title}\\s*$`, 'm'));
-  assert.ok(at >= 0, `home.md has no 「${title}」 section`);
+  assert.ok(at >= 0, `the reference has no 「${title}」 section`);
   const m = text.slice(at).match(/```markdown\n([\s\S]*?)\n```/);
   assert.ok(m, `「${title}」 has no fenced template`);
   return m[1];
@@ -85,16 +88,22 @@ test('the example project line in step 2 is read by the SessionStart hook\'s par
 });
 
 test('the device map template says to look the map up before answering, within 2000 characters', () => {
-  const t = fenced(home, '设备地图模板');
+  const t = fenced(maps, '设备地图模板');
   assert.ok(t.includes('回答关于过去决定或项目事实的问题前，先按地图去查'));
   assert.match(t, /docs\/raw\/[^\n]*不每轮读[^\n]*才 grep/);
   assert.ok([...t].length <= 2000, `device map template is ${[...t].length} characters`);
 });
 
 test('the project map template points at the project\'s own memory index, within 2000 characters', () => {
-  const t = fenced(home, '项目地图模板');
+  const t = fenced(maps, '项目地图模板');
   assert.match(t, /^- 记忆索引：`~\/home\/projects\/<名字>\/memory\/MEMORY\.md`/m);
   assert.ok([...t].length <= 2000, `project map template is ${[...t].length} characters`);
+});
+
+test('setup\'s home.md has no map template of its own and points at the shared one by skill name', () => {
+  assert.doesNotMatch(home, /^## (设备|项目)地图模板/m);
+  assert.match(section(home, '1\\. 建 home'), /`idea-loop:wiki-conventions` 的「home 里的两份地图」/);
+  assert.match(section(home, '2\\. 登记当前项目'), /`idea-loop:wiki-conventions` 的「home 里的两份地图」/);
 });
 
 test('the README names the home step', () => {

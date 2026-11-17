@@ -32,13 +32,13 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project <名字>
 
 `projects/<名字>/AGENTS.md` 整份重写，**不超过 2000 字**（`wc -m` 数，要带 `LC_ALL=en_US.UTF-8`；超了就删最不常用的层，不删「什么问题去哪查」）。
 
-- **模板**：读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/setup/references/home.md` 的「项目地图模板」。setup 起草第一版用的是同一份，这里不抄第二份：几层、每层放什么、什么问题去哪查，外加指向 `projects/<名字>/memory/MEMORY.md` 的那一行，都以它为准。
+- **模板**：用 Skill 工具调 `idea-loop:wiki-conventions`，读它的「home 里的两份地图」里的项目地图模板。setup 起草第一版用的是同一份，这里不抄第二份：几层、每层放什么、什么问题去哪查，外加指向 `projects/<名字>/memory/MEMORY.md` 的那一行，都以它为准。
 - **输入**：`<项目目录>/docs/index.md`、项目目录的目录树、引导文件（`DEVELOPMENT.md`、`REVIEW.md` 等）。层只写项目目录里实际有的；路径写成 `~/home/projects/<名字>/…`。「是什么」取项目清单那一行里的说法，代码仓库路径取清单里的本地路径。
 - 写完 `commit` 到 home，只列这一个文件，消息「dreaming：<日期> 重写 <名字> 项目地图」。内容没变就没有提交，这是正常的。
 
 ## 4. 重写设备地图
 
-全部项目跑完才做。输入是 home 顶层的目录（`ls <home>`）和项目清单；模板是同一份 `home.md` 的「设备地图模板」。
+全部项目跑完才做。输入是 home 顶层的目录（`ls <home>`）和项目清单；模板是同一处「home 里的两份地图」里的设备地图模板。
 
 - 只重写 `~/home/AGENTS.md` 的「## 设备地图」一节：从这一行起到下一个 `## ` 之前。别的节（尤其是 `## 项目` 和人写的跨项目规矩）一个字节不动；写完看一眼 `git -C <home> diff -- AGENTS.md`，改动都落在设备地图那一节里才提交。
 - 不超过 2000 字，数法同上。

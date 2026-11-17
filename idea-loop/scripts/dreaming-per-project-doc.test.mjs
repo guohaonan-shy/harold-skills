@@ -5,9 +5,11 @@
  * - SKILL.md has the 「逐个对账项目」 section between the memory pass and the flow, with the four steps, the skip rule, the
  *   "a project not finished means the run is not a success" rule and the hand-typed case; the memory pass is untouched;
  * - references/per-project.md carries the how (where --project, fetch, a worktree under home's .worktrees/, the two 2000
- *   character caps, only the device-map section rewritten) and points at setup's template instead of copying it;
- * - setup's home reference has the memory line in the project-map template, both 2000-character caps, and .worktrees/ in
- *   the .gitignore it creates;
+ *   character caps, only the device-map section rewritten) and points at the wiki-conventions skill's map templates by
+ *   skill name instead of copying them or reading another skill's private references;
+ * - wiki-conventions' home-maps reference (the one place both setup and dreaming use) has the memory line in the
+ *   project-map template and both 2000-character caps; setup's home reference has .worktrees/ in the .gitignore it
+ *   creates and points at the same templates;
  * - no dreaming reference reads the knowledge base through the code repository's base branch any more.
  */
 import { test } from 'node:test';
@@ -30,6 +32,7 @@ const skill = body(read(...dreamingDir, 'SKILL.md'));
 const perProject = read(...dreamingDir, 'references', 'per-project.md');
 const scope = read(...dreamingDir, 'references', 'incremental-scope.md');
 const homeRef = read('skills', 'engineering', 'setup', 'references', 'home.md');
+const mapsRef = read('skills', 'productivity', 'wiki-conventions', 'references', 'home-maps.md');
 
 test('SKILL.md has 「逐个对账项目」 after the memory pass and before the flow, with the four steps', () => {
   const at = ['## 记忆一段', '## 逐个对账项目', '## 流程'].map((h) => skill.indexOf(h));
@@ -80,9 +83,10 @@ test('per-project.md says how: where, fetch, a detached worktree under .worktree
   assert.match(perProject, /设备地图照样重写/);
 });
 
-test('per-project.md rewrites the project map from setup\'s one template, not a copy, and the device map only inside its own section', () => {
-  assert.match(perProject, /skills\/engineering\/setup\/references\/home\.md` 的「项目地图模板」/);
-  assert.match(perProject, /「设备地图模板」/);
+test('per-project.md rewrites the project map from the one shared template (called by skill name), not a copy, and the device map only inside its own section', () => {
+  assert.match(perProject, /Skill 工具调 `idea-loop:wiki-conventions`，读它的「home 里的两份地图」里的项目地图模板/);
+  assert.match(perProject, /「home 里的两份地图」里的设备地图模板/);
+  assert.doesNotMatch(perProject, /skills\/[a-z]+\/setup\/references/, 'no path into setup\'s private references');
   assert.doesNotMatch(perProject, /# <名字> 项目地图|## 几层|## 什么问题去哪查/, 'no template of its own');
   assert.match(perProject, /不超过 2000 字/);
   assert.match(perProject, /从这一行起到下一个 `## ` 之前/);
@@ -90,9 +94,11 @@ test('per-project.md rewrites the project map from setup\'s one template, not a 
   assert.match(perProject, /docs\/index\.md/);
 });
 
-test('setup\'s home reference: the project-map template points at the memory index and caps at 2000 characters like the device map; .gitignore has .worktrees/', () => {
-  const projectMap = homeRef.slice(homeRef.indexOf('## 项目地图模板'));
-  const deviceMap = homeRef.slice(homeRef.indexOf('## 设备地图模板'), homeRef.indexOf('## 项目地图模板'));
+test('the shared maps reference: the project-map template points at the memory index and caps at 2000 characters like the device map; setup\'s home.md points at it and its .gitignore has .worktrees/', () => {
+  const projectMap = mapsRef.slice(mapsRef.indexOf('## 项目地图模板'));
+  const deviceMap = mapsRef.slice(mapsRef.indexOf('## 设备地图模板'), mapsRef.indexOf('## 项目地图模板'));
+  assert.doesNotMatch(homeRef, /^## (设备|项目)地图模板/m, 'setup keeps no template of its own');
+  assert.equal((homeRef.match(/`idea-loop:wiki-conventions` 的「home 里的两份地图」/g) ?? []).length, 2);
   assert.match(projectMap, /≤ 2000 字/);
   assert.match(deviceMap, /≤ 2000 字/);
   assert.match(projectMap, /记忆索引：`~\/home\/projects\/<名字>\/memory\/MEMORY\.md`/);

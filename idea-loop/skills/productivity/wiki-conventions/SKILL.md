@@ -5,7 +5,7 @@ description: 项目 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定�
 
 ## 项目目录
 
-**项目目录**是这个项目在 home 里的目录 `<home>/projects/<名字>/`。`docs/`（别的 skill 里的 `<docs>`）和项目级规则 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` 都在它下面；代码仓库只留代码和自己的 `AGENTS.md` / `CLAUDE.md`。读写这些文件、给脚本的 `<docs>`，用项目目录里的路径；代码（读源码、跑测试、起服务、开分支和 PR）仍在代码 worktree 里。怎么拿到，看你是谁：
+**项目目录**是这个项目在 home 里的目录 `<home>/projects/<名字>/`。`docs/`（别的 skill 里的 `<docs>`）和项目级规则 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` 都在它下面；代码仓库只留代码和自己的 `AGENTS.md` / `CLAUDE.md`。读写这些文件、给脚本的 `<docs>`，用项目目录里的路径；代码（读源码、跑测试、起服务、开分支和 PR）仍在代码 worktree 里。home 里设备地图、项目地图的模板（setup 起草、dreaming 重写共用）：「home 里的两份地图」，见 [references/home-maps.md](references/home-maps.md)。怎么拿到，看你是谁：
 
 - **主会话开在代码 worktree 里**：会话开场注入的「项目目录：<路径>」那一行；没有，在这个 worktree 里跑下面的 `where`（不带 `--project`）。
 - **主会话开在 home 里**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project <名字>`，取输出的 `projectDir`。
@@ -81,7 +81,7 @@ docs/
 
 ## 中间产物
 
-不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在当前 worktree 根的 `.tmp/` 下，按 skill 与对象分子目录（`grill/`、`to-spec/`、`implement/`、`pr-review/`、`dreaming/`、`retro/`、`review-loop/`）。每个子目录放什么、何时删、为什么不放 `/tmp`、本地忽略怎么配：[references/tmp-artifacts.md](references/tmp-artifacts.md)。
+不进知识库、但要跨好几步（甚至跨会话）用的工作文件，放在当前 worktree 根的 `.tmp/` 下，按 skill 与对象分子目录。每个子目录放什么、何时删、为什么不放 `/tmp`、本地忽略怎么配：[references/tmp-artifacts.md](references/tmp-artifacts.md)。
 
 ## 从平铺布局迁移
 
