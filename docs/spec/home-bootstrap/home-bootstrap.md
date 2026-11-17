@@ -2,7 +2,7 @@
 type: spec
 tags: [home, idea-loop-0-2-0, setup, session-start]
 summary: 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置
-related: ["[[2026-11-15-home-repo-grill]]", "[[docs-ride-code-pr]]", "[[dreaming-triage-autonomous]]"]
+related: ["[[2026-11-15-home-repo-grill]]", "[[0050-docs-ride-code-pr]]", "[[0047-dreaming-triage-autonomous]]"]
 issues: [252]
 ---
 
@@ -148,12 +148,12 @@ setup 加一节「home」，步骤放进它自己的参考文件，SKILL.md 主�
 - **2000 字的上限按 `## 设备地图` 一节、和每份项目地图各自算**：人搬进来的原 `CLAUDE.md` 内容（现在 1617 字）不算在内，项目清单一个项目一行、不算在内。超限的处理照 Claude Code 自己对 `MEMORY.md` 的做法：截断加提示，不报错。
 - **`.backup/` 不进 git**：`~/.claude/settings.json` 有 `env` 一节，可能有密钥；home 在 Mac 上会推到 GitHub。
 - **`~/.claude/CLAUDE.md` 已经是软链、但不指向 `~/home/AGENTS.md` 的**：脚本不动它，出表时这一项写「已是别处的软链，要人处理」，setup 把它交回给人。
-- **版本号**：这个 PR 把 idea-loop 从 0.1.18 升到 0.2.0（minor：新增能力，老用法照样能用）。依据：`REVIEW.md`「额外要求」要求改了插件就升，`scripts/plugin-version.test.mjs` 默认对着 `origin/main` 比；在第一个子 PR 就升到 0.2.0，后面三个子 PR 对着 main 比都已经高过它，不用每个都改号；#331 写的「最后合进 main 时升 0.2.0」变成那时只核一次。
+- **版本号**：这个 PR 不升 idea-loop 的版本。依据：父 issue #331 定了 0.2.0 由父会话在集成分支合进 main 的那个 PR 里一次升；子 PR 合进的是 `release/idea-loop-0.2.0`，不是 main（2026-11-17 父会话转达，推翻 triage 时写的「第一个子 PR 就升到 0.2.0」）。
 - **已知限制**（找不到真实路径，不展开设计，人可以推翻）：仓库没有 `origin`（本机 `~/projects` 下的仓库都有）；同一个仓库被登记成两行；会话开在 home 里时设备地图会不会被 `~/.claude/CLAUDE.md` 和 `~/home/AGENTS.md` 各加载一次（实现时用一次 `claude -p` 看一眼，重复就记进这一条）。
 
 ### 第一版项目地图由 setup 照模板起草，dreaming 之后接管
 
-setup 登记项目时，读这个项目现在的 `docs/index.md`、目录树和引导文件，照一份地图模板（几层、每层放什么、什么问题去哪查）写出第一版，≤2000 字，路径指向东西现在在哪（还在代码仓库的 `docs/`）；#247 搬家时改路径，#333 让 dreaming 每周重写它。例：harold-skills 的地图写「决定记录在 `~/projects/harold-skills/docs/raw/decisions/`」。这样 token 测量在这一刀就能做完，#333 动工前就知道要不要扩展 `design-archive` MCP。
+setup 登记项目时，读这个项目现在的 `docs/index.md`、目录树和引导文件，照一份地图模板（几层、每层放什么、什么问题去哪查）写出第一版，≤2000 字，路径指向东西现在在哪（还在代码仓库的 `docs/`）；模板里有一行指向 `projects/<名字>/memory/MEMORY.md`（这个项目自己的记忆索引，由 #332 填，2026-11-16 #332、#333 定）；#247 搬家时改路径，#333 让 dreaming 每周重写它。例：harold-skills 的地图写「决定记录在 `~/projects/harold-skills/docs/raw/decisions/`」。这样 token 测量在这一刀就能做完，#333 动工前就知道要不要扩展 `design-archive` MCP。
 
 依据：决定记录 Q5 定了地图「由 dreaming 生成」，但 dreaming 读写 home 归 #333；2026-11-16 摆了「setup 起草」和「只建机制、测量挪到 #247 之后」两个选项，人选前者：「都按推荐没问题」。
 
@@ -200,7 +200,7 @@ setup 的三处改动照决定写全、有测试，home-config 脚本支持只�
 
 - raw：[[2026-11-15-home-repo-grill]]（全部决议），这次 triage 会话的两道题记在 `docs/raw/decisions/252.md`。
 - 父 issue #331（0.2.0，集成分支 `release/idea-loop-0.2.0`）。兄弟 issue #332、#333、#247 都依赖这一刀，这一刀先合；跟它们的边界写在「Out of scope」。#332 的正文也写了「`~/home/AGENTS.md` 写『回答前先按地图查』」：这句在这一刀写进设备地图，#332 不再写。#332 的正文写了用户级 `autoMemoryDirectory` 指到 `~/home/memory/`：配置项在这一刀由 setup 改，#332 只管记忆的内容。
-- [[docs-ride-code-pr]]（#244 的 spec，「spec 跟代码一个 PR、setup 问知识库放哪」）：0.2.0 推翻了它的「业务根目录」方向；它问的「知识库放哪」被 home 取代，删它归 #247 迁移时的 dreaming。没有代码上的重叠。
-- [[dreaming-triage-autonomous]]（#298）：token 测量的第一个问题取自它；它由人另行调度、走 main，不在 0.2.0。
+- [[0050-docs-ride-code-pr]]（#244 的 spec，「spec 跟代码一个 PR、setup 问知识库放哪」）：0.2.0 推翻了它的「业务根目录」方向；它问的「知识库放哪」被 home 取代，删它归 #247 迁移时的 dreaming。没有代码上的重叠。
+- [[0047-dreaming-triage-autonomous]]（#298）：token 测量的第一个问题取自它；它由人另行调度、走 main，不在 0.2.0。
 - #286（已关）：查询入口、raw、文章其余建议三题的结论并进了这一刀，token 测量是它的验收。
 - #334（走 main）：认父子 issue；在它合并前，这一刀的会话由人点明基准分支。
