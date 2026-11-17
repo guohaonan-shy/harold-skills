@@ -1,6 +1,6 @@
 ---
 name: keyword-research
-description: 关键词研究：从种子话题发现机会词，评估指标和 SERP，排出优先级。人在场时出机会清单、经同意保存打标；被方向 agent 调用时交回发现清单。要找关键词机会时用；把词分组映射到页面用 keyword-clustering。
+description: 关键词研究：从种子话题发现机会词，评估指标和 SERP，排出优先级。要找关键词机会时用；把词分组映射到页面用 keyword-clustering。
 ---
 
 # 关键词研究
