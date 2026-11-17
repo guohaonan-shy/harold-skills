@@ -21,6 +21,8 @@ idea-loop 插件版本升一个 patch；插件 README 的文件树里补上新�
 - [x] 改前改后逐句对照：每条规则在主体或参考文件里仍能找到；删掉的句子逐条写明依据（设计档案 skill 有单一事实来源，或判为空操作），交回里列出
 - [x] `plugin.json` 版本升一个 patch，README 文件树补上新参考文件
 
+- [x] 全量（2026-11-18）：`skill-private-references` 测试——别的 skill 不直接指 wiki-conventions 的 `references/` 文件，只指主体节名，由主体那一节的指针行再指进参考
+
 ## 选中的存量回归
 
 - `knowledge-base-landing-doc` 测试：守「知识库落地」一节的原文，挪动主体时最容易误删。

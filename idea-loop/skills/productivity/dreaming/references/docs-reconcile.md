@@ -26,7 +26,7 @@
 | spec 说 X，代码是 Y | 代码物在，形态对不上 | **报警，交人**：文档在撒谎，比过期危险 |
 | domain / reference 与现状不符 | 引用的表 / 字段 / 接口已改名；`REVIEW.md` 的命令已不存在 | 订正，不删 |
 | `GLOSSARY.md` 与现状不符 | `_Avoid_` 里的词出现在新代码或新文档里；词条说的概念在代码里已经没了 | 逐条问人，同意了才订正或删除；新增词条只在 `idea-loop:grill` 里 |
-| 新 ADR 推翻某个生效 ADR 的一节 | 写新 ADR 前搜 `docs/adr/` 的同话题旧决策 | 按小节标注取代（`idea-loop:wiki-conventions` 的 `references/adr.md`「ADR 按小节取代」） |
+| 新 ADR 推翻某个生效 ADR 的一节 | 写新 ADR 前搜 `docs/adr/` 的同话题旧决策 | 按小节标注取代（`idea-loop:wiki-conventions` 的「frontmatter」） |
 | 漏网的工单 | `docs/spec/<spec-slug>/tickets/` 里还躺着、对应 PR 已合并（`gh` 查，标题对得上） | 删除 |
 
 起草 ADR 的格式与小节取代按 `idea-loop:wiki-conventions`；提议段只把 ADR 草稿放进提议表指向的文件，不写进 `docs/adr/`。删 spec 是删它整个目录（含 `tickets/` 和 `assets/`）；`assets/` 里 ADR 要引的证据图先挪到 ADR 旁边，这一步在执行段做。
