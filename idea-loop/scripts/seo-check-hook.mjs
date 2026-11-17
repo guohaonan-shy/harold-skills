@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Bash hooks that run seo-check after a command rebuilt the site. A project opts in by writing the
- * build output directory into SEO.md's「构建与检查」section; without SEO.md (or without that line)
- * every command passes untouched.
+ * build output directory into SEO.md's「构建与检查」section (SEO.md is in the project's directory in home); without
+ * SEO.md (or without that line, or when the project has not moved into home) every command passes untouched.
  *
  * Which command was "the build" is not read from the command text — build commands are spelled in
  * too many ways (`npm run build`, `cd site && npm run build`, a workspace flag), and a monorepo's
@@ -24,6 +24,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, wri
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { locate } from './project-map.mjs';
 import { readSeoMd } from './seo-md.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -51,14 +52,28 @@ function repoRoot(cwd) {
   return res.status === 0 ? res.stdout.trim() : null;
 }
 
-/** The build output dir and check args SEO.md declares for the repo around cwd, or null. */
+/**
+ * The build output dir and check args SEO.md declares for the project around cwd, or null.
+ * SEO.md lives in the project's directory in home (project-map.mjs `locate`); the output directory it names is
+ * relative to the code repository — the worktree the build ran in. A project that has not moved into home yet, or one
+ * that cannot be recognized, has no SEO.md to read: null, and every command passes untouched.
+ */
 export function target(cwd) {
   if (!cwd || !existsSync(cwd)) return null;
   const root = repoRoot(cwd);
-  if (!root || !existsSync(join(root, 'SEO.md'))) return null;
+  if (!root) return null;
+  let seoMd;
+  try {
+    const found = locate({ cwd });
+    if (!found.ok) return null;
+    seoMd = join(found.projectDir, 'SEO.md');
+  } catch {
+    return null;
+  }
+  if (!existsSync(seoMd)) return null;
   let build;
   try {
-    build = readSeoMd(join(root, 'SEO.md')).build;
+    build = readSeoMd(seoMd).build;
   } catch {
     return null;
   }

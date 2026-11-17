@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -99,14 +99,33 @@ test('the CLI exits 1 on errors, 2 on a missing directory or an unknown flag', (
 
 // ── the post-build hook ────────────────────────────────────────────────────────
 
-function repo({ seoMd = true, bad = false } = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'seo-hook-'));
+// The hook finds SEO.md in the project's directory in a fake home, never in the machine's own ~/home: every child
+// gets IDEA_LOOP_HOME. The build output directory it names is relative to the code repository (the worktree).
+const SEO_MD = '# SEO\n\n## 构建与检查\n- 产物目录：`site/dist`\n';
+
+/**
+ * A fake home that registers example-app (its directory in home holds SEO.md when `seoMd`, and a docs/ — that is what
+ * "moved" means; `moved: false` leaves the directory out), and a code repository with that origin and a built site.
+ * Returns the code repository, and the env a hook run needs.
+ */
+function repo({ seoMd = true, bad = false, moved = true, inRepo = false } = {}) {
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'seo-hook-')));
+  const home = join(base, 'home');
+  const root = join(base, 'code');
+  mkdirSync(home);
+  writeFileSync(join(home, 'AGENTS.md'), '# 设备\n\n## 项目\n\nexample-app（一个例子）: ~/projects/example-app. Clone from https://github.com/acme/example-app if missing.\n');
+  if (moved) {
+    mkdirSync(join(home, 'projects', 'example-app', 'docs'), { recursive: true });
+    if (seoMd) writeFileSync(join(home, 'projects', 'example-app', 'SEO.md'), SEO_MD);
+  }
+  mkdirSync(root);
   assert.equal(spawnSync('git', ['init', '-q'], { cwd: root }).status, 0);
-  if (seoMd) writeFileSync(join(root, 'SEO.md'), '# SEO\n\n## 构建与检查\n- 产物目录：`site/dist`\n');
+  assert.equal(spawnSync('git', ['remote', 'add', 'origin', 'git@github.com:acme/example-app.git'], { cwd: root }).status, 0);
+  if (inRepo) writeFileSync(join(root, 'SEO.md'), SEO_MD);
   mkdirSync(join(root, 'site/dist'), { recursive: true });
   mkdirSync(join(root, 'app/dist'), { recursive: true });
   writeFileSync(join(root, 'site/dist/index.html'), html({ title: bad ? '' : EN_TITLE }));
-  return root;
+  return { root, env: { IDEA_LOOP_HOME: home, IDEA_LOOP_SEO_HOOK_DIR: mkdtempSync(join(tmpdir(), 'seo-stamps-')) } };
 }
 
 function runHook(event, cwd, id, env) {
@@ -119,8 +138,7 @@ const age = (file) => {
 };
 
 test('hook: the site build that left an error is reported back with exit 2', () => {
-  const root = repo({ bad: true });
-  const env = { IDEA_LOOP_SEO_HOOK_DIR: mkdtempSync(join(tmpdir(), 'seo-stamps-')) };
+  const { root, env } = repo({ bad: true });
   age(join(root, 'site/dist/index.html'));
   assert.equal(runHook('PreToolUse', root, 't1', env).status, 0);
   writeFileSync(join(root, 'site/dist/index.html'), html({ title: '' }));
@@ -129,9 +147,37 @@ test('hook: the site build that left an error is reported back with exit 2', () 
   assert.match(post.stderr, /Missing <title>/);
 });
 
+test('hook: SEO.md is read from the project directory in home, though the worktree has none; the output directory is the worktree\'s', () => {
+  const { root, env } = repo({ bad: true });
+  assert.equal(existsSync(join(root, 'SEO.md')), false, 'the code repository has no SEO.md');
+  const sub = join(root, 'app');
+  age(join(root, 'site/dist/index.html'));
+  assert.equal(runHook('PreToolUse', sub, 't1b', env).status, 0, 'from a subdirectory of the worktree too');
+  writeFileSync(join(root, 'site/dist/index.html'), html({ title: '' }));
+  const post = runHook('PostToolUse', sub, 't1b', env);
+  assert.equal(post.status, 2, post.stderr);
+  assert.ok(post.stderr.includes(join(root, 'site/dist')), post.stderr);
+});
+
+test('hook: a project that has not moved into home passes silently, even when the worktree still has SEO.md', () => {
+  const { root, env } = repo({ bad: true, moved: false, inRepo: true });
+  runHook('PreToolUse', root, 't1c', env);
+  writeFileSync(join(root, 'site/dist/index.html'), html({ title: '' }));
+  const post = runHook('PostToolUse', root, 't1c', env);
+  assert.equal(post.status, 0, post.stderr);
+  assert.equal(post.stderr, '');
+});
+
+test('hook: a repository the project list does not know passes silently', () => {
+  const { root, env } = repo({ bad: true });
+  assert.equal(spawnSync('git', ['remote', 'set-url', 'origin', 'git@github.com:acme/unlisted.git'], { cwd: root }).status, 0);
+  runHook('PreToolUse', root, 't1d', env);
+  writeFileSync(join(root, 'site/dist/index.html'), html({ title: '' }));
+  assert.equal(runHook('PostToolUse', root, 't1d', env).status, 0);
+});
+
 test('hook: another build that did not touch the output dir passes', () => {
-  const root = repo({ bad: true });
-  const env = { IDEA_LOOP_SEO_HOOK_DIR: mkdtempSync(join(tmpdir(), 'seo-stamps-')) };
+  const { root, env } = repo({ bad: true });
   age(join(root, 'site/dist/index.html'));
   runHook('PreToolUse', root, 't2', env);
   writeFileSync(join(root, 'app/dist/index.html'), 'student app build');
@@ -139,8 +185,7 @@ test('hook: another build that did not touch the output dir passes', () => {
 });
 
 test('hook: without a PreToolUse record the start comes from duration_ms', () => {
-  const root = repo({ bad: true });
-  const env = { IDEA_LOOP_SEO_HOOK_DIR: mkdtempSync(join(tmpdir(), 'seo-stamps-')) };
+  const { root, env } = repo({ bad: true });
   writeFileSync(join(root, 'site/dist/index.html'), html({ title: '' }));
   const run = (extra) => spawnSync(process.execPath, [hook], { input: JSON.stringify({ hook_event_name: 'PostToolUse', tool_use_id: 'never-seen', cwd: root, ...extra }), encoding: 'utf8', env: { ...process.env, ...env } });
   assert.equal(run({ duration_ms: 5000 }).status, 2);
@@ -148,15 +193,14 @@ test('hook: without a PreToolUse record the start comes from duration_ms', () =>
 });
 
 test('hook: no SEO.md, no check', () => {
-  const root = repo({ seoMd: false, bad: true });
-  const env = { IDEA_LOOP_SEO_HOOK_DIR: mkdtempSync(join(tmpdir(), 'seo-stamps-')) };
+  const { root, env } = repo({ seoMd: false, bad: true });
   runHook('PreToolUse', root, 't3', env);
   writeFileSync(join(root, 'site/dist/index.html'), html({ title: '' }));
   assert.equal(runHook('PostToolUse', root, 't3', env).status, 0);
 });
 
 test('hook helpers: touchedSince and errorsOnly', () => {
-  const root = repo();
+  const { root } = repo();
   const f = join(root, 'site/dist/index.html');
   age(f);
   assert.equal(touchedSince(join(root, 'site/dist'), Date.now() - 1000), false);

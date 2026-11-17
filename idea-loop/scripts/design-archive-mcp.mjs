@@ -9,19 +9,22 @@
  *
  * Zero dependencies: the three methods an MCP client needs (initialize, tools/list, tools/call) plus
  * ping are spoken by hand as newline-delimited JSON-RPC 2.0. The plugin's `.mcp.json` starts it, so a
- * target project configures nothing; the repository is the git top level of the working directory the
- * session started in. A name that matches nothing, a directory outside git, a missing argument: each is
- * an MCP error *result* (`isError: true`) that says what is wrong, never a dead process.
+ * target project configures nothing. The archive is read from the project's directory in home
+ * (project-map.mjs `locate`): the project is the one the working directory's git repository is (a code
+ * worktree), or the one a tool call names in its optional `project` argument (a session opened in home itself).
+ * `design_affected` reads the code's git history, so it takes the code repository: the git top level of the
+ * working directory, or, with `project`, the project's clone in the list. A name that matches nothing, a project
+ * that is not recognized or has not moved into home, a missing argument: each is an MCP error *result*
+ * (`isError: true`) that says what is wrong, never a dead process.
  *
  *   node design-archive-mcp.mjs        (speaks MCP on stdin / stdout)
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { QueryError, query } from './design-archive-query.mjs';
+import { locate } from './project-map.mjs';
 
 const SUPPORTED_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER_INFO = { name: 'design-archive', version: '1.0.0' };
@@ -30,6 +33,11 @@ const DELTA_PROP = {
   type: 'string',
   description:
     '可选：某个需求（spec）的名字。给了就把它的 docs/design/tmp/<spec>/delta/ 叠在线上档案上，读「改完之后的样子」；不给就读线上现状。',
+};
+const PROJECT_PROP = {
+  type: 'string',
+  description:
+    '可选：项目名（home 项目清单里的名字）。会话开在代码仓库（或它的 worktree）里不用给，按当前目录认；会话开在 home 里时必须给。',
 };
 const nameProp = (description) => ({ type: 'string', description });
 
@@ -103,7 +111,7 @@ const TOOLS = [
   ...t,
   inputSchema: {
     type: 'object',
-    properties: t.properties,
+    properties: { ...t.properties, project: PROJECT_PROP },
     required: [t.arg],
     additionalProperties: false,
   },
@@ -120,22 +128,28 @@ const textResult = (text, isError = false) => ({
   ...(isError ? { isError: true } : {}),
 });
 
-/** The git top level of the working directory, or a thrown QueryError that says why not. */
-function repoRoot(cwd = process.cwd()) {
-  let root;
+/** The git top level of `cwd`, or null when it is not in a git repository. */
+function gitTop(cwd) {
   try {
-    root = execFileSync('git', ['rev-parse', '--show-toplevel'], {
-      cwd,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
+    return execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() || null;
   } catch {
-    throw new QueryError(`当前目录 ${cwd} 不在 git 仓库里：设计档案只读目标仓库的 docs/design，请在仓库里启动会话`, 'no-repo');
+    return null;
   }
-  if (!root || !existsSync(join(root, 'docs'))) {
-    throw new QueryError(`${root || cwd} 下没有 docs/：这个 git 仓库里没有设计档案`, 'no-repo');
+}
+
+/**
+ * Where the archive is and where the code is, or a thrown QueryError that says why not.
+ * `root` is the project's directory in home; `codeRoot` is the code repository (null when there is none to name).
+ */
+function roots(cwd = process.cwd(), project = undefined) {
+  let found;
+  try {
+    found = locate({ cwd, project });
+  } catch (e) {
+    throw new QueryError(`认不出项目：${e.message}`, 'no-repo');
   }
-  return root;
+  if (!found.ok) throw new QueryError(found.message, 'no-repo');
+  return { root: found.projectDir, codeRoot: project === undefined ? gitTop(cwd) : found.cloneDir };
 }
 
 /** One tools/call. Returns an MCP result; every expected failure is an `isError` result. */
@@ -148,9 +162,13 @@ export function callTool(tool, args, cwd = process.cwd()) {
   if (input.delta !== undefined && (typeof input.delta !== 'string' || !input.delta.trim())) {
     return textResult('参数 delta 要是需求（spec）的名字，或者不给', true);
   }
+  if (input.project !== undefined && (typeof input.project !== 'string' || !input.project.trim())) {
+    return textResult('参数 project 要是项目名（home 项目清单里的名字），或者不给', true);
+  }
   const delta = input.delta ?? null;
   try {
-    const result = query(repoRoot(cwd), tool.entry, value, { delta });
+    const { root, codeRoot } = roots(cwd, input.project);
+    const result = query(root, tool.entry, value, { delta, codeRoot });
     // the command line treats "nothing matched" as a failure; so does the tool
     if (tool.entry === 'keyword' && !result.matches.length) return textResult(`没有对象匹配「${result.query}」`, true);
     return textResult(JSON.stringify(result, null, 2));

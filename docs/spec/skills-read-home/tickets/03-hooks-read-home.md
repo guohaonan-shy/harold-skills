@@ -13,11 +13,11 @@
 
 ## 验收标准
 
-- [ ] 假 home 里项目目录有 `SEO.md`、代码 worktree 里没有：SEO hook 在 worktree 里触发时读到项目目录的 `SEO.md`
-- [ ] 没搬的项目：SEO hook 静默放行，退出码 0
-- [ ] 设计档案 MCP 在代码 worktree 里调用时读到假 home 项目目录的 `prod/`；在 home 里带项目名调用读到同一份；没搬的项目报迁移那句话
-- [ ] 设计 lint hook 对 `<假 home>/projects/example-app/docs/design/tmp/x/canvas/a.html` 判为画布；对 `canvas/assets/` 下的文件不判
-- [ ] 三者现有测试全绿
+- [x] 假 home 里项目目录有 `SEO.md`、代码 worktree 里没有：SEO hook 在 worktree 里触发时读到项目目录的 `SEO.md`
+- [x] 没搬的项目：SEO hook 静默放行，退出码 0
+- [x] 设计档案 MCP 在代码 worktree 里调用时读到假 home 项目目录的 `prod/`；在 home 里带项目名调用读到同一份；没搬的项目报迁移那句话
+- [x] 设计 lint hook 对 `<假 home>/projects/example-app/docs/design/tmp/x/canvas/a.html` 判为画布；对 `canvas/assets/` 下的文件不判
+- [x] 三者现有测试全绿
 
 ## 选中的存量回归
 
