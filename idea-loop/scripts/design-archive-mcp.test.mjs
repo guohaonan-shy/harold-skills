@@ -268,10 +268,10 @@ test('opened in home itself, design_affected reads the project\'s clone named in
 
 test('a project that has not moved into home gets the migration sentence from every tool', () => {
   const w = gitRepo();
-  // the project directory in home has no docs/, the code repository has one: not moved yet
+  // the project directory in home has no docs/, the code repository has one with a spec/ in it: not moved yet
   rmSync(join(w.projectDir, 'docs'), { recursive: true, force: true });
-  mkdirSync(join(w.code, 'docs'), { recursive: true });
-  writeFileSync(join(w.code, 'docs', 'x.md'), 'x\n');
+  mkdirSync(join(w.code, 'docs', 'spec'), { recursive: true });
+  writeFileSync(join(w.code, 'docs', 'spec', 'x.md'), 'x\n');
   const s = session(w, [INIT, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))]);
   assert.equal(s.status, 0);
   TOOLS.forEach((n, i) => {

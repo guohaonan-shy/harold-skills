@@ -84,7 +84,7 @@ idea-loop 处处假设知识库、引导文件和代码在同一个 git 仓库�
 
 - **`where`**：输入是当前目录，或者 `--project <名字>`；可选 `IDEA_LOOP_HOME`。输出一份 JSON：项目名、项目目录、`docs`、代码仓库的 `owner/repo`、本地 clone 路径，以及「在不在 home」。判法：
   - 项目清单里有这个项目，且 `~/home/projects/<名字>/docs/` 存在：项目目录就是 `~/home/projects/<名字>/`。
-  - 否则不给项目目录，退出码非 0，并说明原因：仓库根目录有 idea-loop 的引导文件或 `docs/` 的，说「这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移」；别的情况说「这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`」。调用它的 skill 和脚本照这句话停下，不去读代码仓库。
+  - 否则不给项目目录，退出码非 0，并说明原因：仓库根目录有 idea-loop 的引导文件、或 `docs/` 里有 `spec/` 或 `adr/` 的（光有一个普通 `docs/` 不算），说「这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移」；别的情况说「这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`」。调用它的 skill 和脚本照这句话停下，不去读代码仓库。
 - **`commit`**：把调用方列出的文件提交到 home 的 main，见下面的「改动怎么落进 home」。
 
 hook 注入项目地图时多注入一行：`项目目录：<路径>`；`where` 认出「还没搬」的，hook 改为注入那句迁移提示。会话开在代码 worktree 里时，主会话从这一行拿到项目目录；开在 home 里时（父 issue 会话、`dreaming-home`），用 `where --project <名字>` 拿。
@@ -148,7 +148,7 @@ Q12 定了：home 只有 main，直接提交，只 add 自己的文件。落到�
 
 home 已经存在、当前项目在项目清单里没有 `docs/` 的：
 
-- 以前就在用 0.1.x 的项目（仓库根目录已经有 idea-loop 的引导文件或 `docs/`），走 #247 的迁移，这里不管；
+- 以前就在用 0.1.x 的项目（仓库根目录已经有 idea-loop 的引导文件，或 `docs/` 里有 `spec/` 或 `adr/`），走 #247 的迁移，这里不管；
 - 全新的项目，setup 把引导文件和 `docs/` 直接建在项目目录里，不再往代码仓库根目录写；
 - 新项目也不再往代码仓库的 `AGENTS.md` 里写 `## idea-loop` 那段指针，它的作用由项目地图代替（Q3）。
 

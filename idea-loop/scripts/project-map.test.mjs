@@ -270,10 +270,15 @@ test('locateByDocs: the docs/ of a project directory in home is that project; th
   assert.deepEqual(found, locate({ project: 'example-app', env }));
 });
 
-test('locateByDocs: the docs/ of a code repository is not moved yet; a directory with nothing of idea-loop is not connected; an unlisted name in home is not connected', () => {
+test('locateByDocs: the docs/ of a code repository with a spec/ in it is not moved yet, a plain one is not connected; a directory with nothing of idea-loop is not connected; an unlisted name in home is not connected', () => {
   const { code, home, root } = moved();
   const env = { IDEA_LOOP_HOME: home, HOME: root };
   mkdirSync(join(code, 'docs'));
+  const plainDocs = locateByDocs({ docs: join(code, 'docs'), env });
+  assert.equal(plainDocs.ok, false);
+  assert.equal(plainDocs.code, 'not-connected');
+  assert.equal(plainDocs.message, NOT_CONNECTED);
+  mkdirSync(join(code, 'docs', 'spec'));
   const unmoved = locateByDocs({ docs: join(code, 'docs'), env });
   assert.equal(unmoved.ok, false);
   assert.equal(unmoved.code, 'not-moved');
@@ -334,10 +339,10 @@ test('where, projects/<名字>/docs/ gone and a DEVELOPMENT.md in the repository
   assert.equal(NOT_MOVED, '这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移');
 });
 
-test('where: any one bootstrap file, or a docs/ directory, in the repository root means not moved; an unregistered repository with one too', () => {
-  for (const file of ['DEVELOPMENT.md', 'REVIEW.md', 'CODING_STANDARDS.md', 'PRODUCT.md', 'ISSUE_TRACKER.md', 'GLOSSARY.md', 'DESIGN.md', 'SEO.md', 'docs/']) {
+test('where: any one bootstrap file, or a docs/ with a spec/ or adr/ in it, in the repository root means not moved; an unregistered repository with one too', () => {
+  for (const file of ['DEVELOPMENT.md', 'REVIEW.md', 'CODING_STANDARDS.md', 'PRODUCT.md', 'ISSUE_TRACKER.md', 'GLOSSARY.md', 'DESIGN.md', 'SEO.md', 'docs/spec/', 'docs/adr/']) {
     const { code, home } = world();
-    if (file.endsWith('/')) mkdirSync(join(code, 'docs'));
+    if (file.endsWith('/')) mkdirSync(join(code, file), { recursive: true });
     else writeFileSync(join(code, file), 'x\n');
     const r = cli(['where'], code, home);
     assert.notEqual(r.status, 0, file);
@@ -366,6 +371,20 @@ test('where for a repository that is not in the project list, has no origin, or 
 test('where, a listed project with no docs/ in home and nothing to migrate in the clone: not connected, not "not moved"', () => {
   const { code, home } = world();
   assert.ok(cli(['where'], code, home).stderr.includes(NOT_CONNECTED));
+});
+
+test('where: a repository whose docs/ is plain (a README, a guides/ directory, no spec/ or adr/) and has no bootstrap file is not connected, listed or not; with a spec/ in it, not moved', () => {
+  for (const origin of ['git@github.com:acme/example-app.git', 'git@github.com:acme/unregistered.git']) {
+    const { code, home } = world({ origin });
+    mkdirSync(join(code, 'docs', 'guides'), { recursive: true });
+    writeFileSync(join(code, 'docs', 'README.md'), 'x\n');
+    const r = cli(['where'], code, home);
+    assert.notEqual(r.status, 0, origin);
+    assert.equal(r.stdout, '');
+    assert.equal(r.stderr.trim(), NOT_CONNECTED, origin);
+    mkdirSync(join(code, 'docs', 'spec'));
+    assert.ok(cli(['where'], code, home).stderr.includes(NOT_MOVED), origin);
+  }
 });
 
 test('an unknown command: usage on stderr, exit non-zero', () => {
@@ -397,6 +416,16 @@ test('the hook in a project that has not moved: the migration sentence and nothi
   const r = run(code, home);
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, `${NOT_MOVED}\n`);
+});
+
+test('the hook in a project whose repository has only a plain docs/: no migration sentence, the map alone as for a project with nothing to migrate; with a docs/spec/, the migration sentence', () => {
+  const { code, home } = world();
+  mkdirSync(join(code, 'docs', 'guides'), { recursive: true });
+  const plain = run(code, home);
+  assert.equal(plain.status, 0, plain.stderr);
+  assert.equal(plain.stdout, MAP);
+  mkdirSync(join(code, 'docs', 'spec'));
+  assert.equal(run(code, home).stdout, `${NOT_MOVED}\n`);
 });
 
 test('the hook with no home directory: nothing and exit 0, even in a repository that has not moved', () => {

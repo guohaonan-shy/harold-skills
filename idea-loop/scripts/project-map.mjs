@@ -18,7 +18,8 @@
  *   `origin` matches a line of the list, and the project's directory in home has a docs/
  *                                                   `项目目录：<路径>`, then that project's map; over 2,000 characters only the
  *                                                   first 2,000 and a notice line; map file missing: one line saying so
- *   the repository has idea-loop's bootstrap files or a docs/ but no project directory in home with a docs/
+ *   the repository has idea-loop's bootstrap files or a docs/ with a spec/ or adr/ in it, but no project directory in
+ *   home with a docs/
  *                                                   one line: not moved yet, run /idea-loop:setup to migrate
  *   matched, but nothing in home and nothing to migrate   the map alone, if there is one
  *   no `origin`, or no line matches                 nothing
@@ -96,7 +97,7 @@ export function mapText(text) {
 export const NOT_MOVED = '这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移';
 export const NOT_CONNECTED = '这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`';
 export const IN_HOME = '当前目录是 home 本身，要带 --project <名字>';
-/** idea-loop's generated bootstrap files; one of them, or a `docs/`, at the top of a code repository means it has not moved yet. */
+/** idea-loop's generated bootstrap files; one of them, or a `docs/` with a `spec/` or `adr/` in it, at the top of a code repository means it has not moved yet. A plain `docs/` (a README, some notes) is not idea-loop's. */
 export const BOOTSTRAP_FILES = ['DEVELOPMENT.md', 'REVIEW.md', 'CODING_STANDARDS.md', 'PRODUCT.md', 'ISSUE_TRACKER.md', 'GLOSSARY.md', 'DESIGN.md', 'SEO.md'];
 
 export const homeOf = (env = process.env) => env.IDEA_LOOP_HOME || join(homedir(), 'home');
@@ -109,7 +110,9 @@ const isDir = (path) => {
   }
 };
 
-const hasBootstrap = (root) => BOOTSTRAP_FILES.some((f) => existsSync(join(root, f))) || isDir(join(root, 'docs'));
+/** Does the code repository at `root` have idea-loop's files, i.e. is it a project that has not moved into home yet? The one test the hook, `where` and setup's preflight share. */
+const hasBootstrap = (root) =>
+  BOOTSTRAP_FILES.some((f) => existsSync(join(root, f))) || ['spec', 'adr'].some((d) => isDir(join(root, 'docs', d)));
 
 const unsafeName = (name) => /[/\\]|^\.\.?$/.test(name);
 
@@ -171,8 +174,8 @@ export function locate({ cwd = process.cwd(), env = process.env, project: name }
 /**
  * Which project does the directory `docs` belong to? `<home>/projects/<名字>/docs` is that project, answered as
  * `locate({ project: <名字> })` does. Any other directory (the docs/ of a code repository, a directory at random) is not
- * in home: 'not-moved' when the directory it sits in has idea-loop's bootstrap files or is itself a code repository's
- * docs/, 'not-connected' otherwise. Same result shape as `locate`.
+ * in home: 'not-moved' when the directory it sits in has idea-loop's bootstrap files or a docs/ with a spec/ or adr/
+ * in it, 'not-connected' otherwise. Same result shape as `locate`.
  */
 export function locateByDocs({ docs, env = process.env }) {
   const dir = realish(docs);
