@@ -149,7 +149,7 @@ setup 加一节「home」，步骤放进它自己的参考文件，SKILL.md 主�
 - **`.backup/` 不进 git**：`~/.claude/settings.json` 有 `env` 一节，可能有密钥；home 在 Mac 上会推到 GitHub。
 - **`~/.claude/CLAUDE.md` 已经是软链、但不指向 `~/home/AGENTS.md` 的**：脚本不动它，出表时这一项写「已是别处的软链，要人处理」，setup 把它交回给人。
 - **版本号**：这个 PR 不升 idea-loop 的版本。依据：父 issue #331 定了 0.2.0 由父会话在集成分支合进 main 的那个 PR 里一次升；子 PR 合进的是 `release/idea-loop-0.2.0`，不是 main（2026-11-17 父会话转达，推翻 triage 时写的「第一个子 PR 就升到 0.2.0」）。
-- **已知限制**（找不到真实路径，不展开设计，人可以推翻）：仓库没有 `origin`（本机 `~/projects` 下的仓库都有）；同一个仓库被登记成两行；会话开在 home 里时设备地图会不会被 `~/.claude/CLAUDE.md` 和 `~/home/AGENTS.md` 各加载一次（实现时用一次 `claude -p` 看一眼，重复就记进这一条）。
+- **已知限制**（找不到真实路径，不展开设计，人可以推翻）：仓库没有 `origin`（本机 `~/projects` 下的仓库都有）；同一个仓库被登记成两行；会话开在 home 里时设备地图被 `~/.claude/CLAUDE.md` 和 `~/home/AGENTS.md` 各加载一次（2026-11-17 本机 `claude -p` 在 `~/home` 里实测：两个路径各一份，约 2200 字多算一遍；只在 home 里开会话时发生，开在代码仓库里只有一份）。
 
 ### 第一版项目地图由 setup 照模板起草，dreaming 之后接管
 
