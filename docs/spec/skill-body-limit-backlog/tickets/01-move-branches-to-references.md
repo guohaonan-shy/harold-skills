@@ -18,15 +18,15 @@ idea-loop 插件版本升一个 patch；插件 README 里如果列了这两个 s
 
 ## 验收标准
 
-- [ ] design-modeling、pr-review 两份 SKILL.md 主体按上面的量法都 < 5000 字（PR 描述贴改前改后的数）
-- [ ] pr-review 主文件仍有「设计变更」小节，正文是一句以触发条件开头、指向 `references/design-change.md` 的指针；参考文件里有原来那一节的全文（含 `idea-loop:design-change-sync` 和「PR 分支」）
-- [ ] design-modeling 主文件仍有「一次写入怎么走」小节，正文是指向 `references/write.md` 的指针；参考文件里有原来那一节的全文（备份、lint、diff 几步都在）
-- [ ] 挪走的内容在主文件里不再留一份（不重复）
-- [ ] pr-review 的字数测试守 5000，先在改前的文本上看到它红，改后绿；「设计变更」那条测试改成断言指针 + 参考文件内容
-- [ ] 设计变更的一致性测试对 pr-review 也像 implement 一样把参考文件拼进「设计变更」再测，仍然绿
-- [ ] implement 回放测试里「不比 9589 长」那一条删掉
-- [ ] 新增一条 design-modeling 的文档测试：主体 < 5000，「一次写入怎么走」小节在且指向 `references/write.md`，参考文件含备份、lint、diff 三步
-- [ ] idea-loop 全部测试通过；插件版本升 patch
+- [x] design-modeling、pr-review 两份 SKILL.md 主体按上面的量法都 < 5000 字（PR 描述贴改前改后的数）
+- [x] pr-review 主文件仍有「设计变更」小节，正文是一句以触发条件开头、指向 `references/design-change.md` 的指针；参考文件里有原来那一节的全文（含 `idea-loop:design-change-sync` 和「PR 分支」）
+- [x] design-modeling 主文件仍有「一次写入怎么走」小节，正文是指向 `references/write.md` 的指针；参考文件里有原来那一节的全文（备份、lint、diff 几步都在）
+- [x] 挪走的内容在主文件里不再留一份（不重复）
+- [x] pr-review 的字数测试守 5000，先在改前的文本上看到它红，改后绿；「设计变更」那条测试改成断言指针 + 参考文件内容
+- [x] 设计变更的一致性测试对 pr-review 也像 implement 一样把参考文件拼进「设计变更」再测，仍然绿
+- [x] implement 回放测试里「不比 9589 长」那一条删掉
+- [x] 新增一条 design-modeling 的文档测试：主体 < 5000，「一次写入怎么走」小节在且指向 `references/write.md`，参考文件含备份、lint、diff 三步
+- [x] idea-loop 全部测试通过；插件版本升 patch
 
 ## 选中的存量回归
 
