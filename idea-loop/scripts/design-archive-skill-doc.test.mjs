@@ -3,7 +3,7 @@
  * one that exists. The checks are shared with the wiki-conventions skill (`skill-doc-check.mjs`).
  *
  * 1. The SKILL.md body (frontmatter stripped, counted in UTF-8 characters) is under 5000.
- * 2. Other skills and agents call the skill by name plus a section title (`idea-loop:design-archive` 的「X」),
+ * 2. Other skills and agents call the skill by name plus a section title (idea-loop:design-archive 的「X」, written without backticks here so this note is not itself scanned),
  *    never by file path. Every title quoted that way must be a heading of the SKILL.md or of one of its
  *    `references/` files.
  */

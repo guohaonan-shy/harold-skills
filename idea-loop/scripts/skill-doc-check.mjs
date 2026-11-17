@@ -5,7 +5,8 @@
  * - bodyChars: the SKILL.md body (frontmatter stripped) in UTF-8 characters — the repo rule is
  *   "SKILL.md 主体 < 5000 字" (AGENTS.md); long material lives in the skill's own `references/`.
  * - danglingSectionPointers: every title quoted right after a `idea-loop:<skill>` mention, anywhere in the
- *   plugin's skills and agents, must be a heading of the skill's SKILL.md or of one of its `references/` files.
+ *   plugin (every `.md` and every script under it, not only skills and agents), must be a heading of the
+ *   skill's SKILL.md or of one of its `references/` files.
  */
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -18,6 +19,19 @@ export function mdFiles(dir) {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) return mdFiles(p);
     return name.endsWith('.md') ? [p] : [];
+  });
+}
+
+const SCRIPT_EXT = /\.(?:md|mjs|cjs|js|sh)$/;
+
+/** Every `.md` and script file under `dir` (node_modules and dot-directories skipped). */
+export function sourceFiles(dir) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).flatMap((name) => {
+    if (name === 'node_modules' || name.startsWith('.')) return [];
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) return sourceFiles(p);
+    return SCRIPT_EXT.test(name) ? [p] : [];
   });
 }
 
@@ -53,17 +67,15 @@ export function danglingSectionPointers({ pluginRoot, skillDir, skillName }) {
 
   const bad = [];
   let seen = 0;
-  for (const dir of ['skills', 'agents']) {
-    for (const file of mdFiles(join(pluginRoot, dir))) {
-      readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-        for (const m of line.matchAll(POINTER)) {
-          for (const [, title] of m[1].matchAll(/「([^」]+)」/g)) {
-            seen += 1;
-            if (!exists(title)) bad.push(`${relative(pluginRoot, file)}:${i + 1}  「${title}」`);
-          }
+  for (const file of sourceFiles(pluginRoot)) {
+    readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+      for (const m of line.matchAll(POINTER)) {
+        for (const [, title] of m[1].matchAll(/「([^」]+)」/g)) {
+          seen += 1;
+          if (!exists(title)) bad.push(`${relative(pluginRoot, file)}:${i + 1}  「${title}」`);
         }
-      });
-    }
+      }
+    });
   }
   return { seen, bad };
 }

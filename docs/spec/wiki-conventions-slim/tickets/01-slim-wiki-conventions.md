@@ -25,7 +25,7 @@ idea-loop 插件版本升一个 patch；插件 README 的文件树里补上新�
 
 - [x] 全量（2026-11-18）：`skill-private-references` 测试——别的 skill 不直接指 wiki-conventions 的 `references/` 文件，只指主体节名，由主体那一节的指针行再指进参考
 
-- [ ] review 第 1 轮 S4（2026-11-18）：防「指到不存在的节」的文档测试扫描整个 idea-loop 插件下的所有 `.md` 与脚本（不只 skills、agents 与 spec.mjs），spec 的测试决策原话「以及 idea-loop 下所有 `.md` 与脚本」
+- [x] review 第 1 轮 S4（2026-11-18）：防「指到不存在的节」的文档测试扫描整个 idea-loop 插件下的所有 `.md` 与脚本（不只 skills、agents 与 spec.mjs），spec 的测试决策原话「以及 idea-loop 下所有 `.md` 与脚本」
 
 ## 选中的存量回归
 

@@ -5,7 +5,7 @@
  *
  * 1. The SKILL.md body (frontmatter stripped, UTF-8 characters) is under 5000. Details only some callers need
  *    live in `references/`, one pointer line from the section that owns them.
- * 2. Other skills and agents call the skill by name plus a section title (`idea-loop:wiki-conventions` 的「X」).
+ * 2. Other skills and agents call the skill by name plus a section title (idea-loop:wiki-conventions 的「X」, written without backticks here so this note is not itself scanned).
  *    Section names are the contract: every title quoted that way must be a heading of the SKILL.md or of one of
  *    its `references/` files. `spec.mjs` quotes one in its error text too.
  */
