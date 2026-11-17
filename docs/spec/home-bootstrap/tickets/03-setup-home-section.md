@@ -18,13 +18,13 @@
 例子只用通用项目名，不出现真实项目（`no-project-leak` 测试守着）。同步 idea-loop README 的 setup 段。
 
 ## 验收标准
-- [ ] setup 的 SKILL.md 有「home」一节：只有一行指针和完成条件；主体 < 5000 字（贴量法输出）
-- [ ] 新参考文件写全三步，第 3 步「三处一起摆、同意一次全做、已是的不再问」
-- [ ] 设备地图模板含「回答…先按地图去查」那一句；项目地图模板含指向 `memory/MEMORY.md` 的一行
-- [ ] 一个文档测试守住：SKILL.md 的 home 一节只是指针；参考文件里三处改动一次问；两份模板的上述两句在
-- [ ] `no-project-leak`、setup 已有的文档测试通过
-- [ ] 调用 writing-for-agents 核过新参考文件与 SKILL.md 改动（改 skill 的工单三格：怎么结合、怎么验证、交回写明调过）
-- [ ] 全量测试通过（`plugin-version` 一条除外，同 01）
+- [x] setup 的 SKILL.md 有「home」一节：只有一行指针和完成条件；主体 < 5000 字（贴量法输出）
+- [x] 新参考文件写全三步，第 3 步「三处一起摆、同意一次全做、已是的不再问」
+- [x] 设备地图模板含「回答…先按地图去查」那一句；项目地图模板含指向 `memory/MEMORY.md` 的一行
+- [x] 一个文档测试守住：SKILL.md 的 home 一节只是指针；参考文件里三处改动一次问；两份模板的上述两句在
+- [x] `no-project-leak`、setup 已有的文档测试通过
+- [x] 调用 writing-for-agents 核过新参考文件与 SKILL.md 改动（改 skill 的工单三格：怎么结合、怎么验证、交回写明调过）
+- [ ] 全量测试通过（`plugin-version` 一条除外，同 01） ⏭ 延后 → PR 交付验收：全量套件本机不跑，PR 转 ready 后由 CI 在这个 head 上跑一遍
 
 ## 选中的存量回归
 - setup 单一来源的文档测试：setup 的 SKILL.md 和参考被改
