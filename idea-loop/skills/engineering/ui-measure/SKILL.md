@@ -54,7 +54,10 @@ description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json        # 人读
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json --json  # 机读
+node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" en-light.json zh-light.json en-dark.json zh-dark.json --json  # 多份矩阵
 ```
+
+多份矩阵（语言 × 深浅色这类）一次交给同一条命令：脚本只开一个浏览器，每份矩阵一个独立的上下文，默认最多同时跑 4 份（`--concurrency N` 改）。不要每份矩阵各开一个进程：每个进程是另一个浏览器，内存按份数翻倍；也不用加 `--max-old-space-size`，截图在脚本里直接解码比对，一格只占几 MB。一份矩阵时 `--json` 的输出跟以前一样；多份时是 `{ "matrices": [{ "matrix": <路径>, "findings", "瓶颈", "humanReviewCells" }, …] }`，有一份有发现退出码就是 `2`。每份矩阵各记各的上一轮（`matrix.json` 记在同目录的 `.ui-measure-last.json`，别的文件名记在 `.ui-measure-last.<文件名>.json`），所以几份矩阵可以放在同一个目录。
 
 退出码：`0` 全绿，`2` 有发现。每条发现带 `id`（缺陷类型）、`severity`、位置（`cell` · `anchor` · `property`）、画布值与实现值（`expected` · `actual` · `delta` · `detail`）和 `why`。严重度是机械的：
 

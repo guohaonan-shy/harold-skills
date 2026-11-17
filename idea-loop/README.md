@@ -400,7 +400,7 @@ idea-loop/
 └── scripts/
     ├── ui-compare.mjs                # the two deterministic comparators (measurement + pixel)
     ├── ui-compare.test.mjs           # their unit tests — the red/green of visual correctness
-    ├── ui-measure.mjs                # playwright shell: one browser, two tabs, walks the matrix
+    ├── ui-measure.mjs                # playwright shell: one browser, one context (two tabs) per matrix, several matrices at once; screenshots decoded in node via ui-png-compare.mjs
     ├── critic-score.mjs              # the critic's output shape and the stop decision: direction / pass / plateau / continue (+ the CLI uiux-refine calls each round)
     ├── critic-score.test.mjs         # its unit tests
     ├── design-archive.mjs            # the design archive parsed: every object, edge and reference under docs/design/prod/ (optionally with a requirement's delta/ laid over it) — the layer queries, MCP and archiving reuse
