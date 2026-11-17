@@ -13,11 +13,11 @@
 
 ## 验收标准
 
-- [ ] spec 出现在假 home 的 `projects/harold-skills/docs/spec/` 下，并已提交到假 home 的 main
-- [ ] 那个代码 worktree 的 `git status` 是干净的，没有切出 issue 分支
-- [ ] 会话里 issue 的读取对着 harold-skills 的 GitHub 仓库（看 `gh` 的调用记录）
-- [ ] 09 若延后了回放用例，这里补跑
-- [ ] 本机 `~/home` 和 `~/.claude/` 没有被改动（跑前跑后各看一次 `git -C ~/home status` 和改动时间）
+- [x] spec 出现在假 home 的 `projects/harold-skills/docs/spec/` 下，并已提交到假 home 的 main
+- [x] 那个代码 worktree 的 `git status` 是干净的，没有切出 issue 分支
+- [x] 会话里 issue 的读取对着 harold-skills 的 GitHub 仓库（看 `gh` 的调用记录）
+- [x] 09 若延后了回放用例，这里补跑
+- [x] 本机 `~/home` 和 `~/.claude/` 没有被改动（跑前跑后各看一次 `git -C ~/home status` 和改动时间）
 
 ## 选中的存量回归
 
