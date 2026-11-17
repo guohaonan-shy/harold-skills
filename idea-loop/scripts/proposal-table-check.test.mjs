@@ -44,6 +44,7 @@ const ROWS = {
   'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「明确不进 DESIGN.md 的内容」里的带日期的先例', '删除', OPTS]],
   漏归档: [['docs/design/tmp/cart-promo/', 'spec 已是「完成」，origin/main 上 tmp/cart-promo/ 里还留着画布与 delta（绕过合并步骤合进去的）', 'git ls-tree origin/main docs/design/tmp/cart-promo/；spec 状态：完成', '补归档', OPTS]],
   'retro 候选': [['候选：下单前先核对自动填好的字段（落点 `idea-loop:seo-outreach`）', '出现 3 次（harold-skills#108、#112、#115）；无已推翻；无反例', '#108：「留在候选吧。」；决定记录：[[108]]', '开 issue：改 skill', OPTS]],
+  记忆: [['memory/acme-shop-launch-batch.md', '只讲 acme-shop 的上线批次，别的项目用不到', '正文第一句「On acme-shop」；frontmatter originSessionId 的工作目录是 acme-shop', '挪进项目', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -305,7 +306,7 @@ test('a table with no rows anywhere is empty: valid, and reported as empty so th
 });
 
 test('a table with even one row is not empty', () => {
-  const r = run(sample({ 候选: [], 缺陷: [], 档案状态: [], 初扫页面: [], 档案对象: [], 'DESIGN.md 条目': [], 'retro 候选': [] }), '--json');
+  const r = run(sample({ 候选: [], 缺陷: [], 档案状态: [], 初扫页面: [], 档案对象: [], 'DESIGN.md 条目': [], 'retro 候选': [], 记忆: [] }), '--json');
   assert.equal(r.status, 0, r.out);
   const parsed = JSON.parse(r.out);
   assert.equal(parsed.empty, false);
@@ -467,4 +468,47 @@ test('a table that is not valid is reported as before, with the same exit code, 
   assert.doesNotMatch(withFlag.out, /^# 提议表/m);
   const unpath = (s) => s.replace(/\(\S*proposal\.md\)/g, '(file)'); // each run writes its own temp file
   assert.equal(unpath(withFlag.out), unpath(plain.out));
+});
+
+// ---------- 记忆：设备上那一份记忆的整理行 ----------
+
+const MEMORY_DISPOSITIONS = ['挪进项目', '合并', '订正', '毕业', '删除', '缩短索引行', '问人'];
+const memoryRow = (object, disposition) => [object, '两条规矩对同一情形给出相反的做法', 'feedback-a.md 第 3 行；feedback-b.md 第 5 行', disposition, OPTS];
+const memoryTable = (...rows) => `# 提议表 2026-10-19\n\n${section('记忆', rows)}`;
+
+test('every legal 记忆 disposition passes, a parenthetical note after it is fine', () => {
+  for (const d of [...MEMORY_DISPOSITIONS, '挪进项目（acme-shop）']) {
+    const r = run(memoryTable(memoryRow('memory/a.md', d)));
+    assert.equal(r.status, 0, `${d}: ${r.out}`);
+  }
+});
+
+test('a 记忆 row proposing 归档 is outside the closed set: exit 2, names the section, the cell and the legal set', () => {
+  const r = run(memoryTable(memoryRow('memory/a.md', '归档')));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /记忆/);
+  assert.match(r.out, /「归档」/);
+  assert.match(r.out, /挪进项目 \/ 合并 \/ 订正 \/ 毕业 \/ 删除 \/ 缩短索引行 \/ 问人/);
+});
+
+test('a disposition of another row type does not carry over to 记忆', () => {
+  for (const d of ['补归档', '驳回', '写 ADR 删 spec']) {
+    assert.equal(run(memoryTable(memoryRow('memory/a.md', d))).status, 2, d);
+  }
+});
+
+test('--split-ask pulls only the 问人 row out of a 记忆 section; the 挪进项目 row stays automatic', () => {
+  const md = memoryTable(memoryRow('memory/feedback-a.md', '问人'), memoryRow('memory/acme-shop-launch-batch.md', '挪进项目'));
+  const r = run(md, ASK_FLAG);
+  assert.equal(r.status, 0, r.out);
+  assert.deepEqual(sectionTitles(r.out), ['记忆']);
+  assert.match(r.out, /memory\/feedback-a\.md/);
+  assert.doesNotMatch(r.out, /acme-shop-launch-batch/);
+  assert.match(run(md.replace('| 问人 |', '| 问人（相反） |'), ASK_FLAG).out, /memory\/feedback-a\.md/);
+});
+
+test('a 记忆 section with no 问人 row splits to nothing', () => {
+  const r = run(memoryTable(memoryRow('memory/a.md', '合并'), memoryRow('memory/b.md', '毕业')), ASK_FLAG);
+  assert.match(r.out, /无问人的行/);
+  assert.doesNotMatch(r.out, /^## /m);
 });

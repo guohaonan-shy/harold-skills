@@ -74,9 +74,9 @@ idea-loop 从这几处读项目配置：
 
 ## 每周对账
 
-`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次。必须在本仓库的主 checkout 里做，任务 id 叫 `dreaming-<仓库名>`。步骤在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次。一台设备只有一个，在 home 那一步之后建，任务 id 叫 `dreaming-home`，目录是 home；不按仓库建。步骤在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
-完成条件：本仓库有一个开着的 `dreaming-<仓库名>` 定时任务，或人拒绝了，或记下了没建的原因。
+完成条件：这台设备有一个开着的 `dreaming-home` 定时任务（已有就是已有），或人拒绝了，或记下了没建的原因。
 
 ## 每周分拣
 
@@ -97,7 +97,7 @@ idea-loop 从这几处读项目配置：
 - 知识库选了仓库外或不要的：说清 spec、设计、dreaming 这些流程只读写仓库里的 `docs/`，在这个仓库里用不了。
 - home：建没建、登记的项目名、三处配置各是已改 / 已是 / 人拒绝 / 要人处理，备份在哪。
 - 规则回放：runner 装在哪、旧计划任务和队列目录删没删、**要人自己加的允许规则**（原样一行）。没加这条规则，无人值守的回放会被拦下。
-- 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
+- 每周对账：设备级的 `dreaming-home` 定时任务建没建、还是已有（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 调度：怎么起、建没建（按 `references/dispatch.md`）。
 - 留给人的事：安装或登录 `gh`、Codex；装浏览器和 Refero（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

@@ -11,7 +11,7 @@ dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的�
 | 条件 | 范围 | 提议表那一行写的原因 |
 |---|---|---|
 | 人调用时明确说了「全量」 | 全量 | 人说了全量 |
-| 取不到定时任务（运行环境没有『定时任务』，或列出的任务里没有 `dreaming-<仓库名>`） | 全量 | 没有定时任务 |
+| 取不到定时任务（运行环境没有『定时任务』，或列出的任务里没有 `dreaming-home`） | 全量 | 没有定时任务 |
 | 定时任务没有一次成功的执行 | 全量 | 定时任务还没有成功跑过 |
 | 找不到基准提交（见下） | 全量 | 找不到那一刻的提交，并写出为什么 |
 | 以上都不是 | 增量 | 自哪天的哪个提交起 |
@@ -20,7 +20,7 @@ dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的�
 
 ## 基准提交
 
-1. 任务 id 是 `dreaming-<仓库名>`，仓库名取主 checkout 的目录名，跟 `/idea-loop:setup` 建任务时用的一样。dreaming 在自己切的 worktree 里跑，`git rev-parse --show-toplevel` 取到的是这个 worktree 的目录名，会找不到任务；改从 git 的公共目录往上取：`basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"`，在主 checkout 和任何 worktree 里得到的都是主 checkout 的目录名。列出的任务里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
+1. 任务 id 是 `dreaming-home`：一台设备只有这一个 dreaming 任务，`/idea-loop:setup` 建它时就用这个 id，不从仓库目录名推。列出的任务里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
 2. 用『定时任务』读这个任务上次成功运行的时间，记下来当 `started_at`。这一次自己若就是定时任务起的，它还没跑完，不能算上次成功运行。
 3. 起环境时已经 `git fetch`。找 `origin/<基准分支>` 在那一刻的提交：`git rev-list -1 --first-parent --before="<started_at>" origin/<基准分支>`。输出为空（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
 

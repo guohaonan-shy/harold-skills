@@ -75,7 +75,8 @@ test('no file of the plugin names one of the eight old states', () => {
 });
 
 test('no file of the plugin groups issues any more (整合 / consolidation) and the prompt file is gone', () => {
-  assert.deepEqual(hits(/整合|[Cc]onsolidat/), []);
+  // `consolidate-memory` is the desktop's memory skill that dreaming's memory pass says it does not call, not issue grouping
+  assert.deepEqual(hits(/整合|[Cc]onsolidat(?!e-memory)/), []);
   assert.deepEqual(files(pluginRoot).filter((f) => /consolidation-prompt/.test(basename(f))), []);
 });
 
