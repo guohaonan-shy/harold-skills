@@ -52,14 +52,14 @@ test('the pr skill has exactly two section tables, one per deliverable, every ro
     }
   }
   const [description, report] = tables;
-  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '要你做的事', '参考']);
+  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '要你做的事', '参考']);
   assert.deepEqual(report.map((r) => r[0]), ['开头一句', '已按规则处理', '要你决定', '能否回滚', '要你看的', '折叠区']);
 });
 
 test('the description table carries the script section names in order, with 能否回滚 after 怎么验证 and no 顺带开的 issue of its own', () => {
   const [description] = sectionTables(skill);
   const names = description.map((r) => r[0].match(/`([^`]*)`/)?.[1]);
-  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'your-todo', 'reference']);
+  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'live-check', 'your-todo', 'reference']);
   assert.ok(!description.some((r) => r[0].includes('顺带开的 issue')));
 });
 
@@ -98,7 +98,7 @@ test('the Review 汇报 gives every 要你决定 item one format: now, impact, e
 test('the PR description template has 能否回滚 right after 怎么验证, and none of the sections that were folded away', () => {
   const text = readFileSync(join(prDir, 'references', 'description.md'), 'utf8');
   const heads = [...text.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '要你做的事', '参考']);
+  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '要你做的事', '参考']);
   assert.doesNotMatch(text, /\*\*切法\*\*/);
 });
 

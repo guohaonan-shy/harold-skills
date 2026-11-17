@@ -28,9 +28,9 @@ test('description only routes: one line, no state list or command', () => {
   assert.doesNotMatch(description, /backlog|triage|issues\.mjs/);
 });
 
-test('the body names every state, the four required body sections, backlog / blocked by and the commands', () => {
+test('the body names every state, the five required body sections, backlog / blocked by and the commands', () => {
   for (const s of STATES) assert.match(body, new RegExp(`\\| ${s} \\|`), `state ${s}`);
-  for (const h of ['## 问题', '## 证据', '## 影响范围', '## 从哪发现']) assert.ok(body.includes(h), h);
+  for (const h of ['## 背景', '## 问题', '## 证据', '## 影响范围', '## 从哪发现']) assert.ok(body.includes(h), h);
   assert.match(body, /先放着/);
   assert.match(body, /blocked by/);
   assert.match(body, /--comment=/);
@@ -41,6 +41,22 @@ test('the body names every state, the four required body sections, backlog / blo
   assert.match(body, /`issues new`/, '「开一个 issue」 goes through issues new');
   assert.doesNotMatch(body, /gh issue create/);
   assert.doesNotMatch(body, /\b(advance|resume|handoff|unhandoff)\b/);
+});
+
+test('正文 marks 背景 required and explains it; 开一个 issue says five required sections and 几周后的自己和人', () => {
+  const format = body.split(/^## 正文\s*$/m)[1].split(/^## blocked by/m)[0];
+  assert.match(format, /^## 背景 +必填：读懂问题要先知道的机制或现状$/m);
+  assert.ok(format.indexOf('## 背景') < format.indexOf('## 问题'), '背景 is the first line of the format');
+  assert.ok(format.includes('读懂问题要先知道的机制或现状，写给隔了几周回来、已经忘了这一块的人：问题里第一次出现的叫法（规则名、字段、页面、命令）各用一句说清它是什么、管什么；规则或现状互相牵扯的，写出各自原文和出处。确实不需要的写『无』。'));
+  const open = body.split(/^## 开一个 issue\s*$/m)[1].split(/^## /m)[0];
+  assert.match(open, /校验正文五个必填节/);
+  assert.doesNotMatch(open, /四个必填节/);
+  assert.match(open, /写给一个没有上下文的人看，包括几周后的自己和人/);
+});
+
+test('the rollback issue the merge step opens carries a 背景 (原 issue 改的是什么、上线自查查的是什么)', () => {
+  const merge = read(pluginRoot, 'skills', 'engineering', 'pr-review', 'references', 'merge.md');
+  assert.match(merge, /背景：原 issue 改的是什么、上线自查查的是什么；问题：/);
 });
 
 test('each platform reference states status, type, module and how a PR attaches to the issue', () => {

@@ -28,7 +28,7 @@ function section(doc, title) {
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
 const weeklySteps = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
 const seoSetup = read('skills', 'seo', 'seo-setup', 'SKILL.md');
-const seoSetupSteps = read('skills', 'seo', 'seo-setup', 'references', 'weekly-scan.md');
+const seoSetupSteps = read('skills', 'seo', 'seo-setup', 'references', 'daily-scan.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 const scope = read('skills', 'productivity', 'dreaming', 'references', 'incremental-scope.md');
 const proposal = read('skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');
@@ -39,7 +39,7 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
   assert.ok(section(setup, '每周对账').includes('references/weekly-dreaming.md'));
   const mine = weeklySteps;
   // seo-setup's SKILL.md section points at its own reference, which carries the steps
-  assert.ok(section(seoSetup, '8. 每周扫描').includes('references/weekly-scan.md'));
+  assert.ok(section(seoSetup, '8. 每天扫描').includes('references/daily-scan.md'));
   const theirs = seoSetupSteps;
   // the same moving parts, in the same order: look, (no capability → hand the prompt over), ask, create, tell.
   const parts = [
