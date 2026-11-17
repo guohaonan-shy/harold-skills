@@ -16,7 +16,9 @@ import { fileURLToPath } from 'node:url';
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
 const entries = hooks.SessionStart;
-const commands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
+const allCommands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
+// the three runtime-detect sections; the project map is a fourth command of its own (project-map.test.mjs)
+const commands = allCommands.filter((c) => c.includes('runtime-detect.mjs'));
 
 /** The limit Claude Code puts on one hook's output; past it the session keeps only a 2,000-character preview. */
 const HOOK_OUTPUT_LIMIT = 10000;
@@ -34,8 +36,10 @@ test('SessionStart has no matcher, so startup, resume, clear, compact and fork a
   for (const e of entries) assert.ok(!('matcher' in e), `a matcher would limit the sources: ${JSON.stringify(e)}`);
 });
 
-test('exactly three SessionStart commands, each its own output', () => {
+test('three runtime-detect SessionStart commands, each its own output, and the project map is a separate command beside them', () => {
   assert.equal(commands.length, 3);
+  assert.equal(allCommands.length, 4);
+  assert.deepEqual(allCommands.slice(0, 3), commands);
 });
 
 for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-desktop'], ['MAGI_SESSION_ID set', { MAGI_SESSION_ID: 'abc' }, 'magi']]) {
