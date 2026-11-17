@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-13
 title: 规则回放改造：取消夜间队列、当场跑，参考 poteto 的 eval playbook
 tags: [idea-loop-decisions, replay-run-large-now]
-related: ["[[replay-run-large-now]]", "[[0028-retro]]"]
+related: ["[[0052-replay-run-large-now]]", "[[0028-retro]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在 harold-skills#174 的 issue 会话里（PR #308 第 1 轮 review 之后）。U1 是 #173 的会话转来的原话，原文也在 #173 的关闭评论里。

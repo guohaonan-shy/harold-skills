@@ -631,6 +631,64 @@ test('exercisedBy: nothing used, or only things the change did not touch: not us
   assert.deepEqual(exercisedBy([], CHANGE, { roots: ROOTS }), { status: 'miss', changed: 3 });
 });
 
+// Spec session-start-inject-rules, ticket 01: the hook puts three kinds of file in the session at the start, so a run
+// does not need to read or call them for the change to reach it.
+const INJECTED_FILES = [
+  'skills/productivity/decision-rules/SKILL.md',
+  'skills/productivity/runtime/SKILL.md',
+  'skills/productivity/runtime/references/claude-desktop.md',
+  'skills/productivity/runtime/references/magi.md',
+];
+
+test('exercisedBy: a change to an injected file counts as used with no read or call in the stream, via "injected"', () => {
+  for (const [runtime, file] of [['claude-desktop', INJECTED_FILES[0]], ['claude-desktop', INJECTED_FILES[1]], ['claude-desktop', INJECTED_FILES[2]], ['magi', INJECTED_FILES[3]], ['magi', INJECTED_FILES[0]]]) {
+    const change = { files: [file], skills: [], agents: [] };
+    assert.deepEqual(exercisedBy([], change, { roots: ROOTS, runtime }), { status: 'hit', via: 'injected', name: file, changed: 1 }, `${runtime} ${file}`);
+  }
+  const decisionRules = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
+  const events = [tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/other/SKILL.md' }), { type: 'result', result: 'done' }];
+  assert.deepEqual(exercisedBy(events, decisionRules, { roots: ROOTS, runtime: 'magi' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[0], changed: 1 });
+});
+
+// Review round 1, S1: the hook injects only the reference of the session's own runtime.
+test("exercisedBy: the other runtime's reference is not injected: a change only to it needs a read or a call", () => {
+  const onlyMagi = { files: [INJECTED_FILES[3]], skills: ['idea-loop:runtime'], agents: [] };
+  assert.deepEqual(exercisedBy([], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 }, 'desktop session, only the magi reference changed, nothing read: not used');
+  const onlyDesktop = { files: [INJECTED_FILES[2]], skills: ['idea-loop:runtime'], agents: [] };
+  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 1 }, 'desktop session, the desktop reference changed: used, injected');
+  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'magi' }), { status: 'miss', changed: 1 }, 'and the other way round');
+  // read or called, it counts again
+  const read = tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/productivity/runtime/references/magi.md' });
+  const r = exercisedBy([read], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([r.status, r.via], ['hit', 'read']);
+  const s = exercisedBy([tool('Skill', { skill: 'idea-loop:runtime' })], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([s.status, s.via], ['hit', 'skill']);
+});
+
+test('exercisedBy: without a known runtime (unknown forced name, or none given) only decision-rules is injected', () => {
+  for (const file of [INJECTED_FILES[1], INJECTED_FILES[2], INJECTED_FILES[3]]) {
+    const change = { files: [file], skills: [], agents: [] };
+    assert.equal(exercisedBy([], change, { roots: ROOTS, runtime: null }).status, 'miss', file);
+    assert.equal(exercisedBy([], change, { roots: ROOTS }).status, 'miss', `${file} (no runtime given)`);
+  }
+  assert.equal(exercisedBy([], { files: [INJECTED_FILES[0]], skills: [], agents: [] }, { roots: ROOTS, runtime: null }).via, 'injected');
+});
+
+test('exercisedBy: when the stream also shows a read or a call, that is what is reported, not the injection', () => {
+  const change = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
+  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:decision-rules' })], change, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([r.status, r.via], ['hit', 'skill']);
+});
+
+test('exercisedBy: a change only to other skills, or to other files under the runtime skill, is still not used', () => {
+  assert.deepEqual(exercisedBy([], { files: ['skills/engineering/demo/SKILL.md'], skills: ['idea-loop:demo'], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 });
+  const nearby = ['skills/productivity/decision-rules/references/more.md', 'skills/productivity/runtime/notes.md', 'skills/productivity/runtime-extra/SKILL.md', 'agents/decision-rules.md'];
+  for (const file of nearby) assert.equal(exercisedBy([], { files: [file], skills: [], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }).status, 'miss', file);
+  // a change set that has one injected file among others is used through the injected one
+  const mixed = { files: ['skills/engineering/demo/SKILL.md', INJECTED_FILES[2]], skills: ['idea-loop:demo'], agents: [] };
+  assert.deepEqual(exercisedBy([], mixed, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 2 });
+});
+
 test('exercisedBy: an empty change set (only scripts changed) is not applicable, whatever the run did', () => {
   assert.deepEqual(exercisedBy([tool('Skill', { skill: 'idea-loop:demo' })], { files: [], skills: [], agents: [] }, { roots: ROOTS }), { status: 'na', changed: 0 });
 });

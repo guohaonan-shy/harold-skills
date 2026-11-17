@@ -34,6 +34,7 @@ test('the installed copy carries the Codex companion finder the judge needs, and
   const dest = fresh();
   const { entry } = install(dest);
   assert.ok(existsSync(join(dest, 'runtime', 'scripts', 'codex-companion.mjs')));
+  assert.ok(existsSync(join(dest, 'runtime', 'scripts', 'runtime-detect.mjs')), 'the exercised check detects the runtime with it');
   const r = run(entry, ['--bogus']);
   assert.equal(r.status, 2, 'it starts (every import resolves) and rejects the argument itself');
   assert.match(r.stderr, /unknown argument/);

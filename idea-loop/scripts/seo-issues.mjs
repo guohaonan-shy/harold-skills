@@ -2,7 +2,7 @@
 /**
  * The only place seo-scan writes GitHub: turns one run's findings into issues. A new issue carries no
  * status:* label, so it simply is backlog, like an issue opened by hand; its body
- * has the four sections every issue needs (问题 / 证据 / 影响范围 / 从哪发现, checked with issues.mjs's
+ * has the five sections every issue needs (背景 / 问题 / 证据 / 影响范围 / 从哪发现, checked with issues.mjs's
  * `bodyErrors` before anything is created) plus how to reproduce it, because the issue session re-runs that
  * independently.
  *
@@ -91,6 +91,7 @@ const scope = (g) => {
 
 export function issueBody(g, date = today()) {
   const parts = [
+    `## 背景\n\n这条 issue 是 seo-scan 在 ${date} 扫描「${DIRECTION_NAMES[g.direction]}」方向时提出的。「怎么复现」一节可以独立重跑，拿到的结果应该和「证据」一致；「建议的修法」是扫描时的判断，triage 时要先核实再采用。`,
     `## 问题\n\n${g.title}`,
     `## 证据\n\n${g.evidences.map(evidenceLine).join('\n')}${ratioLine(g.ratio)}`,
     `## 影响范围\n\n${scope(g)}`,
@@ -106,7 +107,7 @@ export function issueBody(g, date = today()) {
       `## triage 阶段\n\n内容类：目标词「${text(c.keyword)}」，页面类型「${text(c.pageType)}」，${c.mode === 'update' ? '改已有页' : '新开页'}。起草 spec 时用 \`idea-loop:seo-brief\` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 \`idea-loop:seo-writing\` 按 brief 写。`,
     );
   }
-  if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出只改 `docs/` 的 PR。邮件由人发送，任何会话都不发。');
+  if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出只改 `docs/` 的 PR。草稿进人的草稿箱，人说「发」才发。');
   parts.push(`---\n由 \`idea-loop:seo-scan\` 提出。\n\n${marker(g)}`);
   return parts.join('\n\n');
 }

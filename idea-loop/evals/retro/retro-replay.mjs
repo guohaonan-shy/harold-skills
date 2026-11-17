@@ -18,7 +18,8 @@
  * under the plugin's `skills/` and `agents/` between the pre-change and the post-change plugin; the run used it when its event
  * stream (main session and sub-agents) reads one of them (a Read, or a Bash command naming its full path), calls a skill one of them
  * belongs to (Skill tool, or a prompt that starts with that skill's slash command), or starts an agent one of them defines (Agent
- * tool). Used: the judge's answer decides as before, and `result.json` records what was hit (`exercised`). Not used: the judge still
+ * tool), or when one of them is a file the plugin's SessionStart hook injects (decision-rules, runtime, its reference: the session has
+ * them from the start, nothing shows it; a read or call in the stream is reported first). Used: the judge's answer decides as before, and `result.json` records what was hit (`exercised`). Not used: the judge still
  * runs (its answers stay in the result for the human) but the outcome is `not-exercised` ("用例没测到改动"), exit 1, not a pass.
  * An empty change set (only scripts changed) is recorded as "不适用" and the judge decides.
  *
@@ -77,12 +78,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
 import { findCompanion } from '../../scripts/codex-companion.mjs';
+import { detect as detectRuntime } from '../../scripts/runtime-detect.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
   applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, parseOverrides, parseVerdict,
   productsInOrder, relabelLarge, settleVerdicts, verdictsBySide,
 } from './replay.mjs';
+
+/** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way. null for an unknown forced name. */
+function sessionRuntime() {
+  try {
+    return detectRuntime(process.env);
+  } catch {
+    return null;
+  }
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
@@ -441,7 +452,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       if (s.side === 'after') {
         // before the judge: did this run use what the change touched? (the paths in its stream are the staged copy's)
         const roots = [...new Set([staged.dir, realpathSync(staged.dir)])];
-        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c) });
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: sessionRuntime() });
         console.log(`改动核对：${describeExercised(exercised)}`);
       }
     } finally {

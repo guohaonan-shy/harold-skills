@@ -33,7 +33,7 @@ related: ["[[2026-10-19-pr-decision-friction]]", "[[51]]"]
 - 决策规则已升成独立 skill `idea-loop/skills/productivity/decision-rules/`（条文已按 `ADR-0035` 改成原则）。
 - `idea-loop/scripts/review-check.mjs` 有处置 `照规则` / `要你决定` 与「照规则」条目的形状校验。
 - `idea-loop/skills/engineering/pr-review/` 里有每条候选标处置（`references/review-standards.md`）、人推翻后不再按同一依据处理、一轮之后自动起下一轮（两轮上限）。
-- `idea-loop/skills/engineering/pr/` 的 Review 汇报有「已按规则处理」一节；`idea-loop/skills/engineering/implement/SKILL.md` 对存量无关问题自动开 issue。
+- `idea-loop/skills/engineering/pr/` 的 Review 汇报有「已按规则处理」一节；`idea-loop/skills/engineering/implement/references/landing-branches.md` 对存量无关问题自动开 issue。
 - `idea-loop/agents/implementer.md` 的「停，还是延后」有「沿用，不停」一行，写进交回的 `by_existing_practice`。
 - 合并为 PR #54。
 
