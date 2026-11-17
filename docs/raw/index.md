@@ -25,6 +25,7 @@
 | [[2026-10-26-unstable-sections]] | conversation | 2026-10-26 | #65：拍不稳的段对上 TOEFLAIR 营销站组件，两条待定交给推荐 |
 | [[2026-11-05-issue-model-regrill]] | conversation | 2026-11-05 | grill —— #242 重定 issue 模型：七个状态对上 Linear，triage 可跳过，实现开始即开 PR，一个仓库一个 PR，issue 正文格式 |
 | [[2026-11-15-home-repo-grill]] | conversation | 2026-11-15 | grill —— idea-loop 0.2.0：home（一台设备一份的私有仓库）与知识库、记忆脱离项目 |
+| [[2026-11-17-runtime-local-override]] | conversation | 2026-11-17 | 讨论 —— #295 runtime 的本机覆盖：放进 home 按运行环境一份，同名小节整段替换 |
 | [decisions/51](decisions/51.md) | conversation | 2026-10-23 | 决定记录 —— #51 retro 的 issue 会话：摆过的题与 retro 候选的结果 |
 | [decisions/55](decisions/55.md) | conversation | 2026-10-26 | 决定记录 —— #55 的 issue 会话：冻结后画布为唯一真相、dreaming 拆分与增量对账，摆过的题与 retro 候选的结果 |
 | [decisions/57](decisions/57.md) | conversation | 2026-10-26 | 决定记录 —— #57 的 issue 会话：结束整个任务的入口用 X，摆过的题与 retro 候选的结果 |
