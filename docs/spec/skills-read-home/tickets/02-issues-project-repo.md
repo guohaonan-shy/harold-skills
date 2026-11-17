@@ -20,13 +20,13 @@ issue 脚本（`issues.mjs`）的每个命令都收一个 `<docs>`。现在它�
 
 ## 验收标准
 
-- [ ] 假 home 登记了 `example-app`（远端 `acme/example-app`）、项目目录有 `docs/`：`show <那个 docs> 7` 时 stub 收到的每次 `gh` 调用都对着 `acme/example-app`（`api` 路径里没有残留 `{owner}/{repo}`，其余子命令带 `-R acme/example-app` 或已有 `--repo acme/example-app`）
-- [ ] `set` / `type` / `new` / `labels` 同样对着 `acme/example-app`
-- [ ] issue 分支从项目清单登记的本地 clone 里找到
-- [ ] 分类从 `ISSUE_TRACKER.md`「分类 label」一节读到；代码仓库 `AGENTS.md` 里的「issue 分类」不再被读
-- [ ] 删掉项目目录的 `docs/`、代码仓库根放 `DEVELOPMENT.md`，对代码仓库里的 `docs/` 跑 `show`：退出码非 0，输出迁移那句话，stub 一次都没被调
-- [ ] 「仓库」一节的解析和多仓库找 PR 的分支已删，相关测试改成单仓库
-- [ ] 现有 issue 脚本测试意图全保留并全绿
+- [x] 假 home 登记了 `example-app`（远端 `acme/example-app`）、项目目录有 `docs/`：`show <那个 docs> 7` 时 stub 收到的每次 `gh` 调用都对着 `acme/example-app`（`api` 路径里没有残留 `{owner}/{repo}`，其余子命令带 `-R acme/example-app` 或已有 `--repo acme/example-app`）
+- [x] `set` / `type` / `new` / `labels` 同样对着 `acme/example-app`
+- [x] issue 分支从项目清单登记的本地 clone 里找到
+- [x] 分类从 `ISSUE_TRACKER.md`「分类 label」一节读到；代码仓库 `AGENTS.md` 里的「issue 分类」不再被读
+- [x] 删掉项目目录的 `docs/`、代码仓库根放 `DEVELOPMENT.md`，对代码仓库里的 `docs/` 跑 `show`：退出码非 0，输出迁移那句话，stub 一次都没被调
+- [x] 「仓库」一节的解析和多仓库找 PR 的分支已删，相关测试改成单仓库
+- [x] 现有 issue 脚本测试意图全保留并全绿
 
 ## 选中的存量回归
 

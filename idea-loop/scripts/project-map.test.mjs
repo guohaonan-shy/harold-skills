@@ -8,11 +8,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { IN_HOME, MAP_LIMIT, NOT_CONNECTED, NOT_MOVED, TRUNCATED_NOTICE, findProject, mapText, normalizeRemote, parseProjects } from './project-map.mjs';
+import { IN_HOME, MAP_LIMIT, NOT_CONNECTED, NOT_MOVED, TRUNCATED_NOTICE, findProject, locate, locateByDocs, mapText, normalizeRemote, parseProjects } from './project-map.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
@@ -256,6 +256,47 @@ test('where, from a worktree of the code repository: the project directory in ho
     cloneDir: join(dirname(worktree), 'projects', 'example-app'), // `~` is the HOME the child got
     inHome: true,
   });
+});
+
+test('locateByDocs: the docs/ of a project directory in home is that project; the answer is the one `where --project` gives', () => {
+  const { home, root } = moved();
+  const env = { IDEA_LOOP_HOME: home, HOME: root };
+  const found = locateByDocs({ docs: join(home, DOCS), env });
+  assert.equal(found.ok, true);
+  assert.equal(found.project, 'example-app');
+  assert.equal(found.repo, 'acme/example-app');
+  assert.equal(found.projectDir, join(home, 'projects', 'example-app'));
+  assert.equal(found.cloneDir, join(root, 'projects', 'example-app'));
+  assert.deepEqual(found, locate({ project: 'example-app', env }));
+});
+
+test('locateByDocs: the docs/ of a code repository is not moved yet; a directory with nothing of idea-loop is not connected; an unlisted name in home is not connected', () => {
+  const { code, home, root } = moved();
+  const env = { IDEA_LOOP_HOME: home, HOME: root };
+  mkdirSync(join(code, 'docs'));
+  const unmoved = locateByDocs({ docs: join(code, 'docs'), env });
+  assert.equal(unmoved.ok, false);
+  assert.equal(unmoved.code, 'not-moved');
+  assert.equal(unmoved.message, NOT_MOVED);
+  const loose = join(root, 'loose', 'notes');
+  mkdirSync(loose, { recursive: true });
+  const nothing = locateByDocs({ docs: loose, env });
+  assert.equal(nothing.code, 'not-connected');
+  assert.equal(nothing.message, NOT_CONNECTED);
+  mkdirSync(join(home, 'projects', 'stranger', 'docs'), { recursive: true });
+  const stranger = locateByDocs({ docs: join(home, 'projects', 'stranger', 'docs'), env });
+  assert.equal(stranger.ok, false);
+  assert.equal(stranger.code, 'unlisted');
+  assert.match(stranger.message, /没接上/);
+});
+
+test('locateByDocs: a path that reaches the docs/ of home through a symlink is still that project', () => {
+  const { home, root } = moved();
+  const link = join(root, 'link');
+  symlinkSync(home, link);
+  const found = locateByDocs({ docs: join(link, DOCS), env: { IDEA_LOOP_HOME: home, HOME: root } });
+  assert.equal(found.ok, true);
+  assert.equal(found.project, 'example-app');
 });
 
 test('where --project from home gives the same directory, and so does it from anywhere; without --project, home itself is refused', () => {

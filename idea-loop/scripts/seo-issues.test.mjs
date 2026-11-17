@@ -90,7 +90,7 @@ function fakeGh() {
   return { gh, calls, labels };
 }
 
-const TYPES = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索流量\n  - `technical`：技术\n  - `keywords`：关键词\n');
+const TYPES = parseTypes('## 分类 label\n\n- `bug`：缺陷\n- `seo`：搜索流量\n  - `technical`：技术\n  - `keywords`：关键词\n');
 
 test('apply: new issues get no status label and are classified seo/<direction>', () => {
   const { gh, calls, labels } = fakeGh();
@@ -105,7 +105,7 @@ test('apply: new issues get no status label and are classified seo/<direction>',
 
 test('apply: a project without the seo category still gets the issue, flagged untyped', () => {
   const { gh, labels } = fakeGh();
-  const r = apply(gh, parseTypes('## issue 分类\n\n- `bug`：缺陷\n'), plan([finding()], []));
+  const r = apply(gh, parseTypes('## 分类 label\n\n- `bug`：缺陷\n'), plan([finding()], []));
   assert.equal(r.created.length, 1);
   assert.equal(r.untyped, true);
   assert.equal(labels.get('40'), undefined);

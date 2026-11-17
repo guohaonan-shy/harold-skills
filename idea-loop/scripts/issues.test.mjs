@@ -1,14 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseRepos, parseTypes, platformOf,
+  COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseTypes, platformOf,
   prState, priorityOf, queues, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
 } from './issues.mjs';
+import { NOT_CONNECTED, NOT_MOVED } from './project-map.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./issues.mjs', import.meta.url));
 const UI = '- 点重试 → 只重跑这一题';
@@ -29,22 +30,39 @@ ${ui ? `\n### 前端交互\n${ui}\n` : ''}
 ${freeze ? '\n### 冻结摘要\n- 画布\n' : '\n无分歧。\n'}${fork ? '\n### 待定：要不要单独计配额\n- A\n' : ''}
 `;
 
-/** A project root with docs/ (and the given specs), plus an ISSUE_TRACKER.md when `tracker` is given. Returns docs/. */
-function docsWith(specs = {}, tracker = null) {
-  const root = mkdtempSync(join(tmpdir(), 'issues-'));
-  const docs = join(root, 'docs');
-  mkdirSync(docs);
+const GIT = ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false'];
+const git = (cwd, ...args) => execFileSync('git', [...GIT, ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+
+/** The env each docs/ made by `docsWith` is run with: IDEA_LOOP_HOME at its fake home, HOME at the temp root (where `~/code/...` clones live). */
+const ENVS = new Map();
+const envOf = (docs) => ENVS.get(docs);
+
+/**
+ * A fake home with a project `example-app` registered (its remote is `https://github.com/<repo>`, its clone `~/code/example-app`)
+ * and the project directory in it: docs/ (with the given specs) and, when `tracker` is given, ISSUE_TRACKER.md. Returns docs/.
+ * `ENVS` remembers the env that finds it, for `cli`.
+ */
+function docsWith(specs = {}, tracker = null, { repo = 'o/r' } = {}) {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'issues-')));
+  const home = join(root, 'home');
+  const projectDir = join(home, 'projects', 'example-app');
+  const docs = join(projectDir, 'docs');
+  mkdirSync(docs, { recursive: true });
+  writeFileSync(join(home, 'AGENTS.md'), `# 设备\n\n## 项目\n\nexample-app（一个例子）: ~/code/example-app. Clone from https://github.com/${repo} if missing.\n`);
   for (const [slug, md] of Object.entries(specs)) {
     mkdirSync(join(docs, 'spec', slug), { recursive: true });
     writeFileSync(join(docs, 'spec', slug, `${slug}.md`), md);
   }
-  if (tracker !== null) writeFileSync(join(root, 'ISSUE_TRACKER.md'), tracker);
+  if (tracker !== null) writeFileSync(join(projectDir, 'ISSUE_TRACKER.md'), tracker);
+  ENVS.set(docs, { IDEA_LOOP_HOME: home, HOME: root });
   return docs;
 }
 
-const TRACKER_TWO_REPOS = `# Issue tracker：GitHub
+const GITHUB_TRACKER = `# Issue tracker：GitHub
 
 ## 仓库
+
+这一节是旧版留下的，脚本不再读：
 
 | 仓库 | 本地路径 | 主分支 | 管什么 |
 |---|---|---|---|
@@ -59,8 +77,9 @@ const TRACKER_TWO_REPOS = `# Issue tracker：GitHub
  * With `strictLabels`, an edit behaves as GitHub did on a repo missing the label: the removals go through,
  * then adding a label the repo does not have throws; `label create` adds to the repo's labels.
  */
-function fakeGh(issues, labels = [], prs = {}, { strictLabels = false, login = 'me' } = {}) {
+function fakeGh(issues, labels = [], prs = {}, { strictLabels = false, login = 'me', repo = 'o/r' } = {}) {
   const calls = [];
+  const raw = [];
   const rest = (i) => ({
     number: i.number,
     id: 1000 + i.number,
@@ -72,12 +91,15 @@ function fakeGh(issues, labels = [], prs = {}, { strictLabels = false, login = '
     assignees: (i.assignees ?? []).map((l) => ({ login: l })),
     created_at: i.createdAt ?? '2026-01-01T00:00:00Z',
     updated_at: i.updatedAt ?? i.createdAt ?? '2026-01-01T00:00:00Z',
-    repository_url: 'https://api.github.com/repos/o/r',
+    repository_url: `https://api.github.com/repos/${repo}`,
     sub_issues_summary: { total: Object.values(issues).filter((c) => c.subOf === i.number).length },
     issue_dependencies_summary: { blocked_by: (i.blockedBy ?? []).filter((b) => issues[b]?.state === 'OPEN').length, total_blocked_by: (i.blockedBy ?? []).length },
     ...(i.pull ? { pull_request: {} } : {}),
   });
-  const gh = (args) => {
+  const gh = (given) => {
+    raw.push(given);
+    // `-R <repo>` is how the script names the project's repository; the routes below do not care which
+    const args = given.filter((a, k) => a !== '-R' && given[k - 1] !== '-R');
     const [noun, verb, n] = args;
     if (noun === 'label' && verb === 'list') return JSON.stringify(labels.map((name) => ({ name })));
     if (noun === 'issue' && verb === 'view') return JSON.stringify({ labels: issues[n].labels.map((name) => ({ name })) });
@@ -85,7 +107,7 @@ function fakeGh(issues, labels = [], prs = {}, { strictLabels = false, login = '
     if (noun === 'repo' && verb === 'view') return JSON.stringify({ nameWithOwner: 'o/r' });
     if (noun === 'api' && verb !== '-X') {
       const url = new URL(`http://gh/${verb}`);
-      const path = url.pathname.replace('/repos/%7Bowner%7D/%7Brepo%7D/', '').replace('/repos/{owner}/{repo}/', '');
+      const path = url.pathname.replace(/^\/repos\/(%7Bowner%7D|[^/]+)\/(%7Brepo%7D|[^/]+)\//, '');
       if (path === 'issues') {
         assert.equal(url.searchParams.get('state'), 'open');
         const perPage = Number(url.searchParams.get('per_page'));
@@ -148,7 +170,7 @@ function fakeGh(issues, labels = [], prs = {}, { strictLabels = false, login = '
     if (noun === 'issue' && verb === 'comment') return `https://github.com/o/r/issues/${n}#issuecomment-${calls.length}\n`;
     return '';
   };
-  return { gh, calls };
+  return { gh, calls, raw };
 }
 
 const open = (number, labels = [], extra = {}) => ({ number, title: `issue ${number}`, state: 'OPEN', labels, ...extra });
@@ -162,7 +184,7 @@ const failing = (gh, fails) => (args) => {
 /** Runs a command line through `run` with the fake gh; the lines it printed. */
 const cli = (gh, argv, extra = {}) => {
   const out = [];
-  run(argv, { gh, log: (l) => out.push(l), ...extra });
+  run(argv, { gh, log: (l) => out.push(l), env: argv.map(envOf).find(Boolean), ...extra });
   return out;
 };
 const writes = (calls) => calls.filter((c) => c[0] === 'issue' || c[0] === 'label' || c[0] === 'api');
@@ -254,13 +276,6 @@ test('skipsTriage reads 「triage：跳过」 in the project document, not the t
   assert.equal(skipsTriage(''), false);
 });
 
-test('parseRepos reads the first column of the 仓库 section; a name without an owner takes the issue\'s', () => {
-  assert.deepEqual(parseRepos(TRACKER_TWO_REPOS), ['o/r', 'o/api']);
-  assert.deepEqual(parseRepos('## 仓库\n\n- `api`：接口\n- `web`：前端\n\n## 别的\n- `x/y`\n', 'o'), ['o/api', 'o/web']);
-  assert.deepEqual(parseRepos('## 仓库\n\n| 仓库 | 路径 |\n|---|---|\n| `fish-agent` | ~/a |\n', 'fishaudio'), ['fishaudio/fish-agent']);
-  assert.equal(parseRepos('# 只有一个仓库\n'), null);
-});
-
 test('refsIssue: Refs owner/repo#n, or a bare Refs #n in the issue\'s own repo; not a longer number, not another repo\'s', () => {
   assert.equal(refsIssue('Refs o/r#242', 242, 'o/r', 'o/api'), true);
   assert.equal(refsIssue('说明\n\nrefs O/R#242。', 242, 'o/r', 'o/api'), true);
@@ -336,28 +351,29 @@ test('a project that skips triage: set triage is refused, backlog goes straight 
   assert.deepEqual(issues[1].labels, ['status:todo']);
 });
 
-test('an issue with PRs in two repos: set done lists the one not merged; after both merge, reconcile closes it as completed', () => {
-  const docs = docsWith({}, TRACKER_TWO_REPOS);
+test('an issue with two PRs: set done lists the one not merged; after both merge, reconcile closes it as completed', () => {
+  const docs = docsWith();
   const issues = { 242: open(242, ['status:in-review']) };
-  const prs = { 'o/r': [pr(10, '改知识库\n\nRefs o/r#242', 'MERGED'), pr(11, '别的 Refs o/r#9', 'MERGED')], 'o/api': [pr(20, 'Refs o/r#242', 'OPEN')] };
+  const prs = { 'o/r': [pr(10, '改知识库\n\nRefs o/r#242', 'MERGED'), pr(11, '别的 Refs o/r#9', 'MERGED'), pr(20, 'Refs o/r#242', 'OPEN')] };
   const { gh, calls } = fakeGh(issues, [], prs);
-  assert.throws(() => setState(gh, docs, 'done', [242]), /#242：还有 PR 没合并：o\/api#20（ready）/);
+  assert.throws(() => setState(gh, docs, 'done', [242]), /#242：还有 PR 没合并：o\/r#20（ready）/);
   assert.deepEqual(writes(calls), []);
-  assert.deepEqual(reconcile(gh, docs), { done: [], problems: [] });
-  prs['o/api'][0].state = 'MERGED';
-  const { done } = reconcile(gh, docs);
-  assert.deepEqual(done, ['#242: in-review → done（PR o/r#10、o/api#20 都已合并）']);
+  assert.deepEqual(reconcile(gh), { done: [], problems: [] });
+  prs['o/r'][2].state = 'MERGED';
+  const { done } = reconcile(gh);
+  assert.deepEqual(done, ['#242: in-review → done（PR o/r#10、o/r#20 都已合并）']);
   assert.equal(issues[242].state, 'CLOSED');
   assert.equal(issues[242].reason, 'completed');
   assert.deepEqual(issues[242].labels, []);
-  assert.match(comments(calls, 242)[0], /^🤖 idea-loop：PR o\/r#10、o\/api#20 都已合并/);
+  assert.match(comments(calls, 242)[0], /^🤖 idea-loop：PR o\/r#10、o\/r#20 都已合并/);
 });
 
-test('without a 仓库 section only the issue\'s own repo is searched', () => {
-  const docs = docsWith({});
+test('only the project\'s own repo is searched for PRs, whatever an old ISSUE_TRACKER.md 仓库 section lists', () => {
+  const docs = docsWith({}, GITHUB_TRACKER);
   const issues = { 5: open(5, ['status:in-review']) };
-  const { gh } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #5', 'MERGED')], 'o/api': [pr(2, 'Refs o/r#5', 'OPEN')] });
+  const { gh, raw } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #5', 'MERGED')], 'o/api': [pr(2, 'Refs o/r#5', 'OPEN')] });
   assert.deepEqual(setState(gh, docs, 'done', [5]), ['#5: in-review → done（关闭，completed）']);
+  assert.deepEqual([...new Set(raw.filter((c) => c[0] === 'pr').map((c) => c[c.indexOf('--repo') + 1]))], ['o/r']);
 });
 
 test('reconcilePlan: all merged → done; in-progress with every PR ready → in-review; drafts keep it in-progress', () => {
@@ -381,7 +397,7 @@ test('reconcile flips an in-progress issue whose PRs all turned ready to in-revi
   const docs = docsWith({});
   const issues = { 7: open(7, ['status:in-progress']) };
   const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #7')] });
-  assert.deepEqual(reconcile(gh, docs).done, ['#7: in-progress → in-review（PR o/r#1 都已 ready）']);
+  assert.deepEqual(reconcile(gh).done, ['#7: in-progress → in-review（PR o/r#1 都已 ready）']);
   assert.deepEqual(issues[7].labels, ['status:in-review']);
   assert.match(comments(calls, 7)[0], /^🤖 idea-loop：PR o\/r#1 都已 ready/);
 });
@@ -616,16 +632,16 @@ test('candidates: an issue with more events than a page is read page by page', (
 });
 
 test('show: state, title, categories, kind, each PR with its repo and draft / ready / merged, the covering spec, the branch', () => {
-  const docs = docsWith({ retry: spec({ issues: '[10]' }) }, TRACKER_TWO_REPOS);
+  const docs = docsWith({ retry: spec({ issues: '[10]' }) });
   const issues = { 10: open(10, ['status:in-progress', 'type:seo', 'type:seo/blog', 'kind:bug']), 13: open(13) };
-  const { gh } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs o/r#10', 'OPEN', true), pr(2, 'Refs o/r#99')], 'o/api': [pr(3, 'Refs o/r#10', 'MERGED'), pr(4, 'Refs o/r#10', 'CLOSED')] });
+  const { gh } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs o/r#10', 'OPEN', true), pr(2, 'Refs o/r#99'), pr(3, 'Refs o/r#10', 'MERGED'), pr(4, 'Refs o/r#10', 'CLOSED')] });
   const git = () => 'main\norigin/main\nissue/10-retry\norigin/issue/10-retry\nissue/100-other\n';
   const v = show(gh, docs, 10, { git });
   assert.equal(v.state, 'in-progress');
   assert.equal(v.title, 'issue 10');
   assert.deepEqual(v.categories, ['type:seo', 'type:seo/blog']);
   assert.equal(v.kind, 'bug');
-  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'draft'], ['o/api', 3, 'merged'], ['o/api', 4, 'closed']]);
+  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'draft'], ['o/r', 3, 'merged'], ['o/r', 4, 'closed']]);
   assert.equal(v.spec, 'retry');
   assert.equal(v.branch, 'issue/10-retry');
   const none = show(gh, docs, 13, { git: () => '' });
@@ -643,9 +659,9 @@ test('reading open issues pages through the repo list and skips pull requests', 
   assert.equal(candidates(gh, 1000).length, 230);
 });
 
-const TYPES = `# AGENTS.md
+const TYPES = `# Issue tracker：GitHub
 
-## issue 分类
+## 分类 label
 
 GitHub 上打成 \`type:<父类>\`。
 
@@ -667,17 +683,22 @@ test('parseTypes reads parents, children and the keep-list from the section only
   assert.deepEqual(types.parents[1].children, [{ name: 'backlink', about: '外链' }, { name: 'blog', about: '' }]);
   assert.deepEqual(types.keep, ['Idea', 'test infra']);
   assert.equal(parseTypes('# x\n'), null);
-  assert.throws(() => parseTypes('## issue 分类\n- `UI/UX`\n'), /「\/」/);
+  assert.throws(() => parseTypes('## 分类 label\n- `UI/UX`\n'), /「\/」/);
 });
 
-test('readTypes finds the section in AGENTS.md, then CLAUDE.md, next to docs/', () => {
-  const root = mkdtempSync(join(tmpdir(), 'issues-root-'));
-  const docs = join(root, 'docs');
-  mkdirSync(docs);
+test('readTypes reads the 分类 label section of the project directory\'s ISSUE_TRACKER.md; the code repository\'s AGENTS.md and CLAUDE.md are not read', () => {
+  const docs = docsWith();
   assert.equal(readTypes(docs), null);
-  writeFileSync(join(root, 'AGENTS.md'), '# AGENTS.md\n');
-  writeFileSync(join(root, 'CLAUDE.md'), TYPES);
+  const projectDir = join(docs, '..');
+  const oldWay = '# AGENTS.md\n\n## issue 分类\n\n- `legacy`：旧写法\n\n保留的 label：`Old`\n';
+  writeFileSync(join(projectDir, 'AGENTS.md'), oldWay);
+  writeFileSync(join(projectDir, 'CLAUDE.md'), oldWay);
+  assert.equal(readTypes(docs), null, 'the old heading in AGENTS.md / CLAUDE.md is not a source');
+  writeFileSync(join(projectDir, 'ISSUE_TRACKER.md'), '# Issue tracker：GitHub\n\n## 别的\n\n只有这个\n');
+  assert.equal(readTypes(docs), null, 'a tracker without the section');
+  writeFileSync(join(projectDir, 'ISSUE_TRACKER.md'), TYPES);
   assert.deepEqual(readTypes(docs).keep, ['Idea', 'test infra']);
+  assert.deepEqual(readTypes(docs).parents.map((p) => p.name), ['billing', 'seo', 'uiux']);
 });
 
 test('typeSet: a child brings its parent; unknown names are refused with the choices', () => {
@@ -717,7 +738,7 @@ test('setTypes replaces the issue\'s type labels and leaves the rest', () => {
 });
 
 test('a category marked 独立队列 is no queue of its own: the note stays out of the label text and nothing else changes', () => {
-  const types = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索可见性（独立队列，上限 5）\n  - `technical`：技术\n');
+  const types = parseTypes('## 分类 label\n\n- `bug`：缺陷\n- `seo`：搜索可见性（独立队列，上限 5）\n  - `technical`：技术\n');
   assert.equal(types.parents[1].about, '搜索可见性');
   assert.equal('queue' in types.parents[1], false, 'the note no longer makes a queue');
   assert.deepEqual(types.parents.map((p) => p.name), ['bug', 'seo']);
@@ -877,8 +898,7 @@ test('new: todo carries status:todo, backlog carries no status:*; priority, kind
 });
 
 test('the command line: new opens the issue and prints its number; body only checks', () => {
-  const docs = docsWith();
-  writeFileSync(join(docs, '..', 'AGENTS.md'), TYPES);
+  const docs = docsWith({}, TYPES);
   const { gh, calls } = fakeGh({});
   const out = cli(gh, ['new', docs, '重试重复扣配额', fileWith(GOOD_BODY), '--state=todo', '--priority=P0', '--kind=bug', '--type=billing', '--type=seo/blog']);
   assert.deepEqual(out, ['1']);
@@ -1039,18 +1059,18 @@ test('done and canceled close first and drop the label after; a close that fails
 test('reconcile closes before it relabels too', () => {
   const issues = { 8: open(8, ['status:in-review']) };
   const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #8', 'MERGED')] });
-  assert.throws(() => reconcile(failing(gh, (a) => a[1] === 'close'), docsWith()), /gh failed/);
+  assert.throws(() => reconcile(failing(gh, (a) => a[1] === 'close')), /gh failed/);
   assert.deepEqual(issues[8].labels, ['status:in-review']);
   assert.deepEqual(calls, []);
 });
 
 test('set done opens its comment with the merged PRs; a --comment follows; closed-unmerged PRs are not listed', () => {
-  const docs = docsWith({}, TRACKER_TWO_REPOS);
+  const docs = docsWith();
   const issues = { 4: open(4, ['status:in-review']), 5: open(5, ['status:in-review']) };
-  const prs = { 'o/r': [pr(10, 'Refs o/r#4\nRefs o/r#5', 'MERGED'), pr(12, 'Refs o/r#4', 'CLOSED')], 'o/api': [pr(20, 'Refs o/r#4', 'MERGED')] };
+  const prs = { 'o/r': [pr(10, 'Refs o/r#4\nRefs o/r#5', 'MERGED'), pr(12, 'Refs o/r#4', 'CLOSED'), pr(20, 'Refs o/r#4', 'MERGED')] };
   const { gh, calls } = fakeGh(issues, [], prs);
   setState(gh, docs, 'done', [4]);
-  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：合并的 PR：o/r#10、o/api#20。']);
+  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：合并的 PR：o/r#10、o/r#20。']);
   setState(gh, docs, 'done', [5], { comment: '另见 #9' });
   assert.deepEqual(comments(calls, 5), ['🤖 idea-loop：合并的 PR：o/r#10。另见 #9']);
 });
@@ -1063,12 +1083,6 @@ const LINEAR_TRACKER = `# Issue tracker：Linear
 
 Fish（key \`FA\`），issue 号形如 \`FA-123\`
 
-## 仓库
-
-| 仓库 | 本地路径 | 主分支 | 管什么 |
-|---|---|---|---|
-| o/r | ~/code/r | main | 知识库、worker |
-| o/api | ~/code/api | main | 接口 |
 `;
 
 const linearPr = (number, title, body, state = 'OPEN', isDraft = false) => ({ number, title, body, state, isDraft, url: `https://github.com/pr/${number}` });
@@ -1079,7 +1093,7 @@ test('platformOf: a first level-1 heading that names Linear is linear; anything 
   assert.equal(platformOf('# Issue tracker：GitHub\n\n## 仓库\n用 Linear 的人\n'), 'github');
   assert.equal(platformOf('## Linear 小节\n'), 'github');
   assert.equal(platformOf(''), 'github');
-  assert.equal(platformOf(TRACKER_TWO_REPOS), 'github');
+  assert.equal(platformOf(GITHUB_TRACKER), 'github');
 });
 
 test('in a Linear project the commands that write GitHub are refused, naming Linear and references/linear.md, and gh is never called', () => {
@@ -1091,7 +1105,7 @@ test('in a Linear project the commands that write GitHub are refused, naming Lin
     reconcile: ['reconcile', docs], migrate: ['migrate', docs], new: ['new', docs, '标题', body], priority: ['priority', docs, 'P0', '1'],
     backlog: ['backlog', docs], note: ['note', docs, '1', body],
   };
-  for (const [cmd, argv] of Object.entries(lines)) assert.throws(() => run(argv, { gh, log() {} }), (e) => /Linear/.test(e.message) && /references\/linear\.md/.test(e.message) && e.message.includes(`「${cmd}」`), cmd);
+  for (const [cmd, argv] of Object.entries(lines)) assert.throws(() => run(argv, { gh, log() {}, env: envOf(docs) }), (e) => /Linear/.test(e.message) && /references\/linear\.md/.test(e.message) && e.message.includes(`「${cmd}」`), cmd);
   assert.equal(linearRefusal('set').includes('references/linear.md'), true);
   // what does not touch GitHub issues still works
   assert.deepEqual(cli(gh, ['body', docs, body]), ['正文齐了']);
@@ -1112,19 +1126,20 @@ test('check --from does not read the issue, takes a Linear key, and reads the sp
   assert.throws(() => cli(gh, ['check', docs, 'todo', 'nope', '--from=triage']), /不是 GitHub 的号/);
 });
 
-test('check done --from in a Linear project finds the PRs by title [KEY] or a Linear: line in the 仓库 repos, and refuses while one is not merged', () => {
+test('check done --from in a Linear project finds the PRs by title [KEY] or a Linear: line in the project\'s repo, and refuses while one is not merged', () => {
   const docs = docsWith({}, LINEAR_TRACKER);
   const prs = {
-    'o/r': [linearPr(1, '[FA-577] 改 worker', '', 'MERGED'), linearPr(2, '[FA-5770] 别的', '', 'OPEN'), linearPr(3, '提到 FA-577 但不是前缀', '没有那一行', 'OPEN')],
-    'o/api': [linearPr(4, '接口', '说明\nLinear: FA-577\n', 'OPEN', true), linearPr(5, '接口', 'Linear: FA-57', 'OPEN')],
+    'o/r': [linearPr(1, '[FA-577] 改 worker', '', 'MERGED'), linearPr(2, '[FA-5770] 别的', '', 'OPEN'), linearPr(3, '提到 FA-577 但不是前缀', '没有那一行', 'OPEN'), linearPr(4, '接口', '说明\nLinear: FA-577\n', 'OPEN', true), linearPr(5, '接口', 'Linear: FA-57', 'OPEN')],
+    'o/api': [linearPr(6, '[FA-577] 别的仓库', '', 'OPEN')],
   };
   const { gh, seen } = spied({}, [], prs);
-  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), /还有 PR 没合并：o\/api#4（draft）/);
-  prs['o/api'][0].isDraft = false;
-  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), /o\/api#4（ready）/);
-  prs['o/api'][0].state = 'MERGED';
+  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), /还有 PR 没合并：o\/r#4（draft）/);
+  prs['o/r'][3].isDraft = false;
+  assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), /o\/r#4（ready）/);
+  prs['o/r'][3].state = 'MERGED';
   assert.deepEqual(cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), ['FA-577: in-review → done 可以翻']);
   assert.ok(seen.every((a) => a[0] === 'pr'), 'only PRs were searched');
+  assert.ok(seen.every((a) => a[a.indexOf('--repo') + 1] === 'o/r'), 'only the project\'s repo, never o/api');
   assert.ok(seen.some((a) => a.includes('FA-577 in:title')) && seen.some((a) => a.includes('FA-577 in:body')));
   // no PR at all
   assert.throws(() => cli(gh, ['check', docs, 'done', 'FA-999', '--from=in-review']), /没有 PR 挂在/);
@@ -1137,12 +1152,12 @@ test('check in a Linear project without --from is refused, saying --from is need
   assert.deepEqual(seen, []);
 });
 
-test('a Linear project whose ISSUE_TRACKER.md has no 仓库 section looks for PRs in the repo gh runs in, as the GitHub side does', () => {
+test('a Linear project looks for PRs in the repo of the project list, and never asks gh which repo it runs in', () => {
   const docs = docsWith({}, '# Issue tracker：Linear\n\n## 团队\n\nFish（key `FA`）\n');
   const prs = { 'o/r': [linearPr(1, '[FA-577] x', '', 'MERGED'), linearPr(2, '[FA-1] y', '', 'OPEN')] };
   const { gh, seen } = spied({}, [], prs);
   assert.deepEqual(cli(gh, ['check', docs, 'done', 'FA-577', '--from=in-review']), ['FA-577: in-review → done 可以翻']);
-  assert.ok(seen.some((a) => a[0] === 'repo' && a[1] === 'view'));
+  assert.ok(!seen.some((a) => a[0] === 'repo'), 'no gh repo view');
   const v = JSON.parse(cli(spied({}, [], prs).gh, ['show', docs, 'FA-577'], { git: () => '' }).join('\n'));
   assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'merged']]);
 });
@@ -1170,13 +1185,13 @@ test('refsLinear: a [KEY] title prefix or a whole line Linear: KEY, not a longer
 
 test('show in a Linear project: state null, the spec, the PRs and the branch of the key', () => {
   const docs = docsWith({ retry: spec({ issues: '[FA-577, 12]' }) }, LINEAR_TRACKER);
-  const { gh, seen } = spied({}, [], { 'o/r': [linearPr(1, '[FA-577] x', '', 'OPEN', true)], 'o/api': [linearPr(2, 'y', 'Linear: FA-577', 'MERGED')] });
+  const { gh, seen } = spied({}, [], { 'o/r': [linearPr(1, '[FA-577] x', '', 'OPEN', true), linearPr(2, 'y', 'Linear: FA-577', 'MERGED')] });
   const v = JSON.parse(cli(gh, ['show', docs, 'FA-577'], { git: () => 'main\nissue/FA-577-retry\norigin/issue/FA-577-retry\n' }).join('\n'));
   assert.equal(v.state, null);
   assert.equal(v.number, 'FA-577');
   assert.equal(v.spec, 'retry');
   assert.equal(v.branch, 'issue/FA-577-retry');
-  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'draft'], ['o/api', 2, 'merged']]);
+  assert.deepEqual(v.prs.map((p) => [p.repo, p.number, p.state]), [['o/r', 1, 'draft'], ['o/r', 2, 'merged']]);
   assert.ok(!seen.some((a) => a[0] === 'api'));
 });
 
@@ -1186,4 +1201,133 @@ test('the usage in the header lists exactly the commands the script has; open is
   assert.deepEqual([...listed].sort(), [...COMMANDS].sort());
   assert.ok(!COMMANDS.includes('open'));
   assert.throws(() => execFileSync('node', [SCRIPT, 'open', docsWith(), 'retry'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), /不认识的命令/);
+});
+
+// ---------- the project's own repository (spec skills-read-home, ticket 02) ----------
+
+const ACME = 'acme/example-app';
+const NO_GH = () => assert.fail('gh was called');
+
+/** Every gh call of `raw` aims at `repo`: an `api` path names it (no `{owner}/{repo}` left), the rest carry `-R repo` or `--repo repo`. `api user` has no repository. */
+const allAimedAt = (raw, repo) =>
+  raw.every((a) => {
+    if (a[0] === 'api') return a[1] === 'user' || a.some((x) => String(x).startsWith(`repos/${repo}/`) && !String(x).includes('{'));
+    return a[a.indexOf('-R') + 1] === repo || a[a.indexOf('--repo') + 1] === repo;
+  });
+
+test('every command aims its gh calls at the project\'s repo from the project list, never at the directory it runs in', () => {
+  const body = fileWith(GOOD_BODY);
+  const docs = docsWith({ retry: spec({ issues: '[1, 7]' }) }, TYPES, { repo: ACME });
+  const world = () => {
+    const issues = { 1: open(1, ['status:triage']), 2: open(2, ['status:todo'], { assignees: ['me'] }), 3: open(3, ['status:in-progress']), 4: open(4, []), 7: open(7, ['status:in-progress', 'type:seo']) };
+    return { issues, ...fakeGh(issues, ['Idea'], { [ACME]: [pr(9, `Refs ${ACME}#3`, 'MERGED'), pr(8, `Refs ${ACME}#7`)] }, { repo: ACME }) };
+  };
+  const commands = {
+    show: ['show', docs, '7'],
+    check: ['check', docs, 'todo', '1'],
+    set: ['set', docs, 'todo', '1'],
+    type: ['type', docs, '7', 'seo/blog'],
+    new: ['new', docs, '重试重复扣配额', body, '--priority=P1', '--type=billing'],
+    labels: ['labels', docs],
+    'labels --prune': ['labels', docs, '--prune'],
+    priority: ['priority', docs, 'P1', '4'],
+    note: ['note', docs, '4', body],
+    candidates: ['candidates', docs],
+    backlog: ['backlog', docs],
+    reconcile: ['reconcile', docs],
+    migrate: ['migrate', docs],
+    'migrate --apply': ['migrate', docs, '--apply'],
+  };
+  for (const [name, argv] of Object.entries(commands)) {
+    const { gh, raw } = world();
+    cli(gh, argv, { git: () => '' });
+    assert.ok(raw.length > 0, `${name} made gh calls`);
+    assert.ok(allAimedAt(raw, ACME), `${name}: ${JSON.stringify(raw.find((a) => !allAimedAt([a], ACME)))}`);
+  }
+  const { gh, raw } = world();
+  cli(gh, ['show', docs, '7'], { git: () => '' });
+  assert.ok(raw.some((a) => a[0] === 'api' && a[1] === `repos/${ACME}/issues/7`), 'the issue is read from the project\'s repo');
+  assert.ok(raw.some((a) => a[0] === 'pr' && a.includes('--repo') && a[a.indexOf('--repo') + 1] === ACME), 'the PRs are searched in it');
+  assert.ok(!raw.some((a) => a[0] === 'repo'), 'gh is never asked which repo it is in');
+});
+
+test('--repo on new still names another repository, and the project\'s repo is then not added', () => {
+  const docs = docsWith({}, null, { repo: ACME });
+  const raw = [];
+  const gh = (args) => {
+    raw.push(args);
+    return args[0] === 'api' ? '[]' : 'https://github.com/plugin/repo/issues/4\n';
+  };
+  assert.deepEqual(cli(gh, ['new', docs, '插件里的问题', fileWith(GOOD_BODY), '--repo=plugin/repo']), ['4']);
+  assert.deepEqual(raw.at(-1).slice(0, 4), ['issue', 'create', '-R', 'plugin/repo']);
+  assert.equal(raw.at(-1).filter((a) => a === '-R').length, 1);
+});
+
+test('the branch of an issue is found in the clone the project list registers, not in home', () => {
+  const docs = docsWith({ retry: spec({ issues: '[7]' }) }, null, { repo: ACME });
+  const { HOME, IDEA_LOOP_HOME } = envOf(docs);
+  const initWith = (dir, branch) => {
+    mkdirSync(dir, { recursive: true });
+    git(dir, 'init', '-q', '-b', 'main');
+    writeFileSync(join(dir, 'a.txt'), 'x\n');
+    git(dir, 'add', 'a.txt');
+    git(dir, 'commit', '-q', '-m', 'init');
+    git(dir, 'branch', branch);
+  };
+  initWith(IDEA_LOOP_HOME, 'issue/7-from-home');
+  initWith(join(HOME, 'code', 'example-app'), 'issue/7-retry');
+  const { gh } = fakeGh({ 7: open(7, ['status:in-progress']) }, [], {}, { repo: ACME });
+  assert.equal(JSON.parse(cli(gh, ['show', docs, '7']).join('\n')).branch, 'issue/7-retry');
+});
+
+test('the categories come from ISSUE_TRACKER.md in the project directory; the AGENTS.md of the code repository is not read', () => {
+  const docs = docsWith({}, TYPES, { repo: ACME });
+  const { HOME } = envOf(docs);
+  const clone = join(HOME, 'code', 'example-app');
+  mkdirSync(clone, { recursive: true });
+  writeFileSync(join(clone, 'AGENTS.md'), '# AGENTS.md\n\n## issue 分类\n\n- `legacy`：只在代码仓库的 AGENTS.md 里\n');
+  const { gh } = fakeGh({ 1: open(1, ['status:triage']) }, [], {}, { repo: ACME });
+  assert.deepEqual(cli(gh, ['type', docs, '1', 'seo/blog']), ['#1: type:seo type:seo/blog']);
+  assert.throws(() => cli(gh, ['type', docs, '1', 'legacy']), /「legacy」不是这个项目的分类/);
+});
+
+test('a docs/ that is not in a project directory of home stops every command with the sentence of project-map, and gh is never called', () => {
+  const docs = docsWith({}, null, { repo: ACME });
+  const { HOME, IDEA_LOOP_HOME } = envOf(docs);
+  const env = { HOME, IDEA_LOOP_HOME };
+  // the project directory's docs/ is gone; the code repository still has its DEVELOPMENT.md and docs/
+  rmSync(join(docs, '..'), { recursive: true });
+  const code = join(HOME, 'code', 'example-app');
+  mkdirSync(join(code, 'docs'), { recursive: true });
+  writeFileSync(join(code, 'DEVELOPMENT.md'), '# 开发\n');
+  git(code, 'init', '-q', '-b', 'main');
+  for (const cmd of COMMANDS) {
+    assert.throws(() => run([cmd, join(code, 'docs'), '7', 'x'], { gh: NO_GH, git: NO_GH, log() {}, env }), (e) => e.message === NOT_MOVED, cmd);
+  }
+  // a directory with nothing of idea-loop in it
+  const loose = join(HOME, 'loose', 'notes');
+  mkdirSync(loose, { recursive: true });
+  for (const cmd of COMMANDS) {
+    assert.throws(() => run([cmd, loose, '7', 'x'], { gh: NO_GH, git: NO_GH, log() {}, env }), (e) => e.message === NOT_CONNECTED, cmd);
+  }
+  // as a process: exit code, the sentence on stderr, nothing on stdout; gh is not even on the PATH
+  const r = (() => {
+    try {
+      execFileSync('node', [SCRIPT, 'show', join(code, 'docs'), '7'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: dirname(process.execPath), ...env } });
+      return { status: 0 };
+    } catch (e) {
+      return e;
+    }
+  })();
+  assert.notEqual(r.status, 0);
+  assert.equal(r.stderr.trim(), NOT_MOVED);
+  assert.equal(r.stdout, '');
+});
+
+test('a docs/ in home under a name the project list does not have: not connected', () => {
+  const docs = docsWith({}, null, { repo: ACME });
+  const { HOME, IDEA_LOOP_HOME } = envOf(docs);
+  const stranger = join(IDEA_LOOP_HOME, 'projects', 'stranger', 'docs');
+  mkdirSync(stranger, { recursive: true });
+  assert.throws(() => run(['show', stranger, '7'], { gh: NO_GH, log() {}, env: { HOME, IDEA_LOOP_HOME } }), /没接上/);
 });

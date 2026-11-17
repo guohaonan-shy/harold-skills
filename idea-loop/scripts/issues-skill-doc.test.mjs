@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRepos, skipsTriage, STATES } from './issues.mjs';
+import { skipsTriage, STATES } from './issues.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skillDir = join(pluginRoot, 'skills', 'engineering', 'issues');
@@ -85,11 +85,10 @@ for (const [name, file] of [
   });
 }
 
-test('the repo ISSUE_TRACKER.md has a choice for triage and a first repository the scripts can read', () => {
+test('the repo ISSUE_TRACKER.md has a choice for triage the scripts can read', () => {
   const md = read(join(pluginRoot, '..', 'ISSUE_TRACKER.md'));
   assert.equal(skipsTriage(md), false);
   assert.ok(md.match(/^triage：(用|跳过)\s*$/m));
-  assert.equal(parseRepos(md, 'owner')[0], 'guohaonan-shy/harold-skills');
 });
 
 test('the issues SKILL.md body stays under 5000 characters; category and spec details live in its own references', () => {

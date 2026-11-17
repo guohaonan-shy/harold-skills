@@ -16,6 +16,9 @@
  *
  * There is no cap on the number of issues: issue-dispatch limits how many sessions run at once.
  *
+ * <docs> is the docs/ of a project directory in home; the issues are written to the project's repo from the project list
+ * (see issues.mjs `projectOf` / `inRepo`), and a <docs> outside home stops with project-map's sentence.
+ *
  * Usage: node seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]   (the date of the scan, today by default)
  *   → { "created": [{number,title}], "commented": [{number,title}], "rejected": [{title,reason}], "untyped": bool }
  *   (--dry-run: the same shape, numbers null, nothing written)
@@ -24,7 +27,7 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { bodyErrors, defaultGh, readTypes, setTypes, typeSet } from './issues.mjs';
+import { bodyErrors, defaultGh, inRepo, projectOf, readTypes, setTypes, typeSet } from './issues.mjs';
 import { DIRECTIONS } from './seo-md.mjs';
 
 export const DIRECTION_NAMES = {
@@ -183,7 +186,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     if (!docs || !file || flags.some((x) => x !== '--dry-run' && !/^--date=\d{4}-\d{2}-\d{2}$/.test(x))) throw new Error('usage: seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]');
     const findings = JSON.parse(readFileSync(file, 'utf8'));
     if (!Array.isArray(findings)) throw new Error(`${file} 不是发现清单（要一个 JSON 数组）`);
-    const gh = defaultGh(docs);
+    const gh = inRepo(defaultGh(docs), projectOf(docs).repo);
     const types = readTypes(docs);
     const p = plan(findings, openIssues(gh), date ? { date } : {});
     if (flag === '--dry-run') {

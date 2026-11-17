@@ -41,7 +41,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const MAP_LIMIT = 2000;
@@ -166,6 +166,21 @@ export function locate({ cwd = process.cwd(), env = process.env, project: name }
   const entry = origin ? findProject(list, origin) : null;
   if (!entry) return hasBootstrap(top) ? fail('not-moved', NOT_MOVED) : fail('unlisted', NOT_CONNECTED);
   return resolveProject(entry, top);
+}
+
+/**
+ * Which project does the directory `docs` belong to? `<home>/projects/<名字>/docs` is that project, answered as
+ * `locate({ project: <名字> })` does. Any other directory (the docs/ of a code repository, a directory at random) is not
+ * in home: 'not-moved' when the directory it sits in has idea-loop's bootstrap files or is itself a code repository's
+ * docs/, 'not-connected' otherwise. Same result shape as `locate`.
+ */
+export function locateByDocs({ docs, env = process.env }) {
+  const dir = realish(docs);
+  const projectDir = dirname(dir);
+  if (basename(dir) === 'docs' && dirname(projectDir) === realish(join(homeOf(env), 'projects'))) {
+    return locate({ project: basename(projectDir), env });
+  }
+  return hasBootstrap(projectDir) ? { ok: false, code: 'not-moved', message: NOT_MOVED } : { ok: false, code: 'not-connected', message: NOT_CONNECTED };
 }
 
 function mapOf(dir, name) {
