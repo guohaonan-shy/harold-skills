@@ -6,7 +6,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BASE, SPEC_SLUG, compliantFiles, writeRepo } from './design-archive-fixture.mjs';
 import { check } from './design-archive-check.mjs';
-import { archiveSpec, ignoresTmp, lfsCovers, renderIndex, rewriteLinks, setUsedBy } from './design-archive-write.mjs';
+import { archiveSpec, lfsCovers, renderIndex, rewriteLinks, setUsedBy } from './design-archive-write.mjs';
 import { loadArchive, walk } from './design-archive.mjs';
 
 const CLI = fileURLToPath(new URL('./design-archive-write.mjs', import.meta.url));
@@ -27,7 +27,7 @@ const PNG = (n) => Buffer.from(`PNG-${n}`);
  * component, and the pantry overview now using SearchBox (so an existing component's usedBy grows).
  * The spec links three figures sitting in tmp/'s canvas.
  */
-function requirement({ lfs = true, gitignore = true } = {}) {
+function requirement({ lfs = true } = {}) {
   const base = compliantFiles();
   const state = (id, page, extra) =>
     `---\ntype: design-state\ntags: [${page}]\nsummary: ${id}\npage: "[[${page}]]"\n${extra}---\n\n## 这一屏\n\n画面。\n\n## 应看到什么\n\n- 看到画面\n`;
@@ -78,7 +78,6 @@ function requirement({ lfs = true, gitignore = true } = {}) {
 \`\`\`
 `;
   if (lfs) files['.gitattributes'] = `* text=auto\n${LFS}`;
-  if (gitignore) files['.gitignore'] = 'node_modules/\ndocs/design/tmp/\n';
   return files;
 }
 
@@ -267,29 +266,28 @@ test('dry-run on a delta that does not pass still refuses', () => {
   assert.deepEqual(snapshot(root), before);
 });
 
-// ---------- LFS and .gitignore ----------
+// ---------- LFS ----------
 
-test('hints: no LFS rules and no .gitignore line — one hint each, and neither file is created or touched', () => {
-  const files = requirement({ lfs: false, gitignore: false });
+test('hints: no LFS rules — one hint, and no .gitignore line is asked for; the file is not created or touched', () => {
+  const files = requirement({ lfs: false });
   const root = writeRepo(files);
   const result = archiveSpec(root, SPEC_SLUG);
   assert.equal(result.ok, true);
-  assert.deepEqual(result.hints.map((h) => h.kind), ['lfs', 'gitignore']);
+  assert.deepEqual(result.hints.map((h) => h.kind), ['lfs']);
   assert.match(result.hints[0].message, /docs\/design\/prod\/\*\*\/assets\/\*\*\/\*\.png filter=lfs/);
   assert.match(result.hints[0].message, /\*\.gif/);
   assert.match(result.hints[0].message, /\*\.webm/);
-  assert.match(result.hints[1].message, /docs\/design\/tmp\//);
   assert.ok(!has(root, '.gitattributes'));
   assert.ok(!has(root, '.gitignore'));
 });
 
 test('hints: existing files are left byte for byte; only the missing extensions are named', () => {
-  const files = requirement({ gitignore: false });
+  const files = requirement();
   files['.gitattributes'] = '* text=auto\ndocs/design/prod/**/assets/**/*.png filter=lfs diff=lfs merge=lfs -text\n';
   files['.gitignore'] = 'node_modules/\n';
   const root = writeRepo(files);
   const result = archiveSpec(root, SPEC_SLUG);
-  assert.deepEqual(result.hints.map((h) => h.kind), ['lfs', 'gitignore']);
+  assert.deepEqual(result.hints.map((h) => h.kind), ['lfs']);
   assert.doesNotMatch(result.hints[0].message, /\*\.png/);
   assert.match(result.hints[0].message, /gif.*webm|\*\.gif[\s\S]*\*\.webm/);
   assert.equal(read(root, '.gitattributes'), files['.gitattributes']);
@@ -325,13 +323,6 @@ test('lfsCovers: patterns the way git reads them', () => {
   assert.equal(lfsCovers('*.png filter=lfs\n*.png -filter\n', p('png')), false);
   assert.equal(lfsCovers('# *.png filter=lfs\n', p('png')), false);
   assert.equal(lfsCovers('', p('png')), false);
-});
-
-test('ignoresTmp: the forms of the same rule', () => {
-  for (const yes of ['docs/design/tmp/', 'docs/design/tmp', '/docs/design/tmp/', 'docs/design/tmp/*', 'docs/design/tmp/**']) {
-    assert.equal(ignoresTmp(`node_modules/\n${yes}\n`), true, yes);
-  }
-  for (const no of ['', 'tmp/', 'docs/design/', '# docs/design/tmp/', '!docs/design/tmp/']) assert.equal(ignoresTmp(no), false, no);
 });
 
 // ---------- usage ----------

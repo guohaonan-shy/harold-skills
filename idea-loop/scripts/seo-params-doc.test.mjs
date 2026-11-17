@@ -82,7 +82,7 @@ test('seo-scan: the gate notifies, lists guesses with their source, stops withou
   assert.match(g, /推测值、出处/);
   assert.match(g, /一次最多三个问题/);
   assert.match(g, /不派任何方向 agent/);
-  assert.match(g, /用 Edit 改在工作区/);
+  assert.match(g, /用 Edit 改 `<项目目录>\/SEO\.md`/);
   assert.match(g, /人说留空的写 `无`/);
   assert.match(g, /update_project_context/);
   assert.match(g, /从「预算」往下跑/);

@@ -2,8 +2,8 @@
 /**
  * The archive script — the only way `docs/design/prod/` is written.
  *
- * A requirement's design lives in `docs/design/tmp/<spec-slug>/` while it is in flight (local only,
- * never in git). Before the PR merges, its `delta/` is folded into `prod/`: this script does that, in
+ * A requirement's design lives in `docs/design/tmp/<spec-slug>/` of the project directory while it is in flight
+ * (home commits only the files a skill lists, so it never lands in git by accident). Before the PR merges, its `delta/` is folded into `prod/`: this script does that, in
  * one call, and refuses to write anything unless the result would pass the archive's own validation.
  *
  *   1 validate the archive with `delta/` laid over it (usedBy consistency is skipped: it has not been
@@ -13,8 +13,8 @@
  *     frontmatter; the index's own viewport / theme / locale settings are kept)
  *   4 move the requirement's interaction figures into `prod/pages/<page>/assets/flows/` and point the
  *     spec's image links at the new place
- *   5 look at the target repo's `.gitattributes` (Git LFS for png / gif / webm under prod assets) and
- *     `.gitignore` (`docs/design/tmp/`); say what is missing, change neither
+ *   5 look at the root's `.gitattributes` (Git LFS for png / gif / webm under prod assets); say what is
+ *     missing, change nothing
  *   6 empty `tmp/<spec-slug>/`
  *
  * All of 2-4 is first built as a plan and applied to a throw-away copy of `docs/` (text files real,
@@ -197,7 +197,7 @@ export function rewriteLinks(text, specDir, moved) {
   return { text: out.join('\n'), changes };
 }
 
-// ---------- LFS and .gitignore ----------
+// ---------- LFS ----------
 
 /** One .gitattributes pattern → does it match this repo-relative path? */
 function attrMatches(pattern, path) {
@@ -236,14 +236,6 @@ export function lfsCovers(attributes, path) {
   return covered;
 }
 
-/** Whether `.gitignore` text ignores `docs/design/tmp/`. */
-export function ignoresTmp(gitignore) {
-  return String(gitignore).split('\n').some((raw) => {
-    const line = raw.trim().replace(/^\//, '').replace(/\/(\*\*?)?$/, '');
-    return !raw.trim().startsWith('#') && !raw.trim().startsWith('!') && line === TMP;
-  });
-}
-
 function repoHints(root) {
   const hints = [];
   const attrsFile = join(root, '.gitattributes');
@@ -256,10 +248,6 @@ function repoHints(root) {
         .map((ext) => `  ${PROD}/**/assets/**/*.${ext} filter=lfs diff=lfs merge=lfs -text`)
         .join('\n')}`,
     });
-  }
-  const ignoreFile = join(root, '.gitignore');
-  if (!ignoresTmp(existsSync(ignoreFile) ? readFileSync(ignoreFile, 'utf8') : '')) {
-    hints.push({ kind: 'gitignore', message: `.gitignore 还没有忽略 ${TMP}/；要加一行（脚本不代改）：\n  ${TMP}/` });
   }
   return hints;
 }

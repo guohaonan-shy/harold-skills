@@ -78,7 +78,7 @@ test('SEO.md: seven sections parse into the shape the scripts read', () => {
   assert.deepEqual(s.brand.terms, ['cookbook', 'cook book']);
 });
 
-test('SEO.md: 内容路径 is read as a list of globs; a project that has not written it reads as none (only docs/ and SEO.md count as content)', () => {
+test('SEO.md: 内容路径 is read as a list of globs; a project that has not written it reads as none (nothing counts as content)', () => {
   assert.deepEqual(parseSeoMd('## 构建与检查\n- 产物目录：`dist`\n').build.contentPaths, []);
   assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：无\n').build.contentPaths, []);
   assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：`content/**/*.md`\n').build.contentPaths, ['content/**/*.md']);

@@ -16,10 +16,10 @@
 
 ## 验收标准
 
-- [ ] design、seo、agents 下不再出现「当前 worktree 的 `docs/`」「仓库根（目录）的 <引导文件>」「`git add -f`」（文档测试覆盖全部 skill 和 agent，全绿）
-- [ ] 每个 agent 定义写明从调用方 prompt 拿项目目录
-- [ ] 改了的每个 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
-- [ ] 现有文档测试全绿
+- [x] design、seo、agents 下不再出现「当前 worktree 的 `docs/`」「仓库根（目录）的 <引导文件>」「`git add -f`」（文档测试覆盖全部 skill 和 agent，全绿）
+- [x] 每个 agent 定义写明从调用方 prompt 拿项目目录
+- [x] 改了的每个 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
+- [x] 现有文档测试全绿
 
 ## 选中的存量回归
 

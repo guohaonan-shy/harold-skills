@@ -4,9 +4,9 @@ SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，
 
 | 层 | skill / agent |
 |---|---|
-| 接入 | `seo-setup`（人跑，写 SEO.md（新增的键与节：OpenSEO 的套餐额度与每周分配、「构建与检查」的内容路径与上线等待、「内容原则」、可选的「分析」）、同步 OpenSEO、建 issue 分类、批 AI 可见性跟踪、建每天扫描的定时任务） |
+| 接入 | `seo-setup`（人跑，写项目目录里的 SEO.md（新增的键与节：OpenSEO 的套餐额度与每周分配、「构建与检查」的内容路径与上线等待、「内容原则」、可选的「分析」）、同步 OpenSEO、把 seo 分类写进项目目录 `ISSUE_TRACKER.md` 的「分类 label」并建 label、批 AI 可见性跟踪、建每天扫描的定时任务） |
 | 发现 | `seo-audit`、`keyword-research`、`keyword-clustering`、`competitor-analysis`、`link-prospecting`、`seo-geo`；agent `technical-auditor`、`page-optimizer`、`keyword-miner`、`backlink-analyst`、`geo-analyst`（已有跟踪时先估价，估价不超过本次额度才发付费检查，超了不跑；不建跟踪）、`results-analyst`（效果报告：回看改动前后的点击和排名，出两张图和三块报告） |
-| 入队 | `seo-scan`（每天定时，不带参数时按节奏挑方向：效果报告 `results` 每 3 天，其余五个方向每 7 天，当天没有到期的只写一行研究日志；提完 issue 后分流，结尾调用外联跟进，再把效果报告落成 `docs/records/seo-results/<日期>.md`，直接提交到 home 并推送报告路径）+ `scripts/seo-{due,gaps,budget,context,baseline,meta-provenance,issues}.mjs`（OpenSEO 的套餐额度按周花完：`seo-budget.mjs` 读研究日志的「花费」行算本周预算，按 `SEO.md` 的每周分配拆给排名追踪、扫描、起草与验证三份；开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
+| 入队 | `seo-scan`（每天定时，不带参数时按节奏挑方向：效果报告 `results` 每 3 天，其余五个方向每 7 天，当天没有到期的只写一行研究日志；提完 issue 后分流，结尾调用外联跟进，再把效果报告落成项目目录里的 `docs/records/seo-results/<日期>.md`，直接提交到 home 并推送报告路径）+ `scripts/seo-{due,gaps,budget,context,baseline,meta-provenance,issues}.mjs`（OpenSEO 的套餐额度按周花完：`seo-budget.mjs` 读研究日志的「花费」行算本周预算，按 `SEO.md` 的每周分配拆给排名追踪、扫描、起草与验证三份；开场先查这次方向要用的项目信息齐不齐，缺了推测、停下等人确认，写进 `SEO.md` 或项目上下文再跑）；issue 与别的 issue 在调度里同一个队列 |
 | 解决 | `seo-brief`（triage 阶段写方案）、`seo-writing`、`seo-outreach`（实现阶段起草，草稿进人的草稿箱；人说「发外联邮件」才发；每次扫描结尾读回信、追发；目录提交用『人的浏览器』填到最后一步等人点；没有邮件 MCP 或人的浏览器的运行环境，草稿留在 `docs/`、推送路径）、`seo-check`（发布前检查，构建后 hook 自动跑）+ `scripts/seo-content-scope.mjs`（判一个 SEO PR 是不是只改内容：改动文件对 `SEO.md` 的「内容路径」加 `docs/` 和 `SEO.md`；只改内容、检查全过、两轴没有阻塞项的 SEO PR 由 Claude 合并，见 `pr-review/references/seo-auto-merge.md`）；`scripts/seo-live-{check,record}.mjs`（合并后的上线自查，写在 `pr-review/references/merge.md` 的「上线后自查」：每分钟取一次线上页面，等线上换成这次的构建（最久 `SEO.md`「构建与检查」的「上线等待」分钟，没写 30），再逐个网址核能打开、没有 noindex、title 与 description 同产物、在 sitemap 里；全过就在 issue 上贴带隐藏标记的评论并把目标词加进排名追踪，有一项不过就回滚合并并另开 todo issue，等满没上线只推送不回滚） |
 | 陪练 | `seo-coach` |
 

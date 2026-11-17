@@ -13,7 +13,7 @@ tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
 
 ## 输入
 
-提示里有五行：SEO.md 路径、OpenSEO 项目、本次额度、运行目录、今天。
+提示里有六行：SEO.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
 `node ${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs <SEO.md>` 读出配置，用其中的「站点」「竞品」「重点页面」：重点页面的头词是种子，也是判断「并进已有页」时的候选页。
 

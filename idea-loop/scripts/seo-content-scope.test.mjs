@@ -24,11 +24,8 @@ test('a PR touching a blog post and a .tsx is not content-only, and the .tsx is 
   assert.deepEqual(r.outside, ['apps/site/src/components/Hero.tsx']);
 });
 
-test('files all under 内容路径, docs/ and the root SEO.md are content-only', () => {
-  const r = judge(
-    ['apps/site/src/content/blog/a.md', 'apps/site/src/content/blog/img/b.png', 'docs/records/outreach/x.md', 'SEO.md'],
-    [BLOG_DIR],
-  );
+test('files all under 内容路径 are content-only', () => {
+  const r = judge(['apps/site/src/content/blog/a.md', 'apps/site/src/content/blog/img/b.png'], [BLOG_DIR]);
   assert.equal(r.contentOnly, true);
   assert.deepEqual(r.outside, []);
 });
@@ -51,22 +48,22 @@ test('globs: * stays inside one directory, ** crosses directories, a glob that n
   assert.equal(matches('public/images-old/b.webp', ['public/images']), false, 'only at a path boundary');
 });
 
-test('SEO.md and docs/ count only at the repo root', () => {
-  assert.equal(judge(['docs/spec/x/x.md'], []).contentOnly, true);
-  assert.equal(judge(['apps/site/docs/x.md'], []).contentOnly, false);
-  assert.equal(judge(['apps/site/SEO.md'], []).contentOnly, false);
+test('docs/ and SEO.md are not content: they live in the project directory, a code PR does not carry them', () => {
+  assert.equal(judge(['docs/spec/x/x.md'], []).contentOnly, false);
+  assert.equal(judge(['SEO.md'], [BLOG_DIR]).contentOnly, false);
+  assert.deepEqual(judge(['docs/a.md', 'SEO.md'], [BLOG_DIR]).outside, ['docs/a.md', 'SEO.md']);
 });
 
 test('a path that climbs out with .. is never content; a leading ./ is only spelling', () => {
-  assert.equal(judge(['docs/../src/App.tsx'], []).contentOnly, false);
-  assert.equal(judge(['./docs/a.md'], []).contentOnly, true);
+  assert.equal(judge(['content/../src/App.tsx'], ['content']).contentOnly, false);
+  assert.equal(judge(['./content/a.md'], ['content']).contentOnly, true);
 });
 
 test('an empty change list is not content-only: nothing to judge, nothing to auto-merge', () => {
   assert.deepEqual(judge([], [BLOG_DIR]), { contentOnly: false, files: 0, outside: [], reason: '没有改动文件' });
 });
 
-test('CLI: SEO.md + a file list on stdin → JSON; a project without 内容路径 only passes docs/ and SEO.md', () => {
+test('CLI: SEO.md + a file list on stdin → JSON; a project without 内容路径 passes nothing', () => {
   const dir = mkdtempSync(join(tmpdir(), 'seo-scope-'));
   const withPaths = join(dir, 'with.md');
   const without = join(dir, 'without.md');
@@ -80,7 +77,7 @@ test('CLI: SEO.md + a file list on stdin → JSON; a project without 内容路�
 
   const b = run(without, ['apps/site/src/content/blog/a.md']);
   assert.equal(JSON.parse(b.stdout).contentOnly, false, 'no 内容路径 → the blog post is outside');
-  assert.equal(JSON.parse(run(without, ['docs/a.md', 'SEO.md']).stdout).contentOnly, true);
+  assert.equal(JSON.parse(run(without, ['docs/a.md', 'SEO.md']).stdout).contentOnly, false);
 });
 
 test('CLI: --base=<ref> reads the PR from the repo, and a rename counts under its old name too', () => {

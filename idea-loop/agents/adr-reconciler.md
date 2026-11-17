@@ -16,8 +16,9 @@ tools: Read, Grep, Glob, Bash, Write, Skill, Agent
 
 指针，不是摘要：
 
-- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的，核对用它，不在本地工作树上判）和基准分支名
-- 这次运行的中间物目录 `.tmp/dreaming/<YYYY-MM-DD>/`
+- **项目目录**：读调用方在 prompt 里给的项目目录；`<docs>`、引导文件都在它下面，代码在下面的代码 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+- **代码 worktree** 的绝对路径（从 `origin/<基准分支>` 新切的，核对代码用它，不在本地工作树上判）和基准分支名
+- 这次运行的中间物目录 `<home>/.tmp/dreaming/<日期>/<项目名>/` 的绝对路径（dreaming 起你时给的路径）
 - 范围（可选）：只对账哪几份
 
 ## 做

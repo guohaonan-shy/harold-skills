@@ -9,17 +9,17 @@ effort: medium
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:issues`（状态、正文格式）、`idea-loop:decision-rules` 和 `idea-loop:runtime`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指你收到的知识库 `docs/` 的绝对路径。
+用 Skill 工具调 `idea-loop:issues`（状态、正文格式）、`idea-loop:decision-rules` 和 `idea-loop:runtime`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`：项目目录读调用方在 prompt 里给的项目目录，`<docs>`、引导文件（`ISSUE_TRACKER.md`、`DEVELOPMENT.md`）都在它下面，代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
 Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），不跑 `gh` 和 `issues note` / `type`；号形如 `ENG-123`。
 
-你收到：issue 号、`<docs>` 路径、一个已切到最新主分支的 worktree 绝对路径（查代码、跑复现都在这里）。`gh issue view <号> --comments` 读全文和评论；DEVELOPMENT.md 的「开发服务器」告诉你复现要起服务时怎么起，收工前全部停掉。
+你收到：issue 号、项目目录、一个已切到最新主分支的 worktree 绝对路径（查代码、跑复现都在这里）。`gh issue view <号> --comments` 读全文和评论；`<项目目录>/DEVELOPMENT.md` 的「开发服务器」告诉你复现要起服务时怎么起，收工前全部停掉。
 
 ## 五步，命中一项就停
 
 1. **查重**：`gh issue list --state open --search "<关键词>"`，开着的 issue 里有同一个问题 → 建议 canceled，写「跟 #N 重复」。
-2. **「不做」清单**：`docs/records/out-of-scope/` 里命中 → 建议 canceled，附那一份的路径。
-3. **是否已实现**：查代码、已合并的 PR、`docs/adr/` → 建议 canceled，附出处（文件和行，或 PR 号）。issue 写的现状也要核过再信。
+2. **「不做」清单**：`<docs>/records/out-of-scope/` 里命中 → 建议 canceled，附那一份的路径。
+3. **是否已实现**：查代码、已合并的 PR、`<docs>/adr/` → 建议 canceled，附出处（文件和行，或 PR 号）。issue 写的现状也要核过再信。
 4. **复现**：手段按 issue 的性质选。输出放 `.tmp/triage/<号>/`（日志、测试输出、截图都进文件，只读回判断要用的一两行）。
 
    | issue 的性质 | 复现手段 | 评论里写什么 |
@@ -29,7 +29,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
    | 线上数据、日志、性能 | 一条查询或一段日志 | 查的范围和时间，加结果；数字能列成小表就列 |
 
    复现到了 → 建议 todo 或 triage。复现推翻了 issue 的说法，评论里写「修正：issue 原先认为 X，实测是 Y」。复现不出 → 建议 canceled，写三样：试了什么、卡在哪；什么时候、对着哪个提交核的；用什么手段。
-5. **打分类**：模块 `issues type <docs> <号> <父类>[/<子类>]`（分类写在根目录 `AGENTS.md` 或 `CLAUDE.md` 的「issue 分类」一节；没有贴切的就不打，评论里写贴切的新分类名）；类型用 `gh issue edit <号> --add-label kind:<bug|feature|improvement>`。
+5. **打分类**：模块 `issues type <docs> <号> <父类>[/<子类>]`（分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节；没有贴切的就不打，评论里写贴切的新分类名）；类型用 `gh issue edit <号> --add-label kind:<bug|feature|improvement>`。
 
 ## 建议去向
 

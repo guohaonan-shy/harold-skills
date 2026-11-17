@@ -11,17 +11,18 @@ tools: Read, Grep, Glob, Bash, Write, WebFetch
 你收到：
 
 - **目的**：这次要探什么，一两句话。以它为准，不扩大范围。
-- 这批工单的路径（`docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`）和 spec 路径。spec 只读「测试决策」。
+- **项目目录**：读调用方在 prompt 里给的项目目录；`<docs>`、引导文件都在它下面，代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+- 这批工单的路径（`<项目目录>/docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`）和 spec 路径。spec 只读「测试决策」。
 - 笔记目录（`.tmp/implement/<spec-slug>/notes/`，绝对路径）。
 
 ## 读什么
 
 | 找什么 | 去哪找 |
 |---|---|
-| 验证命令（typecheck、lint、单测、全量套件、端到端） | 目标仓库 `REVIEW.md` 的「验证命令」节；端到端等没列的，再看 CI 配置 |
-| worktree 准备命令、服务怎么起、端口怎么配 | 目标仓库 `DEVELOPMENT.md` |
+| 验证命令（typecheck、lint、单测、全量套件、端到端） | `<项目目录>/REVIEW.md` 的「验证命令」节；端到端等没列的，再看 CI 配置 |
+| worktree 准备命令、服务怎么起、端口怎么配 | `<项目目录>/DEVELOPMENT.md` |
 | 测试怎么写、数据怎么造、mock 边界在哪 | 和工单同一层的存量测试，挑一两个最像的 |
-| 领域词汇 | `GLOSSARY.md`（有就读） |
+| 领域词汇 | `<项目目录>/GLOSSARY.md`（有就读） |
 | 每张工单描述的现状在代码里对应哪几处 | 用工单里的行为描述和领域词 grep 代码 |
 | 工单要用到的库的 API | 锁文件里的版本对应的官方文档 |
 

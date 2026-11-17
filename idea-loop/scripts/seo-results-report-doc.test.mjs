@@ -50,7 +50,7 @@ test('results-analyst is defined like the other direction agents: a description 
 test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
   assert.match(AGENT_BODY, /skills\/seo\/seo-scan\/references\/findings\.md/);
   const input = section(AGENT_BODY, '输入');
-  assert.match(input, /五行：SEO\.md 路径、OpenSEO 项目、本次额度、运行目录、今天/);
+  assert.match(input, /六行：SEO\.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天/);
   assert.match(input, /seo-md\.mjs/);
   assert.match(input, /「分析」/);
 });

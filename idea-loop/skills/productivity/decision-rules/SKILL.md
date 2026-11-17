@@ -46,7 +46,7 @@ description: 碰到「这条该怎么处置」时先对它：自己定还是交�
 
 1. `REVIEW.md` 的检查与 `seo-check` 全过。
 2. 两轴没有阻塞项：这一轮没有要修的、没有要人定的事。
-3. `seo-content-scope.mjs` 判定改动只落在内容范围内：`SEO.md`「构建与检查」的「内容路径」加 `docs/` 和根目录 `SEO.md`。
+3. `seo-content-scope.mjs` 判定改动只落在内容范围内：`SEO.md`「构建与检查」的「内容路径」。`docs/` 和 `SEO.md` 在项目目录里，不在代码 PR 里。
 
 上线自查失败时开的 revert PR，检查过了也由 Claude 合并。例外只放开合并，其余护栏照旧。
 
