@@ -27,6 +27,10 @@ idea-loop 插件版本升一个 patch；插件 README 里如果列了这两个 s
 - [x] implement 回放测试里「不比 9589 长」那一条删掉
 - [x] 新增一条 design-modeling 的文档测试：主体 < 5000，「一次写入怎么走」小节在且指向 `references/write.md`，参考文件含备份、lint、diff 三步
 - [x] idea-loop 全部测试通过；插件版本升 patch
+- [ ] review 第 1 轮 人批示 1（2026-11-18）：design-modeling 主文件开头（frontmatter 之后、「是什么」之前）那两段删掉——写 DESIGN.md 时 lint 由插件 hook 自动跑，收尾的 lint 与 diff 命令已在 `references/write.md`
+- [ ] review 第 1 轮 人批示 2（2026-11-18）：「是什么」里「DESIGN.md 由 YAML front matter（…）和 Markdown 正文（…）组成」这句移出，改成「结构」一节开头的两行表格（front matter / 正文，各写它装什么、给谁读）；「是什么」其余三条保留
+- [ ] review 第 1 轮 人批示 3（2026-11-18）：「结构」一节下分两个三级小节：「Front matter」（现在独立的「Front matter」一节整节挪进来，标题文字不变，别的参考文件按「Front matter」这个名字点它）和「正文」（现在「结构」下的章表）；章表下面两条（`omitted:` 声明那条、「前八章来自 Google 规范…靠写的人守」那条）删掉
+- [ ] review 第 1 轮 人批示 4（2026-11-18）：主体仍 < 5000 字，idea-loop 全部测试通过；按小节名点「Front matter」「结构」「一次写入怎么走」的参考文件、hook 注释与测试仍对得上
 
 ## 选中的存量回归
 
