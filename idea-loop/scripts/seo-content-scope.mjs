@@ -4,8 +4,9 @@
  * `robots.txt`, sitemap or `llms.txt` can be merged without a person (decision-rules「护栏」); one that
  * touches a component, a template or a style cannot. This script is the judge for "stays inside".
  *
- * The content scope is the globs under `内容路径` in SEO.md's 构建与检查 section, plus `docs/` and the
- * root `SEO.md`. A changed file counts only when it matches one of them: a `.astro`, `.tsx` or `.css`
+ * The content scope is the globs under `内容路径` in SEO.md's 构建与检查 section, nothing else: `docs/`
+ * and `SEO.md` live in the project directory in home, not in the code repository, so a code PR never
+ * carries them. A changed file counts only when it matches one of them: a `.astro`, `.tsx` or `.css`
  * file is content only when 内容路径 lists it. A glob is a path relative to the repo root: `*` stays
  * inside one directory, `**` crosses directories, `?` is one character, and a path that names a
  * directory (with or without a trailing `/`) covers everything under it. A path that climbs out with
@@ -65,7 +66,7 @@ export function matches(file, globs) {
 export function judge(files, contentPaths) {
   const list = [...new Set(files.map(clean).filter(Boolean))];
   if (!list.length) return { contentOnly: false, files: 0, outside: [], reason: '没有改动文件' };
-  const outside = list.filter((f) => !matches(f, [...contentPaths, 'docs']) && !(f === 'SEO.md'));
+  const outside = list.filter((f) => !matches(f, contentPaths));
   return { contentOnly: outside.length === 0, files: list.length, outside };
 }
 

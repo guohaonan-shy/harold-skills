@@ -72,7 +72,7 @@ test('seo-setup: step 3 gives recommended values for the two items; the old 2,00
 test('seo-setup: an old 单次额度 is migrated into the two new items, before SEO.md is read as a whole, and the human confirms the values', () => {
   const read2 = section(SETUP, '2\\. 读现状，备推荐值');
   assert.match(read2, /单次额度[\s\S]*迁/);
-  assert.ok(read2.indexOf('单次额度') < read2.indexOf('seo-md.mjs SEO.md'), 'the old key makes seo-md.mjs refuse the file, so it is dealt with first');
+  assert.ok(read2.indexOf('单次额度') < read2.indexOf('seo-md.mjs <项目目录>/SEO.md'), 'the old key makes seo-md.mjs refuse the file, so it is dealt with first');
   const write = section(SETUP, '4\\. 写 SEO.md');
   assert.match(write, /单次额度[\s\S]*每周分配/);
   assert.match(write, /删掉[^\n]*单次额度|单次额度[^\n]*删/);

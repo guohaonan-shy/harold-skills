@@ -21,20 +21,20 @@ dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的�
 ## 基准提交
 
 1. 任务 id 是 `dreaming-home`：一台设备只有这一个 dreaming 任务，`/idea-loop:setup` 建它时就用这个 id，不从仓库目录名推。列出的任务里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
-2. 用『定时任务』读这个任务上次成功运行的时间，记下来当 `started_at`。这一次自己若就是定时任务起的，它还没跑完，不能算上次成功运行。
-3. 起环境时已经 `git fetch`。找 `origin/<基准分支>` 在那一刻的提交：`git rev-list -1 --first-parent --before="<started_at>" origin/<基准分支>`。输出为空（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
+2. 用『定时任务』读这个任务上次成功运行的时间，记下来当 `started_at`。这一次自己若就是定时任务起的，它还没跑完，不能算上次成功运行。一个任务对账所有项目，基准点各项目共用；有项目没对完的那次执行不算成功（[per-project.md](per-project.md) 的「整次成功」），所以那个项目下一次从更早的基准点算起。
+3. 取项目时已经 `git fetch`。在代码 worktree 里找 `origin/<基准分支>` 在那一刻的提交：`git rev-list -1 --first-parent --before="<started_at>" origin/<基准分支>`。输出为空（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
 
 得到的提交就是**基准提交**。
 
 ## 挑状态
 
-增量时，在这次的 worktree 里跑档案查询的 `affected`：
+增量时，在代码 worktree 里跑档案查询的 `affected`（`<项目目录>` 是 home 里的项目目录，档案在那里；改过的文件要到代码里查，所以 `--code-root` 要另给代码 worktree，漏了它查询去项目目录里找基准提交，报「找不到提交」）：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根> affected <基准提交>
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> affected <基准提交> --code-root <代码 worktree>
 ```
 
-它交回从基准提交到现在（这个 worktree 的 HEAD 就是 `origin/<基准分支>`）受影响的状态清单：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算（列在状态里的、边上用到的、页面区域里摆着它的）；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了（只追一跳、只认相对路径）。返回里的 `states` 就是交给实时波的清单，`totalStates` 是档案一共多少个状态；MCP 里同一个问法叫 `design_affected`。
+它交回从基准提交到现在（代码 worktree 的 HEAD 就是 `origin/<基准分支>`）受影响的状态清单：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算（列在状态里的、边上用到的、页面区域里摆着它的）；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了（只追一跳、只认相对路径）。返回里的 `states` 就是交给实时波的清单，`totalStates` 是档案一共多少个状态；MCP 里同一个问法叫 `design_affected`。
 
 这个清单**只用来定实时波对哪些状态拍图比对**：
 
@@ -56,5 +56,5 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <worktree 根> aff
 
 ## 两个例外
 
-- **上一张提议表还没处理又到点了**（问人的行人还没回，或自动那份的 PR 没合成）：照常跑，不合并两张表。新提议表在范围那一行后面再写一行「上一次（<日期>）的提议表还没处理」。怎么知道还没处理：每次的提议表放在各自 worktree 的 `.tmp/dreaming/<日期>/proposal.md`，处理完（自动那份已合并，问人的行批了的执行了、或每行都回了「不批」）就删掉那个日期目录，空表也删；所以在 `git worktree list` 列出的别的 worktree 里，`.tmp/dreaming/<别的日期>/proposal.md` 还在、跑 `proposal-table-check.mjs --json` 的 `empty` 是 `false`，就是上一张还没处理，日期取目录名。多张取最近一张。没有就不写这一行。
+- **上一张提议表还没处理又到点了**（问人的行人还没回，或自动那份没提交成）：照常跑，不合并两张表。新提议表在范围那一行后面再写一行「上一次（<日期>）的提议表还没处理」。怎么知道还没处理：每次的提议表放在 home 的 `.tmp/dreaming/<日期>/<名字>/proposal.md`，处理完（自动那份已提交，问人的行批了的执行了、或每行都回了「不批」）就删掉这个项目的那个目录，空表也删；所以 `.tmp/dreaming/<别的日期>/<名字>/proposal.md` 还在、跑 `proposal-table-check.mjs --json` 的 `empty` 是 `false`，就是这个项目上一张还没处理，日期取目录名。多张取最近一张。没有就不写这一行。
 - **没跑成的批**：实时波交回 `incomplete` 的批，写在提议表末尾（见 [archive-reconcile.md](archive-reconcile.md)「实时波」第 3 步），后面附一句「下次可说全量补上」。基准是按定时任务「成功」前推的，一次执行成功了但这一波没跑成，基准照样往前走：这是已知缺口，靠这一行让人看到，下次调用时说「全量」补上。

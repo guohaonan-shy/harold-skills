@@ -4,6 +4,7 @@
  */
 
 import { normalize } from 'node:path';
+import { BOOTSTRAP_FILES, normalizeRemote, parseProjects } from '../../scripts/project-map.mjs';
 
 const ANSWERS ={ 是: 'yes', yes: 'yes', y: 'yes', 否: 'no', no: 'no', n: 'no' };
 const normalizeAnswer = (a) => ANSWERS[String(a ?? '').trim().toLowerCase()];
@@ -215,15 +216,107 @@ export function fileBody(buf) {
   return buf.includes(0) ? `（二进制文件，${buf.length} 字节，内容略）` : buf.toString('utf8');
 }
 
-export function buildArtifact({ resultText, files }, { perFile = 12_000, total = 60_000 } = {}) {
+export function buildArtifact({ resultText, files, homeFiles, homePath }, { perFile = 12_000, total = 60_000 } = {}) {
   const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里写下或改动的文件', ''];
-  if (!files.length) parts.push('（没有写下或改动的文件）');
-  for (const f of files) {
-    const body = f.content.length > perFile ? `${f.content.slice(0, perFile)}\n…（已截断，原长 ${f.content.length} 字）` : f.content;
-    parts.push(`### ${f.path}`, '', body, '');
+  const addFiles = (list) => {
+    if (!list.length) parts.push('（没有写下或改动的文件）');
+    for (const f of list) {
+      const body = f.content.length > perFile ? `${f.content.slice(0, perFile)}\n…（已截断，原长 ${f.content.length} 字）` : f.content;
+      parts.push(`### ${f.path}`, '', body, '');
+    }
+  };
+  addFiles(files);
+  // a run given a home (idea-loop's knowledge-base directory) may write there instead of in the workspace: say where it is and what is in it
+  if (homeFiles) {
+    parts.push(`## home（${homePath}）里写下或改动的文件`, '', '（home 里 `projects/<项目名>/` 是这个项目的目录：它的 `docs/` 是知识库，引导文件也在那里；下面的路径从 home 起算）', '');
+    addFiles(homeFiles);
   }
   const text = parts.join('\n');
   return text.length > total ? `${text.slice(0, total)}\n…（已截断）` : text;
+}
+
+// ---------- the temporary home (idea-loop 0.2.0: the knowledge base lives in home, not in the code repository) ----------
+//
+// Cases recorded before the knowledge base moved into home have it in the code repository at their commit; the post-change plugin only
+// reads home. The runner builds a home out of the commit (this is the only place that conversion exists: no skill and no script has it).
+// What is decided here, without touching disk or git: what is copied, what the project list line says, who gets IDEA_LOOP_HOME.
+
+/** The variable that points idea-loop at its home. */
+export const HOME_ENV = 'IDEA_LOOP_HOME';
+
+/**
+ * Where one side's home comes from. A case with `home_commit` gives both sides a copy cut from that commit of the home repository
+ * ('home-commit'). Without it, the post-change side gets a home built from the case commit's own `docs/` and bootstrap files
+ * ('project-docs'); the pre-change plugin reads those same files from the code repository, so its home is an empty one ('empty'):
+ * the variable is still set, so no home of this machine is reachable through it.
+ */
+export function homeSourceOf(c, side) {
+  if (c.home_commit) return 'home-commit';
+  return side === 'after' ? 'project-docs' : 'empty';
+}
+
+/** The session environment with IDEA_LOOP_HOME pointing at `home`. `env` is not changed. */
+export const withHome = (env, home) => ({ ...env, [HOME_ENV]: home });
+
+/** What goes from the code repository's top level (`topLevel`: its entry names at the commit) into the project directory in home: `docs/` and the bootstrap files, those that exist. */
+export function homeCopyEntries(topLevel) {
+  const names = new Set(topLevel);
+  return ['docs', ...BOOTSTRAP_FILES].filter((n) => names.has(n));
+}
+
+/** The name home files a project under: the repository's name, lower case (what setup registers). */
+export const homeProjectName = (name) => String(name).toLowerCase();
+
+/** The remote the project is registered with: the case repository's own `origin`, or a made-up one that matches nothing real when it has none. */
+export function homeRemote(origin, name) {
+  return normalizeRemote(origin) ? String(origin).trim() : `https://example.invalid/${name}/${name}.git`;
+}
+
+/** One line of the `## 项目` list, in the format home's AGENTS.md and project-map.mjs use. */
+export const projectListLine = ({ name, path, remote }) => `${name}（项目）: ${path}. Clone from ${remote} if missing.`;
+
+/** A home's AGENTS.md with just this project in its list. */
+export function homeAgentsMd(entry) {
+  return ['# home', '', '## 设备地图', '', '回答关于项目的问题前，先在「项目」一节里找到项目，读它的项目地图，再去地图指的那几层。', '', '## 项目', '', projectListLine(entry), ''].join('\n');
+}
+
+/**
+ * `agentsMd` with this project in its list: a line for the same repository (same remote) is replaced, keeping its name and remote, so its path
+ * points at the checkout the run works in and not at the one of the machine the home was cut on; otherwise the line is added to the end of the section.
+ */
+export function registerProject(agentsMd, entry) {
+  const line = projectListLine(entry);
+  const want = normalizeRemote(entry.remote);
+  const lines = String(agentsMd ?? '').split('\n');
+  let inSection = false;
+  let lastInSection = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const heading = lines[i].match(/^##\s+(.*?)\s*$/);
+    if (heading) {
+      inSection = heading[1] === '项目';
+      if (inSection) lastInSection = i;
+      continue;
+    }
+    if (!inSection) continue;
+    if (lines[i].trim()) lastInSection = i;
+    const [found] = parseProjects(`## 项目\n${lines[i]}`);
+    if (found && normalizeRemote(found.remote) === want) {
+      lines[i] = projectListLine({ ...entry, name: found.name, remote: found.remote }); // name and remote stay (the name is the directory's under projects/); only the path moves
+      return lines.join('\n');
+    }
+  }
+  if (lastInSection < 0) return `${lines.join('\n').replace(/\n*$/, '\n')}\n## 项目\n\n${line}\n`;
+  lines.splice(lastInSection + 1, 0, line);
+  return lines.join('\n');
+}
+
+/** The project map (`projects/<名字>/AGENTS.md`) for a project directory built out of `copied` entries. */
+export function projectMapMd({ name, path, copied }) {
+  const layers = [];
+  if (copied.includes('docs')) layers.push('- `docs/`：知识库（spec、工单、设计档案、决策记录）。');
+  const boot = copied.filter((n) => n !== 'docs');
+  if (boot.length) layers.push(`- 引导文件：${boot.map((n) => `\`${n}\``).join('、')}。`);
+  return [`# ${name} 项目地图`, '', `项目。代码仓库：${path}。`, '', '## 几层', '', ...(layers.length ? layers : ['- （还没有内容）']), ''].join('\n');
 }
 
 /** Rough spend per case in dollars: two worker sessions plus one judge. Reference: an empty `claude -p` is about $0.3–0.5; one full skill run about $1.5. */

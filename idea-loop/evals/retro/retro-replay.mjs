@@ -43,8 +43,22 @@
  * `--plugin-dir` is what points a session at a branch.
  *
  *   node idea-loop/evals/retro/retro-replay.mjs --list
- *   node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] [--repo <dir>] [--out <dir>] [--model <alias>]
+ *   node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] [--repo <dir>] [--home-repo <dir>] [--out <dir>] [--model <alias>]
  *   node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <run dir>
+ *
+ * The knowledge base lives in idea-loop's home (`projects/<名字>/docs/`, IDEA_LOOP_HOME points at it), not in the code repository, and
+ * the post-change plugin reads only home. So every session the runner starts is given its own temporary home (a git repo under the
+ * temp dir, deleted with the run; a copy stays under the run dir as `<side>/home`) and IDEA_LOOP_HOME points at it. Nothing of this
+ * machine's own home is reachable through it. Where the temporary home comes from depends on the case:
+ *   - an old case (no `home_commit`; its commit is from before the knowledge base moved): the post-change run gets a home built out
+ *     of that commit: its `docs/` and bootstrap files (DEVELOPMENT.md, REVIEW.md, …) copied into `projects/<名字>/`, the project list
+ *     naming this project (remote: the case repository's `origin`; path: the project copy the run works in). The pre-change run reads
+ *     the same files from the code repository, so it gets an empty home. The project copy has that `origin` too, with a push url that
+ *     goes nowhere. The judge sees what the run wrote in the workspace and what it wrote or committed in its home.
+ *   - a case with `home_commit` (see cases.mjs): both runs get a copy cut from that commit of the home repository, whose location is
+ *     `--home-repo <dir>` (required for such a case; the runner refuses before starting a session when it is missing or lacks the
+ *     commit). The list line for this project's repository is pointed at the project copy.
+ * The conversion from a code repository's `docs/` to a home exists only here; no skill and no script has it.
  *
  * Where the plugin under test and the cases are: `--worktree <dir>` says "this worktree" and stands for
  * `--repo <dir> --after-plugin <dir>/idea-loop --cases-root <dir>/idea-loop/evals/retro`; each can still be given
@@ -89,8 +103,9 @@ import { detect as detectRuntime } from '../../scripts/runtime-detect.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
-  applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, parseOverrides, parseVerdict,
-  productsInOrder, relabelLarge, replayChildEnv, settleVerdicts, verdictsBySide,
+  applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, homeAgentsMd, homeCopyEntries,
+  homeProjectName, homeRemote, homeSourceOf, parseOverrides, parseVerdict, productsInOrder, projectMapMd, registerProject, relabelLarge, replayChildEnv,
+  settleVerdicts, verdictsBySide, withHome,
 } from './replay.mjs';
 
 /** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way. null for an unknown forced name. */
@@ -115,7 +130,7 @@ const RUN_LARGE_TIMEOUT_MIN = 45;
 function parseArgs(argv) {
   const o = {
     list: false, case: null, settle: null, run: null, base: null, repo: null, out: DEFAULT_OUT, model: null, timeoutMin: null,
-    casesRoot: null, beforePlugin: null, afterPlugin: null, worktree: null, runLarge: false, pr: null, cases: null,
+    casesRoot: null, beforePlugin: null, afterPlugin: null, worktree: null, runLarge: false, pr: null, cases: null, homeRepo: null,
   };
   const val = (i) => {
     if (i >= argv.length) throw new Error(`${argv[i - 1]} needs a value`);
@@ -138,6 +153,7 @@ function parseArgs(argv) {
     else if (a === '--worktree') o.worktree = resolve(val(++i));
     else if (a === '--run-large') o.runLarge = true;
     else if (a === '--pr') o.pr = Number(val(++i));
+    else if (a === '--home-repo') o.homeRepo = resolve(val(++i));
     else if (a === '--cases') o.cases = val(++i).split(',').map((x) => x.trim()).filter(Boolean);
     else throw new Error(`unknown argument: ${a}`);
   }
@@ -150,7 +166,7 @@ function parseArgs(argv) {
  * not given on its own; with neither, the runner's own copy is the one under test, if it has one.
  */
 function resolveTargets(o, { needPlugin = true, needCases = true } = {}) {
-  const t = { repo: o.repo, afterPlugin: o.afterPlugin, casesRoot: o.casesRoot };
+  const t = { repo: o.repo, afterPlugin: o.afterPlugin, casesRoot: o.casesRoot, homeRepo: o.homeRepo };
   if (o.worktree) {
     t.repo ??= o.worktree;
     t.afterPlugin ??= join(o.worktree, 'idea-loop');
@@ -190,6 +206,65 @@ function prepareProject(repo, commit, dest) {
   git(dest, 'commit', '-q', '-m', `project at ${commit}`);
 }
 
+/** A push to this goes nowhere: the project copy has the case repository's `origin` so home can tell which project it is, but a run must not be able to push to it. */
+const NO_PUSH_URL = 'file:///nonexistent/no-push';
+
+/** The remote of `repo` (its `origin`), or null. */
+function originOf(repo) {
+  const r = spawnSync('git', ['remote', 'get-url', 'origin'], { cwd: repo, encoding: 'utf8' });
+  return r.status === 0 ? r.stdout.trim() : null;
+}
+
+/** Give the project copy an `origin` (what `project-map.mjs` matches against home's project list) that cannot be pushed to. */
+function connectOrigin(project, remote) {
+  git(project, 'remote', 'add', 'origin', remote);
+  git(project, 'remote', 'set-url', '--push', 'origin', NO_PUSH_URL);
+}
+
+/**
+ * The home one side's session is given, as a git repo in a fresh temp dir with one commit (so what the run adds or commits to it
+ * can be listed afterwards). `homeSourceOf` says where it comes from:
+ *   'project-docs'  an old case: the case commit's `docs/` and bootstrap files go into `projects/<name>/`, the project list has this
+ *                   project (remote: the case repository's `origin`, path: the project copy the run works in)
+ *   'home-commit'   the case's `home_commit`, cut from the home repository `t.homeRepo`; the list line of this project's repository is
+ *                   pointed at the project copy, nothing else is changed
+ *   'empty'         nothing: no project is listed
+ * Returns `{ dir, source, base }`; `base` is the commit it starts from (null for 'empty').
+ */
+export function prepareHome({ c, side, t, project, name }) {
+  const source = homeSourceOf(c, side);
+  const dir = workDirFor('home');
+  if (source === 'empty') return { dir, source, base: null };
+  const key = homeProjectName(name);
+  const entry = { name: key, path: project, remote: homeRemote(originOf(t.repo), name) };
+  if (source === 'project-docs') {
+    git(dir, 'init', '-q', '-b', 'main');
+    const copied = homeCopyEntries(git(t.repo, 'ls-tree', '--name-only', c.commit).toString('utf8').split('\n').filter(Boolean));
+    const projectDir = join(dir, 'projects', key);
+    mkdirSync(projectDir, { recursive: true });
+    if (copied.length) sh(projectDir, 'tar', ['-x', '-C', projectDir], git(t.repo, 'archive', c.commit, '--', ...copied));
+    writeFileSync(join(dir, 'AGENTS.md'), homeAgentsMd(entry));
+    writeFileSync(join(projectDir, 'AGENTS.md'), projectMapMd({ name: key, path: project, copied }));
+  } else {
+    if (!t.homeRepo) throw new Error(`${c.name} 带 home_commit，要用 --home-repo <dir> 说明 home 仓库在哪`);
+    extractArchive(t.homeRepo, c.home_commit, dir);
+    const agents = join(dir, 'AGENTS.md');
+    writeFileSync(agents, registerProject(existsSync(agents) ? readFileSync(agents, 'utf8') : '', entry));
+    git(dir, 'init', '-q', '-b', 'main');
+  }
+  git(dir, 'add', '-A');
+  git(dir, 'commit', '-q', '-m', 'home at the start of the run');
+  return { dir, source, base: git(dir, 'rev-parse', 'HEAD').toString('utf8').trim() };
+}
+
+/** Why a case cannot start (it needs a home repository nobody pointed at, or one that does not have its commit), or null. */
+export function homeProblem(c, t) {
+  if (!c.home_commit) return null;
+  if (!t.homeRepo) return `${c.name}: 带 home_commit，要用 --home-repo <dir> 说明 home 仓库在哪`;
+  const r = spawnSync('git', ['cat-file', '-e', `${c.home_commit}^{commit}`], { cwd: t.homeRepo });
+  return r.status === 0 ? null : `${c.name}: ${t.homeRepo} 里没有提交 ${c.home_commit}（home_commit）`;
+}
+
 /**
  * What the project a run works in is called: the repository's own name (its `origin` remote, else its directory), or `project`
  * when there is none or the name would tell the run it is a test.
@@ -224,15 +299,20 @@ function stagePlugin(src, afterPlugin) {
   return { dir, remove: () => rmSync(dirname(dir), { recursive: true, force: true }) };
 }
 
-function changedFiles(projectDir) {
-  const out = git(projectDir, 'status', '--porcelain', '--untracked-files=all', '-z').toString('utf8');
+/**
+ * What a run added or changed under `dir` (a git repo), as `{path, content}`: the files that differ from `base` (a commit; the work
+ * tree against it, so what the run committed counts too) and the untracked ones. Deleted files, and files over 200 kB, are left out.
+ */
+function changedFiles(dir, base = 'HEAD') {
+  const lines = (...args) => git(dir, ...args).toString('utf8').split('\0').filter(Boolean);
+  const paths = new Set([
+    ...lines('diff', '--name-only', '-z', '--diff-filter=AMTR', base),
+    ...lines('ls-files', '--others', '--exclude-standard', '-z'),
+  ]);
   const files = [];
-  for (const entry of out.split('\0').filter(Boolean)) {
-    const status = entry.slice(0, 2);
-    const path = entry.slice(3);
-    if (status.includes('D') || status.startsWith('R')) continue;
-    const full = join(projectDir, path);
-    if (!existsSync(full) || statSync(full).size > 200_000) continue;
+  for (const path of [...paths].sort()) {
+    const full = join(dir, path);
+    if (!existsSync(full) || !statSync(full).isFile() || statSync(full).size > 200_000) continue;
     files.push({ path, content: fileBody(readFileSync(full)) });
   }
   return files;
@@ -427,16 +507,26 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     const dir = join(runDir, s.side);
     const project = workDirFor(projectName(t.repo));
     const staged = stagePlugin(s.plugin, afterPlugin);
+    let home = null;
     try {
       mkdirSync(dir, { recursive: true });
       prepareProject(t.repo, c.commit, project);
+      const base = git(project, 'rev-parse', 'HEAD').toString('utf8').trim();
+      const name = projectName(t.repo);
+      connectOrigin(project, homeRemote(originOf(t.repo), name));
+      // every session gets IDEA_LOOP_HOME: a populated home when the case needs one for this side, an empty one otherwise, so no home of this machine is reachable
+      home = prepareHome({ c, side: s.side, t, project, name });
+      const sideEnv = withHome(childEnv, home.dir);
       const args = ['-p', buildWorkerPrompt(c), '--plugin-dir', staged.dir, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
       if (opts.model) args.push('--model', opts.model);
       const streamPath = join(dir, 'run.stream.jsonl');
       process.stdout.write(`— ${s.side}: ${s.plugin} …`);
-      const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge, env: childEnv });
+      const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge, env: sideEnv });
       // the run is over: what it left is kept under the run dir for a human to look at (the work dir itself goes in `finally`)
-      const keepProject = () => cpSync(project, join(dir, 'project'), { recursive: true });
+      const keepProject = () => {
+        cpSync(project, join(dir, 'project'), { recursive: true });
+        cpSync(home.dir, join(dir, 'home'), { recursive: true });
+      };
       if (r.escalation) {
         keepProject();
         console.log(` 中止：${r.escalation.kind === 'agent' ? '起了 agent' : '开了浏览器'}（${r.escalation.tool}）`);
@@ -448,7 +538,11 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       }
       const digest = digestStream(fileLines(streamPath));
       if (r.stderr) writeFileSync(join(dir, 'run.stderr.log'), r.stderr);
-      products[s.side] = digest.result ? buildArtifact({ resultText: digest.result.text, files: changedFiles(project) }) : null;
+      products[s.side] = digest.result ? buildArtifact({
+        resultText: digest.result.text,
+        files: changedFiles(project, base),
+        ...(home.base ? { homeFiles: changedFiles(home.dir, home.base), homePath: home.dir } : {}),
+      }) : null;
       keepProject();
       if (!digest.result) {
         const why = r.timedOut ? '超时' : `退出码 ${r.status}`;
@@ -470,6 +564,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       // the plugin copy and the work dir are only for the run: nothing of them stays in the temp dir
       staged.remove();
       rmSync(dirname(project), { recursive: true, force: true });
+      if (home) rmSync(dirname(home.dir), { recursive: true, force: true });
     }
   }
 
@@ -537,6 +632,11 @@ async function replay(opts, t) {
   if (c.size === 'large') {
     console.log(`${c.name} 标成大（${c.size_basis}），这里不跑。大用例由编排者在 PR 开出后用 --run-large --pr <N> 跑。`);
     return 3;
+  }
+  const noHome = homeProblem(c, t);
+  if (noHome) {
+    console.error(noHome);
+    return 2;
   }
   const repo = t.repo ?? git(process.cwd(), 'rev-parse', '--show-toplevel').toString('utf8').trim();
   return (await executeReplay(opts, { ...t, repo }, c)).code;
@@ -634,6 +734,8 @@ async function runLarge(opts, t) {
     if (!c) return bad(`no case "${name}"; cases: ${[...known.keys()].join(', ') || '(none)'}`);
     const problems = validateCase(c);
     if (problems.length) return bad(problems.map((p) => `${name}: ${p.field}: ${p.message}`).join('\n'));
+    const noHome = homeProblem(c, t);
+    if (noHome) return bad(noHome);
     found.push(c);
   }
   const worktree = opts.worktree ?? opts.repo ?? repo;

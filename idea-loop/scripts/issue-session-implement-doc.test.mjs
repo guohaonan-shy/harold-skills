@@ -49,7 +49,7 @@ test('tickets that already exist are not cut again', () => {
   assert.match(impl, /跳过切票|不再切|不用再切/, '「实现」 must say to skip to-ticket when the tickets exist');
 });
 
-test('to-ticket 落盘 flips nothing and commits the tickets to the current branch', () => {
+test('to-ticket 落盘 flips nothing and commits the tickets to home', () => {
   const ticketSkill = read('skills', 'engineering', 'to-ticket', 'SKILL.md');
   // the ticket template inside 「落盘」 has its own "## …" headings, so cut at 「下一环」, not at the next "## "
   const from = ticketSkill.indexOf('\n## 落盘');
@@ -59,9 +59,9 @@ test('to-ticket 落盘 flips nothing and commits the tickets to the current bran
   const flip = save.indexOf('切票不翻任何状态');
   assert.ok(flip >= 0, '「落盘」 must say cutting tickets flips no state');
   const after = save.slice(flip);
-  assert.match(after, /提交/, '「落盘」 must commit the tickets and the spec change');
-  assert.match(after, /当前分支/, '「落盘」 must say the commit goes onto the current branch');
-  assert.match(after, /worktree/, '「落盘」 must say why: the executors\' worktrees are cut from the current branch');
+  assert.match(after, /`commit` 到 home/, '「落盘」 must commit the tickets and the spec change to home');
+  assert.match(after, /知识库落地/, '「落盘」 must point at 知识库落地');
+  assert.match(after, /读不到 home/, '「落盘」 must say why dispatch hands over absolute paths: the executors\' worktrees cannot read home');
 });
 
 test('issue-session 「实现」 step 1 only calls to-ticket and does not commit the tickets itself', () => {
@@ -88,7 +88,7 @@ test('the README row for issue-session does not mention a compact stop', () => {
 test('the README row for to-ticket mentions the commit', () => {
   const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:to-ticket`'));
   assert.ok(row, 'README has no to-ticket row in the Skills table');
-  assert.match(row, /commit/i, 'the to-ticket row must say it commits the tickets onto the current branch');
+  assert.match(row, /commit/i, 'the to-ticket row must say it commits the tickets to home');
 });
 
 test('issue-session SKILL.md body is under 5000 characters', () => {

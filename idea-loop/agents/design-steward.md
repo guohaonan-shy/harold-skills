@@ -15,8 +15,9 @@ effort: high
 
 指针，不是摘要：
 
-- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的）
-- 这次运行的中间物目录 `.tmp/dreaming/<YYYY-MM-DD>/`；截图放它下面的 `shots/`
+- **项目目录**：读调用方在 prompt 里给的项目目录；`<docs>`、`DESIGN.md` 等引导文件都在它下面，代码在下面的代码 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+- **代码 worktree** 的绝对路径（从 `origin/<基准分支>` 新切的）
+- 这次运行的中间物目录 `<home>/.tmp/dreaming/<日期>/<项目名>/` 的绝对路径（dreaming 起你时给的路径）；截图放它下面的 `shots/`
 - 浏览器锁目录、开发服务可用的端口（要从实现里截图或量 token 时才用）
 - 范围：「候选」「对账」或两者都做；或「单条蒸馏」加那一条规则的原话
 

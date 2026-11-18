@@ -745,7 +745,7 @@ export function affectedByFiles(archive, files) {
     for (const file of own) matched.push({ object: o.id, kind: o.kind, file, rule: 'code' });
     let imported = false;
     for (const codeFile of code) {
-      for (const cand of importCandidates(codeFile, readCode(archive.root, codeFile))) {
+      for (const cand of importCandidates(codeFile, readCode(archive.codeRoot ?? archive.root, codeFile))) {
         if (!changed.has(cand) || own.includes(cand)) continue;
         if (matched.some((m) => m.object === o.id && m.file === cand)) continue;
         matched.push({ object: o.id, kind: o.kind, file: cand, rule: 'import', via: codeFile });
@@ -785,7 +785,10 @@ export function queryAffected(archive, since) {
   const rev = String(since ?? '').trim();
   if (!rev) throw new QueryError('提交是空的', 'usage');
   if (rev.startsWith('-')) throw new QueryError(`「${rev}」不是提交`, 'usage');
-  const git = (...args) => execFileSync('git', ['-C', archive.root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  // the code lives in the code repository, which is not where the archive is once the archive is in home
+  const codeRoot = archive.codeRoot ?? archive.root;
+  if (!existsSync(codeRoot)) throw new QueryError(`代码仓库 ${codeRoot} 不存在：按提交挑状态要读它的 git 历史`, 'no-repo');
+  const git = (...args) => execFileSync('git', ['-C', codeRoot, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   let commit;
   try {
     commit = git('rev-parse', '--verify', '--quiet', `${rev}^{commit}`).trim();
@@ -793,7 +796,7 @@ export function queryAffected(archive, since) {
     try {
       git('rev-parse', '--is-inside-work-tree');
     } catch {
-      throw new QueryError(`${archive.root} 不在 git 仓库里：按提交挑状态要读 git 历史`, 'no-repo');
+      throw new QueryError(`${codeRoot} 不在 git 仓库里：按提交挑状态要读 git 历史`, 'no-repo');
     }
     throw new QueryError(`找不到提交「${rev}」`);
   }
@@ -820,9 +823,11 @@ export const ENTRIES = {
 
 /**
  * One call for every entry: `query(root, 'page', 'cookbook', { delta })`. `delta` lays that requirement's
- * `delta/` over `prod/` first (not for `diff`, which compares the two itself).
+ * `delta/` over `prod/` first (not for `diff`, which compares the two itself). `root` is the directory that holds the
+ * archive's `docs/`; `codeRoot` is the code repository, for the one entry that reads code and its git history
+ * (`affected`), when that is not the same directory (the archive in a project's directory in home).
  */
-export function query(root, entry, arg, { delta = null } = {}) {
+export function query(root, entry, arg, { delta = null, codeRoot = null } = {}) {
   const e = ENTRIES[entry];
   if (!e) throw new QueryError(`没有「${entry}」这个入口；可用：${Object.keys(ENTRIES).join('、')}`, 'usage');
   if (e.root) {
@@ -835,10 +840,12 @@ export function query(root, entry, arg, { delta = null } = {}) {
   } catch (err) {
     throw new QueryError(err.message);
   }
+  if (codeRoot) archive.codeRoot = codeRoot;
   return e.run(archive, arg);
 }
 
-const USAGE = `用法：node design-archive-query.mjs <repo-root> <入口> <参数> [--delta <spec-slug>]
+const USAGE = `用法：node design-archive-query.mjs <repo-root> <入口> <参数> [--delta <spec-slug>] [--code-root <代码仓库>]
+<repo-root> 是放着 docs/ 的目录；档案不在代码仓库里时，affected 用 --code-root 指出代码仓库。
 入口：
 ${Object.entries(ENTRIES).map(([k, v]) => `  ${k.padEnd(8)}${v.arg}`).join('\n')}
 输出 JSON；找不到对象退出码 1（原因在 stderr），用法错误或不是仓库根退出码 2。`;
@@ -847,8 +854,11 @@ function main(argv) {
   const args = argv.slice(2);
   const di = args.indexOf('--delta');
   const delta = di >= 0 ? args[di + 1] : null;
-  const positional = args.filter((a, i) => !(a === '--delta' || args[i - 1] === '--delta'));
-  if (positional.length !== 3 || (di >= 0 && !delta) || !ENTRIES[positional[1]]) {
+  const ci = args.indexOf('--code-root');
+  const codeRoot = ci >= 0 && args[ci + 1] ? resolve(args[ci + 1]) : null;
+  const flagged = (a, i) => a === '--delta' || args[i - 1] === '--delta' || a === '--code-root' || args[i - 1] === '--code-root';
+  const positional = args.filter((a, i) => !flagged(a, i));
+  if (positional.length !== 3 || (di >= 0 && !delta) || (ci >= 0 && !codeRoot) || !ENTRIES[positional[1]]) {
     console.error(USAGE);
     return 2;
   }
@@ -859,7 +869,7 @@ function main(argv) {
     return 2;
   }
   try {
-    const result = query(root, entry, arg, { delta });
+    const result = query(root, entry, arg, { delta, codeRoot });
     if (entry === 'keyword' && !result.matches.length) {
       console.error(`没有对象匹配「${result.query}」`);
       return 1;

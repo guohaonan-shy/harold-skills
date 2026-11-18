@@ -79,13 +79,13 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 ### 规则来源：只认写下来的
 
-读目标仓库的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`、根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**只用这个仓库自己的规则**，不带入别的项目的，也不带入通用的「坏味道」清单或命名偏好。
+读项目目录的 `CODING_STANDARDS.md`（分层、文件划分、命名）、`REVIEW.md`，代码仓库根目录与适用子目录的 `AGENTS.md` / `CLAUDE.md`、它们链接到的文档，以及 lint / typecheck / 格式化的配置。`@` 导入不会自动展开，被引用的文件要显式去读。**只用这个仓库自己的规则**，不带入别的项目的，也不带入通用的「坏味道」清单或命名偏好。
 
 规则没写到的，就是没有规则可执行。规则有歧义的，作为问题报出，不当成违反。
 
 ### 机械检查
 
-在 Standards 进程开跑之前，审查者处理仓库声明的检查（`REVIEW.md` 的「验证命令」节与 CI 里的那几条；没装的编译器不为此去装）：
+在 Standards 进程开跑之前，审查者处理仓库声明的检查（项目目录里 `REVIEW.md` 的「验证命令」节与 CI 里的那几条；没装的编译器不为此去装）：
 
 - **全量测试命令、以及 CI 已在这个 head 上跑过的测试，不在本机跑**，读 CI 结论（`gh pr checks <PR 号>`），写进检查结果：`<检查名> | CI 结论 | 链接`；没跑完的写「CI 未完成」，不算通过。**PR 上没有检查时**，全量测试照旧本机跑。
 - **typecheck、lint 照旧本机跑**，每条输出都过一遍改动行过滤：
@@ -122,7 +122,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 {
   "spec": [{
     "id": "S1", "title": "…", "behavior": true, "on_screen": true,
-    "quote": { "file": "docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
+    "quote": { "file": "<项目目录>/docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
     "figure": "r1-….png", "example": "（界面上看不到时可以只有它：一张小表或一行例子）",
     "now": "…", "impact": "…",
     "decide": { "options": [{ "do": "…", "cost": "…", "rollback": "…" }, { "do": "…", "cost": "…", "rollback": "…" }], "recommend": "…" },
@@ -130,15 +130,15 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
   },
   {
     "id": "S2", "title": "…", "behavior": false, "disposition": "照规则",
-    "quote": { "file": "docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
+    "quote": { "file": "<项目目录>/docs/spec/<spec-slug>/tickets/03-….md", "text": "原文" },
     "now": "…", "impact": "用户感受不到",
-    "basis": { "kind": "人的决定", "file": "docs/spec/<spec-slug>/<spec-slug>.md", "text": "人的原话", "summary": "人在 spec 里已经定过……" },
+    "basis": { "kind": "人的决定", "file": "<项目目录>/docs/spec/<spec-slug>/<spec-slug>.md", "text": "人的原话", "summary": "人在 spec 里已经定过……" },
     "action": "同步改",
-    "locations": ["docs/spec/….md:88"]
+    "locations": ["<项目目录>/docs/spec/….md:88"]
   }],
   "standards": [{
     "id": "C1", "title": "…", "disposition": "照规则", "action": "修",
-    "rule": { "file": "CODING_STANDARDS.md", "text": "规则原文" },
+    "rule": { "file": "<项目目录>/CODING_STANDARDS.md", "text": "规则原文" },
     "code": { "path": "src/….ts", "snippet": "原样的几行" },
     "now": "…", "impact": "…",
     "locations": ["src/….ts:17"]
@@ -177,4 +177,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 
 ## 缺词
 
-读目标仓库的 `GLOSSARY.md`（或 `GLOSSARY-MAP.md` 列出的每一份），标题和正文里的领域概念用它的标准叫法。这次 PR 引入或改名、术语表却没收的概念，列进这一轮汇报的「缺词」节：写概念和推荐叫法，不当问题、不阻塞、不写进术语表（新词由 `idea-loop:grill` 加）。
+读项目目录的 `GLOSSARY.md`（或 `GLOSSARY-MAP.md` 列出的每一份），标题和正文里的领域概念用它的标准叫法。这次 PR 引入或改名、术语表却没收的概念，列进这一轮汇报的「缺词」节：写概念和推荐叫法，不当问题、不阻塞、不写进术语表（新词由 `idea-loop:grill` 加）。

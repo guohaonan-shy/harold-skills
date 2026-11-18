@@ -11,3 +11,7 @@ ff 不了（期间别的先落地了）就退回它：合入最新提交、重�
 ## 跟这次无关的存量问题
 
 **跟这次无关的存量问题自动开 issue**（它不在这份 spec 的问题之内，`idea-loop:decision-rules` 的「核心」）：逐条照 `idea-loop:issues` 的「开一个 issue」开（为什么不做：它跟这张工单无关）。把「做了什么 + 依据（它跟这张工单无关）+ issue 链接」记进 handled，下次 Review 汇报（来自实现）和第 1 轮 review 汇报的「已按规则处理」都带它。开不成的也记进 handled，让人在 Review 汇报里看到。
+
+## 勾框
+
+工单在 home 里，执行方的 commit 只含代码。落地（`git merge --ff-only`）之后，照交回的 `acceptance` 在 `<项目目录>/docs/spec/<spec-slug>/tickets/` 里勾好这张工单的框；有延后给后续工单的，在那张工单的验收标准末尾追加 `- [ ] <判据>（继承自 NN）`。然后照 `idea-loop:wiki-conventions` 的「知识库落地」一次 `commit` 到 home，只列这两张工单，消息 `docs(tickets): <NN> — 落地`。

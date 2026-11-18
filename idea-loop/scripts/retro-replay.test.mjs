@@ -8,13 +8,15 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { changeSetOf, projectName } from '../evals/retro/retro-replay.mjs';
+import { changeSetOf, homeProblem, prepareHome, projectName } from '../evals/retro/retro-replay.mjs';
+import { locate, normalizeRemote, parseProjects } from './project-map.mjs';
 import {
+  homeAgentsMd, homeCopyEntries, homeProjectName, homeRemote, homeSourceOf, projectListLine, registerProject, withHome,
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
   estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
@@ -183,10 +185,12 @@ test('settleVerdicts applies the human override for that run only, then decides'
 // The fake reads `<plugin-dir>/MARK` to decide what its worker session does:
 //   a line "reply: X"   final text X, and a file docs/out.md containing X
 //   a line "agent"      the session starts an Agent tool call, then goes on running (must be killed)
+//   a line "home-write: X"  X is written to <IDEA_LOOP_HOME>/projects/repo/docs/spec/out-home.md and committed in that home (as commit-to-home does)
 // With no --plugin-dir it is the judge: it answers yes for a product containing FIXED, else no.
 // ---------------------------------------------------------------------------------------------
 
 const RUNNER = join(dirname(fileURLToPath(import.meta.url)), '..', 'evals', 'retro', 'retro-replay.mjs');
+const PROJECT_MAP = join(dirname(fileURLToPath(import.meta.url)), 'project-map.mjs');
 
 const FAKE = `#!/usr/bin/env node
 const fs = require('node:fs');
@@ -196,7 +200,17 @@ const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
 const dirIn = process.env.GH_CONFIG_DIR;
-const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+const walk = (d, rel = '') => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).filter((e) => e.name !== '.git').flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name), rel + e.name + '/') : [rel + e.name])) : []);
+const hd = process.env.IDEA_LOOP_HOME;
+const home = hd ? { dir: hd, exists: fs.existsSync(hd), files: walk(hd).sort(), agents: fs.existsSync(path.join(hd, 'AGENTS.md')) ? fs.readFileSync(path.join(hd, 'AGENTS.md'), 'utf8') : null } : null;
+const sp = (cmd, a) => require('node:child_process').spawnSync(cmd, a, { cwd: process.cwd(), encoding: 'utf8' });
+const where = () => {
+  if (!process.env.PROJECT_MAP || !hd) return {};
+  const w = sp(process.execPath, [process.env.PROJECT_MAP, 'where']);
+  const o = (a) => { const r = sp('git', a); return r.status === 0 ? r.stdout.trim() : null; };
+  return { where: { status: w.status, stdout: w.stdout, stderr: w.stderr }, origin: { fetch: o(['remote', 'get-url', 'origin']), push: o(['remote', 'get-url', '--push', 'origin']) } };
+};
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null, home, ...where() };
 fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd, probe }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
@@ -214,6 +228,14 @@ if (pd) {
     }
     fs.mkdirSync('docs', { recursive: true });
     fs.writeFileSync('docs/out.md', text);
+    const hw = /^home-write: (.*)$/m.exec(mark);
+    if (hw && hd) {
+      fs.mkdirSync(path.join(hd, 'projects', 'repo', 'docs', 'spec'), { recursive: true });
+      fs.writeFileSync(path.join(hd, 'projects', 'repo', 'docs', 'spec', 'out-home.md'), hw[1]);
+      const g = (...a) => require('node:child_process').spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...a], { cwd: hd });
+      g('add', '-A');
+      g('commit', '-q', '-m', 'spec');
+    }
     emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 't1', name: 'Write', input: {} }] } });
     result(text);
   }
@@ -243,16 +265,21 @@ console.log('我读完了两份产物。');
 console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
 `;
 
-function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {} }) {
+function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, repoFiles = {}, origin, caseExtra = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
   mkdirSync(repo);
   writeFileSync(join(repo, 'README.md'), 'project at the decision commit\n');
+  for (const [rel, text] of Object.entries(repoFiles)) {
+    mkdirSync(dirname(join(repo, rel)), { recursive: true });
+    writeFileSync(join(repo, rel), text);
+  }
   const g = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...a], { cwd: repo, encoding: 'utf8' });
   g('init', '-q');
   g('add', '-A');
   g('commit', '-q', '-m', 'decision state');
   const commit = g('rev-parse', 'HEAD').stdout.trim();
+  if (origin) g('remote', 'add', 'origin', origin);
   // the plugins, each in a dir called idea-loop (as the real one is) under a side's own dir
   for (const [name, mark] of [['before', before], ['after', after]]) {
     mkdirSync(join(root, name, 'idea-loop'), { recursive: true });
@@ -265,7 +292,7 @@ function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFi
   const casesRoot = join(root, 'evals');
   const caseDir = join(casesRoot, 'cases', caseName);
   mkdirSync(caseDir, { recursive: true });
-  writeFileSync(join(caseDir, 'case.json'), JSON.stringify({ ...smallCase(), commit, size }, null, 2));
+  writeFileSync(join(caseDir, 'case.json'), JSON.stringify({ ...smallCase(), commit, size, ...caseExtra }, null, 2));
   writeFileSync(join(caseDir, 'annotations.md'), '# demo\n');
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
@@ -304,7 +331,7 @@ function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
   ], {
     encoding: 'utf8',
     env: {
-      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
+      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp, PROJECT_MAP,
       RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
       ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
@@ -872,4 +899,229 @@ test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not 
   assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker'], 'the judging session is the fake claude');
   assert.equal(resultJson(env, r.stdout).judge, 'claude');
   assert.match(r.stdout, /没找到 Codex，评委用 Claude/);
+});
+
+// ---------------------------------------------------------------------------------------------
+// The temporary home (工单 09): old cases get a home built out of the case commit, cases with `home_commit` get one cut from a home repository
+// ---------------------------------------------------------------------------------------------
+
+const TG = ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false'];
+const tgit = (cwd, ...a) => {
+  const r = spawnSync('git', [...TG, ...a], { cwd, encoding: 'utf8' });
+  assert.equal(r.status, 0, `git ${a.join(' ')}: ${r.stderr}`);
+  return r.stdout.trim();
+};
+/** A git repo at `dir` with these files in one commit; returns the commit. */
+function commitFiles(dir, files) {
+  mkdirSync(dir, { recursive: true });
+  tgit(dir, 'init', '-q', '-b', 'main');
+  for (const [rel, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(dir, rel)), { recursive: true });
+    writeFileSync(join(dir, rel), text);
+  }
+  tgit(dir, 'add', '-A');
+  tgit(dir, 'commit', '-q', '-m', 'state');
+  return tgit(dir, 'rev-parse', 'HEAD');
+}
+const walkFiles = (dir, rel = '') => (!existsSync(dir) ? [] : readdirSync(dir, { withFileTypes: true }).filter((e) => e.name !== '.git')
+  .flatMap((e) => (e.isDirectory() ? walkFiles(join(dir, e.name), `${rel}${e.name}/`) : [`${rel}${e.name}`]))).sort();
+
+const OLD_REPO_FILES = {
+  'docs/index.md': '# 索引\n',
+  'docs/spec/old/old.md': '一份旧 spec\n',
+  'DEVELOPMENT.md': '# 开发\n',
+  'REVIEW.md': '# review\n',
+  'GLOSSARY.md': '# 术语\n',
+  'AGENTS.md': '代码仓库自己的 AGENTS.md\n',
+  'src/app.js': 'code\n',
+};
+
+test('home copy: docs/ and the bootstrap files that exist go in; code and the repository\'s own AGENTS.md / CLAUDE.md stay out', () => {
+  assert.deepEqual(homeCopyEntries(['src', 'docs', 'REVIEW.md', 'AGENTS.md', 'CLAUDE.md', 'package.json', 'DEVELOPMENT.md']), ['docs', 'DEVELOPMENT.md', 'REVIEW.md']);
+  assert.deepEqual(homeCopyEntries(['src', 'README.md']), []);
+});
+
+test('the project list line is read back by project-map.mjs as this project, with the path and remote it was given', () => {
+  const entry = { name: 'demo-app', path: '/tmp/abc/demo-app', remote: 'git@github.com:acme/Demo-App.git' };
+  assert.equal(projectListLine(entry), 'demo-app（项目）: /tmp/abc/demo-app. Clone from git@github.com:acme/Demo-App.git if missing.');
+  assert.deepEqual(parseProjects(homeAgentsMd(entry)), [{ name: 'demo-app', path: '/tmp/abc/demo-app', remote: 'git@github.com:acme/Demo-App.git' }]);
+  assert.equal(homeProjectName('Demo-App'), 'demo-app');
+  assert.equal(homeRemote('https://github.com/acme/x.git\n', 'x'), 'https://github.com/acme/x.git');
+  assert.ok(normalizeRemote(homeRemote(null, 'x')), 'a repository with no origin is registered under a made-up remote that still parses');
+});
+
+test('registering a project in a home that has it: the line is replaced (name kept, path now the run\'s checkout); a home without it: the line is added; nothing else changes', () => {
+  const entry = { name: 'x', path: '/run/x', remote: 'https://github.com/acme/x' };
+  const home = ['# home', '', '## 设备地图', '', '地图', '', '## 项目', '', 'other（别的）: ~/o. Clone from https://github.com/acme/o if missing.', 'app（真实）: ~/projects/app. Clone from git@github.com:acme/x.git if missing.', '', '## 后面', '', '别的段', ''].join('\n');
+  const replaced = registerProject(home, entry);
+  assert.deepEqual(parseProjects(replaced).map((p) => [p.name, p.path]), [['other', '~/o'], ['app', '/run/x']]);
+  assert.ok(replaced.includes('## 后面\n\n别的段'), 'the other sections are as they were');
+  const added = registerProject(home, { ...entry, remote: 'https://github.com/acme/new' });
+  assert.deepEqual(parseProjects(added).map((p) => p.name), ['other', 'app', 'x']);
+  assert.ok(added.indexOf('x（项目）') < added.indexOf('## 后面'), 'added inside the 项目 section, not after the next one');
+  assert.deepEqual(parseProjects(registerProject('', entry)).map((p) => p.name), ['x']);
+});
+
+test('who is given what: an old case gives the post-change side a home built from the commit and the pre-change side an empty one; a case with home_commit gives both the home cut from it', () => {
+  assert.deepEqual(['before', 'after'].map((s) => homeSourceOf({}, s)), ['empty', 'project-docs']);
+  assert.deepEqual(['before', 'after'].map((s) => homeSourceOf({ home_commit: 'abc1234' }, s)), ['home-commit', 'home-commit']);
+  const env = { PATH: '/bin', IDEA_LOOP_HOME: '/the/machines/own/home' };
+  assert.equal(withHome(env, '/tmp/x/home').IDEA_LOOP_HOME, '/tmp/x/home', 'the session gets the temporary home, never the machine\'s');
+  assert.equal(env.IDEA_LOOP_HOME, '/the/machines/own/home', 'the environment it was made from is not changed');
+});
+
+test('the artifact says where home is and lists what the run wrote there, apart from the workspace; without a home it is as before', () => {
+  const a = buildArtifact({ resultText: '停在这', files: [], homeFiles: [{ path: 'projects/x/docs/spec/s/s.md', content: 'SPEC' }], homePath: '/tmp/r4nd/home' });
+  assert.match(a, /## home（\/tmp\/r4nd\/home）里写下或改动的文件/);
+  assert.match(a, /### projects\/x\/docs\/spec\/s\/s\.md\n\nSPEC/);
+  assert.match(a, /## 工作区里写下或改动的文件\n\n（没有写下或改动的文件）/);
+  assert.doesNotMatch(buildArtifact({ resultText: 'r', files: [] }), /home/);
+});
+
+test('prepareHome of an old case: the commit\'s docs/ and bootstrap files are in projects/<name>/, the list has the project, and where (01) finds it from the project and from a worktree of it', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-old-')));
+  const repo = join(root, 'code');
+  const commit = commitFiles(repo, OLD_REPO_FILES);
+  tgit(repo, 'remote', 'add', 'origin', 'git@github.com:acme/Demo-App.git');
+  // docs added after the case commit must not be in the home
+  mkdirSync(join(repo, 'docs', 'later'), { recursive: true });
+  writeFileSync(join(repo, 'docs', 'later', 'x.md'), 'after the commit\n');
+  tgit(repo, 'add', '-A');
+  tgit(repo, 'commit', '-q', '-m', 'later');
+  // the checkout the run works in (what the runner makes with prepareProject)
+  const project = join(root, 'run', 'Demo-App');
+  commitFiles(project, OLD_REPO_FILES);
+  tgit(project, 'remote', 'add', 'origin', 'git@github.com:acme/Demo-App.git');
+
+  const home = prepareHome({ c: { name: 'c', commit }, side: 'after', t: { repo }, project, name: projectName(repo) });
+  assert.equal(home.source, 'project-docs');
+  const files = walkFiles(home.dir);
+  for (const f of ['AGENTS.md', 'projects/demo-app/AGENTS.md', 'projects/demo-app/docs/index.md', 'projects/demo-app/docs/spec/old/old.md', 'projects/demo-app/DEVELOPMENT.md', 'projects/demo-app/REVIEW.md', 'projects/demo-app/GLOSSARY.md']) {
+    assert.ok(files.includes(f), `${f} is in the temporary home: ${files}`);
+  }
+  assert.ok(!files.some((f) => f.includes('src/') || f.includes('later')), 'no code, and nothing from after the case commit');
+  assert.doesNotMatch(readFileSync(join(home.dir, 'projects', 'demo-app', 'AGENTS.md'), 'utf8'), /代码仓库自己的/, 'the project map is written for the home, not the repository\'s own AGENTS.md');
+  assert.deepEqual(parseProjects(readFileSync(join(home.dir, 'AGENTS.md'), 'utf8')), [{ name: 'demo-app', path: project, remote: 'git@github.com:acme/Demo-App.git' }]);
+  assert.equal(tgit(home.dir, 'rev-parse', 'HEAD'), home.base, 'one commit, so what the run adds can be told from what was there');
+
+  const env = { PATH: process.env.PATH, HOME: root, IDEA_LOOP_HOME: home.dir };
+  const found = locate({ cwd: project, env });
+  assert.equal(found.ok, true, JSON.stringify(found));
+  assert.equal(found.projectDir, join(home.dir, 'projects', 'demo-app'));
+  assert.equal(found.docs, join(home.dir, 'projects', 'demo-app', 'docs'));
+  const wt = join(root, 'run', 'wt');
+  tgit(project, 'worktree', 'add', '-q', wt, '-b', 'side');
+  assert.equal(locate({ cwd: wt, env }).projectDir, found.projectDir, 'a worktree of the project is the same project');
+
+  // the pre-change side: a home with nothing in it, so no project is found and nothing of the machine's own home is
+  const empty = prepareHome({ c: { name: 'c', commit }, side: 'before', t: { repo }, project, name: projectName(repo) });
+  assert.equal(empty.base, null);
+  assert.deepEqual(walkFiles(empty.dir), []);
+  assert.equal(locate({ cwd: project, env: { ...env, IDEA_LOOP_HOME: empty.dir } }).ok, false);
+});
+
+test('prepareHome of a case with home_commit: both sides are cut from that commit of the home repository, each its own copy, the project\'s line pointed at the run\'s checkout', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-new-')));
+  const homeRepo = join(root, 'machine-home');
+  const homeCommit = commitFiles(homeRepo, {
+    'AGENTS.md': '# home\n\n## 项目\n\napp（真实）: ~/projects/app. Clone from git@github.com:acme/app.git if missing.\n',
+    'projects/app/AGENTS.md': '地图\n',
+    'projects/app/docs/spec/s/s.md': 'a spec in home\n',
+  });
+  // the home moves on after the commit: that must not reach the run
+  writeFileSync(join(homeRepo, 'projects', 'app', 'docs', 'newer.md'), 'newer\n');
+  tgit(homeRepo, 'add', '-A');
+  tgit(homeRepo, 'commit', '-q', '-m', 'newer');
+  const repo = join(root, 'code');
+  const commit = commitFiles(repo, { 'src/app.js': 'code\n' });
+  tgit(repo, 'remote', 'add', 'origin', 'https://github.com/acme/app');
+  const project = join(root, 'run', 'app');
+  commitFiles(project, { 'src/app.js': 'code\n' });
+  tgit(project, 'remote', 'add', 'origin', 'https://github.com/acme/app');
+  const c = { name: 'c', commit, home_commit: homeCommit };
+  const t = { repo, homeRepo };
+
+  const homes = ['before', 'after'].map((side) => prepareHome({ c, side, t, project, name: 'app' }));
+  assert.notEqual(homes[0].dir, homes[1].dir);
+  for (const h of homes) {
+    assert.equal(h.source, 'home-commit');
+    assert.deepEqual(walkFiles(h.dir), ['AGENTS.md', 'projects/app/AGENTS.md', 'projects/app/docs/spec/s/s.md']);
+    assert.deepEqual(parseProjects(readFileSync(join(h.dir, 'AGENTS.md'), 'utf8')), [{ name: 'app', path: project, remote: 'git@github.com:acme/app.git' }]);
+    assert.equal(locate({ cwd: project, env: { PATH: process.env.PATH, HOME: root, IDEA_LOOP_HOME: h.dir } }).projectDir, join(h.dir, 'projects', 'app'));
+  }
+  assert.equal(homeProblem(c, t), null);
+  assert.match(homeProblem(c, { repo }), /--home-repo/, 'a case with home_commit and no home repository named cannot start');
+  assert.match(homeProblem({ ...c, home_commit: 'deadbee' }, t), /没有提交 deadbee/);
+  assert.equal(homeProblem({ name: 'c', commit }, { repo }), null, 'an old case never needs one');
+});
+
+const workers = (env) => sessions(env).filter((x) => x.kind === 'worker');
+
+test('e2e old case: only the post-change run is given a home with the commit\'s docs/ in it, the pre-change run an empty one; where finds the project from the run\'s checkout; the checkout\'s origin cannot be pushed to', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', origin: 'git@github.com:acme/Demo.git', repoFiles: { 'docs/index.md': '# 知识库\n', 'DEVELOPMENT.md': '# 开发\n', 'src/a.js': 'x\n' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.deepEqual(before.home.files, [], 'the pre-change run: a home with nothing in it');
+  assert.equal(before.where.status, 1, 'and no project in it');
+  assert.deepEqual(after.home.files.filter((f) => !f.endsWith('AGENTS.md')), ['projects/demo/DEVELOPMENT.md', 'projects/demo/docs/index.md']);
+  assert.equal(after.where.status, 0, after.where.stderr);
+  assert.match(after.where.stdout, /"project": "demo"/);
+  assert.notEqual(before.home.dir, after.home.dir);
+  for (const h of [before.home.dir, after.home.dir]) assert.doesNotMatch(h, /retro|replay|回放|before|after|eval/i, `the temporary home's path says nothing about a test: ${h}`);
+  assert.equal(after.origin.fetch, 'git@github.com:acme/Demo.git', 'the project copy has the case repository\'s origin');
+  assert.notEqual(after.origin.push, after.origin.fetch, 'and a run cannot push to it');
+  // the homes are only for the run; a copy stays under the run dir
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  assert.ok(!existsSync(after.home.dir));
+  assert.ok(existsSync(join(dir, 'after', 'home', 'projects', 'demo', 'docs', 'index.md')));
+});
+
+test('e2e old case: what the post-change run writes in its home, and commits there, reaches the judge; the case passes on it alone', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: plain\nhome-write: FIXED the spec', repoFiles: { 'docs/index.md': '# 知识库\n' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const art = readFileSync(join(dir, 'after', 'artifact.md'), 'utf8');
+  assert.match(art, /## home（.+）里写下或改动的文件/);
+  assert.match(art, /### projects\/repo\/docs\/spec\/out-home\.md\n\nFIXED the spec/);
+  assert.doesNotMatch(readFileSync(join(dir, 'before', 'artifact.md'), 'utf8'), /## home/, 'a side given only an empty home has no home section');
+  assert.equal(resultJson(env, r.stdout).outcome, 'pass');
+});
+
+test('e2e case with home_commit: both runs get a home cut from it (their own copies, same content), --home-repo says where the home repository is, the list line points at the run\'s checkout', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', origin: 'https://github.com/acme/repo.git' });
+  const homeRepo = join(env.root, 'machine-home');
+  const homeCommit = commitFiles(homeRepo, {
+    'AGENTS.md': '# home\n\n## 项目\n\nrepo（真实）: ~/projects/elsewhere. Clone from git@github.com:acme/repo.git if missing.\n',
+    'projects/repo/AGENTS.md': '地图\n',
+    'projects/repo/docs/spec/s/s.md': 'a spec in home\n',
+  });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify({ ...c, home_commit: homeCommit }));
+  const r = run(env, ['--home-repo', homeRepo]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  for (const p of [before, after]) {
+    assert.deepEqual(p.home.files, ['AGENTS.md', 'projects/repo/AGENTS.md', 'projects/repo/docs/spec/s/s.md']);
+    assert.equal(p.where.status, 0, p.where.stderr);
+    assert.doesNotMatch(p.home.agents, /elsewhere/, 'the machine\'s own path of the project is not left in the list');
+  }
+  assert.notEqual(before.home.dir, after.home.dir, 'each run has its own copy: what one writes does not reach the other');
+  assert.ok(readFileSync(join(homeRepo, 'AGENTS.md'), 'utf8').includes('elsewhere'), 'the home repository itself is not touched');
+});
+
+test('e2e case with home_commit but no --home-repo: refused before any session starts, and so is a home repository that lacks the commit', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const homeRepo = join(env.root, 'machine-home');
+  commitFiles(homeRepo, { 'AGENTS.md': '# home\n' });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify({ ...c, home_commit: 'deadbee' }));
+  const none = run(env);
+  assert.equal(none.status, 2);
+  assert.match(none.stderr, /--home-repo/);
+  const wrong = run(env, ['--home-repo', homeRepo]);
+  assert.equal(wrong.status, 2);
+  assert.match(wrong.stderr, /没有提交 deadbee/);
+  assert.deepEqual(wrong.calls, [], 'no session was started');
 });

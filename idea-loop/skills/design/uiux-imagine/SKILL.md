@@ -7,18 +7,18 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 
 你是这次 imagine 的编排者：起一个 `idea-loop:uiux-imaginer` 出变种，把每一轮摆给人，把人的回复分好类交回去，直到人说方向没有要补的了，再让它写方向说明、导出交接画布。变种板只由 uiux-imaginer 改，方向定没定只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`，本地、不进 git；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。项目目录照那里的「项目目录」拿。下文的 `imagine/`、`canvas/`、`research/` 都在 `<项目目录>/docs/design/tmp/<spec-slug>/`，打磨时只在本地；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
 
 ## 开工前
 
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节（旧 spec 里它不是「不涉及」）、「实现决策」里还没有冻结摘要，才往下走。还有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
-- 它覆盖的 issue 应该在 triage（设计在 triage 里做，issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<worktree 根>/docs" triage <号>`；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
+- 它覆盖的 issue 应该在 triage（设计在 triage 里做，issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<项目目录>/docs" triage <号>`；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 
 ## 起步
 
 1. 在 `imagine/`（没有就建）后台起一个静态服务器，活到这次 imagine 收工。
-2. 用 Agent 工具起 `idea-loop:uiux-imaginer`，给它：spec 路径与 `<spec-slug>`、目标项目的 `DESIGN.md` / `PRODUCT.md` 路径、`imagine/` 目录与预览地址、人调用时附的原话（不改写），任务是「起手」。人在开工前调过 `idea-loop:uiux-research` 的，再带上人要转的那几段调研文字（不带图、不带页面路径）。方向和高度由它定，你不转述。
+2. 用 Agent 工具起 `idea-loop:uiux-imaginer`，给它：spec 路径与 `<spec-slug>`、项目目录（`DESIGN.md` / `PRODUCT.md` 在它下面）、`imagine/` 目录与预览地址、人调用时附的原话（不改写），任务是「起手」。人在开工前调过 `idea-loop:uiux-research` 的，再带上人要转的那几段调研文字（不带图、不带页面路径）。方向和高度由它定，你不转述。
 
 这一个 uiux-imaginer 活过整个 imagine：之后人的每条意见都用 SendMessage 接着它的上下文交，不重起。
 
@@ -62,8 +62,8 @@ uiux-imaginer 交付一轮之后：
 
 1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格原样摆给人确认；人的确认或改写交回去，任务「按确认改」。
 2. 任务「导出交接画布」。它交付后你核对：
-   - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
-   - spec 没被动过（`git status` 里没有它）；
+   - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
+   - spec 没被动过（项目目录里 `git status` 没有它的改动）；
    - 用『浏览器』打开 `<预览地址>/handoff/index.html`（照 `idea-loop:browser`），换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
 
    不过就把问题交回去，它补完再核。

@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { IN_HOME, NOT_CONNECTED, NOT_MOVED } from './project-map.mjs';
 import { SPEC_SLUG, compliantFiles, marketingFiles, writeRepo } from './design-archive-fixture.mjs';
 
 const SERVER = fileURLToPath(new URL('./design-archive-mcp.mjs', import.meta.url));
@@ -15,11 +16,28 @@ const TOOLS = ['design_page', 'design_state', 'design_journey', 'design_diff', '
 
 // ---------- a stdio client: send every line, close stdin, read every response back ----------
 
-/** The compliant fixture (plus optionally more files) as a real git repository; returns its realpath. */
+const REMOTE = 'https://github.com/acme/example-app';
+const git = (cwd, ...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd, encoding: 'utf8' });
+
+/**
+ * A fake world: a home that registers example-app, the compliant fixture (plus optionally more files) as that
+ * project's directory in home, and a code repository (the worktree a session opens in) whose origin is that project's
+ * remote. `projectDir` holds docs/; `code` holds the code. Nothing here is the machine's own ~/home: the server is
+ * started with IDEA_LOOP_HOME pointing at the fake one.
+ */
 function gitRepo(extra = {}) {
-  const root = realpathSync(writeRepo({ ...compliantFiles(), ...extra }));
-  assert.equal(spawnSync('git', ['init', '-q'], { cwd: root }).status, 0);
-  return root;
+  const base = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-')));
+  const home = join(base, 'home');
+  const projectDir = join(home, 'projects', 'example-app');
+  mkdirSync(projectDir, { recursive: true });
+  writeFileSync(join(home, 'AGENTS.md'), `# 设备\n\n## 项目\n\nexample-app（一个例子）: ~/projects/example-app. Clone from ${REMOTE} if missing.\n`);
+  writeRepo({ ...compliantFiles(), ...extra }, projectDir);
+  assert.equal(git(home, 'init', '-q', '-b', 'main').status, 0); // a real home is a git repository
+  const code = join(base, 'code', 'example-app');
+  mkdirSync(code, { recursive: true });
+  assert.equal(git(code, 'init', '-q', '-b', 'main').status, 0);
+  assert.equal(git(code, 'remote', 'add', 'origin', 'git@github.com:acme/example-app.git').status, 0);
+  return { base, home, projectDir, code, env: { IDEA_LOOP_HOME: home } };
 }
 
 /** The marketing page's files on top of the compliant fixture (marketingFiles() is a superset of it). */
@@ -29,10 +47,14 @@ const INIT = { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVe
 const call = (id, name, args) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name, arguments: args } });
 const LIST = { jsonrpc: '2.0', id: 2, method: 'tools/list' };
 
-/** Runs the server in `cwd` against these messages (objects or raw lines); responses by id. */
-function session(cwd, messages) {
+/**
+ * Runs the server against these messages (objects or raw lines); responses by id. `where` is a world from gitRepo()
+ * (the server starts in its code repository, or in `cwd` when given) or a bare directory (no home at all).
+ * The server gets exactly this env, so the machine's own ~/home cannot leak in.
+ */
+function session(where, messages, { cwd = where.code ?? where, home = where.env?.IDEA_LOOP_HOME } = {}) {
   const input = messages.map((m) => (typeof m === 'string' ? m : JSON.stringify(m))).join('\n') + '\n';
-  const r = spawnSync('node', [SERVER], { cwd, input, encoding: 'utf8', timeout: 20000 });
+  const r = spawnSync('node', [SERVER], { cwd, input, encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH, HOME: dirname(cwd), ...(home ? { IDEA_LOOP_HOME: home } : {}) } });
   const out = r.stdout.split('\n').filter(Boolean).map((l) => JSON.parse(l));
   return { status: r.status, stderr: r.stderr, out, byId: Object.fromEntries(out.map((o) => [o.id, o])) };
 }
@@ -59,6 +81,8 @@ test('stdio: initialize answers with the tools capability, tools/list returns th
   const required = (name) => tools.find((t) => t.name === name).inputSchema.required;
   const props = (name) => Object.keys(tools.find((t) => t.name === name).inputSchema.properties).sort();
   for (const t of tools) assert.equal(t.inputSchema.type, 'object', t.name);
+  for (const t of tools) assert.ok(props(t.name).includes('project'), `${t.name} takes an optional project`);
+  for (const t of tools) assert.ok(!t.inputSchema.required.includes('project'), `${t.name}: project is optional`);
   assert.deepEqual(required('design_page'), ['name']);
   assert.deepEqual(required('design_state'), ['name']);
   assert.deepEqual(required('design_journey'), ['name']);
@@ -70,7 +94,7 @@ test('stdio: initialize answers with the tools capability, tools/list returns th
   for (const n of ['design_page', 'design_state', 'design_journey', 'design_refs', 'design_keyword', 'design_affected']) {
     assert.ok(props(n).includes('delta'), n);
   }
-  assert.deepEqual(props('design_diff'), ['spec']);
+  assert.deepEqual(props('design_diff'), ['project', 'spec']);
 });
 
 test('tools/list: each description says when to reach for the tool', () => {
@@ -104,7 +128,8 @@ const shareSheet =
   '---\ntype: design-state\ntags: [cookbook]\nsummary: 分享面板\npage: "[[cookbook]]"\nedges: []\n---\n\n## 这一屏\n\n分享面板。\n\n## 应看到什么\n\n- 看到分享面板\n';
 
 test('tools/call returns what the command line prints, for the six lookups that need no history', () => {
-  const root = gitRepo({ [SHARE]: shareSheet });
+  const w = gitRepo({ [SHARE]: shareSheet });
+  const root = w.projectDir;
   const cases = [
     ['design_page', { name: 'cookbook' }, ['page', 'cookbook']],
     ['design_state', { name: 'cookbook--search-results' }, ['state', 'cookbook--search-results']],
@@ -113,7 +138,7 @@ test('tools/call returns what the command line prints, for the six lookups that 
     ['design_refs', { name: 'NavBar' }, ['refs', 'NavBar']],
     ['design_keyword', { text: '保存' }, ['keyword', '保存']],
   ];
-  const s = session(root, [INIT, ...cases.map(([name, args], i) => call(10 + i, name, args))]);
+  const s = session(w, [INIT, ...cases.map(([name, args], i) => call(10 + i, name, args))]);
   cases.forEach(([name, , cliArgs], i) => {
     const res = s.byId[10 + i];
     assert.ok(!res.result.isError, `${name}: ${JSON.stringify(res)}`);
@@ -121,28 +146,29 @@ test('tools/call returns what the command line prints, for the six lookups that 
   });
 });
 
-test('tools/call: design_affected returns what the command line prints, and a commit that is not there is an error result', () => {
-  const root = gitRepo();
-  const git = (...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' });
-  mkdirSync(join(root, 'src', 'pages'), { recursive: true });
-  writeFileSync(join(root, 'src', 'pages', 'pantry.tsx'), 'one\n');
-  git('add', '-A');
-  git('commit', '-q', '-m', 'one');
-  const first = git('rev-parse', 'HEAD').stdout.trim();
-  writeFileSync(join(root, 'src', 'pages', 'pantry.tsx'), 'two\n');
-  git('add', '-A');
-  git('commit', '-q', '-m', 'two');
-  const s = session(root, [INIT, call(2, 'design_affected', { commit: first }), call(3, 'design_affected', { commit: 'no-such-commit' })]);
+test('tools/call: design_affected reads the code repository\'s history, though the archive is in home; a commit that is not there is an error result', () => {
+  const w = gitRepo();
+  const { code } = w;
+  mkdirSync(join(code, 'src', 'pages'), { recursive: true });
+  writeFileSync(join(code, 'src', 'pages', 'pantry.tsx'), 'one\n');
+  git(code, 'add', '-A');
+  git(code, 'commit', '-q', '-m', 'one');
+  const first = git(code, 'rev-parse', 'HEAD').stdout.trim();
+  writeFileSync(join(code, 'src', 'pages', 'pantry.tsx'), 'two\n');
+  git(code, 'add', '-A');
+  git(code, 'commit', '-q', '-m', 'two');
+  const s = session(w, [INIT, call(2, 'design_affected', { commit: first }), call(3, 'design_affected', { commit: 'no-such-commit' })]);
   assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
   const answer = JSON.parse(textOf(s.byId[2]));
-  assert.deepEqual(answer, cliJson(root, 'affected', first));
+  assert.deepEqual(answer, cliJson(w.projectDir, 'affected', first, '--code-root', code));
   assert.deepEqual(answer.states.map((x) => x.id), ['pantry--empty', 'pantry--overview']);
   assert.equal(s.byId[3].result.isError, true);
   assert.match(textOf(s.byId[3]), /no-such-commit/);
 });
 
 test('tools/call: design_refs with a section id or a section type returns what the command line prints; design_page lists the sections', () => {
-  const root = gitRepo(marketingExtra());
+  const w = gitRepo(marketingExtra());
+  const root = w.projectDir;
   const cases = [
     ['design_refs', { name: 'mkt-pricing#hero' }, ['refs', 'mkt-pricing#hero']],
     ['design_refs', { name: 'mkt-pricing#feature-b' }, ['refs', 'mkt-pricing#feature-b']],
@@ -150,7 +176,7 @@ test('tools/call: design_refs with a section id or a section type returns what t
     ['design_page', { name: 'mkt-pricing' }, ['page', 'mkt-pricing']],
     ['design_state', { name: 'mkt-pricing--feature-b-expanded' }, ['state', 'mkt-pricing--feature-b-expanded']],
   ];
-  const s = session(root, [INIT, ...cases.map(([name, args], i) => call(10 + i, name, args))]);
+  const s = session(w, [INIT, ...cases.map(([name, args], i) => call(10 + i, name, args))]);
   cases.forEach(([name, args, cliArgs], i) => {
     const res = s.byId[10 + i];
     assert.ok(!res.result.isError, `${name} ${JSON.stringify(args)}: ${JSON.stringify(res)}`);
@@ -175,8 +201,9 @@ test('tools/list: design_page and design_refs say they know about sections, and 
 });
 
 test('tools/call with delta reads the archive as it will be after the requirement', () => {
-  const root = gitRepo({ [SHARE]: shareSheet });
-  const s = session(root, [
+  const w = gitRepo({ [SHARE]: shareSheet });
+  const root = w.projectDir;
+  const s = session(w, [
     INIT,
     call(2, 'design_state', { name: 'cookbook--share-sheet' }),
     call(3, 'design_state', { name: 'cookbook--share-sheet', delta: SPEC_SLUG }),
@@ -188,11 +215,70 @@ test('tools/call with delta reads the archive as it will be after the requiremen
   assert.deepEqual(JSON.parse(textOf(s.byId[4])), cliJson(root, 'page', 'cookbook', '--delta', SPEC_SLUG));
 });
 
-test('the repository root is the git top level of the working directory, also from a subdirectory', () => {
-  const root = gitRepo();
-  const s = session(join(root, 'docs', 'design'), [INIT, call(2, 'design_state', { name: 'cookbook--list' })]);
+test('the archive is the project directory in home that the working directory\'s repository is, also from a subdirectory of the worktree', () => {
+  const w = gitRepo();
+  mkdirSync(join(w.code, 'src'), { recursive: true });
+  const s = session(w, [INIT, call(2, 'design_state', { name: 'cookbook--list' })], { cwd: join(w.code, 'src') });
   assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
-  assert.deepEqual(JSON.parse(textOf(s.byId[2])), cliJson(root, 'state', 'cookbook--list'));
+  assert.deepEqual(JSON.parse(textOf(s.byId[2])), cliJson(w.projectDir, 'state', 'cookbook--list'));
+});
+
+test('a worktree of the code repository reads the same archive in home', () => {
+  const w = gitRepo();
+  writeFileSync(join(w.code, 'README.md'), 'x\n');
+  git(w.code, 'add', '-A');
+  git(w.code, 'commit', '-q', '-m', 'init');
+  const tree = join(w.base, 'worktrees', 'feature');
+  assert.equal(git(w.code, 'worktree', 'add', '-q', '-b', 'feature', tree).status, 0);
+  const s = session(w, [INIT, call(2, 'design_page', { name: 'cookbook' })], { cwd: tree });
+  assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
+  assert.deepEqual(JSON.parse(textOf(s.byId[2])), cliJson(w.projectDir, 'page', 'cookbook'));
+});
+
+test('opened in home itself, a call with the project name reads that project\'s archive; without it the error says to give one', () => {
+  const w = gitRepo();
+  const s = session(w, [INIT, call(2, 'design_page', { name: 'cookbook', project: 'example-app' }), call(3, 'design_page', { name: 'cookbook' }), call(4, 'design_page', { name: 'cookbook', project: 'nope' })], { cwd: w.home });
+  assert.ok(!s.byId[2].result.isError, JSON.stringify(s.byId[2]));
+  assert.deepEqual(JSON.parse(textOf(s.byId[2])), cliJson(w.projectDir, 'page', 'cookbook'));
+  assert.equal(s.byId[3].result.isError, true);
+  assert.equal(textOf(s.byId[3]), IN_HOME);
+  assert.equal(s.byId[4].result.isError, true);
+  assert.match(textOf(s.byId[4]), /nope/);
+});
+
+test('opened in home itself, design_affected reads the project\'s clone named in the project list', () => {
+  const w = gitRepo();
+  // the list says the clone is at ~/projects/example-app; HOME is the fake <base>, so that is <base>/projects/example-app
+  const clone = join(w.base, 'projects', 'example-app');
+  mkdirSync(join(clone, 'src', 'pages'), { recursive: true });
+  assert.equal(git(clone, 'init', '-q', '-b', 'main').status, 0);
+  writeFileSync(join(clone, 'src', 'pages', 'pantry.tsx'), 'one\n');
+  git(clone, 'add', '-A');
+  git(clone, 'commit', '-q', '-m', 'one');
+  const first = git(clone, 'rev-parse', 'HEAD').stdout.trim();
+  writeFileSync(join(clone, 'src', 'pages', 'pantry.tsx'), 'two\n');
+  git(clone, 'add', '-A');
+  git(clone, 'commit', '-q', '-m', 'two');
+  const input = [INIT, call(2, 'design_affected', { commit: first, project: 'example-app' })].map((m) => JSON.stringify(m)).join('\n') + '\n';
+  const r = spawnSync('node', [SERVER], { cwd: w.home, input, encoding: 'utf8', timeout: 20000, env: { PATH: process.env.PATH, HOME: w.base, IDEA_LOOP_HOME: w.home } });
+  const res = r.stdout.split('\n').filter(Boolean).map((l) => JSON.parse(l)).find((o) => o.id === 2);
+  assert.ok(!res.result.isError, JSON.stringify(res));
+  assert.deepEqual(JSON.parse(textOf(res)).states.map((x) => x.id), ['pantry--empty', 'pantry--overview']);
+});
+
+test('a project that has not moved into home gets the migration sentence from every tool', () => {
+  const w = gitRepo();
+  // the project directory in home has no docs/, the code repository has one with a spec/ in it: not moved yet
+  rmSync(join(w.projectDir, 'docs'), { recursive: true, force: true });
+  mkdirSync(join(w.code, 'docs', 'spec'), { recursive: true });
+  writeFileSync(join(w.code, 'docs', 'spec', 'x.md'), 'x\n');
+  const s = session(w, [INIT, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))]);
+  assert.equal(s.status, 0);
+  TOOLS.forEach((n, i) => {
+    const res = s.byId[10 + i];
+    assert.equal(res.result.isError, true, n);
+    assert.equal(textOf(res), NOT_MOVED, n);
+  });
 });
 
 // ---------- errors come back as results, the process stays up ----------
@@ -217,22 +303,22 @@ test('an unknown object is an MCP error result that says what exists, and the ne
 
 test('outside a git repository every tool returns a clear error result instead of crashing', () => {
   const bare = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-nogit-')));
-  const s = session(bare, [INIT, LIST, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))]);
+  const s = session(bare, [INIT, LIST, ...TOOLS.map((n, i) => call(10 + i, n, { name: 'x', text: 'x', spec: 'x', commit: 'x' }))], { home: join(bare, 'no-home') });
   assert.equal(s.status, 0);
   assert.equal(s.byId[2].result.tools.length, 7, 'listing needs no repository');
   TOOLS.forEach((n, i) => {
     const res = s.byId[10 + i];
     assert.equal(res.result.isError, true, n);
-    assert.match(textOf(res), /git/, n);
+    assert.equal(textOf(res), NOT_CONNECTED, n);
   });
 });
 
-test('a git repository without docs/ is reported, not crashed on', () => {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'design-archive-mcp-nodocs-')));
-  spawnSync('git', ['init', '-q'], { cwd: root });
-  const s = session(root, [INIT, call(2, 'design_page', { name: 'x' })]);
+test('a git repository the project list does not know is reported, not crashed on', () => {
+  const w = gitRepo();
+  assert.equal(git(w.code, 'remote', 'set-url', 'origin', 'git@github.com:acme/unlisted.git').status, 0);
+  const s = session(w, [INIT, call(2, 'design_page', { name: 'x' })]);
   assert.equal(s.byId[2].result.isError, true);
-  assert.match(textOf(s.byId[2]), /docs/);
+  assert.equal(textOf(s.byId[2]), NOT_CONNECTED);
 });
 
 test('bad input: missing argument is an error result, unknown tool is a protocol error, garbage line is a parse error', () => {
@@ -258,12 +344,11 @@ test('bad input: missing argument is an error result, unknown tool is a protocol
 });
 
 test('read only: nothing but the seven lookups is offered, and a write-shaped call is refused', () => {
-  const root = gitRepo();
-  const s = session(root, [INIT, LIST, call(3, 'design_write', { path: 'docs/design/prod/x.md', content: 'x' })]);
+  const w = gitRepo();
+  const s = session(w, [INIT, LIST, call(3, 'design_write', { path: 'docs/design/prod/x.md', content: 'x' })]);
   assert.deepEqual(s.byId[2].result.tools.map((t) => t.name).sort(), [...TOOLS].sort());
   assert.ok(s.byId[3].error);
-  const status = spawnSync('git', ['status', '--porcelain', '-uall'], { cwd: root, encoding: 'utf8' }).stdout;
-  assert.equal(status.includes('docs/design/prod/x.md'), false);
+  assert.equal(existsSync(join(w.projectDir, 'docs/design/prod/x.md')), false);
 });
 
 // ---------- the plugin's MCP configuration ----------

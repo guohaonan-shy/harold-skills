@@ -3,12 +3,12 @@
 读档案用查询，不自己翻文件。七个入口，每个都能用 `--delta <spec-slug>` 叠上某个需求的 `delta/`，读改完之后的样子（`diff` 除外）：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入口> <参数> [--delta <spec-slug>]
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> <入口> <参数> [--delta <spec-slug>]
 ```
 
 同样的七个入口也是只读 MCP 工具 `design_page` / `design_state` / `design_journey` / `design_diff` / `design_refs` / `design_keyword` / `design_affected`（各问什么、什么时候用，以工具的 description 为准），返回同一份 JSON。
 
-退出码：名字对不上时 1，stderr 说清这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象（分段对不上时列出这一页现有的段）；`keyword` 一条都没命中同样是 1；`affected` 的提交 git 认不出也是 1。用法错误、不是仓库根、`diff` 带了 `--delta` 是 2。
+退出码：名字对不上时 1，stderr 说清这个名字其实是别的类型的对象（「`NavBar` 是组件，不是页面」），或这一类现有哪些对象（分段对不上时列出这一页现有的段）；`keyword` 一条都没命中同样是 1；`affected` 的提交 git 认不出也是 1。用法错误、`diff` 带了 `--delta` 是 2。
 
 ## 每个入口返回什么
 
@@ -39,4 +39,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <仓库根> <入�
 
 ## MCP 工具
 
-插件自己的 `.mcp.json` 启动 `design-archive`，目标项目零配置。入参是入口的参数（`name`、`spec`、`text` 或 `commit`；`design_refs` 的 `name` 也接 `<页面>#<段>` 与 `#<类型>`），除 `design_diff` 外都可选带 `delta`（需求名）。仓库根取会话工作目录的 git 顶层。名字对不上、不在 git 仓库里、缺参数，都返回错误结果（`isError`，原因写在文本里）。
+插件自己的 `.mcp.json` 启动 `design-archive`，目标项目零配置。入参是入口的参数（`name`、`spec`、`text` 或 `commit`；`design_refs` 的 `name` 也接 `<页面>#<段>` 与 `#<类型>`），除 `design_diff` 外都可选带 `delta`（需求名）。项目目录取会话工作目录所在项目的（代码 worktree 里认 `origin`，home 里每次调用带 `project` 参数，值是 home 项目清单里的名字）；`design_affected` 的代码根是项目的代码仓库。名字对不上、认不出项目、缺参数，都返回错误结果（`isError`，原因写在文本里）。

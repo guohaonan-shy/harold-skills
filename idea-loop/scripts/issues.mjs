@@ -16,8 +16,14 @@
  * work stopped, since the next session picks up from it.
  *
  * A PR belongs to an issue when its body says `Refs <owner>/<repo>#<n>` (a bare `Refs #<n>` counts for a PR
- * in the issue's own repo). The repositories searched are the ones in the 「仓库」 section of ISSUE_TRACKER.md
- * (its first column; the issue's own repo is always searched), or only the issue's repo when there is none.
+ * in the issue's own repo). Only the project's own repository is searched: an issue changes one repository.
+ *
+ * <docs> is `<home>/projects/<名字>/docs`, the project's knowledge base in home (see project-map.mjs). The project's
+ * repository (`owner/repo`) and its local clone come from the project list in home, never from the directory the
+ * script runs in: every `gh` call is aimed at that repository (`{owner}/{repo}` in an api path is replaced, the
+ * `issue` / `label` / `pr` commands get `-R <owner/repo>`), and the issue's branch is looked for in that clone.
+ * A <docs> that is not in a project directory of home (a project not moved yet, a directory at random) stops every
+ * command with project-map's sentence: nothing is read from the code repository and `gh` is not called.
  *
  * Order between issues is GitHub's native "blocked by" relation: `candidates` leaves out a todo that an open
  * issue still blocks. Versions are milestones, modules are categories. There is no parent / child logic.
@@ -38,18 +44,18 @@
  * done with the Linear MCP, skills/engineering/issues/references/linear.md); `check <docs> <state> <n>
  * --from=<state>` takes the state from the caller instead of reading the issue, and `n` may be a Linear key
  * (`FA-577`); `show` gives the spec, the PRs and the branch with `state: null`. A Linear issue's PRs are the ones
- * in the 「仓库」 repositories whose title starts with `[<key>]` or whose body has a line `Linear: <key>`.
+ * in the project's repository whose title starts with `[<key>]` or whose body has a line `Linear: <key>`.
  *
  * Besides its status an issue carries category labels, `type:<parent>` and optionally `type:<parent>/<child>`,
- * and one kind label, `kind:bug|feature|improvement`. The project lists the categories in the「issue 分类」
- * section of its AGENTS.md (or CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes
+ * and one kind label, `kind:bug|feature|improvement`. The project lists the categories in the「分类 label」
+ * section of its ISSUE_TRACKER.md, together with the other labels it keeps; `labels --prune` deletes
  * every label outside the status labels, the kinds, the categories and that keep-list.
  *
  * The dispatch loop hands out sessions from one queue for every issue, with two caps on open sessions: 10 for
  * the in-progress and in-review sessions (and the todo cards not yet opened), 3 for the triage ones. The
  * sessions sit in three sidebar sections, one per working state.
  *
- * Usage (<docs> is the docs/ directory; gh runs there, so it acts on that repo):
+ * Usage (<docs> is the docs/ directory of a project directory in home; gh acts on the project's repo):
  *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, priority:*, kind:* and type:* labels; lists the rest, --prune deletes them
  *   node issues.mjs type       <docs> <n> <parent[/child]>...         → sets #n's type:* labels from the project's categories
  *   node issues.mjs show       <docs> <n>                             → JSON: #n's state, title, categories, its PRs (repo, draft / ready / merged), the spec that covers it, its branch
@@ -71,6 +77,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { locateByDocs } from './project-map.mjs';
 import { forHuman, frontmatter, hasFreezeSummary, issuesOf, scan, touchesUi } from './spec.mjs';
 
 export { issuesOf };
@@ -165,16 +172,17 @@ export function transitionError(from, to, { spec = null, prs = null, comment = '
 }
 
 export const TYPE_PREFIX = 'type:';
-export const TYPES_HEADING = 'issue 分类';
+export const TYPES_HEADING = '分类 label';
 /** An old note on a parent category: kept out of the label text, no longer a queue. */
 const QUEUE_NOTE = /\s*[（(]独立队列[，,]\s*上限\s*\d+\s*[)）]/;
 const TYPE_COLORS = { parent: '0052cc', child: 'c5def5' };
 
 /**
- * The project's categories from its「issue 分类」section: a bullet per parent (`` - `seo`：搜索流量 ``),
+ * The project's categories from its「分类 label」section: a bullet per parent (`` - `seo`：搜索流量 ``),
  * indented bullets for its children, and a line starting「保留的 label」that names, in backticks, the
  * other labels to keep. An old note「（独立队列，上限 N）」on a parent's line is dropped from its label
- * description and means nothing else. Null when the section is missing.
+ * description and means nothing else. Null when the section is missing, or has no category and no keep-list
+ * (prose only: the keep-list lives in the same section, so every project label would look surplus).
  */
 export function parseTypes(md) {
   const lines = String(md).split('\n');
@@ -194,19 +202,12 @@ export function parseTypes(md) {
     }
     if (/^保留的 label/.test(line.trim())) keep.push(...[...line.matchAll(/`([^`]+)`/g)].map((m) => m[1]));
   }
-  return { parents, keep };
+  return parents.length || keep.length ? { parents, keep } : null;
 }
 
-/** The categories of the project <docs> belongs to: AGENTS.md first, then CLAUDE.md. */
+/** The categories of the project <docs> belongs to: the「分类 label」section of the project directory's ISSUE_TRACKER.md. */
 export function readTypes(docs) {
-  const root = dirname(resolve(docs));
-  for (const f of ['AGENTS.md', 'CLAUDE.md']) {
-    const file = join(root, f);
-    if (!existsSync(file)) continue;
-    const types = parseTypes(readFileSync(file, 'utf8'));
-    if (types) return types;
-  }
-  return null;
+  return parseTypes(readTracker(docs));
 }
 
 /** Every type:* label the categories define, with its color and description. */
@@ -303,30 +304,6 @@ export function skipsTriage(md) {
   return /^\s*(?:[-*]\s*)?(?:\|\s*)?(?:\*\*)?triage(?:\*\*)?\s*(?:[：:]|\|)\s*(?:\*\*)?跳过/im.test(String(md));
 }
 
-/**
- * The repositories the project's issues are worked in: the first cell (or first backticked name) of each row
- * or bullet under「## 仓库」. Null when the section is missing. A name without an owner takes `owner`'s.
- */
-export function parseRepos(md, owner = null) {
-  const lines = String(md).split('\n');
-  const start = lines.findIndex((l) => l.trim() === '## 仓库');
-  if (start < 0) return null;
-  const out = [];
-  for (const line of lines.slice(start + 1)) {
-    if (/^#{1,2} /.test(line)) break;
-    let name = null;
-    if (/^\s*\|/.test(line)) {
-      const cell = line.split('|')[1]?.trim().replace(/`/g, '') ?? '';
-      if (cell && !/^[-: ]+$/.test(cell) && !/^仓库(名)?$/.test(cell)) name = cell;
-    } else {
-      name = line.match(/^\s*[-*]\s*`([^`]+)`/)?.[1] ?? null;
-    }
-    if (!name || !/^[\w.-]+(\/[\w.-]+)?$/.test(name)) continue;
-    out.push(name.includes('/') || !owner ? name : `${owner}/${name}`);
-  }
-  return out;
-}
-
 // ---------- PRs ----------
 
 /** Whether a PR body attaches the PR to issue #n of `issueRepo`: `Refs <owner>/<repo>#n`, or a bare `Refs #n` in the issue's own repo. */
@@ -342,14 +319,10 @@ export function refsIssue(body, n, issueRepo, prRepo) {
 /** draft / ready / merged, or closed for a PR closed without merging. */
 export const prState = (p) => (p.state === 'MERGED' ? 'merged' : p.state === 'CLOSED' ? 'closed' : p.isDraft ? 'draft' : 'ready');
 
-/** The PRs that attach to issue #n (of `issueRepo`) in each of `repos`, each { repo, number, url, state }. */
-export function prsOf(gh, n, issueRepo, repos) {
-  const out = [];
-  for (const repo of [...new Set([issueRepo, ...repos])]) {
-    const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${n} in:body`, '--json', 'number,body,state,isDraft,url', '--limit', '100']));
-    for (const p of rows) if (refsIssue(p.body, n, issueRepo, repo)) out.push({ repo, number: p.number, url: p.url ?? null, state: prState(p) });
-  }
-  return out;
+/** The PRs of `repo` that attach to issue #n of that repo, each { repo, number, url, state }. */
+export function prsOf(gh, n, repo) {
+  const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${n} in:body`, '--json', 'number,body,state,isDraft,url', '--limit', '100']));
+  return rows.filter((p) => refsIssue(p.body, n, repo, repo)).map((p) => ({ repo, number: p.number, url: p.url ?? null, state: prState(p) }));
 }
 
 /** Whether a PR belongs to the Linear issue `key`: its title starts with `[<key>]`, or its body has a line `Linear: <key>`. */
@@ -358,27 +331,19 @@ export function refsLinear(title, body, key) {
   return new RegExp(`^\\s*\\[${k}\\]`, 'i').test(String(title ?? '')) || new RegExp(`^\\s*Linear:\\s*${k}\\s*$`, 'im').test(String(body ?? ''));
 }
 
-/** The PRs of the Linear issue `key` in each of `repos`, each { repo, number, url, state }. */
-export function prsOfLinear(gh, key, repos) {
+/** The PRs of `repo` that belong to the Linear issue `key`, each { repo, number, url, state }. */
+export function prsOfLinear(gh, key, repo) {
   const out = [];
-  for (const repo of [...new Set(repos)]) {
-    const seen = new Set();
-    for (const where of ['title', 'body']) {
-      const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${key} in:${where}`, '--json', 'number,title,body,state,isDraft,url', '--limit', '100']));
-      for (const p of rows) {
-        if (seen.has(p.number) || !refsLinear(p.title, p.body, key)) continue;
-        seen.add(p.number);
-        out.push({ repo, number: p.number, url: p.url ?? null, state: prState(p) });
-      }
+  const seen = new Set();
+  for (const where of ['title', 'body']) {
+    const rows = JSON.parse(gh(['pr', 'list', '--repo', repo, '--state', 'all', '--search', `${key} in:${where}`, '--json', 'number,title,body,state,isDraft,url', '--limit', '100']));
+    for (const p of rows) {
+      if (seen.has(p.number) || !refsLinear(p.title, p.body, key)) continue;
+      seen.add(p.number);
+      out.push({ repo, number: p.number, url: p.url ?? null, state: prState(p) });
     }
   }
   return out;
-}
-
-/** The repositories to look for PRs in, for an issue of `issueRepo`. */
-export function reposFor(docs, issueRepo) {
-  const owner = issueRepo.split('/')[0];
-  return parseRepos(readTracker(docs), owner) ?? [];
 }
 
 // ---------- plans ----------
@@ -461,6 +426,31 @@ export function withoutStatus(md) {
 
 export const defaultGh = (cwd) => (args) => execFileSync('gh', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 const defaultGit = (cwd) => (args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+
+/**
+ * The project <docs> is the knowledge base of: `{ project, projectDir, repo, cloneDir, … }` from the project list in
+ * home (see `locateByDocs`). Throws project-map's sentence when <docs> is not in a project directory of home.
+ */
+export function projectOf(docs, env = process.env) {
+  const found = locateByDocs({ docs, env });
+  if (!found.ok) throw new Error(found.message);
+  return found;
+}
+
+/**
+ * `gh` aimed at one repository, wherever it runs: `{owner}/{repo}` in an api path becomes `repo`, and an `issue`,
+ * `label` or `pr` command gets `-R <repo>` unless it already names a repository (`-R`, `--repo`). `api user` and the like
+ * have no repository and pass through.
+ */
+export function inRepo(gh, repo) {
+  return (args) => {
+    const [noun, verb, ...rest] = args;
+    if (noun === 'api') return gh(args.map((a) => String(a).replaceAll('{owner}/{repo}', repo)));
+    const named = args.some((a) => a === '-R' || a === '--repo' || String(a).startsWith('--repo='));
+    if (['issue', 'label', 'pr'].includes(noun) && !named) return gh([noun, verb, '-R', repo, ...rest]);
+    return gh(args);
+  };
+}
 
 function issue(gh, n) {
   const v = JSON.parse(gh(['api', `repos/{owner}/{repo}/issues/${n}`]));
@@ -699,7 +689,7 @@ export function noteIssue(gh, n, text) {
   return out.match(/https?:\/\/\S+/)?.[0] ?? null;
 }
 
-/** The branches of #n: `issue/<n>-<slug>`, local or remote, in the repo <docs> is in. */
+/** The branches of #n: `issue/<n>-<slug>`, local or remote, in the project's local clone (`git` runs there). */
 function branchesOf(git, n) {
   try {
     const names = String(git(['branch', '-a', '--format=%(refname:short)'])).split('\n').map((s) => s.trim()).filter(Boolean);
@@ -709,32 +699,22 @@ function branchesOf(git, n) {
   }
 }
 
-/** The repo `gh` runs in (owner/name), or null when it cannot tell. */
-function currentRepo(gh) {
-  try {
-    return JSON.parse(gh(['repo', 'view', '--json', 'nameWithOwner'])).nameWithOwner ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** The PRs of issue `n` (a number, or a Linear key): by `Refs` for a GitHub number, by title / `Linear:` line for a key, in the 「仓库」 repos. */
-function prsFor(gh, docs, n, issueRepo) {
-  if (typeof n === 'string') {
-    // a tracker without a 「仓库」 section: the PRs are in the repo the script runs in, as on the GitHub side
-    const repos = parseRepos(readTracker(docs)) ?? [currentRepo(gh)].filter(Boolean);
-    return prsOfLinear(gh, n, repos);
-  }
-  const repo = issueRepo ?? currentRepo(gh);
-  if (!repo) throw new Error(`查不到 #${n} 所在的仓库（gh repo view 失败），没法核它的 PR`);
-  return prsOf(gh, n, repo, reposFor(docs, repo));
+/**
+ * The PRs of issue `n` (a number, or a Linear key): by `Refs` for a GitHub number, by title / `Linear:` line for a key,
+ * in the one repository of the project. `issueRepo` is the repo the issue was read from, `repo` the project's.
+ */
+function prsFor(gh, n, issueRepo, repo) {
+  const where = issueRepo ?? repo;
+  if (!where) throw new Error(`没给项目的仓库，没法核 ${typeof n === 'string' ? n : `#${n}`} 的 PR`);
+  return typeof n === 'string' ? prsOfLinear(gh, n, where) : prsOf(gh, n, where);
 }
 
 /**
  * #n with what a session needs to know where it is: state, categories, PRs, the spec that covers it, its branch.
  * In a Linear project the issue is not read (`state: null`, no title or categories): `n` is its key.
+ * `git` runs in the project's clone (no branch without it); `repo` is the project's repository, which a Linear key needs.
  */
-export function show(gh, docs, n, { git = defaultGit(docs) } = {}) {
+export function show(gh, docs, n, { git = null, repo = null } = {}) {
   if (platformOf(readTracker(docs)) === 'linear' || typeof n === 'string') {
     return {
       number: n,
@@ -743,14 +723,14 @@ export function show(gh, docs, n, { git = defaultGit(docs) } = {}) {
       open: null,
       categories: [],
       kind: null,
-      prs: prsFor(gh, docs, n, null).map(({ repo, number, url, state }) => ({ repo, number, url, state })),
+      prs: prsFor(gh, n, null, repo).map(({ repo, number, url, state }) => ({ repo, number, url, state })),
       spec: specFor(docs, n)?.slug ?? null,
-      branch: branchesOf(git, n)[0] ?? null,
+      branch: git ? branchesOf(git, n)[0] ?? null : null,
     };
   }
   const it = issue(gh, n);
   const spec = specFor(docs, n);
-  const prs = it.repo ? prsOf(gh, n, it.repo, reposFor(docs, it.repo)) : [];
+  const prs = it.repo ? prsOf(gh, n, it.repo) : [];
   return {
     number: it.number,
     title: it.title,
@@ -760,16 +740,16 @@ export function show(gh, docs, n, { git = defaultGit(docs) } = {}) {
     kind: it.labels.find((l) => l.startsWith(KIND_PREFIX))?.slice(KIND_PREFIX.length) ?? null,
     prs: prs.map(({ repo, number, url, state }) => ({ repo, number, url, state })),
     spec: spec?.slug ?? null,
-    branch: branchesOf(git, n)[0] ?? null,
+    branch: git ? branchesOf(git, n)[0] ?? null : null,
   };
 }
 
 /**
  * Everything that can refuse the flip of #n to `state`, nothing written. Returns { it, cur, prs } or throws.
  * With `from` the issue is not read: `from` is the state the caller says it is in (`it` is null), and `n` may
- * be a Linear key; the PRs are then looked for in the 「仓库」 repositories.
+ * be a Linear key; the PRs are then looked for in `repo`, the project's repository.
  */
-function checkFlip(gh, docs, state, n, { comment = '', skipDesign = false, from = undefined } = {}) {
+function checkFlip(gh, docs, state, n, { comment = '', skipDesign = false, from = undefined, repo = null } = {}) {
   let it = null;
   let cur = from;
   if (from === undefined) {
@@ -778,7 +758,7 @@ function checkFlip(gh, docs, state, n, { comment = '', skipDesign = false, from 
     if (!it.open) throw new Error(`#${n} 已关闭（${cur}），done / canceled 之后不再翻；重开是人的事`);
   }
   const tracker = readTracker(docs);
-  const prs = state === 'done' && (from !== undefined || it.repo) ? prsFor(gh, docs, n, it?.repo ?? null) : null;
+  const prs = state === 'done' && (from !== undefined || it.repo) ? prsFor(gh, n, it?.repo ?? null, repo) : null;
   const why = transitionError(cur, state, { spec: specFor(docs, n)?.md ?? null, prs, comment, skipDesign, skipTriage: skipsTriage(tracker) });
   if (why) throw new Error(`${typeof n === 'string' ? n : `#${n}`}：${why}`);
   return { it, cur, prs };
@@ -808,11 +788,11 @@ export function setState(gh, docs, state, numbers, opts = {}) {
   });
 }
 
-export function reconcile(gh, docs = null) {
+export function reconcile(gh) {
   const open = openIssues(gh);
   const prs = new Map();
   for (const it of open) {
-    if ((it.state === 'in-progress' || it.state === 'in-review') && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo, docs ? reposFor(docs, it.repo) : []));
+    if ((it.state === 'in-progress' || it.state === 'in-review') && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo));
   }
   const { actions, problems } = reconcilePlan(open, prs);
   const byNumber = new Map(open.map((i) => [i.number, i]));
@@ -839,7 +819,7 @@ export function migrate(gh, docs, { apply = false } = {}) {
   const open = openIssues(gh);
   const prs = new Map();
   for (const it of open) {
-    if (it.labels.includes(label('实现中')) && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo, reposFor(docs, it.repo)));
+    if (it.labels.includes(label('实现中')) && it.repo) prs.set(it.number, prsOf(gh, it.number, it.repo));
   }
   const roots = open.filter(isConsolidationRoot);
   const children = new Map(roots.map((i) => [i.number, subIssues(gh, i.number)]));
@@ -916,20 +896,22 @@ const bodyFile = (file) => {
 
 /**
  * Runs one command line (without `node issues.mjs`). `gh` and `git` are injected in tests; output goes
- * through `log`. Throws the reason when it refuses.
+ * through `log`; `env` is where IDEA_LOOP_HOME and HOME are looked up. Throws the reason when it refuses.
  */
-export function run(argv, { gh = null, git = null, log = console.log } = {}) {
+export function run(argv, { gh = null, git = null, log = console.log, env = process.env } = {}) {
   const { flags, types: typeFlags, words } = parseArgs(argv);
   const [cmd, docs, a, b, ...rest] = words;
   if (!docs || !existsSync(docs)) throw new Error(`usage: issues.mjs <${COMMANDS.join('|')}> <docs> …（${docs ?? '没给 docs'} 不存在）`);
   if (!COMMANDS.includes(cmd)) throw new Error(`不认识的命令「${cmd}」（${COMMANDS.join(' / ')}）`);
+  const project = projectOf(docs, env);
   const linear = platformOf(readTracker(docs)) === 'linear';
   // `new --repo=…` names a GitHub repository itself (retro opens plugin issues that way), so a Linear project may use it
   if (linear && GITHUB_ONLY.has(cmd) && !(cmd === 'new' && flags.repo)) throw new Error(linearRefusal(cmd));
-  gh ??= defaultGh(docs);
+  gh = inRepo(gh ?? defaultGh(docs), project.repo);
+  git ??= defaultGit(project.cloneDir);
   const print = (lines) => lines.forEach((l) => log(l));
   const json = (v) => log(JSON.stringify(v, null, 2));
-  const opts = { comment: typeof flags.comment === 'string' ? flags.comment : '', skipDesign: !!flags['skip-design'] };
+  const opts = { comment: typeof flags.comment === 'string' ? flags.comment : '', skipDesign: !!flags['skip-design'], repo: project.repo };
   if (cmd === 'labels') {
     const { made, surplus, deleted } = ensureLabels(gh, readTypes(docs), { prune: !!flags.prune });
     print(made.map((l) => `created ${l}`));
@@ -941,7 +923,7 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
   if (cmd === 'backlog') return json(backlog(gh, a ? num(a, 'limit') : undefined));
   if (cmd === 'queues') return json(queues());
   if (cmd === 'reconcile') {
-    const { done, problems } = reconcile(gh, docs);
+    const { done, problems } = reconcile(gh);
     print(done);
     return print(problems.map((p) => `问题：${p}`));
   }
@@ -970,7 +952,7 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
     const url = noteIssue(gh, num(a, 'issue'), bodyFile(b));
     return log(`#${num(a, 'issue')}: 已评论${url ? ` ${url}` : ''}`);
   }
-  if (cmd === 'show') return json(show(gh, docs, linear ? ref(a, 'issue') : num(a, 'issue'), git ? { git } : {}));
+  if (cmd === 'show') return json(show(gh, docs, linear ? ref(a, 'issue') : num(a, 'issue'), { git, repo: project.repo }));
   if (cmd === 'type') {
     if (b === undefined) throw new Error('usage: issues.mjs type <docs> <issue 号> <父类[/子类]>...');
     return log(`#${num(a, 'issue')}: ${setTypes(gh, readTypes(docs), num(a, 'issue'), [b, ...rest]).join(' ')}`);

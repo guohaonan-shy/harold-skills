@@ -16,7 +16,7 @@ effort: high
 第一次被起时：
 
 - spec 路径与 `<spec-slug>`：要解决的问题、方案、结构上的决定。
-- 目标项目的 `DESIGN.md` / `PRODUCT.md` 路径（有才给）
+- **项目目录**：读调用方在 prompt 里给的项目目录；`<docs>`、引导文件（`DESIGN.md`、`PRODUCT.md`，有才有）都在它下面，变种板和方向说明在它的 `docs/design/tmp/<spec-slug>/imagine/` 下，代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 - `imagine/` 目录与预览地址
 - 人的原话；人开工前查过别人怎么做的，还有调研的文字结论（只有文字，没有图）
 

@@ -1,6 +1,6 @@
 # 候选池：形状、怎么读、怎么写
 
-人批了、选「进候选池」的规则候选，一条一份文件，放在 `<docs>/records/retro-candidates/`（`type: record`）。池按落点分仓库：落点是插件（idea-loop 的 skill、agent、reference、脚本）的，在 `guohaonan-shy/harold-skills` 的池里；落点是目标仓库自己规则文件的，在目标仓库自己的池里。retro 写入新的一份、或在已有那份的「出现」里追加一行；`dreaming` 读它、数次数、把攒够的提议开成 issue，并改「状态」。
+人批了、选「进候选池」的规则候选，一条一份文件，放在 `<docs>/records/retro-candidates/`（`type: record`）。池按落点分项目：落点是插件（idea-loop 的 skill、agent、reference、脚本）的，在 `guohaonan-shy/harold-skills` 的池里；落点是项目自己规则文件的，在这个项目自己的池里。retro 写入新的一份、或在已有那份的「出现」里追加一行；`dreaming` 读它、数次数、把攒够的提议开成 issue，并改「状态」。
 
 ## 一份文件的形状
 
@@ -15,7 +15,7 @@ tags: [retro-candidates]
 > 来自 <仓库>#<issue 号> 的 retro（<日期>）。人批了，去处选「进候选池」。
 
 - 信号：纠正与追问 / 对题的选择 / 人自己说的方向（<补一句是什么情形>）
-- 落点：<插件 skill 名 / 目标仓库的哪个文件 / 哪个检查>
+- 落点：<插件 skill 名 / 项目的哪个文件 / 哪个检查>
 - 旧文：<现在写的，原文；没有写「无」>
 - 新文：<改成的，原文>
 - 归并：<它是哪条已有原则的特例（没有写「无」）>
@@ -50,7 +50,7 @@ tags: [retro-candidates]
 
 ## 读当前仓库的池
 
-列出每份的标题、落点、状态、次数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前仓库的池和 harold-skills 的池是同一个，不用再远程读。
+列出每份的标题、落点、状态、次数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前项目的池和 harold-skills 的池是同一个，不用再取一遍。
 
 ## 写进当前仓库的池
 
@@ -61,29 +61,8 @@ tags: [retro-candidates]
 
 ## 读与写 harold-skills 的池（retro 不在 harold-skills 里跑时）
 
-不检出，用 `gh`。下面 `<R>` 是 `guohaonan-shy/harold-skills`，`<D>` 是它的默认分支（`gh repo view <R> --json defaultBranchRef --jq .defaultBranchRef.name`）。
+harold-skills 的 `docs/` 在它自己的项目目录里，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project harold-skills` 取（`projectDir`）；池目录是 `<projectDir>/docs/records/retro-candidates/`，读和写都在那里，不经 GitHub。`where` 报错（这台设备没有登记 harold-skills），记下原因，把这条候选的全文留在这场的决定记录里交给人。
 
-读：
+读：对 `<projectDir>/docs/records/retro-candidates` 跑计数脚本，列出每份的标题、落点、状态、次数。
 
-```
-gh api repos/<R>/contents/docs/records/retro-candidates --jq '.[].name'
-gh api -H 'Accept: application/vnd.github.raw' repos/<R>/contents/docs/records/retro-candidates/<文件名>
-```
-
-把读到的文件放进 `.tmp/retro/<YYYY-MM-DD>-<主题>/harold-pool/`，再对那个目录跑计数脚本。
-
-备好要写的文件（第 5 步）：新建的按上面的形状写在 `harold-pool/` 下；追加的，在读下来的那份末尾加一行「出现」。先记下文件路径，池里那一份的链接（`https://github.com/<R>/blob/<D>/docs/records/retro-candidates/<文件名>`）在第 6 步合并后补进决定记录的「结果」。
-
-写（第 6 步，只改 `docs/` 的 PR）：
-
-```
-gh api repos/<R>/git/ref/heads/<D> --jq .object.sha
-gh api repos/<R>/git/refs -f ref=refs/heads/docs/retro-pool-<日期>-<主题> -f sha=<上一步的 sha>
-# 新建：不带 sha；追加：带上现有文件的 sha（contents 接口返回里的 .sha）
-gh api -X PUT repos/<R>/contents/docs/records/retro-candidates/<文件名> \
-  -f message='docs(records): retro 候选 <一句话>' -f branch=docs/retro-pool-<日期>-<主题> \
-  -f content="$(base64 < <备好的文件>)" [-f sha=<现有文件的 sha>]
-gh pr create -R <R> --head docs/retro-pool-<日期>-<主题> --base <D> --title ... --body ...
-```
-
-检查全过就合并（`gh pr checks`，再 `gh pr merge`；合并方式照 harold-skills 的 `DEVELOPMENT.md`「分支」一节）。任何一步开不成（没有权限、检查红、冲突），记下原因，把这条候选的全文留在这场的决定记录里交给人，不重试到成功为止。
+写：新建的按上面的形状写，追加的在那一份末尾加一行「出现」，然后照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home，只列这一份文件。池里那一份的路径（`<projectDir>/docs/records/retro-candidates/<文件名>`）补进决定记录的「结果」：先 `commit` 池，再写决定记录，路径才查得到。`commit` 报「home 没推上去」时在交给人的汇报里带上这一句，流程照走。

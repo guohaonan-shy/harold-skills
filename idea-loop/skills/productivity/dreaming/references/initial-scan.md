@@ -27,8 +27,8 @@
    - **滚动容器的内容比它的可见区高的（文档自己在滚的长页面，和应用外壳里内容在内层容器滚的页面都算），入口状态不拍一张主视口图，改成分段**：按页面的内容把它切成几段，每段起一个类型取自闭集的名字（`header` `hero` `faq` `footer` …），用标题或 landmark 定位，写进入口状态的 `sections`（写法见 `idea-loop:design-archive` 的「写对象文件」的「分段 `sections`」）。
    - **初扫时档案里还没有这个状态**，`measure` 用 `--state <入口状态 id> --page <页面> --sections-file <分段.json>` 的形式，分段列表从命令行给。
    - **`prod/index.md` 还没定视口和主题**，`time`、`measure`、`screen`、`cover`、`pinned` 缺视口或主题又没给参数就退出码 2、不猜，所以 `--viewport` 与 `--theme` 要把提议表里的值传进去（空档案的默认格是 `--viewport 1440x900 --theme light`，换成你提议的；动效模式默认 `default`，要改再加 `--motion`）。
-   - 图放进对象同目录的 `assets/`，例如单屏状态：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <worktree 根> <状态 id> --out <目录> --viewport 1440x900 --theme light`。
-   - **比主视口高、不分段的状态**（加载完的报告页）：`screen` 之后在同一屏上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <worktree 根> <状态 id> --delta dreaming-<日期> --out <目录> --viewport 1440x900 --theme light`，按返回的 `shot` 给每条边写 `shot`。初扫时状态还只在草稿（`docs/design/tmp/dreaming-<日期>/delta/`）里，所以 `cover` 带 `--delta`。
+   - 图放进对象同目录的 `assets/`，例如单屏状态：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" screen <项目目录> <状态 id> --out <目录> --viewport 1440x900 --theme light`。
+   - **比主视口高、不分段的状态**（加载完的报告页）：`screen` 之后在同一屏上跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" cover <项目目录> <状态 id> --delta dreaming-<日期> --out <目录> --viewport 1440x900 --theme light`，按返回的 `shot` 给每条边写 `shot`。初扫时状态还只在草稿（`docs/design/tmp/dreaming-<日期>/delta/`）里，所以 `cover` 带 `--delta`。
    - 入口状态的「这一屏」按段排开（每段一个 `###` 小标题、这一段的图、一两句描述）。
    - 每个有动效的边或节点一张 GIF（`idea-loop:evidence` 的动图，没有用户感觉得到的动效就不录；动效太快截不住时放慢播放再录，并写明倍率）。完整矩阵（主题 × 视口 × 语言）默认不拍；人要才拍，放 `docs/design/tmp/dreaming-<日期>/matrix/`，不进 `delta/`，随目录清掉。截图放对象同目录的 `assets/`，状态文件「这一屏」里内嵌它，「应看到什么」写成几条可判定的话。
 8. **动效对象**：边引用的、能从代码里量出参数的具体动效，建 `motions/<名>.md`（参数、理由、减少动效下怎么退）；量不出来的、太细的，不在初扫里硬建，记进 `未扫`。**状态文件不写决定**；页面、组件的「决定」「设计法候选」两节没有内容各写一行「无」——初扫是从实现建的，没有当初的设计理由，**不编**，需求归档时再补。动效的参数是字面值时 `deviates` 照样必填：写「从实现量出，偏离站内 token 的原因没有记录」，不编原因。
@@ -36,7 +36,7 @@
 建完一页（几页互相链接、一起扫时，**全部写完再**一起）在 dreaming 的 tmp 目录里自检：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --delta dreaming-<日期> --no-used-by
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <项目目录> --delta dreaming-<日期> --no-used-by
 ```
 
 违规逐条点名文件与字段，改到通过（`usedBy` 由归档脚本生成，不手写）。**几页互相有链接时不要每写完一页就校验**：指向后面那页的边在那页写完之前解析不到，会为了过校验把边摘下又补回；全部写完再校验一次，跨页边、组件引用这时都在。只扫一页，或页与页之间没有链接，一页一页校验也行。
@@ -59,17 +59,17 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <worktree 根> --d
 
 - **整页按建议执行**：`初扫页面` 是自动的行，不等人批；这一次不扫的页面只在 `未扫` 里留名，不进 `delta/`。
 - 这一次**扫不完的页面留到下一次**：在 `初扫页面` 一节末尾写一行说明 `未扫：<页面 / 状态 / 入口>（原因）`。说明行不算「行」，不让表变成非空。**质量优先于扫完**：宁可少扫几页，也别建一份边写不准、截图拍在加载中的草稿。
-- 空档案时，表里另写一行说明，列出这次定的主视口 / 主题 / 语言 / 动效模式（「一页一页扫」第 7 步），有不止一个前端时再列工作区前缀 `workspaces`（第 5 步），都写进 PR 正文；人觉得不对，之后改 `prod/index.md` 的这几个键。
+- 空档案时，表里另写一行说明，列出这次定的主视口 / 主题 / 语言 / 动效模式（「一页一页扫」第 7 步），有不止一个前端时再列工作区前缀 `workspaces`（第 5 步），都写进提交消息正文；人觉得不对，之后改 `prod/index.md` 的这几个键。
 
 ## 执行段
 
 在 [archive-reconcile.md](archive-reconcile.md)「执行段」的流程上，初扫行多这几件事：
 
 1. **整页删掉不进表的**：这次没写进提议表的页面（质量不够、中途放弃的），删 `delta/pages/<页面>/`，再删只被它们用到的组件、动效。
-2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档脚本会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进 PR 正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `design-archive-check … --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
+2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档脚本会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进提交消息正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `design-archive-check … --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
 3. 归档（`design-archive-write.mjs`，先 `--dry-run`），`tmp/` 清空。
 4. **首次归档之后**，`prod/index.md` 的 frontmatter 还没有主视口 / 主题 / 语言 / 动效模式：把提议表里写的那几个值（`viewport` / `theme` / `locale` / `motion`，有不止一个前端时再加 `workspaces`）补进去。**这是 dreaming 唯一一处直接改 `prod/` 里文件的地方，只改这几个键**——它们是项目定一次的设置，不是档案对象，归档脚本只保留、不生成（脚本就缺视口 / 主题 / 语言给出提示，`motion` 不写时按 `default`，`workspaces` 不写就不要求前缀）。
-5. 提交：一个只改知识库的提交（`docs/design/prod/` 里的页面、状态、组件、素材，和 `prod/index.md`）；归档脚本的其余提示（LFS、`.gitignore`）照 [archive-reconcile.md](archive-reconcile.md)「执行段」第 3 步写进 PR 正文。
+5. 提交：`commit` 到 home 的一个提交（`docs/design/prod/` 里的页面、状态、组件、素材，和 `prod/index.md`）；归档脚本的其余提示（LFS、`.gitignore`）照 [archive-reconcile.md](archive-reconcile.md)「执行段」第 3 步写进提交消息正文。
 
 ## 边界
 

@@ -15,7 +15,7 @@ argument-hint: "<间隔，如 30m>"
 ## 前提与边界
 
 - 工作目录是主 checkout（`git worktree list` 的第一行），在默认分支上（`git symbolic-ref --short refs/remotes/origin/HEAD` 去掉 `origin/`，下文叫「主分支」）。不是就停下，在汇报里说明，这一轮什么都不做。
-- 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指主 checkout 的 `docs/`，`<仓库名>` 取 `gh repo view --json name -q .name`。
+- 下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<仓库名>` 取 `gh repo view --json name -q .name`。
 - 主 checkout 跟别的会话共用，你在这里只读：不切分支、不改文件、不提交，绝不用 `git reset --hard` / `git stash`。『怎么交出 issue』要你建 worktree 的（建在主 checkout 外面），只那一步，不改主 checkout 的工作区与分支。
 - issue 的状态只走 `issues`；**Linear 项目**（`ISSUE_TRACKER.md` 第一个标题写 Linear）里读 issue 用 MCP，做法是 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），下文标「Linear 项目」的几处照它。你不移动、不收尾别的会话：会话自己归位、自己收尾。
 

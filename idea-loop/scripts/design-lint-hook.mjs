@@ -20,7 +20,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 // Canvases live in docs/design/tmp/<spec-slug>/canvas/ (uiux-refine's home; they stay there until
 // the requirement is archived). The two scratch dirs stay recognized for protocols run outside
 // refine and for older projects. Only HTML directly inside canvas/ counts: canvas/assets/ holds
-// captures, and imagine/ holds throwaway comparison pages, not canvases.
+// captures, and imagine/ holds throwaway comparison pages, not canvases. The path is judged by its tail alone: it need not
+// be inside the repository the session is in, so a canvas in a project's directory in home
+// (`<home>/projects/<name>/docs/design/tmp/<spec-slug>/canvas/…`) counts the same.
 const CANVAS = /(?:(?:^|\/)(?:design-preview|design-motion-preview)\/[^/]*|(?:^|\/)docs\/design\/tmp\/[^/]+\/canvas\/[^/]*)\.html?$/;
 
 /** Does this path name a design canvas the hook should lint? */

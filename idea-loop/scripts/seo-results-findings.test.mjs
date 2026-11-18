@@ -43,7 +43,7 @@ function fakeGh() {
   return { gh, labels };
 }
 
-const TYPES = parseTypes('## issue 分类\n\n- `bug`：缺陷\n- `seo`：搜索流量\n  - `technical`：技术\n  - `pages`：页面\n');
+const TYPES = parseTypes('## 分类 label\n\n- `bug`：缺陷\n- `seo`：搜索流量\n  - `technical`：技术\n  - `pages`：页面\n');
 
 test('a finding the effect report raises passes the findings validation and becomes an issue under the change\'s own direction', () => {
   assert.equal(rejection(finding()), null);

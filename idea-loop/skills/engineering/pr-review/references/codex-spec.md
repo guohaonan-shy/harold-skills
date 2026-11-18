@@ -2,7 +2,7 @@
 
 只回答一个问题：这次改动是否真的解决了 spec 要解决的问题、实现了工单的验收标准？
 
-材料都在 `{{worktree}}` 里：
+代码在 `{{worktree}}` 里，spec 和工单在 home 的项目目录里（下面给的是绝对路径，不在 worktree 里）：
 
 - 改动：`git diff {{base}}...HEAD`；提交列表：`git log --oneline {{base}}..HEAD`。
 - spec：`{{spec}}`。

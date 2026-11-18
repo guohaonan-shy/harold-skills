@@ -16,6 +16,9 @@
  *
  * There is no cap on the number of issues: issue-dispatch limits how many sessions run at once.
  *
+ * <docs> is the docs/ of a project directory in home; the issues are written to the project's repo from the project list
+ * (see issues.mjs `projectOf` / `inRepo`), and a <docs> outside home stops with project-map's sentence.
+ *
  * Usage: node seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]   (the date of the scan, today by default)
  *   → { "created": [{number,title}], "commented": [{number,title}], "rejected": [{title,reason}], "untyped": bool }
  *   (--dry-run: the same shape, numbers null, nothing written)
@@ -24,7 +27,7 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { bodyErrors, defaultGh, readTypes, setTypes, typeSet } from './issues.mjs';
+import { bodyErrors, defaultGh, inRepo, projectOf, readTypes, setTypes, typeSet } from './issues.mjs';
 import { DIRECTIONS } from './seo-md.mjs';
 
 export const DIRECTION_NAMES = {
@@ -107,7 +110,7 @@ export function issueBody(g, date = today()) {
       `## triage 阶段\n\n内容类：目标词「${text(c.keyword)}」，页面类型「${text(c.pageType)}」，${c.mode === 'update' ? '改已有页' : '新开页'}。起草 spec 时用 \`idea-loop:seo-brief\` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 \`idea-loop:seo-writing\` 按 brief 写。`,
     );
   }
-  if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出只改 `docs/` 的 PR。草稿进人的草稿箱，人说「发」才发。');
+  if (g.direction === 'backlinks') parts.push('## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出是 home 里 `docs/` 下的草稿和跟进表。草稿进人的草稿箱，人说「发」才发。');
   parts.push(`---\n由 \`idea-loop:seo-scan\` 提出。\n\n${marker(g)}`);
   return parts.join('\n\n');
 }
@@ -183,7 +186,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     if (!docs || !file || flags.some((x) => x !== '--dry-run' && !/^--date=\d{4}-\d{2}-\d{2}$/.test(x))) throw new Error('usage: seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]');
     const findings = JSON.parse(readFileSync(file, 'utf8'));
     if (!Array.isArray(findings)) throw new Error(`${file} 不是发现清单（要一个 JSON 数组）`);
-    const gh = defaultGh(docs);
+    const gh = inRepo(defaultGh(docs), projectOf(docs).repo);
     const types = readTypes(docs);
     const p = plan(findings, openIssues(gh), date ? { date } : {});
     if (flag === '--dry-run') {

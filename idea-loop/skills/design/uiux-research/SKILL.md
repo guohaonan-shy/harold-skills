@@ -1,7 +1,7 @@
 ---
 name: uiux-research
 description: 调研别人怎么处理一个 UX 问题：流程、某类页面的常见做法、文案语气。人问别的产品怎么做时用；视觉风格不归它。
-allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(git ls-files:*), Bash(ls:*), Bash(node *research-check.mjs:*)
+allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:*), Bash(node *research-check.mjs:*)
 ---
 
 回答一个具名问题：别人怎么做的、为什么这样做，给人一页能直接打开的 HTML。你只管收问题、起调研、把页面交给人；怎么查、页面长什么样归 `idea-loop:uiux-researcher`。查不查、转不转、用哪个来源，都由人定。
@@ -18,12 +18,12 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 ## 定落图目录
 
-项目根 = `git rev-parse --show-toplevel`。第一次用确认 `docs/design/tmp/` 被 git 忽略（`git check-ignore`），不在就照 `idea-loop:wiki-conventions` 的「目录」追加到 `$(git rev-parse --git-common-dir)/info/exclude`：落图目录只在本地。
+项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿。落图目录在它的 `docs/design/tmp/` 下，只在本地：home 的提交只带列出的文件，调研页不会被带进去。
 
 | 情况 | 落图目录（绝对路径） |
 |---|---|
-| **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<项目根>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
-| **没有 spec**：普通对话 | `<项目根>/docs/design/tmp/research/<问题短名>/` |
+| **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<项目目录>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
+| **没有 spec**：普通对话 | `<项目目录>/docs/design/tmp/research/<问题短名>/` |
 
 拿不准是哪份 spec（有好几份 spec 在做设计、人也没点名）就按没有 spec 放，并在最后一句说明。
 
@@ -33,7 +33,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 1. 人的原话（一字不改）；
 2. 具名问题；
-3. 产品上下文：目标项目的 `DESIGN.md` 路径（有就给）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
+3. 产品上下文：项目目录（`DESIGN.md` 在它下面，有才有）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
 4. 落图目录的绝对路径。
 
 方向、参考图、上一轮的结论、你的倾向都不给：它从零查。它每次新起，做完就结束。

@@ -13,7 +13,8 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 编排者用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：
 
-- 画布路径（`canvas/` 里最新一版）
+- **项目目录**的绝对路径：designer 读它来找 `<docs>`、`DESIGN.md`、`PRODUCT.md`，不拿到就没法开工；子代理拿不到注入的那一行，只认 prompt 里给的
+- 画布路径（项目目录下 `docs/design/tmp/<spec-slug>/canvas/` 里最新一版，给绝对路径）
 - 人的原话
 - 受影响的状态名（画布 `?state=` 的名字）
 - 相关截图（实现的截图、Review 汇报里那张图，或人给的）
@@ -52,7 +53,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<canvas>/work/change-<序
 
 编排者：
 
-1. 提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<终>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和评委退回的中间版不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到当前分支：实现期间是集成分支，review 期间是 PR 分支。
+1. 提交画布：照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home，只列 `docs/design/tmp/<spec-slug>/canvas/v<终>.html`、`docs/design/tmp/<spec-slug>/canvas/assets`、`docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和评委退回的中间版不列），消息 `docs(design): <spec-slug> 设计变更 —— <一句话>`。画布不进代码分支，不用推送。
 2. 冻结记录「冻结后的变更」记一行，跟画布同一个提交（第一次记时把冻结时写的「无」换成表头）：
 
    ```

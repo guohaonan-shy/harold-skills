@@ -19,7 +19,7 @@ idea-loop 的 agent 照这份文件选分支、准备 worktree、起服务。小
 
 | 要补的 | 默认做法 |
 |---|---|
-| 被 git 忽略的配置（`.env` 之类） | Claude 建 worktree 时按仓库根的 `.worktreeinclude` 复制。它跳过所有软链，缺了的从主 checkout（`git worktree list` 第一行）手动补 |
+| 被 git 忽略的配置（`.env` 之类） | Claude 建 worktree 时按代码仓库根的 `.worktreeinclude` 复制。它跳过所有软链，缺了的从主 checkout（`git worktree list` 第一行）手动补 |
 | 依赖目录（如 `node_modules`） | 按锁文件装（如 `npm ci`）。macOS 上源和目标在同一个 APFS 卷时，可以用 `cp -cR` 从主 checkout 克隆，软链保留，比重装快。依赖目录不走 `.worktreeinclude`：它会丢掉 `.bin` 这类软链 |
 | 端口 | 用分配给你的端口，照「开发服务器」的命令起服务；前端要指向后端的，改它读的那个配置 |
 

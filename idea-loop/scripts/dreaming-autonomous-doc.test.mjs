@@ -4,8 +4,9 @@
  * Spec dreaming-triage-autonomous, ticket 02. Before: dreaming stopped after the proposal pass, showed the
  * whole table and ran the execution pass only on the rows the human approved. What stays: the full table is
  * never shown, the ask-or-auto rule lives in `proposal-table-check --split-ask` and nowhere else, the automatic
- * PR merges itself after the checks, the push has three cases, a run can be rolled back, and the run's tmp
- * directory is deleted only after the asked rows are handled and the automatic PR is merged.
+ * part is committed to home after the checks (no PR since docs/spec/skills-read-home), the push has three cases,
+ * a run can be rolled back with git revert, and the run's tmp directory is deleted only after the asked rows are
+ * handled and the automatic part is committed.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -48,24 +49,24 @@ test('the ask-or-auto rule is written once, in the script: the docs point at it 
   }
 });
 
-test('the automatic PR merges itself on generic checks, with no project command in the plugin', () => {
-  const merge = proposal.split('4. **自己合并**')[1].split('5. **回滚**')[0];
-  assert.match(merge, /`REVIEW\.md` 的验证命令/);
+test('the automatic part commits to home on generic checks, with no project command in the plugin', () => {
+  const merge = proposal.split('4. **提交前检查**')[1].split('5. **回滚**')[0];
+  assert.match(merge, /REVIEW\.md` 的验证命令/);
   assert.match(merge, /spec\.mjs check/);
   assert.match(merge, /link sweep/);
   assert.match(merge, /design-archive-check/);
-  assert.match(merge, /CI/);
-  assert.match(merge, /`DEVELOPMENT\.md`/);
-  assert.match(merge, /不合并，PR 留着/);
+  assert.doesNotMatch(merge, /CI|gh pr/, 'no PR, so nothing to wait for or merge');
+  assert.match(merge, /不提交，改动留在工作区/);
+  assert.match(merge, /home 没推上去/);
   assert.doesNotMatch(merge, /node --test/);
 });
 
 test('three push cases, rollback and when the tmp directory goes are all written down', () => {
-  assert.match(skill, /推送只有三种情况[^\n]*有问人的行[^\n]*没合成[^\n]*没跑成/);
+  assert.match(skill, /推送只有三种情况[^\n]*有问人的行[^\n]*没提交成[^\n]*没跑成/);
   assert.match(skill, /「这次无事」也不发/);
-  assert.match(skill, /回滚[^\n]*revert PR/);
-  assert.match(skill, /中间物何时删[^\n]*问人的行处理完[^\n]*自动那份已经合并/);
-  assert.match(proposal, /\*\*回滚\*\*[^\n]*revert PR/);
+  assert.match(skill, /回滚[^\n]*git revert/);
+  assert.match(skill, /中间物何时删[^\n]*问人的行处理完[^\n]*自动那份已经提交/);
+  assert.match(proposal, /\*\*回滚\*\*[^\n]*git revert/);
 });
 
 test('no automatic row waits for approval: retro candidates and missed archive run on their own suggestion', () => {

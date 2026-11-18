@@ -91,3 +91,27 @@ test('a path that does not exist, or a payload that is not JSON, is silent', () 
   const res = spawnSync(process.execPath, [hook], { input: 'not json', encoding: 'utf8' });
   assert.equal(res.status, 0);
 });
+
+// ---- the canvas lives in the project's directory in home, not in the code repository the session is in ----
+
+const HOME_PROJECT = 'home/projects/example-app';
+
+test('a canvas under a project directory in home is a canvas; canvas/assets/ under it is not', () => {
+  const dir = `${root}/${HOME_PROJECT}/docs/design/tmp/x`;
+  assert.equal(isCanvas(`${dir}/canvas/a.html`), true);
+  assert.equal(isCanvas(`${dir}/canvas/assets/a.html`), false);
+  assert.equal(isCanvas(`${dir}/imagine/a.html`), false);
+  assert.equal(isCanvas(`${dir}/delta/pages/p/a.html`), false);
+});
+
+test('the hook lints a canvas in home though the session is in a code worktree elsewhere, and ignores assets/ there', () => {
+  const dirty = put(`${HOME_PROJECT}/docs/design/tmp/x/canvas/a.html`, DIRTY);
+  const run = (file) =>
+    spawnSync(process.execPath, [hook], { input: JSON.stringify({ cwd: join(root, 'code', 'example-app'), tool_input: { file_path: file } }), encoding: 'utf8' });
+  const res = run(dirty);
+  assert.equal(res.status, 2);
+  assert.match(res.stderr, /gradient-text/);
+  assert.ok(res.stderr.includes(dirty), 'names the file in home');
+  assert.equal(run(put(`${HOME_PROJECT}/docs/design/tmp/x/canvas/assets/a.html`, DIRTY)).status, 0);
+  assert.equal(run(put(`${HOME_PROJECT}/docs/design/tmp/x/canvas/ok.html`, CLEAN)).status, 0);
+});

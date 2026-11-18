@@ -16,14 +16,14 @@ description: 外链外联：给目标站点写外联邮件、发信、跟进回�
 - **一个外链类 issue**（issue 会话的实现阶段）：`gh issue view <号> --comments` 读全文。资产、候选站点（`targets`）、每个候选为什么相关和建议的角度都在证据里。
 - **人直接给**：资产页面的网址，加一组目标站点或页面。缺资产就问人一次；没给站点就先用 Skill 工具调 `idea-loop:link-prospecting` 找候选，再回到这里。
 
-再读目标仓库根的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 读出各节，取「站点」（我们是谁）、「竞品」（不给竞品写信，也不把竞品当角度里的贬低对象）、「写作」里的文风和失败案例两个文件（`writing.voice`、`writing.failures`）。没有 `SEO.md`，停下告诉人先跑 `/idea-loop:seo-setup`。
+再读项目目录（`idea-loop:wiki-conventions` 的「项目目录」）的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" <项目目录>/SEO.md` 读出各节，取「站点」（我们是谁）、「竞品」（不给竞品写信，也不把竞品当角度里的贬低对象）、「写作」里的文风和失败案例两个文件（`writing.voice`、`writing.failures`）。没有 `SEO.md`，停下告诉人先跑 `/idea-loop:seo-setup`。
 
 完成条件：说得出资产页面、目标站点清单，读过了文风文件（SEO.md 没写文风就记下「按通用语气」）。
 
 ## 定位置
 
 - 活动短名 = 资产页面路径的末段，小写连字符（`https://cookbook.example/blog/weeknight-dinners` → `weeknight-dinners`）。
-- 目录：`docs/records/outreach/<活动短名>/`（`idea-loop:wiki-conventions` 的 `records/`：会话起头、之后由人持续更新的台账）。跟进表的读者：人记状态，backlink-analyst 每次扫描读它，表里已有的站点不再提名。
+- 目录：`<项目目录>/docs/records/outreach/<活动短名>/`（`idea-loop:wiki-conventions` 的 `records/`：会话起头、之后由人持续更新的台账）。跟进表的读者：人记状态，backlink-analyst 每次扫描读它，表里已有的站点不再提名。
 - 文件：跟进表 `<活动短名>-tracker.md`，每个站点一份草稿 `<活动短名>-<站点短名>.md`（站点短名取域名去掉后缀，`recipes.blog.example` → `recipes-blog`）。`docs/` 下 slug 全局唯一（见 `idea-loop:wiki-conventions` 的「slug 与链接」），建文件前 grep 一遍。
 - 目录已经存在（同一资产的第二轮外联）：跟进表追加新行，已有的行和草稿原样留着；已在表里的站点不再写。
 
@@ -119,18 +119,18 @@ related: []
 
 ## 交付
 
-1. `git status --short`：改动只在 `docs/` 下。不在的撤掉。
-2. 在实现阶段被调用：PR 由那条流程开，你交回改动的文件清单。人直接调用：停在工作区，说改了哪些文件；人说开 PR，再开一个只改 `docs/` 的 PR。
+1. 改动只在 `<项目目录>/docs/` 下；别处的撤掉。
+2. 照 `idea-loop:wiki-conventions` 的「知识库落地」把这些文件 `commit` 到 home，不开 PR；在实现阶段被调用的，交回改动的文件清单。
 3. 告诉人：几个站点、几个找到了联系方式、几封在草稿箱（没有邮件 MCP 就说草稿在哪）、跟进表的路径，以及「说『发外联邮件』就发」。
 
 ## 发送
 
 人在任意会话说「发外联邮件」才走这一支；人指了活动或站点，就只发那些。
 
-1. 读 `docs/records/outreach/*/*-tracker.md`，取「状态」是待发送且「草稿 id」不空的行。没有：告诉人，停。
+1. 读 `<项目目录>/docs/records/outreach/*/*-tracker.md`，取「状态」是待发送且「草稿 id」不空的行。没有：告诉人，停。
 2. 用邮件 MCP 逐封发出，发之前读一遍草稿箱里那一封，按现在的内容发（人可能改过）。发不出的（草稿被删、收件人为空、工具报错）：这一行留在待发送，记下原因，发下一封。
 3. 发出一封，改这一行：状态「已发送」，更新于今天，线程 id 填发出后的线程 id。
-4. 跟进表的改动走只改 `docs/` 的 PR（见末节）。
+4. 跟进表的改动 `commit` 到 home（见末节）。
 5. 告诉人：发了几封、哪几封没发出和原因。
 
 没有邮件 MCP：不发，告诉人草稿在 `docs/` 的哪些路径，请自己发，发完改状态。
@@ -161,4 +161,4 @@ related: []
 
 ## 跟进表的改动怎么落地
 
-发送、跟进、目录提交每做完一次，改了跟进表或记录文件就落地：在 `.tmp/` 下用一个从主分支出的临时 worktree，只提交 `docs/` 下的改动，开只改 `docs/` 的 PR，照 `idea-loop:wiki-conventions` 的「知识库落地」检查全过就合并，然后删掉 worktree。
+发送、跟进、目录提交每做完一次，改了跟进表或记录文件就落地：照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home，只列改到的文件，不开 PR。
