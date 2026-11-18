@@ -90,11 +90,12 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
 });
 
 test('only the picked states go to the live wave; the source wave stays full; an empty pick still runs the source wave', () => {
-  assert.match(scope, /design-archive-query\.mjs" <项目目录> affected <基准提交>/);
+  // the archive lives in the project directory and the code in a separate worktree: without --code-root the query looks for the base commit in the project directory and fails
+  assert.match(scope, /design-archive-query\.mjs" <项目目录> affected <基准提交> --code-root <代码 worktree>/);
   assert.match(scope, /只用来定实时波/);
   assert.match(scope, /源码波每次全量/);
   assert.match(scope, /清单为空/);
-  assert.match(reconcile, /增量时就是 `query affected <基准提交>` 交回的 `states`/);
+  assert.match(reconcile, /增量时就是 `query affected <基准提交> --code-root <代码 worktree>` 交回的 `states`/);
   assert.match(reconcile, /增量时它也每次全量/);
 });
 

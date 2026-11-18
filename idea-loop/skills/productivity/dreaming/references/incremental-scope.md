@@ -28,10 +28,10 @@ dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的�
 
 ## 挑状态
 
-增量时，在代码 worktree 里跑档案查询的 `affected`（`<项目目录>` 是 home 里的项目目录）：
+增量时，在代码 worktree 里跑档案查询的 `affected`（`<项目目录>` 是 home 里的项目目录，档案在那里；改过的文件要到代码里查，所以 `--code-root` 要另给代码 worktree，漏了它查询去项目目录里找基准提交，报「找不到提交」）：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> affected <基准提交>
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> affected <基准提交> --code-root <代码 worktree>
 ```
 
 它交回从基准提交到现在（代码 worktree 的 HEAD 就是 `origin/<基准分支>`）受影响的状态清单：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算（列在状态里的、边上用到的、页面区域里摆着它的）；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了（只追一跳、只认相对路径）。返回里的 `states` 就是交给实时波的清单，`totalStates` 是档案一共多少个状态；MCP 里同一个问法叫 `design_affected`。
