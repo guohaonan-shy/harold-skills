@@ -95,4 +95,24 @@ prod 404 断言的形状（栈无关）：以生产模式构建并启动，请�
 
 ## 比对
 
-落完代码，用 Skill 工具调 `idea-loop:ui-measure`，把实现和冻结画布逐格比，直到全绿或停在瓶颈。它就是测试决策里「视觉正确性」那一行的红绿测试。目标项目是 React / Tailwind 时，落代码前再读 [`react-port.md`](react-port.md)。
+落完代码，用 Skill 工具调 `idea-loop:ui-measure`，按验收矩阵跑测量脚本，把实现和冻结画布逐格比。它就是测试决策里「视觉正确性」那一行的红绿测试：在同一个浏览器里开两个 tab 逐格比对，输出带严重度的 finding。**照 finding 改、再跑，直到全绿或脚本判瓶颈**（同一批 finding 两轮不变）。判瓶颈时看残留差异的性质：是实现问题就接着改；是设计决策（项目的组件库出不了那个样子），按执行方定义的「停，还是延后」停下。目标项目是 React / Tailwind 时，落代码前再读 [`react-port.md`](react-port.md)。
+
+## 设计档案与最小差异
+
+写之前用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」（档案的结构）；写对象文件时再看它的「写对象文件」（frontmatter 与必填字段、正文），自检命令在它的「校验」。下面的「tmp 绝对路径」是派工时给的 `<项目目录>/docs/design/tmp/<spec-slug>/` 的绝对路径：它在 home 里，你自己的 worktree 里没有它，也不进你的 commit，画布和最小差异都用这个绝对路径读写；目录不存在就自己建。
+
+- **冻结画布从 tmp 绝对路径的 `canvas/` 下读**。
+- **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
+  - **范围**：只写这张工单碰到的状态、边、组件文件。
+  - **写法**：照 `idea-loop:design-archive` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，保留别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
+  - **自检**：以项目目录当根，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <项目目录> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
+- **要进某个状态去复现或写测试时，先查档案**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
+- **只写 tmp 路径下的 `delta/`**：`docs/design/prod/` 只由合并前的归档脚本写。
+
+## 要人判断的部分，录成素材
+
+不管是不是 UI 工单，验收标准里标「人看」的格（动效、悬停的样子、流程是否顺），以及延后给「PR 交付验收」的格，都照这一节做成素材（图怎么做照 `idea-loop:evidence`，人验清单每一项的格式照 `idea-loop:pr` 的交付证据）：流程用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼真实截图，动效录动图，样式出并排截图。素材取自**你的实现**（真实页面加网络拦截，或开发状态页上的真实组件），不取画布。
+
+- 文件放**你这个 worktree** 的 `.tmp/implement/<spec-slug>/evidence/`，文件名以 `t<NN>-` 开头，不上传。
+- **录的过程中看到的行为和验收标准对不上，那是 bug，不是人验项**：当场修，补回归测试，然后重录。
+- 只做要人判断的。逐格比对已经全绿的格，不做素材。
