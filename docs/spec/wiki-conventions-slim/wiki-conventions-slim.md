@@ -79,13 +79,13 @@ related: ["[[0009-design-archive-skill-length]]", "[[0033-skill-length-measure]]
   | 节 | 处置 |
   |---|---|
   | 知识库落地、人机分工、文件在不在、slug 与链接、spec 和工单怎么写 | 留在主体，原样或只删重复的句子（每个分支都要） |
-  | 目录 | 留目录树和 `raw/`、`domain/`、`records/` 的归属、项目级规则文件、spec 与工单的两条；（实现时「工单住在自己 spec 的目录里」一条删了：目录树与「slug 与链接」已写同一件事，见 PR #372 review 第 1 轮 S3）`design/` 两层的生命周期整段（tmp 各子目录谁写、冻结后提交、`research/` 不归档、`prod/` 写入规则）挪进 `references/design-layout.md`（渐进披露：只有设计类调用方读）；`prod/` 只走归档脚本和旧目录提示两句删掉，以 design-archive 为单一事实来源（去重） |
+  | 目录 | 留目录树和 `raw/`、`domain/`、`records/` 的归属、项目级规则文件、spec 与工单的两条；（实现时「工单住在自己 spec 的目录里」一条删了：目录树与「slug 与链接」已写同一件事，见 PR #372 review 第 1 轮 S3）`design/` 两层的生命周期整段（tmp 各子目录谁写、冻结后提交、`research/` 不归档、`prod/` 写入规则）挪进 `references/design-layout.md`（渐进披露：只有设计类调用方读）；`prod/` 只走归档脚本和旧目录提示两句删掉，以 design-archive 为单一事实来源（去重） （已改：被下面人 2026-11-18 定的「重组成两部分」取代，见 PR #372 review 第 3 轮 S4） |
   | 中间产物 | 主体留规则：放 `<worktree 根>/.tmp/<skill>/<对象>/`、为什么不放系统 `/tmp`、设计侧过程产物不在这里、「本地忽略」小节；每个子目录收什么、什么时候删的那棵树挪进 `references/tmp-layout.md`（渐进披露：每个调用方只查自己那一行） |
   | frontmatter | 留 schema、两处豁免、`status` 闭集表（`issue-model-tripwire` 测试读它）；五种 `design-*` 的说明缩成一句指向 design-archive 的「图的实体」（去重）；「ADR 按小节取代」挪进 `references/adr.md`（渐进披露：只有 dreaming、adr-reconciler 写 ADR） |
-  | index.md | 主体留一句「每层一个、表体从 frontmatter 生成」；格式、`spec/index.md` 和 `design/prod/index.md` 的特例挪进 `references/index-md.md` |
+  | index.md | 主体留一句「每层一个、表体从 frontmatter 生成」；格式、`spec/index.md` 和 `design/prod/index.md` 的特例挪进 `references/index-md.md` （已改：被下面人 2026-11-18 定的「重组成两部分」取代，见 PR #372 review 第 3 轮 S4） |
   | 从平铺布局迁移 | 节名保留（`spec.mjs` 的报错文案指它），正文已经是一行指针，不动 |
 
-- **节名不变**：主体的 `##` 标题全部保留，外置参考用自己的标题；指名「目录」「中间产物」「frontmatter」的调用方不用改。被外置的内容如果有调用方专门指它（grep 出的只有 dreaming 对账参考指「frontmatter」看 ADR 小节取代、design-archive 指「目录」看 tmp 生命周期），这两处同一个 PR 里改成指新参考。（实现时改了：仓库规则「别的 skill 不读另一个 skill 的 `references/`」由全量测试守着，所以这些调用方照旧指正文节名，由正文那一节末尾一行指进参考，见 PR #372 review 第 1 轮 S2）
+- **节名不变**：主体的 `##` 标题全部保留，外置参考用自己的标题；指名「目录」「中间产物」「frontmatter」的调用方不用改。被外置的内容如果有调用方专门指它（grep 出的只有 dreaming 对账参考指「frontmatter」看 ADR 小节取代、design-archive 指「目录」看 tmp 生命周期），这两处同一个 PR 里改成指新参考。（实现时改了：仓库规则「别的 skill 不读另一个 skill 的 `references/`」由全量测试守着，所以这些调用方照旧指正文节名，由正文那一节末尾一行指进参考，见 PR #372 review 第 1 轮 S2）（已改：被下面人 2026-11-18 定的「重组成两部分」取代，见 PR #372 review 第 3 轮 S4）
 - **规则不改**：路径、字段、闭集、生命周期一个不动；删掉的句子要么在 design-archive 有单一事实来源，要么按 `writing-for-agents`「剪枝」判为空操作，PR 描述逐句列出删了哪些、依据哪条。
 - **已有测试守的字符串留在主体**：`知识库落地` 一节与「父 issue 拆完子 issue（spec 与设计定稿）」（`knowledge-base-landing-doc`）、`status` 闭集表与 `spec.mjs`、`issues:`（`issue-model-tripwire`）、「按风险分」「dreaming` 只问两类」（`dreaming-autonomous-doc`）。
 - **版本**：idea-loop `plugin.json` 升 patch（0.1.20 → 0.1.21 或合并时 main 上版本的下一个 patch）：行为不变，只是文档挪位置（`REVIEW.md`「额外要求」）。`idea-loop/README.md` 文件树里 wiki-conventions 那一行补上新的参考文件。
