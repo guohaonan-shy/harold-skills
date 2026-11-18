@@ -68,6 +68,47 @@ test('the steps are written once: SKILL.md does not keep a copy', () => {
   assert.doesNotMatch(b, /design\.md@latest (lint|diff)/);
 });
 
+/** Review round 1 (ticket 01): the body opens straight on 「是什么」; 「结构」 holds the two-row table and two ### subsections. */
+test('the body opens on 「是什么」 with nothing in front of it', () => {
+  const first = body(skill).split('\n').find((l) => l.trim() !== '');
+  assert.equal(first, '## 是什么', `the body should open on "## 是什么", it opens on: ${first}`);
+});
+
+test('「是什么」 keeps its three bullets and no longer carries the front matter / body sentence', () => {
+  const text = section(skill, '是什么');
+  const bullets = text.split('\n').filter((l) => l.startsWith('- '));
+  assert.equal(bullets.length, 3, '「是什么」 should keep its three bullets');
+  assert.doesNotMatch(text, /由 YAML front matter/);
+});
+
+test('「结构」 opens with a two-row table (front matter / 正文: what it holds, who reads it)', () => {
+  const rows = section(skill, '结构').split('\n').filter((l) => l.trim() !== '');
+  assert.match(rows[0], /^\|.*装什么.*给谁读.*\|$/, 'the table header should name what each part holds and who reads it');
+  assert.match(rows[1], /^\|[-| ]+\|$/);
+  assert.match(rows[2], /^\| *front matter/i);
+  assert.match(rows[3], /^\| *正文/);
+  assert.ok(!rows[4].startsWith('|'), 'the table has exactly two rows');
+});
+
+test('「结构」 splits into ### Front matter and ### 正文; there is no separate ## Front matter section', () => {
+  const lines = skill.split('\n');
+  assert.ok(!lines.some((l) => l.startsWith('## Front matter')), 'Front matter must not be its own ## section');
+  const h2 = lines.findIndex((l) => l.startsWith('## 结构'));
+  const h3 = lines.map((l, i) => [l, i]).filter(([l, i]) => i > h2 && l.startsWith('### '));
+  assert.deepEqual(h3.slice(0, 2).map(([l]) => l), ['### Front matter', '### 正文']);
+  assert.ok(h3[0][1] < lines.findIndex((l) => l.startsWith('## 五条写法规则')), 'both subsections sit inside 「结构」');
+  const fm = section(skill, '结构').split('### 正文')[0];
+  assert.match(fm, /凡是影响渲染的属性，必须在 front matter 的 token 里有/, 'the Front matter text moved in whole');
+});
+
+test('under ### 正文: the chapter table stays, the omitted: line and the "前八章" line are gone', () => {
+  const text = section(skill, '结构');
+  assert.match(text, /\| Overview \|/);
+  assert.match(text, /\| Known Gaps（扩展） \|/);
+  assert.doesNotMatch(text, /omitted:` 声明/);
+  assert.doesNotMatch(text, /前八章来自 Google 规范/);
+});
+
 test('every reference SKILL.md points at exists', () => {
   const pointed = [...skill.matchAll(/references\/([\w.-]+\.md)/g)].map((m) => m[1]);
   assert.ok(pointed.length > 0, 'SKILL.md points at no reference');

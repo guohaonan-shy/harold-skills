@@ -3,19 +3,27 @@ name: design-modeling
 description: 项目 DESIGN.md 的写法与准入规则。新建、改、对账 DESIGN.md，判断一条内容该不该进 DESIGN.md，或写设计法候选时用。
 ---
 
-项目的 `DESIGN.md` 写的是这个产品的设计系统本身。判断一条内容该不该进 `DESIGN.md`，只按这一份。
-
-格式以官方规范为准，每次运行现读：`npx -y @google/design.md@latest spec`（写入时的 hook 和收尾校验用的都是最新版）。这里只写规范管不到的：什么该进、怎么写、怎么维护、候选长什么样。
-
 ## 是什么
-
-`DESIGN.md` 由 YAML front matter（全部数值，即 token，是规范性的）和 Markdown 正文（给人和 agent 读的用法与理由）组成。
 
 - 它描述设计系统**现在是什么、必须怎么做**，是这套设计系统唯一的权威版本。
 - 它只收系统，不收设计过程：某天的改动、做过的决策、某个页面或组件在某个场景里的具体样子，都有别的去处（「准入分层表」）。
 - 它靠整理保持可维护，不靠追加（「维护原则」）。
 
 ## 结构
+
+| 部分 | 装什么 | 给谁读 |
+|---|---|---|
+| front matter | 全部数值，即 token，是规范性的 | 读 token 的 agent 和工具 |
+| 正文 | 用法与理由 | 人和 agent |
+
+### Front matter
+
+- **定义**：文件开头 `---` 包起来的 YAML，是设计系统的全部**数值**，也是唯一的数值来源。
+- **写什么**：`colors`、`typography`、`rounded`、`spacing`、`components` 五组，加 `name`、`description`、`version`，必要时 `omitted`。颜色用 CSS 颜色串（默认 hex）；字阶含 `fontFamily / fontSize / fontWeight / lineHeight / letterSpacing`；组件的值用 `{colors.primary}` 这类引用；**状态拆成独立条目**（`button-primary`、`button-primary-hover`、`button-primary-pressed`），改一个色值全局生效。
+- 理由、用途说明写在正文。
+- **凡是影响渲染的属性，必须在 front matter 的 token 里有。** 正文只解释怎么用、为什么，不能成为某个渲染属性的唯一出处（坏例：按钮边框只写在正文括号里，只读 token 的 agent 会漏掉）。新增内容同样同步 token。
+
+### 正文
 
 front matter 之后，正文用 `##` 二级标题，只用下面这些章，按这个顺序，每章只出现一次：
 
@@ -32,9 +40,6 @@ front matter 之后，正文用 `##` 二级标题，只用下面这些章，按�
 | Responsive Behavior（扩展） | 断点、折叠、触控尺寸 |
 | Motion（扩展） | 动效的全局原则与禁令 |
 | Known Gaps（扩展） | 没覆盖什么 |
-
-- 不需要的章用 front matter 的 `omitted:` 声明并写原因，正文里不留空标题。
-- 前八章来自 Google 规范；三个扩展章是我们加的。重复的章和扩展章的形态（不带日期、不枚举、不写判例），官方 lint 都不报，靠写的人守。
 
 ## 五条写法规则
 
@@ -56,13 +61,6 @@ front matter 之后，正文用 `##` 二级标题，只用下面这些章，按�
 4. **改完读一遍相关章节**，确认同一规则只剩一种写法。
 
 判断标准：文件的大小由「设计系统有多少缺口」决定，不由改了多少次决定；它变短的次数应该和变长一样多。
-
-## Front matter
-
-- **定义**：文件开头 `---` 包起来的 YAML，是设计系统的全部**数值**，也是唯一的数值来源。
-- **写什么**：`colors`、`typography`、`rounded`、`spacing`、`components` 五组，加 `name`、`description`、`version`，必要时 `omitted`。颜色用 CSS 颜色串（默认 hex）；字阶含 `fontFamily / fontSize / fontWeight / lineHeight / letterSpacing`；组件的值用 `{colors.primary}` 这类引用；**状态拆成独立条目**（`button-primary`、`button-primary-hover`、`button-primary-pressed`），改一个色值全局生效。
-- 理由、用途说明写在正文。
-- **凡是影响渲染的属性，必须在 front matter 的 token 里有。** 正文只解释怎么用、为什么，不能成为某个渲染属性的唯一出处（坏例：按钮边框只写在正文括号里，只读 token 的 agent 会漏掉）。新增内容同样同步 token。
 
 ## 各章写什么
 
