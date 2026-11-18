@@ -13,6 +13,8 @@ argument-hint: "<issue 号>"
 | triage 会话 | 人或调度卡片 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
 | todo 会话 | 调度 | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，收尾 |
 
+任务里写了「夜间模式」：人不在，整个会话照 [references/night-mode.md](references/night-mode.md) 做，下文停下等人、翻回 triage、收尾的地方以它为准。
+
 会话管理、推送等运行环境的能力，照『<能力>』（`idea-loop:runtime`），下文只写能力名。
 
 **Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`issues set` 在那里被拒，翻前跑 `issues check <docs> <状态> <号> --from=<现在>`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指当前 worktree 的 `docs/`，`<主分支>` 取目标仓库 `DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
