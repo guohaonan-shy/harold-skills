@@ -25,16 +25,16 @@
 
 ## 验收标准
 
-- [ ] skill 与两份运行环境参考里没有「出卡片」「还没点的卡片」「会话内循环」「7 天到期」「`cap`（10）」的调度说法（tripwire 测试守）
-- [ ] `issue-dispatch` 写明三种时段各做什么，空位算法分别是「triage 分组会话数」和「in-progress 里 2 小时内有活动的会话数」
-- [ ] claude-desktop 参考写明开会话的四步，第二步用工单 02 的脚本，交出失败下一轮再试
-- [ ] 早上汇总写明数据从记录文件来、每行有哪几项、推送什么
-- [ ] setup 的「装与设置」打印 `mcp__ccd_sidebar__move_sessions` 允许规则
-- [ ] magi 参考只改派什么（时段、上限、空位），开会话的做法原样
-- [ ] `issue-session`、`issue-triage`、README 里跟卡片有关的说法同步
-- [ ] 各 skill 主体 < 5000 字（量法见仓库 AGENTS.md）
-- [ ] 插件全部测试绿（含 `no-project-leak`）
-- [ ] 真实运行：建一个一次性的调度定时任务跑一轮（时刻用 `--at=23:30`），in-progress 分组出现「harold-skills#<号> …」会话并收到夜间模式的任务（⏭ 延后 → 人：要人先加允许规则、挑一个真 todo issue；PR 里列进「要你做的事」）
+- [x] skill 与两份运行环境参考里没有「出卡片」「还没点的卡片」「会话内循环」「7 天到期」「`cap`（10）」的调度说法（tripwire 测试守）
+- [x] `issue-dispatch` 写明三种时段各做什么，空位算法分别是「triage 分组会话数」和「in-progress 里 2 小时内有活动的会话数」
+- [x] claude-desktop 参考写明开会话的四步，第二步用工单 02 的脚本，交出失败下一轮再试
+- [x] 早上汇总写明数据从记录文件来、每行有哪几项、推送什么
+- [x] setup 的「装与设置」打印 `mcp__ccd_sidebar__move_sessions` 允许规则
+- [x] magi 参考只改派什么（时段、上限、空位），开会话的做法原样
+- [x] `issue-session`、`issue-triage`、README 里跟卡片有关的说法同步
+- [x] 各 skill 主体 < 5000 字（量法见仓库 AGENTS.md）
+- [x] 插件全部测试绿（含 `no-project-leak`）
+- [ ] 真实运行：建一个一次性的调度定时任务跑一轮（时刻用 `--at=23:30`），in-progress 分组出现「harold-skills#<号> …」会话并收到夜间模式的任务（⏭ 延后 → 人：要人先加允许规则、挑一个真 todo issue；PR 里列进「要你做的事」） ⏭ 延后 → 人：要人先加允许规则、先信任 worktree 目录、挑一个真 todo issue，再建一次性调度任务跑 23:30 一轮（PR 列进「要你做的事」）
 
 ## 选中的存量回归
 
