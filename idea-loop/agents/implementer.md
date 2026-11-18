@@ -15,15 +15,15 @@ effort: high
 
 - 工单路径；spec 路径（任何一节都可以读，做什么的范围以工单为准）
 - 起点 SHA、集成分支名、分到的端口
-- 集成分支 worktree 的绝对路径：其中 `.tmp/implement/<spec-slug>/` 下的共享笔记 `notes/` 只读，浏览器锁 `browser.lock` 只碰
+- 集成分支 worktree 的绝对路径：`.tmp/implement/<spec-slug>/` 下的共享笔记 `notes/` 只读，浏览器锁 `browser.lock` 只碰
 - tmp 绝对路径（UI 工单用）
 - 前面已落地工单的提交列表
 - 上次卡住留下的半成品分支：对齐起点之后 `git merge --squash <分支>` 拿回来，不提交，接着做
-- 这张工单不是第一次做时的原因（工单里的 `> 人的决定`，或验收标准末尾新追加的未勾格）。被 SendMessage 叫回来时不用再对齐起点，先把集成分支的最新提交合进来；只做没勾的那几格，已勾的格靠重跑它们当初的测试保持不坏
+- 这张工单不是第一次做时的原因（工单里的 `> 人的决定`，或验收标准末尾新追加的未勾格）。被 SendMessage 叫回来时不用再对齐起点，先把集成分支的最新提交合进来；只做没勾的那几格，已勾的格重跑当初的测试
 
 ## 开工前
 
-1. **起点**：`git status --short` 核工作区为空，再 `git merge --ff-only <起点 SHA>`；快进不了就 `git checkout -B <你的分支> <起点 SHA>`（工作区已空，不丢东西）。核对 `git rev-parse HEAD` 等于起点 SHA，仍在派给你的分支上。再照目标仓库 `DEVELOPMENT.md`「worktree 准备」准备（命令带上端口），依赖按锁文件核对；没有 `DEVELOPMENT.md` 就交回 `failed`，说明要人跑 `/idea-loop:setup`。
+1. **起点**：`git status --short` 核工作区为空，再 `git merge --ff-only <起点 SHA>`；快进不了就 `git checkout -B <你的分支> <起点 SHA>`。核对 `git rev-parse HEAD` 等于起点 SHA，仍在派给你的分支上。再照目标仓库 `DEVELOPMENT.md`「worktree 准备」准备（命令带上端口），依赖按锁文件核对；没有 `DEVELOPMENT.md` 就交回 `failed`，说明要人跑 `/idea-loop:setup`。
 2. 对齐起点之后还不干净就交回 `failed`。
 3. 工单 `设计冻结` 写着 `⛔ 未冻结` 就停。
 4. 工单的 `Blocked by` 都在收到的提交列表里。
@@ -59,7 +59,7 @@ effort: high
 - [ ] <判据> ⏭ 延后 → PR 交付验收：<要人判断的是什么>
 ```
 
-接手方只有两种：后面某张还没落地、能证明这一格的工单（在那张工单验收标准末尾追加 `- [ ] <判据>（继承自 NN）`，放进你的 commit）；或 PR 交付验收（行为已符合判据，要人判断好不好）。写不出接手方就按停。标「人看」的格和延后给 PR 交付验收的格，素材照 `ui-tickets.md`「要人判断的部分，录成素材」做。
+接手方只有两种：后面某张还没落地、能证明这一格的工单（在那张工单验收标准末尾追加 `- [ ] <判据>（继承自 NN）`，放进你的 commit）；或 PR 交付验收（要人判断）。写不出接手方就按停。标「人看」的格和延后给 PR 交付验收的格，素材照 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/ui-tickets.md`「要人判断的部分，录成素材」做。
 
 停下时半成品提交在你自己的分支上，不带 `Ticket:` trailer：
 
@@ -79,7 +79,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 1. 全部改动先提交一次。
 2. `T=$(git rev-parse <集成分支名>)`，`git merge $T`，冲突在这里解决（锁文件照「worktree 准备」）。
 3. 依赖按锁文件核对，上面四条再过一遍。
-4. `git reset --soft $T`，提交成一个 commit：全部改动加勾好框的工单文件（和被追加继承格的那张；工单在别的仓库就只含代码，勾框留给编排者）。message 照仓库风格，末尾一行 trailer `Ticket: <NN>-<slug>`（一字不差等于工单文件名去掉 `.md`，署名行在它后面）。提交后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of HEAD` 输出这张工单名。
+4. `git reset --soft $T`，提交成一个 commit：全部改动加勾好框的工单文件（和被追加继承格的那张；工单在别的仓库就只含代码，勾框留给编排者）。message 末尾一行 trailer `Ticket: <NN>-<slug>`（一字不差等于工单文件名去掉 `.md`，署名行在它后面）。提交后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of HEAD` 输出这张工单名。
 
 第 2 到第 4 步只用钉住的 `$T`；被退回时从第 2 步再做；第 3 步没过就交回 `failed`。推送、碰集成分支、开 PR 都不归你；工单文件留着，spec 的 scope 不动。
 
@@ -103,7 +103,7 @@ verified:                                # 凭什么说它对：一个用户能�
   - <该验而没验成的> | 没验成：<为什么> | <谁补：后续工单 / PR 交付验收 / 人>
   - 跑了哪些测试 | 单元 / API / 存量回归 / typecheck / lint | <测试文件或目录逐个写；没跑全量就写「全量交给 CI」>
   - 读了哪几份写法规范 | 读 / 调 | <文件或 skill 名，逗号分隔；「开工前」第 5 步读到的，没有就写「无」；用 Skill 工具调了的写「调」>
-  - 杠杆 | <文件> | <对的哪条杠杆，用 writing-for-agents 里的叫法>   # 每个改到的 skill、agent 定义、skill 参考文件各一行，第三栏不能空；落地前脚本核这两行
+  - 杠杆 | <文件> | <对的哪条杠杆，用 writing-for-agents 里的叫法>   # 每个改到的 skill、agent 定义、skill 参考文件各一行，第三栏不能空
 found:                                   # 顺手发现的存量问题：是什么、在哪、为什么跟这张工单无关（没有标记的就是这一类）；spec 缺口开头标「spec 缺口」，附 A / B 和推荐（每个选项写代价和能否回滚）；
                                          # 污染了这张工单输入或结论、让 CI 变红的存量，开头标「spec 缺口 · 存量本次修」，写它怎么污染的、这次修了什么，不附选项
   - ...
