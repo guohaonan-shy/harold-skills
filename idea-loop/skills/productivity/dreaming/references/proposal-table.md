@@ -155,7 +155,7 @@
 
 顺序：
 
-1. 先处理会删掉东西的行，再处理会改写的行，最后跑 link sweep、刷各层 `index.md`（格式见 [index-md.md](index-md.md)；`docs/spec/index.md` 用 `spec.mjs index <docs>`）。
+1. 先处理会删掉东西的行，再处理会改写的行，最后删除后查死链、刷各层 `index.md`（格式见 [index-md.md](index-md.md)；`docs/spec/index.md` 用 `spec.mjs index <docs>`）。
 2. 每类行这样执行：
 
 | 行类型 | 怎么执行 |
@@ -172,7 +172,7 @@
 
 3. **只提交知识库文件**：`docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然它留在 `origin/<基准分支>` 上，下一次 dreaming 会把它当成漏归档。开一个 PR（`gh pr create`，标题「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、开出去的 issue 编号；问人那份另说哪些行人没批、留着）。
 4. **自己合并**：不等人看。依次：
-   - 本地跑目标仓库 `REVIEW.md` 的验证命令（那张表里的每一条）、`spec.mjs check <docs>`、link sweep；有设计档案时跑 `design-archive-check`。
+   - 本地跑目标仓库 `REVIEW.md` 的验证命令（那张表里的每一条）、`spec.mjs check <docs>`、删除后查死链；有设计档案时跑 `design-archive-check`。
    - 仓库有 CI 的，再等 CI 全绿。
    - 全过，按目标仓库 `DEVELOPMENT.md`「分支」节的合并方式合并。有一条没过：不合并，PR 留着，用『推送』说哪一条没过。
 5. **回滚**：人说「回滚某次 dreaming」，找到那次的 PR，开它的 revert PR，同样先过第 4 步的检查再合并。

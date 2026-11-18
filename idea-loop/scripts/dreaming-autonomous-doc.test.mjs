@@ -51,7 +51,7 @@ test('the automatic PR merges itself on generic checks, with no project command 
   const merge = proposal.split('4. **自己合并**')[1].split('5. **回滚**')[0];
   assert.match(merge, /`REVIEW\.md` 的验证命令/);
   assert.match(merge, /spec\.mjs check/);
-  assert.match(merge, /link sweep/);
+  assert.match(merge, /删除后查死链/);
   assert.match(merge, /design-archive-check/);
   assert.match(merge, /CI/);
   assert.match(merge, /`DEVELOPMENT\.md`/);
