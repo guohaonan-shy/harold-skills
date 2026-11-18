@@ -19,7 +19,7 @@ description: 项目的 GLOSSARY.md 术语表：收什么、格式、谁能写、
 | 代码约定（命名风格、下划线还是连字符） | 最近的 `AGENTS.md`，能写成 lint 规则就写成 lint 规则 |
 | 指向代码常量或文件的「以 X 为准」 | 对应的 `docs/domain/` 文档或模块 `AGENTS.md` |
 | 机制、调研、分类体系、「它怎么运作」 | `docs/domain/` |
-| 决策和它的理由 | spec，了结后进 ADR（`idea-loop:wiki-conventions` 的「文件在不在，就是状态」） |
+| 决策和它的理由 | spec，了结后进 ADR（`idea-loop:wiki-conventions` 的「生命周期」） |
 
 方向是单向的：其他文档用术语表里的叫法，术语表不链回它们。
 

@@ -12,7 +12,7 @@
  *    and the `prompt` field of a retro replay case (it records what a human typed back then).
  * 2. setup no longer installs the consolidation task, and asks whether the team uses triage.
  * 3. dreaming / adr-reconciler judge "spec is done" by its issues being closed, not by a spec status.
- * 4. wiki-conventions has no spec row in the `status` closed set.
+ * 4. wiki-conventions has no `status` at all (only ADRs carry one, described where they are written).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -135,12 +135,17 @@ test('dreaming and adr-reconciler judge a spec done by its issues being closed',
 
 // ---------- wiki-conventions ----------
 
-test('wiki-conventions: the status closed set has no spec row, and a spec is judged by its issues', () => {
-  const md = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md');
-  const closedSet = md.slice(md.indexOf('`status` 是闭集'));
-  const table = closedSet.split('\n').filter((l) => l.startsWith('|'));
-  assert.ok(table.length > 2);
-  assert.ok(!table.some((l) => /^\|\s*`spec`/.test(l)), 'the spec row is still in the status table');
-  assert.match(md, /spec\.mjs/);
+test('wiki-conventions has no status at all; a spec is judged by its issues (dreaming says so)', () => {
+  const md = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md').split(/^---\s*$/m).slice(2).join('---');
+  assert.doesNotMatch(md, /status/, 'the wiki-conventions body mentions status again');
   assert.match(md, /issues:/);
+  assert.match(md, /spec\.mjs/);
+  // ADR is the only type with a status; its two values live where ADRs are written.
+  const adr = read('skills', 'productivity', 'dreaming', 'references', 'adr.md');
+  assert.match(adr, /只有 ADR 带/);
+  assert.match(adr, /生效/);
+  assert.match(adr, /已被取代（→ ADR-NNNN）/);
+  assert.match(adr, /按小节取代/);
+  const reconcile = read('skills', 'productivity', 'dreaming', 'references', 'docs-reconcile.md');
+  assert.match(reconcile, /spec 自己没有状态/);
 });
