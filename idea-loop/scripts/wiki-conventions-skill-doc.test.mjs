@@ -11,7 +11,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MAX_BODY_CHARS, bodyChars, danglingSectionPointers, mdFiles, headings } from './skill-doc-check.mjs';
@@ -32,7 +32,7 @@ test('every section of wiki-conventions that a skill or agent quotes exists as a
 });
 
 test('every section name other files point at is still a heading (any level): section names are the contract', () => {
-  const names = ['知识库落地', '文件在不在，就是状态', '人机分工', '目录', '生命周期', '中间产物', '本地忽略', '从平铺布局迁移', 'frontmatter', 'slug 与链接', 'index.md', 'spec 和工单怎么写'];
+  const names = ['知识库落地', '目录', '生命周期', '中间产物', '本地忽略', '从平铺布局迁移', 'frontmatter', 'slug 与链接'];
   const have = headings(readFileSync(join(skillDir, 'SKILL.md'), 'utf8'));
   assert.deepEqual(names.filter((s) => !have.includes(s)), []);
 });
@@ -54,4 +54,14 @@ test('the section spec.mjs sends people to exists', () => {
   assert.ok(titles.length > 0);
   const known = allHeadings();
   assert.deepEqual(titles.filter((t) => !known.includes(t)), []);
+});
+
+test('the trimmed sections and parked references are gone, and the directory table names directories, not slug placeholders', () => {
+  const md = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+  const have = headings(md);
+  for (const gone of ['index.md', 'spec 和工单怎么写', '文件在不在，就是状态', '人机分工']) assert.ok(!have.includes(gone), `「${gone}」 is back in SKILL.md`);
+  for (const f of ['design-layout.md', 'adr.md', 'index-md.md']) assert.ok(!existsSync(join(skillDir, 'references', f)), `references/${f} is back`);
+  const table = md.slice(md.indexOf('## 目录'), md.indexOf('### frontmatter')).split('\n').filter((l) => l.startsWith('|'));
+  assert.ok(table.length > 5);
+  assert.deepEqual(table.filter((l) => /<[^>]*slug[^>]*>|NN-/.test(l)), []);
 });

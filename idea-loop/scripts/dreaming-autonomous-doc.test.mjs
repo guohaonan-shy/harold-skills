@@ -23,7 +23,6 @@ const skill = body(skillFull);
 const proposal = read(...dir, 'references', 'proposal-table.md');
 const retro = read(...dir, 'references', 'retro-candidates.md');
 const missed = read(...dir, 'references', 'missed-archive.md');
-const wiki = body(read('skills', 'productivity', 'wiki-conventions', 'SKILL.md'));
 const weekly = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
 const readme = read('README.md');
 
@@ -76,9 +75,8 @@ test('no automatic row waits for approval: retro candidates and missed archive r
   assert.doesNotMatch(missed, /人通过后/);
 });
 
-test('wiki-conventions and the weekly setup text say what dreaming still asks', () => {
-  assert.match(wiki, /按风险分/);
-  assert.match(wiki, /dreaming` 只问两类/);
+test('dreaming and the weekly setup text say what dreaming still asks', () => {
+  assert.match(skill, /行按风险分两类[^\n]*会判错的（`DESIGN\.md`、文档里的冲突）问人[^\n]*其余[^\n]*自己执行/);
   assert.match(weekly, /只有 `DESIGN\.md` 和文档里的冲突两类/);
   assert.doesNotMatch(weekly, /提议表照样等人批/);
 });

@@ -155,7 +155,7 @@
 
 顺序：
 
-1. 先处理会删掉东西的行，再处理会改写的行，最后跑 link sweep、刷各层 `index.md`（`docs/spec/index.md` 用 `spec.mjs index <docs>`）。
+1. 先处理会删掉东西的行，再处理会改写的行，最后跑 link sweep、刷各层 `index.md`（格式见 [index-md.md](index-md.md)；`docs/spec/index.md` 用 `spec.mjs index <docs>`）。
 2. 每类行这样执行：
 
 | 行类型 | 怎么执行 |
