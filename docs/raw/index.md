@@ -63,10 +63,10 @@
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
 | [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
-| [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 的 triage 会话：wiki-conventions 缩短方案按推荐定稿（按分支外置 references，不拆 skill），翻 todo；retro 无候选 |
+| [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 wiki-conventions 主体 7854 字超上限：triage 会话与 todo 会话 |
 | [decisions/313](decisions/313.md) | conversation | 2026-11-15 | 决定记录 —— #313 的 issue 会话：范围题按「影不影响这次交付」推荐（PR #321），回放分不出差别照合，decision-rules 与 runtime 开场注入另开 #326，候选「0.x 行为改动升 patch」第 3 次、开 #327 |
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
-| [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；没有候选 |
+| [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
 | [decisions/252](decisions/252.md) | conversation | 2026-11-16 | 决定记录 —— #252 建 home 的 triage 会话：第一版项目地图由 setup 起草、本机实测时不切记忆目录（等 #247 迁移时切），retro 候选「推迟的一步写明何时由谁做」不批 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
