@@ -26,6 +26,7 @@ harold-skills#379 的 triage 会话（2026-11-18 14:00–16:30）。U 是 Harold
 | 7 | 删掉定时任务、恢复它的运行会话、由普通会话来移 | 拒 | 同 5b |
 | 8 | `claude -p` 开会话，再在交互模式 `claude --resume <id>` 里敲 `/desktop` | 成：出现为普通桌面会话 `local_<同一 id>`，能移进分组、能改标题 | `-p` 里直接敲："/desktop isn't available in this environment"；交互模式："Opening Claude Desktop…" |
 | 9 | 同 8，在定时触发的一轮里做 | 全程通过，没有一步被拦 | "Moved 1 session(s) to the section." |
+| 10 | 桌面定时任务（无人值守，auto mode）跑同一套，再发消息 | 6/7 通过；只有移进分组被 auto mode 拦，说明里写可加 `mcp__ccd_sidebar__move_sessions` 允许规则 | "Message delivered … its turn has started" |
 
 文档（claude-code-guide 查，11-18）没有写明任何无人操作开出普通侧边栏会话的方式；routines 文档原话 "The fired prompt is therefore not live user input"。
 
@@ -77,6 +78,18 @@ OK，然后空档的两段时间，给我留一些缓冲hhh
 
 另外三件用选项问，Harold 都选了推荐：夜里只在不可逆和对外的事上停下；2 小时无进展让出名额；换掉出卡片的间隔调度，只留按时段。
 
+## U10
+
+我倾向于每个小时调度一次，每次调度3个。现在有个点就是loop有时候突然就不运行了hhh
+
+## A10
+
+loop 是会话内定时，工具说明写「session-only（in-memory, gone when this Claude session ends）」；11-18 夜里调度会话 00:10 后到 13:56 一次没被叫醒。改用桌面定时任务当调度：实测第 10 条。
+
+## U11
+
+每轮最多开 3 个
+
 ## 本轮决议
 
 | 议题 | 决议 |
@@ -85,4 +98,4 @@ OK，然后空档的两段时间，给我留一些缓冲hhh
 | 19:00–22:00、8:00–9:00 | 不开新会话，留给人做缓冲；在跑的照常做完 |
 | 夜里替人定的边界 | 停下等人：合并 PR、删分支或数据、强推、对外发信或评论别人的仓库、碰这个 issue 以外的项目；其余按推荐走，写进 PR 描述「夜里替你定的」 |
 | 夜里会话卡住 | 2 小时没有活动就让出名额；不动它、不关它，早上汇总列出卡在哪 |
-| 现在的间隔调度 | 换掉出卡片的做法；loop 照旧按间隔跑，每轮先看时段 |
+| 现在的间隔调度 | 换掉出卡片的做法；调度改由桌面定时任务每小时跑一轮，每轮最多开 3 个，同时在跑的不超过 3 个；人要加 `mcp__ccd_sidebar__move_sessions` 允许规则 |
