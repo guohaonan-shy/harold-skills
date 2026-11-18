@@ -94,6 +94,7 @@ related: ["[[0009-design-archive-skill-length]]", "[[0033-skill-length-measure]]
   - 删掉两份参考：`design-layout.md`（各子目录谁写、冻结提交、`research/` 不归档在设计类 skill 里已各写一遍；只在这里有的句子并进目录表）；`adr.md` 挪进 dreaming 的参考（只有 dreaming 和它起的 adr-reconciler 写 ADR）。
   - frontmatter 一句话：除了工单和 `index.md`，每份 md 都带，是 dreaming 与召回的锚点；字段模板去掉 `status`。`status` 只有 ADR 用（2026-11-18 查 `docs/adr/` 57 份：56 份「生效」、1 份「已被取代（→ ADR-0022）」），两个值随「按小节取代」一起挪进 dreaming，闭集表删掉。
   - 目录表不写 slug 占位，只说目录里放什么；文件怎么命名只在「slug 与链接」。
+  - ADR 文件名（四位编号加名字、递增不复用）也交给 #339 包装（人 2026-11-18 在 review 第 4 轮 S2 定），上线前在「slug 与链接」留一行。
   - 「slug 与链接」只留 slug 是什么和规则各一行；slug 全局唯一、死链检查、各层 `index.md` 的生成交给统一命令行（#339），在那里包装成子命令。`index.md` 一节和 `index-md.md` 删掉；#339 上线前 dreaming 手写 `raw/`、`adr/` 索引用的格式挪进 dreaming 的参考。
   - 「spec 和工单怎么写」删掉：起草 spec、切工单两个 skill 已各写一遍。
   - 「生命周期」只留线条图，「删 spec 前先写 ADR、只有 dreaming 写 ADR」作注；删掉「文件在不在，就是状态」和「人机分工」（人定不挪去 decision-rules：dreaming 自己的 SKILL.md 已写「行按风险分两类」）。「知识库落地」保留（9 处指它，有文档测试守原文，线条图表达不了）；「从平铺布局迁移」保留一行（`spec.mjs` 的报错文案指它）。
