@@ -14,7 +14,7 @@ description: 目标仓库 docs/ 知识库与 worktree 下 .tmp/ 中间产物的�
 | `spec/` | 还没了结的规格，每份一个目录，目录与正文同名 | 会话产物 | `spec` | issue 全关后 dreaming 写 ADR、删 spec |
 | `spec/` 里每份的 `tickets/` | 工单，单 PR 的临时凭据 | `idea-loop:to-ticket` | 无 | 合了即删 |
 | `adr/` | spec 了结后的总结 | dreaming | `adr` | 永久 |
-| `design/tmp/` | 设计过程，一个需求一个目录：`imagine/` 发散，`canvas/` 画布与冻结记录（冻结后是唯一的设计真相），`delta/` 对 `prod/` 的差异，`research/` 调研页（不归档） | `uiux-*`；`delta/` 归档时写 | 冻结记录 `design` | 合并前归档后清掉 |
+| `design/tmp/` | 设计过程，一个需求一个目录：`imagine/` 发散，`canvas/` 画布与冻结记录（冻结后是唯一的设计真相），`delta/` 对 `prod/` 的差异，`research/` 调研页（不归档）；放弃的需求只丢画布，有价值的结论写回 spec 或 issue | `uiux-*`；`delta/` 归档时写 | 冻结记录 `design` | 合并前归档后清掉 |
 | `design/prod/` | 设计档案：线上现在的样子，提交；对象与字段见 `idea-loop:design-archive` 的「图的实体」 | 归档脚本 | `design-*` | 下个需求归档时覆盖或删除 |
 | `domain/` | 领域知识：业务机制、规则、数据结论 | 存量，不由单次会话产生 | `domain` | 不消失 |
 | `records/` | 运营台账，一类一个子目录（如外联跟进表 `records/outreach/`） | 会话建，人改 | `record` | 不进 spec 的生命周期，dreaming 不删 |
