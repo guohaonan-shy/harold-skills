@@ -21,7 +21,7 @@
 - [x] 改了的每个 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
 - [x] 现有文档测试全绿
 - [x] review 第 1 轮 S1（2026-11-18）：冻结后改设计（design-change-sync）派 designer 的清单里给出项目目录的绝对路径——spec：「调用子代理时，调用方在 prompt 里给出项目目录。」
-- [ ] review 第 2 轮 S3（2026-11-18）：插件英文 README 的设计发散段（交接文件在 home 的项目目录下）和 review 段（SEO 自动合并只认 SEO.md 的内容路径、设计过程文件在项目目录）写成现行做法——REVIEW.md：同一个改动里同步插件自己的 README
+- [x] review 第 2 轮 S3（2026-11-18）：插件英文 README 的设计发散段（交接文件在 home 的项目目录下）和 review 段（SEO 自动合并只认 SEO.md 的内容路径、设计过程文件在项目目录）写成现行做法——REVIEW.md：同一个改动里同步插件自己的 README
 
 ## 选中的存量回归
 
