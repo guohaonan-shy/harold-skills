@@ -1,5 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cameFromRollback, commentBody, fromRollback, liveChanges, marker, parseMarkers, recordOf, ROLLBACK_LINE } from './seo-live-record.mjs';
 
 const item = (ok = true) => ({ ok, detail: '' });
@@ -119,4 +124,40 @@ test('fromRollback reads the issue body through gh and says whether it came from
 test('fromRollback does not guess: a key that is not an issue number, or a gh that fails, is an error', () => {
   assert.throws(() => fromRollback(() => '{}', 'FA-577'), /issue 号/);
   assert.throws(() => fromRollback(() => { throw new Error('gh: not found'); }, 12), /not found/);
+});
+
+// ---- the command line: `<docs>` in home has no git remote, so gh has to be aimed at the project's repository ----
+
+const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'seo-live-record.mjs');
+
+/** A fake home with project `example-app` (repo o/r) and a `gh` on PATH that logs its arguments and fails like gh does outside a repository when `-R` is missing. */
+function homeWithGh() {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'seo-live-record-')));
+  const home = join(root, 'home');
+  const docs = join(home, 'projects', 'example-app', 'docs');
+  mkdirSync(docs, { recursive: true });
+  writeFileSync(join(home, 'AGENTS.md'), '# 设备\n\n## 项目\n\nexample-app（一个例子）: ~/code/example-app. Clone from https://github.com/o/r if missing.\n');
+  const bin = join(root, 'bin');
+  mkdirSync(bin);
+  const log = join(root, 'gh.log');
+  writeFileSync(join(bin, 'gh'), `#!/bin/sh\necho "$@" >> "${log}"\ncase " $* " in *" -R o/r "*) ;; *) echo "no git remotes found" >&2; exit 1;; esac\ncase "$2" in list) echo '[]';; view) echo '{"body":"x"}';; esac\n`);
+  chmodSync(join(bin, 'gh'), 0o755);
+  const env = { PATH: `${bin}:${process.env.PATH}`, HOME: root, IDEA_LOOP_HOME: home };
+  return { docs, env, log };
+}
+
+test('`list <docs>` reads the closed seo issues of the project repository, not of whatever repository <docs> sits in', () => {
+  const w = homeWithGh();
+  const r = spawnSync('node', [SCRIPT, 'list', w.docs], { cwd: w.docs, env: w.env, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout), []);
+  assert.match(readFileSync(w.log, 'utf8'), /^issue list -R o\/r --state closed --label type:seo/);
+});
+
+test('`from-rollback <docs> <issue>` reads the issue from the project repository too', () => {
+  const w = homeWithGh();
+  const r = spawnSync('node', [SCRIPT, 'from-rollback', w.docs, '12'], { cwd: w.docs, env: w.env, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(JSON.parse(r.stdout), { issue: 12, fromRollback: false });
+  assert.match(readFileSync(w.log, 'utf8'), /^issue view -R o\/r 12 --json body/);
 });

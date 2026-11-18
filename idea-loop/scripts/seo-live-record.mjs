@@ -9,6 +9,9 @@
  * The marker is one line, `<!-- seo-live-check: {json} -->`; the JSON has `<` and `>` escaped, so no
  * value (a target word with `-->` in it) can end the comment early.
  *
+ * <docs> is the docs/ of a project directory in home; `list` and `from-rollback` read the project's repo from the project
+ * list (see issues.mjs `projectOf` / `inRepo`), and a <docs> outside home stops with project-map's sentence.
+ *
  * Usage:
  *   node seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>]   → the comment body (post it with `issues.mjs note`, which adds the 🤖 idea-loop： prefix); exit 1 unless the check passed
  *   node seo-live-record.mjs list <docs> [--since=<YYYY-MM-DD>]   → JSON: [{ issue, title, url, keyword, mergedOn, status, noindex, meta, sitemap }], one row per URL, oldest issue first
@@ -18,7 +21,7 @@
 
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { defaultGh } from './issues.mjs';
+import { defaultGh, inRepo, projectOf } from './issues.mjs';
 import { ITEMS } from './seo-live-check.mjs';
 
 /**
@@ -115,9 +118,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     } else if (cmd === 'list' && target) {
       const since = flag(args, 'since');
       if (since !== undefined && !DATE_RE.test(since)) throw new Error('--since 要 YYYY-MM-DD');
-      console.log(JSON.stringify(liveChanges(closedSeoIssues(defaultGh(target)), { since }), null, 2));
+      console.log(JSON.stringify(liveChanges(closedSeoIssues(inRepo(defaultGh(target), projectOf(target).repo)), { since }), null, 2));
     } else if (cmd === 'from-rollback' && target && issueArg) {
-      console.log(JSON.stringify({ issue: Number(issueArg), fromRollback: fromRollback(defaultGh(target), issueArg) }));
+      console.log(JSON.stringify({ issue: Number(issueArg), fromRollback: fromRollback(inRepo(defaultGh(target), projectOf(target).repo), issueArg) }));
     } else throw new Error('usage: seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>] | list <docs> [--since=<YYYY-MM-DD>] | from-rollback <docs> <issue>');
   } catch (e) {
     console.error(e.message);
