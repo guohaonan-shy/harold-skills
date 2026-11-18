@@ -37,6 +37,7 @@ home 只有 main，改了直接提交，只 add 自己的文件（决定记录 Q
 - [x] dreaming、retro、SEO 扫描的效果报告：直接提交 home，不开 docs PR
 - [x] 改了的每个 skill 调过 `idea-loop:writing-for-agents` 的写法（字数上限内：`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m` < 5000）
 - [x] 知识库落地的文档测试按新规则改写并全绿
+- [ ] review 第 1 轮 C1（2026-11-18）：插件英文 README 不再写「每个仓库各开一个 PR」（一个 issue 只改一个仓库），也不再写 retro 在别处跑时用 gh 远程读 harold-skills 的候选池（改成取它在 home 里的项目目录、直接提交）——REVIEW.md：同一个改动里同步插件自己的 README
 
 ## 选中的存量回归
 

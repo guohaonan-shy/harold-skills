@@ -29,6 +29,7 @@
 - [x] 记忆一段的原文没被改动（#332 钉住的文档测试仍绿）
 - [x] 改了的 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
 - [x] 回归（2026-11-17）：dreaming 新写的「逐个对账项目」参考里直接写了 setup 私有参考的路径，「一个 skill 不读别的 skill 的私有参考」那条测试因此红；改成只点 skill 名（或把地图模板挪到两边都能指的地方），那条测试绿
+- [ ] review 第 1 轮 C1（2026-11-18）：插件英文 README 里 dreaming 那段不再写开 revert PR、等自动 PR 合并；改成对账结果直接提交 home、回滚就撤销那次提交——REVIEW.md：同一个改动里同步插件自己的 README
 
 ## 选中的存量回归
 
