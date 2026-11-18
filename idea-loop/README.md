@@ -503,6 +503,8 @@ idea-loop/
     ├── runtime-skill-doc.test.mjs    # tripwire — the runtime skill's capability list and both references match one to one; the desktop reference keeps every 0.1.10 tool name; the human's own browser has a table row, a Claude in Chrome section on the desktop and a "none" section in magi
     ├── browser-lock.mjs              # one lock for the session's shared browser where the runtime has one (desktop), so parallel implementers take turns
     ├── browser-lock.test.mjs         # acquire / refuse / stale take-over / owner-only release
+    ├── desktop-handoff.mjs           # opens an issue session unattended and hands it to Claude Desktop as a sidebar session: `claude -p` for the session id, then `claude --resume` under `expect` to type `/desktop`; optionally appends `{issue, desktopSessionId, openedAt, period}` to `~/.idea-loop/dispatch/<repo>.json`
+    ├── desktop-handoff.test.mjs      # against a fake `claude`: success, repainted success text, silent session (timeout, no process left), `-p` failures, record append / not written on failure / HOME isolated
     ├── changed-lines.mjs             # keep only tool diagnostics on lines this PR changed
     ├── changed-lines.test.mjs        # diff parsing, diagnostic formats, filtering
     ├── codex-prompt.mjs              # fills pr-review's fixed Codex prompt templates; refuses a placeholder left empty
