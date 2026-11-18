@@ -90,6 +90,14 @@ related: ["[[0009-design-archive-skill-length]]", "[[0033-skill-length-measure]]
 - **已有测试守的字符串留在主体**：`知识库落地` 一节与「父 issue 拆完子 issue（spec 与设计定稿）」（`knowledge-base-landing-doc`）、`status` 闭集表与 `spec.mjs`、`issues:`（`issue-model-tripwire`）、「按风险分」「dreaming` 只问两类」（`dreaming-autonomous-doc`）。
 - **版本**：idea-loop `plugin.json` 升 patch（0.1.20 → 0.1.21 或合并时 main 上版本的下一个 patch）：行为不变，只是文档挪位置（`REVIEW.md`「额外要求」）。`idea-loop/README.md` 文件树里 wiki-conventions 那一行补上新的参考文件。
 
+- **再精简一轮（人 2026-11-18 读完两部分版本后定，并进 #372）**：
+  - 删掉两份参考：`design-layout.md`（各子目录谁写、冻结提交、`research/` 不归档在设计类 skill 里已各写一遍；只在这里有的句子并进目录表）；`adr.md` 挪进 dreaming 的参考（只有 dreaming 和它起的 adr-reconciler 写 ADR）。
+  - frontmatter 一句话：除了工单和 `index.md`，每份 md 都带，是 dreaming 与召回的锚点；字段模板去掉 `status`。`status` 只有 ADR 用（2026-11-18 查 `docs/adr/` 57 份：56 份「生效」、1 份「已被取代（→ ADR-0022）」），两个值随「按小节取代」一起挪进 dreaming，闭集表删掉。
+  - 目录表不写 slug 占位，只说目录里放什么；文件怎么命名只在「slug 与链接」。
+  - 「slug 与链接」只留 slug 是什么和规则各一行；slug 全局唯一、死链检查、各层 `index.md` 的生成交给统一命令行（#339），在那里包装成子命令。`index.md` 一节和 `index-md.md` 删掉；#339 上线前 dreaming 手写 `raw/`、`adr/` 索引用的格式挪进 dreaming 的参考。
+  - 「spec 和工单怎么写」删掉：起草 spec、切工单两个 skill 已各写一遍。
+  - 「生命周期」只留线条图，「删 spec 前先写 ADR、只有 dreaming 写 ADR」作注；删掉「文件在不在，就是状态」和「人机分工」（人定不挪去 decision-rules：dreaming 自己的 SKILL.md 已写「行按风险分两类」）。「知识库落地」保留（9 处指它，有文档测试守原文，线条图表达不了）；「从平铺布局迁移」保留一行（`spec.mjs` 的报错文案指它）。
+
 ## 测试决策
 
 | 变的是什么 | 仪器 | 本次 |
