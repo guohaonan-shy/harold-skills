@@ -13,7 +13,8 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 编排者用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：
 
-- 画布路径（`canvas/` 里最新一版）
+- **项目目录**的绝对路径：designer 读它来找 `<docs>`、`DESIGN.md`、`PRODUCT.md`，不拿到就没法开工；子代理拿不到注入的那一行，只认 prompt 里给的
+- 画布路径（项目目录下 `docs/design/tmp/<spec-slug>/canvas/` 里最新一版，给绝对路径）
 - 人的原话
 - 受影响的状态名（画布 `?state=` 的名字）
 - 相关截图（实现的截图、Review 汇报里那张图，或人给的）

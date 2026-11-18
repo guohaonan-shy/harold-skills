@@ -20,7 +20,7 @@
 - [x] 每个 agent 定义写明从调用方 prompt 拿项目目录
 - [x] 改了的每个 SKILL.md 主体 < 5000 字，并调过 `idea-loop:writing-for-agents`
 - [x] 现有文档测试全绿
-- [ ] review 第 1 轮 S1（2026-11-18）：冻结后改设计（design-change-sync）派 designer 的清单里给出项目目录的绝对路径——spec：「调用子代理时，调用方在 prompt 里给出项目目录。」
+- [x] review 第 1 轮 S1（2026-11-18）：冻结后改设计（design-change-sync）派 designer 的清单里给出项目目录的绝对路径——spec：「调用子代理时，调用方在 prompt 里给出项目目录。」
 
 ## 选中的存量回归
 

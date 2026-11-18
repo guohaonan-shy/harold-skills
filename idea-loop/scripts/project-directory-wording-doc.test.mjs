@@ -152,3 +152,10 @@ test('the design process files are in the project directory, and the design scri
     assert.doesNotMatch(readFileSync(f, 'utf8'), /<仓库根>|<集成 worktree> (?:state|page|diff|--delta)/, relative(root, f));
   }
 });
+
+test('design-change-sync hands the designer the project directory as an absolute path, and the canvas path under it', () => {
+  const text = read('skills/design/design-change-sync/SKILL.md');
+  const list = text.split('## designer 做')[1].split('它做：')[0];
+  assert.match(list, /\*\*项目目录\*\*的绝对路径/);
+  assert.match(list, /项目目录下 `docs\/design\/tmp\/<spec-slug>\/canvas\/`/);
+});
