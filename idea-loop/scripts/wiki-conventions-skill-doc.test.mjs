@@ -31,10 +31,21 @@ test('every section of wiki-conventions that a skill or agent quotes exists as a
   assert.deepEqual(bad, [], `these wiki-conventions sections do not exist (renamed or moved?):\n${bad.join('\n')}`);
 });
 
-test('every `##` section of the wiki-conventions SKILL.md survives: section names are the contract', () => {
-  const sections = ['知识库落地', '文件在不在，就是状态', '人机分工', '目录', '中间产物', '从平铺布局迁移', 'frontmatter', 'slug 与链接', 'index.md', 'spec 和工单怎么写'];
+test('every section name other files point at is still a heading (any level): section names are the contract', () => {
+  const names = ['知识库落地', '文件在不在，就是状态', '人机分工', '目录', '生命周期', '中间产物', '本地忽略', '从平铺布局迁移', 'frontmatter', 'slug 与链接', 'index.md', 'spec 和工单怎么写'];
   const have = headings(readFileSync(join(skillDir, 'SKILL.md'), 'utf8'));
-  assert.deepEqual(sections.filter((s) => !have.includes(s)), []);
+  assert.deepEqual(names.filter((s) => !have.includes(s)), []);
+});
+
+test('the body is two parts plus the scratch dir: the second-level headings are exactly 目录, 生命周期, 中间产物', () => {
+  let fenced = false;
+  const h2 = [];
+  for (const line of readFileSync(join(skillDir, 'SKILL.md'), 'utf8').split('\n')) {
+    if (line.startsWith('```')) fenced = !fenced;
+    const m = !fenced && line.match(/^##\s+(.+?)\s*$/);
+    if (m) h2.push(m[1]);
+  }
+  assert.deepEqual(h2, ['目录', '生命周期', '中间产物']);
 });
 
 test('the section spec.mjs sends people to exists', () => {

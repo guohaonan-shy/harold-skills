@@ -1,6 +1,6 @@
 # 设计目录两层的生命周期
 
-`docs/design/` 分两层，生命周期相反。SKILL.md「目录」那棵树只写了两层的名字，设计类调用方（uiux-imagine、uiux-refine、uiux-research、design-archive、归档与对账）读这一份。
+`docs/design/` 分两层，生命周期相反。SKILL.md「目录」那张表只写了两层的名字，设计类调用方（uiux-imagine、uiux-refine、uiux-research、design-archive、归档与对账）读这一份。
 
 ## `design/tmp/<spec-slug>/`：跟着需求走
 
