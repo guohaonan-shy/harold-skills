@@ -42,6 +42,17 @@ issue 的优先级是 `priority:P0`、`priority:P1`、`priority:P2` 三个 label
 
 一个 issue 在每个要改的仓库各开一个 PR，PR 正文写 `Refs <owner>/<repo>#<号>`（不写 `Closes`，合一个就会关 issue）。
 
+## 调度
+
+调度每一轮读这张表，定此刻派什么、同时最多开几个会话；改了这里，下一轮就按新的走。没有这一节的项目按下面这两行走。
+
+| 时段 | 派什么 | 上限 |
+|---|---|---|
+| 09:00–19:00 | triage | 3 |
+| 22:00–08:00 | todo | 3 |
+
+时段左闭右开，开始晚于结束就是跨午夜；派什么只能写 `triage` 或 `todo`；表里没覆盖的时间不派；两行重叠时靠前的一行算。
+
 ## 分类 label
 
 issue 还带两种分类 label：模块 `type:<父类>`，可选的子类 `type:<父类>/<子类>`；类型 `kind:bug`、`kind:feature`、`kind:improvement`。有哪些模块、另外保留哪些 label，写在 `AGENTS.md` 的「issue 分类」一节；分类由 idea-loop 分拣 issue 时打。不在状态、分类和保留清单里的 label 会被清掉，要留的写进那一节。

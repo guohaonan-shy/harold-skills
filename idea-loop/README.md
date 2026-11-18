@@ -488,7 +488,7 @@ idea-loop/
     ├── review-loop.test.mjs          # entries and rulings, settled vs not, round numbering, archive once, figure links
     ├── spec.mjs                      # reads a spec (frontmatter, `issues:`, still-waiting-for-a-human lines, touches UI, freeze summary); `index` re-indexes docs/spec, `check` reports the old flat layout and leftover `status` lines
     ├── spec.test.mjs                 # its unit tests — the readers, the index, the check
-    ├── issues.mjs                    # the only writer of an issue's status:* and type:* labels — the flip table and its preconditions, candidates, reconcile, migrate from the old labels, label pruning
+    ├── issues.mjs                    # the only writer of an issue's status:* and type:* labels — the flip table and its preconditions, candidates, reconcile, `queues` (what the dispatch hands out at a given time of day and how many at most, from the `调度` table of `ISSUE_TRACKER.md`), migrate from the old labels, label pruning
     ├── issues.test.mjs               # its unit tests against a fake gh
     ├── issues-skill-doc.test.mjs     # tripwire — the issues skill, its two platform references, and the tracker templates carry the seven states
     ├── pr-body.mjs                   # PR description = the review report, eight fixed sections (one sentence / problem / how it was fixed / how it was verified / can it be rolled back / the URLs to check after going live, SEO only / your to-do / reference; an old issues section is folded into the rollback one); no code references outside reference
