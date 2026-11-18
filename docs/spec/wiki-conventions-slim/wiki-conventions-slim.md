@@ -35,6 +35,10 @@ related: ["[[0009-design-archive-skill-length]]", "[[0033-skill-length-measure]]
 
 一条根因对应上表：这份 skill 是所有动 `docs/` 或 `.tmp/` 的 skill 的共同入口，几份 spec（`docs-ride-code-pr`、`design-tmp-worktree-root`、`dreaming-triage-autonomous` 等）每次把新规则直接加进主体；只有「从平铺布局迁移」挪进过 `references/`。另有一部分是重复：「`prod/` 只走归档脚本、dreaming 对账行例外」和「旧 `design/<spec-slug>/` 目录只打提示」两句，design-archive 的 SKILL.md 里各写了一遍；五种 `design-*` 类型的说明与 design-archive 的「图的实体」重叠。
 
+### 2. 十个并列的节，读的人拼不出「每个目录是什么、一份内容怎么走完一生」
+
+人 2026-11-18 读完缩短后的版本（PR #372）的总结：这份约定其实只有两件事——知识库有哪些目录、每个目录是什么；一份内容的生命周期。现在它们散在十节里：一个目录收什么在「目录」，它的 `type` 在「frontmatter」，什么时候删在「文件在不在，就是状态」，谁写在「人机分工」和各节正文里。例：要知道工单目录的全部约定，得读「目录」的树、「frontmatter」的豁免、「文件在不在」表的两行、「slug 与链接」的豁免四处。
+
 ## 方案
 
 改完：调起 wiki-conventions 的 skill 读到的主体在 5000 字以下，只含每个分支都要的约定；设计目录的生命周期、`.tmp/` 每个子目录的清理时机、index.md 的格式、ADR 按小节取代，各在一份 `references/` 里，由主体里一行指针指过去。规则一条不改，节名不改（别处按「skill 名 + 节名」指过来，节名就是契约，ADR-0009 先例）。
@@ -57,8 +61,17 @@ related: ["[[0009-design-archive-skill-length]]", "[[0033-skill-length-measure]]
 只修问题、不加能力：
 
 1. 期望行为（对问题 1）：wiki-conventions 的 SKILL.md 主体少于 5000 字，由文档测试守住；任何一条规则在主体或它的 `references/` 里仍能找到，别处按节名指过来的都指得到。
+2. 期望行为（对问题 2）：主体按两部分组织——「目录」一张表，每个目录一行说清收什么、谁写、`type`、什么时候消失；「生命周期」写清一份内容从 grill 到 ADR 怎么走，设计是 spec 里的一个环（spec → `design/tmp` → 工单 → 合并时归档进 `design/prod`）。`.tmp/` 中间产物不是知识库，单列一节。
 
 ## 实现决策
+
+- **重组成两部分（人 2026-11-18 定，并进 #372；0.2.0 只做迁移，不改结构和生命周期）**：
+  - `## 目录`：一张表，列 = 目录 · 收什么 · 谁写 · frontmatter `type` · 什么时候消失；行覆盖 `index.md`、`raw/`、`spec/<slug>/`、`spec/<slug>/tickets/`、`adr/`、`design/tmp/<slug>/`、`design/prod/`、`domain/`、`records/`、仓库根的项目级规则文件。表下是全目录通用的规则，作为小标题：`### frontmatter`、`### slug 与链接`、`### index.md`、`### spec 和工单怎么写`。
+  - `## 生命周期`：先一张流程（`grill → raw/` 永久；`spec → design/tmp → 工单 → 合并`（工单删、`design/tmp` 归档进 `design/prod`）`→ issue 全关后 dreaming：spec → ADR、删 spec`），再小标题 `### 文件在不在，就是状态`、`### 知识库落地`、`### 人机分工`。
+  - `## 中间产物`：照旧（含 `### 本地忽略`），它不是知识库，单列。
+  - 「spec 和工单怎么写」留在本 skill，作为「目录」下的小标题 `### spec 和工单怎么写`（挪进 to-spec 不行：它主体已 4871 字，加 400 字超上限；to-ticket 也读它）；「从平铺布局迁移」降成「生命周期」下的一行指针，标题保留（`spec.mjs` 的报错文案指它）。
+  - **节名契约改成「标题存在」**：这次原先定的「`##` 标题全部保留」改为「别处指的名字都还是标题（任意级）」。23 处指针指的 6 个名字（知识库落地、目录、中间产物、frontmatter、本地忽略、slug 与链接）都保留成标题，文档测试已按任意级标题判，调用方不用改。
+  - 主体仍 < 5000 字；表替掉了散在四处的重复说明，预期更短。
 
 - **按分支外置，不拆 skill**。依据：`writing-for-agents`「渐进披露」——每个分支都要的内联，只有部分分支走到的放到指针后面；用户级 `CLAUDE.md`「先扩展已在用的工具，不为一件事新增组件」；ADR-0009 的先例（design-archive 同样外置成 references，没拆 skill）。
 - **主体留什么、外置什么**（对的杠杆标在括号里）：
