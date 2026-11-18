@@ -74,6 +74,7 @@
 | [decisions/275](decisions/275.md) | conversation | 2026-11-17 | 决定记录 —— #275 的 issue 会话：先合并不实跑回放，录制重跑的设计先不开 issue，skill 不写工具用法另开 #356 |
 | [decisions/276](decisions/276.md) | conversation | 2026-11-17 | 决定记录 —— #276 的 issue 会话：并进 #280，decision-rules 默认翻成 Claude 先定，摆过的题与 retro 候选的结果 |
 | [decisions/160](decisions/160.md) | conversation | 2026-11-18 | 决定记录 —— #160 的 issue 会话：开工对齐起点换写法、执行方定义精简（PR #371，0.1.28），交回卡住维持不加机制；候选 1 不批 |
+| [decisions/356](decisions/356.md) | conversation | 2026-11-18 | 决定记录 —— #356 的 issue 会话：并进 #340 的逐份重写、绊线并进 #341；候选 1（重叠 issue 自己定并进）不批 |
 | [[2026-11-13-replay-verify-redesign]] | conversation | 2026-11-13 | 规则回放改造：取消夜间队列、当场跑，参考 poteto 的 eval playbook |
 | [[2026-10-31-writing-for-agents-scope-grill]] | conversation | 2026-10-31 | #180 writing-for-agents 审 spec：按作用域分能带什么，retro 候选要写怎么结合、怎么验证 |
 | [[2026-10-26-retro-candidate-pool-grill]] | conversation | 2026-10-26 | grill —— retro 候选池放在哪个仓库、哪个目录 |
