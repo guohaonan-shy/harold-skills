@@ -1,0 +1,256 @@
+---
+type: spec
+tags: [idea-loop-0-2-0, cli, scripts, runtime, codex]
+summary: idea-loop 的脚本收成一个 idea-loop 命令，skill 只写命令；runtime 变命令数据，去掉 pr-reviewer 和 codex companion
+related: ["[[339]]", "[[2026-11-15-home-repo-grill]]", "[[skills-read-home]]", "[[home-bootstrap]]", "[[device-memory]]"]
+issues: [339]
+---
+
+# idea-loop 命令行
+
+> #339 存在：2026-11-18 对着 `release/idea-loop-0.2.0` 的 `da89648` 数，`idea-loop/skills` 和 `idea-loop/agents` 里 `${CLAUDE_PLUGIN_ROOT}/scripts/` 出现 154 次、分布在 89 个文件（issue 写时对着 main `a032e45` 是 127 次、77 个文件，#333 合入后又多了）。详情在「问题陈述」。
+
+## 问题陈述
+
+下面的数都是 2026-11-18 在 `release/idea-loop-0.2.0` 的 `da89648` 上用 grep 查的，范围是 `idea-loop/skills` 和 `idea-loop/agents`。
+
+### 1. 脚本只能用全路径调，参数抄在 skill 文字里
+
+`idea-loop/scripts/` 下不算测试有 57 个 `.mjs`。skill 和 agent 要调它们，只能写 `node "${CLAUDE_PLUGIN_ROOT}/scripts/<名字>.mjs" …`，一共 154 处。最多的三个是 `seo-md.mjs` 17 处、`issues.mjs` 16 处、`design-archive-sections.mjs` 15 处。
+
+脚本的参数也抄在 skill 文字里。例子：`issue-session` 的 SKILL.md 开头要专门写一句「下文 `issues` 指 node …/issues.mjs」，下面再逐条写 `issues set <docs> todo <号> --comment=…`。脚本一改参数，这些文字就过期了，也没有测试会红。
+
+### 2. 容易出错的操作每次手写
+
+`git`、`gh` 的操作在 skill 里手写，每处写法不一样：
+
+| 手写的操作 | 处数 |
+|---|---|
+| `git worktree …`（建、删 worktree） | 17 |
+| `git -C <目录> …` | 19 |
+| `git push` / `merge` / `commit` | 11 |
+| `gh pr …` | 15 |
+| `gh issue …` | 24 |
+| 挡路关系（`gh api …/dependencies/blocked_by`） | 3 |
+| 起静态服务器（`python -m http.server` 等） | 4 |
+| DESIGN.md 官方 lint / diff（`npx @google/design.md`） | 5 |
+
+知识库还有三条规则只靠 agent 手动 grep：`docs/` 下 slug 全局唯一、删文件后查死链、ADR 文件名四位编号递增。#302 定了把这三条交给命令行（#339 的评论，来源 PR #372），现在 `wiki-conventions` 的「slug 与链接」和 dreaming 的 `index-md.md` 里各留了一行「由 #339 包装」的占位。
+
+### 3. 调 Codex 留下常驻进程，从不退出
+
+pr-review 现在经 Codex 插件的 companion 脚本起 Codex。companion 每次起一个常驻 broker，从不退出。2026-11-18 本机查到 154 个 broker，连同子进程一共 1205 个进程、约 3.76 GB 内存，最老的跑了 23 天（父会话查到并已清理）。
+
+### 4. 运行环境的做法是一个 skill，子代理要自己去读
+
+`idea-loop:runtime` 是一个 skill：正文 3636 字，每种运行环境一份参考（`claude-desktop` 13938 字、`magi` 11183 字）。主会话开场由 SessionStart hook 注入。子代理收不到注入，要自己跑 `runtime-detect.mjs`，再去翻参考找那一节。skill 和 agent 里 `idea-loop:runtime` 出现 39 次、`idea-loop:browser` 20 次。
+
+### 根因
+
+idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找它们，参数只能抄在文字里（问题 1）；没有入口，就没地方给易错操作加护栏（问题 2）、没地方管子进程的生死（问题 3）、没地方让子代理按能力查运行环境（问题 4）。
+
+## 方案
+
+改完后，skill 和 agent 里只写 `idea-loop <模块> <命令>`。参数靠 `idea-loop <模块> <命令> --help` 查；skill 只写查不到的约定、理由和坑。易错的操作做成带护栏的子命令，出错时直接告诉调用方下一条该跑什么。hook 只做两件事：拦手写的易错操作，跑 lint。
+
+![方案时序](../../raw/issue-workflow/assets/sequence-idea-loop-cli.png)
+
+图里五方：会话（照 skill 做的主会话或子代理）、hook、`idea-loop` 命令、git / gh、Codex / Claude 命令行。红色是这份 spec 新增或改动的。
+
+- ①–③：调命令代替调全路径脚本，出错时返回下一条命令。
+- ④⑤：hook 拦手写的易错操作，告诉它该用哪条命令。
+- ⑥–⑨：pr-review 主会话自己起两个 Codex 进程，不再经 pr-reviewer 子代理和 companion。
+- ⑩⑪：子代理按能力查运行环境，不再读 runtime skill。
+
+一次调用怎么走，只由三样决定：调的命令和参数、当前目录（用它的 git 远端认项目，#333 的「项目目录」）、运行环境（每次运行时自己判断，不在 setup 写死）。
+
+### 入口
+
+一个命令 `idea-loop`，放在插件的 `bin/`。实测（2026-11-18，Claude Code 2.1.327，`claude -p --plugin-dir` 装一个临时插件）：插件 `bin/` 下的可执行文件能在 Bash 里直接按名字调；但这时它拿不到 `CLAUDE_PLUGIN_ROOT`（是空的）。所以入口按自己所在的路径找插件目录，不读这个环境变量。hook 照旧写 `${CLAUDE_PLUGIN_ROOT}` 全路径（hook 里有这个变量）。
+
+### 模块
+
+现有 57 个脚本的去向：
+
+| 去向 | 个数 | 脚本 |
+|---|---|---|
+| 进命令 | 41 | 见下表 |
+| 只给 hook 跑的 lint，不进命令 | 2 | `design-lint`、`glossary-check` |
+| 库、测试用具、MCP 服务器、hook 入口，不进命令 | 13 | `mini-yaml`、`design-archive`、`design-archive-fixture`、`design-archive-mcp`、`ui-compare`、`ui-measure-concurrency`、`claude-stream`、`github-app`、`skill-doc-check`、`design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` |
+| 删掉 | 1 | `codex-companion` |
+
+进命令的按模块分。「新增」是现在没有脚本、skill 手写的操作。
+
+| 模块 | 收进来的脚本 | 新增 |
+|---|---|---|
+| `issues` | `issues` | 挡路关系：标、去、列（包 `gh api …/dependencies/blocked_by`）；`gh issue` 的读、开、评论 |
+| `spec` | `spec`、`ticket-ledger` | — |
+| `home`（知识库） | `project-map`（where / commit）、`home-config`、`memory-check` | 各层 `index.md` 生成；`adr new`（四位编号递增）；`commit` 加护栏：slug 重名、死链就拒绝 |
+| `pr` | `pr-body`、`review-loop`、`evidence`、`changed-lines`、`review-check` | `gh pr` 的开、转 ready、看、合并 |
+| `git` | — | 落地：只 add 给定的文件、提交、推送（代码仓库的 `git commit/push/merge`、`git -C`） |
+| `worktree` | — | 建、删、列（删时先解锁、再删分支） |
+| `design` | `design-archive-check/query/write/sections`、`direction-note-check`、`critic-score`、`flow-compose` | DESIGN.md 官方 lint / diff |
+| `ui` | `ui-measure`、`ui-png-compare`、`browser-lock` | — |
+| `serve` | — | 起、停静态服务器（自己挑空闲端口，打印地址） |
+| `research` | `research-check` | — |
+| `dreaming` | `proposal-table-check` | — |
+| `seo` | `seo-md`、`seo-baseline`、`seo-budget`、`seo-check`、`seo-content-scope`、`seo-context`、`seo-due`、`seo-gaps`、`seo-issues`、`seo-live-check`、`seo-live-record`、`seo-meta-provenance` | — |
+| `retro` | `retro-install`、`retro-pool-count`、`retro-pool-reopened`、`session-digest` | — |
+| `runtime` | `runtime-detect` | `show <能力>`（见「运行环境」） |
+| `agent` | `codex-prompt` | `codex run`、`codex image`、`claude run`（见「包装别的命令行」） |
+
+### 登记表与扫描测试
+
+照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README 里写的 `idea-loop <模块> <命令>`，登记表里没有的就红。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
+
+### hook 只拦不做事
+
+新加一个 Bash 的 PreToolUse hook，只拦两种手写操作，拦下时告诉它该用哪条命令：
+
+- 用 `gh issue edit` 加、去 `status:*` label → `idea-loop issues set`；
+- 手写 `git worktree remove` → `idea-loop worktree remove`。
+
+lint 只由自动触发器跑（现在只有 hook；仓库没有 GitHub Actions），skill 里不再显式调 lint：`design-lint` 的 6 处、`glossary-check` 的 1 处删掉，由已有的 PostToolUse hook 跑。要等一组改动做完才能判的检查（删文件后查死链等），放进落地命令当护栏（`idea-loop home commit` 有死链就拒绝）。
+
+skill 里显式调的 5 个格式检查挪进交回或落地那一步的命令：
+
+| 检查 | 现在谁调 | 改成 |
+|---|---|---|
+| `direction-note-check` | uiux-imagine、uiux-refine | `idea-loop design note submit`：校验过了才算交回 |
+| `research-check` | uiux-researcher | `idea-loop research submit` |
+| `proposal-table-check` | dreaming 与三个对账 agent | `idea-loop dreaming table submit`、`… table split`（拆出问人的行） |
+| `review-check` | pr-reviewer | `idea-loop pr candidates submit`（由 pr-review 主会话调） |
+| `critic-score` | uiux-refine、design-change-sync | `idea-loop design critic round`（它决定这轮停不停，本来就是一步，不是 lint） |
+
+### 包装别的命令行
+
+`idea-loop agent codex run|image`、`idea-loop agent claude run`：直接起 `codex exec` / `claude -p` 子进程，stdin 关掉（不关会卡住等输入），带超时，退出或超时时连子进程树一起结束。不再用 Codex 插件的 companion：`codex-companion.mjs` 删掉，setup 的预检改查 `codex` 命令在不在。
+
+实测（codex-cli 0.166.0）：
+
+| 测什么 | 在哪跑 | 结果 |
+|---|---|---|
+| `codex exec --sandbox read-only`，stdin 关掉（父会话测） | 主会话、子代理各一次 | 都执行成功、没被拦；主会话 27 秒退出 0；没有残留进程 |
+| `codex exec --sandbox workspace-write` 生图，stdin 关掉（本会话 2026-11-18 测） | 子代理 | 没被拦，退出 0，89 秒；用 Codex 内置生图工具出了一张 1254×1254 的 PNG 放进目标目录；跑完没有残留 `codex exec` 进程 |
+
+所以子代理可以自己生图：uiux-imaginer 定义里「`codex exec` 在子代理里会被权限拦下，写进请编排者代办」这条作废，改成自己调 `idea-loop agent codex image`；uiux-imagine 里替它代办生图的那一条一起删。
+
+**去掉 pr-reviewer 子代理**（Harold 2026-11-18 定：多余）。pr-review 主会话自己跑一轮：机械检查 → 用 `idea-loop agent codex run` 并行起 Spec、Standards 两个 Codex 进程 → 等 UI 走查的发现文件 → 核实候选、`idea-loop pr candidates submit` 校验 → 写汇报。pr-reviewer 定义里这一轮的做法（约 1 万字）挪进 pr-review 自己的 references，SKILL.md 主体（现在 4705 字）只加指针，守在 5000 字以内。
+
+### 运行环境
+
+runtime 不再是 skill。
+
+- 能做成命令的做成命令：认环境（`runtime-detect`）、浏览器锁、静态服务器、magi 的 worktree。
+- 每种运行环境「能力 → 工具」的对照表（现在的两份参考）变成命令自带的数据。SessionStart hook 照旧把当前环境那份注入主会话；子代理用 `idea-loop runtime show <能力>` 取那一节；不带能力打印能力清单和退路。
+- `idea-loop:browser` 的三条规矩（给人看、无头、并行时）并进每份数据的「浏览器」一节。
+- 删掉 `runtime`、`browser` 两个 skill。skill 和 agent 里 `idea-loop:runtime` 的 39 处、`idea-loop:browser` 的 20 处改成 `idea-loop runtime show <能力>`。
+
+### 跟 #340 怎么分
+
+| 这些事 | 归谁 | 理由 |
+|---|---|---|
+| 删 `runtime`、`browser`、`seo-check` 三个 skill | #339 | 三个都是内容变成了命令或命令数据，删 skill 跟建命令是同一件事。`seo-check` 只留检查命令和构建后 hook |
+| 删 `pr-reviewer` agent，做法挪进 pr-review 的 references | #339 | 它被 `agent codex run` 取代 |
+| 154 处全路径调用改成命令；会被新 hook 拦的手写操作（`git worktree remove` 6 处、手改 status label）改成命令；`codex exec` 3 处改成命令 | #339 | 不改的话命令一上线 skill 就调不通，或者被 hook 拦住 |
+| 其余手写的 `git`、`gh`、静态服务器、DESIGN.md lint 改成新命令 | #340 | #340 要逐份重写所有 skill，在重写时一起改；#339 只保证命令在、登记表在、扫描测试在 |
+| `evidence`+`decision-rules`、`glossary`→`wiki-conventions`、`seo-brief`+`seo-writing`、`seo-coach`→`seo-setup`、`link-prospecting`→`seo-outreach` 五组合并，逐份重写 | #340 | skill 之间合内容，不涉及命令 |
+| implementer 定义精简 | #340 | — |
+
+#339 改 implementer（主体 4999 字）和 dreaming（4987 字）时，只能做等长或更短的替换：一条全路径命令换成 `idea-loop …` 本来就更短，不往里加新句子。
+
+### 同一行为的其他入口
+
+- **hook**（`hooks/hooks.json`）：纳入。照旧写全路径调 hook 入口脚本，入口内部改调模块。
+- **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：排除。它们是本地跑的 node 脚本，直接 import 模块，不经 Bash 调命令，不受这次影响。
+- **plugin 的 `README.md`**：纳入，命令写法同步改；扫描测试也扫它。
+- **design-archive MCP 服务器**：排除。它是 MCP，不是命令；查询逻辑跟 `idea-loop design archive query` 共用一个模块。
+
+## User Stories
+
+### 场景一：照 skill 调命令
+
+1. 作为照 skill 做事的会话，我想要用 `idea-loop <模块> <命令>` 调 idea-loop 的脚本，以便不用读一大串全路径
+2. 作为照 skill 做事的会话，我想要用 `--help` 查参数，以便 skill 文字里不再抄参数
+3. 作为调命令的会话，我想要命令出错时告诉我下一条该跑什么，以便不用自己猜怎么补救
+4. 作为子代理，我想要跟主会话一样直接调 `idea-loop`，以便不用调用方把路径传进来
+5. 作为在 magi 或本机桌面端跑的会话，我想要命令自己判断当前运行环境，以便同一份 skill 在两边都对
+
+### 场景二：易错操作有护栏
+
+1. 作为手写 `gh issue edit --add-label status:…` 的会话，我想要被拦下并被告知用 `idea-loop issues set`，以便 issue 的状态只从一个地方改
+2. 作为手写 `git worktree remove` 的会话，我想要被拦下并被告知用 `idea-loop worktree remove`，以便不漏解锁、不漏删分支
+3. 作为往 home 提交知识库的会话，我想要 `idea-loop home commit` 在有死链、有重名 slug 时拒绝提交并说出是哪几处，以便坏链接进不了 home
+4. 作为起草 ADR 的会话，我想要 `idea-loop home adr new` 给出下一个编号，以便不靠推断已有文件名
+5. 作为子代理交回产物，我想要交回命令（`design note submit`、`research submit`、`dreaming table submit`）当场校验格式，以便格式不对的交不出去
+
+### 场景三：调别的命令行
+
+1. 作为 pr-review 主会话，我想要用 `idea-loop agent codex run` 并行起 Spec、Standards 两个 Codex 进程，以便不用再起 pr-reviewer 子代理
+2. 作为这台机器的主人，我想要 Codex 进程跑完或超时就连子进程一起结束，以便机器上不再堆积常驻进程
+3. 作为 uiux-imaginer 子代理，我想要自己用 `idea-loop agent codex image` 生图，以便不用请编排者代办
+
+### 场景四：查运行环境
+
+1. 作为子代理，我想要用 `idea-loop runtime show <能力>` 取当前运行环境这一项能力的做法，以便不用读 runtime skill 再翻参考
+2. 作为主会话，我想要开场照旧被注入当前运行环境的做法，以便行为跟现在一样
+
+### 场景五：维护者
+
+1. 作为改 skill 的人，我想要 skill 里写了登记表里没有的命令时测试变红，以便命令改名后 skill 不会悄悄过期
+
+## 实现决策
+
+- **入口用 node 写**，跟现有脚本同一种语言；按自己所在的路径找插件目录，不读 `CLAUDE_PLUGIN_ROOT`（依据：本会话实测，bin 里这个变量是空的）。
+- **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
+- **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
+- **不留旧路径的兼容**：0.2.0 一次发布，全路径调用一次改完（依据：#333 定的「只认 home、不留中间状态」）。脚本文件可以留在原处当模块实现，调用方不再引用它们的路径。
+- **护栏报错的写法**：说出哪条规则没过、哪几处（文件、行）、下一条命令。例：`home commit` 拒绝时列出死链所在文件和它指向的 slug。
+- **hook 拦截的范围只有两条**（Harold 定）：手改 status label、手写 `git worktree remove`。其余易错操作靠 skill 写命令、靠 #340 重写，不加 hook。
+- **`agent codex run` 的超时**默认 20 分钟，跟 pr-reviewer 现在等 companion 的上限一样；到点结束整个进程组，报超时和已写出的部分输出位置，这一轴记「未完成」（跟现在一样）。
+- **runtime 数据仍是 markdown**，每种环境一份、每个能力一节，跟现在的两份参考同形；`runtime show` 按节名取。新加运行环境还是多写一份数据、把名字加进认环境的名单（现在 runtime skill 的「加一种运行环境」挪进命令的 `--help`）。
+- **SessionStart 的三条注入**（decision-rules、runtime、reference）里 runtime 那条改成注入命令数据；decision-rules 那条不动（#340 合并 `evidence`+`decision-rules` 时再改）。
+- **wiki-conventions、dreaming 里「由 #339 包装」的两处占位**改成指向新命令；dreaming 的 `index-md.md` 删掉（各层索引由 `idea-loop home index` 生成）。dreaming 主体只删不加。
+- **已知限制**：
+  - Codex 插件自己的 `codex:rescue` 等命令仍走 companion，仍会留 broker；那是 Codex 插件的事，idea-loop 管不到。
+  - Codex 生图会在 `~/.codex/generated_images/` 留一份原图（本会话实测看到），不清理。
+  - 只测了一次可写沙箱生图；批量连续生图在子代理里会不会越拦越多（TOEFL-demo 记忆里记过）没测。
+
+## 测试决策
+
+| 变的是什么 | 仪器 | 本次 |
+|---|---|---|
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：登记表、参数解析、护栏（死链、slug 重名、ADR 编号）、`runtime show` 取节、hook 的拦截判定、进程树超时 |
+| API 契约（路由、schema、序列化） | TDD API 测试 | 碰到：命令的输出与退出码就是契约，用现有各脚本测试的断言改成经命令调 |
+| DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：pr-review 的 Codex prompt 模板原样搬，不改内容；skill 文字只换命令写法 |
+| 视觉正确性 | UI 实现环 | 不涉及 |
+| 端到端用户流程 | 浏览器端到端测试 | 不涉及；端到端用「临时插件 + `claude -p` 调 `idea-loop`」代替 |
+
+- **seam**：
+  - `idea-loop` 命令本身（起子进程调 `bin/idea-loop`，读输出和退出码）：能抓到入口找不到插件目录、登记表和实现对不上、参数解析错；漏掉的是 Claude Code 把 `bin/` 放上 PATH 这一步。
+  - 登记表扫描测试（读 skill、agent、README 文本）：能抓到 skill 写了不存在的命令、还留着全路径调用；漏掉的是命令语义对不对。
+- **增量功能测试**：
+  1. 前置：一个装了这版 idea-loop 的临时插件目录。步骤：`claude -p --plugin-dir <它>` 让会话跑 `idea-loop issues --help`。期望：打印 issues 模块的命令表，退出 0。覆盖：场景一 1、2、4。
+  2. 前置：一份 skill 文本写了 `idea-loop issues frobnicate`。步骤：跑扫描测试。期望：红，报出文件和行。覆盖：场景五 1。
+  3. 前置：`docs/` 里一份文件链到已删除的 slug。步骤：`idea-loop home commit <文件>`。期望：拒绝，列出死链所在文件和 slug，不产生提交。覆盖：场景二 3。
+  4. 前置：PATH 上放一个假 `codex`，它再起一个睡眠子进程。步骤：`idea-loop agent codex run` 带 2 秒超时。期望：报超时，假 codex 和它的子进程都已不在。覆盖：场景三 2。
+  5. 步骤：把 `gh issue edit 1 --add-label status:todo`、`git worktree remove x` 喂给新 hook。期望：两条都被拦，提示里有对应的 `idea-loop` 命令；`gh issue edit 1 --add-label kind:bug` 不拦。覆盖：场景二 1、2。
+  6. 步骤：`IDEA_LOOP_RUNTIME=magi idea-loop runtime show 浏览器`。期望：打印 magi 数据的「浏览器」一节，包含原 browser skill 的三条规矩。覆盖：场景四 1、场景一 5。
+  7. 步骤：`grep -r 'CLAUDE_PLUGIN_ROOT}/scripts/' idea-loop/skills idea-loop/agents`。期望：没有输出。覆盖：场景一 1。
+- **照着谁写**：各脚本已有的 `*.test.mjs`（如 `issues.test.mjs`）；扫 skill 文本的写法照 `no-project-leak.test.mjs`；hook 的测试照 `design-lint-hook.test.mjs`；runtime 照 `runtime-detect.test.mjs`。
+
+## Out of scope
+
+- skill 的合并、逐份重写、implementer 精简：#340。
+- 其余手写 `git`、`gh` 等改成新命令：#340 重写时一起做。
+- 结构检查：#341。
+- 知识库迁移：#247。
+- 二进制分发、命令装到插件外的 PATH 上。
+
+## 关联
+
+- 决定记录：[[339]]（Harold 在父会话定的命令行方案、本会话的两次实测）；[[2026-11-15-home-repo-grill]] 的「本轮决议」。
+- [[skills-read-home]]（#333，已合入集成分支）：项目目录、`project-map` 的 where / commit 由它建，`home` 模块收进来、在上面加护栏。
+- [[home-bootstrap]]（#252）、[[device-memory]]（#332）：已合入；`home-config`、`memory-check` 收进 `home` 模块，行为不变。
+- 相邻还没完成的：#340（skill 合并与重写）在 #339 之后，分工见「跟 #340 怎么分」；#341（结构检查）在 #340 之后，没有重叠；#247（迁移）最后，它要调的 setup 脚本改成命令，没有别的重叠。四个都被 #331 挡着。
