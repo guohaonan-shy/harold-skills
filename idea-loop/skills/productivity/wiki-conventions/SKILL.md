@@ -12,7 +12,7 @@ description: 目标仓库 docs/ 知识库与 worktree 下 .tmp/ 中间产物的�
 | `spec/<spec-slug>/` | 还没了结的规格，正文 `<spec-slug>.md` | 会话产物 | `spec` | issue 全关后 dreaming 写 ADR、删 spec |
 | `spec/<spec-slug>/tickets/` | `NN-<slug>.md` 工单，单 PR 临时凭据 | `idea-loop:to-ticket` | 无 | 合了即删 |
 | `adr/` | `NNNN-<slug>.md`，spec 了结后的总结 | dreaming | `adr` | 永久 |
-| `design/tmp/<spec-slug>/` | 设计过程：`imagine/` `canvas/` `delta/` `research/` | `uiux-*` skill | `design` | 合并前归档，整个目录清掉 |
+| `design/tmp/<spec-slug>/` | 设计过程：`imagine/` `canvas/` `delta/` `research/` | `uiux-*`；`delta/` 归档时写 | 冻结记录 `design` | 合并前归档后清掉 |
 | `design/prod/` | 设计档案：线上现在的样子，提交；对象与字段见 `idea-loop:design-archive` 的「图的实体」 | 归档脚本 | `design-*` | 下个需求归档时覆盖或删除 |
 | `domain/` | 领域知识：业务机制、规则、数据结论 | 存量，不由单次会话产生 | `domain` | 不消失 |
 | `records/<kind>/` | 运营台账（如外联跟进表 `records/outreach/`） | 会话建，人改 | `record` | 不进 spec 的生命周期，dreaming 不删 |

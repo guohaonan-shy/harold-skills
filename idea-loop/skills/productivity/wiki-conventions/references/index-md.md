@@ -1,6 +1,6 @@
 # index.md 的格式与特例
 
-SKILL.md「index.md」定了规则：每层一个，只放索引，表体从 frontmatter 生成。dreaming 和 `spec.mjs index` 生成它时读这一份。
+SKILL.md「目录」表的第一行定了规则：每层一个，表体从 frontmatter 生成；「index.md」小节写只放索引。dreaming 和 `spec.mjs index` 生成它时读这一份。
 
 ```markdown
 # <层名>
