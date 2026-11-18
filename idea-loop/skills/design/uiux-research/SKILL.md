@@ -18,7 +18,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 ## 定落图目录
 
-项目根 = `git rev-parse --show-toplevel`。第一次用确认 `docs/design/tmp/` 被 git 忽略（`git check-ignore`），不在就照 `idea-loop:wiki-conventions` 的「目录」追加到 `$(git rev-parse --git-common-dir)/info/exclude`：落图目录只在本地。
+项目根 = `git rev-parse --show-toplevel`。第一次用确认 `docs/design/tmp/` 被 git 忽略（`git check-ignore`），不在就照 `idea-loop:wiki-conventions` 的「本地忽略」追加到 `$(git rev-parse --git-common-dir)/info/exclude`：落图目录只在本地。
 
 | 情况 | 落图目录（绝对路径） |
 |---|---|

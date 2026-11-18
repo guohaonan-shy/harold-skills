@@ -9,4 +9,6 @@
 | [[seo-autopilot]] | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱 |
 | [[seo-outreach-reads-seo-md]] | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
 | [[seo-skill-descriptions-route-only]] | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
+| [[skill-body-limit-backlog]] | idea-loop 两份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references |
 | [[subagent-handback-lost-turn]] | 交回后卡住是那一轮模型请求断了或挂住，被平台合成回复关掉；网络问题，idea-loop 不加机制 |
+| [[wiki-conventions-slim]] | wiki-conventions 主体从 7854 字缩到 5000 字以下：只有部分调用方用到的细节外置成 references |
