@@ -27,6 +27,7 @@ issue 脚本（`issues.mjs`）的每个命令都收一个 `<docs>`。现在它�
 - [x] 删掉项目目录的 `docs/`、代码仓库根放 `DEVELOPMENT.md`，对代码仓库里的 `docs/` 跑 `show`：退出码非 0，输出迁移那句话，stub 一次都没被调
 - [x] 「仓库」一节的解析和多仓库找 PR 的分支已删，相关测试改成单仓库
 - [x] 现有 issue 脚本测试意图全保留并全绿
+- [ ] review 第 2 轮 S2（2026-11-18）：SEO 效果报告读改动清单的脚本（seo-live-record）对着项目清单里这个项目的仓库查 issue，跟 issue 脚本、SEO 开 issue 的脚本一样；docs 不在 home 时同样停下。单测用假 home 和 gh stub 钉住
 
 ## 选中的存量回归
 
