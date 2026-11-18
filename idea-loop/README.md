@@ -367,9 +367,10 @@ idea-loop/
 │   │       references/merge.md       # merge (no spec-done step, no CI wait), the pre-merge design archive, the post-deploy check of an SEO change (wait for the deploy, record or roll back), the post-merge cleanup
 │   │       references/seo-auto-merge.md  # read when the issue is `type:seo/*`: the conditions for merging without the human (checks and `seo-check`, no blocker, content only, a 上线自查的网址 section) and what the session does then
 │   │       references/ui-walkthrough.md  # read only when the PR has design output: starting the ui-reviewer next to the pr-reviewer, and what to do when it returns incomplete
+│   │       references/design-change.md  # read only when the human accepted a design that differs from the frozen canvas: the design-change-sync route on the PR branch
 │   ├── design/
 │   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
-│   │   │   references/chapters.md, new.md, distill.md, reconcile.md  # each chapter; creating, distilling, reconciling DESIGN.md
+│   │   │   references/chapters.md, new.md, distill.md, reconcile.md, write.md  # each chapter; creating, distilling, reconciling DESIGN.md; the path of one write (find the file, backup, draft, human confirms, lint and diff, report), read only by a run that really writes DESIGN.md
 │   │   ├── uiux-imagine/SKILL.md     # the divergent half — the process; the work is in agents/uiux-imaginer.md
 │   │   │   references/imagine-canvas.md  # the board, cloning variants from a shipped UI, the handoff canvas, cleanup
 │   │   │   references/direction-note.md  # the letter to refine: seven sections, composition list, provenance markers
@@ -533,7 +534,7 @@ What came across:
 |---|---|
 | The taste/craft references | `skills/design/uiux-refine/references/design/` |
 | The two former design skills | `skills/design/uiux-refine/references/design/static-protocol.md` (surface, module and component altitudes in one file), `skills/design/uiux-refine/references/design/motion.md` — demoted to on-demand protocols |
-| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, how a write goes, the candidate format, who may write: `skills/design/design-modeling/SKILL.md` |
+| The `DESIGN.md` spec | Format: the official `@google/design.md` spec, read at run time (`npx -y @google/design.md@latest spec`). What may enter, how to write it, the candidate format, who may write: `skills/design/design-modeling/SKILL.md`; how a write goes: `skills/design/design-modeling/references/write.md` |
 | The lint hook + rules + their unit tests | `hooks/hooks.json`, `scripts/design-lint*.mjs` |
 | The browser | the "browser" capability, done as the current runtime says (`skills/productivity/runtime/references/`; on the desktop a user-level `playwright` MCP, headless and isolated, checked by `setup`; in magi `magi browser`); how to use it: `skills/engineering/browser/SKILL.md` |
 | The design archive's lookups | `.mcp.json` (`design-archive`, `scripts/design-archive-mcp.mjs`) |
