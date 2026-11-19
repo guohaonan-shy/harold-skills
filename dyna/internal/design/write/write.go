@@ -266,7 +266,7 @@ func RenderIndex(a *archive.Archive, existing *string) string {
 	return strings.Join([]string{
 		head,
 		"# 设计档案\n",
-		"> 本文件由归档脚本生成，表体取自各对象的 frontmatter，不手工维护。",
+		"> 本文件由归档命令生成，表体取自各对象的 frontmatter，不手工维护。",
 		"",
 		"## 页面\n",
 		table([]string{"页面", "状态", "说明"}, pages),
@@ -366,7 +366,7 @@ func repoHints(root string) []Hint {
 		for _, ext := range missing {
 			lines = append(lines, fmt.Sprintf("  %s/**/assets/**/*.%s filter=lfs diff=lfs merge=lfs -text", Prod, ext))
 		}
-		hints = append(hints, Hint{Kind: "lfs", Message: fmt.Sprintf(".gitattributes 还没有用 Git LFS 管 %s/**/assets/ 下的 %s；要加这几行（脚本不代改）：\n%s", Prod, strings.Join(missing, " / "), strings.Join(lines, "\n"))})
+		hints = append(hints, Hint{Kind: "lfs", Message: fmt.Sprintf(".gitattributes 还没有用 Git LFS 管 %s/**/assets/ 下的 %s；要加这几行（命令不代改）：\n%s", Prod, strings.Join(missing, " / "), strings.Join(lines, "\n"))})
 	}
 	return hints
 }

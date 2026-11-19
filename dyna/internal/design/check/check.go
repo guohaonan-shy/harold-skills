@@ -544,7 +544,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 			for _, o := range archive.ObjectsOfKind(a, kk.kind) {
 				ub := o.FM.Get("usedBy")
 				if ub == nil {
-					c.v(6, o.File, "usedBy", "usedBy 缺失——未生成（由归档脚本反向生成，不手写）")
+					c.v(6, o.File, "usedBy", "usedBy 缺失——未生成（由归档命令反向生成，不手写）")
 					continue
 				}
 				list, ok := ub.([]any)

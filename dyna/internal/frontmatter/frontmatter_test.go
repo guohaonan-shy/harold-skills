@@ -199,3 +199,22 @@ func TestSplitCountsErrorLinesFromTheTopOfTheFile(t *testing.T) {
 		t.Fatalf("got %q", sp.Error)
 	}
 }
+
+func TestSyntaxErrorsFromUnquotedValuesSayToQuoteThem(t *testing.T) {
+	cases := map[string]string{
+		"colon in a value":    "---\ntype: x\ntitle: a: b\n---\nbody",
+		"brace in a value":    "---\ntype: x\nlink: {token\n---\nbody",
+		"unclosed list value": "---\ntype: x\nbad: [a\nnext: 1\n---\nbody",
+	}
+	for name, src := range cases {
+		sp := Split(src)
+		if !strings.HasPrefix(sp.Error, "第 ") || !strings.HasSuffix(sp.Error, "值里有冒号、问号或花括号时要加引号") {
+			t.Errorf("%s: want the line, the library's words and the quote sentence, got %q", name, sp.Error)
+		}
+	}
+	// an error that is not about a value's characters stays as the library said it
+	sp := Split("---\ntype: x\n\tb: 2\n---\nbody")
+	if sp.Error == "" || strings.Contains(sp.Error, "要加引号") {
+		t.Errorf("a tab error should not carry the quote sentence: %q", sp.Error)
+	}
+}

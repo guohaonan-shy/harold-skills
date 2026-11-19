@@ -126,14 +126,24 @@ var libraryErrRe = regexp.MustCompile(`(?s)^yaml: (?:line (\d+): )?(.*)$`)
 // errors (a tab, a stray character, an unclosed quote) already name the line a person counts.
 var parserErrRe = regexp.MustCompile(`^did not find expected (<|'|node|key|-)`)
 
+// The syntax errors a hand-written value hits when it holds a colon, a question mark or a brace without quotes
+// ("title: a: b", "to: {token}"): the library words them for a YAML author, not for the person who wrote the file.
+var quoteHintErrRe = regexp.MustCompile(`^(mapping values are not allowed in this context|did not find expected ',' or '[}\]]')`)
+
+const quoteHint = "。值里有冒号、问号或花括号时要加引号"
+
 // libraryError says where the YAML is wrong in the words the archive's checks use: 第 N 行：<what the library said>.
-// A parse error on the first line comes from the library without a line, so it is passed on without one.
+// A parse error on the first line comes from the library without a line, so it is passed on without one. The errors
+// an unquoted value causes get a sentence after the library's words saying so.
 func libraryError(err error, offset int) error {
 	m := libraryErrRe.FindStringSubmatch(err.Error())
 	if m == nil {
 		return err
 	}
 	msg := strings.TrimSpace(m[2])
+	if quoteHintErrRe.MatchString(msg) {
+		msg += quoteHint
+	}
 	if m[1] == "" {
 		return errors.New(msg)
 	}

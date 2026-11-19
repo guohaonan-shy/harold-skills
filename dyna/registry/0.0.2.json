@@ -271,7 +271,7 @@
           "kind": "flag",
           "required": false,
           "value": "bool",
-          "description": "跳过 usedBy 那一半（归档脚本重新生成 usedBy 之前判 delta/ 用）"
+          "description": "跳过 usedBy 那一半（归档命令重新生成 usedBy 之前判 delta/ 用）"
         },
         {
           "name": "workspaces",

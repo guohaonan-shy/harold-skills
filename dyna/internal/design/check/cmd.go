@@ -34,7 +34,7 @@ func Command() *cobra.Command {
 		SilenceErrors: true,
 	}
 	c.Flags().String("delta", "", "把这个 spec 的 tmp/<spec-slug>/delta/ 叠在 prod/ 上再判")
-	c.Flags().Bool("no-used-by", false, "跳过 usedBy 那一半（归档脚本重新生成 usedBy 之前判 delta/ 用）")
+	c.Flags().Bool("no-used-by", false, "跳过 usedBy 那一半（归档命令重新生成 usedBy 之前判 delta/ 用）")
 	c.Flags().String("workspaces", "", "组件文件名的工作区前缀，逗号分隔（prod/index.md 还没有时用）")
 	c.Flags().Bool("json", false, "输出 JSON")
 	c.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return usageError(usage + "\n" + err.Error()) })

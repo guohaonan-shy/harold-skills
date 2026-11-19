@@ -475,7 +475,7 @@ func Check(markdown string) Result {
 				errs = append(errs, where+p)
 			}
 			if s.title == "初扫页面" && !tmpDirRe.MatchString(r.cells[2]) {
-				errs = append(errs, where+"的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，只有归档脚本写 prod/")
+				errs = append(errs, where+"的证据要指向 tmp/ 下这次建出来的页面草稿——初扫的产物先放 tmp/，只有归档命令写 prod/")
 			}
 		}
 	}

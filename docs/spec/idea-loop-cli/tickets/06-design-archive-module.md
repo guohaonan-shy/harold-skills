@@ -27,5 +27,5 @@
 
 > 人的决定（2026-11-19）：S1 A，S2 A
 
-- [ ] review 第 2 轮 S2（2026-11-19）：读文件开头元数据时，库报语法错（如 did not find expected ',' or '}'、mapping values are not allowed in this context），在原文后面补一句中文「值里有冒号、问号或花括号时要加引号」，文件和行号照旧；拿 TOFEL-demo 主分支那 8 个文件各验一次都带这句
-- [ ] review 第 2 轮 C1 补（2026-11-19）：dyna 自己的输出和 --help 里指代 dyna 命令的「脚本」改成「命令」（设计档案写入与检查、dreaming 提议表那几处「归档脚本」「脚本不代改」），0.0.2 的登记表从命令树重新生成；版本仍是 0.0.2，不再升
+- [x] review 第 2 轮 S2（2026-11-19）：读文件开头元数据时，库报语法错（如 did not find expected ',' or '}'、mapping values are not allowed in this context），在原文后面补一句中文「值里有冒号、问号或花括号时要加引号」，文件和行号照旧；拿 TOFEL-demo 主分支那 8 个文件各验一次都带这句
+- [x] review 第 2 轮 C1 补（2026-11-19）：dyna 自己的输出和 --help 里指代 dyna 命令的「脚本」改成「命令」（设计档案写入与检查、dreaming 提议表那几处「归档脚本」「脚本不代改」），0.0.2 的登记表从命令树重新生成；版本仍是 0.0.2，不再升
