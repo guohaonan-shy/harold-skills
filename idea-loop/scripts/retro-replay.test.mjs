@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { dynaBinary } from './dyna-test-bin.mjs';
 import { changeSetOf, homeProblem, prepareHome, projectName } from '../evals/retro/retro-replay.mjs';
 import { locate, normalizeRemote, parseProjects } from './project-map.mjs';
 import {
@@ -247,12 +248,14 @@ if (pd) {
 }
 `;
 
-// A fake Codex companion: `node <it> task --model … --effort … --prompt-file F --cwd D`. It answers like the fake judge does
-// (yes for a product containing FIXED), with some prose around the JSON the way a real one talks; FAKE_CODEX_FAIL makes it exit 2.
-const FAKE_CODEX = `// task
+// A fake `codex`, started by `dyna agent codex run` as `codex exec --sandbox read-only … -C D -m M -c … -o OUT PROMPT`. It answers like the
+// fake judge does (yes for a product containing FIXED), with some prose around the JSON the way a real one talks, on stdout and
+// in the -o file; FAKE_CODEX_FAIL makes it exit 2.
+const FAKE_CODEX = `#!/usr/bin/env node
 const fs = require('node:fs');
 const args = process.argv.slice(2);
-const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
+const prompt = args[args.length - 1] === '-' ? fs.readFileSync(0, 'utf8') : args[args.length - 1];
+const out = args[args.indexOf('-o') + 1];
 fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
 const dirIn = process.env.GH_CONFIG_DIR;
 const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
@@ -261,8 +264,9 @@ if (process.env.FAKE_CODEX_FAIL) process.exit(2);
 const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
 const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
 const ans = (s) => (s.includes('FIXED') ? '是' : '否');
-console.log('我读完了两份产物。');
-console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
+const said = '我读完了两份产物。\\n' + JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }) + '\\n';
+fs.writeFileSync(out, said);
+process.stdout.write(said);
 `;
 
 function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, repoFiles = {}, origin, caseExtra = {} }) {
@@ -297,8 +301,9 @@ function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFi
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
   chmodSync(bin, 0o755);
-  const codex = join(root, 'fake-codex.cjs');
+  const codex = join(root, 'fake-codex');
   writeFileSync(codex, FAKE_CODEX);
+  chmodSync(codex, 0o755);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
   // where the runs work: a temp dir whose own path says nothing about a test
@@ -309,18 +314,18 @@ function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFi
 /** What the fake `claude` was started with, one entry per session. */
 const sessions = (env) => (existsSync(`${env.log}.json`) ? readFileSync(`${env.log}.json`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 
-/** A Claude config dir with a Codex companion in the place the runner would look for the real one (a fake that logs "codex"). */
+/** A directory with a `codex` on it, for PATH: the place the runner would look for the real one (a fake that logs "codex"). */
 function realCodexLookalike(env) {
-  const dir = join(env.root, 'claude-config');
-  const script = join(dir, 'plugins', 'marketplaces', 'openai-codex', 'plugins', 'codex', 'scripts', 'codex-companion.mjs');
-  mkdirSync(dirname(script), { recursive: true });
-  writeFileSync(script, readFileSync(env.codex, 'utf8'));
+  const dir = join(env.root, 'path-with-codex');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'codex'), readFileSync(env.codex, 'utf8'));
+  chmodSync(join(dir, 'codex'), 0o755);
   return dir;
 }
 
 /**
- * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the companion path does not exist), 'fails' (it exits 2),
- * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
+ * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the codex path does not exist), 'fails' (it exits 2),
+ * 'unset' (RETRO_CODEX_BIN is not set at all, while a codex that would be found sits on PATH).
  * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
  */
 function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
@@ -332,8 +337,9 @@ function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
     encoding: 'utf8',
     env: {
       ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp, PROJECT_MAP,
-      RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
-      ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
+      IDEA_LOOP_DYNA_BIN: dynaBinary(),
+      RETRO_CODEX_BIN: codex === 'missing' ? join(env.root, 'no-codex-here') : env.codex,
+      ...(codex === 'unset' ? { RETRO_CODEX_BIN: undefined, PATH: `${realCodexLookalike(env)}:${process.env.PATH}` } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
       ...(order ? { RETRO_JUDGE_ORDER: order } : { RETRO_JUDGE_ORDER: '' }),
     },
@@ -449,9 +455,10 @@ test('e2e: the judge is the fake Codex: its answer decides, the result and the r
   assert.match(r.stdout, /不占 Claude 额度/);
   assert.ok(!sessions(env).some((x) => x.kind === 'judge'), 'no claude judging session');
   const [codex] = sessions(env).filter((x) => x.kind === 'codex');
-  assert.equal(codex.args[0], 'task');
-  assert.ok(codex.args.includes('--prompt-file'));
-  assert.ok(!codex.args.includes('--write'), 'Codex gets no write permission');
+  assert.equal(codex.args[0], 'exec');
+  assert.equal(codex.args[codex.args.indexOf('--sandbox') + 1], 'read-only', 'Codex gets no write permission');
+  assert.ok(!codex.args.includes('workspace-write') && !codex.args.includes('--write'), 'Codex gets no write permission');
+  assert.ok(codex.args.includes('gpt-5.6-sol'), 'the judge runs with the model the reviewers use');
   // the answer of a Codex that finds the post-change product lacking is a fail, the other way round a case that missed the problem
   const failing = setup({ before: 'reply: plain', after: 'reply: plain' });
   const f = run(failing);
@@ -891,7 +898,7 @@ test('e2e: --settle keeps "not-exercised" even when the human overrules the judg
   assert.equal(settled.judgedOutcome, 'pass', 'the override still reached the judged answers');
 });
 
-test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not go looking for the real Codex, the stand-in judges', () => {
+test('e2e: a stand-in claude without RETRO_CODEX_BIN: the runner does not go looking for the real Codex, the stand-in judges', () => {
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
   const r = run(env, [], { codex: 'unset' });
   assert.equal(r.status, 0, r.stdout + r.stderr);

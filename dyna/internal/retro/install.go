@@ -17,7 +17,7 @@ var runtimeFiles = []struct {
 	files []string
 }{
 	{"evals/retro", []string{"retro-replay.mjs", "queue.mjs", "replay.mjs", "cases.mjs"}},
-	{"scripts", []string{"claude-stream.mjs", "codex-companion.mjs", "project-map.mjs", "runtime-detect.mjs"}},
+	{"scripts", []string{"project-map.mjs", "runtime-detect.mjs"}},
 }
 
 const entryText = `#!/usr/bin/env node

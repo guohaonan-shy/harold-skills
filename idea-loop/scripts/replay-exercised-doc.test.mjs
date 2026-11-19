@@ -32,14 +32,14 @@ test('README: the check, its outcome and the exit code are written down', () => 
   assert.match(readme, /用例没测到改动/);
 });
 
-test('README: the installed runner only changes when setup is run again, and the Codex lookup script goes in with it', () => {
+test('README: the installed runner only changes when setup is run again, and it needs the command line to start any session', () => {
   const readme = read('README.md');
   const sentence = readme.split('\n\n').find((p) => p.includes('A runner copy at `~/.idea-loop/bin/`'));
   assert.ok(sentence, 'the paragraph that tells to install the runner again');
   assert.match(sentence, /\/idea-loop:setup/);
-  assert.match(sentence, /scripts\/codex-companion\.mjs/);
-  assert.match(sentence, /no Codex lookup/);
-  assert.match(sentence, /cannot use the Codex judge/);
+  assert.match(sentence, /dyna agent claude run/);
+  assert.match(sentence, /dyna agent codex run/);
+  assert.match(sentence, /cannot run a replay at all/);
 });
 
 test('setup\'s runner step says the Codex lookup script is installed with the runner and needs setup run again', () => {

@@ -294,13 +294,13 @@ node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <dir> # re-dec
 The runner copies the project as of the case's commit into a temp dir, runs `claude -p` with `--plugin-dir` pointing at the base
 branch's plugin and again at this working tree's plugin (a sub-agent cannot do this: it loads the installed copy), then has a
 judge read both products anonymously and answer the question with a quote. **The judge is Codex** (a different model family from
-the two runs), run through the Codex companion's `task` (found the way `pr-review` finds it; read-only, never `--write`), with the
+the two runs), run through `dyna agent codex run` (the `codex` command on PATH; read-only, never write access), with the
 products lettered A and B in a random order each time; the order is recorded as `afterIs` in `result.json` and turned back into
 pre-change / post-change when the answers are read, and `result.json`, the terminal report and the review loop entry all say who
 judged (`judge: codex` or `judge: claude`). It uses no Claude quota (the cost estimate printed up front still follows the old
 formula and says the judge runs on Codex). When no Codex is found, the runner prints 没找到 Codex，评委用 Claude before it starts
 and judges with `claude -p` as before (a Codex that gives nothing at judging time falls back the same way, said out loud); a
-replay is an acceptance check, not a gate, so it falls back instead of stopping, and the entry shows it (with `RETRO_CLAUDE_BIN` set to a stand-in `claude` and `RETRO_CODEX_COMPANION` not set, the runner does not look for a real Codex at all: the stand-in judges). **The input is only the human's
+replay is an acceptance check, not a gate, so it falls back instead of stopping, and the entry shows it (with `RETRO_CLAUDE_BIN` set to a stand-in `claude` and `RETRO_CODEX_BIN` not set, the runner does not look for a real Codex at all: the stand-in judges). **The input is only the human's
 words**: each run is given exactly the case's `prompt` (nothing added, no note that it is a test, no stop point: an agent that hands
 its work to the human ends its turn, and the timeout is the backstop) and works in `<tmp dir>/<random>/<project name>`, a path with
 nothing about retro, replay, before or after in it, and the plugin it loads is copied to `<tmp dir>/<random>/<plugin dir name>`
@@ -342,7 +342,7 @@ and handles the result as `idea-loop:implement`'s `references/replay-result.md` 
 the case's yes/no question on each, and compares with the judge; a disagreement stops the run and goes to the human (a small
 case's implementer does the same and hands a disagreement back as `blocked`). The PR stays a draft until the replays
 are handled. Exit codes: 0 all passed, 1 some did not, 2 no `--pr` / no case / a case that is missing or malformed (no session
-is started). A runner copy at `~/.idea-loop/bin/` from before this option does not know it: run `scripts/retro-install.mjs` again (that is, `/idea-loop:setup`'s runner step: the installed copy only changes when setup is run again). The Codex lookup script (`scripts/codex-companion.mjs`) is installed with the runner, so a machine that has not run setup again has no Codex lookup either and cannot use the Codex judge; the same goes for the exercised check, which also needs the runtime detection script (`scripts/runtime-detect.mjs`, installed with the runner too) to tell which runtime the checked session ran in.
+is started). A runner copy at `~/.idea-loop/bin/` from before this option does not know it: run `scripts/retro-install.mjs` again (that is, `/idea-loop:setup`'s runner step: the installed copy only changes when setup is run again). The runner starts every `claude -p` and `codex exec` through `dyna agent claude run` / `dyna agent codex run` (the `dyna` at `IDEA_LOOP_DYNA_BIN`, else `~/.idea-loop/bin/dyna`, else on PATH), so a machine without the command line cannot run a replay at all; the exercised check also needs the runtime detection script (`scripts/runtime-detect.mjs`, installed with the runner too) to tell which runtime the checked session ran in.
 
 `/idea-loop:setup` does the machine-level part once: `scripts/retro-install.mjs` copies the runner to `~/.idea-loop/bin/` (a fixed
 path) and prints the permission rule `Bash(node ~/.idea-loop/bin/retro-replay.mjs:*)` for the human to add to

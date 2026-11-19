@@ -11,10 +11,10 @@
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] PATH 上放一个假 codex 再起一个睡眠子进程，`dyna agent codex run` 带 2 秒超时：报超时，假 codex 和它的子进程都已不在
-- [ ] 两个 eval runner 改调命令后，各自的回放/基线测试照旧通过
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] PATH 上放一个假 codex 再起一个睡眠子进程，`dyna agent codex run` 带 2 秒超时：报超时，假 codex 和它的子进程都已不在
+- [x] 两个 eval runner 改调命令后，各自的回放/基线测试照旧通过
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 

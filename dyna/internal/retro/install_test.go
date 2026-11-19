@@ -58,15 +58,22 @@ func TestInstalledRunnerHasNoPluginOfItsOwnToTestAndSaysWhichFlagToGive(t *testi
 	}
 }
 
-func TestTheInstalledCopyCarriesTheCodexCompanionFinderTheJudgeNeedsAndStartsWithIt(t *testing.T) {
+// The runner starts its Claude sessions and its Codex judge through `dyna agent`, so the copies of the stream
+// reader and of the Codex companion finder it used to import are no longer installed with it.
+func TestTheInstalledCopyCarriesWhatTheRunnerImportsAndNotTheOldStreamReaderOrCompanionFinder(t *testing.T) {
 	dest := fresh(t)
 	entry, err := retro.Install(dest, pluginRoot())
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{"codex-companion.mjs", "runtime-detect.mjs"} {
+	for _, f := range []string{"runtime-detect.mjs", "project-map.mjs"} {
 		if _, err := os.Stat(filepath.Join(dest, "runtime", "scripts", f)); err != nil {
 			t.Fatal(f, err)
+		}
+	}
+	for _, f := range []string{"claude-stream.mjs", "codex-companion.mjs"} {
+		if _, err := os.Stat(filepath.Join(dest, "runtime", "scripts", f)); err == nil {
+			t.Fatal(f, "is still installed")
 		}
 	}
 	r := runEntry(t, entry, "--bogus")
@@ -180,6 +187,11 @@ func TestInstallAnswersLikeTheOldScript(t *testing.T) {
 		return out
 	}
 	a, b := tree(oldDest), tree(newDest)
+	// The one deliberate difference: the runner starts its sessions through `dyna agent` now, so the old stream reader and
+	// Codex companion finder it imported are not copied any more (the old installer still copies them until it is removed).
+	for _, gone := range []string{"claude-stream.mjs", "codex-companion.mjs"} {
+		delete(a, filepath.Join("runtime", "scripts", gone))
+	}
 	if len(a) != len(b) || len(a) == 0 {
 		t.Fatalf("%d files vs %d", len(a), len(b))
 	}
