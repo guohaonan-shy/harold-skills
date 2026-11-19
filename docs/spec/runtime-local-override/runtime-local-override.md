@@ -20,7 +20,7 @@ issues: [295]
 
 测了什么、看到什么（分拣评论 [2026-11-13](https://github.com/guohaonan-shy/harold-skills/issues/295#issuecomment-6851539509)，2026-11-17 对着 `release/idea-loop-0.2.0` 的 `950f916` 再核一遍）：
 
-- 读 reference 的路只有两条，都不碰本机文件：主会话由 SessionStart hook 跑 `runtime-detect.mjs --inject reference`，原样打印插件里那份 reference；子 agent 照 runtime 的 SKILL.md「怎么用」自己读 `references/<运行环境>.md`。
+- 读 reference 的路只有两条，都不碰本机文件：主会话由 SessionStart hook 跑 `runtime-detect.mjs --inject reference`，原样打印插件里那份 reference；子 agent 照 runtime 的 SKILL.md「怎么用」自己读 `references/<运行环境>.md`。2026-11-20 对着 `release/idea-loop-0.2.0` 的 `ce6eaa8` 再核：两条路换成了 `dyna runtime inject reference` 和 `dyna runtime show <能力>`（#339），读的都只是插件里 `runtime/<运行环境>.md`，仍不碰本机文件。
 - 全仓库 grep `RUNTIME.md` 零命中；`magi.md` 仍写 `magi cron`。
 - 本机 `~/home` 已建（2026-11-17，#252 的 setup 建的），设备地图列了 `AGENTS.md`、`memory/`、`projects/`、`.backup/` 四层，没有放 runtime 做法的一层。
 
@@ -38,11 +38,11 @@ issues: [295]
 
 **做法**：
 
-1. `runtime-detect.mjs --inject reference` 读完 reference 后，再读 `<home>/runtime/<运行环境>.md`（home 的位置跟 #252 的项目地图注入用同一个规则：`IDEA_LOOP_HOME` 有值用它，否则 `~/home`）。
+1. `dyna runtime inject reference`（主会话开场注入）读完插件里的运行环境数据后，再读 `<home>/runtime/<运行环境>.md`（home 的位置跟 #252 的项目地图注入用同一个规则：`IDEA_LOOP_HOME` 有值用它，否则 `~/home`）。
 2. 按标题合并：本机文件里每个 `##` 或 `###` 标题开一段，到下一个同级或更高级标题为止；reference 里同级、标题文字完全相同、且只有一处的那段，被整段替换。`##` 段里带着的 `###` 一起算在这段里。本机文件第一个 `##` / `###` 之前的内容（如 `# magi 本机覆盖` 这行标题）不用。
 3. 注入的头一行（在「以下是 … reference 全文」之前）说明合并结果：替换了哪几节，哪几节没对上、没用上。没有本机文件就没有这一行。
-4. runtime 的 SKILL.md「怎么用」第 1、2 步改：子 agent 不再自己读 `references/<运行环境>.md`，改跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/runtime-detect.mjs" --inject reference`，读输出里用到的那一节。主会话照旧直接照开场注入做。
-5. 设备地图加一行：setup 写 `~/home/AGENTS.md`「home 里每一层放什么」时多列 `runtime/`：「这台设备对 `idea-loop:runtime` 的本机覆盖，`<运行环境>.md` 一份，开场已合进注入的 reference，不用另读」。
+4. 子 agent 取某个能力的做法用的 `dyna runtime show <能力>`，取的是合并后的那份：那一节被本机替换了，输出第一行写「本机覆盖 <路径>：这一节是本机写的」。主会话照旧直接照开场注入做。
+5. 设备地图加一行：设备地图模板（wiki-conventions 的 `references/home-maps.md`，setup 和 dreaming 共用）的「home 里每一层放什么」多列 `runtime/`：「这台设备对 `idea-loop:runtime` 的本机覆盖，`<运行环境>.md` 一份，开场已合进注入的 reference，不用另读」。
 
 magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 `~/home/runtime/magi.md`，写两段：`## 定时任务`（不建不改 `magi cron`）和 `### 调度（issue-dispatch 的三处）`（常驻会话 + `magi wake`、跑完不停、`--desktop main`）。调度会话开场拿到的 reference 里这两段已是本机写法，头一行写「本机覆盖 ~/home/runtime/magi.md：替换了「定时任务」「调度（issue-dispatch 的三处）」」。`CLAUDE.md` 删掉那一节。
 
@@ -51,8 +51,8 @@ magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 
 | 入口 | 纳入 / 排除 |
 |---|---|
 | 主会话开场注入（SessionStart hook，claude-desktop 和 magi 都走它） | 纳入 |
-| 子 agent 读 reference（runtime SKILL.md 第 2 步） | 纳入，改成跑同一条命令 |
-| `runtime-detect.mjs` 不带参数打印运行环境名 | 排除：只给名字，不涉及做法 |
+| 子 agent 取一个能力的做法（`dyna runtime show <能力>`） | 纳入，同一份合并逻辑 |
+| `dyna runtime name` 打印运行环境名、`dyna runtime show` 不带能力打印能力清单和退路 | 排除：只给名字或通用规则，不涉及做法 |
 | 开场的另两段注入（decision-rules、runtime 正文） | 排除：本机覆盖只针对运行环境的具体做法；runtime 正文的能力清单和退路是通用规则，不给本机改 |
 
 ## User Stories
@@ -72,12 +72,12 @@ magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 
 - **落点 `~/home/runtime/<运行环境>.md`，一个运行环境一份**：依据人在本会话选的「home 里一份，runtime 去读」（raw 的 U1）。按运行环境分文件，因为一台设备可能同时跑 claude-desktop 和 magi，两边的做法互不相干；文件名跟插件 `references/` 下的同名，人一眼对得上。home 不存在或文件不存在，等于没有覆盖。
 - **同名小节整段替换，不做补充**：依据人选的「同名小节整段替换」（raw 的 U2）。规则机械：本机写了的整段用本机的，没写的用 reference 的，两边不会同时生效、不用 agent 判断谁优先。
 - **对不上的段不用，只报出来**：本机文件里的标题在 reference 里找不到同级同名的、或找到不止一处的，这段不进注入，记进头一行的「没对上」。不往末尾追加：追加等于「补充」，跟人定的替换规则冲突，而且 reference 改名后旧覆盖会静默变成补充。
-- **合并在 `runtime-detect.mjs` 里做，不新增脚本或 hook**：依据「先扩展已在用的工具」。主会话和子 agent 都经由它，合并逻辑只有一份。
+- **合并在 `dyna` 的 runtime 模块里做，不新增命令或 hook**：依据「先扩展已在用的工具」。spec 起草时（2026-11-17）这里写的是 `runtime-detect.mjs`；#339（PR #387，2026-11-18 合进 `release/idea-loop-0.2.0`）把它和 runtime skill 一起换成了 `dyna runtime inject` / `dyna runtime show`，落点跟着搬，原则不变：主会话和子 agent 都经由同一处，合并逻辑只有一份。改了 dyna 代码，照 `REVIEW.md` 升 dyna 版本、存登记表；发版由人说了才发（`DEVELOPMENT.md`「命令行 dyna」）。
 - **home 位置复用 #252 的规则**：`IDEA_LOOP_HOME` 优先，否则 `~/home`（#252 的项目地图注入用的同一条，见 [[home-bootstrap]]）。合并逻辑直接复用它解析 home 的那段代码，不另写一套。
-- **合并后超过 10000 字**：hook 输出在 10000 字处被截断（`runtime-detect.mjs` 文件头注释）。现在 claude-desktop 注入 8065 字、magi 6226 字（2026-11-17 量）。合并后超了，头一行加一句「合并后 N 字，超过开场注入上限，后面被截断；完整版跑 `node …/runtime-detect.mjs --inject reference`」，不报错、不拒绝注入。
+- **合并后超过 10000 字**：hook 输出在 10000 字处被截断（`session-start-inject.test.mjs` 钉着这个上限）。合并后超了，头一行加一句「合并后 N 字，超过开场注入上限，后面被截断；完整的某一节跑 `dyna runtime show <能力>`」，不报错、不拒绝注入。
 - **本机文件出错不挡开场**：读不了、不是 UTF-8 之类，当作没有覆盖，头一行写「本机覆盖读取失败：<原因>」；跟 #252 项目地图注入「坏了的 home 不能挡住会话开始」同一个原则。
 - **magi 的 reference 不改**：那台机器上 `magi cron` 开出的会话没有能力，是不是 magi 的通用情况没核过（issue 原文只说「本机」）；照本机覆盖处理，不改通用 reference。
-- **跟 #252 的先后**：设备地图那一行改的是 #252 新增的 setup 参考（`setup/references/home.md`），home 位置的解析也来自 #252 的代码，所以这份 spec 在 #252 的 PR #360 合进 `release/idea-loop-0.2.0` 之后实现，PR 开到 `release/idea-loop-0.2.0`。
+- **跟 #252 的先后**：设备地图模板和 home 位置的解析都来自 #252（之后搬进 wiki-conventions 的参考和 dyna 的 home 模块），所以这份 spec 在 #252 的 PR #360 合进 `release/idea-loop-0.2.0` 之后实现，PR 开到 `release/idea-loop-0.2.0`。
 
 ## 测试决策
 
@@ -86,17 +86,17 @@ magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 
 | 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：合并规则（替换、对不上、重名、`##` 带 `###`、无文件、无 home、超长、读取失败）、头一行的写法 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
-| LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：runtime SKILL.md 第 2 步改的是一条命令，由已有的 `runtime-skill-doc.test.mjs` 这类文档测试钉住命令文本 |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：没有改 prompt；设备地图模板多一行，由已有的 `setup-home-doc.test.mjs` 这类文档测试钉住 |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及；本机实测替代：在本机写一份 `~/home/runtime/claude-desktop.md` 开一个新会话看注入 |
 
-- **seam**：`runtime-detect.mjs` 导出的 `injection('reference', { env, pluginRoot })`，已有的那个。测试用临时目录当 `pluginRoot`（放假 reference）和 `IDEA_LOOP_HOME`（放假本机覆盖），读返回的字符串。能抓到合并规则和头一行的每种情形；漏掉 hook 真被宿主调起、输出真被截断这两样，由本机实测补。
+- **seam**：dyna runtime 模块的 `Inject("reference", env)` 和 `Show(capability, env)`，已有的那两个。测试用临时目录当 `IDEA_LOOP_PLUGIN_ROOT`（放假数据）和 `IDEA_LOOP_HOME`（放假本机覆盖），读返回的字符串。能抓到合并规则和头一行的每种情形；漏掉 hook 真被宿主调起、输出真被截断这两样，由本机实测补。
 - **增量功能测试**：
   - 前置：本机 `~/home` 存在；写 `~/home/runtime/claude-desktop.md`，内容一段 `## 推送`（写一句本机做法）和一段 `## 不存在的能力`。步骤：在 harold-skills 开一个新会话，看开场注入。期望：头一行写替换了「推送」、「不存在的能力」没对上；reference 的「推送」一节是本机那句；其余各节跟插件里的一样。覆盖：本机覆盖 1、4。
   - 前置同上。步骤：同一会话里派一个子 agent，让它照 runtime 的步骤读「推送」一节并原样交回。期望：交回的是本机那句。覆盖：本机覆盖 2。
   - 前置：删掉 `~/home/runtime/claude-desktop.md`。步骤：开新会话。期望：注入跟插件 reference 逐字相同、没有头一行。覆盖：本机覆盖 3。
   - 本机覆盖 5 由人在 magi 那台机器上搬 `CLAUDE.md` 那一节后，开一个调度会话核：注入的「定时任务」「调度」是本机写法。这台 Mac 没有 magi，实现会话做不了，交给人。
-- **照着谁写**：`scripts/runtime-detect.test.mjs`（同一个 seam 的现有测试）；#252 的 `scripts/project-map.test.mjs`（用 `IDEA_LOOP_HOME` 指临时 home 的写法）。
+- **照着谁写**：`dyna/internal/runtime/runtime_test.go`（同一个 seam 的现有测试）；`dyna/internal/home/home_test.go`（用 `IDEA_LOOP_HOME` 指临时 home 的写法）。
 
 ## Out of scope
 
