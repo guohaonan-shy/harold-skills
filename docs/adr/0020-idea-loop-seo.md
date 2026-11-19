@@ -33,7 +33,7 @@ related: ["[[2026-10-22-grill-idea-loop-seo]]", "[[2026-10-21-seo-workflow-discu
 
 - 实现于 PR #73（0.1.3，2026-10-22 合并）；之后由 `skills/seo/` 下的 13 个 skill、`agents/` 下的 5 个方向 agent、`scripts/seo-{md,due,budget,gaps,context,baseline,issues,check}.mjs` 与 `seo-check-hook.mjs`（在 `hooks/hooks.json` 里挂 PreToolUse / PostToolUse 的 Bash）组成，各有单测。`seo-setup` 只能人调，`seo-scan` 可被模型调（定时任务只能写「用 Skill 工具调」）。
 - 与 spec 当时写法不同、但属后来有意的演进（不算偏离）：
-  - **独立队列已删。** spec 里 seo 有独立的调度队列（上限 5、三个带前缀的 section）；PR #267（2026-11-09，「所有 issue 一个队列」，见 [[266]] 题 3）按人的话「seo 不整单独队列」删掉了它。`issues.mjs` 现在把旧的「（独立队列，上限 N）」注释当作过期备注丢弃；`seo-setup` 的 description 里「建 SEO 的 issue 分类和队列」是留下的残字。
+  - **独立队列已删。** spec 里 seo 有独立的调度队列（上限 5、三个带前缀的 section）；PR #267（2026-11-09，「所有 issue 一个队列」，见 [[266]] 题 3）按人的话「seo 不整单独队列」删掉了它。`issues.mjs` 现在把旧的「（独立队列，上限 N）」注释当作过期备注丢弃。
   - **「待验证」状态已不存在**：issue 模型改成七个状态对上 Linear（PR #255），新 SEO issue 是没有状态标签的 backlog，由每周 triage 分拣。
   - **SEO.md 现为七节**（比 spec 多一节「品牌」，由后续的品牌词蚕食修复加入，PR #141）；缺项目信息时的处理改为先推测、经人确认补进 SEO.md（PR #207）。
 - 项目侧的接入（退役旧周报插件与 launchd、写第一个项目的 SEO.md、建 AI 可见性跟踪）不在本次范围，另有记录。

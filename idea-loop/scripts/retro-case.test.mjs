@@ -51,6 +51,15 @@ test('the question carries the human original words it was written from', () => 
   assert.deepEqual(fields(c), ['quote']);
 });
 
+test('a prompt that would tell the run it is being tested is refused: 回放 / eval / judge / rubric / benchmark / 评测 / 评委 / 判定, any case', () => {
+  for (const w of ['回放', 'eval', 'Judge', 'RUBRIC', 'benchmark', '评测', '评委', '判定', 'evaluation']) {
+    const [p] = validateCase({ ...good(), prompt: `照常做这件事。这是一次${w}，别问我` });
+    assert.equal(p?.field, 'prompt', w);
+    assert.match(p.message, /看出自己在被测/, w);
+  }
+  assert.deepEqual(validateCase({ ...good(), prompt: '把这件事摆给我，二者的区别能讲一下吗' }), []);
+});
+
 test('the commit must look like a commit id', () => {
   assert.deepEqual(fields({ ...good(), commit: 'main' }), ['commit']);
   assert.deepEqual(fields({ ...good(), commit: 'xyz1234' }), ['commit']);

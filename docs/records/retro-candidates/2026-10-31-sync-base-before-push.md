@@ -16,4 +16,4 @@ tags: [retro-candidates]
 
 ## 出现
 
-- guohaonan-shy/Tofelair#712（2026-10-31）：「我觉得这样，开pr之前、开pr之后的每一次commit之前，我觉得在本地都需要进行反合（本地）。这样ci也不会多跑，每次review的都是上线的最新版本」（retro 摆候选 3「推迁移前反合」时人扩成通用规则）；决定记录：[[712]]
+- guohaonan-shy/Tofelair#712（2026-10-31）：「我觉得这样，开pr之前、开pr之后的每一次commit之前，我觉得在本地都需要进行反合（本地）。这样ci也不会多跑，每次review的都是上线的最新版本」（retro 摆候选 3「推迁移前反合」时人扩成通用规则）；决定记录：guohaonan-shy/Tofelair `docs/raw/decisions/712.md`

@@ -44,6 +44,7 @@ const ROWS = {
   'DESIGN.md 条目': [['Motion 章第 3 条', '带日期的先例：不该在文件里', 'DESIGN.md 第 88 行；旧：「结账页弹层淡入 0.2s（2026-07-16 定）」→ 删；依据：design-modeling「明确不进 DESIGN.md 的内容」里的带日期的先例', '删除', OPTS]],
   漏归档: [['docs/design/tmp/cart-promo/', 'spec 已是「完成」，origin/main 上 tmp/cart-promo/ 里还留着画布与 delta（绕过合并步骤合进去的）', 'git ls-tree origin/main docs/design/tmp/cart-promo/；spec 状态：完成', '补归档', OPTS]],
   'retro 候选': [['候选：下单前先核对自动填好的字段（落点 `idea-loop:seo-outreach`）', '出现 3 次（harold-skills#108、#112、#115）；无已推翻；无反例', '#108：「留在候选吧。」；决定记录：[[108]]', '开 issue：改 skill', OPTS]],
+  暂缓设计: [['docs/design/pending/cart-promo/', 'spec 已了结：cart-promo 的 issue #31 已关；暂缓的设计还在（imagine/、canvas/ 到 v7）', 'git worktree list 第一行：/work/shop；ls：imagine/ canvas/；spec 目录已不在 origin/main', '删除', OPTS]],
   缺陷: [['pages/cart--checkout', '产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError', `${IMG_PROD} ${IMG_TMP}`, '开 issue', OPTS]],
 };
 
@@ -365,4 +366,132 @@ test('a batch that did not run, noted at the end with the full-run hint, is a no
   assert.equal(JSON.parse(r.out).counts.缺陷, 1);
   const empty = run(`# 提议表 2026-10-19\n\n${EMPTY_SECTIONS('无')}\n${note}\n`, '--json');
   assert.equal(JSON.parse(empty.out).empty, true);
+});
+
+// ---------- 拆表：把要问人的行抽成一张小表 ----------
+
+const ASK_FLAG = '--split-ask';
+const REF = join(dirname(SCRIPT), '..', 'skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');
+const refSample = () => readFileSync(REF, 'utf8').match(/```markdown\n(# 提议表[\s\S]*?)\n```/)[1];
+const docRow = (object, disposition, finding = '对不上', evidence = 'docs/guide/checkout.md 第 3 行') =>
+  `| ${object} | ${finding} | ${evidence} | ${disposition} | ${OPTS} |`;
+/** Append rows right under the one 文档 row the reference sample carries. */
+const withDocRows = (md, ...rows) => md.replace(/^(\| docs\/spec\/cart-promo\/cart-promo\.md .*)$/m, `$1\n${rows.join('\n')}`);
+const sectionTitles = (md) => [...md.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+
+test('splitting the reference sample plus a GLOSSARY.md 订正 row and a 报警 row leaves 文档 (those two rows only), 候选 and DESIGN.md 条目', () => {
+  const md = withDocRows(refSample(), docRow('GLOSSARY.md', '订正', '「结算」条目写的是旧流程'), docRow('docs/guide/checkout.md', '报警', '链接指向的页面不存在'));
+  const r = run(md, ASK_FLAG);
+  assert.equal(r.status, 0, r.out);
+  assert.deepEqual(sectionTitles(r.out), ['文档', '候选', 'DESIGN.md 条目']);
+  assert.match(r.out, /\| GLOSSARY\.md \|/);
+  assert.match(r.out, /\| docs\/guide\/checkout\.md \|/);
+  assert.doesNotMatch(r.out, /写 ADR 删 spec/);
+  assert.doesNotMatch(r.out, /pages\/cart--empty|pages\/cart--checkout|retro|漏归档/);
+  assert.match(r.out, /卡片内边距统一 16px/); // the 候选 row, whole section
+  assert.match(r.out, /Motion 章第 3 条/); // the DESIGN.md row, whole section
+});
+
+test('the small table keeps the title, the opening lines and the five columns, and is itself a valid proposal table', () => {
+  const md = withDocRows(refSample(), docRow('GLOSSARY.md', '订正'));
+  const out = join(mkdtempSync(join(tmpdir(), 'proposal-ask-')), 'ask.md');
+  const r = run(md, `${ASK_FLAG}=${out}`);
+  assert.equal(r.status, 0, r.out);
+  const small = readFileSync(out, 'utf8');
+  assert.match(small, /^# 提议表 2026-10-19\n/);
+  assert.match(small, /对账范围：增量——/);
+  assert.match(small, /上一次（2026-10-12）的提议表还没处理/);
+  assert.match(small, /\| 对象 \| 发现 \| 证据 \| 建议处置 \| 选项 \|/);
+  assert.equal(run(small).status, 0, 'the small table passes the same check as the full one');
+  assert.match(r.out, /3 行/); // the terminal says how many rows went to the file
+});
+
+test('a table with only automatic rows splits to nothing, and the output says there is no row to ask', () => {
+  const md = `# 提议表 2026-10-19\n\n${section('文档', [['docs/guide/checkout.md', '路径改名', 'src/cart/promo.ts', '订正', OPTS]])}\n${section('档案状态', ROWS.档案状态)}\n${section('缺陷', ROWS.缺陷)}\n${section('retro 候选', ROWS['retro 候选'])}`;
+  const r = run(md, ASK_FLAG);
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.out, /无问人的行/);
+  assert.doesNotMatch(r.out, /^## /m);
+});
+
+test('with a file given and nothing to ask, no file is written', () => {
+  const out = join(mkdtempSync(join(tmpdir(), 'proposal-ask-')), 'ask.md');
+  const r = run(`# 提议表 2026-10-19\n\n${EMPTY_SECTIONS('无')}`, `${ASK_FLAG}=${out}`);
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.out, /无问人的行/);
+  assert.throws(() => readFileSync(out), /ENOENT/);
+});
+
+test('a 报警 or 问人 disposition with a parenthetical note still goes to the human; other 文档 dispositions do not', () => {
+  const md = (d) => `# 提议表 2026-10-19\n\n${section('文档', [['docs/guide/checkout.md', '链接失效', 'x', d, OPTS]])}`;
+  for (const d of ['报警（链接失效）', '报警 (link dead)', '问人（两份文档说法相反）', '问人']) {
+    const r = run(md(d), ASK_FLAG);
+    assert.equal(r.status, 0, `${d}: ${r.out}`);
+    assert.deepEqual(sectionTitles(r.out), ['文档'], d);
+  }
+  for (const d of ['订正', '写 ADR 删 spec', '写 ADR 未采纳删 spec', '标注被取代', '删漏网工单', '迁移布局', '删除', '订正（路径改名）']) {
+    assert.match(run(md(d), ASK_FLAG).out, /无问人的行/, d);
+  }
+});
+
+test('GLOSSARY.md as the object goes to the human whatever the disposition; a path that merely contains it does not', () => {
+  const md = (object, d) => `# 提议表 2026-10-19\n\n${section('文档', [[object, '对不上', 'x', d, OPTS]])}`;
+  for (const d of ['订正', '删除', '标注被取代']) {
+    assert.deepEqual(sectionTitles(run(md('GLOSSARY.md', d), ASK_FLAG).out), ['文档'], d);
+  }
+  assert.deepEqual(sectionTitles(run(md('GLOSSARY.md 第 12 行「结算」条目', '订正'), ASK_FLAG).out), ['文档']);
+  assert.deepEqual(sectionTitles(run(md('`GLOSSARY.md`', '订正'), ASK_FLAG).out), ['文档']);
+  assert.match(run(md('docs/old/GLOSSARY.md.bak', '删除'), ASK_FLAG).out, /无问人的行/);
+});
+
+test('every row in 候选 and DESIGN.md 条目 goes to the human, whatever its disposition', () => {
+  const rejected = [['候选：通用原则：只有会丢东西时才确认', '换个产品也成立', '无图：说的是确认的时机', '驳回', OPTS]];
+  const r = run(`# 提议表 2026-10-19\n\n${section('候选', rejected)}\n${section('DESIGN.md 条目', ROWS['DESIGN.md 条目'])}`, ASK_FLAG);
+  assert.equal(r.status, 0, r.out);
+  assert.deepEqual(sectionTitles(r.out), ['候选', 'DESIGN.md 条目']);
+});
+
+test('a cell with an escaped pipe survives the split', () => {
+  const row = ['GLOSSARY.md', '写成了 a \\| b', 'x', '订正', OPTS];
+  const r = run(`# 提议表 2026-10-19\n\n${section('文档', [row])}`, ASK_FLAG);
+  assert.match(r.out, /a \\\| b/);
+  assert.equal(run(r.out).status, 0);
+});
+
+test('a table that is not valid is reported as before, with the same exit code, and is not split', () => {
+  const bad = sample({ 文档: withDisposition('文档', '顺手重构一下') });
+  const plain = run(bad);
+  const withFlag = run(bad, ASK_FLAG);
+  assert.equal(plain.status, 2);
+  assert.equal(withFlag.status, 2);
+  assert.match(withFlag.out, /顺手重构一下/);
+  assert.doesNotMatch(withFlag.out, /^# 提议表/m);
+  const unpath = (s) => s.replace(/\(\S*proposal\.md\)/g, '(file)'); // each run writes its own temp file
+  assert.equal(unpath(withFlag.out), unpath(plain.out));
+});
+
+// ---------- 暂缓设计：主 checkout 的 pending/ 里的每一份 ----------
+
+test('a shelved-design row takes 删除 or 留着 (a note in parentheses is fine) and nothing else', () => {
+  for (const d of ['删除', '留着', '留着（spec 还在，#31 开着）']) {
+    const r = run(sample({ 暂缓设计: withDisposition('暂缓设计', d) }));
+    assert.equal(r.status, 0, `${d}: ${r.out}`);
+  }
+  const bad = run(sample({ 暂缓设计: withDisposition('暂缓设计', '归档') }));
+  assert.equal(bad.status, 2, bad.out);
+  assert.match(bad.out, /暂缓设计/);
+  assert.match(bad.out, /删除 \/ 留着/);
+});
+
+test('splitting: a shelved-design 删除 row goes to the human (local files, no git history), a 留着 row stays automatic', () => {
+  const keep = ['docs/design/pending/menu-redesign/', 'spec 还在：issue #44 开着', 'spec 目录在 origin/main；#44 open', '留着', OPTS];
+  const del = ['docs/design/pending/cart-promo/', 'spec 已了结', 'issue #31 closed', '删除（已了结）', OPTS];
+  const md = `# 提议表 2026-10-19\n\n${section('暂缓设计', [keep, del])}`;
+  const r = run(md, ASK_FLAG);
+  assert.equal(r.status, 0, r.out);
+  assert.deepEqual(sectionTitles(r.out), ['暂缓设计']);
+  assert.match(r.out, /cart-promo/);
+  assert.doesNotMatch(r.out, /menu-redesign/);
+  const onlyKeep = run(`# 提议表 2026-10-19\n\n${section('暂缓设计', [keep])}`, ASK_FLAG);
+  assert.match(onlyKeep.out, /无问人的行/);
 });

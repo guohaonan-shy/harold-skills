@@ -206,7 +206,7 @@ test('every referenced image and zoom target must exist next to the page', () =>
   assert.deepEqual([...new Set(seen)].sort(), ['shots/acme-1-full.png', 'shots/acme-1.png', 'shots/acme-2-full.png', 'shots/acme-2.png']);
 });
 
-for (const bad of ['https://images.refero.design/a.png', 'http://x/a.png', '//cdn/a.png', '/abs/a.png', 'file:///tmp/a.png', '../outside.png', 'data:image/png;base64,AAAA']) {
+for (const bad of ['https://mobbin.com/api/mcp/short/Ws985Y9x', 'http://x/a.png', '//cdn/a.png', '/abs/a.png', 'file:///tmp/a.png', '../outside.png', 'data:image/png;base64,AAAA']) {
   test(`image address ${bad} is not a relative path inside the drop directory`, () => {
     const r = checkResearchPage(page({ sources: [source({ steps: [[bad, '点 X']] })] }), { fileExists: everything });
     assert.equal(r.valid, false);
@@ -226,7 +226,7 @@ test('a picture outside the flow steps is held to the same address rule: remote 
   const inScene = (src) => page({ sources: [source({ scene: `练习中途想退出 <img src="${src}" alt="">` })] });
 
   for (const make of [inConclusion, inDecisions, inScene]) {
-    for (const bad of ['https://images.refero.design/x.jpg', '//cdn/x.jpg', '/abs/x.jpg', '../outside.jpg', 'data:image/png;base64,AAAA']) {
+    for (const bad of ['https://mobbin.com/api/mcp/short/Ws985Y9x', '//cdn/x.jpg', '/abs/x.jpg', '../outside.jpg', 'data:image/png;base64,AAAA']) {
       const e = errorsOf(make(bad));
       assert.ok(e.some((x) => x.includes(bad) && /相对/.test(x)), `${make.name} ${bad}: ${e.join('\n')}`);
     }

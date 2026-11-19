@@ -9,7 +9,7 @@ effort: medium
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:issues`（状态、正文格式）和 `idea-loop:decision-rules`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指你收到的知识库 `docs/` 的绝对路径。
+用 Skill 工具调 `idea-loop:issues`（状态、正文格式）、`idea-loop:decision-rules` 和 `idea-loop:runtime`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指你收到的知识库 `docs/` 的绝对路径。
 
 Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），不跑 `gh` 和 `issues note` / `type`；号形如 `ENG-123`。
 
@@ -39,6 +39,8 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
 | triage + P1/P2 | 复现到了，但要人定方案、要 grill，碰 UI 要设计，或是一个新能力 |
 | canceled | 重复、在「不做」清单里、已实现、复现不出 |
 | 留在 backlog | 判不了 |
+
+**SEO issue**（带 `type:seo/*`）：只有 UI 设计建议 triage、判不了建议 todo。要新建或改组件、页面模板、样式的，建议 triage；要 grill、要定方案的，建议 todo（todo 会话照推荐定）；判不了的也建议 todo，不留在 backlog，也不因为拿不准就 canceled。canceled 仍只来自重复、在「不做」清单里、已实现、复现不出四种。
 
 项目跳过 triage 的（`ISSUE_TRACKER.md` 写了「triage：跳过」），没有 triage 这一行：要人评估的也建议 todo。你不判 P0；像 P0 的建议 P1，结论里标「疑似 P0」。
 

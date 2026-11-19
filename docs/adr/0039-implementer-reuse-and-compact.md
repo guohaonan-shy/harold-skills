@@ -25,7 +25,7 @@ related: ["[[149]]"]
 - **保留 implementer，只改它的定义。** issue 原提议删掉这个 agent、改派通用子代理加薄提示词；人的原话：「算了，我觉得先不删除implementer吧」。模型、思考强度和派工方式不动。
 - **开工调哪些 skill**：只留 `decision-rules` 为必调（「停，还是延后」整节引用它）；`wiki-conventions`、`tdd` 等改成看工单挑，定义里写一句怎么挑并给几个例子，例子不是清单。
 - **spec 全文可读，范围以工单为准**：spec 里有、工单没要的不做；越界有 review 的 Spec 轴兜底。
-- **开工前读写法规范**：照 review 的 Standards 轴同一套读法（`CODING_STANDARDS.md`、`REVIEW.md`、`AGENTS.md` / `CLAUDE.md` 及其链接的文档，`@` 导入要显式去读），并先在 `CODING_STANDARDS.md` 的「链接」里找出管这张工单所改文件类型的那一条，链接指到 skill 目录就读或调它。
+- **开工前读写法规范**：照 review 的 Standards 轴同一套读法（`CODING_STANDARDS.md`、`REVIEW.md`、`AGENTS.md` / `CLAUDE.md` 及其链接的文档，`@` 导入要显式去读），并先在 `CODING_STANDARDS.md` 的「链接」里找出管这张工单所改文件类型的那一条，链接指到 skill 目录就读或调它。⚠️ 已被取代（部分：skill、agent 定义、skill 参考文件的工单）→ [[0058-skill-edit-acceptance]]
 - **卡住的工单：原执行方联系得上就叫回。** `pending.md` 每条多记原执行方的 agent id；人回复并把决定写进工单后，先用 `SendMessage` 只给指针叫回它，并让它先合进集成分支的最新提交；报错或没记 id 才新起一个执行方、从半成品分支接上。已知代价（人知情后选的）：叫回来的执行方带着旧上下文，隔很久缓存过期可能比新起更贵，所以新起的分支保留作兜底。已经落地的工单（人验反馈、review 的「修」）照旧新起，因为那时 worktree 已回收、返工往往隔几小时。
 - **to-ticket 落盘后把工单和 spec 提交进当前分支**：执行方的 worktree 从这条分支切出，不提交就读不到工单（人的决定：在同一个 PR 里修，不另开 issue）。
 - **进实现前压缩上下文：先定了（停点放在切完工单之后、让人复制一条填好的 `/compact`），随后撤销。** 依据是当时「实现放子会话」的结构；该结构被推翻后，人定下全在一个会话里，上下文问题等真的碰到再说，#153 关成 not planned。

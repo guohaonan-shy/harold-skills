@@ -2,11 +2,11 @@
 type: adr
 status: 生效
 tags: [idea-loop, issue-workflow, issue-triage]
-summary: backlog 每周由子代理逐个核实、人批一张表定去向；开 issue 必经校验；优先级决定派发顺序；issue-verify 删除
+summary: backlog 每周由子代理逐个核实、按建议去向直接翻状态；开 issue 必经校验；优先级决定派发顺序；issue-verify 删除
 related: ["[[2026-11-05-issue-triage-grill]]", "[[2026-11-05-issue-model-regrill]]"]
 ---
 
-# ADR-0023 — issue-triage：backlog 每周分拣，人批一张表；开 issue 校验正文；按优先级派发
+# ADR-0023 — issue-triage：backlog 每周分拣，按建议去向翻状态；开 issue 校验正文；按优先级派发
 
 > 由 spec `issue-triage` 蒸馏而来，该 spec 已删除。
 
@@ -16,7 +16,7 @@ related: ["[[2026-11-05-issue-triage-grill]]", "[[2026-11-05-issue-model-regrill
 
 ## 2 决策（how）
 
-- **每周分拣**：新 skill `idea-loop:issue-triage` 由定时任务每周起，取最早的 15 个 backlog issue，每个交给一个新子代理 `idea-loop:issue-triager`（同时最多 5 个）；依次查重、对“不做”清单、查是否已实现、复现、打分类，在 issue 上贴一条“🤖 idea-loop：”前缀的证据评论，交回一行 JSON。分拣会话拼成一张表，人逐行批，会话照批的翻状态。`全部` 参数用于把存量每 15 个一批跑完。
+- **每周分拣**：新 skill `idea-loop:issue-triage` 由定时任务每周起，取最早的 15 个 backlog issue，每个交给一个新子代理 `idea-loop:issue-triager`（同时最多 5 个）；依次查重、对“不做”清单、查是否已实现、复现、打分类，在 issue 上贴一条“🤖 idea-loop：”前缀的证据评论，交回一行 JSON。分拣会话拼成一张表，人逐行批，会话照批的翻状态。⚠️ 已被取代（部分：一张表、人逐行批）→ [[0047-dreaming-triage-autonomous]]`全部` 参数用于把存量每 15 个一批跑完。
 - **建议去向四种**：todo（问题清楚、不要人评估）、triage（要人 grill 或设计，或新能力）、canceled（重复/在“不做”清单/已实现/复现不出）、留在 backlog（判不了，评论分“已查清/还要你补”两栏，人没补就不再问）。项目跳过 triage 的没有第二种。分拣不判 P0，像 P0 的建议 P1 并标“疑似 P0”。
 - **开 issue 只有一个入口**：`issues new` 先校验四个必填节、再按标题查重、再开；默认开成 backlog，人在会话里明说“做”的才开 todo 且必带优先级；疑似 P0 的开成 backlog 后当场起 `issue-triager` 复现，复现到了翻 todo、打 P0、推送通知人。`issues open` 删除；人明说不做的不开，直接写“不做”清单。
 - **“不做”清单**：`docs/records/out-of-scope/<slug>.md`，一个概念一份，放在已有的 `records/` 下，不另开顶层目录。
@@ -37,3 +37,4 @@ related: ["[[2026-11-05-issue-triage-grill]]", "[[2026-11-05-issue-model-regrill
 
 - 在 ADR-0022 的七个状态与正文格式之上建；无冲突。
 - 后续被改动的几处：“triage 会话由人开”被 ADR-0025 改为调度也出卡片；候选顺序后来又加了指派人维度与“在状态里停留时间”（ADR-0026，#264）；每周任务“在桌面 app 里建”被 ADR-0026 的“定时任务”能力替代（magi 里 prompt 写成“用 Skill 工具调”）。
+- “人逐行批一张表”被 ADR-0047（PR #301）改为按子代理的建议去向直接翻状态。

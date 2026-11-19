@@ -1,6 +1,6 @@
 # 文档对账：spec → ADR
 
-文档写下时是对的，代码往前走了，没人回头改那一行。这份是 `idea-loop:adr-reconciler` 的工作方法：拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，**提议**处置；提议表里的行怎么写见 [proposal-table.md](proposal-table.md)，人批过才执行。
+文档写下时是对的，代码往前走了，没人回头改那一行。这份是 `idea-loop:adr-reconciler` 的工作方法：拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，判处置；提议表里的行怎么写见 [proposal-table.md](proposal-table.md)。表里的行按风险分：哪些行问人，以 `proposal-table-check.mjs --split-ask` 的拆表为准，问人的行人批才执行，其余行按建议处置自己执行。
 
 ## 纪律
 
@@ -26,7 +26,7 @@
 | spec 说 X，代码是 Y | 代码物在，形态对不上 | **报警，交人**：文档在撒谎，比过期危险 |
 | domain / reference 与现状不符 | 引用的表 / 字段 / 接口已改名；`REVIEW.md` 的命令已不存在 | 订正，不删 |
 | `GLOSSARY.md` 与现状不符 | `_Avoid_` 里的词出现在新代码或新文档里；词条说的概念在代码里已经没了 | 逐条问人，同意了才订正或删除；新增词条只在 `idea-loop:grill` 里 |
-| 新 ADR 推翻某个生效 ADR 的一节 | 写新 ADR 前搜 `docs/adr/` 的同话题旧决策 | 按小节标注取代（`idea-loop:wiki-conventions` 的「frontmatter」） |
+| 新 ADR 推翻某个生效 ADR 的一节 | 写新 ADR 前搜 `docs/adr/` 的同话题旧决策 | 按小节标注取代（见 [adr.md](adr.md)） |
 | 漏网的工单 | `docs/spec/<spec-slug>/tickets/` 里还躺着、对应 PR 已合并（`gh` 查，标题对得上） | 删除 |
 
-起草 ADR 的格式与小节取代按 `idea-loop:wiki-conventions`；提议段只把 ADR 草稿放进提议表指向的文件，不写进 `docs/adr/`。删 spec 是删它整个目录（含 `tickets/` 和 `assets/`）；`assets/` 里 ADR 要引的证据图先挪到 ADR 旁边，这一步在执行段做。
+起草 ADR 的格式与小节取代按 [adr.md](adr.md)；提议段只把 ADR 草稿放进提议表指向的文件，不写进 `docs/adr/`。删 spec 是删它整个目录（含 `tickets/` 和 `assets/`）；`assets/` 里 ADR 要引的证据图先挪到 ADR 旁边，这一步在执行段做。

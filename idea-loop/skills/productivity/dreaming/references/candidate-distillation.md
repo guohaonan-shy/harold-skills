@@ -39,7 +39,7 @@
 - 一批候选里有几条要进 `DESIGN.md`，合成一次写入、一次 lint。
 - **处理完的候选从档案对象里删掉**（经 `delta/` 加归档脚本，见 [proposal-table.md](proposal-table.md) 的「执行段」），去向（落进哪一章 / 开了哪个 issue / 留在原处 / 驳回理由）记在这次 PR 的正文里。
 - 整节删空时写一行「无」：空着分不清是没有还是漏了。
-- 两种 issue 都是人批了才开：通用原则 issue 的命令照「蒸馏」，缺陷 issue 照 [proposal-table.md](proposal-table.md) 执行段的 `缺陷` 一行。
+- `候选` 的两种 issue 都是人批了才开：通用原则 issue 的命令照「蒸馏」，缺陷 issue 照 [proposal-table.md](proposal-table.md) 执行段的 `缺陷` 一行开（查重，已经开着的用那一条）。`缺陷` 一节自己的行不等人批，这里不受影响。
 - 不批的候选原样留着，下一次对账再出现，这是正常的。
 
 ## 单条蒸馏

@@ -26,7 +26,7 @@
  * implementing, e.g. a ticket stuck; absent or "review": a review round). Rounds count per source, so the
  * first review round is round 1 whatever came before it. `pause` is the older kind for what is now a
  * `review` with from=impl: files already written keep reading, and so do the comments already archived
- * under its marker. `replay` is the nightly runner's.
+ * under its marker. `replay` is the replay runner's.
  *
  * An entry is settled once every 你的批示 has a 做了什么 after it. An entry that asks the human nothing
  * has no ruling to wait for and is settled by its 做了什么 alone: a report with no 要你决定 section in it

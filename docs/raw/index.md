@@ -33,6 +33,8 @@
 | [decisions/128](decisions/128.md) | conversation | 2026-11-13 | 决定记录 —— #128 的 issue 会话：滚动驱动只认整段钉住、每步一张图，摆过的题与 retro 候选的结果 |
 | [decisions/68](decisions/68.md) | conversation | 2026-10-26 | 决定记录 —— #68 的 issue 会话：内层容器滚动页的段图逐屏截拼接，摆过的题与 retro 候选的结果 |
 | [decisions/65](decisions/65.md) | conversation | 2026-10-26 | 决定记录 —— #65 的 issue 会话：设计档案拍不稳的段停住页面时间、滚动驱动段建成段内状态，摆过的题与 retro 候选的结果 |
+| [decisions/69](decisions/69.md) | conversation | 2026-11-13 | 决定记录 —— #69 的 triage 与 todo 会话：长状态首屏以下会连出边的组件按屏补拍进截图（PR #300 四轮 review 后合并），摆过的题与 retro 候选的结果 |
+| [decisions/229](decisions/229.md) | conversation | 2026-11-15 | 决定记录 —— #229 的 issue 会话：to-ticket 切票前从入口沿最新主分支走一遍调用链，版本改 patch，retro 候选补进 #327 |
 | [decisions/93](decisions/93.md) | conversation | 2026-10-27 | 决定记录 —— #93 的 issue 会话：dreaming SKILL.md 超长验证为不存在，摆过的题与 retro 候选的结果 |
 | [decisions/81](decisions/81.md) | conversation | 2026-10-27 | 决定记录 —— #81 的 issue 会话：页面优化的蚕食规则排除 SEO.md 里写的品牌词，摆过的题与 retro 候选的结果 |
 | [decisions/77](decisions/77.md) | conversation | 2026-10-27 | 决定记录 —— #77 的 issue 会话：imagine / refine 的设计目录按 worktree 根定位，摆过的题与 retro 候选的结果（并入 #131） |
@@ -50,7 +52,40 @@
 | [decisions/142](decisions/142.md) | conversation | 2026-10-31 | 决定记录 —— #142 的 issue 会话：seo 项目信息由人确认写入、扫描缺了停下等确认、说不需要写「无」，摆过的题与 retro 候选的结果 |
 | [decisions/180](decisions/180.md) | conversation | 2026-10-31 | 决定记录 —— #180 的 issue 会话：writing-for-agents 归并改写、通用文档不带项目信息、retro 候选加验证，摆过的题与 retro 候选的结果 |
 | [decisions/266](decisions/266.md) | conversation | 2026-11-09 | 决定记录 —— #266 的 issue 会话：调度给 triage 出卡片、删独立队列，摆过的题与 retro 候选的结果（两条都不批） |
+| [decisions/298](decisions/298.md) | conversation | 2026-11-13 | 决定记录 —— #298 的 issue 会话：存量超字数本次不动、合并前升版本、合并，retro 候选「按语义化版本定版本号」开成 #305 |
+| [decisions/178](decisions/178.md) | conversation | 2026-11-13 | 决定记录 —— #178 的 issue 会话：合并；retro 无候选 |
 | [decisions/269](decisions/269.md) | conversation | 2026-11-09 | 决定记录 —— #269 的 issue 会话：分拣不等人批先不做（issue 关掉），改为给 harold-skills 建每日分拣定时，摆过的题（无 retro 候选） |
 | [decisions/148](decisions/148.md) | conversation | 2026-11-10 | 决定记录 —— #148 的 issue 会话：起草修坏能力的 spec 时查调用方，review 里重复措辞保持现状、合并，retro 候选开成 #276 |
 | [decisions/151](decisions/151.md) | conversation | 2026-11-10 | 决定记录 —— #151 的 issue 会话：起草参考直读别的 skill 的 references/ 违反写法规范，照规范改成调 skill、合并，retro 无候选 |
 | [decisions/157](decisions/157.md) | conversation | 2026-11-10 | 决定记录 —— #157 的 issue 会话：会话断后已做完的工单先落地，回放用例抓不住删掉、交回记录缺失记成已知限制，合并；retro 候选不批 |
+| [decisions/291](decisions/291.md) | conversation | 2026-11-16 | 决定记录 —— #291 的 issue 会话（并入 #215）：spec 六条照草稿定；实现合并（PR #338），版本定 patch，AI 搜索可见性方向允许在额度内花钱；retro 两条候选都不批 |
+| [decisions/303](decisions/303.md) | conversation | 2026-11-14 | 决定记录 —— #303 的 issue 会话：测试按阶段分层合并（0.1.14），review 里不压字数，skill 写法调研写进 #137、#292，retro 候选开成 #311 |
+| [decisions/174](decisions/174.md) | conversation | 2026-11-14 | 决定记录 —— #174 的 issue 会话（并入 #173）：取消夜间回放队列、当场跑、输入不露题、Codex 评委，摆过的题与 retro 候选的结果 |
+| [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
+| [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
+| [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
+| [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 wiki-conventions 主体 7854 字超上限：triage 会话与 todo 会话 |
+| [decisions/379](decisions/379.md) | conversation | 2026-11-18 | 决定记录 —— #379 调度按时段分两种模式：triage 会话，人不在时用 claude -p 交到桌面端开会话，定时任务每小时一轮，retro 三条候选都不批 |
+| [decisions/313](decisions/313.md) | conversation | 2026-11-15 | 决定记录 —— #313 的 issue 会话：范围题按「影不影响这次交付」推荐（PR #321），回放分不出差别照合，decision-rules 与 runtime 开场注入另开 #326，候选「0.x 行为改动升 patch」第 3 次、开 #327 |
+| [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
+| [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
+| [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
+| [decisions/161](decisions/161.md) | conversation | 2026-11-16 | 决定记录 —— #161 的 issue 会话：explorer 加读 spec「实现决策」（spec explorer-reads-impl-decisions），候选「摆题前讲清 issue 来由」不批 |
+| [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
+| [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
+| [decisions/297](decisions/297.md) | conversation | 2026-11-17 | 决定记录 —— #297 的 issue 会话：issue 正文「背景」改必填，版本改 patch，retro 候选不批 |
+| [decisions/234](decisions/234.md) | conversation | 2026-11-17 | 决定记录 —— #234 的 issue 会话：seo 分类 6 个 skill 的 description 只做路由（PR #353），合并时按 patch 升到 0.1.24；无 retro 候选 |
+| [decisions/275](decisions/275.md) | conversation | 2026-11-17 | 决定记录 —— #275 的 issue 会话：先合并不实跑回放，录制重跑的设计先不开 issue，skill 不写工具用法另开 #356 |
+| [decisions/276](decisions/276.md) | conversation | 2026-11-17 | 决定记录 —— #276 的 issue 会话：并进 #280，decision-rules 默认翻成 Claude 先定，摆过的题与 retro 候选的结果 |
+| [decisions/160](decisions/160.md) | conversation | 2026-11-18 | 决定记录 —— #160 的 issue 会话：开工对齐起点换写法、执行方定义精简（PR #371，0.1.28），交回卡住维持不加机制；候选 1 不批 |
+| [[2026-11-13-replay-verify-redesign]] | conversation | 2026-11-13 | 规则回放改造：取消夜间队列、当场跑，参考 poteto 的 eval playbook |
+| [[2026-10-31-writing-for-agents-scope-grill]] | conversation | 2026-10-31 | #180 writing-for-agents 审 spec：按作用域分能带什么，retro 候选要写怎么结合、怎么验证 |
+| [[2026-10-26-retro-candidate-pool-grill]] | conversation | 2026-10-26 | grill —— retro 候选池放在哪个仓库、哪个目录 |
+| [[2026-11-06-runtime-grill]] | conversation | 2026-11-06 | 把运行环境从 idea-loop 的通用流程里抽出来（#262 的 grill） |
+| [[2026-10-27-design-archive-skill-length-grill]] | conversation | 2026-10-27 | #125 design-archive 精简：主体以图的实体为中心，命令行走 references |
+| [[2026-11-02-issue-intake-priority-grill]] | conversation | 2026-11-02 | 讨论 —— issue 越做越多：开 issue 时就挂模块、判 P0，调度只给 P0 和本期焦点出卡片，停掉 cloud 整合 |
+| [[2026-10-30-issue-consolidation-grill]] | conversation | 2026-10-30 | 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现 |
+| [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
+| [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
+| [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
+| [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |

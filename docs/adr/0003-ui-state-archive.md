@@ -26,7 +26,7 @@ related: ["[[0002-design-loop-v2-imagine-refine]]", "[[2026-10-23-design-truth-a
 - **`prod/` 是一张图。** 节点是页面状态（完整的一屏，组件自己的状态不单独建模）；边写在出发状态里，分用户行为（带 ARIA 角色加名字的定位）和系统行为（写怎么让它发生）两类；跨页跳转也是边。组件按代码组件各存一份，动效、用户路径各一份，用 wikilink 互引，Obsidian 里可以顺着逛。
 - **进入方式不手写，从图上推。** 只有入口节点写地址与前置条件，任一状态的进入方式 = 入口到它的最短路径（跳过标了 `blocked` 的边）；进不去又没标 `blocked` 算校验错误。选项是「每个状态各写一份进入步骤」，否掉的理由是它会随画面漂移、漏写本身就是漂移。
 - **决定跟着它说的对象走。** 页面、组件、动效、用户路径各有「决定」（为什么、否掉过、来源）和「设计法候选」两节，状态文件不写决定。不另设 notes 文件。
-- **读一个查询模块，写只有归档脚本一条路。** 查询原定六个入口（页面、状态、用户路径、需求差异、反查、关键词），外面包命令行和只读 MCP；MCP 声明在插件自己的 `.mcp.json`，目标项目零配置，Codex 不读档案。`prod/` 只由归档脚本在人批过之后写，agent 只写 `delta/`，所以谁也绕不过校验和人审。
+- **读一个查询模块，写只有归档脚本一条路。** 查询原定六个入口（页面、状态、用户路径、需求差异、反查、关键词），外面包命令行和只读 MCP；MCP 声明在插件自己的 `.mcp.json`，目标项目零配置，Codex 不读档案。`prod/` 只由归档脚本在人批过之后写，agent 只写 `delta/`，所以谁也绕不过校验和人审。⚠️ 已被取代（部分：『人批过之后』）→ [[0047-dreaming-triage-autonomous]]
 - **`delta/` 与 `prod/` 同构**，放改完之后的全文，删除的对象 id 列在 `removed.md`：归档 = 覆盖加删除，需求差异 = 逐对象比对，都不用解析补丁。
 - **`prod/` 只存精简矩阵**（每状态一张主视口图、每个有动效处一张 GIF），完整矩阵随 `tmp/` 清掉；素材走 Git LFS，脚本只提示、不代改 `.gitattributes`。
 - **UI 审查是一个独立 agent（ui-reviewer）**，既在每轮 pr-review 里拿实现出来的图对冻结的图抓漏，也在合并前对着实现核、通过后重拍素材、起草说明交人审。
@@ -37,7 +37,7 @@ related: ["[[0002-design-loop-v2-imagine-refine]]", "[[2026-10-23-design-truth-a
 树上现在是（核对 `origin/main` 92fa448）：
 
 - `idea-loop/skills/design/design-archive/`：图的实体、目录与命名、进入方式推导，加 `references/` 里的写法、校验、查询、归档脚本、拍图、UI 审查归档与对账。
-- 脚本：`design-archive.mjs`（解析）、`design-archive-check.mjs`（校验，现为七条规则）、`design-archive-query.mjs`（查询）、`design-archive-write.mjs`（归档，含 LFS 与 `.gitignore` 提示，`--dry-run`）、`design-archive-mcp.mjs`（只读 MCP，`idea-loop/.mcp.json` 里的 `design-archive`）、`flow-compose.mjs` 的状态 id 输入。
+- 脚本：`design-archive.mjs`（解析）、`design-archive-check.mjs`（校验，现为规则 1–8 加结构，规则 8 是边的截图）、`design-archive-query.mjs`（查询）、`design-archive-write.mjs`（归档，含 LFS 与 `.gitignore` 提示，`--dry-run`）、`design-archive-mcp.mjs`（只读 MCP，`idea-loop/.mcp.json` 里的 `design-archive`）、`flow-compose.mjs` 的状态 id 输入。
 - 查询后来多了第七个入口 `affected`（为 dreaming 的增量对账，MCP 工具 `design_affected`）。
 - `idea-loop:ui-reviewer` 定义在 `idea-loop/agents/ui-reviewer.md`（sonnet、high），三种模式：每轮走查、归档、对账；`pr-review` 的 `references/ui-walkthrough.md` 与 `merge.md` 的「合并前归档」把它接进流程。
 - design-lint 钩子监视 `docs/design/tmp/<spec-slug>/canvas/`，imagine 的方向说明在 `tmp/<spec-slug>/imagine/`，implement / implementer 拿集成 worktree 里 `tmp/<spec-slug>/` 的绝对路径、没有设计稿时在 `delta/` 记最小差异。
