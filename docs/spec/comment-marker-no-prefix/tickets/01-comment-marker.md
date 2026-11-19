@@ -45,3 +45,4 @@
 - [x] review 第 1 轮 S1（2026-11-20）：issue 脚本自带的用法说明（开头总说明、贴评论命令的用法行）不再说会加前缀，改成加标记。
 - [x] review 第 1 轮 S2（2026-11-20）：pr 的 review loop 参考里讲归档评论以谁的身份发的那段开头、发帖身份脚本的开头注释，改成「配了 App 用 bot、没配用 gh 当前账号、不加署名」，不再说归档评论不会显得是人本人写的。
 - [x] review 第 1 轮 C1（2026-11-20）：idea-loop 的 README 讲发帖身份（Bot identity）那段同步成新做法：配了 App 用 bot、没配用 gh 当前账号、正文不署名；删掉「Claude never speaks as the human」的说法。规则原文：REVIEW.md「改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同一个改动里同步它自己的 README.md」。
+- [ ] review 第 2 轮 S1（2026-11-20）：测试里不再写死评论标记的字面值，都从定义它的那一处取（spec 原话：「标记字符串定义在 `issues.mjs` 一处……别的脚本和测试从那里引」）；断言只认旧前缀兼容的那几条照旧。
