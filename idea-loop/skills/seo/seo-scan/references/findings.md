@@ -1,6 +1,6 @@
 # 发现清单与方向 agent 的文件约定
 
-一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `seo-issues.mjs`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；五个方向 agent 和被它们调用的方法 skill 都照这里写。
+一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `dyna seo file-issues`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；五个方向 agent 和被它们调用的方法 skill 都照这里写。
 
 ## 一条发现
 
@@ -40,7 +40,7 @@
   "ratio": { "numerator": 12, "denominator": 1050 },
   "repro": "get_search_console_performance projectId=<SEO.md 的项目> dimensions=[query,page] dateRange=last_28_days filters=[{dimension:page,operator:equals,expression:https://cookbook.example/blog/weeknight-dinners}]",
   "fix": "需要诊断：对照 get_serp_results 前 10 名的标题，看意图是不是「快手」而不是「清单」",
-  "acceptance": ["页面 title 包含目标词且不超过 seo-check 的宽度上限", "改动上线 28 天后同一查询的点击 / 展现高于本次"]
+  "acceptance": ["页面 title 包含目标词且不超过 `dyna seo check` 的宽度上限", "改动上线 28 天后同一查询的点击 / 展现高于本次"]
 }
 ```
 
@@ -60,8 +60,8 @@ OpenSEO 项目：<projectId>
 
 ## 文件放哪
 
-- 运行目录由调用方给（`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`）。发现清单写到 `<运行目录>/<方向>.json`：一个 JSON 数组，没有发现就是 `[]`。
-- 为了交给脚本而存的工具原始返回（审计逐页数据等）也放在运行目录里，文件名带方向前缀（`technical-audit-pages-current.json`）。运行目录以外不写任何文件。
+- 运行目录由调用方给（会话工作目录所在 git 仓库的根下的 `.tmp/seo-scan/<YYYYMMDD-HHMM>/`）。发现清单写到 `<运行目录>/<方向>.json`：一个 JSON 数组，没有发现就是 `[]`。
+- 为了交给命令而存的工具原始返回（审计逐页数据等）也放在运行目录里，文件名带方向前缀（`technical-audit-pages-current.json`）。运行目录以外不写任何文件。
 - 方向 agent 有话要写进研究日志、又不是发现的（technical 的「有意改动」），写成 `<运行目录>/<方向>-<名字>.txt`，一行，seo-scan 写研究日志时照抄；交回仍只有那一行。
 - **未采集**：这个方向的数据一样也没拿到（MCP 连不上、没有 Search Console 连接、额度为 0 而方法只剩付费调用），文件内容是只有一个对象的数组：
 

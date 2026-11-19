@@ -4,6 +4,7 @@
  */
 
 import { normalize } from 'node:path';
+import { BOOTSTRAP_FILES, normalizeRemote, parseProjects } from './home-projects.mjs';
 
 const ANSWERS ={ 是: 'yes', yes: 'yes', y: 'yes', 否: 'no', no: 'no', n: 'no' };
 const normalizeAnswer = (a) => ANSWERS[String(a ?? '').trim().toLowerCase()];
@@ -21,32 +22,47 @@ export function decideOutcome({ before, after }) {
   return { outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」' };
 }
 
+/** The variables `gh` takes a login from, other than its config dir: github.com and enterprise tokens. */
+const GH_TOKEN_VARS = ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN'];
+
 /**
- * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs runtime-detect.mjs --inject):
- * the body of `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the reference of the current runtime only. The
+ * The environment every process the runner starts (the two workers, the Claude judge, the Codex judge) gets: the runner's own
+ * environment without a `gh` login. The project copy stands at the case's commit, but a `gh` read still answers from the machine's
+ * login, with what happened after that commit; no token and an empty config dir make every `gh` read fail as not logged in.
+ * `ghConfigDir` is an existing empty directory. `env` is not changed; everything but the above passes through.
+ */
+export function replayChildEnv(env, ghConfigDir) {
+  const child = { ...env, GH_CONFIG_DIR: ghConfigDir };
+  for (const k of GH_TOKEN_VARS) delete child[k];
+  return child;
+}
+
+/**
+ * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs `dyna runtime inject <section>`):
+ * the body of `idea-loop:decision-rules`, the capability list (`runtime/capabilities.md`), and the data of the current runtime only (`runtime/<name>.md`). The
  * runner starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
- * `runtime` is the runtime the replayed session ran in (what `runtime-detect.mjs` gives for the runner's environment, which the
+ * `runtime` is the runtime the replayed session ran in (what `dyna runtime name` gives for the runner's environment, which the
  * session inherits), or null when that environment names no known runtime: then the hook prints `decision-rules` only.
- * The other runtime's reference is not injected, so a change to it still has to be read or called to count.
- * Not checked: that the hook really ran (a hook that errors would still count as used); the hook itself has unit tests.
+ * The other runtime's data is not injected, so a change to it still has to be read or called to count.
+ * Not checked: that the hook really ran (a hook that errors would still count as used); `dyna runtime inject` has its own tests.
  */
 export function injectedFiles(runtime) {
   const files = ['skills/productivity/decision-rules/SKILL.md'];
-  if (runtime) files.push('skills/productivity/runtime/SKILL.md', `skills/productivity/runtime/references/${runtime}.md`);
+  if (runtime) files.push('runtime/capabilities.md', `runtime/${runtime}.md`);
   return files;
 }
 
 /**
  * Did the post-change run use what the change touched? `events` is the post-change run's event stream (parsed events, main
  * session and sub-agents alike); `change` is `{files, skills, agents}` (see `changeSetOf` in the runner): the files added or
- * modified under the plugin's `skills/` and `agents/`, relative to the plugin dir, the skills those files belong to
+ * modified under the plugin's `skills/`, `agents/` and `runtime/`, relative to the plugin dir, the skills those files belong to
  * (`<plugin>:<skill dir>`) and the agents among them (`<plugin>:<file name without .md>`). `roots` are the spellings of the
  * dir the post-change plugin was loaded from, as a path in the stream would show it; `prompt` is what the run was given.
  *
  * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
  * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
  * harness loads that skill itself, no tool call shows it), or a changed file the SessionStart hook injects (see `injectedFiles`;
- * `runtime` says which runtime's reference that is, without it only `decision-rules` counts): the session has it from the
+ * `runtime` says which runtime's data that is, without it only `decision-rules` counts): the session has it from the
  * start, so no tool call shows it either, and a read or call in the stream is reported in its place.
  * Returns `{status: 'hit', via: 'read'|'skill'|'agent'|'injected', name, changed}`, `{status: 'miss', changed}`, or
  * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).
@@ -200,15 +216,107 @@ export function fileBody(buf) {
   return buf.includes(0) ? `（二进制文件，${buf.length} 字节，内容略）` : buf.toString('utf8');
 }
 
-export function buildArtifact({ resultText, files }, { perFile = 12_000, total = 60_000 } = {}) {
+export function buildArtifact({ resultText, files, homeFiles, homePath }, { perFile = 12_000, total = 60_000 } = {}) {
   const parts = ['## 最后一段回复', '', resultText || '（没有最后回复）', '', '## 工作区里写下或改动的文件', ''];
-  if (!files.length) parts.push('（没有写下或改动的文件）');
-  for (const f of files) {
-    const body = f.content.length > perFile ? `${f.content.slice(0, perFile)}\n…（已截断，原长 ${f.content.length} 字）` : f.content;
-    parts.push(`### ${f.path}`, '', body, '');
+  const addFiles = (list) => {
+    if (!list.length) parts.push('（没有写下或改动的文件）');
+    for (const f of list) {
+      const body = f.content.length > perFile ? `${f.content.slice(0, perFile)}\n…（已截断，原长 ${f.content.length} 字）` : f.content;
+      parts.push(`### ${f.path}`, '', body, '');
+    }
+  };
+  addFiles(files);
+  // a run given a home (idea-loop's knowledge-base directory) may write there instead of in the workspace: say where it is and what is in it
+  if (homeFiles) {
+    parts.push(`## home（${homePath}）里写下或改动的文件`, '', '（home 里 `projects/<项目名>/` 是这个项目的目录：它的 `docs/` 是知识库，引导文件也在那里；下面的路径从 home 起算）', '');
+    addFiles(homeFiles);
   }
   const text = parts.join('\n');
   return text.length > total ? `${text.slice(0, total)}\n…（已截断）` : text;
+}
+
+// ---------- the temporary home (idea-loop 0.2.0: the knowledge base lives in home, not in the code repository) ----------
+//
+// Cases recorded before the knowledge base moved into home have it in the code repository at their commit; the post-change plugin only
+// reads home. The runner builds a home out of the commit (this is the only place that conversion exists: no skill and no script has it).
+// What is decided here, without touching disk or git: what is copied, what the project list line says, who gets IDEA_LOOP_HOME.
+
+/** The variable that points idea-loop at its home. */
+export const HOME_ENV = 'IDEA_LOOP_HOME';
+
+/**
+ * Where one side's home comes from. A case with `home_commit` gives both sides a copy cut from that commit of the home repository
+ * ('home-commit'). Without it, the post-change side gets a home built from the case commit's own `docs/` and bootstrap files
+ * ('project-docs'); the pre-change plugin reads those same files from the code repository, so its home is an empty one ('empty'):
+ * the variable is still set, so no home of this machine is reachable through it.
+ */
+export function homeSourceOf(c, side) {
+  if (c.home_commit) return 'home-commit';
+  return side === 'after' ? 'project-docs' : 'empty';
+}
+
+/** The session environment with IDEA_LOOP_HOME pointing at `home`. `env` is not changed. */
+export const withHome = (env, home) => ({ ...env, [HOME_ENV]: home });
+
+/** What goes from the code repository's top level (`topLevel`: its entry names at the commit) into the project directory in home: `docs/` and the bootstrap files, those that exist. */
+export function homeCopyEntries(topLevel) {
+  const names = new Set(topLevel);
+  return ['docs', ...BOOTSTRAP_FILES].filter((n) => names.has(n));
+}
+
+/** The name home files a project under: the repository's name, lower case (what setup registers). */
+export const homeProjectName = (name) => String(name).toLowerCase();
+
+/** The remote the project is registered with: the case repository's own `origin`, or a made-up one that matches nothing real when it has none. */
+export function homeRemote(origin, name) {
+  return normalizeRemote(origin) ? String(origin).trim() : `https://example.invalid/${name}/${name}.git`;
+}
+
+/** One line of the `## 项目` list, in the format home's AGENTS.md and `dyna home` use. */
+export const projectListLine = ({ name, path, remote }) => `${name}（项目）: ${path}. Clone from ${remote} if missing.`;
+
+/** A home's AGENTS.md with just this project in its list. */
+export function homeAgentsMd(entry) {
+  return ['# home', '', '## 设备地图', '', '回答关于项目的问题前，先在「项目」一节里找到项目，读它的项目地图，再去地图指的那几层。', '', '## 项目', '', projectListLine(entry), ''].join('\n');
+}
+
+/**
+ * `agentsMd` with this project in its list: a line for the same repository (same remote) is replaced, keeping its name and remote, so its path
+ * points at the checkout the run works in and not at the one of the machine the home was cut on; otherwise the line is added to the end of the section.
+ */
+export function registerProject(agentsMd, entry) {
+  const line = projectListLine(entry);
+  const want = normalizeRemote(entry.remote);
+  const lines = String(agentsMd ?? '').split('\n');
+  let inSection = false;
+  let lastInSection = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const heading = lines[i].match(/^##\s+(.*?)\s*$/);
+    if (heading) {
+      inSection = heading[1] === '项目';
+      if (inSection) lastInSection = i;
+      continue;
+    }
+    if (!inSection) continue;
+    if (lines[i].trim()) lastInSection = i;
+    const [found] = parseProjects(`## 项目\n${lines[i]}`);
+    if (found && normalizeRemote(found.remote) === want) {
+      lines[i] = projectListLine({ ...entry, name: found.name, remote: found.remote }); // name and remote stay (the name is the directory's under projects/); only the path moves
+      return lines.join('\n');
+    }
+  }
+  if (lastInSection < 0) return `${lines.join('\n').replace(/\n*$/, '\n')}\n## 项目\n\n${line}\n`;
+  lines.splice(lastInSection + 1, 0, line);
+  return lines.join('\n');
+}
+
+/** The project map (`projects/<名字>/AGENTS.md`) for a project directory built out of `copied` entries. */
+export function projectMapMd({ name, path, copied }) {
+  const layers = [];
+  if (copied.includes('docs')) layers.push('- `docs/`：知识库（spec、工单、设计档案、决策记录）。');
+  const boot = copied.filter((n) => n !== 'docs');
+  if (boot.length) layers.push(`- 引导文件：${boot.map((n) => `\`${n}\``).join('、')}。`);
+  return [`# ${name} 项目地图`, '', `项目。代码仓库：${path}。`, '', '## 几层', '', ...(layers.length ? layers : ['- （还没有内容）']), ''].join('\n');
 }
 
 /** Rough spend per case in dollars: two worker sessions plus one judge. Reference: an empty `claude -p` is about $0.3–0.5; one full skill run about $1.5. */

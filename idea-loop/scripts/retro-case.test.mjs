@@ -8,7 +8,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -116,4 +116,21 @@ test('loadCases returns the cases sorted by name, each with its name', () => {
 test('the cases that ship with the plugin are all well-formed', () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'evals', 'retro');
   assert.deepEqual(checkCasesDir(root), []);
+});
+
+test('home_commit is optional (the old cases have none); when given it must look like a commit id of the home repository', () => {
+  assert.deepEqual(validateCase(good()), [], 'a case without it is complete');
+  assert.deepEqual(validateCase({ ...good(), home_commit: '96d66f2a7c9d3b1e4f5a6b7c8d9e0f1a2b3c4d5e' }), []);
+  assert.deepEqual(validateCase({ ...good(), home_commit: 'abc1234' }), []);
+  for (const bad of ['main', 'xyz1234', '', '   ', 42, null]) {
+    const [p, ...rest] = validateCase({ ...good(), home_commit: bad });
+    assert.equal(p?.field, 'home_commit', JSON.stringify(bad));
+    assert.deepEqual(rest, [], JSON.stringify(bad));
+  }
+});
+
+test('the format description in cases.mjs says what home_commit is for', () => {
+  const text = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'evals', 'retro', 'cases.mjs'), 'utf8');
+  assert.match(text, /home_commit\s+optional/);
+  assert.match(text, /--home-repo/);
 });

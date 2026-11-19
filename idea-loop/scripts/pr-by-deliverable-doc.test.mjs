@@ -52,14 +52,14 @@ test('the pr skill has exactly two section tables, one per deliverable, every ro
     }
   }
   const [description, report] = tables;
-  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '要你做的事', '参考']);
+  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '夜里替你定的', '等你定的', '要你做的事', '参考']);
   assert.deepEqual(report.map((r) => r[0]), ['开头一句', '已按规则处理', '要你决定', '能否回滚', '要你看的', '折叠区']);
 });
 
 test('the description table carries the script section names in order, with 能否回滚 after 怎么验证 and no 顺带开的 issue of its own', () => {
   const [description] = sectionTables(skill);
   const names = description.map((r) => r[0].match(/`([^`]*)`/)?.[1]);
-  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'live-check', 'your-todo', 'reference']);
+  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'live-check', 'night-decided', 'night-waiting', 'your-todo', 'reference']);
   assert.ok(!description.some((r) => r[0].includes('顺带开的 issue')));
 });
 
@@ -98,7 +98,7 @@ test('the Review 汇报 gives every 要你决定 item one format: now, impact, e
 test('the PR description template has 能否回滚 right after 怎么验证, and none of the sections that were folded away', () => {
   const text = readFileSync(join(prDir, 'references', 'description.md'), 'utf8');
   const heads = [...text.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '要你做的事', '参考']);
+  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '夜里替你定的', '等你定的', '要你做的事', '参考']);
   assert.doesNotMatch(text, /\*\*切法\*\*/);
 });
 
@@ -124,9 +124,7 @@ test('nothing in the plugin points at the removed stop-report / review-round fil
   const hits = [];
   for (const file of walk(pluginRoot)) {
     const text = readFileSync(file, 'utf8');
-    // review-loop.mjs keeps reading the old 需要你决定 heading in files already written; that is its one mention
-    const scrubbed = file.endsWith('review-loop.mjs') ? text.replace(/需要你?决定|需要\|要/g, '') : text;
-    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(scrubbed)) hits.push(relative(pluginRoot, file));
+    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(text)) hits.push(relative(pluginRoot, file));
   }
   assert.deepEqual(hits, [], `还指着旧的停下汇报：${hits.join(', ')}`);
 });
@@ -139,6 +137,6 @@ test('the callers name the new sections: deliver.md writes rollback, not issues,
   // the steps of 「没活了就停下」 live in implement's own reference
   const implement = read('skills', 'engineering', 'implement', 'SKILL.md') + '\n' + read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
   assert.match(implement, /Review 汇报/);
-  assert.match(implement, /review-loop\.mjs" next[^\n]*review impl/);
+  assert.match(implement, /dyna pr loop next[^\n]*review impl/);
   assert.doesNotMatch(implement, /next[^\n]* pause/);
 });

@@ -1,5 +1,5 @@
 /**
- * Tripwire — pr-review's SKILL.md stays slim: body capped by a ratchet (5000 per AGENTS.md「SKILL.md 编写约定」, restored by #137),
+ * Tripwire — pr-review's SKILL.md stays slim: body under 5000 characters (AGENTS.md「标准 plugin 目录结构」),
  * each action written once, the ticket-return steps defined in one place, "what next after a round" in
  * one section, and the branches only some rounds take (UI walkthrough) behind a pointer.
  *
@@ -29,18 +29,17 @@ function section(title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
-// Ratchet, not the 5000 limit: test-layering-ci-full (ticket 01, review round 1) restored the sentences it had
-// squeezed out to stay under 5000, so the body is 5108 now. Do not let it grow; bringing it back to 5000 is #137's.
-const BODY_MAX = 5108;
-test(`the body does not exceed ${BODY_MAX} characters (ratchet; the 5000 limit comes back with #137)`, () => {
-  assert.ok([...body].length <= BODY_MAX, `body is ${[...body].length} characters`);
+// The limit in AGENTS.md「标准 plugin 目录结构」. The design change, which only a round where the human accepted a
+// design that differs from the frozen canvas reaches, lives in references/design-change.md (spec skill-body-limit-backlog).
+test('the body is under 5000 characters (the limit in AGENTS.md)', () => {
+  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
 });
 
 test('the append-a-cell-to-the-ticket step is written once, under 回工单', () => {
   assert.equal(body.split('docs(tickets): <NN> — review 第').length - 1, 1, 'the ticket-cell commit message is spelled out more than once');
   const text = section('回工单');
   assert.match(text, /git blame/);
-  assert.match(text, /ticket-ledger\.mjs/);
+  assert.match(text, /dyna spec ticket-of/);
   assert.match(text, /idea-loop:implementer/);
   assert.match(text, /Ticket:/);
   assert.ok(body.split('回工单').length - 1 >= 3, 'the other places should refer to 回工单 by name');
@@ -67,17 +66,38 @@ test('the rules decision-rules already owns are pointers, not restated lists', (
   assert.doesNotMatch(body, /仍然停/);
 });
 
+// the round the reviewer agent used to run is a reference of pr-review's own now (spec idea-loop-cli, ticket 16)
+test('the round itself lives in references/run-a-round.md behind one pointer; there is no reviewer agent', () => {
+  assert.ok(existsSync(join(dir, 'references', 'run-a-round.md')), 'references/run-a-round.md is missing');
+  assert.match(body, /references\/run-a-round\.md/);
+  assert.doesNotMatch(body, /pr-reviewer/);
+  assert.ok(!existsSync(join(pluginRoot, 'agents', 'pr-reviewer.md')), 'agents/pr-reviewer.md is back');
+  const ref = readFileSync(join(dir, 'references', 'run-a-round.md'), 'utf8');
+  assert.match(ref, /dyna agent codex prompt spec/);
+  assert.match(ref, /dyna agent codex prompt standards/);
+  assert.match(ref, /dyna agent codex run/);
+  assert.match(ref, /dyna pr candidates submit/);
+  assert.match(ref, /dyna pr diagnostics filter/);
+  assert.doesNotMatch(ref, /companion|--write/);
+});
+
 test('the UI walkthrough lives in its own reference, with the condition for reading it', () => {
   assert.ok(existsSync(join(dir, 'references', 'ui-walkthrough.md')), 'references/ui-walkthrough.md is missing');
   assert.match(body, /有设计产物[^\n]*references\/ui-walkthrough\.md/);
   assert.doesNotMatch(body, /ui-incomplete\.md/, 'the incomplete-walkthrough handling belongs in the reference');
 });
 
-test('the design change is a pointer to design-change-sync, not a procedure', () => {
+test('the design change is a pointer to references/design-change.md; the steps live in the reference', () => {
   const text = section('设计变更');
-  assert.match(text, /idea-loop:design-change-sync/);
-  assert.match(text, /PR 分支/);
-  assert.ok([...text].length <= 400, 'the steps live in design-change-sync; keep only how this stage differs');
+  assert.match(text, /references\/design-change\.md/, 'the section does not point at the reference');
+  assert.ok([...text].length <= 120, 'the section is a one-sentence pointer; the steps live in the reference');
+  assert.match(text, /^\s*人接受了/, 'the pointer opens with the condition for reading it');
+  const ref = join(dir, 'references', 'design-change.md');
+  assert.ok(existsSync(ref), 'references/design-change.md is missing');
+  const doc = readFileSync(ref, 'utf8');
+  assert.match(doc, /idea-loop:design-change-sync/);
+  assert.match(doc, /PR 分支/);
+  assert.doesNotMatch(body, /idea-loop:design-change-sync/, 'the steps are written once, in the reference');
 });
 
 test('no no-op or negated framing from the old text is left', () => {

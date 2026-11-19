@@ -1,7 +1,7 @@
 /**
  * Tripwire — setup's SKILL.md body and the references split out of it say each thing once.
  *
- * The 规则回放 runner / 每周对账 completion conditions and "which file the issue-category section is written into" live in
+ * The 规则回放 runner / 每周对账 completion conditions and "which file the issue categories are written into" live in
  * the SKILL.md body only; the references carry the steps / the format, not a second copy. The 规则回放 runner section of
  * the body is one line on when to read the reference, not a summary of its steps.
  */
@@ -36,7 +36,8 @@ test('规则回放 runner in the body is a pointer, not a summary of the steps',
   }
 });
 
-test('which file the issue-category section is written into is stated only in the SKILL.md body', () => {
-  assert.match(body, /`## issue 分类` 一节[^\n]*写进 `AGENTS\.md`/);
-  assert.doesNotMatch(read('references', 'issue-category-format.md'), /写进/, 'issue-category-format.md repeats where the section is written');
+test('which file the issue categories are written into is stated only in the SKILL.md body; the template carries the format', () => {
+  assert.match(body, /`ISSUE_TRACKER\.md` 的「分类 label」一节：把人定的分类/);
+  assert.doesNotMatch(read('references', 'issue-tracker.md'), /写进/, 'issue-tracker.md repeats where the categories are written');
+  assert.doesNotMatch(read('references', 'issue-tracker.md'), /AGENTS\.md/, 'the categories no longer live in AGENTS.md');
 });

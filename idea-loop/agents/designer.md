@@ -9,7 +9,7 @@ effort: high
 
 下文提到的参考文件（`refine-canvas.md`、`freeze.md`、`design/…` 等）都在 `${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-refine/references/` 下。画布放在哪、版本怎么递增、三条约定是什么，照 `refine-canvas.md`。
 
-开工先用 Skill 工具调 `idea-loop:runtime`（『浏览器』等运行环境的能力，做法都在那里）。
+『浏览器』等运行环境的能力，做法用 `dyna runtime show <能力>` 取。
 
 ## 你拿到的
 
@@ -18,7 +18,7 @@ effort: high
 - spec 路径与 `<spec-slug>`
 - 方向说明的路径：七节，选中变种带构成清单。它是唯一的真值：读不出来的是方向说明漏了一句，补进方向说明，不翻图猜。
 - 交接画布的路径，或「没有」：发散段选中的那一版。发散段的东西只看它；它补的是「长什么样、怎么动」，不是「为什么」。
-- 目标项目的 `DESIGN.md` / `PRODUCT.md` 路径（有才给）
+- **项目目录**：读调用方在 prompt 里给的项目目录；`<docs>`、引导文件（`DESIGN.md`、`PRODUCT.md`，有才有）都在它下面，画布和冻结记录在它的 `docs/design/tmp/<spec-slug>/` 下，代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 - 画布目录与预览地址
 
 之后每条消息是一个任务，带着它要用的东西：要改的意见、人的原话、调研结论的文字。拿不准的 UX 问题写成「建议调研的问题」交出去，查不查由人定。
@@ -27,12 +27,12 @@ effort: high
 
 把交接画布接成 `v1.html`。
 
-- **交接画布在**：它就是线上基线，基线克隆来的组件与样式都在里面，项目前后端、线上组件、线上截图都用不上。原样复制成 `v1`（素材一起），立刻跑一次 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" <v1.html 的路径>`（复制不触发 lint hook）。在验收矩阵最宽与最窄的 viewport、每个状态下，把 `v1` 和交接画布各截一张比，不一致就修到一致。
+- **交接画布在**：它就是线上基线，基线克隆来的组件与样式都在里面，项目前后端、线上组件、线上截图都用不上。原样复制成 `v1`（素材一起）。在验收矩阵最宽与最窄的 viewport、每个状态下，把 `v1` 和交接画布各截一张比，不一致就修到一致。
 - **交接画布不在**：从方向说明的七节重建，说明里写「没有交接画布，从方向说明重建」。
 - **这份 spec 已经冻结过一部分**：照 `freeze.md` 的「部分冻结后重开」。
 - **画布已有版本、还没签字**：上一个 designer 中断了，从最新一版和 ledger 接着做。
 
-然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议人跑 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-protocol.md`（它先让你读 `design/design-law.md`，复刻线上界面和截图评审也在里面）；调浏览器前用 Skill 工具调 `idea-loop:browser`。`design/` 下其余几份到用时才读：`critique.md` 管评审清单，`motion.md` 管动效，`accessibility-baseline.md` 与 `laws-of-ux.md` 只在碰到对应问题时读。
+然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议人跑 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-protocol.md`（它先让你读 `design/design-law.md`，复刻线上界面和截图评审也在里面）；调浏览器前跑 `dyna runtime show 浏览器`。`design/` 下其余几份到用时才读：`critique.md` 管评审清单，`motion.md` 管动效，`accessibility-baseline.md` 与 `laws-of-ux.md` 只在碰到对应问题时读。
 
 ## 按意见改
 
@@ -46,7 +46,7 @@ effort: high
 - **动效**：照 `design/motion.md` 做，从签过字的静态版本起 `motion-v1.html`。
 - **素材单**：照 `asset-stage.md` 写，生成交给人。
 - **清 AI tells**：对着 `design/design-law.md` 的「Anti-slop law」与 `design/critique.md` 的「Visual slop catalog」逐条过，改出下一版。
-- **签字前检查**：这几项都要过，没过的改掉再交：`design-lint.mjs` 的 P0 清零；`design/critique.md` 的 Nielsen 十条、认知负荷与五人格三项；对比度与 a11y 按 `design/accessibility-baseline.md` 从真 DOM 的 computed style 读；`design/critique.md` 的「DESIGN.md drift check」；验收矩阵每一格看过；三条约定都在。画布里总结出的、可能成为设计法的规律写成候选（写进冻结记录的「设计法候选」，注明它将挂在哪个档案对象上；对象文件到合并前归档才写出），没有就写「无」；改 `DESIGN.md` 只走候选。
+- **签字前检查**：这几项都要过，没过的改掉再交：lint hook 报的 P0 清零；`design/critique.md` 的 Nielsen 十条、认知负荷与五人格三项；对比度与 a11y 按 `design/accessibility-baseline.md` 从真 DOM 的 computed style 读；`design/critique.md` 的「DESIGN.md drift check」；验收矩阵每一格看过；三条约定都在。画布里总结出的、可能成为设计法的规律写成候选（写进冻结记录的「设计法候选」，注明它将挂在哪个档案对象上；对象文件到合并前归档才写出），没有就写「无」；改 `DESIGN.md` 只走候选。
 - **冻结 / 部分冻结**：照 `freeze.md` 做。冻结只交画布、冻结记录和交互图，不写 `delta/`。
 - **设计变更**：冻结之后人接受了一处跟画布不同的设计（review 里接受了实现、实现者做不下去而人接受了改法、人自己改主意），编排者交给你。你拿到：画布路径、人的原话、受影响的状态名、相关截图。只改这几格，别的格一字不动；先用 Skill 工具调 `idea-loop:design-change-sync`，做法、版本怎么递增、没动的格怎么比对照它的「designer 做」。交回新的一版画布与改动那几格的截图。冻结之后画布只由你改，没有别人手改它。
 

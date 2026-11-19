@@ -4,6 +4,13 @@
  * `cases/<case>/case.json` records one decision point of a past session:
  *
  *   commit      the repository state the decision happened in (the runner copies the project from here)
+ *   home_commit optional: a commit of the home repository (where the knowledge base lives since 0.2.0: `projects/<名字>/docs/`,
+ *               the bootstrap files). With it the runner cuts a temporary home from that commit and points IDEA_LOOP_HOME at it for
+ *               both the pre-change and the post-change run (each gets its own copy of it), and the home repository's location comes
+ *               from the runner's `--home-repo <dir>`. Without it the case is an old one: `commit` is from before the knowledge base
+ *               moved into home, so the runner builds a temporary home out of that commit's `docs/` and bootstrap files and only the
+ *               post-change run is given it (the pre-change plugin reads the same files from the code repository; its run gets an
+ *               empty home so nothing of this machine's own home reaches it). Same format as `commit`.
  *   prompt      the sentence that, back then, made the skill produce the thing. The run is given exactly this and nothing
  *               else, so it must not say that this is a test: no 回放 / eval / judge / rubric / benchmark / 评测 / 评委 / 判定
  *   stop_at     where the skill hands the thing to the human. Only the judging session is told (to look at that moment in
@@ -43,6 +50,10 @@ export function validateCase(c) {
 
   if (!filled(c.commit)) need('commit', '缺提交号：决策发生时的仓库状态');
   else if (!COMMIT.test(c.commit.trim())) need('commit', `提交号 "${c.commit}" 不是 7–40 位十六进制的提交 id`);
+
+  if (c.home_commit !== undefined && (!filled(c.home_commit) || !COMMIT.test(c.home_commit.trim()))) {
+    need('home_commit', `home_commit ${JSON.stringify(c.home_commit)} 不是 7–40 位十六进制的提交 id（它是 home 仓库里的提交；老用例不用写这个字段）`);
+  }
 
   if (!filled(c.prompt)) need('prompt', '缺 prompt：当时让 skill 产出东西的那句话');
   else {

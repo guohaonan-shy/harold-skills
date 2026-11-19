@@ -15,7 +15,7 @@ missing doc is a degradation, never an abort.
 should be. They are not defaults.
 
 **Enforcement split.** The mechanically-checkable subset is enforced by
-`${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs`: a PostToolUse hook runs it on every write to a canvas
+the design lint: a PostToolUse hook runs it on every write to a canvas
 HTML (`docs/design/tmp/<spec-slug>/canvas/`, plus the legacy `design-preview/` /
 `design-motion-preview/`). The lint is the hard gate; this file carries the *why* plus the judgment
 calls a regex can't make.
@@ -193,7 +193,7 @@ previews/ports; docs and code comments are out of scope.
 ### Copy construction
 
 How to build copy that works, split by register. Mechanically-checkable pieces (extended filler-word
-list, weak CTA labels, placeholder-only labels) are enforced by design-lint; the rest is judgment,
+list, weak CTA labels, placeholder-only labels) are enforced by the design lint; the rest is judgment,
 applied at close-out.
 
 **In-app / product copy** *(distilled from the `impeccable` plugin's `clarify` command; going deeper
@@ -237,8 +237,7 @@ is a re-distill into this file, never a runtime read of an external path)*:
 
 Every build round, non-negotiable *(open-design Steps 7–8)*.
 
-1. **Mechanical pre-flight**: confirm the lint hook ran clean on the final write (or run
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" <preview.html>`). Every P0 must pass — a
+1. **Mechanical pre-flight**: confirm the lint hook ran clean on the final write. Every P0 must pass — a
    failing P0 does not proceed to review.
 2. **5-dimensional critique** *(verbatim from open-design; score silently 1–5)*:
    1. **Philosophy** — does the visual posture match what was asked, or did you drift back to your

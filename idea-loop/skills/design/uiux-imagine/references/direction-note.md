@@ -48,7 +48,7 @@
 ## 校验
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" <direction-note.md 的路径>
+dyna design note submit <direction-note.md 的路径>
 ```
 
 缺一节（包括有标题没正文）、选中变种的构成清单缺项、某项没带两种标记之一，都失败，并报出是哪一项。它只查形状，不查内容。

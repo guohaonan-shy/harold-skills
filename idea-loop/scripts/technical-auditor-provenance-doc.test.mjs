@@ -1,5 +1,5 @@
 /**
- * Tripwire — technical-auditor runs the meta-provenance script after seo-baseline.mjs, and a deliberate
+ * Tripwire — technical-auditor runs `dyna seo provenance` after `dyna seo compare-audits`, and a deliberate
  * title / description change goes only into the research log, never into the findings.
  *
  * Before: step 3 put every `key-page-meta-changed` finding into the list, so a change a merged SEO PR
@@ -19,11 +19,11 @@ const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const agent = readFileSync(process.env.TECHNICAL_AUDITOR ?? join(pluginRoot, 'agents', 'technical-auditor.md'), 'utf8');
 const step3 = agent.split(/^\d+\. \*\*/m).find((s) => s.startsWith('重点页面的回退')) ?? '';
 
-test('step 3 runs seo-meta-provenance.mjs after seo-baseline.mjs, on the baseline output and the two audit times', () => {
-  const baseline = step3.indexOf('seo-baseline.mjs');
-  const provenance = step3.indexOf('seo-meta-provenance.mjs');
-  assert.ok(baseline >= 0, 'step 3 lost seo-baseline.mjs');
-  assert.ok(provenance > baseline, 'seo-meta-provenance.mjs must come after seo-baseline.mjs');
+test('step 3 runs dyna seo provenance after dyna seo compare-audits, on the baseline output and the two audit times', () => {
+  const baseline = step3.indexOf('dyna seo compare-audits');
+  const provenance = step3.indexOf('dyna seo provenance');
+  assert.ok(baseline >= 0, 'step 3 lost dyna seo compare-audits');
+  assert.ok(provenance > baseline, 'dyna seo provenance must come after dyna seo compare-audits');
   assert.match(step3, /completedAt/);
 });
 
