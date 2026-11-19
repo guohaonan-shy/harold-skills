@@ -4,6 +4,7 @@
 | 文件 | summary |
 |---|---|
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
+| [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
 | [[implementer-start-point-non-destructive]] | implementer 开工对齐起点改用不丢东西的 git 写法，不再被 auto mode 拦；定义按 agent-builder 精简到 5000 字内 |
 | [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
 | [[refine-judge-advisor]] | 设计收敛改由人定：评委降为顾问，每轮交一份配参考图和用户路径的设计评审报告 |
