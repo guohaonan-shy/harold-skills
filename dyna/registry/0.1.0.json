@@ -2,6 +2,66 @@
   "version": "0.1.0",
   "commands": [
     {
+      "command": "git commit",
+      "module": "git",
+      "use": "commit <文件>...",
+      "summary": "只 add 给定的文件并提交，工作区和暂存区里别的改动不进这个提交；打印新提交的完整 SHA",
+      "caller": "session",
+      "next": "dyna git commit --repo <目录> -m <说明> <文件>...",
+      "args": [
+        {
+          "name": "文件",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        },
+        {
+          "name": "message",
+          "kind": "flag",
+          "required": false,
+          "value": "stringArray",
+          "repeatable": true,
+          "description": "提交说明；可重复，每个 -m 一段（跟 git commit 一样，末尾的署名行单独一段）"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "git push",
+      "module": "git",
+      "use": "push [branch]",
+      "summary": "把分支推到远端并记下它跟踪的远端分支；不给分支就推当前分支；不强推",
+      "caller": "session",
+      "next": "dyna git push --repo <目录>",
+      "args": [
+        {
+          "name": "branch",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "remote",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "远端名"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
+        }
+      ]
+    },
+    {
       "command": "home adr new",
       "module": "home",
       "use": "new <name>",
@@ -788,6 +848,131 @@
       "caller": "session",
       "next": "",
       "args": []
+    },
+    {
+      "command": "worktree add",
+      "module": "worktree",
+      "use": "add <名字>",
+      "summary": "在主 checkout 旁边建 worktree（<上一级>/<仓库名>-worktrees/<名字>），打印它的路径；分支默认 issue/<名字>，已有就接上，路径上已经是这条分支的 worktree 就直接给回",
+      "caller": "session",
+      "next": "dyna worktree add <名字> --repo <主 checkout> --base <基准分支>",
+      "args": [
+        {
+          "name": "名字",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "基准分支（DEVELOPMENT.md「分支」节写的）；新建分支或游离 worktree 时从 origin/<基准分支> 起，必须给"
+        },
+        {
+          "name": "branch",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "分支名；不给就是 issue/<名字>（issue 已经有分支就写它）"
+        },
+        {
+          "name": "detach",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "不建分支，游离在 origin/<基准分支> 上（triage 会话用）"
+        },
+        {
+          "name": "path",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "worktree 的路径；不给就是 <主 checkout 的上一级>/<仓库名>-worktrees/<名字>"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主 checkout 的目录（建和删用同一个路径）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "worktree guard",
+      "module": "worktree",
+      "use": "guard [command]",
+      "summary": "拦下手写的 git worktree remove，提示改用 dyna worktree remove；别的 git worktree 子命令放行",
+      "caller": "hook",
+      "next": "dyna worktree remove <路径>",
+      "args": [
+        {
+          "name": "command",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PreToolUse 事件；被拦时退出码 2、理由写到 stderr"
+        }
+      ]
+    },
+    {
+      "command": "worktree list",
+      "module": "worktree",
+      "use": "list",
+      "summary": "列出这个仓库的 worktree：路径、分支（游离的写 (detached)）、锁（locked），用制表符隔开",
+      "caller": "session",
+      "next": "dyna worktree list --repo <主 checkout>",
+      "args": [
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主 checkout 的目录（建和删用同一个路径）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "worktree remove",
+      "module": "worktree",
+      "use": "remove <路径>",
+      "summary": "删 worktree：先解锁、再删 worktree、再删它的分支（--keep-branch 保留）；里面有没提交的改动就拒绝（--force 才删）",
+      "caller": "session",
+      "next": "dyna worktree list --repo <主 checkout>",
+      "args": [
+        {
+          "name": "路径",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "force",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "里面有没提交的改动也删"
+        },
+        {
+          "name": "keep-branch",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "不删分支（默认删，不论合并没合并：该不该删由调用方判断）"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主 checkout 的目录（建和删用同一个路径）；不给就用当前目录；不给就从 worktree 自己找到它的主 checkout"
+        }
+      ]
     }
   ]
 }

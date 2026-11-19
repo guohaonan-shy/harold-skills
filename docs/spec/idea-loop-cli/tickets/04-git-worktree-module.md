@@ -11,11 +11,11 @@
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] 把 `git worktree remove x` 喂给 `dyna worktree guard --hook` 被拦，提示里有 `dyna worktree remove`；`git worktree list` 放行
-- [ ] 在临时仓库里 `dyna worktree remove` 一个上了锁的 worktree：解锁、删除、分支也删掉
-- [ ] `dyna git commit` 只提交给定的文件，工作区里别的改动不进提交
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）：没有对应的旧脚本和旧测试，没有可搬的
+- [x] 把 `git worktree remove x` 喂给 `dyna worktree guard --hook` 被拦，提示里有 `dyna worktree remove`；`git worktree list` 放行
+- [x] 在临时仓库里 `dyna worktree remove` 一个上了锁的 worktree：解锁、删除、分支也删掉
+- [x] `dyna git commit` 只提交给定的文件，工作区里别的改动不进提交
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 

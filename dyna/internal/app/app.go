@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/git"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/issues"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
@@ -20,6 +21,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/semver"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/version"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/worktree"
 )
 
 // Environment variables the plugin's small script sets before it hands over to this binary.
@@ -77,6 +79,8 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(issues.Command(issues.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Git: io.Git}))
 	root.AddCommand(home.Command(home.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, Cwd: io.Cwd, Now: io.Now}))
 	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
+	root.AddCommand(git.Command(git.Deps{Stdout: io.Stdout}))
+	root.AddCommand(worktree.Command(worktree.Deps{Stdin: io.Stdin, Stdout: io.Stdout}))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
 }
