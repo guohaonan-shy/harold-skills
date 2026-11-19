@@ -49,7 +49,7 @@ README / AGENTS.md（人看的总览，各列一份，跟 SKILL.md 同一份清�
 
 - **dreaming SKILL.md 开头**：列举补全成脚本的五类（`DESIGN.md`、文档里的冲突、`GLOSSARY.md`、要删的暂缓设计、所有 `候选` 行），跟 README、AGENTS.md 同序同词。
 - **weekly-dreaming.md**：不再复述列举，改成「只有问人的那几类行（见 `idea-loop:dreaming` 开头）才摆在会话里等人批」。这是给 agent 的文档，改动对的是「单一来源」：周任务只是起 dreaming 的入口，范围由 dreaming 自己说。
-- **测试**：两条断言跟着改，并加一条守住「dreaming 开头的列举 = 脚本的五类」，下次脚本加类而文字没跟，测试红。
+- **测试**：两条断言跟着改，并加一条守住「dreaming 开头的列举 = 脚本实际拆给人的类别」：测试从脚本的判定推出类别再去对列举，不把五个词写死，下次脚本加类而文字没跟，测试红。
 
 同一说法的其他入口：
 
@@ -58,7 +58,7 @@ README / AGENTS.md（人看的总览，各列一份，跟 SKILL.md 同一份清�
 | `idea-loop/README.md` dreaming 一行 | 已一致，不改 |
 | 根目录 `AGENTS.md` | 已一致，不改 |
 | `wiki-conventions` | 已不提，不改 |
-| `dreaming/references/proposal-table.md` | 只说「问人的行」，不列举，不改 |
+| `dreaming/references/proposal-table.md` | 纳入：「问人的行和自动的行」一节有一句「大意」只列三类（设计规范、文档里的冲突、术语），改成指向 dreaming 开头，不再自带列举（修正：起草时判成「不列举」，review 第 1 轮 S2 指出有这句大意） |
 | `docs/adr/0047-dreaming-triage-autonomous.md` | 排除：ADR 是当时决定的记录，被后来的改动取代由 dreaming 标注，不在这里改 |
 
 ## User Stories
