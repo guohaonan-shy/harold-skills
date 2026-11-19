@@ -11,13 +11,13 @@ magi 运行环境参考里「调度 · 怎么交出 issue」的第 1 步「建 w
 同时把调度这一节的文档测试补上：照桌面端那条「已有分支的 issue 接上分支、不用 -b 新建」的测试，给 magi 加同样的一条；原来钉着 magi 旧写法整条 `-b issue/<号>-<slug>` 命令的断言改成钉新写法（只有「两处都没有」那条从基准分支建）。idea-loop 插件版本升一档 patch，README 若提到这一步就同步。
 
 ## 验收标准
-- [ ] magi 参考的第 1 步有三条 `worktree add` 命令：本地有 / 只有远端有 / 两处都没有，本地有那条不带 `-b`，只有「两处都没有」那条用基准分支。
-- [ ] 文档测试新加的 magi 那条先在旧文本上见红，改完见绿；全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全绿。
-- [ ] 在临时 git 仓库里，三种情况各照新命令跑一次 `git worktree add`，都退出码 0、worktree 在对应分支上；本地已有分支的那种照旧命令跑报「already exists」。
-- [ ] idea-loop `plugin.json` 的 `version` 从 main 当前版本升一档 patch。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] magi 参考的第 1 步有三条 `worktree add` 命令：本地有 / 只有远端有 / 两处都没有，本地有那条不带 `-b`，只有「两处都没有」那条用基准分支。
+- [x] 文档测试新加的 magi 那条先在旧文本上见红，改完见绿；全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全绿。
+- [x] 在临时 git 仓库里，三种情况各照新命令跑一次 `git worktree add`，都退出码 0、worktree 在对应分支上；本地已有分支的那种照旧命令跑报「already exists」。
+- [x] idea-loop `plugin.json` 的 `version` 从 main 当前版本升一档 patch。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 - `idea-loop/scripts/dispatch-by-period-doc.test.mjs` 里 magi 的「only what to hand out changes」：钉着 magi 开会话与建 worktree 的命令，这次要改它的一条断言，其余断言必须仍绿。
