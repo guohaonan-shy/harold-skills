@@ -3,11 +3,13 @@ package uicompare
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -97,9 +99,16 @@ func TestTheComparatorsAnswerLikeTheOldScript(t *testing.T) {
 			c.Canvas[name] = box()
 			if rng.Intn(5) != 0 {
 				// the port is the canvas with a few things moved
+				// keys in a fixed order: ranging over the map would draw from the generator in a different order
+				// on every run, and the cases would not be the same cases twice
 				l := map[string]any{}
-				for k, v := range c.Canvas[name] {
-					l[k] = v
+				keys := make([]string, 0, len(c.Canvas[name]))
+				for k := range c.Canvas[name] {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+				for _, k := range keys {
+					l[k] = c.Canvas[name][k]
 					if rng.Intn(5) == 0 {
 						l[k] = value(k)
 					}
@@ -127,10 +136,9 @@ func TestTheComparatorsAnswerLikeTheOldScript(t *testing.T) {
 				for k := 0; k < 3; k++ {
 					data[p*4+k] = float64(rng.Intn(256))
 					if base != nil && rng.Intn(3) != 0 {
-						data[p*4+k] = base[p*4+k] + float64(rng.Intn(9)) - 4
-						if data[p*4+k] < 0 {
-							data[p*4+k] = 0
-						}
+						// a channel stays within 0..255 here, so the script (Uint8ClampedArray) and the port (byte)
+						// are given the same number
+						data[p*4+k] = math.Min(255, math.Max(0, base[p*4+k]+float64(rng.Intn(9))-4))
 					}
 				}
 				data[p*4+3] = []float64{255, 255, 128, 0}[rng.Intn(4)]
@@ -172,8 +180,11 @@ func TestTheComparatorsAnswerLikeTheOldScript(t *testing.T) {
 		if c.Images != nil {
 			a, b := toImage(c.Images[0]), toImage(c.Images[1])
 			got, err := ComparePixels(a, b, c.Antialias)
-			if err != nil || old[i].Percent == nil || got != *old[i].Percent {
-				t.Fatalf("case %d: pixels %v (%v), old %v", i, got, err, old[i].Percent)
+			if err != nil || old[i].Percent == nil {
+				t.Fatalf("case %d: pixels %v (err %v), old %v", i, got, err, old[i].Percent)
+			}
+			if got != *old[i].Percent {
+				t.Fatalf("case %d: pixels %v, old %v", i, got, *old[i].Percent)
 			}
 			continue
 		}
