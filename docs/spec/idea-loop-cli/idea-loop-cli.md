@@ -66,7 +66,7 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 
 ### 入口
 
-一个命令 `idea-loop`，放在插件的 `bin/`。实测（2026-11-18，Claude Code 2.1.327，`claude -p --plugin-dir` 装一个临时插件）：插件 `bin/` 下的可执行文件能在 Bash 里直接按名字调；但这时它拿不到 `CLAUDE_PLUGIN_ROOT`（是空的）。所以入口按自己所在的路径找插件目录，不读这个环境变量。hook 照旧写 `${CLAUDE_PLUGIN_ROOT}` 全路径（hook 里有这个变量）。
+一个命令 `idea-loop`，放在插件的 `bin/`。实测（2026-11-18，Claude Code 2.1.327，`claude -p --plugin-dir` 装一个临时插件）：插件 `bin/` 下的可执行文件能在 Bash 里直接按名字调；但这时它拿不到 `CLAUDE_PLUGIN_ROOT`（是空的）。所以入口按自己所在的路径找插件目录，不读这个环境变量。hook 也调这个命令：`hooks.json` 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" hook <名字>`（hook 进程里有这个变量，所以用全路径；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）。
 
 ### 模块
 
@@ -74,10 +74,14 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 
 | 去向 | 个数 | 脚本 |
 |---|---|---|
-| 进命令 | 41 | 见下表 |
-| 只给 hook 跑的 lint，不进命令 | 2 | `design-lint`、`glossary-check` |
-| 库、测试用具、MCP 服务器、hook 入口，不进命令 | 13 | `mini-yaml`、`design-archive`、`design-archive-fixture`、`design-archive-mcp`、`ui-compare`、`ui-measure-concurrency`、`claude-stream`、`github-app`、`skill-doc-check`、`design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` |
+| 进命令，给会话调 | 41 | 见下表 |
+| 进命令的 `hook` 模块，只给 hook 调 | 4 | `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook`（另有新加的拦截 hook、SessionStart 的注入，也走这个模块） |
+| 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
+| lint 本体，只经 `hook` 模块跑，没有自己的命令 | 2 | `design-lint`、`glossary-check` |
+| 库与 MCP 服务器，不进命令 | 7 | `mini-yaml`、`design-archive`、`ui-compare`、`ui-measure-concurrency`、`claude-stream`、`github-app`（库，被别的模块 import）；`design-archive-mcp`（`.mcp.json` 起的 MCP 服务器） |
 | 删掉 | 1 | `codex-companion` |
+
+hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」。
 
 进命令的按模块分。「新增」是现在没有脚本、skill 手写的操作。
 
@@ -98,19 +102,21 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 | `retro` | `retro-install`、`retro-pool-count`、`retro-pool-reopened`、`session-digest` | — |
 | `runtime` | `runtime-detect` | `show <能力>`（见「运行环境」） |
 | `agent` | `codex-prompt` | `codex run`、`codex image`、`claude run`（见「包装别的命令行」） |
+| `hook` | `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook`；SessionStart 的三条注入（原 `runtime-detect --inject`）和项目地图（原 `project-map`） | `guard`：拦手写易错操作（见「hook 只拦不做事」） |
+| `test` | `design-archive-fixture`（写出一份虚构的设计档案到给定目录）、`skill-doc-check`（查一份 skill 的主体字数和被指向的小节在不在） | `run`：跑插件自己的 `*.test.mjs`，可带匹配 |
 
 ### 登记表与扫描测试
 
-照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README 里写的 `idea-loop <模块> <命令>`，登记表里没有的就红。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
+照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README 和 `hooks.json` 里写的 `idea-loop <模块> <命令>`，登记表里没有的就红。登记表给每个模块标调用方：`hook` 模块只许 `hooks.json` 引用，skill、agent 里写了也红；`test` 模块只许测试、`REVIEW.md`、`DEVELOPMENT.md` 引用。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
 
 ### hook 只拦不做事
 
-新加一个 Bash 的 PreToolUse hook，只拦两种手写操作，拦下时告诉它该用哪条命令：
+新加一个 Bash 的 PreToolUse hook（`idea-loop hook guard`），只拦两种手写操作，拦下时告诉它该用哪条命令：
 
 - 用 `gh issue edit` 加、去 `status:*` label → `idea-loop issues set`；
 - 手写 `git worktree remove` → `idea-loop worktree remove`。
 
-lint 只由自动触发器跑（现在只有 hook；仓库没有 GitHub Actions），skill 里不再显式调 lint：`design-lint` 的 6 处、`glossary-check` 的 1 处删掉，由已有的 PostToolUse hook 跑。要等一组改动做完才能判的检查（删文件后查死链等），放进落地命令当护栏（`idea-loop home commit` 有死链就拒绝）。
+lint 只由自动触发器跑（现在只有 hook；仓库没有 GitHub Actions），skill 里不再显式调 lint：`design-lint` 的 6 处、`glossary-check` 的 1 处删掉，由已有的 PostToolUse hook 经 `idea-loop hook design-lint`、`idea-loop hook glossary` 跑。要等一组改动做完才能判的检查（删文件后查死链等），放进落地命令当护栏（`idea-loop home commit` 有死链就拒绝）。
 
 skill 里显式调的 5 个格式检查挪进交回或落地那一步的命令：
 
@@ -161,7 +167,8 @@ runtime 不再是 skill。
 
 ### 同一行为的其他入口
 
-- **hook**（`hooks/hooks.json`）：纳入。照旧写全路径调 hook 入口脚本，入口内部改调模块。
+- **hook**（`hooks/hooks.json`）：纳入。每条都改成 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" hook <名字>`，不再直接写脚本路径。
+- **测试**：纳入。共用的测试用具改经 `idea-loop test` 调；测试文件里直接 import 模块的照旧。改插件时要用 worktree 里的 `idea-loop/bin/idea-loop test run`：PATH 上的 `idea-loop` 是已装的那一版插件，跑的是它自己的测试，不是 worktree 里正在改的。
 - **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：排除。它们是本地跑的 node 脚本，直接 import 模块，不经 Bash 调命令，不受这次影响。
 - **plugin 的 `README.md`**：纳入，命令写法同步改；扫描测试也扫它。
 - **design-archive MCP 服务器**：排除。它是 MCP，不是命令；查询逻辑跟 `idea-loop design archive query` 共用一个模块。
@@ -198,6 +205,8 @@ runtime 不再是 skill。
 ### 场景五：维护者
 
 1. 作为改 skill 的人，我想要 skill 里写了登记表里没有的命令时测试变红，以便命令改名后 skill 不会悄悄过期
+2. 作为改插件的人，我想要用 `idea-loop test` 跑测试、取测试用具，以便不用记哪个 mjs 文件做什么
+3. 作为改 hook 的人，我想要 hook 也走 `idea-loop hook <名字>`，以便 hook 和会话用同一个入口、同一份登记表
 
 ## 实现决策
 
@@ -229,7 +238,7 @@ runtime 不再是 skill。
 
 - **seam**：
   - `idea-loop` 命令本身（起子进程调 `bin/idea-loop`，读输出和退出码）：能抓到入口找不到插件目录、登记表和实现对不上、参数解析错；漏掉的是 Claude Code 把 `bin/` 放上 PATH 这一步。
-  - 登记表扫描测试（读 skill、agent、README 文本）：能抓到 skill 写了不存在的命令、还留着全路径调用；漏掉的是命令语义对不对。
+  - 登记表扫描测试（读 skill、agent、README、`hooks.json` 文本）：能抓到 skill 写了不存在的命令、还留着全路径调用；漏掉的是命令语义对不对。
 - **增量功能测试**：
   1. 前置：一个装了这版 idea-loop 的临时插件目录。步骤：`claude -p --plugin-dir <它>` 让会话跑 `idea-loop issues --help`。期望：打印 issues 模块的命令表，退出 0。覆盖：场景一 1、2、4。
   2. 前置：一份 skill 文本写了 `idea-loop issues frobnicate`。步骤：跑扫描测试。期望：红，报出文件和行。覆盖：场景五 1。
@@ -237,7 +246,9 @@ runtime 不再是 skill。
   4. 前置：PATH 上放一个假 `codex`，它再起一个睡眠子进程。步骤：`idea-loop agent codex run` 带 2 秒超时。期望：报超时，假 codex 和它的子进程都已不在。覆盖：场景三 2。
   5. 步骤：把 `gh issue edit 1 --add-label status:todo`、`git worktree remove x` 喂给新 hook。期望：两条都被拦，提示里有对应的 `idea-loop` 命令；`gh issue edit 1 --add-label kind:bug` 不拦。覆盖：场景二 1、2。
   6. 步骤：`IDEA_LOOP_RUNTIME=magi idea-loop runtime show 浏览器`。期望：打印 magi 数据的「浏览器」一节，包含原 browser skill 的三条规矩。覆盖：场景四 1、场景一 5。
-  7. 步骤：`grep -r 'CLAUDE_PLUGIN_ROOT}/scripts/' idea-loop/skills idea-loop/agents`。期望：没有输出。覆盖：场景一 1。
+  7. 步骤：`grep -r 'CLAUDE_PLUGIN_ROOT}/scripts/' idea-loop/skills idea-loop/agents idea-loop/hooks`。期望：没有输出。覆盖：场景一 1。
+  8. 前置：一份 skill 文本写了 `idea-loop hook guard`。步骤：跑扫描测试。期望：红，报「hook 模块只许 hooks.json 引用」。覆盖：场景五 1。
+  9. 步骤：`idea-loop test fixture design-archive <空目录>`，再 `idea-loop design archive check <那个目录>`。期望：写出两页的虚构档案，校验退出 0。覆盖：场景五 2。
 - **照着谁写**：各脚本已有的 `*.test.mjs`（如 `issues.test.mjs`）；扫 skill 文本的写法照 `no-project-leak.test.mjs`；hook 的测试照 `design-lint-hook.test.mjs`；runtime 照 `runtime-detect.test.mjs`。
 
 ## Out of scope
