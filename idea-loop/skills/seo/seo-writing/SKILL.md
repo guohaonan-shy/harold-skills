@@ -79,10 +79,26 @@ description: 站点文章的写法：按 brief 写新文或改写、局部润色
 
 完成条件：上面每一条都对过；没对上的写进交回，不默默放过。
 
-## 5. 检查，交回
+## 5. 改稿循环（只有按 brief 写走这步）
+
+初稿写完，一轮一轮改到干净，托管时中间不停；人在场时，循环结束把交回摆给人，让人改一遍。每轮三件事，命令、评委怎么起、第二评委怎么接读 [`references/revision-loop.md`](references/revision-loop.md)：
+
+1. 跑 lint：通用写作 lint（带「写作」节的 `lintConfig`），再跑 `extraLint`（补充 lint）。
+2. 起冷读评委子代理，按 [`references/judge-rubric.md`](references/judge-rubric.md) 给每个语言版本打分；配了 `secondJudge`，它跟冷读评委一起打。
+3. lint 的问题和评委的 `local` 问题自己改，回到 1。
+
+lint 一条问题没有、评委没有 `local` 问题，就是干净，结束。最多三轮，三轮后没干净的写进交回的「没干净的」。`extraLint`、`secondJudge` 写 `无` 或没写，这一样跳过，循环照常跑。
+
+评委报出 `premise`（改它要动论点、章节或事实断言）：不自己改。这一轮其余的照改，然后停，把评委原话写进交回的 `premise` 一节；调用方把已写的提交，照 `issue-session`「起草中冒出了要人定的」把 issue 翻回 triage。
+
+title 或第 3 步那句论点跟出图时用的不一样了，用 Skill 工具调 `idea-loop:cover`、`idea-loop:og` 重出图。
+
+完成条件：每个语言版本最后一轮 lint 的结果和评委轮次有了；要么干净，要么「没干净的」逐条列出；有 `premise` 就贴着评委原话。
+
+## 6. 检查，交回
 
 改了 title、description、FAQ、结构化数据或新增了页面，构建站点：构建后 hook 会自动跑 seo-check，有 error 会交回给你。想看 warn、或只看这篇的路由，用 Skill 工具调 `idea-loop:seo-check` 手动跑。
 
-改动留在工作区，交回调用方：改了哪些文件、类型和它的来源、SERP 重查的结果、没对上的规则、需要人决定的事。
+改动留在工作区，交回调用方：改了哪些文件、类型和它的来源、SERP 重查的结果、没对上的规则、需要人决定的事；按 brief 写的再加 lint 结果、评委轮次、没干净的、`premise`（各项写法见 `references/revision-loop.md` 的「`premise`」和「交回里多的三项」）。
 
 完成条件：seo-check 对本文的路由没有 error；交回里每一项都有。
