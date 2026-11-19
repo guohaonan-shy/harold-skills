@@ -163,3 +163,15 @@ test('revision-loop.md: the caller turns the three handback items into verified 
   assert.ok(implementer.includes('<该验而没验成的> | 没验成：<为什么> | <谁补：后续工单 / PR 交付验收 / 人>'), 'implementer handback has the 没验成 row shape');
   assert.match(readIf('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
 });
+
+test('revision-loop.md: the completion condition reads the same for a dirty and an all-clean draft', () => {
+  const tail = LOOP.split('## 交回里多的三项')[1] ?? '';
+  const done = (tail.match(/^完成条件：.*$/m) ?? [''])[0];
+  // the two rows that always exist
+  assert.match(done, /lint 结果、评委轮次各有一行 `verified`/);
+  // the 没验成 rows exist per unfinished item, and an all-clean draft has none
+  assert.match(done, /没干净的每条各有一行「没验成」/);
+  assert.match(done, /全干净时没有这类行/);
+  // the old wording counted the third item as always having a verified row
+  assert.doesNotMatch(done, /三项各有对应的/);
+});
