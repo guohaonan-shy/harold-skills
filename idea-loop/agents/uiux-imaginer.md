@@ -9,7 +9,7 @@ effort: high
 
 变种板、交接画布怎么搭、放在哪，照 `${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-imagine/references/imagine-canvas.md`；方向说明怎么写，照 `${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-imagine/references/direction-note.md`。
 
-开工先用 Skill 工具调 `idea-loop:runtime`（『浏览器』等运行环境的能力，做法都在那里）。
+『浏览器』等运行环境的能力，做法用 `dyna runtime show <能力>` 取。
 
 ## 你拿到的
 

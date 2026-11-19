@@ -2,14 +2,14 @@
 name: seo-scan
 description: 跑一次 SEO 扫描：并行查站点各方向，把发现提成 GitHub issue，每 3 天出一份效果报告。每天的定时任务触发，人也可以手动跑。
 argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：technical pages keywords backlinks geo results）"
-allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(node *seo-md.mjs:*), Bash(node *seo-due.mjs:*), Bash(node *seo-gaps.mjs:*), Bash(node *seo-budget.mjs:*), Bash(node *seo-context.mjs:*), Bash(node *seo-issues.mjs:*), Bash(node *issues.mjs:*), Bash(git fetch:*), Bash(git worktree:*), Bash(node *project-map.mjs:*), Bash(cp:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
+allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(dyna seo:*), Bash(dyna issues:*), Bash(git fetch:*), Bash(git worktree:*), Bash(dyna home commit:*), Bash(cp:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
 一次扫描：挑方向，每个方向起一个 agent 并行查，发现交给提 issue 脚本，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；外联跟进表、效果报告和关卡里人确认过的 `SEO.md` 改动提交到 home。
 
 可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
-下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`。脚本都输出 JSON 到 stdout，出错退出码 1、原因在 stderr。
+`dyna seo` 的命令都输出 JSON 到 stdout，出错退出码 1、原因在 stderr；参数靠 `--help` 查。
 
 ## 开场
 
@@ -20,7 +20,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 ## 方向
 
 - `$ARGUMENTS` 不为空：就跑这几个。不在 `technical pages keywords backlinks geo results` 里的词，记成「不认识的方向」进研究日志，不跑。
-- 为空（定时任务每天这样调一次）：`node S/seo-due.mjs <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：`results` 每 3 天，其余五个每 7 天；研究日志的前两行格式不能改（它读以前各次的「采集」行）。没有 `context.json`：跑全部六个。
+- 为空（定时任务每天这样调一次）：`dyna seo due <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：`results` 每 3 天，其余五个每 7 天；研究日志的前两行格式不能改（它读以前各次的「采集」行）。没有 `context.json`：跑全部六个。
 
 完成条件：一个方向列表（可以为空：为空就跳过预算、派 agent、提 issue，研究日志只写一行）。
 
@@ -29,12 +29,12 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 这次方向要用的项目信息缺了，不拿推出来的值直接跑：推测、等人确认、写下来，再往下。
 
 1. 方向列表为空：跳过。
-2. `node S/seo-gaps.mjs <项目目录>/SEO.md <运行目录>/context.json <方向>...`（没有 `context.json` 时第二个参数写 `-`），输出存到 `<运行目录>/gaps.json`。`gaps` 为空：进「预算」。
+2. `dyna seo gaps <项目目录>/SEO.md <运行目录>/context.json <方向>...`（没有 `context.json` 时第二个参数写 `-`），输出存到 `<运行目录>/gaps.json`。`gaps` 为空：进「预算」。
 3. 有缺口，逐项推测，每项带出处：
-   - 竞品：`find_serp_competitors`，花 credits。先按「预算」的做法跑一次 `whoami`（记作开始余额）和 `seo-budget.mjs`；要竞品的方向没有一个 `allow` 大于 0，就不推，只问人要。调完再调一次 `whoami`，差值是关卡花的。
+   - 竞品：`find_serp_competitors`，花 credits。先按「预算」的做法跑一次 `whoami`（记作开始余额）和 `dyna seo allocate`；要竞品的方向没有一个 `allow` 大于 0，就不推，只问人要。调完再调一次 `whoami`，差值是关卡花的。
    - 品牌词：「站点」域名去掉后缀。
    - 业务概述、当前目标、定位：站点首页。
-4. 用『推送』提醒（写明缺哪几项；做法照 `idea-loop:runtime`），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认，说「不需要」就是这项留空。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
+4. 用『推送』提醒（写明缺哪几项；做法照 `dyna runtime show 推送`），在会话里逐项列出缺什么、推测值、出处、哪些方向要它，一次最多三个问题，人一句「照推荐」就算确认，说「不需要」就是这项留空。然后停下，不派任何方向 agent，交回「停下等确认」的形状。
 5. 人回复后：
    - `SEO.md` 的项（竞品、品牌词）用 Edit 改 `<项目目录>/SEO.md`，改完 `commit` 到 home（人已确认过值）；人说留空的写 `无`。
    - 项目上下文的项用 `update_project_context` 的 `{ section, content }` 写回；人说不需要的，那一节也写 `无`，下次缺口检查就不再报。
@@ -46,7 +46,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 ## 预算
 
 1. 重新读一次余额：调 `whoami` 读 `creditsRemaining`。「开始余额」是本次扫描第一次读到的（关卡调过就是它那次），「已花」= 开始余额 − 余额。读不到或 `null`：余额传 `null`、记原因（付费全不放行）。
-2. `node S/seo-budget.mjs <项目目录>/SEO.md <余额> <方向>... --spent <已花> --context <运行目录>/context.json --today <YYYY-MM-DD>`，输出存到 `<运行目录>/budget.json`。额度按周算，读法见 [references/budget.md](references/budget.md)。
+2. `dyna seo allocate <项目目录>/SEO.md <余额> <方向>... --spent <已花> --context <运行目录>/context.json --today <YYYY-MM-DD>`，输出存到 `<运行目录>/budget.json`。额度按周算，读法见 [references/budget.md](references/budget.md)。
 
 `allow` 里的方向都派（额度是它能花的 credits，0 只做免费）。`skipped` 的原因原样进研究日志；本周份额不够的另用『推送』告诉人。
 
@@ -85,7 +85,7 @@ OpenSEO 项目：<projectId>
 ## 提 issue
 
 1. 合并：把各方向文件里的发现拼成 `<运行目录>/findings.json`、去掉 `uncollected` 对象，命令见 [references/merge-findings.md](references/merge-findings.md)。
-2. `node S/seo-issues.mjs <docs> <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；新开的 issue 先是 backlog，下一节马上分流。
+2. `dyna seo file-issues <docs> <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；新开的 issue 先是 backlog，下一节马上分流。
 3. 脚本失败：原因记下进研究日志，不重试、不手动建。
 
 完成条件：`issues.json` 存在，或失败原因已记下。

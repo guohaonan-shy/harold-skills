@@ -166,7 +166,7 @@ motion-anything's `MA_RUNTIME`)*:
    ```
    WAAPI/CSS animations are seekable via `document.getAnimations()`; pure rAF/JS-clock motion is not
    — prefer WAAPI/CSS for choreography, or expose the JS clock through the same `seek(t)`.
-2. **Verify by seeking, not by waiting**: run `__maTimeline.seek(t)` in the page (arbitrary JS via the browser capability; if the runtime can't, take the `idea-loop:runtime` fallback) at t = 0 / mid /
+2. **Verify by seeking, not by waiting**: run `__maTimeline.seek(t)` in the page (arbitrary JS via the browser capability; if the runtime can't, take the fallback `dyna runtime show` prints) at t = 0 / mid /
    end (+ keyframes of interest) → screenshot each → confirm the frames DIFFER and match the intended
    choreography. Identical frames = the animation never played. For scroll-driven or pointer
    interactions the timeline can't cover, capture before / during / after instead.
@@ -212,7 +212,7 @@ the sibling shipped components whose interactions you must match or extend.
    written down and sent back to the static loop, never quietly re-skinned.
 4. **Expose the freezable timeline.**
 5. **Reduced motion**, per its section.
-6. Serve it locally and drive it with the browser capability: load `idea-loop:browser` first (it sets the default
+6. Serve it locally and drive it with the browser capability: run `dyna runtime show 浏览器` first (it sets the default
    headless server), then navigate, interact, capture.
 
 ### B · Review gates to convergence

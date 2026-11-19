@@ -66,7 +66,7 @@ function main() {
   }
   const { entry } = install(dest);
   console.log(`runner 已装到 ${entry}`);
-  console.log(`允许规则（请你自己加进运行环境的 permissions.allow，位置见 idea-loop:runtime 的『装与设置』，这个脚本不改权限设置）：\n  ${allowRule(dest)}`);
+  console.log(`允许规则（请你自己加进运行环境的 permissions.allow，位置见「dyna runtime show 装与设置」，这个脚本不改权限设置）：\n  ${allowRule(dest)}`);
   return 0;
 }
 

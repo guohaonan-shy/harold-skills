@@ -44,9 +44,9 @@ test('seo-scan sits 分流 between 提 issue and 研究日志, and leaves no 等
   assert.ok(!SCAN_BODY.includes('就是 backlog'), 'seo-scan still says opened issues are backlog');
 });
 
-test('seo-scan can run the flips: allowed-tools has issues.mjs and the worktree commands', () => {
+test('seo-scan can run the flips: allowed-tools has dyna issues and the worktree commands', () => {
   const tools = SCAN.match(/^allowed-tools:\s*(.+)$/m)?.[1] ?? '';
-  for (const t of ['Bash(node *issues.mjs:*)', 'Bash(git fetch:*)', 'Bash(git worktree:*)']) {
+  for (const t of ['Bash(dyna issues:*)', 'Bash(git fetch:*)', 'Bash(git worktree:*)']) {
     assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
   }
 });

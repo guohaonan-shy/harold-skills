@@ -32,7 +32,7 @@
 
 **补归档**，跟执行段其余改动同一次 `commit`：
 
-1. 开发环境：在代码 worktree（它就是基准分支）里照 `<项目目录>/DEVELOPMENT.md` 准备，自己挑一个空闲端口起服务；浏览器照 `idea-loop:browser` 的「并行时抢锁」，owner 写 `dreaming`。
+1. 开发环境：在代码 worktree（它就是基准分支）里照 `<项目目录>/DEVELOPMENT.md` 准备，自己挑一个空闲端口起服务；浏览器照 `dyna runtime show 浏览器` 的「并行时抢锁」，owner 写 `dreaming`。
 2. 起 `idea-loop:ui-reviewer`，模式「归档」，输入照 `idea-loop:pr-review` 合并 reference 的「合并前归档」第 1 步：spec 名、项目目录的绝对路径、代码 worktree、端口、图的前缀 `dreaming-<日期>-merge-`。没有 PR：输入里「PR 号」一格填 `dreaming-<日期>-<spec-slug>`，图和草稿就落在代码 worktree 的 `.tmp/pr-review/dreaming-<日期>-<spec-slug>/` 下；没有 review loop 文件，「决定」取自冻结记录。
 3. 核不过（`failed`）或未完成：这一行不执行，把它交回的条目原样写进提交消息正文，用『推送』说这一部分没跑成，留着等下一次。
 4. 通过：不等人看草稿，直接跑 `dyna design archive write <项目目录> <spec-slug>`（先 `--dry-run`）。脚本先校验，再并进 `prod/`、清掉这个 `tmp/<spec-slug>/`；退出码 1 是拒绝，把它列的违规写进提交消息正文，这一行不执行，也用『推送』说一句。

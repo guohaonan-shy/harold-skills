@@ -372,14 +372,15 @@ function pluginNameOf(dir, fallback) {
 }
 
 /**
- * What the change touched, for the exercised check: the files added or modified under `skills/` and `agents/` between the
+ * What the change touched, for the exercised check: the files added or modified under `skills/`, `agents/` and `runtime/` (the
+ * data the SessionStart hook injects) between the
  * pre-change plugin dir and the post-change one (a deleted file is not "used"), the skills those files belong to
  * (`<plugin>:<dir holding the nearest SKILL.md above the file>`) and the agents among them (`<plugin>:<file name without .md>`).
  * Sorted, so the result reads the same every time.
  */
 export function changeSetOf(beforeDir, afterDir, pluginName) {
   const plugin = pluginNameOf(afterDir, pluginName);
-  const files = ['skills', 'agents'].flatMap((top) => filesUnder(join(afterDir, top), `${top}/`)).filter((rel) => {
+  const files = ['skills', 'agents', 'runtime'].flatMap((top) => filesUnder(join(afterDir, top), `${top}/`)).filter((rel) => {
     const old = join(beforeDir, rel);
     return !existsSync(old) || !readFileSync(old).equals(readFileSync(join(afterDir, rel)));
   }).sort();

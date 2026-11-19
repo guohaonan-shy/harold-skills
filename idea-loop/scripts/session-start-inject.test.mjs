@@ -1,6 +1,6 @@
 /**
  * The SessionStart hook injects three sections at the start of every main session: the body of
- * `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the whole reference of the current runtime.
+ * `idea-loop:decision-rules`, the capability list (runtime/capabilities.md), and the whole data of the current runtime (runtime/<name>.md).
  * The tests run the commands registered in hooks.json through a shell, exactly as the host does, and read stdout.
  *
  * Spec session-start-inject-rules, ticket 01.
@@ -67,12 +67,12 @@ for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-deskto
 
     // runtime: first line is the runtime, then the header, then the body
     assert.equal(runtime.stdout.split('\n')[0], `当前运行环境：${name}`);
-    assert.match(runtime.stdout.split('\n')[1], /^以下是 `idea-loop:runtime` 的正文，开场注入，不必再调它/);
+    assert.match(runtime.stdout.split('\n')[1], /^以下是运行环境的能力清单，开场注入，不必再取/);
     assert.ok(runtime.stdout.includes('## 能力清单'));
     assert.doesNotMatch(runtime.stdout, /^name: /m);
 
     // reference: the whole file of this runtime, and not the other one's
-    assert.match(reference.stdout.split('\n')[0], /^以下是 `idea-loop:runtime` 的 reference/);
+    assert.match(reference.stdout.split('\n')[0], /^以下是运行环境「/);
     assert.ok(reference.stdout.includes(name));
     assert.ok(reference.stdout.includes(readFileSync(join(pluginRoot, REFERENCE[name]), 'utf8').replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot).trim()));
     const other = name === 'magi' ? 'claude-desktop' : 'magi';
@@ -80,9 +80,10 @@ for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-deskto
   });
 }
 
-test('the plugin path in the injected text is the real one: the runtime body names the detect script with it', () => {
+test('the injected runtime body sends a sub-agent to `dyna runtime show`, and names neither the removed skill nor the old detect script', () => {
   const [, runtime] = runAll({});
-  assert.ok(runtime.stdout.includes(`${pluginRoot}/scripts/runtime-detect.mjs`));
+  assert.ok(runtime.stdout.includes('dyna runtime show'));
+  for (const gone of ['idea-loop:runtime', 'runtime-detect.mjs']) assert.ok(!runtime.stdout.includes(gone), gone);
 });
 
 test('IDEA_LOOP_RUNTIME=foo: decision-rules still injects, both runtime sections exit non-zero with empty stdout', () => {

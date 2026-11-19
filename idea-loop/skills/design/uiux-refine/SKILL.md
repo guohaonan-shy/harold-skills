@@ -70,7 +70,7 @@ designer 交付一版之后：
 
 停在 `瓶颈`、`方向`、有冲突项、动效做完、签字前检查做完、冻结、部分冻结，或 designer 交付「卡住」时，不等人要：
 
-- 照 `idea-loop:browser` 的「给人看」打开最新一版，停在这次改动的那个状态。
+- 照 `dyna runtime show 浏览器` 的「给人看」打开最新一版，停在这次改动的那个状态。
 - 配一份短清单：为什么停、评委分、本轮核心问题、designer 改了什么、要人判的取舍（带 designer 的推荐）。截图和评委回执留在 `canvas/work/`。
 - **冲突项排在最前**：评委原话、撞上的是哪一项人选定的东西、画布停在没动那一项的样子。按人保留排除的，只带一句「已按人保留排除 N 条」。
 - **「建议调研的问题」**和要人判的取舍一起摆，每条带 designer 的推荐做法：designer 已经按它改了。人说要查才调 `idea-loop:uiux-research`；不查，就当推荐做法定了。
@@ -101,7 +101,7 @@ designer 交付「冻结」后，你核对：
 - `canvas/<spec-slug>-design.md` 六节齐，「冻结后的变更」写着「无」。冻结不写 `delta/`：它只在合并前归档时由 ui-reviewer 从最终画布加实现写出。
 - `imagine/`、`canvas/work/` 和没签字的画布版本已清。
 
-都过了，照 `idea-loop:browser` 的「给人看」把交互图给人看，关掉预览服务器，然后把冻结结果 `commit` 到 home（`idea-loop:wiki-conventions` 的「知识库落地」）：不开分支、不开 PR，实现在代码分支上做，画布不进代码分支。
+都过了，照 `dyna runtime show 浏览器` 的「给人看」把交互图给人看，关掉预览服务器，然后把冻结结果 `commit` 到 home（`idea-loop:wiki-conventions` 的「知识库落地」）：不开分支、不开 PR，实现在代码分支上做，画布不进代码分支。
 
 提交的步骤和之后告诉人的话见 [`references/after-freeze.md`](references/after-freeze.md)。
 

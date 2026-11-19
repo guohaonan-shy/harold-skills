@@ -238,7 +238,7 @@ func TestHookTheSiteBuildThatLeftAnErrorIsReportedBackWithExitTwo(t *testing.T) 
 	}
 	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
 	errs, code := w.hook("PostToolUse", w.root, "t1", nil)
-	if code != 2 || !strings.Contains(errs, "Missing <title>") || !strings.Contains(errs, "idea-loop:seo-check") || !strings.HasPrefix(errs, "构建产物 "+filepath.Join(w.root, "site/dist")+" 有 SEO error") || !strings.HasSuffix(errs, "改完重新构建；每条规则的理由见 idea-loop:seo-check。\n") {
+	if code != 2 || !strings.Contains(errs, "Missing <title>") || !strings.Contains(errs, "seo-writing/references/checks.md") || strings.Contains(errs, "idea-loop:seo-check") || !strings.HasPrefix(errs, "构建产物 "+filepath.Join(w.root, "site/dist")+" 有 SEO error") || !strings.HasSuffix(errs, "改完重新构建；每条规则的理由见 idea-loop 插件的 skills/seo/seo-writing/references/checks.md。\n") {
 		t.Fatal(code, errs)
 	}
 }

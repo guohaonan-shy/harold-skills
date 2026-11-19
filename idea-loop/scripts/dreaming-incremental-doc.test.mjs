@@ -57,9 +57,9 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
   assert.ok(mine.includes('分钟避开 0 和 30'));
   assert.ok(mine.indexOf('列出已有的任务') < mine.indexOf('用『向人提问』问人'));
   assert.ok(mine.indexOf('用『向人提问』问人') < mine.indexOf('用『定时任务』创建'));
-  // no desktop tool name left: the how is in idea-loop:runtime
+  // no desktop tool name left: the how is `dyna runtime show`
   assert.doesNotMatch(mine, /list_scheduled_tasks|AskUserQuestion|create_scheduled_task|桌面 app/);
-  assert.match(mine, /idea-loop:runtime/);
+  assert.match(mine, /dyna runtime show/);
   // the prompt starts the skill (the way to write it is the runtime's), and what the runtime does at a missed run is told to the human
   assert.match(mine, /prompt：调起 `idea-loop:dreaming`/);
   assert.match(mine, /补不补跑[\s\S]*「行为」/);
@@ -78,7 +78,7 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
   // the how (which tool, which field) is the runtime's; the scope says only what to read
   assert.doesNotMatch(scope, /list_task_runs|list_scheduled_tasks|桌面 app/);
   assert.match(scope, /读这个任务上次成功运行的时间/);
-  assert.match(scope, /idea-loop:runtime/);
+  assert.match(scope, /dyna runtime show/);
   assert.match(scope, /started_at/);
   assert.match(scope, /git rev-list -1 --first-parent --before=/);
   assert.match(scope, /origin\/<基准分支>/);

@@ -1,6 +1,6 @@
 # 发现清单与方向 agent 的文件约定
 
-一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `seo-issues.mjs`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；五个方向 agent 和被它们调用的方法 skill 都照这里写。
+一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `dyna seo file-issues`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；五个方向 agent 和被它们调用的方法 skill 都照这里写。
 
 ## 一条发现
 
@@ -40,7 +40,7 @@
   "ratio": { "numerator": 12, "denominator": 1050 },
   "repro": "get_search_console_performance projectId=<SEO.md 的项目> dimensions=[query,page] dateRange=last_28_days filters=[{dimension:page,operator:equals,expression:https://cookbook.example/blog/weeknight-dinners}]",
   "fix": "需要诊断：对照 get_serp_results 前 10 名的标题，看意图是不是「快手」而不是「清单」",
-  "acceptance": ["页面 title 包含目标词且不超过 seo-check 的宽度上限", "改动上线 28 天后同一查询的点击 / 展现高于本次"]
+  "acceptance": ["页面 title 包含目标词且不超过 `dyna seo check` 的宽度上限", "改动上线 28 天后同一查询的点击 / 展现高于本次"]
 }
 ```
 

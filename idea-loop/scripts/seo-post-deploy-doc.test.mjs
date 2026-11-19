@@ -119,7 +119,7 @@ test('the check that could not run does not roll anything back', () => {
   assert.match(o, /不回滚/);
 });
 
-test('SEO.md format: 上线等待 sits in 构建与检查, minutes, 30 when not written, read by seo-live-check.mjs', () => {
+test('SEO.md format: 上线等待 sits in 构建与检查, minutes, 30 when not written, read by dyna seo verify-live', () => {
   assert.match(FORMAT, /- 上线等待：\d+/);
-  assert.match(FORMAT, /\| 构建与检查 \|[^\n]*上线等待[^\n]*按 30[^\n]*seo-live-check\.mjs/);
+  assert.match(FORMAT, /\| 构建与检查 \|[^\n]*上线等待[^\n]*按 30[^\n]*dyna seo verify-live/);
 });

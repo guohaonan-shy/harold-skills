@@ -1,6 +1,6 @@
 # claude-desktop
 
-Claude 桌面 app 里的做法。写法是 0.1.10 各流程正文里的原样：工具名、参数、提醒文案、规则都没改。命令行、IDE 插件按这份判，缺的工具走 [`SKILL.md`](../SKILL.md) 的退路。小节名与那里的能力清单一一对应。
+Claude 桌面 app 里的做法。写法是 0.1.10 各流程正文里的原样：工具名、参数、提醒文案、规则都没改。命令行、IDE 插件按这份判，缺的工具走能力清单的退路（`dyna runtime show` 不带能力就打印）。小节名与能力清单一一对应。
 
 ## 定时任务
 
@@ -55,7 +55,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。
      - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `<项目目录>/DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
 
      路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
-  2. **开会话并交到桌面端**：在沙箱外跑（它要联网）`node "${CLAUDE_PLUGIN_ROOT}/scripts/desktop-handoff.mjs" --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>`（`<dispatch>` 取 `todo` 或 `triage`，早上汇总靠它找夜里开出的）。脚本先用 `claude -p` 开出会话，再在交互模式里接回、敲 `/desktop`，看到「Opening in Claude Desktop…」算成功，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`；用交互模式是因为 `-p` 里没有 `/desktop`；依赖系统自带的 `expect`。成功：stdout 一行 JSON，`desktopSessionId` 是 `local_<id>`；`recorded` 是 `false` 说明会话交出了但记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr 「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。目录没被 claude 信任过时，交互那步停在信任确认，也是交出失败：先在 `<仓库名>-worktrees` 这个目录里开一次 `claude` 选信任，它下面的 worktree 沿用。
+  2. **开会话并交到桌面端**：在沙箱外跑（它要联网）`dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>`（`<dispatch>` 取 `todo` 或 `triage`，早上汇总靠它找夜里开出的）。脚本先用 `claude -p` 开出会话，再在交互模式里接回、敲 `/desktop`，看到「Opening in Claude Desktop…」算成功，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`；用交互模式是因为 `-p` 里没有 `/desktop`；依赖系统自带的 `expect`。成功：stdout 一行 JSON，`desktopSessionId` 是 `local_<id>`；`recorded` 是 `false` 说明会话交出了但记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr 「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。目录没被 claude 信任过时，交互那步停在信任确认，也是交出失败：先在 `<仓库名>-worktrees` 这个目录里开一次 `claude` 选信任，它下面的 worktree 沿用。
   3. **归位**：`set_session_title` 把 `local_<id>` 改成「<仓库名>#<号> <标题>」，再用 `mcp__ccd_sidebar__move_sessions` 移进对应分组（`triage` 进 triage，`todo` 进 in-progress）；这是调度唯一一次移动别的会话。移动被拦（没加允许规则，见「装与设置」）：会话已经开着，但不在分组里，数不到，所以这一轮不再交出别的 issue，汇报里写明并推送，要人加规则。
   4. **发任务**：用会话间消息 `send_message` 把 issue 会话的 prompt（`idea-loop:issue-dispatch` 里写的）发给 `local_<id>`。要在交到桌面端之后才发：`claude -p` 跑着的时候桌面端看不见它、调度数不到它，夜里会超开。
 
@@ -96,16 +96,16 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 - 它拒绝 `file:` 地址；`file://` 下 ES 模块和 fetch 也会坏。本地文件同样经静态服务器打开。
 - 它只能往工作区里写文件：截图先存进工作区，再挪到要放的位置。
 - 跑 Playwright 代码的那个工具（`browser_run_code*`，如 `browser_run_code_unsafe`）写不了文件，也没有 `setTimeout`，等待用 `page.waitForTimeout(ms)`。代码的返回值只印在工具输出里；要存成文件，用 `browser_evaluate`（函数 `() => window.<变量>`，带 `filename`）。
-- 在页面里跑脚本打印的一段 `async (page) => …` 代码（如 design-archive 的 `design-archive-sections.mjs`）：入口用 `browser_navigate` 打开，代码交给 `browser_run_code_unsafe` 跑；代码长就存成文件、用 `filename` 参数传，代码文件和输出目录要在 Playwright 的工作区根目录里，否则报「outside allowed roots」。读页面变量存成文件用 `browser_evaluate`，结果 JSON 就在 Playwright 的工作区里；页面里量值同样用它（如 `browser_evaluate(getComputedStyle)`、`__maTimeline.seek(t)`）。
+- 在页面里跑脚本打印的一段 `async (page) => …` 代码（如 `dyna design archive sections`）：入口用 `browser_navigate` 打开，代码交给 `browser_run_code_unsafe` 跑；代码长就存成文件、用 `filename` 参数传，代码文件和输出目录要在 Playwright 的工作区根目录里，否则报「outside allowed roots」。读页面变量存成文件用 `browser_evaluate`，结果 JSON 就在 Playwright 的工作区里；页面里量值同样用它（如 `browser_evaluate(getComputedStyle)`、`__maTimeline.seek(t)`）。
 - 慢网络、失败用请求拦截造：慢的在 `page.route` 里先等再 `continue`，失败用 `route.fulfill({ status: 500 })` 或 `route.abort()`。
 
 ### 并行时抢锁
 
 一个会话只有一个 MCP 浏览器，几个子代理同时用会点到对方的页面。调用方给了锁目录的，每次用 `mcp__playwright__browser_*` 之前先抢锁，按下面的步骤抢、释放，等了默认的 30 分钟还没拿到就停下；自己起 chromium 的脚本（测量、拼流程图、录动图）不用。
 
-1. 先把不需要浏览器的活做完，再抢：`node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" acquire <锁目录> --owner <你的名字>`。
+1. 先把不需要浏览器的活做完，再抢：`dyna ui lock acquire <锁目录> --owner <你的名字>`。
 2. 拿到后先 `browser_close` 一次，不继承上一个人的标签页和登录态；只访问自己端口上的页面。
-3. 用完 `browser_close`，再 `node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release <锁目录> --owner <你的名字>`。
+3. 用完 `browser_close`，再 `dyna ui lock release <锁目录> --owner <你的名字>`。
 4. 等了默认的 30 分钟还没拿到，就停下，在交回里写明卡在锁上。
 
 ## 人的浏览器
@@ -116,7 +116,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 - 先 `tabs_context_mcp` 看人开着哪些标签页；用 `tabs_create_mcp` 开新标签页干活，不动人已有的标签页，用完 `tabs_close_mcp` 关掉自己开的（要留给人点的那一页除外）。
 - 开页面 `navigate`，读页面 `read_page` / `get_page_text`，填表 `form_input`，截图 `computer` 的 `screenshot`。
 - 遇到登录页、验证码、支付页：停下，交给人；不替人输密码，不过人机验证。
-- 扩展没连上、工具不在：走 `SKILL.md` 的退路。
+- 扩展没连上、工具不在：走能力清单的退路。
 
 ## 向人提问
 

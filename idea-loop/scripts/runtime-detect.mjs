@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Which runtime is this session in? Prints its name; skills/productivity/runtime/ holds one reference per name.
+ * Which runtime is this session in? Prints its name; runtime/ holds one data file per name.
  *
  * IDEA_LOOP_RUNTIME (a known name) wins; otherwise MAGI_SESSION_ID means magi; otherwise claude-desktop.
  * The command line and IDE plugins have no reliable marker variable, so they land on claude-desktop and the
- * capabilities they lack go through the fallback in the runtime skill. A forced name that is not known is an
+ * capabilities they lack go through the fallback in runtime/capabilities.md. A forced name that is not known is an
  * error, never a guess.
  *
  * Also what the SessionStart hook runs: `--inject <section>` prints one of the three sections a main session
  * starts with, one hook command each (a hook's output is cut at 10,000 characters, so they stay apart):
  *   decision-rules  the body of idea-loop:decision-rules
- *   runtime         "当前运行环境：<name>", then the body of idea-loop:runtime
- *   reference       the whole reference of the current runtime (skills/productivity/runtime/references/<name>.md)
+ *   runtime         "当前运行环境：<name>", then the body of runtime/capabilities.md
+ *   reference       the whole data of the current runtime (runtime/<name>.md)
  * The frontmatter is dropped and `${CLAUDE_PLUGIN_ROOT}` is replaced by the real plugin path (the host does that
  * for a skill it loads, not for hook output).
  *
@@ -48,15 +48,15 @@ const stripFrontmatter = (text) => text.replace(/^---\n[\s\S]*?\n---\n/, '');
 export function injection(section, { env = process.env, pluginRoot = PLUGIN_ROOT } = {}) {
   if (!SECTIONS.includes(section)) throw new Error(`unknown section ${section}; known: ${SECTIONS.join(', ')}`);
   const read = (...p) =>
-    stripFrontmatter(readFileSync(join(pluginRoot, 'skills', 'productivity', ...p), 'utf8')).replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot).trim();
+    stripFrontmatter(readFileSync(join(pluginRoot, ...p), 'utf8')).replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot).trim();
   if (section === 'decision-rules') {
-    return `以下是 \`idea-loop:decision-rules\` 的正文，开场注入，不必再调它。「核心」一节针对有 spec 的工作；没有 spec 的会话里，把「spec」读作人这次交代的事。\n\n${read('decision-rules', 'SKILL.md')}\n`;
+    return `以下是 \`idea-loop:decision-rules\` 的正文，开场注入，不必再调它。「核心」一节针对有 spec 的工作；没有 spec 的会话里，把「spec」读作人这次交代的事。\n\n${read('skills', 'productivity', 'decision-rules', 'SKILL.md')}\n`;
   }
   const name = detect(env);
   if (section === 'runtime') {
-    return `当前运行环境：${name}\n以下是 \`idea-loop:runtime\` 的正文，开场注入，不必再调它。\n\n${read('runtime', 'SKILL.md')}\n`;
+    return `当前运行环境：${name}\n以下是运行环境的能力清单，开场注入，不必再取。\n\n${read('runtime', 'capabilities.md')}\n`;
   }
-  return `以下是 \`idea-loop:runtime\` 的 reference「${name}」全文，开场注入，不必再读它。\n\n${read('runtime', 'references', `${name}.md`)}\n`;
+  return `以下是运行环境「${name}」的做法全文，开场注入，不必再取。\n\n${read('runtime', `${name}.md`)}\n`;
 }
 
 // import.meta.url is the real path, argv[1] is the path as given: through a symlink (macOS /var → /private/var) they differ

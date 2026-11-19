@@ -15,7 +15,7 @@ argument-hint: "<issue 号>"
 
 任务里写了「夜间模式」：人不在，整个会话照 [references/night-mode.md](references/night-mode.md) 做，下文停下等人、翻回 triage、收尾的地方以它为准。
 
-会话管理、推送等运行环境的能力，照『<能力>』（`idea-loop:runtime`），下文只写能力名。
+会话管理、推送等运行环境的能力，照『<能力>』（`dyna runtime show <能力>`），下文只写能力名。
 
 **Linear 项目**读写 issue、翻状态（认领、翻回 triage、先放着都算）用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；`dyna issues set` 在那里被拒，翻前跑 `dyna issues check <docs> <状态> <号> --from=<现在>`。`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<主分支>` 取 `<项目目录>/DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 

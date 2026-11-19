@@ -9,8 +9,8 @@ seo 类 skill 和 seo 的方向 agent 里的全路径脚本调用改成 `dyna se
 
 ## 验收标准
 
-- [ ] 插件里没有 runtime、browser、seo-check 三个 skill，没有任何文件引用它们
-- [ ] seo 类 skill 和 agent 里没有全路径脚本调用；扫描测试通过
+- [x] 插件里没有 runtime、browser、seo-check 三个 skill，没有任何文件引用它们
+- [x] seo 类 skill 和 agent 里没有全路径脚本调用；扫描测试通过
 
 ## 选中的存量回归
 

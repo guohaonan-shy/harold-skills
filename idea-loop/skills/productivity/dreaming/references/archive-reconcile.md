@@ -10,7 +10,7 @@
 
 - **worktree**：代码在 [per-project.md](per-project.md) 取项目那一步从 `origin/<基准分支>` 新切的代码 worktree 里；开发环境跑基准分支的代码。`docs/` 在项目目录，dreaming 只写自己的 `dreaming-<日期>/`，不跟进行中需求的 `tmp/<spec-slug>/` 混。
 - **开发服务**：照 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」准备，用一个自己挑的空闲端口起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换）。前后端要互相指向的，改它读的那个配置，别人的端口不碰。
-- **浏览器**：和 `idea-loop:implement` 并行的执行方共用会话里那一个，照 `idea-loop:browser` 的「并行时抢锁」排队，owner 写 `dreaming`。锁目录默认放中间物目录的 `browser.lock`（`.tmp/dreaming/<日期>/browser.lock`）；人说同一时间有 `idea-loop:implement` 在用同一个浏览器，就改用那一边的锁目录。
+- **浏览器**：和 `idea-loop:implement` 并行的执行方共用会话里那一个，照 `dyna runtime show 浏览器` 的「并行时抢锁」排队，owner 写 `dreaming`。锁目录默认放中间物目录的 `browser.lock`（`.tmp/dreaming/<日期>/browser.lock`）；人说同一时间有 `idea-loop:implement` 在用同一个浏览器，就改用那一边的锁目录。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」）：
   - `delta/`：要进档案的对象，与 `prod/` 同构，由归档脚本并进 `prod/`；
   - `evidence/`：只给人看、不进档案的图（产品坏了的现状）。

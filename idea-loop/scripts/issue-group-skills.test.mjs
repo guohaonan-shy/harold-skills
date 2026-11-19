@@ -46,7 +46,7 @@ test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账�
   assert.match(md, /status:<状态>/);
   assert.match(md, /没有同号会话的记进汇报/);
   assert.match(md, /合计最多交出 3 个/);
-  assert.match(md, /idea-loop:runtime/);
+  assert.match(md, /dyna runtime show/);
   for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
   // the how is no longer in the body: no sidebar section, card or in-session loop
   assert.doesNotMatch(md, /section|卡片|CronCreate|会话内循环|(?<![\w-])loop(?![\w-])/, 'dispatch 正文还写着 section、卡片或会话内循环的做法');
@@ -186,7 +186,8 @@ test('issue-triager：sonnet、medium、只读不翻状态，五步、复现手�
 test('issue-triager 不设 tools 白名单（继承会话全部工具，浏览器与 Linear MCP 才拿得到），skill 都写「用 Skill 工具调」，评论链接取自 issues note 的输出', () => {
   const md = readFileSync(join(root, 'agents/issue-triager.md'), 'utf8');
   assert.doesNotMatch(front(md), /^tools:/m);
-  for (const k of ['idea-loop:browser', 'idea-loop:evidence']) assert.match(md, new RegExp(`用 Skill 工具调 \`${k}\``), `${k} 没写「用 Skill 工具调」`);
+  assert.match(md, new RegExp('用 Skill 工具调 `idea-loop:evidence`'), 'idea-loop:evidence 没写「用 Skill 工具调」');
+  assert.match(md, /起浏览器前跑 `dyna runtime show 浏览器`/, '浏览器没写 dyna runtime show');
   assert.match(md, /已评论 <链接>/);
 });
 

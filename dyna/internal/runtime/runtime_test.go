@@ -134,7 +134,7 @@ func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(
 			if lines[0] != "当前运行环境："+tc.name {
 				t.Errorf("first line: %s", lines[0])
 			}
-			if !strings.HasPrefix(lines[1], "以下是 `idea-loop:runtime` 的正文，开场注入，不必再调它") {
+			if !strings.HasPrefix(lines[1], "以下是运行环境的能力清单，开场注入，不必再取") {
 				t.Errorf("second line: %s", lines[1])
 			}
 			if !strings.Contains(runtime, "## 能力清单") || strings.Contains(runtime, "\nname: ") {
@@ -142,7 +142,7 @@ func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(
 			}
 
 			// reference: the whole data of this runtime, and not the other one's
-			if !strings.HasPrefix(reference, "以下是 `idea-loop:runtime` 的 reference") || !strings.Contains(strings.SplitN(reference, "\n", 2)[0], tc.name) {
+			if !strings.HasPrefix(reference, "以下是运行环境「") || !strings.Contains(strings.SplitN(reference, "\n", 2)[0], tc.name) {
 				t.Errorf("reference header: %s", strings.SplitN(reference, "\n", 2)[0])
 			}
 			own := strings.TrimSpace(strings.ReplaceAll(readFile(t, filepath.Join(pluginRoot(), rt.DataDir, tc.name+".md")), "${CLAUDE_PLUGIN_ROOT}", pluginRoot()))
@@ -160,10 +160,33 @@ func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(
 	}
 }
 
-func TestThePluginPathInTheInjectedTextIsTheRealOne(t *testing.T) {
+func TestTheInjectedRuntimeTextNamesNeitherTheOldSkillNorTheOldScript(t *testing.T) {
 	r := dyna(env(), "runtime", "inject", "runtime")
-	if !strings.Contains(r.stdout, pluginRoot()+"/scripts/runtime-detect.mjs") {
-		t.Fatal("the runtime body names the detect script with the real plugin path")
+	// the skill is gone: nothing in the injected text sends the session to it or to the old detect script
+	for _, bad := range []string{"idea-loop:runtime", "idea-loop:browser", "runtime-detect.mjs", "${CLAUDE_PLUGIN_ROOT}"} {
+		if strings.Contains(r.stdout, bad) {
+			t.Fatalf("the runtime body still names %q", bad)
+		}
+	}
+	if !strings.Contains(r.stdout, "dyna runtime show") {
+		t.Fatal("the runtime body says how a sub-agent fetches a capability")
+	}
+}
+
+// The runtime and browser skills are deleted and their content lives in the data: nothing in the data points back
+// at them, at SKILL.md, or at an old script (the lock and the hand-over are `dyna ui lock …` and `dyna runtime handoff`).
+func TestTheDataPointsAtNoDeletedSkillAndNoOldScript(t *testing.T) {
+	entries, err := os.ReadDir(filepath.Join(pluginRoot(), rt.DataDir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		text := readFile(t, filepath.Join(pluginRoot(), rt.DataDir, e.Name()))
+		for _, bad := range []string{"idea-loop:runtime", "idea-loop:browser", "SKILL.md", ".mjs", "${CLAUDE_PLUGIN_ROOT}/scripts", "## 怎么用", "## 检测规则", "## 加一种运行环境"} {
+			if strings.Contains(text, bad) {
+				t.Errorf("%s still has %q", e.Name(), bad)
+			}
+		}
 	}
 }
 
@@ -304,7 +327,7 @@ func TestShowBrowserPrintsTheEnvironmentsSectionWithTheThreeRulesOfTheOldBrowser
 		extra []string
 	}{
 		{"magi", []string{"magi browser", "window new"}},
-		{"claude-desktop", []string{"mcp__playwright__browser_", "browser-lock", "30 分钟"}},
+		{"claude-desktop", []string{"mcp__playwright__browser_", "dyna ui lock acquire", "dyna ui lock release", "30 分钟"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := dyna(env(rt.EnvRuntime, tc.name), "runtime", "show", "浏览器")
@@ -334,8 +357,8 @@ func TestShowBrowserPrintsTheEnvironmentsSectionWithTheThreeRulesOfTheOldBrowser
 			if strings.Contains(out, "${CLAUDE_PLUGIN_ROOT}") {
 				t.Error("the placeholder is expanded")
 			}
-			if tc.name == "claude-desktop" && !strings.Contains(out, pluginRoot()+"/scripts/browser-lock.mjs") {
-				t.Error("the lock command carries the real plugin path")
+			if strings.Contains(out, ".mjs") {
+				t.Error("no old script is named in the 浏览器 section")
 			}
 		})
 	}

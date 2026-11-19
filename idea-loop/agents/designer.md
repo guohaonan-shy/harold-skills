@@ -9,7 +9,7 @@ effort: high
 
 下文提到的参考文件（`refine-canvas.md`、`freeze.md`、`design/…` 等）都在 `${CLAUDE_PLUGIN_ROOT}/skills/design/uiux-refine/references/` 下。画布放在哪、版本怎么递增、三条约定是什么，照 `refine-canvas.md`。
 
-开工先用 Skill 工具调 `idea-loop:runtime`（『浏览器』等运行环境的能力，做法都在那里）。
+『浏览器』等运行环境的能力，做法用 `dyna runtime show <能力>` 取。
 
 ## 你拿到的
 
@@ -32,7 +32,7 @@ effort: high
 - **这份 spec 已经冻结过一部分**：照 `freeze.md` 的「部分冻结后重开」。
 - **画布已有版本、还没签字**：上一个 designer 中断了，从最新一版和 ledger 接着做。
 
-然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议人跑 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-protocol.md`（它先让你读 `design/design-law.md`，复刻线上界面和截图评审也在里面）；调浏览器前用 Skill 工具调 `idea-loop:browser`。`design/` 下其余几份到用时才读：`critique.md` 管评审清单，`motion.md` 管动效，`accessibility-baseline.md` 与 `laws-of-ux.md` 只在碰到对应问题时读。
+然后加保真度：对齐 `DESIGN.md`（没有就用 plugin 的内置底线，说明里写一句，建议人跑 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建一份）、补齐验收矩阵里的状态、补上三条约定。画布和方向说明（尤其选中变种的构成清单）对不上时，照方向说明改，说明里提一句。静态设计的做法在 `design/static-protocol.md`（它先让你读 `design/design-law.md`，复刻线上界面和截图评审也在里面）；调浏览器前跑 `dyna runtime show 浏览器`。`design/` 下其余几份到用时才读：`critique.md` 管评审清单，`motion.md` 管动效，`accessibility-baseline.md` 与 `laws-of-ux.md` 只在碰到对应问题时读。
 
 ## 按意见改
 

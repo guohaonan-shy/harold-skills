@@ -1,6 +1,6 @@
 # Google 与 Bing 的标准
 
-两个平台读同一份 HTML，但一个只报状态，一个会逐页挑内容的毛病。设计新路由的 head 标签、或平台后台报了脚本没报的东西时，按下面判。
+两个平台读同一份 HTML，但一个只报状态，一个会逐页挑内容的毛病。设计新路由的 head 标签、或平台后台报了检查命令没报的东西时，按下面判。
 
 ## 报告方式就不一样
 
@@ -29,7 +29,7 @@
 | CJK 页面的长度 | 不适用 | 按原始字数算，不给 CJK 折算，写满的中文标题仍报「太短」 | 已知误报，不凑字 |
 | FAQPage、HowTo 结构化数据 | 已不再产生富结果，标记是惰性的 | 看重页面上**可见**的 FAQ 段落，AI 回答会引用它 | 留着无害；不为 Google 富结果新加；可见的 FAQ 照常写 |
 | 站内搜索框（`WebSite` + `SearchAction`） | 已不再使用 | — | 不依赖它，也不必删 |
-| hreflang 的反馈 | Search Console 不报告 hreflang 错误，只能自己验 | 同样读 hreflang | 靠检查脚本的互指检查 |
+| hreflang 的反馈 | Search Console 不报告 hreflang 错误，只能自己验 | 同样读 hreflang | 靠 `dyna seo check` 的互指检查 |
 | 即时收录通知（IndexNow） | 不接收；靠 sitemap 发现，收录请求在 Search Console 里手动提 | 接收，提交后按信号重新抓取（接入 IndexNow 的其他引擎也会收到） | 新页、改过的页推给 IndexNow；Google 那边保证 sitemap 是新的 |
 
 ## 和 AI 引用有关的 Bing meta 指令

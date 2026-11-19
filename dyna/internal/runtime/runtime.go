@@ -119,13 +119,13 @@ func Inject(section string, env home.Env) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return "当前运行环境：" + name + "\n以下是 `idea-loop:runtime` 的正文，开场注入，不必再调它。\n\n" + body + "\n", nil
+		return "当前运行环境：" + name + "\n以下是运行环境的能力清单，开场注入，不必再取。\n\n" + body + "\n", nil
 	}
 	body, err := p.read(DataDir, name+".md")
 	if err != nil {
 		return "", err
 	}
-	return "以下是 `idea-loop:runtime` 的 reference「" + name + "」全文，开场注入，不必再读它。\n\n" + body + "\n", nil
+	return "以下是运行环境「" + name + "」的做法全文，开场注入，不必再取。\n\n" + body + "\n", nil
 }
 
 // sectionOf is the `## <title>` section of a markdown text, heading line and its `###` subsections included, up

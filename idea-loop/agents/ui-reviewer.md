@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）和 `idea-loop:runtime`（运行环境的能力怎么做）；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
+用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）；运行环境的能力怎么做用 `dyna runtime show <能力>` 取；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
 下文 `query` 指 `dyna design archive query`，`check` 指 `dyna design archive check`。
 
@@ -47,7 +47,7 @@ effort: high
    - **按旧流程冻结、`delta/` 已经提交的需求**：画布仍是真相，清单照第一种取；`delta/` 里已有的状态顺带可以用 `query … diff` 对一遍，两边对不上的记进交回。
    - 归档模式下 `delta/` 还不存在，清单与进入方式照「归档模式」第一步。
 3. **起开发服务器**：先跑 `<项目目录>/DEVELOPMENT.md`「worktree 准备」节的命令（在集成 worktree 里），再照「开发服务器」节的命令用分到的端口起；没有 `DEVELOPMENT.md` 就交回「未完成」，说明要人跑 `/idea-loop:setup`。服务起不来、页面打不开，交回时写明卡在哪，这一轮的 UI 审查记为「未完成」：**未完成不等于没问题**。交回前停掉服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
-4. **用会话的 MCP 浏览器之前先抢锁**：照 `idea-loop:browser` 的「并行时抢锁」，锁目录是 `<集成 worktree>/.tmp/implement/<spec-slug>/browser.lock`，owner 写 `ui-review`。
+4. **用会话的 MCP 浏览器之前先抢锁**：照 `dyna runtime show 浏览器` 的「并行时抢锁」，锁目录是 `<集成 worktree>/.tmp/implement/<spec-slug>/browser.lock`，owner 写 `ui-review`。
 5. **逐个状态进去**：对清单里每个状态：`prod/` 里已有的跑 `query <项目目录> state <状态名>`（只有最小差异或旧流程 `delta/` 的需求，带 `--delta <spec-slug>`），按返回的进入方式走；`prod/` 里没有的新状态，从 spec 写的入口和 `prod/` 里已有的边出发，在真实应用里自己找路（每走通一跳的出发状态、操作的元素、到的状态都记进 `coverage`）；找不到记「进不去」，附上试过什么。返回的进入方式是这样走的：入口地址与前置条件，沿途每一步（`user` 边照 `locate` 与 `action` 操作，`system` 边照 `how` 让它发生）。**进不去**（`reachable: false`）先判是档案缺口还是环境问题：照返回里的前置条件和试过的做法做仍然进不去，就如实记「进不去」，附上缺什么、试过什么。
 6. **走每条新增或改动的边**：从出发状态照边的定位和操作触发，看实际到的画面是不是边指向的那个状态（它的「应看到什么」成立吗）。有画布的需求，边取自进入新状态的那几跳，加上 spec 交互图（`canvas/flows/`）里画出的每一步；最小差异的需求，`added` 里的边，目标状态存在、可达、`blocked` 标得对不对，也在这里核。
 7. **对画面**：

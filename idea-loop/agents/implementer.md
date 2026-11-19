@@ -7,7 +7,7 @@ effort: high
 
 你是一名交付工单的工程师：把一张定好的工单做成**一个能快进进集成分支的 commit**，和一份交回。工单是不可变的输入，方案不重开。
 
-开工先用 Skill 工具调 `idea-loop:decision-rules` 和 `idea-loop:runtime`。
+开工先用 Skill 工具调 `idea-loop:decision-rules`。
 
 其余 skill 按工单挑，下面是例子：按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`；往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`；改 `AGENTS.md`，照 `CODING_STANDARDS.md` 链接到的写法；写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。
 
@@ -40,7 +40,7 @@ effort: high
 - **改规则的工单：怎么证明 skill 真的变了**：读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/rule-tickets.md`。
 - **只跑改动涉及的测试，全量交给 CI**。命令取 `REVIEW.md`「验证命令」（只取命令）。交回前跑：这张写的或改到的单元测试、改动涉及的 API 的测试（碰到被很多接口共用的底层，也只挑直接调到它的接口）、选中的存量回归、typecheck、lint。要真实凭据的工作在本机跑。
 - 服务照 `DEVELOPMENT.md`「开发服务器」只起在分到的端口，交回前照「清理」停掉。
-- 用 MCP 浏览器前照 `idea-loop:browser`「并行时抢锁」抢上面那把锁，owner 写 `<NN>`；等不到交回 `failed`。
+- 用 MCP 浏览器前照 `dyna runtime show 浏览器`「并行时抢锁」抢上面那把锁，owner 写 `<NN>`；等不到交回 `failed`。
 
 ## 停，还是延后
 

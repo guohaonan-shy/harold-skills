@@ -310,8 +310,8 @@ func (h HookDeps) Run() error {
 		return &nexterr.Exit{Code: 2, Msg: fmt.Sprintf("seo-check 没跑起来（退出码 %d）：%s", code, reason)}
 	}
 	return &nexterr.Exit{Code: 2, Msg: strings.Join([]string{
-		fmt.Sprintf("构建产物 %s 有 SEO error（idea-loop:seo-check）：", t.dist),
+		fmt.Sprintf("构建产物 %s 有 SEO error：", t.dist),
 		ErrorsOnly(stdout),
-		"改完重新构建；每条规则的理由见 idea-loop:seo-check。",
+		"改完重新构建；每条规则的理由见 idea-loop 插件的 skills/seo/seo-writing/references/checks.md。",
 	}, "\n")}
 }

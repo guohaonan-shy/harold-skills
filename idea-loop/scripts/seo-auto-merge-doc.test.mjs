@@ -92,9 +92,9 @@ test('the PR description rules say an SEO issue writes 上线自查的网址, an
   assert.match(DESCRIPTION, /没有[^\n]*(不自动合并|不会自动合并)/);
 });
 
-test('SEO.md format: 内容路径 sits in 构建与检查, read by seo-content-scope.mjs, written with globs in backticks', () => {
+test('SEO.md format: 内容路径 sits in 构建与检查, read by dyna seo scope, written with globs in backticks', () => {
   assert.match(FORMAT, /- 内容路径：/);
-  assert.match(FORMAT, /\| 构建与检查 \|[^\n]*内容路径[^\n]*seo-content-scope\.mjs/);
+  assert.match(FORMAT, /\| 构建与检查 \|[^\n]*内容路径[^\n]*dyna seo scope/);
 });
 
 test('seo-setup infers 内容路径 and asks the human to confirm it', () => {
