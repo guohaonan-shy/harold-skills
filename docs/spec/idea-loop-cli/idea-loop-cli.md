@@ -77,7 +77,7 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 - **给 skill 用的文字留在插件，二进制只放逻辑**：runtime 各环境的数据、pr-review 的 Codex prompt 模板、开场注入的 decision-rules 正文，都是跟着 skill 改的文字，放在插件里；小脚本把插件目录（`IDEA_LOOP_PLUGIN_ROOT`）传给二进制，命令从那里读。这样改这些文字只升插件，不用发命令行。
 - **装在哪**：`~/.idea-loop/bin/dyna`。插件目录会随升级换路径，所以二进制放用户主目录（`AGENTS.md` 定的「跨会话持久的用户数据」位置）。这个目录不加进人的 PATH：官方文档写插件 `bin/` 排在人自己的 PATH 之后，加进去的话会话会绕过插件的小脚本直接调到二进制，版本核对就没了。
 - **谁来装**：插件的小脚本自己带 `dyna self install` / `self upgrade` 两条（用 `curl` 下载对应平台的包、`shasum` 核校验和，不需要二进制在场），setup 在人同意后调它。所以第一次装不依赖命令行本身。
-- **怎么调到它**：插件的 `bin/dyna` 是一个几行的 sh 小脚本。实测（2026-11-18，Claude Code 2.1.327，临时插件 + `claude -p --plugin-dir`）插件 `bin/` 在 Bash 的 PATH 上，官方文档 plugins/components.md 的「Executables」也这样写，所以会话里直接敲 `dyna xxx`，不用改人的 shell 配置。小脚本只做一件事：带上插件要的版本范围，转给 `~/.idea-loop/bin/dyna`。hook 写 `"${CLAUDE_PLUGIN_ROOT}/bin/dyna" <模块> <命令> --hook`（hook 进程里有这个变量；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）；hook 只管什么时候触发、调哪条命令，命令本身就是各模块里的那条（见「hook 只拦不做事」的对照表）。
+- **怎么调到它**：插件的 `bin/dyna` 是一个几行的 sh 小脚本。实测（2026-11-18，Claude Code 2.1.327，临时插件 + `claude -p --plugin-dir`）插件 `bin/` 在 Bash 的 PATH 上，官方文档 plugins/components.md 的「Executables」也这样写，所以会话里直接敲 `dyna xxx`，不用改人的 shell 配置。小脚本只做一件事：带上插件要的版本范围，转给 `~/.idea-loop/bin/dyna`。hook 写 `"${CLAUDE_PLUGIN_ROOT}/bin/dyna" <模块> <命令> --hook`（hook 进程里有这个变量；会话的 Bash 里没有，所以 skill 只写 `dyna`）；hook 只管什么时候触发、调哪条命令，命令本身就是各模块里的那条（见「hook 只拦不做事」的对照表）。
 
 **skill 要求命令行最低版本，这样维护**：
 
@@ -96,7 +96,7 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 | 进命令，给会话调 | 41 | 见下表 |
 | 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
-| 命令行内部的包，没有自己的子命令 | 5 | 都在命令行的代码里，作为 Go 包被命令引用：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `idea-loop` 的命令，不单独处理）、`design-archive`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 用；两个 eval runner 改调 `dyna agent claude run`）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
+| 命令行内部的包，没有自己的子命令 | 5 | 都在命令行的代码里，作为 Go 包被命令引用：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `dyna` 的命令，不单独处理）、`design-archive`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 用；两个 eval runner 改调 `dyna agent claude run`）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
 | 设计档案 MCP | 1 | `design-archive-mcp`：命令行里单独一个 Go 包，以 MCP 协议提供七个查询工具，由 `dyna mcp design-archive` 起（见下面「设计档案 MCP」） |
 | 删掉 | 2 | `codex-companion`（见「包装别的命令行」）；`mini-yaml`（Go 直接用现成的 YAML 库） |
 
@@ -258,7 +258,7 @@ runtime 不再是 skill。
 - **用 Go 写**（Harold 2026-11-19 选「Go (Recommended)」；设计档案 MCP 也确认改成 Go 包：「MCP 就按你说的改成 Go 包吧」）：goreleaser 一次出各平台的包，交叉编译不用另装工具链；参数解析、子命令用标准库或一个常用的子命令库，YAML 用现成的库（`mini-yaml` 删掉）。依赖由 Go 模块管理，编进二进制，用户机器上不装任何运行时。
 - **代码架构：按模块分包**（Harold 2026-11-19 选「按模块分包 (Recommended)」）：顶层目录下一个 Go 模块；`cmd/` 下的 main 只把各模块的命令拼成一棵命令树；每个模块（issues、home、pr、git、worktree、design、ui、serve、research、dreaming、seo、retro、runtime、agent、test）一个内部包，放它的命令和逻辑；设计档案 MCP 单独一个包；共用的东西（GitHub 身份、进程树管理、版本范围判断、「报错带下一条命令」的错误类型）一个共用包；另有每版一份的命令登记表、命令行版本号、goreleaser 配置。加一个模块就是加一个包。noodle 也是按领域分包。
 - **命令框架用 cobra**（Harold 2026-11-19 选「cobra (Recommended)」）：嵌套子命令、`--help`、参数校验现成；命令登记表从 cobra 的命令树导出，只有一份来源；每条命令带一个「谁能调」的标注（会话 / 只由 hook / 只给测试），扫描测试按它判。gh、noodle 都用 cobra。
-- **按模块分包的细节**：每个模块一个 Go 包，命令的实现和它内部用的东西放在一起；只被引用、没有动作的（`claude-stream`、`github-app`、`ui-compare` 等）作为共用的包（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）。对调用方来说只有 `idea-loop` 一个入口。
+- **按模块分包的细节**：每个模块一个 Go 包，命令的实现和它内部用的东西放在一起；只被引用、没有动作的（`claude-stream`、`github-app`、`ui-compare` 等）作为共用的包（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）。对调用方来说只有 `dyna` 一个入口。
 - **重写的验收照现有测试**：现有 123 个测试文件（21893 行，其中约一半测脚本行为、一半测 skill 文本）里测脚本行为的那些，是 Go 实现的行为基准：逐个模块把它们的断言搬成 `go test`，过了才删对应的 `.mjs`。测 skill 文本的那些照旧。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
 - **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
@@ -297,7 +297,7 @@ runtime 不再是 skill。
   2. 前置：一份 skill 文本写了 `dyna issues frobnicate`。步骤：跑扫描测试。期望：红，报出文件和行。覆盖：场景五 1。
   3. 前置：`docs/` 里一份文件链到已删除的 slug。步骤：`dyna home commit <文件>`。期望：拒绝，列出死链所在文件和 slug，不产生提交。覆盖：场景二 3。
   4. 前置：PATH 上放一个假 `codex`，它再起一个睡眠子进程。步骤：`dyna agent codex run` 带 2 秒超时。期望：报超时，假 codex 和它的子进程都已不在。覆盖：场景三 2。
-  5. 步骤：把 `gh issue edit 1 --add-label status:todo`、`git worktree remove x` 分别喂给 `issues guard --hook`、`worktree guard --hook`。期望：两条都被拦，提示里有对应的 `idea-loop` 命令；`gh issue edit 1 --add-label kind:bug` 不拦。覆盖：场景二 1、2。
+  5. 步骤：把 `gh issue edit 1 --add-label status:todo`、`git worktree remove x` 分别喂给 `issues guard --hook`、`worktree guard --hook`。期望：两条都被拦，提示里有对应的 `dyna` 命令；`gh issue edit 1 --add-label kind:bug` 不拦。覆盖：场景二 1、2。
   6. 步骤：`IDEA_LOOP_RUNTIME=magi dyna runtime show 浏览器`。期望：打印 magi 数据的「浏览器」一节，包含原 browser skill 的三条规矩。覆盖：场景四 1、场景一 5。
   7. 步骤：`grep -r 'CLAUDE_PLUGIN_ROOT}/scripts/' idea-loop/skills idea-loop/agents idea-loop/hooks`。期望：没有输出。覆盖：场景一 1。
   8. 前置：一份 skill 文本写了 `dyna design lint`。步骤：跑扫描测试。期望：红，报「这条命令只许 hooks.json 引用」。覆盖：场景五 1。
