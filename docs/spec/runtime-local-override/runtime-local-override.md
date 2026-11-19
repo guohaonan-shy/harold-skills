@@ -44,7 +44,7 @@ issues: [295]
 4. 子 agent 取某个能力的做法用的 `dyna runtime show <能力>`，取的是合并后的那份：那一节被本机替换了，输出第一行写「本机覆盖 <路径>：这一节是本机写的」。主会话照旧直接照开场注入做。
 5. 设备地图加一行：设备地图模板（wiki-conventions 的 `references/home-maps.md`，setup 和 dreaming 共用）的「home 里每一层放什么」多列 `runtime/`：「这台设备对 `idea-loop:runtime` 的本机覆盖，`<运行环境>.md` 一份，开场已合进注入的 reference，不用另读」。
 
-magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 `~/home/runtime/magi.md`，写两段：`## 定时任务`（不建不改 `magi cron`）和 `### 调度（issue-dispatch 的三处）`（常驻会话 + `magi wake`、跑完不停、`--desktop main`）。调度会话开场拿到的 reference 里这两段已是本机写法，头一行写「本机覆盖 ~/home/runtime/magi.md：替换了「定时任务」「调度（issue-dispatch 的三处）」」。`CLAUDE.md` 删掉那一节。
+magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 `~/home/runtime/magi.md`，写两段：`### 调度（issue-dispatch 的三处）`（写在最前）和 `## 定时任务`（不建不改 `magi cron`）（常驻会话 + `magi wake`、跑完不停、`--desktop main`）。调度会话开场拿到的 reference 里这两段已是本机写法，头一行写「本机覆盖 ~/home/runtime/magi.md：替换了「定时任务」「调度（issue-dispatch 的三处）」」。`CLAUDE.md` 删掉那一节。
 
 同一行为的其他入口：
 
@@ -71,6 +71,7 @@ magi 例子改完的样子：那台机器把 `CLAUDE.md` 里那约 10 行搬成 
 
 - **落点 `~/home/runtime/<运行环境>.md`，一个运行环境一份**：依据人在本会话选的「home 里一份，runtime 去读」（raw 的 U1）。按运行环境分文件，因为一台设备可能同时跑 claude-desktop 和 magi，两边的做法互不相干；文件名跟插件 `references/` 下的同名，人一眼对得上。home 不存在或文件不存在，等于没有覆盖。
 - **同名小节整段替换，不做补充**：依据人选的「同名小节整段替换」（raw 的 U2）。规则机械：本机写了的整段用本机的，没写的用 reference 的，两边不会同时生效、不用 agent 判断谁优先。
+- **`##` 段吞掉紧跟其后的 `###`，不看插件结构**：同一份本机文件里 `## 定时任务` 后面接 `### 调度（issue-dispatch 的三处）`，后者算在定时任务那一段里，不去换插件「会话管理」下的同名小节。要单独换一个 `###`，把它写在所有 `##` 之前，或前面隔一行 `#` 标题（`dyna runtime --help` 写了这条）。夜间实现时（2026-11-20）按推荐定：规则保持只按本机文件切、不看插件结构；写错顺序的后果在头一行看得到（只报替换了「定时任务」）。
 - **对不上的段不用，只报出来**：本机文件里的标题在 reference 里找不到同级同名的、或找到不止一处的，这段不进注入，记进头一行的「没对上」。不往末尾追加：追加等于「补充」，跟人定的替换规则冲突，而且 reference 改名后旧覆盖会静默变成补充。
 - **合并在 `dyna` 的 runtime 模块里做，不新增命令或 hook**：依据「先扩展已在用的工具」。spec 起草时（2026-11-17）这里写的是 `runtime-detect.mjs`；#339（PR #387，2026-11-18 合进 `release/idea-loop-0.2.0`）把它和 runtime skill 一起换成了 `dyna runtime inject` / `dyna runtime show`，落点跟着搬，原则不变：主会话和子 agent 都经由同一处，合并逻辑只有一份。改了 dyna 代码，照 `REVIEW.md` 升 dyna 版本、存登记表；发版由人说了才发（`DEVELOPMENT.md`「命令行 dyna」）。
 - **home 位置复用 #252 的规则**：`IDEA_LOOP_HOME` 优先，否则 `~/home`（#252 的项目地图注入用的同一条，见 [[home-bootstrap]]）。合并逻辑直接复用它解析 home 的那段代码，不另写一套。
