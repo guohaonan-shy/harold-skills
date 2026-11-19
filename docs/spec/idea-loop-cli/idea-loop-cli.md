@@ -89,11 +89,11 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 
 ### 模块
 
-现有 57 个脚本的功能去向（全部用 Go 重写，现有的 `.mjs` 实现和它们的测试在命令行对上之后删掉）：
+现有 57 个脚本（2026-11-19 集成分支 `75665ec` 合进 #379 后多了 `desktop-handoff`，共 58 个）的功能去向（全部用 Go 重写，现有的 `.mjs` 实现和它们的测试在命令行对上之后删掉）：
 
 | 去向 | 个数 | 脚本 |
 |---|---|---|
-| 进命令，给会话调 | 41 | 见下表 |
+| 进命令，给会话调 | 42 | 见下表 |
 | 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
 | 命令行内部的包，没有自己的子命令 | 5 | 都在命令行的代码里，作为 Go 包被命令引用：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `dyna` 的命令，不单独处理）、`design-archive`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 用；两个 eval runner 改调 `dyna agent claude run`）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
@@ -119,7 +119,7 @@ hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动�
 | `dreaming` | `proposal-table-check` | — |
 | `seo` | `seo-md`、`seo-baseline`、`seo-budget`、`seo-check`、`seo-content-scope`、`seo-context`、`seo-due`、`seo-gaps`、`seo-issues`、`seo-live-check`、`seo-live-record`、`seo-meta-provenance` | — |
 | `retro` | `retro-install`、`retro-pool-count`、`retro-pool-reopened`、`session-digest` | — |
-| `runtime` | `runtime-detect`（`name`、`inject`） | `show <能力>`（见「运行环境」） |
+| `runtime` | `runtime-detect`（`name`、`inject`）、`desktop-handoff`（`handoff`：桌面端把 `claude -p` 开出的会话交到桌面端，调度用） | `show <能力>`（见「运行环境」） |
 | `agent` | `codex-prompt` | `codex run`、`codex image`、`claude run`（见「包装别的命令行」） |
 | `test` | `design-archive-fixture`（写出一份虚构的设计档案到给定目录）、`skill-doc-check`（查一份 skill 的主体字数和被指向的小节在不在） | `run`：跑插件自己的 `*.test.mjs`，可带匹配 |
 

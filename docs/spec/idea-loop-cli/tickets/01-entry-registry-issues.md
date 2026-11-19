@@ -13,7 +13,7 @@
 - **版本**：命令行有自己的语义化版本号（第一版 0.1.0）；插件根目录一个文件写插件要的命令行版本范围。
 - **插件小脚本**：插件里一个几行的 sh 脚本 `bin/dyna`，把插件目录（`IDEA_LOOP_PLUGIN_ROOT`）和版本范围交给 `~/.idea-loop/bin/dyna`；自带 `self install` / `self upgrade`（curl 下载对应平台的包、shasum 核校验和，不需要二进制在场）。没装时说「跑 `/idea-loop:setup` 装命令行」。
 - **二进制核版本**：不在范围里就不执行，说出本机版本、要的范围和下一步（低了：跑 `/idea-loop:setup` 升级；高过上限：去 `/plugin` 更新插件）。带 `--hook` 的命令版本不对时不拦、不报错，只在 stderr 留一行。
-- **issues 模块**：现有 issues 脚本的全部子命令和行为用 Go 重写（`show`、`set`、`check` 等，参数、输出、退出码不变）；新增：挡路关系的标、去、列（包 GitHub 的 blocked_by 接口）；`gh issue` 的读、开、评论；`guard --hook`：从 stdin 读 PreToolUse 事件，用 `gh issue edit` 加或去 `status:*` label 的拦下并提示 `dyna issues set`，别的 label 放行。
+- **issues 模块**：现有 issues 脚本的全部子命令和行为用 Go 重写（`show`、`set`、`check`、`queues` 等，参数、输出、退出码不变；`queues` 以 #379 合入后的为准：带 `--at=HH:MM`，输出 at、period、dispatch、limit、periods、sections，没有 cap、triageCap）；新增：挡路关系的标、去、列（包 GitHub 的 blocked_by 接口）；`gh issue` 的读、开、评论；`guard --hook`：从 stdin 读 PreToolUse 事件，用 `gh issue edit` 加或去 `status:*` label 的拦下并提示 `dyna issues set`，别的 label 放行。
 - **扫描测试**（`node --test`，放插件测试里）：扫 skill、agent、README、`hooks.json`、`.mcp.json` 里写的每条 `dyna <模块> <命令>`，拿「插件写的最低版本」那份已存的登记表对：命令或参数不存在就红并报文件和行；只由 hook 调的命令出现在 skill/agent 里就红；`test` 模块只许测试、`REVIEW.md`、`DEVELOPMENT.md` 引用；最低版本没有存档的登记表就红，报「最低版本 X 还没发布」。登记表按版本一份存进命令行目录。
 - **发布配置**：goreleaser 配置出 Mac（arm64、amd64）、Linux（amd64、arm64）的包和校验和，标签 `dyna-v<版本>`。只写配置、本机能 `goreleaser release --snapshot` 出包，不打标签、不上传（发版是工单 14，由人说了才发）。
 - **仓库约定**：`DEVELOPMENT.md` 写要的 Go 版本和 goreleaser、怎么编本地二进制并用它跑（不要用 `~/.idea-loop/bin/` 里已装的发布版）；`REVIEW.md` 的验证命令加 `go test ./...`；照插件版本测试加一条「改了命令行代码就必须升命令行版本」；`AGENTS.md` 的 Repository Purpose 加一句命令行目录是什么；`GLOSSARY.md` 加「dyna：idea-loop 的命令行」。

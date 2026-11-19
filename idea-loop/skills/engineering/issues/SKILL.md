@@ -105,7 +105,7 @@ issues backlog    <docs> [<上限>]                  # 开着的 backlog issue�
 issues note       <docs> <号> <正文文件>           # 贴一条带「🤖 idea-loop：」前缀的评论
 issues candidates <docs> [<上限>] [--state=todo|triage]  # 能派的 todo（--state=triage 取 triage 的）：没有开着的 blocked by；先排指派给本人的（P0 → P1 → P2 → 没有，再按号），本人名下没有可派的才给未指派的（同样按优先级，同级里停留久的先），指派给别人的不给（JSON）
 issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label、两个 status:* 报出
-issues queues     <docs>                           # 调度的上限（cap、triageCap）和分组名（sections）；JSON 对象
+issues queues     <docs> [--at=HH:MM]              # 此刻（--at 指定）派什么、上限几个（取自「调度」表）、整张表、分组名；JSON
 issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出
 ```
 
