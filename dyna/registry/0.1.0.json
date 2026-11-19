@@ -1964,6 +1964,118 @@
       ]
     },
     {
+      "command": "runtime handoff",
+      "module": "runtime",
+      "use": "handoff",
+      "summary": "开一个会话并交到桌面端：先 claude -p 建会话、读 id，再在交互模式接回并敲 /desktop（调度用）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "claude",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "claude 可执行文件（环境变量 DESKTOP_HANDOFF_CLAUDE；默认 claude）"
+        },
+        {
+          "name": "dir",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）"
+        },
+        {
+          "name": "idle-ms",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "接回的会话安静多少毫秒后才敲 /desktop（默认 2500）"
+        },
+        {
+          "name": "issue",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "issue 号；和 --repo、--period 要么都给、要么都不给，给了就在成功后往记录目录追加一条"
+        },
+        {
+          "name": "p-timeout-sec",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "claude -p 那一步最多等几秒（环境变量 DESKTOP_HANDOFF_P_TIMEOUT_SEC；默认 180）"
+        },
+        {
+          "name": "period",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "时段标签（todo 或 triage），早上汇总靠它找夜里开出的会话"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库名，记录文件是 <记录目录>/<仓库名>.json"
+        },
+        {
+          "name": "timeout-sec",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "交互那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）"
+        },
+        {
+          "name": "worktree",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "两次 claude 都在这个目录里跑（默认：当前目录）；接回的会话只能从它被建出来的目录找到"
+        }
+      ]
+    },
+    {
+      "command": "runtime inject",
+      "module": "runtime",
+      "use": "inject <decision-rules|runtime|reference>",
+      "summary": "打印开场注入的一段（只由 SessionStart hook 调）：decision-rules 的正文、运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "decision-rules|runtime|reference",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "runtime name",
+      "module": "runtime",
+      "use": "name",
+      "summary": "打印当前运行环境的名字（claude-desktop / magi）；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1，不猜",
+      "caller": "session",
+      "next": "",
+      "args": []
+    },
+    {
+      "command": "runtime show",
+      "module": "runtime",
+      "use": "show [capability]",
+      "summary": "打印当前运行环境里这项能力的做法（数据里的那一节）；不带能力打印能力清单和做不到时的退路。子代理收不到开场注入，用它取",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "capability",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
       "command": "serve start",
       "module": "serve",
       "use": "start <目录>",

@@ -214,6 +214,11 @@ the skill text and a launcher.
   there, on a hook-only command written outside `hooks.json`, and on a floor that is not released.
 - **`dyna registry --json`** prints the command registry: each command with its arguments, one-line summary, who
   may call it (a session, only a hook, only tests) and the next command to run when it fails.
+- **`runtime/`** (this plugin) is the data the `runtime` module reads: `capabilities.md` (the capability list and its fallbacks)
+  and one `<environment>.md` per runtime environment, each with one `## <capability>` section. `runtime show
+  <capability>` prints the current environment's section, `runtime inject` (only the SessionStart hook calls it) prints
+  what a session starts with, and `runtime handoff` opens an issue session and hands it to the desktop app. The text lives in the plugin, so
+  changing it only needs a new plugin version, not a new dyna; adding an environment is described in the module's `--help`.
 - **Modules so far**: `issues` (status flips, labels, blocked-by, reading and opening issues, `guard --hook` that
   stops a hand-written `gh issue edit` of a `status:*` label); the other scripts move into modules in later tickets
   of the same spec, and the `.mjs` scripts they replace stay until each module is proven.

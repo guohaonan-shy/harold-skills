@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 // the command line lives next to the plugin, not in it, and ships with the same promise: nothing of a real project
-const SCANNED = ['skills', 'agents', 'docs', 'README.md', 'AGENTS.md', 'bin', 'dyna-version', '../dyna'];
+const SCANNED = ['skills', 'agents', 'docs', 'README.md', 'AGENTS.md', 'bin', 'dyna-version', 'runtime', '../dyna'];
 
 const TELLS = [
   /toeflair|tofelair|\btoefl\b/i,

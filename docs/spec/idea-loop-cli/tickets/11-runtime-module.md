@@ -11,10 +11,10 @@ runtime-detect 收成 `dyna runtime name` 和 `runtime inject <decision-rules|ru
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] `IDEA_LOOP_RUNTIME=magi dyna runtime show 浏览器` 打印 magi 数据的浏览器一节，含原 browser skill 的三条规矩
-- [ ] `runtime inject runtime` 的输出与旧脚本注入的内容一致（数据搬家前后对同一环境）
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] `IDEA_LOOP_RUNTIME=magi dyna runtime show 浏览器` 打印 magi 数据的浏览器一节，含原 browser skill 的三条规矩
+- [x] `runtime inject runtime` 的输出与旧脚本注入的内容一致（数据搬家前后对同一环境）
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 
