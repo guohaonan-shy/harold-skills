@@ -9,7 +9,7 @@
 ## 验收标准
 - [ ] idea-loop 的 README 和 seo 组说明写了博客 workflow、两个新 skill、写作 lint、项目要配的取值。
 - [ ] `plugin.json` 的 version 升了 minor，marketplace 里的版本一致（如有）。
-- [ ] 全量 `node --test idea-loop/scripts/` 通过。
+- [ ] `REVIEW.md` 的验证命令全量通过。
 - [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。

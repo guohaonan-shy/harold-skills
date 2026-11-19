@@ -6,7 +6,7 @@
 ## 要建什么
 idea-loop 的 seo 组新增一个可被模型调用的 skill `cover`：给一篇文章（标题、角度、封面主体）出列表封面，放到项目的图片目录、写进文章 frontmatter 的封面字段。
 
-- 项目取值从两处读：`SEO.md`「配图」节（图片目录、生图工具、字段名）和 `DESIGN.md`（front matter 的色板与字体 token；Components 章的「blog-cover」组件：logo 路径、底色、主体风格、生图提示词骨架）。找 DESIGN.md 照 `design-modeling` 第 0 步，多份时读「配图」节指定的那份。
+- 项目取值从两处读：`SEO.md`「配图」节（图片目录、生图工具、字段名）和 `DESIGN.md`（front matter 的色板与字体 token；Components 章的「blog-cover」组件：logo 路径、底色、主体风格、生图提示词骨架）。找 DESIGN.md 用 `git ls-files | grep -i 'DESIGN.md$'`（design-modeling 没有现成步骤，写进 cover 自己的说明），多份时读「配图」节指定的那份，没指定就停下问人、托管时按默认配方。
 - 通用做法从 Toeflair 的项目级 `cover`、`hero` 和 `blog-image-kit` 里取（本机 `TOFEL-demo` 仓库的项目级插件）：列表封面能垫白字标题、主体居中防裁切、HTML→PNG 用浏览器渲染、颗粒用 canvas、重渲后对 md5 防缓存。项目取值（底色、提示词、MCP 工具、路径、字段名）一律不带进插件。
 - 文章顶部大图（hero）是它的一个分支：项目文章页要大图时同一套做法出。
 - 项目没配「配图」节或 DESIGN.md 没有「blog-cover」：人在场就问；托管时用插件的默认配方出图，交回里写一句「项目没配封面配方，用的默认」，不阻塞。
