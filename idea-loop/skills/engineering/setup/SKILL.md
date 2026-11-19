@@ -93,4 +93,4 @@ idea-loop 从这几处读项目配置：
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 调度：怎么起、建没建（按 `references/dispatch.md`）；要人自己加的允许规则（原样一行，没加的后果）。
-- 留给人的事：安装或登录 `gh`、Codex；装浏览器和 Refero（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。
+- 留给人的事：安装或登录 `gh`、Codex；装浏览器、登录 Mobbin（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。
