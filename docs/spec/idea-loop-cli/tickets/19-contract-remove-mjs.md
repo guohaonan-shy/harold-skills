@@ -20,3 +20,5 @@
 - `setup-*-doc.test.mjs`、`readme-project-directory-doc.test.mjs`：断言 setup 和 README 的文字
 
 > 补充（工单 03 交回，2026-11-19）：`home index` 的 spec 层和 `spec index` 各有一份生成代码，收缩时让 `home index` 改调 spec 包那份，只留一份。删旧 `glossary-check.mjs` 前，查目标仓库 CI 里有没有直接下载它的用法，有的改成命令或在交回里说明。
+
+> 补充（工单 09 交回，2026-11-19）：删旧脚本时同步 `retro install` 的文件清单（project-map、runtime-detect 等），并把它打印和写进入口文件的「idea-loop:runtime 的『装与设置』」「scripts/retro-install.mjs」两处文字改成新的说法。工单 16 若挪动 dreaming 的提议表参考文档，dreaming 模块两条读它的 go test 随之改。

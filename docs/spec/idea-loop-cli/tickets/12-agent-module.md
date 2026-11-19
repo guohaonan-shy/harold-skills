@@ -20,3 +20,5 @@
 
 - `codex-prompt.test.mjs`、`claude-stream.test.mjs`：行为基准
 - `retro-replay.test.mjs`、`retro-run-large.test.mjs`、`research-baseline.test.mjs`：runner 改调用方式，有风险
+
+> 补充（工单 09 交回，2026-11-19）：`retro install` 装到用户机器的文件清单里有 claude-stream、codex-companion 等旧脚本；改 claude-stream、删 codex-companion 时同步改 retro 模块里的这份清单。`retro-queue.test.mjs`、`retro-case.test.mjs` 测的是回放 runner 的 queue、cases，归这张看要不要搬。
