@@ -83,11 +83,12 @@ test('cover: nothing in the skill carries a real project’s values', () => {
   }
 });
 
-test('cover: every numbered step ends with a completion condition, and the browser is loaded with the Skill tool', () => {
+test('cover: every numbered step ends with a completion condition, and the headless browser is loaded with the Skill tool, the runtime is named not called', () => {
   const steps = BODY.split(/^## /m).filter((s) => /^\d\. /.test(s));
   assert.equal(steps.length, 5, 'five numbered steps');
   for (const s of steps) assert.match(s, /完成条件：/, `step 「${s.split('\n')[0]}」 has no completion condition`);
   const render = read(...COVER_DIR, 'references', 'render.md');
   assert.match(render, /用 Skill 工具调 `idea-loop:browser`/);
-  assert.match(render, /用 Skill 工具调 `idea-loop:runtime`，读它的「浏览器」一节/);
+  assert.match(render, /照『浏览器』（`idea-loop:runtime`）/);
+  assert.doesNotMatch(render, /用 Skill 工具调 `idea-loop:runtime`/);
 });
