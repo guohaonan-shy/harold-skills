@@ -116,7 +116,7 @@ test('the section check goes red when a capability is missing or one is added', 
 // Every desktop tool or interface the 0.1.10 skill and agent bodies named, found by grepping them.
 const DESKTOP_NAMES = [
   'mcp__scheduled-tasks__list_scheduled_tasks', 'create_scheduled_task', 'update_scheduled_task', 'mcp__scheduled-tasks__list_task_runs',
-  'CronCreate', 'CronList', 'CronDelete', '调度 loop 已到期', 'recurring: false',
+  'CronCreate', 'CronList', 'CronDelete',
   'mcp__ccd_session_mgmt__list_sessions', 'mcp__ccd_session_mgmt__send_message', 'mcp__ccd_session_mgmt__export_transcript',
   'start_session', 'list_sections', 'create_section', 'detach_session', 'move_sessions', 'set_session_title', 'archive_session', 'get_session',
   'ToolSearch', 'SendMessage',

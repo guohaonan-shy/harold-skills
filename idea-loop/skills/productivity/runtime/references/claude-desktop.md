@@ -22,14 +22,15 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 
 ## 会话内循环
 
-在当前会话里每隔一段时间再叫自己一次，用 `CronCreate` / `CronList` / `CronDelete`。loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由一个只触发一次的提醒在这个会话里叫人重起。
+在当前会话里每隔一段时间再叫自己一次，用 `CronCreate` / `CronList` / `CronDelete`：
 
-起一个 loop：
+- `CronCreate`：间隔换成 cron（分钟避开 0 和 30），prompt 是要重复的文字。
+- `CronList`：本会话里的 loop。
+- `CronDelete`：取消一个 loop。
 
-1. `CronList`：本会话里已有的 loop 和到期提醒（prompt 以「调度 loop 已到期」开头）都用 `CronDelete` 删掉，重起时不留两个。
-2. `CronCreate` 循环定时：间隔换成 cron（分钟避开 0 和 30），prompt 是要重复的命令，不带参数。
-3. `CronCreate` 到期提醒：`recurring: false`，时间定在现在起 7 天加 10 分钟（loop 那时已经删掉），prompt：「调度 loop 已到期。在会话里说：<仓库名> 的 issue 调度 loop 7 天到期，已经停了，重新敲 /idea-loop:issue-dispatch <间隔> 起一个新的。用 PushNotification 发同一句。」
-4. 汇报里写下次运行和到期的时间。
+loop 是本会话里的循环定时，7 天后自动删掉。
+
+调度在桌面端不用它，用「定时任务」（见「会话管理」的调度）。
 
 ## 会话管理
 
@@ -48,7 +49,12 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 - **怎么一轮一轮跑**：桌面定时任务，每小时一次，每次运行开一个新的调度会话、跑一轮就结束；它在侧边栏的 Scheduled 里，不进分组，也不需要进。人敲 `/idea-loop:issue-dispatch`（不带间隔）起：用「定时任务」建（`list_scheduled_tasks` 里已有 `dispatch-<仓库名>` 就 `update_scheduled_task`）：id `dispatch-<仓库名>`，标题 `<仓库名> issue 调度`，`cronExpression` 取 `7 * * * *`（每小时一次，分钟避开 0 和 30），prompt `/idea-loop:issue-dispatch`，建在主 checkout 里；然后立刻做第一轮。app 关着时到点不跑，下次打开补跑一次。起好后汇报里写下次运行的时间。
 - **怎么数开着的会话**：`issues queues <docs>` 给出此刻的 `dispatch`、`limit` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：分组跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。数两个数：triage 分组里的会话数；in-progress 分组里 `lastActivityAt` 在最近 2 小时内的会话数（in-review 不数，超过 2 小时没活动的不数，也不动它们）。三个分组里所有匹配的会话号都记下，派的时候跳过。判别用标题，不用会话的 `startedBy`；交出时调度会给新会话改成这个标题，所以下一轮数得到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，可能多开一个；只多一个会话，不丢东西，接受。
 - **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 3 个。人在调度会话里说话的那一轮也走这条路。
-  1. **建 worktree**（会话不开在主 checkout，多个会话不互相踩）：`git -C <主 checkout> worktree add <主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug> -b issue/<号>-<slug> origin/<基准分支>`。路径在主 checkout 外面，所以主 checkout 的工作区和分支都不动。`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）；`<slug>` 取 issue 标题的几个词，小写、连字符。`issues show` 已给出 issue 的分支（triage 会话留下的）：用它，`-b <那条分支> origin/<那条分支>`，不新起。路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
+  1. **建 worktree**（会话不开在主 checkout，多个会话不互相踩）：路径是 `<主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在主 checkout 外面，所以主 checkout 的工作区和分支都不动。`<slug>` 取 issue 标题的几个词，小写、连字符。分支名取 `issues show` 给出的 issue 分支（triage 会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（白天评估过的 issue，评估会话归档时只清了工作区，分支还在，夜里再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
+     - 本地有（`git -C <主 checkout> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <主 checkout> worktree add <路径> <分支>`。
+     - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <主 checkout> worktree add --track -b <分支> <路径> origin/<分支>`。
+     - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
+
+     路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
   2. **开会话并交到桌面端**：在沙箱外跑（它要联网）`node "${CLAUDE_PLUGIN_ROOT}/scripts/desktop-handoff.mjs" --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>`（`<dispatch>` 取 `todo` 或 `triage`，早上汇总靠它找夜里开出的）。脚本先用 `claude -p` 开出会话，再在交互模式里接回、敲 `/desktop`，看到「Opening in Claude Desktop…」算成功，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`；用交互模式是因为 `-p` 里没有 `/desktop`；依赖系统自带的 `expect`。成功：stdout 一行 JSON，`desktopSessionId` 是 `local_<id>`；`recorded` 是 `false` 说明会话交出了但记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr 「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。目录没被 claude 信任过时，交互那步停在信任确认，也是交出失败：先在 `<仓库名>-worktrees` 这个目录里开一次 `claude` 选信任，它下面的 worktree 沿用。
   3. **归位**：`set_session_title` 把 `local_<id>` 改成「<仓库名>#<号> <标题>」，再用 `mcp__ccd_sidebar__move_sessions` 移进对应分组（`triage` 进 triage，`todo` 进 in-progress）；这是调度唯一一次移动别的会话。移动被拦（没加允许规则，见「装与设置」）：会话已经开着，但不在分组里，数不到，所以这一轮不再交出别的 issue，汇报里写明并推送，要人加规则。
   4. **发任务**：用会话间消息 `send_message` 把 issue 会话的 prompt（`idea-loop:issue-dispatch` 里写的）发给 `local_<id>`。要在交到桌面端之后才发：`claude -p` 跑着的时候桌面端看不见它、调度数不到它，夜里会超开。

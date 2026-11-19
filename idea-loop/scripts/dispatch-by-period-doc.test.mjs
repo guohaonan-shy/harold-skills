@@ -150,6 +150,36 @@ test('claude-desktop: a session is opened in four steps, the second is the hand-
   assert.match(text, /已知限制：交到桌面端时[^。]*前台[^。]*抢人的窗口/);
 });
 
+test('claude-desktop: the in-session loop section carries no dispatch expiry reminder; the dispatcher uses a scheduled task, as in magi', () => {
+  const at = desktop.indexOf('## 会话内循环');
+  const part = desktop.slice(at, desktop.indexOf('\n## ', at + 1));
+  assert.ok(at >= 0 && part.length > 20, 'claude-desktop has the section');
+  for (const [name, re] of [['到期提醒', /到期提醒/], ['调度 loop 已到期', /调度 loop 已到期/], ['一次性提醒', /recurring: false/], ['重新敲 / 间隔参数', /重新敲|issue-dispatch <间隔>/]]) {
+    assert.ok(!re.test(part), `the in-session loop section still says 「${name}」`);
+  }
+  assert.match(part, /调度在桌面端不用它，用「定时任务」/);
+  assert.match(magi.slice(magi.indexOf('## 会话内循环')), /调度在 magi 里不用它，用「定时任务」/, 'same line as magi');
+});
+
+test('claude-desktop: a worktree for an issue with an existing branch attaches that branch instead of creating one with -b', () => {
+  const text = desktopDispatch.slice(desktopDispatch.indexOf('- **怎么交出 issue**'));
+  const step = text.slice(text.indexOf('1. **建 worktree**'), text.indexOf('2. **开会话并交到桌面端**'));
+  assert.ok(step, 'step 1 found');
+  assert.match(step, /有就接上，不新建同名分支/);
+  assert.match(step, /refs\/heads\/<分支>/, 'checks the local branch');
+  assert.match(step, /refs\/remotes\/origin\/<分支>/, 'checks the remote branch');
+  const lines = step.split('\n').filter((l) => /worktree add/.test(l));
+  assert.equal(lines.length, 3, 'one command per case: local, remote only, neither');
+  // the only command that creates the branch from the base is the one for 「two places both have none」
+  const withBase = lines.filter((l) => /origin\/<基准分支>/.test(l));
+  assert.equal(withBase.length, 1);
+  assert.match(withBase[0], /两处都没有/);
+  assert.match(lines[0], /worktree add <路径> <分支>`/, 'a local branch is attached without -b');
+  assert.ok(!/-b/.test(lines[0]), 'attaching a local branch never passes -b');
+  // a branch left behind after the daytime session's workspace was cleaned must not make the night round fail
+  assert.match(step, /分支还在/);
+});
+
 test('claude-desktop: the allow rule is printed under 装与设置, and setup prints it', () => {
   const install = desktop.slice(desktop.indexOf('## 装与设置'));
   assert.match(install, /mcp__ccd_sidebar__move_sessions/);
