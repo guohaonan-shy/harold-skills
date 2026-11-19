@@ -10,7 +10,7 @@
 **回放统计脚本**（放 `ai-eval/scripts/`，照 `paired-stats.mjs` 的样子：文件头写用法与规则，输出 JSON，退出码 0/1/2）：
 - 输入：结果文件，每行一个 JSON：`{ case, group, variant, run, status: "ok" | "platform_error", pass: true|false|null, score: number|null }`。`group` 是重抽分组键（如会话 id）；基线变体固定叫 `baseline`；没法判的 `pass`、`score` 为 `null`。
 - 还有 `platform_error` 行：拒绝出数，退出码 1，列出还剩几行，不给任何差值。
-- 否则：每个变体的 pass¹（过的次数 / 有判定的次数）、pass³（每个 case 跑满三次且三次全过的 case 占比；没有跑满三次的不报 pass³）；每个非基线变体对 `baseline` 的差（pass¹ 的差，有 `score` 时也给分数的差）、按 `group` 重抽 2,000 次的 95% 区间、判定：区间整个在 0 以上「变好」，整个在 0 以下「变差」，跨 0「持平」。
+- 否则：每个变体的 pass¹（过的次数 / 有判定的次数）、pass³（每个 case 跑满三次且三次全过的 case 占比；没有跑满三次的不报 pass³）；每个非基线变体对 `baseline` 的差（pass¹ 的差，有 `score` 时也给分数的差）、按 `group` 重抽 2,000 次的 95% 区间、判定：区间整个在 0 以上「变好」，整个在 0 以下「变差」，跨 0「持平」。通过率和分数各自判定，整体结论：一好一坏为「冲突」交人判断，一个持平一个变差为「变差」，一个持平一个变好为「变好」（review 第 1 轮补记）。
 - 随机种子固定：同一份输入两次跑出同样的区间。
 - 参数错、文件读不了：退出码 2。
 
