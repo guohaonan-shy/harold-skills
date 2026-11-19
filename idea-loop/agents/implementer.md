@@ -39,7 +39,7 @@ effort: high
 - **改规则的工单：怎么证明 skill 真的变了**：读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/rule-tickets.md`。
 - **只跑改动涉及的测试，全量交给 CI**。命令取 `REVIEW.md`「验证命令」（只取命令）。交回前跑：这张写的或改到的单元测试、改动涉及的 API 的测试（碰到被很多接口共用的底层，也只挑直接调到它的接口）、选中的存量回归、typecheck、lint。要真实凭据的工作在本机跑。
 - 服务照 `DEVELOPMENT.md`「开发服务器」只起在分到的端口，交回前照「清理」停掉。
-- 用 MCP 浏览器前照 `idea-loop:browser`「并行时抢锁」抢上面那把锁，owner 写 `<NN>`；等不到交回 `failed`。
+- 用 MCP 浏览器前照 `idea-loop:browser`「并行时」抢上面那把锁，owner 写 `<NN>`；等不到交回 `failed`。
 
 ## 停，还是延后
 
