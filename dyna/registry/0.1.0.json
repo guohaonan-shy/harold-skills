@@ -523,6 +523,86 @@
       ]
     },
     {
+      "command": "spec check",
+      "module": "spec",
+      "use": "check <docs>",
+      "summary": "列出 docs/spec/ 下的 spec（JSON），报旧平铺布局、缺 spec 文件、还留着 status 行的问题",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec index",
+      "module": "spec",
+      "use": "index <docs>",
+      "summary": "按 docs/spec/ 下的 spec 重写 docs/spec/index.md 的表，表外的字不动",
+      "caller": "session",
+      "next": "dyna spec check <docs>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec landed",
+      "module": "spec",
+      "use": "landed <base-ref>",
+      "summary": "列出集成分支上自与 <base-ref> 分叉以来已落地的工单（JSON：提交和工单名，旧的在前）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec skill-edit",
+      "module": "spec",
+      "use": "skill-edit <commit> <handback-file>",
+      "summary": "核对交回文件有没有覆盖这个提交改到的 skill、agent 定义、skill 参考文件；不够时每条原因一行，退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "commit",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "handback-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec ticket-of",
+      "module": "spec",
+      "use": "ticket-of <commit>",
+      "summary": "打印一个提交属于哪张工单；提交里没有 Ticket 行时不打印，退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "commit",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
       "command": "version",
       "module": "version",
       "use": "version",

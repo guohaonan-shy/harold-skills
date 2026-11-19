@@ -11,9 +11,9 @@
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] 同一份 docs 上 `dyna spec check`、`dyna spec index` 与旧脚本输出一致
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] 同一份 docs 上 `dyna spec check`、`dyna spec index` 与旧脚本输出一致
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 

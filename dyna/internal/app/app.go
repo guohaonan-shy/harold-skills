@@ -17,6 +17,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/semver"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/version"
 )
 
@@ -70,6 +71,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.SetFlagErrorFunc(flagError)
 
 	root.AddCommand(issues.Command(issues.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Git: io.Git}))
+	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
 }
