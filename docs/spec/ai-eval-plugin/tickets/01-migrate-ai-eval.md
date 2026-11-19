@@ -17,16 +17,16 @@
 - 仓库根：`marketplace.json` 加 `ai-eval` 一项（`source: ./ai-eval`）；`AGENTS.md`「当前 plugins」加一行；`AGENTS.md`「issue 分类」加父类 `ai-eval`（ai-eval plugin 的 issue）。根 README（中英两份）如有 plugin 列表也加一行。
 
 ## 验收标准
-- [ ] `ai-eval/` 下有 7 个文件夹里的 6 个 skill（eval-baseline、eval-judge、eval-metrics-review、eval-run、eval-samples、eval-setup）、2 份插件级参考、9 个脚本和它们的测试，`plugin.json` 版本 0.1.0
-- [ ] `grep -rniE 'toeflair|tofelair|toefl|托福|作文|学生' ai-eval` 只命中防泄漏测试自己的提示词表
-- [ ] 防泄漏测试在 `ai-eval/skills/` 某个文件里临时写进 `toeflair-app` 时变红并点名那个文件，删掉后变绿
-- [ ] 仓库全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全过（迁过来的 9 个脚本测试包含在内）
-- [ ] marketplace.json 合法 JSON、含 `ai-eval`；`AGENTS.md` 的「当前 plugins」和「issue 分类」各有 ai-eval 一行
-- [ ] README 有安装、每个 skill 的用法示例和「依赖」一节
-- [ ] PR 描述「参考」里写了迁移基准提交 `be895871`（由编排者写，执行方在交回里给出它）
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] `ai-eval/` 下有 7 个文件夹里的 6 个 skill（eval-baseline、eval-judge、eval-metrics-review、eval-run、eval-samples、eval-setup）、2 份插件级参考、9 个脚本和它们的测试，`plugin.json` 版本 0.1.0
+- [x] `grep -rniE 'toeflair|tofelair|toefl|托福|作文|学生' ai-eval` 只命中防泄漏测试自己的提示词表
+- [x] 防泄漏测试在 `ai-eval/skills/` 某个文件里临时写进 `toeflair-app` 时变红并点名那个文件，删掉后变绿
+- [x] 仓库全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全过（迁过来的 9 个脚本测试包含在内）
+- [x] marketplace.json 合法 JSON、含 `ai-eval`；`AGENTS.md` 的「当前 plugins」和「issue 分类」各有 ai-eval 一行
+- [x] README 有安装、每个 skill 的用法示例和「依赖」一节
+- [x] PR 描述「参考」里写了迁移基准提交 `be895871`（由编排者写，执行方在交回里给出它）
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 - `scripts/plugin-version.test.mjs`：新 plugin 目录要被版本检查认得，不能因为 main 上没有它的 plugin.json 而误报。
