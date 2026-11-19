@@ -18,3 +18,5 @@
 
 - 全量 `node --test`：删实现后剩下的 skill 文字测试不能因为找不到被删文件而红
 - `setup-*-doc.test.mjs`、`readme-project-directory-doc.test.mjs`：断言 setup 和 README 的文字
+
+> 补充（工单 03 交回，2026-11-19）：`home index` 的 spec 层和 `spec index` 各有一份生成代码，收缩时让 `home index` 改调 spec 包那份，只留一份。删旧 `glossary-check.mjs` 前，查目标仓库 CI 里有没有直接下载它的用法，有的改成命令或在交回里说明。
