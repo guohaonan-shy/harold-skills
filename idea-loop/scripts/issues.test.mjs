@@ -10,6 +10,8 @@ import {
   DEFAULT_PERIODS, parsePeriods, prState, priorityOf, queues, readTracker, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
 } from './issues.mjs';
 
+const reEscape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const startsWithMarker = (rest) => new RegExp(`^${reEscape(AI_MARKER)}\\n${reEscape(rest)}`);
 const SCRIPT = fileURLToPath(new URL('./issues.mjs', import.meta.url));
 const UI = '- 点重试 → 只重跑这一题';
 
@@ -350,7 +352,7 @@ test('an issue with PRs in two repos: set done lists the one not merged; after b
   assert.equal(issues[242].state, 'CLOSED');
   assert.equal(issues[242].reason, 'completed');
   assert.deepEqual(issues[242].labels, []);
-  assert.match(comments(calls, 242)[0], /^<!-- idea-loop -->\nPR o\/r#10、o\/api#20 都已合并/);
+  assert.match(comments(calls, 242)[0], startsWithMarker('PR o/r#10、o/api#20 都已合并'));
 });
 
 test('without a 仓库 section only the issue\'s own repo is searched', () => {
@@ -383,7 +385,7 @@ test('reconcile flips an in-progress issue whose PRs all turned ready to in-revi
   const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #7')] });
   assert.deepEqual(reconcile(gh, docs).done, ['#7: in-progress → in-review（PR o/r#1 都已 ready）']);
   assert.deepEqual(issues[7].labels, ['status:in-review']);
-  assert.match(comments(calls, 7)[0], /^<!-- idea-loop -->\nPR o\/r#1 都已 ready/);
+  assert.match(comments(calls, 7)[0], startsWithMarker('PR o/r#1 都已 ready'));
 });
 
 test('migratePlan maps the old labels; 实现中 is in-review only with a ready PR; 搁置 gets a comment; mixed labels are problems', () => {
@@ -426,7 +428,7 @@ test('migrate lists by default and calls no gh write; --apply swaps the labels, 
   assert.deepEqual(issues[1].labels.sort(), ['status:in-review', 'type:bug']);
   assert.deepEqual(issues[2].labels, []);
   assert.deepEqual(comments(calls, 2).length, 1);
-  assert.match(comments(calls, 2)[0], /^<!-- idea-loop -->\n从搁置迁回/);
+  assert.match(comments(calls, 2)[0], startsWithMarker('从搁置迁回'));
   assert.deepEqual(issues[3].labels, ['status:todo']);
   assert.doesNotMatch(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8'), /^status:/m);
   assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8')), [1]);
@@ -493,7 +495,7 @@ test('migrate only unlinks and closes roots the consolidation task opened (body 
   assert.equal(issues[21].subOf, 20);
   assert.equal(issues[10].state, 'CLOSED');
   assert.equal(issues[10].reason, 'not_planned');
-  assert.match(comments(calls, 10)[0], /^<!-- idea-loop -->\n/);
+  assert.match(comments(calls, 10)[0], startsWithMarker(''));
   assert.doesNotMatch(comments(calls, 10)[0], /🤖 idea-loop：/);
   assert.equal(issues[20].state, 'OPEN');
   assert.equal(issues[30].state, 'OPEN');

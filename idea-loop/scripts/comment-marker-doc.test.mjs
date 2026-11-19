@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AI_MARKER } from './issues.mjs';
 
 // Guards the wording rule behind issue comments: idea-loop's comments start with the hidden marker, not a
 // visible prefix, and nothing it posts on a PR is signed "posted by Claude". The old prefix survives only
@@ -52,7 +53,7 @@ test('nothing in the plugin says a comment is posted on Claude\'s behalf or in a
 test('every place that tells an agent to read idea-loop\'s latest comment names the marker', () => {
   for (const rel of ['skills/engineering/issue-session/SKILL.md', 'skills/engineering/issue-dispatch/SKILL.md', 'skills/engineering/issue-session/references/draft-spec.md']) {
     const text = all.find((f) => f.rel === rel).lines.join('\n');
-    assert.ok(text.includes('<!-- idea-loop -->'), `${rel} must name the <!-- idea-loop --> marker`);
+    assert.ok(text.includes(AI_MARKER), `${rel} must name the ${AI_MARKER} marker`);
   }
 });
 
@@ -63,6 +64,17 @@ test('no script usage text or posting-identity note still says a prefix is added
     if (isTest(f.rel)) continue;
     f.lines.forEach((l, i) => {
       if (STALE.some((re) => re.test(l))) hits.push(`${f.rel}:${i + 1}`);
+    });
+  }
+  assert.deepEqual(hits, []);
+});
+
+test('no test writes the comment marker out: they all take it from AI_MARKER in issues.mjs', () => {
+  const hits = [];
+  for (const f of all) {
+    if (!isTest(f.rel)) continue;
+    f.lines.forEach((l, i) => {
+      if (l.includes(AI_MARKER)) hits.push(`${f.rel}:${i + 1}`);
     });
   }
   assert.deepEqual(hits, []);

@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { AI_MARKER } from './issues.mjs';
 import { cameFromRollback, commentBody, fromRollback, liveChanges, marker, parseMarkers, recordOf, ROLLBACK_LINE } from './seo-live-record.mjs';
 
 const item = (ok = true) => ({ ok, detail: '' });
@@ -61,7 +62,7 @@ test('recordOf only takes a passed check: a failed or not-live result has no cha
 
 test('liveChanges lists each page of each closed SEO issue that carries the marker, one row per URL', () => {
   const issues = [
-    { number: 12, title: 'SEO（已有页面优化）：改标题', comments: [{ body: '🤖 idea-loop：开工了（旧前缀）' }, { body: `<!-- idea-loop -->\n${commentBody(result(), { mergedOn: '2026-11-16' })}` }] },
+    { number: 12, title: 'SEO（已有页面优化）：改标题', comments: [{ body: '🤖 idea-loop：开工了（旧前缀）' }, { body: `${AI_MARKER}\n${commentBody(result(), { mergedOn: '2026-11-16' })}` }] },
     { number: 13, title: '没有自查', comments: [{ body: '随便说两句' }] },
     { number: 14, title: '没有评论', comments: [] },
   ];
