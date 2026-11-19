@@ -1,6 +1,6 @@
 # 18 — skill 迁移：seo 类，删掉 runtime、browser、seo-check 三个 skill
 
-**Blocked by**：14 — 发布 dyna 第一版并存登记表
+**Blocked by**：01 — 末尾「人的决定」那一格（版本改成 0.0.1）
 **设计冻结**：不涉及 UI
 
 ## 要建什么

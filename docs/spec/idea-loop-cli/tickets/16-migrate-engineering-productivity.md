@@ -1,6 +1,6 @@
 # 16 — skill 迁移：engineering、productivity 两类与它们的 agent，去掉 pr-reviewer
 
-**Blocked by**：14 — 发布 dyna 第一版并存登记表
+**Blocked by**：01 — 末尾「人的决定」那一格（版本改成 0.0.1）
 **设计冻结**：不涉及 UI
 
 ## 要建什么
