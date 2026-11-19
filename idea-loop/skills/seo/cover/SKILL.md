@@ -46,6 +46,8 @@ description: 文章的列表封面和顶部大图：新文要配图、标题或�
 - PNG 存 `<images.dir>/<slug>.png`；每个语言版本的 frontmatter 的 `images.coverField` 写这张图的引用路径，写法照同一篇文章里别的图片。
 - `images.dir`、`images.coverField` 没写：人在场问；托管时看同站已有文章里图片引用的目录、frontmatter 里放封面的字段（出处写哪篇），找不到就把 PNG 留在 `.tmp/cover/`、不动 frontmatter，交回里写明。
 
+完成条件：图在 `<images.dir>/<slug>.png`、每个语言版本的 `images.coverField` 都写了引用；走了退路的，PNG 在 `.tmp/cover/`、交回里写明没动 frontmatter。
+
 ## 5. 核对
 
 1. 重渲过的图，对着服务器核 md5：`curl -s <图的地址> | md5` 等于 `md5 <磁盘文件>`（静态服务器会一直给旧字节）。
