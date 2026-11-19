@@ -15,15 +15,15 @@
 
 ## 验收标准
 
-- [ ] pr-review「一轮之后往哪走」写的自动起下一轮上限是 5，不再出现「不超过 2」「跑满两轮」；第 5 轮修复落地后停下并说明第 5 轮修复未审。
-- [ ] pr-review「前提」有一条「合入最新主分支、解冲突、生成文件重新生成、推送」，排在 CI 那条之前，写明用 merge 不用 rebase。
-- [ ] 合并参考的「合并」第 1 步引用「前提」里合入主分支那一条。
-- [ ] 审查者定义、review 汇报模板、设计变更参考、合并参考、SEO 自动合并参考、pr-review SKILL.md 里不再出现「两轮」上限的说法（仓库内 `grep -rn "两轮" idea-loop/skills/engineering/pr-review idea-loop/skills/engineering/pr idea-loop/agents/pr-reviewer.md` 只剩跟轮数上限无关的句子）。
-- [ ] 文档测试：「一轮之后往哪走」的断言改成上限 5；新增断言「前提」含合入最新主分支、合并参考引用它、审查者定义与汇报模板不含「跑满两轮」；`node --test idea-loop/scripts/*.test.mjs` 全绿。
-- [ ] 插件 `plugin.json` 的 `version` 按 `REVIEW.md`「额外要求」升档（spec 判为 minor；#327 若已定了别的档位按那边的结论）。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] pr-review「一轮之后往哪走」写的自动起下一轮上限是 5，不再出现「不超过 2」「跑满两轮」；第 5 轮修复落地后停下并说明第 5 轮修复未审。
+- [x] pr-review「前提」有一条「合入最新主分支、解冲突、生成文件重新生成、推送」，排在 CI 那条之前，写明用 merge 不用 rebase。
+- [x] 合并参考的「合并」第 1 步引用「前提」里合入主分支那一条。
+- [x] 审查者定义、review 汇报模板、设计变更参考、合并参考、SEO 自动合并参考、pr-review SKILL.md 里不再出现「两轮」上限的说法（仓库内 `grep -rn "两轮" idea-loop/skills/engineering/pr-review idea-loop/skills/engineering/pr idea-loop/agents/pr-reviewer.md` 只剩跟轮数上限无关的句子）。
+- [x] 文档测试：「一轮之后往哪走」的断言改成上限 5；新增断言「前提」含合入最新主分支、合并参考引用它、审查者定义与汇报模板不含「跑满两轮」；`node --test idea-loop/scripts/*.test.mjs` 全绿。
+- [x] 插件 `plugin.json` 的 `version` 按 `REVIEW.md`「额外要求」升档（spec 判为 minor；#327 若已定了别的档位按那边的结论）。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 

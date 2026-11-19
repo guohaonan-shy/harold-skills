@@ -18,6 +18,8 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dir = join(pluginRoot, 'skills', 'engineering', 'pr-review');
 const file = process.env.PR_REVIEW_SKILL || join(dir, 'SKILL.md');
 const raw = readFileSync(file, 'utf8');
+// The other places that used to repeat the cap; env overrides let the checks run against the old text.
+const readRef = (envName, ...parts) => readFileSync(process.env[envName] || join(pluginRoot, ...parts), 'utf8');
 const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '');
 
 function section(title) {
@@ -56,7 +58,9 @@ test('where a round goes next is one section with the three outcomes', () => {
   assert.match(text, /自动起下一轮/);
   assert.match(text, /交审核报告/);
   assert.match(text, /停下等人/);
-  assert.match(text, /跑满两轮|不超过 2/);
+  assert.match(text, /不超过 5/);
+  assert.match(text, /已跑满 5 轮，第 5 轮的修复还没审/);
+  assert.doesNotMatch(text, /不超过 2|跑满两轮|两轮/, 'the old two-round cap is gone');
   assert.match(text, /逐题核过/);
   assert.equal(body.split('逐题核过').length - 1, 1, 'the per-question check is written more than once');
 });
@@ -88,4 +92,31 @@ test('the design change is a pointer to references/design-change.md; the steps l
 test('no no-op or negated framing from the old text is left', () => {
   assert.doesNotMatch(body, /不装自动触发的 hook/);
   assert.doesNotMatch(body, /不审代码、不改代码/);
+});
+
+test('前提 merges the latest base branch in before the CI line; merge.md points at it', () => {
+  const text = section('前提');
+  const mergeAt = text.search(/合入最新主分支/);
+  const ciAt = text.search(/CI 全绿/);
+  assert.ok(mergeAt >= 0, '前提 has no 合入最新主分支 line');
+  assert.ok(mergeAt < ciAt, 'the merge-in line must come before the CI line');
+  assert.match(text, /merge 进 PR 分支，不 rebase/);
+  assert.match(text, /重新生成、不手拼/);
+  assert.match(text, /推送/);
+  assert.match(text, /idea-loop:decision-rules/);
+  const merge = readRef('PR_REVIEW_MERGE_REF', 'skills', 'engineering', 'pr-review', 'references', 'merge.md');
+  const step1 = merge.slice(merge.indexOf('## 合并\n'), merge.indexOf('\n2. '));
+  assert.match(step1, /先合入最新主分支/, 'merge.md 合并 step 1 does not cite the 前提 line');
+});
+
+test('the round cap is written once: reviewer definition, report template and the other references do not repeat it', () => {
+  const reviewer = readRef('PR_REVIEWER_DEF', 'agents', 'pr-reviewer.md');
+  const template = readRef('PR_REVIEW_REPORT_REF', 'skills', 'engineering', 'pr', 'references', 'review-report.md');
+  assert.doesNotMatch(reviewer, /跑满两轮|已跑满/, 'the reviewer cannot know whether the loop stops after this round');
+  assert.doesNotMatch(template, /跑满两轮|已跑满/, 'the report template must not carry the stop sentence');
+  for (const f of ['design-change.md', 'merge.md', 'seo-auto-merge.md']) {
+    const doc = readFileSync(join(dir, 'references', f), 'utf8');
+    assert.doesNotMatch(doc, /两轮|第 2 轮之后/, `${f} still mentions the two-round cap`);
+  }
+  assert.doesNotMatch(body, /两轮/);
 });

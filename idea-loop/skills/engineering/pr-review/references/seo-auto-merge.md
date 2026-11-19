@@ -7,7 +7,7 @@
 对每个 PR 逐条核；任何一条不满足，或核不了（构建失败、没有产物目录），照 `../SKILL.md` 的老路：交报告，停下，人说合并。几个 PR 的，每个 PR 都满足才自动合并，有一个不满足，全部停下。
 
 1. **检查全过**：目标仓库 `REVIEW.md`「验证命令」的检查（CI 在前提里已经绿了）；再对这个 head 的构建产物跑 `seo-check`：产物目录取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" SEO.md` 输出的 `build.distDir`，不在，或不是这个 head 构建的，按目标仓库的构建命令构建一次；然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check.mjs" <产物目录> <build.checkArgs>`，退出码 0 才算过。
-2. **两轴没有阻塞项**：这一轮落在「没有修复，且没有要人定的事」（现有的「最多两轮」不变），并且报告 `your-todo` 里没有未勾的人验素材、没有要人上线前做的事：那些要人看、要人做，合并只由人说。
+2. **两轴没有阻塞项**：这一轮落在「没有修复，且没有要人定的事」（自动起下一轮最多到第 5 轮，不变），并且报告 `your-todo` 里没有未勾的人验素材、没有要人上线前做的事：那些要人看、要人做，合并只由人说。
 3. **只改内容**：在这个 PR 的 worktree 里 `node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-content-scope.mjs" SEO.md --base=origin/<基准分支>`，输出 `contentOnly` 为 `true`。`false` 时 `outside` 列出不在范围内的文件，写进报告「要你做的事」，让人决定是合并还是改。
 4. **PR 描述有「上线自查的网址」一节**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/pr-body.mjs" get <owner/repo> <PR 号> live-check` 输出非空。没有这一节，合并后无从自查，不自动合并；回头补写它（写法见 `idea-loop:pr`）再判。
 
