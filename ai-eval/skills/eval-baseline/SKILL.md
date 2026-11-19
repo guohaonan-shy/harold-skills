@@ -39,7 +39,7 @@ description: 管基线：人决定的候选全量上线、旧组删掉之后，�
 
 ### 3. 重跑
 
-按 `EVAL.md`「跑基线」的顺序：`run`、`recall`、`build`、`write --dry-run` 再 `write`、`triggers`。起 `run` 与 `recall` 之后告诉人在等什么、大约多久，用后台命令加 Monitor 等；失败后原样再跑一遍，只补缺的。
+按 `EVAL.md`「跑基线」的顺序：`run`、`recall`、`build`、`write --dry-run` 再 `write`、`triggers`。起 `run` 与 `recall` 之后告诉人在等什么、大约多久，用后台命令加 Monitor 等；失败后原样再跑一遍，只补缺的。`build` 之前先把平台报错重跑到零（命令在 `EVAL.md`「跑基线」，规则见 `<插件目录>/references/reporting-rules.md`「平台报错先重跑」）。
 
 `write` 拒绝时停下，把拒绝的原话交给人：AI 任务的 dataset 里留着上一版基线的条目时它拒绝写，刷新 dataset 的代码还没有（`EVAL.md`「放量与升基线」的已知缺口）。不删 PostHog 里的条目绕过去。
 

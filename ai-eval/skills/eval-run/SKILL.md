@@ -34,6 +34,8 @@ description: 改一个 AI 任务的提示词、模型或思考预算时用：动
 - 样本：用 `EVAL.md`「评测集存在哪」写的列条目命令（带全文）读条目的 `input`、`expected_output`、`metadata.covers`；数覆盖用样本描述命令加 `coverage.mjs`（`EVAL.md`「样本的问题类型」）。
 - 指标：用 `EVAL.md`「指标与断言」写的命令读这个任务挂的 scorer 的 tags 和 description。
 
+要测的东西是多轮对话里的一步、要模拟用户才能跑流水线的，转去 `ai-eval:eval-replay`，不走这套。
+
 AI 任务条目的 `covers` 是空的；找「哪些条目会触发预期变化」靠它的 `expected_output`，和 `metadata.sample`（这条调用来自用户任务的哪个样本，到用户任务 dataset 里读那个样本）。
 
 每个任务回答四问，每问带出处（条目编号、scorer 名）：
@@ -76,7 +78,7 @@ AI 任务条目的 `covers` 是空的；找「哪些条目会触发预期变化�
 
 ### 7. 第一段
 
-`run --stage 1`，然后 `compare --stage 1`。起 `run` 之后告诉人在等什么、大约多久；用后台命令加 Monitor 等，不连续轮询。`compare` 退出码 0 才有第二段；1 是停下（不达标或待诊断）。
+`run --stage 1`。起 `run` 之后告诉人在等什么、大约多久；用后台命令加 Monitor 等，不连续轮询。跑完先把候选和基线的平台报错重跑到零（命令在 `EVAL.md`「两段式实验」，规则见 `<插件目录>/references/reporting-rules.md`「平台报错先重跑」），再 `compare --stage 1`。`compare` 退出码 0 才有第二段；1 是停下（不达标或待诊断）。
 
 `compare` 拒绝比、说基线是在另一版评测集上打的分：照它给的下一步走（只改了期望或加了 scorer 就 `rescore --baseline`；某几个样本的输入变了，先只重跑它们的基线，这条要花钱，对人说规模、等同意；`EVAL.md`「两段式实验」里列了各情形），做完再比，不改实验去适应旧基线。
 
@@ -90,7 +92,7 @@ AI 任务条目的 `covers` 是空的；找「哪些条目会触发预期变化�
 
 ### 8. 第二段
 
-第一段全部达标才开始。`run --stage 2`、`compare --stage 2`；断言过了的行等判官：用 Skill 工具调 `ai-eval:eval-judge`，出 `paired-stats` 结果后 `finish`。待诊断的行同步骤 7 处理。
+第一段全部达标才开始。`run --stage 2`，平台报错照步骤 7 重跑到零（规则同 `<插件目录>/references/reporting-rules.md`），再 `compare --stage 2`；断言过了的行等判官：用 Skill 工具调 `ai-eval:eval-judge`，出 `paired-stats` 结果后 `finish`。待诊断的行同步骤 7 处理。
 
 完成条件：第二段每个用户任务的行有状态（达标、不达标，或待诊断等人）。
 
@@ -103,7 +105,7 @@ AI 任务条目的 `covers` 是空的；找「哪些条目会触发预期变化�
 - 4：每条待诊断和需诊断：是潜在问题还是偶然，和这次改动有没有因果，引产物原文。
 - 5：预期变好的 scorer 变好了吗，预期不变的动了吗；**新能力**的实验必须写一句判断：新 scorer 上候选比基线好、其余 scorer 与底线不变差，才写「新能力生效」，否则写「新能力未生效」并说明差在哪。代码只把新 scorer 的分并排列出，这一句靠你判。
 
-数字照报告第 5 部分抄，不临场重算。
+数字照报告第 5 部分抄，不临场重算。pass¹ 和 pass³ 一并写出，第一次出现时给定义（原样取自 `<插件目录>/references/reporting-rules.md`「pass¹ 和 pass³」）；项目的报告没有这两个数，就在分析里写「报告没给」，并在 `EVAL.md`「待确认」记一条，不自己算。
 
 完成条件：`report.md` 的 1、2、4、5 四部分都不再是「待 eval skill 填写」。
 
