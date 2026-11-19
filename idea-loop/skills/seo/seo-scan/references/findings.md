@@ -62,11 +62,14 @@ OpenSEO 项目：<projectId>
 
 - 运行目录由调用方给（`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`）。发现清单写到 `<运行目录>/<方向>.json`：一个 JSON 数组，没有发现就是 `[]`。
 - 为了交给脚本而存的工具原始返回（审计逐页数据等）也放在运行目录里，文件名带方向前缀（`technical-audit-pages-current.json`）。运行目录以外不写任何文件。
+- 方向 agent 有话要写进研究日志、又不是发现的（technical 的「有意改动」），写成 `<运行目录>/<方向>-<名字>.txt`，一行，seo-scan 写研究日志时照抄；交回仍只有那一行。
 - **未采集**：这个方向的数据一样也没拿到（MCP 连不上、没有 Search Console 连接、额度为 0 而方法只剩付费调用），文件内容是只有一个对象的数组：
 
   ```json
   [{ "direction": "pages", "uncollected": "OpenSEO 项目没有连 Search Console" }]
   ```
+
+  agent 没有交回合法文件（文件不存在、不是 JSON 数组、报错退出）时，调用方替它写成同样形状的未采集，原因写 agent 的报错或「没有交回发现文件」。`results`（效果报告）方向的发现用被它回看的那个改动的方向做 `direction`，只有它的未采集对象写 `"direction": "results"`。
 
   拿到了一部分就交回拿到的那部分发现，缺的那块写进交回那一句（例：geo 方向没有 AI 可见性跟踪时，引用数据没采集，免费的站点自检照常交回发现）。
 - 写完先验一遍：`node -e 'const a=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(!Array.isArray(a))process.exit(1)' <文件>`，退出码 0 才交回。

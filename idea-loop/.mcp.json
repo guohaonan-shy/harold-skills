@@ -9,6 +9,10 @@
     "openseo": {
       "type": "http",
       "url": "https://app.openseo.so/mcp"
+    },
+    "mobbin": {
+      "type": "http",
+      "url": "https://api.mobbin.com/mcp"
     }
   }
 }

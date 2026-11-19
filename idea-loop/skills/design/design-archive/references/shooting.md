@@ -22,7 +22,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属�
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库根> <状态 id> --out <目录> [设置]
 ```
 
-`[设置]` 是 `--viewport <WxH> --theme <light|dark> --motion <default|reduce>`。除 `step` 和 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给『浏览器』里执行代码的那一项跑（做法见『浏览器』）；`attribute` 打印 JSON。
+`[设置]` 是 `--viewport <WxH> --theme <light|dark> --locale <如 zh-CN> --motion <default|reduce>`；`--locale` 只用来在提示里标注语言，浏览器仍要自己按那个语言打开。除 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给『浏览器』里执行代码的那一项跑（做法见『浏览器』）；`attribute` 打印 JSON。
 
 ## 共用的规矩
 
@@ -85,7 +85,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 
 1. **检出**：长页面入口的 `attribute` 因为 `undeclaredScrollDriven` 退出码 1，该段列在里面（`scrollDriven` 逐段给出依据）。完成：`undeclaredScrollDriven` 里列出了要声明的段。
 2. **声明**：这一段在分段声明里加 `scrollDriven: true`。完成：重测，`undeclaredScrollDriven` 空。
-3. **建状态和边**：第 2 步起每一步一个状态，写 `section: <页面>#<段>`；结构相同的步骤只记第一个。边按页面怎么驱动它写：
+3. **建状态和边**：第 2 步起每一步建一个状态，写 `section: <页面>#<段>`；每一步各拍一张钉住视口图。步骤不算重复项，版式相同也一样建（每步的插图和文字不同，是这一段的内容本身）。边按页面怎么驱动它写：
    - 滚轮一下换一张：`user` 边，`action` 写「在钉住的这一段上向下滚一次滚轮」，`component` 与 `locate` 指这一段的组件和它的标题；
    - 按滚动位置切换：`system` 边，`trigger` 写「页面滚到这一段的第 n 步」，`how` 写滚到这一段的百分之几。
    
@@ -123,6 +123,5 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库�
 碰到时换做法：
 
 - **一段不要跨过滚动容器的顶边**（外壳顶栏在容器外，不随容器滚）：在容器顶切成两段，容器外一段、容器里一段。
-- **长文章侧边随滚动变的阅读进度或「当前章节」标签**会让那一段被认成滚动驱动：声明之后这一段只拍钉住的那一屏，段里其余内容档案里没有图（没有「这一段不是滚动驱动」的声明）。在状态文件「这一屏」里用文字写明整段的内容。
 - **一段高过约 16000px**（浏览器单张截图的上限）：拆成两段。
 - 两个窗格各自滚动的页面只认可见面积最大的一个（另一个见上表 `scroller.others`）；横向滚动不管。

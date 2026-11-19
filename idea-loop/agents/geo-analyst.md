@@ -19,7 +19,7 @@ tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
 
 ## 做
 
-1. **分析**：用 Skill 工具调 `idea-loop:seo-geo`，`args` 照 findings.md 的「调方法 skill」填。它在无人分支里只读已有的跟踪结果、引用来源和趋势，不发起新的付费检查；没有跟踪时只跑免费的站点自检。
+1. **分析**：用 Skill 工具调 `idea-loop:seo-geo`，`args` 照 findings.md 的「调方法 skill」填。它在无人分支里读已有跟踪的结果、引用来源和趋势；已有跟踪时可以发起付费检查，先估价，估价不超过「本次额度」才跑，超了不跑、在交回里写明；没有跟踪时不建跟踪，只跑免费的站点自检。
 2. **写文件**：它交回的发现写到 `<运行目录>/geo.json`，照 findings.md 验一遍。它说 AI 引用数据没采集（没有跟踪或读不到）：自检的发现照写，缺的那块按 findings.md「拿到了一部分」写进交回那一句，原因用它的原话；自检也什么都没拿到才写成未采集。
 
 完成条件：`geo.json` 通过验证。
