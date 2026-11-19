@@ -2208,6 +2208,57 @@
       ]
     },
     {
+      "command": "test run",
+      "module": "test",
+      "use": "run [匹配] [--plugin <插件根>]",
+      "summary": "跑插件自己的 scripts/*.test.mjs（node --test）；带匹配就只跑文件名含它的；结果和退出码照 node 的",
+      "caller": "test",
+      "next": "",
+      "args": [
+        {
+          "name": "匹配",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "plugin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "插件根目录；不给就从当前目录往上找（仓库根目录下的 idea-loop/ 也认），再不行用 IDEA_LOOP_PLUGIN_ROOT"
+        }
+      ]
+    },
+    {
+      "command": "test skill-doc",
+      "module": "test",
+      "use": "skill-doc <skill目录> [--plugin <插件根>] [--min-pointers <n>]",
+      "summary": "查一份 skill：SKILL.md 主体（去掉 frontmatter）不到 5000 字（UTF-8 字符），插件里每处指向它的小节（idea-loop:<skill> 的「某节」）都是它的 SKILL.md 或 references/ 的标题；不对退出 1",
+      "caller": "test",
+      "next": "",
+      "args": [
+        {
+          "name": "skill目录",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "min-pointers",
+          "kind": "flag",
+          "required": false,
+          "value": "int",
+          "description": "至少要查到这么多处指向；少了算红（防止写错 skill 名查了个空）"
+        },
+        {
+          "name": "plugin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "插件根目录；不给就从 skill 目录往上找带 .claude-plugin/plugin.json 的那层，再不行用 IDEA_LOOP_PLUGIN_ROOT"
+        }
+      ]
+    },
+    {
       "command": "ui compare",
       "module": "ui",
       "use": "compare <archive.png> <fresh.png>",

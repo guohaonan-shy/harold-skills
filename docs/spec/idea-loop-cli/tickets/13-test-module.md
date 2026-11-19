@@ -11,10 +11,10 @@ skill-doc-check 收成 `dyna test skill-doc`（查一份 skill 的主体字数�
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] `dyna test run issues` 只跑名字含 issues 的测试文件并返回它们的结果
-- [ ] `dyna test skill-doc` 对超 5000 字的 skill 报红，字数量法与 AGENTS.md 一致（UTF-8 字符）
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] `dyna test run issues` 只跑名字含 issues 的测试文件并返回它们的结果
+- [x] `dyna test skill-doc` 对超 5000 字的 skill 报红，字数量法与 AGENTS.md 一致（UTF-8 字符）
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 
