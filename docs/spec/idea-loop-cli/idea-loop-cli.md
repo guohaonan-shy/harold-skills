@@ -66,7 +66,7 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 
 ### 入口
 
-一个命令 `idea-loop`，放在插件的 `bin/`。实测（2026-11-18，Claude Code 2.1.327，`claude -p --plugin-dir` 装一个临时插件）：插件 `bin/` 下的可执行文件能在 Bash 里直接按名字调；但这时它拿不到 `CLAUDE_PLUGIN_ROOT`（是空的）。所以入口按自己所在的路径找插件目录，不读这个环境变量。hook 也调这个命令：`hooks.json` 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" hook <名字>`（hook 进程里有这个变量，所以用全路径；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）。
+一个命令 `idea-loop`，放在插件的 `bin/`。实测（2026-11-18，Claude Code 2.1.327，`claude -p --plugin-dir` 装一个临时插件）：插件 `bin/` 下的可执行文件能在 Bash 里直接按名字调；但这时它拿不到 `CLAUDE_PLUGIN_ROOT`（是空的）。所以入口按自己所在的路径找插件目录，不读这个环境变量。hook 也调这个命令：hook 只管什么时候触发、调哪条命令，命令本身就是各模块里的那条（见「hook 只拦不做事」的对照表）。`hooks.json` 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`（hook 进程里有这个变量，所以用全路径；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）。
 
 ### 模块
 
@@ -75,48 +75,58 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 | 去向 | 个数 | 脚本 |
 |---|---|---|
 | 进命令，给会话调 | 41 | 见下表 |
-| 进命令的 `hook` 模块，只给 hook 调 | 4 | `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook`（另有新加的拦截 hook、SessionStart 的注入，也走这个模块） |
+| 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
-| lint 本体，只经 `hook` 模块跑，没有自己的命令 | 2 | `design-lint`、`glossary-check` |
 | 库与 MCP 服务器，不进命令 | 7 | `mini-yaml`、`design-archive`、`ui-compare`、`ui-measure-concurrency`、`claude-stream`、`github-app`（库，被别的模块 import）；`design-archive-mcp`（`.mcp.json` 起的 MCP 服务器） |
 | 删掉 | 1 | `codex-companion` |
 
-hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」。
+hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」；hook 不单设模块：「不是，我并不是让你增加一个hook模块，而是这些功能可能都是在原有的模块，hook控制触发世纪以及调用哪个命令」。
 
 进命令的按模块分。「新增」是现在没有脚本、skill 手写的操作。
 
 | 模块 | 收进来的脚本 | 新增 |
 |---|---|---|
-| `issues` | `issues` | 挡路关系：标、去、列（包 `gh api …/dependencies/blocked_by`）；`gh issue` 的读、开、评论 |
+| `issues` | `issues` | `guard`：拦手改 status label；挡路关系：标、去、列（包 `gh api …/dependencies/blocked_by`）；`gh issue` 的读、开、评论 |
 | `spec` | `spec`、`ticket-ledger` | — |
-| `home`（知识库） | `project-map`（where / commit）、`home-config`、`memory-check` | 各层 `index.md` 生成；`adr new`（四位编号递增）；`commit` 加护栏：slug 重名、死链就拒绝 |
+| `home`（知识库） | `project-map`（where / commit / map）、`home-config`、`memory-check`、`glossary-check`（`glossary check`） | 各层 `index.md` 生成；`adr new`（四位编号递增）；`commit` 加护栏：slug 重名、死链就拒绝 |
 | `pr` | `pr-body`、`review-loop`、`evidence`、`changed-lines`、`review-check` | `gh pr` 的开、转 ready、看、合并 |
 | `git` | — | 落地：只 add 给定的文件、提交、推送（代码仓库的 `git commit/push/merge`、`git -C`） |
-| `worktree` | — | 建、删、列（删时先解锁、再删分支） |
-| `design` | `design-archive-check/query/write/sections`、`direction-note-check`、`critic-score`、`flow-compose` | DESIGN.md 官方 lint / diff |
+| `worktree` | — | 建、删、列（删时先解锁、再删分支）；`guard`：拦手写 `git worktree remove` |
+| `design` | `design-archive-check/query/write/sections`、`direction-note-check`、`critic-score`、`flow-compose`、`design-lint`（`lint`） | DESIGN.md 官方 lint / diff（`md lint`、`md diff`） |
 | `ui` | `ui-measure`、`ui-png-compare`、`browser-lock` | — |
 | `serve` | — | 起、停静态服务器（自己挑空闲端口，打印地址） |
 | `research` | `research-check` | — |
 | `dreaming` | `proposal-table-check` | — |
 | `seo` | `seo-md`、`seo-baseline`、`seo-budget`、`seo-check`、`seo-content-scope`、`seo-context`、`seo-due`、`seo-gaps`、`seo-issues`、`seo-live-check`、`seo-live-record`、`seo-meta-provenance` | — |
 | `retro` | `retro-install`、`retro-pool-count`、`retro-pool-reopened`、`session-digest` | — |
-| `runtime` | `runtime-detect` | `show <能力>`（见「运行环境」） |
+| `runtime` | `runtime-detect`（`name`、`inject`） | `show <能力>`（见「运行环境」） |
 | `agent` | `codex-prompt` | `codex run`、`codex image`、`claude run`（见「包装别的命令行」） |
-| `hook` | `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook`；SessionStart 的三条注入（原 `runtime-detect --inject`）和项目地图（原 `project-map`） | `guard`：拦手写易错操作（见「hook 只拦不做事」） |
 | `test` | `design-archive-fixture`（写出一份虚构的设计档案到给定目录）、`skill-doc-check`（查一份 skill 的主体字数和被指向的小节在不在） | `run`：跑插件自己的 `*.test.mjs`，可带匹配 |
 
 ### 登记表与扫描测试
 
-照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README 和 `hooks.json` 里写的 `idea-loop <模块> <命令>`，登记表里没有的就红。登记表给每个模块标调用方：`hook` 模块只许 `hooks.json` 引用，skill、agent 里写了也红；`test` 模块只许测试、`REVIEW.md`、`DEVELOPMENT.md` 引用。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
+照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README 和 `hooks.json` 里写的 `idea-loop <模块> <命令>`，登记表里没有的就红。登记表给每条命令标调用方：只由 hook 调的命令（lint、`guard`、`inject`、`map`）只许 `hooks.json` 引用，skill、agent 里写了也红；`test` 模块只许测试、`REVIEW.md`、`DEVELOPMENT.md` 引用。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
 
 ### hook 只拦不做事
 
-新加一个 Bash 的 PreToolUse hook（`idea-loop hook guard`），只拦两种手写操作，拦下时告诉它该用哪条命令：
+hook 只管两件事：什么时候触发、调哪条命令。命令都在各自的模块里；带 `--hook` 时，命令从 stdin 读 hook 事件（工具名、命令或文件路径），按 hook 的格式回话（放行、拦下并说理由、附加上下文）；不带 `--hook` 就是普通调用。改完后 `hooks.json` 是这样：
+
+| 触发时机 | 调的命令 | 原来 |
+|---|---|---|
+| SessionStart | `runtime inject decision-rules`、`runtime inject runtime`、`runtime inject reference` | `runtime-detect.mjs --inject …` |
+| SessionStart | `home map` | `project-map.mjs` |
+| PreToolUse（Bash） | `issues guard --hook`、`worktree guard --hook` | 新加 |
+| PreToolUse、PostToolUse（Bash） | `seo check --hook` | `seo-check-hook.mjs` |
+| PostToolUse（Write / Edit） | `design lint --hook` | `design-lint-hook.mjs` |
+| PostToolUse（Write / Edit） | `design md lint --hook` | `design-md-hook.mjs` |
+| PostToolUse（Write / Edit） | `home glossary check --hook` | `glossary-check-hook.mjs` |
+
+新加的两条 `guard` 只拦两种手写操作，拦下时告诉它该用哪条命令：
 
 - 用 `gh issue edit` 加、去 `status:*` label → `idea-loop issues set`；
 - 手写 `git worktree remove` → `idea-loop worktree remove`。
 
-lint 只由自动触发器跑（现在只有 hook；仓库没有 GitHub Actions），skill 里不再显式调 lint：`design-lint` 的 6 处、`glossary-check` 的 1 处删掉，由已有的 PostToolUse hook 经 `idea-loop hook design-lint`、`idea-loop hook glossary` 跑。要等一组改动做完才能判的检查（删文件后查死链等），放进落地命令当护栏（`idea-loop home commit` 有死链就拒绝）。
+lint 只由自动触发器跑（现在只有 hook；仓库没有 GitHub Actions），skill 里不再显式调 lint：`design-lint` 的 6 处、`glossary-check` 的 1 处删掉，由已有的 PostToolUse hook 经 `design lint --hook`、`home glossary check --hook` 跑。要等一组改动做完才能判的检查（删文件后查死链等），放进落地命令当护栏（`idea-loop home commit` 有死链就拒绝）。
 
 skill 里显式调的 5 个格式检查挪进交回或落地那一步的命令：
 
@@ -167,7 +177,7 @@ runtime 不再是 skill。
 
 ### 同一行为的其他入口
 
-- **hook**（`hooks/hooks.json`）：纳入。每条都改成 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" hook <名字>`，不再直接写脚本路径。
+- **hook**（`hooks/hooks.json`）：纳入。每条都改成 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`，不再直接写脚本路径。
 - **测试**：纳入。共用的测试用具改经 `idea-loop test` 调；测试文件里直接 import 模块的照旧。改插件时要用 worktree 里的 `idea-loop/bin/idea-loop test run`：PATH 上的 `idea-loop` 是已装的那一版插件，跑的是它自己的测试，不是 worktree 里正在改的。
 - **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：排除。它们是本地跑的 node 脚本，直接 import 模块，不经 Bash 调命令，不受这次影响。
 - **plugin 的 `README.md`**：纳入，命令写法同步改；扫描测试也扫它。
@@ -206,7 +216,7 @@ runtime 不再是 skill。
 
 1. 作为改 skill 的人，我想要 skill 里写了登记表里没有的命令时测试变红，以便命令改名后 skill 不会悄悄过期
 2. 作为改插件的人，我想要用 `idea-loop test` 跑测试、取测试用具，以便不用记哪个 mjs 文件做什么
-3. 作为改 hook 的人，我想要 hook 也走 `idea-loop hook <名字>`，以便 hook 和会话用同一个入口、同一份登记表
+3. 作为改 hook 的人，我想要 hook 调的就是各模块里的命令，以便 hook 只写触发时机，检查逻辑跟命令只有一份
 
 ## 实现决策
 
@@ -244,10 +254,10 @@ runtime 不再是 skill。
   2. 前置：一份 skill 文本写了 `idea-loop issues frobnicate`。步骤：跑扫描测试。期望：红，报出文件和行。覆盖：场景五 1。
   3. 前置：`docs/` 里一份文件链到已删除的 slug。步骤：`idea-loop home commit <文件>`。期望：拒绝，列出死链所在文件和 slug，不产生提交。覆盖：场景二 3。
   4. 前置：PATH 上放一个假 `codex`，它再起一个睡眠子进程。步骤：`idea-loop agent codex run` 带 2 秒超时。期望：报超时，假 codex 和它的子进程都已不在。覆盖：场景三 2。
-  5. 步骤：把 `gh issue edit 1 --add-label status:todo`、`git worktree remove x` 喂给新 hook。期望：两条都被拦，提示里有对应的 `idea-loop` 命令；`gh issue edit 1 --add-label kind:bug` 不拦。覆盖：场景二 1、2。
+  5. 步骤：把 `gh issue edit 1 --add-label status:todo`、`git worktree remove x` 分别喂给 `issues guard --hook`、`worktree guard --hook`。期望：两条都被拦，提示里有对应的 `idea-loop` 命令；`gh issue edit 1 --add-label kind:bug` 不拦。覆盖：场景二 1、2。
   6. 步骤：`IDEA_LOOP_RUNTIME=magi idea-loop runtime show 浏览器`。期望：打印 magi 数据的「浏览器」一节，包含原 browser skill 的三条规矩。覆盖：场景四 1、场景一 5。
   7. 步骤：`grep -r 'CLAUDE_PLUGIN_ROOT}/scripts/' idea-loop/skills idea-loop/agents idea-loop/hooks`。期望：没有输出。覆盖：场景一 1。
-  8. 前置：一份 skill 文本写了 `idea-loop hook guard`。步骤：跑扫描测试。期望：红，报「hook 模块只许 hooks.json 引用」。覆盖：场景五 1。
+  8. 前置：一份 skill 文本写了 `idea-loop design lint`。步骤：跑扫描测试。期望：红，报「这条命令只许 hooks.json 引用」。覆盖：场景五 1。
   9. 步骤：`idea-loop test fixture design-archive <空目录>`，再 `idea-loop design archive check <那个目录>`。期望：写出两页的虚构档案，校验退出 0。覆盖：场景五 2。
 - **照着谁写**：各脚本已有的 `*.test.mjs`（如 `issues.test.mjs`）；扫 skill 文本的写法照 `no-project-leak.test.mjs`；hook 的测试照 `design-lint-hook.test.mjs`；runtime 照 `runtime-detect.test.mjs`。
 
