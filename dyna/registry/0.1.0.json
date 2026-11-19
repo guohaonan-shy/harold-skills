@@ -2,6 +2,184 @@
   "version": "0.1.0",
   "commands": [
     {
+      "command": "home adr new",
+      "module": "home",
+      "use": "new <name>",
+      "summary": "打印下一份 ADR 的文件名：比现有最大编号大 1 的四位编号加名字，编号不复用",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "name",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "project",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "项目名（不带就取当前目录所在的项目）"
+        }
+      ]
+    },
+    {
+      "command": "home commit",
+      "module": "home",
+      "use": "commit <message> <file>...",
+      "summary": "只提交列出的文件到 home 的主分支再推送；docs 里有重名 slug 或死链就拒绝",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "message",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "home config apply",
+      "module": "home",
+      "use": "apply",
+      "summary": "先备份 settings.json 和 CLAUDE.md，再做还没做的改动；都已做就什么都不写",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "only",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只做这几项：1,2,3 或 plugin,memory,claude-md"
+        }
+      ]
+    },
+    {
+      "command": "home config plan",
+      "module": "home",
+      "use": "plan",
+      "summary": "列出三处用户级改动各自的改前、改后、是否已做；什么都不写",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        },
+        {
+          "name": "only",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只看这几项：1,2,3 或 plugin,memory,claude-md"
+        }
+      ]
+    },
+    {
+      "command": "home glossary check",
+      "module": "home",
+      "use": "check [file]",
+      "summary": "查 GLOSSARY.md 的格式；有问题退出 2。--hook：读 PostToolUse 事件，写到 GLOSSARY.md 才查，有问题退出 2 并在 stderr 回话",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PostToolUse 事件；有问题退出码 2、理由写到 stderr"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "home index",
+      "module": "home",
+      "use": "index",
+      "summary": "按各份 frontmatter 重新生成 spec、adr、raw 三层的 index.md",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "layer",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只生成一层：spec | adr | raw"
+        },
+        {
+          "name": "project",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "项目名（不带就取当前目录所在的项目）"
+        }
+      ]
+    },
+    {
+      "command": "home map",
+      "module": "home",
+      "use": "map",
+      "summary": "开场注入当前项目的项目目录和项目地图（出任何岔子都什么也不打印）",
+      "caller": "hook",
+      "next": "",
+      "args": []
+    },
+    {
+      "command": "home memory check",
+      "module": "home",
+      "use": "check [dir]",
+      "summary": "量记忆根索引：不超 140 行和 25,000 字节，链接都在，条目都进了索引；有问题退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dir",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "home where",
+      "module": "home",
+      "use": "where",
+      "summary": "打印当前项目在 home 里的目录（JSON）；在 home 本身里要带 --project",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "project",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "项目名（在 home 目录里，或不在项目的仓库里时要带）"
+        }
+      ]
+    },
+    {
       "command": "issues backlog",
       "module": "issues",
       "use": "backlog <docs> [limit]",

@@ -11,12 +11,12 @@
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] 一份 docs 里一个文件链到已删除的 slug，`dyna home commit <文件>` 拒绝、列出文件和 slug、git 里没有新提交
-- [ ] 两个同名 slug 时 `home commit` 拒绝；工单、index.md 同名不拒
-- [ ] `home adr new` 在已有 0001、0003 时给出 0004
-- [ ] `home glossary check --hook` 对同一个 hook 事件的回话与旧钩子一致
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] 一份 docs 里一个文件链到已删除的 slug，`dyna home commit <文件>` 拒绝、列出文件和 slug、git 里没有新提交
+- [x] 两个同名 slug 时 `home commit` 拒绝；工单、index.md 同名不拒
+- [x] `home adr new` 在已有 0001、0003 时给出 0004
+- [x] `home glossary check --hook` 对同一个 hook 事件的回话与旧钩子一致
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 

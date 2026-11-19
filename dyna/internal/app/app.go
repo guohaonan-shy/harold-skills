@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -37,6 +38,9 @@ type IO struct {
 	Env    home.Env
 	GH     func(dir string) issues.GH
 	Git    func(dir string) issues.GH
+	// Cwd is the directory the session runs in; empty means the process's. Now is the clock; nil means time.Now.
+	Cwd string
+	Now func() time.Time
 }
 
 // OSIO is the real process.
@@ -71,6 +75,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.SetFlagErrorFunc(flagError)
 
 	root.AddCommand(issues.Command(issues.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Git: io.Git}))
+	root.AddCommand(home.Command(home.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, Cwd: io.Cwd, Now: io.Now}))
 	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
