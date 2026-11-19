@@ -254,7 +254,9 @@ runtime 不再是 skill。
 ## 实现决策
 
 - **用 Go 写**（Harold 2026-11-19 选「Go (Recommended)」；设计档案 MCP 也确认改成 Go 包：「MCP 就按你说的改成 Go 包吧」）：goreleaser 一次出各平台的包，交叉编译不用另装工具链；参数解析、子命令用标准库或一个常用的子命令库，YAML 用现成的库（`mini-yaml` 删掉）。依赖由 Go 模块管理，编进二进制，用户机器上不装任何运行时。
-- **代码按模块分包**：每个模块一个 Go 包，命令的实现和它内部用的东西放在一起；只被引用、没有动作的（`claude-stream`、`github-app`、`ui-compare` 等）作为共用的包（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）。对调用方来说只有 `idea-loop` 一个入口。
+- **代码架构：按模块分包**（Harold 2026-11-19 选「按模块分包 (Recommended)」）：顶层目录下一个 Go 模块；`cmd/` 下的 main 只把各模块的命令拼成一棵命令树；每个模块（issues、home、pr、git、worktree、design、ui、serve、research、dreaming、seo、retro、runtime、agent、test）一个内部包，放它的命令和逻辑；设计档案 MCP 单独一个包；共用的东西（GitHub 身份、进程树管理、版本范围判断、「报错带下一条命令」的错误类型）一个共用包；另有每版一份的命令登记表、命令行版本号、goreleaser 配置。加一个模块就是加一个包。noodle 也是按领域分包。
+- **命令框架用 cobra**（Harold 2026-11-19 选「cobra (Recommended)」）：嵌套子命令、`--help`、参数校验现成；命令登记表从 cobra 的命令树导出，只有一份来源；每条命令带一个「谁能调」的标注（会话 / 只由 hook / 只给测试），扫描测试按它判。gh、noodle 都用 cobra。
+- **按模块分包的细节**：每个模块一个 Go 包，命令的实现和它内部用的东西放在一起；只被引用、没有动作的（`claude-stream`、`github-app`、`ui-compare` 等）作为共用的包（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）。对调用方来说只有 `idea-loop` 一个入口。
 - **重写的验收照现有测试**：现有 123 个测试文件（21893 行，其中约一半测脚本行为、一半测 skill 文本）里测脚本行为的那些，是 Go 实现的行为基准：逐个模块把它们的断言搬成 `go test`，过了才删对应的 `.mjs`。测 skill 文本的那些照旧。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
 - **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
