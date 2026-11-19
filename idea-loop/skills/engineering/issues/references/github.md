@@ -1,6 +1,6 @@
 # GitHub 上的 issue
 
-`dyna issues` 用 `gh`（带 `-R <owner/repo>`）对着项目清单里登记的仓库跑。下表是实体的每个字段在 GitHub 上的样子，和脚本读写它用的接口。
+`dyna issues` 用 `gh`（带 `-R <owner/repo>`）对着项目清单里登记的仓库跑。下表是实体的每个字段在 GitHub 上的样子，和命令读写它用的接口。
 
 | 字段 | GitHub 上 | 读 | 写 |
 |---|---|---|---|
@@ -14,5 +14,5 @@
 
 - **PR 挂 issue 写 `Refs`，不写 `Closes`**：issue 的 done 由合并步骤翻，不靠 PR 一合并就关。不带仓库的 `Refs #<号>` 只在 issue 自己的仓库里认。
 - **指派人**：`dyna issues candidates` 按指派人排候选。本人是 `gh api user` 的登录；指派给别人的不派；未指派的先按优先级排，同一优先级里按在该状态（todo，`--state=triage` 时是 triage）里停留的时间排，时间取 issue events 里最后一次加上 `status:<该状态>` 的时刻，没有这条事件就用创建时间，只对与别的未指派 issue 同一优先级的读 events。
-- 列表接口会混进 PR（带 `pull_request` 字段），脚本跳过它们。
+- 列表接口会混进 PR（带 `pull_request` 字段），命令跳过它们。
 - 人在 GitHub 上直接开的 issue 没有 `status:*`，就是 backlog。旧的中文 `status:*` label 调度认不出，`dyna issues migrate` 换成上表的。

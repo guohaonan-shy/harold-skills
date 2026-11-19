@@ -5,9 +5,9 @@ description: issue 这个实体：状态、谁在什么时候翻、正文格式�
 
 issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是文档，没有自己的状态；spec 了结 = 它 frontmatter `issues:` 列的 issue 全关了。
 
-状态改只走脚本：`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。脚本先核前提再写，拒绝时说原因和能翻成什么，照办。
+状态改只走命令：`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。命令先核前提再写，拒绝时说原因和能翻成什么，照办。
 
-字段在平台上怎么表达：GitHub 用脚本，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `dyna issues check` 核。平台看项目目录 `ISSUE_TRACKER.md` 首个标题。
+字段在平台上怎么表达：GitHub 用命令，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `dyna issues check` 核。平台看项目目录 `ISSUE_TRACKER.md` 首个标题。
 
 ## 实体
 
