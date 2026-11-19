@@ -29,7 +29,7 @@
  *
  * Issues are opened only through `new`, which refuses a body that lacks one of the five required sections
  * (背景 / 问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
- * backlog issues the weekly triage should look at; `note` posts a comment with the AI prefix. Closing comes
+ * backlog issues the weekly triage should look at; `note` posts a comment with the idea-loop marker. Closing comes
  * first: `set … done|canceled` closes the issue and only then drops its status label, so a failed close leaves
  * the issue where it was; a flip to done opens its comment with the PRs that were merged.
  *
@@ -59,7 +59,7 @@
  *   node issues.mjs body       <docs> <body-file>                     → only checks the body's five required sections
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
- *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
+ *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the idea-loop marker
  *   node issues.mjs candidates <docs> [<limit>] [--state=todo|triage] → JSON: todo (or triage) issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (P0 → P1 → P2 → none, then longest in that state first); someone else's never
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
  *   node issues.mjs queues     <docs> [--at=HH:MM]                    → JSON: what to hand out at that moment (now when absent) and how many at most, from the「调度」table of ISSUE_TRACKER.md (defaults when it has none), the whole table, and the sidebar sections

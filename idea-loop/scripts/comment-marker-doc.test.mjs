@@ -55,3 +55,15 @@ test('every place that tells an agent to read idea-loop\'s latest comment names 
     assert.ok(text.includes('<!-- idea-loop -->'), `${rel} must name the <!-- idea-loop --> marker`);
   }
 });
+
+test('no script usage text or posting-identity note still says a prefix is added or that Claude hides behind the human', () => {
+  const STALE = [/with the AI prefix/, /never appear as written by the human/, /never speaks as the human/, /saying up front that Claude posted/, /不会显得是人本人/, /以项目 bot 的身份发/];
+  const hits = [];
+  for (const f of all) {
+    if (isTest(f.rel)) continue;
+    f.lines.forEach((l, i) => {
+      if (STALE.some((re) => re.test(l))) hits.push(`${f.rel}:${i + 1}`);
+    });
+  }
+  assert.deepEqual(hits, []);
+});
