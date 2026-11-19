@@ -191,10 +191,169 @@ func TestARejectedPushReportsTheNextStepAndLeavesTheRemoteAlone(t *testing.T) {
 
 	_, err := run("push", "--repo", repo)
 	var ne *nexterr.Error
-	if err == nil || !errors.As(err, &ne) || !strings.Contains(ne.Next, "origin/main") {
+	if err == nil || !errors.As(err, &ne) || !strings.Contains(ne.Next, "dyna git merge --repo "+repo+" origin/main") {
 		t.Fatalf("a rejected push says to bring the remote's commits in first: %#v", err)
 	}
 	if sh(t, remote, "log", "-1", "--format=%s", "main") != "theirs" {
 		t.Fatal("the remote is as the other clone left it")
+	}
+}
+
+// twoClones makes a bare remote with main, and a clone of it (repo); other is a second clone to push from.
+func twoClones(t *testing.T) (repo, other, remote string) {
+	t.Helper()
+	repo = newRepo(t)
+	remote = filepath.Join(t.TempDir(), "remote.git")
+	sh(t, repo, "init", "-q", "--bare", "-b", "main", remote)
+	sh(t, repo, "remote", "add", "origin", remote)
+	sh(t, repo, "push", "-q", "-u", "origin", "main")
+	other = filepath.Join(t.TempDir(), "other")
+	sh(t, repo, "clone", "-q", remote, other)
+	sh(t, other, "config", "user.email", "o@example.com")
+	sh(t, other, "config", "user.name", "O")
+	return
+}
+
+func TestMergeOfARemoteBranchFetchesItFirstAndPrintsTheMergeCommit(t *testing.T) {
+	repo, other, _ := twoClones(t)
+	write(t, other, "a.txt", "theirs\n")
+	sh(t, other, "commit", "-q", "-am", "theirs")
+	sh(t, other, "push", "-q")
+	write(t, repo, "b.txt", "mine\n")
+	sh(t, repo, "commit", "-q", "-am", "mine")
+
+	out, err := run("merge", "--repo", repo, "origin/main") // repo has not fetched: the command does
+	if err != nil {
+		t.Fatal(err, out)
+	}
+	if head := sh(t, repo, "rev-parse", "HEAD"); !strings.Contains(out, head) {
+		t.Fatalf("prints the full SHA of the merge commit: %q (HEAD %s)", out, head)
+	}
+	if sh(t, repo, "show", "--no-patch", "--format=%P", "HEAD") == sh(t, repo, "rev-parse", "HEAD~1") {
+		t.Fatal("two parents")
+	}
+	if got := sh(t, repo, "show", "origin/main:a.txt"); got != "theirs" {
+		t.Fatal(got)
+	}
+	data, _ := os.ReadFile(filepath.Join(repo, "a.txt"))
+	if string(data) != "theirs\n" {
+		t.Fatalf("their change is in the working tree: %q", data)
+	}
+}
+
+func TestMergeOfACommitSaysSoWhenThereIsNothingNewToBringIn(t *testing.T) {
+	repo := newRepo(t)
+	head := sh(t, repo, "rev-parse", "HEAD")
+	out, err := run("merge", "--repo", repo, head)
+	if err != nil || !strings.Contains(out, "已经在当前分支里") {
+		t.Fatal(out, err)
+	}
+	if sh(t, repo, "rev-parse", "HEAD") != head {
+		t.Fatal("no new commit")
+	}
+}
+
+func TestMergeOfACommitFastForwards(t *testing.T) {
+	repo := newRepo(t)
+	sh(t, repo, "checkout", "-q", "-b", "side")
+	write(t, repo, "a.txt", "side\n")
+	sh(t, repo, "commit", "-q", "-am", "side")
+	side := sh(t, repo, "rev-parse", "HEAD")
+	sh(t, repo, "checkout", "-q", "main")
+	out, err := run("merge", "--repo", repo, side)
+	if err != nil || !strings.Contains(out, side) {
+		t.Fatal(out, err)
+	}
+	if sh(t, repo, "rev-parse", "HEAD") != side {
+		t.Fatal("fast-forwarded to the commit")
+	}
+}
+
+func conflictRepo(t *testing.T) (repo, other string) {
+	t.Helper()
+	repo, other, _ = twoClones(t)
+	write(t, other, "a.txt", "theirs\n")
+	write(t, other, "c.txt", "their clean file\n")
+	sh(t, other, "add", "-A")
+	sh(t, other, "commit", "-q", "-m", "theirs")
+	sh(t, other, "push", "-q")
+	write(t, repo, "a.txt", "mine\n")
+	sh(t, repo, "commit", "-q", "-am", "mine")
+	return
+}
+
+func TestMergeWithConflictsStopsListsTheFilesAndResolvesNothing(t *testing.T) {
+	repo, _ := conflictRepo(t)
+	_, err := run("merge", "--repo", repo, "origin/main")
+	var ne *nexterr.Error
+	if err == nil || !errors.As(err, &ne) {
+		t.Fatalf("a conflict is an error with a next command: %#v", err)
+	}
+	if !strings.Contains(ne.Msg, "a.txt") || strings.Contains(ne.Msg, "c.txt") {
+		t.Fatalf("lists exactly the conflicting files: %q", ne.Msg)
+	}
+	if !strings.Contains(ne.Next, "dyna git commit") {
+		t.Fatalf("next command: %q", ne.Next)
+	}
+	data, _ := os.ReadFile(filepath.Join(repo, "a.txt"))
+	if !strings.Contains(string(data), "<<<<<<<") || !strings.Contains(string(data), "mine") || !strings.Contains(string(data), "theirs") {
+		t.Fatalf("the conflict is left for a person: %q", data)
+	}
+	if _, err := os.Stat(filepath.Join(repo, ".git", "MERGE_HEAD")); err != nil {
+		t.Fatal("the merge stays open")
+	}
+}
+
+func TestCommitRefusesAFileThatStillHasConflictMarkers(t *testing.T) {
+	repo, _ := conflictRepo(t)
+	if _, err := run("merge", "--repo", repo, "origin/main"); err == nil {
+		t.Fatal("conflict expected")
+	}
+	// committing before the conflict is resolved is refused and names the file
+	_, err := run("commit", "--repo", repo, "-m", "merge", "a.txt")
+	if err == nil {
+		t.Fatal("git add would take the file as resolved, so the markers are checked first")
+	}
+	if !strings.Contains(err.Error(), "a.txt") {
+		t.Fatalf("names the file: %v", err)
+	}
+	if !merging(repo) {
+		t.Fatal("the merge is still open")
+	}
+}
+
+func TestCommitConcludesAMergeOnceTheConflictIsResolved(t *testing.T) {
+	repo, _ := conflictRepo(t)
+	if _, err := run("merge", "--repo", repo, "origin/main"); err == nil {
+		t.Fatal("conflict expected")
+	}
+	write(t, repo, "a.txt", "resolved\n")
+	out, err := run("commit", "--repo", repo, "-m", "merge origin/main", "a.txt")
+	if err != nil {
+		t.Fatal(err, out)
+	}
+	head := sh(t, repo, "rev-parse", "HEAD")
+	if !strings.Contains(out, head) {
+		t.Fatalf("prints the merge commit: %q", out)
+	}
+	if len(strings.Fields(sh(t, repo, "show", "--no-patch", "--format=%P", "HEAD"))) != 2 {
+		t.Fatal("the commit is a merge of two parents")
+	}
+	if sh(t, repo, "show", "HEAD:a.txt") != "resolved" || sh(t, repo, "show", "HEAD:c.txt") != "their clean file" {
+		t.Fatal("the resolution and the clean part of their change are both in")
+	}
+	if merging(repo) {
+		t.Fatal("merge is over")
+	}
+}
+
+func TestAMergeThatCannotStartIsNotReportedAsAConflict(t *testing.T) {
+	repo, _ := conflictRepo(t)
+	write(t, repo, "c.txt", "my uncommitted file\n")
+	sh(t, repo, "add", "c.txt")
+	_, err := run("merge", "--repo", repo, "origin/main")
+	var ne *nexterr.Error
+	if err == nil || errors.As(err, &ne) && strings.Contains(ne.Msg, "冲突的文件") {
+		t.Fatalf("local changes in the way are git's own refusal, not a conflict list: %v", err)
 	}
 }

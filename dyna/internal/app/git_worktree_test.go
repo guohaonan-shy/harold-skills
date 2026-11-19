@@ -46,6 +46,7 @@ func TestRegistryJSONHasEveryGitAndWorktreeCommandWithItsCaller(t *testing.T) {
 	want := map[string]string{
 		"git commit":      registry.CallerSession,
 		"git push":        registry.CallerSession,
+		"git merge":       registry.CallerSession,
 		"worktree add":    registry.CallerSession,
 		"worktree list":   registry.CallerSession,
 		"worktree remove": registry.CallerSession,

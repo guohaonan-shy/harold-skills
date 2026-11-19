@@ -33,6 +33,28 @@
       ]
     },
     {
+      "command": "git merge",
+      "module": "git",
+      "use": "merge <提交或远端分支>",
+      "summary": "把给定的提交或远端分支（如 origin/main）合进当前分支；远端分支先取最新；有冲突就停下，列出冲突文件，不自动解决",
+      "caller": "session",
+      "next": "dyna git merge --repo <目录> <提交或远端分支>",
+      "args": [
+        {
+          "name": "提交或远端分支",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
+        }
+      ]
+    },
+    {
       "command": "git push",
       "module": "git",
       "use": "push [branch]",

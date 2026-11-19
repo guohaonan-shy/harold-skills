@@ -37,8 +37,8 @@ func leaf(use, short, next string, run func(cmd *cobra.Command, args []string) e
 
 // Command is the `git` module.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("git", "在代码仓库里落地：只 add 给定的文件、提交、推送（--repo 代替手写 git -C）")
-	root.AddCommand(commitCommand(d), pushCommand(d))
+	root := registry.Group("git", "在代码仓库里落地：只 add 给定的文件、提交、推送、合并（--repo 代替手写 git -C）")
+	root.AddCommand(commitCommand(d), pushCommand(d), mergeCommand(d))
 	return root
 }
 
@@ -72,8 +72,17 @@ func commit(d Deps, repo string, msgs, files []string) error {
 			return err
 		}
 	}
+	if merging(repo) {
+		if left := withConflictMarkers(repo, files); len(left) > 0 {
+			return nexterr.New(commitNext(repo, "<说明>"),
+				"这些文件里还留着冲突标记（<<<<<<<），合并没有提交：%s", strings.Join(left, "、"))
+		}
+	}
 	if _, err := gitrun.Run(repo, append([]string{"add", "--"}, files...)...); err != nil {
 		return err
+	}
+	if merging(repo) {
+		return concludeMerge(d, repo, msgs, files)
 	}
 	staged, err := gitrun.Run(repo, append([]string{"diff", "--cached", "--name-only", "--"}, files...)...)
 	if err != nil {
@@ -92,6 +101,11 @@ func commit(d Deps, repo string, msgs, files []string) error {
 	if _, err := gitrun.Run(repo, append(cargs, files...)...); err != nil {
 		return err
 	}
+	return printHead(d, repo)
+}
+
+// printHead prints the full SHA of HEAD and its subject line.
+func printHead(d Deps, repo string) error {
 	sha, err := gitrun.Run(repo, "rev-parse", "HEAD")
 	if err != nil {
 		return err
@@ -99,6 +113,74 @@ func commit(d Deps, repo string, msgs, files []string) error {
 	subject, _ := gitrun.Run(repo, "log", "-1", "--format=%s")
 	fmt.Fprintf(d.out(), "%s %s\n", strings.TrimSpace(sha), strings.TrimSpace(subject))
 	return nil
+}
+
+// merging reports whether a merge is waiting to be concluded in repo.
+func merging(repo string) bool {
+	_, err := gitrun.Run(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD")
+	return err == nil
+}
+
+// unmerged lists the files a merge left in conflict.
+func unmerged(repo string) []string {
+	out, _ := gitrun.Run(repo, "diff", "--name-only", "--diff-filter=U")
+	var fs []string
+	for _, l := range strings.Split(out, "\n") {
+		if l = strings.TrimSpace(l); l != "" {
+			fs = append(fs, l)
+		}
+	}
+	return fs
+}
+
+// withConflictMarkers returns the files that still hold a line starting with the conflict-start marker, because
+// `git add` would take such a file as resolved.
+func withConflictMarkers(repo string, files []string) []string {
+	var left []string
+	for _, f := range files {
+		p := f
+		if !filepath.IsAbs(p) {
+			p = filepath.Join(repo, f)
+		}
+		data, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		if strings.HasPrefix(string(data), "<<<<<<< ") || strings.Contains(string(data), "\n<<<<<<< ") {
+			left = append(left, f)
+		}
+	}
+	return left
+}
+
+// concludeMerge commits a merge that stopped on conflicts. Git refuses a commit limited to some paths while a
+// merge is open, so the files named are added and the merge is committed whole: everything the merge brought in
+// goes into this one commit.
+func concludeMerge(d Deps, repo string, msgs, files []string) error {
+	if left := unmerged(repo); len(left) > 0 {
+		return nexterr.New(commitNext(repo, "<说明>")+"（先把这些文件里的冲突标记解决掉）",
+			"合并还没完成，这些文件还有冲突：%s", strings.Join(left, "、"))
+	}
+	cargs := []string{"commit", "-q"}
+	for _, m := range msgs {
+		cargs = append(cargs, "-m", m)
+	}
+	if _, err := gitrun.Run(repo, cargs...); err != nil {
+		return err
+	}
+	return printHead(d, repo)
+}
+
+// commitNext is the `dyna git commit` line to run after fixing conflicts.
+func commitNext(repo, msg string) string {
+	return "dyna git commit" + repoArg(repo) + " -m " + msg + " <冲突文件>..."
+}
+
+func repoArg(repo string) string {
+	if repo == "" {
+		return ""
+	}
+	return " --repo " + repo
 }
 
 // mustExist checks a file the caller named is in the working tree or tracked (a deletion to commit).
@@ -147,15 +229,71 @@ func push(d Deps, repo, remote, branch string) error {
 	if _, err := gitrun.Run(repo, "push", "-q", "-u", remote, branch); err != nil {
 		var ge *gitrun.Error
 		if errors.As(err, &ge) && strings.Contains(ge.Stderr, "rejected") {
-			dir := repo
-			if dir == "" {
-				dir = "."
-			}
-			return nexterr.New(fmt.Sprintf("git -C %s fetch %s && git -C %s merge %s/%s（解决冲突、提交后再跑 dyna git push）", dir, remote, dir, remote, branch),
+			return nexterr.New(fmt.Sprintf("dyna git merge%s %s/%s（有冲突就解决后用 dyna git commit 提交；合并完再跑 dyna git push）", repoArg(repo), remote, branch),
 				"远端 %s/%s 有本地没有的提交，推送被拒绝，远端没有变化", remote, branch)
 		}
 		return err
 	}
 	fmt.Fprintf(d.out(), "已推送 %s → %s/%s\n", branch, remote, branch)
 	return nil
+}
+
+func mergeCommand(d Deps) *cobra.Command {
+	c := leaf("merge <提交或远端分支>", "把给定的提交或远端分支（如 origin/main）合进当前分支；远端分支先取最新；有冲突就停下，列出冲突文件，不自动解决",
+		"dyna git merge --repo <目录> <提交或远端分支>", func(cmd *cobra.Command, args []string) error {
+			repo, _ := cmd.Flags().GetString("repo")
+			return merge(d, repo, args[0])
+		})
+	c.Args = cobra.ExactArgs(1)
+	c.Flags().String("repo", "", repoUsage)
+	return c
+}
+
+func merge(d Deps, repo, ref string) error {
+	if merging(repo) {
+		return nexterr.New(commitNext(repo, "<说明>"), "上一次合并还没完成，先把它提交，或用 git merge --abort 放弃")
+	}
+	if remote, branch, ok := remoteBranch(repo, ref); ok {
+		if _, err := gitrun.Run(repo, "fetch", "-q", remote, branch); err != nil {
+			return err
+		}
+	}
+	before, err := gitrun.Run(repo, "rev-parse", "HEAD")
+	if err != nil {
+		return err
+	}
+	if _, err := gitrun.Run(repo, "merge", "--no-edit", "-q", ref); err != nil {
+		if left := unmerged(repo); len(left) > 0 {
+			return nexterr.New(commitNext(repo, "<说明>")+"（先解决这些文件里的冲突；不想合就 git merge --abort）",
+				"合并 %s 有冲突，没有自动解决，冲突的文件：%s", ref, strings.Join(left, "、"))
+		}
+		return err
+	}
+	after, err := gitrun.Run(repo, "rev-parse", "HEAD")
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(before) == strings.TrimSpace(after) {
+		fmt.Fprintf(d.out(), "%s 已经在当前分支里，没有产生新提交\n", ref)
+		return nil
+	}
+	return printHead(d, repo)
+}
+
+// remoteBranch splits "origin/main" into the remote and the branch when its first part is a remote of repo.
+func remoteBranch(repo, ref string) (remote, branch string, ok bool) {
+	i := strings.Index(ref, "/")
+	if i <= 0 || i == len(ref)-1 {
+		return "", "", false
+	}
+	out, err := gitrun.Run(repo, "remote")
+	if err != nil {
+		return "", "", false
+	}
+	for _, r := range strings.Fields(out) {
+		if r == ref[:i] {
+			return r, ref[i+1:], true
+		}
+	}
+	return "", "", false
 }
