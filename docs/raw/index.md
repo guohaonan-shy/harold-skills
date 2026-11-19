@@ -85,3 +85,5 @@
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
 | [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
+| [decisions/223](decisions/223.md) | conversation | 2026-11-19 | 决定记录 —— #223 的 triage 会话：不再比 margin 和 gap、锚点区域字段叫 pixelAnchor；retro 无候选 |
+| [idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps](idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps.md) | conversation | 2026-11-19 | #223 triage：margin/gap 与 pixelAnchor 两道题 |
