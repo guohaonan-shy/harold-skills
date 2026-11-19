@@ -13,17 +13,18 @@ import { digestStream, fileLines, detectEscalation, escalationOfEvent } from './
 const toolUse = (name, parent = null) => ({ type: 'assistant', parent_tool_use_id: parent, message: { content: [{ type: 'tool_use', id: `id-${name}`, name, input: {} }] } });
 const stream = (...events) => events.map((e) => JSON.stringify(e)).join('\n');
 
-test('digestStream separates the calling session from sub-agents and counts Refero calls', () => {
+test('digestStream separates the calling session from sub-agents and counts Mobbin calls', () => {
   const d = digestStream(stream(
     toolUse('Agent'),
-    toolUse('mcp__refero__refero_search_screens', 'a'),
+    toolUse('mcp__plugin_idea-loop_mobbin__search_screens', 'a'),
     toolUse('Bash', 'a'),
     { type: 'result', result: 'done', total_cost_usd: 1.5, num_turns: 3, duration_ms: 10, modelUsage: { 'claude-opus': {} } },
   ));
-  assert.equal(d.session.referoCalls, 0);
-  assert.equal(d.subagents.referoCalls, 1);
+  assert.equal(d.session.mobbinCalls, 0);
+  assert.equal(d.subagents.mobbinCalls, 1);
+  assert.equal(digestStream(stream(toolUse('mcp__plugin_idea-loop_openseo__whoami', 'a'))).subagents.mobbinCalls, 0);
   assert.deepEqual(d.session.tools, { Agent: 1 });
-  assert.deepEqual(d.subagents.tools, { mcp__refero__refero_search_screens: 1, Bash: 1 });
+  assert.deepEqual(d.subagents.tools, { 'mcp__plugin_idea-loop_mobbin__search_screens': 1, Bash: 1 });
   assert.deepEqual(d.result, { text: 'done', cost: 1.5, turns: 3, durationMs: 10, isError: false, models: ['claude-opus'] });
 });
 
@@ -63,7 +64,7 @@ test('detectEscalation reports a browser, whichever browser tool family opened i
 });
 
 test('a tool that merely has "agent" or "browser" in its name is not an escalation', () => {
-  assert.equal(detectEscalation(stream(toolUse('Bash'), toolUse('mcp__refero__refero_search_screens'), toolUse('mcp__x__reagent_check'))), null);
+  assert.equal(detectEscalation(stream(toolUse('Bash'), toolUse('mcp__plugin_idea-loop_mobbin__search_screens'), toolUse('mcp__x__reagent_check'))), null);
 });
 
 test('escalationOfEvent reads one event, so a runner can stop a run mid-stream', () => {

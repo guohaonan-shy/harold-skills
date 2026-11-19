@@ -31,6 +31,10 @@
  * skills/design/uiux-research/references/research-backend.md). A page with no source at all is legal only when a
  * `data-part="no-source"` section says why.
  *
+ * Second mode, `checkLightReturn` (CLI `--light`): the file the researcher hands back for the light use
+ * (one item per judge opinion, each with a user path, pictures and a new design intent). Its shape is
+ * in skills/design/uiux-research/references/light-return.md; the full-page checks above do not apply to it.
+ *
  * Pure apart from the CLI at the bottom: `fileExists` is injected so the check never touches the
  * disk in tests.
  */
@@ -244,25 +248,182 @@ export function renderReport(result, file) {
   return [`research-check: 调研页校验失败${file ? ` (${file})` : ''} —— 补齐后再交回：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
 }
 
+// ---------------------------------------------------------------------------------------------
+// Light use: the structured file the researcher returns each design round.
+// ---------------------------------------------------------------------------------------------
+
+/** The standard line a "Mobbin not connected" return carries; the review report shows it where the pictures would be. */
+export const NO_REFERENCE_LINE = '这一轮没有参考图：Mobbin 没连上';
+
+const LIGHT_FIELDS = { connected: ['mode', 'mobbin', 'items', 'uncovered'], unavailable: ['mode', 'mobbin', 'message', 'reason', 'items'] };
+const ITEM_FIELDS = ['covers', 'path', 'intent', 'overturns'];
+const STEP_FIELDS = ['source', 'saw', 'did', 'then', 'images', 'reading'];
+const OVERTURN_FIELDS = ['ledger', 'why'];
+const UNCOVERED_FIELDS = ['opinion', 'why'];
+/** Ledger numbers are `<round>.<serial>`; round 0 holds what was carried over from before the ledger. */
+const LEDGER_ID = /^\d+\.\d+$/;
+
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const isText = (v) => typeof v === 'string' && v.trim() !== '';
+/** Opinion numbers may be written 1 or "1"; they are compared as text. */
+const key = (n) => (typeof n === 'string' || Number.isInteger(n) ? String(n) : null);
+
+function unknownFields(obj, allowed, where, errors) {
+  for (const f of Object.keys(obj)) if (!allowed.includes(f)) errors.push(`${where}有不认识的字段 ${f}`);
+}
+
+/**
+ * @param {unknown} data the parsed file
+ * @param {{ fileExists: (relativePath: string) => boolean, opinions: Array<number|string>, ledger?: string[] }} ctx
+ *   `opinions`: the numbers of the judge opinions handed to the researcher; `ledger`: the ledger numbers
+ *   handed to it (when given, an overturn must name one of them).
+ * @returns {{ valid: boolean, errors: string[], items: number }}
+ */
+export function checkLightReturn(data, { fileExists, opinions = [], ledger }) {
+  const errors = [];
+  if (!isObj(data)) return { valid: false, errors: ['交回的文件顶层要是一个对象'], items: 0 };
+  if (data.mode !== 'light') errors.push('mode 要写 "light"');
+  if (data.mobbin !== 'connected' && data.mobbin !== 'unavailable') {
+    errors.push('mobbin 要写 "connected" 或 "unavailable"');
+    return { valid: false, errors, items: 0 };
+  }
+  unknownFields(data, LIGHT_FIELDS[data.mobbin], '文件顶层', errors);
+
+  if (data.mobbin === 'unavailable') {
+    if (data.message !== NO_REFERENCE_LINE) errors.push(`message 要写「${NO_REFERENCE_LINE}」，报告照这句出`);
+    if (!isText(data.reason)) errors.push('reason 是空的：写下调用 Mobbin 时看到的错误');
+    if (!Array.isArray(data.items) || data.items.length) errors.push('Mobbin 没连上时 items 要是空数组');
+    return { valid: errors.length === 0, errors, items: 0 };
+  }
+
+  if (!Array.isArray(data.items)) {
+    errors.push('items 要是数组');
+    return { valid: false, errors, items: 0 };
+  }
+  const known = new Set(opinions.map(key));
+  const ledgerIds = ledger ? new Set(ledger.map(String)) : null;
+  const coveredBy = new Map();
+
+  data.items.forEach((it, i) => {
+    const name = `第 ${i + 1} 项`;
+    if (!isObj(it)) return errors.push(`${name}要是一个对象`);
+    unknownFields(it, ITEM_FIELDS, name, errors);
+
+    if (!Array.isArray(it.covers) || !it.covers.length || !it.covers.every((n) => key(n) !== null)) {
+      errors.push(`${name}的 covers 要列出它覆盖的评委意见编号（至少一个）`);
+    } else {
+      for (const n of it.covers) {
+        const k = key(n);
+        if (!known.has(k)) errors.push(`${name}覆盖的评委意见 ${k} 不是这一轮给的意见编号`);
+        else if (coveredBy.has(k)) errors.push(`评委意见 ${k} 同时出现在两项里（第 ${coveredBy.get(k)} 项和${name}）：并成一项`);
+        else coveredBy.set(k, i + 1);
+      }
+    }
+
+    if (!Array.isArray(it.path) || !it.path.length) errors.push(`${name}缺用户路径（path：每步写看到什么、做了什么、接着看到什么）`);
+    else {
+      it.path.forEach((st, n) => {
+        const sname = `${name}第 ${n + 1} 步`;
+        if (!isObj(st)) return errors.push(`${sname}要是一个对象`);
+        unknownFields(st, STEP_FIELDS, sname, errors);
+        for (const f of ['saw', 'did', 'then']) {
+          if (!isText(st[f])) errors.push(`${sname}缺 ${f}（${{ saw: '看到什么', did: '做了什么', then: '接着看到什么' }[f]}）`);
+        }
+        if (!isText(st.reading)) errors.push(`${sname}缺解读（reading：一句话说这一步为什么这样做）`);
+        if (!Array.isArray(st.images) || st.images.length < 1 || st.images.length > 2) {
+          errors.push(`${sname}要配 1–2 张图（images）`);
+        } else {
+          for (const img of st.images) {
+            if (typeof img !== 'string' || !isRelative(img)) errors.push(`${sname}的图 ${img} 不是落图目录内的相对路径`);
+            else if (!fileExists(img)) errors.push(`${sname}的图 ${img} 在落图目录里不存在`);
+          }
+        }
+      });
+    }
+
+    if (!isText(it.intent)) errors.push(`${name}缺新的设计意图（intent：一句话）`);
+
+    if (it.overturns !== undefined) {
+      if (!Array.isArray(it.overturns)) errors.push(`${name}的 overturns 要是数组`);
+      else {
+        it.overturns.forEach((o, n) => {
+          const oname = `${name}第 ${n + 1} 条推翻`;
+          if (!isObj(o)) return errors.push(`${oname}要是一个对象`);
+          unknownFields(o, OVERTURN_FIELDS, oname, errors);
+          if (typeof o.ledger !== 'string' || !LEDGER_ID.test(o.ledger)) errors.push(`${oname}缺 ledger 编号（形如 1.2）`);
+          else if (ledgerIds && !ledgerIds.has(o.ledger)) errors.push(`${oname}的编号 ${o.ledger} 不在这一轮给的 ledger 里`);
+          if (!isText(o.why)) errors.push(`${oname}缺理由（why）：为什么这条决策该改`);
+        });
+      }
+    }
+  });
+
+  const left = new Map();
+  if (data.uncovered !== undefined) {
+    if (!Array.isArray(data.uncovered)) errors.push('uncovered 要是数组');
+    else {
+      data.uncovered.forEach((u, n) => {
+        const uname = `uncovered 第 ${n + 1} 条`;
+        if (!isObj(u)) return errors.push(`${uname}要是一个对象`);
+        unknownFields(u, UNCOVERED_FIELDS, uname, errors);
+        if (key(u.opinion) === null) errors.push(`${uname}缺 opinion（评委意见编号）`);
+        else if (isText(u.why)) left.set(key(u.opinion), u.why);
+      });
+    }
+  }
+  for (const k of known) {
+    if (!coveredBy.has(k) && !left.has(k)) errors.push(`评委意见 ${k} 没有被覆盖：放进某一项的 covers，或在 uncovered 里写明为什么没覆盖`);
+  }
+
+  return { valid: errors.length === 0, errors, items: data.items.length };
+}
+
+/** Human-readable render for the light mode. */
+export function renderLightReport(result, file) {
+  if (result.valid) return `research-check: green ✓ 轻用法交回，${result.items} 项${file ? ` (${file})` : ''}`;
+  return [`research-check: 轻用法交回校验失败${file ? ` (${file})` : ''} —— 补齐后再交回：`, ...result.errors.map((e) => `  - ${e}`)].join('\n');
+}
+
 // CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
+  const light = args.includes('--light');
+  const opt = (name) => args.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+  const list = (v) => (v === undefined ? undefined : v.split(',').map((x) => x.trim()).filter(Boolean));
   const [file] = args.filter((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('usage: research-check.mjs <index.html> [--json]');
+    console.error('usage: research-check.mjs <index.html> [--json]\n       research-check.mjs --light <research-light.json> --opinions=1,2,3 [--ledger=1.1,1.2] [--json]');
     process.exit(1);
   }
-  let html;
+  let text;
   try {
-    html = readFileSync(file, 'utf8');
+    text = readFileSync(file, 'utf8');
   } catch (e) {
     console.error(`research-check: cannot read ${file}: ${e.message}`);
     process.exit(1);
   }
   const base = dirname(file);
-  const result = checkResearchPage(html, { fileExists: (rel) => existsSync(join(base, rel)) });
-  if (json) console.log(JSON.stringify(result, null, 2));
-  else console.log(renderReport(result, file));
+  const fileExists = (rel) => existsSync(join(base, rel));
+  let result;
+  if (light) {
+    const opinions = list(opt('opinions'));
+    if (!opinions || !opinions.length) {
+      console.error('research-check: --light needs --opinions=<the judge opinion numbers of this round>, e.g. --opinions=1,2,3');
+      process.exit(1);
+    }
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error(`research-check: ${file} is not valid JSON: ${e.message}`);
+      process.exit(1);
+    }
+    result = checkLightReturn(data, { fileExists, opinions, ledger: list(opt('ledger')) });
+    console.log(json ? JSON.stringify(result, null, 2) : renderLightReport(result, file));
+  } else {
+    result = checkResearchPage(text, { fileExists });
+    console.log(json ? JSON.stringify(result, null, 2) : renderReport(result, file));
+  }
   process.exit(result.valid ? 0 : 2);
 }

@@ -30,7 +30,7 @@ export function parseEvent(line) {
  */
 export function digestStream(input) {
   const lines = typeof input === 'string' ? input.split('\n') : input;
-  const bucket = () => ({ tools: {}, referoCalls: 0 });
+  const bucket = () => ({ tools: {}, mobbinCalls: 0 });
   const session = bucket();
   const subagents = bucket();
   let result = null;
@@ -53,7 +53,7 @@ export function digestStream(input) {
     for (const block of ev.message?.content ?? []) {
       if (block?.type !== 'tool_use') continue;
       b.tools[block.name] = (b.tools[block.name] ?? 0) + 1;
-      if (/^mcp__.*refero/i.test(block.name)) b.referoCalls += 1;
+      if (/^mcp__.*mobbin/i.test(block.name)) b.mobbinCalls += 1;
     }
   }
   return { session, subagents, result };

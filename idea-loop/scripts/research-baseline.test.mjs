@@ -47,16 +47,16 @@ test('the unattended prompt keeps the human words and adds only the no-questions
   assert.match(p, /无人值守/);
 });
 
-test('digestStream separates the calling session from sub-agents and counts Refero calls', () => {
+test('digestStream separates the calling session from sub-agents and counts Mobbin calls', () => {
   const lines = [
     { type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'a', name: 'Agent', input: {} }] } },
-    { type: 'assistant', parent_tool_use_id: 'a', message: { content: [{ type: 'tool_use', id: 'b', name: 'mcp__refero__refero_search_screens', input: {} }] } },
+    { type: 'assistant', parent_tool_use_id: 'a', message: { content: [{ type: 'tool_use', id: 'b', name: 'mcp__plugin_idea-loop_mobbin__search_screens', input: {} }] } },
     { type: 'assistant', parent_tool_use_id: 'a', message: { content: [{ type: 'tool_use', id: 'c', name: 'Bash', input: {} }] } },
     { type: 'result', result: 'done', total_cost_usd: 1.5, num_turns: 3, duration_ms: 10, modelUsage: { 'claude-opus': {} } },
   ].map((o) => JSON.stringify(o)).join('\n');
   const d = digestStream(lines);
-  assert.equal(d.session.referoCalls, 0);
-  assert.equal(d.subagents.referoCalls, 1);
+  assert.equal(d.session.mobbinCalls, 0);
+  assert.equal(d.subagents.mobbinCalls, 1);
   assert.deepEqual(d.session.tools, { Agent: 1 });
   assert.equal(d.result.cost, 1.5);
   assert.deepEqual(d.result.models, ['claude-opus']);

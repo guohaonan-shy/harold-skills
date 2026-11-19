@@ -79,7 +79,6 @@ node "<companion>" task --model gpt-5.6-sol --effort high --prompt-file <工作�
 
 - 第一行是 review loop 的条目标记 `<!-- idea-loop-entry {"kind":"review","round":<N>} -->`。
 - 「已按规则处理」一节每条照规则的候选一行，行尾留 `〔链接〕` 占位（之后补成提交或 issue 链接）；列进这一节的不在下面重复。
-- N ≥ 2 时，末尾加一句「已跑满两轮，要再跑或合并请直接说」。
 - **图写本地路径**，相对 review loop 文件所在的 `.tmp/review-loop/`，即 `../pr-review/<PR 号>/evidence/r<N>-….png`。不上传。
 - 写完自己读一遍折叠区以外的部分：有没有反引号、路径、提交号、章节编号。
 

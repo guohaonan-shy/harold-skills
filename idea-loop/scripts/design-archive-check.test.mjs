@@ -341,6 +341,16 @@ test('legacy layout: one note per old directory, nothing read, no violation', ()
   assert.match(r.notes[0], /docs\/design\/old-spec-a\/.*旧布局.*建议删/);
 });
 
+test('pending: a shelved design under design/pending/<slug>/ is skipped, no note, no violation', () => {
+  const r = run(bend({}, {
+    'docs/design/pending/shelved-spec/canvas/shelved-spec-design.md': '---\ntype: [broken\n---\n乱七八糟 [[nowhere]]\n',
+    'docs/design/pending/shelved-spec/delta/states/ghost.md': '---\ntype: design-state\n---\n[[also-nowhere]]\n',
+    'docs/design/pending/shelved-spec/imagine/direction-note.md': '# 方向\n',
+  }));
+  assert.deepEqual(r.violations, []);
+  assert.deepEqual(r.notes, []);
+});
+
 // ---------- rule 8: an edge's screenshot (`shot`) ----------
 
 /** The `shot` fixture (a state with three `user` edges carrying `shot`, two of them on one image) with edits applied. */
