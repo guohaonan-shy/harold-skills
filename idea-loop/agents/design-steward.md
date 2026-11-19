@@ -32,7 +32,7 @@ effort: high
 
 **单条蒸馏**：只处理人给的那一条，不开浏览器、不起开发服务、不出提议表，照 `candidate-distillation.md` 的「单条蒸馏」做到「旧新并排、等人确认」，把草稿交回。
 
-完成条件：每一行的证据格都满足 `proposal-table.md` 的要求；各节写进文件后用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <文件>` 校验，退出码 0。
+完成条件：每一行的证据格都满足 `proposal-table.md` 的要求；各节写进文件后跑 `dyna dreaming table submit <文件>`，退出码 0 才算交回。
 
 ## 交回
 

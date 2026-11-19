@@ -271,9 +271,7 @@ close-out protocol.
 
 ### G · Review gates to convergence
 
-1. **Mechanical lint.** The final preview is P0-clean (run
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/v<N>.html`
-   when needed). Fix or explicitly justify P1s.
+1. **Mechanical lint.** The final preview is P0-clean (the lint hook checks every write to it). Fix or explicitly justify P1s.
 2. **Isolated critique** over the served preview URL: read [critique.md](critique.md), screenshot
    each section, record findings against it. Route direction findings to
    B/W, craft findings to F. On the real DOM: computed contrast via

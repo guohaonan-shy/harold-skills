@@ -1,7 +1,7 @@
 ---
 name: uiux-research
 description: 调研别人怎么处理一个 UX 问题：流程、某类页面的常见做法、文案语气。人问别的产品怎么做时用；视觉风格不归它。
-allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:*), Bash(node *research-check.mjs:*)
+allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:*), Bash(dyna research submit:*)
 ---
 
 回答一个具名问题：别人怎么做的、为什么这样做，给人一页能直接打开的 HTML。你只管收问题、起调研、把页面交给人；怎么查、页面长什么样归 `idea-loop:uiux-researcher`。查不查、转不转、用哪个来源，都由人定。
@@ -45,7 +45,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:
 1. **核对**：自己再跑一次校验：
 
    ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/research-check.mjs" <落图目录>/index.html
+   dyna research submit <落图目录>/index.html
    ```
 
    不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。

@@ -10,9 +10,9 @@
 5. **收尾校验**：
 
    ```
-   npx -y @google/design.md@latest lint <DESIGN.md 路径>
-   npx -y @google/design.md@latest diff /tmp/design-md/before.md <DESIGN.md 路径>
+   dyna design md lint <DESIGN.md 路径>
+   dyna design md diff /tmp/design-md/before.md <DESIGN.md 路径>
    ```
 
-   `lint` 修到没有 error。`diff` 判为退化（新增了 error 或 warning）就修，或把这条 warning 摆给人并说明为什么可以接受。新版本 CLI 对老内容多报出来的 warning 不算这一次的退化，列进报告留给下一次对账。
+   `lint` 修到没有 error。`diff` 判为退化（新增了 error 或 warning）就修，或把这条 warning 摆给人并说明为什么可以接受。官方工具新版本对老内容多报出来的 warning 不算这一次的退化，列进报告留给下一次对账。
 6. **报告**：模式与依据；写进 `DESIGN.md` 的每一处（新增 / 修改 / 删除）；分到别处的各几条；校验结果；前后行数。

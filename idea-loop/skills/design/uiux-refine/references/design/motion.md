@@ -218,7 +218,7 @@ the sibling shipped components whose interactions you must match or extend.
 ### B · Review gates to convergence
 
 1. **Gate 1 — mechanical lint** (automatic on every write): brand rules plus `layout-transition` and
-   `bounce-easing`, all native to `${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs`. P0 = build error.
+   `bounce-easing`, all native to the design lint. P0 = build error.
 2. **Gate 2 — motion-craft audit**, self-contained, with
    [accessibility-baseline.md](accessibility-baseline.md): a11y (real semantics, focus order,
    keyboard — including mid-animation, per "Performance and craft rules"), perf (offscreen pause, no
@@ -237,7 +237,7 @@ the sibling shipped components whose interactions you must match or extend.
 The refine loop runs as usual for a motion round, with **frame sequences** instead of screenshots:
 `__maTimeline.seek(t)` at t = 0 / mid / end (plus keyframes you care about), in time order; for scroll
 and pointer interactions the timeline can't cover, before / during / after. The intent sentence, the
-three things never given to the judge, `critic-score.mjs` and one ledger line per round are the same
+three things never given to the judge, `dyna design critic round` and one ledger line per round are the same
 as for static.
 
 When motion is done, stop and let the human watch the running preview. The hand-back's 「改了什么」

@@ -3,7 +3,7 @@
 `prod/` 只经这一个脚本写：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <项目目录> <spec-slug> [--dry-run] [--json]
+dyna design archive write <项目目录> <spec-slug> [--dry-run] [--json]
 ```
 
 退出码 0 = 已归档（`--dry-run` 时是「可以归档」），1 = 拒绝（逐条列出违规或冲突，**什么都没写**），2 = 用法错误或 `tmp/<spec-slug>/` 不存在。

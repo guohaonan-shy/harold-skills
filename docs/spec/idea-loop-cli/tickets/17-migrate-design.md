@@ -9,8 +9,8 @@ design 类 skill 和 designer、uiux-imaginer、ui-reviewer、uiux-researcher、
 
 ## 验收标准
 
-- [ ] design 类 skill 和对应 agent 里没有全路径脚本调用、没有手写 `codex exec`；扫描测试通过
-- [ ] uiux-imagine、uiux-imaginer 里不再有代办生图的说法
+- [x] design 类 skill 和对应 agent 里没有全路径脚本调用、没有手写 `codex exec`；扫描测试通过
+- [x] uiux-imagine、uiux-imaginer 里不再有代办生图的说法
 
 ## 选中的存量回归
 

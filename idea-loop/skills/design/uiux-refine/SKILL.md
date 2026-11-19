@@ -13,7 +13,7 @@ disable-model-invocation: true
 ## 开工前
 
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），「实现决策」里还没有冻结摘要。
-- `imagine/direction-note.md` 在，并过得了 `node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
+- `imagine/direction-note.md` 在，并过得了 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人「这份 spec 没有交接画布，会从方向说明重建」。
 
 ## 起步
@@ -32,7 +32,7 @@ designer 交付一版之后：
 3. **评分**：把评委的 `findings`、`score` 和之前每一轮的分数（`history`，从旧到新）写成 `canvas/work/round-<N>.json`，跑：
 
    ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<项目目录>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
+   dyna design critic round "<项目目录>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
    ```
 
    退出码 `2` 是评委的输出不合格式：作废这一轮，新起一个 ui-master 重评。按它的停止判定走：

@@ -44,7 +44,7 @@
 3. 每个来源一节：一条 flow、场景、设计逻辑
 4. 要我们决策的问题：最后一块，它之后没有别的块
 
-`research-check.mjs` 只守这个骨架（见「校验管什么」）。下面「每块写什么」是要照着写的描述，不是校验会判失败的规则。页面用具名问题的语言写。
+`dyna research submit` 只守这个骨架（见「校验管什么」）。下面「每块写什么」是要照着写的描述，不是校验会判失败的规则。页面用具名问题的语言写。
 
 ## 每块写什么
 
@@ -63,7 +63,7 @@
 
 ## 标记约定
 
-`research-check.mjs` 按这些属性查形状，属性原样保留；其余（CSS、标题措辞）由你定。
+`dyna research submit` 按这些属性查形状，属性原样保留；其余（CSS、标题措辞）由你定。
 
 ```html
 <!doctype html>
@@ -123,7 +123,7 @@
 ## 校验管什么
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/research-check.mjs" <落图目录>/index.html
+dyna research submit <落图目录>/index.html
 ```
 
 它查：

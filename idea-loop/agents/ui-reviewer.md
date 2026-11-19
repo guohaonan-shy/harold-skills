@@ -17,7 +17,7 @@ effort: high
 
 用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）和 `idea-loop:runtime`（运行环境的能力怎么做）；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
-下文 `query` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs"`，`check` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs"`。
+下文 `query` 指 `dyna design archive query`，`check` 指 `dyna design archive check`。
 
 ## 输入
 
@@ -51,10 +51,10 @@ effort: high
 5. **逐个状态进去**：对清单里每个状态：`prod/` 里已有的跑 `query <项目目录> state <状态名>`（只有最小差异或旧流程 `delta/` 的需求，带 `--delta <spec-slug>`），按返回的进入方式走；`prod/` 里没有的新状态，从 spec 写的入口和 `prod/` 里已有的边出发，在真实应用里自己找路（每走通一跳的出发状态、操作的元素、到的状态都记进 `coverage`）；找不到记「进不去」，附上试过什么。返回的进入方式是这样走的：入口地址与前置条件，沿途每一步（`user` 边照 `locate` 与 `action` 操作，`system` 边照 `how` 让它发生）。**进不去**（`reachable: false`）先判是档案缺口还是环境问题：照返回里的前置条件和试过的做法做仍然进不去，就如实记「进不去」，附上缺什么、试过什么。
 6. **走每条新增或改动的边**：从出发状态照边的定位和操作触发，看实际到的画面是不是边指向的那个状态（它的「应看到什么」成立吗）。有画布的需求，边取自进入新状态的那几跳，加上 spec 交互图（`canvas/flows/`）里画出的每一步；最小差异的需求，`added` 里的边，目标状态存在、可达、`blocked` 标得对不对，也在这里核。
 7. **对画面**：
-   - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `ui-measure.mjs`（`idea-loop:ui-measure` 的「矩阵怎么写」；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对报出的差异就是对不上的画面。状态切换页（harness）覆盖不了的格标「人看」，列出来。多份矩阵（语言 × 深浅色……）一次交给同一条命令，由脚本在一个浏览器里并发跑（`idea-loop:ui-measure` 的「跑，然后照发现改」），不自己每份矩阵开一个进程，也不加 `--max-old-space-size`。
+   - 该状态在 `canvas/` 里有冻结画布：把画布与实现的路由写进矩阵，跑 `dyna ui measure`（`idea-loop:ui-measure` 的「矩阵怎么写」；画布用本地文件地址打开，状态靠 `?state=`），**用它现有的容差**，不放宽、不收紧。比对报出的差异就是对不上的画面。状态切换页（harness）覆盖不了的格标「人看」，列出来。多份矩阵（语言 × 深浅色……）一次交给同一条命令，由命令在一个浏览器里并发跑（`idea-loop:ui-measure` 的「跑，然后照发现改」），不自己每份矩阵开一个进程。
    - 没有冻结画布（implementer 记的最小差异）：对着实际画面逐条核 `delta/` 状态文件「应看到什么」里可判定的每一条。
 
-   `ui-measure.mjs` 判了瓶颈，或残留差异是设计决策层面的，照实记下交回。
+   `dyna ui measure` 判了瓶颈，或残留差异是设计决策层面的，照实记下交回。
 8. **漏掉的**：实现里这一屏上出现了、画布（最小差异的需求取 `delta/`）与 `prod/` 里都没有的状态或边（多出一个弹层、一个按钮能走到档案里没有的地方），同样是发现。
 
 ## 每轮走查模式

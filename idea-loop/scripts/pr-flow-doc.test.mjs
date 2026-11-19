@@ -166,7 +166,7 @@ test('the design skills ask whether the spec still waits for a human, not for a 
     const md = read('skills/design', f, 'SKILL.md');
     assert.match(md, /需要 grill/, `${f} checks what still waits for a human`);
   }
-  assert.match(read('skills/design/uiux-imagine/SKILL.md'), /issues\.mjs" set [^\n]*triage <号>/);
+  assert.match(read('skills/design/uiux-imagine/SKILL.md'), /dyna issues set [^\n]*triage <号>/);
 });
 
 test('the closed set of 文档 dispositions drops the three that moved a spec between old statuses', () => {

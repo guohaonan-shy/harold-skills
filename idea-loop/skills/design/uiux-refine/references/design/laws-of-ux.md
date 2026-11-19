@@ -18,7 +18,7 @@ Peak-End, Zeigarnik (1927), Fitts (1954), Doherty & Thadani (1982), Csíkszentmi
 Parkinson (1955), Sweller (1988).
 
 **These are guidance, applied by the reviewer and the agent — not auto-checked** by
-`design-lint.mjs`, unlike the mechanical rules in `design-law.md`'s "Anti-slop law".
+the design lint, unlike the mechanical rules in `design-law.md`'s "Anti-slop law".
 
 ## Already operationalized elsewhere — don't re-derive
 
