@@ -52,7 +52,7 @@ import {
   DEFAULT_TOLERANCE, DEFAULT_ANTIALIAS_TOLERANCE, DEFAULT_PIXEL_THRESHOLD,
 } from './ui-compare.mjs';
 import {
-  regionBox, diffAnchors, parseChangeSet, classifyChanges, shotFileName, renderCanvasDiff, hasAttention,
+  regionBox, padSize, diffAnchors, parseChangeSet, classifyChanges, shotFileName, renderCanvasDiff, hasAttention,
 } from './ui-canvas-diff.mjs';
 import { decodePng } from './ui-png-compare.mjs';
 import { pickConcurrency, sampleIdleCores } from './ui-measure-concurrency.mjs';
@@ -142,13 +142,32 @@ const pageSize = (page) => page.evaluate(() => ({
 }));
 
 /**
+ * Make the page at least `size` big without moving anything on it: one invisible,
+ * absolutely positioned box. The page's own background fills the added area, so a
+ * crop of it is the blank the page really has there.
+ */
+function padPage(page, size) {
+  return page.evaluate(({ width, height }) => {
+    const pad = document.createElement('div');
+    pad.setAttribute('aria-hidden', 'true');
+    pad.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;visibility:hidden;pointer-events:none`;
+    document.documentElement.appendChild(pad);
+  }, size);
+}
+
+/**
  * Cut the same region out of both tabs. Page coordinates, so an anchor below the
  * fold is cut like any other (hence fullPage). Returns null when there is no
  * region (see regionBox).
+ *
+ * `union`: the two tabs are two versions of one canvas. The region is cut from the
+ * longer page's extent and the shorter page is padded to it, so a block the new
+ * version added past the old page's end gets two same-size crops (the old one blank).
  */
-async function regionShots(tabA, tabB, rectA, rectB) {
-  const box = regionBox(rectA, rectB, await pageSize(tabA), await pageSize(tabB));
+async function regionShots(tabA, tabB, rectA, rectB, { union = false } = {}) {
+  const box = regionBox(rectA, rectB, await pageSize(tabA), await pageSize(tabB), { union });
   if (!box) return null;
+  if (union) await Promise.all([padPage(tabA, padSize(box)), padPage(tabB, padSize(box))]);
   const clip = { x: box.x, y: box.y, width: box.width, height: box.height };
   const [a, b] = await Promise.all([tabA.screenshot({ clip, fullPage: true }), tabB.screenshot({ clip, fullPage: true })]);
   return { box, a, b };
@@ -283,7 +302,7 @@ async function runCanvasDiff(browser, matrix, matrixPath, changeSet) {
       );
 
       for (const anchor of new Set([...Object.keys(beforeM), ...Object.keys(afterM)])) {
-        const shots = await regionShots(beforeTab, afterTab, beforeM[anchor], afterM[anchor]);
+        const shots = await regionShots(beforeTab, afterTab, beforeM[anchor], afterM[anchor], { union: true });
         const pixelPercent = shots
           ? comparePixels(
             decodePng(shots.a, `${cell.name} ${anchor} before`),

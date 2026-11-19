@@ -232,7 +232,7 @@ export function buildReport({ judge, research, diff, canvas, thoughts, dissatisf
             ...(c.pixelPercent != null && c.pixelPercent > 0 ? [`区域像素差 ${c.pixelPercent.toFixed(2)}%`] : [])].join('；');
       const shots = c.shots
         ? `<div class="pair">${figure(c.shots.before, '改前')}${figure(c.shots.after, '改后')}</div>`
-        : '<p class="muted">没有区域截图：这个区域在一版里不存在。</p>';
+        : '<p class="muted">没有区域截图：这个区域在两版里都没有面积（两边都隐藏）。</p>';
       entries.push({ n: number, section: 'undeclared', state: c.state, anchor: c.anchor });
       return `<article id="r${number}" data-n="${number}" data-kind="undeclared">
 <h3><span class="num">#${number}</span> ${esc(c.state)} · ${esc(c.anchor)}</h3>

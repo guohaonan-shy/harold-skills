@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  regionBox, diffAnchors, parseChangeSet, classifyChanges, shotFileName, renderCanvasDiff, hasAttention,
+  regionBox, padSize, diffAnchors, parseChangeSet, classifyChanges, shotFileName, renderCanvasDiff, hasAttention,
 } from './ui-canvas-diff.mjs';
 
 const box = (over = {}) => ({ top: 100, left: 40, width: 320, height: 48, color: 'rgb(0, 0, 0)', ...over });
@@ -35,6 +35,28 @@ test('an anchor that is hidden (no area) on both sides has no region', () => {
 test('an anchor present on one side only still gets a region, from the side that has it', () => {
   const r = regionBox(undefined, { top: 10, left: 10, width: 50, height: 20 }, { width: 400, height: 400 }, { width: 400, height: 400 });
   assert.deepEqual(r, { x: 10, y: 10, width: 50, height: 20 });
+});
+
+test('two versions of one canvas: a region on the longer page is cut in full, the shorter page is padded to it (not cut down)', () => {
+  const oldPage = { width: 390, height: 844 };
+  const newPage = { width: 390, height: 1100 };
+  // the block the new version added below the old page's end
+  const added = { top: 900, left: 20, width: 350, height: 120 };
+  assert.deepEqual(regionBox(undefined, added, oldPage, newPage, { union: true }), { x: 20, y: 900, width: 350, height: 120 });
+  // only its top edge lies inside the old page
+  const straddle = { top: 840, left: 20, width: 350, height: 120 };
+  assert.deepEqual(regionBox(undefined, straddle, oldPage, newPage, { union: true }), { x: 20, y: 840, width: 350, height: 120 });
+});
+
+test('a union region is still cut at the end of the longer page, and is null when both pages end before it', () => {
+  const low = { top: 800, left: 0, width: 100, height: 400 };
+  assert.deepEqual(regionBox(low, low, page, { width: 1440, height: 1000 }, { union: true }), { x: 0, y: 800, width: 100, height: 200 });
+  const beyond = { top: 950, left: 0, width: 100, height: 20 };
+  assert.equal(regionBox(beyond, beyond, page, page, { union: true }), null);
+});
+
+test('padSize is how big a page has to be for the region to lie inside it', () => {
+  assert.deepEqual(padSize({ x: 20, y: 900, width: 350, height: 120 }), { width: 370, height: 1020 });
 });
 
 // ---------- which anchors changed ----------

@@ -6,6 +6,7 @@
  * data, so it can be unit-tested without a browser:
  *
  *  - `regionBox`      where to cut the anchor's area out of a screenshot
+ *  - `padSize`        how big the shorter version's page is padded so that box exists in it
  *  - `diffAnchors`    which anchors changed between the two versions, and how
  *  - `parseChangeSet` the shape of the change set a designer hands in with a version
  *  - `classifyChanges` which of the changes the change set declared, and which it did not
@@ -24,24 +25,37 @@ const present = (r) => r && r.width > 0 && r.height > 0;
  *
  * Both versions are cut from the SAME box so the two crops have the same size —
  * the pixel comparator refuses two sizes. The box covers the anchor in both
- * versions (an anchor that grew is judged over its larger area) and is cut down to
- * what both pages actually have. Returns null when nothing is left to look at
- * (hidden on both sides, or entirely outside one of the pages).
+ * versions (an anchor that grew is judged over its larger area). Returns null when
+ * nothing is left to look at (hidden on both sides, or entirely outside the pages).
+ *
+ * By default the box is cut down to what BOTH pages have (canvas against
+ * implementation: a region one side lacks is not part of the comparison).
+ * With `{ union: true }` (two versions of one canvas) it is cut down to what EITHER
+ * page has: a block the new version added below the old page's end is still cut in
+ * full, and the caller pads the shorter page (see `padSize`) so the old crop is the
+ * blank it really was.
  *
  * @param a, b         { top, left, width, height } of the anchor on each side, or undefined
  * @param pageA, pageB { width, height } of each page
+ * @param options      { union?: boolean }
  */
-export function regionBox(a, b, pageA, pageB) {
+export function regionBox(a, b, pageA, pageB, { union = false } = {}) {
   const rects = [a, b].filter(present);
   if (rects.length === 0) return null;
+  const limit = union ? Math.max : Math.min;
   const x = Math.floor(Math.min(...rects.map((r) => r.left)));
   const y = Math.floor(Math.min(...rects.map((r) => r.top)));
-  const right = Math.min(Math.ceil(Math.max(...rects.map((r) => r.left + r.width))), Math.min(pageA.width, pageB.width));
-  const bottom = Math.min(Math.ceil(Math.max(...rects.map((r) => r.top + r.height))), Math.min(pageA.height, pageB.height));
+  const right = Math.min(Math.ceil(Math.max(...rects.map((r) => r.left + r.width))), limit(pageA.width, pageB.width));
+  const bottom = Math.min(Math.ceil(Math.max(...rects.map((r) => r.top + r.height))), limit(pageA.height, pageB.height));
   const width = right - Math.max(x, 0);
   const height = bottom - Math.max(y, 0);
   if (width <= 0 || height <= 0) return null;
   return { x: Math.max(x, 0), y: Math.max(y, 0), width, height };
+}
+
+/** How big a page has to be for a region box to lie inside it (what the shorter page is padded to). */
+export function padSize(box) {
+  return { width: box.x + box.width, height: box.y + box.height };
 }
 
 /**
