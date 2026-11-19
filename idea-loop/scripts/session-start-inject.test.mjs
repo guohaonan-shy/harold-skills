@@ -12,34 +12,39 @@ import { mkdtempSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dynaBinary } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
 const entries = hooks.SessionStart;
 const allCommands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
-// the three runtime-detect sections; the project map is a fourth command of its own (project-map.test.mjs)
-const commands = allCommands.filter((c) => c.includes('runtime-detect.mjs'));
+// the three `dyna runtime inject` sections; the project map is a fourth command of its own (project-map.test.mjs)
+const commands = allCommands.filter((c) => c.includes('bin/dyna" runtime inject '));
 
 /** The limit Claude Code puts on one hook's output; past it the session keeps only a 2,000-character preview. */
 const HOOK_OUTPUT_LIMIT = 10000;
 
 // The child gets exactly the env given here, so the machine running the test (maybe a magi session) cannot leak in.
+// The plugin's launcher hands the call to a dyna built from this repository, not to the one installed in ~/.idea-loop/bin/.
 const runAll = (env) =>
   commands.map((command) =>
-    spawnSync('sh', ['-c', command], { env: { PATH: process.env.PATH, CLAUDE_PLUGIN_ROOT: pluginRoot, ...env }, encoding: 'utf8' }));
+    spawnSync('sh', ['-c', command], { env: { PATH: process.env.PATH, CLAUDE_PLUGIN_ROOT: pluginRoot, IDEA_LOOP_DYNA_BIN: dynaBinary(), ...env }, encoding: 'utf8' }));
 
 const skillBody = (rel) => readFileSync(join(pluginRoot, rel), 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
-const REFERENCE = { 'claude-desktop': 'skills/productivity/runtime/references/claude-desktop.md', magi: 'skills/productivity/runtime/references/magi.md' };
+// `dyna runtime inject reference` prints the data file of the current runtime, the plugin's runtime/ directory
+const REFERENCE = { 'claude-desktop': 'runtime/claude-desktop.md', magi: 'runtime/magi.md' };
 
 test('SessionStart has no matcher, so startup, resume, clear, compact and fork all inject', () => {
   assert.ok(Array.isArray(entries) && entries.length > 0, 'SessionStart is registered');
   for (const e of entries) assert.ok(!('matcher' in e), `a matcher would limit the sources: ${JSON.stringify(e)}`);
 });
 
-test('three runtime-detect SessionStart commands, each its own output, and the project map is a separate command beside them', () => {
+test('three `dyna runtime inject` SessionStart commands, each its own output, and the project map is a separate command beside them', () => {
   assert.equal(commands.length, 3);
   assert.equal(allCommands.length, 4);
   assert.deepEqual(allCommands.slice(0, 3), commands);
+  assert.deepEqual(commands.map((c) => c.split('runtime inject ')[1]), ['decision-rules --hook', 'runtime --hook', 'reference --hook']);
+  assert.equal(allCommands[3], '"${CLAUDE_PLUGIN_ROOT}/bin/dyna" home map --hook');
 });
 
 for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-desktop'], ['MAGI_SESSION_ID set', { MAGI_SESSION_ID: 'abc' }, 'magi']]) {

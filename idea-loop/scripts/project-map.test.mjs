@@ -12,12 +12,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync,
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dynaBinary } from './dyna-test-bin.mjs';
 import { IN_HOME, MAP_LIMIT, NOT_CONNECTED, NOT_MOVED, TRUNCATED_NOTICE, findProject, locate, locateByDocs, mapText, normalizeRemote, parseProjects } from './project-map.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
 const hookCommands = hooks.SessionStart.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
-const command = hookCommands.find((c) => c.includes('project-map.mjs'));
+const command = hookCommands.find((c) => c.includes('home map'));
 
 const REMOTE = 'https://github.com/acme/example-app';
 const MAP = '# example-app 项目地图\n\n知识库在 docs/，过去的决定先查 docs/spec/。\n';
@@ -56,14 +57,16 @@ function world({ map = MAP, remote = REMOTE, origin = 'git@github.com:acme/examp
 }
 
 // The child gets exactly the env given here, so the machine running the test (its own ~/home, a magi session) cannot leak in.
+// The plugin's launcher hands the call to a dyna built from this repository, not to the one installed in ~/.idea-loop/bin/.
 const run = (cwd, home) =>
-  spawnSync('sh', ['-c', command], { cwd, env: { PATH: process.env.PATH, CLAUDE_PLUGIN_ROOT: pluginRoot, HOME: dirname(cwd), ...(home ? { IDEA_LOOP_HOME: home } : {}) }, encoding: 'utf8' });
+  spawnSync('sh', ['-c', command], { cwd, env: { PATH: process.env.PATH, CLAUDE_PLUGIN_ROOT: pluginRoot, IDEA_LOOP_DYNA_BIN: dynaBinary(), HOME: dirname(cwd), ...(home ? { IDEA_LOOP_HOME: home } : {}) }, encoding: 'utf8' });
 
-test('hooks.json registers the command as its own SessionStart command, next to the three runtime-detect ones', () => {
-  assert.ok(command, 'a SessionStart command runs project-map.mjs');
-  assert.equal(command, 'node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs"');
-  assert.equal(hookCommands.filter((c) => c.includes('project-map.mjs')).length, 1);
-  assert.equal(hookCommands.filter((c) => c.includes('runtime-detect.mjs')).length, 3);
+test('hooks.json registers the command as its own SessionStart command, next to the three `runtime inject` ones', () => {
+  assert.ok(command, 'a SessionStart command runs `dyna home map`');
+  assert.equal(command, '"${CLAUDE_PLUGIN_ROOT}/bin/dyna" home map --hook');
+  assert.equal(hookCommands.filter((c) => c.includes('home map')).length, 1);
+  assert.equal(hookCommands.filter((c) => c.includes('project-map.mjs')).length, 0);
+  assert.equal(hookCommands.filter((c) => c.includes('runtime inject')).length, 3);
   assert.ok(hooks.SessionStart.every((e) => !('matcher' in e)), 'no matcher: startup, resume, clear, compact and fork all inject');
 });
 

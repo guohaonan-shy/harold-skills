@@ -9,9 +9,9 @@
 
 ## 验收标准
 
-- [ ] hooks.json、.mcp.json 里没有旧脚本路径；扫描测试对它们通过
-- [ ] 临时插件 + 本机装好的命令行，开一个 `claude -p` 会话：开场注入了运行环境和项目地图；会话里手写 `git worktree remove` 被拦（⏭ 延后 → 跑不了 `claude -p` 时写明）
-- [ ] 版本不对时 hook 不拦、不报错，只在 stderr 留一行
+- [x] hooks.json、.mcp.json 里没有旧脚本路径；扫描测试对它们通过
+- [ ] 临时插件 + 本机装好的命令行，开一个 `claude -p` 会话：开场注入了运行环境和项目地图；会话里手写 `git worktree remove` 被拦 ⏭ 延后 → 14：这张只能用本地编的二进制，不许碰 ~/.idea-loop/bin/ 和 ~/.claude，真开 `claude -p` 会话要写这两处；换成了同一批 hooks.json 命令经启动小脚本在 shell 里跑（开场四段输出、两个拦截放行与拦下），14 装好第一版后补真会话
+- [x] 版本不对时 hook 不拦、不报错，只在 stderr 留一行
 
 ## 选中的存量回归
 

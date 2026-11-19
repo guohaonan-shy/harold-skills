@@ -356,8 +356,8 @@ test('read only: nothing but the seven lookups is offered, and a write-shaped ca
 test('.mcp.json: the plugin ships the archive server and OpenSEO; Playwright and Refero are user-level', () => {
   const cfg = JSON.parse(readFileSync(MCP_JSON, 'utf8'));
   const archive = cfg.mcpServers['design-archive'];
-  assert.equal(archive.command, 'node');
-  assert.deepEqual(archive.args, ['${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs']);
+  assert.equal(archive.command, '${CLAUDE_PLUGIN_ROOT}/bin/dyna');
+  assert.deepEqual(archive.args, ['mcp', 'design-archive']);
   assert.deepEqual(cfg.mcpServers.openseo, { type: 'http', url: 'https://app.openseo.so/mcp' });
   assert.deepEqual(Object.keys(cfg.mcpServers), ['design-archive', 'openseo']);
 });

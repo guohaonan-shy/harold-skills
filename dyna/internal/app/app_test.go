@@ -64,6 +64,28 @@ func TestARangeThisBinaryIsNotInStopsTheCommandAHookJustLeavesALine(t *testing.T
 	}
 }
 
+// The commands the plugin's SessionStart hook runs. Without --hook a version mismatch would exit 1 and the host would
+// show a hook failure on every session start of a machine whose command line is too old or too new.
+func TestTheSessionStartCommandsTakeHookAndAMismatchIsOnlyALineOnStderr(t *testing.T) {
+	env := map[string]string{EnvRange: ">=9.0.0 <10.0.0"}
+	for _, args := range [][]string{
+		{"home", "map", "--hook"},
+		{"runtime", "inject", "decision-rules", "--hook"},
+		{"runtime", "inject", "runtime", "--hook"},
+		{"runtime", "inject", "reference", "--hook"},
+	} {
+		out, errs, code := run(env, args...)
+		if code != 0 || out != "" || errs == "" || strings.Count(strings.TrimSpace(errs), "\n") != 0 {
+			t.Fatalf("%v: %q %q %d", args, out, errs, code)
+		}
+	}
+	// and in range the flag is a real one of the command: the call is not refused as an unknown flag
+	_, errs, code := run(map[string]string{EnvRange: ">=0.0.1 <1.0.0"}, "home", "map", "--hook")
+	if strings.Contains(errs, "unknown flag") || code != 0 {
+		t.Fatalf("home map --hook: %q %d", errs, code)
+	}
+}
+
 func TestRegistryJSONHasEveryIssuesCommandWithItsParts(t *testing.T) {
 	out, errs, code := run(nil, "registry", "--json")
 	if code != 0 {

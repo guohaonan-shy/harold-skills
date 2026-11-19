@@ -137,6 +137,7 @@ func Command(d Deps) *cobra.Command {
 		fmt.Fprint(d.out(), ProjectMap(d.cwd(), d.env()))
 		return nil
 	})
+	mapCmd.Flags().Bool("hook", false, "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话")
 
 	index := leaf("index", "按各份 frontmatter 重新生成 spec、adr、raw 三层的 index.md", sess, "", func(cmd *cobra.Command, args []string) error {
 		found, err := d.project(cmd)

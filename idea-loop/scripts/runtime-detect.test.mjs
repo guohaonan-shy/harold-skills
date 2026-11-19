@@ -48,14 +48,16 @@ test('an unknown IDEA_LOOP_RUNTIME exits non-zero, prints nothing on stdout and 
   assert.match(r.stderr, /magi/);
 });
 
-test('hooks.json registers three SessionStart commands that run runtime-detect.mjs --inject, one per section (the project map has its own command, see project-map.test.mjs)', () => {
+test('hooks.json no longer runs this script: the three SessionStart sections come from `dyna runtime inject` (see session-start-inject.test.mjs)', () => {
   const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
   const entries = hooks.SessionStart;
   assert.ok(Array.isArray(entries) && entries.length > 0, 'SessionStart is registered');
-  const commands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command).filter((c) => c.includes('runtime-detect.mjs'));
-  assert.equal(commands.length, 3);
-  for (const c of commands) assert.match(c, /runtime-detect\.mjs" --inject (decision-rules|runtime|reference)$/);
-  assert.deepEqual(commands.map((c) => c.split('--inject ')[1]), ['decision-rules', 'runtime', 'reference']);
+  const commands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
+  assert.equal(commands.filter((c) => c.includes('runtime-detect.mjs')).length, 0);
+  assert.deepEqual(
+    commands.filter((c) => c.includes('runtime inject')).map((c) => c.split('runtime inject ')[1]),
+    ['decision-rules --hook', 'runtime --hook', 'reference --hook'],
+  );
 });
 
 test('--inject with a section it does not know exits non-zero and prints nothing on stdout', () => {

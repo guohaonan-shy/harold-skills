@@ -92,6 +92,7 @@ func Command(d Deps) *cobra.Command {
 		return err
 	})
 	inject.Args = cobra.ArbitraryArgs
+	inject.Flags().Bool("hook", false, "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话")
 
 	show := leaf("show [capability]", "打印当前运行环境里这项能力的做法（数据里的那一节）；不带能力打印能力清单和做不到时的退路。子代理收不到开场注入，用它取", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {

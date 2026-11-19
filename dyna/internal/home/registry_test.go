@@ -57,7 +57,7 @@ func TestRegistryJSONHasEveryHomeCommandWithItsCallerAndItsArguments(t *testing.
 		"home index":          "layer:flag,project:flag",
 		"home memory check":   "dir:positional",
 		"home where":          "project:flag",
-		"home map":            "",
+		"home map":            "hook:flag",
 	} {
 		if got := argNames(name); got != args {
 			t.Errorf("%s takes %q, want %q", name, got, args)

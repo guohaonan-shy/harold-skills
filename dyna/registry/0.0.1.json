@@ -1160,7 +1160,15 @@
       "summary": "开场注入当前项目的项目目录和项目地图（出任何岔子都什么也不打印）",
       "caller": "hook",
       "next": "",
-      "args": []
+      "args": [
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话"
+        }
+      ]
     },
     {
       "command": "home memory check",
@@ -2286,6 +2294,13 @@
           "name": "decision-rules|runtime|reference",
           "kind": "positional",
           "required": true
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话"
         }
       ]
     },

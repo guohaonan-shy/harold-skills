@@ -370,8 +370,8 @@ to start.
 ```
 idea-loop/
 ├── .claude-plugin/plugin.json
-├── .mcp.json                         # two MCP servers: design-archive (read-only lookups of the design archive) and openseo (remote, the seo category's data source). The browser (on the desktop a user-level Playwright, headless and isolated) and Refero are set up by the human; `setup` only checks them
-├── hooks/hooks.json                  # SessionStart → runtime-detect.mjs --inject decision-rules | runtime | reference (three commands, no matcher: startup, resume, clear, compact and fork all inject), then `project-map.mjs` (a fourth command of its own: the project map, below); PreToolUse(Bash) → seo-check-hook.mjs; PostToolUse(Write|Edit) → design-lint-hook.mjs + design-md-hook.mjs + glossary-check-hook.mjs; PostToolUse(Bash) → seo-check-hook.mjs
+├── .mcp.json                         # two MCP servers: design-archive (`bin/dyna mcp design-archive`, read-only lookups of the design archive) and openseo (remote, the seo category's data source). The browser (on the desktop a user-level Playwright, headless and isolated) and Refero are set up by the human; `setup` only checks them
+├── hooks/hooks.json                  # every hook is `bin/dyna <module> <command> --hook` (with --hook a missing or out-of-range command line is one line on stderr and exit 0, never a stopped session): SessionStart → `runtime inject decision-rules | runtime | reference` (three commands, no matcher: startup, resume, clear, compact and fork all inject), then `home map` (a fourth command of its own: the project map, below); PreToolUse(Bash) → `issues guard` + `worktree guard` + `seo check`; PostToolUse(Write|Edit) → `design lint` + `design md lint` + `home glossary check`; PostToolUse(Bash) → `seo check`
 ├── agents/
 │   ├── uiux-imaginer.md              # uiux-imagine's executor (idea-loop:uiux-imaginer) — `opus` alias, effort high, one per imagine run
 │   ├── designer.md                   # uiux-refine's executor (idea-loop:designer) — `opus` alias, effort high, one per refine run; after the freeze one fresh per "design change" (the only editor of the frozen canvas)

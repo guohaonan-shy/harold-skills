@@ -209,20 +209,15 @@ test('hook helpers: touchedSince and errorsOnly', () => {
   assert.equal(errorsOnly(report), '/b\n    [ERROR] [Both] Missing <title>.\nSummary: 1 error');
 });
 
-test('the plugin hooks: Bash PreToolUse runs only the SEO check, the post-write hooks are all there, SessionStart is the only other event, and the pre-merge hook is gone', () => {
+test('the plugin hooks: Bash PreToolUse runs the two guards and the SEO check, the post-write hooks are all there, SessionStart is the only other event, and the pre-merge hook is gone', () => {
   const hooks = JSON.parse(readFileSync(join(here, '..', 'hooks', 'hooks.json'), 'utf8')).hooks;
+  const dyna = (rest) => ({ type: 'command', command: `"\${CLAUDE_PLUGIN_ROOT}/bin/dyna" ${rest}` });
   assert.deepEqual(hooks.PreToolUse, [
-    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
+    { matcher: 'Bash', hooks: [dyna('issues guard --hook'), dyna('worktree guard --hook'), dyna('seo check --hook')] },
   ]);
   assert.deepEqual(hooks.PostToolUse, [
-    {
-      matcher: 'Write|Edit',
-      hooks: ['design-lint-hook', 'design-md-hook', 'glossary-check-hook'].map((n) => ({
-        type: 'command',
-        command: `node "\${CLAUDE_PLUGIN_ROOT}/scripts/${n}.mjs"`,
-      })),
-    },
-    { matcher: 'Bash', hooks: [{ type: 'command', command: 'node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs"' }] },
+    { matcher: 'Write|Edit', hooks: [dyna('design lint --hook'), dyna('design md lint --hook'), dyna('home glossary check --hook')] },
+    { matcher: 'Bash', hooks: [dyna('seo check --hook')] },
   ]);
   assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse', 'SessionStart']);
   assert.doesNotMatch(JSON.stringify(hooks), /merge-gate/);

@@ -17,6 +17,7 @@
 - [ ] Harold 在会话里说了发之后，GitHub Releases 上有这一版的 4 个平台包和校验和（⏭ 延后 → Harold 没说发之前，停在这一格交回）
 - [ ] 本机 `self install` 后 `dyna --version` 是这一版，校验和核过
 - [ ] 插件的版本范围下限是这一版
+- [ ] 临时插件 + 本机装好的命令行，开一个 `claude -p` 会话：开场注入了运行环境和项目地图；会话里手写 `git worktree remove` 被拦（继承自 15）
 
 ## 选中的存量回归
 
