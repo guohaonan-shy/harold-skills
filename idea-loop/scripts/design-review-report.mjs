@@ -30,6 +30,11 @@
  *                them as undeclared; an undeclared change that matches an entry by `state` + `anchor` shows the
  *                designer's reason beside it, one that matches nothing says the designer gave no reason. When the
  *                input is left out, the page says nothing about reasons at all.
+ *                An entry that matches no undeclared change but sits on the same `state` + `anchor` as a
+ *                declared change (`diff.declared`: the comparison counts the whole block as declared, so the
+ *                designer's own edit hides inside the decision's) is listed in the same first section, with the
+ *                block's before / after pictures, the designer's reason and the decisions that also changed this
+ *                block, and asks keep or undo. Only an entry that matches neither is left off the page.
  *   dissatisfied [{ opinion, quote }]: the session's mark that the human, in this refine, already said
  *                they are not satisfied with the block a `direction` opinion is about, with their own
  *                words. Whether they were is the session's call; this file only renders the mark.
@@ -128,6 +133,7 @@ function validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts,
   else if (diff.classified !== true) {
     errors.push('diff was run without a change set (classified is not true): without one every change looks undeclared; run it with "changeSet" ([] in the first round)');
   } else if (!Array.isArray(diff.undeclared)) errors.push('diff.undeclared must be an array');
+  else if (diff.declared !== undefined && !Array.isArray(diff.declared)) errors.push('diff.declared must be an array');
 
   if (!isObject(canvas) || !isText(canvas.current)) errors.push('canvas.current (the address of this version\'s canvas page) is required');
   else {
@@ -227,7 +233,8 @@ function recommend(finding, item, mark) {
  * Build the report.
  *
  * @returns {{ html: string, summary: string, entries: [{ n, section, ... }], unmatchedSelfCheck: [{ state, anchor, what, why }] }}
- *          `unmatchedSelfCheck`: self-check entries that matched no undeclared change (nothing to show for them).
+ *          `unmatchedSelfCheck`: self-check entries that matched neither an undeclared change nor a declared one
+ *          (nothing to show for them).
  *          `summary` is the short text for the conversation: the score and the items needing attention.
  *          The report's own link is added by the session after it publishes the page.
  * @throws  Error whose message lists every problem with the inputs
@@ -258,9 +265,17 @@ export function buildReport({ judge, research, diff, canvas, thoughts, dissatisf
   const entries = [];
   const sections = [];
 
-  // 1. changes nobody declared
-  if (diff.undeclared.length) {
-    const cards = diff.undeclared.map((c) => {
+  // 1. changes nobody declared, then the designer's self-check edits hidden inside a declared block
+  const undeclaredKeys = new Set(diff.undeclared.map((c) => JSON.stringify([c.state, c.anchor])));
+  const hidden = [];
+  for (const c of diff.declared ?? []) {
+    const key = JSON.stringify([c.state, c.anchor]);
+    if (undeclaredKeys.has(key) || !selfChecks.has(key)) continue;
+    hidden.push(c);
+  }
+  const listed = [...diff.undeclared.map((c) => ({ c, decisions: null })), ...hidden.map((c) => ({ c, decisions: c.decisions ?? [] }))];
+  if (listed.length) {
+    const cards = listed.map(({ c, decisions }) => {
       const number = ++n;
       const links = [`<a href="${esc(canvasLink(canvas.current, c.state))}">打开 ${esc(versionLabel(canvas.current))} 的「${esc(c.state)}」</a>`];
       if (canvas.previous) links.push(`<a href="${esc(canvasLink(canvas.previous, c.state))}">打开 ${esc(versionLabel(canvas.previous))} 的「${esc(c.state)}」</a>`);
@@ -277,18 +292,27 @@ export function buildReport({ judge, research, diff, canvas, thoughts, dissatisf
       let reason = '';
       if (said) reason = `<p class="selfcheck" data-reason="given"><strong>designer 自检：</strong>${esc(said.why)}<span class="muted">（designer 写的改动：${esc(said.what)}）</span></p>`;
       else if (selfCheck) reason = '<p class="selfcheck none" data-reason="none"><strong>designer 没说明为什么改。</strong></p>';
-      entries.push({ n: number, section: 'undeclared', state: c.state, anchor: c.anchor, ...(selfCheck ? { selfCheck: said ? said.why : null } : {}) });
+      const decisionLabel = decisions ? decisions.map((d) => `决策 ${esc(d)}`).join('、') : '';
+      const overlapNote = decisions
+        ? `<p class="overlap" data-overlap="true"><strong>这一块这一轮也按${decisionLabel}改过</strong>，比对把整块算成已声明，所以 designer 自检改的这一处没被单独挑出来。下面的改前改后是整块的，两处改动混在一起；自检那处是：${esc(said.what)}</p>`
+        : '';
+      entries.push({
+        n: number, section: 'undeclared', state: c.state, anchor: c.anchor,
+        ...(selfCheck ? { selfCheck: said ? said.why : null } : {}),
+        ...(decisions ? { alsoDeclaredBy: [...decisions] } : {}),
+      });
       return `<article id="r${number}" data-n="${number}" data-kind="undeclared">
 <h3><span class="num">#${number}</span> ${esc(c.state)} · ${esc(c.anchor)}</h3>
-<p>${esc(what)}</p>
+${decisions ? `<p class="muted">整块的比对差异：${esc(what)}</p>` : `<p>${esc(what)}</p>`}
+${overlapNote}
 ${reason}
 ${shots}
-<p class="ask">这处改动没有出现在改动集里。<strong>留，还是撤？</strong>（这一条要你定）</p>
+<p class="ask">${decisions ? 'designer 自检改的这一处没有出现在改动集里。' : '这处改动没有出现在改动集里。'}<strong>留，还是撤？</strong>（这一条要你定）</p>
 <p class="links">${links.join(' · ')}</p>
 </article>`;
     });
     sections.push(`<section data-section="undeclared"><h2>没声明却变了的地方</h2>
-<p class="muted">设计师这一版动了下面这些地方，但改动集里没写（设计师交付前自检改的地方也在这里）。每一条回「留」或「撤」；撤的会写进 ledger，下一轮照撤。</p>
+<p class="muted">设计师这一版动了下面这些地方，但改动集里没写（设计师交付前自检改的地方也在这里，包括落在这一轮按决策改过的同一块里的）。每一条回「留」或「撤」；撤的会写进 ledger，下一轮照撤。</p>
 ${cards.join('\n')}</section>`);
   }
 
@@ -394,7 +418,7 @@ ${sections.join('\n')}
 </html>
 `;
   const unmatchedSelfCheck = (selfCheck ?? []).filter((c) => !usedSelfChecks.has(JSON.stringify([c.state, c.anchor])));
-  return { html, summary: renderSummary({ judge, entries, undeclaredCount: diff.undeclared.length }), entries, unmatchedSelfCheck };
+  return { html, summary: renderSummary({ judge, entries, undeclaredCount: entries.filter((e) => e.section === 'undeclared').length }), entries, unmatchedSelfCheck };
 }
 
 /**
@@ -468,7 +492,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       },
     });
     writeFileSync(flag('out'), html);
-    for (const c of unmatchedSelfCheck) console.error(`design-review-report: self-check entry ${c.state} · ${c.anchor} matches no undeclared change, so it is not on the page`);
+    for (const c of unmatchedSelfCheck) console.error(`design-review-report: self-check entry ${c.state} · ${c.anchor} matches neither an undeclared nor a declared change, so it is not on the page`);
     console.log(summary);
   } catch (e) {
     console.error(`design-review-report: ${e.message}`);

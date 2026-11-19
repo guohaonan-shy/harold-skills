@@ -375,6 +375,61 @@ test('a self-check reason is written beside the undeclared change it matches; on
   assert.ok(footer.indexOf('designer 自检') < footer.indexOf('<img'));
 });
 
+// A decision changed the score card's font size; the designer's self-check also removed a badge inside the same card.
+// The comparison counts the whole card as declared, so the self-check edit is not in `undeclared`.
+const SCORE_CARD = {
+  cell: 'results', state: 'results', anchor: 'score-card', kind: 'changed', decisions: ['2.1'],
+  changes: [{ property: 'font-size', before: '20px', after: '28px', delta: null }], pixelPercent: 31,
+  shots: { before: '/shots/results--score-card--before.png', after: '/shots/results--score-card--after.png' },
+};
+const OVERLAP_SELF_CHECK = [{ state: 'results', anchor: 'score-card', what: '删掉分数卡右上角的装饰徽章', why: '多余的装饰' }];
+const overlapDiff = () => ({ ...fixtureDiff(), declared: [SCORE_CARD] });
+
+test('a self-check edit inside a block a decision also changed is listed with the block\'s pictures, the reason and the decision, and asks keep or undo', () => {
+  const { html, entries, unmatchedSelfCheck, summary } = build({ diff: overlapDiff(), selfCheck: [...SELF_CHECK, ...OVERLAP_SELF_CHECK] });
+  assert.deepEqual(sectionOrder(html), ['undeclared', 'opinions', 'reasoning', 'score']);
+  // after the two undeclared changes, still inside the first section, numbered in sequence
+  const card = article(html, 3);
+  assert.ok(card, 'the third entry is the hidden self-check edit');
+  assert.ok(html.indexOf('data-n="3"') < html.indexOf('data-section="opinions"'));
+  assert.match(card, /results · score-card/);
+  assert.match(card, /designer 自检：<\/strong>多余的装饰/);
+  assert.match(card, /删掉分数卡右上角的装饰徽章/);
+  assert.match(card, /决策 2\.1/);
+  assert.equal([...card.matchAll(/<img /g)].length, 2, 'before and after of the whole block');
+  assert.match(card, /留，还是撤/);
+  assert.match(card, /v3\.html\?state=results/);
+  assert.deepEqual(entries.find((e) => e.n === 3), { n: 3, section: 'undeclared', state: 'results', anchor: 'score-card', selfCheck: '多余的装饰', alsoDeclaredBy: ['2.1'] });
+  // the opinions keep counting on from there
+  assert.equal(entries.find((e) => e.section === 'opinions').n, 4);
+  // matched, so it is not handed back as unmatched; the sidebar one still is
+  assert.deepEqual(unmatchedSelfCheck, [SELF_CHECK[1]]);
+  // the conversation text counts it among the things needing the human's call
+  assert.match(summary, /没声明却变了的地方 3 处：#1、#2、#3/);
+});
+
+test('a self-check entry that matches neither an undeclared nor a declared change is left off the page and handed back', () => {
+  const { html, entries, unmatchedSelfCheck } = build({ diff: overlapDiff(), selfCheck: [{ state: 'results', anchor: 'nowhere', what: 'w', why: 'y' }] });
+  assert.equal(entries.filter((e) => e.section === 'undeclared').length, 2);
+  assert.ok(!html.includes('nowhere'));
+  assert.equal(unmatchedSelfCheck.length, 1);
+});
+
+test('a declared change with no self-check entry on it is not listed; without a self-check input nothing is added either', () => {
+  const noEntry = build({ diff: overlapDiff(), selfCheck: SELF_CHECK });
+  assert.equal(noEntry.entries.filter((e) => e.section === 'undeclared').length, 2);
+  assert.ok(!noEntry.html.includes('score-card'));
+  const noInput = build({ diff: overlapDiff() });
+  assert.ok(!noInput.html.includes('score-card'));
+});
+
+test('a place that is both in the undeclared list and the declared list is shown once', () => {
+  const diff = fixtureDiff();
+  diff.declared = [{ ...SCORE_CARD, state: 'quiz-exit', anchor: 'footer' }];
+  const { entries } = build({ diff, selfCheck: SELF_CHECK });
+  assert.equal(entries.filter((e) => e.section === 'undeclared').length, 2);
+});
+
 test('without a self-check input the page says nothing about reasons; an empty one marks every undeclared change as unexplained', () => {
   const none = build();
   assert.ok(!none.html.includes('designer 自检') && !none.html.includes('designer 没说明'));
@@ -454,7 +509,7 @@ test('the command line takes --self-check, shows the reasons, and says on stderr
   const { result, out } = runCli({}, ['--self-check', writeSelfCheck()]);
   assert.equal(result.status, 0, result.stderr);
   assert.match(readFileSync(out, 'utf8'), /designer 自检：<\/strong>页脚和正文没有层次/);
-  assert.match(result.stderr, /self-check entry results · sidebar matches no undeclared change/);
+  assert.match(result.stderr, /self-check entry results · sidebar matches neither an undeclared nor a declared change/);
   const bad = runCli({}, ['--self-check', writeSelfCheck([{ state: 'a' }])]);
   assert.equal(bad.result.status, 2);
   assert.match(bad.result.stderr, /selfCheck\[0\]\.anchor/);
