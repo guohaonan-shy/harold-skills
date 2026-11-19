@@ -116,7 +116,7 @@ test('the section check goes red when a capability is missing or one is added', 
 // Every desktop tool or interface the 0.1.10 skill and agent bodies named, found by grepping them.
 const DESKTOP_NAMES = [
   'mcp__scheduled-tasks__list_scheduled_tasks', 'create_scheduled_task', 'update_scheduled_task', 'mcp__scheduled-tasks__list_task_runs',
-  'CronCreate', 'CronList', 'CronDelete', '调度 loop 已到期', 'recurring: false',
+  'CronCreate', 'CronList', 'CronDelete',
   'mcp__ccd_session_mgmt__list_sessions', 'mcp__ccd_session_mgmt__send_message', 'mcp__ccd_session_mgmt__export_transcript',
   'start_session', 'list_sections', 'create_section', 'detach_session', 'move_sessions', 'set_session_title', 'archive_session', 'get_session',
   'ToolSearch', 'SendMessage',
@@ -148,7 +148,7 @@ test('the magi reference carries the spec table\'s commands and the dispatch sha
   const dispatch = text.slice(text.indexOf('### 调度'));
   // a session cannot archive itself (measured 2026-11-06); it stops itself instead
   assert.ok(!dispatch.includes('归档自己'), 'magi sessions cannot archive themselves');
-  for (const word of ['每轮新开', '停掉自己', '没有 7 天到期', '前缀', 'stopped / exited / dead', 'triageCap', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
+  for (const word of ['每轮新开', '停掉自己', '前缀', 'stopped / exited / dead', '最近 2 小时有活动', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
 });
 
 test('the skill is findable: lives under productivity, with the two references and no stray files', () => {
