@@ -58,7 +58,7 @@ function dynaOf(version) {
 }
 
 test('without the binary: says to run /idea-loop:setup and exits 1; a hook gets the line and exit 0', () => {
-  const root = pluginWith('>=0.1.0 <1.0.0');
+  const root = pluginWith('>=0.0.1 <1.0.0');
   const home = tmp('home');
   const r = launch(root, home, ['issues', 'show']);
   assert.equal(r.code, 1);
@@ -216,7 +216,7 @@ test('self with no or an unknown action prints the usage and exits 1', () => {
 });
 
 test('IDEA_LOOP_DYNA_BIN runs that binary instead of the installed one, and is not needed to be under HOME', () => {
-  const root = pluginWith('>=0.1.0 <1.0.0');
+  const root = pluginWith('>=0.0.1 <1.0.0');
   const stub = join(tmp('stub'), 'dyna-local');
   writeFileSync(stub, '#!/bin/sh\necho "local $*"\n');
   chmodSync(stub, 0o755);

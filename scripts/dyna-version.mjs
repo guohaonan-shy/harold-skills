@@ -9,7 +9,7 @@ import { compareVersions } from './plugin-version.mjs';
 
 export const VERSION_FILE = 'dyna/internal/version/version.go';
 
-/** The version written in version.go: `var Version = "0.1.0"` (or a const). */
+/** The version written in version.go: `var Version = "0.0.1"` (or a const). */
 export function versionIn(source) {
   return /\bVersion\s*=\s*"(\d+\.\d+\.\d+)"/.exec(String(source))?.[1] ?? null;
 }

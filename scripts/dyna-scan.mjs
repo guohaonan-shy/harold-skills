@@ -180,7 +180,7 @@ export function scanPlugin({ pluginRoot, registryDir }) {
   const rangeFile = join(pluginRoot, 'dyna-version');
   if (!existsSync(rangeFile)) return [`${basename(pluginRoot)}/dyna-version：没有这个文件，插件没写要哪个版本的命令行`];
   const floor = lowerBound(readRange(readFileSync(rangeFile, 'utf8')));
-  if (!floor) return [`${basename(pluginRoot)}/dyna-version：范围里没有下限（要写成 >=0.1.0 <1.0.0）`];
+  if (!floor) return [`${basename(pluginRoot)}/dyna-version：范围里没有下限（要写成 >=0.0.1 <1.0.0）`];
   const stored = join(registryDir, `${floor}.json`);
   if (!existsSync(stored)) return [`${basename(pluginRoot)}/dyna-version：最低版本 ${floor} 还没发布（${relative(join(registryDir, '..', '..'), stored)} 不存在）：先合命令行的改动、发版、存下登记表，再提高下限`];
   const registry = JSON.parse(readFileSync(stored, 'utf8'));

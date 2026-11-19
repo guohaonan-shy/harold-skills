@@ -18,43 +18,43 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 // ---------- pure function ----------
 
 test('code changed and the version not raised is a violation naming both versions and the file', () => {
-  const v = findViolations({ changedFiles: ['dyna/internal/issues/cmd.go'], baseVersion: '0.1.0', currentVersion: '0.1.0' });
+  const v = findViolations({ changedFiles: ['dyna/internal/issues/cmd.go'], baseVersion: '0.0.1', currentVersion: '0.0.1' });
   assert.equal(v.length, 1);
-  assert.match(v[0], /0\.1\.0/);
+  assert.match(v[0], /0\.0\.1/);
   assert.match(v[0], /internal\/version\/version\.go/);
   assert.match(v[0], /登记表/);
 });
 
 test('a raised version is fine, a lower one is not', () => {
   for (const current of ['0.1.1', '0.2.0', '1.0.0']) {
-    assert.deepEqual(findViolations({ changedFiles: ['dyna/go.mod'], baseVersion: '0.1.0', currentVersion: current }), [], current);
+    assert.deepEqual(findViolations({ changedFiles: ['dyna/go.mod'], baseVersion: '0.0.1', currentVersion: current }), [], current);
   }
   assert.equal(findViolations({ changedFiles: ['dyna/go.mod'], baseVersion: '0.2.0', currentVersion: '0.1.9' }).length, 1);
 });
 
 test('the release config and a stored registry count as command line changes', () => {
-  for (const f of ['dyna/.goreleaser.yaml', 'dyna/registry/0.1.0.json', 'dyna/cmd/dyna/main.go']) {
-    assert.equal(findViolations({ changedFiles: [f], baseVersion: '0.1.0', currentVersion: '0.1.0' }).length, 1, f);
+  for (const f of ['dyna/.goreleaser.yaml', 'dyna/registry/0.0.1.json', 'dyna/cmd/dyna/main.go']) {
+    assert.equal(findViolations({ changedFiles: [f], baseVersion: '0.0.1', currentVersion: '0.0.1' }).length, 1, f);
   }
 });
 
 test('a Go test file alone, or changes outside dyna/, need no new version', () => {
   assert.equal(isDynaChange('dyna/internal/issues/issues_test.go'), false);
-  assert.deepEqual(findViolations({ changedFiles: ['dyna/internal/issues/issues_test.go', 'idea-loop/README.md', 'docs/spec/x/x.md', 'dynamo/a.go'], baseVersion: '0.1.0', currentVersion: '0.1.0' }), []);
+  assert.deepEqual(findViolations({ changedFiles: ['dyna/internal/issues/issues_test.go', 'idea-loop/README.md', 'docs/spec/x/x.md', 'dynamo/a.go'], baseVersion: '0.0.1', currentVersion: '0.0.1' }), []);
 });
 
 test('dyna/ not on the base yet (the first release) is not required to bump', () => {
-  assert.deepEqual(findViolations({ changedFiles: ['dyna/go.mod', 'dyna/internal/version/version.go'], baseVersion: null, currentVersion: '0.1.0' }), []);
+  assert.deepEqual(findViolations({ changedFiles: ['dyna/go.mod', 'dyna/internal/version/version.go'], baseVersion: null, currentVersion: '0.0.1' }), []);
 });
 
 test('a version.go that cannot be read is reported instead of silently passing', () => {
-  const v = findViolations({ changedFiles: ['dyna/go.mod'], baseVersion: '0.1.0', currentVersion: null });
+  const v = findViolations({ changedFiles: ['dyna/go.mod'], baseVersion: '0.0.1', currentVersion: null });
   assert.equal(v.length, 1);
   assert.match(v[0], /读不出/);
 });
 
 test('versionIn reads a var or a const', () => {
-  assert.equal(versionIn('package version\n\nvar Version = "0.1.0"\n'), '0.1.0');
+  assert.equal(versionIn('package version\n\nvar Version = "0.0.1"\n'), '0.0.1');
   assert.equal(versionIn('const Version = "12.3.40"'), '12.3.40');
   assert.equal(versionIn('var Version = "next"'), null);
 });

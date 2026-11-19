@@ -39,7 +39,7 @@ import (
 
 // Environment variables the plugin's small script sets before it hands over to this binary.
 const (
-	// EnvRange is the dyna version range the plugin accepts, such as ">=0.1.0 <1.0.0".
+	// EnvRange is the dyna version range the plugin accepts, such as ">=0.0.1 <1.0.0".
 	EnvRange = "IDEA_LOOP_CLI_RANGE"
 	// EnvPluginRoot is the plugin's directory; commands read the plugin's own data files from it.
 	EnvPluginRoot = "IDEA_LOOP_PLUGIN_ROOT"

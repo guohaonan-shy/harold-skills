@@ -22,4 +22,4 @@
 
 - 扫描测试（工单 01 建）：最低版本有了存档的登记表后不再报「还没发布」
 
-> 注意（工单 01 交回，2026-11-19）：goreleaser 开源版对 `dyna-v0.1.0` 这种带前缀的标签解析会出问题（monorepo 前缀是 Pro 功能），只在 `--snapshot` 下验过。发版时先在本机定下做法（如传 `GORELEASER_CURRENT_TAG` 并手工建 release），再问 Harold。
+> 注意（工单 01 交回，2026-11-19）：goreleaser 开源版对 `dyna-v0.0.1` 这种带前缀的标签解析会出问题（monorepo 前缀是 Pro 功能），只在 `--snapshot` 下验过。发版时先在本机定下做法（如传 `GORELEASER_CURRENT_TAG` 并手工建 release），再问 Harold。

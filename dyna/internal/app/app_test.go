@@ -58,7 +58,7 @@ func TestARangeThisBinaryIsNotInStopsTheCommandAHookJustLeavesALine(t *testing.T
 	if code != 0 || out != "" || strings.Count(strings.TrimSpace(errs), "\n") != 0 || errs == "" {
 		t.Fatalf("a hook is never stopped by a version mismatch: %q %q %d", out, errs, code)
 	}
-	out, _, code = run(map[string]string{EnvRange: ">=0.1.0 <1.0.0"}, "version")
+	out, _, code = run(map[string]string{EnvRange: ">=0.0.1 <1.0.0"}, "version")
 	if code != 0 || strings.TrimSpace(out) != version.Version {
 		t.Fatal(out, code)
 	}
