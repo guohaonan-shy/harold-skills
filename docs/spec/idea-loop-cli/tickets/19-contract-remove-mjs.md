@@ -26,3 +26,5 @@
 > 补充（工单 12 交回，2026-11-19）：uiux-research 的 eval runner 的形状检查仍起旧 research-check 脚本，删它之前改成 `dyna research submit`。
 
 > 补充（工单 17 交回，2026-11-19）：README 第 35 行、490–491 行还写着旧 research-check 脚本；design-archive-sections-doc、archive-check-flag 两个测试里为等 16 留了「旧写法也认」，16 落地后收掉，只认 dyna 写法。
+
+> 补充（工单 15 交回，2026-11-19）：回放工具 evals/retro 的 replay.mjs 里 injectedFiles 和注释仍写「hooks.json 跑 runtime-detect --inject」、注入文件指旧 skill references；改成插件 runtime/ 下的数据。session-start-inject 测试末尾测旧脚本软链的那条随旧脚本一起删。
