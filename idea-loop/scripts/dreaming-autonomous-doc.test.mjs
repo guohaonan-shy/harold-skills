@@ -1,5 +1,5 @@
 /**
- * Tripwire — dreaming asks the human about two kinds of rows only and carries out the rest itself.
+ * Tripwire — dreaming asks the human only about the rows `--split-ask` hands over and carries out the rest itself.
  *
  * Spec dreaming-triage-autonomous, ticket 02. Before: dreaming stopped after the proposal pass, showed the
  * whole table and ran the execution pass only on the rows the human approved. What stays: the full table is
@@ -76,9 +76,16 @@ test('no automatic row waits for approval: retro candidates and missed archive r
 });
 
 test('dreaming and the weekly setup text say what dreaming still asks', () => {
-  // refine-judge-advisor 08 adds the deletion of a settled shelved design to what is asked
-  assert.match(skill, /行按风险分两类[^\n]*会判错[^（\n]*（`DESIGN\.md`、文档里的冲突[^）\n]*）问人[^\n]*其余[^\n]*自己执行/);
-  assert.match(weekly, /只有 `DESIGN\.md` 和文档里的冲突两类/);
+  // dreaming's opening lists the five kinds of rows `proposal-table-check --split-ask` hands to the human
+  // (same words and order as the plugin README); the weekly setup text points there instead of listing them again
+  const ask = skill.match(/行按风险分两类[^\n]*会判错[^（\n]*（([^）\n]*)）问人[^\n]*其余[^\n]*自己执行/);
+  assert.ok(ask, 'the opening sentence about the two risk classes is missing');
+  const kinds = ['`DESIGN.md`', '文档里的冲突', '`GLOSSARY.md`', '要删的暂缓设计', '`候选`'];
+  for (const kind of kinds) assert.ok(ask[1].includes(kind), `dreaming's opening list lacks ${kind}: ${ask[1]}`);
+  const at = kinds.map((k) => ask[1].indexOf(k));
+  assert.deepEqual(at, [...at].sort((a, b) => a - b), `dreaming's opening list is out of order: ${ask[1]}`);
+  assert.doesNotMatch(weekly, /两类/);
+  assert.match(weekly, /`idea-loop:dreaming`[^\n]*开头/);
   assert.doesNotMatch(weekly, /提议表照样等人批/);
 });
 
