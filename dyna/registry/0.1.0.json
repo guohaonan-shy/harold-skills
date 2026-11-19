@@ -766,6 +766,361 @@
       ]
     },
     {
+      "command": "pr body get",
+      "module": "pr",
+      "use": "get <owner/repo> <pr> <section>",
+      "summary": "打印 PR 描述的一个小节（summary|problem|changes|verification|rollback|live-check|night-decided|night-waiting|your-todo|reference）；没有这一节就打印空行",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "section",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr body set",
+      "module": "pr",
+      "use": "set <owner/repo> <pr> <section> <content.md>",
+      "summary": "把文件的内容写成 PR 描述的这一节（空内容删掉这一节）；「参考」以外有代码层面的指称就拒写",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "section",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "content.md",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr candidates submit",
+      "module": "pr",
+      "use": "submit <candidates.json> <base-ref> <evidence-dir> <round>",
+      "summary": "校验候选：引用的原文要在文件里、代码要在 diff 里（不成立的丢弃并写原因）；措辞不合格的退回并说出哪一条（退出 2），校验过了才算交回",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "candidates.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "evidence-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "round",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr diagnostics filter",
+      "module": "pr",
+      "use": "filter <base-ref>",
+      "summary": "从标准输入读检查输出，只留下落在 <base-ref>...HEAD 改动行上的那几条（JSON：onChanged、elsewhere、unlocated）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr evidence cleanup",
+      "module": "pr",
+      "use": "cleanup <owner/repo> <pr>",
+      "summary": "删掉证据分支（没有就什么也不做）和旧版留下的 draft release",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr evidence list",
+      "module": "pr",
+      "use": "list <owner/repo> <pr>",
+      "summary": "打印证据分支上每个文件的地址（JSON）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr evidence publish",
+      "module": "pr",
+      "use": "publish <owner/repo> <pr> <file>...",
+      "summary": "把图片传到证据分支，打印 {文件名: 地址} 的 JSON；文件名要以 tNN- / rN- / pr- 开头",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "pr loop archive",
+      "module": "pr",
+      "use": "archive <file> <owner/repo> <pr>",
+      "summary": "把文件里还没在 PR 上的汇报各发成一条评论（有 GitHub App 就用它的身份），本地图先传到证据分支；已发过的不重发",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr loop check",
+      "module": "pr",
+      "use": "check <file>",
+      "summary": "JSON：文件里每条汇报和它有没有处理完；unsettled 列出没处理完的",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr loop next",
+      "module": "pr",
+      "use": "next <file> <kind> [impl]",
+      "summary": "打印下一个轮次号：kind 是 review（review 轮；带 impl 数实现阶段的汇报）、pause（旧）或 replay",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "impl",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "pr merge",
+      "module": "pr",
+      "use": "merge <owner/repo> <pr>",
+      "summary": "合并 PR（--method 取 DEVELOPMENT.md「分支」节写的合并方式）",
+      "caller": "session",
+      "next": "dyna pr view <owner/repo> <pr>",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "method",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "合并方式：merge、squash 或 rebase（必填）"
+        }
+      ]
+    },
+    {
+      "command": "pr open",
+      "module": "pr",
+      "use": "open <owner/repo>",
+      "summary": "在当前分支上开 PR，默认 draft（--ready 直接开成 ready）；打印 PR 的地址",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "基准分支（必填）"
+        },
+        {
+          "name": "body-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "正文文件（必填）"
+        },
+        {
+          "name": "head",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "要开 PR 的分支；不给就用当前分支"
+        },
+        {
+          "name": "ready",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "直接开成 ready（默认 draft）"
+        },
+        {
+          "name": "title",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "标题（必填）"
+        }
+      ]
+    },
+    {
+      "command": "pr ready",
+      "module": "pr",
+      "use": "ready <owner/repo> <pr>",
+      "summary": "把 draft PR 转成 ready",
+      "caller": "session",
+      "next": "dyna pr view <owner/repo> <pr>",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr view",
+      "module": "pr",
+      "use": "view <owner/repo> <pr>",
+      "summary": "JSON：PR 的状态、是否 draft、分支、合并提交（--fields 换字段）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "fields",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "要读的字段，逗号分开（gh pr view --json 认的）"
+        }
+      ]
+    },
+    {
       "command": "registry",
       "module": "registry",
       "use": "registry",

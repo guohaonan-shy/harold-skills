@@ -17,6 +17,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/issues"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/pr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/semver"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
@@ -43,6 +44,8 @@ type IO struct {
 	// Cwd is the directory the session runs in; empty means the process's. Now is the clock; nil means time.Now.
 	Cwd string
 	Now func() time.Time
+	// PR is the pr module's outside world (gh, git, GitHub's token endpoint); a field left nil is the real one.
+	PR pr.Deps
 }
 
 // OSIO is the real process.
@@ -81,8 +84,16 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
 	root.AddCommand(git.Command(git.Deps{Stdout: io.Stdout}))
 	root.AddCommand(worktree.Command(worktree.Deps{Stdin: io.Stdin, Stdout: io.Stdout}))
+	root.AddCommand(pr.Command(prDeps(io)))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
+}
+
+// prDeps is the pr module's dependencies: what the process already has, and what a test put in IO.PR.
+func prDeps(io IO) pr.Deps {
+	d := io.PR
+	d.Env, d.Stdin, d.Stdout = io.Env, io.Stdin, io.Stdout
+	return d
 }
 
 var needsValue = regexp.MustCompile(`^flag needs an argument: (--[\w-]+)`)
