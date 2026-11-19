@@ -1,6 +1,6 @@
 # OpenSEO 被别处的配置顶替
 
-`seo-setup` 第 1 步指到这里。判断跟 `seo-scan` 开场「认 OpenSEO」是同一个（表在 `../../seo-scan/references/stops.md`）：会话里没有 `mcp__plugin_idea-loop_openseo__whoami`，但某个 `mcp__<名字>__` 前缀下同时有 `__whoami` 和 `__get_project_context`，就是 `<名字>` 那份配置顶替了插件自带的 OpenSEO。
+`seo-setup` 第 1 步指到这里。判断跟 `seo-scan` 开场「认 OpenSEO」是同一个：会话里没有 `mcp__plugin_idea-loop_openseo__whoami`，但某个 `mcp__<名字>__` 前缀下同时有 `__whoami` 和 `__get_project_context`，就是 `<名字>` 那份配置顶替了插件自带的 OpenSEO。
 
 原因（一句话告诉人）：Claude Code 对同一个服务只连优先级高的那份，工具名随之换成 `mcp__<名字>__*`，而 seo-scan 的方向 agent 只认插件名下的，会一个工具都拿不到。
 

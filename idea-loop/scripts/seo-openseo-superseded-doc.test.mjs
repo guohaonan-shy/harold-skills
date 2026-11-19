@@ -114,6 +114,10 @@ test('openseo-superseded.md: tells the human which name, both removals, reopen, 
   assert.match(SETUP_REF, /未做/);
 });
 
+test('openseo-superseded.md: seo-setup reference does not point into seo-scan internal references', () => {
+  assert.doesNotMatch(SETUP_REF, /seo-scan\/references|stops\.md/, 'a skill-internal reference is read only by its own skill');
+});
+
 test('the six direction agents still whitelist only the plugin-named OpenSEO', () => {
   for (const name of AGENTS) {
     const doc = read('agents', `${name}.md`);
