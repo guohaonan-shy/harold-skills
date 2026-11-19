@@ -2,7 +2,6 @@ package home_test
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -30,36 +29,6 @@ func TestIndexOfTheSpecLayerIsATableOfSlugAndSummaryKeepingTheTextAround(t *test
 	// again: no change, and it says so
 	if r := w.run(w.home, "home", "index", "--project", "example-app", "--layer", "spec").ok(t); !strings.Contains(r.out, "没有变化") {
 		t.Fatal(r.out)
-	}
-}
-
-func TestIndexOfTheSpecLayerIsTheTextTheOldScriptWrites(t *testing.T) {
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is needed to run the old script")
-	}
-	for _, existing := range []string{"", "# spec\n> 契约\n\n| 文件 | status | summary |\n|---|---|---|\n| [[x]] | 草稿 | y |\n\n尾巴\n"} {
-		w := moved(t, opts{})
-		write(t, w.home, docsRel+"/spec/b-spec/b-spec.md", "---\nsummary: 第二份\n---\n")
-		write(t, w.home, docsRel+"/spec/a-spec/a-spec.md", "---\nsummary: 第一份\n---\n")
-		idx := docsOf(w) + "/spec/index.md"
-		if existing != "" {
-			write(t, w.home, docsRel+"/spec/index.md", existing)
-		}
-		cmd := exec.Command(node, filepath.Join("..", "..", "..", "idea-loop", "scripts", "spec.mjs"), "index", docsOf(w))
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("%v\n%s", err, out)
-		}
-		old := readFile(t, idx)
-		if existing == "" {
-			_ = os.Remove(idx)
-		} else {
-			write(t, w.home, docsRel+"/spec/index.md", existing)
-		}
-		w.run(w.home, "home", "index", "--project", "example-app", "--layer", "spec").ok(t)
-		if got := readFile(t, idx); got != old {
-			t.Errorf("existing %q:\nold script:\n%s\ndyna:\n%s", existing, old, got)
-		}
 	}
 }
 

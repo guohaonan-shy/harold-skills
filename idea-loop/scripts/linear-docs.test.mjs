@@ -10,7 +10,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { platformOf } from './issues.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
@@ -43,7 +42,7 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   assert.match(questions, /Linear/);
   assert.match(eng('setup', 'references', 'survey.md'), /issue 在哪个平台/);
   const tpl = eng('setup', 'references', 'issue-tracker-linear.md');
-  assert.equal(platformOf(tpl), 'linear', 'the template names Linear in its first heading');
+  assert.match(tpl.match(/^# (.+)$/m)[1], /linear/i, 'the template names Linear in its first heading (what `dyna issues` reads as the platform)');
   assert.match(tpl, /^triage：用 \/ 跳过$/m);
   assert.doesNotMatch(tpl, /^## 仓库$/m);
   assert.match(tpl, /^## 分类 label$/m);

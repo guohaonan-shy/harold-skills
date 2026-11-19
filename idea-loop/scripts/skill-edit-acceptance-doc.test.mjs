@@ -1,12 +1,12 @@
 /**
  * Tripwire — a ticket that changes skills, agent definitions or skill reference files carries three fixed acceptance
  * cells, its executor CALLS `writing-for-agents` and hands back one 杠杆 line per changed file, and the orchestrator
- * runs `ticket-ledger.mjs skill-edit` on the hand-back before it lands the ticket.
+ * runs `dyna spec skill-edit` on the hand-back before it lands the ticket.
  *
  * Spec skill-edit-acceptance, ticket 02 (issue #311). Before: to-ticket added no cell for such tickets; the
  * implementer's step 5 sent the executor to `writing-for-agents` through CODING_STANDARDS.md's links (two hops, and
  * a hand-back that only said 「读」 was accepted); the orchestrator's landed check never looked at that line.
- * These checks pin the sentences that carry the change; the script's own behaviour is tested in ticket-ledger.test.mjs.
+ * These checks pin the sentences that carry the change; the command's own behaviour is tested in dyna/internal/ledger.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -83,7 +83,7 @@ test('README rows for to-ticket and implement mention the cells and the skill-ed
   assert.match(ticketRow, /three fixed acceptance cells/, 'to-ticket 行要写改 skill 类文件的工单带三格');
   const implementRow = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:implement`'));
   assert.ok(implementRow, 'README 缺 implement 那一行');
-  assert.match(implementRow, /ticket-ledger\.mjs skill-edit/, 'implement 行要写 landed 核对跑 skill-edit');
+  assert.match(implementRow, /dyna spec skill-edit/, 'implement 行要写 landed 核对跑 skill-edit');
   assert.match(implementRow, /杠杆|lever/, 'implement 行要写交回里的杠杆行');
   const plugin = JSON.parse(read('.claude-plugin', 'plugin.json'));
   assert.match(plugin.version, /^\d+\.\d+\.\d+$/, 'plugin.json 的 version 要是 x.y.z 格式');

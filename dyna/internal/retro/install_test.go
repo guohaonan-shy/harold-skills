@@ -11,7 +11,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/retro"
 )
 
-// The assertions of the old retro-install.test.mjs: the fixed-path install of the replay runner, what it puts
+// The assertions of the old retro-install.test.mjs (the script is gone): the fixed-path install of the replay runner, what it puts
 // where, what it prints, and that the installed copy works from there. It is the file the permission rule points at.
 // Every test points HOME at a temporary directory; none touches the real ~/.idea-loop.
 
@@ -58,23 +58,21 @@ func TestInstalledRunnerHasNoPluginOfItsOwnToTestAndSaysWhichFlagToGive(t *testi
 	}
 }
 
-// The runner starts its Claude sessions and its Codex judge through `dyna agent`, so the copies of the stream
-// reader and of the Codex companion finder it used to import are no longer installed with it.
-func TestTheInstalledCopyCarriesWhatTheRunnerImportsAndNotTheOldStreamReaderOrCompanionFinder(t *testing.T) {
+// The runner starts its Claude sessions and its Codex judge through `dyna agent`, and asks `dyna` which runtime it is
+// in, so the plugin's scripts are not installed with it: only the runner's own files are.
+func TestTheInstalledCopyCarriesTheRunnersOwnFilesAndNoneOfThePluginsScripts(t *testing.T) {
 	dest := fresh(t)
 	entry, err := retro.Install(dest, pluginRoot())
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{"runtime-detect.mjs", "project-map.mjs"} {
-		if _, err := os.Stat(filepath.Join(dest, "runtime", "scripts", f)); err != nil {
+	for _, f := range []string{"retro-replay.mjs", "queue.mjs", "replay.mjs", "cases.mjs", "home-projects.mjs"} {
+		if _, err := os.Stat(filepath.Join(dest, "runtime", "evals", "retro", f)); err != nil {
 			t.Fatal(f, err)
 		}
 	}
-	for _, f := range []string{"claude-stream.mjs", "codex-companion.mjs"} {
-		if _, err := os.Stat(filepath.Join(dest, "runtime", "scripts", f)); err == nil {
-			t.Fatal(f, "is still installed")
-		}
+	if _, err := os.Stat(filepath.Join(dest, "runtime", "scripts")); err == nil {
+		t.Fatal("the plugin's scripts are installed with the runner")
 	}
 	r := runEntry(t, entry, "--bogus")
 	if r.code != 2 || !strings.Contains(r.stderr, "unknown argument") { // it starts (every import resolves) and rejects the argument itself

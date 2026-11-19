@@ -5,9 +5,6 @@
  * version the plugin asks for lists them). The agents and references quote the commands; a renamed option or
  * a made-up subcommand would send an agent into a usage error in the middle of a long shot. This greps the
  * skills and agents for lines that run the command and checks the subcommand and every `--option`.
- *
- * The dreaming reference (`initial-scan.md`) is moved to `dyna …` by its own ticket; until then it may still
- * quote the old script form, which `RUNS` accepts for the two "does this place name `screen` / `cover`" checks.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,8 +23,8 @@ const PREFIX = 'design archive sections ';
 const COMMAND_FLAGS = Object.fromEntries(
   registry.commands.filter((c) => c.command.startsWith(PREFIX)).map((c) => [c.command.slice(PREFIX.length), c.args.filter((a) => a.kind === 'flag').map((a) => `--${a.name}`)]),
 );
-/** A line that runs one subcommand: `dyna design archive sections <name>` (the old script form is still accepted where noted). */
-const runs = (name, { old = false } = {}) => new RegExp(`(?:dyna design archive sections${old ? '|design-archive-sections\\.mjs"?' : ''})\\s+${name}\\b`);
+/** A line that runs one subcommand: `dyna design archive sections <name>`. */
+const runs = (name) => new RegExp(`dyna design archive sections\\s+${name}\\b`);
 
 function files(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -64,7 +61,7 @@ test('the places that shoot the design archive send a single-screen state to the
   const bad = [];
   for (const rel of ['skills/design/design-archive/references/review-archive.md', 'skills/design/design-archive/references/review-reconcile.md', 'skills/productivity/dreaming/references/initial-scan.md', 'skills/design/design-archive/references/shooting.md']) {
     const text = readFileSync(join(pluginRoot, rel), 'utf8');
-    if (!runs('screen', { old: true }).test(text)) bad.push(`${rel}: 没有指向 screen 子命令的命令行`);
+    if (!runs('screen').test(text)) bad.push(`${rel}: 没有指向 screen 子命令的命令行`);
     if (/animation:\s*none/.test(text)) bad.push(`${rel}: 还在教注入「animation: none」的关动画样式`);
     if (/照\s*`idea-loop:ui-measure`\s*的「三条环境约定」/.test(text)) bad.push(`${rel}: 还在叫人照 ui-measure 的「三条环境约定」拍（那三条只留给 UI 实现环）`);
   }
@@ -79,7 +76,7 @@ test('the shooting reference offers a case for a state taller than the main view
   if (!choose.includes('比主视口高、不分段的状态')) bad.push('shooting.md:「情形怎么选」里没有「比主视口高、不分段的状态」');
   if (!/^## 比主视口高、不分段的状态$/m.test(shooting)) bad.push('shooting.md: 没有「## 比主视口高、不分段的状态」这一节');
   for (const rel of ['skills/design/design-archive/references/shooting.md', 'skills/design/design-archive/references/review-reconcile.md', 'skills/design/design-archive/references/review-archive.md', 'skills/productivity/dreaming/references/initial-scan.md']) {
-    if (!runs('cover', { old: true }).test(read(rel))) bad.push(`${rel}: 拍单屏 / 不分段状态的地方没有指向 cover 子命令的命令行`);
+    if (!runs('cover').test(read(rel))) bad.push(`${rel}: 拍单屏 / 不分段状态的地方没有指向 cover 子命令的命令行`);
   }
   const route = read('skills/design/design-archive/SKILL.md').split('\n').find((line) => line.includes('references/shooting.md')) ?? '';
   if (!route.includes('比主视口高')) bad.push('SKILL.md: 「按需读」表里拍档案截图那一行没有列这种情形');

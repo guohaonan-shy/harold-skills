@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -202,74 +201,3 @@ func TestTheJSONOutputKeepsItsKeysInOrder(t *testing.T) {
 }
 
 // ---- the old script, on the same rounds ----
-
-func TestDifferentialCriticSaysWhatTheOldScriptSaid(t *testing.T) {
-	if _, err := exec.LookPath("node"); err != nil {
-		t.Skip("node is not on PATH")
-	}
-	script, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "idea-loop", "scripts", "critic-score.mjs"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	g := gap("craft")
-	rounds := []string{
-		`{"findings":[],"score":10}`,
-		`{"findings":[` + g + `],"score":9,"history":[7,8]}`,
-		`{"findings":[` + gap("direction") + `],"score":3}`,
-		`{"findings":[` + g + `],"score":7,"history":[5,7,7,6]}`,
-		`{"findings":[` + g + `],"score":8,"history":[5,7,7,6]}`,
-		`{"findings":[` + g + `],"score":7.5}`,
-		`{"findings":[` + g + `],"score":"8"}`,
-		`{"findings":[` + g + `]}`,
-		`{"findings":[` + g + `],"score":null}`,
-		`{"findings":[` + g + `],"score":[1]}`,
-		`{"findings":[` + g + `],"score":{"a":1}}`,
-		`{"findings":[` + g + `],"score":7,"history":["P1"]}`,
-		`{"findings":[` + g + `],"score":7,"history":"x"}`,
-		`{"findings":[` + g + `],"score":7,"history":null}`,
-		`{"findings":[` + g + `],"score":7,"history":[1.5]}`,
-		`{"findings":"x","score":7}`,
-		`{"score":7}`,
-		`{"findings":[3,null,[],"s",{}],"score":7}`,
-		`{"findings":[{"kind":5,"where":1,"detail":null,"why":[]}],"score":7}`,
-		`{"findings":[{"kind":null,"where":"w","detail":"d","why":"y"}],"score":7}`,
-		`{"findings":[{"kind":["a","b"],"where":"w","detail":"d","why":"y"}],"score":7}`,
-		`{"findings":[{"why":"y","zzz":1,"aaa":2,"kind":"craft","where":"w","detail":"d","severity":"P1"}],"score":7}`,
-		`{"findings":[{"kind":"craft","where":"w","detail":"d","why":"y"},{"kind":"x"}],"score":0}`,
-		`[]`, `null`, `5`, `"s"`, `{}`,
-		`{"findings":[` + g + `],"score":1e1}`,
-		`{"findings":[` + g + `],"score":10.0}`,
-		`{"findings":[` + g + `],"score":11}`,
-		`{"findings":[` + g + `],"score":-1}`,
-	}
-	dir := t.TempDir()
-	for i, r := range rounds {
-		file := filepath.Join(dir, "round.json")
-		if err := os.WriteFile(file, []byte(r), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		for _, extra := range [][]string{nil, {"--json"}} {
-			oldOut, oldCode := runOld(t, script, append([]string{file}, extra...)...)
-			out, _, code := run(append([]string{file}, extra...)...)
-			if out != oldOut || code != oldCode {
-				t.Errorf("round %d %s %v\n--- old (exit %d)\n%s--- new (exit %d)\n%s", i, r, extra, oldCode, oldOut, code, out)
-			}
-		}
-	}
-}
-
-func runOld(t *testing.T, script string, args ...string) (string, int) {
-	t.Helper()
-	cmd := exec.Command("node", append([]string{script}, args...)...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	code := 0
-	if err := cmd.Run(); err != nil {
-		ee, ok := err.(*exec.ExitError)
-		if !ok {
-			t.Fatal(err)
-		}
-		code = ee.ExitCode()
-	}
-	return out.String(), code
-}

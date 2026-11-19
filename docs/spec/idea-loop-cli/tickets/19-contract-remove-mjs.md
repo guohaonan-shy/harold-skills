@@ -9,10 +9,10 @@
 
 ## 验收标准
 
-- [ ] 在插件的 skills、agents、hooks 里搜旧脚本全路径没有输出
-- [ ] 插件里没有旧脚本实现，没有 import 它们的测试；剩下的 `node --test` 全绿，`go test ./...` 全绿
-- [ ] README 里写的每条 `dyna …` 都过扫描测试
-- [ ] setup 的预检不再提 companion
+- [x] 在插件的 skills、agents、hooks 里搜旧脚本全路径没有输出
+- [x] 插件里没有旧脚本实现，没有 import 它们的测试；剩下的 `node --test` 全绿，`go test ./...` 全绿
+- [x] README 里写的每条 `dyna …` 都过扫描测试
+- [x] setup 的预检不再提 companion
 
 ## 选中的存量回归
 

@@ -17,11 +17,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { reviewLoopPath } from '../evals/retro/queue.mjs';
-import { dynaBinary } from './dyna-test-bin.mjs';
+import { dynaBinary, runDyna } from './dyna-test-bin.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RUNNER = join(HERE, '..', 'evals', 'retro', 'retro-replay.mjs');
-const REVIEW_LOOP = join(HERE, 'review-loop.mjs');
 
 const FAKE = `#!/usr/bin/env node
 const fs = require('node:fs');
@@ -126,7 +125,7 @@ function runner(env, args) {
   return { ...r, calls };
 }
 
-const loopCheck = (wt, pr) => JSON.parse(spawnSync(process.execPath, [REVIEW_LOOP, 'check', reviewLoopPath(wt, pr)], { encoding: 'utf8' }).stdout);
+const loopCheck = (wt, pr) => JSON.parse(runDyna(['pr', 'loop', 'check', reviewLoopPath(wt, pr)]).stdout);
 
 const runLargeArgs = (env, pr, extra = []) => [
   '--worktree', env.wt, '--base', 'base-point', '--out', env.out, '--timeout-min', '1', ...(pr === null ? [] : ['--pr', String(pr)]), ...extra,

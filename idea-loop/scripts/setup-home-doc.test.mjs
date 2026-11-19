@@ -16,10 +16,11 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findProject, parseProjects } from './project-map.mjs';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const setupDir = process.env.SETUP_DOCS_ROOT || join(pluginRoot, 'skills', 'engineering', 'setup');
@@ -79,12 +80,17 @@ test('step 2 writes the project line in the shape the SessionStart hook reads', 
   assert.match(s, /转小写/);
 });
 
-test('the example project line in step 2 is read by the SessionStart hook\'s parser and finds its repository', () => {
+test('the example project line in step 2 is read by `dyna home`, which finds the project and the repository it registers', () => {
   const line = section(home, '2\\. 登记当前项目').match(/`(example-app（[^`]*)`/)?.[1];
   assert.ok(line, 'step 2 has no example line');
-  const projects = parseProjects(`## 项目\n${line}\n`);
-  assert.equal(projects.length, 1);
-  assert.equal(findProject(projects, 'git@github.com:acme/example-app.git')?.name, 'example-app');
+  const dir = mkdtempSync(join(tmpdir(), 'setup-home-line-'));
+  mkdirSync(join(dir, 'projects', 'example-app', 'docs'), { recursive: true });
+  writeFileSync(join(dir, 'AGENTS.md'), `## 项目\n${line}\n`);
+  const r = runDyna(['home', 'where', '--project', 'example-app'], { cwd: dir, env: { IDEA_LOOP_HOME: dir, HOME: dir } });
+  assert.equal(r.status, 0, r.stderr);
+  const found = JSON.parse(r.stdout);
+  assert.equal(found.project, 'example-app');
+  assert.equal(found.repo, 'acme/example-app');
 });
 
 test('the device map template says to look the map up before answering, within 2000 characters', () => {

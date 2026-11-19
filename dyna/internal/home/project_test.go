@@ -3,7 +3,6 @@ package home_test
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -362,41 +361,5 @@ func TestAnUnknownHomeCommandIsRefusedAndListsTheCommands(t *testing.T) { // "an
 	r := w.run(w.home, "home", "frobnicate")
 	if r.code == 0 || !strings.Contains(r.err, "不认识的命令「frobnicate」") || !strings.Contains(r.err, "commit") {
 		t.Fatalf("%+v", r)
-	}
-}
-
-func TestMapAndWhereAreTheOldScriptsOutput(t *testing.T) { // the SessionStart text and `where`'s JSON are the old project-map.mjs's, byte for byte
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is needed to run the old script")
-	}
-	script, _ := filepath.Abs(filepath.Join("..", "..", "..", "idea-loop", "scripts", "project-map.mjs"))
-	old := func(w world, cwd string, args ...string) (string, int) {
-		cmd := exec.Command(node, append([]string{script}, args...)...)
-		cmd.Dir = cwd
-		cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + w.root, "IDEA_LOOP_HOME=" + w.home}
-		out, _ := cmd.Output()
-		return string(out), cmd.ProcessState.ExitCode()
-	}
-	worlds := map[string]world{
-		"moved":     moved(t, opts{}),
-		"no map":    moved(t, opts{noMap: true}),
-		"long map":  moved(t, opts{mapMD: strings.Repeat("字", 2500)}),
-		"not moved": newWorld(t, opts{}),
-		"unlisted":  newWorld(t, opts{origin: "git@github.com:acme/unregistered.git"}),
-	}
-	// not moved / unlisted: a bootstrap file in the code repository says it has not moved yet
-	write(t, worlds["not moved"].code, "DEVELOPMENT.md", "x\n")
-	write(t, worlds["unlisted"].code, "DEVELOPMENT.md", "x\n")
-	for name, w := range worlds {
-		wantOut, _ := old(w, w.code)
-		if got := w.run(w.code, "home", "map").ok(t).out; got != wantOut {
-			t.Errorf("%s map:\nold: %q\ndyna: %q", name, wantOut, got)
-		}
-		wantOut, wantCode := old(w, w.code, "where")
-		r := w.run(w.code, "home", "where")
-		if r.out != wantOut || (r.code == 0) != (wantCode == 0) {
-			t.Errorf("%s where:\nold (%d): %q\ndyna (%d): %q", name, wantCode, wantOut, r.code, r.out)
-		}
 	}
 }

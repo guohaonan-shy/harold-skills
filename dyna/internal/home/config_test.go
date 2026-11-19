@@ -3,7 +3,6 @@ package home_test
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -432,28 +431,5 @@ func TestMergeAgentsPutsTheTextBeforeTheFirstIdeaLoopSectionOnce(t *testing.T) {
 	}
 	if home.MergeAgents(homeAgent, "") != homeAgent {
 		t.Fatal("empty text")
-	}
-}
-
-func TestConfigPlanAndJSONAreTheOldScriptsOutput(t *testing.T) { // the old script and dyna print the same plan for the same machine
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is needed to run the old script")
-	}
-	r := newRig(t, rigOpts{})
-	// the old script finds its plugin name from where it lives: run a copy of it inside a fake plugin directory
-	scripts := filepath.Join(r.plugin, "scripts")
-	oldScript := filepath.Join("..", "..", "..", "idea-loop", "scripts", "home-config.mjs")
-	write(t, scripts, "home-config.mjs", readFile(t, oldScript))
-	for _, args := range [][]string{{"plan"}, {"plan", "--json"}, {"plan", "--only", "3,1"}} {
-		cmd := exec.Command(node, append([]string{filepath.Join(scripts, "home-config.mjs")}, args...)...)
-		cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + r.HOME, "IDEA_LOOP_HOME=" + r.home}
-		old, err := cmd.Output()
-		if err != nil {
-			t.Fatalf("%v: %v", args, err)
-		}
-		if got := r.cfg(args...).ok(t).out; got != string(old) {
-			t.Errorf("%v:\nold:\n%s\ndyna:\n%s", args, old, got)
-		}
 	}
 }

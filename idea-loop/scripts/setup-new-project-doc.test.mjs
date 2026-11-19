@@ -1,12 +1,12 @@
 /**
  * Tripwire — setup builds a new project's files in the project directory of home (docs/spec/skills-read-home, ticket 08).
  *
- * - The preflight asks `project-map.mjs where` whether the project is connected and says what each outcome means;
+ * - The preflight asks `dyna home where` whether the project is connected and says what each outcome means;
  *   a 0.1.x project stops at 「迁移」 and nothing is written into the code repository.
  * - A new project's bootstrap files and docs/ are written into <项目目录> and committed to home with `commit`; the
  *   `## idea-loop` block of the code repository's AGENTS.md is no longer written, and its template is gone.
  * - ISSUE_TRACKER.md templates have no 「仓库」 section; 「分类 label」 holds the categories, and the script that reads
- *   them (`issues.mjs labels`) reads a file made from the template.
+ *   them (`dyna issues labels`) reads a file made from the template.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,8 +14,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFi
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { run } from './issues.mjs';
-import { NOT_CONNECTED, NOT_MOVED, IN_HOME } from './project-map.mjs';
+import { chmodSync } from 'node:fs';
+import { runDyna } from './dyna-test-bin.mjs';
+
+// The three sentences `dyna home where` answers with when it finds no project directory (dyna/internal/home).
+const NOT_MOVED = '这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移';
+const NOT_CONNECTED = '这个仓库没接上 idea-loop，先跑 `/idea-loop:setup`';
+const IN_HOME = '当前目录是 home 本身，要带 --project <名字>';
 
 const setupDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'engineering', 'setup');
 const read = (...p) => readFileSync(join(setupDir, ...p), 'utf8');
@@ -101,7 +106,7 @@ test('neither tracker template has a 仓库 section; 分类 label holds the cate
   assert.match(read('references', 'issue-tracker-linear.md'), /Linear: <号>/);
 });
 
-test('`issues.mjs labels` reads the categories of a file made from the GitHub template', () => {
+test('`dyna issues labels` reads the categories of a file made from the GitHub template', () => {
   let n = 0;
   const names = ['engineering', 'spec', 'design'];
   // fill the placeholders the way a human's answers would: parents engineering (child spec) and design, keeping `docs`
@@ -119,19 +124,24 @@ test('`issues.mjs labels` reads the categories of a file made from the GitHub te
   writeFileSync(join(home, 'AGENTS.md'), '# 设备\n\n## 项目\n\nexample-app（一个例子）: ~/code/example-app. Clone from https://github.com/acme/example-app if missing.\n');
   writeFileSync(join(projectDir, 'ISSUE_TRACKER.md'), filled);
 
-  const calls = [];
-  const gh = (given) => {
-    const args = given.filter((a, k) => a !== '-R' && given[k - 1] !== '-R'); // the script names the project's repository with -R
-    calls.push(args);
-    if (args.includes('list') && args.includes('label')) return JSON.stringify([{ name: 'docs' }, { name: 'stale' }]);
-    if (args.includes('api')) return '[]';
-    return '';
-  };
-  const out = [];
-  run(['labels', docs], { gh, git: () => '', log: (l) => out.push(l), env: { IDEA_LOOP_HOME: home, HOME: root } });
+  // a gh that records what it is asked and answers the two reads `labels` makes
+  const bin = join(root, 'bin');
+  mkdirSync(bin);
+  const log = join(root, 'gh.log');
+  writeFileSync(join(bin, 'gh'), `#!/usr/bin/env node
+const fs = require('node:fs');
+const args = process.argv.slice(2).filter((a, k, all) => a !== '-R' && all[k - 1] !== '-R'); // dyna names the project's repository with -R
+fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
+if (args.includes('list') && args.includes('label')) process.stdout.write(JSON.stringify([{ name: 'docs' }, { name: 'stale' }]));
+else if (args.includes('api')) process.stdout.write('[]');
+`);
+  chmodSync(join(bin, 'gh'), 0o755);
+  const r = runDyna(['issues', 'labels', docs], { cwd: root, env: { PATH: `${bin}:${process.env.PATH}`, IDEA_LOOP_HOME: home, HOME: root } });
+  assert.equal(r.status, 0, r.stderr);
+  const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
   const created = calls.filter((a) => a.includes('create')).map((a) => a[a.indexOf('create') + 1]);
   for (const l of ['type:engineering', 'type:engineering/spec', 'type:design']) assert.ok(created.includes(l), `${l} created: ${created}`);
-  const text = out.join('\n');
+  const text = r.stdout;
   assert.match(text, /stale/, 'a label outside the categories and the keep-list is reported as surplus');
   assert.doesNotMatch(text, /\bdocs（/, 'a label in 保留的 label is kept');
 });

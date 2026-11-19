@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dynaCommands } from './dyna-test-bin.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = (name) => readFileSync(join(root, 'skills/engineering', name, 'SKILL.md'), 'utf8');
@@ -17,12 +18,13 @@ test('三份 SKILL.md 主体都在 5000 字以内', () => {
   for (const n of NAMES) assert.ok([...body(skill(n))].length < 5000, `${n} 主体 ${[...body(skill(n))].length} 字`);
 });
 
-test('文中写到的 issues 命令都是脚本认得的，已删的命令一条也不写', () => {
-  const src = readFileSync(join(root, 'scripts/issues.mjs'), 'utf8');
-  const known = new Set(src.match(/const COMMANDS = \[([^\]]*)\]/)[1].match(/'([a-z]+)'/g).map((s) => s.slice(1, -1)));
-  for (const gone of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split', 'block']) assert.ok(!known.has(gone), `脚本不该再认得 ${gone}`);
+test('文中写到的 issues 命令都是命令行认得的，已删的命令一条也不写', () => {
+  const commands = dynaCommands();
+  const known = new Set([...commands].filter((c) => c.startsWith('issues ')).map((c) => c.split(' ')[1]));
+  for (const gone of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split']) assert.ok(!known.has(gone), `命令行不该再认得 issues ${gone}`);
+  assert.ok(known.has('set') && known.has('show'), '命令行至少认得 issues set 和 issues show');
   for (const n of NAMES) {
-    for (const m of skill(n).matchAll(/`issues ([a-z]+)\b/g)) assert.ok(known.has(m[1]), `${n} 写了不存在的命令 issues ${m[1]}`);
+    for (const m of skill(n).matchAll(/`dyna issues ([a-z]+)\b/g)) assert.ok(known.has(m[1]), `${n} 写了不存在的命令 dyna issues ${m[1]}`);
   }
 });
 

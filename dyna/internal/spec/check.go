@@ -110,7 +110,9 @@ const defaultIndex = "# spec\n> 契约：还没了结的规格，一份一个目
 
 // RenderIndex replaces the index table, keeping everything above and below it. There is no status column: a spec
 // has no status, and its issues' labels change on every stage, so a column here would make branches running side
-// by side conflict on this file. An old table with a status column is rewritten.
+// by side conflict on this file. An old table with a status column is rewritten, and so are rows of the old table
+// that a stray line cut off from it. A `|` or a line break in a summary cannot break the table. This is the one
+// place the spec layer's index is written: `spec index` and `home index` both come here.
 func RenderIndex(existing string, specs []Listed) string {
 	if existing == "" {
 		existing = defaultIndex
@@ -137,12 +139,16 @@ func RenderIndex(existing string, specs []Listed) string {
 	for _, s := range sorted {
 		cell := ""
 		if s.Summary != nil {
-			cell = *s.Summary
+			cell = strings.ReplaceAll(strings.ReplaceAll(*s.Summary, "\n", " "), "|", `\|`)
 		}
 		out = append(out, "| [["+s.Slug+"]] | "+cell+" |")
 	}
 	if end <= len(lines) {
-		out = append(out, lines[end:]...)
+		for _, l := range lines[end:] {
+			if !strings.HasPrefix(l, "| [") { // a row of the table that something cut off
+				out = append(out, l)
+			}
+		}
 	}
 	return strings.Join(out, "\n")
 }
@@ -160,8 +166,33 @@ func isIndexHeader(l string) bool {
 	return strings.HasPrefix(rest, "|")
 }
 
+// IndexText is docs/spec/index.md as it should read: the table rewritten from the specs on disk, the text around it as
+// it is in existing, and how many specs the table has. A spec's cell is its summary without quotes, or its title when
+// it has no summary.
+func IndexText(docs, existing string) (string, int) {
+	specs := Check(docs).Specs
+	for i := range specs {
+		fm := Frontmatter(readOrEmpty(specs[i].File))
+		cell := unquote(fm["summary"])
+		if cell == "" {
+			cell = unquote(fm["title"])
+		}
+		specs[i].Summary = &cell
+	}
+	return RenderIndex(existing, specs), len(specs)
+}
+
+func unquote(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) >= 2 && (s[0] == '"' && s[len(s)-1] == '"' || s[0] == '\'' && s[len(s)-1] == '\'') {
+		return s[1 : len(s)-1]
+	}
+	return s
+}
+
 // Reindex rewrites docs/spec/index.md from the specs on disk.
 func Reindex(docs string) error {
 	file := filepath.Join(docs, "spec", "index.md")
-	return os.WriteFile(file, []byte(RenderIndex(readOrEmpty(file), Check(docs).Specs)), 0o644)
+	text, _ := IndexText(docs, readOrEmpty(file))
+	return os.WriteFile(file, []byte(text), 0o644)
 }

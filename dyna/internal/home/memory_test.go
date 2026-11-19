@@ -3,7 +3,6 @@ package home_test
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -192,32 +191,5 @@ func TestMemoryDirectoryWithoutMemoryMdExitsTwoAndAMissingDirectoryExitsOne(t *t
 	}
 	if r := m.check(filepath.Join(m.memory, "nope")); r.code != 1 {
 		t.Fatalf("%+v", r)
-	}
-}
-
-func TestMemoryOutputIsTheOldScriptsOutput(t *testing.T) { // same directory, same words, same exit code
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is needed to run the old script")
-	}
-	m := newMemHome(t)
-	put(t, m.memory, map[string]string{
-		"MEMORY.md": "# Memory\n- [gone](gone.md) — x\n\n## 项目\n- [acme](../projects/acme/MEMORY.md) — y\n- acme 没有链接\n",
-		"orphan.md": "o\n",
-	})
-	good := newMemHome(t)
-	put(t, good.memory, map[string]string{"MEMORY.md": "# Memory\n- [a](a.md) — x\n", "a.md": "a\n"})
-	for _, dir := range []string{m.memory, good.memory} {
-		cmd := exec.Command(node, filepath.Join("..", "..", "..", "idea-loop", "scripts", "memory-check.mjs"), dir)
-		old, _ := cmd.Output()
-		oldCode := cmd.ProcessState.ExitCode()
-		h := m
-		if dir == good.memory {
-			h = good
-		}
-		r := h.check(dir)
-		if r.out != string(old) || r.code != oldCode {
-			t.Errorf("%s:\nold (%d):\n%s\ndyna (%d):\n%s", dir, oldCode, old, r.code, r.out)
-		}
 	}
 }

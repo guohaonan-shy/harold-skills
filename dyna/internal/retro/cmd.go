@@ -193,7 +193,7 @@ func (d Deps) installCommand() *cobra.Command {
 			return err
 		}
 		fmt.Fprintf(d.out(), "runner 已装到 %s\n", entry)
-		fmt.Fprintf(d.out(), "允许规则（请你自己加进运行环境的 permissions.allow，位置见「dyna runtime show 装与设置」，这个脚本不改权限设置）：\n  %s\n", AllowRule(dest, home))
+		fmt.Fprintf(d.out(), "允许规则（请你自己加进运行环境的 permissions.allow，位置见「dyna runtime show 装与设置」，这条命令不改权限设置）：\n  %s\n", AllowRule(dest, home))
 		return nil
 	})
 	// a bad argument is a usage error with exit 2, as the old script ended

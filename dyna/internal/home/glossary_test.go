@@ -2,8 +2,6 @@ package home_test
 
 import (
 	"encoding/json"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -230,49 +228,4 @@ func TestGlossaryHookRepliesOnlyForABrokenGlossaryMd(t *testing.T) {
 	if r.code != 2 || r.out != "" || !strings.Contains(r.err, "改到通过再继续") || !strings.Contains(r.err, "出现反引号") {
 		t.Fatalf("%+v", r)
 	}
-}
-
-func TestGlossaryHookAnswersTheSameAsTheOldHook(t *testing.T) { // acceptance: the reply to one hook event is the old hook's
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is needed to run the old script")
-	}
-	w := newWorld(t, opts{})
-	good := w.glossaryFile(t, "good/GLOSSARY.md", glossaryGood)
-	bad := w.glossaryFile(t, "bad/GLOSSARY.md", bend("学生可以做的一条练习，属于四种题型之一。", "存在 `recordings` 表。\n见 https://example.com。"))
-	other := w.glossaryFile(t, "bad/NOTES.md", "`x`\n")
-	for _, event := range []string{hookEvent(good), hookEvent(bad), hookEvent(other), hookEvent(filepath.Join(w.root, "gone", "GLOSSARY.md")), "not json", `{"tool_name":"Write"}`} {
-		cmd := exec.Command(node, filepath.Join("..", "..", "..", "idea-loop", "scripts", "glossary-check-hook.mjs"))
-		cmd.Stdin = strings.NewReader(event)
-		var stderr strings.Builder
-		cmd.Stderr = &stderr
-		oldOut, _ := cmd.Output()
-		oldCode := cmd.ProcessState.ExitCode()
-		r := w.runWith(w.root, event, nil, "home", "glossary", "check", "--hook")
-		if r.code != oldCode || r.err != stderr.String() || r.out != string(oldOut) {
-			t.Errorf("%s:\nold (%d): %q\ndyna (%d): %q", event, oldCode, stderr.String(), r.code, r.err)
-		}
-	}
-}
-
-func TestGlossaryCheckIsTheOldScriptsOutputOnTheSameFile(t *testing.T) {
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is needed to run the old script")
-	}
-	w := newWorld(t, opts{})
-	mess := "前面有内容\n# T\n\n一。二。三。\n\n## 术语\n\n**A**：\n定义 `x` 路径 a/b.md 2=b。\n_Avoid_:\n多余\n\n#### 深\n\n## 歧义词\n\n- **w**：\n乱写\n"
-	for name, text := range map[string]string{"good": glossaryGood, "mess": mess, "empty": ""} {
-		file := w.glossaryFile(t, name+"/GLOSSARY.md", text)
-		for _, extra := range [][]string{nil, {"--json"}} {
-			cmd := exec.Command(node, append([]string{filepath.Join("..", "..", "..", "idea-loop", "scripts", "glossary-check.mjs"), file}, extra...)...)
-			old, _ := cmd.Output()
-			oldCode := cmd.ProcessState.ExitCode()
-			r := w.run(w.root, append([]string{"home", "glossary", "check", file}, extra...)...)
-			if r.out != string(old) || r.code != oldCode {
-				t.Errorf("%s %v:\nold (%d):\n%s\ndyna (%d):\n%s", name, extra, oldCode, old, r.code, r.out)
-			}
-		}
-	}
-	_ = os.Stdout
 }

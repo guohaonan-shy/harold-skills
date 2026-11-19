@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -62,6 +63,7 @@ func Render(template string, keys []string, values map[string]string, builtin []
 			unknown = append(unknown, k)
 		}
 	}
+	sort.Strings(unknown) // keys come from a map: the refusal must read the same every time
 	if len(missing) > 0 || len(unknown) > 0 {
 		var why []string
 		if len(missing) > 0 {

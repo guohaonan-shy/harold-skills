@@ -13,14 +13,20 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { dynaBinary } from './dyna-test-bin.mjs';
+import { dynaBinary, runDyna } from './dyna-test-bin.mjs';
 import { changeSetOf, homeProblem, prepareHome, projectName } from '../evals/retro/retro-replay.mjs';
-import { locate, normalizeRemote, parseProjects } from './project-map.mjs';
+import { normalizeRemote, parseProjects } from '../evals/retro/home-projects.mjs';
 import {
   homeAgentsMd, homeCopyEntries, homeProjectName, homeRemote, homeSourceOf, projectListLine, registerProject, withHome,
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
   estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
+
+/** Where `dyna home where` puts the project that `cwd` is in, given this home: `{ ok: true, projectDir, docs, … }`, or `{ ok: false }` when it finds none. */
+function locate({ cwd, env }) {
+  const r = runDyna(['home', 'where'], { cwd, env });
+  return r.status === 0 ? { ok: true, ...JSON.parse(r.stdout) } : { ok: false, stderr: r.stderr };
+}
 
 const smallCase = () => ({
   commit: 'a1b2c3d',
@@ -191,7 +197,6 @@ test('settleVerdicts applies the human override for that run only, then decides'
 // ---------------------------------------------------------------------------------------------
 
 const RUNNER = join(dirname(fileURLToPath(import.meta.url)), '..', 'evals', 'retro', 'retro-replay.mjs');
-const PROJECT_MAP = join(dirname(fileURLToPath(import.meta.url)), 'project-map.mjs');
 
 const FAKE = `#!/usr/bin/env node
 const fs = require('node:fs');
@@ -206,8 +211,8 @@ const hd = process.env.IDEA_LOOP_HOME;
 const home = hd ? { dir: hd, exists: fs.existsSync(hd), files: walk(hd).sort(), agents: fs.existsSync(path.join(hd, 'AGENTS.md')) ? fs.readFileSync(path.join(hd, 'AGENTS.md'), 'utf8') : null } : null;
 const sp = (cmd, a) => require('node:child_process').spawnSync(cmd, a, { cwd: process.cwd(), encoding: 'utf8' });
 const where = () => {
-  if (!process.env.PROJECT_MAP || !hd) return {};
-  const w = sp(process.execPath, [process.env.PROJECT_MAP, 'where']);
+  if (!process.env.IDEA_LOOP_DYNA_BIN || !hd) return {};
+  const w = sp(process.env.IDEA_LOOP_DYNA_BIN, ['home', 'where']);
   const o = (a) => { const r = sp('git', a); return r.status === 0 ? r.stdout.trim() : null; };
   return { where: { status: w.status, stdout: w.stdout, stderr: w.stderr }, origin: { fetch: o(['remote', 'get-url', 'origin']), push: o(['remote', 'get-url', '--push', 'origin']) } };
 };
@@ -336,7 +341,7 @@ function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
   ], {
     encoding: 'utf8',
     env: {
-      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp, PROJECT_MAP,
+      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
       IDEA_LOOP_DYNA_BIN: dynaBinary(),
       RETRO_CODEX_BIN: codex === 'missing' ? join(env.root, 'no-codex-here') : env.codex,
       ...(codex === 'unset' ? { RETRO_CODEX_BIN: undefined, PATH: `${realCodexLookalike(env)}:${process.env.PATH}` } : {}),
@@ -951,7 +956,7 @@ test('home copy: docs/ and the bootstrap files that exist go in; code and the re
   assert.deepEqual(homeCopyEntries(['src', 'README.md']), []);
 });
 
-test('the project list line is read back by project-map.mjs as this project, with the path and remote it was given', () => {
+test('the project list line is read back as this project, with the path and remote it was given', () => {
   const entry = { name: 'demo-app', path: '/tmp/abc/demo-app', remote: 'git@github.com:acme/Demo-App.git' };
   assert.equal(projectListLine(entry), 'demo-app（项目）: /tmp/abc/demo-app. Clone from git@github.com:acme/Demo-App.git if missing.');
   assert.deepEqual(parseProjects(homeAgentsMd(entry)), [{ name: 'demo-app', path: '/tmp/abc/demo-app', remote: 'git@github.com:acme/Demo-App.git' }]);

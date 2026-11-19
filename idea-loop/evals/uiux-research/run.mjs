@@ -134,7 +134,7 @@ function runCase(c, opts) {
   if (pages.length) {
     page = pages[0];
     cpSync(dirname(page), outputDir, { recursive: true });
-    const k = spawnSync('node', [join(PLUGIN_ROOT, 'scripts', 'research-check.mjs'), join(outputDir, 'index.html')], { encoding: 'utf8' });
+    const k = spawnSync(dynaBin(), ['research', 'submit', join(outputDir, 'index.html')], { encoding: 'utf8' });
     check = { ok: k.status === 0, output: `${k.stdout}${k.stderr}`.trim().slice(0, 2000) };
   }
   const facts = {

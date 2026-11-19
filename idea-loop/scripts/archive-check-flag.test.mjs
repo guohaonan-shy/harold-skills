@@ -6,8 +6,7 @@
  * component is always inconsistent on rule 6 (the component's `usedBy` does not list the new page yet),
  * and `usedBy` is only ever written by the archive script. A check command without the flag therefore
  * fails a correct delta and sends the agent to hand-edit `usedBy`. This greps the skills, agents and
- * references for the command so a copy without the flag cannot slip back in. Both spellings are read: the old script
- * (still in the docs of tickets not yet moved to `dyna`) and `dyna design archive check`.
+ * references for the command (`dyna design archive check`) so a copy without the flag cannot slip back in.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,7 +31,7 @@ test('every doc line that runs the archive check (`dyna design archive check`) o
   for (const dir of SCANNED) {
     for (const file of files(join(pluginRoot, dir))) {
       readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-        if (!/design-archive-check\.mjs|dyna design archive check/.test(line) || !/--delta/.test(line)) return;
+        if (!/dyna design archive check/.test(line) || !/--delta/.test(line)) return;
         seen += 1;
         if (!/--no-used-by/.test(line)) hits.push(`${relative(pluginRoot, file)}:${i + 1}  ${line.trim().slice(0, 100)}`);
       });

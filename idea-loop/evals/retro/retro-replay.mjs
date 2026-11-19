@@ -63,7 +63,7 @@
  * Where the plugin under test and the cases are: `--worktree <dir>` says "this worktree" and stands for
  * `--repo <dir> --after-plugin <dir>/idea-loop --cases-root <dir>/idea-loop/evals/retro`; each can still be given
  * on its own. Run from the plugin's own copy, with none of them given, it tests that copy. Run from the installed
- * copy (`~/.idea-loop/bin/`, see scripts/retro-install.mjs) it has no copy of its own to test and asks for one.
+ * copy (`~/.idea-loop/bin/`, see `dyna retro install`) it has no copy of its own to test and asks for one.
  *
  * Only small cases run by `--case`. A case marked large is not run: the runner says how the orchestrator runs it once the PR
  * is open (`--run-large --pr <N>`) and exits 3.
@@ -101,7 +101,6 @@ import { homedir, tmpdir } from 'node:os';
 import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
-import { detect as detectRuntime } from '../../scripts/runtime-detect.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
@@ -109,15 +108,6 @@ import {
   homeProjectName, homeRemote, homeSourceOf, parseOverrides, parseVerdict, productsInOrder, projectMapMd, registerProject, relabelLarge, replayChildEnv,
   settleVerdicts, verdictsBySide, withHome,
 } from './replay.mjs';
-
-/** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way. null for an unknown forced name. */
-function sessionRuntime() {
-  try {
-    return detectRuntime(process.env);
-  } catch {
-    return null;
-  }
-}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
@@ -153,6 +143,12 @@ function runDyna(args, { cwd, env }) {
     child.on('close', (status) => resolvePromise({ status, stdout, stderr }));
   });
 }
+/** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way (`dyna runtime name`). null for an unknown forced name. */
+async function sessionRuntime() {
+  const r = await runDyna(['runtime', 'name'], { env: process.env });
+  return r.status === 0 && r.stdout.trim() ? r.stdout.trim() : null;
+}
+
 /** A session's timeout in minutes: 20 for a small case, 45 for `--run-large` (large cases take longer). */
 const DEFAULT_TIMEOUT_MIN = 20;
 const RUN_LARGE_TIMEOUT_MIN = 45;
@@ -245,7 +241,7 @@ function originOf(repo) {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 
-/** Give the project copy an `origin` (what `project-map.mjs` matches against home's project list) that cannot be pushed to. */
+/** Give the project copy an `origin` (what `dyna home` matches against home's project list) that cannot be pushed to. */
 function connectOrigin(project, remote) {
   git(project, 'remote', 'add', 'origin', remote);
   git(project, 'remote', 'set-url', '--push', 'origin', NO_PUSH_URL);
@@ -579,7 +575,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       if (s.side === 'after') {
         // before the judge: did this run use what the change touched? (the paths in its stream are the staged copy's)
         const roots = [...new Set([staged.dir, realpathSync(staged.dir)])];
-        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: sessionRuntime() });
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: await sessionRuntime() });
         console.log(`改动核对：${describeExercised(exercised)}`);
       }
     } finally {

@@ -4,7 +4,7 @@
  */
 
 import { normalize } from 'node:path';
-import { BOOTSTRAP_FILES, normalizeRemote, parseProjects } from '../../scripts/project-map.mjs';
+import { BOOTSTRAP_FILES, normalizeRemote, parseProjects } from './home-projects.mjs';
 
 const ANSWERS ={ 是: 'yes', yes: 'yes', y: 'yes', 否: 'no', no: 'no', n: 'no' };
 const normalizeAnswer = (a) => ANSWERS[String(a ?? '').trim().toLowerCase()];
@@ -38,13 +38,13 @@ export function replayChildEnv(env, ghConfigDir) {
 }
 
 /**
- * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs runtime-detect.mjs --inject):
+ * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs `dyna runtime inject <section>`):
  * the body of `idea-loop:decision-rules`, the capability list (`runtime/capabilities.md`), and the data of the current runtime only (`runtime/<name>.md`). The
  * runner starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
- * `runtime` is the runtime the replayed session ran in (what `runtime-detect.mjs` gives for the runner's environment, which the
+ * `runtime` is the runtime the replayed session ran in (what `dyna runtime name` gives for the runner's environment, which the
  * session inherits), or null when that environment names no known runtime: then the hook prints `decision-rules` only.
  * The other runtime's data is not injected, so a change to it still has to be read or called to count.
- * Not checked: that the hook really ran (a hook that errors would still count as used); the hook itself has unit tests.
+ * Not checked: that the hook really ran (a hook that errors would still count as used); `dyna runtime inject` has its own tests.
  */
 export function injectedFiles(runtime) {
   const files = ['skills/productivity/decision-rules/SKILL.md'];
@@ -272,7 +272,7 @@ export function homeRemote(origin, name) {
   return normalizeRemote(origin) ? String(origin).trim() : `https://example.invalid/${name}/${name}.git`;
 }
 
-/** One line of the `## 项目` list, in the format home's AGENTS.md and project-map.mjs use. */
+/** One line of the `## 项目` list, in the format home's AGENTS.md and `dyna home` use. */
 export const projectListLine = ({ name, path, remote }) => `${name}（项目）: ${path}. Clone from ${remote} if missing.`;
 
 /** A home's AGENTS.md with just this project in its list. */

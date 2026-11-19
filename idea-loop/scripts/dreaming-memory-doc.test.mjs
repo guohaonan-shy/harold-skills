@@ -3,21 +3,22 @@
  *
  * The behaviour lives in skill text, so these checks pin what a reader has to be able to follow:
  * - dreaming's SKILL.md points at the memory reference, names 「只跑记忆」, and stays under 5000 characters;
- * - the memory reference carries the closed set of dispositions (the same one `proposal-table-check` accepts),
+ * - the memory reference carries the closed set of dispositions (the same one `dyna dreaming table submit` accepts),
  *   adds only the paths it changed, commits once in home, and says how to roll back with `git revert`;
  * - setup's 「每周对账」 (the SKILL.md section and its reference) creates `dreaming-home`, never a per-repository
  *   `dreaming-<仓库名>`; the incremental-scope reference looks the task's run history up under the same id;
  * - setup's home reference writes `.tmp/` into the `.gitignore` it creates;
- * - the README names the device-level task, the memory pass and `memory-check`.
+ * - the README names the device-level task, the memory pass and `dyna home memory check`.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ROW_TYPES } from './proposal-table-check.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+// The dispositions a 记忆 row may carry, as `dyna dreaming table submit` accepts them (`RowTypes` in dyna/internal/dreaming/table.go).
+const MEMORY_DISPOSITIONS = ['挪进项目', '合并', '订正', '毕业', '删除', '缩短索引行', '问人'];
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const body = (md) => md.split(/^---\s*$/m).slice(2).join('---');
 const section = (md, title) => {
@@ -65,10 +66,10 @@ test('judging reads a body only to merge, to correct, or to place an entry that 
   assert.match(judge, /没有项目出处的条目不为判归属读正文，留在根里/);
 });
 
-test('the memory reference lists exactly the dispositions the proposal-table script accepts, each with what to do', () => {
+test('the memory reference lists exactly the dispositions `dyna dreaming table submit` accepts, each with what to do', () => {
   const table = memory.split('## 建议处置，和执行时做什么')[1].split('\n## ')[0];
   const listed = [...table.matchAll(/^\| (\S+) \|/gm)].map((m) => m[1]).filter((d) => d !== '建议处置');
-  assert.deepEqual(listed, ROW_TYPES.记忆);
+  assert.deepEqual(listed, MEMORY_DISPOSITIONS);
   assert.match(memory, /保留内容更全的那份的路径/);
   assert.match(memory, /相对时间改成绝对日期/);
   assert.match(memory, /≤150 字/);
@@ -139,11 +140,10 @@ test('setup\'s home reference writes both .backup/ and .tmp/ into the .gitignore
   assert.ok(gitignore.includes('.tmp/'), gitignore);
 });
 
-test('the README names the device-level task, the memory pass and memory-check', () => {
+test('the README names the device-level task, the memory pass and `dyna home memory check`', () => {
   assert.match(readme, /`dreaming-home`/);
   assert.doesNotMatch(readme, /`dreaming-<repo name>`/);
-  assert.match(readme, /memory-check\.mjs/);
-  assert.match(readme, /memory-check\.test\.mjs/);
+  assert.match(readme, /`dyna home memory check`/);
   assert.match(readme, /memory-tidy/);
   assert.match(readme, /only memory|memory only/i);
 });

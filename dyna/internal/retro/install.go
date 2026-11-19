@@ -11,17 +11,17 @@ import (
 // EntryName is the file the permission rule points at.
 const EntryName = "retro-replay.mjs"
 
-// runtimeFiles are what the replay runner imports, copied in the plugin's own layout so no import needs rewriting.
+// runtimeFiles are what the replay runner imports, copied in the plugin's own layout so no import needs rewriting. The
+// runner imports nothing from the plugin's scripts/: what it needs of the command line it asks `dyna` for.
 var runtimeFiles = []struct {
 	dir   string
 	files []string
 }{
-	{"evals/retro", []string{"retro-replay.mjs", "queue.mjs", "replay.mjs", "cases.mjs"}},
-	{"scripts", []string{"project-map.mjs", "runtime-detect.mjs"}},
+	{"evals/retro", []string{"retro-replay.mjs", "queue.mjs", "replay.mjs", "cases.mjs", "home-projects.mjs"}},
 }
 
 const entryText = `#!/usr/bin/env node
-// Installed by idea-loop (scripts/retro-install.mjs, run by /idea-loop:setup). Do not edit: running setup replaces it.
+// Installed by idea-loop (dyna retro install, run by /idea-loop:setup). Do not edit: running setup replaces it.
 import { main } from './runtime/evals/retro/retro-replay.mjs';
 
 process.exitCode = await main(process.argv.slice(2));

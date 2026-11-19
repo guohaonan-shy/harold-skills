@@ -2,12 +2,31 @@
  * How a replay's result is written into the PR's review loop file (idea-loop/evals/retro/queue.mjs): what one entry says,
  * how its round is counted, and that it is settled only when nothing is waiting for the human.
  *
- * The runner's whole flow against a fake `claude` is in retro-run-large.test.mjs; this file is pure functions.
+ * The runner's whole flow against a fake `claude` is in retro-run-large.test.mjs; this file is pure functions, and
+ * reads the entries it wrote back the way the review flow does, through `dyna pr loop`.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { appendReplayResults, buildReplayEntry, describeExercised, reviewLoopPath, summarizeResults } from '../evals/retro/queue.mjs';
-import { nextRound, parseLoop, unsettled } from './review-loop.mjs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { runDyna } from './dyna-test-bin.mjs';
+
+/** The review loop file `text` as `dyna pr loop` reads it. */
+const loopFile = (text) => {
+  const file = join(mkdtempSync(join(tmpdir(), 'retro-queue-')), '12.md');
+  writeFileSync(file, text);
+  return file;
+};
+const loopCheck = (text) => {
+  const r = runDyna(['pr', 'loop', 'check', loopFile(text)]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  return JSON.parse(r.stdout);
+};
+const parseLoop = (text) => loopCheck(text).entries;
+const unsettled = (text) => loopCheck(text).unsettled;
+const nextRound = (text, kind) => Number(runDyna(['pr', 'loop', 'next', loopFile(text), kind]).stdout.trim());
 
 const at = (h, m = 0, day = 23) => new Date(2026, 9, day, h, m, 0);
 
@@ -26,17 +45,17 @@ test('when everything passes, the entry is a replay record that says what was do
   const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a'), pass('b')]) });
   const [e] = parseLoop(text);
   assert.deepEqual([e.kind, e.round, e.settled], ['replay', 1, true]);
-  assert.match(e.body, /2 个用例，2 个过/);
+  assert.match(text, /2 个用例，2 个过/);
 });
 
 test('when a case does not pass, the entry hands the result to the human and stays unsettled until acted on', () => {
   const text = buildReplayEntry({ round: 2, ...ENTRY_INPUT([pass('a'), fail('b')]) });
   const [e] = parseLoop(text);
   assert.deepEqual([e.kind, e.round, e.settled], ['replay', 2, false]);
-  assert.match(e.body, /\*\*要你决定\*\*/);
-  assert.match(e.body, /b/);
-  assert.match(e.body, /仍然答「否」/);
-  assert.deepEqual(unsettled([e]), [{ kind: 'replay', round: 2 }]);
+  assert.match(text, /\*\*要你决定\*\*/);
+  assert.match(text, /b/);
+  assert.match(text, /仍然答「否」/);
+  assert.deepEqual(unsettled(text), [{ kind: 'replay', round: 2 }]);
   // once the human rules and it has been acted on, it is settled like any other entry
   const [done] = parseLoop(`${text}\n### 你的批示（2026-10-23 09:30）\n> 再改一次规则\n\n### 做了什么\n- 改了（提交链接）\n`);
   assert.equal(done.settled, true);
@@ -74,10 +93,10 @@ test('each case says who judged it: Codex, or Claude when no Codex was found', (
 test('a case that produced no result, or could not be run, is a result too: not passed, with the reason', () => {
   const none = { case: 'c', outcome: 'no-result', reason: '改后那一遍没有产出 result（超时）' };
   const bad = { case: 'e', outcome: 'bad-case', reason: '用例 e 不存在' };
-  const [e] = parseLoop(buildReplayEntry({ round: 1, ...ENTRY_INPUT([none, bad]) }));
-  assert.equal(e.settled, false);
-  assert.match(e.body, /超时/);
-  assert.match(e.body, /不存在/);
+  const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([none, bad]) });
+  assert.equal(parseLoop(text)[0].settled, false);
+  assert.match(text, /超时/);
+  assert.match(text, /不存在/);
 });
 
 test('appending to a loop file that has entries leaves them as they were and numbers the replay by replay count only', () => {
@@ -104,8 +123,8 @@ test('appending to a loop file that has entries leaves them as they were and num
   const after = parseLoop(text);
   assert.deepEqual(after.slice(0, 2), before);
   assert.deepEqual(after.map((x) => [x.kind, x.round]), [['pause', 1], ['review', 1], ['replay', 1]]);
-  assert.equal(nextRound(after, 'review'), 2, 'review rounds are not renumbered by a replay');
-  assert.equal(nextRound(after, 'replay'), 2);
+  assert.equal(nextRound(text, 'review'), 2, 'review rounds are not renumbered by a replay');
+  assert.equal(nextRound(text, 'replay'), 2);
   // a second replay's result is round 2
   assert.equal(appendReplayResults(text, ENTRY_INPUT([fail('a')])).round, 2);
 });
@@ -127,7 +146,7 @@ test('a case the run did not exercise is listed as "用例没测到改动", with
   assert.match(text, /改动核对：没用上（改动了 2 个/);
   const [e] = parseLoop(text);
   assert.equal(e.settled, false);
-  assert.match(e.body, /- A：[\s\S]*- B：[\s\S]*- C：/);
+  assert.match(text, /- A：[\s\S]*- B：[\s\S]*- C：/);
   assert.equal(summarizeResults([missed]).passed, 0, 'not a pass');
 });
 

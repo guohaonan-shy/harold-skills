@@ -51,7 +51,8 @@ const touchedDocs = [
   ...mdFiles(skillDir('design', 'uiux-refine')),
   ...mdFiles(skillDir('design', 'uiux-research')),
 ];
-const touchedScripts = ['review-loop.mjs', 'proposal-table-check.mjs'].map((f) => join(root, 'scripts', f));
+// The command line's code those two scripts became (dyna/internal/pr, dyna/internal/dreaming), outside the plugin.
+const touchedScripts = [join(root, '..', 'dyna', 'internal', 'dreaming', 'table.go'), join(root, '..', 'dyna', 'internal', 'pr', 'loop.go')];
 
 test('no skill or script of this slice names an old state, a spec status or spec-status', () => {
   const hits = [];
@@ -170,6 +171,6 @@ test('the design skills ask whether the spec still waits for a human, not for a 
 });
 
 test('the closed set of 文档 dispositions drops the three that moved a spec between old statuses', () => {
-  const src = readFileSync(join(root, 'scripts', 'proposal-table-check.mjs'), 'utf8');
+  const src = readFileSync(join(root, '..', 'dyna', 'internal', 'dreaming', 'table.go'), 'utf8');
   for (const gone of ['标搁置', '去审核', '去设计']) assert.ok(!src.includes(gone), gone);
 });

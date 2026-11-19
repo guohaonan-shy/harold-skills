@@ -8,8 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, symlinkSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dynaBinary } from './dyna-test-bin.mjs';
@@ -18,7 +17,7 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
 const entries = hooks.SessionStart;
 const allCommands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
-// the three `dyna runtime inject` sections; the project map is a fourth command of its own (project-map.test.mjs)
+// the three `dyna runtime inject` sections; the project map is a fourth command of its own (home-map-hook.test.mjs)
 const commands = allCommands.filter((c) => c.includes('bin/dyna" runtime inject '));
 
 /** The limit Claude Code puts on one hook's output; past it the session keeps only a 2,000-character preview. */
@@ -101,15 +100,4 @@ test('IDEA_LOOP_RUNTIME forces the reference too', () => {
   const [, runtime, reference] = runAll({ IDEA_LOOP_RUNTIME: 'magi' });
   assert.equal(runtime.stdout.split('\n')[0], '当前运行环境：magi');
   assert.ok(reference.stdout.includes('magi sessions'));
-});
-
-test('the plugin reached through a symlinked path (macOS /var → /private/var) still injects: the script must not mistake itself for an import', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'inject-link-'));
-  symlinkSync(pluginRoot, join(dir, 'idea-loop'));
-  const link = join(dir, 'idea-loop');
-  for (const section of ['decision-rules', 'runtime', 'reference']) {
-    const r = spawnSync(process.execPath, [join(link, 'scripts', 'runtime-detect.mjs'), '--inject', section], { env: { PATH: process.env.PATH }, encoding: 'utf8' });
-    assert.equal(r.status, 0, r.stderr);
-    assert.ok(r.stdout.includes('开场注入'), `${section}: empty output through a symlinked path`);
-  }
 });

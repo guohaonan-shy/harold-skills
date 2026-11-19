@@ -11,7 +11,8 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ROLLBACK_LINE } from './seo-live-record.mjs';
+// The line `dyna seo live record` puts in a rollback issue's body (`RollbackLine` in dyna/internal/seo).
+const ROLLBACK_LINE = '由上线自查回滚而来';
 
 const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..');
 const path = (...p) => join(root, ...p);

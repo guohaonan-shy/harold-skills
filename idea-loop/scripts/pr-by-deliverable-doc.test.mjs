@@ -124,9 +124,7 @@ test('nothing in the plugin points at the removed stop-report / review-round fil
   const hits = [];
   for (const file of walk(pluginRoot)) {
     const text = readFileSync(file, 'utf8');
-    // review-loop.mjs keeps reading the old 需要你决定 heading in files already written; that is its one mention
-    const scrubbed = file.endsWith('review-loop.mjs') ? text.replace(/需要你?决定|需要\|要/g, '') : text;
-    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(scrubbed)) hits.push(relative(pluginRoot, file));
+    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(text)) hits.push(relative(pluginRoot, file));
   }
   assert.deepEqual(hits, [], `还指着旧的停下汇报：${hits.join(', ')}`);
 });

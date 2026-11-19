@@ -1,5 +1,5 @@
 // The knowledge base lives in the project directory (home); every change to it is committed to home's main
-// with `project-map.mjs commit`, which stages only the files it is given (docs/spec/skills-read-home, ticket 04).
+// with `dyna home commit`, which stages only the files it is given (docs/spec/skills-read-home, ticket 04).
 // Code PRs and issue branches carry code only. The rule is written once, in wiki-conventions「知识库落地」;
 // the places that used to land a stage on a work branch, or open a docs-only PR, point at it instead.
 import { test } from 'node:test';
@@ -21,7 +21,6 @@ function files(dir, out = []) {
   return out;
 }
 const docs = [...files(join(root, 'skills')), ...files(join(root, 'agents')), join(root, 'README.md')];
-const seoIssues = join(root, 'scripts', 'seo-issues.mjs');
 
 test('no skill, agent or README lands knowledge-base changes on a work branch or opens a docs-only PR', () => {
   const banned = [
@@ -40,7 +39,7 @@ test('no skill, agent or README lands knowledge-base changes on a work branch or
     /through a docs-only/i,
   ];
   const hits = [];
-  for (const f of [...docs, seoIssues]) {
+  for (const f of docs) {
     const text = readFileSync(f, 'utf8');
     for (const re of banned) if (re.test(text)) hits.push(`${relative(root, f)}: ${re}`);
   }

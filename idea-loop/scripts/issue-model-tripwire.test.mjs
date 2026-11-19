@@ -4,12 +4,11 @@
  * Before: a spec carried its own `status` (草稿 … 完成) written by `spec-status.mjs`, an issue carried one of
  * eight Chinese `status:*` labels, and a cloud scheduled task ("整合") hung issues that touched the same place
  * under a root issue. Now an issue's status is the only state (backlog / triage / todo / in-progress /
- * in-review / done / canceled), a spec is a document read by `spec.mjs`, and nothing groups issues.
+ * in-review / done / canceled), a spec is a document read by `dyna spec`, and nothing groups issues.
  *
  * 1. Every text file of the plugin is scanned: no `spec-status`, none of the eight old state names, no
  *    "整合" / consolidation, and the consolidation prompt file is gone. Exempt: `*.test.mjs` (they assert
- *    the absence), `scripts/issues.mjs` (its `migrate` table is the one place that maps old labels to new),
- *    and the `prompt` field of a retro replay case (it records what a human typed back then).
+ *    the absence) and the `prompt` field of a retro replay case (it records what a human typed back then).
  * 2. setup no longer installs the consolidation task, and asks whether the team uses triage.
  * 3. dreaming / adr-reconciler judge "spec is done" by its issues being closed, not by a spec status.
  * 4. wiki-conventions has no `status` at all (only ADRs carry one, described where they are written).
@@ -43,7 +42,7 @@ function files(dir, out = []) {
 /** The text of a file to scan; undefined when the file is exempt. */
 function scanned(f) {
   const rel = relative(pluginRoot, f).split('\\').join('/');
-  if (f.endsWith('.test.mjs') || rel === 'scripts/issues.mjs') return undefined;
+  if (f.endsWith('.test.mjs')) return undefined;
   const text = readFileSync(f, 'utf8');
   if (/^evals\/retro\/cases\/[^/]+\/case\.json$/.test(rel)) {
     const { prompt, ...rest } = JSON.parse(text); // the prompt is what a human typed back then
@@ -110,7 +109,7 @@ test('setup asks whether the team uses triage and writes the answer into ISSUE_T
   assert.match(tpl, /^triage：用 \/ 跳过$/m, 'the template line the answer replaces');
 });
 
-test('setup reads specs through spec.mjs and migrates old labels through issues.mjs migrate', () => {
+test('setup reads specs through `dyna spec check` and migrates old labels through `dyna issues migrate`', () => {
   const survey = readFileSync(join(setupDir, 'references', 'survey.md'), 'utf8');
   assert.match(survey, /dyna spec check <docs>/);
   assert.match(body, /dyna issues migrate <docs>/);
