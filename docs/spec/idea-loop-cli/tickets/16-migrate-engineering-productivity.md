@@ -26,3 +26,5 @@ wiki-conventions、dreaming 里「由 #339 包装」的占位改成指向新命�
 - `no-project-leak.test.mjs`：改写后的文字不带项目信息
 
 > 补充（工单 08 交回，2026-11-19）：`dyna ui measure` 不再用目标项目里的 playwright，改用本机的 Chrome / Chromium（找不到再找 Playwright 缓存里的 chromium，或用 `IDEA_LOOP_CHROME` 指定）。改 ui-measure skill 和 implement 里 UI 工单的参考时，把「项目里要装 playwright」换成「机器上要有 Chrome 或 Chromium」。
+
+> 补充（工单 12 交回，2026-11-19）：setup 的 replay-runner 参考里「Codex 查找脚本也随 runner 装进去」已不对（runner 改调 dyna），改它时同步改 replay-exercised-doc 测试最后一条断言；pr-review、setup 的预检表、pr-reviewer 里写的 codex-companion、codex-prompt 改成 `dyna agent codex run` / `dyna agent codex prompt`。
