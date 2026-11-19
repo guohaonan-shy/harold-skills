@@ -58,14 +58,14 @@ test('the steps are in the reference: find the file, backup, wait for the human,
   assert.match(ref, /<项目目录>\/DESIGN\.md/, 'the find-the-file step is gone');
   assert.match(ref, /\/tmp\/design-md\/before\.md/, 'the backup step is gone');
   assert.match(ref, /停下等人确认/, 'the wait-for-the-human step is gone');
-  assert.match(ref, /design\.md@latest lint/, 'the lint step is gone');
-  assert.match(ref, /design\.md@latest diff/, 'the diff step is gone');
+  assert.match(ref, /dyna design md lint/, 'the lint step is gone');
+  assert.match(ref, /dyna design md diff/, 'the diff step is gone');
 });
 
 test('the steps are written once: SKILL.md does not keep a copy', () => {
   const b = body(skill);
   assert.doesNotMatch(b, /\/tmp\/design-md\/before\.md/);
-  assert.doesNotMatch(b, /design\.md@latest (lint|diff)/);
+  assert.doesNotMatch(b, /dyna design md (lint|diff)/);
 });
 
 /** Review round 1 (ticket 01): the body opens straight on 「是什么」; 「结构」 holds the two-row table and two ### subsections. */

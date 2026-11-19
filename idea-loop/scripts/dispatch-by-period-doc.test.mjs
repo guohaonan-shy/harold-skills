@@ -26,8 +26,8 @@ const triage = read('skills', 'engineering', 'issue-triage', 'SKILL.md');
 const session = read('skills', 'engineering', 'issue-session', 'SKILL.md');
 const setupDispatch = read('skills', 'engineering', 'setup', 'references', 'dispatch.md');
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
-const desktop = read('skills', 'productivity', 'runtime', 'references', 'claude-desktop.md');
-const magi = read('skills', 'productivity', 'runtime', 'references', 'magi.md');
+const desktop = read('runtime', 'claude-desktop.md');
+const magi = read('runtime', 'magi.md');
 const readme = read('README.md');
 
 const partOf = (md) => md.slice(md.indexOf('### 调度'), md.indexOf('\n## ', md.indexOf('### 调度')));
@@ -136,7 +136,7 @@ test('claude-desktop: a session is opened in four steps, the second is the hand-
   assert.equal(steps.length, 4);
   assert.match(steps[0], /建 worktree/);
   assert.match(steps[1], /开会话并交到桌面端/);
-  assert.match(steps[1], /desktop-handoff\.mjs/);
+  assert.match(steps[1], /dyna runtime handoff/);
   assert.match(steps[1], /--worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>/);
   assert.match(steps[1], /在沙箱外跑/);
   assert.match(steps[1], /交出失败/);

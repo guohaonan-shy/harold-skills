@@ -27,7 +27,7 @@ tools: Read, Write, Bash, mcp__refero__refero_search_screens, mcp__refero__refer
 2. **下载截图。** 每一步两张，地址照契约「截图从哪来」：流程行里的存成 `shots/<来源>-<序号>.jpg`，每个来源按用户遇到的顺序编号；放大图存成 `shots/<来源>-<序号>-full.jpg`。下载失败的步骤重试一次，还不行就删掉这一步：页面上每个 `<img>` 都指向一个存在的文件。用 `Read` 看一眼下载下来的图，确认它真是你要的那一步，再给它写「这一步在做什么」。
 3. **解构。** 每个来源只写场景、设计逻辑两段（契约「每块写什么」）。
 4. **写页。** 先把各来源放在一起读，再写通用结论和页尾的决策块，照契约「每块写什么」：几个来源对不上，那个分歧就是一条决策，不取中间值、不替人选。然后照「标记约定」写落图目录里的 `index.html`。
-5. **校验。** 跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/research-check.mjs" <落图目录>/index.html`，红了就补到绿：缺哪一段补哪一段，图不存在就重新下载或删掉那一步。**绿了才交回。**
+5. **交回前过校验。** 跑 `dyna research submit <落图目录>/index.html`，红了就补到绿：缺哪一段补哪一段，图不存在就重新下载或删掉那一步。**绿了才算交回。**
 
 ## 交回
 
@@ -42,6 +42,6 @@ tools: Read, Write, Bash, mcp__refero__refero_search_screens, mcp__refero__refer
 
 - 只查 UX 模式与流程：Refero 只用 screens / flows 两层，不碰 styles。
 - 只说各来源回答了什么、没回答什么；方向结论（「所以应该选 B」）留给人。
-- 只写落图目录里的文件；画布、变种板、方向说明都不碰。`Bash` 只用来 `curl` 下载截图、建 `shots/` 目录、把缩略图复制成放大图的兜底、跑 `research-check`。
+- 只写落图目录里的文件；画布、变种板、方向说明都不碰。`Bash` 只用来 `curl` 下载截图、建 `shots/` 目录、把缩略图复制成放大图的兜底、跑 `dyna research submit`。
 - 来源只有 Refero：不起浏览器、不起子代理、不上网查别的来源。
 - 不跟人对话。

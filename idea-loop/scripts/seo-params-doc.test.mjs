@@ -75,7 +75,7 @@ test('seo-scan: the gate sits after 方向 and before 预算', () => {
 
 test('seo-scan: the gate notifies, lists guesses with their source, stops without dispatching, then writes and goes on', () => {
   const g = section(SCAN, '缺口关卡');
-  assert.match(g, /seo-gaps\.mjs/);
+  assert.match(g, /dyna seo gaps/);
   assert.match(g, /find_serp_competitors/);
   assert.match(g, /allow` 大于 0，就不推/, 'competitors are only inferred when the budget lets it');
   assert.match(g, /『推送』/);
@@ -114,12 +114,12 @@ test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
   assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
 });
 
-test('seo-outreach and seo-writing: read SEO.md through seo-md.mjs, not through seo-setup\'s private references (#235)', () => {
+test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not through seo-setup\'s private references (#235)', () => {
   for (const [name, doc] of [['seo-outreach', OUTREACH], ['seo-writing', WRITING]]) {
     assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is seo-setup's own reference`);
     assert.ok(!/seo-setup[^\n]*references/.test(doc), `${name}: points into seo-setup's references`);
     assert.ok(!/格式见/.test(doc), `${name}: a format pointer is left over`);
-    assert.match(doc, /seo-md\.mjs/, `${name}: reads SEO.md through the parse script`);
+    assert.match(doc, /dyna seo parse/, `${name}: reads SEO.md through the parse command`);
   }
 });
 
@@ -132,7 +132,7 @@ test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md chang
 
 test('seo-scan: allowed-tools has what the gate uses', () => {
   const tools = frontmatterField(SCAN, 'allowed-tools');
-  for (const t of ['PushNotification', 'Edit', 'Bash(node *seo-gaps.mjs:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
+  for (const t of ['PushNotification', 'Edit', 'Bash(dyna seo:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
     assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
   }
 });

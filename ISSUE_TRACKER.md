@@ -14,7 +14,7 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度按时段�
 
 ## 状态
 
-状态只由 idea-loop 的 `issues.mjs` 改。
+状态只由 idea-loop 的 `dyna issues` 改。
 
 | 状态 | GitHub 上 | 意思 |
 |---|---|---|

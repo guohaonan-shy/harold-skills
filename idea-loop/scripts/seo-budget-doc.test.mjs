@@ -72,7 +72,7 @@ test('seo-setup: step 3 gives recommended values for the two items; the old 2,00
 test('seo-setup: an old 单次额度 is migrated into the two new items, before SEO.md is read as a whole, and the human confirms the values', () => {
   const read2 = section(SETUP, '2\\. 读现状，备推荐值');
   assert.match(read2, /单次额度[\s\S]*迁/);
-  assert.ok(read2.indexOf('单次额度') < read2.indexOf('seo-md.mjs <项目目录>/SEO.md'), 'the old key makes seo-md.mjs refuse the file, so it is dealt with first');
+  assert.ok(read2.indexOf('单次额度') < read2.indexOf('dyna seo parse <项目目录>/SEO.md'), 'the old key makes dyna seo parse refuse the file, so it is dealt with first');
   const write = section(SETUP, '4\\. 写 SEO.md');
   assert.match(write, /单次额度[\s\S]*每周分配/);
   assert.match(write, /删掉[^\n]*单次额度|单次额度[^\n]*删/);
@@ -85,7 +85,7 @@ test('research-log.md: the 花费 line carries a 份 field, and a line without i
 
 test('seo-scan: 预算 reads the week from the research log, says what a skipped share does, and pushes it', () => {
   const b = section(SCAN, '预算');
-  assert.match(b, /seo-budget\.mjs[^\n]*--context[^\n]*--today/);
+  assert.match(b, /dyna seo allocate[^\n]*--context[^\n]*--today/);
   assert.match(b, /--spent/);
   assert.match(b, /重新读/);
   assert.match(b, /开始余额[^\n]*第一次/);
@@ -104,8 +104,8 @@ test('seo-scan: the 花费 line it writes carries 份：扫描, the budget refer
 });
 
 test('draft-spec: before SEO research the session reads its 起草与验证 share, skips what does not fit, and writes the spend back to the research log', () => {
-  const line = DRAFT.split('\n').find((l) => /seo-budget\.mjs/.test(l));
-  assert.ok(line, 'draft-spec does not call seo-budget.mjs');
+  const line = DRAFT.split('\n').find((l) => /dyna seo allocate/.test(l));
+  assert.ok(line, 'draft-spec does not call dyna seo allocate');
   assert.match(line, /起草与验证/);
   assert.match(line, /left/);
   assert.match(line, /appendResearchLog/);

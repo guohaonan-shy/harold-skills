@@ -1,0 +1,42 @@
+# dyna's release packages: Mac and Linux, arm64 and amd64, plus the checksum file the plugin's launcher checks.
+# Tag: dyna-v<version> (the version in internal/version/version.go). Releasing is a person's call and is not done
+# from here: this file only has to build with
+#   goreleaser release --snapshot --clean
+# (run from dyna/; packages land in dyna/dist/, nothing is tagged or uploaded).
+version: 2
+project_name: dyna
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dyna
+    main: ./cmd/dyna
+    binary: dyna
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux]
+    goarch: [arm64, amd64]
+    flags: [-trimpath]
+    ldflags: ["-s -w"]
+
+archives:
+  - id: dyna
+    formats: [tar.gz]
+    # the launcher downloads dyna_<version>_<os>_<arch>.tar.gz and expects `dyna` at its top level
+    name_template: "dyna_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: ["none*"]
+
+checksum:
+  name_template: "dyna_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+changelog:
+  disable: true
+
+release:
+  github:
+    owner: guohaonan-shy
+    name: harold-skills
+  draft: true

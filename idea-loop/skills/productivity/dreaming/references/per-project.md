@@ -9,15 +9,15 @@
 ## 1. 取项目
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project <名字>
+dyna home where --project <名字>
 ```
 
 退出码非 0：它输出的那句话就是原因（还没搬、没接上、清单里没有），跳过这个项目。成功就取 `projectDir`（项目目录）和 `cloneDir`（本地 clone）。然后：
 
 1. 读 `<项目目录>/DEVELOPMENT.md` 的「分支」节，拿基准分支。没有这份文件或这一节，跳过。
 2. `git -C <cloneDir> fetch origin`。`cloneDir` 不存在或 fetch 失败，跳过。
-3. `git -C <cloneDir> worktree add --detach <代码 worktree> origin/<基准分支>`。同名的 worktree 还在（上次中途停了没删）：先 `git -C <cloneDir> worktree remove --force` 它再建。不在本地 clone 的分支上建，所以不碰人在那个 clone 里的工作。
-4. 这个项目做完（或中途停下）就 `git -C <cloneDir> worktree remove --force <代码 worktree>`。
+3. `git -C <cloneDir> worktree add --detach <代码 worktree> origin/<基准分支>`。同名的 worktree 还在（上次中途停了没删）：先 `dyna worktree remove <代码 worktree> --force --repo <cloneDir>` 它再建。不在本地 clone 的分支上建，所以不碰人在那个 clone 里的工作。
+4. 这个项目做完（或中途停下）就 `dyna worktree remove <代码 worktree> --force --repo <cloneDir>`。
 
 ## 2. 对账
 
@@ -26,7 +26,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project <名字>
 - **知识库在项目目录，代码在代码 worktree**：`<docs>` 是 `<项目目录>/docs/`，引导文件在项目目录；读代码、跑开发服务、`DEVELOPMENT.md` 的「worktree 准备」都在代码 worktree 里。「所有核实对 `origin/<基准分支>`」说的是代码；知识库读 home 已提交的内容（`git -C <home> ls-tree`、`git -C <home> show HEAD:projects/<名字>/…`），别的会话正在写、还没提交的不算。
 - **起 agent**：prompt 里把项目目录、代码 worktree、中间物目录三个绝对路径都给它。
 - **提交**：改动用 `commit` 直接提交到 home（`idea-loop:wiki-conventions` 的「知识库落地」），只列这次改到的文件，目录也可以；删掉的文件直接删，`commit` 会把删除一起提交。消息写「dreaming：<日期> <名字> 知识库对账」。
-- **`gh`、`issues.mjs`**：开 issue、查 PR 都对着项目自己的代码仓库（`where` 输出的 `repo`），不是 home。
+- **`gh`、`dyna issues`**：开 issue、查 PR 都对着项目自己的代码仓库（`where` 输出的 `repo`），不是 home。
 
 ## 3. 重写项目地图
 

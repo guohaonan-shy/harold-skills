@@ -5,7 +5,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 把一份 spec 切成若干工单：每张是一颗 tracer bullet 式的**垂直切片**，写明挡着它的那几张。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。
+先用 Skill 工具调 `idea-loop:wiki-conventions`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。
 
 工单是**临时凭据**：开工时才建，切完提交到 home，代码 PR 合并后由 pr-review 的合并步骤删掉（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
 
@@ -19,11 +19,11 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 读 `docs/spec/<slug>/<slug>.md` 全文，含「测试决策」：seam 已经在那里谈拢，照用。
 
-先跑 `spec check <docs>`，报了旧平铺布局就停下，提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。
+先跑 `dyna spec check <docs>`，报了旧平铺布局就停下，提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。
 
 两个条件都满足才往下走，缺哪个就停下告诉人缺什么：
 
-- 没有「需要 grill」，也没有「待定」。还有的，先跟人定完（它们由 triage 里的会话定，issue 翻 todo 时脚本核过；直接调到这里的也要核）。
+- 没有「需要 grill」，也没有「待定」。还有的，先跟人定完（它们由 triage 里的会话定，issue 翻 todo 时命令核过；直接调到这里的也要核）。
 - 碰 UI 的，设计已冻结：「实现决策」里有完整的冻结摘要（画布指针、矩阵、mismatch 阈值、一行 ledger 摘要、状态矩阵与数据契约变更）。缺任何一样就是还没冻结，先跑完设计；冻结只由设计那一段做，切票这一步不替它补。
 
 所以碰 UI 的 spec 只在冻结后切，不会有「切了但不能开工」的票。混着 UI 和非 UI 的 spec，非 UI 那部分也要等冻结；不想等，起草时就拆成两份 spec。
@@ -112,7 +112,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 ## 改 skill 类文件的工单
 
-工单要改 skill、agent 定义或 skill 参考文件的，验收标准末尾固定带下面三格，原文照抄。「这类文件」按路径认，落地时 `ticket-ledger.mjs skill-edit` 用同一条：路径以 `SKILL.md` 结尾；或在某个 `skills/` 目录下、以 `.md` 结尾；或是某个 `agents/` 目录下直接的 `.md` 文件（含 `.claude/agents/`）。工单文件（`docs/spec/*/tickets/`）不算。
+工单要改 skill、agent 定义或 skill 参考文件的，验收标准末尾固定带下面三格，原文照抄。「这类文件」按路径认，落地时 `dyna spec skill-edit` 用同一条：路径以 `SKILL.md` 结尾；或在某个 `skills/` 目录下、以 `.md` 结尾；或是某个 `agents/` 目录下直接的 `.md` 文件（含 `.claude/agents/`）。工单文件（`docs/spec/*/tickets/`）不算。
 
 - [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。

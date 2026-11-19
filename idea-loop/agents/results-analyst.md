@@ -15,7 +15,7 @@ tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*, mcp__plugin_e
 
 提示里有六行：SEO.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
-`node ${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs <SEO.md>` 读出配置，用其中的「站点」（域名、Search Console 站点）、「重点页面」和「分析」节：`analytics` 的 `tool`、`projectId`、`dashboard` 三项，都是 null 就是没写「分析」节。
+`dyna seo parse <SEO.md>` 读出配置，用其中的「站点」（域名、Search Console 站点）、「重点页面」和「分析」节：`analytics` 的 `tool`、`projectId`、`dashboard` 三项，都是 null 就是没写「分析」节。
 
 先算日期。`今天` 记作 T：
 
@@ -24,7 +24,7 @@ tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*, mcp__plugin_e
 
 ## 做
 
-1. **改动清单**：`node ${CLAUDE_PLUGIN_ROOT}/scripts/seo-live-record.mjs list <项目目录>/docs --since=<E 往前 41 天>`。它从已关的 SEO issue 上带「上线自查」标记的评论读回改动，一个网址一行：`issue`、`title`、`url`、`keyword`、`mergedOn`。没有任何一行：改动清单为空，报告里照写，不是错误。
+1. **改动清单**：`dyna seo record list <项目目录>/docs --since=<E 往前 41 天>`。它从已关的 SEO issue 上带「上线自查」标记的评论读回改动，一个网址一行：`issue`、`title`、`url`、`keyword`、`mergedOn`。没有任何一行：改动清单为空，报告里照写，不是错误。
 2. **整站**：调 `get_search_console_performance`（`projectId`、`dimensions: [date]`，日期范围近 4 周）取每日点击，近 7 天和上一个 7 天各取点击、展现、平均位置。没有 Search Console 连接：整个方向未采集（看「发现」），不写报告。
 3. **每个满 14 天的改动**：满 14 天的定义和前后窗口在「报告」里；每个网址调 `get_search_console_performance`（`dimensions: [date]`，`filters` 取 `page` 等于这个网址），前、后各 14 天取点击、展现；再带上目标词（`query` 等于 `keyword`）取前、后的平均位置。目标词已在 OpenSEO 排名追踪里的，调 `get_rank_history` 附上改动后最近一个位置（追踪在上线自查通过后才开，没有改动前的数）。付费调用不超过「本次额度」，额度是 0 就只用 Search Console 这类免费调用。
 4. **分析工具**：`analytics.tool` 写了，用它取营销站访问和 CTA 点击（近 7 天对上一个 7 天），附 `dashboard` 链接；你的工具里没有它：这一块写「分析工具这次没连上」。没写「分析」节：写「没有接分析工具」。不截分析工具的图，只附链接。

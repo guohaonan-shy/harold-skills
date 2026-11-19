@@ -16,10 +16,11 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findProject, parseProjects } from './project-map.mjs';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const setupDir = process.env.SETUP_DOCS_ROOT || join(pluginRoot, 'skills', 'engineering', 'setup');
@@ -49,7 +50,7 @@ test('SKILL.md 「home」 is a pointer and a completion condition, not the steps
   assert.ok(s.includes('references/home.md'));
   assert.match(s, /^完成条件：/m);
   assert.ok([...s].length < 400, `「home」 section is ${[...s].length} characters: it is growing past a pointer`);
-  for (const detail of ['git init', 'gh repo create', 'home-config.mjs', 'autoMemoryDirectory', '.backup', 'plan', 'apply']) {
+  for (const detail of ['git init', 'gh repo create', 'home config', 'autoMemoryDirectory', '.backup', 'plan', 'apply']) {
     assert.ok(!s.includes(detail), `body 「home」 summarises the reference (${detail})`);
   }
 });
@@ -63,8 +64,8 @@ test('home.md writes the three steps, and the completion condition only once, in
 
 test('step 3 shows the three changes together, asks once, does them all, and does not ask about those already in place', () => {
   const s = section(home, '3\\. 改三处用户级配置');
-  assert.match(s, /home-config\.mjs" plan/);
-  assert.match(s, /home-config\.mjs" apply/);
+  assert.match(s, /dyna home config plan/);
+  assert.match(s, /dyna home config apply/);
   assert.match(s, /三项一起/);
   assert.match(s, /问一次/);
   assert.match(s, /「已是」的项[^\n]*不再问/);
@@ -79,12 +80,17 @@ test('step 2 writes the project line in the shape the SessionStart hook reads', 
   assert.match(s, /转小写/);
 });
 
-test('the example project line in step 2 is read by the SessionStart hook\'s parser and finds its repository', () => {
+test('the example project line in step 2 is read by `dyna home`, which finds the project and the repository it registers', () => {
   const line = section(home, '2\\. 登记当前项目').match(/`(example-app（[^`]*)`/)?.[1];
   assert.ok(line, 'step 2 has no example line');
-  const projects = parseProjects(`## 项目\n${line}\n`);
-  assert.equal(projects.length, 1);
-  assert.equal(findProject(projects, 'git@github.com:acme/example-app.git')?.name, 'example-app');
+  const dir = mkdtempSync(join(tmpdir(), 'setup-home-line-'));
+  mkdirSync(join(dir, 'projects', 'example-app', 'docs'), { recursive: true });
+  writeFileSync(join(dir, 'AGENTS.md'), `## 项目\n${line}\n`);
+  const r = runDyna(['home', 'where', '--project', 'example-app'], { cwd: dir, env: { IDEA_LOOP_HOME: dir, HOME: dir } });
+  assert.equal(r.status, 0, r.stderr);
+  const found = JSON.parse(r.stdout);
+  assert.equal(found.project, 'example-app');
+  assert.equal(found.repo, 'acme/example-app');
 });
 
 test('the device map template says to look the map up before answering, within 2000 characters', () => {

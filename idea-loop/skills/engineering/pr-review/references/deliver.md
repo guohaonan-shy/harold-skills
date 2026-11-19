@@ -4,7 +4,7 @@
 
 ## 1. 记下这一轮做了什么
 
-最新一轮条目末尾记一节「做了什么」（没有修复就写「没有要修的，进审核报告」），`review-loop check .tmp/review-loop/<PR 号>.md` 才不再列它。
+最新一轮条目末尾记一节「做了什么」（没有修复就写「没有要修的，进审核报告」），`dyna pr loop check .tmp/review-loop/<PR 号>.md` 才不再列它。
 
 ## 2. 等 CI 绿
 
@@ -12,11 +12,11 @@
 
 ## 3. 写审核报告
 
-用 `pr-body.mjs set` 写进 PR 描述（用 Skill 工具调 `idea-loop:pr`，看它的「PR 描述」，节名、顺序、每节怎么写都照它）：`problem`、`changes`、`verification`、`rollback`、`your-todo` 各节，`summary` 核一遍。读者是没跟过这件事的人，一份讲完（问题 → 怎么修 → 怎么验证 → 能否回滚 → 要你做的事）：
+用 `dyna pr body set` 写进 PR 描述（用 Skill 工具调 `idea-loop:pr`，看它的「PR 描述」，节名、顺序、每节怎么写都照它）：`problem`、`changes`、`verification`、`rollback`、`your-todo` 各节，`summary` 核一遍。读者是没跟过这件事的人，一份讲完（问题 → 怎么修 → 怎么验证 → 能否回滚 → 要你做的事）：
 
 - 素材：spec 的「问题陈述」和「方案」，工单（标题、被谁挡着、端到端行为），review loop 文件里每份汇报的「已按规则处理」「做了什么」，`idea-loop:implement` 期间开的 issue。
 - review 的结论收进 `verification`（几轮、中途修了什么），照规则定的做法和依据收进 `changes`，不再另贴一份。
-- **人验素材**：review loop 文件里「要你看的」中还没勾的项，全部收进 `your-todo` 的「要你审的」，一项一个复选框：「看什么」+ 素材（素材只放这里，`verification` 里不重复），素材照 `idea-loop:pr` 的交付证据做（流程图、动图、并排截图），用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/evidence.mjs" publish` 上传后贴进描述，人在 PR 上直接看。会话里照 `idea-loop:pr` 的「在会话里给人看」一项一段，文字后紧跟它的图。
+- **人验素材**：review loop 文件里「要你看的」中还没勾的项，全部收进 `your-todo` 的「要你审的」，一项一个复选框：「看什么」+ 素材（素材只放这里，`verification` 里不重复），素材照 `idea-loop:pr` 的交付证据做（流程图、动图、并排截图），用 `dyna pr evidence publish` 上传后贴进描述，人在 PR 上直接看。会话里照 `idea-loop:pr` 的「在会话里给人看」一项一段，文字后紧跟它的图。
 - `rollback` 对着整个 PR 判：能不能撤回、怎么撤、影响面；要人在上线前做的（例：推迁移，写明为什么要人来做）；`idea-loop:implement` 和 review 期间开的 issue，列在「顺带开的 issue」下。
 - `your-todo` 里写清要人做的事：要审的人验素材（上面那些复选框）、会话里还没批示的事，末尾一句「说合并即可」。人看了说对，勾上；人直接说合并，视为人验素材都看过、都对。
 

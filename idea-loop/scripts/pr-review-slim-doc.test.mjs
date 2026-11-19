@@ -39,7 +39,7 @@ test('the append-a-cell-to-the-ticket step is written once, under 回工单', ()
   assert.equal(body.split('docs(tickets): <NN> — review 第').length - 1, 1, 'the ticket-cell commit message is spelled out more than once');
   const text = section('回工单');
   assert.match(text, /git blame/);
-  assert.match(text, /ticket-ledger\.mjs/);
+  assert.match(text, /dyna spec ticket-of/);
   assert.match(text, /idea-loop:implementer/);
   assert.match(text, /Ticket:/);
   assert.ok(body.split('回工单').length - 1 >= 3, 'the other places should refer to 回工单 by name');
@@ -64,6 +64,21 @@ test('where a round goes next is one section with the three outcomes', () => {
 test('the rules decision-rules already owns are pointers, not restated lists', () => {
   assert.match(body, /idea-loop:decision-rules/);
   assert.doesNotMatch(body, /仍然停/);
+});
+
+// the round the reviewer agent used to run is a reference of pr-review's own now (spec idea-loop-cli, ticket 16)
+test('the round itself lives in references/run-a-round.md behind one pointer; there is no reviewer agent', () => {
+  assert.ok(existsSync(join(dir, 'references', 'run-a-round.md')), 'references/run-a-round.md is missing');
+  assert.match(body, /references\/run-a-round\.md/);
+  assert.doesNotMatch(body, /pr-reviewer/);
+  assert.ok(!existsSync(join(pluginRoot, 'agents', 'pr-reviewer.md')), 'agents/pr-reviewer.md is back');
+  const ref = readFileSync(join(dir, 'references', 'run-a-round.md'), 'utf8');
+  assert.match(ref, /dyna agent codex prompt spec/);
+  assert.match(ref, /dyna agent codex prompt standards/);
+  assert.match(ref, /dyna agent codex run/);
+  assert.match(ref, /dyna pr candidates submit/);
+  assert.match(ref, /dyna pr diagnostics filter/);
+  assert.doesNotMatch(ref, /companion|--write/);
 });
 
 test('the UI walkthrough lives in its own reference, with the condition for reading it', () => {

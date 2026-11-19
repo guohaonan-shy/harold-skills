@@ -1,19 +1,19 @@
 # SEO 内容 PR 自动合并
 
-`../SKILL.md` 的「一轮之后往哪走」判出「交审核报告」、而且这个 issue 带 `type:seo/*` 时读这份。依据是 `idea-loop:decision-rules`「护栏」的 SEO 例外：改的只是内容、检查全过、两轴没有阻塞项的 SEO PR，合并不再等人。`review-loop`、设计产物的意思同 `../SKILL.md`。
+`../SKILL.md` 的「一轮之后往哪走」判出「交审核报告」、而且这个 issue 带 `type:seo/*` 时读这份。依据是 `idea-loop:decision-rules`「护栏」的 SEO 例外：改的只是内容、检查全过、两轴没有阻塞项的 SEO PR，合并不再等人。设计产物的意思同 `../SKILL.md`。
 
 ## 判断：全部满足才自动合并
 
 逐条核；任何一条不满足，或核不了（构建失败、没有产物目录），照 `../SKILL.md` 的老路：交报告，停下，人说合并。
 
-1. **检查全过**：`<项目目录>/REVIEW.md`「验证命令」的检查（CI 在前提里已经绿了）；再对这个 head 的构建产物跑 `seo-check`：产物目录取 `node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" <项目目录>/SEO.md` 输出的 `build.distDir`，不在，或不是这个 head 构建的，按目标仓库的构建命令构建一次；然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-check.mjs" <产物目录> <build.checkArgs>`，退出码 0 才算过。
+1. **检查全过**：`<项目目录>/REVIEW.md`「验证命令」的检查（CI 在前提里已经绿了）；再对这个 head 的构建产物跑 `seo-check`：产物目录取 `dyna seo parse <项目目录>/SEO.md` 输出的 `build.distDir`，不在，或不是这个 head 构建的，按目标仓库的构建命令构建一次；然后 `dyna seo check <产物目录> <build.checkArgs>`，退出码 0 才算过。
 2. **两轴没有阻塞项**：这一轮落在「没有修复，且没有要人定的事」（现有的「最多两轮」不变），并且报告 `your-todo` 里没有未勾的人验素材、没有要人上线前做的事：那些要人看、要人做，合并只由人说。
-3. **只改内容**：在这个 PR 的 worktree 里 `node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-content-scope.mjs" <项目目录>/SEO.md --base=origin/<基准分支>`，输出 `contentOnly` 为 `true`。`false` 时 `outside` 列出不在范围内的文件，写进报告「要你做的事」，让人决定是合并还是改。
-4. **PR 描述有「上线自查的网址」一节**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/pr-body.mjs" get <owner/repo> <PR 号> live-check` 输出非空。没有这一节，合并后无从自查，不自动合并；回头补写它（写法见 `idea-loop:pr`）再判。
+3. **只改内容**：在这个 PR 的 worktree 里 `dyna seo scope <项目目录>/SEO.md --base=origin/<基准分支>`，输出 `contentOnly` 为 `true`。`false` 时 `outside` 列出不在范围内的文件，写进报告「要你做的事」，让人决定是合并还是改。
+4. **PR 描述有「上线自查的网址」一节**：`dyna pr body get <owner/repo> <PR 号> live-check` 输出非空。没有这一节，合并后无从自查，不自动合并；回头补写它（写法见 `idea-loop:pr`）再判。
 
 ## 做
 
 1. 报告照常交：`deliver.md` 的第 1 到 3 步（记下这一轮、等 CI 绿、写审核报告）。`your-todo` 写「已自动合并，没有要你做的事」。
 2. 不停下，直接照 [`merge.md`](merge.md) 的「合并」做：review loop 照常归档，逐个合并，全部合并后删工单、翻 done，起「上线后自查」（上面第 4 条的网址就是它的输入；后台等上线，不拦后面：全过才给目标词开排名追踪，有一项不过就自动回滚），再做清理。没有设计产物，不走「合并前归档」。
-3. 在会话里写「已自动合并」，附 PR 链接和三条各自的结果（检查、两轴、`seo-content-scope.mjs` 的输出），发推送通知，同样写「已自动合并」。
+3. 在会话里写「已自动合并」，附 PR 链接和三条各自的结果（检查、两轴、`dyna seo scope` 的输出），发推送通知，同样写「已自动合并」。
 4. 合并失败照 `merge.md` 的「逐个合并」：停下告诉人，已合并的不撤。

@@ -9,12 +9,12 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 
 - **读一个 issue**：`gh issue view <号> --comments`，正文和评论都读完。
 - **列 issue**：`gh issue list --state open --json number,title,labels`，按需加 `--label`。
 - **评论**：`gh issue comment <号> --body "..."`，多行正文用 heredoc。
-- **加、去 label**：`gh issue edit <号> --add-label "..."` / `--remove-label "..."`。
+- **加、去 label**：`gh issue edit <号> --add-label "..."` / `--remove-label "..."`；`status:*` 不走这里，用 `dyna issues set`（手写的会被 hook 拦下）。
 - **关闭**：`gh issue close <号> --reason completed|"not planned" --comment "..."`。
 
 ## 状态
 
-状态只由 idea-loop 的 `issues.mjs` 改。
+状态只由 idea-loop 的 `dyna issues` 改。
 
 | 状态 | GitHub 上 | 意思 |
 |---|---|---|
@@ -36,7 +36,7 @@ issue 的优先级是 `priority:P0`、`priority:P1`、`priority:P2` 三个 label
 
 ## PR
 
-一个 issue 一个 PR，PR 正文写 `Refs <owner>/<repo>#<号>`（不写 `Closes`：状态只由 `issues.mjs` 改）。
+一个 issue 一个 PR，PR 正文写 `Refs <owner>/<repo>#<号>`（不写 `Closes`：状态只由 `dyna issues` 改）。
 
 ## 调度
 
@@ -53,7 +53,7 @@ issue 的优先级是 `priority:P0`、`priority:P1`、`priority:P2` 三个 label
 
 issue 还带两种分类 label：模块 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打；类型 `kind:bug`、`kind:feature`、`kind:improvement`。分类由 idea-loop 分拣 issue 时打，人也可以手动打。不在状态、分类和保留清单里的 label 会被清掉，要留的列在「保留的 label」。
 
-模块的写法（脚本照这个格式读本节：父类、子类各一行，名字放反引号里，后面「：」接说明，子类缩进两格；「保留的 label」一行把别的要留的 label 放反引号里；本节到下一个 `##` 标题为止）：
+模块的写法（命令照这个格式读本节：父类、子类各一行，名字放反引号里，后面「：」接说明，子类缩进两格；「保留的 label」一行把别的要留的 label 放反引号里；本节到下一个 `##` 标题为止）：
 
 - `<父类>`：<什么样的 issue 归它>
   - `<子类>`：<什么样的 issue 归它>

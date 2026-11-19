@@ -39,5 +39,6 @@ test('retro-replay.mjs: the runner header says who judges and how the order is t
   assert.match(header, /Codex/);
   assert.match(header, /afterIs/);
   assert.match(header, /--plugin-dir/);
-  assert.match(header, /RETRO_CODEX_COMPANION/);
+  assert.match(header, /RETRO_CODEX_BIN/);
+  assert.match(header, /dyna agent codex run/);
 });

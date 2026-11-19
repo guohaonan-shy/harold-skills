@@ -1,19 +1,19 @@
 # 提议表：形状，问人和自动怎么分，执行与提交
 
-提议表是提议段唯一的输出，也是执行段唯一的输入。执行段碰两类行：自动的行（按各自的建议处置，不问人）、问人的行里人批了的；问人的行里人没批的不碰。下文 `proposal-table-check` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs"`：写完表先过它，退出码 0 才往下走，2 就按它逐条点名的问题改。
+提议表是提议段唯一的输出，也是执行段唯一的输入。执行段碰两类行：自动的行（按各自的建议处置，不问人）、问人的行里人批了的；问人的行里人没批的不碰。写完表先过 `dyna dreaming table submit`，退出码 0 才往下走，2 就按它逐条点名的问题改。
 
 ## 放哪、谁看
 
 - 表写在这个项目的中间物目录 `<home>/.tmp/dreaming/<YYYY-MM-DD>/<名字>/proposal.md`（home 的 `.gitignore` 忽略 `.tmp/`，不进版本库）；下文与各 reference 写的 `.tmp/dreaming/<日期>/` 都指这个项目的目录。代码在从 `origin/<基准分支>` 新切的 worktree 里，不是任何一个进行中需求的工作区；知识库在项目目录，改动直接 `commit` 到 home（[per-project.md](per-project.md)）。
 - **完整表不摆给人**：它是执行段的输入和提交消息正文的来源。
-- **只摆问人的小表**：`proposal-table-check <表> --split-ask=.tmp/dreaming/<日期>/ask.md` 抽出来（形状同提议表，空节不写；脚本报「无问人的行」就没有这一份）。一屏摆得下就在会话里按节摆给人；摆不下就用『发布审阅页』发出，会话里按节摆。`候选` 和 `DESIGN.md 条目` 有行时另做审核页（[review-page.md](review-page.md)）。有行就用『推送』发一句：几类、共几行。
+- **只摆问人的小表**：`dyna dreaming table split <表> --out .tmp/dreaming/<日期>/ask.md` 抽出来（形状同提议表，空节不写；命令报「无问人的行」就没有这一份）。一屏摆得下就在会话里按节摆给人；摆不下就用『发布审阅页』发出，会话里按节摆。`候选` 和 `DESIGN.md 条目` 有行时另做审核页（[review-page.md](review-page.md)）。有行就用『推送』发一句：几类、共几行。
 - 人在会话里对小表逐行回「批 / 不批 / 改成…」。不批的行不执行；「改成…」按人的话改那一行再执行。人不回，不挡任何东西：自动那份照常已经执行并提交。
 - **推送只有三种情况**：有问人的行、自动那份没提交成、哪一部分没跑成。都没有就不推送，空表（这次无事）也不发。
-- 『发布审阅页』『推送』等运行环境的能力，做法照 `idea-loop:runtime`。
+- 『发布审阅页』『推送』等运行环境的能力，做法照 `dyna runtime show <能力>`。
 
 ## 问人的行和自动的行
 
-哪些行问人，只由脚本判：`proposal-table-check` 的 `--split-ask`（导出函数 `splitAskRows`），判据只写在脚本里，这里不另抄一份。大意是会判错的行归人：设计规范、文档里的冲突、术语。其余行归自动。
+哪些行问人，只由 `dyna dreaming table split` 判，判据只写在命令里，这里不另抄一份。大意是会判错的行归人：设计规范、文档里的冲突、术语。其余行归自动。
 
 - **自动的行**：「批了」就是照它自己的建议处置执行，下文与各 reference 里的「执行段」「只执行批了的行」据此成立。人看不到这些行，除非翻提交消息正文。
 - **问人的行**：人回「批」或「改成…」才执行；「不批」的原样留着，下一次对账会再出现。
@@ -29,14 +29,14 @@
 | 档案对象、档案状态，及产品坏了的缺陷行 | `idea-loop:ui-reviewer` 的对账模式（[archive-reconcile.md](archive-reconcile.md)：源码波出 `档案对象`，实时波出 `档案状态` 与缺陷） | dreaming 自己的 tmp 目录与交回的结果文件 |
 | 初扫页面 | dreaming 自己（[initial-scan.md](initial-scan.md)：`prod/` 为空，或 reviewer 报了 `补扫页面`） | dreaming 自己的 tmp 目录 |
 | 漏归档 | dreaming 自己机械地查 | 直接写进表 |
-| retro 候选 | dreaming 自己（[retro-candidates.md](retro-candidates.md)：读候选池、调计数脚本） | 直接写进表 |
+| retro 候选 | dreaming 自己（[retro-candidates.md](retro-candidates.md)：读候选池、调计数命令） | 直接写进表 |
 | 记忆 | dreaming 自己（[memory-tidy.md](memory-tidy.md)：量索引、判每一条）；这一节在 home 里单独成表、单独执行，不并进项目的那张 | home 的 `.tmp/dreaming/<YYYY-MM-DD>/proposal.md` |
 
-同一行类型只出现在一节里：`缺陷` 有两个来源，并成一节。并好后过校验脚本，退出码 0 才交出去。
+同一行类型只出现在一节里：`缺陷` 有两个来源，并成一节。并好后过校验命令，退出码 0 才交出去。
 
 ## 一张表的形状
 
-一个 `#` 标题（写日期）。标题下、第一个 `##` 节之前，先写说明行，每行一句，不是表的行，校验脚本不数它们：
+一个 `#` 标题（写日期）。标题下、第一个 `##` 节之前，先写说明行，每行一句，不是表的行，校验命令不数它们：
 
 - **对账范围**（起了 ui-reviewer 的那次一定有）：`对账范围：增量——…` 或 `对账范围：全量——…`，三样都要写：全量还是增量、为什么、对了几个状态。怎么定、怎么写，见 [incremental-scope.md](incremental-scope.md)。
 - **上一张还没处理**：`上一次（<日期>）的提议表还没处理`，只在上一张确实没处理时写，两张表不合并。
@@ -47,7 +47,7 @@
 |---|---|---|---|---|
 
 - 一行一个对象（一份文档、一个档案状态、一条候选、一个漏归档的需求、一条攒够次数的 retro 候选、`DESIGN.md` 的一处）。五列都要填。
-- 「建议处置」从该行类型自己的闭集里取，后面可以跟一个括号写补充（`订正（路径改名）`）。闭集里找不到合适的，说明这份文件缺一条：先补闭集和校验脚本的单测，再写表。
+- 「建议处置」从该行类型自己的闭集里取，后面可以跟一个括号写补充（`订正（路径改名）`）。闭集里找不到合适的，说明这份文件缺一条：先补闭集和校验命令的单测，再写表。
 - 「选项」写人的几种回法（至少「批 / 不批 / 改成…」；两种解释分不清时把两种都写上）。自动的行也写这一格，没人读它。
 - 跑过的部分，一节没有行就写一行 `无`：节在，才说明这一部分跑过了。没跑的部分整节不写。
 - 节内可以有表格以外的说明行，最常见的是全站初扫末尾的 `未扫：…`；说明行不算「行」，不让表变成非空。
@@ -86,7 +86,7 @@
 
 ## 样例
 
-下面这张表是合规的，校验脚本的单测会跑它，改格式时这里和脚本一起改。例子是虚构的结账产品。
+下面这张表是合规的，校验命令的单测会跑它，改格式时这里和命令一起改。例子是虚构的结账产品。
 
 ```markdown
 # 提议表 2026-10-19
@@ -163,7 +163,7 @@
 
 顺序：
 
-1. 先处理会删掉东西的行，再处理会改写的行，最后删除后查死链、刷各层 `index.md`（格式见 [index-md.md](index-md.md)；`docs/spec/index.md` 用 `spec.mjs index <docs>`）。
+1. 先处理会删掉东西的行，再处理会改写的行，最后删除后查死链、刷各层 `index.md`（`dyna home index`，spec 层也是它）。
 2. 每类行这样执行：
 
 | 行类型 | 怎么执行 |
@@ -173,15 +173,15 @@
 | `缺陷` | 照 `idea-loop:issues` 的「开一个 issue」开成 backlog issue，开到**目标仓库**，标题和正文用表里起草的，查重时连状态 id 一起搜；「已有 #N」的不开。产品坏了的行只开 issue，档案不动，它的 `evidence/` 图随 tmp 目录一起丢 |
 | `retro 候选` | 照 [retro-candidates.md](retro-candidates.md) 的「执行段」：建议开 issue 的，开到落点所在的仓库，并把候选文件的状态改成 `已开 issue（<链接>）`；建议驳回的改成 `驳回（<理由>）`；留在池里的不动。dreaming 不改 skill |
 | `记忆` | 照 [memory-tidy.md](memory-tidy.md) 的「执行」：在 home 里做、直接提交，不走下面第 3、4 步 |
-| `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、草稿过档案校验、归档脚本并进 `prod/`；丢弃是删掉 `docs/design/tmp/<spec-slug>/`。都跟其余改动同一次 `commit` |
+| `漏归档` | 照 [missed-archive.md](missed-archive.md) 的「执行段」：补归档是对它跑一次 ui-reviewer 归档模式、草稿过档案校验、归档命令并进 `prod/`；丢弃是删掉 `docs/design/tmp/<spec-slug>/`。都跟其余改动同一次 `commit` |
 | `候选` 的「起草通用原则 issue」 | 人批了才开，开到 harold-skills 仓库，命令照 `idea-loop:design-modeling` 的「蒸馏」 |
-| `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：校验过，再跑档案的归档脚本整目录并进 `prod/`。步骤见 [archive-reconcile.md](archive-reconcile.md) 的「执行段」与 [initial-scan.md](initial-scan.md) 的「执行段」 |
+| `档案对象` / `档案状态` / `初扫页面` | 产物都在 `docs/design/tmp/dreaming-<日期>/delta/`：校验过，再跑档案的归档命令整目录并进 `prod/`。步骤见 [archive-reconcile.md](archive-reconcile.md) 的「执行段」与 [initial-scan.md](initial-scan.md) 的「执行段」 |
 
-档案对象文件的任何改动都走 `delta/` 加归档脚本，包括「处理完的候选从档案对象里删掉」：把改过的对象全文放进 `delta/`，随同一次归档并进 `prod/`。
+档案对象文件的任何改动都走 `delta/` 加归档命令，包括「处理完的候选从档案对象里删掉」：把改过的对象全文放进 `delta/`，随同一次归档并进 `prod/`。
 
-3. **只提交知识库文件**：项目目录里的 `docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档脚本写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然下一次 dreaming 会把它当成漏归档。`commit` 到 home，只列这次改到的文件，消息「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、开出去的 issue 编号；问人那份另说哪些行人没批、留着。
+3. **只提交知识库文件**：项目目录里的 `docs/`、`DESIGN.md`、`GLOSSARY.md`（`docs/design/prod/` 里归档命令写的页面、状态、组件与素材在 `docs/` 之内）。归档后 `docs/design/tmp/dreaming-<日期>/` 若还在（这次没有要归档的档案行），整个删掉，不然下一次 dreaming 会把它当成漏归档。`commit` 到 home，只列这次改到的文件，消息「dreaming：<日期> 知识库对账」，正文按节列执行了哪些行、开出去的 issue 编号；问人那份另说哪些行人没批、留着。
 4. **提交前检查**：不等人看。依次：
-   - 在代码 worktree 里跑 `<项目目录>/REVIEW.md` 的验证命令（那张表里的每一条）、`spec.mjs check <docs>`、删除后查死链；有设计档案时跑 `design-archive-check`。
+   - 在代码 worktree 里跑 `<项目目录>/REVIEW.md` 的验证命令（那张表里的每一条）、`dyna spec check <docs>`、删除后查死链；有设计档案时跑 `dyna design archive check`。
    - 全过就第 3 步的 `commit`。有一条没过：不提交，改动留在工作区，用『推送』说哪一条没过。`commit` 报「home 没推上去」不算没过，在汇报里带上这一句，流程照走。
 5. **回滚**：人说「回滚某次 dreaming」，在 home 里 `git revert` 那次提交，有 `origin` 的接着推送。
 6. 最后报告给人的只有问人的小表和没提交成、没跑成的部分；已自动提交的行不出现在汇报里。

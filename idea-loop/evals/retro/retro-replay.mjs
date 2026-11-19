@@ -4,12 +4,12 @@
  *
  * For one replay case (cases/<case>/case.json) it
  *   1. copies the project as it was at the case's commit into /tmp, twice (one copy per side);
- *   2. runs `claude -p` in each copy with the case's prompt, once with the PRE-change plugin (the base
- *      branch's idea-loop/) and once with the POST-change plugin (this working tree's idea-loop/);
+ *   2. runs `claude -p` in each copy (through `dyna agent claude run`) with the case's prompt, once with the PRE-change plugin
+ *      (the base branch's idea-loop/) and once with the POST-change plugin (this working tree's idea-loop/);
  *   3. starts a judge that reads both products (anonymised as A and B, in a random order each time) and answers the
  *      case's yes/no question, quoting where in the product it found the answer; only the judge is told
  *      where the skill hands the thing to the human (the case's `stop_at`). The judge is Codex (a different model family
- *      from the two runs): the companion's `task`, read-only, with the prompt in a file. When no Codex is found the runner says
+ *      from the two runs): `dyna agent codex run`, read-only, with the prompt in a file. When no Codex is found the runner says
  *      so before it starts ("没找到 Codex，评委用 Claude") and judges with `claude -p` as before; a Codex judge that gives
  *      nothing also falls back to Claude. `result.json` records `judge` (`codex` / `claude`) and `afterIs` (the letter the
  *      post-change product had), which is how the answers are turned back into pre-change / post-change.
@@ -63,7 +63,7 @@
  * Where the plugin under test and the cases are: `--worktree <dir>` says "this worktree" and stands for
  * `--repo <dir> --after-plugin <dir>/idea-loop --cases-root <dir>/idea-loop/evals/retro`; each can still be given
  * on its own. Run from the plugin's own copy, with none of them given, it tests that copy. Run from the installed
- * copy (`~/.idea-loop/bin/`, see scripts/retro-install.mjs) it has no copy of its own to test and asks for one.
+ * copy (`~/.idea-loop/bin/`, see `dyna retro install`) it has no copy of its own to test and asks for one.
  *
  * Only small cases run by `--case`. A case marked large is not run: the runner says how the orchestrator runs it once the PR
  * is open (`--run-large --pr <N>`) and exits 3.
@@ -86,20 +86,21 @@
  *             2 bad arguments or a malformed case · 3 a large case, left to `--run-large` · 4 judge gave no usable answer ·
  *             5 a session produced no result.
  *
- * `RETRO_CLAUDE_BIN` replaces the `claude` command, `RETRO_CODEX_COMPANION` the Codex companion script (a path that does
+ * Every `claude -p` and `codex exec` this runner starts goes through `dyna agent claude run` / `dyna agent codex run`: they close stdin,
+ * enforce the timeout, end the whole process tree when the session exits or runs out of time, and (claude) digest the event stream.
+ * The command is `IDEA_LOOP_DYNA_BIN`, else `~/.idea-loop/bin/dyna`, else `dyna` on PATH.
+ *
+ * `RETRO_CLAUDE_BIN` replaces the `claude` command, `RETRO_CODEX_BIN` the `codex` command (a path that does
  * not exist means "no Codex"; with `RETRO_CLAUDE_BIN` set and this one not, the runner does not look for a real Codex either: a stand-in
  * `claude` means a test, and the stand-in judges), and `RETRO_JUDGE_ORDER` (`after-first` / `before-first`) fixes the A/B order: the tests use these.
  */
 
-import { cpSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, readSync, openSync, closeSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { randomBytes, randomInt } from 'node:crypto';
 import { homedir, tmpdir } from 'node:os';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
-import { digestStream, escalationOfEvent, fileLines, parseEvent } from '../../scripts/claude-stream.mjs';
-import { findCompanion } from '../../scripts/codex-companion.mjs';
-import { detect as detectRuntime } from '../../scripts/runtime-detect.mjs';
 import { checkCasesDir, loadCases, revealingWordsIn, validateCase } from './cases.mjs';
 import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResults } from './queue.mjs';
 import {
@@ -108,21 +109,46 @@ import {
   settleVerdicts, verdictsBySide, withHome,
 } from './replay.mjs';
 
-/** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way. null for an unknown forced name. */
-function sessionRuntime() {
-  try {
-    return detectRuntime(process.env);
-  } catch {
-    return null;
-  }
-}
-
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
 const DEFAULT_OUT = '/tmp/idea-loop-retro';
 const CLAUDE = process.env.RETRO_CLAUDE_BIN || 'claude';
-/** The model and effort the Codex judge runs with: the same the pr-reviewer's Codex processes use. */
+/** The model and effort the Codex judge runs with: the same the Codex processes of pr-review's round use. */
 const CODEX_ARGS = ['--model', 'gpt-5.6-sol', '--effort', 'high'];
+
+/** The `dyna` that starts the sessions: `IDEA_LOOP_DYNA_BIN`, else the installed one, else the one on PATH. */
+function dynaBin() {
+  if (process.env.IDEA_LOOP_DYNA_BIN) return process.env.IDEA_LOOP_DYNA_BIN;
+  const installed = join(homedir(), '.idea-loop', 'bin', 'dyna');
+  return existsSync(installed) ? installed : 'dyna';
+}
+
+/** An executable called `name` on PATH, or null. */
+function onPath(name) {
+  for (const dir of (process.env.PATH ?? '').split(delimiter)) {
+    if (dir && existsSync(join(dir, name))) return join(dir, name);
+  }
+  return null;
+}
+
+/** Run `dyna <args>` to the end; resolves `{ status, stdout, stderr }` (status null when dyna could not be started). */
+function runDyna(args, { cwd, env }) {
+  return new Promise((resolvePromise) => {
+    const child = spawn(dynaBin(), args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => { stdout += d; });
+    child.stderr.on('data', (d) => { stderr += d; });
+    child.on('error', (e) => { stderr += String(e); });
+    child.on('close', (status) => resolvePromise({ status, stdout, stderr }));
+  });
+}
+/** The runtime the replayed sessions run in: they inherit this process's environment, so the hook detects it the same way (`dyna runtime name`). null for an unknown forced name. */
+async function sessionRuntime() {
+  const r = await runDyna(['runtime', 'name'], { env: process.env });
+  return r.status === 0 && r.stdout.trim() ? r.stdout.trim() : null;
+}
+
 /** A session's timeout in minutes: 20 for a small case, 45 for `--run-large` (large cases take longer). */
 const DEFAULT_TIMEOUT_MIN = 20;
 const RUN_LARGE_TIMEOUT_MIN = 45;
@@ -215,7 +241,7 @@ function originOf(repo) {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 
-/** Give the project copy an `origin` (what `project-map.mjs` matches against home's project list) that cannot be pushed to. */
+/** Give the project copy an `origin` (what `dyna home` matches against home's project list) that cannot be pushed to. */
 function connectOrigin(project, remote) {
   git(project, 'remote', 'add', 'origin', remote);
   git(project, 'remote', 'set-url', '--push', 'origin', NO_PUSH_URL);
@@ -342,14 +368,15 @@ function pluginNameOf(dir, fallback) {
 }
 
 /**
- * What the change touched, for the exercised check: the files added or modified under `skills/` and `agents/` between the
+ * What the change touched, for the exercised check: the files added or modified under `skills/`, `agents/` and `runtime/` (the
+ * data the SessionStart hook injects) between the
  * pre-change plugin dir and the post-change one (a deleted file is not "used"), the skills those files belong to
  * (`<plugin>:<dir holding the nearest SKILL.md above the file>`) and the agents among them (`<plugin>:<file name without .md>`).
  * Sorted, so the result reads the same every time.
  */
 export function changeSetOf(beforeDir, afterDir, pluginName) {
   const plugin = pluginNameOf(afterDir, pluginName);
-  const files = ['skills', 'agents'].flatMap((top) => filesUnder(join(afterDir, top), `${top}/`)).filter((rel) => {
+  const files = ['skills', 'agents', 'runtime'].flatMap((top) => filesUnder(join(afterDir, top), `${top}/`)).filter((rel) => {
     const old = join(beforeDir, rel);
     return !existsSync(old) || !readFileSync(old).equals(readFileSync(join(afterDir, rel)));
   }).sort();
@@ -369,69 +396,76 @@ export function changeSetOf(beforeDir, afterDir, pluginName) {
   return { files, skills: [...skills].sort(), agents: [...agents].sort() };
 }
 
-/** The parsed events of a stream file, one at a time. */
+/** The parsed events of a stream file, one at a time (the file can be huge: it holds screenshots, so it is read in chunks). */
 function* eventsOf(path) {
-  for (const line of fileLines(path)) {
-    const ev = parseEvent(line);
-    if (ev) yield ev;
+  const fd = openSync(path, 'r');
+  const chunk = Buffer.alloc(1 << 20);
+  let pending = Buffer.alloc(0);
+  const parse = (buf) => {
+    try {
+      return JSON.parse(buf.toString('utf8'));
+    } catch {
+      return null; // a blank line, or the last line cut off by a timeout
+    }
+  };
+  try {
+    for (;;) {
+      const n = readSync(fd, chunk, 0, chunk.length, null);
+      if (n === 0) break;
+      pending = Buffer.concat([pending, chunk.subarray(0, n)]);
+      let nl;
+      while ((nl = pending.indexOf(10)) >= 0) {
+        const ev = parse(pending.subarray(0, nl));
+        pending = pending.subarray(nl + 1);
+        if (ev) yield ev;
+      }
+    }
+    if (pending.length) {
+      const ev = parse(pending);
+      if (ev) yield ev;
+    }
+  } finally {
+    closeSync(fd);
   }
 }
 
+/** The facts about a session that produced no stream at all. */
+const NO_DIGEST = { session: { tools: {}, referoCalls: 0 }, subagents: { tools: {}, referoCalls: 0 }, result: null };
+
 /**
- * Run one `claude -p` to the end. With `watch`, the first plugin-agent or browser tool call in the event
- * stream kills the session at once and is returned as `escalation`.
+ * Run one `claude -p` to the end, through `dyna agent claude run`: the event stream is kept at `streamPath`, and the
+ * command reads it as it comes. With `watch`, the first plugin-agent or browser tool call in the stream ends the session
+ * at once and is returned as `escalation`. `plugin` (a plugin dir) also means the unattended run: permissions are skipped.
+ * Resolves `{ status, stderr, escalation, timedOut, digest }`: `status` is claude's own exit code, `digest` what the session did.
  */
-function runClaude({ args, cwd, streamPath, timeoutMs, watch, env }) {
-  return new Promise((resolvePromise) => {
-    const child = spawn(CLAUDE, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
-    const out = createWriteStream(streamPath);
-    let stderr = '';
-    let pending = '';
-    let escalation = null;
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill('SIGKILL');
-    }, timeoutMs);
-    child.stderr.on('data', (d) => { stderr += d; });
-    child.stdout.on('data', (chunk) => {
-      out.write(chunk);
-      if (!watch || escalation) return;
-      pending += chunk.toString('utf8');
-      let nl;
-      while ((nl = pending.indexOf('\n')) >= 0) {
-        const hit = escalationOfEvent(parseEvent(pending.slice(0, nl)));
-        pending = pending.slice(nl + 1);
-        if (hit) {
-          escalation = hit;
-          child.kill('SIGKILL');
-          return;
-        }
-      }
-    });
-    child.on('error', (e) => { stderr += String(e); });
-    child.on('close', (status) => {
-      clearTimeout(timer);
-      out.end(() => resolvePromise({ status, stderr, escalation, timedOut }));
-    });
-  });
+async function runClaude({ prompt, plugin, cwd, streamPath, timeoutMs, watch, env, model }) {
+  const promptFile = `${streamPath}.prompt.md`;
+  writeFileSync(promptFile, prompt);
+  const args = ['agent', 'claude', 'run', '--json', '--bin', CLAUDE, '--prompt-file', promptFile, '--cwd', cwd, '--stream', streamPath,
+    '--timeout', `${Math.max(1, Math.round(timeoutMs / 1000))}s`];
+  if (plugin) args.push('--plugin-dir', plugin, '--skip-permissions');
+  if (watch) args.push('--stop-on-escalation');
+  if (model) args.push('--model', model);
+  const r = await runDyna(args, { cwd, env });
+  let summary = null;
+  try {
+    summary = JSON.parse(r.stdout);
+  } catch {
+    // dyna did not get as far as printing the summary: its own message says why
+  }
+  if (!summary) return { status: r.status, stderr: r.stderr, escalation: null, timedOut: false, digest: NO_DIGEST };
+  return { status: summary.exitCode, stderr: summary.stderr, escalation: summary.escalation, timedOut: summary.timedOut, digest: summary.digest };
 }
 
 /**
- * The Codex companion script that can run the judge, or null. `RETRO_CODEX_COMPANION` replaces the search (the tests point it at
- * a fake, or at a path that does not exist); otherwise it is looked for the way pr-review does: from this plugin, then from the
- * plugins directory of the Claude config (an installed copy of the runner has no plugins directory above it).
+ * The Codex command that can run the judge, or null. `RETRO_CODEX_BIN` replaces the search (the tests point it at
+ * a fake, or at a path that does not exist); otherwise it is `codex` on PATH.
  */
 export function locateCodex() {
-  const override = process.env.RETRO_CODEX_COMPANION;
+  const override = process.env.RETRO_CODEX_BIN;
   if (override !== undefined) return override && existsSync(override) ? override : null;
   if (process.env.RETRO_CLAUDE_BIN) return null; // a stand-in claude means a test: it must not reach the real Codex
-  const starts = [PLUGIN_ROOT, join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'plugins')];
-  for (const start of starts) {
-    const { path } = findCompanion(start);
-    if (path) return path;
-  }
-  return null;
+  return onPath('codex');
 }
 
 /** The letter ("A" or "B") the post-change product gets this time: random, unless `RETRO_JUDGE_ORDER` fixes it (the tests do). */
@@ -441,30 +475,16 @@ function pickAfterLetter() {
 }
 
 /**
- * The judging session on Codex: `task` with the prompt in a file, never `--write` (the companion's default is read-only).
- * Resolves `{text}` with what it printed, or `{text: null, why}` when it could not start, exited non-zero or printed nothing.
+ * The judging session on Codex: `dyna agent codex run` with the prompt in a file (it is read-only by default; the runner never
+ * asks for write access). Resolves `{text}` with the final message, or `{text: null, why}` when it could not start, exited
+ * non-zero, timed out or printed nothing.
  */
-function runCodexJudge({ companion, promptFile, cwd, outPath, timeoutMs, env }) {
-  return new Promise((resolvePromise) => {
-    const child = spawn(process.execPath, [companion, 'task', ...CODEX_ARGS, '--prompt-file', promptFile, '--cwd', cwd], { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill('SIGKILL');
-    }, timeoutMs);
-    child.stdout.on('data', (d) => { stdout += d; });
-    child.stderr.on('data', (d) => { stderr += d; });
-    child.on('error', (e) => { stderr += String(e); });
-    child.on('close', (status) => {
-      clearTimeout(timer);
-      writeFileSync(outPath, stdout);
-      if (stderr) writeFileSync(`${outPath}.stderr.log`, stderr);
-      const why = timedOut ? '超时' : status !== 0 ? `退出码 ${status}` : !stdout.trim() ? '没有输出' : null;
-      resolvePromise(why ? { text: null, why } : { text: stdout });
-    });
-  });
+async function runCodexJudge({ codex, promptFile, cwd, outPath, timeoutMs, env }) {
+  const r = await runDyna(['agent', 'codex', 'run', '--bin', codex, ...CODEX_ARGS, '--prompt-file', promptFile, '--cwd', cwd, '--out', outPath,
+    '--timeout', `${Math.max(1, Math.round(timeoutMs / 1000))}s`], { cwd, env });
+  if (r.stderr) writeFileSync(`${outPath}.stderr.log`, r.stderr);
+  const why = r.status === null ? `没法启动 dyna：${r.stderr.trim()}` : r.status === 124 ? '超时' : r.status !== 0 ? `退出码 ${r.status}` : !r.stdout.trim() ? '没有输出' : null;
+  return why ? { text: null, why } : { text: r.stdout };
 }
 
 const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
@@ -475,9 +495,9 @@ const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
  */
 async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const est = estimateCostUsd(1);
-  const companion = locateCodex();
+  const codex = locateCodex();
   console.log(`${c.name}: ${c.size === 'large' ? '大' : '小'}用例，当场跑。预计花费约 ${usd(est.low)}–${usd(est.high)}（改前、改后各一次 claude -p，加一次判定；空跑一次约 $0.3–0.5，完整跑一个 skill 约 $1.5；评委走 Codex 时判定不占 Claude 额度，估计仍按这个算）`);
-  console.log(companion ? `评委：Codex（${companion}）` : '没找到 Codex，评委用 Claude');
+  console.log(codex ? `评委：Codex（${codex}）` : '没找到 Codex，评委用 Claude');
 
   const runId = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*$/, '');
   const runDir = join(opts.out, c.name, runId);
@@ -517,11 +537,9 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       // every session gets IDEA_LOOP_HOME: a populated home when the case needs one for this side, an empty one otherwise, so no home of this machine is reachable
       home = prepareHome({ c, side: s.side, t, project, name });
       const sideEnv = withHome(childEnv, home.dir);
-      const args = ['-p', buildWorkerPrompt(c), '--plugin-dir', staged.dir, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
-      if (opts.model) args.push('--model', opts.model);
       const streamPath = join(dir, 'run.stream.jsonl');
       process.stdout.write(`— ${s.side}: ${s.plugin} …`);
-      const r = await runClaude({ args, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge, env: sideEnv });
+      const r = await runClaude({ prompt: buildWorkerPrompt(c), plugin: staged.dir, model: opts.model, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge, env: sideEnv });
       // the run is over: what it left is kept under the run dir for a human to look at (the work dir itself goes in `finally`)
       const keepProject = () => {
         cpSync(project, join(dir, 'project'), { recursive: true });
@@ -536,7 +554,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
         console.log(`大用例由编排者在 PR 开出后用 --run-large --pr <N> 跑：${c.name} 原标成小，跑到一半发现不是；已把 ${file} 改标成大。`);
         return { code: 3, runDir };
       }
-      const digest = digestStream(fileLines(streamPath));
+      const digest = r.digest;
       if (r.stderr) writeFileSync(join(dir, 'run.stderr.log'), r.stderr);
       products[s.side] = digest.result ? buildArtifact({
         resultText: digest.result.text,
@@ -557,7 +575,7 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       if (s.side === 'after') {
         // before the judge: did this run use what the change touched? (the paths in its stream are the staged copy's)
         const roots = [...new Set([staged.dir, realpathSync(staged.dir)])];
-        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: sessionRuntime() });
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: await sessionRuntime() });
         console.log(`改动核对：${describeExercised(exercised)}`);
       }
     } finally {
@@ -574,13 +592,13 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const afterIs = pickAfterLetter();
   const { A, B } = productsInOrder(products, afterIs);
   const judgePrompt = buildJudgePrompt(c, A, B);
-  let judge = companion ? 'codex' : 'claude';
+  let judge = codex ? 'codex' : 'claude';
   let judgeText = null;
   if (judge === 'codex') {
     const promptFile = join(judgeDir, 'prompt.md');
     writeFileSync(promptFile, judgePrompt);
     process.stdout.write('— 判定（Codex）…');
-    const cx = await runCodexJudge({ companion, promptFile, cwd: judgeDir, outPath: join(judgeDir, 'codex.stdout.txt'), timeoutMs: opts.timeoutMin * 60_000, env: childEnv });
+    const cx = await runCodexJudge({ codex, promptFile, cwd: judgeDir, outPath: join(judgeDir, 'codex.stdout.txt'), timeoutMs: opts.timeoutMin * 60_000, env: childEnv });
     if (cx.text) {
       judgeText = cx.text;
       console.log(' 完成（不占 Claude 额度）');
@@ -590,12 +608,10 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     }
   }
   if (judge === 'claude') {
-    const jArgs = ['-p', judgePrompt, '--output-format', 'stream-json', '--verbose'];
-    if (opts.model) jArgs.push('--model', opts.model);
     const jStream = join(judgeDir, 'run.stream.jsonl');
     process.stdout.write('— 判定 …');
-    const j = await runClaude({ args: jArgs, cwd: judgeDir, streamPath: jStream, timeoutMs: opts.timeoutMin * 60_000, watch: false, env: childEnv });
-    const jDigest = digestStream(fileLines(jStream));
+    const j = await runClaude({ prompt: judgePrompt, model: opts.model, cwd: judgeDir, streamPath: jStream, timeoutMs: opts.timeoutMin * 60_000, watch: false, env: childEnv });
+    const jDigest = j.digest;
     if (!jDigest.result) {
       console.log(` 没有产出 result（退出码 ${j.status}），见 ${judgeDir}`);
       return { code: 5, runDir, message: `判定会话没有产出 result（退出码 ${j.status}），现场在 ${judgeDir}` };

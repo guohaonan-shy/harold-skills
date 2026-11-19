@@ -29,7 +29,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
 
 项目上下文工具免费，和 OpenSEO 应用、其它 agent 共用。
 
-1. 先读项目目录的 `SEO.md`：`node "${CLAUDE_PLUGIN_ROOT}/scripts/seo-md.mjs" <项目目录>/SEO.md` 读出八节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
+1. 先读项目目录的 `SEO.md`：`dyna seo parse <项目目录>/SEO.md` 读出八节。竞品和重点页面以 SEO.md 为准，和 OpenSEO 项目上下文不一致时听 SEO.md 的。没有 SEO.md：人在场时在收尾建议跑一次 `idea-loop:seo-setup`，照常往下做。
 2. 调 `get_project_context`，报告以它为根：业务是做什么的，决定哪些发现要紧、那「一件事」该是什么。
 3. 这个 skill 需要 `business_overview`。它写着「无」（人明确说过不需要）时，就当作没有这项信息：不推断、不问、不写回，人在场、无人值守都一样；在 `assumptions` 里写明没法按业务判断哪些发现要紧、那「一件事」该是什么，只交回核实过的问题，人在场就写在报告里；无人值守且没有发现可挂时，把同样的话写进 `uncollected`。其余为空时：
    - 人在场：做最小的现场补齐：从站点推断业务，用一个问题和人确认，用 `update_project_context` 写回，再继续审计。不要一上来做完整访谈；收尾时建议跑 `idea-loop:seo-setup` 补其余。
@@ -63,7 +63,7 @@ description: 站点 SEO 审计：抓取站点、对着线上页面核实问题�
 7. 站点健康时提出一个起步的重点方向：调一次 `research_keywords`，种子取自站点真实的主题，然后选一个主题和 3–5 个站点能实际排上去的低难度关键词，每个配上要做的页面或文章。这是一个起步方向，不是关键词策略；完整流程请人用 `keyword-research`。站点挂了就整步跳过：那时只有那一件事要紧。
 8. 用 `references/template.html` 写报告（见「输出格式」）。
 9. 交付前 review：环境里有第二个 agent 或模型就做一轮对抗式审查，没有就重新自审一遍。把核实过的事实交给审查者，让它攻击四点：超出事实的说法、没解释的术语、对新手负担过重的内容、夸张的措辞。审查者也可能指出你没给它的真实事实；拿你的证据去核，而不是去「修」它们。
-10. 交付报告：用『发布审阅页』（做法照 `idea-loop:runtime`）。
+10. 交付报告：用『发布审阅页』（做法照 `dyna runtime show 发布审阅页`）。
 
 ## 输出格式
 

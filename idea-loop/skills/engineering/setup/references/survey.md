@@ -12,4 +12,4 @@
 - `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`PRODUCT.md` 在不在；没有 `PRODUCT.md` 的，从 `README`、落地页文案、产品里现有的界面推出它每一节的推荐答案
 - `docs/` 目录树、`.gitattributes`
 - issue 在哪个平台：`ISSUE_TRACKER.md` 第一个标题写的是 GitHub 还是 Linear；没有这份文件的，看会话里有没有 Linear 的 MCP（能不能调 `list_teams`）、`README` 和 `CONTRIBUTING.md` 有没有提 Linear，推出「issue 在哪个平台」的推荐答案
-- `<docs>` 在时：`node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs" check <docs>`：报了旧平铺布局或还带 `status` 行的 spec，要迁移
+- `<docs>` 在时：`dyna spec check <docs>`：报了旧平铺布局或还带 `status` 行的 spec，要迁移

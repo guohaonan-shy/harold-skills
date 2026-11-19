@@ -131,11 +131,11 @@ test('agentReferenceProblems: a path that does not exist is reported with the ag
 
 test('agentReferenceProblems: reading a skill that does not start the agent is reported', () => {
   const text = '读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/ui-tickets.md`。';
-  const problems = agentReferenceProblems('pr-reviewer', text, new Set(['pr-review']), () => true);
+  const problems = agentReferenceProblems('ui-reviewer', text, new Set(['pr-review']), () => true);
   assert.equal(problems.length, 1);
-  assert.match(problems[0], /agents\/pr-reviewer\.md reads skills\/engineering\/implement\/references\/ui-tickets\.md/);
-  assert.match(problems[0], /implement does not start pr-reviewer \(started by pr-review\)/);
-  assert.match(agentReferenceProblems('pr-reviewer', text, new Set(), () => true)[0], /started by no skill/);
+  assert.match(problems[0], /agents\/ui-reviewer\.md reads skills\/engineering\/implement\/references\/ui-tickets\.md/);
+  assert.match(problems[0], /implement does not start ui-reviewer \(started by pr-review\)/);
+  assert.match(agentReferenceProblems('ui-reviewer', text, new Set(), () => true)[0], /started by no skill/);
 });
 
 test('agentReferenceProblems: an existing path in a skill that starts the agent is fine, a directory and trailing dot too', () => {
