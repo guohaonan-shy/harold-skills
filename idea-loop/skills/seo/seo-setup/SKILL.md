@@ -10,11 +10,10 @@ disable-model-invocation: true
 
 ## 1. 连上 OpenSEO，定下项目
 
-1. `whoami`。调不通：告诉人在 `/mcp` 里连上 `openseo`（idea-loop 插件自带这个服务）。人连不上就继续往下走，只做仓库里的事（`SEO.md` 里 OpenSEO 能推的值留给人填，第 5、7 步记「未做：OpenSEO 没连上」）。
-2. `list_projects`，按 `SEO.md` 的域名或人说的站点找项目。
-3. 对不上唯一一个：
-   - 有几个像的，问人用哪个。
-   - 一个都没有，问人后 `create_project`（名字、域名只写主机名、市场 `locationCode`/`languageCode`）；返回要 `organizationId` 的，把组织列给人选。
+1. **认 OpenSEO**：没有插件名下的 `whoami`、却有别的名字下的 OpenSEO 工具：被顶替，照 [references/openseo-superseded.md](references/openseo-superseded.md) 告诉人。
+2. `whoami`。调不通：告诉人在 `/mcp` 里连上 `openseo`（idea-loop 插件自带这个服务）。人连不上就继续往下走，只做仓库里的事（`SEO.md` 里 OpenSEO 能推的值留给人填，第 5、7 步记「未做：OpenSEO 没连上」）。
+3. `list_projects`，按 `SEO.md` 的域名或人说的站点找项目。
+4. 对不上唯一一个：照 [references/project-pick.md](references/project-pick.md)。
 
 研究类工具不拿来测连通，`whoami` 和 `list_projects` 就够。
 
