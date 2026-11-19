@@ -70,9 +70,7 @@
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
 | [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
-<<<<<<< HEAD
 | [decisions/188](decisions/188.md) | conversation | 2026-11-16 | 决定记录 —— #188 的 triage 会话：seo-brief 角度候选对照站内文章，规则验收选写回放用例（跨仓库、付费、PR 开出后当场跑）；无候选 |
-=======
 | [decisions/161](decisions/161.md) | conversation | 2026-11-16 | 决定记录 —— #161 的 issue 会话：explorer 加读 spec「实现决策」（spec explorer-reads-impl-decisions），候选「摆题前讲清 issue 来由」不批 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
 | [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
@@ -81,7 +79,6 @@
 | [decisions/275](decisions/275.md) | conversation | 2026-11-17 | 决定记录 —— #275 的 issue 会话：先合并不实跑回放，录制重跑的设计先不开 issue，skill 不写工具用法另开 #356 |
 | [decisions/276](decisions/276.md) | conversation | 2026-11-17 | 决定记录 —— #276 的 issue 会话：并进 #280，decision-rules 默认翻成 Claude 先定，摆过的题与 retro 候选的结果 |
 | [decisions/160](decisions/160.md) | conversation | 2026-11-18 | 决定记录 —— #160 的 issue 会话：开工对齐起点换写法、执行方定义精简（PR #371，0.1.28），交回卡住维持不加机制；候选 1 不批 |
->>>>>>> origin/main
 | [[2026-11-13-replay-verify-redesign]] | conversation | 2026-11-13 | 规则回放改造：取消夜间队列、当场跑，参考 poteto 的 eval playbook |
 | [[2026-10-31-writing-for-agents-scope-grill]] | conversation | 2026-10-31 | #180 writing-for-agents 审 spec：按作用域分能带什么，retro 候选要写怎么结合、怎么验证 |
 | [[2026-10-26-retro-candidate-pool-grill]] | conversation | 2026-10-26 | grill —— retro 候选池放在哪个仓库、哪个目录 |
