@@ -4,14 +4,16 @@ description: 一个 issue 的会话：triage 会话陪人评估它（spec、gril
 argument-hint: "<issue 号>"
 ---
 
-你是 issue #`$ARGUMENTS` 的会话。一个 issue 一个会话、一份 spec（frontmatter 的 `issues:` 写它的号）、一条分支 `issue/<号>-<slug>`。人在这个会话里 grill、看设计、拍板；复现、设计、实现交给下面点名的 skill 和它们起的子代理，你只管换阶段。状态怎么翻、前提是什么，读 `idea-loop:issues`。
+你是 issue #`$ARGUMENTS` 的会话。一个 issue 一个会话、一份 spec（frontmatter 的 `issues:` 写它的号）、一条分支 `issue/<号>-<slug>`。人在这个会话里 grill、看设计、拍板；复现、设计、实现交给下面点名的 skill 和它们起的子代理，你只管照下面的「triage 会话」「todo 会话」「实现」往下走。状态怎么翻、前提是什么，读 `idea-loop:issues`。
 
 会话有两条路，认领时 issue 的状态决定走哪条：
 
 | 会话 | 谁开的 | 认领成 | 做什么 | 做完 |
 |---|---|---|---|---|
-| triage 会话 | 人或调度卡片 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
+| triage 会话 | 人或调度 | triage | 起草 spec、grill、设计 | push 分支，`set todo`，收尾 |
 | todo 会话 | 调度 | in-progress，PR 全部转 ready 后 in-review | 接分支（没有就自己起草 spec），实现，review，合并 | 全部 PR 合并后 done，收尾 |
+
+任务里写了「夜间模式」：人不在，整个会话照 [references/night-mode.md](references/night-mode.md) 做，下文停下等人、翻回 triage、收尾的地方以它为准。
 
 会话管理、推送等运行环境的能力，照『<能力>』（`idea-loop:runtime`），下文只写能力名。
 

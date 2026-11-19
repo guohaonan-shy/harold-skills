@@ -22,8 +22,8 @@
  *
  * With `--delta <spec-slug>` the requirement's `tmp/<slug>/delta/` is laid over `prod/` first
  * (replace by id, drop what removed.md lists) and the rules judge the result.
- * `docs/design/` entries other than tmp/, prod/ and index.md are the old per-spec layout: one note
- * each, never a violation, never read.
+ * `docs/design/` entries other than tmp/, prod/, pending/ and index.md are the old per-spec layout: one note
+ * each, never a violation, never read. `pending/` holds shelved designs (local only): skipped, no note.
  *
  * Usage:  node design-archive-check.mjs <repo-root> [--delta <spec-slug>] [--no-used-by] [--json]
  *         --no-used-by skips the `usedBy` half of rule 6, for judging a delta/ before the archive

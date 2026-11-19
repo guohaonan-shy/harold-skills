@@ -20,6 +20,7 @@ const sync = read('skills', 'design', 'design-change-sync', 'SKILL.md');
 const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
 const implementDesignChange = read('skills', 'engineering', 'implement', 'references', 'design-change.md');
 const prReview = read('skills', 'engineering', 'pr-review', 'SKILL.md');
+const prReviewDesignChange = read('skills', 'engineering', 'pr-review', 'references', 'design-change.md');
 
 function section(doc, title) {
   const lines = doc.split('\n');
@@ -47,10 +48,11 @@ test('design-change-sync: the ticket cell it has the caller append points at the
   assert.match(line, /canvas\/v<终>\.html/);
 });
 
-// implement and pr-review keep one sentence each and point at the single source for the cell text.
+// implement and pr-review keep one sentence each and point at the single source for the cell text; the paragraph
+// itself lives in each skill's own references/design-change.md.
 for (const [name, doc] of [['implement', implement], ['pr-review', prReview]]) {
   test(`${name}: the design-change section points at design-change-sync and does not restate the cell`, () => {
-    const text = section(doc, '设计变更') + (name === 'implement' ? '\n' + implementDesignChange : '');
+    const text = section(doc, '设计变更') + '\n' + (name === 'implement' ? implementDesignChange : prReviewDesignChange);
     assert.match(text, /idea-loop:design-change-sync/, `${name} does not call design-change-sync`);
     assert.doesNotMatch(text, /v<N\+\d+>/, 'the section pins a specific attempt');
     assert.doesNotMatch(text, /canvas\/v<终>\.html/, 'the cell text lives only in design-change-sync');
