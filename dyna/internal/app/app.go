@@ -27,6 +27,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/retro"
 	rt "github.com/guohaonan-shy/harold-skills/dyna/internal/runtime"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/semver"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/seo"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/serve"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/testcmd"
@@ -106,6 +107,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(research.Command(research.Deps{Stdout: io.Stdout}))
 	root.AddCommand(dreaming.Command(dreaming.Deps{Stdout: io.Stdout}))
 	root.AddCommand(retro.Command(retro.Deps{Env: io.Env, Stdout: io.Stdout}))
+	root.AddCommand(seo.Command(seo.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Cwd: io.Cwd, Now: io.Now}))
 	root.AddCommand(rt.Command(rt.Deps{Env: io.Env, Stdout: io.Stdout, Stderr: io.Stderr, Cwd: io.Cwd, Now: io.Now}))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root

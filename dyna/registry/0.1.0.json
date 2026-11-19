@@ -2076,6 +2076,451 @@
       ]
     },
     {
+      "command": "seo allocate",
+      "module": "seo",
+      "use": "allocate <SEO.md> <balance> [direction...]",
+      "summary": "算这一轮扫描各方向本周能花多少 OpenSEO credits（按套餐额度、每周分配、已花的和余额下限）；不给方向只打印本周的账",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "balance",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "direction...",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "context",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "get_project_context 的原始返回（要有 researchLog）；不给就当账本未知"
+        },
+        {
+          "name": "spent",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "这一轮已经花掉的 credits（竞品猜测那一步），算进本周「扫描」一份"
+        },
+        {
+          "name": "today",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "今天的日期 YYYY-MM-DD（默认今天，UTC）"
+        }
+      ]
+    },
+    {
+      "command": "seo check",
+      "module": "seo",
+      "use": "check [dist-dir]",
+      "summary": "查构建产物里每个 index.html 的 SEO（Google 和 Bing 两个平台），按路由列出问题；有 error 退出 1，参数不对或目录不存在退出 2。--hook：读 PreToolUse、PostToolUse 事件，构建后跑检查，有 error 退出 2 并在 stderr 回话",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dist-dir",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "desc-max",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "description 宽度上限（默认 160，超了是 error）"
+        },
+        {
+          "name": "desc-min",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "description 宽度下限（默认 145）"
+        },
+        {
+          "name": "filter",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只报告路由里含这段文字的页面（扫描仍是全站，hreflang 互指照全站查）"
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PreToolUse、PostToolUse 事件；有 error 退出码 2、理由写到 stderr"
+        },
+        {
+          "name": "strict",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "警告也算失败（退出 1）"
+        },
+        {
+          "name": "title-max",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "title 宽度上限（默认 70）"
+        },
+        {
+          "name": "title-min",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "title 宽度下限（默认 48，CJK 字符算 2）"
+        }
+      ]
+    },
+    {
+      "command": "seo compare-audits",
+      "module": "seo",
+      "use": "compare-audits <SEO.md> <previous.json> <current.json>",
+      "summary": "比对 OpenSEO 站点审计的上一次和这一次（get_audit_pages 的原始返回），打印重点页面回退的发现（方向 technical）：状态码、可索引、sitemap 是严重，title 和 description 变了是警告",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "previous.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "current.json",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo due",
+      "module": "seo",
+      "use": "due <context.json> <YYYY-MM-DD>",
+      "summary": "不带参数的扫描这次该跑哪些方向：results 每 3 天，其余五个每 7 天，按研究日志里最近一次采集算",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "context.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "YYYY-MM-DD",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo file-issues",
+      "module": "seo",
+      "use": "file-issues <docs> <findings.json>",
+      "summary": "把一轮扫描的发现开成 issue：证据、复现、验收标准缺一样的拒收；同方向同类的合成一个 issue；已有同标记的 open issue 就留评论；新 issue 不带 status label（就是 backlog），打 type:seo/<方向>",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "findings.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "date",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "这次扫描的日期 YYYY-MM-DD（默认今天，UTC）"
+        },
+        {
+          "name": "dry-run",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "只打印会做什么，不写 GitHub（number 为 null）"
+        }
+      ]
+    },
+    {
+      "command": "seo gaps",
+      "module": "seo",
+      "use": "gaps <SEO.md> <context.json|-> <direction>...",
+      "summary": "这一轮的方向要用、却还没人写下的项目信息（竞品、品牌词、业务概述、当前目标、定位）；项目上下文给 - 或读不到就只查 SEO.md 的项",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "context.json|-",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "direction",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "seo parse",
+      "module": "seo",
+      "use": "parse <SEO.md>",
+      "summary": "读 SEO.md，打印九节内容的 JSON（站点、OpenSEO、竞品、重点页面、构建与检查、写作、品牌、内容原则、分析，和哪些项已确认）；读不了或写法不对退出 1",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo provenance",
+      "module": "seo",
+      "use": "provenance <repo> <previous.json> <current.json> <findings.json> <since> <until>",
+      "summary": "哪些「title 或 description 变了」是已合并的 PR 有意改的：在仓库历史里找新字符串是哪个 commit 加的、哪个 PR 合进主线，合并时间落在两次审计之间就算有意，从发现里去掉",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "previous.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "current.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "findings.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "since",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "until",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "branch",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主线是哪个 ref（默认远端的默认分支，仓库不知道就用 HEAD）"
+        }
+      ]
+    },
+    {
+      "command": "seo record body",
+      "module": "seo",
+      "use": "body <result.json>",
+      "summary": "把全过的上线自查结果写成 issue 评论正文（给人看的表加隐藏的标记）；不是全过退出 1。用 dyna issues note 贴出去",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "result.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "merged",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "PR 的合并日期 YYYY-MM-DD"
+        },
+        {
+          "name": "pr",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "合并的 PR 号"
+        }
+      ]
+    },
+    {
+      "command": "seo record from-rollback",
+      "module": "seo",
+      "use": "from-rollback <docs> <issue>",
+      "summary": "这个 issue 是不是上线自查回滚后开的（正文带「由上线自查回滚而来」）：是的话再失败就是第二次，交给人",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "issue",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo record list",
+      "module": "seo",
+      "use": "list <docs>",
+      "summary": "读项目已关闭的 type:seo issue 评论里的上线记录，JSON：每个网址一行（issue、title、url、keyword、mergedOn、四项结果），按 issue 号从小到大",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "since",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只列这一天及以后合并的"
+        }
+      ]
+    },
+    {
+      "command": "seo scope",
+      "module": "seo",
+      "use": "scope <SEO.md>",
+      "summary": "判断一个 PR 是不是只改内容：改动的文件都落在 SEO.md「构建与检查」的「内容路径」里才算（可以不等人合并）；没有改动文件不算。退出 0 看 contentOnly",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "从仓库取：git diff --name-only --no-renames <ref>...HEAD（在当前目录跑）"
+        },
+        {
+          "name": "files",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "改动文件清单，一行一个路径；- 是标准输入"
+        }
+      ]
+    },
+    {
+      "command": "seo sync-context",
+      "module": "seo",
+      "use": "sync-context <SEO.md> <context.json>",
+      "summary": "把 SEO.md 的竞品和重点页面单向同步到 OpenSEO 项目上下文：打印 update_project_context 要用的 updates 和一句说明（updates 为空就是已一致）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "context.json",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo verify-live",
+      "module": "seo",
+      "use": "verify-live <SEO.md> <build-dir>",
+      "summary": "合并之后的上线自查：对 PR 描述里每个网址取线上页面，对照构建产物查四项（能打开、没有 noindex、title 与 description 同产物、在 sitemap 里）；退出 0 看 verdict（pass、fail、not-live）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "build-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "interval",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "--wait 每隔几秒取一遍"
+        },
+        {
+          "name": "max-wait",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "覆盖等多久（秒），给测试用；limitMinutes 仍是 SEO.md 的"
+        },
+        {
+          "name": "urls",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "网址清单：一行一个 `<网址> 目标词：<词>`；- 是标准输入"
+        },
+        {
+          "name": "wait",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "先等部署：每隔 --interval 秒取一遍，每页 title 和 description 都同产物才算上线；超过 SEO.md 的「上线等待」分钟还没上线就报 not-live，不算失败"
+        }
+      ]
+    },
+    {
       "command": "serve start",
       "module": "serve",
       "use": "start <目录>",
