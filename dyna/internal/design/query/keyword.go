@@ -6,7 +6,7 @@ import (
 	"unicode"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 var tier = map[string]int{"name": 3, "summary": 2, "body": 1}
@@ -14,7 +14,7 @@ var hitByTier = map[int]string{3: "name", 2: "summary", 1: "body"}
 var skipFields = map[string]bool{"type": true, "tags": true, "summary": true, "intent": true, "usedBy": true}
 
 // frontmatterText is every string value in a frontmatter object (skipping pure wikilinks and the descriptive fields).
-func frontmatterText(fm *miniyaml.Map) string {
+func frontmatterText(fm *frontmatter.Map) string {
 	var out []string
 	var walk func(v any)
 	walk = func(v any) {
@@ -27,7 +27,7 @@ func frontmatterText(fm *miniyaml.Map) string {
 			for _, e := range x {
 				walk(e)
 			}
-		case *miniyaml.Map:
+		case *frontmatter.Map:
 			for _, k := range x.Keys() {
 				walk(x.Get(k))
 			}
@@ -126,9 +126,9 @@ func snippet(txt, term string) string {
 
 type hit struct{ term, field string }
 
-func searchWith(a *archive.Archive, terms []string) []*miniyaml.Map {
+func searchWith(a *archive.Archive, terms []string) []*frontmatter.Map {
 	type found struct {
-		m     *miniyaml.Map
+		m     *frontmatter.Map
 		tier  int
 		count int
 		id    string
@@ -137,8 +137,8 @@ func searchWith(a *archive.Archive, terms []string) []*miniyaml.Map {
 	for _, o := range a.All() {
 		var parts []string
 		for _, k := range []string{"summary", "intent"} {
-			if v := o.FM.Get(k); miniyaml.Truthy(v) {
-				parts = append(parts, miniyaml.Text(v))
+			if v := o.FM.Get(k); frontmatter.Truthy(v) {
+				parts = append(parts, frontmatter.Text(v))
 			}
 		}
 		texts := map[string]string{
@@ -195,7 +195,7 @@ func searchWith(a *archive.Archive, terms []string) []*miniyaml.Map {
 		}
 		return x.id < y.id
 	})
-	out := make([]*miniyaml.Map, len(all))
+	out := make([]*frontmatter.Map, len(all))
 	for i, f := range all {
 		out[i] = f.m
 	}
@@ -206,7 +206,7 @@ func searchWith(a *archive.Archive, terms []string) []*miniyaml.Map {
 // the query, case-insensitively. Best position first — name, then summary, then body — and within a position the
 // object matching more of the words. A query with no spaces and long Chinese runs that matches nothing as written
 // is retried as overlapping two-character pieces (`expanded: true`).
-func Keyword(a *archive.Archive, txt string) (*miniyaml.Map, error) {
+func Keyword(a *archive.Archive, txt string) (*frontmatter.Map, error) {
 	var terms []string
 	seen := map[string]bool{}
 	for _, t := range strings.Fields(strings.TrimSpace(txt)) {

@@ -5,11 +5,11 @@ import (
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 func isPlain(v any) bool {
-	m, ok := v.(*miniyaml.Map)
+	m, ok := v.(*frontmatter.Map)
 	return ok && m != nil
 }
 
@@ -19,7 +19,7 @@ func isKeyedList(v any) bool {
 		return false
 	}
 	for _, x := range l {
-		m, ok := x.(*miniyaml.Map)
+		m, ok := x.(*frontmatter.Map)
 		if !ok || m == nil {
 			return false
 		}
@@ -34,8 +34,8 @@ func isKeyedList(v any) bool {
 // there (undef) is not the same as one that is null.
 func deepEqual(a, b any) bool {
 	switch x := a.(type) {
-	case *miniyaml.Map:
-		y, ok := b.(*miniyaml.Map)
+	case *frontmatter.Map:
+		y, ok := b.(*frontmatter.Map)
 		if !ok || x.Len() != y.Len() {
 			return false
 		}
@@ -62,7 +62,7 @@ func deepEqual(a, b any) bool {
 	case nil:
 		return b == nil
 	}
-	if _, isMap := b.(*miniyaml.Map); isMap {
+	if _, isMap := b.(*frontmatter.Map); isMap {
 		return false
 	}
 	if _, isList := b.([]any); isList {
@@ -85,11 +85,11 @@ func unlink(v any) any {
 			out[i] = unlink(e)
 		}
 		return out
-	case *miniyaml.Map:
+	case *frontmatter.Map:
 		if x == nil {
 			return v
 		}
-		out := miniyaml.NewMap()
+		out := frontmatter.NewMap()
 		for _, k := range x.Keys() {
 			out.Set(k, unlink(x.Get(k)))
 		}
@@ -100,7 +100,7 @@ func unlink(v any) any {
 
 var atomicPath = regexp.MustCompile(`^sections\[[^\]]+\]\.locate$`)
 
-func keyUnion(a, b *miniyaml.Map) []string {
+func keyUnion(a, b *frontmatter.Map) []string {
 	out := a.Keys()
 	seen := map[string]bool{}
 	for _, k := range out {
@@ -125,7 +125,7 @@ func diffFields(path string, a, b any, out *[]any) {
 	atomic := atomicPath.MatchString(path)
 	switch {
 	case isPlain(a) && isPlain(b) && !atomic:
-		ma, mb := a.(*miniyaml.Map), b.(*miniyaml.Map)
+		ma, mb := a.(*frontmatter.Map), b.(*frontmatter.Map)
 		for _, k := range keyUnion(ma, mb) {
 			p := k
 			if path != "" {
@@ -138,7 +138,7 @@ func diffFields(path string, a, b any, out *[]any) {
 			var ids []string
 			m := map[string]any{}
 			for _, x := range l {
-				id := x.(*miniyaml.Map).Get("id").(string)
+				id := x.(*frontmatter.Map).Get("id").(string)
 				if _, ok := m[id]; !ok {
 					ids = append(ids, id)
 				}
@@ -234,7 +234,7 @@ func diffSections(before, after string) []any {
 	return out
 }
 
-func objectView(o *archive.Object) *miniyaml.Map {
+func objectView(o *archive.Object) *frontmatter.Map {
 	return obj("id", o.ID, "kind", o.Kind, "summary", summaryOf(o), "file", o.File)
 }
 
@@ -242,7 +242,7 @@ func objectView(o *archive.Object) *miniyaml.Map {
 // objects; changed carry the frontmatter fields that differ (`fields`) and the body sections that do
 // (`sections`). A copy in `delta/` that equals the `prod/` object is not a change. Ids that `removed.md` lists
 // but `prod/` never had are `unknownRemoved`.
-func Diff(root, slug string) (*miniyaml.Map, error) {
+func Diff(root, slug string) (*frontmatter.Map, error) {
 	prod, err := archive.Load(root, archive.Options{})
 	if err != nil {
 		return nil, err

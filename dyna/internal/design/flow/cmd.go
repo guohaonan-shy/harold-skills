@@ -14,7 +14,7 @@ import (
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/jsx"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -183,13 +183,13 @@ func compose(cmd *cobra.Command, args []string) error {
 func statesJSON(states []StateRef) string {
 	list := make([]any, 0, len(states))
 	for _, s := range states {
-		m := miniyaml.NewMap()
+		m := frontmatter.NewMap()
 		m.Set("row", float64(s.Row))
 		m.Set("step", float64(s.Step))
 		m.Set("state", s.State)
 		m.Set("caption", s.Caption)
 		list = append(list, m)
 	}
-	text, _ := miniyaml.JSON(list, 2)
+	text, _ := frontmatter.JSON(list, 2)
 	return text
 }

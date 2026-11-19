@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/fixture"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 )
 
@@ -30,7 +30,7 @@ func J(s string) any {
 // plain turns values into maps, slices and float64 so reflect.DeepEqual can compare them.
 func plain(v any) any {
 	switch x := v.(type) {
-	case *miniyaml.Map:
+	case *frontmatter.Map:
 		out := map[string]any{}
 		for _, k := range x.Keys() {
 			if !isUndef(x.Get(k)) {

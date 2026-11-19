@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -178,13 +178,13 @@ func run(cmd *cobra.Command, args []string) error {
 		return &nexterr.Exit{Code: code, Msg: qe.Msg}
 	}
 	if entryName == "keyword" {
-		if m, ok := result.(*miniyaml.Map); ok {
+		if m, ok := result.(*frontmatter.Map); ok {
 			if matches, _ := m.Get("matches").([]any); len(matches) == 0 {
 				return &nexterr.Exit{Code: 1, Msg: fmt.Sprintf("没有对象匹配「%s」", m.Get("query"))}
 			}
 		}
 	}
-	out, err := miniyaml.JSON(result, 2)
+	out, err := frontmatter.JSON(result, 2)
 	if err != nil {
 		return err
 	}

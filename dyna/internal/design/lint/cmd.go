@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/jsx"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -87,7 +87,7 @@ func readReason(err error) string {
 func findingsJSON(all []Finding) string {
 	list := make([]any, 0, len(all))
 	for _, f := range all {
-		m := miniyaml.NewMap()
+		m := frontmatter.NewMap()
 		m.Set("file", f.File)
 		m.Set("id", f.ID)
 		m.Set("severity", f.Severity)
@@ -98,7 +98,7 @@ func findingsJSON(all []Finding) string {
 		}
 		list = append(list, m)
 	}
-	s, _ := miniyaml.JSON(list, 2)
+	s, _ := frontmatter.JSON(list, 2)
 	return s
 }
 

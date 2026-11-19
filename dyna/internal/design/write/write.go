@@ -41,7 +41,7 @@ import (
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/check"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // Where the archive and the requirements' scratch area live.
@@ -167,7 +167,7 @@ var (
 func cell(v any) string {
 	s := ""
 	if v != nil {
-		s = miniyaml.Text(v)
+		s = frontmatter.Text(v)
 	}
 	s = pipeRe.ReplaceAllString(s, `\|`)
 	s = newlineRe.ReplaceAllString(s, " ")
@@ -240,7 +240,7 @@ func RenderIndex(a *archive.Archive, existing *string) string {
 		touched := map[string]bool{}
 		for _, item := range asList(j.FM.Get("path")) {
 			var ref any = item
-			if m, ok := item.(*miniyaml.Map); ok {
+			if m, ok := item.(*frontmatter.Map); ok {
 				ref = m.Get("state")
 			} else if _, ok := item.([]any); ok {
 				ref = nil
@@ -769,7 +769,7 @@ func planArchive(root, slug string) (*planned, error) {
 	missingSetting := a.Index == nil
 	if !missingSetting {
 		for _, k := range []string{"viewport", "theme", "locale"} {
-			if !miniyaml.Truthy(a.Index.Get(k)) {
+			if !frontmatter.Truthy(a.Index.Get(k)) {
 				missingSetting = true
 			}
 		}

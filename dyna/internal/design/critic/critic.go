@@ -21,7 +21,7 @@ import (
 	"math"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/jsx"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // Kinds are what a gap asks for. Closed set; each routes to a different place in the loop.
@@ -51,7 +51,7 @@ func isInteger(v any) bool {
 }
 
 // ValidateFindings is one human-readable error per violation, none when the findings are well-formed. findings is a
-// value read from JSON (a []any of *miniyaml.Map).
+// value read from JSON (a []any of *frontmatter.Map).
 func ValidateFindings(findings any) []string {
 	list, ok := findings.([]any)
 	if !ok {
@@ -60,7 +60,7 @@ func ValidateFindings(findings any) []string {
 	errs := []string{}
 	for i, f := range list {
 		at := fmt.Sprintf("findings[%d]", i)
-		m, ok := f.(*miniyaml.Map)
+		m, ok := f.(*frontmatter.Map)
 		if !ok {
 			errs = append(errs, at+": must be an object")
 			continue
@@ -77,7 +77,7 @@ func ValidateFindings(findings any) []string {
 		}
 		if m.Has("kind") {
 			if s, isStr := m.Get("kind").(string); !isStr || !contains(Kinds, s) {
-				errs = append(errs, fmt.Sprintf("%s: kind \"%s\" is not one of %s", at, miniyaml.Text(m.Get("kind")), "direction / pattern / craft"))
+				errs = append(errs, fmt.Sprintf("%s: kind \"%s\" is not one of %s", at, frontmatter.Text(m.Get("kind")), "direction / pattern / craft"))
 			}
 		}
 		for _, field := range []string{"where", "detail", "why"} {
@@ -150,7 +150,7 @@ func CheckRound(findings any, scorePresent bool, score any, history any) Result 
 		return Result{Errors: errs}
 	}
 	for _, f := range findings.([]any) {
-		if f.(*miniyaml.Map).Get("kind") == "direction" {
+		if f.(*frontmatter.Map).Get("kind") == "direction" {
 			return Result{Valid: true, Errors: []string{}, Stop: "方向"}
 		}
 	}
@@ -176,7 +176,7 @@ func Render(r Result, file string, score any) string {
 		}
 		return joinLines(lines)
 	}
-	return "critic-round: 有效" + at + "\n  分数：" + miniyaml.Text(score) + "　停止判定：" + r.Stop
+	return "critic-round: 有效" + at + "\n  分数：" + frontmatter.Text(score) + "　停止判定：" + r.Stop
 }
 
 func joinLines(lines []string) string {

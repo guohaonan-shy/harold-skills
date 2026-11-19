@@ -26,8 +26,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/jsx"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -103,8 +103,8 @@ func RenderErrors(report any, path string) string {
 			continue
 		}
 		line := "- [" + text(f, "rule") + "]"
-		if p := prop(f, "path"); miniyaml.Truthy(p) {
-			line += " " + miniyaml.Text(p) + ":"
+		if p := prop(f, "path"); frontmatter.Truthy(p) {
+			line += " " + frontmatter.Text(p) + ":"
 		}
 		line += " " + text(f, "message")
 		lines = append(lines, line)
@@ -118,14 +118,14 @@ func RenderErrors(report any, path string) string {
 
 // text is `${f[k]}`: a missing key reads "undefined".
 func text(v any, k string) string {
-	if m, ok := miniyaml.AsMap(v); ok && m.Has(k) {
-		return miniyaml.Text(m.Get(k))
+	if m, ok := frontmatter.AsMap(v); ok && m.Has(k) {
+		return frontmatter.Text(m.Get(k))
 	}
 	return "undefined"
 }
 
 func prop(v any, k string) any {
-	if m, ok := miniyaml.AsMap(v); ok {
+	if m, ok := frontmatter.AsMap(v); ok {
 		return m.Get(k)
 	}
 	return nil

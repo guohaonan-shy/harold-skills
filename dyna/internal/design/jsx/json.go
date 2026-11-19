@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
-// ParseJSON reads one JSON document the way JSON.parse does, with objects as *miniyaml.Map (keys in the order
+// ParseJSON reads one JSON document the way JSON.parse does, with objects as *frontmatter.Map (keys in the order
 // written), arrays as []any, numbers as float64, and null as nil.
 func ParseJSON(data []byte) (any, error) {
 	dec := json.NewDecoder(bytes.NewReader(data))
@@ -40,7 +40,7 @@ func value(dec *json.Decoder) (any, error) {
 	}
 	switch d {
 	case '{':
-		m := miniyaml.NewMap()
+		m := frontmatter.NewMap()
 		for dec.More() {
 			kt, err := dec.Token()
 			if err != nil {
@@ -76,7 +76,7 @@ func value(dec *json.Decoder) (any, error) {
 
 // Stringify is JSON.stringify(v) for a value ParseJSON made, compact.
 func Stringify(v any) string {
-	s, err := miniyaml.JSON(v, 0)
+	s, err := frontmatter.JSON(v, 0)
 	if err != nil {
 		return "null"
 	}

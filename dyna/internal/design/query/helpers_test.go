@@ -11,7 +11,7 @@ import (
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/fixture"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 )
 
@@ -55,7 +55,7 @@ func jsonText(v any, err error) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return miniyaml.JSON(v, 2)
+	return frontmatter.JSON(v, 2)
 }
 
 func repoOf(t *testing.T, files fixture.Files) string {
@@ -70,7 +70,7 @@ func repoOf(t *testing.T, files fixture.Files) string {
 // norm turns a result into what its JSON says: maps, slices, strings, float64, bool, nil.
 func norm(t *testing.T, v any) any {
 	t.Helper()
-	s, err := miniyaml.JSON(v, 0)
+	s, err := frontmatter.JSON(v, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,8 +82,8 @@ func norm(t *testing.T, v any) any {
 }
 
 // okMap unwraps a result that must not be an error and normalises it: okMap(t)(Page(a, "x")).
-func okMap(t *testing.T) func(*miniyaml.Map, error) any {
-	return func(v *miniyaml.Map, err error) any {
+func okMap(t *testing.T) func(*frontmatter.Map, error) any {
+	return func(v *frontmatter.Map, err error) any {
 		t.Helper()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)

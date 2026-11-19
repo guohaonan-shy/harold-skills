@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // journeyStop is one item of a journey's `path`: `"[[state]]"` or `{ state, via }`.
@@ -18,7 +18,7 @@ func journeyPath(j *archive.Object) []journeyStop {
 	out := make([]journeyStop, len(items))
 	for i, item := range items {
 		switch x := item.(type) {
-		case *miniyaml.Map:
+		case *frontmatter.Map:
 			out[i] = journeyStop{state: wikilinkOrText(fmGet(x, "state")), via: nn(fmGet(x, "via"))}
 		case []any:
 			out[i] = journeyStop{state: "undefined"}
@@ -45,7 +45,7 @@ func decisionsAndCandidates(o *archive.Object) (decisions, candidates []any) {
 // Page is a page: its object, regions (area → component), the components and motions it uses (with every page
 // that uses each), every state with the edges leaving and entering it, the journeys that pass through it, and the
 // decisions and candidates of the page and of what it uses, each tagged `of`.
-func Page(a *archive.Archive, name string) (*miniyaml.Map, error) {
+func Page(a *archive.Archive, name string) (*frontmatter.Map, error) {
 	page, err := need(a, name, "page")
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func Page(a *archive.Archive, name string) (*miniyaml.Map, error) {
 	for _, s := range sortObjects(archive.StatesOfPage(a, page.ID)) {
 		var entry any
 		if archive.IsEntry(s) {
-			e, _ := s.FM.Get("entry").(*miniyaml.Map)
+			e, _ := s.FM.Get("entry").(*frontmatter.Map)
 			entry = obj("url", fmGet(e, "url"), "preconditions", nn(fmGet(e, "preconditions")))
 		}
 		m := obj(
@@ -149,7 +149,7 @@ func Page(a *archive.Archive, name string) (*miniyaml.Map, error) {
 			"outgoing", edgeViews(a, archive.OutgoingEdges(a, s.ID)),
 			"incoming", edgeViews(a, archive.IncomingEdges(a, s.ID)),
 		)
-		if sec := fmGet(s.FM, "section"); miniyaml.Truthy(sec) && sec != undef {
+		if sec := fmGet(s.FM, "section"); frontmatter.Truthy(sec) && sec != undef {
 			m.Set("section", text(sec))
 		}
 		states = append(states, m)
@@ -178,7 +178,7 @@ func Page(a *archive.Archive, name string) (*miniyaml.Map, error) {
 }
 
 // State is a state: its way in (`enter`), what to see there, the screen's description and screenshot paths.
-func State(a *archive.Archive, name string) (*miniyaml.Map, error) {
+func State(a *archive.Archive, name string) (*frontmatter.Map, error) {
 	state, err := need(a, name, "state")
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func State(a *archive.Archive, name string) (*miniyaml.Map, error) {
 	if err != nil {
 		return nil, err
 	}
-	enter := miniyaml.NewMap()
+	enter := frontmatter.NewMap()
 	for _, k := range full.Keys() {
 		if k != "shouldSee" {
 			enter.Set(k, full.Get(k))
@@ -236,7 +236,7 @@ func journeySteps(a *archive.Archive, j *archive.Object) []journeyStep {
 				}
 			}
 			var chosen *archive.Edge
-			if miniyaml.Truthy(prev.via) {
+			if frontmatter.Truthy(prev.via) {
 				for k := range between {
 					if v, ok := prev.via.(string); ok && between[k].HasID && between[k].ID == v {
 						chosen = &between[k]
@@ -250,7 +250,7 @@ func journeySteps(a *archive.Archive, j *archive.Object) []journeyStep {
 				step.noEdge = true
 			} else {
 				step.edge = chosen
-				if !miniyaml.Truthy(prev.via) && len(between) > 1 {
+				if !frontmatter.Truthy(prev.via) && len(between) > 1 {
 					for _, e := range between {
 						step.ambiguous = append(step.ambiguous, e.ID)
 					}
@@ -263,7 +263,7 @@ func journeySteps(a *archive.Archive, j *archive.Object) []journeyStep {
 }
 
 // Journey is a journey: its intent, how its first state is entered (`start`), and every step in order.
-func Journey(a *archive.Archive, name string) (*miniyaml.Map, error) {
+func Journey(a *archive.Archive, name string) (*frontmatter.Map, error) {
 	journey, err := need(a, name, "journey")
 	if err != nil {
 		return nil, err

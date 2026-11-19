@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -57,7 +57,7 @@ func Command() *cobra.Command {
 }
 
 func resultJSON(r Result) string {
-	m := miniyaml.NewMap()
+	m := frontmatter.NewMap()
 	m.Set("valid", r.Valid)
 	errs := make([]any, len(r.Errors))
 	for i, e := range r.Errors {
@@ -74,6 +74,6 @@ func resultJSON(r Result) string {
 	} else {
 		m.Set("level", float64(r.Level))
 	}
-	s, _ := miniyaml.JSON(m, 2)
+	s, _ := frontmatter.JSON(m, 2)
 	return strings.TrimRight(s, "\n")
 }

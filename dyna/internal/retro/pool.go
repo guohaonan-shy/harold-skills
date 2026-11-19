@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/gitrun"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/jsstr"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
 )
 
 // `retro` puts a rule candidate the human approved but did not yet send into a skill into a pool
@@ -82,9 +82,9 @@ func occurrenceLines(body string) ([]string, bool) {
 // splitFrontmatter splits `---\n<yaml>\n---\n<body>` and reads the title. problem is what is wrong with the
 // frontmatter itself ("" when nothing); title is nil when there is none or it is not a string.
 func splitFrontmatter(md string) (title *string, body string, problem string) {
-	sp := miniyaml.SplitFrontmatter(md)
+	sp := frontmatter.Split(md)
 	if sp.FM != nil {
-		if t, ok := miniyaml.AsString(sp.FM.Get("title")); ok {
+		if t, ok := frontmatter.AsString(sp.FM.Get("title")); ok {
 			if trimmed := jsstr.Trim(t); trimmed != "" {
 				title = &trimmed
 			}

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 var sourceExts = []string{".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".json", ".css", ".scss", ".sass", ".less", ".vue", ".svelte"}
@@ -90,7 +90,7 @@ func readCode(root, file string) string {
 // `matched` is one entry per (object, file): `rule: 'code'`, or `rule: 'import'` with `via`, the registered code
 // file that imports it. `states` carry `via`: the ids of the pages / components that put them in. `totalStates` is
 // how many states the archive has, so a caller can say "n of m".
-func AffectedByFiles(a *archive.Archive, files []string, codeRoot string) *miniyaml.Map {
+func AffectedByFiles(a *archive.Archive, files []string, codeRoot string) *frontmatter.Map {
 	m := affectedByFiles(a, files, codeRoot)
 	return obj("matched", m.matched, "states", m.states, "totalStates", float64(m.total))
 }
@@ -187,7 +187,7 @@ func affectedByFiles(a *archive.Archive, files []string, codeRoot string) affect
 		// page that lays it out as a region
 		if refs, err := Refs(a, comp.ID); err == nil {
 			for _, s := range asList(refs.Get("states")) {
-				put(s.(*miniyaml.Map).Get("id").(string), comp.ID)
+				put(s.(*frontmatter.Map).Get("id").(string), comp.ID)
 			}
 		}
 		for _, p := range regionPages(comp.ID) {
@@ -218,7 +218,7 @@ func gitRun(codeRoot string, args ...string) (string, string, error) {
 // AffectedByFiles. `since` is anything git resolves to a commit — a sha, a branch, `HEAD~3`; the answer carries
 // the full sha it resolved to (`commit`) and how many files changed. The code lives in the code repository
 // (codeRoot), which is not where the archive is once the archive is in home; empty means the archive's root.
-func Affected(a *archive.Archive, since, codeRoot string) (*miniyaml.Map, error) {
+func Affected(a *archive.Archive, since, codeRoot string) (*frontmatter.Map, error) {
 	rev := strings.TrimSpace(since)
 	if rev == "" {
 		return nil, qerrCode("提交是空的", "usage")

@@ -14,7 +14,7 @@
 //
 // Pure apart from reading files: no clock, no network, no model.
 //
-// Frontmatter values are untyped (miniyaml: nil, bool, float64, string, []any, *Map). Where the archive treats
+// Frontmatter values are untyped (frontmatter: nil, bool, float64, string, []any, *Map). Where the archive treats
 // "absent" and "null" the same, a text field here is the empty string for both.
 package archive
 
@@ -27,7 +27,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // TypeKinds maps a frontmatter `type` to the kind of object, in the order the messages list them.
@@ -144,7 +144,7 @@ func RefsIn(value any, path string) []FieldRef {
 			out = append(out, RefsIn(v, fmt.Sprintf("%s[%d]", path, i))...)
 		}
 		return out
-	case *miniyaml.Map:
+	case *frontmatter.Map:
 		var out []FieldRef
 		for _, k := range x.Keys() {
 			p := k
@@ -445,7 +445,7 @@ type Object struct {
 	Type   string
 	File   string // path from the repository root, forward slashes
 	Source string // "prod" or "delta"
-	FM     *miniyaml.Map
+	FM     *frontmatter.Map
 	Body   string
 }
 
@@ -460,7 +460,7 @@ func readObject(root, abs, source string, problems *[]Problem) *Object {
 	file := Posix(rel)
 	id := strings.TrimSuffix(filepath.Base(abs), ".md")
 	b, _ := os.ReadFile(abs)
-	sp := miniyaml.SplitFrontmatter(string(b))
+	sp := frontmatter.Split(string(b))
 	if sp.Error != "" {
 		*problems = append(*problems, Problem{File: file, Message: "frontmatter 读不出来：" + sp.Error})
 		return nil
@@ -474,7 +474,7 @@ func readObject(root, abs, source string, problems *[]Problem) *Object {
 	if kind == "" {
 		shown := "缺失"
 		if t != nil {
-			shown = miniyaml.Text(t)
+			shown = frontmatter.Text(t)
 		}
 		var types []string
 		for _, tk := range TypeKinds {
@@ -560,7 +560,7 @@ func nonNullText(v any) string {
 	if v == nil {
 		return ""
 	}
-	return miniyaml.Text(v)
+	return frontmatter.Text(v)
 }
 
 func targetOrText(v any) string {
@@ -570,16 +570,16 @@ func targetOrText(v any) string {
 	if t, ok := WikilinkTarget(v); ok {
 		return t
 	}
-	return miniyaml.Text(v)
+	return frontmatter.Text(v)
 }
 
 func normalizeEdges(state *Object) []Edge {
 	raw, _ := state.FM.Get("edges").([]any)
 	out := make([]Edge, 0, len(raw))
 	for index, e := range raw {
-		edge, isMap := e.(*miniyaml.Map)
+		edge, isMap := e.(*frontmatter.Map)
 		if !isMap || edge == nil {
-			edge = miniyaml.NewMap()
+			edge = frontmatter.NewMap()
 		}
 		to, _ := WikilinkTarget(edge.Get("to"))
 		out = append(out, Edge{
@@ -643,7 +643,7 @@ type Archive struct {
 	Refs       []Ref               // every wikilink in an object
 	Files      map[string][]string // basename -> paths in docs/ (md without extension, assets with it)
 	Duplicates []Duplicate         // object ids that more than one file claims, in the order they were first claimed
-	Index      *miniyaml.Map       // prod/index.md frontmatter (viewport / theme / locale / motion / workspaces); nil when none
+	Index      *frontmatter.Map    // prod/index.md frontmatter (viewport / theme / locale / motion / workspaces); nil when none
 	Problems   []Problem           // files that could not be read as objects
 	Legacy     []string            // docs/design/ entries other than tmp, prod, index.md
 	Delta      *DeltaInfo
@@ -813,7 +813,7 @@ func Load(root string, opts Options) (*Archive, error) {
 	}
 
 	if b, err := os.ReadFile(filepath.Join(prodDir, "index.md")); err == nil {
-		a.Index = miniyaml.SplitFrontmatter(string(b)).FM
+		a.Index = frontmatter.Split(string(b)).FM
 	}
 	return a, nil
 }
@@ -925,7 +925,7 @@ type SectionBy struct {
 
 // SectionLocate reads a section's `locate`; nil for any other shape.
 func SectionLocate(locate any) *SectionBy {
-	m, ok := miniyaml.AsMap(locate)
+	m, ok := frontmatter.AsMap(locate)
 	if !ok {
 		return nil
 	}
@@ -943,7 +943,7 @@ func SectionLocate(locate any) *SectionBy {
 			return &SectionBy{Kind: "landmark", Role: role}
 		}
 	case "position":
-		if p := m.Get("position"); miniyaml.IsInteger(p) && p.(float64) >= 1 {
+		if p := m.Get("position"); frontmatter.IsInteger(p) && p.(float64) >= 1 {
 			return &SectionBy{Kind: "position", Position: int(p.(float64))}
 		}
 	}
@@ -974,14 +974,14 @@ func SectionsOfState(state *Object) []StateSection {
 	}
 	out := make([]StateSection, 0, len(raw))
 	for index, item := range raw {
-		it, ok := item.(*miniyaml.Map)
+		it, ok := item.(*frontmatter.Map)
 		if !ok || it == nil {
-			it = miniyaml.NewMap()
+			it = frontmatter.NewMap()
 		}
 		s := StateSection{Index: index, Locate: it.Get("locate"), By: SectionLocate(it.Get("locate")), ScrollDriven: it.Get("scrollDriven"), ScrollDrivenSet: it.Has("scrollDriven"), State: state.ID}
 		if idv := it.Get("id"); idv != nil {
 			s.HasID = true
-			s.ID = miniyaml.Text(idv)
+			s.ID = frontmatter.Text(idv)
 			p := ParseSectionID(s.ID)
 			s.Type, s.Qualifier, s.IDError = p.Type, p.Qualifier, p.Error
 		} else {
@@ -1061,7 +1061,7 @@ func IncomingEdges(a *Archive, stateID string) []Edge {
 
 // IsEntry says whether a state is an entry state (it has an `entry` mapping).
 func IsEntry(state *Object) bool {
-	m, ok := state.FM.Get("entry").(*miniyaml.Map)
+	m, ok := state.FM.Get("entry").(*frontmatter.Map)
 	return ok && m != nil
 }
 
@@ -1104,7 +1104,7 @@ func ComputeUsedBy(a *Archive) UsedBy {
 	}
 	for _, page := range ObjectsOfKind(a, "page") {
 		for _, region := range asList(page.FM.Get("regions")) {
-			rm, _ := region.(*miniyaml.Map)
+			rm, _ := region.(*frontmatter.Map)
 			t, _ := WikilinkTarget(rm.Get("component"))
 			add(components, t, page.ID)
 		}

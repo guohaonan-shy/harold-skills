@@ -34,7 +34,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // Rules names each rule by its number.
@@ -59,8 +59,8 @@ type Violation struct {
 }
 
 // Map is the violation as the JSON the command prints: rule, file, field (null when empty), message.
-func (v Violation) Map() *miniyaml.Map {
-	m := miniyaml.NewMap()
+func (v Violation) Map() *frontmatter.Map {
+	m := frontmatter.NewMap()
 	m.Set("rule", v.Rule)
 	m.Set("file", v.File)
 	if v.Field == "" {
@@ -159,7 +159,7 @@ func asList(v any) []any {
 
 // get reads a field of a value that may or may not be a mapping.
 func get(v any, key string) any {
-	if m, ok := v.(*miniyaml.Map); ok {
+	if m, ok := v.(*frontmatter.Map); ok {
 		return m.Get(key)
 	}
 	return nil
@@ -167,7 +167,7 @@ func get(v any, key string) any {
 
 func isObject(v any) bool { // a mapping or a list: what the rules' `typeof v === 'object'` lets through (not null)
 	switch v.(type) {
-	case *miniyaml.Map, []any:
+	case *frontmatter.Map, []any:
 		return true
 	}
 	return false
@@ -272,7 +272,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 		if !s.FM.Has("async") {
 			continue
 		}
-		am, ok := s.FM.Get("async").(*miniyaml.Map)
+		am, ok := s.FM.Get("async").(*frontmatter.Map)
 		if !ok {
 			c.v(2, s.File, "async", "async 必须是 loading / failure / empty 三项的映射")
 			continue
@@ -288,7 +288,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 			}
 			t, ok := archive.WikilinkTarget(val)
 			if !ok {
-				c.v(2, s.File, "async."+key, fmt.Sprintf("「%s」既不是状态的引用也不是「不适用」", miniyaml.Text(val)))
+				c.v(2, s.File, "async."+key, fmt.Sprintf("「%s」既不是状态的引用也不是「不适用」", frontmatter.Text(val)))
 			} else if o := a.Objects[t]; o == nil || o.Kind != "state" {
 				c.v(2, s.File, "async."+key, fmt.Sprintf("[[%s]] 不是档案里的状态", t))
 			}
@@ -327,7 +327,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 			}
 			t, ok := archive.WikilinkTarget(item)
 			if !ok {
-				c.v(3, o.File, path, fmt.Sprintf("「%s」要写成指向%s的 wikilink（\"[[名字]]\"）", miniyaml.Text(item), want))
+				c.v(3, o.File, path, fmt.Sprintf("「%s」要写成指向%s的 wikilink（\"[[名字]]\"）", frontmatter.Text(item), want))
 				continue
 			}
 			if !archive.Resolves(a, t) {
@@ -360,7 +360,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 		if o.Kind == "journey" {
 			for i, item := range asList(o.FM.Get("path")) {
 				var v any = item
-				if m, ok := item.(*miniyaml.Map); ok {
+				if m, ok := item.(*frontmatter.Map); ok {
 					v = m.Get("state")
 				} else if _, ok := item.([]any); ok {
 					v = nil
@@ -395,11 +395,11 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 	for _, j := range archive.ObjectsOfKind(a, "journey") {
 		var steps []step
 		for _, item := range asList(j.FM.Get("path")) {
-			if m, ok := item.(*miniyaml.Map); ok {
+			if m, ok := item.(*frontmatter.Map); ok {
 				st, _ := archive.WikilinkTarget(m.Get("state"))
 				s := step{state: st}
 				if via := m.Get("via"); via != nil {
-					s.via, s.hasVia = miniyaml.Text(via), true
+					s.via, s.hasVia = frontmatter.Text(via), true
 				}
 				steps = append(steps, s)
 			} else {
@@ -529,7 +529,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 				continue
 			}
 			literals = append(literals, k)
-			values = append(values, miniyaml.Text(v))
+			values = append(values, frontmatter.Text(v))
 		}
 		if len(literals) > 0 && !filled(m.FM.Get("deviates")) {
 			c.v(6, m.File, "deviates", fmt.Sprintf("%s 写的是字面值（%s），要用 {token} 引用，或者写 deviates 说明为什么偏离", strings.Join(literals, "、"), strings.Join(values, "、")))
@@ -557,7 +557,7 @@ func Archive(a *archive.Archive, opts Options) ([]Violation, error) {
 				for _, x := range list {
 					t, ok := archive.WikilinkTarget(x)
 					if !ok {
-						t = miniyaml.Text(x)
+						t = frontmatter.Text(x)
 					}
 					if !haveSet[t] {
 						haveSet[t] = true
@@ -654,7 +654,7 @@ func shotRules(a *archive.Archive, c *collector) {
 				if e.HasID {
 					eid = e.ID
 				}
-				shown, _ := miniyaml.JSON(e.Shot, 0)
+				shown, _ := frontmatter.JSON(e.Shot, 0)
 				c.v(8, s.File, field, fmt.Sprintf("shot 写法不对，应为 %s（如 %s@%s.png），现在是 %s", form, s.ID, eid, shown))
 			case !strings.HasPrefix(shot, s.ID+"@"):
 				c.v(8, s.File, field, fmt.Sprintf("shot「%s」的前半要是出发状态 %s（%s），补拍图放在出发状态自己的 assets/ 里", shot, s.ID, form))
@@ -687,7 +687,7 @@ var wholeWikilink = regexp.MustCompile(`^\s*\[\[.*\]\]\s*$`)
 func badSectionRef(raw any, wantPage string, declared []archive.StateSection, what string) string {
 	s, ok := raw.(string)
 	if !ok {
-		shown, _ := miniyaml.JSON(raw, 0)
+		shown, _ := frontmatter.JSON(raw, 0)
 		return fmt.Sprintf("%s要写成 <页面>#<段> 的普通字符串（现在是 %s）", what, shown)
 	}
 	page := nullable(wantPage)
@@ -760,7 +760,7 @@ func sectionRules(a *archive.Archive, c *collector) {
 				c.v(7, s.File, at+".locate", "locate 只能是 { role: heading, name: <完整标题> }、{ role: banner } / { role: contentinfo }、{ position: N } 三种之一")
 			}
 			if x.ScrollDrivenSet && x.ScrollDriven != true {
-				shown, _ := miniyaml.JSON(x.ScrollDriven, 0)
+				shown, _ := frontmatter.JSON(x.ScrollDriven, 0)
 				c.v(7, s.File, at+".scrollDriven", fmt.Sprintf("scrollDriven 只能写 true（现在是 %s）：不是滚动驱动的段不写这个字段", shown))
 			}
 		}
@@ -876,7 +876,7 @@ func structure(o *archive.Object, c *collector) {
 			c.v(0, o.File, "regions", "页面缺 regions（区域 → 组件的列表）")
 		} else {
 			for i, r := range regions {
-				m, isMap := r.(*miniyaml.Map)
+				m, isMap := r.(*frontmatter.Map)
 				if !isMap || !filled(m.Get("name")) || !filled(m.Get("component")) {
 					c.v(0, o.File, fmt.Sprintf("regions[%d]", i), "每个区域要有 name 和 component")
 				}
@@ -908,7 +908,7 @@ func structure(o *archive.Object, c *collector) {
 		c.v(0, o.File, "page", "状态缺 page")
 	}
 	if f.Has("entry") {
-		em, ok := f.Get("entry").(*miniyaml.Map)
+		em, ok := f.Get("entry").(*frontmatter.Map)
 		if !ok || !filled(em.Get("url")) {
 			c.v(0, o.File, "entry", "入口节点的 entry 要有 url（和 preconditions）")
 		}
@@ -921,7 +921,7 @@ func structure(o *archive.Object, c *collector) {
 	seen := map[string]bool{}
 	for i, item := range asList(f.Get("edges")) {
 		at := fmt.Sprintf("edges[%d]", i)
-		e, ok := item.(*miniyaml.Map)
+		e, ok := item.(*frontmatter.Map)
 		if !ok {
 			c.v(0, o.File, at, "每条边是一个映射")
 			continue
@@ -929,10 +929,10 @@ func structure(o *archive.Object, c *collector) {
 		switch {
 		case !filled(e.Get("id")):
 			c.v(0, o.File, at, "边缺 id（在本状态内唯一）")
-		case seen[miniyaml.Text(e.Get("id"))]:
-			c.v(0, o.File, at, fmt.Sprintf("边 id「%s」在本状态内重复", miniyaml.Text(e.Get("id"))))
+		case seen[frontmatter.Text(e.Get("id"))]:
+			c.v(0, o.File, at, fmt.Sprintf("边 id「%s」在本状态内重复", frontmatter.Text(e.Get("id"))))
 		default:
-			seen[miniyaml.Text(e.Get("id"))] = true
+			seen[frontmatter.Text(e.Get("id"))] = true
 		}
 		if !filled(e.Get("to")) {
 			c.v(0, o.File, at+".to", "边缺 to（目标状态）")
@@ -946,13 +946,13 @@ func structure(o *archive.Object, c *collector) {
 		if kind != "user" && kind != "system" {
 			shown := "缺失"
 			if kind != nil {
-				shown = miniyaml.Text(kind)
+				shown = frontmatter.Text(kind)
 			}
 			c.v(0, o.File, at+".kind", fmt.Sprintf("边的 kind 只能是 user 或 system（现在是 %s）", shown))
 			continue
 		}
 		if b := e.Get("blocked"); b != nil && b != false {
-			bm, ok := b.(*miniyaml.Map)
+			bm, ok := b.(*frontmatter.Map)
 			tried, isList := (any)(nil), false
 			if ok {
 				tried = bm.Get("tried")
@@ -980,7 +980,7 @@ func structure(o *archive.Object, c *collector) {
 
 // edgeLocateOK: an edge's `locate` is `{ role, name }`, or — when the element cannot be found by role — `{ text }` alone.
 func edgeLocateOK(locate any) bool {
-	m, ok := locate.(*miniyaml.Map)
+	m, ok := locate.(*frontmatter.Map)
 	if !ok {
 		return false
 	}

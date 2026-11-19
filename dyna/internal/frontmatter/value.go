@@ -1,4 +1,4 @@
-package miniyaml
+package frontmatter
 
 import (
 	"bytes"

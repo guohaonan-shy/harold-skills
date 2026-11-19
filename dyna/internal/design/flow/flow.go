@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/jsx"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 func isNum(v any) bool {
@@ -53,7 +53,7 @@ func isInt(v any) bool {
 // get reads a property of a JSON value the way `v.k` would: a mapping has it or not (present says which), anything
 // else has no properties.
 func get(v any, k string) (val any, present bool) {
-	if m, ok := v.(*miniyaml.Map); ok && m.Has(k) {
+	if m, ok := v.(*frontmatter.Map); ok && m.Has(k) {
 		return m.Get(k), true
 	}
 	return nil, false
@@ -69,7 +69,7 @@ func prop(v any, k string) any { x, _ := get(v, k); return x }
 func Check(flow any, exists func(string) bool, hasState func(string) bool) []string {
 	var errs []string
 	switch flow.(type) {
-	case *miniyaml.Map, []any:
+	case *frontmatter.Map, []any:
 	default:
 		return []string{"flow 不是一个对象"}
 	}

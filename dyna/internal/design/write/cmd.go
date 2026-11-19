@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/check"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -26,8 +26,8 @@ func strs(xs []string) []any {
 }
 
 // JSON is the result as the JSON the command prints.
-func (r Result) JSON() *miniyaml.Map {
-	m := miniyaml.NewMap()
+func (r Result) JSON() *frontmatter.Map {
+	m := frontmatter.NewMap()
 	m.Set("ok", r.OK)
 	if !r.OK {
 		m.Set("stage", r.Stage)
@@ -40,7 +40,7 @@ func (r Result) JSON() *miniyaml.Map {
 		return m
 	}
 	m.Set("dryRun", r.DryRun)
-	s := miniyaml.NewMap()
+	s := frontmatter.NewMap()
 	s.Set("slug", r.Summary.Slug)
 	s.Set("added", strs(r.Summary.Added))
 	s.Set("changed", strs(r.Summary.Changed))
@@ -48,7 +48,7 @@ func (r Result) JSON() *miniyaml.Map {
 	s.Set("usedBy", strs(r.Summary.UsedBy))
 	figures := []any{}
 	for _, f := range r.Summary.Figures {
-		fm := miniyaml.NewMap()
+		fm := frontmatter.NewMap()
 		fm.Set("from", f.From)
 		fm.Set("to", f.To)
 		fm.Set("page", f.Page)
@@ -58,7 +58,7 @@ func (r Result) JSON() *miniyaml.Map {
 	s.Set("figures", figures)
 	specLinks := []any{}
 	for _, l := range r.Summary.SpecLinks {
-		lm := miniyaml.NewMap()
+		lm := frontmatter.NewMap()
 		lm.Set("file", l.File)
 		lm.Set("from", l.From)
 		lm.Set("to", l.To)
@@ -68,7 +68,7 @@ func (r Result) JSON() *miniyaml.Map {
 	m.Set("summary", s)
 	hints := []any{}
 	for _, h := range r.Hints {
-		hm := miniyaml.NewMap()
+		hm := frontmatter.NewMap()
 		hm.Set("kind", h.Kind)
 		hm.Set("message", h.Message)
 		hints = append(hints, hm)
@@ -180,7 +180,7 @@ func Command() *cobra.Command {
 		}
 		out := cmd.OutOrStdout()
 		if asJSON {
-			text, err := miniyaml.JSON(res.JSON(), 2)
+			text, err := frontmatter.JSON(res.JSON(), 2)
 			if err != nil {
 				return err
 			}

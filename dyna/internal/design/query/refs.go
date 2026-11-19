@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 var sectionRefRe = regexp.MustCompile(`^[^#]+#[^#]+$`)
@@ -22,7 +22,7 @@ func sectionTypeList() string {
 // Refs is who refers to a component (given by name or by code path) or to a motion: the edges that go through
 // it, the states that list it or have such an edge (`via`: components / motions / edges), the journeys whose
 // steps use it, and every page that uses it. `<page>#<section>` and `#<type>` ask about sections instead.
-func Refs(a *archive.Archive, name string) (*miniyaml.Map, error) {
+func Refs(a *archive.Archive, name string) (*frontmatter.Map, error) {
 	key := normalizeCode(name)
 	if strings.HasPrefix(key, "#") {
 		return refsOfSectionType(a, key[1:])
@@ -120,7 +120,7 @@ func Refs(a *archive.Archive, name string) (*miniyaml.Map, error) {
 	}
 	journeys = sortObjects(journeys)
 
-	states := make([]*miniyaml.Map, 0, len(viaOf))
+	states := make([]*frontmatter.Map, 0, len(viaOf))
 	for _, v := range viaOf {
 		states = append(states, obj("id", v.id, "page", nilIf(archive.PageOfState(a.Objects[v.id])), "via", strList(v.via)))
 	}
@@ -154,7 +154,7 @@ func journeyRefs(journeys []*archive.Object) []any {
 }
 
 // refsOfSectionType is `#<type>`: every section of that type on every page.
-func refsOfSectionType(a *archive.Archive, typ string) (*miniyaml.Map, error) {
+func refsOfSectionType(a *archive.Archive, typ string) (*frontmatter.Map, error) {
 	known := false
 	for _, t := range archive.SectionTypes {
 		if t.Name == typ {
@@ -196,7 +196,7 @@ func refsOfSectionType(a *archive.Archive, typ string) (*miniyaml.Map, error) {
 }
 
 // refsOfSection is `<page>#<section>`: what leaves it, lands on it, happens inside it, and the journeys through those.
-func refsOfSection(a *archive.Archive, ref string) (*miniyaml.Map, error) {
+func refsOfSection(a *archive.Archive, ref string) (*frontmatter.Map, error) {
 	parts := strings.Split(ref, "#")
 	pageID, id := parts[0], parts[1]
 	if _, err := need(a, pageID, "page"); err != nil {

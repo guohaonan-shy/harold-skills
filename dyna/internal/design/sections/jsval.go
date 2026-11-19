@@ -8,7 +8,7 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // The measurement, the attribution and the configs are loosely shaped data that flows straight through to the
@@ -16,7 +16,7 @@ import (
 // and says "absent" with Undefined, which is what leaves a key out of the printed JSON.
 
 // Obj is an ordered mapping.
-type Obj = *miniyaml.Map
+type Obj = *frontmatter.Map
 
 type undefinedT struct{}
 
@@ -27,7 +27,7 @@ func isUndef(v any) bool { _, ok := v.(undefinedT); return ok }
 
 // O builds an ordered mapping from key, value pairs.
 func O(kv ...any) Obj {
-	m := miniyaml.NewMap()
+	m := frontmatter.NewMap()
 	for i := 0; i+1 < len(kv); i += 2 {
 		m.Set(kv[i].(string), kv[i+1])
 	}
@@ -36,7 +36,7 @@ func O(kv ...any) Obj {
 
 // get reads a key; anything that is not a mapping, or a missing key, is Undefined (so a chain of reads never panics).
 func get(v any, key string) any {
-	m, ok := v.(*miniyaml.Map)
+	m, ok := v.(*frontmatter.Map)
 	if !ok || m == nil || !m.Has(key) {
 		return Undefined
 	}
@@ -62,7 +62,7 @@ func truthy(v any) bool {
 	if isUndef(v) {
 		return false
 	}
-	return miniyaml.Truthy(v)
+	return frontmatter.Truthy(v)
 }
 
 // num is the number a value stands for in a comparison (NaN for what is not one).
@@ -104,7 +104,7 @@ func text(v any) string {
 	if isUndef(v) {
 		return "undefined"
 	}
-	return miniyaml.Text(v)
+	return frontmatter.Text(v)
 }
 
 // strictEq is `a === b` for the values this package holds.
@@ -241,7 +241,7 @@ func writeJSON(b *strings.Builder, v any, indent, depth int) {
 		}
 		nl(depth)
 		b.WriteByte(']')
-	case *miniyaml.Map:
+	case *frontmatter.Map:
 		var keys []string
 		for _, k := range x.Keys() {
 			if !isUndef(x.Get(k)) {
@@ -497,7 +497,7 @@ func (p *jsonParser) array() any {
 
 func (p *jsonParser) object() any {
 	p.i++
-	out := miniyaml.NewMap()
+	out := frontmatter.NewMap()
 	p.ws()
 	if p.i < len(p.s) && p.s[p.i] == '}' {
 		p.i++

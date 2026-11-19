@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -74,7 +74,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		return usageError(err.Error())
 	}
 	if asJSON {
-		m := miniyaml.NewMap()
+		m := frontmatter.NewMap()
 		m.Set("ok", len(res.Violations) == 0)
 		m.Set("violations", ViolationsJSON(res.Violations))
 		notes := make([]any, len(res.Notes))
@@ -83,7 +83,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		}
 		m.Set("notes", notes)
 		m.Set("objects", len(res.Archive.Objects))
-		text, err := miniyaml.JSON(m, 2)
+		text, err := frontmatter.JSON(m, 2)
 		if err != nil {
 			return err
 		}

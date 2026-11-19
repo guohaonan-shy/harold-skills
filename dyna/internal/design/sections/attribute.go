@@ -6,11 +6,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 func clone(m Obj) Obj {
-	out := miniyaml.NewMap()
+	out := frontmatter.NewMap()
 	for _, k := range m.Keys() {
 		out.Set(k, m.Get(k))
 	}

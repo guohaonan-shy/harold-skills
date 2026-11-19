@@ -29,8 +29,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/query"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
 
@@ -59,12 +59,12 @@ func (t tool) argDescription() string {
 	return ""
 }
 
-func (t tool) inputSchema() *miniyaml.Map {
-	props := miniyaml.NewMap()
+func (t tool) inputSchema() *frontmatter.Map {
+	props := frontmatter.NewMap()
 	for _, p := range append(append([]prop{}, t.properties...), prop{"project", projectDescription}) {
 		props.Set(p.name, strObj(p.description))
 	}
-	m := miniyaml.NewMap()
+	m := frontmatter.NewMap()
 	m.Set("type", "object")
 	m.Set("properties", props)
 	m.Set("required", []any{t.arg})
@@ -72,8 +72,8 @@ func (t tool) inputSchema() *miniyaml.Map {
 	return m
 }
 
-func strObj(description string) *miniyaml.Map {
-	m := miniyaml.NewMap()
+func strObj(description string) *frontmatter.Map {
+	m := frontmatter.NewMap()
 	m.Set("type", "string")
 	m.Set("description", description)
 	return m
@@ -140,7 +140,7 @@ func toolNamed(name string) *tool {
 func listing() []any {
 	out := make([]any, len(tools))
 	for i, t := range tools {
-		m := miniyaml.NewMap()
+		m := frontmatter.NewMap()
 		m.Set("name", t.name)
 		m.Set("description", t.description)
 		m.Set("inputSchema", t.inputSchema())
@@ -158,11 +158,11 @@ type Deps struct {
 
 // ---------- running a tool ----------
 
-func textResult(text string, isError bool) *miniyaml.Map {
-	item := miniyaml.NewMap()
+func textResult(text string, isError bool) *frontmatter.Map {
+	item := frontmatter.NewMap()
 	item.Set("type", "text")
 	item.Set("text", text)
-	m := miniyaml.NewMap()
+	m := frontmatter.NewMap()
 	m.Set("content", []any{item})
 	if isError {
 		m.Set("isError", true)
@@ -202,7 +202,7 @@ func notText(v any) bool {
 }
 
 // callTool is one tools/call. It returns an MCP result; every expected failure is an `isError` result.
-func callTool(t tool, args any, d Deps) *miniyaml.Map {
+func callTool(t tool, args any, d Deps) *frontmatter.Map {
 	input, _ := args.(map[string]any)
 	value := input[t.arg]
 	if notText(value) {
@@ -230,13 +230,13 @@ func callTool(t tool, args any, d Deps) *miniyaml.Map {
 	}
 	// the command line treats "nothing matched" as a failure; so does the tool
 	if t.entry == "keyword" {
-		if m, ok := result.(*miniyaml.Map); ok {
+		if m, ok := result.(*frontmatter.Map); ok {
 			if matches, _ := m.Get("matches").([]any); len(matches) == 0 {
 				return textResult(fmt.Sprintf("没有对象匹配「%s」", m.Get("query")), true)
 			}
 		}
 	}
-	text, err := miniyaml.JSON(result, 2)
+	text, err := frontmatter.JSON(result, 2)
 	if err != nil {
 		return textResult("查询出错："+err.Error(), true)
 	}
@@ -245,19 +245,19 @@ func callTool(t tool, args any, d Deps) *miniyaml.Map {
 
 // ---------- JSON-RPC over stdio ----------
 
-func ok(id any, result any) *miniyaml.Map {
-	m := miniyaml.NewMap()
+func ok(id any, result any) *frontmatter.Map {
+	m := frontmatter.NewMap()
 	m.Set("jsonrpc", "2.0")
 	m.Set("id", id)
 	m.Set("result", result)
 	return m
 }
 
-func fail(id any, code int, message string) *miniyaml.Map {
-	e := miniyaml.NewMap()
+func fail(id any, code int, message string) *frontmatter.Map {
+	e := frontmatter.NewMap()
 	e.Set("code", float64(code))
 	e.Set("message", message)
-	m := miniyaml.NewMap()
+	m := frontmatter.NewMap()
 	m.Set("jsonrpc", "2.0")
 	m.Set("id", id)
 	m.Set("error", e)
@@ -291,7 +291,7 @@ func jsText(v any) string {
 }
 
 // Handle answers one parsed message: the response to write, or nil (notifications get none).
-func Handle(msg any, d Deps) *miniyaml.Map {
+func Handle(msg any, d Deps) *frontmatter.Map {
 	obj, isObj := msg.(map[string]any)
 	method, isStr := obj["method"].(string)
 	if !isObj || !isStr {
@@ -316,21 +316,21 @@ func Handle(msg any, d Deps) *miniyaml.Map {
 				version = asked
 			}
 		}
-		caps := miniyaml.NewMap()
-		caps.Set("tools", miniyaml.NewMap())
-		info := miniyaml.NewMap()
+		caps := frontmatter.NewMap()
+		caps.Set("tools", frontmatter.NewMap())
+		info := frontmatter.NewMap()
 		info.Set("name", "design-archive")
 		info.Set("version", "1.0.0")
-		r := miniyaml.NewMap()
+		r := frontmatter.NewMap()
 		r.Set("protocolVersion", version)
 		r.Set("capabilities", caps)
 		r.Set("serverInfo", info)
 		r.Set("instructions", instructions)
 		return ok(id, r)
 	case "ping":
-		return ok(id, miniyaml.NewMap())
+		return ok(id, frontmatter.NewMap())
 	case "tools/list":
-		r := miniyaml.NewMap()
+		r := frontmatter.NewMap()
 		r.Set("tools", listing())
 		return ok(id, r)
 	case "tools/call":
@@ -368,7 +368,7 @@ func decodeLine(line string) (any, error) {
 	return v, nil
 }
 
-func handleSafely(msg any, d Deps) (res *miniyaml.Map) {
+func handleSafely(msg any, d Deps) (res *frontmatter.Map) {
 	defer func() {
 		if r := recover(); r != nil {
 			var id any
@@ -389,8 +389,8 @@ func Serve(in io.Reader, out io.Writer, d Deps) error {
 	if d.Cwd == "" {
 		d.Cwd, _ = os.Getwd()
 	}
-	write := func(m *miniyaml.Map) error {
-		text, err := miniyaml.JSON(m, 0)
+	write := func(m *frontmatter.Map) error {
+		text, err := frontmatter.JSON(m, 0)
 		if err != nil {
 			return err
 		}
@@ -402,7 +402,7 @@ func Serve(in io.Reader, out io.Writer, d Deps) error {
 		line, readErr := r.ReadString('\n')
 		if strings.TrimSpace(line) != "" {
 			msg, err := decodeLine(line)
-			var res *miniyaml.Map
+			var res *frontmatter.Map
 			if err != nil {
 				res = fail(nil, -32700, "Parse error")
 			} else {

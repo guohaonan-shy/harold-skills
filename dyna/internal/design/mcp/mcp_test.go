@@ -17,8 +17,8 @@ import (
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/fixture"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/query"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
 )
 
 // The assertions of the old design-archive-mcp.test.mjs, in its order, run in-process: the same messages go in
@@ -195,7 +195,7 @@ func cliJSON(t *testing.T, root, entry, arg string, opts query.Options) any {
 	if err != nil {
 		t.Fatal(err)
 	}
-	text, err := miniyaml.JSON(v, 2)
+	text, err := frontmatter.JSON(v, 2)
 	if err != nil {
 		t.Fatal(err)
 	}

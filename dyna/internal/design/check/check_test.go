@@ -12,7 +12,7 @@ import (
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/fixture"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // Every test of the old design-archive-check.test.mjs is here under the same name in Go style; the one that
@@ -279,11 +279,11 @@ func TestLoadArchiveReturnsEveryObjectEdgeAndReference(t *testing.T) {
 	eq(t, fail.To, "cookbook--search-failed")
 	eq(t, fail.Kind, "system")
 	eq(t, fail.How, "拦截搜索请求并返回 500")
-	tried := fail.Blocked.(*miniyaml.Map).Get("tried")
+	tried := fail.Blocked.(*frontmatter.Map).Get("tried")
 	eq(t, tried, []any{"拦截搜索请求返回 500", "用空关键词搜索"})
 	search := find("cookbook--list", "search")
 	eq(t, search.Component, "SearchBox")
-	loc := search.Locate.(*miniyaml.Map)
+	loc := search.Locate.(*frontmatter.Map)
 	eq(t, []any{loc.Get("role"), loc.Get("name")}, []any{"searchbox", "搜索菜谱"})
 	eq(t, search.Action, "输入关键词并回车")
 

@@ -11,7 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // ---------- views of edges and states ----------
@@ -25,7 +25,7 @@ func idOf(e archive.Edge) any {
 
 // edgeView is an edge as the caller sees it: only the fields its kind uses. An edge with `shot` also says
 // whether that image is in the `assets/` next to its state (`shotExists`); an edge without has neither key.
-func edgeView(a *archive.Archive, e archive.Edge) *miniyaml.Map {
+func edgeView(a *archive.Archive, e archive.Edge) *frontmatter.Map {
 	var shotExists any
 	if s, ok := e.Shot.(string); ok {
 		shotExists = assetOf(a, a.Objects[e.From], s).exists
@@ -180,7 +180,7 @@ func mediaOf(a *archive.Archive, state *archive.Object) []any {
 // every `blocked` edge on a way in (the state's own in-edges and those upstream, up to where the graph is
 // reachable again), and `undeclared: true` when there is none — nothing explains why.
 // Ties go to the entry with the smaller id, then to the edge written first.
-func EnterState(a *archive.Archive, id string) (*miniyaml.Map, error) {
+func EnterState(a *archive.Archive, id string) (*frontmatter.Map, error) {
 	target, err := need(a, id, "state")
 	if err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ func EnterState(a *archive.Archive, id string) (*miniyaml.Map, error) {
 			steps = []any{}
 		}
 		first := a.Objects[origin[id]]
-		entry, _ := first.FM.Get("entry").(*miniyaml.Map)
+		entry, _ := first.FM.Get("entry").(*frontmatter.Map)
 		return obj(
 			"state", id,
 			"reachable", true,
@@ -261,7 +261,7 @@ func EnterState(a *archive.Archive, id string) (*miniyaml.Map, error) {
 				continue
 			}
 			if archive.HasBlocked(e) {
-				b, _ := e.Blocked.(*miniyaml.Map)
+				b, _ := e.Blocked.(*frontmatter.Map)
 				plain := e
 				plain.Blocked = nil
 				item := edgeView(a, plain)
@@ -321,7 +321,7 @@ type sectionData struct {
 	a           *archive.Archive
 }
 
-func (s sectionData) view() *miniyaml.Map {
+func (s sectionData) view() *frontmatter.Map {
 	m := obj(
 		"id", s.id,
 		"page", s.page,

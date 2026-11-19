@@ -40,7 +40,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 )
@@ -185,7 +185,7 @@ func settingsOf(a *archive.Archive, p parsed) (settings, error) {
 	vp := pick("viewport")
 	vs := ""
 	if vp != nil {
-		vs = miniyaml.Text(vp)
+		vs = frontmatter.Text(vp)
 	}
 	m := viewportRe.FindStringSubmatch(vs)
 	if m == nil {
@@ -370,7 +370,7 @@ func runMeasure(pr printer, p parsed) error {
 		if !ok || state.Kind != "state" {
 			return usagef("档案里没有状态「%s」；档案里还没有这个状态时（初扫）用 --sections 给分段列表", stateID)
 		}
-		if !miniyaml.Truthy(state.FM.Get("entry")) {
+		if !frontmatter.Truthy(state.FM.Get("entry")) {
 			return usagef("%s 不是入口状态：只有入口状态声明 sections", stateID)
 		}
 		sections = sectionsFromArchive(state)
@@ -410,7 +410,7 @@ func runMeasure(pr printer, p parsed) error {
 		known, isKnown := a.Objects[p.flags["for"]]
 		var written *archive.SectionRef
 		if isKnown && known.Kind == "state" && known.FM.Get("section") != nil {
-			if r, ok := archive.ParseSectionRef(miniyaml.Text(known.FM.Get("section"))); ok {
+			if r, ok := archive.ParseSectionRef(frontmatter.Text(known.FM.Get("section"))); ok {
 				written = &r
 			}
 		}

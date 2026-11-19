@@ -5,7 +5,7 @@
 // The engine is file reading and text matching: no embedding, no model, no clock. A name that matches nothing is
 // a *QueryError whose message says what exists instead.
 //
-// Results are *miniyaml.Map (keys in the order the answer lists them), []any and scalars, so they marshal to the
+// Results are *frontmatter.Map (keys in the order the answer lists them), []any and scalars, so they marshal to the
 // same JSON the previous script printed. A value that is Undefined is a key that is left out of the output.
 package query
 
@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/archive"
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 // QueryError is an expected failure: the caller prints its message. Code says which kind: "not-found" (the
@@ -60,8 +60,8 @@ func nilIfPtr(s *string) any {
 }
 
 // obj builds a mapping from key, value pairs; a value that is undef leaves its key out.
-func obj(kv ...any) *miniyaml.Map {
-	m := miniyaml.NewMap()
+func obj(kv ...any) *frontmatter.Map {
+	m := frontmatter.NewMap()
 	for i := 0; i+1 < len(kv); i += 2 {
 		if kv[i+1] == undef {
 			continue
@@ -72,8 +72,8 @@ func obj(kv ...any) *miniyaml.Map {
 }
 
 // clean drops the keys whose value is null or undefined.
-func clean(m *miniyaml.Map) *miniyaml.Map {
-	out := miniyaml.NewMap()
+func clean(m *frontmatter.Map) *frontmatter.Map {
+	out := frontmatter.NewMap()
 	for _, k := range m.Keys() {
 		if v := m.Get(k); !isNull(v) {
 			out.Set(k, v)
@@ -83,7 +83,7 @@ func clean(m *miniyaml.Map) *miniyaml.Map {
 }
 
 // fmGet is `o.fm[key]`: undef when the key is not written.
-func fmGet(fm *miniyaml.Map, key string) any {
+func fmGet(fm *frontmatter.Map, key string) any {
 	if !fm.Has(key) {
 		return undef
 	}
@@ -92,7 +92,7 @@ func fmGet(fm *miniyaml.Map, key string) any {
 
 // member is `v?.key`: undef unless v is a mapping that has the key.
 func member(v any, key string) any {
-	m, ok := v.(*miniyaml.Map)
+	m, ok := v.(*frontmatter.Map)
 	if !ok || m == nil {
 		return undef
 	}
@@ -135,7 +135,7 @@ func sortObjects(list []*archive.Object) []*archive.Object {
 	return out
 }
 
-func sortMapsByID(list []*miniyaml.Map) {
+func sortMapsByID(list []*frontmatter.Map) {
 	sort.SliceStable(list, func(i, j int) bool {
 		a, _ := list[i].Get("id").(string)
 		b, _ := list[j].Get("id").(string)
@@ -143,7 +143,7 @@ func sortMapsByID(list []*miniyaml.Map) {
 	})
 }
 
-func mapsToList(list []*miniyaml.Map) []any {
+func mapsToList(list []*frontmatter.Map) []any {
 	out := make([]any, len(list))
 	for i, m := range list {
 		out[i] = m
@@ -156,7 +156,7 @@ func text(v any) string {
 	if v == undef {
 		return "undefined"
 	}
-	return miniyaml.Text(v)
+	return frontmatter.Text(v)
 }
 
 // wikilinkOrText is `wikilinkTarget(x) ?? String(x)`.

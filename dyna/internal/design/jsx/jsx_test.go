@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/miniyaml"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/frontmatter"
 )
 
 var (
@@ -51,7 +51,7 @@ func TestParseJSONKeepsKeyOrderAndTellsNullFromMissing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, _ := miniyaml.AsMap(v)
+	m, _ := frontmatter.AsMap(v)
 	if strings.Join(m.Keys(), ",") != "z,a,m" || !m.Has("a") || m.Get("a") != nil || m.Has("q") {
 		t.Fatal(m.Keys())
 	}
