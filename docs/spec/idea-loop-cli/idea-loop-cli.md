@@ -64,22 +64,37 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 
 一次调用怎么走，只由三样决定：调的命令和参数、当前目录（用它的 git 远端认项目，#333 的「项目目录」）、运行环境（每次运行时自己判断，不在 setup 写死）。
 
-### 入口
+### 入口、分发与版本
 
-一个命令 `idea-loop`，放在插件的 `bin/`。实测（2026-11-18，Claude Code 2.1.327，`claude -p --plugin-dir` 装一个临时插件）：插件 `bin/` 下的可执行文件能在 Bash 里直接按名字调；但这时它拿不到 `CLAUDE_PLUGIN_ROOT`（是空的）。所以入口按自己所在的路径找插件目录，不读这个环境变量。hook 也调这个命令：hook 只管什么时候触发、调哪条命令，命令本身就是各模块里的那条（见「hook 只拦不做事」的对照表）。`hooks.json` 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`（hook 进程里有这个变量，所以用全路径；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）。
+命令行用 Go 写，编译成二进制单独发布；skill 留在插件里单独升级。Harold 2026-11-19 定：「我倾向于分开，二进制是二进制，skill是skill」，并选了「代码放在 harold-skills 里一个目录」「用 Go」。这推翻了父会话 2026-11-18 的「不照搬二进制分发」。参考的是 poteto/noodle（`82d2921`）：Go 写，用 goreleaser 一次出 6 个平台的包（v0.1.5 每个约 4.3–4.7 MB），Mac 用 brew、Linux 从 GitHub Releases 下载；skill 和二进制在同一个仓库、走两条发布渠道。
+
+![命令行与 skill 怎么对版本](../../raw/issue-workflow/assets/sequence-idea-loop-cli-version.png)
+
+- **代码**：harold-skills 里一个顶层目录，不是插件（`marketplace.json` 不列它；`AGENTS.md` 的「Repository Purpose」加一句说明）。改命令行和改用到它的 skill 可以在同一个 PR 里 review。
+- **发布**：打 `cli-v<版本>` 标签，在本机跑 goreleaser 出 Mac（arm64、amd64）和 Linux（amd64、arm64）的包，传到 GitHub Releases，附校验和。不加 GitHub Actions：仓库现在没有 Actions，检查和评估都在本地跑。
+- **装在哪**：`~/.idea-loop/bin/idea-loop`。插件目录会随升级换路径，所以二进制放用户主目录（`AGENTS.md` 定的「跨会话持久的用户数据」位置）。由 setup 装（下载对应平台的包、核校验和），人同意后才装；以后升级也走 setup。
+- **怎么调到它**：插件的 `bin/idea-loop` 是一个几行的 sh 小脚本。实测（2026-11-18，Claude Code 2.1.327，临时插件 + `claude -p --plugin-dir`）插件 `bin/` 在 Bash 的 PATH 上，官方文档 plugins/components.md 的「Executables」也这样写，所以会话里直接敲 `idea-loop xxx`，不用改人的 shell 配置。小脚本只做一件事：带上插件要的版本范围，转给 `~/.idea-loop/bin/idea-loop`。hook 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`（hook 进程里有这个变量；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）；hook 只管什么时候触发、调哪条命令，命令本身就是各模块里的那条（见「hook 只拦不做事」的对照表）。
+
+**skill 要求命令行最低版本，这样维护**：
+
+1. **版本号**：命令行用语义化版本。同一个大版本里只加不删：不删命令、不改参数的含义；要改名，新名字先上，旧名字留至少一个小版本，调用时照常执行并提示「改用 X」。删除和改含义只在大版本。
+2. **插件里写一行版本范围**：插件根目录一个文件写插件要的命令行版本，如 `>=0.4.0 <1.0.0`。只有 skill 开始用一条新命令、新参数时才提高下限；命令行升大版本时，等 skill 跟上了再放开上限。
+3. **每次调用都核**：小脚本把这个范围交给二进制；二进制不在范围里就不执行，说出本机版本、要的范围和下一步（「跑 `/idea-loop:setup` 升级命令行」或「插件比命令行旧，去 `/plugin` 更新插件」）。没装就说「跑 `/idea-loop:setup` 装命令行」。SessionStart 的 hook 也经小脚本调，所以开场第一件事就会把不对的版本告诉人。lint、`guard` 这类 hook 在版本不对时不拦、不报错，只在 stderr 留一行，不打断会话。
+4. **发布前对得上**：每次发命令行，把这一版的命令登记表（`idea-loop registry --json`，命令、参数、调用方）存进仓库，按版本号一份。skill 那边的扫描测试拿「插件写的最低版本」那份登记表，对 skill、agent、README、`hooks.json` 里写的每条 `idea-loop …`：命令或参数在那一版里没有就红。最低版本还没发布（没有那份登记表）也红，所以顺序被钉死：先合命令行的改动、发版，再合提高下限的 skill 改动。
+5. **例子**：要给 `worktree remove` 加 `--keep-branch`。PR 一：改命令行，合并后发 `cli-v0.4.0`，存 0.4.0 的登记表。PR 二：skill 开始写 `--keep-branch`，插件的范围下限改成 0.4.0，扫描测试拿 0.4.0 的登记表对上，过了才合并、升插件版本。另一台机器更新了插件、命令行还是 0.3.2：开会话时 SessionStart 就提示「命令行要 >=0.4.0，本机 0.3.2，跑 `/idea-loop:setup` 升级」。
 
 ### 模块
 
-现有 57 个脚本的去向：
+现有 57 个脚本的功能去向（全部用 Go 重写，现有的 `.mjs` 实现和它们的测试在命令行对上之后删掉）：
 
 | 去向 | 个数 | 脚本 |
 |---|---|---|
 | 进命令，给会话调 | 41 | 见下表 |
 | 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
-| 命令行内部的模块，没有自己的子命令 | 5 | 都在 `idea-loop` 命令行这个 package 里，被命令 import：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `idea-loop` 的命令，不单独处理）、`design-archive`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 和两个 eval runner 用）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
-| 设计档案 MCP package | 1 | `design-archive-mcp`：idea-loop 下单独一个 package，以 MCP 协议提供七个查询工具（见下面「设计档案 MCP」） |
-| 删掉 | 2 | `codex-companion`（见「包装别的命令行」）；`mini-yaml`（换成 npm 上的 `yaml` 包，见「实现决策」） |
+| 命令行内部的包，没有自己的子命令 | 5 | 都在命令行的代码里，作为 Go 包被命令引用：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `idea-loop` 的命令，不单独处理）、`design-archive`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 用；两个 eval runner 改调 `idea-loop agent claude run`）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
+| 设计档案 MCP | 1 | `design-archive-mcp`：命令行里单独一个 Go 包，以 MCP 协议提供七个查询工具，由 `idea-loop mcp design-archive` 起（见下面「设计档案 MCP」） |
+| 删掉 | 2 | `codex-companion`（见「包装别的命令行」）；`mini-yaml`（Go 直接用现成的 YAML 库） |
 
 hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」；hook 不单设模块：「不是，我并不是让你增加一个hook模块，而是这些功能可能都是在原有的模块，hook控制触发世纪以及调用哪个命令」。
 
@@ -106,15 +121,15 @@ hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动�
 
 ### 设计档案 MCP
 
-Harold 2026-11-19 定：「design-archive-mcp 这个我觉的可以单独在idea-loop下封装一个package，这个package 以MCP协议提供工具能力」，做法照推荐（「mcp就按照你说的推荐来」）：
+Harold 2026-11-19 定：「design-archive-mcp 这个我觉的可以单独在idea-loop下封装一个package，这个package 以MCP协议提供工具能力」，做法照推荐（「mcp就按照你说的推荐来」）。当时推荐的是「插件里一个 Node package，不发布 npm」；改用 Go 以后照同一个意思落成：
 
-- 放在插件里、idea-loop 下单独一个 package，有自己的 `package.json`；不发布到 npm（发布要 npm 账号、每次改动单独发版、每台机器第一次启动要下载）。
-- 设计档案的解析和七种查询（页面、状态、用户路径、需求差异、反查、关键词、受影响）放进这个 package；命令 `idea-loop design archive query` 反过来引用它，查询逻辑只有一份。
-- `.mcp.json` 照旧用 `node` 起它，装插件就有，跟插件一起升级。七个工具的名字、参数、返回不变。
+- 命令行代码里单独一个 Go 包，只管以 MCP 协议提供七个查询工具（页面、状态、用户路径、需求差异、反查、关键词、受影响）；七个工具的名字、参数、返回不变。
+- 查询逻辑只有一份：MCP 包和命令 `idea-loop design archive query` 都用设计档案那个包。
+- 由同一个二进制起：`.mcp.json` 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" mcp design-archive`，不单独发布，跟命令行同一个版本。
 
 ### 登记表与扫描测试
 
-照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README 和 `hooks.json` 里写的 `idea-loop <模块> <命令>`，登记表里没有的就红。登记表给每条命令标调用方：只由 hook 调的命令（lint、`guard`、`inject`、`map`）只许 `hooks.json` 引用，skill、agent 里写了也红；`test` 模块只许测试、`REVIEW.md`、`DEVELOPMENT.md` 引用。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
+照 poteto/noodle（`82d2921`）的做法：一份登记表列出所有模块、命令和参数，`--help` 从它生成；一条测试扫所有 skill、agent、README、`hooks.json`、`.mcp.json` 里写的 `idea-loop <模块> <命令>`，拿插件要求的最低版本那份登记表对，没有的就红（见「入口、分发与版本」第 4 条）。登记表给每条命令标调用方：只由 hook 调的命令（lint、`guard`、`inject`、`map`）只许 `hooks.json` 引用，skill、agent 里写了也红；`test` 模块只许测试、`REVIEW.md`、`DEVELOPMENT.md` 引用。不照搬 noodle 的二进制分发和「靠环境变量开护栏」。
 
 ### hook 只拦不做事
 
@@ -187,8 +202,8 @@ runtime 不再是 skill。
 ### 同一行为的其他入口
 
 - **hook**（`hooks/hooks.json`）：纳入。每条都改成 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`，不再直接写脚本路径。
-- **测试**：纳入。共用的测试用具改经 `idea-loop test` 调；测试文件里直接 import 模块的照旧。改插件时要用 worktree 里的 `idea-loop/bin/idea-loop test run`：PATH 上的 `idea-loop` 是已装的那一版插件，跑的是它自己的测试，不是 worktree 里正在改的。
-- **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：排除。它们是本地跑的 node 脚本，直接 import 模块，不经 Bash 调命令，不受这次影响。
+- **测试**：纳入。命令行自己的测试用 `go test`；skill 文本的测试（现在的 `*-doc.test.mjs` 等）照旧用 `node --test`，它们读的是 skill 文本，不是命令行代码。共用的测试用具改经 `idea-loop test` 调。改命令行时要用本仓库编出来的二进制跑：`~/.idea-loop/bin/` 里的是已装的发布版，不是正在改的。
+- **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：纳入。它们现在直接 import `claude-stream.mjs`，那份实现要删，改成调 `idea-loop agent claude run`。
 - **plugin 的 `README.md`**：纳入，命令写法同步改；扫描测试也扫它。
 - **design-archive MCP 服务器**：纳入，做成单独的 package（见「设计档案 MCP」）。
 
@@ -226,20 +241,23 @@ runtime 不再是 skill。
 1. 作为改 skill 的人，我想要 skill 里写了登记表里没有的命令时测试变红，以便命令改名后 skill 不会悄悄过期
 2. 作为改插件的人，我想要用 `idea-loop test` 跑测试、取测试用具，以便不用记哪个 mjs 文件做什么
 3. 作为改 hook 的人，我想要 hook 调的就是各模块里的命令，以便 hook 只写触发时机，检查逻辑跟命令只有一份
+4. 作为让 skill 用上一条新命令的人，我想要最低版本还没发布时扫描测试就红，以便不会先发出一个要求不存在版本的插件
+
+### 场景六：命令行与插件版本对不上
+
+1. 作为更新了插件、命令行还是旧版的人，我想要开会话时就被告知要升到哪一版、跑哪条命令，以便不会在流程中途才撞上缺命令
+2. 作为升了命令行大版本、插件还是旧版的人，我想要被告知去更新插件，以便旧 skill 不会调到含义变了的命令
+3. 作为没装命令行的人，我想要被告知跑 `/idea-loop:setup` 装，以便不用自己去找下载地址
 
 ## 实现决策
 
-- **用 Node.js 写，ES 模块（`.mjs`），不需要构建**：现有 57 个脚本和全部测试（`node --test`）已经是 Node。插件按 git 原样分发，所以不用 TypeScript（要么提交编译产物、要么装时编译），也不用 Go、Rust 出二进制（父会话已排除二进制分发）。参数解析用 Node 自带的 `node:util` 的 `parseArgs`。
-- **可以引用 npm 包，`mini-yaml` 删掉换成 `yaml`**（Harold 2026-11-19：「内部应该就可以引用包了吧，mini-yaml是不是没有必要了」）。依据是官方文档 plugins/loading.md 的「Node.js package dependencies」：插件根目录同时有 `package.json` 和 npm lockfile 时，Claude Code 在装插件、更新到新版本、新机器上第一次启动会话这三个时刻，自动把依赖装进插件的缓存目录；本机已装的 excalidrawer 就是这样（它的仓库忽略 `node_modules`，缓存里却有，比 `package.json` 晚 1 秒生成）。所以 idea-loop 根目录加 `package.json` 和 `package-lock.json`。文档的限制决定了能引哪些包：
-  - 只装 npm 注册表上、lockfile 精确锁版本的包；不跑 install 脚本，要编译原生模块的包装不上；`package.json` 与 lockfile 不一致、有 `overrides`、超过 60 秒都算失败。所以只引纯 JS、没有 install 脚本的包。
-  - 装失败时插件照常加载，用到依赖的命令会坏。所以入口启动时先查依赖在不在，缺了就停下，说出缺哪个包、让人重装插件（`/plugin`），不带着缺包往下跑；setup 的预检也查这一条。
-  - 本仓库里改插件时 worktree 没有 `node_modules`：`DEVELOPMENT.md` 的「worktree 准备」加一步在 `idea-loop/` 下 `npm ci`。
-  - 设计档案 MCP package 也可以照这条引官方 MCP SDK；这次不换，照旧手写协议，七个工具行为不变（换 SDK 不改用户能感到的东西）。
-- **代码按模块分目录**：`idea-loop` 命令行是一个 package，每个模块一个目录，命令的实现和它内部用的库放在一起；只被引用、没有动作的（`claude-stream`、`github-app`）作为这个 package 里的共用模块（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）；不再有一个平铺的、谁都能直接 `node` 调的脚本目录。对调用方来说只有 `idea-loop` 一个入口，库文件不是入口。
-- **入口**按自己所在的路径找插件目录，不读 `CLAUDE_PLUGIN_ROOT`（依据：本会话实测，bin 里这个变量是空的）。
+- **用 Go 写**（Harold 2026-11-19 选「Go (Recommended)」）：goreleaser 一次出各平台的包，交叉编译不用另装工具链；参数解析、子命令用标准库或一个常用的子命令库，YAML 用现成的库（`mini-yaml` 删掉）。依赖由 Go 模块管理，编进二进制，用户机器上不装任何运行时。
+- **代码按模块分包**：每个模块一个 Go 包，命令的实现和它内部用的东西放在一起；只被引用、没有动作的（`claude-stream`、`github-app`、`ui-compare` 等）作为共用的包（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）。对调用方来说只有 `idea-loop` 一个入口。
+- **runtime 数据、pr-review 的 Codex prompt 模板编进二进制**：随命令行版本走；它们是给 skill 用的数据，改了算命令行的一次发布。
+- **重写的验收照现有测试**：现有 123 个测试文件（21893 行，其中约一半测脚本行为、一半测 skill 文本）里测脚本行为的那些，是 Go 实现的行为基准：逐个模块把它们的断言搬成 `go test`，过了才删对应的 `.mjs`。测 skill 文本的那些照旧。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
 - **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
-- **不留旧路径的兼容**：0.2.0 一次发布，全路径调用一次改完（依据：#333 定的「只认 home、不留中间状态」）。脚本文件可以留在原处当模块实现，调用方不再引用它们的路径。
+- **不留旧路径的兼容**：0.2.0 一次发布，全路径调用一次改完（依据：#333 定的「只认 home、不留中间状态」）。idea-loop 0.2.0 合进 main 之前，命令行的第一版必须已经发布，插件的版本范围从它开始。
 - **护栏报错的写法**：说出哪条规则没过、哪几处（文件、行）、下一条命令。例：`home commit` 拒绝时列出死链所在文件和它指向的 slug。
 - **hook 拦截的范围只有两条**（Harold 定）：手改 status label、手写 `git worktree remove`。其余易错操作靠 skill 写命令、靠 #340 重写，不加 hook。
 - **`agent codex run` 的超时**默认 20 分钟，跟 pr-reviewer 现在等 companion 的上限一样；到点结束整个进程组，报超时和已写出的部分输出位置，这一轴记「未完成」（跟现在一样）。
@@ -249,25 +267,27 @@ runtime 不再是 skill。
 - **已知限制**：
   - Codex 插件自己的 `codex:rescue` 等命令仍走 companion，仍会留 broker；那是 Codex 插件的事，idea-loop 管不到。
   - Codex 生图会在 `~/.codex/generated_images/` 留一份原图（本会话实测看到），不清理。
-  - 公司虚拟机能不能连 npm 注册表没核过；连不上时第一次启动装不上依赖，入口会停下报缺包。
+  - 公司虚拟机能不能连 GitHub Releases 没核过；连不上时 setup 下不了二进制，只能人手拷一份到 `~/.idea-loop/bin/`。
+  - 没装命令行或版本不对时，lint、拦截这几条 hook 不起作用（只留一行提示），直到人升级。
   - 只测了一次可写沙箱生图；批量连续生图在子代理里会不会越拦越多（TOEFL-demo 记忆里记过）没测。
 
 ## 测试决策
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到：登记表、参数解析、护栏（死链、slug 重名、ADR 编号）、`runtime show` 取节、hook 的拦截判定、进程树超时 |
-| API 契约（路由、schema、序列化） | TDD API 测试 | 碰到：命令的输出与退出码就是契约，用现有各脚本测试的断言改成经命令调 |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到（`go test`）：登记表、参数解析、版本范围判断、护栏（死链、slug 重名、ADR 编号）、`runtime show` 取节、hook 的拦截判定、进程树超时；现有脚本行为测试的断言逐个搬过来 |
+| API 契约（路由、schema、序列化） | TDD API 测试 | 碰到：命令的输出与退出码就是契约；`registry --json` 的形状；MCP 七个工具的返回 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：pr-review 的 Codex prompt 模板原样搬，不改内容；skill 文字只换命令写法 |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及；端到端用「临时插件 + `claude -p` 调 `idea-loop`」代替 |
 
 - **seam**：
-  - `idea-loop` 命令本身（起子进程调 `bin/idea-loop`，读输出和退出码）：能抓到入口找不到插件目录、登记表和实现对不上、参数解析错；漏掉的是 Claude Code 把 `bin/` 放上 PATH 这一步。
-  - 登记表扫描测试（读 skill、agent、README、`hooks.json` 文本）：能抓到 skill 写了不存在的命令、还留着全路径调用；漏掉的是命令语义对不对。
+  - `idea-loop` 命令本身（起子进程调编出来的二进制，读输出和退出码）：能抓到登记表和实现对不上、参数解析错、版本范围判断错；漏掉的是插件小脚本转发和 Claude Code 把 `bin/` 放上 PATH 这两步。
+  - 插件的小脚本（起子进程调 `bin/idea-loop`，用一个假二进制）：能抓到版本范围没传过去、没装时的提示；漏掉的是真二进制的行为。
+  - 登记表扫描测试（读 skill、agent、README、`hooks.json`、`.mcp.json` 文本和最低版本的登记表）：能抓到 skill 写了不存在的命令、还留着全路径调用；漏掉的是命令语义对不对。
 - **增量功能测试**：
-  1. 前置：一个装了这版 idea-loop 的临时插件目录。步骤：`claude -p --plugin-dir <它>` 让会话跑 `idea-loop issues --help`。期望：打印 issues 模块的命令表，退出 0。覆盖：场景一 1、2、4。
+  1. 前置：一个装了这版 idea-loop 的临时插件目录，`~/.idea-loop/bin/` 里放这一版的二进制。步骤：`claude -p --plugin-dir <它>` 让会话跑 `idea-loop issues --help`。期望：打印 issues 模块的命令表，退出 0。覆盖：场景一 1、2、4。
   2. 前置：一份 skill 文本写了 `idea-loop issues frobnicate`。步骤：跑扫描测试。期望：红，报出文件和行。覆盖：场景五 1。
   3. 前置：`docs/` 里一份文件链到已删除的 slug。步骤：`idea-loop home commit <文件>`。期望：拒绝，列出死链所在文件和 slug，不产生提交。覆盖：场景二 3。
   4. 前置：PATH 上放一个假 `codex`，它再起一个睡眠子进程。步骤：`idea-loop agent codex run` 带 2 秒超时。期望：报超时，假 codex 和它的子进程都已不在。覆盖：场景三 2。
@@ -276,7 +296,9 @@ runtime 不再是 skill。
   7. 步骤：`grep -r 'CLAUDE_PLUGIN_ROOT}/scripts/' idea-loop/skills idea-loop/agents idea-loop/hooks`。期望：没有输出。覆盖：场景一 1。
   8. 前置：一份 skill 文本写了 `idea-loop design lint`。步骤：跑扫描测试。期望：红，报「这条命令只许 hooks.json 引用」。覆盖：场景五 1。
   9. 步骤：`idea-loop test fixture design-archive <空目录>`，再 `idea-loop design archive check <那个目录>`。期望：写出两页的虚构档案，校验退出 0。覆盖：场景五 2。
-- **照着谁写**：各脚本已有的 `*.test.mjs`（如 `issues.test.mjs`）；扫 skill 文本的写法照 `no-project-leak.test.mjs`；hook 的测试照 `design-lint-hook.test.mjs`；runtime 照 `runtime-detect.test.mjs`。
+  10. 前置：插件版本范围写 `>=0.4.0 <1.0.0`，`~/.idea-loop/bin/` 里是 0.3.2。步骤：`idea-loop issues show docs 1`。期望：不执行，输出本机 0.3.2、要 >=0.4.0、跑 `/idea-loop:setup` 升级；换成 1.0.0 时输出去 `/plugin` 更新插件；删掉二进制时输出跑 `/idea-loop:setup` 装。覆盖：场景六 1、2、3。
+  11. 前置：插件版本范围下限写一个还没发布的版本（仓库里没有它的登记表）。步骤：跑扫描测试。期望：红，报「最低版本 X 还没发布」。覆盖：场景五 4。
+- **照着谁写**：命令行的测试照各脚本已有的 `*.test.mjs`（如 `issues.test.mjs`）的断言搬；扫 skill 文本的写法照 `no-project-leak.test.mjs`；hook 的测试照 `design-lint-hook.test.mjs`；runtime 照 `runtime-detect.test.mjs`。
 
 ## Out of scope
 
@@ -284,7 +306,8 @@ runtime 不再是 skill。
 - 其余手写 `git`、`gh` 等改成新命令：#340 重写时一起做。
 - 结构检查：#341。
 - 知识库迁移：#247。
-- 二进制分发、命令装到插件外的 PATH 上。
+- 用 brew 装：要多维护一个 tap 仓库，setup 直接下载够用。
+- 用 GitHub Actions 发版。
 
 ## 关联
 
