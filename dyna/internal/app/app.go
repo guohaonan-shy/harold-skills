@@ -15,12 +15,15 @@ import (
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design"
 	designmcp "github.com/guohaonan-shy/harold-skills/dyna/internal/design/mcp"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/dreaming"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/git"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/issues"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/pr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/research"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/retro"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/semver"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/testcmd"
@@ -92,6 +95,9 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(git.Command(git.Deps{Stdout: io.Stdout}))
 	root.AddCommand(worktree.Command(worktree.Deps{Stdin: io.Stdin, Stdout: io.Stdout}))
 	root.AddCommand(pr.Command(prDeps(io)))
+	root.AddCommand(research.Command(research.Deps{Stdout: io.Stdout}))
+	root.AddCommand(dreaming.Command(dreaming.Deps{Stdout: io.Stdout}))
+	root.AddCommand(retro.Command(retro.Deps{Env: io.Env, Stdout: io.Stdout}))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
 }

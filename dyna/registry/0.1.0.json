@@ -496,6 +496,57 @@
       ]
     },
     {
+      "command": "dreaming table split",
+      "module": "dreaming",
+      "use": "split <proposal-table.md>",
+      "summary": "把要问人的行拆成一张同样格式的小表：打印出来，或用 --out 写到文件；表本身不合格就照 submit 的样子报错（退出 2），不拆",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "proposal-table.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "表不合格时输出 JSON（同 submit）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "小表写到这个文件；不给就打印到标准输出"
+        }
+      ]
+    },
+    {
+      "command": "dreaming table submit",
+      "module": "dreaming",
+      "use": "submit <proposal-table.md>",
+      "summary": "校验提议表的形状：行类型、每类的建议处置、证据里该有的图和原文旧新；不对就说出哪一条（退出 2），校验过了才算交回",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "proposal-table.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（valid、empty、errors、counts）"
+        }
+      ]
+    },
+    {
       "command": "git commit",
       "module": "git",
       "use": "commit <文件>...",
@@ -1637,6 +1688,128 @@
           "required": false,
           "value": "bool",
           "description": "输出 JSON（每版发布时存进 dyna/registry/<版本>.json）"
+        }
+      ]
+    },
+    {
+      "command": "research submit",
+      "module": "research",
+      "use": "submit <index.html>",
+      "summary": "校验调研页的骨架：章节齐、顺序对、每步截图有说明且能点开、图都是落图目录内的相对路径；不对就说出哪一条（退出 2），校验过了才算交回",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "index.html",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（valid、errors、sources）"
+        }
+      ]
+    },
+    {
+      "command": "retro digest",
+      "module": "retro",
+      "use": "digest <transcript.jsonl>",
+      "summary": "把一份会话记录压成人的发言，每条带上它前一条 AI 回复的结论（不含工具调用、工具输出、压缩摘要）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "transcript.jsonl",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "ai-max",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "每条保留 AI 结论的最后多少字（默认 1500）"
+        }
+      ]
+    },
+    {
+      "command": "retro install",
+      "module": "retro",
+      "use": "install",
+      "summary": "把回放 runner 装到固定路径（默认 ~/.idea-loop/bin），打印要加进权限设置的允许规则；不改任何权限设置",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dest",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "装到哪个目录（默认 ~/.idea-loop/bin）"
+        }
+      ]
+    },
+    {
+      "command": "retro locate",
+      "module": "retro",
+      "use": "locate",
+      "summary": "找出这场会话自己的记录文件：先按会话 id，再按开场第一句人话里的标记；只认唯一的一份，零份或多份退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dir",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只在这一个目录里找（不给就找 ~/.claude/projects 下所有项目目录）"
+        },
+        {
+          "name": "marker",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "开场第一句人话里的一段话；没有 id 或按 id 找不到时用"
+        },
+        {
+          "name": "session",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "会话 id（记录文件名去掉 .jsonl）；不给就用环境变量 CLAUDE_CODE_SESSION_ID"
+        }
+      ]
+    },
+    {
+      "command": "retro pool count",
+      "module": "retro",
+      "use": "count <pool-dir>",
+      "summary": "数候选池里每个候选出现过几次（不同会话数，已推翻的不算），到 3 次算过线；文件格式不对就列出来（退出 2）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "pool-dir",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "retro pool reopened",
+      "module": "retro",
+      "use": "reopened <candidate-file>",
+      "summary": "被驳回的候选自上次驳回以来有没有新的会话出现：从 git 历史答（候选文件要在 git 仓库里）；答不了（状态不是驳回、驳回还没提交）退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "candidate-file",
+          "kind": "positional",
+          "required": true
         }
       ]
     },

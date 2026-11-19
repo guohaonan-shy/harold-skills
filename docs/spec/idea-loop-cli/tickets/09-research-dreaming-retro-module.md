@@ -11,9 +11,9 @@ research-check 变成 `dyna research submit`；proposal-table-check 变成 `dyna
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] `research submit`、`dreaming table submit` 对格式不对的产物拒绝并说出哪一条
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] `research submit`、`dreaming table submit` 对格式不对的产物拒绝并说出哪一条
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 
