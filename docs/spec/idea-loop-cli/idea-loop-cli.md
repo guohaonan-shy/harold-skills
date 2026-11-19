@@ -77,7 +77,7 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 | 进命令，给会话调 | 41 | 见下表 |
 | 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
-| 库与 MCP 服务器，不进命令 | 7 | `mini-yaml`、`design-archive`、`ui-compare`、`ui-measure-concurrency`、`claude-stream`、`github-app`（库，被别的模块 import）；`design-archive-mcp`（`.mcp.json` 起的 MCP 服务器） |
+| 模块内部的库与 MCP 服务器，没有自己的子命令 | 7 | 库被命令 import，跟用它的模块放在一起：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部）、`design-archive`、`mini-yaml`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 和两个 eval runner 用）、`github-app`（以 bot 身份发言，`pr loop archive` 用）；`design-archive-mcp`（`.mcp.json` 起的 MCP 服务器） |
 | 删掉 | 1 | `codex-companion` |
 
 hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」；hook 不单设模块：「不是，我并不是让你增加一个hook模块，而是这些功能可能都是在原有的模块，hook控制触发世纪以及调用哪个命令」。
@@ -220,7 +220,9 @@ runtime 不再是 skill。
 
 ## 实现决策
 
-- **入口用 node 写**，跟现有脚本同一种语言；按自己所在的路径找插件目录，不读 `CLAUDE_PLUGIN_ROOT`（依据：本会话实测，bin 里这个变量是空的）。
+- **用 Node.js 写，ES 模块（`.mjs`），零依赖，不需要构建**：现有 57 个脚本和全部测试（`node --test`）已经是这样，插件按 git 原样分发、没有 `npm install` 这一步，所以不引入 npm 包，也不用 TypeScript（要么提交编译产物、要么装时编译）；参数解析用 Node 自带的 `node:util` 的 `parseArgs`。不用 Go、Rust 出二进制（父会话已排除二进制分发）。缺 YAML 解析这类库时照现有做法手写够用的子集（如 `mini-yaml` 只读设计档案 frontmatter 用到的那部分 YAML）。
+- **代码按模块分目录**：每个模块一个目录，命令的实现和它内部用的库放在一起；不再有一个平铺的、谁都能直接 `node` 调的脚本目录。对调用方来说只有 `idea-loop` 一个入口，库文件不是入口。
+- **入口**按自己所在的路径找插件目录，不读 `CLAUDE_PLUGIN_ROOT`（依据：本会话实测，bin 里这个变量是空的）。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
 - **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
 - **不留旧路径的兼容**：0.2.0 一次发布，全路径调用一次改完（依据：#333 定的「只认 home、不留中间状态」）。脚本文件可以留在原处当模块实现，调用方不再引用它们的路径。
