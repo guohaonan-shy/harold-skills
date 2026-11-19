@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * replay-stats：回放结果文件的统计。每个变体的 pass¹ / pass³，每个非基线变体对 baseline 的差、
+ * replay-stats：结果文件的统计。每个变体的 pass¹ / pass³，每个非基线变体对 baseline 的差、
  * 按 group 重抽的 95% 区间、「变好 / 变差 / 持平」。
  *
  *   node replay-stats.mjs --results <结果文件> [--resamples 2000] [--seed 20240229]
