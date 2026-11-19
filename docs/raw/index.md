@@ -69,7 +69,7 @@
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
 | [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
-| [decisions/339](decisions/339.md) | conversation | 2026-11-18 | 决定记录 —— #339 idea-loop 命令行：父会话定的方案、bin/ 与子代理生图两次实测、跟 #340 的分工 |
+| [decisions/339](decisions/339.md) | conversation | 2026-11-18 | 决定记录 —— #339 idea-loop 命令行：父会话定的方案、bin/ 与子代理生图两次实测、跟 #340 的分工；todo 会话合并 PR #387（dyna 0.0.1/0.0.2 已发），候选 2 条：1 不批、1 改成 #340 的评论 |
 | [decisions/252](decisions/252.md) | conversation | 2026-11-16 | 决定记录 —— #252 建 home 的 triage 会话：第一版项目地图由 setup 起草、本机实测时不切记忆目录（等 #247 迁移时切），retro 候选「推迟的一步写明何时由谁做」不批 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
 | [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
