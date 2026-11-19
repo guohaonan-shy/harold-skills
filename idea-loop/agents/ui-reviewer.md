@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对脚本、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）；运行环境的能力怎么做用 `dyna runtime show <能力>` 取；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
+用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按它的「按需读」读写对象文件、拍图、查询、校验、归档各自指到的那份）、`idea-loop:ui-measure`（比对命令、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）；运行环境的能力怎么做用 `dyna runtime show <能力>` 取；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」两节。
 
 下文 `query` 指 `dyna design archive query`，`check` 指 `dyna design archive check`。
 
@@ -40,10 +40,10 @@ effort: high
 
 每轮走查与归档都走这八步；对账模式只用第 3、4、5 步，它的不同写在对账那一份里。
 
-1. **写的范围**：只写 `.tmp/` 和 `<项目目录>/docs/design/tmp/<spec-slug>/delta/`（只有归档模式写 `delta/`，写的随归档提交；按旧流程冻结的需求里它已经提交过；每轮走查不写 `delta/`，也不写 `canvas/`）。其余文件一个字节都不动；`prod/` 只由归档脚本写。
+1. **写的范围**：只写 `.tmp/` 和 `<项目目录>/docs/design/tmp/<spec-slug>/delta/`（只有归档模式写 `delta/`，写的随归档提交；按旧流程冻结的需求里它已经提交过；每轮走查不写 `delta/`，也不写 `canvas/`）。其余文件一个字节都不动；`prod/` 只由归档命令写。
 2. **拿清单**：
    - **有冻结画布的需求**（`canvas/` 里有冻结记录 `<spec-slug>-design.md` 和画布 HTML；每轮走查的常态）：要核的状态清单取冻结记录状态矩阵里每一格的状态名（画布 `?state=` 的名字就是状态名），加上记录「冻结后的变更」一节里新增的格，没有这一节就跳过。**每轮都对最新一版画布**：「冻结后的变更」最后一行的画布版本，没有就是冻结记录里的画布。PR 开出前发生的设计变更，也在这里随第一轮一起核。清单每一项都要有交代：走过、进不去、标了「人看」或没来得及跑。
-   - **没有画布、只有实现者记的最小差异的需求**：`delta/` 就是唯一的设计真相，`query <项目目录> diff <spec-slug>` 的 `added` / `changed` / `removed` 是清单；`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑 `check <项目目录> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本重算，这里不判），违规直接记进交回，档案的结构留给人改。
+   - **没有画布、只有实现者记的最小差异的需求**：`delta/` 就是唯一的设计真相，`query <项目目录> diff <spec-slug>` 的 `added` / `changed` / `removed` 是清单；`unknownRemoved` 不为空，说明 `removed.md` 列了 `prod/` 里没有的对象，记进交回。同时跑 `check <项目目录> --delta <spec-slug> --no-used-by`（`usedBy` 由归档命令重算，这里不判），违规直接记进交回，档案的结构留给人改。
    - **按旧流程冻结、`delta/` 已经提交的需求**：画布仍是真相，清单照第一种取；`delta/` 里已有的状态顺带可以用 `query … diff` 对一遍，两边对不上的记进交回。
    - 归档模式下 `delta/` 还不存在，清单与进入方式照「归档模式」第一步。
 3. **起开发服务器**：先跑 `<项目目录>/DEVELOPMENT.md`「worktree 准备」节的命令（在集成 worktree 里），再照「开发服务器」节的命令用分到的端口起；没有 `DEVELOPMENT.md` 就交回「未完成」，说明要人跑 `/idea-loop:setup`。服务起不来、页面打不开，交回时写明卡在哪，这一轮的 UI 审查记为「未完成」：**未完成不等于没问题**。交回前停掉服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。

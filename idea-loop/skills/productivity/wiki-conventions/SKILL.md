@@ -9,13 +9,13 @@ description: 项目 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定�
 
 | 目录 | 收什么 | 谁写 | `type` | 什么时候消失 |
 |---|---|---|---|---|
-| `index.md`（每层一个） | 索引；顶层是导航 | 脚本从 frontmatter 生成；`raw/`、`adr/` 的暂由 dreaming 写 | 无 | 不消失 |
+| `index.md`（每层一个） | 索引；顶层是导航 | 命令从 frontmatter 生成；`raw/`、`adr/` 的暂由 dreaming 写 | 无 | 不消失 |
 | `raw/` | 素材与事实，忠实不编辑（含 `assets/`） | 会话产物 | `raw` | 不消失 |
 | `spec/` | 还没了结的规格，每份一个目录，目录与正文同名 | 会话产物 | `spec` | issue 全关后 dreaming 写 ADR、删 spec |
 | `spec/` 里每份的 `tickets/` | 工单，单 PR 的临时凭据 | `idea-loop:to-ticket` | 无 | 代码 PR 合并后删 |
 | `adr/` | spec 了结后的总结 | dreaming | `adr` | 永久 |
 | `design/tmp/` | 设计过程，一个需求一个目录：`imagine/` 发散，`canvas/` 画布与冻结记录（冻结后是唯一的设计真相），`delta/` 对 `prod/` 的差异，`research/` 调研页（不归档）；放弃的需求只丢画布，有价值的结论写回 spec 或 issue | `uiux-*`；`delta/` 合并前写 | 冻结记录 `design` | 代码 PR 合并后归档时清掉 |
-| `design/prod/` | 设计档案：线上现在的样子，提交；对象与字段见 `idea-loop:design-archive` 的「图的实体」 | 归档脚本 | `design-*` | 下个需求归档时覆盖或删除 |
+| `design/prod/` | 设计档案：线上现在的样子，提交；对象与字段见 `idea-loop:design-archive` 的「图的实体」 | 归档命令 | `design-*` | 下个需求归档时覆盖或删除 |
 | `domain/` | 领域知识：业务机制、规则、数据结论 | 存量，不由单次会话产生 | `domain` | 不消失 |
 | `records/` | 运营台账，一类一个子目录（如外联跟进表 `records/outreach/`） | 会话建，人改 | `record` | 不进 spec 的生命周期，dreaming 不删 |
 | 项目目录本身 | 项目级规则，一份文件管一件事：`DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` | 前四份由 `/idea-loop:setup` 建 | — | 不消失 |
@@ -24,7 +24,7 @@ description: 项目 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定�
 
 ### 项目目录
 
-**项目目录**是这个项目在 home 里的目录 `<home>/projects/<名字>/`。`docs/`（别的 skill 里的 `<docs>`）和项目级规则 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` 都在它下面；代码仓库只留代码和自己的 `AGENTS.md` / `CLAUDE.md`。读写这些文件、给脚本的 `<docs>`，用项目目录里的路径；代码（读源码、跑测试、起服务、开分支和 PR）仍在代码 worktree 里。home 里设备地图、项目地图的模板（setup 起草、dreaming 重写共用）：「home 里的两份地图」，见 [references/home-maps.md](references/home-maps.md)。怎么拿到，看你是谁：
+**项目目录**是这个项目在 home 里的目录 `<home>/projects/<名字>/`。`docs/`（别的 skill 里的 `<docs>`）和项目级规则 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` 都在它下面；代码仓库只留代码和自己的 `AGENTS.md` / `CLAUDE.md`。读写这些文件、给命令的 `<docs>`，用项目目录里的路径；代码（读源码、跑测试、起服务、开分支和 PR）仍在代码 worktree 里。home 里设备地图、项目地图的模板（setup 起草、dreaming 重写共用）：「home 里的两份地图」，见 [references/home-maps.md](references/home-maps.md)。怎么拿到，看你是谁：
 
 - **主会话开在代码 worktree 里**：会话开场注入的「项目目录：<路径>」那一行；没有，在这个 worktree 里跑下面的 `where`（不带 `--project`）。
 - **主会话开在 home 里**：`dyna home where --project <名字>`，取输出的 `projectDir`。
@@ -79,7 +79,7 @@ dyna home commit "<消息>" <文件>...
 | spec、raw | 写好就提交 |
 | 工单 | 切完提交；代码 PR 合并后，`idea-loop:pr-review` 的合并步骤删这份 spec 的 `tickets/` 并提交 |
 | 冻结的设计（画布、冻结记录、交互图） | 冻结时提交 |
-| 设计档案归档（`prod/`） | 合并前只写 `delta/`、跑归档校验，review 看的就是 `delta/`；代码 PR 合并成功后才跑归档脚本，结果提交 |
+| 设计档案归档（`prod/`） | 合并前只写 `delta/`、跑归档校验，review 看的就是 `delta/`；代码 PR 合并成功后才跑归档命令，结果提交 |
 | dreaming 的执行段、「不做」记录、retro 决定记录、SEO 的效果报告 | 做完直接提交，不经 PR |
 
 SEO 的内容改动不在表里：站点内容在代码仓库，仍是代码 PR。
@@ -95,7 +95,7 @@ SEO 的内容改动不在表里：站点内容在代码仓库，仍是代码 PR�
 - `<worktree 根>` 取 `git rev-parse --show-toplevel`；不在 git 仓库里就是项目根。
 - 生命周期跟着 worktree，所以不放系统 `/tmp`：那里重启会清，不同 worktree、不同会话的东西也分不清归谁。跑完即弃、不跨步骤的东西仍可以用系统临时目录；spec 图的源文件定稿前还要改好几轮，算跨步骤。
 - 分到 `<对象>` 一层，不然同一个 worktree 里先后跑两份 spec 时，固定文件名会悄无声息地互相覆盖。
-- 设计侧的过程产物在 `<项目目录>/docs/design/tmp/<spec-slug>/`，不在这里：归档脚本认得那里。
+- 设计侧的过程产物在 `<项目目录>/docs/design/tmp/<spec-slug>/`，不在这里：归档命令认得那里。
 
 每个子目录收什么、什么时候删，见 [references/tmp-layout.md](references/tmp-layout.md)。
 

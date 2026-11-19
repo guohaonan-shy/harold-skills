@@ -27,7 +27,7 @@ tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
      输出存到 `<运行目录>/technical-baseline.json`。
    - **有意改动**：再跑
      `dyna seo provenance <代码仓库根> <previous 文件> <current 文件> <technical-baseline.json> <上一次审计的 completedAt> <本次审计的 completedAt>`
-     （两个时间取自 `list_site_audits`）。判定全在脚本里，照它的输出做：`findings` 并进第 2 步的清单；`log` 不是 null 时，把它这一行原样写到 `<运行目录>/technical-intentional.txt`。**有意改动只进研究日志、不出发现**：seo-scan 写研究日志时读这个文件。脚本退出码非 0：`technical-baseline.json` 的发现原样并进清单，记下缺口「有意改动出处没判（原因）」。
+     （两个时间取自 `list_site_audits`）。判定全在命令里，照它的输出做：`findings` 并进第 2 步的清单；`log` 不是 null 时，把它这一行原样写到 `<运行目录>/technical-intentional.txt`。**有意改动只进研究日志、不出发现**：seo-scan 写研究日志时读这个文件。命令退出码非 0：`technical-baseline.json` 的发现原样并进清单，记下缺口「有意改动出处没判（原因）」。
    - 否则不比：记下缺口「缺基线比对（这次没有新审计 / 之前没有审计）」。
 4. **写文件**：全部发现写到 `<运行目录>/technical.json`，照 findings.md 验一遍。MCP 连不上、审计跑不起来、一条数据都没拿到：写成未采集。
 

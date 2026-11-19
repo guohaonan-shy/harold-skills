@@ -5,7 +5,7 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和 PR 状态，判处置。**行按风险分两类**：会判错的（`DESIGN.md`、文档里的冲突）问人，其余按各自的建议处置自己执行、自己合并，不进汇报。
 
-**dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己的中间物。
+**dreaming 只编排**：起环境、派工、汇提议表并过校验命令、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己的中间物。
 
 先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、目录、frontmatter、删除后的死链检查都按它）和 `idea-loop:issues`（issue 的状态只走 `dyna issues`，spec 了结看它 `issues:` 里的 issue 全关了；`dyna spec check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 

@@ -59,7 +59,7 @@ disable-model-invocation: true
 2. 重新 `get_project_context` 存成 `.tmp/seo-setup/context.json`，跑 `dyna seo sync-context <项目目录>/SEO.md .tmp/seo-setup/context.json`。
 3. `updates` 非空：把 `summary`（加了谁、删了谁）给人看，人确认后原样作为 `update_project_context` 的 `updates` 写入。
 
-完成条件：重新取一次上下文再跑比对脚本，`updates` 是空数组。
+完成条件：重新取一次上下文再跑比对命令，`updates` 是空数组。
 
 ## 6. 加 SEO 的 issue 分类
 

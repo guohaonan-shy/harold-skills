@@ -105,7 +105,7 @@ async:                            # 这一屏发起了异步动作时必填
 
 **引用与边**：
 
-- 有分段的入口状态上，每条 `user` 边都写 `from`（分段脚本的归属结果给出每个可点元素在哪一段，照抄）。
+- 有分段的入口状态上，每条 `user` 边都写 `from`（分段命令的归属结果给出每个可点元素在哪一段，照抄）。
 - **页内锚点**：入口状态的自环（`to` 指向自己）加 `section` 写落点段，不另建状态。
 - **段内交互**（FAQ 展开、切标签）是页面的另一个状态，状态写 `section` 说明它在哪一段，截图只拍那一段。
 
@@ -117,7 +117,7 @@ async:                            # 这一屏发起了异步动作时必填
 
 `duration`、`easing`（`"{token}"` 引用，或字面值）、`properties`、`iterations`、`reducedMotion`（减少动效下怎么退）、字面值时必填的 `deviates`（一句为什么偏离站内 token）、`usedBy`。
 
-**`usedBy`（组件、动效共用）**：写 `delta/` 时留着不动，归档脚本反向生成。页面用组件 = 它的某个 `regions` 写了它，或它的某个状态在 `components` 里列了它，或它的某条边经过它；页面用动效 = 它的某个状态在 `motions` 里列了它，或它的某条边的 `motion` 是它。只有一个页面用也生成。
+**`usedBy`（组件、动效共用）**：写 `delta/` 时留着不动，归档命令反向生成。页面用组件 = 它的某个 `regions` 写了它，或它的某个状态在 `components` 里列了它，或它的某条边经过它；页面用动效 = 它的某个状态在 `motions` 里列了它，或它的某条边的 `motion` 是它。只有一个页面用也生成。
 
 ## 用户路径 `type: design-journey`
 
@@ -166,4 +166,4 @@ path:
 
 **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置在 `prod/index.md` 的 frontmatter，见下）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。拍法见 [shooting.md](shooting.md)。
 
-**`prod/index.md` 的设置键**（项目定一次，归档脚本原样保留）：`viewport`（如 `1440x900`）、`theme`（`light` / `dark`）、`locale`、`motion`（`default` 是默认动效、拍之前把整页滚一遍让内容出现，`reduce` 是减少动效；不写是 `default`）、`workspaces`（可选：项目有不止一个前端时，组件文件名的工作区前缀列表，如 `[mkt, app]`）。
+**`prod/index.md` 的设置键**（项目定一次，归档命令原样保留）：`viewport`（如 `1440x900`）、`theme`（`light` / `dark`）、`locale`、`motion`（`default` 是默认动效、拍之前把整页滚一遍让内容出现，`reduce` 是减少动效；不写是 `default`）、`workspaces`（可选：项目有不止一个前端时，组件文件名的工作区前缀列表，如 `[mkt, app]`）。

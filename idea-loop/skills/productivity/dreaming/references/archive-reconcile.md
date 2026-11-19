@@ -4,7 +4,7 @@
 
 两波：先**源码波**（不开浏览器），再**实时波**（源码波干净也跑）。**两波都由 `idea-loop:ui-reviewer` 的对账模式做**，dreaming 只派工、汇它交回的行；源码波怎么查、怎么写，在它的定义里（「对账模式」的「源码波」）。只有 `prod/` 为空时的全站初扫留在 dreaming 自己手里，见 [initial-scan.md](initial-scan.md)。
 
-用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。查询用 `dyna design archive query`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档脚本并进 `prod/`（这几类行是自动执行的，不等人批）。
+用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。查询用 `dyna design archive query`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档命令并进 `prod/`（这几类行是自动执行的，不等人批）。
 
 ## 环境
 
@@ -12,7 +12,7 @@
 - **开发服务**：照 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」准备，用一个自己挑的空闲端口起（`lsof -iTCP:<端口> -sTCP:LISTEN` 探一下，被占就换）。前后端要互相指向的，改它读的那个配置，别人的端口不碰。
 - **浏览器**：和 `idea-loop:implement` 并行的执行方共用会话里那一个，照 `dyna runtime show 浏览器` 的「并行时抢锁」排队，owner 写 `dreaming`。锁目录默认放中间物目录的 `browser.lock`（`.tmp/dreaming/<日期>/browser.lock`）；人说同一时间有 `idea-loop:implement` 在用同一个浏览器，就改用那一边的锁目录。
 - **tmp 目录**：这一次运行的产物放 `docs/design/tmp/dreaming-<YYYY-MM-DD>/`（下称「dreaming 的 tmp 目录」）：
-  - `delta/`：要进档案的对象，与 `prod/` 同构，由归档脚本并进 `prod/`；
+  - `delta/`：要进档案的对象，与 `prod/` 同构，由归档命令并进 `prod/`；
   - `evidence/`：只给人看、不进档案的图（产品坏了的现状）。
 
   比对用的草稿图放 `.tmp/dreaming/<日期>/shots/`：一致的状态在 `docs/design/tmp/` 里不留任何新图。进行中需求的 `tmp/<spec-slug>/` 不归 dreaming 管，一个字节不碰。
@@ -57,13 +57,13 @@ dreaming 拿到它交回的结果后：
 
 1. **先删掉不进表的产物**：提议段留在 `delta/` 里、但没有对应行的文件（reviewer 判为一致后留下的草稿，或这次不执行的行对应的状态文件、图、对象全文）从 dreaming 的 tmp 目录里删掉；`evidence/` 不动。
 2. **校验**：`dyna design archive check <项目目录> --delta dreaming-<日期> --no-used-by`。每条违规点名了文件与字段，按它改，直到通过。`删对象` 的行：把对象 id 一行一条写进 `delta/removed.md`（`- [[<id>]]`），还引用它的节点与边，在 delta 里改掉（改指向它被替换成的组件，或删边）；看不出该改指向谁、又不能删边的，不执行这一行，在提交消息正文里写明留着、为什么。
-3. **归档**：`dyna design archive write <项目目录> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。脚本负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进提交消息正文：`.gitattributes` 不是知识库文件，不在这次提交里改，交人处理。
-4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档脚本写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、不执行的档案行，不产生任何素材提交。
+3. **归档**：`dyna design archive write <项目目录> dreaming-<日期>`，先带 `--dry-run` 看，再去掉它跑。命令负责覆盖、删除、重算 `usedBy` 与索引、检查 LFS、清空这个 tmp 目录；dreaming 只通过它写 `prod/`。它的提示（`.gitattributes` 没管 `prod/` 的素材、`prod/index.md` 没定主视口 / 主题 / 语言）原样写进提交消息正文：`.gitattributes` 不是知识库文件，不在这次提交里改，交人处理。
+4. **提交**：只提交 `docs/`、`DESIGN.md`、`GLOSSARY.md`；归档命令写的素材（png / gif）在 `docs/design/prod/` 里，属于 `docs/`。一致的状态、不执行的档案行，不产生任何素材提交。
 5. 归档之后 `docs/design/tmp/dreaming-<日期>/` 应已清空；这次没有任何要归档的档案行时 `evidence/` 还在，手动把整个目录删掉，不然它留在项目目录里，哪次提交带上它，下一次 dreaming 就会把它当成漏归档。
 
 ## 边界
 
-- 写 `prod/` 只走归档脚本；进行中需求的 `tmp/<spec-slug>/` 不碰。
-- 「产品坏了」的画面只放 `evidence/`：放进 `delta/`，归档脚本会把它当档案的新真值并进去。
+- 写 `prod/` 只走归档命令；进行中需求的 `tmp/<spec-slug>/` 不碰。
+- 「产品坏了」的画面只放 `evidence/`：放进 `delta/`，归档命令会把它当档案的新真值并进去。
 - 状态走不通就如实判，应用代码和开发环境的数据保持原样。
 - 结论只出在提议表里；每个状态的判定来自 reviewer 这一次跑出来的证据，不凭对代码的印象。

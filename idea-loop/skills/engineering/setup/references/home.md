@@ -36,11 +36,11 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 
 ## 3. 改三处用户级配置
 
-三处是：用户级 `settings.json` 启用 idea-loop、`autoMemoryDirectory` 指到 `~/home/memory/`、`~/.claude/CLAUDE.md` 软链到 `~/home/AGENTS.md`。机械部分归脚本：
+三处是：用户级 `settings.json` 启用 idea-loop、`autoMemoryDirectory` 指到 `~/home/memory/`、`~/.claude/CLAUDE.md` 软链到 `~/home/AGENTS.md`。机械部分归命令：
 
 1. `dyna home config plan`：出一张表，每项带改前、改后和状态（待改 / 已是 / 已是别处的软链，要人处理）；它什么都不写。
 2. 三项一起把整张表摆给人，问一次。「已是」的项只在表里列着，不再问；「已是别处的软链，要人处理」的项不动，写进交回交给人。没有「待改」的项，这一步跳过。
 3. 人同意：`dyna home config apply`，它先把 `settings.json` 和 `CLAUDE.md` 备份进 `~/home/.backup/<时间>/`，再把待改的项全做。人只同意其中几项时，加 `--only <编号或名字，逗号分隔>`（`plugin` `memory` `claude-md`）；没做的项下次跑 setup 仍是「待改」。
-4. 提交 home 里脚本写的文件：`git add AGENTS.md .gitignore`（`.backup/` 不进 git）。
+4. 提交 home 里命令写的文件：`git add AGENTS.md .gitignore`（`.backup/` 不进 git）。
 
-脚本需要 `~/home/AGENTS.md` 已存在，所以排在第 1 步之后。
+命令需要 `~/home/AGENTS.md` 已存在，所以排在第 1 步之后。

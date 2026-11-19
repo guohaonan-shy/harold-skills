@@ -50,6 +50,6 @@ test('ui-tickets.md carries the design-archive steps that used to be inline', ()
   assert.match(ui, /dyna design archive check <项目目录> --delta <spec-slug> --no-used-by/);
   assert.match(ui, /dyna design archive query <项目目录> state <状态名> --delta <spec-slug>/);
   assert.match(ui, /delta\/removed\.md/);
-  assert.match(ui, /`docs\/design\/prod\/` 只由合并前的归档脚本写/);
+  assert.match(ui, /`docs\/design\/prod\/` 只由合并前的归档命令写/);
   assert.match(ui, /同一批 finding 两轮不变/);
 });

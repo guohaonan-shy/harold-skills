@@ -54,7 +54,7 @@ idea-loop 从项目目录读这几份配置：
 - `<docs>` 骨架：`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`index.md`，只建不存在的。
 - `.tmp/` 追加进代码仓库的 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`<项目目录>/.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
-- `ISSUE_TRACKER.md` 的「分类 label」一节：把人定的分类和要保留的 label 写进去，格式脚本要读，见模板里它那一节。
+- `ISSUE_TRACKER.md` 的「分类 label」一节：把人定的分类和要保留的 label 写进去，格式命令要读，见模板里它那一节。
 - **Linear 项目**（人选了 Linear）：连 MCP、选团队、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `dyna issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
 - triage：把人对「团队用不用 triage」的回答写进 `ISSUE_TRACKER.md` 状态表后面那一行（`triage：用` 或 `triage：跳过`），模板里的「用 / 跳过」占位不算选了。
 - 旧状态（GitHub 项目）：`dyna spec check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `dyna issues migrate <docs>` 只列出会怎么改，给人看，人确认后加 `--apply`。

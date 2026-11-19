@@ -22,7 +22,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
    frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步调过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
 
-5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时脚本核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>` 刷 `docs/spec/index.md`。
+5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>` 刷 `docs/spec/index.md`。
 
 6. **提交并收工**：spec 提交到 home，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-session`），这一步留给它。
 
@@ -34,7 +34,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 开头（标题下，覆盖了已有的 issue 才写）：
 
-给读者什么：每个 issue 现在是真问题，还是已经没了。每个 issue 一行引用，结论只写「存在」或「不存在」，脚本按这两个词判断 spec 能不能直接完成、issue 该不该关：
+给读者什么：每个 issue 现在是真问题，还是已经没了。每个 issue 一行引用，结论只写「存在」或「不存在」，命令按这两个词判断 spec 能不能直接完成、issue 该不该关：
 
 > #<号> 存在：一句话的复现现象，详情在「问题陈述」
 > #<号> 不存在：试了什么、卡在哪（或现在的规则、代码在哪）；什么时候、对着哪个基准分支、用什么手段核的
@@ -68,7 +68,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 - `### 后端`：图下几行列出接口变化。
 - `### 前端内部`：缓存、状态这类看不见的部分，写读路径、写路径和每层的生命周期；需要图就再画一张时序图。
-- `### 前端交互`：每个场景一行（触发 → 变化），小节开头标「待补图：uiux-refine 冻结时按冻结画布补交互图，替换本节文字」。脚本靠有没有这一小节判断 spec 碰不碰 UI。
+- `### 前端交互`：每个场景一行（触发 → 变化），小节开头标「待补图：uiux-refine 冻结时按冻结画布补交互图，替换本节文字」。命令靠有没有这一小节判断 spec 碰不碰 UI。
 
 ## User Stories
 

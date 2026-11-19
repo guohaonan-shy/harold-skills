@@ -29,4 +29,4 @@ wiki-conventions、dreaming 里「由 #339 包装」的占位改成指向新命�
 
 > 补充（工单 12 交回，2026-11-19）：setup 的 replay-runner 参考里「Codex 查找脚本也随 runner 装进去」已不对（runner 改调 dyna），改它时同步改 replay-exercised-doc 测试最后一条断言；pr-review、setup 的预检表、pr-reviewer 里写的 codex-companion、codex-prompt 改成 `dyna agent codex run` / `dyna agent codex prompt`。
 - [x] review 第 1 轮 C1（2026-11-19）：给 agent 的说明里，指代 dyna 命令时不叫「脚本」，改叫「命令」或直接写 dyna（术语表 dyna 词条「不要用」：脚本）；只换词，不加句子；claude-desktop 的运行环境数据注入接近一万字上限，不变长
-- [ ] review 第 2 轮 C1（2026-11-19）：全插件（skills、agents、runtime 数据）里凡是指代 dyna 命令的「脚本」都改成「命令」，一次扫完，不只第 2 轮列出的 17 处（含工单 17、18 引入的几处和上线自查那节的存量一处）；指 evals 里 .mjs 文件、或别的工具的「脚本」不改；只换词不加句子；改完 grep 全插件确认没有残留并在交回里列出剩下的「脚本」各指什么
+- [x] review 第 2 轮 C1（2026-11-19）：全插件（skills、agents、runtime 数据）里凡是指代 dyna 命令的「脚本」都改成「命令」，一次扫完，不只第 2 轮列出的 17 处（含工单 17、18 引入的几处和上线自查那节的存量一处）；指 evals 里 .mjs 文件、或别的工具的「脚本」不改；只换词不加句子；改完 grep 全插件确认没有残留并在交回里列出剩下的「脚本」各指什么
