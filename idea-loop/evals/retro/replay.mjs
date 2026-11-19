@@ -21,6 +21,21 @@ export function decideOutcome({ before, after }) {
   return { outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」' };
 }
 
+/** The variables `gh` takes a login from, other than its config dir: github.com and enterprise tokens. */
+const GH_TOKEN_VARS = ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN'];
+
+/**
+ * The environment every process the runner starts (the two workers, the Claude judge, the Codex judge) gets: the runner's own
+ * environment without a `gh` login. The project copy stands at the case's commit, but a `gh` read still answers from the machine's
+ * login, with what happened after that commit; no token and an empty config dir make every `gh` read fail as not logged in.
+ * `ghConfigDir` is an existing empty directory. `env` is not changed; everything but the above passes through.
+ */
+export function replayChildEnv(env, ghConfigDir) {
+  const child = { ...env, GH_CONFIG_DIR: ghConfigDir };
+  for (const k of GH_TOKEN_VARS) delete child[k];
+  return child;
+}
+
 /**
  * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs runtime-detect.mjs --inject):
  * the body of `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the reference of the current runtime only. The

@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import { getSection, setSection, readerProblems, SECTIONS, TITLES } from './pr-body.mjs';
 
 test('the description is the review report: one sentence, then its five parts, then the folded reference', () => {
-  assert.deepEqual(SECTIONS, ['summary', 'problem', 'changes', 'verification', 'rollback', 'your-todo', 'reference']);
+  // 上线自查的网址 sits between 能否回滚 and 要你做的事: SEO changes only, the pages to check once the merge is live
+  assert.deepEqual(SECTIONS, ['summary', 'problem', 'changes', 'verification', 'rollback', 'live-check', 'night-decided', 'night-waiting', 'your-todo', 'reference']);
+  assert.equal(TITLES['live-check'], '上线自查的网址');
+  // night-mode sessions only: what was settled by the recommendation overnight, and what is waiting for a person
+  assert.equal(TITLES['night-decided'], '夜里替你定的');
+  assert.equal(TITLES['night-waiting'], '等你定的');
   assert.deepEqual(
     ['problem', 'changes', 'verification', 'rollback', 'your-todo'].map((n) => TITLES[n]),
     ['问题', '怎么修', '怎么验证', '能否回滚', '要你做的事'],
@@ -13,7 +18,7 @@ test('the description is the review report: one sentence, then its five parts, t
 });
 
 test('sections come out in the fixed order whatever order they were written in', () => {
-  const written = ['reference', 'your-todo', 'rollback', 'verification', 'summary', 'changes', 'problem'];
+  const written = ['reference', 'your-todo', 'night-waiting', 'night-decided', 'live-check', 'rollback', 'verification', 'summary', 'changes', 'problem'];
   let body = '';
   for (const n of written) body = setSection(body, n, `内容 ${n}`);
   const order = SECTIONS.map((n) => body.indexOf(`<!-- idea-loop:section ${n} -->`));
@@ -133,4 +138,31 @@ test('an old issues section that only said there were none is dropped, not folde
   const none = '<!-- idea-loop:section issues -->\n## 顺带开的 issue\n\n无\n<!-- /idea-loop:section issues -->';
   const body = setSection(none, 'summary', 'S');
   assert.doesNotMatch(body, /section issues|顺带开的 issue|section rollback/);
+});
+
+test('上线自查的网址: one URL and its target word per line is accepted, read back, and ordered before 要你做的事', () => {
+  const urls = [
+    'https://cookbook.example/blog/weeknight-dinners 目标词：weeknight dinner ideas',
+    'https://cookbook.example/pricing 目标词：recipe app subscription',
+  ].join('\n');
+  let body = setSection('', 'your-todo', '- [ ] 说合并即可');
+  body = setSection(body, 'live-check', urls);
+  assert.match(body, /## 上线自查的网址\n\nhttps:\/\/cookbook\.example\/blog\/weeknight-dinners 目标词：weeknight dinner ideas/);
+  assert.equal(getSection(body, 'live-check'), urls);
+  assert.ok(body.indexOf('section live-check -->') < body.indexOf('section your-todo -->'));
+  assert.deepEqual(readerProblems('live-check', urls), [], 'a URL line is not a code-level reference');
+  assert.equal(getSection(setSection(body, 'live-check', ''), 'live-check'), null, 'empty content removes it');
+  // a path written without its URL, or the target word in backticks, is code-level and refused
+  assert.throws(() => setSection('', 'live-check', '`apps/site/src/content/blog/a.md`'), /say it in words/);
+});
+
+test('the two night-mode sections are written between the live-check and the to-do, and are read by a person', () => {
+  let body = setSection('', 'your-todo', '说合并即可');
+  body = setSection(body, 'night-waiting', '- **删一条旧分支**：只能人来删');
+  body = setSection(body, 'night-decided', '- **要不要保留旧入口**：选了保留，因为老用户还在用；另一种是直接删掉');
+  assert.match(body, /## 夜里替你定的\n\n- \*\*要不要保留旧入口/);
+  assert.match(body, /## 等你定的\n\n- \*\*删一条旧分支/);
+  const at = ['night-decided', 'night-waiting', 'your-todo'].map((n) => body.indexOf(`section ${n} -->`));
+  assert.deepEqual([...at].sort((a, b) => a - b), at);
+  assert.throws(() => setSection(body, 'night-decided', '- 改了 `src/app.ts` 的默认值'), /read by a person/);
 });
