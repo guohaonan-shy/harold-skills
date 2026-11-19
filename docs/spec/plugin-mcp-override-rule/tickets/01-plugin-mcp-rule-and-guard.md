@@ -23,11 +23,11 @@
 
 ## 验收标准
 
-- [ ] 维护约定的那一节先在测试里红（节还没写时跑测试，AGENTS.md 那组断言失败），写完转绿。
-- [ ] 临时给某个 agent 的 `tools` 加 `mcp__openseo__*` 跑测试，红且报出文件和名字；撤掉后绿。
-- [ ] 那一节写了：插件名为准与白名单只写插件名、开场确认与被顶替停下、两种删法、Mobbin 现存实例、design-archive 例外。
-- [ ] `plugin.json` 的 `version` 从 main 当前版本升了一个 patch。
-- [ ] 全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全绿。
+- [x] 维护约定的那一节先在测试里红（节还没写时跑测试，AGENTS.md 那组断言失败），写完转绿。
+- [x] 临时给某个 agent 的 `tools` 加 `mcp__openseo__*` 跑测试，红且报出文件和名字；撤掉后绿。
+- [x] 那一节写了：插件名为准与白名单只写插件名、开场确认与被顶替停下、两种删法、Mobbin 现存实例、design-archive 例外。
+- [x] `plugin.json` 的 `version` 从 main 当前版本升了一个 patch。
+- [x] 全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全绿。
 
 ## 选中的存量回归
 

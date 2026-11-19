@@ -21,3 +21,12 @@ plugin 级不设 `references/`，每份参考资料归一个 skill：
 ## 登记
 
 `plugin.json` 的 `skills` 按分类目录登记，新 skill 放进已有分类不用改它；新开一个分类要把目录加进去。现有清单以目录本身为准。
+
+## 插件自带的 MCP
+
+插件 `.mcp.json` 里的服务（`design-archive`、`openseo`、`mobbin`）以插件那份为准。写或改用它们的 skill、agent 时：
+
+- **白名单只写插件名**：agent 的 `tools`、skill 的 `allowed-tools` 写 `mcp__plugin_idea-loop_<服务>__*`；`scripts/plugin-mcp-names-doc.test.mjs` 守着这一条。
+- **开场确认它以插件名加载**：Claude Code 对同一个服务只连一份，项目、用户或本地配置里配了同一个服务（远程比 URL，本地比命令），插件那份就被顶替，工具换成别处起的名字。流程开场看工具清单里有没有插件名那一组；没有就停下，交回时说清删哪份配置：用户级或本地配置 `claude mcp remove <名字>`（`-s <范围>`），项目配置删项目 `.mcp.json` 里那一项。
+- **照现成的做**：Mobbin。`uiux-researcher` 的第 0 步「先认 Mobbin 连着没有」是开场确认，`idea-loop:runtime` 的 claude-desktop 参考「装与设置」里 Mobbin 那条写了被同地址配置顶替时删哪份。
+- **例外 `design-archive`**：不做开场确认。它的七个查询入口命令行也有，输出同一份 JSON（`design-archive` skill 的 `references/query.md`），工具不在就改用命令行。
