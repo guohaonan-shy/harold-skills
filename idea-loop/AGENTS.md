@@ -24,7 +24,7 @@ plugin 级不设 `references/`，每份参考资料归一个 skill：
 
 ## 插件自带的 MCP
 
-插件 `.mcp.json` 里的服务（`design-archive`、`openseo`、`mobbin`）以插件那份为准。写或改用它们的 skill、agent 时：
+插件 `.mcp.json` 里的服务以插件那份为准。写或改用这些服务的 skill、agent 时：
 
 - **白名单只写插件名**：agent 的 `tools`、skill 的 `allowed-tools` 写 `mcp__plugin_idea-loop_<服务>__*`；`scripts/plugin-mcp-names-doc.test.mjs` 守着这一条。
 - **开场确认它以插件名加载**：Claude Code 对同一个服务只连一份，项目、用户或本地配置里配了同一个服务（远程比 URL，本地比命令），插件那份就被顶替，工具换成别处起的名字。流程开场看工具清单里有没有插件名那一组；没有就停下，交回时说清删哪份配置：用户级或本地配置 `claude mcp remove <名字>`（`-s <范围>`），项目配置删项目 `.mcp.json` 里那一项。
