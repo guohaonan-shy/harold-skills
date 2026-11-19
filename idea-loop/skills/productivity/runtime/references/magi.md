@@ -99,7 +99,8 @@ magi 托管的优先：
 
 告诉人怎么接：
 
-- **MCP**：人在 magi 网页的 Integrations → MCP servers 里加（Linear、Refero 等；查有没有：`magi mcp list`）。
+- **MCP**：人在 magi 网页的 Integrations → MCP servers 里加（Linear、Mobbin 等；查有没有：`magi mcp list`）。
+- **Mobbin MCP**（可选，设计调研用，要 Mobbin 付费计划）：magi 里的 MCP 都在上面那个入口加：人加一个名为 `mobbin`、地址 `https://api.mobbin.com/mcp`、走 OAuth 登录的服务器；起调研员的会话用 `magi mcp call mobbin …` 调它。`magi mcp list` 里没有 `mobbin`，设计调研就停下，只有它受影响。
 - **Playwright MCP**：不用装，浏览器是 `magi browser`。
 - **插件**：在 magi 会话里 `/plugin`。
 - **允许规则、设置**：人自己改 `$CLAUDE_CONFIG_DIR/settings.json`；这边只打印规则，不替人改权限设置。
