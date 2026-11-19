@@ -232,6 +232,15 @@ test('attribute: a pinned element inside a section makes it scroll-driven; witho
   assert.deepEqual(r.declaredNotDetected, []);
 });
 
+test('attribute: the evidence says what the pin is and how long it holds, never that it was taken for a pin because of its text — a measurement saved by an older version still reads the same', () => {
+  const small = { ...PIN, height: 420, byText: true, probes: [{ y: 1000, text: 'Step 1' }], index: 0 };
+  for (const pin of [PIN, small]) {
+    const evidence = attribute(measurement(ALL, { pins: [pin] })).undeclaredScrollDriven[0].evidence.join('；');
+    assert.doesNotMatch(evidence, /不到半屏/);
+    assert.doesNotMatch(evidence, /按「钉住时的文字随滚动变了」认定/);
+  }
+});
+
 test('attribute: a scroll-driven section that is declared passes, and the evidence is still given', () => {
   const r = attribute(measurement([HEADER, HERO, declared(FEATURE_A), FEATURE_B, FOOTER], { pins: [PIN] }));
   assert.equal(r.ok, true);
