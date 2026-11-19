@@ -35,14 +35,14 @@ test('dreaming: description routes only, body stays under 5000 characters', () =
 
 test('dreaming: the full table is not shown; the split comes from the script', () => {
   assert.match(skill, /完整表[^\n]*不摆给人/);
-  assert.match(skill, /proposal-table-check[^\n]*--split-ask/);
-  assert.match(proposal, /--split-ask/);
+  assert.match(skill, /dyna dreaming table split[^\n]*--out/);
+  assert.match(proposal, /dyna dreaming table split[^\n]*--out/);
 });
 
 test('the ask-or-auto rule is written once, in the script: the docs point at it and list no dispositions', () => {
   assert.match(proposal, /问人的行和自动的行/);
   const part = proposal.split('## 问人的行和自动的行')[1].split('\n## ')[0];
-  assert.match(part, /splitAskRows/);
+  assert.match(part, /dyna dreaming table split/);
   for (const k of ['报警', '问人 ·', '`GLOSSARY.md`', '`DESIGN.md 条目`']) {
     assert.ok(!part.includes(k), `the split section repeats the rule: ${k}`);
   }
@@ -51,9 +51,9 @@ test('the ask-or-auto rule is written once, in the script: the docs point at it 
 test('the automatic part commits to home on generic checks, with no project command in the plugin', () => {
   const merge = proposal.split('4. **提交前检查**')[1].split('5. **回滚**')[0];
   assert.match(merge, /REVIEW\.md` 的验证命令/);
-  assert.match(merge, /spec\.mjs check/);
+  assert.match(merge, /dyna spec check/);
   assert.match(merge, /删除后查死链/);
-  assert.match(merge, /design-archive-check/);
+  assert.match(merge, /dyna design archive check/);
   assert.doesNotMatch(merge, /CI|gh pr/, 'no PR, so nothing to wait for or merge');
   assert.match(merge, /不提交，改动留在工作区/);
   assert.match(merge, /home 没推上去/);

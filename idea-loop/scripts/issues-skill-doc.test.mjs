@@ -34,11 +34,11 @@ test('the body names every state, the five required body sections, backlog / blo
   assert.match(body, /先放着/);
   assert.match(body, /blocked by/);
   assert.match(body, /--comment=/);
-  for (const c of ['labels', 'type', 'show', 'check', 'set', 'candidates', 'reconcile', 'queues', 'migrate', 'new', 'body', 'priority', 'backlog', 'note']) {
-    assert.match(body, new RegExp(`^issues ${c} `, 'm'), `command ${c}`);
-  }
+  // the arguments are read from `--help`, not copied into the body (spec idea-loop-cli, ticket 16): the body only points there
+  assert.match(body, /dyna issues --help/);
+  assert.doesNotMatch(body, /^dyna issues (labels|type|show|check|set|candidates|reconcile|queues|migrate|body|priority|backlog|note) +</m, 'the command table is back');
   assert.doesNotMatch(body, /^issues open /m, 'issues open is gone');
-  assert.match(body, /`issues new`/, '「开一个 issue」 goes through issues new');
+  assert.match(body, /`dyna issues new`/, '「开一个 issue」 goes through issues new');
   assert.doesNotMatch(body, /gh issue create/);
   assert.doesNotMatch(body, /\b(advance|resume|handoff|unhandoff)\b/);
 });

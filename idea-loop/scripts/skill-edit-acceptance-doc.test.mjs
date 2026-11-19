@@ -68,11 +68,11 @@ test('implementer hand-back: a 杠杆 line per changed file, and the standards l
   assert.match(std, /调了的写「调」/, '调了 skill 的写「调」');
 });
 
-test('implement 核对与落地: the landed check runs ticket-ledger.mjs skill-edit on the saved hand-back', () => {
+test('implement 核对与落地: the landed check runs dyna spec skill-edit on the saved hand-back', () => {
   const block = section(implement, '核对与落地');
   const landed = block.split('\n').find((l) => l.startsWith('| `landed`'));
   assert.ok(landed, '核对表缺 landed 那一行');
-  assert.match(landed, /ticket-ledger\.mjs skill-edit/, 'landed 的核对要跑 skill-edit 子命令');
+  assert.match(landed, /dyna spec skill-edit/, 'landed 的核对要跑 skill-edit 子命令');
   assert.match(landed, /\.tmp\/implement\/<spec-slug>\//, '交回原文要存进 .tmp/implement/<spec-slug>/ 下的文件');
 });
 

@@ -49,7 +49,7 @@ test('the memory reference writes the steps in order: measure, judge, execute, a
   const at = ['## 1. 量', '## 2. 判每一条', '## 3. 执行', '## 4. 问人'].map((h) => memory.indexOf(h));
   assert.ok(at.every((i) => i >= 0), `a step heading is missing: ${at}`);
   assert.deepEqual([...at].sort((a, b) => a - b), at);
-  assert.match(memory, /memory-check/);
+  assert.match(memory, /dyna home memory check/);
   assert.match(memory, /originSessionId/);
   assert.match(memory, /先看出处，再看内容/);
   assert.match(memory, /判不准留在根里/);

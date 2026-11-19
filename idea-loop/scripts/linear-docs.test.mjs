@@ -32,7 +32,7 @@ test('linear.md names every MCP tool it relies on, with no connection prefix, an
 test('issues SKILL: GitHub by script, Linear by MCP; the old 「脚本还不接」 is gone', () => {
   const md = eng('issues', 'SKILL.md');
   assert.match(md, /Linear 用 MCP/);
-  assert.match(md, /`issues check`/);
+  assert.match(md, /`dyna issues check`/);
   assert.doesNotMatch(md, /脚本还不接/);
   assert.doesNotMatch(linear, /脚本还不接/);
 });
@@ -52,7 +52,7 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   const md = eng('setup', 'SKILL.md');
   assert.match(md, /issue-tracker-linear\.md/);
   assert.match(md, /linear-setup\.md/);
-  assert.match(md, /跳过下面的 `issues labels` 与 `migrate`/);
+  assert.match(md, /跳过下面的 `dyna issues labels` 与 `migrate`/);
   assert.match(md, /issue-tracker\.md\]/, 'the file table still lists the GitHub template');
   const steps = eng('setup', 'references', 'linear-setup.md');
   // the connecting is a capability now: the steps name the MCP address and the capabilities, the how is in the runtime's reference
@@ -77,7 +77,7 @@ test('session, dispatch and triage (skill and agent) each point at the issues sk
     assert.doesNotMatch(md, /references\/linear\.md/, `${name} reads another skill's private reference`);
     assert.doesNotMatch(md, /includeRelations|addLabels|removeLabels|orderBy/, `${name} repeats tool parameters`);
   }
-  assert.match(eng('issue-dispatch', 'SKILL.md'), /Linear 项目跳过 `issues labels` 与 `issues reconcile`/);
+  assert.match(eng('issue-dispatch', 'SKILL.md'), /Linear 项目跳过 `dyna issues labels` 与 `dyna issues reconcile`/);
   assert.match(eng('issue-session', 'SKILL.md'), /issues check <docs> <状态> <号> --from=<现在>/);
 });
 

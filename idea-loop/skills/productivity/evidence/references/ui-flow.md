@@ -1,4 +1,4 @@
-# UI flow：用 flow-compose.mjs 拼截图
+# UI flow：用 dyna design flow compose 拼截图
 
 **核心就是 UI 截图 + 截图之间的箭头 + 必要、简洁的文字**，问题、设计、交付都这样画。
 
@@ -53,7 +53,7 @@ excalidrawer 没有图片节点，UI flow 只用这个脚本拼。输入是一�
 ## 运行
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs" flow.json out.png [--archive <项目目录> [--delta <spec-slug>]]
+dyna design flow compose flow.json out.png [--archive <项目目录> [--delta <spec-slug>]]
 ```
 
 - 脚本先校验，不合规就退出码 2，逐条列出问题。

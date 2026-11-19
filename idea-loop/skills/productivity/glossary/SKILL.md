@@ -72,7 +72,7 @@ _Avoid_: level, priority（告警上另有一个也叫 priority 的字段，指�
 - 只有一个词能指两个以上概念时才进这一节；只指一个概念的，写成那个概念的 `_Avoid_`。
 - 每条一到两句：这个词可能指哪几样，单独出现时该怎么说。
 
-格式由 `glossary-check.mjs` 机械校验：plugin 的 PostToolUse hook 在每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件时自动跑它，违规写到 stderr、退出码 2，当场改到通过。内容该不该收，它不判断：那是「收什么」和人的事。
+格式由 plugin 的 PostToolUse hook 机械校验：每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件时自动查，违规写到 stderr、退出码 2，当场改到通过。内容该不该收，它不判断：那是「收什么」和人的事。
 
 ## 写：人拍板之后当场写
 

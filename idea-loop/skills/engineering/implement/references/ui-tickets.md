@@ -105,13 +105,13 @@ prod 404 断言的形状（栈无关）：以生产模式构建并启动，请�
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：
   - **范围**：只写这张工单碰到的状态、边、组件文件。
   - **写法**：照 `idea-loop:design-archive` 的结构和路径（与 `prod/` 同构）。对象文件在 `delta/` 里已经有了（别的工单写的），就在它上面改，保留别人写的部分；只在 `prod/` 里有的对象，放它改完之后的**全文**。状态文件补齐「这一屏」与「应看到什么」两节；删除的对象 id 列进 `delta/removed.md`。
-  - **自检**：以项目目录当根，跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <项目目录> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
-- **要进某个状态去复现或写测试时，先查档案**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
+  - **自检**：以项目目录当根，跑 `dyna design archive check <项目目录> --delta <spec-slug> --no-used-by`（`usedBy` 由归档脚本生成，不手写也不在这里判），违规当场改。
+- **要进某个状态去复现或写测试时，先查档案**：`dyna design archive query <项目目录> state <状态名> --delta <spec-slug>`，按返回的进入方式（入口地址与前置条件、沿途每一步）进去，终点拿「应看到什么」核对。
 - **只写 tmp 路径下的 `delta/`**：`docs/design/prod/` 只由合并前的归档脚本写。
 
 ## 要人判断的部分，录成素材
 
-不管是不是 UI 工单，验收标准里标「人看」的格（动效、悬停的样子、流程是否顺），以及延后给「PR 交付验收」的格，都照这一节做成素材（图怎么做照 `idea-loop:evidence`，人验清单每一项的格式照 `idea-loop:pr` 的交付证据）：流程用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼真实截图，动效录动图，样式出并排截图。素材取自**你的实现**（真实页面加网络拦截，或开发状态页上的真实组件），不取画布。
+不管是不是 UI 工单，验收标准里标「人看」的格（动效、悬停的样子、流程是否顺），以及延后给「PR 交付验收」的格，都照这一节做成素材（图怎么做照 `idea-loop:evidence`，人验清单每一项的格式照 `idea-loop:pr` 的交付证据）：流程用 `dyna design flow compose` 拼真实截图，动效录动图，样式出并排截图。素材取自**你的实现**（真实页面加网络拦截，或开发状态页上的真实组件），不取画布。
 
 - 文件放**你这个 worktree** 的 `.tmp/implement/<spec-slug>/evidence/`，文件名以 `t<NN>-` 开头，不上传。
 - **录的过程中看到的行为和验收标准对不上，那是 bug，不是人验项**：当场修，补回归测试，然后重录。

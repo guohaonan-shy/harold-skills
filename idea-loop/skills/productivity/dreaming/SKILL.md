@@ -7,7 +7,7 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 **dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己的中间物。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、目录、frontmatter、删除后的死链检查都按它）和 `idea-loop:issues`（issue 的状态只走 `issues.mjs`，spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、目录、frontmatter、删除后的死链检查都按它）和 `idea-loop:issues`（issue 的状态只走 `dyna issues`，spec 了结看它 `issues:` 里的 issue 全关了；`dyna spec check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
 ## 纪律
 
@@ -49,8 +49,8 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
    | `idea-loop:design-steward`（opus · high） | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它 | `rows-design.md`（`候选`、`DESIGN.md 条目` 与牵出的 `缺陷` 行） |
 
    项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。
-4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <表>`，退出码 0 才往下走。完整表是执行段的输入和提交消息正文的来源，不摆给人。完成条件：校验通过。
-5. **拆表**：`proposal-table-check <表> --split-ask=<小表路径>` 抽出问人的行。问人的是哪几类行，只由脚本判，这里不另写一份；脚本报「无问人的行」就没有问人那份。
+4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `dyna dreaming table submit <表>`，退出码 0 才往下走。完整表是执行段的输入和提交消息正文的来源，不摆给人。完成条件：校验通过。
+5. **拆表**：`dyna dreaming table split <表> --out <小表路径>` 抽出问人的行。问人的是哪几类行，只由命令判，这里不另写一份；它报「无问人的行」就没有问人那份。
 
 **自动那份**（拆表后立刻做）：照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」，按完整表里每一行自己的建议处置执行（问人的行除外），改动照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home（这一份不会碰 `DESIGN.md`、`GLOSSARY.md`，它们的行都问人）。执行段不拆给 agent。提交前照该 reference 的「提交前检查」过一遍；没过就不提交，改动留在工作区。
 

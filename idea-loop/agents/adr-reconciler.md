@@ -10,7 +10,7 @@ tools: Read, Grep, Glob, Bash, Write, Skill, Agent
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:wiki-conventions`（目录、frontmatter）、`idea-loop:issues`（issue 的状态；spec 了结看它 `issues:` 里的 issue 全关了；`spec.mjs check` 顺带报旧平铺布局与还带 `status` 行的 spec）、`idea-loop:decision-rules`、`idea-loop:runtime`；目标项目有 `GLOSSARY.md` 时再调 `idea-loop:glossary`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
+用 Skill 工具调 `idea-loop:wiki-conventions`（目录、frontmatter）、`idea-loop:issues`（issue 的状态；spec 了结看它 `issues:` 里的 issue 全关了；`dyna spec check` 顺带报旧平铺布局与还带 `status` 行的 spec）、`idea-loop:decision-rules`、`idea-loop:runtime`；目标项目有 `GLOSSARY.md` 时再调 `idea-loop:glossary`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
 
 ## 你收到的
 
@@ -25,7 +25,7 @@ tools: Read, Grep, Glob, Bash, Write, Skill, Agent
 
 按 `docs-reconcile.md` 逐份取证出结论。文档多，就按目录拆给 sonnet 子代理并行，每个只读、回结构化表格，汇总由你做。ADR 草稿放 `<中间物目录>/adr-drafts/<ADR 文件名>`，行的「证据」格指向它。
 
-完成条件：每份在范围内的文档要么出了一行，要么一致（不进表）；`文档` 一节写进文件后，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <文件>` 校验，退出码 0。
+完成条件：每份在范围内的文档要么出了一行，要么一致（不进表）；`文档` 一节写进文件后，用 `dyna dreaming table submit <文件>` 校验，退出码 0。
 
 ## 交回
 

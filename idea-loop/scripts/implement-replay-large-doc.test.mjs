@@ -73,7 +73,7 @@ test('replay-result.md moved from issue-session to implement, and handles the ou
   assert.match(doc, /全过/);
   assert.match(doc, /有不过的/);
   assert.match(doc, /判定对.*判定错.*用例有问题|三个处理/s, 'the three rulings');
-  assert.match(doc, /retro-install\.mjs/, 'reinstall the fixed-path runner when it does not know --run-large');
+  assert.match(doc, /dyna retro install/, 'reinstall the fixed-path runner when it does not know --run-large');
   assert.match(doc, /unknown argument/);
   assert.doesNotMatch(doc, /夜|队列|macOS 通知|会话间消息|当场跑/, 'nothing of the night run is left');
 });
@@ -90,7 +90,7 @@ test('setup 「规则回放 runner」 installs the runner only; its reference re
   assert.match(setupRef, /idea-loop-retro-replay/, 'delete the old scheduled task by its id');
   assert.match(setupRef, /『定时任务』/, 'with the scheduled-task capability');
   assert.match(setupRef, /~\/\.idea-loop\/replay-queue\//, 'delete the old queue directory');
-  assert.match(setupRef, /retro-install\.mjs/);
+  assert.match(setupRef, /dyna retro install/);
   assert.match(setupRef, /允许规则/);
   assert.ok(chars(setup) < 5000, `setup body is ${chars(setup)} characters`);
 });

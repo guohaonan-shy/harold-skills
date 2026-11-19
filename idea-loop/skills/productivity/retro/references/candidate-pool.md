@@ -34,7 +34,7 @@ tags: [retro-candidates]
 - 原话逐字，核过 digest 再写。
 - 池里早先的文件没有「归并」「验证」两条，不回填；读的人和计数脚本都容得下它们缺失。
 - 文件名：`<YYYY-MM-DD>-<主题 slug>.md`；slug 在 `docs/` 里全局唯一（建之前 grep 一遍）。
-- 次数不靠人数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <池目录>`，按 JSON 输出每份的次数和是否过门槛（≥3），形状不对的列成问题、退出码 2。写完一份就对那个池跑一遍，确认没有问题。
+- 次数不靠人数：`dyna retro pool count <池目录>`，按 JSON 输出每份的次数和是否过门槛（≥3），形状不对的列成问题、退出码 2。写完一份就对那个池跑一遍，确认没有问题。
 
 ## 判同类
 
@@ -50,7 +50,7 @@ tags: [retro-candidates]
 
 ## 读当前仓库的池
 
-列出每份的标题、落点、状态、次数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前项目的池和 harold-skills 的池是同一个，不用再取一遍。
+列出每份的标题、落点、状态、次数：`dyna retro pool count <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前项目的池和 harold-skills 的池是同一个，不用再取一遍。
 
 ## 写进当前仓库的池
 
@@ -61,7 +61,7 @@ tags: [retro-candidates]
 
 ## 读与写 harold-skills 的池（retro 不在 harold-skills 里跑时）
 
-harold-skills 的 `docs/` 在它自己的项目目录里，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project harold-skills` 取（`projectDir`）；池目录是 `<projectDir>/docs/records/retro-candidates/`，读和写都在那里，不经 GitHub。`where` 报错（这台设备没有登记 harold-skills），记下原因，把这条候选的全文留在这场的决定记录里交给人。
+harold-skills 的 `docs/` 在它自己的项目目录里，用 `dyna home where --project harold-skills` 取（`projectDir`）；池目录是 `<projectDir>/docs/records/retro-candidates/`，读和写都在那里，不经 GitHub。`where` 报错（这台设备没有登记 harold-skills），记下原因，把这条候选的全文留在这场的决定记录里交给人。
 
 读：对 `<projectDir>/docs/records/retro-candidates` 跑计数脚本，列出每份的标题、落点、状态、次数。
 

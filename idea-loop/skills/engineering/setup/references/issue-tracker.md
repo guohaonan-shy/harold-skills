@@ -9,12 +9,12 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 
 - **读一个 issue**：`gh issue view <号> --comments`，正文和评论都读完。
 - **列 issue**：`gh issue list --state open --json number,title,labels`，按需加 `--label`。
 - **评论**：`gh issue comment <号> --body "..."`，多行正文用 heredoc。
-- **加、去 label**：`gh issue edit <号> --add-label "..."` / `--remove-label "..."`。
+- **加、去 label**：`gh issue edit <号> --add-label "..."` / `--remove-label "..."`；`status:*` 不走这里，用 `dyna issues set`（手写的会被 hook 拦下）。
 - **关闭**：`gh issue close <号> --reason completed|"not planned" --comment "..."`。
 
 ## 状态
 
-状态只由 idea-loop 的 `issues.mjs` 改。
+状态只由 idea-loop 的 `dyna issues` 改。
 
 | 状态 | GitHub 上 | 意思 |
 |---|---|---|
@@ -36,7 +36,7 @@ issue 的优先级是 `priority:P0`、`priority:P1`、`priority:P2` 三个 label
 
 ## PR
 
-一个 issue 一个 PR，PR 正文写 `Refs <owner>/<repo>#<号>`（不写 `Closes`：状态只由 `issues.mjs` 改）。
+一个 issue 一个 PR，PR 正文写 `Refs <owner>/<repo>#<号>`（不写 `Closes`：状态只由 `dyna issues` 改）。
 
 ## 调度
 

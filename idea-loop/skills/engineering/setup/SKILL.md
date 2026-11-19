@@ -55,17 +55,17 @@ idea-loop 从项目目录读这几份配置：
 - `.tmp/` 追加进代码仓库的 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`<项目目录>/.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
 - `ISSUE_TRACKER.md` 的「分类 label」一节：把人定的分类和要保留的 label 写进去，格式脚本要读，见模板里它那一节。
-- **Linear 项目**（人选了 Linear）：连 MCP、选团队、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
+- **Linear 项目**（人选了 Linear）：连 MCP、选团队、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `dyna issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
 - triage：把人对「团队用不用 triage」的回答写进 `ISSUE_TRACKER.md` 状态表后面那一行（`triage：用` 或 `triage：跳过`），模板里的「用 / 跳过」占位不算选了。
-- 旧状态（GitHub 项目）：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate <docs>` 只列出会怎么改，给人看，人确认后加 `--apply`。
+- 旧状态（GitHub 项目）：`dyna spec check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `dyna issues migrate <docs>` 只列出会怎么改，给人看，人确认后加 `--apply`。
 - label（GitHub 项目），按顺序：
-  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels <docs>`：建出缺的 `status:*`、`kind:*`、`type:*` 和 `priority:*`（`priority:P0`、`priority:P1`、`priority:P2`），列出多余的 label 和各自在用的 open issue 数。
-  2. 人定了要迁成分类的，对每个用着它的 issue 跑 `issues.mjs type <docs> <号> <分类>`。
-  3. 把多余 label 的清单给人看，人确认后 `issues.mjs labels <docs> --prune` 删掉，issue 上的也一起去掉。
+  1. `dyna issues labels <docs>`：建出缺的 `status:*`、`kind:*`、`type:*` 和 `priority:*`（`priority:P0`、`priority:P1`、`priority:P2`），列出多余的 label 和各自在用的 open issue 数。
+  2. 人定了要迁成分类的，对每个用着它的 issue 跑 `dyna issues type <docs> <号> <分类>`。
+  3. 把多余 label 的清单给人看，人确认后 `dyna issues labels <docs> --prune` 删掉，issue 上的也一起去掉。
 - GitHub App：在 `~/.idea-loop/github-apps.json` 里加 `"<owner/repo>": { "appId": <id>, "privateKeyPath": "<路径>" }`。只写路径，私钥文件不打开。
-- 提交：给人看写过的文件（`git -C <home> status`、`diff`），然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" commit "chore: 接上 idea-loop（<名字>）" <文件>...`。
+- 提交：给人看写过的文件（`git -C <home> status`、`diff`），然后 `dyna home commit "chore: 接上 idea-loop（<名字>）" <文件>...`。
 
-完成条件：这几份文件都在 `<项目目录>`，模板里的小节一个不缺，`project-map.mjs where` 对这个项目成功；代码仓库里没有新增的 idea-loop 文件；这些文件已 `commit`，差异给人看过；GitHub 项目的 `issues.mjs labels <docs>` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好。
+完成条件：这几份文件都在 `<项目目录>`，模板里的小节一个不缺，`dyna home where` 对这个项目成功；代码仓库里没有新增的 idea-loop 文件；这些文件已 `commit`，差异给人看过；GitHub 项目的 `dyna issues labels <docs>` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好。
 
 ## 规则回放 runner
 

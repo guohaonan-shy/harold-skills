@@ -61,9 +61,9 @@ effort: high
 
 在合并前抓到漏掉的状态与边、走不通的路径、对不上的画面。**只发现、不改**：不改画布、不改 `delta/`、不改代码，不拍精简矩阵，不判该改实现还是改设计，选哪边由人定。
 
-你与 pr-reviewer 同时被起：它在等你的发现文件。**发现文件写完整了再放到位**：先写成 `ui-findings.json.tmp`，再 `mv` 成 `ui-findings.json`，别让它读到写了一半的。没有发现也交回文件；交回 `incomplete`（服务起不来、页面打不开、锁拿不到）时可以没有这个文件，编排者会把未完成写进这一轮的工作目录，pr-reviewer 据此记 UI 这一轴「未完成」。
+你与两个 Codex 进程同时被起：编排者在等你的发现文件。**发现文件写完整了再放到位**：先写成 `ui-findings.json.tmp`，再 `mv` 成 `ui-findings.json`，别让它读到写了一半的。没有发现也交回文件；交回 `incomplete`（服务起不来、页面打不开、锁拿不到）时可以没有这个文件，编排者据此记 UI 这一轴「未完成」。
 
-发现写成 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`，形状沿用 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md` 的「Spec 轴」与「准入：机械校验」里的 Spec 候选，让 pr-reviewer 能原样并进去：
+发现写成 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`，形状沿用 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md` 的「Spec 轴」与「准入：机械校验」里的 Spec 候选，让编排者能原样并进去：
 
 ```json
 {
@@ -78,7 +78,7 @@ effort: high
 - `quote` 引**冻结下来的原文**（`file` 写相对项目目录的路径）：优先是冻结记录里那一格的描述，或「冻结后的变更」里人的原话，画布 HTML 里写明的文字也行；最小差异的需求引 `delta/` 状态文件的「应看到什么」或边的描述；都没有就引 spec 或工单。引不到原文的，不是发现。
 - 写法照 `idea-loop:pr` 的「Review 汇报」：`title` 是用户能感到的后果，`now` / `impact` / `decide` 用话说行为，位置只放 `locations`；`decide.options` 每个写 `do` / `cost` / `rollback`（做法、代价、能否回滚）。选项至少两个，典型是「改实现」（让实现照画布做）与「接受实现，走设计变更」（实现的样子留着，由 designer 改画布）；这两个选项的文字照这一条的内容写，并给建议。**你只摆这两条路，不替人选。**真正的故障（控制台报错、请求失败、点了没反应、走不通）照旧是发现，不是设计变更的事，选项写修法。
 - **每条都是界面上看得到的行为问题，必须有你自己在实现上拍的截图**：单点差别用之前 / 之后（画布或档案的图在左，实现在右），多步流程用截图拼的流程，动起来的用动图（怎么做照 `idea-loop:evidence` 的「配什么图」）。确实拍不到的，在 `no_screenshot` 里写为什么。复现不了的不算发现，写进 `coverage.notRun`。
-- `coverage` 给 pr-reviewer 写折叠区用：走过哪些状态与边、哪些进不去、哪些标了「人看」、哪些没来得及跑。已经由设计变更改过的格，按最新一版画布核；别把已经接受过的差别再报一次。
+- `coverage` 给编排者写折叠区用：走过哪些状态与边、哪些进不去、哪些标了「人看」、哪些没来得及跑。已经由设计变更改过的格，按最新一版画布核；别把已经接受过的差别再报一次。
 
 ## 归档模式
 

@@ -27,7 +27,7 @@ description: 项目 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定�
 **项目目录**是这个项目在 home 里的目录 `<home>/projects/<名字>/`。`docs/`（别的 skill 里的 `<docs>`）和项目级规则 `DEVELOPMENT.md`、`REVIEW.md`、`CODING_STANDARDS.md`、`PRODUCT.md`、`ISSUE_TRACKER.md`、`GLOSSARY.md`、`DESIGN.md`、`SEO.md` 都在它下面；代码仓库只留代码和自己的 `AGENTS.md` / `CLAUDE.md`。读写这些文件、给脚本的 `<docs>`，用项目目录里的路径；代码（读源码、跑测试、起服务、开分支和 PR）仍在代码 worktree 里。home 里设备地图、项目地图的模板（setup 起草、dreaming 重写共用）：「home 里的两份地图」，见 [references/home-maps.md](references/home-maps.md)。怎么拿到，看你是谁：
 
 - **主会话开在代码 worktree 里**：会话开场注入的「项目目录：<路径>」那一行；没有，在这个 worktree 里跑下面的 `where`（不带 `--project`）。
-- **主会话开在 home 里**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project <名字>`，取输出的 `projectDir`。
+- **主会话开在 home 里**：`dyna home where --project <名字>`，取输出的 `projectDir`。
 - **子代理**：调用方在 prompt 里给的路径，不自己去找；prompt 里没有，就停下，交回写明缺项目目录。
 - **拿不到**（`where` 退出码非 0，或开场注入的是迁移提示）：照它输出的那句话停下告诉人（如先跑 `/idea-loop:setup` 迁移），不去读代码仓库里的同名文件。
 
@@ -47,11 +47,11 @@ related: ["[[other-slug]]"]
 
 ### slug 与链接
 
-slug 是文件名去掉 `.md`；这是 Obsidian vault，`[[slug]]` 按 basename 解析，与目录无关。以后由统一命令行（#339）把下面三条包装成子命令。
+slug 是文件名去掉 `.md`；这是 Obsidian vault，`[[slug]]` 按 basename 解析，与目录无关。下面三条由命令守着。
 
-- `docs/` 下每个 slug 全局唯一，建文件前 grep 一遍（工单和 `index.md` 只按路径引用，不在此列）。
-- 移动不打断链接，删除会：每次删除后查死链，`[[...]]` 指到的 slug 都要有文件（行内代码和代码块里的不算）。
-- ADR 文件名是四位编号加名字（`0001-<名字>.md`），编号递增、不复用。
+- `docs/` 下每个 slug 全局唯一（工单和 `index.md` 只按路径引用，不在此列）；`dyna home commit` 遇到重名就拒绝。
+- 移动不打断链接，删除会：`[[...]]` 指到的 slug 都要有文件（行内代码和代码块里的不算）；`dyna home commit` 遇到死链就拒绝。
+- ADR 文件名是四位编号加名字（`0001-<名字>.md`），编号递增、不复用；下一个文件名用 `dyna home adr new <名字>` 取。
 
 ## 生命周期
 
@@ -67,7 +67,7 @@ spec → design/tmp/（碰 UI 时）→ 工单 → 代码 PR 合并（工单删�
 一个需求在知识库里的改动不跟代码 PR 走：写好就用 `commit` 提交到 home 的 main，代码 PR 里只有代码，issue 分支只给代码用。别的 skill 说「照『知识库落地』」，就是照这一节做。
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" commit "<消息>" <文件>...
+dyna home commit "<消息>" <文件>...
 ```
 
 - **只提交列出的文件**：home 是所有会话共用的一个 checkout，别的会话暂存区里的东西不带进来。home 有 `origin` 的，它接着 `pull --rebase` 再推送。
@@ -86,7 +86,7 @@ SEO 的内容改动不在表里：站点内容在代码仓库，仍是代码 PR�
 
 ### 从平铺布局迁移
 
-`spec.mjs check` 报出旧平铺布局时，先照 [references/migrate-flat-layout.md](references/migrate-flat-layout.md) 一次性迁过去，再跑 `idea-loop:to-spec`、`idea-loop:to-ticket` 或 `idea-loop:implement`。
+`dyna spec check` 报出旧平铺布局时，先照 [references/migrate-flat-layout.md](references/migrate-flat-layout.md) 一次性迁过去，再跑 `idea-loop:to-spec`、`idea-loop:to-ticket` 或 `idea-loop:implement`。
 
 ## 中间产物
 

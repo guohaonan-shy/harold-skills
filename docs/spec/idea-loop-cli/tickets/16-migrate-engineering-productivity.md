@@ -15,10 +15,10 @@ wiki-conventions、dreaming 里「由 #339 包装」的占位改成指向新命�
 
 ## 验收标准
 
-- [ ] 这两类 skill 和对应 agent 里没有全路径脚本调用；扫描测试通过
-- [ ] pr-reviewer agent 已删，没有任何文件再引用它；pr-review 主体 ≤ 5000 字
-- [ ] implementer、dreaming 主体字数不超过改前（用 AGENTS.md 的量法）
-- [ ] 两处「由 #339 包装」的占位都指向存在的命令
+- [x] 这两类 skill 和对应 agent 里没有全路径脚本调用；扫描测试通过
+- [x] pr-reviewer agent 已删，没有任何文件再引用它；pr-review 主体 ≤ 5000 字
+- [x] implementer、dreaming 主体字数不超过改前（用 AGENTS.md 的量法）
+- [x] 两处「由 #339 包装」的占位都指向存在的命令
 
 ## 选中的存量回归
 

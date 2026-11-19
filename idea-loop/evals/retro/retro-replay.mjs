@@ -123,7 +123,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
 const DEFAULT_OUT = '/tmp/idea-loop-retro';
 const CLAUDE = process.env.RETRO_CLAUDE_BIN || 'claude';
-/** The model and effort the Codex judge runs with: the same the pr-reviewer's Codex processes use. */
+/** The model and effort the Codex judge runs with: the same the Codex processes of pr-review's round use. */
 const CODEX_ARGS = ['--model', 'gpt-5.6-sol', '--effort', 'high'];
 
 /** The `dyna` that starts the sessions: `IDEA_LOOP_DYNA_BIN`, else the installed one, else the one on PATH. */

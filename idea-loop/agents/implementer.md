@@ -80,7 +80,7 @@ git add -A && git commit -m "wip(<NN>): <停在哪>"
 1. 全部改动先提交一次。
 2. `T=$(git rev-parse <集成分支名>)`，`git merge $T`，冲突在这里解决（锁文件照「worktree 准备」）。
 3. 依赖按锁文件核对，上面四条再过一遍。
-4. `git reset --soft $T`，提交成一个 commit：只含代码和测试改动；工单在 home 里不进 commit，勾框和继承格留给编排者。message 末尾一行 trailer `Ticket: <NN>-<slug>`（一字不差等于工单文件名去掉 `.md`，署名行在它后面）。提交后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" of HEAD` 输出这张工单名。
+4. `git reset --soft $T`，提交成一个 commit：只含代码和测试改动；工单在 home 里不进 commit，勾框和继承格留给编排者。message 末尾一行 trailer `Ticket: <NN>-<slug>`（一字不差等于工单文件名去掉 `.md`，署名行在它后面）。提交后 `dyna spec ticket-of HEAD` 输出这张工单名。
 
 第 2 到第 4 步只用钉住的 `$T`；被退回时从第 2 步再做；第 3 步没过就交回 `failed`。推送、碰集成分支、开 PR 都不归你；spec 的 scope 不动。
 

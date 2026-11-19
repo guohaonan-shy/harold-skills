@@ -9,7 +9,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 ## 过程
 
-1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `spec check <docs>`，报的问题照 `idea-loop:issues` 处理。
+1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `dyna spec check <docs>`，报的问题照 `idea-loop:issues` 处理。
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，正文照 [`references/raw-template.md`](references/raw-template.md)。frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`、`title`、`tags: [<topic>, <feature-slug>]`、`related: ["[[<spec-slug>]]"]`。
 
@@ -18,11 +18,11 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
 
-   spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `issues new` 开成 todo，号码写进 `issues`；不在场，停下问人。
+   spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `dyna issues new` 开成 todo，号码写进 `issues`；不在场，停下问人。
 
    frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步调过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
 
-5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时脚本核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `spec index <docs>` 刷 `docs/spec/index.md`。
+5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时脚本核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>` 刷 `docs/spec/index.md`。
 
 6. **提交并收工**：spec 提交到 home，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-session`），这一步留给它。
 

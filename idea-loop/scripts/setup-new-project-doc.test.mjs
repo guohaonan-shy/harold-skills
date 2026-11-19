@@ -29,7 +29,7 @@ function section(text, title) {
 
 test('the preflight asks `where` and says what each of its outcomes means', () => {
   const table = read('references', 'preflight-table.md');
-  assert.match(table, /^\| 项目接上了吗 \| `node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/project-map\.mjs" where`/m);
+  assert.match(table, /^\| 项目接上了吗 \| `dyna home where`/m);
   // the sentences are the ones `where` prints; a changed sentence must be changed here too
   for (const sentence of [NOT_MOVED, NOT_CONNECTED, IN_HOME]) {
     const lead = sentence.replace(/`[^`]*`/g, '').split('，')[0];
@@ -60,8 +60,8 @@ test('a new project gets its files and docs/ in the project directory, committed
   const w = section(body, '写');
   assert.match(w, /引导文件（上表）按模板写进 `<项目目录>`/);
   assert.match(w, /`<docs>` 骨架：/);
-  assert.match(w, /project-map\.mjs" commit/);
-  assert.match(w, /`project-map\.mjs where` 对这个项目成功/);
+  assert.match(w, /dyna home commit/);
+  assert.match(w, /`dyna home where` 对这个项目成功/);
   assert.match(w, /代码仓库里没有新增的 idea-loop 文件/);
   // what goes into the code repository is only the local exclude of .tmp/
   assert.match(w, /\.tmp\/` 追加进代码仓库的 `\$\(git rev-parse --git-common-dir\)\/info\/exclude`/);
@@ -79,7 +79,7 @@ test('the `## idea-loop` block is not written any more and its template is gone'
 test('the home step comes before the files are written, and its registration is committed with `commit`', () => {
   const home = read('references', 'home.md');
   const step2 = section(home, '2\\. 登记当前项目');
-  assert.match(step2, /project-map\.mjs" commit "chore: 登记 <名字>"/);
+  assert.match(step2, /dyna home commit "chore: 登记 <名字>"/);
   assert.doesNotMatch(step2, /代码仓库的 `docs\/`/);
   assert.doesNotMatch(home, /人说提交才提交/);
 });

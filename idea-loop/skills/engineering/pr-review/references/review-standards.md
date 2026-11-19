@@ -1,6 +1,6 @@
 # 两轴 review：问什么、什么算问题、怎么验
 
-`idea-loop:pr-reviewer` 和它起的两个 Codex 进程读这份文件。一轮 review 只回答两个问题：
+pr-review 的编排者和它起的两个 Codex 进程读这份文件。一轮 review 只回答两个问题：
 
 - **Spec**：代码是否真的解决了 spec 要解决的问题、实现了工单的验收标准？
 - **Standards**：代码是否遵守这个仓库**写下来的**规则？
@@ -92,7 +92,7 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 
 ```
-<命令> 2>&1 | node "${CLAUDE_PLUGIN_ROOT}/scripts/changed-lines.mjs" <merge-base>
+<命令> 2>&1 | dyna pr diagnostics filter <merge-base>
 ```
 
 工具要按「一行一条、带 `路径:行号`」的格式输出（比如 eslint 加 `-f unix`）。脚本只留挂在这次新增或改动行上的诊断，其余的只计数。**退出码和诊断原文由审查者交给 Codex**，Codex 只负责判断每条对应哪条规则、该不该成为 `C` 条目，不重新转述工具的结果。跑不了的检查（缺依赖、缺环境）照实写「未运行：<原因>」，不算通过。核实某条发现要跑测试时，只跑对应的那几个，不跑全量。
@@ -115,7 +115,7 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 两个进程的候选合成一个 JSON，交给脚本校验：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-base> .tmp/pr-review/<PR 号>/evidence <轮次>
+dyna pr candidates submit candidates.json <merge-base> .tmp/pr-review/<PR 号>/evidence <轮次>
 ```
 
 ```json

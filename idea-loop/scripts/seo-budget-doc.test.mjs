@@ -104,8 +104,8 @@ test('seo-scan: the 花费 line it writes carries 份：扫描, the budget refer
 });
 
 test('draft-spec: before SEO research the session reads its 起草与验证 share, skips what does not fit, and writes the spend back to the research log', () => {
-  const line = DRAFT.split('\n').find((l) => /seo-budget\.mjs/.test(l));
-  assert.ok(line, 'draft-spec does not call seo-budget.mjs');
+  const line = DRAFT.split('\n').find((l) => /dyna seo allocate/.test(l));
+  assert.ok(line, 'draft-spec does not call dyna seo allocate');
   assert.match(line, /起草与验证/);
   assert.match(line, /left/);
   assert.match(line, /appendResearchLog/);

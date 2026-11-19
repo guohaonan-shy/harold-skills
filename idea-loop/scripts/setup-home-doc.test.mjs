@@ -49,7 +49,7 @@ test('SKILL.md 「home」 is a pointer and a completion condition, not the steps
   assert.ok(s.includes('references/home.md'));
   assert.match(s, /^完成条件：/m);
   assert.ok([...s].length < 400, `「home」 section is ${[...s].length} characters: it is growing past a pointer`);
-  for (const detail of ['git init', 'gh repo create', 'home-config.mjs', 'autoMemoryDirectory', '.backup', 'plan', 'apply']) {
+  for (const detail of ['git init', 'gh repo create', 'home config', 'autoMemoryDirectory', '.backup', 'plan', 'apply']) {
     assert.ok(!s.includes(detail), `body 「home」 summarises the reference (${detail})`);
   }
 });
@@ -63,8 +63,8 @@ test('home.md writes the three steps, and the completion condition only once, in
 
 test('step 3 shows the three changes together, asks once, does them all, and does not ask about those already in place', () => {
   const s = section(home, '3\\. 改三处用户级配置');
-  assert.match(s, /home-config\.mjs" plan/);
-  assert.match(s, /home-config\.mjs" apply/);
+  assert.match(s, /dyna home config plan/);
+  assert.match(s, /dyna home config apply/);
   assert.match(s, /三项一起/);
   assert.match(s, /问一次/);
   assert.match(s, /「已是」的项[^\n]*不再问/);

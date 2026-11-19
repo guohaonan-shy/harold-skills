@@ -112,8 +112,8 @@ test('setup asks whether the team uses triage and writes the answer into ISSUE_T
 
 test('setup reads specs through spec.mjs and migrates old labels through issues.mjs migrate', () => {
   const survey = readFileSync(join(setupDir, 'references', 'survey.md'), 'utf8');
-  assert.match(survey, /spec\.mjs" check <docs>/);
-  assert.match(body, /issues\.mjs" migrate <docs>/);
+  assert.match(survey, /dyna spec check <docs>/);
+  assert.match(body, /dyna issues migrate <docs>/);
   assert.match(body, /--apply/);
 });
 
@@ -130,7 +130,7 @@ test('dreaming and adr-reconciler judge a spec done by its issues being closed',
   assert.match(missed, /issues:/);
   assert.match(missed, /全(都)?关/);
   assert.doesNotMatch(missed, /`status`/);
-  assert.match(agent, /idea-loop:issues|spec\.mjs/);
+  assert.match(agent, /idea-loop:issues|dyna spec/);
 });
 
 // ---------- wiki-conventions ----------
@@ -139,7 +139,7 @@ test('wiki-conventions has no status at all; a spec is judged by its issues (dre
   const md = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md').split(/^---\s*$/m).slice(2).join('---');
   assert.doesNotMatch(md, /status/, 'the wiki-conventions body mentions status again');
   assert.match(md, /issues:/);
-  assert.match(md, /spec\.mjs/);
+  assert.match(md, /dyna spec/);
   // ADR is the only type with a status; its two values live where ADRs are written.
   const adr = read('skills', 'productivity', 'dreaming', 'references', 'adr.md');
   assert.match(adr, /只有 ADR 带/);

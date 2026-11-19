@@ -42,9 +42,12 @@ test('README: the installed runner only changes when setup is run again, and it 
   assert.match(sentence, /cannot run a replay at all/);
 });
 
-test('setup\'s runner step says the Codex lookup script is installed with the runner and needs setup run again', () => {
+// the runner no longer ships a Codex lookup script: it starts its sessions and the judge through the command line (spec idea-loop-cli, ticket 12)
+test('setup\'s runner step says the runner starts sessions and the Codex judge through dyna, so dyna has to be installed', () => {
   const step = read('skills', 'engineering', 'setup', 'references', 'replay-runner.md');
-  assert.match(step, /Codex 查找脚本也随 runner 装进去，不重跑就用不上 Codex 评委/);
+  assert.match(step, /runner 起会话和请 Codex 当评委都调命令行[^。\n]*`dyna agent claude run`[^。\n]*`dyna agent codex run`/);
+  assert.match(step, /机器上要装 `dyna`/);
+  assert.doesNotMatch(step, /Codex 查找脚本/);
 });
 
 // the rule-ticket steps moved out of agents/implementer.md into implement's references/rule-tickets.md
