@@ -12,12 +12,12 @@
 idea-loop 的 `plugin.json` 版本按 `REVIEW.md` 定档：改了 to-spec 产出的内容，升 minor，从 main 上的当前版本往上升。idea-loop 的 README 若有讲到 to-spec 测试决策的 eval，同步一句。
 
 ## 验收标准
-- [ ] to-spec 测试决策表 eval 一行的仪器列是上面的意思，提到 eval-run 和 eval-replay，没有出现任何项目名
-- [ ] idea-loop 版本比 main 上的高一个 minor
-- [ ] idea-loop 防泄漏测试、插件版本测试、全量测试全过
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] to-spec 测试决策表 eval 一行的仪器列是上面的意思，提到 eval-run 和 eval-replay，没有出现任何项目名
+- [x] idea-loop 版本比 main 上的高一个 minor
+- [x] idea-loop 防泄漏测试、插件版本测试、全量测试全过
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 - `idea-loop/scripts/no-project-leak.test.mjs`：新句子不能带项目名。
