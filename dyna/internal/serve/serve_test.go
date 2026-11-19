@@ -312,3 +312,94 @@ func TestStartSaysWhyWhenTheServerProcessDoesNotCome(t *testing.T) {
 		t.Fatal("nothing printed when it did not start:", out.String())
 	}
 }
+
+// waitClosed waits for the address to stop listening, up to the time given.
+func waitClosed(addr string, within time.Duration) bool {
+	deadline := time.Now().Add(within)
+	for time.Now().Before(deadline) {
+		if portClosed(addr) {
+			return true
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	return portClosed(addr)
+}
+
+// A server nobody asks anything of quits on its own after the idle time: the port is free, the process is gone,
+// and `stop` on it afterwards is still not an error.
+func TestAServerNobodyAsksAnythingOfQuitsAfterTheIdleTimeAndStopStillSucceeds(t *testing.T) {
+	out, errs, code := dyna(t, "serve", "start", site(t), "--idle", "400ms")
+	if code != 0 {
+		t.Fatal(code, errs)
+	}
+	addr := strings.TrimSpace(out)
+	t.Cleanup(func() { dyna(t, "serve", "stop", addr) })
+	_, _, header := get(t, addr+"/index.html")
+	pid, _ := strconv.Atoi(header.Get(Header))
+	if !waitClosed(addr, 5*time.Second) {
+		t.Fatal("the server is still listening long after the idle time")
+	}
+	gone := false
+	for i := 0; i < 80 && !gone; i++ {
+		gone = syscall.Kill(pid, 0) != nil
+		time.Sleep(25 * time.Millisecond)
+	}
+	if !gone {
+		t.Fatalf("process %d is still running after the idle exit", pid)
+	}
+	if out, errs, code = dyna(t, "serve", "stop", addr); code != 0 || !strings.Contains(out, "已经停") {
+		t.Fatal(code, out, errs)
+	}
+}
+
+// Every request starts the idle time again, so a page being looked at stays up; dyna's own question of who is
+// listening (what `stop` asks) is not a request of the page's.
+func TestARequestStartsTheIdleTimeAgainButTheProbeDoesNot(t *testing.T) {
+	out, errs, code := dyna(t, "serve", "start", site(t), "--idle", "700ms")
+	if code != 0 {
+		t.Fatal(code, errs)
+	}
+	addr := strings.TrimSpace(out)
+	t.Cleanup(func() { dyna(t, "serve", "stop", addr) })
+	port, _ := portOf(addr)
+	for i := 0; i < 10; i++ { // 1.5 s in all, twice the idle time, a request every 150 ms
+		if status, _, _ := get(t, addr+"/index.html"); status != 200 {
+			t.Fatalf("round %d: the server went away while it was being asked: %d", i, status)
+		}
+		time.Sleep(150 * time.Millisecond)
+	}
+	for i := 0; i < 10 && !portClosed(addr); i++ { // only probes now
+		probe(port, time.Second)
+		time.Sleep(150 * time.Millisecond)
+	}
+	if !waitClosed(addr, 3*time.Second) {
+		t.Fatal("probes kept the server up")
+	}
+}
+
+// 0 means never quit; the default is thirty minutes; a negative time is refused.
+func TestIdleZeroNeverQuitsTheDefaultIsThirtyMinutesAndNegativeIsRefused(t *testing.T) {
+	out, errs, code := dyna(t, "serve", "start", site(t), "--idle", "0")
+	if code != 0 {
+		t.Fatal(code, errs)
+	}
+	addr := strings.TrimSpace(out)
+	t.Cleanup(func() { dyna(t, "serve", "stop", addr) })
+	time.Sleep(1200 * time.Millisecond)
+	if status, _, _ := get(t, addr+"/index.html"); status != 200 {
+		t.Fatal("--idle 0 server quit")
+	}
+
+	start, _, err := Command(Deps{}).Find([]string{"start"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if def := start.Flags().Lookup("idle").DefValue; def != "30m0s" {
+		t.Fatalf("default idle time: %s", def)
+	}
+
+	_, errs, code = dyna(t, "serve", "start", site(t), "--idle", "-5m")
+	if code != 1 || !strings.Contains(errs, "idle") {
+		t.Fatal(code, errs)
+	}
+}

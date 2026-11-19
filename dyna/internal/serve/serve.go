@@ -3,7 +3,9 @@
 //
 // `serve start` runs the server as a separate process (the same binary, `serve run`, hidden) that outlives the
 // command, and prints its address. The port is bound by the command itself and handed to that process, so there
-// is no window between "found a free port" and "took it". Every answer the server gives carries the header
+// is no window between "found a free port" and "took it". The server quits by itself when no request has come for
+// the idle time (30 minutes unless `--idle` says otherwise, 0 for never), so a forgotten one does not hold its port.
+// Every answer the server gives carries the header
 // X-Dyna-Serve: <its pid>; `serve stop <address>` asks the address who is there, and stops that process only
 // when it says it is a dyna server, so no file of records is kept that could go stale or be cleaned away.
 package serve
@@ -22,6 +24,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -80,6 +83,9 @@ func Command(d Deps) *cobra.Command {
 	return root
 }
 
+// DefaultIdle is how long a server goes without a request before it quits.
+const DefaultIdle = 30 * time.Minute
+
 const host = "127.0.0.1"
 
 func address(port int) string { return "http://" + net.JoinHostPort(host, strconv.Itoa(port)) }
@@ -91,14 +97,19 @@ func startCommand(d Deps) *cobra.Command {
 		"在后台起一个静态服务器，服务这个目录；挑一个空闲端口（--port 指定也行），打印地址，用完用 serve stop <地址> 停",
 		"dyna serve start <目录>", func(cmd *cobra.Command, args []string) error {
 			port, _ := cmd.Flags().GetInt("port")
-			return d.start(args[0], port)
+			idle, _ := cmd.Flags().GetDuration("idle")
+			return d.start(args[0], port, idle)
 		})
 	c.Args = cobra.ExactArgs(1)
 	c.Flags().Int("port", 0, "指定端口；不给就让系统挑一个空闲的")
+	c.Flags().Duration("idle", DefaultIdle, "这么久没有请求，服务就自己退出（如 30m、2h）；0 表示不退")
 	return c
 }
 
-func (d Deps) start(dir string, port int) error {
+func (d Deps) start(dir string, port int, idle time.Duration) error {
+	if idle < 0 {
+		return nexterr.New("dyna serve start <目录>", "--idle %v 不能是负的（0 表示不自动退出）", idle)
+	}
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
@@ -133,7 +144,7 @@ func (d Deps) start(dir string, port int) error {
 	defer os.Remove(stderr.Name())
 	defer stderr.Close()
 
-	child := exec.Command(exe, "serve", "run", abs)
+	child := exec.Command(exe, "serve", "run", abs, "--idle", idle.String())
 	child.ExtraFiles = []*os.File{file} // becomes file descriptor 3 of the server process
 	child.Stderr = stderr
 	detach(child)
@@ -183,9 +194,11 @@ func runCommand(d Deps) *cobra.Command {
 		if err != nil {
 			return fmt.Errorf("没有收到 start 交来的监听端口：%w", err)
 		}
-		return Serve(cmd.Context(), ln, args[0])
+		idle, _ := cmd.Flags().GetDuration("idle")
+		return Serve(cmd.Context(), ln, args[0], idle)
 	})
 	c.Args = cobra.ExactArgs(1)
+	c.Flags().Duration("idle", DefaultIdle, "没有请求这么久就退出；0 表示不退")
 	c.Hidden = true
 	return c
 }
@@ -205,27 +218,88 @@ func Handler(dir string) http.Handler {
 	})
 }
 
-// Serve serves dir on ln until the process is asked to stop (SIGTERM, SIGINT), then finishes what is in flight.
-func Serve(ctx context.Context, ln net.Listener, dir string) error {
+// idleClock remembers when the last request of the page's own (not dyna's probe) was finished, and how many are
+// being answered right now, so a long download is never cut off as idle.
+type idleClock struct {
+	mu     sync.Mutex
+	last   time.Time
+	active int
+}
+
+func (c *idleClock) begin() {
+	c.mu.Lock()
+	c.active++
+	c.mu.Unlock()
+}
+
+func (c *idleClock) end() {
+	c.mu.Lock()
+	c.active--
+	c.last = time.Now()
+	c.mu.Unlock()
+}
+
+// remaining is how long is left before the server counts as idle; 0 or less means it is idle now.
+func (c *idleClock) remaining(idle time.Duration) time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.active > 0 {
+		return idle
+	}
+	return idle - time.Since(c.last)
+}
+
+func (c *idleClock) track(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != probePath {
+			c.begin()
+			defer c.end()
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Serve serves dir on ln until the process is asked to stop (SIGTERM, SIGINT) or, when idle is more than 0, until
+// no request has come for that long; then it finishes what is in flight and returns, which frees the port.
+func Serve(ctx context.Context, ln net.Listener, dir string, idle time.Duration) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGTERM, os.Interrupt)
 	defer stop()
-	srv := &http.Server{Handler: Handler(dir), ReadHeaderTimeout: 10 * time.Second}
+	clock := &idleClock{last: time.Now()}
+	srv := &http.Server{Handler: clock.track(Handler(dir)), ReadHeaderTimeout: 10 * time.Second}
 	done := make(chan error, 1)
 	go func() { done <- srv.Serve(ln) }()
+	quiet := make(chan struct{})
+	if idle > 0 {
+		go func() {
+			defer close(quiet)
+			for {
+				left := clock.remaining(idle)
+				if left <= 0 {
+					return
+				}
+				select {
+				case <-time.After(left):
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
 	select {
 	case err := <-done:
 		return err
 	case <-ctx.Done():
-		shutdown, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(shutdown); err != nil {
-			_ = srv.Close()
-		}
-		return nil
+	case <-quiet:
 	}
+	shutdown, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdown); err != nil {
+		_ = srv.Close()
+	}
+	return nil
 }
 
 // ---------- stop ----------

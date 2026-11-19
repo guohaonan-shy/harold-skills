@@ -26,4 +26,4 @@ ui-measure、ui-png-compare、browser-lock 收成 `dyna ui …`；ui-compare、u
 
 > 人的决定（2026-11-19）：D1 同意，用A（静态服务器空闲自动退出）
 
-- [ ] 人的决定（2026-11-19）：`dyna serve start` 起的服务 30 分钟没有请求就自己退出（可用参数改时长，0 表示不退）；退出后端口释放，`serve stop` 对已退出的照旧不报错
+- [x] 人的决定（2026-11-19）：`dyna serve start` 起的服务 30 分钟没有请求就自己退出（可用参数改时长，0 表示不退）；退出后端口释放，`serve stop` 对已退出的照旧不报错

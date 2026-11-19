@@ -2772,6 +2772,13 @@
           "required": true
         },
         {
+          "name": "idle",
+          "kind": "flag",
+          "required": false,
+          "value": "duration",
+          "description": "这么久没有请求，服务就自己退出（如 30m、2h）；0 表示不退"
+        },
+        {
           "name": "port",
           "kind": "flag",
           "required": false,

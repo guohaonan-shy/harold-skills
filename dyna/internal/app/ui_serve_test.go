@@ -26,7 +26,7 @@ func TestRegistryJSONHasEveryUIAndServeCommandWithItsCaller(t *testing.T) {
 		"ui lock acquire": {"lock-dir", "owner", "stale-min", "wait-min"},
 		"ui lock release": {"lock-dir", "owner", "force"},
 		"ui lock status":  {"lock-dir", "stale-min"},
-		"serve start":     {"目录", "port"},
+		"serve start":     {"目录", "port", "idle"},
 		"serve stop":      {"地址"},
 	}
 	have := map[string]registry.Command{}
