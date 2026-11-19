@@ -20,3 +20,7 @@
 
 - `design-archive-check.test.mjs`、`design-archive-query.test.mjs`、`design-archive-write.test.mjs`、`design-archive-sections.test.mjs`、`design-archive-mcp.test.mjs`：行为基准
 - `design-archive-sections-browser.test.mjs`：碰浏览器，搬时确认它在本机能跑
+
+> 人的决定（2026-11-19）：S1 B，换现成库
+
+- [ ] review 第 1 轮 S1（2026-11-19）：读文件开头元数据改用现成的 YAML 库，删掉自写的小解析器，所有用它的模块（设计档案、评委一轮、方向说明、retro 候选池等）一起换；不带引号的 `[[链接]]`、以 `{` 开头的值不再容错，改为报错，报错说出文件、行和「引用要加引号」；日期照旧读成原文字符串、字段照文件里的顺序输出，其余命令输出不变；本机真实设计档案（TOFEL-demo 的设计档案目录）跑档案检查照旧通过
