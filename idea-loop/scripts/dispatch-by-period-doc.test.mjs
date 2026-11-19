@@ -4,8 +4,8 @@
  * Spec dispatch-day-night-modes, ticket 03. Before: every round handed out todo and triage together
  * (two caps, `cap` 10 and `triageCap` 3, todo first), a session was only a card the human clicked, the
  * rounds were an in-session loop that expired after 7 days. Now: an hourly scheduled task; `issues queues`
- * says what this time of day is for (`dispatch`, `limit`); a triage period counts the triage sessions, a todo
- * period counts the in-progress sessions with activity in the last 2 hours; sessions are opened and handed to
+ * says what this time of day is for (`dispatch`, `limit`); `limit` is how many new sessions a round opens, the
+ * open sessions only say which issues to skip (harold-skills#398: no cap on how many are open); sessions are opened and handed to
  * the desktop app directly; the first round after the night writes a summary; the setup prints the allow
  * rule the unattended move needs. These tests read the text only: they catch the old wording coming back
  * and the new rules going missing, not whether a model follows them.
@@ -84,14 +84,15 @@ test('issue-dispatch: a round asks issues queues for the period, and each period
   const bullets = dispatch.slice(dispatch.indexOf(step)).split('\n').filter((l) => /^\s+- `(triage|todo|null)`/.test(l));
   assert.equal(bullets.length, 3, 'one bullet each for triage, todo and null');
   const [t, d, n] = bullets;
-  assert.match(t, /空位 = `limit` − triage 分组里的会话数/);
   assert.match(t, /issues candidates <docs> --state=triage/);
-  assert.match(d, /空位 = `limit` − in-progress 分组里最近 2 小时有活动的会话数/);
-  assert.match(d, /in-review 的会话也不算|in-review 的会话不算/);
-  assert.match(d, /2 小时没活动的会话也不算[^。]*不动它、不关它/);
+  assert.match(t, /取前 `limit` 个/);
+  assert.match(d, /取前 `limit` 个/);
+  // harold-skills#398: the open sessions do not use up the round's limit
+  assert.doesNotMatch(dispatch, /空位 = `limit` −|最近 2 小时有活动|让出名额/, 'the open sessions no longer take slots');
+  assert.match(dispatch, /开着的会话总数不设上限/);
   assert.match(n, /不派.*只对账/);
   assert.match(dispatch, /先跳过第 3 步记下的同号会话/, 'skip sessions that already exist before taking candidates');
-  assert.match(dispatch, /一轮合计最多交出 3 个/);
+  assert.match(dispatch, /一轮合计最多交出 `limit` 个/);
 });
 
 test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a failed hand-over waits for the next round', () => {
@@ -122,10 +123,11 @@ test('claude-desktop: an hourly scheduled task runs the rounds', () => {
   }
 });
 
-test('claude-desktop: counting follows the period (triage section; in-progress with activity in the last 2 hours; in-review not)', () => {
+test('claude-desktop: the open sessions are listed to skip their issues, and take no slot', () => {
   const part = desktopDispatch.split('\n').find((l) => /^- \*\*怎么数开着的会话\*\*/.test(l));
   assert.ok(part);
-  for (const word of ['`dispatch`', '`limit`', '`lastActivityAt`', '最近 2 小时', 'in-review 不数', '只数标题匹配']) assert.ok(part.includes(word), `counting must mention ${word}`);
+  for (const word of ['`dispatch`', '`limit`', '只认标题匹配', '派的时候跳过', '不占名额', '开着的会话总数不设上限']) assert.ok(part.includes(word), `counting must mention ${word}`);
+  assert.ok(!/最近 2 小时|lastActivityAt|in-review 不数/.test(part), 'no activity window: the open sessions take no slot');
 });
 
 test('claude-desktop: a session is opened in four steps, the second is the hand-off script, a failed hand-over waits for the next round', () => {
@@ -196,7 +198,8 @@ test('setup\'s dispatch steps create an hourly task and ask no interval', () => 
 });
 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
-  for (const word of ['`limit`', '`dispatch`', '最近 2 小时有活动', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
+  for (const word of ['`limit`', '`dispatch`', '不占名额', '夜间模式', '每轮最多开 `limit` 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
+  assert.ok(!magiDispatch.includes('最近 2 小时'), 'magi has no activity window either');
   assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi/);
   assert.match(magiDispatch, /git -C <主 checkout> worktree add <主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug> -b issue\/<号>-<slug>/);
 });
@@ -213,5 +216,6 @@ test('README names the hourly rounds and no card', () => {
   assert.ok(row);
   assert.match(row, /no interval: it runs every hour/);
   assert.match(row, /morning summary/);
-  assert.match(row, /最近 2 小时|last 2 hours/);
+  assert.match(row, /no cap on the sessions already open/);
+  assert.doesNotMatch(row, /last 2 hours/);
 });

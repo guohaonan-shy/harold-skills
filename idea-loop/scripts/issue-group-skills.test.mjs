@@ -45,7 +45,7 @@ test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账�
   assert.match(md, /issues queues <docs>/);
   assert.match(md, /status:<状态>/);
   assert.match(md, /没有同号会话的记进汇报/);
-  assert.match(md, /合计最多交出 3 个/);
+  assert.match(md, /合计最多交出 `limit` 个/);
   assert.match(md, /idea-loop:runtime/);
   for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
   // the how is no longer in the body: no sidebar section, card or in-session loop

@@ -14,7 +14,7 @@
  *   classify — `type:seo/<direction>` through issues.mjs's categories; when the project has no `seo`
  *             category the issue is still created and the result says so (`untyped`)
  *
- * There is no cap on the number of issues: issue-dispatch limits how many sessions run at once.
+ * There is no cap on the number of issues: issue-dispatch limits how many sessions it opens a round.
  *
  * Usage: node seo-issues.mjs <docs> <findings.json> [--dry-run] [--date=<YYYY-MM-DD>]   (the date of the scan, today by default)
  *   → { "created": [{number,title}], "commented": [{number,title}], "rejected": [{title,reason}], "untyped": bool }

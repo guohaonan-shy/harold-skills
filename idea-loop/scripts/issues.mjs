@@ -285,7 +285,7 @@ export function periodAt(periods, minutes) {
 /**
  * What the dispatch loop reads from one place, for the moment `at` (`HH:MM`; the machine clock when null): the
  * period that moment is in (`period`, null in a gap), what to hand out in it (`dispatch`: triage, todo or null)
- * and how many sessions at most (`limit`, 0 in a gap), the whole table (`periods`: the project's「调度」section,
+ * and how many new sessions a round may open at most (`limit`, 0 in a gap; no cap on the sessions already open), the whole table (`periods`: the project's「调度」section,
  * or the defaults), and the sidebar sections. `md` is the project's ISSUE_TRACKER.md.
  */
 export function queues(md = '', at = null, now = new Date()) {
