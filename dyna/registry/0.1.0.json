@@ -2,6 +2,500 @@
   "version": "0.1.0",
   "commands": [
     {
+      "command": "design archive check",
+      "module": "design",
+      "use": "check <repo-root>",
+      "summary": "校验设计档案的八条规则（--delta 把某个需求的 delta/ 叠在 prod/ 上再判；--json 机器可读）",
+      "caller": "session",
+      "next": "dyna design archive check <repo-root> --json",
+      "args": [
+        {
+          "name": "repo-root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "把这个 spec 的 tmp/<spec-slug>/delta/ 叠在 prod/ 上再判"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        },
+        {
+          "name": "no-used-by",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "跳过 usedBy 那一半（归档脚本重新生成 usedBy 之前判 delta/ 用）"
+        },
+        {
+          "name": "workspaces",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "组件文件名的工作区前缀，逗号分隔（prod/index.md 还没有时用）"
+        }
+      ]
+    },
+    {
+      "command": "design archive query",
+      "module": "design",
+      "use": "query <repo-root> <entry> <arg>",
+      "summary": "查设计档案：page / state / journey / refs / keyword / affected / diff 七种问法，输出 JSON（--delta 读某需求改完之后的样子，--code-root 给 affected 指代码仓库）",
+      "caller": "session",
+      "next": "dyna design archive check <repo-root>",
+      "args": [
+        {
+          "name": "repo-root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "entry",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "arg",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "code-root",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "代码仓库：档案不在代码仓库里时，affected 从这里读 git 历史"
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "某个需求（spec）的名字：把它的 docs/design/tmp/<spec>/delta/ 叠在线上档案上读"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections attribute",
+      "module": "design",
+      "use": "attribute <measurement>",
+      "summary": "测量结果 → 每段的范围、每个可点元素属于哪一段、落空 / 定位失败 / 顺序不对 / 重叠 / 滚动驱动没声明（有任何一项退出码 1）",
+      "caller": "session",
+      "next": "dyna design archive sections measure <root> <state>",
+      "args": [
+        {
+          "name": "measurement",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "design archive sections cover",
+      "module": "design",
+      "use": "cover <root> <state>",
+      "summary": "不分段、比主视口高的状态：打印按屏补拍首屏以下会连出边的组件的代码",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "spec 名：把 docs/design/tmp/<spec>/delta/ 盖在 prod/ 上读"
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections measure",
+      "module": "design",
+      "use": "measure <root> [state]",
+      "summary": "打印量页面的代码：定位各段、框出分块、标题和可点元素；结果留在 window.__dsMeasure，交给 attribute",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "spec 名：把 docs/design/tmp/<spec>/delta/ 盖在 prod/ 上读"
+        },
+        {
+          "name": "for",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "段内状态 id：给它量，不重载页面"
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "page",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "页面 id"
+        },
+        {
+          "name": "section",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "段 id（measure：配 --for；shoot：只拍这些段，逗号分隔）"
+        },
+        {
+          "name": "sections",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "分段列表，JSON 数组：[{ \"id\": \"hero\", \"locate\": { … } }, …]"
+        },
+        {
+          "name": "sections-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "分段列表的 JSON 文件"
+        },
+        {
+          "name": "state",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "入口状态 id（档案里还没有这个状态时用，要配 --page 和 --sections / --sections-file）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections pinned",
+      "module": "design",
+      "use": "pinned <root> <state>",
+      "summary": "滚动驱动的段里第 2 步起的状态：打印不滚动、不拨时间、直接截当前视口的代码",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections screen",
+      "module": "design",
+      "use": "screen <root> <state>",
+      "summary": "不分段的单屏状态：打印截主视口的代码，图叫 <状态>.png",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections shoot",
+      "module": "design",
+      "use": "shoot <attribution>",
+      "summary": "归属结果 → 打印逐段截图的代码，一段一张 <入口状态>@<段>.png",
+      "caller": "session",
+      "next": "dyna design archive sections attribute <measurement>",
+      "args": [
+        {
+          "name": "attribution",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "include",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "JSON 定位，把叠在页面上的东西也拍进去：{ \"role\": …, \"name\": … } / { \"text\": … } / { \"selector\": … }"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "section",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "段 id（measure：配 --for；shoot：只拍这些段，逗号分隔）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections step",
+      "module": "design",
+      "use": "step <ms>",
+      "summary": "打印「拨一步」的代码：页面时间往前拨 N 毫秒（页面时钟和还在播的动画一起）；要先跑过 time",
+      "caller": "session",
+      "next": "dyna design archive sections time <root>",
+      "args": [
+        {
+          "name": "ms",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "design archive sections time",
+      "module": "design",
+      "use": "time <root>",
+      "summary": "打印「装时间」的代码：页面时钟和 CSS 动画时间线停在固定的起点，重载页面，按固定步长拨一段让页面起来（browser_navigate 到入口之后、做任何交互之前跑一次）",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive write",
+      "module": "design",
+      "use": "write <repo-root> <spec-slug>",
+      "summary": "把需求的 delta/ 归档进 prod/（唯一写 prod/ 的入口；校验不过就什么都不写；--dry-run 只演练）",
+      "caller": "session",
+      "next": "dyna design archive check <repo-root> --delta <spec-slug>",
+      "args": [
+        {
+          "name": "repo-root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "spec-slug",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "只校验和报告，不写任何文件"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
       "command": "git commit",
       "module": "git",
       "use": "commit <文件>...",
@@ -766,6 +1260,15 @@
       ]
     },
     {
+      "command": "mcp design-archive",
+      "module": "mcp",
+      "use": "design-archive",
+      "summary": "设计档案的 MCP 服务（只读，七个查询工具），走标准输入输出",
+      "caller": "session",
+      "next": "",
+      "args": []
+    },
+    {
       "command": "pr body get",
       "module": "pr",
       "use": "get <owner/repo> <pr> <section>",
@@ -1212,6 +1715,21 @@
       "args": [
         {
           "name": "commit",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "test fixture design-archive",
+      "module": "test",
+      "use": "design-archive <目录>",
+      "summary": "把一份虚构的两页设计档案（菜谱 App）写进一个空目录；写完 dyna design archive check <目录> 退出 0",
+      "caller": "test",
+      "next": "",
+      "args": [
+        {
+          "name": "目录",
           "kind": "positional",
           "required": true
         }

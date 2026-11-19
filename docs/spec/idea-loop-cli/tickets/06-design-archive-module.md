@@ -11,10 +11,10 @@
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] `dyna test fixture design-archive <空目录>` 后 `dyna design archive check <那个目录>` 退出 0
-- [ ] 用 MCP 客户端对同一份档案调七个工具，返回与旧 MCP 服务器一致
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] `dyna test fixture design-archive <空目录>` 后 `dyna design archive check <那个目录>` 退出 0
+- [x] 用 MCP 客户端对同一份档案调七个工具，返回与旧 MCP 服务器一致
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 

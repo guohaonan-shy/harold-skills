@@ -13,6 +13,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/design"
+	designmcp "github.com/guohaonan-shy/harold-skills/dyna/internal/design/mcp"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/git"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/issues"
@@ -21,6 +23,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/semver"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/testcmd"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/version"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/worktree"
 )
@@ -64,6 +67,9 @@ func NewRoot(io IO) *cobra.Command {
 	root.CompletionOptions.DisableDefaultCmd = true
 	root.SetOut(io.Stdout)
 	root.SetErr(io.Stderr)
+	if io.Stdin != nil {
+		root.SetIn(io.Stdin)
+	}
 	root.Args = func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return nil
@@ -80,6 +86,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.SetFlagErrorFunc(flagError)
 
 	root.AddCommand(issues.Command(issues.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Git: io.Git}))
+	root.AddCommand(design.Command(), mcpCommand(io), testcmd.Command())
 	root.AddCommand(home.Command(home.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, Cwd: io.Cwd, Now: io.Now}))
 	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
 	root.AddCommand(git.Command(git.Deps{Stdout: io.Stdout}))
@@ -87,6 +94,17 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(pr.Command(prDeps(io)))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
+}
+
+// mcpCommand is the `mcp` module: servers the plugin's .mcp.json starts.
+func mcpCommand(io IO) *cobra.Command {
+	g := registry.Group("mcp", "MCP 服务器：插件的 .mcp.json 起它们，走标准输入输出")
+	env := io.Env
+	if env == nil {
+		env = home.OSEnv
+	}
+	g.AddCommand(designmcp.CommandWith(designmcp.Deps{Env: env}))
+	return g
 }
 
 // prDeps is the pr module's dependencies: what the process already has, and what a test put in IO.PR.
