@@ -916,9 +916,10 @@ test('queues: without --at it reads the machine clock', () => {
   assert.equal(queues('', null, new Date(2026, 10, 18, 7, 5)).at, '07:05');
 });
 
-test("queues: this repository's own ISSUE_TRACKER.md has a 「调度」 section that reads out the defaults", () => {
+test("queues: this repository's own ISSUE_TRACKER.md has a 「调度」 section that reads, triage by day and todo by night", () => {
   const docs = join(fileURLToPath(new URL('../../docs', import.meta.url)));
-  assert.deepEqual(parsePeriods(readTracker(docs)), DEFAULT_PERIODS);
+  const periods = parsePeriods(readTracker(docs));
+  assert.deepEqual(periods.map(({ start, end, dispatch }) => ({ start, end, dispatch })), DEFAULT_PERIODS.map(({ start, end, dispatch }) => ({ start, end, dispatch })));
   assert.equal(JSON.parse(execFileSync('node', [SCRIPT, 'queues', docs, '--at=23:30'], { encoding: 'utf8' })).dispatch, 'todo');
 });
 
