@@ -22,24 +22,24 @@
 
 ## 验收标准
 
-- [ ] 单元测试（照现有的 ui-compare 测试，`node:test`，直接喂测量对象和 RGBA 数组），先红后绿：
-  - [ ] 颜色换算：hex 换出的 rgb、`rgb()`/`rgba()`、`oklch()`、`oklab()`、`color(srgb …)` 各一例；色域外的 oklch 截到 0–255；嵌在阴影值里的颜色被换算；认不得的写法原样返回
-  - [ ] 测量层：画布 `rgb(59, 130, 246)`、实现 `oklch(...)` 换算后相同 → 不报；换算后一个通道差 1 → 报一条 token-mismatch，发现里有两边原写法和换算值
-  - [ ] 测量层：margin / gap 属性即使出现在测量数据里也不进比较（不报 position-drift）
-  - [ ] 像素层：一张图整体平移 1 个像素的锐利边缘（子像素位移的代理）→ 差异落在 1% 以内；平移 2 个像素 → 超过 1%
-  - [ ] 像素层：完全相同的两张图仍是 0%，完全不同的仍是 100%
-- [ ] 命令行验收（`.tmp/` 下造两份静态页当画布和实现，起静态服务器，在装了 playwright 的目录里跑 `ui-measure.mjs <matrix> --json`），把每一步的命令和输出摘要记进交回：
-  - [ ] 实现页颜色写 oklch、画布写对应 hex；实现页 hero 下面的块用 margin-bottom、画布用 margin-top；实现页一行字挪 0.4px；实现页在 `issues-slot` 外多一块侧栏。不写新字段跑：没有 token-mismatch、没有 margin 的 position-drift，像素层只报侧栏造成的 P2
-  - [ ] 那一格加 `shotAnchor: "issues-slot"` 再跑：全绿
-  - [ ] 把实现页一个颜色改成差一个色阶：报一条 token-mismatch，有两边原写法和换算值
-  - [ ] 把实现页那行字挪 2px：像素层报红
-  - [ ] 两页各加 `@media (prefers-reduced-motion: reduce)` 下的不同样式（画布与实现一致），再加一格 `reducedMotion: "reduce"`：这一格量到的是减弱动效下的样式（故意把实现页的减弱动效样式改错一处时，只有这一格报）
-- [ ] 老矩阵照样能跑：不带新字段的矩阵（如上面第一步）退出码与输出格式不变
-- [ ] idea-loop 的 `plugin.json` 版本 0.1.35 → 0.1.36
-- [ ] 仓库验证命令（`REVIEW.md`）全过
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 单元测试（照现有的 ui-compare 测试，`node:test`，直接喂测量对象和 RGBA 数组），先红后绿：
+  - [x] 颜色换算：hex 换出的 rgb、`rgb()`/`rgba()`、`oklch()`、`oklab()`、`color(srgb …)` 各一例；色域外的 oklch 截到 0–255；嵌在阴影值里的颜色被换算；认不得的写法原样返回
+  - [x] 测量层：画布 `rgb(59, 130, 246)`、实现 `oklch(...)` 换算后相同 → 不报；换算后一个通道差 1 → 报一条 token-mismatch，发现里有两边原写法和换算值
+  - [x] 测量层：margin / gap 属性即使出现在测量数据里也不进比较（不报 position-drift）
+  - [x] 像素层：一张图整体平移 1 个像素的锐利边缘（子像素位移的代理）→ 差异落在 1% 以内；平移 2 个像素 → 超过 1%
+  - [x] 像素层：完全相同的两张图仍是 0%，完全不同的仍是 100%
+- [x] 命令行验收（`.tmp/` 下造两份静态页当画布和实现，起静态服务器，在装了 playwright 的目录里跑 `ui-measure.mjs <matrix> --json`），把每一步的命令和输出摘要记进交回：
+  - [x] 实现页颜色写 oklch、画布写对应 hex；实现页 hero 下面的块用 margin-bottom、画布用 margin-top；实现页一行字挪 0.4px；实现页在 `issues-slot` 外多一块侧栏。不写新字段跑：没有 token-mismatch、没有 margin 的 position-drift，像素层只报侧栏造成的 P2
+  - [x] 那一格加 `shotAnchor: "issues-slot"` 再跑：全绿
+  - [x] 把实现页一个颜色改成差一个色阶：报一条 token-mismatch，有两边原写法和换算值
+  - [x] 把实现页那行字挪 2px：像素层报红
+  - [x] 两页各加 `@media (prefers-reduced-motion: reduce)` 下的不同样式（画布与实现一致），再加一格 `reducedMotion: "reduce"`：这一格量到的是减弱动效下的样式（故意把实现页的减弱动效样式改错一处时，只有这一格报）
+- [x] 老矩阵照样能跑：不带新字段的矩阵（如上面第一步）退出码与输出格式不变
+- [x] idea-loop 的 `plugin.json` 版本 0.1.35 → 0.1.36
+- [x] 仓库验证命令（`REVIEW.md`）全过
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
