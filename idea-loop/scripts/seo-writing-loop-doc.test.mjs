@@ -147,3 +147,19 @@ test('judge-rubric.md: per-category bars are the project\'s, pointed at from the
   assert.match(RUBRIC, /按类型调的分数线，以它为准/);
   assert.doesNotMatch(RUBRIC, /RESEARCH|DATA STUDY|PRODUCT GUIDE|STORY\b|TIPS\b|Per-category/);
 });
+
+test('revision-loop.md: the caller turns the three handback items into verified rows, so they reach the PR description', () => {
+  const tail = LOOP.split('## 交回里多的三项')[1] ?? '';
+  // who does it, and why this column
+  assert.match(tail, /调用方（执行方）把这三项写进它自己交回的 `verified`/);
+  assert.match(tail, /这一栏进 PR 描述/);
+  // lint 结果 and 评委轮次: one verified row each
+  assert.match(tail, /lint 结果、评委轮次各写一行/);
+  // 没干净的: one 没验成 row per item, handed to the human through the PR
+  assert.match(tail, /没干净的逐条写成「没验成」行/);
+  assert.match(tail, /\| 没验成：<为什么没改掉> \| 人（pr-review 照 PR 描述看）/);
+  // the row shape and the route to the PR it relies on are the ones the implementer and implement docs actually have
+  const implementer = readIf('agents', 'implementer.md');
+  assert.ok(implementer.includes('<该验而没验成的> | 没验成：<为什么> | <谁补：后续工单 / PR 交付验收 / 人>'), 'implementer handback has the 没验成 row shape');
+  assert.match(readIf('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
+});
