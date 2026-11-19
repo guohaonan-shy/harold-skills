@@ -1,0 +1,535 @@
+{
+  "version": "0.1.0",
+  "commands": [
+    {
+      "command": "issues backlog",
+      "module": "issues",
+      "use": "backlog <docs> [limit]",
+      "summary": "JSON：没有 status:* 的 open issue，最老的在前；等人补而没人答的不列",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "issues block add",
+      "module": "issues",
+      "use": "add <docs> <n> <blocker>",
+      "summary": "标：#n 被 #blocker 挡着",
+      "caller": "session",
+      "next": "dyna issues block list <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "blocker",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues block list",
+      "module": "issues",
+      "use": "list <docs> <n>",
+      "summary": "列：JSON，挡着 #n 的 issue",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues block remove",
+      "module": "issues",
+      "use": "remove <docs> <n> <blocker>",
+      "summary": "去：#n 不再被 #blocker 挡着",
+      "caller": "session",
+      "next": "dyna issues block list <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "blocker",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues body",
+      "module": "issues",
+      "use": "body <docs> <body-file>",
+      "summary": "只核对正文的五节",
+      "caller": "session",
+      "next": "dyna issues new <docs> <title> <body-file>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "body-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues candidates",
+      "module": "issues",
+      "use": "candidates <docs> [limit]",
+      "summary": "JSON：没被挡路的 todo（或 triage）issue，按「我的优先、再按优先级、再按等得久」排好",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "state",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "todo 或 triage"
+        }
+      ]
+    },
+    {
+      "command": "issues check",
+      "module": "issues",
+      "use": "check <docs> <state> <n>",
+      "summary": "只核对翻状态的前提，不写任何东西（--from：不读 issue，n 可以是 Linear 的号）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "comment",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "翻状态时的评论"
+        },
+        {
+          "name": "from",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "issue 现在的状态（给了就不读 issue）"
+        },
+        {
+          "name": "skip-design",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "没装 design 插件时跳过「设计已冻结」的核对"
+        }
+      ]
+    },
+    {
+      "command": "issues guard",
+      "module": "issues",
+      "use": "guard [command]",
+      "summary": "拦下手写的 gh issue edit 加或去 status:* label，提示改用 dyna issues set；别的 label 放行",
+      "caller": "hook",
+      "next": "dyna issues set <docs> <状态> <issue 号>",
+      "args": [
+        {
+          "name": "command",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PreToolUse 事件；被拦时退出码 2、理由写到 stderr"
+        }
+      ]
+    },
+    {
+      "command": "issues labels",
+      "module": "issues",
+      "use": "labels <docs>",
+      "summary": "建出缺的 status / priority / kind / type label，列出多余的（--prune 删掉）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "prune",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "删掉状态、优先级、类型、分类和保留清单之外的 label"
+        }
+      ]
+    },
+    {
+      "command": "issues migrate",
+      "module": "issues",
+      "use": "migrate <docs>",
+      "summary": "列出旧的中文状态 label 怎么换（--apply 才写）",
+      "caller": "session",
+      "next": "dyna issues labels <docs>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "apply",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "真的改"
+        }
+      ]
+    },
+    {
+      "command": "issues new",
+      "module": "issues",
+      "use": "new <docs> <title> <body-file>",
+      "summary": "开 issue：先核正文的五节和同标题的 open issue；打印新号",
+      "caller": "session",
+      "next": "dyna issues body <docs> <body-file>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "title",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "body-file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "bug / feature / improvement"
+        },
+        {
+          "name": "priority",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "P0 / P1 / P2（开成 todo 必须带）"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "开在别的仓库：owner/repo"
+        },
+        {
+          "name": "state",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "backlog（默认）或 todo"
+        },
+        {
+          "name": "type",
+          "kind": "flag",
+          "required": false,
+          "value": "stringArray",
+          "repeatable": true,
+          "description": "分类，如 seo/blog，可重复"
+        }
+      ]
+    },
+    {
+      "command": "issues note",
+      "module": "issues",
+      "use": "note <docs> <n> <body-file>",
+      "summary": "在 #n 上评论，带 AI 前缀",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "body-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues priority",
+      "module": "issues",
+      "use": "priority <docs> <P0|P1|P2|none> <n>...",
+      "summary": "换 issue 的 priority:* label（none：只去掉）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "P0|P1|P2|none",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "issues queues",
+      "module": "issues",
+      "use": "queues <docs>",
+      "summary": "JSON：这一刻调度该派什么、最多几个（读 ISSUE_TRACKER.md 的「调度」表，没有就用默认）、整张表和侧栏的分区",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "at",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "按这一刻（HH:MM）算，不给就用本机的钟"
+        }
+      ]
+    },
+    {
+      "command": "issues read",
+      "module": "issues",
+      "use": "read <docs> <n>",
+      "summary": "JSON：#n 的标题、状态、label、负责人、正文和全部评论（包 gh issue view）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues reconcile",
+      "module": "issues",
+      "use": "reconcile <docs>",
+      "summary": "PR 全合并 → done；PR 全 ready → in-review；旧 label、两个 status label 报问题",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues set",
+      "module": "issues",
+      "use": "set <docs> <state> <n>...",
+      "summary": "翻 issue 的状态：先逐个核对，再写；done / canceled 先关 issue 再去 label",
+      "caller": "session",
+      "next": "dyna issues check <docs> <状态> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        },
+        {
+          "name": "comment",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "翻状态时的评论（翻 backlog 必须写清停在哪）"
+        },
+        {
+          "name": "skip-design",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "没装 design 插件时跳过「设计已冻结」的核对"
+        }
+      ]
+    },
+    {
+      "command": "issues show",
+      "module": "issues",
+      "use": "show <docs> <n>",
+      "summary": "JSON：#n 的状态、标题、分类、PR（仓库、draft / ready / merged）、覆盖它的 spec、分支",
+      "caller": "session",
+      "next": "dyna issues check <docs> <状态> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues type",
+      "module": "issues",
+      "use": "type <docs> <n> <parent[/child]>...",
+      "summary": "把 #n 的 type:* label 设成项目分类里的给定值",
+      "caller": "session",
+      "next": "dyna issues labels <docs>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "parent[/child]",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "registry",
+      "module": "registry",
+      "use": "registry",
+      "summary": "打印命令登记表：每条命令的名字、参数、说明、谁能调、出错时提示的下一条命令",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（每版发布时存进 dyna/registry/<版本>.json）"
+        }
+      ]
+    },
+    {
+      "command": "version",
+      "module": "version",
+      "use": "version",
+      "summary": "打印这个 dyna 的版本号",
+      "caller": "session",
+      "next": "",
+      "args": []
+    }
+  ]
+}

@@ -22,15 +22,15 @@
 
 ## 验收标准
 
-- [ ] `go test ./...` 在命令行目录全绿；现有 issues 脚本行为测试的断言都已搬成 `go test`（逐条对照，没搬的写理由）
-- [ ] 对同一份 docs 和同一个 issue，`dyna issues show` 与旧脚本 `show` 的 JSON 输出一致；`set` 被拒的情形与提示一致
-- [ ] `dyna registry --json` 输出包含 issues 模块每条命令的名字、参数、说明、调用方、下一条命令
-- [ ] 把 `gh issue edit 1 --add-label status:todo` 喂给 `dyna issues guard --hook` 被拦，提示里有 `dyna issues set`；`gh issue edit 1 --add-label kind:bug` 放行
-- [ ] 插件小脚本测试（假二进制）：范围写 `>=0.4.0 <1.0.0`、二进制报 0.3.2 时不执行并提示跑 `/idea-loop:setup` 升级；报 1.0.0 时提示去 `/plugin` 更新插件；没有二进制时提示跑 `/idea-loop:setup` 装
-- [ ] 扫描测试：一份夹具 skill 写 `dyna issues frobnicate` → 红，报文件和行；写 `dyna issues guard` → 红，报「只许 hooks.json 引用」；最低版本写一个没存登记表的版本 → 红，报还没发布
-- [ ] 端到端：临时插件目录 + 本地编出的二进制，`claude -p --plugin-dir <它>` 让会话跑 `dyna issues --help`，打印命令表、退出 0（⏭ 延后 → 跑不了 `claude -p` 时在交回里写明）
-- [ ] `goreleaser release --snapshot --clean` 本机出 4 个平台的包和校验和
-- [ ] 改了命令行代码没升命令行版本时，新加的版本测试红
+- [x] `go test ./...` 在命令行目录全绿；现有 issues 脚本行为测试的断言都已搬成 `go test`（逐条对照，没搬的写理由）
+- [x] 对同一份 docs 和同一个 issue，`dyna issues show` 与旧脚本 `show` 的 JSON 输出一致；`set` 被拒的情形与提示一致
+- [x] `dyna registry --json` 输出包含 issues 模块每条命令的名字、参数、说明、调用方、下一条命令
+- [x] 把 `gh issue edit 1 --add-label status:todo` 喂给 `dyna issues guard --hook` 被拦，提示里有 `dyna issues set`；`gh issue edit 1 --add-label kind:bug` 放行
+- [x] 插件小脚本测试（假二进制）：范围写 `>=0.4.0 <1.0.0`、二进制报 0.3.2 时不执行并提示跑 `/idea-loop:setup` 升级；报 1.0.0 时提示去 `/plugin` 更新插件；没有二进制时提示跑 `/idea-loop:setup` 装
+- [x] 扫描测试：一份夹具 skill 写 `dyna issues frobnicate` → 红，报文件和行；写 `dyna issues guard` → 红，报「只许 hooks.json 引用」；最低版本写一个没存登记表的版本 → 红，报还没发布
+- [x] 端到端：临时插件目录 + 本地编出的二进制，`claude -p --plugin-dir <它>` 让会话跑 `dyna issues --help`，打印命令表、退出 0（⏭ 延后 → 跑不了 `claude -p` 时在交回里写明）
+- [x] `goreleaser release --snapshot --clean` 本机出 4 个平台的包和校验和
+- [x] 改了命令行代码没升命令行版本时，新加的版本测试红
 
 ## 选中的存量回归
 

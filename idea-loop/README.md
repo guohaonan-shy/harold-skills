@@ -190,6 +190,34 @@ The old loop (up to two automatic rounds of three-axis review → fix → re-ver
 round, a mergeReady verdict) and its design record [`docs/pr-review-loop.md`](./docs/pr-review-loop.md)
 are superseded; the record stays as history.
 
+## Command line: `dyna`
+
+`dyna` is idea-loop's command line: skills and agents write `dyna <module> <command>` and look the arguments up
+with `--help`, instead of calling scripts by full path. It is written in Go, lives in the repository's `dyna/`
+directory (not a plugin), and is released on its own as packages on GitHub Releases; the plugin only carries
+the skill text and a launcher.
+
+- **`bin/dyna`** (this plugin) is a short `sh` launcher; Claude Code puts the plugin's `bin/` on the session's
+  PATH, so a session just types `dyna …`. It hands the call to the installed binary, `~/.idea-loop/bin/dyna`,
+  together with the plugin's directory (`IDEA_LOOP_PLUGIN_ROOT`) and the version range from **`dyna-version`**
+  (`IDEA_LOOP_CLI_RANGE`). The binary refuses to run outside that range and says what to run: `/idea-loop:setup`
+  to upgrade it when it is too old, `/plugin` to update the plugin when the binary is too new; with no binary
+  installed the launcher says to run `/idea-loop:setup`. A call with `--hook` is never stopped by any of this:
+  one line on stderr and exit 0.
+- **`dyna self install` / `dyna self upgrade`** are handled by the launcher itself, so they work before any binary
+  is installed: they download this machine's package, check its sha256 against the release's checksum file, and put
+  the binary in `~/.idea-loop/bin/`.
+- **`dyna-version`** is raised only when a skill starts using a command or flag a newer dyna added, and only after
+  that dyna is released and its command registry is stored in `dyna/registry/`. `scripts/dyna-scan.test.mjs`
+  (repository root) reads every `dyna <module> <command>` written in the skills, agents, this README, `hooks/hooks.json`
+  and `.mcp.json` against the registry of the lowest accepted version and goes red on a command or flag that is not
+  there, on a hook-only command written outside `hooks.json`, and on a floor that is not released.
+- **`dyna registry --json`** prints the command registry: each command with its arguments, one-line summary, who
+  may call it (a session, only a hook, only tests) and the next command to run when it fails.
+- **Modules so far**: `issues` (status flips, labels, blocked-by, reading and opening issues, `guard --hook` that
+  stops a hand-written `gh issue edit` of a `status:*` label); the other scripts move into modules in later tickets
+  of the same spec, and the `.mjs` scripts they replace stay until each module is proven.
+
 ## Tests
 
 Node unit tests across this whole repo (every plugin's `scripts/`) run under **one

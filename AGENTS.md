@@ -18,6 +18,8 @@
 - `interview-coach/` — AI 工程方向的面试陪练
 - `happy-life/` — 个人生活小仪式
 
+另外一个顶层目录 `dyna/` **不是插件**，`marketplace.json` 不列它：它是 idea-loop 的命令行 `dyna`（Go 写的，用 goreleaser 单独发布到 GitHub Releases，装在 `~/.idea-loop/bin/dyna`）。skill 和 agent 里写 `dyna <模块> <命令>`，插件根目录的 `dyna-version` 写它要的命令行版本范围，插件的 `bin/dyna` 是调它的小脚本。开发和发版的做法在 `DEVELOPMENT.md` 的「命令行 dyna」一节。改了 `dyna/` 下的代码就升 `dyna/internal/version/version.go` 的版本（`scripts/dyna-version.test.mjs` 守着）。
+
 改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同步改的是它自己的 `README.md`，不是这里。
 
 说一个 plugin 的 PR 可以合并、或交它的审核报告时，一并说它把 `plugin.json` 的 `version` 升到了哪一版、哪一档（档位规则见 `REVIEW.md`「额外要求」）；没碰插件的，说「不碰插件，不升版本」。
