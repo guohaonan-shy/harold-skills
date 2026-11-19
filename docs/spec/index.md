@@ -7,6 +7,7 @@
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
 | [[implementer-start-point-non-destructive]] | implementer 开工对齐起点改用不丢东西的 git 写法，不再被 auto mode 拦；定义按 agent-builder 精简到 5000 字内 |
 | [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
+| [[magi-existing-branch-worktree]] | magi 下调度给已有分支的 issue 建 worktree 时先查分支在不在，在就接上，不再用 -b 新建 |
 | [[pr-review-round-cap]] | pr-review 自动起下一轮放到最多 5 轮，审到没有要修的为止；每轮开审前先合入最新主分支解冲突 |
 | [[refine-judge-advisor]] | 设计收敛改由人定：评委降为顾问，每轮交一份配参考图和用户路径的设计评审报告 |
 | [[replay-gh-isolation]] | 规则回放起的每个 claude / Codex 子进程都不带 gh 登录，读不到用例之后的线上 issue 与 PR |
