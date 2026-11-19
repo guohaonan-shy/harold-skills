@@ -11,10 +11,10 @@ design-lint 收成 `dyna design lint`（只由 hook 调，带 `--hook` 时照现
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] `design lint --hook`、`design md lint --hook` 对同一个 hook 事件的回话与旧钩子一致
-- [ ] `design note submit` 对格式不对的方向说明拒绝并说出哪一条
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] `design lint --hook`、`design md lint --hook` 对同一个 hook 事件的回话与旧钩子一致
+- [x] `design note submit` 对格式不对的方向说明拒绝并说出哪一条
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 

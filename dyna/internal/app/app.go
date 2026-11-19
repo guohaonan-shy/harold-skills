@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/designmd"
 	designmcp "github.com/guohaonan-shy/harold-skills/dyna/internal/design/mcp"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/dreaming"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/git"
@@ -52,6 +53,8 @@ type IO struct {
 	Now func() time.Time
 	// PR is the pr module's outside world (gh, git, GitHub's token endpoint); a field left nil is the real one.
 	PR pr.Deps
+	// DesignMD is the official DESIGN.md tool `design md` runs; nil means the real one.
+	DesignMD designmd.CLI
 }
 
 // OSIO is the real process.
@@ -89,7 +92,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.SetFlagErrorFunc(flagError)
 
 	root.AddCommand(issues.Command(issues.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Git: io.Git}))
-	root.AddCommand(design.Command(), mcpCommand(io), testcmd.Command())
+	root.AddCommand(design.CommandWith(design.Deps{Env: io.Env, DesignMD: io.DesignMD}), mcpCommand(io), testcmd.Command())
 	root.AddCommand(home.Command(home.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, Cwd: io.Cwd, Now: io.Now}))
 	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
 	root.AddCommand(git.Command(git.Deps{Stdout: io.Stdout}))

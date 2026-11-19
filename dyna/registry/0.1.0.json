@@ -496,6 +496,156 @@
       ]
     },
     {
+      "command": "design critic round",
+      "module": "design",
+      "use": "round <round.json>",
+      "summary": "评委这一轮：校验 findings 的形状和分数，判停（方向 / 通过 / 瓶颈 / 继续）；输入文件是 { findings, score, history }",
+      "caller": "session",
+      "next": "dyna design critic round <round.json>",
+      "args": [
+        {
+          "name": "round.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "design flow compose",
+      "module": "design",
+      "use": "compose <flow.json> <out.png>",
+      "summary": "把截图、箭头、一句话拼成一张交互流程图（PNG）；--archive 核对步骤里的状态名在不在设计档案，--delta 叠上这个需求的 delta/",
+      "caller": "session",
+      "next": "dyna design flow compose <flow.json> <out.png>",
+      "args": [
+        {
+          "name": "flow.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "out.png",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "archive",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库根：核对步骤的 state 在设计档案里有没有"
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "把这个 spec 的 tmp/<spec-slug>/delta/ 叠在档案上再核对（要和 --archive 一起）"
+        }
+      ]
+    },
+    {
+      "command": "design lint",
+      "module": "design",
+      "use": "lint [file.html]...",
+      "summary": "设计画布的机械检查（AI 味特征）：P0/P1 退出 2；--hook 从 PostToolUse 事件里取被写的画布，只拦 docs/design/tmp/<spec-slug>/canvas/ 下的",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "file.html",
+          "kind": "positional",
+          "required": false,
+          "variadic": true
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从标准输入读 PostToolUse 事件；有 P0/P1 时退出码 2、报告写到 stderr，不是画布或干净时静默"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "design md diff",
+      "module": "design",
+      "use": "diff <before> <after>",
+      "summary": "官方 DESIGN.md diff：比较改前（备份）和改后的 DESIGN.md，判是否退化（新增了 error 或 warning）；输出与退出码照官方工具",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "before",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "after",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "design md lint",
+      "module": "design",
+      "use": "lint [DESIGN.md]",
+      "summary": "官方 DESIGN.md lint：直接跑是打印官方报告、有 error 退出 1；--hook 从 PostToolUse 事件取被写的文件，只管叫 DESIGN.md 的，有 error 退出 2 并写到 stderr，工具跑不起来只留一行说明、退出 0",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "DESIGN.md",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从标准输入读 PostToolUse 事件"
+        }
+      ]
+    },
+    {
+      "command": "design note submit",
+      "module": "design",
+      "use": "submit <direction-note.md>",
+      "summary": "交回方向说明：校验七节齐全、同一层级、按顺序、有正文，选中变种的构成清单六项全、每项标来源；不合格退出 2 并逐条说哪一条",
+      "caller": "session",
+      "next": "dyna design note submit <direction-note.md>",
+      "args": [
+        {
+          "name": "direction-note.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
       "command": "dreaming table split",
       "module": "dreaming",
       "use": "split <proposal-table.md>",
