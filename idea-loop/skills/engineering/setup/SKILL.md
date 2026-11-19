@@ -80,9 +80,9 @@ idea-loop 从这几处读项目配置：
 
 ## 调度
 
-`idea-loop:issue-dispatch` 一轮一轮交出 todo 和 triage 的 issue，怎么起因运行环境而异；按 [references/dispatch.md](references/dispatch.md) 做。
+`idea-loop:issue-dispatch` 每小时一轮、按时段交出 triage 或 todo 的 issue，怎么起因运行环境而异；按 [references/dispatch.md](references/dispatch.md) 做。
 
-完成条件：调度的起法告诉了人，或建好了调度任务，或人拒绝了。
+完成条件：调度的起法告诉了人，或建好了调度任务，或人拒绝了；运行环境要人加的允许规则打印了。
 
 ## 交回
 
@@ -92,5 +92,5 @@ idea-loop 从这几处读项目配置：
 - 规则回放：runner 装在哪、旧计划任务和队列目录删没删、**要人自己加的允许规则**（原样一行）。没加这条规则，无人值守的回放会被拦下。
 - 每周对账：dreaming 的定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
-- 调度：怎么起、建没建（按 `references/dispatch.md`）。
+- 调度：怎么起、建没建（按 `references/dispatch.md`）；要人自己加的允许规则（原样一行，没加的后果）。
 - 留给人的事：安装或登录 `gh`、Codex；装浏览器、登录 Mobbin（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

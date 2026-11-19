@@ -1,6 +1,6 @@
 # 暂缓设计：主 checkout 的 `pending/`
 
-人说「这块界面先不做」时，设计整份挪进主 checkout 的 `docs/design/pending/<spec-slug>/`（怎么挪、怎么找回见 `idea-loop:wiki-conventions` 的「design/pending」）。它只在本地、不进 git，所以没有 PR 会替它记账：dreaming 每次对账一遍，免得它们被遗忘在角落。这一项由 dreaming 自己查，不起 agent。
+人说「这块界面先不做」时，设计整份挪进主 checkout 的 `docs/design/pending/<spec-slug>/`（它是什么见 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行；怎么挪、怎么找回在 `uiux-refine`、`uiux-imagine` 里）。它只在本地、不进 git，所以没有 PR 会替它记账：dreaming 每次对账一遍，免得它们被遗忘在角落。这一项由 dreaming 自己查，不起 agent。
 
 ## 怎么查
 

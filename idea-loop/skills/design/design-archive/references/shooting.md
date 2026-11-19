@@ -22,7 +22,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" shoot <归属�
 node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-sections.mjs" pinned <仓库根> <状态 id> --out <目录> [设置]
 ```
 
-`[设置]` 是 `--viewport <WxH> --theme <light|dark> --motion <default|reduce>`。除 `step` 和 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给『浏览器』里执行代码的那一项跑（做法见『浏览器』）；`attribute` 打印 JSON。
+`[设置]` 是 `--viewport <WxH> --theme <light|dark> --locale <如 zh-CN> --motion <default|reduce>`；`--locale` 只用来在提示里标注语言，浏览器仍要自己按那个语言打开。除 `attribute` 外，每个子命令都打印一段 `async (page) => …` 的代码，交给『浏览器』里执行代码的那一项跑（做法见『浏览器』）；`attribute` 打印 JSON。
 
 ## 共用的规矩
 

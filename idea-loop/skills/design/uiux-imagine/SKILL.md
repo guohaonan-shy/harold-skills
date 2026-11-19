@@ -14,7 +14,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(n
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节（旧 spec 里它不是「不涉及」）、「实现决策」里还没有冻结摘要，才往下走。还有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
 - 它覆盖的 issue 应该在 triage（设计在 triage 里做，issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<worktree 根>/docs" triage <号>`；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
-- **暂缓的设计**：主 checkout（`git worktree list` 第一行）的 `docs/design/pending/` 里有没有同一块界面的设计，有就问人要不要接着做。要的话把那个目录复制回当前 worktree 的 `docs/design/tmp/<spec-slug>/`（`cp -R`，pending 那份留着），再从「中断与恢复」接上；不要就照常往下。人说这块界面先不做的，照 `idea-loop:wiki-conventions` 的「design/pending」挪走。
+- **暂缓的设计**：主 checkout（`git worktree list` 第一行）的 `docs/design/pending/` 里有没有同一块界面的设计，有就问人要不要接着做。要的话把那个目录复制回当前 worktree 的 `docs/design/tmp/<spec-slug>/`（`cp -R`，pending 那份留着），再从「中断与恢复」接上；不要就照常往下。人说这块界面先不做的，照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行挪走。
 
 ## 起步
 

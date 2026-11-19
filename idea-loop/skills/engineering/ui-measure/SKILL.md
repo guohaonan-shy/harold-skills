@@ -55,7 +55,10 @@ description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json        # 人读
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json --json  # 机读
+node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" en-light.json zh-light.json en-dark.json zh-dark.json --json  # 多份矩阵
 ```
+
+多份矩阵（语言 × 深浅色这类）一次交给同一条命令：脚本只开一个浏览器，每份矩阵一个独立的上下文；同时跑几份由脚本按本机此刻的可用内存（每份约 0.5 GiB，外加浏览器约 0.6 GiB）和空闲 CPU（每份约 1 核）自己定，最多 4 份，定下的份数和依据打在 stderr 第一行。机器忙时它会降到 1 份：CPU 不够时同时跑，测量层不受影响，但像素差会在 1% 阈值附近抖。`--concurrency N` 可以强行指定，同样不超过 4。不要每份矩阵各开一个进程：每个进程是另一个浏览器，内存按份数翻倍；也不用加 `--max-old-space-size`，截图在脚本里直接解码比对，一格只占几 MB。一份矩阵时 `--json` 的输出跟以前一样；多份时是 `{ "matrices": [{ "matrix": <路径>, "findings", "瓶颈", "humanReviewCells" }, …] }`，有一份有发现退出码就是 `2`。每份矩阵各记各的上一轮（`matrix.json` 记在同目录的 `.ui-measure-last.json`，别的文件名记在 `.ui-measure-last.<文件名>.json`），所以几份矩阵可以放在同一个目录。
 
 退出码：`0` 全绿，`2` 有发现。每条发现带 `id`（缺陷类型）、`severity`、位置（`cell` · `anchor` · `property`）、画布值与实现值（`expected` · `actual` · `delta` · `detail`）和 `why`。严重度是机械的：
 
@@ -69,33 +72,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json --json  # 机读
 
 拿这一版画布跟上一版比，只回答「变了哪些锚点」，再按改动集分成声明过的和没声明的。矩阵里 `"mode": "canvas-diff"`，两边写 `before`（上一版）和 `after`（这一版），其余（`cells`、`dpr`、`tolerance`、`byAnchor`）照上面；`state` 同样拼成 `?state=`。第一轮没有上一版，`before` 填 imagine 的交接画布，`changeSet` 写 `[]`。
 
-```json
-{
-  "mode": "canvas-diff",
-  "before": "http://127.0.0.1:8000/v2.html",
-  "after": "http://127.0.0.1:8000/v3.html",
-  "changeSet": [
-    { "decision": "2.1", "states": ["default", "empty"], "anchors": ["card", "card-title"] },
-    { "decision": "2.3", "states": ["default"], "anchors": ["cta"] }
-  ],
-  "shotsDir": "shots",
-  "cells": [
-    { "name": "mobile/light/default", "viewport": { "width": 390, "height": 844 }, "state": "default" },
-    { "name": "mobile/light/empty", "viewport": { "width": 390, "height": 844 }, "state": "empty" }
-  ]
-}
-```
-
-**改动集**是 designer 每版交的一份清单，一条对应人上一轮的一条决策：`decision` 是决策编号 `<轮次>.<序号>`，`states` 是动过的状态名，`anchors` 是动过的锚点名。一条可以写多个状态和锚点，同一个锚点可以被几条决策覆盖。状态名和锚点名要跟矩阵、画布里的写得一样。没有 `changeSet` 这个键时不分类，只列变了的锚点。
-
-每个状态、每个锚点：先比计算样式（位置 ±1px，token 精确，规则同上），再按锚点区域截图比像素。**默认只要有一个像素可见地不同就算变了**（两版都是画布，没有渲染环境差）；矩阵的 `tolerance.pixel` 可以放宽。锚点只在一版里有，算 `added` / `removed`。
-
-输出（`--json`）：
-
-- `changed`：变了的锚点，每项有 `cell`、`state`、`anchor`、`kind`（`changed` / `added` / `removed`）、`changes`（`property`、`before`、`after`、`delta`）、`pixelPercent`，和 `shots.before` / `shots.after`：两版区域截图的文件路径（存在矩阵旁的 `shotsDir`，默认 `ui-measure-shots/`）。区域已经没有面积（两边都隐藏）的锚点没有 `shots`。
-- 给了改动集，另外有：`undeclared`（没声明却变了的，排在给人的报告最前面）、`declared`（每项多一个 `decisions`）、`declaredUnchanged`（改动集声明了、却没变：`decision`、`state`、`anchor`）、`unchecked`（改动集声明的状态，矩阵里没有这一格，没比，不算没变）。
-
-退出码：`0` 两版没有变化，或有改动集且变的都声明过；`2` 其余（有改动集时有没声明的；没改动集时有任何变化）。`declaredUnchanged` 只列出来，不改退出码。
+矩阵示例、改动集的写法、`--json` 输出的字段和退出码见 [references/canvas-diff.md](references/canvas-diff.md)。
 
 ## 终止条件
 

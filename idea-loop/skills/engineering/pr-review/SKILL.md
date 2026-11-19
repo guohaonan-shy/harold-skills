@@ -68,7 +68,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 ## 设计变更
 
-人接受了跟冻结画布不同的设计（接受实现，或自己改了主意）：用 Skill 工具调 `idea-loop:design-change-sync` 照它做，不手改 `delta/` 和画布。与 implement 的差别：提交推送到 **PR 分支**；给 designer 的截图用 UI 走查发现里的图，或人给的；评委只给意见，由人定提不提交，所以停下，把评委意见和新旧两版截图摆给人；代码跟新画布不一致的（来源不是「接受实现」），照它写的追加设计变更那一格，回工单。画布提交后，提交链接记进「做了什么」。新画布与代码是否一致，在下一轮 UI 走查里核，第 2 轮之后人要核就说「再跑一轮」。
+人接受了跟冻结画布不同的设计（接受实现，或自己改了主意）：读 [references/design-change.md](references/design-change.md)。
 
 ## 一轮之后往哪走
 

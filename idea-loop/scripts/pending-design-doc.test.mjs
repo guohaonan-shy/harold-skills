@@ -19,28 +19,38 @@ const chars = (text) => [...body(text)].length;
 
 const wiki = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md');
 
-test('wiki-conventions: the directory map has design/pending/<spec-slug>/ and its lifecycle says where, local only, who moves, who reads', () => {
-  assert.match(wiki, /pending\/<spec-slug>\//);
-  const life = wiki.slice(wiki.indexOf('**`design/pending/<spec-slug>/`**'));
-  assert.ok(life.length < wiki.length, 'lifecycle bullet for design/pending/ is missing');
-  const para = life.slice(0, life.indexOf('\n- **`design/prod/`**') > 0 ? life.indexOf('\n- **`design/prod/`**') : 2500);
-  assert.match(para, /主 checkout/);
-  assert.match(para, /git worktree list/);
-  assert.match(para, /只在本地|不提交/);
-  assert.match(para, /先不做/);
-  assert.match(para, /编排者/);
-  assert.match(para, /uiux-imagine/);
-  assert.match(para, /uiux-refine/);
-  assert.match(para, /dreaming/);
+// wiki-conventions keeps one row per directory in its 目录 table (docs/spec/wiki-conventions-slim), so the
+// shelved-design convention is the design/pending/ row, and the local ignore is the 本地忽略 subsection.
+const pendingRow = wiki.split('\n').find((l) => l.startsWith('| `design/pending/` |')) ?? '';
+
+test('wiki-conventions: the 目录 table has a design/pending/ row that says where, local only, who moves, who reads', () => {
+  assert.ok(pendingRow, 'the 目录 table has no design/pending/ row');
+  assert.match(pendingRow, /主 checkout/);
+  assert.match(pendingRow, /git worktree list/);
+  assert.match(pendingRow, /只在本地|不提交/);
+  assert.match(pendingRow, /先不做/);
+  assert.match(pendingRow, /编排者/);
+  assert.match(pendingRow, /uiux-imagine/);
+  assert.match(pendingRow, /uiux-refine/);
+  assert.match(pendingRow, /dreaming/);
 });
 
 test('wiki-conventions: the local ignore covers docs/design/pending/ too', () => {
-  const ignore = wiki.slice(wiki.indexOf('**本地忽略**'));
-  assert.match(ignore.slice(0, 600), /docs\/design\/pending\//);
+  const at = wiki.indexOf('### 本地忽略');
+  assert.ok(at >= 0, 'the 本地忽略 subsection is missing');
+  assert.match(wiki.slice(at, at + 600), /docs\/design\/pending\//);
 });
 
 test('wiki-conventions: the move writes a pointer and the reason into the spec', () => {
-  assert.match(wiki, /spec[^\n]*(指针|指向)[^\n]*(理由|原因)|(指针|指向)[^\n]*spec[^\n]*(理由|原因)/);
+  assert.match(pendingRow, /spec[^|]*(指针|指向)[^|]*(理由|原因)/);
+});
+
+test('nothing points at a 「design/pending」 section of wiki-conventions; the convention is a row of 目录', () => {
+  for (const f of [['skills', 'design', 'uiux-imagine', 'SKILL.md'], ['skills', 'design', 'uiux-refine', 'references', 'after-freeze.md'], ['skills', 'productivity', 'dreaming', 'references', 'pending-designs.md']]) {
+    const text = read(...f);
+    assert.doesNotMatch(text, /「design\/pending」/, f.join('/'));
+    assert.match(text, /`idea-loop:wiki-conventions` 的「目录」里 `design\/pending\/` 那一行/, f.join('/'));
+  }
 });
 
 for (const skill of ['uiux-imagine', 'uiux-refine']) {

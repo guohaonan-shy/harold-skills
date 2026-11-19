@@ -20,4 +20,4 @@
 
 **会话中断或重开**：designer 接不回来。下次调 refine 起一个新的，任务「起手」：画布的最新一版、ledger 与方向说明就是恢复点。从暂缓的设计接着做（开工前问过人、人要接着做）也是这样：目录已复制回当前 worktree 的 `docs/design/tmp/<spec-slug>/`，直接用这个恢复点。
 
-**这块界面先不做**：人看了数据或改了主意，说「先不做」。不冻结，也不当作放弃（放弃只丢画布）。你照 `idea-loop:wiki-conventions` 的「design/pending」做：先确认主 checkout（`git worktree list` 第一行）的 `docs/design/pending/` 在本地忽略里，再把当前 worktree 的 `docs/design/tmp/<spec-slug>/` 原样挪到 `docs/design/pending/<spec-slug>/`，里面的东西不清理，目标目录已存在就停下问人；然后在 spec 里写一句指针和人原话的理由，随 spec 的改动提交。最后关掉预览服务器，告诉人挪到了哪、spec 里写了什么。
+**这块界面先不做**：人看了数据或改了主意，说「先不做」。不冻结，也不当作放弃（放弃只丢画布）。你照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行做：先确认主 checkout（`git worktree list` 第一行）的 `docs/design/pending/` 在本地忽略里，再把当前 worktree 的 `docs/design/tmp/<spec-slug>/` 原样挪到 `docs/design/pending/<spec-slug>/`，里面的东西不清理，目标目录已存在就停下问人；然后在 spec 里写一句指针和人原话的理由，随 spec 的改动提交。最后关掉预览服务器，告诉人挪到了哪、spec 里写了什么。
