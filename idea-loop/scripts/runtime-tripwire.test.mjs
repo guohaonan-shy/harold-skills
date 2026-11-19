@@ -4,7 +4,7 @@
  * idea-loop's skills and agents write capabilities (scheduled task, browser, asking the human …);
  * how a capability is done in one runtime (claude-desktop, magi) lives only in the runtime skill's
  * references. This test scans skills/ and agents/ for runtime-specific writing (tool names, CLI
- * commands, settings paths — the list is in docs/spec/runtime/runtime.md, "tripwire 的名单") and
+ * commands, settings paths — the list is in docs/adr/0026-runtime.md, "tripwire 的名单") and
  * reports every hit as "file:line  rule  original line". Scanning stays aligned with
  * no-project-leak.test.mjs (skills/ and agents/ are in both; scripts/ and evals/ are out of both).
  *
