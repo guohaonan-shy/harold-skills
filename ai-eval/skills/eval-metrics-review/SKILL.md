@@ -1,6 +1,6 @@
 ---
 name: eval-metrics-review
-description: 审核一个用户任务的判官 scorer，结论分保留、改写、挪成确定性断言、删掉四种，列成表交人拍板。一个用户任务接入评测之前、新增或改写判官 scorer 和评分标准之后、判官打出来的分总是不稳时用。
+description: 审核一个用户任务的判官 scorer。一个用户任务接入评测之前、新增或改写判官 scorer 和评分标准之后、判官打出来的分总是不稳时用。
 ---
 
 # eval-metrics-review

@@ -1,6 +1,6 @@
 ---
 name: eval-judge
-description: 判官：一个 scorer × 一个样本起一次 Codex 会话，打出 0 到 1 的分。一轮实验到了判官这一步、要重判某几个 scorer 或样本、要单独重判一批报告，或要结束判官会话时用。
+description: 判官：给一个样本上的一个 scorer 打分。一轮实验到了判官这一步、要重判某几个 scorer 或样本、要单独重判一批报告，或要结束判官会话时用。
 ---
 
 # eval-judge

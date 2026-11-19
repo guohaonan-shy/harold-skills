@@ -29,6 +29,7 @@ const TELLS = [
   /托福|作文|学生/,
   /t11-live-config|ai_tasks\.yaml/,
   /\bacademic_discussion_report\b/,
+  /offline_eval|eval_reports|\bUSER_TASKS\b/,
 ];
 
 function files(path) {

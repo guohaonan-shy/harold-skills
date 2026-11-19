@@ -27,8 +27,8 @@
 - [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
-- [ ] review 第 1 轮 S3（2026-11-20）：eval-run、eval-baseline 里不留来源项目的存储目录层级（基线产物在存储里的目录）和代码常量名（登记用户任务的常量），改成指向 EVAL.md 对应小节；防泄漏测试的提示词表加上这两样
-- [ ] review 第 1 轮 C1（2026-11-20）：eval-judge、eval-run、eval-metrics-review 的 description 只写它是什么和触发词（AGENTS.md「description 只做路由」：流程、产物格式、模型名不写），原有的触发说法都保留
+- [x] review 第 1 轮 S3（2026-11-20）：eval-run、eval-baseline 里不留来源项目的存储目录层级（基线产物在存储里的目录）和代码常量名（登记用户任务的常量），改成指向 EVAL.md 对应小节；防泄漏测试的提示词表加上这两样
+- [x] review 第 1 轮 C1（2026-11-20）：eval-judge、eval-run、eval-metrics-review 的 description 只写它是什么和触发词（AGENTS.md「description 只做路由」：流程、产物格式、模型名不写），原有的触发说法都保留
 
 ## 选中的存量回归
 - `scripts/plugin-version.test.mjs`：新 plugin 目录要被版本检查认得，不能因为 main 上没有它的 plugin.json 而误报。
