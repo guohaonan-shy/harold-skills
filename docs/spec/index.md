@@ -3,6 +3,17 @@
 
 | 文件 | summary |
 |---|---|
+| [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
+| [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
+| [[implementer-start-point-non-destructive]] | implementer 开工对齐起点改用不丢东西的 git 写法，不再被 auto mode 拦；定义按 agent-builder 精简到 5000 字内 |
+| [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
+| [[refine-judge-advisor]] | 设计收敛改由人定：评委降为顾问，每轮交一份配参考图和用户路径的设计评审报告 |
+| [[replay-gh-isolation]] | 规则回放起的每个 claude / Codex 子进程都不带 gh 登录，读不到用例之后的线上 issue 与 PR |
+| [[scroll-driven-whole-pin]] | 滚动驱动的段只认整段钉住；窄钉子的段照普通长图拍；滚动驱动段每一步都拍一张 |
 | [[seo-agents-openseo-tool-name]] | 以插件自带的 OpenSEO 为准：别处配了同一服务、顶替了插件那份时，seo-scan 开场停下、seo-setup 设置时就说清删哪份 |
-
-> 当前为空。上一批（`design-plugin-idea-loop-integration` / `design-loop-v2`）已于 2026-09-16 蒸馏进 [[0001-design-workflow-into-harold-skills]] 与 [[0002-design-loop-v2-imagine-refine]] 并删除。
+| [[seo-autopilot]] | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱 |
+| [[seo-outreach-reads-seo-md]] | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
+| [[seo-skill-descriptions-route-only]] | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
+| [[skill-body-limit-backlog]] | idea-loop 两份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references |
+| [[subagent-handback-lost-turn]] | 交回后卡住是那一轮模型请求断了或挂住，被平台合成回复关掉；网络问题，idea-loop 不加机制 |
+| [[wiki-conventions-slim]] | wiki-conventions 主体从 7854 字缩到 5000 字以下：只有部分调用方用到的细节外置成 references |

@@ -19,6 +19,11 @@
  *                                 and why, what the review rounds concluded
  *   rollback      能否回滚        if this turns out wrong after merging: can it be undone, how, what it touches; what to
  *                                 prepare before going live; the pre-existing problems found on the way and filed
+ *   live-check    上线自查的网址   SEO changes only: one live URL and its target word per line, the pages checked after the merge
+ *                                 goes live; written by the implementation stage, and a PR without it is not merged automatically
+ *   night-decided 夜里替你定的    night-mode sessions only: each thing that needed a person and was settled by the recommendation,
+ *                                 with what was picked, why, and the other option
+ *   night-waiting 等你定的        night-mode sessions only: what the session stopped at because only a person may do it
  *   your-todo     要你做的事      what to review, what to decide
  *   reference     参考            folded: change map by module, spec & tickets, ledger, cleanup
  *
@@ -53,6 +58,9 @@ export const TITLES = {
   changes: '怎么修',
   verification: '怎么验证',
   rollback: '能否回滚',
+  'live-check': '上线自查的网址',
+  'night-decided': '夜里替你定的',
+  'night-waiting': '等你定的',
   'your-todo': '要你做的事',
   reference: '参考',
 };
