@@ -15,7 +15,7 @@
  *      post-change product had), which is how the answers are turned back into pre-change / post-change.
  *
  * Before a run starts, the files the change touched in the plugin are put into the project copy: every file that differs between
- * the pre-change and post-change plugin (added, edited or deleted, anywhere in the plugin dir) is replaced by the version of the side being run
+ * the pre-change and post-change plugin (added, edited or deleted, anywhere in the plugin dir except its top-level `evals/`, which holds the replay cases and eval material themselves) is replaced by the version of the side being run
  * (written when that side has it, removed when it does not), but only when the case's commit holds that plugin at the plugin's
  * relative dir in its repository (a `.claude-plugin/plugin.json` there with the post-change plugin's `name`; a plugin outside a git repo
  * is taken to sit at `<repo root>/<its dir name>`). Other plugin files and the rest of the project stay as the commit had them, and
