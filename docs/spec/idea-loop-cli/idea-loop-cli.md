@@ -77,7 +77,8 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 | 进命令，给会话调 | 41 | 见下表 |
 | 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
-| 模块内部的库与 MCP 服务器，没有自己的子命令 | 7 | 库被命令 import，跟用它的模块放在一起：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部）、`design-archive`、`mini-yaml`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 和两个 eval runner 用）、`github-app`（以 bot 身份发言，`pr loop archive` 用）；`design-archive-mcp`（`.mcp.json` 起的 MCP 服务器） |
+| 命令行内部的模块，没有自己的子命令 | 6 | 都在 `idea-loop` 命令行这个 package 里，被命令 import：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `idea-loop` 的命令，不单独处理）、`design-archive`、`mini-yaml`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 和两个 eval runner 用）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
+| 设计档案 MCP package | 1 | `design-archive-mcp`：idea-loop 下单独一个 package，以 MCP 协议提供七个查询工具（见下面「设计档案 MCP」） |
 | 删掉 | 1 | `codex-companion` |
 
 hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」；hook 不单设模块：「不是，我并不是让你增加一个hook模块，而是这些功能可能都是在原有的模块，hook控制触发世纪以及调用哪个命令」。
@@ -102,6 +103,14 @@ hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动�
 | `runtime` | `runtime-detect`（`name`、`inject`） | `show <能力>`（见「运行环境」） |
 | `agent` | `codex-prompt` | `codex run`、`codex image`、`claude run`（见「包装别的命令行」） |
 | `test` | `design-archive-fixture`（写出一份虚构的设计档案到给定目录）、`skill-doc-check`（查一份 skill 的主体字数和被指向的小节在不在） | `run`：跑插件自己的 `*.test.mjs`，可带匹配 |
+
+### 设计档案 MCP
+
+Harold 2026-11-19 定：「design-archive-mcp 这个我觉的可以单独在idea-loop下封装一个package，这个package 以MCP协议提供工具能力」，做法照推荐（「mcp就按照你说的推荐来」）：
+
+- 放在插件里、idea-loop 下单独一个 package，有自己的 `package.json`；不发布到 npm（发布要 npm 账号、每次改动单独发版、每台机器第一次启动要下载）。
+- 设计档案的解析和七种查询（页面、状态、用户路径、需求差异、反查、关键词、受影响）放进这个 package；命令 `idea-loop design archive query` 反过来引用它，查询逻辑只有一份。
+- `.mcp.json` 照旧用 `node` 起它，装插件就有，跟插件一起升级。七个工具的名字、参数、返回不变。
 
 ### 登记表与扫描测试
 
@@ -181,7 +190,7 @@ runtime 不再是 skill。
 - **测试**：纳入。共用的测试用具改经 `idea-loop test` 调；测试文件里直接 import 模块的照旧。改插件时要用 worktree 里的 `idea-loop/bin/idea-loop test run`：PATH 上的 `idea-loop` 是已装的那一版插件，跑的是它自己的测试，不是 worktree 里正在改的。
 - **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：排除。它们是本地跑的 node 脚本，直接 import 模块，不经 Bash 调命令，不受这次影响。
 - **plugin 的 `README.md`**：纳入，命令写法同步改；扫描测试也扫它。
-- **design-archive MCP 服务器**：排除。它是 MCP，不是命令；查询逻辑跟 `idea-loop design archive query` 共用一个模块。
+- **design-archive MCP 服务器**：纳入，做成单独的 package（见「设计档案 MCP」）。
 
 ## User Stories
 
@@ -221,7 +230,7 @@ runtime 不再是 skill。
 ## 实现决策
 
 - **用 Node.js 写，ES 模块（`.mjs`），零依赖，不需要构建**：现有 57 个脚本和全部测试（`node --test`）已经是这样，插件按 git 原样分发、没有 `npm install` 这一步，所以不引入 npm 包，也不用 TypeScript（要么提交编译产物、要么装时编译）；参数解析用 Node 自带的 `node:util` 的 `parseArgs`。不用 Go、Rust 出二进制（父会话已排除二进制分发）。缺 YAML 解析这类库时照现有做法手写够用的子集（如 `mini-yaml` 只读设计档案 frontmatter 用到的那部分 YAML）。
-- **代码按模块分目录**：每个模块一个目录，命令的实现和它内部用的库放在一起；不再有一个平铺的、谁都能直接 `node` 调的脚本目录。对调用方来说只有 `idea-loop` 一个入口，库文件不是入口。
+- **代码按模块分目录**：`idea-loop` 命令行是一个 package，每个模块一个目录，命令的实现和它内部用的库放在一起；只被引用、没有动作的（`claude-stream`、`github-app`）作为这个 package 里的共用模块（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）；不再有一个平铺的、谁都能直接 `node` 调的脚本目录。对调用方来说只有 `idea-loop` 一个入口，库文件不是入口。
 - **入口**按自己所在的路径找插件目录，不读 `CLAUDE_PLUGIN_ROOT`（依据：本会话实测，bin 里这个变量是空的）。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
 - **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
