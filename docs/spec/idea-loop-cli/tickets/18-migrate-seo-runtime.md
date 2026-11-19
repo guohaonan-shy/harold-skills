@@ -19,3 +19,4 @@ seo 类 skill 和 seo 的方向 agent 里的全路径脚本调用改成 `dyna se
 
 > 补充（工单 11 交回，2026-11-19）：runtime 数据在插件的 `runtime/` 目录（capabilities.md 与每种环境一份）。删 runtime skill 时一起改数据里指向旧东西的字眼：capabilities.md 的「怎么用」「检测规则」「加一种运行环境」三节、两份环境数据里指向 SKILL.md 的链接和「走 SKILL.md 的退路」、抢锁和桌面端交出那两步里的旧脚本调用（改成 `dyna ui lock …`、`dyna runtime handoff`）、注入头话里的「idea-loop:runtime」。对着旧脚本差分的注入测试随之改成对着新文字断言。claude-desktop 那份注入已有 9933 字（上限一万），只删不加。
 - [x] review 第 1 轮 C1（2026-11-19）：给 agent 的说明里，指代 dyna 命令时不叫「脚本」，改叫「命令」或直接写 dyna（术语表 dyna 词条「不要用」：脚本）；只换词，不加句子；claude-desktop 的运行环境数据注入接近一万字上限，不变长
+- [ ] review 第 1 轮 C1 补（2026-11-19）：C1 把运行环境数据里「自己起 chromium 的脚本」改成了「命令」后，runtime 模块那条核对浏览器一节三条规矩的测试变红；测试的期望跟着改成新叫法，magi 那份数据里同样的「脚本」也改成「命令」，两份不变长
