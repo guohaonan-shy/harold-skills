@@ -27,18 +27,18 @@ const missed = read(...dir, 'references', 'missed-archive.md');
 const weekly = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
 const readme = read('README.md');
 
-// How the docs word each kind of row `--split-ask` hands to the human, in README order. `wording` reads the
-// script's own verdict on one probe row and returns the words the docs use for it; null means "no wording
-// exists for this kind", which is how a kind the script added and the docs never named shows up.
-const ASK_WORDING = ['`DESIGN.md`', '文档里的冲突', '`GLOSSARY.md`', '要删的暂缓设计', '`候选`'];
-function wording(type, disposition, object) {
-  if (type === '文档' && /^`?GLOSSARY\.md/.test(object)) return '`GLOSSARY.md`';
-  if (type === '文档' && ['报警', '问人'].includes(disposition)) return '文档里的冲突';
-  if (type === 'DESIGN.md 条目') return '`DESIGN.md`';
-  if (type === '暂缓设计' && disposition === '删除') return '要删的暂缓设计';
-  if (type === '候选') return '`候选`';
-  return null;
-}
+// How the docs word each kind of row `--split-ask` hands to the human, in README order. One table holds
+// both the wording and the order: each entry says which probe rows (type, disposition, object) it names.
+// A kind the script asks about that no entry names shows up as unnamed; an entry the script no longer asks
+// about, or one the opening list lacks, is red too.
+const ASK_KINDS = [
+  { word: '`DESIGN.md`', names: (t) => t.type === 'DESIGN.md 条目' },
+  { word: '文档里的冲突', names: (t) => t.type === '文档' && ['报警', '问人'].includes(t.disposition) },
+  { word: '`GLOSSARY.md`', names: (t) => t.type === '文档' && /^`?GLOSSARY\.md/.test(t.object) },
+  { word: '要删的暂缓设计', names: (t) => t.type === '暂缓设计' && t.disposition === '删除' },
+  { word: '`候选`', names: (t) => t.type === '候选' },
+];
+const ASK_WORDING = ASK_KINDS.map((k) => k.word);
 
 /** Feed `splitAskRows` one probe row per (row type, disposition, object) and collect what it hands to the human. */
 function askedBySplit() {
@@ -113,14 +113,16 @@ test('dreaming and the weekly setup text say what dreaming still asks', () => {
   assert.ok(ask, 'the opening sentence about the two risk classes is missing');
   const asked = askedBySplit();
   assert.ok(asked.length > 0, 'the script hands nothing to the human');
-  const unnamed = asked.filter((a) => wording(a.type, a.disposition, a.object) === null);
+  const unnamed = asked.filter((t) => !ASK_KINDS.some((k) => k.names(t)));
   assert.deepEqual(unnamed, [], `--split-ask hands these rows to the human but dreaming's opening names no such kind: ${JSON.stringify(unnamed)}`);
-  const derived = new Set(asked.map((a) => wording(a.type, a.disposition, a.object)));
-  for (const word of ASK_WORDING) {
-    assert.ok(derived.has(word), `dreaming's opening names ${word} but --split-ask no longer asks about it`);
-    assert.ok(ask[1].includes(word), `dreaming's opening list lacks ${word}: ${ask[1]}`);
+  const derived = ASK_KINDS.filter((k) => asked.some((t) => k.names(t)));
+  for (const k of ASK_KINDS) {
+    assert.ok(derived.includes(k), `dreaming's opening names ${k.word} but --split-ask no longer asks about it`);
   }
-  const at = ASK_WORDING.map((k) => ask[1].indexOf(k));
+  for (const k of derived) {
+    assert.ok(ask[1].includes(k.word), `dreaming's opening list lacks ${k.word}: ${ask[1]}`);
+  }
+  const at = derived.map((k) => ask[1].indexOf(k.word));
   assert.deepEqual(at, [...at].sort((a, b) => a - b), `dreaming's opening list is out of order: ${ask[1]}`);
   assert.doesNotMatch(weekly, /两类/);
   assert.match(weekly, /`idea-loop:dreaming`[^\n]*开头/);
