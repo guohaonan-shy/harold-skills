@@ -24,3 +24,5 @@ wiki-conventions、dreaming 里「由 #339 包装」的占位改成指向新命�
 
 - 两类 skill 的 `*-doc.test.mjs`（issues-skill-doc、implementer-slim-doc、pr-review-slim-doc、dreaming-*-doc、wiki-conventions-skill-doc 等）：断言 skill 文字，换写法可能碰到，要么照新写法改断言并写理由
 - `no-project-leak.test.mjs`：改写后的文字不带项目信息
+
+> 补充（工单 08 交回，2026-11-19）：`dyna ui measure` 不再用目标项目里的 playwright，改用本机的 Chrome / Chromium（找不到再找 Playwright 缓存里的 chromium，或用 `IDEA_LOOP_CHROME` 指定）。改 ui-measure skill 和 implement 里 UI 工单的参考时，把「项目里要装 playwright」换成「机器上要有 Chrome 或 Chromium」。
