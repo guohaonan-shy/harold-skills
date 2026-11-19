@@ -36,4 +36,4 @@
 - `research-baseline.test.mjs`、`claude-stream.test.mjs`：统计字段从 Refero 换成 Mobbin
 - `setup-single-source.test.mjs`、`runtime-skill-doc.test.mjs`：setup 预检和 runtime 的文字被改
 - `no-project-leak.test.mjs`：契约要补新例子
-- [ ] review 第 1 轮 C1（2026-11-19）：调研契约里不用术语表避用的叫法「用户流程」，改用「用户路径」（GLOSSARY.md「用户路径」词条写明避用「用户流程」；代码规范：领域词汇以术语表为准）
+- [x] review 第 1 轮 C1（2026-11-19）：调研契约里不用术语表避用的叫法「用户流程」，改用「用户路径」（GLOSSARY.md「用户路径」词条写明避用「用户流程」；代码规范：领域词汇以术语表为准）
