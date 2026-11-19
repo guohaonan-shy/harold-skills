@@ -58,7 +58,7 @@ test('the reference exists and carries each rule once, with both definitions ver
 });
 
 test('no skill restates a rule the reference owns', () => {
-  for (const name of ['eval-run', 'eval-baseline', 'eval-setup', 'eval-judge', 'eval-samples', 'eval-metrics-review']) {
+  for (const name of ['eval-run', 'eval-baseline', 'eval-setup', 'eval-judge', 'eval-samples', 'eval-metrics-review', 'eval-replay']) {
     const text = skill(name);
     for (const [rule, sentence] of Object.entries(RULE_SENTENCES)) {
       assert.ok(!text.includes(sentence), `${name} restates the ${rule} rule; point at ${REF} instead`);
@@ -88,6 +88,12 @@ test('eval-run report step writes pass¹ / pass³ with definitions, or says the 
 test('eval-run sends a one-step-of-a-conversation change to eval-replay', () => {
   const body = section(skill('eval-run'), /### 2\. 评估样本与指标/);
   assert.match(body, /ai-eval:eval-replay/);
+});
+
+test('eval-replay points at the reference where it reports numbers, and leaves the interval to the script', () => {
+  const text = skill('eval-replay');
+  assert.ok(text.includes(REF), 'eval-replay does not point at the reference');
+  assert.match(text, /replay-stats\.mjs/);
 });
 
 test('eval-baseline reruns platform errors to zero before it compares', () => {

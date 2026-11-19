@@ -30,6 +30,7 @@
 |---|---|---|
 | `ai-eval:eval-setup` | 第一次在项目里用、或评测的存放处、用户任务、判官配置、准出标准有变 | 「给这个项目建 `EVAL.md`」：读项目的代码和文档，写出 `EVAL.md`，读不到的列成待确认清单问你 |
 | `ai-eval:eval-run` | 改一个 AI 任务的提示词、模型或思考预算 | 「我要改摘要任务的提示词，跑一次实验」：先评估现有样本和指标看不看得出这次改动，再开两段式实验（比较前先把平台报错重跑到零）、诊断、写带 pass¹ / pass³ 的报告，放量前核对基线 |
+| `ai-eval:eval-replay` | 改多轮对话里的某一步（工具定义、说明文字、某一轮的提示词、模型参数），想在真实对话上比线上写法和新写法 | 「给退款工具加一个 `reason` 参数，在真实对话上比一下」：照它在项目里写一个只回放那一步的脚本，跑出结果文件，再用 `replay-stats` 算每个变体的 pass¹ / pass³、对基线的差、按会话分组的 95% 区间和「变好 / 变差 / 持平」 |
 | `ai-eval:eval-samples` | 看每个 case 有几个样本、往评测集加样本或期望 | 「数一下覆盖」「加一个超长输入的样本」：数出缺口、逐条提议，你同意才入库 |
 | `ai-eval:eval-baseline` | 候选全量上线后升基线、新用户任务建第一份基线、加了样本之后补基线 | 「候选全量上线了，升基线」：先报规模等你同意，再按新的生产配置重跑 |
 | `ai-eval:eval-judge` | 实验到了判官这一步、重判某几个 scorer 或样本、结束判官会话 | 「重判 `tone` 这个 scorer」：生成判官任务、起判官、还原分数 |
@@ -37,9 +38,9 @@
 
 ## 目录
 
-- `skills/`：6 个 skill。
-- `references/`：`reporting-rules.md`（报数口径：门槛对线上基线、pass¹ / pass³ 带定义、平台报错先重跑、差别看区间；eval-run、eval-baseline 比较前引它）、`judge-format.md`（判官用到的文件格式）、`judge-prompt.md`（判官的固定提示）。
-- `scripts/`：判官流水线（`judge-pack` / `judge-run` / `judge-validate` / `judge-settle` / `judge-launch` / `judge-agreement`）、配对统计 `paired-stats`、覆盖统计 `coverage`、`read-json`，每个脚本旁有同名的 `.test.mjs`；`no-project-leak.test.mjs` 守着插件里不出现任何项目的名字和领域词，`reporting-rules.test.mjs` 守着 skill 在该引报数口径的步骤引它、没有把规则重抄一遍。
+- `skills/`：7 个 skill。
+- `references/`：`reporting-rules.md`（报数口径：门槛对线上基线、pass¹ / pass³ 带定义、平台报错先重跑、差别看区间；eval-run、eval-baseline 比较前引它，eval-replay 报数时引它）、`judge-format.md`（判官用到的文件格式）、`judge-prompt.md`（判官的固定提示）。
+- `scripts/`：判官流水线（`judge-pack` / `judge-run` / `judge-validate` / `judge-settle` / `judge-launch` / `judge-agreement`）、配对统计 `paired-stats`、回放统计 `replay-stats`（读回放脚本写的结果文件，算 pass¹ / pass³ 和对基线的分组重抽区间；还有平台报错行就拒绝出数）、覆盖统计 `coverage`、`read-json`，每个脚本旁有同名的 `.test.mjs`；`no-project-leak.test.mjs` 守着插件里不出现任何项目的名字和领域词，`reporting-rules.test.mjs` 守着 skill 在该引报数口径的步骤引它、没有把规则重抄一遍，`eval-replay.test.mjs` 守着 eval-replay 的八条完成条件、结果文件的行形状和统计命令都在。
 
 跑测试：
 
