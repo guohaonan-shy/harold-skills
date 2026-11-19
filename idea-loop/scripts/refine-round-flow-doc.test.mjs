@@ -89,6 +89,18 @@ test('the reference writes down the ledger format, how the report goes out, how 
   assert.match(ref, /design-review-report\.mjs/);
 });
 
+test('what goes in the chat when the report goes out: link, score, the items to watch (with a reason), a "how to reply" line; the rest stays on the page', () => {
+  const step6 = body.slice(body.indexOf('6. **拼报告、发出去**'), body.indexOf('designer 和评委的上下文里不放参考图'));
+  const ref = read('skills', 'design', 'uiux-refine', 'references', 'ledger-and-report.md');
+  const section = ref.slice(ref.indexOf('## 报告怎么发'), ref.indexOf('## 迁移'));
+  for (const [where, text] of [['skill step 6', step6], ['reference 「报告怎么发」', section]]) {
+    assert.doesNotMatch(text, /只放/, `${where} still says the chat holds only the three things`);
+    assert.match(text, /推荐理由/, `${where} does not allow a reason with each item`);
+    assert.match(text, /怎么回/, `${where} does not allow the closing 「怎么回」 line`);
+    assert.match(text, /其余留在(报告)?页/, `${where} does not keep the rest on the page`);
+  }
+});
+
 test('a direction opinion about a block the human already disliked is reported as "reopen in imagine" (#230)', () => {
   const section = body.slice(body.indexOf('## 方向性意见与人的不满'), body.indexOf('## 人说的其它话'));
   assert.match(section, /不满意（会话记录或 ledger 里有人的原话）/);
