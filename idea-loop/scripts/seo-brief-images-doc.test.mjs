@@ -141,3 +141,12 @@ test('seo-brief: the body stays under 5000 characters', () => {
 test('cover and og exist as skills the step can call', () => {
   for (const s of ['cover', 'og']) assert.ok(existsSync(path('skills', 'seo', s, 'SKILL.md')), `${s}/SKILL.md exists`);
 });
+
+test('配图 step: a default recipe is also a verified row the caller writes, so the sentence reaches the PR description', () => {
+  const line = IMAGES.split('\n').find((l) => /^5\. \*\*没配配方\*\*/.test(l));
+  assert.ok(line, 'the 没配配方 item');
+  assert.match(line, /调用方（执行方）[^\n]*`verified`/);
+  assert.match(line, /这一栏进 PR 描述/);
+  assert.ok(line.includes('`封面 / OG 配方 | 默认配方 | 项目没配封面 / OG 配方，用的默认`'), 'the row shape');
+  assert.match(read('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
+});

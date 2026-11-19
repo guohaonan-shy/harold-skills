@@ -105,3 +105,11 @@ test('the layout notes keep no copy of the default title sizes, and point at the
 test('with no browser available, the skill says to load the browser skill with the Skill tool', () => {
   assert.match(SKILL, /用 Skill 工具调 `idea-loop:browser`/);
 });
+
+test('a default recipe is also a verified row the caller writes, so the sentence reaches the PR description', () => {
+  const tail = SKILL.split('## 6.')[1] ?? '';
+  assert.match(tail, /调用方（执行方）[^\n]*`verified`/);
+  assert.match(tail, /这一栏进 PR 描述/);
+  assert.ok(tail.includes('`分享卡配方 | 默认配方 | 项目没配 OG 配方，用的默认`'), 'the row shape');
+  assert.match(read('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
+});

@@ -92,3 +92,12 @@ test('cover: every numbered step ends with a completion condition, and the headl
   assert.match(render, /照『浏览器』（`idea-loop:runtime`）/);
   assert.doesNotMatch(render, /用 Skill 工具调 `idea-loop:runtime`/);
 });
+
+test('cover: a default recipe is also a verified row the caller writes, so the sentence reaches the PR description', () => {
+  const tail = BODY.split('## 交回')[1] ?? '';
+  assert.match(tail, /调用方（执行方）[^\n]*`verified`/);
+  assert.match(tail, /这一栏进 PR 描述/);
+  assert.ok(tail.includes('`封面配方 | 默认配方 | 项目没配封面配方，用的默认`'), 'the row shape');
+  // the route it relies on is the one the implement doc actually has
+  assert.match(read('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
+});
