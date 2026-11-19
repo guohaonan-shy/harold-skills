@@ -29,4 +29,4 @@ implementer（执行方）做 UI 工单时读 implement skill 的参考「UI 工
 
 - `idea-loop/scripts/design-tmp-worktree-root-doc.test.mjs`：守着 tmp 路径以集成 worktree 为根的写法，这次改的正是同一段。
 - `idea-loop/scripts/implementer-slim-doc.test.mjs`：守着从执行方定义挪进这份参考的句子，改句时可能碰到。
-- `idea-loop/scripts/plugin-version.test.mjs`：改了插件必须升版本。
+- `scripts/plugin-version.test.mjs`：改了插件必须升版本。
