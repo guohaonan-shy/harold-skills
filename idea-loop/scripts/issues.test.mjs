@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseRepos, parseTypes, platformOf,
-  prState, priorityOf, queues, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
+  DEFAULT_PERIODS, parsePeriods, prState, priorityOf, queues, readTracker, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
 } from './issues.mjs';
 
 const SCRIPT = fileURLToPath(new URL('./issues.mjs', import.meta.url));
@@ -721,7 +721,7 @@ test('a category marked 独立队列 is no queue of its own: the note stays out 
   assert.equal(types.parents[1].about, '搜索可见性');
   assert.equal('queue' in types.parents[1], false, 'the note no longer makes a queue');
   assert.deepEqual(types.parents.map((p) => p.name), ['bug', 'seo']);
-  assert.deepEqual(queues(), { cap: 10, triageCap: 3, sections: ['triage', 'in-progress', 'in-review'] });
+  assert.deepEqual(queues('', '10:00').sections, ['triage', 'in-progress', 'in-review']);
 });
 
 test('candidates: an issue of a category once marked 独立队列 goes in the same order as every other', () => {
@@ -775,10 +775,164 @@ test('candidates --state: the command line takes todo or triage and refuses anyt
   assert.throws(() => cli(gh, ['candidates', docs, '--state']), /state/);
 });
 
-test('queues: one object with both caps and the three sidebar sections, no per-issue lookup', () => {
+/** What `queues <docs> --at=…` prints, parsed. */
+const queuesAt = (docs, at) => JSON.parse(cli(fakeGh({}).gh, ['queues', docs, ...(at ? [`--at=${at}`] : [])]).join('\n'));
+const picks = (docs, at) => { const q = queuesAt(docs, at); return [q.dispatch, q.limit]; };
+
+const SCHEDULE = (rows) => `# Issue tracker：GitHub
+
+## 状态
+
+triage：用
+
+## 调度
+
+这张表给调度读：每一行是一个时段。
+
+| 时段 | 派什么 | 上限 |
+|---|---|---|
+${rows.join('\n')}
+
+## 仓库
+
+| 仓库 | 本地路径 | 主分支 | 管什么 |
+|---|---|---|---|
+| \`o/r\` | . | main | 全部 |
+`;
+
+test('queues: a project without a 「调度」 section runs on the defaults (9–19 triage 3, 22–8 todo 3, nothing else)', () => {
+  for (const tracker of [null, '# Issue tracker：GitHub\n\n## 仓库\n\n| 仓库 |\n|---|\n| `o/r` |\n']) {
+    const docs = docsWith({}, tracker);
+    assert.deepEqual(picks(docs, '23:30'), ['todo', 3]);
+    assert.deepEqual(picks(docs, '10:00'), ['triage', 3]);
+    assert.deepEqual(picks(docs, '20:00'), [null, 0]);
+    assert.deepEqual(picks(docs, '08:30'), [null, 0]);
+  }
+});
+
+test('queues: the periods are left-closed, right-open, and one that starts after it ends crosses midnight', () => {
   const docs = docsWith();
-  const { gh } = fakeGh({});
-  assert.deepEqual(JSON.parse(cli(gh, ['queues', docs]).join('\n')), { cap: 10, triageCap: 3, sections: ['triage', 'in-progress', 'in-review'] });
+  assert.deepEqual(picks(docs, '22:00'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '21:59'), [null, 0]);
+  assert.deepEqual(picks(docs, '08:00'), [null, 0]);
+  assert.deepEqual(picks(docs, '07:59'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '09:00'), ['triage', 3]);
+  assert.deepEqual(picks(docs, '19:00'), [null, 0]);
+  assert.deepEqual(picks(docs, '18:59'), ['triage', 3]);
+  assert.deepEqual(picks(docs, '00:00'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '8:05'), [null, 0], 'a one-digit hour is fine');
+});
+
+test('queues: the output names the current period, what to dispatch, the limit, the whole table and the sections — and has no cap', () => {
+  const docs = docsWith();
+  assert.deepEqual(queuesAt(docs, '23:30'), {
+    at: '23:30',
+    period: { start: '22:00', end: '08:00' },
+    dispatch: 'todo',
+    limit: 3,
+    periods: [
+      { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
+      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 3 },
+    ],
+    sections: ['triage', 'in-progress', 'in-review'],
+  });
+  const idle = queuesAt(docs, '20:00');
+  assert.deepEqual([idle.period, idle.dispatch, idle.limit], [null, null, 0]);
+  assert.equal(idle.periods.length, 2, 'the table is there outside any period too, the morning summary needs where 夜里 starts');
+  for (const q of [queuesAt(docs, '23:30'), idle]) for (const gone of ['cap', 'triageCap']) assert.equal(gone in q, false, gone);
+  assert.deepEqual(DEFAULT_PERIODS.map((p) => p.dispatch), ['triage', 'todo']);
+});
+
+test('queues: a 「调度」 section is followed — only the rows it has', () => {
+  const docs = docsWith({}, SCHEDULE(['| 10:00–12:00 | triage | 2 |']));
+  assert.deepEqual(picks(docs, '11:00'), ['triage', 2]);
+  assert.deepEqual(picks(docs, '13:00'), [null, 0]);
+  assert.deepEqual(picks(docs, '23:30'), [null, 0], 'no default fills in around a written table');
+  assert.deepEqual(queuesAt(docs, '11:00').periods, [{ start: '10:00', end: '12:00', dispatch: 'triage', limit: 2 }]);
+  assert.deepEqual(queuesAt(docs, '11:00').period, { start: '10:00', end: '12:00' });
+});
+
+test('queues: a table reads with a hyphen, backticks and extra columns, and the first matching row wins', () => {
+  const docs = docsWith({}, SCHEDULE(['| 6:30 - 12:00 | `todo` | 4 | 备注 |', '| 11:00–13:00 | triage | 1 |', '| 23:00—01:00 | todo | 2 |']));
+  assert.deepEqual(picks(docs, '06:30'), ['todo', 4]);
+  assert.deepEqual(picks(docs, '11:30'), ['todo', 4]);
+  assert.deepEqual(picks(docs, '12:30'), ['triage', 1]);
+  assert.deepEqual(picks(docs, '00:30'), ['todo', 2]);
+});
+
+test('queues: a broken 「调度」 section is refused with the row that is wrong, never replaced by the defaults', () => {
+  const bad = {
+    '| 25:00–08:00 | todo | 3 |': /25:00/,
+    '| 09:00–19:61 | triage | 3 |': /19:61/,
+    '| 09:00–19:00 | review | 3 |': /review/,
+    '| 09:00–19:00 | triage | 0 |': /\| 09:00–19:00 \| triage \| 0 \|/,
+    '| 09:00–19:00 | triage | abc |': /abc/,
+    '| 09:00–19:00 | triage | -2 |': /-2/,
+    '| 09:00–19:00 | triage | 2.5 |': /2\.5/,
+    '| 09:00 | triage | 3 |': /\| 09:00 \| triage \| 3 \|/,
+    '| 09:00–09:00 | triage | 3 |': /09:00–09:00/,
+    '| 09:00–19:00 | triage |': /\| 09:00–19:00 \| triage \|/,
+  };
+  for (const [row, why] of Object.entries(bad)) {
+    const docs = docsWith({}, SCHEDULE(['| 01:00–02:00 | todo | 1 |', row]));
+    assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => /调度/.test(e.message) && /第 \d+ 行/.test(e.message) && why.test(e.message) && e.message.includes(row.trim()), row);
+  }
+  // the line number is the line in ISSUE_TRACKER.md
+  const docs = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 3 |', '| 22:00–08:00 | nap | 3 |']));
+  const line = readTracker(docs).split('\n').findIndex((l) => l.includes('nap')) + 1;
+  assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), new RegExp(`第 ${line} 行`));
+  // a table with no rows, or no separator under the header
+  assert.throws(() => cli(fakeGh({}).gh, ['queues', docsWith({}, SCHEDULE([])), '--at=10:00']), /调度.*没有.*行/);
+  assert.throws(() => parsePeriods('## 调度\n\n| 时段 | 派什么 | 上限 |\n| 09:00–19:00 | triage | 3 |\n'), /表头/);
+});
+
+test('queues: --at must be HH:MM, and a bare --at is refused', () => {
+  const docs = docsWith();
+  for (const at of ['25:00', 'abc', '10:60', '1000', '10:5', '-1:00', '10:00:00', '']) {
+    assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, `--at=${at}`]), /--at/, at);
+  }
+  assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at']), /--at/);
+  // exit code on the command line
+  for (const at of ['25:00', 'abc']) {
+    assert.throws(() => execFileSync('node', [SCRIPT, 'queues', docs, `--at=${at}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), (e) => e.status === 1 && /--at/.test(e.stderr), at);
+  }
+  const out = execFileSync('node', [SCRIPT, 'queues', docs, '--at=23:30'], { encoding: 'utf8' });
+  assert.equal(JSON.parse(out).dispatch, 'todo');
+});
+
+test('queues: a broken table exits non-zero on the command line and names the row on stderr', () => {
+  const docs = docsWith({}, SCHEDULE(['| 09:00–19:00 | review | 3 |']));
+  assert.throws(() => execFileSync('node', [SCRIPT, 'queues', docs, '--at=10:00'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), (e) => e.status === 1 && /review/.test(e.stderr));
+});
+
+test('queues: without --at it reads the machine clock', () => {
+  const docs = docsWith();
+  const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const before = hhmm(new Date());
+  const { at } = queuesAt(docs);
+  const after = hhmm(new Date());
+  assert.ok(at === before || at === after, `${at} is neither ${before} nor ${after}`);
+  assert.equal(queues('', null, new Date(2026, 10, 18, 23, 30)).dispatch, 'todo');
+  assert.equal(queues('', null, new Date(2026, 10, 18, 7, 5)).at, '07:05');
+});
+
+test("queues: this repository's own ISSUE_TRACKER.md has a 「调度」 section that reads out the defaults", () => {
+  const docs = join(fileURLToPath(new URL('../../docs', import.meta.url)));
+  assert.deepEqual(parsePeriods(readTracker(docs)), DEFAULT_PERIODS);
+  assert.equal(JSON.parse(execFileSync('node', [SCRIPT, 'queues', docs, '--at=23:30'], { encoding: 'utf8' })).dispatch, 'todo');
+});
+
+test("queues: the setup templates' 「调度」 section is the defaults, for GitHub and Linear projects alike", () => {
+  const dir = fileURLToPath(new URL('../skills/engineering/setup/references/', import.meta.url));
+  for (const f of ['issue-tracker.md', 'issue-tracker-linear.md']) assert.deepEqual(parsePeriods(readFileSync(join(dir, f), 'utf8')), DEFAULT_PERIODS, f);
+});
+
+test('the 「调度」 section does not disturb how the rest of ISSUE_TRACKER.md reads', () => {
+  const md = SCHEDULE(['| 09:00–19:00 | triage | 3 |']);
+  assert.equal(skipsTriage(md), false);
+  assert.deepEqual(parseRepos(md, 'o'), ['o/r']);
+  assert.equal(skipsTriage(md.replace('triage：用', 'triage：跳过')), true);
+  assert.equal(platformOf(md), 'github');
 });
 
 test('the command line refuses the commands of the old model', () => {

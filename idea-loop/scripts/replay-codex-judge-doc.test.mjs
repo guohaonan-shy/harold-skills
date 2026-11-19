@@ -14,9 +14,11 @@ import { fileURLToPath } from 'node:url';
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 
-test('implementer.md: a replay case\'s prompt is only the human\'s words, and where it stops is for the judge alone', () => {
-  const line = read('agents', 'implementer.md').split('\n').find((l) => l.includes('写一个回放用例'));
-  const detail = read('agents', 'implementer.md').split('\n').find((l) => l.includes('「停在哪」'));
+// the rule-ticket steps moved out of agents/implementer.md into implement's references/rule-tickets.md
+// (spec implementer-start-point-non-destructive, ticket 02); the implementer reads it behind a pointer.
+test('rule-tickets.md: a replay case\'s prompt is only the human\'s words, and where it stops is for the judge alone', () => {
+  const line = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md').split('\n').find((l) => l.includes('写一个回放用例'));
+  const detail = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md').split('\n').find((l) => l.includes('「停在哪」'));
   assert.ok(line && detail, 'the line that teaches how to write a case');
   assert.match(detail, /prompt 只放人当时[^；]*原话/, 'the prompt holds only the human\'s own words');
   assert.match(detail, /不加「这是回放」「人不在场」之类/, 'no note that this is a replay or that nobody is there');

@@ -45,9 +45,9 @@
  * section of its AGENTS.md (or CLAUDE.md), together with the other labels it keeps; `labels --prune` deletes
  * every label outside the status labels, the kinds, the categories and that keep-list.
  *
- * The dispatch loop hands out sessions from one queue for every issue, with two caps on open sessions: 10 for
- * the in-progress and in-review sessions (and the todo cards not yet opened), 3 for the triage ones. The
- * sessions sit in three sidebar sections, one per working state.
+ * The dispatch loop hands out sessions by the time of day: the project's ISSUE_TRACKER.md「调度」table says, per
+ * period, whether it hands out triage or todo sessions and how many at most (`queues`; defaults when there is no
+ * table). The sessions sit in three sidebar sections, one per working state.
  *
  * Usage (<docs> is the docs/ directory; gh runs there, so it acts on that repo):
  *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, priority:*, kind:* and type:* labels; lists the rest, --prune deletes them
@@ -62,7 +62,7 @@
  *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
  *   node issues.mjs candidates <docs> [<limit>] [--state=todo|triage] → JSON: todo (or triage) issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (P0 → P1 → P2 → none, then longest in that state first); someone else's never
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
- *   node issues.mjs queues     <docs>                                 → JSON: the caps (cap, triageCap) and the sidebar sections
+ *   node issues.mjs queues     <docs> [--at=HH:MM]                    → JSON: what to hand out at that moment (now when absent) and how many at most, from the「调度」table of ISSUE_TRACKER.md (defaults when it has none), the whole table, and the sidebar sections
  *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply creates the missing labels, then changes them
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
@@ -217,13 +217,90 @@ export function typeLabels(types) {
   ]);
 }
 
-export const MAIN_CAP = 10;
-export const TRIAGE_CAP = 3;
 export const STAGE_SECTIONS = [...WORKING];
 
-/** What the dispatch loop reads from one place: the cap of in-progress / in-review sessions, the cap of triage ones, the sidebar sections. */
-export function queues() {
-  return { cap: MAIN_CAP, triageCap: TRIAGE_CAP, sections: [...STAGE_SECTIONS] };
+// ---------- dispatch periods (ISSUE_TRACKER.md「调度」) ----------
+
+/** What the dispatch loop hands out in a period: a triage session or a todo one. */
+export const DISPATCHES = ['triage', 'todo'];
+export const PERIODS_HEADING = '调度';
+
+/** The periods a project that wrote no「调度」section runs on: triage by day, todo by night, nothing in between. */
+export const DEFAULT_PERIODS = [
+  { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
+  { start: '22:00', end: '08:00', dispatch: 'todo', limit: 3 },
+];
+
+/** `H:MM` / `HH:MM` as minutes after midnight, null when it is no time of day. */
+const minutesOf = (hhmm) => {
+  const m = String(hhmm).match(/^(\d{1,2}):(\d{2})$/);
+  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+};
+const clock = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+/**
+ * The periods in the「## 调度」section of ISSUE_TRACKER.md: one table row each, `开始–结束 | 派什么 | 上限`
+ * (the range may be joined by `–`, `—` or `-`; the middle cell is `triage` or `todo`; the limit a positive
+ * integer; further columns are notes). The text around the table is ignored. Null when the section is
+ * missing; a row that does not read throws, naming its line in the file and quoting it.
+ */
+export function parsePeriods(md) {
+  const lines = String(md).split('\n');
+  const start = lines.findIndex((l) => l.trim() === `## ${PERIODS_HEADING}`);
+  if (start < 0) return null;
+  const rows = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^#{1,2} /.test(lines[i])) break;
+    if (/^\s*\|/.test(lines[i])) rows.push({ no: i + 1, line: lines[i].trim() });
+  }
+  const cells = (line) => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim().replace(/`/g, ''));
+  const fail = (row, why) => new Error(`ISSUE_TRACKER.md 第 ${row.no} 行（「${PERIODS_HEADING}」一节）：${why}：${row.line}`);
+  if (!rows.length) throw new Error(`ISSUE_TRACKER.md 的「${PERIODS_HEADING}」一节没有表：每个时段一行，列是 开始–结束 | 派什么 | 上限`);
+  if (rows.length < 2 || !cells(rows[1].line).every((c) => /^:?-{2,}:?$/.test(c))) throw fail(rows[0], '表头下面要有分隔行（|---|---|---|）');
+  const data = rows.slice(2);
+  if (!data.length) throw new Error(`ISSUE_TRACKER.md 的「${PERIODS_HEADING}」一节没有时段行：每个时段一行，列是 开始–结束 | 派什么 | 上限`);
+  return data.map((row) => {
+    const [range, dispatch, limit] = cells(row.line);
+    if (limit === undefined) throw fail(row, '要三列：开始–结束、派什么、上限');
+    const ends = range.split(/\s*[–—-]\s*/);
+    if (ends.length !== 2) throw fail(row, `时段「${range}」要写成 开始–结束，例如 09:00–19:00`);
+    const [from, to] = ends.map(minutesOf);
+    if (from === null || to === null) throw fail(row, `「${range}」里有不是时刻的（要 HH:MM，00:00 到 23:59）`);
+    if (from === to) throw fail(row, `「${range}」开始和结束是同一时刻`);
+    if (!DISPATCHES.includes(dispatch)) throw fail(row, `派什么要写 ${DISPATCHES.join(' 或 ')}，不是「${dispatch}」`);
+    if (!/^\d+$/.test(limit) || Number(limit) < 1) throw fail(row, `上限要是正整数，不是「${limit}」`);
+    return { start: clock(from), end: clock(to), dispatch, limit: Number(limit) };
+  });
+}
+
+/** The first period that covers `minutes` after midnight, or null. Left-closed, right-open; a period that starts after it ends crosses midnight. */
+export function periodAt(periods, minutes) {
+  return periods.find((p) => {
+    const [from, to] = [minutesOf(p.start), minutesOf(p.end)];
+    return from < to ? minutes >= from && minutes < to : minutes >= from || minutes < to;
+  }) ?? null;
+}
+
+/**
+ * What the dispatch loop reads from one place, for the moment `at` (`HH:MM`; the machine clock when null): the
+ * period that moment is in (`period`, null in a gap), what to hand out in it (`dispatch`: triage, todo or null)
+ * and how many sessions at most (`limit`, 0 in a gap), the whole table (`periods`: the project's「调度」section,
+ * or the defaults), and the sidebar sections. `md` is the project's ISSUE_TRACKER.md.
+ */
+export function queues(md = '', at = null, now = new Date()) {
+  const minutes = at === null ? now.getHours() * 60 + now.getMinutes() : minutesOf(at);
+  if (minutes === null) throw new Error(`--at 要写成 HH:MM（00:00 到 23:59），不是「${at}」`);
+  const periods = parsePeriods(md) ?? DEFAULT_PERIODS.map((p) => ({ ...p }));
+  const now_ = periodAt(periods, minutes);
+  return {
+    at: clock(minutes),
+    period: now_ && { start: now_.start, end: now_.end },
+    dispatch: now_ ? now_.dispatch : null,
+    limit: now_ ? now_.limit : 0,
+    periods,
+    sections: [...STAGE_SECTIONS],
+  };
 }
 
 /** The labels a project keeps: the status labels, the priorities, the kinds, its categories, and its keep-list. */
@@ -939,7 +1016,7 @@ export function run(argv, { gh = null, git = null, log = console.log } = {}) {
   }
   if (cmd === 'candidates') return json(candidates(gh, a ? num(a, 'limit') : undefined, { state: flags.state === undefined ? 'todo' : text(flags, 'state') }));
   if (cmd === 'backlog') return json(backlog(gh, a ? num(a, 'limit') : undefined));
-  if (cmd === 'queues') return json(queues());
+  if (cmd === 'queues') return json(queues(readTracker(docs), text(flags, 'at')));
   if (cmd === 'reconcile') {
     const { done, problems } = reconcile(gh, docs);
     print(done);
