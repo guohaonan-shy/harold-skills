@@ -1,6 +1,6 @@
 # 预算：本周的账
 
-`seo-scan` 的「预算」一节跑 `dyna seo allocate` 之后，照这份读它的输出（`<运行目录>/budget.json`）。额度的规则（套餐额度、每周分配、三份怎么拆）在 `SEO.md` 格式里，脚本照它算。
+`seo-scan` 的「预算」一节跑 `dyna seo allocate` 之后，照这份读它的输出（`<运行目录>/budget.json`）。额度的规则（套餐额度、每周分配、三份怎么拆）在 `SEO.md` 格式里，命令照它算。
 
 命令里的 `--context` 指开场存的 `context.json`；这次没有它（项目上下文没取到）就不传这个参数。
 

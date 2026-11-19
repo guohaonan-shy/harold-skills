@@ -5,7 +5,7 @@ argument-hint: "[<方向>...]（不给：按节奏挑；给了只跑这几个：
 allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(mkdir:*), Bash(date:*), Bash(wc:*), Bash(dyna seo:*), Bash(dyna issues:*), Bash(git fetch:*), Bash(git worktree:*), Bash(dyna home commit:*), Bash(cp:*), Bash(node -e:*), mcp__plugin_idea-loop_openseo__whoami, mcp__plugin_idea-loop_openseo__get_project_context, mcp__plugin_idea-loop_openseo__update_project_context, mcp__plugin_idea-loop_openseo__find_serp_competitors
 ---
 
-一次扫描：挑方向，每个方向起一个 agent 并行查，发现交给提 issue 脚本，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；外联跟进表、效果报告和关卡里人确认过的 `SEO.md` 改动提交到 home。
+一次扫描：挑方向，每个方向起一个 agent 并行查，发现交给提 issue 命令，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；外联跟进表、效果报告和关卡里人确认过的 `SEO.md` 改动提交到 home。
 
 可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有三种情形停下：开场的两种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
@@ -20,7 +20,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 ## 方向
 
 - `$ARGUMENTS` 不为空：就跑这几个。不在 `technical pages keywords backlinks geo results` 里的词，记成「不认识的方向」进研究日志，不跑。
-- 为空（定时任务每天这样调一次）：`dyna seo due <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由脚本定：`results` 每 3 天，其余五个每 7 天；研究日志的前两行格式不能改（它读以前各次的「采集」行）。没有 `context.json`：跑全部六个。
+- 为空（定时任务每天这样调一次）：`dyna seo due <运行目录>/context.json <YYYY-MM-DD>`，跑 `due` 里的方向。节奏由命令定：`results` 每 3 天，其余五个每 7 天；研究日志的前两行格式不能改（它读以前各次的「采集」行）。没有 `context.json`：跑全部六个。
 
 完成条件：一个方向列表（可以为空：为空就跳过预算、派 agent、提 issue，研究日志只写一行）。
 
@@ -85,8 +85,8 @@ OpenSEO 项目：<projectId>
 ## 提 issue
 
 1. 合并：把各方向文件里的发现拼成 `<运行目录>/findings.json`、去掉 `uncollected` 对象，命令见 [references/merge-findings.md](references/merge-findings.md)。
-2. `dyna seo file-issues <docs> <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由脚本做，不手动建 issue；新开的 issue 先是 backlog，下一节马上分流。
-3. 脚本失败：原因记下进研究日志，不重试、不手动建。
+2. `dyna seo file-issues <docs> <运行目录>/findings.json`，输出存到 `<运行目录>/issues.json`。拒收、合并、去重、打 `type:seo/<方向>` 都由命令做，不手动建 issue；新开的 issue 先是 backlog，下一节马上分流。
+3. 命令失败：原因记下进研究日志，不重试、不手动建。
 
 完成条件：`issues.json` 存在，或失败原因已记下。
 
