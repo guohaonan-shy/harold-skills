@@ -20,8 +20,11 @@ import (
 	rt "github.com/guohaonan-shy/harold-skills/dyna/internal/runtime"
 )
 
+// noHome is a home that does not exist, so a local override on the machine running the tests cannot leak in.
+const noHome = "/nonexistent-dyna-test-home"
+
 func env(kv ...string) map[string]string {
-	m := map[string]string{rt.EnvPluginRoot: pluginRoot()}
+	m := map[string]string{rt.EnvPluginRoot: pluginRoot(), "IDEA_LOOP_HOME": noHome}
 	for i := 0; i+1 < len(kv); i += 2 {
 		m[kv[i]] = kv[i+1]
 	}

@@ -28,15 +28,15 @@
 
 ## 验收标准
 
-- [ ] 单元测试（临时目录当插件目录和 home）覆盖并通过：替换一节；`##` 段连带 `###` 一起替换；单独替换一个 `###`；标题对不上；插件里同名标题不止一处；本机文件只有 `#` 标题和前言；没有 home；home 在但没有本机文件；本机文件读取失败；合并后超过 10000 字。每种情形断言注入全文和头一行。
-- [ ] 没有本机覆盖时，`inject reference` 和 `show <能力>` 的输出跟改动前逐字相同（对 claude-desktop 和 magi 两份真数据各断言一次）。
-- [ ] `show <能力>`：被替换的能力输出第一行是「本机覆盖 <路径>：这一节是本机写的」，正文是本机那段；没被替换的能力输出跟改动前相同。
-- [ ] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全过；插件侧 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全过。
-- [ ] dyna 版本升到 0.0.3，`dyna/registry/0.0.3.json` 是新二进制 `registry --json` 的输出。
-- [ ] 本机实测（用本地编出的 dyna，经 `IDEA_LOOP_DYNA_BIN` 指过去）：在一个临时 home 里写 `runtime/claude-desktop.md`，含一段 `## 推送`（一句本机做法）和一段 `## 不存在的能力`；跑插件的 `bin/dyna runtime inject reference --hook` 和 `bin/dyna runtime show 推送`，输出贴进交回：头一行写替换了「推送」、「不存在的能力」没对上；「推送」一节是本机那句。删掉本机文件再跑一次，输出跟插件数据逐字相同。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 单元测试（临时目录当插件目录和 home）覆盖并通过：替换一节；`##` 段连带 `###` 一起替换；单独替换一个 `###`；标题对不上；插件里同名标题不止一处；本机文件只有 `#` 标题和前言；没有 home；home 在但没有本机文件；本机文件读取失败；合并后超过 10000 字。每种情形断言注入全文和头一行。
+- [x] 没有本机覆盖时，`inject reference` 和 `show <能力>` 的输出跟改动前逐字相同（对 claude-desktop 和 magi 两份真数据各断言一次）。
+- [x] `show <能力>`：被替换的能力输出第一行是「本机覆盖 <路径>：这一节是本机写的」，正文是本机那段；没被替换的能力输出跟改动前相同。
+- [ ] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全过；插件侧 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全过。 ⏭ 延后 → PR 交付验收：Go 侧全过；插件侧 725/726，只剩 `scripts/plugin-version.test.mjs` 一条红（idea-loop 是 0.1.29，origin/main 已是 0.1.35），起点 SHA 上就红，要在开 PR 时按 `REVIEW.md` 从 main 的版本往上升才会绿
+- [x] dyna 版本升到 0.0.3，`dyna/registry/0.0.3.json` 是新二进制 `registry --json` 的输出。
+- [x] 本机实测（用本地编出的 dyna，经 `IDEA_LOOP_DYNA_BIN` 指过去）：在一个临时 home 里写 `runtime/claude-desktop.md`，含一段 `## 推送`（一句本机做法）和一段 `## 不存在的能力`；跑插件的 `bin/dyna runtime inject reference --hook` 和 `bin/dyna runtime show 推送`，输出贴进交回：头一行写替换了「推送」、「不存在的能力」没对上；「推送」一节是本机那句。删掉本机文件再跑一次，输出跟插件数据逐字相同。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
