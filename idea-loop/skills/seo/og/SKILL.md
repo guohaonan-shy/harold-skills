@@ -56,7 +56,7 @@ node S/og-render.mjs render <params.json> <图片目录，或 .tmp/og>/<文件�
 | 0 | 写出了，输出里 `fit` 是 `ok`，`defaults` 列出落回默认的项 | 往下走 |
 | 2 | params 不合法 | 照 stderr 改 |
 | 4 | 文字缩到最小字号还放不下，输出的 `overflow` 说是哪一块 | 缩短那段字，或换一个版式；PNG 已写出但不能用 |
-| 1 | 没有可用的浏览器 | 命令已写出 HTML：用「浏览器」能力（`idea-loop:browser`）打开它，等 `<html>` 的 `data-fit` 变成 `ok`，截 1200×630 |
+| 1 | 没有可用的浏览器 | 命令已写出 HTML：用 Skill 工具调 `idea-loop:browser`，照它的做法打开 HTML，等 `<html>` 的 `data-fit` 变成 `ok`，截 1200×630 |
 
 完成条件：退出码 0（或 1 的退路里 `data-fit` 是 `ok`），PNG 在图片目录里。
 

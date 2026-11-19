@@ -5,7 +5,8 @@
  * body stays under 5000 characters; the SEO.md keys the skill reads exist in the parser; every script it names exists;
  * the layouts the docs name are the templates on disk and the default is one of them; a project with no OG recipe is told
  * so in the handback; the templates hold no color literals (every color comes in as a token, so no project's brand can be
- * baked in); both READMEs list the skill.
+ * baked in); both READMEs list the skill; the layout notes keep no copy of the default title sizes (the render script
+ * holds them); the no-browser exit tells the agent to load the browser skill with the Skill tool.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail there
  * first.
@@ -91,4 +92,16 @@ test('the templates carry no color literals: every color comes in as a token', (
 test('the plugin README and the seo group README both list og', () => {
   assert.match(read('README.md'), /`og`/);
   assert.match(read('skills', 'seo', 'README.md'), /`og`/);
+});
+
+test('the layout notes keep no copy of the default title sizes, and point at the render script that holds them', () => {
+  assert.ok(!/字号（最大/.test(LAYOUTS), 'layouts.md has a title-size column');
+  assert.ok(!/\d+\s*→\s*\d+/.test(LAYOUTS), 'layouts.md lists a title-size range');
+  assert.match(LAYOUTS, /og-render\.mjs/);
+  assert.match(LAYOUTS, /TITLE_SIZE/);
+  assert.match(read('scripts', 'og-render.mjs'), /const TITLE_SIZE = /, 'the script no longer holds the sizes');
+});
+
+test('with no browser available, the skill says to load the browser skill with the Skill tool', () => {
+  assert.match(SKILL, /用 Skill 工具调 `idea-loop:browser`/);
 });
