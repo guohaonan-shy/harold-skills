@@ -192,6 +192,44 @@ The old loop (up to two automatic rounds of three-axis review → fix → re-ver
 round, a mergeReady verdict) and its design record [`docs/pr-review-loop.md`](./docs/pr-review-loop.md)
 are superseded; the record stays as history.
 
+### The blog workflow: brief → writing loop → publish
+
+An SEO article (an issue labelled `type:seo/*` whose spec is a content brief) goes through three steps,
+all inside the issue session; the angle is the only thing a human has to pick, and when nobody is there
+(night mode) the session follows the recommendation and writes the basis 「AI 照推荐定」 into the spec.
+
+1. **Brief, with images** (`seo-brief`, triage session). After the angle and the title are settled the
+   brief gets a 「配图」 section: cover-subject candidates per angle and the OG headline taken from the
+   title. `idea-loop:cover` (the article-list cover and the top image) and `idea-loop:og` (the 1200×630
+   share card) make the two images; they are committed on the issue branch next to the spec. A human in
+   the session answers angle and cover subject in one question; a project with no recipe gets the default
+   and the brief says so in one sentence.
+2. **Draft, then a revision loop** (`seo-writing`, todo session). The draft follows the brief and the
+   project's voice files. Then, every language version, up to three rounds: `scripts/writing-lint.mjs`
+   (configured by `SEO.md` 「lint 配置」) and the project's own 「补充 lint」, then a cold-read judge
+   sub-agent scoring 13 dimensions (plus 「第二评委」, a second model's command, when the project set one).
+   Lint hits and `local` findings are fixed by the writer; what is still not clean goes into the handback.
+   A `premise` finding (the thesis, the sections or the factual claims would change) is never fixed by the
+   writer: the committed work is pushed and the issue goes back to triage with the judge's own words, in
+   the day and in night mode alike (`skills/engineering/issue-session/references/night-mode.md`), because
+   the angle is the human's. A changed title or thesis re-runs `cover` and `og`.
+3. **Publish** (`seo-writing` handback, then the existing flow). Build the site: the post-build hook runs
+   `seo-check` on the changed routes and hands any error back. The handback lists the files, the lint
+   result, the judge rounds, what is not clean and any `premise`. The draft PR, the auto-merge for
+   content-only SEO PRs and the post-deploy check are the flow described above under "Delivery".
+
+What a project writes to use it (the format is `skills/seo/seo-setup/references/seo-md.md`; `seo-setup`
+asks for each key with a recommendation):
+
+| Where | What | Read by |
+|---|---|---|
+| `SEO.md` 「写作」 | voice file, failure-case file, page-type field and map, `lint 配置`, `补充 lint`, `第二评委` (`无` skips the last two) | `seo-writing`, the judge |
+| `SEO.md` 「配图」 | image directory (must sit inside 「内容路径」), image-generating tool, cover field, OG field, `DESIGN.md` path when the repo has several | `cover`, `og`, `seo-brief` |
+| `DESIGN.md` | `colors` / `typography` tokens, and optionally a `blog-cover` component (logo, base colour, subject style, prompt skeleton) and an `og-card` component (layout, `titleSize`, logo) | `cover`, `og` |
+
+Any of these missing is not a stop: `cover` and `og` fall back to a neutral default recipe and say so in the
+handback, and a skipped lint or judge is skipped, not an error. See also `skills/seo/README.md`.
+
 ## Tests
 
 Node unit tests across this whole repo (every plugin's `scripts/`) run under **one
@@ -455,6 +493,10 @@ idea-loop/
     ├── seo-outreach-doc.test.mjs     # tripwire: seo-outreach has the four branches (mailbox, send, follow-up, directory submission) with "发出和提交只在人说之后", "不注册账号、不输入密码" and the fallback without a mail MCP / the human's browser; its description routes and carries 发外联邮件; the tracker has the 草稿 id and 线程 id columns; seo-scan calls the follow-up branch (`OUTREACH_DOCS_ROOT` points it at a copy of the plugin root)
     ├── seo-budget-doc.test.mjs       # tripwire: the OpenSEO plan is spent by the week — `SEO.md` writes 套餐额度 and 每周分配 (an old 单次额度 is migrated by seo-setup), the research log's 花费 line carries a 份 field, seo-scan reads the week's books and pushes what it skipped, an issue session checks its 起草与验证 share before SEO research and writes the spend back
     ├── seo-brief-images-doc.test.mjs # tripwire: seo-brief's 「配图」 step sits after title and description and before the step that writes the brief out, calls `cover` and `og`, settles the cover subject in the same question as the angle when a human is in the session and by recommendation (basis 「AI 照推荐定」) when hosted, falls back to the default recipe with one sentence, commits the images on the issue branch (draft-spec's check and commit lines let them in), the template has the 「配图」 section `og` reads the headline from, and `seo-writing`'s step 4 writes the recorded cover / OG paths into each language version's frontmatter (`SEO_DOCS_ROOT` points it at the text before the change)
+    ├── writing-lint.mjs              # the mechanical half of checking an article (`.md` / `.mdx`): sentence and comma counts, filler phrases, caption and frontmatter gaps, markup slips, EN / ZH structure parity; `--config=<file.json>` is the project's `SEO.md` 「lint 配置」, every rule can be switched off; prints a findings list as JSON (or `--format=text`), exit 0 clean / 1 findings / 2 usage error. Whether a hook is strong or a thesis holds is the judge's, not this script's
+    ├── writing-lint.test.mjs         # every rule on a fixture article (a hit, and nothing once the rule is switched off), the config overrides and the errors for a bad config, EN / ZH parity, the output shape and exit codes, no project names in the script or fixtures
+    ├── seo-writing-loop-doc.test.mjs # tripwire: `seo-writing`'s revision-loop step (lint → cold-read judge → fix → back to lint, three rounds, hosted never stops), the judge's rubric reference (13 dimensions, `local` / `premise`), where a `premise` goes, when `cover` / `og` run again
+    ├── seo-blog-workflow-readme-doc.test.mjs # tripwire: both READMEs describe the blog workflow (brief with images → writing loop → publish, `premise` back to triage in night mode too), the keys and `DESIGN.md` components a project writes, `cover`, `og` and the writing lint in the skills tables, and the files they name exist (`SEO_DOCS_ROOT` points it at the text before the change)
     ├── seo-brief-angle-doc.test.mjs  # tripwire: seo-brief's step 4 and step 7 settle the angle by recommendation (basis 「AI 照推荐定」) when a SEO issue's spec is drafted and leave it to the human when a brief is asked for directly, the intro and template heading agree, and seo-setup's body stays under 5000 characters with the label list and the AI-visibility steps behind pointers (`SEO_DOCS_ROOT` points it at the text before the change)
     ├── design-archive-write.mjs      # the archive script — the only writer of docs/design/prod/: validate, fold delta/ in, drop removed.md, regenerate usedBy + index.md, move interaction figures and re-point the spec's links, say what LFS / .gitignore lack, empty tmp/<spec-slug>/; --dry-run writes nothing
     ├── design-archive-write.test.mjs # one requirement end to end, refuse-writes-nothing, dry-run, hints, and the pieces

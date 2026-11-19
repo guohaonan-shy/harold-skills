@@ -10,6 +10,24 @@ SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，
 | 解决 | `seo-brief`（triage 阶段写方案；定了角度和 title 后多一步「配图」：推封面主体候选、取 OG 大标题，调 `cover`、`og` 出图，写进 brief 的「配图」一节，图跟 spec 一起提交到 issue 分支；人在场时角度和封面主体合成一问，托管时照推荐定，没配配方用默认并在 brief 里写一句）、`seo-writing`（按 brief 写完初稿后跑改稿循环：`scripts/writing-lint.mjs` 加项目的补充 lint，再起冷读评委子代理按 13 个维度打分，配了「第二评委」就一起打；lint 的问题和评委的 `local` 问题自动改，最多三轮，没干净的写进交回；评委报 `premise`（论点、章节或事实断言要变）时不自己改，issue 翻回 triage 并附评委原话；title 或论点变了重调 `cover`、`og`）、`cover`（文章列表封面和顶部大图：项目取值读 `SEO.md` 的「配图」节和 `DESIGN.md` 的 `blog-cover` 组件，没配时用默认配方出图并在交回里写明）、`og`（文章的 OG 分享卡：三种自带版式，颜色字体读 `DESIGN.md`，没配用中性默认；`scripts/og-render.mjs` 填模板并在浏览器里截成 1200×630，文字放不下会报出来而不是裁掉）、`seo-outreach`（实现阶段起草，草稿进人的草稿箱；人说「发外联邮件」才发；每次扫描结尾读回信、追发；目录提交用『人的浏览器』填到最后一步等人点；没有邮件 MCP 或人的浏览器的运行环境，草稿留在 `docs/`、推送路径）、`seo-check`（发布前检查，构建后 hook 自动跑）+ `scripts/seo-content-scope.mjs`（判一个 SEO PR 是不是只改内容：改动文件对 `SEO.md` 的「内容路径」加 `docs/` 和 `SEO.md`；只改内容、检查全过、两轴没有阻塞项的 SEO PR 由 Claude 合并，见 `pr-review/references/seo-auto-merge.md`）；`scripts/seo-live-{check,record}.mjs`（合并后的上线自查，写在 `pr-review/references/merge.md` 的「上线后自查」：每分钟取一次线上页面，等线上换成这次的构建（最久 `SEO.md`「构建与检查」的「上线等待」分钟，没写 30），再逐个网址核能打开、没有 noindex、title 与 description 同产物、在 sitemap 里；全过就在 issue 上贴带隐藏标记的评论并把目标词加进排名追踪，有一项不过就回滚合并并另开 todo issue，等满没上线只推送不回滚） |
 | 陪练 | `seo-coach` |
 
+## 博客 workflow
+
+一篇站点文章（`type:seo/*` 的 issue，spec 的「方案」是 brief）在 issue 会话里走三步：
+
+1. **brief 出图**：`seo-brief` 定角度和 title 后，推封面主体候选、取 OG 大标题，调 `cover`（文章列表封面和顶部大图）和 `og`（1200×630 分享卡）出图，写进 brief 的「配图」一节，图跟 spec 一起提交到 issue 分支。
+2. **写作循环**：`seo-writing` 写完初稿，每个语言版本最多三轮：`scripts/writing-lint.mjs`（`SEO.md`「写作」节的 `lint 配置`）加项目的 `补充 lint`，再起冷读评委按 13 个维度打分（配了 `第二评委` 就一起打）；lint 的问题和评委的 `local` 问题自动改。评委报 `premise` 时不自己改：issue 翻回 triage，评论放评委原话，夜间模式也一样（`issue-session/references/night-mode.md`）。title 或论点变了，重调 `cover`、`og`。
+3. **发布**：构建后 `seo-check` 自动跑，之后的开 PR、自动合并、上线自查是已有流程。
+
+项目要写的取值（格式见 `seo-setup/references/seo-md.md`，`seo-setup` 逐键推荐并提问）：
+
+| 位置 | 写什么 | 谁读 |
+|---|---|---|
+| `SEO.md`「写作」 | 文风文件、失败案例文件、类型字段与映射、`lint 配置`、`补充 lint`、`第二评委` | `seo-writing`、评委 |
+| `SEO.md`「配图」 | 图片目录（要在「内容路径」里）、生图工具、封面字段、OG 字段、`DESIGN.md` 路径 | `cover`、`og`、`seo-brief` |
+| `DESIGN.md` | `colors` / `typography` token；可选的 `blog-cover` 组件（logo、底色、主体风格、提示词骨架）和 `og-card` 组件（版式、`titleSize`、logo） | `cover`、`og` |
+
+哪样没配都不停：`cover`、`og` 用中性默认配方并在交回里写明，`补充 lint`、`第二评委` 写 `无` 就跳过。
+
 ## 出处
 
 外部内容按「蒸馏副本」管理：需要的子集复制进来作为这里的真相源，运行时不读上游。上游更新时显式重新蒸馏：逐段对照上游，只保留下面写明的改动。
