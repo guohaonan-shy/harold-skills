@@ -12,6 +12,7 @@
 | `changeset.json` | designer | 改动集：`[{ "decision": "2.1", "states": [...], "anchors": [...] }]`，一条对应人上一轮的一条决策；第一轮写 `[]`。形状见 `idea-loop:ui-measure` 的「两版画布对比」 |
 | `shots/` | designer | 这一版每个状态的截图 |
 | `thoughts.md` | 你 | 人这一轮写下的每条思路，一条一行：`<编号> \| <人的原话>`，编号按顺序 `1`、`2`……；原话分了几行，后面的行直接接着写。报告脚本读它 |
+| `self-check.json` | 你 | designer 交回的「自检说明」抄成 `[{ "state": "...", "anchor": "...", "what": "...", "why": "..." }]`，每项四样都是非空文字，同一个 state + anchor 不写两次；没有自检改动就写 `[]`。报告脚本读它 |
 | `critic.json`、`context.json` | 你 | 评委的 JSON；`{ "states": [画布状态清单], "thoughts": [这一轮要评估的思路编号] }`，ledger 里标了「讨论后坚持」的思路不进 `thoughts` |
 | `matrix.json`、`canvas-diff.json` | 你 | 两版比对的矩阵和 `--json` 输出 |
 | `dissatisfied.json` | 你 | 人的不满标记，有才写 |
@@ -40,7 +41,7 @@
 
 人在对话里按报告的编号回，一条一句：「1 收下」「2 不要，改成 X」「3 先放着」。
 
-- 没提到的编号算收下，也就是照调研员那一项的新设计意图定；调研员提议推翻 ledger 的那一项，没提到不算收下，要问一句。
+- 报告上的每一条都要人回应过，才把这一轮的决策交给 designer。人没提到的编号，你接着问，不替人照推荐或设计意图定，把漏的编号列出来再问一遍。
 - 人顺带写下的意图和思路（「我想让这页更像工具、不像宣传页」）记进 `thoughts.md`，下一轮交给评委评估。
 - 人回「撤」的没声明的改动：写成一条决策进 ledger，下一轮 designer 照撤；回「留」的也写，免得下一轮又被列出来。
 
@@ -49,14 +50,16 @@
 脚本拼，不手写：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.json> --research <research/round-<N>/research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <这一版的预览地址> [--previous <上一版的预览地址>] [--dissatisfied <dissatisfied.json>] --out <report.html>
+node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.json> --research <research/round-<N>/research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <这一版的预览地址> [--previous <上一版的预览地址>] [--dissatisfied <dissatisfied.json>] --self-check <self-check.json> --out <report.html>
 ```
 
 输入的形状、页面顺序、`dissatisfied.json`（`[{ "opinion": <评委意见编号>, "quote": "<人的原话>" }]`，只对 `direction` 意见打）见脚本的头注释；退出码 `2` 是输入不对，输出会说哪一份、哪一项，补齐了重跑。脚本的输出摘要里有分数和要特别注意的项，对话里引用它。
 
 `--thoughts` 读本轮的 `thoughts.md`：评委评估过的每条思路都要有人的原话，缺了脚本退出码 `2` 并列出缺的编号，先补 `thoughts.md` 再重跑（「讨论后坚持」的思路评委没评估，不用写进来）。
 
-页面里的顺序：没声明却变了的地方（有才有，排最前，由人定留还是撤）→ 评委意见逐条 → 对人思路的评估（每条先写「你说：『人的原话』」，再写「评委：成立 / 存疑，理由……」）→ 分数与总评。每条有编号，人按编号回。
+`--self-check` 每轮都传，没有自检改动就传 `[]`（不传，报告不提理由）。自检说明里某一项跟比对列出的没声明的改动都对不上，脚本会在错误输出里说「matches no undeclared change」：让 designer 改成比对里的状态和锚点写法，再重跑。
+
+页面里的顺序：没声明却变了的地方（有才有，排最前，由人定留还是撤；designer 自检改的地方也在这里，旁边放它在自检说明里写的理由，没写的就标「designer 没说明为什么改」）→ 评委意见逐条 → 对人思路的评估（每条先写「你说：『人的原话』」，再写「评委：成立 / 存疑，理由……」）→ 分数与总评。每条有编号，人按编号回。
 
 ## 报告怎么发
 

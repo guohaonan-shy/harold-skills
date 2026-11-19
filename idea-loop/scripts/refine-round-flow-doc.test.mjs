@@ -40,7 +40,9 @@ test('the round is the six steps, ending at a report the human answers by number
   for (const name of ['人回决策', '交给 designer', '请评委', '比对两版', '配参考', '拼报告、发出去']) {
     assert.ok(steps.includes(name), `no step 「${name}」`);
   }
-  assert.match(body, /没提到的条目算收下/);
+  assert.match(body, /每一条都要人回应过才往下/);
+  assert.match(body, /人没提到的你接着问，不替人照推荐或设计意图定/);
+  assert.doesNotMatch(body, /算收下/);
   assert.match(body, /跟旧决策矛盾的，先摆给人/);
   assert.match(body, /人确认后，你把决策写进 ledger/);
 });
@@ -84,7 +86,9 @@ test('the reference writes down the ledger format, how the report goes out, how 
   assert.match(ref, /## 报告怎么发/);
   assert.match(ref, /发布审阅页/);
   assert.match(ref, /## 人怎么回/);
-  assert.match(ref, /没提到的编号算收下/);
+  assert.match(ref, /每一条都要人回应过，才把这一轮的决策交给 designer/);
+  assert.match(ref, /人没提到的编号，你接着问，不替人照推荐或设计意图定/);
+  assert.doesNotMatch(ref, /没提到的编号算收下/);
   assert.match(ref, /第 0 轮/);
   assert.match(ref, /design-review-report\.mjs/);
 });
@@ -119,6 +123,19 @@ test('the designer: change set tied to decision numbers, "stuck", and the self-c
   assert.doesNotMatch(designer, /\*\*清 AI tells\*\*|\*\*减法\*\*/);
   assert.doesNotMatch(designer.split('---')[1], /清 AI tells|减法/, 'the task list in the first paragraph still names them');
   assert.doesNotMatch(designer, /不看图/);
+});
+
+test('self-check changes stay out of the change set: the designer writes them in a self-check note, the session saves it and hands it to the report script (review round 1, S3)', () => {
+  assert.match(designer, /自检改的地方不进改动集/);
+  assert.match(designer, /自检说明：/);
+  assert.match(designer, /为什么改/);
+  assert.doesNotMatch(designer, /单列一条写明「自检」|挂在最接近的决策编号下/);
+  assert.match(body, /自检说明/);
+  assert.match(body, /round-<N>\/self-check\.json/);
+  const ref = read('skills', 'design', 'uiux-refine', 'references', 'ledger-and-report.md');
+  assert.match(ref, /`self-check\.json`/);
+  assert.match(ref, /--self-check <self-check\.json>/);
+  assert.match(ref, /没有自检改动就传 `\[\]`/);
 });
 
 test('design-change-sync: the judge gives opinions, the human decides; no stop table', () => {
