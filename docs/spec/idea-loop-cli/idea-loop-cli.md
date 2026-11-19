@@ -73,7 +73,7 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 ![命令行与 skill 怎么对版本](../../raw/issue-workflow/assets/sequence-idea-loop-cli-version.png)
 
 - **代码**：harold-skills 里一个顶层目录，不是插件（`marketplace.json` 不列它；`AGENTS.md` 的「Repository Purpose」加一句说明）。改命令行和改用到它的 skill 可以在同一个 PR 里 review。
-- **发布**：打 `dyna-v<版本>` 标签，在本机跑 goreleaser 出 Mac（arm64、amd64）和 Linux（amd64、arm64）的包，传到 GitHub Releases，附校验和。不加 GitHub Actions：仓库现在没有 Actions，检查和评估都在本地跑。发版是对外发布，每次由人说了才发。本机现在是 Go 1.20.7、没装 goreleaser：`DEVELOPMENT.md` 写明要的 Go 版本和 goreleaser，开发前装好。
+- **发布**：打 `dyna-v<版本>` 标签，在本机跑 goreleaser 出 Mac（arm64、amd64）和 Linux（amd64、arm64）的包，传到 GitHub Releases，附校验和。不加 GitHub Actions：仓库现在没有 Actions，检查和评估都在本地跑。发版是对外发布，每次由人说了才发。本机 Go 已在 2026-11-19 用 Homebrew 升到 1.27.4（原来 1.20.7），还没装 goreleaser：`DEVELOPMENT.md` 写明要的 Go 版本和 goreleaser，开发前装好。
 - **给 skill 用的文字留在插件，二进制只放逻辑**：runtime 各环境的数据、pr-review 的 Codex prompt 模板、开场注入的 decision-rules 正文，都是跟着 skill 改的文字，放在插件里；小脚本把插件目录（`IDEA_LOOP_PLUGIN_ROOT`）传给二进制，命令从那里读。这样改这些文字只升插件，不用发命令行。
 - **装在哪**：`~/.idea-loop/bin/dyna`。插件目录会随升级换路径，所以二进制放用户主目录（`AGENTS.md` 定的「跨会话持久的用户数据」位置）。这个目录不加进人的 PATH：官方文档写插件 `bin/` 排在人自己的 PATH 之后，加进去的话会话会绕过插件的小脚本直接调到二进制，版本核对就没了。
 - **谁来装**：插件的小脚本自己带 `dyna self install` / `self upgrade` 两条（用 `curl` 下载对应平台的包、`shasum` 核校验和，不需要二进制在场），setup 在人同意后调它。所以第一次装不依赖命令行本身。
