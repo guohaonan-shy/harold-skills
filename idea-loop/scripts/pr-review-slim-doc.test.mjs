@@ -65,6 +65,15 @@ test('where a round goes next is one section with the three outcomes', () => {
   assert.equal(body.split('逐题核过').length - 1, 1, 'the per-question check is written more than once');
 });
 
+test('the auto-started next round runs the whole 前提 first (merge in the latest base, push, then wait for CI), not only the CI wait', () => {
+  const text = section('一轮之后往哪走');
+  const point1 = text.slice(text.indexOf('1. **这一轮有修复**'), text.indexOf('2. **没有修复'));
+  assert.ok(point1.length > 0, 'cannot find point 1 of 一轮之后往哪走');
+  assert.match(point1, /先走完「前提」/, 'point 1 does not cite the whole 前提');
+  assert.match(point1, /合入最新主分支/, 'point 1 does not name the merge-in step');
+  assert.doesNotMatch(point1, /先等 CI（同前提）/, 'point 1 is back to waiting for CI only');
+});
+
 test('the rules decision-rules already owns are pointers, not restated lists', () => {
   assert.match(body, /idea-loop:decision-rules/);
   assert.doesNotMatch(body, /仍然停/);
