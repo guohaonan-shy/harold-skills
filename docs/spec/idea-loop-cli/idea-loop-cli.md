@@ -77,9 +77,9 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 | 进命令，给会话调 | 41 | 见下表 |
 | 进命令，只由 hook 调 | 6 | lint 本体 `design-lint`、`glossary-check` 成为各自模块的命令；4 个 hook 入口 `design-lint-hook`、`design-md-hook`、`glossary-check-hook`、`seo-check-hook` 并进对应命令的 `--hook` 方式，不再是单独的文件入口 |
 | 进命令的 `test` 模块，给改插件的人和测试调 | 2 | `design-archive-fixture`、`skill-doc-check` |
-| 命令行内部的模块，没有自己的子命令 | 6 | 都在 `idea-loop` 命令行这个 package 里，被命令 import：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `idea-loop` 的命令，不单独处理）、`design-archive`、`mini-yaml`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 和两个 eval runner 用）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
+| 命令行内部的模块，没有自己的子命令 | 5 | 都在 `idea-loop` 命令行这个 package 里，被命令 import：`ui-compare`、`ui-measure-concurrency`（`ui measure` 的内部，`ui measure` 本身是 `idea-loop` 的命令，不单独处理）、`design-archive`（设计档案的解析）、`claude-stream`（读 `claude -p` 的事件流，`agent claude run` 和两个 eval runner 用）、`github-app`（以 bot 身份发言，`pr loop archive` 用） |
 | 设计档案 MCP package | 1 | `design-archive-mcp`：idea-loop 下单独一个 package，以 MCP 协议提供七个查询工具（见下面「设计档案 MCP」） |
-| 删掉 | 1 | `codex-companion` |
+| 删掉 | 2 | `codex-companion`（见「包装别的命令行」）；`mini-yaml`（换成 npm 上的 `yaml` 包，见「实现决策」） |
 
 hook 入口和测试用具进命令是 Harold 2026-11-19 定的：「hook启动的这几个，我觉的也可以整理成命令行，方便hook调用吧，二者并不冲突」「测试用具，也可以专门构建一个test模块」；hook 不单设模块：「不是，我并不是让你增加一个hook模块，而是这些功能可能都是在原有的模块，hook控制触发世纪以及调用哪个命令」。
 
@@ -229,7 +229,12 @@ runtime 不再是 skill。
 
 ## 实现决策
 
-- **用 Node.js 写，ES 模块（`.mjs`），零依赖，不需要构建**：现有 57 个脚本和全部测试（`node --test`）已经是这样，插件按 git 原样分发、没有 `npm install` 这一步，所以不引入 npm 包，也不用 TypeScript（要么提交编译产物、要么装时编译）；参数解析用 Node 自带的 `node:util` 的 `parseArgs`。不用 Go、Rust 出二进制（父会话已排除二进制分发）。缺 YAML 解析这类库时照现有做法手写够用的子集（如 `mini-yaml` 只读设计档案 frontmatter 用到的那部分 YAML）。
+- **用 Node.js 写，ES 模块（`.mjs`），不需要构建**：现有 57 个脚本和全部测试（`node --test`）已经是 Node。插件按 git 原样分发，所以不用 TypeScript（要么提交编译产物、要么装时编译），也不用 Go、Rust 出二进制（父会话已排除二进制分发）。参数解析用 Node 自带的 `node:util` 的 `parseArgs`。
+- **可以引用 npm 包，`mini-yaml` 删掉换成 `yaml`**（Harold 2026-11-19：「内部应该就可以引用包了吧，mini-yaml是不是没有必要了」）。依据是官方文档 plugins/loading.md 的「Node.js package dependencies」：插件根目录同时有 `package.json` 和 npm lockfile 时，Claude Code 在装插件、更新到新版本、新机器上第一次启动会话这三个时刻，自动把依赖装进插件的缓存目录；本机已装的 excalidrawer 就是这样（它的仓库忽略 `node_modules`，缓存里却有，比 `package.json` 晚 1 秒生成）。所以 idea-loop 根目录加 `package.json` 和 `package-lock.json`。文档的限制决定了能引哪些包：
+  - 只装 npm 注册表上、lockfile 精确锁版本的包；不跑 install 脚本，要编译原生模块的包装不上；`package.json` 与 lockfile 不一致、有 `overrides`、超过 60 秒都算失败。所以只引纯 JS、没有 install 脚本的包。
+  - 装失败时插件照常加载，用到依赖的命令会坏。所以入口启动时先查依赖在不在，缺了就停下，说出缺哪个包、让人重装插件（`/plugin`），不带着缺包往下跑；setup 的预检也查这一条。
+  - 本仓库里改插件时 worktree 没有 `node_modules`：`DEVELOPMENT.md` 的「worktree 准备」加一步在 `idea-loop/` 下 `npm ci`。
+  - 设计档案 MCP package 也可以照这条引官方 MCP SDK；这次不换，照旧手写协议，七个工具行为不变（换 SDK 不改用户能感到的东西）。
 - **代码按模块分目录**：`idea-loop` 命令行是一个 package，每个模块一个目录，命令的实现和它内部用的库放在一起；只被引用、没有动作的（`claude-stream`、`github-app`）作为这个 package 里的共用模块（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）；不再有一个平铺的、谁都能直接 `node` 调的脚本目录。对调用方来说只有 `idea-loop` 一个入口，库文件不是入口。
 - **入口**按自己所在的路径找插件目录，不读 `CLAUDE_PLUGIN_ROOT`（依据：本会话实测，bin 里这个变量是空的）。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
@@ -244,6 +249,7 @@ runtime 不再是 skill。
 - **已知限制**：
   - Codex 插件自己的 `codex:rescue` 等命令仍走 companion，仍会留 broker；那是 Codex 插件的事，idea-loop 管不到。
   - Codex 生图会在 `~/.codex/generated_images/` 留一份原图（本会话实测看到），不清理。
+  - 公司虚拟机能不能连 npm 注册表没核过；连不上时第一次启动装不上依赖，入口会停下报缺包。
   - 只测了一次可写沙箱生图；批量连续生图在子代理里会不会越拦越多（TOEFL-demo 记忆里记过）没测。
 
 ## 测试决策
