@@ -35,6 +35,11 @@ idea-loop 的 agent 照这份文件选分支、准备 worktree、起服务。小
 - **测试**：`cd dyna && go test ./...`；扫 skill 文本和插件小脚本的测试用 `node --test`（见 `REVIEW.md` 的验证命令）。
 - **新一版的登记表**：改了命令或参数，就升 `dyna/internal/version/version.go`，再 `../.tmp/dyna registry --json > registry/<新版本>.json`（在 `dyna/` 下）；`go test` 会核对存的那份和命令树一致。
 - **出包（不发布）**：在 `dyna/` 下 `goreleaser release --snapshot --clean`，4 个平台的包和校验和落在 `dyna/dist/`（已被忽略）。打 `dyna-v<版本>` 标签、传 GitHub Releases 是发版，由人说了才发。
+- **发版（人说了才发）**：goreleaser 开源版不认 `dyna-v` 前缀的标签，所以只用它在本机出包，上传用 gh：
+  1. `git tag -a dyna-v<版本> -m "dyna <版本>" <提交>`，`git push origin dyna-v<版本>`；
+  2. 在 `dyna/` 下 `GORELEASER_CURRENT_TAG=v<版本> goreleaser release --clean --skip=publish,validate,announce`；
+  3. `gh release create dyna-v<版本> --verify-tag --draft --latest=false --title "dyna <版本>"`，再逐个 `gh release upload` 4 个包和校验和（网络断了就重传那一个），核对大小后 `gh release edit dyna-v<版本> --draft=false`；
+  4. 从公开地址下载一个包核校验和，再 `idea-loop/bin/dyna self install`（装进 `~/.idea-loop/bin/`，装之前把改前改后给人看）。
 
 ## 清理
 
