@@ -32,6 +32,7 @@ test('description routes only: a trigger for each branch, no flow or artifact', 
   const d = SKILL.match(/^description: (.*)$/m)[1];
   for (const trigger of ['做 OG', '分享卡', '重做 OG']) assert.ok(d.includes(trigger), `description lacks 「${trigger}」: ${d}`);
   assert.match(d, /时用/);
+  assert.ok(!/\d+\s*[×x]\s*\d+/.test(d), `description states the output size, which is an artifact format: ${d}`);
   for (const w of ['人在场时', '发现清单', '草稿箱', '表单', '报告', 'PNG', 'HTML', 'DESIGN.md']) assert.ok(!d.includes(w), `description mentions 「${w}」`);
   assert.ok(!/^disable-model-invocation:/m.test(SKILL), 'the model has to be able to call it: seo-brief and seo-writing do');
   assert.match(SKILL, /^name: og$/m);
