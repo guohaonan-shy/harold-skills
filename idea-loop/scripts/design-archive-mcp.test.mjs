@@ -268,11 +268,12 @@ test('read only: nothing but the seven lookups is offered, and a write-shaped ca
 
 // ---------- the plugin's MCP configuration ----------
 
-test('.mcp.json: the plugin ships the archive server and OpenSEO; Playwright and Refero are user-level', () => {
+test('.mcp.json: the plugin ships the archive server, OpenSEO and Mobbin; Playwright is user-level', () => {
   const cfg = JSON.parse(readFileSync(MCP_JSON, 'utf8'));
   const archive = cfg.mcpServers['design-archive'];
   assert.equal(archive.command, 'node');
   assert.deepEqual(archive.args, ['${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs']);
   assert.deepEqual(cfg.mcpServers.openseo, { type: 'http', url: 'https://app.openseo.so/mcp' });
-  assert.deepEqual(Object.keys(cfg.mcpServers), ['design-archive', 'openseo']);
+  assert.deepEqual(cfg.mcpServers.mobbin, { type: 'http', url: 'https://api.mobbin.com/mcp' });
+  assert.deepEqual(Object.keys(cfg.mcpServers), ['design-archive', 'openseo', 'mobbin']);
 });

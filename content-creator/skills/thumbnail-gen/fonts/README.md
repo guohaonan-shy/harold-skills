@@ -1,8 +1,8 @@
 # 自定义字体
 
-将 `.ttf` 或 `.woff2` 字体文件放到此目录，HTML 模板会通过 `@font-face` 自动加载。
+将 `.woff2` 字体文件放到此目录，HTML 模板会通过 `@font-face` 自动加载；只认 `.woff2`，`.ttf` / `.otf` 先转成 `.woff2` 再放。目前自带得意黑（Smiley Sans Oblique）。
 
-如果此目录为空，默认使用 Google Fonts CDN 的 **Noto Sans SC Black**。
+此目录里没有 `.woff2` 时，默认使用 Google Fonts CDN 的 **Noto Sans SC**（字重 700/900）。
 
 ## 推荐免费商用中文标题字体
 
@@ -16,12 +16,12 @@
 
 ## 使用方式
 
-下载字体文件后放入此目录，例如：
+下载字体文件、转成 `.woff2` 后放入此目录，例如现在自带的：
 
 ```
 fonts/
-├── PangMenZhengDao.ttf
-├── YouSheTitleBlack.ttf
+├── SmileySans-Oblique.ttf.woff2
+├── SmileySans-Oblique.otf.woff2
 └── README.md
 ```
 

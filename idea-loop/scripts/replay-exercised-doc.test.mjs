@@ -47,7 +47,9 @@ test('setup\'s runner step says the Codex lookup script is installed with the ru
   assert.match(step, /Codex 查找脚本也随 runner 装进去，不重跑就用不上 Codex 评委/);
 });
 
-test('implement\'s replay-result.md and the implementer both treat 「用例没测到改动」 as not a pass', () => {
+// the rule-ticket steps moved out of agents/implementer.md into implement's references/rule-tickets.md
+// (spec implementer-start-point-non-destructive, ticket 02); the implementer reads it behind a pointer.
+test('implement\'s replay-result.md and the implementer\'s rule-tickets.md both treat 「用例没测到改动」 as not a pass', () => {
   assert.match(read('skills', 'engineering', 'implement', 'references', 'replay-result.md'), /用例没测到改动/);
-  assert.match(read('agents', 'implementer.md'), /「用例没测到改动」[^。]*也不算过/);
+  assert.match(read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md'), /「用例没测到改动」[^。]*也不算过/);
 });
