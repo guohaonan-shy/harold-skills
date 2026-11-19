@@ -99,6 +99,27 @@ test("the numbers are the script's: the skill points at the reporting rules and 
   assert.match(text, /数字全部出自/)
 })
 
+test('platform errors are rerun by the reporting rules (three rounds, then stop), not "until the script stops refusing"', () => {
+  const text = read()
+  assert.doesNotMatch(text, /直到统计脚本不再拒绝/, 'step 4 still loops until the stats script stops refusing')
+  assert.doesNotMatch(text, /不再拒绝出数/)
+  for (const heading of [/### 4\. /, /### 5\. /]) {
+    const step = section(text, heading)
+    assert.match(step, /平台报错先重跑/, `${heading} does not point at the rerun rule`)
+    assert.match(step, /reporting-rules\.md/, `${heading} does not name the reference`)
+  }
+  const rerun = section(text, /### 4\. /)
+  assert.match(rerun, /3 轮/, 'step 4 should carry the round cap')
+  assert.match(rerun, /停下/, 'step 4 should say what happens after the cap')
+})
+
+test('a conflict between pass¹ and score is reported as a conflict for the person to judge', () => {
+  const report = section(read(), /### 5\. /)
+  assert.match(report, /冲突/)
+  assert.match(report, /交人判断/)
+  assert.match(report, /变好 \/ 变差 \/ 持平/)
+})
+
 test('the README shows an eval-replay example and counts seven skills', () => {
   const readme = readFileSync(join(root, 'README.md'), 'utf8')
   assert.match(readme, /ai-eval:eval-replay/)

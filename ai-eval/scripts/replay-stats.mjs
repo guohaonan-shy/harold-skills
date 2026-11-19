@@ -19,15 +19,18 @@
  *     （三次里有没法判的，算没全过）。这个变体有任何 case 不足三次，不报 pass³（pass3 是 null，pass3Note 写原因）。
  *   - 差 = 变体的 pass¹ 减 baseline 的 pass¹；有 score 时另给 score 均值的差。区间：按 group 有放回重抽
  *     （默认 2000 次，组数不变，两个变体用同一批抽到的组），取差的 2.5% 和 97.5% 分位。
- *   - 判定看 pass¹ 的差：区间整个在 0 以上「变好」（better），整个在 0 以下「变差」（worse），跨 0 「持平」（flat）。
- *     没有任何 pass 判定、只有 score 时，改看 score 的差，verdictBy 写 score。
+ *   - 判定：每个指标（pass¹、score）各自按区间下：整个在 0 以上「变好」（better），整个在 0 以下「变差」（worse），
+ *     跨 0 「持平」（flat）。整体结论由有数的那几个指标合成：一个变好、一个变差，是「冲突」（conflict），
+ *     交人判断；否则有变差的就是变差（一边持平一边变差，不被持平盖住），再否则有变好的就是变好，都持平是持平。
+ *     只有一个指标有数时，整体结论就是它的判定。
  *   - 随机种子固定（默认值写在 DEFAULT_SEED），同一份输入两次跑出同样的区间。
  *
  * 输出（stdout，JSON）：
  *   { rows, groups, variants: { <变体>: { rows, judged, passes, pass1, cases, pass3: { passed, rate } | null,
  *       pass3Note, meanScore } },
- *     comparisons: { <变体>: { pass1: { delta, interval: [lo, hi], groups, resamples } | null,
- *       score: { ... } | null, verdict, label, verdictBy } } }
+ *     comparisons: { <变体>: { pass1: { delta, interval: [lo, hi], groups, resamples, verdict, label } | null,
+ *       score: { ...同上 } | null, verdict, label } } }
+ *   verdict 是 better / worse / flat / conflict；label 是 变好 / 变差 / 持平 / 冲突。pass1、score 里各有自己的 verdict、label。
  *   拒绝出数时：{ verdict: 'platform_error', remaining, rows: [{ case, variant, run }], message }
  * 退出码：0 出了数（不论变好变差），1 还有平台报错，2 用法或输入有误（原因在 stderr，stdout 为空）。
  */
@@ -37,7 +40,7 @@ import { fileURLToPath } from 'node:url'
 export const DEFAULT_RESAMPLES = 2000
 export const DEFAULT_SEED = 20240229
 const BASELINE = 'baseline'
-const LABELS = { better: '变好', worse: '变差', flat: '持平' }
+const LABELS = { better: '变好', worse: '变差', flat: '持平', conflict: '冲突' }
 
 /** mulberry32：同一个种子出同一串数。 */
 function random(seed) {
@@ -159,6 +162,19 @@ function bootstrapDelta(baselineRows, variantRows, valueOf, groups, resamples, r
 
 const verdictOf = (interval) => (interval[0] > 0 ? 'better' : interval[1] < 0 ? 'worse' : 'flat')
 
+/** 给一个指标的差和区间加上它自己的判定；这个指标没有数就是 null。 */
+const judged = (metric) => (metric ? { ...metric, verdict: verdictOf(metric.interval), label: LABELS[verdictOf(metric.interval)] } : null)
+
+/** 合成整体结论：一好一坏是冲突；有变差的是变差，有变好的是变好，都持平是持平；一个指标都没有是 null。 */
+function overallVerdict(metrics) {
+  const verdicts = metrics.filter(Boolean).map((m) => m.verdict)
+  if (verdicts.length === 0) return null
+  if (verdicts.includes('better') && verdicts.includes('worse')) return 'conflict'
+  if (verdicts.includes('worse')) return 'worse'
+  if (verdicts.includes('better')) return 'better'
+  return 'flat'
+}
+
 export function replayStats(rows, { resamples = DEFAULT_RESAMPLES, seed = DEFAULT_SEED } = {}) {
   const pending = rows.filter((r) => r.status === 'platform_error')
   if (pending.length > 0) {
@@ -185,12 +201,10 @@ export function replayStats(rows, { resamples = DEFAULT_RESAMPLES, seed = DEFAUL
   const comparisons = {}
   for (const [name, list] of byVariant) {
     if (name === BASELINE) continue
-    const pass1 = bootstrapDelta(byVariant.get(BASELINE), list, passValue, groups, resamples, random(seed))
-    const score = bootstrapDelta(byVariant.get(BASELINE), list, scoreValue, groups, resamples, random(seed))
-    const by = pass1 ? 'pass1' : score ? 'score' : null
-    const chosen = pass1 ?? score
-    const verdict = chosen ? verdictOf(chosen.interval) : null
-    comparisons[name] = { pass1, score, verdict, label: verdict ? LABELS[verdict] : null, verdictBy: by }
+    const pass1 = judged(bootstrapDelta(byVariant.get(BASELINE), list, passValue, groups, resamples, random(seed)))
+    const score = judged(bootstrapDelta(byVariant.get(BASELINE), list, scoreValue, groups, resamples, random(seed)))
+    const verdict = overallVerdict([pass1, score])
+    comparisons[name] = { pass1, score, verdict, label: verdict ? LABELS[verdict] : null }
   }
   return { rows: rows.length, groups: groups.length, variants, comparisons }
 }

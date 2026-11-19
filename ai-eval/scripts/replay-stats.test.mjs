@@ -141,6 +141,72 @@ test('差的区间整个在 0 以上判「变好」，整个在 0 以下判「�
   approx(f.delta, 0); assert.ok(f.interval[0] < 0 && f.interval[1] > 0)
 })
 
+/** 每个 case 三次都带同一个分数的结果行：pass 按 passes（T / F 三个字符）给，score 按变体给。 */
+function scoredRows({ baseline, candidate }) {
+  const out = []
+  for (const [variant, { runs, score }] of Object.entries({ baseline, new: candidate })) {
+    for (const [caseId, group] of Object.entries(GROUPS)) {
+      ;[...runs].forEach((c, i) => out.push(row(caseId, group, variant, i + 1, c === 'T', { score })))
+    }
+  }
+  return out
+}
+
+test('通过率和分数各自给判定；一个变好、一个变差，整体结论是「冲突」，交人判断', () => {
+  // 通过率 0 → 1（变好），分数 0.9 → 0.2（变差）：两个组里方向都一样，区间不跨 0
+  const conflict = run(['--results', writeResults(scoredRows({
+    baseline: { runs: 'FFF', score: 0.9 }, candidate: { runs: 'TTT', score: 0.2 },
+  }))])
+  assert.equal(conflict.status, 0, conflict.stderr)
+  const cmp = conflict.json.comparisons.new
+  assert.equal(cmp.pass1.verdict, 'better')
+  assert.equal(cmp.pass1.label, '变好')
+  assert.equal(cmp.score.verdict, 'worse')
+  assert.equal(cmp.score.label, '变差')
+  approx(cmp.score.delta, -0.7)
+  assert.equal(cmp.verdict, 'conflict')
+  assert.equal(cmp.label, '冲突')
+
+  // 反过来：通过率变差、分数变好，同样是冲突
+  const reverse = run(['--results', writeResults(scoredRows({
+    baseline: { runs: 'TTT', score: 0.2 }, candidate: { runs: 'FFF', score: 0.9 },
+  }))])
+  assert.equal(reverse.json.comparisons.new.pass1.verdict, 'worse')
+  assert.equal(reverse.json.comparisons.new.score.verdict, 'better')
+  assert.equal(reverse.json.comparisons.new.verdict, 'conflict')
+})
+
+test('两个指标不冲突时：同向取同向，一边持平一边变差取变差，一边持平一边变好取变好，都持平是持平', () => {
+  const overall = (baseline, candidate) => run(['--results', writeResults(scoredRows({ baseline, candidate }))]).json.comparisons.new
+  const both = overall({ runs: 'FFF', score: 0.2 }, { runs: 'TTT', score: 0.9 })
+  assert.deepEqual([both.pass1.verdict, both.score.verdict, both.verdict, both.label], ['better', 'better', 'better', '变好'])
+
+  // 通过率没动（持平），分数变差：不能被「持平」盖住
+  const scoreWorse = overall({ runs: 'TTF', score: 0.9 }, { runs: 'TTF', score: 0.2 })
+  assert.deepEqual([scoreWorse.pass1.verdict, scoreWorse.score.verdict, scoreWorse.verdict], ['flat', 'worse', 'worse'])
+
+  const scoreBetter = overall({ runs: 'TTF', score: 0.2 }, { runs: 'TTF', score: 0.9 })
+  assert.deepEqual([scoreBetter.pass1.verdict, scoreBetter.score.verdict, scoreBetter.verdict], ['flat', 'better', 'better'])
+
+  const same = overall({ runs: 'TTF', score: 0.5 }, { runs: 'TTF', score: 0.5 })
+  assert.deepEqual([same.pass1.verdict, same.score.verdict, same.verdict, same.label], ['flat', 'flat', 'flat', '持平'])
+})
+
+test('只有一个指标时，整体结论就是它的判定', () => {
+  const passOnly = run(['--results', writeResults(rowsOf({ baseline: BASELINE, new: NEW }, GROUPS))]).json.comparisons.new
+  assert.equal(passOnly.score, null)
+  assert.equal(passOnly.verdict, passOnly.pass1.verdict)
+
+  // 没有任何 pass 判定、只有分数
+  const scoreOnly = ['baseline', 'new'].flatMap((variant, v) =>
+    Object.entries(GROUPS).flatMap(([caseId, group]) =>
+      [1, 2, 3].map((n) => row(caseId, group, variant, n, null, { score: v === 0 ? 0.2 : 0.9 }))))
+  const cmp = run(['--results', writeResults(scoreOnly)]).json.comparisons.new
+  assert.equal(cmp.pass1, null)
+  assert.equal(cmp.score.verdict, 'better')
+  assert.equal(cmp.verdict, 'better')
+})
+
 test('没法判的（pass 是 null）不进 pass¹ 的分母；三次里有没法判的，这个 case 算没全过', () => {
   const rows = rowsOf({ baseline: { c1: 'TTT', c2: 'T?T', c3: 'FFF' }, new: { c1: 'TTT', c2: 'TTT', c3: 'TTT' } },
     { c1: 'g1', c2: 'g1', c3: 'g2' })
