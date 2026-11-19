@@ -14,13 +14,13 @@ idea-loop 的 seo 组新增一个可被模型调用的 skill `cover`：给一篇
 - description 只做路由（根 `AGENTS.md`「Frontmatter description 只做路由」），触发词覆盖「做封面」「重出封面」。
 
 ## 验收标准
-- [ ] 用一个只有通用默认、没有 DESIGN.md 配方的临时项目跑一次，产出一张封面 PNG，交回写明用了默认配方。
-- [ ] 用一个配了「配图」节和 DESIGN.md「blog-cover」的临时项目跑一次，封面用上了它的色和 logo；两张图放进交回给人看。
-- [ ] 插件里不出现 Toeflair 的取值；`no-project-leak.test.mjs` 通过。
-- [ ] 插件说明里的 skill 清单列出 `cover`。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 用一个只有通用默认、没有 DESIGN.md 配方的临时项目跑一次，产出一张封面 PNG，交回写明用了默认配方。
+- [x] 用一个配了「配图」节和 DESIGN.md「blog-cover」的临时项目跑一次，封面用上了它的色和 logo；两张图放进交回给人看。
+- [x] 插件里不出现 Toeflair 的取值；`no-project-leak.test.mjs` 通过。
+- [x] 插件说明里的 skill 清单列出 `cover`。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 - `no-project-leak.test.mjs`：从项目搬方法最容易带进取值。
