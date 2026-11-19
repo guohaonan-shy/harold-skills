@@ -963,6 +963,23 @@ test('e2e: the plugin dir in the commit is another plugin (a different manifest 
   for (const side of ['plain', 'FIXED']) assert.deepEqual(seen[side], { [DEMO]: '旧', [OTHER]: '快照', [FRESH]: null, [GONE]: '快照里还有' });
 });
 
+test('e2e: files under the plugin\'s evals/ are never swapped in, even when the two sides differ: the post-change run does not see a case the change added, and both keep the snapshot\'s evals/; files outside evals/ are still swapped', () => {
+  const NEWCASE = 'evals/retro/cases/new-case/case.json';
+  const OLDCASE = 'evals/retro/cases/old-case/case.json';
+  const sides = sidesWith();
+  sides.before[OLDCASE] = '改前的用例';
+  sides.after[OLDCASE] = '改后的用例';
+  sides.after[NEWCASE] = '改后新增的用例';
+  const snapshot = { ...snapshotWith(), [`idea-loop/${OLDCASE}`]: '快照里的用例' };
+  const peekPaths = [DEMO, NEWCASE, OLDCASE].map((f) => `peek: idea-loop/${f}`).join('\n');
+  const env = setup({ before: `reply: plain\n${peekPaths}`, after: `reply: FIXED\nskill: idea-loop:demo\n${peekPaths}`, snapshot, pluginFiles: sides });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  assert.deepEqual(seen.plain, { [DEMO]: '改前', [NEWCASE]: null, [OLDCASE]: '快照里的用例' }, 'pre-change run');
+  assert.deepEqual(seen.FIXED, { [DEMO]: '改后', [NEWCASE]: null, [OLDCASE]: '快照里的用例' }, 'post-change run');
+});
+
 test('e2e: the post-change run reads a changed file in the project by a Bash path relative to the project, or by a Read of its absolute path: used, not not-exercised', () => {
   for (const reading of [`bash: cat idea-loop/${DEMO}`, `bash: cd /somewhere && cat ./idea-loop/${DEMO} | head`, `readproj: idea-loop/${DEMO}`]) {
     const env = setup({ before: 'reply: plain', after: `reply: FIXED\n${reading}`, snapshot: snapshotWith(), pluginFiles: sidesWith() });
@@ -982,7 +999,7 @@ test('e2e: the same read when nothing was swapped into the project (the commit h
   assert.equal(resultJson(env, r.stdout).outcome, 'not-exercised');
 });
 
-test('pluginDiffOf: every file that differs between the two plugin dirs, added, edited or deleted, dot-files and files outside skills/ and agents/ included; same files and .DS_Store are not', () => {
+test('pluginDiffOf: every file that differs between the two plugin dirs, added, edited or deleted, dot-files and files outside skills/ and agents/ included; same files, .DS_Store and the plugin\'s top-level evals/ are not', () => {
   const root = mkdtempSync(join(tmpdir(), 'plugindiff-'));
   const put = (dir, rel, text) => {
     mkdirSync(dirname(join(root, dir, rel)), { recursive: true });
@@ -998,8 +1015,15 @@ test('pluginDiffOf: every file that differs between the two plugin dirs, added, 
   put('after', 'scripts/new.mjs', 'x');
   put('after', '.mcp.json', '{}');
   put('after', 'skills/a/.DS_Store', 'junk');
+  // evals/ holds replay cases and eval material: never part of the diff, whether edited, added or deleted
+  put('before', 'evals/retro/cases/c/case.json', 'before');
+  put('after', 'evals/retro/cases/c/case.json', 'after');
+  put('after', 'evals/retro/cases/d/case.json', 'new');
+  put('before', 'evals/retro/cases/e/annotations.md', 'gone');
+  put('before', 'skills/b/evals/keep.md', 'before');
+  put('after', 'skills/b/evals/keep.md', 'after');
   assert.deepEqual(pluginDiffOf(join(root, 'before'), join(root, 'after')), [
-    '.claude-plugin/plugin.json', '.mcp.json', 'agents/gone.md', 'hooks/hooks.json', 'scripts/new.mjs', 'skills/b/SKILL.md',
+    '.claude-plugin/plugin.json', '.mcp.json', 'agents/gone.md', 'hooks/hooks.json', 'scripts/new.mjs', 'skills/b/SKILL.md', 'skills/b/evals/keep.md',
   ]);
   assert.deepEqual(pluginDiffOf(join(root, 'before'), join(root, 'before')), []);
 });

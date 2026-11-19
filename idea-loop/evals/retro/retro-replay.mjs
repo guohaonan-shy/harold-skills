@@ -298,10 +298,14 @@ function allFilesUnder(dir, prefix = '') {
   return out.sort();
 }
 
-/** Every file that differs between the pre-change plugin dir and the post-change one (added, edited or deleted), anywhere in the plugin, as sorted relative paths. */
+/**
+ * Every file that differs between the pre-change plugin dir and the post-change one (added, edited or deleted), anywhere in the plugin,
+ * as sorted relative paths, except the plugin's top-level `evals/`: it holds the replay cases and eval material themselves, so a case
+ * the change adds or edits must not show up in the project the run works in.
+ */
 export function pluginDiffOf(beforeDir, afterDir) {
   const rels = new Set([...allFilesUnder(beforeDir), ...allFilesUnder(afterDir)]);
-  return [...rels].filter((rel) => {
+  return [...rels].filter((rel) => !rel.startsWith('evals/')).filter((rel) => {
     const b = join(beforeDir, rel);
     const a = join(afterDir, rel);
     return !existsSync(b) || !existsSync(a) || !readFileSync(b).equals(readFileSync(a));
