@@ -106,7 +106,7 @@ issue 来自一个目标项目的一张 UI 工单（2026-11-03，51 格矩阵）
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 颜色换算（hex / rgb / oklch / oklab / 色域外 / 嵌在 boxShadow 里 / 认不得的写法）；换算后精确比；邻域比对（子像素位移绿、2px 红）；两张大小不同的图按重叠区比；margin/gap 不进比较 |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 颜色换算（hex / rgb / oklch / oklab / 色域外 / 嵌在 boxShadow 里 / 认不得的写法）；换算后精确比；邻域比对（子像素位移绿、2px 红）；margin/gap 不进比较 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 不涉及：只改脚本和 SKILL.md 的规则文字，不改 prompt；SKILL.md 文字改动不走 eval（`AGENTS.md` §5） |
