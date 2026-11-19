@@ -11,10 +11,10 @@ ui-measure、ui-png-compare、browser-lock 收成 `dyna ui …`；ui-compare、u
 
 ## 验收标准
 
-- [ ] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
-- [ ] `dyna serve start <目录>` 打印的地址能取到目录里的文件，`serve stop` 后端口释放
-- [ ] 两个进程同时取浏览器锁，第二个等待或按旧脚本的方式报错
-- [ ] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
+- [x] 对应旧脚本的行为测试断言全部搬成 `go test` 并通过（逐条对照，没搬的写理由）
+- [x] `dyna serve start <目录>` 打印的地址能取到目录里的文件，`serve stop` 后端口释放
+- [x] 两个进程同时取浏览器锁，第二个等待或按旧脚本的方式报错
+- [x] `dyna registry --json` 里有这个模块的每条命令，调用方标注正确
 
 ## 选中的存量回归
 
