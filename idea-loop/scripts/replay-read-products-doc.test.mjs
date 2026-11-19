@@ -2,7 +2,7 @@
  * Doc test — whoever runs a replay reads the two products and answers the judge's question themselves, then compares.
  *
  * Spec replay-run-large-now, ticket 06. For a large case that is the orchestrator of `idea-loop:implement`
- * (`references/replay-result.md`); for a small case it is the implementer (`agents/implementer.md`). A disagreement with
+ * (`references/replay-result.md`); for a small case it is the implementer (`references/rule-tickets.md`, read from `agents/implementer.md`). A disagreement with
  * the judge stops the run and is put to the human (orchestrator) or handed back as `blocked` (implementer); neither
  * changes the verdict by itself. No script is involved: reading a product is judgement. This test reads the documents
  * and catches a sentence being dropped; it cannot tell whether a session then does what the text says.
@@ -17,7 +17,9 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 
 const result = read('skills', 'engineering', 'implement', 'references', 'replay-result.md');
-const implementer = read('agents', 'implementer.md');
+// the rule-ticket steps moved out of agents/implementer.md into implement's references/rule-tickets.md
+// (spec implementer-start-point-non-destructive, ticket 02); the implementer reads it behind a pointer.
+const implementer = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md');
 const smallLine = implementer.split('\n').find((l) => l.startsWith('  - **小的**'));
 
 test('replay-result.md: read both products, answer the question yourself, compare with the judge', () => {

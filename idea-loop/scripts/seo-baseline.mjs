@@ -7,7 +7,8 @@
  *
  *   severe  — status is not 200, the page became non-indexable, left the sitemap, or is missing from
  *             this audit while the previous one had it
- *   warning — title or description changed (may well be on purpose; the issue session decides)
+ *   warning — title or description changed (often on purpose; seo-meta-provenance.mjs then drops the
+ *             pages a merged PR between the two audits introduced, and what is left goes to the issue session)
  *
  * Input: SEO.md and two files holding the raw JSON `get_audit_pages` returned (`{ pages: [...] }`),
  * previous first. Each file may also carry `auditId` / `completedAt` (copied from
@@ -21,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { readSeoMd } from './seo-md.mjs';
 
-const key = (u) => String(u ?? '').trim().replace(/\/+$/, '');
+export const key = (u) => String(u ?? '').trim().replace(/\/+$/, '');
 const day = (iso) => (iso ? String(iso).slice(0, 10) : new Date().toISOString().slice(0, 10));
 
 /** What regressed on one page: { severe: [...], warning: [...] }, each a short line. */
@@ -39,6 +40,24 @@ export function pageChanges(prev, cur) {
 
 const auditRef = (a) => (a.auditId ? `auditId ${a.auditId}` : '最近一次审计');
 
+const repro = (urls, previous, current) =>
+  `list_site_audits 找到两次审计（上一次 ${auditRef(previous)}，本次 ${auditRef(current)}），各调 get_audit_pages（limit 1000），按网址对比：${urls.join('、')}；再用 curl -sI 和 curl -s 看线上页面的状态码与 <title>、meta robots`;
+const values = (rows) => rows.map((r) => `${r.url}：${r.lines.join('，')}`).join('；');
+
+/** The `key-page-meta-changed` finding for `rows` ([{ url, lines }]); seo-meta-provenance.mjs rebuilds it for the pages that are left. */
+export function metaChangedFinding(rows, previous, current) {
+  return {
+    direction: 'technical',
+    kind: 'key-page-meta-changed',
+    title: `${rows.length} 个重点页面的 title 或 description 和上一次审计不同`,
+    targets: rows.map((r) => r.url),
+    evidence: { what: `get_audit_pages：${auditRef(previous)} 对 ${auditRef(current)}`, when: day(current.completedAt), values: values(rows) },
+    repro: repro(rows.map((r) => r.url), previous, current),
+    fix: '需要决定：确认改动是有意的；不是就改回',
+    acceptance: rows.map((r) => `${r.url} 的 title 和 description 是有意写下的版本`),
+  };
+}
+
 export function regressions(seo, previous, current) {
   const prev = new Map((previous.pages ?? []).map((p) => [key(p.url), p]));
   const cur = new Map((current.pages ?? []).map((p) => [key(p.url), p]));
@@ -50,10 +69,6 @@ export function regressions(seo, previous, current) {
     if (c.severe.length) severe.push({ url: k, lines: c.severe });
     if (c.warning.length) warning.push({ url: k, lines: c.warning });
   }
-  const when = day(current.completedAt);
-  const repro = (urls) =>
-    `list_site_audits 找到两次审计（上一次 ${auditRef(previous)}，本次 ${auditRef(current)}），各调 get_audit_pages（limit 1000），按网址对比：${urls.join('、')}；再用 curl -sI 和 curl -s 看线上页面的状态码与 <title>、meta robots`;
-  const values = (rows) => rows.map((r) => `${r.url}：${r.lines.join('，')}`).join('；');
   const out = [];
   if (severe.length)
     out.push({
@@ -61,22 +76,12 @@ export function regressions(seo, previous, current) {
       kind: 'key-page-regression',
       title: `${severe.length} 个重点页面相对上一次审计出现了会影响收录的回退`,
       targets: severe.map((r) => r.url),
-      evidence: { what: `get_audit_pages：${auditRef(previous)} 对 ${auditRef(current)}`, when, values: values(severe) },
-      repro: repro(severe.map((r) => r.url)),
+      evidence: { what: `get_audit_pages：${auditRef(previous)} 对 ${auditRef(current)}`, when: day(current.completedAt), values: values(severe) },
+      repro: repro(severe.map((r) => r.url), previous, current),
       fix: '需要诊断：先确认是不是有意的下线或改版，不是就恢复',
       acceptance: severe.map((r) => `${r.url} 返回 200、可索引、在 sitemap 里`),
     });
-  if (warning.length)
-    out.push({
-      direction: 'technical',
-      kind: 'key-page-meta-changed',
-      title: `${warning.length} 个重点页面的 title 或 description 和上一次审计不同`,
-      targets: warning.map((r) => r.url),
-      evidence: { what: `get_audit_pages：${auditRef(previous)} 对 ${auditRef(current)}`, when, values: values(warning) },
-      repro: repro(warning.map((r) => r.url)),
-      fix: '需要决定：确认改动是有意的；不是就改回',
-      acceptance: warning.map((r) => `${r.url} 的 title 和 description 是有意写下的版本`),
-    });
+  if (warning.length) out.push(metaChangedFinding(warning, previous, current));
   return out;
 }
 

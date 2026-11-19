@@ -7,7 +7,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 状态改只走脚本：下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指知识库的 `docs/`。脚本先核前提再写，拒绝时会说原因和能翻成什么，照原因处理。
 
-平台上各字段怎么表达、读写用什么：GitHub 用脚本，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `issues check` 核。项目在哪个平台，看 `ISSUE_TRACKER.md` 第一个标题。
+字段在平台上怎么表达：GitHub 用脚本，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `issues check` 核。项目在哪个平台，看 `ISSUE_TRACKER.md` 第一个标题。
 
 ## 实体
 
@@ -22,7 +22,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 挂着的 PR | 这个 issue 要改的每个仓库各一个，状态各自是 draft / ready / merged |
 | 评论 | 停在哪、等什么、为什么关；idea-loop 写的带「🤖 idea-loop：」前缀 |
 
-不用父子关系归组：一个 issue 一个会话、一份 spec。版本用 milestone，模块用分类，「这几个相关」写正文链接。平台上已有的父子关系照常读，不当成组。
+不用父子关系归组：一个 issue 一个会话、一份 spec；版本用 milestone，模块用分类，「这几个相关」写正文链接；平台上已有的父子关系照常读，不当成组。
 
 ## 状态
 
@@ -59,13 +59,15 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 ```
 标题：一句现象，用户视角：什么情况下，出了什么事；不写方案
 
-## 背景        可选：读懂问题要先知道的链路或现状
+## 背景        必填：读懂问题要先知道的机制或现状
 ## 问题        必填：看到了什么，带一个具体例子；在哪（页面、接口、文件或 skill）
 ## 证据        必填：查询、日志、截图的摘要和出处；没有就写「无，待验证」
 ## 影响范围    必填：多少次、多少用户；查不到写原因
 ## 从哪发现    必填：哪个会话、哪次扫描、哪个 PR；人开的写「人」
 ## 已确认原因  可选：验证后补
 ```
+
+读懂问题要先知道的机制或现状，写给隔了几周回来、已经忘了这一块的人：问题里第一次出现的叫法（规则名、字段、页面、命令）各用一句说清它是什么、管什么；规则或现状互相牵扯的，写出各自原文和出处。确实不需要的写『无』。
 
 类型、模块、优先级不写进正文，用平台的字段或 label。
 
@@ -79,9 +81,9 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 ## 开一个 issue
 
-流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `issues new`，它先校验正文四个必填节、再查重（同标题开着的 issue 已有就拒绝并报号）：
+流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `issues new`，它先校验正文五个必填节、再查重（同标题开着的 issue 已有就拒绝并报号）：
 
-1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看。
+1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看，包括几周后的自己和人。
 2. `issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
 3. 判断是 P0 的，开成 backlog 后调 `/idea-loop:issue-triage P0 <号>`，当场复现。
 4. 正文被拒（缺节或节是空的）就补上再开；开不成（`gh` 失败）的，记下没开成和原因，交给人。
@@ -101,12 +103,12 @@ issues body       <docs> <正文文件>                # 只校验正文，不�
 issues priority   <docs> <P0|P1|P2|none> <号>...   # 换掉原有的优先级
 issues backlog    <docs> [<上限>]                  # 开着的 backlog issue，最早的在前（JSON）；跳过分拣问过「还要你补」、之后没人动过的
 issues note       <docs> <号> <正文文件>           # 贴一条带「🤖 idea-loop：」前缀的评论
-issues candidates <docs> [<上限>] [--state=todo|triage]  # 能派的 todo（--state=triage 取 triage 的）：没有开着的 blocked by；指派给本人的单独排在前（P0 → P1 → P2 → 没有，再按号），本人名下没有可派的才给未指派的（同样先按优先级，同一优先级里在该状态里停留久的先），指派给别人的不给（JSON）
-issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label 与两个 status:* 作为问题报出
-issues queues     <docs>                           # 调度的两个上限（cap、triageCap）和分组名（sections）；JSON 对象
-issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出，--apply 先建缺的 label
+issues candidates <docs> [<上限>] [--state=todo|triage]  # 能派的 todo（--state=triage 取 triage 的）：没有开着的 blocked by；先排指派给本人的（P0 → P1 → P2 → 没有，再按号），本人名下没有可派的才给未指派的（同样按优先级，同级里停留久的先），指派给别人的不给（JSON）
+issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label、两个 status:* 报出
+issues queues     <docs> [--at=HH:MM]              # 此刻（--at 指定）派什么、上限几个（取自「调度」表）、整张表、分组名；JSON
+issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出
 ```
 
-PR 正文怎么挂到 issue 上，平台各有写法，见两份 reference。
+PR 正文怎么挂到 issue，见两份 reference。
 
 分类（模块、类型）和 spec 的 `issues:`、`spec.mjs` 怎么用，读 [references/category-and-spec.md](references/category-and-spec.md)。
