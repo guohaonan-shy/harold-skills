@@ -18,3 +18,5 @@
 - `session-start-inject.test.mjs`、`design-lint-hook.test.mjs`、`design-md-hook.test.mjs`：读 hooks.json 的形状，改写后要跟着改
 
 > 注意（工单 03 交回，2026-11-19）：`home map` 不带 `--hook`，版本不对时退出 1、把版本提示打在 stderr（开场告诉人）。接线时核一下桌面端对 SessionStart 退出 1 的显示是否可接受；要它像 guard 那样静默，就给它加 `--hook` 并同步登记表。
+
+> 补充（工单 11 交回，2026-11-19）：`runtime inject` 也同 `home map`：不带 `--hook`，版本不对时退出 1 并报版本。两条一起定：都加 `--hook`（同步登记表），或都接受。
