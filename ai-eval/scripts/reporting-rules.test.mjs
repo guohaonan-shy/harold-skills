@@ -42,6 +42,7 @@ function section(text, heading) {
 const RULE_SENTENCES = {
   threshold: '门槛写成「候选不比基线差」',
   pass1: 'pass¹ 是单次运行的通过率，等于过了的次数除以总次数。',
+  pass1Unjudged: '回放里判不出来的那几次不进 pass¹ 的分母。',
   pass3: 'pass³ 是同一个 case 跑三次全过的 case 占的比例。',
   platformError: '最多重跑 3 轮',
   interval: '重抽 2,000 次',
@@ -94,6 +95,17 @@ test('eval-replay points at the reference where it reports numbers, and leaves t
   const text = skill('eval-replay');
   assert.ok(text.includes(REF), 'eval-replay does not point at the reference');
   assert.match(text, /replay-stats\.mjs/);
+});
+
+test('the reference puts the unjudged-runs sentence right after the pass¹ definition, and eval-replay asks for it and for the count without restating it', () => {
+  const ref = read(`references/${REF}`);
+  const def = RULE_SENTENCES.pass1;
+  const gap = ref.slice(ref.indexOf(def) + def.length, ref.indexOf(RULE_SENTENCES.pass1Unjudged));
+  assert.ok(ref.indexOf(RULE_SENTENCES.pass1Unjudged) > ref.indexOf(def), 'the unjudged sentence must follow the pass¹ definition');
+  assert.ok(!gap.includes('pass³ 是'), 'the unjudged sentence must come before the pass³ definition');
+  const body = section(skill('eval-replay'), /### 5\. 算数，写结论/);
+  assert.match(body, /判不出来/, 'the report step does not mention the unjudged runs');
+  assert.match(body, /rows/, 'the report step does not say where the unjudged count comes from');
 });
 
 test('eval-baseline reruns platform errors to zero before it compares', () => {
