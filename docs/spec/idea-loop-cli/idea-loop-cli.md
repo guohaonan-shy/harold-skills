@@ -71,8 +71,10 @@ idea-loop 的脚本没有一个统一的入口：调用方只能拿全路径找�
 ![命令行与 skill 怎么对版本](../../raw/issue-workflow/assets/sequence-idea-loop-cli-version.png)
 
 - **代码**：harold-skills 里一个顶层目录，不是插件（`marketplace.json` 不列它；`AGENTS.md` 的「Repository Purpose」加一句说明）。改命令行和改用到它的 skill 可以在同一个 PR 里 review。
-- **发布**：打 `cli-v<版本>` 标签，在本机跑 goreleaser 出 Mac（arm64、amd64）和 Linux（amd64、arm64）的包，传到 GitHub Releases，附校验和。不加 GitHub Actions：仓库现在没有 Actions，检查和评估都在本地跑。
-- **装在哪**：`~/.idea-loop/bin/idea-loop`。插件目录会随升级换路径，所以二进制放用户主目录（`AGENTS.md` 定的「跨会话持久的用户数据」位置）。由 setup 装（下载对应平台的包、核校验和），人同意后才装；以后升级也走 setup。
+- **发布**：打 `cli-v<版本>` 标签，在本机跑 goreleaser 出 Mac（arm64、amd64）和 Linux（amd64、arm64）的包，传到 GitHub Releases，附校验和。不加 GitHub Actions：仓库现在没有 Actions，检查和评估都在本地跑。发版是对外发布，每次由人说了才发。本机现在是 Go 1.20.7、没装 goreleaser：`DEVELOPMENT.md` 写明要的 Go 版本和 goreleaser，开发前装好。
+- **给 skill 用的文字留在插件，二进制只放逻辑**：runtime 各环境的数据、pr-review 的 Codex prompt 模板、开场注入的 decision-rules 正文，都是跟着 skill 改的文字，放在插件里；小脚本把插件目录（`IDEA_LOOP_PLUGIN_ROOT`）传给二进制，命令从那里读。这样改这些文字只升插件，不用发命令行。
+- **装在哪**：`~/.idea-loop/bin/idea-loop`。插件目录会随升级换路径，所以二进制放用户主目录（`AGENTS.md` 定的「跨会话持久的用户数据」位置）。这个目录不加进人的 PATH：官方文档写插件 `bin/` 排在人自己的 PATH 之后，加进去的话会话会绕过插件的小脚本直接调到二进制，版本核对就没了。
+- **谁来装**：插件的小脚本自己带 `idea-loop self install` / `self upgrade` 两条（用 `curl` 下载对应平台的包、`shasum` 核校验和，不需要二进制在场），setup 在人同意后调它。所以第一次装不依赖命令行本身。
 - **怎么调到它**：插件的 `bin/idea-loop` 是一个几行的 sh 小脚本。实测（2026-11-18，Claude Code 2.1.327，临时插件 + `claude -p --plugin-dir`）插件 `bin/` 在 Bash 的 PATH 上，官方文档 plugins/components.md 的「Executables」也这样写，所以会话里直接敲 `idea-loop xxx`，不用改人的 shell 配置。小脚本只做一件事：带上插件要的版本范围，转给 `~/.idea-loop/bin/idea-loop`。hook 写 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`（hook 进程里有这个变量；会话的 Bash 里没有，所以 skill 只写 `idea-loop`）；hook 只管什么时候触发、调哪条命令，命令本身就是各模块里的那条（见「hook 只拦不做事」的对照表）。
 
 **skill 要求命令行最低版本，这样维护**：
@@ -202,7 +204,7 @@ runtime 不再是 skill。
 ### 同一行为的其他入口
 
 - **hook**（`hooks/hooks.json`）：纳入。每条都改成 `"${CLAUDE_PLUGIN_ROOT}/bin/idea-loop" <模块> <命令> --hook`，不再直接写脚本路径。
-- **测试**：纳入。命令行自己的测试用 `go test`；skill 文本的测试（现在的 `*-doc.test.mjs` 等）照旧用 `node --test`，它们读的是 skill 文本，不是命令行代码。共用的测试用具改经 `idea-loop test` 调。改命令行时要用本仓库编出来的二进制跑：`~/.idea-loop/bin/` 里的是已装的发布版，不是正在改的。
+- **测试**：纳入。命令行自己的测试用 `go test`，`REVIEW.md` 的验证命令加上它；照 `plugin-version.test.mjs` 加一条「改了命令行代码就必须升命令行版本」；skill 文本的测试（现在的 `*-doc.test.mjs` 等）照旧用 `node --test`，它们读的是 skill 文本，不是命令行代码。共用的测试用具改经 `idea-loop test` 调。改命令行时要用本仓库编出来的二进制跑：`~/.idea-loop/bin/` 里的是已装的发布版，不是正在改的。
 - **evals 的 runner**（`evals/retro`、`evals/uiux-research`）：纳入。它们现在直接 import `claude-stream.mjs`，那份实现要删，改成调 `idea-loop agent claude run`。
 - **plugin 的 `README.md`**：纳入，命令写法同步改；扫描测试也扫它。
 - **design-archive MCP 服务器**：纳入，做成单独的 package（见「设计档案 MCP」）。
@@ -251,9 +253,8 @@ runtime 不再是 skill。
 
 ## 实现决策
 
-- **用 Go 写**（Harold 2026-11-19 选「Go (Recommended)」）：goreleaser 一次出各平台的包，交叉编译不用另装工具链；参数解析、子命令用标准库或一个常用的子命令库，YAML 用现成的库（`mini-yaml` 删掉）。依赖由 Go 模块管理，编进二进制，用户机器上不装任何运行时。
+- **用 Go 写**（Harold 2026-11-19 选「Go (Recommended)」；设计档案 MCP 也确认改成 Go 包：「MCP 就按你说的改成 Go 包吧」）：goreleaser 一次出各平台的包，交叉编译不用另装工具链；参数解析、子命令用标准库或一个常用的子命令库，YAML 用现成的库（`mini-yaml` 删掉）。依赖由 Go 模块管理，编进二进制，用户机器上不装任何运行时。
 - **代码按模块分包**：每个模块一个 Go 包，命令的实现和它内部用的东西放在一起；只被引用、没有动作的（`claude-stream`、`github-app`、`ui-compare` 等）作为共用的包（Harold 2026-11-19：「放在命令行package里面作为模块package被引用」）。对调用方来说只有 `idea-loop` 一个入口。
-- **runtime 数据、pr-review 的 Codex prompt 模板编进二进制**：随命令行版本走；它们是给 skill 用的数据，改了算命令行的一次发布。
 - **重写的验收照现有测试**：现有 123 个测试文件（21893 行，其中约一半测脚本行为、一半测 skill 文本）里测脚本行为的那些，是 Go 实现的行为基准：逐个模块把它们的断言搬成 `go test`，过了才删对应的 `.mjs`。测 skill 文本的那些照旧。
 - **命令名用英文**，模块名照上面「模块」表。子命令按动作起名（`set`、`submit`、`run`），不按脚本名。
 - **登记表是唯一来源**：`--help`、扫描测试都读它；每条命令写：名字、参数、一句话说明、出错时提示的下一条命令。
@@ -268,7 +269,8 @@ runtime 不再是 skill。
   - Codex 插件自己的 `codex:rescue` 等命令仍走 companion，仍会留 broker；那是 Codex 插件的事，idea-loop 管不到。
   - Codex 生图会在 `~/.codex/generated_images/` 留一份原图（本会话实测看到），不清理。
   - 公司虚拟机能不能连 GitHub Releases 没核过；连不上时 setup 下不了二进制，只能人手拷一份到 `~/.idea-loop/bin/`。
-  - 没装命令行或版本不对时，lint、拦截这几条 hook 不起作用（只留一行提示），直到人升级。
+  - 没装命令行或版本不对时，lint、拦截这几条 hook 不起作用，开场的 runtime、项目地图也注入不进来（只留一行「跑 `/idea-loop:setup`」），直到人装好或升级。
+  - 官方文档写 claude.ai 和 Cowork 不装带顶层 `bin/` 的插件；idea-loop 现在只在桌面端 Code 和 magi 里用，不受影响。
   - 只测了一次可写沙箱生图；批量连续生图在子代理里会不会越拦越多（TOEFL-demo 记忆里记过）没测。
 
 ## 测试决策
