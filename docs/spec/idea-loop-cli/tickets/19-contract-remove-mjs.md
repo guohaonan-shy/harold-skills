@@ -24,3 +24,5 @@
 > 补充（工单 09 交回，2026-11-19）：删旧脚本时同步 `retro install` 的文件清单（project-map、runtime-detect 等），并把它打印和写进入口文件的「idea-loop:runtime 的『装与设置』」「scripts/retro-install.mjs」两处文字改成新的说法。工单 16 若挪动 dreaming 的提议表参考文档，dreaming 模块两条读它的 go test 随之改。
 
 > 补充（工单 12 交回，2026-11-19）：uiux-research 的 eval runner 的形状检查仍起旧 research-check 脚本，删它之前改成 `dyna research submit`。
+
+> 补充（工单 17 交回，2026-11-19）：README 第 35 行、490–491 行还写着旧 research-check 脚本；design-archive-sections-doc、archive-check-flag 两个测试里为等 16 留了「旧写法也认」，16 落地后收掉，只认 dyna 写法。
