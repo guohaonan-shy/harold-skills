@@ -343,7 +343,7 @@ func TestShowBrowserPrintsTheEnvironmentsSectionWithTheThreeRulesOfTheOldBrowser
 				"### 给人看", "### 无头", "### 并行时抢锁",
 				"python3 -m http.server",        // 给人看：本地 HTML 先起静态服务器
 				"测试账号", "DEVELOPMENT.md", "静止态", // 无头：登录、把页面带到对的状态
-				"自己起 chromium 的脚本", // 并行时：自己起浏览器的脚本不用
+				"自己起 chromium 的命令", // 并行时：自己起浏览器的命令不用
 			) {
 				if !strings.Contains(out, want) {
 					t.Errorf("the 浏览器 section lacks %q", want)
