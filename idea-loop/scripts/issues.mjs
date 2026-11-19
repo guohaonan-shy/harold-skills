@@ -120,8 +120,24 @@ export const NEXT = {
 
 /** Flips that must say, in a comment on the issue, where the work stopped. */
 export const NEEDS_COMMENT = new Set(['backlog']);
-/** Prefix of every comment idea-loop writes on an issue. */
-export const AI_PREFIX = '🤖 idea-loop：';
+/** First line of every comment idea-loop writes on an issue: an HTML comment, which GitHub does not render. */
+export const AI_MARKER = '<!-- idea-loop -->';
+/** The visible prefix idea-loop used to put on its comments; comments already posted keep it, so it is still recognised. */
+const LEGACY_PREFIX = '🤖 idea-loop：';
+
+/** Whether a comment was written by idea-loop: it carries the marker, or starts with the old prefix. */
+export const isIdeaLoopComment = (body) => {
+  const t = String(body ?? '');
+  return t.includes(AI_MARKER) || t.startsWith(LEGACY_PREFIX);
+};
+
+/** The text of a comment as posted: the marker on its own first line, then the text; the old prefix is dropped, a marker already there is not doubled. */
+const withMarker = (text) => {
+  const t = String(text ?? '').trim();
+  if (t.startsWith(AI_MARKER)) return t;
+  const body = t.startsWith(LEGACY_PREFIX) ? t.slice(LEGACY_PREFIX.length).trim() : t;
+  return `${AI_MARKER}\n${body}`;
+};
 
 /**
  * An issue's state: closed ones by their close reason (not planned = canceled, anything else = done), open
@@ -602,7 +618,7 @@ function relabel(gh, n, labels, state) {
  * not open with no label, which reads as backlog. The open states relabel, then comment.
  */
 function move(gh, it, state, comment = '') {
-  const body = comment ? `${AI_PREFIX}${comment}` : '';
+  const body = comment ? withMarker(comment) : '';
   if (CLOSED[state]) {
     gh(['issue', 'close', String(it.number), '--reason', CLOSED[state], ...(body ? ['--comment', body] : [])]);
     relabel(gh, it.number, it.labels, state);
@@ -713,7 +729,7 @@ function lastComment(gh, n) {
 }
 
 /** Triage's comment that asks the human for more. */
-const asksForMore = (c) => String(c?.body ?? '').startsWith(AI_PREFIX) && String(c.body).includes('还要你补');
+const asksForMore = (c) => isIdeaLoopComment(c?.body) && String(c.body).includes('还要你补');
 
 /**
  * The open issues with no status:* label (backlog), oldest first, at most `limit`. One whose newest comment
@@ -768,11 +784,11 @@ export function setPriority(gh, n, p) {
   return want;
 }
 
-/** Comments on #n with the AI prefix (not doubled when the text already starts with it). Returns the comment's URL (what `gh issue comment` prints), or null. */
+/** Comments on #n with the AI marker (the old prefix dropped, the marker not doubled). Returns the comment's URL (what `gh issue comment` prints), or null. */
 export function noteIssue(gh, n, text) {
   const t = String(text ?? '').trim();
   if (!t) throw new Error('评论是空的');
-  const out = String(gh(['issue', 'comment', String(n), '--body', t.startsWith(AI_PREFIX) ? t : `${AI_PREFIX}${t}`]) ?? '');
+  const out = String(gh(['issue', 'comment', String(n), '--body', withMarker(t)]) ?? '');
   return out.match(/https?:\/\/\S+/)?.[0] ?? null;
 }
 
@@ -934,7 +950,7 @@ export function migrate(gh, docs, { apply = false } = {}) {
   ensureLabels(gh);
   for (const r of plan.relabels) {
     editLabels(gh, r.n, r.add, r.remove);
-    if (r.comment) gh(['issue', 'comment', String(r.n), '--body', `${AI_PREFIX}${r.comment}`]);
+    if (r.comment) gh(['issue', 'comment', String(r.n), '--body', withMarker(r.comment)]);
   }
   for (const s of specs) writeFileSync(s.file, withoutStatus(readFileSync(s.file, 'utf8')));
   for (const u of plan.unlinks) gh(['api', '-X', 'DELETE', `repos/{owner}/{repo}/issues/${u.parent}/sub_issue`, '-F', `sub_issue_id=${u.childId}`]);

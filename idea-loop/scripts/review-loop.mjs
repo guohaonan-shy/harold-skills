@@ -43,11 +43,11 @@
  * local figure an entry uses to the PR's evidence branch (evidence.mjs) and rewrites the path to the
  * address that opens full size on GitHub.
  *
- * Identity for the archive: the repository's GitHub App when configured, else the gh login with a
- * line saying Claude posted it (github-app.mjs). Archiving is idempotent: an entry whose marker is
+ * Identity for the archive: the repository's GitHub App when configured, else the gh login; the body
+ * carries no signature either way (github-app.mjs). Archiving is idempotent: an entry whose marker is
  * already on the PR is not posted again.
  *
- * Deterministic core (parseLoop, nextRound, unsettled, toArchive, archiveBody, withAuthorship,
+ * Deterministic core (parseLoop, nextRound, unsettled, toArchive, archiveBody,
  * localFigures, withFigureUrls) is
  * pure and unit-tested.
  *
@@ -141,15 +141,10 @@ export function withFigureUrls(body, urls) {
   return String(body).replace(FIGURE, (all, alt, p) => (urls[basename(p)] ? `![${alt}](${urls[basename(p)]})` : all));
 }
 
-/** Without an App, the gh login posts — so the body has to say who really wrote it. */
-export function withAuthorship(body, identity) {
-  return identity === 'app' ? body : `> 🤖 由 Claude 代发（仓库未配置 GitHub App，借用 gh 当前登录的账号发出，不是本人所写）\n\n${body}`;
-}
-
-export function archiveBody(entry, identity) {
+export function archiveBody(entry) {
   const impl = entry.kind === 'review' && entry.source === 'impl';
   const label = impl ? `实现阶段第 ${entry.round} 次汇报` : { pause: `第 ${entry.round} 次停下`, review: `review 第 ${entry.round} 轮`, replay: `规则回放第 ${entry.round} 次` }[entry.kind];
-  const body = `${archiveMarker(entry.kind, entry.round, impl ? 'impl' : undefined)}\n${withAuthorship(`> 记录：${label}在会话里进行，下面是原样的汇报、批示和处理结果。\n\n${entry.body}`, identity)}`;
+  const body = `${archiveMarker(entry.kind, entry.round, impl ? 'impl' : undefined)}\n> 记录：${label}在会话里进行，下面是原样的汇报、批示和处理结果。\n\n${entry.body}`;
   if (body.length > MAX_BODY) throw new Error(`${label} is ${body.length} characters (limit ${MAX_BODY}); fold detail in the file before archiving`);
   return body;
 }
@@ -176,7 +171,7 @@ async function main() {
     for (const entry of toArchive(parseLoop(read(file)), existing)) {
       const figures = localFigures(entry.body).map((p) => resolve(dirname(file), p));
       const urls = figures.length ? publish(repo, pr, figures) : {};
-      const body = archiveBody({ ...entry, body: withFigureUrls(entry.body, urls) }, api.identity);
+      const body = archiveBody({ ...entry, body: withFigureUrls(entry.body, urls) });
       const c = await api('POST', `repos/${repo}/issues/${pr}/comments`, { body });
       posted.push({ kind: entry.kind, round: entry.round, url: c.html_url });
     }

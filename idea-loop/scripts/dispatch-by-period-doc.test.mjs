@@ -103,7 +103,7 @@ test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a faile
 test('issue-dispatch: the morning summary reads the record file, one line per issue, and pushes one sentence', () => {
   const step = dispatch.split('\n').find((l) => /^6\.\s+\*\*早上汇总\*\*/.test(l));
   assert.ok(step, 'there is a step 「早上汇总」');
-  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', '🤖 idea-loop：', '『推送』']) {
+  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', '<!-- idea-loop -->', '『推送』']) {
     assert.ok(step.includes(word), `the morning summary must mention ${word}`);
   }
   assert.match(step, /开了几个、几个等审、几个卡住/);
