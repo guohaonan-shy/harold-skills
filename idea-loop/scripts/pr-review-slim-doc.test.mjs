@@ -120,3 +120,19 @@ test('the round cap is written once: reviewer definition, report template and th
   }
   assert.doesNotMatch(body, /两轮/);
 });
+
+test('merge.md opening summary does not contradict step 1: no CI wait unless the main branch was merged in', () => {
+  const merge = readRef('PR_REVIEW_MERGE_REF', 'skills', 'engineering', 'pr-review', 'references', 'merge.md');
+  const intro = merge.slice(0, merge.indexOf('## 合并\n'));
+  assert.match(intro, /除非第 1 步合入了新的主分支，也不再等 CI/);
+  assert.doesNotMatch(intro, /合并时不再做「删工单」，也不再等 CI/, 'the unconditional no-CI-wait sentence is back');
+});
+
+test('the round-cap number lives only in pr-review SKILL.md: night-mode, merge and seo-auto-merge say it without a number', () => {
+  const night = readRef('NIGHT_MODE_REF', 'skills', 'engineering', 'issue-session', 'references', 'night-mode.md');
+  const merge = readRef('PR_REVIEW_MERGE_REF', 'skills', 'engineering', 'pr-review', 'references', 'merge.md');
+  const seo = readRef('SEO_AUTO_MERGE_REF', 'skills', 'engineering', 'pr-review', 'references', 'seo-auto-merge.md');
+  for (const [name, doc] of [['night-mode.md', night], ['merge.md', merge], ['seo-auto-merge.md', seo]]) {
+    assert.doesNotMatch(doc, /[5五]\s*轮/, `${name} repeats the round-cap number`);
+  }
+});

@@ -182,10 +182,10 @@ it worked, but carried one person's words from GitHub back into the session they
 - **Fixes go back through the tickets.** A finding fixed — by rule or by the human's word — becomes a
   new acceptance box on the ticket that introduced it (found by the quote, or by `git blame` →
   `Ticket:` trailer), and a fresh implementer does it. **The next round starts itself** when
-  this round had at least one fix, every item is handled and the fixes are pushed, and fewer than
-  two rounds have run (it says so and sends a push notification first); with no fix it stops and
-  waits for the word to merge, after two rounds it stops and says so. The cap binds only the
-  automatic start — the human can ask for another round any time. Merging is the human's order.
+  this round had at least one fix, every item is handled and the fixes are pushed, and the next
+  round number is at most 5 (it says so and sends a push notification first); with no fix it stops
+  and waits for the word to merge, after the fifth round's fixes it stops and says they went
+  unreviewed. The cap binds only the automatic start — the human can ask for another round any time. Merging is the human's order.
 
 The old loop (up to two automatic rounds of three-axis review → fix → re-verify, one round post per
 round, a mergeReady verdict) and its design record [`docs/pr-review-loop.md`](./docs/pr-review-loop.md)
@@ -365,7 +365,8 @@ idea-loop/
 │   │       references/review-standards.md    # the two review axes: inputs, what counts, reproduce-and-draw, per-finding disposition, mechanical admission
 │   │       references/codex-spec.md, codex-standards.md  # the fixed Codex prompts per axis, filled by scripts/codex-prompt.mjs
 │   │       references/deliver.md     # a round with nothing for the human: push the spec-done docs commit, wait for CI, write the review report into the PR description, stop; and what to do when the human asks for changes after the report
-│   │       references/merge.md       # merge (no spec-done step, no CI wait), the pre-merge design archive, the post-deploy check of an SEO change (wait for the deploy, record or roll back), the post-merge cleanup
+│   │       references/rulings.md     # read when the human's ruling brings out something before or after going live, or asks for the report to be rewritten
+│   │       references/merge.md       # merge (no spec-done step; no CI wait unless step 1 merged in new base-branch commits), the pre-merge design archive, the post-deploy check of an SEO change (wait for the deploy, record or roll back), the post-merge cleanup
 │   │       references/seo-auto-merge.md  # read when the issue is `type:seo/*`: the conditions for merging without the human (checks and `seo-check`, no blocker, content only, a 上线自查的网址 section) and what the session does then
 │   │       references/ui-walkthrough.md  # read only when the PR has design output: starting the ui-reviewer next to the pr-reviewer, and what to do when it returns incomplete
 │   │       references/design-change.md  # read only when the human accepted a design that differs from the frozen canvas: the design-change-sync route on the PR branch
