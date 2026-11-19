@@ -24,6 +24,12 @@
  *                words (`round-<N>/thoughts.md`, read by `parseThoughts`). Every thought the critic assessed
  *                (`judge.reasoning[].id`) must have its words here, or the report is refused and the missing
  *                ones are listed; thoughts nobody assessed (kept after discussion) are simply not shown.
+ *   selfCheck    optional. [{ state, anchor, what, why }]: what the designer changed in its own pre-delivery
+ *                self-check, one entry per place, as the designer wrote it in its handback (the session copies
+ *                it into `self-check.json`). Self-check changes are not in the change set, so the comparison lists
+ *                them as undeclared; an undeclared change that matches an entry by `state` + `anchor` shows the
+ *                designer's reason beside it, one that matches nothing says the designer gave no reason. When the
+ *                input is left out, the page says nothing about reasons at all.
  *   dissatisfied [{ opinion, quote }]: the session's mark that the human, in this refine, already said
  *                they are not satisfied with the block a `direction` opinion is about, with their own
  *                words. Whether they were is the session's call; this file only renders the mark.
@@ -89,7 +95,7 @@ export function versionLabel(url) {
   return last ? last.replace(/\.[^.]+$/, '') : u.host;
 }
 
-function validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts }) {
+function validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts, selfCheck }) {
   const errors = [];
 
   if (!isObject(judge)) errors.push('judge must be the critic\'s JSON object');
@@ -139,6 +145,21 @@ function validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts 
     if (missing.length) errors.push(`thoughts has no words from the human for the thought${missing.length > 1 ? 's' : ''} the critic assessed: ${missing.join(', ')}`);
   }
 
+  if (selfCheck !== undefined) {
+    if (!Array.isArray(selfCheck)) errors.push('selfCheck must be an array of { state, anchor, what, why }');
+    else {
+      const seen = new Set();
+      selfCheck.forEach((c, i) => {
+        const at = `selfCheck[${i}]`;
+        if (!isObject(c)) return errors.push(`${at} must be an object`);
+        for (const k of ['state', 'anchor', 'what', 'why']) if (!isText(c[k])) errors.push(`${at}.${k} must be a non-empty string`);
+        const id = JSON.stringify([c.state, c.anchor]);
+        if (seen.has(id)) errors.push(`${at}: ${c.state} · ${c.anchor} is written twice`);
+        seen.add(id);
+      });
+    }
+  }
+
   const count = Array.isArray(judge?.findings) ? judge.findings.length : 0;
   if (!Array.isArray(dissatisfied)) errors.push('dissatisfied must be an array of { opinion, quote }');
   else {
@@ -157,19 +178,33 @@ function validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts 
   return errors;
 }
 
+/**
+ * An opinion number as the researcher wrote it, 1 or "1", as the number it means. The return check
+ * accepts both and compares them as text, so the report must too. Anything else (0, "01", "a") is no opinion number.
+ */
+function opinionNumber(n) {
+  if (Number.isInteger(n)) return n;
+  if (typeof n === 'string' && /^[1-9]\d*$/.test(n)) return Number(n);
+  return null;
+}
+
 /** Which research item speaks for each opinion number, and which opinions it explicitly left uncovered. */
 function indexResearch(research, count) {
   const itemOf = new Map();
   const uncovered = new Map();
   const errors = [];
   research.items.forEach((item, i) => {
-    for (const n of item.covers ?? []) {
-      if (!Number.isInteger(n) || n < 1 || n > count) errors.push(`research.items[${i}] covers opinion ${n}, which the critic did not give`);
+    for (const raw of item.covers ?? []) {
+      const n = opinionNumber(raw);
+      if (n === null || n < 1 || n > count) errors.push(`research.items[${i}] covers opinion ${raw}, which the critic did not give`);
       else if (itemOf.has(n)) errors.push(`opinion ${n} is covered by two research items`);
       else itemOf.set(n, { item, index: i });
     }
   });
-  for (const u of research.uncovered ?? []) uncovered.set(u.opinion, u.why);
+  for (const u of research.uncovered ?? []) {
+    const n = opinionNumber(u?.opinion);
+    if (n !== null) uncovered.set(n, u.why);
+  }
   if (research.mobbin === 'connected') {
     for (let n = 1; n <= count; n++) {
       if (!itemOf.has(n) && !uncovered.has(n)) errors.push(`opinion ${n} has neither a research item nor an entry in research.uncovered`);
@@ -191,13 +226,14 @@ function recommend(finding, item, mark) {
 /**
  * Build the report.
  *
- * @returns {{ html: string, summary: string, entries: [{ n, section, ... }] }}
+ * @returns {{ html: string, summary: string, entries: [{ n, section, ... }], unmatchedSelfCheck: [{ state, anchor, what, why }] }}
+ *          `unmatchedSelfCheck`: self-check entries that matched no undeclared change (nothing to show for them).
  *          `summary` is the short text for the conversation: the score and the items needing attention.
  *          The report's own link is added by the session after it publishes the page.
  * @throws  Error whose message lists every problem with the inputs
  */
-export function buildReport({ judge, research, diff, canvas, thoughts, dissatisfied = [], readImage }) {
-  const errors = validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts });
+export function buildReport({ judge, research, diff, canvas, thoughts, dissatisfied = [], selfCheck, readImage }) {
+  const errors = validateInputs({ judge, research, diff, canvas, dissatisfied, thoughts, selfCheck });
   if (errors.length) throw new Error(errors.join('\n'));
   const { itemOf, uncovered, errors: researchErrors } = indexResearch(research, judge.findings.length);
   if (researchErrors.length) throw new Error(researchErrors.join('\n'));
@@ -216,6 +252,8 @@ export function buildReport({ judge, research, diff, canvas, thoughts, dissatisf
   const figure = (path, caption) => `<figure><img src="${imageUri(path)}" alt="${esc(caption)}"><figcaption>${esc(caption)}</figcaption></figure>`;
 
   const marks = new Map(dissatisfied.map((d) => [d.opinion, d]));
+  const selfChecks = new Map((selfCheck ?? []).map((c) => [JSON.stringify([c.state, c.anchor]), c]));
+  const usedSelfChecks = new Set();
   let n = 0;
   const entries = [];
   const sections = [];
@@ -233,17 +271,24 @@ export function buildReport({ judge, research, diff, canvas, thoughts, dissatisf
       const shots = c.shots
         ? `<div class="pair">${figure(c.shots.before, '改前')}${figure(c.shots.after, '改后')}</div>`
         : '<p class="muted">没有区域截图：这个区域在两版里都没有面积（两边都隐藏）。</p>';
-      entries.push({ n: number, section: 'undeclared', state: c.state, anchor: c.anchor });
+      const selfKey = JSON.stringify([c.state, c.anchor]);
+      const said = selfChecks.get(selfKey);
+      if (said) usedSelfChecks.add(selfKey);
+      let reason = '';
+      if (said) reason = `<p class="selfcheck" data-reason="given"><strong>designer 自检：</strong>${esc(said.why)}<span class="muted">（designer 写的改动：${esc(said.what)}）</span></p>`;
+      else if (selfCheck) reason = '<p class="selfcheck none" data-reason="none"><strong>designer 没说明为什么改。</strong></p>';
+      entries.push({ n: number, section: 'undeclared', state: c.state, anchor: c.anchor, ...(selfCheck ? { selfCheck: said ? said.why : null } : {}) });
       return `<article id="r${number}" data-n="${number}" data-kind="undeclared">
 <h3><span class="num">#${number}</span> ${esc(c.state)} · ${esc(c.anchor)}</h3>
 <p>${esc(what)}</p>
+${reason}
 ${shots}
 <p class="ask">这处改动没有出现在改动集里。<strong>留，还是撤？</strong>（这一条要你定）</p>
 <p class="links">${links.join(' · ')}</p>
 </article>`;
     });
     sections.push(`<section data-section="undeclared"><h2>没声明却变了的地方</h2>
-<p class="muted">设计师这一版动了下面这些地方，但改动集里没写。每一条回「留」或「撤」；撤的会写进 ledger，下一轮照撤。</p>
+<p class="muted">设计师这一版动了下面这些地方，但改动集里没写（设计师交付前自检改的地方也在这里）。每一条回「留」或「撤」；撤的会写进 ledger，下一轮照撤。</p>
 ${cards.join('\n')}</section>`);
   }
 
@@ -294,7 +339,7 @@ ${recLine}
 </article>`;
   });
   sections.push(`<section data-section="opinions"><h2>评委的意见</h2>
-<p class="muted">评委是顾问，意见不会自动改画布。按编号回你的决定；没提到的编号，照各条的推荐处理。</p>
+<p class="muted">评委是顾问，意见不会自动改画布。每一条都请回应，没回的会话会接着问。</p>
 ${opinionCards.length ? opinionCards.join('\n') : '<p class="muted">评委这一轮没有提意见。</p>'}</section>`);
 
   // 3. the assessment of the human's own reasoning
@@ -336,7 +381,7 @@ article { background:var(--card); border:1px solid var(--line); border-radius:8p
 .muted { color:var(--muted); } blockquote { margin:8px 0; padding-left:12px; border-left:3px solid var(--line); }
 .pair { display:flex; flex-wrap:wrap; gap:12px; } figure { margin:0; } figure img { max-width:100%; max-height:520px; width:auto; height:auto; border:1px solid var(--line); border-radius:4px; background:#fff; } figcaption { font-size:13px; color:var(--muted); }
 .overturn { background:var(--warn-bg); color:var(--warn-fg); border-radius:6px; padding:8px 12px; font-weight:600; }
-.ask, .rec { margin:10px 0 4px; } .score { font-size:32px; margin:8px 0 0; } a { color:var(--accent); } ol { padding-left:20px; }
+.ask, .rec, .selfcheck { margin:10px 0 4px; } .selfcheck.none { color:var(--warn-fg); } .score { font-size:32px; margin:8px 0 0; } a { color:var(--accent); } ol { padding-left:20px; }
 </style>
 </head>
 <body>
@@ -348,7 +393,8 @@ ${sections.join('\n')}
 </body>
 </html>
 `;
-  return { html, summary: renderSummary({ judge, entries, undeclaredCount: diff.undeclared.length }), entries };
+  const unmatchedSelfCheck = (selfCheck ?? []).filter((c) => !usedSelfChecks.has(JSON.stringify([c.state, c.anchor])));
+  return { html, summary: renderSummary({ judge, entries, undeclaredCount: diff.undeclared.length }), entries, unmatchedSelfCheck };
 }
 
 /**
@@ -373,7 +419,7 @@ export function renderSummary({ judge, entries, undeclaredCount }) {
 
 // CLI: node design-review-report.mjs --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json>
 //        --thoughts <thoughts.md> --canvas <this version's page address> [--previous <previous version's page address>]
-//        [--dissatisfied <marks.json>] --out <report.html>
+//        [--dissatisfied <marks.json>] [--self-check <self-check.json>] --out <report.html>
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const flag = (name) => {
@@ -382,7 +428,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   };
   const need = ['judge', 'research', 'diff', 'thoughts', 'canvas', 'out'].filter((k) => !flag(k));
   if (need.length) {
-    console.error(`usage: design-review-report.mjs --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> [--previous <address>] [--dissatisfied <marks.json>] --out <report.html>\n  missing: ${need.map((k) => `--${k}`).join(' ')}`);
+    console.error(`usage: design-review-report.mjs --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> [--previous <address>] [--dissatisfied <marks.json>] [--self-check <self-check.json>] --out <report.html>\n  missing: ${need.map((k) => `--${k}`).join(' ')}`);
     process.exit(1);
   }
   const read = (path) => {
@@ -408,19 +454,21 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const resolveImage = (p) => (isAbsolute(p) ? p : join(researchDir, p));
   for (const item of research.items ?? []) for (const s of item.path ?? []) s.images = (s.images ?? []).map(resolveImage);
   try {
-    const { html, summary } = buildReport({
+    const { html, summary, unmatchedSelfCheck } = buildReport({
       judge: read(flag('judge')),
       research,
       diff: read(flag('diff')),
       thoughts: parseThoughts(readText(flag('thoughts'))),
       canvas: { current: flag('canvas'), ...(flag('previous') ? { previous: flag('previous') } : {}) },
       dissatisfied: flag('dissatisfied') ? read(flag('dissatisfied')) : [],
+      selfCheck: flag('self-check') ? read(flag('self-check')) : undefined,
       readImage: (p) => {
         if (!existsSync(p)) throw new Error('file does not exist');
         return readFileSync(p);
       },
     });
     writeFileSync(flag('out'), html);
+    for (const c of unmatchedSelfCheck) console.error(`design-review-report: self-check entry ${c.state} · ${c.anchor} matches no undeclared change, so it is not on the page`);
     console.log(summary);
   } catch (e) {
     console.error(`design-review-report: ${e.message}`);

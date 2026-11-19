@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   buildReport, parseThoughts, canvasLink, versionLabel, NO_REFERENCE_MESSAGE, RECOMMEND_KEEP, RECOMMEND_REOPEN,
 } from './design-review-report.mjs';
+import { checkLightReturn } from './research-check.mjs';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'design-review-report.mjs');
 
@@ -315,6 +316,78 @@ test('a picture that cannot be read stops the report instead of leaving a hole',
   assert.throws(() => build({ research, readImage: () => PIXEL }), /cannot inline/);
 });
 
+test('opinion numbers in the researcher\'s return may be written 1 or "1": the report reads both, like the return check does', () => {
+  const asText = fixtureResearch();
+  asText.items[0].covers = ['1'];
+  asText.items[1].covers = ['2', 3];
+  asText.uncovered = [{ opinion: '4', why: '搜了两个角度，没有能呈现空状态重试的画面' }];
+  // the return check lets this file through ...
+  const verdict = checkLightReturn(asText, { fileExists: () => true, opinions: [1, 2, 3, 4] });
+  assert.equal(verdict.valid, true, verdict.errors.join('\n'));
+  // ... so the report has to come out too, with every opinion served by the same research item as with plain numbers
+  const plain = build();
+  const text = build({ research: asText });
+  assert.deepEqual(text.entries, plain.entries);
+  assert.match(article(text.html, 3), /退出入口留在右上角，点后先弹确认/);
+  assert.match(article(text.html, 3), /推翻 ledger 1\.2/);
+  assert.match(article(text.html, 6), /没有找到能呈现这一点的参考：搜了两个角度/);
+  assert.match(article(text.html, 5), /跟 #4 是同一件事/);
+});
+
+test('the same opinion written 1 in one item and "1" in another is covered twice; "01" or "x" is no opinion number', () => {
+  const dup = fixtureResearch();
+  dup.items[1].covers = ['1', 3];
+  assert.throws(() => build({ research: dup }), /opinion 1 is covered by two research items/);
+  for (const bad of ['01', 'x', 0, '0']) {
+    const r = fixtureResearch();
+    r.items[0].covers = [bad];
+    assert.throws(() => build({ research: r }), new RegExp(`covers opinion ${bad}, which the critic did not give`));
+  }
+});
+
+test('the page asks for a response to every opinion and no longer says unmentioned ones follow the recommendation', () => {
+  const { html } = build();
+  assert.match(html, /每一条都请回应，没回的会话会接着问/);
+  assert.ok(!html.includes('没提到'));
+  assert.ok(!html.includes('照各条的推荐处理'));
+});
+
+const SELF_CHECK = [
+  { state: 'quiz-exit', anchor: 'footer', what: '页脚底色从白改成浅灰', why: '页脚和正文没有层次，自检时觉得糊在一起' },
+  { state: 'results', anchor: 'sidebar', what: '删掉侧栏的装饰线', why: '纯装饰，自检时按减法删了' },
+];
+
+test('a self-check reason is written beside the undeclared change it matches; one with no reason says so', () => {
+  const { html, entries, unmatchedSelfCheck } = build({ selfCheck: SELF_CHECK });
+  const footer = article(html, 1);
+  assert.match(footer, /designer 自检：<\/strong>页脚和正文没有层次，自检时觉得糊在一起/);
+  assert.match(footer, /designer 写的改动：页脚底色从白改成浅灰/);
+  assert.ok(!footer.includes('designer 没说明为什么改'));
+  // the second undeclared change (results · badge) has no entry
+  const badge = article(html, 2);
+  assert.match(badge, /designer 没说明为什么改/);
+  assert.ok(!badge.includes('designer 自检：'));
+  assert.equal(entries[0].selfCheck, '页脚和正文没有层次，自检时觉得糊在一起');
+  assert.equal(entries[1].selfCheck, null);
+  // an entry that matches no undeclared change is handed back, not silently dropped
+  assert.deepEqual(unmatchedSelfCheck, [SELF_CHECK[1]]);
+  // the reason sits inside the card, before the pictures
+  assert.ok(footer.indexOf('designer 自检') < footer.indexOf('<img'));
+});
+
+test('without a self-check input the page says nothing about reasons; an empty one marks every undeclared change as unexplained', () => {
+  const none = build();
+  assert.ok(!none.html.includes('designer 自检') && !none.html.includes('designer 没说明'));
+  const empty = build({ selfCheck: [] });
+  assert.equal([...empty.html.matchAll(/designer 没说明为什么改/g)].length, 2);
+});
+
+test('a self-check input that is not { state, anchor, what, why } per place, or repeats a place, is refused', () => {
+  assert.throws(() => build({ selfCheck: { state: 'a' } }), /selfCheck must be an array/);
+  assert.throws(() => build({ selfCheck: [{ state: 'results', anchor: 'x', what: 'w' }] }), /selfCheck\[0\]\.why must be a non-empty string/);
+  assert.throws(() => build({ selfCheck: [SELF_CHECK[0], SELF_CHECK[0]] }), /written twice/);
+});
+
 // ---- the command line ----
 
 function runCli(files, extra = []) {
@@ -368,4 +441,21 @@ test('the command line exits 2 with the problem when an input is unsound, and 1 
   const usage = spawnSync(process.execPath, [SCRIPT], { encoding: 'utf8' });
   assert.equal(usage.status, 1);
   assert.match(usage.stderr, /usage: design-review-report\.mjs/);
+});
+
+function writeSelfCheck(value = SELF_CHECK) {
+  const dir = mkdtempSync(join(tmpdir(), 'self-check-'));
+  const p = join(dir, 'self-check.json');
+  writeFileSync(p, JSON.stringify(value));
+  return p;
+}
+
+test('the command line takes --self-check, shows the reasons, and says on stderr which entries matched nothing', () => {
+  const { result, out } = runCli({}, ['--self-check', writeSelfCheck()]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(readFileSync(out, 'utf8'), /designer 自检：<\/strong>页脚和正文没有层次/);
+  assert.match(result.stderr, /self-check entry results · sidebar matches no undeclared change/);
+  const bad = runCli({}, ['--self-check', writeSelfCheck([{ state: 'a' }])]);
+  assert.equal(bad.result.status, 2);
+  assert.match(bad.result.stderr, /selfCheck\[0\]\.anchor/);
 });
