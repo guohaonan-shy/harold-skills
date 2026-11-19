@@ -29,6 +29,8 @@
 - [x] `plugin.json` 的 `version` 从 main 当前版本升了一个 patch。
 - [x] 全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全绿。
 
+- [ ] review 第 1 轮 C1（2026-11-20）：维护约定那一节不抄插件自带服务的名单（服务以插件 `.mcp.json` 为准，一个文件就能查到的留给环境）；测试照样全绿。
+
 ## 选中的存量回归
 
 - `scripts/plugin-version.test.mjs`：改了插件目录必须升版本。
