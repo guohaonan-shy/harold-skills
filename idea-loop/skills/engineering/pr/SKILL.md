@@ -33,6 +33,8 @@ PR 从分支上有第一个提交起就挂着，不等工单：平台据此在 i
 | 怎么验证 `verification` | 凭什么说修对了：每个行为怎么验的、哪些没验成、review 的结论 | `idea-loop:pr-review` 的编排者，交报告时写 |
 | 能否回滚 `rollback` | 合并后发现错了，能不能撤、怎么撤、影响面多大；上线前要人注意的事；顺带开的 issue | `idea-loop:pr-review` 的编排者，交报告时写；人的批示带出上线前的事时追加 |
 | 上线自查的网址 `live-check` | 只有带 `type:seo/*` 的 issue 写：合并上线后要核的网址，每行一个网址加它的目标词；没有这一节的不自动合并 | `idea-loop:implement` 转 open 前写，`idea-loop:pr-review` 的编排者交报告时核 |
+| 夜里替你定的 `night-decided` | 只有夜间模式的会话写：夜里碰到要人定的、按推荐定了的事，每条写选了什么、为什么、另一种是什么；人不同意就说「推翻」 | 夜间模式的 issue 会话（`idea-loop:issue-session`），每定一条追加 |
+| 等你定的 `night-waiting` | 只有夜间模式的会话写：夜里停下的事，只有人能做（合并以外的四类，见夜间模式），写停在哪、为什么要人来、人说了之后会话怎么接 | 夜间模式的 issue 会话 |
 | 要你做的事 `your-todo` | 轮到他的事：要看的人验素材（素材只放这里）、要定的事、说「合并」即可 | `idea-loop:implement` 转 open 前写，`idea-loop:pr-review` 的编排者更新 |
 | 参考 `reference` | 折叠：想追溯的人查证（改动地图、spec 与工单、执行记录、合并后的清理） | 开 draft PR 时写，每次汇报更新 |
 
