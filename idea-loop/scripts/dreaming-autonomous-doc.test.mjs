@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { COLUMNS, ROW_TYPES, splitAskRows } from './proposal-table-check.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
@@ -25,6 +26,34 @@ const retro = read(...dir, 'references', 'retro-candidates.md');
 const missed = read(...dir, 'references', 'missed-archive.md');
 const weekly = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
 const readme = read('README.md');
+
+// How the docs word each kind of row `--split-ask` hands to the human, in README order. `wording` reads the
+// script's own verdict on one probe row and returns the words the docs use for it; null means "no wording
+// exists for this kind", which is how a kind the script added and the docs never named shows up.
+const ASK_WORDING = ['`DESIGN.md`', '文档里的冲突', '`GLOSSARY.md`', '要删的暂缓设计', '`候选`'];
+function wording(type, disposition, object) {
+  if (type === '文档' && /^`?GLOSSARY\.md/.test(object)) return '`GLOSSARY.md`';
+  if (type === '文档' && ['报警', '问人'].includes(disposition)) return '文档里的冲突';
+  if (type === 'DESIGN.md 条目') return '`DESIGN.md`';
+  if (type === '暂缓设计' && disposition === '删除') return '要删的暂缓设计';
+  if (type === '候选') return '`候选`';
+  return null;
+}
+
+/** Feed `splitAskRows` one probe row per (row type, disposition, object) and collect what it hands to the human. */
+function askedBySplit() {
+  const asked = [];
+  for (const [type, dispositions] of Object.entries(ROW_TYPES)) {
+    for (const disposition of dispositions) {
+      for (const object of ['`docs/x.md`', '`GLOSSARY.md`']) {
+        const cells = [object, 'f', 'e', disposition, '—'];
+        const table = `# t\n\n## ${type}\n\n| ${COLUMNS.join(' | ')} |\n|---|---|---|---|---|\n| ${cells.join(' | ')} |\n`;
+        if (splitAskRows(table).count > 0) asked.push({ type, disposition, object });
+      }
+    }
+  }
+  return asked;
+}
 
 test('dreaming: description routes only, body stays under 5000 characters', () => {
   const description = skillFull.match(/^description: (.*)$/m)[1];
@@ -42,9 +71,10 @@ test('the ask-or-auto rule is written once, in the script: the docs point at it 
   assert.match(proposal, /问人的行和自动的行/);
   const part = proposal.split('## 问人的行和自动的行')[1].split('\n## ')[0];
   assert.match(part, /splitAskRows/);
-  for (const k of ['报警', '问人 ·', '`GLOSSARY.md`', '`DESIGN.md 条目`']) {
+  for (const k of ['报警', '问人 ·', '`GLOSSARY.md`', '`DESIGN.md 条目`', ...ASK_WORDING, '大意', '设计规范', '术语']) {
     assert.ok(!part.includes(k), `the split section repeats the rule: ${k}`);
   }
+  assert.match(part, /`idea-loop:dreaming`[^\n]*开头/);
 });
 
 test('the automatic PR merges itself on generic checks, with no project command in the plugin', () => {
@@ -76,13 +106,21 @@ test('no automatic row waits for approval: retro candidates and missed archive r
 });
 
 test('dreaming and the weekly setup text say what dreaming still asks', () => {
-  // dreaming's opening lists the five kinds of rows `proposal-table-check --split-ask` hands to the human
-  // (same words and order as the plugin README); the weekly setup text points there instead of listing them again
+  // dreaming's opening lists the kinds of rows `proposal-table-check --split-ask` hands to the human; the kinds
+  // come from running the script's own judgment, not from a word list kept here. The weekly setup text points
+  // at the opening instead of listing them again.
   const ask = skill.match(/行按风险分两类[^\n]*会判错[^（\n]*（([^）\n]*)）问人[^\n]*其余[^\n]*自己执行/);
   assert.ok(ask, 'the opening sentence about the two risk classes is missing');
-  const kinds = ['`DESIGN.md`', '文档里的冲突', '`GLOSSARY.md`', '要删的暂缓设计', '`候选`'];
-  for (const kind of kinds) assert.ok(ask[1].includes(kind), `dreaming's opening list lacks ${kind}: ${ask[1]}`);
-  const at = kinds.map((k) => ask[1].indexOf(k));
+  const asked = askedBySplit();
+  assert.ok(asked.length > 0, 'the script hands nothing to the human');
+  const unnamed = asked.filter((a) => wording(a.type, a.disposition, a.object) === null);
+  assert.deepEqual(unnamed, [], `--split-ask hands these rows to the human but dreaming's opening names no such kind: ${JSON.stringify(unnamed)}`);
+  const derived = new Set(asked.map((a) => wording(a.type, a.disposition, a.object)));
+  for (const word of ASK_WORDING) {
+    assert.ok(derived.has(word), `dreaming's opening names ${word} but --split-ask no longer asks about it`);
+    assert.ok(ask[1].includes(word), `dreaming's opening list lacks ${word}: ${ask[1]}`);
+  }
+  const at = ASK_WORDING.map((k) => ask[1].indexOf(k));
   assert.deepEqual(at, [...at].sort((a, b) => a - b), `dreaming's opening list is out of order: ${ask[1]}`);
   assert.doesNotMatch(weekly, /两类/);
   assert.match(weekly, /`idea-loop:dreaming`[^\n]*开头/);
