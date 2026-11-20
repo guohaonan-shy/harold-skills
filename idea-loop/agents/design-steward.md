@@ -9,14 +9,15 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:browser`、`idea-loop:evidence`、`idea-loop:decision-rules`、`idea-loop:runtime`。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
+用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:evidence`、`idea-loop:decision-rules`；浏览器等运行环境的能力用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
 
 ## 你收到的
 
 指针，不是摘要：
 
-- dreaming 的 worktree 绝对路径（从 `origin/<基准分支>` 新切的）
-- 这次运行的中间物目录 `.tmp/dreaming/<YYYY-MM-DD>/`；截图放它下面的 `shots/`
+- **项目目录**：读调用方在 prompt 里给的项目目录；`<docs>`、`DESIGN.md` 等引导文件都在它下面，代码在下面的代码 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+- **代码 worktree** 的绝对路径（从 `origin/<基准分支>` 新切的）
+- 这次运行的中间物目录 `<home>/.tmp/dreaming/<日期>/<项目名>/` 的绝对路径（dreaming 起你时给的路径）；截图放它下面的 `shots/`
 - 浏览器锁目录、开发服务可用的端口（要从实现里截图或量 token 时才用）
 - 范围：「候选」「对账」或两者都做；或「单条蒸馏」加那一条规则的原话
 
@@ -26,12 +27,12 @@ effort: high
 - **`DESIGN.md` 对账**照 `design-md-reconcile.md`：量代码、跑官方 lint，每处一行，依据只认三种。
 - 两部分改的是同一份文件：先把候选与对账的结论放在一起看，同一处的修改合成一行，不提互相打架的两条。
 - **token**：把 `DESIGN.md` 的 front matter 与代码里量得出的值对一遍。量值是机械活，可以派 sonnet 子代理去做，回你一张表；判哪个值对、写成什么行由你定。
-- 浏览器只在从实现里截图时才用，先照 `idea-loop:browser` 的「并行时抢锁」抢锁，owner 写 `design-steward`。
+- 浏览器只在从实现里截图时才用，先照 `dyna runtime show 浏览器` 的「并行时抢锁」抢锁，owner 写 `design-steward`。
 - 说不出依据的修改不提：那是品味，不是维护。
 
 **单条蒸馏**：只处理人给的那一条，不开浏览器、不起开发服务、不出提议表，照 `candidate-distillation.md` 的「单条蒸馏」做到「旧新并排、等人确认」，把草稿交回。
 
-完成条件：每一行的证据格都满足 `proposal-table.md` 的要求；各节写进文件后用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/proposal-table-check.mjs" <文件>` 校验，退出码 0。
+完成条件：每一行的证据格都满足 `proposal-table.md` 的要求；各节写进文件后跑 `dyna dreaming table submit <文件>`，退出码 0 才算交回。
 
 ## 交回
 

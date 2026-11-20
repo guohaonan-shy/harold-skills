@@ -21,7 +21,7 @@ only when a block's job is one of four:
 | **氛围** (atmosphere) | Keeps the environment alive while the subject is still (**marketing register only**; the in-app ambient-loop budget is zero) |
 
 "Looks more alive" is not a job; motion without a job is filler. If none match, don't open the stage
-and say so in one ledger line. Every moving element owes **one sentence of reason** tied to that job;
+and say so in one line of this round's `notes.md`. Every moving element owes **one sentence of reason** tied to that job;
 an element with no such sentence is cut, not tuned.
 
 ## First principles
@@ -166,7 +166,7 @@ motion-anything's `MA_RUNTIME`)*:
    ```
    WAAPI/CSS animations are seekable via `document.getAnimations()`; pure rAF/JS-clock motion is not
    — prefer WAAPI/CSS for choreography, or expose the JS clock through the same `seek(t)`.
-2. **Verify by seeking, not by waiting**: run `__maTimeline.seek(t)` in the page (arbitrary JS via the browser capability; if the runtime can't, take the `idea-loop:runtime` fallback) at t = 0 / mid /
+2. **Verify by seeking, not by waiting**: run `__maTimeline.seek(t)` in the page (arbitrary JS via the browser capability; if the runtime can't, take the fallback `dyna runtime show` prints) at t = 0 / mid /
    end (+ keyframes of interest) → screenshot each → confirm the frames DIFFER and match the intended
    choreography. Identical frames = the animation never played. For scroll-driven or pointer
    interactions the timeline can't cover, capture before / during / after instead.
@@ -212,13 +212,13 @@ the sibling shipped components whose interactions you must match or extend.
    written down and sent back to the static loop, never quietly re-skinned.
 4. **Expose the freezable timeline.**
 5. **Reduced motion**, per its section.
-6. Serve it locally and drive it with the browser capability: load `idea-loop:browser` first (it sets the default
+6. Serve it locally and drive it with the browser capability: run `dyna runtime show 浏览器` first (it sets the default
    headless server), then navigate, interact, capture.
 
 ### B · Review gates to convergence
 
 1. **Gate 1 — mechanical lint** (automatic on every write): brand rules plus `layout-transition` and
-   `bounce-easing`, all native to `${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs`. P0 = build error.
+   `bounce-easing`, all native to the design lint. P0 = build error.
 2. **Gate 2 — motion-craft audit**, self-contained, with
    [accessibility-baseline.md](accessibility-baseline.md): a11y (real semantics, focus order,
    keyboard — including mid-animation, per "Performance and craft rules"), perf (offscreen pause, no
@@ -234,13 +234,12 @@ the sibling shipped components whose interactions you must match or extend.
 
 ### C · ui-master on frames, then the human
 
-The refine loop runs as usual for a motion round, with **frame sequences** instead of screenshots:
+A motion round is an ordinary round (the human names the motion in a decision; the session sends the judge **frame sequences** instead of screenshots):
 `__maTimeline.seek(t)` at t = 0 / mid / end (plus keyframes you care about), in time order; for scroll
 and pointer interactions the timeline can't cover, before / during / after. The intent sentence, the
-three things never given to the judge, `critic-score.mjs` and one ledger line per round are the same
-as for static.
+three things never given to the judge and the round's report are the same as for static.
 
-When motion is done, stop and let the human watch the running preview. The hand-back's 「改了什么」
+When the motion is done, the human watches the running preview. The hand-back's 「改了什么」
 carries: each motion's reason sentence and tokens, how reduced motion falls back, the restraint tally
 for the viewport, the frame-evidence paths, responsive notes, and every `DESIGN.md` deviation and why.
 Read a cluster of fine notes as one rule. **No React until the human signs off.**

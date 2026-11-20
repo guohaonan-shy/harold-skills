@@ -5,7 +5,7 @@
  * What it does: for each case, copies the minimal product context (`project/`) into a fresh git repo,
  * types the case's default prompt into `claude -p` with this working tree's plugin loaded, and leaves
  * the page the researcher wrote at a fixed place for a HUMAN to open and annotate. It does not judge
- * the page: the only numbers it prints are facts about the run (did the calling session touch Refero,
+ * the page: the only numbers it prints are facts about the run (did the calling session touch Mobbin,
  * did the shape check pass, what it cost), never a score.
  *
  *   node idea-loop/evals/uiux-research/run.mjs --list
@@ -22,17 +22,23 @@
  *
  * `--plugin-dir` points at the working tree's idea-loop/, not the installed copy: a run against the
  * installed plugin says nothing about the change in front of you.
+ *
+ * `UIUX_RESEARCH_CLAUDE_BIN` replaces the `claude` command (the test stands a fake one in).
  */
 
-import { closeSync, cpSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { digestStream, fileLines } from '../../scripts/claude-stream.mjs';
 
-// Reading the event stream lives in scripts/claude-stream.mjs, shared with the retro runner.
-// Re-exported here so existing importers (research-baseline.test.mjs) keep working.
-export { digestStream };
+// Starting `claude -p` and reading its event stream are `dyna agent claude run`'s job (the same command the retro runner uses).
+// The command is `IDEA_LOOP_DYNA_BIN`, else `~/.idea-loop/bin/dyna`, else `dyna` on PATH.
+function dynaBin() {
+  if (process.env.IDEA_LOOP_DYNA_BIN) return process.env.IDEA_LOOP_DYNA_BIN;
+  const installed = join(homedir(), '.idea-loop', 'bin', 'dyna');
+  return existsSync(installed) ? installed : 'dyna';
+}
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = resolve(HERE, '..', '..');
@@ -99,20 +105,27 @@ function runCase(c, opts) {
   git(projectDir, 'add', '-A');
   git(projectDir, 'commit', '-q', '-m', 'baseline project');
 
-  const args = ['-p', buildPrompt(c), '--plugin-dir', PLUGIN_ROOT, '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose'];
-  if (opts.model) args.push('--model', opts.model);
+  // The session runs through `dyna agent claude run`: stdin closed, the timeout enforced, the whole process tree ended when
+  // the session exits or runs out of time, and the event stream (kept at streamPath) digested as it comes.
   const streamPath = join(caseDir, 'run.stream.jsonl');
-  const out = openSync(streamPath, 'w');
+  const promptFile = join(caseDir, 'prompt.md');
+  writeFileSync(promptFile, buildPrompt(c));
+  const args = ['agent', 'claude', 'run', '--json', '--prompt-file', promptFile, '--cwd', projectDir, '--plugin-dir', PLUGIN_ROOT, '--skip-permissions',
+    '--stream', streamPath, '--timeout', `${Math.max(1, Math.round(opts.timeoutMin * 60))}s`];
+  if (process.env.UIUX_RESEARCH_CLAUDE_BIN) args.push('--bin', process.env.UIUX_RESEARCH_CLAUDE_BIN);
+  if (opts.model) args.push('--model', opts.model);
   const started = Date.now();
-  let r;
+  const r = spawnSync(dynaBin(), args, { cwd: projectDir, encoding: 'utf8', maxBuffer: 1 << 28 });
+  let summary = null;
   try {
-    r = spawnSync('claude', args, { cwd: projectDir, encoding: 'utf8', timeout: opts.timeoutMin * 60_000, stdio: ['ignore', out, 'pipe'] });
-  } finally {
-    closeSync(out);
+    summary = JSON.parse(r.stdout);
+  } catch {
+    // dyna did not get as far as printing the summary: its own message (run.stderr.log) says why
   }
-  if (r.stderr) writeFileSync(join(caseDir, 'run.stderr.log'), r.stderr);
+  const stderr = summary ? summary.stderr : r.stderr || String(r.error ?? '');
+  if (stderr) writeFileSync(join(caseDir, 'run.stderr.log'), stderr);
 
-  const digest = digestStream(fileLines(streamPath));
+  const digest = summary?.digest ?? { session: { tools: {}, mobbinCalls: 0 }, subagents: { tools: {}, mobbinCalls: 0 }, result: null };
   if (digest.result) writeFileSync(join(caseDir, 'result.txt'), digest.result.text);
 
   const pages = findPage(projectDir);
@@ -121,18 +134,18 @@ function runCase(c, opts) {
   if (pages.length) {
     page = pages[0];
     cpSync(dirname(page), outputDir, { recursive: true });
-    const k = spawnSync('node', [join(PLUGIN_ROOT, 'scripts', 'research-check.mjs'), join(outputDir, 'index.html')], { encoding: 'utf8' });
+    const k = spawnSync(dynaBin(), ['research', 'submit', join(outputDir, 'index.html')], { encoding: 'utf8' });
     check = { ok: k.status === 0, output: `${k.stdout}${k.stderr}`.trim().slice(0, 2000) };
   }
   const facts = {
     case: c.name,
     elapsedSec: Math.round((Date.now() - started) / 1000),
-    exitCode: r.status,
-    timedOut: r.error?.code === 'ETIMEDOUT',
+    exitCode: summary ? summary.exitCode : r.status,
+    timedOut: summary ? summary.timedOut : false,
     pageWrittenAt: page ? page.replace(projectDir, '<project>') : null,
     shapeCheck: check,
-    callingSessionReferoCalls: digest.session.referoCalls,
-    researcherReferoCalls: digest.subagents.referoCalls,
+    callingSessionMobbinCalls: digest.session.mobbinCalls,
+    researcherMobbinCalls: digest.subagents.mobbinCalls,
     callingSessionTools: digest.session.tools,
     subagentTools: digest.subagents.tools,
     run: digest.result && { cost: digest.result.cost, turns: digest.result.turns, models: digest.result.models, isError: digest.result.isError },
@@ -162,7 +175,7 @@ function main() {
     } else {
       console.log(`   page:       (none written — see ${join(caseDir, 'result.txt')})`);
     }
-    console.log(`   shape check: ${facts.shapeCheck ? (facts.shapeCheck.ok ? 'green' : 'RED') : 'n/a'}   calling-session Refero calls: ${facts.callingSessionReferoCalls}   researcher Refero calls: ${facts.researcherReferoCalls}`);
+    console.log(`   shape check: ${facts.shapeCheck ? (facts.shapeCheck.ok ? 'green' : 'RED') : 'n/a'}   calling-session Mobbin calls: ${facts.callingSessionMobbinCalls}   researcher Mobbin calls: ${facts.researcherMobbinCalls}`);
     console.log(`   last time:  ${c.last_time}`);
     console.log(`   annotate:   ${join(HERE, 'cases', c.name, 'annotations.md')}\n`);
   }

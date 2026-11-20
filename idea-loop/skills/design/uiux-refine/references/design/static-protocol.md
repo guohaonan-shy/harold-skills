@@ -7,7 +7,7 @@ code is `idea-loop:implement`'s job.
 Design the **static UI** of a product surface in a **real browser** as a preview HTML file: visual
 system, layout, hierarchy, copy, component structure, and the *shape* of interactions (which states
 exist and where controls sit). The canvas is the browser, not Paper (temporarily); before any browser
-tool call, load `idea-loop:browser` with the Skill tool.
+tool call, run `dyna runtime show 浏览器`.
 
 **The gates do not trust the generator.** Every route closes through deterministic lint, isolated
 critique with persisted evidence, real-DOM checks, a context-appropriate matrix, and human sign-off.
@@ -19,7 +19,7 @@ A direction/slop finding returns to concept or composition; a craft finding is f
 2. Read the target project root's `DESIGN.md` and `PRODUCT.md`, each if present (missing: see
    design-law's "Precedence").
 3. Read the real code, data/domain model, and sibling shipped components at the target scope.
-4. Load `idea-loop:browser` before any browser call.
+4. Run `dyna runtime show 浏览器` before any browser call.
 
 [accessibility-baseline.md](accessibility-baseline.md) (beyond the one-line a11y floor) and
 [laws-of-ux.md](laws-of-ux.md) (a composition question the expression framework doesn't answer) load
@@ -159,7 +159,7 @@ references or pixels.
 Skip by default. Fires only when the concept leaves a specific structural, coverage, flow, or state
 question a judgment at this altitude cannot settle.
 
-**The executor does not research**: no Refero, no research agent. It writes a **suggested research
+**The executor does not research**: no Mobbin, no research agent. It writes a **suggested research
 question** — one sentence, one decision, plus its **recommended answer** — into the hand-back
 (`designer`'s 「建议调研的问题」) and carries on without stopping, working from the recommendation.
 Whether to research is the human's call: they may run `idea-loop:uiux-research` and forward
@@ -271,13 +271,11 @@ close-out protocol.
 
 ### G · Review gates to convergence
 
-1. **Mechanical lint.** The final preview is P0-clean (run
-   `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" docs/design/tmp/<spec-slug>/canvas/v<N>.html`
-   when needed). Fix or explicitly justify P1s.
+1. **Mechanical lint.** The final preview is P0-clean (the lint hook checks every write to it). Fix or explicitly justify P1s.
 2. **Isolated critique** over the served preview URL: read [critique.md](critique.md), screenshot
    each section, record findings against it. Route direction findings to
    B/W, craft findings to F. On the real DOM: computed contrast via
-   `getComputedStyle` run in the page (ratios, no approximation; arbitrary JS, so a runtime without it takes the `idea-loop:runtime` fallback) and a clean console. Verify with
+   `getComputedStyle` run in the page (ratios, no approximation; arbitrary JS, so a runtime without it takes the fallback `dyna runtime show` prints) and a clean console. Verify with
    screenshots and measured values, never by reading the code alone.
 3. **Context matrix** for the route, never a one-size viewport:
 

@@ -12,6 +12,7 @@ Default English version: [README.md](./README.md)
 | [`content-creator/`](./content-creator/) | 面向短视频 / 社交 feed 创作者的内容工具集，当前包含 `thumbnail-gen`。 | Ready |
 | [`happy-life/`](./happy-life/) | 面向日常仪式感和个人 taste memory 的生活类 skills，当前包含 `daily-coffee-oracle`。 | Ready |
 | [`idea-loop/`](./idea-loop/) | 从 idea 到工程落地的闭环——设计树访谈 → spec → ［设计发散 → 设计收敛］ → tracer-bullet ticket → TDD 实现 → 三轴 PR review（Correctness / Standards / Spec）→ 知识库对账。方括号那两段只在 spec 碰 UI 时才走。从一个真实项目里通用化出来，读目标仓库自己的约定，不硬编码。 | Ready |
+| [`ai-eval/`](./ai-eval/) | 评测 AI 流水线的改动：候选在固定样本集上跑，用确定性断言加 Codex 判官打分，和存好的基线比，对着项目自己 `EVAL.md` 里的准出标准判过不过。依赖 PostHog（存样本和 scorer）和 Codex（当判官）。 | Ready |
 
 更多 plugin 会陆续加入。
 
@@ -30,6 +31,7 @@ Default English version: [README.md](./README.md)
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
 /plugin install idea-loop@harold-skills
+/plugin install ai-eval@harold-skills
 ```
 
 ## 仓库结构

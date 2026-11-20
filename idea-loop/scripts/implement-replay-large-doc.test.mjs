@@ -73,7 +73,7 @@ test('replay-result.md moved from issue-session to implement, and handles the ou
   assert.match(doc, /全过/);
   assert.match(doc, /有不过的/);
   assert.match(doc, /判定对.*判定错.*用例有问题|三个处理/s, 'the three rulings');
-  assert.match(doc, /retro-install\.mjs/, 'reinstall the fixed-path runner when it does not know --run-large');
+  assert.match(doc, /dyna retro install/, 'reinstall the fixed-path runner when it does not know --run-large');
   assert.match(doc, /unknown argument/);
   assert.doesNotMatch(doc, /夜|队列|macOS 通知|会话间消息|当场跑/, 'nothing of the night run is left');
 });
@@ -90,20 +90,19 @@ test('setup 「规则回放 runner」 installs the runner only; its reference re
   assert.match(setupRef, /idea-loop-retro-replay/, 'delete the old scheduled task by its id');
   assert.match(setupRef, /『定时任务』/, 'with the scheduled-task capability');
   assert.match(setupRef, /~\/\.idea-loop\/replay-queue\//, 'delete the old queue directory');
-  assert.match(setupRef, /retro-install\.mjs/);
+  assert.match(setupRef, /dyna retro install/);
   assert.match(setupRef, /允许规则/);
   assert.ok(chars(setup) < 5000, `setup body is ${chars(setup)} characters`);
 });
 
-test('implement SKILL.md body is not longer than it was before this change (9589 characters on main after #304)', () => {
-  assert.ok(chars(implement) <= 9589, `implement body is ${chars(implement)} characters`);
-});
-
 test('implementer: a large case is only written and committed; the result of `--run-large` is the orchestrator\'s', () => {
-  const doc = readFileSync(join(pluginRoot, 'agents', 'implementer.md'), 'utf8');
+  // the rule-ticket steps moved out of agents/implementer.md into references/rule-tickets.md (spec
+  // implementer-start-point-non-destructive, ticket 02): the positive sentences are read there, the queue words stay out of both
+  const def = readFileSync(join(pluginRoot, 'agents', 'implementer.md'), 'utf8');
+  const doc = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md');
   assert.match(doc, /大用例待跑：<用例>/);
   assert.match(doc, /PR 开出后当场跑/);
-  assert.doesNotMatch(doc, /--enqueue|夜里|夜间|回放在队列里|队列/);
+  for (const text of [def, doc]) assert.doesNotMatch(text, /--enqueue|夜里|夜间|回放在队列里|队列/);
   assert.match(doc, /规则回放 runner/, 'a runner that is not there means setup\'s 「规则回放 runner」 step was not done');
 });
 

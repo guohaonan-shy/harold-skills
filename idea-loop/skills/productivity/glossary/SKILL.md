@@ -1,9 +1,9 @@
 ---
 name: glossary
-description: 目标项目 GLOSSARY.md 术语表：收什么、格式、谁能写、怎么读。新增、改名、订正术语，或给产出里的领域概念起名时用。
+description: 项目的 GLOSSARY.md 术语表：收什么、格式、谁能写、怎么读。新增、改名、订正术语，或给产出里的领域概念起名时用。
 ---
 
-目标项目根目录的 `GLOSSARY.md` 是一份术语表，别的什么都不是。每条只回答两件事：这个东西在本项目里叫什么，它是什么。它最常见的坏法是膨胀：把「写进术语表」当成「把每个答案都存下来」，几个月后变成一份 spec。下面的规则都为挡住这一点。
+项目目录里的 `GLOSSARY.md`（`idea-loop:wiki-conventions` 的「项目目录」）是一份术语表，别的什么都不是。每条只回答两件事：这个东西在本项目里叫什么，它是什么。它最常见的坏法是膨胀：把「写进术语表」当成「把每个答案都存下来」，几个月后变成一份 spec。下面的规则都为挡住这一点。
 
 ## 收什么：三问全过才收
 
@@ -15,11 +15,11 @@ description: 目标项目 GLOSSARY.md 术语表：收什么、格式、谁能写
 
 | 内容 | 去处 |
 |---|---|
-| 字段取值、枚举编码（`1=active`、`category=2`）、表结构、存储位置 | 目标项目的 `AGENTS.md`（表结构那节）或代码本身 |
+| 字段取值、枚举编码（`1=active`、`category=2`）、表结构、存储位置 | 代码仓库的 `AGENTS.md`（表结构那节）或代码本身 |
 | 代码约定（命名风格、下划线还是连字符） | 最近的 `AGENTS.md`，能写成 lint 规则就写成 lint 规则 |
 | 指向代码常量或文件的「以 X 为准」 | 对应的 `docs/domain/` 文档或模块 `AGENTS.md` |
 | 机制、调研、分类体系、「它怎么运作」 | `docs/domain/` |
-| 决策和它的理由 | spec，了结后进 ADR（`idea-loop:wiki-conventions` 的「文件在不在，就是状态」） |
+| 决策和它的理由 | spec，了结后进 ADR（`idea-loop:wiki-conventions` 的「生命周期」） |
 
 方向是单向的：其他文档用术语表里的叫法，术语表不链回它们。
 
@@ -27,8 +27,8 @@ description: 目标项目 GLOSSARY.md 术语表：收什么、格式、谁能写
 
 ### 位置
 
-- 单一上下文（多数项目）：仓库根目录一份 `GLOSSARY.md`。
-- 多上下文：根目录一份 `GLOSSARY-MAP.md`，指向各上下文自己的 `GLOSSARY.md`。先拿子标题分组撑着，只有当文件已经精简、仍然覆盖两块读者不会同时需要的领域时才拆：一份膨胀的文件拆开，只会得到几份膨胀的文件。
+- 单一上下文（多数项目）：项目目录一份 `GLOSSARY.md`。
+- 多上下文：项目目录一份 `GLOSSARY-MAP.md`，指向各上下文自己的 `GLOSSARY.md`。先拿子标题分组撑着，只有当文件已经精简、仍然覆盖两块读者不会同时需要的领域时才拆：一份膨胀的文件拆开，只会得到几份膨胀的文件。
 - 第一个术语定下来时才建文件。
 - 它在 `docs/` 之外，不是 vault 的一部分：不带 frontmatter，不参与 slug 唯一性。
 
@@ -72,7 +72,7 @@ _Avoid_: level, priority（告警上另有一个也叫 priority 的字段，指�
 - 只有一个词能指两个以上概念时才进这一节；只指一个概念的，写成那个概念的 `_Avoid_`。
 - 每条一到两句：这个词可能指哪几样，单独出现时该怎么说。
 
-格式由 `glossary-check.mjs` 机械校验：plugin 的 PostToolUse hook 在每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件时自动跑它，违规写到 stderr、退出码 2，当场改到通过。内容该不该收，它不判断：那是「收什么」和人的事。
+格式由 plugin 的 PostToolUse hook 机械校验：每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件时自动查，违规写到 stderr、退出码 2，当场改到通过。内容该不该收，它不判断：那是「收什么」和人的事。
 
 ## 写：人拍板之后当场写
 
@@ -103,6 +103,6 @@ _Avoid_: level, priority（告警上另有一个也叫 priority 的字段，指�
 
 术语表不存在就照常干活，也不提醒人去建。
 
-目标项目第一次有术语表、或人要求接入（`AGENTS.md` 的读取规则、CI 兜底）时，照 [references/target-repo-setup.md](references/target-repo-setup.md)。
+项目第一次有术语表、或人要求接入（读取规则、手改后的检查）时，照 [references/target-repo-setup.md](references/target-repo-setup.md)。
 
 来源：改写自 [mattpocock/skills](https://github.com/mattpocock/skills) 的 `domain-modeling`（v1.3），MIT License，Copyright (c) Matt Pocock。

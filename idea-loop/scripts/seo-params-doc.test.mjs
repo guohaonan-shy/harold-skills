@@ -22,6 +22,7 @@ const WRITING = read('skills', 'seo', 'seo-writing', 'SKILL.md');
 const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
 const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
+const STOPS = read('skills', 'seo', 'seo-scan', 'references', 'stops.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
@@ -75,14 +76,14 @@ test('seo-scan: the gate sits after 方向 and before 预算', () => {
 
 test('seo-scan: the gate notifies, lists guesses with their source, stops without dispatching, then writes and goes on', () => {
   const g = section(SCAN, '缺口关卡');
-  assert.match(g, /seo-gaps\.mjs/);
+  assert.match(g, /dyna seo gaps/);
   assert.match(g, /find_serp_competitors/);
   assert.match(g, /allow` 大于 0，就不推/, 'competitors are only inferred when the budget lets it');
   assert.match(g, /『推送』/);
   assert.match(g, /推测值、出处/);
   assert.match(g, /一次最多三个问题/);
   assert.match(g, /不派任何方向 agent/);
-  assert.match(g, /用 Edit 改在工作区/);
+  assert.match(g, /用 Edit 改 `<项目目录>\/SEO\.md`/);
   assert.match(g, /人说留空的写 `无`/);
   assert.match(g, /update_project_context/);
   assert.match(g, /从「预算」往下跑/);
@@ -114,25 +115,26 @@ test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
   assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
 });
 
-test('seo-outreach and seo-writing: read SEO.md through seo-md.mjs, not through seo-setup\'s private references (#235)', () => {
+test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not through seo-setup\'s private references (#235)', () => {
   for (const [name, doc] of [['seo-outreach', OUTREACH], ['seo-writing', WRITING]]) {
     assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is seo-setup's own reference`);
     assert.ok(!/seo-setup[^\n]*references/.test(doc), `${name}: points into seo-setup's references`);
     assert.ok(!/格式见/.test(doc), `${name}: a format pointer is left over`);
-    assert.match(doc, /seo-md\.mjs/, `${name}: reads SEO.md through the parse script`);
+    assert.match(doc, /dyna seo parse/, `${name}: reads SEO.md through the parse command`);
   }
 });
 
-test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
-  assert.match(SCAN, /只有三种情形停下/);
+test('seo-scan: four stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
+  assert.match(SCAN, /只有四种情形停下/);
   assert.ok(!/只有开场的两种情形停下/.test(SCAN));
-  assert.match(SCAN, /停下等确认：/);
+  assert.match(SCAN, /停下等确认/);
+  assert.match(STOPS, /停下等确认：/);
   assert.match(SCAN, /- SEO\.md：这次改了/);
 });
 
 test('seo-scan: allowed-tools has what the gate uses', () => {
   const tools = frontmatterField(SCAN, 'allowed-tools');
-  for (const t of ['PushNotification', 'Edit', 'Bash(node *seo-gaps.mjs:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
+  for (const t of ['PushNotification', 'Edit', 'Bash(dyna seo:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
     assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
   }
 });

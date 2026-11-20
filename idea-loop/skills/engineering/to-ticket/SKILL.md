@@ -5,9 +5,9 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 把一份 spec 切成若干工单：每张是一颗 tracer bullet 式的**垂直切片**，写明挡着它的那几张。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`。下文 `spec` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs"`，`<docs>` 指目标项目的 `docs/`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。
 
-工单是**临时凭据**：开工时才建，提交在需求的工作分支上，合并前由合并的人删掉，删除跟着同一个 PR 进主分支（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
+工单是**临时凭据**：开工时才建，切完提交到 home，代码 PR 合并后由 pr-review 的合并步骤删掉（`idea-loop:pr-review` 的「合并」）。留痕的是 spec 和 ADR，工单不归档。
 
 工单也是写给失忆者的信：拿起它的执行方从没见过那份 spec，只读这一张，做不下去只会停下交回。你写时觉得「显而易见所以不用写」的东西，对它并不显而易见。所以每张工单：
 
@@ -19,12 +19,13 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 读 `docs/spec/<slug>/<slug>.md` 全文，含「测试决策」：seam 已经在那里谈拢，照用。
 
-先跑 `spec check <docs>`，报了旧平铺布局就停下，提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。
+先跑 `dyna spec check <docs>`，报了旧平铺布局就停下，提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。
 
-两个条件都满足才往下走，缺哪个就停下告诉人缺什么：
+下面的条件都满足才往下走，缺哪个就停下告诉人缺什么：
 
-- 没有「需要 grill」，也没有「待定」。还有的，先跟人定完（它们由 triage 里的会话定，issue 翻 todo 时脚本核过；直接调到这里的也要核）。
+- 没有「需要 grill」，也没有「待定」。还有的，先跟人定完（它们由 triage 里的会话定，issue 翻 todo 时命令核过；直接调到这里的也要核）。
 - 碰 UI 的，设计已冻结：「实现决策」里有完整的冻结摘要（画布指针、矩阵、mismatch 阈值、一行 ledger 摘要、状态矩阵与数据契约变更）。缺任何一样就是还没冻结，先跑完设计；冻结只由设计那一段做，切票这一步不替它补。
+- 在 issue 会话里（由 `idea-loop:issue-session` 调进来）时，issue 已经过了 triage。状态用 `idea-loop:issues` 查（`dyna issues show <docs> <号>`，Linear 项目照它的 Linear 做法），不看 label；还在 triage 就停下，指回 `idea-loop:issue-session` 的「triage 会话」第 3 步「交给调度」：翻 todo，工单由之后的 todo 会话切。人直接调本 skill、不在 issue 会话里时，不核状态。
 
 所以碰 UI 的 spec 只在冻结后切，不会有「切了但不能开工」的票。混着 UI 和非 UI 的 spec，非 UI 那部分也要等冻结；不想等，起草时就拆成两份 spec。
 
@@ -34,7 +35,7 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 先 `git fetch`，对着 `origin/<主分支>` 读。从用户进入的入口开始（Web 应用里是地址，命令行里是命令），沿真实调用链一跳一跳走到数据来源（Web 应用里是路由 → 页面 → 接口），每一跳都对着代码说清它现在做什么，包括 spec 没点名的那几跳。再看 spec 文件最后一次提交以来、主分支上碰过这条链的提交，逐个说清它改了哪一跳。走出 spec 没覆盖的一段，就是下面「唯一会停的情况」里的「spec 没写清」，照那里办。
 
-目标项目有 `GLOSSARY.md` 就读它，工单的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词；缺词不问、不写，先用描述性的说法（`idea-loop:pr-review` 会把缺词列出来）。
+项目目录有 `GLOSSARY.md` 就读它，工单的标题和描述用它的标准叫法、不用 `_Avoid_` 里的词；缺词不问、不写，先用描述性的说法（`idea-loop:pr-review` 会把缺词列出来）。
 
 顺手找**预重构**的机会：让改动变容易，然后做那个容易的改动。
 
@@ -44,7 +45,6 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 - 切完的一刀自己就能演示或验证。
 - 预重构排最前。
 - 一份 spec 塞得进一个 PR，就只切一张工单。至少一张。
-- 项目有多个仓库（`ISSUE_TRACKER.md` 有「仓库」一节）时，一刀只落在一个仓库；跨仓库的竖切拆成每个仓库一张，后一张写明被前一张挡着（接口先于调用方）。
 
 按层横切的工单每张都会反复返工，所以竖切不是审美偏好。
 
@@ -80,7 +80,6 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 # NN — <标题>
 
 **Blocked by**：<编号/标题>，或「无——可立即开工」
-**仓库**：<「仓库」一节里的仓库名>（项目只有一个仓库就不写这一行）
 **设计冻结**：不涉及 UI ｜ 已冻结（<画布指针> · <矩阵里这张工单范围内的格> · <mismatch 阈值> · <一行 ledger 摘要> · <状态矩阵与数据契约变更>）
 
 ## 要建什么
@@ -110,11 +109,11 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 工单全部落盘之后，把上面「切法直接落盘，不停下」要求的切法清单交回。切票不翻任何状态：issue 的状态由 `idea-loop:implement` 开 PR 时翻 in-progress。
 
-落盘之后，把工单和 spec 的改动提交进当前分支：`idea-loop:implement` 派出的执行方，worktree 都是从这条分支切出来的，不提交就读不到工单。
+落盘之后，照 `idea-loop:wiki-conventions` 的「知识库落地」把工单和 spec 的改动 `commit` 到 home：`idea-loop:implement` 派出的执行方从代码分支切 worktree，读不到 home，所以派工时会把工单的绝对路径给它。
 
 ## 改 skill 类文件的工单
 
-工单要改 skill、agent 定义或 skill 参考文件的，验收标准末尾固定带下面三格，原文照抄。「这类文件」按路径认，落地时 `ticket-ledger.mjs skill-edit` 用同一条：路径以 `SKILL.md` 结尾；或在某个 `skills/` 目录下、以 `.md` 结尾；或是某个 `agents/` 目录下直接的 `.md` 文件（含 `.claude/agents/`）。工单文件（`docs/spec/*/tickets/`）不算。
+工单要改 skill、agent 定义或 skill 参考文件的，验收标准末尾固定带下面三格，原文照抄。「这类文件」按路径认，落地时 `dyna spec skill-edit` 用同一条：路径以 `SKILL.md` 结尾；或在某个 `skills/` 目录下、以 `.md` 结尾；或是某个 `agents/` 目录下直接的 `.md` 文件（含 `.claude/agents/`）。工单文件（`docs/spec/*/tickets/`）不算。
 
 - [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。

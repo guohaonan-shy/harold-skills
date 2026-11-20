@@ -12,9 +12,10 @@ tags: [retro-candidates]
 - 旧文：无（这份文件要求先查清现状、先写交付物、每个问题配具体例子，没有要求解释题里用到的指称）
 - 新文：加一条「**题里引入的指称，第一次出现就落到具体对象上。** 问题或选项里出现一个人没在这次对话里见过定义的叫法（『公开样题』『源码波』『这批题』），第一次出现就说清它是什么、在哪：例，不写『剔除了与公开样题相同的题组』，写『剔除了和 toeflresources.com 公开的 15 套 Take an Interview 样题逐字相同的 7 套』。」
 - 例子：#577 写稿途中，AI 请人决定文末统计说明里「剔除了措辞与公开样题相同的题组」这句留不留，没说「公开样题」指 toeflresources.com 上的 15 套 Interview 样题，人先问了一句才回到决定上。相关：retro-candidate-98（落点只是 review 汇报的写法，同一个毛病出现在别的交给人的地方）。
-- 状态：在池里
+- 状态：已开 issue（https://github.com/guohaonan-shy/harold-skills/issues/427）
 
 ## 出现
 
 - Tofelair#577（2026-10-31）：「公开样题指的是？」（写稿途中定文末统计说明的去留）；决定记录：Tofelair `docs/raw/decisions/577.md`
 - guohaonan-shy/Tofelair#731（2026-11-11）：「兜底样本是指针对azure失败的Gemini任务的样本？另外，你多做的那件事我没看懂你做了什么？」；「我看里面有基线和候选？这个是什么意思，我们现在基线和候选的区别是？」（工单 05 汇报里的「恢复同号归档条目改写」、冒烟实验评审页里没先定义的「基线」「候选」）；决定记录：guohaonan-shy/Tofelair `docs/raw/decisions/731.md` 候选 7
+- guohaonan-shy/harold-skills#164（2026-11-20）：「Q1 只改那8个，disallowed tool是指不被允许的工具吗？」（grill 第一轮之后）；「Mobbin MCP 这类叫法是在哪里？做什么用的」（第 3 轮 review 修复落地后交题时）；人批开 issue，聚合进 https://github.com/guohaonan-shy/harold-skills/issues/427 ；决定记录：[[164]] 候选 1

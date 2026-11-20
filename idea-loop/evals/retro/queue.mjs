@@ -53,7 +53,7 @@ function describeCase(r) {
 /**
  * One review-loop entry for the replay of one PR. A replay entry is a record the runner wrote:
  * when every case passed it says so under 做了什么 (nothing is waiting for the human); otherwise it carries a
- * 要你决定 and no 做了什么, so `review-loop.mjs check` lists it until the human has ruled and it was acted on.
+ * 要你决定 and no 做了什么, so `dyna pr loop check` lists it until the human has ruled and it was acted on.
  */
 export function buildReplayEntry({ round, ranAt, results }) {
   const s = summarizeResults(results);
@@ -87,7 +87,7 @@ function nextReplayRound(text) {
       const rec = JSON.parse(m[1]);
       if (rec.kind === 'replay' && Number.isSafeInteger(rec.round)) max = Math.max(max, rec.round);
     } catch {
-      /* a malformed marker is review-loop.mjs's to report, not ours */
+      /* a malformed marker is `dyna pr loop`'s to report, not ours */
     }
   }
   return max + 1;

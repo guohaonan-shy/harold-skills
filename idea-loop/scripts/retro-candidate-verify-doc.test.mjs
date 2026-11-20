@@ -12,9 +12,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(pluginRoot, '..');
@@ -83,7 +83,7 @@ test('the pool reader still accepts the existing pool files, which have no éªŒè¯
   const dir = join(repoRoot, 'docs', 'records', 'retro-candidates');
   const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
   assert.ok(files.length > 0);
-  const r = spawnSync(process.execPath, [join(pluginRoot, 'scripts', 'retro-pool-count.mjs'), dir], { encoding: 'utf8' });
+  const r = runDyna(['retro', 'pool', 'count', dir]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(JSON.parse(r.stdout).problems, []);
 });

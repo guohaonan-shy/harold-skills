@@ -1,0 +1,5 @@
+# The dyna (command line) versions this plugin works with. The plugin's `bin/dyna` hands this range to the
+# installed binary on every call; the binary refuses to run outside it. See the repository's dyna/ directory.
+# Raise the lower bound only when a skill starts using a command or flag a newer dyna added, and only after
+# that dyna version is released and its command registry is stored in dyna/registry/.
+>=0.0.4 <1.0.0

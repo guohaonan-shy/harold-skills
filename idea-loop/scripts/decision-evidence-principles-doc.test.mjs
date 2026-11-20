@@ -65,7 +65,7 @@ test('「要人定的写成一道题」 lives in decision-rules only', () => {
 
 test('evidence says what evidence is, the style, and the figure kinds; it decides no placement', () => {
   assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '配什么图：你来判断']);
-  for (const phrase of ['出处', '同条件', '复现', '结论在前', '图文结合', '旁边', 'flow-compose', 'excalidrawer', 'mermaid', '动图']) {
+  for (const phrase of ['出处', '同条件', '复现', '结论在前', '图文结合', '旁边', 'flow compose', 'excalidrawer', 'mermaid', '动图']) {
     assert.match(evidenceBody, new RegExp(phrase), `evidence 缺：${phrase}`);
   }
   assert.match(evidenceBody, /放在哪[^\n]*由调用你的 skill 定/);
@@ -81,7 +81,7 @@ test('placement moved to the callers: to-spec figures.md and pr delivery-evidenc
   for (const phrase of ['problem-', 'tree-user-stories-', 'sequence-', '只留 PNG', '待补图']) assert.match(figures, new RegExp(phrase));
   assert.match(read('skills', 'engineering', 'to-spec', 'SKILL.md'), /references\/figures\.md/);
   const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
-  for (const phrase of ['idea-loop-evidence-pr-', 'evidence.mjs" publish', 'cleanup', '看什么', '做素材本身就是一道验证']) assert.match(delivery, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  for (const phrase of ['idea-loop-evidence-pr-', 'dyna pr evidence publish', 'cleanup', '看什么', '做素材本身就是一道验证']) assert.match(delivery, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
 });
 

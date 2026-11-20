@@ -52,13 +52,13 @@ test('放进草稿箱: finds a mail MCP with draft, send and thread search; push
   assert.match(s, /草稿在 <路径>/);
 });
 
-test('发送: starts only from the human saying 发外联邮件, reads 待发送 rows with a draft id, flips to 已发送 through a docs-only PR', () => {
+test('发送: starts only from the human saying 发外联邮件, reads 待发送 rows with a draft id, flips to 已发送 and commits the tracker to home', () => {
   const s = section(SKILL, '发送');
   assert.match(s, /发外联邮件/);
   assert.match(s, /待发送/);
   assert.match(s, /草稿 id/);
   assert.match(s, /已发送/);
-  assert.match(s, /只改 `docs\/` 的 PR/);
+  assert.match(s, /`commit` 到 home/);
   assert.match(s, /没有邮件 MCP/);
 });
 
