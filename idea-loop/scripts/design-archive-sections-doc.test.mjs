@@ -97,3 +97,47 @@ test('ui-measure says its three environment conventions are for the UI implement
   const text = readFileSync(join(pluginRoot, 'skills/engineering/ui-measure/SKILL.md'), 'utf8');
   assert.match(text, /设计档案的拍图不用/);
 });
+
+// ---------- scroll-driven sections: every step is a state, only a whole-screen pin makes a section scroll-driven ----------
+
+const sectionOf = (text, heading) => {
+  const from = text.indexOf(`\n## ${heading}`);
+  assert.notEqual(from, -1, `no section ${heading}`);
+  const next = text.indexOf('\n## ', from + 1);
+  return text.slice(from, next === -1 ? undefined : next);
+};
+const read = (rel) => readFileSync(join(pluginRoot, rel), 'utf8');
+
+test('shooting.md: the scroll-driven section builds a state and a shot for every step — it no longer keeps only the first of steps that look alike', () => {
+  const text = sectionOf(read('skills/design/design-archive/references/shooting.md'), '滚动驱动的段');
+  assert.doesNotMatch(text, /结构相同的步骤只记第一个/);
+  assert.match(text, /每一步(都)?(建|一个)[^。\n]*状态/);
+  assert.match(text, /步骤不算重复项|不按结构相同合并/);
+});
+
+test('shooting.md: the known limits no longer list the narrow sidebar that writes the chapter it is at', () => {
+  const text = sectionOf(read('skills/design/design-archive/references/shooting.md'), '已知限制');
+  assert.doesNotMatch(text, /阅读进度|当前章节/);
+  assert.match(text, /滚动容器/, 'the other limit stays');
+});
+
+test('writing.md: the steps of a scroll-driven section are not repeated items — the one-representative rule has that exception', () => {
+  const text = sectionOf(read('skills/design/design-archive/references/writing.md'), '建模的取舍');
+  const rule = text.split('\n').find((l) => l.includes('结构相同的多项只记一个代表'));
+  assert.ok(rule, 'the rule is there');
+  assert.match(rule, /滚动驱动的段的步骤不算重复项/);
+});
+
+test('dreaming initial-scan.md: the sentence that points at the modelling trade-offs carries the same exception', () => {
+  const text = read('skills/productivity/dreaming/references/initial-scan.md');
+  const line = text.split('\n').find((l) => l.includes('取舍照档案的「建模的取舍」'));
+  assert.ok(line, 'the sentence is there');
+  assert.match(line, /滚动驱动的段的步骤不算重复项/);
+});
+
+// The rule itself (only a pin at least half the viewport wide and half of it tall counts) lives in the command line now and is
+// pinned by its own tests (dyna/internal/design/sections); the README no longer describes the sections command line by line.
+test('README: no narrower pinned column is described as making a section scroll-driven', () => {
+  const text = read('README.md');
+  assert.doesNotMatch(text, /pinned column smaller than a screen/);
+});

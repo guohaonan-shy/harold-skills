@@ -413,7 +413,7 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	note := leaf("note <docs> <n> <body-file>", "在 #n 上评论，带 AI 前缀", sess,
+	note := leaf("note <docs> <n> <body-file>", "在 #n 上评论，第一行是 idea-loop 的标记（HTML 注释，GitHub 不显示）", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("note", arg(args, 0), "")
 			if err != nil {

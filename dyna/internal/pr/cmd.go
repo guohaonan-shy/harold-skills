@@ -476,7 +476,7 @@ func (d Deps) archive(file, repo, pr string) error {
 			urls = u.URLs
 		}
 		e.Body = WithFigureUrls(e.Body, urls)
-		text, err := ArchiveBody(e, api.Identity)
+		text, err := ArchiveBody(e)
 		if err != nil {
 			return err
 		}

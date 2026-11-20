@@ -44,6 +44,19 @@
 }
 ```
 
+## 提示模板
+
+`seo-scan` 起方向 agent 时，提示照这个模板填，不加别的：
+
+```
+SEO.md：<项目目录>/SEO.md
+项目目录：<项目目录绝对路径>
+OpenSEO 项目：<projectId>
+本次额度：<allow 里这个方向的数> credits
+运行目录：<运行目录绝对路径>
+今天：<YYYY-MM-DD>
+```
+
 ## 调方法 skill
 
 方向 agent 用 Skill 工具调方法 skill（`idea-loop:seo-audit` 等）时，`args` 照这个模板填，第一行原样：

@@ -113,8 +113,32 @@ var Next = map[string][]string{
 // NeedsComment are the flips that must say, in a comment on the issue, where the work stopped.
 var NeedsComment = map[string]bool{"backlog": true}
 
-// AIPrefix opens every comment idea-loop writes on an issue.
-const AIPrefix = "🤖 idea-loop："
+// AIMarker is the first line of every comment idea-loop writes on an issue: an HTML comment, which GitHub does not
+// render.
+const AIMarker = "<!-- idea-loop -->"
+
+// legacyPrefix is the visible prefix idea-loop used to put on its comments; comments already posted keep it, so it
+// is still recognised.
+const legacyPrefix = "🤖 idea-loop："
+
+// IsIdeaLoopComment says whether a comment was written by idea-loop: it carries the marker, or starts with the old
+// prefix.
+func IsIdeaLoopComment(body string) bool {
+	return strings.Contains(body, AIMarker) || strings.HasPrefix(body, legacyPrefix)
+}
+
+// withMarker is the text of a comment as posted: the marker on its own first line, then the text; the old prefix is
+// dropped, a marker already there is not doubled.
+func withMarker(text string) string {
+	t := strings.TrimSpace(text)
+	if strings.HasPrefix(t, AIMarker) {
+		return t
+	}
+	if strings.HasPrefix(t, legacyPrefix) {
+		t = strings.TrimSpace(strings.TrimPrefix(t, legacyPrefix))
+	}
+	return AIMarker + "\n" + t
+}
 
 // StateOf is an issue's state: closed ones by their close reason (not planned = canceled, anything else = done),
 // open ones by the status:* label, backlog when there is none. A label that is not a state, or two status

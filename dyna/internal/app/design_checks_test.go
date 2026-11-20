@@ -32,6 +32,7 @@ func TestRegistryHasTheDesignChecksWithTheirCallers(t *testing.T) {
 		"design md diff":      registry.CallerSession,
 		"design note submit":  registry.CallerSession,
 		"design critic round": registry.CallerSession,
+		"design report":       registry.CallerSession,
 		"design flow compose": registry.CallerSession,
 	}
 	for name, caller := range want {
@@ -56,7 +57,7 @@ func TestRegistryHasTheDesignChecksWithTheirCallers(t *testing.T) {
 			t.Errorf("%s has no --hook", name)
 		}
 	}
-	for _, name := range []string{"design note submit", "design critic round", "design flow compose"} {
+	for _, name := range []string{"design note submit", "design critic round", "design report", "design flow compose"} {
 		if have[name].Next == "" {
 			t.Errorf("%s says no next command for a failed call", name)
 		}
@@ -115,9 +116,11 @@ func TestTheNoteAndCriticCommandsSayWhatIsWrongAndExitTwo(t *testing.T) {
 		t.Fatal(code, out)
 	}
 	round := filepath.Join(dir, "round.json")
-	os.WriteFile(round, []byte(`{"findings":[],"score":11}`), 0o644)
-	out, _, code = runWith(IO{}, "", "design", "critic", "round", round)
-	if code != 2 || !strings.Contains(out, "本轮无效") || !strings.Contains(out, "score must be an integer 1–10, got 11") {
+	os.WriteFile(round, []byte(`{"findings":[],"reasoning":[],"score":11,"note":null}`), 0o644)
+	context := filepath.Join(dir, "context.json")
+	os.WriteFile(context, []byte(`{"states":["首页 · 默认态"],"thoughts":[]}`), 0o644)
+	out, _, code = runWith(IO{}, "", "design", "critic", "round", round, "--context", context)
+	if code != 2 || !strings.Contains(out, "不合格") || !strings.Contains(out, "score must be an integer 1–10, got 11") {
 		t.Fatal(code, out)
 	}
 }

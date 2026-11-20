@@ -94,7 +94,7 @@ func (ev *Event) fromSubagent() bool {
 // Bucket counts what one party (the calling session, or its sub-agents) did.
 type Bucket struct {
 	Tools       map[string]int `json:"tools"`
-	ReferoCalls int            `json:"referoCalls"`
+	MobbinCalls int            `json:"mobbinCalls"`
 }
 
 // Result is what a session said at the end.
@@ -114,7 +114,7 @@ type Digest struct {
 	Result    *Result `json:"result"`
 }
 
-var referoTool = regexp.MustCompile(`(?i)^mcp__.*refero`)
+var mobbinTool = regexp.MustCompile(`(?i)^mcp__.*mobbin`)
 
 // Digester condenses a stream one line at a time, so a run can be digested while it is still going.
 type Digester struct {
@@ -164,8 +164,8 @@ func (g *Digester) AddEvent(ev *Event) {
 				name = "undefined"
 			}
 			b.Tools[name]++
-			if referoTool.MatchString(name) {
-				b.ReferoCalls++
+			if mobbinTool.MatchString(name) {
+				b.MobbinCalls++
 			}
 		}
 	}

@@ -177,7 +177,7 @@ const measureUsage = "usage: dyna ui measure <matrix.json> [<matrix.json> …] [
 
 func measureCommand(d Deps) *cobra.Command {
 	c := leaf("measure <matrix.json>...",
-		"把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2",
+		"把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素（格上写 shotAnchor 就只比那个锚点的区域，写 reducedMotion 就在那种减弱动效偏好下比；颜色先换成 8 位 sRGB 再精确比，margin 和 gap 不比）；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2。矩阵写 \"mode\": \"canvas-diff\" 就比同一画布的两版：列出变了的锚点和两版区域截图，有改动集时分出没声明的；没变或变的都声明过退出 0，其余退出 2",
 		"dyna ui measure <matrix.json>...", func(cmd *cobra.Command, args []string) error {
 			asJSON, _ := cmd.Flags().GetBool("json")
 			var requested *int
@@ -199,7 +199,7 @@ func measureCommand(d Deps) *cobra.Command {
 		return nil
 	}
 	c.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error { return exit(1, "%s", measureUsage) })
-	c.Flags().Bool("json", false, "输出 JSON：一份矩阵是 {findings, 瓶颈, humanReviewCells}，多份是 {matrices: […]}")
+	c.Flags().Bool("json", false, "输出 JSON：一份矩阵是 {findings, 瓶颈, humanReviewCells}（canvas-diff 是 {mode, classified, changed, declared, undeclared, declaredUnchanged, unchecked, humanReviewCells}），多份是 {matrices: […]}")
 	c.Flags().Int("concurrency", 0, "同时跑几份矩阵（至多 4）；不给就按机器空闲的内存和 CPU 定")
 	return c
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -98,7 +99,7 @@ func withoutSection(name string) string {
 
 // ---------- set / check ----------
 
-func TestSetRelabelsCommentsWithTheAIPrefixAndClosesDoneAndCanceledDroppingTheLabel(t *testing.T) {
+func TestSetRelabelsCommentsWithTheAIMarkerAndClosesDoneAndCanceledDroppingTheLabel(t *testing.T) {
 	p := docsWith(t, map[string]string{"retry": specText(sp{Issues: "[1]"})}, nil, "")
 	f := newFake(open(1, "status:triage", "type:bug"), open(2, "status:in-review"), open(3, "status:in-progress"), open(4, "status:todo"))
 	f.prs["o/r"] = []*fPR{pr(5, "Refs o/r#2", "MERGED", false)}
@@ -108,15 +109,15 @@ func TestSetRelabelsCommentsWithTheAIPrefixAndClosesDoneAndCanceledDroppingTheLa
 	if f.issues[2].Open || f.issues[2].Reason != "completed" || len(f.issues[2].Labels) != 0 {
 		t.Fatalf("%+v", f.issues[2])
 	}
-	eq(t, commentsOn(f.calls, 2), []string{"🤖 idea-loop：合并的 PR：o/r#5。"})
+	eq(t, commentsOn(f.calls, 2), []string{issues.AIMarker + "\n合并的 PR：o/r#5。"})
 	run(p, f, "set", p.docs, "backlog", "3", "--comment=先放着：等 0.2.x")
 	eq(t, len(f.issues[3].Labels), 0)
-	eq(t, commentsOn(f.calls, 3), []string{"🤖 idea-loop：先放着：等 0.2.x"})
+	eq(t, commentsOn(f.calls, 3), []string{issues.AIMarker + "\n先放着：等 0.2.x"})
 	run(p, f, "set", p.docs, "canceled", "4", "--comment=不做了")
 	if f.issues[4].Reason != "not_planned" || len(f.issues[4].Labels) != 0 {
 		t.Fatalf("%+v", f.issues[4])
 	}
-	eq(t, commentsOn(f.calls, 4), []string{"🤖 idea-loop：不做了"})
+	eq(t, commentsOn(f.calls, 4), []string{issues.AIMarker + "\n不做了"})
 }
 
 func TestSetChecksEveryFlipBeforeMakingAny(t *testing.T) {
@@ -174,7 +175,7 @@ func TestAnIssueWithTwoPRsSetDoneListsTheOneNotMergedAfterBothMergeReconcileClos
 	if f.issues[242].Open || f.issues[242].Reason != "completed" || len(f.issues[242].Labels) != 0 {
 		t.Fatalf("%+v", f.issues[242])
 	}
-	mustMatch(t, `^🤖 idea-loop：PR o/r#10、o/r#20 都已合并`, commentsOn(f.calls, 242)[0])
+	mustMatch(t, markerThen(`PR o/r#10、o/r#20 都已合并`), commentsOn(f.calls, 242)[0])
 }
 
 func TestOnlyTheProjectsOwnRepoIsSearchedForPRs(t *testing.T) {
@@ -202,7 +203,7 @@ func TestReconcileFlipsAnInProgressIssueWhosePRsAllTurnedReadyToInReview(t *test
 	f.prs["o/r"] = []*fPR{pr(1, "Refs #7", "OPEN", false)}
 	eq(t, run(p, f, "reconcile", p.docs).lines(), []string{"#7: in-progress → in-review（PR o/r#1 都已 ready）"})
 	eq(t, f.issues[7].Labels, []string{"status:in-review"})
-	mustMatch(t, `^🤖 idea-loop：PR o/r#1 都已 ready`, commentsOn(f.calls, 7)[0])
+	mustMatch(t, markerThen(`PR o/r#1 都已 ready`), commentsOn(f.calls, 7)[0])
 }
 
 func TestReconcilePrintsProblemsAfterTheFlips(t *testing.T) {
@@ -236,7 +237,7 @@ func TestMigrateListsByDefaultAndApplySwapsLabelsCommentsDropsSpecStatusLines(t 
 	eq(t, sorted(f.issues[1].Labels), []string{"status:in-review", "type:bug"})
 	eq(t, len(f.issues[2].Labels), 0)
 	eq(t, len(commentsOn(f.calls, 2)), 1)
-	mustMatch(t, `^🤖 idea-loop：从搁置迁回`, commentsOn(f.calls, 2)[0])
+	mustMatch(t, markerThen(`从搁置迁回`), commentsOn(f.calls, 2)[0])
 	eq(t, f.issues[3].Labels, []string{"status:todo"})
 	b, _ = os.ReadFile(specFile)
 	if strings.Contains(string(b), "\nstatus:") && strings.Index(string(b), "\nstatus:") < strings.Index(string(b), "\n---\n\n#") {
@@ -309,7 +310,10 @@ func TestMigrateOnlyUnlinksAndClosesRootsTheConsolidationTaskOpened(t *testing.T
 	if f.issues[10].Open || f.issues[10].Reason != "not_planned" {
 		t.Fatalf("%+v", f.issues[10])
 	}
-	mustMatch(t, `^🤖 idea-loop：`, commentsOn(f.calls, 10)[0])
+	mustMatch(t, markerThen(``), commentsOn(f.calls, 10)[0])
+	if strings.Contains(commentsOn(f.calls, 10)[0], "🤖 idea-loop：") {
+		t.Fatal("the old prefix is gone")
+	}
 	if !f.issues[20].Open || !f.issues[30].Open {
 		t.Fatal("closed a root somebody works on")
 	}
@@ -866,7 +870,8 @@ func TestPriorityReplacesThePriorityLabelNoneOnlyRemovesNothingToChangeMeansNoEd
 }
 
 func TestBacklogListsTheOnesTriageShouldLookAt(t *testing.T) {
-	ask := comment{Body: "🤖 idea-loop：查过了，还要你补：复现步骤", CreatedAt: "2026-10-20T00:00:00Z"}
+	ask := comment{Body: issues.AIMarker + "\n查过了，还要你补：复现步骤", CreatedAt: "2026-10-20T00:00:00Z"}
+	oldAsk := comment{Body: "🤖 idea-loop：查过了，还要你补：复现步骤", CreatedAt: "2026-10-20T00:00:00Z"}
 	mk := func(n int, upd string, cs ...comment) *fIssue {
 		i := open(n)
 		i.UpdatedAt = upd
@@ -876,9 +881,11 @@ func TestBacklogListsTheOnesTriageShouldLookAt(t *testing.T) {
 	i9 := open(9, "type:seo")
 	f := newFake(
 		mk(7, "2026-10-20T00:00:30Z", ask), mk(8, "2026-10-25T00:00:00Z", ask), i9, open(10, "status:todo"),
-		mk(11, "2026-10-20T00:00:00Z", comment{Body: "🤖 idea-loop：已查清：重复了 #3", CreatedAt: "2026-10-20T00:00:00Z"}),
+		mk(11, "2026-10-20T00:00:00Z", comment{Body: issues.AIMarker + "\n已查清：重复了 #3", CreatedAt: "2026-10-20T00:00:00Z"}),
 		mk(12, "2026-10-20T00:00:00Z", comment{Body: "人写的：还要你补一句也不算", CreatedAt: "2026-10-20T00:00:00Z"}),
 		mk(13, "2026-10-20T00:01:01Z", ask), mk(14, "2026-10-20T00:01:00Z", ask), open(15, "status:triage"), closed(16),
+		mk(17, "2026-10-20T00:00:30Z", oldAsk),
+		mk(18, "2026-10-20T00:00:30Z", comment{Body: "人写的，没有标记：还要你补", CreatedAt: "2026-10-20T00:00:00Z"}),
 	)
 	p := docsWith(t, nil, nil, "")
 	type row struct {
@@ -901,7 +908,7 @@ func TestBacklogListsTheOnesTriageShouldLookAt(t *testing.T) {
 		}
 		return out
 	}
-	eq(t, numbers(list()), []int{8, 9, 11, 12, 13})
+	eq(t, numbers(list()), []int{8, 9, 11, 12, 13, 18})
 	eq(t, list()[1], row{9, "issue 9", []string{"type:seo"}, "2026-01-01T00:00:00Z"})
 	eq(t, numbers(list("1")), []int{8}, "the skipped #7 does not use up the limit")
 	f.raw = nil
@@ -920,7 +927,7 @@ func TestBacklogReadsTheNewestCommentEvenPastTheFirstPage(t *testing.T) {
 	for k := 0; k < 101; k++ {
 		many = append(many, comment{Body: fmt.Sprintf("c%d", k), CreatedAt: "2026-10-01T00:00:00Z"})
 	}
-	many[100] = comment{Body: "🤖 idea-loop：还要你补", CreatedAt: "2026-10-02T00:00:00Z"}
+	many[100] = comment{Body: issues.AIMarker + "\n还要你补", CreatedAt: "2026-10-02T00:00:00Z"}
 	i := open(1)
 	i.UpdatedAt = "2026-10-02T00:00:10Z"
 	i.Comments = many
@@ -929,14 +936,20 @@ func TestBacklogReadsTheNewestCommentEvenPastTheFirstPage(t *testing.T) {
 	eq(t, strings.TrimSpace(r.out), "[]")
 }
 
-func TestNoteCommentsWithTheAIPrefixOnceAndShowsTheURL(t *testing.T) {
+func TestNoteCommentsWithTheAIMarkerOnItsOwnFirstLineOnceAndShowsTheURL(t *testing.T) {
 	p := docsWith(t, nil, nil, "")
 	f := newFake(open(4))
 	n, err := issues.NoteIssue(f.gh, 4, "已查清：重复了 #3\n")
 	must(t, err)
 	mustMatch(t, `^https://github\.com/o/r/issues/4#issuecomment-\d+$`, n)
 	issues.NoteIssue(f.gh, 4, "🤖 idea-loop：还要你补：复现步骤")
-	eq(t, commentsOn(f.calls, 4), []string{"🤖 idea-loop：已查清：重复了 #3", "🤖 idea-loop：还要你补：复现步骤"})
+	issues.NoteIssue(f.gh, 4, issues.AIMarker+"\n已经带标记")
+	eq(t, commentsOn(f.calls, 4), []string{issues.AIMarker + "\n已查清：重复了 #3", issues.AIMarker + "\n还要你补：复现步骤", issues.AIMarker + "\n已经带标记"})
+	for _, body := range commentsOn(f.calls, 4) {
+		if strings.Count(body, issues.AIMarker) != 1 || strings.Contains(body, "🤖 idea-loop：") {
+			t.Fatalf("the marker once, never the old prefix: %q", body)
+		}
+	}
 	_, err = issues.NoteIssue(f.gh, 4, "  \n")
 	if err == nil || !strings.Contains(err.Error(), "空的") {
 		t.Fatal(err)
@@ -944,7 +957,7 @@ func TestNoteCommentsWithTheAIPrefixOnceAndShowsTheURL(t *testing.T) {
 	r := run(p, f, "note", p.docs, "4", fileWith(t, "行"))
 	eq(t, len(r.lines()), 1)
 	mustMatch(t, `^#4: 已评论 https://github\.com/o/r/issues/4#issuecomment-\d+$`, r.lines()[0])
-	eq(t, commentsOn(f.calls, 4)[2], "🤖 idea-loop：行")
+	eq(t, commentsOn(f.calls, 4)[3], issues.AIMarker+"\n行")
 	// a gh that prints nothing: no URL, still commented
 	u, err := issues.NoteIssue(func([]string) (string, error) { return "", nil }, 4, "x")
 	must(t, err)
@@ -1004,9 +1017,9 @@ func TestSetDoneOpensItsCommentWithTheMergedPRs(t *testing.T) {
 	f := newFake(open(4, "status:in-review"), open(5, "status:in-review"))
 	f.prs["o/r"] = []*fPR{pr(10, "Refs o/r#4\nRefs o/r#5", "MERGED", false), pr(12, "Refs o/r#4", "CLOSED", false), pr(20, "Refs o/r#4", "MERGED", false)}
 	run(p, f, "set", p.docs, "done", "4")
-	eq(t, commentsOn(f.calls, 4), []string{"🤖 idea-loop：合并的 PR：o/r#10、o/r#20。"})
+	eq(t, commentsOn(f.calls, 4), []string{issues.AIMarker + "\n合并的 PR：o/r#10、o/r#20。"})
 	run(p, f, "set", p.docs, "done", "5", "--comment=另见 #9")
-	eq(t, commentsOn(f.calls, 5), []string{"🤖 idea-loop：合并的 PR：o/r#10。另见 #9"})
+	eq(t, commentsOn(f.calls, 5), []string{issues.AIMarker + "\n合并的 PR：o/r#10。另见 #9"})
 }
 
 // ---------- Linear projects ----------
@@ -1442,4 +1455,24 @@ func TestGuardHook(t *testing.T) {
 	r = cli(p, nil, nil, "issues", "guard", "gh issue edit 1 --remove-label status:triage")
 	eq(t, r.code, 1)
 	mustMatch(t, `dyna issues set`, r.err)
+}
+
+// markerThen matches a comment that opens with the marker on its own line, then rest.
+func markerThen(rest string) string { return `^` + regexp.QuoteMeta(issues.AIMarker+"\n"+rest) }
+
+func TestSetWithACommentThatStartsWithTheOldPrefixOrCarriesTheMarkerPostsTheMarkerOnce(t *testing.T) {
+	p := docsWith(t, map[string]string{"retry": specText(sp{Issues: "[1]"})}, nil, "")
+	f := newFake(open(1, "status:triage"), open(2, "status:triage"))
+	eq(t, run(p, f, "set", p.docs, "backlog", "1", "--comment=🤖 idea-loop：先放着").code, 0)
+	eq(t, run(p, f, "set", p.docs, "backlog", "2", "--comment="+issues.AIMarker+"\n先放着").code, 0)
+	eq(t, commentsOn(f.calls, 1), []string{issues.AIMarker + "\n先放着"})
+	eq(t, commentsOn(f.calls, 2), []string{issues.AIMarker + "\n先放着"})
+}
+
+func TestIsIdeaLoopCommentTheMarkerAnywhereOrTheOldPrefixAtTheStart(t *testing.T) {
+	for body, want := range map[string]bool{issues.AIMarker + "\n正文": true, "🤖 idea-loop：正文": true, "人写的评论": false, "他说 🤖 idea-loop：不在开头": false, "": false} {
+		if issues.IsIdeaLoopComment(body) != want {
+			t.Errorf("%q: want %v", body, want)
+		}
+	}
 }

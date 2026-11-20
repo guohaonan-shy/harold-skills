@@ -32,20 +32,23 @@ func stream(events ...map[string]any) string {
 
 func ptr(f float64) *float64 { return &f }
 
-func TestDigestSeparatesTheCallingSessionFromSubagentsAndCountsReferoCalls(t *testing.T) {
+func TestDigestSeparatesTheCallingSessionFromSubagentsAndCountsMobbinCalls(t *testing.T) {
 	d := DigestText(stream(
 		toolUse("Agent", nil),
-		toolUse("mcp__refero__refero_search_screens", "a"),
+		toolUse("mcp__plugin_idea-loop_mobbin__search_screens", "a"),
 		toolUse("Bash", "a"),
 		map[string]any{"type": "result", "result": "done", "total_cost_usd": 1.5, "num_turns": 3, "duration_ms": 10, "modelUsage": map[string]any{"claude-opus": map[string]any{}}},
 	))
-	if d.Session.ReferoCalls != 0 || d.Subagents.ReferoCalls != 1 {
-		t.Fatalf("refero calls: session %d, subagents %d", d.Session.ReferoCalls, d.Subagents.ReferoCalls)
+	if d.Session.MobbinCalls != 0 || d.Subagents.MobbinCalls != 1 {
+		t.Fatalf("mobbin calls: session %d, subagents %d", d.Session.MobbinCalls, d.Subagents.MobbinCalls)
+	}
+	if n := DigestText(stream(toolUse("mcp__plugin_idea-loop_openseo__whoami", "a"))).Subagents.MobbinCalls; n != 0 {
+		t.Errorf("an OpenSEO tool is not a Mobbin call: %d", n)
 	}
 	if want := map[string]int{"Agent": 1}; !reflect.DeepEqual(d.Session.Tools, want) {
 		t.Errorf("session tools = %v", d.Session.Tools)
 	}
-	if want := map[string]int{"mcp__refero__refero_search_screens": 1, "Bash": 1}; !reflect.DeepEqual(d.Subagents.Tools, want) {
+	if want := map[string]int{"mcp__plugin_idea-loop_mobbin__search_screens": 1, "Bash": 1}; !reflect.DeepEqual(d.Subagents.Tools, want) {
 		t.Errorf("subagent tools = %v", d.Subagents.Tools)
 	}
 	want := &Result{Text: "done", Cost: ptr(1.5), Turns: ptr(3), DurationMs: ptr(10), IsError: false, Models: []string{"claude-opus"}}
@@ -120,7 +123,7 @@ func TestDetectEscalationReportsABrowserWhicheverBrowserToolFamilyOpenedIt(t *te
 }
 
 func TestAToolThatMerelyHasAgentOrBrowserInItsNameIsNotAnEscalation(t *testing.T) {
-	text := stream(toolUse("Bash", nil), toolUse("mcp__refero__refero_search_screens", nil), toolUse("mcp__x__reagent_check", nil))
+	text := stream(toolUse("Bash", nil), toolUse("mcp__plugin_idea-loop_mobbin__search_screens", nil), toolUse("mcp__x__reagent_check", nil))
 	if e := DetectEscalation(slices.Values(strings.Split(text, "\n"))); e != nil {
 		t.Errorf("escalation = %+v, want none", e)
 	}
@@ -168,8 +171,8 @@ func TestDigestJSONKeepsTheNamesTheRunnersWrite(t *testing.T) {
 	if !reflect.DeepEqual(d.Result.Models, []string{"b", "a"}) {
 		t.Errorf("models keep the order they were written in: %v", d.Result.Models)
 	}
-	if _, ok := got["session"].(map[string]any)["referoCalls"]; !ok {
-		t.Errorf("session has no referoCalls: %s", b)
+	if _, ok := got["session"].(map[string]any)["mobbinCalls"]; !ok {
+		t.Errorf("session has no mobbinCalls: %s", b)
 	}
 }
 

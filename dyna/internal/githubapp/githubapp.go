@@ -1,7 +1,7 @@
 // Package githubapp is the GitHub identity of idea-loop's own posts: the GitHub App configured for a repository
-// speaks (when the review loop is archived to a PR, say), otherwise the account `gh` is logged in with. The
-// installation token lives only in this process and is never printed or written; every write sends its JSON on
-// stdin, so PR text is never part of a command line. Configuration and permissions are described in
+// speaks (when the review loop is archived to a PR, say), otherwise the account `gh` is logged in with, with no
+// signature line either way. The installation token lives only in this process and is never printed or written;
+// every write sends its JSON on stdin, so PR text is never part of a command line. Configuration and permissions are described in
 // skills/engineering/pr/references/review-loop.md of the plugin.
 package githubapp
 

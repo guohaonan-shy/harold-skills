@@ -22,6 +22,7 @@ const WRITING = read('skills', 'seo', 'seo-writing', 'SKILL.md');
 const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
 const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
+const STOPS = read('skills', 'seo', 'seo-scan', 'references', 'stops.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
@@ -123,10 +124,11 @@ test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not thro
   }
 });
 
-test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
-  assert.match(SCAN, /只有三种情形停下/);
+test('seo-scan: four stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
+  assert.match(SCAN, /只有四种情形停下/);
   assert.ok(!/只有开场的两种情形停下/.test(SCAN));
-  assert.match(SCAN, /停下等确认：/);
+  assert.match(SCAN, /停下等确认/);
+  assert.match(STOPS, /停下等确认：/);
   assert.match(SCAN, /- SEO\.md：这次改了/);
 });
 

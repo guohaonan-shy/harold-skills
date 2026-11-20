@@ -266,6 +266,18 @@ func TestAttributeAPinnedElementMakesASectionScrollDriven(t *testing.T) {
 	eq(t, r.Get("declaredNotDetected"), []any{})
 }
 
+// The evidence says what the pin is and how long it holds, never that it was taken for a pin because of its text — a
+// measurement saved by an older version (a small pin with byText) still reads the same.
+func TestAttributeTheEvidenceNeverSaysAPinWasTakenForOneBecauseOfItsText(t *testing.T) {
+	small := with(PIN, "height", 420, "byText", true, "probes", J(`[{"y":1000,"text":"Step 1"}]`), "index", 0)
+	for _, pin := range []Obj{PIN, small} {
+		evidence := joinTexts(list(get(at(Attribute(measurement(ALL, "pins", []any{pin})).Get("undeclaredScrollDriven"), 0.0), "evidence")), "；")
+		if regexp.MustCompile(`不到半屏|按「钉住时的文字随滚动变了」认定`).MatchString(evidence) {
+			t.Errorf("evidence still names the text rule: %s", evidence)
+		}
+	}
+}
+
 func TestAttributeADeclaredScrollDrivenSectionPassesAndTheEvidenceIsStillGiven(t *testing.T) {
 	r := Attribute(measurement([]any{HEADER, HERO, declared(FEATUREA), FEATUREB, FOOTER}, "pins", []any{PIN}))
 	is(t, r.Get("ok"), true)

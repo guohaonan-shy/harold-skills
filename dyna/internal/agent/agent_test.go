@@ -79,7 +79,7 @@ case "$FAKE_MODE" in
   noresult) echo '{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"tool_use","id":"t1","name":"Read","input":{}}]}}' ;;
   *)
     echo '{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"tool_use","id":"t1","name":"Agent","input":{}}]}}'
-    echo '{"type":"assistant","parent_tool_use_id":"t1","message":{"content":[{"type":"tool_use","id":"t2","name":"mcp__refero__refero_search_screens","input":{}}]}}'
+    echo '{"type":"assistant","parent_tool_use_id":"t1","message":{"content":[{"type":"tool_use","id":"t2","name":"mcp__plugin_idea-loop_mobbin__search_screens","input":{}}]}}'
     echo '{"type":"assistant","parent_tool_use_id":null,"message":{"content":[{"type":"tool_use","id":"t3","name":"Write","input":{}}]}}'
     echo 'not json, a cut-off line'
     printf '%s' '{"type":"result","result":"all done","total_cost_usd":0.25,"num_turns":2,"duration_ms":5,"modelUsage":{"fake":{}}}'
@@ -434,7 +434,7 @@ type summary struct {
 		Session   struct{ Tools map[string]int }
 		Subagents struct {
 			Tools       map[string]int
-			ReferoCalls int
+			MobbinCalls int
 		}
 		Result *struct {
 			Text   string
@@ -461,7 +461,7 @@ func TestClaudeRunDigestsTheStreamAsItGoesAndKeepsTheRawStream(t *testing.T) {
 	if s.ExitCode != 0 || s.TimedOut || s.Escalation != nil || s.Stream != stream || s.Stderr != "a warning" {
 		t.Errorf("summary = %+v", s)
 	}
-	if s.Digest.Session.Tools["Agent"] != 1 || s.Digest.Session.Tools["Write"] != 1 || s.Digest.Subagents.ReferoCalls != 1 {
+	if s.Digest.Session.Tools["Agent"] != 1 || s.Digest.Session.Tools["Write"] != 1 || s.Digest.Subagents.MobbinCalls != 1 {
 		t.Errorf("digest = %+v", s.Digest)
 	}
 	if r := s.Digest.Result; r == nil || r.Text != "all done" || r.Cost == nil || *r.Cost != 0.25 || len(r.Models) != 1 || r.Models[0] != "fake" {

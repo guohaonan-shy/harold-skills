@@ -20,7 +20,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 优先级 | P0 / P1 / P2，最多一个，没有就是没有；GitHub 上是 `priority:P0` / `priority:P1` / `priority:P2` label。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判 |
 | blocked by | 挡着它的 issue |
 | 挂着的 PR | 这个 issue 的 PR，状态是 draft / ready / merged |
-| 评论 | 停在哪、等什么、为什么关；idea-loop 写的带「🤖 idea-loop：」前缀 |
+| 评论 | 停在哪、等什么、为什么关；idea-loop 写的第一行是 `<!-- idea-loop -->`（页面不显示） |
 
 不用父子关系归组：一个 issue 一个会话、一份 spec；版本用 milestone，模块用分类，「这几个相关」写正文链接；平台上已有的父子关系照常读，不当成组。
 

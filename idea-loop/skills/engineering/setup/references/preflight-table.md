@@ -8,7 +8,7 @@
 | Codex 命令行 | `command -v codex` 有输出 | 是（review 用） |
 | 命令行 `dyna` | `dyna version` 能跑、版本在插件要的范围里（不在范围里它自己会说）；没装或太旧，问人同意再跑 `dyna self install`（没装）或 `dyna self upgrade`（太旧），不同意就把这条命令留给人 | 是（skill 和 hook 都调它） |
 | 浏览器 | 照『浏览器』与『装与设置』（`dyna runtime show 浏览器`、`dyna runtime show 装与设置`）：要装什么、怎么查、修法都在那里 | 是 |
-| Refero MCP | 同上，读『装与设置』里 Refero 一条（查有没有、修法） | 可选（设计调研用） |
+| Mobbin MCP | 同上，读『装与设置』里 Mobbin 一条（查有没有、修法） | 可选（设计调研用；要 Mobbin 付费计划） |
 | 项目接上了吗 | `dyna home where`，看退出码和输出（下表） | 是 |
 
 「项目接上了吗」的结论：

@@ -1,7 +1,8 @@
 // Package design is the `design` module: the design archive (`docs/design/prod/`) read, checked, queried, written
-// and shot, and the checks around a design run: the canvas lint, the direction note, the critic's round, the flow
-// figure and the project's DESIGN.md. The work is in the packages beside it; this package only puts their commands
-// in one tree: `dyna design archive …`, `lint`, `note submit`, `critic round`, `flow compose`, `md lint|diff`.
+// and shot, and the checks around a design run: the canvas lint, the direction note, the critic's round, the round's
+// review report, the flow figure and the project's DESIGN.md. The work is in the packages beside it; this package
+// only puts their commands in one tree: `dyna design archive …`, `lint`, `note submit`, `critic round`, `report`,
+// `flow compose`, `md lint|diff`.
 package design
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/lint"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/note"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/query"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/report"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/sections"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/design/write"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
@@ -33,17 +35,17 @@ func Command() *cobra.Command { return CommandWith(Deps{}) }
 
 // CommandWith is the `design` module.
 func CommandWith(d Deps) *cobra.Command {
-	root := registry.Group("design", "设计档案与设计流程的检查：档案校验、查询、归档、长页分段拍摄；画布 lint、方向说明、评委一轮、流程图、DESIGN.md")
+	root := registry.Group("design", "设计档案与设计流程的检查：档案校验、查询、归档、长页分段拍摄；画布 lint、方向说明、评委一轮、设计评审报告、流程图、DESIGN.md")
 	archive := registry.Group("archive", "设计档案（docs/design/prod/）：check 校验、query 查询、write 归档、sections 长页分段拍摄")
 	archive.AddCommand(check.Command(), query.Command(), write.Command(), sections.Command())
 
 	notes := registry.Group("note", "方向说明：submit 交回时校验格式")
 	notes.AddCommand(note.Command())
-	critics := registry.Group("critic", "设计评委：round 校验一轮的输出并判停")
+	critics := registry.Group("critic", "设计评委：round 校验评委一轮交回的形状，点出方向性意见")
 	critics.AddCommand(critic.Command())
 	flows := registry.Group("flow", "交互流程图：compose 把截图、箭头、文字拼成一张 PNG")
 	flows.AddCommand(flow.Command())
 
-	root.AddCommand(archive, lint.Command(), notes, critics, flows, designmd.Command(designmd.Deps{Env: d.Env, CLI: d.DesignMD}))
+	root.AddCommand(archive, lint.Command(), notes, critics, report.Command(), flows, designmd.Command(designmd.Deps{Env: d.Env, CLI: d.DesignMD}))
 	return root
 }

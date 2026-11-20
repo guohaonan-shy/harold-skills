@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"math"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
 )
 
 // These tests are the assertions of idea-loop/scripts/ui-compare.test.mjs, one for one.
+
+var regexpDigits = regexp.MustCompile(`\d+`)
 
 func anchor(over map[string]any) Box {
 	b := Box{"top": 100.0, "left": 40.0, "width": 320.0, "height": 48.0}
@@ -148,11 +151,11 @@ func TestAnExtraAnchorOnThePortedSideIsNotAFinding(t *testing.T) {
 	}
 }
 
-// A value that is not a number ("normal" for the gap of a block) turns into NaN, and NaN is never beyond a
+// A value that is not a number ("normal", say) turns into NaN, and NaN is never beyond a
 // tolerance: the old script let such a pair through, and so does this.
 func TestANonNumericPositionValueIsNeverADrift(t *testing.T) {
-	canvas := Measurements{"a": Box{"gap": "normal"}}
-	local := Measurements{"a": Box{"gap": 8.0}}
+	canvas := Measurements{"a": Box{"paddingTop": "normal"}}
+	local := Measurements{"a": Box{"paddingTop": 8.0}}
 	if fs := CompareMeasurements(canvas, local, Tolerance{}, nil); len(fs) != 0 {
 		t.Fatal(fs)
 	}
@@ -290,5 +293,178 @@ func TestJSNumberReadsOnlyWhatNumberReads(t *testing.T) {
 		if got := JSNumber(in); !math.IsNaN(got) {
 			t.Errorf("%q should be NaN, got %v", in, got)
 		}
+	}
+}
+
+// ---------- color conversion (ui-compare.test.mjs, #414) ----------
+
+func TestAHexColorBecomesThe8BitSRGBTheScreenShows(t *testing.T) {
+	for in, want := range map[string]string{"#3b82f6": "rgb(59, 130, 246)", "#FFF": "rgb(255, 255, 255)", "#0000ff80": "rgba(0, 0, 255, 0.5)"} {
+		if got := NormalizeColors(in); got != want {
+			t.Errorf("%s: %v, want %s", in, got, want)
+		}
+	}
+}
+
+func TestRgbAndRgbaAreRewrittenIntoOneCanonicalSpelling(t *testing.T) {
+	for in, want := range map[string]string{
+		"rgb(59, 130, 246)": "rgb(59, 130, 246)", "rgb(59 130 246)": "rgb(59, 130, 246)", "rgba(0, 0, 0, 0.1)": "rgba(0, 0, 0, 0.1)",
+		"rgb(59 130 246 / 50%)": "rgba(59, 130, 246, 0.5)", "rgba(59, 130, 246, 1)": "rgb(59, 130, 246)",
+	} {
+		if got := NormalizeColors(in); got != want {
+			t.Errorf("%s: %v, want %s", in, got, want)
+		}
+	}
+}
+
+func TestOklchIsConvertedAndAColorOutsideTheGamutIsCutPerChannel(t *testing.T) {
+	// The Tailwind v4 blue: measured by painting it in headless Chromium, the pixel is 43,127,255.
+	for in, want := range map[string]string{
+		"oklch(0.623 0.214 259.815)": "rgb(43, 127, 255)", "oklch(1 0 0)": "rgb(255, 255, 255)", "oklch(0 0 0)": "rgb(0, 0, 0)",
+		"oklch(62.3% 0.214 259.815deg / 0.5)": "rgba(43, 127, 255, 0.5)",
+	} {
+		if got := NormalizeColors(in); got != want {
+			t.Errorf("%s: %v, want %s", in, got, want)
+		}
+	}
+	out := NormalizeColors("oklch(0.7 0.4 150)").(string)
+	var channels []int
+	for _, m := range regexpDigits.FindAllString(out, -1) {
+		n := 0
+		for _, c := range m {
+			n = n*10 + int(c-'0')
+		}
+		channels = append(channels, n)
+	}
+	if len(channels) != 3 || channels[0] != 0 {
+		t.Fatal(out)
+	}
+	for _, c := range channels {
+		if c < 0 || c > 255 {
+			t.Fatal(out)
+		}
+	}
+}
+
+func TestOklabAndColorSrgbAreConvertedToo(t *testing.T) {
+	for in, want := range map[string]string{
+		"oklab(0.5 0 0)": "rgb(99, 99, 99)", "oklab(1 0 0 / 0.25)": "rgba(255, 255, 255, 0.25)",
+		"color(srgb 1 0 0)": "rgb(255, 0, 0)", "color(srgb 0.5 0.5 0.5 / 0.5)": "rgba(128, 128, 128, 0.5)",
+	} {
+		if got := NormalizeColors(in); got != want {
+			t.Errorf("%s: %v, want %s", in, got, want)
+		}
+	}
+}
+
+func TestColorsInsideACompoundValueAreConvertedWhereTheySit(t *testing.T) {
+	if got := NormalizeColors("oklch(0.623 0.214 259.815) 0px 4px 6px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px 0px"); got != "rgb(43, 127, 255) 0px 4px 6px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px 0px" {
+		t.Fatal(got)
+	}
+	if got := NormalizeColors("1px solid #3b82f6"); got != "1px solid rgb(59, 130, 246)" {
+		t.Fatal(got)
+	}
+}
+
+func TestASpellingItDoesNotRecognizeComesBackExactly(t *testing.T) {
+	for _, v := range []any{"color(display-p3 1 0 0)", "currentcolor", "var(--brand)", "Inter, sans-serif", "oklch(from red l c h)", "", 16.0, nil} {
+		if got := NormalizeColors(v); got != v {
+			t.Errorf("%v: %v", v, got)
+		}
+	}
+}
+
+const blueRGB = "rgb(59, 130, 246)"
+const blueOKLCH = "oklch(0.6231 0.188 259.8)" // the same blue, written the way Tailwind v4 writes colors
+
+func TestTheSameColorAsRgbOnTheCanvasAndOklchOnThePortIsNotAFinding(t *testing.T) {
+	canvas := Measurements{"cta": anchor(map[string]any{"color": blueRGB, "boxShadow": "rgba(0, 0, 0, 0.1) 0px 1px 2px 0px"})}
+	local := Measurements{"cta": anchor(map[string]any{"color": blueOKLCH, "boxShadow": "oklch(0 0 0 / 0.1) 0px 1px 2px 0px"})}
+	if fs := CompareMeasurements(canvas, local, Tolerance{}, nil); len(fs) != 0 {
+		t.Fatal(fs)
+	}
+}
+
+func TestAColorOneLevelOffAfterConversionIsStillATokenFindingWithBothSpellingsAndConversions(t *testing.T) {
+	off := "rgb(59, 130, 247)"
+	fs := CompareMeasurements(Measurements{"cta": anchor(map[string]any{"color": off})}, Measurements{"cta": anchor(map[string]any{"color": blueOKLCH})}, Tolerance{}, nil)
+	if len(fs) != 1 || fs[0].ID != TokenMismatch || fs[0].Expected != off || fs[0].Actual != blueOKLCH {
+		t.Fatal(fs)
+	}
+	for _, part := range []string{off, blueOKLCH, "as 8-bit sRGB: rgb(59, 130, 247) → rgb(59, 130, 246)"} {
+		if !strings.Contains(fs[0].Detail, part) {
+			t.Errorf("%q not in %s", part, fs[0].Detail)
+		}
+	}
+}
+
+func TestAColorTheConverterDoesNotKnowIsComparedAsTheOriginalString(t *testing.T) {
+	canvas := Measurements{"cta": anchor(map[string]any{"color": "color(display-p3 1 0 0)"})}
+	if fs := CompareMeasurements(canvas, Measurements{"cta": anchor(map[string]any{"color": "color(display-p3 1 0 0)"})}, Tolerance{}, nil); len(fs) != 0 {
+		t.Fatal(fs)
+	}
+	fs := CompareMeasurements(canvas, Measurements{"cta": anchor(map[string]any{"color": "color(display-p3 1 0 0.1)"})}, Tolerance{}, nil)
+	if len(fs) != 1 || fs[0].ID != TokenMismatch || strings.Contains(fs[0].Detail, "8-bit") {
+		t.Fatal(fs)
+	}
+}
+
+// ---------- margin and gap are how a layout was written, not where it ended up ----------
+
+func TestMarginAndGapAreNotCompared(t *testing.T) {
+	canvas := Measurements{"block": anchor(map[string]any{"top": 120.0, "marginTop": 16.0, "marginBottom": 0.0, "gap": 0.0, "rowGap": 0.0, "columnGap": 0.0})}
+	local := Measurements{"block": anchor(map[string]any{"top": 120.0, "marginTop": 0.0, "marginBottom": 16.0, "gap": 8.0, "rowGap": 8.0, "columnGap": 8.0, "marginLeft": 4.0, "marginRight": 4.0})}
+	if fs := CompareMeasurements(canvas, local, Tolerance{}, nil); len(fs) != 0 {
+		t.Fatal(fs)
+	}
+}
+
+func TestTheBoxItselfStillDriftsAndPaddingIsStillCompared(t *testing.T) {
+	canvas := Measurements{"block": anchor(map[string]any{"top": 120.0, "marginTop": 16.0, "paddingTop": 8.0})}
+	local := Measurements{"block": anchor(map[string]any{"top": 130.0, "marginTop": 0.0, "paddingTop": 12.0})}
+	var got []string
+	for _, f := range CompareMeasurements(canvas, local, Tolerance{}, nil) {
+		got = append(got, f.ID+":"+*f.Property)
+	}
+	if !reflect.DeepEqual(got, []string{"position-drift:paddingTop", "position-drift:top"}) {
+		t.Fatal(got)
+	}
+}
+
+// ---------- pixel layer: sub-pixel shifts ----------
+
+// bar is a 100×40 page: white, with a black block spanning the full height from x = from to to.
+func bar(from, to int) Image {
+	w, h := 100, 40
+	img := Image{Width: w, Height: h, Data: make([]byte, w*h*4)}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			v := byte(255)
+			if x >= from && x < to {
+				v = 0
+			}
+			copy(img.Data[(y*w+x)*4:], []byte{v, v, v, 255})
+		}
+	}
+	return img
+}
+
+func TestASharpEdgeMovedByOnePixelIsTheSamePicture(t *testing.T) {
+	if p := percent(t, bar(20, 50), bar(21, 51), DefaultAntialiasTolerance); p > 1 {
+		t.Fatal(p)
+	}
+}
+
+func TestASharpEdgeMovedByTwoPixelsIsStillAMismatch(t *testing.T) {
+	if p := percent(t, bar(20, 50), bar(22, 52), DefaultAntialiasTolerance); p <= 1 {
+		t.Fatal(p)
+	}
+}
+
+func TestTheNeighbourhoodIsJudgedBothWays(t *testing.T) {
+	a, b := solid(5, 5, 255, 255, 255), solid(5, 5, 255, 255, 255)
+	copy(b.Data[(2*5+2)*4:], []byte{0, 0, 0, 255})
+	if p := percent(t, a, b, DefaultAntialiasTolerance); p <= 0 {
+		t.Fatal(p)
 	}
 }

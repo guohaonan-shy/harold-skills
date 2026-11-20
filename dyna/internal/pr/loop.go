@@ -39,8 +39,8 @@ package pr
 // entry uses to the PR's evidence branch (evidence.go) and rewrites the path to the address that opens full size
 // on GitHub.
 //
-// Identity for the archive: the repository's GitHub App when configured, else the gh login with a line saying
-// Claude posted it (package githubapp). Archiving is idempotent: an entry whose marker is already on the PR is
+// Identity for the archive: the repository's GitHub App when configured, else the gh login; the body carries no
+// signature either way (package githubapp). Archiving is idempotent: an entry whose marker is already on the PR is
 // not posted again.
 
 import (
@@ -51,8 +51,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/guohaonan-shy/harold-skills/dyna/internal/githubapp"
 )
 
 // Kinds an entry may have, and where a report may come from.
@@ -287,16 +285,9 @@ func WithFigureUrls(body string, urls map[string]string) string {
 	})
 }
 
-// WithAuthorship says who really wrote it when the gh login posts instead of an App.
-func WithAuthorship(body, identity string) string {
-	if identity == githubapp.IdentityApp {
-		return body
-	}
-	return "> 🤖 由 Claude 代发（仓库未配置 GitHub App，借用 gh 当前登录的账号发出，不是本人所写）\n\n" + body
-}
-
-// ArchiveBody is the comment that archives one entry.
-func ArchiveBody(e Entry, identity string) (string, error) {
+// ArchiveBody is the comment that archives one entry. It carries no signature, whoever posts it (the repository's
+// GitHub App or the gh login).
+func ArchiveBody(e Entry) (string, error) {
 	impl := e.Kind == "review" && e.Source == "impl"
 	var label string
 	switch {
@@ -313,7 +304,7 @@ func ArchiveBody(e Entry, identity string) (string, error) {
 	if impl {
 		from = "impl"
 	}
-	body := ArchiveMarker(e.Kind, e.Round, from) + "\n" + WithAuthorship(fmt.Sprintf("> 记录：%s在会话里进行，下面是原样的汇报、批示和处理结果。\n\n%s", label, e.Body), identity)
+	body := ArchiveMarker(e.Kind, e.Round, from) + "\n" + fmt.Sprintf("> 记录：%s在会话里进行，下面是原样的汇报、批示和处理结果。\n\n%s", label, e.Body)
 	if n := jsLen(body); n > maxComment {
 		return "", fmt.Errorf("%s is %d characters (limit %d); fold detail in the file before archiving", label, n, maxComment)
 	}

@@ -39,7 +39,7 @@ function files(path) {
   return readdirSync(path).flatMap((name) => {
     const p = join(path, name);
     if (statSync(p).isDirectory()) return name === 'dist' ? [] : files(p);
-    return /\.(md|mjs|json|go|ya?ml)$|^dyna$/.test(name) ? [p] : [];
+    return /\.(md|mjs|json|go|ya?ml|html)$|^dyna$/.test(name) ? [p] : [];
   });
 }
 

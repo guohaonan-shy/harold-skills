@@ -39,7 +39,7 @@ evals/uiux-research/
 ```bash
 node idea-loop/evals/uiux-research/run.mjs --list                    # 看有哪些 case 和它们的 prompt
 node idea-loop/evals/uiux-research/run.mjs --only leave-confirm      # 跑一个（冒烟）
-node idea-loop/evals/uiux-research/run.mjs                           # 跑全部六个（会真的调 Refero，花钱，夜里跑）
+node idea-loop/evals/uiux-research/run.mjs                           # 跑全部六个（会真的调 Mobbin，花钱，夜里跑）
 node idea-loop/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-min 30
 ```
 
@@ -47,7 +47,7 @@ node idea-loop/evals/uiux-research/run.mjs --only a,b --model <alias> --timeout-
 （不是装好的那份）把 default prompt 敲给 `claude -p`，prompt 末尾只加一句「无人值守，不要提问」。跑完留下：
 
 - `output/index.html` 和 `output/shots/`——**产物，人打开这个**（`file://` 能直接开，也能在内嵌浏览器里开）
-- `digest.json`——这一跑的事实：调用会话有没有碰 Refero（应为 0）、researcher 调了几次、`dyna research submit` 红绿、花费、模型
+- `digest.json`——这一跑的事实：调用会话有没有碰 Mobbin（应为 0）、researcher 调了几次、`dyna research submit` 红绿、花费、模型
 - `result.txt`、`run.stream.jsonl`、`project/`——排查用
 
 同一个 case 再跑会覆盖这个目录，**所以标注要写在仓库里的 `cases/<case>/annotations.md`**，不写在 `/tmp`。

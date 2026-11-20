@@ -126,7 +126,8 @@ test('every subagent definition takes the project directory from the prompt of i
 });
 
 test('the SEO direction agents and seo-scan agree on what the prompt carries: SEO.md and the project directory are two of its lines', () => {
-  const scan = read('skills/seo/seo-scan/SKILL.md');
+  // the prompt template lives in seo-scan's findings reference (main #397 moved it out of the SKILL.md body)
+  const scan = read('skills/seo/seo-scan/references/findings.md');
   assert.match(scan, /SEO\.md：<项目目录>\/SEO\.md\n项目目录：<项目目录绝对路径>/);
   for (const a of ['geo-analyst', 'keyword-miner', 'technical-auditor', 'page-optimizer', 'backlink-analyst', 'results-analyst']) {
     assert.match(read(`agents/${a}.md`), /提示里有六行：SEO\.md 路径、项目目录、/, a);

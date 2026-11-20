@@ -50,14 +50,14 @@ test('the unattended prompt keeps the human words and adds only the no-questions
   assert.match(p, /无人值守/);
 });
 
-// The old digestStream test (the calling session apart from sub-agents, Refero calls counted) moved to the command line's own tests
+// The old digestStream test (the calling session apart from sub-agents, Mobbin calls counted) moved to the command line's own tests
 // (dyna/internal/claudestream). What is left to check here is that the runner starts the session through `dyna agent claude run`
 // and writes what the command read into the facts file the human reads: the same sample stream, through the real command.
 const FAKE_CLAUDE = `#!/usr/bin/env node
 const out = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const use = (id, name, parent) => out({ type: 'assistant', parent_tool_use_id: parent, message: { content: [{ type: 'tool_use', id, name, input: {} }] } });
 use('a', 'Agent', null);
-use('b', 'mcp__refero__refero_search_screens', 'a');
+use('b', 'mcp__plugin_idea-loop_mobbin__search_screens', 'a');
 use('c', 'Bash', 'a');
 out({ type: 'result', result: 'done', total_cost_usd: 1.5, num_turns: 3, duration_ms: 10, modelUsage: { 'claude-opus': {} } });
 `;
@@ -76,10 +76,10 @@ test('the runner starts the session through dyna and writes what the session did
   const facts = JSON.parse(readFileSync(join(out, 'leave-confirm', 'digest.json'), 'utf8'));
   assert.equal(facts.exitCode, 0);
   assert.equal(facts.timedOut, false);
-  assert.equal(facts.callingSessionReferoCalls, 0);
-  assert.equal(facts.researcherReferoCalls, 1);
+  assert.equal(facts.callingSessionMobbinCalls, 0);
+  assert.equal(facts.researcherMobbinCalls, 1);
   assert.deepEqual(facts.callingSessionTools, { Agent: 1 });
-  assert.deepEqual(facts.subagentTools, { mcp__refero__refero_search_screens: 1, Bash: 1 });
+  assert.deepEqual(facts.subagentTools, { 'mcp__plugin_idea-loop_mobbin__search_screens': 1, Bash: 1 });
   assert.deepEqual(facts.run, { cost: 1.5, turns: 3, models: ['claude-opus'], isError: false });
   assert.equal(readFileSync(join(out, 'leave-confirm', 'result.txt'), 'utf8'), 'done');
   assert.ok(existsSync(join(out, 'leave-confirm', 'run.stream.jsonl')), 'the raw stream is kept');

@@ -4,93 +4,70 @@ description: 设计收敛：把定下的方向打磨到人签字冻结。
 disable-model-invocation: true
 ---
 
-你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布，每版请评委 `idea-loop:ui-master` 打分、把意见交回去，评分说停就把画布摆给人，直到人签字、designer 冻结完，再把冻结结果 `commit` 到 home。画布只由 designer 改，签字只由人宣布。
+你是这次 refine 的编排者：起一个 `idea-loop:designer` 出画布；每一轮请评委 `idea-loop:ui-master` 提意见、请调研员配参考，拼成一份设计评审报告交给人，人在对话里按编号回决策；人签字，designer 冻结，你再把冻结结果 `commit` 到 home。评委是顾问，分数只是参考，停不停由人定。画布只由 designer 改，决策和签字只由人定。
 
 先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/refine-canvas.md`](references/refine-canvas.md)（画布放在哪、版本怎么递增）。项目目录照那里的「项目目录」拿。下文的 `imagine/`、`canvas/`、`research/` 都在 `<项目目录>/docs/design/tmp/<spec-slug>/`：打磨时只在本地，冻结结果 `commit` 到 home；交给 designer 的目录也用这个前缀写成绝对路径。
 
-几个词：**ledger** 是 `canvas/work/ledger.md`，designer 每交付一版落一行的打磨记录；**块的 job** 是方向说明「结构」节给每块写的内容责任，归为状态 / 结果 / 身份 / 氛围之一；**register** 是这块界面属于营销页还是产品内（in-app），记在方向说明里；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。
+几个词：**ledger** 是 `canvas/work/ledger.md`，只记人讨论后定下的决策，由你在人确认后写，designer 和评委只读；**改动集**是 designer 每版交的一份清单，逐条对上决策编号；**块的 job** 是方向说明「结构」节给每块写的内容责任；**register** 是这块界面属于营销页还是产品内（in-app）；**AI tells** 是一眼看得出是 AI 生成的套路（紫色渐变、emoji 当图标之类）。ledger 的格式、每轮的目录、报告怎么发、人怎么按编号回，都在 [`references/ledger-and-report.md`](references/ledger-and-report.md)，开第一轮前读完。
 
 ## 开工前
 
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），「实现决策」里还没有冻结摘要。
-- `imagine/direction-note.md` 在，并过得了 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过（哪怕交接画布在：画布说不出「为什么」），停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
+- `imagine/direction-note.md` 在，并过得了 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过，停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
+- **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有没有同一块界面的设计，有就问人要不要接着做。要的话把那个目录复制回 `<项目目录>/docs/design/tmp/<spec-slug>/`（pending 那份留着），再从 [`references/after-freeze.md`](references/after-freeze.md) 的「会话中断或重开」接上；不要就照常往下。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人「这份 spec 没有交接画布，会从方向说明重建」。
 
 ## 起步
 
 1. 在 `canvas/`（没有就建）后台起一个静态服务器，活到这次 refine 结束。
-2. 用 Agent 工具起 `idea-loop:designer`，给它：spec 路径与 `<spec-slug>`、方向说明路径、交接画布路径（不在就写「没有」）、项目目录（`DESIGN.md` / `PRODUCT.md` 在它下面）、画布目录与预览地址，任务是「起手」。人调用时附的话先照「人的回复」分好类：执行性的随第一次「按意见改」交给它，跟方向说明矛盾的先问人。方向只在方向说明里，你不转述。
+2. 用 Agent 工具起 `idea-loop:designer`，给它：spec 路径与 `<spec-slug>`、方向说明路径、交接画布路径（不在就写「没有」）、项目目录（`DESIGN.md` / `PRODUCT.md` 在它下面）、画布目录与预览地址、ledger 路径，任务是「起手」，出 `v1`。方向只在方向说明里，你不转述。
 
 这一个 designer 活过整个 refine：之后的任务都用 SendMessage 接着它的上下文交，不重起。
 
 ## 每一轮
 
-designer 交付一版之后：
+第一轮没有决策，从第 2 步起（designer 出 v1，第 4 步拿交接画布当上一版）。每一轮的文件放 `canvas/work/round-<N>/`。
 
-1. **请评委**：用 Agent 工具新起一个 `idea-loop:ui-master`，跑完即弃。给它：designer 交付的截图路径、方向说明「意图」节的那句话、这一轮看什么（静态 / 动效 / 减法），以及方向说明里标了「人保留」的项（有才给，告诉它这几处不算差距）。
-2. **分拣意见**：评委看不到哪些是人亲手定的，所以由你分。照「碰到人选定项的意见」把每条分成要问人、按人保留不交、交给 designer 三类。
-3. **评分**：把评委的 `findings`、`score` 和之前每一轮的分数（`history`，从旧到新）写成 `canvas/work/round-<N>.json`，跑：
+1. **人回决策**：人按报告编号回，带上这一轮的意图与思路。报告上的每一条都要人回应过才往下，人没提到的你接着问，不替人照推荐或设计意图定。你先拿新决策对一遍 ledger：跟旧决策矛盾的，先摆给人，人定了再往下。人确认后，你把决策写进 ledger。
+2. **交给 designer**：决策、意图与思路、ledger 交给它，任务「按决策改」。它交回画布下一版、改动集和「自检说明」（交付前自检改了哪几处、为什么改），你把自检说明抄成 `round-<N>/self-check.json`。交回「卡住」的（两条决策打架、决策跟设计法冲突），把它说的卡在哪摆给人，人定了再接着做，你不替它取舍。
+3. **请评委**：新起一个 `idea-loop:ui-master`，跑完即弃。给它这一版各状态的截图（标状态名）、方向说明「意图」节的那句话、人的意图与思路（每条编号）、从 ledger 抽出的「不算差距」清单（讨论后坚持的思路也在里面）。把它的 JSON 存成 `round-<N>/critic.json`，再写 `round-<N>/context.json`（`{ "states": [...], "thoughts": [...] }`），跑：
 
    ```
-   dyna design critic round "<项目目录>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>.json"
+   dyna design critic round "<项目目录>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>/critic.json" --context "<项目目录>/docs/design/tmp/<spec-slug>/canvas/work/round-<N>/context.json"
    ```
 
-   退出码 `2` 是评委的输出不合格式：作废这一轮，新起一个 ui-master 重评。按它的停止判定走：
+   退出码 `2` 是格式不合：作废，新起一个重评。合格只说明格式对，它不判停。
+4. **比对两版**：用 Skill 工具调 `idea-loop:ui-measure`，照它的「两版画布对比」比这一版和上一版，带上改动集，输出存成 `round-<N>/canvas-diff.json`。
+5. **配参考**：用 Skill 工具调 `idea-loop:uiux-research`，走它的轻用法，每轮自动起，不问人。
+6. **拼报告、发出去**：照 `references/ledger-and-report.md` 用报告命令拼，经「发布审阅页」发出。对话里放报告链接、分数、要特别注意的项（调研员提议推翻 ledger 的、方向性意见、没声明的改动）；每个要特别注意的项可带一两句推荐理由，末尾可附一句「怎么回」（回复格式举例），其余留在报告页。
 
-   | 停止判定 | 做什么 |
-   |---|---|
-   | `继续` | 把要交的意见交给 designer，任务「按意见改」 |
-   | `瓶颈` | 停下摆给人 |
-   | `方向` | 立即停下摆给人：评委认为方向本身有问题，由人判是不是真的跟方向说明矛盾 |
-   | `通过` | 静态构图定了，进「定稿之后」 |
+designer 和评委的上下文里不放参考图，也不放调研：参考只给人看。
 
-## 碰到人选定项的意见
+## 方向性意见与人的不满
 
-逐条对照方向说明里选中变种的构成清单（每项行末标 `（人选定）` 或 `（模型代填）`），看意见要改变什么，不看措辞，拿不准就当碰到：
+评委判 `direction` 的意见，看人在这次 refine 里有没有对这一块表示过不满意（会话记录或 ledger 里有人的原话）：有，给报告命令打标记，报告就推荐「回 imagine 重开这一块」，不再推荐保留；没有才推荐保留。人同意重开：照 `references/freeze.md` 的「部分冻结」处理，告诉人跑 `/idea-loop:uiux-imagine`，调用时附上这条意见的原文，由它交给新的 imaginer。
 
-| 意见要动的是 | 你做 |
-|---|---|
-| `（人选定）` 项已写下来的那部分 | 冲突项：不交给 designer，留着问人「保留 / 改」 |
-| 方向说明里这一项下已有 `人保留（日期）` 那一行 | 拦下，不交给 designer（[`references/pinned-findings.md`](references/pinned-findings.md)） |
-| 其余 | 交给 designer |
-
-这一轮有冲突项时：其余意见照常交给 designer 改完这一版，然后停下，冲突项排在最前问人；人答之前不开下一轮。人说**保留**，你照 `pinned-findings.md` 记下，designer 不用动，之后起评委时把它作为「人保留的项」交给评委，评委再提它就直接拦下，不再问人；人说**改**，交给 designer，标明「人的方向修订」。
-
-## 定稿之后
-
-按顺序走，每一步 designer 交付一版后照「每一轮」评：
-
-1. **动效**：判据见 [`references/design/motion.md`](references/design/motion.md) 的「开不开」（有块的 job 是四值之一才开）。开就给 designer 任务「动效」，评委看动效；做完先停下给人看跑起来的样子。不开就跳过。
-2. **素材**：判据见 [`references/asset-stage.md`](references/asset-stage.md) 的「闸门」（营销 register、块的 job 是身份或氛围）。开就给 designer 任务「素材单」，素材单摆给人，由人交给生成管线；缺素材不挡后面的步骤。
-3. **减法**：评委这一轮看减法，意见交给 designer 改。
-4. **清 AI tells**：给 designer 任务「清 AI tells」，改完照常评一次。
-5. **签字前检查**：给 designer 任务「签字前检查」，交付后停下，请人签字。
-
-## 每次停下，都摆给人
-
-停在 `瓶颈`、`方向`、有冲突项、动效做完、签字前检查做完、冻结、部分冻结，或 designer 交付「卡住」时，不等人要：
-
-- 照 `dyna runtime show 浏览器` 的「给人看」打开最新一版，停在这次改动的那个状态。
-- 配一份短清单：为什么停、评委分、本轮核心问题、designer 改了什么、要人判的取舍（带 designer 的推荐）。截图和评委回执留在 `canvas/work/`。
-- **冲突项排在最前**：评委原话、撞上的是哪一项人选定的东西、画布停在没动那一项的样子。按人保留排除的，只带一句「已按人保留排除 N 条」。
-- **「建议调研的问题」**和要人判的取舍一起摆，每条带 designer 的推荐做法：designer 已经按它改了。人说要查才调 `idea-loop:uiux-research`；不查，就当推荐做法定了。
-
-## 人的回复
-
-先判性质，不按语气：
+## 人说的其它话
 
 | 人说的是 | 怎么办 |
 |---|---|
-| 执行性的（「这条分隔线太重」） | 原话交给 designer，任务「按意见改」，之后照「每一轮」评 |
-| 跟方向说明矛盾，人当场给了新方向 | 交给 designer，标明「人的方向修订」，任务「按意见改」 |
+| 按编号的决策 | 每一轮的第 1 步 |
+| 要点到某处动效 | 当作一条决策，designer 照 [`references/design/motion.md`](references/design/motion.md) 做那一处，交评委时配定格帧 |
 | 跟方向说明矛盾，人想看几个变种再定 | 告诉人跑 `/idea-loop:uiux-imagine`，在对应那一档高度重开；没签过字的部分照部分冻结处理 |
-| 冲突项的「保留 / 改」 | 照「碰到人选定项的意见」 |
-| 要查别人怎么做 | 用 Skill 工具调 `idea-loop:uiux-research`，落图目录用这份 spec 的 `research/`，把调研页以文件发给人 |
-| 看完调研，说要转哪些 | 取出对应的文字（来源的场景 / 设计逻辑、页上的通用结论、页尾的决策条目），加人的原话交给 designer，标「调研结论（文字，来自 `research/<问题短名>`）」，提醒它用上了照常记。图和页面路径都不给；人不说转就不转 |
-| 签字（全部） | 交给 designer，任务「冻结」，写明签的是哪一版 |
-| 签字（一部分），其余回去重新发散 | 交给 designer，任务「部分冻结」，写明哪几块签了、哪几块回推 |
+| 要查别人怎么做（整页调研） | 用 Skill 工具调 `idea-loop:uiux-research`，落图目录用这份 spec 的 `research/`，把调研页以文件发给人 |
+| 看完调研，说要转哪些 | 取出对应的文字，加人的原话交给 designer，标「调研结论（文字，来自 `research/<问题短名>`）」；图和页面路径都不给 |
+| 静态定了、可以准备签字 | 见下面「签字」 |
 
-**回推只有一个理由：跟方向说明矛盾。** 判据是能不能在方向说明里指出被推翻的那一句；指不出来，就是执行性的，在 refine 里改。拿不准就问人。refine 里改方向只能是人亲口说的。
+**回推只有一个理由：跟方向说明矛盾。** 判据是能不能在方向说明里指出被推翻的那一句；指不出来，就是执行性的，在 refine 里改。
+
+## 签字
+
+没有「通过」「瓶颈」：分数高低、评委判不判「方向」，都不自动停。人说静态定了，往下走两步：
+
+1. **素材单**：判据见 [`references/asset-stage.md`](references/asset-stage.md) 的「闸门」。成立就给 designer 任务「素材单」，摆给人，由人交给生成管线；缺素材不挡后面的步骤。
+2. **签字前检查**：给 designer 任务「签字前检查」，交付后停下。把还没解决的方向性意见列给人看一遍（评委判过 `direction`、ledger 里没有对应决策的，原话逐条列出），人仍签才冻结。
+
+签字（全部）交给 designer，任务「冻结」，写明签的是哪一版；签字（一部分）、其余回去重新发散，任务「部分冻结」，写明哪几块签了、哪几块回推。
 
 ## 冻结之后
 
@@ -105,4 +82,4 @@ designer 交付「冻结」后，你核对：
 
 提交的步骤和之后告诉人的话见 [`references/after-freeze.md`](references/after-freeze.md)。
 
-**冻结之后设计变了、部分冻结、会话中断或重开**：各自怎么办见 [`references/after-freeze.md`](references/after-freeze.md)。
+**冻结之后设计变了、部分冻结、先不做、会话中断或重开**：各自怎么办见 [`references/after-freeze.md`](references/after-freeze.md)。

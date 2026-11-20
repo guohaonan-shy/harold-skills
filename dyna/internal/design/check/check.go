@@ -22,8 +22,9 @@
 // Rule 0 is the structure the rules stand on: files that cannot be read as objects, required fields.
 //
 // With a delta slug the requirement's `tmp/<slug>/delta/` is laid over `prod/` first (replace by id, drop what
-// removed.md lists) and the rules judge the result. `docs/design/` entries other than tmp/, prod/ and index.md are
-// the old per-spec layout: one note each, never a violation, never read.
+// removed.md lists) and the rules judge the result. `docs/design/` entries other than tmp/, prod/, pending/ and
+// index.md are the old per-spec layout: one note each, never a violation, never read. `pending/` holds shelved
+// designs (local only): skipped, no note.
 package check
 
 import (

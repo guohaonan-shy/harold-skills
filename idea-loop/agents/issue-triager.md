@@ -46,7 +46,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
 
 ## 评论与交回
 
-把评论正文写进 `.tmp/triage/<号>/comment.md`，`dyna issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（命令加「🤖 idea-loop：」前缀），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
+把评论正文写进 `.tmp/triage/<号>/comment.md`，`dyna issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（命令加 `<!-- idea-loop -->` 标记），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
 
 交回一行 JSON，别的不写；`comment` 填上面取到的评论地址，不自己拼：
 

@@ -12,7 +12,7 @@
 
 ### 配置类问题 —— 用 AskUserQuestion
 
-启动时确定"怎么跑"的离散选项,比如目标方向(AI Engineer / AI Agent Engineer / Harness / 其他)、复盘时是否需要结合目标 JD。满足:2-4 个选项、单选、不需要复合信息。
+启动时确定"怎么跑"的离散选项,比如目标方向(AI Engineer / AI Agent Engineer / Harness Engineer / 其他)、复盘时是否需要结合目标 JD。满足:2-4 个选项、单选、不需要复合信息。
 
 ### 复合信息 —— 用自然语言模板
 
@@ -50,7 +50,7 @@
 
 ## 5. 文件已存在时的覆盖策略
 
-产物文件已存在时,不直接覆盖,用 AskUserQuestion 三选一:**覆盖** / **加时间戳后缀另存**(如 `interview-transcript-2026-09-03-2.md`)/ **另存到用户指定路径**。同一会话内问过一次就记住偏好,不重复问。
+产物文件已存在时,不直接覆盖,用 AskUserQuestion 三选一:**覆盖** / **加序号后缀另存**(如 `interview-transcript-2026-09-03-2.md`)/ **另存到用户指定路径**。同一会话内问过一次就记住偏好,不重复问。
 
 ---
 
@@ -69,7 +69,6 @@
 
 自然顺序是 `mock-interview → interview-review`,但两者都要能独立工作:
 - `interview-review` 的输入不一定来自 `mock-interview`——用户完全可能拿一份真实面试的录音转写直接来复盘(这正是这个 plugin 最初的使用场景)
-- 如果用户直接找 `mock-interview` 且 cwd 下已有未复盘的 `interview-transcript-*.md`,提示一句"上一场还没复盘,要不要先跑 `interview-review`",不强制
 
 ---
 

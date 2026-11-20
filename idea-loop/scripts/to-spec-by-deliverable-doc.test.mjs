@@ -82,7 +82,7 @@ test('实现决策 no longer carries an overview diagram; 测试决策 folds pro
   const decisions = sections(template).find((s) => s.title === '实现决策').text;
   assert.doesNotMatch(decisions, /总览/);
   const tests = sections(template).find((s) => s.title === '测试决策').text;
-  assert.match(tests, /\| LLM 输出质量（prompt 改动） \| eval（确定性断言） \| 改了哪些 prompt/);
+  assert.match(tests, /\| LLM 输出质量（prompt 改动） \| eval，门槛对线上基线、不写绝对值；装了 `ai-eval` 的项目，跑流水线的改动走 eval-run，多轮对话里的一步走 eval-replay \| 改了哪些 prompt/);
   assert.doesNotMatch(tests, /prompt \/ eval 变动/);
 });
 

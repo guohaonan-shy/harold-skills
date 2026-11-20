@@ -273,8 +273,11 @@ func TestLoopArchivePostsEachEntryOnceAsTheGhLoginWithAFigureUploadedFirst(t *te
 		t.Fatal(s.gh.comments)
 	}
 	c := s.gh.comments[0]
-	contains(t, c, `<!-- idea-loop-archive {"kind":"review","round":1} -->`, "由 Claude 代发", "review 第 1 轮在会话里进行",
+	contains(t, c, `<!-- idea-loop-archive {"kind":"review","round":1} -->`, "review 第 1 轮在会话里进行",
 		"![流程](https://github.com/o/r/blob/idea-loop-evidence-pr-5/r1-s1-flow.png?raw=true)")
+	if strings.Contains(c, "由 Claude 代发") {
+		t.Fatal("the gh login posts with no signature line:", c)
+	}
 	// the second run finds the marker on the PR and posts nothing
 	out.Reset()
 	code = app.Run([]string{"pr", "loop", "archive", file, "o/r", "5"}, app.IO{

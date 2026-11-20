@@ -344,7 +344,7 @@ func relabel(gh GH, n int, labels []string, state string) error {
 func move(gh GH, it Issue, state, comment string) error {
 	body := ""
 	if comment != "" {
-		body = AIPrefix + comment
+		body = withMarker(comment)
 	}
 	if reason, ok := Closed[state]; ok {
 		args := []string{"issue", "close", fmt.Sprint(it.Number), "--reason", reason}
@@ -701,7 +701,7 @@ func Backlog(gh GH, limit int) ([]BacklogRow, error) {
 		if err != nil {
 			return nil, err
 		}
-		if found && strings.HasPrefix(body, AIPrefix) && strings.Contains(body, "还要你补") {
+		if found && IsIdeaLoopComment(body) && strings.Contains(body, "还要你补") {
 			upd, e1 := time.Parse(time.RFC3339, deref(it.UpdatedAt))
 			cr, e2 := time.Parse(time.RFC3339, created)
 			if e1 == nil && e2 == nil && upd.Sub(cr) <= minute {
@@ -837,17 +837,14 @@ func SetPriority(gh GH, n int, p string) ([]string, error) {
 
 var urlRe = regexp.MustCompile(`https?://\S+`)
 
-// NoteIssue comments on #n with the AI prefix (not doubled when the text already starts with it). Returns the
+// NoteIssue comments on #n with the AI marker (the old prefix dropped, the marker not doubled). Returns the
 // comment's URL (what `gh issue comment` prints), or "".
 func NoteIssue(gh GH, n int, text string) (string, error) {
 	t := strings.TrimSpace(text)
 	if t == "" {
 		return "", fmt.Errorf("评论是空的")
 	}
-	if !strings.HasPrefix(t, AIPrefix) {
-		t = AIPrefix + t
-	}
-	out, err := gh([]string{"issue", "comment", fmt.Sprint(n), "--body", t})
+	out, err := gh([]string{"issue", "comment", fmt.Sprint(n), "--body", withMarker(t)})
 	if err != nil {
 		return "", err
 	}
@@ -1198,7 +1195,7 @@ func Migrate(gh GH, docs string, apply bool) (lines []string, err error) {
 			return lines, err
 		}
 		if r.Comment != "" {
-			if _, err := gh([]string{"issue", "comment", fmt.Sprint(r.N), "--body", AIPrefix + r.Comment}); err != nil {
+			if _, err := gh([]string{"issue", "comment", fmt.Sprint(r.N), "--body", withMarker(r.Comment)}); err != nil {
 				return lines, err
 			}
 		}

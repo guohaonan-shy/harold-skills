@@ -2,9 +2,9 @@
 
 把设计档案（`docs/design/prod/`，下称「档案」）拿去对基准分支上真实跑着的界面，抓三种悄悄发生的漂移：绕过流程的改动（没走 `tmp/` 的提交）、环境变化（依赖升级、后端返回变了）、产品本身坏了。**前两种提议改档案，第三种报告给人，档案不被改成坏掉的样子。**
 
-两波：先**源码波**（不开浏览器），再**实时波**（源码波干净也跑）。**两波都由 `idea-loop:ui-reviewer` 的对账模式做**，dreaming 只派工、汇它交回的行；源码波怎么查、怎么写，在它的定义里（「对账模式」的「源码波」）。只有 `prod/` 为空时的全站初扫留在 dreaming 自己手里，见 [initial-scan.md](initial-scan.md)。
+两波：先**源码波**（不开浏览器），再**实时波**（源码波干净也跑）。**两波都由 `idea-loop:ui-reviewer` 的对账模式做**，dreaming 只派工、汇它交回的行；源码波怎么查、怎么写，在 `idea-loop:design-archive`「按需读」里「UI 审查的对账模式」那一份的「源码波」（ui-reviewer 定义的「对账模式」指向它）。只有 `prod/` 为空时的全站初扫留在 dreaming 自己手里，见 [initial-scan.md](initial-scan.md)。
 
-用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」「查询」。查询用 `dyna design archive query`。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档命令并进 `prod/`（这几类行是自动执行的，不等人批）。
+用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」，查询看「按需读」里「查档案」那一行（命令是 `dyna design archive query`）。提议表的行与处置闭集在 [proposal-table.md](proposal-table.md)。产物一律先写进 dreaming 自己的 tmp 目录，提议表出来后由归档命令并进 `prod/`（这几类行是自动执行的，不等人批）。
 
 ## 环境
 

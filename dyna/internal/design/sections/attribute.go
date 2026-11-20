@@ -297,8 +297,7 @@ func Attribute(m any) Obj {
 
 // scrollDrivenOf says which sections are scroll-driven. The measurement lists the pins it saw while the page was
 // scrolled through (a `position: sticky` element, or a fixed one a library pins, inside a container taller than itself,
-// big enough to hold a screen — or smaller, when the text in it changed with the scroll and changes the same way where
-// the scroll is put back); a pin belongs to the section whose range holds its container's vertical centre. A section is
+// big enough to hold a screen: half the viewport's width and height); a pin belongs to the section whose range holds its container's vertical centre. A section is
 // scroll-driven when a pin belongs to it. `declared` is the section's `scrollDriven: true`. Detected but not declared
 // fails the run (the section would be shot as one tall picture with blank under the first step); declared but not
 // detected is only a hint.
@@ -321,12 +320,8 @@ func scrollDrivenOf(pins []any, found []any, ranges []*rng) (scrollDriven, undec
 		if len(texts) > 1 {
 			txt = fmt.Sprintf("；钉住时的可见文字随滚动变了（%d 种）", len(texts))
 		}
-		small := ""
-		if truthy(get(pin, "byText")) {
-			small = "；它不到半屏，按「钉住时的文字随滚动变了」认定"
-		}
 		c := get(pin, "container")
-		return fmt.Sprintf("%s 的 <%s>%s高 %spx，容器高 %spx%s%s%s", how, text(get(pin, "tag")), label, text(roundPx(num(get(pin, "height")))), text(roundPx(num(get(c, "bottom"))-num(get(c, "top")))), held, txt, small)
+		return fmt.Sprintf("%s 的 <%s>%s高 %spx，容器高 %spx%s%s", how, text(get(pin, "tag")), label, text(roundPx(num(get(pin, "height")))), text(roundPx(num(get(c, "bottom"))-num(get(c, "top")))), held, txt)
 	}
 	evidence := map[string][]any{}
 	pinTop := map[string]float64{}

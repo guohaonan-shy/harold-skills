@@ -22,14 +22,16 @@ import (
 // fakeBrowser answers each matrix from a table keyed by its canvas address, and records what it was asked.
 type fakeBrowser struct {
 	results map[string]MatrixResult
+	diffs   map[string]DiffRun // canvas-diff matrices, keyed by their `before`
 	err     map[string]error
 	delay   time.Duration
 
-	mu      sync.Mutex
-	walked  []string
-	running atomic.Int32
-	peak    atomic.Int32
-	closed  atomic.Bool
+	mu        sync.Mutex
+	walked    []string
+	shotsDirs []string
+	running   atomic.Int32
+	peak      atomic.Int32
+	closed    atomic.Bool
 }
 
 func (f *fakeBrowser) Walk(ctx context.Context, m Matrix) (MatrixResult, error) {
@@ -55,6 +57,17 @@ func (f *fakeBrowser) Walk(ctx context.Context, m Matrix) (MatrixResult, error) 
 		return MatrixResult{}, err
 	}
 	return f.results[m.Canvas], nil
+}
+
+func (f *fakeBrowser) Diff(ctx context.Context, m Matrix, shotsDir string) (DiffRun, error) {
+	f.mu.Lock()
+	f.walked = append(f.walked, m.Before)
+	f.shotsDirs = append(f.shotsDirs, shotsDir)
+	f.mu.Unlock()
+	if err := f.err[m.Before]; err != nil {
+		return DiffRun{}, err
+	}
+	return f.diffs[m.Before], nil
 }
 
 func (f *fakeBrowser) Close() { f.closed.Store(true) }
@@ -367,5 +380,141 @@ func TestAMatrixFileReadsTheKnobsAMatrixAndACellMayHave(t *testing.T) {
 	}
 	if m.Cells[0].scheme() != "dark" || m.Cells[1].scheme() != "light" || m.Cells[1].Review != "human" || *m.Cells[0].ByAnchor["hero"].Position != 4 {
 		t.Fatalf("%+v", m.Cells)
+	}
+}
+
+// ---------- canvas-diff matrices ----------
+
+func diffMatrix(t *testing.T, dir, name, before, extra string) string {
+	t.Helper()
+	return write(t, filepath.Join(dir, name), `{"mode":"canvas-diff","before":"`+before+`","after":"http://c/new"`+extra+
+		`,"cells":[{"name":"mobile/default","viewport":{"width":390,"height":844},"state":"default"}]}`)
+}
+
+func TestACanvasDiffWithAChangeSetPutsTheUndeclaredFirstAndExits2OnlyForThose(t *testing.T) {
+	dir := t.TempDir()
+	set := `,"changeSet":[{"decision":"2.1","states":["default"],"anchors":["card"]},{"decision":"2.3","states":["empty"],"anchors":["cta"]}]`
+	m := diffMatrix(t, dir, "diff.json", "http://c/old", set)
+	card := change("default", "card")
+	toggle := change("default", "card-toggle")
+	toggle.Kind = "added"
+	fb := &fakeBrowser{diffs: map[string]DiffRun{"http://c/old": {Changed: []Change{card, toggle}, States: []string{"default"}}}}
+	r := run(fb.deps(), "measure", m)
+	if r.code != 2 {
+		t.Fatal(r.all())
+	}
+	contains(t, r.out, "没声明却变了的地方（1）：\n  desktop/default · card-toggle  新版新增的锚点", "改动集里声明过的（1）：", "（改动集 2.1）",
+		"改动集声明了、但矩阵里没有这个状态的格，没比（1）：\n  2.3  empty")
+	if fb.shotsDirs[0] != filepath.Join(dir, "ui-measure-shots") {
+		t.Fatalf("the shots go next to the matrix: %s", fb.shotsDirs[0])
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".ui-measure-last.diff.json")); err == nil {
+		t.Fatal("a canvas-diff remembers no round")
+	}
+
+	// only declared changes: nothing for a human to look at
+	fb.diffs["http://c/old"] = DiffRun{Changed: []Change{card}, States: []string{"default"}}
+	if r := run(fb.deps(), "measure", m); r.code != 0 {
+		t.Fatal(r.all())
+	}
+}
+
+func TestACanvasDiffWithoutAChangeSetListsEveryChangeAndAnyChangeExits2(t *testing.T) {
+	dir := t.TempDir()
+	m := diffMatrix(t, dir, "diff.json", "http://c/old", `,"shotsDir":"shots"`)
+	p := 1.5
+	c := change("default", "card")
+	c.PixelPercent = &p
+	c.Shots = &Shots{Before: "/x/b.png", After: "/x/a.png"}
+	fb := &fakeBrowser{diffs: map[string]DiffRun{"http://c/old": {Changed: []Change{c}, States: []string{"default"}, HumanCells: []string{"hover"}}}}
+	r := run(fb.deps(), "measure", m)
+	if r.code != 2 {
+		t.Fatal(r.all())
+	}
+	contains(t, r.out, "变了的锚点（1）：", "区域像素差 1.50%", "\n区域截图（两版各一张）在 "+filepath.Join(dir, "shots")+"\n", "HUMAN REVIEW (not green, not checked): hover")
+	if strings.Contains(r.out, "没声明") {
+		t.Fatal(r.out)
+	}
+	fb.diffs["http://c/old"] = DiffRun{States: []string{"default"}}
+	if r := run(fb.deps(), "measure", m); r.code != 0 || strings.TrimSpace(r.out) != "ui-measure: 两版没有变化 ✓" {
+		t.Fatal(r.all())
+	}
+}
+
+func TestTheJSONOfACanvasDiffHasTheFieldsInOrderAndNothingInternal(t *testing.T) {
+	dir := t.TempDir()
+	m := diffMatrix(t, dir, "diff.json", "http://c/old", `,"changeSet":[]`)
+	fb := &fakeBrowser{diffs: map[string]DiffRun{"http://c/old": {Changed: []Change{change("default", "card")}, States: []string{"default"}}}}
+	r := run(fb.deps(), "measure", m, "--json")
+	if r.code != 2 {
+		t.Fatal(r.all())
+	}
+	var keys []string
+	dec := json.NewDecoder(strings.NewReader(r.out))
+	dec.Token()
+	for dec.More() {
+		k, _ := dec.Token()
+		keys = append(keys, k.(string))
+		var skip json.RawMessage
+		dec.Decode(&skip)
+	}
+	if strings.Join(keys, ",") != "mode,classified,changed,declared,undeclared,declaredUnchanged,unchecked,humanReviewCells" {
+		t.Fatalf("%v\n%s", keys, r.out)
+	}
+	contains(t, r.out, `"pixelPercent": null`, `"shots": null`, `"classified": true`)
+	if strings.Contains(r.out, "decisions") {
+		t.Fatalf("an undeclared change has no decisions: %s", r.out)
+	}
+
+	// with an ordinary matrix: wrapped, each with its own matrix path
+	plain := matrixFile(t, dir, "plain.json", "http://c/plain")
+	fb.results = map[string]MatrixResult{"http://c/plain": {}}
+	both := run(fb.deps(), "measure", plain, m, "--json")
+	var got struct {
+		Matrices []map[string]json.RawMessage
+	}
+	if err := json.Unmarshal([]byte(both.out), &got); err != nil || len(got.Matrices) != 2 || both.code != 2 {
+		t.Fatal(err, both.all())
+	}
+	if string(got.Matrices[1]["mode"]) != `"canvas-diff"` || string(got.Matrices[1]["matrix"]) != `"`+m+`"` || got.Matrices[1]["shotsDir"] != nil || got.Matrices[1]["attention"] != nil {
+		t.Fatalf("%s", both.out)
+	}
+	if got.Matrices[0]["findings"] == nil {
+		t.Fatalf("%s", both.out)
+	}
+}
+
+func TestACanvasDiffWithoutTwoAddressesOrWithABadChangeSetExits1BeforeABrowserStarts(t *testing.T) {
+	dir := t.TempDir()
+	started := false
+	d := Deps{Browser: func(context.Context) (Browser, error) { started = true; return &fakeBrowser{}, nil }}
+	noAfter := write(t, filepath.Join(dir, "a.json"), `{"mode":"canvas-diff","before":"http://c/old","cells":[]}`)
+	if r := run(d, "measure", noAfter); r.code != 1 || !strings.Contains(r.err, `ui-measure: a canvas-diff matrix needs "before" and "after"`) {
+		t.Fatal(r.all())
+	}
+	for raw, want := range map[string]string{`{}`: "changeSet 必须是数组", `[{"decision":"x","states":["a"],"anchors":["b"]}]`: "changeSet[0].decision", `null`: "changeSet 必须是数组"} {
+		bad := diffMatrix(t, dir, "b.json", "http://c/old", `,"changeSet":`+raw)
+		if r := run(d, "measure", bad); r.code != 1 || !strings.Contains(r.err, want) {
+			t.Errorf("%s: %s", raw, r.all())
+		}
+	}
+	if started {
+		t.Fatal("a browser started")
+	}
+}
+
+func TestACanvasDiffMatrixReadsItsToleranceWithAPixelOfZeroUnlessToldOtherwise(t *testing.T) {
+	var m Matrix
+	if err := json.Unmarshal([]byte(`{"mode":"canvas-diff","tolerance":{"position":2},"cells":[{"name":"a"},{"name":"b","tolerance":{"pixel":0.5}}]}`), &m); err != nil {
+		t.Fatal(err)
+	}
+	if pos, aa, px := m.resolveDiff(m.Cells[0]); pos != 2 || aa != uicompare.DefaultAntialiasTolerance || px != 0 {
+		t.Fatal(pos, aa, px)
+	}
+	if _, _, px := m.resolveDiff(m.Cells[1]); px != 0.5 {
+		t.Fatal(px)
+	}
+	if m.ChangeSet != nil {
+		t.Fatal("no changeSet key is no change set")
 	}
 }
