@@ -90,3 +90,4 @@
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
 | [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
 | [[2026-11-19-design-shared-implementations]] | conversation | 2026-11-19 | 讨论 —— DESIGN.md 登记共用实现（失败页、404 这类）并配项目测试，补 Voice 章（#366） |
+| [decisions/366](decisions/366.md) | conversation | 2026-11-20 | 决定记录 —— #366 DESIGN.md 登记共用实现：检查由项目写、整页共用视图进 Components、Voice 章并进；候选 1 不批、候选 2 进池 |
