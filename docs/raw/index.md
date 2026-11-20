@@ -25,6 +25,7 @@
 | [[2026-10-26-unstable-sections]] | conversation | 2026-10-26 | #65：拍不稳的段对上 TOEFLAIR 营销站组件，两条待定交给推荐 |
 | [[2026-11-05-issue-model-regrill]] | conversation | 2026-11-05 | grill —— #242 重定 issue 模型：七个状态对上 Linear，triage 可跳过，实现开始即开 PR，一个仓库一个 PR，issue 正文格式 |
 | [[2026-11-15-home-repo-grill]] | conversation | 2026-11-15 | grill —— idea-loop 0.2.0：home（一台设备一份的私有仓库）与知识库、记忆脱离项目 |
+| [[2026-11-17-runtime-local-override]] | conversation | 2026-11-17 | 讨论 —— #295 runtime 的本机覆盖：放进 home 按运行环境一份，同名小节整段替换 |
 | [decisions/51](decisions/51.md) | conversation | 2026-10-23 | 决定记录 —— #51 retro 的 issue 会话：摆过的题与 retro 候选的结果 |
 | [decisions/55](decisions/55.md) | conversation | 2026-10-26 | 决定记录 —— #55 的 issue 会话：冻结后画布为唯一真相、dreaming 拆分与增量对账，摆过的题与 retro 候选的结果 |
 | [decisions/57](decisions/57.md) | conversation | 2026-10-26 | 决定记录 —— #57 的 issue 会话：结束整个任务的入口用 X，摆过的题与 retro 候选的结果 |
@@ -68,6 +69,7 @@
 | [decisions/313](decisions/313.md) | conversation | 2026-11-15 | 决定记录 —— #313 的 issue 会话：范围题按「影不影响这次交付」推荐（PR #321），回放分不出差别照合，decision-rules 与 runtime 开场注入另开 #326，候选「0.x 行为改动升 patch」第 3 次、开 #327 |
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
 | [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
+| [decisions/295](decisions/295.md) | conversation | 2026-11-17 | 决定记录 —— #295 的 issue 会话（triage）：runtime 本机覆盖放进 home、同名小节整段替换，挂到 0.2.0、被 #252 挡；retro 无候选 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
 | [decisions/339](decisions/339.md) | conversation | 2026-11-18 | 决定记录 —— #339 idea-loop 命令行：父会话定的方案、bin/ 与子代理生图两次实测、跟 #340 的分工；todo 会话合并 PR #387（dyna 0.0.1/0.0.2 已发），候选 2 条：1 不批、1 改成 #340 的评论 |
 | [decisions/252](decisions/252.md) | conversation | 2026-11-16 | 决定记录 —— #252 建 home 的 triage 会话：第一版项目地图由 setup 起草、本机实测时不切记忆目录（等 #247 迁移时切），retro 候选「推迟的一步写明何时由谁做」不批 |
