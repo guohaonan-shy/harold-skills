@@ -117,7 +117,7 @@ issues: [366]
 - **补 Voice & Content Strategy 章，章节顺序照官方。** 依据：官方规范「Section Order」，人决定本 issue 一起做（raw U3）。SKILL.md 的章节表与 chapters.md 改成：Overview、Colors、Typography、Layout、Elevation & Depth、Shapes、Motion、Voice & Content Strategy、Components、Do's and Don'ts，后接扩展的 Responsive Behavior、Known Gaps。Motion 去掉「扩展」二字，章名沿用「Motion」（官方列为认可的别名）。
 - **Voice 章的术语只指向 `GLOSSARY.md`。** 项目有 `GLOSSARY.md` 的，Voice 章的术语一条写「术语以 GLOSSARY.md 为准」，不重抄词表；没有的才在 Voice 章写。依据：五条写法规则第 2 条；`idea-loop:glossary` 管术语表。
 - **改的是给 agent 读的文档**，对的杠杆：chapters.md 与 SKILL.md 章节表是「写法规则」；reconcile.md 与 design-md-reconcile.md 是「流程步骤」；ui-tickets.md 是「开工前的输入」。SKILL.md 主体改后仍 < 5000 字。
-- **版本**：新增能力（一种条目、一章、一类对账发现），老用法照常能用，idea-loop `plugin.json` 升 minor。
+- **版本**：新增能力（一种条目、一章、一类对账发现），老用法照常能用；按 `REVIEW.md`「额外要求」，插件还在 0.x 时这类改动算 patch，idea-loop `plugin.json` 升 patch。
 
 ## 测试决策
 
