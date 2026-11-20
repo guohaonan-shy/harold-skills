@@ -21,6 +21,8 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/jsstr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/seo/og"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/seo/writing"
 )
 
 // Deps is what the commands reach outside the process through, so tests can stand in for gh, the clock, the live
@@ -132,18 +134,19 @@ func usageErr(use string) error { return fmt.Errorf("usage: dyna seo %s", use) }
 
 // Command is the `seo` module.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("seo", "SEO：SEO.md 的读取、扫描的预算与到期方向、产物检查与构建后钩子、发现开成 issue、上线自查与留档")
+	root := registry.Group("seo", "SEO：SEO.md 的读取、扫描的预算与到期方向、产物检查与构建后钩子、发现开成 issue、上线自查与留档、OG 分享卡、文章写作检查")
 	root.AddCommand(
 		d.parseCommand(), d.compareAuditsCommand(), d.allocateCommand(), d.checkCommand(), d.scopeCommand(),
 		d.syncContextCommand(), d.dueCommand(), d.gapsCommand(), d.fileIssuesCommand(), d.verifyLiveCommand(),
 		d.recordCommand(), d.provenanceCommand(),
+		og.Command(og.Deps{Env: d.env(), Stdout: d.out()}), writing.Command(writing.Deps{Stdout: d.out()}),
 	)
 	return root
 }
 
 func (d Deps) parseCommand() *cobra.Command {
 	const use = "parse <SEO.md>"
-	return leaf(use, "读 SEO.md，打印九节内容的 JSON（站点、OpenSEO、竞品、重点页面、构建与检查、写作、品牌、内容原则、分析，和哪些项已确认）；读不了或写法不对退出 1", "", func(cmd *cobra.Command, args []string) error {
+	return leaf(use, "读 SEO.md，打印十节内容的 JSON（站点、OpenSEO、竞品、重点页面、构建与检查、写作、配图、品牌、内容原则、分析，和哪些项已确认）；读不了或写法不对退出 1", "", func(cmd *cobra.Command, args []string) error {
 		if arg(args, 0) == "" {
 			return usageErr("parse <SEO.md>")
 		}
@@ -318,17 +321,22 @@ func (d Deps) changedFiles(cmd *cobra.Command) ([]string, error) {
 		}
 		return strings.Split(string(out), "\n"), nil
 	}
-	return nil, usageErr("scope <SEO.md> (--files=<file|-> | --base=<ref>)")
+	return nil, usageErr("scope <SEO.md> (--files=<file|-> | --base=<ref> | --image-dir=<dir>)")
 }
 
 func (d Deps) scopeCommand() *cobra.Command {
-	c := leaf("scope <SEO.md>", "判断一个 PR 是不是只改内容：改动的文件都落在 SEO.md「构建与检查」的「内容路径」里才算（可以不等人合并）；没有改动文件不算。退出 0 看 contentOnly", "", func(cmd *cobra.Command, args []string) error {
+	c := leaf("scope <SEO.md>", "判断一个 PR 是不是只改内容：改动的文件都落在 SEO.md「构建与检查」的「内容路径」里才算（可以不等人合并）；没有改动文件不算。退出 0 看 contentOnly。--image-dir 改判一个图片目录在不在内容路径以内", "", func(cmd *cobra.Command, args []string) error {
 		if arg(args, 0) == "" {
-			return usageErr("scope <SEO.md> (--files=<file|-> | --base=<ref>)")
+			return usageErr("scope <SEO.md> (--files=<file|-> | --base=<ref> | --image-dir=<dir>)")
 		}
 		seo, err := ReadSeoMd(args[0])
 		if err != nil {
 			return err
+		}
+		if cmd.Flags().Changed("image-dir") {
+			dir, _ := cmd.Flags().GetString("image-dir")
+			d.printLine(stringify(ImageDirInScope(dir, seo.Build.ContentPaths)))
+			return nil
 		}
 		files, err := d.changedFiles(cmd)
 		if err != nil {
@@ -339,6 +347,7 @@ func (d Deps) scopeCommand() *cobra.Command {
 	})
 	c.Flags().String("files", "", "改动文件清单，一行一个路径；- 是标准输入")
 	c.Flags().String("base", "", "从仓库取：git diff --name-only --no-renames <ref>...HEAD（在当前目录跑）")
+	c.Flags().String("image-dir", "", "改判一个图片目录在不在内容路径以内：打印 {inScope, dir, reason?, contentPaths}（seo-setup 写「配图」前用）")
 	return c
 }
 

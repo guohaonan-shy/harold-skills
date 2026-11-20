@@ -5,7 +5,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 **一次调用跑一轮。** 一轮看这个 issue 的 PR（`prs.md` 里的那个）。调用这个 skill 的会话是**编排者**：自己跑审查、处理条目、在会话里给人看汇报、派修复、人说合并时合并。审查这一步只读，做法在 [`references/run-a-round.md`](references/run-a-round.md)；修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
 
-开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）。哪些条目不等人，照 `idea-loop:decision-rules`。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独 `commit` 到 home（`docs(spec): …` / `docs(tickets): …`）。
+开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）。哪些条目不等人，照 `idea-loop:decision-rules`。往来都在会话里，PR 上不开 thread，不和人往来。改 spec、工单的提交一律单独 `commit` 到 home（`docs(spec): …` / `docs(tickets): …`）。
 
 review loop 文件是 `.tmp/review-loop/<PR 号>.md`。`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」）。**设计产物**指 `<docs>/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西。
 

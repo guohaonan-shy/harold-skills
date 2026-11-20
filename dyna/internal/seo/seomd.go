@@ -24,7 +24,7 @@ var PageTypes = []string{"对比与研究", "数据研究", "故事", "教程"}
 // does not say.
 const DefaultLiveWait = 30
 
-var seoSections = []string{"站点", "OpenSEO", "竞品", "重点页面", "构建与检查", "写作", "品牌", "内容原则", "分析"}
+var seoSections = []string{"站点", "OpenSEO", "竞品", "重点页面", "构建与检查", "写作", "配图", "品牌", "内容原则", "分析"}
 
 const none = "无"
 
@@ -174,6 +174,23 @@ type Writing struct {
 	Failures  *string  `json:"failures"`
 	TypeField *string  `json:"typeField"`
 	TypeMap   *TypeMap `json:"typeMap"`
+	// the writing loop's checks: a JSON file overriding the lint defaults, the project's own lint command, a second
+	// model's review command
+	LintConfig  *string `json:"lintConfig"`
+	ExtraLint   *string `json:"extraLint"`
+	SecondJudge *string `json:"secondJudge"`
+}
+
+// Images is SEO.md's 配图: where images go and how they are made — the image directory (inside 内容路径, which
+// seo-setup checks when it writes it), the generating tool (an MCP tool name or a command), the frontmatter fields
+// holding the cover and the OG image, and which DESIGN.md to read when the repo has several. No section, no key or
+// `无` reads as null.
+type Images struct {
+	Dir        *string `json:"dir"`
+	Tool       *string `json:"tool"`
+	CoverField *string `json:"coverField"`
+	OgField    *string `json:"ogField"`
+	DesignMd   *string `json:"designMd"`
 }
 
 // Brand is SEO.md's 品牌.
@@ -198,9 +215,17 @@ type Analytics struct {
 type Confirmed struct {
 	Competitors bool `json:"competitors"`
 	BrandTerms  bool `json:"brandTerms"`
+	LintConfig  bool `json:"lintConfig"`
+	ExtraLint   bool `json:"extraLint"`
+	SecondJudge bool `json:"secondJudge"`
+	ImageDir    bool `json:"imageDir"`
+	ImageTool   bool `json:"imageTool"`
+	CoverField  bool `json:"coverField"`
+	OgField     bool `json:"ogField"`
+	DesignMd    bool `json:"designMd"`
 }
 
-// SeoMd is the nine sections of a project's SEO.md.
+// SeoMd is the ten sections of a project's SEO.md.
 type SeoMd struct {
 	Site        Site         `json:"site"`
 	OpenSEO     OpenSEO      `json:"openseo"`
@@ -208,6 +233,7 @@ type SeoMd struct {
 	KeyPages    []KeyPage    `json:"keyPages"`
 	Build       Build        `json:"build"`
 	Writing     Writing      `json:"writing"`
+	Images      Images       `json:"images"`
 	Brand       Brand        `json:"brand"`
 	Principles  []Principle  `json:"principles"`
 	Analytics   Analytics    `json:"analytics"`
@@ -467,7 +493,30 @@ func parseWriting(lines []string) (Writing, error) {
 		}
 		tm.Vals[m[1]] = m[2]
 	}
-	return Writing{Voice: firstTick(kv["文风"]), Failures: firstTick(kv["失败案例"]), TypeField: firstTick(kv["类型字段"]), TypeMap: tm}, nil
+	return Writing{Voice: firstTick(kv["文风"]), Failures: firstTick(kv["失败案例"]), TypeField: firstTick(kv["类型字段"]), TypeMap: tm,
+		LintConfig: valueOf(kv["lint 配置"]), ExtraLint: valueOf(kv["补充 lint"]), SecondJudge: valueOf(kv["第二评委"])}, nil
+}
+
+// valueOf is a key's value: the first backticked span, else the text as written; nothing written or `无` reads as
+// nil.
+func valueOf(raw string) *string {
+	v := jsstr.Trim(raw)
+	if v == "" || v == none {
+		return nil
+	}
+	if t := firstTick(v); t != nil {
+		return t
+	}
+	return &v
+}
+
+// written says whether the key was written — a value, or an explicit `无`. A key never written, or written with
+// nothing after it, is not.
+func written(kv map[string]string, key string) bool { return jsstr.Trim(kv[key]) != "" }
+
+func parseImages(lines []string) Images {
+	kv := pairs(lines)
+	return Images{Dir: valueOf(kv["图片目录"]), Tool: valueOf(kv["生图工具"]), CoverField: valueOf(kv["封面字段"]), OgField: valueOf(kv["OG 字段"]), DesignMd: valueOf(kv["DESIGN.md 路径"])}
 }
 
 func parsePrinciples(lines []string) []Principle {
@@ -487,17 +536,7 @@ func parsePrinciples(lines []string) []Principle {
 
 func parseAnalytics(lines []string) Analytics {
 	kv := pairs(lines)
-	value := func(key string) *string {
-		raw := jsstr.Trim(kv[key])
-		if raw == "" || raw == none {
-			return nil
-		}
-		if t := firstTick(raw); t != nil {
-			return t
-		}
-		return &raw
-	}
-	return Analytics{Tool: value("工具"), ProjectID: value("项目"), Dashboard: value("dashboard")}
+	return Analytics{Tool: valueOf(kv["工具"]), ProjectID: valueOf(kv["项目"]), Dashboard: valueOf(kv["dashboard"])}
 }
 
 // ParseSeoMd reads SEO.md's text. A section that is not there reads as empty, a line it does not know is ignored.
@@ -513,6 +552,7 @@ func ParseSeoMd(md string) (*SeoMd, error) {
 	if err != nil {
 		return nil, err
 	}
+	wkv, ikv := pairs(s["写作"]), pairs(s["配图"])
 	noCompetitors := false
 	for _, it := range items(s["竞品"]) {
 		if it == none {
@@ -526,12 +566,21 @@ func ParseSeoMd(md string) (*SeoMd, error) {
 		KeyPages:    parseKeyPages(s["重点页面"]),
 		Build:       parseBuild(s["构建与检查"]),
 		Writing:     writing,
+		Images:      parseImages(s["配图"]),
 		Brand:       brand,
 		Principles:  parsePrinciples(s["内容原则"]),
 		Analytics:   parseAnalytics(s["分析"]),
 		Confirmed: Confirmed{
 			Competitors: len(competitors) > 0 || noCompetitors,
 			BrandTerms:  len(brand.Terms) > 0 || jsstr.Trim(pairs(s["品牌"])["品牌词"]) == none,
+			LintConfig:  written(wkv, "lint 配置"),
+			ExtraLint:   written(wkv, "补充 lint"),
+			SecondJudge: written(wkv, "第二评委"),
+			ImageDir:    written(ikv, "图片目录"),
+			ImageTool:   written(ikv, "生图工具"),
+			CoverField:  written(ikv, "封面字段"),
+			OgField:     written(ikv, "OG 字段"),
+			DesignMd:    written(ikv, "DESIGN.md 路径"),
 		},
 	}, nil
 }

@@ -178,13 +178,14 @@ const freezeCSS = `*, *::before, *::after {
   caret-color: transparent !important; scroll-behavior: auto !important;
 }`
 
-// prepare puts the tab in the cell's viewport, DPR and color scheme, loads the url until the network has been
+// prepare puts the tab in the cell's viewport, DPR, color scheme and reduced-motion preference (a cell without one
+// clears it, so it never inherits the previous cell's setting), loads the url until the network has been
 // quiet for half a second, freezes motion and waits for the fonts.
 func (t *tab) prepare(url string, c Cell, dpr float64) error {
 	css, _ := json.Marshal(freezeCSS)
 	return chromedp.Run(t.ctx,
 		emulation.SetDeviceMetricsOverride(int64(c.Viewport.Width), int64(c.Viewport.Height), dpr, false),
-		emulation.SetEmulatedMedia().WithFeatures([]*emulation.MediaFeature{{Name: "prefers-color-scheme", Value: c.scheme()}}),
+		emulation.SetEmulatedMedia().WithFeatures([]*emulation.MediaFeature{{Name: "prefers-color-scheme", Value: c.scheme()}, {Name: "prefers-reduced-motion", Value: c.reducedMotion()}}),
 		chromedp.ActionFunc(func(ctx context.Context) error { return t.load(ctx, url) }),
 		chromedp.Evaluate(`(css => { const s = document.createElement('style'); s.textContent = css;
 			(document.head || document.documentElement).appendChild(s); })(`+string(css)+`)`, nil),
@@ -227,8 +228,7 @@ var measureStyles = []string{
 	"letterSpacing", "textTransform", "borderRadius", "borderWidth", "borderColor",
 	"boxShadow", "opacity",
 	"paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
-	"marginTop", "marginRight", "marginBottom", "marginLeft",
-	"gap", "rowGap", "columnGap",
+	// margin and gap are not measured: they are how a layout was written, the box position is the result.
 }
 
 // measureInPage runs in the page and returns { <anchor>: { …measurements } }.
@@ -389,6 +389,9 @@ func (c *chrome) Walk(ctx context.Context, m Matrix) (MatrixResult, error) {
 		}
 		// One tab after the other, on purpose: loading both at once changed a measured top by 1px on a real
 		// port (a layout that depends on load timing), so the verdict would no longer match the serial walk's.
+		if err := cell.checkReducedMotion(); err != nil {
+			return MatrixResult{}, err
+		}
 		if err := canvasTab.prepare(canvasURL, cell, m.dpr()); err != nil {
 			return MatrixResult{}, fmt.Errorf("%s 的画布：%w", cell.Name, err)
 		}
@@ -500,6 +503,9 @@ func (c *chrome) Diff(ctx context.Context, m Matrix, shotsDir string) (DiffRun, 
 			return DiffRun{}, err
 		}
 		// One tab after the other, as in Walk: loading both at once can move a measured box.
+		if err := cell.checkReducedMotion(); err != nil {
+			return DiffRun{}, err
+		}
 		if err := beforeTab.prepare(beforeURL, cell, m.dpr()); err != nil {
 			return DiffRun{}, fmt.Errorf("%s 的旧版画布：%w", cell.Name, err)
 		}

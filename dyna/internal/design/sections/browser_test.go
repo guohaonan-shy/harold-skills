@@ -1,15 +1,20 @@
 package sections
 
-// The browser side of the sections command, run for real: the code `measure`, `shoot`, `screen`, `cover`, `time`, `step`
-// and `pinned` print, handed a Playwright page that shows small pages built to have the shapes the code has to cope
-// with (islands that take no room, a fixed table of contents that fades in at the second section, a scroll container
-// inside an app shell, a pin that holds a screen while the page scrolls, a carousel that ticks by itself, …).
+// The browser side of the sections command, run for real: testdata/browser/browser.test.mjs hands the code `measure`,
+// `shoot`, `screen`, `cover`, `time`, `step` and `pinned` print to a Playwright page (the code is Playwright code by
+// design: the session runs it through the Playwright MCP) and checks what it measured and shot. The code builders,
+// the `sections` command and the PNG decoding and comparison all answer from this package and package ui, through the
+// helper binary testdata/sectionscli; nothing here reads the old idea-loop scripts.
 //
-// The assertions are the ones of design-archive-sections-browser.test.mjs, unchanged: the test file is copied, and the
-// only thing replaced is where the code comes from — the build functions it imports and the command it runs now
-// answer from this package (through testdata/sectionscli) instead of from the old script. Playwright and a Chromium are
-// looked up where the machine has them (the project's own node_modules, the npx cache, the Playwright browser cache);
-// with none found the tests inside it are skipped, and so is this one. It takes minutes: `go test -short` skips it.
+// Every case really opens Chromium and waits in real time — about 6 minutes for the whole file — so `go test ./...`
+// does not run it: it runs only with IDEA_LOOP_BROWSER_TESTS=1 set (the same switch the old browser test had, spec
+// sections-browser-test-out-of-full-suite), on its own:
+//
+//	cd dyna && IDEA_LOOP_BROWSER_TESTS=1 go test ./internal/design/sections -run TestBrowserCodeRunsInARealBrowser -timeout 15m
+//
+// Each case times out after 120 s and the browser start-up after 60 s (in the .mjs), so a stuck browser fails one case
+// and the run still ends. With the switch on but no Playwright with a Chromium on the machine, the cases are skipped
+// and so is this test.
 
 import (
 	"bytes"
@@ -17,85 +22,32 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"testing"
 )
 
-const goBuilders = `import { execFileSync } from 'node:child_process';
-
-const BIN = process.env.SECTIONS_BIN;
-const gen = (name, input) => {
-  try {
-    return execFileSync(BIN, ['generate', name], { input: JSON.stringify(input) ?? 'null', encoding: 'utf8', maxBuffer: 1 << 28 });
-  } catch (e) {
-    throw new Error(String(e.stderr || '').trim() || e.message);
-  }
-};
-
-export const buildTimeCode = (config) => gen('time', config);
-export const buildStepCode = (ms) => gen('step', ms);
-export const buildMeasureCode = (config) => gen('measure', config);
-export const buildShootCode = (config) => gen('shoot', config);
-export const buildPinnedCode = (config) => gen('pinned', config);
-export const buildScreenCode = (config) => gen('screen', config);
-export const buildCoverCode = (config) => gen('cover', config);
-export const attribute = (measurement) => JSON.parse(gen('attribute', measurement));
-export const shootTargets = (attribution, opts = {}) => JSON.parse(gen('shootTargets', { attribution, only: opts.only ?? null }));
-`
+// browserOptIn is the environment variable that turns the browser test on (value 1).
+const browserOptIn = "IDEA_LOOP_BROWSER_TESTS"
 
 func TestBrowserCodeRunsInARealBrowser(t *testing.T) {
-	if testing.Short() {
-		t.Skip("the browser test takes minutes: skipped with -short")
+	if os.Getenv(browserOptIn) != "1" {
+		t.Skip("about 6 minutes in a real browser: set " + browserOptIn + "=1 and run it on its own")
 	}
 	node, err := exec.LookPath("node")
 	if err != nil {
 		t.Skip("node is not on PATH")
 	}
-	scripts, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "idea-loop", "scripts"))
+	test, err := filepath.Abs(filepath.Join("testdata", "browser", "browser.test.mjs"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	original, err := os.ReadFile(filepath.Join(scripts, "design-archive-sections-browser.test.mjs"))
-	if err != nil {
-		t.Skip("the old browser test is gone: nothing to run")
-	}
-
-	work := t.TempDir()
-	bin := filepath.Join(work, "sectionscli")
-	build := exec.Command("go", "build", "-o", bin, "./testdata/sectionscli")
-	if out, err := build.CombinedOutput(); err != nil {
+	bin := filepath.Join(t.TempDir(), "sectionscli")
+	if out, err := exec.Command("go", "build", "-o", bin, "./testdata/sectionscli").CombinedOutput(); err != nil {
 		t.Fatalf("building the helper: %v\n%s", err, out)
 	}
 
-	src := string(original)
-	src = strings.Replace(src, "from './design-archive-sections.mjs'", "from './go-sections.mjs'", 1)
-	src = strings.Replace(src, "const CLI = fileURLToPath(new URL('./design-archive-sections.mjs', import.meta.url));", "const CLI = null;", 1)
-	src = strings.ReplaceAll(src, "spawnSync('node', [CLI, ", "spawnSync(process.env.SECTIONS_BIN, ['sections', ")
-	if strings.Contains(src, "design-archive-sections.mjs") || strings.Contains(src, "[CLI") {
-		t.Fatal("the old browser test still reaches for the old script: the replacements no longer fit it")
-	}
-	files := map[string]string{
-		"go-sections.mjs":    goBuilders,
-		"browser.test.mjs":   src,
-		"ui-png-compare.mjs": "",
-		"ui-compare.mjs":     "",
-	}
-	for _, name := range []string{"ui-png-compare.mjs", "ui-compare.mjs"} {
-		b, err := os.ReadFile(filepath.Join(scripts, name))
-		if err != nil {
-			t.Fatal(err)
-		}
-		files[name] = string(b)
-	}
-	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(work, name), []byte(content), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	cmd := exec.Command(node, "--test", filepath.Join(work, "browser.test.mjs"))
-	cmd.Dir = filepath.Join(scripts, "..", "..") // the repository root, where the old test is run from
-	cmd.Env = append(os.Environ(), "SECTIONS_BIN="+bin)
+	cmd := exec.Command(node, "--test", test)
+	cmd.Dir = filepath.Join("..", "..", "..", "..") // the repository root: Playwright is looked up from here
+	cmd.Env = append(os.Environ(), "SECTIONS_BIN="+bin, browserOptIn+"=1")
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out
 	err = cmd.Run()

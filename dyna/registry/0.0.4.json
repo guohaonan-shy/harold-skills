@@ -1631,7 +1631,7 @@
       "command": "issues note",
       "module": "issues",
       "use": "note <docs> <n> <body-file>",
-      "summary": "在 #n 上评论，带 AI 前缀",
+      "summary": "在 #n 上评论，第一行是 idea-loop 的标记（HTML 注释，GitHub 不显示）",
       "caller": "session",
       "next": "dyna issues show <docs> <n>",
       "args": [
@@ -2690,10 +2690,110 @@
       ]
     },
     {
+      "command": "seo og html",
+      "module": "seo",
+      "use": "html <params.json> <out.html>",
+      "summary": "只填版式、不开浏览器：写出 HTML，打印 {html, layout, defaults}",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "params.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "out.html",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "assets",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "版式目录；不给就用插件的 skills/seo/og/assets（IDEA_LOOP_PLUGIN_ROOT 由插件的 bin/dyna 设）"
+        }
+      ]
+    },
+    {
+      "command": "seo og layouts",
+      "module": "seo",
+      "use": "layouts",
+      "summary": "列出版式，一行一个",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "assets",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "版式目录；不给就用插件的 skills/seo/og/assets（IDEA_LOOP_PLUGIN_ROOT 由插件的 bin/dyna 设）"
+        }
+      ]
+    },
+    {
+      "command": "seo og md5",
+      "module": "seo",
+      "use": "md5 <file>",
+      "summary": "打印文件的 md5；带 --url 再取服务器上的这张图比一比：字节不一样（缓存或旧服务）退出 3",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "url",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "预览服务里这张图的地址"
+        }
+      ]
+    },
+    {
+      "command": "seo og render",
+      "module": "seo",
+      "use": "render <params.json> <out.png>",
+      "summary": "填版式、在浏览器里让字自己缩到放得下、截 1200×630：打印 {png, layout, defaults, md5, fit, overflow, sizes}；放不下退出 4，没有浏览器退出 1 并写出 HTML 供手动截图",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "params.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "out.png",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "assets",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "版式目录；不给就用插件的 skills/seo/og/assets（IDEA_LOOP_PLUGIN_ROOT 由插件的 bin/dyna 设）"
+        },
+        {
+          "name": "html",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "同时把填好的 HTML 写到这个文件"
+        }
+      ]
+    },
+    {
       "command": "seo parse",
       "module": "seo",
       "use": "parse <SEO.md>",
-      "summary": "读 SEO.md，打印九节内容的 JSON（站点、OpenSEO、竞品、重点页面、构建与检查、写作、品牌、内容原则、分析，和哪些项已确认）；读不了或写法不对退出 1",
+      "summary": "读 SEO.md，打印十节内容的 JSON（站点、OpenSEO、竞品、重点页面、构建与检查、写作、配图、品牌、内容原则、分析，和哪些项已确认）；读不了或写法不对退出 1",
       "caller": "session",
       "next": "",
       "args": [
@@ -2826,7 +2926,7 @@
       "command": "seo scope",
       "module": "seo",
       "use": "scope <SEO.md>",
-      "summary": "判断一个 PR 是不是只改内容：改动的文件都落在 SEO.md「构建与检查」的「内容路径」里才算（可以不等人合并）；没有改动文件不算。退出 0 看 contentOnly",
+      "summary": "判断一个 PR 是不是只改内容：改动的文件都落在 SEO.md「构建与检查」的「内容路径」里才算（可以不等人合并）；没有改动文件不算。退出 0 看 contentOnly。--image-dir 改判一个图片目录在不在内容路径以内",
       "caller": "session",
       "next": "",
       "args": [
@@ -2848,6 +2948,13 @@
           "required": false,
           "value": "string",
           "description": "改动文件清单，一行一个路径；- 是标准输入"
+        },
+        {
+          "name": "image-dir",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "改判一个图片目录在不在内容路径以内：打印 {inScope, dir, reason?, contentPaths}（seo-setup 写「配图」前用）"
         }
       ]
     },
@@ -2916,6 +3023,48 @@
           "required": false,
           "value": "bool",
           "description": "先等部署：每隔 --interval 秒取一遍，每页 title 和 description 都同产物才算上线；超过 SEO.md 的「上线等待」分钟还没上线就报 not-live，不算失败"
+        }
+      ]
+    },
+    {
+      "command": "seo writing lint",
+      "module": "seo",
+      "use": "lint [--config=<file.json>] <file|dir>...",
+      "summary": "文章的机械检查（句数、逗号、套话、图注、frontmatter、中英结构）：一条都没有退出 0，有发现退出 1，用法或配置不对退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "--config=<file.json>",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "file|dir",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        },
+        {
+          "name": "config",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "覆盖默认值的 JSON 配置文件（SEO.md「写作」的「lint 配置」）"
+        },
+        {
+          "name": "format",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "json 或 text"
+        },
+        {
+          "name": "lang",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "强制语言：en 或 zh；不给就看文件名，再看正文"
         }
       ]
     },
@@ -3241,7 +3390,7 @@
       "command": "ui measure",
       "module": "ui",
       "use": "measure <matrix.json>...",
-      "summary": "把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素（格上写 shotAnchor 就只比那个锚点的区域）；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2。矩阵写 \"mode\": \"canvas-diff\" 就比同一画布的两版：列出变了的锚点和两版区域截图，有改动集时分出没声明的；没变或变的都声明过退出 0，其余退出 2",
+      "summary": "把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素（格上写 shotAnchor 就只比那个锚点的区域，写 reducedMotion 就在那种减弱动效偏好下比；颜色先换成 8 位 sRGB 再精确比，margin 和 gap 不比）；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2。矩阵写 \"mode\": \"canvas-diff\" 就比同一画布的两版：列出变了的锚点和两版区域截图，有改动集时分出没声明的；没变或变的都声明过退出 0，其余退出 2",
       "caller": "session",
       "next": "dyna ui measure <matrix.json>...",
       "args": [

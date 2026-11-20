@@ -229,8 +229,8 @@ func TestParseJSONOutputKeepsTheKeyOrderAndNulls(t *testing.T) {
 	for _, want := range []string{
 		"{\n  \"site\": {\n    \"domain\": \"a.example\",\n    \"languages\": [],\n    \"searchConsole\": null,\n    \"bing\": null\n  },\n  \"openseo\": {\n    \"projectId\": null,\n    \"floor\": null,\n    \"monthly\": null,\n    \"resetDay\": null,\n    \"weekly\": null\n  },",
 		"\"build\": {\n    \"distDir\": null,\n    \"checkArgs\": [],\n    \"contentPaths\": [],\n    \"liveWait\": 30\n  },",
-		"\"writing\": {\n    \"voice\": null,\n    \"failures\": null,\n    \"typeField\": null,\n    \"typeMap\": {}\n  },",
-		"\"confirmed\": {\n    \"competitors\": false,\n    \"brandTerms\": false\n  }\n}",
+		"\"writing\": {\n    \"voice\": null,\n    \"failures\": null,\n    \"typeField\": null,\n    \"typeMap\": {},\n    \"lintConfig\": null,\n    \"extraLint\": null,\n    \"secondJudge\": null\n  },\n  \"images\": {\n    \"dir\": null,\n    \"tool\": null,\n    \"coverField\": null,\n    \"ogField\": null,\n    \"designMd\": null\n  },\n  \"brand\"",
+		"\"confirmed\": {\n    \"competitors\": false,\n    \"brandTerms\": false,\n    \"lintConfig\": false,\n    \"extraLint\": false,\n    \"secondJudge\": false,\n    \"imageDir\": false,\n    \"imageTool\": false,\n    \"coverField\": false,\n    \"ogField\": false,\n    \"designMd\": false\n  }\n}",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in\n%s", want, out)

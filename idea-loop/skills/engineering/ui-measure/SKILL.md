@@ -19,12 +19,14 @@ description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像
 
 | 属性类别 | 判据 |
 |---|---|
-| 位置类（top / left / width / height / padding / margin / gap） | ±1px |
+| 位置类（锚点盒子的 top / left / width / height，加 padding） | ±1px |
 | token 类（颜色、字号、行高、字重、字距、圆角、边框、阴影、透明度） | 精确匹配 |
 | 像素层每格差异 | ≤ 1% |
-| 抗锯齿 | 感知色距 0.1（YIQ 归一化，与 pixelmatch 同源）：两个像素在光栅化意义上算同一个颜色。它跟位置容差是两回事，各管各的 |
+| 抗锯齿 | 感知色距 0.1（YIQ 归一化，与 pixelmatch 同源）：两个像素在光栅化意义上算同一个颜色。同位置不相近的像素，再看另一张图在它周围 1 个物理像素（3×3 邻域）的逐通道颜色范围，双向都落在对方范围里才算同一个，所以挪不到一个像素的字不报红，挪 2px 照样红。它跟位置容差是两回事，各管各的 |
 
-颜色差一个色阶是一条发现，不是舍入误差：它意味着用错了 token。
+margin 和 gap 不比：`margin-top`、`space-y`、`gap` 排出同一个位置，只看盒子落在哪。没有锚点的子元素排偏了，由像素层兜底。
+
+颜色差一个色阶是一条发现，不是舍入误差：它意味着用错了 token。比颜色前两边都先换算成 8 位 sRGB（每通道 0–255 的整数）加透明度，再精确比：画布写 `#3b82f6`、实现写 `oklch(…)`，换算后相同就是同一个色。发现里同时给两边的原写法和换算值。认得 `rgb()`/`rgba()`、`oklch()`、`oklab()`、`color(srgb …)`；sRGB 色域外的按通道截到 0–255；阴影、边框这类复合值里嵌着的颜色同样换算；认不得的写法按原字符串比。
 
 ## 矩阵怎么写
 
@@ -40,12 +42,14 @@ description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像
     { "name": "desktop/light/default", "viewport": { "width": 1440, "height": 900 }, "colorScheme": "light", "state": "default" },
     { "name": "mobile/dark/empty", "viewport": { "width": 390, "height": 844 }, "colorScheme": "dark", "state": "empty",
       "tolerance": { "pixel": 2 }, "byAnchor": { "chart": { "position": 3 } } },
+    { "name": "desktop/light/reduced-motion", "viewport": { "width": 1440, "height": 900 }, "state": "default", "reducedMotion": "reduce" },
     { "name": "desktop/light/live-data", "viewport": { "width": 1440, "height": 900 }, "state": "live", "review": "human" }
   ]
 }
 ```
 
 - 格的 `name` 出现在每条发现的位置字段里，写得让人一眼知道是哪一格。
+- `reducedMotion`（可选）：`"reduce"` 或 `"no-preference"`（缺省），两个标签页都按它模拟 `prefers-reduced-motion`，写法照 `colorScheme`。关动画与过渡的冻结样式照加：比的是这种偏好下的静止样式。不写的格跟没有这个字段时一样。
 - `review: "human"` 的格命令跳过，单独列出来，不计入绿。
 - 像素层默认看 viewport 那一帧（不是整页）。一格写 `"shotAnchor": "<锚点名>"`，这一格只截这个锚点的区域再比像素：两边按同一个框裁（框是这个锚点在两边范围的并集，再裁到两个页面都有的部分），尺寸一定相同，折叠线以下的锚点也能截。不写就照旧截 viewport。
 - `canvas` 和 `local` 两边都只是地址：填画布某一版的地址（`.../v3.html`），就是两版画布对比，输出还是上面那种发现。要的是「变了哪些锚点、哪些没声明」的清单，用下面的「两版画布对比」。

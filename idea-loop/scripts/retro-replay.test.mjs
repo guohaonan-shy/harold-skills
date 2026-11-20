@@ -8,13 +8,13 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { dynaBinary, runDyna } from './dyna-test-bin.mjs';
-import { changeSetOf, homeProblem, prepareHome, projectName } from '../evals/retro/retro-replay.mjs';
+import { changeSetOf, homeProblem, pluginDiffOf, pluginRelDirOf, prepareHome, projectName, swapPluginFiles } from '../evals/retro/retro-replay.mjs';
 import { normalizeRemote, parseProjects } from '../evals/retro/home-projects.mjs';
 import {
   homeAgentsMd, homeCopyEntries, homeProjectName, homeRemote, homeSourceOf, projectListLine, registerProject, withHome,
@@ -193,6 +193,9 @@ test('settleVerdicts applies the human override for that run only, then decides'
 //   a line "reply: X"   final text X, and a file docs/out.md containing X
 //   a line "agent"      the session starts an Agent tool call, then goes on running (must be killed)
 //   a line "home-write: X"  X is written to <IDEA_LOOP_HOME>/projects/repo/docs/spec/out-home.md and committed in that home (as commit-to-home does)
+//   a line "peek: P"    the session looks at P (relative to its work dir) and records what it found there (null when missing)
+//   a line "bash: C"    the session issues a Bash tool call with command C (nothing is run)
+//   a line "readproj: P" the session issues a Read of P under its work dir, as an absolute path
 // With no --plugin-dir it is the judge: it answers yes for a product containing FIXED, else no.
 // ---------------------------------------------------------------------------------------------
 
@@ -228,6 +231,17 @@ if (pd) {
   } else {
     const m = /^reply: (.*)$/m.exec(mark);
     const text = m ? m[1] : 'nothing';
+    for (const u of mark.matchAll(/^peek: (.*)$/gm)) {
+      const file = path.join(process.cwd(), u[1]);
+      const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+      fs.appendFileSync(process.env.FAKE_LOG + '.peek', JSON.stringify({ reply: m ? m[1] : null, rel: u[1], content }) + '\\n');
+    }
+    for (const u of mark.matchAll(/^bash: (.*)$/gm)) {
+      emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'b1', name: 'Bash', input: { command: u[1] } }] } });
+    }
+    for (const u of mark.matchAll(/^readproj: (.*)$/gm)) {
+      emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'r1', name: 'Read', input: { file_path: path.join(process.cwd(), u[1]) } }] } });
+    }
     for (const u of mark.matchAll(/^(skill|read): (.*)$/gm)) {
       const input = u[1] === 'skill' ? { skill: u[2] } : { file_path: path.join(pd, u[2]) };
       emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'u1', name: u[1] === 'skill' ? 'Skill' : 'Read', input }] } });
@@ -274,12 +288,16 @@ fs.writeFileSync(out, said);
 process.stdout.write(said);
 `;
 
-function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, repoFiles = {}, origin, caseExtra = {} }) {
+function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, repoFiles = {}, snapshot = {}, origin, caseExtra = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
   mkdirSync(repo);
   writeFileSync(join(repo, 'README.md'), 'project at the decision commit\n');
   for (const [rel, text] of Object.entries(repoFiles)) {
+    mkdirSync(dirname(join(repo, rel)), { recursive: true });
+    writeFileSync(join(repo, rel), text);
+  }
+  for (const [rel, text] of Object.entries(snapshot)) {
     mkdirSync(dirname(join(repo, rel)), { recursive: true });
     writeFileSync(join(repo, rel), text);
   }
@@ -1139,4 +1157,196 @@ test('e2e case with home_commit but no --home-repo: refused before any session s
   assert.equal(wrong.status, 2);
   assert.match(wrong.stderr, /没有提交 deadbee/);
   assert.deepEqual(wrong.calls, [], 'no session was started');
+});
+
+// ---------------------------------------------------------------------------------------------
+// The project's own copy of the plugin: the files the change touched are put there in each side's own version.
+// ---------------------------------------------------------------------------------------------
+
+const MANIFEST = (name) => JSON.stringify({ name });
+const DEMO = 'skills/engineering/demo/SKILL.md';
+const OTHER = 'skills/engineering/other/SKILL.md';
+const FRESH = 'skills/engineering/fresh/SKILL.md';
+const GONE = 'skills/engineering/gone/SKILL.md';
+/** The plugin as the case's commit holds it (under idea-loop/, the dir the test plugins have): a skill the change edits, one it does not touch, one it deletes. */
+const snapshotWith = (name = 'idea-loop') => ({
+  'idea-loop/.claude-plugin/plugin.json': MANIFEST(name),
+  [`idea-loop/${DEMO}`]: '旧', [`idea-loop/${OTHER}`]: '快照', [`idea-loop/${GONE}`]: '快照里还有',
+});
+/** Pre-change and post-change plugins: DEMO edited, OTHER untouched, FRESH only post-change, GONE only pre-change. */
+const sidesWith = (name = 'idea-loop') => ({
+  before: { '.claude-plugin/plugin.json': MANIFEST(name), [DEMO]: '改前', [OTHER]: '两边一样', [GONE]: '改前才有' },
+  after: { '.claude-plugin/plugin.json': MANIFEST(name), [DEMO]: '改后', [OTHER]: '两边一样', [FRESH]: '改后新增' },
+});
+const PEEKS = [DEMO, OTHER, FRESH, GONE].map((f) => `peek: idea-loop/${f}`).join('\n');
+/** What each run found at the peeked paths, keyed by the run's reply text ("plain" is the pre-change run, "FIXED" the post-change one). */
+const peeks = (env) => {
+  const out = { plain: {}, FIXED: {} };
+  for (const l of readFileSync(`${env.log}.peek`, 'utf8').split('\n').filter(Boolean)) {
+    const x = JSON.parse(l);
+    out[x.reply][x.rel.replace('idea-loop/', '')] = x.content;
+  }
+  return out;
+};
+const swapSetup = (snapshot, pluginName) => setup({
+  before: `reply: plain\n${PEEKS}`, after: `reply: FIXED\nskill: idea-loop:demo\n${PEEKS}`, snapshot, pluginFiles: sidesWith(pluginName),
+});
+
+test('e2e: the changed plugin files in the project are each side\'s own version; untouched plugin files stay as the commit had them; new files appear, deleted ones go', () => {
+  const env = swapSetup(snapshotWith());
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  assert.deepEqual(seen.plain, { [DEMO]: '改前', [OTHER]: '快照', [FRESH]: null, [GONE]: '改前才有' }, 'pre-change run');
+  assert.deepEqual(seen.FIXED, { [DEMO]: '改后', [OTHER]: '快照', [FRESH]: '改后新增', [GONE]: null }, 'post-change run');
+});
+
+test('e2e: the swapped-in plugin files are not in what the run wrote: neither product lists them', () => {
+  const env = swapSetup(snapshotWith());
+  const r = run(env);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  for (const side of ['before', 'after']) {
+    const artifact = readFileSync(join(dir, side, 'artifact.md'), 'utf8');
+    assert.match(artifact, /docs\/out\.md/, 'what the run wrote is there');
+    assert.doesNotMatch(artifact, /idea-loop\//, `${side}: no plugin file in the product`);
+  }
+});
+
+test('e2e: the case commit has no copy of the plugin (a case from another repository): both projects are the commit as unpacked, no plugin file appears', () => {
+  const env = swapSetup({});
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  for (const side of ['plain', 'FIXED']) assert.deepEqual(seen[side], { [DEMO]: null, [OTHER]: null, [FRESH]: null, [GONE]: null });
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  for (const side of ['before', 'after']) assert.ok(!existsSync(join(dir, side, 'project', 'idea-loop')), `${side}: nothing at the plugin's place`);
+  assert.equal(readFileSync(join(dir, 'after', 'project', 'README.md'), 'utf8'), 'project at the decision commit\n');
+});
+
+test('e2e: the plugin dir in the commit is another plugin (a different manifest name): nothing is swapped, it is unpacked as it was', () => {
+  const env = swapSetup(snapshotWith('some-other-plugin'));
+  run(env);
+  const seen = peeks(env);
+  for (const side of ['plain', 'FIXED']) assert.deepEqual(seen[side], { [DEMO]: '旧', [OTHER]: '快照', [FRESH]: null, [GONE]: '快照里还有' });
+});
+
+test('e2e: files under the plugin\'s evals/ are never swapped in, even when the two sides differ: the post-change run does not see a case the change added, and both keep the snapshot\'s evals/; files outside evals/ are still swapped', () => {
+  const NEWCASE = 'evals/retro/cases/new-case/case.json';
+  const OLDCASE = 'evals/retro/cases/old-case/case.json';
+  const sides = sidesWith();
+  sides.before[OLDCASE] = '改前的用例';
+  sides.after[OLDCASE] = '改后的用例';
+  sides.after[NEWCASE] = '改后新增的用例';
+  const snapshot = { ...snapshotWith(), [`idea-loop/${OLDCASE}`]: '快照里的用例' };
+  const peekPaths = [DEMO, NEWCASE, OLDCASE].map((f) => `peek: idea-loop/${f}`).join('\n');
+  const env = setup({ before: `reply: plain\n${peekPaths}`, after: `reply: FIXED\nskill: idea-loop:demo\n${peekPaths}`, snapshot, pluginFiles: sides });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  assert.deepEqual(seen.plain, { [DEMO]: '改前', [NEWCASE]: null, [OLDCASE]: '快照里的用例' }, 'pre-change run');
+  assert.deepEqual(seen.FIXED, { [DEMO]: '改后', [NEWCASE]: null, [OLDCASE]: '快照里的用例' }, 'post-change run');
+});
+
+test('e2e: the post-change run reads a changed file in the project by a Bash path relative to the project, or by a Read of its absolute path: used, not not-exercised', () => {
+  for (const reading of [`bash: cat idea-loop/${DEMO}`, `bash: cd /somewhere && cat ./idea-loop/${DEMO} | head`, `readproj: idea-loop/${DEMO}`]) {
+    const env = setup({ before: 'reply: plain', after: `reply: FIXED\n${reading}`, snapshot: snapshotWith(), pluginFiles: sidesWith() });
+    const r = run(env);
+    assert.equal(r.status, 0, `${reading}\n${r.stdout}${r.stderr}`);
+    const res = resultJson(env, r.stdout);
+    assert.equal(res.exercised.status, 'hit', reading);
+    assert.equal(res.exercised.via, 'read', reading);
+    assert.equal(res.outcome, 'pass');
+  }
+});
+
+test('e2e: the same read when nothing was swapped into the project (the commit has no such plugin) does not count: the project holds no post-change version', () => {
+  const env = setup({ before: 'reply: plain', after: `reply: FIXED\nbash: cat idea-loop/${DEMO}`, pluginFiles: sidesWith() });
+  const r = run(env);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.equal(resultJson(env, r.stdout).outcome, 'not-exercised');
+});
+
+test('pluginDiffOf: every file that differs between the two plugin dirs, added, edited or deleted, dot-files and files outside skills/ and agents/ included; same files, .DS_Store and the plugin\'s top-level evals/ are not', () => {
+  const root = mkdtempSync(join(tmpdir(), 'plugindiff-'));
+  const put = (dir, rel, text) => {
+    mkdirSync(dirname(join(root, dir, rel)), { recursive: true });
+    writeFileSync(join(root, dir, rel), text);
+  };
+  for (const dir of ['before', 'after']) {
+    put(dir, 'skills/a/SKILL.md', 'same');
+    put(dir, 'skills/b/SKILL.md', dir);
+    put(dir, 'hooks/hooks.json', dir);
+    put(dir, '.claude-plugin/plugin.json', dir);
+  }
+  put('before', 'agents/gone.md', 'x');
+  put('after', 'scripts/new.mjs', 'x');
+  put('after', '.mcp.json', '{}');
+  put('after', 'skills/a/.DS_Store', 'junk');
+  // evals/ holds replay cases and eval material: never part of the diff, whether edited, added or deleted
+  put('before', 'evals/retro/cases/c/case.json', 'before');
+  put('after', 'evals/retro/cases/c/case.json', 'after');
+  put('after', 'evals/retro/cases/d/case.json', 'new');
+  put('before', 'evals/retro/cases/e/annotations.md', 'gone');
+  put('before', 'skills/b/evals/keep.md', 'before');
+  put('after', 'skills/b/evals/keep.md', 'after');
+  assert.deepEqual(pluginDiffOf(join(root, 'before'), join(root, 'after')), [
+    '.claude-plugin/plugin.json', '.mcp.json', 'agents/gone.md', 'hooks/hooks.json', 'scripts/new.mjs', 'skills/b/SKILL.md', 'skills/b/evals/keep.md',
+  ]);
+  assert.deepEqual(pluginDiffOf(join(root, 'before'), join(root, 'before')), []);
+});
+
+test('swapPluginFiles: writes this side\'s version, removes what this side lacks, leaves the rest; does nothing without the same-named plugin at relDir', () => {
+  const root = mkdtempSync(join(tmpdir(), 'swap-'));
+  const put = (rel, text) => {
+    mkdirSync(dirname(join(root, rel)), { recursive: true });
+    writeFileSync(join(root, rel), text);
+  };
+  put('side/.claude-plugin/plugin.json', MANIFEST('p'));
+  put('side/skills/x/SKILL.md', 'side x');
+  put('side/skills/new/deep/SKILL.md', 'side new');
+  const project = () => {
+    rmSync(join(root, 'project'), { recursive: true, force: true });
+    put('project/tools/p/.claude-plugin/plugin.json', MANIFEST('p'));
+    put('project/tools/p/skills/x/SKILL.md', 'old x');
+    put('project/tools/p/skills/gone/SKILL.md', 'old gone');
+    put('project/tools/p/skills/keep/SKILL.md', 'old keep');
+    put('project/README.md', 'readme');
+    return join(root, 'project');
+  };
+  const args = (p) => ({ project: p, relDir: 'tools/p', afterPlugin: join(root, 'side'), sidePlugin: join(root, 'side'), diff: ['skills/x/SKILL.md', 'skills/new/deep/SKILL.md', 'skills/gone/SKILL.md'] });
+  let p = project();
+  const at = (rel) => (existsSync(join(p, 'tools/p', rel)) ? readFileSync(join(p, 'tools/p', rel), 'utf8') : null);
+  assert.equal(swapPluginFiles(args(p)), true);
+  assert.deepEqual([at('skills/x/SKILL.md'), at('skills/new/deep/SKILL.md'), at('skills/gone/SKILL.md'), at('skills/keep/SKILL.md')], ['side x', 'side new', null, 'old keep']);
+  assert.equal(readFileSync(join(p, 'README.md'), 'utf8'), 'readme');
+  // no plugin at relDir, or a different name there: untouched
+  p = project();
+  assert.equal(swapPluginFiles({ ...args(p), relDir: 'elsewhere' }), false);
+  put('project/tools/p/.claude-plugin/plugin.json', MANIFEST('not-p'));
+  assert.equal(swapPluginFiles(args(p)), false);
+  assert.equal(at('skills/x/SKILL.md'), 'old x');
+});
+
+test('pluginRelDirOf: the plugin\'s dir in its git repository (empty at the repo root); a dir outside any repo counts as <repo root>/<its own name>', () => {
+  const root = mkdtempSync(join(tmpdir(), 'reldir-'));
+  mkdirSync(join(root, 'nested', 'my-plugin'), { recursive: true });
+  spawnSync('git', ['init', '-q'], { cwd: root });
+  assert.equal(pluginRelDirOf(join(root, 'nested', 'my-plugin')), 'nested/my-plugin');
+  assert.equal(pluginRelDirOf(root), '');
+  const loose = mkdtempSync(join(tmpdir(), 'loose-'));
+  mkdirSync(join(loose, 'my-plugin'));
+  assert.equal(pluginRelDirOf(join(loose, 'my-plugin')), 'my-plugin');
+});
+
+test('exercisedBy: a Bash command naming a changed file by its path relative to the project counts when that project dir is given; not as the tail of a longer path or a different file', () => {
+  const change = { files: ['skills/a/SKILL.md'], skills: ['p:a'], agents: [] };
+  const bash = (command) => [{ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Bash', input: { command } }] } }];
+  const used = (command, projectRelDirs = ['tools/p']) => exercisedBy(bash(command), change, { projectRelDirs }).status;
+  assert.equal(used('cat tools/p/skills/a/SKILL.md'), 'hit');
+  assert.equal(used('cat ./tools/p/skills/a/SKILL.md'), 'hit');
+  assert.equal(used('head -5 "tools/p/skills/a/SKILL.md" && ls'), 'hit');
+  assert.equal(used('cat /elsewhere/tools/p/skills/a/SKILL.md'), 'miss');
+  assert.equal(used('cat tools/p/skills/b/SKILL.md'), 'miss');
+  assert.equal(used('cat tools/p/skills/a/SKILL.md', []), 'miss', 'no project copy of the plugin: not counted');
+  assert.equal(used('cat skills/a/SKILL.md', ['']), 'hit', 'a plugin at the project root');
 });

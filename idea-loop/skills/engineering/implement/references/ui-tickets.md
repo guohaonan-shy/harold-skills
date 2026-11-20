@@ -6,7 +6,7 @@ implementer 做 **UI 工单**时读这份。这一环是 TDD 的红绿环，**�
 
 来自工单的「设计冻结」字段（从 spec「实现决策」里的冻结摘要誊写）：
 
-- **HTML 画布**的指针（`docs/design/tmp/<spec-slug>/canvas/` 里那份，指针是这个目录的路径，不写 wikilink；冻结时它 `commit` 到 home，不在代码分支里：implementer 的 worktree 读不到它，派工时给它的是 tmp 绝对路径）——它是这一刀的**真值**
+- **HTML 画布**的指针（`docs/design/tmp/<spec-slug>/canvas/` 里那份，指针是这个目录的路径，不写 wikilink；冻结时它 `commit` 到 home，不在代码分支里，implementer 的 worktree 读不到它；读写都用派工给的 tmp 绝对路径，见「设计档案与最小差异」）——它是这一刀的**真值**
 - **验收矩阵**：要逐格比对的 viewport / 主题 / 状态组合，以及每格的容差覆盖
 - **ledger 摘要**（打磨过程的决定记录）：做过哪些决定，防止你把一条已经被否掉的方案又实现回来
 - 状态矩阵与**数据契约变更**
@@ -99,7 +99,7 @@ prod 404 断言的形状（栈无关）：以生产模式构建并启动，请�
 
 ## 设计档案与最小差异
 
-写之前用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」（档案的结构）；写对象文件时再看它的「写对象文件」（frontmatter 与必填字段、正文），自检命令在它的「校验」。下面的「tmp 绝对路径」是派工时给的 `<项目目录>/docs/design/tmp/<spec-slug>/` 的绝对路径：它在 home 里，你自己的 worktree 里没有它，也不进你的 commit，画布和最小差异都用这个绝对路径读写；目录不存在就自己建。
+写之前用 Skill 工具调 `idea-loop:design-archive`，看它的「图的实体」「目录与命名」「进入方式从图上推导」（档案的结构）；写对象文件时再看它的「写对象文件」（frontmatter 与必填字段、正文），自检命令在它的「校验」。下面的「tmp 绝对路径」是派工时给的 `<项目目录>/docs/design/tmp/<spec-slug>/` 的绝对路径。画布冻结时已 `commit` 到 home，`delta/` 和 `tmp/` 下其余东西也都在这里；它们都不在代码分支上，你自己的 worktree 里读不到，也不进你的 commit。画布和最小差异都用这个绝对路径读写：两样在同一处，读到的画布是 home 里最新的那份（冻结后设计变更 `commit` 到 home 的新版本，这里立刻读得到）；目录不存在就自己建。
 
 - **冻结画布从 tmp 绝对路径的 `canvas/` 下读**。
 - **工单是 UI 改动但没有设计稿**（`canvas/` 里没有对应的画布）时，在同一个绝对路径的 `delta/` 下记**最小差异**：

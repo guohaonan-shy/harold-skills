@@ -65,14 +65,17 @@ type Tolerance struct {
 
 // Cell is one state to put both tabs in and compare.
 type Cell struct {
-	Name        string     `json:"name"`
-	Viewport    Viewport   `json:"viewport"`
-	ColorScheme string     `json:"colorScheme"`
-	State       string     `json:"state"`
-	Review      string     `json:"review"`
-	ShotAnchor  string     `json:"shotAnchor"`
-	Tolerance   *Tolerance `json:"tolerance"`
-	ByAnchor    map[string]struct {
+	Name        string   `json:"name"`
+	Viewport    Viewport `json:"viewport"`
+	ColorScheme string   `json:"colorScheme"`
+	State       string   `json:"state"`
+	Review      string   `json:"review"`
+	ShotAnchor  string   `json:"shotAnchor"`
+	// ReducedMotion puts both tabs under this prefers-reduced-motion ("reduce" or "no-preference"), written like
+	// colorScheme; not written, there is no emulation.
+	ReducedMotion json.RawMessage `json:"reducedMotion"`
+	Tolerance     *Tolerance      `json:"tolerance"`
+	ByAnchor      map[string]struct {
 		Position *float64 `json:"position"`
 	} `json:"byAnchor"`
 }
@@ -173,6 +176,30 @@ func (m Matrix) dpr() float64 {
 }
 
 // scheme is the color scheme of a cell: light unless it says otherwise.
+// reducedMotion is the cell's prefers-reduced-motion, "" when it has none (no emulation). Call checkReducedMotion first.
+func (c Cell) reducedMotion() string {
+	var v string
+	_ = json.Unmarshal(c.ReducedMotion, &v)
+	return v
+}
+
+// checkReducedMotion refuses a reducedMotion that is not "reduce" or "no-preference".
+func (c Cell) checkReducedMotion() error {
+	if len(c.ReducedMotion) == 0 {
+		return nil
+	}
+	var v string
+	if json.Unmarshal(c.ReducedMotion, &v) == nil && (v == "reduce" || v == "no-preference") {
+		return nil
+	}
+	var compact bytes.Buffer
+	if json.Compact(&compact, c.ReducedMotion) != nil {
+		compact.Reset()
+		compact.Write(c.ReducedMotion)
+	}
+	return fmt.Errorf("cell \"%s\": reducedMotion must be \"reduce\" or \"no-preference\", got %s", c.Name, compact.String())
+}
+
 func (c Cell) scheme() string {
 	if c.ColorScheme == "" {
 		return "light"

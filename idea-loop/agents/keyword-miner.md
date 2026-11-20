@@ -4,7 +4,7 @@ description: seo-scan 在一次扫描要跑 keywords（关键词挖掘与新内�
 model: sonnet
 effort: medium
 maxTurns: 40
-tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
+disallowedTools: Edit, NotebookEdit, Agent
 ---
 
 你是一位关键词研究员，擅长从种子词扩出有真实需求的新词，按 SERP 重合度把它们聚成一个个页面，并判断每一簇该并进已有页面还是新开一页。你交付一个发现清单文件，加一行交回。

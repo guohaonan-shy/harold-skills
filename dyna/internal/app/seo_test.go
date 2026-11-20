@@ -73,8 +73,9 @@ func TestRegistryHasEverySeoCommandMarkedForSessionsWithTheArgumentsTheOldScript
 		t.Fatal(err)
 	}
 	want := []string{
-		"seo allocate", "seo check", "seo compare-audits", "seo due", "seo file-issues", "seo gaps", "seo parse", "seo provenance", "seo record body",
-		"seo record from-rollback", "seo record list", "seo scope", "seo sync-context", "seo verify-live",
+		"seo allocate", "seo check", "seo compare-audits", "seo due", "seo file-issues", "seo gaps",
+		"seo og html", "seo og layouts", "seo og md5", "seo og render", "seo parse", "seo provenance", "seo record body",
+		"seo record from-rollback", "seo record list", "seo scope", "seo sync-context", "seo verify-live", "seo writing lint",
 	}
 	var have []string
 	for _, c := range reg.Commands {
@@ -90,7 +91,7 @@ func TestRegistryHasEverySeoCommandMarkedForSessionsWithTheArgumentsTheOldScript
 	}
 	sort.Strings(have)
 	if strings.Join(have, ",") != strings.Join(want, ",") {
-		t.Fatalf("the module holds %v, the ticket lists the 12 scripts as %v", have, want)
+		t.Fatalf("the module holds %v, want the commands of the old scripts (and og-render, writing-lint) as %v", have, want)
 	}
 	flags := func(name string) string {
 		c, _ := reg.Find(name)
@@ -106,7 +107,12 @@ func TestRegistryHasEverySeoCommandMarkedForSessionsWithTheArgumentsTheOldScript
 	for name, want := range map[string]string{
 		"seo allocate":     "context,spent,today",
 		"seo check":        "desc-max,desc-min,filter,hook,strict,title-max,title-min",
-		"seo scope":        "base,files",
+		"seo scope":        "base,files,image-dir",
+		"seo og layouts":   "assets",
+		"seo og html":      "assets",
+		"seo og render":    "assets,html",
+		"seo og md5":       "url",
+		"seo writing lint": "config,format,lang",
 		"seo file-issues":  "date,dry-run",
 		"seo verify-live":  "interval,max-wait,urls,wait",
 		"seo record body":  "merged,pr",
@@ -123,7 +129,7 @@ func TestRegistryHasEverySeoCommandMarkedForSessionsWithTheArgumentsTheOldScript
 	}
 }
 
-func TestParsePrintsTheNineSectionsAndAnUnreadableFileExitsOne(t *testing.T) {
+func TestParsePrintsTheTenSectionsAndAnUnreadableFileExitsOne(t *testing.T) {
 	dir := t.TempDir()
 	md := write(t, filepath.Join(dir, "SEO.md"), "## 站点\n- 域名：`a.example`\n")
 	out, errs, code := seoRun{}.do("parse", md)

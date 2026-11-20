@@ -9,6 +9,7 @@
 | 类型检查 | `.mjs` 没有类型检查；命令行 dyna：`cd dyna && go vet ./...` |
 | 单个测试文件 | `node --test <文件>`；命令行 dyna：`cd dyna && go test ./internal/<包>` |
 | 全量测试 | `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`；命令行 dyna：`cd dyna && go test ./...` |
+| 设计档案浏览器测试 | 分段拍摄生成的浏览器代码在真 Chromium 里跑的测试，不在全量测试里：命令行 dyna：`cd dyna && IDEA_LOOP_BROWSER_TESTS=1 go test ./internal/design/sections -run TestBrowserCodeRunsInARealBrowser -timeout 15m`（不设 `IDEA_LOOP_BROWSER_TESTS=1` 时跳过）。改了 `dyna/internal/design/sections`、它用到的截图比对，或这份测试本身时跑；约 5 分钟，放后台跑 |
 | lint | `.mjs` 没有；命令行 dyna：`cd dyna && gofmt -l .`（有输出就是没格式化） |
 
 ## 额外要求

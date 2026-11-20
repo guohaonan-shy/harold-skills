@@ -14,7 +14,7 @@
 | 优先级 | Linear 自带的 priority，对照见「优先级」 |
 | blocked by | issue relation「blocked by」 |
 | 挂着的 PR | PR 标题前缀 `[<号>]`，正文第一行 `Linear: <号>`；平台据此把 PR 挂到 issue 上 |
-| 评论 | comment，带「🤖 idea-loop：」前缀 |
+| 评论 | comment，不加前缀也不加标记 |
 
 ## 谁翻状态
 
@@ -28,10 +28,10 @@
 | 操作 | 工具与参数 |
 |---|---|
 | 读 issue | `get_issue`（`id`: `<号>`；要挡路的关系加 `includeRelations: true`，要标签和优先级 `fields` 里带 `labels`、`priority`） |
-| 读评论 | `list_comments`（`issueId`: `<号>`）；最近一条「🤖 idea-loop：」写着上次停在哪、分支叫什么 |
+| 读评论 | `list_comments`（`issueId`: `<号>`）；读最近几条 idea-loop 写的评论，接上上次停在哪、分支叫什么 |
 | 列某状态的 issue | `list_issues`（`team`、`state`: 那个状态的名字、`orderBy`: `createdAt`、`limit`；`fields` 带 `priority`、`createdAt`、`labels`）；多页用返回的 `cursor` 接着取。**结果是新的在前**，要最早的，得一页页翻到最后一页（带 `cursor` 取，直到 `hasNextPage` 为 false）再从末尾往前数 |
 | 翻状态 | 先 `dyna issues check … --from=…`，再 `save_issue`（`id`: `<号>`、`state`: 目标状态的名字） |
-| 评论 | `save_comment`（`issueId`: `<号>`、`body`: 以「🤖 idea-loop：」开头） |
+| 评论 | `save_comment`（`issueId`: `<号>`、`body`: 正文，不带开头） |
 | 先放着 | 先 `check --from=…`；`save_comment` 写停在哪、分支名；再 `save_issue` 翻 `state` 到 backlog 的名字 |
 | 取消（不做、验证为不存在） | 先 `check --from=…`；`save_comment` 写理由；再 `save_issue`（`id`、`state`: Canceled 的名字） |
 | 取消（重复） | 同上，但 `save_issue` 翻到 Duplicate 的名字（`ISSUE_TRACKER.md` canceled 那行的第二个名字；团队没有 Duplicate 就翻 Canceled），并带 `duplicateOf`: 原 issue 的号；评论写「跟 <原号> 重复」 |
@@ -58,7 +58,7 @@
 - **派发候选**：先取指派给本人的，再取未指派的，指派给别人的不取。
   1. `list_issues`（`team`、`state`: todo 的名字、`assignee`: `"me"`、`fields`: `priority`、`createdAt`、`labels`），结果是新的在前，要翻到最后一页（`cursor` 直到 `hasNextPage` 为 false）才取全；每个再 `get_issue`（`includeRelations: true`）去掉 blocked by 还没关的；按 P0 → P1 → P2 → 没有排，同级按 `createdAt` 早的在前。
   2. 这一步剩下的是空的（没有指派给本人、又没被挡着的），才取未指派的：`list_issues` 同上，`assignee` 换成 `"null"`，`fields` 加 `updatedAt`；同样去掉被挡的；按 P0 → P1 → P2 → 没有排，同级按 `updatedAt` 早的在前。Linear 不给「进入当前状态的时间」，`updatedAt`（最近一次改动，评论、改字段、翻状态都算）是最接近「在 Todo 里放了多久没动」的字段。
-- **分拣取 backlog**：`list_issues`（`state`: backlog 的名字、`orderBy`: `createdAt`），结果是新的在前，翻到最后一页（`cursor` 直到 `hasNextPage` 为 false），从末尾取最早的 15 个；最近一条带前缀的评论含「还要你补」、之后没人更新的，跳过、不占这 15 个的名额。
+- **分拣取 backlog**：`list_issues`（`state`: backlog 的名字、`orderBy`: `createdAt`），结果是新的在前，翻到最后一页（`cursor` 直到 `hasNextPage` 为 false），从末尾取最早的 15 个；最近一条评论是分拣写的、含「还要你补」，之后没人更新的，跳过、不占这 15 个的名额。
 
 ## 要知道的几件事
 

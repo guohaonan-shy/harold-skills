@@ -2,7 +2,7 @@
  * Pins the sentences that make "seo-brief and the issue session's SEO branch agree on who settles the angle"
  * true in the docs: while drafting a SEO issue's spec the angle is settled by recommendation and the basis reads
  * 「AI 照推荐定」; a human asking for a brief directly still decides it. The two places are step 4 (角度候选) and
- * step 6 (the 「需要 grill：选题角度和论点」 line), and the intro and the template heading must not contradict them.
+ * step 7 (the 「需要 grill：选题角度和论点」 line), and the intro and the template heading must not contradict them.
  * Also seo-setup's body stays under 5000 characters, with what moved out reachable by a pointer.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail
@@ -40,8 +40,8 @@ test('seo-brief step 4: drafting a SEO issue settles the angle by recommendation
   assert.match(line, /人直接要[^\n]*照旧留给人定/, 'a human asking directly keeps deciding');
 });
 
-test('seo-brief step 6: the 「需要 grill：选题角度和论点」 line is answered by the SEO branch, not left for the human', () => {
-  const s = section(BRIEF, '6\\. 写进去');
+test('seo-brief step 7: the 「需要 grill：选题角度和论点」 line is answered by the SEO branch, not left for the human', () => {
+  const s = section(BRIEF, '7\\. 写进去');
   const para = s.split('\n').find((l) => /需要 grill：选题角度和论点/.test(l));
   assert.ok(para, 'the 需要 grill line is still mentioned');
   assert.match(para, SEO_BRANCH);

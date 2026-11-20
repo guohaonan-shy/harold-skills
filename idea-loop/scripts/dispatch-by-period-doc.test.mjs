@@ -17,6 +17,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+// The comment marker is defined once, in dyna (the command that posts idea-loop's comments).
+const AI_MARKER = readFileSync(join(pluginRoot, '..', 'dyna', 'internal', 'issues', 'state.go'), 'utf8').match(/const AIMarker = "([^"]+)"/)[1];
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const body = (md) => md.replace(/^---\n[\s\S]*?\n---\n/, '');
 
@@ -103,7 +105,7 @@ test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a faile
 test('issue-dispatch: the morning summary reads the record file, one line per issue, and pushes one sentence', () => {
   const step = dispatch.split('\n').find((l) => /^6\.\s+\*\*早上汇总\*\*/.test(l));
   assert.ok(step, 'there is a step 「早上汇总」');
-  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', '🤖 idea-loop：', '『推送』']) {
+  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', AI_MARKER, '『推送』']) {
     assert.ok(step.includes(word), `the morning summary must mention ${word}`);
   }
   assert.match(step, /开了几个、几个等审、几个卡住/);
@@ -168,7 +170,8 @@ test('claude-desktop: a worktree for an issue with an existing branch attaches t
   assert.match(step, /有就接上，不新建同名分支/);
   assert.match(step, /refs\/heads\/<分支>/, 'checks the local branch');
   assert.match(step, /refs\/remotes\/origin\/<分支>/, 'checks the remote branch');
-  const lines = step.split('\n').filter((l) => /worktree add/.test(l));
+  // 0.2.0: a triage session gets a detached worktree (no branch); the three cases below are the todo session's
+  const lines = step.split('\n').filter((l) => /worktree add/.test(l) && !/--detach/.test(l));
   assert.equal(lines.length, 3, 'one command per case: local, remote only, neither');
   // the only command that creates the branch from the base is the one for 「two places both have none」
   const withBase = lines.filter((l) => /origin\/<基准分支>/.test(l));
@@ -198,7 +201,31 @@ test('setup\'s dispatch steps create an hourly task and ask no interval', () => 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
   for (const word of ['`limit`', '`dispatch`', '最近 2 小时有活动', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
   assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi/);
-  assert.match(magiDispatch, /git -C <主 checkout> worktree add <主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug> -b issue\/<号>-<slug>/);
+  assert.match(magiDispatch, /git -C <主 checkout> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
+});
+
+test('magi: a worktree for an issue with an existing branch attaches that branch instead of creating one with -b', () => {
+  const text = magiDispatch.slice(magiDispatch.indexOf('- **怎么交出 issue**'));
+  const step = text.slice(text.indexOf('1. **建 worktree**'), text.indexOf('2. **开会话**'));
+  assert.ok(step, 'step 1 found');
+  assert.match(step, /<主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug>/, 'the path is outside the main checkout');
+  assert.match(step, /有就接上，不新建同名分支/);
+  assert.match(step, /refs\/heads\/<分支>/, 'checks the local branch');
+  assert.match(step, /refs\/remotes\/origin\/<分支>/, 'checks the remote branch');
+  // 0.2.0: a triage session gets a detached worktree (no branch); the three cases below are the todo session's
+  assert.match(step, /triage 会话不建分支[^\n]*worktree add --detach <路径> origin\/<基准分支>/, 'a triage session gets a detached worktree');
+  const lines = step.split('\n').filter((l) => /worktree add/.test(l) && !/--detach/.test(l));
+  assert.equal(lines.length, 3, 'one command per case: local, remote only, neither');
+  // the only command that creates the branch from the base is the one for 「two places both have none」
+  const withBase = lines.filter((l) => /origin\/<基准分支>/.test(l));
+  assert.equal(withBase.length, 1);
+  assert.match(withBase[0], /两处都没有/);
+  assert.match(lines[0], /worktree add <路径> <分支>`/, 'a local branch is attached without -b');
+  assert.ok(!/-b/.test(lines[0]), 'attaching a local branch never passes -b');
+  assert.match(lines[1], /worktree add --track -b <分支> <路径> origin\/<分支>`/, 'a remote-only branch gets a tracking branch');
+  // a branch left behind after the daytime session's workspace was cleaned must not make the night round fail
+  assert.match(step, /分支还在/);
+  assert.match(step, /路径已经存在、就是这条分支的 worktree/);
 });
 
 test('the triage row of issue-triage\'s table says the daytime dispatch opens the session itself; issue-session says a triage session is opened by the human or the dispatcher', () => {

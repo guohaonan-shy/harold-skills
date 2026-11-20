@@ -134,7 +134,7 @@ func TestAReview汇报FromImplementationIsAReviewEntryWithFromImplCountedApartFr
 
 func TestAnImplementationReportIsArchivedUnderItsOwnMarkerAndLabelTheSameRoundNumberOfAnotherSourceIsNotMistakenForIt(t *testing.T) {
 	e := parseText(t, mergedText)
-	body, err := ArchiveBody(e[2], "app")
+	body, err := ArchiveBody(e[2])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,29 +185,28 @@ func TestAMalformedMarkerIsAnErrorNotASilentlyDroppedEntry(t *testing.T) {
 	}
 }
 
-func TestArchivingPostsEachEntryOnceLabelledAsARecordSayingWhoPosted(t *testing.T) {
+func TestArchivingPostsEachEntryOnceLabelledAsARecordSignedByNobody(t *testing.T) {
 	e := parseText(t, loopText)
 	already := []string{ArchiveMarker("pause", 1, "") + "\n…", "人写的评论"}
 	left := ToArchive(e, already)
 	if len(left) != 1 || left[0].Kind != "review" || left[0].Round != 1 {
 		t.Fatal(left)
 	}
-	body, err := ArchiveBody(e[1], "gh-login")
+	body, err := ArchiveBody(e[1])
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.HasPrefix(body, ArchiveMarker("review", 1, "")) {
 		t.Fatal(body)
 	}
-	mustMatch(t, "由 Claude 代发", body)
-	mustMatch(t, "review 第 1 轮在会话里进行", body)
-	if WithAuthorship("x", "app") != "x" {
-		t.Fatal("the App speaks for itself")
+	if strings.Contains(body, "由 Claude 代发") || strings.Contains(body, "🤖") {
+		t.Fatal("the archive is signed by nobody:", body)
 	}
+	mustMatch(t, "review 第 1 轮在会话里进行", body)
 }
 
 func TestAnEntryTooLongForOneGitHubCommentIsRefusedBeforeItIsSent(t *testing.T) {
-	_, err := ArchiveBody(Entry{Kind: "review", Round: 1, Source: "review", Body: strings.Repeat("x", 70000)}, "app")
+	_, err := ArchiveBody(Entry{Kind: "review", Round: 1, Source: "review", Body: strings.Repeat("x", 70000)})
 	wantErr(t, "limit", err)
 }
 
@@ -344,7 +343,7 @@ func TestAReplayIsAThirdKindOfEntryNumberedAmongReplaysArchivedWithItsOwnLabelAn
 	if NextRound(e, "review", "") != 2 { // a replay does not use up a review round
 		t.Fatal("review")
 	}
-	body, err := ArchiveBody(e[2], "app")
+	body, err := ArchiveBody(e[2])
 	if err != nil {
 		t.Fatal(err)
 	}

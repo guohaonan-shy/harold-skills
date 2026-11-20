@@ -72,9 +72,16 @@ const DefaultPositionTolerance = 1.0
 // set is a token value and must match exactly.
 var positionProps = map[string]bool{
 	"top": true, "left": true, "right": true, "bottom": true, "width": true, "height": true, "x": true, "y": true,
-	"gap": true, "rowGap": true, "columnGap": true,
 	"paddingTop": true, "paddingRight": true, "paddingBottom": true, "paddingLeft": true,
+}
+
+// layoutOnlyProps are how a layout was written, not where it ended up: `margin-top` on the lower block,
+// `margin-bottom` on the upper one and `space-y` / `gap` on the parent all put the box at the same top. The result
+// is the box's top/left/width/height, which is already compared; these are never compared themselves (not as a
+// position, and not as a token either). Padding stays: it sets how far the element's own background reaches.
+var layoutOnlyProps = map[string]bool{
 	"marginTop": true, "marginRight": true, "marginBottom": true, "marginLeft": true,
+	"gap": true, "rowGap": true, "columnGap": true,
 }
 
 var why = map[string]string{
@@ -113,6 +120,9 @@ func CompareMeasurements(canvas, local Measurements, tolerance Tolerance, cell *
 		}
 		tol := positionTolerance(tolerance, anchor)
 		for property, expected := range expectedBox {
+			if layoutOnlyProps[property] {
+				continue
+			}
 			// a property the port did not measure is JavaScript's undefined: NaN as a number, "undefined" as text
 			actual, measured := actualBox[property]
 			if !measured {
@@ -132,13 +142,19 @@ func CompareMeasurements(canvas, local Measurements, tolerance Tolerance, cell *
 				continue
 			}
 			// Token class: exact match. No tolerance of any kind is consulted here — "one shade off" is a
-			// different token, not a rounding error.
-			if !strictEqual(expected, actual) {
+			// different token, not a rounding error. Colors are first brought to 8-bit sRGB (see NormalizeColors)
+			// so two spellings of one color are one token.
+			expectedSrgb, actualSrgb := NormalizeColors(expected), NormalizeColors(actual)
+			if !strictEqual(expectedSrgb, actualSrgb) {
+				converted := ""
+				if !strictEqual(expectedSrgb, expected) || !strictEqual(actualSrgb, actual) {
+					converted = fmt.Sprintf("; as 8-bit sRGB: %s → %s", JSString(expectedSrgb), JSString(actualSrgb))
+				}
 				findings = append(findings, Finding{
 					ID: TokenMismatch, Severity: "P1", Cell: cell, Anchor: ptr(anchor), Property: ptr(property),
 					Expected: expected, Actual: actual,
 					Why:    why[TokenMismatch],
-					Detail: fmt.Sprintf("%s.%s: %s → %s (must match exactly)", anchor, property, JSString(expected), JSString(actual)),
+					Detail: fmt.Sprintf("%s.%s: %s → %s (must match exactly%s)", anchor, property, JSString(expected), JSString(actual), converted),
 				})
 			}
 		}
@@ -310,21 +326,69 @@ func yiqDistance(p, q [3]float64) float64 {
 
 // ComparePixels is the pixel layer — it catches what nobody thought to put an anchor on. Both images must be the
 // same size. antialias is the perceived-color distance (0..1) below which two pixels count as the same color.
-// The result is the mismatch percentage, 0–100.
+// The result is the mismatch percentage, 0–100. A pixel that is not close to the other image's pixel at the same
+// position still counts as the same when it passes the 3×3 neighbourhood check both ways (see inNeighbourhood).
 func ComparePixels(canvas, local Image, antialias float64) (float64, error) {
 	if canvas.Width != local.Width || canvas.Height != local.Height {
 		return 0, fmt.Errorf("pixel layer needs two screenshots of the same size: %d×%d vs %d×%d",
 			canvas.Width, canvas.Height, local.Width, local.Height)
 	}
 	cutoff := float64(float64(antialias*antialias) * maxYIQDistance)
+	width := canvas.Width
 	total := canvas.Width * canvas.Height
 	differing := 0
 	for i := 0; i < total*4; i += 4 {
-		if yiqDistance(flatten(canvas.Data, i), flatten(local.Data, i)) > cutoff {
-			differing++
+		if yiqDistance(flatten(canvas.Data, i), flatten(local.Data, i)) <= cutoff {
+			continue
 		}
+		// Not close at the same position: a glyph that sits a fraction of a pixel off lights its edge pixels
+		// differently, and that is not a layout defect. Look one pixel around.
+		at := i / 4
+		if inNeighbourhood(canvas, local, at%width, at/width) {
+			continue
+		}
+		differing++
 	}
 	return float64(differing) / float64(total) * 100, nil
+}
+
+// neighbourhoodRange is the per-channel range (min, max) of the 3×3 block of pixels around (x, y), cut at the
+// picture's edge. Radius 1 is in screenshot pixels, not CSS px, and is fixed: it is not a tolerance anyone sets, and
+// it is not the ±1px position tolerance (that one is for measured boxes, in CSS px).
+func neighbourhoodRange(img Image, x, y int) (lo, hi [3]float64) {
+	lo, hi = [3]float64{255, 255, 255}, [3]float64{0, 0, 0}
+	for ny := max(0, y-1); ny <= min(img.Height-1, y+1); ny++ {
+		for nx := max(0, x-1); nx <= min(img.Width-1, x+1); nx++ {
+			rgb := flatten(img.Data, (ny*img.Width+nx)*4)
+			for c := 0; c < 3; c++ {
+				lo[c] = math.Min(lo[c], rgb[c])
+				hi[c] = math.Max(hi[c], rgb[c])
+			}
+		}
+	}
+	return lo, hi
+}
+
+func withinRange(rgb, lo, hi [3]float64) bool {
+	for c := 0; c < 3; c++ {
+		if rgb[c] < lo[c] || rgb[c] > hi[c] {
+			return false
+		}
+	}
+	return true
+}
+
+// inNeighbourhood judges the same pixel against its surroundings, pixelmatch's way: each side's pixel has to lie
+// inside the per-channel color range of the other side's 3×3 neighbourhood — both ways. One way alone would let a
+// lone dark pixel on white pass (white is inside the dark pixel's range; the dark pixel is not inside white's).
+func inNeighbourhood(a, b Image, x, y int) bool {
+	i := (y*a.Width + x) * 4
+	loB, hiB := neighbourhoodRange(b, x, y)
+	if !withinRange(flatten(a.Data, i), loB, hiB) {
+		return false
+	}
+	loA, hiA := neighbourhoodRange(a, x, y)
+	return withinRange(flatten(b.Data, i), loA, hiA)
 }
 
 // PixelFinding turns a mismatch percentage into a finding of the same shape as everything else. It is P2 on

@@ -10,7 +10,7 @@
 
 ### Mobbin 的三层
 
-工具是插件自带的 Mobbin MCP 的三个搜索工具，装好后名字是 `mcp__plugin_idea-loop_mobbin__search_screens` / `__search_flows` / `__search_sections`。没有「按 id 取详情」「找相似」这类工具：搜索结果里就带着图的地址。
+工具是 Mobbin MCP 的三个搜索工具：`search_screens` / `search_flows` / `search_sections`（插件自带，手动配的同一个服务也一样；前缀随配置不同，按短名找）。没有「按 id 取详情」「找相似」这类工具：搜索结果里就带着图的地址。
 
 | 具名问题问的是 | 层 | 调用 | 平台 |
 |---|---|---|---|

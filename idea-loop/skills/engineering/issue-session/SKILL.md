@@ -22,7 +22,7 @@ argument-hint: "<issue 号>"
 ## 开场
 
 1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
-2. **认领**：`gh issue view $ARGUMENTS --comments` 读全文和评论（最近一条「🤖 idea-loop：」写着上次停在哪、分支叫什么），`dyna issues show <docs> $ARGUMENTS` 看状态、挂着的 PR、spec、分支（triage 阶段 `branch: null` 是正常的）。**Linear 项目**这里读 issue、读状态、翻状态都不用 `gh` 和 `dyna issues set`，用 Skill 工具调 `idea-loop:issues`，照它的 Linear 做法。按状态走：
+2. **认领**：`gh issue view $ARGUMENTS --comments` 读全文和评论（最近一条带 `<!-- idea-loop -->` 标记（或旧的「🤖 idea-loop：」开头）的评论写着上次停在哪、分支叫什么），`dyna issues show <docs> $ARGUMENTS` 看状态、挂着的 PR、spec、分支（triage 阶段 `branch: null` 是正常的）。**Linear 项目**这里读 issue、读状态、翻状态都不用 `gh` 和 `dyna issues set`，用 Skill 工具调 `idea-loop:issues`，照它的 Linear 做法。按状态走：
    - backlog：人在接手它。`dyna issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`dyna issues set` 拒绝 triage），`set todo` 再 `set in-progress`，走 todo 会话。
    - triage：人在接着评估，走 triage 会话。
    - todo：`dyna issues set <docs> in-progress $ARGUMENTS`，走 todo 会话。
@@ -35,7 +35,7 @@ argument-hint: "<issue 号>"
 
 ## triage 会话
 
-1. **起草**：读 issue 全文和分拣贴的证据评论（`gh issue view $ARGUMENTS --comments`，「🤖 idea-loop：」开头的那条），用 Skill 工具调 `idea-loop:to-spec` 起草，再照 [references/draft-spec.md](references/draft-spec.md) 自校验、在这里跟人 grill、把 spec 提交到 home。起草时发现已被做掉的（它会把 issue 关成 canceled）、人决定不做的，去「收尾」；人说先放着，去「先放着」。
+1. **起草**：读 issue 全文和分拣贴的证据评论（`gh issue view $ARGUMENTS --comments`，带 `<!-- idea-loop -->` 标记或旧「🤖 idea-loop：」开头的那条），用 Skill 工具调 `idea-loop:to-spec` 起草，再照 [references/draft-spec.md](references/draft-spec.md) 自校验、在这里跟人 grill、把 spec 提交到 home。起草时发现已被做掉的（它会把 issue 关成 canceled）、人决定不做的，去「收尾」；人说先放着，去「先放着」。
 2. **设计**：读 spec，几句话告诉人要解决的问题、「前端交互」里要设计的场景、「实现决策」里定下的结构决策。不碰 UI 的 spec 跳过。碰 UI 的告诉人设计从 `/idea-loop:uiux-imagine` 开始（只能人调），停下等人；人设计完、`/idea-loop:uiux-refine` 把冻结结果提交到 home 之后，往下。
 3. **交给调度**：`dyna issues set <docs> todo $ARGUMENTS --comment=<spec 已提交到 home <提交号>>`，去「收尾」。`set todo` 被拒时说出了还差什么（spec 里没定完的行、没冻结的设计），回去补。
 

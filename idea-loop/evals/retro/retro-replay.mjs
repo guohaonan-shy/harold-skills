@@ -14,9 +14,17 @@
  *      nothing also falls back to Claude. `result.json` records `judge` (`codex` / `claude`) and `afterIs` (the letter the
  *      post-change product had), which is how the answers are turned back into pre-change / post-change.
  *
+ * Before a run starts, the files the change touched in the plugin are put into the project copy: every file that differs between
+ * the pre-change and post-change plugin (added, edited or deleted, anywhere in the plugin dir except its top-level `evals/`, which holds the replay cases and eval material themselves) is replaced by the version of the side being run
+ * (written when that side has it, removed when it does not), but only when the case's commit holds that plugin at the plugin's
+ * relative dir in its repository (a `.claude-plugin/plugin.json` there with the post-change plugin's `name`; a plugin outside a git repo
+ * is taken to sit at `<repo root>/<its dir name>`). Other plugin files and the rest of the project stay as the commit had them, and
+ * this happens before the project's initial commit, so what the run wrote does not list the swapped files. Without it, a run that reads the
+ * plugin's files straight out of the project would read the same old rule on both sides.
+ *
  * Before the judge, the runner checks that the post-change run used the change: the change set is the files added or modified
  * under the plugin's `skills/` and `agents/` between the pre-change and the post-change plugin; the run used it when its event
- * stream (main session and sub-agents) reads one of them (a Read, or a Bash command naming its full path), calls a skill one of them
+ * stream (main session and sub-agents) reads one of them (a Read, or a Bash command naming its full path or its path relative to the project; the project's own copy of the plugin counts as a place the post-change plugin sits), calls a skill one of them
  * belongs to (Skill tool, or a prompt that starts with that skill's slash command), or starts an agent one of them defines (Agent
  * tool), or when one of them is a file the plugin's SessionStart hook injects (decision-rules, runtime, its reference: the session has
  * them from the start, nothing shows it; a read or call in the stream is reported first). Used: the judge's answer decides as before, and `result.json` records what was hit (`exercised`). Not used: the judge still
@@ -224,9 +232,14 @@ function extractArchive(repo, treeish, dest) {
   sh(dest, 'tar', ['-x', '-C', dest], git(repo, 'archive', treeish));
 }
 
-/** The project as it was at the case's commit, as its own git repo so the files the run adds can be listed. */
-function prepareProject(repo, commit, dest) {
+/**
+ * The project as it was at the case's commit, as its own git repo so the files the run adds can be listed. `beforeCommit` runs
+ * on the unpacked files, before the initial commit: what it changes is part of the project's starting state, not something the
+ * run wrote.
+ */
+function prepareProject(repo, commit, dest, beforeCommit) {
   extractArchive(repo, commit, dest);
+  beforeCommit?.(dest);
   git(dest, 'init', '-q');
   git(dest, 'add', '-A');
   git(dest, 'commit', '-q', '-m', `project at ${commit}`);
@@ -354,6 +367,79 @@ function filesUnder(dir, prefix = '') {
     else if (e.isFile()) out.push(`${prefix}${e.name}`);
   }
   return out.sort();
+}
+
+/**
+ * Where the plugin sits in the repository it comes from, relative to that repo's root (`''` for a plugin at the root): what
+ * `git rev-parse --show-prefix` says in the plugin dir. A plugin that is not in a git repo (a dir a test hands over) is taken
+ * to sit at `<repo root>/<its own dir name>`.
+ */
+export function pluginRelDirOf(pluginDir) {
+  try {
+    return git(pluginDir, 'rev-parse', '--show-prefix').toString('utf8').trim().replace(/\/+$/, '');
+  } catch {
+    return basename(pluginDir);
+  }
+}
+
+/** The `name` in a plugin dir's `.claude-plugin/plugin.json`, or null when there is none. */
+function manifestNameOf(dir) {
+  try {
+    const name = JSON.parse(readFileSync(join(dir, '.claude-plugin', 'plugin.json'), 'utf8')).name;
+    return typeof name === 'string' && name ? name : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Every file under `dir` (dot-files included, `.git` and `.DS_Store` not), as paths relative to it with `/`; none when `dir` is not there. */
+function allFilesUnder(dir, prefix = '') {
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === '.git' || e.name === '.DS_Store') continue;
+    if (e.isDirectory()) out.push(...allFilesUnder(join(dir, e.name), `${prefix}${e.name}/`));
+    else if (e.isFile()) out.push(`${prefix}${e.name}`);
+  }
+  return out.sort();
+}
+
+/**
+ * Every file that differs between the pre-change plugin dir and the post-change one (added, edited or deleted), anywhere in the plugin,
+ * as sorted relative paths, except the plugin's top-level `evals/`: it holds the replay cases and eval material themselves, so a case
+ * the change adds or edits must not show up in the project the run works in.
+ */
+export function pluginDiffOf(beforeDir, afterDir) {
+  const rels = new Set([...allFilesUnder(beforeDir), ...allFilesUnder(afterDir)]);
+  return [...rels].filter((rel) => !rel.startsWith('evals/')).filter((rel) => {
+    const b = join(beforeDir, rel);
+    const a = join(afterDir, rel);
+    return !existsSync(b) || !existsSync(a) || !readFileSync(b).equals(readFileSync(a));
+  }).sort();
+}
+
+/**
+ * Put one side's version of the changed plugin files into the project the run works in. Only when the project (the case's commit)
+ * holds this plugin at `relDir`: `.claude-plugin/plugin.json` there with the same `name` as the post-change plugin's; a project
+ * without it (a case from another repository) is left as unpacked. Each file in `diff`: written from `sidePlugin` when that side has
+ * it, removed from the project when it does not. Files not in `diff` and everything outside the plugin dir stay as the commit had
+ * them. Returns whether it swapped.
+ */
+export function swapPluginFiles({ project, relDir, afterPlugin, sidePlugin, diff }) {
+  const here = join(project, relDir);
+  const name = manifestNameOf(afterPlugin);
+  if (!name || manifestNameOf(here) !== name) return false;
+  for (const rel of diff) {
+    const from = join(sidePlugin, rel);
+    const to = join(here, rel);
+    if (existsSync(from)) {
+      mkdirSync(dirname(to), { recursive: true });
+      cpSync(from, to);
+    } else {
+      rmSync(to, { force: true });
+    }
+  }
+  return true;
 }
 
 /** The name a plugin goes by in `<plugin>:<skill>`: its manifest's `name`, else `fallback`, else its directory's name. */
@@ -520,6 +606,9 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
 
   const sides = [{ side: 'before', plugin: beforePlugin }, { side: 'after', plugin: afterPlugin }];
   const change = changeSetOf(beforePlugin, afterPlugin);
+  // the project holds a copy of the plugin as of the case's commit; the files the change touched are put there in each side's own version
+  const pluginDiff = pluginDiffOf(beforePlugin, afterPlugin);
+  const pluginRelDir = pluginRelDirOf(afterPlugin);
   let exercised = null;
   const products = {};
   const costs = {};
@@ -530,7 +619,10 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
     let home = null;
     try {
       mkdirSync(dir, { recursive: true });
-      prepareProject(t.repo, c.commit, project);
+      let swapped = false;
+      prepareProject(t.repo, c.commit, project, () => {
+        swapped = swapPluginFiles({ project, relDir: pluginRelDir, afterPlugin, sidePlugin: s.plugin, diff: pluginDiff });
+      });
       const base = git(project, 'rev-parse', 'HEAD').toString('utf8').trim();
       const name = projectName(t.repo);
       connectOrigin(project, homeRemote(originOf(t.repo), name));
@@ -574,8 +666,10 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       console.log(` 完成，${usd(digest.result.cost)}`);
       if (s.side === 'after') {
         // before the judge: did this run use what the change touched? (the paths in its stream are the staged copy's)
-        const roots = [...new Set([staged.dir, realpathSync(staged.dir)])];
-        exercised = exercisedBy(eventsOf(streamPath), change, { roots, prompt: buildWorkerPrompt(c), runtime: await sessionRuntime() });
+        // the project's own copy of the plugin, when the changed files were swapped into it, is a place the post-change plugin sits too
+        const inProject = swapped ? [join(project, pluginRelDir), join(realpathSync(project), pluginRelDir)].map((p) => p.replace(/\/+$/, '')) : [];
+        const roots = [...new Set([staged.dir, realpathSync(staged.dir), ...inProject])];
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, projectRelDirs: swapped ? [pluginRelDir] : [], prompt: buildWorkerPrompt(c), runtime: await sessionRuntime() });
         console.log(`改动核对：${describeExercised(exercised)}`);
       }
     } finally {
