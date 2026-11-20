@@ -70,11 +70,11 @@ test('the memory pass paragraph is the one #332 pinned', () => {
 });
 
 test('per-project.md says how: where, fetch, a detached worktree under .worktrees/, delete it afterwards, skip reasons, the success rule', () => {
-  assert.match(perProject, /project-map\.mjs" where --project <名字>/);
+  assert.match(perProject, /dyna home where --project <名字>/);
   assert.match(perProject, /git -C <cloneDir> fetch origin/);
   assert.match(perProject, /worktree add --detach <代码 worktree> origin\/<基准分支>/);
   assert.match(perProject, /<home>\/\.worktrees\/<名字>-<YYYY-MM-DD>\//);
-  assert.match(perProject, /worktree remove --force <代码 worktree>/);
+  assert.match(perProject, /dyna worktree remove <代码 worktree> --force/);
   assert.match(perProject, /<home>\/\.tmp\/dreaming\/<YYYY-MM-DD>\/<名字>\//);
   assert.match(perProject, /项目目录、代码 worktree、中间物目录三个绝对路径/);
   assert.match(perProject, /整次成功/);

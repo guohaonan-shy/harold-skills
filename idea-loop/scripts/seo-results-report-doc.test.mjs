@@ -43,20 +43,20 @@ test('results-analyst is defined like the other direction agents: a description 
   assert.equal(field(AGENT, 'model'), 'sonnet');
   assert.match(field(AGENT, 'effort'), /^(medium|high)$/);
   assert.match(field(AGENT, 'maxTurns'), /^\d+$/);
-  const tools = field(AGENT, 'tools');
-  for (const t of ['Read', 'Write', 'Bash', 'Skill', 'mcp__plugin_idea-loop_openseo__*']) assert.ok(tools.includes(t), `tools lacks ${t}`);
+  assert.equal(field(AGENT, 'tools'), '', 'it uses connectors, so no tools whitelist (a renamed connector would leave it with no tools)');
+  assert.equal(field(AGENT, 'disallowedTools'), 'Edit, NotebookEdit, Agent');
 });
 
 test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
   assert.match(AGENT_BODY, /skills\/seo\/seo-scan\/references\/findings\.md/);
   const input = section(AGENT_BODY, '输入');
   assert.match(input, /六行：SEO\.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天/);
-  assert.match(input, /seo-md\.mjs/);
+  assert.match(input, /dyna seo parse/);
   assert.match(input, /「分析」/);
 });
 
-test('the change list comes from seo-live-record.mjs list, i.e. the 上线自查 comments on closed SEO issues', () => {
-  assert.match(AGENT_BODY, /seo-live-record\.mjs list/);
+test('the change list comes from dyna seo record list, i.e. the 上线自查 comments on closed SEO issues', () => {
+  assert.match(AGENT_BODY, /dyna seo record list/);
   assert.match(AGENT_BODY, /「上线自查」/);
   assert.match(AGENT_BODY, /已关/);
 });
@@ -155,7 +155,7 @@ test('the reference lands the report straight in home: copy into the project dir
   assert.ok(REPORT, 'references/results-report.md does not exist');
   assert.match(REPORT, /docs\/records\/seo-results\/<日期>\.md/);
   assert.match(REPORT, /docs\/records\/seo-results\/assets/);
-  assert.match(REPORT, /project-map\.mjs" commit/);
+  assert.match(REPORT, /dyna home commit/);
   assert.match(REPORT, /只列这次放进去的文件/);
   assert.match(REPORT, /home 没推上去/);
   assert.doesNotMatch(REPORT, /git worktree|gh pr create|git push|git checkout/);
@@ -164,9 +164,9 @@ test('the reference lands the report straight in home: copy into the project dir
   assert.match(REPORT, /type: record/, 'the report file carries the records frontmatter');
 });
 
-test('seo-scan can run what landing needs: allowed-tools has project-map.mjs (commit) and no longer git add / commit / push or gh pr', () => {
+test('seo-scan can run what landing needs: allowed-tools has dyna home commit and no longer git add / commit / push or gh pr', () => {
   const tools = field(SCAN, 'allowed-tools');
-  assert.ok(tools.includes('Bash(node *project-map.mjs:*)'), 'allowed-tools lacks project-map.mjs');
+  assert.ok(tools.includes('Bash(dyna home commit:*)'), 'allowed-tools lacks dyna home commit');
   for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)']) assert.ok(!tools.includes(t), `allowed-tools still has ${t}`);
   assert.ok(tools.includes('Bash(git worktree:*)'), 'triage still uses a worktree');
 });
@@ -197,9 +197,9 @@ test('seo-setup installs the scan every day, not every week; the old weekly refe
   assert.match(DAILY, /分钟避开 0 和 30/);
 });
 
-test('SEO.md format: nine sections, the optional 分析 section with tool, project id and dashboard link, and who reads it', () => {
-  assert.match(FORMAT, /九个 `## ` 小节/);
-  assert.doesNotMatch(FORMAT, /八个 `## ` 小节/);
+test('SEO.md format: ten sections, the optional 分析 section with tool, project id and dashboard link, and who reads it', () => {
+  assert.match(FORMAT, /十个 `## ` 小节/);
+  assert.doesNotMatch(FORMAT, /九个 `## ` 小节/);
   assert.match(FORMAT, /^## 分析$/m);
   assert.match(FORMAT, /- 工具：/);
   assert.match(FORMAT, /- dashboard：/);

@@ -1,6 +1,6 @@
 # 两轴 review：问什么、什么算问题、怎么验
 
-`idea-loop:pr-reviewer` 和它起的两个 Codex 进程读这份文件。一轮 review 只回答两个问题：
+pr-review 的编排者和它起的两个 Codex 进程读这份文件。一轮 review 只回答两个问题：
 
 - **Spec**：代码是否真的解决了 spec 要解决的问题、实现了工单的验收标准？
 - **Standards**：代码是否遵守这个仓库**写下来的**规则？
@@ -70,7 +70,7 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 | `figure` / `example` | 证据：图的文件名，或直接写进正文的表格 / 例子；非行为问题都不填 |
 | `no_screenshot` | 界面上看得到却拍不到时，一句为什么（比如只有真机能复现）；其余不填 |
 | `decide` | **要你决定**的才写（Spec、Standards 同一个格式）：`options`（至少两个，每个 `{ do, cost, rollback }`：做法、代价、能否回滚）+ `recommend`（建议和一句理由）。照规则的不写 |
-| `disposition` / `basis` / `action` | 处置：`照规则` 或 `要你决定`（不写就是后者）。照规则的写 `basis`（`kind`：规则原文 / 人的决定 / 现有做法；`file` 与 `text`：出处与原文，脚本会核；`summary`：给人读的一句依据）和 `action`（修 / 同步改 / 接受并补记 / 恢复 / 开 issue） |
+| `disposition` / `basis` / `action` | 处置：`照规则` 或 `要你决定`（不写就是后者）。照规则的写 `basis`（`kind`：规则原文 / 人的决定 / 现有做法；`file` 与 `text`：出处与原文，命令会核；`summary`：给人读的一句依据）和 `action`（修 / 同步改 / 接受并补记 / 恢复 / 开 issue） |
 | `locations` | 给修复方的位置：文件:行号、提交号。**只有这个字段可以写代码** |
 
 除 `locations` 外都**不写代码层面的指称**：变量名、函数名、文件路径、「文件:行号」、提交号、spec 或工单的章节编号。spec 定义了、实现只覆盖了一部分的，直接写覆盖了谁、漏了谁。
@@ -92,10 +92,10 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 
 ```
-<命令> 2>&1 | node "${CLAUDE_PLUGIN_ROOT}/scripts/changed-lines.mjs" <merge-base>
+<命令> 2>&1 | dyna pr diagnostics filter <merge-base>
 ```
 
-工具要按「一行一条、带 `路径:行号`」的格式输出（比如 eslint 加 `-f unix`）。脚本只留挂在这次新增或改动行上的诊断，其余的只计数。**退出码和诊断原文由审查者交给 Codex**，Codex 只负责判断每条对应哪条规则、该不该成为 `C` 条目，不重新转述工具的结果。跑不了的检查（缺依赖、缺环境）照实写「未运行：<原因>」，不算通过。核实某条发现要跑测试时，只跑对应的那几个，不跑全量。
+工具要按「一行一条、带 `路径:行号`」的格式输出（比如 eslint 加 `-f unix`）。命令只留挂在这次新增或改动行上的诊断，其余的只计数。**退出码和诊断原文由审查者交给 Codex**，Codex 只负责判断每条对应哪条规则、该不该成为 `C` 条目，不重新转述工具的结果。跑不了的检查（缺依赖、缺环境）照实写「未运行：<原因>」，不算通过。核实某条发现要跑测试时，只跑对应的那几个，不跑全量。
 
 ### 每条的形状
 
@@ -112,10 +112,10 @@ Codex 给的是候选。审查者对每个候选**真的核实一遍**，并标�
 
 ## 准入：机械校验
 
-两个进程的候选合成一个 JSON，交给脚本校验：
+两个进程的候选合成一个 JSON，交给命令校验：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-base> .tmp/pr-review/<PR 号>/evidence <轮次>
+dyna pr candidates submit candidates.json <merge-base> .tmp/pr-review/<PR 号>/evidence <轮次>
 ```
 
 ```json
@@ -148,7 +148,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 
 第一条 Spec 是「要你决定」（没写 `disposition`），第二条是「照规则」，Standards 那条也是：Standards 的依据就是它自己的 `rule`，不用再写 `basis`。存量问题的例外（「Standards 轴」）在 Standards 条目上加 `"existing": true` 与 `"pollutes": "…"`。
 
-先查**站不站得住**，没过的直接丢弃，带上脚本给的原因，进「丢弃的候选」：
+先查**站不站得住**，没过的直接丢弃，带上命令给的原因，进「丢弃的候选」：
 
 - Spec：引用的原文在 spec 或工单里找得到；行为问题（`behavior: true`）有复现证据——配图（存在、以 `r<轮次>-` 开头）或写进正文的表 / 例子。非行为问题不要求证据。
 - Standards：规则原文在规则文件里找得到；代码片段的每一行都是这次 diff 的新增行（`existing: true` 的则是现在文件里的行）。
@@ -156,7 +156,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/review-check.mjs" candidates.json <merge-bas
 
 除了空白字符会被归一，其他都不做模糊匹配。
 
-再查**写得对不对**，没过的不丢弃，进 `rewrite`，审查者改写后重跑，直到它为空（脚本退出码 2 表示还有要改写的）：
+再查**写得对不对**，没过的不丢弃，进 `rewrite`，审查者改写后重跑，直到它为空（命令退出码 2 表示还有要改写的）：
 
 - 标题、现状、影响都在；「要你决定」（两轴同一个格式）有至少两个选项，每个都写了做法、代价、能否回滚，并有建议；Spec 的 `behavior` 标了；非行为问题没带配图；行为问题标了 `on_screen`，界面上看得到的有截图，或在 `no_screenshot` 里写了为什么没有。
 - **照规则**的有依据（种类是三种之一、出处和原文都给了、有一句给人读的依据）和动作（修 / 同步改 / 接受并补记 / 恢复 / 开 issue 之一），**不带**「要你决定」；存量例外的动作是修、带 `pollutes`。处置只能是「照规则」或「要你决定」。

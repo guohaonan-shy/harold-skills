@@ -41,15 +41,15 @@ test('a rule-changing ticket reads rule-tickets.md, a UI ticket reads ui-tickets
   assert.ok(uiLine, 'no pointer to ui-tickets.md');
   assert.match(uiLine, /UI 工单/);
   assert.doesNotMatch(body, /写一个回放用例|retro-replay\.mjs/, 'the replay steps belong in rule-tickets.md');
-  assert.doesNotMatch(body, /design-archive-check\.mjs|design-archive-query\.mjs/, 'the archive commands belong in ui-tickets.md');
+  assert.doesNotMatch(body, /design-archive-check\.mjs|design-archive-query\.mjs|dyna design archive/, 'the archive commands belong in ui-tickets.md');
 });
 
 test('ui-tickets.md carries the design-archive steps that used to be inline', () => {
   const ui = readFileSync(join(refs, 'ui-tickets.md'), 'utf8');
   assert.match(ui, /idea-loop:design-archive/);
-  assert.match(ui, /design-archive-check\.mjs" <项目目录> --delta <spec-slug> --no-used-by/);
-  assert.match(ui, /design-archive-query\.mjs" <项目目录> state <状态名> --delta <spec-slug>/);
+  assert.match(ui, /dyna design archive check <项目目录> --delta <spec-slug> --no-used-by/);
+  assert.match(ui, /dyna design archive query <项目目录> state <状态名> --delta <spec-slug>/);
   assert.match(ui, /delta\/removed\.md/);
-  assert.match(ui, /`docs\/design\/prod\/` 只由合并前的归档脚本写/);
+  assert.match(ui, /`docs\/design\/prod\/` 只由合并前的归档命令写/);
   assert.match(ui, /同一批 finding 两轮不变/);
 });

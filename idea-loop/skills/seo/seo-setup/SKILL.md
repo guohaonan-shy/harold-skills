@@ -6,15 +6,13 @@ disable-model-invocation: true
 
 在目标仓库的主 checkout 里跑，人在场。`SEO.md` 在项目目录（`idea-loop:wiki-conventions` 的「项目目录」）里：已存在就只补缺的小节，人写过的原样保留；项目目录里的改动先不提交，人说提交才 `commit` 到 home。写进 OpenSEO 的东西（项目、上下文、跟踪）立刻生效，每一笔先给人看、人确认了才写。
 
-下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`，工作文件放 `.tmp/seo-setup/`（不进 git）。`SEO.md` 的格式只有一份定义：[references/seo-md.md](references/seo-md.md)，照它写。
+工作文件放 `.tmp/seo-setup/`（不进 git）。`SEO.md` 的格式只有一份定义：[references/seo-md.md](references/seo-md.md)，照它写。
 
 ## 1. 连上 OpenSEO，定下项目
 
 1. `whoami`。调不通：告诉人在 `/mcp` 里连上 `openseo`（idea-loop 插件自带这个服务）。人连不上就继续往下走，只做仓库里的事（`SEO.md` 里 OpenSEO 能推的值留给人填，第 5、7 步记「未做：OpenSEO 没连上」）。
 2. `list_projects`，按 `SEO.md` 的域名或人说的站点找项目。
-3. 对不上唯一一个：
-   - 有几个像的，问人用哪个。
-   - 一个都没有，问人后 `create_project`（名字、域名只写主机名、市场 `locationCode`/`languageCode`）；返回要 `organizationId` 的，把组织列给人选。
+3. 对不上唯一一个：见 [references/pick-project.md](references/pick-project.md)。
 
 研究类工具不拿来测连通，`whoami` 和 `list_projects` 就够。
 
@@ -22,14 +20,15 @@ disable-model-invocation: true
 
 ## 2. 读现状，备推荐值
 
-- `SEO.md` 的「OpenSEO」写的是旧的「单次额度」：`seo-md.mjs` 读到它会报错，所以先迁移、再跑下一条命令。把它换成「套餐额度」和「每周分配」两项（规则见 [references/seo-md.md](references/seo-md.md) 的「额度按周算」）：各方向的数字照搬进「扫描」，只有旧值是 0 的 `geo`（过去不花钱）不搬，改给推荐值（扫描里其余方向的平均），其余方向照旧照搬；`geo` 的推荐值和其余的值第 3 步给推荐、经人确认才写；人确认新两项后删掉「单次额度」那一行。
-- `SEO.md` 在的话跑 `node S/seo-md.mjs <项目目录>/SEO.md`，记下哪些小节、哪些键是空的（输出的 `confirmed` 为 true 的不算空：写了值，或人写了 `无`）。只问空的（「内容原则」不问，见第 4 步）。
+- `SEO.md` 的「OpenSEO」写的是旧的「单次额度」：`dyna seo parse` 读到它会报错，所以先迁移、再跑下一条命令。把它换成「套餐额度」和「每周分配」两项（规则见 [references/seo-md.md](references/seo-md.md) 的「额度按周算」）：各方向的数字照搬进「扫描」，只有旧值是 0 的 `geo`（过去不花钱）不搬，改给推荐值（扫描里其余方向的平均），其余方向照旧照搬；`geo` 的推荐值和其余的值第 3 步给推荐、经人确认才写；人确认新两项后删掉「单次额度」那一行。
+- `SEO.md` 在的话跑 `dyna seo parse <项目目录>/SEO.md`，记下哪些小节、哪些键是空的（输出的 `confirmed` 为 true 的不算空：写了值，或人写了 `无`）。只问空的（「内容原则」不问，见第 4 步）。
 - `get_project_context`，原样存成 `.tmp/seo-setup/context.json`。它的竞品、重点页面、业务概述就是对应小节的推荐值；`missingSections` 里的几节，第 3 步一起问（问法见 [references/project-context.md](references/project-context.md)）；写了 `无` 的节不再问。
 - 代码仓库里找其余小节的推荐值，每个记下出处：
   - **站点**：站点配置里的域名、i18n 路由（语言前缀）、`robots.txt`、`sitemap`。
   - **构建与检查**：营销站的构建命令和产物目录（`package.json`、框架配置）；内容路径：博客文章、配图、`robots.txt`、`sitemap`、`llms.txt` 所在的目录或文件（站点配置、内容集合的定义、`public/`），出处写它们是在哪找到的。组件、模板、样式不推荐；项目里唯一记 SEO 事件的那个文件，人说算就列进去。
   - **写作**：文风、失败案例之类的文档；文章 frontmatter 里记文章类型的字段和它的取值。
   - **品牌**：「站点」节的域名去掉后缀（`cookbook.example` → `cookbook`），出处写「域名」。
+  - **写作的检查键、配图**：见 [references/writing-images.md](references/writing-images.md)。
 - 竞品还空着：先问人。人也说不准，提议用 `find_serp_competitors` 跑几个种子词（花 credits，人同意才跑），名单经人确认才算数。
 
 完成条件：要问的每个键都有推荐值和出处，或写明「探查不到」。
@@ -43,6 +42,7 @@ disable-model-invocation: true
 - **重点页面**：要守的页面，10 到 30 个是常态，每个带头词。
 - **构建与检查**：内容路径给推荐值，说明它的用处：只改这些路径的 SEO PR（`docs/` 和 `SEO.md` 在项目目录里，不在代码 PR 里）检查全过、两轴没有阻塞项就由 Claude 合并，所以人要确认每一项是内容、不是代码。
 - **品牌**：品牌词，查询里含它的不算自相蚕食（站点链接会让品牌词查询看起来像几个页面在抢同一个词）。人可以照推荐、加别的写法（空格、连字符的变体不用加，比较时会去掉）或说留空。推荐值经人确认才写，约定见 [references/seo-md.md](references/seo-md.md) 的「项目信息从哪来」。
+- **写作的检查键、配图**：问法和写入前的图片目录检查照那份参考。
 - 项目上下文缺的几节一起问（业务、目标、定位、写作偏好）。
 
 完成条件：每个空键都有人确认过的值，或人明确说留空。
@@ -51,21 +51,21 @@ disable-model-invocation: true
 
 照 [references/seo-md.md](references/seo-md.md) 写进 `<项目目录>/SEO.md`；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。「OpenSEO」节按新格式写；有旧的「单次额度」行（第 2 步的迁移），人确认每周分配和套餐额度后把它删掉。新建的 `SEO.md` 带上空的「内容原则」节（只有标题）：内容由项目自己填，不问人、不推测、不写任何原则；已有的文件缺这一节就补上标题。「分析」节可选：人主动说了分析工具（工具名、项目 id、dashboard 链接）才写，不问、不推测；没有就不建这一节，效果报告里那一块写「没有接分析工具」。
 
-完成条件：`node S/seo-md.mjs <项目目录>/SEO.md` 解析成功，八节都在；改动给人看过。
+完成条件：`dyna seo parse <项目目录>/SEO.md` 解析成功，九节都在；改动给人看过。
 
 ## 5. 同步进 OpenSEO 项目上下文
 
 1. 第 3 步问到的业务、目标、定位、写作偏好，照 [references/project-context.md](references/project-context.md) 写成段落，用 `update_project_context` 写进对应 `section`。已有内容的节，把新答案并进原文，不整段替换。人说不需要的那一节写 `无`，跟 `SEO.md` 的键同一种记法。
-2. 重新 `get_project_context` 存成 `.tmp/seo-setup/context.json`，跑 `node S/seo-context.mjs <项目目录>/SEO.md .tmp/seo-setup/context.json`。
+2. 重新 `get_project_context` 存成 `.tmp/seo-setup/context.json`，跑 `dyna seo sync-context <项目目录>/SEO.md .tmp/seo-setup/context.json`。
 3. `updates` 非空：把 `summary`（加了谁、删了谁）给人看，人确认后原样作为 `update_project_context` 的 `updates` 写入。
 
-完成条件：重新取一次上下文再跑比对脚本，`updates` 是空数组。
+完成条件：重新取一次上下文再跑比对命令，`updates` 是空数组。
 
 ## 6. 加 SEO 的 issue 分类
 
 项目的分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节。这一节不存在，告诉人先跑 `/idea-loop:setup`，这一步记「未做」。存在就补上缺的 `seo` 父类和五个方向子类（`technical`、`pages`、`keywords`、`backlinks`、`geo`）的行，要补的原文和格式在 [references/issue-labels.md](references/issue-labels.md)。
 
-然后跑 `node S/issues.mjs labels <项目目录>/docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 `/idea-loop:setup`。
+然后跑 `dyna issues labels <项目目录>/docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 `/idea-loop:setup`。
 
 完成条件：`ISSUE_TRACKER.md` 的这一节多了 [references/issue-labels.md](references/issue-labels.md) 里的六行；`gh label list --search type:seo` 列出六个 label。
 

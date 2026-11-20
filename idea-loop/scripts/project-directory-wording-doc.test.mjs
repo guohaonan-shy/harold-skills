@@ -64,7 +64,6 @@ test('the places that start a subagent hand it the project directory in the prom
   const cases = [
     ['skills/engineering/implement/SKILL.md', /项目目录的绝对路径，工单与 spec/],
     ['skills/engineering/implement/SKILL.md', /idea-loop:explorer`，给一句目的[^。\n]*项目目录/],
-    ['skills/engineering/pr-review/SKILL.md', /idea-loop:pr-reviewer`，\*\*只给指针\*\*：项目目录的绝对路径/],
     ['skills/engineering/pr-review/references/ui-walkthrough.md', /ui-reviewer 的指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/pr-review/references/merge.md', /ui-reviewer`，只给指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/issue-triage/SKILL.md', /idea-loop:issue-triager`，给 issue 号、项目目录的绝对路径/],
@@ -112,7 +111,7 @@ test('every SKILL.md body under skills/ stays under 5000 characters', () => {
 });
 
 // ui-master looks at a screenshot and reads no project file (its prompt carries the DESIGN.md baseline it needs), so it has no
-// project directory to take from the caller; the other sixteen subagents each read files that live in the project directory.
+// project directory to take from the caller; the other fifteen subagents each read files that live in the project directory.
 test('every subagent definition takes the project directory from the prompt of its caller, and says what is under it', () => {
   const missing = [];
   for (const f of agentMds) {
@@ -123,11 +122,12 @@ test('every subagent definition takes the project directory from the prompt of i
     if (!/没有项目目录|缺项目目录/.test(text)) missing.push(`${relative(root, f)}: does not say what to do when the prompt has none`);
   }
   assert.deepEqual(missing, []);
-  assert.equal(agentMds.length, 17, 'seventeen agent definitions; a new one must be added to this check or to the ui-master exception');
+  assert.equal(agentMds.length, 16, 'sixteen agent definitions; a new one must be added to this check or to the ui-master exception');
 });
 
 test('the SEO direction agents and seo-scan agree on what the prompt carries: SEO.md and the project directory are two of its lines', () => {
-  const scan = read('skills/seo/seo-scan/SKILL.md');
+  // the prompt template lives in seo-scan's findings reference (main #397 moved it out of the SKILL.md body)
+  const scan = read('skills/seo/seo-scan/references/findings.md');
   assert.match(scan, /SEO\.md：<项目目录>\/SEO\.md\n项目目录：<项目目录绝对路径>/);
   for (const a of ['geo-analyst', 'keyword-miner', 'technical-auditor', 'page-optimizer', 'backlink-analyst', 'results-analyst']) {
     assert.match(read(`agents/${a}.md`), /提示里有六行：SEO\.md 路径、项目目录、/, a);

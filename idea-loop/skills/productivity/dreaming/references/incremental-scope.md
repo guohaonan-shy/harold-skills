@@ -1,6 +1,6 @@
 # 对账范围：截图对账这次对哪些状态
 
-dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的）。『定时任务』等运行环境的能力，做法照 `idea-loop:runtime`。截图对账要把档案里的状态一个个重新驱动、拍图、比对，状态多了很贵，所以**只对上次以来代码动过的状态做**；档案对象的源码检查不开浏览器，每次都是全量。
+dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的）。『定时任务』等运行环境的能力，做法照 `dyna runtime show <能力>`。截图对账要把档案里的状态一个个重新驱动、拍图、比对，状态多了很贵，所以**只对上次以来代码动过的状态做**；档案对象的源码检查不开浏览器，每次都是全量。
 
 只在项目有设计档案、`prod/` 里有对象、要起 ui-reviewer 的时候做这一步。项目没有设计档案、或 `prod/` 为空（走全站初扫），这一步和提议表开头的那一行都不用写。
 
@@ -31,7 +31,7 @@ dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的�
 增量时，在代码 worktree 里跑档案查询的 `affected`（`<项目目录>` 是 home 里的项目目录，档案在那里；改过的文件要到代码里查，所以 `--code-root` 要另给代码 worktree，漏了它查询去项目目录里找基准提交，报「找不到提交」）：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> affected <基准提交> --code-root <代码 worktree>
+dyna design archive query <项目目录> affected <基准提交> --code-root <代码 worktree>
 ```
 
 它交回从基准提交到现在（代码 worktree 的 HEAD 就是 `origin/<基准分支>`）受影响的状态清单：改过的文件是某页面登记的代码，这页的全部状态都算；是某组件登记的代码，用到它的状态都算（列在状态里的、边上用到的、页面区域里摆着它的）；被这些页面或组件的代码直接 import 的数据、样式、静态资源改了，也算它们改了（只追一跳、只认相对路径）。返回里的 `states` 就是交给实时波的清单，`totalStates` 是档案一共多少个状态；MCP 里同一个问法叫 `design_affected`。
@@ -40,7 +40,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> aff
 
 - 清单为空：实时波一个状态都不跑，提议表那一行写「改过的代码没有牵到任何状态」。起 ui-reviewer 的第一批照旧（源码波每次全量，只在第一批跑），状态清单给空。
 - 清单不空：照 [archive-reconcile.md](archive-reconcile.md) 的「实时波」派工，状态清单就是它；状态多要分批时，也只在这份清单里分。
-- 全量：清单取自 `prod/index.md` 的页面清单，对每页跑 `query page <页面名>` 拿它的状态，原来怎么做还怎么做。
+- 全量：清单取自 `prod/index.md` 的页面清单，对每页跑 `dyna design archive query <项目目录> page <页面名>` 拿它的状态，原来怎么做还怎么做。
 
 ## 提议表开头那一行
 
@@ -56,5 +56,5 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-query.mjs" <项目目录> aff
 
 ## 两个例外
 
-- **上一张提议表还没处理又到点了**（问人的行人还没回，或自动那份没提交成）：照常跑，不合并两张表。新提议表在范围那一行后面再写一行「上一次（<日期>）的提议表还没处理」。怎么知道还没处理：每次的提议表放在 home 的 `.tmp/dreaming/<日期>/<名字>/proposal.md`，处理完（自动那份已提交，问人的行批了的执行了、或每行都回了「不批」）就删掉这个项目的那个目录，空表也删；所以 `.tmp/dreaming/<别的日期>/<名字>/proposal.md` 还在、跑 `proposal-table-check.mjs --json` 的 `empty` 是 `false`，就是这个项目上一张还没处理，日期取目录名。多张取最近一张。没有就不写这一行。
+- **上一张提议表还没处理又到点了**（问人的行人还没回，或自动那份没提交成）：照常跑，不合并两张表。新提议表在范围那一行后面再写一行「上一次（<日期>）的提议表还没处理」。怎么知道还没处理：每次的提议表放在 home 的 `.tmp/dreaming/<日期>/<名字>/proposal.md`，处理完（自动那份已提交，问人的行批了的执行了、或每行都回了「不批」）就删掉这个项目的那个目录，空表也删；所以 `.tmp/dreaming/<别的日期>/<名字>/proposal.md` 还在、跑 `dyna dreaming table submit --json` 的 `empty` 是 `false`，就是这个项目上一张还没处理，日期取目录名。多张取最近一张。没有就不写这一行。
 - **没跑成的批**：实时波交回 `incomplete` 的批，写在提议表末尾（见 [archive-reconcile.md](archive-reconcile.md)「实时波」第 3 步），后面附一句「下次可说全量补上」。基准是按定时任务「成功」前推的，一次执行成功了但这一波没跑成，基准照样往前走：这是已知缺口，靠这一行让人看到，下次调用时说「全量」补上。

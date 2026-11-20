@@ -29,20 +29,20 @@ tags: [retro-candidates]
 ```
 
 - `状态` 是闭集：`在池里` / `已开 issue（<链接>）` / `驳回（<理由>）`。你写入时只写 `在池里`，另外两种由 `dreaming` 和人改；开过 issue、驳回的不删，留作以后认得出。
-- `出现` 每次一行，行首必须是 `- <仓库>#<号>`：计数脚本按它数「不同会话」。同一场会话的两行只算一次。后来被人推翻的那一行不删，在行尾加 `（已推翻：「<推翻时的原话>」）`，它不再算数。
+- `出现` 每次一行，行首必须是 `- <仓库>#<号>`：计数命令按它数「不同会话」。同一场会话的两行只算一次。后来被人推翻的那一行不删，在行尾加 `（已推翻：「<推翻时的原话>」）`，它不再算数。
 - 决定记录不在池所在的仓库时（在别的仓库跑的 retro 往这个池里写），写 `` <仓库> `docs/raw/decisions/<文件名>.md` ``（有「候选 N」照样跟在后面），不用 `[[ ]]`：`[[ ]]` 只指得到同一个 `docs/` 里的文件，跨仓库就是断链。
 - 原话逐字，核过 digest 再写。
-- 池里早先的文件没有「归并」「验证」两条，不回填；读的人和计数脚本都容得下它们缺失。
+- 池里早先的文件没有「归并」「验证」两条，不回填；读的人和计数命令都容得下它们缺失。
 - 文件名：`<YYYY-MM-DD>-<主题 slug>.md`；slug 在 `docs/` 里全局唯一（建之前 grep 一遍）。
-- 次数不靠人数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <池目录>`，按 JSON 输出每份的次数和是否过门槛（≥3），形状不对的列成问题、退出码 2。写完一份就对那个池跑一遍，确认没有问题。
+- 次数不靠人数：`dyna retro pool count <池目录>`，按 JSON 输出每份的次数和是否过门槛（≥3），形状不对的列成问题、退出码 2。写完一份就对那个池跑一遍，确认没有问题。
 
 ## 判同类
 
-候选「同类」写池里的哪一份，按决定记录「情形 / 处置」的读法（[decision-record.md](decision-record.md) 的「读它的规矩」）：落点相同，再读池里那一份的旧文、新文、例子，核对要改的是不是同一件事，不看措辞像不像。拿不准就写「池里没有」，宁可多一份，不并错。「同类」的 N 是那一份现在的次数加 1，次数以计数脚本为准。
+候选「同类」写池里的哪一份，按决定记录「情形 / 处置」的读法（[decision-record.md](decision-record.md) 的「读它的规矩」）：落点相同，再读池里那一份的旧文、新文、例子，核对要改的是不是同一件事，不看措辞像不像。拿不准就写「池里没有」，宁可多一份，不并错。「同类」的 N 是那一份现在的次数加 1，次数以计数命令为准。
 
 ## 摆给人时怎么回
 
-- **每条候选给去处推荐，去处仍由人选。** 次数就是「同类」一项里的 N（「池里没有」算第 1 次）：第 1、2 次推荐**默认进候选池**；第 3 次起推荐开 issue，门槛跟计数脚本的 `threshold` 一致。依据是人的原话：「开issue的选择时只有出现2-3次相同的候选。」「仍然保持3次」。
+- **每条候选给去处推荐，去处仍由人选。** 次数就是「同类」一项里的 N（「池里没有」算第 1 次）：第 1、2 次推荐**默认进候选池**；第 3 次起推荐开 issue，门槛跟计数命令的 `threshold` 一致。依据是人的原话：「开issue的选择时只有出现2-3次相同的候选。」「仍然保持3次」。
 - 推荐跟次数写在一起说：「这是第 N 次，并进 <那一份>，推荐<进候选池 / 开 issue>」；「池里没有」写「池里没有，这是第 1 次，推荐进候选池」。
 - 人只回了「批」、没说去处，按推荐的去处走，回复里说一句走了哪个；人用了别的说法（例：「留在候选吧」）按意思归到「批·进候选池」或「批·开 issue」，拿不准（不是「批」，也不是两个去处之一）就问。
 - 人选了跟推荐不同的去处，按人选的走，不劝。
@@ -50,19 +50,19 @@ tags: [retro-candidates]
 
 ## 读当前仓库的池
 
-列出每份的标题、落点、状态、次数：`node "${CLAUDE_PLUGIN_ROOT}/scripts/retro-pool-count.mjs" <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前项目的池和 harold-skills 的池是同一个，不用再取一遍。
+列出每份的标题、落点、状态、次数：`dyna retro pool count <docs>/records/retro-candidates`；目录不存在就是还没有。retro 就跑在 harold-skills 里时，当前项目的池和 harold-skills 的池是同一个，不用再取一遍。
 
 ## 写进当前仓库的池
 
 - 新建一份：按上面的形状写，「出现」一行，是这场会话。
 - 「同类」写了那一份的：在它的「出现」末尾加一行，别的不动（形状、状态、旧文新文都不改；你觉得旧文新文该改，说给人，由人定）。
 
-写完跑计数脚本，把那一份的新次数报给人。
+写完跑计数命令，把那一份的新次数报给人。
 
 ## 读与写 harold-skills 的池（retro 不在 harold-skills 里跑时）
 
-harold-skills 的 `docs/` 在它自己的项目目录里，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" where --project harold-skills` 取（`projectDir`）；池目录是 `<projectDir>/docs/records/retro-candidates/`，读和写都在那里，不经 GitHub。`where` 报错（这台设备没有登记 harold-skills），记下原因，把这条候选的全文留在这场的决定记录里交给人。
+harold-skills 的 `docs/` 在它自己的项目目录里，用 `dyna home where --project harold-skills` 取（`projectDir`）；池目录是 `<projectDir>/docs/records/retro-candidates/`，读和写都在那里，不经 GitHub。`where` 报错（这台设备没有登记 harold-skills），记下原因，把这条候选的全文留在这场的决定记录里交给人。
 
-读：对 `<projectDir>/docs/records/retro-candidates` 跑计数脚本，列出每份的标题、落点、状态、次数。
+读：对 `<projectDir>/docs/records/retro-candidates` 跑计数命令，列出每份的标题、落点、状态、次数。
 
 写：新建的按上面的形状写，追加的在那一份末尾加一行「出现」，然后照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home，只列这一份文件。池里那一份的路径（`<projectDir>/docs/records/retro-candidates/<文件名>`）补进决定记录的「结果」：先 `commit` 池，再写决定记录，路径才查得到。`commit` 报「home 没推上去」时在交给人的汇报里带上这一句，流程照走。

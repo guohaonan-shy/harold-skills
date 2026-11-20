@@ -54,18 +54,18 @@ idea-loop 从项目目录读这几份配置：
 - `<docs>` 骨架：`spec/`、`adr/`、`design/`、`raw/`、`domain/`、`index.md`，只建不存在的。
 - `.tmp/` 追加进代码仓库的 `$(git rev-parse --git-common-dir)/info/exclude`。
 - 做 UI 设计时：`<项目目录>/.gitattributes` 让 `docs/design/prod/**/assets/` 下的 `*.png`、`*.gif`、`*.webm` 走 Git LFS。
-- `ISSUE_TRACKER.md` 的「分类 label」一节：把人定的分类和要保留的 label 写进去，格式脚本要读，见模板里它那一节。
-- **Linear 项目**（人选了 Linear）：连 MCP、选团队、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
+- `ISSUE_TRACKER.md` 的「分类 label」一节：把人定的分类和要保留的 label 写进去，格式命令要读，见模板里它那一节。
+- **Linear 项目**（人选了 Linear）：连 MCP、选团队、整理成表给人确认再写 `ISSUE_TRACKER.md`，并跳过下面的 `dyna issues labels` 与 `migrate`。步骤见 [references/linear-setup.md](references/linear-setup.md)。
 - triage：把人对「团队用不用 triage」的回答写进 `ISSUE_TRACKER.md` 状态表后面那一行（`triage：用` 或 `triage：跳过`），模板里的「用 / 跳过」占位不算选了。
-- 旧状态（GitHub 项目）：`spec.mjs check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" migrate <docs>` 只列出会怎么改，给人看，人确认后加 `--apply`。
+- 旧状态（GitHub 项目）：`dyna spec check` 报了还带 `status` 行的 spec，或仓库里还有旧中文 `status:*` label 的，先跑 `dyna issues migrate <docs>` 只列出会怎么改，给人看，人确认后加 `--apply`。
 - label（GitHub 项目），按顺序：
-  1. `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" labels <docs>`：建出缺的 `status:*`、`kind:*`、`type:*` 和 `priority:*`（`priority:P0`、`priority:P1`、`priority:P2`），列出多余的 label 和各自在用的 open issue 数。
-  2. 人定了要迁成分类的，对每个用着它的 issue 跑 `issues.mjs type <docs> <号> <分类>`。
-  3. 把多余 label 的清单给人看，人确认后 `issues.mjs labels <docs> --prune` 删掉，issue 上的也一起去掉。
+  1. `dyna issues labels <docs>`：建出缺的 `status:*`、`kind:*`、`type:*` 和 `priority:*`（`priority:P0`、`priority:P1`、`priority:P2`），列出多余的 label 和各自在用的 open issue 数。
+  2. 人定了要迁成分类的，对每个用着它的 issue 跑 `dyna issues type <docs> <号> <分类>`。
+  3. 把多余 label 的清单给人看，人确认后 `dyna issues labels <docs> --prune` 删掉，issue 上的也一起去掉。
 - GitHub App：在 `~/.idea-loop/github-apps.json` 里加 `"<owner/repo>": { "appId": <id>, "privateKeyPath": "<路径>" }`。只写路径，私钥文件不打开。
-- 提交：给人看写过的文件（`git -C <home> status`、`diff`），然后 `node "${CLAUDE_PLUGIN_ROOT}/scripts/project-map.mjs" commit "chore: 接上 idea-loop（<名字>）" <文件>...`。
+- 提交：给人看写过的文件（`git -C <home> status`、`diff`），然后 `dyna home commit "chore: 接上 idea-loop（<名字>）" <文件>...`。
 
-完成条件：这几份文件都在 `<项目目录>`，模板里的小节一个不缺，`project-map.mjs where` 对这个项目成功；代码仓库里没有新增的 idea-loop 文件；这些文件已 `commit`，差异给人看过；GitHub 项目的 `issues.mjs labels <docs>` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好。
+完成条件：这几份文件都在 `<项目目录>`，模板里的小节一个不缺，`dyna home where` 对这个项目成功；代码仓库里没有新增的 idea-loop 文件；这些文件已 `commit`，差异给人看过；GitHub 项目的 `dyna issues labels <docs>` 不再列出多余的 label；Linear 项目的 `ISSUE_TRACKER.md` 经人确认写好。
 
 ## 规则回放 runner
 
@@ -75,7 +75,7 @@ idea-loop 从项目目录读这几份配置：
 
 ## 每周对账
 
-`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次。一台设备只有一个，在 home 那一步之后建，任务 id 叫 `dreaming-home`，目录是 home；不按仓库建。步骤在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
+`idea-loop:dreaming` 可以由『定时任务』每周自己跑一次。一台设备只有一个，在 home 那一步之后建，任务 id 叫 `dreaming-home`，目录是 home。步骤在 [references/weekly-dreaming.md](references/weekly-dreaming.md)。
 
 完成条件：这台设备有一个开着的 `dreaming-home` 定时任务（已有就是已有），或人拒绝了，或记下了没建的原因。
 
@@ -87,9 +87,9 @@ idea-loop 从项目目录读这几份配置：
 
 ## 调度
 
-`idea-loop:issue-dispatch` 一轮一轮交出 todo 和 triage 的 issue，怎么起因运行环境而异；按 [references/dispatch.md](references/dispatch.md) 做。
+`idea-loop:issue-dispatch` 每小时一轮、按时段交出 issue；按 [references/dispatch.md](references/dispatch.md) 建它的定时任务。
 
-完成条件：调度的起法告诉了人，或建好了调度任务，或人拒绝了。
+完成条件：建好了调度任务，或人拒绝了，或记下了没建的原因；允许规则打印了。
 
 ## 交回
 
@@ -100,5 +100,5 @@ idea-loop 从项目目录读这几份配置：
 - 规则回放：runner 装在哪、旧计划任务和队列目录删没删、**要人自己加的允许规则**（原样一行）。没加这条规则，无人值守的回放会被拦下。
 - 每周对账：设备级的 `dreaming-home` 定时任务建没建、还是已有（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
 - 每周分拣：`triage-<仓库名>` 定时任务建没建（taskId 与时间），没建的原因（运行环境没有『定时任务』/ 人拒绝）；没建时 prompt 原样给人。
-- 调度：怎么起、建没建（按 `references/dispatch.md`）。
-- 留给人的事：安装或登录 `gh`、Codex；装浏览器和 Refero（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。
+- 调度：`dispatch-<仓库名>` 建没建，没建的原因；要人自己加的允许规则（原样一行，不加的后果）。
+- 留给人的事：安装或登录 `gh`、Codex；装浏览器、登录 Mobbin（预检的表指到各运行环境的做法）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

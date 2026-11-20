@@ -30,7 +30,8 @@ function section(doc, title) {
 }
 
 const implementer = read('agents', 'implementer.md');
-const reviewer = read('agents', 'pr-reviewer.md');
+// the round the reviewer agent used to run is now pr-review's own reference (spec idea-loop-cli, ticket 16)
+const reviewer = read('skills', 'engineering', 'pr-review', 'references', 'run-a-round.md');
 const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
 // the branches only some runs walk moved out of SKILL.md into its references (spec skill-edit-acceptance, ticket 01)
 const landingBranches = read('skills', 'engineering', 'implement', 'references', 'landing-branches.md');
@@ -106,7 +107,7 @@ test('pr-review requires the head\'s CI to be done and green (or no checks), bef
   // 红了要显式调 implement 的「等 CI」，不只写「照 … 处理」
   assert.match(pre, /用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」/);
   const next = section(prReview, '一轮之后往哪走');
-  assert.match(next, /修复[^。\n]*先等 CI[^。\n]*起下一轮/);
+  assert.match(next, /修复[^。\n]*等 CI[^。\n]*起下一轮/);
 });
 
 test('both 机械检查 sections read the full-suite result from CI, run it locally only without checks, and run only the matching tests to verify a finding', () => {

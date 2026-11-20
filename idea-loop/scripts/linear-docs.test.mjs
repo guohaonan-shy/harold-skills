@@ -10,7 +10,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { platformOf } from './issues.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
@@ -32,7 +31,7 @@ test('linear.md names every MCP tool it relies on, with no connection prefix, an
 test('issues SKILL: GitHub by script, Linear by MCP; the old 「脚本还不接」 is gone', () => {
   const md = eng('issues', 'SKILL.md');
   assert.match(md, /Linear 用 MCP/);
-  assert.match(md, /`issues check`/);
+  assert.match(md, /`dyna issues check`/);
   assert.doesNotMatch(md, /脚本还不接/);
   assert.doesNotMatch(linear, /脚本还不接/);
 });
@@ -43,7 +42,7 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   assert.match(questions, /Linear/);
   assert.match(eng('setup', 'references', 'survey.md'), /issue 在哪个平台/);
   const tpl = eng('setup', 'references', 'issue-tracker-linear.md');
-  assert.equal(platformOf(tpl), 'linear', 'the template names Linear in its first heading');
+  assert.match(tpl.match(/^# (.+)$/m)[1], /linear/i, 'the template names Linear in its first heading (what `dyna issues` reads as the platform)');
   assert.match(tpl, /^triage：用 \/ 跳过$/m);
   assert.doesNotMatch(tpl, /^## 仓库$/m);
   assert.match(tpl, /^## 分类 label$/m);
@@ -52,14 +51,14 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   const md = eng('setup', 'SKILL.md');
   assert.match(md, /issue-tracker-linear\.md/);
   assert.match(md, /linear-setup\.md/);
-  assert.match(md, /跳过下面的 `issues labels` 与 `migrate`/);
+  assert.match(md, /跳过下面的 `dyna issues labels` 与 `migrate`/);
   assert.match(md, /issue-tracker\.md\]/, 'the file table still lists the GitHub template');
   const steps = eng('setup', 'references', 'linear-setup.md');
   // the connecting is a capability now: the steps name the MCP address and the capabilities, the how is in the runtime's reference
   assert.match(steps, /https:\/\/mcp\.linear\.app\/mcp/);
   assert.match(steps, /『调用 MCP』/);
   assert.match(steps, /『装与设置』/);
-  const desktop = readFileSync(join(root, 'skills', 'productivity', 'runtime', 'references', 'claude-desktop.md'), 'utf8');
+  const desktop = readFileSync(join(root, 'runtime', 'claude-desktop.md'), 'utf8');
   assert.match(desktop, /claude mcp add --transport http --scope user linear https:\/\/mcp\.linear\.app\/mcp/);
   assert.match(desktop, /Connectors/);
   for (const tool of ['list_teams', 'list_issue_statuses', 'get_team', 'list_issue_labels']) assert.ok(steps.includes(tool), tool);
@@ -77,7 +76,7 @@ test('session, dispatch and triage (skill and agent) each point at the issues sk
     assert.doesNotMatch(md, /references\/linear\.md/, `${name} reads another skill's private reference`);
     assert.doesNotMatch(md, /includeRelations|addLabels|removeLabels|orderBy/, `${name} repeats tool parameters`);
   }
-  assert.match(eng('issue-dispatch', 'SKILL.md'), /Linear 项目跳过 `issues labels` 与 `issues reconcile`/);
+  assert.match(eng('issue-dispatch', 'SKILL.md'), /Linear 项目跳过 `dyna issues labels` 与 `dyna issues reconcile`/);
   assert.match(eng('issue-session', 'SKILL.md'), /issues check <docs> <状态> <号> --from=<现在>/);
 });
 

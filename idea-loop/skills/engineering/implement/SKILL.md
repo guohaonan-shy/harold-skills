@@ -3,7 +3,7 @@ name: implement
 description: 把一份已切好工单的 spec 实现完。spec 的工单已切好、要开工时用。
 ---
 
-**把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
+**把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不和人往来）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
 
 开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（Review 汇报、PR 描述的七节）和 `idea-loop:issues`（issue 的状态、开 issue）。执行方交回的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照 `idea-loop:decision-rules`。
 
@@ -11,7 +11,7 @@ description: 把一份已切好工单的 spec 实现完。spec 的工单已切�
 
 - 人调 `/idea-loop:implement <spec-slug>`，或调用方要求做完一份 spec。一份 spec 的工单全部做完才算完：要求只做其中几张的，说明 spec 该调整（拆成两份，或把不做的部分移出去），停下告诉人，不开工。
 - **当前 worktree 就是集成分支**：一份 spec 一条分支、一个 PR，这个 skill 不建、不切它。工作区不干净或当前就是基准分支，停下告诉人。
-- `node "${CLAUDE_PLUGIN_ROOT}/scripts/spec.mjs" check <docs>` 不报旧布局，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<号>` 指 spec 的 `issues:` 里的 issue 号。
+- `dyna spec check <docs>` 不报旧布局，`tickets/` 下有工单。否则停：旧布局照它提示的迁移，没切票先跑 `idea-loop:to-ticket`。`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<号>` 指 spec 的 `issues:` 里的 issue 号。
 - 每张工单第一次派出是新上下文，人不用在工单之间 `/clear`；卡住的工单在人做完决定后可能被叫回原执行方（见「人回复后」）。
 
 scope 和工单都按 spec 与 `idea-loop:to-ticket` 定下的来：编排者不改 scope、不删工单（删工单在合并成功后，归 `idea-loop:pr-review`），也不合并 PR。
@@ -26,7 +26,7 @@ review loop 文件、Review 汇报的存档以这个 PR 的号命名（下文 `<
 
 不另建状态文件：
 
-- **已落地**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。用这个脚本，不用 git 的 trailer 读法：环境会在 message 末尾另起一段追加署名，按 trailer 读会读空。
+- **已落地**：`dyna spec landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。用这条命令，不用 git 的 trailer 读法：环境会在 message 末尾另起一段追加署名，按 trailer 读会读空。
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项（各带代价和能否回滚）、推荐、半成品的 worktree 和分支、原执行方的 agent id（起它时 Agent 工具返回的那个；会话压缩或重启后靠它找回）。丢了就从 review loop 文件还原（Review 汇报里有批示和「做了什么」的就算已决定）。
 - **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进 Review 汇报后清空。
 - **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（`idea-loop:pr` 的「开 draft PR」写的）。
@@ -57,7 +57,7 @@ review loop 文件、Review 汇报的存档以这个 PR 的号命名（下文 `<
 
 | 交回 | 核对 |
 |---|---|
-| `landed` | 比集成分支只多一个 commit（`git rev-list --count HEAD..<commit>` 为 1），`ticket-ledger.mjs of <commit>` 输出的正是这张工单；交回的 `acceptance` 每格已勾或 `⏭ 延后 → <接手方>`；延后给 PR 交付验收的，`human_verify` 有素材且文件在它的证据目录；交回原文存成 `.tmp/implement/<spec-slug>/` 下的文件，`ticket-ledger.mjs skill-edit <commit> <该文件>` 退出码 0（不过会逐条列原因） |
+| `landed` | 比集成分支只多一个 commit（`git rev-list --count HEAD..<commit>` 为 1），`dyna spec ticket-of <commit>` 输出的正是这张工单；交回的 `acceptance` 每格已勾或 `⏭ 延后 → <接手方>`；延后给 PR 交付验收的，`human_verify` 有素材且文件在它的证据目录；交回原文存成 `.tmp/implement/<spec-slug>/` 下的文件，`dyna spec skill-edit <commit> <该文件>` 退出码 0（不过会逐条列原因） |
 | `blocked` | 半成品已提交在它的分支上，worktree 干净 |
 | `failed` | 不核，直接进「卡住一张，别的接着做」 |
 
@@ -94,8 +94,8 @@ review loop 文件、Review 汇报的存档以这个 PR 的号命名（下文 `<
 只在工单落地（fast-forward 进集成分支）之后做。`<项目目录>/DEVELOPMENT.md` 的「清理」写了命令就先跑它，然后：
 
 1. 停掉这个 worktree 端口上的服务（`lsof -tiTCP:<端口> -sTCP:LISTEN` 找进程）。
-2. 它还持有浏览器锁就释放：`node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release .tmp/implement/<spec-slug>/browser.lock --force`。
+2. 它还持有浏览器锁就释放：`dyna ui lock release .tmp/implement/<spec-slug>/browser.lock --force`。
 3. 把它 `.tmp/implement/<spec-slug>/evidence/` 下的素材拷进集成分支 worktree 的同名目录。
-4. `git worktree remove --force <路径>`（Claude 加的锁先 `git worktree unlock`），再 `git branch -D <它的分支>`。
+4. `dyna worktree remove <路径> --force`（先解锁，连它的分支一起删）。
 
 卡住或失败的工单不回收：worktree 和分支留着，半成品在它的分支上，等人做完决定由下一个执行方接着用。素材照样先拷出来，Review 汇报要用。

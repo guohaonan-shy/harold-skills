@@ -44,7 +44,7 @@ for (const skill of ['uiux-imagine', 'uiux-refine']) {
     assert.match(text, /`imagine\/`、`canvas\/`、`research\/` 都在 `<项目目录>\/docs\/design\/tmp\/<spec-slug>\/`/);
     assert.doesNotMatch(text, /worktree 根/, 'the project directory is in home; the worktree root is no longer where the design files are');
     // every command that reads those files is prefixed with the project directory, not a bare docs/ path
-    const commands = text.split('\n').filter((l) => /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/(direction-note-check|critic-score|issues)\.mjs"/.test(l));
+    const commands = text.split('\n').filter((l) => /dyna (design note submit|design critic round|issues set) "/.test(l));
     assert.ok(commands.length > 0, 'no commands found to check');
     for (const line of commands) {
       assert.match(line, /<项目目录>\/docs/, `command not anchored on the project directory: ${line.trim()}`);

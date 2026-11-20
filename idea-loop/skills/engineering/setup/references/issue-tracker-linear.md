@@ -1,6 +1,6 @@
 # Issue tracker：Linear
 
-这个项目的需求以 Linear issue 的形式进来。读写 issue 用 Linear 的 MCP，做法见 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；翻状态的前提、PR 怎么算、正文格式仍由 idea-loop 的 `issues.mjs` 判。
+这个项目的需求以 Linear issue 的形式进来。读写 issue 用 Linear 的 MCP，做法见 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）；翻状态的前提、PR 怎么算、正文格式仍由 idea-loop 的 `dyna issues` 判。
 
 issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 triage、todo 的 issue 出一个会话（一个 issue 一个会话），从评估、设计一路走到实现合并。要做的事写在 spec 里（`docs/spec/<slug>/` 下的文件，工单也在那里），issue 里不放 spec 正文。
 
@@ -41,3 +41,14 @@ P0 = Urgent，P1 = High，P2 = Medium；No priority 与 Low 都按「没有」�
 ## PR
 
 一个 issue 一个 PR。PR 挂到 issue 上：标题前缀 `[<号>]`，正文第一行 `Linear: <号>`。
+
+## 调度
+
+调度每一轮读这张表，定此刻派什么、同时最多开几个会话；改了这里，下一轮就按新的走。没有这一节的项目按下面这两行走。
+
+| 时段 | 派什么 | 上限 |
+|---|---|---|
+| 09:00–19:00 | triage | 3 |
+| 22:00–08:00 | todo | 3 |
+
+时段左闭右开，开始晚于结束就是跨午夜；派什么只能写 `triage` 或 `todo`；表里没覆盖的时间不派；两行重叠时靠前的一行算。

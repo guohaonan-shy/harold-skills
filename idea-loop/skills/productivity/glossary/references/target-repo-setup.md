@@ -11,8 +11,4 @@
 
 ## 手改之后的检查
 
-plugin 的 hook 只管 agent 的写入：每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件，不论它在哪个目录，都会自动跑 `glossary-check.mjs`。人手改、别的工具改的，没有代码仓库的 CI 能挡（文件不在那里）；改完手动跑一遍：
-
-```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/glossary-check.mjs" <项目目录>/GLOSSARY.md
-```
+格式检查由 plugin 的 PostToolUse hook 跑，只管 agent 的写入：每次 Write / Edit 落到名为 `GLOSSARY.md` 的文件，不论它在哪个目录，都会自动查，违规当场改到通过。人手改、别的工具改的，没有代码仓库的 CI 能挡（文件不在那里）：这样的改动在下一次 agent 往这份文件写入时被查出。

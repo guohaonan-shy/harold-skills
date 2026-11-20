@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dynaCommands } from './dyna-test-bin.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = (name) => readFileSync(join(root, 'skills/engineering', name, 'SKILL.md'), 'utf8');
@@ -17,12 +18,13 @@ test('三份 SKILL.md 主体都在 5000 字以内', () => {
   for (const n of NAMES) assert.ok([...body(skill(n))].length < 5000, `${n} 主体 ${[...body(skill(n))].length} 字`);
 });
 
-test('文中写到的 issues 命令都是脚本认得的，已删的命令一条也不写', () => {
-  const src = readFileSync(join(root, 'scripts/issues.mjs'), 'utf8');
-  const known = new Set(src.match(/const COMMANDS = \[([^\]]*)\]/)[1].match(/'([a-z]+)'/g).map((s) => s.slice(1, -1)));
-  for (const gone of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split', 'block']) assert.ok(!known.has(gone), `脚本不该再认得 ${gone}`);
+test('文中写到的 issues 命令都是命令行认得的，已删的命令一条也不写', () => {
+  const commands = dynaCommands();
+  const known = new Set([...commands].filter((c) => c.startsWith('issues ')).map((c) => c.split(' ')[1]));
+  for (const gone of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split']) assert.ok(!known.has(gone), `命令行不该再认得 issues ${gone}`);
+  assert.ok(known.has('set') && known.has('show'), '命令行至少认得 issues set 和 issues show');
   for (const n of NAMES) {
-    for (const m of skill(n).matchAll(/`issues ([a-z]+)\b/g)) assert.ok(known.has(m[1]), `${n} 写了不存在的命令 issues ${m[1]}`);
+    for (const m of skill(n).matchAll(/`dyna issues ([a-z]+)\b/g)) assert.ok(known.has(m[1]), `${n} 写了不存在的命令 dyna issues ${m[1]}`);
   }
 });
 
@@ -35,18 +37,18 @@ test('三份 skill 里没有旧中文状态名、根 / 子 issue、整合、一�
   }
 });
 
-test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、两个上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
+test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、按时段的上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
   const md = skill('issue-dispatch');
   assert.match(front(md), /todo/);
   assert.match(front(md), /一个 issue 一个会话/);
-  assert.match(md, /`todo` 和 `triage` 的 issue/);
+  assert.match(md, /`triage` 或 `todo` 的 issue/);
   assert.match(md, /issues candidates/);
   assert.match(md, /issues reconcile/);
   assert.match(md, /issues queues <docs>/);
   assert.match(md, /status:<状态>/);
   assert.match(md, /没有同号会话的记进汇报/);
   assert.match(md, /合计最多交出 3 个/);
-  assert.match(md, /idea-loop:runtime/);
+  assert.match(md, /dyna runtime show/);
   for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
   // the how is no longer in the body: no sidebar section, card or in-session loop
   assert.doesNotMatch(md, /section|卡片|CronCreate|会话内循环|(?<![\w-])loop(?![\w-])/, 'dispatch 正文还写着 section、卡片或会话内循环的做法');
@@ -186,7 +188,8 @@ test('issue-triager：sonnet、medium、只读不翻状态，五步、复现手�
 test('issue-triager 不设 tools 白名单（继承会话全部工具，浏览器与 Linear MCP 才拿得到），skill 都写「用 Skill 工具调」，评论链接取自 issues note 的输出', () => {
   const md = readFileSync(join(root, 'agents/issue-triager.md'), 'utf8');
   assert.doesNotMatch(front(md), /^tools:/m);
-  for (const k of ['idea-loop:browser', 'idea-loop:evidence']) assert.match(md, new RegExp(`用 Skill 工具调 \`${k}\``), `${k} 没写「用 Skill 工具调」`);
+  assert.match(md, new RegExp('用 Skill 工具调 `idea-loop:evidence`'), 'idea-loop:evidence 没写「用 Skill 工具调」');
+  assert.match(md, /起浏览器前跑 `dyna runtime show 浏览器`/, '浏览器没写 dyna runtime show');
   assert.match(md, /已评论 <链接>/);
 });
 

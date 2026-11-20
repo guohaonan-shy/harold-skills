@@ -26,7 +26,7 @@ description: 写给人看的东西（spec、PR 描述、汇报、要人定的题
 看这条证据要人判断的是什么，挑最快能让人看懂的那一种。可用的：
 
 - **UI 页面标注**：截图只截那个组件（必要时连同它弹出的浮层），2 倍像素密度，用产物的主语言，手机宽度默认 390；红色光圈圈出要看的地方，旁边一两句说明。
-- **UI flow 标注**：多张截图横排，箭头上写触发条件，截图下一句状态，红色光圈圈出要看的地方；并排对照（之前 / 之后、静止 / 悬停）也用它。只用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，同一组图才长得一样；构图规则、JSON 格式和命令见 [`references/ui-flow.md`](references/ui-flow.md)。
+- **UI flow 标注**：多张截图横排，箭头上写触发条件，截图下一句状态，红色光圈圈出要看的地方；并排对照（之前 / 之后、静止 / 悬停）也用它。只用 `dyna design flow compose` 拼，同一组图才长得一样；构图规则、JSON 格式和命令见 [`references/ui-flow.md`](references/ui-flow.md)。
 - **图表**：用 Skill 工具调 excalidrawer 的入口 skill（`excalidrawer:sequence` 时序、`excalidrawer:tree` 树、`excalidrawer:flowchart` 流程、`excalidrawer:state-machine` 状态、`excalidrawer:comparison` 对比、`excalidrawer:chart` 柱状 / 折线等）。没装 excalidrawer 时用 mermaid。
 - **动图**：动起来哪里不对、动效顺不顺。怎么录、怎么转、体积怎么控，见 [`references/gif.md`](references/gif.md)。
 - **表或一行例子**：规则覆盖了谁（场景 × 有没有覆盖），数值对不对（输入 → 之前的结果 → 现在的结果），直接写进正文。

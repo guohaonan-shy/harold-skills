@@ -20,7 +20,8 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCANNED = ['skills', 'agents', 'docs', 'README.md', 'AGENTS.md'];
+// the command line lives next to the plugin, not in it, and ships with the same promise: nothing of a real project
+const SCANNED = ['skills', 'agents', 'docs', 'README.md', 'AGENTS.md', 'bin', 'dyna-version', 'runtime', '../dyna'];
 
 const TELLS = [
   /toeflair|tofelair|\btoefl\b/i,
@@ -37,12 +38,12 @@ function files(path) {
   if (!statSync(path).isDirectory()) return [path];
   return readdirSync(path).flatMap((name) => {
     const p = join(path, name);
-    if (statSync(p).isDirectory()) return files(p);
-    return /\.(md|mjs|json|ya?ml)$/.test(name) ? [p] : [];
+    if (statSync(p).isDirectory()) return name === 'dist' ? [] : files(p);
+    return /\.(md|mjs|json|go|ya?ml|html)$|^dyna$/.test(name) ? [p] : [];
   });
 }
 
-test('skills, agents, docs, README and AGENTS.md carry no project-specific names or examples', () => {
+test('skills, agents, docs, README, AGENTS.md and the command line carry no project-specific names or examples', () => {
   const hits = [];
   for (const entry of SCANNED) {
     for (const file of files(join(pluginRoot, entry))) {

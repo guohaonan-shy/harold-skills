@@ -1,5 +1,5 @@
 // The knowledge base lives in the project directory (home); every change to it is committed to home's main
-// with `project-map.mjs commit`, which stages only the files it is given (docs/spec/skills-read-home, ticket 04).
+// with `dyna home commit`, which stages only the files it is given (docs/spec/skills-read-home, ticket 04).
 // Code PRs and issue branches carry code only. The rule is written once, in wiki-conventions「知识库落地」;
 // the places that used to land a stage on a work branch, or open a docs-only PR, point at it instead.
 import { test } from 'node:test';
@@ -21,7 +21,6 @@ function files(dir, out = []) {
   return out;
 }
 const docs = [...files(join(root, 'skills')), ...files(join(root, 'agents')), join(root, 'README.md')];
-const seoIssues = join(root, 'scripts', 'seo-issues.mjs');
 
 test('no skill, agent or README lands knowledge-base changes on a work branch or opens a docs-only PR', () => {
   const banned = [
@@ -40,7 +39,7 @@ test('no skill, agent or README lands knowledge-base changes on a work branch or
     /through a docs-only/i,
   ];
   const hits = [];
-  for (const f of [...docs, seoIssues]) {
+  for (const f of docs) {
     const text = readFileSync(f, 'utf8');
     for (const re of banned) if (re.test(text)) hits.push(`${relative(root, f)}: ${re}`);
   }
@@ -62,12 +61,12 @@ test('wiki-conventions「知识库落地」: commit straight to home, only the l
   const md = read('skills/productivity/wiki-conventions/SKILL.md');
   const at = md.indexOf('## 知识库落地');
   const rule = md.slice(at, md.indexOf('\n## ', at + 5));
-  assert.match(rule, /project-map\.mjs" commit/);
+  assert.match(rule, /dyna home commit/);
   assert.match(rule, /只提交列出的文件/);
   assert.match(rule, /home 没推上去/);
   assert.match(rule, /流程照走/);
   for (const artifact of ['spec', 'raw', '工单', '冻结的设计', '设计档案', 'dreaming', '「不做」记录', 'retro', '效果报告']) assert.ok(rule.includes(artifact), artifact);
-  assert.match(rule, /代码 PR 合并成功后才跑归档脚本/);
+  assert.match(rule, /代码 PR 合并成功后才跑归档命令/);
   assert.match(rule, /`delta\/`/);
   assert.match(rule, /git revert/);
   assert.match(rule, /代码 PR 里只有代码/);
@@ -92,8 +91,8 @@ test('pr-review merge archives after the code PR merged, then deletes the ticket
   const deliver = read('skills/engineering/pr-review/references/deliver.md');
   assert.match(merge, /代码 PR 合并成功之后才动/);
   assert.match(merge, /## 合并后归档并删工单/);
-  assert.match(merge, /design-archive-write\.mjs/);
-  assert.match(merge, /project-map\.mjs" commit/);
+  assert.match(merge, /dyna design archive write/);
+  assert.match(merge, /dyna home commit/);
   assert.match(merge, /tickets\//);
   assert.doesNotMatch(deliver, /先推删工单的 docs 提交/);
 });
@@ -119,6 +118,6 @@ test('setup builds docs/ in the project directory and commits it to home; there 
   assert.doesNotMatch(q, /要不要知识库/);
   const setup = read('skills/engineering/setup/SKILL.md');
   assert.match(setup, /`<docs>` 骨架：/);
-  assert.match(setup, /project-map\.mjs" commit/);
+  assert.match(setup, /dyna home commit/);
   assert.doesNotMatch(setup, /知识库选了仓库外/);
 });

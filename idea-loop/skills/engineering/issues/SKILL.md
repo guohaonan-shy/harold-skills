@@ -5,9 +5,9 @@ description: issue 这个实体：状态、谁在什么时候翻、正文格式�
 
 issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是文档，没有自己的状态；spec 了结 = 它 frontmatter `issues:` 列的 issue 全关了。
 
-状态改只走脚本：下文 `issues` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs"`，`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。脚本先核前提再写，拒绝时说原因和能翻成什么，照办。
+状态改只走命令：`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。命令先核前提再写，拒绝时说原因和能翻成什么，照办。
 
-字段在平台上怎么表达：GitHub 用脚本，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `issues check` 核。平台看项目目录 `ISSUE_TRACKER.md` 首个标题。
+字段在平台上怎么表达：GitHub 用命令，读 [references/github.md](references/github.md)；Linear 用 MCP，读 [references/linear.md](references/linear.md)。两边翻状态的前提都由 `dyna issues check` 核。平台看项目目录 `ISSUE_TRACKER.md` 首个标题。
 
 ## 实体
 
@@ -20,7 +20,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 优先级 | P0 / P1 / P2，最多一个，没有就是没有；GitHub 上是 `priority:P0` / `priority:P1` / `priority:P2` label。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判 |
 | blocked by | 挡着它的 issue |
 | 挂着的 PR | 这个 issue 的 PR，状态是 draft / ready / merged |
-| 评论 | 停在哪、等什么、为什么关；idea-loop 写的带「🤖 idea-loop：」前缀 |
+| 评论 | 停在哪、等什么、为什么关；idea-loop 写的第一行是 `<!-- idea-loop -->`（页面不显示） |
 
 不用父子关系归组：一个 issue 一个会话、一份 spec；版本用 milestone，模块用分类，「这几个相关」写正文链接；平台上已有的父子关系照常读，不当成组。
 
@@ -50,7 +50,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 任意开着的 | canceled | 人决定不做；验证为不存在 |
 
 - 项目没开 triage 的（`ISSUE_TRACKER.md` 的状态表写了「triage：跳过」），不翻 triage：backlog 直接翻 todo，grill 与设计在 todo 会话里做。
-- 前提由 `issues set` 核：triage → todo，spec 不能还有「> 需要 grill」或「### 待定」，碰 UI 的要有冻结摘要（没装设计插件时带 `--skip-design`，并在汇报里写明跳过了设计）；→ done，挂着的 PR 合并。
+- 前提由 `dyna issues set` 核：triage → todo，spec 不能还有「> 需要 grill」或「### 待定」，碰 UI 的要有冻结摘要（没装设计插件时带 `--skip-design`，并在汇报里写明跳过了设计）；→ done，挂着的 PR 合并。
 - done、canceled 之后不再翻；重开是人的事。
 - Linear 上 in-progress、in-review、done 由集成按 PR 推，agent 不手翻，其余照这张表。
 
@@ -77,38 +77,23 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 - **被别的 issue 挡**：用平台的 blocked by。调度跳过还被挡着的 todo，挡路的关了它自然能派。
 - **等人给条件**：在 issue 上评论「等你：X」，回 backlog。
-- **先放着**：`issues set <docs> backlog <号> --comment=<停在哪个阶段、有分支就写分支名>`，评论必须带。人放回 todo 后，新会话读它。
+- **先放着**：`dyna issues set <docs> backlog <号> --comment=<停在哪个阶段、有分支就写分支名>`，评论必须带。人放回 todo 后，新会话读它。
 
 ## 开一个 issue
 
-流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `issues new`，它先校验正文五个必填节、再查重（同标题开着的 issue 已有就拒绝并报号）：
+流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `dyna issues new`，它先校验正文五个必填节、再查重（同标题开着的 issue 已有就拒绝并报号）：
 
 1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看，包括几周后的自己和人。
-2. `issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
+2. `dyna issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
 3. 判断是 P0 的，开成 backlog 后调 `/idea-loop:issue-triage P0 <号>`，当场复现。
 4. 正文被拒（缺节、节为空）就补上再开；开不成（`gh` 失败）的，记下原因交给人。
 
-Linear 项目没有 `issues new`：`issues body` 校验正文，再照 [references/linear.md](references/linear.md) 的「开 issue」用 MCP 开。
+Linear 项目没有 `dyna issues new`：`dyna issues body` 校验正文，再照 [references/linear.md](references/linear.md) 的「开 issue」用 MCP 开。
 
 ## 命令
 
-```bash
-issues labels     <docs> [--prune]                 # 建缺的 status:*、kind:*、type:* label；多余的只列出，--prune 删
-issues type       <docs> <号> <父类[/子类]>...      # 打模块，换掉原有的 type:*
-issues show       <docs> <号>                      # JSON：状态、标题、分类、挂着的 PR（draft / ready / merged）、覆盖它的 spec 与分支
-issues check      <docs> <状态> <号> [--from=<现在的状态>]   # 只核翻法的前提、不改；Linear 上必带 --from，先跑它再用 MCP 翻
-issues set        <docs> <状态> <号>... [--comment=<文字>] [--skip-design]   # 核过再翻；done、canceled 同时关闭
-issues new        <docs> <标题> <正文文件> [--state=backlog|todo] [--priority=P0|P1|P2] [--kind=…] [--type=…]... [--repo=<owner/repo>]   # 校验正文、查重、开；默认 backlog，todo 必带 --priority；--repo 开到别的仓库；输出新号
-issues body       <docs> <正文文件>                # 只校验正文，不开；Linear 上先跑它再用 MCP 开
-issues priority   <docs> <P0|P1|P2|none> <号>...   # 换掉原有的优先级
-issues backlog    <docs> [<上限>]                  # 开着的 backlog issue，最早的在前（JSON）；跳过分拣问过「还要你补」、之后没人动过的
-issues note       <docs> <号> <正文文件>           # 贴一条带「🤖 idea-loop：」前缀的评论
-issues candidates <docs> [<上限>] [--state=todo|triage]  # 能派的 todo（--state=triage 取 triage 的）：没有开着的 blocked by；先排指派给本人的（P0 → P1 → P2 → 没有，再按号），本人名下没有可派的才给未指派的（同样按优先级，同级里停留久的先），指派给别人的不给（JSON）
-issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label、两个 status:* 报出
-issues queues     <docs>                           # 调度的上限（cap、triageCap）和分组名（sections）；JSON 对象
-issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出
-```
+参数用 `dyna issues --help`、`dyna issues <命令> --help` 查。`--help` 查不到的：Linear 上翻状态必带 `check` 的 `--from`，先跑它再用 MCP 翻；Linear 上开 issue 先跑 `body` 校验再用 MCP 开；`set` 的 done、canceled 同时关闭 issue。
 
 PR 正文怎么挂到 issue，见两份 reference。
 
-分类（模块、类型）和 spec 的 `issues:`、`spec.mjs` 怎么用，读 [references/category-and-spec.md](references/category-and-spec.md)。
+分类（模块、类型）和 spec 的 `issues:`、`dyna spec` 怎么用，读 [references/category-and-spec.md](references/category-and-spec.md)。

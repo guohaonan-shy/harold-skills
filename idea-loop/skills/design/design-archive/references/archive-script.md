@@ -1,16 +1,16 @@
 # 归档
 
-`prod/` 只经这一个脚本写：
+`prod/` 只经这一个命令写：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-write.mjs" <项目目录> <spec-slug> [--dry-run] [--json]
+dyna design archive write <项目目录> <spec-slug> [--dry-run] [--json]
 ```
 
 退出码 0 = 已归档（`--dry-run` 时是「可以归档」），1 = 拒绝（逐条列出违规或冲突，**什么都没写**），2 = 用法错误或 `tmp/<spec-slug>/` 不存在。
 
 **谁在什么时候跑**：不带 `--dry-run` 的归档在代码 PR 合并成功之后、UI 审查者的归档草稿经人批过的前提下跑（`idea-loop:pr-review` 的「合并后归档并删工单」；合并前只跑 `--dry-run`），或由 dreaming 对账的档案行自动跑，不等人批；写 `delta/` 的 agent 自检只跑 `--dry-run`。
 
-## 脚本做了什么
+## 命令做了什么
 
 拒绝原因看不懂、或要核对它挪了什么时读：
 
