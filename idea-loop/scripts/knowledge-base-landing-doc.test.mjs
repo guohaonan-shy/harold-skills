@@ -68,7 +68,8 @@ test('wiki-conventions「知识库落地」: commit straight to home, only the l
   for (const artifact of ['spec', 'raw', '工单', '冻结的设计', '设计档案', 'dreaming', '「不做」记录', 'retro', '效果报告']) assert.ok(rule.includes(artifact), artifact);
   assert.match(rule, /代码 PR 合并成功后才跑归档命令/);
   assert.match(rule, /`delta\/`/);
-  assert.match(rule, /git revert/);
+  assert.match(rule, /回退那次提交/);
+  assert.doesNotMatch(rule, /git revert/, 'the rule states the outcome, not the command');
   assert.match(rule, /代码 PR 里只有代码/);
   assert.ok([...body(md)].length < 5000, `body is ${[...body(md)].length} characters`);
 });
