@@ -100,4 +100,4 @@
 | [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
 | [decisions/271](decisions/271.md) | conversation | 2026-11-20 | 决定记录 —— #271 的 issue 会话：pr-review 自动 review 放到最多 5 轮、每轮先合入主分支，摆过的题与 retro 候选的结果 |
 | [[2026-11-18-comment-writing-grill]] | conversation | 2026-11-18 | grill —— #296 替人发的评论：发出后变了另发新的、第一句写结论和要他做什么、不署名；表达方式进 home，插件只去掉机器开头 |
-| [decisions/296](decisions/296.md) | conversation | 2026-11-19 | 决定记录 —— #296 的 triage 会话：评论发出后变了另发新的、第一句写结论和要他做什么、不署名；规矩只进 home，插件只去掉机器开头；三条 retro 候选都不批 |
+| [decisions/296](decisions/296.md) | conversation | 2026-11-19 | 决定记录 —— #296 的 triage 会话：评论发出后变了另发新的、第一句写结论和要他做什么、不署名；规矩只进 home，插件只去掉机器开头；三条 retro 候选都不批；todo 会话：版本按 patch 升、已贴的归档评论删署名行，无候选 |
