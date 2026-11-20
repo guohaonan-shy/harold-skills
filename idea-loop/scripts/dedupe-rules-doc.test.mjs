@@ -19,9 +19,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 const body = (text) => text.replace(/^---\n[\s\S]*?\n---\n/, '');
 
-const SEO_AGENTS = ['backlink-analyst', 'geo-analyst', 'keyword-miner', 'page-optimizer', 'technical-auditor'];
+const SEO_AGENTS = ['backlink-analyst', 'geo-analyst', 'keyword-miner', 'page-optimizer', 'technical-auditor', 'results-analyst'];
 
-test('the five SEO direction agents do not list the prompt lines: the template in seo-scan\'s findings.md does, and the project-directory sentence stays in each', () => {
+test('the six SEO direction agents do not list the prompt lines: the template in seo-scan\'s findings.md does, and the project-directory sentence stays in each', () => {
   const template = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
   assert.match(template, /## 提示模板/);
   for (const a of SEO_AGENTS) {

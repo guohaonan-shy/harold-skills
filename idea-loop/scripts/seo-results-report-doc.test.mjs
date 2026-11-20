@@ -47,10 +47,11 @@ test('results-analyst is defined like the other direction agents: a description 
   assert.equal(field(AGENT, 'disallowedTools'), 'Edit, NotebookEdit, Agent');
 });
 
-test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
+test('results-analyst takes the prompt lines from the shared template like the other direction agents and reads findings.md and SEO.md first', () => {
   assert.match(AGENT_BODY, /skills\/seo\/seo-scan\/references\/findings\.md/);
   const input = section(AGENT_BODY, '输入');
-  assert.match(input, /六行：SEO\.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天/);
+  assert.match(input, /提示的各行照 findings\.md 的「提示模板」。\*\*项目目录\*\*读调用方在 prompt 里给的项目目录/);
+  assert.doesNotMatch(input, /提示里有六行/);
   assert.match(input, /dyna seo parse/);
   assert.match(input, /「分析」/);
 });

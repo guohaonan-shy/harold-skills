@@ -32,4 +32,4 @@ designer 交付「冻结」后，你核对：
 
 **会话中断或重开**：designer 接不回来。下次调 refine 起一个新的，任务「起手」：画布的最新一版、ledger 与方向说明就是恢复点。从暂缓的设计接着做（`idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行，复制回 `design/tmp/` 之后）也是这样，直接用这个恢复点。
 
-**这块界面先不做**：人看了数据或改了主意，说「先不做」。不冻结，也不当作放弃（放弃只丢画布）。你照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行做（挪走，spec 里写指针和人原文的理由），spec 的改动随后 `commit` 到 home。最后关掉预览服务器，告诉人挪到了哪、spec 里写了什么。
+**这块界面先不做**：人看了数据或改了主意，说「先不做」。不冻结，也不当作放弃（放弃只丢画布）。你照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行做（挪走，spec 里写指针和人原话的理由），spec 的改动随后 `commit` 到 home。最后关掉预览服务器，告诉人挪到了哪、spec 里写了什么。

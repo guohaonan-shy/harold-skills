@@ -10,7 +10,7 @@ imagine 的画布让人在几个真正不同的方向之间选：同一个问题
 imagine/
 ├── board.html            变种板：用 ?variant=<名字> 切变种，?state=<名字> 切状态
 ├── assets/               变种板引用的素材、抓来的组件与样式、生成的图
-├── rounds.md             每轮记录：人的话、点名留下的变种、交付原文；会话重开后从这里接着做
+├── rounds.md             每轮记录：人的原话、点名留下的变种、交付原文；会话重开后从这里接着做
 ├── direction-note.md     方向说明，写法见 [direction-note.md](direction-note.md)
 └── handoff/              交接画布：选中的那一版导成的独立页面，refine 的第一版画布从它来
     ├── index.html

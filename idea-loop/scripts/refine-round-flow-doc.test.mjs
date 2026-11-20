@@ -110,7 +110,7 @@ test('a direction opinion about a block the human already disliked is reported a
   assert.match(body.slice(body.indexOf('## 方向性意见与人的不满'), body.indexOf('## 人说的其它话')), /references\/ledger-and-report\.md/);
   const ref = read('skills', 'design', 'uiux-refine', 'references', 'ledger-and-report.md');
   const section = ref.slice(ref.indexOf('## 方向性意见与人的不满'), ref.indexOf('## 迁移'));
-  assert.match(section, /不满意（会话记录或 ledger 里有人的原文）/);
+  assert.match(section, /不满意（会话记录或 ledger 里有人的原话）/);
   assert.match(section, /推荐「回 imagine 重开这一块」，不再推荐保留/);
   assert.match(section, /附上这条意见的原文/);
 });

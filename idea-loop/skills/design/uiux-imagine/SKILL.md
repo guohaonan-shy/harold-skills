@@ -21,7 +21,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(d
 ## 起步
 
 1. 用 `dyna serve start` 在 `imagine/`（没有就建）起静态服务器，活到这次 imagine 收工。
-2. 用 Agent 工具起 `idea-loop:uiux-imaginer`，任务是「起手」，给它：spec 路径与 `<spec-slug>`、项目目录（`DESIGN.md` / `PRODUCT.md` 在它下面）、`imagine/` 目录与预览地址、人调用时附的话（逐字）。人在开工前调过 `idea-loop:uiux-research` 的，再带上人要转的那几段调研文字（只给文字）。方向和高度由它定，你不转述。
+2. 用 Agent 工具起 `idea-loop:uiux-imaginer`，任务是「起手」，给它：spec 路径与 `<spec-slug>`、项目目录（`DESIGN.md` / `PRODUCT.md` 在它下面）、`imagine/` 目录与预览地址、人调用时附的原话（逐字）。人在开工前调过 `idea-loop:uiux-research` 的，再带上人要转的那几段调研文字（只给文字）。方向和高度由它定，你不转述。
 
 完成条件：uiux-imaginer 交回第一轮。这一个 uiux-imaginer 活过整个 imagine：之后人的每条意见都用 SendMessage 接着它的上下文交，不重起。
 
@@ -44,7 +44,7 @@ uiux-imaginer 交付一轮之后：
 
 ## 人的回复
 
-先判性质，不按语气。交给 uiux-imaginer 的带人的话（逐字）；一条回复里有几类就拆成几个任务一起交。
+先判性质，不按语气。交给 uiux-imaginer 的带人的原话（逐字）；一条回复里有几类就拆成几个任务一起交。
 
 | 人说的是 | 怎么办 |
 |---|---|
@@ -54,7 +54,7 @@ uiux-imaginer 交付一轮之后：
 | 「重探语言」 | 任务「重探语言」 |
 | 推翻了 spec 里的某一句（「这块要不要存在」「这功能不该放这里」） | 不交。问人：回 spec 用 `idea-loop:grill` 重谈，还是留在 imagine 里。回去的话 `imagine/` 原样留着，回来再调 imagine 走恢复 |
 | 要查别人怎么做 | 用 Skill 工具调 `idea-loop:uiux-research`，落图目录用这份 spec 的 `research/`，把调研页以文件发给人 |
-| 看完调研，说要转哪些 | 取出对应的文字（来源的场景 / 设计逻辑、通用结论、页尾的决策条目），加人的话，随「调向」交，标「调研结论（文字，来自 `research/<问题短名>`）」。图和页面路径都不给；人不说转就不转 |
+| 看完调研，说要转哪些 | 取出对应的文字（来源的场景 / 设计逻辑、通用结论、页尾的决策条目），加人的原话，随「调向」交，标「调研结论（文字，来自 `research/<问题短名>`）」。图和页面路径都不给；人不说转就不转 |
 | 「方向没有要补的了」，或接受了收工提议 | 进「收工」 |
 
 **回 spec 只有一个理由：推翻了 spec 里的某一句**（要解决的问题、scope、一条 story）。判据是能不能指出被推翻的那一句；指不出来就是设计层的，交给 uiux-imaginer。拿不准就问人。imagine 不改 spec。
@@ -77,6 +77,6 @@ uiux-imaginer 交付一轮之后：
 
 会话压缩或重开后，原来的 uiux-imaginer 接不回来。
 
-- 再调 imagine 时 `imagine/rounds.md` 在：不翻状态，重起服务器，新起一个 uiux-imaginer，任务「接着做」，输入同「起步」。先用一句话告诉人从第几轮接上；人这次附的话就是下一轮的输入。
+- 再调 imagine 时 `imagine/rounds.md` 在：不翻状态，重起服务器，新起一个 uiux-imaginer，任务「接着做」，输入同「起步」。先用一句话告诉人从第几轮接上；人这次附的话就是下一轮的原话。
 - `rounds.md` 不在，就是一次新的 imagine，从「起步」开始，并告诉人。
 - refine 部分冻结后回来重开几块：`rounds.md` 不在，照新的 imagine 起，任务「起手」时写明这是第二轮发散、哪几块要重开、以 `canvas/` 里的冻结画布为基线。

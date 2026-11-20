@@ -25,7 +25,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(dyna research
 
 **一句话，一个决定。** 「退出确认：入口用 X 还是箭头、弹窗怎么摆」是；「这块该是什么感觉」不是。调用方已经给了一句具名问题（比如 imagine / refine 里执行者写的「建议调研的问题」），就用它。人的话比这大（几个决定连在一起）或太虚，**先问一次**或拆开：一次最多问一个问题，附你的拆法当推荐；只收人问到的范围。收好之后，用一句话复述给人，不等确认，直接起。
 
-**同时留住人的原文**：人敲下的那句话，一字不改，和具名问题分开存着。页面顶部要原样摆出这两样和交给 researcher 的上下文，人才看得出自己问的是什么、agent 拿到的又是什么。
+**同时留住人的原话**：人敲下的那句话，一字不改，和具名问题分开存着。页面顶部要原样摆出这两样和交给 researcher 的上下文，人才看得出自己问的是什么、agent 拿到的又是什么。
 
 给它起一个**问题短名**（小写、连字符、≤ 4 个词，如 `leave-confirm`），用作目录名。同名目录已存在，加 `-2`，保留上一次的结果。
 
@@ -44,7 +44,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(dyna research
 
 用 Agent 工具起 `idea-loop:uiux-researcher`，交给它的只有：
 
-1. 人的原文（一字不改）；
+1. 人的原话（一字不改）；
 2. 具名问题；
 3. 产品上下文：项目目录（`DESIGN.md` 在它下面，有才有）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
 4. 落图目录的绝对路径。
@@ -57,7 +57,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(dyna research
 
 交回应当只有 `index.html` 的绝对路径和一句结论。researcher 说 **Mobbin 没连上**：整页调研到此停下，不换来源、不重试；告诉人怎么连，照 `dyna runtime show 装与设置` 里 Mobbin 那一条（要 Mobbin 付费计划），说明只有设计调研受影响。交回末尾带 `ai_usage_notice` 的话，原样转给人。
 
-1. **核对**：自己再跑一次 `dyna research submit <落图目录>/index.html`。不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原文告诉人。
+1. **核对**：自己再跑一次 `dyna research submit <落图目录>/index.html`。不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。
 2. **把页面摆给人看**：照 `dyna runtime show 浏览器` 的「给人看」，在落图目录用 `dyna serve start` 起静态服务器，打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
 3. 到此为止（完成条件：校验绿、页面摆给了人）。要不要用、用哪些来源、转不转给谁，是人看完之后的话。
 
@@ -65,7 +65,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(dyna research
 
 设计收敛的会话每一轮在评委的意见交回之后起一次，不问人。
 
-1. **备好输入**：一个落图目录，每轮一个，放在 `<项目目录>/docs/design/tmp/<spec-slug>/research/` 下（如 `round-2/`；只在本地，同整页调研的「定落图目录」）；各状态的截图路径；评委的每条意见按 `findings` 的顺序编成 `1`、`2`、……，带 `state`、`where`、`detail`、`why`、`reference`；人这一轮的意图与思路原文；ledger 全文（每条带编号）。
+1. **备好输入**：一个落图目录，每轮一个，放在 `<项目目录>/docs/design/tmp/<spec-slug>/research/` 下（如 `round-2/`；只在本地，同整页调研的「定落图目录」）；各状态的截图路径；评委的每条意见按 `findings` 的顺序编成 `1`、`2`、……，带 `state`、`where`、`detail`、`why`、`reference`；人这一轮的意图与思路原话；ledger 全文（每条带编号）。
 2. **起 `idea-loop:uiux-researcher`**：Agent 工具，交给它这五样，并说明走轻用法；运行环境收不到 Mobbin 原生工具时，同整页调研那样把调 Mobbin 的写法放进提示。它每次新起、做完就结束。
 3. **收到交回**：只有 `research-light.json` 的路径和一句话。自己再跑一次校验，命令和参数见 `references/light-return.md` 的「校验管什么」，`--opinions` 填刚才的编号，`--ledger` 填 ledger 的编号；不绿就把输出用 SendMessage 转回它补。Mobbin 没连上时文件也合格：会话不重试、不报错，报告里照出「这一轮没有参考图：Mobbin 没连上」。
 4. 到此为止（完成条件：校验绿）。文件和截图留在落图目录，交给拼设计评审报告的那一步；你不读搜索结果、不下方向结论、不替人定要不要推翻 ledger。
