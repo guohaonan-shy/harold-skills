@@ -200,9 +200,9 @@ test('seo-setup installs the scan every day, not every week; the old weekly refe
   assert.match(DAILY, /分钟避开 0 和 30/);
 });
 
-test('SEO.md format: nine sections, the optional 分析 section with tool, project id and dashboard link, and who reads it', () => {
-  assert.match(FORMAT, /九个 `## ` 小节/);
-  assert.doesNotMatch(FORMAT, /八个 `## ` 小节/);
+test('SEO.md format: ten sections, the optional 分析 section with tool, project id and dashboard link, and who reads it', () => {
+  assert.match(FORMAT, /十个 `## ` 小节/);
+  assert.doesNotMatch(FORMAT, /九个 `## ` 小节/);
   assert.match(FORMAT, /^## 分析$/m);
   assert.match(FORMAT, /- 工具：/);
   assert.match(FORMAT, /- dashboard：/);

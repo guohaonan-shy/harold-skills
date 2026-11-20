@@ -32,11 +32,11 @@
 5. **每条都有期望行为**：只修问题的 spec，「User Stories」里每个问题一行「期望行为」，编号跟「问题陈述」的小节对得上。
 6. **选项都是真分歧**：每条「待定」写明了依据为什么冲突或没有；选项的写法照 `idea-loop:decision-rules` 的「要人定的写成一道题」。
 7. **现状和范围查清了**：同一行为的其他入口，每个都在「方案」里标了纳入还是排除；「关联」列了相邻还没完成的 spec 与 issue，没有写「无」。spec 是修一个坏掉的能力的，还查过它有没有调用方（界面入口、前端请求、别的服务、脚本或定时任务），查到的写进「方案」；一个都查不到，「实现决策」里有一条「待定：修好还是删掉」，两个选项各配例子和代价，不默认按修起草。
-8. **改动只在该在的地方**：`git status --short` 里只有这份 spec 的目录和 `docs/spec/index.md`。
+8. **改动只在该在的地方**：`git status --short` 里只有这份 spec 的目录和 `docs/spec/index.md`；SEO 的 brief 出了配图的，再加 `SEO.md`「配图」节的图片目录里它出的图。
 
 ## 跟人定要 grill 的
 
-issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、不停下，自己定完就提交；人在场接手时也照这条，人可以推翻。
+issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、不停下，自己定完就提交；人在场接手时也照这条，人可以推翻；唯一的例外是 `idea-loop:seo-brief` 的角度和封面主体，人在场时它们合成一问。
 
 - 「待定」：逐条照推荐改写成决定，依据写「AI 照推荐定：<推荐的理由>」，删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
 - 「需要 grill」：照 spec 已有的结论和 `SEO.md`「内容原则」自己答完，删掉这一行。
@@ -53,4 +53,4 @@ issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、�
 
 ## 提交
 
-照 `idea-loop:wiki-conventions` 的「知识库落地」：只 `git add` 这份 spec 的目录和 `docs/spec/index.md`（`spec index <docs>` 刷新它），提交（`docs(spec): 起草 <slug>`），留在这个分支上；设计和实现接着在这里做，最后跟代码一个 PR 合进主分支。
+照 `idea-loop:wiki-conventions` 的「知识库落地」：只 `git add` 这份 spec 的目录和 `docs/spec/index.md`（`spec index <docs>` 刷新它），SEO 的 brief 出了配图的，再 add 图片目录里它出的图，提交（`docs(spec): 起草 <slug>`），留在这个分支上；设计和实现接着在这里做，最后跟代码一个 PR 合进主分支。
