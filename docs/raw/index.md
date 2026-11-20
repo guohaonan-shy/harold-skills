@@ -64,6 +64,7 @@
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
 | [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
+| [decisions/212](decisions/212.md) | conversation | 2026-11-16 | 决定记录 —— #212 的 triage 会话：回放快照自带旧版 skill，修法定为 runner 只换两份插件之间不同的文件（spec replay-snapshot-plugin-sync），无规则候选 |
 | [decisions/192](decisions/192.md) | conversation | 2026-11-16 | 决定记录 —— #192 的 triage 会话：浏览器测试移出全量命令并加每例超时（按推荐）；无 retro 候选 |
 | [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 wiki-conventions 主体 7854 字超上限：triage 会话与 todo 会话 |
 | [decisions/379](decisions/379.md) | conversation | 2026-11-18 | 决定记录 —— #379 调度按时段分两种模式：triage 会话，人不在时用 claude -p 交到桌面端开会话，定时任务每小时一轮，retro 三条候选都不批 |
