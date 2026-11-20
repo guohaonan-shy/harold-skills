@@ -244,7 +244,7 @@ export const PERIODS_HEADING = '调度';
 /** The periods a project that wrote no「调度」section runs on: triage by day, todo by night, nothing in between. */
 export const DEFAULT_PERIODS = [
   { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
-  { start: '22:00', end: '08:00', dispatch: 'todo', limit: 3 },
+  { start: '22:00', end: '08:00', dispatch: 'todo', limit: 1 },
 ];
 
 /** `H:MM` / `HH:MM` as minutes after midnight, null when it is no time of day. */
