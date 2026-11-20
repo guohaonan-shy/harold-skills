@@ -14,6 +14,7 @@
 | [[replay-gh-isolation]] | 规则回放起的每个 claude / Codex 子进程都不带 gh 登录，读不到用例之后的线上 issue 与 PR |
 | [[replay-snapshot-plugin-sync]] | 回放时把快照里被改动的插件文件换成这一边的版本，改前改后读到不同的规则 |
 | [[scroll-driven-whole-pin]] | 滚动驱动的段只认整段钉住；窄钉子的段照普通长图拍；滚动驱动段每一步都拍一张 |
+| [[seo-agents-openseo-tool-name]] | 带连接器的 agent 不写 tools 白名单、只写禁用清单，连接器被别处配置改了名也拿得到工具 |
 | [[sections-browser-test-out-of-full-suite]] | 设计档案的浏览器测试移出全量测试命令、另给单独命令，每例加超时 |
 | [[seo-autopilot]] | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱 |
 | [[seo-brief-angle-vs-site-posts]] | seo-brief 新开页时先读站内同主题文章，每个角度候选写明和哪篇重合、新页补什么 |
