@@ -43,6 +43,10 @@ in-review 有：既是 issue 状态，也是侧边栏分组，PR 全部转 ready
 
 我觉的可以先搞成30分钟，schedule的模型可以换成sonnet，思考强度可以换成low/medium
 
+## U5
+
+定时任务的模型和思考强度可以固定，这个是没问题的。
+
 ## 本轮决议
 
 | 议题 | 决议 |
@@ -51,4 +55,4 @@ in-review 有：既是 issue 状态，也是侧边栏分组，PR 全部转 ready
 | 总数上限 | 按状态分：triage 6，in-progress 默认不设（可配），in-review 不设 |
 | 配置放哪 | 时段、每轮 X、各状态上限全搬进 home 一张表，项目的「调度」表删掉 |
 | 感知名额空出 | 由调度自己感知，不让执行会话去叫；webhook 本机接不上，先改成每 30 分钟一轮 |
-| 调度会话的模型 | Sonnet，思考强度 low/medium（spec 取 medium） |
+| 调度会话的模型 | Sonnet，思考强度 low/medium（spec 取 medium），钉在定时任务上 |

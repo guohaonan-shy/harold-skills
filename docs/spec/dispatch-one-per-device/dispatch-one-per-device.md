@@ -138,7 +138,7 @@ issues: [386]
 ### 已定
 
 - **任务 id `dispatch-home`，开在 `~/home`**：照 #332 定的 `dreaming-home`（「我倾向于设备纬度只有一个dreaming任务」），设备级任务开在 home、id 带 `-home`。定时任务的会话用建它的会话的目录（`claude-desktop.md`「定时任务」）。
-- **每 30 分钟一轮，Sonnet、思考强度 medium**：人 2026-11-20 原话「我觉的可以先搞成30分钟，schedule的模型可以换成sonnet，思考强度可以换成low/medium」。人给的是 low 或 medium，这里取 medium：一轮里要跨项目排候选、判分组，取高的一档；人可以推翻。定时任务能不能钉模型和思考强度，实现时核：`create_scheduled_task` 没有这两个参数，任务文件（`SKILL.md` 的 frontmatter）认不认 `model`、`effort` 要实测；不认就由调度会话开场对自己 `set_session_model` / `set_session_effort`，从下一个回合起生效。
+- **每 30 分钟一轮，Sonnet、思考强度 medium**：人 2026-11-20 原话「我觉的可以先搞成30分钟，schedule的模型可以换成sonnet，思考强度可以换成low/medium」。人给的是 low 或 medium，这里取 medium：一轮里要跨项目排候选、判分组，取高的一档；人可以推翻。模型和思考强度钉在定时任务上：人 2026-11-20 确认「定时任务的模型和思考强度可以固定，这个是没问题的」；建任务、更新任务时一起设。
 - **不接 webhook**：人想要调度自己感知事件（「我倾向于让schedule agent（定时任务）感知事件变化」）。本机定时任务只有 cron、一次性时刻、手动三种触发；能挂 GitHub 事件的是云端 Routine，碰不到本机侧边栏和 `~/home`。所以先靠把间隔缩到 30 分钟，见「Out of scope」。
 - **配置在 `~/home/DISPATCH.md`，项目里不再有「调度」一节**：人选「全搬进 home 一张表」。单独一份文件，不写进 `~/home/AGENTS.md`：后者是每个会话都注入的设备说明，「## 设备地图」由 dreaming 重写，调度表不该进每个会话的上下文，也不该被 dreaming 改。文件名照 home 顶层 `AGENTS.md` 的大写写法。人可以推翻文件名。
 - **每轮新开数按时段写**：harold-skills 现在白天每轮 6、夜里 3（`ISSUE_TRACKER.md`「调度」，2026-11-20 集成分支），白天和夜里本来就不一样，所以 X 留在时段那一行。
