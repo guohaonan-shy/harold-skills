@@ -395,14 +395,35 @@ type result struct {
 // any positive number for the seconds, not only whole ones).
 type HandoffOptions struct {
 	Worktree, Issue, Repo, Period, Claude, Timeout, PTimeout, Idle, Dir string
-	Given                                                               map[string]bool
+	// PromptFile, Magi and Caps are for a magi session; a desktop hand-over does not read them.
+	PromptFile, Magi string
+	Caps             []string
+	Given            map[string]bool
 }
 
-const handoffUsage = "usage: dyna runtime handoff [--worktree <dir>] [--issue <n> --repo <name> --period <label>] [--claude <bin>] [--timeout-sec N] [--p-timeout-sec N] [--idle-ms N] [--dir <records-dir>]"
+const handoffUsage = "usage: dyna runtime handoff [--worktree <dir>] [--issue <n> --repo <name> --period <label>] [--cap <name>]... [--prompt-file <file>] [--claude <bin>] [--magi <bin>] [--timeout-sec N] [--p-timeout-sec N] [--idle-ms N] [--dir <records-dir>]"
 
-// Handoff runs the two steps and, with --issue, records the session; it returns the exit code and writes the one
-// JSON line to stdout, the reasons to stderr.
+// parseSeconds is a number from a flag or an environment variable; 0 when it is not one.
+func parseSeconds(v string) float64 {
+	n, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+// Handoff opens an issue session in the current runtime and, with --issue, records it; it returns the exit code
+// and writes the one JSON line to stdout, the reasons to stderr. In Claude Desktop that is the two steps above; in
+// magi it is `magi sessions start` (handoff_magi.go).
 func Handoff(o HandoffOptions, env func(string) string, cwdDefault string, now func() time.Time, stdout, stderr io.Writer) int {
+	runtimeName, err := Detect(env)
+	if err != nil {
+		fmt.Fprintf(stderr, "交出失败：%v\n", err)
+		return 1
+	}
+	if runtimeName == "magi" {
+		return handoffMagi(o, env, now, stdout, stderr)
+	}
 	given := 0
 	for _, k := range []string{"issue", "repo", "period"} {
 		if o.Given[k] {
@@ -438,13 +459,7 @@ func Handoff(o HandoffOptions, env func(string) string, cwdDefault string, now f
 	if !o.Given["worktree"] {
 		cwd = cwdDefault
 	}
-	number := func(v string) float64 {
-		n, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
-		if err != nil {
-			return 0
-		}
-		return n
-	}
+	number := parseSeconds
 	timeoutSec := number(pick(o.Timeout, o.Given["timeout-sec"], "DESKTOP_HANDOFF_TIMEOUT_SEC", "90"))
 	pTimeoutSec := number(pick(o.PTimeout, o.Given["p-timeout-sec"], "DESKTOP_HANDOFF_P_TIMEOUT_SEC", "180"))
 	idleMs := number(pick(o.Idle, o.Given["idle-ms"], "", "2500"))
@@ -462,7 +477,21 @@ func Handoff(o HandoffOptions, env func(string) string, cwdDefault string, now f
 		return fail(err.Error())
 	}
 
-	desktopSessionID := "local_" + sessionID
+	return finishHandoff(o, env, now, sessionID, "local_"+sessionID, stdout, stderr)
+}
+
+// finishHandoff records a handed-over session when --issue was given and prints the one JSON line; the ids are the
+// ones the runtime's own start step gave (desktop: the claude session and its `local_` twin; magi: magi's id twice).
+func finishHandoff(o HandoffOptions, env func(string) string, now func() time.Time, sessionID, desktopSessionID string, stdout, stderr io.Writer) int {
+	pick := func(flag string, given bool, envName, fallback string) string {
+		switch {
+		case given:
+			return flag
+		case env(envName) != "":
+			return env(envName)
+		}
+		return fallback
+	}
 	recorded := false
 	if o.Given["issue"] {
 		dir := pick(o.Dir, o.Given["dir"], "IDEA_LOOP_DISPATCH_DIR", "")

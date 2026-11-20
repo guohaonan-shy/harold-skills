@@ -52,7 +52,7 @@ func leaf(use, short, caller string, run func(cmd *cobra.Command, args []string)
 	return c
 }
 
-const moduleLong = `运行环境：认环境、开场注入、按能力取这个环境的做法、把会话交到桌面端。
+const moduleLong = `运行环境：认环境、开场注入、按能力取这个环境的做法、开一个 issue 会话（桌面端交到桌面、magi 直接开）。
 
 认环境：IDEA_LOOP_RUNTIME 有值就用它（必须是已知名字，不认识就报错，不猜）；否则有 MAGI_SESSION_ID 是 magi；否则是 claude-desktop。命令行、IDE 插件没有可靠的标记变量，落到 claude-desktop，缺的工具走退路。
 
@@ -77,7 +77,7 @@ const moduleLong = `运行环境：认环境、开场注入、按能力取这个
 
 // Command is the `runtime` module.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("runtime", "运行环境：认环境、开场注入、按能力取这个环境的做法、把会话交到桌面端")
+	root := registry.Group("runtime", "运行环境：认环境、开场注入、按能力取这个环境的做法、开一个 issue 会话（桌面端交到桌面、magi 直接开）")
 	root.Long = moduleLong
 
 	name := leaf("name", "打印当前运行环境的名字（claude-desktop / magi）；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1，不猜", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
@@ -125,16 +125,18 @@ func Command(d Deps) *cobra.Command {
 	})
 	show.Args = cobra.ArbitraryArgs
 
-	handoff := leaf("handoff", "开一个会话并交到桌面端：先 claude -p 建会话、读 id，再在交互模式接回并敲 /desktop（调度用）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+	handoff := leaf("handoff", "开一个 issue 会话（调度用），命令自己认当前运行环境：桌面端先 claude -p 建会话、读 id，再在交互模式接回并敲 /desktop；magi 下跑 magi sessions start（要 --worktree、--issue、--repo、--period、--prompt-file）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		f := cmd.Flags()
 		o := HandoffOptions{Given: map[string]bool{}}
 		for name, dst := range map[string]*string{
 			"worktree": &o.Worktree, "issue": &o.Issue, "repo": &o.Repo, "period": &o.Period, "claude": &o.Claude,
 			"timeout-sec": &o.Timeout, "p-timeout-sec": &o.PTimeout, "idle-ms": &o.Idle, "dir": &o.Dir,
+			"prompt-file": &o.PromptFile, "magi": &o.Magi,
 		} {
 			*dst, _ = f.GetString(name)
 			o.Given[name] = f.Changed(name)
 		}
+		o.Caps, _ = f.GetStringArray("cap")
 		cwd := d.Cwd
 		if cwd == "" {
 			cwd, _ = os.Getwd()
@@ -158,6 +160,10 @@ func Command(d Deps) *cobra.Command {
 	handoff.Flags().String("p-timeout-sec", "", "claude -p 那一步最多等几秒（环境变量 DESKTOP_HANDOFF_P_TIMEOUT_SEC；默认 180）")
 	handoff.Flags().String("idle-ms", "", "接回的会话安静多少毫秒后才敲 /desktop（默认 2500）")
 	handoff.Flags().String("dir", "", "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）")
+
+	handoff.Flags().StringArray("cap", nil, "magi：会话可以用的能力，可重复（如 magi、browser、issue 平台的 MCP 服务器名）；桌面端不读")
+	handoff.Flags().String("prompt-file", "", "magi：会话的任务（prompt）写在这个文件里；magi 下必须给，桌面端不读，任务由调用方在归位之后发")
+	handoff.Flags().String("magi", "", "magi 可执行文件（环境变量 IDEA_LOOP_HANDOFF_MAGI；默认 magi）")
 
 	root.AddCommand(name, inject, show, handoff)
 	return root

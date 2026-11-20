@@ -202,7 +202,10 @@ test('setup\'s dispatch steps create an hourly task and ask no interval', () => 
 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
   for (const word of ['`limit`', '`dispatch`', '最近 2 小时有活动', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
-  assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi/);
+  // 0.0.5: the session is opened by the one command both runtimes share; magi's `magi sessions start` is what it runs inside
+  assert.match(magiDispatch, /dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>/);
+  assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap/);
+  assert.match(magiDispatch, /--cap magi --cap <MCP 服务器名> --cap browser/);
   assert.match(magiDispatch, /git -C <主 checkout> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
 });
 

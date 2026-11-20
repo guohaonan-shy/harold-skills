@@ -37,7 +37,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 用会话管理 MCP（`mcp__ccd_session_mgmt__*`）：
 
 - **列会话**：`mcp__ccd_session_mgmt__list_sessions`，`group` 写 section 名，`limit: 100`，列出没归档的会话；section 自带的计数含已归档的，不用它。
-- **开一个 issue 会话**：不用 `start_session`：定时触发的轮次里 app 拒它（"Start sessions only on the user's own words…"），人说话的轮次开出的也要人点了才算数。issue 会话一律照「调度」的「怎么交出 issue」开：`claude -p` 开出、交到桌面端、再归位。
+- **开一个 issue 会话**：`dyna runtime handoff …`，两种运行环境同一条，命令自己认环境；参数和结果见「调度」的「怎么交出 issue」第 2 步。
 - **给别的会话发消息**：`mcp__ccd_session_mgmt__send_message`，`session_id` 填会话 id，`message` 填原文。工具还没加载就先用 ToolSearch 的 `select:mcp__ccd_session_mgmt__send_message` 加载。
 - **读一个会话的记录**：`mcp__ccd_session_mgmt__export_transcript`，`session_id: self`，导出一个 zip，解开里面的会话记录文件。
 - **本会话 id**：`get_session`（`self`），是 `local_…` 那一串。
@@ -55,7 +55,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。
      - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `<项目目录>/DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
 
      路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
-  2. **开会话并交到桌面端**：在沙箱外跑（它要联网）`dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>`（`<dispatch>` 取 `todo` 或 `triage`，早上汇总靠它找夜里开出的）。命令先用 `claude -p` 开出会话，再在交互模式里接回、敲 `/desktop`，看到「Opening in Claude Desktop…」算成功，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`；用交互模式是因为 `-p` 里没有 `/desktop`；依赖系统自带的 `expect`。成功：stdout 一行 JSON，`desktopSessionId` 是 `local_<id>`；`recorded` 是 `false` 说明会话交出了但记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr 「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。目录没被 claude 信任过时，交互那步停在信任确认，也是交出失败：先在 `<仓库名>-worktrees` 这个目录里开一次 `claude` 选信任，它下面的 worktree 沿用。
+  2. **开会话并交到桌面端**：`dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>`（在沙箱外跑，它要联网；`<dispatch>` 取 `todo` 或 `triage`；`--cap` 每个能力一个；`--prompt-file` 是写好 issue 会话 prompt 的文件，放在 worktree 外）。命令开出会话，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`。成功：stdout 一行 JSON，`desktopSessionId` 是会话 id；`recorded` 是 `false` 说明记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。桌面端里：不用 `start_session`；命令用 `claude -p` 开出会话，再在交互模式里接回、敲 `/desktop`（要系统自带的 `expect`），看到「Opening in Claude Desktop…」算成功，`desktopSessionId` 是 `local_<id>`；不读 `--cap`、`--prompt-file`，任务在第 4 步发。目录没被 claude 信任过时，交互那步停在信任确认，也是交出失败：先在 `<仓库名>-worktrees` 里开一次 `claude` 选信任，它下面的 worktree 沿用。
   3. **归位**：`set_session_title` 把 `local_<id>` 改成「<仓库名>#<号> <标题>」，再用 `mcp__ccd_sidebar__move_sessions` 移进对应分组（`triage` 进 triage，`todo` 进 in-progress）；这是调度唯一一次移动别的会话。移动被拦（没加允许规则，见「装与设置」）：会话已经开着，但不在分组里，数不到，所以这一轮不再交出别的 issue，汇报里写明并推送，要人加规则。
   4. **发任务**：用会话间消息 `send_message` 把 issue 会话的 prompt（`idea-loop:issue-dispatch` 里写的）发给 `local_<id>`。要在交到桌面端之后才发：`claude -p` 跑着的时候桌面端看不见它、调度数不到它，夜里会超开。
 

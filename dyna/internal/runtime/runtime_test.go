@@ -489,7 +489,7 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 	for _, a := range handoff.Args {
 		flags = append(flags, a.Name)
 	}
-	if strings.Join(flags, ",") != "claude,dir,idle-ms,issue,p-timeout-sec,period,repo,timeout-sec,worktree" {
+	if strings.Join(flags, ",") != "cap,claude,dir,idle-ms,issue,magi,p-timeout-sec,period,prompt-file,repo,timeout-sec,worktree" {
 		t.Errorf("handoff flags: %v", flags)
 	}
 }

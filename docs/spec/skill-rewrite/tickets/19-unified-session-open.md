@@ -18,11 +18,11 @@
 
 ## 验收标准
 
-- [ ] magi 下 `dyna runtime handoff --worktree <目录> --issue <号> --repo <仓库名> --period <时段> --cap <能力>… --prompt-file <文件>` 调到 `magi sessions start`，参数对得上，成功打印与桌面端同形的 JSON 并追加调度记录：Go 单元测试用假的 `magi` 可执行文件验证（本机没有 magi）。
-- [ ] magi 下缺 `--prompt-file`、`magi sessions start` 失败（例如能力被拒）：退出 1，stderr「交出失败：…」写明原因：Go 测试覆盖。
-- [ ] 桌面端行为不变：现有 handoff 测试全绿，不改它们的断言。
-- [ ] `runtime/magi.md`、`runtime/claude-desktop.md` 开会话那一步都写同一条 `dyna runtime handoff`；`dyna runtime show 会话管理` 在两种环境下打印出来的那一步一致：文档测试钉住。
-- [ ] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全绿；node 全量测试除 plugin-version（预期红）外全绿；`dyna-scan`、`dyna-version` 绿。
+- [x] magi 下 `dyna runtime handoff --worktree <目录> --issue <号> --repo <仓库名> --period <时段> --cap <能力>… --prompt-file <文件>` 调到 `magi sessions start`，参数对得上，成功打印与桌面端同形的 JSON 并追加调度记录：Go 单元测试用假的 `magi` 可执行文件验证（本机没有 magi）。
+- [x] magi 下缺 `--prompt-file`、`magi sessions start` 失败（例如能力被拒）：退出 1，stderr「交出失败：…」写明原因：Go 测试覆盖。
+- [x] 桌面端行为不变：现有 handoff 测试全绿，不改它们的断言。
+- [x] `runtime/magi.md`、`runtime/claude-desktop.md` 开会话那一步都写同一条 `dyna runtime handoff`；`dyna runtime show 会话管理` 在两种环境下打印出来的那一步一致：文档测试钉住。
+- [x] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全绿；node 全量测试除 plugin-version（预期红）外全绿；`dyna-scan`、`dyna-version` 绿。
 
 ## 选中的存量回归
 
