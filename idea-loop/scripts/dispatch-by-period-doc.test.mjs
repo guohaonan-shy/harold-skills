@@ -199,7 +199,29 @@ test('setup\'s dispatch steps create an hourly task and ask no interval', () => 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
   for (const word of ['`limit`', '`dispatch`', '最近 2 小时有活动', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
   assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi/);
-  assert.match(magiDispatch, /git -C <主 checkout> worktree add <主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug> -b issue\/<号>-<slug>/);
+  assert.match(magiDispatch, /git -C <主 checkout> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
+});
+
+test('magi: a worktree for an issue with an existing branch attaches that branch instead of creating one with -b', () => {
+  const text = magiDispatch.slice(magiDispatch.indexOf('- **怎么交出 issue**'));
+  const step = text.slice(text.indexOf('1. **建 worktree**'), text.indexOf('2. **开会话**'));
+  assert.ok(step, 'step 1 found');
+  assert.match(step, /<主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug>/, 'the path is outside the main checkout');
+  assert.match(step, /有就接上，不新建同名分支/);
+  assert.match(step, /refs\/heads\/<分支>/, 'checks the local branch');
+  assert.match(step, /refs\/remotes\/origin\/<分支>/, 'checks the remote branch');
+  const lines = step.split('\n').filter((l) => /worktree add/.test(l));
+  assert.equal(lines.length, 3, 'one command per case: local, remote only, neither');
+  // the only command that creates the branch from the base is the one for 「two places both have none」
+  const withBase = lines.filter((l) => /origin\/<基准分支>/.test(l));
+  assert.equal(withBase.length, 1);
+  assert.match(withBase[0], /两处都没有/);
+  assert.match(lines[0], /worktree add <路径> <分支>`/, 'a local branch is attached without -b');
+  assert.ok(!/-b/.test(lines[0]), 'attaching a local branch never passes -b');
+  assert.match(lines[1], /worktree add --track -b <分支> <路径> origin\/<分支>`/, 'a remote-only branch gets a tracking branch');
+  // a branch left behind after the daytime session's workspace was cleaned must not make the night round fail
+  assert.match(step, /分支还在/);
+  assert.match(step, /路径已经存在、就是这条分支的 worktree/);
 });
 
 test('the triage row of issue-triage\'s table says the daytime dispatch opens the session itself; issue-session says a triage session is opened by the human or the dispatcher', () => {
