@@ -41,7 +41,7 @@ test('SKILL.md has 「逐个对账项目」 after the memory pass and before the
   const s = section(skill, '逐个对账项目');
   assert.match(s, /项目清单[^\n]*顺序/);
   assert.match(s, /where --project <名字>/);
-  assert.match(s, /git fetch/);
+  assert.match(s, /同步到 origin 最新/);
   assert.match(s, /origin\/<基准分支>/);
   assert.match(s, /`\.worktrees\/`/);
   assert.match(s, /DEVELOPMENT\.md` 的「分支」节/);
@@ -71,8 +71,8 @@ test('the memory pass paragraph is the one #332 pinned', () => {
 
 test('per-project.md says how: where, fetch, a detached worktree under .worktrees/, delete it afterwards, skip reasons, the success rule', () => {
   assert.match(perProject, /dyna home where --project <名字>/);
-  assert.match(perProject, /git -C <cloneDir> fetch origin/);
-  assert.match(perProject, /worktree add --detach <代码 worktree> origin\/<基准分支>/);
+  assert.match(perProject, /把 `cloneDir` 同步到 origin 最新/);
+  assert.match(perProject, /从 `origin\/<基准分支>` 切一个游离（detached）的代码 worktree/);
   assert.match(perProject, /<home>\/\.worktrees\/<名字>-<YYYY-MM-DD>\//);
   assert.match(perProject, /dyna worktree remove <代码 worktree> --force/);
   assert.match(perProject, /<home>\/\.tmp\/dreaming\/<YYYY-MM-DD>\/<名字>\//);

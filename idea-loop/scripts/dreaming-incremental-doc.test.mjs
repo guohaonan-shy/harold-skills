@@ -80,7 +80,8 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
   assert.match(scope, /读这个任务上次成功运行的时间/);
   assert.match(scope, /dyna runtime show/);
   assert.match(scope, /started_at/);
-  assert.match(scope, /git rev-list -1 --first-parent --before=/);
+  // the commit at that moment is found along the first-parent line, before started_at (the how is the agent's)
+  assert.match(scope, /first-parent 主线[^\n]*`origin\/<基准分支>` 上 `started_at` 之前最近的一个提交/);
   assert.match(scope, /origin\/<基准分支>/);
   assert.match(scope, /没有定时任务/);
   assert.match(scope, /没有一次成功的执行/);
