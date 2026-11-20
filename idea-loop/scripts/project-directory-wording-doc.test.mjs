@@ -129,9 +129,13 @@ test('the SEO direction agents and seo-scan agree on what the prompt carries: SE
   // the prompt template lives in seo-scan's findings reference (main #397 moved it out of the SKILL.md body)
   const scan = read('skills/seo/seo-scan/references/findings.md');
   assert.match(scan, /SEO\.md：<项目目录>\/SEO\.md\n项目目录：<项目目录绝对路径>/);
-  for (const a of ['geo-analyst', 'keyword-miner', 'technical-auditor', 'page-optimizer', 'backlink-analyst', 'results-analyst']) {
-    assert.match(read(`agents/${a}.md`), /提示里有六行：SEO\.md 路径、项目目录、/, a);
+  // the six lines are listed once, in that template; five of the direction agents point at it (results-analyst has its own prompt shape)
+  for (const a of ['geo-analyst', 'keyword-miner', 'technical-auditor', 'page-optimizer', 'backlink-analyst']) {
+    const text = read(`agents/${a}.md`);
+    assert.match(text, /提示的各行照 findings\.md 的「提示模板」。\*\*项目目录\*\*读调用方在 prompt 里给的项目目录/, a);
+    assert.doesNotMatch(text, /提示里有六行/, a);
   }
+  assert.match(read('agents/results-analyst.md'), /提示里有六行：SEO\.md 路径、项目目录、/);
 });
 
 test('an SEO PR is judged against 内容路径 only: docs/ and SEO.md live in the project directory, not in the code PR', () => {

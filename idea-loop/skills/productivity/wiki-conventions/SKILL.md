@@ -17,7 +17,7 @@ description: 项目目录、docs/ 知识库、术语表、worktree 下 .tmp/ 中
 | `spec/` 里每份的 `tickets/` | 工单，单 PR 的临时凭据 | `idea-loop:to-ticket` | 无 | 代码 PR 合并后删 |
 | `adr/` | spec 了结后的总结 | dreaming | `adr` | 永久 |
 | `design/tmp/` | 设计过程，一个需求一个目录：`imagine/` 发散，`canvas/` 画布与冻结记录（冻结后是唯一的设计真相），`delta/` 对 `prod/` 的差异，`research/` 调研页（不归档）；放弃的需求只丢画布（只是先不做的挪去 `design/pending/`），有价值的结论写回 spec 或 issue | `uiux-*`；`delta/` 合并前写 | 冻结记录 `design` | 代码 PR 合并后归档时清掉 |
-| `design/pending/` | 暂缓的设计：人说「这块界面先不做」时，从 `design/tmp/` 原样挪来的整个需求目录（目标已存在就停下问人，不覆盖），spec 里留一句指针和暂缓理由（人说的那句）。只在本地、从不提交（`commit` 不列它），设计档案校验跳过它 | `uiux-imagine` / `uiux-refine` 的编排者挪 | 无 | spec 了结后 dreaming 提议删 |
+| `design/pending/` | 暂缓的设计：人说「这块界面先不做」时，编排者把 `design/tmp/` 下那个需求目录原样挪来（目标已存在就停下问人，不覆盖），spec 里留一句指针和暂缓理由（人说的那句）。开工前这块界面在这里有设计的，问人要不要接着做：要就复制回 `design/tmp/`（这份留着），再按那个 skill 的中断恢复接上；不要就照常往下。只在本地、从不提交（`commit` 不列它），设计档案校验跳过它 | `uiux-imagine` / `uiux-refine` 的编排者挪、读 | 无 | spec 了结后 dreaming 提议删 |
 | `design/prod/` | 设计档案：线上现在的样子，提交；对象与字段见 `idea-loop:design-archive` 的「图的实体」 | 归档命令 | `design-*` | 下个需求归档时覆盖或删除 |
 | `domain/` | 领域知识：业务机制、规则、数据结论 | 存量，不由单次会话产生 | `domain` | 不消失 |
 | `records/` | 运营台账，一类一个子目录 | 会话建，人改 | `record` | 不进 spec 的生命周期，dreaming 不删 |
@@ -50,11 +50,7 @@ related: ["[[other-slug]]"]
 
 ### slug 与链接
 
-slug 是文件名去掉 `.md`；这是 Obsidian vault，`[[slug]]` 按 basename 解析，与目录无关。下面三条由命令守着。
-
-- `docs/` 下每个 slug 全局唯一（工单和 `index.md` 只按路径引用，不在此列）；`dyna home commit` 遇到重名就拒绝。
-- 移动不打断链接，删除会：`[[...]]` 指到的 slug 都要有文件（行内代码和代码块里的不算）；`dyna home commit` 遇到死链就拒绝。
-- ADR 文件名（四位编号加名字，编号递增、不复用）用 `dyna home adr new <名字>` 取。
+slug 是文件名去掉 `.md`；这是 Obsidian vault，`[[slug]]` 按 basename 解析，与目录无关。slug 全局唯一、链接指到的 slug 要有文件，由 `dyna home commit` 守着；细则读 [references/slug-and-links.md](references/slug-and-links.md)。
 
 ### 术语表
 

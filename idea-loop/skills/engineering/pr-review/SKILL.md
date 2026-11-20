@@ -21,7 +21,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 2. 自己跑这一轮：机械检查、并行起 Spec 与 Standards 两个 Codex 进程、核实候选、写汇报（候选已过 `dyna pr candidates submit`；格式见 `idea-loop:pr` 的「Review 汇报」），照 [`references/run-a-round.md`](references/run-a-round.md)。有设计产物时，起 Codex 的同一条消息里多起 ui-reviewer，先读 [`references/ui-walkthrough.md`](references/ui-walkthrough.md)。
 3. **先记文件**：汇报原样追加进 `<loop>` 为新条目。
 4. **处理照规则的条目**（「处理条目」），不等人。
-5. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，一个不剩，`<loop>` 里的条目同步改成同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另把 implement 期间开的存量问题 issue（取自 `<loop>` 各次停下的「已按规则处理」里带 issue 链接的行）原样列进这一节。
+5. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，一个不剩，`<loop>` 里的条目同步改成同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另列 implement 期间开的存量问题 issue，照 `idea-loop:pr` 的「Review 汇报」。
 6. **给人看**：照 `idea-loop:pr` 的「在会话里给人看」。汇报里有缺词，念出来（概念加推荐叫法），问人要不要开一轮 `idea-loop:grill` 定下来。
 7. 用『推送』能力（`dyna runtime show 推送`）通知：第几轮、几条已按规则处理、几条要你决定；未完成的轴或检查明说。
 

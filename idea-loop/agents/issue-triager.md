@@ -11,7 +11,7 @@ effort: medium
 
 用 Skill 工具调 `idea-loop:issues`（状态、正文格式）、`idea-loop:decision-rules`；运行环境的能力用 `dyna runtime show <能力>` 取。`<docs>` 指 `<项目目录>/docs/`：项目目录读调用方在 prompt 里给的项目目录，`<docs>`、引导文件（`ISSUE_TRACKER.md`、`DEVELOPMENT.md`）都在它下面，代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
-Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），不跑 `dyna issues read` / `note` / `type`；号形如 `ENG-123`。
+Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）读 issue、贴评论、打 label；号形如 `ENG-123`。
 
 你收到：issue 号、项目目录、一个已切到最新主分支的 worktree 绝对路径（查代码、跑复现都在这里）。`dyna issues read <docs> <号>` 读全文和评论；`<项目目录>/DEVELOPMENT.md` 的「开发服务器」告诉你复现要起服务时怎么起，收工前全部停掉。
 
@@ -46,7 +46,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
 
 ## 评论与交回
 
-把评论正文写进 `.tmp/triage/<号>/comment.md`，`dyna issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（命令加 `<!-- idea-loop -->` 标记），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
+把评论正文写进 `.tmp/triage/<号>/comment.md`，`dyna issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（标记由命令加，见 `idea-loop:issues` 的「评论」），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
 
 交回一行 JSON，别的不写；`comment` 填上面取到的评论地址，不自己拼：
 

@@ -16,7 +16,7 @@ disable-model-invocation: true
 
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），「实现决策」里还没有冻结摘要。
 - `imagine/direction-note.md` 在，并过得了 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过，停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
-- **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计，就问人要不要接着做。要的话把那个目录复制回 `<项目目录>/docs/design/tmp/<spec-slug>/`（pending 那份留着），再从 [`references/after-freeze.md`](references/after-freeze.md) 的「会话中断或重开」接上；不要就照常往下。
+- **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计：照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行。人要接着做的，从 [`references/after-freeze.md`](references/after-freeze.md) 的「会话中断或重开」接上。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人没有交接画布、会从方向说明重建。
 
 ## 起步

@@ -22,7 +22,7 @@ argument-hint: "<issue 号>"
 ## 开场
 
 1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
-2. **认领**：读 issue 全文和评论（`dyna issues read <docs> $ARGUMENTS`；最近一条带 `<!-- idea-loop -->` 标记的评论写着上次停在哪、分支叫什么），`dyna issues show <docs> $ARGUMENTS` 看状态、PR、spec、分支（triage 阶段 `branch: null` 是正常的）。按状态走：
+2. **认领**：读 issue 全文和评论（`dyna issues read <docs> $ARGUMENTS`；读哪条评论接上次，照 `idea-loop:issues` 的「评论」），`dyna issues show <docs> $ARGUMENTS` 看状态、PR、spec、分支（triage 阶段 `branch: null` 是正常的）。按状态走：
    - backlog：人在接手它。`dyna issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`set triage` 被拒），`set todo` 再 `set in-progress`，走 todo 会话。
    - triage：人在接着评估，走 triage 会话。
    - todo：`dyna issues set <docs> in-progress $ARGUMENTS`，走 todo 会话。

@@ -16,7 +16,7 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(d
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节、「实现决策」里还没有冻结摘要。有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
 - 它覆盖的 issue 在 triage（issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，用 `dyna issues set "<项目目录>/docs" triage <号>` 翻；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
-- **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计，就问人要不要接着做。要的话把那个目录复制回 `<项目目录>/docs/design/tmp/<spec-slug>/`（pending 那份留着），再从「中断与恢复」接上；不要就照常往下。人说这块界面先不做的，照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行挪走。
+- **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计，或人说这块界面先不做：照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行。人要接着做的，从下面的「中断与恢复」接上。
 
 ## 起步
 

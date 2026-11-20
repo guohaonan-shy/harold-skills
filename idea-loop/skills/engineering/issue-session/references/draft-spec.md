@@ -5,7 +5,7 @@
 ## 输入
 
 - issue 全文和评论：认领时读到的那份（`dyna issues read <docs> <号>`）。
-- 分拣的证据评论（带 `<!-- idea-loop -->` 标记）：复现、分类、结论都在里面，当证据用，在 spec 里引它的出处（评论链接、日期）。没有这条评论的（人直接开成 todo 的），自己先复现：手段表在 `${CLAUDE_PLUGIN_ROOT}/agents/issue-triager.md`「五步」的第 4 步「复现」，输出留在 `.tmp/to-spec/<spec-slug>/repro/`，只读回判断要用的一两行。
+- 分拣的证据评论（idea-loop 写的，认法照 `idea-loop:issues` 的「评论」）：复现、分类、结论都在里面，当证据用，在 spec 里引它的出处（评论链接、日期）。没有这条评论的（人直接开成 todo 的），自己先复现：手段表在 `${CLAUDE_PLUGIN_ROOT}/agents/issue-triager.md`「五步」的第 4 步「复现」，输出留在 `.tmp/to-spec/<spec-slug>/repro/`，只读回判断要用的一两行。
 - issue 写的现状也要核一遍，再写进 spec：照 `idea-loop:decision-rules` 的「证据是什么」。
 - issue 带 `type:seo/<方向>` 的：先用 Skill 工具调这个方向的 agent 调的那个 SEO skill（方向与 agent 的对应在 `idea-loop:seo-scan` 的 SKILL.md 的「派方向 agent」表，agent 调哪个 skill 写在 `${CLAUDE_PLUGIN_ROOT}/agents/` 下它自己的定义里），只读它写修法建议前要读的原则（由那个 skill 指过去，不直接翻它的 `references/`），不跑它的检查步骤。选项和推荐讲到某种做法有没有用时，引那里的结论和出处，不写「说法不一」这类没核过的话；原则文件没覆盖的才自己查一手来源，查不到的标成猜测。
 - 起草要跑 OpenSEO 的付费调用（SEO 研究）的：先看「起草与验证」那一份本周还剩多少。`get_project_context` 存成 `.tmp/to-spec/<spec-slug>/context.json`，`whoami` 读余额，跑 `dyna seo allocate <项目目录>/SEO.md <余额> --context <那份 context.json> --today <YYYY-MM-DD>`（不带方向，只出本周的账），读输出里 `week.shares` 的「起草与验证」的 `left`（也不超过 `week.floorRoom`）。这次研究预估要花的 credits 超过它就不跑：用『推送』告诉人是哪项研究、预估多少、本周还剩多少，spec 里写明这项研究没做。跑了的，用 `update_project_context` 的 `appendResearchLog` 记一笔，第一行 `起草 <YYYY-MM-DD>：issue #<号>`，第二行 `花费：<n | 未知> credits，余额 <n | 未知>，份：起草与验证`（「花费」行同 `idea-loop:seo-scan` 的研究日志，`dyna seo allocate` 靠它加总）。

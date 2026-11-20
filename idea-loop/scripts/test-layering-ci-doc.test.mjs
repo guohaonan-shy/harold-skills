@@ -46,13 +46,17 @@ test('the implementer runs only the tests the ticket touches, the touched APIs, 
   const done = section(implementer, '完成标准，然后 commit');
   assert.doesNotMatch(doIt, /全量套件最后跑一次/);
   assert.doesNotMatch(done, /全量套件、typecheck、lint 都是绿的/);
-  for (const part of [doIt, done]) {
-    assert.match(part, /改动涉及/);
-    assert.match(part, /交给 CI/);
-  }
+  // the list is written once, in 做; the completion standard and implement's landing reference point at it
+  assert.match(doIt, /改动涉及/);
+  assert.match(doIt, /交给 CI/);
+  assert.match(doIt, /\*\*交回前跑\*\*/);
   assert.match(doIt, /选中的存量回归/);
-  assert.match(done, /typecheck/);
-  assert.match(done, /lint/);
+  assert.match(doIt, /typecheck/);
+  assert.match(doIt, /lint/);
+  assert.match(done, /「做」里「交回前跑」的那一组全绿；全量交给 CI/);
+  assert.doesNotMatch(done, /选中的存量回归|typecheck|lint/);
+  assert.doesNotMatch(landingBranches, /涉及的 API 测试|选中的存量回归/);
+  assert.match(landingBranches, /implementer\.md` 「做」里「交回前跑」的那一组/);
   // called back to fix: re-run the tests of the boxes already ticked, not the full suite
   const input = section(implementer, '输入') + read('skills', 'engineering', 'implement', 'references', 'stop-and-defer.md');
   assert.doesNotMatch(input, /全量套件照样要全绿/);
