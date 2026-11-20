@@ -1,26 +1,49 @@
 # 调研页契约
 
-查什么、走 Refero 哪一层、截图从哪来、页面长什么样、校验管什么。
+整页调研的契约：查什么、走 Mobbin 哪一层、截图从哪来、页面长什么样、校验管什么。「查什么」「Mobbin 的三层」「截图从哪来」「Mobbin 没连上」两种用法共用；从「文件放哪」起只属于整页调研。轻用法（设计收敛每一轮）的输入和交回格式在 `light-return.md`。
 
 ## 查什么
 
 **具名问题**是一句话、关于一个决定、手上的工作从产品自己的真值里定不下来的问题。「这块该是什么感觉」不是；「产品怎么确认退出一个进行中的会话，确认放在哪」是。
 
-调研只答 **UX 问题**：一个 UX 模式、一条跨屏的用户流程、某类页面通常怎么搭、一段文案的语气。视觉风格（品味、审美流派、配色或字体气质）归 `DESIGN.md` 和发散段的随机种子。所以只用 Refero 的两层：
+调研只答 **UX 问题**：一个 UX 模式、一条跨屏的用户路径、某类页面通常怎么搭、一段文案的语气。视觉风格（品味、审美流派、配色或字体气质）归 `DESIGN.md` 和发散段的随机种子；Mobbin 没有风格这一层，不要拿搜索去凑。
 
-| 具名问题问的是 | 层 | Refero 调用 |
-|---|---|---|
-| 一个具体的 UI 模式：某个组件或屏怎么组织、写了什么 | **Screens** | `refero_search_screens`（加 `refero_get_screen`、`refero_get_similar_screens`） |
-| 一条多步流程：用户怎么穿过几个相连的屏完成一件事 | **Flows** | `refero_search_flows`（加 `refero_get_flow`） |
+### Mobbin 的三层
 
-按问题选层，不按工作的高度选。flow 搜出来稀疏，就搜相关的 screens，手工排出顺序。
+工具是插件自带的 Mobbin MCP 的三个搜索工具，装好后名字是 `mcp__plugin_idea-loop_mobbin__search_screens` / `__search_flows` / `__search_sections`。没有「按 id 取详情」「找相似」这类工具：搜索结果里就带着图的地址。
 
-只用这两层的调用：styles 层（`refero_search_styles` / `refero_get_style`）答的是视觉风格；`refero_get_screen_image` 把图作为没有地址的图片块交回，存不了盘。
+| 具名问题问的是 | 层 | 调用 | 平台 |
+|---|---|---|---|
+| 一个具体的 UI 模式：某个组件或屏怎么组织、写了什么 | **Screens** | `search_screens` | `platform`：`ios` 或 `web` |
+| 一条多步流程：用户怎么穿过几个相连的屏完成一件事 | **Flows** | `search_flows` | `platform`：`ios` 或 `web` |
+| 营销站点的一节：定价、首屏、页脚、文案语气 | **Sections** | `search_sections` | 没有 `platform`，只有 web |
+
+Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iOS 的。按问题选层，不按工作的高度选。flow 搜出来稀疏，就搜相关的 screens，手工排出顺序。
+
+**怎么写查询**：一次一个屏、一条流程或一节，最多三个限定条件；写看得见的东西（类型加产品种类，如「冥想 app 的离开确认弹窗」），不写「现代」「简洁」这类风格词，不把答案写进查询；点名一个 app 会把结果限定到它。屏的搜索有 `mode`：`deep`（默认，多个限定时用，可能返回少于 `limit`）和 `standard`（点名某个 app 的查找）。结果不够，同一个查询要更多：screens 把已见的 `id` 放进 `exclude_screen_ids`，flows / sections 翻 `page`（`has_next_page` 为 false 就换查询）；换了查询就是新搜索。`task_intent`（一句英文）、`output_destination`（写页面用 `doc`）在同一次调研的每次调用里保持一样。
+
+### 搜索结果的字段（2026-11-16 实测）
+
+| 层 | 每条结果的字段 |
+|---|---|
+| Screens | `id`、`image_url`、`mobbin_url`、`app_name`、`platform`；外层 `query`、`screens` |
+| Flows | `id`、`name`、`actions`、`mobbin_url`、`app_name`、`platform`、`screen_count`、`screens`（每项 `screen_id`、`image_url`、`position`）；外层 `query`、`page`、`has_next_page`、`flows` |
+| Sections | `id`、`image_url`、`mobbin_url`、`site_name`；外层 `query`、`page`、`has_next_page`、`sections` |
+
+搜索结果偶尔带 `ai_usage_notice`（这次实测没出现过）：把它的 `text` 原样留到交回的最后，不进页面。
+
+一条 flow 带着它**全部**屏的 `image_url`（`screen_count` 张，按 `position` 排好）；搜索时回给你看的预览图只是其中间隔取的几张，没预览的屏下载下来再看。字段里没有每屏的标题或说明：每一步在做什么，要看图写。
 
 ### 截图从哪来
 
-- **流程行里显示的图**：搜索结果里每个屏都带 `thumbnail_url`（`images.refero.design/…_thumb.jpg`，约 500–800px 宽），flow 详情的每一步也带同一字段。用 `curl` 下载。
-- **点开放大的图**：同一地址去掉 `_thumb` 再试一次（`curl -fsS`）。iOS 截图（`…/screenshots/<id>/mobile/<uuid>_thumb.jpg`）这样能拿到约 1125px 宽的大图；web 截图（`…/screenshots/<site>/desktop/<uuid>_thumb.jpg`，缩略图本身已约 800px 宽）返回 403，`_large`、`_full`、`.png`、`.webp` 这些后缀也都是 403，不用试。返回 200 就用它；不是 200，放大图就是缩略图本身的一份拷贝，链接从不断。
+- **每个结果的 `image_url`** 是 `https://mobbin.com/api/mcp/short/<8 位>` 形式的短链，指向高清原图，**只有这一种尺寸**，没有缩略图。它会 302 跳到真正的文件，所以下载必须带 `-L`：`curl -fsSL -o shots/<来源>-<n>.jpg "<image_url>"`。
+- **格式**：每次搜索都传 `image_format: "jpg"`，下载下来才真是 jpeg，跟 `.jpg` 文件名一致（默认是 webp）。实测大小：iOS 屏 1179×2676，web 屏和 section 约 1920×1320。
+- **会过期**：短链 30 天后失效（失效的返回 410），所以页面只用下载到本地的图，不放远程地址；页面上要引用出处就写 `app_name` / `site_name`，需要时附 `mobbin_url`（只作文字链，不是图）。
+- **点开放大的图**：只有一种尺寸，所以放大图就是流程行里那张图的一份拷贝（`cp`）。页面里流程行的图由 CSS 缩小显示。
+
+### Mobbin 没连上
+
+调用返回要登录（OAuth 未授权）、工具根本不在清单里，或每次调用都被拒（比如没有 Mobbin 付费计划）：**整页调研停下**。不换别的来源、不上网查、不凑页面。交回里一句话说清「Mobbin 没连上」和看到的错误；摆给人的说法由 `idea-loop:uiux-research` 的 skill 照 `dyna runtime show 装与设置` 写。只有设计调研受影响，别的分类不用 Mobbin。轻用法不在这里停：它交回一个写明「没连上」的文件，照 `light-return.md`。
 
 ### 静态截图答不了的
 
@@ -33,7 +56,7 @@
 - 有 spec：`docs/design/tmp/<spec-slug>/research/<问题短名>/`
 - 没有 spec：`docs/design/tmp/research/<问题短名>/`
 
-里面是 `index.html` 和下载到 `shots/` 下的截图：每一步一张流程行里显示的 `shots/<来源>-<n>.jpg`，一张点开放大的 `shots/<来源>-<n>-full.jpg`（没有更清楚的地址时，它是前一张的拷贝）。页面只用相对路径引用它们，所以在落图目录起静态服务器就能打开，整个目录挪走也不断。
+里面是 `index.html` 和下载到 `shots/` 下的截图：每一步一张流程行里显示的 `shots/<来源>-<n>.jpg`，一张点开放大的 `shots/<来源>-<n>-full.jpg`（Mobbin 只有一种尺寸，它是前一张的拷贝）。页面只用相对路径引用它们，所以在落图目录起静态服务器就能打开，整个目录挪走也不断。
 
 ## 页面结构
 

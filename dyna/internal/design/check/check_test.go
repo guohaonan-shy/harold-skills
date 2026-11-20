@@ -617,6 +617,18 @@ func TestLegacyLayoutOneNotePerOldDirectoryNothingReadNoViolation(t *testing.T) 
 	matches(t, `docs/design/old-spec-a/.*旧布局.*建议删`, r.Notes[0])
 }
 
+func TestPendingAShelvedDesignUnderDesignPendingIsSkippedNoNoteNoViolation(t *testing.T) {
+	r := run(t, bend(t, nil, map[string]string{
+		"docs/design/pending/shelved-spec/canvas/shelved-spec-design.md": "---\ntype: [broken\n---\n乱七八糟 [[nowhere]]\n",
+		"docs/design/pending/shelved-spec/delta/states/ghost.md":         "---\ntype: design-state\n---\n[[also-nowhere]]\n",
+		"docs/design/pending/shelved-spec/imagine/direction-note.md":     "# 方向\n",
+	}))
+	noViolations(t, r)
+	if len(r.Notes) != 0 {
+		t.Fatalf("notes: %v", r.Notes)
+	}
+}
+
 // ---------- rule 8: an edge's screenshot (`shot`) ----------
 
 var SHOT_SAVE = "shot: " + fixture.ShotState + "@save.png"

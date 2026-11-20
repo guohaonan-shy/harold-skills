@@ -3,15 +3,15 @@ name: dreaming
 description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账：提议该订正、归档、删除的内容。人要对账、说文档过期了、或说 dreaming 时用。
 ---
 
-文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和 PR 状态，判处置。**行按风险分两类**：会判错的（`DESIGN.md`、文档里的冲突）问人，其余按各自的建议处置自己执行、自己合并，不进汇报。
+文档写下时是对的，代码往前走了，没人回头改。这个 skill 拿每份文档的自我陈述去撞真实的代码和 PR 状态，判处置。**行按风险分两类**：会判错或删了找不回的（`DESIGN.md`、文档里的冲突、要删的暂缓设计）问人，其余按各自的建议处置自己执行、自己合并，不进汇报。
 
-**dreaming 只编排**：起环境、派工、汇提议表并过校验命令、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己的中间物。
+**dreaming 只编排**：起环境、派工、汇提议表并过校验命令、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每段对账由一个专职 agent 做（模型与强度钉在定义里），提议段里只读，只写自己的中间物。
 
 先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、目录、frontmatter、删除后的死链检查都按它）和 `idea-loop:issues`（issue 的状态只走 `dyna issues`，spec 了结看它 `issues:` 里的 issue 全关了；`dyna spec check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
 
 ## 纪律
 
-- **代码的核实对 `origin/<基准分支>`**，不对本地工作树：本地会落后，在落后的树上判「未实现」就是误判。派给 agent 的代码指针是下面那个新切的 worktree。
+- **代码的核实对 `origin/<基准分支>`**，不对本地工作树：本地会落后，在落后的树上判「未实现」就是误判；派给 agent 的是下面新切的 worktree。
 - **每个判定都靠这一次跑出来的证据**，不凭记忆、不凭文档自己的旧结论。存疑就留着不动。
 - **扫描范围**：项目目录的 `docs/`、`GLOSSARY.md`、`REVIEW.md`、`DESIGN.md`，代码仓库里各插件的 references。`CLAUDE.md` 与 `AGENTS.md` 不在范围内。
 
@@ -37,10 +37,11 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 1. **起环境**：上一节第 1 步的 worktree 就是环境；中间物放 home 的 `.tmp/dreaming/<YYYY-MM-DD>/<名字>/`。知识库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
 2. **自己做、不起 agent**：
    - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查还留着设计产物的已完成需求。
+   - **暂缓设计**：项目目录 `docs/design/pending/` 里每份暂缓的设计和它的 spec 了结没有，照 [references/pending-designs.md](references/pending-designs.md) 摆进提议表。
    - **retro 候选**：候选池里出现 ≥ 3 次的，照 [references/retro-candidates.md](references/retro-candidates.md) 摆进提议表；照建议处置开成 issue，不改 skill。
-   - **对账范围**（`prod/` 有对象时）：dreaming 每周由 `/idea-loop:setup` 建的『定时任务』自己跑，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
-   - **全站初扫**（`prod/` 为空时）：照 [references/initial-scan.md](references/initial-scan.md)。`prod/` 有对象时不做全站初扫，档案对账整个交给下面的 ui-reviewer；项目没有设计档案目录、也不打算建，这一项和档案对账整个跳过。
-3. **派工**：下面三个互不依赖，**在同一条消息里并行起**，只给指针（项目目录和代码 worktree 的绝对路径、基准分支、中间物目录、范围；要开浏览器的再给各自的空闲端口与同一个浏览器锁目录，锁 owner 各写自己的名字）。
+   - **对账范围**（`prod/` 有对象时）：每周定时跑时，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
+   - **全站初扫**（`prod/` 为空时）：照 [references/initial-scan.md](references/initial-scan.md)。`prod/` 有对象时不做，档案对账整个交给 ui-reviewer；项目没有设计档案目录也不打算建，就跳过。
+3. **派工**：三个互不依赖，**同一条消息里并行起**，只给指针（项目目录和代码 worktree 的绝对路径、基准分支、中间物目录、范围；要开浏览器的再给各自的空闲端口与同一个浏览器锁目录，锁 owner 各写自己的名字）。
 
    | agent | 做什么 | 交回 |
    |---|---|---|
@@ -48,11 +49,11 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
    | `idea-loop:adr-reconciler`（sonnet · high） | spec → ADR：判 spec 上线没有、起草 ADR、标被取代的 ADR 小节、找漏网的工单；次要查 `docs/domain/`、参考手册、`GLOSSARY.md`、`REVIEW.md` 的过期，方法在 [references/docs-reconcile.md](references/docs-reconcile.md) | `rows-docs.md`（`文档` 一节） |
    | `idea-loop:design-steward`（opus · high） | 候选蒸馏 + `DESIGN.md` 对账 + token；对 `DESIGN.md` 的一切修改出自它 | `rows-design.md`（`候选`、`DESIGN.md 条目` 与牵出的 `缺陷` 行） |
 
-   项目没有设计档案目录时不起 ui-reviewer，档案那几节不写。
+   没有设计档案目录时不起 ui-reviewer，不写档案那几节。
 4. **汇提议表**：把三个 agent 交回的行、漏归档与初扫的行并成一张表；ui-reviewer 交回的 `补扫页面` 行先照 [references/archive-reconcile.md](references/archive-reconcile.md) 的「源码波」处理。标题下先写对账范围那一行（上一张提议表还没处理时再加一行），形状、各类行的处置闭集、怎么摆给人，照 [references/proposal-table.md](references/proposal-table.md)。先过 `dyna dreaming table submit <表>`，退出码 0 才往下走。完整表是执行段的输入和提交消息正文的来源，不摆给人。完成条件：校验通过。
 5. **拆表**：`dyna dreaming table split <表> --out <小表路径>` 抽出问人的行。问人的是哪几类行，只由命令判，这里不另写一份；它报「无问人的行」就没有问人那份。
 
-**自动那份**（拆表后立刻做）：照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」，按完整表里每一行自己的建议处置执行（问人的行除外），改动照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home（这一份不会碰 `DESIGN.md`、`GLOSSARY.md`，它们的行都问人）。执行段不拆给 agent。提交前照该 reference 的「提交前检查」过一遍；没过就不提交，改动留在工作区。
+**自动那份**（拆表后立刻做）：照 [references/proposal-table.md](references/proposal-table.md) 的「执行段」，按完整表里每一行自己的建议处置执行（问人的行除外），改动照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home（`DESIGN.md`、`GLOSSARY.md` 的行都问人，这份不碰）。执行段不拆给 agent。提交前照该 reference 的「提交前检查」过一遍；没过就不提交，改动留在工作区。
 
 **问人那份**（有行才有）：小表在会话里按节摆给人，`候选` 与 `DESIGN.md 条目` 有行时另做一页审核页，照 [references/review-page.md](references/review-page.md)；用『推送』通知人。人不回，不挡任何东西。人回了，只执行批了的那几行，同样检查后 `commit` 到 home。
 
@@ -62,12 +63,12 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 **中间物何时删**：问人的行处理完（批了的执行了，或每行都回了「不批」；没有问人的行就不用等），且自动那份已经提交（空表没有要提交的），才删这个项目的中间物目录。没删的，下次靠它判断上一张还没处理。
 
-**写 `DESIGN.md` 停在人身上**：提议段只把旧文和新文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）起草成目标仓库的 issue，自动那份直接开成 backlog issue。
+**写 `DESIGN.md` 停在人身上**：提议段只把旧文和新文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）由自动那份直接开成目标仓库的 backlog issue。
 
-**幂等**：同一批文档重跑，提议表应为空；不为空说明上一次没处理干净。
+**幂等**：同一批文档重跑，提议表应为空；不为空是上一次没处理干净。
 
 ## 只跑一部分
 
-人调用时可以说只跑某一部分，只起对应的 agent（或只做漏归档），只出那几节：只跑 spec → ADR 起 `adr-reconciler`；只跑候选蒸馏或只跑 `DESIGN.md` 对账起 `design-steward`，范围写明哪一部分；只跑设计档案走档案那一路；说「只跑记忆」就只做记忆一段，只出 `记忆` 一节。
+人可以说只跑某一部分，只起对应的 agent（或只做漏归档），只出那几节：只跑 spec → ADR 起 `adr-reconciler`；只跑候选蒸馏或只跑 `DESIGN.md` 对账起 `design-steward`，范围写明哪一部分；只跑设计档案走档案那一路；说「只跑记忆」就只做记忆一段，只出 `记忆` 一节。
 
-**单条蒸馏**：人在会话里口述了一条视觉规则、想当场落，调用时带上这条规则：只起 `design-steward`，范围「单条蒸馏」，不开浏览器、不跑其它部分、不出提议表，照 [references/candidate-distillation.md](references/candidate-distillation.md) 的「单条蒸馏」。没有单独调用的，这条规则记成候选，等下次对账。
+**单条蒸馏**：人口述一条视觉规则想当场落，调用时带上它：只起 `design-steward`，范围「单条蒸馏」，不出提议表，照 [references/candidate-distillation.md](references/candidate-distillation.md) 的「单条蒸馏」。没有单独调用的，这条规则记成候选，等下次对账。

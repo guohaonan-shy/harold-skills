@@ -448,5 +448,5 @@ Distilled from taste-skill (upstream `Leonxlnx/taste-skill`), the open-design pr
 `imagegen-frontend-web` taste skill, a design-lib research repository's `design-landing` /
 `design-landing-plan` skills, and the target project's `DESIGN.md`; sections marked *(verbatim)* are
 lifted, not paraphrased. Every gate runs on this plugin's own scripts and references, with no runtime
-read of an external skill; the one live dependency is `idea-loop:uiux-research`'s Refero research,
+read of an external skill; the one live dependency is `idea-loop:uiux-research`'s Mobbin research,
 run only when the human asks, never a gate.

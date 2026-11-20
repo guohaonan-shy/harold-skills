@@ -251,7 +251,7 @@ func TestEveryReferencedImageAndZoomTargetMustExistNextToThePage(t *testing.T) {
 	}
 }
 
-var badAddresses = []string{"https://images.refero.design/a.png", "http://x/a.png", "//cdn/a.png", "/abs/a.png", "file:///tmp/a.png", "../outside.png", "data:image/png;base64,AAAA"}
+var badAddresses = []string{"https://mobbin.com/api/mcp/short/Ws985Y9x", "http://x/a.png", "//cdn/a.png", "/abs/a.png", "file:///tmp/a.png", "../outside.png", "data:image/png;base64,AAAA"}
 
 func TestAnImageOrZoomAddressThatIsNotARelativePathInsideTheDropDirectoryFails(t *testing.T) {
 	for _, bad := range badAddresses {
@@ -287,7 +287,7 @@ func TestAPictureOutsideTheFlowStepsIsHeldToTheSameAddressRule(t *testing.T) {
 		},
 	}
 	for name, make := range makers {
-		for _, bad := range []string{"https://images.refero.design/x.jpg", "//cdn/x.jpg", "/abs/x.jpg", "../outside.jpg", "data:image/png;base64,AAAA"} {
+		for _, bad := range []string{"https://mobbin.com/api/mcp/short/Ws985Y9x", "//cdn/x.jpg", "/abs/x.jpg", "../outside.jpg", "data:image/png;base64,AAAA"} {
 			e := errorsOf(make(bad))
 			if !anyHas(e, bad, "相对") {
 				t.Fatalf("%s %s: %v", name, bad, e)

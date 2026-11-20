@@ -59,7 +59,7 @@ func TestRegistryHasEveryResearchDreamingAndRetroCommandMarkedForSessions(t *tes
 		return strings.Join(out, ",")
 	}
 	for name, want := range map[string]string{
-		"research submit":       "json",
+		"research submit":       "json,ledger,light,opinions",
 		"dreaming table submit": "json",
 		"dreaming table split":  "json,out",
 		"retro install":         "dest",

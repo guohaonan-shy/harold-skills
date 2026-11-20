@@ -23,6 +23,7 @@
 | [[2026-10-26-inner-scroll-shot]] | conversation | 2026-10-26 | #68：内层容器滚动页的段图在容器里逐屏截、拼成一张 |
 | [[2026-10-26-retro-merge-grill]] | conversation | 2026-10-26 | grill —— #108 / #106：retro 开的 issue 按 plugin 做 retro 整合，调度只数 issue 会话 |
 | [[2026-10-26-unstable-sections]] | conversation | 2026-10-26 | #65：拍不稳的段对上 TOEFLAIR 营销站组件，两条待定交给推荐 |
+| [[2026-11-13-scroll-driven-whole-pin-grill]] | conversation | 2026-11-13 | #128：滚动驱动只认整段钉住，每一步一张图 |
 | [[2026-11-05-issue-model-regrill]] | conversation | 2026-11-05 | grill —— #242 重定 issue 模型：七个状态对上 Linear，triage 可跳过，实现开始即开 PR，一个仓库一个 PR，issue 正文格式 |
 | [[2026-11-15-home-repo-grill]] | conversation | 2026-11-15 | grill —— idea-loop 0.2.0：home（一台设备一份的私有仓库）与知识库、记忆脱离项目 |
 | [decisions/51](decisions/51.md) | conversation | 2026-10-23 | 决定记录 —— #51 retro 的 issue 会话：摆过的题与 retro 候选的结果 |
@@ -30,6 +31,7 @@
 | [decisions/57](decisions/57.md) | conversation | 2026-10-26 | 决定记录 —— #57 的 issue 会话：结束整个任务的入口用 X，摆过的题与 retro 候选的结果 |
 | [decisions/108](decisions/108.md) | conversation | 2026-10-26 | 决定记录 —— #108 / #106 的 issue 会话：调度只数 issue 会话、retro 整合（当天撤回）、retro 候选改进 docs 候选池 |
 | [decisions/115](decisions/115.md) | conversation | 2026-10-26 | 决定记录 —— #115 的 issue 会话：retro 批的候选进候选池、dreaming 数次数，摆过的题与 retro 候选的结果 |
+| [decisions/128](decisions/128.md) | conversation | 2026-11-13 | 决定记录 —— #128 的 issue 会话：滚动驱动只认整段钉住、每步一张图，摆过的题与 retro 候选的结果 |
 | [decisions/68](decisions/68.md) | conversation | 2026-10-26 | 决定记录 —— #68 的 issue 会话：内层容器滚动页的段图逐屏截拼接，摆过的题与 retro 候选的结果 |
 | [decisions/65](decisions/65.md) | conversation | 2026-10-26 | 决定记录 —— #65 的 issue 会话：设计档案拍不稳的段停住页面时间、滚动驱动段建成段内状态，摆过的题与 retro 候选的结果 |
 | [decisions/69](decisions/69.md) | conversation | 2026-11-13 | 决定记录 —— #69 的 triage 与 todo 会话：长状态首屏以下会连出边的组件按屏补拍进截图（PR #300 四轮 review 后合并），摆过的题与 retro 候选的结果 |
@@ -71,6 +73,8 @@
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
 | [decisions/339](decisions/339.md) | conversation | 2026-11-18 | 决定记录 —— #339 idea-loop 命令行：父会话定的方案、bin/ 与子代理生图两次实测、跟 #340 的分工；todo 会话合并 PR #387（dyna 0.0.1/0.0.2 已发），候选 2 条：1 不批、1 改成 #340 的评论 |
 | [decisions/252](decisions/252.md) | conversation | 2026-11-16 | 决定记录 —— #252 建 home 的 triage 会话：第一版项目地图由 setup 起草、本机实测时不切记忆目录（等 #247 迁移时切），retro 候选「推迟的一步写明何时由谁做」不批 |
+| [decisions/188](decisions/188.md) | conversation | 2026-11-16 | 决定记录 —— #188 的 triage 与 todo 会话：seo-brief 角度候选对照站内文章，规则验收选写回放用例（跨仓库、付费、PR 开出后当场跑）；夜里按推荐定 4 件、人以 patch 合并 PR #402；无候选 |
+| [decisions/161](decisions/161.md) | conversation | 2026-11-16 | 决定记录 —— #161 的 issue 会话：explorer 加读 spec「实现决策」（spec explorer-reads-impl-decisions），候选「摆题前讲清 issue 来由」不批 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
 | [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
 | [decisions/297](decisions/297.md) | conversation | 2026-11-17 | 决定记录 —— #297 的 issue 会话：issue 正文「背景」改必填，版本改 patch，retro 候选不批 |
@@ -87,3 +91,6 @@
 | [[2026-10-30-issue-consolidation-grill]] | conversation | 2026-10-30 | 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现 |
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
 | [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
+| [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
+| [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
+| [decisions/271](decisions/271.md) | conversation | 2026-11-20 | 决定记录 —— #271 的 issue 会话：pr-review 自动 review 放到最多 5 轮、每轮先合入主分支，摆过的题与 retro 候选的结果 |

@@ -14,7 +14,8 @@ description: 项目 docs/ 知识库与 worktree 下 .tmp/ 中间产物的约定�
 | `spec/` | 还没了结的规格，每份一个目录，目录与正文同名 | 会话产物 | `spec` | issue 全关后 dreaming 写 ADR、删 spec |
 | `spec/` 里每份的 `tickets/` | 工单，单 PR 的临时凭据 | `idea-loop:to-ticket` | 无 | 代码 PR 合并后删 |
 | `adr/` | spec 了结后的总结 | dreaming | `adr` | 永久 |
-| `design/tmp/` | 设计过程，一个需求一个目录：`imagine/` 发散，`canvas/` 画布与冻结记录（冻结后是唯一的设计真相），`delta/` 对 `prod/` 的差异，`research/` 调研页（不归档）；放弃的需求只丢画布，有价值的结论写回 spec 或 issue | `uiux-*`；`delta/` 合并前写 | 冻结记录 `design` | 代码 PR 合并后归档时清掉 |
+| `design/tmp/` | 设计过程，一个需求一个目录：`imagine/` 发散，`canvas/` 画布与冻结记录（冻结后是唯一的设计真相），`delta/` 对 `prod/` 的差异，`research/` 调研页（不归档）；放弃的需求只丢画布（只是先不做的挪去 `design/pending/`），有价值的结论写回 spec 或 issue | `uiux-*`；`delta/` 合并前写 | 冻结记录 `design` | 代码 PR 合并后归档时清掉 |
+| `design/pending/` | 暂缓的设计：人说「这块界面先不做」时，从 `design/tmp/` 原样挪来的整个需求目录（目标已存在就停下问人，不覆盖），spec 里留一句指针和暂缓理由（人的原话）。只在本地、从不提交（`commit` 不列它），设计档案校验跳过它 | `uiux-imagine` / `uiux-refine` 的编排者挪；两者起手时查它，有同一块界面就问人接不接着做 | 无 | spec 了结后 dreaming 提议删 |
 | `design/prod/` | 设计档案：线上现在的样子，提交；对象与字段见 `idea-loop:design-archive` 的「图的实体」 | 归档命令 | `design-*` | 下个需求归档时覆盖或删除 |
 | `domain/` | 领域知识：业务机制、规则、数据结论 | 存量，不由单次会话产生 | `domain` | 不消失 |
 | `records/` | 运营台账，一类一个子目录（如外联跟进表 `records/outreach/`） | 会话建，人改 | `record` | 不进 spec 的生命周期，dreaming 不删 |
@@ -101,4 +102,4 @@ SEO 的内容改动不在表里：站点内容在代码仓库，仍是代码 PR�
 
 ### 本地忽略
 
-第一次用时确认 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。`docs/design/tmp/` 不加进忽略：冻结的画布要 `commit` 进 home，被忽略的路径 `git add` 会拒绝；过程产物不会被带进提交，因为 `commit` 只提交列出的文件。
+第一次用时确认 `.tmp/` 在 `$(git rev-parse --git-common-dir)/info/exclude` 里（`git check-ignore` 可查），不在就追加一行。这样只在本地忽略，仓库的 `.gitignore` 不动，也不会被误提交。`docs/design/tmp/` 不加进忽略：冻结的画布要 `commit` 进 home，被忽略的路径 `git add` 会拒绝；过程产物和 `docs/design/pending/` 不会被带进提交，因为 `commit` 只提交列出的文件。

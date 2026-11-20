@@ -13,13 +13,14 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`。`<docs>` 指 `<项目目�
 
 - `idea-loop:implement` 全部落地、全部 PR 刚转 ready：第 1 轮。
 - 「一轮之后往哪走」判出自动起下一轮。
-- 人调 `/idea-loop:pr-review` 或说「再跑一轮」：随时，不受两轮上限约束，计入轮次。
+- 人调 `/idea-loop:pr-review` 或说「再跑一轮」：随时，不受自动轮数上限约束，计入轮次。
 - 人说合并：照 [`references/merge.md`](references/merge.md)。
 
 ## 前提
 
 - PR 是 **ready**（open、不是 draft）。是 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - 回放排队的事 implement 进 review 前已核过。之后 `dyna pr loop check` 列出未处理的 `replay` 条目（有用例没过），先交给人，批示处理完再起这一轮。
+- **PR 先合入最新主分支**：`git fetch`，把基准分支（`<项目目录>/DEVELOPMENT.md`「分支」）的最新 merge 进 PR 分支，不 rebase；已是最新就什么都不做。有冲突就解决，命令生成的文件（例：spec 索引）重新生成、不手拼，判断不了保留哪边的照 `idea-loop:decision-rules` 停下问人；推送，再等下面的 CI。
 - **PR 的 head 上 CI 全绿（或没有检查）**：`gh pr checks <PR 号> --watch` 等；红了用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」，照它处理。
 - 集成 worktree 工作区干净（`git status --short --untracked-files=no` 为空），HEAD 已推送且等于 PR 的 head。
 - `command -v codex` 有输出。没有，开跑前告诉人缺 `codex` 命令。
@@ -69,6 +70,6 @@ review loop 文件是 `.tmp/review-loop/<PR 号>.md`。`<docs>` 指 `<项目目�
 
 前提成立，三选一：
 
-1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`dyna pr loop next` 给的下一轮编号不超过 2（人触发的轮次也计入），先等 CI（同前提），绿了就自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。已跑满两轮、第 2 轮的修复刚落地且没人看过，就停下，等人说「再跑一轮」或合并。
-2. **没有修复，且没有要人定的事 → 不等人，交审核报告**。要人定的事：「要你决定」（含被降级的边缘情形）、未过的设计停点（冻结、`ui-measure` 瓶颈、归档设计档案的草稿过目，后者在人说合并后走，见 `references/merge.md` 的「合并前归档」）。`idea-loop:decision-rules`「护栏」里的不自己做：生产写操作（例：推迁移）、未勾的人验素材写进报告，合并只由人说。照 [`references/deliver.md`](references/deliver.md) 做，然后停下，人读报告、追问、说合并。`type:seo/*` 的 issue 例外：条件满足就不停下，自动合并（[`references/seo-auto-merge.md`](references/seo-auto-merge.md)）。
+1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`dyna pr loop next` 给的下一轮编号不超过 5（人触发的轮次也计入），先走完「前提」（合入最新主分支、推送、等 CI 绿），再自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。编号超过 5 就不自动起：第 5 轮的修复落地后停下，说「已跑满 5 轮，第 5 轮的修复还没审，要再跑或合并请直接说」，等人。
+2. **没有修复，且没有要人定的事 → 不等人，交审核报告**。要人定的事：「要你决定」（含被降级的边缘情形）、未过的设计停点（冻结、`ui-measure` 瓶颈、归档设计档案的草稿过目，后者在人说合并后走，见 `references/merge.md` 的「合并前归档」）。`idea-loop:decision-rules`「护栏」里的不自己做：生产写操作（例：推迁移）、未勾的人验素材写进报告给人，合并只由人说。照 [`references/deliver.md`](references/deliver.md) 做，然后停下，人读报告、追问、说合并。`type:seo/*` 的 issue 例外：条件满足就不停下，自动合并（[`references/seo-auto-merge.md`](references/seo-auto-merge.md)）。
 3. 其余：停下等人。

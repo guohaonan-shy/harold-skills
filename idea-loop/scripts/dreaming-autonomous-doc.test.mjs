@@ -77,7 +77,8 @@ test('no automatic row waits for approval: retro candidates and missed archive r
 });
 
 test('dreaming and the weekly setup text say what dreaming still asks', () => {
-  assert.match(skill, /行按风险分两类[^\n]*会判错的（`DESIGN\.md`、文档里的冲突）问人[^\n]*其余[^\n]*自己执行/);
+  // refine-judge-advisor 08 adds the deletion of a settled shelved design to what is asked
+  assert.match(skill, /行按风险分两类[^\n]*会判错[^（\n]*（`DESIGN\.md`、文档里的冲突[^）\n]*）问人[^\n]*其余[^\n]*自己执行/);
   assert.match(weekly, /只有 `DESIGN\.md` 和文档里的冲突两类/);
   assert.doesNotMatch(weekly, /提议表照样等人批/);
 });

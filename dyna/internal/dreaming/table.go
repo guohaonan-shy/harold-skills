@@ -43,7 +43,9 @@ type RowType struct {
 // itself, and the row's 证据 carries the verbatim words of each occurrence, so it is checked only for being
 // non-empty. 记忆 is one memory file or index line of the device's memory that dreaming's memory pass has something
 // to do with; only a 问人 row (two rules that give opposite answers to the same case) goes to the human. 漏归档 is
-// a merged need whose docs/design/tmp/<spec-slug>/ still holds design output on the base branch.
+// a merged need whose docs/design/tmp/<spec-slug>/ still holds design output on the base branch. 暂缓设计 is one
+// shelved design in the project directory's docs/design/pending/ (local only, never in git), saying whether its spec is
+// settled: 删除 for a settled one, 留着 for one still alive.
 var RowTypes = []RowType{
 	{"文档", []string{"写 ADR 删 spec", "写 ADR 未采纳删 spec", "报警", "订正", "标注被取代", "删漏网工单", "问人", "迁移布局", "删除"}},
 	{"档案对象", []string{"改代码路径", "删对象", "补扫页面", "标进入方式过期"}},
@@ -54,6 +56,7 @@ var RowTypes = []RowType{
 	{"retro 候选", []string{"开 issue：机械检查", "开 issue：改 skill", "留在池里", "驳回"}},
 	{"DESIGN.md 条目", []string{"改法", "移出", "删除", "改写为全局规则", "合并为一条", "新建 DESIGN.md", "处理 lint 警告", "交人裁决"}},
 	{"记忆", []string{"挪进项目", "合并", "订正", "毕业", "删除", "缩短索引行", "问人"}},
+	{"暂缓设计", []string{"删除", "留着"}},
 	{"缺陷", []string{"开 issue", "已有 #N"}},
 }
 
@@ -499,6 +502,8 @@ func Check(markdown string) Result {
 //   - every row of 候选 and of DESIGN.md 条目;
 //   - a 文档 row whose disposition is 报警 or 问人 (a note in parentheses after it is ignored);
 //   - a 记忆 row whose disposition is 问人 (two memory rules that contradict each other);
+//   - a 暂缓设计 row proposing 删除: the design lives only on this machine, so deleting it cannot be undone from
+//     git history; a 留着 row changes nothing and stays automatic;
 //   - a 文档 row whose object starts with GLOSSARY.md: terms are decided by the human only, whatever the
 //     disposition (a backtick around the file name is read through, so a quoted name is not mistaken for an
 //     automatic row).
@@ -510,6 +515,9 @@ func isAskRow(typ string, cells []string) bool {
 	}
 	if typ == "记忆" {
 		return leadingDisposition(cells[3]) == "问人"
+	}
+	if typ == "暂缓设计" {
+		return leadingDisposition(cells[3]) == "删除"
 	}
 	if typ != "文档" {
 		return false

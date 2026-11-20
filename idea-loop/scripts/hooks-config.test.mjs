@@ -54,7 +54,8 @@ test('hooks.json and .mcp.json name no script of the plugin: every hook is the l
   assert.deepEqual(servers['design-archive'], { command: '${CLAUDE_PLUGIN_ROOT}/bin/dyna', args: ['mcp', 'design-archive'] });
   // the plugin ships the archive server and OpenSEO; Playwright and Refero are user-level
   assert.deepEqual(servers.openseo, { type: 'http', url: 'https://app.openseo.so/mcp' });
-  assert.deepEqual(Object.keys(servers), ['design-archive', 'openseo']);
+  assert.deepEqual(servers.mobbin, { type: 'http', url: 'https://api.mobbin.com/mcp' });
+  assert.deepEqual(Object.keys(servers), ['design-archive', 'openseo', 'mobbin']);
 });
 
 test('the events: SessionStart four commands, Bash PreToolUse two guards and the SEO check, the write hooks, Bash PostToolUse the SEO check', () => {

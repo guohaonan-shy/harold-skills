@@ -83,10 +83,11 @@ var rows = map[string]rowT{
 	"漏归档":          {"docs/design/tmp/cart-promo/", "spec 已是「完成」，origin/main 上 tmp/cart-promo/ 里还留着画布与 delta（绕过合并步骤合进去的）", "git ls-tree origin/main docs/design/tmp/cart-promo/；spec 状态：完成", "补归档", opts},
 	"retro 候选":     {"候选：下单前先核对自动填好的字段（落点 `idea-loop:seo-outreach`）", "出现 3 次（harold-skills#108、#112、#115）；无已推翻；无反例", "#108：「留在候选吧。」；决定记录：[[108]]", "开 issue：改 skill", opts},
 	"记忆":           {"memory/acme-shop-launch-batch.md", "只讲 acme-shop 的上线批次，别的项目用不到", "正文第一句「On acme-shop」；frontmatter originSessionId 的工作目录是 acme-shop", "挪进项目", opts},
+	"暂缓设计":         {"docs/design/pending/cart-promo/", "spec 已了结：cart-promo 的 issue #31 已关；暂缓的设计还在（imagine/、canvas/ 到 v7）", "项目目录 /work/shop；ls /work/shop/docs/design/pending/cart-promo/：imagine/ canvas/；spec 目录已不在主分支", "删除", opts},
 	"缺陷":           {"pages/cart--checkout", "产品坏了：结算按钮点了没反应（也可能是档案没跟上）；控制台 TypeError", imgProd + " " + imgTmp, "开 issue", opts},
 }
 
-var types = []string{"文档", "档案对象", "档案状态", "初扫页面", "候选", "DESIGN.md 条目", "漏归档", "retro 候选", "记忆", "缺陷"}
+var types = []string{"文档", "档案对象", "档案状态", "初扫页面", "候选", "DESIGN.md 条目", "漏归档", "retro 候选", "记忆", "暂缓设计", "缺陷"}
 
 // sample is a table with every row type; over replaces the rows of a type (an empty slice drops them).
 func sample(over map[string][]rowT) string {
@@ -796,4 +797,28 @@ func TestTheOldScriptAnswersTheSame(t *testing.T) {
 			t.Errorf("%s --out: old (%d) %q %q; new (%d) %q %q", name, oldCode, oldSay, oldFile, got.code, got.stdout, newFile)
 		}
 	}
+}
+
+// ---------- 暂缓设计：项目目录的 docs/design/pending/ 里的每一份 ----------
+
+func TestAShelvedDesignRowTakesDeleteOrKeepAndNothingElse(t *testing.T) {
+	for _, d := range []string{"删除", "留着", "留着（spec 还在，#31 开着）"} {
+		code(t, 0, run(t, sample(over("暂缓设计", withDisposition("暂缓设计", d)))))
+	}
+	r := run(t, sample(over("暂缓设计", withDisposition("暂缓设计", "归档"))))
+	code(t, 2, r)
+	mustMatch(t, `暂缓设计`, r.out())
+	mustMatch(t, `删除 / 留着`, r.out())
+}
+
+func TestSplittingAShelvedDesignDeleteRowGoesToTheHumanAndAKeepRowStaysAutomatic(t *testing.T) {
+	keep := rowT{"docs/design/pending/menu-redesign/", "spec 还在：issue #44 开着", "spec 目录在主分支；#44 open", "留着", opts}
+	del := rowT{"docs/design/pending/cart-promo/", "spec 已了结", "issue #31 closed", "删除（已了结）", opts}
+	r := split(t, "# 提议表 2026-10-19\n\n"+section("暂缓设计", keep, del))
+	code(t, 0, r)
+	sameTitles(t, r.stdout, "暂缓设计")
+	mustMatch(t, `cart-promo`, r.stdout)
+	mustNotMatch(t, `menu-redesign`, r.stdout)
+	onlyKeep := split(t, "# 提议表 2026-10-19\n\n"+section("暂缓设计", keep))
+	mustMatch(t, `无问人的行`, onlyKeep.stdout)
 }

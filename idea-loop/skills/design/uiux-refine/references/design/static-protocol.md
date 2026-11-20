@@ -159,7 +159,7 @@ references or pixels.
 Skip by default. Fires only when the concept leaves a specific structural, coverage, flow, or state
 question a judgment at this altitude cannot settle.
 
-**The executor does not research**: no Refero, no research agent. It writes a **suggested research
+**The executor does not research**: no Mobbin, no research agent. It writes a **suggested research
 question** — one sentence, one decision, plus its **recommended answer** — into the hand-back
 (`designer`'s 「建议调研的问题」) and carries on without stopping, working from the recommendation.
 Whether to research is the human's call: they may run `idea-loop:uiux-research` and forward

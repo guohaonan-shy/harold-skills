@@ -21,10 +21,11 @@ description: 把一份 spec 切成垂直切片的工单，每张写明被谁挡�
 
 先跑 `dyna spec check <docs>`，报了旧平铺布局就停下，提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。
 
-两个条件都满足才往下走，缺哪个就停下告诉人缺什么：
+下面的条件都满足才往下走，缺哪个就停下告诉人缺什么：
 
 - 没有「需要 grill」，也没有「待定」。还有的，先跟人定完（它们由 triage 里的会话定，issue 翻 todo 时命令核过；直接调到这里的也要核）。
 - 碰 UI 的，设计已冻结：「实现决策」里有完整的冻结摘要（画布指针、矩阵、mismatch 阈值、一行 ledger 摘要、状态矩阵与数据契约变更）。缺任何一样就是还没冻结，先跑完设计；冻结只由设计那一段做，切票这一步不替它补。
+- 在 issue 会话里（由 `idea-loop:issue-session` 调进来）时，issue 已经过了 triage。状态用 `idea-loop:issues` 查（`dyna issues show <docs> <号>`，Linear 项目照它的 Linear 做法），不看 label；还在 triage 就停下，指回 `idea-loop:issue-session` 的「triage 会话」第 3 步「交给调度」：翻 todo，工单由之后的 todo 会话切。人直接调本 skill、不在 issue 会话里时，不核状态。
 
 所以碰 UI 的 spec 只在冻结后切，不会有「切了但不能开工」的票。混着 UI 和非 UI 的 spec，非 UI 那部分也要等冻结；不想等，起草时就拆成两份 spec。
 

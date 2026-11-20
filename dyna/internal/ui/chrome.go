@@ -20,6 +20,7 @@ import (
 	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/jsnum"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/uicompare"
 )
 
@@ -252,16 +253,90 @@ const measureInPage = `(styleProps => {
 })`
 
 func (t *tab) measure() (uicompare.Measurements, error) {
+	m, _, err := t.measureInOrder()
+	return m, err
+}
+
+// measureInOrder is measure, with the anchors in the order the page has them (a map has no order of its own).
+func (t *tab) measureInOrder() (uicompare.Measurements, []string, error) {
 	props, _ := json.Marshal(measureStyles)
-	var raw map[string]map[string]any
-	if err := chromedp.Run(t.ctx, chromedp.Evaluate(measureInPage+"("+string(props)+")", &raw)); err != nil {
-		return nil, err
+	var raw struct {
+		M     map[string]map[string]any `json:"m"`
+		Order []string                  `json:"order"`
+	}
+	code := "(() => { const m = " + measureInPage + "(" + string(props) + "); return { m, order: Object.keys(m) }; })()"
+	if err := chromedp.Run(t.ctx, chromedp.Evaluate(code, &raw)); err != nil {
+		return nil, nil, err
 	}
 	out := uicompare.Measurements{}
-	for anchor, box := range raw {
+	for anchor, box := range raw.M {
 		out[anchor] = uicompare.Box(box)
 	}
-	return out, nil
+	return out, raw.Order, nil
+}
+
+// pageSize is the size of the whole page (CSS px): the limit a region is cut down to.
+func (t *tab) pageSize() (Size, error) {
+	var s Size
+	err := chromedp.Run(t.ctx, chromedp.Evaluate(`({ Width: document.documentElement.scrollWidth, Height: document.documentElement.scrollHeight })`, &s))
+	return s, err
+}
+
+// pad makes the page at least size big without moving anything on it: one invisible, absolutely positioned box. The
+// page's own background fills the added area, so a crop of it is the blank the page really has there.
+func (t *tab) pad(size Size) error {
+	return chromedp.Run(t.ctx, chromedp.Evaluate(fmt.Sprintf(`(({ width, height }) => {
+  const pad = document.createElement('div');
+  pad.setAttribute('aria-hidden', 'true');
+  pad.style.cssText = 'position:absolute;left:0;top:0;width:' + width + 'px;height:' + height + 'px;visibility:hidden;pointer-events:none';
+  document.documentElement.appendChild(pad);
+})({ width: %s, height: %s })`, jsnum.Format(size.Width), jsnum.Format(size.Height)), nil))
+}
+
+// clip is a screenshot of one region of the page, in page coordinates (so an anchor below the fold is cut like any
+// other).
+func (t *tab) clip(r Region) ([]byte, error) {
+	var buf []byte
+	err := chromedp.Run(t.ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+		var err error
+		buf, err = page.CaptureScreenshot().WithFormat(page.CaptureScreenshotFormatPng).
+			WithClip(&page.Viewport{X: r.X, Y: r.Y, Width: r.Width, Height: r.Height, Scale: 1}).
+			WithCaptureBeyondViewport(true).Do(ctx)
+		return err
+	}))
+	return buf, err
+}
+
+// regionShots cuts the same region out of both tabs; nil when there is no region (see RegionBox). union: the two
+// tabs are two versions of one canvas — the region is cut from the longer page's extent and the shorter page is
+// padded to it, so a block the new version added past the old page's end gets two same-size crops (the old one blank).
+func regionShots(a, b *tab, rectA, rectB *Rect, union bool) (box *Region, shotA, shotB []byte, err error) {
+	sizeA, err := a.pageSize()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	sizeB, err := b.pageSize()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	box = RegionBox(rectA, rectB, sizeA, sizeB, union)
+	if box == nil {
+		return nil, nil, nil, nil
+	}
+	if union {
+		for _, t := range []*tab{a, b} {
+			if err := t.pad(PadSize(*box)); err != nil {
+				return nil, nil, nil, err
+			}
+		}
+	}
+	if shotA, err = a.clip(*box); err != nil {
+		return nil, nil, nil, err
+	}
+	if shotB, err = b.clip(*box); err != nil {
+		return nil, nil, nil, err
+	}
+	return box, shotA, shotB, nil
 }
 
 func (t *tab) screenshot() ([]byte, error) {
@@ -336,13 +411,29 @@ func (c *chrome) Walk(ctx context.Context, m Matrix) (MatrixResult, error) {
 		findings = append(findings, uicompare.CompareMeasurements(canvasM, localM,
 			uicompare.Tolerance{Position: &position, ByAnchor: byAnchor}, &name)...)
 
-		canvasShot, err := canvasTab.screenshot()
-		if err != nil {
-			return MatrixResult{}, err
-		}
-		localShot, err := localTab.screenshot()
-		if err != nil {
-			return MatrixResult{}, err
+		// Default: the viewport frame. A cell with `shotAnchor` compares only that anchor's area (the same box cut from
+		// both tabs, so the sizes agree).
+		var canvasShot, localShot []byte
+		if cell.ShotAnchor != "" {
+			ra, rb := rectOf(canvasM, cell.ShotAnchor), rectOf(localM, cell.ShotAnchor)
+			if ra == nil && rb == nil {
+				return MatrixResult{}, fmt.Errorf("cell \"%s\": shotAnchor \"%s\" is on neither page", cell.Name, cell.ShotAnchor)
+			}
+			box, a, b, err := regionShots(canvasTab, localTab, ra, rb, false)
+			if err != nil {
+				return MatrixResult{}, err
+			}
+			if box == nil {
+				continue // no area to look at; a missing anchor is already a finding above
+			}
+			canvasShot, localShot = a, b
+		} else {
+			if canvasShot, err = canvasTab.screenshot(); err != nil {
+				return MatrixResult{}, err
+			}
+			if localShot, err = localTab.screenshot(); err != nil {
+				return MatrixResult{}, err
+			}
 		}
 		canvasImg, err := DecodePNG(canvasShot, cell.Name+" canvas")
 		if err != nil {
@@ -361,4 +452,127 @@ func (c *chrome) Walk(ctx context.Context, m Matrix) (MatrixResult, error) {
 		}
 	}
 	return MatrixResult{Findings: uicompare.SortFindings(findings), HumanCells: human}, nil
+}
+
+// Diff compares two versions of one canvas in a context of its own (two tabs), cell by cell, anchor by anchor: measure
+// both, compare, cut the anchor's area out of both and compare the pixels. Anything that differs is a changed anchor
+// and gets its two area screenshots written into shotsDir.
+func (c *chrome) Diff(ctx context.Context, m Matrix, shotsDir string) (DiffRun, error) {
+	bctx, dispose, err := c.newContext()
+	if err != nil {
+		return DiffRun{}, err
+	}
+	defer dispose()
+	beforeTab, cancel1, err := c.newTab(bctx)
+	if err != nil {
+		return DiffRun{}, err
+	}
+	defer cancel1()
+	afterTab, cancel2, err := c.newTab(bctx)
+	if err != nil {
+		return DiffRun{}, err
+	}
+	defer cancel2()
+
+	run := DiffRun{Changed: []Change{}, HumanCells: []string{}}
+	for _, cell := range m.Cells {
+		if err := ctx.Err(); err != nil {
+			return DiffRun{}, err
+		}
+		if cell.Review == "human" {
+			run.HumanCells = append(run.HumanCells, cell.Name)
+			continue
+		}
+		state := cell.State
+		if state == "" {
+			state = cell.Name
+		}
+		if !inStrings(run.States, state) {
+			run.States = append(run.States, state)
+		}
+		position, antialias, pixel := m.resolveDiff(cell)
+		beforeURL, err := withState(m.Before, cell.State)
+		if err != nil {
+			return DiffRun{}, err
+		}
+		afterURL, err := withState(m.After, cell.State)
+		if err != nil {
+			return DiffRun{}, err
+		}
+		// One tab after the other, as in Walk: loading both at once can move a measured box.
+		if err := beforeTab.prepare(beforeURL, cell, m.dpr()); err != nil {
+			return DiffRun{}, fmt.Errorf("%s 的旧版画布：%w", cell.Name, err)
+		}
+		if err := afterTab.prepare(afterURL, cell, m.dpr()); err != nil {
+			return DiffRun{}, fmt.Errorf("%s 的新版画布：%w", cell.Name, err)
+		}
+		beforeM, beforeOrder, err := beforeTab.measureInOrder()
+		if err != nil {
+			return DiffRun{}, err
+		}
+		afterM, afterOrder, err := afterTab.measureInOrder()
+		if err != nil {
+			return DiffRun{}, err
+		}
+		byAnchor := map[string]uicompare.AnchorTolerance{}
+		for anchor, t := range cell.ByAnchor {
+			byAnchor[anchor] = uicompare.AnchorTolerance{Position: t.Position}
+		}
+		diffs := map[string]AnchorDiff{}
+		for _, d := range DiffAnchors(beforeM, afterM, beforeOrder, afterOrder, uicompare.Tolerance{Position: &position, ByAnchor: byAnchor}) {
+			diffs[d.Anchor] = d
+		}
+		var anchors []string
+		for _, a := range append(orderOf(beforeM, beforeOrder), orderOf(afterM, afterOrder)...) {
+			if !inStrings(anchors, a) {
+				anchors = append(anchors, a)
+			}
+		}
+		for _, anchor := range anchors {
+			box, a, b, err := regionShots(beforeTab, afterTab, rectOf(beforeM, anchor), rectOf(afterM, anchor), true)
+			if err != nil {
+				return DiffRun{}, err
+			}
+			var percent *float64
+			if box != nil {
+				imgA, err := DecodePNG(a, cell.Name+" "+anchor+" before")
+				if err != nil {
+					return DiffRun{}, err
+				}
+				imgB, err := DecodePNG(b, cell.Name+" "+anchor+" after")
+				if err != nil {
+					return DiffRun{}, err
+				}
+				p, err := uicompare.ComparePixels(imgA, imgB, antialias)
+				if err != nil {
+					return DiffRun{}, err
+				}
+				percent = &p
+			}
+			entry, ok := diffs[anchor]
+			if !ok {
+				if percent == nil || !(*percent > pixel) {
+					continue
+				}
+				entry = AnchorDiff{Anchor: anchor, Kind: "changed", Changes: []AnchorChange{}}
+			}
+			item := Change{Cell: cell.Name, State: state, Anchor: entry.Anchor, Kind: entry.Kind, Changes: entry.Changes, PixelPercent: percent}
+			if box != nil {
+				if err := os.MkdirAll(shotsDir, 0o755); err != nil {
+					return DiffRun{}, err
+				}
+				before := filepath.Join(shotsDir, ShotFileName(cell.Name, anchor, "before"))
+				after := filepath.Join(shotsDir, ShotFileName(cell.Name, anchor, "after"))
+				if err := os.WriteFile(before, a, 0o644); err != nil {
+					return DiffRun{}, err
+				}
+				if err := os.WriteFile(after, b, 0o644); err != nil {
+					return DiffRun{}, err
+				}
+				item.Shots = &Shots{Before: before, After: after}
+			}
+			run.Changed = append(run.Changed, item)
+		}
+	}
+	return run, nil
 }

@@ -166,7 +166,7 @@ func TestQueuesWithoutAtReadsTheClock(t *testing.T) {
 	}
 }
 
-func TestThisRepositorysTrackerAndTheSetupTemplatesReadOutTheDefaults(t *testing.T) {
+func TestThisRepositorysTrackerReadsTriageByDayAndTodoByNightAndTheSetupTemplatesReadOutTheDefaults(t *testing.T) {
 	for _, f := range []string{
 		"../../../ISSUE_TRACKER.md",
 		"../../../idea-loop/skills/engineering/setup/references/issue-tracker.md",
@@ -178,7 +178,16 @@ func TestThisRepositorysTrackerAndTheSetupTemplatesReadOutTheDefaults(t *testing
 			continue
 		}
 		got, err := ParsePeriods(string(b))
-		if err != nil || !reflect.DeepEqual(got, DefaultPeriods()) {
+		want := DefaultPeriods()
+		if f == "../../../ISSUE_TRACKER.md" {
+			// this repository sets its own limits; what it shares with the defaults is triage by day and todo by night
+			for _, ps := range [][]Period{got, want} {
+				for i := range ps {
+					ps[i].Limit = 0
+				}
+			}
+		}
+		if err != nil || !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: %v %v", f, got, err)
 		}
 	}

@@ -645,7 +645,7 @@ type Archive struct {
 	Duplicates []Duplicate         // object ids that more than one file claims, in the order they were first claimed
 	Index      *frontmatter.Map    // prod/index.md frontmatter (viewport / theme / locale / motion / workspaces); nil when none
 	Problems   []Problem           // files that could not be read as objects
-	Legacy     []string            // docs/design/ entries other than tmp, prod, index.md
+	Legacy     []string            // docs/design/ entries other than tmp, prod, pending, index.md
 	Delta      *DeltaInfo
 }
 
@@ -718,10 +718,10 @@ func Load(root string, opts Options) (*Archive, error) {
 		}
 	}
 
-	// every file under docs/ except the scratch area and the legacy per-spec design records
+	// every file under docs/ except the scratch area, the shelved designs and the legacy per-spec design records
 	if entries, err := os.ReadDir(designDir); err == nil {
 		for _, e := range entries {
-			if st, err := os.Stat(filepath.Join(designDir, e.Name())); err == nil && st.IsDir() && e.Name() != "tmp" && e.Name() != "prod" {
+			if st, err := os.Stat(filepath.Join(designDir, e.Name())); err == nil && st.IsDir() && e.Name() != "tmp" && e.Name() != "prod" && e.Name() != "pending" {
 				a.Legacy = append(a.Legacy, e.Name())
 			}
 		}
@@ -731,6 +731,9 @@ func Load(root string, opts Options) (*Archive, error) {
 		rel, _ := filepath.Rel(designDir, p)
 		rel = Posix(rel)
 		if rel == "tmp" || strings.HasPrefix(rel, "tmp/") {
+			return true
+		}
+		if rel == "pending" || strings.HasPrefix(rel, "pending/") { // shelved designs: local only, not read
 			return true
 		}
 		if contains(a.Legacy, strings.SplitN(rel, "/", 2)[0]) {

@@ -104,8 +104,9 @@ async function measurePage(page, C, T) {
           if (pos !== 'sticky' && pos !== 'fixed' && !/pin-spacer/.test(String(parent.className))) continue;
           const r = el.getBoundingClientRect();
           if (parent.getBoundingClientRect().height < r.height + vh * 0.5) continue;
-          // a pin that holds a screen is one by its size; a smaller one (a text column beside the pictures that scroll past) only when its text changes
-          ds.pins.set(el, { samples: [], big: r.width >= vw * 0.5 && r.height >= vh * 0.5 });
+          // only a pin that holds a screen is one — a narrower one (a table of contents, a sidebar beside the text that scrolls past) is not, whatever its text says
+          if (r.width < vw * 0.5 || r.height < vh * 0.5) continue;
+          ds.pins.set(el, { samples: [] });
         }
         for (const [el, pin] of ds.pins) {
           if (!el.isConnected) continue;
@@ -116,8 +117,7 @@ async function measurePage(page, C, T) {
           pin.samples.push({ y, pos: getComputedStyle(el).position, top: Math.round(r.top), text: ds.seenText(el) });
         }
       },
-      pinText: (index) => ds.seenText([...ds.pins.keys()][index]),
-      pinList: () => [...ds.pins.values()].flatMap((pin, index) => {
+      pinList: () => [...ds.pins.values()].flatMap((pin) => {
         const byTop = new Map();
         for (const s of pin.samples) if (s.pos === 'sticky' || s.pos === 'fixed') byTop.set(s.top, [...(byTop.get(s.top) || []), s]);
         const stuck = [...byTop.values()].sort((a, b) => b.length - a.length)[0] || [];
@@ -125,9 +125,6 @@ async function measurePage(page, C, T) {
         const sticky = stuck.some((s) => s.pos === 'sticky');
         if (ys.length < 2 || (!sticky && !pin.samples.some((s) => s.pos !== 'fixed'))) return [];
         const texts = [...new Set(stuck.map((s) => s.text))];
-        if (!pin.big && texts.length < 2) return [];
-        // where each text was seen first: the measurement goes back there to check the text belongs to the place, not to the time
-        const probes = pin.big ? [] : texts.slice(0, 4).map((t) => ({ y: stuck.find((s) => s.text === t).y, text: t }));
         return [{
           kind: sticky ? 'sticky' : 'fixed',
           tag: pin.tag,
@@ -136,7 +133,6 @@ async function measurePage(page, C, T) {
           container: pin.container,
           stuck: { from: ys[0], to: ys[ys.length - 1], count: ys.length },
           texts: texts.slice(0, 6).map((t) => t.slice(0, 60)),
-          ...(pin.big ? {} : { byText: true, index, probes }),
         }];
       }),
       fixedList: () => {
@@ -345,24 +341,7 @@ async function measurePage(page, C, T) {
   }
 
   // 7 the pins the scroll-through saw, then clean the marks off
-  // a pin too small to hold a screen counts when the text in it changed with the scroll — and changes the same way when the page goes back to the places
-  // it was seen at (a banner that rotates its messages on a timer changes too, but not where the scroll put it)
-  const pins = [];
-  let probed = false;
-  for (const { probes, index, ...pin } of await page.evaluate(() => window.__ds.pinList())) {
-    let sameThere = true;
-    for (const probe of pin.byText ? probes : []) {
-      probed = true;
-      await page.evaluate((v) => window.__ds.scrollTo(v), probe.y);
-      await tick(200);
-      if ((await page.evaluate((i) => window.__ds.pinText(i), index)) !== probe.text) {
-        sameThere = false;
-        break;
-      }
-    }
-    if (sameThere) pins.push(pin);
-  }
-  if (probed) await page.evaluate(() => window.__ds.scrollTo(0));
+  const pins = await page.evaluate(() => window.__ds.pinList());
   await page.evaluate(() => {
     document.querySelectorAll('[data-ds-block],[data-ds-lm]').forEach((el) => {
       el.removeAttribute('data-ds-block');

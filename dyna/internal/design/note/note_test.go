@@ -280,11 +280,11 @@ func TestANoteWhoseCompositionListLacksMarkersIsNotValid(t *testing.T) {
 	}
 }
 
-func TestAHumanKeptLineWrittenUnderAnItemIsNotACompositionItem(t *testing.T) {
+func TestAPlainNoteLineWrittenUnderAnItemIsNotACompositionItem(t *testing.T) {
 	kept := strings.Replace(composition(),
 		"  - 容器形状：容器形状 的写法（人选定）",
-		"  - 容器形状：容器形状 的写法（人选定）\n    - 人保留（2026-10-19）：评委要把关闭按钮挪到左上，人说保留右上", 1)
-	if !strings.Contains(kept, "人保留（2026-10-19）") {
+		"  - 容器形状：容器形状 的写法（人选定）\n    - 补充（2026-10-19）：关闭按钮留在右上", 1)
+	if !strings.Contains(kept, "补充（2026-10-19）") {
 		t.Fatal("the fixture lost its line")
 	}
 	if errs := CheckComposition(kept); len(errs) != 0 {

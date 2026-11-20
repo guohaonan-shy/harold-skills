@@ -5,7 +5,7 @@
  * What it does: for each case, copies the minimal product context (`project/`) into a fresh git repo,
  * types the case's default prompt into `claude -p` with this working tree's plugin loaded, and leaves
  * the page the researcher wrote at a fixed place for a HUMAN to open and annotate. It does not judge
- * the page: the only numbers it prints are facts about the run (did the calling session touch Refero,
+ * the page: the only numbers it prints are facts about the run (did the calling session touch Mobbin,
  * did the shape check pass, what it cost), never a score.
  *
  *   node idea-loop/evals/uiux-research/run.mjs --list
@@ -125,7 +125,7 @@ function runCase(c, opts) {
   const stderr = summary ? summary.stderr : r.stderr || String(r.error ?? '');
   if (stderr) writeFileSync(join(caseDir, 'run.stderr.log'), stderr);
 
-  const digest = summary?.digest ?? { session: { tools: {}, referoCalls: 0 }, subagents: { tools: {}, referoCalls: 0 }, result: null };
+  const digest = summary?.digest ?? { session: { tools: {}, mobbinCalls: 0 }, subagents: { tools: {}, mobbinCalls: 0 }, result: null };
   if (digest.result) writeFileSync(join(caseDir, 'result.txt'), digest.result.text);
 
   const pages = findPage(projectDir);
@@ -144,8 +144,8 @@ function runCase(c, opts) {
     timedOut: summary ? summary.timedOut : false,
     pageWrittenAt: page ? page.replace(projectDir, '<project>') : null,
     shapeCheck: check,
-    callingSessionReferoCalls: digest.session.referoCalls,
-    researcherReferoCalls: digest.subagents.referoCalls,
+    callingSessionMobbinCalls: digest.session.mobbinCalls,
+    researcherMobbinCalls: digest.subagents.mobbinCalls,
     callingSessionTools: digest.session.tools,
     subagentTools: digest.subagents.tools,
     run: digest.result && { cost: digest.result.cost, turns: digest.result.turns, models: digest.result.models, isError: digest.result.isError },
@@ -175,7 +175,7 @@ function main() {
     } else {
       console.log(`   page:       (none written — see ${join(caseDir, 'result.txt')})`);
     }
-    console.log(`   shape check: ${facts.shapeCheck ? (facts.shapeCheck.ok ? 'green' : 'RED') : 'n/a'}   calling-session Refero calls: ${facts.callingSessionReferoCalls}   researcher Refero calls: ${facts.researcherReferoCalls}`);
+    console.log(`   shape check: ${facts.shapeCheck ? (facts.shapeCheck.ok ? 'green' : 'RED') : 'n/a'}   calling-session Mobbin calls: ${facts.callingSessionMobbinCalls}   researcher Mobbin calls: ${facts.researcherMobbinCalls}`);
     console.log(`   last time:  ${c.last_time}`);
     console.log(`   annotate:   ${join(HERE, 'cases', c.name, 'annotations.md')}\n`);
   }

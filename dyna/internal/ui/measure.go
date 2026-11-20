@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -32,13 +33,27 @@ import (
 //
 // Screenshots are decoded here and compared by the unit-tested ComparePixels; they never travel back into a page.
 
-// Matrix is the acceptance matrix file `ui measure` walks.
+// Matrix is the acceptance matrix file `ui measure` walks. Two kinds, picked by the matrix itself (several of either
+// kind can go to one invocation):
+//   - default: `canvas` vs `local`, cell by cell, findings with severities. Either side may be an implementation route
+//     or a canvas address (a version of a canvas), so two canvases compare the same way. A cell may carry
+//     `shotAnchor` to compare only that anchor's area instead of the viewport.
+//   - `"mode": "canvas-diff"`: `before` vs `after` (two versions of one canvas), the list of anchors that changed,
+//     each with the two area screenshots, and — if the matrix has a `changeSet` — split into declared / undeclared.
+//     The decisions live in canvasdiff.go.
 type Matrix struct {
+	Mode      string     `json:"mode"`
 	Canvas    string     `json:"canvas"`
 	Local     string     `json:"local"`
 	DPR       *float64   `json:"dpr"`
 	Tolerance *Tolerance `json:"tolerance"`
 	Cells     []Cell     `json:"cells"`
+
+	// canvas-diff only
+	Before    string          `json:"before"`
+	After     string          `json:"after"`
+	ChangeSet json.RawMessage `json:"changeSet"`
+	ShotsDir  *string         `json:"shotsDir"`
 }
 
 // Tolerance holds the knobs of a matrix or of one cell; what a cell does not set it takes from the matrix.
@@ -55,6 +70,7 @@ type Cell struct {
 	ColorScheme string     `json:"colorScheme"`
 	State       string     `json:"state"`
 	Review      string     `json:"review"`
+	ShotAnchor  string     `json:"shotAnchor"`
 	Tolerance   *Tolerance `json:"tolerance"`
 	ByAnchor    map[string]struct {
 		Position *float64 `json:"position"`
@@ -65,6 +81,14 @@ type Cell struct {
 type Viewport struct {
 	Width  float64 `json:"width"`
 	Height float64 `json:"height"`
+}
+
+// DiffRun is what comparing two versions of a canvas found: the changed anchors (with their area screenshots written
+// to the shots directory), the states some cell compared, and the cells left to a human.
+type DiffRun struct {
+	Changed    []Change
+	States     []string
+	HumanCells []string
 }
 
 // MatrixResult is what walking one matrix found.
@@ -78,6 +102,9 @@ type Browser interface {
 	// Walk goes through every cell of the matrix in a context of its own and returns the findings, most severe
 	// first.
 	Walk(ctx context.Context, m Matrix) (MatrixResult, error)
+	// Diff compares the two versions of a canvas-diff matrix cell by cell, writing each changed anchor's two area
+	// screenshots into shotsDir.
+	Diff(ctx context.Context, m Matrix, shotsDir string) (DiffRun, error)
 	Close()
 }
 
@@ -99,6 +126,42 @@ func (m Matrix) resolve(c Cell) (position, antialias, pixel float64) {
 		}
 	}
 	return
+}
+
+// resolveDiff is what a canvas-diff cell compares with: like resolve, except that any pixel that visibly differs is a
+// change (two versions of a canvas have no rendering differences) unless the matrix or the cell says otherwise.
+func (m Matrix) resolveDiff(c Cell) (position, antialias, pixel float64) {
+	position, antialias, pixel = uicompare.DefaultPositionTolerance, uicompare.DefaultAntialiasTolerance, 0
+	for _, t := range []*Tolerance{m.Tolerance, c.Tolerance} {
+		if t == nil {
+			continue
+		}
+		if t.Position != nil {
+			position = *t.Position
+		}
+		if t.Antialias != nil {
+			antialias = *t.Antialias
+		}
+		if t.Pixel != nil {
+			pixel = *t.Pixel
+		}
+	}
+	return
+}
+
+func (m Matrix) isDiff() bool { return m.Mode == ModeCanvasDiff }
+
+// checkCanvasDiff finds a canvas-diff matrix's input errors before any browser starts, and returns its change set
+// (nil when the matrix has none: the changes are then not classified).
+func (m Matrix) checkCanvasDiff() ([]ChangeEntry, bool, error) {
+	if m.Before == "" || m.After == "" {
+		return nil, false, errors.New(`a canvas-diff matrix needs "before" and "after" (the two canvas addresses)`)
+	}
+	if m.ChangeSet == nil {
+		return nil, false, nil
+	}
+	set, err := ParseChangeSet(m.ChangeSet)
+	return set, err == nil, err
 }
 
 // DPR is the device pixel ratio of the matrix: 1 unless it says otherwise.
@@ -210,6 +273,46 @@ type matrixReport struct {
 	reportBody
 }
 
+// diffBody is a canvas-diff matrix's report, in the order the JSON keys are written.
+type diffBody struct {
+	Mode       string `json:"mode"`
+	Classified bool   `json:"classified"`
+	DiffReport
+	HumanReviewCells []string `json:"humanReviewCells"`
+}
+
+type diffMatrixReport struct {
+	Matrix string `json:"matrix"`
+	diffBody
+}
+
+// report is one matrix's report, of either kind.
+type report struct {
+	path      string
+	diff      *diffBody
+	plain     *reportBody
+	shotsDir  string
+	attention bool
+}
+
+func (r report) json(withMatrix bool) any {
+	switch {
+	case r.diff != nil && withMatrix:
+		return diffMatrixReport{Matrix: r.path, diffBody: *r.diff}
+	case r.diff != nil:
+		return *r.diff
+	case withMatrix:
+		return matrixReport{Matrix: r.path, reportBody: *r.plain}
+	}
+	return *r.plain
+}
+
+// matrixRun is one matrix walked: the result of whichever kind it is.
+type matrixRun struct {
+	walk MatrixResult
+	diff DiffRun
+}
+
 func writeJSON(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
@@ -251,6 +354,19 @@ func (d Deps) measure(ctx context.Context, o measureOptions) error {
 		}
 	}
 
+	changeSets := make([][]ChangeEntry, len(matrices))
+	classified := make([]bool, len(matrices))
+	for i, m := range matrices {
+		if !m.isDiff() {
+			continue
+		}
+		set, ok, err := m.checkCanvasDiff()
+		if err != nil {
+			return &nexterr.Exit{Code: 1, Msg: "ui-measure: " + err.Error()}
+		}
+		changeSets[i], classified[i] = set, ok
+	}
+
 	concurrency, reason := d.concurrency(len(matrices), o.Requested)
 	fmt.Fprintf(d.errOut(), "ui-measure: 同时跑 %d 份矩阵（%s）\n", concurrency, reason)
 
@@ -258,17 +374,48 @@ func (d Deps) measure(ctx context.Context, o measureOptions) error {
 	if err != nil {
 		return &nexterr.Exit{Code: 1, Msg: "ui-measure: " + err.Error()}
 	}
-	runs, err := mapLimit(ctx, matrices, concurrency, browser.Walk)
+	indexes := make([]int, len(matrices))
+	for i := range indexes {
+		indexes[i] = i
+	}
+	runs, err := mapLimit(ctx, indexes, concurrency, func(ctx context.Context, i int) (matrixRun, error) {
+		m := matrices[i]
+		if !m.isDiff() {
+			w, err := browser.Walk(ctx, m)
+			return matrixRun{walk: w}, err
+		}
+		dr, err := browser.Diff(ctx, m, shotsDirOf(o.Paths[i], m))
+		return matrixRun{diff: dr}, err
+	})
 	browser.Close()
 	if err != nil {
 		return &nexterr.Exit{Code: 1, Msg: "ui-measure: " + err.Error()}
 	}
 
-	reports := make([]matrixReport, len(runs))
-	for i, run := range runs {
+	reports := make([]report, len(runs))
+	for i, r := range runs {
+		human := r.walk.HumanCells
+		if matrices[i].isDiff() {
+			// No 瓶颈 here: two canvas versions are compared once per change, not iterated to green.
+			human = r.diff.HumanCells
+			if human == nil {
+				human = []string{}
+			}
+			changed := r.diff.Changed
+			if changed == nil {
+				changed = []Change{}
+			}
+			cls := Classified{Declared: []Change{}, Undeclared: []Change{}, DeclaredUnchanged: []Declaration{}, Unchecked: []Declaration{}}
+			if classified[i] {
+				cls = ClassifyChanges(changed, changeSets[i], r.diff.States)
+			}
+			body := diffBody{Mode: ModeCanvasDiff, Classified: classified[i], DiffReport: DiffReport{Changed: changed, Classified: cls}, HumanReviewCells: human}
+			reports[i] = report{path: o.Paths[i], diff: &body, shotsDir: shotsDirOf(o.Paths[i], matrices[i]), attention: HasAttention(body.DiffReport, classified[i])}
+			continue
+		}
 		// Plateau is mechanical: the same defects, cell for cell, two runs running.
-		current := make([]string, len(run.Findings))
-		for j, f := range run.Findings {
+		current := make([]string, len(r.walk.Findings))
+		for j, f := range r.walk.Findings {
 			current[j] = fingerprint(f)
 		}
 		var previous []string
@@ -276,7 +423,7 @@ func (d Deps) measure(ctx context.Context, o measureOptions) error {
 		if raw, err := os.ReadFile(memos[i]); err == nil {
 			havePrevious = json.Unmarshal(raw, &previous) == nil
 		}
-		bottleneck := havePrevious && len(run.Findings) > 0 && equalStrings(previous, current)
+		bottleneck := havePrevious && len(r.walk.Findings) > 0 && equalStrings(previous, current)
 		var memo bytes.Buffer
 		if err := writeJSON(&memo, current); err != nil {
 			return err
@@ -284,14 +431,14 @@ func (d Deps) measure(ctx context.Context, o measureOptions) error {
 		if err := os.WriteFile(memos[i], bytes.TrimRight(memo.Bytes(), "\n"), 0o644); err != nil {
 			return err
 		}
-		findings, human := run.Findings, run.HumanCells
+		findings := r.walk.Findings
 		if findings == nil {
 			findings = []uicompare.Finding{}
 		}
 		if human == nil {
 			human = []string{}
 		}
-		reports[i] = matrixReport{Matrix: o.Paths[i], reportBody: reportBody{Findings: findings, Bottleneck: bottleneck, HumanReviewCells: human}}
+		reports[i] = report{path: o.Paths[i], plain: &reportBody{Findings: findings, Bottleneck: bottleneck, HumanReviewCells: human}, attention: len(findings) > 0}
 	}
 
 	single := len(reports) == 1
@@ -299,32 +446,67 @@ func (d Deps) measure(ctx context.Context, o measureOptions) error {
 	if o.JSON {
 		// One matrix keeps the historical shape; several are wrapped, one entry per matrix.
 		if single {
-			if err := writeJSON(out, reports[0].reportBody); err != nil {
+			if err := writeJSON(out, reports[0].json(false)); err != nil {
 				return err
 			}
-		} else if err := writeJSON(out, map[string]any{"matrices": reports}); err != nil {
-			return err
+		} else {
+			all := make([]any, len(reports))
+			for i, r := range reports {
+				all[i] = r.json(true)
+			}
+			if err := writeJSON(out, map[string]any{"matrices": all}); err != nil {
+				return err
+			}
 		}
 	} else {
 		for _, r := range reports {
 			if !single {
-				fmt.Fprintf(out, "\n== %s\n", r.Matrix)
+				fmt.Fprintf(out, "\n== %s\n", r.path)
 			}
-			fmt.Fprintln(out, uicompare.RenderFindings(r.Findings))
-			if r.Bottleneck {
+			if r.diff != nil {
+				fmt.Fprintln(out, RenderCanvasDiff(r.diff.DiffReport, r.diff.Classified))
+				for _, c := range r.diff.Changed {
+					if c.Shots != nil {
+						fmt.Fprintf(out, "\n区域截图（两版各一张）在 %s\n", r.shotsDir)
+						break
+					}
+				}
+				if len(r.diff.HumanReviewCells) > 0 {
+					fmt.Fprintf(out, "\nHUMAN REVIEW (not green, not checked): %s\n", strings.Join(r.diff.HumanReviewCells, ", "))
+				}
+				continue
+			}
+			fmt.Fprintln(out, uicompare.RenderFindings(r.plain.Findings))
+			if r.plain.Bottleneck {
 				fmt.Fprintln(out, "\n瓶颈：同一批 finding 连续两轮不变。停下，交给人。")
 			}
-			if len(r.HumanReviewCells) > 0 {
-				fmt.Fprintf(out, "\nHUMAN REVIEW (not green, not checked): %s\n", strings.Join(r.HumanReviewCells, ", "))
+			if len(r.plain.HumanReviewCells) > 0 {
+				fmt.Fprintf(out, "\nHUMAN REVIEW (not green, not checked): %s\n", strings.Join(r.plain.HumanReviewCells, ", "))
 			}
 		}
 	}
 	for _, r := range reports {
-		if len(r.Findings) > 0 {
+		if r.attention {
 			return &nexterr.Exit{Code: 2}
 		}
 	}
 	return nil
+}
+
+// shotsDirOf is where a canvas-diff matrix's area screenshots go: its `shotsDir` (default ui-measure-shots/), next to
+// the matrix file.
+func shotsDirOf(matrixPath string, m Matrix) string {
+	dir := "ui-measure-shots"
+	if m.ShotsDir != nil {
+		dir = *m.ShotsDir
+	}
+	if !filepath.IsAbs(dir) {
+		abs, err := filepath.Abs(filepath.Dir(matrixPath))
+		if err == nil {
+			dir = filepath.Join(abs, dir)
+		}
+	}
+	return filepath.Clean(dir)
 }
 
 func equalStrings(a, b []string) bool {
