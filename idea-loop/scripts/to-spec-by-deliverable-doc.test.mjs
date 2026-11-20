@@ -86,11 +86,11 @@ test('实现决策 no longer carries an overview diagram; 测试决策 folds pro
   assert.doesNotMatch(tests, /prompt \/ eval 变动/);
 });
 
-test('how to write for a human is a pointer to evidence, not restated rules', () => {
-  assert.match(body, /`idea-loop:evidence`/);
-  for (const phrase of ['陌生', '同条件', '出处']) assert.doesNotMatch(body, new RegExp(phrase), `to-spec 里还有「${phrase}」：共用写法只在 evidence`);
-  // and evidence is where they live
-  const evidence = read('skills', 'productivity', 'evidence', 'SKILL.md');
+test('how to write for a human is a pointer to decision-rules, not restated rules', () => {
+  assert.match(body, /`idea-loop:decision-rules`/);
+  for (const phrase of ['陌生', '同条件', '出处']) assert.doesNotMatch(body, new RegExp(phrase), `to-spec 里还有「${phrase}」：共用写法只在 decision-rules`);
+  // and decision-rules (the section 「证据是什么」 and after) is where they live
+  const evidence = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
   for (const phrase of ['陌生', '同条件', '出处']) assert.match(evidence, new RegExp(phrase));
 });
 
@@ -154,8 +154,8 @@ test('draft-spec\'s self-check names the sections the new template has', () => {
   // the verdict is written as the opening quoted line, and the old table is gone from the instructions
   assert.match(verify, /> #<号> 存在：/);
   assert.doesNotMatch(verify, /「验证」表/);
-  // the present-state wording points at evidence rather than restating it
-  assert.match(verify, /idea-loop:evidence/);
+  // the present-state wording points at decision-rules' 「证据是什么」 rather than restating it
+  assert.match(verify, /idea-loop:decision-rules` 的「证据是什么」/);
 });
 
 test('the command line still reads the older 验证 table (documented in the issues skill, where the format is)', () => {

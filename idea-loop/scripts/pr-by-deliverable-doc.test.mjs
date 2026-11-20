@@ -102,11 +102,11 @@ test('the PR description template has 能否回滚 right after 怎么验证, and
   assert.doesNotMatch(text, /\*\*切法\*\*/);
 });
 
-test('the shared writing rules are cited from evidence, not restated in the pr skill', () => {
+test('the shared writing rules are cited from decision-rules, not restated in the pr skill', () => {
   const all = [skill, ...readdirSync(join(prDir, 'references')).map((f) => readFileSync(join(prDir, 'references', f), 'utf8'))].join('\n');
-  assert.match(skill, /idea-loop:evidence/);
+  assert.match(skill, /idea-loop:decision-rules` 的「证据是什么」/);
   for (const [name, re] of [['陌生叫法第一次出现', /第一次出现/], ['比对同条件', /同条件/], ['规模数字', /规模数字/], ['裸编号', /裸编号/], ['评判标准', /评判标准/]]) {
-    assert.doesNotMatch(all, re, `pr 里复述了 evidence 的共用写法：${name}`);
+    assert.doesNotMatch(all, re, `pr 里复述了 decision-rules 的共用写法：${name}`);
   }
 });
 

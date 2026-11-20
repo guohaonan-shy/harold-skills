@@ -9,7 +9,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:evidence`、`idea-loop:decision-rules`；浏览器等运行环境的能力用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
+用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:decision-rules`；浏览器等运行环境的能力用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
 
 ## 你收到的
 

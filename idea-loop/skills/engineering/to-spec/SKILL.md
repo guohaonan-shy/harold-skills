@@ -13,14 +13,14 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `<docs>/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，frontmatter 和正文照 [`references/raw-template.md`](references/raw-template.md)。
 
-3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先用 Skill 工具调 `idea-loop:evidence`，看它的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。项目目录有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
+3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先照 `idea-loop:decision-rules` 的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。项目目录有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
    seam 是测试观察行为的公共边界，测试从这里喂输入、读输出。优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置，每个带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认，不在场自己定。写进「测试决策」。
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
 
    spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `dyna issues new` 开成 todo，号码写进 `issues`；不在场，停下问人。
 
-   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步调过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
+   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步对过的 `idea-loop:decision-rules`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
 
 5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>` 刷 `docs/spec/index.md`。
 

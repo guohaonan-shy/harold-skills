@@ -3,7 +3,7 @@ name: pr
 description: 一个 PR 上给人看的两份东西怎么写、放在哪：GitHub 上的 PR 描述，和对话里的 Review 汇报（连同存档它的 review loop 文件）。写 PR 描述、写汇报、记录或归档 review loop 时用。
 ---
 
-一个 issue 一个 PR：它的所有工单共享一条集成分支和一个 PR，review loop 文件以这个 PR 的号命名。PR 上给人看的东西只有两份，读的是同一个人：要判断这次交付能不能合并的那个人。他清楚方向和高层设计，不清楚实现细节，每次看都要能马上知道两件事：**要我决定什么，要我看什么。** 怎么写给他看（结论在前、最小的图、现状带出处）用 Skill 工具调 `idea-loop:evidence`。要他定的事怎么写成一道题，照 `idea-loop:decision-rules`；下面只写落到这两份上的。交付证据（人验素材、review 配图、之前 → 之后）放哪、怎么上传、人验清单怎么写：[`references/delivery-evidence.md`](references/delivery-evidence.md)。
+一个 issue 一个 PR：它的所有工单共享一条集成分支和一个 PR，review loop 文件以这个 PR 的号命名。PR 上给人看的东西只有两份，读的是同一个人：要判断这次交付能不能合并的那个人。他清楚方向和高层设计，不清楚实现细节，每次看都要能马上知道两件事：**要我决定什么，要我看什么。** 怎么写给他看（结论在前、最小的图、现状带出处）照 `idea-loop:decision-rules` 的「证据是什么」「整体风格」。要他定的事怎么写成一道题，照它的「要人定的写成一道题」；下面只写落到这两份上的。交付证据（人验素材、review 配图、之前 → 之后）放哪、怎么上传、人验清单怎么写：[`references/delivery-evidence.md`](references/delivery-evidence.md)。
 
 正文说页面、流程、行为和后果。代码行、变量名、函数名、文件路径、「文件:行号」、提交号、spec 或工单的章节编号只放折叠区：拍板的人看了也不知道是什么意思；`dyna pr body set` 和 `dyna pr candidates submit` 会机械地查这一条。为什么做在 spec 的「问题陈述」，每刀做了什么在工单里，验收契约就是 home 里的工单文件，这些都只写标题、home 里的路径和一句摘要，不放链接（home 是私有的，公司虚拟机上的 home 没有远端）；复现命令、检查日志这些过程材料留在本地。
 
