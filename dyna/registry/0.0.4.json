@@ -1,0 +1,3405 @@
+{
+  "version": "0.0.4",
+  "commands": [
+    {
+      "command": "agent claude run",
+      "module": "agent",
+      "use": "run",
+      "summary": "起 claude -p 无头跑一个会话并等它结束：stdin 关掉，默认 20 分钟超时，退出或超时时结束整个进程组；事件流（stream-json）存进 --stream，边跑边读，不带 --json 时打印会话最后说的话，带 --json 时打印退出情况和做了什么（调了哪些工具、有没有起 agent 或开浏览器、花了多少）；超时退出 124，因 --stop-on-escalation 中止退出 3，其余失败退出 1",
+      "caller": "session",
+      "next": "dyna agent claude run --help",
+      "args": [
+        {
+          "name": "bin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "claude 命令（默认 PATH 上的 claude；测试放假的）"
+        },
+        {
+          "name": "cwd",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "会话的工作目录（默认当前目录）"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "打印 JSON：退出码、是否超时、escalation、stderr、digest（session / subagents / result）；不带时只打印会话最后说的话"
+        },
+        {
+          "name": "model",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "模型别名"
+        },
+        {
+          "name": "plugin-dir",
+          "kind": "flag",
+          "required": false,
+          "value": "stringArray",
+          "repeatable": true,
+          "description": "加载这个目录里的插件（可重复；指向工作树的 idea-loop/ 而不是已装的那份）"
+        },
+        {
+          "name": "prompt",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "prompt 文字（与 --prompt-file 二选一）"
+        },
+        {
+          "name": "prompt-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "prompt 所在的文件（与 --prompt 二选一）"
+        },
+        {
+          "name": "skip-permissions",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "跳过权限检查（无人值守的跑要它）"
+        },
+        {
+          "name": "stop-on-escalation",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "会话一起 agent 或一开浏览器就结束它（退出 3，summary 里写是哪个工具）"
+        },
+        {
+          "name": "stream",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "事件流存到这个文件（默认不存）"
+        },
+        {
+          "name": "timeout",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "超过这个时长就结束它（如 20m、90s）"
+        }
+      ]
+    },
+    {
+      "command": "agent codex image",
+      "module": "agent",
+      "use": "image",
+      "summary": "起 codex exec 用它内置的生图工具出一张图，存到 --out（可写沙箱，工作目录是 --out 所在目录）；stdin 关掉，默认 10 分钟超时，退出或超时时结束整个进程组；成功打印图的路径，没出图报错退出 1，超时退出 124，codex 自己非零退出时 dyna 以同一个码退出",
+      "caller": "session",
+      "next": "dyna agent codex image --help",
+      "args": [
+        {
+          "name": "bin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "codex 命令（默认 PATH 上的 codex；测试放假的）"
+        },
+        {
+          "name": "model",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "模型（默认用 Codex 配置里的）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图存成这个文件，如 imagine/assets/hero.png（必填）"
+        },
+        {
+          "name": "prompt",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "生图要求文字（与 --prompt-file 二选一）"
+        },
+        {
+          "name": "prompt-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "生图要求所在的文件（与 --prompt 二选一）"
+        },
+        {
+          "name": "timeout",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "超过这个时长就结束它（如 10m、90s）"
+        }
+      ]
+    },
+    {
+      "command": "agent codex prompt",
+      "module": "agent",
+      "use": "prompt <spec|standards> <out-file> [key=value...]",
+      "summary": "把 pr-review 固定的 Codex prompt 模板（Spec 轴或 Standards 轴）填好写进 <out-file>：模板与 review-standards、decision-rules 的路径从插件目录读，key=value 是这一轮不一样的引用；没填的占位或模板里没有的 key 都拒绝（退出 1）",
+      "caller": "session",
+      "next": "dyna agent codex prompt --help",
+      "args": [
+        {
+          "name": "spec|standards",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "out-file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "key=value...",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "agent codex run",
+      "module": "agent",
+      "use": "run",
+      "summary": "起 codex exec 跑一轮并等它结束：stdin 关掉，默认只读沙箱，默认 20 分钟超时，退出或超时时结束整个进程组；成功时把最终消息写进 --out 并打印；超时退出 124，报已写出的部分输出在哪（--out 的 .log）；codex 自己非零退出时 dyna 以同一个码退出，其余失败退出 1",
+      "caller": "session",
+      "next": "dyna agent codex run --help",
+      "args": [
+        {
+          "name": "bin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "codex 命令（默认 PATH 上的 codex；测试放假的）"
+        },
+        {
+          "name": "cwd",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "Codex 的工作目录（默认当前目录）"
+        },
+        {
+          "name": "effort",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "思考强度（low / medium / high 等，传给 model_reasoning_effort）"
+        },
+        {
+          "name": "model",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "模型（默认用 Codex 配置里的）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "最终消息写到这个文件（默认在临时目录）；Codex 的过程日志写到 <out>.log"
+        },
+        {
+          "name": "prompt",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "prompt 文字（与 --prompt-file 二选一）"
+        },
+        {
+          "name": "prompt-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "prompt 所在的文件（与 --prompt 二选一）"
+        },
+        {
+          "name": "sandbox",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "沙箱：read-only（默认）或 workspace-write"
+        },
+        {
+          "name": "timeout",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "超过这个时长就结束它（如 20m、90s）"
+        }
+      ]
+    },
+    {
+      "command": "design archive check",
+      "module": "design",
+      "use": "check <repo-root>",
+      "summary": "校验设计档案的八条规则（--delta 把某个需求的 delta/ 叠在 prod/ 上再判；--json 机器可读）",
+      "caller": "session",
+      "next": "dyna design archive check <repo-root> --json",
+      "args": [
+        {
+          "name": "repo-root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "把这个 spec 的 tmp/<spec-slug>/delta/ 叠在 prod/ 上再判"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        },
+        {
+          "name": "no-used-by",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "跳过 usedBy 那一半（归档命令重新生成 usedBy 之前判 delta/ 用）"
+        },
+        {
+          "name": "workspaces",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "组件文件名的工作区前缀，逗号分隔（prod/index.md 还没有时用）"
+        }
+      ]
+    },
+    {
+      "command": "design archive query",
+      "module": "design",
+      "use": "query <repo-root> <entry> <arg>",
+      "summary": "查设计档案：page / state / journey / refs / keyword / affected / diff 七种问法，输出 JSON（--delta 读某需求改完之后的样子，--code-root 给 affected 指代码仓库）",
+      "caller": "session",
+      "next": "dyna design archive check <repo-root>",
+      "args": [
+        {
+          "name": "repo-root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "entry",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "arg",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "code-root",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "代码仓库：档案不在代码仓库里时，affected 从这里读 git 历史"
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "某个需求（spec）的名字：把它的 docs/design/tmp/<spec>/delta/ 叠在线上档案上读"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections attribute",
+      "module": "design",
+      "use": "attribute <measurement>",
+      "summary": "测量结果 → 每段的范围、每个可点元素属于哪一段、落空 / 定位失败 / 顺序不对 / 重叠 / 滚动驱动没声明（有任何一项退出码 1）",
+      "caller": "session",
+      "next": "dyna design archive sections measure <root> <state>",
+      "args": [
+        {
+          "name": "measurement",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "design archive sections cover",
+      "module": "design",
+      "use": "cover <root> <state>",
+      "summary": "不分段、比主视口高的状态：打印按屏补拍首屏以下会连出边的组件的代码",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "spec 名：把 docs/design/tmp/<spec>/delta/ 盖在 prod/ 上读"
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections measure",
+      "module": "design",
+      "use": "measure <root> [state]",
+      "summary": "打印量页面的代码：定位各段、框出分块、标题和可点元素；结果留在 window.__dsMeasure，交给 attribute",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "spec 名：把 docs/design/tmp/<spec>/delta/ 盖在 prod/ 上读"
+        },
+        {
+          "name": "for",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "段内状态 id：给它量，不重载页面"
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "page",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "页面 id"
+        },
+        {
+          "name": "section",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "段 id（measure：配 --for；shoot：只拍这些段，逗号分隔）"
+        },
+        {
+          "name": "sections",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "分段列表，JSON 数组：[{ \"id\": \"hero\", \"locate\": { … } }, …]"
+        },
+        {
+          "name": "sections-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "分段列表的 JSON 文件"
+        },
+        {
+          "name": "state",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "入口状态 id（档案里还没有这个状态时用，要配 --page 和 --sections / --sections-file）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections pinned",
+      "module": "design",
+      "use": "pinned <root> <state>",
+      "summary": "滚动驱动的段里第 2 步起的状态：打印不滚动、不拨时间、直接截当前视口的代码",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections screen",
+      "module": "design",
+      "use": "screen <root> <state>",
+      "summary": "不分段的单屏状态：打印截主视口的代码，图叫 <状态>.png",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections shoot",
+      "module": "design",
+      "use": "shoot <attribution>",
+      "summary": "归属结果 → 打印逐段截图的代码，一段一张 <入口状态>@<段>.png",
+      "caller": "session",
+      "next": "dyna design archive sections attribute <measurement>",
+      "args": [
+        {
+          "name": "attribution",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "include",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "JSON 定位，把叠在页面上的东西也拍进去：{ \"role\": …, \"name\": … } / { \"text\": … } / { \"selector\": … }"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "图写到的目录（Playwright 只能写它的工作区根目录里）"
+        },
+        {
+          "name": "section",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "段 id（measure：配 --for；shoot：只拍这些段，逗号分隔）"
+        }
+      ]
+    },
+    {
+      "command": "design archive sections step",
+      "module": "design",
+      "use": "step <ms>",
+      "summary": "打印「拨一步」的代码：页面时间往前拨 N 毫秒（页面时钟和还在播的动画一起）；要先跑过 time",
+      "caller": "session",
+      "next": "dyna design archive sections time <root>",
+      "args": [
+        {
+          "name": "ms",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "design archive sections time",
+      "module": "design",
+      "use": "time <root>",
+      "summary": "打印「装时间」的代码：页面时钟和 CSS 动画时间线停在固定的起点，重载页面，按固定步长拨一段让页面起来（browser_navigate 到入口之后、做任何交互之前跑一次）",
+      "caller": "session",
+      "next": "dyna design archive check <root>",
+      "args": [
+        {
+          "name": "root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "locale",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "语言，如 zh-CN（默认取 prod/index.md）"
+        },
+        {
+          "name": "motion",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "default 或 reduce（默认取 prod/index.md，再默认 default）"
+        },
+        {
+          "name": "theme",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "light 或 dark（默认取 prod/index.md）"
+        },
+        {
+          "name": "viewport",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "视口，如 1440x900（默认取 docs/design/prod/index.md 的 frontmatter）"
+        }
+      ]
+    },
+    {
+      "command": "design archive write",
+      "module": "design",
+      "use": "write <repo-root> <spec-slug>",
+      "summary": "把需求的 delta/ 归档进 prod/（唯一写 prod/ 的入口；校验不过就什么都不写；--dry-run 只演练）",
+      "caller": "session",
+      "next": "dyna design archive check <repo-root> --delta <spec-slug>",
+      "args": [
+        {
+          "name": "repo-root",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "spec-slug",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "只校验和报告，不写任何文件"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "design critic round",
+      "module": "design",
+      "use": "round <critic.json> --context <context.json>",
+      "summary": "评委这一轮：校验评委交回的形状（findings、对人思路的评估、分数），点出方向性意见；不判停，停不停由人定。--context 是 { states, thoughts }",
+      "caller": "session",
+      "next": "dyna design critic round <critic.json> --context <context.json>",
+      "args": [
+        {
+          "name": "critic.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "context.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "context",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "本轮的上下文文件 { states: 这一版的状态名, thoughts: 要评估的人的思路 id }"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（valid、errors、score、direction）"
+        }
+      ]
+    },
+    {
+      "command": "design flow compose",
+      "module": "design",
+      "use": "compose <flow.json> <out.png>",
+      "summary": "把截图、箭头、一句话拼成一张交互流程图（PNG）；--archive 核对步骤里的状态名在不在设计档案，--delta 叠上这个需求的 delta/",
+      "caller": "session",
+      "next": "dyna design flow compose <flow.json> <out.png>",
+      "args": [
+        {
+          "name": "flow.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "out.png",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "archive",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库根：核对步骤的 state 在设计档案里有没有"
+        },
+        {
+          "name": "delta",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "把这个 spec 的 tmp/<spec-slug>/delta/ 叠在档案上再核对（要和 --archive 一起）"
+        }
+      ]
+    },
+    {
+      "command": "design lint",
+      "module": "design",
+      "use": "lint [file.html]...",
+      "summary": "设计画布的机械检查（AI 味特征）：P0/P1 退出 2；--hook 从 PostToolUse 事件里取被写的画布，只拦 docs/design/tmp/<spec-slug>/canvas/ 下的",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "file.html",
+          "kind": "positional",
+          "required": false,
+          "variadic": true
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从标准输入读 PostToolUse 事件；有 P0/P1 时退出码 2、报告写到 stderr，不是画布或干净时静默"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "design md diff",
+      "module": "design",
+      "use": "diff <before> <after>",
+      "summary": "官方 DESIGN.md diff：比较改前（备份）和改后的 DESIGN.md，判是否退化（新增了 error 或 warning）；输出与退出码照官方工具",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "before",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "after",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "design md lint",
+      "module": "design",
+      "use": "lint [DESIGN.md]",
+      "summary": "官方 DESIGN.md lint：直接跑是打印官方报告、有 error 退出 1；--hook 从 PostToolUse 事件取被写的文件，只管叫 DESIGN.md 的，有 error 退出 2 并写到 stderr，工具跑不起来只留一行说明、退出 0",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "DESIGN.md",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从标准输入读 PostToolUse 事件"
+        }
+      ]
+    },
+    {
+      "command": "design note submit",
+      "module": "design",
+      "use": "submit <direction-note.md>",
+      "summary": "交回方向说明：校验七节齐全、同一层级、按顺序、有正文，选中变种的构成清单六项全、每项标来源；不合格退出 2 并逐条说哪一条",
+      "caller": "session",
+      "next": "dyna design note submit <direction-note.md>",
+      "args": [
+        {
+          "name": "direction-note.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "design report",
+      "module": "design",
+      "use": "report --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> --out <report.html>",
+      "summary": "把设计收敛的一轮拼成一页设计评审报告（没声明却变了的地方、评委意见配用户路径和参考图、对人思路的评估、分数），图都内嵌；打印给对话用的摘要。输入不对退出 2 并逐条说哪一份、哪一项",
+      "caller": "session",
+      "next": "dyna design report --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> --self-check <self-check.json> --out <report.html>",
+      "args": [
+        {
+          "name": "critic.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "research-light.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "canvas-diff.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "thoughts.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "address",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "report.html",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "canvas",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "这一版画布页的地址"
+        },
+        {
+          "name": "diff",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "dyna ui measure 在 canvas-diff 模式、带改动集跑出的 --json 输出"
+        },
+        {
+          "name": "dissatisfied",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "人的不满标记 [{ opinion, quote }]，只对 direction 意见"
+        },
+        {
+          "name": "judge",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "评委的 JSON（dyna design critic round 校验过的）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "报告写到这个文件"
+        },
+        {
+          "name": "previous",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "上一版画布页的地址"
+        },
+        {
+          "name": "research",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "调研员轻用法交回的 research-light.json；其中的图按它所在的目录解析"
+        },
+        {
+          "name": "self-check",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "designer 的自检说明 [{ state, anchor, what, why }]；不传，报告不提理由"
+        },
+        {
+          "name": "thoughts",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "这一轮的 thoughts.md：一条一行，<编号> | <人的原话>"
+        }
+      ]
+    },
+    {
+      "command": "dreaming table split",
+      "module": "dreaming",
+      "use": "split <proposal-table.md>",
+      "summary": "把要问人的行拆成一张同样格式的小表：打印出来，或用 --out 写到文件；表本身不合格就照 submit 的样子报错（退出 2），不拆",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "proposal-table.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "表不合格时输出 JSON（同 submit）"
+        },
+        {
+          "name": "out",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "小表写到这个文件；不给就打印到标准输出"
+        }
+      ]
+    },
+    {
+      "command": "dreaming table submit",
+      "module": "dreaming",
+      "use": "submit <proposal-table.md>",
+      "summary": "校验提议表的形状：行类型、每类的建议处置、证据里该有的图和原文旧新；不对就说出哪一条（退出 2），校验过了才算交回",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "proposal-table.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（valid、empty、errors、counts）"
+        }
+      ]
+    },
+    {
+      "command": "git commit",
+      "module": "git",
+      "use": "commit <文件>...",
+      "summary": "只 add 给定的文件并提交，工作区和暂存区里别的改动不进这个提交；打印新提交的完整 SHA",
+      "caller": "session",
+      "next": "dyna git commit --repo <目录> -m <说明> <文件>...",
+      "args": [
+        {
+          "name": "文件",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        },
+        {
+          "name": "message",
+          "kind": "flag",
+          "required": false,
+          "value": "stringArray",
+          "repeatable": true,
+          "description": "提交说明；可重复，每个 -m 一段（跟 git commit 一样，末尾的署名行单独一段）"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "git merge",
+      "module": "git",
+      "use": "merge <提交或远端分支>",
+      "summary": "把给定的提交或远端分支（如 origin/main）合进当前分支；远端分支先取最新；有冲突就停下，列出冲突文件，不自动解决",
+      "caller": "session",
+      "next": "dyna git merge --repo <目录> <提交或远端分支>",
+      "args": [
+        {
+          "name": "提交或远端分支",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "git push",
+      "module": "git",
+      "use": "push [branch]",
+      "summary": "把分支推到远端并记下它跟踪的远端分支；不给分支就推当前分支；不强推",
+      "caller": "session",
+      "next": "dyna git push --repo <目录>",
+      "args": [
+        {
+          "name": "branch",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "remote",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "远端名"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "home adr new",
+      "module": "home",
+      "use": "new <name>",
+      "summary": "打印下一份 ADR 的文件名：比现有最大编号大 1 的四位编号加名字，编号不复用",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "name",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "project",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "项目名（不带就取当前目录所在的项目）"
+        }
+      ]
+    },
+    {
+      "command": "home commit",
+      "module": "home",
+      "use": "commit <message> <file>...",
+      "summary": "只提交列出的文件到 home 的主分支再推送；docs 里有重名 slug 或死链就拒绝",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "message",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "home config apply",
+      "module": "home",
+      "use": "apply",
+      "summary": "先备份 settings.json 和 CLAUDE.md，再做还没做的改动；都已做就什么都不写",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "only",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只做这几项：1,2,3 或 plugin,memory,claude-md"
+        }
+      ]
+    },
+    {
+      "command": "home config plan",
+      "module": "home",
+      "use": "plan",
+      "summary": "列出三处用户级改动各自的改前、改后、是否已做；什么都不写",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        },
+        {
+          "name": "only",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只看这几项：1,2,3 或 plugin,memory,claude-md"
+        }
+      ]
+    },
+    {
+      "command": "home glossary check",
+      "module": "home",
+      "use": "check [file]",
+      "summary": "查 GLOSSARY.md 的格式；有问题退出 2。--hook：读 PostToolUse 事件，写到 GLOSSARY.md 才查，有问题退出 2 并在 stderr 回话",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PostToolUse 事件；有问题退出码 2、理由写到 stderr"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON"
+        }
+      ]
+    },
+    {
+      "command": "home index",
+      "module": "home",
+      "use": "index",
+      "summary": "按各份 frontmatter 重新生成 spec、adr、raw 三层的 index.md",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "layer",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只生成一层：spec | adr | raw"
+        },
+        {
+          "name": "project",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "项目名（不带就取当前目录所在的项目）"
+        }
+      ]
+    },
+    {
+      "command": "home map",
+      "module": "home",
+      "use": "map",
+      "summary": "开场注入当前项目的项目目录和项目地图（出任何岔子都什么也不打印）",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话"
+        }
+      ]
+    },
+    {
+      "command": "home memory check",
+      "module": "home",
+      "use": "check [dir]",
+      "summary": "量记忆根索引：不超 140 行和 25,000 字节，链接都在，条目都进了索引；有问题退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dir",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "home where",
+      "module": "home",
+      "use": "where",
+      "summary": "打印当前项目在 home 里的目录（JSON）；在 home 本身里要带 --project",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "project",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "项目名（在 home 目录里，或不在项目的仓库里时要带）"
+        }
+      ]
+    },
+    {
+      "command": "issues backlog",
+      "module": "issues",
+      "use": "backlog <docs> [limit]",
+      "summary": "JSON：没有 status:* 的 open issue，最老的在前；等人补而没人答的不列",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "issues block add",
+      "module": "issues",
+      "use": "add <docs> <n> <blocker>",
+      "summary": "标：#n 被 #blocker 挡着",
+      "caller": "session",
+      "next": "dyna issues block list <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "blocker",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues block list",
+      "module": "issues",
+      "use": "list <docs> <n>",
+      "summary": "列：JSON，挡着 #n 的 issue",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues block remove",
+      "module": "issues",
+      "use": "remove <docs> <n> <blocker>",
+      "summary": "去：#n 不再被 #blocker 挡着",
+      "caller": "session",
+      "next": "dyna issues block list <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "blocker",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues body",
+      "module": "issues",
+      "use": "body <docs> <body-file>",
+      "summary": "只核对正文的五节",
+      "caller": "session",
+      "next": "dyna issues new <docs> <title> <body-file>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "body-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues candidates",
+      "module": "issues",
+      "use": "candidates <docs> [limit]",
+      "summary": "JSON：没被挡路的 todo（或 triage）issue，按「我的优先、再按优先级、再按等得久」排好",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "state",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "todo 或 triage"
+        }
+      ]
+    },
+    {
+      "command": "issues check",
+      "module": "issues",
+      "use": "check <docs> <state> <n>",
+      "summary": "只核对翻状态的前提，不写任何东西（--from：不读 issue，n 可以是 Linear 的号）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "comment",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "翻状态时的评论"
+        },
+        {
+          "name": "from",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "issue 现在的状态（给了就不读 issue）"
+        },
+        {
+          "name": "skip-design",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "没装 design 插件时跳过「设计已冻结」的核对"
+        }
+      ]
+    },
+    {
+      "command": "issues guard",
+      "module": "issues",
+      "use": "guard [command]",
+      "summary": "拦下手写的 gh issue edit 加或去 status:* label，提示改用 dyna issues set；别的 label 放行",
+      "caller": "hook",
+      "next": "dyna issues set <docs> <状态> <issue 号>",
+      "args": [
+        {
+          "name": "command",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PreToolUse 事件；被拦时退出码 2、理由写到 stderr"
+        }
+      ]
+    },
+    {
+      "command": "issues labels",
+      "module": "issues",
+      "use": "labels <docs>",
+      "summary": "建出缺的 status / priority / kind / type label，列出多余的（--prune 删掉）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "prune",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "删掉状态、优先级、类型、分类和保留清单之外的 label"
+        }
+      ]
+    },
+    {
+      "command": "issues migrate",
+      "module": "issues",
+      "use": "migrate <docs>",
+      "summary": "列出旧的中文状态 label 怎么换（--apply 才写）",
+      "caller": "session",
+      "next": "dyna issues labels <docs>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "apply",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "真的改"
+        }
+      ]
+    },
+    {
+      "command": "issues new",
+      "module": "issues",
+      "use": "new <docs> <title> <body-file>",
+      "summary": "开 issue：先核正文的五节和同标题的 open issue；打印新号",
+      "caller": "session",
+      "next": "dyna issues body <docs> <body-file>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "title",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "body-file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "bug / feature / improvement"
+        },
+        {
+          "name": "priority",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "P0 / P1 / P2（开成 todo 必须带）"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "开在别的仓库：owner/repo"
+        },
+        {
+          "name": "state",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "backlog（默认）或 todo"
+        },
+        {
+          "name": "type",
+          "kind": "flag",
+          "required": false,
+          "value": "stringArray",
+          "repeatable": true,
+          "description": "分类，如 seo/blog，可重复"
+        }
+      ]
+    },
+    {
+      "command": "issues note",
+      "module": "issues",
+      "use": "note <docs> <n> <body-file>",
+      "summary": "在 #n 上评论，带 AI 前缀",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "body-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues priority",
+      "module": "issues",
+      "use": "priority <docs> <P0|P1|P2|none> <n>...",
+      "summary": "换 issue 的 priority:* label（none：只去掉）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "P0|P1|P2|none",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "issues queues",
+      "module": "issues",
+      "use": "queues <docs>",
+      "summary": "JSON：这一刻调度该派什么、最多几个（读 ISSUE_TRACKER.md 的「调度」表，没有就用默认）、整张表和侧栏的分区",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "at",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "按这一刻（HH:MM）算，不给就用本机的钟"
+        }
+      ]
+    },
+    {
+      "command": "issues read",
+      "module": "issues",
+      "use": "read <docs> <n>",
+      "summary": "JSON：#n 的标题、状态、label、负责人、正文和全部评论（包 gh issue view）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues reconcile",
+      "module": "issues",
+      "use": "reconcile <docs>",
+      "summary": "PR 全合并 → done；PR 全 ready → in-review；旧 label、两个 status label 报问题",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues set",
+      "module": "issues",
+      "use": "set <docs> <state> <n>...",
+      "summary": "翻 issue 的状态：先逐个核对，再写；done / canceled 先关 issue 再去 label",
+      "caller": "session",
+      "next": "dyna issues check <docs> <状态> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "state",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        },
+        {
+          "name": "comment",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "翻状态时的评论（翻 backlog 必须写清停在哪）"
+        },
+        {
+          "name": "skip-design",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "没装 design 插件时跳过「设计已冻结」的核对"
+        }
+      ]
+    },
+    {
+      "command": "issues show",
+      "module": "issues",
+      "use": "show <docs> <n>",
+      "summary": "JSON：#n 的状态、标题、分类、PR（仓库、draft / ready / merged）、覆盖它的 spec、分支",
+      "caller": "session",
+      "next": "dyna issues check <docs> <状态> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues type",
+      "module": "issues",
+      "use": "type <docs> <n> <parent[/child]>...",
+      "summary": "把 #n 的 type:* label 设成项目分类里的给定值",
+      "caller": "session",
+      "next": "dyna issues labels <docs>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "n",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "parent[/child]",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "mcp design-archive",
+      "module": "mcp",
+      "use": "design-archive",
+      "summary": "设计档案的 MCP 服务（只读，七个查询工具），走标准输入输出",
+      "caller": "session",
+      "next": "",
+      "args": []
+    },
+    {
+      "command": "pr body get",
+      "module": "pr",
+      "use": "get <owner/repo> <pr> <section>",
+      "summary": "打印 PR 描述的一个小节（summary|problem|changes|verification|rollback|live-check|night-decided|night-waiting|your-todo|reference）；没有这一节就打印空行",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "section",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr body set",
+      "module": "pr",
+      "use": "set <owner/repo> <pr> <section> <content.md>",
+      "summary": "把文件的内容写成 PR 描述的这一节（空内容删掉这一节）；「参考」以外有代码层面的指称就拒写",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "section",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "content.md",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr candidates submit",
+      "module": "pr",
+      "use": "submit <candidates.json> <base-ref> <evidence-dir> <round>",
+      "summary": "校验候选：引用的原文要在文件里、代码要在 diff 里（不成立的丢弃并写原因）；措辞不合格的退回并说出哪一条（退出 2），校验过了才算交回",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "candidates.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "evidence-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "round",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr diagnostics filter",
+      "module": "pr",
+      "use": "filter <base-ref>",
+      "summary": "从标准输入读检查输出，只留下落在 <base-ref>...HEAD 改动行上的那几条（JSON：onChanged、elsewhere、unlocated）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr evidence cleanup",
+      "module": "pr",
+      "use": "cleanup <owner/repo> <pr>",
+      "summary": "删掉证据分支（没有就什么也不做）和旧版留下的 draft release",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr evidence list",
+      "module": "pr",
+      "use": "list <owner/repo> <pr>",
+      "summary": "打印证据分支上每个文件的地址（JSON）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr evidence publish",
+      "module": "pr",
+      "use": "publish <owner/repo> <pr> <file>...",
+      "summary": "把图片传到证据分支，打印 {文件名: 地址} 的 JSON；文件名要以 tNN- / rN- / pr- 开头",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "pr loop archive",
+      "module": "pr",
+      "use": "archive <file> <owner/repo> <pr>",
+      "summary": "把文件里还没在 PR 上的汇报各发成一条评论（有 GitHub App 就用它的身份），本地图先传到证据分支；已发过的不重发",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr loop check",
+      "module": "pr",
+      "use": "check <file>",
+      "summary": "JSON：文件里每条汇报和它有没有处理完；unsettled 列出没处理完的",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr loop next",
+      "module": "pr",
+      "use": "next <file> <kind> [impl]",
+      "summary": "打印下一个轮次号：kind 是 review（review 轮；带 impl 数实现阶段的汇报）、pause（旧）或 replay",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "impl",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "pr merge",
+      "module": "pr",
+      "use": "merge <owner/repo> <pr>",
+      "summary": "合并 PR（--method 取 DEVELOPMENT.md「分支」节写的合并方式）",
+      "caller": "session",
+      "next": "dyna pr view <owner/repo> <pr>",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "method",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "合并方式：merge、squash 或 rebase（必填）"
+        }
+      ]
+    },
+    {
+      "command": "pr open",
+      "module": "pr",
+      "use": "open <owner/repo>",
+      "summary": "在当前分支上开 PR，默认 draft（--ready 直接开成 ready）；打印 PR 的地址",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "基准分支（必填）"
+        },
+        {
+          "name": "body-file",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "正文文件（必填）"
+        },
+        {
+          "name": "head",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "要开 PR 的分支；不给就用当前分支"
+        },
+        {
+          "name": "ready",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "直接开成 ready（默认 draft）"
+        },
+        {
+          "name": "title",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "标题（必填）"
+        }
+      ]
+    },
+    {
+      "command": "pr ready",
+      "module": "pr",
+      "use": "ready <owner/repo> <pr>",
+      "summary": "把 draft PR 转成 ready",
+      "caller": "session",
+      "next": "dyna pr view <owner/repo> <pr>",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr view",
+      "module": "pr",
+      "use": "view <owner/repo> <pr>",
+      "summary": "JSON：PR 的状态、是否 draft、分支、合并提交（--fields 换字段）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "owner/repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "pr",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "fields",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "要读的字段，逗号分开（gh pr view --json 认的）"
+        }
+      ]
+    },
+    {
+      "command": "registry",
+      "module": "registry",
+      "use": "registry",
+      "summary": "打印命令登记表：每条命令的名字、参数、说明、谁能调、出错时提示的下一条命令",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（每版发布时存进 dyna/registry/<版本>.json）"
+        }
+      ]
+    },
+    {
+      "command": "research submit",
+      "module": "research",
+      "use": "submit <index.html> | submit --light <research-light.json> --opinions=1,2,3 [--ledger=1.1,1.2]",
+      "summary": "校验调研页的骨架：章节齐、顺序对、每步截图有说明且能点开、图都是落图目录内的相对路径；--light 校验轻用法交回的文件（每条评委意见有用户路径、配图、新的设计意图）；不对就说出哪一条（退出 2），校验过了才算交回",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "index.html",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "research-light.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "--ledger=1.1,1.2",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON（valid、errors、sources；--light 时是 valid、errors、items）"
+        },
+        {
+          "name": "ledger",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "--light：这一轮交给调研员的 ledger 编号，逗号分隔，如 1.1,1.2；给了，推翻就只能指其中一条"
+        },
+        {
+          "name": "light",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "校验轻用法交回的文件：位置参数是 research-light.json，要带 --opinions"
+        },
+        {
+          "name": "opinions",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "--light：这一轮交给调研员的评委意见编号，逗号分隔，如 1,2,3"
+        }
+      ]
+    },
+    {
+      "command": "retro digest",
+      "module": "retro",
+      "use": "digest <transcript.jsonl>",
+      "summary": "把一份会话记录压成人的发言，每条带上它前一条 AI 回复的结论（不含工具调用、工具输出、压缩摘要）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "transcript.jsonl",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "ai-max",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "每条保留 AI 结论的最后多少字（默认 1500）"
+        }
+      ]
+    },
+    {
+      "command": "retro install",
+      "module": "retro",
+      "use": "install",
+      "summary": "把回放 runner 装到固定路径（默认 ~/.idea-loop/bin），打印要加进权限设置的允许规则；不改任何权限设置",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dest",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "装到哪个目录（默认 ~/.idea-loop/bin）"
+        }
+      ]
+    },
+    {
+      "command": "retro locate",
+      "module": "retro",
+      "use": "locate",
+      "summary": "找出这场会话自己的记录文件：先按会话 id，再按开场第一句人话里的标记；只认唯一的一份，零份或多份退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dir",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只在这一个目录里找（不给就找 ~/.claude/projects 下所有项目目录）"
+        },
+        {
+          "name": "marker",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "开场第一句人话里的一段话；没有 id 或按 id 找不到时用"
+        },
+        {
+          "name": "session",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "会话 id（记录文件名去掉 .jsonl）；不给就用环境变量 CLAUDE_CODE_SESSION_ID"
+        }
+      ]
+    },
+    {
+      "command": "retro pool count",
+      "module": "retro",
+      "use": "count <pool-dir>",
+      "summary": "数候选池里每个候选出现过几次（不同会话数，已推翻的不算），到 3 次算过线；文件格式不对就列出来（退出 2）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "pool-dir",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "retro pool reopened",
+      "module": "retro",
+      "use": "reopened <candidate-file>",
+      "summary": "被驳回的候选自上次驳回以来有没有新的会话出现：从 git 历史答（候选文件要在 git 仓库里）；答不了（状态不是驳回、驳回还没提交）退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "candidate-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "runtime handoff",
+      "module": "runtime",
+      "use": "handoff",
+      "summary": "开一个会话并交到桌面端：先 claude -p 建会话、读 id，再在交互模式接回并敲 /desktop（调度用）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "claude",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "claude 可执行文件（环境变量 DESKTOP_HANDOFF_CLAUDE；默认 claude）"
+        },
+        {
+          "name": "dir",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）"
+        },
+        {
+          "name": "idle-ms",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "接回的会话安静多少毫秒后才敲 /desktop（默认 2500）"
+        },
+        {
+          "name": "issue",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "issue 号；和 --repo、--period 要么都给、要么都不给，给了就在成功后往记录目录追加一条"
+        },
+        {
+          "name": "p-timeout-sec",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "claude -p 那一步最多等几秒（环境变量 DESKTOP_HANDOFF_P_TIMEOUT_SEC；默认 180）"
+        },
+        {
+          "name": "period",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "时段标签（todo 或 triage），早上汇总靠它找夜里开出的会话"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "仓库名，记录文件是 <记录目录>/<仓库名>.json"
+        },
+        {
+          "name": "timeout-sec",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "交互那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）"
+        },
+        {
+          "name": "worktree",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "两次 claude 都在这个目录里跑（默认：当前目录）；接回的会话只能从它被建出来的目录找到"
+        }
+      ]
+    },
+    {
+      "command": "runtime inject",
+      "module": "runtime",
+      "use": "inject <decision-rules|runtime|reference>",
+      "summary": "打印开场注入的一段（只由 SessionStart hook 调）：decision-rules 的正文、运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截",
+      "caller": "hook",
+      "next": "",
+      "args": [
+        {
+          "name": "decision-rules|runtime|reference",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话"
+        }
+      ]
+    },
+    {
+      "command": "runtime name",
+      "module": "runtime",
+      "use": "name",
+      "summary": "打印当前运行环境的名字（claude-desktop / magi）；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1，不猜",
+      "caller": "session",
+      "next": "",
+      "args": []
+    },
+    {
+      "command": "runtime show",
+      "module": "runtime",
+      "use": "show [capability]",
+      "summary": "打印当前运行环境里这项能力的做法（数据里的那一节）；不带能力打印能力清单和做不到时的退路。子代理收不到开场注入，用它取",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "capability",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
+      "command": "seo allocate",
+      "module": "seo",
+      "use": "allocate <SEO.md> <balance> [direction...]",
+      "summary": "算这一轮扫描各方向本周能花多少 OpenSEO credits（按套餐额度、每周分配、已花的和余额下限）；不给方向只打印本周的账",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "balance",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "direction...",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "context",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "get_project_context 的原始返回（要有 researchLog）；不给就当账本未知"
+        },
+        {
+          "name": "spent",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "这一轮已经花掉的 credits（竞品猜测那一步），算进本周「扫描」一份"
+        },
+        {
+          "name": "today",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "今天的日期 YYYY-MM-DD（默认今天，UTC）"
+        }
+      ]
+    },
+    {
+      "command": "seo check",
+      "module": "seo",
+      "use": "check [dist-dir]",
+      "summary": "查构建产物里每个 index.html 的 SEO（Google 和 Bing 两个平台），按路由列出问题；有 error 退出 1，参数不对或目录不存在退出 2。--hook：读 PreToolUse、PostToolUse 事件，构建后跑检查，有 error 退出 2 并在 stderr 回话",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "dist-dir",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "desc-max",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "description 宽度上限（默认 160，超了是 error）"
+        },
+        {
+          "name": "desc-min",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "description 宽度下限（默认 145）"
+        },
+        {
+          "name": "filter",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只报告路由里含这段文字的页面（扫描仍是全站，hreflang 互指照全站查）"
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PreToolUse、PostToolUse 事件；有 error 退出码 2、理由写到 stderr"
+        },
+        {
+          "name": "strict",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "警告也算失败（退出 1）"
+        },
+        {
+          "name": "title-max",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "title 宽度上限（默认 70）"
+        },
+        {
+          "name": "title-min",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "title 宽度下限（默认 48，CJK 字符算 2）"
+        }
+      ]
+    },
+    {
+      "command": "seo compare-audits",
+      "module": "seo",
+      "use": "compare-audits <SEO.md> <previous.json> <current.json>",
+      "summary": "比对 OpenSEO 站点审计的上一次和这一次（get_audit_pages 的原始返回），打印重点页面回退的发现（方向 technical）：状态码、可索引、sitemap 是严重，title 和 description 变了是警告",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "previous.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "current.json",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo due",
+      "module": "seo",
+      "use": "due <context.json> <YYYY-MM-DD>",
+      "summary": "不带参数的扫描这次该跑哪些方向：results 每 3 天，其余五个每 7 天，按研究日志里最近一次采集算",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "context.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "YYYY-MM-DD",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo file-issues",
+      "module": "seo",
+      "use": "file-issues <docs> <findings.json>",
+      "summary": "把一轮扫描的发现开成 issue：证据、复现、验收标准缺一样的拒收；同方向同类的合成一个 issue；已有同标记的 open issue 就留评论；新 issue 不带 status label（就是 backlog），打 type:seo/<方向>",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "findings.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "date",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "这次扫描的日期 YYYY-MM-DD（默认今天，UTC）"
+        },
+        {
+          "name": "dry-run",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "只打印会做什么，不写 GitHub（number 为 null）"
+        }
+      ]
+    },
+    {
+      "command": "seo gaps",
+      "module": "seo",
+      "use": "gaps <SEO.md> <context.json|-> <direction>...",
+      "summary": "这一轮的方向要用、却还没人写下的项目信息（竞品、品牌词、业务概述、当前目标、定位）；项目上下文给 - 或读不到就只查 SEO.md 的项",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "context.json|-",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "direction",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "seo parse",
+      "module": "seo",
+      "use": "parse <SEO.md>",
+      "summary": "读 SEO.md，打印九节内容的 JSON（站点、OpenSEO、竞品、重点页面、构建与检查、写作、品牌、内容原则、分析，和哪些项已确认）；读不了或写法不对退出 1",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo provenance",
+      "module": "seo",
+      "use": "provenance <repo> <previous.json> <current.json> <findings.json> <since> <until>",
+      "summary": "哪些「title 或 description 变了」是已合并的 PR 有意改的：在仓库历史里找新字符串是哪个 commit 加的、哪个 PR 合进主线，合并时间落在两次审计之间就算有意，从发现里去掉",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "repo",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "previous.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "current.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "findings.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "since",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "until",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "branch",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主线是哪个 ref（默认远端的默认分支，仓库不知道就用 HEAD）"
+        }
+      ]
+    },
+    {
+      "command": "seo record body",
+      "module": "seo",
+      "use": "body <result.json>",
+      "summary": "把全过的上线自查结果写成 issue 评论正文（给人看的表加隐藏的标记）；不是全过退出 1。用 dyna issues note 贴出去",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "result.json",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "merged",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "PR 的合并日期 YYYY-MM-DD"
+        },
+        {
+          "name": "pr",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "合并的 PR 号"
+        }
+      ]
+    },
+    {
+      "command": "seo record from-rollback",
+      "module": "seo",
+      "use": "from-rollback <docs> <issue>",
+      "summary": "这个 issue 是不是上线自查回滚后开的（正文带「由上线自查回滚而来」）：是的话再失败就是第二次，交给人",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "issue",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo record list",
+      "module": "seo",
+      "use": "list <docs>",
+      "summary": "读项目已关闭的 type:seo issue 评论里的上线记录，JSON：每个网址一行（issue、title、url、keyword、mergedOn、四项结果），按 issue 号从小到大",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "since",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "只列这一天及以后合并的"
+        }
+      ]
+    },
+    {
+      "command": "seo scope",
+      "module": "seo",
+      "use": "scope <SEO.md>",
+      "summary": "判断一个 PR 是不是只改内容：改动的文件都落在 SEO.md「构建与检查」的「内容路径」里才算（可以不等人合并）；没有改动文件不算。退出 0 看 contentOnly",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "从仓库取：git diff --name-only --no-renames <ref>...HEAD（在当前目录跑）"
+        },
+        {
+          "name": "files",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "改动文件清单，一行一个路径；- 是标准输入"
+        }
+      ]
+    },
+    {
+      "command": "seo sync-context",
+      "module": "seo",
+      "use": "sync-context <SEO.md> <context.json>",
+      "summary": "把 SEO.md 的竞品和重点页面单向同步到 OpenSEO 项目上下文：打印 update_project_context 要用的 updates 和一句说明（updates 为空就是已一致）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "context.json",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "seo verify-live",
+      "module": "seo",
+      "use": "verify-live <SEO.md> <build-dir>",
+      "summary": "合并之后的上线自查：对 PR 描述里每个网址取线上页面，对照构建产物查四项（能打开、没有 noindex、title 与 description 同产物、在 sitemap 里）；退出 0 看 verdict（pass、fail、not-live）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "SEO.md",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "build-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "interval",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "--wait 每隔几秒取一遍"
+        },
+        {
+          "name": "max-wait",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "覆盖等多久（秒），给测试用；limitMinutes 仍是 SEO.md 的"
+        },
+        {
+          "name": "urls",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "网址清单：一行一个 `<网址> 目标词：<词>`；- 是标准输入"
+        },
+        {
+          "name": "wait",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "先等部署：每隔 --interval 秒取一遍，每页 title 和 description 都同产物才算上线；超过 SEO.md 的「上线等待」分钟还没上线就报 not-live，不算失败"
+        }
+      ]
+    },
+    {
+      "command": "serve start",
+      "module": "serve",
+      "use": "start <目录>",
+      "summary": "在后台起一个静态服务器，服务这个目录；挑一个空闲端口（--port 指定也行），打印地址，用完用 serve stop <地址> 停",
+      "caller": "session",
+      "next": "dyna serve start <目录>",
+      "args": [
+        {
+          "name": "目录",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "idle",
+          "kind": "flag",
+          "required": false,
+          "value": "duration",
+          "description": "这么久没有请求，服务就自己退出（如 30m、2h）；0 表示不退"
+        },
+        {
+          "name": "port",
+          "kind": "flag",
+          "required": false,
+          "value": "int",
+          "description": "指定端口；不给就让系统挑一个空闲的"
+        }
+      ]
+    },
+    {
+      "command": "serve stop",
+      "module": "serve",
+      "use": "stop <地址>",
+      "summary": "停掉 serve start 起的服务器，等到端口放开才返回；地址就是 start 打印的那行（给端口号也行）。那个端口上没有服务就当已经停了",
+      "caller": "session",
+      "next": "dyna serve start <目录>",
+      "args": [
+        {
+          "name": "地址",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec check",
+      "module": "spec",
+      "use": "check <docs>",
+      "summary": "列出 docs/spec/ 下的 spec（JSON），报旧平铺布局、缺 spec 文件、还留着 status 行的问题",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec index",
+      "module": "spec",
+      "use": "index <docs>",
+      "summary": "按 docs/spec/ 下的 spec 重写 docs/spec/index.md 的表，表外的字不动",
+      "caller": "session",
+      "next": "dyna spec check <docs>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec landed",
+      "module": "spec",
+      "use": "landed <base-ref>",
+      "summary": "列出集成分支上自与 <base-ref> 分叉以来已落地的工单（JSON：提交和工单名，旧的在前）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec skill-edit",
+      "module": "spec",
+      "use": "skill-edit <commit> <handback-file>",
+      "summary": "核对交回文件有没有覆盖这个提交改到的 skill、agent 定义、skill 参考文件；不够时每条原因一行，退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "commit",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "handback-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "spec ticket-of",
+      "module": "spec",
+      "use": "ticket-of <commit>",
+      "summary": "打印一个提交属于哪张工单；提交里没有 Ticket 行时不打印，退出 2",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "commit",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "test fixture design-archive",
+      "module": "test",
+      "use": "design-archive <目录>",
+      "summary": "把一份虚构的两页设计档案（菜谱 App）写进一个空目录；写完 dyna design archive check <目录> 退出 0",
+      "caller": "test",
+      "next": "",
+      "args": [
+        {
+          "name": "目录",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "test run",
+      "module": "test",
+      "use": "run [匹配] [--plugin <插件根>]",
+      "summary": "跑插件自己的 scripts/*.test.mjs（node --test）；带匹配就只跑文件名含它的；结果和退出码照 node 的",
+      "caller": "test",
+      "next": "",
+      "args": [
+        {
+          "name": "匹配",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "plugin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "插件根目录；不给就从当前目录往上找（仓库根目录下的 idea-loop/ 也认），再不行用 IDEA_LOOP_PLUGIN_ROOT"
+        }
+      ]
+    },
+    {
+      "command": "test skill-doc",
+      "module": "test",
+      "use": "skill-doc <skill目录> [--plugin <插件根>] [--min-pointers <n>]",
+      "summary": "查一份 skill：SKILL.md 主体（去掉 frontmatter）不到 5000 字（UTF-8 字符），插件里每处指向它的小节（idea-loop:<skill> 的「某节」）都是它的 SKILL.md 或 references/ 的标题；不对退出 1",
+      "caller": "test",
+      "next": "",
+      "args": [
+        {
+          "name": "skill目录",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "min-pointers",
+          "kind": "flag",
+          "required": false,
+          "value": "int",
+          "description": "至少要查到这么多处指向；少了算红（防止写错 skill 名查了个空）"
+        },
+        {
+          "name": "plugin",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "插件根目录；不给就从 skill 目录往上找带 .claude-plugin/plugin.json 的那层，再不行用 IDEA_LOOP_PLUGIN_ROOT"
+        }
+      ]
+    },
+    {
+      "command": "ui compare",
+      "module": "ui",
+      "use": "compare <archive.png> <fresh.png>",
+      "summary": "比两张同一状态的截图（档案里的、新拍的），按 UI 环自己的容差：一致（退出 0）就不用重拍，超出（1）或读不了（2）",
+      "caller": "session",
+      "next": "dyna ui compare <archive.png> <fresh.png>",
+      "args": [
+        {
+          "name": "archive.png",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "fresh.png",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "antialias",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "两个像素当作同一个颜色的感知色差（0 到 1）"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON：within、percent、threshold、antialias、reason"
+        },
+        {
+          "name": "pixel",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "允许不同的像素占比（百分数）"
+        }
+      ]
+    },
+    {
+      "command": "ui lock acquire",
+      "module": "ui",
+      "use": "acquire <lock-dir>",
+      "summary": "取浏览器锁：被别人占着就等（--wait-min 分钟），等不到退出 1；占锁的人已经不在了（--stale-min 分钟）就接手",
+      "caller": "session",
+      "next": "dyna ui lock status <lock-dir>",
+      "args": [
+        {
+          "name": "lock-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "owner",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "谁在取锁（实现者的工单号、dreaming 之类）"
+        },
+        {
+          "name": "stale-min",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "锁超过多少分钟没人放就当占锁的人已经不在了"
+        },
+        {
+          "name": "wait-min",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "最多等多少分钟；0 就是试一次"
+        }
+      ]
+    },
+    {
+      "command": "ui lock release",
+      "module": "ui",
+      "use": "release <lock-dir>",
+      "summary": "放浏览器锁：只有占锁的人放得掉，--force 谁的都放（编排者在实现者交回时用）",
+      "caller": "session",
+      "next": "dyna ui lock status <lock-dir>",
+      "args": [
+        {
+          "name": "lock-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "force",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "不管谁占着都放掉"
+        },
+        {
+          "name": "owner",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "谁在放锁"
+        }
+      ]
+    },
+    {
+      "command": "ui lock status",
+      "module": "ui",
+      "use": "status <lock-dir>",
+      "summary": "看浏览器锁：打印 JSON {held, owner, since, stale}",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "lock-dir",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "stale-min",
+          "kind": "flag",
+          "required": false,
+          "value": "float64",
+          "description": "锁超过多少分钟没人放就算 stale"
+        }
+      ]
+    },
+    {
+      "command": "ui measure",
+      "module": "ui",
+      "use": "measure <matrix.json>...",
+      "summary": "把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素（格上写 shotAnchor 就只比那个锚点的区域）；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2。矩阵写 \"mode\": \"canvas-diff\" 就比同一画布的两版：列出变了的锚点和两版区域截图，有改动集时分出没声明的；没变或变的都声明过退出 0，其余退出 2",
+      "caller": "session",
+      "next": "dyna ui measure <matrix.json>...",
+      "args": [
+        {
+          "name": "matrix.json",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        },
+        {
+          "name": "concurrency",
+          "kind": "flag",
+          "required": false,
+          "value": "int",
+          "description": "同时跑几份矩阵（至多 4）；不给就按机器空闲的内存和 CPU 定"
+        },
+        {
+          "name": "json",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "输出 JSON：一份矩阵是 {findings, 瓶颈, humanReviewCells}（canvas-diff 是 {mode, classified, changed, declared, undeclared, declaredUnchanged, unchecked, humanReviewCells}），多份是 {matrices: […]}"
+        }
+      ]
+    },
+    {
+      "command": "version",
+      "module": "version",
+      "use": "version",
+      "summary": "打印这个 dyna 的版本号",
+      "caller": "session",
+      "next": "",
+      "args": []
+    },
+    {
+      "command": "worktree add",
+      "module": "worktree",
+      "use": "add <名字>",
+      "summary": "在主 checkout 旁边建 worktree（<上一级>/<仓库名>-worktrees/<名字>），打印它的路径；分支默认 issue/<名字>，已有就接上，路径上已经是这条分支的 worktree 就直接给回",
+      "caller": "session",
+      "next": "dyna worktree add <名字> --repo <主 checkout> --base <基准分支>",
+      "args": [
+        {
+          "name": "名字",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "base",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "基准分支（DEVELOPMENT.md「分支」节写的）；新建分支或游离 worktree 时从 origin/<基准分支> 起，必须给"
+        },
+        {
+          "name": "branch",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "分支名；不给就是 issue/<名字>（issue 已经有分支就写它）"
+        },
+        {
+          "name": "detach",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "不建分支，游离在 origin/<基准分支> 上（triage 会话用）"
+        },
+        {
+          "name": "path",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "worktree 的路径；不给就是 <主 checkout 的上一级>/<仓库名>-worktrees/<名字>"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主 checkout 的目录（建和删用同一个路径）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "worktree guard",
+      "module": "worktree",
+      "use": "guard [command]",
+      "summary": "拦下手写的 git worktree remove，提示改用 dyna worktree remove；别的 git worktree 子命令放行",
+      "caller": "hook",
+      "next": "dyna worktree remove <路径>",
+      "args": [
+        {
+          "name": "command",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "hook",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "从 stdin 读 PreToolUse 事件；被拦时退出码 2、理由写到 stderr"
+        }
+      ]
+    },
+    {
+      "command": "worktree list",
+      "module": "worktree",
+      "use": "list",
+      "summary": "列出这个仓库的 worktree：路径、分支（游离的写 (detached)）、锁（locked），用制表符隔开",
+      "caller": "session",
+      "next": "dyna worktree list --repo <主 checkout>",
+      "args": [
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主 checkout 的目录（建和删用同一个路径）；不给就用当前目录"
+        }
+      ]
+    },
+    {
+      "command": "worktree remove",
+      "module": "worktree",
+      "use": "remove <路径>",
+      "summary": "删 worktree：先解锁、再删 worktree、再删它的分支（--keep-branch 保留）；里面有没提交的改动就拒绝（--force 才删）",
+      "caller": "session",
+      "next": "dyna worktree list --repo <主 checkout>",
+      "args": [
+        {
+          "name": "路径",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "force",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "里面有没提交的改动也删"
+        },
+        {
+          "name": "keep-branch",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "不删分支（默认删，不论合并没合并：该不该删由调用方判断）"
+        },
+        {
+          "name": "repo",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "主 checkout 的目录（建和删用同一个路径）；不给就用当前目录；不给就从 worktree 自己找到它的主 checkout"
+        }
+      ]
+    }
+  ]
+}

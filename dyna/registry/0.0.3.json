@@ -736,34 +736,22 @@
     {
       "command": "design critic round",
       "module": "design",
-      "use": "round <critic.json> --context <context.json>",
-      "summary": "评委这一轮：校验评委交回的形状（findings、对人思路的评估、分数），点出方向性意见；不判停，停不停由人定。--context 是 { states, thoughts }",
+      "use": "round <round.json>",
+      "summary": "评委这一轮：校验 findings 的形状和分数，判停（方向 / 通过 / 瓶颈 / 继续）；输入文件是 { findings, score, history }",
       "caller": "session",
-      "next": "dyna design critic round <critic.json> --context <context.json>",
+      "next": "dyna design critic round <round.json>",
       "args": [
         {
-          "name": "critic.json",
+          "name": "round.json",
           "kind": "positional",
           "required": true
-        },
-        {
-          "name": "context.json",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "context",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "本轮的上下文文件 { states: 这一版的状态名, thoughts: 要评估的人的思路 id }"
         },
         {
           "name": "json",
           "kind": "flag",
           "required": false,
           "value": "bool",
-          "description": "输出 JSON（valid、errors、score、direction）"
+          "description": "输出 JSON"
         }
       ]
     },
@@ -892,109 +880,6 @@
           "required": false,
           "value": "bool",
           "description": "输出 JSON"
-        }
-      ]
-    },
-    {
-      "command": "design report",
-      "module": "design",
-      "use": "report --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> --out <report.html>",
-      "summary": "把设计收敛的一轮拼成一页设计评审报告（没声明却变了的地方、评委意见配用户路径和参考图、对人思路的评估、分数），图都内嵌；打印给对话用的摘要。输入不对退出 2 并逐条说哪一份、哪一项",
-      "caller": "session",
-      "next": "dyna design report --judge <critic.json> --research <research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <address> --self-check <self-check.json> --out <report.html>",
-      "args": [
-        {
-          "name": "critic.json",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "research-light.json",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "canvas-diff.json",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "thoughts.md",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "address",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "report.html",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "canvas",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "这一版画布页的地址"
-        },
-        {
-          "name": "diff",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "dyna ui measure 在 canvas-diff 模式、带改动集跑出的 --json 输出"
-        },
-        {
-          "name": "dissatisfied",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "人的不满标记 [{ opinion, quote }]，只对 direction 意见"
-        },
-        {
-          "name": "judge",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "评委的 JSON（dyna design critic round 校验过的）"
-        },
-        {
-          "name": "out",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "报告写到这个文件"
-        },
-        {
-          "name": "previous",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "上一版画布页的地址"
-        },
-        {
-          "name": "research",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "调研员轻用法交回的 research-light.json；其中的图按它所在的目录解析"
-        },
-        {
-          "name": "self-check",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "designer 的自检说明 [{ state, anchor, what, why }]；不传，报告不提理由"
-        },
-        {
-          "name": "thoughts",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "这一轮的 thoughts.md：一条一行，<编号> | <人的原话>"
         }
       ]
     },
@@ -2205,8 +2090,8 @@
     {
       "command": "research submit",
       "module": "research",
-      "use": "submit <index.html> | submit --light <research-light.json> --opinions=1,2,3 [--ledger=1.1,1.2]",
-      "summary": "校验调研页的骨架：章节齐、顺序对、每步截图有说明且能点开、图都是落图目录内的相对路径；--light 校验轻用法交回的文件（每条评委意见有用户路径、配图、新的设计意图）；不对就说出哪一条（退出 2），校验过了才算交回",
+      "use": "submit <index.html>",
+      "summary": "校验调研页的骨架：章节齐、顺序对、每步截图有说明且能点开、图都是落图目录内的相对路径；不对就说出哪一条（退出 2），校验过了才算交回",
       "caller": "session",
       "next": "",
       "args": [
@@ -2216,42 +2101,11 @@
           "required": true
         },
         {
-          "name": "research-light.json",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "--ledger=1.1,1.2",
-          "kind": "positional",
-          "required": false
-        },
-        {
           "name": "json",
           "kind": "flag",
           "required": false,
           "value": "bool",
-          "description": "输出 JSON（valid、errors、sources；--light 时是 valid、errors、items）"
-        },
-        {
-          "name": "ledger",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "--light：这一轮交给调研员的 ledger 编号，逗号分隔，如 1.1,1.2；给了，推翻就只能指其中一条"
-        },
-        {
-          "name": "light",
-          "kind": "flag",
-          "required": false,
-          "value": "bool",
-          "description": "校验轻用法交回的文件：位置参数是 research-light.json，要带 --opinions"
-        },
-        {
-          "name": "opinions",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "--light：这一轮交给调研员的评委意见编号，逗号分隔，如 1,2,3"
+          "description": "输出 JSON（valid、errors、sources）"
         }
       ]
     },
@@ -3241,7 +3095,7 @@
       "command": "ui measure",
       "module": "ui",
       "use": "measure <matrix.json>...",
-      "summary": "把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素（格上写 shotAnchor 就只比那个锚点的区域）；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2。矩阵写 \"mode\": \"canvas-diff\" 就比同一画布的两版：列出变了的锚点和两版区域截图，有改动集时分出没声明的；没变或变的都声明过退出 0，其余退出 2",
+      "summary": "把设计画布和本地页面逐格量一遍：先量锚点的位置和样式，再比整页像素；没有问题（或只剩要人看的格）退出 0，有 finding 退出 2",
       "caller": "session",
       "next": "dyna ui measure <matrix.json>...",
       "args": [
@@ -3263,7 +3117,7 @@
           "kind": "flag",
           "required": false,
           "value": "bool",
-          "description": "输出 JSON：一份矩阵是 {findings, 瓶颈, humanReviewCells}（canvas-diff 是 {mode, classified, changed, declared, undeclared, declaredUnchanged, unchecked, humanReviewCells}），多份是 {matrices: […]}"
+          "description": "输出 JSON：一份矩阵是 {findings, 瓶颈, humanReviewCells}，多份是 {matrices: […]}"
         }
       ]
     },

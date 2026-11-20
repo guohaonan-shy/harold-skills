@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
@@ -125,7 +126,20 @@ func Inject(section string, env home.Env) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "以下是运行环境「" + name + "」的做法全文，开场注入，不必再取。\n\n" + body + "\n", nil
+	intro := "以下是运行环境「" + name + "」的做法全文，开场注入，不必再取。\n\n"
+	ov := loadOverride(name, env)
+	switch {
+	case ov.failure != "":
+		return ov.failedLine() + "\n" + intro + body + "\n", nil
+	case !ov.present:
+		return intro + body + "\n", nil
+	}
+	m := merge(body, p.expand(ov.text))
+	head := ov.header(m)
+	if n := runeCount(head + "\n" + intro + m.text + "\n"); n > InjectLimit {
+		head += "合并后 " + strconv.Itoa(n) + " 字，超过开场注入上限，后面被截断；完整的某一节跑 `dyna runtime show <能力>`。"
+	}
+	return head + "\n" + intro + m.text + "\n", nil
 }
 
 // sectionOf is the `## <title>` section of a markdown text, heading line and its `###` subsections included, up
@@ -198,7 +212,8 @@ func (p Plugin) Overview() (string, error) {
 	return strings.Join(parts, "\n\n") + "\n", nil
 }
 
-// Show is the section for one capability in the current environment's data.
+// Show is the section for one capability in the current environment's data, with the device's local override
+// merged in; when part of the section is the device's own, the first line says so.
 func Show(capability string, env home.Env) (string, error) {
 	p, err := PluginFrom(env)
 	if err != nil {
@@ -223,9 +238,17 @@ func Show(capability string, env home.Env) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	lead := ""
+	if ov := loadOverride(name, env); ov.failure != "" {
+		lead = ov.failedLine() + "\n"
+	} else if ov.present {
+		m := merge(text, p.expand(ov.text))
+		text = m.text
+		lead = leadOf(ov, m, capability)
+	}
 	s, ok := sectionOf(text, capability)
 	if !ok {
 		return "", nexterr.Plain("运行环境 %s 的数据（%s/%s.md）里没有「%s」一节", name, DataDir, name, capability)
 	}
-	return s + "\n", nil
+	return lead + s + "\n", nil
 }

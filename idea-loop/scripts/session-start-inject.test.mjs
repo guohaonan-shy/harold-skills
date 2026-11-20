@@ -8,7 +8,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dynaBinary } from './dyna-test-bin.mjs';
@@ -100,4 +101,27 @@ test('IDEA_LOOP_RUNTIME forces the reference too', () => {
   const [, runtime, reference] = runAll({ IDEA_LOOP_RUNTIME: 'magi' });
   assert.equal(runtime.stdout.split('\n')[0], '当前运行环境：magi');
   assert.ok(reference.stdout.includes('magi sessions'));
+});
+
+test('a local override in home reaches the reference the hook injects: first line names the file, the replaced section is the local one, the rest is the plugin\'s', () => {
+  const home = mkdtempSync(join(tmpdir(), 'inject-home-'));
+  try {
+    mkdirSync(join(home, 'runtime'));
+    const file = join(home, 'runtime', 'claude-desktop.md');
+    writeFileSync(file, '# 本机覆盖\n\n## 推送\n\n本机推送做法\n\n## 不存在的能力\n\n用不上\n');
+    const [, , reference] = runAll({ IDEA_LOOP_HOME: home });
+    assert.equal(reference.status, 0, reference.stderr);
+    assert.ok(reference.stdout.length < HOOK_OUTPUT_LIMIT);
+    const [first, second] = reference.stdout.split('\n');
+    assert.equal(first, `本机覆盖 ${file}：替换了「推送」；没对上、没用上：「不存在的能力」（插件里没有同级同名的一节）。`);
+    assert.match(second, /^以下是运行环境「claude-desktop」/);
+    assert.ok(reference.stdout.includes('## 推送\n\n本机推送做法\n'));
+    assert.ok(!reference.stdout.includes('用不上'));
+    const plain = readFileSync(join(pluginRoot, REFERENCE['claude-desktop']), 'utf8').replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot).trim();
+    assert.ok(reference.stdout.includes(plain.split('## 推送')[0]), 'sections before the replaced one are the plugin\'s');
+    // the other two injected sections do not change
+    assert.equal(runAll({ IDEA_LOOP_HOME: home })[1].stdout, runAll({})[1].stdout);
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
 });
