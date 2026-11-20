@@ -129,7 +129,7 @@ test('implement: before dispatching it checks the PRs are there (opening any tha
   assert.match(open, /issues set <docs> in-progress/);
   const ending = section(md, '## 没活了就停下') + '\n' + stopRef;
   assert.doesNotMatch(ending, /还没有 PR/, 'the PR is opened at the start, not at the end');
-  assert.match(md + stopRef, /gh pr ready/);
+  assert.match(md + stopRef, /dyna pr ready <owner\/repo> <PR 号>/);
   assert.match(md + stopRef, /issues set <docs> in-review/);
   assert.match(md + landingRef, /idea-loop:issues[^\n]*开一个 issue/);
 });

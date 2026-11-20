@@ -63,7 +63,7 @@ test('wiki-conventions defines the project directory once: what is in it, where 
 test('the places that start a subagent hand it the project directory in the prompt', () => {
   const cases = [
     ['skills/engineering/implement/SKILL.md', /项目目录的绝对路径，工单与 spec/],
-    ['skills/engineering/implement/SKILL.md', /idea-loop:explorer`，给一句目的[^。\n]*项目目录/],
+    ['skills/engineering/implement/references/start-of-run.md', /idea-loop:explorer`，给一句目的[^。\n]*项目目录/],
     ['skills/engineering/pr-review/references/ui-walkthrough.md', /ui-reviewer 的指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/pr-review/references/merge.md', /ui-reviewer`，只给指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/issue-triage/SKILL.md', /idea-loop:issue-triager`，给 issue 号、项目目录的绝对路径/],

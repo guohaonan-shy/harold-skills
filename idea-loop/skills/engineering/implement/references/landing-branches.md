@@ -14,4 +14,4 @@ ff 不了（期间别的先落地了）就退回它：合入最新提交、重�
 
 ## 勾框
 
-工单在 home 里，执行方的 commit 只含代码。落地（`git merge --ff-only`）之后，照交回的 `acceptance` 在 `<项目目录>/docs/spec/<spec-slug>/tickets/` 里勾好这张工单的框；有延后给后续工单的，在那张工单的验收标准末尾追加 `- [ ] <判据>（继承自 NN）`。然后照 `idea-loop:wiki-conventions` 的「知识库落地」一次 `commit` 到 home，只列这两张工单，消息 `docs(tickets): <NN> — 落地`。
+工单在 home 里，执行方的 commit 只含代码。落地（只快进）之后，照交回的 `acceptance` 在 `<项目目录>/docs/spec/<spec-slug>/tickets/` 里勾好这张工单的框；有延后给后续工单的，在那张工单的验收标准末尾追加 `- [ ] <判据>（继承自 NN）`。然后照 `idea-loop:wiki-conventions` 的「知识库落地」一次 `commit` 到 home，只列这两张工单，消息 `docs(tickets): <NN> — 落地`。

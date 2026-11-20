@@ -54,7 +54,7 @@ test('the implementer runs only the tests the ticket touches, the touched APIs, 
   assert.match(done, /typecheck/);
   assert.match(done, /lint/);
   // called back to fix: re-run the tests of the boxes already ticked, not the full suite
-  const input = section(implementer, '输入');
+  const input = section(implementer, '输入') + read('skills', 'engineering', 'implement', 'references', 'stop-and-defer.md');
   assert.doesNotMatch(input, /全量套件照样要全绿/);
   assert.match(input, /已勾的格[\s\S]*重跑/);
 });
@@ -80,19 +80,19 @@ test('implement sends a non-fast-forwardable commit back to re-run its own ticke
   assert.match(land, /ff 不了[^。\n]*重跑[^。\n]*这张工单[^。\n]*测试/);
 });
 
-test('implement waits for CI between `gh pr ready` and pr-review, and says what to do when it is red, unrelated, or absent', () => {
+test('implement waits for CI between readying the PR and pr-review, and says what to do when it is red, unrelated, or absent', () => {
   const stop = `${section(implement, '没活了就停下')}\n${stopAndResume}`;
-  // the sentence that readies the PRs names the order: ready, then wait for CI, then pr-review
-  const ready = stop.indexOf('gh pr ready');
+  // the sentence that readies the PR names the order: ready, then wait for CI, then pr-review
+  const ready = stop.indexOf('dyna pr ready');
   const sentenceEnd = stop.indexOf('\n', ready);
   const order = stop.slice(ready, sentenceEnd);
-  assert.ok(ready >= 0, 'implement no longer says `gh pr ready`');
-  assert.ok(order.indexOf('等 CI') > 0, 'the step after `gh pr ready` must be waiting for CI');
+  assert.ok(ready >= 0, 'implement no longer says to ready the PR with `dyna pr ready`');
+  assert.ok(order.indexOf('等 CI') > 0, 'the step after readying the PR must be waiting for CI');
   assert.ok(order.indexOf('idea-loop:pr-review') > order.indexOf('等 CI'), 'pr-review must start after the CI wait');
-  assert.ok(stop.indexOf('gh pr checks') > ready, '`gh pr checks` must come after `gh pr ready`');
-  assert.match(stop, /gh pr checks <PR 号> --watch/);
-  assert.match(stop, /gh run view <run> --log-failed/);
-  assert.match(stop, /git blame/);
+  const wait = stop.lastIndexOf('**等 CI**：');
+  assert.ok(wait > ready, 'the CI wait comes after readying the PR');
+  assert.match(stop.slice(wait), /等这个 head 的检查跑完/, 'wait for the checks of this head to finish');
+  assert.match(stop, /读失败的测试[^。\n]*找到[^。\n]*提交[^。\n]*`dyna spec ticket-of/, 'a red check is traced to the ticket that introduced it');
   assert.match(stop, /CI（<日期>）：/);
   assert.match(stop, /docs\(tickets\): <NN> — CI 失败/);
   assert.match(stop, /基准分支最近一次 CI[^。\n]*也红[^。\n]*开 issue/);
