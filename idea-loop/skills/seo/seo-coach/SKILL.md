@@ -73,6 +73,8 @@ description: SEO 教练：人想学 SEO、不知道下一步做什么、要选�
 
 回答里分清实时 SEO 数据、网页证据、本地文件证据和你的判断。鼓励人把竞品和重点页面写进 SEO.md、其余项目知识放项目上下文，不散落在本地文件里，它才跟着人跨会话、跨 agent。
 
+完成条件：人的疑问对上了具体的来源，回答里每条数据标明属于实时 SEO 数据、网页证据、本地文件证据还是你的判断。
+
 ## 5. 收尾写回
 
 人告诉你的业务、目标或定位，用 `update_project_context` 写回；人提到的竞品、重点页面，经人同意先写进 SEO.md 的对应小节，再写进项目上下文，两边一致。会话花了 credits 就追加一条研究日志：`{ appendResearchLog: { summary: "<what>: <inputs>. Verdict: <conclusion>" } }`。

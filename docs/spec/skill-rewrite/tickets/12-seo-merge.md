@@ -29,4 +29,4 @@
 ## 选中的存量回归
 
 - `seo-brief-angle-doc`、`seo-brief-images-doc`、`seo-writing-loop-doc`、`seo-outreach-doc`、`seo-md-writing-images`、`seo-blog-workflow-readme-doc`、`seo-skill-descriptions-route-only-doc`、`seo-method-skills-no-inference-doc`、`seo-spec-recommend-doc` 测试。
-- [ ] review 第 1 轮 C2（2026-11-20）：seo-coach 讲数据来源那一步，结尾补一句完成条件（writing-for-agents：「每一步都以一个**完成条件**结尾」）
+- [x] review 第 1 轮 C2（2026-11-20）：seo-coach 讲数据来源那一步，结尾补一句完成条件（writing-for-agents：「每一步都以一个**完成条件**结尾」）
