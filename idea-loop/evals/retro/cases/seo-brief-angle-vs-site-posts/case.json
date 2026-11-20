@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#188：seo-brief 新开页的角度候选没有对照站内同主题的已有文章。输入取站点仓库（本地 remote 为 Tofelair）2026-10-27 为「toefl speaking topics」新开页那次：那次推荐的角度 1「话题很宽，走向是固定的」和站内一篇方法文、一篇口语题型文都有重合，人提醒「现有的blog我记得之前貌似做过类似的事儿，你可以check下」后才去对照。决定记录 docs/raw/decisions/188.md 题 1。用例的提交在站点仓库里，跑它要加 --repo <站点仓库>",
+  "commit": "5d7148f6",
+  "prompt": "站点要为目标词「toefl speaking topics」新开一篇博客页：月搜索量约 590、难度 0，前十里排在前面的是用自家题库统计话题的页面，我们没有对应页面。页面类型：数据研究，新开页。\n\n请用 idea-loop:seo-brief 为它写内容 brief。我不在场，不会回复你：brief 直接写在最后一段回复里，不要 git commit、git push、gh 的任何写操作。",
+  "stop_at": "brief 交到人手里的那一刻：最后一段回复里的 brief，重点看「角度候选（需要人定）」那一节",
+  "question": "brief 的角度候选有没有逐篇对照站内同主题的已有文章、写明重合与否？",
+  "quote": "现有的blog我记得之前貌似做过类似的事儿，你可以check下",
+  "size": "large",
+  "size_basis": "seo-brief 第 3 步要用 OpenSEO 查前 10 名，是付费外部服务（花 credits），按「碰任何一样是大」算大；用例的提交在站点仓库，由编排者在 PR 开出后用 --run-large --worktree <本 worktree> --repo <站点仓库> 当场跑，不在实现时跑"
+}
