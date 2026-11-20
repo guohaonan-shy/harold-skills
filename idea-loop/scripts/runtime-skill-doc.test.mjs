@@ -93,7 +93,8 @@ test('the body states the detection rule, the fallback with its two exceptions, 
 });
 
 test('every runtime the detector knows has a reference, and no reference is left over', () => {
-  const files = readdirSync(join(dir, 'references')).map((f) => f.replace(/\.md$/, '')).sort();
+  // `<runtime>-<topic>.md` is a detail file one of that runtime's reference sections points at (the injected reference has a size cap)
+  const files = readdirSync(join(dir, 'references')).map((f) => f.replace(/\.md$/, '')).filter((f) => !RUNTIMES.some((r) => f.startsWith(`${r}-`))).sort();
   assert.deepEqual(files, [...RUNTIMES].sort());
 });
 
@@ -129,6 +130,24 @@ const DESKTOP_NAMES = [
 test('the claude-desktop reference carries every desktop tool name the 0.1.10 bodies used', () => {
   const text = read('references', 'claude-desktop.md');
   assert.deepEqual(DESKTOP_NAMES.filter((n) => !text.includes(n)), []);
+});
+
+// spec browser-fake-mic: the MCP browser cannot feed a fake microphone (sandbox on, real mic once granted), so the mic flow
+// lives in a command-line session. The desktop 浏览器 section names it and points at the detail file (the injected reference has a
+// size cap); deleting the subsection or the file, or turning it back into MCP steps, goes red here.
+test('claude-desktop 浏览器 names the playwright-cli mic flow and points at a detail file that carries the procedure', () => {
+  const section = sectionText(read('references', 'claude-desktop.md'), '浏览器');
+  assert.ok(section.includes('@playwright/cli'), '浏览器 does not mention @playwright/cli');
+  assert.ok(section.includes('### 要麦克风的流程'), '浏览器 has no 要麦克风的流程 subsection');
+  const pointer = section.match(/references\/(claude-desktop-mic\.md)/);
+  assert.ok(pointer, '要麦克风的流程 does not point at claude-desktop-mic.md');
+  assert.ok(existsSync(join(dir, 'references', pointer[1])), 'the pointed file does not exist');
+  const detail = read('references', pointer[1]);
+  for (const word of ['--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture', '%noloop', 'chromiumSandbox', 'grantPermissions', 'clearPermissions', 'NotSupportedError']) assert.ok(detail.includes(word), word);
+});
+
+test('the magi reference has no mic-flow section (desktop only, decided)', () => {
+  assert.ok(!read('references', 'magi.md').includes('playwright-cli'));
 });
 
 test('the magi reference carries the spec table\'s commands and the dispatch shape', () => {
