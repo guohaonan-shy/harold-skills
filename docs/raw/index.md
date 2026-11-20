@@ -68,7 +68,7 @@
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
 | [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
-| [decisions/164](decisions/164.md) | conversation | 2026-11-16 | 决定记录 —— #164 的 triage 会话：OpenSEO 被别处配置顶替时以插件那份为准（不迁就别的名字），候选「插件自带 MCP 以插件那份为准」开 #345 |
+| [decisions/164](decisions/164.md) | conversation | 2026-11-16 | 决定记录 —— #164 的 triage 会话：OpenSEO 被别处配置顶替时以插件那份为准（不迁就别的名字），候选「插件自带 MCP 以插件那份为准」开 #345；11-20 todo 会话推翻、改走禁用清单（PR #397），候选并进 #427，一条不批 |
 | [decisions/212](decisions/212.md) | conversation | 2026-11-16 | 决定记录 —— #212：triage 定修法为只换两份插件之间不同的文件；todo 会话夜间做到 review 完，评测材料按推荐不换，合并 PR #405（0.1.38），删掉失效的夜间回放定时任务；无 retro 候选 |
 | [decisions/192](decisions/192.md) | conversation | 2026-11-16 | 决定记录 —— #192 的 triage 会话：浏览器测试移出全量命令并加每例超时（按推荐）；无 retro 候选 |
 | [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 wiki-conventions 主体 7854 字超上限：triage 会话与 todo 会话 |
@@ -112,3 +112,4 @@
 | [decisions/296](decisions/296.md) | conversation | 2026-11-19 | 决定记录 —— #296 的 triage 会话：评论发出后变了另发新的、第一句写结论和要他做什么、不署名；规矩只进 home，插件只去掉机器开头；三条 retro 候选都不批；todo 会话：版本按 patch 升、已贴的归档评论删署名行，无候选 |
 | [decisions/350](decisions/350.md) | conversation | 2026-11-20 | 决定记录 —— #350 的 issue 会话：dreaming 问人范围的说法对齐，main 照常合、0.2.0 另开 #418；候选 1 进池 |
 | [decisions/383](decisions/383.md) | conversation | 2026-11-20 | 决定记录 —— #383 的 issue 会话：magi 调度接上已有分支；多仓库的同类限制交给 0.2.0 的 home repo，不开 issue；无候选 |
+| [decisions/293](decisions/293.md) | conversation | 2026-11-20 | 决定记录 —— #293 的 todo 会话：ai-eval 迁进来，夜里按推荐定 4 题，白天定版本（ai-eval 0.0.1、idea-loop patch）与 setup 统一入口另开 #420；两条候选都不批 |
