@@ -11,12 +11,12 @@ allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(d
 
 ## 开工前
 
-完成条件：下面四条都核过，才进「起步」。
-
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节、「实现决策」里还没有冻结摘要。有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
 - 它覆盖的 issue 在 triage（issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，用 `dyna issues set "<项目目录>/docs" triage <号>` 翻；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
 - **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计，或人说这块界面先不做：照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行。人要接着做的，从下面的「中断与恢复」接上。
+
+完成条件：上面四条都核过，才进「起步」。
 
 ## 起步
 
@@ -61,8 +61,6 @@ uiux-imaginer 交付一轮之后：
 
 ## 收工
 
-完成条件：`imagine/direction-note.md` 校验过、`imagine/handoff/` 自检过、人看完变种板、`imagine/` 里只剩这两样。
-
 1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格摆给人确认；人的确认或改写交回去，任务「按确认改」。
 2. 任务「导出交接画布」。它交付后你核对：
    - 自己再跑一次 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
@@ -72,6 +70,8 @@ uiux-imaginer 交付一轮之后：
    不过就把问题交回去，它补完再核。
 3. 主动问人要不要把变种板再看一遍：清掉之后就看不到了，留着又会让下一段误以为它们是真值。人说看完了，任务「清」；它交付后用 `dyna serve stop` 关掉静态服务器。
 4. 告诉人跑 `/idea-loop:uiux-refine`，就在这个会话里调。关于方向的话只住在方向说明里，想补一句先补进方向说明；执行层的要求可以直接在调 refine 时说。
+
+完成条件：`imagine/direction-note.md` 校验过、`imagine/handoff/` 自检过、人看完变种板、`imagine/` 里只剩这两样。
 
 ## 中断与恢复
 

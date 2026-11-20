@@ -12,12 +12,12 @@ disable-model-invocation: true
 
 ## 开工前
 
-完成条件：四条都核过才进「起步」。
-
 - spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」），「实现决策」里还没有冻结摘要。
 - `imagine/direction-note.md` 在，并过得了 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`。不在或不过，停下，告诉人跑 `/idea-loop:uiux-imagine` 把方向说明写完。
 - **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计：照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行。人要接着做的，从 [`references/after-freeze.md`](references/after-freeze.md) 的「会话中断或重开」接上。
 - 交接画布 `imagine/handoff/index.html` 不在：照常开工，先告诉人没有交接画布、会从方向说明重建。
+
+完成条件：上面四条都核过，才进「起步」。
 
 ## 起步
 
@@ -57,10 +57,12 @@ designer 和评委的上下文里不放参考图，也不放调研：参考只�
 
 ## 签字
 
-没有「通过」「瓶颈」：分数高低、评委判不判「方向」，都不自动停。人说静态定了，往下走两步（完成条件：素材单有结论、签字前检查交付）：
+没有「通过」「瓶颈」：分数高低、评委判不判「方向」，都不自动停。人说静态定了，往下走两步：
 
 1. **素材单**：判据见 [`references/asset-stage.md`](references/asset-stage.md) 的「闸门」。成立就给 designer 任务「素材单」，摆给人，由人交给生成管线；缺素材不挡后面的步骤。
 2. **签字前检查**：给 designer 任务「签字前检查」，交付后停下。把还没解决的方向性意见列给人看一遍（评委判过 `direction`、ledger 里没有对应决策的，原话逐条列出），人仍签才冻结。
+
+完成条件：素材单有结论、签字前检查交付。
 
 签字（全部）交给 designer，任务「冻结」，写明签的是哪一版；签字（一部分）、其余回去重新发散，任务「部分冻结」，写明哪几块签了、哪几块回推。
 
