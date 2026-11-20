@@ -24,6 +24,8 @@ related: ["[[340]]", "[[idea-loop-cli]]", "[[skills-no-tool-commands]]", "[[2026
 
 issue 里的真实路径：implement 的主体从 10-14 的 3885 字涨到 11-13 的 9589 字，约 25 个功能提交各往主文件里内联一个分支（多仓库 +1724、设计变更 +1092、等 CI +570），#311 才压回 4849。现在 implementer、dreaming 只剩 1、13 字，#339 改它们时只能做等长替换（[[idea-loop-cli]] 的「跟 #340 怎么分」）。
 
+开工前对着集成分支 `e30dcd8a`（#339 合入、main 同步到 #431 之后，2026-11-20）复核：SKILL.md 41 份（#339 删了 `runtime`、`browser`、`seo-check`；main 同步进来 `og`、`cover`）、agent 定义 16 份；主体超过 4500 的 25 份，最紧的是 ui-reviewer 6632、dreaming 4999、seo-setup 4984、link-prospecting 4965、seo-outreach 4957、implementer 4943。
+
 ### 2. 主文件里有决策历史和只有部分运行才走到的分支
 
 `grep -cE '20[0-9]{2}-[0-9]{2}-[0-9]{2}|人定|原话|依据：'` 在 59 份文件里有 27 份命中，最多的是 decision-rules 7 处、uiux-imaginer 6、uiux-imagine 6、retro 6、to-spec 5、design-change-sync 5。例：implement 里的「依据：…人定于 2026-10-30：…」。分支的例子：implementer 的「停，还是延后」整节（约 900 字）只在停下或延后的那次才用，dreaming 的「只跑一部分」只在人点名部分运行时才用，都在主文件里。
@@ -39,7 +41,7 @@ issue 里的真实路径：implement 的主体从 10-14 的 3885 字涨到 11-13
 
 ## 方案
 
-改完：idea-loop 的每份 SKILL.md 和 agent 定义主体都不超过 4500 字；主文件只放每次都走的路，部分运行才走到的分支在指针后面；没有决策历史；共享的规矩只写一处；步骤写要拿到什么，命令只写 `dyna` 和查不到的坑。skill 从 42 个减到 34 个（#339 删 3 个、这里合 5 组），agent 从 17 个减到 16 个（#339 删 pr-reviewer）。
+改完：idea-loop 的每份 SKILL.md 和 agent 定义主体都不超过 4500 字；主文件只放每次都走的路，部分运行才走到的分支在指针后面；没有决策历史；共享的规矩只写一处；步骤写要拿到什么，命令只写 `dyna` 和查不到的坑。skill 从 41 个减到 36 个（这里合 5 组），agent 16 个不变（#339 已删 pr-reviewer）。
 
 ![工单顺序](../../raw/issue-workflow/assets/flowchart-skill-rewrite-tickets.png)
 
@@ -96,8 +98,8 @@ issue 里的真实路径：implement 的主体从 10-14 的 3885 字涨到 11-13
 
 | 文件 | 现在 | 移出去的 | 去哪 | 预计 |
 |---|---|---|---|---|
-| implementer | 4999 | 「停，还是延后」整节和延后、半成品提交的格式（约 900 字）；「输入」里半成品分支、被叫回来两条（约 250 字）；「做」里转述 `tdd` 的一句；「开工前」第 5 步收成一句「改 skill 类文件调 `writing-for-agents`，其余读 `CODING_STANDARDS.md` 链到的写法」 | `implement/references/` 一份「停下与延后」（implementer 已经读 implement 的 `ui-tickets.md`、`rule-tickets.md`，同一处） | 约 3700 |
-| dreaming | 4987 | 「只跑一部分」整节（约 500 字）；「回滚」「中间物何时删」「幂等」「推送只有三种情况」（约 600 字） | 「只跑一部分」进 `dreaming/references/partial-runs.md`；后四条并进 `proposal-table.md` | 约 3900 |
+| implementer | 4943 | 「停，还是延后」整节和延后、半成品提交的格式（约 900 字）；「输入」里半成品分支、被叫回来两条（约 250 字）；「做」里转述 `tdd` 的一句；「开工前」第 5 步收成一句「改 skill 类文件调 `writing-for-agents`，其余读 `CODING_STANDARDS.md` 链到的写法」 | `implement/references/` 一份「停下与延后」（implementer 已经读 implement 的 `ui-tickets.md`、`rule-tickets.md`，同一处） | 约 3700 |
+| dreaming | 4999 | 「只跑一部分」整节（约 500 字）；「回滚」「中间物何时删」「幂等」「推送只有三种情况」（约 600 字） | 「只跑一部分」进 `dreaming/references/partial-runs.md`；后四条并进 `proposal-table.md` | 约 3900 |
 
 implementer 保留定义（钉模型、新上下文、并行、交回机械核对，2026-11-18 已定）；交回的字段格式每次都用、会被机械核对，留在主文件。
 
@@ -121,7 +123,7 @@ implementer 保留定义（钉模型、新上下文、并行、交回机械核�
 
 ## 实现决策
 
-- **基准分支**：`release/idea-loop-0.2.0`。工单从 #339 的 PR 合进集成分支之后的那个提交起做；#339 删的 3 个 skill、1 个 agent 和它改成 `dyna` 的命令都以集成分支上那时的样子为准。
+- **基准分支**：`release/idea-loop-0.2.0`。工单从集成分支 `e30dcd8a` 起做（#339 已合入，main 已同步到 #431）；#339 删的 3 个 skill、1 个 agent 和它改成 `dyna` 的命令以那时的样子为准；main 同步进来的改动（设计收敛改由人定、pr-review 最多 5 轮、夜间模式、`og` / `cover`）是重写的输入，行为照留。
 - **一个 PR**：全部工单落在 `issue/340-skill-rewrite` 一条分支、一个 PR，开到集成分支。#356 跟这个 PR 一起关。
 - **工单与顺序**（每张写明改哪些文件；Blocked by 照下表）：
 
@@ -140,7 +142,7 @@ implementer 保留定义（钉模型、新上下文、并行、交回机械核�
   | 11 设计档案 | `design-archive`、`design-modeling`、ui-reviewer（6767 → ≤4500） | 02、03 |
   | 12 SEO 合并 | `seo-writing` ← `seo-brief`、`seo-outreach` ← `link-prospecting`、`seo-coach` | 08 |
   | 13 SEO 扫描 | `seo-scan`、backlink-analyst、geo-analyst、keyword-miner、page-optimizer、technical-auditor | 12 |
-  | 14 SEO 研究 | `seo-audit`、`competitor-analysis`、`keyword-research`、`keyword-clustering`、`seo-geo` | 12 |
+  | 14 SEO 研究与出图 | `seo-audit`、`competitor-analysis`、`keyword-research`、`keyword-clustering`、`seo-geo`、`og`、`cover` | 12 |
   | 15 整体核对 | 不改 skill：全插件跑一遍核对表里能机械判的几条、全部测试，README 与 skill 目录对得上 | 04–14 |
 
   依据：01 是规则来源，后面每张都照它；02、03 改的指针遍布全插件，先做完后面的工单才不跟它们抢同一批文件；08 先把 SEO 的配置挪进 setup，12 里 coach 才能指向它；13、14 引用 12 合并后的名字。04–11 之间、13 与 14 之间改的文件不相交，可以并行。
