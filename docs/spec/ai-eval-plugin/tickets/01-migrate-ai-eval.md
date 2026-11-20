@@ -7,7 +7,7 @@
 
 任何项目都能从 harold-skills 的 marketplace 装上 `ai-eval` plugin，六个 skill 跟原来用法一样，项目的事实只从项目自己的 `EVAL.md` 读。
 
-来源：私有仓库 Tofelair（本机 `~/projects/TOFEL-demo`，GitHub `guohaonan-shy/Tofelair`）主分支提交 `be895871` 下的 `.claude/plugins/ai-eval/`：6 个 skill、插件级参考 `judge-format` / `judge-prompt`、9 个脚本连同测试、一个 skill 级参考。只读那个仓库，不改它。用 `git show be895871:<路径>` 取文件，不用它的工作区（工作区有未提交改动）。
+来源：私有仓库 Tofelair（本机 `~/projects/TOFEL-demo`，GitHub `guohaonan-shy/Tofelair`）主分支提交 `fcfb1718` 下的 `.claude/plugins/ai-eval/`：6 个 skill、插件级参考 `judge-format` / `judge-prompt`、9 个脚本连同测试、一个 skill 级参考。只读那个仓库，不改它。用 `git show fcfb1718:<路径>` 取文件，不用它的工作区（工作区有未提交改动）。
 
 要做的事：
 - 在仓库顶层建 `ai-eval/` plugin，内容原样迁过来；`plugin.json` 版本 `0.1.0`，description 去掉「Beta, living in-repo…」那句，改成说它住在 harold-skills。
@@ -23,13 +23,13 @@
 - [x] 仓库全量测试 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` 全过（迁过来的 9 个脚本测试包含在内）
 - [x] marketplace.json 合法 JSON、含 `ai-eval`；`AGENTS.md` 的「当前 plugins」和「issue 分类」各有 ai-eval 一行
 - [x] README 有安装、每个 skill 的用法示例和「依赖」一节
-- [x] PR 描述「参考」里写了迁移基准提交 `be895871`（由编排者写，执行方在交回里给出它）
+- [x] PR 描述「参考」里写了迁移基准提交 `fcfb1718`（由编排者写，执行方在交回里给出它）
 - [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 - [x] review 第 1 轮 S3（2026-11-20）：eval-run、eval-baseline 里不留来源项目的存储目录层级（基线产物在存储里的目录）和代码常量名（登记用户任务的常量），改成指向 EVAL.md 对应小节；防泄漏测试的提示词表加上这两样
 - [x] review 第 1 轮 C1（2026-11-20）：eval-judge、eval-run、eval-metrics-review 的 description 只写它是什么和触发词（AGENTS.md「description 只做路由」：流程、产物格式、模型名不写），原有的触发说法都保留
-- [ ] 合并前同步（2026-11-20）：迁移源主分支在基准之后又有 2 个提交改了 ai-eval（fcfb1718、4e1e1e62：eval-baseline 的触发交人时写成一份按样本排的清单，带原文、预判、三选项勾选框，触发多一种「断言写得不对」；eval-run 补一句清单格式照 eval-baseline），同步进来并照本工单去项目信息（「学生」「作文」「口语录音」等换通用说法），防泄漏测试、全量测试全过；迁移基准改记成 fcfb1718
+- [x] 合并前同步（2026-11-20）：迁移源主分支在基准之后又有 2 个提交改了 ai-eval（fcfb1718、4e1e1e62：eval-baseline 的触发交人时写成一份按样本排的清单，带原文、预判、三选项勾选框，触发多一种「断言写得不对」；eval-run 补一句清单格式照 eval-baseline），同步进来并照本工单去项目信息（「学生」「作文」「口语录音」等换通用说法），防泄漏测试、全量测试全过；迁移基准改记成 fcfb1718
 
 ## 选中的存量回归
 - `scripts/plugin-version.test.mjs`：新 plugin 目录要被版本检查认得，不能因为 main 上没有它的 plugin.json 而误报。
