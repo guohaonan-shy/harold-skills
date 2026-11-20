@@ -11,6 +11,7 @@
 | [[2026-10-19-design-md-standard]] | document | 2026-10-19 | DESIGN.md 写入标准（Harold 已认可） |
 | [[2026-10-19-pr-decision-friction]] | conversation | 2026-10-19 | 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么 |
 | [[2026-10-21-seo-workflow-discussion]] | conversation | 2026-10-21 | 讨论 —— SEO 工作流重新设计：五个方向、项目内插件（位置与队列已被次日推翻） |
+| [[2026-11-20-connector-tools-grill]] | conversation | 2026-11-20 | grill —— 带连接器的 agent 不写 tools 白名单、只写禁用清单（#164 推翻 11-16 的决定） |
 | [[2026-10-22-grill-idea-loop-seo]] | conversation | 2026-10-22 | grill —— SEO 能力放进 idea-loop：OpenSEO 负责发现，idea-loop 负责解决 |
 | [[2026-10-27-brand-terms-cannibalization]] | conversation | 2026-10-27 | #81 审核：自相蚕食的定义，品牌词放进 SEO.md 新开的「品牌」节 |
 | [[2026-10-31-seo-params-confirm-gate]] | conversation | 2026-10-31 | #142 审核：seo skill 要用的项目信息缺了——setup 推测确认，scan 停下等人确认再补进 SEO.md |
