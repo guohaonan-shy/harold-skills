@@ -6,6 +6,13 @@
  * itself. Playwright and a Chromium are looked up where this machine has them (the project's own
  * node_modules, the npx cache the plugin's Playwright MCP uses, the Playwright browser cache); with none
  * found the tests are skipped, not failed.
+ *
+ * Every case really opens Chromium and waits in real time: the whole file takes about 6 minutes, so the
+ * full-suite command does not run it — without IDEA_LOOP_BROWSER_TESTS=1 every case is skipped. Run it on
+ * its own (REVIEW.md, 验证命令) when the sections script or the PNG comparison it imports changes:
+ *   IDEA_LOOP_BROWSER_TESTS=1 node --test idea-loop/scripts/design-archive-sections-browser.test.mjs
+ * Each case times out after 120 s and the browser start-up after 60 s, so a stuck browser fails one case
+ * and the file still ends.
  */
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -79,9 +86,15 @@ const SETTINGS = { viewport: { width: 800, height: 600 }, theme: 'light', motion
 
 let browser = null;
 let page = null;
-let skip = 'no Playwright with a Chromium found on this machine';
+const OPT_IN = 'IDEA_LOOP_BROWSER_TESTS';
+const CASE_TIMEOUT_MS = 120_000;
+const LAUNCH_TIMEOUT_MS = 60_000;
+let skip = process.env[OPT_IN] === '1'
+  ? 'no Playwright with a Chromium found on this machine'
+  : `设 \`${OPT_IN}=1\` 单独跑，见 REVIEW.md`;
 
 before(async () => {
+  if (process.env[OPT_IN] !== '1') return;
   const { cores, exes } = findPlaywright();
   for (const core of cores) {
     for (const exe of [undefined, ...exes]) {
@@ -96,13 +109,13 @@ before(async () => {
       }
     }
   }
-});
+}, { timeout: LAUNCH_TIMEOUT_MS });
 after(async () => {
   if (browser) await browser.close();
 });
 
 const browserTest = (name, fn) =>
-  test(name, async (t) => {
+  test(name, { timeout: CASE_TIMEOUT_MS }, async (t) => {
     if (skip) return t.skip(skip);
     return fn(t);
   });
@@ -758,7 +771,8 @@ browserTest('browser measure: a thin sticky bar, a narrow sticky sidebar and a f
 });
 
 // a narrow sticky text column beside pictures that scroll past (800×600 viewport): the column is 340 wide, a pin too small to hold a screen,
-// and its text — and its colour, for the pixel checks — change with the scroll: three steps, one per 700 px
+// and its text — and its colour — change with the scroll: three steps, one per 700 px. Only a pin that holds a whole screen makes a section scroll-driven,
+// so this one is an ordinary section: shot whole
 const STORY_BG = ['#fde68a', '#93c5fd', '#fca5a5'];
 const STORY_RGB = [[253, 230, 138], [147, 197, 253], [252, 165, 165]];
 const STORY_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
@@ -826,42 +840,100 @@ async function loadWith(html, sections, entry) {
   return { p, m: await runOn(p, buildMeasureCode({ state: entry, page: entry.split('--')[0], sections, ...SETTINGS })) };
 }
 
-browserTest('browser measure: a pinned text column narrower than half the screen, whose text changes as the page scrolls, is detected as scroll-driven — undeclared, `attribute` exits 1; declared, it exits 0', async () => {
+browserTest('browser measure: a pinned text column narrower than half the screen is not a pin, even when its text changes as the page scrolls — undeclared, `attribute` exits 0; declared, it only gets the hint that nothing was detected', async () => {
   const { p, m } = await loadWith(STORY_PAGE, STORY_SECTIONS, STORY_ENTRY);
   try {
-    assert.equal(m.pins.length, 1, JSON.stringify(m.pins));
-    const [pin] = m.pins;
-    assert.deepEqual([pin.kind, pin.tag, pin.height, pin.byText, pin.container.top], ['sticky', 'div', 420, true, 460]);
-    assert.deepEqual(pin.texts.map((t) => t.replace(/^How it works /, '')), ['Step 1: record', 'Step 2: score', 'Step 3: improve']);
+    assert.deepEqual(m.pins, []);
     const a = attribute(m);
-    assert.deepEqual(a.undeclaredScrollDriven.map((x) => x.id), ['how-it-works']);
-    assert.equal(a.ok, false);
-    const cli = attributeCli(m);
-    assert.equal(cli.status, 1, cli.stderr);
-    assert.match(cli.stderr, /how-it-works.*scrollDriven: true/);
+    assert.deepEqual([a.ok, a.scrollDriven, a.undeclaredScrollDriven], [true, [], []]);
+    assert.equal(attributeCli(m).status, 0);
     const declared = await runOn(p, buildMeasureCode({ state: STORY_ENTRY, page: 's-home', sections: STORY_SECTIONS.map((x) => (x.id === 'how-it-works' ? { ...x, scrollDriven: true } : x)), ...SETTINGS }));
-    assert.equal(attributeCli(declared).status, 0);
+    assert.deepEqual(declared.pins, []);
+    const d = attribute(declared);
+    assert.deepEqual([d.ok, d.undeclaredScrollDriven, d.declaredNotDetected.map((x) => x.id)], [true, [], ['how-it-works']]);
+    const cli = attributeCli(declared);
+    assert.equal(cli.status, 0, cli.stderr);
+    assert.match(cli.stderr, /how-it-works 声明了 scrollDriven 但测量没检出/);
   } finally {
     await p.context().close();
   }
 });
 
-browserTest('browser shoot: the narrow-column section is one screen tall and shows step 1; the screen after a scroll to step 2 is shot as step 2', async () => {
-  const { p, m } = await loadWith(STORY_PAGE, STORY_SECTIONS.map((x) => (x.id === 'how-it-works' ? { ...x, scrollDriven: true } : x)), STORY_ENTRY);
+browserTest('browser shoot: the narrow-column section is shot whole, as one picture as tall as the section — not the one screen a pin would hold', async () => {
+  const { p, m } = await loadWith(STORY_PAGE, STORY_SECTIONS, STORY_ENTRY);
   try {
     const a = attribute(m);
     assert.equal(a.ok, true, JSON.stringify(a.undeclaredScrollDriven));
+    const range = a.ranges.find((r) => r.id === 'how-it-works');
     const out = mkdtempSync(join(tmpdir(), 'sections-story-'));
     const { targets, scroller } = shootTargets(a, { only: ['how-it-works'] });
-    await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
-    const first = join(out, `${STORY_ENTRY}@how-it-works.png`);
-    assert.deepEqual(pngSize(first), [800, 600]);
-    assert.deepEqual(rgbAt(first, 100, 300), STORY_RGB[0]);
-    await p.evaluate(() => window.scrollTo(0, 460 + 700));
-    await runOn(p, buildStepCode(100));
-    const r = await runOn(p, buildPinnedCode({ state: 's-home--how-it-works-step-2', ...SETTINGS, outDir: out }));
-    assert.equal(r.shots[0].uncontrolled, false);
-    assert.deepEqual(rgbAt(join(out, 's-home--how-it-works-step-2.png'), 100, 300), STORY_RGB[1]);
+    const r = await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+    assert.equal(r.shots[0].scrollDriven, undefined);
+    const file = join(out, `${STORY_ENTRY}@how-it-works.png`);
+    const [width, height] = pngSize(file);
+    assert.deepEqual([width, height], [800, range.end - range.start]);
+    assert.ok(height > 1500, `the whole section, not a screen: ${height}`);
+    assert.deepEqual(rgbAt(file, 100, 300), STORY_RGB[0], 'the column, as it stands at the top of the section');
+    assert.deepEqual(rgbAt(file, 500, height - 400), [221, 221, 221], 'the last picture, far below the first screen');
+  } finally {
+    await p.context().close();
+  }
+});
+
+// a three-chapter article (800×600 viewport) with a 200-wide sticky sidebar that writes "Reading: Chapter N" as the page scrolls
+const CHAPTER_BG = ['#fde68a', '#93c5fd', '#fca5a5'];
+const CHAPTER_RGB = [[253, 230, 138], [147, 197, 253], [252, 165, 165]];
+const ARTICLE_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  body { margin: 0; font: 20px sans-serif; }
+  header { height: 60px; background: #eee; }
+  main > section { display: block; box-sizing: border-box; }
+  #article { display: flex; gap: 20px; padding: 0 20px; }
+  #side { position: sticky; top: 0; width: 200px; height: 120px; align-self: flex-start; background: #ddd; }
+  #body { flex: 1; } #body h1 { margin: 0; height: 60px; }
+  .chap { height: 900px; } .chap h2 { margin: 0; }
+  #after { height: 500px; padding: 20px; background: #eee; }
+  footer { height: 100px; background: #ccc; }
+</style></head><body>
+<header><a href="/">Home</a></header>
+<main>
+<section id="article"><div id="side">Reading: Chapter 1</div><div id="body"><h1>Long read</h1>
+<div class="chap" style="background:${CHAPTER_BG[0]}"><h2>Chapter one</h2></div><div class="chap" style="background:${CHAPTER_BG[1]}"><h2>Chapter two</h2></div><div class="chap" style="background:${CHAPTER_BG[2]}"><h2>Chapter three</h2></div></div></section>
+<section id="after"><h2>After</h2><button>Done</button></section>
+</main>
+<footer><a href="/terms">Terms</a></footer>
+<script>
+const chaps = [...document.querySelectorAll('.chap')];
+addEventListener('scroll', () => {
+  let k = 0;
+  chaps.forEach((c, i) => { if (c.getBoundingClientRect().top <= 300) k = i; });
+  side.textContent = 'Reading: Chapter ' + (k + 1);
+});
+</script></body></html>`;
+const ARTICLE_SECTIONS = [
+  { id: 'header', locate: { role: 'banner' } },
+  { id: 'article', locate: { role: 'heading', name: 'Long read' } },
+  { id: 'faq', locate: { role: 'heading', name: 'After' } },
+  { id: 'footer', locate: { role: 'contentinfo' } },
+];
+const ARTICLE_ENTRY = 'a-home--entry';
+
+browserTest('browser: a long article with a narrow sidebar that writes the chapter it is at, and nothing declared — no pin, `attribute` exits 0, and the section is shot as one picture as tall as the section with all three chapters in it', async () => {
+  const { p, m } = await loadWith(ARTICLE_PAGE, ARTICLE_SECTIONS, ARTICLE_ENTRY);
+  try {
+    assert.deepEqual(m.pins, []);
+    const a = attribute(m);
+    assert.deepEqual([a.ok, a.undeclaredScrollDriven, a.scrollDriven], [true, [], []]);
+    const cli = attributeCli(m);
+    assert.equal(cli.status, 0, cli.stderr);
+    const range = a.ranges.find((r) => r.id === 'article');
+    assert.equal(range.end - range.start, 60 + 3 * 900);
+    const out = mkdtempSync(join(tmpdir(), 'sections-article-'));
+    const { targets, scroller } = shootTargets(a, { only: ['article'] });
+    const r = await runOn(p, buildShootCode({ targets, scroller, ...SETTINGS, pageHeight: a.pageHeight, outDir: out }));
+    assert.equal(r.shots[0].scrollDriven, undefined);
+    const file = join(out, `${ARTICLE_ENTRY}@article.png`);
+    assert.deepEqual(pngSize(file), [800, range.end - range.start], 'the section as tall as it is, not one 600-tall screen');
+    CHAPTER_RGB.forEach((rgb, k) => assert.deepEqual(rgbAt(file, 500, 60 + 900 * k + 450), rgb, `chapter ${k + 1} is in the picture`));
   } finally {
     await p.context().close();
   }

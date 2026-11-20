@@ -309,7 +309,7 @@ function normalizeEdges(state) {
  *   duplicates: Map<string, string[]>,  object ids that more than one file claims
  *   index: object|null,                 prod/index.md frontmatter (viewport / theme / locale / motion / workspaces)
  *   problems: { file, message }[],      files that could not be read as objects
- *   legacy: string[],                   docs/design/ entries other than tmp, prod, index.md
+ *   legacy: string[],                   docs/design/ entries other than tmp, prod, pending, index.md
  *   delta: { slug, added, changed, removed } | null,
  * }}
  */
@@ -329,15 +329,16 @@ export function loadArchive(root, { delta = null } = {}) {
     if (!objects.has(o.id)) objects.set(o.id, o);
   }
 
-  // every file under docs/ except the scratch area and the legacy per-spec design records
+  // every file under docs/ except the scratch area, the shelved designs and the legacy per-spec design records
   const legacy = existsSync(designDir)
     ? readdirSync(designDir)
-        .filter((n) => statSync(join(designDir, n)).isDirectory() && n !== 'tmp' && n !== 'prod')
+        .filter((n) => statSync(join(designDir, n)).isDirectory() && n !== 'tmp' && n !== 'prod' && n !== 'pending')
         .sort()
     : [];
   const skipDocs = (p, name) => {
     const rel = posix(relative(designDir, p));
     if (rel === 'tmp' || rel.startsWith('tmp/')) return true;
+    if (rel === 'pending' || rel.startsWith('pending/')) return true; // shelved designs: local only, not read
     if (legacy.includes(rel.split('/')[0])) return true;
     // ticket files repeat names across specs by design (wiki-conventions, section slug 与链接)
     return /(^|\/)spec\/[^/]+\/tickets$/.test(posix(relative(docs, p))) && name === 'tickets';

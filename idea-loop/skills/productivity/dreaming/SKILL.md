@@ -3,7 +3,7 @@ name: dreaming
 description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账：提议该订正、归档、删除的内容。人要对账、说文档过期了、或说 dreaming 时用。
 ---
 
-文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后判处置。**行按风险分两类**：会判错的（`DESIGN.md`、文档里的冲突）问人，其余按各自的建议处置自己执行、自己合并，不进汇报。
+文档写下时是对的，代码往前走了，没人回头改那一行。这个 skill 拿每份文档的自我陈述，去撞真实的代码和真实的 PR 状态，然后判处置。**行按风险分两类**：会判错或删了找不回的（`DESIGN.md`、文档里的冲突、`GLOSSARY.md`、要删的暂缓设计，另加所有 `候选` 行）问人，其余按各自的建议处置自己执行、自己合并，不进汇报。
 
 **dreaming 只编排**：起环境、派工、汇提议表并过校验脚本、拆出问人的小表、执行自动那份并合并、问人那份做审核页与推送。每一段对账由一个专职 agent 做，模型与思考强度钉在各自的定义里；提议段里它们只读，只写自己那段的中间物。
 
@@ -22,6 +22,7 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 1. **起环境**：读目标仓库 `DEVELOPMENT.md` 的「分支」节拿基准分支（没有这份文件就停下，告诉人跑 `/idea-loop:setup`）；`git fetch`，从 `origin/<基准分支>` 新切一个 worktree 在里面工作，这次的中间物放 `.tmp/dreaming/<YYYY-MM-DD>/`。目标仓库还是旧平铺布局，提议表里先提议迁移（`idea-loop:wiki-conventions` 的「从平铺布局迁移」）。
 2. **自己做、不起 agent**：
    - **漏归档**：照 [references/missed-archive.md](references/missed-archive.md)，查基准分支上还留着设计产物的已完成需求。
+   - **暂缓设计**：主 checkout 的 `docs/design/pending/` 里暂缓的设计，每份和它的 spec 是否已了结，照 [references/pending-designs.md](references/pending-designs.md) 摆进提议表；已了结的提议删（本地文件，删了找不回，所以这类行问人）。
    - **retro 候选**：候选池里出现 ≥ 3 次的，照 [references/retro-candidates.md](references/retro-candidates.md) 摆进提议表；照建议处置开成 issue，不改 skill。
    - **对账范围**（`prod/` 有对象时）：dreaming 每周由 `/idea-loop:setup` 建的『定时任务』自己跑，截图对账只对上次成功执行以来代码动过的状态做；定基准、挑状态、写提议表开头那一行，照 [references/incremental-scope.md](references/incremental-scope.md)。人调用时说「全量」，或没有基准点，就全量。
    - **全站初扫**（`prod/` 为空时）：照 [references/initial-scan.md](references/initial-scan.md)。`prod/` 有对象时不做全站初扫，档案对账整个交给下面的 ui-reviewer；项目没有设计档案目录、也不打算建，这一项和档案对账整个跳过。

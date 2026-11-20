@@ -137,6 +137,6 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 
 - **MCP**：桌面 app 在设置的 Connectors 里加；命令行 `claude mcp add --scope user …`（如 `claude mcp add --transport http --scope user linear https://mcp.linear.app/mcp`），再在 `claude` 里 `/mcp` 授权。查有没有：`claude mcp get <名字>`。
 - **Playwright MCP**（必需）：查 `claude mcp get playwright`，要用户级、参数带 `--headless --isolated`；修法 `claude mcp add --scope user playwright -- npx -y @playwright/mcp --headless --isolated`。
-- **Refero MCP**（可选，设计调研用）：查 `claude mcp get refero`，要用户级、http、`https://api.refero.design/mcp`；token 由人自己配，修法 `claude mcp add --scope user --transport http refero https://api.refero.design/mcp --header "Authorization: Bearer <token>"`。
+- **Mobbin MCP**（可选，设计调研用，要 Mobbin 付费计划）：由插件自带（`.mcp.json` 的 `mobbin`，远程 http，`https://api.mobbin.com/mcp`），不用 `claude mcp add`。查：`claude mcp list` 里 `plugin:idea-loop:mobbin` 一行，`Connected` 就是好的；写着 `Needs authentication` 的，修法是在 `claude` 里 `/mcp`，选它，走 OAuth 登录 Mobbin。看不到这一行：插件没装或没重载（`/reload-plugins`），或者已经手动配过一个同地址的 Mobbin（`claude mcp list` 里另有一行指向 `https://api.mobbin.com/mcp`，常见的是用户级的 `mobbin`）：Claude Code 只连优先级高的那份，调研员按工具短名取工具，手动配的也能用，只要登录了；`Needs authentication` 的同样 `/mcp` 登录。没连上时只有设计调研受影响。
 - **允许规则**：人自己加进 `~/.claude/settings.json` 的 `permissions.allow`；这边只打印规则，不替人改权限设置。
   - 调度要加一条：`mcp__ccd_sidebar__move_sessions`。不加，无人值守时调度移动别的会话会被拦，夜里开出的会话进不了分组，就数不到（`/idea-loop:setup` 照这里打印）。

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cover crop check</title>
+<!--
+  Shows one cover the way list pages show it. Open through a static server: ?img=<picture>&title=<text>
+  Three containers (16:9 as made, a 16:10 card, a 16:7 banner), image fitted like object-fit: cover, a plain
+  white title laid over the bottom third (no scrim: the picture itself has to carry it). The dashed
+  rectangle is the inner frame (12% in from every edge) of the 16:9 picture.
+-->
+<style>
+  body { margin: 0; padding: 24px; background: #fff; font-family: system-ui, sans-serif; color: #222; }
+  .row { display: flex; gap: 24px; align-items: flex-start; }
+  figure { margin: 0; }
+  figcaption { font-size: 13px; margin-top: 6px; }
+  .box { position: relative; width: 480px; overflow: hidden; background: #888; }
+  .box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .a { aspect-ratio: 16 / 9; } .b { aspect-ratio: 16 / 10; } .c { aspect-ratio: 16 / 7; }
+  .title {
+    position: absolute; left: 6%; right: 6%; bottom: 8%; margin: 0; color: #fff;
+    font-size: 22px; font-weight: 600; line-height: 1.25;
+  }
+  .frame { position: absolute; inset: 12%; border: 1px dashed rgba(255,255,255,.7); pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="row" id="row">
+  <figure><div class="box a"><img class="pic"><div class="frame"></div><p class="title"></p></div><figcaption>16:9 (as made)</figcaption></figure>
+  <figure><div class="box b"><img class="pic"><p class="title"></p></div><figcaption>16:10 list card</figcaption></figure>
+  <figure><div class="box c"><img class="pic"><p class="title"></p></div><figcaption>16:7 banner</figcaption></figure>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const title = q.get('title') || 'A title long enough to wrap onto a second line';
+  document.querySelectorAll('.pic').forEach((el) => { el.src = q.get('img'); });
+  document.querySelectorAll('.title').forEach((el) => { el.textContent = title; });
+</script>
+</body>
+</html>
