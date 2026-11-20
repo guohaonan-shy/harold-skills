@@ -58,7 +58,7 @@ disallowedTools: Edit, NotebookEdit, Agent
 - **改过的页面反常下跌**：改动清单里的网址，近 7 天点击比上一个 7 天少 30% 以上，且上一个 7 天点击不少于 20。`kind: page-clicks-drop`，`direction` 取原改动的方向。
 - **改了没起色**：上线满 14 天、前 14 天展现不少于 100，后 14 天点击不高于前 14 天，且目标词的平均位置没有前进。`kind: change-no-lift`，`direction` 取原改动的方向，`ratio` 是后 14 天点击 / 前 14 天点击。
 
-原改动的方向：`gh issue view <issue 号> --json labels` 里 `type:seo/<方向>` 的那个方向；没有子类标签的写 `pages`。results 方向的发现按原改动的方向打分类，不新增 `type:seo/results`，`direction` 永远是 findings.md 的那五个之一。同一种 `kind` 合成一条，`targets` 列各个网址。`repro` 写 `get_search_console_performance` 的完整参数（项目、日期范围、`filters`），一个没看过本次数据的人照着就能重跑；`acceptance` 写能独立检查的一条，例如「再过 14 天，同一页面的点击高于改动前 14 天」。
+原改动的方向：`dyna issues show <项目目录>/docs <issue 号>` 的分类里 `type:seo/<方向>` 的那个方向；没有子类的写 `pages`。results 方向的发现按原改动的方向打分类，不新增 `type:seo/results`，`direction` 永远是 findings.md 的那五个之一。同一种 `kind` 合成一条，`targets` 列各个网址。`repro` 写 `get_search_console_performance` 的完整参数（项目、日期范围、`filters`），一个没看过本次数据的人照着就能重跑；`acceptance` 写能独立检查的一条，例如「再过 14 天，同一页面的点击高于改动前 14 天」。
 
 **未采集**：没有 Search Console 连接、或这次一条数据都没拿到：`results.json` 写成只有一个对象的数组 `[{ "direction": "results", "uncollected": "<原因>" }]`，不写报告，交回写原因。
 

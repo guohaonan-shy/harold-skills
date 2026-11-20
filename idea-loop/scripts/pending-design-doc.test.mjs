@@ -64,8 +64,8 @@ for (const skill of ['uiux-imagine', 'uiux-refine']) {
     assert.match(opening, /复制回/);
     assert.match(opening, /中断与恢复|after-freeze/);
   });
-  test(`${skill}: SKILL.md body stays under 5000 characters`, () => {
-    assert.ok(chars(read('skills', 'design', skill, 'SKILL.md')) < 5000);
+  test(`${skill}: SKILL.md body stays under the 4500-character line`, () => {
+    assert.ok(chars(read('skills', 'design', skill, 'SKILL.md')) < 4500);
   });
 }
 

@@ -459,7 +459,7 @@ idea-loop/
 │   │   ├── uiux-refine/SKILL.md      # the convergent half — the process; the work is in agents/
 │   │   │   references/design/                # the design side (see below)
 │   │   │   references/refine-canvas.md   # where the refine canvas lives and how its versions (v1, v2, …) advance
-│   │   │   references/ledger-and-report.md, freeze.md, asset-stage.md, after-freeze.md  # the ledger format, each round's folder, the review report and how it is sent; then read only on their branch: sign-off, marketing assets, committing the freeze and what comes after
+│   │   │   references/ledger-and-report.md, freeze.md, asset-stage.md, after-freeze.md  # the ledger format, each round's folder, the review report and how it is sent, direction-level opinions the human disliked; then read only on their branch: sign-off, marketing assets, checking and committing the freeze and what comes after
 │   │   ├── uiux-research/SKILL.md    # design research, two branches (human-run full page; light use every design-convergence round) — only the calling mechanism; the work is in agents/uiux-researcher.md
 │   │   │   references/research-backend.md   # the full-page contract (+ what both branches share: Mobbin layers, screenshot download, not-connected)
 │   │   │   references/light-return.md       # the light use: its input, the research-light.json format with a generic example, what the check covers

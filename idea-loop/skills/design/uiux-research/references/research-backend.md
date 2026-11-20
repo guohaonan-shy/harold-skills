@@ -22,7 +22,7 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 
 **怎么写查询**：一次一个屏、一条流程或一节，最多三个限定条件；写看得见的东西（类型加产品种类，如「冥想 app 的离开确认弹窗」），不写「现代」「简洁」这类风格词，不把答案写进查询；点名一个 app 会把结果限定到它。屏的搜索有 `mode`：`deep`（默认，多个限定时用，可能返回少于 `limit`）和 `standard`（点名某个 app 的查找）。结果不够，同一个查询要更多：screens 把已见的 `id` 放进 `exclude_screen_ids`，flows / sections 翻 `page`（`has_next_page` 为 false 就换查询）；换了查询就是新搜索。`task_intent`（一句英文）、`output_destination`（写页面用 `doc`）在同一次调研的每次调用里保持一样。
 
-### 搜索结果的字段（2026-11-16 实测）
+### 搜索结果的字段
 
 | 层 | 每条结果的字段 |
 |---|---|
@@ -30,14 +30,14 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 | Flows | `id`、`name`、`actions`、`mobbin_url`、`app_name`、`platform`、`screen_count`、`screens`（每项 `screen_id`、`image_url`、`position`）；外层 `query`、`page`、`has_next_page`、`flows` |
 | Sections | `id`、`image_url`、`mobbin_url`、`site_name`；外层 `query`、`page`、`has_next_page`、`sections` |
 
-搜索结果偶尔带 `ai_usage_notice`（这次实测没出现过）：把它的 `text` 原样留到交回的最后，不进页面。
+搜索结果偶尔带 `ai_usage_notice`：把它的 `text` 原样留到交回的最后，不进页面。
 
 一条 flow 带着它**全部**屏的 `image_url`（`screen_count` 张，按 `position` 排好）；搜索时回给你看的预览图只是其中间隔取的几张，没预览的屏下载下来再看。字段里没有每屏的标题或说明：每一步在做什么，要看图写。
 
 ### 截图从哪来
 
 - **每个结果的 `image_url`** 是 `https://mobbin.com/api/mcp/short/<8 位>` 形式的短链，指向高清原图，**只有这一种尺寸**，没有缩略图。它会 302 跳到真正的文件，所以下载必须带 `-L`：`curl -fsSL -o shots/<来源>-<n>.jpg "<image_url>"`。
-- **格式**：每次搜索都传 `image_format: "jpg"`，下载下来才真是 jpeg，跟 `.jpg` 文件名一致（默认是 webp）。实测大小：iOS 屏 1179×2676，web 屏和 section 约 1920×1320。
+- **格式**：每次搜索都传 `image_format: "jpg"`，下载下来才真是 jpeg，跟 `.jpg` 文件名一致（默认是 webp）。大小：iOS 屏 1179×2676，web 屏和 section 约 1920×1320。
 - **会过期**：短链 30 天后失效（失效的返回 410），所以页面只用下载到本地的图，不放远程地址；页面上要引用出处就写 `app_name` / `site_name`，需要时附 `mobbin_url`（只作文字链，不是图）。
 - **点开放大的图**：只有一种尺寸，所以放大图就是流程行里那张图的一份拷贝（`cp`）。页面里流程行的图由 CSS 缩小显示。
 
@@ -62,7 +62,7 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 
 页面按这个顺序读：人先看到问了什么，再看这些产品的共识，再看证据，最后才被问要决定什么。
 
-1. 研究问题：标题、人的原话、上下文
+1. 研究问题：标题、人的原文、上下文
 2. 通用结论
 3. 每个来源一节：一条 flow、场景、设计逻辑
 4. 要我们决策的问题：最后一块，它之后没有别的块
@@ -71,7 +71,7 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 
 ## 每块写什么
 
-**研究问题。** 页面的 `<h1>` 是交给你的具名问题，**原样**，不改写成更好听的问法；标题恰为「研究问题」的那一块里，放**人的原话**，原样；再放交给你的**产品上下文**（哪个产品、哪块界面、`DESIGN.md` 指针、平台），也原样。人靠这几样判断这页有没有答到点上，改写过的问题会藏住错位。
+**研究问题。** 页面的 `<h1>` 是交给你的具名问题，**原样**，不改写成更好听的问法；标题恰为「研究问题」的那一块里，放**人的原文**，原样；再放交给你的**产品上下文**（哪个产品、哪块界面、`DESIGN.md` 指针、平台），也原样。人靠这几样判断这页有没有答到点上，改写过的问题会藏住错位。
 
 **通用结论（`general`）。** 在你摆出的来源之间都成立的结论，一个短列表，最要紧的在前。静态截图答不了的部分在这里占一行。人最先读、也可能只读这一块，它要能脱离来源单独成立。只写结论：哪些来源没放进来、图的顺序是谁排的、怎么搜的这类过程说明，都不上页面。
 
@@ -104,7 +104,7 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 </style></head><body>
 <h1 data-part="question">具名问题，原样</h1>
 <section data-part="brief">
-  <div data-part="human-words"><h3>研究问题</h3><p>…人的原话，原样…</p></div>
+  <div data-part="human-words"><h3>研究问题</h3><p>…人的原文，原样…</p></div>
   <div data-part="context"><h3>交给调研 agent 的上下文</h3><p>…原样…</p></div>
 </section>
 <section data-part="conclusion">
@@ -151,7 +151,7 @@ dyna research submit <落图目录>/index.html
 
 它查：
 
-- **骨架与顺序**：标题、「研究问题」块（人的原话）和上下文在结论之前；结论（`general`，非空）在第一个来源之前；每个来源（或 `no-source` 说明）在 `decisions` 之前；`decisions` 非空、不在 `conclusion` 里面，且是**页面最后一块**，之后只能跟放大用的 `<dialog>` 和它的 `<script>`。
+- **骨架与顺序**：标题、「研究问题」块（人的原文）和上下文在结论之前；结论（`general`，非空）在第一个来源之前；每个来源（或 `no-source` 说明）在 `decisions` 之前；`decisions` 非空、不在 `conclusion` 里面，且是**页面最后一块**，之后只能跟放大用的 `<dialog>` 和它的 `<script>`。
 - **每个来源**：一个标题，一条 flow，每一步都有包在 `<a data-part="zoom">` 里的截图和一行字，`scene` 与 `logic` 非空。
 - **地址**：页面上每个 `<img>`（flow 里的或别处的：结论、来源的两段、决策块）和每个放大的 `href`，都是**相对落图目录**的路径且文件存在。不用远程地址（会过期）、不用 `data:` URI、不用 `..`。唯一的例外是放大 `<dialog>` 里那个空的 `<img alt="">`（`<dialog>` 里的 `<img>` 都跳过），它的地址由脚本在点击时设。
 - **两个已撤掉的块**：出现 `cannot-answer` 或 `for-us` 就失败。
