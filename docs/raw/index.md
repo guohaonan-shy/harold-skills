@@ -11,6 +11,7 @@
 | [[2026-10-19-design-md-standard]] | document | 2026-10-19 | DESIGN.md 写入标准（Harold 已认可） |
 | [[2026-10-19-pr-decision-friction]] | conversation | 2026-10-19 | 讨论 —— PR 流程里哪些决定 agent 能自己定、交给人之前要先做完什么 |
 | [[2026-10-21-seo-workflow-discussion]] | conversation | 2026-10-21 | 讨论 —— SEO 工作流重新设计：五个方向、项目内插件（位置与队列已被次日推翻） |
+| [[2026-11-20-connector-tools-grill]] | conversation | 2026-11-20 | grill —— 带连接器的 agent 不写 tools 白名单、只写禁用清单（#164 推翻 11-16 的决定） |
 | [[2026-10-22-grill-idea-loop-seo]] | conversation | 2026-10-22 | grill —— SEO 能力放进 idea-loop：OpenSEO 负责发现，idea-loop 负责解决 |
 | [[2026-10-27-brand-terms-cannibalization]] | conversation | 2026-10-27 | #81 审核：自相蚕食的定义，品牌词放进 SEO.md 新开的「品牌」节 |
 | [[2026-10-31-seo-params-confirm-gate]] | conversation | 2026-10-31 | #142 审核：seo skill 要用的项目信息缺了——setup 推测确认，scan 停下等人确认再补进 SEO.md |
@@ -65,6 +66,7 @@
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
 | [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
+| [decisions/164](decisions/164.md) | conversation | 2026-11-16 | 决定记录 —— #164 的 triage 会话：OpenSEO 被别处配置顶替时以插件那份为准（不迁就别的名字），候选「插件自带 MCP 以插件那份为准」开 #345 |
 | [decisions/212](decisions/212.md) | conversation | 2026-11-16 | 决定记录 —— #212：triage 定修法为只换两份插件之间不同的文件；todo 会话夜间做到 review 完，评测材料按推荐不换，合并 PR #405（0.1.38），删掉失效的夜间回放定时任务；无 retro 候选 |
 | [decisions/192](decisions/192.md) | conversation | 2026-11-16 | 决定记录 —— #192 的 triage 会话：浏览器测试移出全量命令并加每例超时（按推荐）；无 retro 候选 |
 | [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 wiki-conventions 主体 7854 字超上限：triage 会话与 todo 会话 |
@@ -98,3 +100,10 @@
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
 | [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
 | [decisions/271](decisions/271.md) | conversation | 2026-11-20 | 决定记录 —— #271 的 issue 会话：pr-review 自动 review 放到最多 5 轮、每轮先合入主分支，摆过的题与 retro 候选的结果 |
+| [decisions/223](decisions/223.md) | conversation | 2026-11-19 | 决定记录 —— #223 的 triage 会话：不再比 margin 和 gap、锚点区域字段叫 pixelAnchor；retro 无候选 |
+| [idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps](idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps.md) | conversation | 2026-11-19 | #223 triage：margin/gap 与 pixelAnchor 两道题 |
+| [decisions/375](decisions/375.md) | conversation | 2026-11-20 | 决定记录 —— #375 的 issue 会话：UI 工单参考里「画布在不在执行方 worktree」两处说法统一，摆过的题与 retro 候选的结果 |
+| [[2026-11-18-comment-writing-grill]] | conversation | 2026-11-18 | grill —— #296 替人发的评论：发出后变了另发新的、第一句写结论和要他做什么、不署名；表达方式进 home，插件只去掉机器开头 |
+| [decisions/296](decisions/296.md) | conversation | 2026-11-19 | 决定记录 —— #296 的 triage 会话：评论发出后变了另发新的、第一句写结论和要他做什么、不署名；规矩只进 home，插件只去掉机器开头；三条 retro 候选都不批；todo 会话：版本按 patch 升、已贴的归档评论删署名行，无候选 |
+| [decisions/350](decisions/350.md) | conversation | 2026-11-20 | 决定记录 —— #350 的 issue 会话：dreaming 问人范围的说法对齐，main 照常合、0.2.0 另开 #418；候选 1 进池 |
+| [decisions/383](decisions/383.md) | conversation | 2026-11-20 | 决定记录 —— #383 的 issue 会话：magi 调度接上已有分支；多仓库的同类限制交给 0.2.0 的 home repo，不开 issue；无候选 |
