@@ -33,6 +33,11 @@
       "name": "interview-coach",
       "source": "./interview-coach",
       "description": "AI Engineer / AI Agent Engineer / Harness 方向的面试陪练。mock-interview 基于简历 + 目标方向扮演面试官,按四类问题框架(概括/选型/实现/延伸场景)深挖简历项目和领域知识点,全程不给反馈；interview-review 消费一场面试的转录(mock-interview 产物,或真实面试的录音转写),逐题做内容结构/表达/hook/技术准确性四维复盘,并把暴露出的知识漏洞讲透。两个 skill 共享同一份从真实面试教练转录里蒸馏出的四类问题框架和领域知识点清单。"
+    },
+    {
+      "name": "ai-eval",
+      "source": "./ai-eval",
+      "description": "Gate AI-pipeline changes by user task: run the candidate through the product's own pipeline on a fixed sample set, score it with deterministic asserts and Codex judges, compare against a stored baseline, and decide against the exit criteria in the project's own EVAL.md. Project facts live only in EVAL.md, which eval-setup generates. Depends on PostHog (samples and scorers) and Codex (judge)."
     }
   ]
 }

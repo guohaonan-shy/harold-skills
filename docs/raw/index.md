@@ -49,6 +49,7 @@
 | [decisions/80](decisions/80.md) | conversation | 2026-10-31 | 决定记录 —— #80 的 issue 会话：decision-rules 只管谁来定，to-spec 与 pr 按交付物重写，全局沟通风格重写；摆过的题与 retro 候选的结果 |
 | [decisions/89](decisions/89.md) | conversation | 2026-10-31 | 决定记录 —— #89 的 issue 会话：README 目录树里 pr-reviewer 的模型改成跟定义一致，摆过的题（合并），无 retro 候选 |
 | [decisions/87](decisions/87.md) | conversation | 2026-10-31 | 决定记录 —— #87 的 issue 会话：session-digest locate 只认这场会话自己的记录，摆过的题（合并），无 retro 候选 |
+| [decisions/293](decisions/293.md) | conversation | 2026-11-17 | 决定记录 —— #293 的 issue 会话：eval 写法定成迁 ai-eval 并补规则，toeflair 切换另开 #361；摆过的题，无 retro 候选 |
 | [decisions/121](decisions/121.md) | conversation | 2026-10-31 | 决定记录 —— #121 的 issue 会话：link sweep 跳过代码里的格式示例，摆过的题（合并），无 retro 候选 |
 | [decisions/142](decisions/142.md) | conversation | 2026-10-31 | 决定记录 —— #142 的 issue 会话：seo 项目信息由人确认写入、扫描缺了停下等确认、说不需要写「无」，摆过的题与 retro 候选的结果 |
 | [decisions/180](decisions/180.md) | conversation | 2026-10-31 | 决定记录 —— #180 的 issue 会话：writing-for-agents 归并改写、通用文档不带项目信息、retro 候选加验证，摆过的题与 retro 候选的结果 |

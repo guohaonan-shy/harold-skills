@@ -17,6 +17,7 @@
 - `idea-loop/` — 从 idea 到工程落地的闭环：grill → spec → 设计 → 工单 → 实现 → review
 - `interview-coach/` — AI 工程方向的面试陪练
 - `happy-life/` — 个人生活小仪式
+- `ai-eval/` — AI 流水线改动的评测：样本、基线、判官、准出标准
 
 改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同步改的是它自己的 `README.md`，不是这里。
 
@@ -158,5 +159,6 @@ issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类
 - `content-creator`：content-creator plugin 的 issue
 - `interview-coach`：interview-coach plugin 的 issue
 - `happy-life`：happy-life plugin 的 issue
+- `ai-eval`：ai-eval plugin 的 issue
 
 保留的 label：无
