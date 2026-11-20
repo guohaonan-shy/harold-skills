@@ -40,8 +40,9 @@
  *              `--delta <spec-slug>` reads `docs/design/tmp/<slug>/delta/` over `prod/`, as `measure` does (delta/ wins).
  *              Like `screen`, the page is not reloaded and its time not moved.
  *
- * The browser side is covered by design-archive-sections-browser.test.mjs (skipped when no Chromium is
- * found) and by a real run; `attribute` and the target arithmetic are pure functions over data.
+ * The browser side is covered by design-archive-sections-browser.test.mjs (about 6 minutes: it runs only
+ * with IDEA_LOOP_BROWSER_TESTS=1 set, on its own — the full-suite command skips it; also skipped when no
+ * Chromium is found) and by a real run; `attribute` and the target arithmetic are pure functions over data.
  *
  *   node design-archive-sections.mjs time <repo-root> [settings]
  *   node design-archive-sections.mjs step <ms>

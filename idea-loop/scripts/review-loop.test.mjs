@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { archiveBody, archiveMarker, localFigures, nextRound, parseLoop, toArchive, unsettled, withAuthorship, withFigureUrls } from './review-loop.mjs';
+import { archiveBody, archiveMarker, localFigures, nextRound, parseLoop, toArchive, unsettled, withFigureUrls } from './review-loop.mjs';
 
 const loop = `# PR #12 的 review loop
 
@@ -98,15 +98,16 @@ test('a malformed marker is an error, not a silently dropped entry', () => {
   assert.throws(() => parseLoop('<!-- idea-loop-entry {"kind":"note","round":1} -->'), /bad entry marker/);
 });
 
-test('archiving posts each entry once, labelled as a record, saying who posted it', () => {
+test('archiving posts each entry once, labelled as a record, signed by nobody', () => {
   const e = parseLoop(loop);
   const already = [{ body: `${archiveMarker('pause', 1)}\n…` }, { body: '人写的评论' }];
   assert.deepEqual(toArchive(e, already).map((x) => [x.kind, x.round]), [['review', 1]]);
-  const body = archiveBody(e[1], 'gh-login');
-  assert.ok(body.startsWith(archiveMarker('review', 1)));
-  assert.match(body, /由 Claude 代发/);
-  assert.match(body, /review 第 1 轮在会话里进行/);
-  assert.equal(withAuthorship('x', 'app'), 'x');
+  for (const identity of ['app', 'gh-login']) {
+    const body = archiveBody(e[1], identity);
+    assert.ok(body.startsWith(archiveMarker('review', 1)));
+    assert.doesNotMatch(body, /由 Claude 代发/);
+    assert.match(body, /review 第 1 轮在会话里进行/);
+  }
 });
 
 test('an entry too long for one GitHub comment is refused before it is sent', () => {

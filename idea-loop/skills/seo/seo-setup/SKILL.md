@@ -12,9 +12,7 @@ disable-model-invocation: true
 
 1. `whoami`。调不通：告诉人在 `/mcp` 里连上 `openseo`（idea-loop 插件自带这个服务）。人连不上就继续往下走，只做仓库里的事（`SEO.md` 里 OpenSEO 能推的值留给人填，第 5、7 步记「未做：OpenSEO 没连上」）。
 2. `list_projects`，按 `SEO.md` 的域名或人说的站点找项目。
-3. 对不上唯一一个：
-   - 有几个像的，问人用哪个。
-   - 一个都没有，问人后 `create_project`（名字、域名只写主机名、市场 `locationCode`/`languageCode`）；返回要 `organizationId` 的，把组织列给人选。
+3. 对不上唯一一个：见 [references/pick-project.md](references/pick-project.md)。
 
 研究类工具不拿来测连通，`whoami` 和 `list_projects` 就够。
 
@@ -30,6 +28,7 @@ disable-model-invocation: true
   - **构建与检查**：营销站的构建命令和产物目录（`package.json`、框架配置）；内容路径：博客文章、配图、`robots.txt`、`sitemap`、`llms.txt` 所在的目录或文件（站点配置、内容集合的定义、`public/`），出处写它们是在哪找到的。组件、模板、样式不推荐；项目里唯一记 SEO 事件的那个文件，人说算就列进去。
   - **写作**：文风、失败案例之类的文档；文章 frontmatter 里记文章类型的字段和它的取值。
   - **品牌**：「站点」节的域名去掉后缀（`cookbook.example` → `cookbook`），出处写「域名」。
+  - **写作的检查键、配图**：见 [references/writing-images.md](references/writing-images.md)。
 - 竞品还空着：先问人。人也说不准，提议用 `find_serp_competitors` 跑几个种子词（花 credits，人同意才跑），名单经人确认才算数。
 
 完成条件：要问的每个键都有推荐值和出处，或写明「探查不到」。
@@ -43,6 +42,7 @@ disable-model-invocation: true
 - **重点页面**：要守的页面，10 到 30 个是常态，每个带头词。
 - **构建与检查**：内容路径给推荐值，说明它的用处：只改这些路径（加 `docs/`、根目录 `SEO.md`）的 SEO PR 检查全过、两轴没有阻塞项就由 Claude 合并，所以人要确认每一项是内容、不是代码。
 - **品牌**：品牌词，查询里含它的不算自相蚕食（站点链接会让品牌词查询看起来像几个页面在抢同一个词）。人可以照推荐、加别的写法（空格、连字符的变体不用加，比较时会去掉）或说留空。推荐值经人确认才写，约定见 [references/seo-md.md](references/seo-md.md) 的「项目信息从哪来」。
+- **写作的检查键、配图**：问法和写入前的图片目录检查照那份参考。
 - 项目上下文缺的几节一起问（业务、目标、定位、写作偏好）。
 
 完成条件：每个空键都有人确认过的值，或人明确说留空。
@@ -51,7 +51,7 @@ disable-model-invocation: true
 
 照 [references/seo-md.md](references/seo-md.md) 写进仓库根目录；已有的文件只往空的小节和空的键里填。人说留空的键（竞品这类按行列的节，整节）写成 `无`，写法见格式定义，不留白，扫描才分得出「问过、不要」和「没问过」。「OpenSEO」节按新格式写；有旧的「单次额度」行（第 2 步的迁移），人确认每周分配和套餐额度后把它删掉。新建的 `SEO.md` 带上空的「内容原则」节（只有标题）：内容由项目自己填，不问人、不推测、不写任何原则；已有的文件缺这一节就补上标题。「分析」节可选：人主动说了分析工具（工具名、项目 id、dashboard 链接）才写，不问、不推测；没有就不建这一节，效果报告里那一块写「没有接分析工具」。
 
-完成条件：`node S/seo-md.mjs SEO.md` 解析成功，八节都在；`git diff SEO.md` 给人看过。
+完成条件：`node S/seo-md.mjs SEO.md` 解析成功，九节都在；`git diff SEO.md` 给人看过。
 
 ## 5. 同步进 OpenSEO 项目上下文
 
