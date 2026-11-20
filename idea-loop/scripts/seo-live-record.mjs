@@ -10,7 +10,7 @@
  * value (a target word with `-->` in it) can end the comment early.
  *
  * Usage:
- *   node seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>]   → the comment body (post it with `issues.mjs note`, which adds the 🤖 idea-loop： prefix); exit 1 unless the check passed
+ *   node seo-live-record.mjs body <result.json> --merged=<YYYY-MM-DD> [--pr=<n>]   → the comment body (post it with `issues.mjs note`, which adds the <!-- idea-loop --> marker); exit 1 unless the check passed
  *   node seo-live-record.mjs list <docs> [--since=<YYYY-MM-DD>]   → JSON: [{ issue, title, url, keyword, mergedOn, status, noindex, meta, sitemap }], one row per URL, oldest issue first
  *   node seo-live-record.mjs from-rollback <docs> <issue>   → JSON: { issue, fromRollback }: whether the issue's body carries the sentence every rollback-opened issue carries, i.e. a failed check on it is the second failure
  * Exit: 0 = done, 1 = bad input / gh error (reason on stderr).

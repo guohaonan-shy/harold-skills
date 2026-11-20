@@ -61,11 +61,12 @@ description: <职业身份 + 它交付什么；只在特定条件下才起的，
 model: <haiku | sonnet | opus | fable>
 effort: <low | medium | high | xhigh>
 maxTurns: <按工作量；跑一次就结束的窄任务 15 左右，要抓取或多轮的 30–45>
-tools: <白名单；MCP 可写 mcp__<server>__*>
+tools: <白名单；不用连接器的 agent 才写>
+disallowedTools: <用到连接器的 agent 写这个，不写 tools>
 ```
 
 - description 跟正文开头一致：职业身份和交付。调用方按名字起它，所以流程、交付格式、模型选择的理由都不进去。
-- 权限用 `tools` 表达，正文不再复述「你只读代码」这类话。
+- 权限用 frontmatter 表达，正文不再复述「你只读代码」这类话：不用连接器的 agent 用 `tools` 白名单；用到连接器的 agent 不写 `tools:`，写 `disallowedTools` 禁掉不该有的。连接器是会话里任何提供工具的 MCP 服务；它被别处的配置改名时，白名单按全名匹配，agent 一个工具都拿不到。
 - 模型按工作类型选：判断与综合用 opus / fable，按规程执行用 sonnet，只找位置用 haiku。
 - 要预加载的 skill 写进 `skills:`，全文会在启动时注入。设了 `disable-model-invocation: true` 的 skill 预加载不了。
 
@@ -75,7 +76,7 @@ tools: <白名单；MCP 可写 mcp__<server>__*>
 
 逐句问：删了这句，这份交付会变吗？不变就整句删。重点看：
 
-- 禁止清单：能用 `tools` 表达的挪到 frontmatter，剩下的改写成要它做的事。
+- 禁止清单：能用 `tools` 或 `disallowedTools` 表达的挪到 frontmatter，剩下的改写成要它做的事。
 - 写给维护者的话（为什么当初这么定、哪天谁签的字）：挪进 ADR 或 README。
 - 能查到的事实（目录结构、命令用法）：删，或换成去哪查。
 - 带日期的事实与版本号：放进参考文件，正文只写去哪查。

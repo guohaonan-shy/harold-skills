@@ -5,7 +5,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 **一次调用跑一轮。** 一轮看这个 issue 的全部 PR（`prs.md` 列着，知识库所在仓库的是主 PR）。调用这个 skill 的会话是**编排者**：起审查者、处理条目、在会话里给人看汇报、派修复、人说合并时合并。审查归 `idea-loop:pr-reviewer`（只读），修复归 `idea-loop:implementer`。一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)。
 
-开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）。哪些条目不等人，照 `idea-loop:decision-rules`。往来都在会话里，PR 上不开 thread，不以人的身份发言。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
+开工先用 Skill 工具调 `idea-loop:pr`（review loop 文件、汇报与 PR 描述的写法）。哪些条目不等人，照 `idea-loop:decision-rules`。往来都在会话里，PR 上不开 thread，不和人往来。改 spec、工单的提交一律单独提交（`docs(spec): …` / `docs(tickets): …`）并推送。
 
 `review-loop` 指 `node "${CLAUDE_PLUGIN_ROOT}/scripts/review-loop.mjs"`，review loop 文件是 `.tmp/review-loop/<PR 号>.md`。**设计产物**指集成 worktree 的 `docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西。
 

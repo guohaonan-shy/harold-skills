@@ -6,6 +6,13 @@
  * itself. Playwright and a Chromium are looked up where this machine has them (the project's own
  * node_modules, the npx cache the plugin's Playwright MCP uses, the Playwright browser cache); with none
  * found the tests are skipped, not failed.
+ *
+ * Every case really opens Chromium and waits in real time: the whole file takes about 6 minutes, so the
+ * full-suite command does not run it — without IDEA_LOOP_BROWSER_TESTS=1 every case is skipped. Run it on
+ * its own (REVIEW.md, 验证命令) when the sections script or the PNG comparison it imports changes:
+ *   IDEA_LOOP_BROWSER_TESTS=1 node --test idea-loop/scripts/design-archive-sections-browser.test.mjs
+ * Each case times out after 120 s and the browser start-up after 60 s, so a stuck browser fails one case
+ * and the file still ends.
  */
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -79,9 +86,15 @@ const SETTINGS = { viewport: { width: 800, height: 600 }, theme: 'light', motion
 
 let browser = null;
 let page = null;
-let skip = 'no Playwright with a Chromium found on this machine';
+const OPT_IN = 'IDEA_LOOP_BROWSER_TESTS';
+const CASE_TIMEOUT_MS = 120_000;
+const LAUNCH_TIMEOUT_MS = 60_000;
+let skip = process.env[OPT_IN] === '1'
+  ? 'no Playwright with a Chromium found on this machine'
+  : `设 \`${OPT_IN}=1\` 单独跑，见 REVIEW.md`;
 
 before(async () => {
+  if (process.env[OPT_IN] !== '1') return;
   const { cores, exes } = findPlaywright();
   for (const core of cores) {
     for (const exe of [undefined, ...exes]) {
@@ -96,13 +109,13 @@ before(async () => {
       }
     }
   }
-});
+}, { timeout: LAUNCH_TIMEOUT_MS });
 after(async () => {
   if (browser) await browser.close();
 });
 
 const browserTest = (name, fn) =>
-  test(name, async (t) => {
+  test(name, { timeout: CASE_TIMEOUT_MS }, async (t) => {
     if (skip) return t.skip(skip);
     return fn(t);
   });

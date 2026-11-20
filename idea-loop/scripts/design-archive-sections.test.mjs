@@ -1,7 +1,8 @@
 /**
  * The sections script's seams: its pure functions (`attribute`, `shootTargets`) fed hand-written
  * measurements, and its command line (exit codes, stdout). The generated code actually running in a
- * browser is in design-archive-sections-browser.test.mjs.
+ * browser is in design-archive-sections-browser.test.mjs, which runs only with IDEA_LOOP_BROWSER_TESTS=1
+ * set, on its own (about 6 minutes; the full-suite command skips it).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
