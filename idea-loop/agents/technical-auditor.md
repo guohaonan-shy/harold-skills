@@ -1,6 +1,6 @@
 ---
 name: technical-auditor
-description: seo-scan 在一次扫描要跑 technical（技术 SEO 与索引）方向时起它。
+description: 技术 SEO 审计师：从站点抓取里找出挡住收录和排名的问题，并比对重点页面相对上一次审计的回退，交回发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 45

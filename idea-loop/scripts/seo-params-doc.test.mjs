@@ -23,6 +23,8 @@ const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
 const PROJECT_CONTEXT = read('skills', 'engineering', 'setup', 'references', 'seo', 'project-context.md');
 const STOPS = read('skills', 'seo', 'seo-scan', 'references', 'stops.md');
+// 0.2.0: what happens once there are gaps lives in the gate's own reference; SKILL.md keeps the gaps call and the pointer.
+const GATE = read('skills', 'seo', 'seo-scan', 'references', 'gap-gate.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
@@ -75,8 +77,10 @@ test('seo-scan: the gate sits after 方向 and before 预算', () => {
 });
 
 test('seo-scan: the gate notifies, lists guesses with their source, stops without dispatching, then writes and goes on', () => {
-  const g = section(SCAN, '缺口关卡');
-  assert.match(g, /dyna seo gaps/);
+  const head = section(SCAN, '缺口关卡');
+  assert.match(head, /dyna seo gaps/);
+  assert.match(head, /references\/gap-gate\.md/, 'the gate section points at its reference');
+  const g = GATE;
   assert.match(g, /find_serp_competitors/);
   assert.match(g, /allow` 大于 0，就不推/, 'competitors are only inferred when the budget lets it');
   assert.match(g, /『推送』/);
@@ -90,7 +94,7 @@ test('seo-scan: the gate notifies, lists guesses with their source, stops withou
 });
 
 test('seo-scan: after the human answers, the project context is fetched again before the gaps are rechecked (S1)', () => {
-  const g = section(SCAN, '缺口关卡');
+  const g = GATE;
   const answered = g.slice(g.indexOf('人回复后'));
   const refetch = answered.search(/重新调 `get_project_context`[^\n]*覆盖[^\n]*context\.json/);
   const recheck = answered.search(/重跑第 2 步/);
@@ -99,7 +103,7 @@ test('seo-scan: after the human answers, the project context is fetched again be
 });
 
 test('seo-scan: credits the gate spent count toward the run, and 预算 reads the balance again (S2)', () => {
-  const g = section(SCAN, '缺口关卡');
+  const g = GATE;
   assert.match(g, /find_serp_competitors[^\n]*调完再调一次[^\n]*`whoami`/, 'the gate reads the balance after the paid call');
   const b = section(SCAN, '预算');
   assert.match(b, /重新读/, '预算 reads creditsRemaining itself');
@@ -109,10 +113,10 @@ test('seo-scan: credits the gate spent count toward the run, and 预算 reads th
 });
 
 test('seo-scan: does not point at the SEO module\'s private references (C1)', () => {
-  const g = section(SCAN, '缺口关卡');
-  assert.ok(!/seo-md\.md/.test(SCAN), 'seo-md.md is the SEO module\'s own reference');
+  const g = section(SCAN, '缺口关卡') + GATE;
+  assert.ok(!/seo-md\.md/.test(SCAN + GATE), 'seo-md.md is the SEO module\'s own reference');
   assert.ok(!/格式定义/.test(g));
-  assert.ok(!/setup[^\n]*references\/seo/.test(SCAN));
+  assert.ok(!/setup[^\n]*references\/seo/.test(SCAN + GATE));
 });
 
 test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not through the SEO module\'s private references (#235)', () => {
@@ -139,8 +143,8 @@ test('seo-scan: allowed-tools has what the gate uses', () => {
   }
 });
 
-test('seo-scan: the body stays under 5000 characters', () => {
-  assert.ok([...body(SCAN)].length < 5000, `${[...body(SCAN)].length} characters`);
+test('seo-scan: the body stays within the 4500-character line', () => {
+  assert.ok([...body(SCAN)].length <= 4500, `${[...body(SCAN)].length} characters`);
 });
 
 test('the SEO module: the brand step points at the convention and writes 无 for a blank answer', () => {
@@ -169,7 +173,7 @@ test('seo-md.md: an item the human said is not needed is written 无 at its own 
 });
 
 test('seo-scan: the gate writes 无 into the project-context section when the human says it is not needed (S3)', () => {
-  const g = section(SCAN, '缺口关卡');
+  const g = GATE;
   assert.match(g, /项目上下文的项[^\n]*update_project_context[^\n]*人说不需要的[^\n]*写 `无`/);
   assert.match(g, /不需要/, 'the question tells the human they may say 不需要');
 });
@@ -181,8 +185,4 @@ test('the SEO module: a project-context section the human says is not needed is 
 
 test('project-context.md: a section that is not needed is written as 无, nothing else (S3)', () => {
   assert.match(PROJECT_CONTEXT, /人说这一节不需要[^\n]*整节写 `无`/);
-});
-
-test('seo-scan: the body stays within 5000 characters after the S3 additions (S3)', () => {
-  assert.ok([...body(SCAN)].length <= 5000, `${[...body(SCAN)].length} characters`);
 });

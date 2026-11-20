@@ -168,7 +168,8 @@ test('seo-scan can run what landing needs: allowed-tools has dyna home commit an
   const tools = field(SCAN, 'allowed-tools');
   assert.ok(tools.includes('Bash(dyna home commit:*)'), 'allowed-tools lacks dyna home commit');
   for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)']) assert.ok(!tools.includes(t), `allowed-tools still has ${t}`);
-  assert.ok(tools.includes('Bash(git worktree:*)'), 'triage still uses a worktree');
+  assert.ok(tools.includes('Bash(dyna worktree:*)'), 'triage still uses a worktree, made with dyna worktree');
+  assert.ok(!tools.includes('Bash(git worktree:*)'), 'no hand-written git worktree');
 });
 
 test('the scan names results-analyst, so its private references stay private to seo-scan and the agent it starts', () => {

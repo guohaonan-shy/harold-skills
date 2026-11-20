@@ -1,6 +1,6 @@
 ---
 name: backlink-analyst
-description: seo-scan 在一次扫描要跑 backlinks（外链）方向时起它。
+description: 外链分析师：从竞品的引用域里找出引用了他们、却没引用我们的站点，判断哪些值得外联和用什么角度，交回外链发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 40

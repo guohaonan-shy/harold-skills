@@ -1,6 +1,6 @@
 ---
 name: geo-analyst
-description: seo-scan 在一次扫描要跑 geo（AI 搜索可见性）方向时起它。
+description: AI 搜索可见性分析师：读 AI 回答里品牌出不出现、引用了谁，找出竞品被引用而我们缺席的话题，以及挡住 AI 抓取的站点问题，交回发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 40

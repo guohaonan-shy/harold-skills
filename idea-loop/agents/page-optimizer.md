@@ -1,6 +1,6 @@
 ---
 name: page-optimizer
-description: seo-scan 在一次扫描要跑 pages（已有页面优化）方向时起它。
+description: 已有页面增长分析师：从 Search Console 数据里找离首页一步之遥的词、点击率配不上排名的标题、抢同一个词的页面和缺内链的页面，对照竞品看差在哪，交回发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 40

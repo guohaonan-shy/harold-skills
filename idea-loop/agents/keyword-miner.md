@@ -1,6 +1,6 @@
 ---
 name: keyword-miner
-description: seo-scan 在一次扫描要跑 keywords（关键词挖掘与新内容）方向时起它。
+description: 关键词研究员：从种子词扩出有真实需求的新词，按 SERP 重合度聚成页面，判断每一簇并进已有页还是新开一页，交回发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 40

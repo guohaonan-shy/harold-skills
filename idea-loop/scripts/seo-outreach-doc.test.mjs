@@ -107,9 +107,9 @@ test('the body is within the 4500-character line', () => {
   assert.ok([...body(SKILL)].length <= 4500, String([...body(SKILL)].length));
 });
 
-test('seo-scan calls the follow-up branch of seo-outreach, and stays within its limit', () => {
+test('seo-scan calls the follow-up branch of seo-outreach, and stays within the 4500-character line', () => {
   const s = section(SCAN, '外联跟进');
   assert.match(s, /idea-loop:seo-outreach/);
   assert.match(s, /跟进/);
-  assert.ok([...body(SCAN)].length <= 5000, String([...body(SCAN)].length));
+  assert.ok([...body(SCAN)].length <= 4500, String([...body(SCAN)].length));
 });

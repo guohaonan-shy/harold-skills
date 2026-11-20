@@ -1,6 +1,6 @@
 # 发现清单与方向 agent 的文件约定
 
-一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `dyna seo file-issues`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；五个方向 agent 和被它们调用的方法 skill 都照这里写。
+一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `dyna seo file-issues`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；方向 agent 和被它们调用的方法 skill 都照这里写。
 
 ## 一条发现
 
@@ -13,7 +13,7 @@
   "evidence": { "what": "调了什么工具、什么参数", "when": "YYYY-MM-DD", "values": "拿回的数值，一两句" },
   "ratio": { "numerator": 3, "denominator": 40 },
   "repro": "照着就能重跑的步骤：哪个 OpenSEO 工具、什么参数；或用什么 UA 请求哪个网址、看哪一行",
-  "fix": "建议的修法；还没定的写「需要诊断」或「需要决定：…」",
+  "fix": "建议的修法；还没想清楚写「需要诊断」或「需要决定：…」，这条照样交回，诊断和拍板在 issue 会话里做",
   "acceptance": ["能逐条独立检查的验收标准"],
   "assumptions": ["无人时代替提问用的默认值"],
   "content": { "keyword": "目标词", "pageType": "对比与研究 | 数据研究 | 故事 | 教程", "mode": "new | update" }
@@ -21,10 +21,9 @@
 ```
 
 - `ratio`、`assumptions`、`content` 可选，其余必填。
-- **同一种问题一条**：三十个页面缺描述是一条 `kind: missing-meta-description`、`targets` 列三十个网址，不是三十条。合并和去重都靠 `direction` + `kind`，所以同一方向里 `kind` 的拼法每次运行保持一致：优先用 OpenSEO 返回里现成的问题类型名（例如审计的 `issueType`）。
+- **同一种问题一条**：三十个页面缺描述是一条 `kind: missing-meta-description`、`targets` 列三十个网址。合并和去重都靠 `direction` + `kind`，所以同一方向里 `kind` 的拼法每次运行保持一致：优先用 OpenSEO 返回里现成的问题类型名（例如审计的 `issueType`）。
 - 文字里（`title`、`evidence.values`、`fix`）出现百分比，就带 `ratio`；否则整条被拒收。CTR 写「12 次点击 / 1,050 次展现」，再给 `ratio: { numerator: 12, denominator: 1050 }`。
 - `repro` 要能被一个没看过本次数据的人照着重跑：工具名加完整参数（含 `projectId`、日期范围），或一条 `curl -A '<UA>' <网址>` 加要看的那一行。triage 会话的验证就照它独立复现。
-- `fix` 还没想清楚时写「需要诊断」或「需要决定：…」，这条照样交回：诊断和拍板在 issue 会话里有人做。
 - `content` 只给要新写或改写正文的发现，`pageType` 只取那四个值，`mode` 是新开页（`new`）还是改已有页（`update`）。
 - `assumptions` 写清无人时你替人选了什么：「SEO.md 没写目标市场，按 MCP 默认 United States / English」。缺的项目信息不推断着用，写清缺什么、哪部分因此没做：「SEO.md 竞品为空，未挖竞品外链」。
 
