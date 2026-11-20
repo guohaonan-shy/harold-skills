@@ -121,7 +121,7 @@ Codex 审查者 ──→ 提示词里除思考模式外，加传 ~/.claude/CLAU
 
 ## 实现决策
 
-- **先等 #340**：本 issue 改的 decision-rules、pr-review、pr 都在 #340 的重写清单里（02、05 号工单）。实现从 #340 的 PR #432 合进集成分支之后的提交起做；GitHub 上已加 blocked by #340。#432 里 evidence 并进 decision-rules 的那一组怎么处理（撤回，还是留给 #438 拆）见 #438。
+- **先等 #340**：本 issue 改的 decision-rules、pr-review、pr 都在 #340 的重写清单里（02、05 号工单）。实现从 #340 的 PR #432 合进集成分支之后的提交起做；GitHub 上已加 blocked by #340。#432 照原样合入（evidence 并进 decision-rules 那一组不撤），#438 再把证据拆出来（[[280]] 题 10）；#280 和 #438 都改 `thinking-mode` 这一份，谁后做谁接前一个的结果。
 - **改名不留旧名**：`decision-rules` 目录、引用、注入名、提示词键一次改完，不留重定向（同 #340「合并的 skill 删除」：0.2.0 一次发布、不留中间状态）。
 - **不留旧节**：「依据冲突或没有」整节删，不留一句「旧节改名了」。「已按规则处理」这个节名保留：pr-review、pr、implement、`dyna pr candidates` 都按它找（同 ADR-0035「不改名」的理由）。
 - **插件里只指 home 的位置，不写 home 的内容**：写「会话已加载的用户规则（`~/.claude/CLAUDE.md`）」，不写 home 的路径和条目（AGENTS.md「插件里不出现任何项目的信息」；`no-project-leak.test.mjs` 守着）。
