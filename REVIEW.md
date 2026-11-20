@@ -9,6 +9,7 @@
 | 类型检查 | 无（纯 `.mjs`，没有类型检查） |
 | 单个测试文件 | `node --test <文件>` |
 | 全量测试 | `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` |
+| 设计档案浏览器测试 | `IDEA_LOOP_BROWSER_TESTS=1 node --test idea-loop/scripts/design-archive-sections-browser.test.mjs`。改了 `design-archive-sections.mjs`、它引入的 `ui-png-compare.mjs`，或这份浏览器测试本身时跑；约 6 分钟，放后台跑。全量测试不设这个变量，这份文件的用例全部 skipped |
 | lint | 无 |
 
 ## 额外要求

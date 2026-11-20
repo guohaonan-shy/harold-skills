@@ -20,7 +20,7 @@ tags: [retro-candidates]
 
 Tofelair#532（「toefl speaking practice」新开页）的审核：brief 推荐的角度 1「练完要知道错在哪，才算练过」，核心内容和站内已有的三篇博客（L&R 三种出错原因、L&R 重练方法、Interview 别背模板）重合。人回复：
 
-- 状态：在池里
+- 状态：已开 issue（#188）
 
 ## 出现
 

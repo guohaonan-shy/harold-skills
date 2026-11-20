@@ -64,12 +64,16 @@
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
 | [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
+| [decisions/212](decisions/212.md) | conversation | 2026-11-16 | 决定记录 —— #212：triage 定修法为只换两份插件之间不同的文件；todo 会话夜间做到 review 完，评测材料按推荐不换，合并 PR #405（0.1.38），删掉失效的夜间回放定时任务；无 retro 候选 |
+| [decisions/192](decisions/192.md) | conversation | 2026-11-16 | 决定记录 —— #192 的 triage 会话：浏览器测试移出全量命令并加每例超时（按推荐）；无 retro 候选 |
 | [decisions/302](decisions/302.md) | conversation | 2026-11-16 | 决定记录 —— #302 wiki-conventions 主体 7854 字超上限：triage 会话与 todo 会话 |
 | [decisions/379](decisions/379.md) | conversation | 2026-11-18 | 决定记录 —— #379 调度按时段分两种模式：triage 会话，人不在时用 claude -p 交到桌面端开会话，定时任务每小时一轮，retro 三条候选都不批 |
+| [decisions/345](decisions/345.md) | conversation | 2026-11-20 | 决定记录 —— #345 插件自带的 MCP 被顶替时的规则：被 #164 推翻方向后关掉，retro 一条候选不批 |
 | [decisions/313](decisions/313.md) | conversation | 2026-11-15 | 决定记录 —— #313 的 issue 会话：范围题按「影不影响这次交付」推荐（PR #321），回放分不出差别照合，decision-rules 与 runtime 开场注入另开 #326，候选「0.x 行为改动升 patch」第 3 次、开 #327 |
 | [decisions/326](decisions/326.md) | conversation | 2026-11-15 | 决定记录 —— #326 的 issue 会话：开场注入 decision-rules 与 runtime（PR #330），回放只认当前环境那份说明（收窄），版本按人定改 patch；两条候选都不批 |
 | [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
+| [decisions/188](decisions/188.md) | conversation | 2026-11-16 | 决定记录 —— #188 的 triage 与 todo 会话：seo-brief 角度候选对照站内文章，规则验收选写回放用例（跨仓库、付费、PR 开出后当场跑）；夜里按推荐定 4 件、人以 patch 合并 PR #402；无候选 |
 | [decisions/161](decisions/161.md) | conversation | 2026-11-16 | 决定记录 —— #161 的 issue 会话：explorer 加读 spec「实现决策」（spec explorer-reads-impl-decisions），候选「摆题前讲清 issue 来由」不批 |
 | [decisions/292](decisions/292.md) | conversation | 2026-11-16 | 决定记录 —— #292 的 issue 会话：根因订正为交回那一轮模型请求断了或挂住（PR #342），人定不加机制、关成 canceled；候选「推翻根因先白话讲因果链」不批 |
 | [decisions/237](decisions/237.md) | conversation | 2026-11-16 | 决定记录 —— #237 的 issue 会话：Codex 跑完整个 issue 会话、cmux 开 Codex 终端，人定不做，关成 canceled（不做记录 PR #347）；无 retro 候选 |
@@ -88,6 +92,7 @@
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
 | [[2026-11-16-blog-workflow-grill]] | conversation | 2026-11-16 | grill —— #163 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用写作 lint、品牌取值扩 DESIGN.md |
 | [decisions/163](decisions/163.md) | conversation | 2026-11-16 | 决定记录 —— #163 blog-publisher 拆分：博客 workflow 进 idea-loop seo 组，摆过的题与 retro 候选的结果 |
+| [[2026-11-16-sections-browser-test-slow]] | conversation | 2026-11-16 | #192 triage：设计档案浏览器测试单跑近 6 分钟、拖住全量测试，人选移出全量命令并加每例超时 |
 | [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
 | [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
