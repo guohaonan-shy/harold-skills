@@ -11,6 +11,7 @@
 | [[refine-judge-advisor]] | 设计收敛改由人定：评委降为顾问，每轮交一份配参考图和用户路径的设计评审报告 |
 | [[replay-gh-isolation]] | 规则回放起的每个 claude / Codex 子进程都不带 gh 登录，读不到用例之后的线上 issue 与 PR |
 | [[scroll-driven-whole-pin]] | 滚动驱动的段只认整段钉住；窄钉子的段照普通长图拍；滚动驱动段每一步都拍一张 |
+| [[sections-browser-test-out-of-full-suite]] | 设计档案的浏览器测试移出全量测试命令、另给单独命令，每例加超时 |
 | [[seo-autopilot]] | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱 |
 | [[seo-brief-angle-vs-site-posts]] | seo-brief 新开页时先读站内同主题文章，每个角度候选写明和哪篇重合、新页补什么 |
 | [[seo-outreach-reads-seo-md]] | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
