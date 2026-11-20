@@ -1,6 +1,6 @@
 ---
 name: ui-measure
-description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像不像」变成一个会红的测试。实现 UI 工单、review 时对画布、冻结时定容差时用。
+description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像不像」变成一个会红的测试。实现 UI 工单、review 时对画布、冻结时定容差、比较两版画布找没声明的改动时用。
 ---
 
 两个标签页，一边是冻结的画布，一边是项目里的实现，按验收矩阵逐格比。判据是 `node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs"`，不是另一个模型的意见：差多少、差在哪，输出一串带严重度的发现（finding）。它就是测试决策里「视觉正确性」那一行的红绿测试，在实现的红绿环里主动跑。
@@ -19,12 +19,14 @@ description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像
 
 | 属性类别 | 判据 |
 |---|---|
-| 位置类（top / left / width / height / padding / margin / gap） | ±1px |
+| 位置类（锚点盒子的 top / left / width / height，加 padding） | ±1px |
 | token 类（颜色、字号、行高、字重、字距、圆角、边框、阴影、透明度） | 精确匹配 |
 | 像素层每格差异 | ≤ 1% |
-| 抗锯齿 | 感知色距 0.1（YIQ 归一化，与 pixelmatch 同源）：两个像素在光栅化意义上算同一个颜色。它跟位置容差是两回事，各管各的 |
+| 抗锯齿 | 感知色距 0.1（YIQ 归一化，与 pixelmatch 同源）：两个像素在光栅化意义上算同一个颜色。同位置不相近的像素，再看另一张图在它周围 1 个物理像素（3×3 邻域）的逐通道颜色范围，双向都落在对方范围里才算同一个，所以挪不到一个像素的字不报红，挪 2px 照样红。它跟位置容差是两回事，各管各的 |
 
-颜色差一个色阶是一条发现，不是舍入误差：它意味着用错了 token。
+margin 和 gap 不比：`margin-top`、`space-y`、`gap` 排出同一个位置，只看盒子落在哪。没有锚点的子元素排偏了，由像素层兜底。
+
+颜色差一个色阶是一条发现，不是舍入误差：它意味着用错了 token。比颜色前两边都先换算成 8 位 sRGB（每通道 0–255 的整数）加透明度，再精确比：画布写 `#3b82f6`、实现写 `oklch(…)`，换算后相同就是同一个色。发现里同时给两边的原写法和换算值。认得 `rgb()`/`rgba()`、`oklch()`、`oklab()`、`color(srgb …)`；sRGB 色域外的按通道截到 0–255；阴影、边框这类复合值里嵌着的颜色同样换算；认不得的写法按原字符串比。
 
 ## 矩阵怎么写
 
@@ -40,21 +42,27 @@ description: 把 UI 实现和冻结的设计画布逐格测量比对，让「像
     { "name": "desktop/light/default", "viewport": { "width": 1440, "height": 900 }, "colorScheme": "light", "state": "default" },
     { "name": "mobile/dark/empty", "viewport": { "width": 390, "height": 844 }, "colorScheme": "dark", "state": "empty",
       "tolerance": { "pixel": 2 }, "byAnchor": { "chart": { "position": 3 } } },
+    { "name": "desktop/light/reduced-motion", "viewport": { "width": 1440, "height": 900 }, "state": "default", "reducedMotion": "reduce" },
     { "name": "desktop/light/live-data", "viewport": { "width": 1440, "height": 900 }, "state": "live", "review": "human" }
   ]
 }
 ```
 
 - 格的 `name` 出现在每条发现的位置字段里，写得让人一眼知道是哪一格。
+- `reducedMotion`（可选）：`"reduce"` 或 `"no-preference"`（缺省），两个标签页都按它模拟 `prefers-reduced-motion`，写法照 `colorScheme`。关动画与过渡的冻结样式照加：比的是这种偏好下的静止样式。不写的格跟没有这个字段时一样。
 - `review: "human"` 的格脚本跳过，单独列出来，不计入绿。
-- 像素层看的是 viewport 那一帧（不是整页）；折叠线以下靠锚点覆盖，要单独看就再加一格。
+- 像素层默认看 viewport 那一帧（不是整页）。一格写 `"shotAnchor": "<锚点名>"`，这一格只截这个锚点的区域再比像素：两边按同一个框裁（框是这个锚点在两边范围的并集，再裁到两个页面都有的部分），尺寸一定相同，折叠线以下的锚点也能截。不写就照旧截 viewport。
+- `canvas` 和 `local` 两边都只是地址：填画布某一版的地址（`.../v3.html`），就是两版画布对比，输出还是上面那种发现。要的是「变了哪些锚点、哪些没声明」的清单，用下面的「两版画布对比」。
 
 ## 跑，然后照发现改
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json        # 人读
 node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json --json  # 机读
+node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" en-light.json zh-light.json en-dark.json zh-dark.json --json  # 多份矩阵
 ```
+
+多份矩阵（语言 × 深浅色这类）一次交给同一条命令：脚本只开一个浏览器，每份矩阵一个独立的上下文；同时跑几份由脚本按本机此刻的可用内存（每份约 0.5 GiB，外加浏览器约 0.6 GiB）和空闲 CPU（每份约 1 核）自己定，最多 4 份，定下的份数和依据打在 stderr 第一行。机器忙时它会降到 1 份：CPU 不够时同时跑，测量层不受影响，但像素差会在 1% 阈值附近抖。`--concurrency N` 可以强行指定，同样不超过 4。不要每份矩阵各开一个进程：每个进程是另一个浏览器，内存按份数翻倍；也不用加 `--max-old-space-size`，截图在脚本里直接解码比对，一格只占几 MB。一份矩阵时 `--json` 的输出跟以前一样；多份时是 `{ "matrices": [{ "matrix": <路径>, "findings", "瓶颈", "humanReviewCells" }, …] }`，有一份有发现退出码就是 `2`。每份矩阵各记各的上一轮（`matrix.json` 记在同目录的 `.ui-measure-last.json`，别的文件名记在 `.ui-measure-last.<文件名>.json`），所以几份矩阵可以放在同一个目录。
 
 退出码：`0` 全绿，`2` 有发现。每条发现带 `id`（缺陷类型）、`severity`、位置（`cell` · `anchor` · `property`）、画布值与实现值（`expected` · `actual` · `delta` · `detail`）和 `why`。严重度是机械的：
 
@@ -63,6 +71,12 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/ui-measure.mjs" matrix.json --json  # 机读
 - **P2 `pixel-mismatch`**：像素层的兜底，知道有东西不一样但说不出是什么。要么在那儿补一个锚点让测量层接手，要么写明这个差异为什么可以接受。
 
 测量层为主：像素层永远不压过一条点名了锚点的发现。
+
+## 两版画布对比：找出「没声明却变了的地方」
+
+拿这一版画布跟上一版比，只回答「变了哪些锚点」，再按改动集分成声明过的和没声明的。矩阵里 `"mode": "canvas-diff"`，两边写 `before`（上一版）和 `after`（这一版），其余（`cells`、`dpr`、`tolerance`、`byAnchor`）照上面；`state` 同样拼成 `?state=`。第一轮没有上一版，`before` 填 imagine 的交接画布，`changeSet` 写 `[]`。
+
+矩阵示例、改动集的写法、`--json` 输出的字段和退出码见 [references/canvas-diff.md](references/canvas-diff.md)。
 
 ## 终止条件
 

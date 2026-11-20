@@ -40,11 +40,13 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
 | canceled | 重复、在「不做」清单里、已实现、复现不出 |
 | 留在 backlog | 判不了 |
 
+**SEO issue**（带 `type:seo/*`）：只有 UI 设计建议 triage、判不了建议 todo。要新建或改组件、页面模板、样式的，建议 triage；要 grill、要定方案的，建议 todo（todo 会话照推荐定）；判不了的也建议 todo，不留在 backlog，也不因为拿不准就 canceled。canceled 仍只来自重复、在「不做」清单里、已实现、复现不出四种。
+
 项目跳过 triage 的（`ISSUE_TRACKER.md` 写了「triage：跳过」），没有 triage 这一行：要人评估的也建议 todo。你不判 P0；像 P0 的建议 P1，结论里标「疑似 P0」。
 
 ## 评论与交回
 
-把评论正文写进 `.tmp/triage/<号>/comment.md`，`issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（脚本加「🤖 idea-loop：」前缀），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
+把评论正文写进 `.tmp/triage/<号>/comment.md`，`issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（脚本加 `<!-- idea-loop -->` 标记），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
 
 交回一行 JSON，别的不写；`comment` 填上面取到的评论地址，不自己拼：
 

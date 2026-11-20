@@ -22,32 +22,44 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 
 ## 会话内循环
 
-在当前会话里每隔一段时间再叫自己一次，用 `CronCreate` / `CronList` / `CronDelete`。loop 是本会话里的一个循环定时，7 天后自动删掉；到期后由一个只触发一次的提醒在这个会话里叫人重起。
+在当前会话里每隔一段时间再叫自己一次，用 `CronCreate` / `CronList` / `CronDelete`：
 
-起一个 loop：
+- `CronCreate`：间隔换成 cron（分钟避开 0 和 30），prompt 是要重复的文字。
+- `CronList`：本会话里的 loop。
+- `CronDelete`：取消一个 loop。
 
-1. `CronList`：本会话里已有的 loop 和到期提醒（prompt 以「调度 loop 已到期」开头）都用 `CronDelete` 删掉，重起时不留两个。
-2. `CronCreate` 循环定时：间隔换成 cron（分钟避开 0 和 30），prompt 是要重复的命令，不带参数。
-3. `CronCreate` 到期提醒：`recurring: false`，时间定在现在起 7 天加 10 分钟（loop 那时已经删掉），prompt：「调度 loop 已到期。在会话里说：<仓库名> 的 issue 调度 loop 7 天到期，已经停了，重新敲 /idea-loop:issue-dispatch <间隔> 起一个新的。用 PushNotification 发同一句。」
-4. 汇报里写下次运行和到期的时间。
+loop 是本会话里的循环定时，7 天后自动删掉。
+
+调度在桌面端不用它，用「定时任务」（见「会话管理」的调度）。
 
 ## 会话管理
 
 用会话管理 MCP（`mcp__ccd_session_mgmt__*`）：
 
 - **列会话**：`mcp__ccd_session_mgmt__list_sessions`，`group` 写 section 名，`limit: 100`，列出没归档的会话；section 自带的计数含已归档的，不用它。
-- **开一个 issue 会话**：`start_session`，`initiation: own_initiative`，`context: fresh`，`use_worktree: true`（会话要有自己的 worktree 才能从调度会话里脱离出去），标题「<仓库名>#<号> <标题>」，再带 `prompt` 和 `background`。定时触发的轮次不能直接开会话，`start_session` 出的是卡片，人点了卡片会话才开；卡片一周不点会过期。
+- **开一个 issue 会话**：不用 `start_session`：定时触发的轮次里 app 拒它（"Start sessions only on the user's own words…"），人说话的轮次开出的也要人点了才算数。issue 会话一律照「调度」的「怎么交出 issue」开：`claude -p` 开出、交到桌面端、再归位。
 - **给别的会话发消息**：`mcp__ccd_session_mgmt__send_message`，`session_id` 填会话 id，`message` 填原文。工具还没加载就先用 ToolSearch 的 `select:mcp__ccd_session_mgmt__send_message` 加载。
 - **读一个会话的记录**：`mcp__ccd_session_mgmt__export_transcript`，`session_id: self`，导出一个 zip，解开里面的会话记录文件。
 - **本会话 id**：`get_session`（`self`），是 `local_…` 那一串。
 - **会话收尾**：`archive_session`，`session_id: self`，`reason` 写「#<号> done」「#<号> 交给调度」「#<号> 先放着」之类；worktree 随归档清掉。
-- **分组（侧边栏 section）**：issue 会话按状态待在三个 section 里：triage、in-progress、in-review（名字取 `issues queues <docs>` 返回的 `sections`，不带分类名）。`list_sections` 列，缺的用 `create_section` 建。会话自己归位：`detach_session`（`self`）变成顶层会话（报错说不是被别的会话开出来的，就跳过），按认领后的状态找到对应的 section（triage 会话在 triage；todo 会话在 in-progress，PR 全部转 ready 后移到 in-review），再 `move_sessions`（`self`）移进去；标题不是「<仓库名>#<号> <标题>」的，`set_session_title` 改成这样：调度会话靠它数会话。调度会话只用 `list_sections` / `create_section` 和列会话，不移动、不归档任何会话。
+- **分组（侧边栏 section）**：issue 会话按状态待在三个 section 里：triage、in-progress、in-review（名字取 `issues queues <docs>` 返回的 `sections`，不带分类名）。`list_sections` 列，缺的用 `create_section` 建。会话自己归位：`detach_session`（`self`）变成顶层会话（报错说不是被别的会话开出来的，就跳过），按认领后的状态找到对应的 section（triage 会话在 triage；todo 会话在 in-progress，PR 全部转 ready 后移到 in-review），再 `move_sessions`（`self`）移进去；标题不是「<仓库名>#<号> <标题>」的，`set_session_title` 改成这样：调度会话靠它数会话。调度会话列分组、缺的建，不归档任何会话，只在开会话那一步移动它开出的会话（「调度」的「怎么交出 issue」，用 `mcp__ccd_sidebar__move_sessions`）。
 
 ### 调度（issue-dispatch 的三处）
 
-- **怎么一轮一轮跑**：常驻调度会话里的会话内循环（步骤见「会话内循环」），`/idea-loop:issue-dispatch <间隔>` 起，之后每到点不带参数调一次，prompt 是 `/idea-loop:issue-dispatch`；7 天到期，由到期提醒叫人重起（提醒的 prompt 里写 `/idea-loop:issue-dispatch <间隔>`）。起好后汇报里写下次运行和到期的时间。
-- **怎么数开着的会话**：`issues queues <docs>` 给出三个 `sections`（triage、in-progress、in-review）和两个上限（`cap`、`triageCap`）；缺的先用 `create_section` 建，再各用 `list_sessions` 列出没归档的会话。分两份数：in-progress、in-review 两个 section 里的会话是 `cap` 那一份，triage section 里的是 `triageCap` 那一份。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：section 跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个 section 里，但不占位，记下个数。判别用标题，不用会话的 `startedBy`：点调度卡片开出的 issue 会话，`startedBy` 也是调度会话，跟子会话分不出来；issue 会话开场会把自己的标题改成这个格式，所以都能被数到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，这一份可能多出一张卡片；只多一个会话，不丢东西，接受。
-- **怎么交出 issue**：出卡片，人点了才开。两份各算各的：todo 的空位 = `cap` − in-progress、in-review 的会话 − 还没点的 todo 卡片，triage 的空位 = `triageCap` − triage 的会话 − 还没点的 triage 卡片。还没点的卡片 = 调度出过、issue 还是出卡片时那个状态（todo 或 triage）、也没有同号会话的；上一轮汇报里按状态记着。卡片一周不点会过期：过期的从「还没点的卡片」里去掉，下一轮会重新出。卡片的 `prompt`：`你是 <仓库名>#<号>（<标题>）的 issue 会话，由 issue 调度会话的卡片开出。用 Skill 工具调 idea-loop:issue-session，参数 <号>，按它从开场做起。`卡片的 `background`：这个仓库用 idea-loop 处理 issue，一个 issue 一个会话，会话按状态待在侧边栏的 triage、in-progress、in-review 里，你派的是 todo 或 triage 的 issue：todo 会话认领后从 spec 做到 PR 合并，triage 会话陪人评估（起草 spec、grill、设计），做完翻 todo。
+- **怎么一轮一轮跑**：桌面定时任务，每小时一次，每次运行开一个新的调度会话、跑一轮就结束；它在侧边栏的 Scheduled 里，不进分组，也不需要进。人敲 `/idea-loop:issue-dispatch`（不带间隔）起：用「定时任务」建（`list_scheduled_tasks` 里已有 `dispatch-<仓库名>` 就 `update_scheduled_task`）：id `dispatch-<仓库名>`，标题 `<仓库名> issue 调度`，`cronExpression` 取 `7 * * * *`（每小时一次，分钟避开 0 和 30），prompt `/idea-loop:issue-dispatch`，建在主 checkout 里；然后立刻做第一轮。app 关着时到点不跑，下次打开补跑一次。起好后汇报里写下次运行的时间。
+- **怎么数开着的会话**：`issues queues <docs>` 给出此刻的 `dispatch`、`limit` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：分组跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。数两个数：triage 分组里的会话数；in-progress 分组里 `lastActivityAt` 在最近 2 小时内的会话数（in-review 不数，超过 2 小时没活动的不数，也不动它们）。三个分组里所有匹配的会话号都记下，派的时候跳过。判别用标题，不用会话的 `startedBy`；交出时调度会给新会话改成这个标题，所以下一轮数得到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，可能多开一个；只多一个会话，不丢东西，接受。
+- **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 3 个。人在调度会话里说话的那一轮也走这条路。
+  1. **建 worktree**（会话不开在主 checkout，多个会话不互相踩）：路径是 `<主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在主 checkout 外面，所以主 checkout 的工作区和分支都不动。`<slug>` 取 issue 标题的几个词，小写、连字符。分支名取 `issues show` 给出的 issue 分支（triage 会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（白天评估过的 issue，评估会话归档时只清了工作区，分支还在，夜里再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
+     - 本地有（`git -C <主 checkout> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <主 checkout> worktree add <路径> <分支>`。
+     - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <主 checkout> worktree add --track -b <分支> <路径> origin/<分支>`。
+     - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
+
+     路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
+  2. **开会话并交到桌面端**：在沙箱外跑（它要联网）`node "${CLAUDE_PLUGIN_ROOT}/scripts/desktop-handoff.mjs" --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>`（`<dispatch>` 取 `todo` 或 `triage`，早上汇总靠它找夜里开出的）。脚本先用 `claude -p` 开出会话，再在交互模式里接回、敲 `/desktop`，看到「Opening in Claude Desktop…」算成功，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`；用交互模式是因为 `-p` 里没有 `/desktop`；依赖系统自带的 `expect`。成功：stdout 一行 JSON，`desktopSessionId` 是 `local_<id>`；`recorded` 是 `false` 说明会话交出了但记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr 「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。目录没被 claude 信任过时，交互那步停在信任确认，也是交出失败：先在 `<仓库名>-worktrees` 这个目录里开一次 `claude` 选信任，它下面的 worktree 沿用。
+  3. **归位**：`set_session_title` 把 `local_<id>` 改成「<仓库名>#<号> <标题>」，再用 `mcp__ccd_sidebar__move_sessions` 移进对应分组（`triage` 进 triage，`todo` 进 in-progress）；这是调度唯一一次移动别的会话。移动被拦（没加允许规则，见「装与设置」）：会话已经开着，但不在分组里，数不到，所以这一轮不再交出别的 issue，汇报里写明并推送，要人加规则。
+  4. **发任务**：用会话间消息 `send_message` 把 issue 会话的 prompt（`idea-loop:issue-dispatch` 里写的）发给 `local_<id>`。要在交到桌面端之后才发：`claude -p` 跑着的时候桌面端看不见它、调度数不到它，夜里会超开。
+
+  已知限制：交到桌面端时，桌面端把这个会话打开到前台，白天开 triage 会话会抢人的窗口，接受。
 
 ## 浏览器
 
@@ -89,6 +101,16 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 3. 用完 `browser_close`，再 `node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release <锁目录> --owner <你的名字>`。
 4. 等了默认的 30 分钟还没拿到，就停下，在交回里写明卡在锁上。
 
+## 人的浏览器
+
+用 Claude in Chrome：人自己的 Chrome，带人的登录态，工具是 `mcp__claude-in-chrome__*`。跟「浏览器」里的两个不同：Playwright 每次是干净的、没有登录；内嵌浏览器是 Claude 桌面端自己的面板，也不是人的 Chrome 配置。
+
+- 工具是延迟加载的：一次 `ToolSearch` 用 `select:` 把要用的几个都加载（`tabs_context_mcp`、`tabs_create_mcp`、`navigate`、`read_page`、`find`、`form_input`、`computer`、`tabs_close_mcp`），不一个一个加载。
+- 先 `tabs_context_mcp` 看人开着哪些标签页；用 `tabs_create_mcp` 开新标签页干活，不动人已有的标签页，用完 `tabs_close_mcp` 关掉自己开的（要留给人点的那一页除外）。
+- 开页面 `navigate`，读页面 `read_page` / `get_page_text`，填表 `form_input`，截图 `computer` 的 `screenshot`。
+- 遇到登录页、验证码、支付页：停下，交给人；不替人输密码，不过人机验证。
+- 扩展没连上、工具不在：走 `SKILL.md` 的退路。
+
 ## 向人提问
 
 `AskUserQuestion`：2–4 个选项的单选题。选项装不下的分叉（要人评判的复合信息）不用它，用对话里的 markdown 问。
@@ -115,5 +137,6 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 
 - **MCP**：桌面 app 在设置的 Connectors 里加；命令行 `claude mcp add --scope user …`（如 `claude mcp add --transport http --scope user linear https://mcp.linear.app/mcp`），再在 `claude` 里 `/mcp` 授权。查有没有：`claude mcp get <名字>`。
 - **Playwright MCP**（必需）：查 `claude mcp get playwright`，要用户级、参数带 `--headless --isolated`；修法 `claude mcp add --scope user playwright -- npx -y @playwright/mcp --headless --isolated`。
-- **Refero MCP**（可选，设计调研用）：查 `claude mcp get refero`，要用户级、http、`https://api.refero.design/mcp`；token 由人自己配，修法 `claude mcp add --scope user --transport http refero https://api.refero.design/mcp --header "Authorization: Bearer <token>"`。
+- **Mobbin MCP**（可选，设计调研用，要 Mobbin 付费计划）：由插件自带（`.mcp.json` 的 `mobbin`，远程 http，`https://api.mobbin.com/mcp`），不用 `claude mcp add`。查：`claude mcp list` 里 `plugin:idea-loop:mobbin` 一行，`Connected` 就是好的；写着 `Needs authentication` 的，修法是在 `claude` 里 `/mcp`，选它，走 OAuth 登录 Mobbin。看不到这一行：插件没装或没重载（`/reload-plugins`），或者已经手动配过一个同地址的 Mobbin（`claude mcp list` 里另有一行指向 `https://api.mobbin.com/mcp`，常见的是用户级的 `mobbin`）：Claude Code 只连优先级高的那份，调研员按工具短名取工具，手动配的也能用，只要登录了；`Needs authentication` 的同样 `/mcp` 登录。没连上时只有设计调研受影响。
 - **允许规则**：人自己加进 `~/.claude/settings.json` 的 `permissions.allow`；这边只打印规则，不替人改权限设置。
+  - 调度要加一条：`mcp__ccd_sidebar__move_sessions`。不加，无人值守时调度移动别的会话会被拦，夜里开出的会话进不了分组，就数不到（`/idea-loop:setup` 照这里打印）。

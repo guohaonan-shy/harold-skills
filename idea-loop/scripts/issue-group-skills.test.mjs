@@ -35,11 +35,11 @@ test('三份 skill 里没有旧中文状态名、根 / 子 issue、整合、一�
   }
 });
 
-test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、两个上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
+test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、按时段的上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
   const md = skill('issue-dispatch');
   assert.match(front(md), /todo/);
   assert.match(front(md), /一个 issue 一个会话/);
-  assert.match(md, /`todo` 和 `triage` 的 issue/);
+  assert.match(md, /`triage` 或 `todo` 的 issue/);
   assert.match(md, /issues candidates/);
   assert.match(md, /issues reconcile/);
   assert.match(md, /issues queues <docs>/);

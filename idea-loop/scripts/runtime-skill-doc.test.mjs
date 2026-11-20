@@ -18,7 +18,7 @@ const read = (...p) => readFileSync(join(dir, ...p), 'utf8');
 const skill = read('SKILL.md');
 const body = skill.replace(/^---\n[\s\S]*?\n---\n/, '');
 
-const CAPABILITIES = ['定时任务', '会话内循环', '会话管理', '浏览器', '向人提问', '发布审阅页', '推送', '发文件给人', '调用 MCP', '装与设置'];
+const CAPABILITIES = ['定时任务', '会话内循环', '会话管理', '浏览器', '人的浏览器', '向人提问', '发布审阅页', '推送', '发文件给人', '调用 MCP', '装与设置'];
 
 /** The capability names in the first column of the table under 「能力清单」. */
 export function capabilitiesOf(text) {
@@ -51,8 +51,36 @@ test('body stays under 5000 characters', () => {
   assert.ok(body.length < 5000, String(body.length));
 });
 
-test('the capability list is the closed set of ten', () => {
+test('the capability list is the closed set of eleven', () => {
   assert.deepEqual(capabilitiesOf(skill), CAPABILITIES);
+});
+
+/** The text of one `##` section of a reference. */
+const sectionText = (text, name) => {
+  const start = text.indexOf(`\n## ${name}\n`);
+  assert.ok(start >= 0, `no ${name} section`);
+  const rest = text.slice(start + 1);
+  const end = rest.slice(3).search(/\n## /);
+  return end < 0 ? rest : rest.slice(0, end + 3);
+};
+
+test('人的浏览器: the table row says it carries the human\'s own login, and the fallback is the shared one', () => {
+  const row = skill.split('\n').find((l) => l.startsWith('| 人的浏览器 |'));
+  assert.ok(row, 'no 人的浏览器 row');
+  assert.match(row, /人自己的浏览器/);
+  assert.match(row, /登录态/);
+  assert.match(row, /退路\s*\|$/);
+});
+
+test('人的浏览器: claude-desktop uses Claude in Chrome and works in a new tab; magi says there is none and points to the fallback', () => {
+  const desktop = sectionText(read('references', 'claude-desktop.md'), '人的浏览器');
+  assert.match(desktop, /Claude in Chrome/);
+  assert.match(desktop, /mcp__claude-in-chrome__/);
+  assert.match(desktop, /新标签页/);
+  assert.match(desktop, /登录页|验证码/);
+  const magi = sectionText(read('references', 'magi.md'), '人的浏览器');
+  assert.match(magi, /没有/);
+  assert.match(magi, /退路/);
 });
 
 test('the body states the detection rule, the fallback with its two exceptions, and asking in the conversation', () => {
@@ -88,7 +116,7 @@ test('the section check goes red when a capability is missing or one is added', 
 // Every desktop tool or interface the 0.1.10 skill and agent bodies named, found by grepping them.
 const DESKTOP_NAMES = [
   'mcp__scheduled-tasks__list_scheduled_tasks', 'create_scheduled_task', 'update_scheduled_task', 'mcp__scheduled-tasks__list_task_runs',
-  'CronCreate', 'CronList', 'CronDelete', '调度 loop 已到期', 'recurring: false',
+  'CronCreate', 'CronList', 'CronDelete',
   'mcp__ccd_session_mgmt__list_sessions', 'mcp__ccd_session_mgmt__send_message', 'mcp__ccd_session_mgmt__export_transcript',
   'start_session', 'list_sections', 'create_section', 'detach_session', 'move_sessions', 'set_session_title', 'archive_session', 'get_session',
   'ToolSearch', 'SendMessage',
@@ -120,7 +148,7 @@ test('the magi reference carries the spec table\'s commands and the dispatch sha
   const dispatch = text.slice(text.indexOf('### 调度'));
   // a session cannot archive itself (measured 2026-11-06); it stops itself instead
   assert.ok(!dispatch.includes('归档自己'), 'magi sessions cannot archive themselves');
-  for (const word of ['每轮新开', '停掉自己', '没有 7 天到期', '前缀', 'stopped / exited / dead', 'triageCap', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
+  for (const word of ['每轮新开', '停掉自己', '前缀', 'stopped / exited / dead', '最近 2 小时有活动', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
 });
 
 test('the skill is findable: lives under productivity, with the two references and no stray files', () => {

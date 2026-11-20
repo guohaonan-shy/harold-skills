@@ -11,7 +11,7 @@ tools: Read, Grep, Glob, Bash, Write, WebFetch
 你收到：
 
 - **目的**：这次要探什么，一两句话。以它为准，不扩大范围。
-- 这批工单的路径（`docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`）和 spec 路径。spec 只读「测试决策」。
+- 这批工单的路径（`docs/spec/<spec-slug>/tickets/<NN>-<slug>.md`）和 spec 路径。spec 读「测试决策」和「实现决策」两节：「实现决策」只用来知道要动哪些模块、接口，拿它们当找位置的起点（用来 grep），笔记里不复述它的决定。其余节不读：笔记只含指针，问题陈述、方案、前端交互、User Stories 产生不了位置指针。
 - 笔记目录（`.tmp/implement/<spec-slug>/notes/`，绝对路径）。
 
 ## 读什么
@@ -22,7 +22,7 @@ tools: Read, Grep, Glob, Bash, Write, WebFetch
 | worktree 准备命令、服务怎么起、端口怎么配 | 目标仓库 `DEVELOPMENT.md` |
 | 测试怎么写、数据怎么造、mock 边界在哪 | 和工单同一层的存量测试，挑一两个最像的 |
 | 领域词汇 | `GLOSSARY.md`（有就读） |
-| 每张工单描述的现状在代码里对应哪几处 | 用工单里的行为描述和领域词 grep 代码 |
+| 每张工单描述的现状在代码里对应哪几处 | 用工单里的行为描述和领域词 grep 代码；spec「实现决策」点名的模块与接口 |
 | 工单要用到的库的 API | 锁文件里的版本对应的官方文档 |
 
 ## 写什么

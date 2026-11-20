@@ -21,6 +21,21 @@ export function decideOutcome({ before, after }) {
   return { outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」' };
 }
 
+/** The variables `gh` takes a login from, other than its config dir: github.com and enterprise tokens. */
+const GH_TOKEN_VARS = ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN'];
+
+/**
+ * The environment every process the runner starts (the two workers, the Claude judge, the Codex judge) gets: the runner's own
+ * environment without a `gh` login. The project copy stands at the case's commit, but a `gh` read still answers from the machine's
+ * login, with what happened after that commit; no token and an empty config dir make every `gh` read fail as not logged in.
+ * `ghConfigDir` is an existing empty directory. `env` is not changed; everything but the above passes through.
+ */
+export function replayChildEnv(env, ghConfigDir) {
+  const child = { ...env, GH_CONFIG_DIR: ghConfigDir };
+  for (const k of GH_TOKEN_VARS) delete child[k];
+  return child;
+}
+
 /**
  * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs runtime-detect.mjs --inject):
  * the body of `idea-loop:decision-rules`, the body of `idea-loop:runtime`, and the reference of the current runtime only. The
@@ -36,12 +51,21 @@ export function injectedFiles(runtime) {
   return files;
 }
 
+/** Does a shell command name `path` as a path relative to the working dir: at the start, or after a space, quote, `./` or a shell operator, not as the tail of a longer path. */
+function namesRelativePath(command, path) {
+  const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[\\s'"=(;|&<>]|\\./)${escaped}`).test(command);
+}
+
 /**
  * Did the post-change run use what the change touched? `events` is the post-change run's event stream (parsed events, main
  * session and sub-agents alike); `change` is `{files, skills, agents}` (see `changeSetOf` in the runner): the files added or
  * modified under the plugin's `skills/` and `agents/`, relative to the plugin dir, the skills those files belong to
  * (`<plugin>:<skill dir>`) and the agents among them (`<plugin>:<file name without .md>`). `roots` are the spellings of the
- * dir the post-change plugin was loaded from, as a path in the stream would show it; `prompt` is what the run was given.
+ * dir the post-change plugin was loaded from, as a path in the stream would show it, and (when the runner swapped the changed files
+ * into the project's own copy of the plugin) the spellings of that copy in the project; `projectRelDirs` are where that copy is,
+ * relative to the project dir (`['idea-loop']`; `''` for a plugin at the project root), so a Bash command that reads a changed file
+ * by a path relative to the project counts too. `prompt` is what the run was given.
  *
  * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
  * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
@@ -51,7 +75,7 @@ export function injectedFiles(runtime) {
  * Returns `{status: 'hit', via: 'read'|'skill'|'agent'|'injected', name, changed}`, `{status: 'miss', changed}`, or
  * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).
  */
-export function exercisedBy(events, change, { roots = [], prompt = '', runtime = null } = {}) {
+export function exercisedBy(events, change, { roots = [], projectRelDirs = [], prompt = '', runtime = null } = {}) {
   const files = new Set(change?.files ?? []);
   if (!files.size) return { status: 'na', changed: 0 };
   const skills = new Set(change.skills ?? []);
@@ -83,6 +107,10 @@ export function exercisedBy(events, change, { roots = [], prompt = '', runtime =
       } else if (block.name === 'Bash' && typeof input.command === 'string') {
         for (const root of roots) {
           const rel = [...files].find((f) => input.command.includes(`${root}/${f}`));
+          if (rel) return hit('read', rel);
+        }
+        for (const dir of projectRelDirs) {
+          const rel = [...files].find((f) => namesRelativePath(input.command, dir ? `${dir}/${f}` : f));
           if (rel) return hit('read', rel);
         }
       }

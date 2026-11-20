@@ -1,7 +1,7 @@
 # docs
 > 这个仓库自己的知识库，按 `idea-loop` 的 wiki 契约维护（契约全文见 `idea-loop/skills/productivity/wiki-conventions/SKILL.md`）。
 >
-> **文件在不在，就是状态**：spec 目录存在 = 还没了结（走到哪一步看它 frontmatter `issues:` 里的 issue）；spec 目录消失 + ADR 存在 = 已了结；ticket 存在 = 有人正在做这一刀。
+> **生命周期**：grill → raw（永久）；spec → design/tmp（碰 UI 时）→ 工单 → 合并（工单删、设计归档进 design/prod）→ issue 全关后 dreaming 把 spec 写成 ADR、删 spec。
 
 | 层 | 收什么 | 当前 |
 |---|---|---|

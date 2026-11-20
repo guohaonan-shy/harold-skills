@@ -10,7 +10,7 @@
 | 优先级 | label `priority:P0` / `priority:P1` / `priority:P2`，最多一个 | 同上 | `issues priority` |
 | blocked by | 原生 issue dependencies：列表里的 `issue_dependencies_summary.blocked_by` 是还开着的挡路数 | `GET repos/{owner}/{repo}/issues/<号>/dependencies/blocked_by` | `POST …/dependencies/blocked_by -F issue_id=<挡路 issue 的 id>`（id 是数据库 id，不是号） |
 | 挂着的 PR | PR 正文里的 `Refs <owner>/<repo>#<号>` | `gh pr list --repo <仓库> --state all --search "<号> in:body" --json number,body,state,isDraft` | 开 PR 时写进正文 |
-| 评论 | issue 评论，带「🤖 idea-loop：」前缀 | `gh issue view --comments` | `gh issue comment`，或 `gh issue close --comment` |
+| 评论 | issue 评论，第一行是 `<!-- idea-loop -->` 标记（旧评论以「🤖 idea-loop：」开头，照认） | `gh issue view --comments` | `gh issue comment`，或 `gh issue close --comment` |
 
 - **PR 挂 issue 写 `Refs`，不写 `Closes`**：一个 issue 在几个仓库各有一个 PR，写 `Closes` 的 PR 一合并就把 issue 关了。不带仓库的 `Refs #<号>` 只在 issue 自己的仓库里认。
 - **改哪些仓库**：`ISSUE_TRACKER.md` 的「仓库」一节第一列列出的仓库，脚本在这些仓库里找挂着的 PR；没有这一节就只找 issue 所在的仓库。

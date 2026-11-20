@@ -8,15 +8,15 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { changeSetOf, projectName } from '../evals/retro/retro-replay.mjs';
+import { changeSetOf, pluginDiffOf, pluginRelDirOf, projectName, swapPluginFiles } from '../evals/retro/retro-replay.mjs';
 import {
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
-  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised,
+  estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
 
 const smallCase = () => ({
@@ -131,6 +131,25 @@ test('buildArtifact says so when the run left no files', () => {
   assert.match(buildArtifact({ resultText: 'r', files: [] }), /没有写下或改动的文件/);
 });
 
+test('replayChildEnv: the four gh token variables are gone, GH_CONFIG_DIR is the given empty dir, everything else is passed on, the input is untouched', () => {
+  const parent = {
+    GH_TOKEN: 't1', GITHUB_TOKEN: 't2', GH_ENTERPRISE_TOKEN: 't3', GITHUB_ENTERPRISE_TOKEN: 't4',
+    GH_CONFIG_DIR: '/home/me/.config/gh', PATH: '/usr/bin', HOME: '/home/me', CLAUDE_CONFIG_DIR: '/home/me/.claude',
+    IDEA_LOOP_RUNTIME: 'desktop', RETRO_JUDGE_ORDER: 'after-first', FAKE_LOG: '/x/log', GH_HOST: 'github.com',
+  };
+  const snapshot = structuredClone(parent);
+  const env = replayChildEnv(parent, '/run/dir/gh-config');
+  for (const k of ['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN']) assert.ok(!(k in env), `${k} is removed`);
+  assert.equal(env.GH_CONFIG_DIR, '/run/dir/gh-config');
+  const { GH_TOKEN, GITHUB_TOKEN, GH_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_TOKEN, GH_CONFIG_DIR, ...rest } = parent;
+  assert.deepEqual({ ...env, GH_CONFIG_DIR: undefined }, { ...rest, GH_CONFIG_DIR: undefined }, 'every other variable passes through as it was');
+  assert.deepEqual(parent, snapshot, 'the object passed in was not changed');
+});
+
+test('replayChildEnv: when the parent has no gh variables at all, GH_CONFIG_DIR is still set to the empty dir', () => {
+  assert.deepEqual(replayChildEnv({ PATH: '/usr/bin' }, '/e'), { PATH: '/usr/bin', GH_CONFIG_DIR: '/e' });
+});
+
 test('the cost estimate is a range, scales with cases, and is stated in dollars', () => {
   const one = estimateCostUsd(1);
   assert.ok(one.low > 0 && one.high > one.low);
@@ -164,6 +183,9 @@ test('settleVerdicts applies the human override for that run only, then decides'
 // The fake reads `<plugin-dir>/MARK` to decide what its worker session does:
 //   a line "reply: X"   final text X, and a file docs/out.md containing X
 //   a line "agent"      the session starts an Agent tool call, then goes on running (must be killed)
+//   a line "peek: P"    the session looks at P (relative to its work dir) and records what it found there (null when missing)
+//   a line "bash: C"    the session issues a Bash tool call with command C (nothing is run)
+//   a line "readproj: P" the session issues a Read of P under its work dir, as an absolute path
 // With no --plugin-dir it is the judge: it answers yes for a product containing FIXED, else no.
 // ---------------------------------------------------------------------------------------------
 
@@ -176,7 +198,9 @@ const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd }) + '\\n');
+const dirIn = process.env.GH_CONFIG_DIR;
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd, probe }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
 if (pd) {
@@ -187,6 +211,17 @@ if (pd) {
   } else {
     const m = /^reply: (.*)$/m.exec(mark);
     const text = m ? m[1] : 'nothing';
+    for (const u of mark.matchAll(/^peek: (.*)$/gm)) {
+      const file = path.join(process.cwd(), u[1]);
+      const content = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+      fs.appendFileSync(process.env.FAKE_LOG + '.peek', JSON.stringify({ reply: m ? m[1] : null, rel: u[1], content }) + '\\n');
+    }
+    for (const u of mark.matchAll(/^bash: (.*)$/gm)) {
+      emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'b1', name: 'Bash', input: { command: u[1] } }] } });
+    }
+    for (const u of mark.matchAll(/^readproj: (.*)$/gm)) {
+      emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'r1', name: 'Read', input: { file_path: path.join(process.cwd(), u[1]) } }] } });
+    }
     for (const u of mark.matchAll(/^(skill|read): (.*)$/gm)) {
       const input = u[1] === 'skill' ? { skill: u[2] } : { file_path: path.join(pd, u[2]) };
       emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 'u1', name: u[1] === 'skill' ? 'Skill' : 'Read', input }] } });
@@ -211,7 +246,9 @@ const fs = require('node:fs');
 const args = process.argv.slice(2);
 const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
 fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
-fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd() }) + '\\n');
+const dirIn = process.env.GH_CONFIG_DIR;
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: 'codex', args, prompt, cwd: process.cwd(), probe }) + '\\n');
 if (process.env.FAKE_CODEX_FAIL) process.exit(2);
 const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
 const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
@@ -220,11 +257,15 @@ console.log('我读完了两份产物。');
 console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
 `;
 
-function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {} }) {
+function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, snapshot = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
   mkdirSync(repo);
   writeFileSync(join(repo, 'README.md'), 'project at the decision commit\n');
+  for (const [rel, text] of Object.entries(snapshot)) {
+    mkdirSync(dirname(join(repo, rel)), { recursive: true });
+    writeFileSync(join(repo, rel), text);
+  }
   const g = (...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...a], { cwd: repo, encoding: 'utf8' });
   g('init', '-q');
   g('add', '-A');
@@ -273,7 +314,7 @@ function realCodexLookalike(env) {
  * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
  * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
  */
-function run(env, extra = [], { codex = 'fake', order } = {}) {
+function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
   const r = spawnSync(process.execPath, [
     RUNNER, '--case', 'demo-case', '--repo', env.repo, '--cases-root', env.casesRoot,
     '--before-plugin', join(env.root, 'before', 'idea-loop'), '--after-plugin', join(env.root, 'after', 'idea-loop'),
@@ -281,7 +322,7 @@ function run(env, extra = [], { codex = 'fake', order } = {}) {
   ], {
     encoding: 'utf8',
     env: {
-      ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
+      ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
       RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
       ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
@@ -351,6 +392,31 @@ test('e2e: both runs get exactly the case prompt, in a work dir that does not sa
   assert.ok(existsSync(join(dir, 'before', 'project', 'docs', 'out.md')));
   assert.ok(existsSync(join(dir, 'after', 'run.stream.jsonl')));
   assert.ok(!existsSync(dirname(w1.cwd)), 'the work dir is gone once the run is over');
+});
+
+test('e2e: every process the runner starts (both workers, the Codex judge, the Claude judge) has no gh login: no tokens, an existing empty config dir that is not the one passed in, the rest of the environment as it was', () => {
+  const given = mkdtempSync(join(tmpdir(), 'gh-given-'));
+  writeFileSync(join(given, 'hosts.yml'), 'github.com:\n  user: someone\n');
+  const parentEnv = { GH_TOKEN: 'secret-1', GITHUB_TOKEN: 'secret-2', GH_CONFIG_DIR: given, UNRELATED_VAR: 'stays' };
+  for (const codex of ['fake', 'missing']) {
+    const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+    const r = run(env, [], { codex, parentEnv });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const all = sessions(env);
+    const kinds = all.map((x) => x.kind).sort();
+    assert.deepEqual(kinds, codex === 'fake' ? ['codex', 'worker', 'worker'] : ['judge', 'worker', 'worker']);
+    const dirs = new Set();
+    for (const s of all) {
+      assert.equal(s.probe.GH_TOKEN, null, `${s.kind}: GH_TOKEN`);
+      assert.equal(s.probe.GITHUB_TOKEN, null, `${s.kind}: GITHUB_TOKEN`);
+      assert.notEqual(s.probe.GH_CONFIG_DIR, given, `${s.kind}: not the config dir that was passed in`);
+      assert.deepEqual(s.probe.ghDirEntries, [], `${s.kind}: GH_CONFIG_DIR exists and is empty`);
+      assert.equal(s.probe.UNRELATED, 'stays', `${s.kind}: other variables are passed on`);
+      dirs.add(s.probe.GH_CONFIG_DIR);
+    }
+    const runDir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+    assert.ok([...dirs].every((d) => d.startsWith(`${runDir}/`)), 'the empty dir lives under the run dir, and is kept with it');
+  }
 });
 
 test('e2e: the judge is told where the thing is handed to the human', () => {
@@ -824,4 +890,196 @@ test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not 
   assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker'], 'the judging session is the fake claude');
   assert.equal(resultJson(env, r.stdout).judge, 'claude');
   assert.match(r.stdout, /没找到 Codex，评委用 Claude/);
+});
+
+// ---------------------------------------------------------------------------------------------
+// The project's own copy of the plugin: the files the change touched are put there in each side's own version.
+// ---------------------------------------------------------------------------------------------
+
+const MANIFEST = (name) => JSON.stringify({ name });
+const DEMO = 'skills/engineering/demo/SKILL.md';
+const OTHER = 'skills/engineering/other/SKILL.md';
+const FRESH = 'skills/engineering/fresh/SKILL.md';
+const GONE = 'skills/engineering/gone/SKILL.md';
+/** The plugin as the case's commit holds it (under idea-loop/, the dir the test plugins have): a skill the change edits, one it does not touch, one it deletes. */
+const snapshotWith = (name = 'idea-loop') => ({
+  'idea-loop/.claude-plugin/plugin.json': MANIFEST(name),
+  [`idea-loop/${DEMO}`]: '旧', [`idea-loop/${OTHER}`]: '快照', [`idea-loop/${GONE}`]: '快照里还有',
+});
+/** Pre-change and post-change plugins: DEMO edited, OTHER untouched, FRESH only post-change, GONE only pre-change. */
+const sidesWith = (name = 'idea-loop') => ({
+  before: { '.claude-plugin/plugin.json': MANIFEST(name), [DEMO]: '改前', [OTHER]: '两边一样', [GONE]: '改前才有' },
+  after: { '.claude-plugin/plugin.json': MANIFEST(name), [DEMO]: '改后', [OTHER]: '两边一样', [FRESH]: '改后新增' },
+});
+const PEEKS = [DEMO, OTHER, FRESH, GONE].map((f) => `peek: idea-loop/${f}`).join('\n');
+/** What each run found at the peeked paths, keyed by the run's reply text ("plain" is the pre-change run, "FIXED" the post-change one). */
+const peeks = (env) => {
+  const out = { plain: {}, FIXED: {} };
+  for (const l of readFileSync(`${env.log}.peek`, 'utf8').split('\n').filter(Boolean)) {
+    const x = JSON.parse(l);
+    out[x.reply][x.rel.replace('idea-loop/', '')] = x.content;
+  }
+  return out;
+};
+const swapSetup = (snapshot, pluginName) => setup({
+  before: `reply: plain\n${PEEKS}`, after: `reply: FIXED\nskill: idea-loop:demo\n${PEEKS}`, snapshot, pluginFiles: sidesWith(pluginName),
+});
+
+test('e2e: the changed plugin files in the project are each side\'s own version; untouched plugin files stay as the commit had them; new files appear, deleted ones go', () => {
+  const env = swapSetup(snapshotWith());
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  assert.deepEqual(seen.plain, { [DEMO]: '改前', [OTHER]: '快照', [FRESH]: null, [GONE]: '改前才有' }, 'pre-change run');
+  assert.deepEqual(seen.FIXED, { [DEMO]: '改后', [OTHER]: '快照', [FRESH]: '改后新增', [GONE]: null }, 'post-change run');
+});
+
+test('e2e: the swapped-in plugin files are not in what the run wrote: neither product lists them', () => {
+  const env = swapSetup(snapshotWith());
+  const r = run(env);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  for (const side of ['before', 'after']) {
+    const artifact = readFileSync(join(dir, side, 'artifact.md'), 'utf8');
+    assert.match(artifact, /docs\/out\.md/, 'what the run wrote is there');
+    assert.doesNotMatch(artifact, /idea-loop\//, `${side}: no plugin file in the product`);
+  }
+});
+
+test('e2e: the case commit has no copy of the plugin (a case from another repository): both projects are the commit as unpacked, no plugin file appears', () => {
+  const env = swapSetup({});
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  for (const side of ['plain', 'FIXED']) assert.deepEqual(seen[side], { [DEMO]: null, [OTHER]: null, [FRESH]: null, [GONE]: null });
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  for (const side of ['before', 'after']) assert.ok(!existsSync(join(dir, side, 'project', 'idea-loop')), `${side}: nothing at the plugin's place`);
+  assert.equal(readFileSync(join(dir, 'after', 'project', 'README.md'), 'utf8'), 'project at the decision commit\n');
+});
+
+test('e2e: the plugin dir in the commit is another plugin (a different manifest name): nothing is swapped, it is unpacked as it was', () => {
+  const env = swapSetup(snapshotWith('some-other-plugin'));
+  run(env);
+  const seen = peeks(env);
+  for (const side of ['plain', 'FIXED']) assert.deepEqual(seen[side], { [DEMO]: '旧', [OTHER]: '快照', [FRESH]: null, [GONE]: '快照里还有' });
+});
+
+test('e2e: files under the plugin\'s evals/ are never swapped in, even when the two sides differ: the post-change run does not see a case the change added, and both keep the snapshot\'s evals/; files outside evals/ are still swapped', () => {
+  const NEWCASE = 'evals/retro/cases/new-case/case.json';
+  const OLDCASE = 'evals/retro/cases/old-case/case.json';
+  const sides = sidesWith();
+  sides.before[OLDCASE] = '改前的用例';
+  sides.after[OLDCASE] = '改后的用例';
+  sides.after[NEWCASE] = '改后新增的用例';
+  const snapshot = { ...snapshotWith(), [`idea-loop/${OLDCASE}`]: '快照里的用例' };
+  const peekPaths = [DEMO, NEWCASE, OLDCASE].map((f) => `peek: idea-loop/${f}`).join('\n');
+  const env = setup({ before: `reply: plain\n${peekPaths}`, after: `reply: FIXED\nskill: idea-loop:demo\n${peekPaths}`, snapshot, pluginFiles: sides });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const seen = peeks(env);
+  assert.deepEqual(seen.plain, { [DEMO]: '改前', [NEWCASE]: null, [OLDCASE]: '快照里的用例' }, 'pre-change run');
+  assert.deepEqual(seen.FIXED, { [DEMO]: '改后', [NEWCASE]: null, [OLDCASE]: '快照里的用例' }, 'post-change run');
+});
+
+test('e2e: the post-change run reads a changed file in the project by a Bash path relative to the project, or by a Read of its absolute path: used, not not-exercised', () => {
+  for (const reading of [`bash: cat idea-loop/${DEMO}`, `bash: cd /somewhere && cat ./idea-loop/${DEMO} | head`, `readproj: idea-loop/${DEMO}`]) {
+    const env = setup({ before: 'reply: plain', after: `reply: FIXED\n${reading}`, snapshot: snapshotWith(), pluginFiles: sidesWith() });
+    const r = run(env);
+    assert.equal(r.status, 0, `${reading}\n${r.stdout}${r.stderr}`);
+    const res = resultJson(env, r.stdout);
+    assert.equal(res.exercised.status, 'hit', reading);
+    assert.equal(res.exercised.via, 'read', reading);
+    assert.equal(res.outcome, 'pass');
+  }
+});
+
+test('e2e: the same read when nothing was swapped into the project (the commit has no such plugin) does not count: the project holds no post-change version', () => {
+  const env = setup({ before: 'reply: plain', after: `reply: FIXED\nbash: cat idea-loop/${DEMO}`, pluginFiles: sidesWith() });
+  const r = run(env);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.equal(resultJson(env, r.stdout).outcome, 'not-exercised');
+});
+
+test('pluginDiffOf: every file that differs between the two plugin dirs, added, edited or deleted, dot-files and files outside skills/ and agents/ included; same files, .DS_Store and the plugin\'s top-level evals/ are not', () => {
+  const root = mkdtempSync(join(tmpdir(), 'plugindiff-'));
+  const put = (dir, rel, text) => {
+    mkdirSync(dirname(join(root, dir, rel)), { recursive: true });
+    writeFileSync(join(root, dir, rel), text);
+  };
+  for (const dir of ['before', 'after']) {
+    put(dir, 'skills/a/SKILL.md', 'same');
+    put(dir, 'skills/b/SKILL.md', dir);
+    put(dir, 'hooks/hooks.json', dir);
+    put(dir, '.claude-plugin/plugin.json', dir);
+  }
+  put('before', 'agents/gone.md', 'x');
+  put('after', 'scripts/new.mjs', 'x');
+  put('after', '.mcp.json', '{}');
+  put('after', 'skills/a/.DS_Store', 'junk');
+  // evals/ holds replay cases and eval material: never part of the diff, whether edited, added or deleted
+  put('before', 'evals/retro/cases/c/case.json', 'before');
+  put('after', 'evals/retro/cases/c/case.json', 'after');
+  put('after', 'evals/retro/cases/d/case.json', 'new');
+  put('before', 'evals/retro/cases/e/annotations.md', 'gone');
+  put('before', 'skills/b/evals/keep.md', 'before');
+  put('after', 'skills/b/evals/keep.md', 'after');
+  assert.deepEqual(pluginDiffOf(join(root, 'before'), join(root, 'after')), [
+    '.claude-plugin/plugin.json', '.mcp.json', 'agents/gone.md', 'hooks/hooks.json', 'scripts/new.mjs', 'skills/b/SKILL.md', 'skills/b/evals/keep.md',
+  ]);
+  assert.deepEqual(pluginDiffOf(join(root, 'before'), join(root, 'before')), []);
+});
+
+test('swapPluginFiles: writes this side\'s version, removes what this side lacks, leaves the rest; does nothing without the same-named plugin at relDir', () => {
+  const root = mkdtempSync(join(tmpdir(), 'swap-'));
+  const put = (rel, text) => {
+    mkdirSync(dirname(join(root, rel)), { recursive: true });
+    writeFileSync(join(root, rel), text);
+  };
+  put('side/.claude-plugin/plugin.json', MANIFEST('p'));
+  put('side/skills/x/SKILL.md', 'side x');
+  put('side/skills/new/deep/SKILL.md', 'side new');
+  const project = () => {
+    rmSync(join(root, 'project'), { recursive: true, force: true });
+    put('project/tools/p/.claude-plugin/plugin.json', MANIFEST('p'));
+    put('project/tools/p/skills/x/SKILL.md', 'old x');
+    put('project/tools/p/skills/gone/SKILL.md', 'old gone');
+    put('project/tools/p/skills/keep/SKILL.md', 'old keep');
+    put('project/README.md', 'readme');
+    return join(root, 'project');
+  };
+  const args = (p) => ({ project: p, relDir: 'tools/p', afterPlugin: join(root, 'side'), sidePlugin: join(root, 'side'), diff: ['skills/x/SKILL.md', 'skills/new/deep/SKILL.md', 'skills/gone/SKILL.md'] });
+  let p = project();
+  const at = (rel) => (existsSync(join(p, 'tools/p', rel)) ? readFileSync(join(p, 'tools/p', rel), 'utf8') : null);
+  assert.equal(swapPluginFiles(args(p)), true);
+  assert.deepEqual([at('skills/x/SKILL.md'), at('skills/new/deep/SKILL.md'), at('skills/gone/SKILL.md'), at('skills/keep/SKILL.md')], ['side x', 'side new', null, 'old keep']);
+  assert.equal(readFileSync(join(p, 'README.md'), 'utf8'), 'readme');
+  // no plugin at relDir, or a different name there: untouched
+  p = project();
+  assert.equal(swapPluginFiles({ ...args(p), relDir: 'elsewhere' }), false);
+  put('project/tools/p/.claude-plugin/plugin.json', MANIFEST('not-p'));
+  assert.equal(swapPluginFiles(args(p)), false);
+  assert.equal(at('skills/x/SKILL.md'), 'old x');
+});
+
+test('pluginRelDirOf: the plugin\'s dir in its git repository (empty at the repo root); a dir outside any repo counts as <repo root>/<its own name>', () => {
+  const root = mkdtempSync(join(tmpdir(), 'reldir-'));
+  mkdirSync(join(root, 'nested', 'my-plugin'), { recursive: true });
+  spawnSync('git', ['init', '-q'], { cwd: root });
+  assert.equal(pluginRelDirOf(join(root, 'nested', 'my-plugin')), 'nested/my-plugin');
+  assert.equal(pluginRelDirOf(root), '');
+  const loose = mkdtempSync(join(tmpdir(), 'loose-'));
+  mkdirSync(join(loose, 'my-plugin'));
+  assert.equal(pluginRelDirOf(join(loose, 'my-plugin')), 'my-plugin');
+});
+
+test('exercisedBy: a Bash command naming a changed file by its path relative to the project counts when that project dir is given; not as the tail of a longer path or a different file', () => {
+  const change = { files: ['skills/a/SKILL.md'], skills: ['p:a'], agents: [] };
+  const bash = (command) => [{ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Bash', input: { command } }] } }];
+  const used = (command, projectRelDirs = ['tools/p']) => exercisedBy(bash(command), change, { projectRelDirs }).status;
+  assert.equal(used('cat tools/p/skills/a/SKILL.md'), 'hit');
+  assert.equal(used('cat ./tools/p/skills/a/SKILL.md'), 'hit');
+  assert.equal(used('head -5 "tools/p/skills/a/SKILL.md" && ls'), 'hit');
+  assert.equal(used('cat /elsewhere/tools/p/skills/a/SKILL.md'), 'miss');
+  assert.equal(used('cat tools/p/skills/b/SKILL.md'), 'miss');
+  assert.equal(used('cat tools/p/skills/a/SKILL.md', []), 'miss', 'no project copy of the plugin: not counted');
+  assert.equal(used('cat skills/a/SKILL.md', ['']), 'hit', 'a plugin at the project root');
 });

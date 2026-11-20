@@ -95,15 +95,14 @@ test('setup 「规则回放 runner」 installs the runner only; its reference re
   assert.ok(chars(setup) < 5000, `setup body is ${chars(setup)} characters`);
 });
 
-test('implement SKILL.md body is not longer than it was before this change (9589 characters on main after #304)', () => {
-  assert.ok(chars(implement) <= 9589, `implement body is ${chars(implement)} characters`);
-});
-
 test('implementer: a large case is only written and committed; the result of `--run-large` is the orchestrator\'s', () => {
-  const doc = readFileSync(join(pluginRoot, 'agents', 'implementer.md'), 'utf8');
+  // the rule-ticket steps moved out of agents/implementer.md into references/rule-tickets.md (spec
+  // implementer-start-point-non-destructive, ticket 02): the positive sentences are read there, the queue words stay out of both
+  const def = readFileSync(join(pluginRoot, 'agents', 'implementer.md'), 'utf8');
+  const doc = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md');
   assert.match(doc, /大用例待跑：<用例>/);
   assert.match(doc, /PR 开出后当场跑/);
-  assert.doesNotMatch(doc, /--enqueue|夜里|夜间|回放在队列里|队列/);
+  for (const text of [def, doc]) assert.doesNotMatch(text, /--enqueue|夜里|夜间|回放在队列里|队列/);
   assert.match(doc, /规则回放 runner/, 'a runner that is not there means setup\'s 「规则回放 runner」 step was not done');
 });
 

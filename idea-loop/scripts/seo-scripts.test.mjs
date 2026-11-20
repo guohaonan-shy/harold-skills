@@ -1,10 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSeoMd } from './seo-md.mjs';
-import { plan as budgetPlan, RUN_CAP } from './seo-budget.mjs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { parseSeoMd, DIRECTIONS, SCAN_DIRECTIONS } from './seo-md.mjs';
+import { gaps } from './seo-gaps.mjs';
+import { plan as budgetPlan, spendings, billingPeriod } from './seo-budget.mjs';
 import { syncPlan } from './seo-context.mjs';
 import { regressions } from './seo-baseline.mjs';
 import { due } from './seo-due.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 const SEO_MD = `# SEO
 
@@ -18,7 +26,8 @@ const SEO_MD = `# SEO
 ## OpenSEO
 - 项目：\`00000000-0000-4000-8000-000000000000\`
 - 余额下限：1000
-- 单次额度：technical 200，pages 300，keywords 600，backlinks 400
+- 套餐额度：每月 10000，每月 1 日重置
+- 每周分配：排名追踪 300；扫描 technical 200，pages 300，keywords 600，backlinks 400，geo 0，results 100；起草与验证 400
 
 ## 竞品
 - \`recipebox.example\`：RecipeBox，按食材搜菜谱的订阅制 app
@@ -31,6 +40,7 @@ const SEO_MD = `# SEO
 ## 构建与检查
 - 产物目录：\`apps/site/dist\`
 - 检查参数：\`--title-max=70 --desc-max=160\`
+- 内容路径：\`apps/site/src/content/blog/\`；\`apps/site/public/images/**\`；\`apps/site/public/llms.txt\`
 
 ## 写作
 - 文风：\`docs/reference/voice.md\`
@@ -47,7 +57,9 @@ test('SEO.md: seven sections parse into the shape the scripts read', () => {
   assert.deepEqual(s.site.languages, [{ code: 'en', prefix: '/' }, { code: 'zh-CN', prefix: '/zh/' }]);
   assert.equal(s.openseo.projectId, '00000000-0000-4000-8000-000000000000');
   assert.equal(s.openseo.floor, 1000);
-  assert.deepEqual(s.openseo.budgets, { technical: 200, pages: 300, keywords: 600, backlinks: 400 });
+  assert.equal(s.openseo.monthly, 10000);
+  assert.equal(s.openseo.resetDay, 1);
+  assert.deepEqual(s.openseo.weekly, { tracking: 300, scan: { technical: 200, pages: 300, keywords: 600, backlinks: 400, geo: 0, results: 100 }, drafting: 400 });
   assert.deepEqual(s.competitors, [
     { domain: 'recipebox.example', name: 'RecipeBox', notes: '按食材搜菜谱的订阅制 app' },
     { domain: 'panfry.example', name: 'PanFry', notes: '' },
@@ -56,9 +68,55 @@ test('SEO.md: seven sections parse into the shape the scripts read', () => {
     { url: 'https://cookbook.example/pricing', keyword: 'recipe app subscription' },
     { url: 'https://cookbook.example/blog/weeknight-dinners', keyword: null },
   ]);
-  assert.deepEqual(s.build, { distDir: 'apps/site/dist', checkArgs: ['--title-max=70', '--desc-max=160'] });
+  assert.deepEqual(s.build, {
+    distDir: 'apps/site/dist',
+    checkArgs: ['--title-max=70', '--desc-max=160'],
+    contentPaths: ['apps/site/src/content/blog/', 'apps/site/public/images/**', 'apps/site/public/llms.txt'],
+    liveWait: 30,
+  });
   assert.deepEqual(s.writing.typeMap, { COMPARISON: '对比与研究', 'HOW-TO': '教程' });
   assert.deepEqual(s.brand.terms, ['cookbook', 'cook book']);
+});
+
+test('SEO.md: 内容路径 is read as a list of globs; a project that has not written it reads as none (only docs/ and SEO.md count as content)', () => {
+  assert.deepEqual(parseSeoMd('## 构建与检查\n- 产物目录：`dist`\n').build.contentPaths, []);
+  assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：无\n').build.contentPaths, []);
+  assert.deepEqual(parseSeoMd('## 构建与检查\n- 内容路径：`content/**/*.md`\n').build.contentPaths, ['content/**/*.md']);
+});
+
+test('SEO.md: 上线等待 is minutes to wait for a deploy after a merge; not written, 无 or not a positive number reads as 30', () => {
+  const wait = (v) => parseSeoMd(`## 构建与检查\n- 产物目录：\`dist\`\n${v === undefined ? '' : `- 上线等待：${v}\n`}`).build.liveWait;
+  assert.equal(wait(), 30);
+  assert.equal(wait('45'), 45);
+  assert.equal(wait('10 分钟'), 10);
+  assert.equal(wait('无'), 30);
+  assert.equal(wait('0'), 30);
+  assert.equal(wait('很久'), 30);
+  assert.equal(parseSeoMd('# SEO\n').build.liveWait, 30, 'no 构建与检查 section at all');
+});
+
+test('SEO.md: 内容原则 reads one principle per line, with its source; no section reads as none, without an error', () => {
+  const md = `## 内容原则
+每行一条：原则（出处：人的原话或 issue 号）
+- 数据只当佐证，不罗列（出处：#12，「数据只当佐证」）
+- 拿不出能直接练的东西、跟已有文章大面积重合的，不开新页（出处：#30）
+- 没写出处的也读得出
+- 无
+`;
+  assert.deepEqual(parseSeoMd(md).principles, [
+    { text: '数据只当佐证，不罗列', source: '#12，「数据只当佐证」' },
+    { text: '拿不出能直接练的东西、跟已有文章大面积重合的，不开新页', source: '#30' },
+    { text: '没写出处的也读得出', source: '' },
+  ]);
+  assert.deepEqual(parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n').principles, []);
+  assert.deepEqual(parseSeoMd('## 内容原则\n\n## 品牌\n- 品牌词：`cookbook`\n').principles, []);
+  assert.deepEqual(parseSeoMd(SEO_MD).principles, [], 'a SEO.md written before the section existed has none');
+});
+
+test('SEO.md: 内容原则 does not leak into its neighbours, and the neighbours not into it', () => {
+  const s = parseSeoMd('## 内容原则\n- 写短句（出处：#1）\n\n## 品牌\n- 品牌词：`cookbook`\n');
+  assert.deepEqual(s.principles, [{ text: '写短句', source: '#1' }]);
+  assert.deepEqual(s.brand.terms, ['cookbook']);
 });
 
 test('SEO.md: a missing 品牌 section, a missing 品牌词 key or a value without backticks reads as no brand terms', () => {
@@ -91,43 +149,153 @@ test('SEO.md: missing sections read as empty, unknown directions and page types 
   const s = parseSeoMd('# SEO\n\n## 站点\n- 域名：`cookbook.example`\n');
   assert.deepEqual(s.competitors, []);
   assert.equal(s.build.distDir, null);
-  assert.throws(() => parseSeoMd('## OpenSEO\n- 单次额度：social 100\n'), /social/);
   assert.throws(() => parseSeoMd('## 写作\n- 类型映射：`X` → 杂谈\n'), /杂谈/);
 });
 
-test('budget: credits already spent earlier in the run (the gate) count against the single-run cap', () => {
-  const o = { floor: 100, budgets: { technical: 0, pages: 1500, keywords: 1500 } };
-  const base = budgetPlan(o, 5000, ['pages', 'keywords']);
-  assert.deepEqual(base.allow, { pages: 1500, keywords: 500 });
-  const after = budgetPlan(o, 4800, ['pages', 'keywords'], 200);
-  assert.deepEqual(after.allow, { pages: 1500, keywords: 300 }, 'cap 2000 minus 200 spent, split in order');
-  assert.match(after.skipped[0].reason, /单次合计上限 2000/);
-  const nearFloor = budgetPlan(o, 250, ['pages'], 200);
-  assert.deepEqual(nearFloor.allow, { pages: 150 }, 'the floor is checked against the balance read after the spend');
-  assert.deepEqual(budgetPlan(o, 4800, ['pages'], 2500).allow, { pages: 0 }, 'a run that already spent the cap runs free calls only');
+test('SEO.md: 套餐额度 and 每周分配 read as numbers; a part left out is simply not allocated', () => {
+  const s = parseSeoMd('## OpenSEO\n- 套餐额度：每月 10,000，每月 31 日重置\n- 每周分配：扫描 pages 300\n');
+  assert.equal(s.openseo.monthly, 10000);
+  assert.equal(s.openseo.resetDay, 31);
+  assert.deepEqual(s.openseo.weekly, { tracking: 0, scan: { pages: 300 }, drafting: 0 });
+  const none = parseSeoMd('## OpenSEO\n- 余额下限：1000\n').openseo;
+  assert.deepEqual([none.monthly, none.resetDay, none.weekly], [null, null, null]);
+});
+
+test('SEO.md: the old 单次额度 key is refused and the error says to migrate with seo-setup', () => {
+  assert.throws(() => parseSeoMd('## OpenSEO\n- 单次额度：technical 200，pages 300\n'), /单次额度[\s\S]*\/idea-loop:seo-setup/);
+  assert.throws(() => parseSeoMd(SEO_MD.replace('- 套餐额度', '- 单次额度：pages 300\n- 套餐额度')), /单次额度/, 'even with the new keys beside it');
+});
+
+test('SEO.md: an allocation that names something unknown, or a reset day that is not a day, is refused', () => {
+  assert.throws(() => parseSeoMd('## OpenSEO\n- 每周分配：扫描 social 100\n'), /social/);
+  assert.throws(() => parseSeoMd('## OpenSEO\n- 每周分配：社交 100\n'), /社交/);
+  assert.throws(() => parseSeoMd('## OpenSEO\n- 套餐额度：每月 10000，每月 32 日重置\n'), /32/);
+});
+
+const OPENSEO = parseSeoMd(SEO_MD).openseo; // 套餐 10000，每月 1 日重置；每周分配合计 300 + 1600 + 400 = 2300
+const spend = (date, lines) => ({ entryDate: date, summary: `seo-scan ${date} 22:05，方向：pages\n采集：pages 1 条\n${lines}` });
+
+test('billing period: starts on the reset day, a reset day past the month end falls on its last day', () => {
+  assert.deepEqual(billingPeriod(15, '2026-11-10'), { start: '2026-10-15', end: '2026-11-15' });
+  assert.deepEqual(billingPeriod(15, '2026-11-15'), { start: '2026-11-15', end: '2026-12-15' }, 'the reset day itself opens the new period');
+  assert.deepEqual(billingPeriod(31, '2027-02-20'), { start: '2027-01-31', end: '2027-02-28' });
+  assert.deepEqual(billingPeriod(1, '2026-12-31'), { start: '2026-12-01', end: '2027-01-01' });
+  assert.deepEqual(billingPeriod(20, '2027-01-05'), { start: '2026-12-20', end: '2027-01-20' }, 'across the new year');
+});
+
+test('spendings: sums 花费 lines by 份, a line without 份 counts as 扫描, 未知 counts as nothing, the date comes from entryDate or the first line', () => {
+  const log = [
+    { entryDate: '2027-02-02', summary: 'seo-scan 2027-02-02 22:05，方向：pages\n采集：pages 1 条\n花费：300 credits，余额 9000，份：扫描；预算跳过：无\n花费：50 credits，份：排名追踪' },
+    { summary: '起草 2027-02-03：issue #12\n花费：1,200 credits，份：起草与验证' },
+    { entryDate: '2027-02-04', summary: 'seo-scan 2027-02-04 22:05，方向：pages\n花费：未知 credits，余额 未知' },
+    { entryDate: '2027-02-05', summary: 'Keyword research: weeknight dinners. Verdict: ...' },
+    { summary: '没有日期的一条\n花费：999 credits' },
+  ];
+  assert.deepEqual(spendings(log), [
+    { date: '2027-02-02', share: '扫描', credits: 300 },
+    { date: '2027-02-02', share: '排名追踪', credits: 50 },
+    { date: '2027-02-03', share: '起草与验证', credits: 1200 },
+  ]);
+});
+
+// 2027-02 has 28 days, so on 2027-02-15 the period (2027-02-01 .. 2027-03-01) has two weeks left.
+const FEB = [
+  spend('2027-01-28', '花费：700 credits，余额 15000'), // last period
+  spend('2027-02-02', '花费：3000 credits，余额 9000，份：扫描'),
+  spend('2027-02-09', '花费：1500 credits，份：扫描'),
+  { entryDate: '2027-02-10', summary: '起草 2027-02-10：issue #7\n花费：900 credits，份：起草与验证' },
+];
+
+test('budget: 套餐 10000, two weeks left, 5400 spent this period → 2300 for the week, split by the allocation ratio into three shares', () => {
+  const r = budgetPlan(OPENSEO, 20000, ['technical'], { log: FEB, today: '2027-02-15' });
+  assert.equal(r.week.weeksLeft, 2);
+  assert.equal(r.week.periodSpent, 5400);
+  assert.equal(r.week.budget, 2300);
+  assert.deepEqual(r.week.shares['排名追踪'], { quota: 300, spent: 0, left: 300 });
+  assert.deepEqual(r.week.shares['扫描'], { quota: 1600, spent: 0, left: 1600 });
+  assert.deepEqual(r.week.shares['起草与验证'], { quota: 400, spent: 0, left: 400 });
+  assert.deepEqual(r.allow, { technical: 200 });
+});
+
+test('budget: what the week has spent so far comes out of its share; the budget itself is fixed at the start of the week', () => {
+  const log = [...FEB, spend('2027-02-16', '花费：1300 credits，份：扫描'), { entryDate: '2027-02-17', summary: '起草 2027-02-17：issue #9\n花费：100 credits，份：起草与验证' }];
+  const r = budgetPlan(OPENSEO, 20000, [], { log, today: '2027-02-18' });
+  assert.equal(r.week.budget, 2300, 'this week\'s own spending does not shrink the week\'s budget');
+  assert.equal(r.week.shares['扫描'].spent, 1300);
+  assert.equal(r.week.shares['扫描'].left, 300);
+  assert.equal(r.week.shares['起草与验证'].left, 300);
+  assert.deepEqual(r.allow, {}, 'no directions asked: the week\'s books only');
+});
+
+test('budget: an unspent period is spread over the weeks left, so the shares grow', () => {
+  const r = budgetPlan(OPENSEO, 20000, ['technical', 'pages', 'keywords', 'backlinks', 'geo'], { log: [], today: '2027-02-15' });
+  assert.equal(r.week.budget, 5000, '10000 over two weeks');
+  assert.deepEqual(r.allow, { technical: 434, pages: 652, keywords: 1304, backlinks: 869, geo: 0 }, 'each direction\'s allocation scaled by 5000 / 2300, rounded down');
+});
+
+test('budget: an estimate larger than its share\'s weekly remainder is not run and goes to skipped; the others run', () => {
+  const log = [...FEB, spend('2027-02-16', '花费：1300 credits')]; // 扫描 left 300 of 1600
+  const r = budgetPlan(OPENSEO, 20000, ['keywords', 'technical', 'pages'], { log, today: '2027-02-18' });
+  assert.deepEqual(r.allow, { keywords: 0, technical: 200, pages: 0 }, 'keywords (600) does not fit 300; technical (200) does and leaves 100, which pages (300) does not fit');
+  assert.deepEqual(r.skipped.map((s) => s.direction), ['keywords', 'pages']);
+  assert.match(r.skipped[0].reason, /预估 600[\s\S]*本周[\s\S]*剩余 300/);
+});
+
+test('budget: credits the gate spent earlier in the run come out of the same week\'s 扫描 share', () => {
+  const r = budgetPlan(OPENSEO, 20000, ['technical', 'pages'], { log: FEB, today: '2027-02-15', spent: 1500 });
+  assert.equal(r.week.shares['扫描'].left, 100);
+  assert.deepEqual(r.allow, { technical: 0, pages: 0 });
+});
+
+test('budget: a week with no budget left (the plan already spent) runs free calls only', () => {
+  const log = [spend('2027-02-02', '花费：10000 credits，份：扫描')];
+  const r = budgetPlan(OPENSEO, 20000, ['technical'], { log, today: '2027-02-15' });
+  assert.equal(r.week.budget, 0);
+  assert.deepEqual(r.allow, { technical: 0 });
+  assert.equal(r.skipped.length, 1);
 });
 
 test('budget: below the floor nothing paid runs', () => {
-  const r = budgetPlan({ floor: 1000, budgets: { technical: 200, pages: 300 } }, 800, ['technical', 'pages']);
+  const r = budgetPlan(OPENSEO, 800, ['technical', 'pages'], { log: [], today: '2027-02-15' });
   assert.deepEqual(r.allow, { technical: 0, pages: 0 });
   assert.equal(r.skipped.length, 2);
   assert.match(r.skipped[0].reason, /余额 800 低于下限 1000/);
 });
 
-test('budget: a run never plans more than the cap, granted in argument order', () => {
-  const budgets = { technical: 600, pages: 600, keywords: 600, backlinks: 600, geo: 200 };
-  const r = budgetPlan({ floor: 1000, budgets }, 20000, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
-  assert.equal(Object.values(r.allow).reduce((a, b) => a + b, 0), RUN_CAP);
-  assert.deepEqual(r.allow, { technical: 600, pages: 600, keywords: 600, backlinks: 200, geo: 0 });
-  assert.deepEqual(r.skipped.map((s) => s.direction), ['backlinks', 'geo']);
-});
-
 test('budget: never spends into the floor; unknown balance means free calls only', () => {
-  assert.deepEqual(budgetPlan({ floor: 1000, budgets: { keywords: 600 } }, 1300, ['keywords']).allow, { keywords: 300 });
-  const r = budgetPlan({ floor: 1000, budgets: { keywords: 600 } }, NaN, ['keywords']);
+  const o = { ...OPENSEO, weekly: { tracking: 0, scan: { keywords: 600 }, drafting: 0 } };
+  assert.deepEqual(budgetPlan(o, 1300, ['keywords'], { log: [], today: '2027-02-15' }).allow, { keywords: 300 });
+  assert.equal(budgetPlan(o, 1300, [], { log: [], today: '2027-02-15' }).week.floorRoom, 300);
+  const r = budgetPlan(o, NaN, ['keywords'], { log: [], today: '2027-02-15' });
   assert.deepEqual(r.allow, { keywords: 0 });
   assert.match(r.skipped[0].reason, /读不到余额/);
-  assert.throws(() => budgetPlan({ floor: 1000, budgets: {} }, 5000, ['social']), /social/);
+  assert.throws(() => budgetPlan(o, 5000, ['social'], { log: [], today: '2027-02-15' }), /social/);
+});
+
+test('budget: a SEO.md without 套餐额度 / 每周分配 is refused with the way out; a bad date is refused', () => {
+  assert.throws(() => budgetPlan({ floor: 1000, monthly: null, resetDay: null, weekly: null }, 5000, ['pages'], { log: [], today: '2027-02-15' }), /套餐额度[\s\S]*seo-setup/);
+  assert.throws(() => budgetPlan(OPENSEO, 5000, ['pages'], { log: [], today: '15/02' }), /YYYY-MM-DD/);
+});
+
+test('budget: the command line reads SEO.md and the context file, and prints the week with the plan', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'seo-budget-'));
+  try {
+    writeFileSync(join(dir, 'SEO.md'), SEO_MD);
+    writeFileSync(join(dir, 'context.json'), JSON.stringify({ researchLog: FEB }));
+    const cli = (...args) => spawnSync('node', [join(here, 'seo-budget.mjs'), join(dir, 'SEO.md'), ...args], { encoding: 'utf8' });
+    const r = cli('20000', 'technical', 'pages', '--context', join(dir, 'context.json'), '--today', '2027-02-15', '--spent', '0');
+    assert.equal(r.status, 0, r.stderr);
+    const out = JSON.parse(r.stdout);
+    assert.deepEqual(out.allow, { technical: 200, pages: 300 });
+    assert.equal(out.week.budget, 2300);
+    assert.equal(out.week.logKnown, true);
+    const bare = JSON.parse(cli('20000', '--today', '2027-02-15').stdout);
+    assert.equal(bare.week.logKnown, false, 'no context file: the book is unknown, not empty');
+    assert.equal(cli('x', 'pages', '--today', '2027-02-15').status, 0, 'an unreadable balance is "unknown", not a usage error');
+    assert.equal(cli().status, 1);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('context: one-way — SEO.md adds, changes and removes; OpenSEO is never read back', () => {
@@ -183,21 +351,67 @@ test('baseline: a key page missing from this audit is severe; unchanged pages gi
 
 const run = (date, collected) => ({ entryDate: date, summary: `seo-scan ${date} 22:05，方向：${collected}\n采集：${collected}\n花费：0 credits` });
 
-test('due: an empty log runs everything; a collected run waits its cadence, a skipped one does not', () => {
-  assert.deepEqual(due({ researchLog: [] }, '2026-10-25').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
+test('due: an empty log runs everything, results included; a collected run waits its cadence, a skipped one does not', () => {
+  assert.deepEqual(due({ researchLog: [] }, '2026-10-25').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo', 'results']);
   const log = [
-    run('2026-10-18', 'technical 3 条；pages 2 条'),
+    run('2026-10-23', 'technical 3 条；pages 2 条；results 1 条'),
     run('2026-10-04', 'technical 1 条；pages 0 条；keywords 4 条；backlinks 未采集（数据源不可用）；geo 0 条'),
     { entryDate: '2026-10-10', summary: 'Keyword research: weeknight dinners. Verdict: ...' },
   ];
   const r = due({ researchLog: log }, '2026-10-25');
-  assert.deepEqual(r.last, { technical: '2026-10-18', pages: '2026-10-18', keywords: '2026-10-04', backlinks: null, geo: '2026-10-04' });
-  assert.deepEqual(r.due, ['technical', 'pages', 'backlinks']);
-  assert.deepEqual(due({ researchLog: log }, '2026-10-31').due, ['technical', 'pages', 'keywords', 'backlinks', 'geo']);
+  assert.deepEqual(r.last, { technical: '2026-10-23', pages: '2026-10-23', keywords: '2026-10-04', backlinks: null, geo: '2026-10-04', results: '2026-10-23' });
+  assert.deepEqual(r.due, ['keywords', 'backlinks', 'geo'], 'technical and pages ran 2 days ago, results too: none of them is due; the others were last collected 21 days ago or never');
 });
 
-test('due: a weekly run a few minutes early still counts as a week', () => {
-  assert.deepEqual(due({ researchLog: [run('2026-10-18', 'technical 1 条；pages 1 条')] }, '2026-10-24').due.slice(0, 2), ['technical', 'pages']);
-  assert.ok(!due({ researchLog: [run('2026-10-18', 'technical 1 条；pages 1 条')] }, '2026-10-20').due.includes('technical'));
+test('due: results every 3 days, the other five every 7 — results 3 days ago is due while technical 6 days ago is not', () => {
+  const log = [run('2026-10-22', 'results 2 条'), run('2026-10-19', 'technical 1 条')];
+  const r = due({ researchLog: [...log, run('2026-10-10', 'pages 1 条；keywords 1 条；backlinks 1 条；geo 1 条')] }, '2026-10-25');
+  assert.ok(r.due.includes('results'), 'results ran 3 days ago');
+  assert.ok(!r.due.includes('technical'), 'technical ran 6 days ago');
+  const later = due({ researchLog: log }, '2026-10-26');
+  assert.ok(later.due.includes('technical'), 'technical ran 7 days ago');
+  assert.ok(!due({ researchLog: [run('2026-10-23', 'results 1 条')] }, '2026-10-25').due.includes('results'), 'results ran 2 days ago');
+});
+
+test('due: a day is a calendar date, so a run a few minutes early in the day still counts; a bad date is refused', () => {
+  const log = [run('2026-10-18', 'technical 1 条；pages 1 条')];
+  assert.deepEqual(due({ researchLog: log }, '2026-10-25').due.slice(0, 2), ['technical', 'pages']);
+  assert.ok(!due({ researchLog: log }, '2026-10-24').due.includes('technical'));
   assert.throws(() => due({}, '10/25'), /YYYY-MM-DD/);
+});
+
+test('due: a log with nothing due still reads — the run only writes its one line', () => {
+  const log = [run('2026-10-25', 'technical 1 条；pages 1 条；keywords 1 条；backlinks 1 条；geo 1 条；results 1 条')];
+  assert.deepEqual(due({ researchLog: log }, '2026-10-26').due, []);
+});
+
+test('SEO.md: 分析 is optional — tool, project id and dashboard link; no section, 无 or empty values read as none, without an error', () => {
+  const md = `## 分析
+- 工具：PostHog
+- 项目：\`12345\`
+- dashboard：\`https://analytics.example/project/12345/dashboard/7\`
+`;
+  assert.deepEqual(parseSeoMd(md).analytics, { tool: 'PostHog', projectId: '12345', dashboard: 'https://analytics.example/project/12345/dashboard/7' });
+  const none = { tool: null, projectId: null, dashboard: null };
+  assert.deepEqual(parseSeoMd(SEO_MD).analytics, none, 'a SEO.md written before the section existed');
+  assert.deepEqual(parseSeoMd('## 分析\n- 工具：无\n').analytics, none);
+  assert.deepEqual(parseSeoMd('## 分析\n- 说明：随便写点什么\n').analytics, none);
+  assert.deepEqual(parseSeoMd('## 分析\n- 工具：PostHog\n').analytics, { tool: 'PostHog', projectId: null, dashboard: null }, 'only the tool written');
+});
+
+test('SEO.md: 分析 does not leak into its neighbours, and the neighbours not into it', () => {
+  const s = parseSeoMd('## 品牌\n- 品牌词：`cookbook`\n\n## 分析\n- 工具：PostHog\n- 项目：`9`\n\n## 内容原则\n- 写短句（出处：#1）\n');
+  assert.deepEqual(s.analytics, { tool: 'PostHog', projectId: '9', dashboard: null });
+  assert.deepEqual(s.brand.terms, ['cookbook']);
+  assert.deepEqual(s.principles, [{ text: '写短句', source: '#1' }]);
+  assert.equal(s.openseo.projectId, null, '「项目」in 分析 is not the OpenSEO project');
+});
+
+test('results is a scan direction only: the budget and the gap check take it, a finding cannot be filed under it', () => {
+  assert.deepEqual(SCAN_DIRECTIONS, [...DIRECTIONS, 'results']);
+  assert.ok(!DIRECTIONS.includes('results'), 'findings keep the original direction; there is no type:seo/results');
+  const r = budgetPlan(OPENSEO, 20000, ['results'], { log: [], today: '2027-02-15' });
+  assert.ok(r.allow.results > 0, 'results has an allocation of its own');
+  assert.deepEqual(gaps(parseSeoMd(SEO_MD), null, ['results']).gaps, [], 'the report needs no project facts');
+  assert.throws(() => gaps(parseSeoMd(SEO_MD), null, ['nonsense']), /不认识的方向/);
 });

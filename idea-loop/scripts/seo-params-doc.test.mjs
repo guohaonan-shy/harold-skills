@@ -17,9 +17,12 @@ const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 
 const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
 const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+const OUTREACH = read('skills', 'seo', 'seo-outreach', 'SKILL.md');
+const WRITING = read('skills', 'seo', 'seo-writing', 'SKILL.md');
 const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
 const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
+const STOPS = read('skills', 'seo', 'seo-scan', 'references', 'stops.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
@@ -112,10 +115,20 @@ test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
   assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
 });
 
-test('seo-scan: three stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
-  assert.match(SCAN, /只有三种情形停下/);
+test('seo-outreach and seo-writing: read SEO.md through seo-md.mjs, not through seo-setup\'s private references (#235)', () => {
+  for (const [name, doc] of [['seo-outreach', OUTREACH], ['seo-writing', WRITING]]) {
+    assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is seo-setup's own reference`);
+    assert.ok(!/seo-setup[^\n]*references/.test(doc), `${name}: points into seo-setup's references`);
+    assert.ok(!/格式见/.test(doc), `${name}: a format pointer is left over`);
+    assert.match(doc, /seo-md\.mjs/, `${name}: reads SEO.md through the parse script`);
+  }
+});
+
+test('seo-scan: four stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
+  assert.match(SCAN, /只有四种情形停下/);
   assert.ok(!/只有开场的两种情形停下/.test(SCAN));
-  assert.match(SCAN, /停下等确认：/);
+  assert.match(SCAN, /停下等确认/);
+  assert.match(STOPS, /停下等确认：/);
   assert.match(SCAN, /- SEO\.md：这次改了/);
 });
 

@@ -1,6 +1,8 @@
 # raw transcript 的正文模板
 
-`docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md` 的正文照下面写。frontmatter 的字段在 `idea-loop:to-spec` 的「落 raw」里。
+`docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md` 的 frontmatter 与正文照下面写。
+
+frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`、`title`、`tags: [<topic>, <feature-slug>]`、`related: ["[[<spec-slug>]]"]`。
 
 ```markdown
 <一段格式约定，让这份文件自解释：U 是人的原话，A 是 AI 的结论>
