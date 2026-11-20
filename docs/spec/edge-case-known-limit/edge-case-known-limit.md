@@ -1,12 +1,12 @@
 ---
 type: spec
 tags: [idea-loop, decision-rules, home]
-summary: 删掉插件的 decision-rules，决策只在 home 写禁区和范围，其余交给模型判断、事后列出
-related: ["[[0035-decision-evidence-principles]]"]
+summary: 决策默认交给模型：插件 decision-rules 只留证据、题的写法与护栏，停不停下看 home 的禁区和范围
+related: ["[[0035-decision-evidence-principles]]", "[[skill-rewrite]]", "[[280]]"]
 issues: [280, 276]
 ---
 
-# 决策规则搬进 home：只写禁区和范围，其余交给模型判断
+# 决策默认交给模型：停不停下看 home 的禁区和范围
 
 > #280 存在：现行 review 标准把「只在兜底路径或罕见异常里出现、不丢东西的边缘情形」一律标成「要你决定」；决定记录里碰到时看得见、不丢东西的 3 道，人每次都选接受、从未推翻，详情在「问题陈述」1
 
@@ -41,7 +41,7 @@ issues: [280, 276]
 
 两类题都是同一个形状：插件里的 `decision-rules` 默认「三种依据都给不出就停下问人」，人每多批一类，就要多写一条例外。全局量：决定记录 36 份、181 道题（2026-11-17 数）；人改了或推翻推荐的 26 道，其中 25 道出在起草 spec、grill、审 spec 初稿时，PR 流程里只有 #311 题 2（版本档位）1 道。
 
-人的方向（2026-11-17，#276 会话）：规则穷举不完，能不能默认让 Claude 自己定、事后靠信号纠正；随后定「并进 #280 一起定」。在本会话：「我倾向于涉及到decision-rules 这个skills的改动，之后都放到home/claude.md下面，我们只说绝对不允许的决策项，以及某些决策的范围，剩下的交给模型判断。」「我倾向于整个删除掉，这些skill更多是按照原来的内容做对应的任务和交付即可～ agents.md本身就会被会话加载」
+人的方向（#276 会话）：规则穷举不完，能不能默认让 Claude 自己定、事后靠信号纠正；随后定「并进 #280 一起定」。在本会话：「我倾向于涉及到decision-rules 这个skills的改动，之后都放到home/claude.md下面，我们只说绝对不允许的决策项，以及某些决策的范围，剩下的交给模型判断。」「我倾向于整个删除掉，这些skill更多是按照原来的内容做对应的任务和交付即可～ agents.md本身就会被会话加载」之后 #340 定了把 evidence 并进 decision-rules、整份开场注入，人在本会话改选「拆开放」：skill 留着管证据和题的写法，停不停下看 home（见「方案」）。
 
 复现材料：上两表的决定记录；分拣评论 https://github.com/guohaonan-shy/harold-skills/issues/280 、https://github.com/guohaonan-shy/harold-skills/issues/276 （2026-11-13）；候选来历 `docs/records/retro-candidates/retro-candidate-102.md`、`retro-candidate-103.md`。
 
@@ -51,37 +51,55 @@ issues: [280, 276]
 
 ## 方案
 
-改完人得到什么：PR 流程、起草、实现里，不在 home 写明的禁区和范围之内的事，模型自己定，在交付里列进「已按规则处理」，一句话写做了什么、为什么；人说「推翻某条」就改回，之后同类不再自己定。只有 home 写明的禁区（只由人做）和范围（停下问人）会停下。问题 1、2 的两类题在这个默认下自动不再摆题；悄悄出错的、说不出满足 spec 哪条目标的，由 home 的范围拦下。
-
-决定由两样输入定：home `AGENTS.md` 的「决策」一节（人自己维护，插件不写它的内容），和模型对这件事的判断。
+改完人得到什么：PR 流程、起草、实现里，home 没写成「只由我做」或「停下问我」的事，模型自己定，列进「已按规则处理」，一句话写做了什么、要达成的目标原文、为什么这个做法达成它；人说「推翻某条」就改回，之后同类不再自己定。问题 1、2 的两类题在这个默认下不再摆题；悄悄出错的、说不出满足 spec 哪条目标的，由 home 的范围拦下。
 
 ```
-会话开场 ──→ 加载 ~/.claude/CLAUDE.md（= ~/home/AGENTS.md，含「决策」一节）
-          ╳  不再注入插件 decision-rules 正文（删）
+会话开场 ──→ 加载 ~/.claude/CLAUDE.md（= home 的 AGENTS.md，含「决策」一节：只由我做 / 停下问我 / 其余你自己定）
+        ──→ 注入插件 decision-rules 正文（#340 合并 evidence 之后的那份；本 issue 改其中「停不停下」的几节）
 碰到一件要定的事
-  ├─ 在「只由我定」里 ──→ 停下，交给人（同现在的护栏）
-  ├─ 在「停下问我」的范围里 ──→ 摆成一道题（写法照 home「要我定的事写成一道题」）
-  └─ 其余 ──→ 模型自己定 → 列进「已按规则处理」（新：不再需要三种依据之一）
-Codex 审查者 ──→ 提示词里传 ~/.claude/CLAUDE.md（改：原来传插件 decision-rules 的路径）
+  ├─ 插件「护栏」或 home「只由我做」 ──→ 停下，交给人（同现在）
+  ├─ home「停下问我」的范围 ──→ 摆成一道题（写法照 decision-rules「要人定的写成一道题」）
+  └─ 其余 ──→ 照 decision-rules「自己定时怎么判断」三步定 → 列进「已按规则处理」（新：依据多一种「目标」）
+Codex 审查者 ──→ 提示词里除插件 decision-rules 外，加传 ~/.claude/CLAUDE.md（新）
 ```
 
-改动面（两个仓库）：
+### 落在哪：#340 合并后的 decision-rules + home
 
-- **home（`~/home`，私有仓库，人的文件）**：`AGENTS.md` 加「决策」一节，原文见「实现决策」的「home『决策』一节的原文」。走 home 仓库自己的提交，不进本 PR。
+人的决定：「拆开放」（2026-11-20，本会话，见 [[280]] 题 6）。#340 把 `evidence` 并进 `decision-rules`、整份开场注入（[[skill-rewrite]] 的「五组合并」第一行）；本 issue 不删这个 skill，只改它里面管「停不停下」的部分，禁区和范围写在 home：
+
+| 合并后 `decision-rules` 的节 | 本 issue 怎么改 |
+|---|---|
+| 核心 | 不动 |
+| 依据只认三种 | 改成「依据四种」：原三种加「目标」——spec 原文或用户真实路径里的一句目标，配下面三步的推理 |
+| 依据明确、没冲突：照标准做 | 并进新节「自己定，列进『已按规则处理』」：每条写做了什么、依据（四种之一，带原文与出处）、动作；人说推翻就改回，同类之后算「人的决定」 |
+| 依据冲突或没有：停下问人 | 删。换成一节「停不停下」：只看「护栏」和会话已加载的用户规则（`~/.claude/CLAUDE.md`）里写的禁区与范围；用户规则没写到的自己定。插件只指位置，不写 home 的条目 |
+| （新）自己定时怎么判断 | 三步：先写目标（spec 原文或用户真实路径）→ 每种做法对目标的结果 → 选达成目标的；「改动小、代价低」只在结果相同时才能当理由 |
+| 护栏（含 SEO 例外） | 不动：没有 home 的项目，这是唯一会停下的地方 |
+| 要人定的写成一道题 | 不动 |
+| evidence 并进来的几节（证据、整体风格、配图） | 不动 |
+
+改完这几节合起来的主体仍要在 #340 的 4500 字线内（[[skill-rewrite]]「主体字数」）。
+
+### 改动面
+
+- **home（`~/home`，人的私有仓库）**：`AGENTS.md` 加「决策」一节，原文见「实现决策」。由人在 home 自己提交，不进本 PR。
 - **harold-skills（本 PR，base `release/idea-loop-0.2.0`）**：
-  - 删 `idea-loop/skills/productivity/decision-rules/` 整个目录。
-  - 开场注入：`hooks/hooks.json` 去掉 `--inject decision-rules`，`runtime-detect.mjs` 去掉这一节。
-  - Codex 审查者：`codex-prompt.mjs` 的 `decision_rules` 改指 `~/.claude/CLAUDE.md`（通用位置，插件不写 home 的路径和内容）。
-  - 引用它的 skill、agent、参考（约 20 份）：「照 `idea-loop:decision-rules` 的……」改成各自原来要做的动作本身，或指向「会话已加载的用户规则（`~/.claude/CLAUDE.md`）」；`pr-review` 处置表的边缘情形一行、`pr` 汇报写法的「边缘情形不放这里」随之改掉。
-  - 准入脚本 `review-check.mjs`：「照规则」的依据种类见「待定：模型怎么用第一性原理判断，以及这类条目在 review 里怎么过准入」。
-  - 文档测试与回放用例里对 decision-rules 的断言：删或改指新落点。
-  - `idea-loop/README.md`、`AGENTS.md`（idea-loop 的维护约定列了 `decision-rules` 是独立能力 skill）同步。
+  - `idea-loop/skills/productivity/decision-rules/SKILL.md`：照上表。
+  - `dyna pr candidates`（`dyna/internal/pr/candidates.go`）：`BasisKinds` 加「目标」；种类是「目标」的，`file` 必须是这次的 spec，`text` 要在 spec 里原样找得到，找不到照现在的做法丢弃。改了 `dyna/` 就升 `dyna/internal/version/version.go`，并在登记表里写进新版本。
+  - Codex 审查者的提示词（`dyna agent` 的 prompt，`dyna/internal/agent/prompt.go`）：在 `decision_rules` 之外加一个 `user_rules`，指 `~/.claude/CLAUDE.md`；文件不在时这一项写「无」，不报错。
+  - `pr-review`：`references/review-standards.md` 处置表删掉「不丢东西的边缘情形 → 要你决定」那一行，「依据只认三种」一段改成四种并指向 decision-rules；`SKILL.md` 第 2 条去掉「（含被降级的边缘情形）」。
+  - `pr`：`references/review-report.md`「已按规则处理」一条：依据改成四种，删「边缘情形不放这里，是决定题」。
+  - `issue-session/references/night-mode.md`：「`decision-rules`『依据冲突或没有』里的每一题」改指新节名「停不停下」。
+  - `agents/design-steward.md`「依据只认三种」改成指 decision-rules 的依据一节。
+  - 文档测试：断言旧节名、「边缘情形 → 要你决定」的改钉新位置；回放用例见「测试决策」。
+  - `plugin.json` 升版本：改了决策行为，minor（档位规则见 `REVIEW.md`「额外要求」）。
 
-同一行为的其他入口：
+### 同一行为的其他入口
 
-- **纳入**：`implement` 停下汇报、`pr-review` 每轮、`to-spec` 起草、`retro`（它的决定记录类别引用 decision-rules 的节名）、`issue-triager`、`adr-reconciler`、`design-steward`——都改成读会话已加载的用户规则。
-- **排除**：#216（交给人决策时先讲问题、按场景选证据形态）原计划落在 decision-rules「要人定的写成一道题」；这一节删掉后，它的落点改成 home `AGENTS.md`「要我定的事写成一道题」，由 #216 的会话自己改，本 spec 只在关联里说明。
-- **排除**：上线后的监控反馈（人在本会话提出），另开 #365，不在这里做。
+- **纳入**：`implement` 停下汇报、`pr-review` 每轮、`to-spec` 起草、夜间模式——都经开场注入的 decision-rules 走同一套「停不停下」，不再各自转述。
+- **不改**：SessionStart 注入（`dyna runtime inject decision-rules`）和 `hooks.json`：skill 还在，注入的仍是它的正文。
+- **排除**：#216（交给人时先讲问题、按场景选证据形态）落点在合并后 decision-rules 的证据与「写成一道题」两节，由 #216 自己的会话定。
+- **排除**：上线后的监控反馈 #365。
 
 ## User Stories
 
@@ -89,19 +107,20 @@ Codex 审查者 ──→ 提示词里传 ~/.claude/CLAUDE.md（改：原来传�
 
 1. **期望行为**（对应问题 1）：PR 流程里碰到看得见、不丢东西的边缘情形（例：#68 题 3），出现在「已按规则处理」并补记成已知限制，不出现在「要你决定」；碰到时会悄悄出错的（例：#108 题 9），仍停下问人。
 2. **期望行为**（对应问题 2）：执行方已做好一种、另一种也说得通、已做的那种不少满足 spec 任何一条的（例：#148 C1），出现在「已按规则处理」保持现状；已做的让 spec 某条只达成一部分的（例：#55 题 10），仍停下问人。
-3. **期望行为**（对应问题 3）：插件里不再有 `decision-rules` 这个 skill，也不再在开场注入它；会话里是否停下问人，只看 home `AGENTS.md` 的「决策」一节。
+3. **期望行为**（对应问题 3）：会话停不停下问人，只看插件「护栏」和 home `AGENTS.md` 的「决策」一节；人往 home 里加一条范围，不用改插件就生效。
 
 ## 实现决策
 
-- **删，不留薄壳**：人的原话「我倾向于整个删除掉，这些skill更多是按照原来的内容做对应的任务和交付即可～ agents.md本身就会被会话加载」。没有 home 的项目从此没有插件自带的护栏，这是人接受的代价。
-- **插件里只指位置，不写内容**：引用处写「会话已加载的用户规则（`~/.claude/CLAUDE.md`）」，不写 home 的路径和条目（依据：AGENTS.md「插件里不出现任何项目的信息」；`no-project-leak.test.mjs` 守着）。
-- **合进 0.2.0 集成分支**：人选「0.2.0 集成分支」；PR base `release/idea-loop-0.2.0`，挂父 issue #331。
-- **「已按规则处理」这个节名保留**：pr-review、pr、implement、准入脚本都按它找，改名只加冲突（同 ADR-0035「不改名」的理由）。
-- **回放用例**（AGENTS.md §5 第二个例外）三个：正例 #68 PR #114 第 1 次停下（期望行为 1）、正例 #148 PR #274 第 1 轮 C1，提交 `633d421`（期望行为 2）、反例 #55 PR #90 第 1 轮 S3，期望改后仍在「要你决定」（期望行为 2 后半句）。
+- **先等 #340**：本 issue 改的 decision-rules、pr-review、pr 都在 #340 的重写清单里（02、05 号工单）。实现从 #340 的 PR 合进集成分支之后的提交起做，改的是合并、重写后的那一份；GitHub 上加 blocked by #340。
+- **不删 skill，不留旧节**：「依据冲突或没有」整节删，不留一句「旧节改名了」。「已按规则处理」这个节名保留：pr-review、pr、implement、`dyna pr candidates` 都按它找（同 ADR-0035「不改名」的理由）。
+- **插件里只指位置，不写内容**：写「会话已加载的用户规则（`~/.claude/CLAUDE.md`）」，不写 home 的路径和条目（AGENTS.md「插件里不出现任何项目的信息」；`no-project-leak.test.mjs` 守着）。
+- **判断方法写在插件，范围写在 home**：三步判断对每个项目都一样，进插件；禁区和范围是人自己的偏好，进 home。人的决定：「先用草稿」（2026-11-20，见 [[280]] 题 7）；人之后想清楚第一性原理怎么写，改这一节即可。
+- **没有 home 的项目**：只剩「护栏」会停下，其余都自己定、事后列出。人在 #280 前一轮已接受「没有 home 的项目从此没有插件自带的范围」这个代价（[[280]] 题 2）。
+- **合进 0.2.0 集成分支**：PR base `release/idea-loop-0.2.0`，挂父 issue #331。
 
 ### home「决策」一节的原文
 
-人的决定（2026-11-19，本会话）：照草稿写（原题 A，「题目1 没问题」），保留「起草 spec、grill 时的方案形状」停下问人这一条。由人在 home 仓库提交：
+人的决定（[[280]] 题 5 之后，2026-11-19 定稿）；第 3 条末尾的判断方法改指插件（本次题 7 的结果）。由人在 home 仓库提交：
 
 > ## 决策
 >
@@ -110,38 +129,36 @@ Codex 审查者 ──→ 提示词里传 ~/.claude/CLAUDE.md（改：原来传�
 >   - 碰到时会悄悄出错的（没有提示、没人会发现）：写成一道题，推荐修。
 >   - 说不出满足 spec 哪一条目标的做法。
 >   - 起草 spec、grill 时的方案形状（我在场，当场定）。
-> - **其余你自己定**：在交付里列进「已按规则处理」，一句话写做了什么、为什么；我说推翻就改回，之后同类不再自己定。
+> - **其余你自己定**：照 `decision-rules`「自己定时怎么判断」，在交付里列进「已按规则处理」，一句话写做了什么、为什么；我说推翻就改回，之后同类不再自己定。
 
-「其余你自己定」怎么判断，等下一节定了再补进这一节。
+### 「自己定时怎么判断」的原文（进 decision-rules）
 
-### 待定：模型怎么用第一性原理判断，以及这类条目在 review 里怎么过准入
+> 1. 写出目标：spec 里的一句原文，或用户的一条真实路径（哪个页面、哪类用户）。写不出，就是「说不出满足 spec 哪一条目标」，按用户规则停下问人。
+> 2. 每种做法走一遍这条路径，写出对目标的结果：达成、达成一部分、没达成。
+> 3. 选达成目标的那种。几种结果相同，才比改动大小、代价。
+>
+> 依据写成「目标」：原文、出处（spec 的节名），加一句第 2 步的结果。
 
-依据为什么没有：人的原话「模型其实有时候会丢失第一性原理，比如会以改动很大来否定某个改动」「所谓的decision-rules，我觉的是要让模型可以通过第一性原理来思考决策」「我觉得还是得交回模型如何以第一性原理进行思考和判断，我觉的这个事儿可以让0.2.0做，我在那里面好好想想并和claude讨论」。
-
-真实例子：`docs/raw/decisions/55.md` 题 10，执行方以「改动最小」推荐留在 dreaming（已做的），只达成 spec 目标的一半，人选了 B。只写「改动最小」当理由的还有 `51.md` 题 12、`55.md` 题 9 与区域组件、`108.md` 题 8、`148.md` 题 1。
-
-本会话摆过的一版草稿（未定，供 0.2.0 讨论参考）：「模型判断」的依据写成三步——目标（spec 原文或用户真实路径）→ 各做法对目标的结果 → 选达成目标的；代价只在结果相同时参与。准入脚本核对目标原文在 spec 里找得到。
-
-定下之前：`review-check.mjs` 的依据种类不改，本 issue 留在 triage，不翻 todo。
+真实例子：`docs/raw/decisions/55.md` 题 10，执行方以「改动最小」推荐留在 dreaming，只达成 spec 目标的一半；走这三步，第 2 步写出「达成一部分」，选另一种，与人当时的选择一致。
 
 ## 测试决策
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | `runtime-detect` 的注入节不再有 decision-rules；`codex-prompt` 的规则路径；`review-check` 的依据种类（「待定：模型怎么用第一性原理判断」定了再写）；文档断言：插件里没有 `decision-rules` 目录、没有 `idea-loop:decision-rules` 的引用 |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | `dyna pr candidates`：种类「目标」的 `text` 在 spec 里找得到才收、找不到丢弃，其余三种不变；`dyna agent` prompt 多一个 `user_rules`，文件不在时写「无」 |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 不涉及 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
-| LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了 pr-review、implement、to-spec 等读规则的位置：三个 retro 回放用例（见「实现决策」） |
+| LLM 输出质量（prompt 改动） | eval（确定性断言） | 改了 decision-rules「停不停下」：三个 retro 回放用例（AGENTS.md §5 第二个例外） |
 | 视觉正确性 | UI 实现环 | 不涉及 |
 | 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
 
-- **seam**：两个。retro 回放（`idea-loop/evals/retro/`）抓「那个现场这条进了哪一节」，漏掉别的现场的判法；脚本单测抓注入、提示词、准入三处机制，漏掉模型怎么读 home。
+- **seam**：两个。retro 回放（`idea-loop/evals/retro/`）抓「那个现场这条进了哪一节」，漏掉别的现场；dyna 单测抓准入和提示词，漏掉模型怎么读 home。
 - **增量功能测试**：
   - 前置：#68 PR #114 第 1 次停下之前的提交；步骤：改前、改后的插件各跑一遍停下汇报；期望：是/否题「『一段从滚动容器外开始、延伸进容器时只拍首屏那截』是放进『已按规则处理』，而不是摆成要你决定的题？」改前否、改后是；覆盖：期望行为 1。
   - 前置：提交 `633d421`；步骤：pr-review 跑第 1 轮；期望：「新加那句里『例子』重复写了一遍」进「已按规则处理」保持现状，改前否、改后是；覆盖：期望行为 2。
   - 前置：#55 PR #90 review 第 1 轮之前的提交（实现时从 PR 历史取）；期望：S3（对账的一半留在 dreaming）改后仍在「要你决定」；覆盖：期望行为 2 后半句。
-  - 改前就「是」的不算过。回放环境里的 `~/.claude/CLAUDE.md` 用 home 改完后的版本，改前用改前的版本，两边同条件。
-- **照着谁写**：`idea-loop/evals/retro/cases/decision-rules-scope-recommend/`；`idea-loop/scripts/session-start-inject.test.mjs`、`decision-rules-who-decides-doc.test.mjs`。
+  - 改前就「是」的不算过。回放环境里的 `~/.claude/CLAUDE.md` 改后用加了「决策」一节的版本，改前用没加的，两边其余条件相同。
+- **照着谁写**：`idea-loop/evals/retro/cases/decision-rules-scope-recommend/`；`dyna/internal/pr/loop_test.go`；`idea-loop/scripts/session-start-inject.test.mjs`。
 
 ## Out of scope
 
@@ -151,8 +168,10 @@ Codex 审查者 ──→ 提示词里传 ~/.claude/CLAUDE.md（改：原来传�
 
 ## 关联
 
-- ADR：[[0035-decision-evidence-principles]]（本 spec 推翻它「decision-rules 剪枝成六块」的结论，由 dreaming 在合并后起草新 ADR）。
+- ADR：[[0035-decision-evidence-principles]]（本 spec 推翻它「依据冲突或没有就停下问人」与边缘情形一律问人的结论，由 dreaming 在合并后起草新 ADR）。
+- 决定记录：[[280]]。
 - 候选：`docs/records/retro-candidates/retro-candidate-102.md`、`retro-candidate-103.md`。
-- 父 issue：#331（idea-loop 0.2.0）；相邻子 issue #333（skill 从 home 读知识）——本 spec 不依赖它：home 规则靠 `~/.claude/CLAUDE.md` 的软链接加载，已经生效。
-- 相邻 issue：#216（triage 中，落点要从 decision-rules 改到 home，由它自己的会话改）；#365（监控反馈，triage）；#298（dreaming 逐行批，落点在 dreaming，不重叠）。
+- 父 issue：#331（idea-loop 0.2.0）；本 spec 不依赖 #333：home 规则靠 `~/.claude/CLAUDE.md` 的软链接加载，已经生效。
+- [[skill-rewrite]]（#340，实现中）：先于本 issue；它合并 evidence 与 decision-rules、重写 pr-review 与 pr，本 issue 改的是它重写后的那几份。
+- 相邻 issue：#216（先放着，落点在合并后 decision-rules 的证据与「写成一道题」两节，由它自己的会话定）；#365（监控反馈，triage）；#298（dreaming 逐行批，落点在 dreaming，不重叠）。
 - 相邻 spec：无。
