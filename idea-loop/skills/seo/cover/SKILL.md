@@ -9,7 +9,7 @@ description: 文章的列表封面和顶部大图：新文要配图、标题或�
 
 ## 1. 收输入
 
-- 标题、slug、封面主体：调用方给（`seo-brief` 的「配图」一步、`seo-writing` 的改稿循环）；人直接要的，问人。
+- 标题、slug、封面主体：调用方给（`seo-writing` 的 brief 分支「配图」一步、`seo-writing` 的改稿循环）；人直接要的，问人。
 - 没给封面主体：从文章角度推两三个候选。每个写明它对应论点的哪一点（跟论点无关的好看形状不算主体），并避开图片目录里相邻文章已用的主体。人在场让人挑，托管时挑推荐的。
 
 完成条件：标题、slug、主体都有，主体说得出对应论点的哪一点。
@@ -43,7 +43,7 @@ description: 文章的列表封面和顶部大图：新文要配图、标题或�
 
 ## 4. 放进仓库
 
-- 调用方给了输出目录（`seo-brief` 出图时给 spec 的 `assets/`），PNG 存进那里，不动 frontmatter，这一步到此为止。
+- 调用方给了输出目录（`seo-writing` 的 brief 分支出图时给 spec 的 `assets/`），PNG 存进那里，不动 frontmatter，这一步到此为止。
 - 否则 PNG 存 `<images.dir>/<slug>.png`；每个语言版本的 frontmatter 的 `images.coverField` 写这张图的引用路径，写法照同一篇文章里别的图片。
 - `images.dir`、`images.coverField` 没写：人在场问；托管时看同站已有文章里图片引用的目录、frontmatter 里放封面的字段（出处写哪篇），找不到就把 PNG 留在 `.tmp/cover/`、不动 frontmatter，交回里写明。
 

@@ -65,7 +65,7 @@ test('the README architecture tree lists the writing loop tripwires; the lint it
 });
 
 test('the skills table lists cover and og, and the writing lint under seo-writing', () => {
-  assert.match(README, /\| `idea-loop:seo-brief`, `seo-writing`, `seo-outreach`, `cover` \| SEO · solve \|[^\n]*`dyna seo writing lint`/);
+  assert.match(README, /\| `idea-loop:seo-writing`, `seo-outreach`, `cover` \| SEO · solve \|[^\n]*`dyna seo writing lint`/);
   assert.match(README, /\| `idea-loop:og` \| SEO · solve \|/);
 });
 

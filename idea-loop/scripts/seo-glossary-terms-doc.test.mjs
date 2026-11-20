@@ -30,7 +30,7 @@ const walk = (dir) =>
   });
 
 const seoDirs = [
-  ...['cover', 'og', 'seo-brief', 'seo-writing'].map((d) => join(root, 'skills', 'seo', d)),
+  ...['cover', 'og', 'seo-writing'].map((d) => join(root, 'skills', 'seo', d)),
   join(root, 'skills', 'engineering', 'setup', 'references', 'seo'), // the SEO module of setup
 ];
 const WRITING_SIDE = [

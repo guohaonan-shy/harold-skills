@@ -36,9 +36,9 @@ test('no seo skill states a section count right after reading SEO.md', () => {
 });
 
 test('the six skills that read SEO.md with `dyna seo parse` still do so, and say 读出各节', () => {
-  const readers = ['keyword-clustering', 'keyword-research', 'competitor-analysis', 'link-prospecting', 'seo-audit', 'seo-coach'];
+  const readers = ['keyword-clustering', 'keyword-research', 'competitor-analysis', 'seo-outreach/references/prospecting.md', 'seo-audit', 'seo-coach'];
   for (const name of readers) {
-    const body = read('skills', 'seo', name, 'SKILL.md');
+    const body = name.endsWith('.md') ? read('skills', 'seo', ...name.split('/')) : read('skills', 'seo', name, 'SKILL.md');
     assert.match(body, /`dyna seo parse <项目目录>\/SEO\.md` 读出各节/, name);
   }
 });

@@ -68,7 +68,7 @@ dyna seo og render <params.json> <调用方给的输出目录，或图片目录�
 
 ## 6. 写进文章，防缓存
 
-- 调用方给了输出目录（`seo-brief` 出图时给 spec 的 `assets/`）的，不写 frontmatter，只交回图的路径和 `md5`。
+- 调用方给了输出目录（`seo-writing` 的 brief 分支出图时给 spec 的 `assets/`）的，不写 frontmatter，只交回图的路径和 `md5`。
 - 否则 `images.ogField` 的值写成图片的站点路径，形态照同一字段在已有文章里的写法；多语言版本各写各的。
 - 重渲同一个文件名后，预览服务在跑就 `dyna seo og md5 <png> --url <预览里这张图的地址>`：退出码 3 是服务器还给旧图，重启预览或换文件名；没有预览只记下 `md5`。
 

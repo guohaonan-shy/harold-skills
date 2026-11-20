@@ -72,7 +72,7 @@ test('the skills that used to say "run seo-setup" say `/idea-loop:setup` (SEO mo
     ['seo', 'seo-audit', 'SKILL.md'], ['seo', 'seo-coach', 'SKILL.md'], ['seo', 'seo-scan', 'SKILL.md'],
     ['seo', 'seo-scan', 'references', 'opening.md'], ['seo', 'seo-scan', 'references', 'research-log.md'],
     ['seo', 'keyword-research', 'SKILL.md'], ['seo', 'keyword-clustering', 'SKILL.md'], ['seo', 'competitor-analysis', 'SKILL.md'],
-    ['seo', 'seo-geo', 'SKILL.md'], ['seo', 'link-prospecting', 'SKILL.md'], ['seo', 'seo-outreach', 'SKILL.md'],
+    ['seo', 'seo-geo', 'SKILL.md'], ['seo', 'seo-outreach', 'references', 'prospecting.md'], ['seo', 'seo-outreach', 'SKILL.md'],
   ];
   for (const f of files) {
     const text = read('skills', ...f);

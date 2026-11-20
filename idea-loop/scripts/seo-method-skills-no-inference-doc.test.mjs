@@ -4,7 +4,7 @@
  * Spec seo-params-from-seo-md, ticket 02. Convention: project information a skill needs (business, goal, positioning,
  * competitors) is confirmed by a human and written down; an unattended run (a direction agent called by seo-scan) that
  * finds a gap must not infer a value from the site / find_serp_competitors and use it. Step 3 of 「项目上下文」 in
- * keyword-research, seo-audit, link-prospecting and competitor-analysis therefore reads 「缺了不推断」: say in
+ * keyword-research, seo-audit, seo-outreach's 找候选站点 reference (the former link-prospecting) and competitor-analysis therefore reads 「缺了不推断」: say in
  * `assumptions` what is missing and which part was not done, finish the rest. The human-present branch (guess →
  * ask → write back) stays as it was, and competitor-analysis still analyses a competitor the caller names.
  *
@@ -18,7 +18,9 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const seoDir = process.env.SEO_SKILLS_DIR ?? join(pluginRoot, 'skills', 'seo');
-const read = (slug) => readFileSync(join(seoDir, slug, 'SKILL.md'), 'utf8');
+// link-prospecting is the 找候选站点 branch of seo-outreach now: its text lives in the branch's reference file.
+const FILE = { 'link-prospecting': ['seo-outreach', 'references', 'prospecting.md'] };
+const read = (slug) => readFileSync(join(seoDir, ...(FILE[slug] ?? [slug, 'SKILL.md'])), 'utf8');
 
 function section(doc, title) {
   const lines = doc.split('\n');
@@ -99,8 +101,10 @@ for (const c of cases) {
     assert.match(section(doc, '两种调用'), /项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步/);
     // the hand-back template's `assumptions` says it can carry the missing project information
     assert.match(doc, /"assumptions": \["代替提问用的默认值；缺的项目信息及因此没做的部分"\]/);
-    const body = doc.split(/^---\s*$/m).slice(2).join('---');
-    assert.ok([...body].length < 5000, 'SKILL.md body stays under 5000 characters');
+    if (!FILE[c.slug]) {
+      const body = doc.split(/^---\s*$/m).slice(2).join('---');
+      assert.ok([...body].length < 5000, 'SKILL.md body stays under 5000 characters');
+    }
   });
 }
 
