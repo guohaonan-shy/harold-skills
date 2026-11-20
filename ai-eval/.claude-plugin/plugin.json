@@ -1,6 +1,6 @@
 {
   "name": "ai-eval",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Gate AI-pipeline changes by user task: run the candidate through the product's own pipeline on a fixed sample set, score the reports a user actually reads (deterministic asserts plus Codex judges, one fresh session per scorer and sample), compare against a stored baseline, and decide pass or fail against the exit criteria written in the project's EVAL.md. Project-agnostic: everything about a project lives in its EVAL.md, which eval-setup generates. Lives in the harold-skills marketplace.",
   "author": {
     "name": "Harold"

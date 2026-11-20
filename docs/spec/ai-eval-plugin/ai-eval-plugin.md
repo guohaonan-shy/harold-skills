@@ -98,7 +98,7 @@ ai-eval 还没做到它自称的项目无关。6 个 skill 和脚本里有 60 �
 ### plugin 的形状
 
 - 新 plugin 名 `ai-eval`，放在仓库顶层。marketplace.json 加一项，仓库 `AGENTS.md` 的「当前 plugins」加一行。plugin 的 README 照 `AGENTS.md`「标准 plugin 目录结构」写：介绍、安装、每个 skill 的用法示例，以及依赖。toeflair 那边原来没有 README。
-- 起始版本 `0.1.0`。toeflair 那边是 `0.0.0-beta.5`，这次在它上面加了新能力（eval-replay、报数口径），按 `REVIEW.md` 的档位规则算 minor。
+- 起始版本 `0.0.1`（2026-11-20 人定：「新plugin，定位0.0.1」；起草时写的是 `0.1.0`，按在原 beta 上加了新能力算 minor）。
 - 目录：
   - 6 个 skill 原样迁过来，新增 `eval-replay`，共 7 个。
   - 插件级 `references/`：现有的 `judge-format`、`judge-prompt`，再加一份报数口径。
@@ -159,7 +159,7 @@ ai-eval 还没做到它自称的项目无关。6 个 skill 和脚本里有 60 �
 
 ### to-spec 那一行
 
-idea-loop to-spec「测试决策」表 eval 那一行的「仪器」列，改成：eval，门槛对线上基线，不写绝对值；装了 `ai-eval` 的项目，跑流水线的改动走 eval-run，多轮对话里的一步走 eval-replay。idea-loop 的版本按 `REVIEW.md` 定档（改了 to-spec 产出的内容，算 minor）。合并时 main 已经升过（比如 0.2.0 发布分支先合了），就从 main 的新版本重新按同一档升。
+idea-loop to-spec「测试决策」表 eval 那一行的「仪器」列，改成：eval，门槛对线上基线，不写绝对值；装了 `ai-eval` 的项目，跑流水线的改动走 eval-run，多轮对话里的一步走 eval-replay。idea-loop 的版本升 patch（2026-11-20 人定：「idea-loop 仍然是patch」；起草时按改了 to-spec 产出的内容算 minor）。合并时 main 已经升过（比如 0.2.0 发布分支先合了），就从 main 的新版本重新按同一档升。
 
 ### toeflair 那边的切换另开 issue
 
