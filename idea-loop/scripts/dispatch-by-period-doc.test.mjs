@@ -72,9 +72,9 @@ test('nothing else in the plugin or the repo still says the dispatcher gives out
   assert.ok(!files.some((f) => readFileSync(f, 'utf8').includes('独立队列')), '「独立队列」 stays gone');
 });
 
-test('issue-dispatch takes no interval and stays under 5000 characters', () => {
+test('issue-dispatch takes no interval and stays within 4500 characters', () => {
   assert.ok(!/argument-hint/.test(dispatchFile.split('\n---\n')[0]), 'no interval argument');
-  assert.ok([...dispatch].length < 5000, 'body under 5000 characters');
+  assert.ok([...dispatch].length <= 4500, 'body within 4500 characters');
   assert.match(dispatchFile.split('\n---\n')[0], /每小时一轮/);
 });
 
@@ -102,13 +102,16 @@ test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a faile
   assert.match(dispatch, /人在调度会话里说话的那一轮也照下面做/);
 });
 
-test('issue-dispatch: the morning summary reads the record file, one line per issue, and pushes one sentence', () => {
+test('issue-dispatch: the morning summary is a step that points at its reference; the reference reads the record file, one line per issue, and pushes one sentence', () => {
   const step = dispatch.split('\n').find((l) => /^6\.\s+\*\*早上汇总\*\*/.test(l));
   assert.ok(step, 'there is a step 「早上汇总」');
+  assert.match(step, /references\/morning-summary\.md/, 'the step points at the reference');
+  assert.match(step, /上一轮[^。]*落在 `todo` 时段、此刻不在/, 'the step says when it applies');
+  const ref = read('skills', 'engineering', 'issue-dispatch', 'references', 'morning-summary.md');
   for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', AI_MARKER, '『推送』']) {
-    assert.ok(step.includes(word), `the morning summary must mention ${word}`);
+    assert.ok(ref.includes(word), `the morning summary must mention ${word}`);
   }
-  assert.match(step, /开了几个、几个等审、几个卡住/);
+  assert.match(ref, /开了几个、几个等审、几个卡住/);
 });
 
 test('issue-dispatch: the dispatcher only moves the sessions it opened', () => {

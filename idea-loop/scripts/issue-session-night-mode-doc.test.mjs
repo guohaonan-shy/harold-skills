@@ -3,7 +3,7 @@
  *
  * The dispatcher's night rounds open todo sessions whose task says 「夜间模式」: nobody is there to
  * answer, so the session may not stop to ask. The rules live in issue-session's own reference
- * (the SKILL.md body is within a few hundred characters of its 5000 limit and carries one line
+ * (the SKILL.md body stays within the 4500 line and carries one line
  * pointing at it); the PR description gets the two sections the rules write into. Whether a model
  * follows the rules is not decided here; this pins that the reference exists, is pointed at, and
  * lists every stop, the stopping point and what is left for daytime.
@@ -24,12 +24,12 @@ const reference = existsSync(join(sessionDir, 'references', 'night-mode.md'))
   ? readFileSync(join(sessionDir, 'references', 'night-mode.md'), 'utf8')
   : '';
 
-test('issue-session points at the night-mode reference in one line, and its body stays under 5000 characters', () => {
+test('issue-session points at the night-mode reference in one line, and its body stays within 4500 characters', () => {
   assert.ok(reference, 'issue-session/references/night-mode.md exists');
   const lines = body(skill).split('\n').filter((l) => l.includes('references/night-mode.md'));
   assert.equal(lines.length, 1, 'exactly one line of the body points at it');
   assert.match(lines[0], /夜间模式/, 'the line names the trigger the dispatcher writes into the task');
-  assert.ok([...body(skill)].length < 5000, `body is ${[...body(skill)].length} characters`);
+  assert.ok([...body(skill)].length <= 4500, `body is ${[...body(skill)].length} characters`);
 });
 
 test('the reference says: never stop to ask, settle by the recommendation, record it as 夜里替你定的', () => {

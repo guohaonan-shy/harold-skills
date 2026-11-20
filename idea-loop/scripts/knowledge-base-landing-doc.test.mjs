@@ -79,12 +79,11 @@ test('an issue session cuts no branch for triage: the spec goes to home, the bra
   assert.match(session, /triage 会话不切分支/);
   assert.match(session, /branch: null/);
   assert.match(session, /spec 已提交到 home <提交号>/);
-  assert.match(session, /git switch -c issue\/<号>-<slug> origin\/<主分支>/);
+  assert.match(session, /从 `origin\/<主分支>` 新建/, 'a branch that exists nowhere is cut from the base branch');
   assert.match(session, /第一次要写代码/);
-  assert.doesNotMatch(session, /git switch -c <下一段>/);
   assert.doesNotMatch(session, /spec、设计、工单和代码都提交在这一条分支上/);
   assert.doesNotMatch(session, /git push -u origin issue\/<号>-<slug>`，`issues set <docs> todo/);
-  assert.ok([...body(session)].length < 5000);
+  assert.ok([...body(session)].length <= 4500);
 });
 
 test('pr-review merge archives after the code PR merged, then deletes the tickets, both committed to home', () => {

@@ -14,8 +14,8 @@ const body = (md) => md.replace(/^---\n[\s\S]*?\n---\n/, '');
 const NAMES = ['issue-dispatch', 'issue-session', 'issue-triage'];
 const OLD_STATES = ['待验证', '验证中', '审核中', '待设计', '设计中', '待实现', '实现中', '搁置'];
 
-test('三份 SKILL.md 主体都在 5000 字以内', () => {
-  for (const n of NAMES) assert.ok([...body(skill(n))].length < 5000, `${n} 主体 ${[...body(skill(n))].length} 字`);
+test('三份 SKILL.md 主体都在 4500 字以内', () => {
+  for (const n of NAMES) assert.ok([...body(skill(n))].length <= 4500, `${n} 主体 ${[...body(skill(n))].length} 字`);
 });
 
 test('文中写到的 issues 命令都是命令行认得的，已删的命令一条也不写', () => {
@@ -78,6 +78,15 @@ test('issue-session：triage 会话读证据评论、调 to-spec 起草并照 dr
   assert.match(md, /用 Skill 工具调 `idea-loop:to-spec` 起草，再照 \[references\/draft-spec\.md\]/);
   assert.match(md, /用 Skill 工具调 `idea-loop:to-spec` 起草，上下文是 issue 全文和评论，再照 \[references\/draft-spec\.md\]/);
   assert.match(md, /issues set <docs> triage \$ARGUMENTS --comment=/);
+});
+
+test('issue-session：碰 UI 的设计交接在参考里，triage 会话第 2 步只留一行指针', () => {
+  const md = skill('issue-session');
+  const step = md.split('\n').find((l) => /^2\.\s+\*\*设计\*\*/.test(l));
+  assert.ok(step, 'triage 会话有第 2 步「设计」');
+  assert.match(step, /references\/design-handoff\.md/);
+  const ref = readFileSync(join(root, 'skills/engineering/issue-session/references/design-handoff.md'), 'utf8');
+  for (const k of ['/idea-loop:uiux-imagine', '/idea-loop:uiux-refine', '前端交互', '只能人调']) assert.ok(ref.includes(k), `design-handoff.md 缺 ${k}`);
 });
 
 test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做掉的就 canceled 并删草稿；没有「验证为不存在」的落地 PR', () => {

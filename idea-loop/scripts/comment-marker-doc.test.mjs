@@ -56,7 +56,7 @@ test('nothing in the plugin says a comment is posted on Claude\'s behalf or in a
 });
 
 test('every place that tells an agent to read idea-loop\'s latest comment names the marker', () => {
-  for (const rel of ['skills/engineering/issue-session/SKILL.md', 'skills/engineering/issue-dispatch/SKILL.md', 'skills/engineering/issue-session/references/draft-spec.md']) {
+  for (const rel of ['skills/engineering/issue-session/SKILL.md', 'skills/engineering/issue-dispatch/references/morning-summary.md', 'skills/engineering/issue-session/references/draft-spec.md']) {
     const text = all.find((f) => f.rel === rel).lines.join('\n');
     assert.ok(text.includes(AI_MARKER), `${rel} must name the ${AI_MARKER} marker`);
   }

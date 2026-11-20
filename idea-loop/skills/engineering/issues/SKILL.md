@@ -86,13 +86,13 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看，包括几周后的自己和人。
 2. `dyna issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
 3. 判断是 P0 的，开成 backlog 后调 `/idea-loop:issue-triage P0 <号>`，当场复现。
-4. 正文被拒（缺节、节为空）就补上再开；开不成（`gh` 失败）的，记下原因交给人。
+4. 正文被拒（缺节、节为空）就补上再开；开不成的，记下原因交给人。完成条件：拿到新 issue 的号，或「已有 #N」，或写明开不成的原因。
 
 Linear 项目没有 `dyna issues new`：`dyna issues body` 校验正文，再照 [references/linear.md](references/linear.md) 的「开 issue」用 MCP 开。
 
 ## 命令
 
-参数用 `dyna issues --help`、`dyna issues <命令> --help` 查。`--help` 查不到的：Linear 上翻状态必带 `check` 的 `--from`，先跑它再用 MCP 翻；Linear 上开 issue 先跑 `body` 校验再用 MCP 开；`set` 的 done、canceled 同时关闭 issue。
+参数用 `dyna issues --help`、`dyna issues <命令> --help` 查。读 issue 全文和评论（GitHub）：`dyna issues read <docs> <号>`；Linear 用 MCP。`--help` 查不到的：Linear 上翻状态必带 `check` 的 `--from`，先跑它再用 MCP 翻；Linear 上开 issue 先跑 `body` 校验再用 MCP 开；`set` 的 done、canceled 同时关闭 issue。
 
 PR 正文怎么挂到 issue，见两份 reference。
 
