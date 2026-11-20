@@ -40,7 +40,7 @@ issues: [388]
 
 1. `issue-intake-priority`（frontmatter `related`）：删掉这一项，`related` 留空列表。spec 已删、没有接替它的 ADR，可挂的东西没有；`tags` 里的 `issue-intake-priority` 保留，召回照样能找到。
 2. `2026-11-04-idea-loop-0-2-0-restructure-grill`：frontmatter `related` 里删掉这一项，另外两项不动；正文第 10 行改成行内代码 `` `2026-11-04-idea-loop-0-2-0-restructure-grill` ``，后面注一句「（未合进主分支）」，读者仍知道指的是哪场讨论、题号为什么不是一套。
-3. `[[FA-457]]` → 纯文本「Linear FA-457」，跟同一行前面写法一致。
+3. `[[FA-457]]`：这是别的仓库的决定记录，照 retro 候选池的写法规则（「决定记录不在池所在的仓库时……写仓库加 `docs/raw/decisions/<文件名>.md`……不用双括号链接」）改成「fishaudio/fish-agent `docs/raw/decisions/FA-457.md`」，跟池里其余跨仓库的出处一致。（修正：起草时写的是纯文本「Linear FA-457」，review 第 1 轮按这条规则改。）
 
 改完重扫，`docs/` 下 0 处死链。
 

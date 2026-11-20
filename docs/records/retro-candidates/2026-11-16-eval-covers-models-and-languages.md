@@ -20,4 +20,4 @@ tags: [retro-candidates]
 
 ## 出现
 
-- fishaudio/fish-agent#364（Linear FA-457，2026-11-16）：「这个是否需要像其他的case一样覆盖平台支持的所有模型 以及 不同语言。577那个会话跑的eval是所有的case吗？」（审 spec 的测试决策、解释冒烟 eval 只测了一个模型之后）；决定记录：Linear FA-457
+- fishaudio/fish-agent#364（Linear FA-457，2026-11-16）：「这个是否需要像其他的case一样覆盖平台支持的所有模型 以及 不同语言。577那个会话跑的eval是所有的case吗？」（审 spec 的测试决策、解释冒烟 eval 只测了一个模型之后）；决定记录：fishaudio/fish-agent `docs/raw/decisions/FA-457.md`
