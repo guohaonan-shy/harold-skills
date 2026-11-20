@@ -124,8 +124,8 @@ test('seo-outreach and seo-writing: read SEO.md through seo-md.mjs, not through 
   }
 });
 
-test('seo-scan: five stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
-  assert.match(SCAN, /只有五种情形停下/);
+test('seo-scan: four stop cases, a stop-and-wait return shape, and SEO.md changes reported', () => {
+  assert.match(SCAN, /只有四种情形停下/);
   assert.ok(!/只有开场的两种情形停下/.test(SCAN));
   assert.match(SCAN, /停下等确认/);
   assert.match(STOPS, /停下等确认：/);

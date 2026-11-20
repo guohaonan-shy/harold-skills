@@ -7,7 +7,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 一次扫描：挑出这次要跑的方向，每个方向起一个 agent 并行查，发现交给提 issue 脚本，最后写研究日志。产出是 issue（当场分流）、评论、研究日志、外联跟进和每 3 天一份的效果报告；仓库里只提交外联跟进表和效果报告（关卡可能改 `SEO.md`，改在工作区）。
 
-可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有五种情形停下：开场的四种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
+可能没有人在场（定时任务触发）：任何一步缺数据，记下来接着往下走，跑到「交回」为止。只有四种情形停下：开场的三种，和「缺口关卡」里要用的项目信息缺了（等人确认）。
 
 下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`。脚本都输出 JSON 到 stdout，出错退出码 1、原因在 stderr。
 
@@ -15,7 +15,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 1. 仓库根 = `git rev-parse --show-toplevel`。`<仓库根>/SEO.md` 不存在，或 `node S/seo-md.mjs <仓库根>/SEO.md` 报错、`openseo.projectId` 为空：停下，交回原因和「先由人跑 `/idea-loop:seo-setup`」。
 2. **运行目录**：`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（`date +%Y%m%d-%H%M`），`mkdir -p` 建好。照 `idea-loop:wiki-conventions` 的「本地忽略」确认 `.tmp/` 被忽略。
-3. **认 OpenSEO**：会话里有插件名下的 `whoami` 往下；被别的名字顶替或没连上：停下，不派 agent、不花 credits，照 [references/stops.md](references/stops.md) 交回。
+3. **认 OpenSEO**：会话里有连接器同时带 `whoami` 和 `get_project_context` 就往下；一个都没有：停下，不派 agent，照 [references/stops.md](references/stops.md) 交回。
 4. **项目上下文**：调 `get_project_context`（`projectId`），原始返回原样写到 `<运行目录>/context.json`。失败：原因记下，下面挑方向和同步都当作没有上下文。
 
 完成条件：拿到项目 id、一个运行目录、`context.json` 或它的失败原因。

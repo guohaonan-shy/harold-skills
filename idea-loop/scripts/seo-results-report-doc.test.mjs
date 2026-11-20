@@ -44,8 +44,8 @@ test('results-analyst is defined like the other direction agents: a description 
   assert.equal(field(AGENT, 'model'), 'sonnet');
   assert.match(field(AGENT, 'effort'), /^(medium|high)$/);
   assert.match(field(AGENT, 'maxTurns'), /^\d+$/);
-  const tools = field(AGENT, 'tools');
-  for (const t of ['Read', 'Write', 'Bash', 'Skill', 'mcp__plugin_idea-loop_openseo__*']) assert.ok(tools.includes(t), `tools lacks ${t}`);
+  assert.equal(field(AGENT, 'tools'), '', 'it uses connectors, so no tools whitelist (a renamed connector would leave it with no tools)');
+  assert.equal(field(AGENT, 'disallowedTools'), 'Edit, NotebookEdit, Agent');
 });
 
 test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
