@@ -44,8 +44,8 @@ test('results-analyst is defined like the other direction agents: a description 
   assert.equal(field(AGENT, 'model'), 'sonnet');
   assert.match(field(AGENT, 'effort'), /^(medium|high)$/);
   assert.match(field(AGENT, 'maxTurns'), /^\d+$/);
-  const tools = field(AGENT, 'tools');
-  for (const t of ['Read', 'Write', 'Bash', 'Skill', 'mcp__plugin_idea-loop_openseo__*']) assert.ok(tools.includes(t), `tools lacks ${t}`);
+  assert.equal(field(AGENT, 'tools'), '', 'it uses connectors, so no tools whitelist (a renamed connector would leave it with no tools)');
+  assert.equal(field(AGENT, 'disallowedTools'), 'Edit, NotebookEdit, Agent');
 });
 
 test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
@@ -200,9 +200,9 @@ test('seo-setup installs the scan every day, not every week; the old weekly refe
   assert.match(DAILY, /分钟避开 0 和 30/);
 });
 
-test('SEO.md format: nine sections, the optional 分析 section with tool, project id and dashboard link, and who reads it', () => {
-  assert.match(FORMAT, /九个 `## ` 小节/);
-  assert.doesNotMatch(FORMAT, /八个 `## ` 小节/);
+test('SEO.md format: ten sections, the optional 分析 section with tool, project id and dashboard link, and who reads it', () => {
+  assert.match(FORMAT, /十个 `## ` 小节/);
+  assert.doesNotMatch(FORMAT, /九个 `## ` 小节/);
   assert.match(FORMAT, /^## 分析$/m);
   assert.match(FORMAT, /- 工具：/);
   assert.match(FORMAT, /- dashboard：/);

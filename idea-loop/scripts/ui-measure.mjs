@@ -31,7 +31,8 @@
  *     side may be an implementation route or a canvas address (a version of a
  *     canvas), so two canvases compare the same way. A cell may carry
  *     `shotAnchor: "<anchor>"` to compare only that anchor's area instead of the
- *     viewport.
+ *     viewport, and `reducedMotion: "reduce" | "no-preference"` to put both tabs
+ *     under that `prefers-reduced-motion` (written like `colorScheme`).
  *   - `"mode": "canvas-diff"`: `before` vs `after` (two versions of one canvas),
  *     the list of anchors that changed, each with the two area screenshots, and —
  *     if the matrix has a `changeSet` — split into declared / undeclared.
@@ -90,8 +91,7 @@ const MEASURED_STYLES = [
   'letterSpacing', 'textTransform', 'borderRadius', 'borderWidth', 'borderColor',
   'boxShadow', 'opacity',
   'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-  'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
-  'gap', 'rowGap', 'columnGap',
+  // margin and gap are not measured: they are how a layout was written, the box position is the result.
 ];
 
 /** Runs in the page. Returns { <anchor>: { …measurements } }. */
@@ -128,9 +128,15 @@ function withState(url, state) {
   return u.toString();
 }
 
+const REDUCED_MOTION = ['reduce', 'no-preference'];
+
 async function prepare(page, url, cell) {
+  if (cell.reducedMotion !== undefined && !REDUCED_MOTION.includes(cell.reducedMotion)) {
+    throw new Error(`cell "${cell.name}": reducedMotion must be "reduce" or "no-preference", got ${JSON.stringify(cell.reducedMotion)}`);
+  }
   await page.setViewportSize(cell.viewport);
-  await page.emulateMedia({ colorScheme: cell.colorScheme ?? 'light' });
+  // `null` clears the emulation, so a cell without the field never inherits the previous cell's setting.
+  await page.emulateMedia({ colorScheme: cell.colorScheme ?? 'light', reducedMotion: cell.reducedMotion ?? null });
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.addStyleTag({ content: FREEZE_CSS });
   await page.evaluate(() => document.fonts.ready);

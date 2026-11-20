@@ -46,7 +46,7 @@ test('the reference lists all five things the session stops for, and writes the 
   }
   assert.match(reference, /等你定的/);
   assert.match(reference, /会话留在当前分组/);
-  assert.match(reference, /两小时/);
+  assert.match(reference, /调度每轮照样派新的 todo，不等它/);
 });
 
 test('the reference says where the session stops: review done, PR ready, in-review, waiting for the word to merge', () => {
@@ -77,4 +77,21 @@ test('the PR description format says where 夜里替你定的 and 等你定的 g
 test("the reference does not read another skill's private references", () => {
   assert.doesNotMatch(reference, /idea-loop:[a-z-]+`?\s*的\s*`?\[?`?references\//);
   assert.doesNotMatch(reference, /skills\/[a-z]+\/[a-z-]+\/references\//);
+});
+
+test('night mode sends a writing judge\'s `premise` back to triage with its words, matching the revision loop reference', () => {
+  // The night rule says "settle by the recommendation"; the angle of an article is the human's, so the one
+  // exception is written where the rule is: 翻回 triage, the judge's own words in the comment, no thesis change.
+  const line = reference.split('\n').find((l) => l.includes('`premise`')) ?? '';
+  assert.ok(line, 'night-mode.md has a line about `premise`');
+  assert.match(line, /seo-writing/);
+  assert.match(line, /翻回 triage|triage <号>/);
+  assert.match(line, /写作评委原话/);
+  assert.match(line, /不按推荐改论点/);
+  assert.match(line, /交回，不算停下/);
+
+  const loop = read('skills', 'seo', 'seo-writing', 'references', 'revision-loop.md');
+  const premise = loop.split(/^## /m).find((s) => s.startsWith('`premise`')) ?? '';
+  assert.match(premise, /issues set <docs> triage/, 'the loop reference sends it to triage');
+  assert.match(premise, /写作评委原话/, 'with the judge\'s own words');
 });
