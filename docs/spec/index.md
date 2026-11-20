@@ -7,6 +7,7 @@
 | [[comment-marker-no-prefix]] | idea-loop 发的评论去掉「🤖 idea-loop：」开头和「由 Claude 代发」，脚本改认看不见的标记 |
 | [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
+| [[dispatch-one-per-device]] | 一台设备一个调度定时任务 dispatch-home，按项目清单逐个项目派 issue |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
 | [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
@@ -20,8 +21,8 @@
 | [[replay-snapshot-plugin-sync]] | 回放时把快照里被改动的插件文件换成这一边的版本，改前改后读到不同的规则 |
 | [[runtime-local-override]] | 本机对 runtime 的特殊做法写进 ~/home/runtime/<运行环境>.md，开场注入时同名小节整段替换 reference |
 | [[scroll-driven-whole-pin]] | 滚动驱动的段只认整段钉住；窄钉子的段照普通长图拍；滚动驱动段每一步都拍一张 |
-| [[seo-agents-openseo-tool-name]] | 带连接器的 agent 不写 tools 白名单、只写禁用清单，连接器被别处配置改了名也拿得到工具 |
 | [[sections-browser-test-out-of-full-suite]] | 设计档案的浏览器测试移出全量测试命令、另给单独命令，每例加超时 |
+| [[seo-agents-openseo-tool-name]] | 带连接器的 agent 不写 tools 白名单、只写禁用清单，连接器被别处配置改了名也拿得到工具 |
 | [[seo-autopilot]] | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天出效果报告、外联进草稿箱 |
 | [[seo-brief-angle-vs-site-posts]] | seo-brief 新开页时先读站内同主题文章，每个角度候选写明和哪篇重合、新页补什么 |
 | [[seo-outreach-reads-seo-md]] | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
