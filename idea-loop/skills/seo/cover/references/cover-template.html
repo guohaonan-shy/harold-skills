@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cover</title>
+<!--
+  Cover template, 1600x900. Copy it to a working folder next to the logo / background files, replace the
+  contents of the motif group (id "motif") with the motif, and open it through a static server with query parameters:
+    ?base=%2312141f&accent=%234f5fd0         colors (URL-encode the #)
+    &logo=logo.svg                           optional, drawn small at the top-left of the inner frame
+    &bg=generated.png                        optional, a generated image used instead of the gradient
+    &headline=Some%20title                   optional, switches the motif off and bakes the headline in
+    &font=Inter                              optional, a font family the page can load
+  The inner frame is 12% in from every edge: motif and logo stay inside it (see SKILL.md).
+-->
+<style>
+  html, body { margin: 0; background: #000; }
+  #cover {
+    --base: #12141f; --accent: #4f5fd0;
+    position: relative; width: 1600px; height: 900px; overflow: hidden;
+    background: var(--base); font-family: var(--font, system-ui, sans-serif);
+  }
+  .mesh {
+    position: absolute; inset: -180px; filter: blur(82px) saturate(1.05);
+    background:
+      radial-gradient(40% 52% at 16% 22%, color-mix(in srgb, var(--accent) 75%, white) 0%, transparent 64%),
+      radial-gradient(44% 56% at 86% 16%, var(--accent) 0%, transparent 64%),
+      radial-gradient(48% 60% at 82% 84%, color-mix(in srgb, var(--accent) 65%, var(--base)) 0%, transparent 64%),
+      radial-gradient(72% 88% at 50% 50%, color-mix(in srgb, var(--accent) 35%, var(--base)) 0%, transparent 78%),
+      var(--base);
+  }
+  #bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+  #grain { position: absolute; inset: 0; width: 100%; height: 100%; mix-blend-mode: overlay; opacity: .13; }
+  #subject { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #logo { position: absolute; left: 192px; top: 108px; height: 44px; display: none; }
+  #headline {
+    position: absolute; left: 192px; right: 192px; top: 50%; transform: translateY(-50%); margin: 0;
+    text-align: center; color: #fff; font-weight: 600; font-size: 64px; line-height: 1.3;
+    letter-spacing: -.005em; display: none;
+  }
+</style>
+</head>
+<body>
+<div id="cover">
+  <div class="mesh"></div>
+  <img id="bg" alt="">
+  <canvas id="grain" width="1600" height="900"></canvas>
+  <svg id="subject" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+    <!-- Inner frame: x 192..1408, y 108..792. The motif sits in y 108..603 (the lower third is for the title laid over
+         the picture). Replace this placeholder with the motif. White line-art, ~6px stroke. -->
+    <g id="motif" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round">
+      <circle cx="800" cy="355" r="110"/>
+      <circle cx="800" cy="355" r="175" opacity=".7"/>
+      <circle cx="800" cy="355" r="247" opacity=".4"/>
+    </g>
+  </svg>
+  <img id="logo" alt="">
+  <h1 id="headline"></h1>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const cover = document.getElementById('cover');
+  if (q.get('base')) cover.style.setProperty('--base', q.get('base'));
+  if (q.get('accent')) cover.style.setProperty('--accent', q.get('accent'));
+  if (q.get('font')) cover.style.setProperty('--font', q.get('font'));
+  if (q.get('bg')) {
+    const bg = document.getElementById('bg');
+    bg.src = q.get('bg'); bg.style.display = 'block';
+    document.querySelector('.mesh').style.display = 'none';
+  }
+  if (q.get('logo')) {
+    const logo = document.getElementById('logo');
+    logo.src = q.get('logo'); logo.style.display = 'block';
+  }
+  if (q.get('headline')) {
+    const h = document.getElementById('headline');
+    h.textContent = q.get('headline'); h.style.display = 'block';
+    document.getElementById('subject').style.display = 'none';
+  }
+  // Grain: canvas pixel noise at 1:1 (SVG feTurbulence often does not show up in screenshots).
+  const g = document.getElementById('grain'), ctx = g.getContext('2d');
+  const img = ctx.createImageData(g.width, g.height);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  document.fonts.ready.then(() => { document.title = 'cover-ready'; });
+</script>
+</body>
+</html>
