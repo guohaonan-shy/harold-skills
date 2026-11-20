@@ -3,28 +3,28 @@ name: to-spec
 description: 把当前上下文（一场讨论，或一组复现过的 issue）写成一份 spec。讨论收尾要落成 spec 时用。
 ---
 
-把当前上下文和你对代码库的理解综合成一份 spec。不访谈，只把已知的写下来。综合时发现思考本身有洞，停下，用 Skill 工具调 `idea-loop:grill` 把洞问清，spec 只写问清了的。
+把当前上下文和你对代码库的理解综合成一份 spec，交付是写好并提交到 home 的 `docs/spec/<slug>/<slug>.md`。不访谈，只把已知的写下来。综合时发现思考本身有洞，停下，用 Skill 工具调 `idea-loop:grill` 把洞问清，spec 只写问清了的。
 
-spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看懂问题、看到证据、做出决定；下游的 agent（切工单、实现、review）也照它做。模板每一节写一行「这一节给读者什么」，节的取舍从这里推出来。
+spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看懂问题、看到证据、做出决定；下游的 agent（切工单、实现、review）也照它做。节的取舍从模板每节的「给读者什么」推出来。
 
 ## 过程
 
-1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `dyna spec check <docs>`，报的问题照 `idea-loop:issues` 处理。
+1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `dyna spec check <docs>`，报的问题照 `idea-loop:issues` 处理。完成条件：它没有未处理的报告。
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `<docs>/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，frontmatter 和正文照 [`references/raw-template.md`](references/raw-template.md)。
 
-3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先照 `idea-loop:decision-rules` 的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。项目目录有 `GLOSSARY.md` 就用它的标准叫法、不用 `_Avoid_` 里的词，缺词先用描述性的说法；这一块有 ADR 就守它。
+3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先照 `idea-loop:decision-rules` 的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，再读 [`references/agent-docs.md`](references/agent-docs.md)。项目目录有 `GLOSSARY.md` 就照 `idea-loop:wiki-conventions` 的「术语表」读它来命名；这一块有 ADR 就守它。
    seam 是测试观察行为的公共边界，测试从这里喂输入、读输出。优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置，每个带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认，不在场自己定。写进「测试决策」。
 
-4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。
+4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。完成条件：模板每节都有内容，或写明「不涉及」。
 
-   spec 没有自己的状态，走到哪只看它覆盖的 issue。让 spec 在 tracker 上有入口：覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `dyna issues new` 开成 todo，号码写进 `issues`；不在场，停下问人。
+   spec 没有自己的状态，走到哪只看它覆盖的 issue。覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `dyna issues new` 开成 todo 并写进 `issues`，不在场，停下问人。
 
-   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步对过的 `idea-loop:decision-rules`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。依据明确的自己定，写成已定的决定并注明依据；依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」）。
+   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步对过的 `idea-loop:decision-rules`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。
 
-5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>` 刷 `docs/spec/index.md`。
+5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>`。完成条件：还剩的每一样都点了名，索引已刷新。
 
-6. **提交并收工**：spec 提交到 home，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-session`），这一步留给它。
+6. **提交并收工**：spec 提交到 home，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-session`），这一步留给它。完成条件：spec 已进 home，人知道它到了哪个状态。
 
 工单归 `idea-loop:to-ticket`，ADR 归 `/idea-loop:dreaming`，这里只写 spec。
 
@@ -34,18 +34,13 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 开头（标题下，覆盖了已有的 issue 才写）：
 
-给读者什么：每个 issue 现在是真问题，还是已经没了。每个 issue 一行引用，结论只写「存在」或「不存在」，命令按这两个词判断 spec 能不能直接完成、issue 该不该关：
-
-> #<号> 存在：一句话的复现现象，详情在「问题陈述」
-> #<号> 不存在：试了什么、卡在哪（或现在的规则、代码在哪）；什么时候、对着哪个基准分支、用什么手段核的
-
-覆盖的 issue 全都不存在的 spec，只写这几行和「关联」。
+给读者什么：每个 issue 现在是真问题，还是已经没了。每个 issue 一行引用，写法见 [`references/issue-verdicts.md`](references/issue-verdicts.md)。
 
 ## 问题陈述
 
 给读者什么：用户现在到底遇到什么问题，配标注过的复现图。用户视角，不是「我们要建 X」。每个问题一个小节，先图后文字；图照 figures 的「问题的复现证据」，新功能就在现在的 UI 上加红色光圈标出哪里不够用。
 
-复现结论写成人读得懂的话：测了什么、看到什么、本该是什么，带一个具体例子。失败输出、堆栈、查询语句、整段日志不进 spec，要指回去就在小节末尾写「复现材料：`<路径>`」。
+复现结论写成人读得懂的话：测了什么、看到什么、本该是什么，带一个具体例子；失败输出、堆栈、查询语句、整段日志放文件，小节末尾写「复现材料：`<路径>`」。
 
 ### 根因
 
@@ -64,11 +59,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 同一行为的其他入口（页面、接口、调用方）逐个标纳入还是排除，排除的写理由，只在这里列。
 
-下面三个子小节，不涉及的不写：
-
-- `### 后端`：图下几行列出接口变化。
-- `### 前端内部`：缓存、状态这类看不见的部分，写读路径、写路径和每层的生命周期；需要图就再画一张时序图。
-- `### 前端交互`：每个场景一行（触发 → 变化），小节开头标「待补图：uiux-refine 冻结时按冻结画布补交互图，替换本节文字」。命令靠有没有这一小节判断 spec 碰不碰 UI。
+涉及后端、前端内部、前端交互的，各加一个 `### 后端` / `### 前端内部` / `### 前端交互` 子小节，写法见 [`references/plan-subsections.md`](references/plan-subsections.md)；不涉及的不写。
 
 ## User Stories
 
@@ -76,17 +67,13 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 1. 作为 <角色>，我想要 <能力>，以便 <收益>
 
-<user-story-example>
-1. 作为团队成员，我想要撤销刚删的评论，以便误删后不丢内容
-</user-story-example>
-
 按场景分组，每个场景一棵 story 树（照 figures 的「User Stories 的树」），图下是同样的编号列表。编号在每个场景内从 1 开始，别处引用写「场景名 + 编号」。只修问题、不加能力的 spec 不画树：每个问题一行「期望行为」，编号跟「问题陈述」的小节对上。
 
 ## 实现决策
 
 给读者什么：已经定下的决定和它的依据；还要人定的题。
 
-模块、接口、技术澄清、架构选择、schema、API 契约、具体交互。能按规则判的写成已定的决定，注明依据（规则原文、人的原话或现存实例），边缘情形在这里定好，不留给 implement 停下。依据不成立的才写成选项，每条一个小节，标题「### 待定：<要定的问题>」，带推荐；人定了，改写成定下的决定、删掉「待定」两个字。
+模块、接口、schema、API 契约、具体交互这类决定。能按规则判的写成已定的决定，注明依据（规则原文、人的原话或现存实例），边缘情形在这里定好，不留给 implement 停下。依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」），每条一个小节，标题「### 待定：<要定的问题>」，带推荐；人定了，改写成定下的决定、删掉「待定」两个字。
 
 不写文件路径和代码片段，它们烂得最快；例外是原型里产出的片段比散文更准地说清了一个决定（状态机、schema、类型形状），内联进那条决定并注明出自原型。碰 UI 的再写访谈里定下的结构决策（这块界面按什么结构组织），下游设计在它之内做，不重开。
 
@@ -111,7 +98,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 ## Out of scope
 
-给读者什么：明确不做的事。方案里已经排除的入口不再重复列。
+给读者什么：明确不做的事。
 
 ## 关联
 

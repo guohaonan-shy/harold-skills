@@ -3,12 +3,12 @@
  *
  * Spec decision-rules-who-decides, ticket 02 (issue #80). Before: the template was ten sections grown one
  * rule at a time, none said what the section gives the reader, and the SKILL.md body was ~5970 characters
- * (the repo limit is 5000). These checks pin: every section of the template opens with a 「给读者什么」 line;
+ * (the repo limit was 5000). These checks pin: every section of the template opens with a 「给读者什么」 line;
  * the section list is the one the human approved (a quoted verdict line under the title instead of a 验证
  * table, 问题陈述, a 方案 that opens with an interaction sequence diagram and carries 后端 / 前端内部 /
  * 前端交互 as sub-sections, no 技术方案总览); 方案 spells out the four points of "write what the user gets
- * before how"; the how-to-write-for-a-human rules live in evidence only; the body is inside 5000
- * characters; and a spec written from the template's own lines is read correctly by the command line (verdicts,
+ * before how"; the how-to-write-for-a-human rules live in evidence only; the body is inside 4500
+ * characters (the rewrite checklist's line); and a spec written from the template's own lines is read correctly by the command line (verdicts,
  * what still waits for a human, whether it touches UI), which `dyna issues check` checks a flip out of triage against.
  */
 import { test } from 'node:test';
@@ -25,6 +25,8 @@ const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const bodyOf = (raw) => raw.replace(/^---\n[\s\S]*?\n---\n/, '');
 
 const skill = read('skills', 'engineering', 'to-spec', 'SKILL.md');
+const verdicts = read('skills', 'engineering', 'to-spec', 'references', 'issue-verdicts.md');
+const subsections = read('skills', 'engineering', 'to-spec', 'references', 'plan-subsections.md');
 const body = bodyOf(skill);
 const template = body.match(/<spec-template>([\s\S]*?)<\/spec-template>/)?.[1] ?? '';
 
@@ -35,9 +37,8 @@ function sections(text) {
 }
 const firstLine = (text) => text.split('\n').find((l) => l.trim() !== '') ?? '';
 
-test('the to-spec body is at most 5000 characters (UTF-8 characters, not bytes)', () => {
-  assert.ok([...body].length <= 5000, `body is ${[...body].length} characters`);
-  assert.ok([...skill].length <= 5000, `whole file is ${[...skill].length} characters`);
+test('the to-spec body is at most 4500 characters (UTF-8 characters, not bytes)', () => {
+  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
 });
 
 test('the template has a 「给读者什么」 line in the opening and at the start of every section', () => {
@@ -57,10 +58,11 @@ test('the sections are the approved ones: no 验证 table, no 技术方案总览
   assert.match(template, /### 根因/, '「根因」是「问题陈述」的小节');
 });
 
-test('the verdict lines under the title are in the template, one per issue, in the form the command line reads', () => {
-  const opening = sections(template)[0].text;
-  assert.match(opening, /^> #<号> 存在：/m);
-  assert.match(opening, /^> #<号> 不存在：/m);
+test('the verdict lines under the title are written in issue-verdicts.md, one per issue, in the form the command line reads; the template opening points there', () => {
+  assert.match(sections(template)[0].text, /references\/issue-verdicts\.md/);
+  assert.match(verdicts, /^> #<号> 存在：/m);
+  assert.match(verdicts, /^> #<号> 不存在：/m);
+  assert.match(verdicts, /只写这几行和「关联」/);
 });
 
 test('方案 opens with an interaction sequence diagram, carries the four points, and has the three sub-sections', () => {
@@ -74,8 +76,13 @@ test('方案 opens with an interaction sequence diagram, carries the four points
     ['改了文字，图和测试表同步改', /改了文字，图和测试表同步改/],
   ]) assert.match(before, re, `方案缺：${name}`);
   assert.match(before, /逐个标纳入还是排除/);
-  for (const sub of ['后端', '前端内部', '前端交互']) assert.match(plan, new RegExp(`### ${sub}`), `方案缺子小节：${sub}`);
+  assert.match(plan, /references\/plan-subsections\.md/);
   assert.match(plan, /不涉及的不写/);
+  for (const sub of ['后端', '前端内部', '前端交互']) {
+    assert.match(plan, new RegExp(`### ${sub}`), `方案没点名子小节：${sub}`);
+    assert.match(subsections, new RegExp(`### ${sub}`), `plan-subsections.md 缺子小节：${sub}`);
+  }
+  assert.match(subsections, /命令靠有没有这一小节判断 spec 碰不碰 UI/);
 });
 
 test('实现决策 no longer carries an overview diagram; 测试决策 folds prompt/eval into the instrument table', () => {
@@ -105,8 +112,7 @@ test('the process is six steps, and the raw template moved into the skill\'s own
 });
 
 test('a spec written from the template\'s own lines is read by `dyna issues check`: a verdict line is read, 待定 waits for a human, a UI spec waits for its frozen design', () => {
-  const opening = sections(template)[0].text;
-  const quote = (word) => opening.split('\n').find((l) => l.startsWith(`> #<号> ${word}：`)).replace('<号>', '1');
+  const quote = (word) => verdicts.split('\n').find((l) => l.startsWith(`> #<号> ${word}：`)).replace('<号>', '1');
   const titles = sections(template).slice(1).map((s) => s.title);
   const build = ({ word, fork = false, ui = false }) => {
     const plan = `重试不再扣配额。\n${ui ? '\n### 前端交互\n- 点重试 → 只重跑这一题\n' : ''}`;
