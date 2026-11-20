@@ -2954,7 +2954,7 @@
           "kind": "flag",
           "required": false,
           "value": "string",
-          "description": "改判一个图片目录在不在内容路径以内：打印 {inScope, dir, reason?, contentPaths}（seo-setup 写「配图」前用）"
+          "description": "改判一个图片目录在不在内容路径以内：打印 {inScope, dir, reason?, contentPaths}（setup 的 SEO 模块写「配图」前用）"
         }
       ]
     },

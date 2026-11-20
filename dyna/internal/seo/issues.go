@@ -270,7 +270,7 @@ func IssueBody(g *Group, date string) string {
 		if get(c, "mode") == "update" {
 			mode = "改已有页"
 		}
-		parts = append(parts, fmt.Sprintf("## triage 阶段\n\n内容类：目标词「%s」，页面类型「%s」，%s。起草 spec 时用 `idea-loop:seo-brief` 写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 `idea-loop:seo-writing` 按 brief 写。", text(get(c, "keyword")), text(get(c, "pageType")), mode))
+		parts = append(parts, fmt.Sprintf("## triage 阶段\n\n内容类：目标词「%s」，页面类型「%s」，%s。起草 spec 时用 `idea-loop:seo-writing` 的 brief 分支写「方案」；spec 标题下第一行写「> 需要 grill：选题角度和论点」，由人定。实现阶段用 `idea-loop:seo-writing` 按 brief 写。", text(get(c, "keyword")), text(get(c, "pageType")), mode))
 	}
 	if direction == "backlinks" {
 		parts = append(parts, "## 实现阶段\n\n用 `idea-loop:seo-outreach` 起草邮件和跟进表，产出是 home 里 `docs/` 下的草稿和跟进表。草稿进人的草稿箱，人说「发」才发。")

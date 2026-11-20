@@ -1,6 +1,6 @@
 package seo
 
-// SEO.md's writing-check keys (写作: lint 配置 / 补充 lint / 第二评委) and the 配图 section, and the check seo-setup runs
+// SEO.md's writing-check keys (写作: lint 配置 / 补充 lint / 第二评委) and the 配图 section, and the check the SEO module of setup runs
 // before writing an image directory: the assertions of seo-md-writing-images.test.mjs, one for one.
 
 import (

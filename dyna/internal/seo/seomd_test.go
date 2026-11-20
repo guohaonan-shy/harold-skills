@@ -172,7 +172,7 @@ func TestPlanAndWeeklyAllocationReadAsNumbersAndAPartLeftOutIsNotAllocated(t *te
 func TestTheOldPerRunQuotaKeyIsRefusedWithTheWayToMigrate(t *testing.T) {
 	for _, md := range []string{"## OpenSEO\n- 单次额度：technical 200，pages 300\n", strings.Replace(testSeoMd, "- 套餐额度", "- 单次额度：pages 300\n- 套餐额度", 1)} {
 		_, err := ParseSeoMd(md)
-		if err == nil || !strings.Contains(err.Error(), "单次额度") || !strings.Contains(err.Error(), "/idea-loop:seo-setup") {
+		if err == nil || !strings.Contains(err.Error(), "单次额度") || !strings.Contains(err.Error(), "/idea-loop:setup") {
 			t.Errorf("%v", err)
 		}
 	}

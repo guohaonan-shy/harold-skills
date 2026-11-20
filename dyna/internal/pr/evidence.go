@@ -5,7 +5,7 @@ package pr
 // Delivery evidence (the human-verify flows and GIFs a ticket's implementer records, the figures a review round
 // draws for its findings) only serves "is this delivery right?". It dies with the PR, so it never enters the code
 // branch or docs/. It lives on its own orphan branch `idea-loop-evidence-pr-<N>`: never merged, no history shared
-// with the code, deleted in one call. Rules and lifecycle: skills/productivity/decision-rules/SKILL.md of the plugin.
+// with the code, deleted in one call. Rules and lifecycle: skills/engineering/pr/references/delivery-evidence.md of the plugin.
 //
 // Why a branch and not a release: a release asset URL is served as a download (`content-disposition:
 // attachment`), so clicking an image in a PR comment downloads it instead of opening it full size. A file on a

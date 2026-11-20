@@ -16,11 +16,11 @@
 
 ## 验收标准
 
-- [ ] dyna 源码（不含 `_test.go`）里的 skill 名、路径、节名逐个核过，交回里列一张表：位置 | 原来指向 | 现在指向 | 核对结果（指得到）。
-- [ ] 上面四处已知的文字改完；对应 Go 测试改完。
-- [ ] 全仓库搜不到 dyna 输出里指向 `idea-loop:evidence`、`idea-loop:glossary`、`idea-loop:seo-brief`、`idea-loop:seo-setup`、`/idea-loop:seo-setup`、`idea-loop:link-prospecting` 和已删目录路径的文字（登记表的历史版本 0.0.1–0.0.4 照原样，不改）。
-- [ ] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全绿；node 全量测试除 plugin-version（预期红）外全绿；`dyna-scan`、`dyna-version` 绿。
-- [ ] 不改任何命令的行为，只改文字。
+- [x] dyna 源码（不含 `_test.go`）里的 skill 名、路径、节名逐个核过，交回里列一张表：位置 | 原来指向 | 现在指向 | 核对结果（指得到）。
+- [x] 上面四处已知的文字改完；对应 Go 测试改完。
+- [x] 全仓库搜不到 dyna 输出里指向 `idea-loop:evidence`、`idea-loop:glossary`、`idea-loop:seo-brief`、`idea-loop:seo-setup`、`/idea-loop:seo-setup`、`idea-loop:link-prospecting` 和已删目录路径的文字（登记表的历史版本 0.0.1–0.0.4 照原样，不改）。
+- [x] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全绿；node 全量测试除 plugin-version（预期红）外全绿；`dyna-scan`、`dyna-version` 绿。
+- [x] 不改任何命令的行为，只改文字。
 
 ## 选中的存量回归
 

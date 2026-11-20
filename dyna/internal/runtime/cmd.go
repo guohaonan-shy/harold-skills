@@ -58,7 +58,7 @@ const moduleLong = `运行环境：认环境、开场注入、按能力取这个
 
 数据在插件目录的 runtime/ 下（IDEA_LOOP_PLUGIN_ROOT，经插件的 bin/dyna 调用会自己设）：
   runtime/capabilities.md   能力清单和退路（show 不带能力时打印它们；inject runtime 注入它的全文）
-  runtime/<环境名>.md       这个环境每个能力一节（## <能力名>，名字与能力清单第一列一致）；浏览器那一节含原 browser skill 的三条规矩（给人看、无头、并行时抢锁）
+  runtime/<环境名>.md       这个环境每个能力一节（## <能力名>，名字与能力清单第一列一致）；浏览器那一节含三条规矩（给人看、无头、并行时抢锁）
 改数据只升插件，不用发新版 dyna。
 
 本机覆盖：这台设备的做法跟插件数据不一样时，写 <home>/runtime/<环境名>.md（home 是 IDEA_LOOP_HOME，没设就是用户主目录下的 home；文件名与插件 runtime/ 下的同名）。inject reference 和 show <能力> 打印的都是合并后的：
