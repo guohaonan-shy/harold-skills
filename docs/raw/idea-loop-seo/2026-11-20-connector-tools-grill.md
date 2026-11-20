@@ -15,7 +15,7 @@ U 是 Harold 的原话，逐字保留；A 是 AI 的结论与发现，取证过�
 
 ## A1
 
-一般插件不在 agent 里写死工具全名，idea-loop 是少数派。本机已装插件（2026-11-20 查）：PostHog 唯一的 agent 不写 `tools:`、skill 里只写工具短名；ChatCut 的 skill 明说按短名从可见工具里找；Stripe 走命令行。idea-loop 有 8 个 agent 的 `tools:` 白名单写死了插件全名，来源是 agent-builder 模板「`tools: <白名单；MCP 可写 mcp__<server>__*>`」。坏的只有白名单：它按全名逐字匹配，被顶替后对不上；skill 正文在主会话里跑，不受影响。摆了两个方向：A 维持现状（被顶替就停下让人删），B 学别的插件（agent 不写白名单、改写 `disallowedTools`，skill 按短名），推荐 B。
+一般插件不在 agent 里写死工具全名，idea-loop 是少数派。本机已装插件（2026-11-20 查）：PostHog 唯一的 agent 不写 `tools:`、skill 里只写工具短名；ChatCut 的 skill 明说按短名从可见工具里找；Stripe 走命令行。idea-loop 有 7 个 agent 的（当时误说成 8 个） `tools:` 白名单写死了插件全名，来源是 agent-builder 模板「`tools: <白名单；MCP 可写 mcp__<server>__*>`」。坏的只有白名单：它按全名逐字匹配，被顶替后对不上；skill 正文在主会话里跑，不受影响。摆了两个方向：A 维持现状（被顶替就停下让人删），B 学别的插件（agent 不写白名单、改写 `disallowedTools`，skill 按短名），推荐 B。
 
 ## U2
 
@@ -68,7 +68,7 @@ Q2 我觉的agent定义不用写"只用 OpenSEO（或 Mobbin），不碰别的�
 | 议题 | 决议 |
 |---|---|
 | 方向 | 选 B：带连接器的 agent 不写 `tools:` 白名单，推翻 11-16「以插件那份为准、被顶替就停下」 |
-| 改哪些 agent | 白名单里写了 MCP 的 8 个：technical-auditor、page-optimizer、keyword-miner、backlink-analyst、geo-analyst、results-analyst（连同 excalidrawer、PostHog）、uiux-researcher；adr-reconciler、explorer、ui-master 不动 |
+| 改哪些 agent | 白名单里写了 MCP 的 7 个（讨论中误数成 8 个）：technical-auditor、page-optimizer、keyword-miner、backlink-analyst、geo-analyst、results-analyst（连同 excalidrawer、PostHog）、uiux-researcher；adr-reconciler、explorer、ui-master 不动 |
 | 怎么写 | 去掉 `tools:`，只写 `disallowedTools: Edit, NotebookEdit, Agent`；定义里不加「只用某连接器」；以后要禁的连接器再加 |
 | #397 的开场检测 | 删「被顶替就停下」与 seo-setup 的话术、`openseo-superseded.md`；留「一个 OpenSEO 都没有就停下」，按短名判断；挪出正文的段落按字数定去留 |
 | 怎么称呼工具 | skill 正文、agent 定义只写短名；`allowed-tools` 保留插件全名（中间通配实测无效），默认权限模式被顶替时卡确认框记已知限制 |
