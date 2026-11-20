@@ -18,24 +18,30 @@ const skill = readFileSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 
 
 /** Step 3 of 过程: from its bold title to the start of step 4. */
 const step3 = skill.match(/^3\. \*\*探代码并谈 seam\*\*[\s\S]*?(?=^4\. \*\*)/m)?.[0] ?? '';
+/** The diagnosis lives in the branch reference, read only when the spec changes a document an agent reads. */
+const branch = readFileSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'agent-docs.md'), 'utf8');
 
 test('step 3 is found', () => {
   assert.ok(step3.length > 0, '找不到第 3 步「探代码并谈 seam」');
 });
 
-test('step 3 says: for an agent-facing document, call writing-for-agents with the Skill tool and diagnose against its levers', () => {
+test('step 3 points at agent-docs.md for the case where the spec changes a document an agent reads', () => {
   assert.match(step3, /给 agent 读的文档/);
-  assert.match(step3, /用 Skill 工具调 `idea-loop:writing-for-agents`/);
-  assert.match(step3, /诊断/);
-  assert.match(step3, /杠杆/);
+  assert.match(step3, /references\/agent-docs\.md/);
 });
 
-test('step 3 says: list who calls the document and which parts each reads', () => {
-  assert.match(step3, /谁在调它/);
-  assert.match(step3, /各读哪几块/);
+test('agent-docs.md says: call writing-for-agents with the Skill tool and diagnose against its levers', () => {
+  assert.match(branch, /用 Skill 工具调 `idea-loop:writing-for-agents`/);
+  assert.match(branch, /诊断/);
+  assert.match(branch, /杠杆/);
 });
 
-test('step 3 says: the 方案 follows from the diagnosis and the caller list, each change names its lever', () => {
-  assert.match(step3, /「方案」从这两样推出/);
-  assert.match(step3, /每处改动标明对的是哪条杠杆/);
+test('agent-docs.md says: list who calls the document and which parts each reads', () => {
+  assert.match(branch, /谁在调它/);
+  assert.match(branch, /各读哪几块/);
+});
+
+test('agent-docs.md says: the 方案 follows from the diagnosis and the caller list, each change names its lever', () => {
+  assert.match(branch, /「方案」从这两样推出/);
+  assert.match(branch, /每处改动标明对的是哪条杠杆/);
 });

@@ -1,17 +1,11 @@
 package runtime_test
 
-// Ported from desktop-handoff.test.mjs. The stand-in for `claude` is a shell script (the old test used a Node one);
-// nothing here starts a real claude or opens a real desktop session, and HOME for the records points into a
-// temporary directory, so the real ~/.idea-loop/ is never touched. The tests need `expect` (macOS has it) and are
-// skipped without it.
-//
-// Not ported: "the claude path can come from DESKTOP_HANDOFF_CLAUDE" is ported (it goes through dyna's env, not the
-// process's); there is nothing left over.
+// The stand-in for `claude` is a shell script; nothing here starts a real claude or opens a real desktop session,
+// and HOME for the records points into a temporary directory, so the real ~/.idea-loop/ is never touched.
 
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -22,9 +16,9 @@ import (
 	rt "github.com/guohaonan-shy/harold-skills/dyna/internal/runtime"
 )
 
-// FAKE is a stand-in for `claude`. `-p` prints one JSON object; `--resume <id>` is a tiny interactive prompt that
-// reacts to a typed /desktop line. FAKE_MODE picks the behaviour; FAKE_LOG gets one line per call (arguments and
-// directory); FAKE_PID_FILE gets the pid of the interactive process so a test can check it is gone afterwards.
+// FAKE is a stand-in for `claude`. `-p` prints one JSON object; `--desktop --resume <id>` is what the second step
+// runs. FAKE_MODE picks the behaviour; FAKE_LOG gets one line per call (arguments and directory); FAKE_PID_FILE
+// gets the pid of the `--desktop` process so a test can check it is gone afterwards.
 const fakeClaude = `#!/bin/sh
 mode="${FAKE_MODE:-ok}"
 if [ -n "$FAKE_LOG" ]; then echo "$*|$(pwd -P)" >> "$FAKE_LOG"; fi
@@ -38,17 +32,12 @@ if [ "$1" = "-p" ]; then
   exit 0
 fi
 if [ -n "$FAKE_PID_FILE" ]; then echo $$ > "$FAKE_PID_FILE"; fi
-echo 'fake claude ready>'
-while read -r line; do
-  [ "$line" = "/desktop" ] || continue
-  [ "$mode" = "silent" ] && continue
-  if [ "$mode" = "repaint" ]; then
-    printf '\033[3G✳\033[5GChecking\033[14Gfor\033[18GClaude\033[25GDesktop…\r\r\n\r\033[4C\033[1AOp\033[8Gning Claude Desktop…\033[K\r\r\n\r\033[2C\033[1A✻\r\r\n\r\033[12C\033[1Ain Claud\033[22G Desktop…\r\r\n'
-    exit 0
-  fi
-  echo 'Opening Claude Desktop…'
-  exit 0
-done
+case "$mode" in
+  desktop-fail) echo 'Desktop app is not installed' >&2; exit 3 ;;
+  desktop-hang) exec sleep 60 ;;
+esac
+echo 'Opening in Claude Desktop…'
+exit 0
 `
 
 type handoffEnv struct {
@@ -57,9 +46,6 @@ type handoffEnv struct {
 
 func setupHandoff(t *testing.T) handoffEnv {
 	t.Helper()
-	if _, err := exec.LookPath("expect"); err != nil {
-		t.Skip("expect is not installed: the interactive step needs it")
-	}
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +74,7 @@ func setupHandoff(t *testing.T) handoffEnv {
 func (h handoffEnv) run(t *testing.T, mode string, args ...string) outcome {
 	t.Helper()
 	t.Setenv("FAKE_MODE", mode)
-	return dyna(map[string]string{"HOME": h.home}, append([]string{"runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree, "--idle-ms", "300"}, args...)...)
+	return dyna(map[string]string{"HOME": h.home}, append([]string{"runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree}, args...)...)
 }
 
 type call struct{ args, cwd string }
@@ -114,22 +100,6 @@ func waitGone(pid int) bool {
 		time.Sleep(100 * time.Millisecond)
 	}
 	return !alive(pid)
-}
-
-func TestRenderScreenRebuildsTheLineTheResumedClaudePaintsInPieces(t *testing.T) {
-	// taken from a real `/desktop` run (Claude Code 2.1.327): the text is never contiguous in the byte stream
-	raw := "\x1b[3G✳\x1b[5GChecking\x1b[14Gfor\x1b[18GClaude\x1b[25GDesktop…\r\r\n\r\x1b[4C\x1b[1AOp\x1b[8Gning Claude Desktop…\x1b[K\r\r\n" +
-		"\r\x1b[2C\x1b[1A✻\r\r\n\r\x1b[12C\x1b[1Ain Claud\x1b[22G Desktop…\r\r\n"
-	if strings.Contains(raw, "Opening") {
-		t.Fatal("the raw stream must not contain the text")
-	}
-	if got := rt.RenderScreen(raw); !strings.Contains(got, "Opening in Claude Desktop…") {
-		t.Fatalf("%q", got)
-	}
-	// erase-line, carriage return, private modes ignored
-	if got := rt.RenderScreen("a\r\nb\x1b[2Kc\r\x1b[?25lx"); got != "a\nxc" {
-		t.Fatalf("%q", got)
-	}
 }
 
 func TestBothStepsWorkExitsZeroWithOneJSONLineOfTheSessionIDAndLocalID(t *testing.T) {
@@ -163,7 +133,7 @@ func TestBothClaudeRunsHappenInTheGivenWorktreeWithTheReadyPromptOnly(t *testing
 	if !strings.HasPrefix(calls[0].args, "-p ") || !strings.Contains(calls[0].args, rt.ReadyPrompt) || !strings.Contains(calls[0].args, "--output-format json") {
 		t.Errorf("-p call: %+v", calls[0])
 	}
-	if calls[1].args != "--resume fake-session-123" {
+	if calls[1].args != "--desktop --resume fake-session-123" {
 		t.Errorf("resume call: %+v", calls[1])
 	}
 	for _, c := range calls {
@@ -173,27 +143,19 @@ func TestBothClaudeRunsHappenInTheGivenWorktreeWithTheReadyPromptOnly(t *testing
 	}
 }
 
-func TestTheSuccessTextArrivingAsCursorMoveRepaintsStillCounts(t *testing.T) {
-	h := setupHandoff(t)
-	r := h.run(t, "repaint")
-	if r.code != 0 || !strings.Contains(r.stdout, "local_fake-session-123") {
-		t.Fatal(r.all())
-	}
-}
-
 func TestTheClaudePathCanComeFromDESKTOP_HANDOFF_CLAUDEInsteadOfTheFlag(t *testing.T) {
 	h := setupHandoff(t)
-	r := dyna(map[string]string{"HOME": h.home, "DESKTOP_HANDOFF_CLAUDE": h.fake}, "runtime", "handoff", "--worktree", h.worktree, "--idle-ms", "300")
+	r := dyna(map[string]string{"HOME": h.home, "DESKTOP_HANDOFF_CLAUDE": h.fake}, "runtime", "handoff", "--worktree", h.worktree)
 	if r.code != 0 {
 		t.Fatal(r.all())
 	}
 }
 
-func TestAnInteractiveSessionThatNeverPrintsFailsWithinTheTimeoutAndLeavesNoProcess(t *testing.T) {
+func TestClaudeDesktopThatNeverEndsFailsWithinTheTimeoutAndLeavesNoProcess(t *testing.T) {
 	h := setupHandoff(t)
 	started := time.Now()
-	r := h.run(t, "silent", "--timeout-sec", "3")
-	if r.code == 0 || !strings.Contains(r.stderr, "交出失败") {
+	r := h.run(t, "desktop-hang", "--timeout-sec", "2")
+	if r.code != 1 || !strings.Contains(r.stderr, "交出失败：claude --desktop 超过 2 秒没结束") || r.stdout != "" {
 		t.Fatal(r.all())
 	}
 	if time.Since(started) > 15*time.Second {
@@ -205,6 +167,33 @@ func TestAnInteractiveSessionThatNeverPrintsFailsWithinTheTimeoutAndLeavesNoProc
 	}
 	if !waitGone(pid) {
 		t.Errorf("fake claude %d is still running", pid)
+	}
+}
+
+func TestClaudeDesktopExitingNonZeroFailsWithTheExitCodeAndWhatItSaidAndWritesNoRecord(t *testing.T) {
+	h := setupHandoff(t)
+	r := h.run(t, "desktop-fail", "--issue", "5", "--repo", "demo", "--period", "night", "--dir", h.dir)
+	if r.code != 1 || r.stdout != "" {
+		t.Fatal(r.all())
+	}
+	for _, want := range []string{"交出失败：claude --desktop 退出码 3", "fake-session-123", "Desktop app is not installed"} {
+		if !strings.Contains(r.stderr, want) {
+			t.Errorf("stderr lacks %q: %s", want, r.stderr)
+		}
+	}
+	if len(h.calls(t)) != 2 {
+		t.Errorf("both steps ran: %+v", h.calls(t))
+	}
+	if _, err := os.Stat(filepath.Join(h.dir, "demo.json")); err == nil {
+		t.Fatal("a record was written")
+	}
+}
+
+func TestAClaudeThatCannotBeStartedFailsAtTheFirstStepNamingTheCommand(t *testing.T) {
+	h := setupHandoff(t)
+	r := dyna(map[string]string{"HOME": h.home}, "runtime", "handoff", "--claude", filepath.Join(h.root, "no-such-claude"), "--worktree", h.worktree)
+	if r.code != 1 || !strings.Contains(r.stderr, "交出失败：claude -p 没跑成") {
+		t.Fatal(r.all())
 	}
 }
 
@@ -330,7 +319,7 @@ func TestTheRecordsDirectoryDefaultsUnderHOMEAndIDEA_LOOP_DISPATCH_DIROverridesI
 	}
 	elsewhere := filepath.Join(h.root, "elsewhere")
 	t.Setenv("FAKE_MODE", "")
-	r := dyna(map[string]string{"HOME": h.home, "IDEA_LOOP_DISPATCH_DIR": elsewhere}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree, "--idle-ms", "300", "--issue", "6", "--repo", "demo", "--period", "day")
+	r := dyna(map[string]string{"HOME": h.home, "IDEA_LOOP_DISPATCH_DIR": elsewhere}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree, "--issue", "6", "--repo", "demo", "--period", "day")
 	if r.code != 0 {
 		t.Fatal(r.all())
 	}
@@ -415,38 +404,5 @@ func TestTimesThatAreNotPositiveNumbersAreRefusedBeforeClaudeIsCalled(t *testing
 	}
 	if len(h.calls(t)) != 0 {
 		t.Fatal("claude was called")
-	}
-}
-
-// ---- against the old script, where both can run: the same fake, the same arguments ----
-
-func TestAHandOverIsWhatTheOldScriptDid(t *testing.T) {
-	node, script := oldScript(t, "desktop-handoff.mjs")
-	h := setupHandoff(t)
-	t.Setenv("FAKE_MODE", "")
-	oldDir, newDir := filepath.Join(h.root, "old-records"), filepath.Join(h.root, "new-records")
-	common := []string{"--claude", h.fake, "--worktree", h.worktree, "--idle-ms", "300", "--issue", "9", "--repo", "demo", "--period", "day"}
-	old := runOld(t, node, script, map[string]string{"HOME": h.home, "FAKE_LOG": h.log, "FAKE_PID_FILE": h.pidFile}, append(common, "--dir", oldDir)...)
-	now := dyna(map[string]string{"HOME": h.home}, append(append([]string{"runtime", "handoff"}, common...), "--dir", newDir)...)
-	if old.code != 0 || now.code != 0 || old.stdout != now.stdout {
-		t.Fatalf("old %+v, new %+v", old, now)
-	}
-	strip := func(text string) string { // the time of the record is the only difference
-		var list []map[string]any
-		if err := json.Unmarshal([]byte(text), &list); err != nil {
-			t.Fatal(err)
-		}
-		for _, e := range list {
-			delete(e, "openedAt")
-		}
-		b, _ := json.Marshal(list)
-		return string(b)
-	}
-	oldFile, newFile := readFile(t, filepath.Join(oldDir, "demo.json")), readFile(t, filepath.Join(newDir, "demo.json"))
-	if strip(oldFile) != strip(newFile) {
-		t.Errorf("records differ:\n%s\n%s", oldFile, newFile)
-	}
-	if len(oldFile) != len(newFile) {
-		t.Errorf("same layout: %q vs %q", oldFile, newFile)
 	}
 }

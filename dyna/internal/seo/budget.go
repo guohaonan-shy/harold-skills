@@ -191,7 +191,7 @@ func ceilDiv(n, d float64) float64 {
 // weekOf is this week's books: the budget, its three shares (quota, spent, left) and what the period has spent.
 func weekOf(o OpenSEO, log []any, today string, gateSpent float64, logKnown bool) (*Week, error) {
 	if o.Monthly == nil || o.ResetDay == nil || o.Weekly == nil {
-		return nil, fmt.Errorf("SEO.md「OpenSEO」没写「套餐额度」和「每周分配」：跑 `/idea-loop:seo-setup` 补上")
+		return nil, fmt.Errorf("SEO.md「OpenSEO」没写「套餐额度」和「每周分配」：跑 `/idea-loop:setup`（SEO 模块）补上")
 	}
 	period, err := BillingPeriod(*o.ResetDay, today)
 	if err != nil {

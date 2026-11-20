@@ -1,7 +1,7 @@
 ---
 name: uiux-research
 description: 调研别人怎么处理一个 UX 问题：流程、某类页面的常见做法、文案语气。人问别的产品怎么做时用，或设计收敛每一轮给评委意见配参考时用；视觉风格不归它。
-allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:*), Bash(dyna research submit:*)
+allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(dyna research submit:*), Bash(dyna serve:*)
 ---
 
 别人怎么做的、为什么这样做：你只管收输入、起调研、把结果交出去；怎么查、文件长什么样归 `idea-loop:uiux-researcher`。两个分支，看谁在要：
@@ -57,15 +57,9 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:
 
 交回应当只有 `index.html` 的绝对路径和一句结论。researcher 说 **Mobbin 没连上**：整页调研到此停下，不换来源、不重试；告诉人怎么连，照 `dyna runtime show 装与设置` 里 Mobbin 那一条（要 Mobbin 付费计划），说明只有设计调研受影响。交回末尾带 `ai_usage_notice` 的话，原样转给人。
 
-1. **核对**：自己再跑一次校验：
-
-   ```
-   dyna research submit <落图目录>/index.html
-   ```
-
-   不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。
-2. **把页面摆给人看**：照 `dyna runtime show 浏览器` 的「给人看」，在落图目录起静态服务器，打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
-3. 到此为止。要不要用、用哪些来源、转不转给谁，是人看完之后的话。
+1. **核对**：自己再跑一次 `dyna research submit <落图目录>/index.html`。不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。
+2. **把页面摆给人看**：照 `dyna runtime show 浏览器` 的「给人看」，在落图目录用 `dyna serve start` 起静态服务器，打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
+3. 到此为止（完成条件：校验绿、页面摆给了人）。要不要用、用哪些来源、转不转给谁，是人看完之后的话。
 
 ## 轻用法
 
@@ -74,7 +68,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git ls-files:*), Bash(ls:
 1. **备好输入**：一个落图目录，每轮一个，放在 `<项目目录>/docs/design/tmp/<spec-slug>/research/` 下（如 `round-2/`；只在本地，同整页调研的「定落图目录」）；各状态的截图路径；评委的每条意见按 `findings` 的顺序编成 `1`、`2`、……，带 `state`、`where`、`detail`、`why`、`reference`；人这一轮的意图与思路原话；ledger 全文（每条带编号）。
 2. **起 `idea-loop:uiux-researcher`**：Agent 工具，交给它这五样，并说明走轻用法；运行环境收不到 Mobbin 原生工具时，同整页调研那样把调 Mobbin 的写法放进提示。它每次新起、做完就结束。
 3. **收到交回**：只有 `research-light.json` 的路径和一句话。自己再跑一次校验，命令和参数见 `references/light-return.md` 的「校验管什么」，`--opinions` 填刚才的编号，`--ledger` 填 ledger 的编号；不绿就把输出用 SendMessage 转回它补。Mobbin 没连上时文件也合格：会话不重试、不报错，报告里照出「这一轮没有参考图：Mobbin 没连上」。
-4. 到此为止。文件和截图留在落图目录，交给拼设计评审报告的那一步；你不读搜索结果、不下方向结论、不替人定要不要推翻 ledger。
+4. 到此为止（完成条件：校验绿）。文件和截图留在落图目录，交给拼设计评审报告的那一步；你不读搜索结果、不下方向结论、不替人定要不要推翻 ledger。
 
 ## 边界
 

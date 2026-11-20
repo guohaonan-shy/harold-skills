@@ -4,7 +4,7 @@
  * Spec seo-params-from-seo-md, ticket 02. Convention: project information a skill needs (business, goal, positioning,
  * competitors) is confirmed by a human and written down; an unattended run (a direction agent called by seo-scan) that
  * finds a gap must not infer a value from the site / find_serp_competitors and use it. Step 3 of 「项目上下文」 in
- * keyword-research, seo-audit, link-prospecting and competitor-analysis therefore reads 「缺了不推断」: say in
+ * keyword-research, seo-audit, seo-outreach's 找候选站点 reference (the former link-prospecting) and competitor-analysis therefore reads 「缺了不推断」 (for seo-audit, keyword-research and competitor-analysis in the 「项目信息缺了」 section of their references/unattended.md): say in
  * `assumptions` what is missing and which part was not done, finish the rest. The human-present branch (guess →
  * ask → write back) stays as it was, and competitor-analysis still analyses a competitor the caller names.
  *
@@ -18,7 +18,13 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const seoDir = process.env.SEO_SKILLS_DIR ?? join(pluginRoot, 'skills', 'seo');
-const read = (slug) => readFileSync(join(seoDir, slug, 'SKILL.md'), 'utf8');
+// link-prospecting is the 找候选站点 branch of seo-outreach now: its text lives in the branch's reference file.
+const FILE = { 'link-prospecting': ['seo-outreach', 'references', 'prospecting.md'] };
+const read = (slug) => readFileSync(join(seoDir, ...(FILE[slug] ?? [slug, 'SKILL.md'])), 'utf8');
+// The unattended branch of these three lives in the skill's own references/unattended.md (SKILL.md keeps a pointer);
+// seo-outreach's prospecting reference holds both branches in one file.
+const MOVED = new Set(['seo-audit', 'keyword-research', 'competitor-analysis']);
+const readUnattended = (slug) => MOVED.has(slug) ? readFileSync(join(seoDir, slug, 'references', 'unattended.md'), 'utf8') : read(slug);
 
 function section(doc, title) {
   const lines = doc.split('\n');
@@ -39,10 +45,12 @@ function step3(slug) {
   const end = rest.findIndex((l) => /^\d+\.\s/.test(l));
   const bullets = rest.slice(0, end < 0 ? undefined : end).join('\n');
   const present = bullets.split('\n').find((l) => /^\s+- 人在场：/.test(l));
-  const unattended = bullets.split('\n').find((l) => /^\s+- 无人值守：/.test(l));
+  const pointer = bullets.split('\n').find((l) => /^\s+- 无人值守：/.test(l));
   assert.ok(present, `${slug}: step 3 has no 「人在场」 branch`);
-  assert.ok(unattended, `${slug}: step 3 has no 「无人值守」 branch`);
-  return { present, unattended };
+  assert.ok(pointer, `${slug}: step 3 has no 「无人值守」 branch`);
+  if (!MOVED.has(slug)) return { present, unattended: pointer };
+  assert.match(pointer, /references\/unattended\.md/, `${slug}: step 3's 「无人值守」 bullet points at references/unattended.md`);
+  return { present, unattended: section(readUnattended(slug), '项目信息缺了') };
 }
 
 const cases = [
@@ -96,16 +104,24 @@ for (const c of cases) {
     const doc = read(c.slug);
     assert.ok(!/推断[^。\n]*写进 `assumptions`，不写回/.test(doc), 'no 「推断…写进 assumptions，不写回」 residue');
     // 「不提问」 defaults are only the MCP defaults (market / language), never project information
-    assert.match(section(doc, '两种调用'), /项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步/);
+    const unattendedDoc = readUnattended(c.slug);
+    if (MOVED.has(c.slug)) {
+      assert.match(section(unattendedDoc, '和人在场的差别'), /项目信息（业务、目标、定位、竞品）缺了不在此列，见下面「项目信息缺了」/);
+    } else {
+      assert.match(section(doc, '两种调用'), /项目信息（业务、目标、定位、竞品）缺了不在此列，见「项目上下文」第 3 步/);
+    }
     // the hand-back template's `assumptions` says it can carry the missing project information
-    assert.match(doc, /"assumptions": \["代替提问用的默认值；缺的项目信息及因此没做的部分"\]/);
-    const body = doc.split(/^---\s*$/m).slice(2).join('---');
-    assert.ok([...body].length < 5000, 'SKILL.md body stays under 5000 characters');
+    assert.match(unattendedDoc, /"assumptions": \["代替提问用的默认值；缺的项目信息及因此没做的部分"\]/);
+    if (!FILE[c.slug]) {
+      const body = doc.split(/^---\s*$/m).slice(2).join('---');
+      assert.ok([...body].length <= 4500, 'SKILL.md body stays within 4500 characters');
+    }
   });
 }
 
 test('competitor-analysis: a caller-named competitor is still analysed unattended', () => {
   const { unattended } = step3('competitor-analysis');
+  assert.match(unattended, /调用方点名了一家，照常分析那一家/);
   assert.match(unattended, /只分析调用方点名的那家，照常做/);
   const inputs = section(read('competitor-analysis'), '必需输入');
   assert.match(inputs, /无人值守时用调用方点名的/);
@@ -156,7 +172,13 @@ for (const c of noneCases) {
     assert.match(lead, /当作没有/, 'read 「无」 as no such information');
     assert.match(lead, /不推断、不问、不写回/, '「无」 means no inference, no question, no write-back');
     assert.match(lead, /人在场、无人值守都一样/, 'same for a present human and an unattended run');
-    assert.match(lead, /`assumptions`/, 'what was not done goes into `assumptions`');
+    if (MOVED.has(c.slug)) {
+      const missing = section(readUnattended(c.slug), '项目信息缺了');
+      assert.match(missing, /写着「无」/, 'the unattended file names the 「无」 case');
+      assert.match(missing, /`assumptions`/, 'what was not done goes into `assumptions`');
+    } else {
+      assert.match(lead, /`assumptions`/, 'what was not done goes into `assumptions`');
+    }
     for (const re of c.needs) assert.match(lead, re, 'must name the fact(s) this skill reads');
     for (const re of c.notDone) assert.match(lead, re, 'must say which part was therefore not done');
     // the 「为空」 branches below are the ones that ask / infer; they stay

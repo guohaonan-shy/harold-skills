@@ -31,7 +31,7 @@ package pr
 // 0.0.16 drafts' sections are dropped on the next write; legacy `header` / `ledger` blocks are left as text. A
 // description opened when 顺带开的 issue was a section of its own still has it: the next write folds its list into
 // 能否回滚, under the label IssuesLabel, and that list survives later writes of 能否回滚 unless the new text brings
-// its own. Layout and who writes what: skills/engineering/pr/SKILL.md of the plugin.
+// its own. Layout and who writes what: skills/engineering/pr/SKILL.md and its references/description.md, in the plugin.
 
 import (
 	"fmt"

@@ -68,8 +68,8 @@ test('a new project gets its files and docs/ in the project directory, committed
   assert.match(w, /dyna home commit/);
   assert.match(w, /`dyna home where` 对这个项目成功/);
   assert.match(w, /代码仓库里没有新增的 idea-loop 文件/);
-  // what goes into the code repository is only the local exclude of .tmp/
-  assert.match(w, /\.tmp\/` 追加进代码仓库的 `\$\(git rev-parse --git-common-dir\)\/info\/exclude`/);
+  // what goes into the code repository is only the local exclude of .tmp/, the one all worktrees share
+  assert.match(w, /\.tmp\/` 追加进代码仓库的本地排除文件（所有 worktree 共用的 `info\/exclude`，不进 `\.gitignore`）/);
   assert.doesNotMatch(w, /仓库根目录|写进仓库/);
 });
 
@@ -89,8 +89,8 @@ test('the home step comes before the files are written, and its registration is 
   assert.doesNotMatch(home, /人说提交才提交/);
 });
 
-test('the setup skill body stays under 5000 characters and every reference it links exists', () => {
-  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
+test('the setup skill body stays under 4500 characters and every reference it links exists', () => {
+  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
   for (const [, link] of skill.matchAll(/\]\((references\/[^)#]+)\)/g)) assert.ok(existsSync(join(setupDir, link)), link);
 });
 

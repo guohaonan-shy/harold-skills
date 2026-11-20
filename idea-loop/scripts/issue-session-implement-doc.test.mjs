@@ -6,7 +6,7 @@
  * drop it (spec 「进实现前压缩上下文」 was dropped, #153; implementation runs in the issue session itself, issue-consolidation ticket 05). What stays:
  * tickets already under the spec's tickets/ are not cut again (so re-typing /idea-loop:issue-session lands in
  * the right place), 「实现」 calls to-ticket → implement → pr-review as 「用 Skill 工具调 <插件>:<名字>」, and the
- * SKILL.md body stays under 5000 characters.
+ * SKILL.md body stays within 4500 characters.
  *
  * Who commits the tickets: to-ticket's 「落盘」 does, after the human nods, the tickets are all written and
  * cutting flips no state (the executors' worktrees are cut from the current branch, so uncommitted
@@ -91,8 +91,8 @@ test('the README row for to-ticket mentions the commit', () => {
   assert.match(row, /commit/i, 'the to-ticket row must say it commits the tickets to home');
 });
 
-test('issue-session SKILL.md body is under 5000 characters', () => {
+test('issue-session SKILL.md body is within 4500 characters', () => {
   const m = skill.match(/^---\n[\s\S]*?\n---\n/);
   const n = [...(m ? skill.slice(m[0].length) : skill)].length;
-  assert.ok(n < 5000, `SKILL.md body is ${n} characters; the limit is 5000`);
+  assert.ok(n <= 4500, `SKILL.md body is ${n} characters; the limit is 4500`);
 });

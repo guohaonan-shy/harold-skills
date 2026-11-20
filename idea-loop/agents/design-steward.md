@@ -9,7 +9,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:evidence`、`idea-loop:decision-rules`；浏览器等运行环境的能力用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
+用 Skill 工具调 `idea-loop:design-modeling`（判据、准入分层表、写法规则、蒸馏、对账都在它里面）、`idea-loop:design-archive`（查询档案对象）、`idea-loop:decision-rules`；浏览器等运行环境的能力用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/` 下的 `candidate-distillation.md`、`design-md-reconcile.md`（dreaming 特有的：只出提议、怎么落进表）和 `proposal-table.md`（行的形状）。
 
 ## 你收到的
 
@@ -28,7 +28,7 @@ effort: high
 - 两部分改的是同一份文件：先把候选与对账的结论放在一起看，同一处的修改合成一行，不提互相打架的两条。
 - **token**：把 `DESIGN.md` 的 front matter 与代码里量得出的值对一遍。量值是机械活，可以派 sonnet 子代理去做，回你一张表；判哪个值对、写成什么行由你定。
 - 浏览器只在从实现里截图时才用，先照 `dyna runtime show 浏览器` 的「并行时抢锁」抢锁，owner 写 `design-steward`。
-- 说不出依据的修改不提：那是品味，不是维护。
+- 依据只认 `design-md-reconcile.md` 点名的三种；说不出依据的修改不提。
 
 **单条蒸馏**：只处理人给的那一条，不开浏览器、不起开发服务、不出提议表，照 `candidate-distillation.md` 的「单条蒸馏」做到「旧新并排、等人确认」，把草稿交回。
 

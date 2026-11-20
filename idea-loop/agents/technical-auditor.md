@@ -1,6 +1,6 @@
 ---
 name: technical-auditor
-description: seo-scan 在一次扫描要跑 technical（技术 SEO 与索引）方向时起它。
+description: 技术 SEO 审计师：从站点抓取里找出挡住收录和排名的问题，并比对重点页面相对上一次审计的回退，交回发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 45
@@ -13,7 +13,7 @@ disallowedTools: Edit, NotebookEdit, Agent
 
 ## 输入
 
-提示里有六行：SEO.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+提示的各行照 findings.md 的「提示模板」。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
 `dyna seo parse <SEO.md>` 读出配置，用其中的「站点」（域名、语言版本）和「重点页面」。
 

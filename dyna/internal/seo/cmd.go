@@ -347,7 +347,7 @@ func (d Deps) scopeCommand() *cobra.Command {
 	})
 	c.Flags().String("files", "", "改动文件清单，一行一个路径；- 是标准输入")
 	c.Flags().String("base", "", "从仓库取：git diff --name-only --no-renames <ref>...HEAD（在当前目录跑）")
-	c.Flags().String("image-dir", "", "改判一个图片目录在不在内容路径以内：打印 {inScope, dir, reason?, contentPaths}（seo-setup 写「配图」前用）")
+	c.Flags().String("image-dir", "", "改判一个图片目录在不在内容路径以内：打印 {inScope, dir, reason?, contentPaths}（setup 的 SEO 模块写「配图」前用）")
 	return c
 }
 

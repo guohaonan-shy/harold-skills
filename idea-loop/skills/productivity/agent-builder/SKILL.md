@@ -4,7 +4,7 @@ description: 新建或改写一个 subagent 定义（agents/*.md），连同调�
 disable-model-invocation: true
 ---
 
-写之前用 Skill 工具调 `idea-loop:writing-for-agents`，每一步都按它的写法落字。
+写之前用 Skill 工具调 `idea-loop:writing-for-agents`，每一步都按它的写法落字；改写已有的 agent 定义，也按它给的重写核对表过一遍。交付是一份 agent 定义，加上改好的调用方一侧。
 
 ## 先判断它该不该是 agent
 
@@ -74,7 +74,7 @@ disallowedTools: <用到连接器的 agent 写这个，不写 tools>
 
 ## 剪
 
-逐句问：删了这句，这份交付会变吗？不变就整句删。重点看：
+逐句照 `idea-loop:writing-for-agents` 的「剪枝」过；agent 定义里特别看：
 
 - 禁止清单：能用 `tools` 或 `disallowedTools` 表达的挪到 frontmatter，剩下的改写成要它做的事。
 - 写给维护者的话（为什么当初这么定、哪天谁签的字）：挪进 ADR 或 README。
@@ -83,7 +83,7 @@ disallowedTools: <用到连接器的 agent 写这个，不写 tools>
 - 几个 agent 里一模一样的段落：抽进一个共享 skill 或参考文件，各 agent 留一行指针。
 - 黑话：内部术语、英文行话（比如把「瓶颈」写成 plateau）换成直白的话。脚本输出的取值也一样，它们会原样出现在模型的回复里。
 
-正文写得远长于约 500 个英文词（约 1000 个汉字），通常是流程写进了 agent（挪回调用方 skill），或者只在部分情况下才走的段落还没挪出去。
+正文写得远长于约 500 个英文词（约 1000 个汉字），通常是流程写进了 agent（挪回调用方 skill），或者只在部分情况下才走的段落还没挪出去。主体的硬上限是 4500 字（量法在 `idea-loop:writing-for-agents` 的「4500 线」）。
 
 完成条件：剩下的每一句都改变这份交付；上面每一类都查过一遍。
 

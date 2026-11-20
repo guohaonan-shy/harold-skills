@@ -51,7 +51,7 @@ test('the places that used to land a stage on its own point at wiki-conventions�
     'skills/engineering/to-spec/references/land-on-main.md',
     'skills/engineering/issue-session/references/draft-spec.md',
     'skills/engineering/issue-session/SKILL.md',
-    'skills/design/uiux-refine/SKILL.md',
+    'skills/design/uiux-refine/references/after-freeze.md',
     'skills/productivity/decision-rules/SKILL.md',
     'skills/productivity/retro/SKILL.md',
   ]) assert.match(read(f), /知识库落地/, `${f} does not point at 知识库落地`);
@@ -68,7 +68,8 @@ test('wiki-conventions「知识库落地」: commit straight to home, only the l
   for (const artifact of ['spec', 'raw', '工单', '冻结的设计', '设计档案', 'dreaming', '「不做」记录', 'retro', '效果报告']) assert.ok(rule.includes(artifact), artifact);
   assert.match(rule, /代码 PR 合并成功后才跑归档命令/);
   assert.match(rule, /`delta\/`/);
-  assert.match(rule, /git revert/);
+  assert.match(rule, /回退那次提交/);
+  assert.doesNotMatch(rule, /git revert/, 'the rule states the outcome, not the command');
   assert.match(rule, /代码 PR 里只有代码/);
   assert.ok([...body(md)].length < 5000, `body is ${[...body(md)].length} characters`);
 });
@@ -78,12 +79,11 @@ test('an issue session cuts no branch for triage: the spec goes to home, the bra
   assert.match(session, /triage 会话不切分支/);
   assert.match(session, /branch: null/);
   assert.match(session, /spec 已提交到 home <提交号>/);
-  assert.match(session, /git switch -c issue\/<号>-<slug> origin\/<主分支>/);
+  assert.match(session, /从 `origin\/<主分支>` 新建/, 'a branch that exists nowhere is cut from the base branch');
   assert.match(session, /第一次要写代码/);
-  assert.doesNotMatch(session, /git switch -c <下一段>/);
   assert.doesNotMatch(session, /spec、设计、工单和代码都提交在这一条分支上/);
   assert.doesNotMatch(session, /git push -u origin issue\/<号>-<slug>`，`issues set <docs> todo/);
-  assert.ok([...body(session)].length < 5000);
+  assert.ok([...body(session)].length <= 4500);
 });
 
 test('pr-review merge archives after the code PR merged, then deletes the tickets, both committed to home', () => {

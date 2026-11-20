@@ -4,7 +4,7 @@
 
 ## 分类
 
-除了状态，issue 还带模块和类型两种 label：模块是 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上；类型是 `kind:bug` / `kind:feature` / `kind:improvement` 之一。项目有哪些模块、另外保留哪些 label，写在项目目录 `ISSUE_TRACKER.md` 的「分类 label」一节，`/idea-loop:setup` 建它。`dyna issues type` 打模块，会替换原有的 `type:*`；类型用 `gh issue edit --add-label`。
+除了状态，issue 还带模块和类型两种 label：模块是 `type:<父类>`，可选的子类 `type:<父类>/<子类>`，打子类时父类一起打上；类型是 `kind:bug` / `kind:feature` / `kind:improvement` 之一。项目有哪些模块、另外保留哪些 label，写在项目目录 `ISSUE_TRACKER.md` 的「分类 label」一节，`/idea-loop:setup` 建它。`dyna issues type` 打模块，会替换原有的 `type:*`；类型在 GitHub 上是 `kind:*` label，写法见 [github.md](github.md)；Linear 用 MCP。
 
 ## spec 与 issue
 

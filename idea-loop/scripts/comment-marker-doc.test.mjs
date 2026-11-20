@@ -55,10 +55,18 @@ test('nothing in the plugin says a comment is posted on Claude\'s behalf or in a
   assert.deepEqual(hits, []);
 });
 
-test('every place that tells an agent to read idea-loop\'s latest comment names the marker', () => {
-  for (const rel of ['skills/engineering/issue-session/SKILL.md', 'skills/engineering/issue-dispatch/SKILL.md', 'skills/engineering/issue-session/references/draft-spec.md']) {
+// The rule (write through the command so it carries the marker; read the latest comment that has it) lives once, in `issues`'
+// 「评论」; the three places that read idea-loop's latest comment point there and do not write the marker out again.
+test('the marker rule is written once, in issues 「评论」; the places that read idea-loop\'s comments point there', () => {
+  const issues = all.find((f) => f.rel === 'skills/engineering/issues/SKILL.md').lines.join('\n');
+  const section = issues.slice(issues.indexOf('## 评论'), issues.indexOf('## blocked by'));
+  assert.ok(section.includes(AI_MARKER), `issues 「评论」 must name the ${AI_MARKER} marker`);
+  assert.match(section, /dyna issues note/);
+  assert.match(section, /最近一条/);
+  for (const rel of ['skills/engineering/issue-session/SKILL.md', 'skills/engineering/issue-dispatch/references/morning-summary.md', 'skills/engineering/issue-session/references/draft-spec.md', 'agents/issue-triager.md']) {
     const text = all.find((f) => f.rel === rel).lines.join('\n');
-    assert.ok(text.includes(AI_MARKER), `${rel} must name the ${AI_MARKER} marker`);
+    assert.match(text, /`idea-loop:issues` 的「评论」/, `${rel} must point at issues 「评论」`);
+    assert.ok(!text.includes(AI_MARKER), `${rel} must not write the ${AI_MARKER} marker out: it is owned by issues`);
   }
 });
 

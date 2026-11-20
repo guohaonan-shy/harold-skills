@@ -35,6 +35,13 @@ test('wiki-conventions: the 目录 table has a design/pending/ row that says whe
   assert.match(pendingRow, /dreaming/);
 });
 
+test('wiki-conventions: the row also owns the read side: ask whether to continue, copy back into design/tmp/, resume', () => {
+  assert.match(pendingRow, /问人要不要接着做/);
+  assert.match(pendingRow, /复制回 `design\/tmp\/`/);
+  assert.match(pendingRow, /这份留着/);
+  assert.match(pendingRow, /中断恢复/);
+});
+
 test('wiki-conventions: the local ignore covers docs/design/pending/ too', () => {
   const at = wiki.indexOf('### 本地忽略');
   assert.ok(at >= 0, 'the 本地忽略 subsection is missing');
@@ -60,22 +67,22 @@ for (const skill of ['uiux-imagine', 'uiux-refine']) {
     assert.match(opening, /pending\//);
     assert.match(opening, /项目目录/);
     assert.doesNotMatch(opening, /主 checkout/);
-    assert.match(opening, /问人/);
-    assert.match(opening, /复制回/);
+    // the rule is written once, in wiki-conventions' design/pending/ row; the skill only points there and names its own resume place
+    assert.match(opening, /`idea-loop:wiki-conventions` 的「目录」里 `design\/pending\/` 那一行/);
+    assert.doesNotMatch(opening, /复制回/);
     assert.match(opening, /中断与恢复|after-freeze/);
   });
-  test(`${skill}: SKILL.md body stays under 5000 characters`, () => {
-    assert.ok(chars(read('skills', 'design', skill, 'SKILL.md')) < 5000);
+  test(`${skill}: SKILL.md body stays under the 4500-character line`, () => {
+    assert.ok(chars(read('skills', 'design', skill, 'SKILL.md')) < 4500);
   });
 }
 
 test('uiux-refine after-freeze reference carries the 先不做 move: pending dir, nothing cleaned, spec pointer and reason', () => {
   const text = read('skills', 'design', 'uiux-refine', 'references', 'after-freeze.md');
   assert.match(text, /先不做/);
-  assert.match(text, /docs\/design\/pending\/<spec-slug>\//);
-  assert.match(text, /项目目录/);
   assert.doesNotMatch(text, /主 checkout/);
-  assert.match(text, /不清理|原样/);
+  assert.match(text, /`idea-loop:wiki-conventions` 的「目录」里 `design\/pending\/` 那一行/, 'the move itself is owned by wiki-conventions; this reference points there');
+  assert.doesNotMatch(text, /不清理|目标目录已存在/);
   assert.match(text, /指针/);
   assert.match(text, /理由/);
 });

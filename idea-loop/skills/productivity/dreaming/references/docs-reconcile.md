@@ -4,8 +4,8 @@
 
 ## 纪律
 
-- **PR 编号要交叉核对标题。** grep `#\d+` 会抓到 hex 色值（`#2563eb`）和文档内部的任务编号，`gh pr view 15` 照样返回一个看起来合理的无关 PR；PR 标题与文档主题对得上才算。
-- **spec 了结与否看它 `issues:` 里的 issue**（`gh issue view <号> --json state,labels`），spec 自己没有状态：`issues:` 里的 issue 全关了才算了结。有 issue 在 backlog（开着、没有 `status:*`）的 spec，不做年龄判定：年龄分不出被遗忘和被故意放着。issue 在 `triage` / `todo` 的还没开工，只看它在这个状态停了多久（提议人去评估、去派，或把 issue 放回 backlog），不判实现；在 `in-progress` / `in-review` 的实现正在进行，同样不判。
+- **PR 编号要交叉核对标题。** grep `#\d+` 会抓到 hex 色值（`#2563eb`）和文档内部的任务编号，按这种编号读 PR 照样返回一个看起来合理的无关 PR；PR 标题与文档主题对得上才算。
+- **spec 了结与否看它 `issues:` 里的 issue**（`dyna issues read <docs> <号>`，`<docs>` 是 `<项目目录>/docs/`），spec 自己没有状态：`issues:` 里的 issue 全关了才算了结。有 issue 在 backlog（开着、没有 `status:*`）的 spec，不做年龄判定：年龄分不出被遗忘和被故意放着。issue 在 `triage` / `todo` 的还没开工，只看它在这个状态停了多久（提议人去评估、去派，或把 issue 放回 backlog），不判实现；在 `in-progress` / `in-review` 的实现正在进行，同样不判。
 - **每个判定都靠这一次跑出来的证据**，不凭记忆、不凭文档自己的旧结论。存疑就留着不动。
 
 ## 扫描范围
@@ -27,6 +27,6 @@
 | domain / reference 与现状不符 | 引用的表 / 字段 / 接口已改名；`REVIEW.md` 的命令已不存在 | 订正，不删 |
 | `GLOSSARY.md` 与现状不符 | `_Avoid_` 里的词出现在新代码或新文档里；词条说的概念在代码里已经没了 | 逐条问人，同意了才订正或删除；新增词条只在 `idea-loop:grill` 里 |
 | 新 ADR 推翻某个生效 ADR 的一节 | 写新 ADR 前搜 `docs/adr/` 的同话题旧决策 | 按小节标注取代（见 [adr.md](adr.md)） |
-| 漏网的工单 | `docs/spec/<spec-slug>/tickets/` 里还躺着、对应 PR 已合并（`gh` 查，标题对得上） | 删除 |
+| 漏网的工单 | `docs/spec/<spec-slug>/tickets/` 里还躺着、对应 PR 已合并（读 PR 状态，标题对得上） | 删除 |
 
 起草 ADR 的格式与小节取代按 [adr.md](adr.md)；提议段只把 ADR 草稿放进提议表指向的文件，不写进 `docs/adr/`。删 spec 是删它整个目录（含 `tickets/` 和 `assets/`）；`assets/` 里 ADR 要引的证据图先挪到 ADR 旁边，这一步在执行段做。

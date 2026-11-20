@@ -8,7 +8,7 @@ import (
 )
 
 // `home index` (new: spec layer follows spec.mjs's `index`, raw and adr follow dreaming's hand-written format
-// in skills/productivity/dreaming/references/index-md.md) and `home adr new` (new).
+// in skills/productivity/wiki-conventions/SKILL.md, 「项目目录」) and `home adr new` (new).
 
 func docsOf(w world) string { return filepath.Join(w.home, docsRel) }
 

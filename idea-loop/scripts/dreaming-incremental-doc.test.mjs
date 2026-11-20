@@ -3,7 +3,7 @@
  *
  * Spec canvas-truth-dreaming-agents, implementation decision 7. The behaviour lives in skill text, so
  * these checks pin the steps a reader has to be able to follow: setup creates the task the way
- * seo-setup creates seo-scan's, dreaming derives the baseline from the task's run history (and a
+ * setup's SEO module creates seo-scan's, dreaming derives the baseline from the task's run history (and a
  * hand-typed run does not move it), only the picked states go to the live wave while the source wave
  * stays full, and the proposal table's opening line and trailing note are written down.
  */
@@ -27,19 +27,19 @@ function section(doc, title) {
 
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
 const weeklySteps = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
-const seoSetup = read('skills', 'seo', 'seo-setup', 'SKILL.md');
-const seoSetupSteps = read('skills', 'seo', 'seo-setup', 'references', 'daily-scan.md');
+const seoSetup = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
+const seoSetupSteps = read('skills', 'engineering', 'setup', 'references', 'seo', 'daily-scan.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 const scope = read('skills', 'productivity', 'dreaming', 'references', 'incremental-scope.md');
 const proposal = read('skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');
 const reconcile = read('skills', 'productivity', 'dreaming', 'references', 'archive-reconcile.md');
 
-test('setup creates the weekly dreaming task the way seo-setup creates the seo-scan one', () => {
+test('setup creates the weekly dreaming task the way its SEO module creates the seo-scan one', () => {
   // the steps live in setup's own reference (SKILL.md keeps its body short); the SKILL.md section must point at it
   assert.ok(section(setup, '每周对账').includes('references/weekly-dreaming.md'));
   const mine = weeklySteps;
-  // seo-setup's SKILL.md section points at its own reference, which carries the steps
-  assert.ok(section(seoSetup, '8. 每天扫描').includes('references/daily-scan.md'));
+  // the SEO module's steps file points at its own reference, which carries the steps
+  assert.ok(section(seoSetup, '8. 每天扫描').includes('daily-scan.md'));
   const theirs = seoSetupSteps;
   // the same moving parts, in the same order: look, (no capability → hand the prompt over), ask, create, tell.
   const parts = [
@@ -49,7 +49,7 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
     ['minute', '分钟避开 0 和 30'],
   ];
   for (const [name, word] of parts) {
-    assert.ok(theirs.includes(word), `seo-setup no longer says the "${name}" part; update this test with it`);
+    assert.ok(theirs.includes(word), `the SEO module no longer says the "${name}" part; update this test with it`);
   }
   assert.doesNotMatch(theirs, /list_scheduled_tasks|AskUserQuestion|create_scheduled_task|桌面 app/);
   // seo-scan is model-invocable (2026-11-08), so no runtime needs a fallback for a human-invoked-only skill
@@ -80,7 +80,8 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
   assert.match(scope, /读这个任务上次成功运行的时间/);
   assert.match(scope, /dyna runtime show/);
   assert.match(scope, /started_at/);
-  assert.match(scope, /git rev-list -1 --first-parent --before=/);
+  // the commit at that moment is found along the first-parent line, before started_at (the how is the agent's)
+  assert.match(scope, /first-parent 主线[^\n]*`origin\/<基准分支>` 上 `started_at` 之前最近的一个提交/);
   assert.match(scope, /origin\/<基准分支>/);
   assert.match(scope, /没有定时任务/);
   assert.match(scope, /没有一次成功的执行/);

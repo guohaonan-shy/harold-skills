@@ -9,7 +9,7 @@ import (
 	"unicode"
 )
 
-// GLOSSARY.md lint: the format half of idea-loop's glossary skill (「文件与格式」), made falsifiable.
+// GLOSSARY.md lint: the format half of the glossary rules in wiki-conventions (references/glossary.md, 「文件与格式」), made falsifiable.
 //
 // The failure it guards against is a glossary that slowly turns into a spec: field values, code constants, file
 // paths and mechanism write-ups creep in one reasonable-looking line at a time. So this does not ask whether
@@ -458,7 +458,7 @@ func RenderGlossaryReport(r GlossaryResult, file string) string {
 	if r.Valid {
 		return "glossary-check: green ✓" + where
 	}
-	out := []string{fmt.Sprintf("glossary-check: %d 处不符合 skills/productivity/glossary/SKILL.md 的「文件与格式」%s：", len(r.Errors), where)}
+	out := []string{fmt.Sprintf("glossary-check: %d 处不符合 skills/productivity/wiki-conventions/references/glossary.md 的「文件与格式」%s：", len(r.Errors), where)}
 	for _, e := range r.Errors {
 		out = append(out, "  - "+e)
 	}
@@ -467,6 +467,6 @@ func RenderGlossaryReport(r GlossaryResult, file string) string {
 
 // GlossaryHookReply is what the PostToolUse hook tells the model when a GLOSSARY.md it just wrote breaks the format.
 func GlossaryHookReply(r GlossaryResult, file string) string {
-	return RenderGlossaryReport(r, file) + "\n\n改到通过再继续。格式规则见 idea-loop 的 skills/productivity/glossary/SKILL.md 的「文件与格式」；" +
+	return RenderGlossaryReport(r, file) + "\n\n改到通过再继续。格式规则见 idea-loop 的 skills/productivity/wiki-conventions/references/glossary.md 的「文件与格式」；" +
 		"挪出去的内容按「收什么：三问全过才收」里那张去处表放。"
 }
