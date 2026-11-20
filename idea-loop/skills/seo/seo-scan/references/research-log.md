@@ -16,6 +16,6 @@ seo-scan <YYYY-MM-DD HH:MM>，方向：<方向...>
 分流：todo <n>，triage <n>，canceled <n>（没翻成的号：#<号>（<原因>））
 <运行目录里有 technical-intentional.txt 时加这一行，内容原样照抄（technical-auditor 写的，形如）：有意改动：<页面> → #<PR>；…>
 拒收：<标题>（<原因>）；…
-<untyped 为 true 时加一行：项目没有 seo 分类，跑一次 seo-setup>
+<untyped 为 true 时加一行：项目没有 seo 分类，跑一次 /idea-loop:setup 的 SEO 模块>
 <提 issue 失败时加一行：提 issue 失败：原因>
 ```

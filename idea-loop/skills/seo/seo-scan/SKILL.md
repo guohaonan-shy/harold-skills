@@ -13,7 +13,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 开场
 
-项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿；`<docs>` 指 `<项目目录>/docs/`；运行目录是 `<工作根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（工作根 = `git rev-parse --show-toplevel`）。四步（认项目、建运行目录、认 OpenSEO、取项目上下文）见 [references/opening.md](references/opening.md)：`<项目目录>/SEO.md` 不存在或读不出 `openseo.projectId` 就停下，交回原因和「先由人跑 `/idea-loop:seo-setup`」；会话里没有 OpenSEO 也停下（第 3 步）。
+项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿；`<docs>` 指 `<项目目录>/docs/`；运行目录是 `<工作根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`（工作根 = `git rev-parse --show-toplevel`）。四步（认项目、建运行目录、认 OpenSEO、取项目上下文）见 [references/opening.md](references/opening.md)：`<项目目录>/SEO.md` 不存在或读不出 `openseo.projectId` 就停下，交回原因和「先由人跑 `/idea-loop:setup`（SEO 模块）」；会话里没有 OpenSEO 也停下（第 3 步）。
 
 完成条件：拿到项目 id、一个运行目录、`context.json` 或它的失败原因。
 
@@ -110,7 +110,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 ```
 seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - <方向>：<N> 条发现 | 未采集（<原因>） | 预算跳过（<原因>）
-- issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:seo-setup>
+- issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:setup 的 SEO 模块>
 - 分流：todo <n>，triage <n>，canceled <n>
 - 花费：<n | 未知> credits
 - 效果报告：<报告路径 | 没跑 | 没落成（原因）>

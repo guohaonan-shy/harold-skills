@@ -25,7 +25,7 @@ const SKILL_FILE = readIf(...WRITING_DIR, 'SKILL.md');
 const SKILL = SKILL_FILE.split(/^---\s*$/m).slice(2).join('---');
 const RUBRIC = readIf(...WRITING_DIR, 'references', 'judge-rubric.md');
 const LOOP = readIf(...WRITING_DIR, 'references', 'revision-loop.md');
-const FORMAT = readIf('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const FORMAT = readIf('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const ISSUE_SESSION = readIf('skills', 'engineering', 'issue-session', 'SKILL.md');
 
 /** The body of `## <heading prefix>…` (up to the next `## ` heading), or '' when the heading is missing. */

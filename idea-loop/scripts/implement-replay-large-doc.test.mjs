@@ -92,7 +92,7 @@ test('setup 「规则回放 runner」 installs the runner only; its reference re
   assert.match(setupRef, /~\/\.idea-loop\/replay-queue\//, 'delete the old queue directory');
   assert.match(setupRef, /dyna retro install/);
   assert.match(setupRef, /允许规则/);
-  assert.ok(chars(setup) < 5000, `setup body is ${chars(setup)} characters`);
+  assert.ok(chars(setup) <= 4500, `setup body is ${chars(setup)} characters`);
 });
 
 test('implementer: a large case is only written and committed; the result of `--run-large` is the orchestrator\'s', () => {

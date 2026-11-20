@@ -55,7 +55,7 @@ test('the README names what a project writes: the 写作 and 配图 keys of SEO.
   for (const k of ['lint 配置', '补充 lint', '第二评委', '`SEO.md` 「配图」', '`blog-cover`', '`og-card`', 'DESIGN.md']) {
     assert.ok(BLOG.includes(k), `README blog section names ${k}`);
   }
-  assert.match(BLOG, /skills\/seo\/seo-setup\/references\/seo-md\.md/);
+  assert.match(BLOG, /skills\/engineering\/setup\/references\/seo\/seo-md\.md/);
 });
 
 test('the README architecture tree lists the writing loop tripwires; the lint itself is `dyna seo writing lint`, no script', () => {
@@ -90,10 +90,10 @@ test('every skill, script and SEO.md key the blog sections name exists', () => {
     ['skills', 'seo', 'cover', 'SKILL.md'],
     ['skills', 'seo', 'og', 'SKILL.md'],
     ['skills', 'engineering', 'issue-session', 'references', 'night-mode.md'],
-    ['skills', 'seo', 'seo-setup', 'references', 'seo-md.md'],
+    ['skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md'],
   ]) {
     assert.ok(existsSync(join(root, ...f)), `${f.join('/')} exists`);
   }
-  const format = readIf('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+  const format = readIf('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
   for (const k of ['lint 配置', '补充 lint', '第二评委', '## 配图']) assert.ok(format.includes(k), `the format file has ${k}`);
 });

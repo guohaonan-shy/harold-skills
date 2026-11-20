@@ -1,6 +1,6 @@
 # SEO 的 issue 分类
 
-seo-setup 第 6 步，补进 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节。存在就补上缺的行，格式照 setup 的模板：父类、子类各一行，名字放反引号里，「：」后接说明，子类缩进两格。
+SEO 模块第 6 步，补进 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节。存在就补上缺的行，格式照 setup 的模板：父类、子类各一行，名字放反引号里，「：」后接说明，子类缩进两格。
 
 ```markdown
 - `seo`：搜索可见性的问题：由 seo-scan 定时提出，或人按 SEO 问题提

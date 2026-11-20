@@ -1,6 +1,6 @@
 /**
  * Pins the sentences that make "seo 要用的项目信息：推测 → 人确认 → 写入 → 只读写着的" true in the
- * docs: the convention and the 每个方向要用的信息 table in seo-md.md, seo-scan's 缺口关卡, seo-setup
+ * docs: the convention and the 每个方向要用的信息 table in seo-md.md, seo-scan's 缺口关卡, the SEO module
  * writing `无`, and the two brand-term judges reading `无` as no brand terms.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to
@@ -16,12 +16,12 @@ const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 
 const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
-const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
 const OUTREACH = read('skills', 'seo', 'seo-outreach', 'SKILL.md');
 const WRITING = read('skills', 'seo', 'seo-writing', 'SKILL.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
-const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
+const PROJECT_CONTEXT = read('skills', 'engineering', 'setup', 'references', 'seo', 'project-context.md');
 const STOPS = read('skills', 'seo', 'seo-scan', 'references', 'stops.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
@@ -43,7 +43,7 @@ test('seo-md.md: the convention sits between 「每节读的人」 and 「不写
 
 test('seo-md.md: the convention says who infers, who confirms, what a skill reads and what a scan does when it is missing', () => {
   const c = section(FORMAT, '项目信息从哪来[^\\n]*');
-  assert.match(c, /seo-setup`? 推测/);
+  assert.match(c, /SEO 模块推测/);
   assert.match(c, /人确认/);
   assert.match(c, /skill 只读写着的/);
   assert.match(c, /seo-scan`? 开场[\s\S]*推测、停下等人确认/);
@@ -108,17 +108,17 @@ test('seo-scan: credits the gate spent count toward the run, and 预算 reads th
   assert.match(b, /开始余额[^\n]*第一次/, 'the run-start balance is the first reading, gate included');
 });
 
-test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
+test('seo-scan: does not point at the SEO module\'s private references (C1)', () => {
   const g = section(SCAN, '缺口关卡');
-  assert.ok(!/seo-md\.md/.test(SCAN), 'seo-md.md is seo-setup\'s own reference');
+  assert.ok(!/seo-md\.md/.test(SCAN), 'seo-md.md is the SEO module\'s own reference');
   assert.ok(!/格式定义/.test(g));
-  assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
+  assert.ok(!/setup[^\n]*references\/seo/.test(SCAN));
 });
 
-test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not through seo-setup\'s private references (#235)', () => {
+test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not through the SEO module\'s private references (#235)', () => {
   for (const [name, doc] of [['seo-outreach', OUTREACH], ['seo-writing', WRITING]]) {
-    assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is seo-setup's own reference`);
-    assert.ok(!/seo-setup[^\n]*references/.test(doc), `${name}: points into seo-setup's references`);
+    assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is the SEO module's own reference`);
+    assert.ok(!/setup[^\n]*references\/seo/.test(doc), `${name}: points into the SEO module's references`);
     assert.ok(!/格式见/.test(doc), `${name}: a format pointer is left over`);
     assert.match(doc, /dyna seo parse/, `${name}: reads SEO.md through the parse command`);
   }
@@ -143,7 +143,7 @@ test('seo-scan: the body stays under 5000 characters', () => {
   assert.ok([...body(SCAN)].length < 5000, `${[...body(SCAN)].length} characters`);
 });
 
-test('seo-setup: the brand step points at the convention and writes 无 for a blank answer', () => {
+test('the SEO module: the brand step points at the convention and writes 无 for a blank answer', () => {
   const brand = SETUP.split('\n').find((l) => l.startsWith('- **品牌**'));
   assert.match(brand, /项目信息从哪来/);
   assert.ok(!/不自己从域名推一个写进去/.test(brand), 'the brand-only rule moved into the convention');
@@ -174,7 +174,7 @@ test('seo-scan: the gate writes 无 into the project-context section when the hu
   assert.match(g, /不需要/, 'the question tells the human they may say 不需要');
 });
 
-test('seo-setup: a project-context section the human says is not needed is written 无, and 无 is not asked again (S3)', () => {
+test('the SEO module: a project-context section the human says is not needed is written 无, and 无 is not asked again (S3)', () => {
   assert.match(section(SETUP, '5\\. 同步进 OpenSEO 项目上下文'), /人说不需要的那一节[\s\S]*写 `无`/);
   assert.match(section(SETUP, '2\\. 读现状，备推荐值'), /写了 `无` 的节不再问/);
 });

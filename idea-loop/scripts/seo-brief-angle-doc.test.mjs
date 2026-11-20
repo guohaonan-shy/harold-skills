@@ -3,7 +3,7 @@
  * true in the docs: while drafting a SEO issue's spec the angle is settled by recommendation and the basis reads
  * 「AI 照推荐定」; a human asking for a brief directly still decides it. The two places are step 4 (角度候选) and
  * step 7 (the 「需要 grill：选题角度和论点」 line), and the intro and the template heading must not contradict them.
- * Also seo-setup's body stays under 5000 characters, with what moved out reachable by a pointer.
+ * Also the SEO module's steps file points at what moved out of it.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail
  * there first.
@@ -20,7 +20,7 @@ const read = (...p) => readFileSync(path(...p), 'utf8');
 const body = (md) => md.split(/^---\s*$/m).slice(2).join('---');
 
 const BRIEF = body(read('skills', 'seo', 'seo-brief', 'SKILL.md'));
-const SETUP = body(read('skills', 'seo', 'seo-setup', 'SKILL.md'));
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
 
 /** The body of `## <title>` (up to the next `## ` heading), or '' when the heading is missing. */
 function section(doc, title) {
@@ -57,15 +57,14 @@ test('seo-brief: the intro and the template heading do not say the angle is alwa
   assert.ok(!/#### 角度候选（需要人定）/.test(BRIEF), 'the template heading no longer says 需要人定 unconditionally');
 });
 
-test('seo-setup: the body stays under 5000 characters, and what moved out is reachable by a pointer', () => {
-  assert.ok([...SETUP].length < 5000, `${[...SETUP].length} characters`);
+test('setup\'s SEO module: what moved out of the steps file is reachable by a pointer', () => {
   for (const ref of ['issue-labels.md', 'ai-visibility.md']) {
-    assert.ok(SETUP.includes(`references/${ref}`), `SKILL.md points at references/${ref}`);
-    assert.ok(existsSync(path('skills', 'seo', 'seo-setup', 'references', ref)), `references/${ref} exists`);
+    assert.ok(SETUP.includes(`(${ref})`), `steps.md points at ${ref}`);
+    assert.ok(existsSync(path('skills', 'engineering', 'setup', 'references', 'seo', ref)), `references/${ref} exists`);
   }
-  const labels = read('skills', 'seo', 'seo-setup', 'references', 'issue-labels.md');
+  const labels = read('skills', 'engineering', 'setup', 'references', 'seo', 'issue-labels.md');
   for (const d of ['technical', 'pages', 'keywords', 'backlinks', 'geo']) assert.match(labels, new RegExp(`\`${d}\``));
-  const tracker = read('skills', 'seo', 'seo-setup', 'references', 'ai-visibility.md');
+  const tracker = read('skills', 'engineering', 'setup', 'references', 'seo', 'ai-visibility.md');
   for (const t of ['get_ai_visibility_tracker', 'estimate_ai_visibility_cost', 'save_ai_visibility_tracker', 'set_ai_visibility_schedule', 'appendResearchLog']) {
     assert.ok(tracker.includes(t), `ai-visibility.md keeps ${t}`);
   }

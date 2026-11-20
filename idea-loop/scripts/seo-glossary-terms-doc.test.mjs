@@ -29,7 +29,10 @@ const walk = (dir) =>
     return statSync(p).isDirectory() ? walk(p) : /\.(md|html|css|js|mjs)$/.test(n) ? [p] : [];
   });
 
-const seoDirs = ['cover', 'og', 'seo-brief', 'seo-setup', 'seo-writing'].map((d) => join(root, 'skills', 'seo', d));
+const seoDirs = [
+  ...['cover', 'og', 'seo-brief', 'seo-writing'].map((d) => join(root, 'skills', 'seo', d)),
+  join(root, 'skills', 'engineering', 'setup', 'references', 'seo'), // the SEO module of setup
+];
 const WRITING_SIDE = [
   ...seoDirs.flatMap(walk),
   join(root, 'skills', 'seo', 'README.md'),

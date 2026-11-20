@@ -132,7 +132,7 @@ test('seo-writing 写: the cover and OG paths the brief recorded go into each la
   assert.match(line, /各语言版本[^\n]*frontmatter/);
   assert.match(line, /SEO\.md「配图」节的封面字段、OG 字段/);
   assert.match(line, /人在场[^\n]*问[^\n]*托管[^\n]*同站已有文章[^\n]*找不到就不写/, 'same fallback as cover / og');
-  const keys = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+  const keys = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
   for (const k of ['封面字段', 'OG 字段']) assert.ok(keys.includes(k), `${k} is a key in the SEO.md format doc`);
 });
 

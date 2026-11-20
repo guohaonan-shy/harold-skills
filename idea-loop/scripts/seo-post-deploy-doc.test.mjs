@@ -23,7 +23,7 @@ const outcome = (text, name) => text.split(/\n(?=\d\. \*\*)/).find((s) => s.incl
 
 const MERGE = read('skills', 'engineering', 'pr-review', 'references', 'merge.md');
 const AUTO = read('skills', 'engineering', 'pr-review', 'references', 'seo-auto-merge.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const CHECK = section(MERGE, '上线后自查');
 
 test('merge.md has an 上线后自查 section, and 合并 points into it for both the human and the automatic path', () => {
