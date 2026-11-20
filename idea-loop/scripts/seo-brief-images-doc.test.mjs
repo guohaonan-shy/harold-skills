@@ -75,7 +75,7 @@ test('seo-brief step 4 points a human in the session at the one question, so the
 });
 
 test('配图 step: no recipe configured → default recipe, one sentence in the brief, never blocks', () => {
-  assert.match(IMAGES, /项目没配封面 \/ OG 配方，用的默认/);
+  assert.match(IMAGES, /项目没配出图配方，用的默认/);
   assert.match(IMAGES, /不阻塞/);
   assert.match(IMAGES, /人在场[^\n]*问[\s\S]*托管[^\n]*默认/, 'same fallback as cover / og: ask when a human is there, default when hosted');
 });
@@ -143,10 +143,10 @@ test('cover and og exist as skills the step can call', () => {
 });
 
 test('配图 step: a default recipe is also a verified row the caller writes, so the sentence reaches the PR description', () => {
-  const line = IMAGES.split('\n').find((l) => /^5\. \*\*没配配方\*\*/.test(l));
-  assert.ok(line, 'the 没配配方 item');
+  const line = IMAGES.split('\n').find((l) => /^5\. \*\*没配出图配方\*\*/.test(l));
+  assert.ok(line, 'the 没配出图配方 item');
   assert.match(line, /调用方（执行方）[^\n]*`verified`/);
   assert.match(line, /这一栏进 PR 描述/);
-  assert.ok(line.includes('`封面 / OG 配方 | 默认配方 | 项目没配封面 / OG 配方，用的默认`'), 'the row shape');
+  assert.ok(line.includes('`出图配方 | 默认出图配方 | 项目没配出图配方，用的默认`'), 'the row shape');
   assert.match(read('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
 });

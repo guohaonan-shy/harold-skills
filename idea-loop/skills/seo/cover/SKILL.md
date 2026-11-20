@@ -14,18 +14,18 @@ description: 文章的列表封面和顶部大图：新文要配图、标题或�
 
 完成条件：标题、slug、主体都有，主体说得出对应论点的哪一点。
 
-## 2. 取项目的配方
+## 2. 取项目的出图配方
 
 1. `node S/seo-md.mjs SEO.md`，取输出 `images` 的 `dir`、`tool`、`coverField`、`designMd`。没有 SEO.md 或没有「配图」节，它们全是空。
-2. 找 DESIGN.md：`git ls-files | grep -i 'DESIGN.md$'`。只有一份就读它；有几份，读 `images.designMd` 指的那份；没指定，人在场问读哪份，托管时按默认配方。
+2. 找 DESIGN.md：`git ls-files | grep -i 'DESIGN.md$'`。只有一份就读它；有几份，读 `images.designMd` 指的那份；没指定，人在场问读哪份，托管时按默认出图配方。
 3. 读它 front matter 的 `colors`、`typography` token，和 Components 章的 `blog-cover` 组件：logo 路径、底色、主体风格、生图提示词骨架。
-4. 定每一项的来源：`blog-cover` 在就用它；没有 `blog-cover`、没有 DESIGN.md、没有「配图」节，人在场问人这几项怎么定，托管时用默认配方，读 [R/default-recipe.md](references/default-recipe.md)。DESIGN.md 有色板的，默认配方的主色取 `colors` 里的主色 token。
+4. 定每一项的来源：`blog-cover` 在就用它；没有 `blog-cover`、没有 DESIGN.md、没有「配图」节，人在场问人这几项怎么定，托管时用默认出图配方，读 [R/default-recipe.md](references/default-recipe.md)。DESIGN.md 有色板的，默认出图配方的主色取 `colors` 里的主色 token。
 
-完成条件：底色、主体风格、logo、提示词骨架每一项有来源：`blog-cover`、DESIGN.md 的 token，或默认配方。
+完成条件：底色、主体风格、logo、提示词骨架每一项有来源：`blog-cover`、DESIGN.md 的 token，或默认出图配方。
 
 ## 3. 出图
 
-版面（所有配方都守）：
+版面（所有出图配方都守）：
 
 - 画布 1600×900。列表卡片（16:10）裁掉左右各约 5%，宽横幅（16:7）裁掉上下各约 11%：主体和 logo 放进离四边至少 12% 的内框。叠上去的标题落在画面下方，主体水平居中、竖直放在离顶 12% 到 67% 之间，下面三成留给标题。
 - 底色取中暗色调，没有大面积亮块，白色标题叠上去照样读得清。
@@ -34,7 +34,7 @@ description: 文章的列表封面和顶部大图：新文要配图、标题或�
 
 按 `images.tool` 走两条路：
 
-- **配了生图工具**：把配方的提示词骨架填上主体，调这个工具（MCP 工具名直接调，命令照项目写的跑），参数照工具自己的说明。输出不在图片目录就挪进去。图不合要求（主体偏、带了字）改提示词重出，不在像素上修。配方有 logo 的，生成的图当背景，照 [R/render.md](references/render.md) 叠 logo。
+- **配了生图工具**：把出图配方的提示词骨架填上主体，调这个工具（MCP 工具名直接调，命令照项目写的跑），参数照工具自己的说明。输出不在图片目录就挪进去。图不合要求（主体偏、带了字）改提示词重出，不在像素上修。出图配方有 logo 的，生成的图当背景，照 [R/render.md](references/render.md) 叠 logo。
 - **没配**（`无` 或没写）：自己渲 HTML → PNG，照 [R/render.md](references/render.md)，模板是 `R/cover-template.html`。
 
 重出（标题或论点变了）：主体按新论点重推，文件覆盖同名旧图。
@@ -63,6 +63,6 @@ description: 文章的列表封面和顶部大图：新文要配图、标题或�
 
 ## 交回
 
-写三件事：配方来源（项目的 `blog-cover`，或默认配方：此时写一句「项目没配封面配方，用的默认」）、PNG 的路径、写了哪些 frontmatter 字段。
+写三件事：出图配方来源（项目的 `blog-cover`，或默认出图配方：此时写一句「项目没配出图配方，用的默认」）、PNG 的路径、写了哪些 frontmatter 字段。
 
-用了默认配方，调用方（执行方）把这句写进它自己交回的 `verified`（这一栏进 PR 描述，合并的人在那里看到用了默认）：`封面配方 | 默认配方 | 项目没配封面配方，用的默认`。
+用了默认出图配方，调用方（执行方）把这句写进它自己交回的 `verified`（这一栏进 PR 描述，合并的人在那里看到用了默认）：`封面出图配方 | 默认出图配方 | 项目没配出图配方，用的默认`。

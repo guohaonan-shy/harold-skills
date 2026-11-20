@@ -31,7 +31,7 @@ test('cover: a model-invocable seo skill whose description routes only (a trigge
   assert.doesNotMatch(FRONT, /disable-model-invocation/);
   for (const trigger of ['做封面', '重出封面']) assert.ok(DESCRIPTION.includes(trigger), `description lacks 「${trigger}」: ${DESCRIPTION}`);
   assert.match(DESCRIPTION, /时用/);
-  for (const w of ['PNG', 'HTML', 'DESIGN.md', 'SEO.md', '默认配方', '1600']) assert.ok(!DESCRIPTION.includes(w), `description mentions 「${w}」: ${DESCRIPTION}`);
+  for (const w of ['PNG', 'HTML', 'DESIGN.md', 'SEO.md', '默认出图配方', '1600']) assert.ok(!DESCRIPTION.includes(w), `description mentions 「${w}」: ${DESCRIPTION}`);
 });
 
 test('cover: the body stays under 5000 characters', () => {
@@ -54,8 +54,8 @@ test('cover: finds DESIGN.md with git ls-files, reads the blog-cover component, 
   assert.match(BODY, /Components 章的 `blog-cover` 组件/);
   for (const part of ['logo 路径', '底色', '主体风格', '生图提示词骨架']) assert.ok(BODY.includes(part), `blog-cover field 「${part}」`);
   assert.match(BODY, /人在场问人/);
-  assert.match(BODY, /托管时用默认配方/);
-  assert.match(BODY, /项目没配封面配方，用的默认/);
+  assert.match(BODY, /托管时用默认出图配方/);
+  assert.match(BODY, /项目没配出图配方，用的默认/);
 });
 
 test('cover: the references it points at exist, and the template and crop check carry the pieces the doc relies on', () => {
@@ -72,7 +72,7 @@ test('cover: the plugin READMEs list it and design-modeling places brand image r
   assert.match(read('README.md'), /`seo-check`, `cover` \| SEO · solve/);
   assert.match(read('skills', 'seo', 'README.md'), /`cover`（/);
   const table = read('skills', 'design', 'design-modeling', 'SKILL.md');
-  assert.match(table, /博客封面、OG 卡这类品牌对外图的配方算 Components 章的组件/);
+  assert.match(table, /博客封面、OG 卡这类品牌对外图的出图配方算 Components 章的组件/);
 });
 
 test('cover: nothing in the skill carries a real project’s values', () => {
@@ -97,7 +97,7 @@ test('cover: a default recipe is also a verified row the caller writes, so the s
   const tail = BODY.split('## 交回')[1] ?? '';
   assert.match(tail, /调用方（执行方）[^\n]*`verified`/);
   assert.match(tail, /这一栏进 PR 描述/);
-  assert.ok(tail.includes('`封面配方 | 默认配方 | 项目没配封面配方，用的默认`'), 'the row shape');
+  assert.ok(tail.includes('`封面出图配方 | 默认出图配方 | 项目没配出图配方，用的默认`'), 'the row shape');
   // the route it relies on is the one the implement doc actually has
   assert.match(read('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
 });

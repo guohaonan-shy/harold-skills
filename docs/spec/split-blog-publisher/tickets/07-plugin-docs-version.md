@@ -11,13 +11,13 @@
 ## 验收标准
 - [x] idea-loop 的 README 和 seo 组说明写了博客 workflow、两个新 skill、写作 lint、项目要配的取值。
 - [x] 夜间模式说明写了 `premise` 照 spec 翻回 triage，跟 seo-writing 改稿循环参考里 premise 的去向对得上，有文档测试守住。
-- [x] `plugin.json` 的 version 升了 minor，marketplace 里的版本一致（如有）。
+- [x] `plugin.json` 的 version 升了 minor，marketplace 里的版本一致（如有）。（已由下面人的决定改为 patch：0.1.38）
 - [x] `REVIEW.md` 的验证命令全量通过。
 - [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
-- [ ] 人的决定（2026-11-20）：插件版本升 patch，不升 minor：从合并时 main 上的版本（现为 0.1.36）升到下一个 patch。人的原话：「插件版本还是patch」。
-- [ ] 人的决定（2026-11-20）：术语表加两条——「写作评委」（写作改稿循环里给稿件打分的子代理；_Avoid_：冷读评委、评委（单说指设计收敛的评审））、「出图配方」（封面、分享卡在 DESIGN.md 里的出图取值；_Avoid_：封面配方、OG 配方）；插件里这次新写的文字（seo-writing、seo-brief、cover、og、seo-setup 参考、seo 组说明）和它们的文档测试统一换成这两个叫法。人的原话：「缺的术语就按你说的补上就行」。
+- [x] 人的决定（2026-11-20）：插件版本升 patch，不升 minor：从合并时 main 上的版本（现为 0.1.36）升到下一个 patch。人的原话：「插件版本还是patch」。
+- [x] 人的决定（2026-11-20）：术语表加两条——「写作评委」（写作改稿循环里给稿件打分的子代理；_Avoid_：冷读评委、评委（单说指设计收敛的评审））、「出图配方」（封面、分享卡在 DESIGN.md 里的出图取值；_Avoid_：封面配方、OG 配方）；插件里这次新写的文字（seo-writing、seo-brief、cover、og、seo-setup 参考、seo 组说明）和它们的文档测试统一换成这两个叫法。人的原话：「缺的术语就按你说的补上就行」。
 
 ## 选中的存量回归
 - `no-project-leak.test.mjs`：说明里的例子。

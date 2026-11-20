@@ -49,10 +49,10 @@ test('SKILL.md: a loop step sits between 写 and 检查，交回, for 按 brief 
 
 test('SKILL.md: the step runs lint → judge → fix → back to lint, with the stop condition and the three-round cap', () => {
   assert.match(STEP, /1\. 跑 lint：通用写作 lint（带「写作」节的 `lintConfig`），再跑 `extraLint`/);
-  assert.match(STEP, /2\. 起冷读评委子代理，按 \[`references\/judge-rubric\.md`\]\(references\/judge-rubric\.md\)/);
-  assert.match(STEP, /`secondJudge`，它跟冷读评委一起打/);
-  assert.match(STEP, /3\. lint 的问题和评委的 `local` 问题自己改，回到 1/);
-  assert.match(STEP, /lint 一条问题没有、评委没有 `local` 问题，就是干净，结束/);
+  assert.match(STEP, /2\. 起写作评委子代理，按 \[`references\/judge-rubric\.md`\]\(references\/judge-rubric\.md\)/);
+  assert.match(STEP, /`secondJudge`，它跟写作评委一起打/);
+  assert.match(STEP, /3\. lint 的问题和写作评委的 `local` 问题自己改，回到 1/);
+  assert.match(STEP, /lint 一条问题没有、写作评委没有 `local` 问题，就是干净，结束/);
   assert.match(STEP, /最多三轮，三轮后没干净的写进交回的「没干净的」/);
   assert.match(STEP, /托管时中间不停/);
 });
@@ -68,14 +68,14 @@ test('SKILL.md: 无 or an empty extraLint / secondJudge skips that one, the loop
 });
 
 test('SKILL.md: a premise is not fixed by the writer, and goes back to triage through the issue session', () => {
-  assert.match(STEP, /评委报出 `premise`（改它要动论点、章节或事实断言）：不自己改/);
-  assert.match(STEP, /把评委原话写进交回的 `premise` 一节/);
+  assert.match(STEP, /写作评委报出 `premise`（改它要动论点、章节或事实断言）：不自己改/);
+  assert.match(STEP, /把写作评委原话写进交回的 `premise` 一节/);
   assert.match(STEP, /照 `issue-session`「起草中冒出了要人定的」把 issue 翻回 triage/);
   // the phrase it points at is the one issue-session actually has
   assert.ok(ISSUE_SESSION.includes('起草中冒出了要人定的'), 'issue-session has the 「起草中冒出了要人定的」 clause');
   assert.match(ISSUE_SESSION, /issues set <docs> triage/);
   const p = LOOP.split('\n## ').find((b) => b.startsWith('`premise`')) ?? '';
-  assert.match(p, /评委的原话/);
+  assert.match(p, /写作评委的原话/);
   assert.match(p, /已写的提交并 push/);
   assert.match(p, /issues set <docs> triage <号>/);
 });
@@ -89,8 +89,8 @@ test('SKILL.md: cover and og are called again when the title or the one-sentence
   assert.match(LOOP, /## 出图跟着变/);
 });
 
-test('SKILL.md: the handback gains lint 结果, 评委轮次, 没干净的 (and premise), each defined in the loop reference', () => {
-  for (const field of ['lint 结果', '评委轮次', '没干净的']) {
+test('SKILL.md: the handback gains lint 结果, 写作评委轮次, 没干净的 (and premise), each defined in the loop reference', () => {
+  for (const field of ['lint 结果', '写作评委轮次', '没干净的']) {
     assert.ok(HANDBACK.includes(field), `${field} is in the handback`);
     assert.match(LOOP.split('## 交回里多的三项')[1] ?? '', new RegExp(`\\*\\*${field}\\*\\*`), `${field} is defined in the loop reference`);
   }
@@ -139,7 +139,7 @@ test('judge-rubric.md: a score under 4 carries a finding, anti-Goodhart, a cold 
   assert.match(RUBRIC, /低于 4 分必须带至少一条 finding/);
   assert.match(RUBRIC, /## 防刷分（anti-Goodhart）/);
   assert.match(RUBRIC, /冷读者/);
-  assert.match(RUBRIC, /不给评委 brief、不给作者的话/);
+  assert.match(RUBRIC, /不给写作评委 brief、不给作者的话/);
 });
 
 test('judge-rubric.md: per-category bars are the project\'s, pointed at from the writing section, not in the plugin', () => {
@@ -153,8 +153,8 @@ test('revision-loop.md: the caller turns the three handback items into verified 
   // who does it, and why this column
   assert.match(tail, /调用方（执行方）把这三项写进它自己交回的 `verified`/);
   assert.match(tail, /这一栏进 PR 描述/);
-  // lint 结果 and 评委轮次: one verified row each
-  assert.match(tail, /lint 结果、评委轮次各写一行/);
+  // lint 结果 and 写作评委轮次: one verified row each
+  assert.match(tail, /lint 结果、写作评委轮次各写一行/);
   // 没干净的: one 没验成 row per item, handed to the human through the PR
   assert.match(tail, /没干净的逐条写成「没验成」行/);
   assert.match(tail, /\| 没验成：<为什么没改掉> \| 人（pr-review 照 PR 描述看）/);
@@ -168,7 +168,7 @@ test('revision-loop.md: the completion condition reads the same for a dirty and 
   const tail = LOOP.split('## 交回里多的三项')[1] ?? '';
   const done = (tail.match(/^完成条件：.*$/m) ?? [''])[0];
   // the two rows that always exist
-  assert.match(done, /lint 结果、评委轮次各有一行 `verified`/);
+  assert.match(done, /lint 结果、写作评委轮次各有一行 `verified`/);
   // the 没验成 rows exist per unfinished item, and an all-clean draft has none
   assert.match(done, /没干净的每条各有一行「没验成」/);
   assert.match(done, /全干净时没有这类行/);

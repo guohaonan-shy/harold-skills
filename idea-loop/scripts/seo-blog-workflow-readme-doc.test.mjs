@@ -44,9 +44,9 @@ test('idea-loop/README.md has a blog workflow section with the three steps and t
   assert.match(BLOG, /\*\*Publish\*\*[\s\S]*`seo-check`/);
 });
 
-test("the README says a `premise` goes back to triage with the judge's words, in night mode too", () => {
+test("the README says a `premise` goes back to triage with the writing judge's words, in night mode too", () => {
   assert.match(BLOG, /`premise`/);
-  assert.match(BLOG, /back to triage with the judge's own words/);
+  assert.match(BLOG, /back to triage with the writing judge's own words/);
   assert.match(BLOG, /night mode/);
   assert.match(BLOG, /references\/night-mode\.md/);
 });
@@ -74,7 +74,7 @@ test('skills/seo/README.md has the same workflow, the project keys, and lists co
   assert.ok(SEO_BLOG, 'a "## 博客 workflow" section exists');
   assert.match(SEO_BLOG, /1\. \*\*brief 出图\*\*[\s\S]*`cover`[\s\S]*`og`/);
   assert.match(SEO_BLOG, /2\. \*\*写作循环\*\*[\s\S]*`scripts\/writing-lint\.mjs`/);
-  assert.match(SEO_BLOG, /评论放评委原话/);
+  assert.match(SEO_BLOG, /评论放写作评委原话/);
   assert.match(SEO_BLOG, /night-mode\.md/);
   for (const k of ['lint 配置', '补充 lint', '第二评委', '「配图」', '`blog-cover`', '`og-card`']) {
     assert.ok(SEO_BLOG.includes(k), `seo README blog section names ${k}`);

@@ -32,7 +32,7 @@ OG 分享卡是文章被分享、被链接预览时露出的那张图，自带�
 
 ## 3. 选版式
 
-`node S/og-render.mjs layouts` 列出版式。「og-card」配方指定了版式就用它；没指定用 `poster`，三种的区别和什么文章用哪种看 [`references/layouts.md`](references/layouts.md)。
+`node S/og-render.mjs layouts` 列出版式。「og-card」出图配方指定了版式就用它；没指定用 `poster`，三种的区别和什么文章用哪种看 [`references/layouts.md`](references/layouts.md)。
 
 完成条件：版式名在 `layouts` 的输出里。
 
@@ -71,9 +71,9 @@ node S/og-render.mjs render <params.json> <图片目录，或 .tmp/og>/<文件�
 - `images.ogField` 的值写成图片的站点路径，形态照同一字段在已有文章里的写法；多语言版本各写各的。
 - 重渲同一个文件名后，预览服务在跑就 `node S/og-render.mjs md5 <png> --url <预览里这张图的地址>`：退出码 3 是服务器还给旧图，重启预览或换文件名；没有预览只记下 `md5`。
 
-交回写：版式、哪些取值来自项目、哪些用了默认（`defaults`），默认的写一句「项目没配 OG 配方，用的默认」，图的路径和 `md5`。
+交回写：版式、哪些取值来自项目、哪些用了默认（`defaults`），默认的写一句「项目没配出图配方，用的默认」，图的路径和 `md5`。
 
-用了默认，调用方（执行方）把这句写进它自己交回的 `verified`（这一栏进 PR 描述，合并的人在那里看到用了默认）：`分享卡配方 | 默认配方 | 项目没配 OG 配方，用的默认`。
+用了默认，调用方（执行方）把这句写进它自己交回的 `verified`（这一栏进 PR 描述，合并的人在那里看到用了默认）：`分享卡出图配方 | 默认出图配方 | 项目没配出图配方，用的默认`。
 
 完成条件：OG 字段写好；交回里有版式、默认项和 `md5`。
 

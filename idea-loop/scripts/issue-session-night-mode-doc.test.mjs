@@ -86,12 +86,12 @@ test('night mode sends a writing judge\'s `premise` back to triage with its word
   assert.ok(line, 'night-mode.md has a line about `premise`');
   assert.match(line, /seo-writing/);
   assert.match(line, /翻回 triage|triage <号>/);
-  assert.match(line, /评委原话/);
+  assert.match(line, /写作评委原话/);
   assert.match(line, /不按推荐改论点/);
   assert.match(line, /交回，不算停下/);
 
   const loop = read('skills', 'seo', 'seo-writing', 'references', 'revision-loop.md');
   const premise = loop.split(/^## /m).find((s) => s.startsWith('`premise`')) ?? '';
   assert.match(premise, /issues set <docs> triage/, 'the loop reference sends it to triage');
-  assert.match(premise, /评委原话/, 'with the judge\'s own words');
+  assert.match(premise, /写作评委原话/, 'with the judge\'s own words');
 });

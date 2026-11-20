@@ -73,7 +73,7 @@ test('the layouts the docs name are the templates on disk (2 to 3), and the defa
 });
 
 test('a project with no OG recipe is told so, and a missing image directory or field is looked up from the other articles of the site, and when it cannot be found the PNG waits in .tmp/og', () => {
-  assert.match(SKILL, /项目没配 OG 配方，用的默认/);
+  assert.match(SKILL, /项目没配出图配方，用的默认/);
   assert.match(SKILL, /托管时看同站已有文章里图片引用的目录/);
   assert.match(SKILL, /\.tmp\/og\//);
   assert.match(SKILL, /人在场就问/);
@@ -111,6 +111,6 @@ test('a default recipe is also a verified row the caller writes, so the sentence
   const tail = SKILL.split('## 6.')[1] ?? '';
   assert.match(tail, /调用方（执行方）[^\n]*`verified`/);
   assert.match(tail, /这一栏进 PR 描述/);
-  assert.ok(tail.includes('`分享卡配方 | 默认配方 | 项目没配 OG 配方，用的默认`'), 'the row shape');
+  assert.ok(tail.includes('`分享卡出图配方 | 默认出图配方 | 项目没配出图配方，用的默认`'), 'the row shape');
   assert.match(read('skills', 'engineering', 'implement', 'SKILL.md'), /\| `verified` \| PR 描述 \|/);
 });
