@@ -92,6 +92,8 @@
 | [[2026-11-02-issue-intake-priority-grill]] | conversation | 2026-11-02 | 讨论 —— issue 越做越多：开 issue 时就挂模块、判 P0，调度只给 P0 和本期焦点出卡片，停掉 cloud 整合 |
 | [[2026-10-30-issue-consolidation-grill]] | conversation | 2026-10-30 | 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现 |
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
+| [[2026-11-16-blog-workflow-grill]] | conversation | 2026-11-16 | grill —— #163 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用写作 lint、品牌取值扩 DESIGN.md |
+| [decisions/163](decisions/163.md) | conversation | 2026-11-16 | 决定记录 —— #163 blog-publisher 拆分：博客 workflow 进 idea-loop seo 组，摆过的题与 retro 候选的结果 |
 | [[2026-11-16-sections-browser-test-slow]] | conversation | 2026-11-16 | #192 triage：设计档案浏览器测试单跑近 6 分钟、拖住全量测试，人选移出全量命令并加每例超时 |
 | [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
