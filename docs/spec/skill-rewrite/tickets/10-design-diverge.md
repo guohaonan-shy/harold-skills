@@ -26,3 +26,4 @@
 ## 选中的存量回归
 
 - `refine-round-flow-doc`、`after-freeze-exit-doc`、`research-light-doc`、`research-baseline`、`ui-master-doc`、`design-change-final-version-doc`、`pending-design-doc`、`seo-results-report-doc`、`skill-private-references` 测试。
+- [ ] review 第 1 轮 C1（2026-11-20）：uiux-imagine 的「开工前」「收工」、uiux-refine 的「开工前」三步，完成条件放在步骤结尾，不放开头（writing-for-agents：「每一步都以一个**完成条件**结尾」）
