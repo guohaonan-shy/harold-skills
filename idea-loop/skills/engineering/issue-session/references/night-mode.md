@@ -9,6 +9,7 @@
 - 起草 spec 冒出的「待定」「需要 grill」：照 [draft-spec.md](draft-spec.md) 里「AI 照推荐定」的写法自己定完，不翻回 triage。
 - 实现和 review 里：把「夜间模式，人不在，按推荐：<推荐原文>」当作这一条的批示记进 review loop 文件，之后照原来人批示后的处理走（`idea-loop:implement` 的「人回复后」、`idea-loop:pr-review` 的「处理条目」），不等人。
 - 只有人能做的设计（画布没冻结、要先 `/idea-loop:uiux-imagine`）推荐替代不了：照 draft-spec.md 的做法 `issues set <docs> triage` 翻回去并留评论，去「收尾」（夜里的收尾不起 retro，见下）。这是交回，不算停下等人。
+- `idea-loop:seo-writing` 的写作评委报出 `premise`（论点、章节或事实断言要变）：角度是人定的，推荐替代不了。已写的提交并 push，`issues set <docs> triage <号> --comment=<写作评委原话和分支名>`，不按推荐改论点，去「收尾」。这是交回，不算停下等人。
 
 **每定一条，当场记进 PR 描述的「夜里替你定的」**：先 `pr-body.mjs get` 取现有的内容，追加一条，再 `set` 写回（用 Skill 工具调 `idea-loop:pr`，看它的「PR 描述」；几个仓库的写在主 PR 上）。PR 还没开出来时定的，开出来后立刻写。一条写什么：选了什么、为什么、另一种是什么，用人话写，格式见 `idea-loop:pr` 的「PR 描述」。
 
