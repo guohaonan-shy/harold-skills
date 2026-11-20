@@ -2,8 +2,8 @@
  * Tripwire — `idea-loop:design-modeling`'s SKILL.md stays inside the body limit; the write path that only a run that
  * really writes `DESIGN.md` walks lives behind a pointer in `references/write.md`.
  *
- * Spec skill-body-limit-backlog, ticket 01. The body was 5485 characters (the limit in AGENTS.md「标准 plugin 目录结构」
- * is 5000: UTF-8 characters after the frontmatter, `awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`).
+ * The body was 5485 characters when 「一次写入怎么走」 moved out; the limit is now the 4500 line (writing-for-agents 「4500 线」;
+ * UTF-8 characters after the frontmatter, `awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`).
  * Runs that only write a design-law candidate or judge admission do not walk 「一次写入怎么走」, so it moved whole into
  * references/write.md; the title stayed because design-steward, dreaming and uiux-imagine cite it by name. This test
  * catches the body growing back, the title or the pointer disappearing, the steps being written twice, and the
@@ -40,9 +40,17 @@ function section(doc, title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
-test('design-modeling SKILL.md body is under 5000 characters (the limit in AGENTS.md)', () => {
+test('design-modeling SKILL.md body is under the 4500-character line (writing-for-agents 「4500 线」)', () => {
   const n = [...body(skill)].length;
-  assert.ok(n < 5000, `design-modeling body is ${n} characters`);
+  assert.ok(n < 4500, `design-modeling body is ${n} characters`);
+});
+
+test('「设计法候选的形态」 keeps its title and points at references/candidate.md, where the format lives', () => {
+  const text = section(skill, '设计法候选的形态');
+  assert.match(text, /references\/candidate\.md/);
+  assert.doesNotMatch(text, /并进：/, 'the format block moved to the reference');
+  const ref = readFileSync(join(skillDir, 'references', 'candidate.md'), 'utf8');
+  for (const k of ['并进：', '为什么：', '证据：']) assert.ok(ref.includes(k), `candidate.md lost ${k}`);
 });
 
 test('「一次写入怎么走」 keeps its title and is a one-sentence pointer to references/write.md that opens with the condition', () => {
