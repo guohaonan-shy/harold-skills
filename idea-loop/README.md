@@ -145,9 +145,9 @@ it worked, but carried one person's words from GitHub back into the session they
   and says so in its hand-back; a legacy problem that spoils the ticket's input or turns CI red is
   fixed in this ticket and reported as such, while an unrelated one becomes an issue the orchestrator opens (the reviewer does not hunt for legacy problems) (`skills/productivity/decision-rules/SKILL.md` 的「核心」). Everything else keeps going. A behaviour that is decided but cannot be proven inside this ticket
   is deferred to a named receiver; no receiver means it was undecided after all.
-- **Bot identity.** The archive comments posted at merge come from the repository's GitHub App
+- **Posting identity.** The archive comments posted at merge come from the repository's GitHub App
   when `~/.idea-loop/github-apps.json` configures one (Pull requests write, Contents read); otherwise
-  from the gh login, saying up front that Claude posted them. Claude never speaks as the human.
+  from the gh login; neither adds a signature line to the body.
 - **Delivery evidence never enters the code branch or `docs/`.** It lives on one orphan branch per
   PR (`scripts/evidence.mjs`), never merged, deleted when the PR merges, and is embedded as
   `blob/<branch>/<file>?raw=true` so clicking an image opens it full size instead of downloading it
