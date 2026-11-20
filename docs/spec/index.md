@@ -24,5 +24,6 @@
 | [[skill-body-limit-backlog]] | idea-loop 两份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references |
 | [[split-blog-publisher]] | 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用 lint，项目取值走 SEO.md 与 DESIGN.md |
 | [[subagent-handback-lost-turn]] | 交回后卡住是那一轮模型请求断了或挂住，被平台合成回复关掉；网络问题，idea-loop 不加机制 |
+| [[ui-measure-matrix-gaps]] | ui-measure 补三样能力（只比一个锚点区域、颜色换算后再比、减弱动效格）并去掉两类假红（小数像素、margin/gap） |
 | [[ui-ticket-canvas-in-worktree]] | UI 工单参考里画布在不在执行方 worktree 的两处说法统一：画布在，delta 不在，都走 tmp 绝对路径 |
 | [[wiki-conventions-slim]] | wiki-conventions 主体从 7854 字缩到 5000 字以下：只有部分调用方用到的细节外置成 references |
