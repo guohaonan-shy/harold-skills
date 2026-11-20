@@ -266,7 +266,7 @@ func TestInTheDesktopTheMagiOnlyFlagsAreAcceptedAndIgnored(t *testing.T) {
 	h := setupHandoff(t)
 	m := setupMagi(t)
 	t.Setenv("FAKE_MODE", "")
-	r := dyna(map[string]string{"HOME": h.home, "IDEA_LOOP_HANDOFF_MAGI": m.fake}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree, "--idle-ms", "300",
+	r := dyna(map[string]string{"HOME": h.home, "IDEA_LOOP_HANDOFF_MAGI": m.fake}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree,
 		"--cap", "magi", "--prompt-file", filepath.Join(h.root, "nowhere.md"), "--issue", "302", "--repo", "demo", "--period", "todo", "--dir", h.dir)
 	if r.code != 0 || !strings.Contains(r.stdout, `"desktopSessionId":"local_fake-session-123"`) {
 		t.Fatal(r.all())

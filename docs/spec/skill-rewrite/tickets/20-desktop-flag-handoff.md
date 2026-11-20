@@ -18,12 +18,12 @@
 
 ## 验收标准
 
-- [ ] 桌面端 `dyna runtime handoff` 第二步调 `claude --desktop --resume <id>`，cwd 是 `--worktree`；成功打印的 JSON、追加的调度记录与改前同形：Go 测试用假 claude 验证。
-- [ ] `claude --desktop` 失败（退出非零、超时）时退出 1、stderr「交出失败：…」带原因，不写调度记录：Go 测试覆盖。
-- [ ] 源码、说明、登记表 0.0.5 里不再有 `expect` 这条路（历史登记表 0.0.1–0.0.4 不动）；`runtime/claude-desktop.md` 开场注入的长度比改前短，交回里贴改前改后字数。
-- [ ] magi 那一支的测试原样全绿。
-- [ ] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全绿；node 全量测试除 plugin-version（预期红）外全绿；`dyna-scan`、`dyna-version`、`session-start-inject` 绿。
-- [ ] 人验：在本机真跑一次，确认 `claude --desktop --resume <id>` 能把 `claude -p` 建出的会话交到桌面端侧边栏（⏭ 延后 → PR 交付验收：执行方不在真机上开桌面端会话，由人验）。
+- [x] 桌面端 `dyna runtime handoff` 第二步调 `claude --desktop --resume <id>`，cwd 是 `--worktree`；成功打印的 JSON、追加的调度记录与改前同形：Go 测试用假 claude 验证。
+- [x] `claude --desktop` 失败（退出非零、超时）时退出 1、stderr「交出失败：…」带原因，不写调度记录：Go 测试覆盖。
+- [x] 源码、说明、登记表 0.0.5 里不再有 `expect` 这条路（历史登记表 0.0.1–0.0.4 不动）；`runtime/claude-desktop.md` 开场注入的长度比改前短，交回里贴改前改后字数。
+- [x] magi 那一支的测试原样全绿。
+- [x] `cd dyna && go vet ./... && gofmt -l . && go test ./...` 全绿；node 全量测试除 plugin-version（预期红）外全绿；`dyna-scan`、`dyna-version`、`session-start-inject` 绿。
+- [ ] 人验：在本机真跑一次，确认 `claude --desktop --resume <id>` 能把 `claude -p` 建出的会话交到桌面端侧边栏。 ⏭ 延后 → PR 交付验收：执行方不在真机上开桌面端会话，由人验。
 
 ## 选中的存量回归
 

@@ -125,12 +125,12 @@ func Command(d Deps) *cobra.Command {
 	})
 	show.Args = cobra.ArbitraryArgs
 
-	handoff := leaf("handoff", "开一个 issue 会话（调度用），命令自己认当前运行环境：桌面端先 claude -p 建会话、读 id，再在交互模式接回并敲 /desktop；magi 下跑 magi sessions start（要 --worktree、--issue、--repo、--period、--prompt-file）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+	handoff := leaf("handoff", "开一个 issue 会话（调度用），命令自己认当前运行环境：桌面端先 claude -p 建会话、读 id，再 claude --desktop --resume <id> 交到桌面；magi 下跑 magi sessions start（要 --worktree、--issue、--repo、--period、--prompt-file）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		f := cmd.Flags()
 		o := HandoffOptions{Given: map[string]bool{}}
 		for name, dst := range map[string]*string{
 			"worktree": &o.Worktree, "issue": &o.Issue, "repo": &o.Repo, "period": &o.Period, "claude": &o.Claude,
-			"timeout-sec": &o.Timeout, "p-timeout-sec": &o.PTimeout, "idle-ms": &o.Idle, "dir": &o.Dir,
+			"timeout-sec": &o.Timeout, "p-timeout-sec": &o.PTimeout, "dir": &o.Dir,
 			"prompt-file": &o.PromptFile, "magi": &o.Magi,
 		} {
 			*dst, _ = f.GetString(name)
@@ -156,9 +156,8 @@ func Command(d Deps) *cobra.Command {
 	handoff.Flags().String("repo", "", "仓库名，记录文件是 <记录目录>/<仓库名>.json")
 	handoff.Flags().String("period", "", "时段标签（todo 或 triage），早上汇总靠它找夜里开出的会话")
 	handoff.Flags().String("claude", "", "claude 可执行文件（环境变量 DESKTOP_HANDOFF_CLAUDE；默认 claude）")
-	handoff.Flags().String("timeout-sec", "", "交互那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）")
+	handoff.Flags().String("timeout-sec", "", "claude --desktop 那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）")
 	handoff.Flags().String("p-timeout-sec", "", "claude -p 那一步最多等几秒（环境变量 DESKTOP_HANDOFF_P_TIMEOUT_SEC；默认 180）")
-	handoff.Flags().String("idle-ms", "", "接回的会话安静多少毫秒后才敲 /desktop（默认 2500）")
 	handoff.Flags().String("dir", "", "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）")
 
 	handoff.Flags().StringArray("cap", nil, "magi：会话可以用的能力，可重复（如 magi、browser、issue 平台的 MCP 服务器名）；桌面端不读")

@@ -2359,7 +2359,7 @@
       "command": "runtime handoff",
       "module": "runtime",
       "use": "handoff",
-      "summary": "开一个 issue 会话（调度用），命令自己认当前运行环境：桌面端先 claude -p 建会话、读 id，再在交互模式接回并敲 /desktop；magi 下跑 magi sessions start（要 --worktree、--issue、--repo、--period、--prompt-file）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」",
+      "summary": "开一个 issue 会话（调度用），命令自己认当前运行环境：桌面端先 claude -p 建会话、读 id，再 claude --desktop --resume <id> 交到桌面；magi 下跑 magi sessions start（要 --worktree、--issue、--repo、--period、--prompt-file）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」",
       "caller": "session",
       "next": "",
       "args": [
@@ -2384,13 +2384,6 @@
           "required": false,
           "value": "string",
           "description": "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）"
-        },
-        {
-          "name": "idle-ms",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "接回的会话安静多少毫秒后才敲 /desktop（默认 2500）"
         },
         {
           "name": "issue",
@@ -2439,7 +2432,7 @@
           "kind": "flag",
           "required": false,
           "value": "string",
-          "description": "交互那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）"
+          "description": "claude --desktop 那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）"
         },
         {
           "name": "worktree",

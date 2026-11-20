@@ -2,12 +2,11 @@ package runtime
 
 // Open an issue session unattended and hand it to Claude Desktop as an ordinary sidebar session.
 //
-// Why two steps: `claude -p` runs without anyone present but its session is invisible to the desktop app, and
-// `/desktop` does not exist in `-p` mode ("/desktop isn't available in this environment"). So this runs
-// `claude -p` once to create a session and read its id, then resumes that session in interactive mode (under
-// `expect`, which supplies the terminal) and types `/desktop`. The desktop app then shows it as the session
-// `local_<same id>`. Nothing else happens here: no task is sent, no title set, no group moved; the caller does
-// those with its session-management tools.
+// Why two steps: `claude -p` runs without anyone present but its session is invisible to the desktop app. So this
+// runs `claude -p` once to create a session and read its id, then `claude --desktop --resume <id>`, which opens
+// that session in the desktop app. The desktop app then shows it as the session `local_<same id>`. Nothing else
+// happens here: no task is sent, no title set, no group moved; the caller does those with its session-management
+// tools.
 
 import (
 	"bytes"
@@ -19,185 +18,15 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
-	"unicode"
 )
 
 // ReadyPrompt is what the `claude -p` step is asked; its answer does not matter, only that a session exists.
 const ReadyPrompt = "只回一个字：就绪"
-
-// successText is what the resumed session prints once the hand-over worked. 2.1.327 prints "Opening in Claude
-// Desktop…"; the spec's shorter wording is accepted too.
-var successText = regexp.MustCompile(`Opening (?:in )?Claude Desktop`)
-
-const successLabel = "「Opening Claude Desktop」"
-
-// expectScript takes its inputs from the environment (expect -c leaves no room for argv): HANDOFF_CLAUDE,
-// HANDOFF_SESSION, HANDOFF_IDLE_MS, HANDOFF_TIMEOUT_SEC. Everything the resumed claude prints goes to stdout. Exit:
-// 0 = /desktop was typed and the session either ended or the deadline came (the caller reads the screen to tell
-// success from failure), 3 = the session never went quiet before the deadline, 4 = it ended before /desktop could
-// be typed.
-const expectScript = `
-set claude $env(HANDOFF_CLAUDE)
-set sid $env(HANDOFF_SESSION)
-set idle [expr {$env(HANDOFF_IDLE_MS) / 1000.0}]
-set limit $env(HANDOFF_TIMEOUT_SEC)
-set deadline [expr {[clock seconds] + $limit}]
-set timeout -1
-log_user 1
-spawn $claude --resume $sid
-set pid [exp_pid]
-proc leave {code} {
-  global pid
-  catch {exec kill -9 $pid}
-  catch {close}
-  catch {wait}
-  exit $code
-}
-# type /desktop only once the resumed session has stopped printing
-set quiet 0
-while {!$quiet} {
-  set left [expr {$deadline - [clock seconds]}]
-  if {$left <= 0} { leave 3 }
-  set timeout [expr {$idle < $left ? $idle : $left}]
-  expect {
-    -re {.+} { exp_continue }
-    timeout { set quiet 1 }
-    eof { leave 4 }
-  }
-}
-send "/desktop"
-sleep 0.4
-send "\r"
-set left [expr {$deadline - [clock seconds]}]
-if {$left <= 0} { leave 0 }
-set timeout $left
-expect {
-  -re {.+} { exp_continue -continue_timer }
-  timeout { leave 0 }
-  eof { leave 0 }
-}
-leave 0
-`
-
-// RenderScreen is what the terminal would show after raw was printed: the resumed claude repaints with cursor
-// moves, so "Opening Claude Desktop…" is never one contiguous run in the byte stream (it arrives as "Op" +
-// "ning Claude…" over the previous line). Handles carriage return, line feed, cursor up/down/forward/back/column,
-// erase line.
-func RenderScreen(raw string) string {
-	rows := map[int][]rune{}
-	r, c := 0, 0
-	row := func(n int) []rune {
-		if _, ok := rows[n]; !ok {
-			rows[n] = []rune{}
-		}
-		return rows[n]
-	}
-	chars := []rune(raw)
-	for i := 0; i < len(chars); i++ {
-		ch := chars[i]
-		switch {
-		case ch == '\x1b':
-			var next rune
-			if i+1 < len(chars) {
-				next = chars[i+1]
-			}
-			switch next {
-			case '[':
-				j := i + 2
-				params := ""
-				for j < len(chars) && chars[j] >= '0' && chars[j] <= '?' {
-					params += string(chars[j])
-					j++
-				}
-				for j < len(chars) && chars[j] >= ' ' && chars[j] <= '/' {
-					j++
-				}
-				var fin rune
-				if j < len(chars) {
-					fin = chars[j]
-				}
-				i = j
-				if strings.HasPrefix(params, "?") || strings.HasPrefix(params, ">") || strings.HasPrefix(params, "<") {
-					continue
-				}
-				n, hasN := leadingInt(params)
-				k := 1
-				if hasN && n > 1 {
-					k = n
-				}
-				switch fin {
-				case 'A':
-					r -= k
-				case 'B':
-					r += k
-				case 'C':
-					c += k
-				case 'D':
-					c = max(0, c-k)
-				case 'G':
-					c = k - 1
-				case 'H':
-					r, c = 0, 0
-				case 'K':
-					if hasN && n == 2 {
-						rows[r] = []rune{}
-					} else if line := row(r); len(line) > c {
-						rows[r] = line[:c]
-					}
-				}
-			case '(', ')':
-				i += 2
-			default:
-				i++
-			}
-		case ch == '\r':
-			c = 0
-		case ch == '\n':
-			r++
-		case ch >= ' ':
-			line := row(r)
-			for len(line) < c {
-				line = append(line, ' ')
-			}
-			if c < len(line) {
-				line[c] = ch
-			} else {
-				line = append(line, ch)
-			}
-			rows[r] = line
-			c++
-		}
-	}
-	keys := make([]int, 0, len(rows))
-	for k := range rows {
-		keys = append(keys, k)
-	}
-	sort.Ints(keys)
-	lines := make([]string, 0, len(keys))
-	for _, k := range keys {
-		lines = append(lines, strings.TrimRightFunc(string(rows[k]), unicode.IsSpace))
-	}
-	return strings.Join(lines, "\n")
-}
-
-// leadingInt is JavaScript's parseInt(s, 10): the digits at the start, if any.
-func leadingInt(s string) (int, bool) {
-	end := 0
-	for end < len(s) && s[end] >= '0' && s[end] <= '9' {
-		end++
-	}
-	if end == 0 {
-		return 0, false
-	}
-	n, err := strconv.Atoi(s[:end])
-	return n, err == nil
-}
 
 // tailChars is the last n characters of s.
 func tailChars(s string, n int) string {
@@ -270,68 +99,39 @@ func createSession(claude, cwd string, timeoutSec float64) (string, error) {
 	return id, nil
 }
 
-// handOff resumes the session interactively and types /desktop; nil when the success text showed up.
-func handOff(claude, cwd, sessionID string, idleMs, timeoutSec float64) error {
-	cmd := exec.Command("expect", "-c", expectScript)
+// handOff runs `claude --desktop --resume <id>` in cwd and judges it by its exit code: nil when it exits 0. A run
+// that is still going after timeoutSec is killed together with everything it started.
+func handOff(claude, cwd, sessionID string, timeoutSec float64) error {
+	cmd := exec.Command(claude, "--desktop", "--resume", sessionID)
 	cmd.Dir = cwd
-	cmd.Env = append(os.Environ(),
-		"HANDOFF_CLAUDE="+claude,
-		"HANDOFF_SESSION="+sessionID,
-		"HANDOFF_IDLE_MS="+seconds(idleMs),
-		"HANDOFF_TIMEOUT_SEC="+seconds(timeoutSec),
-	)
-	var out, errOut bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &out, &errOut
+	var out bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &out, &out
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.WaitDelay = 3 * time.Second
 	if err := cmd.Start(); err != nil {
-		if errors.Is(err, exec.ErrNotFound) {
-			return errors.New("找不到 expect（交互模式要靠它提供终端）")
-		}
-		return err
+		return fmt.Errorf("claude --desktop 没跑成：%v", err)
 	}
 	pid := cmd.Process.Pid
-	// the backstop: expect has its own deadline, this one only fires if expect itself hangs
-	watchdog := time.AfterFunc(time.Duration((timeoutSec+10)*float64(time.Second)), func() { killGroup(pid) })
+	var timedOut atomic.Bool
+	timer := time.AfterFunc(time.Duration(timeoutSec*float64(time.Second)), func() {
+		timedOut.Store(true)
+		killGroup(pid)
+	})
 	err := cmd.Wait()
-	watchdog.Stop()
+	timer.Stop()
 	killGroup(pid) // nothing from that process group outlives us
-
-	code := 0
+	said := tailChars(strings.TrimSpace(out.String()), 300)
+	if timedOut.Load() {
+		return fmt.Errorf("claude --desktop 超过 %s 秒没结束（会话 %s）：%s", seconds(timeoutSec), sessionID, said)
+	}
 	var exit *exec.ExitError
 	switch {
 	case errors.As(err, &exit):
-		code = exit.ExitCode() // -1 when it was killed by a signal
+		return fmt.Errorf("claude --desktop 退出码 %d（会话 %s）：%s", exit.ExitCode(), sessionID, said)
 	case err != nil && !errors.Is(err, exec.ErrWaitDelay):
-		return err
+		return fmt.Errorf("claude --desktop 没跑成：%v", err)
 	}
-	screen := RenderScreen(out.String())
-	var shown []string
-	for _, l := range strings.Split(screen, "\n") {
-		if l != "" {
-			shown = append(shown, l)
-		}
-	}
-	if len(shown) > 6 {
-		shown = shown[len(shown)-6:]
-	}
-	tail := tailChars(strings.Join(shown, " | "), 300)
-	switch {
-	case code == 3 || code == -1:
-		return fmt.Errorf("%s 秒内会话没安静下来，没来得及敲 /desktop（会话 %s）：%s", seconds(timeoutSec), sessionID, tail)
-	case code == 4:
-		return fmt.Errorf("交互模式的 claude 在能敲 /desktop 之前就退出了：%s", tail)
-	case code != 0:
-		said := errOut.String()
-		if said == "" {
-			said = tail
-		}
-		return fmt.Errorf("expect 退出码 %d：%s", code, headChars(strings.TrimSpace(said), 300))
-	}
-	if successText.MatchString(screen) {
-		return nil
-	}
-	return fmt.Errorf("敲了 /desktop，%s 秒内（或到它退出为止）没看到%s（会话 %s）：%s", seconds(timeoutSec), successLabel, sessionID, tail)
+	return nil
 }
 
 var repoName = regexp.MustCompile(`^\w[\w.-]*$`)
@@ -394,14 +194,14 @@ type result struct {
 // HandoffOptions are the parameters of `runtime handoff`, as the flags gave them (strings: the old script took
 // any positive number for the seconds, not only whole ones).
 type HandoffOptions struct {
-	Worktree, Issue, Repo, Period, Claude, Timeout, PTimeout, Idle, Dir string
+	Worktree, Issue, Repo, Period, Claude, Timeout, PTimeout, Dir string
 	// PromptFile, Magi and Caps are for a magi session; a desktop hand-over does not read them.
 	PromptFile, Magi string
 	Caps             []string
 	Given            map[string]bool
 }
 
-const handoffUsage = "usage: dyna runtime handoff [--worktree <dir>] [--issue <n> --repo <name> --period <label>] [--cap <name>]... [--prompt-file <file>] [--claude <bin>] [--magi <bin>] [--timeout-sec N] [--p-timeout-sec N] [--idle-ms N] [--dir <records-dir>]"
+const handoffUsage = "usage: dyna runtime handoff [--worktree <dir>] [--issue <n> --repo <name> --period <label>] [--cap <name>]... [--prompt-file <file>] [--claude <bin>] [--magi <bin>] [--timeout-sec N] [--p-timeout-sec N] [--dir <records-dir>]"
 
 // parseSeconds is a number from a flag or an environment variable; 0 when it is not one.
 func parseSeconds(v string) float64 {
@@ -462,8 +262,7 @@ func Handoff(o HandoffOptions, env func(string) string, cwdDefault string, now f
 	number := parseSeconds
 	timeoutSec := number(pick(o.Timeout, o.Given["timeout-sec"], "DESKTOP_HANDOFF_TIMEOUT_SEC", "90"))
 	pTimeoutSec := number(pick(o.PTimeout, o.Given["p-timeout-sec"], "DESKTOP_HANDOFF_P_TIMEOUT_SEC", "180"))
-	idleMs := number(pick(o.Idle, o.Given["idle-ms"], "", "2500"))
-	for _, n := range []float64{timeoutSec, pTimeoutSec, idleMs} {
+	for _, n := range []float64{timeoutSec, pTimeoutSec} {
 		if !(n > 0) || n > 1e9 {
 			return fail("超时和等待时间要是正数")
 		}
@@ -471,7 +270,7 @@ func Handoff(o HandoffOptions, env func(string) string, cwdDefault string, now f
 
 	sessionID, err := createSession(claude, cwd, pTimeoutSec)
 	if err == nil {
-		err = handOff(claude, cwd, sessionID, idleMs, timeoutSec)
+		err = handOff(claude, cwd, sessionID, timeoutSec)
 	}
 	if err != nil {
 		return fail(err.Error())

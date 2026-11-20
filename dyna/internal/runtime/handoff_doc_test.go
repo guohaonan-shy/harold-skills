@@ -98,7 +98,7 @@ func TestTheSharedCommandSentenceNamesOnlyFlagsTheCommandHasAndTheFailureShapeIt
 
 func TestWhatDiffersByRuntimeStaysAfterTheSharedSentence(t *testing.T) {
 	desktop, magi := showSessions(t, "claude-desktop"), showSessions(t, "magi")
-	for _, want := range []string{"`claude -p`", "`/desktop`", "`expect`", "`start_session`", "归位", "发任务"} {
+	for _, want := range []string{"`claude -p`", "`claude --desktop --resume <id>`", "`start_session`", "归位", "发任务"} {
 		if !strings.Contains(desktop, want) {
 			t.Errorf("claude-desktop lacks %q", want)
 		}
