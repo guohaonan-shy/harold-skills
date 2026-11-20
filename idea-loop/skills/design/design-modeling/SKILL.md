@@ -35,10 +35,11 @@ front matter 之后，正文用 `##` 二级标题，只用下面这些章，按�
 | Layout | 间距、栅格、留白 |
 | Elevation & Depth | 层级怎么表达 |
 | Shapes | 圆角与形状规则 |
-| Components | 组件配方（含状态） |
+| Motion | 动效的全局原则与禁令 |
+| Voice & Content Strategy | 界面文案：语气、空 / 加载 / 错误状态说什么 |
+| Components | 组件配方（含状态）；一类界面必须用的共用实现 |
 | Do's and Don'ts | 可判定的约束 |
 | Responsive Behavior（扩展） | 断点、折叠、触控尺寸 |
-| Motion（扩展） | 动效的全局原则与禁令 |
 | Known Gaps（扩展） | 没覆盖什么 |
 
 ## 五条写法规则

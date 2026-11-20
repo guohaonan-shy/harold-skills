@@ -16,17 +16,17 @@ idea-loop 插件里管 DESIGN.md 的规则（design-modeling 这个 skill 和它
 
 ## 验收标准
 
-- [ ] 新增文档检查 `design-shared-implementations-doc.test.mjs`（照已有的 design-modeling 精简文档检查的写法），先在改前的主分支版本上跑见红，改后全绿。它至少断言下面四格。
-- [ ] Components 的写法里有「共用实现」条目，含 `@` 指针、用在、可变、不许自画、检查五项，并写明整页共用视图以这种条目进、条目不重抄外观、不进 front matter。
-- [ ] UI 工单参考里有「查共用实现条目、命中就用、超出可变就停下」。
-- [ ] 两份对账参考都有「共用实现」一类发现，含指针失效、缺检查、豁免条数与上次比三种处置。
-- [ ] design-modeling 的 SKILL.md 章节表、章节写法参考、插件的 design-modeling 人读文档三处，都按官方顺序列出 Motion、Voice & Content Strategy、Components、Do's and Don'ts；章节写法参考有 Voice 章，术语一条指向 `GLOSSARY.md`。
-- [ ] 新建与蒸馏两份参考按「要建什么」第 2 条改到。
-- [ ] 已有检查不回退：design-modeling 精简文档检查对章节表的断言随之更新、仍过；项目信息泄漏检查过；全量 `node --test idea-loop/scripts/` 绿。
-- [ ] `plugin.json` 的 `version` 按档升过，交回写明升到哪一版、哪一档。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 新增文档检查 `design-shared-implementations-doc.test.mjs`（照已有的 design-modeling 精简文档检查的写法），先在改前的主分支版本上跑见红，改后全绿。它至少断言下面四格。
+- [x] Components 的写法里有「共用实现」条目，含 `@` 指针、用在、可变、不许自画、检查五项，并写明整页共用视图以这种条目进、条目不重抄外观、不进 front matter。
+- [x] UI 工单参考里有「查共用实现条目、命中就用、超出可变就停下」。
+- [x] 两份对账参考都有「共用实现」一类发现，含指针失效、缺检查、豁免条数与上次比三种处置。
+- [x] design-modeling 的 SKILL.md 章节表、章节写法参考、插件的 design-modeling 人读文档三处，都按官方顺序列出 Motion、Voice & Content Strategy、Components、Do's and Don'ts；章节写法参考有 Voice 章，术语一条指向 `GLOSSARY.md`。
+- [x] 新建与蒸馏两份参考按「要建什么」第 2 条改到。
+- [x] 已有检查不回退：design-modeling 精简文档检查对章节表的断言随之更新、仍过；项目信息泄漏检查过；全量 `node --test idea-loop/scripts/` 绿。
+- [x] `plugin.json` 的 `version` 按档升过，交回写明升到哪一版、哪一档。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
