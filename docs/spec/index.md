@@ -5,6 +5,7 @@
 |---|---|
 | [[ai-eval-plugin]] | toeflair 的 ai-eval 迁成 harold-skills 的 plugin，补报数口径与回放型 eval |
 | [[comment-marker-no-prefix]] | idea-loop 发的评论去掉「🤖 idea-loop：」开头和「由 Claude 代发」，脚本改认看不见的标记 |
+| [[design-shared-implementations]] | DESIGN.md 能登记「这类界面必须用的共用实现」并配项目测试，对账核它；补上官方的 Voice & Content Strategy 章 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
