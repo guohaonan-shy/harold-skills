@@ -90,6 +90,17 @@ test('chapters.md Components: pointer resolution rules and the project-owned che
   assert.match(c, /不提供扫描脚本/, 'missing: the plugin ships no scan script');
 });
 
+test('chapters.md Components: who registers matches distill — human judges must-unify; fresh DESIGN.md does not register; a candidate with no check yet is written with 检查 待补 plus a drafted issue', () => {
+  const c = section(chapters, 'Components');
+  const who = c.split('\n').find((l) => l.includes('谁来登记'));
+  assert.ok(who, 'no 谁来登记 line');
+  assert.match(who, /必须统一/);
+  assert.match(who, /不主动登记/);
+  assert.match(who, /待补/, 'missing: 检查 is written as 待补 when no project check exists yet');
+  assert.match(who, /共用实现缺检查/, 'missing: the drafted issue');
+  assert.doesNotMatch(who, /已有项目测试/, 'an existing project test must not be a precondition for registering');
+});
+
 test('chapters.md: the example entry uses generic names', () => {
   const c = section(chapters, 'Components');
   assert.match(c, /整页加载失败视图/, 'the example entry should be the generic 整页加载失败视图');
@@ -106,6 +117,12 @@ test('ui-tickets.md: before building a UI, look up DESIGN.md 共用实现 entrie
   assert.match(s, /加进「可变」还是另起/, 'missing: the human decides between widening 可变 and starting another');
 });
 
+test('ui-tickets.md: reaches the 共用实现 entries by calling the design-modeling skill, not by pointing at its references file', () => {
+  const s = section(uiTickets, '建一块 UI 前查共用实现');
+  assert.match(s, /Skill 工具调 `idea-loop:design-modeling`/, 'missing: call the skill with the Skill tool');
+  assert.doesNotMatch(s, /chapters\.md/, "another skill's references/ file must not be named");
+});
+
 // --- Reconcile: one more kind of finding --------------------------------------------------------------------------
 
 for (const [name, doc] of [['design-modeling reconcile.md', reconcile], ['dreaming design-md-reconcile.md', dreamingReconcile]]) {
@@ -114,7 +131,9 @@ for (const [name, doc] of [['design-modeling reconcile.md', reconcile], ['dreami
     assert.match(doc, /`@`[^。\n]*(不在|失效)|(不在|失效)[^。\n]*`@`/, 'missing: dead @ pointer');
     assert.match(doc, /共用实现缺检查/, 'missing: the issue 「共用实现缺检查」');
     assert.match(doc, /豁免清单/, 'missing: exemption list');
-    assert.match(doc, /上次对账|上一次 dreaming 的提议表/, 'missing: compared with the last reconcile');
+    assert.match(doc, /基准提交/, 'missing: compared with the exemption list at the baseline commit of the last scheduled run');
+    assert.match(doc, /只报当前条数/, 'missing: with no baseline commit only the current count is reported');
+    assert.doesNotMatch(doc, /提议表比|上一次 dreaming 的提议表/, 'the last proposal table is deleted after handling, so it cannot be the comparison source');
     assert.match(doc, /变多/, 'missing: more exemptions than last time is raised');
     assert.match(doc, /变少或持平只报不提|持平[^。\n]*只报不提/, 'missing: fewer or equal is only reported');
   });
