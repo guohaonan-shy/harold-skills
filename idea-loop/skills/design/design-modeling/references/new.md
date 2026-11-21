@@ -29,4 +29,4 @@
 
 ## 写
 
-正文只有「结构」里那几章，按那张表的顺序（含 Voice & Content Strategy 章，写法照 chapters.md）；每章照 [chapters.md](chapters.md)；front matter 照「Front matter」；不需要的章写进 `omitted` 附理由。**不主动登记共用实现条目**：条目要人判「必须统一」并要有项目测试，新建时两样都没有，之后经候选进。走「一次写入怎么走」。写完在 Known Gaps 如实写下没覆盖的东西。
+正文只有「结构」里那几章，按那张表的顺序（含 Voice & Content Strategy 章，写法照 chapters.md）；每章照 [chapters.md](chapters.md)；front matter 照「Front matter」；不需要的章写进 `omitted` 附理由。**不主动登记共用实现条目**：条目要人判「必须统一」，新建时还没有人判过，之后经候选进。走「一次写入怎么走」。写完在 Known Gaps 如实写下没覆盖的东西。

@@ -139,6 +139,12 @@ for (const [name, doc] of [['design-modeling reconcile.md', reconcile], ['dreami
   });
 }
 
+test('design-modeling reconcile.md: the baseline commit is taken by calling idea-loop:dreaming with the Skill tool and reading its 对账范围', () => {
+  assert.match(reconcile, /用 Skill 工具调 `idea-loop:dreaming`/, 'missing: call the dreaming skill with the Skill tool');
+  assert.match(reconcile, /『对账范围』/, 'missing: the section name 对账范围');
+  assert.doesNotMatch(reconcile, /`idea-loop:dreaming` 的增量范围/, 'the old bare pointer to dreaming is gone');
+});
+
 test('reconcile.md: the official lint 0.4.0 does not report a missing @ target, so reconcile checks the file itself; broken-ref later', () => {
   assert.match(reconcile, /@google\/design\.md` 0\.4\.0|@google\/design\.md 0\.4\.0/, 'missing: lint version 0.4.0');
   assert.match(reconcile, /不报缺失的 `@` 目标|不报[^。\n]*缺失/, 'missing: lint does not report a missing @ target');
@@ -187,6 +193,7 @@ test('new.md writes the new order and Voice chapter but does not register shared
   assert.match(newRef, /Voice/, 'new.md does not mention the Voice chapter');
   assert.match(newRef, /不主动登记共用实现/, 'missing: no shared-implementation entries on a fresh DESIGN.md');
   assert.match(newRef, /候选/, 'missing: they come later through candidates');
+  assert.doesNotMatch(newRef, /项目测试/, 'new.md must only say nobody has judged 必须统一 yet, not name a project test as a precondition');
 });
 
 test('distill.md writes a 共用实现 candidate in the entry shape and drafts 「共用实现缺检查」 when there is no check yet', () => {
