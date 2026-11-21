@@ -67,7 +67,7 @@ issues: [366]
 
 同一行为的其他入口：
 
-- `design-modeling` 的「新建」（`references/new.md`，uiux-imagine 开工时写第一份）：**纳入**章节顺序与 Voice 章（照 chapters.md 写）；**不主动登记**共用实现条目，理由：条目要人判「必须统一」并要有项目测试，新建时两样都没有，之后走候选。
+- `design-modeling` 的「新建」（`references/new.md`，uiux-imagine 开工时写第一份）：**纳入**章节顺序与 Voice 章（照 chapters.md 写）；**不主动登记**共用实现条目，理由：条目要人判「必须统一」，新建时还没有人判过，之后走候选（蒸馏时还没有检查的照写条目，见下一条）。（review 第 2 轮 S1 同步：原写「并要有项目测试」，与蒸馏那条矛盾。）
 - `design-modeling` 的「蒸馏」（`references/distill.md`）：**纳入**。候选里写「共用实现」的，蒸馏时照条目形状落笔；还没有检查的，照写条目，同时在缺陷节起草「共用实现缺检查」的项目 issue。
 - `designer`、`uiux-imaginer`、`ui-master` 读 DESIGN.md：**纳入核对，不改**，它们整份读，条目自然可见。
 - `pr-reviewer`：**排除**，违规由项目测试在 CI 里拦，review 不重复判。
