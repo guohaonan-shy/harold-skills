@@ -91,7 +91,7 @@ issues: [366]
 **对账**
 
 1. 作为维护设计规范的人，我想对账时看到每条共用实现的 `@` 指针是否还指向存在的文件，以便指针失效时知道
-2. 作为维护设计规范的人，我想对账时看到每条的检查是否还在项目测试里、豁免清单比上次对账多了还是少了几处，以便知道统一的进度
+2. 作为维护设计规范的人，我想对账时看到每条的检查是否还在项目测试里、豁免清单比上次定时对账那一刻多了还是少了几处，以便知道统一的进度
 3. 作为维护设计规范的人，我想缺检查或豁免变多时得到一条起草好的项目 issue，以便有人去补
 
 **Voice 章**
@@ -112,7 +112,7 @@ issues: [366]
 - **对账新增一类发现「共用实现」**，写进 `reconcile.md`，`design-steward` 经 dreaming 的 `design-md-reconcile.md` 落成提议表行：
   - 指针失效 → `DESIGN.md 条目` 一行，交人裁决（改指针 / 删条目）。
   - 检查不在了或从没有过 → `缺陷` 节起草项目 issue「共用实现缺检查」。
-  - 豁免清单条数：每次对账报当前条数，与上次对账（上一次 dreaming 的提议表）比；变多 → `缺陷` 节起草项目 issue；变少或持平只报不提。
+  - 豁免清单条数：每次对账报当前条数，与上次定时对账那一刻主分支上（dreaming 增量范围用的「基准提交」）的豁免清单条数比；变多 → `缺陷` 节起草项目 issue；变少或持平只报不提；找不到基准提交（第一次跑、人说全量）只报当前条数。（原写「与上一次 dreaming 的提议表比」，review 第 1 轮 S2 发现提议表处理完即删、持平不进表，比不出来，夜间按推荐改。）
 - **实现前查条目。** `implement/references/ui-tickets.md` 加一节：建一块 UI 前查 DESIGN.md 的共用实现条目，命中就用指定实现；要的变化超出「可变」就停下，交人判（加进「可变」还是另起）。
 - **补 Voice & Content Strategy 章，章节顺序照官方。** 依据：官方规范「Section Order」，人决定本 issue 一起做（raw U3）。SKILL.md 的章节表与 chapters.md 改成：Overview、Colors、Typography、Layout、Elevation & Depth、Shapes、Motion、Voice & Content Strategy、Components、Do's and Don'ts，后接扩展的 Responsive Behavior、Known Gaps。Motion 去掉「扩展」二字，章名沿用「Motion」（官方列为认可的别名）。
 - **Voice 章的术语只指向 `GLOSSARY.md`。** 项目有 `GLOSSARY.md` 的，Voice 章的术语一条写「术语以 GLOSSARY.md 为准」，不重抄词表；没有的才在 Voice 章写。依据：五条写法规则第 2 条；`idea-loop:glossary` 管术语表。
