@@ -152,7 +152,7 @@ it worked, but carried one person's words from GitHub back into the session they
   `blob/<branch>/<file>?raw=true` so clicking an image opens it full size instead of downloading it
   (`skills/engineering/pr/references/delivery-evidence.md`). Knowledge-base images — spec figures, frozen canvases — stay in `docs/`.
 - **Two axes, reported apart** (`skills/engineering/pr-review/references/review-standards.md`). The reviewer runs the repo's
-  declared checks and keeps only diagnostics on changed lines (`dyna pr diagnostics filter`); each
+  declared checks and keeps only diagnostics on changed lines (`dyna pr diagnostics filter`), and lists the SKILL.md files and agent definitions whose body length changed, before → after (`dyna pr skill-growth <merge-base>`, facts only; Standards judges the growth); each
   Codex process sees only its own question. A behavioural Spec finding that cannot be reproduced
   and drawn, or a Standards finding whose rule text or code is not where it claims, is discarded by
   `dyna pr candidates submit` and listed in one folded line; a finding that stands but is missing a

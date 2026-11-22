@@ -304,6 +304,23 @@ func Command(d Deps) *cobra.Command {
 			}),
 	)
 
+	skillGrowth := leaf("skill-growth <base-ref>", "列出 <base-ref>...HEAD 里主体字数变了的 SKILL.md 和 agent 定义：路径、改前 → 改后（差值）；只报事实，退出 0", "",
+		func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 || args[0] == "" {
+				return usage("skill-growth <base-ref>")
+			}
+			lines, err := d.skillGrowth(args[0])
+			if err != nil {
+				return err
+			}
+			if len(lines) == 0 {
+				d.println("没有 SKILL.md 或 agent 定义的主体字数变了")
+				return nil
+			}
+			d.println(lines...)
+			return nil
+		})
+
 	open := leaf("open <owner/repo>", "在当前分支上开 PR，默认 draft（--ready 直接开成 ready）；打印 PR 的地址", "",
 		func(cmd *cobra.Command, args []string) error {
 			repo := arg(args, 0)
@@ -385,7 +402,7 @@ func Command(d Deps) *cobra.Command {
 		})
 	merge.Flags().String("method", "", "合并方式：merge、squash 或 rebase（必填）")
 
-	root.AddCommand(body, loop, evidence, candidates, diagnostics, open, ready, view, merge)
+	root.AddCommand(body, loop, evidence, candidates, diagnostics, skillGrowth, open, ready, view, merge)
 	return root
 }
 

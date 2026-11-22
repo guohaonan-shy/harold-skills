@@ -2159,6 +2159,21 @@
       ]
     },
     {
+      "command": "pr skill-growth",
+      "module": "pr",
+      "use": "skill-growth <base-ref>",
+      "summary": "列出 <base-ref>...HEAD 里主体字数变了的 SKILL.md 和 agent 定义：路径、改前 → 改后（差值）；只报事实，退出 0",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "base-ref",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
       "command": "pr view",
       "module": "pr",
       "use": "view <owner/repo> <pr>",
