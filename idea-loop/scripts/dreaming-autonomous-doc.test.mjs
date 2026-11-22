@@ -99,6 +99,19 @@ test('dreaming: description routes only, body stays under 5000 characters', () =
   assert.ok([...skill].length < 5000, `body is ${[...skill].length} characters`);
 });
 
+test('dreaming, adr-reconciler and design-steward keep their body under the 4500 line; the partial-run branch lives in its own reference behind one pointer', () => {
+  assert.ok([...skill].length <= 4500, `dreaming body is ${[...skill].length} characters`);
+  for (const f of ['adr-reconciler.md', 'design-steward.md']) {
+    const n = [...body(read('agents', f))].length;
+    assert.ok(n <= 4500, `${f} body is ${n} characters`);
+  }
+  assert.match(skill, /\[references\/partial-runs\.md\]\(references\/partial-runs\.md\)/);
+  assert.doesNotMatch(skill, /## 只跑一部分|单条蒸馏/, 'the partial-run branch is moved out of SKILL.md');
+  const partial = read(...dir, 'references', 'partial-runs.md');
+  assert.match(partial, /只跑记忆[^\n]*只出 `记忆` 一节/);
+  assert.match(partial, /## 单条蒸馏[\s\S]*candidate-distillation\.md/);
+});
+
 test('dreaming: the full table is not shown; the split comes from the script', () => {
   assert.match(skill, /完整表[^\n]*不摆给人/);
   assert.match(skill, /dyna dreaming table split[^\n]*--out/);
@@ -116,7 +129,7 @@ test('the ask-or-auto rule is written once, in the script: the docs point at it 
 });
 
 test('the automatic part commits to home on generic checks, with no project command in the plugin', () => {
-  const merge = proposal.split('4. **提交前检查**')[1].split('5. **回滚**')[0];
+  const merge = proposal.split('4. **提交前检查**')[1].split('5. 最后报告')[0];
   assert.match(merge, /REVIEW\.md` 的验证命令/);
   assert.match(merge, /dyna spec check/);
   assert.match(merge, /删除后查死链/);
@@ -127,12 +140,17 @@ test('the automatic part commits to home on generic checks, with no project comm
   assert.doesNotMatch(merge, /node --test/);
 });
 
-test('three push cases, rollback and when the tmp directory goes are all written down', () => {
-  assert.match(skill, /推送只有三种情况[^\n]*有问人的行[^\n]*没提交成[^\n]*没跑成/);
-  assert.match(skill, /「这次无事」也不发/);
-  assert.match(skill, /回滚[^\n]*git revert/);
-  assert.match(skill, /中间物何时删[^\n]*问人的行处理完[^\n]*自动那份已经提交/);
-  assert.match(proposal, /\*\*回滚\*\*[^\n]*git revert/);
+test('three push cases, rollback, when the tmp directory goes and idempotence are written down once, in the proposal reference\'s 收尾; SKILL.md points there', () => {
+  assert.match(skill, /\[references\/proposal-table\.md\]\(references\/proposal-table\.md\) 的「收尾」/);
+  const end = proposal.split('\n## 收尾')[1];
+  assert.ok(end, 'proposal-table.md has no 收尾 section');
+  assert.match(end, /推送只有三种情况[^\n]*有问人的行[^\n]*没提交成[^\n]*没跑成/);
+  assert.match(end, /这次无事[^\n]*也不发/);
+  // the rollback is a result constraint (revert by a new commit, no history rewrite), not a pinned command
+  assert.match(end, /\*\*回滚\*\*[^\n]*还原[^\n]*不改写历史/);
+  assert.match(end, /中间物何时删[^\n]*问人的行处理完[^\n]*自动那份已经提交/);
+  assert.match(end, /幂等[^\n]*提议表应为空/);
+  assert.doesNotMatch(skill, /推送只有三种情况|中间物何时删|git revert/, 'the moved paragraphs are not repeated in SKILL.md');
 });
 
 test('no automatic row waits for approval: retro candidates and missed archive run on their own suggestion', () => {

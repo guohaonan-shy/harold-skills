@@ -6,7 +6,7 @@
 
 ## ff 不了
 
-ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑它这张工单那组测试（工单写的或改到的单元测试、涉及的 API 测试、选中的存量回归），不跑全量，不算失败。
+ff 不了（期间别的先落地了）就退回它：合入最新提交、重新压成一个、重跑它这张工单那组测试（`${CLAUDE_PLUGIN_ROOT}/agents/implementer.md` 「做」里「交回前跑」的那一组），不跑全量，不算失败。
 
 ## 跟这次无关的存量问题
 
@@ -14,4 +14,4 @@ ff 不了（期间别的先落地了）就退回它：合入最新提交、重�
 
 ## 勾框
 
-工单在 home 里，执行方的 commit 只含代码。落地（`git merge --ff-only`）之后，照交回的 `acceptance` 在 `<项目目录>/docs/spec/<spec-slug>/tickets/` 里勾好这张工单的框；有延后给后续工单的，在那张工单的验收标准末尾追加 `- [ ] <判据>（继承自 NN）`。然后照 `idea-loop:wiki-conventions` 的「知识库落地」一次 `commit` 到 home，只列这两张工单，消息 `docs(tickets): <NN> — 落地`。
+工单在 home 里，执行方的 commit 只含代码。落地（只快进）之后，照交回的 `acceptance` 在 `<项目目录>/docs/spec/<spec-slug>/tickets/` 里勾好这张工单的框；有延后给后续工单的，在那张工单的验收标准末尾追加 `- [ ] <判据>（继承自 NN）`。然后照 `idea-loop:wiki-conventions` 的「知识库落地」一次 `commit` 到 home，只列这两张工单，消息 `docs(tickets): <NN> — 落地`。

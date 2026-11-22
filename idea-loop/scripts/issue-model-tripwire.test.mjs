@@ -85,8 +85,8 @@ const setupDir = join(pluginRoot, 'skills', 'engineering', 'setup');
 const skill = readFileSync(join(setupDir, 'SKILL.md'), 'utf8');
 const body = skill.split(/^---\s*$/m).slice(2).join('---');
 
-test('setup SKILL.md body is under 5000 characters', () => {
-  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
+test('setup SKILL.md body is at most 4500 characters', () => {
+  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
 });
 
 test('every references/ link in setup SKILL.md exists', () => {
@@ -112,8 +112,10 @@ test('setup asks whether the team uses triage and writes the answer into ISSUE_T
 test('setup reads specs through `dyna spec check` and migrates old labels through `dyna issues migrate`', () => {
   const survey = readFileSync(join(setupDir, 'references', 'survey.md'), 'utf8');
   assert.match(survey, /dyna spec check <docs>/);
-  assert.match(body, /dyna issues migrate <docs>/);
-  assert.match(body, /--apply/);
+  const tracker = readFileSync(join(setupDir, 'references', 'tracker-write.md'), 'utf8');
+  assert.match(body, /tracker-write\.md/);
+  assert.match(tracker, /dyna issues migrate <docs>/);
+  assert.match(tracker, /--apply/);
 });
 
 // ---------- dreaming / adr-reconciler ----------

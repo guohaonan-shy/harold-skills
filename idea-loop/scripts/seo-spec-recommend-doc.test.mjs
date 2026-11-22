@@ -1,7 +1,7 @@
 /**
  * Pins the sentences that make "a SEO issue's spec is settled by recommendation, and the principles the human has
  * stated live in SEO.md" true in the docs: draft-spec's SEO branch in 「跟人定要 grill 的」 and its 「输入」 line,
- * the 内容原则 section in the SEO.md format reference, and seo-setup creating it (format only, no project's own
+ * the 内容原则 section in the SEO.md format reference, and the SEO module creating it (format only, no project's own
  * principles).
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail
@@ -17,8 +17,8 @@ const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 
 const DRAFT_SPEC = read('skills', 'engineering', 'issue-session', 'references', 'draft-spec.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
-const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
 
 /** The body of `## <title>` (up to the next `## ` heading), or '' when the heading is missing. */
 function section(doc, title) {
@@ -82,7 +82,7 @@ test('seo-md.md: who appends a new principle, and that the plugin writes none of
   assert.match(FORMAT, /插件只定节名和格式/);
 });
 
-test('seo-setup creates the 「内容原则」 section when it writes SEO.md and fills in no principle', () => {
+test('the SEO module creates the 「内容原则」 section when it writes SEO.md and fills in no principle', () => {
   const s = section(SETUP, '4\\. 写 SEO.md');
   assert.match(s, /内容原则/);
   assert.match(s, /内容由项目自己填/);

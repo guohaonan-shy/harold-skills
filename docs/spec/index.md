@@ -27,6 +27,7 @@
 | [[seo-outreach-reads-seo-md]] | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
 | [[seo-skill-descriptions-route-only]] | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
 | [[skill-body-limit-backlog]] | idea-loop 两份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references |
+| [[skill-rewrite]] | idea-loop 的 skill 与 agent 定义按写法规则逐份重写、五组合并，主体都不超过 4500 字 |
 | [[skill-structure-checks]] | 改 skill 有常驻检查：杠杆诊断与验证方式、回放与目标评测、字数线与增长报告、命令绊线 |
 | [[skills-read-home]] | skill 与脚本从 home 的项目目录读写知识库，改动直接提交 home，dreaming-home 对账各项目 |
 | [[split-blog-publisher]] | 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用 lint，项目取值走 SEO.md 与 DESIGN.md |

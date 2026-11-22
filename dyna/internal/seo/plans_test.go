@@ -182,7 +182,7 @@ func TestBudgetNeverSpendsIntoTheFloorAndAnUnknownBalanceMeansFreeCallsOnly(t *t
 
 func TestBudgetASeoMdWithoutThePlanIsRefusedWithTheWayOutAndABadDateIsRefused(t *testing.T) {
 	floor := 1000.0
-	if _, err := PlanBudget(OpenSEO{Floor: &floor}, 5000, []string{"pages"}, BudgetOpts{Log: []any{}, Today: "2027-02-15"}); err == nil || !strings.Contains(err.Error(), "套餐额度") || !strings.Contains(err.Error(), "seo-setup") {
+	if _, err := PlanBudget(OpenSEO{Floor: &floor}, 5000, []string{"pages"}, BudgetOpts{Log: []any{}, Today: "2027-02-15"}); err == nil || !strings.Contains(err.Error(), "套餐额度") || !strings.Contains(err.Error(), "/idea-loop:setup") {
 		t.Fatal(err)
 	}
 	if _, err := PlanBudget(openseo(t), 5000, []string{"pages"}, BudgetOpts{Log: []any{}, Today: "15/02"}); err == nil || !strings.Contains(err.Error(), "YYYY-MM-DD") {

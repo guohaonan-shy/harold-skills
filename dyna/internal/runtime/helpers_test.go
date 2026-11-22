@@ -18,7 +18,7 @@ type outcome struct {
 
 func (o outcome) all() string { return o.stdout + o.stderr }
 
-// dyna runs one command line in memory. The child processes a command starts (claude, expect) get the real
+// dyna runs one command line in memory. The child processes a command starts (claude) get the real
 // process environment, which tests set with t.Setenv; env is only what dyna itself reads.
 func dyna(env map[string]string, args ...string) outcome {
 	var out, errb bytes.Buffer

@@ -66,4 +66,4 @@
 - **PR 带 issue 的号**；PR 合并才算 done，跟 GitHub 一致。
 - **不读不写**：Linear 的 Project、Cycle、Estimate、父子关系。
 - Linear 的 PR 与 issue 是多对多的，idea-loop 仍按一个 issue 一个会话、一个 PR 用。
-- `issues` 里写 GitHub issue 的命令（`set`、`new`、`candidates`、`reconcile` 这些）在 Linear 项目上会被拒绝，就是要你改用上面的工具。例外是 `dyna issues new … --repo=<owner/repo>`：它自己点名了一个 GitHub 仓库（比如把插件的问题开到插件仓库），Linear 项目也能用。
+- `issues` 里写 GitHub issue 的命令（`set`、`new`、`candidates`、`reconcile` 这些）在 Linear 项目上会被拒绝；`backlog`、`read`、`note`、`priority`、`type` 也不跑。都改用上面的工具，翻状态前仍先跑 `check --from`。例外是 `dyna issues new … --repo=<owner/repo>`：它自己点名了一个 GitHub 仓库（比如把插件的问题开到插件仓库），Linear 项目也能用。

@@ -2,7 +2,7 @@
  * Pins the docs of SEO.md's new keys — 「写作」's lint 配置 / 补充 lint / 第二评委 and the 「配图」 section
  * (图片目录 / 生图工具 / 封面字段 / OG 字段 / DESIGN.md 路径): the format file's template and 「每节读的人」
  * table carry them and say who reads them, the template parses to a value for every key (so a key the doc
- * names and the script does not read, or the other way round, goes red), and seo-setup asks for them and
+ * names and the script does not read, or the other way round, goes red), and setup's SEO module asks for them and
  * checks the image directory against 内容路径 before it writes it.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see
@@ -19,9 +19,9 @@ const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta
 const path = (...p) => join(root, ...p);
 const read = (...p) => readFileSync(path(...p), 'utf8');
 
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
-const SETUP_FILE = read('skills', 'seo', 'seo-setup', 'SKILL.md');
-const SETUP = SETUP_FILE.split(/^---\s*$/m).slice(2).join('---');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
+const SETUP_FILE = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
+const SETUP = SETUP_FILE; // a reference file: no frontmatter to cut off
 const TEMPLATE = FORMAT.match(/```markdown([\s\S]*?)```/)[1];
 const README = read('README.md');
 
@@ -79,16 +79,16 @@ test('seo-md.md: each new key is written once in the template, so none repeats a
   }
 });
 
-test('seo-setup: the writing-check keys and 配图 are inferred, asked and checked through references/writing-images.md', () => {
-  assert.ok(SETUP.includes('references/writing-images.md'), 'SKILL.md points at the reference');
-  assert.ok(existsSync(path('skills', 'seo', 'seo-setup', 'references', 'writing-images.md')), 'the reference exists');
+test('setup\'s SEO module: the writing-check keys and 配图 are inferred, asked and checked through writing-images.md', () => {
+  assert.ok(SETUP.includes('(writing-images.md)'), 'steps.md points at the reference');
+  assert.ok(existsSync(path('skills', 'engineering', 'setup', 'references', 'seo', 'writing-images.md')), 'the reference exists');
   assert.match(section(SETUP, '2\\. 读现状，备推荐值'), /写作的检查键、配图[^\n]*writing-images\.md/);
   assert.match(section(SETUP, '3\\. 逐节问人'), /写作的检查键、配图[^\n]*图片目录检查/);
   assert.match(section(SETUP, '4\\. 写 SEO.md'), /九节都在/);
 });
 
 test('writing-images.md: a recommendation and a question per key, and the image-directory check before it is written', () => {
-  const ref = read('skills', 'seo', 'seo-setup', 'references', 'writing-images.md');
+  const ref = read('skills', 'engineering', 'setup', 'references', 'seo', 'writing-images.md');
   for (const key of ['lint 配置', '补充 lint', '第二评委', '图片目录', '生图工具', '封面字段', 'OG 字段', 'DESIGN.md 路径']) {
     assert.ok(ref.includes(key), `${key} is covered`);
   }
@@ -99,14 +99,13 @@ test('writing-images.md: a recommendation and a question per key, and the image-
   assert.match(ref, /一次最多三个问题/);
 });
 
-test('seo-setup: the body stays under 5000 characters, what moved out is reachable by a pointer', () => {
-  assert.ok([...SETUP].length < 5000, `${[...SETUP].length} characters`);
-  assert.ok(SETUP.includes('references/pick-project.md'));
-  assert.ok(existsSync(path('skills', 'seo', 'seo-setup', 'references', 'pick-project.md')));
+test('setup\'s SEO module: what moved out of the steps file is reachable by a pointer', () => {
+  assert.ok(SETUP.includes('(pick-project.md)'));
+  assert.ok(existsSync(path('skills', 'engineering', 'setup', 'references', 'seo', 'pick-project.md')));
 });
 
-test('README: seo-setup lists the writing-check keys and the 配图 section', () => {
-  const line = README.split('\n').find((l) => l.startsWith('| `/idea-loop:seo-setup`')) ?? '';
+test('README: the SEO module row lists the writing-check keys and the 配图 section', () => {
+  const line = README.split('\n').find((l) => l.startsWith('| `/idea-loop:setup` (SEO module)')) ?? '';
   assert.match(line, /ten sections/);
   assert.match(line, /补充 lint/);
   assert.match(line, /配图/);

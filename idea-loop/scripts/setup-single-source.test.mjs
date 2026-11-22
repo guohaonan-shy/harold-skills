@@ -37,7 +37,7 @@ test('规则回放 runner in the body is a pointer, not a summary of the steps',
 });
 
 test('which file the issue categories are written into is stated only in the SKILL.md body; the template carries the format', () => {
-  assert.match(body, /`ISSUE_TRACKER\.md` 的「分类 label」一节：把人定的分类/);
+  assert.match(body, /`ISSUE_TRACKER\.md` 的「分类 label」一节：把人确认的分类/);
   assert.doesNotMatch(read('references', 'issue-tracker.md'), /写进/, 'issue-tracker.md repeats where the categories are written');
   assert.doesNotMatch(read('references', 'issue-tracker.md'), /AGENTS\.md/, 'the categories no longer live in AGENTS.md');
 });

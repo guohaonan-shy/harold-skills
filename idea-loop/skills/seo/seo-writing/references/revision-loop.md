@@ -49,7 +49,7 @@ SKILL.md 第 5 步的细节：每个命令怎么跑、写作评委怎么起、�
 
 1. 这一轮里不碰那条 `premise` 的改法照常改完，然后停，不进下一轮。
 2. 交回的 `premise` 一节逐条写写作评委的原话：哪个写作评委、`dimension`、`location`、`problem`、`fix` 原样贴，不转述。
-3. 调用方（issue 会话）把已写的提交并 push，照 `issue-session` 的「起草中冒出了要人定的」那句，`issues set <docs> triage <号> --comment=<要人定什么、分支名>`，评论里放写作评委原话；角度是人定的东西，所以回 triage，不在这里翻。
+3. 调用方（issue 会话）把已写的提交并 push，照 `issue-session` 的「起草中冒出了要人定的」把 issue 翻回 triage，评论写要人定什么、分支名，并放写作评委原话；角度是人定的东西，所以回 triage；翻状态是调用方的事，写稿的人不翻。
 
 ## 出图跟着变
 

@@ -30,7 +30,7 @@
    - 图放进对象同目录的 `assets/`，例如单屏状态：`dyna design archive sections screen <项目目录> <状态 id> --out <目录> --viewport 1440x900 --theme light`。
    - **比主视口高、不分段的状态**（加载完的报告页）：`screen` 之后在同一屏上跑 `dyna design archive sections cover <项目目录> <状态 id> --delta dreaming-<日期> --out <目录> --viewport 1440x900 --theme light`，按返回的 `shot` 给每条边写 `shot`。初扫时状态还只在草稿（`docs/design/tmp/dreaming-<日期>/delta/`）里，所以 `cover` 带 `--delta`。
    - 入口状态的「这一屏」按段排开（每段一个 `###` 小标题、这一段的图、一两句描述）。
-   - 每个有动效的边或节点一张 GIF（`idea-loop:evidence` 的动图，没有用户感觉得到的动效就不录；动效太快截不住时放慢播放再录，并写明倍率）。完整矩阵（主题 × 视口 × 语言）默认不拍；人要才拍，放 `docs/design/tmp/dreaming-<日期>/matrix/`，不进 `delta/`，随目录清掉。截图放对象同目录的 `assets/`，状态文件「这一屏」里内嵌它，「应看到什么」写成几条可判定的话。
+   - 每个有动效的边或节点一张 GIF（`idea-loop:decision-rules` 的动图，没有用户感觉得到的动效就不录；动效太快截不住时放慢播放再录，并写明倍率）。完整矩阵（主题 × 视口 × 语言）默认不拍；人要才拍，放 `docs/design/tmp/dreaming-<日期>/matrix/`，不进 `delta/`，随目录清掉。截图放对象同目录的 `assets/`，状态文件「这一屏」里内嵌它，「应看到什么」写成几条可判定的话。
 8. **动效对象**：边引用的、能从代码里量出参数的具体动效，建 `motions/<名>.md`（参数、理由、减少动效下怎么退）；量不出来的、太细的，不在初扫里硬建，记进 `未扫`。**状态文件不写决定**；页面、组件的「决定」「设计法候选」两节没有内容各写一行「无」——初扫是从实现建的，没有当初的设计理由，**不编**，需求归档时再补。动效的参数是字面值时 `deviates` 照样必填：写「从实现量出，偏离站内 token 的原因没有记录」，不编原因。
 
 建完一页（几页互相链接、一起扫时，**全部写完再**一起）在 dreaming 的 tmp 目录里自检：
@@ -66,7 +66,7 @@ dyna design archive check <项目目录> --delta dreaming-<日期> --no-used-by
 在 [archive-reconcile.md](archive-reconcile.md)「执行段」的流程上，初扫行多这几件事：
 
 1. **整页删掉不进表的**：这次没写进提议表的页面（质量不够、中途放弃的），删 `delta/pages/<页面>/`，再删只被它们用到的组件、动效。
-2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档命令会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进提交消息正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `design-archive-check … --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
+2. **剪掉通向没进表的页面的边**：进表的页面里，边的 `to` 指向没进表页面的状态，归档命令会拒绝（引用解析不到）。把这些边从状态文件里删掉，并**记进提交消息正文**（「A 页的 X 状态通向 B 页，B 页这次没扫，下次扫到 B 页时补回这条边」）。`async` 若引用了没进表的状态，同样改成「不适用」或补上。然后跑 `dyna design archive check <项目目录> --delta dreaming-<日期> --no-used-by`，每条「解析不到」照此处理，直到通过。
 3. 归档（`dyna design archive write`，先 `--dry-run`），`tmp/` 清空。
 4. **首次归档之后**，`prod/index.md` 的 frontmatter 还没有主视口 / 主题 / 语言 / 动效模式：把提议表里写的那几个值（`viewport` / `theme` / `locale` / `motion`，有不止一个前端时再加 `workspaces`）补进去。**这是 dreaming 唯一一处直接改 `prod/` 里文件的地方，只改这几个键**——它们是项目定一次的设置，不是档案对象，归档命令只保留、不生成（命令就缺视口 / 主题 / 语言给出提示，`motion` 不写时按 `default`，`workspaces` 不写就不要求前缀）。
 5. 提交：`commit` 到 home 的一个提交（`docs/design/prod/` 里的页面、状态、组件、素材，和 `prod/index.md`）；归档命令的其余提示（LFS、`.gitignore`）照 [archive-reconcile.md](archive-reconcile.md)「执行段」第 3 步写进提交消息正文。

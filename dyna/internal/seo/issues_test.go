@@ -142,7 +142,7 @@ func TestUncollectedPlaceholdersAreSkippedContentAndBacklinkIssuesCarryTheStageP
 	if len(p.Create) != 2 {
 		t.Fatal(p)
 	}
-	for _, want := range []string{"idea-loop:seo-brief", "需要 grill：选题角度和论点"} {
+	for _, want := range []string{"idea-loop:seo-writing` 的 brief 分支", "需要 grill：选题角度和论点"} {
 		if !strings.Contains(p.Create[0].Body, want) {
 			t.Errorf("%q missing from the content issue", want)
 		}
