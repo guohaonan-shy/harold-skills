@@ -17,11 +17,6 @@ const SKILL = read('skills/design/uiux-research/SKILL.md');
 const AGENT = read('agents/uiux-researcher.md');
 const LIGHT = read('skills/design/uiux-research/references/light-return.md');
 
-const body = (md) => md.split(/^---$/m).slice(2).join('---');
-
-test('the skill body stays under the 4500-character line', () => {
-  assert.ok([...body(SKILL)].length < 4500, `${[...body(SKILL)].length} characters`);
-});
 
 test('the skill names both branches, says the light one starts every round without the human, and keeps full-page research on the human', () => {
   assert.match(SKILL, /## 整页调研/);

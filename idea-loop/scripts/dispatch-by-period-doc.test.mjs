@@ -71,9 +71,8 @@ test('nothing else in the plugin or the repo still says the dispatcher gives out
   assert.ok(!files.some((f) => readFileSync(f, 'utf8').includes('独立队列')), '「独立队列」 stays gone');
 });
 
-test('issue-dispatch takes no interval and stays within 4500 characters', () => {
+test('issue-dispatch takes no interval', () => {
   assert.ok(!/argument-hint/.test(dispatchFile.split('\n---\n')[0]), 'no interval argument');
-  assert.ok([...dispatch].length <= 4500, 'body within 4500 characters');
   assert.match(dispatchFile.split('\n---\n')[0], /每小时一轮/);
 });
 

@@ -99,7 +99,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(issues.Command(issues.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Git: io.Git}))
 	root.AddCommand(design.CommandWith(design.Deps{Env: io.Env, DesignMD: io.DesignMD}), mcpCommand(io), testcmd.CommandWith(testcmd.Deps{Env: io.Env, Cwd: io.Cwd}))
 	root.AddCommand(home.Command(home.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, Cwd: io.Cwd, Now: io.Now}))
-	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout}))
+	root.AddCommand(spec.Command(spec.Deps{Stdout: io.Stdout, Home: func() string { return home.Dir(io.Env) }}))
 	root.AddCommand(git.Command(git.Deps{Stdout: io.Stdout}))
 	root.AddCommand(worktree.Command(worktree.Deps{Stdin: io.Stdin, Stdout: io.Stdout}))
 	root.AddCommand(ui.Command(ui.Deps{Env: io.Env, Stdout: io.Stdout, Stderr: io.Stderr}))

@@ -140,10 +140,6 @@ test('seo-writing 写 points at the cover / OG field steps; they carry the paths
   for (const k of ['封面字段', 'OG 字段']) assert.ok(keys.includes(k), `${k} is a key in the SEO.md format doc`);
 });
 
-test('seo-writing: the body stays within the 4500-character line', () => {
-  assert.ok([...WRITING].length <= 4500, `${[...WRITING].length} characters`);
-});
-
 test('cover and og exist as skills the step can call', () => {
   for (const s of ['cover', 'og']) assert.ok(existsSync(path('skills', 'seo', s, 'SKILL.md')), `${s}/SKILL.md exists`);
 });

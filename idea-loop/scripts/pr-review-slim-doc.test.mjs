@@ -1,5 +1,5 @@
 /**
- * Tripwire — pr-review's SKILL.md stays slim: body at most 4500 characters (writing-for-agents「4500 线」),
+ * Tripwire — pr-review's SKILL.md stays slim: 
  * each action written once, the ticket-return steps defined in one place, "what next after a round" in
  * one section, and the branches only some rounds take (UI walkthrough) behind a pointer.
  *
@@ -31,12 +31,8 @@ function section(title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
-// The 4500 line of writing-for-agents (rewrite checklist). The design change, which only a round where the human accepted a
+// The design change, which only a round where the human accepted a
 // design that differs from the frozen canvas reaches, lives in references/design-change.md.
-test('the body is at most 4500 characters (the line in writing-for-agents)', () => {
-  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
-});
-
 test('the append-a-cell-to-the-ticket step is written once, under 回工单', () => {
   assert.equal(body.split('docs(tickets): <NN> — review 第').length - 1, 1, 'the ticket-cell commit message is spelled out more than once');
   const text = section('回工单');

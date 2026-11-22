@@ -92,8 +92,7 @@ test('the repo ISSUE_TRACKER.md has a choice for triage the command line can rea
   assert.ok(md.match(/^triage：(用|跳过)\s*$/m));
 });
 
-test('the issues SKILL.md body stays within 4500 characters (writing-for-agents 「4500 线」); category and spec details live in its own references', () => {
-  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
+test('the issues SKILL.md points at its own reference for category and spec details', () => {
   assert.match(body, /references\/category-and-spec\.md/);
   assert.ok(existsSync(join(skillDir, 'references', 'category-and-spec.md')));
 });

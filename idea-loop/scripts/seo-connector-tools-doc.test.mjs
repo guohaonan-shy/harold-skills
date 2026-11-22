@@ -156,6 +156,3 @@ test('README: the SEO module and seo-scan rows drop the superseded stop, agents 
   assert.ok(!/seo-openseo-superseded-doc/.test(README), 'the old test is not listed any more');
 });
 
-test('the seo-scan SKILL.md body stays within the 4500-character line', () => {
-  assert.ok([...SCAN].length <= 4500, `seo-scan ${[...SCAN].length}`);
-});

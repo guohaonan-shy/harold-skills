@@ -20,19 +20,19 @@
 
 ## 验收标准
 
-- [ ] go 单元/命令测试：夹具 idea-loop 插件根里主体 4501 字的 SKILL.md，包成 PostToolUse 事件喂 `--hook` → 退出 2，stderr 含文件、4501、线 4500、`idea-loop:writing-for-agents`，不含「references」；改到 4500 字 → 静默退出 0。
-- [ ] 同样 4501 字的文件放在夹具 home 下某项目的 `skills/x/SKILL.md` → 退出 2；放在 home 外、往上没有插件根的 `.claude/skills/x/SKILL.md` → 静默退出 0；agent 定义同理被认。
-- [ ] 夹具 idea-loop SKILL.md 正文一行写 ``gh issue view 1 --comments`` → 退出 2，报文件和行号；同一行加「坑：…」→ 退出 0；文件是放行清单里的适配层 → 退出 0；别的插件（plugin.json 名字不是 idea-loop）里同样一行 → 不报。
-- [ ] `--changed <base>`：分支只改了一份超线文件、另有一份超线但没改 → 只报改到的那份，退出 1；干净退出 0。不带 --hook 的给定文件模式列完全部问题退出 1。
-- [ ] 本分支 `dyna spec skill-lint idea-loop/skills/*/*/SKILL.md idea-loop/agents/*.md` 退出 0（存量都在线内、剩下的行内命令都在适配层或标了坑）；若有不在线内或未放行的，交回列出，不改那些文件的规则内容以外的东西。
-- [ ] **先在历史错误上见红**：在 #340 之前的某个提交（如 implement 主体 9589 字的版本，从 git 历史里取那份 SKILL.md）上跑 `skill-lint`，报超线；交回写出命令和输出。
-- [ ] hooks 配置多一条 PostToolUse（Write|Edit）的 `dyna spec skill-lint --hook`，`hooks-config.test.mjs` 之类的现有测试跟着更新并通过。
-- [ ] `dyna test skill-doc` 不再量字数；skilldoc 里不再有 `MaxBodyChars`；文档测试里量主体字数的断言已删，其余断言保留；全量（`node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`、`cd dyna && go test ./...`、`go vet`、`gofmt -l .`）绿。
-- [ ] `AGENTS.md`、`REVIEW.md` 不再出现「< 5000」，字数线说法是 4500 + `dyna spec skill-lint`；`REVIEW.md` 验证命令表有 `skill-lint --changed` 一行。
-- [ ] dyna 版本 0.0.7、登记表 0.0.7.json 已存、`idea-loop/dyna-version` 下限 0.0.7，`node --test scripts/dyna-scan.test.mjs` 绿，`DYNA_VERSION_BASE=origin/release/idea-loop-0.2.0 node --test scripts/dyna-version.test.mjs` 绿。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] go 单元/命令测试：夹具 idea-loop 插件根里主体 4501 字的 SKILL.md，包成 PostToolUse 事件喂 `--hook` → 退出 2，stderr 含文件、4501、线 4500、`idea-loop:writing-for-agents`，不含「references」；改到 4500 字 → 静默退出 0。
+- [x] 同样 4501 字的文件放在夹具 home 下某项目的 `skills/x/SKILL.md` → 退出 2；放在 home 外、往上没有插件根的 `.claude/skills/x/SKILL.md` → 静默退出 0；agent 定义同理被认。
+- [x] 夹具 idea-loop SKILL.md 正文一行写 ``gh issue view 1 --comments`` → 退出 2，报文件和行号；同一行加「坑：…」→ 退出 0；文件是放行清单里的适配层 → 退出 0；别的插件（plugin.json 名字不是 idea-loop）里同样一行 → 不报。
+- [x] `--changed <base>`：分支只改了一份超线文件、另有一份超线但没改 → 只报改到的那份，退出 1；干净退出 0。不带 --hook 的给定文件模式列完全部问题退出 1。
+- [x] 本分支 `dyna spec skill-lint idea-loop/skills/*/*/SKILL.md idea-loop/agents/*.md` 退出 0（存量都在线内、剩下的行内命令都在适配层或标了坑）；若有不在线内或未放行的，交回列出，不改那些文件的规则内容以外的东西。
+- [x] **先在历史错误上见红**：在 #340 之前的某个提交（如 implement 主体 9589 字的版本，从 git 历史里取那份 SKILL.md）上跑 `skill-lint`，报超线；交回写出命令和输出。
+- [x] hooks 配置多一条 PostToolUse（Write|Edit）的 `dyna spec skill-lint --hook`，`hooks-config.test.mjs` 之类的现有测试跟着更新并通过。
+- [x] `dyna test skill-doc` 不再量字数；skilldoc 里不再有 `MaxBodyChars`；文档测试里量主体字数的断言已删，其余断言保留；全量（`node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`、`cd dyna && go test ./...`、`go vet`、`gofmt -l .`）绿。
+- [x] `AGENTS.md`、`REVIEW.md` 不再出现「< 5000」，字数线说法是 4500 + `dyna spec skill-lint`；`REVIEW.md` 验证命令表有 `skill-lint --changed` 一行。
+- [x] dyna 版本 0.0.7、登记表 0.0.7.json 已存、`idea-loop/dyna-version` 下限 0.0.7，`node --test scripts/dyna-scan.test.mjs` 绿，`DYNA_VERSION_BASE=origin/release/idea-loop-0.2.0 node --test scripts/dyna-version.test.mjs` 绿。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 

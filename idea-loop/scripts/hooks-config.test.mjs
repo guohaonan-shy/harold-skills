@@ -62,7 +62,7 @@ test('the events: SessionStart four commands, Bash PreToolUse two guards and the
   const at = (event, matcher) => all.filter((h) => h.event === event && h.matcher === matcher).map((h) => h.command.replace('"${CLAUDE_PLUGIN_ROOT}/bin/dyna" ', ''));
   assert.deepEqual(at('SessionStart', null), ['runtime inject decision-rules --hook', 'runtime inject runtime --hook', 'runtime inject reference --hook', 'home map --hook']);
   assert.deepEqual(at('PreToolUse', 'Bash'), ['issues guard --hook', 'worktree guard --hook', 'seo check --hook']);
-  assert.deepEqual(at('PostToolUse', 'Write|Edit'), ['design lint --hook', 'design md lint --hook', 'home glossary check --hook']);
+  assert.deepEqual(at('PostToolUse', 'Write|Edit'), ['design lint --hook', 'design md lint --hook', 'home glossary check --hook', 'spec skill-lint --hook']);
   assert.deepEqual(at('PostToolUse', 'Bash'), ['seo check --hook']);
   assert.deepEqual(Object.keys(hooks).sort(), ['PostToolUse', 'PreToolUse', 'SessionStart']);
 });

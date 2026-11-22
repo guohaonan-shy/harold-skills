@@ -143,10 +143,6 @@ test('seo-scan: allowed-tools has what the gate uses', () => {
   }
 });
 
-test('seo-scan: the body stays within the 4500-character line', () => {
-  assert.ok([...body(SCAN)].length <= 4500, `${[...body(SCAN)].length} characters`);
-});
-
 test('the SEO module: the brand step points at the convention and writes 无 for a blank answer', () => {
   const brand = SETUP.split('\n').find((l) => l.startsWith('- **品牌**'));
   assert.match(brand, /项目信息从哪来/);

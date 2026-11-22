@@ -14,10 +14,6 @@ const body = (md) => md.replace(/^---\n[\s\S]*?\n---\n/, '');
 const NAMES = ['issue-dispatch', 'issue-session', 'issue-triage'];
 const OLD_STATES = ['待验证', '验证中', '审核中', '待设计', '设计中', '待实现', '实现中', '搁置'];
 
-test('三份 SKILL.md 主体都在 4500 字以内', () => {
-  for (const n of NAMES) assert.ok([...body(skill(n))].length <= 4500, `${n} 主体 ${[...body(skill(n))].length} 字`);
-});
-
 test('文中写到的 issues 命令都是命令行认得的，已删的命令一条也不写', () => {
   const commands = dynaCommands();
   const known = new Set([...commands].filter((c) => c.startsWith('issues ')).map((c) => c.split(' ')[1]));
