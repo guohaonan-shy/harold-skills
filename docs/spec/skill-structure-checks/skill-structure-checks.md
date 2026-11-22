@@ -1,7 +1,7 @@
 ---
 type: spec
 tags: [idea-loop-0-2-0, skill-writing, dyna, structure-checks]
-summary: skill 文件的常驻检查：写文件时 hook 对 home 下全部 skill 跑字数线 4500、对 idea-loop 跑行内命令绊线、review 报主文件增长、retro 先判能不能做成检查、全量在 review 本机跑
+summary: skill 文件的常驻检查：写文件时 hook 对 home 下全部 skill 跑字数线 4500、对 idea-loop 跑行内命令绊线、review 报主文件增长、retro 先判能不能做成检查、没 CI 时同一 head 的全量只跑一次
 issues: [341]
 related: ["[[341]]", "[[skill-rewrite]]", "[[idea-loop-cli]]", "[[skills-no-tool-commands]]", "[[skill-body-limit-backlog]]"]
 ---
@@ -28,9 +28,9 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
 
 `retro` 第 3 节的落点表里「能机械判定 → 优先做成检查」是第三行，跟另外两行并列，也没说做成检查后原来那段文字怎么办。Harold 在 #137 第二条 idea-loop 评论里给的方向：反复出现的纠正做成检查，文字删掉。
 
-### 4. 全量测试在哪跑，三处说法对不上（并进的 #376）
+### 4. 全量测试在哪跑，说法对不上，同一个 head 还跑两遍（并进的 #376）
 
-仓库没有 `.github/workflows`，PR 上从来没有检查（PR #371 上 `gh pr checks` 回「no checks reported」）。`REVIEW.md`「验证命令」第 5 行写「写代码时常跑前两条，提交前跑全量」；`idea-loop/agents/implementer.md` 第 39、46 行写「全量交给 CI」；`pr-review` 的 `references/review-standards.md` 第 90 行写「PR 上没有检查时，全量测试照旧本机跑」。上面两类检查要靠全量跑到，在哪跑得先定。
+仓库没有 `.github/workflows`，PR 上从来没有检查（PR #371 上 `gh pr checks` 回「no checks reported」）。`REVIEW.md`「验证命令」第 5 行写「写代码时常跑前两条，提交前跑全量」；`idea-loop/agents/implementer.md` 第 39、46 行写「全量交给 CI」；`pr-review` 的 `references/review-standards.md` 第 90 行写「PR 上没有检查时，全量测试照旧本机跑」。实际跑的时机（插件 0.1.45 的文字）：执行方不跑全量；PR 转 ready 后 `implement` 的「等 CI」在 PR 上没有检查时，编排者本机跑一次全量（`implement/references/stop-and-resume.md` 第 32、37 行）；紧接着 `pr-review` 第一轮的机械检查在没有检查时又本机跑一次（`review-standards.md` 第 90 行、`run-a-round.md` 第 18 行）。两次跑的是同一个 head，第二次白跑。#376 那时全量 1512 条（PR #371）。
 
 ## 杠杆诊断
 
@@ -40,7 +40,8 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
 
 - **retro 第 3 节**（调用方：`issue-session` 收尾、人说「retro 一下」；每次都读这一节）。引导词：先判「能不能做成检查」，能的落点是检查，「新文」写删掉原文字；用正向写法写目标行为。验证：判不了：没有一次历史 retro 把可机械判定的纠正写成文字的决策点可回放；文档测试钉住第一步是这一判。
 - **pr-review 的 `references/run-a-round.md`「机械检查」**（只在跑一轮时读）。步骤：命令清单多一条增长报告，结果原样进 `checks.md`，不加新步骤。验证：检查，文档测试钉住清单里有这条命令。
-- **仓库 `REVIEW.md` 与 `AGENTS.md`**（读者是在这个仓库里改 plugin 的 agent）。只改说法：全量在哪跑、idea-loop 的字数线以哪条命令为准。验证：不改行为，给人和 agent 读的规矩。
+- **仓库 `REVIEW.md` 与 `AGENTS.md`**（读者是在这个仓库里改 plugin 的 agent）。只改说法：全量在哪跑、字数线以哪条命令为准。验证：不改行为，给人和 agent 读的规矩。
+- **implement 的 `references/stop-and-resume.md`「等 CI」与 pr-review 的 `review-standards.md`、`run-a-round.md`「机械检查」**（读者：编排者，PR 上没有检查时）。步骤：「等 CI」本机跑完全量后用 `dyna pr full-suite record` 记下结果；机械检查本机跑全量之前先 `dyna pr full-suite show`，这个 head 有「过」的记录就复用、写成 `全量测试 | 复用 <head> 的本机结果`，没有才跑并记下。完成条件不变。验证：检查，命令测试钉住复用条件，文档测试钉住两处都写了这一步。
 
 ## 方案
 
@@ -57,7 +58,11 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
 
 **hook 管 home 下所有给 agent 看的 skill 和 agent 定义，一律 4500**（Harold 2026-11-22 定：idea-loop、其他插件、项目自己的 skill 以后都放进 home，都在范围内；选「扩到 home，一律 4500」）。范围按位置认：被写的文件在 home 目录下（`dyna home` 认的那个），是 `skills/**/SKILL.md` 或 `agents/*.md`，搬进来就自动纳入。搬进 home 之前的过渡：harold-skills 里带 `.claude-plugin/plugin.json` 的插件根下的同类文件也算。别的文件静默放行。已经超线的存量（2026-11-22 量：harold-skills 其他插件 11 份里 3 份超，如 `content-creator/thumbnail-gen` 15224 字；TOFEL-demo 自己的 20 份里 18 份超，如 `.claude/skills/announcement/SKILL.md` 29736 字）不豁免：哪次改到它，hook 就报，会话照报错调 writing-for-agents 把它精简到线内。绊线只管 idea-loop 插件的文件：「适配层以外不写行内 `gh` / `git`」是 idea-loop 的写法规矩（[[skills-no-tool-commands]]），项目自己的 skill 不受它约束。
 
-全量在哪跑（Harold 2026-11-22 选「不加 CI，review 每轮本机跑」）：这个仓库不加 CI。`REVIEW.md` 第 5 行改成「执行方只跑改动涉及的（前两条）；review 每轮在本机把每一条都跑一遍，全量也在这里」。插件里的说法不动：`implementer`「全量交给 CI」配合 `review-standards`「PR 上没有检查时，全量测试照旧本机跑」，对有 CI 和没 CI 的项目都成立。
+全量在哪跑（Harold 2026-11-22 选「不加 CI，review 每轮本机跑」）：这个仓库不加 CI。`REVIEW.md` 第 5 行改成「执行方只跑改动涉及的（前两条）；review 每轮在本机把每一条都跑一遍，全量也在这里」。`REVIEW.md` 第 5 行改成「执行方只跑改动涉及的（前两条）；全量在 PR 转 ready 后跑一次（implement 的『等 CI』），之后 review 每轮 head 变了再跑」。`implementer`「全量交给 CI」不动。
+
+**同一个 head 只跑一次全量**（Harold 2026-11-22 定「并进 #341」）：只管 PR 上没有检查的情况；有 CI 时本来就读 CI 结论，不受影响。新命令 `dyna pr full-suite`，两个子命令：`record <head> <退出码> <日志文件>` 把这次本机全量的结果记到 `.tmp/full-suite/<head>.json`；`show <head>` 打印这个 head 的记录，没有记录退出 2。`implement`「等 CI」跑完就 `record`；`run-a-round` 的机械检查先 `show` 当前 head：有、且退出码是 0，就复用，不再跑；没有记录、记录是红的、或 head 变了，照旧本机跑并 `record`。找不到记录（比如 review 开在另一个 worktree）只是多跑一次，不会把没跑过的当成过了。
+
+一个真实例子：PR 转 ready 时 head 是 `abc1234`，「等 CI」本机跑全量绿了，记下 `.tmp/full-suite/abc1234.json`。pr-review 第一轮工作区干净、head 仍是 `abc1234`，`show` 读到退出码 0，`checks.md` 写 `全量测试 | 复用 abc1234 的本机结果`，这一轮不再跑。第一轮要修，第二轮 head 变成 `def5678`，`show` 退出 2，照旧跑一次。
 
 一个真实例子：`writing-for-agents` 现在 4497 字。执行方用 Edit 往里加一句 20 字的话，hook 当场退出 2，会话收到「idea-loop/skills/productivity/writing-for-agents/SKILL.md 主体 4517 字，线 4500。调 `idea-loop:writing-for-agents` 精简这份文件」；它调 writing-for-agents，可能删掉一句重复的规矩，也可能把一个分支挪到指针后面，改回线内后 hook 静默。review 跑一轮时 `checks.md` 里多一行 `productivity/writing-for-agents/SKILL.md 4497 → 4499（+2）`，由审查者判这 2 字合不合适。
 
@@ -76,7 +81,7 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
 1. 期望行为（对应问题 1）：home 下（过渡期含 harold-skills 的插件）任何一份 skill 或 agent 定义改完超过 4500 字，写它的会话当场收到报错和下一步（调 `writing-for-agents`）；不经 hook 的超线 review 时红；review 的机械检查列出这个 PR 让哪几份主文件变长了、各多少字。
 2. 期望行为（对应问题 2）：有人往 idea-loop 的 skill 或 agent 定义里写了行内 `gh` / `git` 命令，写它的会话当场收到报错，报出文件和行号；不经 hook 的 review 时红。
 3. 期望行为（对应问题 3）：retro 遇到能机械判定的纠正，候选的落点是检查，「新文」是删掉原来的文字。
-4. 期望行为（对应问题 4）：`REVIEW.md` 说清全量在 review 每轮本机跑，跟插件里的说法不再冲突。
+4. 期望行为（对应问题 4）：`REVIEW.md` 说清全量在哪跑，跟插件里的说法不再冲突；PR 上没有检查时，同一个 head 的全量本机只跑一次。
 
 ## 实现决策
 
@@ -85,8 +90,9 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
 - **线只写一处**：`skilldoc.MaxBodyChars` 和 `dyna test skill-doc` 的字数那条去掉，`skill-doc` 只留小节指针的核对。四个 `*-slim-doc.test.mjs`，以及 `design-archive-skill-doc`、`cover-skill-doc`、`og-skill-doc` 里量主体字数的断言删掉，其余断言留着。`AGENTS.md`「要点」和 `REVIEW.md`「额外要求」里的「< 5000」改成「线 4500，`dyna spec skill-lint` 在写文件时和 review 时核」，所有插件一样。
 - **`dyna pr skill-growth <base-ref>`**：放在 `dyna/internal/pr`。对 `<base-ref>...HEAD` 里变了的每份 SKILL.md 和 agent 定义输出改前、改后、差值；新增的改前记 0，删掉的改后记 0，没变的不列，参考文件不列。永远退出 0。`run-a-round.md`「机械检查」列上它。
 - **retro 第 3 节**：落点表之前加第一步「先判能不能机械判定」；能的，落点是检查（`dyna` 的护栏或仓库测试），「旧文 / 新文」写成删掉那段（或收成一句指向检查报错的话），「验证」写检查名并先在历史错误上看它红（现有写法）；不能的再按问题出在哪选落点。表里「能机械判定」一行删掉。
-- **版本**：改了 `dyna/` 就照 `DEVELOPMENT.md`「命令行 dyna」升 dyna 版本（现在 0.0.5）、存登记表。`hooks.json` 开始写 `dyna spec skill-lint --hook`、`run-a-round.md` 开始写 `dyna pr skill-growth`，`idea-loop/dyna-version` 下限要提到那一版；那一版必须已发布（`scripts/dyna-scan.test.mjs` 守着），发不发、什么时候发由人定。插件 `plugin.json` 升 minor：写 idea-loop 文件时多一个 hook、review 的机械检查多一条、retro 的落点判法变了，是流程行为的改动。
+- **版本**：改了 `dyna/` 就照 `DEVELOPMENT.md`「命令行 dyna」升 dyna 版本（现在 0.0.5）、存登记表。`hooks.json` 开始写 `dyna spec skill-lint --hook`、`run-a-round.md` 开始写 `dyna pr skill-growth` 与 `dyna pr full-suite`，`idea-loop/dyna-version` 下限要提到那一版；那一版必须已发布（`scripts/dyna-scan.test.mjs` 守着），发不发、什么时候发由人定。插件 `plugin.json` 升 minor：写 idea-loop 文件时多一个 hook、review 的机械检查多一条、没有 CI 时同一个 head 的全量不再重跑、retro 的落点判法变了，是流程行为的改动。
 - **已知限制**：
+  - 全量结果记在 worktree 的 `.tmp/` 里：「等 CI」和 review 不在同一个 worktree 时记录读不到，退回多跑一次。
   - 改一份已超线的存量文件，哪怕只改一个字，也要先精简到 4500 才不再报；这是 Harold 选的口径。
   - 还没搬进 home 的项目 skill 不在范围内。
   - hook 每次 Write / Edit 都跑：精简途中文件还超线时，每改一次都会报一次，改回线内才静默。
@@ -98,7 +104,7 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
 
 | 变的是什么 | 仪器 | 本次 |
 |---|---|---|
-| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到（`go test`）：`spec skill-lint` 的量与扫描、放行规则、`--hook` 的范围判定（home 内外、过渡期的插件根、绊线只对 idea-loop）；`--changed` 只查改到的；`pr skill-growth` 的计算（新增、删除、没变、参考文件不算） |
+| 纯逻辑、数据转换、状态机 | TDD 单元测试 | 碰到（`go test`）：`spec skill-lint` 的量与扫描、放行规则、`--hook` 的范围判定（home 内外、过渡期的插件根、绊线只对 idea-loop）；`--changed` 只查改到的；`pr skill-growth` 的计算（新增、删除、没变、参考文件不算）；`pr full-suite` 的复用条件（同 head 且退出码 0 才复用） |
 | API 契约（路由、schema、序列化） | TDD API 测试 | 碰到：两条新命令的输出形状与退出码、`--hook` 的回话（退出 2、stderr）、登记表多两条命令（登记表测试守着）、`hooks.json` 多一行 |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval（确定性断言） | 见「杠杆诊断」各处的「验证」 |
@@ -111,7 +117,8 @@ idea-loop 有 36 份 SKILL.md、16 份 agent 定义。#340 重写后主体（量
   2. 前置：一个分支在基准上把一份 SKILL.md 加了 300 字，新增一份 agent 定义，改了一份参考文件。步骤：`dyna pr skill-growth <base>`。期望：列两行（SKILL.md +300，agent 定义 0 → N），参考文件不列，退出 0。覆盖：期望行为 1。
   3. 前置：夹具 SKILL.md 正文一行写 `` `gh issue view 1 --comments` ``。步骤：`dyna spec skill-lint --hook`（喂这份文件的事件）。期望：退出 2，报文件和行号；同一行加「坑：…」，或文件在放行清单里，退出 0。覆盖：期望行为 2。
   4. 前置：本分支的 `idea-loop/`。步骤：`dyna spec skill-lint idea-loop/skills/*/*/SKILL.md idea-loop/agents/*.md`。期望：退出 0（现有 52 份都在线内、剩下的行内命令都在适配层）。覆盖：期望行为 1、2。
-  5. 前置：改后的 `retro`、`run-a-round.md`、`REVIEW.md`。步骤：对应的文档测试。期望：retro 第 3 节第一步是「能不能机械判定」；清单里有 `dyna pr skill-growth`；`REVIEW.md` 第 5 行写全量在 review 本机跑。覆盖：期望行为 3、4。
+  5. 前置：改后的 `retro`、`run-a-round.md`、`stop-and-resume.md`、`REVIEW.md`。步骤：对应的文档测试。期望：retro 第 3 节第一步是「能不能机械判定」；清单里有 `dyna pr skill-growth` 和 `dyna pr full-suite show`；「等 CI」没有检查的分支里有 `dyna pr full-suite record`；`REVIEW.md` 第 5 行写清全量在「等 CI」和 head 变了的 review 轮跑。覆盖：期望行为 3、4。
+  6. 前置：`record abc1234 0 <日志>` 之后。步骤：`dyna pr full-suite show abc1234`、`show def5678`；再 `record abc1234 1 <日志>` 后 `show abc1234`。期望：第一次打印退出码 0 的记录；第二次退出 2；第三次打印退出码 1 的记录（调用方据此重跑）。覆盖：期望行为 4。
 - **照着谁写**：`spec skill-lint` 的 `--hook` 照 `design lint --hook` 及其测试，量法照 `skill-doc`；`pr skill-growth` 照 `dyna pr diagnostics filter`；绊线判据照 `no-project-leak.test.mjs`、`runtime-tripwire.test.mjs`。
 
 ## Out of scope
