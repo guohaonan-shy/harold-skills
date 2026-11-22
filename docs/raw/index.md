@@ -114,3 +114,9 @@
 | [decisions/293](decisions/293.md) | conversation | 2026-11-20 | 决定记录 —— #293 的 todo 会话：ai-eval 迁进来，夜里按推荐定 4 题，白天定版本（ai-eval 0.0.1、idea-loop patch）与 setup 统一入口另开 #420；两条候选都不批 |
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
+| [[2026-11-17-ai-eval-shape]] | conversation | 2026-11-17 | eval 写法的形状：把 toeflair 的 ai-eval 迁进 harold-skills，再补规则 |
+| [[2026-11-16-explorer-reads-impl-decisions]] | conversation | 2026-11-16 | explorer 读 spec 的范围：加读「实现决策」 |
+| [[2026-11-19-ui-measure-matrix-gaps]] | conversation | 2026-11-19 | ui-measure 矩阵缺口：margin/gap 与 pixelAnchor 两道题 |
+| [[2026-11-16-handback-lost-turn]] | conversation | 2026-11-16 | #292 交回后卡住：根因是那一轮的模型请求丢了 |
+| [[2026-11-16-issue-137-scope]] | conversation | 2026-11-16 | #137 的范围：拆成子 issue，除字数存量外随 0.2.0 发布 |
+| [[2026-11-16-refine-advisor-grill]] | conversation | 2026-11-16 | uiux-refine 重设计 grill：评委降为顾问、每轮交设计评审报告 |

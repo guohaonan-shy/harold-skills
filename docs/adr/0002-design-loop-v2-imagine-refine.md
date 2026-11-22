@@ -45,7 +45,7 @@ v1 的接法是：`grill` 的设计子树长出来后，一次性 handoff 给独
 
 准出物**只有一份方向说明**（固定七节，写进 spec §4），形状由 `direction-note-check.mjs` 校验。变种的渲染只服务于人当下的反应，不留存、不往下传。项目没有 `DESIGN.md` 的，语言在这一段被选出来并写成文件。原 `design-brief` 溶解在这里。
 
-### 2.4 uiux-refine：收敛，准出一个 HTML 画布 ⚠️ 已被取代（部分）→ [[0015-uiux-imagine-agent]]
+### 2.4 uiux-refine：收敛，准出一个 HTML 画布 ⚠️ 已被取代（部分）→ [[0015-uiux-imagine-agent]]；⚠️ 已被取代（部分：评委打磨环与减法 / AI tells 轮）→ [[0074-refine-judge-advisor]] §2
 
 也只能人调，且要一个全新会话。它读 spec 里那份方向说明，在 `DESIGN.md` 之下**从方向说明重建** preview（绝不从 imagine 的渲染物继续），执行者对评委跑双模型打磨环 —— **评委只收截图，分数从 finding 推导**，由 `critic-score.mjs` 对着它自己的 finding 复算。静态构图冻结之后才接动效段与素材段，再各跑一轮减法与 AI tells。
 

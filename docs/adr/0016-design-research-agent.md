@@ -20,7 +20,7 @@ related: ["[[0001-design-workflow-into-harold-skills]]", "[[0002-design-loop-v2-
 3. **调研几乎都是人发起的。** 全部会话里调过 Refero 的设计会话只有 3 场、6 次调研，其中 5 次是人看了变种后点名要查；执行者主动去查的一次都没有，有用的都在回答「别人验证过的做法」（UX 惯例、一个没画过的流程、文案语气），没用的都是时间 / 行为维度的问题。
 4. **同一份契约被三个调用方各读一遍**（imaginer、designer、静态 UI 协议 C 段），而 imaginer 里写的「自己起调研 agent」指向一个不存在的 agent。
 
-## 2 决策（how）
+## 2 决策（how） ⚠️ 已被取代（部分：「谁来调：人」与「Refero」两条；轻用法由会话自起，数据源换成 Mobbin）→ [[0074-refine-judge-advisor]] §2
 
 - **谁来调：人。** 新增 skill `uiux-research`，不设 `disable-model-invocation`（普通对话里人说「查一下别人怎么做」，模型可自调）；imagine / refine 的编排者只在人说要查时才调。备选是由执行者自己起调研 agent，被否：调研从来是人发起的，执行者主动查没有产出。先这样协作一阵子，再看怎么融进流程。
 - **谁来查：专职 `uiux-researcher`。** 每次新起、做完即结束；Refero 调用与截图都留在它那里，调用方只收一页 HTML 的路径加一句结论。模型钉 `opus` · medium，工具只有 Refero 的 screens / flows、下载截图的 curl、写文件，不给浏览器，不起子代理。

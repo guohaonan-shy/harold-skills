@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-16
 title: "#292 交回后卡住：根因是那一轮的模型请求丢了"
 tags: [issue-workflow, subagent-handback-lost-turn]
-related: ["[[subagent-handback-lost-turn]]"]
+related: ["[[0086-subagent-handback-lost-turn]]"]
 ---
 
 U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。证据的扫描脚本与逐条清单在当时 worktree 的 `.tmp/triage/292/`，不进知识库；数字都写进了 spec。
