@@ -4,11 +4,11 @@
 
 ## 怎么查
 
-对 home 已提交的内容，不对工作区里别的会话还没提交的文件（下面 `<home>` 是 home，`<名字>` 是项目名）：
+对 home 已提交的内容（`HEAD`），不对工作区里别的会话还没提交的文件（`<名字>` 是项目名）：
 
-1. 列出 `docs/design/tmp/` 下的目录：`git -C <home> ls-tree --name-only HEAD projects/<名字>/docs/design/tmp/`。目录名 `research` 跳过（没有 spec 时的调研页放那里，不算设计产物）。
-2. 每个目录 `<名>`，看它里面有没有 `research/` 之外的东西：`git -C <home> ls-tree -r --name-only HEAD projects/<名字>/docs/design/tmp/<名>/`，滤掉 `…/docs/design/tmp/<名>/research/` 开头的路径，还剩文件才算有设计产物。
-3. 有设计产物的，看它的 spec：`git -C <home> show HEAD:projects/<名字>/docs/spec/<名>/<名>.md` 的 frontmatter `issues:`，逐个 `gh issue view <号> --json state` 查。
+1. 列出 home `HEAD` 里 `projects/<名字>/docs/design/tmp/` 下的目录。目录名 `research` 跳过（没有 spec 时的调研页放那里，不算设计产物）。
+2. 每个目录 `<名>`，列出它里面的全部文件，滤掉 `research/` 开头的路径，还剩文件才算有设计产物。
+3. 有设计产物的，看它的 spec：读 home `HEAD` 里 `projects/<名字>/docs/spec/<名>/<名>.md` 的 frontmatter `issues:`，逐个 `dyna issues read <docs> <号>` 查 state（`<docs>` 是 `<项目目录>/docs/`）。
    - 读不到（已经没有 spec 目录），或 `issues:` 里的 issue 全关了：**漏归档**，出一行。
    - 还有 issue 开着：需求还在走，不出行。`issues:` 是空的，判不了，不出行。
 
@@ -22,7 +22,7 @@
 |---|---|
 | 对象 | `docs/design/tmp/<名>/` |
 | 发现 | spec 的 issue 全关了或已经没有 spec 目录；里面还留着哪些设计产物（`canvas/`、`delta/`……） |
-| 证据 | 上面的 `ls-tree` 输出摘要与 issue 状态 |
+| 证据 | 列出的文件摘要与 issue 状态 |
 | 建议处置 | `补归档` 或 `丢弃`（闭集） |
 | 选项 | 批 / 不批 / 改成… |
 

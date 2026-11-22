@@ -31,8 +31,8 @@ function markdownUnder(dir) {
   });
 }
 
-test('the skill body stays under 5000 characters', () => {
-  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
+test('the skill body stays under the 4500-character line', () => {
+  assert.ok([...body].length < 4500, `body is ${[...body].length} characters`);
 });
 
 test('the round is the six steps, ending at a report the human answers by number', () => {
@@ -106,7 +106,10 @@ test('what goes in the chat when the report goes out: link, score, the items to 
 });
 
 test('a direction opinion about a block the human already disliked is reported as "reopen in imagine" (#230)', () => {
-  const section = body.slice(body.indexOf('## 方向性意见与人的不满'), body.indexOf('## 人说的其它话'));
+  // the branch lives in the ledger reference; the skill body keeps a pointer to it
+  assert.match(body.slice(body.indexOf('## 方向性意见与人的不满'), body.indexOf('## 人说的其它话')), /references\/ledger-and-report\.md/);
+  const ref = read('skills', 'design', 'uiux-refine', 'references', 'ledger-and-report.md');
+  const section = ref.slice(ref.indexOf('## 方向性意见与人的不满'), ref.indexOf('## 迁移'));
   assert.match(section, /不满意（会话记录或 ledger 里有人的原话）/);
   assert.match(section, /推荐「回 imagine 重开这一块」，不再推荐保留/);
   assert.match(section, /附上这条意见的原文/);

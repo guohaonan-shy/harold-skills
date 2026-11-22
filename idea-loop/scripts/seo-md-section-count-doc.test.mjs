@@ -1,8 +1,8 @@
 /**
  * Pins that no seo skill hard-codes how many sections SEO.md has. The section list lives in one place,
- * the format file (skills/seo/seo-setup/references/seo-md.md); a skill that says "读出八节" is a copy of it
+ * the format file (skills/engineering/setup/references/seo/seo-md.md); a skill that says "读出八节" is a copy of it
  * and goes stale the day a section is added (it did, when 「配图」 came in). The only count a skill may
- * still state is seo-setup's "N节都在" completion check, and that one must equal the number of required
+ * still state is the SEO module's "N节都在" completion check, and that one must equal the number of required
  * sections in the format file's template.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see
@@ -36,21 +36,21 @@ test('no seo skill states a section count right after reading SEO.md', () => {
 });
 
 test('the six skills that read SEO.md with `dyna seo parse` still do so, and say 读出各节', () => {
-  const readers = ['keyword-clustering', 'keyword-research', 'competitor-analysis', 'link-prospecting', 'seo-audit', 'seo-coach'];
+  const readers = ['keyword-clustering', 'keyword-research', 'competitor-analysis', 'seo-outreach/references/prospecting.md', 'seo-audit', 'seo-coach'];
   for (const name of readers) {
-    const body = read('skills', 'seo', name, 'SKILL.md');
+    const body = name.endsWith('.md') ? read('skills', 'seo', ...name.split('/')) : read('skills', 'seo', name, 'SKILL.md');
     assert.match(body, /`dyna seo parse <项目目录>\/SEO\.md` 读出各节/, name);
   }
 });
 
-test('seo-setup completion check: "N节都在" equals the required sections in the template', () => {
-  const format = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+test('the SEO module completion check: "N节都在" equals the required sections in the template', () => {
+  const format = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
   const template = format.match(/```markdown([\s\S]*?)```/)[1];
   const headings = [...template.matchAll(/^## (.+?)\s*$/gm)].map((m) => m[1]);
   const required = headings.filter((h) => h !== '分析').length;
-  const setup = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+  const setup = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
   const m = setup.match(new RegExp(`(${NUM})节都在`));
-  assert.ok(m, 'seo-setup states the completion check');
+  assert.ok(m, 'the SEO module states the completion check');
   const stated = DIGITS[m[1]] ?? Number(m[1]);
   assert.equal(stated, required, `template has ${required} required sections`);
 });

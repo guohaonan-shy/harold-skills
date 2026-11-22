@@ -9,6 +9,8 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 没有设计稿的 UI 改动（没有画布）不走这一条：实现者在 `delta/` 记「最小差异」。
 
+交付物：冻结画布的最终一版 `v<终>`、冻结记录「冻结后的变更」里新记的一行、归属工单上追加的一格（只在代码跟新画布不一致、且来源不是接受实现时追加）。
+
 ## designer 做
 
 编排者用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：
@@ -34,13 +36,7 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 编排者新起一个 `idea-loop:ui-master`，跑完即弃，只给：改动那几格的截图（标状态名）、冻结记录「意图」节的那句话、这一轮看静态。它是顾问：交回意见和分数，提不提交、改不改，由人定。
 
-把评委的 JSON 写成 `canvas/work/change-<序号>/critic.json`，再写同目录的 `context.json`（`{ "states": [这几格的状态名], "thoughts": [] }`），跑：
-
-```
-dyna design critic round "<canvas>/work/change-<序号>/critic.json" --context "<canvas>/work/change-<序号>/context.json"
-```
-
-退出码 `2` 是评委的输出不合格式：作废，新起一个 ui-master 重评。合格只说明格式对，不判停。
+把评委的 JSON 写成 `canvas/work/change-<序号>/critic.json`，再写同目录的 `context.json`（`{ "states": [这几格的状态名], "thoughts": [] }`），用 `dyna design critic round`（`--context` 带上 `context.json`）校验。退出码 `2` 是评委的输出不合格式：作废，新起一个 ui-master 重评。合格只说明格式对，不判停。
 
 然后停下，把评委的每条意见（带编号）、分数、新旧两版截图交给人，照调用方 skill 写的方式摆。人逐条定：
 
@@ -60,7 +56,7 @@ dyna design critic round "<canvas>/work/change-<序号>/critic.json" --context "
    ```
    | 日期 | 画布版本 | 改了哪几格 | 人的原话 | 评委分 |
    |---|---|---|---|---|
-   | 2026-10-24 | v6 | cookbook--search-loading | 「加载态不要骨架屏，一条细进度条就够」 | 9 |
+   | <日期> | v6 | cookbook--search-loading | 「加载态不要骨架屏，一条细进度条就够」 | 9 |
    ```
 
    「改了哪几格」写状态名，多格用逗号；「评委分」是人定提交那一版、评委给的分数（参考，不是关卡）；「画布版本」写 `v<终>`，是这一行之后的最终画布：它与冻结摘要里的画布指针不同时，以这一节最后一行的版本为准。

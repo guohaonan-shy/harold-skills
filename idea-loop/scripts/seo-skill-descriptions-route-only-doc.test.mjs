@@ -18,7 +18,7 @@ const seoDir = process.env.SEO_SKILLS_DIR ?? join(pluginRoot, 'skills', 'seo');
 const description = (slug) =>
   readFileSync(join(seoDir, slug, 'SKILL.md'), 'utf8').match(/^description: (.*)$/m)[1];
 
-const SKILLS = ['seo-outreach', 'link-prospecting', 'competitor-analysis', 'keyword-research', 'keyword-clustering', 'seo-audit'];
+const SKILLS = ['seo-outreach', 'seo-writing', 'seo-coach', 'competitor-analysis', 'keyword-research', 'keyword-clustering', 'seo-audit'];
 const ARTIFACT_WORDS = ['人在场时', '发现清单', '草稿箱', '表单', '报告', '打标'];
 
 for (const slug of SKILLS) {

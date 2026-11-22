@@ -1,13 +1,14 @@
 /**
- * Tripwire — decision-rules only says who decides; how to write what a human reads lives in evidence;
+ * Tripwire — decision-rules says who decides; how to write what a human reads lives in its last three sections
+ * (merged in from the old evidence skill, spec skill-rewrite ticket 02);
  * adding a rule starts with "is it a special case of an existing one".
  *
  * Spec decision-rules-who-decides, ticket 01 (issue #80). Before: decision-rules carried a section
  * 「交给人时」 and a reference (handing-to-human.md) about how to write a question for the human, and seven
  * places pointed at it; writing-for-agents and retro only ever appended. These checks pin: no text left
  * in the plugin that points at the old section or reference (dreaming's own step names excepted), the
- * reference gone, evidence opening with the reader model and covering the shared writing rules inside
- * 5000 characters, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
+ * reference gone, the evidence sections of decision-rules opening with the reader model and covering the shared
+ * writing rules, the whole body inside 4500 characters, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
  * the places that repeat the format), the four pool candidates re-pointed, and the explain-mechanism replay
  * case removed.
  */
@@ -42,23 +43,25 @@ test('nothing in the plugin points at the old 「交给人时」 section or the 
   assert.deepEqual(hits, [], `还指着旧的「交给人时」/ handing-to-human：${hits.join(', ')}`);
 });
 
-test('decision-rules has no references directory and its description no longer routes on how to write a question', () => {
+test('decision-rules holds only the two figure references (no handing-to-human) and its description no longer routes on how to write a question', () => {
   const dir = join(pluginRoot, 'skills', 'productivity', 'decision-rules');
-  assert.ok(!existsSync(join(dir, 'references')), 'decision-rules/references 还在');
+  assert.deepEqual(readdirSync(join(dir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
   const raw = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
   const description = raw.match(/^description: (.*)$/m)[1];
   assert.doesNotMatch(description, /功课/);
   assert.doesNotMatch(bodyOf(raw), /^## 交给人时/m);
 });
 
-test('evidence opens with the reader model and carries the shared writing rules', () => {
-  const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
-  const body = bodyOf(raw);
+test('decision-rules carries the reader model and the shared writing rules in its evidence sections', () => {
+  const raw = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
+  const all = bodyOf(raw);
+  const body = all.slice(all.indexOf('## 证据是什么'));
   const description = raw.match(/^description: (.*)$/m)[1];
-  assert.match(description, /写给人看|写给人/, 'description 要路由「写给人看的东西」');
-  assert.match(description, /截图|配图/, 'description 还要路由「配图」');
+  assert.match(description, /写证据/, 'description 要路由「写证据」');
+  assert.match(description, /配图/, 'description 还要路由「配图」');
+  for (const w of ['拼流程图', '画图表', '录动图']) assert.match(description, new RegExp(w), `description 缺：${w}`);
 
-  const firstBlock = body.trim().split(/\n##? /)[0];
+  const firstBlock = body.split(/\n## /)[0];
   assert.match(firstBlock, /不清楚实现细节/, '正文开头要写读者模型');
   assert.match(firstBlock, /快速/, '读者模型要写读者要的是快速看懂、拿到证据、决定');
 
@@ -74,9 +77,9 @@ test('evidence opens with the reader model and carries the shared writing rules'
   assert.match(body, /最新基准/);
 });
 
-test('the evidence body is at most 5000 characters (UTF-8 characters, not bytes)', () => {
-  const body = bodyOf(read('skills', 'productivity', 'evidence', 'SKILL.md'));
-  assert.ok([...body].length <= 5000, `body is ${[...body].length} characters`);
+test('the decision-rules body, evidence sections included, is at most 4500 characters (UTF-8 characters, not bytes)', () => {
+  const body = bodyOf(read('skills', 'productivity', 'decision-rules', 'SKILL.md'));
+  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
 });
 
 test('writing-for-agents says to look for an existing principle before adding one', () => {

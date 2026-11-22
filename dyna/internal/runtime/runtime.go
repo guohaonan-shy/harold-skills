@@ -109,7 +109,7 @@ func Inject(section string, env home.Env) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return "以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它。「核心」一节针对有 spec 的工作；没有 spec 的会话里，把「spec」读作人这次交代的事。\n\n" + body + "\n", nil
+		return "以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它。前六节讲处置：「核心」一节针对有 spec 的工作；没有 spec 的会话里，把「spec」读作人这次交代的事。后三节讲证据怎么写、配什么图，写给人看的东西都照它。\n\n" + body + "\n", nil
 	}
 	name, err := Detect(env)
 	if err != nil {

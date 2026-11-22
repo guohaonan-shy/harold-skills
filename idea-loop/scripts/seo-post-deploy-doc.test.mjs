@@ -23,7 +23,7 @@ const outcome = (text, name) => text.split(/\n(?=\d\. \*\*)/).find((s) => s.incl
 
 const MERGE = read('skills', 'engineering', 'pr-review', 'references', 'merge.md');
 const AUTO = read('skills', 'engineering', 'pr-review', 'references', 'seo-auto-merge.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const CHECK = section(MERGE, '上线后自查');
 
 test('merge.md has an 上线后自查 section, and 合并 points into it for both the human and the automatic path', () => {
@@ -82,8 +82,8 @@ test('有一项不过: revert the merge, merge the revert PR when checks pass, p
   assert.match(o, /git revert -m 1 <合并提交>/);
   assert.match(o, /revert PR/);
   assert.match(o, /原 PR/);
-  assert.match(o, /gh pr checks/);
-  assert.match(o, /gh pr merge/);
+  assert.match(o, /dyna pr merge/, 'the revert PR is merged by the command, not a hand-written gh line');
+  assert.doesNotMatch(o, /gh pr (checks|merge)/);
   assert.match(o, /护栏的 revert PR 例外/);
   assert.match(o, /检查没过[^\n]*不合并/, 'a revert PR whose checks fail waits for the human');
   assert.match(o, /已回滚 #<PR 号>：<网址> <哪一项>/);

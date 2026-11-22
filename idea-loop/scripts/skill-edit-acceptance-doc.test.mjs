@@ -48,13 +48,12 @@ test('to-ticket copies the three cells into the end of the acceptance list, word
   ]) assert.ok(block.includes(cell), `三格里缺这一格：${cell.slice(0, 30)}…`);
 });
 
-test('implementer step 5 names writing-for-agents directly for skill, agent definition and skill reference tickets', () => {
-  const step = section(implementer, '开工前').split('\n').find((l) => l.startsWith('5. '));
-  assert.ok(step, '「开工前」缺第 5 步');
+test('the implementer\'s 写法规范 step names writing-for-agents directly for skill, agent definition and skill reference tickets', () => {
+  const step = section(implementer, '开工前').split('\n').find((l) => l.includes('**写法规范**'));
+  assert.ok(step, '「开工前」缺写法规范那一步');
   assert.match(step, /skill、agent 定义、skill 参考文件/, '第 5 步要点名这三类文件');
   assert.match(step, /用 Skill 工具调 `idea-loop:writing-for-agents`/, '第 5 步要直接用 Skill 工具调 writing-for-agents');
   assert.match(step, /读完再动手/, '要读完再动手');
-  assert.match(step, /不再[^。]*转一跳/, '要说明不再经 CODING_STANDARDS.md 的链接转一跳');
 });
 
 test('implementer hand-back: a 杠杆 line per changed file, and the standards line says 调 when it called the skill', () => {

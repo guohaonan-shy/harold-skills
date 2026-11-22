@@ -116,7 +116,7 @@ type ImageDirVerdict struct {
 	ContentPaths []string `json:"contentPaths"`
 }
 
-// ImageDirInScope says whether dir — the image directory seo-setup is about to write into SEO.md's 配图 — is inside the
+// ImageDirInScope says whether dir — the image directory the SEO module of setup is about to write into SEO.md's 配图 — is inside the
 // content scope (内容路径 — not docs/: in 0.2.0 docs/ lives in the project directory, not in the code repository, as
 // JudgeScope has it too): the directory itself, or a file placed straight into it (so `public/images/**`
 // covers `public/images`).

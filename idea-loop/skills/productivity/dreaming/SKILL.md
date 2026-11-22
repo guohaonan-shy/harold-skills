@@ -5,9 +5,9 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 文档写下时是对的，代码往前走了，没人回头改。这个 skill 拿每份文档的自我陈述去撞真实的代码和 PR 状态，判处置。**行按风险分两类**：会判错或删了找不回的（`DESIGN.md`、文档里的冲突、`GLOSSARY.md`、要删的暂缓设计、`记忆` 的 `问人` 行，另加所有 `候选` 行）问人，其余按各自的建议处置自己执行，不进汇报。
 
-**dreaming 只编排**：起环境、派工、汇提议表并过校验命令、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每段对账由一个专职 agent 做（模型与强度钉在定义里），提议段里只读，只写自己的中间物。
+**dreaming 只编排**：起环境、派工、汇提议表、拆出问人的小表、执行自动那份并提交 home、问人那份做审核页与推送。每段对账由一个专职 agent 做，提议段里只读，只写自己的中间物。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、目录、frontmatter、删除后的死链检查都按它）和 `idea-loop:issues`（issue 的状态只走 `dyna issues`，spec 了结看它 `issues:` 里的 issue 全关了；`dyna spec check` 顺带报旧平铺布局和还带 `status` 行的 spec）。目标项目有 `GLOSSARY.md` 时，再用 Skill 工具调 `idea-loop:glossary`。
+先用 Skill 工具调 `idea-loop:wiki-conventions`（项目目录、frontmatter、死链检查、术语表都按它）和 `idea-loop:issues`（issue 的状态；spec 了结与否）。
 
 ## 纪律
 
@@ -23,9 +23,9 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 照项目清单（home `AGENTS.md` 的 `## 项目`）的顺序，每个项目做 1–3 步，全部做完做第 4 步；做法见 [references/per-project.md](references/per-project.md)。
 
-1. **取项目**：`where --project <名字>` 拿项目目录；在登记的本地 clone 里 `git fetch`，从 `origin/<基准分支>` 切一个 worktree 放在 home 的 `.worktrees/` 下，对完删掉。基准分支取 `<项目目录>/DEVELOPMENT.md` 的「分支」节。
-2. **对账**：下面的「流程」。`<docs>` 指 `<项目目录>/docs/`，对的是这个 worktree 里的代码。
-3. **重写项目地图** `projects/<名字>/AGENTS.md`，不超过 2000 字，`commit` 到 home。
+1. **取项目**：`where --project <名字>` 拿项目目录；把登记的本地 clone 同步到 origin 最新，从 `origin/<基准分支>` 在 home 的 `.worktrees/` 下切一个 worktree（不动人在 clone 里的工作），对完删掉。基准分支取 `<项目目录>/DEVELOPMENT.md` 的「分支」节。完成条件：项目目录和代码 worktree 都在。
+2. **对账**：下面的「流程」。`<docs>` 指 `<项目目录>/docs/`，对的是这个 worktree 里的代码。完成条件：自动那份已提交，问人的行已摆给人。
+3. **重写项目地图** `projects/<名字>/AGENTS.md`，不超过 2000 字，`commit` 到 home（内容没变就没有提交）。
 4. **重写设备地图**：只改 `~/home/AGENTS.md` 的「## 设备地图」一节，不超过 2000 字；「## 项目」一节由 setup 维护，不改。
 
 跑不了的项目（本地 clone 不在、fetch 失败、`where` 报「还没搬」）跳过，汇报里写一行原因，不挡后面的项目。有项目没对完，这次就不算成功，汇报里写明哪个。人手敲时（会话开在某个项目的代码 worktree 里）只对这一个项目做 1–3 步。开在 home 时项目自己的 hook、`.mcp.json`、`.claude/skills` 都不加载，对账只用 idea-loop 自己的工具。
@@ -57,18 +57,6 @@ description: 知识库、设计档案、DESIGN.md 和术语表跟代码的对账
 
 **问人那份**（有行才有）：小表在会话里按节摆给人，`候选` 与 `DESIGN.md 条目` 有行时另做一页审核页，照 [references/review-page.md](references/review-page.md)；用『推送』通知人。人不回，不挡什么。人回了，只执行批了的那几行，同样检查后 `commit` 到 home。
 
-**推送只有三种情况**：有问人的行、自动那份没提交成、哪一部分没跑成。都没有就不推送，「这次无事」也不发。
+**收尾**（何时推送、回滚、中间物清理、重跑）：照 [references/proposal-table.md](references/proposal-table.md) 的「收尾」。
 
-**回滚**：人说「回滚某次 dreaming」，在 home 里 `git revert` 那次提交。
-
-**中间物何时删**：问人的行处理完（批了的执行了，或每行都回了「不批」；没有问人的行就不用等），且自动那份已经提交（空表没有要提交的），才删这个项目的中间物目录。没删的，下次凭它知道上一张没处理完。
-
-**写 `DESIGN.md` 停在人身上**：提议段只把新旧文并排放进提议表，人批了、确认了措辞才落笔。缺陷（产品坏了、法对代码错）由自动那份直接开成目标仓库的 backlog issue。
-
-**幂等**：同一批文档重跑，提议表应为空。
-
-## 只跑一部分
-
-人可以说只跑某一部分，只起对应的 agent（或只做漏归档），只出那几节：只跑 spec → ADR 起 `adr-reconciler`；只跑候选蒸馏或 `DESIGN.md` 对账起 `design-steward`，范围写明哪一部分；只跑设计档案走档案那一路；说「只跑记忆」就只做记忆一段，只出 `记忆` 一节。
-
-**单条蒸馏**：人口述一条视觉规则想当场落，调用时带上它：只起 `design-steward`，范围「单条蒸馏」，不出提议表，照 [references/candidate-distillation.md](references/candidate-distillation.md) 的「单条蒸馏」。没有单独调用的，这条规则记成候选，等下次对账。
+人说只跑某一部分（只跑记忆、只跑 spec → ADR、只跑候选蒸馏或 `DESIGN.md` 对账、只跑设计档案），或口述一条视觉规则想当场落：照 [references/partial-runs.md](references/partial-runs.md)。

@@ -8,7 +8,7 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
 
 推送等运行环境的能力，照『<能力>』（`dyna runtime show <能力>`）。`<docs>` 指 `<项目目录>/docs/`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」），`<主分支>` 取 `<项目目录>/DEVELOPMENT.md` 的「分支」节；没有 `DEVELOPMENT.md`，停下告诉人跑 `/idea-loop:setup`。
 
-**Linear 项目**（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，取 backlog、贴评论、打 label、翻状态用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）做，不跑 `dyna issues backlog` / `note` / `set` / `priority` / `type`；翻状态前仍先 `dyna issues check <docs> <状态> <号> --from=<现在>`。
+**Linear 项目**（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）取 backlog、贴评论、打 label、翻状态。
 
 三种调用，`$ARGUMENTS` 决定：
 
@@ -20,7 +20,7 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
 
 ## 分拣
 
-1. **备环境**：`git fetch origin`，用 `git worktree add --detach <路径> origin/<主分支>` 切一个 worktree 给子代理查代码、复现用；中间物放它的 `.tmp/triage/<号>/`。
+1. **备环境**：把 origin 取到最新，`dyna worktree add triage-<批次或 P0 的号> --detach --base <主分支>` 切一个游离在最新主分支上的 worktree，给子代理查代码、复现用（它打印路径）；中间物放它的 `.tmp/triage/<号>/`。
 2. **取一批**：`dyna issues backlog <docs> 15`。`全部`：不带上限列出全部，每批取还没处理过的最早 15 个。
 3. **派子代理**：每个 issue 起一个 `idea-loop:issue-triager`，给 issue 号、项目目录的绝对路径（`<docs>` 就在它下面）和上面 worktree 的绝对路径；**同时最多 5 个**，一个交回再补下一个。它们各自在 issue 上贴证据评论，交回一行 JSON（号、结论、评论链接、建议去向、建议优先级）。
 4. **照建议执行**：每个 issue 按子代理交回的建议去向翻。建议去向有四种：
@@ -36,7 +36,7 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
    - **不替人拒需求**：canceled 只来自重复、命中「不做」清单、已实现、复现不出四种；子代理建议 canceled 而理由不在这四种里的，改翻 triage。拿不准值不值得做的翻 triage，不 canceled，交给人评估。
    - **疑似 P0**：结论里标了「疑似 P0」的，照建议去向翻，优先级写 P1；P0 由人改。
 5. **推送**：只在两种情况，用『推送』能力点名这几个号：有留在 backlog 的 issue（子代理评论里写了「还要你补」），或有疑似 P0。都没有，不推送。
-6. **收尾**：删掉第 1 步的 worktree。`全部` 还有没处理的，回第 2 步，一批接一批跑完。
+6. **收尾**：`dyna worktree remove <路径>` 删掉第 1 步的 worktree。`全部` 还有没处理的，回第 2 步，一批接一批跑完。
 
 完成条件：这一批每一行都按建议去向处理了。
 

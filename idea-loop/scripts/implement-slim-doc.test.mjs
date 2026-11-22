@@ -31,9 +31,9 @@ function body(doc) {
   return rest.join('\n');
 }
 
-test('implement SKILL.md body is under 5000 characters (the limit in AGENTS.md)', () => {
+test('implement SKILL.md body is within 4500 characters (the line writing-for-agents sets, leaving room for new branches)', () => {
   const n = [...body(skill)].length;
-  assert.ok(n < 5000, `implement body is ${n} characters`);
+  assert.ok(n <= 4500, `implement body is ${n} characters`);
 });
 
 // pr-review cites 「派工」「核对与落地」「回收」「等 CI」「设计变更」; the pr skill's review-loop reference cites 「没活了就停下」.
@@ -68,8 +68,8 @@ test('every markdown link inside a reference opens from the reference file\'s ow
 test('the 「等 CI」 rule is written once: SKILL.md keeps the title and a pointer, the rule stays in the reference', () => {
   const line = skill.split('\n').find((l) => l.startsWith('**等 CI**'));
   assert.ok(line, 'no 「等 CI」 title');
-  assert.ok(!line.includes('gh pr checks'), 'SKILL.md repeats the wait command; the rule belongs in the reference only');
+  assert.doesNotMatch(line, /红了|无关|没有检查/, 'SKILL.md repeats the outcomes; the rule belongs in the reference only');
   assert.match(line, /references\/stop-and-resume\.md/, '「等 CI」 must point at the reference');
   const ref = readFileSync(join(skillDir, 'references', 'stop-and-resume.md'), 'utf8');
-  assert.match(ref, /\*\*等 CI\*\*：[^\n]*gh pr checks <PR 号> --watch/, 'the reference no longer holds the rule');
+  assert.match(ref, /\*\*等 CI\*\*：[^\n]*等这个 head 的检查跑完/, 'the reference no longer holds the rule');
 });

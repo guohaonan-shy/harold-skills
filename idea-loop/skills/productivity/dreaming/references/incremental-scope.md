@@ -22,7 +22,7 @@ dreaming 每周由『定时任务』自己跑一次（`/idea-loop:setup` 建的�
 
 1. 任务 id 是 `dreaming-home`：一台设备只有这一个 dreaming 任务，`/idea-loop:setup` 建它时就用这个 id，不从仓库目录名推。列出的任务里没有这个 id，不去猜别的任务，按上表走「没有定时任务」。
 2. 用『定时任务』读这个任务上次成功运行的时间，记下来当 `started_at`。这一次自己若就是定时任务起的，它还没跑完，不能算上次成功运行。一个任务对账所有项目，基准点各项目共用；有项目没对完的那次执行不算成功（[per-project.md](per-project.md) 的「整次成功」），所以那个项目下一次从更早的基准点算起。
-3. 取项目时已经 `git fetch`。在代码 worktree 里找 `origin/<基准分支>` 在那一刻的提交：`git rev-list -1 --first-parent --before="<started_at>" origin/<基准分支>`。输出为空（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
+3. 取项目时已经把 clone 同步到最新。在代码 worktree 里，沿 first-parent 主线（分支合并带进来的旧提交不抢先）取 `origin/<基准分支>` 上 `started_at` 之前最近的一个提交。取不到（那一刻之前基准分支上还没有提交）就走「找不到基准提交」。
 
 得到的提交就是**基准提交**。
 

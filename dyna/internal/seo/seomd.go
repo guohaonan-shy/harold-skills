@@ -182,7 +182,7 @@ type Writing struct {
 }
 
 // Images is SEO.md's 配图: where images go and how they are made — the image directory (inside 内容路径, which
-// seo-setup checks when it writes it), the generating tool (an MCP tool name or a command), the frontmatter fields
+// the SEO module of setup checks when it writes it), the generating tool (an MCP tool name or a command), the frontmatter fields
 // holding the cover and the OG image, and which DESIGN.md to read when the repo has several. No section, no key or
 // `无` reads as null.
 type Images struct {
@@ -406,7 +406,7 @@ func monthlyOf(plan string) (string, bool) {
 func parseOpenSeo(lines []string) (OpenSEO, error) {
 	kv := pairs(lines)
 	if _, ok := kv["单次额度"]; ok {
-		return OpenSEO{}, fmt.Errorf("SEO.md「OpenSEO」写的是旧的「单次额度」：额度现在按周算，改成「套餐额度」和「每周分配」两项。跑 `/idea-loop:seo-setup` 迁移")
+		return OpenSEO{}, fmt.Errorf("SEO.md「OpenSEO」写的是旧的「单次额度」：额度现在按周算，改成「套餐额度」和「每周分配」两项。跑 `/idea-loop:setup`（SEO 模块）迁移")
 	}
 	o := OpenSEO{ProjectID: firstTick(kv["项目"])}
 	if m := digitsRe.FindString(kv["余额下限"]); m != "" {

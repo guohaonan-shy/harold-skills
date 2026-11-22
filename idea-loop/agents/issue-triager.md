@@ -11,13 +11,13 @@ effort: medium
 
 用 Skill 工具调 `idea-loop:issues`（状态、正文格式）、`idea-loop:decision-rules`；运行环境的能力用 `dyna runtime show <能力>` 取。`<docs>` 指 `<项目目录>/docs/`：项目目录读调用方在 prompt 里给的项目目录，`<docs>`、引导文件（`ISSUE_TRACKER.md`、`DEVELOPMENT.md`）都在它下面，代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
-Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue、贴评论、打 label 都用 MCP，照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），不跑 `gh` 和 `dyna issues note` / `type`；号形如 `ENG-123`。
+Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它）读 issue、贴评论、打 label；号形如 `ENG-123`。
 
-你收到：issue 号、项目目录、一个已切到最新主分支的 worktree 绝对路径（查代码、跑复现都在这里）。`gh issue view <号> --comments` 读全文和评论；`<项目目录>/DEVELOPMENT.md` 的「开发服务器」告诉你复现要起服务时怎么起，收工前全部停掉。
+你收到：issue 号、项目目录、一个已切到最新主分支的 worktree 绝对路径（查代码、跑复现都在这里）。`dyna issues read <docs> <号>` 读全文和评论；`<项目目录>/DEVELOPMENT.md` 的「开发服务器」告诉你复现要起服务时怎么起，收工前全部停掉。
 
 ## 五步，命中一项就停
 
-1. **查重**：`gh issue list --state open --search "<关键词>"`，开着的 issue 里有同一个问题 → 建议 canceled，写「跟 #N 重复」。
+1. **查重**：用关键词在开着的 issue 里搜，有同一个问题 → 建议 canceled，写「跟 #N 重复」。
 2. **「不做」清单**：`<docs>/records/out-of-scope/` 里命中 → 建议 canceled，附那一份的路径。
 3. **是否已实现**：查代码、已合并的 PR、`<docs>/adr/` → 建议 canceled，附出处（文件和行，或 PR 号）。issue 写的现状也要核过再信。
 4. **复现**：手段按 issue 的性质选。输出放 `.tmp/triage/<号>/`（日志、测试输出、截图都进文件，只读回判断要用的一两行）。
@@ -25,11 +25,11 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
    | issue 的性质 | 复现手段 | 评论里写什么 |
    |---|---|---|
    | 逻辑、数据、API 行为 | 一个会红的测试，不提交：测试代码和输出放 `.tmp/triage/<号>/` | 白话写测了什么、看到什么、本该是什么，带一个具体例子 |
-   | 看得见的界面问题 | 一张截图加标注（用 Skill 工具调 `idea-loop:evidence`，看它的「配什么图」；起浏览器前跑 `dyna runtime show 浏览器`） | 截图的位置和一句话说明 |
+   | 看得见的界面问题 | 一张截图加标注（用 Skill 工具调 `idea-loop:decision-rules`，看它的「配什么图」；起浏览器前跑 `dyna runtime show 浏览器`） | 截图的位置和一句话说明 |
    | 线上数据、日志、性能 | 一条查询或一段日志 | 查的范围和时间，加结果；数字能列成小表就列 |
 
    复现到了 → 建议 todo 或 triage。复现推翻了 issue 的说法，评论里写「修正：issue 原先认为 X，实测是 Y」。复现不出 → 建议 canceled，写三样：试了什么、卡在哪；什么时候、对着哪个提交核的；用什么手段。
-5. **打分类**：模块 `dyna issues type <docs> <号> <父类>[/<子类>]`（分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节；没有贴切的就不打，评论里写贴切的新分类名）；类型用 `gh issue edit <号> --add-label kind:<bug|feature|improvement>`。
+5. **打分类**：模块 `dyna issues type <docs> <号> <父类>[/<子类>]`（分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节；没有贴切的就不打，评论里写贴切的新分类名）；类型打 `kind:<bug|feature|improvement>`（GitHub 上是 label，写法见 `idea-loop:issues` 的 GitHub 做法）。
 
 ## 建议去向
 
@@ -46,7 +46,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）里，读 issue�
 
 ## 评论与交回
 
-把评论正文写进 `.tmp/triage/<号>/comment.md`，`dyna issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（命令加 `<!-- idea-loop -->` 标记），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
+把评论正文写进 `.tmp/triage/<号>/comment.md`，`dyna issues note <docs> <号> .tmp/triage/<号>/comment.md` 贴上（标记由命令加，见 `idea-loop:issues` 的「评论」），它打印出这条评论的地址（`#<号>: 已评论 <链接>`）。Linear 项目取 `save_comment` 返回的评论地址。内容：结论、证据、建议去向与理由；issue 正文缺必填节的，把查到的补在评论里。判不了的评论分两栏：「已查清」（已经确认的）和「还要你补」（要人补什么，具体到一个问题）。
 
 交回一行 JSON，别的不写；`comment` 填上面取到的评论地址，不自己拼：
 

@@ -32,7 +32,7 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 用 `magi sessions`：
 
 - **列会话**：`magi sessions list`。
-- **开一个 issue 会话**：`magi sessions start --cwd <目录> --slug <前缀> --cap <能力>… <prompt>`。直接开，不等人点；打印 `<slug> <id>`。会话只拿到 `--cap` 列出的能力（默认只有 magi），而且不会比开它的会话多；issue 会话开在它自己的 worktree 里，怎么建、带哪些能力见「调度」的「怎么交出 issue」。
+- **开一个 issue 会话**：`dyna runtime handoff …`，两种运行环境同一条，命令自己认环境；参数和结果见「调度」的「怎么交出 issue」第 2 步。
 - **给别的会话发消息**：`magi sessions send <会话> <文本 | ->`。
 - **读一个会话的记录**：`magi sessions show <会话> -o <文件>`，`-o` 写出整份。
 - **会话收尾**：`magi sessions stop <会话>`，对自己可用，会话停掉自己。会话不能归档自己（`magi sessions archive` 只收它开出的 helper）；停掉的会话由人在 magi 或 Dawn 里归档。
@@ -42,17 +42,17 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 - **怎么一轮一轮跑**：`magi cron`（「定时任务」）每轮新开一个调度会话来跑 `idea-loop:issue-dispatch`，id `dispatch-<仓库名>`，默认每小时一次（表达式 `7 * * * *`），人要换间隔就 `magi cron edit`；跑完一轮 `magi sessions stop` 停掉自己，不用常驻会话。人手敲 `/idea-loop:issue-dispatch`（不带间隔）：用「定时任务」建（已有就 `magi cron edit`）这个任务，prompt 是 `用 Skill 工具调 idea-loop:issue-dispatch`，再立刻做第一轮。
 - **怎么数开着的会话**：`magi sessions list` 里 slug 前缀是 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的。不是这个前缀的会话（如 issue 会话开出的子会话）不占位，记下个数。magi 没有分组，按会话对应 issue 的状态数：用 slug 里的号读 issue 的状态（GitHub 项目跑 `issues show <docs> <号>`；Linear 项目 `issues show` 不读状态，照 `idea-loop:issues` 的 Linear 做法用 `get_issue` 读、对着 `ISSUE_TRACKER.md` 的状态表换算）。派 `triage` 的时段数状态是 triage 的会话；派 `todo` 的时段数状态是 in-progress 的会话，且只数最近 2 小时有活动的（in-review 不数；超过 2 小时没活动的不数，也不动它们）。最后活动时间取 `magi sessions list` / `magi sessions show` 里会话的时间；读不到时间的当作有活动，照数。同号会话（不论状态）都记下，派的时候跳过。
-- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。空位 = `issues queues <docs>` 的 `limit` − 上一条数到的会话数，只派 `dispatch` 那一种（`triage` 或 `todo`），先跳过已有同号会话的（triage 会话开着时 issue 仍是 triage，todo 会话认领前 issue 仍是 todo），再取够空位个数。每轮最多开 3 个。派 `todo` 的时段，prompt 句尾加「夜间模式。」开出后往 `~/.idea-loop/dispatch/<仓库名>.json`（JSON 数组）追加一条 `{issue, desktopSessionId, openedAt, period}`，`desktopSessionId` 填 magi 的会话 id，`period` 填 `dispatch`：早上汇总读它。triage 会话开场起草 spec、自校验，碰到要人定的就推送一句话停下等人（`idea-loop:issue-session`「跟人定要 grill 的」）。
+- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。空位 = `issues queues <docs>` 的 `limit` − 上一条数到的会话数，只派 `dispatch` 那一种（`triage` 或 `todo`），先跳过已有同号会话的（triage 会话开着时 issue 仍是 triage，todo 会话认领前 issue 仍是 todo），再取够空位个数。每轮最多开 3 个。派 `todo` 的时段，prompt 句尾加「夜间模式。」。开出后调度记录（`~/.idea-loop/dispatch/<仓库名>.json`，早上汇总读它）由命令追加。triage 会话开场起草 spec、自校验，碰到要人定的就推送一句话停下等人（`idea-loop:issue-session`「跟人定要 grill 的」）。
   1. **建 worktree**（桌面端 `start_session` 的 `use_worktree` 对应的做法；会话不再开在主 checkout，多个会话不互相踩）：路径是 `<主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在主 checkout 外面（它的同级），所以主 checkout 的工作区和分支都不动，调度在主 checkout 只读的前提不变。`<slug>` 取 issue 标题的几个词，小写、连字符。`<基准分支>` 是 `<项目目录>/DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。**triage 会话不建分支**：`git -C <主 checkout> worktree add --detach <路径> origin/<基准分支>`，spec 直接提交到 home，要写代码时 todo 会话自己接分支（`idea-loop:issue-session` 的开场第 4 步）。其余会话的分支名取 `issues show` 给出的 issue 分支（先放着或上次会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（先放着的 issue 分支还在，再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
      - 本地有（`git -C <主 checkout> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <主 checkout> worktree add <路径> <分支>`。
      - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <主 checkout> worktree add --track -b <分支> <路径> origin/<分支>`。
      - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`。
 
      路径已经存在、就是这条分支的 worktree（上一轮建了没开起来）：直接用。
-  2. **开会话**：`magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi --cap <issue 平台的 MCP 服务器名> --cap browser <prompt>`。
+  2. **开会话**：`dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>`（在沙箱外跑，它要联网；`<dispatch>` 取 `todo` 或 `triage`；`--cap` 每个能力一个；`--prompt-file` 是写好 issue 会话 prompt 的文件，放在 worktree 外）。命令开出会话，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`。成功：stdout 一行 JSON，`desktopSessionId` 是会话 id；`recorded` 是 `false` 说明记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。magi 里：命令在 worktree 里跑 `magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap … <prompt 文件的内容>`，直接开，不等人点；`desktopSessionId` 填的是 magi 的会话 id；缺 `--prompt-file`（或 `--worktree`、`--issue`、`--repo`、`--period`）直接交出失败。
   3. **worktree 准备**不由调度做：issue 会话开场照 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」做。
 
-  **`--cap` 的能力名**：`magi`（会话要用 `magi sessions stop` 收尾、`magi mcp call`、`magi artifact`）、`browser`（`magi browser`）、issue 平台在 magi 里托管的 MCP 服务器名，取 `magi mcp list` 里的名字，原样照写（Linear 项目是 `linear`）。GitHub 项目用 `gh`，没有这一项。调度会话自己没有的能力给不出；`start` 因此被拒，就是「交出失败」，在汇报里写缺哪个，不重试。
+  **`--cap` 的能力名**：会话只拿到 `--cap` 列出的能力（不给就只有 magi），而且不会比开它的会话多。调度开会话给 `magi`、issue 平台的 MCP 服务器名、`browser` 三项（`--cap magi --cap <MCP 服务器名> --cap browser`）。`magi`（会话要用 `magi sessions stop` 收尾、`magi mcp call`、`magi artifact`）、`browser`（`magi browser`）、issue 平台在 magi 里托管的 MCP 服务器名，取 `magi mcp list` 里的名字，原样照写（Linear 项目是 `linear`）。GitHub 项目用 `gh`，没有这一项。调度会话自己没有的能力给不出；`start` 因此被拒，就是「交出失败」，在汇报里写缺哪个，不重试。
 
 issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issue 取消）后 `magi sessions stop` 停掉自己。
 
