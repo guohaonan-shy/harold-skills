@@ -437,7 +437,7 @@ idea-loop/
 │   │   ├── to-spec/SKILL.md          # spec template inline (raw template, landing steps, where spec figures go, the issue verdict lines, the plan's sub-sections and the agent-document diagnosis in references/); routes the spec, lands it on main, labels its issues
 │   │   ├── to-ticket/SKILL.md        # references/large-refactor.md (expand, migrate, contract), references/freeze-field.md (how a UI ticket copies the design freeze)
 │   │   ├── implement/SKILL.md        # orchestrates a spec's tickets — the work is in agents/implementer.md
-│   │   │   references/ui-tickets.md, react-port.md  # UI tickets: canvas → the project's component tree, per-stack notes, the dev-only state harness, the measurement loop, the design archive and minimal delta, and the human-verify material for cells a human judges
+│   │   │   references/ui-tickets.md, react-port.md  # UI tickets: canvas → the project's component tree, per-stack notes, the dev-only state harness, the look-up of `DESIGN.md` shared-implementation entries before building a UI, the measurement loop, the design archive and minimal delta, and the human-verify material for cells a human judges
 │   │   │   references/rule-tickets.md  # the implementer on a ticket that changes a rule: a check seen failing first, or a replay case (a small one run on the spot, a large one left to the orchestrator)
 │   │   │   references/stop-and-resume.md, start-of-run.md, landing-branches.md, design-change.md  # the branches only some runs reach, behind pointers in SKILL.md: the stop (waiting for the human, redispatch, CI), the first dispatch with an explorer, a session that broke or a PR not yet open, the odd landing cases, an accepted design change
 │   │   └── pr-review/SKILL.md        # one two-axis round per call — the session runs the round itself (references/run-a-round.md)
@@ -451,7 +451,7 @@ idea-loop/
 │   │       references/ui-walkthrough.md  # read only when the PR has design output: starting the ui-reviewer next to the two Codex processes, and what to do when it returns incomplete
 │   │       references/design-change.md  # read only when the human accepted a design that differs from the frozen canvas: the design-change-sync route on the PR branch
 │   ├── design/
-│   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds, the admission table, one write's path, the candidate format, who writes
+│   │   ├── design-modeling/SKILL.md  # shared, model-invoked — the DESIGN.md write standard: what each chapter holds (official section order, Voice & Content Strategy, and the Components "shared implementation" entry — an `@` pointer to the one implementation a class of screens must use, checked by the project's own test), the admission table, one write's path, the candidate format, who writes
 │   │   │   references/chapters.md, new.md, distill.md, reconcile.md, write.md, candidate.md  # each chapter; creating, distilling, reconciling DESIGN.md; the path of one write (find the file, backup, draft, human confirms, lint and diff, report), read only by a run that really writes DESIGN.md; the candidate format, read by a run that writes a candidate
 │   │   ├── uiux-imagine/SKILL.md     # the divergent half — the process; the work is in agents/uiux-imaginer.md
 │   │   │   references/imagine-canvas.md  # the board, cloning variants from a shipped UI, the handoff canvas, cleanup

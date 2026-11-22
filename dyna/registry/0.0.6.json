@@ -1216,23 +1216,6 @@
       ]
     },
     {
-      "command": "home dispatch",
-      "module": "home",
-      "use": "dispatch",
-      "summary": "打印这台设备的调度表（JSON）：此刻所在时段、该派什么、每轮最多新开几个、各状态同时开着最多几个、不调度的项目、整张时段表和三个分组名；读 home 的 DISPATCH.md，没有就用默认",
-      "caller": "session",
-      "next": "",
-      "args": [
-        {
-          "name": "at",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "按这一刻（HH:MM）算，不给就用本机的钟"
-        }
-      ]
-    },
-    {
       "command": "home glossary check",
       "module": "home",
       "use": "check [file]",
@@ -1316,15 +1299,6 @@
           "required": false
         }
       ]
-    },
-    {
-      "command": "home projects",
-      "module": "home",
-      "use": "projects",
-      "summary": "打印这台设备登记的全部项目（JSON 数组，顺序同项目清单）：名字、项目目录、知识库目录、owner/repo、本地 clone、搬进 home 没有（没搬进的带原因码和原因）",
-      "caller": "session",
-      "next": "",
-      "args": []
     },
     {
       "command": "home where",
@@ -1708,7 +1682,7 @@
       "command": "issues queues",
       "module": "issues",
       "use": "queues <docs>",
-      "summary": "JSON：侧栏的三个分组名（时段、每轮新开数、各状态的上限归 `dyna home dispatch`）",
+      "summary": "JSON：这一刻调度该派什么、最多几个（读 ISSUE_TRACKER.md 的「调度」表，没有就用默认）、整张表和侧栏的分区",
       "caller": "session",
       "next": "",
       "args": [
@@ -1716,6 +1690,13 @@
           "name": "docs",
           "kind": "positional",
           "required": true
+        },
+        {
+          "name": "at",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "按这一刻（HH:MM）算，不给就用本机的钟"
         }
       ]
     },

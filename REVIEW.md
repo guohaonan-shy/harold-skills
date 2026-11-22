@@ -20,7 +20,7 @@
 - 改了命令行 `dyna/` 下的代码（`_test.go` 除外），同一个改动里升 `dyna/internal/version/version.go` 的版本，并把新版本的登记表存进 `dyna/registry/`（做法见 `DEVELOPMENT.md`「命令行 dyna」）；`scripts/dyna-version.test.mjs` 和 `go test` 守着。插件要的命令行版本范围写在 `idea-loop/dyna-version`，下限只在 skill 开始用新命令、新参数时提高，且那一版必须已经发布、登记表已存（`scripts/dyna-scan.test.mjs` 守着）。
 - 改了某个 plugin 目录下任何文件的 PR，交审核报告前按改动的性质升它 `.claude-plugin/plugin.json` 的 `version`，三档取最高的那一档：
   - **major**（1.0.0）：装了它的项目不改自己的配置或用法就会坏，比如删掉或改名一个 skill、改了一个 skill 的调用参数、产物换了位置。
-  - **minor**（0.1.0）：新增能力，或改了流程的行为但老用法照样能用，比如加一个 skill，或者某个流程从停下等人改成自己执行。
-  - **patch**（0.0.1）：不改行为的修正，比如修错字、修 bug、修说明里前后不一致的地方，以及只改 README 或测试。
+  - **minor**（0.1.0）：新增能力，或改了流程的行为但老用法照样能用；插件还在 0.x 时，只有大范围的重构或者使用方式的重大改动才算，比如整条流程重新划分阶段、人要重新学怎么调用。
+  - **patch**（0.0.1）：不改行为的修正，比如修错字、修 bug、修说明里前后不一致的地方，以及只改 README 或测试；插件还在 0.x 时，加 skill、agent、hook 或改已有流程的行为，老用法照样能用的，也算 patch，比如 retro 摆候选时多给一句去处推荐。
 
   定了哪一档、为什么，写进 PR 描述的「参考」。版本号从 main 上的当前版本往上升；合并前 main 已经升过（别的 PR 先合了），就从 main 的新版本重新按同一档升。`scripts/plugin-version.test.mjs` 守着「改了就必须升」。
