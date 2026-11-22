@@ -1,8 +1,8 @@
 // Package worktree is the `worktree` module: make, list and remove the git worktrees sessions work in, and the
 // guard that stops a hand-written `git worktree remove` (it neither unlocks nor deletes the branch).
 //
-// Where a worktree goes and which branch it gets follow runtime/references/magi.md ("怎么交出 issue" and
-// "worktree 的清理"), which the desktop reference repeats: beside the main checkout, in
+// Where a worktree goes and which branch it gets follow runtime/magi.md at the plugin root (「会话管理」的「调度」
+// 里的「怎么交出 issue」, and 「worktree 的清理」), which runtime/claude-desktop.md repeats: beside the main checkout, in
 // `<main checkout's parent>/<repository name>-worktrees/<name>`, on `issue/<name>`, from `origin/<base>`.
 package worktree
 

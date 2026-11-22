@@ -193,7 +193,7 @@ func TestGlossaryCommandExitCodesAndOutput(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r := w.run(w.root, "home", "glossary", "check", bad)
-	if r.code != 2 || !strings.HasPrefix(r.out, "glossary-check: 1 处不符合 skills/productivity/glossary/SKILL.md 的「文件与格式」 ("+bad+")：\n  - 第 ") || r.err != "" {
+	if r.code != 2 || !strings.HasPrefix(r.out, "glossary-check: 1 处不符合 skills/productivity/wiki-conventions/references/glossary.md 的「文件与格式」 ("+bad+")：\n  - 第 ") || r.err != "" {
 		t.Fatalf("%+v", r)
 	}
 	var parsed home.GlossaryResult

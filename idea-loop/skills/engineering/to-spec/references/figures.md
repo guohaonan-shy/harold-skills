@@ -1,6 +1,6 @@
 # spec 里的图：画在哪一节、放在哪
 
-spec 也给人读：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。图怎么做（UI 标注、UI flow、excalidrawer 图表）照 `idea-loop:evidence`；这里只写 spec 的哪一节要图、放在哪。下文「raw 目录」指这场讨论的 `docs/raw/<topic>/`，图放在它的 `assets/` 里；从 GitHub issue 起草、没有对话的 spec 没有 raw 目录，图放这份 spec 自己目录下的 `assets/`。
+spec 也给人读：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。图怎么做（UI 标注、UI flow、excalidrawer 图表）照 `idea-loop:decision-rules`；这里只写 spec 的哪一节要图、放在哪。下文「raw 目录」指这场讨论的 `docs/raw/<topic>/`，图放在它的 `assets/` 里；从 GitHub issue 起草、没有对话的 spec 没有 raw 目录，图放这份 spec 自己目录下的 `assets/`。
 
 | spec 的哪里 | 要的图 | 谁做 |
 |---|---|---|
@@ -19,15 +19,15 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 ## User Stories 的树
 
 - 按**场景**分组，每个场景一棵从左到右展开的树（场景 → 它的几条 story），用 `excalidrawer:tree`。
-- **story 编号在每个场景内从 1 开始**，图和图下的文字一致。别处引用写「场景名 + 编号」（如「播放器 3」），不写全局编号。
+- 图里的 story 编号和图下的文字一致（编号规则在 `SKILL.md` 的 User Stories 一节）。
 - 放 raw 目录的 `assets/tree-user-stories-<n>-<场景 slug>.png`。
 
 ## 时序图
 
 - **方案开头**：一张图让读者先看清前后端或模块之间谁和谁说话、按什么顺序；参与方按这份 spec 的实际取。后端、前端内部两个子小节是它的展开，涉及哪个就把那一段画细。
-- **本 spec 新增或改动的消息用红色**，响应用虚线。后端图下几行列接口变化；前端内部图下写读路径、写路径各一句，以及每层的生命周期。
+- **本 spec 新增或改动的消息用红色**，响应用虚线。图下的文字见 [plan-subsections.md](plan-subsections.md)。
 - 放 raw 目录的 `assets/sequence-<slug>.png`。
 
 ## 前端交互
 
-设计冻结之前，「前端交互」先用文字列出交互变化（每个场景一行：触发 → 变化），小节开头标「待补图：`/idea-loop:uiux-refine` 冻结时按冻结画布补交互图，替换本节文字」。冻结时的 UI flow 放哪，见 uiux-refine 的冻结步骤。
+设计冻结之前只写文字，小节开头标「待补图」（写法见 [plan-subsections.md](plan-subsections.md)）。冻结时的 UI flow 放哪，见 uiux-refine 的冻结步骤。

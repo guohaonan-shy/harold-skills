@@ -60,10 +60,12 @@ for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-deskto
     assert.match(rules.stdout, /^以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它/);
     assert.match(rules.stdout.split('\n')[0], /「核心」一节针对有 spec 的工作/);
     assert.match(rules.stdout.split('\n')[0], /把「spec」读作人这次交代的事/);
+    assert.match(rules.stdout.split('\n')[0], /后三节讲证据怎么写/);
+    for (const h of ['## 依据只认三种', '## 证据是什么', '## 整体风格', '## 配什么图']) assert.ok(rules.stdout.includes(h), `注入里缺 ${h}`);
     assert.ok(rules.stdout.includes('## 护栏'));
     assert.doesNotMatch(rules.stdout, /^name: /m);
     assert.doesNotMatch(rules.stdout, /^description: /m);
-    assert.ok(rules.stdout.includes(skillBody('skills/productivity/decision-rules/SKILL.md').trim()));
+    assert.ok(rules.stdout.includes(skillBody('skills/productivity/decision-rules/SKILL.md').trim().replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot)));
 
     // runtime: first line is the runtime, then the header, then the body
     assert.equal(runtime.stdout.split('\n')[0], `当前运行环境：${name}`);

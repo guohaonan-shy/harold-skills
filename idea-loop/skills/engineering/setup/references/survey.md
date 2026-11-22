@@ -4,8 +4,8 @@
 
 - `CLAUDE.md`、`AGENTS.md`、`CONTRIBUTING.md`、`README`
 - CI 配置（`.github/workflows/`）、`package.json` 的 scripts、锁文件、`.worktreeinclude`
-- `git log --merges -20 --oneline` 和最近合并的 PR（`gh pr list --state merged --limit 10`），看合并方式
-- GitHub 项目：`gh label list --limit 500` 和 open issue 上的 label（`gh issue list --state open --limit 500 --json number,labels`）：哪些 label 在用、用在什么 issue 上，推出分类和要保留的 label
+- 最近 20 次合并提交和最近合并的 10 个 PR，看合并方式
+- GitHub 项目：仓库现有的 label 和 open issue 上的 label（各读到 500 条）：哪些 label 在用、用在什么 issue 上，推出分类和要保留的 label
 
 项目目录里读（全新项目这里还是空的，只有「已接上」的项目才有东西）：
 

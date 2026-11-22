@@ -20,7 +20,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 优先级 | P0 / P1 / P2，最多一个，没有就是没有；GitHub 上是 `priority:P0` / `priority:P1` / `priority:P2` label。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判 |
 | blocked by | 挡着它的 issue |
 | 挂着的 PR | 这个 issue 的 PR，状态是 draft / ready / merged |
-| 评论 | 停在哪、等什么、为什么关；idea-loop 写的第一行是 `<!-- idea-loop -->`（页面不显示） |
+| 评论 | 停在哪、等什么、为什么关；写法和认法见「评论」 |
 
 不用父子关系归组：一个 issue 一个会话、一份 spec；版本用 milestone，模块用分类，「这几个相关」写正文链接；平台上已有的父子关系照常读，不当成组。
 
@@ -71,6 +71,11 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 类型、模块、优先级不写进正文，用平台的字段或 label。
 
+## 评论
+
+- **写**：走 `dyna issues note` 或 `set --comment`，命令把第一行 `<!-- idea-loop -->`（页面不显示）加上，不手写。Linear 上不加标记。
+- **读**：接上次的会话取最近一条 idea-loop 写的评论（GitHub 上认这个标记），它写着上次停在哪、分支叫什么。
+
 ## blocked by 与先放着
 
 不设「被挡」的状态：
@@ -86,13 +91,13 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看，包括几周后的自己和人。
 2. `dyna issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
 3. 判断是 P0 的，开成 backlog 后调 `/idea-loop:issue-triage P0 <号>`，当场复现。
-4. 正文被拒（缺节、节为空）就补上再开；开不成（`gh` 失败）的，记下原因交给人。
+4. 正文被拒（缺节、节为空）就补上再开；开不成的，记下原因交给人。完成条件：拿到新 issue 的号，或「已有 #N」，或写明开不成的原因。
 
 Linear 项目没有 `dyna issues new`：`dyna issues body` 校验正文，再照 [references/linear.md](references/linear.md) 的「开 issue」用 MCP 开。
 
 ## 命令
 
-参数用 `dyna issues --help`、`dyna issues <命令> --help` 查。`--help` 查不到的：Linear 上翻状态必带 `check` 的 `--from`，先跑它再用 MCP 翻；Linear 上开 issue 先跑 `body` 校验再用 MCP 开；`set` 的 done、canceled 同时关闭 issue。
+参数用 `dyna issues --help`、`dyna issues <命令> --help` 查。读 issue 全文和评论（GitHub）：`dyna issues read <docs> <号>`；Linear 用 MCP。`--help` 查不到的：Linear 上翻状态必带 `check` 的 `--from`，先跑它再用 MCP 翻；Linear 上开 issue 先跑 `body` 校验再用 MCP 开；`set` 的 done、canceled 同时关闭 issue。
 
 PR 正文怎么挂到 issue，见两份 reference。
 

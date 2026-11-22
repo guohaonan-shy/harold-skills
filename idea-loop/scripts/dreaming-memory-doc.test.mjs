@@ -84,17 +84,18 @@ test('the three practices taken from consolidate-memory are written once, in the
   assert.doesNotMatch(why, /^\s*-\s/m, 'the section lists the practices again');
 });
 
-test('execution adds only the paths it changed, commits once in home, pushes when there is an origin, and rolls back with git revert', () => {
+test('execution commits only the paths it changed, commits once in home, pushes when there is an origin, and rolls back by a new commit', () => {
   const exec = section(memory, '3\\. 执行');
-  assert.match(exec, /只 add 自己改的路径/);
-  assert.match(exec, /不用 `git add -A`/);
+  assert.match(exec, /只提交自己改的路径/);
+  assert.match(exec, /不全量 add/);
+  assert.match(exec, /dyna git commit <路径…>/);
   assert.match(exec, /`memory\/` 和 `projects\/\*\/memory\/`/);
   assert.match(exec, /在 home 里提交一次/);
   assert.match(exec, /dreaming <日期>：记忆整理/);
   assert.match(exec, /`origin`/);
   assert.match(exec, /先毕业、再挪进项目、再合并、最后缩短索引行/);
   assert.match(exec, /退出码 0/);
-  assert.match(memory, /`git revert`/);
+  assert.match(memory, /回滚[^\n]*还原[^\n]*不改写历史/);
 });
 
 test('the memory pass opens no worktree and no PR, keeps its intermediates in home, says why it does not call consolidate-memory, and states the known limit', () => {

@@ -18,7 +18,6 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 // The comment marker is defined once, in dyna (the command that posts idea-loop's comments).
-const AI_MARKER = readFileSync(join(pluginRoot, '..', 'dyna', 'internal', 'issues', 'state.go'), 'utf8').match(/const AIMarker = "([^"]+)"/)[1];
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const body = (md) => md.replace(/^---\n[\s\S]*?\n---\n/, '');
 
@@ -72,9 +71,9 @@ test('nothing else in the plugin or the repo still says the dispatcher gives out
   assert.ok(!files.some((f) => readFileSync(f, 'utf8').includes('独立队列')), '「独立队列」 stays gone');
 });
 
-test('issue-dispatch takes no interval and stays under 5000 characters', () => {
+test('issue-dispatch takes no interval and stays within 4500 characters', () => {
   assert.ok(!/argument-hint/.test(dispatchFile.split('\n---\n')[0]), 'no interval argument');
-  assert.ok([...dispatch].length < 5000, 'body under 5000 characters');
+  assert.ok([...dispatch].length <= 4500, 'body within 4500 characters');
   assert.match(dispatchFile.split('\n---\n')[0], /每小时一轮/);
 });
 
@@ -102,13 +101,16 @@ test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a faile
   assert.match(dispatch, /人在调度会话里说话的那一轮也照下面做/);
 });
 
-test('issue-dispatch: the morning summary reads the record file, one line per issue, and pushes one sentence', () => {
+test('issue-dispatch: the morning summary is a step that points at its reference; the reference reads the record file, one line per issue, and pushes one sentence', () => {
   const step = dispatch.split('\n').find((l) => /^6\.\s+\*\*早上汇总\*\*/.test(l));
   assert.ok(step, 'there is a step 「早上汇总」');
-  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', AI_MARKER, '『推送』']) {
-    assert.ok(step.includes(word), `the morning summary must mention ${word}`);
+  assert.match(step, /references\/morning-summary\.md/, 'the step points at the reference');
+  assert.match(step, /上一轮[^。]*落在 `todo` 时段、此刻不在/, 'the step says when it applies');
+  const ref = read('skills', 'engineering', 'issue-dispatch', 'references', 'morning-summary.md');
+  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', '`idea-loop:issues` 的「评论」', '『推送』']) {
+    assert.ok(ref.includes(word), `the morning summary must mention ${word}`);
   }
-  assert.match(step, /开了几个、几个等审、几个卡住/);
+  assert.match(ref, /开了几个、几个等审、几个卡住/);
 });
 
 test('issue-dispatch: the dispatcher only moves the sessions it opened', () => {
@@ -200,7 +202,10 @@ test('setup\'s dispatch steps create an hourly task and ask no interval', () => 
 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
   for (const word of ['`limit`', '`dispatch`', '最近 2 小时有活动', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
-  assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi/);
+  // 0.0.5: the session is opened by the one command both runtimes share; magi's `magi sessions start` is what it runs inside
+  assert.match(magiDispatch, /dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>/);
+  assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap/);
+  assert.match(magiDispatch, /--cap magi --cap <MCP 服务器名> --cap browser/);
   assert.match(magiDispatch, /git -C <主 checkout> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
 });
 

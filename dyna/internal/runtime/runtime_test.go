@@ -120,7 +120,7 @@ func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(
 
 			// decision-rules: header with the scope sentence, the body without frontmatter
 			first := strings.SplitN(rules, "\n", 2)[0]
-			for _, want := range []string{"以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它", "「核心」一节针对有 spec 的工作", "把「spec」读作人这次交代的事"} {
+			for _, want := range []string{"以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它", "「核心」一节针对有 spec 的工作", "把「spec」读作人这次交代的事", "后三节讲证据怎么写"} {
 				if !strings.Contains(first, want) {
 					t.Errorf("decision-rules header lacks %q: %s", want, first)
 				}
@@ -128,7 +128,7 @@ func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(
 			if !strings.Contains(rules, "## 护栏") || strings.Contains(rules, "\nname: ") || strings.Contains(rules, "\ndescription: ") {
 				t.Error("decision-rules: the body, without the frontmatter")
 			}
-			if !strings.Contains(rules, skillBody(t, "skills/productivity/decision-rules/SKILL.md")) {
+			if !strings.Contains(rules, strings.ReplaceAll(skillBody(t, "skills/productivity/decision-rules/SKILL.md"), "${CLAUDE_PLUGIN_ROOT}", pluginRoot())) {
 				t.Error("decision-rules: the body of the skill, whole")
 			}
 
@@ -489,7 +489,7 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 	for _, a := range handoff.Args {
 		flags = append(flags, a.Name)
 	}
-	if strings.Join(flags, ",") != "claude,dir,idle-ms,issue,p-timeout-sec,period,repo,timeout-sec,worktree" {
+	if strings.Join(flags, ",") != "cap,claude,dir,issue,magi,p-timeout-sec,period,prompt-file,repo,timeout-sec,worktree" {
 		t.Errorf("handoff flags: %v", flags)
 	}
 }

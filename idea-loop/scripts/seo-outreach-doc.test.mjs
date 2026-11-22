@@ -1,6 +1,7 @@
 /**
- * Doc test — seo-outreach goes from "drafts only, never calls a mail or form tool" to four branches:
- * put the draft in the human's mailbox, send, follow up, directory submission. Building a draft or filling
+ * Doc test — seo-outreach goes from "drafts only, never calls a mail or form tool" to five branches:
+ * put the draft in the human's mailbox (the main file), send, follow up, directory submission and finding
+ * candidate sites (the last four are reference files the main file's routing table points at). Building a draft or filling
  * a form is allowed; sending and submitting wait for the human. The skill's own text names capabilities,
  * never tools (runtime-tripwire guards that); this test pins the rules a reader of the skill must find.
  */
@@ -14,6 +15,7 @@ const pluginRoot = process.env.OUTREACH_DOCS_ROOT ?? join(dirname(fileURLToPath(
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const SKILL = read('skills', 'seo', 'seo-outreach', 'SKILL.md');
 const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
+const ref = (name) => read('skills', 'seo', 'seo-outreach', 'references', name);
 const body = (md) => md.split(/^---\s*$/m).slice(2).join('---');
 const section = (md, title) => {
   const parts = body(md).split(/^## /m).slice(1);
@@ -38,8 +40,12 @@ test('the opening says building drafts and filling forms is allowed, and sending
   assert.doesNotMatch(text, /邮件需要你自己发/);
 });
 
-test('four branches are sections of the skill', () => {
-  for (const title of ['放进草稿箱', '发送', '跟进', '目录提交']) section(SKILL, title);
+test('five branches: the mailbox one is a section of the skill, the other four are reference files the routing table points at', () => {
+  section(SKILL, '放进草稿箱');
+  for (const f of ['prospecting.md', 'send.md', 'follow-up.md', 'directory-submission.md']) {
+    assert.ok(ref(f).length > 0, f);
+    assert.ok(body(SKILL).includes(`references/${f}`), `the routing table points at ${f}`);
+  }
 });
 
 test('放进草稿箱: finds a mail MCP with draft, send and thread search; pushes the count; falls back to docs/', () => {
@@ -53,7 +59,7 @@ test('放进草稿箱: finds a mail MCP with draft, send and thread search; push
 });
 
 test('发送: starts only from the human saying 发外联邮件, reads 待发送 rows with a draft id, flips to 已发送 and commits the tracker to home', () => {
-  const s = section(SKILL, '发送');
+  const s = ref('send.md');
   assert.match(s, /发外联邮件/);
   assert.match(s, /待发送/);
   assert.match(s, /草稿 id/);
@@ -63,7 +69,7 @@ test('发送: starts only from the human saying 发外联邮件, reads 待发送
 });
 
 test('跟进: reads threads of 已发送 rows, 已回复 plus a push on a reply, a follow-up draft after 7 days, into the mailbox', () => {
-  const s = section(SKILL, '跟进');
+  const s = ref('follow-up.md');
   assert.match(s, /已发送/);
   assert.match(s, /线程/);
   assert.match(s, /已回复/);
@@ -75,7 +81,7 @@ test('跟进: reads threads of 已发送 rows, 已回复 plus a push on a reply,
 });
 
 test('目录提交: fills through 人的浏览器, stops at login, human check and the submit button, clicks only after 提交, falls back to docs/', () => {
-  const s = section(SKILL, '目录提交');
+  const s = ref('directory-submission.md');
   assert.match(s, /『人的浏览器』/);
   assert.match(s, /截图/);
   assert.match(s, /登录页/);
@@ -97,13 +103,13 @@ test('the tracker format has the 草稿 id and 线程 id columns, with the three
   assert.match(body(SKILL), /待发送、已发送、已回复、已拿到链接、被拒、无回应/);
 });
 
-test('the body is under 5000 characters', () => {
-  assert.ok([...body(SKILL)].length < 5000, String([...body(SKILL)].length));
+test('the body is within the 4500-character line', () => {
+  assert.ok([...body(SKILL)].length <= 4500, String([...body(SKILL)].length));
 });
 
-test('seo-scan calls the follow-up branch of seo-outreach, and stays within its limit', () => {
+test('seo-scan calls the follow-up branch of seo-outreach, and stays within the 4500-character line', () => {
   const s = section(SCAN, '外联跟进');
   assert.match(s, /idea-loop:seo-outreach/);
   assert.match(s, /跟进/);
-  assert.ok([...body(SCAN)].length <= 5000, String([...body(SCAN)].length));
+  assert.ok([...body(SCAN)].length <= 4500, String([...body(SCAN)].length));
 });

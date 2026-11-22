@@ -71,6 +71,10 @@ dyna design report --judge <critic.json> --research <research/round-<N>/research
 
 对话里放报告链接、分数、要特别注意的项；每个要特别注意的项可带一两句推荐理由，末尾可附一句「怎么回」（回复格式举例，如「1 收下」「2 不要，改成 X」）。其余留在报告页里。Mobbin 没连上时报告照出，页面里写明「这一轮没有参考图：Mobbin 没连上」，你不重试，对话里也提一句。
 
+## 方向性意见与人的不满
+
+评委判 `direction` 的意见，看人在这次 refine 里有没有对这一块表示过不满意（会话记录或 ledger 里有人的原话）：有，给报告命令打标记（`dissatisfied.json`），报告就推荐「回 imagine 重开这一块」，不再推荐保留；没有才推荐保留。人同意重开：照 [freeze.md](freeze.md) 的「部分冻结」处理，告诉人跑 `/idea-loop:uiux-imagine`，调用时附上这条意见的原文，由它交给新的 imaginer。
+
 ## 迁移：旧流程里的「人保留」
 
 第一次用新流程跑一个已经在进行的 refine 时：

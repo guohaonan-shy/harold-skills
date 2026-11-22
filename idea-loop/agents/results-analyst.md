@@ -13,7 +13,7 @@ disallowedTools: Edit, NotebookEdit, Agent
 
 ## 输入
 
-提示里有六行：SEO.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+提示的各行照 findings.md 的「提示模板」。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
 `dyna seo parse <SEO.md>` 读出配置，用其中的「站点」（域名、Search Console 站点）、「重点页面」和「分析」节：`analytics` 的 `tool`、`projectId`、`dashboard` 三项，都是 null 就是没写「分析」节。
 
@@ -58,7 +58,7 @@ disallowedTools: Edit, NotebookEdit, Agent
 - **改过的页面反常下跌**：改动清单里的网址，近 7 天点击比上一个 7 天少 30% 以上，且上一个 7 天点击不少于 20。`kind: page-clicks-drop`，`direction` 取原改动的方向。
 - **改了没起色**：上线满 14 天、前 14 天展现不少于 100，后 14 天点击不高于前 14 天，且目标词的平均位置没有前进。`kind: change-no-lift`，`direction` 取原改动的方向，`ratio` 是后 14 天点击 / 前 14 天点击。
 
-原改动的方向：`gh issue view <issue 号> --json labels` 里 `type:seo/<方向>` 的那个方向；没有子类标签的写 `pages`。results 方向的发现按原改动的方向打分类，不新增 `type:seo/results`，`direction` 永远是 findings.md 的那五个之一。同一种 `kind` 合成一条，`targets` 列各个网址。`repro` 写 `get_search_console_performance` 的完整参数（项目、日期范围、`filters`），一个没看过本次数据的人照着就能重跑；`acceptance` 写能独立检查的一条，例如「再过 14 天，同一页面的点击高于改动前 14 天」。
+原改动的方向：`dyna issues show <项目目录>/docs <issue 号>` 的分类里 `type:seo/<方向>` 的那个方向；没有子类的写 `pages`。results 方向的发现按原改动的方向打分类，不新增 `type:seo/results`，`direction` 永远是 findings.md 的那五个之一。同一种 `kind` 合成一条，`targets` 列各个网址。`repro` 写 `get_search_console_performance` 的完整参数（项目、日期范围、`filters`），一个没看过本次数据的人照着就能重跑；`acceptance` 写能独立检查的一条，例如「再过 14 天，同一页面的点击高于改动前 14 天」。
 
 **未采集**：没有 Search Console 连接、或这次一条数据都没拿到：`results.json` 写成只有一个对象的数组 `[{ "direction": "results", "uncollected": "<原因>" }]`，不写报告，交回写原因。
 

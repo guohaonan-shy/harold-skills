@@ -22,6 +22,8 @@ dyna design archive check <项目目录> [--delta <spec-slug>] [--no-used-by] [-
 | 8 边的截图 | 边的 `shot` 写成 `<出发状态 id>@<边 id>.png`，边 id 是出发状态自己的边；不写在 `system` 边上，不写在声明了 `sections` 的状态上（逐条见下） |
 | 0 结构 | 读不出的文件、不认识的 `type`、缺了规则依赖的必填字段（逐项见 [writing.md](writing.md) 的「状态与边」）；`prod/index.md` 声明了 `workspaces` 时，每个组件文件名要带其中一个前缀 |
 
+`docs/design/` 下 `tmp/`、`prod/`、`pending/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。
+
 ## 规则 7 的逐条违规与提示
 
 一律点名文件与字段：
