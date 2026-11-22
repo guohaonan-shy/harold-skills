@@ -113,4 +113,4 @@
 | [decisions/350](decisions/350.md) | conversation | 2026-11-20 | 决定记录 —— #350 的 issue 会话：dreaming 问人范围的说法对齐，main 照常合、0.2.0 另开 #418；候选 1 进池 |
 | [decisions/383](decisions/383.md) | conversation | 2026-11-20 | 决定记录 —— #383 的 issue 会话：magi 调度接上已有分支；多仓库的同类限制交给 0.2.0 的 home repo，不开 issue；无候选 |
 | [decisions/293](decisions/293.md) | conversation | 2026-11-20 | 决定记录 —— #293 的 todo 会话：ai-eval 迁进来，夜里按推荐定 4 题，白天定版本（ai-eval 0.0.1、idea-loop patch）与 setup 统一入口另开 #420；两条候选都不批 |
-| [decisions/341](decisions/341.md) | conversation | 2026-11-20 | 决定记录 —— #341 的 triage 会话：「杠杆诊断」每份 spec 都写，翻 todo 与工单落地两处拦 |
+| [decisions/341](decisions/341.md) | conversation | 2026-11-20 | 决定记录 —— #341 的 triage 会话：「杠杆诊断」每份 spec 都写（11-22 重新 triage 后挪 #451）；字数线 4500 挂 hook 管 home 下全部 skill、评测拆成 #456、不加 CI、同一 head 全量只跑一次；候选 2 条不批 |
