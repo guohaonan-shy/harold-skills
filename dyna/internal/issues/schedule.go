@@ -28,7 +28,7 @@ type Period struct {
 func DefaultPeriods() []Period {
 	return []Period{
 		{"09:00", "19:00", "triage", 3},
-		{"22:00", "08:00", "todo", 3},
+		{"22:00", "08:00", "todo", 1},
 	}
 }
 

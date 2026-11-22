@@ -1372,7 +1372,7 @@ func TestQueuesThroughTheCommandLine(t *testing.T) {
 		At       string `json:"at"`
 		Dispatch string `json:"dispatch"`
 		Limit    int    `json:"limit"`
-	}{"23:30", "todo", 3})
+	}{"23:30", "todo", 1})
 	for _, at := range []string{"25:00", "abc", "10:60", "1000", "10:5", "-1:00", "10:00:00", ""} {
 		refused(t, run(p, newFake(), "queues", p.docs, "--at="+at), `--at`)
 	}
