@@ -14,7 +14,7 @@ tags: [retro-candidates]
 - 归并：无（它改的是现有 minor 定义本身，不是哪条原则的特例）
 - 验证：判不了：落点是本仓库的 `REVIEW.md`，不是插件 skill 的文字，用不了回放用例；档位要判断，做不成检查
 - 例子：PR #319 让 retro 摆候选时给去处推荐，按旧文是「改了流程的行为」，我推荐 minor（0.1.15 → 0.2.0），人改定 patch（0.1.16）。「成批」没定到具体几个，新文只用例子示意。
-- 状态：已开 issue（https://github.com/guohaonan-shy/harold-skills/issues/327）
+- 状态：已开 issue（https://github.com/guohaonan-shy/harold-skills/issues/327；已落地：minor 用的是 #327 spec 的新文，不是上面「新文」里写的那版）
 
 ## 出现
 

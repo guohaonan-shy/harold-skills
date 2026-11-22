@@ -33,7 +33,7 @@ func picks(t *testing.T, md, at string) (string, int) {
 
 func TestQueuesDefaults(t *testing.T) {
 	for _, md := range []string{"", "# Issue tracker：GitHub\n\n## 仓库\n\n| 仓库 |\n|---|\n| `o/r` |\n"} {
-		for at, want := range map[string]string{"23:30": "todo 3", "10:00": "triage 3", "20:00": "<none> 0", "08:30": "<none> 0"} {
+		for at, want := range map[string]string{"23:30": "todo 1", "10:00": "triage 3", "20:00": "<none> 0", "08:30": "<none> 0"} {
 			d, l := picks(t, md, at)
 			if got := fmt.Sprint(d, " ", l); got != want {
 				t.Errorf("%s: %s want %s", at, got, want)
@@ -44,8 +44,8 @@ func TestQueuesDefaults(t *testing.T) {
 
 func TestQueuesPeriodsAreLeftClosedRightOpenAndCrossMidnight(t *testing.T) {
 	for at, want := range map[string]string{
-		"22:00": "todo 3", "21:59": "<none> 0", "08:00": "<none> 0", "07:59": "todo 3", "09:00": "triage 3",
-		"19:00": "<none> 0", "18:59": "triage 3", "00:00": "todo 3", "8:05": "<none> 0",
+		"22:00": "todo 1", "21:59": "<none> 0", "08:00": "<none> 0", "07:59": "todo 1", "09:00": "triage 3",
+		"19:00": "<none> 0", "18:59": "triage 3", "00:00": "todo 1", "8:05": "<none> 0",
 	} {
 		d, l := picks(t, "", at)
 		if got := fmt.Sprint(d, " ", l); got != want {
@@ -59,7 +59,7 @@ func TestQueuesOutputHasTheWholeTableAndNoCap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if q.At != "23:30" || q.Period == nil || *q.Period != (Span{"22:00", "08:00"}) || *q.Dispatch != "todo" || q.Limit != 3 {
+	if q.At != "23:30" || q.Period == nil || *q.Period != (Span{"22:00", "08:00"}) || *q.Dispatch != "todo" || q.Limit != 1 {
 		t.Fatalf("%+v", q)
 	}
 	if !reflect.DeepEqual(q.Periods, DefaultPeriods()) || !reflect.DeepEqual(q.Sections, []string{"triage", "in-progress", "in-review"}) {
