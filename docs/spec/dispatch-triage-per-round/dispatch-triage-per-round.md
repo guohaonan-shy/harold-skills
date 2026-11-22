@@ -3,7 +3,7 @@ type: spec
 tags: [idea-loop, issue-dispatch]
 summary: 白天的 triage 也按每轮新开表里的上限个，triage 分组总数另设上限（表里新一列，默认 10）
 issues: [398]
-related: ["[[2026-11-22-dispatch-triage-per-round]]", "[[dispatch-day-night-modes]]", "[[0025-dispatch-triage-cards]]"]
+related: ["[[2026-11-22-dispatch-triage-per-round]]", "[[0065-dispatch-day-night-modes]]", "[[0025-dispatch-triage-cards]]"]
 ---
 
 # 调度的 triage 上限改成每轮新开几个，triage 分组总数另设上限
@@ -51,8 +51,8 @@ triage 的上限沿用了 ADR-0025 的「triage 单独上限 3，数 triage sect
 - **口径照人的原话**：「triage 也按照每轮开一个，但是triage这个section下面的总会话不能超过10个」；随后人选了「每轮取表里的上限」（例子新开 4 个）和「表里加一列，默认 10」（2026-11-22，raw `2026-11-22-dispatch-triage-per-round`）。
 - **去掉「一轮最多 3 个」**：人选的例子是一轮新开 4 个，与 3 的硬上限矛盾，按人选的走，统一成 `limit`。
 - **`issues.mjs`**：`parsePeriods` 读第四列（现在「further columns are notes」，改成第四列是分组上限、再往后才是备注；本机各项目的「调度」表都只有三列，不影响已有配置）；`DEFAULT_PERIODS` 的 triage 行带分组上限 10；`queues` 输出新字段 `sectionLimit`。不用 `cap` 这个词：`dispatch-by-period-doc.test.mjs` 禁止文档里再出现旧的 `cap`。
-- **文档改动**：`issue-dispatch` 第 2、3、5 步与「汇报」；`claude-desktop.md`「怎么数开着的会话」「怎么交出 issue」；`magi.md` 同两条；两份 setup 模板、本仓库 `ISSUE_TRACKER.md`；README 的 `issue-dispatch` 一行；`dispatch-day-night-modes` spec 里「派 triage 的时段」一条加一句 11-22 改过、指向本 spec。
-- **插件版本**：idea-loop patch 一档（`REVIEW.md`：0.x 时改已有流程的行为升 patch，见 spec `version-tier-0x-patch`）。
+- **文档改动**：`issue-dispatch` 第 2、3、5 步与「汇报」；`claude-desktop.md`「怎么数开着的会话」「怎么交出 issue」；`magi.md` 同两条；两份 setup 模板、本仓库 `ISSUE_TRACKER.md`；README 的 `issue-dispatch` 一行。ADR-0065（原 spec `dispatch-day-night-modes`，11-22 已转成 ADR）里「派 triage 的时段」的订正跟 ADR-0025 一样，由 `/idea-loop:dreaming` 对账时标被取代。
+- **插件版本**：idea-loop patch 一档（`REVIEW.md`：0.x 时改已有流程的行为升 patch，见 ADR-0089）。
 
 ## 测试决策
 
@@ -76,12 +76,12 @@ triage 的上限沿用了 ADR-0025 的「triage 单独上限 3，数 triage sect
 
 - 夜里 todo 的派法（500fa23c 已定）。
 - 一个调度管所有项目（#386）。
-- ADR-0025 里「triage 单独上限 3」的订正：由 `/idea-loop:dreaming` 对账时标被取代。
+- ADR-0025 里「triage 单独上限 3」、ADR-0065 里「派 triage 的时段」的订正：由 `/idea-loop:dreaming` 对账时标被取代。
 
 ## 关联
 
 - raw：`2026-11-22-dispatch-triage-per-round`（本次的口径）。
-- spec `dispatch-day-night-modes`：定了按时段派；本 spec 改它「派 triage 的时段」的空位算法，实现时在那条后面注一句。
+- ADR-0065（`dispatch-day-night-modes`）：定了按时段派；本 spec 改它「派 triage 的时段」的空位算法。
 - ADR-0025：triage 单独上限的来源，本 spec 取代其中「数 triage section 里的会话当上限」。
 - 旧 PR #400：按 11-19 的口径两半一起改，main 后来另做了 todo 一半，跟 main 冲突；本分支已重做在 origin/main 68495e91 上，旧提交 76194736 留在本地分支 `backup/398-old-76194736`。
-- #386：前提「几个项目共用夜里名额」已随 500fa23c 消失；白天分组上限 10 仍是跨项目共用的，先跑的项目先开，不另做协调（跟 `dispatch-day-night-modes` 的「跨项目的上限」一样）。
+- #386：前提「几个项目共用夜里名额」已随 500fa23c 消失；白天分组上限 10 仍是跨项目共用的，先跑的项目先开，不另做协调（跟 ADR-0065 的「没做：跨项目协调 triage 上限」一样）。
