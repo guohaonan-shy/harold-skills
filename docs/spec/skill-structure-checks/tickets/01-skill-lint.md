@@ -13,9 +13,9 @@
 - **行内命令绊线**：只对 idea-loop 插件的文件（插件根的 plugin.json 名字是 idea-loop）。正文里行内代码（反引号）以 `gh <子命令>` 或 `git <子命令>` 开头的，报 `<文件>:<行> 写了行内命令 <命令>。调 idea-loop:writing-for-agents，照它的命令归类改写；确实是坑就在同一行标「坑」`。放行：同一行带「坑」字；frontmatter 的 `allowed-tools` 行；适配层文件。适配层放行清单写在命令代码里，逐个列文件并写一句理由——以当前树为准，至少包括 issues 的 GitHub 做法参考文件、setup 的 issue-tracker / preflight-table / development 模板。判据参考现有 `no-project-leak.test.mjs`、`runtime-tripwire.test.mjs`。`dyna …` 不扫。注意 agent 定义也是插件文件，绊线同样适用；只有 SKILL.md 与 agent 定义被扫（参考文件不在 lint 范围）。
 - **不带 --hook**：`dyna spec skill-lint <文件>...` 查给定文件，列完全部问题退出 1，干净退出 0。`--changed <base-ref>` 只查 `<base-ref>...HEAD` 里改到的（没删掉的）、在范围内的文件。
 - **版本不对时**：照 idea-loop-cli 的约定 hook 不拦，只在 stderr 留一行（看现有 hook 命令怎么处理）。
-- **线只写一处**：`dyna test skill-doc` 去掉量字数那条（`MaxBodyChars` 删掉），只留小节指针的核对；它的描述文字一起改。插件里 `*-slim-doc.test.mjs` 以及 design-archive / cover / og 等 skill-doc 文档测试里**量主体字数的断言**删掉（逐个 grep，以当前树为准），其余断言不动。
+- **线只写一处**：`dyna test skill-doc` 去掉量字数那条（`MaxBodyChars` 删掉），只留小节指针的核对；它的描述文字一起改。插件里所有**量 SKILL.md 或 agent 定义主体字数的断言**都删掉（`*-slim-doc.test.mjs`、design-archive / cover / og / wiki-conventions / issues 的 skill-doc 测试，以及其它各自断言 4500 或 5000 的文档测试；清单见探路笔记 `01.md`，以当前树为准）：线只在 skill-lint 一处，其余断言不动。
 - **说法**：仓库 `AGENTS.md`（目录树注释和「要点」第一条）、`REVIEW.md`「额外要求」里的「< 5000」改成「线 4500，`dyna spec skill-lint` 在写文件时和 review 时核」；`REVIEW.md`「验证命令」表多一行 `dyna spec skill-lint --changed origin/<基准分支>`（review 每轮对这个 PR 改到的文件跑；用 `cd dyna && go run ./cmd/dyna spec skill-lint …` 或已装的 dyna，照表里其它 dyna 行的写法）。
-- **命令登记表**：新命令登记，调用方标 hook（`--hook`）与 review；dyna 版本 0.0.6 → 0.0.7，存 `dyna/registry/0.0.7.json`（做法照 `DEVELOPMENT.md`「命令行 dyna」；版本守卫的基准用 `DYNA_VERSION_BASE=origin/release/idea-loop-0.2.0`）。`idea-loop/dyna-version` 的下限**不动**（新版未发布，发不发由人定）；如果 `scripts/dyna-scan.test.mjs` 因 hooks 里用到了未发布版本的命令而红，停下交回说明，不自行改下限。
+- **命令登记表**：新命令登记，调用方标 hook（登记表只有 session / hook / test 三种调用方，取 hook）；`dyna/internal/spec/cmd_test.go` 里列 spec 模块叶子的那张表要加上它；dyna 版本 0.0.6 → 0.0.7，存 `dyna/registry/0.0.7.json`（做法照 `DEVELOPMENT.md`「命令行 dyna」；版本守卫的基准用 `DYNA_VERSION_BASE=origin/release/idea-loop-0.2.0`）。`idea-loop/dyna-version` 的下限提到 0.0.7：hooks 一写新命令，`scripts/dyna-scan.test.mjs` 就要求下限那一版的登记表里有它；这条集成分支的现有做法是下限提到已存登记表、未发布的版本，0.2.0 收尾时一起发版（#408 把下限从 0.0.3 提到 0.0.4 时 0.0.4 也未发布）。
 - 插件 README 同步提到新 hook。
 
 ## 验收标准
@@ -29,7 +29,7 @@
 - [ ] hooks 配置多一条 PostToolUse（Write|Edit）的 `dyna spec skill-lint --hook`，`hooks-config.test.mjs` 之类的现有测试跟着更新并通过。
 - [ ] `dyna test skill-doc` 不再量字数；skilldoc 里不再有 `MaxBodyChars`；文档测试里量主体字数的断言已删，其余断言保留；全量（`node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`、`cd dyna && go test ./...`、`go vet`、`gofmt -l .`）绿。
 - [ ] `AGENTS.md`、`REVIEW.md` 不再出现「< 5000」，字数线说法是 4500 + `dyna spec skill-lint`；`REVIEW.md` 验证命令表有 `skill-lint --changed` 一行。
-- [ ] dyna 版本 0.0.7、登记表 0.0.7.json 已存，`DYNA_VERSION_BASE=origin/release/idea-loop-0.2.0 node --test scripts/dyna-version.test.mjs` 绿。
+- [ ] dyna 版本 0.0.7、登记表 0.0.7.json 已存、`idea-loop/dyna-version` 下限 0.0.7，`node --test scripts/dyna-scan.test.mjs` 绿，`DYNA_VERSION_BASE=origin/release/idea-loop-0.2.0 node --test scripts/dyna-version.test.mjs` 绿。
 - [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
