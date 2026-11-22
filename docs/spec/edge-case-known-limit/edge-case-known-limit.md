@@ -1,12 +1,12 @@
 ---
 type: spec
-tags: [idea-loop, decision-rules, thinking-mode, home, setup]
-summary: 思考、决策范围、沟通、证据由 setup 写成 home 的固定文案；插件的思考模式只留护栏与摆题，不再开场注入
+tags: [idea-loop, decision-rules, evidence, home, setup]
+summary: 思考、决策、沟通、证据由 setup 写成 home 的固定文案；插件删掉 decision-rules，证据搬进 evidence
 related: ["[[0035-decision-evidence-principles]]", "[[skill-rewrite]]", "[[home-bootstrap]]", "[[280]]"]
 issues: [280, 276]
 ---
 
-# home 的固定文案管思考与沟通，插件的思考模式只留护栏与摆题
+# 思考与决策写进 home 的固定文案，插件删掉 decision-rules
 
 > #280 存在：现行 review 标准把「只在兜底路径或罕见异常里出现、不丢东西的边缘情形」一律标成「要你决定」；决定记录里碰到时看得见、不丢东西的 3 道，人每次都选接受、从未推翻，详情在「问题陈述」1
 
@@ -67,7 +67,7 @@ issues: [280, 276]
 
 ## 方案
 
-改完人得到什么：每台跑过 setup 的设备，home 的 `AGENTS.md` 里都有同一份 idea-loop 管的固定文案，写思考原则、决策范围、沟通规矩、证据的通用描述；每个会话加载它。PR 流程、起草、实现里，固定文案没写成「只由我做」「停下问我」的事，模型照思考原则自己定、事后列进「已按规则处理」，人说推翻就改回（问题 1、2、3）。每条交给人的消息开头三句说清问题、解法、要人做什么，后台的活跑完说一句（问题 4）。插件开场不再注入 `decision-rules`；它改名「思考模式」，只留 home 写不了的东西。
+改完人得到什么：每台跑过 setup 的设备，home 的 `AGENTS.md` 里都有同一份 idea-loop 管的固定文案，写思考原则、决策范围、沟通规矩、证据的通用描述；每个会话加载它。PR 流程、起草、实现里，固定文案没写成「只由我做」「停下问我」的事，模型照思考原则自己定、事后列进「已按规则处理」，人说推翻就改回（问题 1、2、3）。每条交给人的消息开头三句说清问题、解法、要人做什么，后台的活跑完说一句（问题 4）。插件里的 `decision-rules` 删掉，开场不再注入它；里面只对 idea-loop 流程有用的几条回到用它的 skill，证据三节原样搬进 `idea-loop:evidence`。
 
 ```
 setup / dyna home config apply ──→ 把插件里的固定文案写进 ~/home/AGENTS.md 的 idea-loop 几节（新）
@@ -76,31 +76,31 @@ setup / dyna home config apply ──→ 把插件里的固定文案写进 ~/hom
         ──→ 不再注入 decision-rules（删）
 碰到一件要定的事
   ├─ 固定文案「只由我做」 ──→ 停下，交给人
-  ├─ 固定文案「停下问我」 ──→ 摆成一道题（写法照 idea-loop:thinking-mode「要人定的写成一道题」，按名字调）
+  ├─ 固定文案「停下问我」 ──→ 摆成一道题（写法照固定文案「沟通」的「要我定的写成一道题」）
   └─ 其余 ──→ 照固定文案的四条原则定 → 列进「已按规则处理」（依据多一种「目标」）
 Codex 审查者 ──→ 提示词里加传 ~/.claude/CLAUDE.md（新）
 ```
 
 ### 固定文案：放在哪、怎么写进 home
 
-- **原文在插件里**：`setup` 的参考资料里一份（固定文案全文，见「实现决策」）。插件里只有这一份，`thinking-mode` 和别的 skill 不再转述它。
+- **原文在插件里**：`setup` 的参考资料里一份（固定文案全文，见「实现决策」）。插件里只有这一份，别的 skill 不再转述它。
 - **写进 home 的方式**：扩展已有的 `dyna home config`（setup 第 3 步用的那个），加第 4 项 `rules`：`plan` 列出 home 里 idea-loop 那几节的改前、改后，`apply` 照插件的版本写进去。跟 `## 设备地图`、`## 项目` 一样是 idea-loop 管的节（`dyna/internal/home/config.go` 的 `ownedSections`），人自己写的节原样保留。不新做命令。
 - **插件升级后**：`dyna home map --hook`（开场已有的 hook）比对 home 里的几节和插件的版本，不一致时在开场留一行「home 的固定文案落后于插件，跑 `/idea-loop:setup`」，不拦会话。
 
-### 插件里的「思考模式」
+### 插件里的 decision-rules 删掉，内容各回各处
 
-`decision-rules` 改名 `thinking-mode`（显示名「思考模式」，人 2026-11-20 定，见 [[280]] 题 8），不再开场注入，由要停下问人、要写「已按规则处理」的 skill 按名字调。只留固定文案写不了的：
+人的决定（2026-11-22，本会话）：「思考模式这个点，其实是每一个会话、每一个子代理都需要加载的内容，我觉的思考甚至于决策本身就应该放在home/claude.md里面吧」；证据「#280 原样搬进 evidence」。这推翻了 2026-11-20 的「拆开放」「改名思考模式」（[[280]] 题 6、题 8）：当时删不掉，是因为 #340 把证据并进了 decision-rules；证据现在有了去处。
 
-| 节 | 来自 | 怎么写 |
-|---|---|---|
-| 核心 | 原「核心」 | 不动：按 spec 的方案解决 spec 的问题 |
-| 依据四种 | 原「依据只认三种」 | 原三种加「目标」：spec 原文或用户真实路径里的一句目标，配一句「往下多推一步」的结果（达成、达成一部分、没达成）；`dyna pr candidates` 按它核 |
-| 已按规则处理 | 原「依据明确、没冲突：照标准做」 | 每条写做了什么、依据（四种之一，带原文与出处）、提交或 issue；人说推翻就改回，同类之后算「人的决定」 |
-| 护栏的插件部分 | 原「护栏」 | 通用的五条（合并改了代码的 PR、生产数据、真实支付、对外发布、术语）挪进固定文案「只由我做」；这里只留插件特有的：新词只在 `idea-loop:grill` 里加、SEO 例外 |
-| 要人定的写成一道题 | 原同名节 | 不动，含范围题的推荐规则 |
-| 证据三节 | #340 并进来的 evidence | 本 issue 不动，#438 拆走（[[280]] 题 10） |
+实测（2026-11-22，本会话）：起两个子代理只看开场上下文。通用子代理（general-purpose）看得到 home 的 `AGENTS.md`（有「设备地图」「以我的身份对别人说话」），看不到开场注入的 decision-rules 正文（没有「依据只认三种」）；只读搜索子代理（Explore）两样都没有。即现在的开场注入只到主会话，home 能到子代理。
 
-删掉的：「依据冲突或没有：停下问人」整节（停不停下改看固定文案的范围）。
+| decision-rules 现在的节 | 去哪 |
+|---|---|
+| 核心（按 spec 的方案解决 spec 的问题） | 删：固定文案「先确认问题」「我已经定下的不自己改」覆盖；pr-review 的 Spec 轴本来就对着 spec 审 |
+| 依据只认三种、依据明确：照标准做（「已按规则处理」的写法） | `pr-review` 的 review 标准：依据改成四种，加「目标」（spec 原文或用户真实路径里的一句目标，配一句达成、达成一部分、没达成）；`pr` 的汇报写法指过去。`dyna pr candidates` 按它核 |
+| 依据冲突或没有：停下问人 | 删：停不停下看固定文案的「只由我做」「停下问我」 |
+| 护栏 | 通用五条（合并改了代码的 PR、生产数据、真实支付、对外发布、术语）进固定文案「只由我做」；SEO 例外回 `pr-review` 的合并一步；「新词只在 `idea-loop:grill` 里加」回 `glossary` |
+| 要人定的写成一道题 | 固定文案「沟通」已有；「范围题怎么推荐」一条进 `pr-review` 的 review 标准 |
+| 证据是什么、整体风格、配什么图，加 `references/ui-flow.md`、`gif.md` | 原样搬进新的 `idea-loop:evidence`（`skills/productivity/evidence/`），一字不改，只改路径；description 照 `writing-for-agents`「调用方式」只写路由。#438 在它上面升级 |
 
 ### 改动面
 
@@ -108,16 +108,17 @@ Codex 审查者 ──→ 提示词里加传 ~/.claude/CLAUDE.md（新）
   - `setup`：参考资料加固定文案全文；`references/home.md` 第 1 步建 home 时、第 3 步配置时都写这几节；README 同步。
   - `dyna home config`：加第 4 项 `rules`；`ownedSections` 加固定文案的节名；`dyna home map --hook` 加落后提醒。
   - 开场注入：`hooks.json` 删 `runtime inject decision-rules` 一行；`dyna runtime inject` 的 `Sections` 去掉 `decision-rules`。
-  - `decision-rules/` 改名 `thinking-mode/`，SKILL.md 照上表；description 照 `writing-for-agents`「调用方式」只写路由。全部引用改名（2026-11-22 对着 `c5850c40` 数：skill、agent、脚本、测试、`dyna/` 共 72 个文件，不含 `evals/` 和 `docs/`）；仓库 `AGENTS.md`「调用方式」那条同步。
+  - 删 `decision-rules/`，内容照上表各回各处。全部引用改指新位置（2026-11-22 对着 `c5850c40` 数：skill、agent、脚本、测试、`dyna/` 共 72 个文件，不含 `evals/` 和 `docs/`）：讲证据、配图的指 `idea-loop:evidence`，讲停不停下的指会话已加载的用户规则（`~/.claude/CLAUDE.md`），讲依据和「已按规则处理」的指 `pr-review` 的 review 标准。仓库 `AGENTS.md`「调用方式」那条同步。
   - `dyna pr candidates`：`BasisKinds` 加「目标」；种类是「目标」的，`file` 必须是这次的 spec，`text` 要在 spec 里原样找得到，找不到照现在的做法丢弃。
-  - Codex 审查者的提示词（`dyna/internal/agent/prompt.go`）：`decision_rules` 改名 `thinking_mode` 指新路径，另加 `user_rules` 指 `~/.claude/CLAUDE.md`；文件不在时写「无」，不报错。
+  - Codex 审查者的提示词（`dyna/internal/agent/prompt.go`）：`decision_rules` 换成 `review_standards` 指 `pr-review` 的 review 标准，另加 `user_rules` 指 `~/.claude/CLAUDE.md`；文件不在时写「无」，不报错。
   - 改了 `dyna/` 就升 `dyna/internal/version/version.go`，登记表写进新版本。
-  - `pr-review`：`references/review-standards.md` 删「不丢东西的边缘情形 → 要你决定」那一行，「依据只认三种」改成四种并指向思考模式；`SKILL.md` 去掉「（含被降级的边缘情形）」。
+  - `pr-review`：`references/review-standards.md` 删「不丢东西的边缘情形 → 要你决定」那一行，「依据只认三种」改成四种，写在这里（不再指向 decision-rules），收进 SEO 例外和范围题；`SKILL.md` 去掉「（含被降级的边缘情形）」。
   - `pr`：`references/review-report.md`「已按规则处理」一条依据改成四种，删「边缘情形不放这里，是决定题」。
   - `issue-session/references/night-mode.md`：「『依据冲突或没有』里的每一题」改指固定文案的「停下问我」。
-  - `agents/design-steward.md`「依据只认三种」改指思考模式的依据一节。
+  - `agents/design-steward.md`「依据只认三种」改指 `pr-review` review 标准的依据一节。
+  - `dyna design flow`、`ledger` 等指向 `decision-rules/references/` 的路径改到 `evidence/references/`。
   - 文档测试：断言旧名、旧节名、「边缘情形 → 要你决定」、开场注入 decision-rules 的改钉新位置。
-  - `plugin.json` 升 minor：改了决策行为、改了 skill 名、去掉一段开场注入（档位规则见 `REVIEW.md`「额外要求」）。
+  - `plugin.json` 升 minor：改了决策行为、删了一个 skill、加了一个 skill、去掉一段开场注入（档位规则见 `REVIEW.md`「额外要求」）。
 - **这台设备的 home**：合并、升级插件后跑一次 `/idea-loop:setup` 写进固定文案；人手写的「沟通风格」里跟固定文案重复的段落由人自己删（见「实现决策」）。不进本 PR。
 
 ### 同一行为的其他入口
@@ -126,7 +127,7 @@ Codex 审查者 ──→ 提示词里加传 ~/.claude/CLAUDE.md（新）
 - **纳入**：公司虚拟机这类新设备：setup 建 home 时就写进固定文案。
 - **排除**：证据的各形态做法、视频、评测样本：#438，从固定文案「证据」一节往下展开。
 - **排除**：spec、PR 描述的新结构（开头「现状 → 本次修改的目标」）：#451、#452。
-- **排除**：#216（交给人时先讲问题、按场景选证据形态）：证据部分随 #438，「写成一道题」在思考模式同名节，由 #216 自己的会话定。
+- **排除**：#216（交给人时先讲问题、按场景选证据形态）：证据部分随 #438，「写成一道题」在固定文案「沟通」，由 #216 自己的会话定。
 - **排除**：上线后的监控反馈 #365。
 
 ## User Stories
@@ -135,19 +136,21 @@ Codex 审查者 ──→ 提示词里加传 ~/.claude/CLAUDE.md（新）
 
 1. **期望行为**（对应问题 1）：PR 流程里碰到看得见、不丢东西的边缘情形（例：#68 题 3），出现在「已按规则处理」并补记成已知限制，不出现在「要你决定」；碰到时会悄悄出错的（例：#108 题 9），仍停下问人。
 2. **期望行为**（对应问题 2）：执行方已做好一种、另一种也说得通、已做的那种不少满足 spec 任何一条的（例：#148 C1），出现在「已按规则处理」保持现状；已做的让 spec 某条只达成一部分的（例：#55 题 10），仍停下问人。
-3. **期望行为**（对应问题 3）：会话停不停下问人，只看 home 固定文案的「只由我做」「停下问我」和思考模式的插件护栏；改范围改的是插件里那一份固定文案，跑一次 setup 每台设备都生效。插件里不再有 `decision-rules` 这个名字，开场不再注入它。
+3. **期望行为**（对应问题 3）：会话停不停下问人，只看 home 固定文案的「只由我做」「停下问我」；改范围改的是插件里那一份固定文案，跑一次 setup 每台设备都生效。插件里不再有 `decision-rules` 这个名字，开场不再注入它；子代理也读得到这些范围。
 4. **期望行为**（对应问题 4）：一台新设备跑完 setup，`~/home/AGENTS.md` 里有固定文案的几节；交给人的消息开头三句依次是问题（落到具体对象）、解法（第一次出现的叫法带半句说明）、要人做什么；后台起的活跑完，不等人问就说一句结果。
 
 ## 实现决策
 
-- **实现从 #432 合入后的集成分支起**：#340 的 PR #432 已合进 `release/idea-loop-0.2.0`（`f12f7edc`），本 issue 改的是它重写后的 decision-rules、pr-review、pr。#438 排在本 issue 后面，从本 issue 留下的 `thinking-mode` 和固定文案「证据」一节拆出 evidence。
-- **改名不留旧名**：`decision-rules` 目录、引用、注入名、提示词键一次改完，不留重定向（同 #340「合并的 skill 删除」：0.2.0 一次发布、不留中间状态）。
+- **实现从 #432 合入后的集成分支起**：#340 的 PR #432 已合进 `release/idea-loop-0.2.0`（`f12f7edc`），本 issue 改的是它重写后的 decision-rules、pr-review、pr。#438 排在本 issue 后面，从本 issue 搬好的 `idea-loop:evidence` 和固定文案「证据」一节往下升级。
+- **删除不留旧名**：`decision-rules` 目录、引用、注入名、提示词键一次改完，不留重定向（同 #340「合并的 skill 删除」：0.2.0 一次发布、不留中间状态）。
 - **不留旧节**：「依据冲突或没有」整节删。「已按规则处理」这个节名保留：pr-review、pr、implement、`dyna pr candidates` 都按它找（同 ADR-0035「不改名」的理由）。
 - **固定文案不带任何项目的信息**：举例用通用例子，不写 #164、Toeflair 这些出处（AGENTS.md「插件里不出现任何项目的信息」；`no-project-leak.test.mjs` 守着，把固定文案那份文件加进它扫的范围）。出处留在本 spec 和人自己写的节里。
 - **固定文案里的「我」是用这台设备的人**：home 是人的私有仓库，固定文案写成人对 agent 说话，跟人手写的节同一个口吻。
 - **扩展 `dyna home config`，不新做命令**：home 的 AGENTS.md 已由它写（`claude-md` 项把旧文件搬进来，放在 idea-loop 的节之前），加一项最省（`~/.claude/CLAUDE.md`「做方案」：先扩展已在用的工具）。
-- **通用护栏挪进固定文案、插件只留插件特有的**：固定文案每个会话都加载，护栏写两处会两处说法不一（问题 4 的根因）；SEO 例外和「新词只在 grill 里加」只对 idea-loop 的流程有意义，留插件。
-- **没跑 setup 的设备**：插件升级、开场不再注入 decision-rules 后，home 里还没有固定文案的设备，会话里只剩人手写的规矩和思考模式的插件护栏，直到跑 setup。开场的落后提醒让人知道；这台设备合并后马上跑。
+- **通用护栏挪进固定文案、插件特有的回到用它的 skill**：固定文案每个会话、每个子代理都加载，护栏写两处会两处说法不一（问题 4 的根因）；SEO 例外只在 pr-review 合并时用，「新词只在 grill 里加」只在写术语表时用。
+- **证据原样搬，不改字**：本 issue 只换位置，证据的写法、形态、视频、评测样本都归 #438，两个 issue 不改同一段文字。
+- **只读搜索子代理（Explore）不加载 home**：实测如此，记成已知限制；它只搜、不做决定。
+- **没跑 setup 的设备**：插件升级、开场不再注入 decision-rules 后，home 里还没有固定文案的设备，会话里只剩人手写的规矩，直到跑 setup。开场的落后提醒让人知道；这台设备合并后马上跑。
 
 ### 固定文案的原文（草稿，待人审，见「待定」）
 
@@ -234,7 +237,7 @@ Codex 审查者 ──→ 提示词里加传 ~/.claude/CLAUDE.md（新）
 - 父 issue：#331（idea-loop 0.2.0）。
 - [[home-bootstrap]]（#252）：setup 建 home 的那份 spec；本 spec 在它的 `dyna home config` 上加一项。
 - [[skill-rewrite]]（#340，PR #432 已合入集成分支）：本 issue 改的是它重写后的 decision-rules、pr-review、pr。
-- #438（evidence 升级，triage）：排在本 issue 之后，从固定文案「证据」一节和 `thinking-mode` 拆出 evidence。两者都改 `thinking-mode` 目录，先做本 issue。
+- #438（evidence 升级，triage）：排在本 issue 之后，在本 issue 搬好的 `idea-loop:evidence` 上升级（按形态分支、视频、评测样本），并从固定文案「证据」一节往下展开。两者都改 evidence，先做本 issue。
 - #451（spec 结构）、#452（PR 结构）：被本 issue 和 #438 挡着，不重叠。
 - #216（先放着）、#365（triage）、#298（dreaming 逐行批，落点在 dreaming，不重叠）。
 - 相邻 spec：无。

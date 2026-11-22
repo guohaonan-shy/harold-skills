@@ -8,7 +8,7 @@
 | [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
-| [[edge-case-known-limit]] | 思考、决策范围、沟通、证据由 setup 写成 home 的固定文案；插件的思考模式只留护栏与摆题，不再开场注入 |
+| [[edge-case-known-limit]] | 思考、决策、沟通、证据由 setup 写成 home 的固定文案；插件删掉 decision-rules，证据搬进 evidence |
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
 | [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
 | [[idea-loop-cli]] | idea-loop 的脚本收成 Go 写的 dyna 命令行单独发布，skill 只写命令，插件写命令行版本范围 |
