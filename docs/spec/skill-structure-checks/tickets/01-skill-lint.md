@@ -41,3 +41,4 @@
 - `idea-loop/scripts/hooks-config.test.mjs`：hooks.json 多一行。
 - `idea-loop/scripts/*-slim-doc.test.mjs`、`design-archive-skill-doc`、`cover-skill-doc`、`og-skill-doc`：删字数断言后其余断言仍成立。
 - `scripts/dyna-version.test.mjs`、`scripts/dyna-scan.test.mjs`：版本与登记表。
+- [ ] review 第 1 轮 S1（2026-11-22）：字数线只写在 skill-lint 一处，所有插件一样：别的插件（如 ai-eval）的文档测试里自己量 SKILL.md 主体字数的断言也删掉，那个插件的 plugin.json 跟着升 patch。
