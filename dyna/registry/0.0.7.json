@@ -1997,6 +1997,46 @@
       ]
     },
     {
+      "command": "pr full-suite record",
+      "module": "pr",
+      "use": "record <head> <exit-code> <log-file>",
+      "summary": "记下这次本机全量测试的结果（head、退出码、日志文件、时间）到当前 worktree 的 .tmp/full-suite/<head>.json；同一个 head 再记会覆盖",
+      "caller": "session",
+      "next": "dyna pr full-suite show <head>",
+      "args": [
+        {
+          "name": "head",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "exit-code",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "log-file",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "pr full-suite show",
+      "module": "pr",
+      "use": "show <head>",
+      "summary": "打印这个 head 的本机全量记录（JSON：head、exitCode、log、at）；没有记录退出 2。退出码 0 的可以复用，非 0 的重跑",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "head",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
       "command": "pr loop archive",
       "module": "pr",
       "use": "archive <file> <owner/repo> <pr>",

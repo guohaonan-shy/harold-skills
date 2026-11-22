@@ -29,9 +29,9 @@
 
 **全部落地、pending 清空、`dyna pr loop check` 没有未处理的条目、没有在跑或未处理的回放**（有就 PR 留在 draft，不进 review）：照 `idea-loop:pr` 的「PR 描述」给这个 PR 写齐描述（带 `type:seo/*` 的 issue 另写「上线自查的网址」一节；之前 → 之后专门拍：另起一份基准分支的检出 `.tmp/implement/<spec-slug>/base`（`dyna worktree add base --detach --base <基准分支> --path .tmp/implement/<spec-slug>/base`），拍完用 `dyna worktree remove` 删），`dyna pr ready <owner/repo> <PR 号>`，然后 `dyna issues set <docs> in-review <号>`（Linear 上集成推），再**等 CI**，再用 Skill 工具调 `idea-loop:pr-review` 跑第一轮。提一句交付验收还有几项没勾。
 
-**等 CI**：全量测试只在这里跑一遍。等这个 head 的检查跑完：
+**等 CI**：全量测试在这里跑一遍，同一个 head 之后不再跑。等这个 head 的检查跑完：
 
 - **全绿**：起 pr-review。
 - **红了**：读失败的测试日志，找到引入失败那行的提交，`dyna spec ticket-of <提交>` 读出工单；在那张工单的验收末尾追加 `- [ ] CI（<日期>）：<失败的测试验的行为>`，提交 `docs(tickets): <NN> — CI 失败`，照「重派」新起执行方（已落地的工单 worktree 已回收），落地、推送后回到「等 CI」。
 - **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「跟这次无关的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
-- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `<项目目录>/REVIEW.md`「验证命令」的全量命令，结果当 CI 结果用；红了同上。
+- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `<项目目录>/REVIEW.md`「验证命令」的全量命令，跑完用 `dyna pr full-suite record <head> <退出码> <日志文件>` 记下（`<head>` 是 `git rev-parse HEAD` 的完整提交号，红的也记），结果当 CI 结果用；红了同上。

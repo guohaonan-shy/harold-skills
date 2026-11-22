@@ -18,13 +18,13 @@ PR 上没有检查时，implement 的「等 CI」本机跑完全量后记下结�
 
 ## 验收标准
 
-- [ ] go 命令测试：`record abc1234 0 <日志>` 后 `show abc1234` 打印退出码 0 的记录、退出 0；`show def5678` 退出 2；`record abc1234 1 <日志>` 后 `show abc1234` 打印退出码 1 的记录。记录落在工作目录的 `.tmp/full-suite/`。
-- [ ] 文档测试钉住：「等 CI」没有检查的分支里有 `dyna pr full-suite record`；`run-a-round.md` 机械检查里有 `dyna pr full-suite show` 和复用写法 `复用 <head> 的本机结果`；`REVIEW.md` 第一句写清全量在「等 CI」和 head 变了的 review 轮跑。
-- [ ] `review-standards.md` 与 `run-a-round.md`、`stop-and-resume.md` 三处说法一致，不再有「同一 head 跑两次」的路径。
-- [ ] 登记表含新命令；plugin.json 升了 minor；全量绿（同 01 的命令）。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] go 命令测试：`record abc1234 0 <日志>` 后 `show abc1234` 打印退出码 0 的记录、退出 0；`show def5678` 退出 2；`record abc1234 1 <日志>` 后 `show abc1234` 打印退出码 1 的记录。记录落在工作目录的 `.tmp/full-suite/`。
+- [x] 文档测试钉住：「等 CI」没有检查的分支里有 `dyna pr full-suite record`；`run-a-round.md` 机械检查里有 `dyna pr full-suite show` 和复用写法 `复用 <head> 的本机结果`；`REVIEW.md` 第一句写清全量在「等 CI」和 head 变了的 review 轮跑。
+- [x] `review-standards.md` 与 `run-a-round.md`、`stop-and-resume.md` 三处说法一致，不再有「同一 head 跑两次」的路径。
+- [x] 登记表含新命令；plugin.json 升了 minor；全量绿（同 01 的命令）。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 

@@ -2,7 +2,7 @@
 
 ## 验证命令
 
-写代码时常跑前两条，提交前跑全量；review 时每一条都跑一遍。
+执行方只跑改动涉及的（前两条）；全量在 PR 转 ready 后跑一次（implement 的「等 CI」），之后 review 每轮 head 变了再跑，同一个 head 只跑一遍（`dyna pr full-suite` 记结果）；review 时其余每条都跑一遍。
 
 | 用途 | 命令 |
 |---|---|
