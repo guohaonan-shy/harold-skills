@@ -42,7 +42,7 @@ func TestHomeDispatchWithNoFileGivesTheDefaultsForTheMomentAsked(t *testing.T) {
 		t.Fatalf("%+v", day)
 	}
 	night := w.dispatchAt(t, "23:30")
-	if *night.Dispatch != "todo" || night.PerRound != 3 || night.Caps.InProgress != nil || night.Period.Start != "22:00" || night.Period.End != "08:00" {
+	if *night.Dispatch != "todo" || night.PerRound != 1 || night.Caps.InProgress != nil || night.Period.Start != "22:00" || night.Period.End != "08:00" {
 		t.Fatalf("%+v", night)
 	}
 	gap := w.dispatchAt(t, "20:00")

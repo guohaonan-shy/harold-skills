@@ -29,7 +29,7 @@
 - [x] 版本升了一档，新版本的登记表已存，`dyna registry --json` 里有 `home projects`、`home dispatch`，且登记表测试通过。
 - [x] `cd dyna && go test ./...` 全过。
 
-- [ ] 人的决定（2026-11-22）：没有 `DISPATCH.md` 时 `dyna home dispatch --at=23:30` 给出 todo、每轮 1；白天 triage 仍是每轮 3、triage 上限 6。
+- [x] 人的决定（2026-11-22）：没有 `DISPATCH.md` 时 `dyna home dispatch --at=23:30` 给出 todo、每轮 1；白天 triage 仍是每轮 3、triage 上限 6。
 
 ## 选中的存量回归
 

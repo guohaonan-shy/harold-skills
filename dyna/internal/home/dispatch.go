@@ -65,7 +65,8 @@ type Schedule struct {
 
 func intPtr(n int) *int { return &n }
 
-// DefaultSchedule is what a device with no DISPATCH.md runs on: triage by day, todo by night, nothing in between;
+// DefaultSchedule is what a device with no DISPATCH.md runs on: triage by day (3 a round), todo by night (1 a round,
+// the human's decision of 2026-11-22), nothing in between;
 // at most 6 triage sessions open, no cap on the other two; every project dispatched.
 func DefaultSchedule() Schedule {
 	return Schedule{Periods: defaultPeriods(), Caps: defaultCaps(), Skip: []string{}}
@@ -74,7 +75,7 @@ func DefaultSchedule() Schedule {
 func defaultPeriods() []Period {
 	return []Period{
 		{"09:00", "19:00", "triage", 3},
-		{"22:00", "08:00", "todo", 3},
+		{"22:00", "08:00", "todo", 1},
 	}
 }
 
