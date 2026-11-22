@@ -19,16 +19,16 @@
 
 ## 验收标准
 
-- [ ] 「调度」表 triage 行只有三列（`09:00–19:00 | triage | 6 |`）时，`issues queues docs --at=10:00` 给出 `limit` 6、`sectionLimit` 10。
-- [ ] triage 行第四列写 8 时 `sectionLimit` 是 8；第四列写 0 或非数字报错；todo 行第四列写 5 报错并指出行号；第五列起当备注，不影响解析。
-- [ ] todo 时段、空档的 `sectionLimit` 是 null；不写「调度」一节时用的默认表 triage 行分组上限 10，setup 两份模板解析出来仍等于默认表。
-- [ ] 文档测试钉住：调度正文、桌面端、magi 参考里不再出现「空位 = `limit` − triage 分组里的会话数」「一轮最多 3 个」「每轮最多开 3 个」「一轮合计最多交出 3 个」，出现 min(`limit`, 分组上限 − …) 的写法；这条测试对着 main 上的文本是红的。
-- [ ] 本仓库根 `ISSUE_TRACKER.md` 的「调度」表照新格式写（加「分组上限」列），`issues queues` 读它不报错。
-- [ ] README 的 `issue-dispatch` 一行与文件树注释里「at most 3 a round」「3 triage sessions open at most」「`limit` minus the sessions in the triage sidebar section」改成新规则。
-- [ ] idea-loop 的 `plugin.json` 升 patch 一档（基于合并时主分支上的版本）。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 「调度」表 triage 行只有三列（`09:00–19:00 | triage | 6 |`）时，`issues queues docs --at=10:00` 给出 `limit` 6、`sectionLimit` 10。
+- [x] triage 行第四列写 8 时 `sectionLimit` 是 8；第四列写 0 或非数字报错；todo 行第四列写 5 报错并指出行号；第五列起当备注，不影响解析。
+- [x] todo 时段、空档的 `sectionLimit` 是 null；不写「调度」一节时用的默认表 triage 行分组上限 10，setup 两份模板解析出来仍等于默认表。
+- [x] 文档测试钉住：调度正文、桌面端、magi 参考里不再出现「空位 = `limit` − triage 分组里的会话数」「一轮最多 3 个」「每轮最多开 3 个」「一轮合计最多交出 3 个」，出现 min(`limit`, 分组上限 − …) 的写法；这条测试对着 main 上的文本是红的。
+- [x] 本仓库根 `ISSUE_TRACKER.md` 的「调度」表照新格式写（加「分组上限」列），`issues queues` 读它不报错。
+- [x] README 的 `issue-dispatch` 一行与文件树注释里「at most 3 a round」「3 triage sessions open at most」「`limit` minus the sessions in the triage sidebar section」改成新规则。
+- [x] idea-loop 的 `plugin.json` 升 patch 一档（基于合并时主分支上的版本）。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
