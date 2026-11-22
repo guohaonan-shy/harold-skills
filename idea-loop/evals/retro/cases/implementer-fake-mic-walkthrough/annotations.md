@@ -5,20 +5,22 @@
 
 **当时的原话**：接下来就是麦克风权限的事儿，我觉得可以用computer use 来测试，这样测试就完全自动化了。（Tofelair `docs/raw/decisions/738.md` 题 16；同一份里候选 3：「关于麦克风，我在考虑通过computer use的方式来进行测试，这样以后面对麦克风，你也可以测试了。」）
 
-**是/否题**：执行方是否自己用假麦克风走完了麦克风这一步、没写成人验项？
+**是/否题**：执行方是否自己在浏览器里用假麦克风真的录了音、走完了 tab 内重录（不是用测试夹具或开发开关跳过麦克风），也没把麦克风这一步写成人验项或「没验」？
 
-**输入**：Tofelair 的 spec `paid-practice-backend-gate` 工单 03，提交 `15726d8e`（工单 01、02 已落地，03 未开工）。工单 03 的验收里有 Interview 的 `begin-rejected` 状态：练习页开着、点 Begin、建会话被拒，而 Interview 点 Begin 要先过「检查麦克风」。当时的执行方用精简版无头浏览器走到这一步，页面卡在「Checking Mic...」，把它写成了人验项。
+**输入**：Tofelair 的 spec `recording-upload-pipeline` 工单 08（报告页 tab 内重录），提交 `3290f759`（工单 01–07 已落地，08 未开工）。工单 08 的验收要真录音：TC5 刷新后点「重试」先播题再自动开录，TC7 连录 3 次无效，TC7a 第 2 题录全静音。那时项目还没有自己的假麦克风端到端测试。当时的执行方用测试夹具跳过了麦克风，落地提交 `71502828` 写着「Not exercised: real mic / real prompt playback (fixtures skip both)」；两天后线上出了重录开头 550ms 是静音、第一句被判漏读的 bug（`bc0db812`），录一段指定的话就能看出来。
 
-**预期**：改前（主分支的 idea-loop）答「否」：执行方碰到 `NotSupportedError` 或卡在「Checking Mic...」，把这一步交给人手测，或只走到点 Begin 之前。改后答「是」：执行方在带假麦克风的独立浏览器会话里授权后点 Begin 走过去，结果是截图和断言文件，`human_verify` 里没有这一步。改前就答「是」，说明用例没抓住问题。
+**预期**：改前（主分支的 idea-loop）答「否」：执行方用测试夹具或开发开关跳过麦克风，或把真录音写进「没验」、人验项。改后答「是」：执行方在带假麦克风的独立浏览器会话里授权后点「重试」，页面真的开麦录进一段音频（最好是放进去的指定音频），结果是截图和断言文件。改前就答「是」，说明用例没抓住问题。
 
 ## 怎么跑
 
 - **大用例**：要起插件 agent、开浏览器、起 Tofelair 的前后端，由编排者在 PR 开出后当场跑，不在实现时跑。
-- **`--repo` 指本机的 Tofelair 仓库**：提交 `15726d8e` 在那里，不在 harold-skills。本机路径是 `/Users/guohaonan/projects/TOFEL-demo`（`/Users/guohaonan/projects/TOEFLAIR-worktree/TOFEL-demo` 不是 git 仓库，别用它）。
+- **`--repo` 指本机的 Tofelair 仓库**：提交 `3290f759` 在那里，不在 harold-skills。本机路径是 `/Users/guohaonan/projects/TOFEL-demo`（`/Users/guohaonan/projects/TOEFLAIR-worktree/TOFEL-demo` 不是 git 仓库，别用它）。
 - **prompt 里的端口、锁、tmp 路径是为回放补的**：当时的编排者按那个仓库 `DEVELOPMENT.md` 分端口；跑的时候端口跟本机在用的错开即可，不影响这道题。
-- **判定依据**：看执行方交回的 `verified` 和 `human_verify`，以及它在 `.tmp/` 或工单 03 的勾格里留下的假麦克风会话记录（配置、点 Begin 之后页面的状态）；`human_verify` 里出现「麦克风」「Begin 要真麦克风」之类的人验项即为「否」。
+- **判定依据**：看执行方交回的 `verified`、`human_verify` 和「没验」的说明，以及它在 `.tmp/` 或工单 08 的勾格里留下的假麦克风会话记录（配置、喂的音频、点「重试」之后页面的状态）。录音靠测试夹具或开发开关跳过麦克风、交回里写「没走真麦克风」、或 `human_verify` 里有要人手测录音的项，即为「否」；只让人看流程图、截图不算。
 
 ## prompt 改写记录
+
+- 2026-11-22：输入从 Tofelair `paid-practice-backend-gate` 工单 03（提交 `15726d8e`）换成 `recording-upload-pipeline` 工单 08（提交 `3290f759`）。原因：run `20261122T025744` 改前、改后都答「否」，但看产物，`15726d8e` 上 Tofelair 已经有自己的假麦克风端到端测试（`283d4726`，2026-10-12），改后那次执行方用它走完了点 Begin，没读到新写的麦克风做法说明；改前那次用 MCP 浏览器在本地后端上点的。两边差在执行方挑了哪种走法，跟规则改没改无关，用例测不到这次的规则。换到项目还没有假麦克风测试、而工单要真录音的那一刻。
 
 ## 标注
 
