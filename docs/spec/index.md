@@ -9,6 +9,7 @@
 | [[docs-broken-links]] | 知识库 4 处双括号链接指向主分支上不存在的文件，改成纯文本或删掉 related 里的那一项 |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
+| [[glossary-user-flow-wording]] | 插件里两处「用户流程」改成术语表的标准叫法「用户路径」 |
 | [[implementer-start-point-non-destructive]] | implementer 开工对齐起点改用不丢东西的 git 写法，不再被 auto mode 拦；定义按 agent-builder 精简到 5000 字内 |
 | [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
 | [[magi-existing-branch-worktree]] | magi 下调度给已有分支的 issue 建 worktree 时先查分支在不在，在就接上，不再用 -b 新建 |
