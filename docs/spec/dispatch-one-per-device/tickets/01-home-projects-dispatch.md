@@ -15,6 +15,8 @@
 - **`dyna issues queues <docs>`**：去掉 `dispatch`、`limit`、`period`、`periods`、`at`，只留三个分组名 `sections`；`--at` 去掉。时段的解析整体挪到 `home dispatch`，不留两份。
 - 命令改了，命令行版本升一档，新版本的命令登记表存进仓库。
 
+> 人的决定（2026-11-22）：「1 A」——没有 `DISPATCH.md` 时夜里 22:00–08:00 的 todo 默认每轮最多新开 1 个（不是 3）。
+
 ## 验收标准
 
 - [x] 临时 home、没有 `DISPATCH.md`：`dyna home dispatch --at=10:00` 给出 triage、每轮 3、triage 上限 6；`--at=23:30` 给出 todo、每轮 3、in-progress 上限 null；`--at=20:00` 给出 dispatch null、每轮 0。
@@ -26,6 +28,8 @@
 - [x] `dyna issues queues <docs>` 只输出 `sections`；原来测时段的测试挪到 `home dispatch` 下并仍然通过。
 - [x] 版本升了一档，新版本的登记表已存，`dyna registry --json` 里有 `home projects`、`home dispatch`，且登记表测试通过。
 - [x] `cd dyna && go test ./...` 全过。
+
+- [ ] 人的决定（2026-11-22）：没有 `DISPATCH.md` 时 `dyna home dispatch --at=23:30` 给出 todo、每轮 1；白天 triage 仍是每轮 3、triage 上限 6。
 
 ## 选中的存量回归
 
