@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-16
 title: explorer 读 spec 的范围：加读「实现决策」
 tags: [idea-loop-decisions, explorer-reads-impl-decisions]
-related: ["[[explorer-reads-impl-decisions]]"]
+related: ["[[0068-explorer-reads-impl-decisions]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在 harold-skills#161 的 triage 会话里。

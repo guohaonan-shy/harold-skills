@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-18
 title: grill —— #296 替人发的评论、文档发出后变了怎么更新，评论写多长，要不要署名
 tags: [issue-workflow, comment-marker-no-prefix]
-related: ["[[comment-marker-no-prefix]]"]
+related: ["[[0063-comment-marker-no-prefix]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现。讨论在 harold-skills#296 的 triage 会话里进行（2026-11-16 至 2026-11-18），事实对着 origin/main a032e45 与 GitHub 上 harold-skills 的评论取。末尾一张「本轮决议」表。
@@ -77,7 +77,7 @@ Q3 细节没有文档可链时放哪 是指
 
 ## A8
 
-「以我的身份对别人说话」一节写进 `~/home/AGENTS.md`（home 仓库提交 949bea0）。插件只剩机械改动，写进 spec [[comment-marker-no-prefix]]。
+「以我的身份对别人说话」一节写进 `~/home/AGENTS.md`（home 仓库提交 949bea0）。插件只剩机械改动，写进 spec [[0063-comment-marker-no-prefix]]。
 
 ## 本轮决议
 

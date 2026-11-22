@@ -5,10 +5,10 @@
 
 | 层 | 收什么 | 当前 |
 |---|---|---|
-| [raw](raw/index.md) | 素材与事实，忠实不编辑 | 65 份，6 个桶 |
+| [raw](raw/index.md) | 素材与事实，忠实不编辑 | 111 份，7 个桶 |
 | [spec](spec/index.md) | 还没了结的规格，一份一个目录，做完即删 | 空 |
-| [adr](adr/index.md) | spec 的归档总结，永久 | 57 份 |
-| [records](records/index.md) | 运营台账，会话起头、之后由人持续更新 | 1 个：`retro-candidates/`（retro 的候选池） |
+| [adr](adr/index.md) | spec 的归档总结，永久 | 87 份 |
+| [records](records/index.md) | 运营台账，会话起头、之后由人持续更新 | 2 个：`retro-candidates/`（retro 的候选池）、`out-of-scope/`（人决定不做的概念） |
 
 尚未用上的层：`domain/`（领域知识，目录已建、还没有文档）。
 

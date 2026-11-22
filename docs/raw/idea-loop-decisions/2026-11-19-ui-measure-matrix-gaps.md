@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-19
 title: ui-measure 矩阵缺口：margin/gap 与 pixelAnchor 两道题
 tags: [idea-loop-decisions, ui-measure-matrix-gaps]
-related: ["[[ui-measure-matrix-gaps]]"]
+related: ["[[0087-ui-measure-matrix-gaps]]"]
 ---
 
 U 是人的原话（这次是两道单选题的选择），A 是 AI 的结论。issue #223 的 triage 会话。
