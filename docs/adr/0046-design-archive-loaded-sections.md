@@ -39,7 +39,7 @@ issue 原先的想法是让加载完的状态也能声明分段，2026-11-12 对
 - `idea-loop/scripts/design-archive-sections.mjs`：`cover` 子命令（`coverScreens` 分屏纯函数、`buildCoverCode`、`coverCommand`；声明了 `sections` 的状态退出码 2）。落地时又加了 `--delta <spec-slug>`：状态或边还只在 `delta/` 里（合并前归档、初扫的草稿）时，`cover` 也读得到，这是 spec 里没写、工单阶段补的。
 - `idea-loop/scripts/design-archive-check.mjs`：规则 8 `shotRules`，违规名称「边的截图」。`idea-loop/scripts/design-archive-query.mjs`：`state` / `page` 里每条边多带 `shot`、`shotExists`。
 - 文档：`design-archive` 的 `references/shooting.md`（命令与「比主视口高、不分段的状态」）、`review-reconcile.md`、`review-archive.md`、`writing.md`、`check.md`、`query.md`；`dreaming` 的 `references/initial-scan.md`。
-- 守护它的测试：`design-archive-check.test.mjs`（规则 8 一组，夹具 `shotFiles()`）、`design-archive-sections.test.mjs`（`coverScreens` 的合并、余量、贴底、盖住判定）、`design-archive-sections-browser.test.mjs`（真 Chromium 里的 `cover`，darwin 本机全量套件会卡住，见 issue #192，单独跑）、`design-archive-sections-doc.test.mjs`（各处拍单屏状态的地方都有 `cover` 的命令行、对账写了分组变了算档案过期）、`design-archive-query.test.mjs`。
+- 守护它的测试：`design-archive-check.test.mjs`（规则 8 一组，夹具 `shotFiles()`）、`design-archive-sections.test.mjs`（`coverScreens` 的合并、余量、贴底、盖住判定）、`design-archive-sections-browser.test.mjs`（真 Chromium 里的 `cover`，默认跳过，设 `IDEA_LOOP_BROWSER_TESTS=1` 单独跑，见 [[0078-sections-browser-test-out-of-full-suite]]）、`design-archive-sections-doc.test.mjs`（各处拍单屏状态的地方都有 `cover` 的命令行、对账写了分组变了算档案过期）、`design-archive-query.test.mjs`。
 - 合并在 PR #300「设计档案：首屏以下会连出边的组件，要出现在截图里」（review 4 轮；决定记录进 PR #310）。issue #69 已 COMPLETED 关闭（2026-11-13）。
 
 **与 ADR-0004、0005 的关系：** 分段的规则（只写在入口状态、规则 7）照旧有效；本条是分段之外给「不分段、比主视口高」的状态补的第二条路。

@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-20
 title: grill —— 带连接器的 agent 怎么写工具：放弃白名单，改只写禁用清单（#164 推翻 11-16 的决定）
 tags: [idea-loop-seo, agent-connector-tools]
-related: ["[[seo-agents-openseo-tool-name]]"]
+related: ["[[0079-seo-agents-openseo-tool-name]]"]
 ---
 
 U 是 Harold 的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。背景：#164 的夜间 todo 会话按 11-16 的决定（以插件自带的 OpenSEO 为准，被顶替就停下让人删配置）做完了 PR #397，交审核报告时 Harold 提起 Mobbin 也碰到同样的问题，重开讨论。

@@ -60,3 +60,33 @@
 | [[0058-skill-edit-acceptance]] | 生效 | 改 skill 类文件的工单带三格验收，落地前脚本核对交回「调过」writing-for-agents |
 | [[0059-test-layering-ci-full]] | 生效 | 执行方只跑改动涉及的测试，全量交给 PR 转 ready 后的 CI；无 CI 时本机兜底 |
 | [[0060-to-ticket-walk-request-chain]] | 生效 | 切票前对着最新主分支，从用户入口沿调用链走到数据来源；spec 没覆盖的一段照「唯一会停的情况」处理 |
+| [[0061-ai-eval-plugin]] | 生效 | toeflair 的 ai-eval 迁成 harold-skills 的 ai-eval plugin，补报数口径参考与回放型 eval（eval-replay） |
+| [[0062-browser-fake-mic]] | 生效 | 要麦克风的流程用 playwright-cli 命名会话加假麦克风自己点着走完，能测授权与拒绝，并往假麦克风喂指定音频 |
+| [[0063-comment-marker-no-prefix]] | 生效 | idea-loop 发的评论去掉「🤖 idea-loop：」开头与「由 Claude 代发」署名，脚本改认隐藏标记 |
+| [[0064-design-shared-implementations]] | 生效 | DESIGN.md 的 Components 能登记「这类界面必须用的共用实现」并配项目自己的检查，对账核它；章节表补官方 Voice 章 |
+| [[0065-dispatch-day-night-modes]] | 生效 | 调度按时段派：白天开 triage、夜里每小时开 1 个 todo 做到 review 完，用 claude -p 加 /desktop 交到桌面端 |
+| [[0066-docs-broken-links]] | 生效 | 知识库里指不到文件的双括号链接改成纯文本或删 related 项，不补文件 |
+| [[0067-dreaming-ask-scope]] | 生效 | dreaming 问人的范围只在 SKILL.md 开头列一份并跟脚本判定对齐，周任务说明改成指过去，测试从脚本推出类别来守 |
+| [[0068-explorer-reads-impl-decisions]] | 生效 | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，只拿它点名的模块当找位置的起点 |
+| [[0069-glossary-user-flow-wording]] | 生效 | 插件里两处「用户流程」改成术语表标准叫法「用户路径」，不加避用词检查 |
+| [[0070-implementer-start-point-non-destructive]] | 生效 | implementer 开工对齐起点改成核空、快进、快进不了再改指分支，不再用 reset --hard；定义压到 5000 字内 |
+| [[0071-issue-body-background]] | 生效 | issue 正文「背景」改成必填，issues new 与 issues body 缺它就拒，seo-scan 拼的正文固定补一节 |
+| [[0072-magi-existing-branch-worktree]] | 生效 | magi 下调度给已有分支的 issue 建 worktree 时先查分支在不在，本地有就接上，不再一律 -b 新建 |
+| [[0073-pr-review-round-cap]] | 生效 | pr-review 自动起下一轮的上限从 2 放到 5，审到没有要修的为止；每轮开审前先合入最新主分支 |
+| [[0074-refine-judge-advisor]] | 生效 | 设计收敛改由人定：评委降为顾问，每轮交配参考图和用户路径的评审报告；冻结后走交给调度，搁置的设计放主 checkout 的 pending |
+| [[0075-replay-gh-isolation]] | 生效 | 规则回放起的每个子进程（worker、两路判定）一律不带 gh 登录，读不到用例提交之后的线上 issue 与 PR |
+| [[0076-replay-snapshot-plugin-sync]] | 生效 | 回放时把项目快照里被改动的插件文件换成各自这一边的版本，改前改后读到不同的规则；评测材料不换 |
+| [[0077-scroll-driven-whole-pin]] | 生效 | 设计档案只把整段钉住（宽高都≥半屏）认成滚动驱动，窄侧栏照普通长图拍；滚动驱动段每一步一张图 |
+| [[0078-sections-browser-test-out-of-full-suite]] | 生效 | 设计档案的真浏览器测试默认跳过、设环境变量才跑，每例 120 秒超时，REVIEW.md 另给单独命令 |
+| [[0079-seo-agents-openseo-tool-name]] | 生效 | 带连接器的 agent 不写 tools 白名单、只写 disallowedTools，连接器被别处配置改了名也拿得到工具 |
+| [[0080-seo-autopilot]] | 生效 | SEO issue 默认全托管：扫描后当场分流、spec 照推荐定、内容改动自动合并并上线自查、每 3 天效果报告、外联进草稿箱 |
+| [[0081-seo-brief-angle-vs-site-posts]] | 生效 | seo-brief 新开页时先读站内同主题文章，每个角度候选写明和哪篇重合、新页补什么 |
+| [[0082-seo-outreach-reads-seo-md]] | 生效 | seo-outreach 与 seo-writing 改用 seo-md.mjs 读 SEO.md，不再指向 seo-setup 的私有参考 |
+| [[0083-seo-skill-descriptions-route-only]] | 生效 | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
+| [[0084-skill-body-limit-backlog]] | 生效 | design-modeling 与 pr-review 两份 SKILL.md 把部分运行才走到的分支挪进 references 压回 5000 字，字数测试守回 5000 |
+| [[0085-split-blog-publisher]] | 生效 | 博客 workflow 拆进 idea-loop seo 组：brief 出图、改稿循环、通用写作 lint，项目取值走 SEO.md 与 DESIGN.md |
+| [[0086-subagent-handback-lost-turn]] | 生效 | 子 agent 交回后卡住是那一轮模型请求丢了，属于网络与平台侧；idea-loop 不加任何恢复机制（未采纳） |
+| [[0087-ui-measure-matrix-gaps]] | 生效 | ui-measure 颜色换算后精确比、加减弱动效格、像素层加邻域比对、不再比 margin 与 gap，容差一律不放宽 |
+| [[0088-ui-ticket-canvas-in-worktree]] | 生效 | UI 工单参考里「画布在执行方 worktree 里有、delta 没有、都走 tmp 绝对路径」只留一种说法，文档检查钉住 |
+| [[0089-version-tier-0x-patch]] | 生效 | 插件还在 0.x 时，改已有流程的行为、老用法照样能用的也升 patch，minor 只留给大范围重构或使用方式的重大改动 |
+| [[0090-wiki-conventions-slim]] | 生效 | wiki-conventions 主体缩到 5000 字以下并重组成目录表加生命周期两部分，规则不改，节名当契约 |
