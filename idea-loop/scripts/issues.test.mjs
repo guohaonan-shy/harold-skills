@@ -803,10 +803,10 @@ ${rows.join('\n')}
 | \`o/r\` | . | main | 全部 |
 `;
 
-test('queues: a project without a 「调度」 section runs on the defaults (9–19 triage 3, 22–8 todo 3, nothing else)', () => {
+test('queues: a project without a 「调度」 section runs on the defaults (9–19 triage 3, 22–8 todo 1, nothing else)', () => {
   for (const tracker of [null, '# Issue tracker：GitHub\n\n## 仓库\n\n| 仓库 |\n|---|\n| `o/r` |\n']) {
     const docs = docsWith({}, tracker);
-    assert.deepEqual(picks(docs, '23:30'), ['todo', 3]);
+    assert.deepEqual(picks(docs, '23:30'), ['todo', 1]);
     assert.deepEqual(picks(docs, '10:00'), ['triage', 3]);
     assert.deepEqual(picks(docs, '20:00'), [null, 0]);
     assert.deepEqual(picks(docs, '08:30'), [null, 0]);
@@ -815,14 +815,14 @@ test('queues: a project without a 「调度」 section runs on the defaults (9�
 
 test('queues: the periods are left-closed, right-open, and one that starts after it ends crosses midnight', () => {
   const docs = docsWith();
-  assert.deepEqual(picks(docs, '22:00'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '22:00'), ['todo', 1]);
   assert.deepEqual(picks(docs, '21:59'), [null, 0]);
   assert.deepEqual(picks(docs, '08:00'), [null, 0]);
-  assert.deepEqual(picks(docs, '07:59'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '07:59'), ['todo', 1]);
   assert.deepEqual(picks(docs, '09:00'), ['triage', 3]);
   assert.deepEqual(picks(docs, '19:00'), [null, 0]);
   assert.deepEqual(picks(docs, '18:59'), ['triage', 3]);
-  assert.deepEqual(picks(docs, '00:00'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '00:00'), ['todo', 1]);
   assert.deepEqual(picks(docs, '8:05'), [null, 0], 'a one-digit hour is fine');
 });
 
@@ -832,10 +832,10 @@ test('queues: the output names the current period, what to dispatch, the limit, 
     at: '23:30',
     period: { start: '22:00', end: '08:00' },
     dispatch: 'todo',
-    limit: 3,
+    limit: 1,
     periods: [
       { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
-      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 3 },
+      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 1 },
     ],
     sections: ['triage', 'in-progress', 'in-review'],
   });
