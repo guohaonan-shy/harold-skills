@@ -109,6 +109,11 @@ test('under ### 正文: the chapter table stays, the omitted: line and the "前�
   assert.doesNotMatch(text, /前八章来自 Google 规范/);
 });
 
+test('the chapter table follows the official order: Motion, Voice & Content Strategy, Components, Do\'s and Don\'ts, then the two extensions', () => {
+  const names = section(skill, '结构').split('\n').filter((l) => /^\| [A-Z]/.test(l)).map((l) => l.split('|')[1].trim());
+  assert.deepEqual(names, ['Overview', 'Colors', 'Typography', 'Layout', 'Elevation & Depth', 'Shapes', 'Motion', 'Voice & Content Strategy', 'Components', "Do's and Don'ts", 'Responsive Behavior（扩展）', 'Known Gaps（扩展）']);
+});
+
 test('every reference SKILL.md points at exists', () => {
   const pointed = [...skill.matchAll(/references\/([\w.-]+\.md)/g)].map((m) => m[1]);
   assert.ok(pointed.length > 0, 'SKILL.md points at no reference');
