@@ -128,7 +128,7 @@ function ruledProblems(c, axis) {
   }
   if (c.existing) {
     if (c.action !== '修') problems.push('存量问题照规则处理时，动作只能是「修」');
-    if (!filled(c.pollutes)) problems.push('缺一句它怎么影响这次的输入、结论或 CI（pollutes）：说不出，就是与这次无关的存量，不报');
+    if (!filled(c.pollutes)) problems.push('缺一句它怎么影响这次的输入、结论或 CI，或它描述、引用的正是这次改的东西（pollutes）：说不出，就是不影响本次改动的存量，不报');
     else for (const hit of codeRefs(c.pollutes)) problems.push(`「它怎么影响这次」里有代码层面的指称：${hit}`);
   }
   return problems;
@@ -170,7 +170,7 @@ export function shapeProblems(c, axis) {
   }
   if (c.disposition !== undefined && !DISPOSITIONS.includes(c.disposition)) problems.push(`处置只能是「${DISPOSITIONS.join('」或「')}」，不是「${c.disposition}」`);
   if (isRuled(c)) problems.push(...ruledProblems(c, axis));
-  else if (c.existing) problems.push('改动行以外的存量问题只在它污染了这次改动、或让 CI 变红时才报，处置必须是「照规则」（动作：修）');
+  else if (c.existing) problems.push('改动行以外的存量问题只在它污染了这次改动、让 CI 变红、或它描述、引用的正是这次改的东西时才报，处置必须是「照规则」（动作：修）');
   if (axis === 'spec') {
     if (typeof c.behavior !== 'boolean') problems.push('没标 behavior（是不是行为问题决定要不要配图）');
     else if (!c.behavior && c.figure) problems.push('不是行为问题（多了 / 少了文件、路径不一致这类）不配图，去掉 figure');

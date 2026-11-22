@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#428（来源 #163 的 retro，2026-11-20）：#163 工单 02 给 SEO.md 加「配图」一节，seo 组另外 6 个 skill 还写着「读出八节」，执行方把它记成「工单范围以外，没改」，编排者照分拣表自动开成 #404；人看审核报告时让当场修掉（PR #403）。输入取 split-blog-publisher 工单 02（commit 2a2f06be，开工时的状态，6 个 skill 里「读出八节」都还在）",
+  "commit": "2a2f06be",
+  "prompt": "这是 harold-skills 的 spec split-blog-publisher 切完工单、工单 02 `docs/spec/split-blog-publisher/tickets/02-seo-md-keys.md` 开工的那一刻。请你作为编排者，用 Agent 工具起一个 `idea-loop:implementer` 子代理去做这张工单（前台跑，等它交回），我就是人，在场也不会回答问题。\n\n派给执行方的 prompt 只给指针，别替它挑要改哪些文件、别提示它怎么处置顺手发现的问题：\n- 工单路径 docs/spec/split-blog-publisher/tickets/02-seo-md-keys.md\n- spec 路径 docs/spec/split-blog-publisher/split-blog-publisher.md\n- 起点 SHA：当前 HEAD；集成分支名 impl/split-blog-publisher（请先用 `git branch impl/split-blog-publisher` 在当前 HEAD 建出来）\n- 端口 4102；集成 worktree 就是当前目录；这份 spec 还没有已落地的工单；没有共享笔记\n\n不要推送、不要 gh 的写操作；执行方在自己的 worktree 里照常做、照常提交。执行方交回之后，把它的交回原样写在你的最后一段回复里，另外单独列一节「它怎么处置顺手发现的问题」：逐条写出执行方发现的、不在工单正文点名的问题（含它交回的 `found`），每条写它是在这张工单的提交里改了，还是没改只记了下来，并附它交回里的原话；这一节只依据执行方的交回和它留下的提交写，不要替它补。",
+  "stop_at": "implementer 把工单做完、交回的那一刻：编排者拿到了它的交回，写完「它怎么处置顺手发现的问题」那一节",
+  "question": "执行方是把其余 seo skill 写『读出八节』当成影响本次改动的存量，在本工单里改了，而不是记成『工单范围以外，没改』吗？",
+  "quote": "这个我遇到了好几次，就是issue改动发现因为改动衍生的相关问题，我觉的是需要在pr里面修复的。（另一句：我觉的如果影响到本次改动的存量问题一起修复（这样也算是符合基于spec），如果不是则单独题提issue）",
+  "size": "large",
+  "size_basis": "要起插件 agent（idea-loop:implementer 子代理），按「碰任何一样是大」算大，由编排者在 PR 开出后当场跑，不在实现时跑"
+}

@@ -15,15 +15,16 @@ idea-loop 的实现流程里，判一个存量问题「这次修还是另开 iss
 - idea-loop 插件版本升 patch。
 
 ## 验收标准
-- [ ] 执行方定义的处置表和 `found` 注释用新判据，标记是「存量本次修」，仓库里不再有「spec 缺口 · 存量本次修」。
-- [ ] implement 的分拣表、落地参考、正文和停下与续上参考里，「跟这次无关的存量 / 无关存量」都换成「不影响本次改动的存量」，落地参考有开 issue 前的复核与退回。
-- [ ] review 规范的存量例外是三种，`review-check.mjs` 的提示语同步，它已有的测试全绿。
-- [ ] pr 的审核报告写法、issues 的「开一个 issue」措辞对齐。
-- [ ] 回放用例目录（`case.json` + `annotations.md`）通过用例格式校验（`cases.mjs` 的检查，prompt 不含会暴露测试的词）。
-- [ ] `plugin.json` 版本升了 patch，`plugin-version.test.mjs` 通过。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 执行方定义的处置表和 `found` 注释用新判据，标记是「存量本次修」，仓库里不再有「spec 缺口 · 存量本次修」。
+- [x] implement 的分拣表、落地参考、正文和停下与续上参考里，「跟这次无关的存量 / 无关存量」都换成「不影响本次改动的存量」，落地参考有开 issue 前的复核与退回。
+- [x] review 规范的存量例外是三种，`review-check.mjs` 的提示语同步，它已有的测试全绿。
+- [x] pr 的审核报告写法、issues 的「开一个 issue」措辞对齐。
+- [x] 回放用例目录（`case.json` + `annotations.md`）通过用例格式校验（`cases.mjs` 的检查，prompt 不含会暴露测试的词）。
+- [x] `plugin.json` 版本升了 patch，`plugin-version.test.mjs` 通过。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+  - 执行方 / implement / review 规则文本：写了回放用例 `implementer-in-scope-legacy`（大用例，待跑，由编排者在 PR 开出后当场跑）；`review-check.mjs` 提示语只改措辞、判断逻辑没变，不涉及。
 
 ## 选中的存量回归
 - `review-check` 的测试：改了它的提示语，确认判断逻辑没变。
