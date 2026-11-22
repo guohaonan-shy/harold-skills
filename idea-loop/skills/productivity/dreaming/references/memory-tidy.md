@@ -58,14 +58,14 @@
 1. 拆表：`dyna dreaming table split <表> --out ~/home/.tmp/dreaming/<日期>/ask.md`，问人的行只由命令判。
 2. 除「问人」外的每一行，照上表做完。
 3. 再跑 `dyna home memory check`，退出码 0 才往下。仍超上限，按**先毕业、再挪进项目、再合并、最后缩短索引行**的顺序，从剩下的条目里继续找能做的，每压一档跑一次 `dyna home memory check`，直到过。
-4. **只 add 自己改的路径**：对 `memory/` 和 `projects/*/memory/` 下自己改过、删掉、挪走的每个路径逐个 `git add`（挪走和删掉的原路径也要），不用 `git add -A` 或 `git add .`。在 home 里提交一次，message `dreaming <日期>：记忆整理`。home 有 `origin` 就 `git push`。
+4. **只提交自己改的路径**：`memory/` 和 `projects/*/memory/` 下自己改过、删掉、挪走的每个路径逐个列出（挪走和删掉的原路径也要），不全量 add（别的会话正在写的不带进来）。在 home 里提交一次：`dyna git commit <路径…> --message="dreaming <日期>：记忆整理" --repo=<home>`；home 有 `origin` 就 `dyna git push --repo=<home>`。
 5. 没有任何改动（`dyna home memory check` 一开始就是 0、也没有行）：不提交。
 
 完成条件：`dyna home memory check` 退出码 0，home 多了这一个提交（或没有改动）。
 
 ## 4. 问人
 
-有「问人」的行才有。小表照 [proposal-table.md](proposal-table.md) 的「放哪、谁看」摆给人，用『推送』通知；人不回，不挡任何东西（其余已经提交）。人回「批」或「改成…」的行，照那一行做完，再跑 `dyna home memory check`，同样只 add 自己改的路径，在 home 里再提交一次，message 同上。问人的行都处理完，才删 `~/home/.tmp/dreaming/<日期>/`；没有问人的行，提交完就删。
+有「问人」的行才有。小表照 [proposal-table.md](proposal-table.md) 的「放哪、谁看」摆给人，用『推送』通知；人不回，不挡任何东西（其余已经提交）。人回「批」或「改成…」的行，照那一行做完，再跑 `dyna home memory check`，同样只提交自己改的路径，在 home 里再提交一次，message 同上。问人的行都处理完，才删 `~/home/.tmp/dreaming/<日期>/`；没有问人的行，提交完就删。
 
 ## 为什么不调 `consolidate-memory`
 
@@ -73,5 +73,5 @@
 
 ## 回滚、边界
 
-- **回滚**：人说「回滚某次 dreaming 的记忆整理」，在 home 里 `git revert` 那个提交（有 `origin` 就推）。
+- **回滚**：人说「回滚某次 dreaming 的记忆整理」，把那个提交还原（新提交抵消它，不改写历史），有 `origin` 就推。
 - **已知限制**：整理的同时有会话在写记忆，那一条这次不动、下周再整理；它对索引的改动不会被这次提交带上（只 add 自己改的路径），两边同时改同一行索引时以后写的为准。一条规矩同时属于两个项目、又不是全设备通用的，留在根里。

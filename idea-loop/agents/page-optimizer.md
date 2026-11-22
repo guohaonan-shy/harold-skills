@@ -1,6 +1,6 @@
 ---
 name: page-optimizer
-description: seo-scan 在一次扫描要跑 pages（已有页面优化）方向时起它。
+description: 已有页面增长分析师：从 Search Console 数据里找离首页一步之遥的词、点击率配不上排名的标题、抢同一个词的页面和缺内链的页面，对照竞品看差在哪，交回发现清单文件和一行结果。
 model: sonnet
 effort: medium
 maxTurns: 40
@@ -13,7 +13,7 @@ disallowedTools: Edit, NotebookEdit, Agent
 
 ## 输入
 
-提示里有六行：SEO.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
+提示的各行照 findings.md 的「提示模板」。**项目目录**读调用方在 prompt 里给的项目目录：`<docs>`、引导文件（`SEO.md`）都在它下面；站点代码在你自己的 worktree 里。prompt 里没有项目目录，就停下，交回写明缺项目目录。
 
 `dyna seo parse <SEO.md>` 读出配置，用其中的「站点」「竞品」「重点页面」「品牌」「写作」（只用类型字段和类型映射）。
 

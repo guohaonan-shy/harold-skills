@@ -22,7 +22,7 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 
 **怎么写查询**：一次一个屏、一条流程或一节，最多三个限定条件；写看得见的东西（类型加产品种类，如「冥想 app 的离开确认弹窗」），不写「现代」「简洁」这类风格词，不把答案写进查询；点名一个 app 会把结果限定到它。屏的搜索有 `mode`：`deep`（默认，多个限定时用，可能返回少于 `limit`）和 `standard`（点名某个 app 的查找）。结果不够，同一个查询要更多：screens 把已见的 `id` 放进 `exclude_screen_ids`，flows / sections 翻 `page`（`has_next_page` 为 false 就换查询）；换了查询就是新搜索。`task_intent`（一句英文）、`output_destination`（写页面用 `doc`）在同一次调研的每次调用里保持一样。
 
-### 搜索结果的字段（2026-11-16 实测）
+### 搜索结果的字段
 
 | 层 | 每条结果的字段 |
 |---|---|
@@ -30,14 +30,14 @@ Mobbin 没有 Android：Android 的问题搜 `ios`，页面上写明参考是 iO
 | Flows | `id`、`name`、`actions`、`mobbin_url`、`app_name`、`platform`、`screen_count`、`screens`（每项 `screen_id`、`image_url`、`position`）；外层 `query`、`page`、`has_next_page`、`flows` |
 | Sections | `id`、`image_url`、`mobbin_url`、`site_name`；外层 `query`、`page`、`has_next_page`、`sections` |
 
-搜索结果偶尔带 `ai_usage_notice`（这次实测没出现过）：把它的 `text` 原样留到交回的最后，不进页面。
+搜索结果偶尔带 `ai_usage_notice`：把它的 `text` 原样留到交回的最后，不进页面。
 
 一条 flow 带着它**全部**屏的 `image_url`（`screen_count` 张，按 `position` 排好）；搜索时回给你看的预览图只是其中间隔取的几张，没预览的屏下载下来再看。字段里没有每屏的标题或说明：每一步在做什么，要看图写。
 
 ### 截图从哪来
 
 - **每个结果的 `image_url`** 是 `https://mobbin.com/api/mcp/short/<8 位>` 形式的短链，指向高清原图，**只有这一种尺寸**，没有缩略图。它会 302 跳到真正的文件，所以下载必须带 `-L`：`curl -fsSL -o shots/<来源>-<n>.jpg "<image_url>"`。
-- **格式**：每次搜索都传 `image_format: "jpg"`，下载下来才真是 jpeg，跟 `.jpg` 文件名一致（默认是 webp）。实测大小：iOS 屏 1179×2676，web 屏和 section 约 1920×1320。
+- **格式**：每次搜索都传 `image_format: "jpg"`，下载下来才真是 jpeg，跟 `.jpg` 文件名一致（默认是 webp）。大小：iOS 屏 1179×2676，web 屏和 section 约 1920×1320。
 - **会过期**：短链 30 天后失效（失效的返回 410），所以页面只用下载到本地的图，不放远程地址；页面上要引用出处就写 `app_name` / `site_name`，需要时附 `mobbin_url`（只作文字链，不是图）。
 - **点开放大的图**：只有一种尺寸，所以放大图就是流程行里那张图的一份拷贝（`cp`）。页面里流程行的图由 CSS 缩小显示。
 

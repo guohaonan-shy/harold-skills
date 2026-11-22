@@ -51,7 +51,7 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   const md = eng('setup', 'SKILL.md');
   assert.match(md, /issue-tracker-linear\.md/);
   assert.match(md, /linear-setup\.md/);
-  assert.match(md, /跳过下面的 `dyna issues labels` 与 `migrate`/);
+  assert.match(md, /Linear 项目\*\*[^\n]*不建 GitHub label/, 'a Linear project builds no GitHub labels');
   assert.match(md, /issue-tracker\.md\]/, 'the file table still lists the GitHub template');
   const steps = eng('setup', 'references', 'linear-setup.md');
   // the connecting is a capability now: the steps name the MCP address and the capabilities, the how is in the runtime's reference

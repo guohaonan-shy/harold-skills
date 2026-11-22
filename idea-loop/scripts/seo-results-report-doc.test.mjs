@@ -1,7 +1,7 @@
 /**
  * Pins the sentences that make "每 3 天一份 SEO 效果报告" true in the docs: the results-analyst definition (inputs, where
  * the change list comes from, the two charts, the three blocks of the report, the 14-day rule, the findings it raises
- * and that nothing is rolled back for them), seo-scan's results direction and how the report lands (committed straight to home), the daily scheduled task seo-setup installs, SEO.md's optional 分析 section, and the old
+ * and that nothing is rolled back for them), seo-scan's results direction and how the report lands (committed straight to home), the daily scheduled task the SEO module installs, SEO.md's optional 分析 section, and the old
  * "不写周报" sentence being gone.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail there first.
@@ -25,9 +25,9 @@ const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
 const SCAN_BODY = body(SCAN);
 const REPORT = read('skills', 'seo', 'seo-scan', 'references', 'results-report.md');
 const LOG = read('skills', 'seo', 'seo-scan', 'references', 'research-log.md');
-const SETUP = body(read('skills', 'seo', 'seo-setup', 'SKILL.md'));
-const DAILY = read('skills', 'seo', 'seo-setup', 'references', 'daily-scan.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
+const DAILY = read('skills', 'engineering', 'setup', 'references', 'seo', 'daily-scan.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const README = read('README.md');
 const SEO_README = read('skills', 'seo', 'README.md');
 
@@ -47,10 +47,11 @@ test('results-analyst is defined like the other direction agents: a description 
   assert.equal(field(AGENT, 'disallowedTools'), 'Edit, NotebookEdit, Agent');
 });
 
-test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
+test('results-analyst takes the prompt lines from the shared template like the other direction agents and reads findings.md and SEO.md first', () => {
   assert.match(AGENT_BODY, /skills\/seo\/seo-scan\/references\/findings\.md/);
   const input = section(AGENT_BODY, '输入');
-  assert.match(input, /六行：SEO\.md 路径、项目目录、OpenSEO 项目、本次额度、运行目录、今天/);
+  assert.match(input, /提示的各行照 findings\.md 的「提示模板」。\*\*项目目录\*\*读调用方在 prompt 里给的项目目录/);
+  assert.doesNotMatch(input, /提示里有六行/);
   assert.match(input, /dyna seo parse/);
   assert.match(input, /「分析」/);
 });
@@ -168,7 +169,8 @@ test('seo-scan can run what landing needs: allowed-tools has dyna home commit an
   const tools = field(SCAN, 'allowed-tools');
   assert.ok(tools.includes('Bash(dyna home commit:*)'), 'allowed-tools lacks dyna home commit');
   for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)']) assert.ok(!tools.includes(t), `allowed-tools still has ${t}`);
-  assert.ok(tools.includes('Bash(git worktree:*)'), 'triage still uses a worktree');
+  assert.ok(tools.includes('Bash(dyna worktree:*)'), 'triage still uses a worktree, made with dyna worktree');
+  assert.ok(!tools.includes('Bash(git worktree:*)'), 'no hand-written git worktree');
 });
 
 test('the scan names results-analyst, so its private references stay private to seo-scan and the agent it starts', () => {
@@ -184,16 +186,16 @@ test('the research log: results is collected like any direction (so seo-due sees
   assert.match(tpl[1], /^采集：<方向> <N> 条；/);
 });
 
-test('seo-setup installs the scan every day, not every week; the old weekly reference is gone and the task id stays', () => {
+test('the SEO module installs the scan every day, not every week; the old weekly reference is gone and the task id stays', () => {
   assert.match(SETUP, /^## 8\. 每天扫描$/m);
   assert.doesNotMatch(SETUP, /每周扫描/);
-  assert.match(section(SETUP, '8. 每天扫描'), /references\/daily-scan\.md/);
+  assert.match(section(SETUP, '8. 每天扫描'), /daily-scan\.md/);
   assert.ok(DAILY, 'references/daily-scan.md does not exist');
-  assert.ok(!existsSync(path('skills', 'seo', 'seo-setup', 'references', 'weekly-scan.md')), 'weekly-scan.md is still there');
+  assert.ok(!existsSync(path('skills', 'engineering', 'setup', 'references', 'seo', 'weekly-scan.md')), 'weekly-scan.md is still there');
   assert.match(DAILY, /每天/);
   assert.match(DAILY, /^# 每天扫描$/m);
   assert.match(DAILY, /任务 id：`seo-scan-<仓库名>`/);
-  assert.match(DAILY, /每周一次（早先装的）[^\n]*改成每天/, 'an existing weekly task gets moved to daily');
+  assert.match(DAILY, /每周一次[^\n]*改成每天/, 'an existing weekly task gets moved to daily');
   assert.match(DAILY, /分钟避开 0 和 30/);
 });
 

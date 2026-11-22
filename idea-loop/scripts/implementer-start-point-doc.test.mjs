@@ -28,12 +28,14 @@ function section(title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
+const stopDefer = readFileSync(join(pluginRoot, 'skills', 'engineering', 'implement', 'references', 'stop-and-defer.md'), 'utf8');
+
 test('the definition no longer contains a hard reset; the soft reset that squashes the final commit stays', () => {
   assert.doesNotMatch(doc, /reset --hard/, 'implementer.md 里还有 reset --hard');
-  assert.match(doc, /git reset --soft \$T/, '落地前压成一个 commit 用的 reset --soft 不该被动');
+  assert.match(doc, /git reset --soft <T>/, '落地前压成一个 commit 用的 reset --soft 不该被动');
 });
 
-test('开工前 step 1 aligns the start point in order: empty work tree, fast-forward, own branch to the start point, HEAD check', () => {
+test('开工前 step 1 aligns the start point in order: empty work tree, fast-forward, own branch to the start point; the finish line is HEAD equals the start point', () => {
   const step = section('开工前').split('\n').find((l) => l.startsWith('1.'));
   assert.ok(step, '「开工前」缺第 1 步');
   const at = (re, what) => {
@@ -41,24 +43,25 @@ test('开工前 step 1 aligns the start point in order: empty work tree, fast-fo
     assert.ok(m >= 0, `第 1 步缺「${what}」`);
     return m;
   };
-  const status = at(/git status --short/, '核工作区为空（git status --short）');
-  const ff = at(/git merge --ff-only <起点 SHA>/, '快进到起点（git merge --ff-only <起点 SHA>）');
+  const empty = at(/核工作区为空/, '核工作区为空');
+  const ff = at(/快进到起点 SHA/, '快进到起点');
   const branch = at(/git checkout -B <[^>]*分支[^>]*> <起点 SHA>/, '快进不了时把自己的分支指到起点（git checkout -B <你的分支> <起点 SHA>）');
-  const head = at(/git rev-parse HEAD/, '核 HEAD 等于起点');
-  assert.ok(status < ff && ff < branch && branch < head, '第 1 步的顺序要是：核工作区 → 快进 → 快进不了时 checkout -B → 核 HEAD');
+  assert.ok(empty < ff && ff < branch, '第 1 步的顺序要是：核工作区 → 快进 → 快进不了时 checkout -B');
   assert.match(step, /快进不了/, '要写明 checkout -B 只在快进不了时用');
-  assert.match(step, /等于(它|起点)/, '完成条件「HEAD 等于起点 SHA」要留着');
+  assert.match(step, /不用硬重置/, 'checkout -B 那一处要带着「坑」：不用硬重置');
+  assert.match(step, /HEAD 等于起点 SHA/, '完成条件「HEAD 等于起点 SHA」要留着');
 });
 
-test('the two places that said "reset" now say "对齐起点", meaning unchanged', () => {
-  const inputs = section('输入');
-  const half = inputs.split('\n').find((l) => l.includes('上次卡住留下的半成品分支'));
-  assert.ok(half, '「输入」缺半成品分支那条');
-  assert.match(half, /对齐起点之后 `git merge --squash <分支>`/, '半成品那条要写「对齐起点之后 `git merge --squash <分支>`」');
-  const again = inputs.split('\n').find((l) => l.includes('这张工单不是第一次做时的原因'));
-  assert.ok(again, '「输入」缺不是第一次做那条');
+test('the half-done branch and called-back cases say 对齐起点, in the reference the definition points at; the cleanliness check follows alignment', () => {
+  const pointer = section('输入').split('\n').find((l) => l.includes('stop-and-defer.md'));
+  assert.ok(pointer, '「输入」缺指向 stop-and-defer.md 的那一条');
+  const half = stopDefer.split('\n').find((l) => l.startsWith('- **上次卡住留下的半成品分支**'));
+  assert.ok(half, 'stop-and-defer.md 缺半成品分支那条');
+  assert.match(half, /先对齐起点/, '半成品那条要写「先对齐起点」');
+  assert.match(half, /`git merge --squash <分支>`/, '半成品那条要留 `git merge --squash <分支>`（坑：不带它的提交历史）');
+  const again = stopDefer.split('\n').find((l) => l.startsWith('- **这张工单不是第一次做**'));
+  assert.ok(again, 'stop-and-defer.md 缺不是第一次做那条');
   assert.match(again, /不用再对齐起点/, '不是第一次做那条要写「不用再对齐起点」');
-  const step2 = section('开工前').split('\n').find((l) => l.startsWith('2.'));
-  assert.match(step2, /对齐起点之后还不干净/, '第 2 步要写「对齐起点之后还不干净」');
-  assert.doesNotMatch(doc, /reset 之后|不用再 reset/, '还有「reset 之后」「不用再 reset」的旧措辞');
+  assert.match(section('开工前').split('\n').find((l) => l.startsWith('1.')), /不干净交回 `failed`/, '对齐之后还不干净要交回 failed');
+  assert.doesNotMatch(doc + stopDefer, /reset 之后|不用再 reset/, '还有「reset 之后」「不用再 reset」的旧措辞');
 });

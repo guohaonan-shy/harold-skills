@@ -4,7 +4,7 @@
  * pr-review's SEO branch after "交审核报告" (condition: `type:seo/*`, the three conditions, a 上线自查的网址 section;
  * otherwise stop as before) with its detail in pr-review's own references, merge.md naming the one exception to
  * "合并只由人说", the PR description rule that an SEO issue writes 上线自查的网址, and 内容路径 in SEO.md's format
- * and seo-setup's inference.
+ * and the SEO module's inference.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail there first.
  */
@@ -26,8 +26,8 @@ const AUTO = read('skills', 'engineering', 'pr-review', 'references', 'seo-auto-
 const MERGE = read('skills', 'engineering', 'pr-review', 'references', 'merge.md');
 const PR = body(read('skills', 'engineering', 'pr', 'SKILL.md'));
 const DESCRIPTION = read('skills', 'engineering', 'pr', 'references', 'description.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
-const SETUP = body(read('skills', 'seo', 'seo-setup', 'SKILL.md'));
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
 
 test('decision-rules 护栏 has an SEO exception written as three checkable conditions', () => {
   const guard = section(RULES, '护栏');
@@ -97,7 +97,7 @@ test('SEO.md format: 内容路径 sits in 构建与检查, read by dyna seo scop
   assert.match(FORMAT, /\| 构建与检查 \|[^\n]*内容路径[^\n]*dyna seo scope/);
 });
 
-test('seo-setup infers 内容路径 and asks the human to confirm it', () => {
+test('the SEO module infers 内容路径 and asks the human to confirm it', () => {
   assert.match(SETUP, /内容路径/);
   const step = section(SETUP, '3. 逐节问人');
   assert.match(step, /内容路径/, 'asked in the section-by-section step');

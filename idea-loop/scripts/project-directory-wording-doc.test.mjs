@@ -63,7 +63,7 @@ test('wiki-conventions defines the project directory once: what is in it, where 
 test('the places that start a subagent hand it the project directory in the prompt', () => {
   const cases = [
     ['skills/engineering/implement/SKILL.md', /项目目录的绝对路径，工单与 spec/],
-    ['skills/engineering/implement/SKILL.md', /idea-loop:explorer`，给一句目的[^。\n]*项目目录/],
+    ['skills/engineering/implement/references/start-of-run.md', /idea-loop:explorer`，给一句目的[^。\n]*项目目录/],
     ['skills/engineering/pr-review/references/ui-walkthrough.md', /ui-reviewer 的指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/pr-review/references/merge.md', /ui-reviewer`，只给指针：spec 名、项目目录的绝对路径/],
     ['skills/engineering/issue-triage/SKILL.md', /idea-loop:issue-triager`，给 issue 号、项目目录的绝对路径/],
@@ -129,15 +129,18 @@ test('the SEO direction agents and seo-scan agree on what the prompt carries: SE
   // the prompt template lives in seo-scan's findings reference (main #397 moved it out of the SKILL.md body)
   const scan = read('skills/seo/seo-scan/references/findings.md');
   assert.match(scan, /SEO\.md：<项目目录>\/SEO\.md\n项目目录：<项目目录绝对路径>/);
+  // the six lines are listed once, in that template; the six direction agents point at it
   for (const a of ['geo-analyst', 'keyword-miner', 'technical-auditor', 'page-optimizer', 'backlink-analyst', 'results-analyst']) {
-    assert.match(read(`agents/${a}.md`), /提示里有六行：SEO\.md 路径、项目目录、/, a);
+    const text = read(`agents/${a}.md`);
+    assert.match(text, /提示的各行照 findings\.md 的「提示模板」。\*\*项目目录\*\*读调用方在 prompt 里给的项目目录/, a);
+    assert.doesNotMatch(text, /提示里有六行/, a);
   }
 });
 
 test('an SEO PR is judged against 内容路径 only: docs/ and SEO.md live in the project directory, not in the code PR', () => {
   assert.match(read('skills/productivity/decision-rules/SKILL.md'), /「内容路径」。`docs\/` 和 `SEO\.md` 在项目目录里，不在代码 PR 里/);
-  assert.doesNotMatch(read('skills/seo/seo-setup/references/seo-md.md'), /只有 `docs\/` 和 `SEO\.md` 算内容/);
-  assert.doesNotMatch(read('skills/seo/seo-setup/SKILL.md'), /加 `docs\/`、根目录 `SEO\.md`/);
+  assert.doesNotMatch(read('skills/engineering/setup/references/seo/seo-md.md'), /只有 `docs\/` 和 `SEO\.md` 算内容/);
+  assert.doesNotMatch(read('skills/engineering/setup/references/seo/steps.md'), /加 `docs\/`、根目录 `SEO\.md`/);
 });
 
 test('the design process files are in the project directory, and the design scripts get the project directory as their root', () => {

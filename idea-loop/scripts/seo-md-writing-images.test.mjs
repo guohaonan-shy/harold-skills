@@ -1,7 +1,7 @@
 /**
  * SEO.md's writing-check keys (「写作」: lint 配置 / 补充 lint / 第二评委) and the 「配图」 section
  * (图片目录 / 生图工具 / 封面字段 / OG 字段 / DESIGN.md 路径): the parse result, `无` read as empty and
- * confirmed, and the check seo-setup runs before writing an image directory (it has to sit inside the
+ * confirmed, and the check the SEO module runs before writing an image directory (it has to sit inside the
  * 内容路径 an auto-merged SEO PR may touch).
  */
 import { test } from 'node:test';

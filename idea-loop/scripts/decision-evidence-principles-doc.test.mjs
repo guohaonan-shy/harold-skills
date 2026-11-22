@@ -1,6 +1,8 @@
 /**
- * Tripwire — decision-rules gives principles, not per-case answers; evidence says what evidence is and
- * the overall style, leaves the choice of figure to the model and where it goes to the caller.
+ * Tripwire — decision-rules gives principles, not per-case answers; its last three sections say what evidence is
+ * and the overall style, leave the choice of figure to the model and where it goes to the caller.
+ * Since spec skill-rewrite (ticket 02) the old `evidence` skill is merged into decision-rules: its three sections
+ * follow the six about who decides, and its two references (ui-flow.md, gif.md) sit under decision-rules/references.
  *
  * Spec decision-evidence-principles (issue #245). Before: decision-rules' 「自己定的四条」 listed per-case
  * dispositions (修 / 本次同步改 / 沿用 / 接受并补记 / 恢复 / 开 issue) plus 「代价相称」 and 「改动最小」;
@@ -21,8 +23,9 @@ const bodyOf = (raw) => raw.replace(/^---\n[\s\S]*?\n---\n/, '');
 const headings = (body) => [...body.matchAll(/^## (.+)$/gm)].map((m) => m[1].trim());
 
 const decisionBody = bodyOf(read('skills', 'productivity', 'decision-rules', 'SKILL.md'));
-const evidenceDir = join(pluginRoot, 'skills', 'productivity', 'evidence');
-const evidenceBody = bodyOf(read('skills', 'productivity', 'evidence', 'SKILL.md'));
+const ruleDir = join(pluginRoot, 'skills', 'productivity', 'decision-rules');
+/** the three evidence sections of decision-rules: from 「证据是什么」 to the end */
+const evidenceBody = decisionBody.slice(decisionBody.indexOf('## 证据是什么'));
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -34,7 +37,7 @@ function walk(dir, out = []) {
   return out;
 }
 
-test('decision-rules is the core, three kinds of basis, follow when clear, stop on conflict, guardrails, one question', () => {
+test('decision-rules is the core, three kinds of basis, follow when clear, stop on conflict, guardrails, one question, then the evidence sections', () => {
   assert.deepEqual(headings(decisionBody), [
     '核心',
     '依据只认三种',
@@ -42,6 +45,9 @@ test('decision-rules is the core, three kinds of basis, follow when clear, stop 
     '依据冲突或没有：停下问人',
     '护栏',
     '要人定的写成一道题',
+    '证据是什么',
+    '整体风格',
+    '配什么图：你来判断',
   ]);
   assert.match(decisionBody, /按 spec 的方案解决 spec 提出的问题/);
   assert.match(decisionBody, /已按规则处理/);
@@ -56,24 +62,31 @@ test('decision-rules gives no per-case dispositions', () => {
   }
 });
 
-test('「要人定的写成一道题」 lives in decision-rules only', () => {
-  const q = decisionBody.split('## 要人定的写成一道题')[1];
+test('「要人定的写成一道题」 is its own section, and the evidence sections after it do not restate it', () => {
+  const q = decisionBody.split('## 要人定的写成一道题')[1].split('\n## ')[0];
   for (const phrase of ['真实例子', '推荐', '评判标准']) assert.match(q, new RegExp(phrase));
   assert.doesNotMatch(evidenceBody, /一道题/);
   assert.doesNotMatch(evidenceBody, /评判标准/);
 });
 
-test('evidence says what evidence is, the style, and the figure kinds; it decides no placement', () => {
-  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '配什么图：你来判断']);
+test('the evidence sections say what evidence is, the style, and the figure kinds; they decide no placement', () => {
   for (const phrase of ['出处', '同条件', '复现', '结论在前', '图文结合', '旁边', 'flow compose', 'excalidrawer', 'mermaid', '动图']) {
     assert.match(evidenceBody, new RegExp(phrase), `evidence 缺：${phrase}`);
   }
   assert.match(evidenceBody, /放在哪[^\n]*由调用你的 skill 定/);
-  const all = [evidenceBody, ...readdirSync(join(evidenceDir, 'references')).map((f) => readFileSync(join(evidenceDir, 'references', f), 'utf8'))].join('\n');
+  const all = [evidenceBody, ...readdirSync(join(ruleDir, 'references')).map((f) => readFileSync(join(ruleDir, 'references', f), 'utf8'))].join('\n');
   for (const re of [/docs\/raw/, /docs\/design\/tmp/, /\.tmp\//, /idea-loop-evidence-pr-/, /选哪种形态/]) {
-    assert.doesNotMatch(all, re, `evidence 里还写着放哪 / 按情形选图：${re}`);
+    assert.doesNotMatch(all, re, `证据一节或它的参考里还写着放哪 / 按情形选图：${re}`);
   }
-  assert.deepEqual(readdirSync(join(evidenceDir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
+  assert.deepEqual(readdirSync(join(ruleDir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
+  // the figure references are reached by the full path under the plugin root (the injected body has no base directory)
+  for (const f of ['ui-flow.md', 'gif.md']) assert.ok(decisionBody.includes(`\${CLAUDE_PLUGIN_ROOT}/skills/productivity/decision-rules/references/${f}`), `${f} 没用插件根下的完整路径`);
+});
+
+test('the old evidence skill is gone, and nothing in the plugin calls it', () => {
+  assert.equal(existsSync(join(pluginRoot, 'skills', 'productivity', 'evidence')), false);
+  const hits = walk(pluginRoot).filter((f) => /idea-loop:evidence|skills\/productivity\/evidence/.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
+  assert.deepEqual(hits, [], `还指着 evidence：${hits.join(', ')}`);
 });
 
 test('placement moved to the callers: to-spec figures.md and pr delivery-evidence.md', () => {
@@ -85,10 +98,9 @@ test('placement moved to the callers: to-spec figures.md and pr delivery-evidenc
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
 });
 
-test('every cited section of decision-rules or evidence exists, and nothing points at the removed references', () => {
+test('every cited section of decision-rules exists, and nothing points at the removed references', () => {
   const sections = {
     'decision-rules': headings(decisionBody),
-    evidence: headings(evidenceBody),
   };
   const problems = [];
   for (const file of walk(pluginRoot)) {

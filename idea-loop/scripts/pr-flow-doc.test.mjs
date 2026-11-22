@@ -91,7 +91,8 @@ test('pr: 「开 draft PR」 opens the one draft PR before the tickets are cut, 
   const open = section(md, '## 开 draft PR');
   assert.doesNotMatch(open, /仓库各开|每个仓库|数仓库/);
   assert.match(open, /`<owner\/repo>` 取 `where` 输出的 `repo`/);
-  assert.match(open, /gh pr create --draft/);
+  assert.match(open, /dyna pr open <owner\/repo> --base/);
+  assert.doesNotMatch(open, /gh pr create/);
   assert.match(open, /`Refs <owner>\/<repo>#<号>`/);
   assert.match(open, /\[<号>\]/);
   assert.match(open, /`Linear: <号>`/);
@@ -128,7 +129,7 @@ test('implement: before dispatching it checks the PRs are there (opening any tha
   assert.match(open, /issues set <docs> in-progress/);
   const ending = section(md, '## 没活了就停下') + '\n' + stopRef;
   assert.doesNotMatch(ending, /还没有 PR/, 'the PR is opened at the start, not at the end');
-  assert.match(md + stopRef, /gh pr ready/);
+  assert.match(md + stopRef, /dyna pr ready <owner\/repo> <PR 号>/);
   assert.match(md + stopRef, /issues set <docs> in-review/);
   assert.match(md + landingRef, /idea-loop:issues[^\n]*开一个 issue/);
 });
@@ -157,7 +158,7 @@ test('pr-review: a round looks at the issue\'s PR; deliver does not flip a spec;
   assert.doesNotMatch(deliver, /删掉这个 PR 落地的工单文件/, 'the tickets are deleted after the code PR merged, not before the report');
   const merge = read('skills/engineering/pr-review/references/merge.md');
   assert.match(merge, /删掉这份 spec 的 `<项目目录>\/docs\/spec\/<spec-slug>\/tickets\/`/);
-  assert.match(merge, /\*\*合并\*\*：`gh pr merge/);
+  assert.match(merge, /\*\*合并\*\*：`dyna pr merge <owner\/repo> <PR 号> --method/);
   assert.match(merge, /PR 合并后[^。\n]*set <docs> done/);
   assert.match(merge, /合并统一在[^。\n]*issue 会话/);
 });

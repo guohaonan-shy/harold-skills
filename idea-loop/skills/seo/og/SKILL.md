@@ -3,9 +3,9 @@ name: og
 description: 文章的 OG 分享卡：做 OG、分享卡、重做 OG。brief 要出图，或文章的标题、论点变了要重出图时用；列表封面用兄弟 skill cover。
 ---
 
-OG 分享卡是文章被分享、被链接预览时露出的那张图，自带品牌：logo、大标题、一行副标题。版式是插件自带的 HTML 模板，颜色、字体、logo 来自项目的 `DESIGN.md`；项目没配就用中性默认。
+OG 分享卡是文章被分享、被链接预览时露出的那张图，自带品牌：logo、大标题、一行副标题。交付一张 1200×630 的 PNG，加上交回的版式、默认项和 `md5`。版式是插件自带的 HTML 模板，颜色、字体、logo 来自项目的 `DESIGN.md`；项目没配就用中性默认。
 
-下文 `A` 指 `${CLAUDE_PLUGIN_ROOT}/skills/seo/og`；项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿。
+项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿。
 
 ## 1. 读项目的取值
 
@@ -68,7 +68,7 @@ dyna seo og render <params.json> <调用方给的输出目录，或图片目录�
 
 ## 6. 写进文章，防缓存
 
-- 调用方给了输出目录（`seo-brief` 出图时给 spec 的 `assets/`）的，不写 frontmatter，只交回图的路径和 `md5`。
+- 调用方给了输出目录（`seo-writing` 的 brief 分支出图时给 spec 的 `assets/`）的，不写 frontmatter，只交回图的路径和 `md5`。
 - 否则 `images.ogField` 的值写成图片的站点路径，形态照同一字段在已有文章里的写法；多语言版本各写各的。
 - 重渲同一个文件名后，预览服务在跑就 `dyna seo og md5 <png> --url <预览里这张图的地址>`：退出码 3 是服务器还给旧图，重启预览或换文件名；没有预览只记下 `md5`。
 
