@@ -17,15 +17,15 @@
 
 ## 验收标准
 
-- [ ] 临时 home、没有 `DISPATCH.md`：`dyna home dispatch --at=10:00` 给出 triage、每轮 3、triage 上限 6；`--at=23:30` 给出 todo、每轮 3、in-progress 上限 null；`--at=20:00` 给出 dispatch null、每轮 0。
-- [ ] 跨夜与边界：`--at=08:00` 不派、`--at=22:00` 派 todo、`--at=19:00` 不派、`--at=09:00` 派 triage。
-- [ ] `DISPATCH.md` 写了「in-progress | 4」和「不调度的项目：Foo, bar」：`caps` 的 in-progress 是 4、`skip` 是 `["Foo","bar"]`；写「不设」的状态是 null。
-- [ ] `DISPATCH.md` 里有一行读不出（派什么写了 `done`、每轮写了 0、状态写了不存在的名字、上限写了负数）：命令退出非 0，报错指出第几行并说该怎么写。
-- [ ] 临时 home、项目清单两行，一个项目目录有 `docs/`、一个没有：`dyna home projects` 两行都在，顺序同清单，第一行 `inHome: true` 带全部路径，第二行 `inHome: false` 带原因码和原因句。
-- [ ] 不带 home 的 `AGENTS.md`、或清单为空：`dyna home projects` 输出空数组，退出 0。
-- [ ] `dyna issues queues <docs>` 只输出 `sections`；原来测时段的测试挪到 `home dispatch` 下并仍然通过。
-- [ ] 版本升了一档，新版本的登记表已存，`dyna registry --json` 里有 `home projects`、`home dispatch`，且登记表测试通过。
-- [ ] `cd dyna && go test ./...` 全过。
+- [x] 临时 home、没有 `DISPATCH.md`：`dyna home dispatch --at=10:00` 给出 triage、每轮 3、triage 上限 6；`--at=23:30` 给出 todo、每轮 3、in-progress 上限 null；`--at=20:00` 给出 dispatch null、每轮 0。
+- [x] 跨夜与边界：`--at=08:00` 不派、`--at=22:00` 派 todo、`--at=19:00` 不派、`--at=09:00` 派 triage。
+- [x] `DISPATCH.md` 写了「in-progress | 4」和「不调度的项目：Foo, bar」：`caps` 的 in-progress 是 4、`skip` 是 `["Foo","bar"]`；写「不设」的状态是 null。
+- [x] `DISPATCH.md` 里有一行读不出（派什么写了 `done`、每轮写了 0、状态写了不存在的名字、上限写了负数）：命令退出非 0，报错指出第几行并说该怎么写。
+- [x] 临时 home、项目清单两行，一个项目目录有 `docs/`、一个没有：`dyna home projects` 两行都在，顺序同清单，第一行 `inHome: true` 带全部路径，第二行 `inHome: false` 带原因码和原因句。
+- [x] 不带 home 的 `AGENTS.md`、或清单为空：`dyna home projects` 输出空数组，退出 0。
+- [x] `dyna issues queues <docs>` 只输出 `sections`；原来测时段的测试挪到 `home dispatch` 下并仍然通过。
+- [x] 版本升了一档，新版本的登记表已存，`dyna registry --json` 里有 `home projects`、`home dispatch`，且登记表测试通过。
+- [x] `cd dyna && go test ./...` 全过。
 
 ## 选中的存量回归
 

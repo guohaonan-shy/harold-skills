@@ -25,6 +25,8 @@ func TestRegistryJSONHasEveryHomeCommandWithItsCallerAndItsArguments(t *testing.
 		"home map":            registry.CallerHook,
 		"home memory check":   registry.CallerSession,
 		"home where":          registry.CallerSession,
+		"home projects":       registry.CallerSession,
+		"home dispatch":       registry.CallerSession,
 	}
 	have := map[string]registry.Command{}
 	for _, c := range reg.Commands {
@@ -58,6 +60,8 @@ func TestRegistryJSONHasEveryHomeCommandWithItsCallerAndItsArguments(t *testing.
 		"home memory check":   "dir:positional",
 		"home where":          "project:flag",
 		"home map":            "hook:flag",
+		"home projects":       "",
+		"home dispatch":       "at:flag",
 	} {
 		if got := argNames(name); got != args {
 			t.Errorf("%s takes %q, want %q", name, got, args)

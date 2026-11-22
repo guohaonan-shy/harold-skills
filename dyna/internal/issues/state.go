@@ -20,6 +20,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 )
 
@@ -39,7 +40,7 @@ var Labeled = []string{"triage", "todo", "in-progress", "in-review"}
 var Closed = map[string]string{"done": "completed", "canceled": "not planned"}
 
 // Working are the states a session works in: each has a sidebar section of that name.
-var Working = []string{"triage", "in-progress", "in-review"}
+var Working = home.Sections
 
 var about = map[string]string{
 	"triage":      "验证过，要人评估（grill、设计）",
