@@ -294,7 +294,7 @@ export function parsePeriods(md) {
     if (!/^\d+$/.test(limit) || Number(limit) < 1) throw fail(row, `上限（每轮最多新开几个）要是正整数，不是「${limit}」`);
     const written = sectionCell !== undefined && sectionCell !== '';
     if (dispatch === 'todo' && written) throw fail(row, `todo 行不数分组，分组上限留空，不是「${sectionCell}」`);
-    if (written && (!/^\d+$/.test(sectionCell) || Number(sectionCell) < 1)) throw fail(row, `分组上限（每轮最多新开几个）要是正整数，不是「${sectionCell}」`);
+    if (written && (!/^\d+$/.test(sectionCell) || Number(sectionCell) < 1)) throw fail(row, `分组上限（triage 分组里的会话总数最多几个）要是正整数，不是「${sectionCell}」`);
     const sectionLimit = dispatch === 'triage' ? (written ? Number(sectionCell) : DEFAULT_SECTION_LIMIT) : null;
     return { start: clock(from), end: clock(to), dispatch, limit: Number(limit), sectionLimit };
   });

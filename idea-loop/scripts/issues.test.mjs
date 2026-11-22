@@ -913,7 +913,7 @@ test('queues: the triage row\'s 分组上限 is the fourth column — 10 when it
 test('queues: a bad 分组上限 is refused with the row, and a todo row that writes one says todo does not count the section', () => {
   for (const bad of ['0', 'abc', '-2', '2.5']) {
     const docs = docsWith({}, SCHEDULE([`| 09:00–19:00 | triage | 6 | ${bad} |`]));
-    assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => /分组上限/.test(e.message) && /第 \d+ 行/.test(e.message) && e.message.includes(bad), bad);
+    assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => /分组上限/.test(e.message) && /第 \d+ 行/.test(e.message) && e.message.includes(bad) && /分组里的会话总数最多几个/.test(e.message) && !/每轮最多新开几个/.test(e.message), bad);
   }
   const docs = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |', '| 22:00–08:00 | todo | 1 | 5 |']));
   const line = readTracker(docs).split('\n').findIndex((l) => l.includes('| 5 |')) + 1;
