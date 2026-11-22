@@ -3,7 +3,7 @@
 人敲 `/idea-loop:issue-dispatch`（在哪个目录都行）时按下面四步做完，再做第一轮。定时到点调起的轮次不走这里。完成条件：`dispatch-home` 开着，`DISPATCH.md` 在 home 里，旧的 `dispatch-<仓库名>` 任务都停用了。
 
 1. **建任务**：用『定时任务』在 home（`~/home`）建，已有就更新：任务 id `dispatch-home`，标题 `issue 调度`，cron `7,37 * * * *`（每 30 分钟，分钟避开 0 和 30），prompt 调起 `idea-loop:issue-dispatch`（写法照『定时任务』里的 prompt 写法，不带参数），工作目录 home。汇报里写下次运行的时间。
-   - 模型与思考强度：`SKILL.md` 开头钉了 Sonnet、medium，只管调起它的那一轮。运行环境的『定时任务』没有写能把模型钉在任务上的做法，就在汇报里提醒人：把 `dispatch-home` 的模型手动选成 Sonnet（在哪里选，照『会话管理』「调度」里写的）。
+   - 模型：`SKILL.md` 不在开头钉模型和思考强度。汇报里提醒人：在运行环境里把 `dispatch-home` 的模型手动选成 Sonnet（在哪里选，照『会话管理』「调度」里写的）。
 2. **`DISPATCH.md`**：
    - home 根目录没有就建一份，内容是下面的默认值，再 `dyna home commit "dispatch: DISPATCH.md" DISPATCH.md` 提交到 home：
 
@@ -11,7 +11,7 @@
      | 时段 | 派什么 | 每轮最多新开 |
      |---|---|---|
      | 09:00–19:00 | triage | 3 |
-     | 22:00–08:00 | todo | 3 |
+     | 22:00–08:00 | todo | 1 |
 
      | 状态 | 同时开着最多 |
      |---|---|

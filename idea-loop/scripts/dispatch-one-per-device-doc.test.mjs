@@ -130,19 +130,34 @@ test('starting the dispatch: the task in home with title and cron, DISPATCH.md d
   for (const word of ['`dispatch-home`', '`issue 调度`', '`7,37 * * * *`', '`~/home`', '`DISPATCH.md`', '`dyna home commit', '停用', '只停用，不删', '汇报里列出停了哪几个', '第一轮']) {
     assert.ok(start.includes(word), `start-dispatch.md must mention ${word}`);
   }
-  for (const word of ['09:00–19:00 | triage | 3', '22:00–08:00 | todo | 3', 'triage | 6', 'in-progress | 不设', 'in-review | 不设', '不调度的项目：']) {
+  for (const word of ['09:00–19:00 | triage | 3', '22:00–08:00 | todo | 1', 'triage | 6', 'in-progress | 不设', 'in-review | 不设', '不调度的项目：']) {
     assert.ok(start.includes(word), `the default DISPATCH.md must have ${word}`);
   }
   assert.match(dispatch, /references\/start-dispatch\.md/);
 });
 
-test('the dispatch session\'s model and effort: the skill pins sonnet and medium, and the start tells the human the one thing it cannot pin', () => {
+test('the dispatch session\'s model and effort: the skill front matter pins neither; the start tells the human to pick Sonnet by hand; nothing says the skill pins one', () => {
   const front = dispatchFile.split('\n---\n')[0];
-  assert.match(front, /^model: sonnet$/m);
-  assert.match(front, /^effort: medium$/m);
-  assert.match(start, /Sonnet/);
+  assert.ok(!/^model:/m.test(front), 'issue-dispatch front matter has no model:');
+  assert.ok(!/^effort:/m.test(front), 'issue-dispatch front matter has no effort:');
+  assert.match(start, /不在开头钉模型和思考强度/);
+  assert.match(start, /在运行环境里把 `dispatch-home` 的模型手动选成 Sonnet/);
   assert.match(partOf(desktop), /建任务的工具没有模型和思考强度的参数/);
   assert.match(partOf(desktop), /选成 Sonnet/);
+  for (const [where, text] of Object.entries(places)) {
+    assert.ok(!/skill 开头(钉了|的 `model:`)/.test(text) && !/开头钉了 Sonnet/.test(text), `${where} still says the skill pins the model`);
+  }
+  assert.ok(!/pins Sonnet/.test(readme), 'README no longer says the skill pins Sonnet');
+  assert.match(readme.split('\n').find((l) => l.startsWith('| `/idea-loop:issue-dispatch`')), /does not pin a model or effort/);
+});
+
+test('the default DISPATCH.md and every place that quotes it: todo at night opens 1 a round, triage by day 3', () => {
+  assert.ok(start.includes('09:00–19:00 | triage | 3'));
+  assert.ok(start.includes('22:00–08:00 | todo | 1'));
+  assert.ok(!start.includes('22:00–08:00 | todo | 3'), 'the old night default 3 is gone');
+  const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:issue-dispatch`'));
+  assert.match(row, /`todo` 1 a round/);
+  assert.ok(!/3 a round, triage capped/.test(row), 'README no longer quotes the single 3-a-round default');
 });
 
 test('claude-desktop: one dispatch-home task in home, every 30 minutes; sessions are counted per state across the device, a same number only blocks its own repo; the hand-over works in the issue\'s project clone', () => {
