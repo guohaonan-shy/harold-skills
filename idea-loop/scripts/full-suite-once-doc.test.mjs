@@ -43,6 +43,13 @@ test('the 等 CI branch for a PR with no checks records the local full run with 
   assert.match(noChecks, /没有检查[^。\n]*本机跑一次[^。\n]*全量/);
 });
 
+test('the 等 CI no-checks branch names the head by what it is, not by an inline git command, like the two review docs', () => {
+  const wait = stopAndResume.slice(stopAndResume.lastIndexOf('**等 CI**：'));
+  const noChecks = wait.split('\n').find((l) => /^- \*\*PR 上没有检查\*\*/.test(l));
+  assert.doesNotMatch(noChecks, /`git /, 'an inline git command in a skill reference');
+  assert.match(noChecks, /当前提交的完整提交号/);
+});
+
 test('both mechanical-check places show the head first and reuse a green record as 复用 <head> 的本机结果', () => {
   for (const [name, part] of [['run-a-round.md', section(runARound, '机械检查')], ['review-standards.md', section(standards, '机械检查')]]) {
     assert.match(part, /`dyna pr full-suite show /, `${name}: no \`dyna pr full-suite show\``);

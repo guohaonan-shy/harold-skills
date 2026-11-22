@@ -34,4 +34,4 @@
 - **全绿**：起 pr-review。
 - **红了**：读失败的测试日志，找到引入失败那行的提交，`dyna spec ticket-of <提交>` 读出工单；在那张工单的验收末尾追加 `- [ ] CI（<日期>）：<失败的测试验的行为>`，提交 `docs(tickets): <NN> — CI 失败`，照「重派」新起执行方（已落地的工单 worktree 已回收），落地、推送后回到「等 CI」。
 - **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「跟这次无关的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
-- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `<项目目录>/REVIEW.md`「验证命令」的全量命令，跑完用 `dyna pr full-suite record <head> <退出码> <日志文件>` 记下（`<head>` 是 `git rev-parse HEAD` 的完整提交号，红的也记），结果当 CI 结果用；红了同上。
+- **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `<项目目录>/REVIEW.md`「验证命令」的全量命令，跑完用 `dyna pr full-suite record <head> <退出码> <日志文件>` 记下（`<head>` 是当前提交的完整提交号，红的也记），结果当 CI 结果用；红了同上。

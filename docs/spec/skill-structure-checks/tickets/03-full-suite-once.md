@@ -31,4 +31,4 @@ PR 上没有检查时，implement 的「等 CI」本机跑完全量后记下结�
 - `dyna/internal/pr` 的测试：同一模块。
 - `idea-loop/scripts/implement-*-doc.test.mjs`、`pr-review-*`、`pr-flow-doc.test.mjs`：被改的参考文件。
 - `scripts/plugin-version.test.mjs`：版本升档。
-- [ ] review 第 1 轮 C3（2026-11-22）：skill 参考文件里不写行内 git 命令；「等 CI」那句只写要拿到的东西（当前提交的完整提交号），跟 review 两份说明的写法一致。
+- [x] review 第 1 轮 C3（2026-11-22）：skill 参考文件里不写行内 git 命令；「等 CI」那句只写要拿到的东西（当前提交的完整提交号），跟 review 两份说明的写法一致。
