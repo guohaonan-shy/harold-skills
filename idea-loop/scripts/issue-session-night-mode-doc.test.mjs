@@ -46,7 +46,8 @@ test('the reference lists all five things the session stops for, and writes the 
   }
   assert.match(reference, /等你定的/);
   assert.match(reference, /会话留在当前分组/);
-  assert.match(reference, /两小时/);
+  assert.match(reference, /等人回来/);
+  assert.doesNotMatch(reference, /两小时|2 小时/, 'the dispatcher no longer gives a slot back after idle time (spec dispatch-one-per-device)');
 });
 
 test('the reference says where the session stops: review done, PR ready, in-review, waiting for the word to merge', () => {

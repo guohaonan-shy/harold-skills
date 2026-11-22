@@ -16,7 +16,7 @@ prompt 里要起一个 skill，直接写斜杠命令，如 `/idea-loop:issue-tri
 行为：
 
 - app 关着时到点不跑，下次打开 app 时补跑。
-- 定时任务跑出的会话用的是建它的会话的目录，所以要在目标仓库的主 checkout 里建。
+- 定时任务跑出的会话用的是建它的会话的目录：按项目的任务（如每周分拣）在目标仓库的主 checkout 里建；设备级的（`dispatch-home`、`dreaming-home`）在 home 里建。
 - 跑完的会话在侧边栏的定时任务里看。
 - 定时任务起的会话用 `SendMessage` 发不到别的会话（实测报错）；要给别的会话发消息，用「会话管理」的 `send_message`。
 
@@ -42,17 +42,17 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 - **读一个会话的记录**：`mcp__ccd_session_mgmt__export_transcript`，`session_id: self`，导出一个 zip，解开里面的会话记录文件。
 - **本会话 id**：`get_session`（`self`），是 `local_…` 那一串。
 - **会话收尾**：`archive_session`，`session_id: self`，`reason` 写「#<号> done」「#<号> 交给调度」「#<号> 先放着」之类；worktree 随归档清掉。
-- **分组（侧边栏 section）**：issue 会话按状态待在三个 section 里：triage、in-progress、in-review（名字取 `issues queues <docs>` 返回的 `sections`，不带分类名）。`list_sections` 列，缺的用 `create_section` 建。会话自己归位：`detach_session`（`self`）变成顶层会话（报错说不是被别的会话开出来的，就跳过），按认领后的状态找到对应的 section（triage 会话在 triage；todo 会话在 in-progress，PR 全部转 ready 后移到 in-review），再 `move_sessions`（`self`）移进去；标题不是「<仓库名>#<号> <标题>」的，`set_session_title` 改成这样：调度会话靠它数会话。调度会话列分组、缺的建，不归档任何会话，只在开会话那一步移动它开出的会话（「调度」的「怎么交出 issue」，用 `mcp__ccd_sidebar__move_sessions`）。
+- **分组（侧边栏 section）**：issue 会话按状态待在三个 section 里：triage、in-progress、in-review（名字取 `dyna home dispatch` 返回的 `sections`，不带分类名）。`list_sections` 列，缺的用 `create_section` 建。会话自己归位：`detach_session`（`self`）变成顶层会话（报错说不是被别的会话开出来的，就跳过），按认领后的状态找到对应的 section（triage 会话在 triage；todo 会话在 in-progress，PR 全部转 ready 后移到 in-review），再 `move_sessions`（`self`）移进去；标题不是「<仓库名>#<号> <标题>」的，`set_session_title` 改成这样：调度会话靠它数会话。调度会话列分组、缺的建，不归档任何会话，只在开会话那一步移动它开出的会话。
 
 ### 调度（issue-dispatch 的三处）
 
-- **怎么一轮一轮跑**：桌面定时任务，每小时一次，每次运行开一个新的调度会话、跑一轮就结束；它在侧边栏的 Scheduled 里，不进分组，也不需要进。人敲 `/idea-loop:issue-dispatch`（不带间隔）起：用「定时任务」建（`list_scheduled_tasks` 里已有 `dispatch-<仓库名>` 就 `update_scheduled_task`）：id `dispatch-<仓库名>`，标题 `<仓库名> issue 调度`，`cronExpression` 取 `7 * * * *`（每小时一次，分钟避开 0 和 30），prompt `/idea-loop:issue-dispatch`，建在主 checkout 里；然后立刻做第一轮。app 关着时到点不跑，下次打开补跑一次。起好后汇报里写下次运行的时间。
-- **怎么数开着的会话**：`issues queues <docs>` 给出此刻的 `dispatch`、`limit` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：分组跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。数两个数：triage 分组里的会话数；in-progress 分组里 `lastActivityAt` 在最近 2 小时内的会话数（in-review 不数，超过 2 小时没活动的不数，也不动它们）。三个分组里所有匹配的会话号都记下，派的时候跳过。判别用标题，不用会话的 `startedBy`；交出时调度会给新会话改成这个标题，所以下一轮数得到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，可能多开一个；只多一个会话，不丢东西，接受。
-- **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 3 个。人在调度会话里说话的那一轮也走这条路。
-  1. **建 worktree**（会话不开在主 checkout，多个会话不互相踩）：路径是 `<主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在主 checkout 外面，所以主 checkout 的工作区和分支都不动。`<slug>` 取 issue 标题的几个词，小写、连字符。**triage 会话不建分支**：命令同下面「两处都没有」那条，把 `-b <分支>` 换成 `--detach`；spec 直接提交到 home，要写代码时 todo 会话自己接分支（`idea-loop:issue-session` 的开场第 4 步）。todo 会话的分支名取 `issues show` 给出的 issue 分支（先放着或上次会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（上次会话归档时只清了工作区，分支还在，再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
-     - 本地有（`git -C <主 checkout> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <主 checkout> worktree add <路径> <分支>`。
-     - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <主 checkout> worktree add --track -b <分支> <路径> origin/<分支>`。
-     - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `<项目目录>/DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
+- **怎么一轮一轮跑**：桌面定时任务，整台设备一个 `dispatch-home`，每 30 分钟一次，每次运行开一个新的调度会话、跑一轮就结束。人敲 `/idea-loop:issue-dispatch`（在哪个目录都行）起：照那个 skill 的「起调度」，用「定时任务」在 home 里建（已有就 `update_scheduled_task`）：id `dispatch-home`，标题 `issue 调度`，`cronExpression` 取 `7,37 * * * *`（分钟避开 0 和 30），prompt `/idea-loop:issue-dispatch`；旧的 `dispatch-<仓库名>` 用 `update_scheduled_task` 带 `enabled: false` 停用（不删）；然后立刻做第一轮。起好后汇报里写下次运行的时间，并提醒人把 `dispatch-home` 的模型选成 Sonnet：建任务的工具没有模型和思考强度的参数，只能人在 app 里建或改任务时手动选；skill 开头的 `model:`、`effort:` 只管调起它的那一轮。
+- **怎么数开着的会话**：`dyna home dispatch` 给出此刻的 `dispatch`、`perRound`、`caps` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**，数两样：triage、in-progress 各开着几个，任何仓库名都算（整台设备一个数；in-progress 的全算，不看活动时间；in-review 的不数）；各项目的同号会话按仓库名分开记，**同号只认本项目仓库名**。标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。判别用标题，不用会话的 `startedBy`；交出时调度会给新会话改成这个标题，所以下一轮数得到。已知限制：标题被人手动改了就数不到，可能多开一个，接受。
+- **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 `perRound` 个（算式见 `idea-loop:issue-dispatch`）。人在调度会话里说话的那一轮也走这条路。
+  1. **建 worktree**：`<clone>` 是 issue 所在项目的本地 clone（`cloneDir`）。路径是 `<clone 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在 clone 外面，所以 clone 的工作区和分支都不动。`<slug>` 取 issue 标题的几个词，小写、连字符。**triage 会话不建分支**：命令同下面「两处都没有」那条，把 `-b <分支>` 换成 `--detach`；spec 直接提交到 home，要写代码时 todo 会话自己接分支（`idea-loop:issue-session` 的开场第 4 步）。todo 会话的分支名取 `issues show` 给出的 issue 分支（先放着或上次会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（上次会话归档时只清了工作区，分支还在，再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
+     - 本地有（`git -C <clone> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <clone> worktree add <路径> <分支>`。
+     - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <clone> worktree add --track -b <分支> <路径> origin/<分支>`。
+     - 两处都没有：`git -C <clone> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `<项目目录>/DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
 
      路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
   2. **开会话并交到桌面端**：`dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>`（在沙箱外跑，它要联网；`<dispatch>` 取 `todo` 或 `triage`；`--cap` 每个能力一个；`--prompt-file` 是写好 issue 会话 prompt 的文件，放在 worktree 外）。命令开出会话，并往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条 `{issue, desktopSessionId, openedAt, period}`。成功：stdout 一行 JSON，`desktopSessionId` 是会话 id；`recorded` 是 `false` 说明记录没写进去，写进汇报（早上汇总会少这一条）。失败：stderr「交出失败：<原因>」，退出码 1，写进汇报，这个 issue 下一轮再试，不在本轮重试。桌面端里：不用 `start_session`；命令先用 `claude -p` 开出会话，再跑 `claude --desktop --resume <id>` 交到桌面，退出码 0 算成功，`desktopSessionId` 是 `local_<id>`；不读 `--cap`、`--prompt-file`，任务在第 4 步发。
