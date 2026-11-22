@@ -29,10 +29,10 @@
 - [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 - [x] 人的决定（2026-11-22）：默认 `DISPATCH.md` 与提到默认值的文字里夜里 todo 是每轮 1；调度 skill 开头没有 `model:`、`effort:`，起调度的说明写着提醒人手动选 Sonnet，README 不再说 skill 钉了模型；文档测试钉住这两点。
-- [ ] review 第 1 轮 S1（2026-11-22）：起调度时（包括 setup 在项目目录里起），默认 `DISPATCH.md` 和删掉项目旧「调度」节的改动都能提交进 home：提交 home 里的文件时照 setup 登记项目那一步的现有写法（文件写全路径，或先进 home 再提交），在项目目录里照着做不会报「不在 home 里，什么都没提交」。
-- [ ] review 第 1 轮 S2（2026-11-22）：调度文字里的「仓库名」是不含 owner 的仓库名：`dyna home projects` 的 `repo` 是 `owner/repo`，文字写明取斜杠后那段当仓库名，用于会话标题「<仓库名>#<号>」、同号会话判别和交出命令的 `--repo`，与现有会话标题（如 `Tofelair#280`）一致。
-- [ ] review 第 1 轮 C1（2026-11-22）：调度 skill 里「快进拉取」这类约束只写要达到的效果（只快进、拉不下来就跳过这个项目），不写成具体命令行（规则：writing-for-agents 的 rewrite-checklist「约束型」条目）。
-- [ ] review 第 1 轮 C2（2026-11-22）：setup 的调度参考不再直接读调度 skill 自己的参考文件、也不复述它的步骤：只指向 `idea-loop:issue-dispatch` 的「起调度」并说明 setup 这一步不做第一轮（规则：idea-loop/AGENTS.md「参考资料归谁」）。
+- [x] review 第 1 轮 S1（2026-11-22）：起调度时（包括 setup 在项目目录里起），默认 `DISPATCH.md` 和删掉项目旧「调度」节的改动都能提交进 home：提交 home 里的文件时照 setup 登记项目那一步的现有写法（文件写全路径，或先进 home 再提交），在项目目录里照着做不会报「不在 home 里，什么都没提交」。
+- [x] review 第 1 轮 S2（2026-11-22）：调度文字里的「仓库名」是不含 owner 的仓库名：`dyna home projects` 的 `repo` 是 `owner/repo`，文字写明取斜杠后那段当仓库名，用于会话标题「<仓库名>#<号>」、同号会话判别和交出命令的 `--repo`，与现有会话标题（如 `Tofelair#280`）一致。
+- [x] review 第 1 轮 C1（2026-11-22）：调度 skill 里「快进拉取」这类约束只写要达到的效果（只快进、拉不下来就跳过这个项目），不写成具体命令行（规则：writing-for-agents 的 rewrite-checklist「约束型」条目）。
+- [x] review 第 1 轮 C2（2026-11-22）：setup 的调度参考不再直接读调度 skill 自己的参考文件、也不复述它的步骤：只指向 `idea-loop:issue-dispatch` 的「起调度」并说明 setup 这一步不做第一轮（规则：idea-loop/AGENTS.md「参考资料归谁」）。
 
 ## 选中的存量回归
 

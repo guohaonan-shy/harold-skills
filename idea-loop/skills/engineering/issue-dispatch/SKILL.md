@@ -13,8 +13,8 @@ description: issue 的调度者：一台设备一个，每 30 分钟一轮，按
 
 ## 前提与边界
 
-- 你开在 home（`~/home`）里，只读：只在起调度时提交 `DISPATCH.md`。对各项目的本地 clone 只做 `git -C <cloneDir> pull --ff-only` 和建 worktree（建在 clone 外面），不切分支、不改文件、不提交，工作区里的任何改动都不丢弃（不 reset、不 stash）。
-- 项目取自 `dyna home projects`：`docs` 是它的知识库目录（下文 `<docs>`），`repo` 是 GitHub 上的仓库名（`<仓库名>`，不含 owner），`cloneDir` 是本地 clone（`<clone>`）。
+- 你开在 home（`~/home`）里，只读：只在起调度时提交 `DISPATCH.md`。对各项目的本地 clone 只快进更新（拉不下来就跳过这个项目）和建 worktree（建在 clone 外面），不切分支、不改文件、不提交，工作区里的任何改动都不丢弃（不 reset、不 stash）。
+- 项目取自 `dyna home projects`：`docs` 是它的知识库目录（下文 `<docs>`），`repo` 是 `owner/repo`，取斜杠后那段当 `<仓库名>`（会话标题「<仓库名>#<号>」、判别同号会话、交出命令的 `--repo` 都用它，与侧边栏里现有会话标题一致），`cloneDir` 是本地 clone（`<clone>`）。
 - issue 的状态只走 `issues`；**Linear 项目**（项目目录里 `ISSUE_TRACKER.md` 第一个标题写 Linear）里读 issue 用 MCP，做法是 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），下文标「Linear 项目」的几处照它。你不收尾别的会话：会话自己归位、自己收尾；只在开会话这一步移动它开出的会话。
 
 ## 每一轮
@@ -24,7 +24,7 @@ description: issue 的调度者：一台设备一个，每 30 分钟一轮，按
 1. **读配置**：`dyna home dispatch` 给出此刻的 `dispatch`（`triage`、`todo` 或 `null`）、`perRound`（每轮最多新开）、`caps`（各状态同时开着最多，`null` 是不设）、`skip`（不调度的项目）、三个分组名；`dyna home projects` 列出项目清单。
 2. **数开着的会话**（`dispatch` 是 `null` 就跳过）：照「怎么数开着的会话」，只认标题是「<仓库名>#<号> …」的会话，记两样：triage、in-progress 各开着几个（任何仓库名都算，整台设备一个数）；各项目的同号会话（按仓库名分开记，**同号只认本项目仓库名**）。issue 会话开出的子会话（如设计阶段并行开的 imagine 会话）不占位：记下个数，写进汇报。
 3. **逐个项目**，按清单顺序，名字在 `skip` 里的不碰：
-   1. **跑不了的跳过**：`inHome` 是 `false`、`cloneDir` 不存在、clone 不在默认分支（origin 的 HEAD 指的那条）、`git -C <clone> pull --ff-only` 失败：记一行（项目名、原因）进汇报，接着下一个。
+   1. **跑不了的跳过**：`inHome` 是 `false`、`cloneDir` 不存在、clone 不在默认分支（origin 的 HEAD 指的那条）、clone 只快进更新不成：记一行（项目名、原因）进汇报，接着下一个。
    2. **对账**（Linear 项目跳过 `dyna issues labels` 与 `dyna issues reconcile`：状态由集成推，没有 label 要建）：`dyna issues labels <docs>` 建出缺的 label（多余的 label 记进汇报，不删）；`dyna issues reconcile <docs>`，翻了状态的和报的问题原样记进汇报。
    3. **没有会话的 issue**（`dispatch` 是 `null` 就跳过）：开着、`status:in-progress`、`status:in-review` 的 issue（GitHub 照 `idea-loop:issues` 的 GitHub 做法；Linear 项目照它的 Linear 做法按状态取），对照本项目的同号会话；没有同号会话的记进汇报：人用 `/idea-loop:issue-session <号>` 接上，或 `dyna issues set <docs> backlog <号> --comment=…` 放回去。
    4. **取候选**（`dispatch` 是 `triage` 或 `todo` 才取）：这个项目这一状态的全部候选（GitHub：`dyna issues candidates <docs> --state=<dispatch>`，已不含还被挡着的；Linear 项目照 `idea-loop:issues` 的 Linear 做法取），去掉本项目的同号会话（会话开起来后，triage 的 issue 仍是 triage，todo 的在认领前仍是 todo）。

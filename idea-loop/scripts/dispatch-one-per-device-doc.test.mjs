@@ -82,7 +82,7 @@ test('issue-dispatch: reads the table and the project list from dyna, in home, r
     assert.ok(dispatchFile.includes(word), `issue-dispatch must mention ${word}`);
   }
   assert.match(dispatch, /只在起调度时提交 `DISPATCH.md`/);
-  assert.match(dispatch, /只做 `git -C <cloneDir> pull --ff-only` 和建 worktree/);
+  assert.match(dispatch, /只快进更新（拉不下来就跳过这个项目）和建 worktree/);
   assert.match(dispatch, /不切分支、不改文件/);
 });
 
@@ -101,7 +101,7 @@ test('issue-dispatch: candidates of all projects are one table in the current or
   assert.match(step, /在这一状态停留久的在前/);
   const skip = dispatch.split('\n').find((l) => /\*\*跑不了的跳过\*\*/.test(l));
   assert.ok(skip, 'a step 「跑不了的跳过」');
-  for (const word of ['`inHome` 是 `false`', '`cloneDir` 不存在', '不在默认分支', '`git -C <clone> pull --ff-only` 失败', '记一行（项目名、原因）进汇报']) {
+  for (const word of ['`inHome` 是 `false`', '`cloneDir` 不存在', '不在默认分支', '只快进更新不成', '记一行（项目名、原因）进汇报']) {
     assert.ok(skip.includes(word), `the skip step must mention ${word}`);
   }
   assert.match(dispatch, /跑不了而跳过的和原因/, 'the report names the skipped projects');
@@ -188,8 +188,6 @@ test('setup: the dispatch step checks for dispatch-home and reports or asks; the
   assert.match(setupSkill, /调度（设备级的 `dispatch-home`）/);
   assert.match(setupDispatch, /已有任务里有 `dispatch-home`：报给人/);
   assert.match(setupDispatch, /选项「建（推荐）」「不建，我自己手敲」/);
-  assert.match(setupDispatch, /`7,37 \* \* \* \*`/);
-  assert.match(setupDispatch, /`DISPATCH\.md`/);
 });
 
 test('README: the dispatch and setup rows say dispatch-home, DISPATCH.md and the 30-minute rounds', () => {
@@ -203,4 +201,35 @@ test('README: the dispatch and setup rows say dispatch-home, DISPATCH.md and the
 test('the plugin asks for the dyna that has home projects and home dispatch', () => {
   const range = read('dyna-version');
   assert.match(range, />=0\.0\.([6-9]|\d{2,}) </);
+});
+
+// Review round 1 (S1 S2 C1 C2): each rule below failed on the text of 185c3980.
+
+test('S1: DISPATCH.md and the old 调度 section are committed into home with full paths, so starting from a project directory still commits', () => {
+  assert.ok(!/dyna home commit "dispatch: DISPATCH\.md" DISPATCH\.md/.test(start), 'a bare file name is resolved against the current directory');
+  assert.match(start, /dyna home commit "dispatch: DISPATCH\.md" ~\/home\/DISPATCH\.md/);
+  assert.match(start, /~\/home\/projects\/<名字>\/ISSUE_TRACKER\.md/);
+});
+
+test('S2: 仓库名 is the part of `owner/repo` after the slash, used for the title, the same-number test and --repo', () => {
+  const premise = dispatch.split('\n').find((l) => /^- 项目取自 `dyna home projects`/.test(l));
+  assert.ok(premise, 'the projects line');
+  assert.match(premise, /`repo` 是 `owner\/repo`，取斜杠后那段当 `<仓库名>`/);
+  assert.ok(!/不含 owner/.test(dispatch), 'the old claim that repo has no owner is gone');
+  assert.match(premise, /会话标题/);
+  assert.match(premise, /`--repo`/);
+  assert.match(partOf(magi), /对上 `repo` 斜杠后那段/, 'magi finds the project by the repo name after the slash');
+});
+
+test('C1: the dispatch skill states the fast-forward constraint as an effect, not a command line', () => {
+  assert.ok(!/pull --ff-only/.test(dispatch), 'no pull command in the skill body');
+  assert.match(dispatch, /只快进更新/);
+});
+
+test('C2: setup\'s dispatch step points at issue-dispatch\'s 起调度 and does not read its reference file or restate its steps', () => {
+  assert.ok(!/start-dispatch/.test(setupDispatch), 'setup does not read the dispatch skill\'s own reference');
+  const step = setupDispatch.slice(setupDispatch.indexOf('2. 没有'), setupDispatch.indexOf('3. 运行环境'));
+  assert.ok(!/DISPATCH\.md|7,37 \* \* \* \*|dispatch-<仓库名>/.test(step), 'the three steps are not restated');
+  assert.match(setupDispatch, /用 Skill 工具调 `idea-loop:issue-dispatch`，照它的「起调度」做/);
+  assert.match(setupDispatch, /setup 这一步不做第一轮/);
 });

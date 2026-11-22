@@ -3,6 +3,6 @@
 `idea-loop:issue-dispatch` 整台设备一个，任务 id `dispatch-home`，每 30 分钟一轮，按时段把各项目 triage 或 todo 的 issue 交出去；每一轮是一个新会话，由『定时任务』开出，做法照『会话管理』里「调度」的「怎么一轮一轮跑」（`dyna runtime show 会话管理`）。
 
 1. 『定时任务』列出的已有任务里有 `dispatch-home`：报给人（时间、是否开着），完成。第二个项目的 setup 走到这里只是报。
-2. 没有：用『向人提问』问人（选项「建（推荐）」「不建，我自己手敲」），人要建就照 `idea-loop:issue-dispatch` 的「起调度」（它的 `references/start-dispatch.md`）做前三步：在 home 建 `dispatch-home`（cron `7,37 * * * *`，工作目录 home，prompt 调起 `idea-loop:issue-dispatch`，不带参数），建 `DISPATCH.md`（并进已有项目的旧「调度」节前先给人看改前改后），停用旧的 `dispatch-<仓库名>` 任务；不做第一轮，下一个 :07 或 :37 就是。选「不建」记「人拒绝」。
+2. 没有：用『向人提问』问人（选项「建（推荐）」「不建，我自己手敲」），人要建就用 Skill 工具调 `idea-loop:issue-dispatch`，照它的「起调度」做；setup 这一步不做第一轮，下一个 :07 或 :37 就是。选「不建」记「人拒绝」。
 3. 运行环境没有『定时任务』：走 `dyna runtime show` 的退路，把 prompt 和任务 id 给人，记「未做：运行环境 <名> 没有『定时任务』」。
 4. 任务建好（或已有）之后，照『装与设置』打印调度要人自己加的允许规则，并说明不加的后果；不替人改权限设置。运行环境的「装与设置」没有写调度要的规则，这一步跳过。
