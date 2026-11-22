@@ -101,6 +101,10 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 3. 用完 `browser_close`，再 `node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release <锁目录> --owner <你的名字>`。
 4. 等了默认的 30 分钟还没拿到，就停下，在交回里写明卡在锁上。
 
+### 要麦克风的流程
+
+要麦克风的页面不走 `mcp__playwright__browser_*`（授权后拿到本机真麦克风），用 `playwright-cli`（`@playwright/cli`）的命名会话。做法读 `idea-loop:runtime` 的 `references/claude-desktop-mic.md`。
+
 ## 人的浏览器
 
 用 Claude in Chrome：人自己的 Chrome，带人的登录态，工具是 `mcp__claude-in-chrome__*`。跟「浏览器」里的两个不同：Playwright 每次是干净的、没有登录；内嵌浏览器是 Claude 桌面端自己的面板，也不是人的 Chrome 配置。

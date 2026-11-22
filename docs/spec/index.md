@@ -4,6 +4,7 @@
 | 文件 | summary |
 |---|---|
 | [[ai-eval-plugin]] | toeflair 的 ai-eval 迁成 harold-skills 的 plugin，补报数口径与回放型 eval |
+| [[browser-fake-mic]] | agent 在 playwright-cli 的独立会话里点着走完要麦克风的流程，授权与拒绝都能测，并往假麦克风里喂指定音频 |
 | [[comment-marker-no-prefix]] | idea-loop 发的评论去掉「🤖 idea-loop：」开头和「由 Claude 代发」，脚本改认看不见的标记 |
 | [[design-shared-implementations]] | DESIGN.md 能登记「这类界面必须用的共用实现」并配项目测试，对账核它；补上官方的 Voice & Content Strategy 章 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
