@@ -98,6 +98,7 @@
 | [decisions/163](decisions/163.md) | conversation | 2026-11-16 | 决定记录 —— #163 blog-publisher 拆分：triage 与 todo 两个会话摆过的题（含版本改 patch、术语定名、顺手修「读出八节」）与 retro 候选的结果 |
 | [[2026-11-16-sections-browser-test-slow]] | conversation | 2026-11-16 | #192 triage：设计档案浏览器测试单跑近 6 分钟、拖住全量测试，人选移出全量命令并加每例超时 |
 | [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
+| [[2026-11-22-dispatch-triage-per-round]] | conversation | 2026-11-22 | #398 triage：白天的 triage 也按每轮新开，triage 分组总数另设上限（默认 10） |
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
 | [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
 | [[2026-11-19-design-shared-implementations]] | conversation | 2026-11-19 | 讨论 —— DESIGN.md 登记共用实现（失败页、404 这类）并配项目测试，补 Voice 章（#366） |
@@ -113,3 +114,4 @@
 | [decisions/293](decisions/293.md) | conversation | 2026-11-20 | 决定记录 —— #293 的 todo 会话：ai-eval 迁进来，夜里按推荐定 4 题，白天定版本（ai-eval 0.0.1、idea-loop patch）与 setup 统一入口另开 #420；两条候选都不批 |
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
+| [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
