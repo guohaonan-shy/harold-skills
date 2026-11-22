@@ -109,3 +109,4 @@
 | [decisions/350](decisions/350.md) | conversation | 2026-11-20 | 决定记录 —— #350 的 issue 会话：dreaming 问人范围的说法对齐，main 照常合、0.2.0 另开 #418；候选 1 进池 |
 | [decisions/383](decisions/383.md) | conversation | 2026-11-20 | 决定记录 —— #383 的 issue 会话：magi 调度接上已有分支；多仓库的同类限制交给 0.2.0 的 home repo，不开 issue；无候选 |
 | [decisions/293](decisions/293.md) | conversation | 2026-11-20 | 决定记录 —— #293 的 todo 会话：ai-eval 迁进来，夜里按推荐定 4 题，白天定版本（ai-eval 0.0.1、idea-loop patch）与 setup 统一入口另开 #420；两条候选都不批 |
+| [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
