@@ -2,7 +2,7 @@
  * Tripwire — dreaming tidies the device's one memory, and setup creates one device-level dreaming task.
  *
  * The behaviour lives in skill text, so these checks pin what a reader has to be able to follow:
- * - dreaming's SKILL.md points at the memory reference, names 「只跑记忆」, and stays under 5000 characters;
+ * - dreaming's SKILL.md points at the memory reference, names 「只跑记忆」;
  * - the memory reference carries the closed set of dispositions (the same one `dyna dreaming table submit` accepts),
  *   adds only the paths it changed, commits once in home, and says how to roll back with `git revert`;
  * - setup's 「每周对账」 (the SKILL.md section and its reference) creates `dreaming-home`, never a per-repository
@@ -36,12 +36,11 @@ const weekly = read('skills', 'engineering', 'setup', 'references', 'weekly-drea
 const homeRef = read('skills', 'engineering', 'setup', 'references', 'home.md');
 const readme = read('README.md');
 
-test('dreaming SKILL.md points at the memory reference in one line, names 「只跑记忆」, and the body stays under 5000 characters', () => {
+test('dreaming SKILL.md points at the memory reference in one line, and names 「只跑记忆」', () => {
   assert.match(dreaming, /\[references\/memory-tidy\.md\]\(references\/memory-tidy\.md\)/);
   assert.match(dreaming, /只跑记忆/);
   assert.match(dreaming, /不需要 `DEVELOPMENT\.md`/);
   assert.match(dreaming, /home 或它的 `memory\/` 不存在就跳过/);
-  assert.ok([...dreaming].length < 5000, `body is ${[...dreaming].length} characters`);
   // the steps live in the reference, not in the body
   assert.doesNotMatch(dreaming, /memory-check/);
 });

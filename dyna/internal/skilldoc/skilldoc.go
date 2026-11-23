@@ -1,8 +1,8 @@
-// Package skilldoc checks a skill whose SKILL.md body is kept short and whose sections other documents point at
-// by name (`idea-loop:<skill>` 的「X」).
+// Package skilldoc checks a skill whose sections other documents point at by name (`idea-loop:<skill>` 的「X」),
+// and measures a SKILL.md.
 //
-//   - BodyChars: the SKILL.md body (frontmatter stripped) in UTF-8 characters. The repo rule is
-//     "SKILL.md 主体 < 5000 字" (AGENTS.md); long material lives in the skill's own references/.
+//   - BodyChars, Chars: the SKILL.md body (frontmatter stripped) in UTF-8 characters. How long a body may be is
+//     not decided here: `dyna spec skill-lint` holds the line, in one place.
 //   - DanglingSectionPointers: every title quoted right after a `idea-loop:<skill>` mention, anywhere in the
 //     plugin (every .md and every script under it, not only skills and agents), must be a heading of the
 //     skill's SKILL.md or of one of its references/ files.
@@ -18,9 +18,6 @@ import (
 	"unicode/utf8"
 )
 
-// MaxBodyChars is the limit: a body of this many characters or more is too long.
-const MaxBodyChars = 5000
-
 // namePrefix is the plugin name a pointer starts with.
 const namePrefix = "idea-loop:"
 
@@ -34,13 +31,16 @@ func Body(text string) string {
 	return text
 }
 
+// Chars is the number of UTF-8 characters in the body of a SKILL.md or an agent definition, given its text.
+func Chars(text string) int { return utf8.RuneCountInString(Body(text)) }
+
 // BodyChars is the number of UTF-8 characters in the body of <skillDir>/SKILL.md.
 func BodyChars(skillDir string) (int, error) {
 	b, err := os.ReadFile(filepath.Join(skillDir, "SKILL.md"))
 	if err != nil {
 		return 0, err
 	}
-	return utf8.RuneCountInString(Body(string(b))), nil
+	return Chars(string(b)), nil
 }
 
 var heading = regexp.MustCompile(`^#{1,6}\s+(.+?)\s*$`)

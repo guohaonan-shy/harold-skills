@@ -8,7 +8,7 @@
  * places pointed at it; writing-for-agents and retro only ever appended. These checks pin: no text left
  * in the plugin that points at the old section or reference (dreaming's own step names excepted), the
  * reference gone, the evidence sections of decision-rules opening with the reader model and covering the shared
- * writing rules, the whole body inside 4500 characters, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
+ * writing rules, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
  * the places that repeat the format), the four pool candidates re-pointed, and the explain-mechanism replay
  * case removed.
  */
@@ -75,11 +75,6 @@ test('decision-rules carries the reader model and the shared writing rules in it
   ]) assert.match(body, re, `共用写法缺：${name}`);
   assert.match(body, /裸编号/);
   assert.match(body, /最新基准/);
-});
-
-test('the decision-rules body, evidence sections included, is at most 4500 characters (UTF-8 characters, not bytes)', () => {
-  const body = bodyOf(read('skills', 'productivity', 'decision-rules', 'SKILL.md'));
-  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
 });
 
 test('writing-for-agents says to look for an existing principle before adding one', () => {

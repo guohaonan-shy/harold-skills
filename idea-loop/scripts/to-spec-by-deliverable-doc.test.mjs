@@ -7,8 +7,7 @@
  * the section list is the one the human approved (a quoted verdict line under the title instead of a 验证
  * table, 问题陈述, a 方案 that opens with an interaction sequence diagram and carries 后端 / 前端内部 /
  * 前端交互 as sub-sections, no 技术方案总览); 方案 spells out the four points of "write what the user gets
- * before how"; the how-to-write-for-a-human rules live in evidence only; the body is inside 4500
- * characters (the rewrite checklist's line); and a spec written from the template's own lines is read correctly by the command line (verdicts,
+ * before how"; the how-to-write-for-a-human rules live in evidence only; and a spec written from the template's own lines is read correctly by the command line (verdicts,
  * what still waits for a human, whether it touches UI), which `dyna issues check` checks a flip out of triage against.
  */
 import { test } from 'node:test';
@@ -36,10 +35,6 @@ function sections(text) {
   return parts.map((part, i) => (i === 0 ? { title: null, text: part } : { title: part.split('\n')[0].trim(), text: part.slice(part.indexOf('\n') + 1) }));
 }
 const firstLine = (text) => text.split('\n').find((l) => l.trim() !== '') ?? '';
-
-test('the to-spec body is at most 4500 characters (UTF-8 characters, not bytes)', () => {
-  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
-});
 
 test('the template has a 「给读者什么」 line in the opening and at the start of every section', () => {
   assert.ok(template.length > 0, '找不到 <spec-template>');

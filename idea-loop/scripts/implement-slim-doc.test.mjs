@@ -1,12 +1,10 @@
 /**
- * Tripwire — `idea-loop:implement`'s SKILL.md stays inside the body limit; what only some runs reach lives behind
+ * Tripwire — `idea-loop:implement`'s SKILL.md stays slim; what only some runs reach lives behind
  * pointers in its own `references/`.
  *
- * Spec skill-edit-acceptance, ticket 01. The body had grown to 9414 characters (the limit in AGENTS.md「标准 plugin 目录结构」
- * is 5000: UTF-8 characters after the frontmatter, `awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`). The
+ * Spec skill-edit-acceptance, ticket 01. The body had grown to 9414 characters (the length line is `dyna spec skill-lint`'s). The
  * branches that only some runs walk (waiting for the human, redispatch, CI failures, other repositories, design
- * changes, a session that broke) moved to references; the steps every run walks stayed. This test catches the body
- * growing back, a title that other skills cite by name disappearing, and a pointer that names a file that is not there.
+ * changes, a session that broke) moved to references; the steps every run walks stayed. This test catches a title that other skills cite by name disappearing, and a pointer that names a file that is not there.
  * It cannot tell whether a moved branch is the right one to move: review judges that against `writing-for-agents`.
  */
 import { test } from 'node:test';
@@ -30,11 +28,6 @@ function body(doc) {
   }
   return rest.join('\n');
 }
-
-test('implement SKILL.md body is within 4500 characters (the line writing-for-agents sets, leaving room for new branches)', () => {
-  const n = [...body(skill)].length;
-  assert.ok(n <= 4500, `implement body is ${n} characters`);
-});
 
 // pr-review cites 「派工」「核对与落地」「回收」「等 CI」「设计变更」; the pr skill's review-loop reference cites 「没活了就停下」.
 test('the titles other skills cite by name are still in SKILL.md', () => {

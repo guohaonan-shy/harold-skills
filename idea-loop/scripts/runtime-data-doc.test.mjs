@@ -6,7 +6,7 @@
  *
  * It used to guard the runtime skill (`skills/productivity/runtime/`, with `references/`); the skill is gone and
  * the same files are the plugin's `runtime/` directory, read by `dyna runtime`. What went with the skill, and why:
- *   - "description only routes", "body stays under 5000 characters", "the skill is findable: SKILL.md and
+ *   - "description only routes", "the body length", "the skill is findable: SKILL.md and
  *     references/ only": they were about SKILL.md, which no longer exists; `runtime/` has no size limit of its own
  *     (the injected data is held under the hook's 10,000 characters by dyna/internal/runtime's tests).
  *   - "the body states the detection rule ... and the fallback": the detection rule and how to add a runtime moved

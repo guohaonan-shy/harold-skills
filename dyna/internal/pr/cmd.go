@@ -304,6 +304,42 @@ func Command(d Deps) *cobra.Command {
 			}),
 	)
 
+	skillGrowth := leaf("skill-growth <base-ref>", "列出 <base-ref>...HEAD 里主体字数变了的 SKILL.md 和 agent 定义：路径、改前 → 改后（差值）；只报事实，退出 0", "",
+		func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 || args[0] == "" {
+				return usage("skill-growth <base-ref>")
+			}
+			lines, err := d.skillGrowth(args[0])
+			if err != nil {
+				return err
+			}
+			if len(lines) == 0 {
+				d.println("没有 SKILL.md 或 agent 定义的主体字数变了")
+				return nil
+			}
+			d.println(lines...)
+			return nil
+		})
+
+	fullSuite := registry.Group("full-suite", "本机全量测试的结果：同一个 head 跑过一遍就记下，别处复用")
+	fullSuite.AddCommand(
+		leaf("record <head> <exit-code> <log-file>", "记下这次本机全量测试的结果（head、退出码、日志文件、时间）到当前 worktree 的 .tmp/full-suite/<head>.json；同一个 head 再记会覆盖", "dyna pr full-suite show <head>",
+			func(cmd *cobra.Command, args []string) error {
+				code, ok := parseExitCode(arg(args, 1))
+				if len(args) != 3 || !headRe.MatchString(args[0]) || !ok || args[2] == "" {
+					return usage("full-suite record <head> <exit-code> <log-file>")
+				}
+				return d.recordFullSuite(args[0], code, args[2])
+			}),
+		leaf("show <head>", "打印这个 head 的本机全量记录（JSON：head、exitCode、log、at）；没有记录退出 2。退出码 0 的可以复用，非 0 的重跑", "",
+			func(cmd *cobra.Command, args []string) error {
+				if len(args) != 1 || !headRe.MatchString(args[0]) {
+					return usage("full-suite show <head>")
+				}
+				return d.showFullSuite(args[0])
+			}),
+	)
+
 	open := leaf("open <owner/repo>", "在当前分支上开 PR，默认 draft（--ready 直接开成 ready）；打印 PR 的地址", "",
 		func(cmd *cobra.Command, args []string) error {
 			repo := arg(args, 0)
@@ -385,7 +421,7 @@ func Command(d Deps) *cobra.Command {
 		})
 	merge.Flags().String("method", "", "合并方式：merge、squash 或 rebase（必填）")
 
-	root.AddCommand(body, loop, evidence, candidates, diagnostics, open, ready, view, merge)
+	root.AddCommand(body, loop, evidence, candidates, diagnostics, skillGrowth, fullSuite, open, ready, view, merge)
 	return root
 }
 

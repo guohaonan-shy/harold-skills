@@ -6,7 +6,7 @@
  * - Nothing in the plugin (skills, agents, READMEs) or the repository AGENTS.md still names `seo-setup`: the skills
  *   that used to say "run seo-setup" now say `/idea-loop:setup` (SEO module). `setup` is human-invoked only, so none of
  *   them tells the model to call it with the Skill tool.
- * - Every link in `setup`'s SKILL.md body and in the steps file resolves, and setup's body stays within 4500 characters.
+ * - Every link in `setup`'s SKILL.md body and in the steps file resolves.
  *
  * SETUP_MODULE_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change); ROOT_AGENTS_MD
  * at another copy of the repository AGENTS.md. Both are there to see the checks fail on the old text first.
@@ -54,7 +54,6 @@ test('every link in setup\'s body and in the SEO steps file resolves', () => {
   for (const [, link] of SETUP.matchAll(/\]\((references\/[^)#]+)\)/g)) assert.ok(existsSync(path('skills', 'engineering', 'setup', link)), link);
   const steps = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
   for (const [, link] of steps.matchAll(/\]\(([^)#:]+\.md)\)/g)) assert.ok(existsSync(join(seoRefs, link)), `steps.md links ${link}`);
-  assert.ok([...SETUP].length <= 4500, `setup body is ${[...SETUP].length} characters`);
 });
 
 test('nothing in the plugin or the repository AGENTS.md names seo-setup any more', () => {

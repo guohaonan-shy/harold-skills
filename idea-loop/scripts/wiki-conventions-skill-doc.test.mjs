@@ -1,11 +1,9 @@
 /**
  * Tripwire — the wiki-conventions skill stays short, and everyone who points at one of its sections points at
- * one that exists (docs/spec/wiki-conventions-slim). Same two checks as design-archive-skill-doc.test.mjs,
+ * one that exists (docs/spec/wiki-conventions-slim). The check of design-archive-skill-doc.test.mjs,
  * run by the command line (`dyna test skill-doc`).
  *
- * 1. The SKILL.md body (frontmatter stripped, UTF-8 characters) is under 5000. Details only some callers need
- *    live in `references/`, one pointer line from the section that owns them.
- * 2. Other skills and agents call the skill by name plus a section title (idea-loop:wiki-conventions 的「X」, written without backticks here so this note is not itself scanned).
+ * 1. Other skills and agents call the skill by name plus a section title (idea-loop:wiki-conventions 的「X」, written without backticks here so this note is not itself scanned).
  *    Section names are the contract: every title quoted that way must be a heading of the SKILL.md or of one of
  *    its `references/` files. `dyna spec check` quotes one in its error text too (dyna/internal/spec/check.go).
  */
@@ -33,15 +31,9 @@ function headings(text) {
 }
 const allHeadings = () => [join(skillDir, 'SKILL.md'), ...mdFiles(join(skillDir, 'references'))].flatMap((f) => headings(readFileSync(f, 'utf8')));
 
-// One call answers both questions: exit 1 when the body is 5000 characters or more, or a quoted section does not exist;
+// One call: exit 1 when a quoted section does not exist;
 // --min-pointers makes a wrong skill name (a check of nothing) red too.
 const check = () => runDyna(['test', 'skill-doc', skillDir, '--plugin', pluginRoot, '--min-pointers', '1']);
-
-test('wiki-conventions SKILL.md body is under 5000 characters', () => {
-  const r = check();
-  assert.doesNotMatch(r.stdout + r.stderr, /主体 \d+ 字，上限/, `SKILL.md body is too long. Move long material into references/.\n${r.stdout}${r.stderr}`);
-  assert.match(r.stdout, /SKILL\.md 主体 \d+ 字（上限 5000）/);
-});
 
 test('every section of wiki-conventions that a skill or agent quotes exists as a heading of its SKILL.md or references/', () => {
   const r = check();
@@ -114,8 +106,7 @@ test('references/glossary.md keeps the glossary rules: what goes in, format, who
   assert.ok(!existsSync(join(skillDir, 'references', 'target-repo-setup.md')));
 });
 
-test('wiki-conventions SKILL.md body is within 4500 characters, and neither it nor the glossary reference carries decision history or inline git / gh commands', () => {
-  assert.ok([...mainBody()].length <= 4500, `body is ${[...mainBody()].length} characters`);
+test('neither wiki-conventions SKILL.md nor the glossary reference carries decision history or inline git / gh commands', () => {
   for (const f of [join(skillDir, 'SKILL.md'), glossaryRef]) {
     const text = readFileSync(f, 'utf8');
     assert.doesNotMatch(text, /20\d{2}-\d{2}-\d{2}|人定|原话|依据：/, `${f}: decision history`);

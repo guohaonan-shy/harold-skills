@@ -80,14 +80,3 @@ test('wiki-conventions keeps the slug and link rule short and the details in a r
   assert.equal(migrate.split('保留文件历史').length - 1, 2, 'both moves say to keep file history');
 });
 
-test('every edited SKILL.md body and agent definition stays under the 4500-character line', () => {
-  const files = [
-    ['skills', 'engineering', 'issues', 'SKILL.md'], ['skills', 'engineering', 'issue-session', 'SKILL.md'], ['skills', 'engineering', 'issue-dispatch', 'SKILL.md'],
-    ['skills', 'engineering', 'issue-triage', 'SKILL.md'], ['skills', 'engineering', 'pr', 'SKILL.md'], ['skills', 'engineering', 'pr-review', 'SKILL.md'],
-    ['skills', 'engineering', 'implement', 'SKILL.md'], ['skills', 'design', 'uiux-imagine', 'SKILL.md'], ['skills', 'design', 'uiux-refine', 'SKILL.md'],
-    ['skills', 'seo', 'seo-scan', 'SKILL.md'], ['skills', 'productivity', 'writing-for-agents', 'SKILL.md'], ['skills', 'productivity', 'wiki-conventions', 'SKILL.md'],
-    ['agents', 'implementer.md'], ['agents', 'issue-triager.md'], ...SEO_AGENTS.map((a) => ['agents', `${a}.md`]),
-  ];
-  const over = files.map((f) => [f.join('/'), [...body(read(...f))].length]).filter(([, n]) => n > 4500);
-  assert.deepEqual(over, []);
-});

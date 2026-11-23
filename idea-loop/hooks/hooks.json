@@ -56,6 +56,10 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" home glossary check --hook"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" spec skill-lint --hook"
           }
         ]
       },

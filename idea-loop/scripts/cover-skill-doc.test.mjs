@@ -4,7 +4,7 @@
  * Spec split-blog-publisher, ticket 03. What an agent running `cover` reads has to agree with what the scripts
  * return and with the files around it: the `SEO.md` keys it names are keys `dyna seo parse` returns, the DESIGN.md it
  * looks for is found the way the ticket says, every reference it points at exists, its description routes only,
- * its body stays under 5000 characters, the plugin READMEs list it and design-modeling's admission table says
+ * the plugin READMEs list it and design-modeling's admission table says
  * where a brand's outward-facing image recipes go.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail there.
@@ -32,10 +32,6 @@ test('cover: a model-invocable seo skill whose description routes only (a trigge
   for (const trigger of ['做封面', '重出封面']) assert.ok(DESCRIPTION.includes(trigger), `description lacks 「${trigger}」: ${DESCRIPTION}`);
   assert.match(DESCRIPTION, /时用/);
   for (const w of ['PNG', 'HTML', 'DESIGN.md', 'SEO.md', '默认出图配方', '1600']) assert.ok(!DESCRIPTION.includes(w), `description mentions 「${w}」: ${DESCRIPTION}`);
-});
-
-test('cover: the body stays under 5000 characters', () => {
-  assert.ok([...BODY].length < 5000, `body is ${[...BODY].length} characters`);
 });
 
 test('cover: every SEO.md key it reads from `images` is one `dyna seo parse` returns, and it runs that command', () => {
