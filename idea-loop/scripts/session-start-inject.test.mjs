@@ -17,7 +17,7 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
 const entries = hooks.SessionStart;
 const allCommands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
-// the two `dyna runtime inject` sections; the project map is a fourth command of its own (home-map-hook.test.mjs)
+// the two `dyna runtime inject` sections; the project map is a third command of its own (home-map-hook.test.mjs)
 const commands = allCommands.filter((c) => c.includes('bin/dyna" runtime inject '));
 
 /** The limit Claude Code puts on one hook's output; past it the session keeps only a 2,000-character preview. */

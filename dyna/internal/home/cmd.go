@@ -100,7 +100,7 @@ func (d Deps) project(cmd *cobra.Command) (Found, error) {
 
 // Command is the `home` module.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("home", "home（你的知识库与项目目录）：项目在哪、设备上登记了哪些项目、调度表、知识库怎么提交、各层索引、ADR 编号、setup 的三处用户级配置、记忆与术语表检查")
+	root := registry.Group("home", "home（你的知识库与项目目录）：项目在哪、设备上登记了哪些项目、调度表、知识库怎么提交、各层索引、ADR 编号、setup 的四处用户级配置、记忆与术语表检查")
 	const sess = registry.CallerSession
 
 	where := leaf("where", "打印当前项目在 home 里的目录（JSON）；在 home 本身里要带 --project", sess,

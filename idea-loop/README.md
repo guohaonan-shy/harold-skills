@@ -263,7 +263,7 @@ the skill text and a launcher.
 - **Modules**: `agent` (`codex run` / `codex image` / `claude run`: the headless sessions the skills start, and the fixed Codex prompts of
   `pr-review`), `design` (the archive's check, query, write and sections shooting, the critic's stop decision, the direction note and flow
   gates, the DESIGN.md lint), `dreaming` (the proposal table), `git` and `worktree` (landing, and `guard --hook` against a hand-written
-  `git worktree remove`), `home` (project directory, commit, map, index, ADR numbering, the three user-level config changes, the memory and
+  `git worktree remove`), `home` (project directory, commit, map, index, ADR numbering, the four user-level config changes, the memory and
   glossary checks), `issues` (status flips, labels, blocked-by, reading and opening issues, `guard --hook` that stops a hand-written
   `gh issue edit` of a `status:*` label), `mcp` (the design archive's MCP server), `pr` (description, review loop, evidence, candidates),
   `research`, `retro` (pool, digest, the replay runner's fixed-path install), `runtime`, `seo`, `serve`, `spec`, `test` (what the plugin's own
@@ -542,7 +542,7 @@ idea-loop/
     ├── dedupe-rules-doc.test.mjs        # tripwire: rules that used to be written in several places are written once in their owner (the prompt lines of the SEO direction agents, the first-round stock issues in the review report, the implementer's pre-hand-back test list, the Linear way of `issues`, the slug and link details) and the other places point at it
     ├── no-project-leak.test.mjs         # tripwire: skills/, agents/, docs/, README and AGENTS.md carry no source-project names or examples (evals/ replay cases and test fixtures are left out on purpose)
     ├── issues-skill-doc.test.mjs        # tripwire — the issues skill, its two platform references, and the tracker templates carry the seven states
-    ├── session-start-inject.test.mjs    # runs the SessionStart commands through a shell (with and without `MAGI_SESSION_ID`, with an unknown runtime): three sections, each under the limit, no frontmatter, no `${CLAUDE_PLUGIN_ROOT}` left, the right reference; no matcher
+    ├── session-start-inject.test.mjs    # runs the SessionStart commands through a shell (with and without `MAGI_SESSION_ID`, with an unknown runtime): two sections, each under the limit, no frontmatter, no `${CLAUDE_PLUGIN_ROOT}` left, the right reference; no matcher
     ├── session-inject-doc.test.mjs      # doc test — skills/ no longer tell the main session to call the runtime skill with the Skill tool; every agent definition that reaches a runtime capability says to fetch it with `dyna runtime show`
     ├── runtime-tripwire.test.mjs        # tripwire — skills/ and agents/ carry no runtime-specific tool names, commands or paths (frontmatter tool declarations are the only thing let through; the runtime data lives outside skills/ and agents/); a hit prints file:line, rule and the line
     ├── runtime-data-doc.test.mjs        # tripwire — runtime/capabilities.md's capability list and both data files match one to one; the desktop data keeps every 0.1.10 tool name; the human's own browser has a table row, a Claude in Chrome section on the desktop and a "none" section in magi; the desktop browser section names the `@playwright/cli` mic-flow session and points at `runtime/claude-desktop-mic.md`, magi's says none
