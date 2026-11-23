@@ -117,3 +117,11 @@ test('every cited section of the evidence skill exists, and nothing points at th
   }
   assert.deepEqual(problems, []);
 });
+
+test('issue-session 的「边界」把讨论中冒出的范围题指向 pr-review review 标准的范围题推荐法（#280 工单 02 的人的决定 D3）', () => {
+  const boundary = bodyOf(read('skills', 'engineering', 'issue-session', 'SKILL.md')).split('## 边界')[1] ?? '';
+  assert.match(boundary, /范围题（并进当前 PR 还是另开）/, '边界一节没提范围题');
+  assert.match(boundary, /`idea-loop:pr-review` 的 review 标准/, '范围题没指向 pr-review 的 review 标准');
+  assert.doesNotMatch(boundary, /影响这份 spec 的实现/, '范围题推荐法不在这里转述，只指过去');
+  assert.match(standards, /\*\*范围题\*\*（冒出的改动并进当前 PR，还是另开）/, 'review 标准里的范围题推荐法没了');
+});
