@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-13
 title: "#128 滚动驱动段：只认整段钉住，每一步一张图"
 tags: [idea-loop-decisions, scroll-driven-whole-pin]
-related: ["[[scroll-driven-whole-pin]]", "[[0005-design-archive-unstable-sections]]"]
+related: ["[[0077-scroll-driven-whole-pin]]", "[[0005-design-archive-unstable-sections]]"]
 ---
 
 U 是人的原话，A 是 AI 的结论（取证过程略去，出处在 spec 里写明）。

@@ -279,9 +279,19 @@ func TestEveryKnownEnvironmentHasADataFileAndEveryDataFileIsKnown(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	// <environment>-<topic>.md is a detail file one of that environment's sections points at (the injected data has
+	// a size cap, so a long procedure lives beside it): not an environment of its own.
+	detail := func(n string) bool {
+		for _, env := range rt.Names {
+			if strings.HasPrefix(n, env+"-") {
+				return true
+			}
+		}
+		return false
+	}
 	have := map[string]bool{}
 	for _, e := range entries {
-		if n := strings.TrimSuffix(e.Name(), ".md"); n != strings.TrimSuffix(rt.CapabilitiesFile, ".md") {
+		if n := strings.TrimSuffix(e.Name(), ".md"); n != strings.TrimSuffix(rt.CapabilitiesFile, ".md") && !detail(n) {
 			have[n] = true
 		}
 	}
