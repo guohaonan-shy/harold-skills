@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-16
 title: uiux-refine 重设计 grill：评委降为顾问、每轮交设计评审报告
 tags: [design-workflow, refine-judge-advisor]
-related: ["[[refine-judge-advisor]]", "[[2026-09-11-lenny-ai-world-class-designer]]"]
+related: ["[[0074-refine-judge-advisor]]", "[[2026-09-11-lenny-ai-world-class-designer]]"]
 ---
 
 这份记录是 2026-11-15 到 2026-11-16 的一场 grill，U 是人（Harold）的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。题号（Q1、Q2…）是 grill 里 AI 出的题，人按题号回。

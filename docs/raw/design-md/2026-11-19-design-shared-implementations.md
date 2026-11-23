@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-19
 title: DESIGN.md 登记共用实现、补 Voice 章（#366 triage 讨论）
 tags: [design-md, design-shared-implementations]
-related: ["[[design-shared-implementations]]"]
+related: ["[[0064-design-shared-implementations]]"]
 ---
 
 U 是 Harold 的原话，A 是 AI 的结论（只留结论与发现，取证过程略去）。

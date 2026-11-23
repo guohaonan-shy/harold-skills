@@ -32,4 +32,4 @@ issue 标题还写了「知识库绑在代码仓库里」那一半（业务根�
 - `idea-loop/skills/productivity/wiki-conventions/SKILL.md` 有「知识库落地」一节，含「没有代码可跟」的清单；`idea-loop/skills/engineering/setup/SKILL.md` 的「写」一节与 `setup/references/questions.md` 有三选一的知识库题。
 - 守护：`idea-loop/scripts/knowledge-base-landing-doc.test.mjs`（旧说法「设计 PR」「spec PR、设计 PR」不再出现，各入口指向「知识库落地」）、`setup-single-source.test.mjs`。
 - 合并在 PR #254「idea-loop 0.1.10：spec、设计跟代码一个 PR；setup 问要不要知识库」（2026-11-05）。issue #244 在 2026-11-13 以 NOT_PLANNED 关闭，原因是它的原方案（业务根目录）已被推翻、跟 #252 重复；上面两件落地的部分是它的子集。
-- 没做的那一半（知识库独立成仓库、按需装）由 #252 继续跟，仍开着。
+- 没做的那一半（知识库独立成仓库、按需装）由 #252 跟；#252 已于 2026-11-17 关闭，合并在 PR #360，独立成仓库那一半是否落地未核。

@@ -17,7 +17,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -91,8 +91,10 @@ test('capabilities.md states the fallback with its two exceptions and asking in 
   for (const gone of ['## 怎么用', '## 检测规则', '## 加一种运行环境', 'runtime-detect.mjs', 'idea-loop:runtime']) assert.ok(!capabilitiesMd.includes(gone), gone);
 });
 
-test('the runtime directory holds capabilities.md and one data file per runtime the plugin ships, and nothing else', () => {
-  assert.deepEqual(readdirSync(dir).sort(), ['capabilities.md', ...RUNTIMES.map((n) => `${n}.md`)].sort());
+test('the runtime directory holds capabilities.md, one data file per runtime the plugin ships, and that runtime\'s detail files, and nothing else', () => {
+  // `<runtime>-<topic>.md` is a detail file one of that runtime's sections points at (the injected data has a size cap)
+  const detail = (f) => RUNTIMES.some((r) => f.startsWith(`${r}-`));
+  assert.deepEqual(readdirSync(dir).filter((f) => !detail(f)).sort(), ['capabilities.md', ...RUNTIMES.map((n) => `${n}.md`)].sort());
 });
 
 for (const name of RUNTIMES) {
@@ -128,6 +130,26 @@ test('the claude-desktop data carries every desktop tool name the 0.1.10 bodies 
   const text = read('claude-desktop.md');
   assert.deepEqual(DESKTOP_NAMES.filter((n) => !text.includes(n)), []);
   assert.ok(!text.includes('browser-lock.mjs') && !text.includes('desktop-handoff.mjs'), 'the old scripts are not named');
+});
+
+// spec browser-fake-mic: the MCP browser cannot feed a fake microphone (sandbox on, real mic once granted), so the mic flow
+// lives in a command-line session. The desktop 浏览器 section names it and points at the detail file (the injected data has a
+// size cap); deleting the subsection or the file, or turning it back into MCP steps, goes red here.
+test('claude-desktop 浏览器 names the playwright-cli mic flow and points at a detail file that carries the procedure', () => {
+  const section = sectionText(read('claude-desktop.md'), '浏览器');
+  assert.ok(section.includes('@playwright/cli'), '浏览器 does not mention @playwright/cli');
+  assert.ok(section.includes('### 要麦克风的流程'), '浏览器 has no 要麦克风的流程 subsection');
+  const pointer = section.match(/\$\{CLAUDE_PLUGIN_ROOT\}\/runtime\/(claude-desktop-mic\.md)/);
+  assert.ok(pointer, '要麦克风的流程 does not point at runtime/claude-desktop-mic.md');
+  assert.ok(existsSync(join(dir, pointer[1])), 'the pointed file does not exist');
+  const detail = read(pointer[1]);
+  for (const word of ['--use-fake-device-for-media-stream', '--use-file-for-fake-audio-capture', '%noloop', 'chromiumSandbox', 'grantPermissions', 'clearPermissions', 'NotSupportedError']) assert.ok(detail.includes(word), word);
+});
+
+test('the magi data has no mic flow (desktop only, decided): its 浏览器 says 没有 and takes the fallback', () => {
+  const text = read('magi.md');
+  assert.ok(!text.includes('playwright-cli'));
+  assert.match(sectionText(text, '浏览器'), /要麦克风的流程[^\n]*没有/);
 });
 
 test('the magi data carries the spec table\'s commands and the dispatch shape', () => {

@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-17
 title: eval 写法的形状：把 toeflair 的 ai-eval 迁进 harold-skills，再补规则
 tags: [ai-eval, ai-eval-plugin]
-related: ["[[ai-eval-plugin]]"]
+related: ["[[0061-ai-eval-plugin]]"]
 ---
 
 > 格式：U 是人的原话，逐字保留；A 是 AI 的结论与发现，取证过程略去。讨论发生在 harold-skills#293 的 triage 会话里。
