@@ -140,10 +140,12 @@ test('spec drafting decides what becomes a 待定 by the user rule 「思考与�
   const toSpec = bodyOf(read('skills', 'engineering', 'to-spec', 'SKILL.md'));
   const decisions = toSpec.split('## 实现决策')[1]?.split('\n## ')[0] ?? '';
   assert.match(decisions, /「思考与决策」/);
+  assert.match(decisions, /「只由我做」/);
   assert.match(decisions, /「停下问我」/);
   assert.doesNotMatch(decisions, /依据冲突或没有/);
   const draft = read('skills', 'engineering', 'issue-session', 'references', 'draft-spec.md');
   const item = draft.split('\n').find((l) => /^6\. /.test(l)) ?? '';
+  assert.match(item, /「只由我做」/);
   assert.match(item, /「停下问我」/);
   assert.doesNotMatch(item, /冲突或没有/);
 });
