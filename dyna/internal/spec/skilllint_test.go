@@ -188,6 +188,42 @@ func TestHookReportsAnInlineHostCommandInAnIdeaLoopFileWithFileAndLine(t *testin
 	}
 }
 
+// the two lines the dispatch skill really had (git show 489c5278:idea-loop/skills/engineering/issue-dispatch/SKILL.md,
+// lines 18 and 29): the command name is followed by an option and its value before the subcommand
+func TestAnOptionBeforeTheSubcommandDoesNotHideAnInlineHostCommand(t *testing.T) {
+	w := newWorkspace(t)
+	f := filepath.Join(w.ideaLoop, "skills", "x", "SKILL.md")
+	for _, c := range []struct{ line, want string }{
+		{"对各项目的本地 clone 只做 `git -C <cloneDir> pull --ff-only` 和建 worktree\n", "git -C <cloneDir> pull --ff-only"},
+		{"clone 不在默认分支、`git -C <clone> pull --ff-only` 失败：记一行\n", "git -C <clone> pull --ff-only"},
+		{"看 `gh --repo <仓库> issue view 1` 的输出\n", "gh --repo <仓库> issue view 1"},
+		{"看 `gh -R owner/repo pr list` 的输出\n", "gh -R owner/repo pr list"},
+		{"看 `git --no-pager log -1` 的输出\n", "git --no-pager log -1"},
+		{"看 `git -c core.quotepath=off diff` 的输出\n", "git -c core.quotepath=off diff"},
+	} {
+		writeFile(t, f, tripwireSkill(c.line))
+		errs, code := w.hook(t, f)
+		if code != 2 || !strings.Contains(errs, "写了行内命令 "+c.want) {
+			t.Errorf("%q: %d %q", c.line, code, errs)
+		}
+	}
+	// the pit mark and the adapter layer still let it through
+	writeFile(t, f, tripwireSkill("坑：`git -C <clone> pull --ff-only` 会卡\n"))
+	if errs, code := w.hook(t, f); code != 0 {
+		t.Fatalf("a marked line: %d %q", code, errs)
+	}
+}
+
+// options with no subcommand after them are not a command
+func TestOptionsAloneAfterTheCommandNameAreNotAnInlineCommand(t *testing.T) {
+	w := newWorkspace(t)
+	f := filepath.Join(w.ideaLoop, "skills", "x", "SKILL.md")
+	writeFile(t, f, tripwireSkill("`git --version`、`gh --help`、`git -C <目录>`、`git -c`、`gh -R <仓库>` 都不是命令\n"))
+	if errs, code := w.hook(t, f); code != 0 {
+		t.Fatalf("%d %q", code, errs)
+	}
+}
+
 func TestAPitMarkOnTheSameLineLetsTheCommandThrough(t *testing.T) {
 	w := newWorkspace(t)
 	f := filepath.Join(w.ideaLoop, "skills", "x", "SKILL.md")

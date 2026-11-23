@@ -37,8 +37,10 @@ var (
 	skillFile  = regexp.MustCompile(`(^|/)skills/(.+/)?SKILL\.md$`)
 	agentFile  = regexp.MustCompile(`(^|/)agents/[^/]+\.md$`)
 	inlineCode = regexp.MustCompile("`([^`\n]+)`")
-	// hostCommand is an inline code span that starts as a `gh <subcommand>` or `git <subcommand>` command.
-	hostCommand = regexp.MustCompile(`^(?:gh|git) [a-z]`)
+	// hostCommand is an inline code span that starts as a `gh <subcommand>` or `git <subcommand>` command. Options
+	// (each with at most one value: `-C <dir>`, `--repo <repo>`, `-c k=v`, `--no-pager`) may sit between the command
+	// name and the subcommand, as in `git -C <dir> pull`; options with nothing after them (`git --version`) are not.
+	hostCommand = regexp.MustCompile(`^(?:gh|git)(?: +-{1,2}[A-Za-z][\w-]*(?:=\S+)?(?: +[^\s-]\S*)?)* +[a-z]`)
 )
 
 // IsLintedFile: is this path a SKILL.md under a skills/ directory, or an agent definition directly under agents/?
