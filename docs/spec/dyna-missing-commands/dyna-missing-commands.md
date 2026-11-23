@@ -61,7 +61,7 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 
 同一行为的其他入口：
 
-- **Linear 项目**：排除。1、2 两样在 Linear 上走 MCP（`idea-loop:issues` 的 Linear 做法），跟 `issues type`、`issues priority` 一样只管 GitHub。
+- **Linear 项目**：排除。1、2 两样在 Linear 上走连接器（`idea-loop:issues` 的 Linear 做法），跟 `issues type`、`issues priority` 一样只管 GitHub。
 - **`issues new --kind`**：纳入不变，开 issue 时照旧一次打上；`issues kind` 只管已有的 issue。
 - **implement 拍「之前 → 之后」的 base 检出**（`stop-and-resume.md`，`worktree add base --detach --base`）：不变，它要的就是基准分支的最新。
 - **merge.md 回滚用的 `git revert -m 1`**：排除，不在这五样里。
@@ -110,7 +110,7 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | 不涉及 |
 | LLM 输出质量（prompt 改动） | eval | 不涉及：只把 skill 里的结果描述换成命令，不改判断规则 |
 | 视觉正确性 | UI 实现环 | 不涉及 |
-| 端到端用户流程 | 浏览器端到端测试 | 不涉及 |
+| 端到端用户路径 | 浏览器端到端测试 | 不涉及 |
 
 - **seam**：沿用 dyna 已有的两个。① 模块的 `Deps` 注入假 `gh` / 真临时 git 仓库，从命令入口喂参数、读输出和退出码：能抓到判定和参数解析错，漏掉真 GitHub 的检查注册时序。② `dyna-scan.test.mjs` 拿插件下限那一版的登记表扫 skill：能抓到 skill 写了登记表里没有的命令或参数，漏掉命令行为本身。
 - **增量功能测试**：
