@@ -118,4 +118,5 @@
 | [decisions/293](decisions/293.md) | conversation | 2026-11-20 | 决定记录 —— #293 的 todo 会话：ai-eval 迁进来，夜里按推荐定 4 题，白天定版本（ai-eval 0.0.1、idea-loop patch）与 setup 统一入口另开 #420；两条候选都不批 |
 | [[2026-11-20-dispatch-one-per-device]] | conversation | 2026-11-20 | #386 triage：一台设备一个调度，上限按状态、配置进 home、每 30 分钟一轮 |
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
+| [decisions/386](decisions/386.md) | conversation | 2026-11-23 | 决定记录 —— #386 一台设备一个调度 dispatch-home：开工前提、默认名额、模型钉法、命令行发布时机与合并顺序 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
