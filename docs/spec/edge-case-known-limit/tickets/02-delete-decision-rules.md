@@ -41,7 +41,7 @@
 - [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。（本工单的行为证明由 03 的回放用例承担，这里写「⏭ 延后 → 03」即可。） 已由 03 的四个回放用例证明（见 03 的验收）。
-- [ ] 人的决定（2026-11-23）：issue-session「边界」里范围题那句指向 pr-review review 标准的范围题推荐法；回放用例 `scope-question-recommend` 用新插件跑过，改后答「是」（判定带出处，写进它的 annotations.md）。issue-session「边界」那一句已改、有文档测试钉住（`decision-evidence-principles-doc.test.mjs` 最后一条）；回放跑了三次（1 过、1 改前就答是、1 无结论），判定与出处写进了 `annotations.md`「新插件重跑」；三次改后会话都没调到 issue-session，这个用例测不到那一句 ⏭ 延后 → PR 交付验收：要人判断是否接受这个抽样结果，或另开 issue 改用例 prompt 让会话走 issue-session。
+- [x] 人的决定（2026-11-23）：issue-session「边界」里范围题那句指向 pr-review review 标准的范围题推荐法；回放用例 `scope-question-recommend` 用新插件跑过，改后答「是」（判定带出处，写进它的 annotations.md）。issue-session「边界」那一句已改、有文档测试钉住（`decision-evidence-principles-doc.test.mjs` 最后一条）；回放跑了三次（1 过、1 改前就答是、1 无结论），判定与出处写进了 `annotations.md`「新插件重跑」；三次改后会话都没调到 issue-session，这个用例测不到那一句 人的决定（2026-11-23，D4）：「D4 A」——接受只靠文档测试，用例输入改成走 issue 会话另开 #478。
 
 ## 选中的存量回归
 
