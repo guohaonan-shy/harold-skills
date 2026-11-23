@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-16
 title: 博客 workflow 拆分的 grill（#163）
 tags: [idea-loop-seo, split-blog-publisher]
-related: ["[[split-blog-publisher]]"]
+related: ["[[0085-split-blog-publisher]]"]
 ---
 
 harold-skills #163 的 triage 会话。U 是人的原话，逐字保留；A 是 AI 的结论，取证过程略去。

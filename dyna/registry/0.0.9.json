@@ -1052,23 +1052,16 @@
     {
       "command": "git commit",
       "module": "git",
-      "use": "commit [文件]...",
-      "summary": "只 add 给定的文件并提交，工作区和暂存区里别的改动不进这个提交；--empty 提没有文件改动的提交；打印新提交的完整 SHA",
+      "use": "commit <文件>...",
+      "summary": "只 add 给定的文件并提交，工作区和暂存区里别的改动不进这个提交；打印新提交的完整 SHA",
       "caller": "session",
       "next": "dyna git commit --repo <目录> -m <说明> <文件>...",
       "args": [
         {
           "name": "文件",
           "kind": "positional",
-          "required": false,
+          "required": true,
           "variadic": true
-        },
-        {
-          "name": "empty",
-          "kind": "flag",
-          "required": false,
-          "value": "bool",
-          "description": "提一个没有文件改动的提交：只给 -m，不给文件；暂存区里别的改动不进这个提交"
         },
         {
           "name": "message",
@@ -1556,31 +1549,6 @@
       ]
     },
     {
-      "command": "issues kind",
-      "module": "issues",
-      "use": "kind <docs> <n> <bug|feature|improvement>",
-      "summary": "换 issue 的 kind:* label（先加新的、再去掉别的 kind:*；已经是这个就不动）",
-      "caller": "session",
-      "next": "dyna issues labels <docs>",
-      "args": [
-        {
-          "name": "docs",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "n",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "bug|feature|improvement",
-          "kind": "positional",
-          "required": true
-        }
-      ]
-    },
-    {
       "command": "issues labels",
       "module": "issues",
       "use": "labels <docs>",
@@ -1599,33 +1567,6 @@
           "required": false,
           "value": "bool",
           "description": "删掉状态、优先级、类型、分类和保留清单之外的 label"
-        }
-      ]
-    },
-    {
-      "command": "issues list",
-      "module": "issues",
-      "use": "list <docs> --state <triage|todo|in-progress|in-review>",
-      "summary": "JSON：这个状态下全部开着的 issue（号、标题、指派人），号从小到大；不按挡路、指派人过滤（派活用 candidates）",
-      "caller": "session",
-      "next": "dyna issues show <docs> <n>",
-      "args": [
-        {
-          "name": "docs",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "triage|todo|in-progress|in-review",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "state",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "triage / todo / in-progress / in-review"
         }
       ]
     },
@@ -1990,40 +1931,6 @@
           "name": "round",
           "kind": "positional",
           "required": true
-        }
-      ]
-    },
-    {
-      "command": "pr checks",
-      "module": "pr",
-      "use": "checks <owner/repo> <pr> [--timeout <时长>]",
-      "summary": "等 PR 当前 head 的检查跑完，第一行打印结论：green（全过，skipped 算过，退出 0）、red（第一个失败或取消就返回，列出名字和链接，退出 1）、none（开始 60 秒内一个检查都没有，退出 0）、timeout（默认 30 分钟，退出 124）",
-      "caller": "session",
-      "next": "dyna pr view <owner/repo> <pr>",
-      "args": [
-        {
-          "name": "owner/repo",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "pr",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "interval",
-          "kind": "flag",
-          "required": false,
-          "value": "duration",
-          "description": "隔多久问一次"
-        },
-        {
-          "name": "timeout",
-          "kind": "flag",
-          "required": false,
-          "value": "duration",
-          "description": "等多久（如 30m、90s）；到时还有检查没跑完就是 timeout"
         }
       ]
     },
@@ -3649,13 +3556,6 @@
           "name": "名字",
           "kind": "positional",
           "required": true
-        },
-        {
-          "name": "at",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "跟 --detach 一起用：游离在这个提交上，不读 --base；本地找不到先 fetch origin 再找（上线自查检出合并提交用）"
         },
         {
           "name": "base",

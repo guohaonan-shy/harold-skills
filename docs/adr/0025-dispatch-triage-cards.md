@@ -16,7 +16,7 @@ related: ["[[2026-11-05-issue-triage-grill]]", "[[2026-11-05-issue-model-regrill
 
 另一件事：分类可以注“（独立队列，上限 N）”，只有 `seo-setup` 写过，结果侧边栏里 `seo 审核中`、`seo 设计中`等六个 section 跟主队列并排。人明确说“所有 issue 统一一个队列”。
 
-## 2 决策（how）
+## 2 决策（how） ⚠️ 已被取代（部分：triage 也出卡片、一轮合计最多 3 张、数还没点的卡片；magi 直接开与删独立队列不受影响）→ [[0065-dispatch-day-night-modes]] §2
 
 - **根因判断**：“triage 由人评估”被理解成了“triage 的会话由人开”。人要的只是讨论的**时机**由人定；桌面端调度出的是卡片，要人点了才开会话，已经满足这一点，不需要连入口一起拿掉。
 - **triage 也出卡片**：`issues candidates --state=triage` 取候选，顺序与 todo 相同（指派给本人的在前，按优先级，同级里停留久的在前；指派给别人的不派）；卡片的 prompt 不分状态，`issue-session` 开场按 issue 状态分路。一轮合计最多 3 张，todo 先交，剩下的给 triage。
@@ -25,7 +25,7 @@ related: ["[[2026-11-05-issue-triage-grill]]", "[[2026-11-05-issue-model-regrill
 - **删掉独立队列**：`issues queues` 不再带 `<号>`，返回 `{ cap: 10, triageCap: 3, sections: [triage, in-progress, in-review] }`；`candidates` 去掉 `--queue`；`seo-setup` 不再写那条注；脚本仍把旧注从分类说明里剥掉，已装的项目不用改文件也不坏。已待在 `seo …` section 里的会话不兼容，由人把它们挪进同名主 section。
 - 跳过 triage 的项目：没有候选，不受影响。
 
-## 3 结果（result）
+## 3 结果（result） ⚠️ 已被取代（部分：卡片的做法）→ [[0065-dispatch-day-night-modes]] §2
 
 - skill：`issue-dispatch` 有独立的“交出 triage”一步与 `triageCap` 计数，边界里不再写“由人自己开会话”；`issue-session` 会话表里 triage 会话“谁开的”是“人或调度卡片”；`issue-triage` 批表的 triage 行写“调度会给它出会话卡片”。
 - 脚本：`idea-loop/scripts/issues.mjs` 的 `candidates(…, { state })`（`todo`/`triage`）、`queues()`、`MAIN_CAP`、`TRIAGE_CAP`；`queueOf` 已删。

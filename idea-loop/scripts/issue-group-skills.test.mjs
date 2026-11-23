@@ -47,7 +47,7 @@ test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账�
   assert.match(md, /dyna runtime show/);
   for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
   // the how is no longer in the body: no sidebar section, card or in-session loop
-  assert.doesNotMatch(md, /section|卡片|CronCreate|会话内循环|(?<![\w-])loop(?![\w-])/, 'dispatch 正文还写着 section、卡片或会话内循环的做法');
+  assert.doesNotMatch(md, /section(?!Limit)|卡片|CronCreate|会话内循环|(?<![\w-])loop(?![\w-])/, 'dispatch 正文还写着 section、卡片或会话内循环的做法');
 });
 
 test('issue-dispatch：汇报里的子会话只剩设计阶段的会话，不提实现会话', () => {

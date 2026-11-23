@@ -46,7 +46,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 
 ### 调度（issue-dispatch 的三处）
 
-- **怎么一轮一轮跑**：桌面定时任务，整台设备一个 `dispatch-home`，每 30 分钟一次，每次运行开一个新的调度会话、跑一轮就结束。人敲 `/idea-loop:issue-dispatch`（在哪个目录都行）起：照那个 skill 的「起调度」，用「定时任务」在 home 里建（已有就 `update_scheduled_task`）：id `dispatch-home`，标题 `issue 调度`，`cronExpression` 取 `7,37 * * * *`（分钟避开 0 和 30），prompt `/idea-loop:issue-dispatch`；旧的 `dispatch-<仓库名>` 用 `update_scheduled_task` 带 `enabled: false` 停用（不删）；然后立刻做第一轮。起好后汇报里写下次运行的时间，并提醒人把 `dispatch-home` 的模型选成 Sonnet：建任务的工具没有模型和思考强度的参数，只能人在 app 里建或改任务时手动选。
+- **怎么一轮一轮跑**：桌面定时任务，整台设备一个 `dispatch-home`，每 30 分钟一次，每次运行开一个新的调度会话、跑一轮就结束。人敲 `/idea-loop:issue-dispatch`（在哪个目录都行）起：照那个 skill 的「起调度」，用「定时任务」在 home 里建（已有就 `update_scheduled_task`）：id `dispatch-home`，标题 `issue 调度`，`cronExpression` 取 `7,37 * * * *`，prompt `/idea-loop:issue-dispatch`；旧的 `dispatch-<仓库名>` 用 `update_scheduled_task` 带 `enabled: false` 停用（不删）；然后立刻做第一轮。起好后汇报里写下次运行的时间，并提醒人把 `dispatch-home` 的模型选成 Sonnet：建任务的工具没有模型和思考强度的参数，只能人在 app 里建或改任务时手动选。
 - **怎么数开着的会话**：`dyna home dispatch` 给出此刻的 `dispatch`、`perRound`、`caps` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**，数两样：triage、in-progress 各开着几个，任何仓库名都算（整台设备一个数；in-progress 的全算，不看活动时间；in-review 的不数）；各项目的同号会话按仓库名分开记，**同号只认本项目仓库名**。标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。判别用标题，不用会话的 `startedBy`；交出时调度会给新会话改成这个标题，所以下一轮数得到。已知限制：标题被人手动改了就数不到，可能多开一个，接受。
 - **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 `perRound` 个（算式见 `idea-loop:issue-dispatch`）。人在调度会话里说话的那一轮也走这条路。
   1. **建 worktree**：`<clone>` 是 issue 所在项目的本地 clone（`cloneDir`）。路径是 `<clone 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在 clone 外面，所以 clone 的工作区和分支都不动。`<slug>` 取 issue 标题的几个词，小写、连字符。**triage 会话不建分支**：命令同下面「两处都没有」那条，把 `-b <分支>` 换成 `--detach`；spec 直接提交到 home，要写代码时 todo 会话自己接分支（`idea-loop:issue-session` 的开场第 4 步）。todo 会话的分支名取 `issues show` 给出的 issue 分支（先放着或上次会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（上次会话归档时只清了工作区，分支还在，再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
@@ -85,9 +85,6 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 
 ### 无头
 
-后台任务和子代理里的一切操作都走 Playwright：开页面、量、截图、走用户路径、复现问题，结果留在文件里。
-
-- 本地文件经静态服务器打开，截图先存进工作区再挪，造慢网络、失败的请求：都照下面「Playwright 的限制」。
 - 很多页面要登录。isolated 的浏览器每次都没有登录态，每次照目标项目给的测试账号走一遍登录（在项目目录的 `DEVELOPMENT.md` 或代码仓库的 `CLAUDE.md` 里找）。找不到：在跟人对话的会话里问人；你是子代理就停下，在交回里写明缺测试账号。
 - 截之前把页面带到要看的那个数据状态，组件处在静止态：截到错的状态或加载中，它就成了错的基准。
 
@@ -101,12 +98,16 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 
 ### 并行时抢锁
 
-一个会话只有一个 MCP 浏览器，几个子代理同时用会点到对方的页面。调用方给了锁目录的，每次用 `mcp__playwright__browser_*` 之前先抢锁，按下面的步骤抢、释放，等了默认的 30 分钟还没拿到就停下；自己起 chromium 的命令（测量、拼流程图、录动图）不用。
+一个会话只有一个 MCP 浏览器，几个子代理同时用会点到对方的页面。调用方给了锁目录的，每次用 `mcp__playwright__browser_*` 之前照下面的步骤先抢锁；自己起 chromium 的命令（测量、拼流程图、录动图）不用。
 
 1. 先把不需要浏览器的活做完，再抢：`dyna ui lock acquire <锁目录> --owner <你的名字>`。
 2. 拿到后先 `browser_close` 一次，不继承上一个人的标签页和登录态；只访问自己端口上的页面。
 3. 用完 `browser_close`，再 `dyna ui lock release <锁目录> --owner <你的名字>`。
 4. 等了默认的 30 分钟还没拿到，就停下，在交回里写明卡在锁上。
+
+### 要麦克风的流程
+
+不走 MCP 浏览器（授权后拿到真麦克风），用 `@playwright/cli` 带假麦克风自己走完：读 `${CLAUDE_PLUGIN_ROOT}/runtime/claude-desktop-mic.md`。
 
 ## 人的浏览器
 

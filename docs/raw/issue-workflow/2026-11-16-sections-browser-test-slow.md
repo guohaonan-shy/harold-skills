@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-16
 title: 讨论 —— #192 设计档案浏览器测试在全量套件里「卡住」，怎么修
 tags: [issue-workflow, sections-browser-test-out-of-full-suite]
-related: ["[[sections-browser-test-out-of-full-suite]]"]
+related: ["[[0078-sections-browser-test-out-of-full-suite]]"]
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现。末尾一张「本轮决议」表。
