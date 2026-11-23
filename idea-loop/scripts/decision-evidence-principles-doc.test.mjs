@@ -149,3 +149,10 @@ test('spec drafting decides what becomes a 待定 by the user rule 「思考与�
   assert.match(item, /「停下问我」/);
   assert.doesNotMatch(item, /冲突或没有/);
 });
+
+test('implement 分拣表里标「spec 缺口」的 found，判要不要交给人时「只由我做」和「停下问我」都算（#280 工单 03，review 第 2 轮 S1 同类）', () => {
+  const row = read('skills', 'engineering', 'implement', 'SKILL.md').split('\n').find((l) => l.startsWith('| 标「spec 缺口」的 `found`')) ?? '';
+  assert.ok(row, '分拣表里没有标「spec 缺口」的 found 那一行');
+  assert.match(row, /「只由我做」/);
+  assert.match(row, /「停下问我」/);
+});
