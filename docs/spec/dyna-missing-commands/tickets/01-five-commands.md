@@ -25,17 +25,17 @@ dyna 在集成分支当前版本（0.0.8）上升到 **0.0.9**，存 `0.0.9` 的
 
 ## 验收标准
 
-- [ ] 暂存区有一个改动时 `dyna git commit --empty -m "chore: 开工 #1"`：多一个没有文件改动的提交，暂存区那个改动还在。
-- [ ] `dyna git commit --empty -m x a.txt`：报错退出 1，提示去掉 `--empty`。
-- [ ] 两个提交的临时仓库里 `dyna worktree add build --detach --at <第一个提交> --path <路径>`：worktree 的 HEAD 是第一个提交；`dyna worktree remove <路径> --force` 删得掉。
-- [ ] 假 gh 下 issue 7 带 `kind:bug`，`dyna issues kind docs 7 improvement` 后只剩 `kind:improvement`；已经是 improvement 时不调改 label。
-- [ ] 假 gh 下三个 open issue（#1 in-progress 指派给别人、#2 in-review、#3 in-progress 被挡路），`dyna issues list docs --state in-progress` 输出 #1、#3 两条；`--state backlog` 报错指向 `issues backlog`。
-- [ ] 假 gh 按次返回检查列表：空 → pending → pass 得 green 退出 0；一直空得 none 退出 0；出现 fail 得 red、列出它、退出 1；一直 pending 到超时得 timeout 退出 124。
-- [ ] dyna 版本 0.0.9、`dyna/registry/0.0.9.json` 已存且 `go test ./...` 绿；`idea-loop/dyna-version` 下限 `>=0.0.9`；`dyna-scan.test.mjs` 绿，把某处 skill 写成 `dyna pr checks --foo` 时红。
-- [ ] 上面五处 skill 原文都改成了命令，skill 里不再有 `--allow-empty`、手写的 `gh pr checks`、给 `kind:*` 的 `gh issue edit --add-label`。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 暂存区有一个改动时 `dyna git commit --empty -m "chore: 开工 #1"`：多一个没有文件改动的提交，暂存区那个改动还在。
+- [x] `dyna git commit --empty -m x a.txt`：报错退出 1，提示去掉 `--empty`。
+- [x] 两个提交的临时仓库里 `dyna worktree add build --detach --at <第一个提交> --path <路径>`：worktree 的 HEAD 是第一个提交；`dyna worktree remove <路径> --force` 删得掉。
+- [x] 假 gh 下 issue 7 带 `kind:bug`，`dyna issues kind docs 7 improvement` 后只剩 `kind:improvement`；已经是 improvement 时不调改 label。
+- [x] 假 gh 下三个 open issue（#1 in-progress 指派给别人、#2 in-review、#3 in-progress 被挡路），`dyna issues list docs --state in-progress` 输出 #1、#3 两条；`--state backlog` 报错指向 `issues backlog`。
+- [x] 假 gh 按次返回检查列表：空 → pending → pass 得 green 退出 0；一直空得 none 退出 0；出现 fail 得 red、列出它、退出 1；一直 pending 到超时得 timeout 退出 124。
+- [x] dyna 版本 0.0.9、`dyna/registry/0.0.9.json` 已存且 `go test ./...` 绿；`idea-loop/dyna-version` 下限 `>=0.0.9`；`dyna-scan.test.mjs` 绿，把某处 skill 写成 `dyna pr checks --foo` 时红。
+- [x] 上面五处 skill 原文都改成了命令，skill 里不再有 `--allow-empty`、手写的 `gh pr checks`、给 `kind:*` 的 `gh issue edit --add-label`。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 

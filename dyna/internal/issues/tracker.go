@@ -42,7 +42,7 @@ func LinearRefusal(cmd string) string {
 }
 
 // GithubOnly are the commands that only make sense on GitHub.
-var GithubOnly = map[string]bool{"labels": true, "type": true, "set": true, "candidates": true, "reconcile": true, "migrate": true, "new": true, "priority": true, "backlog": true, "note": true}
+var GithubOnly = map[string]bool{"labels": true, "type": true, "set": true, "candidates": true, "reconcile": true, "migrate": true, "new": true, "priority": true, "kind": true, "list": true, "backlog": true, "note": true}
 
 var skipRe = regexp.MustCompile(`(?im)^\s*(?:[-*]\s*)?(?:\|\s*)?(?:\*\*)?triage(?:\*\*)?\s*(?:[：:]|\|)\s*(?:\*\*)?跳过`)
 

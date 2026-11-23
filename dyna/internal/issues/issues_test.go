@@ -1034,6 +1034,7 @@ func TestInALinearProjectTheCommandsThatWriteGitHubAreRefusedAndGHIsNeverCalled(
 	lines := map[string][]string{
 		"labels": {"labels", p.docs}, "type": {"type", p.docs, "1", "seo"}, "set": {"set", p.docs, "todo", "1"}, "candidates": {"candidates", p.docs},
 		"reconcile": {"reconcile", p.docs}, "migrate": {"migrate", p.docs}, "new": {"new", p.docs, "标题", body}, "priority": {"priority", p.docs, "P0", "1"},
+		"kind": {"kind", p.docs, "1", "bug"}, "list": {"list", p.docs, "--state", "todo"},
 		"backlog": {"backlog", p.docs}, "note": {"note", p.docs, "1", body},
 	}
 	for cmd, argv := range lines {

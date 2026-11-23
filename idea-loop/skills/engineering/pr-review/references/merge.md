@@ -46,7 +46,7 @@
 **准备**：
 
 1. 网址清单：`dyna pr body get <owner/repo> <PR 号> live-check > .tmp/live-check/<PR 号>/urls.txt`，每行一个网址和它的目标词。
-2. 期望值取合并提交的构建产物：`dyna pr view <owner/repo> <PR 号> --fields mergeCommit,mergedAt` 读出合并提交，把它检出到独立 worktree `.tmp/live-check/<PR 号>/build`，照目标仓库的构建命令构建（产物目录取 `dyna seo parse <项目目录>/SEO.md` 的 `build.distDir`）。构建失败：不做自查，把原因告诉人，用『推送』提醒，不回滚（没有产物，什么也比不了）。
+2. 期望值取合并提交的构建产物：`dyna pr view <owner/repo> <PR 号> --fields mergeCommit,mergedAt` 读出合并提交，用 `dyna worktree add build --detach --at <合并提交> --path .tmp/live-check/<PR 号>/build` 检出到独立 worktree，照目标仓库的构建命令构建（产物目录取 `dyna seo parse <项目目录>/SEO.md` 的 `build.distDir`）。构建失败：不做自查，把原因告诉人，用『推送』提醒，不回滚（没有产物，什么也比不了）。
 
 **等上线并核对**：
 

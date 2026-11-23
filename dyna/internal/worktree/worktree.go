@@ -148,7 +148,8 @@ func addCommand(d Deps) *cobra.Command {
 			branch, _ := f.GetString("branch")
 			path, _ := f.GetString("path")
 			detach, _ := f.GetBool("detach")
-			return add(d, addOpts{repo: repo, name: args[0], base: base, branch: branch, path: path, detach: detach})
+			at, _ := f.GetString("at")
+			return add(d, addOpts{repo: repo, name: args[0], base: base, branch: branch, path: path, detach: detach, at: at})
 		})
 	c.Args = cobra.ExactArgs(1)
 	c.Flags().String("repo", "", repoUsage)
@@ -156,16 +157,21 @@ func addCommand(d Deps) *cobra.Command {
 	c.Flags().String("branch", "", "分支名；不给就是 issue/<名字>（issue 已经有分支就写它）")
 	c.Flags().String("path", "", "worktree 的路径；不给就是 <主 checkout 的上一级>/<仓库名>-worktrees/<名字>")
 	c.Flags().Bool("detach", false, "不建分支，游离在 origin/<基准分支> 上（triage 会话用）")
+	c.Flags().String("at", "", "跟 --detach 一起用：游离在这个提交上，不读 --base；本地找不到先 fetch origin 再找（上线自查检出合并提交用）")
 	return c
 }
 
 type addOpts struct {
-	repo, name, base, branch, path string
-	detach                         bool
+	repo, name, base, branch, path, at string
+	detach                             bool
 }
 
 func add(d Deps, o addOpts) error {
 	const next = "dyna worktree add <名字> --repo <主 checkout> --base <基准分支>"
+	if o.at != "" && !o.detach {
+		return nexterr.New("dyna worktree add "+o.name+" --repo <主 checkout> --detach --at "+o.at,
+			"--at 只跟 --detach 一起用：它检出的是游离在某个提交上的 worktree，建分支用 --base")
+	}
 	main, err := mainCheckout(o.repo)
 	if err != nil {
 		return err
@@ -200,6 +206,12 @@ func add(d Deps, o addOpts) error {
 
 	var gargs []string
 	switch {
+	case o.detach && o.at != "":
+		sha, err := resolveCommit(main, o.at)
+		if err != nil {
+			return err
+		}
+		gargs = []string{"worktree", "add", "-q", "--detach", path, sha}
 	case o.detach:
 		ref, err := baseRef(main, o.base, next)
 		if err != nil {
@@ -229,6 +241,25 @@ func describe(detach bool, branch string) string {
 		return "游离的"
 	}
 	return "分支 " + branch + " 的"
+}
+
+// resolveCommit is the full SHA of rev, fetching origin once when the checkout does not have it yet (a merge
+// commit made on GitHub only reaches a local checkout through a fetch).
+func resolveCommit(main, rev string) (string, error) {
+	find := func() (string, bool) {
+		out, err := gitrun.Run(main, "rev-parse", "--verify", "--quiet", rev+"^{commit}")
+		return strings.TrimSpace(out), err == nil && strings.TrimSpace(out) != ""
+	}
+	if sha, ok := find(); ok {
+		return sha, nil
+	}
+	if _, err := gitrun.Run(main, "fetch", "-q", "origin"); err != nil {
+		return "", nexterr.New("检查网络和 origin，再重跑 dyna worktree add", "本地没有提交 %s，从 origin 取也失败了：%v", rev, err)
+	}
+	if sha, ok := find(); ok {
+		return sha, nil
+	}
+	return "", nexterr.New("核对提交号（合并提交看 dyna pr view），再重跑 dyna worktree add", "本地和 origin 都找不到提交 %s，没有建 worktree", rev)
 }
 
 // baseRef is origin/<base>, which must exist.

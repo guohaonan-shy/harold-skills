@@ -5,7 +5,7 @@
 | 字段 | GitHub 上 | 读 | 写 |
 |---|---|---|---|
 | 状态 | 开着的四个状态各一个 label：`status:triage`、`status:todo`、`status:in-progress`、`status:in-review`；backlog 是开着、没有 `status:*`；done 是 closed，reason completed；canceled 是 closed，reason not planned，不留 label | 列表接口的 `labels`、`state`、`state_reason` | `gh issue edit --add-label / --remove-label`，`gh issue close --reason completed` 或 `"not planned"` |
-| 类型 | label `kind:bug` / `kind:feature` / `kind:improvement` | 同上 | `gh issue edit --add-label` |
+| 类型 | label `kind:bug` / `kind:feature` / `kind:improvement`，最多一个 | 同上 | `dyna issues kind` |
 | 模块 | label `type:<父类>`、`type:<父类>/<子类>`（名字是历史沿用，表达的是模块） | 同上 | `dyna issues type` |
 | 优先级 | label `priority:P0` / `priority:P1` / `priority:P2`，最多一个 | 同上 | `dyna issues priority` |
 | blocked by | 原生 issue dependencies：列表里的 `issue_dependencies_summary.blocked_by` 是还开着的挡路数 | `GET repos/{owner}/{repo}/issues/<号>/dependencies/blocked_by` | `POST …/dependencies/blocked_by -F issue_id=<挡路 issue 的 id>`（id 是数据库 id，不是号） |
