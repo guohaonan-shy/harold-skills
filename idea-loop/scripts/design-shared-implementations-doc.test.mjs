@@ -212,7 +212,3 @@ test('no reference still marks Motion as an extension', () => {
   }
 });
 
-test('design-modeling SKILL.md body stays under 5000 characters', () => {
-  const n = [...body(skill)].length;
-  assert.ok(n < 5000, `body is ${n} characters`);
-});

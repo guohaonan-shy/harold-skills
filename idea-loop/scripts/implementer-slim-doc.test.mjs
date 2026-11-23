@@ -1,6 +1,5 @@
 /**
- * Tripwire — the implementer's definition stays slim: the body is capped at 4500 characters (the line writing-for-agents sets for
- * a SKILL.md body or an agent definition), the opening says what it delivers, and the branches only some tickets or runs
+ * Tripwire — the implementer's definition stays slim: the opening says what it delivers, and the branches only some tickets or runs
  * take (a rule-changing ticket, a UI ticket and the design archive, stopping or deferring, picking up a half-done branch) live in
  * implement's references behind one pointer each.
  *
@@ -20,11 +19,6 @@ const file = process.env.IMPLEMENTER_DEF || join(pluginRoot, 'agents', 'implemen
 const raw = readFileSync(file, 'utf8');
 const body = raw.replace(/^---\n[\s\S]*?\n---\n/, '');
 const refs = join(pluginRoot, 'skills', 'engineering', 'implement', 'references');
-
-const BODY_MAX = 4500;
-test(`the body does not exceed ${BODY_MAX} characters`, () => {
-  assert.ok([...body].length <= BODY_MAX, `body is ${[...body].length} characters`);
-});
 
 test('the opening paragraph says what it delivers: one commit that fast-forwards onto the integration branch, and a hand-back', () => {
   const opening = body.trim().split('\n\n')[0];

@@ -3,12 +3,17 @@
  *
  * Spec dispatch-day-night-modes, ticket 03. Before: every round handed out todo and triage together
  * (two caps, `cap` 10 and `triageCap` 3, todo first), a session was only a card the human clicked, the
- * rounds were an in-session loop that expired after 7 days. Now: an hourly scheduled task; `issues queues`
- * says what this time of day is for (`dispatch`, `limit`); a triage period counts the triage sessions, a todo
- * period counts the in-progress sessions with activity in the last 2 hours; sessions are opened and handed to
+ * rounds were an in-session loop that expired after 7 days. Now: a scheduled task; `dyna home dispatch`
+ * says what this time of day is for (`dispatch`, `perRound`, `caps`); sessions are opened and handed to
  * the desktop app directly; the first round after the night writes a summary; the setup prints the allow
  * rule the unattended move needs. These tests read the text only: they catch the old wording coming back
  * and the new rules going missing, not whether a model follows them.
+ *
+ * Spec dispatch-one-per-device, ticket 02: the task is one per device (`dispatch-home`, every 30 minutes,
+ * working directory home), the per-state caps and the same-number rule moved to
+ * dispatch-one-per-device-doc.test.mjs; what is left here is the part that stayed the same (how a session is
+ * opened, the morning summary, the allow rule) plus the places that changed with the new rule: the period
+ * and free-slot wording of the round, the scheduled task's id, schedule and directory.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -71,29 +76,21 @@ test('nothing else in the plugin or the repo still says the dispatcher gives out
   assert.ok(!files.some((f) => readFileSync(f, 'utf8').includes('独立队列')), '「独立队列」 stays gone');
 });
 
-test('issue-dispatch takes no interval and stays within 4500 characters', () => {
+test('issue-dispatch takes no interval', () => {
   assert.ok(!/argument-hint/.test(dispatchFile.split('\n---\n')[0]), 'no interval argument');
-  assert.ok([...dispatch].length <= 4500, 'body within 4500 characters');
-  assert.match(dispatchFile.split('\n---\n')[0], /每小时一轮/);
+  assert.match(dispatchFile.split('\n---\n')[0], /每 30 分钟一轮/);
 });
 
-test('issue-dispatch: a round asks issues queues for the period, and each period hands out its own kind with its own free-slot rule', () => {
-  assert.match(dispatch, /issues queues <docs>/);
-  assert.match(dispatch, /`dispatch`（`triage`、`todo` 或 `null`）和 `limit`/, 'the round reads dispatch and limit from queues');
-  const step = dispatch.split('\n').find((l) => /^5\.\s+\*\*按 `dispatch` 派\*\*/.test(l));
-  assert.ok(step, 'there is a step 「按 dispatch 派」');
-  const bullets = dispatch.slice(dispatch.indexOf(step)).split('\n').filter((l) => /^\s+- `(triage|todo|null)`/.test(l));
-  assert.equal(bullets.length, 3, 'one bullet each for triage, todo and null');
-  const [t, d, n] = bullets;
-  assert.match(t, /空位 = `limit` − triage 分组里的会话数/);
-  assert.match(t, /issues candidates <docs> --state=triage/);
-  // Harold 2026-11-20: todo hands out `limit` every round, whatever is open; the sidebar sections are shared across projects
-  assert.match(d, /每轮固定派 `limit` 个，不看 in-progress 里开着几个、也不看别的项目开了几个/);
-  assert.ok(!/2 小时|空位/.test(d), 'the todo rule subtracts nothing');
-  assert.match(d, /再取前 `limit` 个/);
-  assert.match(n, /不派.*只对账/);
-  assert.match(dispatch, /先跳过第 3 步记下的同号会话/, 'skip sessions that already exist before taking candidates');
-  assert.match(dispatch, /一轮合计最多交出 3 个/);
+test('issue-dispatch: a round reads dyna home dispatch for the period, and the period hands out its own kind; a gap only reconciles', () => {
+  assert.match(dispatch, /`dyna home dispatch` 给出此刻的 `dispatch`（`triage`、`todo` 或 `null`）/);
+  assert.match(dispatch, /`perRound`/);
+  assert.match(dispatch, /`caps`/);
+  const step = dispatch.split('\n').find((l) => /^4\.\s+\*\*按整台设备交出\*\*/.test(l));
+  assert.ok(step, 'there is a step 「按整台设备交出」');
+  assert.match(step, /`dispatch` 是 `null`（空档，或表里没覆盖的时间）就不派，这一轮只做第 3 步的跳过和对账/);
+  const candidates = dispatch.split('\n').find((l) => /\*\*取候选\*\*/.test(l));
+  assert.match(candidates, /dyna issues candidates <docs> --state=<dispatch>/);
+  assert.match(candidates, /去掉本项目的同号会话/, 'skip sessions that already exist before taking candidates');
 });
 
 test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a failed hand-over waits for the next round', () => {
@@ -103,7 +100,7 @@ test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a faile
 });
 
 test('issue-dispatch: the morning summary is a step that points at its reference; the reference reads the record file, one line per issue, and pushes one sentence', () => {
-  const step = dispatch.split('\n').find((l) => /^6\.\s+\*\*早上汇总\*\*/.test(l));
+  const step = dispatch.split('\n').find((l) => /^5\.\s+\*\*早上汇总\*\*/.test(l));
   assert.ok(step, 'there is a step 「早上汇总」');
   assert.match(step, /references\/morning-summary\.md/, 'the step points at the reference');
   assert.match(step, /上一轮[^。]*落在 `todo` 时段、此刻不在/, 'the step says when it applies');
@@ -119,19 +116,18 @@ test('issue-dispatch: the dispatcher only moves the sessions it opened', () => {
   assert.match(dispatch, /只在开会话这一步移动它开出的会话/);
 });
 
-test('claude-desktop: an hourly scheduled task runs the rounds', () => {
+test('claude-desktop: one scheduled task for the device runs the rounds every 30 minutes, in home', () => {
   const part = desktopDispatch.split('\n').find((l) => /^- \*\*怎么一轮一轮跑\*\*/.test(l));
   assert.ok(part, 'claude-desktop has 「怎么一轮一轮跑」');
-  for (const word of ['dispatch-<仓库名>', '/idea-loop:issue-dispatch', '主 checkout', 'update_scheduled_task', '每小时一次', '立刻做第一轮']) {
+  for (const word of ['dispatch-home', '/idea-loop:issue-dispatch', '7,37 * * * *', '在 home 里建', 'update_scheduled_task', '每 30 分钟', '立刻做第一轮']) {
     assert.ok(part.includes(word), `the rounds part must mention ${word}`);
   }
 });
 
-test('claude-desktop: counting follows the period (triage section counts; a todo period counts nothing)', () => {
+test('claude-desktop: counting is per state across the device (triage section, in-progress section, in-review not)', () => {
   const part = desktopDispatch.split('\n').find((l) => /^- \*\*怎么数开着的会话\*\*/.test(l));
   assert.ok(part);
-  for (const word of ['`dispatch`', '`limit`', '只数标题匹配', '每轮固定派 `limit` 个', 'in-progress、in-review 都不数']) assert.ok(part.includes(word), `counting must mention ${word}`);
-  assert.ok(!/最近 2 小时/.test(part), 'no 2-hour activity window any more');
+  for (const word of ['`dyna home dispatch`', '`dispatch`', '`perRound`', '`caps`', 'in-review 的不数', '只数标题匹配']) assert.ok(part.includes(word), `counting must mention ${word}`);
 });
 
 test('claude-desktop: a session is opened in four steps, the second is the hand-off script, a failed hand-over waits for the next round', () => {
@@ -196,26 +192,26 @@ test('claude-desktop: the allow rule is printed under 装与设置, and setup pr
   assert.match(setup, /要人自己加的允许规则/);
 });
 
-test('setup\'s dispatch steps create an hourly task and ask no interval', () => {
-  assert.match(setupDispatch, /每小时一次/);
+test('setup\'s dispatch steps check for the device\'s one task, create it every 30 minutes and ask no interval', () => {
+  assert.match(setupDispatch, /每 30 分钟/);
   assert.ok(!/间隔/.test(setupDispatch), 'no interval question');
-  assert.match(setupDispatch, /dispatch-<仓库名>/);
+  assert.match(setupDispatch, /dispatch-home/);
 });
 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
-  for (const word of ['`limit`', '`dispatch`', '每轮固定派 `limit` 个', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
+  for (const word of ['`perRound`', '`dispatch`', '夜间模式', '一轮最多开 `perRound` 个', '先跳过本项目已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
   // 0.0.5: the session is opened by the one command both runtimes share; magi's `magi sessions start` is what it runs inside
   assert.match(magiDispatch, /dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>/);
   assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap/);
   assert.match(magiDispatch, /--cap magi --cap <MCP 服务器名> --cap browser/);
-  assert.match(magiDispatch, /git -C <主 checkout> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
+  assert.match(magiDispatch, /git -C <clone> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
 });
 
 test('magi: a worktree for an issue with an existing branch attaches that branch instead of creating one with -b', () => {
   const text = magiDispatch.slice(magiDispatch.indexOf('- **怎么交出 issue**'));
   const step = text.slice(text.indexOf('1. **建 worktree**'), text.indexOf('2. **开会话**'));
   assert.ok(step, 'step 1 found');
-  assert.match(step, /<主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug>/, 'the path is outside the main checkout');
+  assert.match(step, /<clone 的上一级>\/<仓库名>-worktrees\/<号>-<slug>/, 'the path is outside the project clone');
   assert.match(step, /有就接上，不新建同名分支/);
   assert.match(step, /refs\/heads\/<分支>/, 'checks the local branch');
   assert.match(step, /refs\/remotes\/origin\/<分支>/, 'checks the remote branch');
@@ -242,11 +238,11 @@ test('the triage row of issue-triage\'s table says the daytime dispatch opens th
   assert.match(session, /\|\s*triage 会话\s*\|\s*人或调度\s*\|/);
 });
 
-test('README names the hourly rounds and no card', () => {
+test('README names the 30-minute rounds and no card', () => {
   const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:issue-dispatch`'));
   assert.ok(row);
-  assert.match(row, /no interval: it runs every hour/);
+  assert.match(row, /no interval: it runs every 30 minutes/);
   assert.match(row, /morning summary/);
-  assert.match(row, /`limit` sessions every round/);
-  assert.ok(!/last 2 hours/.test(row), 'no 2-hour window any more');
+  assert.match(row, /dispatch-home/);
+  assert.ok(!/last 2 hours/.test(row), 'the 2-hour activity rule is gone');
 });

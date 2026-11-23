@@ -31,10 +31,6 @@ function markdownUnder(dir) {
   });
 }
 
-test('the skill body stays under the 4500-character line', () => {
-  assert.ok([...body].length < 4500, `body is ${[...body].length} characters`);
-});
-
 test('the round is the six steps, ending at a report the human answers by number', () => {
   const steps = [...body.matchAll(/^(\d)\. \*\*([^*]+)\*\*/gm)].map((m) => m[2]);
   for (const name of ['人回决策', '交给 designer', '请评委', '比对两版', '配参考', '拼报告、发出去']) {

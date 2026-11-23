@@ -8,8 +8,7 @@
  * are the PR description on GitHub and one Review 汇报 in the conversation (stops during implementation and
  * review rounds are the same report); the review-loop file is only where that report is kept; both have a
  * 能否回滚 section; every 要你决定 item has one format. These checks pin: the two section tables (three
- * columns, no empty cell), the item format, the reference files and their total size, the SKILL.md body
- * under 4500 characters, no pointer left at the removed files or the removed names, and the shared writing
+ * columns, no empty cell), the item format, the reference files and their total size, no pointer left at the removed files or the removed names, and the shared writing
  * rules cited from evidence rather than restated.
  */
 import { test } from 'node:test';
@@ -63,8 +62,7 @@ test('the description table carries the script section names in order, with 能�
   assert.ok(!description.some((r) => r[0].includes('顺带开的 issue')));
 });
 
-test('the skill body is at most 4500 characters (UTF-8 characters, not bytes), and names only the two deliverables', () => {
-  assert.ok(chars(skill) <= 4500, `body is ${chars(skill)} characters`);
+test('the skill names only the two deliverables', () => {
   const description = skillRaw.match(/^description: (.*)$/m)[1];
   assert.match(description, /PR 描述/);
   assert.match(description, /Review 汇报/);

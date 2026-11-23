@@ -10,7 +10,6 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
-const body = (text) => text.replace(/^---[\s\S]*?---\n/, '');
 
 function files(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -71,7 +70,6 @@ test('wiki-conventions「知识库落地」: commit straight to home, only the l
   assert.match(rule, /回退那次提交/);
   assert.doesNotMatch(rule, /git revert/, 'the rule states the outcome, not the command');
   assert.match(rule, /代码 PR 里只有代码/);
-  assert.ok([...body(md)].length < 5000, `body is ${[...body(md)].length} characters`);
 });
 
 test('an issue session cuts no branch for triage: the spec goes to home, the branch comes with the first code', () => {
@@ -83,7 +81,6 @@ test('an issue session cuts no branch for triage: the spec goes to home, the bra
   assert.match(session, /第一次要写代码/);
   assert.doesNotMatch(session, /spec、设计、工单和代码都提交在这一条分支上/);
   assert.doesNotMatch(session, /git push -u origin issue\/<号>-<slug>`，`issues set <docs> todo/);
-  assert.ok([...body(session)].length <= 4500);
 });
 
 test('pr-review merge archives after the code PR merged, then deletes the tickets, both committed to home', () => {

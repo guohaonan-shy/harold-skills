@@ -103,13 +103,8 @@ test('the tracker format has the 草稿 id and 线程 id columns, with the three
   assert.match(body(SKILL), /待发送、已发送、已回复、已拿到链接、被拒、无回应/);
 });
 
-test('the body is within the 4500-character line', () => {
-  assert.ok([...body(SKILL)].length <= 4500, String([...body(SKILL)].length));
-});
-
-test('seo-scan calls the follow-up branch of seo-outreach, and stays within the 4500-character line', () => {
+test('seo-scan calls the follow-up branch of seo-outreach', () => {
   const s = section(SCAN, '外联跟进');
   assert.match(s, /idea-loop:seo-outreach/);
   assert.match(s, /跟进/);
-  assert.ok([...body(SCAN)].length <= 4500, String([...body(SCAN)].length));
 });

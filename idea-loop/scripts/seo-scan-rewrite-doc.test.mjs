@@ -1,6 +1,6 @@
 /**
  * Tripwire — seo-scan and its five direction agents follow the rewrite checklist (writing-for-agents,
- * references/rewrite-checklist.md): the main files stay within 4500 characters, the gate's branch that only runs
+ * references/rewrite-checklist.md): the gate's branch that only runs
  * when there are gaps sits in its own reference, no hand-written `gh` / `git` command is left (the triage worktree is
  * made and removed with `dyna worktree`), no decision history is left, and an agent's description says its job and
  * deliverable, not who starts it.
@@ -25,13 +25,6 @@ const AGENTS = ['backlink-analyst', 'geo-analyst', 'keyword-miner', 'page-optimi
 const SCAN_DIR = join('skills', 'seo', 'seo-scan');
 const refs = existsSync(join(root, SCAN_DIR, 'references')) ? readdirSync(join(root, SCAN_DIR, 'references')).filter((f) => f.endsWith('.md')) : [];
 const FILES = [join(SCAN_DIR, 'SKILL.md'), ...refs.map((f) => join(SCAN_DIR, 'references', f)), ...AGENTS.map((a) => join('agents', `${a}.md`))];
-
-test('the seo-scan SKILL.md body and each direction agent body stay within the 4500-character line', () => {
-  for (const f of [join(SCAN_DIR, 'SKILL.md'), ...AGENTS.map((a) => join('agents', `${a}.md`))]) {
-    const n = [...body(read(f))].length;
-    assert.ok(n > 0 && n <= 4500, `${f}: ${n} characters`);
-  }
-});
 
 test('the gate keeps its gaps call in SKILL.md and the branch that runs only with gaps in references/gap-gate.md', () => {
   const skill = body(read(SCAN_DIR, 'SKILL.md'));

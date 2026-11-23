@@ -28,7 +28,6 @@ const read = () => {
   return readFileSync(SKILL_PATH, 'utf8')
 }
 const frontmatter = (text) => text.split('\n---\n')[0]
-const body = (text) => text.split('\n---\n').slice(1).join('\n---\n')
 
 /** Body of the section whose heading line matches `heading`, up to the next heading of the same or higher level. */
 function section(text, heading) {
@@ -52,10 +51,6 @@ test('the description routes one-step-of-a-conversation changes here and pipelin
   assert.match(description, /线上写法/)
   assert.match(description, /eval-run/)
   assert.ok(!/disable-model-invocation/.test(head), 'eval-run points at it, so a model has to be able to call it')
-})
-
-test('the body stays under the 5000-character limit (AGENTS.md way of counting)', () => {
-  assert.ok([...body(read()).replace(/^\n/, '')].length < 5000)
 })
 
 test('the completion list carries all eight items, each with its own anchor', () => {

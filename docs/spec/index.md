@@ -8,6 +8,7 @@
 | [[design-shared-implementations]] | DESIGN.md 能登记「这类界面必须用的共用实现」并配项目测试，对账核它；补上官方的 Voice & Content Strategy 章 |
 | [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
+| [[dispatch-one-per-device]] | 一台设备一个调度 dispatch-home：配置在 home、上限按状态、每 30 分钟一轮 |
 | [[docs-broken-links]] | 知识库 4 处双括号链接指向主分支上不存在的文件，改成纯文本或删掉 related 里的那一项 |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
 | [[dyna-missing-commands]] | dyna 补上 skill 五处还要 agent 自己拼 gh / git 的命令：按状态列 issue、打 kind、空提交、按提交检出、等 PR 检查 |
@@ -32,6 +33,7 @@
 | [[seo-skill-descriptions-route-only]] | seo 分类 6 个 skill 的 description 删掉流程与产物，只留「是什么 + 触发词」 |
 | [[skill-body-limit-backlog]] | idea-loop 两份超 5000 字的 SKILL.md 把部分运行才走到的分支挪进 references |
 | [[skill-rewrite]] | idea-loop 的 skill 与 agent 定义按写法规则逐份重写、五组合并，主体都不超过 4500 字 |
+| [[skill-structure-checks]] | skill 文件的常驻检查：写文件时 hook 对 home 下全部 skill 跑字数线 4500、对 idea-loop 跑行内命令绊线、review 报主文件增长、retro 先判能不能做成检查、没 CI 时同一 head 的全量只跑一次 |
 | [[skills-read-home]] | skill 与脚本从 home 的项目目录读写知识库，改动直接提交 home，dreaming-home 对账各项目 |
 | [[split-blog-publisher]] | 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用 lint，项目取值走 SEO.md 与 DESIGN.md |
 | [[subagent-handback-lost-turn]] | 交回后卡住是那一轮模型请求断了或挂住，被平台合成回复关掉；网络问题，idea-loop 不加机制 |

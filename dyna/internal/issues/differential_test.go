@@ -90,14 +90,6 @@ func TestShowAndARefusedSetAreTheSameAsTheOldScript(t *testing.T) {
 		t.Fatalf("the comparison did not exercise the branch, the PRs and the unescaped text:\n%s", no)
 	}
 
-	for _, at := range []string{"23:30", "10:00", "20:00"} {
-		oq, _, _ := oldRun("queues", p.docs, "--at="+at)
-		nq, _, _ := newRun("queues", p.docs, "--at="+at)
-		if oq != nq || oq == "" {
-			t.Fatalf("queues --at=%s differs\nold: %s\nnew: %s", at, oq, nq)
-		}
-	}
-
 	// refused flips: the same reason on the first line of stderr, exit 1, nothing on stdout
 	for _, c := range [][]string{
 		{"set", p.docs, "in-progress", "6"},

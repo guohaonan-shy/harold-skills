@@ -26,7 +26,6 @@ function files(path, out = []) {
   return out;
 }
 const docs = SCANNED.flatMap((d) => files(join(root, d)));
-const skillMds = docs.filter((f) => f.endsWith('SKILL.md'));
 const agentMds = docs.filter((f) => f.startsWith(join(root, 'agents')));
 
 test('no skill text puts docs/ in "the current worktree", a bootstrap file at the repository root, or uses git add -f', () => {
@@ -103,11 +102,6 @@ test('the issue categories live in ISSUE_TRACKER.md「分类 label」, not in AG
   const cat = read('skills/engineering/issues/references/category-and-spec.md');
   assert.match(cat, /项目目录 `ISSUE_TRACKER\.md` 的「分类 label」一节/);
   for (const text of [issues, cat]) assert.doesNotMatch(text, /AGENTS\.md[^。\n]*issue 分类|issue 分类[^。\n]*AGENTS\.md/);
-});
-
-test('every SKILL.md body under skills/ stays under 5000 characters', () => {
-  const long = skillMds.map((f) => [relative(root, f), [...body(readFileSync(f, 'utf8'))].length]).filter(([, n]) => n >= 5000);
-  assert.deepEqual(long, []);
 });
 
 // ui-master looks at a screenshot and reads no project file (its prompt carries the DESIGN.md baseline it needs), so it has no

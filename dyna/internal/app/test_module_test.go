@@ -46,18 +46,13 @@ func writeFile(t *testing.T, path, text string) {
 	}
 }
 
-func TestTestSkillDocIsRedForASkillOver5000CharactersThroughTheWholeCommandTree(t *testing.T) {
+func TestTestSkillDocLeavesTheLengthOfTheBodyToSkillLint(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, ".claude-plugin", "plugin.json"), `{"name":"demo-plugin"}`)
 	skill := filepath.Join(root, "skills", "productivity", "long")
-	writeFile(t, filepath.Join(skill, "SKILL.md"), "---\nname: long\n---\n"+strings.Repeat("字", 5001))
-	_, errs, code := run(nil, "test", "skill-doc", skill)
-	if code != 1 || !strings.Contains(errs, "5001") {
-		t.Fatal(errs, code)
-	}
-	writeFile(t, filepath.Join(skill, "SKILL.md"), "---\nname: long\n---\n"+strings.Repeat("字", 4999))
+	writeFile(t, filepath.Join(skill, "SKILL.md"), "---\nname: long\n---\n"+strings.Repeat("字", 9000))
 	out, errs, code := run(nil, "test", "skill-doc", skill)
-	if code != 0 || !strings.Contains(out, "4999") {
+	if code != 0 || strings.Contains(out, "9000") {
 		t.Fatal(out, errs, code)
 	}
 }

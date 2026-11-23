@@ -15,8 +15,6 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
-const body = (text) => text.replace(/^---\n[\s\S]*?\n---\n/, '');
-const chars = (text) => [...body(text)].length;
 
 const wiki = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md');
 
@@ -71,9 +69,6 @@ for (const skill of ['uiux-imagine', 'uiux-refine']) {
     assert.match(opening, /`idea-loop:wiki-conventions` 的「目录」里 `design\/pending\/` 那一行/);
     assert.doesNotMatch(opening, /复制回/);
     assert.match(opening, /中断与恢复|after-freeze/);
-  });
-  test(`${skill}: SKILL.md body stays under the 4500-character line`, () => {
-    assert.ok(chars(read('skills', 'design', skill, 'SKILL.md')) < 4500);
   });
 }
 

@@ -30,10 +30,6 @@ const section = (title) => {
 const tableRows = (text) =>
   text.split('\n').filter((l) => l.startsWith('|') && !/^\|[\s|:-]+\|$/.test(l)).slice(1);
 
-test('the main body is within 4500 characters (UTF-8 characters, not bytes)', () => {
-  assert.ok([...main].length <= 4500, `body is ${[...main].length} characters`);
-});
-
 test('the main file points at the reference once, saying when to read it', () => {
   assert.ok(existsSync(refPath), '缺 references/rewrite-checklist.md');
   const lines = main.split('\n').filter((l) => l.includes('references/rewrite-checklist.md'));
