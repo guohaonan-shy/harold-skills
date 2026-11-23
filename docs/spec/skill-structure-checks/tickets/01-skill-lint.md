@@ -42,3 +42,4 @@
 - `idea-loop/scripts/*-slim-doc.test.mjs`、`design-archive-skill-doc`、`cover-skill-doc`、`og-skill-doc`：删字数断言后其余断言仍成立。
 - `scripts/dyna-version.test.mjs`、`scripts/dyna-scan.test.mjs`：版本与登记表。
 - [x] review 第 1 轮 S1（2026-11-22）：字数线只写在 skill-lint 一处，所有插件一样：别的插件（如 ai-eval）的文档测试里自己量 SKILL.md 主体字数的断言也删掉，那个插件的 plugin.json 跟着升 patch。
+- [ ] review 第 1 轮 S2（2026-11-23）：行内命令绊线也认「命令名后先跟参数、再跟子命令」的写法（如行内写 git -C <目录> pull --ff-only、gh --repo <仓库> issue view）；用 11-22 调度 skill 真实写进去的那句（git show 489c5278:idea-loop/skills/engineering/issue-dispatch/SKILL.md 第 18、29 行）当夹具，先见红；现有树不新增红。
