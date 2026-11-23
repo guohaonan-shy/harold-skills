@@ -358,9 +358,8 @@ func TestAnOldQueueNoteStaysOutOfTheLabelText(t *testing.T) {
 	if types.Parents[1].About != "搜索可见性" {
 		t.Fatal(types.Parents[1].About)
 	}
-	q, err := Dispatch("", ptr("10:00"), time0)
-	if err != nil || !reflect.DeepEqual(q.Sections, []string{"triage", "in-progress", "in-review"}) {
-		t.Fatal(q, err)
+	if !reflect.DeepEqual(Working, []string{"triage", "in-progress", "in-review"}) {
+		t.Fatal(Working)
 	}
 }
 

@@ -8,6 +8,7 @@
 | [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[design-shared-implementations]] | DESIGN.md 能登记「这类界面必须用的共用实现」并配项目测试，对账核它；补上官方的 Voice & Content Strategy 章 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
+| [[dispatch-one-per-device]] | 一台设备一个调度 dispatch-home：配置在 home、上限按状态、每 30 分钟一轮 |
 | [[docs-broken-links]] | 知识库 4 处双括号链接指向主分支上不存在的文件，改成纯文本或删掉 related 里的那一项 |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
