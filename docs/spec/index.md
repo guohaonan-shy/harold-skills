@@ -3,3 +3,4 @@
 
 | 文件 | summary |
 |---|---|
+| [[dispatch-triage-per-round]] | 白天的 triage 也按每轮新开表里的上限个，triage 分组总数另设上限（表里新一列，默认 10） |
