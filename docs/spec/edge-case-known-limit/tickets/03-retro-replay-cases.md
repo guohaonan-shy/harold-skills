@@ -16,12 +16,12 @@
 
 ## 验收标准
 
-- [ ] 继承自 02：「怎么证明 skill 真的变了」由本工单的四个回放用例承担，跑过后 02 那一格算证明完。
-- [ ] `evals/retro/cases/` 里还写着 `decision-rules` 旧名的用例（02 交回点名：`decision-rules-scope-recommend`、`writing-no-project-info`、`implement-no-stop-without-decision`）改成新位置的说法，不改它们要判的那个点；改不了的写明原因。
-- [ ] 四个用例落盘，每个有前置提交、prompt、停在哪、是/否题和出处。
-- [ ] runner 能给改前、改后分别配 home；对应测试全绿。
-- [ ] 四个用例跑过（或写明大用例待跑、由编排者当场跑），改前否、改后是（用例 3 改后是），判定带出处。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 继承自 02：「怎么证明 skill 真的变了」由本工单的四个回放用例承担，跑过后 02 那一格算证明完。
+- [x] `evals/retro/cases/` 里还写着 `decision-rules` 旧名的用例（02 交回点名：`decision-rules-scope-recommend`、`writing-no-project-info`、`implement-no-stop-without-decision`）改成新位置的说法，不改它们要判的那个点；改不了的写明原因。（`decision-rules-scope-recommend` 改名 `scope-question-recommend`，`implement-no-stop-without-decision` 的 `size_basis` 改了；`writing-no-project-info` 改不了：它的落点是 `decision-rules` 下的那份参考，已随 skill 删除、没有对应位置，原因写在它的 `annotations.md`。三者历史记录里的旧名是当时的名字，没改。）
+- [x] 四个用例落盘，每个有前置提交、prompt、停在哪、是/否题和出处。
+- [x] runner 能给改前、改后分别配 home；对应测试全绿。
+- [x] 四个用例跑过（或写明大用例待跑、由编排者当场跑），改前否、改后是（用例 3 改后是），判定带出处。（四个都在这个会话里跑过，没有留待跑的大用例：`implement-visible-edge-case-by-rule` 首次改后答「否」，查出 `implement/SKILL.md` 分拣表仍把标「spec 缺口」的 `found` 一律进 pending，补了那一行后重跑过；结果和判定出处在各用例 `annotations.md` 的「跑过的结果」。）
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。（选的是回放用例：四个小用例都跑过，见上一格。）
 
 ## 选中的存量回归
 

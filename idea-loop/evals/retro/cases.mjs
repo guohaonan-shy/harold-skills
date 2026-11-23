@@ -20,6 +20,9 @@
  *   quote       the human's original words the question was written from
  *   size        small | large (the rule is in size_basis; the runner checks it against the event stream)
  *   size_basis  which criterion decides the size
+ *   guard       optional, true: the case watches that a rule does not reach too far (a thing the human decides stays with the human), so
+ *               the old behaviour already answers "yes" and the new one has to still answer "yes". The runner then passes the case
+ *               on the post-change answer alone; without it, a pre-change "yes" is "用例没抓住问题"
  *   source      optional: where in which session the decision came from
  *
  * `cases/<case>/annotations.md` is where the human overrides a judgement (see replay.mjs).
@@ -54,6 +57,8 @@ export function validateCase(c) {
   if (c.home_commit !== undefined && (!filled(c.home_commit) || !COMMIT.test(c.home_commit.trim()))) {
     need('home_commit', `home_commit ${JSON.stringify(c.home_commit)} 不是 7–40 位十六进制的提交 id（它是 home 仓库里的提交；老用例不用写这个字段）`);
   }
+
+  if (c.guard !== undefined && typeof c.guard !== 'boolean') need('guard', `guard 要写 true 或 false（现在是 ${JSON.stringify(c.guard)}）；不是守边界的用例就别写这个字段`);
 
   if (!filled(c.prompt)) need('prompt', '缺 prompt：当时让 skill 产出东西的那句话');
   else {

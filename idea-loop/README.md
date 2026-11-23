@@ -364,10 +364,25 @@ post-change plugin reads only home. So every session the runner starts gets its 
 under the run dir as `<side>/home`) and `IDEA_LOOP_HOME` points at it; nothing of the machine's own home is reachable. An **old case**
 (no `home_commit`: its commit is from before the knowledge base moved) gets one built out of that commit: its `docs/` and bootstrap
 files copied into `projects/<名字>/`, the project list naming the project (the case repository's `origin`, the checkout the run works
-in); only the post-change run gets it, the pre-change plugin reads the same files from the code repository and gets an empty home. A
+in); the post-change run gets it, and so does a pre-change plugin that already reads the knowledge base from home (its `hooks/hooks.json`
+has the `home map` SessionStart hook: the plugin of 0.2.0's line); a pre-change plugin from before 0.2.0 reads the same files from the code
+repository and gets an empty home. A
 case with the optional field **`home_commit`** (a commit of the home repository) gives both runs a copy cut from it, and
 `--home-repo <dir>` says where the home repository is (required for such a case). The judge sees the files a run wrote in its home as well
 as in the workspace. The conversion from `docs/` to a home lives only in the runner.
+
+**The fixed text, per side.** A side whose plugin has `skills/engineering/setup/references/home-rules.md` gets its temporary home written
+the way `/idea-loop:setup` writes a real one (`dyna home config apply --only rules`, run with that plugin and a throwaway `HOME` so nothing
+lands in the machine's own `~/.claude`), so the home has the sections 思考与决策 / 沟通 / 证据; the pre-change plugin has no such file and its
+home has none. A replayed session cannot be given another `~/.claude/CLAUDE.md`, which is where a real session reads home's `AGENTS.md`
+from, so the three sections are also put in the project copy's `.claude/CLAUDE.md` (committed into the starting state, so the run is not
+credited with them); the machine's own `~/.claude/CLAUDE.md` still reaches both sides. The check that the post-change run used the change
+counts that file as injected. `--before-dyna <bin>` / `--after-dyna <bin>` set the `dyna` each side's session runs with
+(`IDEA_LOOP_DYNA_BIN`): a plugin calls the command line it was written against, and a hook of the pre-change plugin that
+injects a skill the change deleted only works with the `dyna` of an earlier version; `--after-dyna` is also the one that writes the sections (0.0.9 or newer).
+
+**Guard cases.** A case with `"guard": true` watches that a rule does not reach too far (what the human decides stays with the human): the
+old behaviour already answers "yes", so the runner passes it on the post-change "yes" alone.
 
 **Who runs what, and when.** There is no night queue and no scheduled task: replays are run on the spot, by whoever has the
 change in hand. The implementer runs a small case itself (`--case`). A large case (it starts a plugin agent, opens a browser or
