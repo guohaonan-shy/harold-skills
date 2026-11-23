@@ -42,6 +42,6 @@ home 是这台设备上一个私有 git 仓库（`~/home`，环境变量 `IDEA_L
 2. 四项一起把整张表摆给人，问一次。「已是」的项只在表里列着，不再问；「已是别处的软链，要人处理」的项不动，写进交回交给人。没有「待改」的项，这一步跳过。
 3. 人同意：`dyna home config apply`，它先把 `settings.json` 和 `CLAUDE.md` 备份进 `~/home/.backup/<时间>/`，再把待改的项全做。人只同意其中几项时，加 `--only <编号或名字，逗号分隔>`（`plugin` `memory` `claude-md` `rules`）；没做的项下次跑 setup 仍是「待改」。
 4. 提交 home 里命令写的文件（`AGENTS.md`、`.gitignore`；`.backup/` 不进 git）。
-5. **人手写的节里跟固定文案重复的段落**：命令认不出，由你对照 `dyna home config plan` 里 `rules` 项的改后文字和 `~/home/AGENTS.md` 里人写的节（固定文案三节以外），把重复的段落原文和所在的节列给人。删由人自己在 home 里做，setup 不改人写的字。
+5. **人手写的节里跟固定文案重复的段落**：命令认不出，由你对照插件里固定文案的正文（[home-rules.md](home-rules.md)；`dyna home config plan` 里 `rules` 项的改后一栏只有三个节标题，不是正文）和 `~/home/AGENTS.md` 里人写的节（固定文案三节以外），把重复的段落原文和所在的节列给人。删由人自己在 home 里做，setup 不改人写的字。
 
 命令需要 `~/home/AGENTS.md` 已存在，所以排在第 1 步之后。

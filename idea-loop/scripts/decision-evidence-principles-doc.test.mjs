@@ -125,3 +125,15 @@ test('issue-session 的「边界」把讨论中冒出的范围题指向 pr-revie
   assert.doesNotMatch(boundary, /影响这份 spec 的实现/, '范围题推荐法不在这里转述，只指过去');
   assert.match(standards, /\*\*范围题\*\*（冒出的改动并进当前 PR，还是另开）/, 'review 标准里的范围题推荐法没了');
 });
+
+test('spec drafting decides what becomes a 待定 by the user rule 「思考与决策」「停下问我」, not by 「依据冲突或没有」 (#280 ticket 02, review round 1)', () => {
+  const toSpec = bodyOf(read('skills', 'engineering', 'to-spec', 'SKILL.md'));
+  const decisions = toSpec.split('## 实现决策')[1]?.split('\n## ')[0] ?? '';
+  assert.match(decisions, /「思考与决策」/);
+  assert.match(decisions, /「停下问我」/);
+  assert.doesNotMatch(decisions, /依据冲突或没有/);
+  const draft = read('skills', 'engineering', 'issue-session', 'references', 'draft-spec.md');
+  const item = draft.split('\n').find((l) => /^6\. /.test(l)) ?? '';
+  assert.match(item, /「停下问我」/);
+  assert.doesNotMatch(item, /冲突或没有/);
+});

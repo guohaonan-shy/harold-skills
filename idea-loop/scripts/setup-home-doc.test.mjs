@@ -92,6 +92,13 @@ test('step 3 lists the paragraphs of the human\'s own sections that repeat the f
   assert.match(s, /删由人自己在 home 里做，setup 不改人写的字/);
 });
 
+test('step 3 compares the human\'s sections against the body of home-rules.md, not the plan\'s after column (which only holds the three headings)', () => {
+  const s = section(home, '3\\. 改四项用户级配置');
+  const item = s.split('\n').find((l) => l.includes('跟固定文案重复的段落')) ?? '';
+  assert.match(item, /\[home-rules\.md\]\(home-rules\.md\)/, '重复段落那一条没指向固定文案的正文');
+  assert.doesNotMatch(item, /`rules` 项的改后文字/, '还在拿 plan 的改后一栏当对照');
+});
+
 test('step 2 writes the project line in the shape the SessionStart hook reads', () => {
   const s = section(home, '2\\. 登记当前项目');
   assert.ok(s.includes('<名字>（<是什么>）: <本地路径>. Clone from <远端> if missing.'));
