@@ -542,7 +542,7 @@ func TestTheRegistryHasEveryPrCommandCalledBySessions(t *testing.T) {
 	if reg.Version != version.Version {
 		t.Fatal(reg.Version)
 	}
-	want := []string{"body get", "body set", "candidates submit", "diagnostics filter", "evidence cleanup", "evidence list", "evidence publish",
+	want := []string{"body get", "body set", "candidates submit", "checks", "diagnostics filter", "evidence cleanup", "evidence list", "evidence publish",
 		"full-suite record", "full-suite show", "loop archive", "loop check", "loop next", "merge", "open", "ready", "skill-growth", "view"}
 	have := map[string]registry.Command{}
 	for _, c := range reg.Commands {

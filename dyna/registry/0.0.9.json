@@ -145,7 +145,7 @@
       "command": "agent codex prompt",
       "module": "agent",
       "use": "prompt <spec|standards> <out-file> [key=value...]",
-      "summary": "把 pr-review 固定的 Codex prompt 模板（Spec 轴或 Standards 轴）填好写进 <out-file>：模板与 review-standards 的路径从插件目录读，用户规则取 ~/.claude/CLAUDE.md（不在就填「无」），key=value 是这一轮不一样的引用；没填的占位或模板里没有的 key 都拒绝（退出 1）",
+      "summary": "把 pr-review 固定的 Codex prompt 模板（Spec 轴或 Standards 轴）填好写进 <out-file>：模板与 review-standards、decision-rules 的路径从插件目录读，key=value 是这一轮不一样的引用；没填的占位或模板里没有的 key 都拒绝（退出 1）",
       "caller": "session",
       "next": "dyna agent codex prompt --help",
       "args": [
@@ -1187,7 +1187,7 @@
           "kind": "flag",
           "required": false,
           "value": "string",
-          "description": "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules"
+          "description": "只做这几项：1,2,3 或 plugin,memory,claude-md"
         }
       ]
     },
@@ -1195,7 +1195,7 @@
       "command": "home config plan",
       "module": "home",
       "use": "plan",
-      "summary": "列出四处用户级改动各自的改前、改后、是否已做；什么都不写",
+      "summary": "列出三处用户级改动各自的改前、改后、是否已做；什么都不写",
       "caller": "session",
       "next": "",
       "args": [
@@ -1211,7 +1211,7 @@
           "kind": "flag",
           "required": false,
           "value": "string",
-          "description": "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules"
+          "description": "只看这几项：1,2,3 或 plugin,memory,claude-md"
         }
       ]
     },
@@ -1908,7 +1908,7 @@
       "command": "pr candidates submit",
       "module": "pr",
       "use": "submit <candidates.json> <base-ref> <evidence-dir> <round>",
-      "summary": "校验候选：引用的原文要在文件里、代码要在 diff 里（不成立的丢弃并写原因；依据种类是「目标」的，引文要取自 --spec 给的这次的 spec）；措辞不合格的退回并说出哪一条（退出 2），校验过了才算交回",
+      "summary": "校验候选：引用的原文要在文件里、代码要在 diff 里（不成立的丢弃并写原因）；措辞不合格的退回并说出哪一条（退出 2），校验过了才算交回",
       "caller": "session",
       "next": "",
       "args": [
@@ -1931,13 +1931,6 @@
           "name": "round",
           "kind": "positional",
           "required": true
-        },
-        {
-          "name": "spec",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "这次的 spec 文件路径；依据种类是「目标」的候选，引的文件必须是它（不给就认不出，这类候选会被丢弃）"
         }
       ]
     },
@@ -2527,13 +2520,13 @@
     {
       "command": "runtime inject",
       "module": "runtime",
-      "use": "inject <runtime|reference>",
-      "summary": "打印开场注入的一段（只由 SessionStart hook 调）：运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截",
+      "use": "inject <decision-rules|runtime|reference>",
+      "summary": "打印开场注入的一段（只由 SessionStart hook 调）：decision-rules 的正文、运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截",
       "caller": "hook",
       "next": "",
       "args": [
         {
-          "name": "runtime|reference",
+          "name": "decision-rules|runtime|reference",
           "kind": "positional",
           "required": true
         },

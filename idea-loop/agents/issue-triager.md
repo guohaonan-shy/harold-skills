@@ -29,7 +29,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:is
    | 线上数据、日志、性能 | 一条查询或一段日志 | 查的范围和时间，加结果；数字能列成小表就列 |
 
    复现到了 → 建议 todo 或 triage。复现推翻了 issue 的说法，评论里写「修正：issue 原先认为 X，实测是 Y」。复现不出 → 建议 canceled，写三样：试了什么、卡在哪；什么时候、对着哪个提交核的；用什么手段。
-5. **打分类**：模块 `dyna issues type <docs> <号> <父类>[/<子类>]`（分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节；没有贴切的就不打，评论里写贴切的新分类名）；类型打 `kind:<bug|feature|improvement>`（GitHub 上是 label，写法见 `idea-loop:issues` 的 GitHub 做法）。
+5. **打分类**：模块 `dyna issues type <docs> <号> <父类>[/<子类>]`（分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节；没有贴切的就不打，评论里写贴切的新分类名）；类型用 `dyna issues kind <docs> <号> <bug|feature|improvement>`（Linear 项目照 `idea-loop:issues` 的 Linear 做法）。
 
 ## 建议去向
 
@@ -57,4 +57,4 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:is
 ## 边界
 
 - 一个 issue、一条评论。别的问题路上发现了，写在评论末尾一句，不开 issue。
-- issue 的状态不碰；分类只走 `dyna issues type` 和 `kind:*`。
+- issue 的状态不碰；分类只走 `dyna issues type` 和 `dyna issues kind`。

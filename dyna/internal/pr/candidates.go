@@ -29,7 +29,8 @@ package pr
 // (修 / 同步改 / 接受并补记 / 恢复 / 开 issue), and has no decide block — no options, no recommendation. A
 // Standards finding stands on its own rule, so its basis is optional. A Standards finding about code that was
 // not added in this diff (existing: true) is admitted only as a ruled fix with a `pollutes` sentence — a stock
-// problem that spoils this change's input or conclusion or turns CI red; its snippet is then looked up in the file
+// problem that spoils this change's input or conclusion, turns CI red, or states a fact this change alters (so it
+// goes stale the moment this lands); its snippet is then looked up in the file
 // as it is now, not in the diff.
 //
 // Whitespace is normalized; nothing else is fuzzy. A failed candidate is discarded with its reason; the round's
@@ -212,7 +213,7 @@ func ruledProblems(c Candidate, axis string) []string {
 			problems = append(problems, "存量问题照规则处理时，动作只能是「修」")
 		}
 		if !filled(c.M["pollutes"]) {
-			problems = append(problems, "缺一句它怎么影响这次的输入、结论或 CI（pollutes）：说不出，就是与这次无关的存量，不报")
+			problems = append(problems, "缺一句它怎么影响这次的输入、结论或 CI，或它写着的事实正是这次改掉的、一改就过期（pollutes）：说不出，就是不影响本次改动的存量，不报")
 		} else {
 			for _, hit := range codeRefs(c.str("pollutes")) {
 				problems = append(problems, "「它怎么影响这次」里有代码层面的指称："+hit)
@@ -292,7 +293,7 @@ func ShapeProblems(c Candidate, axis string) []string {
 	if c.isRuled() {
 		problems = append(problems, ruledProblems(c, axis)...)
 	} else if truthy(c.M["existing"]) {
-		problems = append(problems, "改动行以外的存量问题只在它污染了这次改动、或让 CI 变红时才报，处置必须是「照规则」（动作：修）")
+		problems = append(problems, "改动行以外的存量问题只在它污染了这次改动、让 CI 变红、或它写着的事实正是这次改掉的、一改就过期时才报，处置必须是「照规则」（动作：修）")
 	}
 	if axis == "spec" {
 		behavior, isB := c.M["behavior"].(bool)

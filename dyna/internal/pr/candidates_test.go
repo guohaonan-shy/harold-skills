@@ -431,6 +431,14 @@ func TestAnExistingNotAddedStandardsProblemIsReportedOnlyAsARuledFixThatSaysHowI
 	}
 	mustMatch(t, "缺一句.*怎么影响这次", problemsText(admitOne(with(stock, obj{"pollutes": ""}), "standards").Rewrite[0]))
 	mustMatch(t, "存量.*照规则", problemsText(admitOne(with(stock, obj{"disposition": nil}), "standards").Rewrite[0]))
+	// spec in-scope-legacy-fix: the third exception — a stock line stating a fact this change alters goes stale
+	// the moment it lands; both refusals name it, so a reviewer knows it may report one
+	mustMatch(t, "一改就过期", problemsText(admitOne(with(stock, obj{"pollutes": ""}), "standards").Rewrite[0]))
+	mustMatch(t, "让 CI 变红、或它写着的事实正是这次改掉的、一改就过期时才报", problemsText(admitOne(with(stock, obj{"disposition": nil}), "standards").Rewrite[0]))
+	stale := with(stock, obj{"pollutes": "README 写着插件版本 0.1.47，这次升到 0.1.48，合进去就过期。"})
+	if n := len(admitOne(stale, "standards").Standards); n != 1 {
+		t.Fatal("a stock line that goes stale with this change is admitted", n)
+	}
 	if n := len(admitOne(with(stock, obj{"code": obj{"path": "src/api/legacy.ts", "snippet": "not there();"}}), "standards").Discarded); n != 1 {
 		t.Fatal(n)
 	}
