@@ -76,9 +76,9 @@ idea-loop 从项目目录读这几份配置：
 
 ## 调度
 
-`idea-loop:issue-dispatch` 每小时一轮、按时段交出 issue；定时任务按 [references/dispatch.md](references/dispatch.md) 建。
+`idea-loop:issue-dispatch` 整台设备一个（`dispatch-home`），每 30 分钟一轮、按时段交出各项目的 issue；这台设备有没有 `dispatch-home`，按 [references/dispatch.md](references/dispatch.md) 查和建。
 
-完成条件：建好了调度任务，或人拒绝了，或记下了没建的原因；允许规则打印了。
+完成条件：报了已有的 `dispatch-home`，或建好了，或人拒绝了，或记下了没建的原因；允许规则打印了。
 
 ## 模块
 
@@ -94,6 +94,6 @@ idea-loop 从项目目录读这几份配置：
 - 预检缺的必需项（各附修法命令）；要迁移的项目，认出的文件清单。
 - home：建没建、登记的项目名、三处配置各是已改 / 已是 / 人拒绝 / 要人处理，备份在哪。
 - 规则回放：runner 装在哪、旧计划任务和队列目录删没删、**要人自己加的允许规则**（原样一行）。没加这条规则，无人值守的回放会被拦下。
-- 每周对账（设备级的 `dreaming-home`）、每周分拣（`triage-<仓库名>`）、调度（`dispatch-<仓库名>`）：各自建没建（taskId 与时间）或已有；没建的原因（运行环境没有『定时任务』/ 人拒绝），prompt 原样给人；调度另附要人自己加的允许规则（原样一行，不加的后果）。
+- 每周对账（设备级的 `dreaming-home`）、每周分拣（`triage-<仓库名>`）、调度（设备级的 `dispatch-home`）：各自建没建（taskId 与时间）或已有；没建的原因（运行环境没有『定时任务』/ 人拒绝），prompt 原样给人；调度另附要人自己加的允许规则（原样一行，不加的后果）。
 - SEO 模块：接了还是「以后再说」；接了的，按 [references/seo/steps.md](references/seo/steps.md) 的「交回」并进来。
 - 留给人的事：装或登录 `gh`、Codex；装浏览器、登录 Mobbin（做法见预检表）；创建 GitHub App；往 `CODING_STANDARDS.md` 里写规则。`GLOSSARY.md` 由 `idea-loop:grill` 建，`DESIGN.md` 由 `/idea-loop:uiux-imagine` 或 `/idea-loop:dreaming` 建。

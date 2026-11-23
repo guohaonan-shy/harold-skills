@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -480,25 +479,17 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	queues := leaf("queues <docs>", "JSON：这一刻调度该派什么、最多几个（读 ISSUE_TRACKER.md 的「调度」表，没有就用默认）、整张表和侧栏的分区", sess, "",
+	queues := leaf("queues <docs>", "JSON：侧栏的三个分组名（时段、每轮新开数、各状态的上限归 `dyna home dispatch`）", sess, "",
 		func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("queues", arg(args, 0), "")
 			if err != nil {
 				return err
 			}
-			var at *string
-			if cmd.Flags().Changed("at") {
-				v, _ := cmd.Flags().GetString("at")
-				at = &v
-			}
-			q, err := Dispatch(ReadTracker(s.docs), at, time.Now())
-			if err != nil {
-				return err
-			}
-			s.json(q)
+			s.json(struct {
+				Sections []string `json:"sections"`
+			}{append([]string{}, Working...)})
 			return nil
 		})
-	queues.Flags().String("at", "", "按这一刻（HH:MM）算，不给就用本机的钟")
 
 	migrate := leaf("migrate <docs>", "列出旧的中文状态 label 怎么换（--apply 才写）", sess,
 		"dyna issues labels <docs>", func(cmd *cobra.Command, args []string) error {

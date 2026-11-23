@@ -139,7 +139,7 @@ test('the magi data carries the spec table\'s commands and the dispatch shape', 
     'magi browser', 'window new', '--tab', '不能执行任意 JS', '元素盒子',
     '编号选项', 'magi artifact push', 'magi.reply', 'PushNotification', '把一页摆给人看：没有', '截一张图',
     'magi mcp list', 'magi mcp call', 'key=value', 'Integrations → MCP servers', '/plugin', '$CLAUDE_CONFIG_DIR/settings.json',
-    'dispatch-<仓库名>', '--slug <仓库名>-<号>', '用 Skill 工具调 idea-loop:',
+    'dispatch-home', '7,37 * * * *', '--slug <仓库名>-<号>', '用 Skill 工具调 idea-loop:',
   ];
   assert.deepEqual(needs.filter((n) => !text.includes(n)), []);
   // measured 2026-11-06: magi cron reads the expression in the human's timezone, not UTC
@@ -147,7 +147,7 @@ test('the magi data carries the spec table\'s commands and the dispatch shape', 
   const dispatch = text.slice(text.indexOf('### 调度'));
   // a session cannot archive itself (measured 2026-11-06); it stops itself instead
   assert.ok(!dispatch.includes('归档自己'), 'magi sessions cannot archive themselves');
-  for (const word of ['每轮新开', '停掉自己', '前缀', 'stopped / exited / dead', '每轮固定派 `limit` 个', '每轮最多开 3']) assert.ok(dispatch.includes(word), word);
+  for (const word of ['每轮新开', '停掉自己', '前缀', 'stopped / exited / dead', '同号只认本项目仓库名', '一轮最多开 `perRound` 个']) assert.ok(dispatch.includes(word), word);
 });
 
 test('no data file points at a deleted skill, SKILL.md or an old script', () => {

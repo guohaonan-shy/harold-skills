@@ -1216,6 +1216,23 @@
       ]
     },
     {
+      "command": "home dispatch",
+      "module": "home",
+      "use": "dispatch",
+      "summary": "打印这台设备的调度表（JSON）：此刻所在时段、该派什么、每轮最多新开几个、各状态同时开着最多几个、不调度的项目、整张时段表和三个分组名；读 home 的 DISPATCH.md，没有就用默认",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "at",
+          "kind": "flag",
+          "required": false,
+          "value": "string",
+          "description": "按这一刻（HH:MM）算，不给就用本机的钟"
+        }
+      ]
+    },
+    {
       "command": "home glossary check",
       "module": "home",
       "use": "check [file]",
@@ -1299,6 +1316,15 @@
           "required": false
         }
       ]
+    },
+    {
+      "command": "home projects",
+      "module": "home",
+      "use": "projects",
+      "summary": "打印这台设备登记的全部项目（JSON 数组，顺序同项目清单）：名字、项目目录、知识库目录、owner/repo、本地 clone、搬进 home 没有（没搬进的带原因码和原因）",
+      "caller": "session",
+      "next": "",
+      "args": []
     },
     {
       "command": "home where",
@@ -1682,7 +1708,7 @@
       "command": "issues queues",
       "module": "issues",
       "use": "queues <docs>",
-      "summary": "JSON：这一刻调度该派什么、最多几个（读 ISSUE_TRACKER.md 的「调度」表，没有就用默认）、整张表和侧栏的分区",
+      "summary": "JSON：侧栏的三个分组名（时段、每轮新开数、各状态的上限归 `dyna home dispatch`）",
       "caller": "session",
       "next": "",
       "args": [
@@ -1690,13 +1716,6 @@
           "name": "docs",
           "kind": "positional",
           "required": true
-        },
-        {
-          "name": "at",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "按这一刻（HH:MM）算，不给就用本机的钟"
         }
       ]
     },
@@ -1997,46 +2016,6 @@
       ]
     },
     {
-      "command": "pr full-suite record",
-      "module": "pr",
-      "use": "record <head> <exit-code> <log-file>",
-      "summary": "记下这次本机全量测试的结果（head、退出码、日志文件、时间）到当前 worktree 的 .tmp/full-suite/<head>.json；同一个 head 再记会覆盖",
-      "caller": "session",
-      "next": "dyna pr full-suite show <head>",
-      "args": [
-        {
-          "name": "head",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "exit-code",
-          "kind": "positional",
-          "required": true
-        },
-        {
-          "name": "log-file",
-          "kind": "positional",
-          "required": true
-        }
-      ]
-    },
-    {
-      "command": "pr full-suite show",
-      "module": "pr",
-      "use": "show <head>",
-      "summary": "打印这个 head 的本机全量记录（JSON：head、exitCode、log、at）；没有记录退出 2。退出码 0 的可以复用，非 0 的重跑",
-      "caller": "session",
-      "next": "",
-      "args": [
-        {
-          "name": "head",
-          "kind": "positional",
-          "required": true
-        }
-      ]
-    },
-    {
       "command": "pr loop archive",
       "module": "pr",
       "use": "archive <file> <owner/repo> <pr>",
@@ -2193,21 +2172,6 @@
         },
         {
           "name": "pr",
-          "kind": "positional",
-          "required": true
-        }
-      ]
-    },
-    {
-      "command": "pr skill-growth",
-      "module": "pr",
-      "use": "skill-growth <base-ref>",
-      "summary": "列出 <base-ref>...HEAD 里主体字数变了的 SKILL.md 和 agent 定义：路径、改前 → 改后（差值）；只报事实，退出 0",
-      "caller": "session",
-      "next": "",
-      "args": [
-        {
-          "name": "base-ref",
           "kind": "positional",
           "required": true
         }
@@ -3248,36 +3212,6 @@
       ]
     },
     {
-      "command": "spec skill-lint",
-      "module": "spec",
-      "use": "skill-lint [file]...",
-      "summary": "skill 与 agent 定义的结构检查：主体（去掉 frontmatter）超过 4500 字报；idea-loop 插件的文件正文里写行内 gh / git 命令报；--hook 从 PostToolUse 事件取被写的文件，--changed <base-ref> 只查 <base-ref>...HEAD 里改到的",
-      "caller": "hook",
-      "next": "",
-      "args": [
-        {
-          "name": "file",
-          "kind": "positional",
-          "required": false,
-          "variadic": true
-        },
-        {
-          "name": "changed",
-          "kind": "flag",
-          "required": false,
-          "value": "string",
-          "description": "只查 <base-ref>...HEAD 里改到的（没删掉的）、在范围内的文件"
-        },
-        {
-          "name": "hook",
-          "kind": "flag",
-          "required": false,
-          "value": "bool",
-          "description": "从标准输入读 PostToolUse 事件；有问题时退出码 2、报错写到 stderr，不在范围内或干净时静默"
-        }
-      ]
-    },
-    {
       "command": "spec ticket-of",
       "module": "spec",
       "use": "ticket-of <commit>",
@@ -3333,7 +3267,7 @@
       "command": "test skill-doc",
       "module": "test",
       "use": "skill-doc <skill目录> [--plugin <插件根>] [--min-pointers <n>]",
-      "summary": "查一份 skill：插件里每处指向它的小节（idea-loop:<skill> 的「某节」）都是它的 SKILL.md 或 references/ 的标题；不对退出 1",
+      "summary": "查一份 skill：SKILL.md 主体（去掉 frontmatter）不到 5000 字（UTF-8 字符），插件里每处指向它的小节（idea-loop:<skill> 的「某节」）都是它的 SKILL.md 或 references/ 的标题；不对退出 1",
       "caller": "test",
       "next": "",
       "args": [

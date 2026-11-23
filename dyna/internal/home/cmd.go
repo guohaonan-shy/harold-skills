@@ -100,7 +100,7 @@ func (d Deps) project(cmd *cobra.Command) (Found, error) {
 
 // Command is the `home` module.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("home", "home（你的知识库与项目目录）：项目在哪、知识库怎么提交、各层索引、ADR 编号、setup 的三处用户级配置、记忆与术语表检查")
+	root := registry.Group("home", "home（你的知识库与项目目录）：项目在哪、设备上登记了哪些项目、调度表、知识库怎么提交、各层索引、ADR 编号、setup 的三处用户级配置、记忆与术语表检查")
 	const sess = registry.CallerSession
 
 	where := leaf("where", "打印当前项目在 home 里的目录（JSON）；在 home 本身里要带 --project", sess,
@@ -121,6 +121,32 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 	where.Flags().String("project", "", "项目名（在 home 目录里，或不在项目的仓库里时要带）")
+
+	projects := leaf("projects", "打印这台设备登记的全部项目（JSON 数组，顺序同项目清单）：名字、项目目录、知识库目录、owner/repo、本地 clone、搬进 home 没有（没搬进的带原因码和原因）", sess,
+		"", func(cmd *cobra.Command, args []string) error {
+			d.println(strings.TrimRight(dump(Projects(d.env())), "\n"))
+			return nil
+		})
+
+	dispatch := leaf("dispatch", "打印这台设备的调度表（JSON）：此刻所在时段、该派什么、每轮最多新开几个、各状态同时开着最多几个、不调度的项目、整张时段表和三个分组名；读 home 的 DISPATCH.md，没有就用默认", sess,
+		"", func(cmd *cobra.Command, args []string) error {
+			var at *string
+			if cmd.Flags().Changed("at") {
+				v, _ := cmd.Flags().GetString("at")
+				at = &v
+			}
+			md, err := ReadDispatchFile(d.env())
+			if err != nil {
+				return err
+			}
+			res, err := ReadDispatch(md, at, d.now())
+			if err != nil {
+				return err
+			}
+			d.println(strings.TrimRight(dump(res), "\n"))
+			return nil
+		})
+	dispatch.Flags().String("at", "", "按这一刻（HH:MM）算，不给就用本机的钟")
 
 	commit := leaf("commit <message> <file>...", "只提交列出的文件到 home 的主分支再推送；docs 里有重名 slug 或死链就拒绝", sess,
 		"", func(cmd *cobra.Command, args []string) error {
@@ -289,7 +315,7 @@ func Command(d Deps) *cobra.Command {
 	glossaryCheck.Flags().Bool("hook", false, "从 stdin 读 PostToolUse 事件；有问题退出码 2、理由写到 stderr")
 	glossary.AddCommand(glossaryCheck)
 
-	root.AddCommand(where, commit, mapCmd, index, adr, config, memory, glossary)
+	root.AddCommand(where, projects, dispatch, commit, mapCmd, index, adr, config, memory, glossary)
 	return root
 }
 
