@@ -45,6 +45,7 @@
 - [x] review 第 1 轮 S1（2026-11-23）：起草 spec 时判断「哪些事写成待定题」也照用户规则的「思考与决策」（落在「停下问我」的才写成待定题），不再按「只认三种依据、冲突或没有就写成选项」；to-spec 和 issue-session 起草 spec 的自查都改。依据：spec「同一行为的其他入口」把 to-spec 起草列为纳入。 已改 to-spec「实现决策」与 draft-spec 自查第 6 条，`decision-evidence-principles-doc.test.mjs` 最后一条钉住（旧文本上见红）。
 - [x] review 第 1 轮 S2（2026-11-23）：setup 列重复段落时，会话对照的是插件里固定文案的正文（那份参考资料），不是 `home config plan` 改后一栏（那里只有三个标题）。依据：人的批示「D1 我倾向于A」。 已改 `home.md` 第 3 步第 5 条指向 `home-rules.md`，`setup-home-doc.test.mjs` 新增一条钉住（旧文本上见红）。
 - [x] review 第 1 轮 C2（2026-11-23）：issue 会话「边界」里范围题那句、PR 汇报写法里取依据那句，指向审查标准时写从插件根目录起的完整位置，照字面找得到；给 agent 写文档的写法说明里「别的 skill 不读一个 skill 的内部参考」记一条例外：PR review 的审查标准可以被 issue 会话和 PR 汇报写法直接读（理由：调审查那个 skill 会开跑一轮 review）。人的批示「C2 A」。 已改两处句子写 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md`，`SKILL-MECHANICS.md`「引用另一个 skill」记了例外；`decision-evidence-principles-doc.test.mjs`、`writing-for-agents-rewrite-doc.test.mjs` 新增两条（旧文本上见红），`skill-private-references.test.mjs` 只对这一份路径、只对 issue-session 与 pr 放行。
+- [ ] review 第 2 轮 S1（2026-11-23）：起草 spec 判哪些事交给人时，用户规则的「只由我做」（例：术语的起名、改名、定稿）和「停下问我」都算，不只「停下问我」；to-spec 与 issue-session 起草自查第 6 条都改。依据：固定文案「只由我做」原文；spec 期望行为 3「只看 home 固定文案的『只由我做』『停下问我』」。
 
 ## 选中的存量回归
 
