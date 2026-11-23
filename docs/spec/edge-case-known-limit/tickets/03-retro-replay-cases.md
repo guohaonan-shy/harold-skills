@@ -16,6 +16,8 @@
 
 ## 验收标准
 
+- [ ] 继承自 02：「怎么证明 skill 真的变了」由本工单的四个回放用例承担，跑过后 02 那一格算证明完。
+- [ ] `evals/retro/cases/` 里还写着 `decision-rules` 旧名的用例（02 交回点名：`decision-rules-scope-recommend`、`writing-no-project-info`、`implement-no-stop-without-decision`）改成新位置的说法，不改它们要判的那个点；改不了的写明原因。
 - [ ] 四个用例落盘，每个有前置提交、prompt、停在哪、是/否题和出处。
 - [ ] runner 能给改前、改后分别配 home；对应测试全绿。
 - [ ] 四个用例跑过（或写明大用例待跑、由编排者当场跑），改前否、改后是（用例 3 改后是），判定带出处。
