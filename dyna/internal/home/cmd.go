@@ -161,6 +161,7 @@ func Command(d Deps) *cobra.Command {
 	mapCmd := leaf("map", "开场注入当前项目的项目目录和项目地图（出任何岔子都什么也不打印）", registry.CallerHook, "", func(cmd *cobra.Command, args []string) error {
 		defer func() { _ = recover() }()
 		fmt.Fprint(d.out(), ProjectMap(d.cwd(), d.env()))
+		fmt.Fprint(d.out(), RulesLagLine(d.env()))
 		return nil
 	})
 	mapCmd.Flags().Bool("hook", false, "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话")
@@ -199,7 +200,7 @@ func Command(d Deps) *cobra.Command {
 	adrNew.Flags().String("project", "", "项目名（不带就取当前目录所在的项目）")
 	adr.AddCommand(adrNew)
 
-	config := registry.Group("config", "setup 的三处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md")
+	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节")
 	pluginRoot := func() (string, error) {
 		root := d.env()(EnvPluginRoot)
 		if root == "" {
@@ -211,7 +212,7 @@ func Command(d Deps) *cobra.Command {
 		v, _ := cmd.Flags().GetString("only")
 		return ParseOnly(v, cmd.Flags().Changed("only"))
 	}
-	plan := leaf("plan", "列出三处用户级改动各自的改前、改后、是否已做；什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
+	plan := leaf("plan", "列出四处用户级改动各自的改前、改后、是否已做；什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
 		items, err := only(cmd)
 		if err != nil {
 			return err
@@ -231,7 +232,7 @@ func Command(d Deps) *cobra.Command {
 		fmt.Fprint(d.out(), ConfigTable(plan))
 		return nil
 	})
-	plan.Flags().String("only", "", "只看这几项：1,2,3 或 plugin,memory,claude-md")
+	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules")
 	plan.Flags().Bool("json", false, "输出 JSON")
 	apply := leaf("apply", "先备份 settings.json 和 CLAUDE.md，再做还没做的改动；都已做就什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
 		items, err := only(cmd)
@@ -256,7 +257,7 @@ func Command(d Deps) *cobra.Command {
 		}
 		return nil
 	})
-	apply.Flags().String("only", "", "只做这几项：1,2,3 或 plugin,memory,claude-md")
+	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules")
 	config.AddCommand(plan, apply)
 
 	memory := registry.Group("memory", "设备记忆的检查")

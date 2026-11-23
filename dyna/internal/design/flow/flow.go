@@ -3,7 +3,7 @@
 // A spec shows a problem or a new interaction as a screen flow: one row per path, screenshots left to right, the
 // trigger written on the arrow, one line under each step, branches dropping down from the step they fork at, red
 // rings on what to look at. This is THE way those figures get made, one recipe, so every figure in a spec (and in
-// the next spec) looks the same. Rules: skills/productivity/decision-rules/references/ui-flow.md; placement is up to the
+// the next spec) looks the same. Rules: skills/productivity/evidence/references/ui-flow.md; placement is up to the
 // caller.
 //
 // The input is one JSON per figure. Its shape is deliberately the same as a flow in the design archive

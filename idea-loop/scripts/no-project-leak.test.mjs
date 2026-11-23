@@ -55,3 +55,14 @@ test('skills, agents, docs, README, AGENTS.md and the command line carry no proj
   }
   assert.deepEqual(hits, [], `project-specific content leaked into the plugin:\n${hits.join('\n')}`);
 });
+
+// home's fixed text is written into every user's home verbatim, so it is held to the same promise by name: the scan above
+// must reach the file (it lives under skills/), and it carries no issue or PR number of the project it was drawn from.
+const HOME_RULES = 'skills/engineering/setup/references/home-rules.md';
+
+test('the fixed text dyna writes into home is among the scanned files and names no project, issue or PR', () => {
+  const scanned = SCANNED.flatMap((entry) => files(join(pluginRoot, entry))).map((f) => relative(pluginRoot, f));
+  assert.ok(scanned.includes(HOME_RULES), `${HOME_RULES} is not under a scanned path`);
+  const text = readFileSync(join(pluginRoot, HOME_RULES), 'utf8');
+  assert.doesNotMatch(text, /#\d{2,}|\b(issue|PR)\s*#?\d+/i, 'an issue or PR number in the fixed text');
+});

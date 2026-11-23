@@ -1,7 +1,7 @@
 package runtime_test
 
 // Ported from the old scripts' behavior tests: runtime-detect.test.mjs (which environment this is) and
-// session-start-inject.test.mjs (the three sections the SessionStart hook injects). What was not ported, and why:
+// session-start-inject.test.mjs (the sections the SessionStart hook injects). What was not ported, and why:
 //   - "hooks.json registers three SessionStart commands that run runtime-detect.mjs --inject" and "SessionStart has
 //     no matcher" / "three commands, the project map beside them": they read hooks.json, whose rewrite to
 //     `dyna runtime inject …` is ticket 15; the registry test below checks the other half (inject is hook-only).
@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -95,14 +96,14 @@ func TestInjectWithoutAPluginDirectoryStopsAndSaysWhich(t *testing.T) {
 // The limit Claude Code puts on one hook's output; past it the session keeps only a 2,000-character preview.
 const hookOutputLimit = 10000
 
-func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(t *testing.T) {
+func TestTwoSectionsEachUnderTheHookLimitInOrderRuntimeReference(t *testing.T) {
 	for _, tc := range []struct {
 		label string
 		vars  []string
 		name  string
 	}{{"MAGI_SESSION_ID not set", nil, "claude-desktop"}, {"MAGI_SESSION_ID set", []string{rt.EnvMagiSession, "abc"}, "magi"}} {
 		t.Run(tc.label, func(t *testing.T) {
-			var got [3]string
+			var got [2]string
 			for i, section := range rt.Sections {
 				r := dyna(env(tc.vars...), "runtime", "inject", section)
 				if r.code != 0 {
@@ -116,21 +117,7 @@ func TestThreeSectionsEachUnderTheHookLimitInOrderDecisionRulesRuntimeReference(
 				}
 				got[i] = r.stdout
 			}
-			rules, runtime, reference := got[0], got[1], got[2]
-
-			// decision-rules: header with the scope sentence, the body without frontmatter
-			first := strings.SplitN(rules, "\n", 2)[0]
-			for _, want := range []string{"以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它", "「核心」一节针对有 spec 的工作", "把「spec」读作人这次交代的事", "后三节讲证据怎么写"} {
-				if !strings.Contains(first, want) {
-					t.Errorf("decision-rules header lacks %q: %s", want, first)
-				}
-			}
-			if !strings.Contains(rules, "## 护栏") || strings.Contains(rules, "\nname: ") || strings.Contains(rules, "\ndescription: ") {
-				t.Error("decision-rules: the body, without the frontmatter")
-			}
-			if !strings.Contains(rules, strings.ReplaceAll(skillBody(t, "skills/productivity/decision-rules/SKILL.md"), "${CLAUDE_PLUGIN_ROOT}", pluginRoot())) {
-				t.Error("decision-rules: the body of the skill, whole")
-			}
+			runtime, reference := got[0], got[1]
 
 			// runtime: first line is the runtime, then the header, then the body
 			lines := strings.Split(runtime, "\n")
@@ -193,16 +180,25 @@ func TestTheDataPointsAtNoDeletedSkillAndNoOldScript(t *testing.T) {
 	}
 }
 
-func TestForcedUnknownNameDecisionRulesStillInjectsBothRuntimeSectionsFail(t *testing.T) {
+func TestForcedUnknownNameFailsBothRuntimeSections(t *testing.T) {
 	e := env(rt.EnvRuntime, "foo")
-	if r := dyna(e, "runtime", "inject", "decision-rules"); r.code != 0 || !strings.Contains(r.stdout, "## 护栏") {
-		t.Fatal(r)
-	}
 	for _, section := range []string{"runtime", "reference"} {
 		r := dyna(e, "runtime", "inject", section)
 		if r.code == 0 || r.stdout != "" || !strings.Contains(r.stderr, "foo") {
 			t.Fatalf("%s: %+v", section, r)
 		}
+	}
+}
+
+// The user's rules (home's fixed text) are loaded by the host from ~/.claude/CLAUDE.md; the plugin no longer
+// injects a skill body of its own, so the old section name is an error like any other unknown one.
+func TestInjectKnowsOnlyRuntimeAndReference(t *testing.T) {
+	if !reflect.DeepEqual(rt.Sections, []string{"runtime", "reference"}) {
+		t.Fatal(rt.Sections)
+	}
+	r := dyna(env(), "runtime", "inject", "decision-rules")
+	if r.code == 0 || r.stdout != "" || !strings.Contains(r.stderr, "unknown section decision-rules") || !strings.Contains(r.stderr, "runtime, reference") {
+		t.Fatalf("%+v", r)
 	}
 }
 
@@ -229,7 +225,7 @@ func TestAPluginDirectoryReachedThroughASymlinkStillInjects(t *testing.T) {
 	}
 }
 
-// The old script's output, byte for byte: decision-rules and runtime are the same text moved (the data was
+// The old script's output, byte for byte: runtime is the same text moved (the data was
 // copied from the skill); reference is the same except the 浏览器 section, which now also holds the three rules
 // of the old browser skill.
 func TestInjectIsWhatTheOldScriptInjectedForTheSameEnvironment(t *testing.T) {

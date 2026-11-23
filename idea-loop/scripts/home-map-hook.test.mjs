@@ -24,6 +24,10 @@ const TRUNCATED_NOTICE = '项目地图超过 2000 字，已截断';
 const NOT_MOVED = '这个项目还没搬进 home，先跑 `/idea-loop:setup` 迁移';
 const MAP_LIMIT = 2000;
 
+// home's three fixed sections, as the plugin ships them; a fake home carries them so that only the map is on stdout
+const RULES = readFileSync(join(pluginRoot, 'skills', 'engineering', 'setup', 'references', 'home-rules.md'), 'utf8');
+const LAG_LINE = 'home 的固定文案落后于插件，跑 `/idea-loop:setup`';
+
 const REMOTE = 'https://github.com/acme/example-app';
 const MAP = '# example-app 项目地图\n\n知识库在 docs/，过去的决定先查 docs/spec/。\n';
 
@@ -51,7 +55,7 @@ function world({ map = MAP, remote = REMOTE, origin = 'git@github.com:acme/examp
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'project-map-')));
   const home = join(root, 'home');
   repo(home, null);
-  writeFileSync(join(home, 'AGENTS.md'), agents ?? `# 设备\n\n## 设备地图\n\n看地图。\n\n## 项目\n\n${listLine('example-app', remote)}\n${listLine('other-app', 'https://github.com/acme/other-app')}\n`);
+  writeFileSync(join(home, 'AGENTS.md'), (agents ?? `# 设备\n\n## 设备地图\n\n看地图。\n\n## 项目\n\n${listLine('example-app', remote)}\n${listLine('other-app', 'https://github.com/acme/other-app')}\n`) + '\n' + RULES);
   if (map !== null) {
     mkdirSync(join(home, 'projects', 'example-app'), { recursive: true });
     writeFileSync(join(home, 'projects', 'example-app', 'AGENTS.md'), map);
@@ -65,12 +69,12 @@ function world({ map = MAP, remote = REMOTE, origin = 'git@github.com:acme/examp
 const run = (cwd, home) =>
   spawnSync('sh', ['-c', command], { cwd, env: { PATH: process.env.PATH, CLAUDE_PLUGIN_ROOT: pluginRoot, IDEA_LOOP_DYNA_BIN: dynaBinary(), HOME: dirname(cwd), ...(home ? { IDEA_LOOP_HOME: home } : {}) }, encoding: 'utf8' });
 
-test('hooks.json registers the command as its own SessionStart command, next to the three `runtime inject` ones', () => {
+test('hooks.json registers the command as its own SessionStart command, next to the two `runtime inject` ones', () => {
   assert.ok(command, 'a SessionStart command runs `dyna home map`');
   assert.equal(command, '"${CLAUDE_PLUGIN_ROOT}/bin/dyna" home map --hook');
   assert.equal(hookCommands.filter((c) => c.includes('home map')).length, 1);
   assert.equal(hookCommands.filter((c) => c.includes('project-map.mjs')).length, 0);
-  assert.equal(hookCommands.filter((c) => c.includes('runtime inject')).length, 3);
+  assert.equal(hookCommands.filter((c) => c.includes('runtime inject')).length, 2);
   assert.ok(hooks.SessionStart.every((e) => !('matcher' in e)), 'no matcher: startup, resume, clear, compact and fork all inject');
 });
 
@@ -133,7 +137,7 @@ test('a home without AGENTS.md, or with one that has no project section: nothing
   const none = world({ agents: '# 设备\n\n没有项目一节。\n' });
   assert.equal(run(none.code, none.home).stdout, '');
   const bare = world();
-  writeFileSync(join(bare.home, 'AGENTS.md'), '');
+  writeFileSync(join(bare.home, 'AGENTS.md'), RULES);
   const r = run(bare.code, bare.home);
   assert.equal(r.status, 0);
   assert.equal(r.stdout, '');
@@ -243,4 +247,22 @@ test('the hook with no home directory: nothing and exit 0, even in a repository 
 test('the hook opened in home itself prints nothing even though home has a project with docs/', () => {
   const { home } = moved();
   assert.equal(run(home, home).stdout, '');
+});
+
+test('home\'s three fixed sections behind the plugin\'s (changed or missing): one line after the map; the same text: the map alone', () => {
+  const { code, home } = world();
+  const agents = join(home, 'AGENTS.md');
+  assert.equal(run(code, home).stdout, MAP, 'a home that carries the plugin\'s text hears nothing extra');
+  const current = readFileSync(agents, 'utf8');
+
+  writeFileSync(agents, current.replace(RULES, RULES.replace('先确认问题', '先想想问题')));
+  const changed = run(code, home);
+  assert.equal(changed.status, 0, changed.stderr);
+  assert.equal(changed.stdout, `${MAP}${LAG_LINE}\n`);
+
+  writeFileSync(agents, current.replace(RULES, ''));
+  assert.equal(run(code, home).stdout, `${MAP}${LAG_LINE}\n`);
+
+  // outside any project the line is still there: it is about this device, not about the repository
+  assert.equal(run(home, home).stdout, `${LAG_LINE}\n`);
 });

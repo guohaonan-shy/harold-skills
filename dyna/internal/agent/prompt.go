@@ -12,9 +12,9 @@ import (
 // The fixed Codex prompts of pr-review are text that changes with the skill, so they stay in the plugin and are
 // read from there (IDEA_LOOP_PLUGIN_ROOT); the command only fills them in.
 const (
-	templateDir     = "skills/engineering/pr-review/references"
-	standardsPath   = "skills/engineering/pr-review/references/review-standards.md"
-	decisionRulesMD = "skills/productivity/decision-rules/SKILL.md"
+	templateDir   = "skills/engineering/pr-review/references"
+	standardsPath = "skills/engineering/pr-review/references/review-standards.md"
+	noUserRules   = "无"
 )
 
 // Axes are the two prompt templates, one per review axis.
@@ -23,11 +23,22 @@ var Axes = []string{"spec", "standards"}
 var placeholder = regexp.MustCompile(`\{\{(\w+)\}\}`)
 
 // Builtin is the values the command fills in itself, from the plugin's own layout: the paths of review-standards
-// and decision-rules under pluginRoot. Keys in the order they are listed in messages.
-func Builtin(pluginRoot string) (keys []string, values map[string]string) {
-	return []string{"standards", "decision_rules"}, map[string]string{
-		"standards":      filepath.Join(pluginRoot, standardsPath),
-		"decision_rules": filepath.Join(pluginRoot, decisionRulesMD),
+// under pluginRoot (as `standards`, and again as `review_standards`, the one the disposition rules are read from),
+// and the user's own rules, <home>/.claude/CLAUDE.md, which every session of theirs loads: its path, or "无" when
+// there is no such file (no error: a device without it just has no user rules). Keys in the order they are listed
+// in messages.
+func Builtin(pluginRoot, home string) (keys []string, values map[string]string) {
+	userRules := noUserRules
+	if home != "" {
+		p := filepath.Join(home, ".claude", "CLAUDE.md")
+		if _, err := os.Stat(p); err == nil {
+			userRules = p
+		}
+	}
+	return []string{"standards", "review_standards", "user_rules"}, map[string]string{
+		"standards":        filepath.Join(pluginRoot, standardsPath),
+		"review_standards": filepath.Join(pluginRoot, standardsPath),
+		"user_rules":       userRules,
 	}
 }
 
@@ -81,7 +92,7 @@ func Render(template string, keys []string, values map[string]string, builtin []
 
 // FillPrompt reads the template of axis from the plugin, fills it from pairs (`key=value`) and the built-in
 // paths, and writes it to out.
-func FillPrompt(pluginRoot, axis, out string, pairs []string) error {
+func FillPrompt(pluginRoot, home, axis, out string, pairs []string) error {
 	ok := false
 	for _, a := range Axes {
 		ok = ok || a == axis
@@ -89,7 +100,7 @@ func FillPrompt(pluginRoot, axis, out string, pairs []string) error {
 	if !ok || out == "" {
 		return fmt.Errorf("用法：dyna agent codex prompt <spec|standards> <out-file> key=value...")
 	}
-	keys, values := Builtin(pluginRoot)
+	keys, values := Builtin(pluginRoot, home)
 	builtin := append([]string{}, keys...)
 	for _, p := range pairs {
 		i := strings.Index(p, "=")

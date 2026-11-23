@@ -5,10 +5,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" runtime inject decision-rules --hook"
-          },
-          {
-            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" runtime inject runtime --hook"
           },
           {

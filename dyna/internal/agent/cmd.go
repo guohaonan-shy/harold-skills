@@ -76,7 +76,7 @@ func leaf(use, short string, next string, args cobra.PositionalArgs, run func(cm
 // promptCommand fills one of pr-review's fixed Codex prompt templates.
 func promptCommand(d Deps) *cobra.Command {
 	return leaf("prompt <spec|standards> <out-file> [key=value...]",
-		"把 pr-review 固定的 Codex prompt 模板（Spec 轴或 Standards 轴）填好写进 <out-file>：模板与 review-standards、decision-rules 的路径从插件目录读，key=value 是这一轮不一样的引用；没填的占位或模板里没有的 key 都拒绝（退出 1）",
+		"把 pr-review 固定的 Codex prompt 模板（Spec 轴或 Standards 轴）填好写进 <out-file>：模板与 review-standards 的路径从插件目录读，用户规则取 ~/.claude/CLAUDE.md（不在就填「无」），key=value 是这一轮不一样的引用；没填的占位或模板里没有的 key 都拒绝（退出 1）",
 		"dyna agent codex prompt --help",
 		cobra.ArbitraryArgs,
 		func(cmd *cobra.Command, args []string) error {
@@ -87,12 +87,21 @@ func promptCommand(d Deps) *cobra.Command {
 			if root == "" {
 				return nexterr.New("经插件的 bin/dyna 调用，或设 "+EnvPluginRoot+"=<插件目录> 再重跑", "没设 %s：prompt 模板放在插件目录里，读不到", EnvPluginRoot)
 			}
-			if err := FillPrompt(root, args[0], args[1], args[2:]); err != nil {
+			if err := FillPrompt(root, userHomeDir(d.env()), args[0], args[1], args[2:]); err != nil {
 				return err
 			}
 			fmt.Fprintln(d.out(), args[1])
 			return nil
 		})
+}
+
+// userHomeDir is the user's home directory as the session sees it; "" when there is none (then there are no user rules).
+func userHomeDir(env home.Env) string {
+	if h := env("HOME"); h != "" {
+		return h
+	}
+	h, _ := os.UserHomeDir()
+	return h
 }
 
 // parseTimeout reads --timeout ("20m", "90s", "1h30m").

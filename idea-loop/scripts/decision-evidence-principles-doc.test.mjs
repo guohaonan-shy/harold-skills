@@ -85,7 +85,8 @@ test('the evidence sections say what evidence is, the style, and the figure kind
 
 test('the old evidence skill is gone, and nothing in the plugin calls it', () => {
   assert.equal(existsSync(join(pluginRoot, 'skills', 'productivity', 'evidence')), false);
-  const hits = walk(pluginRoot).filter((f) => /idea-loop:evidence|skills\/productivity\/evidence/.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
+  // home's fixed text (setup's home-rules.md) sends the reader to `idea-loop:evidence`, the skill that replaces decision-rules' evidence sections (the next ticket writes it)
+  const hits = walk(pluginRoot).filter((f) => !f.endsWith('setup/references/home-rules.md')).filter((f) => /idea-loop:evidence|skills\/productivity\/evidence/.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
   assert.deepEqual(hits, [], `还指着 evidence：${hits.join(', ')}`);
 });
 

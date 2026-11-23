@@ -22,15 +22,15 @@
 
 ## 验收标准
 
-- [ ] `home config plan` 在一个没有这三节的 home 上列出第 4 项 `rules`，状态「待改」，改后是三节标题；`--only rules` 和 `--only 4` 都认。
-- [ ] `home config apply` 后 home 的 `AGENTS.md` 有三节、内容与插件那份逐字相同；原有的人写的节（含 `## 设备地图` 之前那段）一字不动；再 apply 一次不写文件、状态「已是」。
-- [ ] 插件那份改一个字后，plan 显示「待改」，apply 只替换这三节。
-- [ ] `home map --hook`：三节与插件不一致（或缺）时开场输出里多一行落后提醒；一致时输出与改前相同。
-- [ ] `runtime inject decision-rules` 报未知段；`runtime inject runtime`、`reference` 输出不变。
-- [ ] `pr candidates`：种类「目标」、引文在 spec 里找得到的收下；引文找不到的、文件不是这次 spec 的丢弃；原三种照旧。
-- [ ] `agent` 填好的提示词里有 `review_standards`、`user_rules`，没有 `decision_rules`；`~/.claude/CLAUDE.md` 不在时 `user_rules` 是「无」。
-- [ ] 命令行版本已升、新登记表已存，`go test ./...` 全绿；仓库根的版本与扫描测试全绿。
-- [ ] 不许出现项目信息的测试扫到固定文案那份文件并通过。
+- [x] `home config plan` 在一个没有这三节的 home 上列出第 4 项 `rules`，状态「待改」，改后是三节标题；`--only rules` 和 `--only 4` 都认。
+- [x] `home config apply` 后 home 的 `AGENTS.md` 有三节、内容与插件那份逐字相同；原有的人写的节（含 `## 设备地图` 之前那段）一字不动；再 apply 一次不写文件、状态「已是」。
+- [x] 插件那份改一个字后，plan 显示「待改」，apply 只替换这三节。
+- [x] `home map --hook`：三节与插件不一致（或缺）时开场输出里多一行落后提醒；一致时输出与改前相同。
+- [x] `runtime inject decision-rules` 报未知段；`runtime inject runtime`、`reference` 输出不变。
+- [x] `pr candidates`：种类「目标」、引文在 spec 里找得到的收下；引文找不到的、文件不是这次 spec 的丢弃；原三种照旧。
+- [x] `agent` 填好的提示词里有 `review_standards`、`user_rules`，没有 `decision_rules`；`~/.claude/CLAUDE.md` 不在时 `user_rules` 是「无」。
+- [x] 命令行版本已升、新登记表已存，`go test ./...` 全绿；仓库根的版本与扫描测试全绿。
+- [x] 不许出现项目信息的测试扫到固定文案那份文件并通过。
 
 ## 选中的存量回归
 
