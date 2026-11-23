@@ -94,13 +94,12 @@ test('seo-scan: 预算 reads the week from the research log, says what a skipped
   assert.ok(!/单次上限/.test(SCAN), 'there is no single-run cap any more');
 });
 
-test('seo-scan: the 花费 line it writes carries 份：扫描, the budget reference names the three shares, and the body stays within the 4500-character line', () => {
+test('seo-scan: the 花费 line it writes carries 份：扫描, the budget reference names the three shares', () => {
   assert.match(section(SCAN, '研究日志'), /份/);
   assert.match(BUDGET, /排名追踪/);
   assert.match(BUDGET, /起草与验证/);
   assert.match(BUDGET, /logKnown/);
   assert.match(BUDGET, /logSince/);
-  assert.ok([...SCAN].length <= 4500, `${[...SCAN].length} characters`);
 });
 
 test('draft-spec: before SEO research the session reads its 起草与验证 share, skips what does not fit, and writes the spend back to the research log', () => {

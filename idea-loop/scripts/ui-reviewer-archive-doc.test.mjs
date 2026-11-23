@@ -44,19 +44,6 @@ test('archive mode still names the screenshot method it relies on', () => {
   assert.match(text, /idea-loop:design-archive[^\n]*「长页面的入口状态」/);
 });
 
-// The definition is a router for three modes plus the steps every audit walks: it stays under the 4500 line
-// (writing-for-agents 「4500 线」), and each mode's body lives in design-archive's references, called by name and section.
-test('the ui-reviewer definition body is under the 4500-character line', () => {
-  let seen = 0;
-  const rest = [];
-  for (const line of doc.split('\n')) {
-    if (seen >= 2) rest.push(line);
-    if (line === '---') seen++;
-  }
-  const n = [...rest.join('\n')].length;
-  assert.ok(n < 4500, `ui-reviewer body is ${n} characters`);
-});
-
 test('walkthrough mode points at its body in design-archive by name and section, and keeps the shape of the findings out of the definition', () => {
   const text = section('每轮走查模式').map((l) => l.text).join('\n');
   assert.match(text, /idea-loop:design-archive[^\n]*「UI 审查的每轮走查模式」/);

@@ -51,25 +51,28 @@ func pluginWithSkill(t *testing.T, bodyChars int, files map[string]string) (root
 	return root, skillDir
 }
 
-func TestSkillDocPassesAShortSkillWhoseQuotedSectionsExist(t *testing.T) {
-	_, skillDir := pluginWithSkill(t, 4999, map[string]string{"README.md": "见 `idea-loop:demo` 的「有的一节」。\n"})
+func TestSkillDocPassesASkillWhoseQuotedSectionsExistAndSaysHowManyItChecked(t *testing.T) {
+	_, skillDir := pluginWithSkill(t, 100, map[string]string{"README.md": "见 `idea-loop:demo` 的「有的一节」。\n"})
 	out, _, err := execCmd(Deps{}, "skill-doc", skillDir)
 	if err != nil {
 		t.Fatal(err, out)
 	}
-	for _, want := range []string{"demo", "4999", "5000", "1 处"} {
+	for _, want := range []string{"demo", "1 处"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("the report lacks %q: %s", want, out)
 		}
 	}
 }
 
-func TestSkillDocIsRedForABodyOf5000CharactersAndCountsCharactersNotBytes(t *testing.T) {
-	// 5000 han characters are 15000 bytes: 4999 passing above and 5000 failing here pins the unit at characters.
-	_, skillDir := pluginWithSkill(t, 5000, nil)
-	_, _, err := execCmd(Deps{}, "skill-doc", skillDir)
-	if err == nil || !strings.Contains(err.Error(), "5000") || !strings.Contains(err.Error(), "references/") {
-		t.Fatalf("a body of 5000 is over the limit (< 5000 is the rule): %v", err)
+func TestSkillDocDoesNotMeasureTheBody(t *testing.T) {
+	// how long a body may be is `spec skill-lint`'s line, held in one place; skill-doc checks the pointers only
+	_, skillDir := pluginWithSkill(t, 9000, map[string]string{"README.md": "见 `idea-loop:demo` 的「有的一节」。\n"})
+	out, _, err := execCmd(Deps{}, "skill-doc", skillDir)
+	if err != nil {
+		t.Fatalf("a long body is not skill-doc's concern: %v", err)
+	}
+	if strings.Contains(out, "9000") || strings.Contains(out, "上限") {
+		t.Errorf("the report counts no characters: %s", out)
 	}
 }
 

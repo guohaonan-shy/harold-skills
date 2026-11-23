@@ -85,10 +85,6 @@ const setupDir = join(pluginRoot, 'skills', 'engineering', 'setup');
 const skill = readFileSync(join(setupDir, 'SKILL.md'), 'utf8');
 const body = skill.split(/^---\s*$/m).slice(2).join('---');
 
-test('setup SKILL.md body is at most 4500 characters', () => {
-  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
-});
-
 test('every references/ link in setup SKILL.md exists', () => {
   const links = [...skill.matchAll(/\]\((references\/[^)#]+)\)/g)].map((m) => m[1]);
   assert.ok(links.length > 0);

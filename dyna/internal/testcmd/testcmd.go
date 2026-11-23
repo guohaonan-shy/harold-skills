@@ -2,7 +2,7 @@
 // change the plugin.
 //
 //   - `fixture design-archive` writes a small fictional design archive into a directory.
-//   - `skill-doc` checks one skill: its SKILL.md body is short enough and every section other documents point at exists.
+//   - `skill-doc` checks one skill: every section other documents point at exists.
 //   - `run` runs the plugin's own *.test.mjs files, all of them or the ones whose name contains a word.
 package testcmd
 
@@ -147,7 +147,7 @@ func isFile(p string) bool {
 func skillDoc(d Deps) *cobra.Command {
 	c := &cobra.Command{
 		Use:           "skill-doc <skill目录> [--plugin <插件根>] [--min-pointers <n>]",
-		Short:         "查一份 skill：SKILL.md 主体（去掉 frontmatter）不到 5000 字（UTF-8 字符），插件里每处指向它的小节（idea-loop:<skill> 的「某节」）都是它的 SKILL.md 或 references/ 的标题；不对退出 1",
+		Short:         "查一份 skill：插件里每处指向它的小节（idea-loop:<skill> 的「某节」）都是它的 SKILL.md 或 references/ 的标题；不对退出 1",
 		Args:          cobra.ArbitraryArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -181,20 +181,13 @@ func skillDoc(d Deps) *cobra.Command {
 		minPointers, _ := cmd.Flags().GetInt("min-pointers")
 		name := filepath.Base(skillDir)
 
-		n, err := skilldoc.BodyChars(skillDir)
-		if err != nil {
-			return err
-		}
 		ptr, err := skilldoc.DanglingSectionPointers(root, skillDir, name)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "%s：SKILL.md 主体 %d 字（上限 %d），查了 %d 处指向它的小节\n", name, n, skilldoc.MaxBodyChars, ptr.Seen)
+		fmt.Fprintf(cmd.OutOrStdout(), "%s：查了 %d 处指向它的小节\n", name, ptr.Seen)
 
 		var problems []string
-		if n >= skilldoc.MaxBodyChars {
-			problems = append(problems, fmt.Sprintf("SKILL.md 主体 %d 字，上限 %d：长的内容挪进 references/", n, skilldoc.MaxBodyChars))
-		}
 		if ptr.Seen < minPointers {
 			problems = append(problems, fmt.Sprintf("只查到 %d 处指向 %s 的小节，要求至少 %d 处", ptr.Seen, name, minPointers))
 		}

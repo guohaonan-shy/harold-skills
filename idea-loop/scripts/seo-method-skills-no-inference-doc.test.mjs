@@ -112,10 +112,6 @@ for (const c of cases) {
     }
     // the hand-back template's `assumptions` says it can carry the missing project information
     assert.match(unattendedDoc, /"assumptions": \["代替提问用的默认值；缺的项目信息及因此没做的部分"\]/);
-    if (!FILE[c.slug]) {
-      const body = doc.split(/^---\s*$/m).slice(2).join('---');
-      assert.ok([...body].length <= 4500, 'SKILL.md body stays within 4500 characters');
-    }
   });
 }
 

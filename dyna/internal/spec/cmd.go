@@ -21,6 +21,16 @@ type Deps struct {
 	Stdout io.Writer
 	// Dir is where git runs; empty is the directory dyna was started in.
 	Dir string
+	// Home is where `dyna home` keeps the personal repository (the package that knows it imports this one, so the
+	// caller says it); nil means there is none, and only plugin roots count for skill-lint.
+	Home func() string
+}
+
+func (d Deps) homeDir() string {
+	if d.Home == nil {
+		return ""
+	}
+	return d.Home()
 }
 
 func (d Deps) out() io.Writer {
@@ -58,7 +68,7 @@ func usage(use string) error { return fmt.Errorf("usage: dyna spec %s", use) }
 
 // Command is the `spec` module: what a spec says, and which tickets of a spec have landed.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("spec", "spec 的目录检查与索引，工单落地账本（从提交里的 Ticket 行读）和 skill 改动的交回核对")
+	root := registry.Group("spec", "spec 的目录检查与索引，工单落地账本（从提交里的 Ticket 行读）、skill 改动的交回核对和 skill 文件的结构检查")
 
 	root.AddCommand(
 		leaf("index <docs>", "按 docs/spec/ 下的 spec 重写 docs/spec/index.md 的表，表外的字不动", "dyna spec check <docs>",
@@ -146,6 +156,7 @@ func Command(d Deps) *cobra.Command {
 				}
 				return &nexterr.Exit{Code: 2}
 			}),
+		skillLintCommand(d),
 	)
 	return root
 }

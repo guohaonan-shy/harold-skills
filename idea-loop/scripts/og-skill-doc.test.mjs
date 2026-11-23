@@ -2,7 +2,7 @@
  * Tripwire — the `og` skill (OG share cards) says what the code and the project's files actually provide.
  *
  * Spec split-blog-publisher, ticket 04. What is pinned: the description routes only and carries the three triggers; the
- * body stays under 5000 characters; the SEO.md keys the skill reads exist in the parser; every script it names exists;
+ * the SEO.md keys the skill reads exist in the parser; every script it names exists;
  * the layouts the docs name are the templates on disk and the default is one of them; a project with no OG recipe is told
  * so in the handback; the templates hold no color literals (every color comes in as a token, so no project's brand can be
  * baked in); both READMEs list the skill; the layout notes keep no copy of the default title sizes (the render script
@@ -21,7 +21,6 @@ import { parseSeoMd } from './dyna-seo-parse.mjs';
 const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..');
 const path = (...p) => join(root, ...p);
 const read = (...p) => readFileSync(path(...p), 'utf8');
-const body = (md) => md.split(/^---\s*$/m).slice(2).join('---');
 
 const SKILL = read('skills', 'seo', 'og', 'SKILL.md');
 const LAYOUTS = read('skills', 'seo', 'og', 'references', 'layouts.md');
@@ -36,10 +35,6 @@ test('description routes only: a trigger for each branch, no flow or artifact', 
   for (const w of ['人在场时', '发现清单', '草稿箱', '表单', '报告', 'PNG', 'HTML', 'DESIGN.md']) assert.ok(!d.includes(w), `description mentions 「${w}」`);
   assert.ok(!/^disable-model-invocation:/m.test(SKILL), 'the model has to be able to call it: seo-writing does');
   assert.match(SKILL, /^name: og$/m);
-});
-
-test('the body is under 5000 characters', () => {
-  assert.ok([...body(SKILL)].length < 5000, `${[...body(SKILL)].length} characters`);
 });
 
 test('the SEO.md keys it reads are keys the parser returns, and the skill uses their names', () => {

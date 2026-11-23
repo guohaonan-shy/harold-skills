@@ -98,7 +98,7 @@ var tools = []tool{
 	{
 		name: "design_journey", entry: "journey", arg: "name",
 		description: "查一条用户路径：用户的意图加有序步骤，每一步怎么触发（边的定位与操作，或系统行为怎么让它发生）、到了应看到什么。" +
-			"什么时候用：要走通一整段用户流程（端到端测试、验收、复现一串操作）时。",
+			"什么时候用：要走通一整段用户路径（端到端测试、验收、复现一串操作）时。",
 		properties: []prop{{"name", "用户路径名"}, deltaProp},
 	},
 	{

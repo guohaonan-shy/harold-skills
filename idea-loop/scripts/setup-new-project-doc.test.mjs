@@ -89,8 +89,7 @@ test('the home step comes before the files are written, and its registration is 
   assert.doesNotMatch(home, /人说提交才提交/);
 });
 
-test('the setup skill body stays under 4500 characters and every reference it links exists', () => {
-  assert.ok([...body].length <= 4500, `body is ${[...body].length} characters`);
+test('every reference the setup skill links exists', () => {
   for (const [, link] of skill.matchAll(/\]\((references\/[^)#]+)\)/g)) assert.ok(existsSync(join(setupDir, link)), link);
 });
 

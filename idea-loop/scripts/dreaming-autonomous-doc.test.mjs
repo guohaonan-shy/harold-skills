@@ -93,18 +93,12 @@ function askedBySplit() {
   return asked;
 }
 
-test('dreaming: description routes only, body stays under 5000 characters', () => {
+test('dreaming: description routes only', () => {
   const description = skillFull.match(/^description: (.*)$/m)[1];
   assert.ok(!description.includes('人批过才执行'), description);
-  assert.ok([...skill].length < 5000, `body is ${[...skill].length} characters`);
 });
 
-test('dreaming, adr-reconciler and design-steward keep their body under the 4500 line; the partial-run branch lives in its own reference behind one pointer', () => {
-  assert.ok([...skill].length <= 4500, `dreaming body is ${[...skill].length} characters`);
-  for (const f of ['adr-reconciler.md', 'design-steward.md']) {
-    const n = [...body(read('agents', f))].length;
-    assert.ok(n <= 4500, `${f} body is ${n} characters`);
-  }
+test('dreaming: the partial-run branch lives in its own reference behind one pointer', () => {
   assert.match(skill, /\[references\/partial-runs\.md\]\(references\/partial-runs\.md\)/);
   assert.doesNotMatch(skill, /## 只跑一部分|单条蒸馏/, 'the partial-run branch is moved out of SKILL.md');
   const partial = read(...dir, 'references', 'partial-runs.md');

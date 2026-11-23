@@ -1047,7 +1047,7 @@ func TestInALinearProjectTheCommandsThatWriteGitHubAreRefusedAndGHIsNeverCalled(
 	eq(t, issues.LinearRefusal("set") != "", true)
 	// what does not touch GitHub issues still works
 	eq(t, cli(p, nil, nil, "issues", "body", p.docs, body).lines(), []string{"正文齐了"})
-	r := cli(p, nil, nil, "issues", "queues", p.docs, "--at=10:00")
+	r := cli(p, nil, nil, "issues", "queues", p.docs)
 	mustMatch(t, `"sections": \[\s*"triage",\s*"in-progress",\s*"in-review"\s*\]`, r.out)
 }
 
@@ -1358,27 +1358,19 @@ func TestCandidatesStateFlagOnTheCommandLine(t *testing.T) {
 	refused(t, run(p, f, "candidates", p.docs, "--state=done"), `state`)
 }
 
-func TestQueuesThroughTheCommandLine(t *testing.T) {
+func TestQueuesGivesOnlyTheThreeSectionNamesAndTheTimeIsNoLongerItsBusiness(t *testing.T) {
 	p := docsWith(t, nil, nil, "")
-	r := run(p, newFake(), "queues", p.docs, "--at=23:30")
+	r := run(p, newFake(), "queues", p.docs)
 	eq(t, r.code, 0, r.err)
-	var q struct {
-		At       string `json:"at"`
-		Dispatch string `json:"dispatch"`
-		Limit    int    `json:"limit"`
-	}
+	var q map[string]any
 	must(t, json.Unmarshal([]byte(r.out), &q))
-	eq(t, q, struct {
-		At       string `json:"at"`
-		Dispatch string `json:"dispatch"`
-		Limit    int    `json:"limit"`
-	}{"23:30", "todo", 3})
-	for _, at := range []string{"25:00", "abc", "10:60", "1000", "10:5", "-1:00", "10:00:00", ""} {
-		refused(t, run(p, newFake(), "queues", p.docs, "--at="+at), `--at`)
-	}
-	refused(t, run(p, newFake(), "queues", p.docs, "--at"), `--at`)
-	broken := docsWith(t, nil, str("# Issue tracker：GitHub\n\n## 调度\n\n| 时段 | 派什么 | 上限 |\n|---|---|---|\n| 09:00–19:00 | review | 3 |\n"), "")
-	refused(t, run(broken, newFake(), "queues", broken.docs, "--at=10:00"), `review`)
+	eq(t, len(q), 1, r.out)
+	eq(t, q["sections"], []any{"triage", "in-progress", "in-review"})
+	// the period, the limit and --at moved to `home dispatch`
+	refused(t, run(p, newFake(), "queues", p.docs, "--at=10:00"), `--at`)
+	// a 调度 table left in ISSUE_TRACKER.md is no longer read, so a broken one is no longer refused
+	old := docsWith(t, nil, str("# Issue tracker：GitHub\n\n## 调度\n\n| 时段 | 派什么 | 上限 |\n|---|---|---|\n| 09:00–19:00 | review | 3 |\n"), "")
+	eq(t, run(old, newFake(), "queues", old.docs).code, 0)
 }
 
 func TestTheNextCommandIsPrintedAfterARefusal(t *testing.T) {

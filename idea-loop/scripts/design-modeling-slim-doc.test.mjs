@@ -1,12 +1,11 @@
 /**
- * Tripwire — `idea-loop:design-modeling`'s SKILL.md stays inside the body limit; the write path that only a run that
+ * Tripwire — `idea-loop:design-modeling`'s SKILL.md stays slim; the write path that only a run that
  * really writes `DESIGN.md` walks lives behind a pointer in `references/write.md`.
  *
- * The body was 5485 characters when 「一次写入怎么走」 moved out; the limit is now the 4500 line (writing-for-agents 「4500 线」;
- * UTF-8 characters after the frontmatter, `awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`).
+ * The body was 5485 characters when 「一次写入怎么走」 moved out (the length line is `dyna spec skill-lint`'s).
  * Runs that only write a design-law candidate or judge admission do not walk 「一次写入怎么走」, so it moved whole into
  * references/write.md; the title stayed because design-steward, dreaming and uiux-imagine cite it by name. This test
- * catches the body growing back, the title or the pointer disappearing, the steps being written twice, and the
+ * catches the title or the pointer disappearing, the steps being written twice, and the
  * reference losing a step. It cannot tell whether an agent reads the reference when it should.
  */
 import { test } from 'node:test';
@@ -39,11 +38,6 @@ function section(doc, title) {
   const end = rest.findIndex((l) => l.startsWith('## '));
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
-
-test('design-modeling SKILL.md body is under the 4500-character line (writing-for-agents 「4500 线」)', () => {
-  const n = [...body(skill)].length;
-  assert.ok(n < 4500, `design-modeling body is ${n} characters`);
-});
 
 test('「设计法候选的形态」 keeps its title and points at references/candidate.md, where the format lives', () => {
   const text = section(skill, '设计法候选的形态');
@@ -115,6 +109,11 @@ test('under ### 正文: the chapter table stays, the omitted: line and the "前�
   assert.match(text, /\| Known Gaps（扩展） \|/);
   assert.doesNotMatch(text, /omitted:` 声明/);
   assert.doesNotMatch(text, /前八章来自 Google 规范/);
+});
+
+test('the chapter table follows the official order: Motion, Voice & Content Strategy, Components, Do\'s and Don\'ts, then the two extensions', () => {
+  const names = section(skill, '结构').split('\n').filter((l) => /^\| [A-Z]/.test(l)).map((l) => l.split('|')[1].trim());
+  assert.deepEqual(names, ['Overview', 'Colors', 'Typography', 'Layout', 'Elevation & Depth', 'Shapes', 'Motion', 'Voice & Content Strategy', 'Components', "Do's and Don'ts", 'Responsive Behavior（扩展）', 'Known Gaps（扩展）']);
 });
 
 test('every reference SKILL.md points at exists', () => {

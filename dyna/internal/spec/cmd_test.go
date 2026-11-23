@@ -245,6 +245,7 @@ func TestRegistryJSONHasEverySpecCommandWithItsArgumentsAndCaller(t *testing.T) 
 		"spec index":      "docs",
 		"spec landed":     "base-ref",
 		"spec skill-edit": "commit,handback-file",
+		"spec skill-lint": "file",
 		"spec ticket-of":  "commit",
 	}
 	seen := map[string]bool{}
@@ -259,12 +260,22 @@ func TestRegistryJSONHasEverySpecCommandWithItsArgumentsAndCaller(t *testing.T) 
 		seen[c.Command] = true
 		var names []string
 		for _, a := range c.Args {
+			if c.Command == "spec skill-lint" {
+				if a.Kind == "positional" { // its files and flags are pinned by TestTheRegistryHasSkillLintAsAHookCommand
+					names = append(names, a.Name)
+				}
+				continue
+			}
 			if a.Kind != "positional" || !a.Required {
 				t.Errorf("%s: %+v", c.Command, a)
 			}
 			names = append(names, a.Name)
 		}
-		if strings.Join(names, ",") != args || c.Caller != "session" || c.Summary == "" {
+		caller := "session"
+		if c.Command == "spec skill-lint" {
+			caller = "hook"
+		}
+		if strings.Join(names, ",") != args || c.Caller != caller || c.Summary == "" {
 			t.Errorf("%s: %+v", c.Command, c)
 		}
 	}
