@@ -3,12 +3,10 @@ type: spec
 issues: [437]
 tags: [dyna, idea-loop-cli, skill-rewrite]
 summary: dyna 补上 skill 五处还要 agent 自己拼 gh / git 的命令：按状态列 issue、打 kind、空提交、按提交检出、等 PR 检查
-related: ["[[idea-loop-cli]]", "[[skill-rewrite]]", "[[replay-gh-isolation]]"]
+related: ["[[2026-11-23-dyna-missing-commands]]", "[[idea-loop-cli]]", "[[skill-rewrite]]", "[[replay-gh-isolation]]"]
 ---
 
 # dyna 补上 skill 里还在手拼 gh / git 的五个命令
-
-> 需要 grill：五个都是新能力（新命令或新参数），命令形状和「等检查」的边界要人定；也要定五个一起做还是只做一部分。
 
 > #437 存在：dyna 0.0.6 的登记表里没有这五样，skill 走到这五步只写「要达到什么结果」，agent 每次自己拼 `gh` / `git`；详情在「问题陈述」
 
@@ -47,7 +45,7 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 
 ## 方案
 
-<!-- 待补图：题定了之后按定下的命令画「skill → dyna → gh / git」时序图，新增的五条消息标红 -->
+![skill 调 dyna，dyna 再调 gh / git；红色是这次新增的五条命令](../../raw/idea-loop-decisions/assets/sequence-dyna-missing-commands.png)
 
 改完：skill 走到这五步各写一条 `dyna …`，agent 不再拼 `gh` / `git`。dyna 升到 0.0.7、存 0.0.7 的登记表，插件的 `idea-loop/dyna-version` 下限从 0.0.4 提到 0.0.7，五处 skill 原文改成命令。
 
@@ -70,9 +68,9 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 
 ## User Stories
 
-（树图题定后补。）
-
 ### 场景一：skill 照命令走
+
+![场景一的五条 story](../../raw/idea-loop-decisions/assets/tree-user-stories-1-skills-call-dyna.png)
 
 1. 作为 issue 调度会话，我想要一条命令列出某个状态下所有开着的 issue，以便找出没有会话的 in-progress / in-review issue
 2. 作为 issue-triager，我想要一条命令把已有 issue 的类型换成另一个，以便改判后不会同时带两个 `kind:*`
@@ -81,6 +79,8 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 5. 作为 implement / pr-review，我想要一条命令等这个 PR 的检查跑完并告诉我绿、红还是没有检查，以便不再判错 gh 的退出码
 
 ### 场景二：维护者
+
+![场景二的一条 story](../../raw/idea-loop-decisions/assets/tree-user-stories-2-maintainer.png)
 
 1. 作为维护者，我想要插件的 dyna 下限提到含这五样的版本，以便旧 dyna 上跑新 skill 时被拦下并提示升级
 
@@ -92,21 +92,14 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 - **`issues kind`**：参数只收 `bug` / `feature` / `improvement`；先去掉 issue 上所有别的 `kind:*` 再加这个，已经是这个就什么都不做。项目里还没有这个 label 时报错，指向 `dyna issues labels`（跟 `issues priority` 一样）。
 - **`issues list`**：`--state` 收 `triage` / `todo` / `in-progress` / `in-review`；`backlog` 不收，指向 `issues backlog`。输出每条 `{number, title, assignees}`，号从小到大。
 
-### 待定：`pr checks` 等多久、结论怎么报
-
-依据为什么不够：仓库里没有「等外部进程」的超时约定可照；`agent claude run` 默认 20 分钟、超时退出 124，是起会话的超时，不是等 CI 的。四处调用方对「没有检查」的处理都写「不等」，但没写推完多久还没有检查才算「没有」。
-
-我的推荐（A）：
-
-- 等的是 PR **当前 head** 的检查；结论四种：`green`（全过，含 skipped）、`red`（有一个失败或取消，列出名字和链接）、`none`（推完 60 秒还一个检查都没有）、`timeout`。
-- 默认等 30 分钟（`--timeout` 可改）。退出码：green / none 0，red 1，timeout 124（跟 `agent claude run` 一致）。
-- 有一个检查失败就立刻返回 red，不等其余的跑完（调用方拿到 red 就去回工单，其余的结果用不上）。
-
-| 选项 | 走一遍会看到什么（例：本仓库 PR #454，没有 CI） | 代价 |
-|---|---|---|
-| A（推荐）：60 秒没检查算 `none`，默认等 30 分钟，第一个失败就返回 | `dyna pr checks guohaonan-shy/harold-skills 454` 等 60 秒后打印 `none`，退出 0；implement 照「PR 上没有检查」本机跑全量 | 本仓库每次等 CI 多等 60 秒 |
-| B：一开始没检查就立刻算 `none` | 立刻打印 `none`；但在有 CI 的项目里刚 `git push` 就调，检查还没注册，也会判成 `none`，跳过 CI 直接进 review | 有 CI 的项目会漏等 |
-| C：只包一层 `gh pr checks --watch`，结论交给 agent 读 | 打印「no checks reported」，跟今天一样要 agent 自己判 | 没解决问题 5 |
+- **范围：五个一个 PR 做完**（Harold 2026-11-23 选「五个一起 (Recommended)」）。
+- **命令名照草稿**：`issues list`、`issues kind`（Harold 2026-11-23 选「就这样 (Recommended)」）。
+- **`pr checks` 等多久、结论怎么报**（Harold 2026-11-23 选「等 60 秒再判没有 (Recommended)」）：
+  - 等的是 PR **当前 head** 的检查。结论四种：`green`（全过，skipped 算过）、`red`（有一个失败或取消，列出名字和链接）、`none`（推完 60 秒还一个检查都没有）、`timeout`。
+  - 默认等 30 分钟，`--timeout` 可改。退出码：green / none 退出 0，red 退出 1，timeout 退出 124（跟 `agent claude run` 一致）。
+  - 第一个失败就返回 red，不等其余的跑完：调用方拿到 red 就去回工单，其余的结果用不上。
+  - 「60 秒」从命令开始算：GitHub 不给推送时刻，调用方都是推完就调，60 秒覆盖检查注册的那段空档。
+  - 例子：本仓库 PR #454 没有 CI，`dyna pr checks guohaonan-shy/harold-skills 454` 打印 `none`、退出 0，implement 照「PR 上没有检查」在本机跑全量。
 
 ## 测试决策
 
