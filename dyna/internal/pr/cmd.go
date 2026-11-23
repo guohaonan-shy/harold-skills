@@ -35,6 +35,8 @@ type Deps struct {
 	HTTP    *http.Client
 	BaseURL string
 	Now     func() time.Time
+	// Sleep waits between two looks at a PR's checks; nil is time.Sleep.
+	Sleep func(time.Duration)
 }
 
 func (d Deps) env() home.Env {
@@ -421,7 +423,7 @@ func Command(d Deps) *cobra.Command {
 		})
 	merge.Flags().String("method", "", "合并方式：merge、squash 或 rebase（必填）")
 
-	root.AddCommand(body, loop, evidence, candidates, diagnostics, skillGrowth, fullSuite, open, ready, view, merge)
+	root.AddCommand(body, loop, evidence, candidates, diagnostics, skillGrowth, fullSuite, open, ready, view, d.checksCommand(), merge)
 	return root
 }
 

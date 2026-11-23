@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 )
 
@@ -833,6 +834,67 @@ func SetPriority(gh GH, n int, p string) ([]string, error) {
 		}
 	}
 	return want, editLabels(gh, n, add, remove)
+}
+
+// SetKind leaves #n carrying `kind:<k>` and no other `kind:*`; returns the label it ends with. The new label is
+// added before the old ones are removed (editLabels), and an issue that already has exactly that label is not
+// edited at all.
+func SetKind(gh GH, n int, k string) ([]string, error) {
+	if !contains(Kinds, k) {
+		return nil, fmt.Errorf("类型只能是 %s（给的是「%s」）", strings.Join(Kinds, " / "), k)
+	}
+	have, err := labelsOf(gh, n)
+	if err != nil {
+		return nil, err
+	}
+	want := KindPrefix + k
+	var add, remove []string
+	if !contains(have, want) {
+		add = []string{want}
+	}
+	for _, l := range have {
+		if strings.HasPrefix(l, KindPrefix) && l != want {
+			remove = append(remove, l)
+		}
+	}
+	return []string{want}, editLabels(gh, n, add, remove)
+}
+
+// ListStates are the states `list` takes: every one but backlog, which has no label to list by (`backlog` lists it).
+var ListStates = []string{"triage", "todo", "in-progress", "in-review"}
+
+// ListedIssue is one row of `list`.
+type ListedIssue struct {
+	Number    int      `json:"number"`
+	Title     string   `json:"title"`
+	Assignees []string `json:"assignees"`
+}
+
+// ListState is every open issue in state, lowest number first: whoever it is assigned to, whatever blocks it.
+func ListState(gh GH, state string) ([]ListedIssue, error) {
+	if state == "backlog" {
+		return nil, nexterr.New("dyna issues backlog <docs>", "--state 不收 backlog：它没有 status label，要列没有状态的 issue 用 issues backlog")
+	}
+	if !contains(ListStates, state) {
+		return nil, fmt.Errorf("--state 只能是 %s，不是「%s」", strings.Join(ListStates, " / "), state)
+	}
+	all, err := OpenIssues(gh, "")
+	if err != nil {
+		return nil, err
+	}
+	var in []Issue
+	for _, i := range all {
+		if i.State == state {
+			in = append(in, i)
+		}
+	}
+	sort.SliceStable(in, func(a, b int) bool { return in[a].Number < in[b].Number })
+	out := make([]ListedIssue, 0, len(in))
+	for _, i := range in {
+		as := append([]string{}, i.Assignees...)
+		out = append(out, ListedIssue{Number: i.Number, Title: i.Title, Assignees: as})
+	}
+	return out, nil
 }
 
 var urlRe = regexp.MustCompile(`https?://\S+`)

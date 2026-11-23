@@ -112,6 +112,7 @@
 | [decisions/271](decisions/271.md) | conversation | 2026-11-20 | 决定记录 —— #271 的 issue 会话：pr-review 自动 review 放到最多 5 轮、每轮先合入主分支，摆过的题与 retro 候选的结果 |
 | [decisions/223](decisions/223.md) | conversation | 2026-11-19 | 决定记录 —— #223 的 triage 会话：不再比 margin 和 gap、锚点区域字段叫 pixelAnchor；retro 无候选 |
 | [idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps](idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps.md) | conversation | 2026-11-19 | #223 triage：margin/gap 与 pixelAnchor 两道题 |
+| [idea-loop-decisions/2026-11-23-dyna-missing-commands](idea-loop-decisions/2026-11-23-dyna-missing-commands.md) | conversation | 2026-11-23 | #437 triage：五个命令一起做、pr checks 60 秒判没有、命令名照草稿 |
 | [decisions/375](decisions/375.md) | conversation | 2026-11-20 | 决定记录 —— #375 的 issue 会话：UI 工单参考里「画布在不在执行方 worktree」两处说法统一，摆过的题与 retro 候选的结果 |
 | [[2026-11-18-comment-writing-grill]] | conversation | 2026-11-18 | grill —— #296 替人发的评论：发出后变了另发新的、第一句写结论和要他做什么、不署名；表达方式进 home，插件只去掉机器开头 |
 | [decisions/296](decisions/296.md) | conversation | 2026-11-19 | 决定记录 —— #296 的 triage 会话：评论发出后变了另发新的、第一句写结论和要他做什么、不署名；规矩只进 home，插件只去掉机器开头；三条 retro 候选都不批；todo 会话：版本按 patch 升、已贴的归档评论删署名行，无候选 |
@@ -122,6 +123,7 @@
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/386](decisions/386.md) | conversation | 2026-11-23 | 决定记录 —— #386 一台设备一个调度 dispatch-home：开工前提、默认名额、模型钉法、命令行发布时机与合并顺序 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
+| [decisions/437](decisions/437.md) | conversation | 2026-11-23 | 决定记录 —— #437 dyna 缺五个命令：triage 定的三件事；无候选，顺带开 #464 |
 | [decisions/341](decisions/341.md) | conversation | 2026-11-20 | 决定记录 —— #341 的 triage 会话：「杠杆诊断」每份 spec 都写（11-22 重新 triage 后挪 #451）；字数线 4500 挂 hook 管 home 下全部 skill、评测拆成 #456、不加 CI、同一 head 全量只跑一次；候选 2 条不批；todo 会话（PR #458）：S2 修、下限 0.0.8 收尾发版、插件 0.2.0，无候选 |
 | [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
 | [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |

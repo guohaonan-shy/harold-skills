@@ -13,7 +13,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 - PR 是 **ready**（open、不是 draft）。是 draft，说明工单没落地完或有等决定的事，回 `idea-loop:implement`。
 - **PR 先合入最新主分支**：`dyna git merge origin/<基准分支>`（基准分支见 `<项目目录>/DEVELOPMENT.md`「分支」），合并而不 rebase；已是最新就什么都不做。有冲突就解决，命令生成的文件（例：spec 索引）重新生成、不手拼；判断不了保留哪边的，照 `idea-loop:decision-rules` 停下问人。然后推送，等 CI。
-- **PR 的 head 上 CI 全绿（或没有检查）**：等这个 head 的检查跑完；红了用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」，照它处理。
+- **PR 的 head 上 CI 全绿（或没有检查）**：`dyna pr checks <owner/repo> <PR 号>` 等这个 head 的检查跑完，`green`、`none` 往下；`red`、`timeout` 用 Skill 工具调 `idea-loop:implement`，看它的「等 CI」，照它处理。
 
 ## 跑一轮
 
