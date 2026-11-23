@@ -28,6 +28,8 @@
 - 文档测试：断言旧名、旧节名、「边缘情形 → 要你决定」、开场注入 decision-rules 的，改钉新位置；只为钉 decision-rules 自身写的测试，内容挪到钉 evidence / pr-review 的新位置。
 - `plugin.json`：集成分支已是 0.2.0（main 是 0.1.50，本次是 minor：删一个 skill、加一个 skill、改决策行为），不再升；在交回里写一句。
 
+> 人的决定（2026-11-23）：D1「我倾向于A」——重复段落由会话对照 plan 输出列给人、人自己删，保持现状。D3「A」——issue 会话里讨论中冒出的范围题（并进当前 PR 还是另开）也照 pr-review review 标准里的范围题推荐法推荐：在 issue-session「边界」那一句指过去，不转述、不动固定文案；用新插件重跑回放用例 `scope-question-recommend` 确认推荐并进。
+
 ## 验收标准
 
 - [x] 插件目录里（不含 `evals/`）grep 不到 `decision-rules`、`decision_rules`。
@@ -39,6 +41,7 @@
 - [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。（本工单的行为证明由 03 的回放用例承担，这里写「⏭ 延后 → 03」即可。） 已由 03 的四个回放用例证明（见 03 的验收）。
+- [ ] 人的决定（2026-11-23）：issue-session「边界」里范围题那句指向 pr-review review 标准的范围题推荐法；回放用例 `scope-question-recommend` 用新插件跑过，改后答「是」（判定带出处，写进它的 annotations.md）。
 
 ## 选中的存量回归
 
