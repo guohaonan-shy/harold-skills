@@ -1,10 +1,11 @@
 /**
  * Tripwire — setup's home step: the SKILL.md body only points at it, the steps live in references/home.md,
- * the three user-level changes are put to the human once, and the two map templates carry the lines the
+ * the four user-level changes (the fourth is the fixed text, `rules`) are put to the human once, the new home
+ * gets the fixed text's three sections, and the two map templates carry the lines the
  * rest of the design relies on.
  *
  * - SKILL.md 「home」: a pointer to references/home.md plus a completion condition, nothing of the steps.
- * - references/home.md: the three steps; step 3 shows the three changes together, asks once, does all that
+ * - references/home.md: the three steps; step 3 shows the four changes together, asks once, does all that
  *   are still to do, and does not ask about the ones already in place; no second copy of the completion condition.
  * - the two map templates live in the wiki-conventions skill's references/home-maps.md (setup and dreaming both use
  *   them, so neither owns them): 设备地图模板 says to look the map up before answering about past decisions or project
@@ -56,22 +57,39 @@ test('SKILL.md 「home」 is a pointer and a completion condition, not the steps
 });
 
 test('home.md writes the three steps, and the completion condition only once, in the SKILL.md body', () => {
-  for (const title of ['1\\. 建 home', '2\\. 登记当前项目', '3\\. 改三处用户级配置']) {
+  for (const title of ['1\\. 建 home', '2\\. 登记当前项目', '3\\. 改四项用户级配置']) {
     assert.ok(section(home, title), `home.md has no step 「${title.replace('\\', '')}」`);
   }
   assert.doesNotMatch(home, /完成条件/);
 });
 
-test('step 3 shows the three changes together, asks once, does them all, and does not ask about those already in place', () => {
-  const s = section(home, '3\\. 改三处用户级配置');
+test('step 3 shows the four changes together, asks once, does them all, and does not ask about those already in place', () => {
+  const s = section(home, '3\\. 改四项用户级配置');
   assert.match(s, /dyna home config plan/);
   assert.match(s, /dyna home config apply/);
-  assert.match(s, /三项一起/);
+  assert.match(s, /四项一起/);
+  assert.match(s, /`rules`/);
+  assert.match(s, /`--only[^\n]*`rules`/);
   assert.match(s, /问一次/);
   assert.match(s, /「已是」的项[^\n]*不再问/);
   assert.match(s, /待改的项全做/);
   assert.doesNotMatch(s, /逐项/);
   assert.match(s, /备份/);
+});
+
+test('step 1 writes the fixed text\'s three sections into a new home from the one copy in home-rules.md', () => {
+  const s = section(home, '1\\. 建 home');
+  assert.match(s, /## 思考与决策`、`## 沟通`、`## 证据/);
+  assert.match(s, /\[home-rules\.md\]\(home-rules\.md\)/);
+  assert.match(s, /一字不改/);
+  const rules = readIn('references', 'home-rules.md');
+  assert.deepEqual([...rules.matchAll(/^## (.+)$/gm)].map((m) => m[1]), ['思考与决策', '沟通', '证据']);
+});
+
+test('step 3 lists the paragraphs of the human\'s own sections that repeat the fixed text, and leaves deleting them to the human', () => {
+  const s = section(home, '3\\. 改四项用户级配置');
+  assert.match(s, /跟固定文案重复的段落/);
+  assert.match(s, /删由人自己在 home 里做，setup 不改人写的字/);
 });
 
 test('step 2 writes the project line in the shape the SessionStart hook reads', () => {

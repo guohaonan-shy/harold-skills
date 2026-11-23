@@ -1,15 +1,14 @@
 /**
- * Tripwire — decision-rules gives principles, not per-case answers; its last three sections say what evidence is
- * and the overall style, leave the choice of figure to the model and where it goes to the caller.
- * Since spec skill-rewrite (ticket 02) the old `evidence` skill is merged into decision-rules: its three sections
- * follow the six about who decides, and its two references (ui-flow.md, gif.md) sit under decision-rules/references.
+ * Tripwire — `evidence` says what evidence is and the overall style, leaves the choice of figure to the model and
+ * where it goes to the caller; `pr-review`'s review standards give the basis as principles, not per-case answers.
  *
- * Spec decision-evidence-principles (issue #245). Before: decision-rules' 「自己定的四条」 listed per-case
- * dispositions (修 / 本次同步改 / 沿用 / 接受并补记 / 恢复 / 开 issue) plus 「代价相称」 and 「改动最小」;
- * evidence carried a 「一道题」 rule, a table of which figure goes where, and two references
- * (spec-figures.md, delivery.md) mixing how a figure is made with where each caller files it. These checks
- * pin: decision-rules' six sections and no per-case dispositions, 「一道题」 only in decision-rules, evidence
- * free of placement paths, placement in to-spec and pr, and every cited section of either skill existing.
+ * Spec decision-evidence-principles (issue #245) first; spec edge-case-known-limit (issue #280, ticket 02) moved
+ * the evidence sections and the two figure references (ui-flow.md, gif.md) out of the old decision skill into the
+ * `evidence` skill (word for word, only the paths changed), moved the basis rules (now four kinds, with 「目标」)
+ * and the scope-question recommendation into pr-review's review standards, and deleted the old skill. These
+ * checks pin: evidence's three sections, 「一道题」 not restated there, evidence free of placement paths,
+ * placement in to-spec and pr, the basis section of the review standards without per-case dispositions, the old
+ * name gone, and every cited section existing.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,10 +21,11 @@ const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const bodyOf = (raw) => raw.replace(/^---\n[\s\S]*?\n---\n/, '');
 const headings = (body) => [...body.matchAll(/^## (.+)$/gm)].map((m) => m[1].trim());
 
-const decisionBody = bodyOf(read('skills', 'productivity', 'decision-rules', 'SKILL.md'));
-const ruleDir = join(pluginRoot, 'skills', 'productivity', 'decision-rules');
-/** the three evidence sections of decision-rules: from 「证据是什么」 to the end */
-const evidenceBody = decisionBody.slice(decisionBody.indexOf('## 证据是什么'));
+const evidenceBody = bodyOf(read('skills', 'productivity', 'evidence', 'SKILL.md'));
+const evidenceDir = join(pluginRoot, 'skills', 'productivity', 'evidence');
+const standards = read('skills', 'engineering', 'pr-review', 'references', 'review-standards.md');
+/** the basis section of the review standards: from 「依据：只认四种」 to the next `## ` */
+const basisSection = standards.split('## 依据：只认四种')[1]?.split('\n## ')[0] ?? '';
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -37,34 +37,32 @@ function walk(dir, out = []) {
   return out;
 }
 
-test('decision-rules is the core, three kinds of basis, follow when clear, stop on conflict, guardrails, one question, then the evidence sections', () => {
-  assert.deepEqual(headings(decisionBody), [
-    '核心',
-    '依据只认三种',
-    '依据明确、没冲突：照标准做',
-    '依据冲突或没有：停下问人',
-    '护栏',
-    '要人定的写成一道题',
-    '证据是什么',
-    '整体风格',
-    '配什么图：你来判断',
-  ]);
-  assert.match(decisionBody, /按 spec 的方案解决 spec 提出的问题/);
-  assert.match(decisionBody, /已按规则处理/);
-  assert.match(decisionBody, /推翻/);
-  const guard = decisionBody.split('## 护栏')[1].split('\n## ')[0];
-  for (const item of ['术语', '动生产数据', '真实支付', '对外发布', '合并改了代码的 PR']) assert.match(guard, new RegExp(item), `护栏缺：${item}`);
+test('the evidence skill is three sections: what evidence is, the overall style, which figure; its description only routes', () => {
+  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '配什么图：你来判断']);
+  const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
+  assert.match(raw, /^---\nname: evidence\n/);
+  assert.doesNotMatch(raw, /disable-model-invocation/, 'evidence 要能被别的 skill 和 agent 调到');
+  const description = raw.match(/^description: (.+)$/m)[1];
+  for (const word of ['证据', '截图', '流程图', '图表', '动图']) assert.ok(description.includes(word), `description 缺触发词：${word}`);
 });
 
-test('decision-rules gives no per-case dispositions', () => {
+test('the review standards give the basis as four kinds, with 「目标」, the scope-question recommendation, and no per-case dispositions', () => {
+  assert.ok(basisSection, 'review-standards 缺「依据：只认四种」一节');
+  for (const kind of ['规则原文', '人的决定', '现有做法', '目标']) assert.match(basisSection, new RegExp(`\\*\\*${kind}\\*\\*`), `依据缺：${kind}`);
+  for (const phrase of ['达成', '达成一部分', '没达成', '--spec', '推翻', '范围题', '影响这份 spec 的实现']) assert.match(basisSection, new RegExp(phrase), `依据一节缺：${phrase}`);
   for (const re of [/\*\*修\*\*/, /\*\*开 issue\*\*/, /\*\*沿用\*\*/, /\*\*恢复\*\*/, /本次同步改/, /接受并补记/, /代价相称/, /改动最小/, /自己定的四条/]) {
-    assert.doesNotMatch(decisionBody, re, `decision-rules 里还有逐情形的答案：${re}`);
+    assert.doesNotMatch(basisSection, re, `依据一节里还有逐情形的答案：${re}`);
   }
 });
 
-test('「要人定的写成一道题」 is its own section, and the evidence sections after it do not restate it', () => {
-  const q = decisionBody.split('## 要人定的写成一道题')[1].split('\n## ')[0];
-  for (const phrase of ['真实例子', '推荐', '评判标准']) assert.match(q, new RegExp(phrase));
+test('the 「边缘情形 → 要你决定」 line is gone from pr-review and pr', () => {
+  const places = [standards, read('skills', 'engineering', 'pr-review', 'SKILL.md'), read('skills', 'engineering', 'pr', 'references', 'review-report.md')];
+  for (const text of places) {
+    assert.doesNotMatch(text, /只在兜底路径或罕见异常里出现|含被降级的边缘情形|边缘情形不放这里/);
+  }
+});
+
+test('「要人定的写成一道题」 is not restated in the evidence skill', () => {
   assert.doesNotMatch(evidenceBody, /一道题/);
   assert.doesNotMatch(evidenceBody, /评判标准/);
 });
@@ -74,20 +72,20 @@ test('the evidence sections say what evidence is, the style, and the figure kind
     assert.match(evidenceBody, new RegExp(phrase), `evidence 缺：${phrase}`);
   }
   assert.match(evidenceBody, /放在哪[^\n]*由调用你的 skill 定/);
-  const all = [evidenceBody, ...readdirSync(join(ruleDir, 'references')).map((f) => readFileSync(join(ruleDir, 'references', f), 'utf8'))].join('\n');
+  const all = [evidenceBody, ...readdirSync(join(evidenceDir, 'references')).map((f) => readFileSync(join(evidenceDir, 'references', f), 'utf8'))].join('\n');
   for (const re of [/docs\/raw/, /docs\/design\/tmp/, /\.tmp\//, /idea-loop-evidence-pr-/, /选哪种形态/]) {
     assert.doesNotMatch(all, re, `证据一节或它的参考里还写着放哪 / 按情形选图：${re}`);
   }
-  assert.deepEqual(readdirSync(join(ruleDir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
-  // the figure references are reached by the full path under the plugin root (the injected body has no base directory)
-  for (const f of ['ui-flow.md', 'gif.md']) assert.ok(decisionBody.includes(`\${CLAUDE_PLUGIN_ROOT}/skills/productivity/decision-rules/references/${f}`), `${f} 没用插件根下的完整路径`);
+  assert.deepEqual(readdirSync(join(evidenceDir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
+  // the figure references are reached by the full path under the plugin root
+  for (const f of ['ui-flow.md', 'gif.md']) assert.ok(evidenceBody.includes(`\${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/${f}`), `${f} 没用插件根下的完整路径`);
 });
 
-test('the old evidence skill is gone, and nothing in the plugin calls it', () => {
-  assert.equal(existsSync(join(pluginRoot, 'skills', 'productivity', 'evidence')), false);
-  // home's fixed text (setup's home-rules.md) sends the reader to `idea-loop:evidence`, the skill that replaces decision-rules' evidence sections (the next ticket writes it)
-  const hits = walk(pluginRoot).filter((f) => !f.endsWith('setup/references/home-rules.md')).filter((f) => /idea-loop:evidence|skills\/productivity\/evidence/.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
-  assert.deepEqual(hits, [], `还指着 evidence：${hits.join(', ')}`);
+test('the old decision skill is gone: no directory, no mention anywhere in the plugin (evals aside)', () => {
+  assert.equal(existsSync(join(pluginRoot, 'skills', 'productivity', ['decision', 'rules'].join('-'))), false);
+  const old = new RegExp(['decision', 'rules'].join('[-_]'));
+  const hits = walk(pluginRoot).filter((f) => old.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
+  assert.deepEqual(hits, [], `还提着旧名：${hits.join(', ')}`);
 });
 
 test('placement moved to the callers: to-spec figures.md and pr delivery-evidence.md', () => {
@@ -99,9 +97,9 @@ test('placement moved to the callers: to-spec figures.md and pr delivery-evidenc
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
 });
 
-test('every cited section of decision-rules exists, and nothing points at the removed references', () => {
+test('every cited section of the evidence skill exists, and nothing points at the removed references', () => {
   const sections = {
-    'decision-rules': headings(decisionBody),
+    evidence: headings(evidenceBody),
   };
   const problems = [];
   for (const file of walk(pluginRoot)) {

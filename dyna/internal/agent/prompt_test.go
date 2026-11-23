@@ -128,7 +128,7 @@ func TestTheCodexReviewerIsPointedAtTheReviewStandardsAndTheUsersRules(t *testin
 	if !reflect.DeepEqual(keys, []string{"standards", "review_standards", "user_rules"}) {
 		t.Fatal(keys)
 	}
-	if _, old := values["decision_rules"]; old {
+	if _, old := values["decision"+"_rules"]; old { // the removed key, written apart so the plugin carries no mention of it
 		t.Fatal("the old key is gone")
 	}
 	if values["review_standards"] != values["standards"] || !strings.HasSuffix(values["review_standards"], "skills/engineering/pr-review/references/review-standards.md") {

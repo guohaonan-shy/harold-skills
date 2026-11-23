@@ -1,13 +1,13 @@
 /**
- * Tripwire — decision-rules says who decides; how to write what a human reads lives in its last three sections
- * (merged in from the old evidence skill, spec skill-rewrite ticket 02);
- * adding a rule starts with "is it a special case of an existing one".
+ * Tripwire — how to write what a human reads lives in the `evidence` skill (its three sections moved there from the
+ * old decision skill, spec edge-case-known-limit ticket 02); adding a rule starts with "is it a special case of an
+ * existing one".
  *
- * Spec decision-rules-who-decides, ticket 01 (issue #80). Before: decision-rules carried a section
+ * Spec who-decides, ticket 01 (issue #80). Before: the old decision skill carried a section
  * 「交给人时」 and a reference (handing-to-human.md) about how to write a question for the human, and seven
  * places pointed at it; writing-for-agents and retro only ever appended. These checks pin: no text left
  * in the plugin that points at the old section or reference (dreaming's own step names excepted), the
- * reference gone, the evidence sections of decision-rules opening with the reader model and covering the shared
+ * reference gone, the evidence sections of the evidence skill opening with the reader model and covering the shared
  * writing rules, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
  * the places that repeat the format), the four pool candidates re-pointed, and the explain-mechanism replay
  * case removed.
@@ -43,29 +43,25 @@ test('nothing in the plugin points at the old 「交给人时」 section or the 
   assert.deepEqual(hits, [], `还指着旧的「交给人时」/ handing-to-human：${hits.join(', ')}`);
 });
 
-test('decision-rules holds only the two figure references (no handing-to-human) and its description no longer routes on how to write a question', () => {
-  const dir = join(pluginRoot, 'skills', 'productivity', 'decision-rules');
+test('evidence holds only the two figure references (no handing-to-human) and its description no longer routes on how to write a question', () => {
+  const dir = join(pluginRoot, 'skills', 'productivity', 'evidence');
   assert.deepEqual(readdirSync(join(dir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
-  const raw = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
+  const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   const description = raw.match(/^description: (.*)$/m)[1];
   assert.doesNotMatch(description, /功课/);
   assert.doesNotMatch(bodyOf(raw), /^## 交给人时/m);
 });
 
-test('decision-rules carries the reader model and the shared writing rules in its evidence sections', () => {
-  const raw = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
-  const all = bodyOf(raw);
-  const body = all.slice(all.indexOf('## 证据是什么'));
+test('evidence carries the reader model and the shared writing rules in its sections', () => {
+  const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
+  const body = bodyOf(raw).trimStart();
   const description = raw.match(/^description: (.*)$/m)[1];
-  assert.match(description, /写证据/, 'description 要路由「写证据」');
-  assert.match(description, /配图/, 'description 还要路由「配图」');
-  for (const w of ['拼流程图', '画图表', '录动图']) assert.match(description, new RegExp(w), `description 缺：${w}`);
+  for (const w of ['证据', '截图', '流程图', '图表', '动图']) assert.match(description, new RegExp(w), `description 缺：${w}`);
 
   const firstBlock = body.split(/\n## /)[0];
   assert.match(firstBlock, /不清楚实现细节/, '正文开头要写读者模型');
   assert.match(firstBlock, /快速/, '读者模型要写读者要的是快速看懂、拿到证据、决定');
 
-  // spec decision-evidence-principles (#245) moved 「要人定的写成一道题」 into decision-rules
   for (const [name, re] of [
     ['结论在前', /结论在前/],
     ['最小一种视图', /最小/],

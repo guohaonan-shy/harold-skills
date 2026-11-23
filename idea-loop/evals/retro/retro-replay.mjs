@@ -26,7 +26,7 @@
  * under the plugin's `skills/` and `agents/` between the pre-change and the post-change plugin; the run used it when its event
  * stream (main session and sub-agents) reads one of them (a Read, or a Bash command naming its full path or its path relative to the project; the project's own copy of the plugin counts as a place the post-change plugin sits), calls a skill one of them
  * belongs to (Skill tool, or a prompt that starts with that skill's slash command), or starts an agent one of them defines (Agent
- * tool), or when one of them is a file the plugin's SessionStart hook injects (decision-rules, runtime, its reference: the session has
+ * tool), or when one of them is a file the plugin's SessionStart hook injects (runtime, its reference: the session has
  * them from the start, nothing shows it; a read or call in the stream is reported first). Used: the judge's answer decides as before, and `result.json` records what was hit (`exercised`). Not used: the judge still
  * runs (its answers stay in the result for the human) but the outcome is `not-exercised` ("用例没测到改动"), exit 1, not a pass.
  * An empty change set (only scripts changed) is recorded as "不适用" and the judge decides.

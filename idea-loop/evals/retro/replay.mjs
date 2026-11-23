@@ -39,17 +39,15 @@ export function replayChildEnv(env, ghConfigDir) {
 
 /**
  * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs `dyna runtime inject <section>`):
- * the body of `idea-loop:decision-rules`, the capability list (`runtime/capabilities.md`), and the data of the current runtime only (`runtime/<name>.md`). The
+ * the capability list (`runtime/capabilities.md`) and the data of the current runtime only (`runtime/<name>.md`). The
  * runner starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
  * `runtime` is the runtime the replayed session ran in (what `dyna runtime name` gives for the runner's environment, which the
- * session inherits), or null when that environment names no known runtime: then the hook prints `decision-rules` only.
+ * session inherits), or null when that environment names no known runtime: then nothing is injected.
  * The other runtime's data is not injected, so a change to it still has to be read or called to count.
  * Not checked: that the hook really ran (a hook that errors would still count as used); `dyna runtime inject` has its own tests.
  */
 export function injectedFiles(runtime) {
-  const files = ['skills/productivity/decision-rules/SKILL.md'];
-  if (runtime) files.push('runtime/capabilities.md', `runtime/${runtime}.md`);
-  return files;
+  return runtime ? ['runtime/capabilities.md', `runtime/${runtime}.md`] : [];
 }
 
 /** Does a shell command name `path` as a path relative to the working dir: at the start, or after a space, quote, `./` or a shell operator, not as the tail of a longer path. */
@@ -71,7 +69,7 @@ function namesRelativePath(command, path) {
  * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
  * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
  * harness loads that skill itself, no tool call shows it), or a changed file the SessionStart hook injects (see `injectedFiles`;
- * `runtime` says which runtime's data that is, without it only `decision-rules` counts): the session has it from the
+ * `runtime` says which runtime's data that is, without it nothing counts): the session has it from the
  * start, so no tool call shows it either, and a read or call in the stream is reported in its place.
  * Returns `{status: 'hit', via: 'read'|'skill'|'agent'|'injected', name, changed}`, `{status: 'miss', changed}`, or
  * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).

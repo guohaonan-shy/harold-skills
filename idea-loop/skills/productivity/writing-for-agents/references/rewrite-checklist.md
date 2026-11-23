@@ -54,7 +54,9 @@ awk 'f>=2; /^---$/{f++}' <文件> | LC_ALL=en_US.UTF-8 wc -m
 
 | 规矩 | 归谁 |
 |---|---|
-| 依据只认三种、交给人的事写成一道题、证据怎么写 | `decision-rules` |
+| 依据只认四种 | `pr-review` 的 review 标准 |
+| 交给人的事写成一道题、停不停下 | 会话已加载的用户规则（home 的固定文案） |
+| 证据怎么写、配什么图 | `evidence` |
 | 知识库落地、项目目录、frontmatter、术语表 | `wiki-conventions` |
 | issue 的状态、正文格式、blocked by | `issues` |
 | 评论里的 idea-loop 标记（读最近一条带标记的、写时自带） | `issues` 的「评论」 |

@@ -1,7 +1,7 @@
 /**
  * Tripwire — to-spec's template is built from what each section gives the reader, and stays small.
  *
- * Spec decision-rules-who-decides, ticket 02 (issue #80). Before: the template was ten sections grown one
+ * Spec who-decides, ticket 02 (issue #80). Before: the template was ten sections grown one
  * rule at a time, none said what the section gives the reader, and the SKILL.md body was ~5970 characters
  * (the repo limit was 5000). These checks pin: every section of the template opens with a 「给读者什么」 line;
  * the section list is the one the human approved (a quoted verdict line under the title instead of a 验证
@@ -88,11 +88,11 @@ test('实现决策 no longer carries an overview diagram; 测试决策 folds pro
   assert.doesNotMatch(tests, /prompt \/ eval 变动/);
 });
 
-test('how to write for a human is a pointer to decision-rules, not restated rules', () => {
-  assert.match(body, /`idea-loop:decision-rules`/);
-  for (const phrase of ['陌生', '同条件', '出处']) assert.doesNotMatch(body, new RegExp(phrase), `to-spec 里还有「${phrase}」：共用写法只在 decision-rules`);
-  // and decision-rules (the section 「证据是什么」 and after) is where they live
-  const evidence = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
+test('how to write for a human is a pointer to evidence, not restated rules', () => {
+  assert.match(body, /`idea-loop:evidence`/);
+  for (const phrase of ['陌生', '同条件', '出处']) assert.doesNotMatch(body, new RegExp(phrase), `to-spec 里还有「${phrase}」：共用写法只在 evidence`);
+  // and the evidence skill is where they live
+  const evidence = read('skills', 'productivity', 'evidence', 'SKILL.md');
   for (const phrase of ['陌生', '同条件', '出处']) assert.match(evidence, new RegExp(phrase));
 });
 
@@ -155,8 +155,8 @@ test('draft-spec\'s self-check names the sections the new template has', () => {
   // the verdict is written as the opening quoted line, and the old table is gone from the instructions
   assert.match(verify, /> #<号> 存在：/);
   assert.doesNotMatch(verify, /「验证」表/);
-  // the present-state wording points at decision-rules' 「证据是什么」 rather than restating it
-  assert.match(verify, /idea-loop:decision-rules` 的「证据是什么」/);
+  // the present-state wording points at the evidence skill's 「证据是什么」 rather than restating it
+  assert.match(verify, /idea-loop:evidence` 的「证据是什么」/);
 });
 
 test('the command line still reads the older 验证 table (documented in the issues skill, where the format is)', () => {

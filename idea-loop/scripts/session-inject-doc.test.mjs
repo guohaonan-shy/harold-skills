@@ -2,10 +2,11 @@
  * Doc test — what the SessionStart injection changes in the documents agents read.
  *
  * Spec session-start-inject-rules, ticket 01 (the runtime half reworded when the runtime skill became the `dyna
- * runtime` data, ticket 18). A main session starts with the body of `idea-loop:decision-rules`, the capability list
- * and the current runtime's data already in context (the hook is tested in session-start-inject.test.mjs), so:
- *   - no skill other than decision-rules tells the session to fetch decision-rules with the Skill tool: it names it
- *     instead (the runtime skill is gone: there is nothing to fetch with the Skill tool, the how is `dyna runtime show`);
+ * runtime` data, ticket 18; spec edge-case-known-limit, ticket 02 took the last injected skill body away). A main
+ * session starts with the capability list and the current runtime's data already in context (the hook is tested in
+ * session-start-inject.test.mjs), so:
+ *   - no skill tells the session to fetch the runtime skill with the Skill tool: it is gone, the how is
+ *     `dyna runtime show`;
  *   - a sub-agent gets no injection, so every agent definition that reaches a runtime capability says to fetch it
  *     itself with `dyna runtime show <能力>`.
  * "Reaches a capability" is mechanical: the agent's own text, a skill it names as `idea-loop:<name>` (SKILL.md and every
@@ -26,8 +27,8 @@ const walk = (path) => (!existsSync(path) ? [] : statSync(path).isDirectory() ? 
 const mdUnder = (path) => walk(path).filter((f) => f.endsWith('.md'));
 const textOf = (files) => files.map((f) => readFileSync(f, 'utf8')).join('\n');
 
-/** The skill the hook injects; it is the source of the injection and keeps saying what it says. */
-const INJECTED = [join(skillsRoot, 'productivity', 'decision-rules')];
+/** The skill names that used to be fetched with the Skill tool and are not any more: the session has them without a call. */
+const NOT_FETCHED = ['runtime'];
 
 /** Does a sentence tell the reader to call a skill with the Skill tool and then name one of `names` (`idea-loop:<name>`)? A sentence ends at 。 */
 export function callsSkill(text, names) {
@@ -38,13 +39,13 @@ export function callsSkill(text, names) {
   });
 }
 
-/** `<file>:<line>  sentence` of every sentence in `root` that calls decision-rules with the Skill tool. */
-export function fetchPointers(root, skip = INJECTED) {
+/** `<file>:<line>  sentence` of every sentence in `root` that calls a NOT_FETCHED skill with the Skill tool. */
+export function fetchPointers(root, skip = []) {
   const hits = [];
   for (const file of mdUnder(root)) {
     if (skip.some((dir) => file.startsWith(`${dir}/`))) continue;
     readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-      for (const sentence of callsSkill(line, ['decision-rules'])) hits.push(`${relative(pluginRoot, file)}:${i + 1}  ${sentence.trim().slice(0, 80)}`);
+      for (const sentence of callsSkill(line, NOT_FETCHED)) hits.push(`${relative(pluginRoot, file)}:${i + 1}  ${sentence.trim().slice(0, 80)}`);
     });
   }
   return hits;
@@ -78,16 +79,16 @@ export function reachedBy(agentText, caps = capabilities(), dirs = skillDirs()) 
   return [...found];
 }
 
-test('skills/ (decision-rules itself aside) no longer tell the session to call decision-rules with the Skill tool', () => {
+test('skills/ no longer tell the session to call the runtime skill with the Skill tool', () => {
   assert.deepEqual(fetchPointers(skillsRoot), []);
 });
 
 test('the pointer check goes red on the old wording, and stays quiet on a name reference', () => {
-  const both = ['decision-rules'];
-  assert.equal(callsSkill('先用 Skill 工具调 `idea-loop:pr` 和 `idea-loop:decision-rules`。', both).length, 1);
+  const both = ['runtime'];
+  assert.equal(callsSkill('先用 Skill 工具调 `idea-loop:pr` 和 `idea-loop:runtime`。', both).length, 1);
   assert.equal(callsSkill('会话管理等能力，照『<能力>』（`dyna runtime show <能力>`）。', both).length, 0);
-  assert.equal(callsSkill('先对 `idea-loop:decision-rules` 的「核心」。用 Skill 工具调 `idea-loop:pr`。', both).length, 0);
-  assert.equal(callsSkill('用 Skill 工具调 `idea-loop:evidence`。要他定的事怎么写成一道题，照 `idea-loop:decision-rules`。', both).length, 0);
+  assert.equal(callsSkill('先对 `idea-loop:runtime` 的能力清单。用 Skill 工具调 `idea-loop:pr`。', both).length, 0);
+  assert.equal(callsSkill('用 Skill 工具调 `idea-loop:evidence`。要他定的事怎么写成一道题，照 `idea-loop:runtime`。', both).length, 0);
 });
 
 /** Does the text say how to fetch a capability's how-to: `dyna runtime show`? */
@@ -111,5 +112,5 @@ test('the reach rule finds a capability in the agent text, in a named skill, and
   assert.deepEqual(reachedBy('读 skills/engineering/issue-dispatch/SKILL.md', ['推送'], dirs).map(([c]) => c), ['推送']);
   assert.deepEqual(reachedBy('什么也不碰。', caps, dirs), []);
   assert.ok(capabilities().includes('浏览器') && capabilities().length === 11);
-  assert.ok(fetchesCapabilities('用 `dyna runtime show <能力>` 取。') && !fetchesCapabilities('用 Skill 工具调 `idea-loop:decision-rules`。'));
+  assert.ok(fetchesCapabilities('用 `dyna runtime show <能力>` 取。') && !fetchesCapabilities('用 Skill 工具调 `idea-loop:runtime`。'));
 });

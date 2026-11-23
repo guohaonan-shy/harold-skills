@@ -9,7 +9,7 @@ implementer 在两种时候读这份：开工时带着上次的半成品分支�
 
 ## 停，还是延后
 
-依据照 `idea-loop:decision-rules`：
+依据照用户规则（`~/.claude/CLAUDE.md` 的「思考与决策」）：
 
 | 情况 | 怎么办 |
 |---|---|

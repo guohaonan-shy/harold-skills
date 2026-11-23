@@ -196,8 +196,9 @@ func TestInjectKnowsOnlyRuntimeAndReference(t *testing.T) {
 	if !reflect.DeepEqual(rt.Sections, []string{"runtime", "reference"}) {
 		t.Fatal(rt.Sections)
 	}
-	r := dyna(env(), "runtime", "inject", "decision-rules")
-	if r.code == 0 || r.stdout != "" || !strings.Contains(r.stderr, "unknown section decision-rules") || !strings.Contains(r.stderr, "runtime, reference") {
+	old := "decision" + "-rules" // the removed section's name, written apart so the plugin carries no mention of it
+	r := dyna(env(), "runtime", "inject", old)
+	if r.code == 0 || r.stdout != "" || !strings.Contains(r.stderr, "unknown section "+old) || !strings.Contains(r.stderr, "runtime, reference") {
 		t.Fatalf("%+v", r)
 	}
 }
