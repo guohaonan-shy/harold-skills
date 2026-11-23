@@ -19,7 +19,7 @@ const exitTimeout = 124
 const (
 	defaultChecksTimeout = 30 * time.Minute
 	noChecksGrace        = 60 * time.Second
-	defaultChecksPoll    = 15 * time.Second
+	checksPollEvery      = 15 * time.Second // fixed: how often the checks are asked for is not a parameter
 )
 
 func (d Deps) now() time.Time {
@@ -114,17 +114,15 @@ func (d Deps) checksCommand() *cobra.Command {
 				return usage(checksUse)
 			}
 			timeout, _ := cmd.Flags().GetDuration("timeout")
-			poll, _ := cmd.Flags().GetDuration("interval")
-			return d.waitForChecks(repo, pr, timeout, poll)
+			return d.waitForChecks(repo, pr, timeout)
 		})
 	c.Flags().Duration("timeout", defaultChecksTimeout, "等多久（如 30m、90s）；到时还有检查没跑完就是 timeout")
-	c.Flags().Duration("interval", defaultChecksPoll, "隔多久问一次")
 	return c
 }
 
-func (d Deps) waitForChecks(repo, pr string, timeout, poll time.Duration) error {
-	if timeout <= 0 || poll <= 0 {
-		return usage(checksUse + "（--timeout 和 --interval 要大于 0）")
+func (d Deps) waitForChecks(repo, pr string, timeout time.Duration) error {
+	if timeout <= 0 {
+		return usage(checksUse + "（--timeout 要大于 0）")
 	}
 	start := d.now()
 	for {
@@ -145,7 +143,7 @@ func (d Deps) waitForChecks(repo, pr string, timeout, poll time.Duration) error 
 			d.printVerdict(Timeout, listed)
 			return &nexterr.Exit{Code: exitTimeout}
 		}
-		d.sleep(min(poll, timeout-elapsed))
+		d.sleep(min(checksPollEvery, timeout-elapsed))
 	}
 }
 

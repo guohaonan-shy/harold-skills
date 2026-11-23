@@ -110,6 +110,20 @@ func TestChecksACancelledCheckIsRedToo(t *testing.T) {
 	}
 }
 
+func TestChecksHasNoIntervalFlagBecauseHowOftenItAsksIsFixed(t *testing.T) {
+	_, code, calls, _ := checkRun(t, []reply{listing("lint", "pass")}, "--interval", "1s")
+	if code == 0 || calls != 0 {
+		t.Fatalf("--interval is not a parameter: it must be refused before asking gh; code %d calls %d", code, calls)
+	}
+}
+
+func TestChecksAsksEveryFifteenSecondsWhateverTheTimeout(t *testing.T) {
+	_, _, calls, waited := checkRun(t, []reply{listing("lint", "pending")}, "--timeout", "2m")
+	if calls != 9 || waited != 2*time.Minute {
+		t.Fatalf("2m at one question per 15s is 9 questions (at 0s, 15s ... 120s); got %d over %s", calls, waited)
+	}
+}
+
 func TestChecksPendingUntilTheTimeoutIsTimeoutAndExits124(t *testing.T) {
 	out, code, _, waited := checkRun(t, []reply{listing("lint", "pending")}, "--timeout", "5m")
 	lines := strings.Split(strings.TrimSpace(out), "\n")
