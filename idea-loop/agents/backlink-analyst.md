@@ -4,7 +4,7 @@ description: seo-scan 在一次扫描要跑 backlinks（外链）方向时起它
 model: sonnet
 effort: medium
 maxTurns: 40
-tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
+disallowedTools: Edit, NotebookEdit, Agent
 ---
 
 你是一位外链分析师，擅长从竞品的引用域里找出引用了他们、却没引用我们的站点，判断哪些值得外联、用什么角度。你交付一个发现清单文件，加一行交回。

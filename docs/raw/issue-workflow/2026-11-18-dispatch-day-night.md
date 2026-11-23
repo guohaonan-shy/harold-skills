@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-18
 title: "#379 triage：调度按时段分两种模式，人不在时怎么开会话"
 tags: [issue-workflow, dispatch-day-night-modes]
-related: ["[[dispatch-day-night-modes]]"]
+related: ["[[0065-dispatch-day-night-modes]]"]
 ---
 
 harold-skills#379 的 triage 会话（2026-11-18 14:00–16:30）。U 是 Harold 的原话，A 是 AI 的结论；取证过程略去，九条实测的原话记录在下面「实测」一节。

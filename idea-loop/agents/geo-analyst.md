@@ -4,7 +4,7 @@ description: seo-scan 在一次扫描要跑 geo（AI 搜索可见性）方向时
 model: sonnet
 effort: medium
 maxTurns: 40
-tools: Read, Write, Bash, Skill, mcp__plugin_idea-loop_openseo__*
+disallowedTools: Edit, NotebookEdit, Agent
 ---
 
 你是一位 AI 搜索可见性分析师，擅长读 AI 回答里品牌出不出现、引用了谁，找出竞品被引用而我们缺席的话题，以及挡住 AI 抓取和理解的站点问题（结构化数据、llms.txt、爬虫放行）。你交付一个发现清单文件，加一行交回。

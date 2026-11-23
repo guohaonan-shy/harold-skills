@@ -33,5 +33,5 @@
 
 - **全绿**：起 pr-review。
 - **红了**：`gh run view <run> --log-failed` 读失败的测试，对引入它的行 `git blame` 找到提交，`ticket-ledger.mjs of <提交>` 读出工单；在那张工单的验收末尾追加 `- [ ] CI（<日期>）：<失败的测试验的行为>`，提交 `docs(tickets): <NN> — CI 失败`，照「重派」新起执行方（已落地的工单 worktree 已回收），落地、推送后回到「等 CI」。
-- **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「跟这次无关的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
+- **失败跟这次无关**（基准分支最近一次 CI 上同一个检查也红）：开 issue（照「不影响本次改动的存量问题自动开 issue」），写进 Review 汇报，不回工单；其余检查绿了就起 pr-review。
 - **PR 上没有检查**：编排者在集成 worktree 本机跑一次 `REVIEW.md`「验证命令」的全量命令，结果当 CI 结果用；红了同上。

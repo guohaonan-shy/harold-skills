@@ -15,9 +15,14 @@
  * `--base=<ref>` (`git diff --name-only --no-renames <ref>...HEAD` in the current directory: a rename
  * is listed under both names, so a code file moved into the blog directory is still caught).
  *
+ * The same scope answers one more question for seo-setup: is the image directory it is about to write into
+ * SEO.md's 配图 section inside it? `--image-dir=<dir>` judges that one directory against the SEO.md in hand.
+ *
  * Usage: node seo-content-scope.mjs <SEO.md> (--files=<file|-> | --base=<ref>)
  *   → { "contentOnly": true|false, "files": <n>, "outside": ["<changed file not in scope>", ...] }
  *     (a change list with no files adds "reason")
+ *        node seo-content-scope.mjs <SEO.md> --image-dir=<dir>
+ *   → { "inScope": true|false, "dir": "<dir>", "contentPaths": [...] }   (outside adds "reason")
  * Exit: 0 = judged (either way; read `contentOnly`), 1 = unreadable SEO.md, no file list, or git failed (reason on stderr).
  */
 
@@ -69,6 +74,16 @@ export function judge(files, contentPaths) {
   return { contentOnly: outside.length === 0, files: list.length, outside };
 }
 
+/** Is the directory images are written to inside the content scope (内容路径, plus docs/)? */
+export function imageDirInScope(dir, contentPaths) {
+  const path = clean(dir).replace(/\/+$/, '');
+  if (!path) return { inScope: false, dir: String(dir), reason: '没有图片目录' };
+  // the directory itself, or a file placed straight into it (so `public/images/**` covers `public/images`)
+  const scope = [...contentPaths, 'docs'];
+  if (matches(path, scope) || matches(`${path}/_`, scope)) return { inScope: true, dir: path };
+  return { inScope: false, dir: path, reason: `图片目录不在 SEO.md「构建与检查」的内容路径以内（内容路径之外的改动，SEO PR 不能自动合并）` };
+}
+
 function changedFiles(argv) {
   const files = argv.find((a) => a.startsWith('--files='))?.slice('--files='.length);
   const base = argv.find((a) => a.startsWith('--base='))?.slice('--base='.length);
@@ -80,8 +95,13 @@ function changedFiles(argv) {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   try {
     const [seoMd, ...rest] = process.argv.slice(2);
-    if (!seoMd) throw new Error('usage: seo-content-scope.mjs <SEO.md> (--files=<file|-> | --base=<ref>)');
+    if (!seoMd) throw new Error('usage: seo-content-scope.mjs <SEO.md> (--files=<file|-> | --base=<ref> | --image-dir=<dir>)');
     const { build } = readSeoMd(seoMd);
+    const imageDir = rest.find((a) => a.startsWith('--image-dir='))?.slice('--image-dir='.length);
+    if (imageDir !== undefined) {
+      console.log(JSON.stringify({ ...imageDirInScope(imageDir, build.contentPaths), contentPaths: build.contentPaths }));
+      process.exit(0);
+    }
     console.log(JSON.stringify(judge(changedFiles(rest), build.contentPaths)));
   } catch (e) {
     console.error(e.message);

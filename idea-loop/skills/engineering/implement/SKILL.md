@@ -3,7 +3,7 @@ name: implement
 description: 把一份已切好工单的 spec 实现完。spec 的工单已切好、要开工时用。
 ---
 
-**把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不以人的身份发言）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
+**把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收、停下时把要人拍板的事交给人（决定题只由人答，PR 上不和人往来）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西，它的日志也留在它那里。
 
 开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr`（Review 汇报、PR 描述的七节）和 `idea-loop:issues`（issue 的状态、开 issue）。执行方交回的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照 `idea-loop:decision-rules`。
 
@@ -28,7 +28,7 @@ PR 从 spec 提交就挂着，先于派工核一遍 PR 开齐、issue 在 in-pro
 
 - **已落地**：`node "${CLAUDE_PLUGIN_ROOT}/scripts/ticket-ledger.mjs" landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。用这个脚本，不用 git 的 trailer 读法：环境会在 message 末尾另起一段追加署名，按 trailer 读会读空。
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项（各带代价和能否回滚）、推荐、半成品的 worktree 和分支、原执行方的 agent id（起它时 Agent 工具返回的那个；会话压缩或重启后靠它找回）。丢了就从 review loop 文件还原（Review 汇报里有批示和「做了什么」的就算已决定）。
-- **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进 Review 汇报后清空。
+- **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为不影响本次改动的存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进 Review 汇报后清空。
 - **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（`idea-loop:pr` 的「开 draft PR」写的）。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`（浏览器锁，运行环境用得到时才有）。在跑的执行方只记在会话里。
 
@@ -63,7 +63,7 @@ PR 从 spec 提交就挂着，先于派工核一遍 PR 开齐、issue 在 in-pro
 
 不过就 SendMessage 退回同一个执行方说清哪条，第二次还不过按 `failed`。
 
-`by_existing_practice` 没带现存实例、commit 快进不了（ff 不了）、`found` 里有跟这次无关的存量要自动开 issue：读 [references/landing-branches.md](references/landing-branches.md)。
+`by_existing_practice` 没带现存实例、commit 快进不了（ff 不了）、`found` 里有不影响本次改动的存量要自动开 issue：读 [references/landing-branches.md](references/landing-branches.md)。
 
 **落地**：`git merge --ff-only <commit>`。落地后照「回收」收掉它的 worktree，再分拣它的交回：
 
@@ -73,7 +73,7 @@ PR 从 spec 提交就挂着，先于派工核一遍 PR 开齐、issue 在 in-pro
 | `verified` | PR 描述 |
 | `by_existing_practice`、标「存量本次修」的 `found` | handled |
 | 标「spec 缺口」的 `found` | pending，当决定题 |
-| 其余 `found`（跟这次无关的存量） | 开 issue，见下 |
+| 其余 `found`（不影响本次改动的存量） | 开 issue，见下 |
 
 ## 卡住一张，别的接着做
 

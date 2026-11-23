@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AI_MARKER } from './issues.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
@@ -78,20 +79,22 @@ test('issue-dispatch takes no interval and stays under 5000 characters', () => {
 
 test('issue-dispatch: a round asks issues queues for the period, and each period hands out its own kind with its own free-slot rule', () => {
   assert.match(dispatch, /issues queues <docs>/);
-  assert.match(dispatch, /`dispatch`（`triage`、`todo` 或 `null`）和 `limit`/, 'the round reads dispatch and limit from queues');
+  assert.match(dispatch, /`dispatch`（`triage`、`todo` 或 `null`）、`limit`（每轮最多新开几个）和 `sectionLimit`/, 'the round reads dispatch, limit and sectionLimit from queues');
   const step = dispatch.split('\n').find((l) => /^5\.\s+\*\*按 `dispatch` 派\*\*/.test(l));
   assert.ok(step, 'there is a step 「按 dispatch 派」');
   const bullets = dispatch.slice(dispatch.indexOf(step)).split('\n').filter((l) => /^\s+- `(triage|todo|null)`/.test(l));
   assert.equal(bullets.length, 3, 'one bullet each for triage, todo and null');
   const [t, d, n] = bullets;
-  assert.match(t, /空位 = `limit` − triage 分组里的会话数/);
+  assert.match(t, /新开 min\(`limit`, 分组上限 − triage 分组里的会话数\) 个/);
+  assert.match(t, /≤ 0 就跳过/);
   assert.match(t, /issues candidates <docs> --state=triage/);
-  assert.match(d, /空位 = `limit` − in-progress 分组里最近 2 小时有活动的会话数/);
-  assert.match(d, /in-review 的会话也不算|in-review 的会话不算/);
-  assert.match(d, /2 小时没活动的会话也不算[^。]*不动它、不关它/);
+  // Harold 2026-11-20: todo hands out `limit` every round, whatever is open; the sidebar sections are shared across projects
+  assert.match(d, /每轮固定派 `limit` 个，不看 in-progress 里开着几个、也不看别的项目开了几个/);
+  assert.ok(!/2 小时|空位/.test(d), 'the todo rule subtracts nothing');
+  assert.match(d, /再取前 `limit` 个/);
   assert.match(n, /不派.*只对账/);
   assert.match(dispatch, /先跳过第 3 步记下的同号会话/, 'skip sessions that already exist before taking candidates');
-  assert.match(dispatch, /一轮合计最多交出 3 个/);
+  assert.match(dispatch, /一轮最多交出 `limit` 个/);
 });
 
 test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a failed hand-over waits for the next round', () => {
@@ -103,7 +106,7 @@ test('issue-dispatch: a todo period writes 夜间模式 into the prompt; a faile
 test('issue-dispatch: the morning summary reads the record file, one line per issue, and pushes one sentence', () => {
   const step = dispatch.split('\n').find((l) => /^6\.\s+\*\*早上汇总\*\*/.test(l));
   assert.ok(step, 'there is a step 「早上汇总」');
-  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', '🤖 idea-loop：', '『推送』']) {
+  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', AI_MARKER, '『推送』']) {
     assert.ok(step.includes(word), `the morning summary must mention ${word}`);
   }
   assert.match(step, /开了几个、几个等审、几个卡住/);
@@ -122,10 +125,11 @@ test('claude-desktop: an hourly scheduled task runs the rounds', () => {
   }
 });
 
-test('claude-desktop: counting follows the period (triage section; in-progress with activity in the last 2 hours; in-review not)', () => {
+test('claude-desktop: counting follows the period (triage section counts; a todo period counts nothing)', () => {
   const part = desktopDispatch.split('\n').find((l) => /^- \*\*怎么数开着的会话\*\*/.test(l));
   assert.ok(part);
-  for (const word of ['`dispatch`', '`limit`', '`lastActivityAt`', '最近 2 小时', 'in-review 不数', '只数标题匹配']) assert.ok(part.includes(word), `counting must mention ${word}`);
+  for (const word of ['`dispatch`', '`limit`', '`sectionLimit`', '只数标题匹配', '每轮固定派 `limit` 个', 'in-progress、in-review 都不数']) assert.ok(part.includes(word), `counting must mention ${word}`);
+  assert.ok(!/最近 2 小时/.test(part), 'no 2-hour activity window any more');
 });
 
 test('claude-desktop: a session is opened in four steps, the second is the hand-off script, a failed hand-over waits for the next round', () => {
@@ -196,9 +200,31 @@ test('setup\'s dispatch steps create an hourly task and ask no interval', () => 
 });
 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
-  for (const word of ['`limit`', '`dispatch`', '最近 2 小时有活动', '夜间模式', '每轮最多开 3 个', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
+  for (const word of ['`limit`', '`dispatch`', '每轮固定派 `limit` 个', '夜间模式', '`sectionLimit`', '先跳过已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
   assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi/);
-  assert.match(magiDispatch, /git -C <主 checkout> worktree add <主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug> -b issue\/<号>-<slug>/);
+  assert.match(magiDispatch, /git -C <主 checkout> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
+});
+
+test('magi: a worktree for an issue with an existing branch attaches that branch instead of creating one with -b', () => {
+  const text = magiDispatch.slice(magiDispatch.indexOf('- **怎么交出 issue**'));
+  const step = text.slice(text.indexOf('1. **建 worktree**'), text.indexOf('2. **开会话**'));
+  assert.ok(step, 'step 1 found');
+  assert.match(step, /<主 checkout 的上一级>\/<仓库名>-worktrees\/<号>-<slug>/, 'the path is outside the main checkout');
+  assert.match(step, /有就接上，不新建同名分支/);
+  assert.match(step, /refs\/heads\/<分支>/, 'checks the local branch');
+  assert.match(step, /refs\/remotes\/origin\/<分支>/, 'checks the remote branch');
+  const lines = step.split('\n').filter((l) => /worktree add/.test(l));
+  assert.equal(lines.length, 3, 'one command per case: local, remote only, neither');
+  // the only command that creates the branch from the base is the one for 「two places both have none」
+  const withBase = lines.filter((l) => /origin\/<基准分支>/.test(l));
+  assert.equal(withBase.length, 1);
+  assert.match(withBase[0], /两处都没有/);
+  assert.match(lines[0], /worktree add <路径> <分支>`/, 'a local branch is attached without -b');
+  assert.ok(!/-b/.test(lines[0]), 'attaching a local branch never passes -b');
+  assert.match(lines[1], /worktree add --track -b <分支> <路径> origin\/<分支>`/, 'a remote-only branch gets a tracking branch');
+  // a branch left behind after the daytime session's workspace was cleaned must not make the night round fail
+  assert.match(step, /分支还在/);
+  assert.match(step, /路径已经存在、就是这条分支的 worktree/);
 });
 
 test('the triage row of issue-triage\'s table says the daytime dispatch opens the session itself; issue-session says a triage session is opened by the human or the dispatcher', () => {
@@ -213,5 +239,41 @@ test('README names the hourly rounds and no card', () => {
   assert.ok(row);
   assert.match(row, /no interval: it runs every hour/);
   assert.match(row, /morning summary/);
-  assert.match(row, /最近 2 小时|last 2 hours/);
+  assert.match(row, /`limit` sessions every round/);
+  assert.ok(!/last 2 hours/.test(row), 'no 2-hour window any more');
+});
+
+// Harold 2026-11-22 (#398): "triage 也按照每轮开一个，但是 triage 这个 section 下面的总会话不能超过 10 个" —
+// a daytime round opens min(limit, sectionLimit − sessions in the triage section); `limit` is what one round opens, never a section total.
+test('triage: a round opens min(limit, 分组上限 − triage 分组里的会话数); the old 「空位 = limit − …」 and the fixed 「最多 3 个」 are gone from the dispatcher, the desktop and magi texts', () => {
+  const places = { 'issue-dispatch': dispatch, 'claude-desktop 调度': desktopDispatch, 'magi 调度': magiDispatch };
+  const OLD_TRIAGE = [
+    ['空位 = limit − 分组里的会话数', /空位 = `limit` − (triage 分组里的|上一条数到的)会话数/],
+    ['一轮最多 3 个', /一轮最多 3 个/],
+    ['每轮最多开 3 个', /每轮最多开 3 个/],
+    ['一轮合计最多交出 3 个', /一轮合计最多交出 3 个/],
+  ];
+  for (const [where, text] of Object.entries(places)) {
+    for (const [name, re] of OLD_TRIAGE) assert.ok(!re.test(text), `${where} still says 「${name}」`);
+    assert.match(text, /min\(`limit`, 分组上限 − /, `${where} gives the triage formula`);
+    assert.match(text, /`limit`/);
+  }
+  assert.match(desktopDispatch, /一轮最多 `limit` 个/);
+  assert.match(magiDispatch, /每轮最多开 `limit` 个/);
+  assert.match(dispatch, /`sectionLimit`/);
+  // the report line
+  assert.match(dispatch, /这一轮新开几个 \/ `limit`，triage 分组 N \/ 分组上限/);
+  assert.ok(!/占位的会话数 \/ 上限/.test(dispatch), 'the old report line is gone');
+  // magi has no sidebar: it counts the sessions whose state is triage
+  assert.match(magiDispatch, /按状态是 triage 的会话数/);
+});
+
+test('README: issue-dispatch says a triage round opens `limit` and the section holds at most 分组上限 — no fixed 3', () => {
+  const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:issue-dispatch`'));
+  assert.ok(row);
+  for (const old of ['3 triage sessions open at most', 'At most 3 a round', 'for `limit` minus the sessions in the triage sidebar section']) assert.ok(!row.includes(old), `README row still says 「${old}」`);
+  assert.match(row, /`sectionLimit`/);
+  assert.match(row, /min\(`limit`, `sectionLimit` minus the sessions in the triage sidebar section\)/);
+  const tree = readme.split('\n').find((l) => l.includes('issue-dispatch/SKILL.md'));
+  assert.ok(tree && !/at most 3 a round/.test(tree), 'the file-tree comment no longer says 「at most 3 a round」');
 });

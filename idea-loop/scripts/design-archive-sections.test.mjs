@@ -1,7 +1,8 @@
 /**
  * The sections script's seams: its pure functions (`attribute`, `shootTargets`) fed hand-written
  * measurements, and its command line (exit codes, stdout). The generated code actually running in a
- * browser is in design-archive-sections-browser.test.mjs.
+ * browser is in design-archive-sections-browser.test.mjs, which runs only with IDEA_LOOP_BROWSER_TESTS=1
+ * set, on its own (about 6 minutes; the full-suite command skips it).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -230,6 +231,15 @@ test('attribute: a pinned element inside a section makes it scroll-driven; witho
   assert.match(r.undeclaredScrollDriven[0].reason, /scrollDriven: true/);
   assert.deepEqual(r.orphans, []);
   assert.deepEqual(r.declaredNotDetected, []);
+});
+
+test('attribute: the evidence says what the pin is and how long it holds, never that it was taken for a pin because of its text — a measurement saved by an older version still reads the same', () => {
+  const small = { ...PIN, height: 420, byText: true, probes: [{ y: 1000, text: 'Step 1' }], index: 0 };
+  for (const pin of [PIN, small]) {
+    const evidence = attribute(measurement(ALL, { pins: [pin] })).undeclaredScrollDriven[0].evidence.join('；');
+    assert.doesNotMatch(evidence, /不到半屏/);
+    assert.doesNotMatch(evidence, /按「钉住时的文字随滚动变了」认定/);
+  }
 });
 
 test('attribute: a scroll-driven section that is declared passes, and the evidence is still given', () => {

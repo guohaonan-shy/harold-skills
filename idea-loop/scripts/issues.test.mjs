@@ -6,10 +6,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseRepos, parseTypes, platformOf,
+  AI_MARKER, COMMANDS, KINDS, NEXT, STATES, backlog, bodyErrors, candidates, checkState, ensureLabels, isIdeaLoopComment, issuesOf, keptLabels, linearRefusal, migrate, migratePlan, newIssue, noteIssue, parseRepos, parseTypes, platformOf,
   DEFAULT_PERIODS, parsePeriods, prState, priorityOf, queues, readTracker, readTypes, reconcile, reconcilePlan, refsIssue, refsLinear, run, setPriority, setState, setTypes, show, skipsTriage, stateOf, transitionError, typeSet, withoutStatus,
 } from './issues.mjs';
 
+const reEscape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const startsWithMarker = (rest) => new RegExp(`^${reEscape(AI_MARKER)}\\n${reEscape(rest)}`);
 const SCRIPT = fileURLToPath(new URL('./issues.mjs', import.meta.url));
 const UI = '- 点重试 → 只重跑这一题';
 
@@ -276,7 +278,7 @@ test('refsIssue: Refs owner/repo#n, or a bare Refs #n in the issue\'s own repo; 
   assert.equal(prState({ state: 'CLOSED' }), 'closed');
 });
 
-test('set relabels, comments with the AI prefix, and closes done and canceled with their reason, dropping the label', () => {
+test('set relabels, comments with the AI marker, and closes done and canceled with their reason, dropping the label', () => {
   const docs = docsWith({ retry: spec({ issues: '[1]' }) });
   const issues = { 1: open(1, ['status:triage', 'type:bug']), 2: open(2, ['status:in-review']), 3: open(3, ['status:in-progress']), 4: open(4, ['status:todo']) };
   const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(5, 'Refs o/r#2', 'MERGED')] });
@@ -286,14 +288,14 @@ test('set relabels, comments with the AI prefix, and closes done and canceled wi
   assert.equal(issues[2].state, 'CLOSED');
   assert.equal(issues[2].reason, 'completed');
   assert.deepEqual(issues[2].labels, []);
-  assert.deepEqual(comments(calls, 2), ['🤖 idea-loop：合并的 PR：o/r#5。']);
+  assert.deepEqual(comments(calls, 2), [`${AI_MARKER}\n合并的 PR：o/r#5。`]);
   setState(gh, docs, 'backlog', [3], { comment: '先放着：等 0.2.x' });
   assert.deepEqual(issues[3].labels, []);
-  assert.deepEqual(comments(calls, 3), ['🤖 idea-loop：先放着：等 0.2.x']);
+  assert.deepEqual(comments(calls, 3), [`${AI_MARKER}\n先放着：等 0.2.x`]);
   setState(gh, docs, 'canceled', [4], { comment: '不做了' });
   assert.equal(issues[4].reason, 'not_planned');
   assert.deepEqual(issues[4].labels, []);
-  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：不做了']);
+  assert.deepEqual(comments(calls, 4), [`${AI_MARKER}\n不做了`]);
 });
 
 test('set checks every flip before making any', () => {
@@ -350,7 +352,7 @@ test('an issue with PRs in two repos: set done lists the one not merged; after b
   assert.equal(issues[242].state, 'CLOSED');
   assert.equal(issues[242].reason, 'completed');
   assert.deepEqual(issues[242].labels, []);
-  assert.match(comments(calls, 242)[0], /^🤖 idea-loop：PR o\/r#10、o\/api#20 都已合并/);
+  assert.match(comments(calls, 242)[0], startsWithMarker('PR o/r#10、o/api#20 都已合并'));
 });
 
 test('without a 仓库 section only the issue\'s own repo is searched', () => {
@@ -383,7 +385,7 @@ test('reconcile flips an in-progress issue whose PRs all turned ready to in-revi
   const { gh, calls } = fakeGh(issues, [], { 'o/r': [pr(1, 'Refs #7')] });
   assert.deepEqual(reconcile(gh, docs).done, ['#7: in-progress → in-review（PR o/r#1 都已 ready）']);
   assert.deepEqual(issues[7].labels, ['status:in-review']);
-  assert.match(comments(calls, 7)[0], /^🤖 idea-loop：PR o\/r#1 都已 ready/);
+  assert.match(comments(calls, 7)[0], startsWithMarker('PR o/r#1 都已 ready'));
 });
 
 test('migratePlan maps the old labels; 实现中 is in-review only with a ready PR; 搁置 gets a comment; mixed labels are problems', () => {
@@ -426,7 +428,7 @@ test('migrate lists by default and calls no gh write; --apply swaps the labels, 
   assert.deepEqual(issues[1].labels.sort(), ['status:in-review', 'type:bug']);
   assert.deepEqual(issues[2].labels, []);
   assert.deepEqual(comments(calls, 2).length, 1);
-  assert.match(comments(calls, 2)[0], /^🤖 idea-loop：从搁置迁回/);
+  assert.match(comments(calls, 2)[0], startsWithMarker('从搁置迁回'));
   assert.deepEqual(issues[3].labels, ['status:todo']);
   assert.doesNotMatch(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8'), /^status:/m);
   assert.deepEqual(issuesOf(readFileSync(join(docs, 'spec', 'retry', 'retry.md'), 'utf8')), [1]);
@@ -493,7 +495,8 @@ test('migrate only unlinks and closes roots the consolidation task opened (body 
   assert.equal(issues[21].subOf, 20);
   assert.equal(issues[10].state, 'CLOSED');
   assert.equal(issues[10].reason, 'not_planned');
-  assert.match(comments(calls, 10)[0], /^🤖 idea-loop：/);
+  assert.match(comments(calls, 10)[0], startsWithMarker(''));
+  assert.doesNotMatch(comments(calls, 10)[0], /🤖 idea-loop：/);
   assert.equal(issues[20].state, 'OPEN');
   assert.equal(issues[30].state, 'OPEN');
 });
@@ -789,8 +792,8 @@ triage：用
 
 这张表给调度读：每一行是一个时段。
 
-| 时段 | 派什么 | 上限 |
-|---|---|---|
+| 时段 | 派什么 | 上限 | 分组上限 |
+|---|---|---|---|
 ${rows.join('\n')}
 
 ## 仓库
@@ -800,10 +803,10 @@ ${rows.join('\n')}
 | \`o/r\` | . | main | 全部 |
 `;
 
-test('queues: a project without a 「调度」 section runs on the defaults (9–19 triage 3, 22–8 todo 3, nothing else)', () => {
+test('queues: a project without a 「调度」 section runs on the defaults (9–19 triage 3, 22–8 todo 1, nothing else)', () => {
   for (const tracker of [null, '# Issue tracker：GitHub\n\n## 仓库\n\n| 仓库 |\n|---|\n| `o/r` |\n']) {
     const docs = docsWith({}, tracker);
-    assert.deepEqual(picks(docs, '23:30'), ['todo', 3]);
+    assert.deepEqual(picks(docs, '23:30'), ['todo', 1]);
     assert.deepEqual(picks(docs, '10:00'), ['triage', 3]);
     assert.deepEqual(picks(docs, '20:00'), [null, 0]);
     assert.deepEqual(picks(docs, '08:30'), [null, 0]);
@@ -812,14 +815,14 @@ test('queues: a project without a 「调度」 section runs on the defaults (9�
 
 test('queues: the periods are left-closed, right-open, and one that starts after it ends crosses midnight', () => {
   const docs = docsWith();
-  assert.deepEqual(picks(docs, '22:00'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '22:00'), ['todo', 1]);
   assert.deepEqual(picks(docs, '21:59'), [null, 0]);
   assert.deepEqual(picks(docs, '08:00'), [null, 0]);
-  assert.deepEqual(picks(docs, '07:59'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '07:59'), ['todo', 1]);
   assert.deepEqual(picks(docs, '09:00'), ['triage', 3]);
   assert.deepEqual(picks(docs, '19:00'), [null, 0]);
   assert.deepEqual(picks(docs, '18:59'), ['triage', 3]);
-  assert.deepEqual(picks(docs, '00:00'), ['todo', 3]);
+  assert.deepEqual(picks(docs, '00:00'), ['todo', 1]);
   assert.deepEqual(picks(docs, '8:05'), [null, 0], 'a one-digit hour is fine');
 });
 
@@ -829,15 +832,16 @@ test('queues: the output names the current period, what to dispatch, the limit, 
     at: '23:30',
     period: { start: '22:00', end: '08:00' },
     dispatch: 'todo',
-    limit: 3,
+    limit: 1,
     periods: [
-      { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
-      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 3 },
+      { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3, sectionLimit: 10 },
+      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 1, sectionLimit: null },
     ],
+    sectionLimit: null,
     sections: ['triage', 'in-progress', 'in-review'],
   });
   const idle = queuesAt(docs, '20:00');
-  assert.deepEqual([idle.period, idle.dispatch, idle.limit], [null, null, 0]);
+  assert.deepEqual([idle.period, idle.dispatch, idle.limit, idle.sectionLimit], [null, null, 0, null]);
   assert.equal(idle.periods.length, 2, 'the table is there outside any period too, the morning summary needs where 夜里 starts');
   for (const q of [queuesAt(docs, '23:30'), idle]) for (const gone of ['cap', 'triageCap']) assert.equal(gone in q, false, gone);
   assert.deepEqual(DEFAULT_PERIODS.map((p) => p.dispatch), ['triage', 'todo']);
@@ -848,12 +852,12 @@ test('queues: a 「调度」 section is followed — only the rows it has', () =
   assert.deepEqual(picks(docs, '11:00'), ['triage', 2]);
   assert.deepEqual(picks(docs, '13:00'), [null, 0]);
   assert.deepEqual(picks(docs, '23:30'), [null, 0], 'no default fills in around a written table');
-  assert.deepEqual(queuesAt(docs, '11:00').periods, [{ start: '10:00', end: '12:00', dispatch: 'triage', limit: 2 }]);
+  assert.deepEqual(queuesAt(docs, '11:00').periods, [{ start: '10:00', end: '12:00', dispatch: 'triage', limit: 2, sectionLimit: 10 }]);
   assert.deepEqual(queuesAt(docs, '11:00').period, { start: '10:00', end: '12:00' });
 });
 
 test('queues: a table reads with a hyphen, backticks and extra columns, and the first matching row wins', () => {
-  const docs = docsWith({}, SCHEDULE(['| 6:30 - 12:00 | `todo` | 4 | 备注 |', '| 11:00–13:00 | triage | 1 |', '| 23:00—01:00 | todo | 2 |']));
+  const docs = docsWith({}, SCHEDULE(['| 6:30 - 12:00 | `todo` | 4 | | 备注 |', '| 11:00–13:00 | triage | 1 |', '| 23:00—01:00 | todo | 2 |']));
   assert.deepEqual(picks(docs, '06:30'), ['todo', 4]);
   assert.deepEqual(picks(docs, '11:30'), ['todo', 4]);
   assert.deepEqual(picks(docs, '12:30'), ['triage', 1]);
@@ -884,6 +888,36 @@ test('queues: a broken 「调度」 section is refused with the row that is wron
   // a table with no rows, or no separator under the header
   assert.throws(() => cli(fakeGh({}).gh, ['queues', docsWith({}, SCHEDULE([])), '--at=10:00']), /调度.*没有.*行/);
   assert.throws(() => parsePeriods('## 调度\n\n| 时段 | 派什么 | 上限 |\n| 09:00–19:00 | triage | 3 |\n'), /表头/);
+});
+
+test('queues: the triage row\'s 分组上限 is the fourth column — 10 when it is absent or empty, 8 when written; todo and gaps give null', () => {
+  // the ticket's example: three columns only
+  const three = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |', '| 22:00–08:00 | todo | 1 |']));
+  assert.deepEqual([queuesAt(three, '10:00').limit, queuesAt(three, '10:00').sectionLimit], [6, 10]);
+  const empty = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |  |']));
+  assert.equal(queuesAt(empty, '10:00').sectionLimit, 10);
+  const eight = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 | 8 |', '| 22:00–08:00 | todo | 1 |']));
+  assert.equal(queuesAt(eight, '10:00').sectionLimit, 8);
+  assert.deepEqual(queuesAt(eight, '10:00').periods.map((p) => p.sectionLimit), [8, null]);
+  // todo period and gap: null
+  assert.equal(queuesAt(eight, '23:00').sectionLimit, null);
+  assert.equal(queuesAt(eight, '20:00').sectionLimit, null);
+  // a 5th column onwards is a note
+  const note = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 | 8 | 白天 |']));
+  assert.equal(queuesAt(note, '10:00').sectionLimit, 8);
+  // a todo row may leave the fourth cell empty
+  const todoEmpty = docsWith({}, SCHEDULE(['| 22:00–08:00 | todo | 1 | |']));
+  assert.equal(queuesAt(todoEmpty, '23:00').sectionLimit, null);
+});
+
+test('queues: a bad 分组上限 is refused with the row, and a todo row that writes one says todo does not count the section', () => {
+  for (const bad of ['0', 'abc', '-2', '2.5']) {
+    const docs = docsWith({}, SCHEDULE([`| 09:00–19:00 | triage | 6 | ${bad} |`]));
+    assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => /分组上限/.test(e.message) && /第 \d+ 行/.test(e.message) && e.message.includes(bad) && /分组里的会话总数最多几个/.test(e.message) && !/每轮最多新开几个/.test(e.message), bad);
+  }
+  const docs = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |', '| 22:00–08:00 | todo | 1 | 5 |']));
+  const line = readTracker(docs).split('\n').findIndex((l) => l.includes('| 5 |')) + 1;
+  assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => new RegExp(`第 ${line} 行`).test(e.message) && /todo/.test(e.message) && /分组/.test(e.message));
 });
 
 test('queues: --at must be HH:MM, and a bare --at is refused', () => {
@@ -919,6 +953,8 @@ test('queues: without --at it reads the machine clock', () => {
 test("queues: this repository's own ISSUE_TRACKER.md has a 「调度」 section that reads, triage by day and todo by night", () => {
   const docs = join(fileURLToPath(new URL('../../docs', import.meta.url)));
   const periods = parsePeriods(readTracker(docs));
+  assert.match(readTracker(docs), /\|\s*时段\s*\|\s*派什么\s*\|\s*上限\s*\|\s*分组上限\s*\|/, 'the table has the 分组上限 column');
+  assert.equal(JSON.parse(execFileSync('node', [SCRIPT, 'queues', docs, '--at=10:00'], { encoding: 'utf8' })).sectionLimit, 10);
   assert.deepEqual(periods.map(({ start, end, dispatch }) => ({ start, end, dispatch })), DEFAULT_PERIODS.map(({ start, end, dispatch }) => ({ start, end, dispatch })));
   assert.equal(JSON.parse(execFileSync('node', [SCRIPT, 'queues', docs, '--at=23:30'], { encoding: 'utf8' })).dispatch, 'todo');
 });
@@ -1110,21 +1146,24 @@ test('priority replaces the issue\'s priority:* label; none only removes it; not
 });
 
 test('backlog: open issues without status:*, oldest first, up to the limit; one whose latest comment is triage\'s 还要你补 and that nobody touched since is left out', () => {
-  const ask = { body: '🤖 idea-loop：查过了，还要你补：复现步骤', created_at: '2026-10-20T00:00:00Z' };
+  const ask = { body: `${AI_MARKER}\n查过了，还要你补：复现步骤`, created_at: '2026-10-20T00:00:00Z' };
+  const oldAsk = { body: '🤖 idea-loop：查过了，还要你补：复现步骤', created_at: '2026-10-20T00:00:00Z' };
   const issues = {
     7: open(7, [], { updatedAt: '2026-10-20T00:00:30Z', comments: [ask] }),
     8: open(8, [], { updatedAt: '2026-10-25T00:00:00Z', comments: [ask] }),
     9: open(9, ['type:seo'], { comments: [] }),
     10: open(10, ['status:todo']),
-    11: open(11, [], { comments: [{ body: '🤖 idea-loop：已查清：重复了 #3', created_at: '2026-10-20T00:00:00Z' }], updatedAt: '2026-10-20T00:00:00Z' }),
+    11: open(11, [], { comments: [{ body: `${AI_MARKER}\n已查清：重复了 #3`, created_at: '2026-10-20T00:00:00Z' }], updatedAt: '2026-10-20T00:00:00Z' }),
     12: open(12, [], { comments: [{ body: '人写的：还要你补一句也不算', created_at: '2026-10-20T00:00:00Z' }], updatedAt: '2026-10-20T00:00:00Z' }),
     13: open(13, [], { updatedAt: '2026-10-20T00:01:01Z', comments: [ask] }),
     14: open(14, [], { updatedAt: '2026-10-20T00:01:00Z', comments: [ask] }),
     15: open(15, ['status:triage']),
     16: closed(16),
+    17: open(17, [], { updatedAt: '2026-10-20T00:00:30Z', comments: [oldAsk] }),
+    18: open(18, [], { updatedAt: '2026-10-20T00:00:30Z', comments: [{ body: '人写的，没有标记：还要你补', created_at: '2026-10-20T00:00:00Z' }] }),
   };
   const { gh, seen } = spied(issues);
-  assert.deepEqual(backlog(gh).map((i) => i.number), [8, 9, 11, 12, 13]);
+  assert.deepEqual(backlog(gh).map((i) => i.number), [8, 9, 11, 12, 13, 18]);
   assert.deepEqual(backlog(gh)[1], { number: 9, title: 'issue 9', labels: ['type:seo'], createdAt: '2026-01-01T00:00:00Z' });
   assert.deepEqual(backlog(gh, 1).map((i) => i.number), [8], 'the skipped #7 does not use up the limit');
   seen.length = 0;
@@ -1136,19 +1175,42 @@ test('backlog: open issues without status:*, oldest first, up to the limit; one 
 
 test('backlog reads the newest comment even past the first page', () => {
   const many = Array.from({ length: 101 }, (_, k) => ({ body: `c${k}`, created_at: '2026-10-01T00:00:00Z' }));
-  many[100] = { body: '🤖 idea-loop：还要你补', created_at: '2026-10-02T00:00:00Z' };
+  many[100] = { body: `${AI_MARKER}\n还要你补`, created_at: '2026-10-02T00:00:00Z' };
   const { gh } = fakeGh({ 1: open(1, [], { updatedAt: '2026-10-02T00:00:10Z', comments: many }) });
   assert.deepEqual(backlog(gh), []);
 });
 
-test('note comments with the AI prefix, once', () => {
+test('note comments with the AI marker on its own first line, once, and never the old prefix', () => {
   const { gh, calls } = fakeGh({ 4: open(4) });
   noteIssue(gh, 4, '已查清：重复了 #3\n');
   noteIssue(gh, 4, '🤖 idea-loop：还要你补：复现步骤');
-  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：已查清：重复了 #3', '🤖 idea-loop：还要你补：复现步骤']);
+  noteIssue(gh, 4, `${AI_MARKER}\n已经带标记`);
+  assert.deepEqual(comments(calls, 4), [`${AI_MARKER}\n已查清：重复了 #3`, `${AI_MARKER}\n还要你补：复现步骤`, `${AI_MARKER}\n已经带标记`]);
+  for (const body of comments(calls, 4)) {
+    assert.equal(body.split(AI_MARKER).length - 1, 1, 'the marker appears once');
+    assert.ok(!body.includes('🤖 idea-loop：'));
+  }
   assert.throws(() => noteIssue(gh, 4, '  \n'), /空的/);
   assert.equal(cli(gh, ['note', docsWith(), '4', fileWith('行')]).length, 1);
-  assert.equal(comments(calls, 4).at(-1), '🤖 idea-loop：行');
+  assert.equal(comments(calls, 4).at(-1), `${AI_MARKER}\n行`);
+});
+
+test('set with a comment that starts with the old prefix or already carries the marker still posts the marker once', () => {
+  const docs = docsWith({ retry: spec({ issues: '[1]' }) });
+  const issues = { 1: open(1, ['status:triage']), 2: open(2, ['status:triage']) };
+  const { gh, calls } = fakeGh(issues);
+  setState(gh, docs, 'backlog', [1], { comment: '🤖 idea-loop：先放着' });
+  setState(gh, docs, 'backlog', [2], { comment: `${AI_MARKER}\n先放着` });
+  assert.deepEqual(comments(calls, 1), [`${AI_MARKER}\n先放着`]);
+  assert.deepEqual(comments(calls, 2), [`${AI_MARKER}\n先放着`]);
+});
+
+test('isIdeaLoopComment: the marker anywhere, or the old prefix at the start; a human comment is neither', () => {
+  assert.equal(isIdeaLoopComment(`${AI_MARKER}\n正文`), true);
+  assert.equal(isIdeaLoopComment('🤖 idea-loop：正文'), true);
+  assert.equal(isIdeaLoopComment('人写的评论'), false);
+  assert.equal(isIdeaLoopComment('他说 🤖 idea-loop：不在开头'), false);
+  assert.equal(isIdeaLoopComment(undefined), false);
 });
 
 test('note returns the comment URL gh prints and shows it, so the triager can hand it back', () => {
@@ -1205,9 +1267,9 @@ test('set done opens its comment with the merged PRs; a --comment follows; close
   const prs = { 'o/r': [pr(10, 'Refs o/r#4\nRefs o/r#5', 'MERGED'), pr(12, 'Refs o/r#4', 'CLOSED')], 'o/api': [pr(20, 'Refs o/r#4', 'MERGED')] };
   const { gh, calls } = fakeGh(issues, [], prs);
   setState(gh, docs, 'done', [4]);
-  assert.deepEqual(comments(calls, 4), ['🤖 idea-loop：合并的 PR：o/r#10、o/api#20。']);
+  assert.deepEqual(comments(calls, 4), [`${AI_MARKER}\n合并的 PR：o/r#10、o/api#20。`]);
   setState(gh, docs, 'done', [5], { comment: '另见 #9' });
-  assert.deepEqual(comments(calls, 5), ['🤖 idea-loop：合并的 PR：o/r#10。另见 #9']);
+  assert.deepEqual(comments(calls, 5), [`${AI_MARKER}\n合并的 PR：o/r#10。另见 #9`]);
 });
 
 // ---------- Linear projects (spec issue-linear) ----------

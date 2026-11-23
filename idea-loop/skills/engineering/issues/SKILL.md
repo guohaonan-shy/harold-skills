@@ -20,7 +20,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 优先级 | P0 / P1 / P2，最多一个，没有就是没有；GitHub 上是 `priority:P0` / `priority:P1` / `priority:P2` label。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判 |
 | blocked by | 挡着它的 issue |
 | 挂着的 PR | 这个 issue 要改的每个仓库各一个，状态各自是 draft / ready / merged |
-| 评论 | 停在哪、等什么、为什么关；idea-loop 写的带「🤖 idea-loop：」前缀 |
+| 评论 | 停在哪、等什么、为什么关；idea-loop 写的第一行是 `<!-- idea-loop -->`（页面不显示） |
 
 不用父子关系归组：一个 issue 一个会话、一份 spec；版本用 milestone，模块用分类，「这几个相关」写正文链接；平台上已有的父子关系照常读，不当成组。
 
@@ -81,7 +81,7 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 
 ## 开一个 issue
 
-流程里顺手发现、这次不做的事（跟这次无关的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `issues new`，它先校验正文五个必填节、再查重（同标题开着的 issue 已有就拒绝并报号）：
+流程里顺手发现、这次不做的事（不影响本次改动的存量问题、review 里人批了「开 issue」的、对账发现的产品缺陷），开 issue 只走 `issues new`，它先校验正文五个必填节、再查重（同标题已有开着的就拒绝并报号）：
 
 1. 照「正文」的格式把正文写进一个文件，写给一个没有上下文的人看，包括几周后的自己和人。
 2. `issues new <docs> <标题> <正文文件>`，默认开成 backlog，输出新 issue 的号。人在当前会话里明说了「做」的，加 `--state=todo --priority=<P0|P1|P2>`（问人优先级）；分类用 `--kind=…`、`--type=…`。已有同一个问题的，用那一条，写「已有 #N」。
@@ -102,10 +102,10 @@ issues new        <docs> <标题> <正文文件> [--state=backlog|todo] [--prior
 issues body       <docs> <正文文件>                # 只校验正文，不开；Linear 上先跑它再用 MCP 开
 issues priority   <docs> <P0|P1|P2|none> <号>...   # 换掉原有的优先级
 issues backlog    <docs> [<上限>]                  # 开着的 backlog issue，最早的在前（JSON）；跳过分拣问过「还要你补」、之后没人动过的
-issues note       <docs> <号> <正文文件>           # 贴一条带「🤖 idea-loop：」前缀的评论
+issues note       <docs> <号> <正文文件>           # 贴一条评论，脚本加标记
 issues candidates <docs> [<上限>] [--state=todo|triage]  # 能派的 todo（--state=triage 取 triage 的）：没有开着的 blocked by；先排指派给本人的（P0 → P1 → P2 → 没有，再按号），本人名下没有可派的才给未指派的（同样按优先级，同级里停留久的先），指派给别人的不给（JSON）
 issues reconcile  <docs>                           # 对账：PR 都合并了的 → done；都 ready 的 → in-review；旧 label、两个 status:* 报出
-issues queues     <docs> [--at=HH:MM]              # 此刻（--at 指定）派什么、上限几个（取自「调度」表）、整张表、分组名；JSON
+issues queues     <docs> [--at=HH:MM]              # 此刻（--at 指定）派什么、每轮新开几个、分组上限（「调度」表）、整张表、分组名；JSON
 issues migrate    <docs> [--apply]                 # 旧状态机的 label 与 spec 状态行换成新的；不带 --apply 只列出
 ```
 

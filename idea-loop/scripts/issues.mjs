@@ -29,7 +29,7 @@
  *
  * Issues are opened only through `new`, which refuses a body that lacks one of the five required sections
  * (背景 / 问题 / 证据 / 影响范围 / 从哪发现) and an issue whose title an open issue already has. `backlog` lists the
- * backlog issues the weekly triage should look at; `note` posts a comment with the AI prefix. Closing comes
+ * backlog issues the weekly triage should look at; `note` posts a comment with the idea-loop marker. Closing comes
  * first: `set … done|canceled` closes the issue and only then drops its status label, so a failed close leaves
  * the issue where it was; a flip to done opens its comment with the PRs that were merged.
  *
@@ -46,8 +46,9 @@
  * every label outside the status labels, the kinds, the categories and that keep-list.
  *
  * The dispatch loop hands out sessions by the time of day: the project's ISSUE_TRACKER.md「调度」table says, per
- * period, whether it hands out triage or todo sessions and how many at most (`queues`; defaults when there is no
- * table). The sessions sit in three sidebar sections, one per working state.
+ * period, whether it hands out triage or todo sessions, how many to open in one round at most (`limit`) and, for
+ * triage, how many sessions the triage sidebar section may hold in all (`sectionLimit`) (`queues`; defaults when
+ * there is no table). The sessions sit in three sidebar sections, one per working state.
  *
  * Usage (<docs> is the docs/ directory; gh runs there, so it acts on that repo):
  *   node issues.mjs labels     <docs> [--prune]                       → creates the missing status:*, priority:*, kind:* and type:* labels; lists the rest, --prune deletes them
@@ -59,10 +60,10 @@
  *   node issues.mjs body       <docs> <body-file>                     → only checks the body's five required sections
  *   node issues.mjs priority   <docs> <P0|P1|P2|none> <n>...          → replaces the issues' priority:* label (none: just removes it)
  *   node issues.mjs backlog    <docs> [<limit>]                       → JSON: open issues with no status:*, oldest first, left out when triage asked for more and nobody answered
- *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the AI prefix
+ *   node issues.mjs note       <docs> <n> <body-file>                 → comments on #n, with the idea-loop marker
  *   node issues.mjs candidates <docs> [<limit>] [--state=todo|triage] → JSON: todo (or triage) issues no open issue blocks, ordered: assigned to me alone (P0 → P1 → P2 → none, lower numbers first) else the unassigned (P0 → P1 → P2 → none, then longest in that state first); someone else's never
  *   node issues.mjs reconcile  <docs>                                 → every PR merged → done; every PR ready → in-review; old labels, two status labels reported
- *   node issues.mjs queues     <docs> [--at=HH:MM]                    → JSON: what to hand out at that moment (now when absent) and how many at most, from the「调度」table of ISSUE_TRACKER.md (defaults when it has none), the whole table, and the sidebar sections
+ *   node issues.mjs queues     <docs> [--at=HH:MM]                    → JSON: what to hand out at that moment (now when absent), how many to open this round at most and how many triage sessions the sidebar section may hold, from the「调度」table of ISSUE_TRACKER.md (defaults when it has none), the whole table, and the sidebar sections
  *   node issues.mjs migrate    <docs> [--apply]                       → lists how the old Chinese status labels (and spec status lines, the sub-issue links and roots the consolidation task made) would change; --apply creates the missing labels, then changes them
  * Exit: 0 = done, 1 = refused / usage / gh error (the reason on stderr).
  */
@@ -120,8 +121,24 @@ export const NEXT = {
 
 /** Flips that must say, in a comment on the issue, where the work stopped. */
 export const NEEDS_COMMENT = new Set(['backlog']);
-/** Prefix of every comment idea-loop writes on an issue. */
-export const AI_PREFIX = '🤖 idea-loop：';
+/** First line of every comment idea-loop writes on an issue: an HTML comment, which GitHub does not render. */
+export const AI_MARKER = '<!-- idea-loop -->';
+/** The visible prefix idea-loop used to put on its comments; comments already posted keep it, so it is still recognised. */
+const LEGACY_PREFIX = '🤖 idea-loop：';
+
+/** Whether a comment was written by idea-loop: it carries the marker, or starts with the old prefix. */
+export const isIdeaLoopComment = (body) => {
+  const t = String(body ?? '');
+  return t.includes(AI_MARKER) || t.startsWith(LEGACY_PREFIX);
+};
+
+/** The text of a comment as posted: the marker on its own first line, then the text; the old prefix is dropped, a marker already there is not doubled. */
+const withMarker = (text) => {
+  const t = String(text ?? '').trim();
+  if (t.startsWith(AI_MARKER)) return t;
+  const body = t.startsWith(LEGACY_PREFIX) ? t.slice(LEGACY_PREFIX.length).trim() : t;
+  return `${AI_MARKER}\n${body}`;
+};
 
 /**
  * An issue's state: closed ones by their close reason (not planned = canceled, anything else = done), open
@@ -225,10 +242,13 @@ export const STAGE_SECTIONS = [...WORKING];
 export const DISPATCHES = ['triage', 'todo'];
 export const PERIODS_HEADING = '调度';
 
+/** How many sessions the triage sidebar section may hold in all when the table's 分组上限 cell is absent or empty. */
+export const DEFAULT_SECTION_LIMIT = 10;
+
 /** The periods a project that wrote no「调度」section runs on: triage by day, todo by night, nothing in between. */
 export const DEFAULT_PERIODS = [
-  { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
-  { start: '22:00', end: '08:00', dispatch: 'todo', limit: 3 },
+  { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3, sectionLimit: DEFAULT_SECTION_LIMIT },
+  { start: '22:00', end: '08:00', dispatch: 'todo', limit: 1, sectionLimit: null },
 ];
 
 /** `H:MM` / `HH:MM` as minutes after midnight, null when it is no time of day. */
@@ -240,9 +260,11 @@ const minutesOf = (hhmm) => {
 const clock = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 
 /**
- * The periods in the「## 调度」section of ISSUE_TRACKER.md: one table row each, `开始–结束 | 派什么 | 上限`
- * (the range may be joined by `–`, `—` or `-`; the middle cell is `triage` or `todo`; the limit a positive
- * integer; further columns are notes). The text around the table is ignored. Null when the section is
+ * The periods in the「## 调度」section of ISSUE_TRACKER.md: one table row each, `开始–结束 | 派什么 | 上限 | 分组上限`
+ * (the range may be joined by `–`, `—` or `-`; the middle cell is `triage` or `todo`; 上限 is how many sessions a
+ * round opens at most, a positive integer; 分组上限 only counts on a triage row: how many sessions the triage
+ * section may hold in all, a positive integer, 10 when absent or empty, and a todo row that writes one is refused;
+ * the fifth column on is notes). The text around the table is ignored. Null when the section is
  * missing; a row that does not read throws, naming its line in the file and quoting it.
  */
 export function parsePeriods(md) {
@@ -256,12 +278,12 @@ export function parsePeriods(md) {
   }
   const cells = (line) => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim().replace(/`/g, ''));
   const fail = (row, why) => new Error(`ISSUE_TRACKER.md 第 ${row.no} 行（「${PERIODS_HEADING}」一节）：${why}：${row.line}`);
-  if (!rows.length) throw new Error(`ISSUE_TRACKER.md 的「${PERIODS_HEADING}」一节没有表：每个时段一行，列是 开始–结束 | 派什么 | 上限`);
+  if (!rows.length) throw new Error(`ISSUE_TRACKER.md 的「${PERIODS_HEADING}」一节没有表：每个时段一行，列是 开始–结束 | 派什么 | 上限 | 分组上限（只 triage 行）`);
   if (rows.length < 2 || !cells(rows[1].line).every((c) => /^:?-{2,}:?$/.test(c))) throw fail(rows[0], '表头下面要有分隔行（|---|---|---|）');
   const data = rows.slice(2);
-  if (!data.length) throw new Error(`ISSUE_TRACKER.md 的「${PERIODS_HEADING}」一节没有时段行：每个时段一行，列是 开始–结束 | 派什么 | 上限`);
+  if (!data.length) throw new Error(`ISSUE_TRACKER.md 的「${PERIODS_HEADING}」一节没有时段行：每个时段一行，列是 开始–结束 | 派什么 | 上限 | 分组上限（只 triage 行）`);
   return data.map((row) => {
-    const [range, dispatch, limit] = cells(row.line);
+    const [range, dispatch, limit, sectionCell] = cells(row.line);
     if (limit === undefined) throw fail(row, '要三列：开始–结束、派什么、上限');
     const ends = range.split(/\s*[–—-]\s*/);
     if (ends.length !== 2) throw fail(row, `时段「${range}」要写成 开始–结束，例如 09:00–19:00`);
@@ -269,8 +291,12 @@ export function parsePeriods(md) {
     if (from === null || to === null) throw fail(row, `「${range}」里有不是时刻的（要 HH:MM，00:00 到 23:59）`);
     if (from === to) throw fail(row, `「${range}」开始和结束是同一时刻`);
     if (!DISPATCHES.includes(dispatch)) throw fail(row, `派什么要写 ${DISPATCHES.join(' 或 ')}，不是「${dispatch}」`);
-    if (!/^\d+$/.test(limit) || Number(limit) < 1) throw fail(row, `上限要是正整数，不是「${limit}」`);
-    return { start: clock(from), end: clock(to), dispatch, limit: Number(limit) };
+    if (!/^\d+$/.test(limit) || Number(limit) < 1) throw fail(row, `上限（每轮最多新开几个）要是正整数，不是「${limit}」`);
+    const written = sectionCell !== undefined && sectionCell !== '';
+    if (dispatch === 'todo' && written) throw fail(row, `todo 行不数分组，分组上限留空，不是「${sectionCell}」`);
+    if (written && (!/^\d+$/.test(sectionCell) || Number(sectionCell) < 1)) throw fail(row, `分组上限（triage 分组里的会话总数最多几个）要是正整数，不是「${sectionCell}」`);
+    const sectionLimit = dispatch === 'triage' ? (written ? Number(sectionCell) : DEFAULT_SECTION_LIMIT) : null;
+    return { start: clock(from), end: clock(to), dispatch, limit: Number(limit), sectionLimit };
   });
 }
 
@@ -285,7 +311,7 @@ export function periodAt(periods, minutes) {
 /**
  * What the dispatch loop reads from one place, for the moment `at` (`HH:MM`; the machine clock when null): the
  * period that moment is in (`period`, null in a gap), what to hand out in it (`dispatch`: triage, todo or null)
- * and how many sessions at most (`limit`, 0 in a gap), the whole table (`periods`: the project's「调度」section,
+ * how many sessions to open this round at most (`limit`, 0 in a gap), how many sessions the triage section may hold in all (`sectionLimit`: a triage period's row, null in a todo period and in a gap), the whole table (`periods`: the project's「调度」section,
  * or the defaults), and the sidebar sections. `md` is the project's ISSUE_TRACKER.md.
  */
 export function queues(md = '', at = null, now = new Date()) {
@@ -298,6 +324,7 @@ export function queues(md = '', at = null, now = new Date()) {
     period: now_ && { start: now_.start, end: now_.end },
     dispatch: now_ ? now_.dispatch : null,
     limit: now_ ? now_.limit : 0,
+    sectionLimit: now_ ? now_.sectionLimit : null,
     periods,
     sections: [...STAGE_SECTIONS],
   };
@@ -602,7 +629,7 @@ function relabel(gh, n, labels, state) {
  * not open with no label, which reads as backlog. The open states relabel, then comment.
  */
 function move(gh, it, state, comment = '') {
-  const body = comment ? `${AI_PREFIX}${comment}` : '';
+  const body = comment ? withMarker(comment) : '';
   if (CLOSED[state]) {
     gh(['issue', 'close', String(it.number), '--reason', CLOSED[state], ...(body ? ['--comment', body] : [])]);
     relabel(gh, it.number, it.labels, state);
@@ -713,7 +740,7 @@ function lastComment(gh, n) {
 }
 
 /** Triage's comment that asks the human for more. */
-const asksForMore = (c) => String(c?.body ?? '').startsWith(AI_PREFIX) && String(c.body).includes('还要你补');
+const asksForMore = (c) => isIdeaLoopComment(c?.body) && String(c.body).includes('还要你补');
 
 /**
  * The open issues with no status:* label (backlog), oldest first, at most `limit`. One whose newest comment
@@ -768,11 +795,11 @@ export function setPriority(gh, n, p) {
   return want;
 }
 
-/** Comments on #n with the AI prefix (not doubled when the text already starts with it). Returns the comment's URL (what `gh issue comment` prints), or null. */
+/** Comments on #n with the AI marker (the old prefix dropped, the marker not doubled). Returns the comment's URL (what `gh issue comment` prints), or null. */
 export function noteIssue(gh, n, text) {
   const t = String(text ?? '').trim();
   if (!t) throw new Error('评论是空的');
-  const out = String(gh(['issue', 'comment', String(n), '--body', t.startsWith(AI_PREFIX) ? t : `${AI_PREFIX}${t}`]) ?? '');
+  const out = String(gh(['issue', 'comment', String(n), '--body', withMarker(t)]) ?? '');
   return out.match(/https?:\/\/\S+/)?.[0] ?? null;
 }
 
@@ -934,7 +961,7 @@ export function migrate(gh, docs, { apply = false } = {}) {
   ensureLabels(gh);
   for (const r of plan.relabels) {
     editLabels(gh, r.n, r.add, r.remove);
-    if (r.comment) gh(['issue', 'comment', String(r.n), '--body', `${AI_PREFIX}${r.comment}`]);
+    if (r.comment) gh(['issue', 'comment', String(r.n), '--body', withMarker(r.comment)]);
   }
   for (const s of specs) writeFileSync(s.file, withoutStatus(readFileSync(s.file, 'utf8')));
   for (const u of plan.unlinks) gh(['api', '-X', 'DELETE', `repos/{owner}/{repo}/issues/${u.parent}/sub_issue`, '-F', `sub_issue_id=${u.childId}`]);

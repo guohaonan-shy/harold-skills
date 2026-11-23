@@ -41,10 +41,14 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 ### 调度（issue-dispatch 的三处）
 
 - **怎么一轮一轮跑**：`magi cron`（「定时任务」）每轮新开一个调度会话来跑 `idea-loop:issue-dispatch`，id `dispatch-<仓库名>`，默认每小时一次（表达式 `7 * * * *`），人要换间隔就 `magi cron edit`；跑完一轮 `magi sessions stop` 停掉自己，不用常驻会话。人手敲 `/idea-loop:issue-dispatch`（不带间隔）：用「定时任务」建（已有就 `magi cron edit`）这个任务，prompt 是 `用 Skill 工具调 idea-loop:issue-dispatch`，再立刻做第一轮。
-- **怎么数开着的会话**：`magi sessions list` 里 slug 前缀是 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的。不是这个前缀的会话（如 issue 会话开出的子会话）不占位，记下个数。magi 没有分组，按会话对应 issue 的状态数：用 slug 里的号读 issue 的状态（GitHub 项目跑 `issues show <docs> <号>`；Linear 项目 `issues show` 不读状态，照 `idea-loop:issues` 的 Linear 做法用 `get_issue` 读、对着 `ISSUE_TRACKER.md` 的状态表换算）。派 `triage` 的时段数状态是 triage 的会话；派 `todo` 的时段数状态是 in-progress 的会话，且只数最近 2 小时有活动的（in-review 不数；超过 2 小时没活动的不数，也不动它们）。最后活动时间取 `magi sessions list` / `magi sessions show` 里会话的时间；读不到时间的当作有活动，照数。同号会话（不论状态）都记下，派的时候跳过。
-- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。空位 = `issues queues <docs>` 的 `limit` − 上一条数到的会话数，只派 `dispatch` 那一种（`triage` 或 `todo`），先跳过已有同号会话的（triage 会话开着时 issue 仍是 triage，todo 会话认领前 issue 仍是 todo），再取够空位个数。每轮最多开 3 个。派 `todo` 的时段，prompt 句尾加「夜间模式。」开出后往 `~/.idea-loop/dispatch/<仓库名>.json`（JSON 数组）追加一条 `{issue, desktopSessionId, openedAt, period}`，`desktopSessionId` 填 magi 的会话 id，`period` 填 `dispatch`：早上汇总读它。triage 会话开场起草 spec、自校验，碰到要人定的就推送一句话停下等人（`idea-loop:issue-session`「跟人定要 grill 的」）。
-  1. **建 worktree**（桌面端 `start_session` 的 `use_worktree` 对应的做法；会话不再开在主 checkout，多个会话不互相踩）：
-     `git -C <主 checkout> worktree add <主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug> -b issue/<号>-<slug> origin/<基准分支>`。路径在主 checkout 外面（它的同级），所以主 checkout 的工作区和分支都不动，调度在主 checkout 只读的前提不变。`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）；`<slug>` 取 issue 标题的几个词，小写、连字符。`issues show` 已给出 issue 的分支（triage 会话留下的）：用它，`-b <那条分支> origin/<那条分支>`，不新起。路径已经存在、就是这条分支的 worktree（上一轮建了没开起来）：直接用。
+- **怎么数开着的会话**：`magi sessions list` 里 slug 前缀是 `<仓库名>-<号>`、状态不是 stopped / exited / dead、也没归档的。不是这个前缀的会话（如 issue 会话开出的子会话）不占位，记下个数。magi 没有分组，按会话对应 issue 的状态数：用 slug 里的号读 issue 的状态（GitHub 项目跑 `issues show <docs> <号>`；Linear 项目 `issues show` 不读状态，照 `idea-loop:issues` 的 Linear 做法用 `get_issue` 读、对着 `ISSUE_TRACKER.md` 的状态表换算）。派 `triage` 的时段数一个数：按状态是 triage 的会话数（当 triage 分组里的会话数，跨项目算）；派 `todo` 的时段不数：每轮固定派 `limit` 个，不看 in-progress 里开着几个。同号会话（不论状态）都记下，派的时候跳过。
+- **怎么交出 issue**：先给会话建 worktree，再开会话，直接开，不等人。这一轮开几个：派 `triage` 的时段 = min(`limit`, 分组上限 − 上一条数到的会话数)，分组上限取 `issues queues <docs>` 的 `sectionLimit`；派 `todo` 的时段 = `limit`。只派 `dispatch` 那一种（`triage` 或 `todo`），先跳过已有同号会话的（triage 会话开着时 issue 仍是 triage，todo 会话认领前 issue 仍是 todo），再取够这一轮的个数（不够就有几个开几个）。每轮最多开 `limit` 个。派 `todo` 的时段，prompt 句尾加「夜间模式。」开出后往 `~/.idea-loop/dispatch/<仓库名>.json`（JSON 数组）追加一条 `{issue, desktopSessionId, openedAt, period}`，`desktopSessionId` 填 magi 的会话 id，`period` 填 `dispatch`：早上汇总读它。triage 会话开场起草 spec、自校验，碰到要人定的就推送一句话停下等人（`idea-loop:issue-session`「跟人定要 grill 的」）。
+  1. **建 worktree**（桌面端 `start_session` 的 `use_worktree` 对应的做法；会话不再开在主 checkout，多个会话不互相踩）：路径是 `<主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在主 checkout 外面（它的同级），所以主 checkout 的工作区和分支都不动，调度在主 checkout 只读的前提不变。`<slug>` 取 issue 标题的几个词，小写、连字符。分支名取 `issues show` 给出的 issue 分支（triage 会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（白天评估过的 issue，评估会话归档时只清了工作区，分支还在，夜里再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
+     - 本地有（`git -C <主 checkout> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <主 checkout> worktree add <路径> <分支>`。
+     - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <主 checkout> worktree add --track -b <分支> <路径> origin/<分支>`。
+     - 两处都没有：`git -C <主 checkout> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
+
+     路径已经存在、就是这条分支的 worktree（上一轮建了没开起来）：直接用。
   2. **开会话**：`magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap magi --cap <issue 平台的 MCP 服务器名> --cap browser <prompt>`。
   3. **worktree 准备**不由调度做：issue 会话开场照目标仓库 `DEVELOPMENT.md` 的「worktree 准备」做。
 
@@ -99,7 +103,8 @@ magi 托管的优先：
 
 告诉人怎么接：
 
-- **MCP**：人在 magi 网页的 Integrations → MCP servers 里加（Linear、Refero 等；查有没有：`magi mcp list`）。
+- **MCP**：人在 magi 网页的 Integrations → MCP servers 里加（Linear、Mobbin 等；查有没有：`magi mcp list`）。
+- **Mobbin MCP**（可选，设计调研用，要 Mobbin 付费计划）：magi 里的 MCP 都在上面那个入口加：人加一个名为 `mobbin`、地址 `https://api.mobbin.com/mcp`、走 OAuth 登录的服务器；起调研员的会话用 `magi mcp call mobbin …` 调它。`magi mcp list` 里没有 `mobbin`，设计调研就停下，只有它受影响。
 - **Playwright MCP**：不用装，浏览器是 `magi browser`。
 - **插件**：在 magi 会话里 `/plugin`。
 - **允许规则、设置**：人自己改 `$CLAUDE_CONFIG_DIR/settings.json`；这边只打印规则，不替人改权限设置。

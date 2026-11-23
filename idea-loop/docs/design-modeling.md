@@ -106,7 +106,7 @@
 ### 5.1 格式：Google DESIGN.md spec，校验全交给官方 CLI
 
 - YAML frontmatter 放 token（`colors` / `typography` / `rounded` / `spacing` / `components`，`{path}` 引用）；刻意没有的 token 组写进 `omitted` 并附理由，不留着被 lint 报缺。
-- 正文 `##` 章节：Overview、Colors、Typography、Layout、Elevation & Depth、Shapes、Components、Do's and Don'ts。**可以省略，出现的必须按这个顺序**；不认识的章节保留不报错，重复章节不允许。
+- 正文 `##` 章节：Overview、Colors、Typography、Layout、Elevation & Depth、Shapes、Motion、Voice & Content Strategy、Components、Do's and Don'ts，后接扩展的 Responsive Behavior、Known Gaps。**可以省略，出现的必须按这个顺序**；不认识的章节保留不报错，重复章节不允许。
 - 我们现行 `design-md-format.md` 要求八节必须齐全，与 Google 不一致。这份文件**不再维护，删掉**：格式由 skill 每次运行时现读 `npx -y @google/design.md@latest spec`，永远跟 CLI 同一个版本；spec 管不到的内容规则与候选格式很短，直接写在 SKILL.md 里。
 - 格式和结构的校验**不自己写脚本**，全交给官方 CLI（§7）。
 

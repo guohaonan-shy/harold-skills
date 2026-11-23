@@ -47,8 +47,8 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 ### 调度（issue-dispatch 的三处）
 
 - **怎么一轮一轮跑**：桌面定时任务，每小时一次，每次运行开一个新的调度会话、跑一轮就结束；它在侧边栏的 Scheduled 里，不进分组，也不需要进。人敲 `/idea-loop:issue-dispatch`（不带间隔）起：用「定时任务」建（`list_scheduled_tasks` 里已有 `dispatch-<仓库名>` 就 `update_scheduled_task`）：id `dispatch-<仓库名>`，标题 `<仓库名> issue 调度`，`cronExpression` 取 `7 * * * *`（每小时一次，分钟避开 0 和 30），prompt `/idea-loop:issue-dispatch`，建在主 checkout 里；然后立刻做第一轮。app 关着时到点不跑，下次打开补跑一次。起好后汇报里写下次运行的时间。
-- **怎么数开着的会话**：`issues queues <docs>` 给出此刻的 `dispatch`、`limit` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：分组跨项目共用，总数也跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。数两个数：triage 分组里的会话数；in-progress 分组里 `lastActivityAt` 在最近 2 小时内的会话数（in-review 不数，超过 2 小时没活动的不数，也不动它们）。三个分组里所有匹配的会话号都记下，派的时候跳过。判别用标题，不用会话的 `startedBy`；交出时调度会给新会话改成这个标题，所以下一轮数得到。已知限制：issue 会话被人手动改了标题、不再匹配，就不会被数到，可能多开一个；只多一个会话，不丢东西，接受。
-- **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 3 个。人在调度会话里说话的那一轮也走这条路。
+- **怎么数开着的会话**：`issues queues <docs>` 给出此刻的 `dispatch`、`limit`、`sectionLimit` 和三个 `sections`（triage、in-progress、in-review）；缺的先用 `create_section` 建，再各用 `list_sessions`（`group` 写分组名，`limit: 100`）列出没归档的会话。**只数标题匹配「<仓库名>#<号> …」的会话**（任何仓库名都算：分组跨项目共用，总数跨项目算）；标题不匹配的是 issue 会话开出的子会话（如设计阶段并行开的 imagine 会话），它们跟 issue 会话待在同一个分组里，但不占位，记下个数。只数 triage 分组里的会话数 N：派 `triage` 的时段新开 min(`limit`, 分组上限 − N) 个，分组上限即 `sectionLimit`；派 `todo` 的时段每轮固定派 `limit` 个，in-progress、in-review 都不数。三个分组里所有匹配的会话号都记下，派的时候跳过。判别用标题，不用会话的 `startedBy`；交出时调度把新会话改成这个标题，下一轮数得到。已知限制：issue 会话被人手动改了标题、不再匹配就数不到，可能多开一个；只多一个会话，接受。
+- **怎么交出 issue**：直接开会话，不需要人点，四步，每个 issue 一次，一轮最多 `limit` 个。人在调度会话里说话的那一轮也走这条路。
   1. **建 worktree**（会话不开在主 checkout，多个会话不互相踩）：路径是 `<主 checkout 的上一级>/<仓库名>-worktrees/<号>-<slug>`，在主 checkout 外面，所以主 checkout 的工作区和分支都不动。`<slug>` 取 issue 标题的几个词，小写、连字符。分支名取 `issues show` 给出的 issue 分支（triage 会话留下的），没有就是 `issue/<号>-<slug>`。先查这条分支有没有，有就接上，不新建同名分支（白天评估过的 issue，评估会话归档时只清了工作区，分支还在，夜里再 `-b` 新建会报「分支已存在」，这个 issue 每一轮都开不出会话）：
      - 本地有（`git -C <主 checkout> show-ref --verify --quiet refs/heads/<分支>` 成功）：`git -C <主 checkout> worktree add <路径> <分支>`。
      - 只有远端有（`refs/remotes/origin/<分支>`）：`git -C <主 checkout> worktree add --track -b <分支> <路径> origin/<分支>`。
@@ -101,6 +101,10 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 3. 用完 `browser_close`，再 `node "${CLAUDE_PLUGIN_ROOT}/scripts/browser-lock.mjs" release <锁目录> --owner <你的名字>`。
 4. 等了默认的 30 分钟还没拿到，就停下，在交回里写明卡在锁上。
 
+### 要麦克风的流程
+
+要麦克风的页面不走 `mcp__playwright__browser_*`（授权后拿到本机真麦克风），用 `playwright-cli`（`@playwright/cli`）的命名会话。做法读 `idea-loop:runtime` 的 `references/claude-desktop-mic.md`。
+
 ## 人的浏览器
 
 用 Claude in Chrome：人自己的 Chrome，带人的登录态，工具是 `mcp__claude-in-chrome__*`。跟「浏览器」里的两个不同：Playwright 每次是干净的、没有登录；内嵌浏览器是 Claude 桌面端自己的面板，也不是人的 Chrome 配置。
@@ -137,6 +141,6 @@ loop 是本会话里的循环定时，7 天后自动删掉。
 
 - **MCP**：桌面 app 在设置的 Connectors 里加；命令行 `claude mcp add --scope user …`（如 `claude mcp add --transport http --scope user linear https://mcp.linear.app/mcp`），再在 `claude` 里 `/mcp` 授权。查有没有：`claude mcp get <名字>`。
 - **Playwright MCP**（必需）：查 `claude mcp get playwright`，要用户级、参数带 `--headless --isolated`；修法 `claude mcp add --scope user playwright -- npx -y @playwright/mcp --headless --isolated`。
-- **Refero MCP**（可选，设计调研用）：查 `claude mcp get refero`，要用户级、http、`https://api.refero.design/mcp`；token 由人自己配，修法 `claude mcp add --scope user --transport http refero https://api.refero.design/mcp --header "Authorization: Bearer <token>"`。
+- **Mobbin MCP**（可选，设计调研用，要 Mobbin 付费计划）：由插件自带（`.mcp.json` 的 `mobbin`，远程 http，`https://api.mobbin.com/mcp`），不用 `claude mcp add`。查：`claude mcp list` 里 `plugin:idea-loop:mobbin` 一行，`Connected` 就是好的；写着 `Needs authentication` 的，修法是在 `claude` 里 `/mcp`，选它，走 OAuth 登录 Mobbin。看不到这一行：插件没装或没重载（`/reload-plugins`），或者已经手动配过一个同地址的 Mobbin（`claude mcp list` 里另有一行指向 `https://api.mobbin.com/mcp`，常见的是用户级的 `mobbin`）：Claude Code 只连优先级高的那份，调研员按工具短名取工具，手动配的也能用，只要登录了；`Needs authentication` 的同样 `/mcp` 登录。没连上时只有设计调研受影响。
 - **允许规则**：人自己加进 `~/.claude/settings.json` 的 `permissions.allow`；这边只打印规则，不替人改权限设置。
   - 调度要加一条：`mcp__ccd_sidebar__move_sessions`。不加，无人值守时调度移动别的会话会被拦，夜里开出的会话进不了分组，就数不到（`/idea-loop:setup` 照这里打印）。
