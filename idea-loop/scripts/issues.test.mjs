@@ -792,8 +792,8 @@ triage：用
 
 这张表给调度读：每一行是一个时段。
 
-| 时段 | 派什么 | 上限 |
-|---|---|---|
+| 时段 | 派什么 | 上限 | 分组上限 |
+|---|---|---|---|
 ${rows.join('\n')}
 
 ## 仓库
@@ -834,13 +834,14 @@ test('queues: the output names the current period, what to dispatch, the limit, 
     dispatch: 'todo',
     limit: 1,
     periods: [
-      { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3 },
-      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 1 },
+      { start: '09:00', end: '19:00', dispatch: 'triage', limit: 3, sectionLimit: 10 },
+      { start: '22:00', end: '08:00', dispatch: 'todo', limit: 1, sectionLimit: null },
     ],
+    sectionLimit: null,
     sections: ['triage', 'in-progress', 'in-review'],
   });
   const idle = queuesAt(docs, '20:00');
-  assert.deepEqual([idle.period, idle.dispatch, idle.limit], [null, null, 0]);
+  assert.deepEqual([idle.period, idle.dispatch, idle.limit, idle.sectionLimit], [null, null, 0, null]);
   assert.equal(idle.periods.length, 2, 'the table is there outside any period too, the morning summary needs where 夜里 starts');
   for (const q of [queuesAt(docs, '23:30'), idle]) for (const gone of ['cap', 'triageCap']) assert.equal(gone in q, false, gone);
   assert.deepEqual(DEFAULT_PERIODS.map((p) => p.dispatch), ['triage', 'todo']);
@@ -851,12 +852,12 @@ test('queues: a 「调度」 section is followed — only the rows it has', () =
   assert.deepEqual(picks(docs, '11:00'), ['triage', 2]);
   assert.deepEqual(picks(docs, '13:00'), [null, 0]);
   assert.deepEqual(picks(docs, '23:30'), [null, 0], 'no default fills in around a written table');
-  assert.deepEqual(queuesAt(docs, '11:00').periods, [{ start: '10:00', end: '12:00', dispatch: 'triage', limit: 2 }]);
+  assert.deepEqual(queuesAt(docs, '11:00').periods, [{ start: '10:00', end: '12:00', dispatch: 'triage', limit: 2, sectionLimit: 10 }]);
   assert.deepEqual(queuesAt(docs, '11:00').period, { start: '10:00', end: '12:00' });
 });
 
 test('queues: a table reads with a hyphen, backticks and extra columns, and the first matching row wins', () => {
-  const docs = docsWith({}, SCHEDULE(['| 6:30 - 12:00 | `todo` | 4 | 备注 |', '| 11:00–13:00 | triage | 1 |', '| 23:00—01:00 | todo | 2 |']));
+  const docs = docsWith({}, SCHEDULE(['| 6:30 - 12:00 | `todo` | 4 | | 备注 |', '| 11:00–13:00 | triage | 1 |', '| 23:00—01:00 | todo | 2 |']));
   assert.deepEqual(picks(docs, '06:30'), ['todo', 4]);
   assert.deepEqual(picks(docs, '11:30'), ['todo', 4]);
   assert.deepEqual(picks(docs, '12:30'), ['triage', 1]);
@@ -887,6 +888,36 @@ test('queues: a broken 「调度」 section is refused with the row that is wron
   // a table with no rows, or no separator under the header
   assert.throws(() => cli(fakeGh({}).gh, ['queues', docsWith({}, SCHEDULE([])), '--at=10:00']), /调度.*没有.*行/);
   assert.throws(() => parsePeriods('## 调度\n\n| 时段 | 派什么 | 上限 |\n| 09:00–19:00 | triage | 3 |\n'), /表头/);
+});
+
+test('queues: the triage row\'s 分组上限 is the fourth column — 10 when it is absent or empty, 8 when written; todo and gaps give null', () => {
+  // the ticket's example: three columns only
+  const three = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |', '| 22:00–08:00 | todo | 1 |']));
+  assert.deepEqual([queuesAt(three, '10:00').limit, queuesAt(three, '10:00').sectionLimit], [6, 10]);
+  const empty = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |  |']));
+  assert.equal(queuesAt(empty, '10:00').sectionLimit, 10);
+  const eight = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 | 8 |', '| 22:00–08:00 | todo | 1 |']));
+  assert.equal(queuesAt(eight, '10:00').sectionLimit, 8);
+  assert.deepEqual(queuesAt(eight, '10:00').periods.map((p) => p.sectionLimit), [8, null]);
+  // todo period and gap: null
+  assert.equal(queuesAt(eight, '23:00').sectionLimit, null);
+  assert.equal(queuesAt(eight, '20:00').sectionLimit, null);
+  // a 5th column onwards is a note
+  const note = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 | 8 | 白天 |']));
+  assert.equal(queuesAt(note, '10:00').sectionLimit, 8);
+  // a todo row may leave the fourth cell empty
+  const todoEmpty = docsWith({}, SCHEDULE(['| 22:00–08:00 | todo | 1 | |']));
+  assert.equal(queuesAt(todoEmpty, '23:00').sectionLimit, null);
+});
+
+test('queues: a bad 分组上限 is refused with the row, and a todo row that writes one says todo does not count the section', () => {
+  for (const bad of ['0', 'abc', '-2', '2.5']) {
+    const docs = docsWith({}, SCHEDULE([`| 09:00–19:00 | triage | 6 | ${bad} |`]));
+    assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => /分组上限/.test(e.message) && /第 \d+ 行/.test(e.message) && e.message.includes(bad) && /分组里的会话总数最多几个/.test(e.message) && !/每轮最多新开几个/.test(e.message), bad);
+  }
+  const docs = docsWith({}, SCHEDULE(['| 09:00–19:00 | triage | 6 |', '| 22:00–08:00 | todo | 1 | 5 |']));
+  const line = readTracker(docs).split('\n').findIndex((l) => l.includes('| 5 |')) + 1;
+  assert.throws(() => cli(fakeGh({}).gh, ['queues', docs, '--at=10:00']), (e) => new RegExp(`第 ${line} 行`).test(e.message) && /todo/.test(e.message) && /分组/.test(e.message));
 });
 
 test('queues: --at must be HH:MM, and a bare --at is refused', () => {
@@ -922,6 +953,8 @@ test('queues: without --at it reads the machine clock', () => {
 test("queues: this repository's own ISSUE_TRACKER.md has a 「调度」 section that reads, triage by day and todo by night", () => {
   const docs = join(fileURLToPath(new URL('../../docs', import.meta.url)));
   const periods = parsePeriods(readTracker(docs));
+  assert.match(readTracker(docs), /\|\s*时段\s*\|\s*派什么\s*\|\s*上限\s*\|\s*分组上限\s*\|/, 'the table has the 分组上限 column');
+  assert.equal(JSON.parse(execFileSync('node', [SCRIPT, 'queues', docs, '--at=10:00'], { encoding: 'utf8' })).sectionLimit, 10);
   assert.deepEqual(periods.map(({ start, end, dispatch }) => ({ start, end, dispatch })), DEFAULT_PERIODS.map(({ start, end, dispatch }) => ({ start, end, dispatch })));
   assert.equal(JSON.parse(execFileSync('node', [SCRIPT, 'queues', docs, '--at=23:30'], { encoding: 'utf8' })).dispatch, 'todo');
 });
