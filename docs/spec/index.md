@@ -5,16 +5,17 @@
 |---|---|
 | [[ai-eval-plugin]] | toeflair 的 ai-eval 迁成 harold-skills 的 plugin，补报数口径与回放型 eval |
 | [[comment-marker-no-prefix]] | idea-loop 发的评论去掉「🤖 idea-loop：」开头和「由 Claude 代发」，脚本改认看不见的标记 |
-| [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[design-shared-implementations]] | DESIGN.md 能登记「这类界面必须用的共用实现」并配项目测试，对账核它；补上官方的 Voice & Content Strategy 章 |
+| [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[dispatch-day-night-modes]] | 调度按时段派：白天开 triage 会话、夜里开 todo 会话做到 review 完，都用 claude -p 交到桌面端直接开 |
 | [[dispatch-one-per-device]] | 一台设备一个调度 dispatch-home：配置在 home、上限按状态、每 30 分钟一轮 |
 | [[docs-broken-links]] | 知识库 4 处双括号链接指向主分支上不存在的文件，改成纯文本或删掉 related 里的那一项 |
 | [[dreaming-ask-scope]] | 把 dreaming 问人范围的说法统一成脚本的实际判定，周任务说明改成指过去而不再复述 |
+| [[evidence-forms]] | evidence 按五种形态分支（加录屏），从 home「证据」往下展开，配一组取自真实交付物的回放样本 |
 | [[explorer-reads-impl-decisions]] | explorer 读 spec 从只读「测试决策」放宽到再读「实现决策」，用它点名的模块当找位置的起点 |
+| [[glossary-user-flow-wording]] | 插件里两处「用户流程」改成术语表的标准叫法「用户路径」 |
 | [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
 | [[idea-loop-cli]] | idea-loop 的脚本收成 Go 写的 dyna 命令行单独发布，skill 只写命令，插件写命令行版本范围 |
-| [[glossary-user-flow-wording]] | 插件里两处「用户流程」改成术语表的标准叫法「用户路径」 |
 | [[implementer-start-point-non-destructive]] | implementer 开工对齐起点改用不丢东西的 git 写法，不再被 auto mode 拦；定义按 agent-builder 精简到 5000 字内 |
 | [[issue-body-background]] | issue 正文的「背景」改成必填，issues new / body 缺它就拒；SEO 扫描拼的正文同步补上 |
 | [[magi-existing-branch-worktree]] | magi 下调度给已有分支的 issue 建 worktree 时先查分支在不在，在就接上，不再用 -b 新建 |
