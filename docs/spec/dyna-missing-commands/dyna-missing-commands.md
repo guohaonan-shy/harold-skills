@@ -86,7 +86,7 @@ pr-review 合并后的「上线后自查」（`pr-review/references/merge.md`「
 
 ## 实现决策
 
-- **一个 PR 合进 `release/idea-loop-0.2.0`**：dyna 只在这条分支上（main 没有 `dyna/`），dyna 相关的 PR #387、#432 都以它为基准。分支 `issue/437-dyna-missing-commands` 从它切出。命令改动、升 dyna 版本、存登记表、提插件下限、改 skill 在同一个 PR 里（依据：REVIEW.md「额外要求」：改了 `dyna/` 同一个改动里升版本并存登记表；下限只要求那一版的登记表已存）。
+- **一个 PR 合进 `release/idea-loop-0.2.0`**：dyna 只在这条分支上（main 没有 `dyna/`），dyna 相关的 PR #387、#432 都以它为基准。分支 `issue/437-dyna-missing-commands` 从它切出。命令改动、升 dyna 版本、存登记表、提插件下限、改 skill 在同一个 PR 里（依据：REVIEW.md「额外要求」：改了 `dyna/` 同一个改动里升版本并存登记表；下限要求那一版已经发布、登记表已存；dyna 0.0.4 起都还没发布，按人在 #386、#341 的决定，0.2.0 收尾时一起发）。
 - **`git commit --empty`**：带 `--empty` 时不收文件参数，给了文件就报错并给出不带 `--empty` 的写法；不带 `--empty` 时文件照旧必填。暂存区里有别的改动时，空提交也不带进去（跟现在「只提交给定文件」的承诺一致）。
 - **`worktree add --detach --at <提交>`**：`--at` 只在 `--detach` 时有效；给了 `--at` 不读 `--base`。路径上已经是游离 worktree 就直接给回路径（跟现在一样），不核它游离在哪个提交上。提交在本地找不到时先 `fetch origin` 再找，还找不到就报错。
 - **`issues kind`**：参数只收 `bug` / `feature` / `improvement`；先去掉 issue 上所有别的 `kind:*` 再加这个，已经是这个就什么都不做。项目里还没有这个 label 时报错，指向 `dyna issues labels`（跟 `issues priority` 一样）。
