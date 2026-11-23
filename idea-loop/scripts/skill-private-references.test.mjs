@@ -110,11 +110,33 @@ test('foreignReferenceReads: a path into another skill\'s references', () => {
   assert.deepEqual(foreignReferenceReads(text, 'implement').map(([slug]) => slug), ['uiux-refine']);
 });
 
+/**
+ * The one sanctioned foreign read (writing-for-agents SKILL-MECHANICS.md「引用另一个 skill」): the review
+ * standards of `pr-review`, read by `issue-session` and `pr` by full path, because calling `pr-review`
+ * starts a whole review round. Anything else of `pr-review`'s references stays a violation.
+ */
+const SANCTIONED = {
+  'issue-session': ['skills/engineering/pr-review/references/review-standards.md'],
+  pr: ['skills/engineering/pr-review/references/review-standards.md'],
+};
+export function withoutSanctioned(text, ownSlug) {
+  return (SANCTIONED[ownSlug] ?? []).reduce((t, path) => t.split(path).join(''), text);
+}
+
+test('withoutSanctioned: only the review standards, only for issue-session and pr', () => {
+  const text = '读 ${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md。';
+  assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'issue-session'), 'issue-session'), []);
+  assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'pr'), 'pr'), []);
+  assert.equal(foreignReferenceReads(withoutSanctioned(text, 'implement'), 'implement').length, 1);
+  const other = '${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/run-a-round.md';
+  assert.equal(foreignReferenceReads(withoutSanctioned(other, 'pr'), 'pr').length, 1);
+});
+
 test('no skill reads another skill\'s private references', () => {
   const violations = [];
   for (const { slug, dir } of skillDirs()) {
     for (const file of walk(dir).filter((f) => f.endsWith('.md'))) {
-      const text = readFileSync(file, 'utf8');
+      const text = withoutSanctioned(readFileSync(file, 'utf8'), slug);
       for (const [other, excerpt] of foreignReferenceReads(text, slug)) {
         violations.push(`${relative(pluginRoot, file)} reads ${other}'s references: ${excerpt}`);
       }

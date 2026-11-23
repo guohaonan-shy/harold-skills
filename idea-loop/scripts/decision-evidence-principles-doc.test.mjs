@@ -126,6 +126,16 @@ test('issue-session 的「边界」把讨论中冒出的范围题指向 pr-revie
   assert.match(standards, /\*\*范围题\*\*（冒出的改动并进当前 PR，还是另开）/, 'review 标准里的范围题推荐法没了');
 });
 
+const STANDARDS_PATH = '${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md';
+
+test('issue 会话「边界」和 PR 汇报写法读 review 标准时写从插件根目录起的完整位置，照字面找得到（#280 工单 02，review 第 1 轮 C2）', () => {
+  const boundary = bodyOf(read('skills', 'engineering', 'issue-session', 'SKILL.md')).split('## 边界')[1] ?? '';
+  assert.ok(boundary.includes(STANDARDS_PATH), 'issue-session 的「边界」没写 review 标准的完整位置');
+  const report = read('skills', 'engineering', 'pr', 'references', 'review-report.md');
+  assert.ok(report.includes(STANDARDS_PATH), 'pr 的汇报写法没写 review 标准的完整位置');
+  assert.ok(existsSync(join(pluginRoot, STANDARDS_PATH.replace('${CLAUDE_PLUGIN_ROOT}/', ''))), '写的位置不存在');
+});
+
 test('spec drafting decides what becomes a 待定 by the user rule 「思考与决策」「停下问我」, not by 「依据冲突或没有」 (#280 ticket 02, review round 1)', () => {
   const toSpec = bodyOf(read('skills', 'engineering', 'to-spec', 'SKILL.md'));
   const decisions = toSpec.split('## 实现决策')[1]?.split('\n## ')[0] ?? '';

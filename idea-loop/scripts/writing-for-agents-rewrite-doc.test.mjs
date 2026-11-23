@@ -112,6 +112,17 @@ test('SKILL-MECHANICS: an injected skill points at its own references by the ful
   assert.match(part, /开场注入的 skill[^\n]*插件根下的完整路径[^\n]*没有 base directory/);
 });
 
+test('SKILL-MECHANICS: 「别的 skill 不读它的 references」记了 pr-review 审查标准的例外，带理由（#280 工单 02，review 第 1 轮 C2）', () => {
+  const m = readFileSync(join(dir, 'SKILL-MECHANICS.md'), 'utf8');
+  const part = m.slice(m.indexOf('## 引用另一个 skill'), m.indexOf('## 按调用方式拆'));
+  const line = part.split('\n').find((l) => l.includes('例外')) ?? '';
+  assert.match(line, /pr-review/);
+  assert.match(line, /review-standards\.md/);
+  assert.match(line, /issue-session/);
+  assert.match(line, /`pr`/);
+  assert.match(line, /理由/);
+});
+
 test('the rewritten files carry no decision history except the grep pattern that finds it', () => {
   const pattern = /20[0-9]{2}-[0-9]{2}-[0-9]{2}|人定|原话|依据：/;
   const skillMechanics = readFileSync(join(dir, 'SKILL-MECHANICS.md'), 'utf8');
