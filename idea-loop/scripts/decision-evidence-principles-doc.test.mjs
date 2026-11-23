@@ -156,3 +156,13 @@ test('implement 分拣表里标「spec 缺口」的 found，判要不要交给�
   assert.match(row, /「只由我做」/);
   assert.match(row, /「停下问我」/);
 });
+
+test('to-ticket 切的过程中冒出的事，判要不要交给人时「只由我做」和「停下问我」都算（#280 工单 02，review 第 3 轮 S1 同类）', () => {
+  const body = bodyOf(read('skills', 'engineering', 'to-ticket', 'SKILL.md'));
+  const stop = body.split('## 切法直接落盘，不停下')[1]?.split('\n## ')[0] ?? '';
+  assert.ok(stop, '没找到「切法直接落盘，不停下」一节');
+  assert.match(stop, /「思考与决策」/);
+  assert.match(stop, /「只由我做」/);
+  assert.match(stop, /「停下问我」/);
+  assert.doesNotMatch(stop, /「停下问我」之外的自己定/);
+});
