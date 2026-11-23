@@ -2,7 +2,7 @@
 // change the plugin.
 //
 //   - `fixture design-archive` writes a small fictional design archive into a directory.
-//   - `skill-doc` checks one skill: its SKILL.md body is short enough and every section other documents point at exists.
+//   - `skill-doc` checks one skill: every section other documents point at exists.
 //   - `run` runs the plugin's own *.test.mjs files, all of them or the ones whose name contains a word.
 package testcmd
 
