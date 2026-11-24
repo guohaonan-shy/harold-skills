@@ -5,7 +5,7 @@ description: 把一份已切好工单的 spec 实现完。spec 的工单已切�
 
 **把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收，停下时把要人拍板的事交给人（决定题只由人答，PR 上不和人往来）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西。
 
-开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr` 和 `idea-loop:issues`。交回里的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照 `idea-loop:decision-rules`。
+开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr` 和 `idea-loop:issues`。交回里的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照用户规则（`~/.claude/CLAUDE.md` 的「思考与决策」）。
 
 ## 前提
 
@@ -67,7 +67,7 @@ scope 和工单照 spec 与 `idea-loop:to-ticket`：编排者不改 scope、不�
 | `human_verify` | 下次 Review 汇报的「要你看的」 |
 | `verified` | PR 描述 |
 | `by_existing_practice`、标「存量本次修」的 `found` | handled |
-| 标「spec 缺口」的 `found` | pending，当决定题 |
+| 标「spec 缺口」的 `found` | 照用户规则的「思考与决策」判：落在「只由我做」或「停下问我」里的进 pending，当决定题；其余自己定，选目标达成的那个做法，进 handled 并写明目标原文，要动工单或 spec 的追加一格、补记，照「重派」做 |
 | 其余 `found`（不影响本次改动的存量） | 开 issue，见 landing-branches |
 
 ## 卡住一张，别的接着做

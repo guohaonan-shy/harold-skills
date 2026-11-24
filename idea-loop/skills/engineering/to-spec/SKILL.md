@@ -13,14 +13,14 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `<docs>/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，frontmatter 和正文照 [`references/raw-template.md`](references/raw-template.md)。
 
-3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先照 `idea-loop:decision-rules` 的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，再读 [`references/agent-docs.md`](references/agent-docs.md)。项目目录有 `GLOSSARY.md` 就照 `idea-loop:wiki-conventions` 的「术语表」读它来命名；这一块有 ADR 就守它。
+3. **探代码并谈 seam**：没探过就先探，探到 spec 要写的每条现状都能说清在哪、什么时候查的：先照 `idea-loop:evidence` 的「证据是什么」。要改的是给 agent 读的文档（skill、参考、agent 定义、`AGENTS.md`）时，再读 [`references/agent-docs.md`](references/agent-docs.md)。项目目录有 `GLOSSARY.md` 就照 `idea-loop:wiki-conventions` 的「术语表」读它来命名；这一块有 ADR 就守它。
    seam 是测试观察行为的公共边界，测试从这里喂输入、读输出。优先复用已有的，用能用的最高一层，越少越好，理想是一个；要新的就提在尽可能高的位置，每个带一行「它能抓到什么、漏掉什么」。人在场就摆给人确认，不在场自己定。写进「测试决策」。
 
 4. **写 spec**：写进 `docs/spec/<slug>/<slug>.md`，slug 全局唯一，且不同于 transcript 的 slug。frontmatter：`type: spec`、`tags`、`summary`（一句话，≤60 字）、`related`（有 transcript 挂 `"[[<transcript-slug>]]"`，再挂相关的 spec 与 ADR，没有留空列表）。完成条件：模板每节都有内容，或写明「不涉及」。
 
    spec 没有自己的状态，走到哪只看它覆盖的 issue。覆盖了已有的 issue，号码写进 frontmatter 的 `issues`；一个都没覆盖：人在场，照 `idea-loop:issues` 的「开一个 issue」按人说的用 `dyna issues new` 开成 todo 并写进 `issues`，不在场，停下问人。
 
-   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步对过的 `idea-loop:decision-rules`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。
+   frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步对过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。
 
 5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>`。完成条件：还剩的每一样都点了名，索引已刷新。
 
@@ -73,7 +73,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
 给读者什么：已经定下的决定和它的依据；还要人定的题。
 
-模块、接口、schema、API 契约、具体交互这类决定。能按规则判的写成已定的决定，注明依据（规则原文、人的原话或现存实例），边缘情形在这里定好，不留给 implement 停下。依据冲突或没有的才写成选项（`idea-loop:decision-rules` 的「要人定的写成一道题」），每条一个小节，标题「### 待定：<要定的问题>」，带推荐；人定了，改写成定下的决定、删掉「待定」两个字。
+模块、接口、schema、API 契约、具体交互这类决定。每条先照用户规则 `~/.claude/CLAUDE.md` 的「思考与决策」判：落在「只由我做」「停下问我」里的才写成选项（写法照「沟通」），每条一个小节，标题「### 待定：<要定的问题>」，带推荐；人定了，改写成定下的决定、删掉「待定」两个字。其余的自己定，写成已定的决定，注明目标原文和这个做法为什么达成它（再加规则原文、人的原话或现存实例这类依据），边缘情形在这里定好，不留给 implement 停下。
 
 不写文件路径和代码片段，它们烂得最快；例外是原型里产出的片段比散文更准地说清了一个决定（状态机、schema、类型形状），内联进那条决定并注明出自原型。碰 UI 的再写访谈里定下的结构决策（这块界面按什么结构组织），下游设计在它之内做，不重开。
 

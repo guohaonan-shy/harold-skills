@@ -36,7 +36,8 @@ test('the reference says: never stop to ask, settle by the recommendation, recor
   assert.match(reference, /按推荐定/);
   assert.match(reference, /夜里替你定的/);
   assert.match(reference, /选了什么、为什么、另一种是什么/);
-  assert.match(reference, /idea-loop:decision-rules/);
+  assert.match(reference, /「停下问我」/);
+  assert.match(reference, /「只由我做」/);
 });
 
 test('the reference lists all five things the session stops for, and writes the stop under 等你定的', () => {

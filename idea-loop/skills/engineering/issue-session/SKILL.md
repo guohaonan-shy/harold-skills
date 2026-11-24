@@ -66,5 +66,5 @@ issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage�
 ## 边界
 
 - 只做这一个 issue。路上发现的别的问题，照 `idea-loop:issues` 的「开一个 issue」开出去。
-- 任何时候停下问人（包括讨论中冒出的范围题：并进当前 PR 还是另开），先对 `idea-loop:decision-rules`。
+- 任何时候停下问人，先照会话已加载的用户规则（`~/.claude/CLAUDE.md`）的「停下问我」。讨论中冒出的范围题（并进当前 PR 还是另开），推荐照 `idea-loop:pr-review` 的 review 标准里的范围题推荐法：直接读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md` 的「依据：只认四种」一节（调 `pr-review` 会开跑一轮 review）。
 - issue 的状态只走 `issues`；分组只移动你自己。

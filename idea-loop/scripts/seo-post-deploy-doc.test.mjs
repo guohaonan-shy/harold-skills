@@ -84,7 +84,7 @@ test('有一项不过: revert the merge, merge the revert PR when checks pass, p
   assert.match(o, /原 PR/);
   assert.match(o, /dyna pr merge/, 'the revert PR is merged by the command, not a hand-written gh line');
   assert.doesNotMatch(o, /gh pr (checks|merge)/);
-  assert.match(o, /护栏的 revert PR 例外/);
+  assert.match(o, /SEO 例外：上线自查失败开的 revert PR/);
   assert.match(o, /检查没过[^\n]*不合并/, 'a revert PR whose checks fail waits for the human');
   assert.match(o, /已回滚 #<PR 号>：<网址> <哪一项>/);
   assert.match(o, /已是 done，状态机不允许翻回/);

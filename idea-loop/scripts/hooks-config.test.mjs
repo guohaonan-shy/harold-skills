@@ -58,9 +58,9 @@ test('hooks.json and .mcp.json name no script of the plugin: every hook is the l
   assert.deepEqual(Object.keys(servers), ['design-archive', 'openseo', 'mobbin']);
 });
 
-test('the events: SessionStart four commands, Bash PreToolUse two guards and the SEO check, the write hooks, Bash PostToolUse the SEO check', () => {
+test('the events: SessionStart three commands, Bash PreToolUse two guards and the SEO check, the write hooks, Bash PostToolUse the SEO check', () => {
   const at = (event, matcher) => all.filter((h) => h.event === event && h.matcher === matcher).map((h) => h.command.replace('"${CLAUDE_PLUGIN_ROOT}/bin/dyna" ', ''));
-  assert.deepEqual(at('SessionStart', null), ['runtime inject decision-rules --hook', 'runtime inject runtime --hook', 'runtime inject reference --hook', 'home map --hook']);
+  assert.deepEqual(at('SessionStart', null), ['runtime inject runtime --hook', 'runtime inject reference --hook', 'home map --hook']);
   assert.deepEqual(at('PreToolUse', 'Bash'), ['issues guard --hook', 'worktree guard --hook', 'seo check --hook']);
   assert.deepEqual(at('PostToolUse', 'Write|Edit'), ['design lint --hook', 'design md lint --hook', 'home glossary check --hook', 'spec skill-lint --hook']);
   assert.deepEqual(at('PostToolUse', 'Bash'), ['seo check --hook']);

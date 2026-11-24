@@ -14,10 +14,12 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { dynaBinary, runDyna } from './dyna-test-bin.mjs';
-import { changeSetOf, homeProblem, pluginDiffOf, pluginRelDirOf, prepareHome, projectName, swapPluginFiles } from '../evals/retro/retro-replay.mjs';
+import { applyHomeRules, changeSetOf, homeProblem, pluginDiffOf, pluginReadsHome, pluginRelDirOf, prepareHome, projectName, seedRulesMemory, swapPluginFiles } from '../evals/retro/retro-replay.mjs';
 import { normalizeRemote, parseProjects } from '../evals/retro/home-projects.mjs';
+import { validateCase } from '../evals/retro/cases.mjs';
 import {
   homeAgentsMd, homeCopyEntries, homeProjectName, homeRemote, homeSourceOf, projectListLine, registerProject, withHome,
+  RULES_FILE, RULE_SECTIONS, RULES_MEMORY_FILE, rulesMemoryMd, sectionsOf, withDyna,
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
   estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
@@ -219,7 +221,7 @@ const where = () => {
   const o = (a) => { const r = sp('git', a); return r.status === 0 ? r.stdout.trim() : null; };
   return { where: { status: w.status, stdout: w.stdout, stderr: w.stderr }, origin: { fetch: o(['remote', 'get-url', 'origin']), push: o(['remote', 'get-url', '--push', 'origin']) } };
 };
-const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null, home, ...where() };
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null, home, memory: fs.existsSync('.claude/CLAUDE.md') ? fs.readFileSync('.claude/CLAUDE.md', 'utf8') : null, dynaBin: process.env.IDEA_LOOP_DYNA_BIN ?? null, ...where() };
 fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd, probe }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
@@ -739,28 +741,24 @@ test('exercisedBy: nothing used, or only things the change did not touch: not us
 // Spec session-start-inject-rules, ticket 01: the hook puts three kinds of file in the session at the start, so a run
 // does not need to read or call them for the change to reach it.
 const INJECTED_FILES = [
-  'skills/productivity/decision-rules/SKILL.md',
   'runtime/capabilities.md',
   'runtime/claude-desktop.md',
   'runtime/magi.md',
 ];
 
 test('exercisedBy: a change to an injected file counts as used with no read or call in the stream, via "injected"', () => {
-  for (const [runtime, file] of [['claude-desktop', INJECTED_FILES[0]], ['claude-desktop', INJECTED_FILES[1]], ['claude-desktop', INJECTED_FILES[2]], ['magi', INJECTED_FILES[3]], ['magi', INJECTED_FILES[0]]]) {
+  for (const [runtime, file] of [['claude-desktop', INJECTED_FILES[0]], ['claude-desktop', INJECTED_FILES[1]], ['magi', INJECTED_FILES[2]], ['magi', INJECTED_FILES[0]]]) {
     const change = { files: [file], skills: [], agents: [] };
     assert.deepEqual(exercisedBy([], change, { roots: ROOTS, runtime }), { status: 'hit', via: 'injected', name: file, changed: 1 }, `${runtime} ${file}`);
   }
-  const decisionRules = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
-  const events = [tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/other/SKILL.md' }), { type: 'result', result: 'done' }];
-  assert.deepEqual(exercisedBy(events, decisionRules, { roots: ROOTS, runtime: 'magi' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[0], changed: 1 });
 });
 
 // Review round 1, S1: the hook injects only the reference of the session's own runtime.
 test("exercisedBy: the other runtime's reference is not injected: a change only to it needs a read or a call", () => {
-  const onlyMagi = { files: [INJECTED_FILES[3]], skills: [], agents: [] };
+  const onlyMagi = { files: [INJECTED_FILES[2]], skills: [], agents: [] };
   assert.deepEqual(exercisedBy([], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 }, 'desktop session, only the magi reference changed, nothing read: not used');
-  const onlyDesktop = { files: [INJECTED_FILES[2]], skills: [], agents: [] };
-  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 1 }, 'desktop session, the desktop reference changed: used, injected');
+  const onlyDesktop = { files: [INJECTED_FILES[1]], skills: [], agents: [] };
+  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[1], changed: 1 }, 'desktop session, the desktop reference changed: used, injected');
   assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'magi' }), { status: 'miss', changed: 1 }, 'and the other way round');
   // read or called, it counts again
   const read = tool('Read', { file_path: '/tmp/ab12/idea-loop/runtime/magi.md' });
@@ -771,28 +769,27 @@ test("exercisedBy: the other runtime's reference is not injected: a change only 
   assert.equal(s.status, 'miss');
 });
 
-test('exercisedBy: without a known runtime (unknown forced name, or none given) only decision-rules is injected', () => {
-  for (const file of [INJECTED_FILES[1], INJECTED_FILES[2], INJECTED_FILES[3]]) {
+test('exercisedBy: without a known runtime (unknown forced name, or none given) nothing is injected', () => {
+  for (const file of INJECTED_FILES) {
     const change = { files: [file], skills: [], agents: [] };
     assert.equal(exercisedBy([], change, { roots: ROOTS, runtime: null }).status, 'miss', file);
     assert.equal(exercisedBy([], change, { roots: ROOTS }).status, 'miss', `${file} (no runtime given)`);
   }
-  assert.equal(exercisedBy([], { files: [INJECTED_FILES[0]], skills: [], agents: [] }, { roots: ROOTS, runtime: null }).via, 'injected');
 });
 
-test('exercisedBy: when the stream also shows a read or a call, that is what is reported, not the injection', () => {
-  const change = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
-  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:decision-rules' })], change, { roots: ROOTS, runtime: 'claude-desktop' });
-  assert.deepEqual([r.status, r.via], ['hit', 'skill']);
+test('exercisedBy: when the stream also shows a read, that is what is reported, not the injection', () => {
+  const change = { files: [INJECTED_FILES[1]], skills: [], agents: [] };
+  const r = exercisedBy([tool('Read', { file_path: '/tmp/ab12/idea-loop/runtime/claude-desktop.md' })], change, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([r.status, r.via], ['hit', 'read']);
 });
 
 test('exercisedBy: a change only to other skills, or to other files under runtime/, is still not used', () => {
   assert.deepEqual(exercisedBy([], { files: ['skills/engineering/demo/SKILL.md'], skills: ['idea-loop:demo'], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 });
-  const nearby = ['skills/productivity/decision-rules/references/more.md', 'runtime/notes.md', 'skills/productivity/runtime-extra/SKILL.md', 'agents/decision-rules.md'];
+  const nearby = ['skills/productivity/evidence/references/more.md', 'runtime/notes.md', 'skills/productivity/runtime-extra/SKILL.md', 'agents/evidence.md'];
   for (const file of nearby) assert.equal(exercisedBy([], { files: [file], skills: [], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }).status, 'miss', file);
   // a change set that has one injected file among others is used through the injected one
-  const mixed = { files: ['skills/engineering/demo/SKILL.md', INJECTED_FILES[2]], skills: ['idea-loop:demo'], agents: [] };
-  assert.deepEqual(exercisedBy([], mixed, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 2 });
+  const mixed = { files: ['skills/engineering/demo/SKILL.md', INJECTED_FILES[1]], skills: ['idea-loop:demo'], agents: [] };
+  assert.deepEqual(exercisedBy([], mixed, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[1], changed: 2 });
 });
 
 test('exercisedBy: an empty change set (only scripts changed) is not applicable, whatever the run did', () => {
@@ -1349,4 +1346,202 @@ test('exercisedBy: a Bash command naming a changed file by its path relative to 
   assert.equal(used('cat tools/p/skills/b/SKILL.md'), 'miss');
   assert.equal(used('cat tools/p/skills/a/SKILL.md', []), 'miss', 'no project copy of the plugin: not counted');
   assert.equal(used('cat skills/a/SKILL.md', ['']), 'hit', 'a plugin at the project root');
+});
+
+// ---------------------------------------------------------------------------------------------
+// The fixed text (home's 思考与决策 / 沟通 / 证据): the pre-change side's home has none, the post-change side's has it, and the
+// session reads it from its project's .claude/CLAUDE.md
+// ---------------------------------------------------------------------------------------------
+
+const REAL_RULES = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', RULES_FILE), 'utf8');
+
+test('RULE_SECTIONS are the headings of the plugin\'s own fixed text, in order (the runner and dyna name the same three sections)', () => {
+  const headings = [...REAL_RULES.matchAll(/^## (.*?)\s*$/gm)].map((m) => m[1]);
+  assert.deepEqual(headings, RULE_SECTIONS);
+});
+
+test('sectionsOf: the named sections only, each from its heading to the next one, in file order; a ## in a code block ends nothing; none gives an empty string', () => {
+  const agents = ['# home', '', '## 沟通', '', '规矩一', '', '```', '## 不是标题', '```', '', '## 设备地图', '', '地图', '', '## 证据', '', '规矩二', ''].join('\n');
+  assert.equal(sectionsOf(agents), ['## 沟通\n\n规矩一\n\n```\n## 不是标题\n```', '## 证据\n\n规矩二'].join('\n\n'));
+  assert.equal(sectionsOf('# home\n\n## 设备地图\n\n地图\n'), '');
+  assert.equal(sectionsOf(REAL_RULES).split('\n').filter((l) => l.startsWith('## ')).join(','), RULE_SECTIONS.map((n) => `## ${n}`).join(','));
+});
+
+test('rulesMemoryMd keeps what the memory file already holds and adds the sections after it; withDyna sets the side\'s own dyna and changes nothing else', () => {
+  assert.equal(rulesMemoryMd('## 沟通\n\nx'), '## 沟通\n\nx\n');
+  assert.equal(rulesMemoryMd('## 沟通\n\nx', '项目自己的记忆\n\n'), '项目自己的记忆\n\n## 沟通\n\nx\n');
+  const env = { PATH: '/bin', IDEA_LOOP_DYNA_BIN: '/a/dyna' };
+  assert.equal(withDyna(env, '/b/dyna').IDEA_LOOP_DYNA_BIN, '/b/dyna');
+  assert.equal(env.IDEA_LOOP_DYNA_BIN, '/a/dyna');
+  assert.equal(withDyna(env, null), env, 'no side dyna: the environment as it is');
+});
+
+/** A plugin dir with (or without) the fixed text. */
+function rulesPlugin(root, name, withRules) {
+  const dir = join(root, name);
+  mkdirSync(join(dir, '.claude-plugin'), { recursive: true });
+  writeFileSync(join(dir, '.claude-plugin', 'plugin.json'), JSON.stringify({ name: 'idea-loop' }));
+  if (withRules) {
+    mkdirSync(dirname(join(dir, RULES_FILE)), { recursive: true });
+    writeFileSync(join(dir, RULES_FILE), REAL_RULES);
+  }
+  return dir;
+}
+
+test('applyHomeRules and prepareHome: a plugin that has the fixed text gets the three sections in its home (written by dyna, committed in the starting state); one that has not gets a home without them; nothing lands in this machine\'s ~/.claude', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-rules-')));
+  const repo = join(root, 'code');
+  const commit = commitFiles(repo, OLD_REPO_FILES);
+  const project = join(root, 'run', 'Demo-App');
+  commitFiles(project, OLD_REPO_FILES);
+  const oldPlugin = rulesPlugin(root, 'old', false);
+  const newPlugin = rulesPlugin(root, 'new', true);
+  const dyna = dynaBinary();
+  const machineHome = join(root, 'machine-home');
+  mkdirSync(machineHome);
+  const env = { ...process.env, HOME: machineHome };
+
+  const after = prepareHome({ c: { name: 'c', commit }, side: 'after', t: { repo }, project, name: projectName(repo), plugin: newPlugin, dyna, env });
+  const agents = readFileSync(join(after.dir, 'AGENTS.md'), 'utf8');
+  for (const n of RULE_SECTIONS) assert.match(agents, new RegExp(`^## ${n}$`, 'm'), `${n} is in the post-change home`);
+  assert.match(agents, /^## 项目$/m, 'the project list stays');
+  assert.equal(after.rules, sectionsOf(agents));
+  assert.ok(after.rules.includes('三句话的框架'), 'the sections are the plugin\'s text');
+  assert.equal(tgit(after.dir, 'rev-parse', 'HEAD'), after.base);
+  assert.equal(tgit(after.dir, 'status', '--short'), '', 'the fixed text is part of the starting state: nothing is left for the run to be credited with');
+  assert.deepEqual(readdirSync(machineHome), [], 'the backup dyna makes of the user-level files went to a throwaway HOME, not this machine\'s');
+
+  // the pre-change plugin: a home as before, with no fixed text
+  const before = prepareHome({ c: { name: 'c', commit }, side: 'before', t: { repo }, project, name: projectName(repo), plugin: oldPlugin, dyna, env });
+  assert.equal(before.base, null);
+  assert.equal(before.rules, '');
+  assert.deepEqual(walkFiles(before.dir), []);
+  const oldCaseAfterOldPlugin = prepareHome({ c: { name: 'c', commit }, side: 'after', t: { repo }, project, name: projectName(repo), plugin: oldPlugin, dyna, env });
+  assert.equal(oldCaseAfterOldPlugin.rules, '');
+  assert.doesNotMatch(readFileSync(join(oldCaseAfterOldPlugin.dir, 'AGENTS.md'), 'utf8'), /^## 沟通$/m);
+  assert.equal(applyHomeRules({ home: before.dir, plugin: oldPlugin, dyna, env }), '', 'without the text in the plugin nothing is written');
+  assert.deepEqual(walkFiles(before.dir), []);
+
+  // a pre-change side whose plugin does have the text still gets a home with it, even from an empty start
+  const emptyWithRules = prepareHome({ c: { name: 'c', commit }, side: 'before', t: { repo }, project, name: projectName(repo), plugin: newPlugin, dyna, env });
+  assert.ok(emptyWithRules.base);
+  assert.match(readFileSync(join(emptyWithRules.dir, 'AGENTS.md'), 'utf8'), /^## 证据$/m);
+});
+
+test('applyHomeRules: a dyna that cannot write the text is an error that says what to point the runner at, not a silent home without the rules', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-rules-bad-')));
+  const home = join(root, 'home');
+  mkdirSync(home);
+  const bad = join(root, 'bad-dyna');
+  writeFileSync(bad, '#!/bin/sh\necho unknown command >&2\nexit 2\n');
+  chmodSync(bad, 0o755);
+  assert.throws(() => applyHomeRules({ home, plugin: rulesPlugin(root, 'new', true), dyna: bad }), /--after-dyna.*unknown command/s);
+});
+
+test('seedRulesMemory: the sections go in the project\'s .claude/CLAUDE.md as part of the starting commit (after what the commit already had there); no text, nothing changes', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'seed-rules-')));
+  const project = join(root, 'p');
+  commitFiles(project, { 'README.md': 'x\n', '.claude/CLAUDE.md': '项目自己的记忆\n' });
+  const first = tgit(project, 'rev-parse', 'HEAD');
+  assert.equal(seedRulesMemory(project, ''), first, 'no text: the starting commit is the one it was');
+  const base = seedRulesMemory(project, '## 沟通\n\n三句话');
+  assert.notEqual(base, first);
+  assert.equal(readFileSync(join(project, RULES_MEMORY_FILE), 'utf8'), '项目自己的记忆\n\n## 沟通\n\n三句话\n');
+  assert.equal(tgit(project, 'status', '--short'), '');
+  assert.equal(tgit(project, 'rev-parse', 'HEAD'), base);
+});
+
+test('e2e: the post-change plugin has the fixed text: its run has it in its home and in the project\'s .claude/CLAUDE.md, the pre-change run neither; each side runs with its own dyna; the check counts it as used; the artifact does not credit the run with it', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: { [RULES_FILE]: REAL_RULES } }, repoFiles: { 'docs/index.md': '# 知识库\n' } });
+  const beforeDyna = join(env.root, 'dyna-before');
+  writeFileSync(beforeDyna, readFileSync(dynaBinary()));
+  chmodSync(beforeDyna, 0o755);
+  const afterDyna = dynaBinary();
+  const r = run(env, ['--before-dyna', beforeDyna, '--after-dyna', afterDyna]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.equal(before.memory, null, 'the pre-change run: no fixed text in its project memory');
+  assert.doesNotMatch(before.home.agents ?? '', /^## 沟通$/m, 'nor in its home');
+  assert.equal(after.memory.split('\n').filter((l) => l.startsWith('## ')).join(','), RULE_SECTIONS.map((n) => `## ${n}`).join(','), 'the post-change run: the three sections in its memory');
+  for (const n of RULE_SECTIONS) assert.match(after.home.agents, new RegExp(`^## ${n}$`, 'm'), 'and in its home');
+  assert.equal(before.dynaBin, beforeDyna, 'each side\'s session gets its own dyna');
+  assert.equal(after.dynaBin, afterDyna);
+  const result = resultJson(env, r.stdout);
+  assert.equal(result.outcome, 'pass');
+  assert.deepEqual([result.exercised.status, result.exercised.via, result.exercised.name], ['hit', 'injected', RULES_FILE], 'the session has the text from the start: no read or call shows it, and it still counts');
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const artifact = readFileSync(join(dir, 'after', 'artifact.md'), 'utf8');
+  assert.doesNotMatch(artifact, /\.claude\/CLAUDE\.md|### AGENTS\.md|## 思考与决策/, 'the starting state is not something the run wrote');
+  assert.match(artifact, /### docs\/out\.md/, 'only what the run itself wrote is listed in the workspace');
+  assert.match(artifact, /里写下或改动的文件\n\n[^#]*（没有写下或改动的文件）$/, 'and nothing in home');
+});
+
+test('e2e: neither plugin has the fixed text (a case about something else): no memory file, homes as before, and no dyna is forced on the sessions', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', repoFiles: { 'docs/index.md': '# 知识库\n' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.equal(before.memory, null);
+  assert.equal(after.memory, null);
+  assert.equal(before.dynaBin, dynaBinary(), 'the runner\'s own environment passes through');
+  assert.doesNotMatch(after.home.agents, /^## 沟通$/m);
+});
+
+test('a guard case watches that a rule does not reach too far: the post-change answer alone decides, a pre-change "yes" is expected there', () => {
+  assert.equal(decideOutcome({ before: '是', after: '是', guard: true }).outcome, 'pass');
+  assert.equal(decideOutcome({ before: '否', after: '是', guard: true }).outcome, 'pass');
+  assert.equal(decideOutcome({ before: '是', after: '否', guard: true }).outcome, 'fail', 'the new rule took the decision away from the human');
+  assert.equal(decideOutcome({ before: '是', after: '是' }).outcome, 'case-missed', 'without guard a pre-change "yes" still means the case missed the problem');
+  assert.equal(decideOutcome({ before: '是', after: '不知道', guard: true }).outcome, 'inconclusive');
+});
+
+test('validateCase: guard is optional and, when given, true or false', () => {
+  assert.deepEqual(validateCase({ ...smallCase(), guard: true }), []);
+  assert.deepEqual(validateCase({ ...smallCase(), guard: false }), []);
+  assert.deepEqual(validateCase(smallCase()), []);
+  assert.deepEqual(validateCase({ ...smallCase(), guard: 'yes' }).map((p) => p.field), ['guard']);
+});
+
+test('e2e: a guard case passes on the post-change "yes" although the pre-change run said "yes" too, and the result says it was a guard', () => {
+  const env = setup({ before: 'reply: FIXED', after: 'reply: FIXED', caseExtra: { guard: true } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const result = resultJson(env, r.stdout);
+  assert.equal(result.outcome, 'pass');
+  assert.equal(result.guard, true);
+  assert.match(result.reason, /守边界/);
+});
+
+test('a pre-change plugin that already reads the knowledge base from home (its hooks tell the session where home is) is given the built home too; an older one still gets an empty one', () => {
+  assert.equal(homeSourceOf({}, 'before', { readsHome: true }), 'project-docs');
+  assert.equal(homeSourceOf({}, 'before', { readsHome: false }), 'empty');
+  assert.equal(homeSourceOf({}, 'before'), 'empty');
+  assert.equal(homeSourceOf({ home_commit: 'abc1234' }, 'before', { readsHome: true }), 'home-commit');
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'reads-home-')));
+  const withHook = join(root, 'with');
+  mkdirSync(join(withHook, 'hooks'), { recursive: true });
+  writeFileSync(join(withHook, 'hooks', 'hooks.json'), '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"\\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\\" home map --hook"}]}]}}');
+  assert.equal(pluginReadsHome(withHook), true);
+  const without = join(root, 'without');
+  mkdirSync(join(without, 'hooks'), { recursive: true });
+  writeFileSync(join(without, 'hooks', 'hooks.json'), '{"hooks":{}}');
+  assert.equal(pluginReadsHome(without), false);
+  assert.equal(pluginReadsHome(join(root, 'no-hooks-at-all')), false);
+  assert.equal(pluginReadsHome(null), false);
+});
+
+test('e2e old case: a pre-change plugin from 0.2.0\'s line (it reads home) is given the commit\'s docs/ in its home, like the post-change one; only the fixed text tells the two homes apart', () => {
+  const hooks = '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"dyna home map --hook"}]}]}}';
+  const env = setup({
+    before: 'reply: plain', after: 'reply: FIXED',
+    pluginFiles: { before: { 'hooks/hooks.json': hooks }, after: { 'hooks/hooks.json': hooks, [RULES_FILE]: REAL_RULES } },
+    repoFiles: { 'docs/index.md': '# 知识库\n' },
+  });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.ok(before.home.files.includes('projects/repo/docs/index.md'), `the pre-change run finds the knowledge base in its home: ${before.home.files}`);
+  assert.ok(after.home.files.includes('projects/repo/docs/index.md'));
+  assert.doesNotMatch(before.home.agents, /^## 沟通$/m);
+  assert.match(after.home.agents, /^## 沟通$/m);
 });

@@ -6,5 +6,5 @@
   "question": "摆出的范围题里，影响这份 spec 实现或上线后会有影响的改进（例如回放输入露题，会让用例改前改后都答「是」）有没有被推荐并进当前 PR，其余的没被推荐并进？",
   "quote": "影响这个spec实现的问题在这个pr里修复，上线会有影响的重要问题在pr里修，其余的按照我们的流程进入候选",
   "size": "small",
-  "size_basis": "只驱动一轮讨论（decision-rules 一个 skill），不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送、gh 写操作和 Agent，没有付费外部服务"
+  "size_basis": "只驱动一轮讨论（不调别的 skill），不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送、gh 写操作和 Agent，没有付费外部服务"
 }
