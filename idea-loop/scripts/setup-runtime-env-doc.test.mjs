@@ -6,6 +6,8 @@
  *   stays a pointer (the steps are in the reference).
  * - references/runtime-env.md: the two steps, each ending in a completion condition made of what can be checked
  *   (the name written to `<home>/runtime/selected` and committed; `dyna runtime check` passing, then committed).
+ * - step 2 takes the documentation in all three forms the repository's AGENTS.md asks for (a link, a file, or text
+ *   the human pastes in).
  * - no file of setup names `handoff` or a runtime of the plugin's own (the preflight table included): the list of
  *   runtimes is whatever the descriptions say, not a list written into setup.
  * - the README says how a runtime is added (one more description, no dyna change), and mentions `runtime check`
@@ -74,7 +76,7 @@ test('step 1 lists the descriptions with their markers, says what is found now, 
 
 test('step 2 reads the human\'s documentation, writes per capability from the template, has each section approved, checks, commits', () => {
   const s = section(ref, '2\\. 照模板生成新环境的说明');
-  assert.match(s, /文档（链接或文件）/);
+  assert.match(s, /文档（链接、文件，或直接贴进来的正文）/);
   assert.match(s, /「能力模板」/);
   assert.match(s, /标记行/);
   assert.match(s, /标记：没有/);
