@@ -91,3 +91,16 @@ test('replay-result.md: a case that did not pass is put to the human with the op
   assert.match(m[0], /改前就做得到的目标用例/, 'the already-done goal case is named');
   assert.match(m[0], /本来不用加/, 'its first option: the rule was not needed');
 });
+
+// Review round 2 of spec skill-change-verify, ticket 01 (same kind as the replay-result.md change): a small case the
+// implementer hands back as `blocked` gets the options of its kind too, the same sets the replay entry gives.
+test('implementer: a disagreement with the judge is handed back with the options by the kind of case', () => {
+  assert.match(smallLine, /原话用例是判定对 \/ 判定错 \/ 用例有问题/, 'the quoted case\'s three options');
+  assert.match(smallLine, /改前就做得到的目标用例是这段规则本来不用加（撤掉它）\/ 判定错 \/ 换一个改前做不到的用例/, 'the already-done goal case\'s three options');
+});
+
+test('implementer: a goal case that was already done before the change is handed back with the same three options as the replay entry', () => {
+  const goalLine = implementer.split('\n').find((l) => l.startsWith('  - **目标用例**'));
+  assert.ok(goalLine, 'the 目标用例 bullet is gone');
+  assert.match(goalLine, /按 `blocked` 交回，选项是这段规则本来不用加（撤掉它）\/ 判定错 \/ 换一个改前做不到的用例/);
+});
