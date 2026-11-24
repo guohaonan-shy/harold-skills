@@ -70,3 +70,24 @@ test('this change added no script: the comparison is judgement, written only in 
   assert.doesNotMatch(result, /node .*compare|--compare/);
   assert.doesNotMatch(smallLine, /--compare/);
 });
+
+// Review round 2 of spec skill-change-verify, ticket 01: the replay entry gives a goal case that was already done before the
+// change its own options (take the rule out / the judge is wrong / a different case), so the document that tells the
+// orchestrator what to put to the human must not list only the three options of a quoted case anywhere.
+test('replay-result.md: every place that lists the options to the human gives both sets, by the kind of case', () => {
+  const listing = result.split('\n').filter((l) => /用例有问题/.test(l));
+  assert.ok(listing.length >= 1, 'no line lists the options at all');
+  for (const l of listing) {
+    assert.match(l, /本来不用加/, `a list of options without the already-done goal case's set: ${l.slice(0, 60)}`);
+    assert.match(l, /换一个改前做不到的用例/, `a list of options without the replacement case: ${l.slice(0, 60)}`);
+  }
+});
+
+test('replay-result.md: a case that did not pass is put to the human with the options its entry gives, by the kind of case', () => {
+  const m = result.match(/\*\*有不过的\*\*[^\n]*/);
+  assert.ok(m, 'no 有不过的 branch');
+  assert.doesNotMatch(m[0], /选项就是条目里的三个处理（判定对 \/ 判定错 \/ 用例有问题）/, 'still the quoted case\'s three options for every case');
+  assert.match(m[0], /选项就是条目里给这个用例写的那组/, 'the options are the entry\'s own, per case');
+  assert.match(m[0], /改前就做得到的目标用例/, 'the already-done goal case is named');
+  assert.match(m[0], /本来不用加/, 'its first option: the rule was not needed');
+});
