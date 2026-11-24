@@ -33,16 +33,6 @@ func dyna(env map[string]string, args ...string) outcome {
 	return outcome{out.String(), errb.String(), code}
 }
 
-// dynaHandoff is dyna for the hand-over tests: recognising the environment now reads the plugin's descriptions,
-// so it needs the plugin directory like every other command.
-func dynaHandoff(env map[string]string, args ...string) outcome {
-	m := map[string]string{"IDEA_LOOP_PLUGIN_ROOT": pluginRoot()}
-	for k, v := range env {
-		m[k] = v
-	}
-	return dyna(m, args...)
-}
-
 func repoPath(parts ...string) string {
 	p, _ := filepath.Abs(filepath.Join(append([]string{"..", "..", ".."}, parts...)...))
 	return p

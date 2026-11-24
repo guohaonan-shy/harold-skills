@@ -17,12 +17,12 @@
 
 ## 验收标准
 
-- [ ] Go 单元测试先红后绿：`runtime record` 记 #471（`--repo harold-skills --period todo --session local_abc`）后，记录文件多一条，字段与现在 handoff 写的逐字段一致；已有一条时追加成两条；文件不是数组时退出 1、文件没动。
-- [ ] `dyna runtime handoff` 不存在了（登记表里没有，`--help` 不列），相关实现和测试文件删掉；`go test ./...` 全绿。
-- [ ] 两份说明里「开一个 issue 会话」和「怎么交出 issue」第 2 步写的是各自环境的命令加 `dyna runtime record`，`dyna runtime check` 两份都过。
-- [ ] `node --test` 跑插件的文档测试全绿；仓库里（`docs/raw` 和旧登记表以外）不再有 `runtime handoff`。
-- [ ] 桌面端 `inject reference` 不超过 10000 字。
-- [ ] 登记表 0.0.12 已重存。
+- [x] Go 单元测试先红后绿：`runtime record` 记 #471（`--repo harold-skills --period todo --session local_abc`）后，记录文件多一条，字段与现在 handoff 写的逐字段一致；已有一条时追加成两条；文件不是数组时退出 1、文件没动。
+- [x] `dyna runtime handoff` 不存在了（登记表里没有，`--help` 不列），相关实现和测试文件删掉；`go test ./...` 全绿。
+- [x] 两份说明里「开一个 issue 会话」和「怎么交出 issue」第 2 步写的是各自环境的命令加 `dyna runtime record`，`dyna runtime check` 两份都过。
+- [x] `node --test` 跑插件的文档测试全绿；仓库里（`docs/raw` 和旧登记表以外）不再有 `runtime handoff`。
+- [x] 桌面端 `inject reference` 不超过 10000 字。
+- [x] 登记表 0.0.12 已重存。
 
 ## 选中的存量回归
 

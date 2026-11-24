@@ -136,6 +136,11 @@ test('`dyna runtime check` passes the two descriptions the plugin ships, alone a
   }
 });
 
+test('no description still names the removed `runtime handoff`', () => {
+  for (const name of RUNTIMES) assert.ok(!read(`${name}.md`).includes('runtime handoff'), `${name}.md still names runtime handoff`);
+  assert.ok(!capabilitiesMd.includes('runtime handoff'));
+});
+
 test('the section check goes red when a capability is missing or one is added', () => {
   const sections = sectionsOf(read('magi.md'));
   assert.deepEqual(diff(CAPABILITIES, sections.slice(1)).missing, ['定时任务']);
@@ -152,12 +157,12 @@ const DESKTOP_NAMES = [
   'start_session', 'list_sections', 'create_section', 'detach_session', 'move_sessions', 'set_session_title', 'archive_session', 'get_session',
   'ToolSearch', 'SendMessage',
   'mcp__playwright__browser_*', 'browser_navigate', 'browser_evaluate', 'browser_run_code', 'browser_run_code_unsafe', 'browser_close', 'browser_take_screenshot',
-  '--headless --isolated', 'dyna ui lock acquire', 'dyna ui lock release', 'dyna runtime handoff', 'mcp__Claude_Browser__*', 'preview_start', 'navigate', 'read_page', 'get_page_text',
+  '--headless --isolated', 'dyna ui lock acquire', 'dyna ui lock release', 'dyna runtime record', 'mcp__Claude_Browser__*', 'preview_start', 'navigate', 'read_page', 'get_page_text',
   'AskUserQuestion', 'Artifact', 'PushNotification', '发送文件的工具',
   'Connectors', 'claude mcp add', 'claude mcp get', '~/.claude/settings.json',
 ];
 
-test('the claude-desktop data carries every desktop tool name the 0.1.10 bodies used, and calls the lock and the hand-over by their dyna commands', () => {
+test('the claude-desktop data carries every desktop tool name the 0.1.10 bodies used, and calls the lock and the dispatch record by their dyna commands', () => {
   const text = read('claude-desktop.md');
   assert.deepEqual(DESKTOP_NAMES.filter((n) => !text.includes(n)), []);
   assert.ok(!text.includes('browser-lock.mjs') && !text.includes('desktop-handoff.mjs'), 'the old scripts are not named');

@@ -164,7 +164,7 @@ func TestTheInjectedRuntimeTextNamesNeitherTheOldSkillNorTheOldScript(t *testing
 }
 
 // The runtime and browser skills are deleted and their content lives in the data: nothing in the data points back
-// at them, at SKILL.md, or at an old script (the lock and the hand-over are `dyna ui lock …` and `dyna runtime handoff`).
+// at them, at SKILL.md, or at an old script (the lock is `dyna ui lock …`, the dispatch bookkeeping `dyna runtime record`).
 func TestTheDataPointsAtNoDeletedSkillAndNoOldScript(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(pluginRoot(), rt.DataDir))
 	if err != nil {
@@ -454,11 +454,11 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := map[string]string{
-		"runtime name":    registry.CallerSession,
-		"runtime show":    registry.CallerSession,
-		"runtime handoff": registry.CallerSession,
-		"runtime check":   registry.CallerSession,
-		"runtime inject":  registry.CallerHook, // only the SessionStart hook runs it
+		"runtime name":   registry.CallerSession,
+		"runtime show":   registry.CallerSession,
+		"runtime record": registry.CallerSession,
+		"runtime check":  registry.CallerSession,
+		"runtime inject": registry.CallerHook, // only the SessionStart hook runs it
 	}
 	for name, caller := range want {
 		c, ok := reg.Find(name)
@@ -483,13 +483,13 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 			}
 		}
 	}
-	handoff, _ := reg.Find("runtime handoff")
+	record, _ := reg.Find("runtime record")
 	var flags []string
-	for _, a := range handoff.Args {
+	for _, a := range record.Args {
 		flags = append(flags, a.Name)
 	}
-	if strings.Join(flags, ",") != "cap,claude,dir,issue,magi,p-timeout-sec,period,prompt-file,repo,timeout-sec,worktree" {
-		t.Errorf("handoff flags: %v", flags)
+	if strings.Join(flags, ",") != "dir,issue,period,repo,session" {
+		t.Errorf("record flags: %v", flags)
 	}
 }
 
@@ -504,7 +504,7 @@ func TestHelpSaysHowToAddARuntime(t *testing.T) {
 		}
 	}
 	bare := dyna(env(), "runtime")
-	if bare.code != 0 || !strings.Contains(bare.stdout, "handoff") {
+	if bare.code != 0 || !strings.Contains(bare.stdout, "record") || strings.Contains(bare.stdout, "handoff") {
 		t.Fatalf("a bare module prints its commands: %+v", bare)
 	}
 }
