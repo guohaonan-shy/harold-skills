@@ -22,7 +22,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 
    frontmatter 之后是 `# <标题>`，再照 `<spec-template>`。怎么写给人看照第 3 步对过的 `idea-loop:evidence`；哪一节要图、放哪见 [`references/figures.md`](references/figures.md)（下文 figures）。
 
-5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。覆盖的 issue 在开头那几行里全都「不存在」的，这些 issue 翻 canceled。最后跑 `dyna spec index <docs>`。完成条件：还剩的每一样都点了名，索引已刷新。
+5. **交代等人定的**：开头的 `> 需要 grill`、「实现决策」里的 `### 待定` 原样留在 spec 里，说出还剩哪几样；它们由 triage 里的会话定，定完删掉标记，issue 翻 todo 时命令核这两样都没了（`idea-loop:issues` 的「状态」）。人在场就在这里接着定。最后跑 `dyna spec index <docs>`。完成条件：还剩的每一样都点了名，索引已刷新。
 
 6. **提交并收工**：spec 提交到 home，再告诉人它到了哪个状态；怎么提交、挂 label、接着往下走，见 [`references/land-on-main.md`](references/land-on-main.md)。调用方说了提交由它来做的（比如 `idea-loop:issue-session`），这一步留给它。完成条件：spec 已进 home，人知道它到了哪个状态。
 
@@ -86,7 +86,7 @@ spec 的读者清楚方向和高层设计，不清楚实现细节，要快速看
 | 纯逻辑、数据转换、状态机 | TDD 单元测试 | |
 | API 契约（路由、schema、序列化） | TDD API 测试 | |
 | DB schema、迁移、并发与事务语义 | 真 DB 测试 | |
-| LLM 输出质量（prompt 改动） | eval，门槛对线上基线、不写绝对值；装了 `ai-eval` 的项目，跑流水线的改动走 eval-run，多轮对话里的一步走 eval-replay | 改了哪些 prompt、要加或改哪些 eval |
+| LLM 输出质量（prompt 改动） | eval，门槛对线上基线、不写绝对值；装了 `ai-eval` 的项目，跑流水线的改动走 eval-run，多轮对话里的一步走 eval-replay | 改了哪些 prompt、要加或改哪些 eval；skill 改动写「见杠杆诊断各处的验证」 |
 | 视觉正确性 | UI 实现环（`idea-loop:ui-measure`，逐格比对冻结画布） | |
 | 端到端用户路径 | 浏览器端到端测试 | |
 
