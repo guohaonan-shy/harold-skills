@@ -49,6 +49,24 @@ test('a goal case that was already done before the change is listed as "不过�
   assert.deepEqual(unsettled(text), [{ kind: 'replay', round: 1 }]);
 });
 
+test('a goal case that was already done offers "this rule was never needed, take it out" in place of "the change missed its goal"; a quote case keeps the original three options', () => {
+  const done = { case: 'g', outcome: 'already-done', reason: '不过：改前就做得到：改前的插件跑出来已经答「是」', verdicts: [{ side: 'before', answer: 'yes', cite: 'x' }, { side: 'after', answer: 'yes', cite: 'y' }], cost: 1.1 };
+  const only = buildReplayEntry({ round: 1, ...ENTRY_INPUT([done]) });
+  assert.match(only, /- A：判定对，这段规则本来不用加 —— 撤掉这段规则改动/);
+  assert.match(only, /- B：判定错了 —— 在用例旁的 `annotations\.md` 里推翻，再跑 `--settle`/);
+  assert.match(only, /- C：.*换一个改前做不到的用例/);
+  assert.doesNotMatch(only, /规则改动没达到目的/, 'the "change missed its goal" option does not apply to a case that was already done');
+  // a quote case that did not pass: the options are the ones it always had
+  const quote = buildReplayEntry({ round: 1, ...ENTRY_INPUT([fail('b')]) });
+  assert.match(quote, /- A：判定对，规则改动没达到目的/);
+  assert.doesNotMatch(quote, /本来不用加/);
+  // both kinds in one entry: each case gets the options that fit it, and the entry stays unsettled
+  const both = buildReplayEntry({ round: 1, ...ENTRY_INPUT([done, fail('b')]) });
+  assert.match(both, /关于 `g`[^\n]*\n(- [^\n]*\n)*- A：判定对，这段规则本来不用加/);
+  assert.match(both, /关于 `b`[^\n]*\n- A：判定对，规则改动没达到目的/);
+  assert.deepEqual(unsettled(both), [{ kind: 'replay', round: 1 }]);
+});
+
 test('when everything passes, the entry is a replay record that says what was done, so it is settled', () => {
   const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a'), pass('b')]) });
   const [e] = parseLoop(text);
