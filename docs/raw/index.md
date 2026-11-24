@@ -123,6 +123,7 @@
 | [[2026-11-20-dispatch-one-per-device]] | conversation | 2026-11-20 | #386 triage：一台设备一个调度，上限按状态、配置进 home、每 30 分钟一轮 |
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/386](decisions/386.md) | conversation | 2026-11-23 | 决定记录 —— #386 一台设备一个调度 dispatch-home：开工前提、默认名额、模型钉法、命令行发布时机与合并顺序 |
+| [decisions/331](decisions/331.md) | conversation | 2026-11-23 | 决定记录 —— #331 调度给 0.2.0 父 issue 开了 triage 会话：暂停 harold-skills 调度，0.2.0 手动收尾；两条候选都不批 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
 | [decisions/437](decisions/437.md) | conversation | 2026-11-23 | 决定记录 —— #437 dyna 缺五个命令：triage 定的三件事；无候选，顺带开 #464；todo 会话（PR #469）：S1 删参数、S2 已知限制、C1 下限收尾发版、dyna 改升 0.0.10，候选 1 条不批 |
 | [decisions/456](decisions/456.md) | conversation | 2026-11-23 | 决定记录 —— #456 改了 skill 怎么验：triage 定分支基于集成分支、目标用例两边都跑；无候选 |
