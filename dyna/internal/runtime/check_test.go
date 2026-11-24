@@ -202,6 +202,39 @@ func TestCheckAcceptsTheWayToDoItOnTheLinesAfterTheItemName(t *testing.T) {
 	}
 }
 
+func TestCheckTakesABoldNoAfterTheItemNameAsTheAnswerNotAsANewItemName(t *testing.T) {
+	root := fakePlugin(t, nil)
+	for _, body := range []string{"- **创建**：**没有**", "- **创建**：**没有**。走退路。", "- **创建**: **没有**"} {
+		doc := strings.Replace(fakeGood, "- **创建**：`fake cron create`", body, 1)
+		file := filepath.Join(t.TempDir(), "fake.md")
+		writeFile(t, file, doc)
+		if r := dyna(checkEnv(root, ""), "runtime", "check", file); r.code != 0 {
+			t.Errorf("%q: %+v", body, r)
+		}
+	}
+	// the plain no still passes, and an item name with nothing after it is still reported
+	doc := strings.Replace(fakeGood, "- **创建**：`fake cron create`", "- **创建**：没有", 1)
+	file := filepath.Join(t.TempDir(), "fake.md")
+	writeFile(t, file, doc)
+	if r := dyna(checkEnv(root, ""), "runtime", "check", file); r.code != 0 {
+		t.Errorf("plain no: %+v", r)
+	}
+	doc = strings.Replace(fakeGood, "- **创建**：`fake cron create`", "- **创建**：", 1)
+	file = filepath.Join(t.TempDir(), "fake.md")
+	writeFile(t, file, doc)
+	r := dyna(checkEnv(root, ""), "runtime", "check", file)
+	if r.code != 1 || !strings.Contains(r.all(), "「创建」") {
+		t.Errorf("empty item: %+v", r)
+	}
+}
+
+func TestTheModuleHelpDoesNotSayTheInjectionCarriesTheWholeCapabilitiesFile(t *testing.T) {
+	r := dyna(checkEnv(fakePlugin(t, nil), ""), "runtime", "--help")
+	if r.code != 0 || strings.Contains(r.all(), "注入它的全文") || !strings.Contains(r.all(), "不带「能力模板」一节") {
+		t.Fatalf("%+v", r)
+	}
+}
+
 func TestCheckFindsItemsInSubsectionsAndIgnoresHeadingsInsideCodeFences(t *testing.T) {
 	doc := strings.Replace(fakeGood, "## 推送\n\n- **推一句话**：`fake push`\n",
 		"## 推送\n\n### 怎么推\n\n- **推一句话**：`fake push`\n\n```\n## 不是节\n```\n", 1)

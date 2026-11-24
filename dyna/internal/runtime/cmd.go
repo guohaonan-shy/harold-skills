@@ -59,7 +59,7 @@ const moduleLong = `运行环境：认环境、开场注入、按能力取这个
   4. 人也没选：claude-desktop（命令行、IDE 插件没有可靠的标记变量，落到这里，缺的工具走退路）。
 
 数据在插件目录的 runtime/ 下（IDEA_LOOP_PLUGIN_ROOT，经插件的 bin/dyna 调用会自己设）：
-  runtime/capabilities.md   能力清单和退路（show 不带能力时打印它们；inject runtime 注入它的全文）
+  runtime/capabilities.md   能力清单、退路和能力模板（show 不带能力时打印清单和退路；inject runtime 注入清单和退路，不带「能力模板」一节）
   runtime/<环境名>.md       这个环境的说明：开头一行标记，然后每个能力一节（## <能力名>，名字与能力清单第一列一致）；浏览器那一节含三条规矩（给人看、无头、并行时抢锁）
 改数据只升插件，不用发新版 dyna。
 

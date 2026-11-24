@@ -47,6 +47,12 @@ func nameOf(bold string) (name, tail string) {
 	return name, ""
 }
 
+// isColon is whether s is nothing but one colon (and spaces).
+func isColon(s string) bool {
+	s = strings.TrimSpace(s)
+	return s == "：" || s == ":"
+}
+
 // hasText is whether there is anything but punctuation and whitespace.
 func hasText(s string) bool {
 	return strings.Trim(s, " \t\r\n：:，,。.、；;（）()*·-—") != ""
@@ -139,7 +145,12 @@ func itemsOf(section string) map[string]itemAnswer {
 			continue
 		}
 		spans := boldSpan.FindAllStringSubmatchIndex(line, -1)
+		skipNext := false
 		for k, m := range spans {
+			if skipNext {
+				skipNext = false
+				continue
+			}
 			name, tail := nameOf(line[m[2]:m[3]])
 			if name == "" {
 				continue
@@ -149,6 +160,10 @@ func itemsOf(section string) map[string]itemAnswer {
 				end = spans[k+1][0]
 			}
 			written := hasText(tail) || hasText(line[m[1]:end])
+			// a bold text right after the name and its colon (**创建**：**没有**) is the answer, not another name
+			if k+1 < len(spans) && isColon(line[m[1]:end]) {
+				written, skipNext = true, true
+			}
 			if !written && k == len(spans)-1 {
 				for j := i + 1; j < len(lines); j++ {
 					if fenced[j] || headingStart.MatchString(lines[j]) || itemStart.MatchString(lines[j]) {
