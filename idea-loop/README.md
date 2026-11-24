@@ -174,9 +174,13 @@ it worked, but carried one person's words from GitHub back into the session they
   follows delivery, not PR size: a problem that affects this spec's implementation, or has an effect once
   shipped, is recommended into the current PR; the rest is not, and goes back to the caller's own process. How
   each flow disposes of findings (the reviewer's disposition table, the implementer's stop-or-defer table)
-  lives with that flow. `idea-loop:evidence` says what counts as evidence (source, time, version, numbers,
-  like-for-like comparisons) and the overall style (conclusion first, figure beside the sentence it supports);
-  which figure to draw is left to the model, and where it goes is up to the caller (`to-spec`'s
+  lives with that flow. `idea-loop:evidence` takes the fixed "Evidence" section in home as the overall rule and
+  writes only what is outside it: what counts as evidence (re-checking the baseline, like-for-like comparisons,
+  reproduction, evidence taken from the thing being judged) and the overall style (the smallest view that makes
+  the point, strange names explained, overlays declared); which figure to draw follows a six-row table of what
+  the human has to judge (annotated screenshot, UI flow, chart, GIF, screen recording, table or one-line
+  example), each with its own how-to file, and a recording is an H.264 mp4 under the same 10MB limit
+  (split into segments when over); where it goes is up to the caller (`to-spec`'s
   `references/figures.md`, `pr`'s `references/delivery-evidence.md`). Section 4 of a drafted spec keeps what the
   rules can settle as decisions with their basis; only the choices whose basis does not hold are
   left as options, and every "suggest closing" entry says what was claimed, why it no longer holds,

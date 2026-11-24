@@ -43,9 +43,9 @@ test('nothing in the plugin points at the old 「交给人时」 section or the 
   assert.deepEqual(hits, [], `还指着旧的「交给人时」/ handing-to-human：${hits.join(', ')}`);
 });
 
-test('evidence holds only the two figure references (no handing-to-human) and its description no longer routes on how to write a question', () => {
+test('evidence holds only the five figure references (no handing-to-human) and its description no longer routes on how to write a question', () => {
   const dir = join(pluginRoot, 'skills', 'productivity', 'evidence');
-  assert.deepEqual(readdirSync(join(dir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
+  assert.deepEqual(readdirSync(join(dir, 'references')).sort(), ['chart.md', 'gif.md', 'screenshot.md', 'ui-flow.md', 'video.md']);
   const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   const description = raw.match(/^description: (.*)$/m)[1];
   assert.doesNotMatch(description, /功课/);
@@ -58,14 +58,13 @@ test('evidence carries the reader model and the shared writing rules in its sect
   const description = raw.match(/^description: (.*)$/m)[1];
   for (const w of ['证据', '截图', '流程图', '图表', '动图']) assert.match(description, new RegExp(w), `description 缺：${w}`);
 
-  const firstBlock = body.split(/\n## /)[0];
+  // the body opens with one line saying home's 「证据」 is the overall rule (#438 ticket 02); the reader model opens the first section
+  const firstBlock = body.split(/\n## /)[1];
   assert.match(firstBlock, /不清楚实现细节/, '正文开头要写读者模型');
   assert.match(firstBlock, /快速/, '读者模型要写读者要的是快速看懂、拿到证据、决定');
 
   for (const [name, re] of [
-    ['结论在前', /结论在前/],
     ['最小一种视图', /最小/],
-    ['现状带出处和规模数字', /出处[\s\S]*规模数字|规模数字[\s\S]*出处/],
     ['陌生叫法第一次出现说清', /第一次出现/],
     ['比对同条件', /同条件/],
   ]) assert.match(body, re, `共用写法缺：${name}`);

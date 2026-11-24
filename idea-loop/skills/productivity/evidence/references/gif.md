@@ -11,3 +11,4 @@
 
    帧率按时间戳算（帧数 ÷ 时长），这样「停留 5 秒」在动图里才是 5 秒。超过 10MB 就裁短、降到 8–10fps，或者缩小宽度。
 3. **一个动图只讲一件事**：「气泡进场、停留 5 秒、退场」是一个，「悬停时暂停计时」是另一个。动效里有 `prefers-reduced-motion` 分支的，正常和减弱各录一个，并排放。
+4. **装不下就改用录屏**：一段多步流程，动图超 10MB、或裁短会丢掉要看的那段，改读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/video.md`。
