@@ -277,15 +277,17 @@ func Command(d Deps) *cobra.Command {
 
 	candidates := registry.Group("candidates", "pr-review 一轮的审核候选：交回前的校验")
 	candidates.AddCommand(
-		leaf("submit <candidates.json> <base-ref> <evidence-dir> <round>", "校验候选：引用的原文要在文件里、代码要在 diff 里（不成立的丢弃并写原因）；措辞不合格的退回并说出哪一条（退出 2），校验过了才算交回", "",
+		leaf("submit <candidates.json> <base-ref> <evidence-dir> <round>", "校验候选：引用的原文要在文件里、代码要在 diff 里（不成立的丢弃并写原因；依据种类是「目标」的，引文要取自 --spec 给的这次的 spec）；措辞不合格的退回并说出哪一条（退出 2），校验过了才算交回", "",
 			func(cmd *cobra.Command, args []string) error {
 				file, base, evidenceDir, round := arg(args, 0), arg(args, 1), arg(args, 2), arg(args, 3)
 				if file == "" || base == "" || evidenceDir == "" || !numRe.MatchString(round) {
 					return usage("candidates submit <candidates.json> <base-ref> <evidence-dir> <round>")
 				}
-				return d.submit(file, base, evidenceDir, round)
+				spec, _ := cmd.Flags().GetString("spec")
+				return d.submit(file, base, evidenceDir, round, spec)
 			}),
 	)
+	candidates.Commands()[0].Flags().String("spec", "", "这次的 spec 文件路径；依据种类是「目标」的候选，引的文件必须是它（不给就认不出，这类候选会被丢弃）")
 
 	diagnostics := registry.Group("diagnostics", "检查工具（lint、typecheck…）的输出")
 	diagnostics.AddCommand(
@@ -534,7 +536,7 @@ func (d Deps) archive(file, repo, pr string) error {
 	}{done, api.Identity})
 }
 
-func (d Deps) submit(file, base, evidenceDir, round string) error {
+func (d Deps) submit(file, base, evidenceDir, round, spec string) error {
 	diff, err := d.git("diff", "--no-color", base+"...HEAD")
 	if err != nil {
 		return err
@@ -550,6 +552,7 @@ func (d Deps) submit(file, base, evidenceDir, round string) error {
 	n := 0
 	fmt.Sscan(round, &n)
 	res := Admit(cands, IO{
+		Spec: spec,
 		Read: func(p string) (string, bool) {
 			b, err := os.ReadFile(p)
 			if err != nil {

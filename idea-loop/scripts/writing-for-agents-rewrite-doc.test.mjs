@@ -85,11 +85,11 @@ test('4500 线: the cap, the headroom, and references measured with their skill'
   assert.match(s, /一起量/);
 });
 
-test('规矩的归属: fifteen rules, each owned by one place (seven from the rewrite, eight found while rewriting)', () => {
+test('规矩的归属: seventeen rules, each owned by one place (seven from the rewrite, eight found while rewriting, three from splitting the old decision skill)', () => {
   const rows = tableRows(section('规矩的归属'));
-  assert.equal(rows.length, 15);
+  assert.equal(rows.length, 17);
   const owned = rows.map((r) => r.split('|')[2]?.trim() ?? '');
-  for (const o of ['decision-rules', 'wiki-conventions', 'issues', 'pr', 'tdd', 'dyna runtime show', 'writing-for-agents', 'implementer', 'seo-scan', 'dreaming', 'design-archive']) {
+  for (const o of ['evidence', 'pr-review', 'wiki-conventions', 'issues', 'pr', 'tdd', 'dyna runtime show', 'writing-for-agents', 'implementer', 'seo-scan', 'dreaming', 'design-archive']) {
     assert.ok(owned.some((c) => c.includes(`\`${o}`)), `no row is owned by ${o}`);
   }
   assert.equal(owned.filter((c) => c.startsWith('`issues`')).length, 3, 'status / body format, the comment marker and the Linear way are owned by issues');
@@ -101,14 +101,26 @@ test('规矩的归属: fifteen rules, each owned by one place (seven from the re
   assert.ok(rows.some((r) => /SEO 方向 agent 的提示各行/.test(r) && r.includes('提示模板')));
   assert.ok(rows.some((r) => /dreaming 的收尾/.test(r) && r.includes('proposal-table.md')));
   assert.ok(rows.some((r) => /发现文件形状/.test(r) && r.includes('review-walkthrough.md')));
-  assert.match(rows[0], /证据怎么写/, '证据一项归 decision-rules');
-  assert.doesNotMatch(ref, /idea-loop:evidence|`evidence`/, '证据一项照合并后的名字写 decision-rules');
+  assert.ok(rows.some((r) => /证据怎么写/.test(r) && r.includes('`evidence`')), '证据一项归 evidence');
+  assert.ok(rows.some((r) => /依据只认四种/.test(r) && r.includes('`pr-review`')), '依据一项归 pr-review 的 review 标准');
+  assert.ok(rows.some((r) => /停不停下/.test(r) && r.includes('用户规则')), '停不停下一项归用户规则');
 });
 
 test('SKILL-MECHANICS: an injected skill points at its own references by the full plugin-root path, because the injected body has no base directory', () => {
   const m = readFileSync(join(dir, 'SKILL-MECHANICS.md'), 'utf8');
   const part = m.slice(m.indexOf('## 引用另一个 skill'), m.indexOf('## 按调用方式拆'));
   assert.match(part, /开场注入的 skill[^\n]*插件根下的完整路径[^\n]*没有 base directory/);
+});
+
+test('SKILL-MECHANICS: 「别的 skill 不读它的 references」记了 pr-review 审查标准的例外，带理由（#280 工单 02，review 第 1 轮 C2）', () => {
+  const m = readFileSync(join(dir, 'SKILL-MECHANICS.md'), 'utf8');
+  const part = m.slice(m.indexOf('## 引用另一个 skill'), m.indexOf('## 按调用方式拆'));
+  const line = part.split('\n').find((l) => l.includes('例外')) ?? '';
+  assert.match(line, /pr-review/);
+  assert.match(line, /review-standards\.md/);
+  assert.match(line, /issue-session/);
+  assert.match(line, /`pr`/);
+  assert.match(line, /理由/);
 });
 
 test('the rewritten files carry no decision history except the grep pattern that finds it', () => {

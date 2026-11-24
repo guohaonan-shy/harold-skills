@@ -3,10 +3,11 @@
  * background, and reads the target repo's written standards before it writes.
  *
  * Spec implementer-reuse-and-compact, ticket 01 (issue #147). Before: the definition hard-coded
- * "wiki-conventions, tdd, decision-rules" as the start-up skills, told the executor to read only the
+ * three skills as the start-up skills, told the executor to read only the
  * spec's 测试决策, and never mentioned CODING_STANDARDS.md — so a ticket that rewrote a skill file was
  * built without the writing rules the review's Standards axis then judged it by. These checks pin the
- * sentences that carry the change: only decision-rules is a must-call, the rest is picked by the
+ * sentences that carry the change: no skill is a must-call (since spec edge-case-known-limit ticket 02 the
+ * stop-or-go line points at the user rules and the review standards), skills are picked by the
  * ticket's content; the spec's scope is "the ticket decides"; "开工前" points at CODING_STANDARDS.md and
  * what it links to, worded the same way review-standards.md words it.
  */
@@ -32,15 +33,12 @@ const doc = read('agents', 'implementer.md');
 const opening = doc.slice(0, doc.indexOf('\n## '));
 const standardsRule = read('skills', 'engineering', 'pr-review', 'references', 'review-standards.md');
 
-test('only decision-rules is a must-call at start-up; the other skills are picked from the ticket', () => {
-  const mustCall = opening.split(/[。\n]/).find((s) => s.includes('开工先'));
-  assert.ok(mustCall, '开头缺「开工先……」那一句：decision-rules 是开工必调');
-  assert.match(mustCall, /idea-loop:decision-rules/, 'decision-rules 要留在「开工先」那一句里');
-  for (const skill of ['idea-loop:wiki-conventions', 'idea-loop:tdd']) {
-    assert.ok(!mustCall.includes(skill), `「开工先」那一句不该再点名 ${skill}：它跟其它 skill 一样看工单挑`);
-  }
-  assert.doesNotMatch(doc, /wiki-conventions[^。\n]*tdd[^。\n]*decision-rules/, '三个 skill 的固定清单还在');
-  assert.match(opening, /看工单|按工单|工单的内容/, '开头缺「怎么挑」：其余 skill 看工单内容自己挑');
+test('no skill is a must-call at start-up; skills are picked from the ticket; stopping follows the user rules and the review standards', () => {
+  assert.doesNotMatch(opening, /开工先用 Skill 工具调/, '开头不该有必调的 skill：全部看工单挑');
+  const stopLine = opening.split('\n').find((l) => l.includes('停不停下'));
+  assert.ok(stopLine, '开头缺「停不停下、依据够不够」那一句');
+  assert.match(stopLine, /~\/\.claude\/CLAUDE\.md/, '停不停下要指向会话已加载的用户规则');
+  assert.match(opening, /看工单|按工单|工单的内容/, '开头缺「怎么挑」：skill 看工单内容自己挑');
 });
 
 test('the pick sentence gives examples, including a skill-doc ticket following the linked writing rules', () => {
@@ -111,5 +109,5 @@ test('README describes the implementer as reading the standards, not as calling 
   const row = readme.split('\n').find((l) => l.startsWith('| `/idea-loop:implement`'));
   assert.ok(row, 'README 缺 implement 那一行');
   assert.match(row, /CODING_STANDARDS\.md/, 'README 的 implement 行要说 implementer 开工前读 CODING_STANDARDS.md');
-  assert.doesNotMatch(row, /wiki-conventions[^|]*tdd[^|]*decision-rules/, 'README 还写着固定的三 skill 清单');
+  assert.doesNotMatch(row, /always calls/, 'README 还写着 implementer 开工必调某个 skill');
 });

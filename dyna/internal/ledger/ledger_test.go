@@ -240,7 +240,7 @@ var files4417076 = []string{
 	"idea-loop/skills/engineering/implement/SKILL.md",
 }
 
-const handback4417076 = "verified:\n  - 读了哪几份写法规范 | 读 / 调 | idea-loop:decision-rules（skill）、DEVELOPMENT.md、review 第 2 轮汇报里 writing-for-agents「单一事实来源」那条（引文取自汇报）"
+const handback4417076 = "verified:\n  - 读了哪几份写法规范 | 读 / 调 | idea-loop:evidence（skill）、DEVELOPMENT.md、review 第 2 轮汇报里 writing-for-agents「单一事实来源」那条（引文取自汇报）"
 
 func TestCheckSkillEditTheTemplateReadOrCallCopiedAsTheMethodIsReportedNextToTheMissingLeverRow(t *testing.T) {
 	reasons := CheckSkillEdit(files4417076, handback4417076)

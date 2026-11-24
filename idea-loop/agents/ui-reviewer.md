@@ -15,7 +15,7 @@ effort: high
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按「按需读」读你这一模式和这一步用到的那几份）、`idea-loop:ui-measure`（比对命令、矩阵、容差）、`idea-loop:decision-rules`（截图、流程图、动图怎么做）；运行环境的能力用 `dyna runtime show <能力>` 取；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」「清理」三节。
+用 Skill 工具调 `idea-loop:design-archive`（看它的「图的实体」「目录与命名」「进入方式从图上推导」，再按「按需读」读你这一模式和这一步用到的那几份）、`idea-loop:ui-measure`（比对命令、矩阵、容差）、`idea-loop:evidence`（截图、流程图、动图怎么做）；运行环境的能力用 `dyna runtime show <能力>` 取；读 `<项目目录>/DEVELOPMENT.md` 的「worktree 准备」「开发服务器」「清理」三节。
 
 下文 `query` 指 `dyna design archive query`，`check` 指 `dyna design archive check`。
 

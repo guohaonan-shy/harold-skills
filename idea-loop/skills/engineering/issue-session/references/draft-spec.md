@@ -6,7 +6,7 @@
 
 - issue 全文和评论：认领时读到的那份（`dyna issues read <docs> <号>`）。
 - 分拣的证据评论（idea-loop 写的，认法照 `idea-loop:issues` 的「评论」）：复现、分类、结论都在里面，当证据用，在 spec 里引它的出处（评论链接、日期）。没有这条评论的（人直接开成 todo 的），自己先复现：手段表在 `${CLAUDE_PLUGIN_ROOT}/agents/issue-triager.md`「五步」的第 4 步「复现」，输出留在 `.tmp/to-spec/<spec-slug>/repro/`，只读回判断要用的一两行。
-- issue 写的现状也要核一遍，再写进 spec：照 `idea-loop:decision-rules` 的「证据是什么」。
+- issue 写的现状也要核一遍，再写进 spec：照 `idea-loop:evidence` 的「证据是什么」。
 - issue 带 `type:seo/<方向>` 的：先用 Skill 工具调这个方向的 agent 调的那个 SEO skill（方向与 agent 的对应在 `idea-loop:seo-scan` 的 SKILL.md 的「派方向 agent」表，agent 调哪个 skill 写在 `${CLAUDE_PLUGIN_ROOT}/agents/` 下它自己的定义里），只读它写修法建议前要读的原则（由那个 skill 指过去，不直接翻它的 `references/`），不跑它的检查步骤。选项和推荐讲到某种做法有没有用时，引那里的结论和出处，不写「说法不一」这类没核过的话；原则文件没覆盖的才自己查一手来源，查不到的标成猜测。
 - 起草要跑 OpenSEO 的付费调用（SEO 研究）的：先看「起草与验证」那一份本周还剩多少。`get_project_context` 存成 `.tmp/to-spec/<spec-slug>/context.json`，`whoami` 读余额，跑 `dyna seo allocate <项目目录>/SEO.md <余额> --context <那份 context.json> --today <YYYY-MM-DD>`（不带方向，只出本周的账），读输出里 `week.shares` 的「起草与验证」的 `left`（也不超过 `week.floorRoom`）。这次研究预估要花的 credits 超过它就不跑：用『推送』告诉人是哪项研究、预估多少、本周还剩多少，spec 里写明这项研究没做。跑了的，用 `update_project_context` 的 `appendResearchLog` 记一笔，第一行 `起草 <YYYY-MM-DD>：issue #<号>`，第二行 `花费：<n | 未知> credits，余额 <n | 未知>，份：起草与验证`（「花费」行同 `idea-loop:seo-scan` 的研究日志，`dyna seo allocate` 靠它加总）。
 - issue 带 `type:seo/*` 的，再读项目目录的 `SEO.md` 的「内容原则」（`dyna seo parse <项目目录>/SEO.md` 输出里的 `principles`，每条带出处），与上一条先读的方向原则并列：选项、推荐和「需要 grill」的答案都以两者为据。没有 `SEO.md`，或这一节是空的，就当没有这类原则。
@@ -30,7 +30,7 @@
 3. **复现过**：「问题陈述」里写了复现到的现象，来自证据评论或本次复现；只有 issue 原文的不算。
 4. **正文里没有机器的原始输出**：断言报错、堆栈、`[repro]` 日志、SQL 原文都改写成人话。
 5. **每条都有期望行为**：只修问题的 spec，「User Stories」里每个问题一行「期望行为」，编号跟「问题陈述」的小节对得上。
-6. **选项都是真分歧**：每条「待定」写明了依据为什么冲突或没有；选项的写法照 `idea-loop:decision-rules` 的「要人定的写成一道题」。
+6. **待定都落在「只由我做」「停下问我」里**：每条「待定」写明它落在用户规则（`~/.claude/CLAUDE.md`）「思考与决策」的「只由我做」或「停下问我」哪一条；不在里面的已写成定下的决定，带目标原文。选项的写法照「沟通」。
 7. **现状和范围查清了**：同一行为的其他入口，每个都在「方案」里标了纳入还是排除；「关联」列了相邻还没完成的 spec 与 issue，没有写「无」。spec 是修一个坏掉的能力的，还查过它有没有调用方（界面入口、前端请求、别的服务、脚本或定时任务），查到的写进「方案」；一个都查不到，「实现决策」里有一条「待定：修好还是删掉」，两个选项各配例子和代价，不默认按修起草。
 8. **改动只在该在的地方**：要提交到 home 的只有这份 spec 的目录和 `<docs>/spec/index.md`（`raw` 里这次写的文件另算）；SEO 的 brief 出了配图的，图放在这份 spec 目录的 `assets/` 里（`<docs>/spec/<slug>/assets/`），随 spec 一起提交。
 

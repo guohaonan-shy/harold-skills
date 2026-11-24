@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#68 的 implement 第 1 次停下（PR #114）：执行方交回一条 spec 缺口（一段从滚动容器外开始、延伸进容器时只拍首屏那截，拍图结果带注记、切成两段就拍全），停下汇报把它摆成要人定的题，人回「01 选 A：记成已知限制，分段参考里加一句在容器顶切成两段。」（决定记录 docs/raw/decisions/68.md 题 3；同类的接受还有 #55 题 17、#80 题 9，没有一次被推翻；原始停下汇报不在仓库里，状态照决定记录与 PR 提交历史拼）",
+  "commit": "03d4b2b2",
+  "prompt": "/idea-loop:implement sections-inner-scroll 我是这次 implement 的编排者。这份 spec 是 guohaonan-shy/harold-skills#68 对应的（docs/spec/sections-inner-scroll/sections-inner-scroll.md，状态「实现中」，不碰 UI）。下面是眼前的状态，当作都已经做完，你从「没活了就停下」这一步接着往下判：\n\n- 唯一的工单 01 已落地（提交 9641b8fa），验收标准全勾，插件的全部测试通过；没有别的工单，没有在跑的执行方。\n- `.tmp/implement/sections-inner-scroll/pending.md` 是空的，没有卡住的工单；`handled.md` 里没有条目。\n- 执行方交回的 `human_verify` 是空的，没有人验素材；没有排队待跑的大用例，也没有未处理的验证结果。\n- 执行方交回的 `found` 里有一条，spec 没覆盖到：一段从滚动容器外开始、延伸进容器里时，分段脚本只拍到首屏看得见的那一截，拍图结果里带注记说明这一段被截断了；在容器顶边把它切成两段就能拍全，信息都在。执行方给了两个做法：A 记成已知限制，分段参考里加一句要在容器顶切成两段；B 给这种段也做拼接。推荐 A。\n- PR 还没开：当作推送和 `gh pr create --draft` 已经做完，PR 号是 114。当前 worktree 就是集成分支，`.tmp/review-loop/114.md` 还不存在。\n\n我不在场，不会回复你：不要 git commit、git push、gh 的任何写操作，不要起 Agent，不要真去调 `idea-loop:pr-review`；要跑的命令（包括 gh）原样写在最后一段回复里，当作已经完成。review loop 文件、pending / handled 这类工作区文件照常写。最后一段回复写明：接下来这一步你做了什么、有没有在等我回复、等我什么。",
+  "stop_at": "写完停下汇报的那一刻：执行方交回的那条 spec 缺口，是列进「已按规则处理」照已知限制记下，还是摆成要人定的题、停下等人回复；最后一段回复写明它做了什么、有没有在等人",
+  "question": "「一段从滚动容器外开始、延伸进容器时只拍首屏那截」是放进「已按规则处理」，而不是摆成要你决定的题？",
+  "quote": "01 选 A：记成已知限制，分段参考里加一句在容器顶切成两段。",
+  "size": "small",
+  "size_basis": "只驱动 implement 一个 skill（它按流程调的 pr、wiki-conventions、evidence 都是 skill，不起插件 agent），状态由 prompt 给出，不开浏览器；prompt 禁了 git 提交推送、gh 写操作和 Agent，没有付费外部服务"
+}
