@@ -157,8 +157,9 @@ test('the default DISPATCH.md and every place that quotes it: todo at night open
 });
 
 test('setup: the dispatch step checks for dispatch-home and reports or asks; the report line says dispatch-home', () => {
-  assert.match(section(setupSkill, '## 调度'), /`dispatch-home`/);
-  assert.match(setupSkill, /调度（设备级的 `dispatch-home`）/);
+  // #420 folded the four task sections into one 「定时任务」 table; the hand-back details moved into references/handback.md
+  assert.match(section(setupSkill, '## 定时任务'), /`dispatch-home`/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'handback.md'), /调度（设备级的 `dispatch-home`）/);
   assert.match(setupDispatch, /已有任务里有 `dispatch-home`：报给人/);
   assert.match(setupDispatch, /选项「建（推荐）」「不建，我自己手敲」/);
 });

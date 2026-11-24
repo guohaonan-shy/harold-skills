@@ -138,3 +138,5 @@
 | [[2026-11-16-handback-lost-turn]] | conversation | 2026-11-16 | #292 交回后卡住：根因是那一轮的模型请求丢了 |
 | [[2026-11-16-issue-137-scope]] | conversation | 2026-11-16 | #137 的范围：拆成子 issue，除字数存量外随 0.2.0 发布 |
 | [[2026-11-16-refine-advisor-grill]] | conversation | 2026-11-16 | uiux-refine 重设计 grill：评委降为顾问、每轮交设计评审报告 |
+| [[2026-11-24-setup-modules-grill]] | conversation | 2026-11-24 | #420 triage：setup 接完核心后按设计、SEO、评测三段问；不并 #247、#241 暂缓、EVAL.md 留代码仓库根 |
+| [decisions/420](decisions/420.md) | conversation | 2026-11-24 | 决定记录 —— #420 的 triage 会话：setup 按设计、SEO、评测三段接模块，不并 #247，#241 暂缓，EVAL.md 留代码仓库根；无候选 |
