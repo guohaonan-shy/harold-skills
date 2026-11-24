@@ -28,9 +28,9 @@ idea-loop 从项目目录读这几份配置：
 
 ## home
 
-`~/home`、当前项目的登记、四项用户级配置，按 [references/home.md](references/home.md) 做；项目目录在这一步建出来，下面的「写」往里写。
+`~/home`、项目登记、四项用户级配置读 `references/home.md`，项目目录在这一步建出来；默认运行环境、新环境的说明读 `references/runtime-env.md`。
 
-完成条件：`~/home` 在，当前项目在它的 `## 项目` 里有一行、`projects/<名字>/AGENTS.md` 在；四项用户级配置都是「已是」，或人拒绝了，或「要人处理」的项已交回。
+完成条件：`~/home` 在；项目在 `## 项目` 有一行、`projects/<名字>/AGENTS.md` 在；四项各是「已是」、人拒绝或「要人处理」已交回；运行环境选过或人拒绝。
 
 ## 探查
 

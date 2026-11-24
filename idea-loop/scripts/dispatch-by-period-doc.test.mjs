@@ -130,7 +130,7 @@ test('claude-desktop: counting is per state across the device (triage section, i
   for (const word of ['`dyna home dispatch`', '`dispatch`', '`perRound`', '`caps`', 'in-review 的不数', '只数标题匹配']) assert.ok(part.includes(word), `counting must mention ${word}`);
 });
 
-test('claude-desktop: a session is opened in four steps, the second is the hand-off script, a failed hand-over waits for the next round', () => {
+test('claude-desktop: a session is opened in four steps, the second is the two claude commands plus the record, a failed hand-over waits for the next round', () => {
   const at = desktopDispatch.indexOf('- **怎么交出 issue**');
   assert.ok(at >= 0);
   const text = desktopDispatch.slice(at);
@@ -138,11 +138,19 @@ test('claude-desktop: a session is opened in four steps, the second is the hand-
   assert.equal(steps.length, 4);
   assert.match(steps[0], /建 worktree/);
   assert.match(steps[1], /开会话并交到桌面端/);
-  assert.match(steps[1], /dyna runtime handoff/);
-  assert.match(steps[1], /--worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch>/);
-  assert.match(steps[1], /在沙箱外跑/);
-  assert.match(steps[1], /交出失败/);
-  assert.match(steps[1], /下一轮再试/);
+  assert.ok(!/runtime handoff/.test(text), 'the hand-over command is gone');
+  assert.match(steps[1], /claude -p "只回一个字：就绪" --output-format json/);
+  assert.match(steps[1], /claude --desktop --resume <id>/);
+  assert.match(steps[1], /local_<id>/);
+  assert.match(steps[1], /dyna runtime record --issue <号> --repo <仓库名> --period <dispatch> --session local_<id>/);
+  assert.match(steps[1], /沙箱外/);
+  assert.match(steps[1], /失败的处理照「开一个 issue 会话」/);
+  // the bullet under 会话管理 carries the same commands and what happens when one fails
+  const bullet = desktop.split('\n').find((l) => l.startsWith('- **开一个 issue 会话**'));
+  assert.ok(bullet, 'claude-desktop has 「开一个 issue 会话」');
+  for (const word of ['claude -p "只回一个字：就绪" --output-format json', '`session_id`', 'claude --desktop --resume <id>', '退出码 0 算成功', '`local_<id>`', '沙箱外', 'dyna runtime record --issue <号> --repo <仓库名> --period <todo|triage> --session local_<id>', '下一轮再试', '不在本轮重试', '早上汇总会少这一条']) {
+    assert.ok(bullet.includes(word), `the bullet must mention ${word}`);
+  }
   assert.match(steps[2], /归位/);
   assert.match(steps[2], /mcp__ccd_sidebar__move_sessions/);
   assert.match(steps[2], /唯一一次移动别的会话/);
@@ -201,8 +209,14 @@ test('setup\'s dispatch steps check for the device\'s one task, create it every 
 test('magi: only what to hand out changes — period, limit, free slots — and the way a session is opened stays', () => {
   for (const word of ['`perRound`', '`dispatch`', '夜间模式', '一轮最多开 `perRound` 个', '先跳过本项目已有同号会话']) assert.ok(magiDispatch.includes(word), `magi dispatch must mention ${word}`);
   // 0.0.5: the session is opened by the one command both runtimes share; magi's `magi sessions start` is what it runs inside
-  assert.match(magiDispatch, /dyna runtime handoff --worktree <那个 worktree> --issue <号> --repo <仓库名> --period <dispatch> --cap <能力>… --prompt-file <prompt 文件>/);
+  assert.ok(!/runtime handoff/.test(magi), 'the hand-over command is gone');
   assert.match(magiDispatch, /magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap/);
+  assert.match(magiDispatch, /dyna runtime record --issue <号> --repo <仓库名> --period <dispatch> --session <会话 id>/);
+  const bullet = magi.split('\n').find((l) => l.startsWith('- **开一个 issue 会话**'));
+  assert.ok(bullet, 'magi has 「开一个 issue 会话」');
+  for (const word of ['magi sessions start --cwd <那个 worktree> --slug <仓库名>-<号> --cap', '会话 id', '沙箱外', 'dyna runtime record --issue <号> --repo <仓库名> --period <todo|triage> --session <会话 id>', '下一轮再试', '不在本轮重试', '早上汇总会少这一条']) {
+    assert.ok(bullet.includes(word), `the bullet must mention ${word}`);
+  }
   assert.match(magiDispatch, /--cap magi --cap <MCP 服务器名> --cap browser/);
   assert.match(magiDispatch, /git -C <clone> worktree add <路径> -b <分支> origin\/<基准分支>/, 'a branch that exists nowhere is cut from the base branch');
 });
