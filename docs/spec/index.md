@@ -6,6 +6,7 @@
 | [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[dispatch-one-per-device]] | 一台设备一个调度 dispatch-home：配置在 home、上限按状态、每 30 分钟一轮 |
 | [[dispatch-triage-per-round]] | 白天的 triage 也按每轮新开表里的上限个，triage 分组总数另设上限（表里新一列，默认 10） |
+| [[dyna-app-layer-cleanup]] | 运行环境说明搬出插件、由 setup 照模板生成；dyna 去掉写死的桌面端默认和应用层叫法 |
 | [[dyna-missing-commands]] | dyna 补上 skill 五处还要 agent 自己拼 gh / git 的命令：按状态列 issue、打 kind、空提交、按提交检出、等 PR 检查 |
 | [[edge-case-known-limit]] | 思考、决策、沟通、证据由 setup 写成 home 的固定文案；插件删掉 decision-rules，证据搬进 evidence |
 | [[evidence-forms]] | evidence 按五种形态分支（加录屏），从 home「证据」往下展开，配一组取自真实交付物的回放样本 |
