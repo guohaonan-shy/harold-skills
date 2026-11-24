@@ -116,6 +116,7 @@
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/331](decisions/331.md) | conversation | 2026-11-23 | 决定记录 —— #331 调度给 0.2.0 父 issue 开了 triage 会话：暂停 harold-skills 调度，0.2.0 手动收尾；两条候选都不批 |
 | [decisions/478](decisions/478.md) | conversation | 2026-11-24 | 决定记录 —— #478 #471 真机验证开出的 triage 会话：#478 属于 0.2.0，挂到 #331 下先放着；候选不批 |
+| [decisions/476](decisions/476.md) | conversation | 2026-11-24 | 决定记录 —— #476 中文按词断行：落点 critique.md 排版阈值，平衡折行与末行孤字不分语言；无候选 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
 | [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
 | [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |
