@@ -1049,7 +1049,7 @@ func TestInALinearProjectTheCommandsThatWriteGitHubAreRefusedAndGHIsNeverCalled(
 	// what does not touch GitHub issues still works
 	eq(t, cli(p, nil, nil, "issues", "body", p.docs, body).lines(), []string{"正文齐了"})
 	r := cli(p, nil, nil, "issues", "queues", p.docs)
-	mustMatch(t, `"sections": \[\s*"triage",\s*"in-progress",\s*"in-review"\s*\]`, r.out)
+	mustMatch(t, `"states": \[\s*"triage",\s*"in-progress",\s*"in-review"\s*\]`, r.out)
 }
 
 func TestCheckFromDoesNotReadTheIssueTakesALinearKeyAndReadsTheSpec(t *testing.T) {
@@ -1359,14 +1359,14 @@ func TestCandidatesStateFlagOnTheCommandLine(t *testing.T) {
 	refused(t, run(p, f, "candidates", p.docs, "--state=done"), `state`)
 }
 
-func TestQueuesGivesOnlyTheThreeSectionNamesAndTheTimeIsNoLongerItsBusiness(t *testing.T) {
+func TestQueuesGivesOnlyTheThreeStateNamesAndTheTimeIsNoLongerItsBusiness(t *testing.T) {
 	p := docsWith(t, nil, nil, "")
 	r := run(p, newFake(), "queues", p.docs)
 	eq(t, r.code, 0, r.err)
 	var q map[string]any
 	must(t, json.Unmarshal([]byte(r.out), &q))
 	eq(t, len(q), 1, r.out)
-	eq(t, q["sections"], []any{"triage", "in-progress", "in-review"})
+	eq(t, q["states"], []any{"triage", "in-progress", "in-review"})
 	// the period, the limit and --at moved to `home dispatch`
 	refused(t, run(p, newFake(), "queues", p.docs, "--at=10:00"), `--at`)
 	// a 调度 table left in ISSUE_TRACKER.md is no longer read, so a broken one is no longer refused

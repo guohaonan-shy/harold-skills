@@ -50,14 +50,12 @@ const fakeGood = "# fake\n\n标记：`FAKE_SESSION`\n\n" +
 	"## 会话管理\n\n- **开一个 issue 会话**：`fake start`\n- **分组：没有**。\n\n" +
 	"## 推送\n\n- **推一句话**：`fake push`\n"
 
-// fakePlugin is a plugin directory with the fake capability list and these descriptions (name -> content).
-func fakePlugin(t *testing.T, docs map[string]string) string {
+// fakePlugin is a plugin directory with the fake capability list; the descriptions are not in it, the plugin
+// carries none.
+func fakePlugin(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, rt.DataDir, rt.CapabilitiesFile), checkCapabilities)
-	for name, content := range docs {
-		writeFile(t, filepath.Join(root, rt.DataDir, name+".md"), content)
-	}
 	return root
 }
 
@@ -66,7 +64,7 @@ func checkEnv(root, home string) map[string]string {
 	if home == "" {
 		home = noHome
 	}
-	return map[string]string{rt.EnvPluginRoot: root, "IDEA_LOOP_HOME": home}
+	return map[string]string{rt.EnvPluginRoot: root, "IDEA_LOOP_HOME": home, "HOME": noUser}
 }
 
 func lines(s string) []string {
@@ -80,7 +78,7 @@ func lines(s string) []string {
 }
 
 func TestCheckPassesAFullDescriptionWithOneLine(t *testing.T) {
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, fakeGood)
 	r := dyna(checkEnv(root, ""), "runtime", "check", file)
@@ -93,7 +91,7 @@ func TestCheckReportsAMissingSectionAndAnEmptyItemEachOnItsOwnLineWithTheSection
 	bad := "# fake\n\n标记：`FAKE_SESSION`\n\n" +
 		"## 定时任务\n\n- **列出**：`fake cron list`\n- **创建**：\n\n" +
 		"## 会话管理\n\n- **开一个 issue 会话**：`fake start`\n- **分组：没有**。\n"
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, bad)
 	r := dyna(checkEnv(root, ""), "runtime", "check", file)
@@ -123,7 +121,7 @@ func TestCheckReportsAMissingSectionAndAnEmptyItemEachOnItsOwnLineWithTheSection
 
 func TestCheckReportsAMissingItemNameInASection(t *testing.T) {
 	bad := strings.Replace(fakeGood, "- **列出**：`fake cron list`\n", "- 列出：`fake cron list`\n", 1)
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, bad)
 	r := dyna(checkEnv(root, ""), "runtime", "check", file)
@@ -135,7 +133,7 @@ func TestCheckReportsAMissingItemNameInASection(t *testing.T) {
 
 func TestCheckReportsAFileWithoutAMarkerLine(t *testing.T) {
 	bad := strings.Replace(fakeGood, "标记：`FAKE_SESSION`\n\n", "", 1)
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, bad)
 	r := dyna(checkEnv(root, ""), "runtime", "check", file)
@@ -147,7 +145,7 @@ func TestCheckReportsAFileWithoutAMarkerLine(t *testing.T) {
 
 func TestCheckReportsAMisnamedSectionAndTheOneItShouldHaveBeen(t *testing.T) {
 	bad := strings.Replace(fakeGood, "## 会话管理\n", "## 会话管理器\n", 1)
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, bad)
 	r := dyna(checkEnv(root, ""), "runtime", "check", file)
@@ -167,7 +165,7 @@ func TestCheckReportsAMisnamedSectionAndTheOneItShouldHaveBeen(t *testing.T) {
 func TestCheckTakesASectionThatIsOnlyNoAsEveryItemNo(t *testing.T) {
 	for _, body := range []string{"**没有**。走退路。", "没有。", "没有：这个环境做不到。"} {
 		doc := strings.Replace(fakeGood, "- **推一句话**：`fake push`", body, 1)
-		root := fakePlugin(t, nil)
+		root := fakePlugin(t)
 		file := filepath.Join(t.TempDir(), "fake.md")
 		writeFile(t, file, doc)
 		if r := dyna(checkEnv(root, ""), "runtime", "check", file); r.code != 0 {
@@ -176,7 +174,7 @@ func TestCheckTakesASectionThatIsOnlyNoAsEveryItemNo(t *testing.T) {
 	}
 	// 「没有」 as the start of a sentence that then says how it is done is not a whole-section no
 	doc := strings.Replace(fakeGood, "- **推一句话**：`fake push`", "没有专门的工具，在对话里说。", 1)
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, doc)
 	r := dyna(checkEnv(root, ""), "runtime", "check", file)
@@ -187,7 +185,7 @@ func TestCheckTakesASectionThatIsOnlyNoAsEveryItemNo(t *testing.T) {
 
 func TestCheckAcceptsTheWayToDoItOnTheLinesAfterTheItemName(t *testing.T) {
 	doc := strings.Replace(fakeGood, "- **创建**：`fake cron create`", "- **创建**：\n  `fake cron create`，传入 id", 1)
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, doc)
 	if r := dyna(checkEnv(root, ""), "runtime", "check", file); r.code != 0 {
@@ -203,7 +201,7 @@ func TestCheckAcceptsTheWayToDoItOnTheLinesAfterTheItemName(t *testing.T) {
 }
 
 func TestCheckTakesABoldNoAfterTheItemNameAsTheAnswerNotAsANewItemName(t *testing.T) {
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	for _, body := range []string{"- **创建**：**没有**", "- **创建**：**没有**。走退路。", "- **创建**: **没有**"} {
 		doc := strings.Replace(fakeGood, "- **创建**：`fake cron create`", body, 1)
 		file := filepath.Join(t.TempDir(), "fake.md")
@@ -229,8 +227,8 @@ func TestCheckTakesABoldNoAfterTheItemNameAsTheAnswerNotAsANewItemName(t *testin
 }
 
 func TestTheModuleHelpDoesNotSayTheInjectionCarriesTheWholeCapabilitiesFile(t *testing.T) {
-	r := dyna(checkEnv(fakePlugin(t, nil), ""), "runtime", "--help")
-	if r.code != 0 || strings.Contains(r.all(), "注入它的全文") || !strings.Contains(r.all(), "不带「能力模板」一节") {
+	r := dyna(checkEnv(fakePlugin(t), ""), "runtime", "--help")
+	if r.code != 0 || strings.Contains(r.all(), "注入它的全文") || !strings.Contains(r.all(), "不带「能力模板」一节") || !strings.Contains(r.all(), "三处找得到的全部说明") {
 		t.Fatalf("%+v", r)
 	}
 }
@@ -238,7 +236,7 @@ func TestTheModuleHelpDoesNotSayTheInjectionCarriesTheWholeCapabilitiesFile(t *t
 func TestCheckFindsItemsInSubsectionsAndIgnoresHeadingsInsideCodeFences(t *testing.T) {
 	doc := strings.Replace(fakeGood, "## 推送\n\n- **推一句话**：`fake push`\n",
 		"## 推送\n\n### 怎么推\n\n- **推一句话**：`fake push`\n\n```\n## 不是节\n```\n", 1)
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	file := filepath.Join(t.TempDir(), "fake.md")
 	writeFile(t, file, doc)
 	if r := dyna(checkEnv(root, ""), "runtime", "check", file); r.code != 0 {
@@ -247,52 +245,63 @@ func TestCheckFindsItemsInSubsectionsAndIgnoresHeadingsInsideCodeFences(t *testi
 }
 
 func TestCheckOfAFileThatCannotBeReadSaysSo(t *testing.T) {
-	root := fakePlugin(t, nil)
+	root := fakePlugin(t)
 	r := dyna(checkEnv(root, ""), "runtime", "check", filepath.Join(t.TempDir(), "nope.md"))
 	if r.code == 0 || !strings.Contains(r.all(), "nope.md") {
 		t.Fatalf("%+v", r)
 	}
 }
 
-func TestCheckWithNoFileChecksEveryDescriptionWithAMarkerInThePluginAndInHome(t *testing.T) {
-	root := fakePlugin(t, map[string]string{"fake": fakeGood, "notes": "# 细节文件，没有标记行\n\n## 随便\n"})
-	// a home environment with a problem, a home file with no marker (not a description), and a home file that is
-	// the override of the plugin's fake
+func TestCheckWithNoFileChecksEveryDescriptionWithAMarkerInTheThreePlaces(t *testing.T) {
+	// a good description in each place, a bad one in each place, and files with no marker line (not descriptions)
 	zed := "# zed\n\n标记：`ZED_SESSION`\n\n## 定时任务\n\n- **列出**：zed\n"
-	h := homeWith(t, map[string]string{"zed.md": zed, "plain.md": "# 随手记\n"})
-	r := dyna(checkEnv(root, h), "runtime", "check")
+	repo := projectWith(t, map[string]string{"fake-p.md": fakeGood, "bad-p.md": strings.Replace(zed, "zed", "bad-p", 1), "notes.md": "# 细节文件，没有标记行\n\n## 随便\n"})
+	h := homeWith(t, map[string]string{"fake-h.md": fakeGood, "bad-h.md": zed, "plain.md": "# 随手记\n"})
+	u := userRootWith(t, map[string]string{"fake-u.md": fakeGood, "bad-u.md": zed})
+	e := checkEnv(fakePlugin(t), h)
+	e["HOME"] = u
+	r := dynaIn(repo, e, "runtime", "check")
 	if r.code != 1 {
 		t.Fatalf("%+v", r)
 	}
 	out := r.all()
-	if !strings.Contains(out, "zed") || !strings.Contains(out, "「推送」") || !strings.Contains(out, "「会话管理」") {
-		t.Errorf("the home environment's problems are not reported: %s", out)
+	for _, bad := range []string{"bad-p", "bad-h", "bad-u"} {
+		if !strings.Contains(out, bad) {
+			t.Errorf("the problems of %s are not reported: %s", bad, out)
+		}
 	}
 	for _, l := range lines(out) {
-		if strings.Contains(l, "fake") || strings.Contains(l, "plain") || strings.Contains(l, "notes") {
-			t.Errorf("a good description or a file that is not one is mentioned: %s", l)
+		for _, fine := range []string{"fake-p", "fake-h", "fake-u", "plain", "notes"} {
+			if strings.Contains(l, fine) {
+				t.Errorf("a good description or a file that is not one is mentioned: %s", l)
+			}
 		}
+		if !strings.Contains(l, "「推送」") && !strings.Contains(l, "「会话管理」") && !strings.Contains(l, "「定时任务」") {
+			t.Errorf("a problem line names its section: %s", l)
+		}
+	}
+	// the three good ones alone pass, and the line names how many were checked
+	only := checkEnv(fakePlugin(t), homeWith(t, map[string]string{"fake-h.md": fakeGood}))
+	only["HOME"] = userRootWith(t, map[string]string{"fake-u.md": fakeGood})
+	ok := dynaIn(projectWith(t, map[string]string{"fake-p.md": fakeGood}), only, "runtime", "check")
+	if ok.code != 0 || len(lines(ok.stdout)) != 1 || !strings.Contains(ok.stdout, "核了 3 份") {
+		t.Fatalf("%+v", ok)
 	}
 }
 
-func TestCheckWithNoFileChecksTheMergeOfThePluginsFileAndTheLocalOverride(t *testing.T) {
-	root := fakePlugin(t, map[string]string{"fake": fakeGood})
-	// the override takes the 推送 section over with one that has no item name
-	h := homeWith(t, map[string]string{"fake.md": "## 推送\n\n只有一句话，没有加粗的项名。\n"})
-	r := dyna(checkEnv(root, h), "runtime", "check")
-	if r.code != 1 || !strings.Contains(r.all(), "「推送」") || !strings.Contains(r.all(), "「推一句话」") {
-		t.Fatalf("the merged result is what is checked: %+v", r)
-	}
-	// and an override that keeps it complete passes
-	h2 := homeWith(t, map[string]string{"fake.md": "## 推送\n\n- **推一句话**：`local push`\n"})
-	if r := dyna(checkEnv(root, h2), "runtime", "check"); r.code != 0 || !strings.Contains(r.stdout, "fake") {
+func TestCheckWithNoFileAlsoChecksADescriptionAnEarlierPlaceShadows(t *testing.T) {
+	// the same name in the project and in home: the project's is the one in use, and home's is checked too
+	repo := projectWith(t, map[string]string{"fake.md": fakeGood})
+	h := homeWith(t, map[string]string{"fake.md": "# fake\n\n标记：`FAKE_SESSION`\n\n## 推送\n\n- **推一句话**：`x`\n"})
+	r := dynaIn(repo, checkEnv(fakePlugin(t), h), "runtime", "check")
+	if r.code != 1 || !strings.Contains(r.all(), h) || !strings.Contains(r.all(), "「定时任务」") {
 		t.Fatalf("%+v", r)
 	}
 }
 
-func TestCheckWithNoFileAndNoDescriptionAtAllIsAnError(t *testing.T) {
-	root := fakePlugin(t, nil)
-	if r := dyna(checkEnv(root, ""), "runtime", "check"); r.code == 0 {
+func TestCheckWithNoFileAndNoDescriptionAtAllIsAnErrorThatPointsAtSetup(t *testing.T) {
+	root := fakePlugin(t)
+	if r := dyna(checkEnv(root, ""), "runtime", "check"); r.code != 1 || !strings.Contains(r.all(), "/idea-loop:setup") {
 		t.Fatalf("%+v", r)
 	}
 }
@@ -334,18 +343,6 @@ func TestTheRealTemplateHasASectionPerCapabilityAndEveryItemSaysWhatGoesInWhatCo
 					t.Errorf("%s / %s: no 「%s」 in %q", c, it.Name, part, it.Line)
 				}
 			}
-		}
-	}
-}
-
-func TestTheRealPluginsOwnDescriptionsPassWithNoHome(t *testing.T) {
-	r := dyna(env(), "runtime", "check")
-	if r.code != 0 || len(lines(r.stdout)) != 1 || !strings.Contains(r.stdout, "claude-desktop") || !strings.Contains(r.stdout, "magi") {
-		t.Fatalf("%+v", r)
-	}
-	for _, name := range shipped {
-		if r := dyna(env(), "runtime", "check", filepath.Join(pluginRoot(), rt.DataDir, name+".md")); r.code != 0 {
-			t.Errorf("%s: %+v", name, r)
 		}
 	}
 }

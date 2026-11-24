@@ -2,7 +2,7 @@ package pr
 
 // The review loop of one PR — kept in a local markdown file, archived to the PR when it merges.
 //
-// Harold reviews and decides in his Claude session (desktop or phone), not on GitHub: a PR thread is built for
+// Harold reviews and decides in his Claude session, not on GitHub: a PR thread is built for
 // many people answering asynchronously, and moving each of his answers from GitHub back into the session took a
 // bot identity, round markers, a background watcher and a wake-up — all to carry one person's words to the
 // session he was already in. So every report the loop makes (a Review 汇报: implement's stops and pr-review's

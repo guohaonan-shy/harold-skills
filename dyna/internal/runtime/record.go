@@ -2,9 +2,9 @@ package runtime
 
 // `runtime record`: the one line of bookkeeping after a dispatcher opened an issue session.
 //
-// The session itself is opened with the environment's own commands, written in its description (see
-// runtime/<name>.md, 「开一个 issue 会话」); this command does not know which environment that was. It only appends
-// {issue, desktopSessionId, openedAt, period} to <records-dir>/<repo>.json, which is what the morning summary reads
+// The session itself is opened with the environment's own commands, written in its description (the section
+// 「会话管理」, item 「开一个 issue 会话」); this command does not know which environment that was. It only appends
+// {issue, sessionId, openedAt, period} to <records-dir>/<repo>.json, which is what the morning summary reads
 // to find the sessions opened overnight.
 
 import (
@@ -23,12 +23,12 @@ import (
 var repoName = regexp.MustCompile(`^\w[\w.-]*$`)
 
 // record is one entry in <records-dir>/<repo>.json. The field names and their order are what the morning summary
-// reads; `desktopSessionId` holds the session id of whichever environment opened the session.
+// reads; `sessionId` holds the id of the session that was opened, as the environment that opened it reports it.
 type record struct {
-	Issue            int    `json:"issue"`
-	DesktopSessionID string `json:"desktopSessionId"`
-	OpenedAt         string `json:"openedAt"`
-	Period           string `json:"period"`
+	Issue     int    `json:"issue"`
+	SessionID string `json:"sessionId"`
+	OpenedAt  string `json:"openedAt"`
+	Period    string `json:"period"`
 }
 
 // appendRecord appends one entry to <dir>/<repo>.json (an array); an unreadable existing file is left untouched.
@@ -102,7 +102,7 @@ func Record(o RecordOptions, env func(string) string, now func() time.Time) (str
 		dir = filepath.Join(h, ".idea-loop", "dispatch")
 	}
 	n, _ := strconv.Atoi(o.Issue)
-	entry := record{Issue: n, DesktopSessionID: o.Session, OpenedAt: now().UTC().Format("2006-01-02T15:04:05.000Z"), Period: o.Period}
+	entry := record{Issue: n, SessionID: o.Session, OpenedAt: now().UTC().Format("2006-01-02T15:04:05.000Z"), Period: o.Period}
 	if err := appendRecord(dir, o.Repo, entry); err != nil {
 		return "", err
 	}

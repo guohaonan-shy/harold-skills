@@ -64,6 +64,9 @@ func Dir(env Env) string {
 	return filepath.Join(userHome(env), "home")
 }
 
+// UserHome is the user's own home directory (HOME, else what the system says).
+func UserHome(env Env) string { return userHome(env) }
+
 func userHome(env Env) string {
 	if h := env("HOME"); h != "" {
 		return h
