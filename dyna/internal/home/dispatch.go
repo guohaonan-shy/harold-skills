@@ -26,8 +26,8 @@ const DispatchFile = "DISPATCH.md"
 // Dispatches are what the dispatch loop hands out in a period: a triage session or a todo one.
 var Dispatches = []string{"triage", "todo"}
 
-// Sections are the sidebar sections the dispatch counts open sessions in: one per state with a cap.
-var Sections = []string{"triage", "in-progress", "in-review"}
+// States are the three issue states the dispatch counts open sessions in: one per state with a cap.
+var States = []string{"triage", "in-progress", "in-review"}
 
 // Period is one row of the period table.
 type Period struct {
@@ -263,7 +263,7 @@ func parseCaps(data []tableRow, caps *Caps) error {
 		}
 		slot := caps.slot(c[0])
 		if slot == nil {
-			return rowErr(r, 1, "状态", fmt.Sprintf("要写 %s，不是「%s」", strings.Join(Sections, "、"), c[0]))
+			return rowErr(r, 1, "状态", fmt.Sprintf("要写 %s，不是「%s」", strings.Join(States, "、"), c[0]))
 		}
 		if first, dup := seen[c[0]]; dup {
 			return rowErr(r, 1, "状态", fmt.Sprintf("「%s」写了两行（第 %d 行已有一行）", c[0], first))
@@ -323,13 +323,13 @@ type Dispatched struct {
 	Caps     Caps     `json:"caps"`
 	Skip     []string `json:"skip"`
 	Periods  []Period `json:"periods"`
-	Sections []string `json:"sections"`
+	States   []string `json:"states"`
 }
 
 // ReadDispatch is what the dispatch loop reads from one place, for the moment at (`HH:MM`; the clock now when
 // nil): the period that moment is in (null in a gap), what to hand out in it and how many sessions a round may
-// open (0 in a gap), the cap of each state, the projects to leave alone, the whole period table, and the sidebar
-// sections. md is DISPATCH.md ("" when there is none).
+// open (0 in a gap), the cap of each state, the projects to leave alone, the whole period table, and the three
+// states it counts sessions in. md is DISPATCH.md ("" when there is none).
 func ReadDispatch(md string, at *string, now time.Time) (Dispatched, error) {
 	var minutes int
 	if at == nil {
@@ -345,7 +345,7 @@ func ReadDispatch(md string, at *string, now time.Time) (Dispatched, error) {
 	if err != nil {
 		return Dispatched{}, err
 	}
-	out := Dispatched{At: clock(minutes), Caps: s.Caps, Skip: s.Skip, Periods: s.Periods, Sections: append([]string{}, Sections...)}
+	out := Dispatched{At: clock(minutes), Caps: s.Caps, Skip: s.Skip, Periods: s.Periods, States: append([]string{}, States...)}
 	if p := periodAt(s.Periods, minutes); p != nil {
 		out.Period = &Span{p.Start, p.End}
 		d := p.Dispatch

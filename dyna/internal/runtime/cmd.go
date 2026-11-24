@@ -130,7 +130,7 @@ func Command(d Deps) *cobra.Command {
 	})
 	show.Args = cobra.ArbitraryArgs
 
-	recordCmd := leaf("record", "记一笔：调度用环境说明里的命令开出一个 issue 会话之后，往记录目录的 <仓库名>.json 追加一条 {issue, desktopSessionId, openedAt, period}（早上汇总靠它找夜里开出的会话）；成功打印这一条的 JSON，参数缺或不对、仓库名当不了文件名、已有文件不是数组读不出来（不动它）都退出 1，stderr 说原因", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+	recordCmd := leaf("record", "记一笔：调度用环境说明里的命令开出一个 issue 会话之后，往记录目录的 <仓库名>.json 追加一条 {issue, sessionId, openedAt, period}（早上汇总靠它找夜里开出的会话）；成功打印这一条的 JSON，参数缺或不对、仓库名当不了文件名、已有文件不是数组读不出来（不动它）都退出 1，stderr 说原因", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		f := cmd.Flags()
 		var o RecordOptions
 		for name, dst := range map[string]*string{"issue": &o.Issue, "repo": &o.Repo, "period": &o.Period, "session": &o.Session, "dir": &o.Dir} {
@@ -150,7 +150,7 @@ func Command(d Deps) *cobra.Command {
 	recordCmd.Flags().String("issue", "", "issue 号")
 	recordCmd.Flags().String("repo", "", "仓库名，记录文件是 <记录目录>/<仓库名>.json")
 	recordCmd.Flags().String("period", "", "时段，todo 或 triage，早上汇总靠它找夜里开出的会话")
-	recordCmd.Flags().String("session", "", "开出的会话的 id，原样写进 desktopSessionId（桌面端是 local_<id>，其他环境是它自己的会话 id）")
+	recordCmd.Flags().String("session", "", "开出的会话的 id，原样写进 sessionId")
 	recordCmd.Flags().String("dir", "", "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）")
 
 	check := leaf("check [file]", "按能力模板核一份运行环境说明：开头有没有标记行、每个能力的一节在不在且节名对得上、模板里每一项有没有加粗项名并写了做法或「没有」；每个问题一行，带节名（和项名），有问题退出 1，全过打印一行通过。不带文件就核插件和 home 里全部带标记行的说明（home 里跟插件同名的覆盖文件按合并后的结果核）", registry.CallerSession, func(cmd *cobra.Command, args []string) error {

@@ -111,6 +111,13 @@ test('issue-dispatch: the morning summary is a step that points at its reference
   assert.match(ref, /开了几个、几个等审、几个卡住/);
 });
 
+test('issue-dispatch: the morning summary takes the session id from `sessionId` and still reads the old records\' `desktopSessionId`', () => {
+  const ref = read('skills', 'engineering', 'issue-dispatch', 'references', 'morning-summary.md');
+  assert.match(ref, /`sessionId`/, 'new records');
+  assert.match(ref, /`desktopSessionId`/, 'old records');
+  assert.match(ref, /两个字段名都认/);
+});
+
 test('issue-dispatch: the dispatcher only moves the sessions it opened', () => {
   assert.ok(!/你不移动、不收尾别的会话/.test(dispatch), 'the old 「不移动」 premise is gone');
   assert.match(dispatch, /只在开会话这一步移动它开出的会话/);

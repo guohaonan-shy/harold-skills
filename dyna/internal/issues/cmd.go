@@ -525,14 +525,14 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	queues := leaf("queues <docs>", "JSON：侧栏的三个分组名（时段、每轮新开数、各状态的上限归 `dyna home dispatch`）", sess, "",
+	queues := leaf("queues <docs>", "JSON：调度按状态数会话的三个状态（时段、每轮新开数、各状态的上限归 `dyna home dispatch`）", sess, "",
 		func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("queues", arg(args, 0), "")
 			if err != nil {
 				return err
 			}
 			s.json(struct {
-				Sections []string `json:"sections"`
+				States []string `json:"states"`
 			}{append([]string{}, Working...)})
 			return nil
 		})

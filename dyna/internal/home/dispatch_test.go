@@ -58,7 +58,7 @@ func TestDispatchPeriodsAreLeftClosedRightOpenAndCrossMidnight(t *testing.T) {
 	}
 }
 
-func TestDispatchOutputHasTheWholeTableTheCapsAndTheSections(t *testing.T) {
+func TestDispatchOutputHasTheWholeTableTheCapsAndTheStates(t *testing.T) {
 	q, err := ReadDispatch("", ptr("23:30"), time0)
 	if err != nil {
 		t.Fatal(err)
@@ -66,7 +66,7 @@ func TestDispatchOutputHasTheWholeTableTheCapsAndTheSections(t *testing.T) {
 	if q.At != "23:30" || q.Period == nil || *q.Period != (Span{"22:00", "08:00"}) || *q.Dispatch != "todo" || q.PerRound != 1 {
 		t.Fatalf("%+v", q)
 	}
-	if !reflect.DeepEqual(q.Periods, defaultPeriods()) || !reflect.DeepEqual(q.Sections, []string{"triage", "in-progress", "in-review"}) {
+	if !reflect.DeepEqual(q.Periods, defaultPeriods()) || !reflect.DeepEqual(q.States, []string{"triage", "in-progress", "in-review"}) {
 		t.Fatalf("%+v", q)
 	}
 	if q.Caps.Triage == nil || *q.Caps.Triage != 6 || q.Caps.InProgress != nil || q.Caps.InReview != nil || q.Skip == nil || len(q.Skip) != 0 {
@@ -277,9 +277,9 @@ func TestDispatchRefusesABrokenCapRowNamingTheLineTheCellAndHowToWriteIt(t *test
 	}
 }
 
-func TestDispatchSectionsAreTheOnesTheCapsAreWrittenFor(t *testing.T) {
+func TestDispatchStatesAreTheOnesTheCapsAreWrittenFor(t *testing.T) {
 	var c Caps
-	for _, s := range Sections {
+	for _, s := range States {
 		if c.slot(s) == nil {
 			t.Errorf("no cap slot for %s", s)
 		}

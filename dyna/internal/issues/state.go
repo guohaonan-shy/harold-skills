@@ -39,8 +39,8 @@ var Labeled = []string{"triage", "todo", "in-progress", "in-review"}
 // Closed maps the closed states to GitHub's close reason.
 var Closed = map[string]string{"done": "completed", "canceled": "not planned"}
 
-// Working are the states a session works in: each has a sidebar section of that name.
-var Working = home.Sections
+// Working are the states a session works in, the three the dispatch counts open sessions in.
+var Working = home.States
 
 var about = map[string]string{
 	"triage":      "验证过，要人评估（grill、设计）",
