@@ -28,11 +28,11 @@ home 固定文案「证据」一节是总纲，这里只写它之外的。
 
 | 形态 | 让人看到什么 | 工具 | 做法 |
 |---|---|---|---|
-| 截图标注 | 单个画面上的问题：哪一处不对 | 『浏览器』截组件，`dyna design flow compose` 单格加光圈 | `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/screenshot.md` |
-| UI 流程图 | 用户路径整体摆出来：交互哪里变了，站在用户的角度快速过一遍 | `dyna design flow compose` | `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/ui-flow.md` |
-| 图表 | 结构、时序、状态、数量对比 | excalidrawer 的入口 skill | `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/chart.md` |
-| 动图 | 构思、设计、修改的过程中，当前或改后的交互和动效是什么样 | Playwright 帧序列或录屏 + ffmpeg | `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/gif.md` |
-| 录屏 | 端到端的交付：一条流程完整走下来，放进 PR 里验收 | Playwright `recordVideo` / 模拟器录屏 + ffmpeg 转 mp4 | `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/video.md` |
+| 截图标注 | 单个画面上的问题：哪一处不对 | 『浏览器』截组件，`dyna design flow compose` 单格加光圈 | `references/screenshot.md` |
+| UI 流程图 | 用户路径整体摆出来：交互哪里变了，站在用户的角度快速过一遍 | `dyna design flow compose` | `references/ui-flow.md` |
+| 图表 | 结构、时序、状态、数量对比 | excalidrawer 的入口 skill | `references/chart.md` |
+| 动图 | 构思、设计、修改的过程中，当前或改后的交互和动效是什么样 | Playwright 帧序列或录屏 + ffmpeg | `references/gif.md` |
+| 录屏 | 端到端的交付：一条流程完整走下来，放进 PR 里验收 | Playwright `recordVideo` / 模拟器录屏 + ffmpeg 转 mp4 | `references/video.md` |
 | 表或一行例子 | 规则覆盖了谁、数值对不对 | 正文 | 正文：场景 × 有没有覆盖，或输入 → 之前的结果 → 现在的结果 |
 
 图放在哪、文件怎么起名、要不要上传，由调用你的 skill 定，这里不管。

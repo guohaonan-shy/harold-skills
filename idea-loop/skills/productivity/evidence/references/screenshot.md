@@ -21,6 +21,6 @@
    }
    ```
 
-3. **出图**：`dyna design flow compose shot.json out.png`。JSON 的全部字段、命令的校验和解析不到 playwright 时的截图办法读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/ui-flow.md`。
+3. **出图**：`dyna design flow compose shot.json out.png`。JSON 的全部字段、命令的校验和解析不到 playwright 时的截图办法读 `ui-flow.md`。
 
 完成条件：out.png 里光圈落在要看的那一处，说明写得出「对的样子」是什么。

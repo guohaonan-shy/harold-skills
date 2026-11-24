@@ -96,10 +96,18 @@ test('「证据的几种形态」是一张六行的形态表，每行指向的�
   const rows = section.split('\n').filter((l) => l.startsWith('|')).slice(2); // 去掉表头和分隔行
   assert.equal(rows.length, 6, `形态表应有六行，实际 ${rows.length}`);
   assert.deepEqual(rows.map((r) => r.split('|')[1].trim()), ['截图标注', 'UI 流程图', '图表', '动图', '录屏', '表或一行例子']);
-  const pointed = rows.flatMap((r) => [...r.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/(skills\/productivity\/evidence\/references\/[\w.-]+\.md)/g)].map((m) => m[1]));
+  // 做法文件写相对路径（review 第 1 轮 C1）：evidence 不在开场注入，读自己 references/ 下的文件照旧写相对路径
+  const pointed = rows.flatMap((r) => [...r.matchAll(/`(references\/[\w.-]+\.md)`/g)].map((m) => m[1]));
   assert.deepEqual(pointed.map((p) => p.split('/').pop()), ['screenshot.md', 'ui-flow.md', 'chart.md', 'gif.md', 'video.md']);
-  for (const p of pointed) assert.ok(existsSync(join(pluginRoot, p)), `做法文件不存在：${p}`);
+  for (const p of pointed) assert.ok(existsSync(join(evidenceDir, p)), `做法文件不存在：${p}`);
   assert.doesNotMatch(section, /mermaid/i);
+});
+
+test('evidence 的正文和它自己的做法文件指自己 references/ 下的文件时写相对路径，不写插件根下的完整路径（#438 工单 02，review 第 1 轮 C1）', () => {
+  const files = [join(evidenceDir, 'SKILL.md'), ...readdirSync(join(evidenceDir, 'references')).map((f) => join(evidenceDir, 'references', f))];
+  for (const f of files) {
+    assert.doesNotMatch(readFileSync(f, 'utf8'), /\$\{CLAUDE_PLUGIN_ROOT\}|skills\/productivity\/evidence\//, `${relative(pluginRoot, f)} 还写着完整路径`);
+  }
 });
 
 test('截图标注、图表、录屏三份做法各自写全该写的，图表没有 mermaid 退路（#438 工单 02）', () => {
