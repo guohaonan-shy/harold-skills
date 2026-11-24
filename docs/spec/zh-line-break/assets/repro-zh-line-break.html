@@ -1,0 +1,35 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8">
+<style>
+body{font-family:"PingFang SC","Hiragino Sans GB",sans-serif;margin:0;padding:24px;background:#f6f6f4;color:#1d1d1b}
+.row{display:flex;gap:32px}
+.col h2{font-size:15px;font-weight:600;margin:0 0 12px;color:#555}
+.card{width:204px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.card h3{font-size:20px;line-height:1.35;margin:0 0 8px}
+.card p{font-size:15px;line-height:1.6;margin:0}
+.rule .zh{word-break:keep-all;overflow-wrap:anywhere}
+.rule h3{text-wrap:balance}
+.rule p{text-wrap:pretty}
+</style>
+<div class="row">
+ <div class="col plain"><h2>浏览器默认（改前）</h2><div id="a"></div></div>
+ <div class="col rule"><h2>按词断行 + 平衡折行（改后）</h2><div id="b"></div></div>
+</div>
+<script>
+const cards=[
+ ["报销单据已经全部审核通过","财务部门会在三个工作日内把款项打到你的工资卡上，如有疑问请联系人事部门。"],
+ ["下周例会改到周三下午举行","会议室换成三楼东侧的大会议室，请提前十分钟到场并准备好本周进度。"],
+ ["新版本的通知设置已经上线","你可以在个人设置里分别关闭邮件提醒和站内消息，关闭后仍会收到安全通知。"]];
+const seg=new Intl.Segmenter('zh',{granularity:'word'});
+const OPEN=/^[（《“‘「【]$/, CLOSE=/^[，。、；：！？）》”’」】\s]$/;
+function units(t){const out=[];let pend='';
+ for(const {segment:s} of seg.segment(t)){
+  if(OPEN.test(s)){pend+=s;continue}
+  if(out.length&&(CLOSE.test(s)||[...s].length===1&&!pend)){out[out.length-1]+=s;continue}
+  out.push(pend+s);pend=''}
+ if(pend)out.push(pend);return out}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function render(el,rule){for(const [h,p] of cards){
+ const f=t=>rule?units(t).map(esc).join('<wbr>'):esc(t);
+ el.insertAdjacentHTML('beforeend',`<div class="card"><h3 class="zh">${f(h)}</h3><p class="zh">${f(p)}</p></div>`)}}
+render(document.getElementById('a'),false);render(document.getElementById('b'),true);
+</script></html>

@@ -31,7 +31,7 @@ issues: [476]
 - 一个营销页的冻结画布：中文标题手写 `<wbr>` 加 `word-break: keep-all`。同一份画布的注释记了一个坑：390px 宽度下，一个整句不许断的中文标题伸到了 437px，撑出了容器。
 - `text-wrap: balance` 出现在 31 个文件里，`text-wrap: pretty` 10 个（含历史画布）。
 
-复现材料：`.tmp/to-spec/zh-line-break/repro/index.html`（本地，不提交）。
+复现材料：`assets/repro-zh-line-break.html`（经静态服务器打开）。
 
 ### 根因
 
@@ -87,7 +87,7 @@ designer 签字前的排版检查只列了行长、行距、字号这些阈值�
 - **seam**：仓库已有的文档测试（`npm test` 跑的 `*.test.mjs`），这次只依赖其中的 `no-project-leak.test.mjs`。能抓到：规则里混进了别的项目的名字；漏掉：designer 实际读不读、照不照做，这只能等下一次带中文界面的设计看画布。
 - **增量功能测试**：
   - 前置：本 PR 的插件。
-  - 步骤：读 `critique.md`「Typography thresholds」；打开复现页 `.tmp/to-spec/zh-line-break/repro/index.html`，按规则第 4 点量。
+  - 步骤：读 `critique.md`「Typography thresholds」；打开复现页 `assets/repro-zh-line-break.html`，按规则第 4 点量。
   - 期望：这一节有中文断行一条，含「什么时候算问题」「怎么做」「两个退路」「怎么量」四部分；复现页右栏量出词中间断开 0 处，左栏不是 0。
   - 覆盖：期望行为 1。
 - **照着谁写**：`critique.md` 同一节的「Line length」「Tight leading」：一条一个可量的阈值加做法。
