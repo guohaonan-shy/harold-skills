@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#68 的 issue 会话（2026-10-26）：spec 初稿里有一道待定「段比容器可见区高时怎么拍成一张」，三个选项的例子写的是「假设列表段 2000 高」，人追问「这些case是针对当时在toeflair项目里的什么内容开设的？」，才摆出练习列表、历史、账单、设置这几页（决定记录 docs/raw/decisions/68.md 候选 1，候选池 2026-10-26-examples-from-real-material）。原现场的真实材料是目标项目设计档案里各页面文件的「截图说明」，不在本仓库里；回放里取 issue 正文点名的页面作为可取的真实材料",
+  "commit": "1444794865175d1fe8a7330a7c5d72c209bca8c0",
+  "prompt": "/idea-loop:to-spec 把下面这个 issue 起草成一份 spec（这个仓库就在当前目录）。\n\nissue guohaonan-shy/harold-skills#68：idea-loop 设计档案：内层容器滚动的页面，分段脚本量不到首屏以下\n\n## 问题\n\n分段脚本（`design-archive-sections.mjs`）只量**文档**的滚动高度。页面整屏高、内容在内层容器里自己滚动时，文档高度等于视口，脚本就判断「不超过一屏、不用分段」，结果只拍到首屏，首屏以下的内容档案里没有图。\n\n## 实测\n\nToeflair 2026-10-21 全站初扫：应用外壳（`AppShell`）是 `h-screen`，内容在 `<main>` 里滚动。练习列表四页、历史、设置、账单共 7 页都是这样，只拍了首屏，首屏以下改用文字写进状态文件。\n\n## 想要的\n\nmeasure 先找出真正在滚的元素（页面上 `scrollHeight > clientHeight` 且 `overflow-y` 是 auto / scroll 的最大那个容器），量它的高度、在它里面滚动和定位；shoot 截图时也滚这个容器。initial-scan.md 第 7 点「页面比主视口高」的判断改成「滚动容器的内容比它自己高」。\n\n我不在场，不会回复你：不要 git commit、git push、gh 的任何写操作（包括 issues handoff / issues open），不要合并，不要起 Agent；issue 的现状自己在仓库里核；spec 文件照 skill 的规则写进工作区。最后一段回复写明你停在哪一步：spec 草稿已经写好、交给我看的那一刻，以及 spec 的路径。",
+  "stop_at": "spec 草稿写进 docs/spec/<slug>/<slug>.md、交给人看的那一刻",
+  "question": "spec 里要人定的那道待定题，每个选项配的例子，是不是取自 issue 点名的真实页面（练习列表、历史、设置、账单）或这个仓库里已有的真实文件，并写明是哪一页、哪个文件，而不是自己设想的数字？",
+  "quote": "这些case是针对当时在toeflair项目里的什么内容开设的？",
+  "size": "small",
+  "size_basis": "只驱动 to-spec 一个 skill（它调 evidence 等都是读 skill 文字）到 spec 草稿写好的那一刻，题里的例子是文字和表，不要求出图；不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送、gh 写操作和 Agent，没有付费外部服务"
+}
