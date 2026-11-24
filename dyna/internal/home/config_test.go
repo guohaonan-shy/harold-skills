@@ -15,10 +15,13 @@ import (
 // temporary HOME, so the machine's real ~/.claude and ~/home are never touched.
 
 const (
-	claudeMD  = "# 我的规矩\n\n- 用中文回复\n- 先说结论\n\n## 沟通\n\n别用缩写。\n"
+	claudeMD  = "# 我的规矩\n\n- 用中文回复\n- 先说结论\n\n## 说话\n\n别用缩写。\n"
 	homeAgent = "# AGENTS\n\n## 设备地图\n\n去 projects/ 查项目事实。\n\n## 项目\n\n- example-app（示例）: ~/code/example-app. Clone from https://example.test/acme/example-app if missing.\n"
 	key       = "idea-loop@test-market"
 )
+
+// rulesV1 is the plugin's fixed text as the tests have it: the three sections idea-loop owns, nothing else.
+const rulesV1 = "## 思考与决策\n\n先确认问题。\n\n- **只由我做**：合并代码。\n\n## 沟通\n\n三句话：问题、解法、要对方什么。\n\n## 证据\n\n关于现状的话带出处和数字。\n"
 
 var baseSettings = `{
   "env": { "SOME_TOKEN": "secret-value", "OTHER": "1" },
@@ -55,6 +58,7 @@ func newRig(t *testing.T, o rigOpts) rigT {
 	r.claudeMd = filepath.Join(r.claude, "CLAUDE.md")
 	r.plugin = filepath.Join(root, ".claude", "plugins", "cache", "test-market", "idea-loop", "1.0.0")
 	write(t, r.plugin, ".claude-plugin/plugin.json", `{"name":"idea-loop"}`)
+	write(t, r.plugin, home.RulesFile, rulesV1)
 	if o.settings == nil || *o.settings != "" {
 		s := baseSettings
 		if o.settings != nil {
@@ -241,7 +245,7 @@ func TestConfigApplyAgainChangesNoFileAndMakesNoBackup(t *testing.T) { // "runni
 	r := newRig(t, rigOpts{})
 	r.cfg("apply").ok(t)
 	before := snapshot(t, r.root)
-	if got := strings.Count(r.cfg("plan").ok(t).out, "已是"); got != 3 {
+	if got := strings.Count(r.cfg("plan").ok(t).out, "已是"); got != 4 {
 		t.Fatalf("plan says 已是 %d times", got)
 	}
 	again := r.cfg("apply").ok(t)
@@ -284,20 +288,19 @@ func TestConfigClaudeMdLinkedElsewhereIsLeftForAHuman(t *testing.T) { // "CLAUDE
 	if plan := r.cfg("plan").ok(t); !strings.Contains(plan.out, "已是别处的软链，要人处理") {
 		t.Fatal(plan.out)
 	}
-	agentsBefore := readFile(t, filepath.Join(r.home, "AGENTS.md"))
 	res := r.cfg("apply").ok(t)
-	if target, _ := os.Readlink(r.claudeMd); target != elsewhere || readFile(t, elsewhere) != "not ours\n" || readFile(t, filepath.Join(r.home, "AGENTS.md")) != agentsBefore {
-		t.Fatal("touched what is not ours")
+	if target, _ := os.Readlink(r.claudeMd); target != elsewhere || readFile(t, elsewhere) != "not ours\n" || readFile(t, filepath.Join(r.home, "AGENTS.md")) != homeWithRules(rulesV1) {
+		t.Fatal("touched what is not ours (AGENTS.md gets the rules and nothing else)")
 	}
 	if settingsOf(t, r)["enabledPlugins"].(map[string]any)[key] != true || !strings.Contains(res.out, "要人处理") {
-		t.Fatal("the other two still go ahead, and the output says what is left:", res.out)
+		t.Fatal("the other three still go ahead, and the output says what is left:", res.out)
 	}
 }
 
 func TestConfigWithNoClaudeMdTheLinkIsCreatedAndAgentsIsUntouched(t *testing.T) { // "no CLAUDE.md at all…"
 	r := newRig(t, rigOpts{claudeMd: ptr("")})
 	r.cfg("apply").ok(t)
-	if !isLink(r.claudeMd) || readFile(t, filepath.Join(r.home, "AGENTS.md")) != homeAgent {
+	if !isLink(r.claudeMd) || readFile(t, filepath.Join(r.home, "AGENTS.md")) != homeWithRules(rulesV1) {
 		t.Fatal("link or AGENTS.md")
 	}
 	if _, err := os.Stat(filepath.Join(r.home, ".backup", backups(t, r)[0], "CLAUDE.md")); err == nil {
@@ -314,7 +317,7 @@ func TestConfigValuesAlreadyInPlaceNeedNoChangeAndNoBackup(t *testing.T) { // "v
 	if err := json.Unmarshal([]byte(r.cfg("plan", "--json").ok(t).out), &plan); err != nil {
 		t.Fatal(err)
 	}
-	if plan[0].Status != "already" || plan[1].Status != "already" || plan[2].Status != "todo" {
+	if plan[0].Status != "already" || plan[1].Status != "already" || plan[2].Status != "todo" || plan[3].Status != "todo" {
 		t.Fatalf("%+v", plan)
 	}
 	r.cfg("apply", "--only", "1,2").ok(t)
@@ -366,7 +369,7 @@ func TestConfigPlanJSONHasOneRecordPerSelectedItemInItemOrder(t *testing.T) { //
 func TestConfigRefusesWithoutWritingAnything(t *testing.T) { // "refuses without writing: home missing, unknown --only item, unparsable settings.json, unknown command"
 	r := newRig(t, rigOpts{})
 	before := snapshot(t, r.root)
-	for _, args := range [][]string{{"apply", "--only", "4"}, {"bogus"}} {
+	for _, args := range [][]string{{"apply", "--only", "5"}, {"bogus"}} {
 		if res := r.cfg(args...); res.code != 1 || res.err == "" {
 			t.Errorf("%v: %+v", args, res)
 		}

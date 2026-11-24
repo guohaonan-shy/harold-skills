@@ -2,7 +2,7 @@
 
 `../SKILL.md` 的「跑一轮」第 2 步读这份。**这一轮由调用 pr-review 的主会话自己做，不起审查者子代理。** 这一步只读代码：不改代码、不提交、不推送；不碰 PR（描述、评论、合并）和 review loop 文件（SKILL.md 第 3 步才往里追加）；处置只标不执行，也不宣布能不能合并。
 
-开工先读 [review-standards.md](review-standards.md)（两轴问什么、什么算问题、怎么验、每条怎么标处置）；处置怎么判看 `idea-loop:decision-rules`，汇报的写法与证据形式看 `idea-loop:pr` 的「Review 汇报」，配图看 `idea-loop:decision-rules` 的「配什么图」。
+开工先读 [review-standards.md](review-standards.md)（两轴问什么、什么算问题、怎么验、每条怎么标处置）；处置怎么判看它的「依据：只认四种」，停不停下看会话已加载的用户规则（`~/.claude/CLAUDE.md`），汇报的写法与证据形式看 `idea-loop:pr` 的「Review 汇报」，配图看 `idea-loop:evidence` 的「配什么图」。
 
 这一轮的工作目录是 `.tmp/pr-review/<PR 号>/round-<N>/`，配图放 `.tmp/pr-review/<PR 号>/evidence/`。要用到：worktree 路径（集成分支，已推送）、`<owner/repo>`、PR 号、基准分支、轮次 N、spec 路径（`<项目目录>/docs/spec/<spec-slug>/<spec-slug>.md`，给 Codex 的也是它）和同目录 `tickets/`、review loop 文件（从里面读之前几轮的汇报和人的批示，**尤其是人推翻过的条目**）。有设计产物时还有 UI 走查的发现文件 `ui-findings.json`（路径见 [ui-walkthrough.md](ui-walkthrough.md)）。
 
@@ -54,9 +54,9 @@ dyna agent codex run --model gpt-5.6-sol --effort high --prompt-file <工作目�
 2. **Spec 候选逐条核实**（review-standards 的「Spec 轴」），标明 `behavior`：
    - **行为问题**：真的走一遍，把复现结果做成最快能让人看懂的证据，标明 `on_screen`；界面上看得到的必须有取自实现的截图。**复现不了的不做证据**，让它在第 5 步被校验掉，原因写「没复现：<卡在哪>」。
    - **非行为问题**：用 diff 核实，没有证据块。
-3. **给每条候选标处置**，照 review-standards 的「每条候选标处置」，每条都要标。改动行以外的存量只在「Standards 轴」那两种例外下报。
+3. **给每条候选标处置**，照 review-standards 的「每条候选标处置」，每条都要标。改动行以外的存量只在「Standards 轴」那三种例外下报。
 4. **写成拍板的人读得懂的样子**：照 review-standards 的「每条写成拍板的人读得懂的样子」和 `idea-loop:pr` 的「Review 汇报」。位置全放 `locations`。
-5. **校验**：`dyna pr candidates submit candidates.json <merge-base> <证据目录> <N>`。`discarded` 进「丢弃的候选」。`rewrite` 不为空（退出码 2）就改写那几条再跑，直到为空；校验过了才算候选交齐。只有 `spec` 与 `standards` 里的条目进汇报。
+5. **校验**：`dyna pr candidates submit candidates.json <merge-base> <证据目录> <N> --spec <spec 路径>`（不带 `--spec`，种类是「目标」的依据会被丢弃）。`discarded` 进「丢弃的候选」。`rewrite` 不为空（退出码 2）就改写那几条再跑，直到为空；校验过了才算候选交齐。只有 `spec` 与 `standards` 里的条目进汇报。
 6. **编号**：UI 走查条目原来的 `U1` 等编号作废，Spec 依次 `S1`、`S2`……，Standards 依次 `C1`、`C2`……。
 
 ## 写出汇报

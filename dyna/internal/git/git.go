@@ -45,26 +45,60 @@ func Command(d Deps) *cobra.Command {
 const repoUsage = "仓库目录（相当于 git -C <目录>）；不给就用当前目录"
 
 func commitCommand(d Deps) *cobra.Command {
-	c := leaf("commit <文件>...", "只 add 给定的文件并提交，工作区和暂存区里别的改动不进这个提交；打印新提交的完整 SHA",
+	c := leaf("commit [文件]...", "只 add 给定的文件并提交，工作区和暂存区里别的改动不进这个提交；--empty 提没有文件改动的提交；打印新提交的完整 SHA",
 		"dyna git commit --repo <目录> -m <说明> <文件>...", func(cmd *cobra.Command, args []string) error {
 			repo, _ := cmd.Flags().GetString("repo")
 			msgs, _ := cmd.Flags().GetStringArray("message")
+			if empty, _ := cmd.Flags().GetBool("empty"); empty {
+				return commitEmpty(d, repo, msgs, args)
+			}
+			if len(args) == 0 {
+				return nexterr.New("dyna git commit --repo <目录> -m <说明> <文件>...（要提没有文件改动的提交，加 --empty、不给文件）", "没有给文件：要提交哪些文件得写出来")
+			}
 			return commit(d, repo, msgs, args)
 		})
-	c.Args = cobra.MinimumNArgs(1)
+	c.Args = cobra.ArbitraryArgs
 	c.Flags().String("repo", "", repoUsage)
+	c.Flags().Bool("empty", false, "提一个没有文件改动的提交：只给 -m，不给文件；暂存区里别的改动不进这个提交")
 	c.Flags().StringArrayP("message", "m", nil, "提交说明；可重复，每个 -m 一段（跟 git commit 一样，末尾的署名行单独一段）")
 	return c
 }
 
-func commit(d Deps, repo string, msgs, files []string) error {
-	empty := true
+// hasMessage reports whether at least one -m holds text.
+func hasMessage(msgs []string) bool {
 	for _, m := range msgs {
 		if strings.TrimSpace(m) != "" {
-			empty = false
+			return true
 		}
 	}
-	if empty {
+	return false
+}
+
+// commitEmpty makes a commit that changes no file. It is `commit --only` with nothing named, so what is staged
+// for other work stays staged and out of the commit, as in the file form.
+func commitEmpty(d Deps, repo string, msgs, files []string) error {
+	if len(files) > 0 {
+		return nexterr.New("dyna git commit"+repoArg(repo)+" -m <说明> "+strings.Join(files, " "),
+			"--empty 提的是没有文件改动的提交，不能再给文件（%s）：要提交文件就去掉 --empty", strings.Join(files, "、"))
+	}
+	if !hasMessage(msgs) {
+		return nexterr.New("dyna git commit --empty"+repoArg(repo)+" -m <说明>", "没有提交说明：-m 要给，而且不能是空的")
+	}
+	if merging(repo) {
+		return nexterr.New(commitNext(repo, "<说明>"), "合并还没提交，先把它提交，再提空提交")
+	}
+	cargs := []string{"commit", "-q", "--allow-empty", "--only"}
+	for _, m := range msgs {
+		cargs = append(cargs, "-m", m)
+	}
+	if _, err := gitrun.Run(repo, cargs...); err != nil {
+		return err
+	}
+	return printHead(d, repo)
+}
+
+func commit(d Deps, repo string, msgs, files []string) error {
+	if !hasMessage(msgs) {
 		return nexterr.New("dyna git commit --repo <目录> -m <说明> <文件>...", "没有提交说明：-m 要给，而且不能是空的")
 	}
 	for _, f := range files {

@@ -10,7 +10,7 @@ tools: Read, Grep, Glob, Bash, Write, Skill, Agent
 
 ## 开工
 
-用 Skill 工具调 `idea-loop:wiki-conventions`（目录、frontmatter、有 `GLOSSARY.md` 时的「术语表」）、`idea-loop:issues`（issue 状态、spec 了结与否、`dyna spec check` 报的旧平铺布局）、`idea-loop:decision-rules`；运行环境的能力做法用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
+用 Skill 工具调 `idea-loop:wiki-conventions`（目录、frontmatter、有 `GLOSSARY.md` 时的「术语表」）、`idea-loop:issues`（issue 状态、spec 了结与否、`dyna spec check` 报的旧平铺布局）；运行环境的能力做法用 `dyna runtime show <能力>` 取。然后读 `${CLAUDE_PLUGIN_ROOT}/skills/productivity/dreaming/references/docs-reconcile.md`：纪律、判定、处置表都在那里，按它做。提议表的行怎么写按同目录的 `proposal-table.md`。
 
 ## 你收到的
 

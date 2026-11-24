@@ -3,7 +3,7 @@
  * plugin) because the file it reads is the repo's own and does not ship with the plugin.
  *
  * The exit is: issues routed on the spot (not left in backlog for a weekly triage), and the effect report PR
- * every 3 days; and SEO auto-merge is named as an exception to the decision-rules guardrail.
+ * every 3 days; and SEO auto-merge is named as an exception to the user rule 「只由我做」.
  *
  * ROOT_AGENTS_MD points the test at another copy of the file (e.g. the text before the change).
  */
@@ -35,8 +35,8 @@ test('AGENTS.md item 1: the exits are the issues routed on the spot and the 3-da
   assert.match(seoScan, /每 3 天[^。]*效果报告 PR/);
 });
 
-test('AGENTS.md item 1: SEO auto-merge is written as an exception to the decision-rules guardrail', () => {
-  assert.match(seoScan, /自动合并[^。]*`decision-rules`「护栏」的一条例外/);
+test('AGENTS.md item 1: SEO auto-merge is written as an exception to the user rule 「只由我做」', () => {
+  assert.match(seoScan, /自动合并[^。]*「只由我做」[^。]*的一条例外/);
   assert.match(seoScan, /`type:seo\/\*`/);
   assert.match(seoScan, /三条都满足/);
 });

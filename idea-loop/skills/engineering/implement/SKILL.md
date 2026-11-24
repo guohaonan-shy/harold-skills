@@ -5,7 +5,7 @@ description: 把一份已切好工单的 spec 实现完。spec 的工单已切�
 
 **把一份已经切好工单的 spec 做完。** 调用这个 skill 的会话是**编排者**：派工、核对、落地、回收，停下时把要人拍板的事交给人（决定题只由人答，PR 上不和人往来）。一张工单怎么做归 `idea-loop:implementer`：实现代码、验证、合并冲突都是它的，编排者不进它的 worktree 改东西。
 
-开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr` 和 `idea-loop:issues`。交回里的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照 `idea-loop:decision-rules`。
+开工先用 Skill 工具调 `idea-loop:wiki-conventions`（看它的「中间产物」；下文 `.tmp/…` 都指集成分支 worktree 的 `.tmp/`）、`idea-loop:pr` 和 `idea-loop:issues`。交回里的「按现有做法定的」、本次修的存量、Review 汇报的决定题都照用户规则（`~/.claude/CLAUDE.md` 的「思考与决策」）。
 
 ## 前提
 
@@ -26,7 +26,7 @@ scope 和工单照 spec 与 `idea-loop:to-ticket`：编排者不改 scope、不�
 
 - **已落地**：`dyna spec landed <base>` 列出的 commit（message 里有一行 `Ticket: <NN>-<slug>` 的）。用这条命令，不按 git 的 trailer 读：环境会在 message 末尾另起一段追加署名，按 trailer 读会读空（坑）。
 - **等决定**：`.tmp/implement/<spec-slug>/pending.md`，每条记工单号、问题、选项（各带代价和能否回滚）、推荐、半成品的 worktree 和分支、原执行方的 agent id（起它时 Agent 工具返回的那个；会话压缩或重启后靠它找回）。丢了就从 review loop 文件还原（Review 汇报里有批示和「做了什么」的就算已决定）。
-- **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为无关存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接），回收后就找不回来了；写进 Review 汇报后清空。
+- **已按规则处理**：`.tmp/implement/<spec-slug>/handled.md`。每落地一张就把它交回的「按现有做法定的」、标「存量本次修」的 `found`、为不影响本次改动的存量开的 issue 记进来（工单号 + 做了什么 + 依据，开了 issue 的带链接）。执行方回收后这些内容就找不回来了，所以落地时立刻记；写进 Review 汇报后清空。
 - **PR 清单**：`.tmp/implement/<spec-slug>/prs.md`（`idea-loop:pr` 的「开 draft PR」写的）。
 - 同目录还有 `evidence/`（素材）、`notes/`（explorer 笔记）、`browser.lock`。在跑的执行方记在会话里。
 
@@ -58,7 +58,7 @@ scope 和工单照 spec 与 `idea-loop:to-ticket`：编排者不改 scope、不�
 | `blocked` | 半成品已提交在它的分支上，worktree 干净 |
 | `failed` | 不核，直接进「卡住一张，别的接着做」 |
 
-不过就 SendMessage 退回同一个执行方并说清哪条，第二次还不过按 `failed`。`by_existing_practice` 没带现存实例、commit 快进不了（ff 不了）、`found` 里有跟这次无关的存量要开 issue：读 [references/landing-branches.md](references/landing-branches.md)。
+不过就 SendMessage 退回同一个执行方并说清哪条，第二次还不过按 `failed`。`by_existing_practice` 没带现存实例、commit 快进不了（ff 不了）、`found` 里有不影响本次改动的存量要开 issue：读 [references/landing-branches.md](references/landing-branches.md)。
 
 **落地**：只快进，不产生合并提交。工单在 home 里、commit 只含代码：落地后先照 [references/landing-branches.md](references/landing-branches.md) 的「勾框」勾工单并 `commit` 到 home，再照「回收」收掉它的 worktree，再分拣它的交回：
 
@@ -67,8 +67,8 @@ scope 和工单照 spec 与 `idea-loop:to-ticket`：编排者不改 scope、不�
 | `human_verify` | 下次 Review 汇报的「要你看的」 |
 | `verified` | PR 描述 |
 | `by_existing_practice`、标「存量本次修」的 `found` | handled |
-| 标「spec 缺口」的 `found` | pending，当决定题 |
-| 其余 `found`（跟这次无关的存量） | 开 issue，见 landing-branches |
+| 标「spec 缺口」的 `found` | 照用户规则的「思考与决策」判：落在「只由我做」或「停下问我」里的进 pending，当决定题；其余自己定，选目标达成的那个做法，进 handled 并写明目标原文，要动工单或 spec 的追加一格、补记，照「重派」做 |
+| 其余 `found`（不影响本次改动的存量） | 开 issue，见 landing-branches |
 
 ## 卡住一张，别的接着做
 

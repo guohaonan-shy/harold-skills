@@ -68,6 +68,7 @@
 | [decisions/305](decisions/305.md) | conversation | 2026-11-14 | 决定记录 —— #305 的 issue 会话：改了插件的 PR 按三档升版本号（PR #316），retro 候选与 #292 重复、不另提 |
 | [decisions/199](decisions/199.md) | conversation | 2026-11-14 | 决定记录 —— #199 的 issue 会话：跨仓库的决定记录写仓库加路径（PR #320），retro 无候选 |
 | [decisions/314](decisions/314.md) | conversation | 2026-11-14 | 决定记录 —— #314 的 issue 会话：retro 摆候选时给去处推荐（PR #319），版本改定 patch，retro 候选「0.x 行为改动升 patch」进候选池 |
+| [decisions/231](decisions/231.md) | conversation | 2026-11-16 | 决定记录 —— #231 的 issue 会话：目标改成「点着走 + 喂音频」，沙箱题人提第三条路，麦克风流程改走 playwright-cli 命名会话、MCP 不动、magi 不做；一条候选不批 |
 | [decisions/164](decisions/164.md) | conversation | 2026-11-16 | 决定记录 —— #164 的 triage 会话：OpenSEO 被别处配置顶替时以插件那份为准（不迁就别的名字），候选「插件自带 MCP 以插件那份为准」开 #345；11-20 todo 会话推翻、改走禁用清单（PR #397），候选并进 #427，一条不批 |
 | [decisions/212](decisions/212.md) | conversation | 2026-11-16 | 决定记录 —— #212：triage 定修法为只换两份插件之间不同的文件；todo 会话夜间做到 review 完，评测材料按推荐不换，合并 PR #405（0.1.38），删掉失效的夜间回放定时任务；无 retro 候选 |
 | [decisions/192](decisions/192.md) | conversation | 2026-11-16 | 决定记录 —— #192 的 triage 会话：浏览器测试移出全量命令并加每例超时（按推荐）；无 retro 候选 |
@@ -99,10 +100,12 @@
 | [[2026-11-02-issue-intake-priority-grill]] | conversation | 2026-11-02 | 讨论 —— issue 越做越多：开 issue 时就挂模块、判 P0，调度只给 P0 和本期焦点出卡片，停掉 cloud 整合 |
 | [[2026-10-30-issue-consolidation-grill]] | conversation | 2026-10-30 | 讨论 —— 相关 issue 整合成根 issue：cloud 定时任务、根与子 issue、一个会话多份 spec 再拆子会话实现 |
 | [[2026-11-05-issue-triage-grill]] | conversation | 2026-11-05 | grill —— #243 issue-triage：issue-verify 的去留、什么进 todo、每周分拣怎么装、P0 先复现、「不做」清单、存量分批 |
+| [decisions/280](decisions/280.md) | conversation | 2026-11-17 | 决定记录 —— #280 的 triage 会话：并进 #276；规则落点改成拆开放（插件管证据与题的写法，home 管禁区和范围）；判断方法先用三步草稿；监控反馈另开 #365 |
 | [[2026-11-16-blog-workflow-grill]] | conversation | 2026-11-16 | grill —— #163 博客 workflow 进 idea-loop seo 组：brief 出图、写作循环、通用写作 lint、品牌取值扩 DESIGN.md |
 | [decisions/163](decisions/163.md) | conversation | 2026-11-16 | 决定记录 —— #163 blog-publisher 拆分：triage 与 todo 两个会话摆过的题（含版本改 patch、术语定名、顺手修「读出八节」）与 retro 候选的结果 |
 | [[2026-11-16-sections-browser-test-slow]] | conversation | 2026-11-16 | #192 triage：设计档案浏览器测试单跑近 6 分钟、拖住全量测试，人选移出全量命令并加每例超时 |
 | [[2026-11-18-dispatch-day-night]] | conversation | 2026-11-18 | #379 triage：调度按时段分两种模式，人不在时怎么开会话（十条实测） |
+| [[2026-11-22-dispatch-triage-per-round]] | conversation | 2026-11-22 | #398 triage：白天的 triage 也按每轮新开，triage 分组总数另设上限（默认 10） |
 | [decisions/216](decisions/216.md) | conversation | 2026-11-19 | 决定记录 —— #216 的 issue 会话：交接层先放着，等 0.2.0 把 evidence 和 decision-rules 放进全局 CLAUDE.md |
 | [decisions/376](decisions/376.md) | conversation | 2026-11-19 | 决定记录 —— #376 的 issue 会话：加 CI 放进 0.2.0、排在 #339 之后再商量；候选 1 不批 |
 | [[2026-11-19-design-shared-implementations]] | conversation | 2026-11-19 | 讨论 —— DESIGN.md 登记共用实现（失败页、404 这类）并配项目测试，补 Voice 章（#366） |
@@ -110,6 +113,7 @@
 | [decisions/271](decisions/271.md) | conversation | 2026-11-20 | 决定记录 —— #271 的 issue 会话：pr-review 自动 review 放到最多 5 轮、每轮先合入主分支，摆过的题与 retro 候选的结果 |
 | [decisions/223](decisions/223.md) | conversation | 2026-11-19 | 决定记录 —— #223 的 triage 会话：不再比 margin 和 gap、锚点区域字段叫 pixelAnchor；retro 无候选 |
 | [idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps](idea-loop-decisions/2026-11-19-ui-measure-matrix-gaps.md) | conversation | 2026-11-19 | #223 triage：margin/gap 与 pixelAnchor 两道题 |
+| [idea-loop-decisions/2026-11-23-dyna-missing-commands](idea-loop-decisions/2026-11-23-dyna-missing-commands.md) | conversation | 2026-11-23 | #437 triage：五个命令一起做、pr checks 60 秒判没有、命令名照草稿 |
 | [decisions/375](decisions/375.md) | conversation | 2026-11-20 | 决定记录 —— #375 的 issue 会话：UI 工单参考里「画布在不在执行方 worktree」两处说法统一，摆过的题与 retro 候选的结果 |
 | [[2026-11-18-comment-writing-grill]] | conversation | 2026-11-18 | grill —— #296 替人发的评论：发出后变了另发新的、第一句写结论和要他做什么、不署名；表达方式进 home，插件只去掉机器开头 |
 | [decisions/296](decisions/296.md) | conversation | 2026-11-19 | 决定记录 —— #296 的 triage 会话：评论发出后变了另发新的、第一句写结论和要他做什么、不署名；规矩只进 home，插件只去掉机器开头；三条 retro 候选都不批；todo 会话：版本按 patch 升、已贴的归档评论删署名行，无候选 |
@@ -120,4 +124,13 @@
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/386](decisions/386.md) | conversation | 2026-11-23 | 决定记录 —— #386 一台设备一个调度 dispatch-home：开工前提、默认名额、模型钉法、命令行发布时机与合并顺序 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
+| [decisions/437](decisions/437.md) | conversation | 2026-11-23 | 决定记录 —— #437 dyna 缺五个命令：triage 定的三件事；无候选，顺带开 #464；todo 会话（PR #469）：S1 删参数、S2 已知限制、C1 下限收尾发版、dyna 改升 0.0.10，候选 1 条不批 |
 | [decisions/341](decisions/341.md) | conversation | 2026-11-20 | 决定记录 —— #341 的 triage 会话：「杠杆诊断」每份 spec 都写（11-22 重新 triage 后挪 #451）；字数线 4500 挂 hook 管 home 下全部 skill、评测拆成 #456、不加 CI、同一 head 全量只跑一次；候选 2 条不批；todo 会话（PR #458）：S2 修、下限 0.0.8 收尾发版、插件 0.2.0，无候选 |
+| [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
+| [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |
+| [[2026-11-17-ai-eval-shape]] | conversation | 2026-11-17 | eval 写法的形状：把 toeflair 的 ai-eval 迁进 harold-skills，再补规则 |
+| [[2026-11-16-explorer-reads-impl-decisions]] | conversation | 2026-11-16 | explorer 读 spec 的范围：加读「实现决策」 |
+| [[2026-11-19-ui-measure-matrix-gaps]] | conversation | 2026-11-19 | ui-measure 矩阵缺口：margin/gap 与 pixelAnchor 两道题 |
+| [[2026-11-16-handback-lost-turn]] | conversation | 2026-11-16 | #292 交回后卡住：根因是那一轮的模型请求丢了 |
+| [[2026-11-16-issue-137-scope]] | conversation | 2026-11-16 | #137 的范围：拆成子 issue，除字数存量外随 0.2.0 发布 |
+| [[2026-11-16-refine-advisor-grill]] | conversation | 2026-11-16 | uiux-refine 重设计 grill：评委降为顾问、每轮交设计评审报告 |

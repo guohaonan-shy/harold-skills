@@ -19,3 +19,4 @@ tags: [retro-candidates]
 ## 出现
 
 - harold-skills#366（2026-11-20）：「没问题，Voice & Content Strategy也在这个issue里面一起解决」（triage 里确认调研方向时）；决定记录：[[366]] 候选 2
+- guohaonan-shy/Tofelair#847（2026-11-22）：「这个问题你这次一起修复吧。」（看第 1 轮审核报告时，夜里 review 以「main 上一直如此」推荐另开 #1048）；决定记录：guohaonan-shy/Tofelair `docs/raw/decisions/847.md` 候选 1

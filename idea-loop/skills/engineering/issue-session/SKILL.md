@@ -47,7 +47,7 @@ home 里已有 spec 就读它；没有就用 Skill 工具调 `idea-loop:to-spec`
 
 顺序是接分支 → 开 draft PR → 切工单 → 做，让 issue 从第一次写代码起就挂着 PR。
 
-1. **接分支，开 draft PR**：spec 已提交到 home（上一步保证）。第一次要写代码，先把 origin 取到最新，再让工作区站在分支 `issue/<号>-<slug>` 上：当前分支已经是它（调度建 worktree 时开好的）就接着做；`show` 返回了分支就接上它；都没有就从 `origin/<主分支>` 新建，`<slug>` 取标题的几个词。新建的分支先提一个空提交（说明 `chore: 开工 #<号>`）再 `dyna git push`；坑：分支比主分支没有新提交时开不了 PR，空提交要 `--allow-empty`。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」开 PR（已有就跳过）。
+1. **接分支，开 draft PR**：spec 已提交到 home（上一步保证）。第一次要写代码，先把 origin 取到最新，再让工作区站在分支 `issue/<号>-<slug>` 上：当前分支已经是它（调度建 worktree 时开好的）就接着做；`show` 返回了分支就接上它；都没有就从 `origin/<主分支>` 新建，`<slug>` 取标题的几个词。新建的分支先 `dyna git commit --empty -m "chore: 开工 #<号>"` 提一个空提交（分支比主分支没有新提交时开不了 PR），再 `dyna git push`。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」开 PR（已有就跳过）。
 2. **切工单**：spec 的 `<docs>/spec/<slug>/tickets/` 下已经有工单就跳过切票；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
 3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并；PR 合并后 issue 应已是 done，不是就 `dyna issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 
@@ -66,5 +66,5 @@ issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage�
 ## 边界
 
 - 只做这一个 issue。路上发现的别的问题，照 `idea-loop:issues` 的「开一个 issue」开出去。
-- 任何时候停下问人（包括讨论中冒出的范围题：并进当前 PR 还是另开），先对 `idea-loop:decision-rules`。
+- 任何时候停下问人，先照会话已加载的用户规则（`~/.claude/CLAUDE.md`）的「停下问我」。讨论中冒出的范围题（并进当前 PR 还是另开），推荐照 `idea-loop:pr-review` 的 review 标准里的范围题推荐法：直接读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md` 的「依据：只认四种」一节（调 `pr-review` 会开跑一轮 review）。
 - issue 的状态只走 `issues`；分组只移动你自己。

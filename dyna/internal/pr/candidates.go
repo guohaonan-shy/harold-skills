@@ -20,14 +20,17 @@ package pr
 //	            code.path in `git diff <base>...HEAD`
 //
 // Every candidate also carries a disposition. Absent or 要你决定 is the old shape — the human decides. 照规则 is
-// a finding whose handling the written rules already settle (skills/productivity/decision-rules/SKILL.md of the
-// plugin): it carries a basis ({ kind, file, text, summary } — kind is one of the three things a decision may
-// stand on: the text of a written rule, the human's own words from this spec or PR, an existing practice with an
-// instance; text must be found in file, else the candidate is discarded like any ungrounded quote) and an action
+// a finding whose handling the written rules already settle (the basis section of
+// skills/engineering/pr-review/references/review-standards.md of the plugin): it carries a basis ({ kind, file,
+// text, summary } — kind is one of the four things a decision may stand on: the text of a written rule, the
+// human's own words from this spec or PR, an existing practice with an instance, the goal (a sentence of this
+// round's spec, so file must be that spec); text must be found in file, else the candidate is discarded like any
+// ungrounded quote) and an action
 // (修 / 同步改 / 接受并补记 / 恢复 / 开 issue), and has no decide block — no options, no recommendation. A
 // Standards finding stands on its own rule, so its basis is optional. A Standards finding about code that was
 // not added in this diff (existing: true) is admitted only as a ruled fix with a `pollutes` sentence — a stock
-// problem that spoils this change's input or conclusion or turns CI red; its snippet is then looked up in the file
+// problem that spoils this change's input or conclusion, turns CI red, or states a fact this change alters (so it
+// goes stale the moment this lands); its snippet is then looked up in the file
 // as it is now, not in the diff.
 //
 // Whitespace is normalized; nothing else is fuzzy. A failed candidate is discarded with its reason; the round's
@@ -50,14 +53,18 @@ package pr
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
 
-// Dispositions, actions and the three kinds of basis a ruled finding may stand on.
+// samePath is whether two spellings name the same file: the paths are compared as written, cleaned.
+func samePath(a, b string) bool { return filepath.Clean(a) == filepath.Clean(b) }
+
+// Dispositions, actions and the four kinds of basis a ruled finding may stand on.
 var (
 	Actions      = []string{"修", "同步改", "接受并补记", "恢复", "开 issue"}
-	BasisKinds   = []string{"规则原文", "人的决定", "现有做法"}
+	BasisKinds   = []string{"规则原文", "人的决定", "现有做法", "目标"}
 	Dispositions = []string{"照规则", "要你决定"}
 )
 
@@ -188,7 +195,7 @@ func ruledProblems(c Candidate, axis string) []string {
 	} else {
 		b := c.M["basis"]
 		if k, ok := field(b, "kind").(string); !ok || !oneOf(BasisKinds, k) {
-			problems = append(problems, "依据只认三种："+strings.Join(BasisKinds, " / "))
+			problems = append(problems, "依据只认四种："+strings.Join(BasisKinds, " / "))
 		}
 		if !filled(field(b, "file")) || !filled(field(b, "text")) {
 			problems = append(problems, "依据缺出处或原文（file 和 text 都要给）")
@@ -206,7 +213,7 @@ func ruledProblems(c Candidate, axis string) []string {
 			problems = append(problems, "存量问题照规则处理时，动作只能是「修」")
 		}
 		if !filled(c.M["pollutes"]) {
-			problems = append(problems, "缺一句它怎么影响这次的输入、结论或 CI（pollutes）：说不出，就是与这次无关的存量，不报")
+			problems = append(problems, "缺一句它怎么影响这次的输入、结论或 CI，或它写着的事实正是这次改掉的、一改就过期（pollutes）：说不出，就是不影响本次改动的存量，不报")
 		} else {
 			for _, hit := range codeRefs(c.str("pollutes")) {
 				problems = append(problems, "「它怎么影响这次」里有代码层面的指称："+hit)
@@ -286,7 +293,7 @@ func ShapeProblems(c Candidate, axis string) []string {
 	if c.isRuled() {
 		problems = append(problems, ruledProblems(c, axis)...)
 	} else if truthy(c.M["existing"]) {
-		problems = append(problems, "改动行以外的存量问题只在它污染了这次改动、或让 CI 变红时才报，处置必须是「照规则」（动作：修）")
+		problems = append(problems, "改动行以外的存量问题只在它污染了这次改动、让 CI 变红、或它写着的事实正是这次改掉的、一改就过期时才报，处置必须是「照规则」（动作：修）")
 	}
 	if axis == "spec" {
 		behavior, isB := c.M["behavior"].(bool)
@@ -339,6 +346,8 @@ type IO struct {
 	Read func(path string) (string, bool)
 	// Exists says whether an evidence file of this name is in the round's evidence directory.
 	Exists func(name string) bool
+	// Spec is this round's spec: a basis of kind 目标 must quote it and no other file. Empty when the caller did not say.
+	Spec string
 	// Added is the added lines of one file in `git diff <base>...HEAD`, normalized.
 	Added func(path string) []string
 }
@@ -400,6 +409,9 @@ func Admit(cands Candidates, io IO, round int) Result {
 		kind := "没标种类"
 		if k := field(b, "kind"); k != nil {
 			kind = jsString(k)
+		}
+		if kind == "目标" && (io.Spec == "" || !samePath(io.Spec, jsString(field(b, "file")))) {
+			return fmt.Sprintf("依据（目标）：%s 不是这次的 spec（目标的引文必须取自这次的 spec）", jsString(field(b, "file")))
 		}
 		file, ok := read(field(b, "file"))
 		if !ok || file == "" {

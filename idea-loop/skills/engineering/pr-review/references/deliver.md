@@ -8,7 +8,7 @@
 
 ## 2. 等 CI 绿
 
-工单留在 home 里，代码 PR 合并成功后才删（`merge.md`），所以这里没有工单的提交要推。等这个 PR 最新一次推送触发的检查全绿（这个 PR 上没有检查就不等）。CI 红了或卡住，不交报告：查原因，是这次改动引入的，按 `../SKILL.md` 的「回工单」处理；与这次无关的，开 issue，在报告里写明。spec 没有状态可翻：它覆盖的 issue 在全部 PR 合并后翻 done，见 `merge.md`。
+工单留在 home 里，代码 PR 合并成功后才删（`merge.md`），所以这里没有工单的提交要推。`dyna pr checks <owner/repo> <PR 号>` 等这个 PR 最新一次推送触发的检查：`green` 往下；`none`（这个 PR 上没有检查）不等，往下。`red` 或 `timeout`（卡住）不交报告：查原因，是这次改动引入的，按 `../SKILL.md` 的「回工单」处理；与这次无关的，开 issue，在报告里写明。spec 没有状态可翻：它覆盖的 issue 在全部 PR 合并后翻 done，见 `merge.md`。
 
 ## 3. 写审核报告
 

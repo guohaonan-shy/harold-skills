@@ -1,6 +1,7 @@
 package issues
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/registry"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/spec"
 )
@@ -72,7 +74,7 @@ func (s *session) println(lines ...string) {
 
 func (s *session) json(v any) { s.println(Dump(v)) }
 
-const commandList = "labels|type|show|check|set|new|body|priority|backlog|note|candidates|reconcile|queues|migrate|read|block|guard"
+const commandList = "labels|type|show|check|set|new|body|priority|kind|list|backlog|note|candidates|reconcile|queues|migrate|read|block|guard"
 
 // open resolves <docs> the way every command does: it must exist and be a project directory of home; a project
 // whose issues are on Linear refuses the commands that write GitHub.
@@ -392,6 +394,50 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
+	kind := leaf("kind <docs> <n> <bug|feature|improvement>", "换 issue 的 kind:* label（先加新的、再去掉别的 kind:*；已经是这个就不动）", sess,
+		"dyna issues labels <docs>", func(cmd *cobra.Command, args []string) error {
+			s, err := d.open("kind", arg(args, 0), "")
+			if err != nil {
+				return err
+			}
+			if len(args) != 3 {
+				return fmt.Errorf("usage: dyna issues kind <docs> <issue 号> <%s>", strings.Join(Kinds, "|"))
+			}
+			n, err := num(args[1], "issue")
+			if err != nil {
+				return err
+			}
+			got, err := SetKind(s.gh, n, args[2])
+			if err != nil {
+				var ge *GHError
+				if errors.As(err, &ge) && strings.Contains(ge.Stderr, "not found") {
+					return nexterr.New("dyna issues labels "+s.docs, "这个项目还没有 %s 这个 label，#%d 没有改：%v", KindPrefix+args[2], n, err)
+				}
+				return err
+			}
+			s.println(fmt.Sprintf("#%d: %s", n, strings.Join(got, " ")))
+			return nil
+		})
+
+	list := leaf("list <docs> --state <triage|todo|in-progress|in-review>", "JSON：这个状态下全部开着的 issue（号、标题、指派人），号从小到大；不按挡路、指派人过滤（派活用 candidates）", sess,
+		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
+			s, err := d.open("list", arg(args, 0), "")
+			if err != nil {
+				return err
+			}
+			state, _ := cmd.Flags().GetString("state")
+			if state == "" {
+				return fmt.Errorf("usage: dyna issues list <docs> --state <%s>", strings.Join(ListStates, "|"))
+			}
+			rows, err := ListState(s.gh, state)
+			if err != nil {
+				return err
+			}
+			s.json(rows)
+			return nil
+		})
+	list.Flags().String("state", "", strings.Join(ListStates, " / "))
+
 	backlog := leaf("backlog <docs> [limit]", "JSON：没有 status:* 的 open issue，最老的在前；等人补而没人答的不列", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("backlog", arg(args, 0), "")
@@ -504,7 +550,7 @@ func Command(d Deps) *cobra.Command {
 		})
 	migrate.Flags().Bool("apply", false, "真的改")
 
-	root.AddCommand(labels, typ, show, check, set, newCmd, body, priority, backlog, note, candidates, reconcile, queues, migrate)
+	root.AddCommand(labels, typ, show, check, set, newCmd, body, priority, kind, list, backlog, note, candidates, reconcile, queues, migrate)
 	root.AddCommand(readCommand(d), blockCommand(d), guardCommand(d))
 	return root
 }

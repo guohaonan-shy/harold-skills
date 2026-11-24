@@ -1,6 +1,6 @@
 # spec 里的图：画在哪一节、放在哪
 
-spec 也给人读：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。图怎么做（UI 标注、UI flow、excalidrawer 图表）照 `idea-loop:decision-rules`；这里只写 spec 的哪一节要图、放在哪。下文「raw 目录」指这场讨论的 `docs/raw/<topic>/`，图放在它的 `assets/` 里；从 GitHub issue 起草、没有对话的 spec 没有 raw 目录，图放这份 spec 自己目录下的 `assets/`。
+spec 也给人读：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。图怎么做（UI 标注、UI flow、excalidrawer 图表）照 `idea-loop:evidence`；这里只写 spec 的哪一节要图、放在哪。下文「raw 目录」指这场讨论的 `docs/raw/<topic>/`，图放在它的 `assets/` 里；从 GitHub issue 起草、没有对话的 spec 没有 raw 目录，图放这份 spec 自己目录下的 `assets/`。
 
 | spec 的哪里 | 要的图 | 谁做 |
 |---|---|---|

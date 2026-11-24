@@ -18,6 +18,7 @@ const sampleCandDiff = `--- a/src/api/handler.ts
 `
 
 var candFiles = map[string]string{
+	"docs/spec/practice-retry/practice-retry.md":   "## 方案\n\n学生分析失败后点「重试」，只重新分析这一题，不消耗当天的每日额度。\n",
 	"docs/spec/practice-retry/tickets/03-retry.md": "- [x] 失败后点「重试」，只重新分析这一题，  不消耗配额",
 	"docs/reference/code-layering.md":              "路由层不直接访问数据库，\n统一经过 service 层。",
 	"docs/reference/wording.md":                    "界面文案里的按钮名称统一用两个字的动词。",
@@ -25,6 +26,7 @@ var candFiles = map[string]string{
 }
 
 var candIO = IO{
+	Spec: "docs/spec/practice-retry/practice-retry.md",
 	Read: func(p string) (string, bool) {
 		s, ok := candFiles[p]
 		return s, ok
@@ -280,7 +282,7 @@ func TestARuledFindingMissingItsBasisOrItsActionGoesToRewrite(t *testing.T) {
 		{obj{"basis": nil}, "缺依据"},
 		{obj{"action": nil}, "缺动作"},
 		{obj{"action": "改一改"}, "动作只能是"},
-		{obj{"basis": with(basisRule, obj{"kind": "我觉得"})}, "依据只认三种"},
+		{obj{"basis": with(basisRule, obj{"kind": "我觉得"})}, "依据只认四种"},
 		{obj{"basis": with(basisRule, obj{"summary": ""})}, "缺一句依据"},
 		{obj{"basis": obj{"kind": "规则原文", "summary": "有规定。"}}, "缺出处或原文"},
 	} {
@@ -314,6 +316,59 @@ func TestARuledFindingWhoseBasisIsNotWhereItClaimsIsDiscardedWhicheverKindOfBasi
 	good := admitOne(with(sRuled, obj{"basis": real}), "spec")
 	if len(good.Spec) != 1 || len(good.Discarded) != 0 {
 		t.Fatal(counts(good))
+	}
+}
+
+// ---------- 依据的第四种：目标 ----------
+
+var goalBasis = obj{"kind": "目标", "file": "docs/spec/practice-retry/practice-retry.md", "text": "只重新分析这一题，不消耗当天的每日额度", "summary": "这次要的是：重试只重新分析一题，不扣额度；这个做法达成了它。"}
+
+func TestAGoalBasisQuotedFromThisSpecIsAdmittedOnBothAxes(t *testing.T) {
+	for axis, c := range map[string]obj{"spec": with(sRuled, obj{"basis": goalBasis}), "standards": with(cRuled, obj{"basis": goalBasis})} {
+		r := admitOne(c, axis)
+		if len(r.Discarded) != 0 || len(r.Rewrite) != 0 || len(r.Spec)+len(r.Standards) != 1 {
+			t.Errorf("%s: %v %v %v", axis, counts(r), r.Discarded, r.Rewrite)
+		}
+	}
+}
+
+func TestAGoalBasisWhoseQuoteIsNotInTheSpecIsDiscardedLikeAnyUngroundedQuote(t *testing.T) {
+	r := admitOne(with(sRuled, obj{"basis": with(goalBasis, obj{"text": "重试最多三次"})}), "spec")
+	if len(r.Spec) != 0 || len(r.Discarded) != 1 {
+		t.Fatal(counts(r))
+	}
+	mustMatch(t, "依据（目标）.*找不到引用的原文", r.Discarded[0].Reason)
+}
+
+func TestAGoalBasisMustNameThisRoundsSpecNotAnotherFile(t *testing.T) {
+	// the ticket has the sentence too, and the rule file is a real file: neither is the spec
+	for _, file := range []string{"docs/spec/practice-retry/tickets/03-retry.md", "docs/reference/wording.md", "docs/spec/other/other.md"} {
+		r := admitOne(with(sRuled, obj{"basis": with(goalBasis, obj{"file": file, "text": "不消耗配额"})}), "spec")
+		if len(r.Spec) != 0 || len(r.Discarded) != 1 {
+			t.Errorf("%s: %v", file, counts(r))
+			continue
+		}
+		mustMatch(t, "依据（目标）.*不是这次的 spec", r.Discarded[0].Reason)
+	}
+}
+
+func TestAGoalBasisCannotBeCheckedWithoutKnowingTheSpec(t *testing.T) {
+	io := candIO
+	io.Spec = ""
+	r := Admit(Candidates{Spec: []Candidate{cand(with(sRuled, obj{"basis": goalBasis}))}}, io, 1)
+	if len(r.Spec) != 0 || len(r.Discarded) != 1 {
+		t.Fatal(counts(r))
+	}
+	mustMatch(t, "依据（目标）.*不是这次的 spec", r.Discarded[0].Reason)
+	// the other three kinds do not care which spec it is
+	if r := Admit(Candidates{Spec: []Candidate{cand(sRuled)}}, io, 1); len(r.Spec) != 1 || len(r.Discarded) != 0 {
+		t.Fatal(counts(r))
+	}
+}
+
+func TestTheKindsOfBasisAreFour(t *testing.T) {
+	if !reflect.DeepEqual(BasisKinds, []string{"规则原文", "人的决定", "现有做法", "目标"}) {
+		t.Fatal(BasisKinds)
 	}
 }
 
@@ -376,6 +431,14 @@ func TestAnExistingNotAddedStandardsProblemIsReportedOnlyAsARuledFixThatSaysHowI
 	}
 	mustMatch(t, "缺一句.*怎么影响这次", problemsText(admitOne(with(stock, obj{"pollutes": ""}), "standards").Rewrite[0]))
 	mustMatch(t, "存量.*照规则", problemsText(admitOne(with(stock, obj{"disposition": nil}), "standards").Rewrite[0]))
+	// spec in-scope-legacy-fix: the third exception — a stock line stating a fact this change alters goes stale
+	// the moment it lands; both refusals name it, so a reviewer knows it may report one
+	mustMatch(t, "一改就过期", problemsText(admitOne(with(stock, obj{"pollutes": ""}), "standards").Rewrite[0]))
+	mustMatch(t, "让 CI 变红、或它写着的事实正是这次改掉的、一改就过期时才报", problemsText(admitOne(with(stock, obj{"disposition": nil}), "standards").Rewrite[0]))
+	stale := with(stock, obj{"pollutes": "README 写着插件版本 0.1.47，这次升到 0.1.48，合进去就过期。"})
+	if n := len(admitOne(stale, "standards").Standards); n != 1 {
+		t.Fatal("a stock line that goes stale with this change is admitted", n)
+	}
 	if n := len(admitOne(with(stock, obj{"code": obj{"path": "src/api/legacy.ts", "snippet": "not there();"}}), "standards").Discarded); n != 1 {
 		t.Fatal(n)
 	}

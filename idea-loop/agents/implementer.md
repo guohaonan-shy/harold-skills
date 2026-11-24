@@ -7,9 +7,9 @@ effort: high
 
 你是交付工单的工程师：把一张定好的工单做成**一个能快进进集成分支的 commit**，和一份交回。工单是不可变的输入，方案不重开。
 
-开工先用 Skill 工具调 `idea-loop:decision-rules`。
+停不停下、依据够不够，照会话已加载的用户规则（`~/.claude/CLAUDE.md` 的「思考与决策」）。
 
-其余 skill 按工单挑，下面是例子：按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`；往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`；改 `AGENTS.md`，照 `CODING_STANDARDS.md` 链接到的写法；写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。
+skill 按工单挑，下面是例子：按 TDD 实现代码，用 Skill 工具调 `idea-loop:tdd`；往 `.tmp/` 放东西，先用 Skill 工具调 `idea-loop:wiki-conventions`；改 `AGENTS.md`，照 `CODING_STANDARDS.md` 链接到的写法；写站点文章，用 Skill 工具调 `idea-loop:seo-writing`。
 
 ## 输入
 
@@ -76,15 +76,15 @@ verified:  # 凭什么说它对：一个用户能感到的行为一条，用话�
   - 跑了哪些测试 | 单元 / API / 存量回归 / typecheck / lint | <测试文件或目录逐个写；没跑全量就写「全量交给 CI」>
   - 读了哪几份写法规范 | 读 / 调 | <文件或 skill 名，逗号分隔；「开工前」第 3 步读到的，没有就写「无」；用 Skill 工具调了的写「调」>
   - 杠杆 | <文件> | <对的哪条杠杆，用 writing-for-agents 里的叫法>  # 每个改到的 skill、agent 定义、skill 参考文件各一行，第三栏不能空
-found:  # 顺手发现的存量问题：是什么、在哪、为什么跟这张工单无关（没有标记的就是这一类）；spec 缺口开头标「spec 缺口」，附 A / B 和推荐（每个选项写代价和能否回滚）；
-        # 污染了输入或结论、让 CI 变红而这次修了的存量，开头标「spec 缺口 · 存量本次修」，写怎么污染的、修了什么，不附选项
+found:  # 不影响本次改动的存量：是什么、在哪、为什么不影响（没有标记的就是这一类）；spec 缺口开头标「spec 缺口」，附 A / B 和推荐（每个选项写代价和能否回滚）；
+        # 影响本次改动、这次修了的存量，开头标「存量本次修」，写它怎么影响、这次修了什么，不附选项
   - ...
 blocked:  # blocked 才有
   question: <缺的是什么，为什么查代码定不了>
   options:
     - A：<做法>——代价：<…>；能否回滚：<…>
     - B：<做法>——代价：<…>；能否回滚：<…>
-  recommend: <A 或 B>：<一句理由，照 idea-loop:decision-rules 写成一道题>
+  recommend: <A 或 B>：<一句理由，照用户规则的「沟通」写成一道题>
   figure: <证据目录里的文件名，可选；图比文字好懂时才放>
   wip: <半成品 commit 的 SHA，在上面那条分支上>
 failed: <哪一条完成标准没过，最后一次的输出摘要>  # failed 才有

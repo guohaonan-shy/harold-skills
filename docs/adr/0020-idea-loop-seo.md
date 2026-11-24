@@ -18,7 +18,7 @@ related: ["[[2026-10-22-grill-idea-loop-seo]]", "[[2026-10-21-seo-workflow-discu
 2. **OpenSEO 插件（1.0.0，9 个 skill 加一个远程 MCP）按「人坐在对面」写**：缺信息问人、写入前征求同意、产物是 HTML 报告、付费动作要人批。routine 里没有人可问，发现也进不了任何流程。
 3. **发布前的两平台（Google / Bing）检查规则**锁在那个项目的 skill 和构建产物 lint 脚本里，阈值和路径写死，别的站点用不了。
 
-## 2 决策（how）
+## 2 决策（how） ⚠️ 已被取代（部分：「单一入口 seo-scan」一条的每周定时、单次额度与满四周才跑，外联草稿一条部分改写）→ [[0080-seo-autopilot]] §2
 
 - **新开分类目录 `skills/seo/`**；`.mcp.json` 加 OpenSEO 的远程 MCP（代价：每个装 idea-loop 的项目多一个连接，没连上只影响 seo 分类；原 OpenSEO 插件要先卸，否则同名 skill 两份）。出处写在 `skills/seo/README.md`，不写在每个文件头；上游更新时显式重新蒸馏，运行时不读上游。
 - **13 个 skill、5 个只读方向 agent。** 六个蒸馏自 OpenSEO、`seo-geo` 以 claude-seo 的同名 skill 为底换成 OpenSEO 数据，其余自己写。蒸馏副本只改两处：被 agent 调用时不提问不写入（用 SEO.md 的值，没有就用默认值并记进「假设」）、交回统一的发现清单；人在场时照原样。方法全在 skill 里，agent 是薄包装（`technical-auditor`、`page-optimizer`、`keyword-miner`、`backlink-analyst`、`geo-analyst`），起 agent 的理由是每个方向的工具输出大、五个要并行。不设单独的核验 agent：issue 会话的 triage 阶段按「怎么复现」独立重跑就是核验。
@@ -29,7 +29,7 @@ related: ["[[2026-10-22-grill-idea-loop-seo]]", "[[2026-10-21-seo-workflow-discu
 - **解决阶段不改 issue 流程**：内容类在 triage 阶段由 `seo-brief` 写方案，实现阶段由 `seo-writing` 写；外链类由 `seo-outreach` 产出只改 `docs/` 的 PR（邮件草稿加跟进表，永不自动发送，台账在 `docs/records/outreach/`）。
 - **发布前检查**：`seo-check` skill 加脚本，按字宽判标题与描述长度（CJK 记 2）、按平台标注；构建命令结束后由 hook 触发（SEO.md 声明了产物目录且其中有文件晚于命令开始时间才跑），有 error 把清单交回模型，不读 SEO.md 的是脚本本身，所以项目的 CI 也能直接调。
 
-## 3 结果（result）
+## 3 结果（result） ⚠️ 已被取代（部分：「待验证状态已不存在」一条：新 SEO issue 扫描后当场分流）→ [[0080-seo-autopilot]] §2
 
 - 实现于 PR #73（0.1.3，2026-10-22 合并）；之后由 `skills/seo/` 下的 13 个 skill、`agents/` 下的 5 个方向 agent、`scripts/seo-{md,due,budget,gaps,context,baseline,issues,check}.mjs` 与 `seo-check-hook.mjs`（在 `hooks/hooks.json` 里挂 PreToolUse / PostToolUse 的 Bash）组成，各有单测。`seo-setup` 只能人调，`seo-scan` 可被模型调（定时任务只能写「用 Skill 工具调」）。
 - 与 spec 当时写法不同、但属后来有意的演进（不算偏离）：

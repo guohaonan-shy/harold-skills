@@ -68,7 +68,7 @@ const moduleLong = `运行环境：认环境、开场注入、按能力取这个
   - inject reference 最前面多一行：本机覆盖文件的路径、替换了哪几节、没对上的是哪几节。合并后超过 10000 字（开场注入的上限）时那一行再加一句，照样注入。
   - show <能力> 里那一节是本机写的，第一行写「本机覆盖 <路径>：这一节是本机写的」；只有其中的 ### 段是本机写的，第一行点出是哪几段。
   - 没有 home、没有这个文件：输出跟没有这项功能时逐字相同。文件读不了（权限、不是 UTF-8）：当作没有覆盖，头一行写「本机覆盖读取失败：<原因>」，命令照常成功。
-  - 只管这个环境的做法；能力清单、退路、decision-rules 不给本机改。
+  - 只管这个环境的做法；能力清单、退路不给本机改。
 
 加一种运行环境：
   1. 在 runtime/ 下多写一份 <名字>.md，每个能力一节，小节名与 capabilities.md 的能力清单一一对应；某个能力这个环境做不到，那一节写「没有」和退路。
@@ -89,7 +89,7 @@ func Command(d Deps) *cobra.Command {
 		return nil
 	})
 
-	inject := leaf("inject <decision-rules|runtime|reference>", "打印开场注入的一段（只由 SessionStart hook 调）：decision-rules 的正文、运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截", registry.CallerHook, func(cmd *cobra.Command, args []string) error {
+	inject := leaf("inject <runtime|reference>", "打印开场注入的一段（只由 SessionStart hook 调）：运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截", registry.CallerHook, func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("usage: dyna runtime inject <%s>", strings.Join(Sections, "|"))
 		}
