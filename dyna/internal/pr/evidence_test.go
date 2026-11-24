@@ -57,6 +57,70 @@ func TestOnlyImagesAreAccepted(t *testing.T) {
 	}
 }
 
+func TestAnMp4RecordingIsAcceptedAndItsAddressHasTheSameShapeAsAnImages(t *testing.T) {
+	if errs := CheckAssets([]File{ok("t03-checkout-flow.mp4"), ok("r2-spec-1-walkthrough.mp4"), ok("pr-before-after.mp4")}); len(errs) != 0 {
+		t.Fatal(errs)
+	}
+	mp4 := ImageURL("acme/app", "42", "t03-checkout-flow.mp4")
+	png := ImageURL("acme/app", "42", "t03-checkout-flow.png")
+	if mp4 != "https://github.com/acme/app/blob/idea-loop-evidence-pr-42/t03-checkout-flow.mp4?raw=true" || strings.TrimSuffix(mp4, ".mp4?raw=true") != strings.TrimSuffix(png, ".png?raw=true") {
+		t.Fatal(mp4, png)
+	}
+}
+
+func TestAnMp4OverTheLimitIsRefusedWithTheAdviceToSplitItOneStepPerSegment(t *testing.T) {
+	errs := CheckAssets([]File{{Path: "t01-flow.mp4", Size: MaxBytes + 1}})
+	if len(errs) != 1 {
+		t.Fatal(errs)
+	}
+	mustMatch(t, "超过 10MB", errs[0])
+	mustMatch(t, "分段，一段讲一步", errs[0])
+	// an image over the limit keeps the old advice and does not talk about segments
+	img := CheckAssets([]File{{Path: "t01-flow.gif", Size: MaxBytes + 1}})
+	if len(img) != 1 {
+		t.Fatal(img)
+	}
+	mustMatch(t, "裁短、降帧率或缩小尺寸再传", img[0])
+	mustNotMatch(t, "分段", img[0])
+	// exactly 10MB still goes through, for a recording as for an image
+	if errs := CheckAssets([]File{{Path: "t01-flow.mp4", Size: MaxBytes}, {Path: "t01-flow.gif", Size: MaxBytes}}); len(errs) != 0 {
+		t.Fatal(errs)
+	}
+}
+
+func TestOtherVideoTypesAreStillRefusedAndTheMessageListsMp4AmongTheAcceptedTypes(t *testing.T) {
+	for _, name := range []string{"t01-flow.webm", "t01-flow.mov", "t01-flow.avi"} {
+		errs := CheckAssets([]File{ok(name)})
+		if len(errs) != 1 {
+			t.Fatal(name, errs)
+		}
+		mustMatch(t, name+"：只收图片", errs[0])
+		mustMatch(t, `\.mp4`, errs[0])
+		for _, ext := range []string{".png", ".gif", ".jpg", ".jpeg", ".webp"} {
+			mustMatch(t, regexpQuote(ext), errs[0])
+		}
+	}
+}
+
+func TestTheOwnerPrefixRuleAppliesToAnMp4Too(t *testing.T) {
+	errs := CheckAssets([]File{ok("walkthrough.mp4")})
+	if len(errs) != 1 {
+		t.Fatal(errs)
+	}
+	mustMatch(t, "归属", errs[0])
+	for _, name := range []string{"t03-a.mp4", "r12-a.mp4", "pr-a.mp4"} {
+		if errs := CheckAssets([]File{ok(name)}); len(errs) != 0 {
+			t.Fatal(name, errs)
+		}
+	}
+	// a name GitHub would rewrite is refused for an mp4 as for an image
+	if len(CheckAssets([]File{ok("t01-Walk Through.mp4")})) == 0 {
+		t.Fatal("accepted")
+	}
+}
+
+func regexpQuote(s string) string { return strings.ReplaceAll(s, ".", `\.`) }
+
 func TestNamesGitHubWouldRewriteAreRejected(t *testing.T) {
 	if len(CheckAssets([]File{ok("t01-下载失败.png")})) == 0 || len(CheckAssets([]File{ok("t01-Flow One.png")})) == 0 {
 		t.Fatal("accepted")
