@@ -129,6 +129,7 @@
 | [decisions/341](decisions/341.md) | conversation | 2026-11-20 | 决定记录 —— #341 的 triage 会话：「杠杆诊断」每份 spec 都写（11-22 重新 triage 后挪 #451）；字数线 4500 挂 hook 管 home 下全部 skill、评测拆成 #456、不加 CI、同一 head 全量只跑一次；候选 2 条不批；todo 会话（PR #458）：S2 修、下限 0.0.8 收尾发版、插件 0.2.0，无候选 |
 | [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
 | [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |
+| [decisions/471](decisions/471.md) | conversation | 2026-11-23 | 决定记录 —— #471 本期不加新运行环境（cmux、t3code 记进 #477 关 not planned）；dyna 不代理，运行环境的操作写进运行环境说明、按能力模板写；候选 2 条不批 |
 | [[2026-11-17-ai-eval-shape]] | conversation | 2026-11-17 | eval 写法的形状：把 toeflair 的 ai-eval 迁进 harold-skills，再补规则 |
 | [[2026-11-16-explorer-reads-impl-decisions]] | conversation | 2026-11-16 | explorer 读 spec 的范围：加读「实现决策」 |
 | [[2026-11-19-ui-measure-matrix-gaps]] | conversation | 2026-11-19 | ui-measure 矩阵缺口：margin/gap 与 pixelAnchor 两道题 |

@@ -40,14 +40,14 @@ func TestNoVariableSetIsClaudeDesktop(t *testing.T) {
 }
 
 func TestMagiSessionIDMeansMagi(t *testing.T) {
-	r := dyna(env(rt.EnvMagiSession, "abc"), "runtime", "name")
+	r := dyna(env(envMagiSession, "abc"), "runtime", "name")
 	if r.code != 0 || r.stdout != "magi\n" {
 		t.Fatal(r)
 	}
 }
 
 func TestForcedKnownNameWinsOverWhatTheEnvironmentSays(t *testing.T) {
-	if r := dyna(env(rt.EnvRuntime, "claude-desktop", rt.EnvMagiSession, "abc"), "runtime", "name"); r.stdout != "claude-desktop\n" {
+	if r := dyna(env(rt.EnvRuntime, "claude-desktop", envMagiSession, "abc"), "runtime", "name"); r.stdout != "claude-desktop\n" {
 		t.Fatal(r)
 	}
 	if r := dyna(env(rt.EnvRuntime, "magi"), "runtime", "name"); r.stdout != "magi\n" {
@@ -56,13 +56,13 @@ func TestForcedKnownNameWinsOverWhatTheEnvironmentSays(t *testing.T) {
 }
 
 func TestAnEmptyForcedNameCountsAsUnset(t *testing.T) {
-	if r := dyna(env(rt.EnvRuntime, "", rt.EnvMagiSession, "abc"), "runtime", "name"); r.stdout != "magi\n" {
+	if r := dyna(env(rt.EnvRuntime, "", envMagiSession, "abc"), "runtime", "name"); r.stdout != "magi\n" {
 		t.Fatal(r)
 	}
 }
 
 func TestAnUnknownForcedNameExitsNonZeroPrintsNothingAndListsTheKnownOnes(t *testing.T) {
-	r := dyna(env(rt.EnvRuntime, "foo", rt.EnvMagiSession, "abc"), "runtime", "name")
+	r := dyna(env(rt.EnvRuntime, "foo", envMagiSession, "abc"), "runtime", "name")
 	if r.code != 1 || r.stdout != "" {
 		t.Fatal(r)
 	}
@@ -101,7 +101,7 @@ func TestTwoSectionsEachUnderTheHookLimitInOrderRuntimeReference(t *testing.T) {
 		label string
 		vars  []string
 		name  string
-	}{{"MAGI_SESSION_ID not set", nil, "claude-desktop"}, {"MAGI_SESSION_ID set", []string{rt.EnvMagiSession, "abc"}, "magi"}} {
+	}{{"MAGI_SESSION_ID not set", nil, "claude-desktop"}, {"MAGI_SESSION_ID set", []string{envMagiSession, "abc"}, "magi"}} {
 		t.Run(tc.label, func(t *testing.T) {
 			var got [2]string
 			for i, section := range rt.Sections {
@@ -164,7 +164,7 @@ func TestTheInjectedRuntimeTextNamesNeitherTheOldSkillNorTheOldScript(t *testing
 }
 
 // The runtime and browser skills are deleted and their content lives in the data: nothing in the data points back
-// at them, at SKILL.md, or at an old script (the lock and the hand-over are `dyna ui lock …` and `dyna runtime handoff`).
+// at them, at SKILL.md, or at an old script (the lock is `dyna ui lock …`, the dispatch bookkeeping `dyna runtime record`).
 func TestTheDataPointsAtNoDeletedSkillAndNoOldScript(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(pluginRoot(), rt.DataDir))
 	if err != nil {
@@ -231,7 +231,7 @@ func TestAPluginDirectoryReachedThroughASymlinkStillInjects(t *testing.T) {
 // of the old browser skill.
 func TestInjectIsWhatTheOldScriptInjectedForTheSameEnvironment(t *testing.T) {
 	node, script := oldScript(t, "runtime-detect.mjs")
-	for _, name := range rt.Names {
+	for _, name := range shipped {
 		for _, section := range rt.Sections {
 			old := runOld(t, node, script, map[string]string{rt.EnvRuntime: name}, "--inject", section)
 			now := dyna(env(rt.EnvRuntime, name), "runtime", "inject", section)
@@ -253,7 +253,7 @@ func TestInjectIsWhatTheOldScriptInjectedForTheSameEnvironment(t *testing.T) {
 
 func TestNameIsWhatTheOldScriptPrinted(t *testing.T) {
 	node, script := oldScript(t, "runtime-detect.mjs")
-	for _, vars := range []map[string]string{{}, {rt.EnvMagiSession: "abc"}, {rt.EnvRuntime: "magi"}, {rt.EnvRuntime: "claude-desktop", rt.EnvMagiSession: "abc"}, {rt.EnvRuntime: "", rt.EnvMagiSession: "abc"}, {rt.EnvRuntime: "foo"}} {
+	for _, vars := range []map[string]string{{}, {envMagiSession: "abc"}, {rt.EnvRuntime: "magi"}, {rt.EnvRuntime: "claude-desktop", envMagiSession: "abc"}, {rt.EnvRuntime: "", envMagiSession: "abc"}, {rt.EnvRuntime: "foo"}} {
 		old := runOld(t, node, script, vars)
 		e := env()
 		for k, v := range vars {
@@ -271,35 +271,26 @@ func TestNameIsWhatTheOldScriptPrinted(t *testing.T) {
 
 // ---- the data: one section per capability, the browser rules in each ----
 
-func TestEveryKnownEnvironmentHasADataFileAndEveryDataFileIsKnown(t *testing.T) {
+func TestEveryDescriptionWithAMarkerIsAnEnvironmentAndTheOtherFilesAreNot(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(pluginRoot(), rt.DataDir))
 	if err != nil {
 		t.Fatal(err)
 	}
-	// <environment>-<topic>.md is a detail file one of that environment's sections points at (the injected data has
-	// a size cap, so a long procedure lives beside it): not an environment of its own.
-	detail := func(n string) bool {
-		for _, env := range rt.Names {
-			if strings.HasPrefix(n, env+"-") {
-				return true
-			}
-		}
-		return false
-	}
-	have := map[string]bool{}
+	// capabilities.md and <environment>-<topic>.md (a detail file one of that environment's sections points at: the
+	// injected data has a size cap, so a long procedure lives beside it) have no marker line: not environments.
+	var withMarker []string
 	for _, e := range entries {
-		if n := strings.TrimSuffix(e.Name(), ".md"); n != strings.TrimSuffix(rt.CapabilitiesFile, ".md") && !detail(n) {
-			have[n] = true
+		n := strings.TrimSuffix(e.Name(), ".md")
+		if _, ok := rt.MarkerOf(readFile(t, filepath.Join(pluginRoot(), rt.DataDir, e.Name()))); ok {
+			withMarker = append(withMarker, n)
 		}
 	}
-	for _, n := range rt.Names {
-		if !have[n] {
-			t.Errorf("%s is a known runtime but has no %s/%s.md", n, rt.DataDir, n)
-		}
-		delete(have, n)
+	if !reflect.DeepEqual(withMarker, shipped) {
+		t.Fatalf("files with a marker line: %v, want %v", withMarker, shipped)
 	}
-	for n := range have {
-		t.Errorf("%s/%s.md is not in the known runtimes (add it to Names)", rt.DataDir, n)
+	r := dyna(env(rt.EnvRuntime, "zzz"), "runtime", "name")
+	if !strings.Contains(r.stderr, "known: "+strings.Join(shipped, ", ")) {
+		t.Fatalf("the known names are the files with a marker line: %s", r.stderr)
 	}
 }
 
@@ -321,7 +312,7 @@ func TestTheCapabilityListIsTheClosedSetOfEleven(t *testing.T) {
 }
 
 func TestEveryEnvironmentHasASectionForEveryCapability(t *testing.T) {
-	for _, name := range rt.Names {
+	for _, name := range shipped {
 		for _, c := range capabilities(t) {
 			r := dyna(env(rt.EnvRuntime, name), "runtime", "show", c)
 			if r.code != 0 || !strings.HasPrefix(r.stdout, "## "+c+"\n") {
@@ -383,7 +374,7 @@ func TestShowBrowserForMagiIsNotDesktopsAndTheOtherWayRound(t *testing.T) {
 }
 
 func TestShowFollowsTheDetectionRulesAndHonoursAnUnknownForcedName(t *testing.T) {
-	if r := dyna(env(rt.EnvMagiSession, "x"), "runtime", "show", "浏览器"); r.code != 0 || !strings.Contains(r.stdout, "magi browser") {
+	if r := dyna(env(envMagiSession, "x"), "runtime", "show", "浏览器"); r.code != 0 || !strings.Contains(r.stdout, "magi browser") {
 		t.Fatalf("a magi session: %+v", r)
 	}
 	r := dyna(env(rt.EnvRuntime, "foo"), "runtime", "show", "推送")
@@ -408,7 +399,7 @@ func TestShowWithAnUnknownCapabilityListsTheKnownOnes(t *testing.T) {
 }
 
 func TestShowWithNoCapabilityPrintsTheCapabilityListAndTheFallbacks(t *testing.T) {
-	for _, name := range rt.Names {
+	for _, name := range shipped {
 		r := dyna(env(rt.EnvRuntime, name), "runtime", "show")
 		if r.code != 0 {
 			t.Fatal(r)
@@ -444,7 +435,7 @@ func TestShowCutsASectionAtTheNextTopLevelHeading(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	// a data file that lacks a capability's section says so
-	writeFile(t, filepath.Join(root, "runtime", "magi.md"), "## 甲\n\nm\n")
+	writeFile(t, filepath.Join(root, "runtime", "magi.md"), "标记：`MAGI_SESSION_ID`\n\n## 甲\n\nm\n")
 	r = dyna(map[string]string{rt.EnvPluginRoot: root, rt.EnvRuntime: "magi"}, "runtime", "show", "乙")
 	if r.code != 1 || !strings.Contains(r.stderr, "没有「乙」一节") || !strings.Contains(r.stderr, "magi") {
 		t.Fatalf("%+v", r)
@@ -463,10 +454,11 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := map[string]string{
-		"runtime name":    registry.CallerSession,
-		"runtime show":    registry.CallerSession,
-		"runtime handoff": registry.CallerSession,
-		"runtime inject":  registry.CallerHook, // only the SessionStart hook runs it
+		"runtime name":   registry.CallerSession,
+		"runtime show":   registry.CallerSession,
+		"runtime record": registry.CallerSession,
+		"runtime check":  registry.CallerSession,
+		"runtime inject": registry.CallerHook, // only the SessionStart hook runs it
 	}
 	for name, caller := range want {
 		c, ok := reg.Find(name)
@@ -491,13 +483,13 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 			}
 		}
 	}
-	handoff, _ := reg.Find("runtime handoff")
+	record, _ := reg.Find("runtime record")
 	var flags []string
-	for _, a := range handoff.Args {
+	for _, a := range record.Args {
 		flags = append(flags, a.Name)
 	}
-	if strings.Join(flags, ",") != "cap,claude,dir,issue,magi,p-timeout-sec,period,prompt-file,repo,timeout-sec,worktree" {
-		t.Errorf("handoff flags: %v", flags)
+	if strings.Join(flags, ",") != "dir,issue,period,repo,session" {
+		t.Errorf("record flags: %v", flags)
 	}
 }
 
@@ -506,13 +498,13 @@ func TestHelpSaysHowToAddARuntime(t *testing.T) {
 	if r.code != 0 {
 		t.Fatal(r)
 	}
-	for _, want := range []string{"加一种运行环境", "runtime/<环境名>.md", "capabilities.md", "Names", "IDEA_LOOP_RUNTIME", "MAGI_SESSION_ID", "只升插件"} {
+	for _, want := range []string{"加一种运行环境", "runtime/<环境名>.md", "capabilities.md", "标记", "selected", "IDEA_LOOP_RUNTIME", "只升插件", "runtime check", "能力模板"} {
 		if !strings.Contains(r.stdout, want) {
 			t.Errorf("--help lacks %q", want)
 		}
 	}
 	bare := dyna(env(), "runtime")
-	if bare.code != 0 || !strings.Contains(bare.stdout, "handoff") {
+	if bare.code != 0 || !strings.Contains(bare.stdout, "record") || strings.Contains(bare.stdout, "handoff") {
 		t.Fatalf("a bare module prints its commands: %+v", bare)
 	}
 }

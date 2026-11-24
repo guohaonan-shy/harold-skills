@@ -19,9 +19,7 @@ type Deps struct {
 	Env    home.Env
 	Stdout io.Writer
 	Stderr io.Writer
-	// Cwd is where `handoff` runs claude when --worktree is not given; empty means the process's directory.
-	Cwd string
-	// Now is the clock; nil means time.Now.
+	// Now is the clock `record` stamps entries with; nil means time.Now.
 	Now func() time.Time
 }
 
@@ -52,13 +50,17 @@ func leaf(use, short, caller string, run func(cmd *cobra.Command, args []string)
 	return c
 }
 
-const moduleLong = `运行环境：认环境、开场注入、按能力取这个环境的做法、开一个 issue 会话（桌面端交到桌面、magi 直接开）。
+const moduleLong = `运行环境：认环境、开场注入、按能力取这个环境的做法、记一笔开出的 issue 会话。
 
-认环境：IDEA_LOOP_RUNTIME 有值就用它（必须是已知名字，不认识就报错，不猜）；否则有 MAGI_SESSION_ID 是 magi；否则是 claude-desktop。命令行、IDE 插件没有可靠的标记变量，落到 claude-desktop，缺的工具走退路。
+认环境：认识的运行环境，是插件 runtime/ 下、和 home 的 runtime/ 下（插件里没有同名文件的）带标记行的 <名>.md。标记行写在说明开头、第一个 ## 小节之前：「标记：」后面跟用反引号包住的环境变量名，或写「没有」（没有标记）。没有标记行的文件（capabilities.md、claude-desktop-mic.md 这类细节文件）不是说明。按顺序认：
+  1. IDEA_LOOP_RUNTIME 有值：是认识的名字就用它；不认识就报错退出 1，不猜，报错里列出认识的名字。
+  2. 按名字排序扫认识的说明，哪份的标记变量在环境里有值就是它。不止一份有值时取第一份，inject reference 最前面多一行说哪几份同时有值、用了哪份。
+  3. 都没有：用人选的环境，记在 <home>/runtime/selected（纯文本，内容是一个环境名，首尾空白不算）。写的名字不认识当作没选，inject reference 最前面多一行提示。
+  4. 人也没选：claude-desktop（命令行、IDE 插件没有可靠的标记变量，落到这里，缺的工具走退路）。
 
 数据在插件目录的 runtime/ 下（IDEA_LOOP_PLUGIN_ROOT，经插件的 bin/dyna 调用会自己设）：
-  runtime/capabilities.md   能力清单和退路（show 不带能力时打印它们；inject runtime 注入它的全文）
-  runtime/<环境名>.md       这个环境每个能力一节（## <能力名>，名字与能力清单第一列一致）；浏览器那一节含三条规矩（给人看、无头、并行时抢锁）
+  runtime/capabilities.md   能力清单、退路和能力模板（show 不带能力时打印清单和退路；inject runtime 注入清单和退路，不带「能力模板」一节）
+  runtime/<环境名>.md       这个环境的说明：开头一行标记，然后每个能力一节（## <能力名>，名字与能力清单第一列一致）；浏览器那一节含三条规矩（给人看、无头、并行时抢锁）
 改数据只升插件，不用发新版 dyna。
 
 本机覆盖：这台设备的做法跟插件数据不一样时，写 <home>/runtime/<环境名>.md（home 是 IDEA_LOOP_HOME，没设就是用户主目录下的 home；文件名与插件 runtime/ 下的同名）。inject reference 和 show <能力> 打印的都是合并后的：
@@ -67,25 +69,28 @@ const moduleLong = `运行环境：认环境、开场注入、按能力取这个
   - 标题在插件里找不到同级同名的、或不止一处的，这段不用，不往末尾追加，只在头一行写「没对上、没用上」。
   - inject reference 最前面多一行：本机覆盖文件的路径、替换了哪几节、没对上的是哪几节。合并后超过 10000 字（开场注入的上限）时那一行再加一句，照样注入。
   - show <能力> 里那一节是本机写的，第一行写「本机覆盖 <路径>：这一节是本机写的」；只有其中的 ### 段是本机写的，第一行点出是哪几段。
+  - home 里有、插件里没有同名文件的 <环境名>.md（带标记行），就是用户自己的新环境，它本身是一份完整的说明，不按小节合并。
   - 没有 home、没有这个文件：输出跟没有这项功能时逐字相同。文件读不了（权限、不是 UTF-8）：当作没有覆盖，头一行写「本机覆盖读取失败：<原因>」，命令照常成功。
   - 只管这个环境的做法；能力清单、退路不给本机改。
 
-加一种运行环境：
-  1. 在 runtime/ 下多写一份 <名字>.md，每个能力一节，小节名与 capabilities.md 的能力清单一一对应；某个能力这个环境做不到，那一节写「没有」和退路。
-  2. 把名字加进 dyna 的已知名单（dyna/internal/runtime 的 Names），并在认环境的规则里写它怎么认（Detect）；这一步改了 dyna，要升 dyna 版本、存新登记表。
-  3. 通用流程不动：流程只写能力，不写工具。`
+加一种运行环境：多一份带标记行的说明，不改 dyna：
+  1. 写 <名字>.md，开头一行标记（上面「认环境」），每个能力一节，小节名与 capabilities.md 的能力清单一一对应；某个能力这个环境做不到，那一节写「没有」和退路。
+  2. 放进插件的 runtime/（随插件发给所有人），或放进自己的 <home>/runtime/（只在这台机器上认；home 里的名字和插件的同名，就是上面说的本机覆盖，不是新环境）。
+  3. 人要默认用它（它没有标记变量）：把名字写进 <home>/runtime/selected。
+  4. 跑 dyna runtime check <文件>（不带文件就核插件和 home 里全部的说明）：缺哪一节、哪一项既没写做法也没写「没有」，每个问题一行。能力模板（每个能力下工作流要它做的几项，各写传入、拿回、做不到时）在 capabilities.md 的「能力模板」一节，写说明时照它；开场不注入这一节。
+  5. 通用流程不动：流程只写能力，不写工具。`
 
 // Command is the `runtime` module.
 func Command(d Deps) *cobra.Command {
-	root := registry.Group("runtime", "运行环境：认环境、开场注入、按能力取这个环境的做法、开一个 issue 会话（桌面端交到桌面、magi 直接开）")
+	root := registry.Group("runtime", "运行环境：认环境、开场注入、按能力取这个环境的做法、记一笔开出的 issue 会话")
 	root.Long = moduleLong
 
-	name := leaf("name", "打印当前运行环境的名字（claude-desktop / magi）；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1，不猜", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
-		n, err := Detect(d.env())
+	name := leaf("name", "打印当前运行环境的名字；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1（列出认识的名字），不猜", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+		det, err := Detect(d.env())
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(d.out(), n)
+		fmt.Fprintln(d.out(), det.Name)
 		return nil
 	})
 
@@ -125,45 +130,56 @@ func Command(d Deps) *cobra.Command {
 	})
 	show.Args = cobra.ArbitraryArgs
 
-	handoff := leaf("handoff", "开一个 issue 会话（调度用），命令自己认当前运行环境：桌面端先 claude -p 建会话、读 id，再 claude --desktop --resume <id> 交到桌面；magi 下跑 magi sessions start（要 --worktree、--issue、--repo、--period、--prompt-file）；成功打印一行 JSON，失败退出 1、stderr「交出失败：…」", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+	recordCmd := leaf("record", "记一笔：调度用环境说明里的命令开出一个 issue 会话之后，往记录目录的 <仓库名>.json 追加一条 {issue, desktopSessionId, openedAt, period}（早上汇总靠它找夜里开出的会话）；成功打印这一条的 JSON，参数缺或不对、仓库名当不了文件名、已有文件不是数组读不出来（不动它）都退出 1，stderr 说原因", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		f := cmd.Flags()
-		o := HandoffOptions{Given: map[string]bool{}}
-		for name, dst := range map[string]*string{
-			"worktree": &o.Worktree, "issue": &o.Issue, "repo": &o.Repo, "period": &o.Period, "claude": &o.Claude,
-			"timeout-sec": &o.Timeout, "p-timeout-sec": &o.PTimeout, "dir": &o.Dir,
-			"prompt-file": &o.PromptFile, "magi": &o.Magi,
-		} {
+		var o RecordOptions
+		for name, dst := range map[string]*string{"issue": &o.Issue, "repo": &o.Repo, "period": &o.Period, "session": &o.Session, "dir": &o.Dir} {
 			*dst, _ = f.GetString(name)
-			o.Given[name] = f.Changed(name)
-		}
-		o.Caps, _ = f.GetStringArray("cap")
-		cwd := d.Cwd
-		if cwd == "" {
-			cwd, _ = os.Getwd()
 		}
 		now := d.Now
 		if now == nil {
 			now = time.Now
 		}
-		code := Handoff(o, d.env(), cwd, now, d.out(), d.errOut())
-		if code != 0 {
-			return &nexterr.Exit{Code: code}
+		line, err := Record(o, d.env(), now)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(d.out(), line)
+		return nil
+	})
+	recordCmd.Flags().String("issue", "", "issue 号")
+	recordCmd.Flags().String("repo", "", "仓库名，记录文件是 <记录目录>/<仓库名>.json")
+	recordCmd.Flags().String("period", "", "时段，todo 或 triage，早上汇总靠它找夜里开出的会话")
+	recordCmd.Flags().String("session", "", "开出的会话的 id，原样写进 desktopSessionId（桌面端是 local_<id>，其他环境是它自己的会话 id）")
+	recordCmd.Flags().String("dir", "", "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）")
+
+	check := leaf("check [file]", "按能力模板核一份运行环境说明：开头有没有标记行、每个能力的一节在不在且节名对得上、模板里每一项有没有加粗项名并写了做法或「没有」；每个问题一行，带节名（和项名），有问题退出 1，全过打印一行通过。不带文件就核插件和 home 里全部带标记行的说明（home 里跟插件同名的覆盖文件按合并后的结果核）", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			return fmt.Errorf("usage: dyna runtime check [文件]")
+		}
+		file := ""
+		if len(args) == 1 {
+			file = args[0]
+		}
+		res, err := Check(file, d.env())
+		if err != nil {
+			return err
+		}
+		if len(res.Problems) > 0 {
+			for _, p := range res.Problems {
+				fmt.Fprintln(d.out(), p)
+			}
+			return &nexterr.Exit{Code: 1}
+		}
+		if file != "" {
+			fmt.Fprintf(d.out(), "通过：%s 按能力模板核过了\n", file)
+		} else {
+			fmt.Fprintf(d.out(), "通过：核了 %d 份说明（%s）\n", len(res.Labels), strings.Join(res.Labels, "、"))
 		}
 		return nil
 	})
-	handoff.Flags().String("worktree", "", "两次 claude 都在这个目录里跑（默认：当前目录）；接回的会话只能从它被建出来的目录找到")
-	handoff.Flags().String("issue", "", "issue 号；和 --repo、--period 要么都给、要么都不给，给了就在成功后往记录目录追加一条")
-	handoff.Flags().String("repo", "", "仓库名，记录文件是 <记录目录>/<仓库名>.json")
-	handoff.Flags().String("period", "", "时段标签（todo 或 triage），早上汇总靠它找夜里开出的会话")
-	handoff.Flags().String("claude", "", "claude 可执行文件（环境变量 DESKTOP_HANDOFF_CLAUDE；默认 claude）")
-	handoff.Flags().String("timeout-sec", "", "claude --desktop 那一步最多等几秒，超了算失败（环境变量 DESKTOP_HANDOFF_TIMEOUT_SEC；默认 90）")
-	handoff.Flags().String("p-timeout-sec", "", "claude -p 那一步最多等几秒（环境变量 DESKTOP_HANDOFF_P_TIMEOUT_SEC；默认 180）")
-	handoff.Flags().String("dir", "", "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）")
+	check.Args = cobra.ArbitraryArgs
 
-	handoff.Flags().StringArray("cap", nil, "magi：会话可以用的能力，可重复（如 magi、browser、issue 平台的 MCP 服务器名）；桌面端不读")
-	handoff.Flags().String("prompt-file", "", "magi：会话的任务（prompt）写在这个文件里；magi 下必须给，桌面端不读，任务由调用方在归位之后发")
-	handoff.Flags().String("magi", "", "magi 可执行文件（环境变量 IDEA_LOOP_HANDOFF_MAGI；默认 magi）")
-
-	root.AddCommand(name, inject, show, handoff)
+	root.AddCommand(name, inject, show, check, recordCmd)
 	return root
 }

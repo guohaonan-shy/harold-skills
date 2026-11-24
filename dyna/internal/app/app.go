@@ -110,7 +110,7 @@ func NewRoot(io IO) *cobra.Command {
 	root.AddCommand(retro.Command(retro.Deps{Env: io.Env, Stdout: io.Stdout}))
 	root.AddCommand(agent.Command(agent.Deps{Env: io.Env, Stdout: io.Stdout, Stderr: io.Stderr}))
 	root.AddCommand(seo.Command(seo.Deps{Env: io.Env, Stdin: io.Stdin, Stdout: io.Stdout, GH: io.GH, Cwd: io.Cwd, Now: io.Now}))
-	root.AddCommand(rt.Command(rt.Deps{Env: io.Env, Stdout: io.Stdout, Stderr: io.Stderr, Cwd: io.Cwd, Now: io.Now}))
+	root.AddCommand(rt.Command(rt.Deps{Env: io.Env, Stdout: io.Stdout, Stderr: io.Stderr, Now: io.Now}))
 	root.AddCommand(registryCommand(io), versionCommand(io))
 	return root
 }

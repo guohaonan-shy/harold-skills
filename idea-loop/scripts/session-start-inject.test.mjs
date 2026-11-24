@@ -69,6 +69,14 @@ for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-deskto
   });
 }
 
+test('the injected capability list carries no capability template (it is for writing a description, not for a session)', () => {
+  for (const env of [{}, { MAGI_SESSION_ID: 'abc' }]) {
+    const [runtime] = runAll(env);
+    assert.ok(runtime.stdout.includes('## 能力清单') && runtime.stdout.includes('## 退路'));
+    for (const gone of ['能力模板', '\n### ', '传入：']) assert.ok(!runtime.stdout.includes(gone), gone);
+  }
+});
+
 test('the injected runtime body sends a sub-agent to `dyna runtime show`, and names neither the removed skill nor the old detect script', () => {
   const [runtime] = runAll({});
   assert.ok(runtime.stdout.includes('dyna runtime show'));
