@@ -9,6 +9,10 @@
  * checks pin: evidence's three sections, 「一道题」 not restated there, evidence free of placement paths,
  * placement in to-spec and pr, the basis section of the review standards without per-case dispositions, the old
  * name gone, and every cited section existing.
+ *
+ * Spec evidence-forms (issue #438, ticket 02) then split the figure part by form: the evidence body no longer
+ * repeats home's 「证据」 section or the 「结论在前」 line that clashed with home's 「沟通」, 「证据的几种形态」 is a six-row
+ * form table, screenshot / chart / video each have a how-to file, and the two callers stopped listing the forms.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,7 +42,7 @@ function walk(dir, out = []) {
 }
 
 test('the evidence skill is three sections: what evidence is, the overall style, which figure; its description only routes', () => {
-  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '配什么图：你来判断']);
+  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '证据的几种形态']);
   const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   assert.match(raw, /^---\nname: evidence\n/);
   assert.doesNotMatch(raw, /disable-model-invocation/, 'evidence 要能被别的 skill 和 agent 调到');
@@ -68,7 +72,7 @@ test('「要人定的写成一道题」 is not restated in the evidence skill', 
 });
 
 test('the evidence sections say what evidence is, the style, and the figure kinds; they decide no placement', () => {
-  for (const phrase of ['出处', '同条件', '复现', '结论在前', '图文结合', '旁边', 'flow compose', 'excalidrawer', 'mermaid', '动图']) {
+  for (const phrase of ['最新基准再核一次', '同条件', '复现', '用能说清要点的最小一种视图', '叠上去的东西要说明']) {
     assert.match(evidenceBody, new RegExp(phrase), `evidence 缺：${phrase}`);
   }
   assert.match(evidenceBody, /放在哪[^\n]*由调用你的 skill 定/);
@@ -76,9 +80,54 @@ test('the evidence sections say what evidence is, the style, and the figure kind
   for (const re of [/docs\/raw/, /docs\/design\/tmp/, /\.tmp\//, /idea-loop-evidence-pr-/, /选哪种形态/]) {
     assert.doesNotMatch(all, re, `证据一节或它的参考里还写着放哪 / 按情形选图：${re}`);
   }
-  assert.deepEqual(readdirSync(join(evidenceDir, 'references')).sort(), ['gif.md', 'ui-flow.md']);
-  // the figure references are reached by the full path under the plugin root
-  for (const f of ['ui-flow.md', 'gif.md']) assert.ok(evidenceBody.includes(`\${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/${f}`), `${f} 没用插件根下的完整路径`);
+  assert.deepEqual(readdirSync(join(evidenceDir, 'references')).sort(), ['chart.md', 'gif.md', 'screenshot.md', 'ui-flow.md', 'video.md']);
+});
+
+test('evidence 正文不重复 home「证据」一节，也没有跟 home「沟通」冲突的「结论在前」（#438 工单 02）', () => {
+  assert.doesNotMatch(evidenceBody, /结论在前/);
+  assert.doesNotMatch(evidenceBody, /带出处和/, '「带出处和数字」是 home「证据」一节的第一条');
+  assert.doesNotMatch(evidenceBody, /图文结合/);
+  assert.doesNotMatch(evidenceBody, /图放在它支撑的那句话旁边/, '这一条 home「证据」一节已有');
+  assert.match(evidenceBody.split('\n## ')[0], /home 固定文案「证据」一节是总纲/, '正文开头缺「home 是总纲」那句');
+});
+
+test('「证据的几种形态」是一张六行的形态表，每行指向的做法文件都存在（#438 工单 02）', () => {
+  const section = evidenceBody.split('## 证据的几种形态')[1] ?? '';
+  const rows = section.split('\n').filter((l) => l.startsWith('|')).slice(2); // 去掉表头和分隔行
+  assert.equal(rows.length, 6, `形态表应有六行，实际 ${rows.length}`);
+  assert.deepEqual(rows.map((r) => r.split('|')[1].trim()), ['截图标注', 'UI 流程图', '图表', '动图', '录屏', '表或一行例子']);
+  // 做法文件写相对路径（review 第 1 轮 C1）：evidence 不在开场注入，读自己 references/ 下的文件照旧写相对路径
+  const pointed = rows.flatMap((r) => [...r.matchAll(/`(references\/[\w.-]+\.md)`/g)].map((m) => m[1]));
+  assert.deepEqual(pointed.map((p) => p.split('/').pop()), ['screenshot.md', 'ui-flow.md', 'chart.md', 'gif.md', 'video.md']);
+  for (const p of pointed) assert.ok(existsSync(join(evidenceDir, p)), `做法文件不存在：${p}`);
+  assert.doesNotMatch(section, /mermaid/i);
+});
+
+test('evidence 的正文和它自己的做法文件指自己 references/ 下的文件时写相对路径，不写插件根下的完整路径（#438 工单 02，review 第 1 轮 C1）', () => {
+  const files = [join(evidenceDir, 'SKILL.md'), ...readdirSync(join(evidenceDir, 'references')).map((f) => join(evidenceDir, 'references', f))];
+  for (const f of files) {
+    assert.doesNotMatch(readFileSync(f, 'utf8'), /\$\{CLAUDE_PLUGIN_ROOT\}|skills\/productivity\/evidence\//, `${relative(pluginRoot, f)} 还写着完整路径`);
+  }
+});
+
+test('截图标注、图表、录屏三份做法各自写全该写的，图表没有 mermaid 退路（#438 工单 02）', () => {
+  const ref = (f) => readFileSync(join(evidenceDir, 'references', f), 'utf8');
+  const shot = ref('screenshot.md');
+  for (const phrase of ['只截那个组件', '浮层', '2 倍像素密度', '主语言', '390', 'flow compose', '第一格没有箭头', 'circles', 'caption', '不手画', '浏览器', '无头']) {
+    assert.match(shot, new RegExp(phrase), `screenshot.md 缺：${phrase}`);
+  }
+  const chart = ref('chart.md');
+  for (const entry of ['sequence', 'state-machine', 'flowchart', 'tree', 'comparison', 'chart', 'architecture']) {
+    assert.match(chart, new RegExp(`excalidrawer:${entry}`), `chart.md 缺入口：${entry}`);
+  }
+  assert.match(chart, /停下/);
+  assert.match(chart, /装上/);
+  assert.doesNotMatch(chart, /mermaid/i, 'chart.md 不写 mermaid 退路');
+  const video = ref('video.md');
+  for (const phrase of ['端到端', 'PR 里让人验收', '10MB', '动效', 'recordVideo', 'simctl', 'ffmpeg', 'H\\.264', 'faststart', '分段', '开头', '加速', '不带声音', '日志或接口响应', '<video', 'controls', '发文件给人']) {
+    assert.match(video, new RegExp(phrase), `video.md 缺：${phrase}`);
+  }
+  assert.match(ref('gif.md'), /video\.md/, '动图做法缺「端到端交付用录屏」那句');
 });
 
 test('the old decision skill is gone: no directory, no mention anywhere in the plugin (evals aside)', () => {
@@ -95,6 +144,27 @@ test('placement moved to the callers: to-spec figures.md and pr delivery-evidenc
   const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
   for (const phrase of ['idea-loop-evidence-pr-', 'dyna pr evidence publish', 'cleanup', '看什么', '做素材本身就是一道验证']) assert.match(delivery, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
+});
+
+test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形态，只指「证据的几种形态」；交付证据补了录屏的分段和 <video>（#438 工单 02）', () => {
+  const figures = read('skills', 'engineering', 'to-spec', 'references', 'figures.md');
+  const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
+  for (const text of [figures, delivery]) {
+    assert.match(text, /照 `idea-loop:evidence` 的「证据的几种形态」/);
+    assert.doesNotMatch(text, /图怎么做（/, '形态又被括号列出来了');
+    assert.doesNotMatch(text, /UI 标注、UI flow/);
+  }
+  assert.match(delivery, /录屏[^。]*分段/);
+  assert.match(delivery, /<video src="<地址>" controls><\/video>/);
+});
+
+test('插件里指 evidence 形态的地方用现在的名字：「UI 流程图」「截图标注」，不再写「UI flow」「UI 页面标注」（#438 工单 02，review 第 2 轮 S1）', () => {
+  const hits = walk(join(pluginRoot, 'skills')).filter((f) => /UI flow|UI 页面标注/.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
+  assert.deepEqual(hits, [], `还写着旧形态名：${hits.join(', ')}`);
+  const freeze = read('skills', 'design', 'uiux-refine', 'references', 'freeze.md');
+  assert.match(freeze, /「UI 流程图」/);
+  assert.match(freeze, /「截图标注」/);
+  assert.match(read('skills', 'engineering', 'to-spec', 'references', 'figures.md'), /前端交互子小节 \| UI 流程图/);
 });
 
 test('every cited section of the evidence skill exists, and nothing points at the removed references', () => {

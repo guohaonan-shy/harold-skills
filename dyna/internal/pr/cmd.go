@@ -236,7 +236,7 @@ func Command(d Deps) *cobra.Command {
 
 	evidence := registry.Group("evidence", "PR 的交付证据：每个 PR 一条孤儿分支 idea-loop-evidence-pr-<号>，合并后删")
 	evidence.AddCommand(
-		leaf("publish <owner/repo> <pr> <file>...", "把图片传到证据分支，打印 {文件名: 地址} 的 JSON；文件名要以 tNN- / rN- / pr- 开头", "",
+		leaf("publish <owner/repo> <pr> <file>...", "把图片或 mp4 录屏传到证据分支，打印 {文件名: 地址} 的 JSON；单个文件不超过 10MB（录屏超了分段）；文件名要以 tNN- / rN- / pr- 开头", "",
 			func(cmd *cobra.Command, args []string) error {
 				repo, pr, err := repoAndPR("evidence publish <owner/repo> <pr> <file>...", args)
 				if err != nil {

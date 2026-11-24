@@ -45,10 +45,34 @@ test('a blank part counts as missing', () => {
   }
 });
 
-test('the question carries the human original words it was written from', () => {
+const GOAL = 'docs/spec/some-feature/some-feature.md 期望行为 1';
+const goalCase = () => {
+  const { quote, ...rest } = good();
+  return { ...rest, goal_from: GOAL };
+};
+
+test('where the question came from is required, and it is one of two: the human original words (quote) or the spec story it was written from (goal_from)', () => {
   const c = good();
   delete c.quote;
-  assert.deepEqual(fields(c), ['quote']);
+  assert.deepEqual(fields(c), ['quote'], 'neither: reported as missing');
+  assert.match(validateCase(c)[0].message, /goal_from/, 'the message names both ways to fill it');
+  assert.deepEqual(fields({ ...c, goal_from: '   ' }), ['quote'], 'a blank goal_from is no source either');
+});
+
+test('a goal case (goal_from, no quote) is complete', () => {
+  assert.deepEqual(validateCase(goalCase()), []);
+});
+
+test('quote and goal_from together are a conflict, reported once and naming both', () => {
+  const [p, ...rest] = validateCase({ ...good(), goal_from: GOAL });
+  assert.deepEqual(rest, []);
+  assert.equal(p.field, 'goal_from');
+  assert.match(p.message, /冲突/);
+  assert.match(p.message, /quote/);
+});
+
+test('goal_from that is not text is refused as no source', () => {
+  assert.deepEqual(fields({ ...goalCase(), goal_from: 3 }), ['quote']);
 });
 
 test('a prompt that would tell the run it is being tested is refused: 回放 / eval / judge / rubric / benchmark / 评测 / 评委 / 判定, any case', () => {
@@ -127,6 +151,17 @@ test('home_commit is optional (the old cases have none); when given it must look
     assert.equal(p?.field, 'home_commit', JSON.stringify(bad));
     assert.deepEqual(rest, [], JSON.stringify(bad));
   }
+});
+
+test('the format description in cases.mjs says what goal_from is, what it points at, and that it is either-or with quote', () => {
+  const text = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'evals', 'retro', 'cases.mjs'), 'utf8');
+  const line = text.split('\n').find((l) => /^ \* {3}goal_from/.test(l));
+  assert.ok(line, 'no goal_from entry in the format comment');
+  const entry = text.slice(text.indexOf(line)).split(/\n \* {3}(?=[a-z_]+\s)/)[0];
+  assert.match(entry, /spec/);
+  assert.match(entry, /User Story|期望行为/);
+  assert.match(entry, /二选一|either/i);
+  assert.match(entry, /quote/);
 });
 
 test('the format description in cases.mjs says what home_commit is for', () => {

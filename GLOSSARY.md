@@ -7,8 +7,12 @@ Harold 的 Claude Code skills 集合；这里的词条是在这些 plugin 的通
 ### 运行环境
 
 **运行环境**：
-idea-loop 的本地运行环境：跑 idea-loop 会话的那个程序，它决定会话里有哪些工具可用，例如 Claude 桌面端、magi。
+idea-loop 的本地运行环境：跑 idea-loop 会话的那个程序，它决定会话里有哪些工具可用，例如 Claude 桌面端、magi。它是建在某个 harness 上的应用层，管分组、标题、归档、定时、会话之间发消息。
 _Avoid_: 环境（单说会跟开发环境、dev 环境混）, 工作环境、执行环境（0.2.0 计划里的旧叫法）, workspace, 宿主, host, platform
+
+**harness**：
+跑模型和工具的 agent 程序，例如 claude、codex；开会话、接着跑、结束会话都在这一层；运行环境是建在它上面的应用层，两者不是一回事。
+_Avoid_: 模型（同一个 harness 可以换模型）, agent 程序（单说）
 
 **能力**：
 通用流程要运行环境替它做的一类操作，例如定时任务、会话管理；每个运行环境对每个能力要么给出做法，要么写明没有。

@@ -1,13 +1,13 @@
 # spec 里的图：画在哪一节、放在哪
 
-spec 也给人读：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。图怎么做（UI 标注、UI flow、excalidrawer 图表）照 `idea-loop:evidence`；这里只写 spec 的哪一节要图、放在哪。下文「raw 目录」指这场讨论的 `docs/raw/<topic>/`，图放在它的 `assets/` 里；从 GitHub issue 起草、没有对话的 spec 没有 raw 目录，图放这份 spec 自己目录下的 `assets/`。
+spec 也给人读：人读不出一段文字描述的问题长什么样，也没法在脑子里把散在「实现决策」各小节的决策拼成一条链。图怎么做照 `idea-loop:evidence` 的「证据的几种形态」；这里只写 spec 的哪一节要图、放在哪。下文「raw 目录」指这场讨论的 `docs/raw/<topic>/`，图放在它的 `assets/` 里；从 GitHub issue 起草、没有对话的 spec 没有 raw 目录，图放这份 spec 自己目录下的 `assets/`。
 
 | spec 的哪里 | 要的图 | 谁做 |
 |---|---|---|
 | 问题陈述 | 复现证据，每个问题一张，图在文字之前 | `idea-loop:grill` 或 `idea-loop:issue-triager` 复现时截图，这里排版 |
 | User Stories | 每个场景一棵 story 树 | 这里 |
 | 方案 · 开头，以及后端 / 前端内部子小节 | 时序图 | 这里 |
-| 方案 · 前端交互子小节 | UI flow | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
+| 方案 · 前端交互子小节 | UI 流程图 | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
 
 **定稿后 `docs/` 里只留 PNG。** excalidrawer 的 `.excalidraw` 源文件和 sugar JSON 还在改的时候放在代码 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`idea-loop:wiki-conventions` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。
 
@@ -30,4 +30,4 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 
 ## 前端交互
 
-设计冻结之前只写文字，小节开头标「待补图」（写法见 [plan-subsections.md](plan-subsections.md)）。冻结时的 UI flow 放哪，见 uiux-refine 的冻结步骤。
+设计冻结之前只写文字，小节开头标「待补图」（写法见 [plan-subsections.md](plan-subsections.md)）。冻结时的 UI 流程图放哪，见 uiux-refine 的冻结步骤。

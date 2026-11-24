@@ -33,12 +33,12 @@ import (
 )
 
 const (
-	// MaxBytes is the biggest image a PR comment loads.
+	// MaxBytes is the biggest file a PR comment loads, image or recording.
 	MaxBytes = 10 * 1024 * 1024
 )
 
-// Extensions are the file types the evidence branch takes.
-var Extensions = []string{".png", ".gif", ".jpg", ".jpeg", ".webp"}
+// Extensions are the file types the evidence branch takes: images, and .mp4 for a screen recording.
+var Extensions = []string{".png", ".gif", ".jpg", ".jpeg", ".webp", ".mp4"}
 
 var (
 	assetNameRe   = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]*$`)
@@ -48,7 +48,8 @@ var (
 // EvidenceBranch is the branch of one PR's evidence.
 func EvidenceBranch(pr string) string { return "idea-loop-evidence-pr-" + pr }
 
-// ImageURL is the address to embed: it opens as an image in the browser, not as a download.
+// ImageURL is the address to embed: it opens in the browser (an image as an image, an .mp4 as a playable video),
+// not as a download. An .mp4 gets the same shape of address as an image.
 func ImageURL(repo, pr, name string) string {
 	return fmt.Sprintf("https://github.com/%s/blob/%s/%s?raw=true", repo, EvidenceBranch(pr), name)
 }
@@ -78,7 +79,7 @@ func CheckAssets(files []File) []string {
 	for _, f := range files {
 		name := filepath.Base(f.Path)
 		if !oneOf(Extensions, strings.ToLower(jsExt(name))) {
-			errs = append(errs, fmt.Sprintf("%s：只收图片（%s）", name, strings.Join(Extensions, " / ")))
+			errs = append(errs, fmt.Sprintf("%s：只收图片和录屏（%s）", name, strings.Join(Extensions, " / ")))
 		}
 		if !assetNameRe.MatchString(name) {
 			errs = append(errs, fmt.Sprintf("%s：文件名只用小写字母、数字、点、横线、下划线（要直接放进图片地址里，别的字符会被转义，链接对不上）", name))
@@ -92,6 +93,8 @@ func CheckAssets(files []File) []string {
 		seen[name] = true
 		if f.Size <= 0 {
 			errs = append(errs, fmt.Sprintf("%s：空文件或不存在", name))
+		} else if f.Size > MaxBytes && strings.ToLower(jsExt(name)) == ".mp4" {
+			errs = append(errs, fmt.Sprintf("%s：%.1fMB，超过 10MB——分段，一段讲一步；太大的录屏在 PR 里加载不出来", name, float64(f.Size)/1024/1024))
 		} else if f.Size > MaxBytes {
 			errs = append(errs, fmt.Sprintf("%s：%.1fMB，超过 10MB——裁短、降帧率或缩小尺寸再传，太大的图在 PR 里加载不出来", name, float64(f.Size)/1024/1024))
 		}

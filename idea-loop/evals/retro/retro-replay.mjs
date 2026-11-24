@@ -40,6 +40,7 @@
  * Pre-change "no" and post-change "yes" is a pass. Pre-change "yes" means the case never showed the
  * problem ("用例没抓住问题"), which is not a pass. A guard case (`guard: true` in case.json, see cases.mjs) is the other way round: it watches that
  * the change does not reach too far, so the pre-change answer is not asked to be "no" and the post-change "yes" alone is a pass.
+ * A goal case (`goal_from` in case.json instead of `quote`) is judged the same way; its pre-change "yes" reads "不过：改前就做得到".
  * A human can overrule a judgement: see --settle.
  *
  * No process the runner starts (the two runs, the judge, Codex) has a `gh` login: they get this process's environment without
@@ -797,9 +798,9 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const verdict = parseVerdict(judgeText);
   const verdicts = verdictsBySide(verdict, afterIs);
   const judged = { before: verdicts?.[0].answer, after: verdicts?.[1].answer };
-  const decision = applyExercised(decideOutcome({ ...judged, guard: Boolean(c.guard) }), exercised);
+  const decision = applyExercised(decideOutcome({ ...judged, guard: Boolean(c.guard), goal: Boolean(c.goal_from) }), exercised);
   const cost = Object.values(costs).reduce((a, b) => a + (b ?? 0), 0);
-  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, exercised, ...decision, guard: Boolean(c.guard), costs, cost, settled: false };
+  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, exercised, ...decision, guard: Boolean(c.guard), goal: Boolean(c.goal_from), costs, cost, settled: false };
   writeFileSync(join(runDir, 'result.json'), JSON.stringify(result, null, 2));
   return { code: report(result, runDir, c.name, t.casesRoot), result, runDir };
 }
@@ -831,7 +832,7 @@ async function replay(opts, t) {
 }
 
 function report(result, runDir, name, casesRoot) {
-  const label = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论', 'not-exercised': '用例没测到改动' }[result.outcome];
+  const label = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', 'already-done': '不过：改前就做得到', inconclusive: '没有结论', 'not-exercised': '用例没测到改动' }[result.outcome];
   console.log(`\n${name}: ${label}（${result.outcome}）\n  ${result.reason}`);
   if (result.judge) console.log(`  评委：${result.judge === 'codex' ? 'Codex' : 'Claude'}`);
   if (result.exercised) console.log(`  改动核对：${describeExercised(result.exercised)}`);
@@ -840,7 +841,7 @@ function report(result, runDir, name, casesRoot) {
   console.log(`  实际花费：${usd(result.cost)}（改前 ${usd(result.costs.before)}，改后 ${usd(result.costs.after)}，判定 ${judgeCost}）`);
   console.log(`  产物：${runDir}/{before,after}/artifact.md`);
   console.log(`  不同意判定？在 ${join(casesRoot, 'cases', name, 'annotations.md')} 里记一行「- 推翻 ${result.runId} 改前=是|否 ｜ 理由」，再跑 --settle ${name} --run ${runDir}`);
-  return { pass: 0, fail: 1, 'case-missed': 1, 'not-exercised': 1, inconclusive: 4 }[result.outcome];
+  return { pass: 0, fail: 1, 'case-missed': 1, 'already-done': 1, 'not-exercised': 1, inconclusive: 4 }[result.outcome];
 }
 
 function settle(opts, t) {
@@ -853,7 +854,7 @@ function settle(opts, t) {
   const notes = join(t.casesRoot, 'cases', opts.settle, 'annotations.md');
   const overrides = existsSync(notes) ? parseOverrides(readFileSync(notes, 'utf8')) : {};
   const judged = settleVerdicts(result.judged, overrides, result.runId);
-  const decision = applyExercised(decideOutcome({ ...judged, guard: Boolean(result.guard) }), result.exercised);
+  const decision = applyExercised(decideOutcome({ ...judged, guard: Boolean(result.guard), goal: Boolean(result.goal) }), result.exercised);
   const next = { ...result, judged, ...decision, settled: Boolean(overrides[result.runId]), overridden: overrides[result.runId] ?? null };
   writeFileSync(file, JSON.stringify(next, null, 2));
   return report(next, opts.run, opts.settle, t.casesRoot);

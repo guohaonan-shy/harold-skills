@@ -140,7 +140,7 @@ test('claude-desktop: a session is opened in four steps, the second is the two c
   assert.match(steps[1], /开会话并交到桌面端/);
   assert.ok(!/runtime handoff/.test(text), 'the hand-over command is gone');
   assert.match(steps[1], /claude -p "只回一个字：就绪" --output-format json/);
-  assert.match(steps[1], /claude --desktop --resume <id>/);
+  assert.match(steps[1], /`script -q \/dev\/null claude --desktop --resume <id>`/, 'claude --desktop needs a terminal; the Bash tool has none');
   assert.match(steps[1], /local_<id>/);
   assert.match(steps[1], /dyna runtime record --issue <号> --repo <仓库名> --period <dispatch> --session local_<id>/);
   assert.match(steps[1], /沙箱外/);
@@ -148,7 +148,7 @@ test('claude-desktop: a session is opened in four steps, the second is the two c
   // the bullet under 会话管理 carries the same commands and what happens when one fails
   const bullet = desktop.split('\n').find((l) => l.startsWith('- **开一个 issue 会话**'));
   assert.ok(bullet, 'claude-desktop has 「开一个 issue 会话」');
-  for (const word of ['claude -p "只回一个字：就绪" --output-format json', '`session_id`', 'claude --desktop --resume <id>', '退出码 0 算成功', '`local_<id>`', '沙箱外', 'dyna runtime record --issue <号> --repo <仓库名> --period <todo|triage> --session local_<id>', '下一轮再试', '不在本轮重试', '早上汇总会少这一条']) {
+  for (const word of ['claude -p "只回一个字：就绪" --output-format json', '`session_id`', '`script -q /dev/null claude --desktop --resume <id>`', '不是终端', '退出码 0 算成功', '`local_<id>`', '沙箱外', 'dyna runtime record --issue <号> --repo <仓库名> --period <todo|triage> --session local_<id>', '下一轮再试', '不在本轮重试', '早上汇总会少这一条']) {
     assert.ok(bullet.includes(word), `the bullet must mention ${word}`);
   }
   assert.match(steps[2], /归位/);

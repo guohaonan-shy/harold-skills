@@ -17,7 +17,12 @@
  *               the product); the run is never told where to stop: an agent that hands its work to the human ends its turn
  *   question    one yes/no question, written from what the human said back then; a judging session
  *               answers it about the pre-change run and the post-change run
- *   quote       the human's original words the question was written from
+ *   quote       the human's original words the question was written from. A case has either this or `goal_from`, never both and never neither
+ *   goal_from   a goal case's source, in place of `quote`: where in a spec the question was written from, as the spec's path and the
+ *               number of one of its User Stories or expected behaviours ("docs/spec/<slug>/<slug>.md 期望行为 1"). For a new ability
+ *               that has no history and no original words yet; the spec's expectation stands where the human's words would. Either-or
+ *               with `quote` (二选一); the rest of the case, the runner and the judging are the same, and the outcome rule is too:
+ *               pre-change "no" and post-change "yes" is the only pass, while a pre-change "yes" is "不过：改前就做得到"
  *   size        small | large (the rule is in size_basis; the runner checks it against the event stream)
  *   size_basis  which criterion decides the size
  *   guard       optional, true: the case watches that a rule does not reach too far (a thing the human decides stays with the human), so
@@ -70,7 +75,11 @@ export function validateCase(c) {
   if (!filled(c.question)) need('question', '缺是/否题');
   else if (!/[？?]\s*$/.test(c.question.trim())) need('question', '是/否题要写成一个问句（以问号结尾）');
 
-  if (!filled(c.quote)) need('quote', '缺人当时的原话：是/否题是从哪句话写出来的');
+  // where the question came from: the human's words back then (quote) or a spec expectation (goal_from), one of the two
+  const hasQuote = filled(c.quote);
+  const hasGoal = filled(c.goal_from);
+  if (hasQuote && hasGoal) need('goal_from', 'quote 和 goal_from 冲突：只填一个。题是从人当时的原话写出的填 quote，是从 spec 里一条期望写出的填 goal_from');
+  else if (!hasQuote && !hasGoal) need('quote', '缺题的来源，二选一：quote（人当时的原话）或 goal_from（出自哪份 spec 的哪条 User Story / 期望行为）');
 
   if (c.size !== 'small' && c.size !== 'large') need('size', `缺大小，或写的不是 small / large（现在是 ${JSON.stringify(c.size)}）`);
   if (!filled(c.size_basis)) need('size_basis', '缺大小的依据：凭哪一条判的');
