@@ -5,6 +5,7 @@
 - `CLAUDE.md`、`AGENTS.md`、`CONTRIBUTING.md`、`README`
 - CI 配置（`.github/workflows/`）、`package.json` 的 scripts、锁文件、`.worktreeinclude`
 - 最近 20 次合并提交和最近合并的 10 个 PR，看合并方式
+- 「模块」三段推荐接不接的依据：前端界面（页面、组件目录）；对外的营销站或博客；调模型的依赖（`package.json`、`requirements.txt` 之类里的 `@anthropic-ai/sdk`、`openai`）。已接过的看 `<项目目录>/.gitattributes` 的 LFS 规则、`<项目目录>/SEO.md`、代码仓库根的 `EVAL.md`
 - GitHub 项目：仓库现有的 label 和 open issue 上的 label（各读到 500 条）：哪些 label 在用、用在什么 issue 上，推出分类和要保留的 label
 
 项目目录里读（全新项目这里还是空的，只有「已接上」的项目才有东西）：

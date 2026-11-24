@@ -112,12 +112,13 @@ test('the proposal-table reference lists the 记忆 row type and says the memory
 });
 
 test('setup 「每周对账」 creates the device-level task dreaming-home, never a per-repository dreaming-<仓库名>', () => {
-  const s = section(setupSkill, '每周对账');
+  // #420: 每周对账 is a row of setup's 「定时任务」 table; its hand-back line moved into references/handback.md
+  const s = section(setupSkill, '定时任务');
   assert.match(s, /dreaming-home/);
   assert.match(s, /references\/weekly-dreaming\.md/);
   assert.match(s, /^完成条件：/m);
   assert.doesNotMatch(s, /dreaming-<仓库名>/);
-  assert.match(setupSkill, /##\s*交回[\s\S]*每周对账[^\n]*dreaming-home/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'handback.md'), /每周对账[^\n]*dreaming-home/);
   assert.doesNotMatch(weekly, /dreaming-<仓库名>/);
   assert.doesNotMatch(weekly, /git-common-dir/);
   assert.match(weekly, /任务 id：`dreaming-home`/);
