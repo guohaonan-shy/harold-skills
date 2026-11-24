@@ -8,6 +8,7 @@
 | [[dispatch-triage-per-round]] | 白天的 triage 也按每轮新开表里的上限个，triage 分组总数另设上限（表里新一列，默认 10） |
 | [[dyna-missing-commands]] | dyna 补上 skill 五处还要 agent 自己拼 gh / git 的命令：按状态列 issue、打 kind、空提交、按提交检出、等 PR 检查 |
 | [[edge-case-known-limit]] | 思考、决策、沟通、证据由 setup 写成 home 的固定文案；插件删掉 decision-rules，证据搬进 evidence |
+| [[evidence-forms]] | evidence 按五种形态分支（加录屏），从 home「证据」往下展开，配一组取自真实交付物的回放样本 |
 | [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
 | [[idea-loop-cli]] | idea-loop 的脚本收成 Go 写的 dyna 命令行单独发布，skill 只写命令，插件写命令行版本范围 |
 | [[in-scope-legacy-fix]] | 影响本次改动的存量问题在本 PR 里修，不再被当成无关存量自动开 issue |

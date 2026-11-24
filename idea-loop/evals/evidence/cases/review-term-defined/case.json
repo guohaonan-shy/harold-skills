@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#180 的 PR #213 review 第 1 轮（2026-10-31）：S2 的标题和正文写「通用文档不带项目信息的那条规则……哪些算项目级文档」，「通用文档」没说指哪些文件，人回「S2 通用文档指的是什么？」（PR #213 的归档评论「review 第 1 轮」；决定记录 docs/raw/decisions/180.md 题 4、候选 1）",
+  "commit": "759caad38207b51c9ea6d6e3ecb3ddecfcbee1e2",
+  "prompt": "/idea-loop:pr-review 我是 guohaonan-shy/harold-skills 的 PR #213（spec writing-for-agents 的写作规则：剪枝、信息层级）的编排者。第 1 轮 review 跑完了，下面是这一轮的结论，当作「跑一轮」已经做完、汇报已记进 review loop 文件、照规则的条目也都处理完了，你接着往下，把这一轮对我说清楚：\n\n- 审的版本 759caad，基准 origin/main。Spec 3 条、Standards 3 条；Standards 的 3 条（C1、C2、C3）已按规则处理并推送；机械检查全绿；没有设计产物，没有人验素材，没有排队待跑的大用例。\n- S1：起草 spec 的说明（idea-loop/skills/engineering/to-spec/SKILL.md:16）里加的「先诊断」那段，括号里列了 skill、参考、agent 定义，没列项目的 CLAUDE 指令文件；工单第 02 张列了五种。守这段的测试只核了笼统的「给 agent 读的文档」。用户感受不到；说明文件离 5000 字上限只剩 10 字。\n- S2：idea-loop/skills/productivity/writing-for-agents/SKILL.md:81（相关性一条）。工单给这条写好了改写文本：通用文档「不带任何项目信息」，项目级文档（项目根的两种指令文件、项目自己的知识库）才带项目信息。实现写成「不带项目信息」「项目级的文档才带」，去掉了「任何」，也没说哪些算项目级。读规则的 agent 仍能从通用文档那串列举反推出其余都是项目级；语气比我之前说的「不能带有一丝项目相关的信息」弱一点。\n- S3：idea-loop/skills/productivity/retro/SKILL.md:60 写了「是/否题要答改前否、改后是才算规则真的让 skill 变了」，工单说验收方式只在仓库约定里写一处、retro 不复述。但 retro 会在别的项目里跑，那里读不到本仓库的约定。\n- 三条都不是 bug，都要我定：接受并补记进工单，还是改回工单原文。\n\n我不在场，不会回复你：不要 git commit、git push、gh 的任何写操作，不要起 Agent；要跑的命令原样写在最后一段回复里，当作已经完成。要写进工作区的文件照常写。最后一段回复就是你这一轮要对我说的话：写明这一轮的结果、接下来这一步你做了什么，以及要我定的、要我做的是什么。",
+  "stop_at": "写完这一轮交给人的那段话的那一刻：最后一段回复里，S2 那一条（含「通用文档」这个叫法第一次出现的地方）",
+  "question": "「通用文档」这个叫法在这条消息里第一次出现时，有没有说清它指哪些文件（按它们会在几个项目里被读到、或点出具体的文件类型），而不是直接拿来用？",
+  "quote": "S2 通用文档指的是什么？",
+  "size": "small",
+  "size_basis": "只驱动 pr-review 一个 skill，这一轮的结论由 prompt 给出，不起插件 agent、不开浏览器；prompt 禁了 git 提交推送、gh 写操作和 Agent，没有付费外部服务"
+}

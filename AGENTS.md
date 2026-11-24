@@ -48,7 +48,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
-├── evals/                           # 可选 —— 钉住的 baseline 与回放、目标用例（只有 idea-loop 有，见 §5）
+├── evals/                           # 可选 —— 钉住的 baseline、回放与目标用例、标注样本（只有 idea-loop 有，见 §5）
 ├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
 ├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
@@ -119,6 +119,15 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 所以那里不判好坏、不打分：钉一组取自真实设计会话的 default prompt 加一份最小的产品上下文，一条命令跑，每个 case 把页面留在固定位置、旁边放一个文件让人标注问题，
 标注留档，逐步收敛出产物该包含什么。改了调研 agent、契约或 skill，就对着同一组问题再跑一遍给人看。
 写这条例外是为了让下一个读到它的人知道这是决定，不是遗漏；等产物形状稳了，标注收敛出的东西该变成 `research-check` 的机械检查，这个例外就可以收掉。
+
+**有意例外：`idea-loop` 的「标注样本」**（一个 skill 一组，放 `idea-loop/evals/<skill>/cases/`；第一组是 evidence，在 `idea-loop/evals/evidence/cases/`）。
+理由：交付物（给人看的 spec、PR 描述、汇报、要人定的题）写得好不好，没法先写成断言，只能拿人当时追问的真实现场，改前、改后各跑一遍，让人在旁边标注。
+所以它**不打分**；它也不是单条规则的验收（那是上面的回放和目标用例），而是一组跟着某个 skill 的常驻样本，这个 skill 改了就重跑，看人当时追问的那几处现在是不是写好了。
+- **样本**：一个现场一个文件夹，格式就是 retro 回放用例（`case.json`：当时的提交、让 skill 产出那段的 prompt、停在哪、从人当时原话写的是/否题、原话、规模与依据），加两个文件：`sample.md`（给人看：当时产出的原文、人指出的问题、好的长什么样、换过现场的写明换了哪个、为什么）和 `annotations.md`。取不到当时输入的，换一个同类现场，写进 `sample.md`。
+- **runner**：复用 `idea-loop/evals/retro/retro-replay.mjs`，用 `--cases-root idea-loop/evals/<skill>` 指到这一组，不另写；改前用基准分支的插件，改后用本分支的插件，判定会话回答是/否题并引出处。
+- **人怎么推翻**：判定不对，或样本本身要改，记在样本旁的 `annotations.md`（推翻的写法跟回放一样），再 `--settle` 重判；人可以在那里写对这次产出的看法。
+- **什么时候跑**：改了这个 skill（正文、参考、调用它的地方讲它的那部分）就当场跑一遍；小用例当场跑，大用例在 PR 开出来之后照 `--run-large` 跑。
+- **第一组 evidence**：五个现场——`option-current-state-shown`、`spec-option-goal-figure`、`example-from-real-material`、`review-term-defined`、`review-current-state-verified`。#451（to-spec）、#452（pr）往这一条里加自己的一组（`idea-loop/evals/to-spec/`、`idea-loop/evals/pr/`），不另写例外。
 
 ### 6. allowed-tools 收窄到具体命令模式
 

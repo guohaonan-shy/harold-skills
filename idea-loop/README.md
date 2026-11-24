@@ -174,9 +174,14 @@ it worked, but carried one person's words from GitHub back into the session they
   follows delivery, not PR size: a problem that affects this spec's implementation, or has an effect once
   shipped, is recommended into the current PR; the rest is not, and goes back to the caller's own process. How
   each flow disposes of findings (the reviewer's disposition table, the implementer's stop-or-defer table)
-  lives with that flow. `idea-loop:evidence` says what counts as evidence (source, time, version, numbers,
-  like-for-like comparisons) and the overall style (conclusion first, figure beside the sentence it supports);
-  which figure to draw is left to the model, and where it goes is up to the caller (`to-spec`'s
+  lives with that flow. `idea-loop:evidence` takes the fixed "Evidence" section in home as the overall rule and
+  writes only what is outside it: what counts as evidence (re-checking the baseline, like-for-like comparisons,
+  reproduction, evidence taken from the thing being judged) and the overall style (the smallest view that makes
+  the point, names taken from the glossary or the conversation and explained only when neither has them, overlays
+  declared); an overview of the six forms says what each lets the human see (annotated screenshot: one screen's
+  problem; UI flow: the whole user path; chart; GIF: an interaction while designing or changing it; screen
+  recording: the end-to-end delivery, checked in the PR; table or one-line example), each with its own how-to file, and a recording is an H.264 mp4 under the same 10MB limit
+  (split into segments when over); where it goes is up to the caller (`to-spec`'s
   `references/figures.md`, `pr`'s `references/delivery-evidence.md`). Section 4 of a drafted spec keeps what the
   rules can settle as decisions with their basis; only the choices whose basis does not hold are
   left as options, and every "suggest closing" entry says what was claimed, why it no longer holds,
@@ -362,6 +367,20 @@ cannot show that its rule works. An empty change set (only scripts changed) is r
 "yes" is a pass; pre-change "yes" is reported as "the case did not catch the problem". It does not score anything. Details and
 the exit codes: the header of `evals/retro/retro-replay.mjs`.
 
+**Annotated samples.** A skill whose products are judged by feel rather than by a single rule (so far `evidence`) keeps a group of
+real scenes where the human once asked for the evidence, in `evals/<skill>/cases/<name>/`: the same `case.json` format as a replay
+case, plus `sample.md` (the original text, what the human pointed at, what good looks like, and which scene was swapped in and
+why when the original input could not be had) and `annotations.md` (where the human overrules a judgement). The retro runner runs
+them as it runs any case, with `--cases-root`:
+
+```
+node idea-loop/evals/retro/retro-replay.mjs --worktree "$PWD" --cases-root "$PWD/idea-loop/evals/evidence" --list
+node idea-loop/evals/retro/retro-replay.mjs --worktree "$PWD" --cases-root "$PWD/idea-loop/evals/evidence" --case <name> --base <before>
+```
+
+Nothing is scored; the output is the two products and the judge's answer for the human to annotate. Run the group after changing the
+skill. The rule for adding a group is in the repository `AGENTS.md`, "Eval 策略".
+
 **The temporary home.** The knowledge base lives in idea-loop's home (`projects/<名字>/docs/`, `IDEA_LOOP_HOME` points at it), and the
 post-change plugin reads only home. So every session the runner starts gets its own temporary home (a git repo in a temp dir, a copy kept
 under the run dir as `<side>/home`) and `IDEA_LOOP_HOME` points at it; nothing of the machine's own home is reachable. An **old case**
@@ -491,9 +510,10 @@ idea-loop/
 │       ├── retro/SKILL.md            # model-invoked — end-of-session retro: rule candidates from the human's corrections, choices and directions; references/decision-record.md, references/candidate-pool.md (the pool file shape, judging the same kind, the human's replies, reading / writing harold-skills' pool remotely), references/session-digest.md (locating and compressing the transcript)
 │       ├── writing-for-agents/       # shared, model-invoked; SKILL.md + SKILL-MECHANICS.md translated into Chinese from mattpocock/skills (MIT, see its LICENSE); references/rewrite-checklist.md — the rewrite checklist (eight items, each with how to verify), how to classify external-tool commands, the 4500-character line, and which skill owns each shared rule
 │       ├── wiki-conventions/SKILL.md # shared, model-invoked — the docs/ contract — the project directory in home, directories, frontmatter, slug and links, the glossary pointer, the lifecycle and how knowledge-base changes are committed to home, scratch dirs; references/ glossary.md (GLOSSARY.md: what goes in, format, who writes — grill; dreaming corrects with approval — who reads, wiring a project to it), home-maps.md (the device-map and project-map templates setup and dreaming share), tmp-layout.md (what each `.tmp/` subdirectory holds and when it goes), migrate-flat-layout.md
-│       ├── evidence/SKILL.md         # shared, model-invoked — what counts as evidence and the overall style for what a human reads, and the figure kinds and their tools (UI screenshot marks, UI flow via flow-compose — references/ui-flow.md, excalidrawer charts or mermaid, GIFs — references/gif.md; where figures go is the caller's)
+│       ├── evidence/SKILL.md         # shared, model-invoked — what counts as evidence and the overall style for what a human reads, and an overview of the six evidence forms and their how-tos (annotated screenshot — references/screenshot.md, UI flow via flow-compose — references/ui-flow.md, excalidrawer charts — references/chart.md, GIFs — references/gif.md, screen recordings — references/video.md, table or one-line example; where figures go is the caller's)
 │       └── dreaming/SKILL.md         # + references/ — proposal-table (shape, the ask-or-auto split, execution, the commit to home, wrap-up: push, rollback, tmp cleanup), partial-runs (running only one part, single-rule distillation), review-page (the cards a human approves DESIGN.md changes on), archive-reconcile (two waves, both run by the ui-reviewer; five verdicts), initial-scan, candidate-distillation, design-md-reconcile, docs-reconcile (the adr-reconciler's method), missed-archive, retro-candidates (the pool section of the table), incremental-scope (full vs incremental screenshot pass, the baseline from the `dreaming-home` task's runs), memory-tidy (the memory pass: measure, judge, execute in home, ask), per-project (the walk over the project list: fetch, worktree, rewrite the two maps, skip rules, when a run counts as a success), adr (an ADR's two `status` values and superseding one section)
 ├── evals/uiux-research/              # baseline: default prompts from real sessions + a minimal product context; `run.mjs` runs them, the human annotates the pages (see below)
+├── evals/evidence/                   # annotated samples for the `evidence` skill: five real scenes where the human asked for the evidence (`cases/<name>/` = a replay case plus `sample.md` for the human and `annotations.md`); run with the retro runner's `--cases-root idea-loop/evals/evidence`, not scored (see below)
 ├── evals/retro/                      # replay cases for rule changes: `retro-replay.mjs` runs one small case on the pre-change and post-change plugin and has a judge (Codex, `claude -p` when none is found) answer its yes/no question over the two products in a random A/B order; `--run-large` runs the large ones on the spot once the PR is open (`queue.mjs` holds how a result is written into the review loop file; before the judge it checks the post-change run used the changed skills, agents or references) (see below)
 ├── docs/
 │   ├── pr-review-loop.md             # design record of the previous review loop — superseded, kept as history
@@ -528,6 +548,7 @@ idea-loop/
     ├── research-baseline.test.mjs       # keeps the uiux-research baseline well-formed: six cases, each with a prompt, a comparison line and an annotation file; the runner's stream digest
     ├── retro-destination-recommend-doc.test.mjs # tripwire on retro's two files: the candidate pool reference recommends 默认进候选池 for the 1st / 2nd time and 开 issue from the 3rd (the human still chooses; a bare "approve" follows the recommendation), no "不给推荐" left, and SKILL.md step 4 no longer says it leaves the destination alone nor repeats the count
     ├── retro-case.test.mjs              # the replay-case format: a missing commit / prompt / stop point / yes-no question / size / size basis is each reported by name, and so is a prompt that gives away it is a test; the shipped cases are well-formed
+    ├── evidence-samples.test.mjs        # the `evidence` annotated samples (`evals/evidence/cases/`): exactly the five scenes, each passes the replay case format, has a `sample.md` with its five sections and an `annotations.md` carrying the quote and the question
     ├── retro-queue.test.mjs             # how a replay result is written into the review loop file (`queue.mjs`): an entry that says it ran on the spot, is settled only when every case passed, and is numbered among replays; `check` reads it
     ├── retro-run-large.test.mjs         # the runner's `--run-large` end to end against a fake `claude`: a large case run in the daytime, the entry in the review loop file (with the exercised check's line, a not-exercised case listed as not passed), exit codes 0 / 1 / 2 / 3, and the flags of the removed night queue refused as unknown arguments
     ├── retro-replay.test.mjs            # the replay runner's decisions (pass / case missed the problem / fail / abort a small case that started an agent / human override) and its flow end to end against a fake `claude` and a fake Codex: who judges, the A/B order turned back, the fall back to Claude, the plugin path a run is given, the changed plugin files swapped into the project copy (each side's own version, new files in, deleted ones out, untouched ones as the commit had them, the plugin's top-level `evals/` never swapped in, nothing for a commit without that plugin or with a differently named one, none in the products), and the exercised check (Read / Skill / Agent / sub-agent / slash-command / injected-file hits, a miss is `not-exercised`, an empty change set is n/a, `changeSetOf`); a stand-in `claude` never reaches a real Codex
