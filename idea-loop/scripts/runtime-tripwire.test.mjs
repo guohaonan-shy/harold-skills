@@ -2,8 +2,8 @@
  * Tripwire — the plugin's flows stay runtime-agnostic.
  *
  * idea-loop's skills and agents write capabilities (scheduled task, browser, asking the human …);
- * how a capability is done in one runtime (claude-desktop, magi) lives only in the plugin's runtime/ data
- * (outside skills/ and agents/, so it is never scanned). This test scans skills/ and agents/ for runtime-specific writing (tool names, CLI
+ * how a capability is done in one runtime lives only in that machine's own runtime description (project, home or
+ * ~/.idea-loop/, written by setup; outside skills/ and agents/, so it is never scanned). This test scans skills/ and agents/ for runtime-specific writing (tool names, CLI
  * commands, settings paths — the list is in docs/adr/0026-runtime.md, "tripwire 的名单") and
  * reports every hit as "file:line  rule  original line". Scanning stays aligned with
  * no-project-leak.test.mjs (skills/ and agents/ are in both; scripts/ and evals/ are out of both).
@@ -12,7 +12,7 @@
  * those declare which tools a skill or agent may call; a tool declared but absent in some runtime is harmless,
  * and the declaration is not a flow an agent follows. The same words in the body are still hits.
  * (The runtime skill used to be a second exemption, its references/ being where runtime-specific writing
- * belonged; the skill is deleted and its data lives in runtime/, which this test does not scan.)
+ * belonged; the skill is deleted, and the plugin's runtime/ holds only the capability list.)
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -122,16 +122,10 @@ test('the SEO module step 1 has no 被顶替 check, its reference is gone, and n
   assert.match(s1, /记「未做：OpenSEO 没连上」/);
 });
 
-test('uiux-research and the runtime reference: Mobbin tools by short name, a hand-configured Mobbin works', () => {
+test('uiux-research: Mobbin tools by short name', () => {
   const backend = read('skills', 'design', 'uiux-research', 'references', 'research-backend.md');
   assert.doesNotMatch(backend, /mcp__plugin_/);
   for (const t of ['search_screens', 'search_flows', 'search_sections']) assert.ok(backend.includes(`\`${t}\``), t);
-  const desktop = read('runtime', 'claude-desktop.md');
-  const mobbin = desktop.split('\n').find((l) => l.startsWith('- **Mobbin MCP**')) ?? '';
-  assert.ok(mobbin, 'the Mobbin MCP line exists');
-  assert.doesNotMatch(mobbin, /重复项|删掉那份手动配的|拿不到/);
-  assert.match(mobbin, /手动配的/);
-  assert.match(mobbin, /登录/);
 });
 
 test('agent-builder: a connector-using agent writes disallowedTools, not tools', () => {

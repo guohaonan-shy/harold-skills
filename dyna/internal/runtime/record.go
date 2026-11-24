@@ -2,8 +2,8 @@ package runtime
 
 // `runtime record`: the one line of bookkeeping after a dispatcher opened an issue session.
 //
-// The session itself is opened with the environment's own commands, written in its description (see
-// runtime/<name>.md, 「开一个 issue 会话」); this command does not know which environment that was. It only appends
+// The session itself is opened with the environment's own commands, written in its description (the section
+// 「会话管理」, item 「开一个 issue 会话」); this command does not know which environment that was. It only appends
 // {issue, sessionId, openedAt, period} to <records-dir>/<repo>.json, which is what the morning summary reads
 // to find the sessions opened overnight.
 

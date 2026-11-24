@@ -21,16 +21,16 @@
 
 ## 验收标准
 
-- [ ] 插件运行环境目录下只有 `capabilities.md`，有一条检查守着。
-- [ ] 这台 Mac 的 home `runtime/` 里有 `claude-desktop.md`、`claude-desktop-mic.md`、`selected`（写 `claude-desktop`），已 `dyna home commit`；新编的 dyna 在这台 Mac 上 `dyna runtime name` 打印 `claude-desktop`，`dyna runtime check` 对 home 那份全过；那份里读的是 `states`。
-- [ ] setup 的「运行环境」参考按上面改完：三处、触发条件、问放哪、`info/exclude`；没有「本机覆盖」的说法。
-- [ ] README、home 目录地图参考里没有「插件自带两份说明」「本机覆盖」「desktopSessionId」。
-- [ ] 仓库全部检查（`REVIEW.md` 的验证命令）全过，包括 `cd dyna && go test ./...` 和 `node --test` 那一组。
-- [ ] dyna 版本升了一档，登记表已存、跟命令树一致；`dyna-version` 下限是新版本；`plugin.json` 版本已升。
-- [ ] 交回里有给 magi 那台机器的取回命令。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] 插件运行环境目录下只有 `capabilities.md`，有一条检查守着。
+- [x] 这台 Mac 的 home `runtime/` 里有 `claude-desktop.md`、`claude-desktop-mic.md`、`selected`（写 `claude-desktop`），已 `dyna home commit`；新编的 dyna 在这台 Mac 上 `dyna runtime name` 打印 `claude-desktop`，`dyna runtime check` 对 home 那份全过；那份里读的是 `states`。
+- [x] setup 的「运行环境」参考按上面改完：三处、触发条件、问放哪、`info/exclude`；没有「本机覆盖」的说法。
+- [x] README、home 目录地图参考里没有「插件自带两份说明」「本机覆盖」「desktopSessionId」。
+- [x] 仓库全部检查（`REVIEW.md` 的验证命令）全过，包括 `cd dyna && go test ./...` 和 `node --test` 那一组。
+- [x] dyna 版本升了一档，登记表已存、跟命令树一致；`dyna-version` 下限是新版本；`plugin.json` 版本已升。
+- [x] 交回里有给 magi 那台机器的取回命令。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
