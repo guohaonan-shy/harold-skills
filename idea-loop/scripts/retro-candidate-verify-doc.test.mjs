@@ -54,7 +54,8 @@ test('the 验证 field names its three ways in the template line and says what e
   assert.match(para, /是\/否题/);
   assert.match(para, /先在历史错误上看它红/);
   assert.match(para, /判不了/);
-  assert.match(para, /原因/);
+  assert.match(para, /判不了」和卡在哪/, '「判不了」写卡在哪，跟 spec 杠杆诊断里的写法对齐');
+  assert.doesNotMatch(para, /原因/);
 });
 
 test('the 做完的条件 of the candidate section counts nine items and checks the 验证 field', () => {

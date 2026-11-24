@@ -50,6 +50,20 @@ test('before already "yes": the case did not catch the problem, even if after is
   assert.match(r.reason, /用例没抓住问题/);
 });
 
+test('a goal case whose pre-change run already has it: "不过：改前就做得到", its own outcome, not "用例没抓住问题"', () => {
+  for (const after of ['yes', 'no']) {
+    const r = decideOutcome({ before: 'yes', after, goal: true });
+    assert.equal(r.outcome, 'already-done', after);
+    assert.match(r.reason, /不过：改前就做得到/);
+    assert.doesNotMatch(r.reason, /用例没抓住问题/);
+    assert.match(r.reason, /换用例|不用加/, 'says what the human decides next');
+  }
+  assert.equal(decideOutcome({ before: 'no', after: 'yes', goal: true }).outcome, 'pass');
+  assert.equal(decideOutcome({ before: 'no', after: 'no', goal: true }).outcome, 'fail');
+  assert.equal(decideOutcome({ before: 'no', after: undefined, goal: true }).outcome, 'inconclusive');
+  assert.equal(decideOutcome({ before: 'yes', after: 'yes' }).outcome, 'case-missed', 'a quote case keeps its wording');
+});
+
 test('before "yes" and after "no" is still a broken case first, not a regression verdict', () => {
   assert.equal(decideOutcome({ before: 'yes', after: 'no' }).outcome, 'case-missed');
 });
@@ -110,6 +124,19 @@ test('the judge prompt carries the question and both products, and does not say 
   assert.ok(p.includes('BEFORE-BODY') && p.includes('AFTER-BODY'));
   assert.ok(!/改前|改后|before|after/i.test(p.replace('BEFORE-BODY', '').replace('AFTER-BODY', '')), 'no hint which side is the changed plugin');
   assert.match(p, /出处/);
+});
+
+test('the judge prompt says where the question came from: a quote case keeps the human words line, a goal case says it came from that spec expectation', () => {
+  const quoteP = buildJudgePrompt(smallCase(), 'A-BODY', 'B-BODY');
+  assert.ok(quoteP.includes(`（这道题是从人当时的这句话写出来的：${smallCase().quote}）`));
+  assert.doesNotMatch(quoteP, /spec/);
+  const { quote, ...rest } = smallCase();
+  const goal = { ...rest, goal_from: 'docs/spec/x/x.md 期望行为 1' };
+  const goalP = buildJudgePrompt(goal, 'A-BODY', 'B-BODY');
+  assert.ok(goalP.includes('这道题是从 spec 里这条期望写出来的：docs/spec/x/x.md 期望行为 1'));
+  assert.doesNotMatch(goalP, /人当时的这句话/);
+  assert.doesNotMatch(goalP, /undefined/);
+  assert.doesNotMatch(goalP, /改前|改后|新|旧/, 'still no hint which side is the changed plugin');
 });
 
 test('the whole judge prompt, products included, has no 改前 / 改后 / 新 / 旧 in it', () => {
@@ -398,6 +425,28 @@ test('e2e: the pre-change run already has it -> "用例没抓住问题", exit 1'
   assert.equal(r.status, 1);
   assert.equal(resultJson(env, r.stdout).outcome, 'case-missed');
   assert.match(r.stdout, /用例没抓住问题/);
+});
+
+test('e2e: a goal case (goal_from, no quote) whose pre-change run already has it -> "不过：改前就做得到", exit 1; settle keeps the wording', () => {
+  const env = setup({ before: 'reply: FIXED', after: 'reply: FIXED', caseExtra: { quote: undefined, goal_from: 'docs/spec/x/x.md 期望行为 1' } });
+  const r = run(env);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.outcome, 'already-done');
+  assert.equal(res.goal, true);
+  assert.match(r.stdout, /不过：改前就做得到/);
+  assert.doesNotMatch(r.stdout, /用例没抓住问题/);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const s = spawnSync(process.execPath, [RUNNER, '--settle', 'demo-case', '--run', dir, '--cases-root', env.casesRoot], { encoding: 'utf8' });
+  assert.equal(s.status, 1);
+  assert.match(s.stdout, /不过：改前就做得到/);
+});
+
+test('e2e: a goal case that fails before and holds after -> pass, exit 0', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', caseExtra: { quote: undefined, goal_from: 'docs/spec/x/x.md 期望行为 1' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(resultJson(env, r.stdout).outcome, 'pass');
 });
 
 test('e2e: the post-change run still lacks it -> fail, exit 1', () => {
