@@ -1,7 +1,7 @@
 package runtime
 
 // Which environments dyna knows, and which one this session is in. Nothing is listed in code: an environment is a
-// description file with a marker line, in the plugin's runtime/ directory or in <home>/runtime/.
+// description file with a marker line, kept in one of three places (see Places). The plugin carries none.
 
 import (
 	"os"
@@ -11,16 +11,17 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/guohaonan-shy/harold-skills/dyna/internal/gitrun"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 )
 
 const (
-	// DefaultName is where a session lands when nothing marks it and the human picked nothing: the command line and
-	// IDE plugins have no reliable marker (ADR-0026).
-	DefaultName = "claude-desktop"
-	// SelectedFile is the plain-text file in <home>/runtime/ holding the environment the human picked.
+	// SelectedFile is the plain-text file in a runtime/ directory holding the environment the human picked.
 	SelectedFile = "selected"
+
+	// SetupHint is what a session is told when dyna cannot tell which environment it is in.
+	SetupHint = "跑 `/idea-loop:setup`"
 
 	markerPrefix = "标记："
 )
@@ -55,15 +56,47 @@ func MarkerOf(text string) (marker string, ok bool) {
 	return "", false
 }
 
-// Doc is one environment dyna knows.
-type Doc struct {
-	Name string
-	// Marker is the environment variable that, when it has a value, says a session is in this environment; empty
-	// when the description says there is none.
-	Marker string
-	// Path is the home file that is the whole description; empty when the description is the plugin's (the
-	// device's own override of it, if any, is read separately).
-	Path string
+// Place is one of the three directories descriptions are looked for in.
+type Place struct {
+	// Label says which one it is, for the sentences that name a file's origin.
+	Label string
+	// Dir is the runtime/ directory itself.
+	Dir string
+}
+
+// Places are where descriptions (and the `selected` file) are looked for, in this order; the first place that has
+// one wins and its file is used whole, nothing is merged across places:
+//  1. the project: <main checkout>/.idea-loop/runtime, where the main checkout is the parent of the repository's
+//     common git directory (a worktree has the same main checkout as the repository it was made from); skipped
+//     when cwd is not in a git repository;
+//  2. home: <home>/runtime;
+//  3. the user's root directory: ~/.idea-loop/runtime.
+func Places(env home.Env, cwd string) []Place {
+	var out []Place
+	if main := mainCheckout(cwd); main != "" {
+		out = append(out, Place{"项目", filepath.Join(main, ".idea-loop", DataDir)})
+	}
+	if dir := homeRuntimeDir(env); dir != "" {
+		out = append(out, Place{"home", dir})
+	}
+	if u := home.UserHome(env); u != "" && filepath.IsAbs(u) {
+		out = append(out, Place{"用户根目录", filepath.Join(u, ".idea-loop", DataDir)})
+	}
+	return out
+}
+
+// mainCheckout is the main checkout of the repository cwd is in, or empty when it is not in one. The common git
+// directory of a worktree is the main checkout's .git, so the main checkout is its parent.
+func mainCheckout(cwd string) string {
+	out, err := gitrun.Run(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")
+	if err != nil {
+		return ""
+	}
+	common := strings.TrimSpace(out)
+	if filepath.Base(common) != ".git" {
+		return ""
+	}
+	return filepath.Dir(common)
 }
 
 // homeRuntimeDir is <home>/runtime, or empty when there is no usable home.
@@ -78,10 +111,22 @@ func homeRuntimeDir(env home.Env) string {
 	return filepath.Join(h, DataDir)
 }
 
-func mdNames(dir string) ([]string, bool) {
+// Doc is one environment description dyna found.
+type Doc struct {
+	Name string
+	// Marker is the environment variable that, when it has a value, says a session is in this environment; empty
+	// when the description says there is none.
+	Marker string
+	// Path is the file that is the whole description.
+	Path string
+	// Place is where the file lives.
+	Place Place
+}
+
+func mdNames(dir string) []string {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, false
+		return nil
 	}
 	var out []string
 	for _, e := range entries {
@@ -89,49 +134,43 @@ func mdNames(dir string) ([]string, bool) {
 			out = append(out, strings.TrimSuffix(e.Name(), ".md"))
 		}
 	}
-	return out, true
+	return out
 }
 
-// Known are the environments: the plugin's runtime/<name>.md with a marker line, and the home runtime/<name>.md
-// with a marker line that the plugin has no file of the same name for; sorted by name.
-func (p Plugin) Known(env home.Env) ([]Doc, error) {
-	names, ok := mdNames(filepath.Join(p.Root, DataDir))
-	if !ok {
-		return nil, nexterr.Plain("读不到插件里的数据：%s", filepath.Join(p.Root, DataDir))
-	}
-	inPlugin := map[string]bool{strings.TrimSuffix(CapabilitiesFile, ".md"): true}
+// Found is every description with a marker line in the three places, the first place's files first. A name found
+// in more than one place appears once per place; Known is the ones that are used.
+func Found(env home.Env, cwd string) []Doc {
 	var docs []Doc
-	for _, n := range names {
-		inPlugin[n] = true
-		if n == strings.TrimSuffix(CapabilitiesFile, ".md") {
-			continue
-		}
-		b, err := os.ReadFile(filepath.Join(p.Root, DataDir, n+".md"))
-		if err != nil {
-			continue
-		}
-		if m, ok := MarkerOf(string(b)); ok {
-			docs = append(docs, Doc{Name: n, Marker: m})
-		}
-	}
-	if dir := homeRuntimeDir(env); dir != "" {
-		hn, _ := mdNames(dir)
-		for _, n := range hn {
-			if inPlugin[n] {
-				continue
-			}
-			path := filepath.Join(dir, n+".md")
+	for _, pl := range Places(env, cwd) {
+		names := mdNames(pl.Dir)
+		sort.Strings(names)
+		for _, n := range names {
+			path := filepath.Join(pl.Dir, n+".md")
 			b, err := os.ReadFile(path)
 			if err != nil || !utf8.Valid(b) {
 				continue
 			}
 			if m, ok := MarkerOf(string(b)); ok {
-				docs = append(docs, Doc{Name: n, Marker: m, Path: path})
+				docs = append(docs, Doc{Name: n, Marker: m, Path: path, Place: pl})
 			}
 		}
 	}
+	return docs
+}
+
+// Known are the environments: every description with a marker line, and for a name that more than one place has,
+// the place that comes first; sorted by name.
+func Known(env home.Env, cwd string) []Doc {
+	seen := map[string]bool{}
+	var docs []Doc
+	for _, d := range Found(env, cwd) {
+		if !seen[d.Name] {
+			seen[d.Name] = true
+			docs = append(docs, d)
+		}
+	}
 	sort.Slice(docs, func(i, j int) bool { return docs[i].Name < docs[j].Name })
-	return docs, nil
+	return docs
 }
 
 func docNames(docs []Doc) string {
@@ -144,25 +183,33 @@ func docNames(docs []Doc) string {
 
 // Detection is the environment this session is in, and what is worth telling the session about how it was found.
 type Detection struct {
+	// Name is empty when dyna cannot tell: no description, no marker with a value, nothing picked.
 	Name string
-	// Path is the home file that is the whole description, when the environment is one only home has.
+	// Path is the file that is the whole description.
 	Path string
 	// Notes are lines `inject reference` puts before everything else.
 	Notes []string
 }
 
+// None is whether dyna could not tell which environment this is.
+func (d Detection) None() bool { return d.Name == "" }
+
+// Unknown is the error a command that needs a name stops with when there is none; Notes (a pick that matched no
+// description) are said first.
+func (d Detection) Unknown() error {
+	msg := "认不出运行环境：没有运行环境说明对得上这个会话，也没人选过；" + SetupHint
+	if len(d.Notes) > 0 {
+		msg = strings.Join(d.Notes, "\n") + "\n" + msg
+	}
+	return nexterr.Plain("%s", msg)
+}
+
 // Detect is the environment this session is in, in this order: a forced name (IDEA_LOOP_RUNTIME) that is a known
-// one; the first known environment, by name, whose marker variable has a value; the one the human picked in
-// <home>/runtime/selected; the default. A forced name that is not known is an error, never a guess.
-func Detect(env home.Env) (Detection, error) {
-	p, err := PluginFrom(env)
-	if err != nil {
-		return Detection{}, err
-	}
-	docs, err := p.Known(env)
-	if err != nil {
-		return Detection{}, err
-	}
+// one; the first known environment, by name, whose marker variable has a value; the one the human picked in the
+// first `selected` file of the three places; otherwise none. A forced name that is not known is an error, never
+// a guess; a pick that matches no description is noted and counts as no pick.
+func Detect(env home.Env, cwd string) (Detection, error) {
+	docs := Known(env, cwd)
 	find := func(name string) (Doc, bool) {
 		for _, d := range docs {
 			if d.Name == name {
@@ -176,6 +223,9 @@ func Detect(env home.Env) (Detection, error) {
 	if forced := env(EnvRuntime); forced != "" {
 		if d, ok := find(forced); ok {
 			return pick(d), nil
+		}
+		if len(docs) == 0 {
+			return Detection{}, nexterr.Plain("%s=%s is not a known runtime: there is no runtime description; %s", EnvRuntime, forced, SetupHint)
 		}
 		return Detection{}, nexterr.Plain("%s=%s is not a known runtime; known: %s", EnvRuntime, forced, docNames(docs))
 	}
@@ -197,19 +247,23 @@ func Detect(env home.Env) (Detection, error) {
 		return pick(marked[0], "运行环境说明的标记同时有值："+strings.Join(parts, "、")+"；按名字排序取第一份，用了 "+marked[0].Name+"。"), nil
 	}
 
-	if dir := homeRuntimeDir(env); dir != "" {
-		if b, err := os.ReadFile(filepath.Join(dir, SelectedFile)); err == nil {
-			if sel := strings.TrimSpace(string(b)); sel != "" {
-				if d, ok := find(sel); ok {
-					return pick(d), nil
-				}
-				d, _ := find(DefaultName)
-				d.Name = DefaultName
-				return pick(d, "home 里 runtime/"+SelectedFile+" 写的「"+sel+"」不是认识的运行环境，当作没选，用了 "+DefaultName+"；认识的："+docNames(docs)+"。"), nil
-			}
+	for _, pl := range Places(env, cwd) {
+		b, err := os.ReadFile(filepath.Join(pl.Dir, SelectedFile))
+		if err != nil {
+			continue
 		}
+		sel := strings.TrimSpace(string(b))
+		if sel == "" {
+			continue
+		}
+		if d, ok := find(sel); ok {
+			return pick(d), nil
+		}
+		known := "没有任何运行环境说明"
+		if len(docs) > 0 {
+			known = "认识的：" + docNames(docs)
+		}
+		return Detection{Notes: []string{pl.Label + "的 runtime/" + SelectedFile + " 写的「" + sel + "」找不到运行环境说明，当作没选；" + known + "。"}}, nil
 	}
-	d, _ := find(DefaultName)
-	d.Name = DefaultName
-	return pick(d), nil
+	return Detection{}, nil
 }

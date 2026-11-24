@@ -1,13 +1,8 @@
 package runtime_test
 
-// Ported from the old scripts' behavior tests: runtime-detect.test.mjs (which environment this is) and
-// session-start-inject.test.mjs (the sections the SessionStart hook injects). What was not ported, and why:
-//   - "hooks.json registers three SessionStart commands that run runtime-detect.mjs --inject" and "SessionStart has
-//     no matcher" / "three commands, the project map beside them": they read hooks.json, whose rewrite to
-//     `dyna runtime inject …` is ticket 15; the registry test below checks the other half (inject is hook-only).
-//   - "the plugin reached through a symlinked path still injects": that was about a Node script mistaking itself for
-//     an import; dyna has no such check, and the test below only keeps the part that matters (a symlinked plugin
-//     directory reads fine).
+// The injection the SessionStart hook runs, the capability a session fetches with `show`, and the command tree.
+// Which environment a session is in, and where its description is found, is envs_test.go. The descriptions here
+// are written by the tests: the plugin carries none, only the capability list and the template.
 
 import (
 	"encoding/json"
@@ -21,55 +16,26 @@ import (
 	rt "github.com/guohaonan-shy/harold-skills/dyna/internal/runtime"
 )
 
-// noHome is a home that does not exist, so a local override on the machine running the tests cannot leak in.
-const noHome = "/nonexistent-dyna-test-home"
+// noHome is a home that does not exist, so a description on the machine running the tests cannot leak in; noUser
+// is the same for the user's root directory (it is under HOME).
+const (
+	noHome = "/nonexistent-dyna-test-home"
+	noUser = "/nonexistent-dyna-test-user"
+)
 
+// env is what dyna reads: the real plugin directory (for the capability list), no home, no user root directory.
 func env(kv ...string) map[string]string {
-	m := map[string]string{rt.EnvPluginRoot: pluginRoot(), "IDEA_LOOP_HOME": noHome}
+	m := map[string]string{rt.EnvPluginRoot: pluginRoot(), "IDEA_LOOP_HOME": noHome, "HOME": noUser}
 	for i := 0; i+1 < len(kv); i += 2 {
 		m[kv[i]] = kv[i+1]
 	}
 	return m
 }
 
-func TestNoVariableSetIsClaudeDesktop(t *testing.T) {
+func TestWithNoDescriptionAnywhereTheEnvironmentCannotBeTold(t *testing.T) {
 	r := dyna(env(), "runtime", "name")
-	if r.code != 0 || r.stdout != "claude-desktop\n" {
-		t.Fatal(r)
-	}
-}
-
-func TestMagiSessionIDMeansMagi(t *testing.T) {
-	r := dyna(env(envMagiSession, "abc"), "runtime", "name")
-	if r.code != 0 || r.stdout != "magi\n" {
-		t.Fatal(r)
-	}
-}
-
-func TestForcedKnownNameWinsOverWhatTheEnvironmentSays(t *testing.T) {
-	if r := dyna(env(rt.EnvRuntime, "claude-desktop", envMagiSession, "abc"), "runtime", "name"); r.stdout != "claude-desktop\n" {
-		t.Fatal(r)
-	}
-	if r := dyna(env(rt.EnvRuntime, "magi"), "runtime", "name"); r.stdout != "magi\n" {
-		t.Fatal(r)
-	}
-}
-
-func TestAnEmptyForcedNameCountsAsUnset(t *testing.T) {
-	if r := dyna(env(rt.EnvRuntime, "", envMagiSession, "abc"), "runtime", "name"); r.stdout != "magi\n" {
-		t.Fatal(r)
-	}
-}
-
-func TestAnUnknownForcedNameExitsNonZeroPrintsNothingAndListsTheKnownOnes(t *testing.T) {
-	r := dyna(env(rt.EnvRuntime, "foo", envMagiSession, "abc"), "runtime", "name")
-	if r.code != 1 || r.stdout != "" {
-		t.Fatal(r)
-	}
-	for _, want := range []string{"foo", "claude-desktop", "magi"} {
-		if !strings.Contains(r.stderr, want) {
-			t.Errorf("stderr lacks %q: %s", want, r.stderr)
-		}
+	if r.code != 1 || r.stdout != "" || !strings.Contains(r.stderr, "认不出运行环境") || !strings.Contains(r.stderr, "/idea-loop:setup") {
+		t.Fatalf("%+v", r)
 	}
 }
 
@@ -88,7 +54,7 @@ func TestInjectWithoutAPluginDirectoryStopsAndSaysWhich(t *testing.T) {
 	if r.code != 1 || r.stdout != "" || !strings.Contains(r.stderr, rt.EnvPluginRoot) {
 		t.Fatal(r)
 	}
-	if r := dyna(map[string]string{rt.EnvPluginRoot: t.TempDir()}, "runtime", "inject", "runtime"); r.code != 1 || r.stdout != "" || !strings.Contains(r.stderr, "读不到插件里的数据") {
+	if r := dyna(map[string]string{rt.EnvPluginRoot: t.TempDir()}, "runtime", "inject", "runtime"); r.code != 1 || r.stdout != "" || !strings.Contains(r.stderr, "读不到运行环境的数据") {
 		t.Fatalf("a plugin directory without the data: %+v", r)
 	}
 }
@@ -97,56 +63,58 @@ func TestInjectWithoutAPluginDirectoryStopsAndSaysWhich(t *testing.T) {
 const hookOutputLimit = 10000
 
 func TestTwoSectionsEachUnderTheHookLimitInOrderRuntimeReference(t *testing.T) {
-	for _, tc := range []struct {
-		label string
-		vars  []string
-		name  string
-	}{{"MAGI_SESSION_ID not set", nil, "claude-desktop"}, {"MAGI_SESSION_ID set", []string{envMagiSession, "abc"}, "magi"}} {
-		t.Run(tc.label, func(t *testing.T) {
-			var got [2]string
-			for i, section := range rt.Sections {
-				r := dyna(env(tc.vars...), "runtime", "inject", section)
-				if r.code != 0 {
-					t.Fatalf("%s: %s", section, r.stderr)
-				}
-				if n := len([]rune(r.stdout)); n == 0 || n >= hookOutputLimit {
-					t.Fatalf("%s: section length %d", section, n)
-				}
-				if strings.Contains(r.stdout, "${CLAUDE_PLUGIN_ROOT}") {
-					t.Fatalf("%s: the placeholder is expanded to the real plugin path", section)
-				}
-				got[i] = r.stdout
-			}
-			runtime, reference := got[0], got[1]
+	h := homeWith(t, map[string]string{"zed.md": zedDoc})
+	var got [2]string
+	for i, section := range rt.Sections {
+		r := dyna(env("IDEA_LOOP_HOME", h, "ZED_SESSION", "1"), "runtime", "inject", section)
+		if r.code != 0 {
+			t.Fatalf("%s: %s", section, r.stderr)
+		}
+		if n := len([]rune(r.stdout)); n == 0 || n >= hookOutputLimit {
+			t.Fatalf("%s: section length %d", section, n)
+		}
+		if strings.Contains(r.stdout, "${CLAUDE_PLUGIN_ROOT}") {
+			t.Fatalf("%s: the placeholder is expanded to the real plugin path", section)
+		}
+		got[i] = r.stdout
+	}
+	runtime, reference := got[0], got[1]
 
-			// runtime: first line is the runtime, then the header, then the body
-			lines := strings.Split(runtime, "\n")
-			if lines[0] != "当前运行环境："+tc.name {
-				t.Errorf("first line: %s", lines[0])
-			}
-			if !strings.HasPrefix(lines[1], "以下是运行环境的能力清单，开场注入，不必再取") {
-				t.Errorf("second line: %s", lines[1])
-			}
-			if !strings.Contains(runtime, "## 能力清单") || strings.Contains(runtime, "\nname: ") {
-				t.Error("runtime: the capability list, no frontmatter")
-			}
+	// runtime: first line is the runtime, then the header, then the body
+	lines := strings.Split(runtime, "\n")
+	if lines[0] != "当前运行环境：zed" {
+		t.Errorf("first line: %s", lines[0])
+	}
+	if !strings.HasPrefix(lines[1], "以下是运行环境的能力清单，开场注入，不必再取") {
+		t.Errorf("second line: %s", lines[1])
+	}
+	if !strings.Contains(runtime, "## 能力清单") || strings.Contains(runtime, "\nname: ") {
+		t.Error("runtime: the capability list, no frontmatter")
+	}
 
-			// reference: the whole data of this runtime, and not the other one's
-			if !strings.HasPrefix(reference, "以下是运行环境「") || !strings.Contains(strings.SplitN(reference, "\n", 2)[0], tc.name) {
-				t.Errorf("reference header: %s", strings.SplitN(reference, "\n", 2)[0])
-			}
-			own := strings.TrimSpace(strings.ReplaceAll(readFile(t, filepath.Join(pluginRoot(), rt.DataDir, tc.name+".md")), "${CLAUDE_PLUGIN_ROOT}", pluginRoot()))
-			if !strings.Contains(reference, own) {
-				t.Error("reference: the whole file of this runtime")
-			}
-			other := "magi"
-			if tc.name == "magi" {
-				other = "claude-desktop"
-			}
-			if strings.Contains(reference, strings.TrimSpace(readFile(t, filepath.Join(pluginRoot(), rt.DataDir, other+".md")))) {
-				t.Error("reference: not the other runtime's")
-			}
-		})
+	// reference: the whole description of this environment
+	if !strings.HasPrefix(reference, "以下是运行环境「zed」的做法全文，开场注入，不必再取。\n\n") {
+		t.Errorf("reference header: %s", strings.SplitN(reference, "\n", 2)[0])
+	}
+	if !strings.Contains(reference, strings.TrimSpace(zedDoc)) {
+		t.Error("reference: the whole file of this environment")
+	}
+}
+
+func TestACapabilityListAndNoDescriptionStillInjectsTheListAndSaysSoOnTheFirstLine(t *testing.T) {
+	r := dyna(env(), "runtime", "inject", "runtime")
+	if r.code != 0 {
+		t.Fatalf("%+v", r)
+	}
+	if firstLine(r.stdout) != "当前运行环境：没有（跑 /idea-loop:setup）" {
+		t.Errorf("first line: %q", firstLine(r.stdout))
+	}
+	if !strings.Contains(r.stdout, "## 能力清单") || !strings.Contains(r.stdout, "## 退路") {
+		t.Error("the capability list and the fallbacks are still there")
+	}
+	ref := dyna(env(), "runtime", "inject", "reference")
+	if ref.code != 0 || ref.stdout != "没有运行环境说明，跑 `/idea-loop:setup`\n" {
+		t.Fatalf("%+v", ref)
 	}
 }
 
@@ -163,8 +131,9 @@ func TestTheInjectedRuntimeTextNamesNeitherTheOldSkillNorTheOldScript(t *testing
 	}
 }
 
-// The runtime and browser skills are deleted and their content lives in the data: nothing in the data points back
-// at them, at SKILL.md, or at an old script (the lock is `dyna ui lock …`, the dispatch bookkeeping `dyna runtime record`).
+// The runtime and browser skills are deleted and their content lives in the data: nothing in the plugin's data
+// points back at them, at SKILL.md, or at an old script (the lock is `dyna ui lock …`, the dispatch bookkeeping
+// `dyna runtime record`).
 func TestTheDataPointsAtNoDeletedSkillAndNoOldScript(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(pluginRoot(), rt.DataDir))
 	if err != nil {
@@ -204,11 +173,12 @@ func TestInjectKnowsOnlyRuntimeAndReference(t *testing.T) {
 }
 
 func TestForcedNameForcesTheReferenceToo(t *testing.T) {
-	e := env(rt.EnvRuntime, "magi")
-	if r := dyna(e, "runtime", "inject", "runtime"); strings.SplitN(r.stdout, "\n", 2)[0] != "当前运行环境：magi" {
+	h := homeWith(t, map[string]string{"zed.md": zedDoc, "plain.md": noMarkerDoc, "desk.md": deskDoc})
+	e := env("IDEA_LOOP_HOME", h, rt.EnvRuntime, "zed")
+	if r := dyna(e, "runtime", "inject", "runtime"); firstLine(r.stdout) != "当前运行环境：zed" {
 		t.Fatal(r.stdout)
 	}
-	if r := dyna(e, "runtime", "inject", "reference"); !strings.Contains(r.stdout, "magi sessions") {
+	if r := dyna(e, "runtime", "inject", "reference"); !strings.Contains(r.stdout, "zed 的推送做法") || strings.Contains(r.stdout, "desk") {
 		t.Fatal(r.stdout)
 	}
 }
@@ -219,80 +189,14 @@ func TestAPluginDirectoryReachedThroughASymlinkStillInjects(t *testing.T) {
 		t.Skip(err)
 	}
 	for _, section := range rt.Sections {
-		r := dyna(map[string]string{rt.EnvPluginRoot: link}, "runtime", "inject", section)
-		if r.code != 0 || !strings.Contains(r.stdout, "开场注入") {
+		r := dyna(map[string]string{rt.EnvPluginRoot: link, "IDEA_LOOP_HOME": noHome, "HOME": noUser}, "runtime", "inject", section)
+		if r.code != 0 || !strings.Contains(r.stdout, "开场注入") && !strings.Contains(r.stdout, "没有运行环境说明") {
 			t.Fatalf("%s: %+v", section, r)
 		}
 	}
 }
 
-// The old script's output, byte for byte: runtime is the same text moved (the data was
-// copied from the skill); reference is the same except the 浏览器 section, which now also holds the three rules
-// of the old browser skill.
-func TestInjectIsWhatTheOldScriptInjectedForTheSameEnvironment(t *testing.T) {
-	node, script := oldScript(t, "runtime-detect.mjs")
-	for _, name := range shipped {
-		for _, section := range rt.Sections {
-			old := runOld(t, node, script, map[string]string{rt.EnvRuntime: name}, "--inject", section)
-			now := dyna(env(rt.EnvRuntime, name), "runtime", "inject", section)
-			if old.code != 0 || now.code != 0 {
-				t.Fatalf("%s %s: %+v %+v", name, section, old, now)
-			}
-			if section == "reference" {
-				if withoutSection(now.stdout, "浏览器") != withoutSection(old.stdout, "浏览器") {
-					t.Errorf("%s reference: differs outside 浏览器", name)
-				}
-				continue
-			}
-			if now.stdout != old.stdout {
-				t.Errorf("%s %s: differs from the old script", name, section)
-			}
-		}
-	}
-}
-
-func TestNameIsWhatTheOldScriptPrinted(t *testing.T) {
-	node, script := oldScript(t, "runtime-detect.mjs")
-	for _, vars := range []map[string]string{{}, {envMagiSession: "abc"}, {rt.EnvRuntime: "magi"}, {rt.EnvRuntime: "claude-desktop", envMagiSession: "abc"}, {rt.EnvRuntime: "", envMagiSession: "abc"}, {rt.EnvRuntime: "foo"}} {
-		old := runOld(t, node, script, vars)
-		e := env()
-		for k, v := range vars {
-			e[k] = v
-		}
-		now := dyna(e, "runtime", "name")
-		if old.stdout != now.stdout || old.code != now.code {
-			t.Errorf("%v: old %+v, now %+v", vars, old, now)
-		}
-		if old.code != 0 && strings.TrimSpace(old.stderr) != strings.TrimSpace(now.stderr) {
-			t.Errorf("%v: stderr old %q, now %q", vars, old.stderr, now.stderr)
-		}
-	}
-}
-
-// ---- the data: one section per capability, the browser rules in each ----
-
-func TestEveryDescriptionWithAMarkerIsAnEnvironmentAndTheOtherFilesAreNot(t *testing.T) {
-	entries, err := os.ReadDir(filepath.Join(pluginRoot(), rt.DataDir))
-	if err != nil {
-		t.Fatal(err)
-	}
-	// capabilities.md and <environment>-<topic>.md (a detail file one of that environment's sections points at: the
-	// injected data has a size cap, so a long procedure lives beside it) have no marker line: not environments.
-	var withMarker []string
-	for _, e := range entries {
-		n := strings.TrimSuffix(e.Name(), ".md")
-		if _, ok := rt.MarkerOf(readFile(t, filepath.Join(pluginRoot(), rt.DataDir, e.Name()))); ok {
-			withMarker = append(withMarker, n)
-		}
-	}
-	if !reflect.DeepEqual(withMarker, shipped) {
-		t.Fatalf("files with a marker line: %v, want %v", withMarker, shipped)
-	}
-	r := dyna(env(rt.EnvRuntime, "zzz"), "runtime", "name")
-	if !strings.Contains(r.stderr, "known: "+strings.Join(shipped, ", ")) {
-		t.Fatalf("the known names are the files with a marker line: %s", r.stderr)
-	}
-}
+// ---- the capability list ----
 
 func capabilities(t *testing.T) []string {
 	t.Helper()
@@ -311,75 +215,30 @@ func TestTheCapabilityListIsTheClosedSetOfEleven(t *testing.T) {
 	}
 }
 
-func TestEveryEnvironmentHasASectionForEveryCapability(t *testing.T) {
-	for _, name := range shipped {
-		for _, c := range capabilities(t) {
-			r := dyna(env(rt.EnvRuntime, name), "runtime", "show", c)
-			if r.code != 0 || !strings.HasPrefix(r.stdout, "## "+c+"\n") {
-				t.Errorf("%s / %s: %+v", name, c, r)
-			}
-		}
-	}
-}
-
-func TestShowBrowserPrintsTheEnvironmentsSectionWithTheThreeRulesOfTheOldBrowserSkill(t *testing.T) {
-	for _, tc := range []struct {
-		name  string
-		extra []string
-	}{
-		{"magi", []string{"magi browser", "window new"}},
-		{"claude-desktop", []string{"mcp__playwright__browser_", "dyna ui lock acquire", "dyna ui lock release", "30 分钟"}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			r := dyna(env(rt.EnvRuntime, tc.name), "runtime", "show", "浏览器")
-			if r.code != 0 {
-				t.Fatal(r.stderr)
-			}
-			out := r.stdout
-			if !strings.HasPrefix(out, "## 浏览器\n") {
-				t.Errorf("starts with the section's heading: %q", out[:20])
-			}
-			// the three rules: 给人看, 无头, 并行时
-			for _, want := range append(tc.extra,
-				"### 给人看", "### 无头", "### 并行时抢锁",
-				"python3 -m http.server",        // 给人看：本地 HTML 先起静态服务器
-				"测试账号", "DEVELOPMENT.md", "静止态", // 无头：登录、把页面带到对的状态
-				"自己起 chromium 的命令", // 并行时：自己起浏览器的命令不用
-			) {
-				if !strings.Contains(out, want) {
-					t.Errorf("the 浏览器 section lacks %q", want)
-				}
-			}
-			for _, notThis := range []string{"## 人的浏览器", "## 向人提问"} {
-				if strings.Contains(out, notThis) {
-					t.Errorf("only the one section, but found %q", notThis)
-				}
-			}
-			if strings.Contains(out, "${CLAUDE_PLUGIN_ROOT}") {
-				t.Error("the placeholder is expanded")
-			}
-			if strings.Contains(out, ".mjs") {
-				t.Error("no old script is named in the 浏览器 section")
-			}
-		})
-	}
-}
-
-func TestShowBrowserForMagiIsNotDesktopsAndTheOtherWayRound(t *testing.T) {
-	magi := dyna(env(rt.EnvRuntime, "magi"), "runtime", "show", "浏览器").stdout
-	desk := dyna(env(rt.EnvRuntime, "claude-desktop"), "runtime", "show", "浏览器").stdout
-	if strings.Contains(magi, "mcp__playwright__") || strings.Contains(desk, "magi browser") {
-		t.Fatal("each environment's own tools")
+func TestShowPrintsTheSectionOfTheEnvironmentsDescriptionAndNoOtherSection(t *testing.T) {
+	h := homeWith(t, map[string]string{"desk.md": deskDoc})
+	r := dyna(env("IDEA_LOOP_HOME", h, rt.EnvRuntime, "desk"), "runtime", "show", "浏览器")
+	want := "## 浏览器\n\n### 给人看\n\ndesk 的浏览器做法\n\n### 无头\n\ndesk 无头\n"
+	if r.code != 0 || r.stdout != want {
+		t.Fatalf("%+v want %q", r, want)
 	}
 }
 
 func TestShowFollowsTheDetectionRulesAndHonoursAnUnknownForcedName(t *testing.T) {
-	if r := dyna(env(envMagiSession, "x"), "runtime", "show", "浏览器"); r.code != 0 || !strings.Contains(r.stdout, "magi browser") {
-		t.Fatalf("a magi session: %+v", r)
+	h := homeWith(t, map[string]string{"zed.md": zedDoc})
+	if r := dyna(env("IDEA_LOOP_HOME", h, "ZED_SESSION", "x"), "runtime", "show", "推送"); r.code != 0 || !strings.Contains(r.stdout, "zed 的推送做法") {
+		t.Fatalf("a zed session: %+v", r)
 	}
-	r := dyna(env(rt.EnvRuntime, "foo"), "runtime", "show", "推送")
+	r := dyna(env("IDEA_LOOP_HOME", h, rt.EnvRuntime, "foo"), "runtime", "show", "推送")
 	if r.code != 1 || r.stdout != "" || !strings.Contains(r.stderr, "foo") {
 		t.Fatalf("unknown forced name: %+v", r)
+	}
+}
+
+func TestShowOfACapabilityWhenTheEnvironmentCannotBeToldIsAnErrorThatPointsAtSetup(t *testing.T) {
+	r := dyna(env(), "runtime", "show", "推送")
+	if r.code != 1 || r.stdout != "" || !strings.Contains(r.stderr, "认不出运行环境") || !strings.Contains(r.stderr, "/idea-loop:setup") {
+		t.Fatalf("%+v", r)
 	}
 }
 
@@ -398,34 +257,31 @@ func TestShowWithAnUnknownCapabilityListsTheKnownOnes(t *testing.T) {
 	}
 }
 
-func TestShowWithNoCapabilityPrintsTheCapabilityListAndTheFallbacks(t *testing.T) {
-	for _, name := range shipped {
-		r := dyna(env(rt.EnvRuntime, name), "runtime", "show")
+func TestShowWithNoCapabilityPrintsTheCapabilityListAndTheFallbacksWhateverTheEnvironment(t *testing.T) {
+	// the list does not depend on the environment, so no description and a bad forced name do not stop it
+	for _, e := range []map[string]string{env(), env(rt.EnvRuntime, "foo")} {
+		r := dyna(e, "runtime", "show")
 		if r.code != 0 {
 			t.Fatal(r)
 		}
 		for _, want := range []string{"## 能力清单", "| 浏览器 |", "## 退路", "例外一", "改在对话里问"} {
 			if !strings.Contains(r.stdout, want) {
-				t.Errorf("%s: lacks %q", name, want)
+				t.Errorf("lacks %q", want)
 			}
 		}
 		if strings.Contains(r.stdout, "## 怎么用") || strings.Contains(r.stdout, "## 浏览器") {
-			t.Errorf("%s: the list and the fallbacks only", name)
+			t.Error("the list and the fallbacks only")
 		}
-	}
-	// the list does not depend on the environment, so a bad forced name does not stop it
-	if r := dyna(env(rt.EnvRuntime, "foo"), "runtime", "show"); r.code != 0 || !strings.Contains(r.stdout, "## 退路") {
-		t.Fatalf("%+v", r)
 	}
 }
 
-// A small plugin of the same shape, to pin how `show` cuts a section: from its heading to the next `## `, its `###`
-// subsections inside, lines in a code fence never headings.
+// A small plugin and home of the same shape, to pin how `show` cuts a section: from its heading to the next `## `,
+// its `###` subsections inside, lines in a code fence never headings; and the plugin path spelled out.
 func TestShowCutsASectionAtTheNextTopLevelHeading(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "runtime", "capabilities.md"), "说明\n\n## 能力清单\n\n| 能力 | 做什么 |\n|---|---|\n| 甲 | x |\n| 乙 | y |\n\n## 退路\n\n交给人。\n")
-	writeFile(t, filepath.Join(root, "runtime", "claude-desktop.md"), "# claude-desktop\n\n## 甲\n\n甲的正文\n\n### 子节\n\n```\n## 不是标题\n```\n\n## 乙\n\n乙的正文，路径 ${CLAUDE_PLUGIN_ROOT}/x\n")
-	e := map[string]string{rt.EnvPluginRoot: root}
+	h := homeWith(t, map[string]string{"desk.md": "# desk\n\n标记：没有\n\n## 甲\n\n甲的正文\n\n### 子节\n\n```\n## 不是标题\n```\n\n## 乙\n\n乙的正文，路径 ${CLAUDE_PLUGIN_ROOT}/x\n"})
+	e := map[string]string{rt.EnvPluginRoot: root, "IDEA_LOOP_HOME": h, "HOME": noUser, rt.EnvRuntime: "desk"}
 	r := dyna(e, "runtime", "show", "甲")
 	want := "## 甲\n\n甲的正文\n\n### 子节\n\n```\n## 不是标题\n```\n"
 	if r.code != 0 || r.stdout != want {
@@ -434,10 +290,11 @@ func TestShowCutsASectionAtTheNextTopLevelHeading(t *testing.T) {
 	if r := dyna(e, "runtime", "show", "乙"); r.stdout != "## 乙\n\n乙的正文，路径 "+root+"/x\n" {
 		t.Fatalf("%+v", r)
 	}
-	// a data file that lacks a capability's section says so
-	writeFile(t, filepath.Join(root, "runtime", "magi.md"), "标记：`MAGI_SESSION_ID`\n\n## 甲\n\nm\n")
-	r = dyna(map[string]string{rt.EnvPluginRoot: root, rt.EnvRuntime: "magi"}, "runtime", "show", "乙")
-	if r.code != 1 || !strings.Contains(r.stderr, "没有「乙」一节") || !strings.Contains(r.stderr, "magi") {
+	// a description that lacks a capability's section says so
+	writeFile(t, filepath.Join(h, "runtime", "short.md"), "标记：没有\n\n## 甲\n\nm\n")
+	e[rt.EnvRuntime] = "short"
+	r = dyna(e, "runtime", "show", "乙")
+	if r.code != 1 || !strings.Contains(r.stderr, "没有「乙」一节") || !strings.Contains(r.stderr, "short") {
 		t.Fatalf("%+v", r)
 	}
 }
@@ -493,14 +350,19 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 	}
 }
 
-func TestHelpSaysHowToAddARuntime(t *testing.T) {
+func TestHelpSaysWhereDescriptionsLiveAndHowToAddAnEnvironment(t *testing.T) {
 	r := dyna(env(), "runtime", "--help")
 	if r.code != 0 {
 		t.Fatal(r)
 	}
-	for _, want := range []string{"加一种运行环境", "runtime/<环境名>.md", "capabilities.md", "标记", "selected", "IDEA_LOOP_RUNTIME", "只升插件", "runtime check", "能力模板"} {
+	for _, want := range []string{"加一种运行环境", "主 checkout", ".idea-loop/runtime/<名>.md", "<home>/runtime/<名>.md", "~/.idea-loop/runtime/<名>.md", "整份生效", "不合并", "capabilities.md", "标记", "selected", "IDEA_LOOP_RUNTIME", "认不出", "/idea-loop:setup", "runtime check", "能力模板", "不带「能力模板」一节"} {
 		if !strings.Contains(r.stdout, want) {
 			t.Errorf("--help lacks %q", want)
+		}
+	}
+	for _, gone := range []string{"本机覆盖", "只升插件", "随插件发给所有人", "注入它的全文", "claude-desktop", "magi"} {
+		if strings.Contains(r.stdout, gone) {
+			t.Errorf("--help still says %q", gone)
 		}
 	}
 	bare := dyna(env(), "runtime")

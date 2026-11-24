@@ -21,6 +21,16 @@ type Deps struct {
 	Stderr io.Writer
 	// Now is the clock `record` stamps entries with; nil means time.Now.
 	Now func() time.Time
+	// Cwd is the directory the session runs in (the project place is found from it); empty means the process's.
+	Cwd string
+}
+
+func (d Deps) cwd() string {
+	if d.Cwd != "" {
+		return d.Cwd
+	}
+	wd, _ := os.Getwd()
+	return wd
 }
 
 func (d Deps) env() home.Env {
@@ -52,32 +62,25 @@ func leaf(use, short, caller string, run func(cmd *cobra.Command, args []string)
 
 const moduleLong = `运行环境：认环境、开场注入、按能力取这个环境的做法、记一笔开出的 issue 会话。
 
-认环境：认识的运行环境，是插件 runtime/ 下、和 home 的 runtime/ 下（插件里没有同名文件的）带标记行的 <名>.md。标记行写在说明开头、第一个 ## 小节之前：「标记：」后面跟用反引号包住的环境变量名，或写「没有」（没有标记）。没有标记行的文件（capabilities.md、claude-desktop-mic.md 这类细节文件）不是说明。按顺序认：
+说明放在三处，dyna 按这个顺序找，先找到的那份整份生效，三处之间不合并：
+  1. 项目：当前目录所在仓库的主 checkout（git 公共目录的上一级，worktree 里也指向主 checkout，不是 worktree 自己的根）下的 .idea-loop/runtime/<名>.md；不在 git 仓库里就跳过这一处。
+  2. home：<home>/runtime/<名>.md（home 是 IDEA_LOOP_HOME，没设就是用户主目录下的 home）。
+  3. 用户根目录：~/.idea-loop/runtime/<名>.md。
+插件不带任何运行环境的说明，只带能力清单和能力模板（插件目录 runtime/capabilities.md，IDEA_LOOP_PLUGIN_ROOT，经插件的 bin/dyna 调用会自己设）：
+  capabilities.md           能力清单、退路和能力模板（show 不带能力时打印清单和退路；inject runtime 注入清单和退路，不带「能力模板」一节）
+  <环境名>.md               这个环境的说明（放在上面三处）：开头一行标记，然后每个能力一节（## <能力名>，名字与能力清单第一列一致）
+
+认环境：认识的运行环境，是三处里带标记行的 <名>.md，同名的取顺序在前那一处。标记行写在说明开头、第一个 ## 小节之前：「标记：」后面跟用反引号包住的环境变量名，或写「没有」（没有标记）。没有标记行的文件不是说明。按顺序认：
   1. IDEA_LOOP_RUNTIME 有值：是认识的名字就用它；不认识就报错退出 1，不猜，报错里列出认识的名字。
   2. 按名字排序扫认识的说明，哪份的标记变量在环境里有值就是它。不止一份有值时取第一份，inject reference 最前面多一行说哪几份同时有值、用了哪份。
-  3. 都没有：用人选的环境，记在 <home>/runtime/selected（纯文本，内容是一个环境名，首尾空白不算）。写的名字不认识当作没选，inject reference 最前面多一行提示。
-  4. 人也没选：claude-desktop（命令行、IDE 插件没有可靠的标记变量，落到这里，缺的工具走退路）。
-
-数据在插件目录的 runtime/ 下（IDEA_LOOP_PLUGIN_ROOT，经插件的 bin/dyna 调用会自己设）：
-  runtime/capabilities.md   能力清单、退路和能力模板（show 不带能力时打印清单和退路；inject runtime 注入清单和退路，不带「能力模板」一节）
-  runtime/<环境名>.md       这个环境的说明：开头一行标记，然后每个能力一节（## <能力名>，名字与能力清单第一列一致）；浏览器那一节含三条规矩（给人看、无头、并行时抢锁）
-改数据只升插件，不用发新版 dyna。
-
-本机覆盖：这台设备的做法跟插件数据不一样时，写 <home>/runtime/<环境名>.md（home 是 IDEA_LOOP_HOME，没设就是用户主目录下的 home；文件名与插件 runtime/ 下的同名）。inject reference 和 show <能力> 打印的都是合并后的：
-  - 本机文件里每个 ## 或 ### 标题开一段，到下一个同级或更高级标题为止（## 段带着它的 ###；代码块里的 # 行不算标题）。第一个 ##/### 之前的内容（前言、# 标题）不用。要单独换插件里另一处的 ###，写在所有 ## 段之前，或前面隔一行 # 标题，否则它算进上面那个 ## 段里。
-  - 插件数据里同级、标题文字完全相同、且只有一处的那段，被本机这段整段替换。没写的段照插件的。
-  - 标题在插件里找不到同级同名的、或不止一处的，这段不用，不往末尾追加，只在头一行写「没对上、没用上」。
-  - inject reference 最前面多一行：本机覆盖文件的路径、替换了哪几节、没对上的是哪几节。合并后超过 10000 字（开场注入的上限）时那一行再加一句，照样注入。
-  - show <能力> 里那一节是本机写的，第一行写「本机覆盖 <路径>：这一节是本机写的」；只有其中的 ### 段是本机写的，第一行点出是哪几段。
-  - home 里有、插件里没有同名文件的 <环境名>.md（带标记行），就是用户自己的新环境，它本身是一份完整的说明，不按小节合并。
-  - 没有 home、没有这个文件：输出跟没有这项功能时逐字相同。文件读不了（权限、不是 UTF-8）：当作没有覆盖，头一行写「本机覆盖读取失败：<原因>」，命令照常成功。
-  - 只管这个环境的做法；能力清单、退路不给本机改。
+  3. 都没有：用人选的环境，记在三处里第一份有内容的 runtime/selected（纯文本，内容是一个环境名，首尾空白不算）。写的名字三处都没有说明时当作没选，inject reference 最前面多一行提示。
+  4. 人也没选：认不出，不猜一个名字。inject runtime 头一行写「当前运行环境：没有（跑 /idea-loop:setup）」，inject reference 只写一行「没有运行环境说明」；两者退出 0（钩子不能失败）。name 和 show <能力> 报「认不出运行环境」退出 1，能力走退路。
 
 加一种运行环境：多一份带标记行的说明，不改 dyna：
   1. 写 <名字>.md，开头一行标记（上面「认环境」），每个能力一节，小节名与 capabilities.md 的能力清单一一对应；某个能力这个环境做不到，那一节写「没有」和退路。
-  2. 放进插件的 runtime/（随插件发给所有人），或放进自己的 <home>/runtime/（只在这台机器上认；home 里的名字和插件的同名，就是上面说的本机覆盖，不是新环境）。
-  3. 人要默认用它（它没有标记变量）：把名字写进 <home>/runtime/selected。
-  4. 跑 dyna runtime check <文件>（不带文件就核插件和 home 里全部的说明）：缺哪一节、哪一项既没写做法也没写「没有」，每个问题一行。能力模板（每个能力下工作流要它做的几项，各写传入、拿回、做不到时）在 capabilities.md 的「能力模板」一节，写说明时照它；开场不注入这一节。
+  2. 放进三处之一（跑 /idea-loop:setup 会照模板生成并问放哪）。
+  3. 人要默认用它（它没有标记变量）：把名字写进同一处的 runtime/selected。
+  4. 跑 dyna runtime check <文件>（不带文件就核三处找得到的全部说明）：缺哪一节、哪一项既没写做法也没写「没有」，每个问题一行。能力模板（每个能力下工作流要它做的几项，各写传入、拿回、做不到时）在 capabilities.md 的「能力模板」一节，写说明时照它；开场不注入这一节。
   5. 通用流程不动：流程只写能力，不写工具。`
 
 // Command is the `runtime` module.
@@ -85,20 +88,23 @@ func Command(d Deps) *cobra.Command {
 	root := registry.Group("runtime", "运行环境：认环境、开场注入、按能力取这个环境的做法、记一笔开出的 issue 会话")
 	root.Long = moduleLong
 
-	name := leaf("name", "打印当前运行环境的名字；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1（列出认识的名字），不猜", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
-		det, err := Detect(d.env())
+	name := leaf("name", "打印当前运行环境的名字；IDEA_LOOP_RUNTIME 给了不认识的名字就报错退出 1（列出认识的名字），认不出运行环境（没有说明、没有标记有值、没人选）也报错退出 1 并提示跑 /idea-loop:setup，不猜", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+		det, err := Detect(d.env(), d.cwd())
 		if err != nil {
 			return err
+		}
+		if det.None() {
+			return det.Unknown()
 		}
 		fmt.Fprintln(d.out(), det.Name)
 		return nil
 	})
 
-	inject := leaf("inject <runtime|reference>", "打印开场注入的一段（只由 SessionStart hook 调）：运行环境加能力清单、当前环境的数据全文；每段一条命令，因为 hook 的输出超过一万字会被截", registry.CallerHook, func(cmd *cobra.Command, args []string) error {
+	inject := leaf("inject <runtime|reference>", "打印开场注入的一段（只由 SessionStart hook 调）：运行环境加能力清单、当前环境的说明全文；认不出运行环境时头一行写「当前运行环境：没有」、说明那段只写一行「没有运行环境说明，跑 /idea-loop:setup」，照常退出 0；每段一条命令，因为 hook 的输出超过一万字会被截", registry.CallerHook, func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return fmt.Errorf("usage: dyna runtime inject <%s>", strings.Join(Sections, "|"))
 		}
-		text, err := Inject(args[0], d.env())
+		text, err := Inject(args[0], d.env(), d.cwd())
 		if err != nil {
 			return err
 		}
@@ -108,7 +114,7 @@ func Command(d Deps) *cobra.Command {
 	inject.Args = cobra.ArbitraryArgs
 	inject.Flags().Bool("hook", false, "由 SessionStart hook 调：命令行版本不对或没装时只在 stderr 留一行、退出 0，不拦会话")
 
-	show := leaf("show [capability]", "打印当前运行环境里这项能力的做法（数据里的那一节）；不带能力打印能力清单和做不到时的退路。子代理收不到开场注入，用它取", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+	show := leaf("show [capability]", "打印当前运行环境里这项能力的做法（说明里的那一节）；认不出运行环境时报错退出 1，提示跑 /idea-loop:setup，能力走退路；不带能力打印能力清单和做不到时的退路。子代理收不到开场注入，用它取", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return fmt.Errorf("usage: dyna runtime show [能力]")
 		}
@@ -120,7 +126,7 @@ func Command(d Deps) *cobra.Command {
 				text, err = p.Overview()
 			}
 		} else {
-			text, err = Show(args[0], d.env())
+			text, err = Show(args[0], d.env(), d.cwd())
 		}
 		if err != nil {
 			return err
@@ -153,7 +159,7 @@ func Command(d Deps) *cobra.Command {
 	recordCmd.Flags().String("session", "", "开出的会话的 id，原样写进 sessionId")
 	recordCmd.Flags().String("dir", "", "记录目录（环境变量 IDEA_LOOP_DISPATCH_DIR；默认 ~/.idea-loop/dispatch）")
 
-	check := leaf("check [file]", "按能力模板核一份运行环境说明：开头有没有标记行、每个能力的一节在不在且节名对得上、模板里每一项有没有加粗项名并写了做法或「没有」；每个问题一行，带节名（和项名），有问题退出 1，全过打印一行通过。不带文件就核插件和 home 里全部带标记行的说明（home 里跟插件同名的覆盖文件按合并后的结果核）", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+	check := leaf("check [file]", "按能力模板核一份运行环境说明：开头有没有标记行、每个能力的一节在不在且节名对得上、模板里每一项有没有加粗项名并写了做法或「没有」；每个问题一行，带节名（和项名），有问题退出 1，全过打印一行通过。不带文件就核项目、home、用户根目录三处找得到的全部带标记行的说明", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return fmt.Errorf("usage: dyna runtime check [文件]")
 		}
@@ -161,7 +167,7 @@ func Command(d Deps) *cobra.Command {
 		if len(args) == 1 {
 			file = args[0]
 		}
-		res, err := Check(file, d.env())
+		res, err := Check(file, d.env(), d.cwd())
 		if err != nil {
 			return err
 		}
