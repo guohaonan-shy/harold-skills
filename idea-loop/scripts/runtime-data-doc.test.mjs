@@ -20,6 +20,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dir = join(pluginRoot, 'runtime');
@@ -104,6 +105,36 @@ for (const name of RUNTIMES) {
     assert.deepEqual(sections, CAPABILITIES);
   });
 }
+
+// spec runtime-ops-in-docs, ticket 02: the template is the one place that says what a description has to answer for each
+// capability; `dyna runtime check` reads it, and the two shipped descriptions pass it.
+test('the capability template has one ### per capability, in the list\'s order, and every item says what goes in, what comes back and what if not', () => {
+  const start = capabilitiesMd.indexOf('\n## 能力模板\n');
+  assert.ok(start >= 0, 'no 能力模板 section');
+  assert.ok(start > capabilitiesMd.indexOf('\n## 退路\n'), 'the template follows the fallbacks, which stay as they were');
+  const section = capabilitiesMd.slice(start + 1);
+  const subs = [...section.matchAll(/^### (.+)$/gm)].map((m) => m[1].trim());
+  assert.deepEqual(subs, CAPABILITIES);
+  const items = section.split('\n').filter((l) => /^- \*\*/.test(l));
+  assert.ok(items.length >= CAPABILITIES.length, 'every capability has at least one item');
+  for (const line of items) for (const part of ['传入：', '拿回：', '做不到时：']) assert.ok(line.includes(part), `${line} has no ${part}`);
+});
+
+test('the example item of the spec is in the template: 会话管理 → 开一个 issue 会话', () => {
+  const line = capabilitiesMd.split('\n').find((l) => l.startsWith('- **开一个 issue 会话**'));
+  assert.ok(line, 'no 开一个 issue 会话 item');
+  for (const word of ['worktree', '标题「<仓库名>#<号> <标题>」', '分组名', 'prompt', '会话 id', '例外一']) assert.ok(line.includes(word), word);
+});
+
+test('`dyna runtime check` passes the two descriptions the plugin ships, alone and together', () => {
+  const env = { IDEA_LOOP_PLUGIN_ROOT: pluginRoot, IDEA_LOOP_HOME: '/nonexistent-home' };
+  const all = runDyna(['runtime', 'check'], { env });
+  assert.equal(all.status, 0, all.stdout + all.stderr);
+  for (const name of RUNTIMES) {
+    const r = runDyna(['runtime', 'check', join(dir, `${name}.md`)], { env });
+    assert.equal(r.status, 0, `${name}: ${r.stdout}${r.stderr}`);
+  }
+});
 
 test('the section check goes red when a capability is missing or one is added', () => {
   const sections = sectionsOf(read('magi.md'));

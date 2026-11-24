@@ -10,8 +10,8 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 - **创建**：`magi cron create <id> --expr "<5 段 cron>" --action create_session --cwd <工作目录> --prompt …`。表达式按人在 magi 设的时区（`magi cron show` 的 when 一行会显示），分钟避开 0 和 30（跟桌面端一样）。创建者自己的任务最短每 5 分钟跑一次。
 - **列出**：`magi cron list`。
-- **读上次运行**：`magi cron list` / `magi cron show <id>` 里的上次运行时间。不带每次的成败：流程要「上次成功运行」的，magi 给不出，当作没有（流程按没有基准处理，如 dreaming 的截图对账做全量；项目没有设计档案时 dreaming 本来就不做截图对账）。
-- **改、停、删**：`magi cron edit <id> [--expr …] [--enable|--disable] [--prompt …]`，`magi cron delete <id>`。
+- **读上次成功运行的时间**：`magi cron list` / `magi cron show <id>` 里的上次运行时间。不带每次的成败：流程要「上次成功运行」的，magi 给不出，当作没有（流程按没有基准处理，如 dreaming 的截图对账做全量；项目没有设计档案时 dreaming 本来就不做截图对账）。
+- **更新**：改、停、删：`magi cron edit <id> [--expr …] [--enable|--disable] [--prompt …]`，`magi cron delete <id>`。
 
 行为：到点开出一个新会话，目录是 `--cwd`，所以 `--cwd` 填目标仓库的主 checkout（按项目的任务，如每周分拣）；设备级的任务（`dispatch-home`、`dreaming-home`）填 home。
 
@@ -23,9 +23,9 @@ magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能�
 
 在当前会话里每隔一段时间再叫自己一次，用 `magi wake`：
 
-- `magi wake every <间隔 | "<5 段 cron>"> "<文本>" [--until <日期> | --until never]`：到点时文本作为新的一轮回到本会话。不加 `--until` 7 天后结束，最长 30 天或 `never`。
-- `magi wake list`：本会话的定时。
-- `magi wake cancel <id>`：取消。
+- **设一个循环**：`magi wake every <间隔 | "<5 段 cron>"> "<文本>" [--until <日期> | --until never]`，到点时文本作为新的一轮回到本会话。不加 `--until` 7 天后结束，最长 30 天或 `never`。
+- **列出循环**：`magi wake list`，本会话的定时。
+- **取消一个循环**：`magi wake cancel <id>`。
 
 调度在 magi 里不用它，用「定时任务」（见「会话管理」的调度）。
 
@@ -67,7 +67,7 @@ issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issu
 - 开页面、读页面：`magi browser open <地址>`，`snapshot`（元素树，给出 `@bN` 引用），`get url|title|text|box`。
 - 操作：`click`、`fill`、`type`、`key`、`scroll`、`select`、`wait`。
 - 看：`screenshot [-o 文件.png]`，`network`（已完成的请求，看不到头和体），`emulate --tab <tN> --color-scheme dark|light`、`--device phone|tablet`（手机视口与深色）。
-- **不能执行任意 JS**：量值用元素盒子（`get box`）与截图。需要在页面里跑一段 JS 的流程，在 magi 里走能力清单的退路（把要做的事交给人，记「未做：运行环境 magi 没有『浏览器』的执行任意 JS」）：design-archive 拍档案截图与测量（命令打印的是一段 `async (page) => …` 代码）、uiux-imagine 在线上 UI 上取 `outerHTML` 与整页 CSS、uiux-refine 里 `__maTimeline.seek(t)` 与 `getComputedStyle` 的验证。自起 chromium 的命令（测量、拼流程图、录动图）不受影响，照旧。
+- **执行任意 JS：没有**。不能执行任意 JS：量值用元素盒子（`get box`）与截图。需要在页面里跑一段 JS 的流程，在 magi 里走能力清单的退路（把要做的事交给人，记「未做：运行环境 magi 没有『浏览器』的执行任意 JS」）：design-archive 拍档案截图与测量（命令打印的是一段 `async (page) => …` 代码）、uiux-imagine 在线上 UI 上取 `outerHTML` 与整页 CSS、uiux-refine 里 `__maTimeline.seek(t)` 与 `getComputedStyle` 的验证。自起 chromium 的命令（测量、拼流程图、录动图）不受影响，照旧。
 - **子 agent 各自开窗口**：先 `magi browser window new`，之后每条命令都带 `--tab <tN>`，不碰别的 agent 的标签页。所以不需要锁目录。
 - **造慢网络、失败的请求：没有**。`network` 只读已完成的请求，不能拦截。需要这种状态的格走退路，交给人。
 - **把一页摆给人看：没有**。匿名浏览器只有本会话看得到，人看不到。退路：截一张图，经「发文件给人」发出，并附上页面的 URL，让人自己打开；说明这样看不到动效和交互。
@@ -82,18 +82,18 @@ issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issu
 
 ### 无头
 
-后台任务和子代理里的一切操作都走 `magi browser`：开页面、量、截图、走用户路径、复现问题，结果留在文件里。
+**无头操作**：后台任务和子代理里的一切操作都走 `magi browser`：开页面、量、截图、走用户路径、复现问题，结果留在文件里。
 
 - 本地文件同样经静态服务器打开：`file:` 地址在有的浏览器里被拒，`file://` 下 ES 模块和 fetch 也会坏。
 - 这份参考没有记下 magi 对截图位置的限制：`screenshot -o` 直接存到要放的位置。
 - 很多页面要登录。匿名浏览器每次都没有登录态，每次照目标项目给的测试账号走一遍登录（在项目目录的 `DEVELOPMENT.md` 或代码仓库的 `CLAUDE.md` 里找）。找不到：在跟人对话的会话里问人；你是子代理就停下，在交回里写明缺测试账号。
 - 截之前把页面带到要看的那个数据状态，组件处在静止态：截到错的状态或加载中，它就成了错的基准。
 - 要造慢网络、失败的请求：没有（见上），这一格走退路。
-- 要麦克风的流程（录音、语音面试、「检查麦克风」页）：没有，这一格走退路。
+- **要麦克风的流程**（录音、语音面试、「检查麦克风」页）：没有，这一格走退路。
 
 ### 并行时抢锁
 
-每个子 agent 先 `magi browser window new` 开自己的窗口，之后每条命令都带 `--tab <tN>`，不碰别的 agent 的标签页，所以不需要抢锁；自己起 chromium 的命令（测量、拼流程图、录动图）同样不用。
+**并行时抢锁**：每个子 agent 先 `magi browser window new` 开自己的窗口，之后每条命令都带 `--tab <tN>`，不碰别的 agent 的标签页，所以不需要抢锁；自己起 chromium 的命令（测量、拼流程图、录动图）同样不用。
 
 ## 人的浏览器
 
@@ -101,23 +101,24 @@ issue 会话认领后照常翻状态，不挪分组；做完（PR 合并或 issu
 
 ## 向人提问
 
-没有专门的工具：在对话里用编号选项问，等人回。
+**问一个单选题**：没有专门的工具，在对话里用编号选项问，等人回。
 
 ## 发布审阅页
 
-`magi artifact push <文件或目录>`，打印页面的网址（目录当静态站点，根下要有 `index.html`）。收回人的批示：页面里 `<script src="/artifacts/sdk.js"></script>`，调 `magi.reply({text, data})`，批示作为一条用户消息回到发布它的会话。同一页重发用 `--id <ID>`。网址知道就能打开，页面里不放密钥。
+- **发布一页**：`magi artifact push <文件或目录>`，打印页面的网址（目录当静态站点，根下要有 `index.html`）。
+- **收回人的批示**：页面里 `<script src="/artifacts/sdk.js"></script>`，调 `magi.reply({text, data})`，批示作为一条用户消息回到发布它的会话。同一页重发用 `--id <ID>`。网址知道就能打开，页面里不放密钥。
 
 ## 推送
 
-`PushNotification`，同桌面端。
+**推一句话**：`PushNotification`，同桌面端。
 
 ## 发文件给人
 
-`magi artifact push <文件>`，把打印出来的链接贴进对话。链接知道就能打开，不发密钥和不能公开的内容。
+**发一个文件**：`magi artifact push <文件>`，把打印出来的链接贴进对话。链接知道就能打开，不发密钥和不能公开的内容。
 
 ## 调用 MCP
 
-magi 托管的优先：
+**调一个 MCP 工具**：magi 托管的优先：
 
 1. `magi mcp list` 看有没有这个服务器。
 2. 有：第一次先读 `magi mcp info <服务器>`，需要时 `magi mcp tools <服务器> [<工具>]` 看参数，然后 `magi mcp call <服务器> <工具> key=value…`。参数名跟原生工具一样；值是 JSON 的写成 `key:=json`。
@@ -131,4 +132,4 @@ magi 托管的优先：
 - **Mobbin MCP**（可选，设计调研用，要 Mobbin 付费计划）：magi 里的 MCP 都在上面那个入口加：人加一个名为 `mobbin`、地址 `https://api.mobbin.com/mcp`、走 OAuth 登录的服务器；起调研员的会话用 `magi mcp call mobbin …` 调它。`magi mcp list` 里没有 `mobbin`，设计调研就停下，只有它受影响。
 - **Playwright MCP**：不用装，浏览器是 `magi browser`。
 - **插件**：在 magi 会话里 `/plugin`。
-- **允许规则、设置**：人自己改 `$CLAUDE_CONFIG_DIR/settings.json`；这边只打印规则，不替人改权限设置。
+- **允许规则**、设置：人自己改 `$CLAUDE_CONFIG_DIR/settings.json`；这边只打印规则，不替人改权限设置。

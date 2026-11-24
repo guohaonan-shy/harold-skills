@@ -457,6 +457,7 @@ func TestTheModulesCommandsAreInTheRegistryWithTheRightCallers(t *testing.T) {
 		"runtime name":    registry.CallerSession,
 		"runtime show":    registry.CallerSession,
 		"runtime handoff": registry.CallerSession,
+		"runtime check":   registry.CallerSession,
 		"runtime inject":  registry.CallerHook, // only the SessionStart hook runs it
 	}
 	for name, caller := range want {
@@ -497,7 +498,7 @@ func TestHelpSaysHowToAddARuntime(t *testing.T) {
 	if r.code != 0 {
 		t.Fatal(r)
 	}
-	for _, want := range []string{"加一种运行环境", "runtime/<环境名>.md", "capabilities.md", "标记", "selected", "IDEA_LOOP_RUNTIME", "只升插件"} {
+	for _, want := range []string{"加一种运行环境", "runtime/<环境名>.md", "capabilities.md", "标记", "selected", "IDEA_LOOP_RUNTIME", "只升插件", "runtime check", "能力模板"} {
 		if !strings.Contains(r.stdout, want) {
 			t.Errorf("--help lacks %q", want)
 		}

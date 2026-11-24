@@ -2523,6 +2523,21 @@
       ]
     },
     {
+      "command": "runtime check",
+      "module": "runtime",
+      "use": "check [file]",
+      "summary": "按能力模板核一份运行环境说明：开头有没有标记行、每个能力的一节在不在且节名对得上、模板里每一项有没有加粗项名并写了做法或「没有」；每个问题一行，带节名（和项名），有问题退出 1，全过打印一行通过。不带文件就核插件和 home 里全部带标记行的说明（home 里跟插件同名的覆盖文件按合并后的结果核）",
+      "caller": "session",
+      "next": "",
+      "args": [
+        {
+          "name": "file",
+          "kind": "positional",
+          "required": false
+        }
+      ]
+    },
+    {
       "command": "runtime handoff",
       "module": "runtime",
       "use": "handoff",

@@ -95,7 +95,8 @@ func Inject(section string, env home.Env) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return "当前运行环境：" + name + "\n以下是运行环境的能力清单，开场注入，不必再取。\n\n" + body + "\n", nil
+		// the template is for writing a description, not for a session that uses one
+		return "当前运行环境：" + name + "\n以下是运行环境的能力清单，开场注入，不必再取。\n\n" + strings.TrimSpace(withoutSection(body, TemplateTitle)) + "\n", nil
 	}
 	notes := ""
 	for _, n := range det.Notes {

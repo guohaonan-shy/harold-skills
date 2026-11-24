@@ -79,7 +79,8 @@ const moduleLong = `运行环境：认环境、开场注入、按能力取这个
   1. 写 <名字>.md，开头一行标记（上面「认环境」），每个能力一节，小节名与 capabilities.md 的能力清单一一对应；某个能力这个环境做不到，那一节写「没有」和退路。
   2. 放进插件的 runtime/（随插件发给所有人），或放进自己的 <home>/runtime/（只在这台机器上认；home 里的名字和插件的同名，就是上面说的本机覆盖，不是新环境）。
   3. 人要默认用它（它没有标记变量）：把名字写进 <home>/runtime/selected。
-  4. 通用流程不动：流程只写能力，不写工具。`
+  4. 跑 dyna runtime check <文件>（不带文件就核插件和 home 里全部的说明）：缺哪一节、哪一项既没写做法也没写「没有」，每个问题一行。能力模板（每个能力下工作流要它做的几项，各写传入、拿回、做不到时）在 capabilities.md 的「能力模板」一节，写说明时照它；开场不注入这一节。
+  5. 通用流程不动：流程只写能力，不写工具。`
 
 // Command is the `runtime` module.
 func Command(d Deps) *cobra.Command {
@@ -170,6 +171,33 @@ func Command(d Deps) *cobra.Command {
 	handoff.Flags().String("prompt-file", "", "magi：会话的任务（prompt）写在这个文件里；magi 下必须给，桌面端不读，任务由调用方在归位之后发")
 	handoff.Flags().String("magi", "", "magi 可执行文件（环境变量 IDEA_LOOP_HANDOFF_MAGI；默认 magi）")
 
-	root.AddCommand(name, inject, show, handoff)
+	check := leaf("check [file]", "按能力模板核一份运行环境说明：开头有没有标记行、每个能力的一节在不在且节名对得上、模板里每一项有没有加粗项名并写了做法或「没有」；每个问题一行，带节名（和项名），有问题退出 1，全过打印一行通过。不带文件就核插件和 home 里全部带标记行的说明（home 里跟插件同名的覆盖文件按合并后的结果核）", registry.CallerSession, func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			return fmt.Errorf("usage: dyna runtime check [文件]")
+		}
+		file := ""
+		if len(args) == 1 {
+			file = args[0]
+		}
+		res, err := Check(file, d.env())
+		if err != nil {
+			return err
+		}
+		if len(res.Problems) > 0 {
+			for _, p := range res.Problems {
+				fmt.Fprintln(d.out(), p)
+			}
+			return &nexterr.Exit{Code: 1}
+		}
+		if file != "" {
+			fmt.Fprintf(d.out(), "通过：%s 按能力模板核过了\n", file)
+		} else {
+			fmt.Fprintf(d.out(), "通过：核了 %d 份说明（%s）\n", len(res.Labels), strings.Join(res.Labels, "、"))
+		}
+		return nil
+	})
+	check.Args = cobra.ArbitraryArgs
+
+	root.AddCommand(name, inject, show, check, handoff)
 	return root
 }
