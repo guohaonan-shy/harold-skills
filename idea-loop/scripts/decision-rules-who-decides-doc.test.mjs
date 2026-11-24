@@ -68,7 +68,7 @@ test('evidence carries the reader model and the shared writing rules in its sect
     ['陌生叫法第一次出现说清', /第一次出现/],
     ['比对同条件', /同条件/],
   ]) assert.match(body, re, `共用写法缺：${name}`);
-  assert.match(body, /裸编号/);
+  assert.match(body, /GLOSSARY\.md/, '叫法先取术语表或会话里说过的');
   assert.match(body, /最新基准/);
 });
 

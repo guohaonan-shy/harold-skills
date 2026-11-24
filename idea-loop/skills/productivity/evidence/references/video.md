@@ -2,8 +2,8 @@
 
 ## 什么时候选
 
-- 一段多步流程要整体看（登录 → 选题 → 作答 → 提交 → 看结果），或者动图超 10MB、裁短又会丢掉要看的那段：录屏。
-- 只讲一个动效的：仍用动图（`${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/gif.md`）。
+- 端到端的交付：一条流程完整走下来（登录 → 选题 → 作答 → 提交 → 看结果），放进 PR 里让人验收。
+- 构思、设计、修改过程中看一个交互或动效：用动图（`${CLAUDE_PLUGIN_ROOT}/skills/productivity/evidence/references/gif.md`）。
 
 ## 1. 录
 

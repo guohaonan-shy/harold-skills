@@ -11,7 +11,7 @@
  * name gone, and every cited section existing.
  *
  * Spec evidence-forms (issue #438, ticket 02) then split the figure part by form: the evidence body no longer
- * repeats home's 「证据」 section or the 「结论在前」 line that clashed with home's 「沟通」, 「配什么图」 is a six-row
+ * repeats home's 「证据」 section or the 「结论在前」 line that clashed with home's 「沟通」, 「证据的几种形态」 is a six-row
  * form table, screenshot / chart / video each have a how-to file, and the two callers stopped listing the forms.
  */
 import { test } from 'node:test';
@@ -42,7 +42,7 @@ function walk(dir, out = []) {
 }
 
 test('the evidence skill is three sections: what evidence is, the overall style, which figure; its description only routes', () => {
-  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '配什么图：你来判断']);
+  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '证据的几种形态']);
   const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   assert.match(raw, /^---\nname: evidence\n/);
   assert.doesNotMatch(raw, /disable-model-invocation/, 'evidence 要能被别的 skill 和 agent 调到');
@@ -91,11 +91,11 @@ test('evidence 正文不重复 home「证据」一节，也没有跟 home「沟�
   assert.match(evidenceBody.split('\n## ')[0], /home 固定文案「证据」一节是总纲/, '正文开头缺「home 是总纲」那句');
 });
 
-test('「配什么图」是一张六行的形态表，每行指向的做法文件都存在（#438 工单 02）', () => {
-  const section = evidenceBody.split('## 配什么图：你来判断')[1] ?? '';
+test('「证据的几种形态」是一张六行的形态表，每行指向的做法文件都存在（#438 工单 02）', () => {
+  const section = evidenceBody.split('## 证据的几种形态')[1] ?? '';
   const rows = section.split('\n').filter((l) => l.startsWith('|')).slice(2); // 去掉表头和分隔行
   assert.equal(rows.length, 6, `形态表应有六行，实际 ${rows.length}`);
-  assert.deepEqual(rows.map((r) => r.split('|')[2].trim()), ['截图标注', 'UI 流程图', '图表', '动图', '录屏', '表或一行例子']);
+  assert.deepEqual(rows.map((r) => r.split('|')[1].trim()), ['截图标注', 'UI 流程图', '图表', '动图', '录屏', '表或一行例子']);
   const pointed = rows.flatMap((r) => [...r.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/(skills\/productivity\/evidence\/references\/[\w.-]+\.md)/g)].map((m) => m[1]));
   assert.deepEqual(pointed.map((p) => p.split('/').pop()), ['screenshot.md', 'ui-flow.md', 'chart.md', 'gif.md', 'video.md']);
   for (const p of pointed) assert.ok(existsSync(join(pluginRoot, p)), `做法文件不存在：${p}`);
@@ -116,10 +116,10 @@ test('截图标注、图表、录屏三份做法各自写全该写的，图表�
   assert.match(chart, /装上/);
   assert.doesNotMatch(chart, /mermaid/i, 'chart.md 不写 mermaid 退路');
   const video = ref('video.md');
-  for (const phrase of ['多步流程', '10MB', '只讲一个动效', 'recordVideo', 'simctl', 'ffmpeg', 'H\\.264', 'faststart', '分段', '开头', '加速', '不带声音', '日志或接口响应', '<video', 'controls', '发文件给人']) {
+  for (const phrase of ['端到端', 'PR 里让人验收', '10MB', '动效', 'recordVideo', 'simctl', 'ffmpeg', 'H\\.264', 'faststart', '分段', '开头', '加速', '不带声音', '日志或接口响应', '<video', 'controls', '发文件给人']) {
     assert.match(video, new RegExp(phrase), `video.md 缺：${phrase}`);
   }
-  assert.match(ref('gif.md'), /video\.md/, '动图做法缺「装不下改用录屏」那句');
+  assert.match(ref('gif.md'), /video\.md/, '动图做法缺「端到端交付用录屏」那句');
 });
 
 test('the old decision skill is gone: no directory, no mention anywhere in the plugin (evals aside)', () => {
@@ -138,11 +138,11 @@ test('placement moved to the callers: to-spec figures.md and pr delivery-evidenc
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
 });
 
-test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形态，只指「配什么图」；交付证据补了录屏的分段和 <video>（#438 工单 02）', () => {
+test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形态，只指「证据的几种形态」；交付证据补了录屏的分段和 <video>（#438 工单 02）', () => {
   const figures = read('skills', 'engineering', 'to-spec', 'references', 'figures.md');
   const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
   for (const text of [figures, delivery]) {
-    assert.match(text, /照 `idea-loop:evidence` 的「配什么图」/);
+    assert.match(text, /照 `idea-loop:evidence` 的「证据的几种形态」/);
     assert.doesNotMatch(text, /图怎么做（/, '形态又被括号列出来了');
     assert.doesNotMatch(text, /UI 标注、UI flow/);
   }

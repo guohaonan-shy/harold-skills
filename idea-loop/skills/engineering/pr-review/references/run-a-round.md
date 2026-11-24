@@ -2,7 +2,7 @@
 
 `../SKILL.md` 的「跑一轮」第 2 步读这份。**这一轮由调用 pr-review 的主会话自己做，不起审查者子代理。** 这一步只读代码：不改代码、不提交、不推送；不碰 PR（描述、评论、合并）和 review loop 文件（SKILL.md 第 3 步才往里追加）；处置只标不执行，也不宣布能不能合并。
 
-开工先读 [review-standards.md](review-standards.md)（两轴问什么、什么算问题、怎么验、每条怎么标处置）；处置怎么判看它的「依据：只认四种」，停不停下看会话已加载的用户规则（`~/.claude/CLAUDE.md`），汇报的写法与证据形式看 `idea-loop:pr` 的「Review 汇报」，配图看 `idea-loop:evidence` 的「配什么图」。
+开工先读 [review-standards.md](review-standards.md)（两轴问什么、什么算问题、怎么验、每条怎么标处置）；处置怎么判看它的「依据：只认四种」，停不停下看会话已加载的用户规则（`~/.claude/CLAUDE.md`），汇报的写法与证据形式看 `idea-loop:pr` 的「Review 汇报」，配图看 `idea-loop:evidence` 的「证据的几种形态」。
 
 这一轮的工作目录是 `.tmp/pr-review/<PR 号>/round-<N>/`，配图放 `.tmp/pr-review/<PR 号>/evidence/`。要用到：worktree 路径（集成分支，已推送）、`<owner/repo>`、PR 号、基准分支、轮次 N、spec 路径（`<项目目录>/docs/spec/<spec-slug>/<spec-slug>.md`，给 Codex 的也是它）和同目录 `tickets/`、review loop 文件（从里面读之前几轮的汇报和人的批示，**尤其是人推翻过的条目**）。有设计产物时还有 UI 走查的发现文件 `ui-findings.json`（路径见 [ui-walkthrough.md](ui-walkthrough.md)）。
 

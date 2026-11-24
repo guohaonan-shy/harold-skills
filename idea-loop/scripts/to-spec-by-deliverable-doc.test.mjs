@@ -93,7 +93,7 @@ test('how to write for a human is a pointer to evidence, not restated rules', ()
   for (const phrase of ['陌生', '同条件', '出处']) assert.doesNotMatch(body, new RegExp(phrase), `to-spec 里还有「${phrase}」：共用写法只在 evidence`);
   // and the evidence skill is where they live ('出处' lives in home's fixed 「证据」 section since #438, not in evidence)
   const evidence = read('skills', 'productivity', 'evidence', 'SKILL.md');
-  for (const phrase of ['陌生', '同条件']) assert.match(evidence, new RegExp(phrase));
+  for (const phrase of ['GLOSSARY', '同条件']) assert.match(evidence, new RegExp(phrase));
 });
 
 test('the process is six steps, and the raw template moved into the skill\'s own references', () => {
