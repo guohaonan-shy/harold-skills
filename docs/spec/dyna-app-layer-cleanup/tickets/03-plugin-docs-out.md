@@ -16,7 +16,7 @@
 - **README 与帮助**：idea-loop 的 README 里讲「插件自带两份说明」「本机覆盖」「desktopSessionId」的地方，改成三处查找、setup 生成、`sessionId`。home 目录地图那份参考（wiki-conventions 的 `home-maps.md`）讲本机覆盖的也改。
 - **读插件说明的检查**：仓库里直接读插件运行环境说明的检查脚本（开场注入、调度两份、Linear、retro 回放、运行环境数据、SEO 连接器工具、setup home 等），断言某个运行环境具体做法的断言删掉（那些内容不再归插件）；要一份说明才能跑的（开场注入）改用测试自己写的样例说明。加一条检查：插件运行环境目录下只有 `capabilities.md`。
 - **目标用例**：照 `idea-loop/evals/retro/` 的用例格式，从 spec 的 User Story 5 写一个目标用例：空 home 的桌面端会话跑 setup，是否生成了一份过格式检查的说明、并问了人放哪。写好，大用例标明待跑，由编排者跑。
-- **版本**：dyna 版本在集成分支当时的版本（现在 0.0.14）上升一档，用新编的二进制重存登记表 `dyna/registry/<新版本>.json`；插件的 `dyna-version` 下限提到新版本；插件 `plugin.json` 的 `version` 按 `REVIEW.md`「额外要求」的档位升。
+- **版本**：dyna 版本在集成分支当时的版本（现在 0.0.14）上升一档，用新编的二进制重存登记表 `dyna/registry/<新版本>.json`；插件的 `dyna-version` 下限提到新版本；插件 `plugin.json` 的 `version` 留在 0.2.0（发布线上的改动不另升；review 第 1 轮 S1 改）。
 - **给 magi 那台机器的命令**：在交回里写一条命令，从删除之前的提交取出 `magi.md` 放进那台机器 home 的 `runtime/`（编排者写进 PR 的「要你做的事」）。
 
 ## 验收标准
@@ -26,7 +26,7 @@
 - [x] setup 的「运行环境」参考按上面改完：三处、触发条件、问放哪、`info/exclude`；没有「本机覆盖」的说法。
 - [x] README、home 目录地图参考里没有「插件自带两份说明」「本机覆盖」「desktopSessionId」。
 - [x] 仓库全部检查（`REVIEW.md` 的验证命令）全过，包括 `cd dyna && go test ./...` 和 `node --test` 那一组。
-- [x] dyna 版本升了一档，登记表已存、跟命令树一致；`dyna-version` 下限是新版本；`plugin.json` 版本已升。
+- [x] dyna 版本升了一档，登记表已存、跟命令树一致；`dyna-version` 下限是新版本；`plugin.json` 版本留在 0.2.0。
 - [x] 交回里有给 magi 那台机器的取回命令。
 - [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。

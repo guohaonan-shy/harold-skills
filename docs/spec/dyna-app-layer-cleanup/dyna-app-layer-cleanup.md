@@ -87,7 +87,7 @@ related: ["[[2026-11-24-runtime-docs-location-grill]]", "[[runtime-ops-in-docs]]
 - **README、`dyna runtime --help`**：讲「插件自带两份说明」「本机覆盖」的地方，纳入，改成三处和生成。
 - **排除**：`dyna agent claude|codex run`、`claudestream`（harness 层，边界内）；`runtime show`（只读找到的说明，跟着查找顺序走，不另改）。
 
-版本：dyna 在集成分支当时的版本（现在 0.0.14）上升一档，存 `dyna/registry/<新版本>.json`；`idea-loop/dyna-version` 下限跟到新版本（说明开始读 `states`，旧 dyna 给不出）。插件 `plugin.json` 的 `version` 按 `REVIEW.md`「额外要求」的档位升。
+版本：dyna 在集成分支当时的版本（现在 0.0.14）上升一档，存 `dyna/registry/<新版本>.json`；`idea-loop/dyna-version` 下限跟到新版本（说明开始读 `states`，旧 dyna 给不出）。插件 `plugin.json` 的 `version` 原写「按 `REVIEW.md`「额外要求」的档位升」，review 第 1 轮改为留在 0.2.0：发布线上的改动不另升，0.2.0 已高于主分支，整条发布线的档位由 #331 合进 main 时定。
 
 ## User Stories
 
