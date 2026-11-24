@@ -125,14 +125,16 @@ test('the device map template says to look the map up before answering, within 2
   assert.ok([...t].length <= 2000, `device map template is ${[...t].length} characters`);
 });
 
-test('the device map template lists runtime/ as the device\'s local override, already merged, not to be read apart', () => {
+test('the device map template lists runtime/ as the device\'s own runtime descriptions, already injected, not to be read apart', () => {
   const t = fenced(maps, '设备地图模板');
   const line = t.split('\n').find((l) => l.startsWith('- `runtime/`'));
   assert.ok(line, 'the template has no `runtime/` line among the layers of home');
-  assert.match(line, /本机覆盖/);
+  assert.match(line, /这台设备的运行环境说明/);
   assert.match(line, /`<运行环境>\.md` 一份/);
-  assert.match(line, /开场已合进注入的做法/);
-  assert.match(line, /`dyna runtime show` 取到的也是合并后的，不用另读/);
+  assert.match(line, /`selected` 写默认用哪个/);
+  assert.match(line, /开场已注入当前环境的做法/);
+  assert.match(line, /`dyna runtime show` 取到的是同一份，不用另读/);
+  assert.doesNotMatch(line, /本机覆盖|合并/, 'there is no local override and no merging');
 });
 
 test('the project map template points at the project\'s own memory index, within 2000 characters', () => {

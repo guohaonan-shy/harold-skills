@@ -1,18 +1,20 @@
 // Package runtime is the `runtime` module: which environment a session runs in (read from the descriptions' marker
-// lines, see envs.go), what the SessionStart hook injects about it, the per-capability how-to for that environment,
-// and the hand-over of a `claude -p` session to the desktop app.
+// lines, see envs.go), what the SessionStart hook injects about it, and the per-capability how-to for that
+// environment.
 //
-// The texts are the plugin's data, not code: <plugin>/runtime/capabilities.md (the capability list and the
-// fallbacks) and <plugin>/runtime/<environment>.md (one `## <capability>` section per capability). They are read
-// from the plugin directory at call time (IDEA_LOOP_PLUGIN_ROOT, set by the plugin's bin/dyna), so changing them
-// only needs a new plugin, not a new dyna.
+// There are two kinds of text. The plugin's data is <plugin>/runtime/capabilities.md (the capability list, the
+// fallbacks and the template a description is written from); it is read from the plugin directory at call time
+// (IDEA_LOOP_PLUGIN_ROOT, set by the plugin's bin/dyna), so changing it only needs a new plugin, not a new dyna.
+// The descriptions of environments (one `## <capability>` section per capability) are the machine's own: the
+// plugin ships none. dyna looks for them in three places, the project first, then home, then the user's root
+// directory (see Places). A session that matches no description is told dyna does not recognise it, and the
+// capability list's fallbacks apply.
 package runtime
 
 import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/home"
@@ -27,8 +29,8 @@ const (
 	EnvRuntime = "IDEA_LOOP_RUNTIME"
 )
 
-// DataDir is the directory under the plugin that holds the data, and the names of the files in it that are not an
-// environment.
+// DataDir is the directory that holds runtime data: under the plugin (the capability list) and, with descriptions
+// in it, in each of the three places. CapabilitiesFile is the plugin's file in it.
 const (
 	DataDir          = "runtime"
 	CapabilitiesFile = "capabilities.md"
@@ -57,11 +59,11 @@ func (p Plugin) read(rel ...string) (string, error) {
 	return p.readFile(filepath.Join(append([]string{p.Root}, rel...)...))
 }
 
-// readFile is read for a file anywhere (a description only home has), with the same trimming.
+// readFile is read for a file anywhere (a description in one of the three places), with the same trimming.
 func (p Plugin) readFile(path string) (string, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return "", nexterr.Plain("读不到插件里的数据：%v", err)
+		return "", nexterr.Plain("读不到运行环境的数据：%v", err)
 	}
 	return p.expand(strings.TrimSpace(frontmatter.ReplaceAllString(string(b), ""))), nil
 }
@@ -71,9 +73,10 @@ func (p Plugin) expand(text string) string {
 }
 
 // Inject is one section of the SessionStart injection. The hook output is cut at 10,000 characters, so the two
-// sections are two commands. An unknown section is an error; so is an
-// unknown environment.
-func Inject(section string, env home.Env) (string, error) {
+// sections are two commands. An unknown section is an error; so is a forced name that is not known. An
+// environment dyna cannot tell is not an error (a hook that fails leaves the session with nothing): the sections
+// say so and point at setup.
+func Inject(section string, env home.Env, cwd string) (string, error) {
 	known := false
 	for _, s := range Sections {
 		known = known || s == section
@@ -85,15 +88,18 @@ func Inject(section string, env home.Env) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	det, err := Detect(env)
+	det, err := Detect(env, cwd)
 	if err != nil {
 		return "", err
 	}
-	name := det.Name
 	if section == "runtime" {
 		body, err := p.read(DataDir, CapabilitiesFile)
 		if err != nil {
 			return "", err
+		}
+		name := "没有（" + strings.ReplaceAll(SetupHint, "`", "") + "）"
+		if !det.None() {
+			name = det.Name
 		}
 		// the template is for writing a description, not for a session that uses one
 		return "当前运行环境：" + name + "\n以下是运行环境的能力清单，开场注入，不必再取。\n\n" + strings.TrimSpace(withoutSection(body, TemplateTitle)) + "\n", nil
@@ -102,31 +108,14 @@ func Inject(section string, env home.Env) (string, error) {
 	for _, n := range det.Notes {
 		notes += n + "\n"
 	}
-	intro := "以下是运行环境「" + name + "」的做法全文，开场注入，不必再取。\n\n"
-	if det.Path != "" {
-		body, err := p.readFile(det.Path)
-		if err != nil {
-			return "", err
-		}
-		return notes + intro + body + "\n", nil
+	if det.None() {
+		return notes + "没有运行环境说明，" + SetupHint + "\n", nil
 	}
-	body, err := p.read(DataDir, name+".md")
+	body, err := p.readFile(det.Path)
 	if err != nil {
 		return "", err
 	}
-	ov := loadOverride(name, env)
-	switch {
-	case ov.failure != "":
-		return notes + ov.failedLine() + "\n" + intro + body + "\n", nil
-	case !ov.present:
-		return notes + intro + body + "\n", nil
-	}
-	m := merge(body, p.expand(ov.text))
-	head := ov.header(m)
-	if n := runeCount(notes + head + "\n" + intro + m.text + "\n"); n > InjectLimit {
-		head += "合并后 " + strconv.Itoa(n) + " 字，超过开场注入上限，后面被截断；完整的某一节跑 `dyna runtime show <能力>`。"
-	}
-	return notes + head + "\n" + intro + m.text + "\n", nil
+	return notes + "以下是运行环境「" + det.Name + "」的做法全文，开场注入，不必再取。\n\n" + body + "\n", nil
 }
 
 // sectionOf is the `## <title>` section of a markdown text, heading line and its `###` subsections included, up
@@ -199,9 +188,9 @@ func (p Plugin) Overview() (string, error) {
 	return strings.Join(parts, "\n\n") + "\n", nil
 }
 
-// Show is the section for one capability in the current environment's data, with the device's local override
-// merged in; when part of the section is the device's own, the first line says so.
-func Show(capability string, env home.Env) (string, error) {
+// Show is the section for one capability in the current environment's description. An environment dyna cannot tell
+// is an error: the caller asked for a how-to and has none, so it takes the capability list's fallback.
+func Show(capability string, env home.Env, cwd string) (string, error) {
 	p, err := PluginFrom(env)
 	if err != nil {
 		return "", err
@@ -217,32 +206,20 @@ func Show(capability string, env home.Env) (string, error) {
 	if !known {
 		return "", nexterr.Plain("没有「%s」这个能力；能力清单：%s（不带能力跑 `dyna runtime show` 看清单和退路）", capability, strings.Join(caps, " / "))
 	}
-	det, err := Detect(env)
+	det, err := Detect(env, cwd)
 	if err != nil {
 		return "", err
 	}
-	name := det.Name
-	lead := ""
-	var text string
-	if det.Path != "" {
-		if text, err = p.readFile(det.Path); err != nil {
-			return "", err
-		}
-	} else {
-		if text, err = p.read(DataDir, name+".md"); err != nil {
-			return "", err
-		}
-		if ov := loadOverride(name, env); ov.failure != "" {
-			lead = ov.failedLine() + "\n"
-		} else if ov.present {
-			m := merge(text, p.expand(ov.text))
-			text = m.text
-			lead = leadOf(ov, m, capability)
-		}
+	if det.None() {
+		return "", det.Unknown()
+	}
+	text, err := p.readFile(det.Path)
+	if err != nil {
+		return "", err
 	}
 	s, ok := sectionOf(text, capability)
 	if !ok {
-		return "", nexterr.Plain("运行环境 %s 的数据（%s/%s.md）里没有「%s」一节", name, DataDir, name, capability)
+		return "", nexterr.Plain("运行环境 %s 的说明（%s）里没有「%s」一节", det.Name, det.Path, capability)
 	}
-	return lead + s + "\n", nil
+	return s + "\n", nil
 }

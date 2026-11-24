@@ -54,13 +54,10 @@ test('setup asks which platform the issues are on, surveys it, and has a Linear 
   assert.match(md, /Linear 项目\*\*[^\n]*不建 GitHub label/, 'a Linear project builds no GitHub labels');
   assert.match(md, /issue-tracker\.md\]/, 'the file table still lists the GitHub template');
   const steps = eng('setup', 'references', 'linear-setup.md');
-  // the connecting is a capability now: the steps name the MCP address and the capabilities, the how is in the runtime's reference
+  // the connecting is a capability: the steps name the MCP address and the capabilities, the how is in the machine's own runtime description
   assert.match(steps, /https:\/\/mcp\.linear\.app\/mcp/);
   assert.match(steps, /『调用 MCP』/);
   assert.match(steps, /『装与设置』/);
-  const desktop = readFileSync(join(root, 'runtime', 'claude-desktop.md'), 'utf8');
-  assert.match(desktop, /claude mcp add --transport http --scope user linear https:\/\/mcp\.linear\.app\/mcp/);
-  assert.match(desktop, /Connectors/);
   for (const tool of ['list_teams', 'list_issue_statuses', 'get_team', 'list_issue_labels']) assert.ok(steps.includes(tool), tool);
   assert.match(steps, /人确认再写/);
 });

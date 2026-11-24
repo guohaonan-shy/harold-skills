@@ -131,6 +131,7 @@
 | [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
 | [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |
 | [decisions/471](decisions/471.md) | conversation | 2026-11-23 | 决定记录 —— #471 本期不加新运行环境（cmux、t3code 记进 #477 关 not planned）；dyna 不代理，运行环境的操作写进运行环境说明、按能力模板写；候选 2 条不批 |
+| [decisions/490](decisions/490.md) | conversation | 2026-11-24 | 决定记录 —— #490 运行环境说明搬出插件、setup 照模板生成，放项目/home/用户根目录三处（home 为主路）；无候选 |
 | [[2026-11-17-ai-eval-shape]] | conversation | 2026-11-17 | eval 写法的形状：把 toeflair 的 ai-eval 迁进 harold-skills，再补规则 |
 | [[2026-11-16-explorer-reads-impl-decisions]] | conversation | 2026-11-16 | explorer 读 spec 的范围：加读「实现决策」 |
 | [[2026-11-19-ui-measure-matrix-gaps]] | conversation | 2026-11-19 | ui-measure 矩阵缺口：margin/gap 与 pixelAnchor 两道题 |

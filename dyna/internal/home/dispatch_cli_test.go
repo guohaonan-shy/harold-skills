@@ -21,9 +21,9 @@ type dispatchJSON struct {
 		InProgress *int `json:"in-progress"`
 		InReview   *int `json:"in-review"`
 	} `json:"caps"`
-	Skip     []string `json:"skip"`
-	Periods  []map[string]any
-	Sections []string `json:"sections"`
+	Skip    []string `json:"skip"`
+	Periods []map[string]any
+	States  []string `json:"states"`
 }
 
 func (w world) dispatchAt(t *testing.T, at string) dispatchJSON {
@@ -49,7 +49,7 @@ func TestHomeDispatchWithNoFileGivesTheDefaultsForTheMomentAsked(t *testing.T) {
 	if gap.Dispatch != nil || gap.Period != nil || gap.PerRound != 0 {
 		t.Fatalf("%+v", gap)
 	}
-	if len(day.Periods) != 2 || !reflect.DeepEqual(day.Sections, []string{"triage", "in-progress", "in-review"}) || day.Skip == nil || len(day.Skip) != 0 {
+	if len(day.Periods) != 2 || !reflect.DeepEqual(day.States, []string{"triage", "in-progress", "in-review"}) || day.Skip == nil || len(day.Skip) != 0 {
 		t.Fatalf("%+v", day)
 	}
 	// the edges, one by one
