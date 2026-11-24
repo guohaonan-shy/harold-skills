@@ -25,7 +25,7 @@ export function summarizeResults(results) {
   return { total: results.length, passed, notPassed: results.length - passed, allPassed: results.length > 0 && passed === results.length, cost: Math.round(cost * 100) / 100 };
 }
 
-const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论', 'not-exercised': '用例没测到改动', 'no-result': '没跑出结果', 'bad-case': '用例有问题，没能跑' };
+const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', 'already-done': '不过：改前就做得到', inconclusive: '没有结论', 'not-exercised': '用例没测到改动', 'no-result': '没跑出结果', 'bad-case': '用例有问题，没能跑' };
 const YESNO = { yes: '是', no: '否' };
 const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
 

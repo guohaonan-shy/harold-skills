@@ -324,8 +324,11 @@ A rule written into a skill, agent or reference is only a claim until the skill 
 decided mechanically becomes a check (a script or a validator test) that is first seen **failing** on the input that reproduces
 the old mistake. A rule that needs judgement gets a **replay case** in `evals/retro/cases/<case>/`: the commit the decision
 happened at, the prompt that made the skill produce the thing, where it stops (the moment it hands the thing to the human; only
-the judging session is told), a yes/no question written from what the human said back then (with the words quoted), and its size
-(small or large) with the basis.
+the judging session is told), a yes/no question written from what the human said back then (with the words quoted, `quote`), and its size
+(small or large) with the basis. A new ability has no history and no words to quote: its case is a **goal case**, which names in
+`goal_from` the spec and the User Story or expected behaviour the question was written from, instead of `quote` (one of the two,
+never both, never neither). It runs the same way, on both plugins with the same judge; the judge is told the question came from
+that spec expectation, and a pre-change "yes" reads 不过：改前就做得到 (the human decides whether to change the case or drop the rule).
 
 ```
 node idea-loop/evals/retro/retro-replay.mjs --list                      # cases, sizes, format problems

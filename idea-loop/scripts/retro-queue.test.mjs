@@ -41,6 +41,14 @@ test('summary counts: all passed only when every case passed', () => {
   assert.equal(summarizeResults([]).allPassed, false, 'nothing run is not "all passed"');
 });
 
+test('a goal case that was already done before the change is listed as "不过：改前就做得到", not as a missed case, and the entry stays unsettled', () => {
+  const done = { case: 'g', outcome: 'already-done', reason: '不过：改前就做得到：改前的插件跑出来已经答「是」', verdicts: [{ side: 'before', answer: 'yes', cite: 'x' }, { side: 'after', answer: 'yes', cite: 'y' }], cost: 1.1 };
+  const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([done]) });
+  assert.match(text, /`g`：不过：改前就做得到/);
+  assert.doesNotMatch(text, /用例没抓住问题|already-done/);
+  assert.deepEqual(unsettled(text), [{ kind: 'replay', round: 1 }]);
+});
+
 test('when everything passes, the entry is a replay record that says what was done, so it is settled', () => {
   const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a'), pass('b')]) });
   const [e] = parseLoop(text);
