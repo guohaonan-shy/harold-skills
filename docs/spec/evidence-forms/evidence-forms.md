@@ -69,7 +69,7 @@ issues: [438]
 会话 / 子代理 ──加载──→ home 固定文案「证据」三条（#280，不动）
 要给人看的东西里放证据
   └─→ Skill: idea-loop:evidence
-        SKILL.md：home 之外的规则 + 「配什么图」一张形态表（判断什么 → 选哪种 → 读哪份）
+        SKILL.md：home 之外的规则 + 「证据的几种形态」一张形态表（形态 → 让人看到什么 → 读哪份）
           ├─ 截图标注   → references/screenshot.md（新）：单张也走 dyna design flow compose
           ├─ UI 流程图  → references/ui-flow.md（原样）
           ├─ 图表       → references/chart.md（新）：判断什么 → 哪个 excalidrawer 入口
@@ -88,8 +88,8 @@ issues: [438]
 
 - **开头一句**：home 固定文案「证据」一节是总纲，这里只写它之外的。
 - **「证据是什么」**：留比对同条件、复现才是证据、证据取自要判断的那个东西本身；「带出处和数字」一条只留 home 没有的那半句（出题前对最新基准再核一次）。
-- **「整体风格」**：删「结论在前」（跟 home「沟通」的三句话框架冲突，home 是人 2026-11-22 定的）；删「图文结合，图放旁边」（home 已有）；留「用能说清要点的最小一种视图」「陌生叫法说清」「叠上去的东西要说明」。
-- **「配什么图」**：节名不改（8 份文档按这个节名指过来：`issue-triager`、`uiux-refine` 的 freeze、`design-archive` 的 review-walkthrough、`grill`、`pr` 的 description 与 review-report、`pr-review` 的 review-standards 与 run-a-round，另有 2 个文档测试，2026-11-23 数）。改成一张表：要人判断的是什么 → 选哪种 → 用什么工具 → 读哪份。
+- **「整体风格」**：删「结论在前」（跟 home「沟通」的三句话框架冲突，home 是人 2026-11-22 定的）；删「图文结合，图放旁边」（home 已有）；留「用能说清要点的最小一种视图」「陌生叫法说清」「叠上去的东西要说明」。（人 2026-11-24 后来改了：「陌生叫法说清」换成叫法取术语表或会话里说过的，都没有才解释清，见「实现决策」）
+- **「配什么图」**：节名不改（8 份文档按这个节名指过来：`issue-triager`、`uiux-refine` 的 freeze、`design-archive` 的 review-walkthrough、`grill`、`pr` 的 description 与 review-report、`pr-review` 的 review-standards 与 run-a-round，另有 2 个文档测试，2026-11-23 数）。改成一张表：要人判断的是什么 → 选哪种 → 用什么工具 → 读哪份。（人 2026-11-24 后来改了：节名改为「证据的几种形态」，按它指过来的 9 处一起改，见「实现决策」）
 
 | 要人判断的是什么 | 形态 | 工具 | 做法 |
 |---|---|---|---|
@@ -143,7 +143,7 @@ issues: [438]
 
 ### 调用方
 
-- **纳入**：按「配什么图」节名指过来的 8 份文档不用改（节名不变）。括号里把形态列一遍的两处（`to-spec` 的 `figures.md`「图怎么做（UI 标注、UI flow、excalidrawer 图表）」、`pr` 的 `delivery-evidence.md`「图怎么做（UI 标注、UI flow、图表、动图）」）加了录屏就过期，删掉括号，只写「照 `idea-loop:evidence` 的『配什么图』」。
+- **纳入**：按「配什么图」节名指过来的 8 份文档不用改（节名不变）。括号里把形态列一遍的两处（`to-spec` 的 `figures.md`「图怎么做（UI 标注、UI flow、excalidrawer 图表）」、`pr` 的 `delivery-evidence.md`「图怎么做（UI 标注、UI flow、图表、动图）」）加了录屏就过期，删掉括号，只写「照 `idea-loop:evidence` 的『配什么图』」。（人 2026-11-24 后来改了：节名改为「证据的几种形态」，这 8 份文档和两处都按新节名改了）
 - **纳入**：`delivery-evidence.md` 的「单个文件不超过 10MB」后补「录屏同样，超了分段」和 `<video>` 的写法，一两句。
 - **排除**：spec、PR 描述、review 汇报的结构（开头「现状 → 本次修改的目标」、讲证据处只写「照 evidence」）：#451、#452。
 - **排除**：home 固定文案「证据」一节的文字：#280 写定、人批过，本 issue 不改它，只让 evidence 不跟它重复、不冲突。
