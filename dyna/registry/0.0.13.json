@@ -2086,7 +2086,7 @@
       "command": "pr evidence publish",
       "module": "pr",
       "use": "publish <owner/repo> <pr> <file>...",
-      "summary": "把图片或 mp4 录屏传到证据分支，打印 {文件名: 地址} 的 JSON；单个文件不超过 10MB（录屏超了分段）；文件名要以 tNN- / rN- / pr- 开头",
+      "summary": "把图片传到证据分支，打印 {文件名: 地址} 的 JSON；文件名要以 tNN- / rN- / pr- 开头",
       "caller": "session",
       "next": "",
       "args": [
@@ -3315,7 +3315,7 @@
       "command": "spec skill-edit",
       "module": "spec",
       "use": "skill-edit <commit> <handback-file>",
-      "summary": "核对交回文件有没有覆盖这个提交改到的 skill、agent 定义、skill 参考文件；不够时每条原因一行，退出 2",
+      "summary": "核对交回文件有没有覆盖这个提交改到的 skill、agent 定义、skill 参考文件：写法规范行、杠杆行、验证行（含用例目录在提交里、结果是过或大用例待跑）；不够时每条原因一行，退出 2",
       "caller": "session",
       "next": "",
       "args": [

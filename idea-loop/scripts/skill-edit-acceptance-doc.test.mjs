@@ -39,13 +39,34 @@ test('to-ticket writes the "这类文件" rule once: SKILL.md, skills/ .md, agen
   assert.match(block, /`docs\/spec\/\*\/tickets\/`/, '判据缺：工单文件不算');
 });
 
-test('to-ticket copies the three cells into the end of the acceptance list, word for word', () => {
+test('to-ticket copies the three cells into the end of the acceptance list, word for word; the third is the spec\'s own 验证 line, not the executor\'s pick', () => {
   const block = section(toTicket, '改 skill 类文件的工单');
   for (const cell of [
     '- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。',
     '- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。',
-    '- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。',
+    '- [ ] 验证，照抄 spec 杠杆诊断里这处的「验证：」：<粘贴那一行>。照执行方定义「改规则的工单：怎么证明 skill 真的变了」做完，交回 `verified` 写这个文件的验证行。',
   ]) assert.ok(block.includes(cell), `三格里缺这一格：${cell.slice(0, 30)}…`);
+});
+
+test('to-ticket 第三格 copies the spec\'s 验证 per change: 判不了 stays 判不了, and a change with no 验证 stops the cutting', () => {
+  const block = section(toTicket, '改 skill 类文件的工单');
+  assert.match(block, /每处改动一格/, '第三格一处改动一格');
+  assert.match(block, /spec 写「判不了」的照抄「判不了」/, '判不了照抄，执行方不改');
+  assert.match(block, /spec 里这处没有「验证：」，停下回 spec 补，不替它选/, '没有验证就停下回 spec');
+  assert.doesNotMatch(block, /选了一种证明并做完/, '第三格不再让执行方现选');
+});
+
+test('the 验证 row: rule-tickets.md names the five ways and the row; the implementer\'s hand-back carries it and points at rule-tickets.md', () => {
+  const doc = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md');
+  assert.match(doc, /验证 \| <文件> \| <方式> \| <用例名 \/ 检查名 \/ 原因> \| <结果>/, 'rule-tickets.md 写验证行的格式');
+  for (const way of ['检查', '回放', '目标用例']) assert.ok(doc.includes(`「${way}」`), `rule-tickets.md 缺方式「${way}」`);
+  for (const way of ['不改行为', '判不了']) assert.ok(doc.includes(`**${way}**`), `rule-tickets.md 缺方式「${way}」`);
+  assert.match(doc, /大用例待跑/, '结果有「过」「大用例待跑」');
+  assert.match(doc, /你不能自己把别的方式改成判不了/, '执行方不自己改成判不了');
+  const verified = implementer.slice(implementer.indexOf('verified:'), implementer.indexOf('found:'));
+  assert.match(verified, /^\s*- 验证 \| <文件> \| <方式> \| <用例名 \/ 检查名 \/ 原因> \| <结果>/m, '`verified` 要有验证行');
+  const pointer = implementer.split('\n').find((l) => l.includes('怎么证明 skill 真的变了'));
+  assert.match(pointer, /rule-tickets\.md/, '指针指向 rule-tickets.md');
 });
 
 test('the implementer\'s 写法规范 step names writing-for-agents directly for skill, agent definition and skill reference tickets', () => {

@@ -49,10 +49,10 @@ test("a sample's annotations.md carries the human's quote and the question, and 
   }
 });
 
-test('AGENTS.md has the third deliberate exception, naming the first group and where #451 and #452 add theirs', () => {
+test('AGENTS.md has the deliberate exception for annotated samples, naming the first group and where #451 and #452 add theirs', () => {
   const agents = readFileSync(join(repoRoot, 'AGENTS.md'), 'utf8');
-  const start = agents.indexOf('**第三个有意例外');
-  assert.ok(start > 0, 'AGENTS.md has no 第三个有意例外');
+  const start = agents.indexOf('**有意例外：`idea-loop` 的「标注样本」');
+  assert.ok(start > 0, 'AGENTS.md has no 标注样本 exception');
   const section = agents.slice(start, agents.indexOf('### 6.', start));
   assert.match(section, /标注样本/);
   assert.match(section, /idea-loop\/evals\/<skill>\/cases\//);

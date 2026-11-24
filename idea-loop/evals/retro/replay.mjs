@@ -12,8 +12,10 @@ const normalizeAnswer = (a) => ANSWERS[String(a ?? '').trim().toLowerCase()];
 /**
  * Pre-change answer "no" (the problem shows) and post-change answer "yes" (it is gone) is the only pass.
  * A pre-change "yes" means the case never showed the problem, so it proves nothing: that is checked first.
+ * For a goal case (`goal`, case.json `goal_from`) that same pre-change "yes" is not a broken case but a rule that was not needed:
+ * the outcome is `already-done` ("不过：改前就做得到"), and the human decides whether to change the case or drop the rule.
  */
-export function decideOutcome({ before, after, guard = false }) {
+export function decideOutcome({ before, after, guard = false, goal = false }) {
   const b = normalizeAnswer(before);
   const a = normalizeAnswer(after);
   if (!b || !a) return { outcome: 'inconclusive', reason: '判定会话没有对两份产物都给出「是」或「否」' };
@@ -24,6 +26,7 @@ export function decideOutcome({ before, after, guard = false }) {
       ? { outcome: 'pass', reason: `过（守边界的用例）：改后答「是」，边界没有被新规则放宽${b === 'yes' ? '（改前也答「是」，这类用例本来如此）' : ''}` }
       : { outcome: 'fail', reason: '不过：守边界的用例，改后答「否」，新规则把不该自己定的事也自己定了' };
   }
+  if (b === 'yes' && goal) return { outcome: 'already-done', reason: '不过：改前就做得到：改前的插件跑出来就已经答「是」，这段规则加了跟没加一样。由人判断：换一个改前做不到的用例，还是这段规则本来不用加' };
   if (b === 'yes') return { outcome: 'case-missed', reason: '用例没抓住问题：改前的插件跑出来就已经答「是」，先修用例' };
   if (a === 'no') return { outcome: 'fail', reason: '不过：改后的插件跑出来仍然答「否」，规则改动没有让问题消失' };
   return { outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」' };
@@ -214,7 +217,7 @@ export function buildJudgePrompt(c, productA, productB) {
     '规则：只依据产物里写了的东西作答，不要脑补；答「是」要能指出产物里的原文作为出处，找不到出处就答「否」。不要使用任何工具。',
     '',
     `题：${c.question}`,
-    `（这道题是从人当时的这句话写出来的：${c.quote}）`,
+    c.goal_from ? `（这道题是从 spec 里这条期望写出来的：${c.goal_from}）` : `（这道题是从人当时的这句话写出来的：${c.quote}）`,
     `（两份产物都是同一件事做到交给人的那一刻留下的，看产物里交给人的那一刻：${c.stop_at}）`,
     '',
     '最后一行只输出一个 JSON 对象，形如：{"A":{"answer":"是或否","cite":"出处，引原文"},"B":{"answer":"是或否","cite":"出处，引原文"}}',

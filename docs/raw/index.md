@@ -126,6 +126,7 @@
 | [decisions/331](decisions/331.md) | conversation | 2026-11-23 | 决定记录 —— #331 调度给 0.2.0 父 issue 开了 triage 会话：暂停 harold-skills 调度，0.2.0 手动收尾；两条候选都不批 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
 | [decisions/437](decisions/437.md) | conversation | 2026-11-23 | 决定记录 —— #437 dyna 缺五个命令：triage 定的三件事；无候选，顺带开 #464；todo 会话（PR #469）：S1 删参数、S2 已知限制、C1 下限收尾发版、dyna 改升 0.0.10，候选 1 条不批 |
+| [decisions/456](decisions/456.md) | conversation | 2026-11-23 | 决定记录 —— #456 改了 skill 怎么验：triage 定分支基于集成分支、目标用例两边都跑；无候选 |
 | [decisions/341](decisions/341.md) | conversation | 2026-11-20 | 决定记录 —— #341 的 triage 会话：「杠杆诊断」每份 spec 都写（11-22 重新 triage 后挪 #451）；字数线 4500 挂 hook 管 home 下全部 skill、评测拆成 #456、不加 CI、同一 head 全量只跑一次；候选 2 条不批；todo 会话（PR #458）：S2 修、下限 0.0.8 收尾发版、插件 0.2.0，无候选 |
 | [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
 | [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |

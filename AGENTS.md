@@ -48,7 +48,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
-├── evals/                           # 可选 —— 钉住的 baseline、回放用例与标注样本（只有 idea-loop 有，见 §5 的三个有意例外）
+├── evals/                           # 可选 —— 钉住的 baseline、回放与目标用例、标注样本（只有 idea-loop 有，见 §5）
 ├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
 ├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
@@ -108,28 +108,24 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 
 ### 5. Eval 策略
 
-这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可，所有 plugin 都一样。
+**改 skill 的每处改动都要写明怎么验**：spec 的杠杆诊断里每处末尾一行「验证：」，五选一，各自写什么见 `idea-loop/skills/engineering/to-spec/references/agent-docs.md`：检查（先在历史错误上见红）、回放、目标用例、不改行为、判不了（写卡在哪）。回放和目标用例是 skill 改动的验收手段：用例和 runner 在 `idea-loop/evals/retro/`。
+一个用例记下一个决策点（当时的提交、让 skill 产出东西的那句 prompt、停在哪、一道是/否题）：题从历史上人当时的原话写出（回放，`quote`），或从 spec 里一条 User Story / 期望行为写出（目标用例，`goal_from`，给新能力用）。
+改规则时，用改前、改后的插件在那个输入上各跑一遍，由判定会话回答是/否题并引出处：改前「否」、改后「是」才算这条规则真的让 skill 变了；改前就「是」的，不算过，由人判断换用例，还是这段规则本来不用加。人可以推翻判定，推翻记在用例旁的 `annotations.md`。
+它不打分，不是质量基线，只判一条规则对应的那一个点。能机械判定的规则不走这里，做成检查并先在历史错误上看到它失败。
+主观输出（研究方案、文本、图表风格）的定量 baseline 对比不做；目标项目的 AI 流水线评测归 `ai-eval` plugin，不在这一节。
 
-**第一个有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
+**有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
 理由不是它更重要，是它的**产物形状还在跟人一起收敛**：它交出一页给人看的 HTML，这一页该包含什么、怎么写才对，现在没人能先写成断言。
 所以那里不判好坏、不打分：钉一组取自真实设计会话的 default prompt 加一份最小的产品上下文，一条命令跑，每个 case 把页面留在固定位置、旁边放一个文件让人标注问题，
 标注留档，逐步收敛出产物该包含什么。改了调研 agent、契约或 skill，就对着同一组问题再跑一遍给人看。
 写这条例外是为了让下一个读到它的人知道这是决定，不是遗漏；等产物形状稳了，标注收敛出的东西该变成 `research-check` 的机械检查，这个例外就可以收掉。
 
-**第二个有意例外：`idea-loop` 的 retro 回放**（用例和 runner 在 `idea-loop/evals/retro/`）。
-理由跟上一条不同：它不是质量基线，**不打分**，只判**一条规则对应的那一个点**——它是规则改动的验收。
-一个用例记下历史上出过问题的那个决策点（当时的提交、让 skill 产出东西的那句 prompt、停在哪、一道从人当时原话写出的是/否题）；
-改规则时，用改前、改后的插件在那个输入上各跑一遍，由判定会话回答是/否题并引出处：改前「否」、改后「是」才算这条规则真的让 skill 变了。
-改前就「是」的，说明用例没抓住问题，不算过。人可以推翻判定，推翻记在用例旁的 `annotations.md`。
-能机械判定的规则不走这里，做成检查并先在历史错误上看到它失败。
-这个例外跟 `uiux-research` 那条并存：那条等产物形状稳了会收掉，这条只要还有规则改动要验收就在。
-
-**第三个有意例外：`idea-loop` 的「标注样本」**（一个 skill 一组，放 `idea-loop/evals/<skill>/cases/`；第一组是 evidence，在 `idea-loop/evals/evidence/cases/`）。
+**有意例外：`idea-loop` 的「标注样本」**（一个 skill 一组，放 `idea-loop/evals/<skill>/cases/`；第一组是 evidence，在 `idea-loop/evals/evidence/cases/`）。
 理由：交付物（给人看的 spec、PR 描述、汇报、要人定的题）写得好不好，没法先写成断言，只能拿人当时追问的真实现场，改前、改后各跑一遍，让人在旁边标注。
-所以它**不打分**；它也不是单条规则的验收（那是 retro 回放），而是一组跟着某个 skill 的常驻样本，这个 skill 改了就重跑，看人当时追问的那几处现在是不是写好了。
+所以它**不打分**；它也不是单条规则的验收（那是上面的回放和目标用例），而是一组跟着某个 skill 的常驻样本，这个 skill 改了就重跑，看人当时追问的那几处现在是不是写好了。
 - **样本**：一个现场一个文件夹，格式就是 retro 回放用例（`case.json`：当时的提交、让 skill 产出那段的 prompt、停在哪、从人当时原话写的是/否题、原话、规模与依据），加两个文件：`sample.md`（给人看：当时产出的原文、人指出的问题、好的长什么样、换过现场的写明换了哪个、为什么）和 `annotations.md`。取不到当时输入的，换一个同类现场，写进 `sample.md`。
 - **runner**：复用 `idea-loop/evals/retro/retro-replay.mjs`，用 `--cases-root idea-loop/evals/<skill>` 指到这一组，不另写；改前用基准分支的插件，改后用本分支的插件，判定会话回答是/否题并引出处。
-- **人怎么推翻**：判定不对，或样本本身要改，记在样本旁的 `annotations.md`（推翻的写法跟 retro 回放一样），再 `--settle` 重判；人可以在那里写对这次产出的看法。
+- **人怎么推翻**：判定不对，或样本本身要改，记在样本旁的 `annotations.md`（推翻的写法跟回放一样），再 `--settle` 重判；人可以在那里写对这次产出的看法。
 - **什么时候跑**：改了这个 skill（正文、参考、调用它的地方讲它的那部分）就当场跑一遍；小用例当场跑，大用例在 PR 开出来之后照 `--run-large` 跑。
 - **第一组 evidence**：五个现场——`option-current-state-shown`、`spec-option-goal-figure`、`example-from-real-material`、`review-term-defined`、`review-current-state-verified`。#451（to-spec）、#452（pr）往这一条里加自己的一组（`idea-loop/evals/to-spec/`、`idea-loop/evals/pr/`），不另写例外。
 
