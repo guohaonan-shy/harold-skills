@@ -1,4 +1,4 @@
-# UI flow：用 dyna design flow compose 拼截图
+# UI 流程图：用 dyna design flow compose 拼截图
 
 **核心就是 UI 截图 + 截图之间的箭头 + 必要、简洁的文字**，问题、设计、交付都这样画。
 
@@ -13,7 +13,7 @@
 
 ## JSON
 
-excalidrawer 没有图片节点，UI flow 只用这个命令拼。输入是一份 JSON，描述一张图：
+excalidrawer 没有图片节点，UI 流程图只用这个命令拼。输入是一份 JSON，描述一张图：
 
 ```json
 {

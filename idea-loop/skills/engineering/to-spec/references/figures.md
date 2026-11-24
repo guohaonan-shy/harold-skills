@@ -7,7 +7,7 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 | 问题陈述 | 复现证据，每个问题一张，图在文字之前 | `idea-loop:grill` 或 `idea-loop:issue-triager` 复现时截图，这里排版 |
 | User Stories | 每个场景一棵 story 树 | 这里 |
 | 方案 · 开头，以及后端 / 前端内部子小节 | 时序图 | 这里 |
-| 方案 · 前端交互子小节 | UI flow | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
+| 方案 · 前端交互子小节 | UI 流程图 | 冻结前写文字；冻结时 `/idea-loop:uiux-refine` 补图 |
 
 **定稿后 `docs/` 里只留 PNG。** excalidrawer 的 `.excalidraw` 源文件和 sugar JSON 还在改的时候放在代码 worktree 的 `.tmp/to-spec/<spec-slug>/` 下（`idea-loop:wiki-conventions` 的「中间产物」）：在那里渲染，PNG 定了再复制进 `docs/`。定稿之后要改图，就重新画一张。
 
@@ -30,4 +30,4 @@ spec 也给人读：人读不出一段文字描述的问题长什么样，也没
 
 ## 前端交互
 
-设计冻结之前只写文字，小节开头标「待补图」（写法见 [plan-subsections.md](plan-subsections.md)）。冻结时的 UI flow 放哪，见 uiux-refine 的冻结步骤。
+设计冻结之前只写文字，小节开头标「待补图」（写法见 [plan-subsections.md](plan-subsections.md)）。冻结时的 UI 流程图放哪，见 uiux-refine 的冻结步骤。

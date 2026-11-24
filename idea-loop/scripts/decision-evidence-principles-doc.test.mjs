@@ -158,6 +158,15 @@ test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形�
   assert.match(delivery, /<video src="<地址>" controls><\/video>/);
 });
 
+test('插件里指 evidence 形态的地方用现在的名字：「UI 流程图」「截图标注」，不再写「UI flow」「UI 页面标注」（#438 工单 02，review 第 2 轮 S1）', () => {
+  const hits = walk(join(pluginRoot, 'skills')).filter((f) => /UI flow|UI 页面标注/.test(readFileSync(f, 'utf8'))).map((f) => relative(pluginRoot, f));
+  assert.deepEqual(hits, [], `还写着旧形态名：${hits.join(', ')}`);
+  const freeze = read('skills', 'design', 'uiux-refine', 'references', 'freeze.md');
+  assert.match(freeze, /「UI 流程图」/);
+  assert.match(freeze, /「截图标注」/);
+  assert.match(read('skills', 'engineering', 'to-spec', 'references', 'figures.md'), /前端交互子小节 \| UI 流程图/);
+});
+
 test('every cited section of the evidence skill exists, and nothing points at the removed references', () => {
   const sections = {
     evidence: headings(evidenceBody),
