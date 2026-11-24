@@ -70,7 +70,6 @@ func TestTheSessionStartCommandsTakeHookAndAMismatchIsOnlyALineOnStderr(t *testi
 	env := map[string]string{EnvRange: ">=9.0.0 <10.0.0"}
 	for _, args := range [][]string{
 		{"home", "map", "--hook"},
-		{"runtime", "inject", "decision-rules", "--hook"},
 		{"runtime", "inject", "runtime", "--hook"},
 		{"runtime", "inject", "reference", "--hook"},
 	} {

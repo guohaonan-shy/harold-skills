@@ -26,7 +26,7 @@
  * under the plugin's `skills/` and `agents/` between the pre-change and the post-change plugin; the run used it when its event
  * stream (main session and sub-agents) reads one of them (a Read, or a Bash command naming its full path or its path relative to the project; the project's own copy of the plugin counts as a place the post-change plugin sits), calls a skill one of them
  * belongs to (Skill tool, or a prompt that starts with that skill's slash command), or starts an agent one of them defines (Agent
- * tool), or when one of them is a file the plugin's SessionStart hook injects (decision-rules, runtime, its reference: the session has
+ * tool), or when one of them is a file the plugin's SessionStart hook injects (runtime, its reference: the session has
  * them from the start, nothing shows it; a read or call in the stream is reported first). Used: the judge's answer decides as before, and `result.json` records what was hit (`exercised`). Not used: the judge still
  * runs (its answers stay in the result for the human) but the outcome is `not-exercised` ("用例没测到改动"), exit 1, not a pass.
  * An empty change set (only scripts changed) is recorded as "不适用" and the judge decides.
@@ -38,7 +38,9 @@
  * where the agent does not look. No run is told where to stop: an agent that hands its work to the human ends its turn,
  * and the timeout is the backstop.
  * Pre-change "no" and post-change "yes" is a pass. Pre-change "yes" means the case never showed the
- * problem ("用例没抓住问题"), which is not a pass. A human can overrule a judgement: see --settle.
+ * problem ("用例没抓住问题"), which is not a pass. A guard case (`guard: true` in case.json, see cases.mjs) is the other way round: it watches that
+ * the change does not reach too far, so the pre-change answer is not asked to be "no" and the post-change "yes" alone is a pass.
+ * A human can overrule a judgement: see --settle.
  *
  * No process the runner starts (the two runs, the judge, Codex) has a `gh` login: they get this process's environment without
  * `GH_TOKEN` / `GITHUB_TOKEN` / `GH_ENTERPRISE_TOKEN` / `GITHUB_ENTERPRISE_TOKEN`, and with `GH_CONFIG_DIR` pointing at an empty dir
@@ -51,7 +53,7 @@
  * `--plugin-dir` is what points a session at a branch.
  *
  *   node idea-loop/evals/retro/retro-replay.mjs --list
- *   node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] [--repo <dir>] [--home-repo <dir>] [--out <dir>] [--model <alias>]
+ *   node idea-loop/evals/retro/retro-replay.mjs --case <name> [--base main] [--repo <dir>] [--home-repo <dir>] [--before-dyna <bin>] [--after-dyna <bin>] [--out <dir>] [--model <alias>]
  *   node idea-loop/evals/retro/retro-replay.mjs --settle <name> --run <run dir>
  *
  * The knowledge base lives in idea-loop's home (`projects/<名字>/docs/`, IDEA_LOOP_HOME points at it), not in the code repository, and
@@ -60,13 +62,23 @@
  * machine's own home is reachable through it. Where the temporary home comes from depends on the case:
  *   - an old case (no `home_commit`; its commit is from before the knowledge base moved): the post-change run gets a home built out
  *     of that commit: its `docs/` and bootstrap files (DEVELOPMENT.md, REVIEW.md, …) copied into `projects/<名字>/`, the project list
- *     naming this project (remote: the case repository's `origin`; path: the project copy the run works in). The pre-change run reads
- *     the same files from the code repository, so it gets an empty home. The project copy has that `origin` too, with a push url that
+ *     naming this project (remote: the case repository's `origin`; path: the project copy the run works in). A pre-change plugin from
+ *     before 0.2.0 reads the same files from the code repository, so it gets an empty home; one that already reads them from home
+ *     (`pluginReadsHome`) gets the same built home as the post-change run. The project copy has that `origin` too, with a push url that
  *     goes nowhere. The judge sees what the run wrote in the workspace and what it wrote or committed in its home.
  *   - a case with `home_commit` (see cases.mjs): both runs get a copy cut from that commit of the home repository, whose location is
  *     `--home-repo <dir>` (required for such a case; the runner refuses before starting a session when it is missing or lacks the
  *     commit). The list line for this project's repository is pointed at the project copy.
  * The conversion from a code repository's `docs/` to a home exists only here; no skill and no script has it.
+ *
+ * The fixed text (home's AGENTS.md sections 思考与决策 / 沟通 / 证据, which `/idea-loop:setup` writes with `dyna home config apply --only rules`)
+ * goes the same way, per side: a side whose plugin has `skills/engineering/setup/references/home-rules.md` gets its home written by that
+ * same command (run with that plugin, a throwaway HOME, the side's `dyna`), and the sections are also put in the project copy's
+ * `.claude/CLAUDE.md` (committed in the starting state), because a replayed session cannot be given another `~/.claude/CLAUDE.md`,
+ * which is where a real session reads home's AGENTS.md from. The pre-change plugin has no such file: its home has no such sections.
+ * Everything else in this machine's `~/.claude/CLAUDE.md` still reaches both sides, as it did in the session the case comes from.
+ * `--before-dyna <bin>` / `--after-dyna <bin>` set `IDEA_LOOP_DYNA_BIN` for that side's session (and, after, for the command above): a plugin
+ * calls the command line it was written against (the pre-change plugin's SessionStart hook injects what that version's `dyna` injects).
  *
  * Where the plugin under test and the cases are: `--worktree <dir>` says "this worktree" and stands for
  * `--repo <dir> --after-plugin <dir>/idea-loop --cases-root <dir>/idea-loop/evals/retro`; each can still be given
@@ -114,7 +126,7 @@ import { appendReplayResults, describeExercised, reviewLoopPath, summarizeResult
 import {
   applyExercised, buildArtifact, buildJudgePrompt, buildWorkerPrompt, decideOutcome, estimateCostUsd, exercisedBy, fileBody, homeAgentsMd, homeCopyEntries,
   homeProjectName, homeRemote, homeSourceOf, parseOverrides, parseVerdict, productsInOrder, projectMapMd, registerProject, relabelLarge, replayChildEnv,
-  settleVerdicts, verdictsBySide, withHome,
+  RULES_FILE, RULES_MEMORY_FILE, rulesMemoryMd, sectionsOf, settleVerdicts, verdictsBySide, withDyna, withHome,
 } from './replay.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -165,6 +177,7 @@ function parseArgs(argv) {
   const o = {
     list: false, case: null, settle: null, run: null, base: null, repo: null, out: DEFAULT_OUT, model: null, timeoutMin: null,
     casesRoot: null, beforePlugin: null, afterPlugin: null, worktree: null, runLarge: false, pr: null, cases: null, homeRepo: null,
+    beforeDyna: null, afterDyna: null,
   };
   const val = (i) => {
     if (i >= argv.length) throw new Error(`${argv[i - 1]} needs a value`);
@@ -188,6 +201,8 @@ function parseArgs(argv) {
     else if (a === '--run-large') o.runLarge = true;
     else if (a === '--pr') o.pr = Number(val(++i));
     else if (a === '--home-repo') o.homeRepo = resolve(val(++i));
+    else if (a === '--before-dyna') o.beforeDyna = resolve(val(++i));
+    else if (a === '--after-dyna') o.afterDyna = resolve(val(++i));
     else if (a === '--cases') o.cases = val(++i).split(',').map((x) => x.trim()).filter(Boolean);
     else throw new Error(`unknown argument: ${a}`);
   }
@@ -268,12 +283,16 @@ function connectOrigin(project, remote) {
  *   'home-commit'   the case's `home_commit`, cut from the home repository `t.homeRepo`; the list line of this project's repository is
  *                   pointed at the project copy, nothing else is changed
  *   'empty'         nothing: no project is listed
- * Returns `{ dir, source, base }`; `base` is the commit it starts from (null for 'empty').
+ * On top of that, a side whose `plugin` carries the fixed text (RULES_FILE) has it written into the home's AGENTS.md (see
+ * applyHomeRules) before the commit: the home of the pre-change plugin has no such sections, the post-change plugin's has them.
+ * Returns `{ dir, source, base, rules }`; `base` is the commit it starts from (null for 'empty' without the fixed text), `rules` the
+ * text of the sections written ('' when none).
  */
-export function prepareHome({ c, side, t, project, name }) {
-  const source = homeSourceOf(c, side);
+export function prepareHome({ c, side, t, project, name, plugin = null, dyna = null, env = process.env }) {
+  const source = homeSourceOf(c, side, { readsHome: pluginReadsHome(plugin) });
   const dir = workDirFor('home');
-  if (source === 'empty') return { dir, source, base: null };
+  const withRules = Boolean(plugin) && existsSync(join(plugin, RULES_FILE));
+  if (source === 'empty' && !withRules) return { dir, source, base: null, rules: '' };
   const key = homeProjectName(name);
   const entry = { name: key, path: project, remote: homeRemote(originOf(t.repo), name) };
   if (source === 'project-docs') {
@@ -284,16 +303,72 @@ export function prepareHome({ c, side, t, project, name }) {
     if (copied.length) sh(projectDir, 'tar', ['-x', '-C', projectDir], git(t.repo, 'archive', c.commit, '--', ...copied));
     writeFileSync(join(dir, 'AGENTS.md'), homeAgentsMd(entry));
     writeFileSync(join(projectDir, 'AGENTS.md'), projectMapMd({ name: key, path: project, copied }));
-  } else {
+  } else if (source === 'home-commit') {
     if (!t.homeRepo) throw new Error(`${c.name} 带 home_commit，要用 --home-repo <dir> 说明 home 仓库在哪`);
     extractArchive(t.homeRepo, c.home_commit, dir);
     const agents = join(dir, 'AGENTS.md');
     writeFileSync(agents, registerProject(existsSync(agents) ? readFileSync(agents, 'utf8') : '', entry));
     git(dir, 'init', '-q', '-b', 'main');
+  } else {
+    git(dir, 'init', '-q', '-b', 'main');
   }
+  const rules = applyHomeRules({ home: dir, plugin, dyna, env });
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'home at the start of the run');
-  return { dir, source, base: git(dir, 'rev-parse', 'HEAD').toString('utf8').trim() };
+  return { dir, source, base: git(dir, 'rev-parse', 'HEAD').toString('utf8').trim(), rules };
+}
+
+/** Does this plugin read the knowledge base and project rules from home? The plugin of 0.2.0's line does, and says so by the SessionStart hook that tells a session where home is (`dyna home map --hook`); an older one reads them from the code repository. */
+export function pluginReadsHome(plugin) {
+  const hooks = plugin ? join(plugin, 'hooks', 'hooks.json') : null;
+  return Boolean(hooks) && existsSync(hooks) && readFileSync(hooks, 'utf8').includes('home map');
+}
+
+/**
+ * The fixed text, put into a temporary home the way setup puts it into a real one: `dyna home config apply --only rules`, run with
+ * the side's plugin (its `home-rules.md` is the text), home pointed at `home`, and a throwaway HOME so the backup that command makes of
+ * the user-level files lands in nothing of this machine's. A plugin that has no such file (the pre-change one) changes nothing and
+ * gives ''. Returns the three sections as they stand in home's AGENTS.md afterwards.
+ */
+export function applyHomeRules({ home, plugin, dyna, env = process.env }) {
+  if (!plugin || !existsSync(join(plugin, RULES_FILE))) return '';
+  const agents = join(home, 'AGENTS.md');
+  if (!existsSync(agents)) writeFileSync(agents, '# home\n');
+  const scratch = workDirFor('config-home');
+  try {
+    // the command wants a plugin dir whose marketplace it can tell, though the item asked for does not use it: a stand-in with just the manifest and the text
+    const root = join(scratch, 'plugins', 'cache', 'replay', 'idea-loop', '0');
+    mkdirSync(join(root, '.claude-plugin'), { recursive: true });
+    const manifest = join(plugin, '.claude-plugin', 'plugin.json');
+    writeFileSync(join(root, '.claude-plugin', 'plugin.json'), existsSync(manifest) ? readFileSync(manifest) : '{"name":"idea-loop"}');
+    mkdirSync(dirname(join(root, RULES_FILE)), { recursive: true });
+    cpSync(join(plugin, RULES_FILE), join(root, RULES_FILE));
+    const r = spawnSync(dyna ?? dynaBin(), ['home', 'config', 'apply', '--only', 'rules'], {
+      env: { ...env, HOME: scratch, IDEA_LOOP_HOME: home, IDEA_LOOP_PLUGIN_ROOT: root }, encoding: 'utf8',
+    });
+    if (r.status !== 0) {
+      throw new Error(`把固定文案写进临时 home 失败（dyna home config apply --only rules，要 0.0.9 或更新的 dyna；--after-dyna 或 IDEA_LOOP_DYNA_BIN 指向本地编的那份）：${(r.stderr || r.stdout || String(r.error)).trim()}`);
+    }
+  } finally {
+    rmSync(dirname(scratch), { recursive: true, force: true });
+  }
+  return sectionsOf(readFileSync(agents, 'utf8'));
+}
+
+/**
+ * Put the fixed text where the session reads it (see RULES_MEMORY_FILE) and commit it in the project copy, so it is part of the
+ * starting state and not something the run wrote. Returns the new starting commit. Without text, nothing is written and the
+ * commit stays what it was.
+ */
+export function seedRulesMemory(project, rules) {
+  if (rules) {
+    const file = join(project, RULES_MEMORY_FILE);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, rulesMemoryMd(rules, existsSync(file) ? readFileSync(file, 'utf8') : ''));
+    git(project, 'add', '-A');
+    git(project, 'commit', '-q', '-m', 'the fixed text, where the session reads it');
+  }
+  return git(project, 'rev-parse', 'HEAD').toString('utf8').trim();
 }
 
 /** Why a case cannot start (it needs a home repository nobody pointed at, or one that does not have its commit), or null. */
@@ -623,12 +698,14 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
       prepareProject(t.repo, c.commit, project, () => {
         swapped = swapPluginFiles({ project, relDir: pluginRelDir, afterPlugin, sidePlugin: s.plugin, diff: pluginDiff });
       });
-      const base = git(project, 'rev-parse', 'HEAD').toString('utf8').trim();
       const name = projectName(t.repo);
       connectOrigin(project, homeRemote(originOf(t.repo), name));
-      // every session gets IDEA_LOOP_HOME: a populated home when the case needs one for this side, an empty one otherwise, so no home of this machine is reachable
-      home = prepareHome({ c, side: s.side, t, project, name });
-      const sideEnv = withHome(childEnv, home.dir);
+      // every session gets IDEA_LOOP_HOME: a populated home when the case needs one for this side, an empty one otherwise, so no home of this machine is reachable;
+      // a side whose plugin has the fixed text gets it in that home, and (a session cannot be given another ~/.claude) in the project's own memory file
+      const sideDyna = s.side === 'before' ? opts.beforeDyna : opts.afterDyna;
+      home = prepareHome({ c, side: s.side, t, project, name, plugin: s.plugin, dyna: sideDyna ?? null, env: childEnv });
+      const base = seedRulesMemory(project, home.rules);
+      const sideEnv = withDyna(withHome(childEnv, home.dir), sideDyna);
       const streamPath = join(dir, 'run.stream.jsonl');
       process.stdout.write(`— ${s.side}: ${s.plugin} …`);
       const r = await runClaude({ prompt: buildWorkerPrompt(c), plugin: staged.dir, model: opts.model, cwd: project, streamPath, timeoutMs: opts.timeoutMin * 60_000, watch: !runLarge, env: sideEnv });
@@ -669,7 +746,8 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
         // the project's own copy of the plugin, when the changed files were swapped into it, is a place the post-change plugin sits too
         const inProject = swapped ? [join(project, pluginRelDir), join(realpathSync(project), pluginRelDir)].map((p) => p.replace(/\/+$/, '')) : [];
         const roots = [...new Set([staged.dir, realpathSync(staged.dir), ...inProject])];
-        exercised = exercisedBy(eventsOf(streamPath), change, { roots, projectRelDirs: swapped ? [pluginRelDir] : [], prompt: buildWorkerPrompt(c), runtime: await sessionRuntime() });
+        exercised = exercisedBy(eventsOf(streamPath), change, { roots, projectRelDirs: swapped ? [pluginRelDir] : [], prompt: buildWorkerPrompt(c), runtime: await sessionRuntime(),
+          injected: home.rules ? [RULES_FILE] : [] }); // the fixed text sits in the session's memory from the start, like the SessionStart files
         console.log(`改动核对：${describeExercised(exercised)}`);
       }
     } finally {
@@ -719,9 +797,9 @@ async function executeReplay(opts, t, c, { runLarge = false } = {}) {
   const verdict = parseVerdict(judgeText);
   const verdicts = verdictsBySide(verdict, afterIs);
   const judged = { before: verdicts?.[0].answer, after: verdicts?.[1].answer };
-  const decision = applyExercised(decideOutcome(judged), exercised);
+  const decision = applyExercised(decideOutcome({ ...judged, guard: Boolean(c.guard) }), exercised);
   const cost = Object.values(costs).reduce((a, b) => a + (b ?? 0), 0);
-  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, exercised, ...decision, costs, cost, settled: false };
+  const result = { case: c.name, runId, commit: c.commit, question: c.question, judge, afterIs, verdicts, judged, exercised, ...decision, guard: Boolean(c.guard), costs, cost, settled: false };
   writeFileSync(join(runDir, 'result.json'), JSON.stringify(result, null, 2));
   return { code: report(result, runDir, c.name, t.casesRoot), result, runDir };
 }
@@ -775,7 +853,7 @@ function settle(opts, t) {
   const notes = join(t.casesRoot, 'cases', opts.settle, 'annotations.md');
   const overrides = existsSync(notes) ? parseOverrides(readFileSync(notes, 'utf8')) : {};
   const judged = settleVerdicts(result.judged, overrides, result.runId);
-  const decision = applyExercised(decideOutcome(judged), result.exercised);
+  const decision = applyExercised(decideOutcome({ ...judged, guard: Boolean(result.guard) }), result.exercised);
   const next = { ...result, judged, ...decision, settled: Boolean(overrides[result.runId]), overridden: overrides[result.runId] ?? null };
   writeFileSync(file, JSON.stringify(next, null, 2));
   return report(next, opts.run, opts.settle, t.casesRoot);

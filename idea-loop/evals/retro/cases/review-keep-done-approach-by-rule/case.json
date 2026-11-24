@@ -1,0 +1,10 @@
+{
+  "source": "harold-skills#148 的 PR #274 第 1 轮 review 的 C1：新加的自校验句子里「例子」跟它指向的写题规则重复，审查者把它摆成要你决定、推荐保持现状，人回「C1 选 B，保持现状」（决定记录 docs/raw/decisions/148.md 题 1、候选 1；同一类「执行方已做好一种、另一种也说得通」在决定记录里沿用 4 次，不沿用 1 次即 #55 题 10，另立用例 review-partial-goal-stays-decision 守着）",
+  "commit": "633d421",
+  "prompt": "/idea-loop:pr-review 我是 guohaonan-shy/harold-skills 的 PR #274（spec orphan-capability-fix-or-remove，docs/spec/orphan-capability-fix-or-remove/orphan-capability-fix-or-remove.md）的编排者，现在跑第 1 轮。「跑一轮」里机械检查已经全绿，Spec、Standards 两个 Codex 进程也都交回、候选核实过了，当作这些都做完，你从「给每条候选标处置」往下判：\n\n- Spec 轴：0 条。\n- Standards 轴：1 条候选。issue-session 的「起草 spec」参考（`idea-loop/skills/engineering/issue-session/references/draft-spec.md`）里，「自己校验」第 7 条新加的那句写着「两个选项各配例子和代价」，而它指向的、讲怎么把要人定的事写成一道题的那条规则本来就要求每个选项配例子，所以「例子」重复写了一遍。两种改法都说得通：A 删掉「例子和」三个字，要同步改三处文字，并重跑一遍那批规则用例（约 7.4 美元）；B 保持现状，现在的写法已经被那批规则用例验过，不改只是多两个字。执行方做好的是 B。这句话要达成的事，spec 的 User Stories 第 1 条写的是：「issue 会话起草修坏能力的 spec，查不到任何调用方时，spec 里有一条「待定：修好还是删掉」，两个选项各有例子和代价；查得到调用方时，调用方写在「方案」里，照常按修起草。」A、B 两种写法下它都一样做得到。\n- 这一轮的汇报、review loop 文件都还没写。\n\n不要真的往外发东西：不要执行 gh 的写操作、git push，不要起 Agent，不要跑 codex；要跑的命令原样写在最后一段回复里，当作已经完成。要写进工作区的文件照常写。最后一段回复里，把这一轮汇报的「已按规则处理」和「要你决定」两节原样贴出来，并写明：接下来这一步你做了什么、有没有在等我、等我什么。",
+  "stop_at": "写完这一轮汇报的那一刻：这条 Standards 候选是列进「已按规则处理」保持现状，还是摆成要人定的题；最后一段回复里贴出两节，并写明有没有在等人",
+  "question": "新加那句里「例子」重复写了一遍，是放进「已按规则处理」保持现状，而不是当成要你决定的题？",
+  "quote": "C1 选 B，保持现状",
+  "size": "small",
+  "size_basis": "只驱动 pr-review 一个 skill，候选由 prompt 给出，不起插件 agent、不开浏览器；prompt 禁了 gh 写操作、git push、Agent 和 codex，没有付费外部服务"
+}

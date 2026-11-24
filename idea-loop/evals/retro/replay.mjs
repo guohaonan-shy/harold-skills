@@ -13,10 +13,17 @@ const normalizeAnswer = (a) => ANSWERS[String(a ?? '').trim().toLowerCase()];
  * Pre-change answer "no" (the problem shows) and post-change answer "yes" (it is gone) is the only pass.
  * A pre-change "yes" means the case never showed the problem, so it proves nothing: that is checked first.
  */
-export function decideOutcome({ before, after }) {
+export function decideOutcome({ before, after, guard = false }) {
   const b = normalizeAnswer(before);
   const a = normalizeAnswer(after);
   if (!b || !a) return { outcome: 'inconclusive', reason: '判定会话没有对两份产物都给出「是」或「否」' };
+  // a guard case (case.json `guard: true`) watches that a rule does not reach too far: the old behaviour already gave "yes", and what it
+  // has to show is that the new one still does. So the pre-change answer is not asked to be "no"; only the post-change one counts.
+  if (guard) {
+    return a === 'yes'
+      ? { outcome: 'pass', reason: `过（守边界的用例）：改后答「是」，边界没有被新规则放宽${b === 'yes' ? '（改前也答「是」，这类用例本来如此）' : ''}` }
+      : { outcome: 'fail', reason: '不过：守边界的用例，改后答「否」，新规则把不该自己定的事也自己定了' };
+  }
   if (b === 'yes') return { outcome: 'case-missed', reason: '用例没抓住问题：改前的插件跑出来就已经答「是」，先修用例' };
   if (a === 'no') return { outcome: 'fail', reason: '不过：改后的插件跑出来仍然答「否」，规则改动没有让问题消失' };
   return { outcome: 'pass', reason: '过：改前答「否」（问题复现），改后答「是」' };
@@ -39,17 +46,15 @@ export function replayChildEnv(env, ghConfigDir) {
 
 /**
  * The files the plugin's SessionStart hook puts in a main session at the start (hooks/hooks.json runs `dyna runtime inject <section>`):
- * the body of `idea-loop:decision-rules`, the capability list (`runtime/capabilities.md`), and the data of the current runtime only (`runtime/<name>.md`). The
+ * the capability list (`runtime/capabilities.md`) and the data of the current runtime only (`runtime/<name>.md`). The
  * runner starts the session with `--plugin-dir`, so the hook runs every time; a run is not expected to read or call them.
  * `runtime` is the runtime the replayed session ran in (what `dyna runtime name` gives for the runner's environment, which the
- * session inherits), or null when that environment names no known runtime: then the hook prints `decision-rules` only.
+ * session inherits), or null when that environment names no known runtime: then nothing is injected.
  * The other runtime's data is not injected, so a change to it still has to be read or called to count.
  * Not checked: that the hook really ran (a hook that errors would still count as used); `dyna runtime inject` has its own tests.
  */
 export function injectedFiles(runtime) {
-  const files = ['skills/productivity/decision-rules/SKILL.md'];
-  if (runtime) files.push('runtime/capabilities.md', `runtime/${runtime}.md`);
-  return files;
+  return runtime ? ['runtime/capabilities.md', `runtime/${runtime}.md`] : [];
 }
 
 /** Does a shell command name `path` as a path relative to the working dir: at the start, or after a space, quote, `./` or a shell operator, not as the tail of a longer path. */
@@ -71,12 +76,14 @@ function namesRelativePath(command, path) {
  * Used = any one of: a Read of a changed file (or a Bash command naming its full path), a Skill call for a skill that owns a
  * changed file, an Agent call for a changed agent definition, or a prompt that starts with such a skill's slash command (the
  * harness loads that skill itself, no tool call shows it), or a changed file the SessionStart hook injects (see `injectedFiles`;
- * `runtime` says which runtime's data that is, without it only `decision-rules` counts): the session has it from the
- * start, so no tool call shows it either, and a read or call in the stream is reported in its place.
+ * `runtime` says which runtime's data that is, without it nothing counts): the session has it from the
+ * start, so no tool call shows it either, and a read or call in the stream is reported in its place. `injected` lists more such files
+ * (relative to the plugin dir): the runner passes the fixed text (RULES_FILE) when the post-change home has it, since the session
+ * has it in its memory from the start.
  * Returns `{status: 'hit', via: 'read'|'skill'|'agent'|'injected', name, changed}`, `{status: 'miss', changed}`, or
  * `{status: 'na', changed: 0}` when the change set is empty (only scripts changed).
  */
-export function exercisedBy(events, change, { roots = [], projectRelDirs = [], prompt = '', runtime = null } = {}) {
+export function exercisedBy(events, change, { roots = [], projectRelDirs = [], prompt = '', runtime = null, injected: alsoInjected = [] } = {}) {
   const files = new Set(change?.files ?? []);
   if (!files.size) return { status: 'na', changed: 0 };
   const skills = new Set(change.skills ?? []);
@@ -117,7 +124,7 @@ export function exercisedBy(events, change, { roots = [], projectRelDirs = [], p
       }
     }
   }
-  const injectedSet = injectedFiles(runtime);
+  const injectedSet = [...injectedFiles(runtime), ...alsoInjected];
   const injected = [...files].find((f) => injectedSet.includes(f));
   if (injected) return hit('injected', injected);
   return { status: 'miss', changed };
@@ -261,12 +268,60 @@ export const HOME_ENV = 'IDEA_LOOP_HOME';
  * Where one side's home comes from. A case with `home_commit` gives both sides a copy cut from that commit of the home repository
  * ('home-commit'). Without it, the post-change side gets a home built from the case commit's own `docs/` and bootstrap files
  * ('project-docs'); the pre-change plugin reads those same files from the code repository, so its home is an empty one ('empty'):
- * the variable is still set, so no home of this machine is reachable through it.
+ * the variable is still set, so no home of this machine is reachable through it. A pre-change plugin that already reads the knowledge
+ * base from home (`readsHome`, see `pluginReadsHome` in the runner: the plugin of 0.2.0's line, which a change on that line is compared
+ * with) cannot find it in the code repository either, so it is given the same built home as the post-change side.
  */
-export function homeSourceOf(c, side) {
+export function homeSourceOf(c, side, { readsHome = false } = {}) {
   if (c.home_commit) return 'home-commit';
-  return side === 'after' ? 'project-docs' : 'empty';
+  return side === 'after' || readsHome ? 'project-docs' : 'empty';
 }
+
+/**
+ * The plugin's copy of the fixed text that `dyna home config apply --only rules` writes into home's AGENTS.md (relative to the plugin
+ * dir), and the three sections it holds. A plugin without that file (one from before the fixed text existed) gets a home without them.
+ * The tests pin RULE_SECTIONS against the headings of the plugin's copy.
+ */
+export const RULES_FILE = 'skills/engineering/setup/references/home-rules.md';
+export const RULE_SECTIONS = ['思考与决策', '沟通', '证据'];
+
+/** The `## <name>` sections of an AGENTS.md (each from its heading to the line before the next `## `; a `## ` in a fenced block is no heading), joined by a blank line, in the file's order. '' when it has none of them. */
+export function sectionsOf(agentsMd, names = RULE_SECTIONS) {
+  const out = [];
+  let keep = false;
+  let fenced = false;
+  let cur = [];
+  const flush = () => {
+    if (keep && cur.length) out.push(cur.join('\n').trim());
+    cur = [];
+  };
+  for (const line of String(agentsMd ?? '').split('\n')) {
+    if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
+    const heading = !fenced && line.match(/^##\s+(.*?)\s*$/);
+    if (heading) {
+      flush();
+      keep = names.includes(heading[1]);
+    }
+    cur.push(line);
+  }
+  flush();
+  return out.join('\n\n');
+}
+
+/**
+ * Where a session reads the fixed text from. On a real machine `~/.claude/CLAUDE.md` is a link to home's AGENTS.md, so every session
+ * has the sections; a replayed session cannot be given another `~/.claude`, so the sections of its temporary home are put in the
+ * project copy's own `.claude/CLAUDE.md`, which Claude Code loads for the project. `existing` is what the case's commit already has in
+ * that file (kept; the sections come after it).
+ */
+export const RULES_MEMORY_FILE = '.claude/CLAUDE.md';
+export function rulesMemoryMd(sections, existing = '') {
+  const head = String(existing ?? '').replace(/\s*$/, '');
+  return `${head ? `${head}\n\n` : ''}${String(sections).replace(/\s*$/, '')}\n`;
+}
+
+/** The session environment with the `dyna` that the plugin's hooks and skills call set to `bin` (a side's own build: the pre-change plugin needs the command line it was written against). `bin` null: `env` as it is. */
+export const withDyna = (env, bin) => (bin ? { ...env, IDEA_LOOP_DYNA_BIN: bin } : env);
 
 /** The session environment with IDEA_LOOP_HOME pointing at `home`. `env` is not changed. */
 export const withHome = (env, home) => ({ ...env, [HOME_ENV]: home });

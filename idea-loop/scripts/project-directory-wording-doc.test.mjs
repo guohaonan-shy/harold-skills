@@ -132,7 +132,7 @@ test('the SEO direction agents and seo-scan agree on what the prompt carries: SE
 });
 
 test('an SEO PR is judged against 内容路径 only: docs/ and SEO.md live in the project directory, not in the code PR', () => {
-  assert.match(read('skills/productivity/decision-rules/SKILL.md'), /「内容路径」。`docs\/` 和 `SEO\.md` 在项目目录里，不在代码 PR 里/);
+  assert.match(read('skills/engineering/pr-review/references/seo-auto-merge.md'), /「内容路径」；`docs\/` 和 `SEO\.md` 在项目目录里，不在代码 PR 里/);
   assert.doesNotMatch(read('skills/engineering/setup/references/seo/seo-md.md'), /只有 `docs\/` 和 `SEO\.md` 算内容/);
   assert.doesNotMatch(read('skills/engineering/setup/references/seo/steps.md'), /加 `docs\/`、根目录 `SEO\.md`/);
 });

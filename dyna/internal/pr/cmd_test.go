@@ -351,6 +351,38 @@ func TestCandidatesSubmitAdmitsAGroundedCandidateAndExits0(t *testing.T) {
 	}
 }
 
+func TestCandidatesSubmitTakesTheSpecForAGoalBasisAndDiscardsOneThatQuotesAnotherFile(t *testing.T) {
+	s := newSession(t)
+	s.git = gitDiff(handlerDiff)
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "layering.md"), "路由层不直接访问数据库，\n统一经过 service 层。")
+	spec := write(t, filepath.Join(dir, "spec.md"), "目标：路由层不直接访问数据库。")
+	other := write(t, filepath.Join(dir, "other.md"), "目标：路由层不直接访问数据库。")
+	withBasis := func(file string) string {
+		return `{"standards":[{"id":"C1","title":"接口直接查数据库","rule":{"file":"` + filepath.Join(dir, "layering.md") + `","text":"路由层不直接访问数据库"},"code":{"path":"src/api/handler.ts","snippet":"import { db } from '../db/client';"},"now":"分层规则写明路由层不直接访问数据库；分析接口直接查了数据库。","impact":"以后换存储时这一处会被漏掉。","disposition":"照规则","action":"修","basis":{"kind":"目标","file":"` + file + `","text":"路由层不直接访问数据库","summary":"这次要的是路由层不碰数据库；这个做法达成了它。"}}]}`
+	}
+	run := func(file string, extra ...string) (counts struct{ Standards, Discarded []json.RawMessage }, out string) {
+		cands := write(t, filepath.Join(dir, "cands.json"), withBasis(file))
+		out, errs, code := s.run(append([]string{"pr", "candidates", "submit", cands, "main", filepath.Join(dir, "evidence"), "1"}, extra...)...)
+		if code != 0 {
+			t.Fatal(out, errs, code)
+		}
+		if err := json.Unmarshal([]byte(out), &counts); err != nil {
+			t.Fatal(err, out)
+		}
+		return counts, out
+	}
+	if c, out := run(spec, "--spec", spec); len(c.Standards) != 1 || len(c.Discarded) != 0 {
+		t.Fatal(out)
+	}
+	if c, out := run(other, "--spec", spec); len(c.Standards) != 0 || len(c.Discarded) != 1 || !strings.Contains(out, "不是这次的 spec") {
+		t.Fatal(out)
+	}
+	if c, out := run(spec); len(c.Standards) != 0 || len(c.Discarded) != 1 {
+		t.Fatalf("without --spec the goal cannot be checked: %s", out)
+	}
+}
+
 func TestCandidatesSubmitRefusesABadlyWordedCandidateAndSaysWhichOneAndWhatIsWrong(t *testing.T) {
 	s := newSession(t)
 	s.git = gitDiff(handlerDiff)

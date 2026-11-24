@@ -1,6 +1,5 @@
 /**
- * The SessionStart hook injects three sections at the start of every main session: the body of
- * `idea-loop:decision-rules`, the capability list (runtime/capabilities.md), and the whole data of the current runtime (runtime/<name>.md).
+ * The SessionStart hook injects two sections at the start of every main session: the capability list (runtime/capabilities.md), and the whole data of the current runtime (runtime/<name>.md).
  * The tests run the commands registered in hooks.json through a shell, exactly as the host does, and read stdout.
  *
  * Spec session-start-inject-rules, ticket 01.
@@ -18,7 +17,7 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const hooks = JSON.parse(readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')).hooks;
 const entries = hooks.SessionStart;
 const allCommands = entries.flatMap((e) => e.hooks).filter((h) => h.type === 'command').map((h) => h.command);
-// the three `dyna runtime inject` sections; the project map is a fourth command of its own (home-map-hook.test.mjs)
+// the two `dyna runtime inject` sections; the project map is a third command of its own (home-map-hook.test.mjs)
 const commands = allCommands.filter((c) => c.includes('bin/dyna" runtime inject '));
 
 /** The limit Claude Code puts on one hook's output; past it the session keeps only a 2,000-character preview. */
@@ -30,7 +29,6 @@ const runAll = (env) =>
   commands.map((command) =>
     spawnSync('sh', ['-c', command], { env: { PATH: process.env.PATH, CLAUDE_PLUGIN_ROOT: pluginRoot, IDEA_LOOP_DYNA_BIN: dynaBinary(), ...env }, encoding: 'utf8' }));
 
-const skillBody = (rel) => readFileSync(join(pluginRoot, rel), 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
 // `dyna runtime inject reference` prints the data file of the current runtime, the plugin's runtime/ directory
 const REFERENCE = { 'claude-desktop': 'runtime/claude-desktop.md', magi: 'runtime/magi.md' };
 
@@ -39,33 +37,22 @@ test('SessionStart has no matcher, so startup, resume, clear, compact and fork a
   for (const e of entries) assert.ok(!('matcher' in e), `a matcher would limit the sources: ${JSON.stringify(e)}`);
 });
 
-test('three `dyna runtime inject` SessionStart commands, each its own output, and the project map is a separate command beside them', () => {
-  assert.equal(commands.length, 3);
-  assert.equal(allCommands.length, 4);
-  assert.deepEqual(allCommands.slice(0, 3), commands);
-  assert.deepEqual(commands.map((c) => c.split('runtime inject ')[1]), ['decision-rules --hook', 'runtime --hook', 'reference --hook']);
-  assert.equal(allCommands[3], '"${CLAUDE_PLUGIN_ROOT}/bin/dyna" home map --hook');
+test('two `dyna runtime inject` SessionStart commands, each its own output, and the project map is a separate command beside them', () => {
+  assert.equal(commands.length, 2);
+  assert.equal(allCommands.length, 3);
+  assert.deepEqual(allCommands.slice(0, 2), commands);
+  assert.deepEqual(commands.map((c) => c.split('runtime inject ')[1]), ['runtime --hook', 'reference --hook']);
+  assert.equal(allCommands[2], '"${CLAUDE_PLUGIN_ROOT}/bin/dyna" home map --hook');
 });
 
 for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-desktop'], ['MAGI_SESSION_ID set', { MAGI_SESSION_ID: 'abc' }, 'magi']]) {
-  test(`${label}: three sections, each under the hook output limit, in order decision-rules, runtime, reference`, () => {
-    const [rules, runtime, reference] = runAll(env);
-    for (const r of [rules, runtime, reference]) {
+  test(`${label}: two sections, each under the hook output limit, in order runtime, reference`, () => {
+    const [runtime, reference] = runAll(env);
+    for (const r of [runtime, reference]) {
       assert.equal(r.status, 0, r.stderr);
       assert.ok(r.stdout.length > 0 && r.stdout.length < HOOK_OUTPUT_LIMIT, `section length ${r.stdout.length}`);
       assert.ok(!r.stdout.includes('${CLAUDE_PLUGIN_ROOT}'), 'the placeholder is expanded to the real plugin path');
     }
-
-    // decision-rules: header with the scope sentence, the body without frontmatter
-    assert.match(rules.stdout, /^以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它/);
-    assert.match(rules.stdout.split('\n')[0], /「核心」一节针对有 spec 的工作/);
-    assert.match(rules.stdout.split('\n')[0], /把「spec」读作人这次交代的事/);
-    assert.match(rules.stdout.split('\n')[0], /后三节讲证据怎么写/);
-    for (const h of ['## 依据只认三种', '## 证据是什么', '## 整体风格', '## 配什么图']) assert.ok(rules.stdout.includes(h), `注入里缺 ${h}`);
-    assert.ok(rules.stdout.includes('## 护栏'));
-    assert.doesNotMatch(rules.stdout, /^name: /m);
-    assert.doesNotMatch(rules.stdout, /^description: /m);
-    assert.ok(rules.stdout.includes(skillBody('skills/productivity/decision-rules/SKILL.md').trim().replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot)));
 
     // runtime: first line is the runtime, then the header, then the body
     assert.equal(runtime.stdout.split('\n')[0], `当前运行环境：${name}`);
@@ -83,15 +70,13 @@ for (const [label, env, name] of [['MAGI_SESSION_ID not set', {}, 'claude-deskto
 }
 
 test('the injected runtime body sends a sub-agent to `dyna runtime show`, and names neither the removed skill nor the old detect script', () => {
-  const [, runtime] = runAll({});
+  const [runtime] = runAll({});
   assert.ok(runtime.stdout.includes('dyna runtime show'));
   for (const gone of ['idea-loop:runtime', 'runtime-detect.mjs']) assert.ok(!runtime.stdout.includes(gone), gone);
 });
 
-test('IDEA_LOOP_RUNTIME=foo: decision-rules still injects, both runtime sections exit non-zero with empty stdout', () => {
-  const [rules, runtime, reference] = runAll({ IDEA_LOOP_RUNTIME: 'foo' });
-  assert.equal(rules.status, 0);
-  assert.ok(rules.stdout.includes('## 护栏'));
+test('IDEA_LOOP_RUNTIME=foo: both runtime sections exit non-zero with empty stdout', () => {
+  const [runtime, reference] = runAll({ IDEA_LOOP_RUNTIME: 'foo' });
   for (const r of [runtime, reference]) {
     assert.notEqual(r.status, 0);
     assert.equal(r.stdout, '');
@@ -100,7 +85,7 @@ test('IDEA_LOOP_RUNTIME=foo: decision-rules still injects, both runtime sections
 });
 
 test('IDEA_LOOP_RUNTIME forces the reference too', () => {
-  const [, runtime, reference] = runAll({ IDEA_LOOP_RUNTIME: 'magi' });
+  const [runtime, reference] = runAll({ IDEA_LOOP_RUNTIME: 'magi' });
   assert.equal(runtime.stdout.split('\n')[0], '当前运行环境：magi');
   assert.ok(reference.stdout.includes('magi sessions'));
 });
@@ -111,7 +96,7 @@ test('a local override in home reaches the reference the hook injects: first lin
     mkdirSync(join(home, 'runtime'));
     const file = join(home, 'runtime', 'claude-desktop.md');
     writeFileSync(file, '# 本机覆盖\n\n## 推送\n\n本机推送做法\n\n## 不存在的能力\n\n用不上\n');
-    const [, , reference] = runAll({ IDEA_LOOP_HOME: home });
+    const [, reference] = runAll({ IDEA_LOOP_HOME: home });
     assert.equal(reference.status, 0, reference.stderr);
     assert.ok(reference.stdout.length < HOOK_OUTPUT_LIMIT);
     const [first, second] = reference.stdout.split('\n');
@@ -121,8 +106,8 @@ test('a local override in home reaches the reference the hook injects: first lin
     assert.ok(!reference.stdout.includes('用不上'));
     const plain = readFileSync(join(pluginRoot, REFERENCE['claude-desktop']), 'utf8').replaceAll('${CLAUDE_PLUGIN_ROOT}', pluginRoot).trim();
     assert.ok(reference.stdout.includes(plain.split('## 推送')[0]), 'sections before the replaced one are the plugin\'s');
-    // the other two injected sections do not change
-    assert.equal(runAll({ IDEA_LOOP_HOME: home })[1].stdout, runAll({})[1].stdout);
+    // the other injected section does not change
+    assert.equal(runAll({ IDEA_LOOP_HOME: home })[0].stdout, runAll({})[0].stdout);
   } finally {
     rmSync(home, { recursive: true, force: true });
   }

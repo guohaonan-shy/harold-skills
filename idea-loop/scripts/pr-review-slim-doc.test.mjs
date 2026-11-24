@@ -74,8 +74,9 @@ test('the auto-started next round runs the whole 前提 first (merge in the late
   assert.doesNotMatch(point1, /先等 CI（同前提）/, 'point 1 is back to waiting for CI only');
 });
 
-test('the rules decision-rules already owns are pointers, not restated lists', () => {
-  assert.match(body, /idea-loop:decision-rules/);
+test('what the user rules own are pointers, not restated lists', () => {
+  assert.match(body, /~\/\.claude\/CLAUDE\.md/);
+  assert.match(body, /依据：只认四种/);
   assert.doesNotMatch(body, /仍然停/);
 });
 
@@ -128,7 +129,7 @@ test('前提 merges the latest base branch in before the CI line; merge.md point
   assert.doesNotMatch(text, /`git (fetch|merge)`/);
   assert.match(text, /重新生成、不手拼/);
   assert.match(text, /推送/);
-  assert.match(text, /idea-loop:decision-rules/);
+  assert.match(text, /「停下问我」/);
   const merge = readRef('PR_REVIEW_MERGE_REF', 'skills', 'engineering', 'pr-review', 'references', 'merge.md');
   const step1 = merge.slice(merge.indexOf('## 合并\n'), merge.indexOf('\n2. '));
   assert.match(step1, /先合入最新主分支/, 'merge.md 合并 step 1 does not cite the 前提 line');

@@ -51,7 +51,7 @@ test('the places that used to land a stage on its own point at wiki-conventions�
     'skills/engineering/issue-session/references/draft-spec.md',
     'skills/engineering/issue-session/SKILL.md',
     'skills/design/uiux-refine/references/after-freeze.md',
-    'skills/productivity/decision-rules/SKILL.md',
+    'skills/engineering/pr-review/SKILL.md',
     'skills/productivity/retro/SKILL.md',
   ]) assert.match(read(f), /知识库落地/, `${f} does not point at 知识库落地`);
 });

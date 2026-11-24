@@ -41,7 +41,7 @@ const (
 var Names = []string{"claude-desktop", "magi"}
 
 // Sections is what `inject` can print, in the order the SessionStart hook runs them.
-var Sections = []string{"decision-rules", "runtime", "reference"}
+var Sections = []string{"runtime", "reference"}
 
 // Detect is the environment this session is in. A forced name (IDEA_LOOP_RUNTIME) wins and must be a known one;
 // otherwise a magi session variable means magi; otherwise claude-desktop. The command line and IDE plugins have no
@@ -89,9 +89,9 @@ func (p Plugin) expand(text string) string {
 	return strings.ReplaceAll(text, "${CLAUDE_PLUGIN_ROOT}", p.Root)
 }
 
-// Inject is one section of the SessionStart injection. The hook output is cut at 10,000 characters, so the three
-// sections are three commands. An unknown section is an error; so is an unknown environment for the two sections
-// that need it (decision-rules does not).
+// Inject is one section of the SessionStart injection. The hook output is cut at 10,000 characters, so the two
+// sections are two commands. An unknown section is an error; so is an
+// unknown environment.
 func Inject(section string, env home.Env) (string, error) {
 	known := false
 	for _, s := range Sections {
@@ -103,13 +103,6 @@ func Inject(section string, env home.Env) (string, error) {
 	p, err := PluginFrom(env)
 	if err != nil {
 		return "", err
-	}
-	if section == "decision-rules" {
-		body, err := p.read("skills", "productivity", "decision-rules", "SKILL.md")
-		if err != nil {
-			return "", err
-		}
-		return "以下是 `idea-loop:decision-rules` 的正文，开场注入，不必再调它。前六节讲处置：「核心」一节针对有 spec 的工作；没有 spec 的会话里，把「spec」读作人这次交代的事。后三节讲证据怎么写、配什么图，写给人看的东西都照它。\n\n" + body + "\n", nil
 	}
 	name, err := Detect(env)
 	if err != nil {

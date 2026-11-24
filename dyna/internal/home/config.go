@@ -13,21 +13,22 @@ import (
 	"unicode/utf16"
 )
 
-// Setup's three user-level changes, so setup can show them once and do them in one go:
+// Setup's four user-level changes, so setup can show them once and do them in one go:
 //
 //	1 plugin     user-level settings.json: enabledPlugins["<plugin>@<marketplace>"] = true
 //	2 memory     user-level settings.json: autoMemoryDirectory = <home>/memory
 //	3 claude-md  user-level CLAUDE.md becomes a symlink to <home>/AGENTS.md; a plain file's text moves into
 //	             <home>/AGENTS.md first, before the idea-loop sections, verbatim
+//	4 rules      <home>/AGENTS.md holds the plugin's fixed text as the sections 思考与决策, 沟通, 证据 (rules.go)
 //
 // `plan` shows each item's before and after and writes nothing. `apply` backs up first, then does the items that
 // are still to do; items already in place are left alone, and when none is left nothing is written at all.
 
-// ConfigItems are the three items, in order.
-var ConfigItems = []string{"plugin", "memory", "claude-md"}
+// ConfigItems are the four items, in order.
+var ConfigItems = []string{"plugin", "memory", "claude-md", "rules"}
 
-// the two sections idea-loop owns in <home>/AGENTS.md; moved text goes before the first of them
-var ownedSections = []string{"## 设备地图", "## 项目"}
+// the sections idea-loop owns in <home>/AGENTS.md; moved text goes before the first of them
+var ownedSections = []string{"## 思考与决策", "## 沟通", "## 证据", "## 设备地图", "## 项目"}
 
 func claudeDir(env Env) string { return filepath.Join(userHome(env), ".claude") }
 
@@ -153,7 +154,7 @@ func claudeMdState(path string) (state, link string) {
 	return "link", filepath.Clean(target)
 }
 
-// ConfigItem is one of the three changes: what it is, whether it is done, and how it reads before and after.
+// ConfigItem is one of the four changes: what it is, whether it is done, and how it reads before and after.
 type ConfigItem struct {
 	ID     string `json:"id"`
 	Label  string `json:"label"`
@@ -226,6 +227,47 @@ func PlanConfig(env Env, pluginRoot string, only []string) ([]ConfigItem, error)
 	}
 	all["claude-md"] = item
 
+	// the plugin's text is read only when the item is asked for: --only plugin works without it
+	for _, id := range only {
+		if id != "rules" {
+			continue
+		}
+		rules, err := readRules(pluginRoot)
+		if err != nil {
+			return nil, err
+		}
+		agentsText := ""
+		if b, err := os.ReadFile(agents); err == nil {
+			agentsText = string(b)
+		}
+		missing, differs, err := rulesDiff(agentsText, rules)
+		if err != nil {
+			return nil, err
+		}
+		var headings []string
+		for _, n := range RuleSections {
+			headings = append(headings, "## "+n)
+		}
+		item = ConfigItem{Label: agents + " 里 idea-loop 管的三节固定文案", Status: "todo", After: strings.Join(headings, "、") + "（插件里那一份，逐字）"}
+		switch {
+		case len(missing)+len(differs) == 0:
+			item.Status = "already"
+			item.Before = "三节与插件一致"
+		case len(missing) == len(RuleSections):
+			item.Before = "没有这三节"
+		default:
+			var parts []string
+			if len(missing) > 0 {
+				parts = append(parts, "缺 "+strings.Join(missing, "、"))
+			}
+			if len(differs) > 0 {
+				parts = append(parts, strings.Join(differs, "、")+" 与插件不一致")
+			}
+			item.Before = strings.Join(parts, "；")
+		}
+		all["rules"] = item
+	}
+
 	var out []ConfigItem
 	for _, id := range only {
 		it := all[id]
@@ -277,7 +319,7 @@ func ParseOnly(value string, given bool) ([]string, error) {
 		if s == "" {
 			continue
 		}
-		if len(s) == 1 && s >= "1" && s <= "3" {
+		if len(s) == 1 && s >= "1" && s <= "4" {
 			n, _ := strconv.Atoi(s)
 			s = ConfigItems[n-1]
 		}
@@ -297,7 +339,7 @@ func ParseOnly(value string, given bool) ([]string, error) {
 		if got == "" {
 			got = "nothing"
 		}
-		return nil, fmt.Errorf("--only takes items from 1 plugin, 2 memory, 3 claude-md (numbers or names, comma-separated); got %s", got)
+		return nil, fmt.Errorf("--only takes items from 1 plugin, 2 memory, 3 claude-md, 4 rules (numbers or names, comma-separated); got %s", got)
 	}
 	var out []string
 	for _, k := range ConfigItems {
@@ -448,6 +490,25 @@ func ApplyConfig(env Env, pluginRoot string, only []string, now time.Time) (Conf
 		}
 		if err := os.Rename(tmp, claudeMd); err != nil {
 			return ConfigDone{}, err
+		}
+	}
+	if has("rules") {
+		rules, err := readRules(pluginRoot)
+		if err != nil {
+			return ConfigDone{}, err
+		}
+		cur, err := os.ReadFile(agentsPath)
+		if err != nil {
+			return ConfigDone{}, err
+		}
+		next, err := ApplyRules(string(cur), rules)
+		if err != nil {
+			return ConfigDone{}, err
+		}
+		if next != string(cur) {
+			if err := os.WriteFile(agentsPath, []byte(next), 0o644); err != nil {
+				return ConfigDone{}, err
+			}
 		}
 	}
 	return ConfigDone{Backup: backup, Changed: todo, Manual: manual}, nil

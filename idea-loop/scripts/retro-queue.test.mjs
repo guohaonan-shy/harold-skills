@@ -154,7 +154,7 @@ test('the check line says which file, skill or agent was hit, or that it does no
   assert.equal(describeExercised({ status: 'hit', via: 'skill', name: 'idea-loop:demo', changed: 1 }), '用上了（调了 skill idea-loop:demo）');
   assert.equal(describeExercised({ status: 'hit', via: 'read', name: 'skills/a/SKILL.md', changed: 1 }), '用上了（读了 skills/a/SKILL.md）');
   assert.equal(describeExercised({ status: 'hit', via: 'agent', name: 'idea-loop:helper', changed: 1 }), '用上了（起了 agent idea-loop:helper）');
-  assert.equal(describeExercised({ status: 'hit', via: 'injected', name: 'skills/productivity/decision-rules/SKILL.md', changed: 1 }), '用上了（开场注入了 skills/productivity/decision-rules/SKILL.md）');
+  assert.equal(describeExercised({ status: 'hit', via: 'injected', name: 'runtime/capabilities.md', changed: 1 }), '用上了（开场注入了 runtime/capabilities.md）');
   assert.match(describeExercised({ status: 'na', changed: 0 }), /^不适用/);
   assert.equal(describeExercised(undefined), null);
   const text = buildReplayEntry({ round: 1, ...ENTRY_INPUT([pass('a')]) });
