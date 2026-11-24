@@ -123,7 +123,7 @@ func Command(d Deps) *cobra.Command {
 				fmt.Fprintln(d.out(), ticket)
 				return nil
 			}),
-		leaf("skill-edit <commit> <handback-file>", "核对交回文件有没有覆盖这个提交改到的 skill、agent 定义、skill 参考文件；不够时每条原因一行，退出 2", "",
+		leaf("skill-edit <commit> <handback-file>", "核对交回文件有没有覆盖这个提交改到的 skill、agent 定义、skill 参考文件：写法规范行、杠杆行、验证行（含用例目录在提交里、结果是过或大用例待跑）；不够时每条原因一行，退出 2", "",
 			func(args []string) error {
 				if len(args) < 2 || args[0] == "" || args[1] == "" {
 					return usage("skill-edit <commit> <handback-file>")
@@ -143,9 +143,16 @@ func Command(d Deps) *cobra.Command {
 					return fmt.Errorf("读不到交回文件「%s」：%v", args[1], err)
 				}
 				reasons := ledger.CheckSkillEdit(files, string(handback))
+				if len(ledger.SkillEditFiles(files)) > 0 {
+					tree, err := d.git("ls-tree", "-r", "--name-only", args[0])
+					if err != nil {
+						return err
+					}
+					reasons = append(reasons, ledger.CheckVerify(files, string(handback), strings.Split(tree, "\n"))...)
+				}
 				if len(reasons) == 0 {
 					if n := len(ledger.SkillEditFiles(files)); n > 0 {
-						fmt.Fprintf(d.out(), "ok: %d 个 skill、agent 定义或 skill 参考文件，写法规范与杠杆行齐\n", n)
+						fmt.Fprintf(d.out(), "ok: %d 个 skill、agent 定义或 skill 参考文件，写法规范、杠杆行、验证行都齐\n", n)
 					} else {
 						fmt.Fprintln(d.out(), "ok: 没改到 skill、agent 定义或 skill 参考文件")
 					}

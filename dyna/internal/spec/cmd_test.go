@@ -191,18 +191,18 @@ func TestSkillEditRefusesAHandBackThatDoesNotCoverTheSkillFileAndNamesTheReasons
 		t.Fatalf("%q %d", errs, code)
 	}
 	lines := strings.Split(strings.TrimSpace(out), "\n")
-	if len(lines) != 2 || !strings.HasPrefix(lines[0], "- ") || !strings.Contains(lines[0], "调") || !strings.Contains(lines[1], "idea-loop/skills/a/SKILL.md 没有杠杆行") {
+	if len(lines) != 3 || !strings.HasPrefix(lines[0], "- ") || !strings.Contains(lines[0], "调") || !strings.Contains(lines[1], "idea-loop/skills/a/SKILL.md 没有杠杆行") || !strings.Contains(lines[2], "idea-loop/skills/a/SKILL.md 没有验证行") {
 		t.Fatalf("%q", out)
 	}
 }
 
-func TestSkillEditAcceptsAHandBackThatCallsWritingForAgentsAndCarriesTheLeverRow(t *testing.T) {
+func TestSkillEditAcceptsAHandBackThatCallsWritingForAgentsAndCarriesTheLeverRowAndTheVerifyRow(t *testing.T) {
 	dir, shas := repo(t)
 	t.Chdir(dir)
 	hb := filepath.Join(t.TempDir(), "handback.txt")
-	writeFile(t, hb, "读了哪几份写法规范 | 调 | writing-for-agents\n杠杆 | idea-loop/skills/a/SKILL.md | 剪枝\n")
+	writeFile(t, hb, "读了哪几份写法规范 | 调 | writing-for-agents\n杠杆 | idea-loop/skills/a/SKILL.md | 剪枝\n验证 | idea-loop/skills/a/SKILL.md | 不改行为 | 只改措辞 | 过\n")
 	out, errs, code := run(t, "spec", "skill-edit", shas[2], hb)
-	if code != 0 || errs != "" || out != "ok: 1 个 skill、agent 定义或 skill 参考文件，写法规范与杠杆行齐\n" {
+	if code != 0 || errs != "" || out != "ok: 1 个 skill、agent 定义或 skill 参考文件，写法规范、杠杆行、验证行都齐\n" {
 		t.Fatalf("%q %q %d", out, errs, code)
 	}
 	out, _, code = run(t, "spec", "skill-edit", shas[0], hb)
