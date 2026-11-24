@@ -36,7 +36,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。调度在桌面端�
 用会话管理 MCP（`mcp__ccd_session_mgmt__*`）：
 
 - **列会话**：`mcp__ccd_session_mgmt__list_sessions`，`group` 写 section 名，`limit: 100`，列出没归档的会话；section 自带的计数含已归档的，不用它。
-- **开一个 issue 会话**：两条命令，都在那个 worktree 里、沙箱外跑（要联网）：先 `claude -p "只回一个字：就绪" --output-format json`，从输出的 JSON 读 `session_id`；再 `claude --desktop --resume <id>`，退出码 0 算成功，桌面端会话 id 是 `local_<id>`；不用 `start_session`。成功后记一笔：`dyna runtime record --issue <号> --repo <仓库名> --period <todo|triage> --session local_<id>`。任一条退出码非 0、读不出 `session_id`：这个 issue 本轮不交出，写进汇报，下一轮再试，不在本轮重试；记一笔失败（退出码 1）也写进汇报，早上汇总会少这一条。任务不在这里发，见「调度」的「怎么交出 issue」第 4 步。
+- **开一个 issue 会话**：两条命令，都在那个 worktree 里、沙箱外跑（要联网）：先 `claude -p "只回一个字：就绪" --output-format json`，从输出的 JSON 读 `session_id`；再 `script -q /dev/null claude --desktop --resume <id>`（它要终端，Bash 工具的输出不是终端），退出码 0 算成功，桌面端会话 id 是 `local_<id>`；不用 `start_session`。成功后记一笔：`dyna runtime record --issue <号> --repo <仓库名> --period <todo|triage> --session local_<id>`。任一条退出码非 0、读不出 `session_id`：这个 issue 本轮不交出，写进汇报，下一轮再试，不在本轮重试；记一笔失败（退出码 1）也写进汇报，早上汇总会少这一条。任务不在这里发，见「调度」的「怎么交出 issue」第 4 步。
 - **给别的会话发消息**：`mcp__ccd_session_mgmt__send_message`，`session_id` 填会话 id，`message` 填原文。工具还没加载就先用 ToolSearch 的 `select:mcp__ccd_session_mgmt__send_message` 加载。
 - **读一个会话的记录**：`mcp__ccd_session_mgmt__export_transcript`，`session_id: self`，导出一个 zip，解开里面的会话记录文件。
 - **本会话 id**：`get_session`（`self`），是 `local_…` 那一串。
@@ -54,7 +54,7 @@ loop 是本会话里的循环定时，7 天后自动删掉。调度在桌面端�
      - 两处都没有：`git -C <clone> worktree add <路径> -b <分支> origin/<基准分支>`，`<基准分支>` 是 `<项目目录>/DEVELOPMENT.md`「分支」节的基准分支（`origin/<基准分支>` 取这一轮对账 `git pull` 之后的）。
 
      路径已经存在、就是这条分支的 worktree（上一轮建了没交出去）：直接用。
-  2. **开会话并交到桌面端**：在 `<那个 worktree>` 里、沙箱外，先 `claude -p "只回一个字：就绪" --output-format json` 读出 `session_id`，再 `claude --desktop --resume <id>`，退出码 0 算成功，会话 id 是 `local_<id>`；然后 `dyna runtime record --issue <号> --repo <仓库名> --period <dispatch> --session local_<id>`（`<dispatch>` 取 `todo` 或 `triage`），往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条，早上汇总读它。失败的处理照「开一个 issue 会话」。
+  2. **开会话并交到桌面端**：在 `<那个 worktree>` 里、沙箱外，先 `claude -p "只回一个字：就绪" --output-format json` 读出 `session_id`，再 `script -q /dev/null claude --desktop --resume <id>`，退出码 0 算成功，会话 id 是 `local_<id>`；然后 `dyna runtime record --issue <号> --repo <仓库名> --period <dispatch> --session local_<id>`（`<dispatch>` 取 `todo` 或 `triage`），往 `~/.idea-loop/dispatch/<仓库名>.json` 追加一条，早上汇总读它。失败的处理照「开一个 issue 会话」。
   3. **归位**：`set_session_title` 把 `local_<id>` 改成「<仓库名>#<号> <标题>」，再用 `mcp__ccd_sidebar__move_sessions` 移进对应分组（`triage` 进 triage，`todo` 进 in-progress）；这是调度唯一一次移动别的会话。移动被拦（没加允许规则，见「装与设置」）：会话已经开着，但不在分组里，数不到，所以这一轮不再交出别的 issue，汇报里写明并推送，要人加规则。
   4. **发任务**：用会话间消息 `send_message` 把 issue 会话的 prompt（`idea-loop:issue-dispatch` 里写的）发给 `local_<id>`。要在交到桌面端之后才发：`claude -p` 跑着的时候桌面端看不见它、调度数不到它，夜里会超开。
 
