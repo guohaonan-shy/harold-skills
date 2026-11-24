@@ -1,6 +1,6 @@
-// Package runtime is the `runtime` module: which environment a session runs in (claude-desktop, magi), what the
-// SessionStart hook injects about it, the per-capability how-to for that environment, and the hand-over of a
-// `claude -p` session to the desktop app.
+// Package runtime is the `runtime` module: which environment a session runs in (read from the descriptions' marker
+// lines, see envs.go), what the SessionStart hook injects about it, the per-capability how-to for that environment,
+// and the hand-over of a `claude -p` session to the desktop app.
 //
 // The texts are the plugin's data, not code: <plugin>/runtime/capabilities.md (the capability list and the
 // fallbacks) and <plugin>/runtime/<environment>.md (one `## <capability>` section per capability). They are read
@@ -25,8 +25,6 @@ const (
 	EnvPluginRoot = "IDEA_LOOP_PLUGIN_ROOT"
 	// EnvRuntime forces an environment by name.
 	EnvRuntime = "IDEA_LOOP_RUNTIME"
-	// EnvMagiSession is set inside a magi session.
-	EnvMagiSession = "MAGI_SESSION_ID"
 )
 
 // DataDir is the directory under the plugin that holds the data, and the names of the files in it that are not an
@@ -36,30 +34,8 @@ const (
 	CapabilitiesFile = "capabilities.md"
 )
 
-// Names is every environment dyna knows. Adding an environment means adding its name here and writing
-// <plugin>/runtime/<name>.md (the data test fails when the two do not match).
-var Names = []string{"claude-desktop", "magi"}
-
 // Sections is what `inject` can print, in the order the SessionStart hook runs them.
 var Sections = []string{"runtime", "reference"}
-
-// Detect is the environment this session is in. A forced name (IDEA_LOOP_RUNTIME) wins and must be a known one;
-// otherwise a magi session variable means magi; otherwise claude-desktop. The command line and IDE plugins have no
-// reliable marker, so they land on claude-desktop and the capabilities they lack take the fallback.
-func Detect(env home.Env) (string, error) {
-	if forced := env(EnvRuntime); forced != "" {
-		for _, n := range Names {
-			if n == forced {
-				return forced, nil
-			}
-		}
-		return "", nexterr.Plain("%s=%s is not a known runtime; known: %s", EnvRuntime, forced, strings.Join(Names, ", "))
-	}
-	if env(EnvMagiSession) != "" {
-		return "magi", nil
-	}
-	return "claude-desktop", nil
-}
 
 var frontmatter = regexp.MustCompile(`^---\n[\s\S]*?\n---\n`)
 
@@ -78,7 +54,12 @@ func PluginFrom(env home.Env) (Plugin, error) {
 // read is a file under the plugin, without a leading frontmatter, with the plugin path spelled out where the text
 // says ${CLAUDE_PLUGIN_ROOT} (the host does that for a skill it loads, not for hook output), trimmed.
 func (p Plugin) read(rel ...string) (string, error) {
-	b, err := os.ReadFile(filepath.Join(append([]string{p.Root}, rel...)...))
+	return p.readFile(filepath.Join(append([]string{p.Root}, rel...)...))
+}
+
+// readFile is read for a file anywhere (a description only home has), with the same trimming.
+func (p Plugin) readFile(path string) (string, error) {
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return "", nexterr.Plain("读不到插件里的数据：%v", err)
 	}
@@ -104,35 +85,48 @@ func Inject(section string, env home.Env) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name, err := Detect(env)
+	det, err := Detect(env)
 	if err != nil {
 		return "", err
 	}
+	name := det.Name
 	if section == "runtime" {
 		body, err := p.read(DataDir, CapabilitiesFile)
 		if err != nil {
 			return "", err
 		}
-		return "当前运行环境：" + name + "\n以下是运行环境的能力清单，开场注入，不必再取。\n\n" + body + "\n", nil
+		// the template is for writing a description, not for a session that uses one
+		return "当前运行环境：" + name + "\n以下是运行环境的能力清单，开场注入，不必再取。\n\n" + strings.TrimSpace(withoutSection(body, TemplateTitle)) + "\n", nil
+	}
+	notes := ""
+	for _, n := range det.Notes {
+		notes += n + "\n"
+	}
+	intro := "以下是运行环境「" + name + "」的做法全文，开场注入，不必再取。\n\n"
+	if det.Path != "" {
+		body, err := p.readFile(det.Path)
+		if err != nil {
+			return "", err
+		}
+		return notes + intro + body + "\n", nil
 	}
 	body, err := p.read(DataDir, name+".md")
 	if err != nil {
 		return "", err
 	}
-	intro := "以下是运行环境「" + name + "」的做法全文，开场注入，不必再取。\n\n"
 	ov := loadOverride(name, env)
 	switch {
 	case ov.failure != "":
-		return ov.failedLine() + "\n" + intro + body + "\n", nil
+		return notes + ov.failedLine() + "\n" + intro + body + "\n", nil
 	case !ov.present:
-		return intro + body + "\n", nil
+		return notes + intro + body + "\n", nil
 	}
 	m := merge(body, p.expand(ov.text))
 	head := ov.header(m)
-	if n := runeCount(head + "\n" + intro + m.text + "\n"); n > InjectLimit {
+	if n := runeCount(notes + head + "\n" + intro + m.text + "\n"); n > InjectLimit {
 		head += "合并后 " + strconv.Itoa(n) + " 字，超过开场注入上限，后面被截断；完整的某一节跑 `dyna runtime show <能力>`。"
 	}
-	return head + "\n" + intro + m.text + "\n", nil
+	return notes + head + "\n" + intro + m.text + "\n", nil
 }
 
 // sectionOf is the `## <title>` section of a markdown text, heading line and its `###` subsections included, up
@@ -223,21 +217,28 @@ func Show(capability string, env home.Env) (string, error) {
 	if !known {
 		return "", nexterr.Plain("没有「%s」这个能力；能力清单：%s（不带能力跑 `dyna runtime show` 看清单和退路）", capability, strings.Join(caps, " / "))
 	}
-	name, err := Detect(env)
+	det, err := Detect(env)
 	if err != nil {
 		return "", err
 	}
-	text, err := p.read(DataDir, name+".md")
-	if err != nil {
-		return "", err
-	}
+	name := det.Name
 	lead := ""
-	if ov := loadOverride(name, env); ov.failure != "" {
-		lead = ov.failedLine() + "\n"
-	} else if ov.present {
-		m := merge(text, p.expand(ov.text))
-		text = m.text
-		lead = leadOf(ov, m, capability)
+	var text string
+	if det.Path != "" {
+		if text, err = p.readFile(det.Path); err != nil {
+			return "", err
+		}
+	} else {
+		if text, err = p.read(DataDir, name+".md"); err != nil {
+			return "", err
+		}
+		if ov := loadOverride(name, env); ov.failure != "" {
+			lead = ov.failedLine() + "\n"
+		} else if ov.present {
+			m := merge(text, p.expand(ov.text))
+			text = m.text
+			lead = leadOf(ov, m, capability)
+		}
 	}
 	s, ok := sectionOf(text, capability)
 	if !ok {

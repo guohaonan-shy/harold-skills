@@ -11,6 +11,13 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/app"
 )
 
+// envMagiSession is the marker variable of the environment the plugin ships with a marker; the tests name it
+// because it is the plugin's data, not dyna's code.
+const envMagiSession = "MAGI_SESSION_ID"
+
+// shipped are the environments the plugin ships a description for.
+var shipped = []string{"claude-desktop", "magi"}
+
 type outcome struct {
 	stdout, stderr string
 	code           int

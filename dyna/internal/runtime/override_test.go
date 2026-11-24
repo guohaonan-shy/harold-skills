@@ -294,7 +294,7 @@ func TestTheOverrideNeverTouchesTheCapabilityListOrTheOtherInjectedSections(t *t
 
 func TestTheOverrideOfAnotherEnvironmentIsNotRead(t *testing.T) {
 	s := newScene(t, fakeData, "")
-	writeFile(t, filepath.Join(s.root, "runtime", "magi.md"), "## 甲\n\nmagi 甲\n")
+	writeFile(t, filepath.Join(s.root, "runtime", "magi.md"), "标记：`MAGI_SESSION_ID`\n\n## 甲\n\nmagi 甲\n")
 	writeFile(t, filepath.Join(s.home, "runtime", "claude-desktop.md"), "## 甲\n\n桌面的本机甲\n")
 	e := s.env()
 	e[rt.EnvRuntime] = "magi"
@@ -352,7 +352,7 @@ func beforeShow(t *testing.T, name, capability string) string {
 }
 
 func TestWithNoOverrideTheRealDataOfEachEnvironmentComesOutByteForByteAsBefore(t *testing.T) {
-	for _, name := range rt.Names {
+	for _, name := range shipped {
 		t.Run(name, func(t *testing.T) {
 			home := t.TempDir() // a home that exists, with no runtime/ in it
 			e := env(rt.EnvRuntime, name, "IDEA_LOOP_HOME", home)
