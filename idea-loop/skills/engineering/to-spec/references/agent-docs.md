@@ -10,6 +10,6 @@ spec 要改的是 skill、参考文件、agent 定义或 `AGENTS.md` 时，第 3
 - **不改行为**：只改措辞、说法，写一句为什么行为不变。
 - **判不了**：写卡在哪；人在 triage 审 spec 时看到它，接受，或要求换一种。
 
-用例的格式见 `evals/retro/cases.mjs`，写法见 implement 的 `references/rule-tickets.md`。
+用例的格式见 `evals/retro/cases.mjs`。spec 里只写用例名和它出自哪一条；用例目录由实现这处改动的工单写。
 
 完成条件：诊断和调用方清单都在，每处改动都带一条杠杆和一行验证，判不了的写卡在哪。

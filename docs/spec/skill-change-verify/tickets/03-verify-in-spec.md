@@ -28,4 +28,4 @@
 - `to-spec` 相关的文档测试（`scripts/` 下以 to-spec、spec 命名的 `*-doc.test.mjs`）：钉着模板和参考文件的说法。
 - `retro` 相关文档测试（`scripts/retro*.test.mjs` 里读 SKILL 文本的）：第 3 节的说法。
 - `no-project-leak.test.mjs`：用例和文档里不能出现真实项目名。
-- [ ] review 第 3 轮 C1（2026-11-24）：起草 spec 的参考文件里写目标用例的那一句，不把读者直接指进 implement 自己的参考文件（不给别的 skill 内部参考文件的路径），只说要什么、或只提 skill 名由它指过去。依据：writing-for-agents 的 SKILL-MECHANICS.md「别的 skill 不读它的 `references/`，要用就调这个 skill，由它指过去」。交回带写法规范、杠杆、验证三行，落地核对退出 0。
+- [x] review 第 3 轮 C1（2026-11-24）：起草 spec 的参考文件里写目标用例的那一句，不把读者直接指进 implement 自己的参考文件（不给别的 skill 内部参考文件的路径），只说要什么、或只提 skill 名由它指过去。依据：writing-for-agents 的 SKILL-MECHANICS.md「别的 skill 不读它的 `references/`，要用就调这个 skill，由它指过去」。交回带写法规范、杠杆、验证三行，落地核对退出 0。
