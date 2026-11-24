@@ -4,6 +4,8 @@
  * Each sample is a retro replay case (case.json, checked by the retro runner's own format check) plus a `sample.md` the human reads and an
  * `annotations.md` where the human overrules a judgement. Nothing here judges whether the samples are good ones: the runner does that
  * (and the human annotates). This only makes sure the group is complete and no sample loses a part.
+ * The repository AGENTS.md's exception for annotated samples is checked at the repo root, not here:
+ * scripts/root-agents-annotated-samples.test.mjs.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,7 +16,6 @@ import { checkCasesDir, loadCases } from '../evals/retro/cases.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', 'evals', 'evidence');
-const repoRoot = join(here, '..', '..');
 
 const FIRST_GROUP = [
   'example-from-real-material',
@@ -47,20 +48,4 @@ test("a sample's annotations.md carries the human's quote and the question, and 
     assert.ok(text.includes(c.question), `${c.name}: annotations.md does not carry the question`);
     assert.ok(text.includes('## 标注'), `${c.name}: annotations.md has no 标注 section`);
   }
-});
-
-test('AGENTS.md has the deliberate exception for annotated samples, naming the first group and where #451 and #452 add theirs', () => {
-  const agents = readFileSync(join(repoRoot, 'AGENTS.md'), 'utf8');
-  const start = agents.indexOf('**有意例外：`idea-loop` 的「标注样本」');
-  assert.ok(start > 0, 'AGENTS.md has no 标注样本 exception');
-  const section = agents.slice(start, agents.indexOf('### 6.', start));
-  assert.match(section, /标注样本/);
-  assert.match(section, /idea-loop\/evals\/<skill>\/cases\//);
-  assert.match(section, /retro-replay\.mjs/);
-  assert.match(section, /--cases-root/);
-  assert.match(section, /annotations\.md/);
-  assert.match(section, /不打分/);
-  for (const name of FIRST_GROUP) assert.ok(section.includes(name), `the exception does not list ${name}`);
-  assert.match(section, /#451/);
-  assert.match(section, /#452/);
 });
