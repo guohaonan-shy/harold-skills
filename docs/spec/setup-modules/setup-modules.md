@@ -2,13 +2,13 @@
 type: spec
 tags: [idea-loop-0-2-0, setup, setup-modules]
 summary: setup 接完核心后按设计、SEO、评测三段问接不接，按插件装没装出题，正文腾出篇幅
-related: ["[[2026-11-24-setup-modules-grill]]", "[[skill-rewrite]]"]
+related: ["[[2026-11-24-setup-modules-grill]]", "[[skill-rewrite]]", "[[runtime-ops-in-docs]]"]
 issues: [420]
 ---
 
 # 一个 setup 入口：设计、SEO、评测三段
 
-> #420 存在：接一个项目仍要知道两个入口（`/idea-loop:setup`、`ai-eval:eval-setup`），setup 不提评测；setup 正文 4496 字，离 4500 字的线只剩 4 字，详情在「问题陈述」
+> #420 存在：接一个项目仍要知道两个入口（`/idea-loop:setup`、`ai-eval:eval-setup`），setup 不提评测；setup 正文 4499 字，离 4500 字的线只剩 1 字，详情在「问题陈述」
 
 ## 问题陈述
 
@@ -24,12 +24,12 @@ issues: [420]
 
 ### 3. setup 正文已经没有篇幅
 
-按 `AGENTS.md`「标准 plugin 目录结构」的量法，`setup/SKILL.md` 主体 4496 字，`dyna spec skill-lint` 的线 4500。排着要往里加的：
+按 `AGENTS.md`「标准 plugin 目录结构」的量法，`setup/SKILL.md` 主体 4496 字（283ed7da），#471 合进来后 4499 字（640eaf17），`dyna spec skill-lint` 的线 4500。要往里加的：
 
 | 谁 | 要加什么 | 状态 |
 |---|---|---|
 | #420（本 spec） | 评测、设计两段 | triage |
-| #471 | 「选运行环境」「照模板生成新环境说明」两步；它的 spec 写了超线就拆成另一个 issue | in-progress |
+| #471 | 「选运行环境」「照模板生成新环境说明」两步 | 已合进集成分支（PR #484，640eaf17），合后正文 4499 字 |
 | #247 | 「迁移」一节的一行指针（现在写着「待补」） | todo |
 
 ### 根因
@@ -67,7 +67,7 @@ issues: [420]
 - 「规则回放 runner」「每周对账」「每周分拣」「调度」四节并成一节「定时任务」：一张表（任务、建在哪、步骤文件），一条完成条件。各自的步骤文件不动。
 - 「交回」只留按节列的骨架，每节要报的细项挪进一份交回参考文件。
 - 「写」里的 LFS 一条、预检表的 Mobbin 一行、问人清单的「做不做 UI 设计」挪进设计段。
-- 目标：主体 ≤4000 字，给 #471 的两步和 #247 的一行指针留出约 500 字。
+- 目标：主体 ≤4000 字（#471 的两步已在里面），给 #247 的一行指针和以后的改动留出约 500 字。
 
 **同一件事的其他入口**：
 
@@ -99,7 +99,7 @@ issues: [420]
 
 **维护插件**
 
-1. 作为维护插件的人，我想要 setup 正文降到 4000 字以内，以便 #471、#247 要加的步骤放得下
+1. 作为维护插件的人，我想要 setup 正文降到 4000 字以内（含 #471 已加的两步），以便 #247 要加的指针和以后的步骤放得下
 2. 作为维护插件的人，我想要每段只靠一个 skill 名认插件装没装，以便以后 #241 拆插件时只换名字
 
 ## 实现决策
@@ -141,7 +141,7 @@ issues: [420]
 
 - raw：[[2026-11-24-setup-modules-grill]]。
 - [[skill-rewrite]]（#340）：把 `seo-setup` 并成 setup 的模块，本 spec 在它之上加两段。
-- #471（in-progress，spec `runtime-ops-in-docs` 在分支 `issue/471-cli-runtimes`，还没进集成分支）：要给 setup 加两步，靠本 spec 腾出的篇幅；两个 PR 都改 `setup/SKILL.md`，本 spec 先合，#471 在它之上加。
+- [[runtime-ops-in-docs]]（#471，PR #484 已合进集成分支，640eaf17）：给 setup 加了两步，正文到 4499 字。本 spec 在它之上改，压篇幅时把那两步一起算进去。
 - #247（todo，spec `migrate-to-home` 在分支 `issue/247-migrate-to-home`）：补「迁移」一节，同样用本 spec 腾出的篇幅；人 2026-11-24 定不合并，#247 照旧最后 done。
 - #241（backlog）：插件拆分；本 spec 的表按 skill 名认插件，拆了只换名字。
 - 其余相邻的 0.2.0 子 issue：#438、#456 的分支对集成分支的差异里没有 setup 的文件（2026-11-24 查）；#451、#452 改 spec 与 PR 结构，不碰 setup。无重叠。
