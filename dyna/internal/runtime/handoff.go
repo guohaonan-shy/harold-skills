@@ -221,7 +221,7 @@ func Handoff(o HandoffOptions, env func(string) string, cwdDefault string, now f
 		fmt.Fprintf(stderr, "交出失败：%v\n", err)
 		return 1
 	}
-	if runtimeName == "magi" {
+	if runtimeName.Name == "magi" {
 		return handoffMagi(o, env, now, stdout, stderr)
 	}
 	given := 0

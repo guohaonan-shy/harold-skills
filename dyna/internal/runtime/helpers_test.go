@@ -11,6 +11,13 @@ import (
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/app"
 )
 
+// envMagiSession is the marker variable of the environment the plugin ships with a marker; the tests name it
+// because it is the plugin's data, not dyna's code.
+const envMagiSession = "MAGI_SESSION_ID"
+
+// shipped are the environments the plugin ships a description for.
+var shipped = []string{"claude-desktop", "magi"}
+
 type outcome struct {
 	stdout, stderr string
 	code           int
@@ -24,6 +31,16 @@ func dyna(env map[string]string, args ...string) outcome {
 	var out, errb bytes.Buffer
 	code := app.Run(args, app.IO{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Env: func(k string) string { return env[k] }})
 	return outcome{out.String(), errb.String(), code}
+}
+
+// dynaHandoff is dyna for the hand-over tests: recognising the environment now reads the plugin's descriptions,
+// so it needs the plugin directory like every other command.
+func dynaHandoff(env map[string]string, args ...string) outcome {
+	m := map[string]string{"IDEA_LOOP_PLUGIN_ROOT": pluginRoot()}
+	for k, v := range env {
+		m[k] = v
+	}
+	return dyna(m, args...)
 }
 
 func repoPath(parts ...string) string {

@@ -21,13 +21,13 @@
 
 ## 验收标准
 
-- [ ] Go 单元测试先红后绿：home 里放一份 `zed.md`，标记行写 `ZED_SESSION`；设 `ZED_SESSION=1` 跑 `runtime name` 打印 `zed`，`runtime show 推送` 打印 zed.md 的「推送」一节。
-- [ ] 没有任何标记变量、home 里没有 `selected`：`runtime name` 打印 `claude-desktop`；写入 `selected` 为 `magi` 后打印 `magi`；写入不认识的名字仍打印 `claude-desktop`，`inject reference` 第一行是提示。
-- [ ] `MAGI_SESSION_ID` 有值时照旧是 magi；`IDEA_LOOP_RUNTIME=zed`（home 里有 zed.md）被认出，`IDEA_LOOP_RUNTIME=nope` 报错退出 1、列出认识的名字。
-- [ ] 两份说明的标记同时有值：取排序后的第一份，`inject reference` 第一行写出提示。
-- [ ] 插件的 `claude-desktop-mic.md`、`capabilities.md` 不被当成环境；home 里跟插件同名、没有标记行的文件照旧按小节覆盖，现有本机覆盖测试全绿。
-- [ ] dyna 代码里不再有写死的环境名单（`Names` 删掉，改用从说明目录读出的名单）；`go test ./...` 全绿，登记表 0.0.12 已存，`dyna-version` 下限 0.0.12。
-- [ ] 桌面端 `inject reference` 不超过 10000 字（现有长度测试照跑）。
+- [x] Go 单元测试先红后绿：home 里放一份 `zed.md`，标记行写 `ZED_SESSION`；设 `ZED_SESSION=1` 跑 `runtime name` 打印 `zed`，`runtime show 推送` 打印 zed.md 的「推送」一节。
+- [x] 没有任何标记变量、home 里没有 `selected`：`runtime name` 打印 `claude-desktop`；写入 `selected` 为 `magi` 后打印 `magi`；写入不认识的名字仍打印 `claude-desktop`，`inject reference` 第一行是提示。
+- [x] `MAGI_SESSION_ID` 有值时照旧是 magi；`IDEA_LOOP_RUNTIME=zed`（home 里有 zed.md）被认出，`IDEA_LOOP_RUNTIME=nope` 报错退出 1、列出认识的名字。
+- [x] 两份说明的标记同时有值：取排序后的第一份，`inject reference` 第一行写出提示。
+- [x] 插件的 `claude-desktop-mic.md`、`capabilities.md` 不被当成环境；home 里跟插件同名、没有标记行的文件照旧按小节覆盖，现有本机覆盖测试全绿。
+- [x] dyna 代码里不再有写死的环境名单（`Names` 删掉，改用从说明目录读出的名单）；`go test ./...` 全绿，登记表 0.0.12 已存，`dyna-version` 下限 0.0.12。
+- [x] 桌面端 `inject reference` 不超过 10000 字（现有长度测试照跑）。
 
 ## 选中的存量回归
 

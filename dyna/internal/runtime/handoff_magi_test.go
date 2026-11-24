@@ -71,7 +71,7 @@ func setupMagi(t *testing.T) magiEnv {
 func (m magiEnv) run(t *testing.T, mode string, args ...string) outcome {
 	t.Helper()
 	t.Setenv("FAKE_MAGI_MODE", mode)
-	return dyna(map[string]string{"HOME": m.home, "MAGI_SESSION_ID": "abc"}, append([]string{"runtime", "handoff", "--magi", m.fake}, args...)...)
+	return dynaHandoff(map[string]string{"HOME": m.home, "MAGI_SESSION_ID": "abc"}, append([]string{"runtime", "handoff", "--magi", m.fake}, args...)...)
 }
 
 // full is every argument the dispatcher gives, for issue 302 of repo demo.
@@ -149,11 +149,11 @@ func TestInMagiASuccessPrintsTheSameOneLineOfJSONAsTheDesktopAndAppendsTheDispat
 func TestTheRuntimeIsTheOneDynaRuntimeNameSaysMagiSessionVariableOrForcedName(t *testing.T) {
 	m := setupMagi(t)
 	t.Setenv("FAKE_MAGI_MODE", "")
-	forced := dyna(map[string]string{"HOME": m.home, "IDEA_LOOP_RUNTIME": "magi"}, append([]string{"runtime", "handoff", "--magi", m.fake}, m.full()...)...)
+	forced := dynaHandoff(map[string]string{"HOME": m.home, "IDEA_LOOP_RUNTIME": "magi"}, append([]string{"runtime", "handoff", "--magi", m.fake}, m.full()...)...)
 	if forced.code != 0 || !strings.Contains(forced.stdout, "magi-abc123") {
 		t.Fatalf("forced by IDEA_LOOP_RUNTIME: %+v", forced)
 	}
-	bogus := dyna(map[string]string{"HOME": m.home, "IDEA_LOOP_RUNTIME": "nope"}, append([]string{"runtime", "handoff", "--magi", m.fake}, m.full()...)...)
+	bogus := dynaHandoff(map[string]string{"HOME": m.home, "IDEA_LOOP_RUNTIME": "nope"}, append([]string{"runtime", "handoff", "--magi", m.fake}, m.full()...)...)
 	if bogus.code != 1 || !strings.HasPrefix(bogus.stderr, "交出失败：") || !strings.Contains(bogus.stderr, "IDEA_LOOP_RUNTIME") {
 		t.Fatalf("an unknown name is refused: %+v", bogus)
 	}
@@ -164,7 +164,7 @@ func TestTheRuntimeIsTheOneDynaRuntimeNameSaysMagiSessionVariableOrForcedName(t 
 
 func TestTheMagiBinaryCanComeFromTheEnvironmentInsteadOfTheFlag(t *testing.T) {
 	m := setupMagi(t)
-	r := dyna(map[string]string{"HOME": m.home, "MAGI_SESSION_ID": "abc", "IDEA_LOOP_HANDOFF_MAGI": m.fake}, append([]string{"runtime", "handoff"}, m.full()...)...)
+	r := dynaHandoff(map[string]string{"HOME": m.home, "MAGI_SESSION_ID": "abc", "IDEA_LOOP_HANDOFF_MAGI": m.fake}, append([]string{"runtime", "handoff"}, m.full()...)...)
 	if r.code != 0 || !strings.Contains(r.stdout, "magi-abc123") {
 		t.Fatal(r.all())
 	}
@@ -232,7 +232,7 @@ func TestInMagiAFailedStartExitsOneSaysWhyAndWritesNoRecord(t *testing.T) {
 			t.Errorf("%s: %+v", mode, r)
 		}
 	}
-	missing := dyna(map[string]string{"HOME": m.home, "MAGI_SESSION_ID": "abc"}, append([]string{"runtime", "handoff", "--magi", filepath.Join(m.root, "no-such-magi")}, m.full()...)...)
+	missing := dynaHandoff(map[string]string{"HOME": m.home, "MAGI_SESSION_ID": "abc"}, append([]string{"runtime", "handoff", "--magi", filepath.Join(m.root, "no-such-magi")}, m.full()...)...)
 	if missing.code != 1 || !strings.HasPrefix(missing.stderr, "交出失败：") {
 		t.Errorf("a magi that is not there: %+v", missing)
 	}
@@ -266,7 +266,7 @@ func TestInTheDesktopTheMagiOnlyFlagsAreAcceptedAndIgnored(t *testing.T) {
 	h := setupHandoff(t)
 	m := setupMagi(t)
 	t.Setenv("FAKE_MODE", "")
-	r := dyna(map[string]string{"HOME": h.home, "IDEA_LOOP_HANDOFF_MAGI": m.fake}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree,
+	r := dynaHandoff(map[string]string{"HOME": h.home, "IDEA_LOOP_HANDOFF_MAGI": m.fake}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree,
 		"--cap", "magi", "--prompt-file", filepath.Join(h.root, "nowhere.md"), "--issue", "302", "--repo", "demo", "--period", "todo", "--dir", h.dir)
 	if r.code != 0 || !strings.Contains(r.stdout, `"desktopSessionId":"local_fake-session-123"`) {
 		t.Fatal(r.all())

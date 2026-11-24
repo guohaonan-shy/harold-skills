@@ -74,7 +74,7 @@ func setupHandoff(t *testing.T) handoffEnv {
 func (h handoffEnv) run(t *testing.T, mode string, args ...string) outcome {
 	t.Helper()
 	t.Setenv("FAKE_MODE", mode)
-	return dyna(map[string]string{"HOME": h.home}, append([]string{"runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree}, args...)...)
+	return dynaHandoff(map[string]string{"HOME": h.home}, append([]string{"runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree}, args...)...)
 }
 
 type call struct{ args, cwd string }
@@ -145,7 +145,7 @@ func TestBothClaudeRunsHappenInTheGivenWorktreeWithTheReadyPromptOnly(t *testing
 
 func TestTheClaudePathCanComeFromDESKTOP_HANDOFF_CLAUDEInsteadOfTheFlag(t *testing.T) {
 	h := setupHandoff(t)
-	r := dyna(map[string]string{"HOME": h.home, "DESKTOP_HANDOFF_CLAUDE": h.fake}, "runtime", "handoff", "--worktree", h.worktree)
+	r := dynaHandoff(map[string]string{"HOME": h.home, "DESKTOP_HANDOFF_CLAUDE": h.fake}, "runtime", "handoff", "--worktree", h.worktree)
 	if r.code != 0 {
 		t.Fatal(r.all())
 	}
@@ -191,7 +191,7 @@ func TestClaudeDesktopExitingNonZeroFailsWithTheExitCodeAndWhatItSaidAndWritesNo
 
 func TestAClaudeThatCannotBeStartedFailsAtTheFirstStepNamingTheCommand(t *testing.T) {
 	h := setupHandoff(t)
-	r := dyna(map[string]string{"HOME": h.home}, "runtime", "handoff", "--claude", filepath.Join(h.root, "no-such-claude"), "--worktree", h.worktree)
+	r := dynaHandoff(map[string]string{"HOME": h.home}, "runtime", "handoff", "--claude", filepath.Join(h.root, "no-such-claude"), "--worktree", h.worktree)
 	if r.code != 1 || !strings.Contains(r.stderr, "交出失败：claude -p 没跑成") {
 		t.Fatal(r.all())
 	}
@@ -319,7 +319,7 @@ func TestTheRecordsDirectoryDefaultsUnderHOMEAndIDEA_LOOP_DISPATCH_DIROverridesI
 	}
 	elsewhere := filepath.Join(h.root, "elsewhere")
 	t.Setenv("FAKE_MODE", "")
-	r := dyna(map[string]string{"HOME": h.home, "IDEA_LOOP_DISPATCH_DIR": elsewhere}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree, "--issue", "6", "--repo", "demo", "--period", "day")
+	r := dynaHandoff(map[string]string{"HOME": h.home, "IDEA_LOOP_DISPATCH_DIR": elsewhere}, "runtime", "handoff", "--claude", h.fake, "--worktree", h.worktree, "--issue", "6", "--repo", "demo", "--period", "day")
 	if r.code != 0 {
 		t.Fatal(r.all())
 	}

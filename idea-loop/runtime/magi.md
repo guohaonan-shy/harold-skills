@@ -1,5 +1,7 @@
 # magi
 
+标记：`MAGI_SESSION_ID`
+
 magi（管理 Claude Code / Codex 会话的工具）里的做法。magi 的能力是 shell 命令 `magi …`，不是 MCP 工具；命令的准确写法以 `magi help <主题>` 为准。**子 agent 看不到 magi 的说明**：派它们时把要用的命令原样写进 prompt。小节名与能力清单一一对应。
 
 ## 定时任务
