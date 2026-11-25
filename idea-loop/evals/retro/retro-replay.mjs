@@ -395,10 +395,23 @@ export function projectName(repo) {
 /** A name that does not tell a run it is being tested (nothing about retro, replay, before, after, eval and the like in it). */
 const isPlainName = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n ?? '') && !revealingWordsIn(n).length && !/retro|replay|before|after/i.test(n);
 
+/**
+ * The `<tmp dir>/<random>` dirs this process made. The `finally` blocks remove each one when its run is over; an
+ * interrupt (Ctrl-C, a TERM from a timeout, the terminal closing) skips them, so these go on the way out instead.
+ */
+const madeTmp = new Set();
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+  process.once(sig, () => {
+    for (const d of madeTmp) rmSync(d, { recursive: true, force: true });
+    process.exit(128 + ({ SIGHUP: 1, SIGINT: 2, SIGTERM: 15 })[sig]);
+  });
+}
+
 /** A fresh `<tmp dir>/<random>/<name>` for a run to work in; the random part keeps the two runs of a case apart. */
 function workDirFor(name) {
   const dir = join(tmpdir(), randomBytes(8).toString('hex'), name);
   mkdirSync(dir, { recursive: true });
+  madeTmp.add(dirname(dir));
   return dir;
 }
 

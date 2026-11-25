@@ -21,7 +21,7 @@ argument-hint: "<issue 号>"
 
 ## 开场
 
-1. **自己的 worktree**：你应该在一个从主分支开出的 worktree 里，不跟别的会话共用；不是就停下告诉人。
+1. **自己的 worktree**：开在项目 clone 里（调度这样开）就自己建：`dyna worktree add <号>-<slug> --repo <clone> --base <主分支>`（backlog、triage 加 `--detach`；`show` 给了分支加 `--branch <它>`），照『会话管理』的「进自己的 worktree」进去。已在只给你用的 worktree 里就用它；跟别的会话共用的，停下告诉人。
 2. **认领**：读 issue 全文和评论（`dyna issues read <docs> $ARGUMENTS`；读哪条评论接上次，照 `idea-loop:issues` 的「评论」），`dyna issues show <docs> $ARGUMENTS` 看状态、PR、spec、分支（triage 阶段 `branch: null` 是正常的）。按状态走：
    - backlog：人在接手它。`dyna issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`set triage` 被拒），`set todo` 再 `set in-progress`，走 todo 会话。
    - triage：人在接着评估，走 triage 会话。
@@ -60,8 +60,9 @@ home 里已有 spec 就读它；没有就用 Skill 工具调 `idea-loop:to-spec`
 issue 关了（done、canceled），triage 做完翻了 todo，翻回了 triage，或先放着之后：
 
 1. 用 Skill 工具调 `idea-loop:retro`：人批完候选、批了的 issue 开完、决定记录提交到 home 之后，才往下走。
-2. 工作区里没有要留的改动；有就先问人。
-3. 用『会话管理』的「会话收尾」收尾自己，reason 写「#<号> done」这类一句话。
+2. 工作区里没有要留的改动、提交都已推上去；没推的先 `dyna git push`，要留的改动先问人。
+3. **收回资源**：`dyna worktree remove <自己的 worktree> --repo <clone>`，先停 worktree 里的进程，再删 worktree（连 `.tmp/`）和本地分支。被拒就回第 2 步。
+4. 用『会话管理』的「会话收尾」收尾自己，reason 写「#<号> done」这类一句话。
 
 ## 边界
 

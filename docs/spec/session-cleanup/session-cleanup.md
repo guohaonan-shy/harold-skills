@@ -69,7 +69,8 @@ issue 会话 开场 ──dyna worktree add──▶ worktree（新：会话自�
 
 ### 本仓库
 
-- `REVIEW.md` 的「单个测试文件」「全量测试」改成 `dyna test exec -- node --test …`；retro 回放的跑法同样套 `dyna test exec --`（`AGENTS.md` §5 提到 runner 处不动命令，runner 的 README/用法处改）。
+- `REVIEW.md` 的「单个测试文件」「全量测试」改成 `dyna test exec -- node --test …`。
+- retro 回放（`idea-loop/evals/retro/retro-replay.mjs`）不套 `dyna test exec`：skill 里调它的是固定路径 `node ~/.idea-loop/bin/retro-replay.mjs`，人已为这条加了允许规则，套一层要人重加规则。改成它自己在收到 INT/TERM/HUP 时删掉自己建的临时目录（正常结束时 `finally` 已经删）。
 
 同一行为的其他入口：分拣、SEO 扫描、dreaming、implement 执行方、上线自查已经各自用 `dyna worktree add/remove` 收自己的，不动；`remove` 停进程对它们同样生效。人手动开的桌面端会话（worktree 由桌面端建）收尾时同样先 `remove`，桌面端归档再清时已经没东西可清。
 

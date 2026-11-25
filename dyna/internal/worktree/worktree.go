@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -228,11 +229,70 @@ func add(d Deps, o addOpts) error {
 		}
 		gargs = []string{"worktree", "add", "-q", path, "-b", branch, ref}
 	}
-	if _, err := gitrun.Run(main, gargs...); err != nil {
+	if err := addRetryingLocks(main, path, branch, gargs); err != nil {
 		return err
 	}
 	fmt.Fprintln(d.out(), path)
 	return nil
+}
+
+// lockWait and lockTries bound how long add waits on a git lock another session holds.
+var (
+	lockWait  = time.Second
+	lockTries = 5
+)
+
+func isLockErr(err error) bool {
+	m := err.Error()
+	return strings.Contains(m, ".lock") || strings.Contains(m, "could not lock")
+}
+
+// addRetryingLocks runs the worktree add, waiting out a lock file another session holds: several sessions opened
+// in one clone make their worktrees at about the same moment, and git takes `.git/config.lock` and the like. A
+// failed try can leave part of the work done (the branch made, its upstream not written), so each retry first
+// looks at what is already there and does only the rest.
+func addRetryingLocks(main, path, branch string, gargs []string) error {
+	tracking := strings.Contains(strings.Join(gargs, " "), "--track")
+	upstreamDone := !tracking
+	var err error
+	for i := 0; i < lockTries; i++ {
+		if i > 0 {
+			time.Sleep(lockWait)
+			all, lerr := listEntries(main)
+			_, _, made := findEntry(all, path)
+			switch {
+			case lerr != nil:
+			case made && upstreamDone:
+				return nil
+			case made:
+				gargs = nil
+			case branch != "" && refExists(main, "refs/heads/"+branch):
+				gargs = []string{"worktree", "add", "-q", path, branch}
+			}
+		}
+		if gargs != nil {
+			if _, err = gitrun.Run(main, gargs...); err != nil {
+				if !isLockErr(err) {
+					return err
+				}
+				continue
+			}
+			if strings.Contains(strings.Join(gargs, " "), "--track") {
+				upstreamDone = true // git wrote it itself
+			}
+		}
+		if !upstreamDone {
+			if _, err = gitrun.Run(main, "branch", "--set-upstream-to=origin/"+branch, branch); err != nil {
+				if !isLockErr(err) {
+					return err
+				}
+				gargs = nil
+				continue
+			}
+		}
+		return nil
+	}
+	return err
 }
 
 func describe(detach bool, branch string) string {
@@ -308,7 +368,7 @@ func listCommand(d Deps) *cobra.Command {
 // ---------- remove ----------
 
 func removeCommand(d Deps) *cobra.Command {
-	c := leaf("remove <路径>", "删 worktree：先解锁、再删 worktree、再删它的分支（--keep-branch 保留）；里面有没提交的改动就拒绝（--force 才删）",
+	c := leaf("remove <路径>", "删 worktree：先停掉当前目录在里面的进程（调用者自己和它的上级除外）、解锁、再删 worktree、再删它的分支（--keep-branch 保留）；里面有没提交的改动就拒绝（--force 才删）",
 		registry.CallerSession, "dyna worktree list --repo <主 checkout>", func(cmd *cobra.Command, args []string) error {
 			f := cmd.Flags()
 			repo, _ := f.GetString("repo")
@@ -364,6 +424,10 @@ func remove(d Deps, repo, path string, keepBranch, force bool) error {
 		}
 	}
 
+	// What the session left running in the worktree (servers, test runs, agents) goes before the worktree does.
+	if err := stopProcsInside(d.out(), e.Path); err != nil {
+		return err
+	}
 	if e.Locked {
 		if _, err := gitrun.Run(main, "worktree", "unlock", e.Path); err != nil {
 			return err
@@ -381,6 +445,8 @@ func remove(d Deps, repo, path string, keepBranch, force bool) error {
 		}
 		return err
 	}
+	// Worktrees that lived inside it (a live check's build under .tmp/) are gone with it; drop their registrations.
+	_, _ = gitrun.Run(main, "worktree", "prune")
 	fmt.Fprintf(d.out(), "已删除 worktree %s\n", e.Path)
 	switch {
 	case e.Branch == "":
