@@ -21,7 +21,7 @@ argument-hint: "<issue 号>"
 
 ## 开场
 
-1. **自己的 worktree**：开在项目 clone 里（调度这样开）就自己建：`dyna worktree add <号>-<slug> --repo <clone> --base <主分支>`（backlog、triage 加 `--detach`；`show` 给了分支加 `--branch <它>`），照『会话管理』的「进自己的 worktree」进去。已在只给你用的 worktree 里就用它；跟别的会话共用的，停下告诉人。
+1. **在哪**：开在项目 clone 里（调度这样开）的，第 4 步自己建 worktree；已在只给你用的 worktree 里就用它；跟别的会话共用的，停下告诉人。
 2. **认领**：读 issue 全文和评论（`dyna issues read <docs> $ARGUMENTS`；读哪条评论接上次，照 `idea-loop:issues` 的「评论」），`dyna issues show <docs> $ARGUMENTS` 看状态、PR、spec、分支（triage 阶段 `branch: null` 是正常的）。按状态走：
    - backlog：人在接手它。`dyna issues set <docs> triage $ARGUMENTS`，走 triage 会话。项目跳过 triage 的（`set triage` 被拒），`set todo` 再 `set in-progress`，走 todo 会话。
    - triage：人在接着评估，走 triage 会话。
@@ -29,9 +29,9 @@ argument-hint: "<issue 号>"
    - in-progress、in-review：别的会话已经在做。你是调度开出来的，告诉人后照「收尾」收尾；人直接调的，是在接手没有会话的 issue，不翻状态，按 PR、spec、工单接上；in-review 里人批了要改的，先 `set in-progress`。
    - 已关闭：停下说明。
 3. **归位**：用『会话管理』的「分组」把自己归到认领后状态对应的分组，标题改成「<仓库名>#<号> <标题>」；没有分组就跳过。
-4. **不切分支**：triage 会话不切分支，spec、设计、工单提交到 home（`idea-loop:wiki-conventions` 的「知识库落地」），不进任何分支；todo 会话第一次要写代码时才在「实现」里接分支。
+4. **自己的 worktree**（开在 clone 里才做）：`dyna worktree add <号>-<slug> --repo <clone> --base <主分支>`，照『会话管理』的「进自己的 worktree」进去。triage 会话不切分支（加 `--detach`），spec、设计、工单提交到 home（`idea-loop:wiki-conventions` 的「知识库落地」）；todo 会话 `show` 给了分支加 `--branch <它>`。
 
-完成条件：会话在当前路的分组里（没有分组就免），issue 状态是这条路认领成的那个。
+完成条件：会话在自己的 worktree 里、在当前路的分组里（没有分组就免），issue 状态是这条路认领成的那个。
 
 ## triage 会话
 
@@ -47,7 +47,7 @@ home 里已有 spec 就读它；没有就用 Skill 工具调 `idea-loop:to-spec`
 
 顺序是接分支 → 开 draft PR → 切工单 → 做，让 issue 从第一次写代码起就挂着 PR。
 
-1. **接分支，开 draft PR**：spec 已提交到 home（上一步保证）。第一次要写代码，先把 origin 取到最新，再让工作区站在分支 `issue/<号>-<slug>` 上：当前分支已经是它（调度建 worktree 时开好的）就接着做；`show` 返回了分支就接上它；都没有就从 `origin/<主分支>` 新建，`<slug>` 取标题的几个词。新建的分支先 `dyna git commit --empty -m "chore: 开工 #<号>"` 提一个空提交（分支比主分支没有新提交时开不了 PR），再 `dyna git push`。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」开 PR（已有就跳过）。
+1. **接分支，开 draft PR**：spec 已提交到 home（上一步保证）。第一次要写代码，先把 origin 取到最新，再让工作区站在分支 `issue/<号>-<slug>` 上：当前分支已经是它（开场建 worktree 时开好的）就接着做；`show` 返回了分支就接上它；都没有就从 `origin/<主分支>` 新建，`<slug>` 取标题的几个词。新建的分支先 `dyna git commit --empty -m "chore: 开工 #<号>"` 提一个空提交（分支比主分支没有新提交时开不了 PR），再 `dyna git push`。然后用 Skill 工具调 `idea-loop:pr`，照它的「开 draft PR」开 PR（已有就跳过）。
 2. **切工单**：spec 的 `<docs>/spec/<slug>/tickets/` 下已经有工单就跳过切票；没有就用 Skill 工具调 `idea-loop:to-ticket` 切。
 3. **做**：用 Skill 工具调 `idea-loop:implement` 把工单做完；implement 全部落地后用 Skill 工具调 `idea-loop:pr-review`。要人拍板的就停下等人。人说合并时由 pr-review 合并；PR 合并后 issue 应已是 done，不是就 `dyna issues set <docs> done $ARGUMENTS`，然后去「收尾」。Linear 项目的 done 由集成推，核一次，不是就提醒人。转 ready、进 in-review 在这两个 skill 里。
 

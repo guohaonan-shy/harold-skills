@@ -85,6 +85,7 @@ issue 会话 开场 ──dyna worktree add──▶ worktree（新：会话自�
 
 - **进程按当前目录认，不登记**：会话起的服务、测试、Codex 进程，当前目录都在 worktree 里；按目录认不用会话自己记账，崩溃后也认得出。依据：Harold 定的「会话里建的资源都在会话关闭、归档时回收」；#486 让 Codex 审查改成一次性进程，是从源头少起，这里只在收尾时兜，两者不重叠。人自己在那个 worktree 里开的终端也会被停，`remove` 打印出来，接受。
 - **中断、崩溃留下的 worktree 不做自动兜底**：问题 1 的 44 个都是正常收尾路径漏的，没有找到会话崩溃后留下 worktree 的实例；记成已知限制，残留可用 `dyna worktree list` 看、`remove` 删。测试的临时目录有真实的中断路径（Ctrl-C、超时 KILL），所以 `test exec` 开始时补删。
+- **能力模板多一项，别的机器的说明怎么办**：`dyna runtime check` 要求说明里有模板的每一项（`dyna/internal/runtime/check.go`，缺项退出 1）。本机 `~/home/runtime/claude-desktop.md` 已补；插件 0.2.0 还没装到别的机器，那里的说明（如公司虚拟机的 magi）装上后由 setup 照新模板生成，自然带这一项，不另补。
 - **命令名 `dyna test exec`**：放在已有的 `test` 模块下，跟 `test run` 并列；不是术语表里的词。
 - **分支删不删**：`remove` 默认删本地分支（已有行为）；issue-session 只在提交都推上去之后调它，远端分支和 PR 不受影响。
 
