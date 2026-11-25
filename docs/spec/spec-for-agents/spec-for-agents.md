@@ -41,7 +41,7 @@ spec 只给下游 agent（切工单、探路、实现、review）读，照 Matt 
 1. 七节都在、按上面的顺序（「杠杆诊断」可插在任意两节之间）。
 2. frontmatter 有 `changes_agent_docs: true` 的，要有标题为「杠杆诊断」的一节（`##` 或 `###`）。
 
-评测：`idea-loop/evals/to-spec/` 下 5 个标注样本，分两组（Harold 2026-11-24）。
+评测：`idea-loop/evals/to-spec/` 下 4 个标注样本，分两组（Harold 2026-11-24）。
 
 - **样式组**：历史上调 to-spec 的现场，重放看产出合不合新定义（七节、没有给人看的图和判词、该有「杠杆诊断」的有）。
 - **好用组**：下游 agent 因 spec 有错有漏而返工的现场，看新 spec 还会不会让它返工。
@@ -68,7 +68,7 @@ spec 只给下游 agent（切工单、探路、实现、review）读，照 Matt 
 
 评测
 
-1. 作为维护 to-spec 的人，我想要改了 to-spec 就能对着 5 个标注样本改前、改后各跑一遍，以便看出 spec 样式和对下游的可用性有没有变好。
+1. 作为维护 to-spec 的人，我想要改了 to-spec 就能对着 4 个标注样本改前、改后各跑一遍，以便看出 spec 样式和对下游的可用性有没有变好。
 
 ## 实现决策
 
@@ -82,7 +82,7 @@ spec 只给下游 agent（切工单、探路、实现、review）读，照 Matt 
 - **evidence 组两个样本的停点**：`spec-option-goal-figure`（#65）、`example-from-real-material`（#68）的题问「spec 里要人定的那道待定题…」，改问「交 spec 时会话里摆的那道题…」，`stop_at` 改成「交 spec 的那段话写完」；题的原话不变。依据：题对的是人当时读到的东西，现在人读的是会话。
 - **`dyna`**：`spec check` 加两条结构规则和 `--hook`（照 `spec skill-lint --hook`：PostToolUse 事件从标准输入读，不在范围内或干净时静默，有问题退出码 2、报错写 stderr，报错写缺什么和下一步「照 `idea-loop:to-spec` 的模板补」）；`hooks.json` 的 PostToolUse `Write|Edit` 加一行。删 `Verdicts`、`AllAbsent` 及其测试。15 份存量 spec 七节齐、顺序对（已查），全量跑不会多报；存量不迁移。升 `dyna/internal/version/version.go` 一档（合入时取集成分支上的下一档）。
 - **「杠杆诊断」只在写 spec 时核**：Harold 2026-11-24「先只在to-spec加」；review 时不按实际改动兜底。已知限制：to-spec 漏写 `changes_agent_docs` 时漏检。
-- **标注样本**：加进仓库 `AGENTS.md` §5 已有的「标注样本」一条（原文点名「#451（to-spec）……往这一条里加自己的一组（`idea-loop/evals/to-spec/`）……不另写例外」），格式与 runner 同 evidence 组（`case.json` + `sample.md` + `annotations.md`，`retro-replay.mjs --cases-root idea-loop/evals/to-spec`）。五个现场：
+- **标注样本**：加进仓库 `AGENTS.md` §5 已有的「标注样本」一条（原文点名「#451（to-spec）……往这一条里加自己的一组（`idea-loop/evals/to-spec/`）……不另写例外」），格式与 runner 同 evidence 组（`case.json` + `sample.md` + `annotations.md`，`retro-replay.mjs --cases-root idea-loop/evals/to-spec`）。五个现场（后删掉一个，剩四个，见 `guard-four-covered` 一行）：
   - 样式组 `skill-change-has-diagnosis`：#438 起草 evidence-forms（`957553fe` 之前），改了 skill，题：「有没有『杠杆诊断』、frontmatter 有没有 `changes_agent_docs: true`？」
   - 样式组 `ui-spec-shape`：#65 起草设计档案滚动段（`1444794` 起，输入同 evidence 组的 `spec-option-goal-figure`），碰 UI，题：「有没有『前端交互』，且正文没有给人看的配图和判词？」
   - 样式组 `bugfix-spec-shape`：#398 起草 dispatch-triage-per-round（`32e23d72` 之前），只修问题，题：「七节齐、期望行为编号对得上问题陈述，且没有复现图和『根因』小节？」
@@ -96,7 +96,7 @@ spec 只给下游 agent（切工单、探路、实现、review）读，照 Matt 
 
 - **to-spec SKILL.md**（调用方：issue-session 起草、seo-brief、人直接调；每次读全文）。信息层级：读者从人改成下游 agent，模板每节只写「给下游什么」；剪枝：删判词、复现图、时序图、story 树、后端 / 前端内部；步骤：第 5 步交 spec 的那段话写成一步，完成条件「会话里有现状、目标、要你定，还剩的标记都点了名」。验证：样式组三个样本（回放：`skill-change-has-diagnosis`、`ui-spec-shape`、`bugfix-spec-shape`）；结构部分另有检查 `dyna spec check`，先在 `evidence-forms` 上见红（它改了 skill、没有「杠杆诊断」，补上 `changes_agent_docs: true` 后报错）。
 - **to-spec 的 `references/agent-docs.md`**（只在改 agent 文档时读）。步骤：多一步写 frontmatter 标记。验证：检查，`dyna spec check` 的测试钉住有标记没「杠杆诊断」退出 2。
-- **issue-session 的 `references/draft-spec.md` 与正文 triage 第 2 步**（triage 会话每次起草读）。剪枝：删「结论行」；上下文指针：交给人的那段话指到 to-spec 第 5 步，不复述。验证：好用组两个样本（回放：`one-stop-point`、`guard-four-covered`）；文档测试钉住 draft-spec 里没有「结论行」、triage 第 2 步指到 to-spec。
+- **issue-session 的 `references/draft-spec.md` 与正文 triage 第 2 步**（triage 会话每次起草读）。剪枝：删「结论行」；上下文指针：交给人的那段话指到 to-spec 第 5 步，不复述。验证：好用组样本（回放：`one-stop-point`；原有的 `guard-four-covered` 已删）；文档测试钉住 draft-spec 里没有「结论行」、triage 第 2 步指到 to-spec。
 - **home 固定文案 `home-rules.md`「已按规则处理」一句**（每个会话开场注入）。只改交付物名单。验证：不改行为，「已按规则处理」本来就在人读的地方写，名单换成人现在读的那几处。
 - **evidence 的 description 与两个样本的停点**。只改说法和题的对象。验证：不改行为；样本的题从人原话写出，原话不变。
 
@@ -114,7 +114,7 @@ spec 只给下游 agent（切工单、探路、实现、review）读，照 Matt 
   3. 前置：写到 `docs/raw/` 下的文件、写到 `docs/spec/<slug>/tickets/` 下的工单。步骤：同上。期望：都静默退出 0。覆盖：样式与检查 2。
   4. 前置：本分支的 `docs/`。步骤：`dyna spec check docs`。期望：15 份存量和本 spec 都不报结构问题。覆盖：样式与检查 1。
   5. 前置：改后的插件文档。步骤：文档测试。期望：to-spec 模板七节、没有「判词」「时序图」「story 树」「根因」的要求，第 5 步有现状 → 目标 → 要你定；三份 references 已删；draft-spec 没有「结论行」。覆盖：样式与检查 3、人读会话 1、2。
-  6. 前置：`idea-loop/evals/to-spec/` 五个样本。步骤：`retro-replay.mjs --cases-root idea-loop/evals/to-spec`，改前用集成分支的插件、改后用本分支。期望：五个都跑出判定，人在各自的 `annotations.md` 标注；`AGENTS.md` §5 的检查（`scripts/root-agents-annotated-samples.test.mjs`）认这一组。覆盖：评测 1。
+  6. 前置：`idea-loop/evals/to-spec/` 四个样本。步骤：`retro-replay.mjs --cases-root idea-loop/evals/to-spec`，改前用集成分支的插件、改后用本分支。期望：四个都跑出判定，人在各自的 `annotations.md` 标注；`AGENTS.md` §5 的检查（`scripts/root-agents-annotated-samples.test.mjs`）认这一组。覆盖：评测 1。
 - **照着谁写**：`--hook` 照 `spec skill-lint --hook` 和它的测试；样本照 `idea-loop/evals/evidence/cases/`；文档测试照 `idea-loop/scripts/to-spec-by-deliverable-doc.test.mjs`（它钉着被删的 references，要改）。
 
 ## Out of scope

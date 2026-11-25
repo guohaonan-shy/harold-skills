@@ -23,4 +23,4 @@ run-id 是 runner 打印的 run dir 的最后一段（形如 20261022T101500）�
     - 一边：一处写「会话一路做到 PR 转 ready、review 跑完，停在等人说合并」，待定方案 A 又写「走到要起名就停……会话停在 spec 阶段……PR 都没开」，夜里停在哪有两种说法；
     - 另一边：「每个会话一路做到 PR 开出、review 跑完，停在等人说合并」，「待定：无」，只有一种说法。
   - 所以这一题对 to-spec 一次生成的运气很敏感（是不是撞上「要起术语名」这类待定）。改后那一遍要看稳不稳：建议同一个改后插件多跑几遍再看。花费 $6.88。
-- 改后：待跑（等 #451 工单 02 落地）。命令：`retro-replay.mjs --case one-stop-point --cases-root idea-loop/evals/to-spec --worktree <本分支> --base <集成分支> --before-dyna <本地编的 dyna> --after-dyna <本地编的 dyna> --out <.tmp 下的目录>`（要用本地编的 dyna：`~/.idea-loop/bin/dyna` 太旧，`dyna home config apply --only rules` 会报错；编法见 `DEVELOPMENT.md`）。
+- 2026-11-25 改后（编排者当场跑），run 20261125T084849：改前=否（「做到 review 跑完」和「第一轮 review 后停」两种说法），改后=是（全文一种说法），过。花费 $5.97。同一份旧插件预跑时两遍答案不同，这次只算一次观察。
