@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -117,6 +118,12 @@ func sweepRuns(base string, stderr io.Writer) {
 		if err != nil && !os.IsNotExist(err) {
 			continue
 		}
+		// No pid yet may be a run that has just made its directory and is writing it: leave the young ones.
+		if err != nil {
+			if info, ierr := e.Info(); ierr != nil || time.Since(info.ModTime()) < time.Minute {
+				continue
+			}
+		}
 		if os.RemoveAll(p) == nil {
 			n++
 		}
@@ -188,6 +195,7 @@ func inRun(d Deps, cmd *cobra.Command, dir, name string, args []string) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
+	args = specReporterOnATerminal(cmd.OutOrStdout(), name, args)
 	code, err := d.run()(ctx, dir, name, args, r.env(os.Environ()), cmd.OutOrStdout(), cmd.ErrOrStderr())
 	if err != nil {
 		return startErr{err}
@@ -196,4 +204,26 @@ func inRun(d Deps, cmd *cobra.Command, dir, name string, args []string) error {
 		return &nexterr.Exit{Code: code}
 	}
 	return nil
+}
+
+// specReporterOnATerminal keeps `node --test` looking the way it does when run by hand: the child writes into a pipe
+// here, not the terminal, and node then picks the TAP reporter. When dyna's own output is a terminal and no reporter
+// was asked for, ask for spec.
+func specReporterOnATerminal(out io.Writer, name string, args []string) []string {
+	if filepath.Base(name) != "node" || len(args) == 0 || args[0] != "--test" {
+		return args
+	}
+	for _, a := range args {
+		if strings.HasPrefix(a, "--test-reporter") {
+			return args
+		}
+	}
+	f, ok := out.(*os.File)
+	if !ok {
+		return args
+	}
+	if st, err := f.Stat(); err != nil || st.Mode()&os.ModeCharDevice == 0 {
+		return args
+	}
+	return append([]string{"--test", "--test-reporter=spec"}, args[1:]...)
 }

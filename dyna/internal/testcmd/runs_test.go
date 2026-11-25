@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/guohaonan-shy/harold-skills/dyna/internal/nexterr"
 )
@@ -82,6 +83,11 @@ func TestExecFirstRemovesWhatKilledRunsLeftAndKeepsLiveOnes(t *testing.T) {
 	put(t, filepath.Join(dead, "tmp", "big"), "x")
 	put(t, filepath.Join(live, "pid"), strconv.Itoa(os.Getpid())+"\n")
 	put(t, filepath.Join(base, "run-nopid", "tmp", "x"), "x") // killed before it wrote its pid
+	old := time.Now().Add(-2 * time.Minute)
+	if err := os.Chtimes(filepath.Join(base, "run-nopid"), old, old); err != nil {
+		t.Fatal(err)
+	}
+	put(t, filepath.Join(base, "run-starting", "tmp", "x"), "x") // another run that is writing its pid right now
 
 	_, errs, err := execCmd(Deps{Cwd: t.TempDir()}, "exec", "--", "true")
 	if err != nil {
@@ -95,6 +101,9 @@ func TestExecFirstRemovesWhatKilledRunsLeftAndKeepsLiveOnes(t *testing.T) {
 	}
 	if _, err := os.Stat(live); err != nil {
 		t.Fatal("a run that is still going is left alone")
+	}
+	if _, err := os.Stat(filepath.Join(base, "run-starting")); err != nil {
+		t.Fatal("a run made a moment ago that has no pid yet is left alone")
 	}
 	if !strings.Contains(errs, "删掉了 2 个") {
 		t.Fatalf("says what it cleared, got %q", errs)
@@ -138,5 +147,35 @@ func TestRunGoesThroughARunDirectoryToo(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("node gets the run's TMPDIR: %v", gotEnv)
+	}
+}
+
+func TestNodeTestOnATerminalKeepsTheSpecReporter(t *testing.T) {
+	tty, err := os.OpenFile("/dev/tty", os.O_WRONLY, 0)
+	if err != nil {
+		t.Skip("no terminal here")
+	}
+	defer tty.Close()
+	got := specReporterOnATerminal(tty, "node", []string{"--test", "a.test.mjs"})
+	if strings.Join(got, " ") != "--test --test-reporter=spec a.test.mjs" {
+		t.Fatal(got)
+	}
+	if got := specReporterOnATerminal(tty, "node", []string{"--test", "--test-reporter=tap"}); len(got) != 2 {
+		t.Fatal("a reporter asked for is kept", got)
+	}
+}
+
+func TestNodeTestIntoAPipeIsLeftAlone(t *testing.T) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	defer w.Close()
+	if got := specReporterOnATerminal(w, "node", []string{"--test", "a.test.mjs"}); len(got) != 2 {
+		t.Fatal(got)
+	}
+	if got := specReporterOnATerminal(os.Stdout, "sh", []string{"-c", "x"}); len(got) != 2 {
+		t.Fatal(got)
 	}
 }

@@ -400,11 +400,14 @@ const isPlainName = (n) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(n ?? '') && !reve
  * interrupt (Ctrl-C, a TERM from a timeout, the terminal closing) skips them, so these go on the way out instead.
  */
 const madeTmp = new Set();
-for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
-  process.once(sig, () => {
-    for (const d of madeTmp) rmSync(d, { recursive: true, force: true });
-    process.exit(128 + ({ SIGHUP: 1, SIGINT: 2, SIGTERM: 15 })[sig]);
-  });
+/** Run as the command (not imported by a test): on an interrupt, remove what this process made, then end as the signal would. */
+function cleanUpOnInterrupt() {
+  for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+    process.once(sig, () => {
+      for (const d of madeTmp) rmSync(d, { recursive: true, force: true });
+      process.exit(128 + ({ SIGHUP: 1, SIGINT: 2, SIGTERM: 15 })[sig]);
+    });
+  }
 }
 
 /** A fresh `<tmp dir>/<random>/<name>` for a run to work in; the random part keeps the two runs of a case apart. */
@@ -992,5 +995,6 @@ export async function main(argv = process.argv.slice(2)) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  cleanUpOnInterrupt();
   process.exitCode = await main();
 }
