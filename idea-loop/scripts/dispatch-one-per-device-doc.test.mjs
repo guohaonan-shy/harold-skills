@@ -80,7 +80,7 @@ test('issue-dispatch: reads the table and the project list from dyna, in home, r
     assert.ok(dispatchFile.includes(word), `issue-dispatch must mention ${word}`);
   }
   assert.match(dispatch, /只在起调度时提交 `DISPATCH.md`/);
-  assert.match(dispatch, /只快进更新（拉不下来就跳过这个项目）和建 worktree/);
+  assert.match(dispatch, /只快进更新（拉不下来就跳过这个项目），不建 worktree/); // #450: the session makes its own
   assert.match(dispatch, /不切分支、不改文件/);
 });
 

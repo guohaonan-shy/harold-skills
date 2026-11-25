@@ -46,3 +46,19 @@ test('AGENTS.md has the deliberate exception for annotated samples, naming the e
   assert.match(section, /#451/);
   assert.match(section, /#452/);
 });
+
+const PR_GROUP = [
+  'harold-skills-387-decision-risk',
+  'harold-skills-432-length',
+  'tofelair-1072-frequency',
+  'tofelair-1136-reproduce',
+  'tofelair-1137-ui',
+];
+
+test('the exception names the pr group: where its five scenes are, and that the first three need --repo pointed at the target project', () => {
+  const start = agents.indexOf('**有意例外：`idea-loop` 的「标注样本」');
+  const section = agents.slice(start, agents.indexOf('### 6.', start));
+  assert.match(section, /idea-loop\/evals\/pr\/cases\//);
+  for (const name of PR_GROUP) assert.ok(section.includes(name), `the exception does not list the pr scene ${name}`);
+  assert.match(section, /--repo/);
+});

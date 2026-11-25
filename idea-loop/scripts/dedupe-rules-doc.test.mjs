@@ -33,13 +33,13 @@ test('the six SEO direction agents do not list the prompt lines: the template in
   }
 });
 
-test('the first-round stock-issue listing is written in pr\'s review report; pr-review only points at it', () => {
-  const report = read('skills', 'engineering', 'pr', 'references', 'review-report.md');
+test('the first-round stock-issue listing is written in pr-review\'s review report; SKILL.md only points at it', () => {
+  const report = read('skills', 'engineering', 'pr-review', 'references', 'review-report.md');
   const line = report.split('\n').find((l) => l.includes('第 1 轮 review 把实现期间开的存量 issue')) ?? '';
   assert.ok(line, 'the rule is in review-report.md');
   assert.match(line, /各次停下的「已按规则处理」带 issue 链接的行/);
   const prReview = body(read('skills', 'engineering', 'pr-review', 'SKILL.md'));
-  assert.match(prReview, /第 1 轮另列 implement 期间开的存量问题 issue，照 `idea-loop:pr` 的「Review 汇报」/);
+  assert.match(prReview, /第 1 轮另列 implement 期间开的存量问题 issue，照下面的「Review 汇报」/);
   assert.doesNotMatch(prReview, /带 issue 链接的行/, 'pr-review no longer says where the issue links are taken from');
 });
 

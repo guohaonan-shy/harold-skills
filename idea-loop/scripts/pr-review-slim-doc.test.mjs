@@ -137,7 +137,7 @@ test('前提 merges the latest base branch in before the CI line; merge.md point
 
 test('the round cap is written once: the round reference (run-a-round.md), report template and the other references do not repeat it', () => {
   const reviewer = readRef('PR_REVIEW_ROUND_REF', 'skills', 'engineering', 'pr-review', 'references', 'run-a-round.md');
-  const template = readRef('PR_REVIEW_REPORT_REF', 'skills', 'engineering', 'pr', 'references', 'review-report.md');
+  const template = readRef('PR_REVIEW_REPORT_REF', 'skills', 'engineering', 'pr-review', 'references', 'review-report.md');
   assert.doesNotMatch(reviewer, /跑满两轮|已跑满/, 'the round itself cannot know whether the loop stops after this round');
   assert.doesNotMatch(template, /跑满两轮|已跑满/, 'the report template must not carry the stop sentence');
   for (const f of ['design-change.md', 'merge.md', 'seo-auto-merge.md']) {

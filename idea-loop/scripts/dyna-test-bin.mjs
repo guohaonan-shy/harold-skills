@@ -2,12 +2,14 @@
  * A real `dyna` for the tests that need one: the two eval runners, the hook and launcher tests, and the tests of
  * skill text that ask the command line a question (the commands it knows, whether a skill's pointers resolve).
  *
- * Built from the repository's own `dyna/` the first time a test file asks, into a temp dir, and reused for the rest of
- * that file; pass the path as IDEA_LOOP_DYNA_BIN. Needs Go (`REVIEW.md` lists it for the command line's own tests too);
- * a missing Go fails the test with the reason, not silently.
+ * Under `dyna test exec` (how `REVIEW.md` runs the tests) the run has already built one and hands it over as
+ * DYNA_TEST_BIN: every test file uses that one. Run without it (a bare `node --test`), the repository's own `dyna/` is
+ * built the first time a test file asks, into a temp dir that goes when the process exits, and reused for the rest of
+ * that file. Pass the path on as IDEA_LOOP_DYNA_BIN. Needs Go (`REVIEW.md` lists it for the command line's own tests
+ * too); a missing Go fails the test with the reason, not silently.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, realpathSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +19,10 @@ let built = null;
 
 export function dynaBinary() {
   if (built) return built;
-  const out = join(realpathSync(mkdtempSync(join(tmpdir(), 'dyna-test-bin-'))), 'dyna');
+  if (process.env.DYNA_TEST_BIN) return (built = process.env.DYNA_TEST_BIN);
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'dyna-test-bin-')));
+  process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
+  const out = join(dir, 'dyna');
   const r = spawnSync('go', ['build', '-o', out, './cmd/dyna'], { cwd: dynaDir, encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`go build ./cmd/dyna failed (is Go installed?): ${r.stderr || r.error}`);
   built = out;

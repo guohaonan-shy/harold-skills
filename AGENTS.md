@@ -127,8 +127,9 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 - **runner**：复用 `idea-loop/evals/retro/retro-replay.mjs`，用 `--cases-root idea-loop/evals/<skill>` 指到这一组，不另写；改前用基准分支的插件，改后用本分支的插件，判定会话回答是/否题并引出处。
 - **人怎么推翻**：判定不对，或样本本身要改，记在样本旁的 `annotations.md`（推翻的写法跟回放一样），再 `--settle` 重判；人可以在那里写对这次产出的看法。
 - **什么时候跑**：改了这个 skill（正文、参考、调用它的地方讲它的那部分）就当场跑一遍；小用例当场跑，大用例在 PR 开出来之后照 `--run-large` 跑。
-- **第一组 evidence**：五个现场——`option-current-state-shown`、`spec-option-goal-figure`、`example-from-real-material`、`review-term-defined`、`review-current-state-verified`。#452（pr）往这一条里加自己的一组（`idea-loop/evals/pr/`），不另写例外。
+- **第一组 evidence**：五个现场——`option-current-state-shown`、`spec-option-goal-figure`、`example-from-real-material`、`review-term-defined`、`review-current-state-verified`。#451（to-spec）、#452（pr）各在下面加自己的一组，不另写例外。
 - **第二组 to-spec**（#451，`idea-loop/evals/to-spec/cases/`）：四个现场，分两类。样式组看新起草的 spec 合不合 #451 的新定义（七节、没有给人看的配图和判词、该有「杠杆诊断」的有），题从 spec 的 User Stories 写出（`goal_from`）：`skill-change-has-diagnosis`、`ui-spec-shape`、`bugfix-spec-shape`。好用组看新 spec 还会不会让下游返工，现场取自 review 发现 spec 前后不一致或有漏的 PR #382，题从人当时的原话写出：`one-stop-point`。改了 to-spec 就对着这四个跑，命令是 `retro-replay.mjs --cases-root idea-loop/evals/to-spec`。
+- **pr 组**（#452，`idea-loop/evals/pr/cases/`）：五个现场，各取自一个已合并 PR，输入是那个 PR 合并前一刻的基准分支加合并时的材料（旧描述、文件清单、review 归档评论）：`tofelair-1072-frequency`（改提示词）、`tofelair-1137-ui`（UI）、`tofelair-1136-reproduce`（本机服务）、`harold-skills-387-decision-risk`（命令行）、`harold-skills-432-length`（skill 改写）。前三个的提交在目标项目的仓库里，回放时 `--repo` 指到那个仓库；五个都是大用例。
 
 ### 6. allowed-tools 收窄到具体命令模式
 

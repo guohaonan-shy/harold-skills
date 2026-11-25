@@ -103,7 +103,7 @@ test('issue-dispatch: the morning summary is a step that points at its reference
   assert.match(step, /references\/morning-summary\.md/, 'the step points at the reference');
   assert.match(step, /上一轮[^。]*落在 `todo` 时段、此刻不在/, 'the step says when it applies');
   const ref = read('skills', 'engineering', 'issue-dispatch', 'references', 'morning-summary.md');
-  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', '夜里替你定的', '最后活动时间', '`idea-loop:issues` 的「评论」', '『推送』']) {
+  for (const word of ['~/.idea-loop/dispatch/<仓库名>.json', '`period` 是 `todo`', 'PR 链接', 'review 结论', 'review loop 文件', '最近一轮', '夜间模式，人不在，按推荐', '最后活动时间', '`idea-loop:issues` 的「评论」', '『推送』']) {
     assert.ok(ref.includes(word), `the morning summary must mention ${word}`);
   }
   assert.match(ref, /开了几个、几个等审、几个卡住/);

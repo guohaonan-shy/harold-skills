@@ -1912,7 +1912,7 @@
       "command": "pr body get",
       "module": "pr",
       "use": "get <owner/repo> <pr> <section>",
-      "summary": "打印 PR 描述的一个小节（summary|problem|changes|verification|rollback|live-check|night-decided|night-waiting|your-todo|reference）；没有这一节就打印空行",
+      "summary": "打印 PR 描述的一个小节（problem|outline|evidence|risk|your-todo|live-check）；没有这一节就打印空行",
       "caller": "session",
       "next": "",
       "args": [
@@ -1937,7 +1937,7 @@
       "command": "pr body set",
       "module": "pr",
       "use": "set <owner/repo> <pr> <section> <content.md>",
-      "summary": "把文件的内容写成 PR 描述的这一节（空内容删掉这一节）；「参考」以外有代码层面的指称就拒写",
+      "summary": "把文件的内容写成 PR 描述的这一节（空内容删掉这一节）；结构不对就拒写：问题、证据没有视图（同时打印 evidence 的视图菜单）、概要超两个视图、之前之后不成对或组数少于问题的件数、合并风险缺门和影响面、要你做的事不是复选框、除概要外写了提交号、函数名、文件路径、接口地址",
       "caller": "session",
       "next": "",
       "args": [
@@ -3270,7 +3270,7 @@
       "command": "spec check",
       "module": "spec",
       "use": "check <docs>",
-      "summary": "列出 docs/spec/ 下的 spec（JSON），报旧平铺布局、缺 spec 文件、还留着 status 行、七节缺了或顺序错、改 agent 文档却没有「杠杆诊断」的问题；--hook 从 PostToolUse 事件取被写的文件，只查它是不是 spec、结构对不对",
+      "summary": "列出 docs/spec/ 下的 spec（JSON），报旧平铺布局、缺 spec 文件、还留着 status 行的问题",
       "caller": "session",
       "next": "",
       "args": [
@@ -3278,13 +3278,6 @@
           "name": "docs",
           "kind": "positional",
           "required": true
-        },
-        {
-          "name": "hook",
-          "kind": "flag",
-          "required": false,
-          "value": "bool",
-          "description": "从标准输入读 PostToolUse 事件；被写的是 spec 且结构有问题时退出码 2、报错写到 stderr，不是 spec 或干净时静默"
         }
       ]
     },

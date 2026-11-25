@@ -80,6 +80,8 @@ type session struct {
 	home string
 	git  func(args []string) (string, error)
 	in   string
+	// plugin is the plugin's directory the view menu is read from; empty means the environment has none.
+	plugin string
 }
 
 func newSession(t *testing.T) *session {
@@ -90,8 +92,10 @@ func (s *session) run(args ...string) (stdout, stderr string, code int) {
 	var out, errb bytes.Buffer
 	code = app.Run(args, app.IO{
 		Stdin: strings.NewReader(s.in), Stdout: &out, Stderr: &errb,
-		Env: func(k string) string { return map[string]string{"HOME": s.home}[k] },
-		PR:  pr.Deps{GH: s.gh.run, Git: s.git},
+		Env: func(k string) string {
+			return map[string]string{"HOME": s.home, "IDEA_LOOP_PLUGIN_ROOT": s.plugin}[k]
+		},
+		PR: pr.Deps{GH: s.gh.run, Git: s.git},
 	})
 	return out.String(), errb.String(), code
 }
@@ -122,17 +126,17 @@ func TestBodySetWritesOneSectionAndLeavesWhatTheHumanWrote(t *testing.T) {
 	s := newSession(t)
 	s.gh.body = "Refs o/r#3\n\n🤖 Generated with Claude Code"
 	dir := t.TempDir()
-	out, errs, code := s.run("pr", "body", "set", "o/r", "5", "summary", write(t, filepath.Join(dir, "a.md"), "学生重试失败的题不再扣次数"))
+	out, errs, code := s.run("pr", "body", "set", "o/r", "5", "outline", write(t, filepath.Join(dir, "a.md"), "学生重试失败的题不再扣次数"))
 	if code != 0 || errs != "" {
 		t.Fatal(out, errs, code)
 	}
-	if want := fmt.Sprintf("section summary written (%d characters)\n", len(utf16.Encode([]rune(s.gh.body)))); out != want {
+	if want := fmt.Sprintf("section outline written (%d characters)\n", len(utf16.Encode([]rune(s.gh.body)))); out != want {
 		t.Fatalf("%q, want %q", out, want)
 	}
-	if !strings.HasPrefix(s.gh.body, "<!-- idea-loop:section summary -->\n## 一句话\n\n学生重试失败的题不再扣次数\n<!-- /idea-loop:section summary -->\n\nRefs o/r#3") || !strings.HasSuffix(s.gh.body, "🤖 Generated with Claude Code\n") {
+	if !strings.HasPrefix(s.gh.body, "<!-- idea-loop:section outline -->\n## 概要\n\n学生重试失败的题不再扣次数\n<!-- /idea-loop:section outline -->\n\nRefs o/r#3") || !strings.HasSuffix(s.gh.body, "🤖 Generated with Claude Code\n") {
 		t.Fatal(s.gh.body)
 	}
-	out, _, code = s.run("pr", "body", "get", "o/r", "5", "summary")
+	out, _, code = s.run("pr", "body", "get", "o/r", "5", "outline")
 	if code != 0 || out != "学生重试失败的题不再扣次数\n" {
 		t.Fatal(out, code)
 	}
@@ -145,12 +149,12 @@ func TestBodySetWritesOneSectionAndLeavesWhatTheHumanWrote(t *testing.T) {
 func TestBodySetRefusesCodeLevelWordsBeforeItWritesAnythingAndSaysWhich(t *testing.T) {
 	s := newSession(t)
 	s.gh.body = "before"
-	file := write(t, filepath.Join(t.TempDir(), "a.md"), "重试时不再调 `retryAnalysis`，见 src/report/retry.ts:42")
-	_, errs, code := s.run("pr", "body", "set", "o/r", "5", "changes", file)
+	file := write(t, filepath.Join(t.TempDir(), "a.md"), "重试时不再调 `retryAnalysis`，见 src/report/retry.ts:42\n\n```text\n一段\n```")
+	_, errs, code := s.run("pr", "body", "set", "o/r", "5", "problem", file)
 	if code != 1 {
 		t.Fatal(code)
 	}
-	contains(t, errs, "section changes is read by a person; say it in words, put code locations in reference:", "反引号「`retryAnalysis`」", "文件:行号「src/report/retry.ts:42」")
+	contains(t, errs, "section problem is read by a person; say it in words", "函数名「retryAnalysis」", "文件:行号「src/report/retry.ts:42」")
 	if s.gh.body != "before" {
 		t.Fatal("nothing may be written:", s.gh.body)
 	}
@@ -161,19 +165,65 @@ func TestBodySetRefusesCodeLevelWordsBeforeItWritesAnythingAndSaysWhich(t *testi
 			}
 		}
 	}
-	// the same words are fine in 参考, which is for looking things up
-	if _, errs, code := s.run("pr", "body", "set", "o/r", "5", "reference", file); code != 0 {
+	// the outline is the one section that may name code
+	if _, errs, code := s.run("pr", "body", "set", "o/r", "5", "outline", file); code != 0 {
 		t.Fatal(errs)
+	}
+}
+
+const menuSkill = "---\nname: evidence\n---\n\n## 视图菜单\n\n| 要讲清的是什么 | 视图 |\n|---|---|\n| 一段逻辑 | 伪代码 |\n\n## 怎么摆\n\n不是菜单。\n"
+
+func TestBodySetRefusesAProblemWithoutAViewAndPrintsTheEvidenceMenuFromThePlugin(t *testing.T) {
+	s := newSession(t)
+	s.plugin = t.TempDir()
+	write(t, filepath.Join(s.plugin, "skills", "productivity", "evidence", "SKILL.md"), menuSkill)
+	s.gh.body = "Refs o/r#3"
+	file := write(t, filepath.Join(t.TempDir(), "a.md"), "分拣员看不出哪些 issue 值得做，每周都要人再看一遍。")
+	out, errs, code := s.run("pr", "body", "set", "o/r", "5", "problem", file)
+	if code == 0 || out != "" {
+		t.Fatal(out, errs, code)
+	}
+	contains(t, errs, "问题节没有视图", "## 视图菜单", "| 一段逻辑 | 伪代码 |")
+	if strings.Contains(errs, "不是菜单") {
+		t.Fatal("only the menu is printed:", errs)
+	}
+	if s.gh.body != "Refs o/r#3" {
+		t.Fatal("nothing may be written:", s.gh.body)
+	}
+}
+
+func TestBodySetStillRefusesWhenTheMenuCannotBeReadAndSaysSo(t *testing.T) {
+	s := newSession(t) // no plugin directory in the environment
+	file := write(t, filepath.Join(t.TempDir(), "a.md"), "没有视图的问题。")
+	_, errs, code := s.run("pr", "body", "set", "o/r", "5", "problem", file)
+	if code == 0 {
+		t.Fatal("must be refused")
+	}
+	contains(t, errs, "问题节没有视图", "读不到视图菜单", "IDEA_LOOP_PLUGIN_ROOT")
+	for _, c := range s.gh.calls {
+		for i, a := range c {
+			if a == "--method" && c[i+1] == "PATCH" {
+				t.Fatal("a PATCH was sent")
+			}
+		}
+	}
+}
+
+func TestBodySetOfAnOldSectionNameIsAUsageError(t *testing.T) {
+	s := newSession(t)
+	_, errs, code := s.run("pr", "body", "set", "o/r", "5", "summary", "f.md")
+	if code != 1 || !strings.Contains(errs, "usage: dyna pr body set") {
+		t.Fatal(errs, code)
 	}
 }
 
 func TestBodyUsageErrorsAreExit1WithAUsageLine(t *testing.T) {
 	s := newSession(t)
 	for _, args := range [][]string{
-		{"pr", "body", "get", "o", "5", "summary"},
-		{"pr", "body", "get", "o/r", "x", "summary"},
+		{"pr", "body", "get", "o", "5", "problem"},
+		{"pr", "body", "get", "o/r", "x", "problem"},
 		{"pr", "body", "get", "o/r", "5", "nope"},
-		{"pr", "body", "set", "o/r", "5", "summary"},
+		{"pr", "body", "set", "o/r", "5", "problem"},
 		{"pr", "body", "set", "o/r", "5", "nope", "f.md"},
 	} {
 		_, errs, code := s.run(args...)
@@ -181,7 +231,7 @@ func TestBodyUsageErrorsAreExit1WithAUsageLine(t *testing.T) {
 			t.Errorf("%v: %q %d", args, errs, code)
 		}
 	}
-	_, errs, code := s.run("pr", "body", "set", "o/r", "5", "summary", "/nonexistent/a.md")
+	_, errs, code := s.run("pr", "body", "set", "o/r", "5", "problem", "/nonexistent/a.md")
 	if code != 1 || !strings.Contains(errs, "读不到内容文件") {
 		t.Fatal(errs, code)
 	}
@@ -193,7 +243,7 @@ func TestBodyUsageErrorsAreExit1WithAUsageLine(t *testing.T) {
 func TestAGhFailureIsPrintedAsGhSaidIt(t *testing.T) {
 	s := newSession(t)
 	s.gh.fail = map[string]string{"api repos/o/r/pulls/5": "gh: Not Found (HTTP 404)"}
-	_, errs, code := s.run("pr", "body", "get", "o/r", "5", "summary")
+	_, errs, code := s.run("pr", "body", "get", "o/r", "5", "problem")
 	if code != 1 || strings.TrimSpace(errs) != "gh: Not Found (HTTP 404)" {
 		t.Fatalf("%q %d", errs, code)
 	}
@@ -332,7 +382,7 @@ func gitDiff(diff string) func([]string) (string, error) {
 const handlerDiff = "--- a/src/api/handler.ts\n+++ b/src/api/handler.ts\n@@ -1,0 +2,3 @@\n+import { db } from '../db/client';\n+export async function handler(req) {\n"
 
 func goodStandards(dir string) string {
-	return `{"standards":[{"id":"C1","title":"接口直接查数据库","rule":{"file":"` + filepath.Join(dir, "layering.md") + `","text":"路由层不直接访问数据库"},"code":{"path":"src/api/handler.ts","snippet":"import { db } from '../db/client';"},"now":"分层规则写明路由层不直接访问数据库；分析接口直接查了数据库。","impact":"以后换存储时这一处会被漏掉。","decide":{"options":[{"do":"修：把查询挪进业务层","cost":"多一个函数","rollback":"能，纯代码改动"},{"do":"开 issue：这次不动","cost":"规则在这一处继续不成立","rollback":"能，随时可以改"}],"recommend":"修，改动很小。"}}]}`
+	return `{"standards":[{"id":"C1","title":"接口直接查数据库","rule":{"file":"` + filepath.Join(dir, "layering.md") + `","text":"路由层不直接访问数据库"},"code":{"path":"src/api/handler.ts","snippet":"import { db } from '../db/client';"},"now":"分层规则写明路由层不直接访问数据库；分析接口直接查了数据库。","impact":"以后换存储时这一处会被漏掉。","example":"` + "```text\\n分析接口 → 直接查数据库\\n```" + `","decide":{"options":[{"do":"修：把查询挪进业务层","cost":"多一个函数","rollback":"能，纯代码改动"},{"do":"开 issue：这次不动","cost":"规则在这一处继续不成立","rollback":"能，随时可以改"}],"recommend":"修，改动很小。"}}]}`
 }
 
 func TestCandidatesSubmitAdmitsAGroundedCandidateAndExits0(t *testing.T) {
@@ -404,6 +454,60 @@ func TestCandidatesSubmitRefusesABadlyWordedCandidateAndSaysWhichOneAndWhatIsWro
 	}
 	if err := json.Unmarshal([]byte(out), &res); err != nil || len(res.Rewrite) != 1 || res.Rewrite[0].ID != "C1" {
 		t.Fatal(err, out)
+	}
+}
+
+func TestCandidatesSubmitRefusesAQuestionWithNoViewOneOptionOrNoRecommendationAndPrintsTheMenuForTheFirst(t *testing.T) {
+	good := func(dir string) string { return goodStandards(dir) }
+	noView := func(c string) string {
+		return strings.Replace(c, `"example":"`+"```text\\n分析接口 → 直接查数据库\\n```"+`",`, "", 1)
+	}
+	oneOption := func(c string) string {
+		return strings.Replace(c, `,{"do":"开 issue：这次不动","cost":"规则在这一处继续不成立","rollback":"能，随时可以改"}`, "", 1)
+	}
+	noRecommend := func(c string) string { return strings.Replace(c, `,"recommend":"修，改动很小。"`, "", 1) }
+	for name, c := range map[string]struct {
+		edit func(string) string
+		want string
+		menu bool
+	}{
+		"no view":      {noView, "问题里没有视图", true},
+		"one option":   {oneOption, "至少要列两个选项", false},
+		"no recommend": {noRecommend, "没给建议", false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			s := newSession(t)
+			s.git = gitDiff(handlerDiff)
+			s.plugin = t.TempDir()
+			write(t, filepath.Join(s.plugin, "skills", "productivity", "evidence", "SKILL.md"), menuSkill)
+			dir := t.TempDir()
+			write(t, filepath.Join(dir, "layering.md"), "路由层不直接访问数据库，\n统一经过 service 层。")
+			base := good(dir)
+			edited := c.edit(base)
+			if edited == base {
+				t.Fatal("the fixture was not changed")
+			}
+			file := write(t, filepath.Join(dir, "cands.json"), edited)
+			_, errs, code := s.run("pr", "candidates", "submit", file, "main", filepath.Join(dir, "evidence"), "1")
+			if code != 2 {
+				t.Fatal(code, errs)
+			}
+			contains(t, errs, "C1：", c.want)
+			if got := strings.Contains(errs, "| 一段逻辑 | 伪代码 |"); got != c.menu {
+				t.Fatalf("the menu is printed only for a missing view (printed: %v):\n%s", got, errs)
+			}
+		})
+	}
+	// a figure is a view too
+	s := newSession(t)
+	s.git = gitDiff(handlerDiff)
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "layering.md"), "路由层不直接访问数据库，\n统一经过 service 层。")
+	write(t, filepath.Join(dir, "evidence", "r1-flow.png"), "x")
+	withFigure := strings.Replace(good(dir), `"example":"`+"```text\\n分析接口 → 直接查数据库\\n```"+`",`, `"figure":"r1-flow.png",`, 1)
+	file := write(t, filepath.Join(dir, "cands.json"), withFigure)
+	if _, errs, code := s.run("pr", "candidates", "submit", file, "main", filepath.Join(dir, "evidence"), "1"); code != 0 {
+		t.Fatal(code, errs)
 	}
 }
 
