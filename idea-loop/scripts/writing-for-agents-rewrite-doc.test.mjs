@@ -96,7 +96,7 @@ test('规矩的归属: seventeen rules, each owned by one place (seven from the 
   assert.ok(rows.some((r) => /评论里的 idea-loop 标记/.test(r) && r.includes('`issues` 的「评论」')));
   assert.ok(rows.some((r) => /Linear 项目上怎么读写 issue/.test(r) && r.includes('`issues` 的 Linear 做法')));
   assert.ok(rows.some((r) => /暂缓的设计/.test(r) && r.includes('design/pending/')));
-  assert.ok(rows.some((r) => /第 1 轮 review 把实现期间开的存量 issue/.test(r) && r.includes('`pr`')));
+  assert.ok(rows.some((r) => /第 1 轮 review 把实现期间开的存量 issue/.test(r) && r.includes('`pr-review`')));
   assert.ok(rows.some((r) => /交回前要跑的那一组测试/.test(r) && r.includes('implementer')));
   assert.ok(rows.some((r) => /SEO 方向 agent 的提示各行/.test(r) && r.includes('提示模板')));
   assert.ok(rows.some((r) => /dreaming 的收尾/.test(r) && r.includes('proposal-table.md')));

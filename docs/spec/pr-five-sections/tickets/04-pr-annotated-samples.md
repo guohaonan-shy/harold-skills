@@ -20,6 +20,7 @@
 - [ ] `retro-replay.mjs --cases-root idea-loop/evals/pr --dry-run`（或 runner 已有的只校验不跑的方式）对五个用例都不报格式错。
 - [ ] AGENTS.md §5「标注样本」写进了 pr 组；守它的根测试（`scripts/root-agents-annotated-samples.test.mjs`）跟着改并绿。
 - [ ] 改前 / 改后回放：大用例写明待跑，由编排者在 PR 开出来之后照 `--run-large` 跑。
+- [ ] 五个样本跑出的结果覆盖 02 改的三个 skill：pr 的描述五节（432-length、1136-reproduce、387-decision-risk）、evidence 的视图菜单（1072-frequency、1137-ui）、pr-review 交报告按五节写（387-decision-risk）（继承自 02）
 
 ## 选中的存量回归
 - 仓库根 `scripts/root-agents-annotated-samples.test.mjs`：守 AGENTS.md §5 的样本清单。
