@@ -13,12 +13,12 @@ agent 写或改一份 spec 文件（知识库 `spec/<slug>/<slug>.md`）的那�
 
 ## 验收标准
 
-- [ ] 七节齐、顺序对的夹具 spec 喂给 `--hook`：静默退出 0；调换「方案」「User Stories」后退出 2，stderr 写顺序错和「照 `idea-loop:to-spec` 的模板补」。
-- [ ] frontmatter 有 `changes_agent_docs: true`、没有「杠杆诊断」的夹具：退出 2，报缺「杠杆诊断」；加上 `### 杠杆诊断` 后退出 0；去掉标记、也没有这一节时退出 0。
-- [ ] 写到 raw 讨论、写到 spec 的 tickets 目录下的工单：都静默退出 0。
-- [ ] 对本分支的 `docs/` 跑全量 `dyna spec check docs`：存量 spec 和本 spec 都不报结构问题。
-- [ ] 判词解析的代码和测试已删，`go test ./...`、`go vet ./...` 全过。
-- [ ] 钩子配置里有这一行；dyna 版本已升一档，`scripts/dyna-version.test.mjs` 与插件版本相关测试全过。
+- [x] 七节齐、顺序对的夹具 spec 喂给 `--hook`：静默退出 0；调换「方案」「User Stories」后退出 2，stderr 写顺序错和「照 `idea-loop:to-spec` 的模板补」。
+- [x] frontmatter 有 `changes_agent_docs: true`、没有「杠杆诊断」的夹具：退出 2，报缺「杠杆诊断」；加上 `### 杠杆诊断` 后退出 0；去掉标记、也没有这一节时退出 0。
+- [x] 写到 raw 讨论、写到 spec 的 tickets 目录下的工单：都静默退出 0。
+- [x] 对本分支的 `docs/` 跑全量 `dyna spec check docs`：存量 spec 和本 spec 都不报结构问题。
+- [x] 判词解析的代码和测试已删，`go test ./...`、`go vet ./...` 全过。
+- [x] 钩子配置里有这一行；dyna 版本已升一档，`scripts/dyna-version.test.mjs` 与插件版本相关测试全过。
 
 ## 选中的存量回归
 

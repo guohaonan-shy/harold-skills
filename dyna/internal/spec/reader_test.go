@@ -48,67 +48,6 @@ func TestTouchesUIStillReadsAnOlderSpec(t *testing.T) {
 	}
 }
 
-func TestVerdictsReadTheQuotedLinesUnderTheTitleAndAllAbsentNeedsEveryListedIssueMarkedNotExisting(t *testing.T) {
-	md := doc(opts{Issues: "[1, 2]", Verdict: map[string]string{"1": "存在", "2": "不存在"}})
-	want := []Verdict{{IssueRef{Num: 1}, "存在"}, {IssueRef{Num: 2}, "不存在"}}
-	if got := Verdicts(md); !reflect.DeepEqual(got, want) {
-		t.Fatal(got)
-	}
-	if AllAbsent(md) {
-		t.Fatal("one exists")
-	}
-	if !AllAbsent(doc(opts{Issues: "[1, 2]", Verdict: map[string]string{"1": "不存在", "2": "不存在"}})) {
-		t.Fatal("both absent")
-	}
-	if AllAbsent(doc(opts{})) {
-		t.Fatal("no issues listed is not all absent")
-	}
-}
-
-func TestVerdictsReadALinearKeyAsAKeyMatchingWhatIssuesOfReturns(t *testing.T) {
-	md := doc(opts{Issues: "[FA-577, 12]", Verdict: map[string]string{"FA-577": "存在", "12": "不存在"}})
-	v := verdictMap(Verdicts(md))
-	if v[IssueRef{Key: "FA-577"}] != "存在" || v[IssueRef{Num: 12}] != "不存在" {
-		t.Fatal(v)
-	}
-	if AllAbsent(md) {
-		t.Fatal("FA-577 exists")
-	}
-	if !AllAbsent(doc(opts{Issues: "[ENG-9, 12]", Verdict: map[string]string{"ENG-9": "不存在", "12": "不存在"}})) {
-		t.Fatal("both absent")
-	}
-	if AllAbsent(doc(opts{Issues: "[ENG-9]", Verdict: map[string]string{"ENG-8": "不存在"}})) {
-		t.Fatal("a verdict for another issue says nothing about ENG-9")
-	}
-}
-
-func TestVerdictsStillReadTheOlderVerificationTable(t *testing.T) {
-	md := doc(opts{Legacy: true, Issues: "[1, 2]", Verdict: map[string]string{"1": "存在", "2": "不存在"}})
-	want := []Verdict{{IssueRef{Num: 1}, "存在"}, {IssueRef{Num: 2}, "不存在"}}
-	if got := Verdicts(md); !reflect.DeepEqual(got, want) {
-		t.Fatal(got)
-	}
-	if !AllAbsent(doc(opts{Legacy: true, Issues: "[1, 2]", Verdict: map[string]string{"1": "不存在", "2": "不存在"}})) {
-		t.Fatal("both absent")
-	}
-}
-
-func TestAQuotedLineCountsOnlyUpToTheFirstSectionTheGrillLineAndProseAreNotVerdicts(t *testing.T) {
-	md := doc(opts{Issues: "[1]", Verdict: map[string]string{"1": "存在"}, Grill: true})
-	md = replaceOnce(md, "## 方案", "## 方案\n\n> #1 不存在：这是方案里的引用，不算结论")
-	if got := Verdicts(md); !reflect.DeepEqual(got, []Verdict{{IssueRef{Num: 1}, "存在"}}) {
-		t.Fatal(got)
-	}
-	// an ASCII colon works too, and an issue with no verdict stays unknown
-	two := replaceOnce(doc(opts{Issues: "[1, 2]"}), "# 重试不消耗配额", "# 重试不消耗配额\n\n> #1 不存在: 试过了")
-	if got := Verdicts(two); !reflect.DeepEqual(got, []Verdict{{IssueRef{Num: 1}, "不存在"}}) {
-		t.Fatal(got)
-	}
-	if AllAbsent(two) {
-		t.Fatal("#2 has no verdict")
-	}
-}
-
 func TestForHumanListsWhatWaitsForAHuman(t *testing.T) {
 	if got := ForHuman(doc(opts{})); len(got) != 0 {
 		t.Fatal(got)

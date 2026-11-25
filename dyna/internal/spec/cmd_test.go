@@ -31,7 +31,7 @@ func writeFile(t *testing.T, path, text string) {
 	}
 }
 
-const retrySpec = "---\ntype: spec\ntags: [retry]\nsummary: 重试不消耗配额\nrelated: []\nissues: [12, FA-577]\n---\n\n# 重试不消耗配额\n\n## 方案\n\n重试不再扣配额。\n"
+const retrySpec = "---\ntype: spec\ntags: [retry]\nsummary: 重试不消耗配额\nrelated: []\nissues: [12, FA-577]\n---\n\n# 重试不消耗配额\n\n## 问题陈述\n\n重试多扣配额。\n\n## 方案\n\n重试不再扣配额。\n\n## User Stories\n\n1. 作为用户，我想要重试不扣配额。\n\n## 实现决策\n\n无。\n\n## 测试决策\n\n无。\n\n## Out of scope\n\n无。\n\n## 关联\n\n无。\n"
 
 func docsDir(t *testing.T) string {
 	t.Helper()
@@ -260,8 +260,8 @@ func TestRegistryJSONHasEverySpecCommandWithItsArgumentsAndCaller(t *testing.T) 
 		seen[c.Command] = true
 		var names []string
 		for _, a := range c.Args {
-			if c.Command == "spec skill-lint" {
-				if a.Kind == "positional" { // its files and flags are pinned by TestTheRegistryHasSkillLintAsAHookCommand
+			if c.Command == "spec skill-lint" || c.Command == "spec check" {
+				if a.Kind == "positional" { // their files and flags are pinned by TestTheRegistryHasSkillLintAsAHookCommand and TestTheRegistryHasSpecCheckWithAHookFlagForSessionsToo
 					names = append(names, a.Name)
 				}
 				continue

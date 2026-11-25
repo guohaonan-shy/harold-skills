@@ -39,7 +39,8 @@ func readOrEmpty(p string) string {
 }
 
 // Check reads docs/spec/: the specs there, and the problems with the layout (the old flat layout, a spec
-// directory without its spec file, a status line left over from the old state machine).
+// directory without its spec file, a status line left over from the old state machine, a spec whose seven sections
+// are missing or out of order, a spec that changes agent documents without a 「杠杆诊断」 section).
 func Check(docs string) Report {
 	r := Report{Specs: []Listed{}, Problems: []string{}}
 	root := filepath.Join(docs, "spec")
@@ -77,6 +78,9 @@ func Check(docs string) Report {
 			}
 			if _, has := fm["status"]; has {
 				r.Problems = append(r.Problems, fmt.Sprintf("docs/spec/%s/%s.md 的 frontmatter 还有 status 行（spec 没有状态了，删掉这一行；进度看 issue 的 label）", name, name))
+			}
+			for _, p := range StructureProblems(md) {
+				r.Problems = append(r.Problems, fmt.Sprintf("docs/spec/%s/%s.md %s", name, name, p))
 			}
 			l := Listed{Slug: name, File: file, Issues: []any{}, Tickets: tickets}
 			for _, ref := range IssuesOf(md) {
