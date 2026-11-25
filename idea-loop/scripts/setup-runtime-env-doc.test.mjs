@@ -1,13 +1,17 @@
 /**
- * Tripwire — setup's two runtime steps: pick the device's default runtime, and generate a description for a
- * runtime that is not in the list from the capability template.
+ * Tripwire — setup's two runtime steps: pick the device's default runtime, and generate this machine's description
+ * from the capability template (the plugin carries none; spec dyna-app-layer-cleanup).
  *
  * - SKILL.md 「home」: a pointer to references/runtime-env.md plus the completion condition naming the runtime; it
  *   stays a pointer (the steps are in the reference).
  * - references/runtime-env.md: the two steps, each ending in a completion condition made of what can be checked
- *   (the name written to `<home>/runtime/selected` and committed; `dyna runtime check` passing, then committed).
- * - step 2 takes the documentation in all three forms the repository's AGENTS.md asks for (a link, a file, or text
- *   the human pastes in).
+ *   (the name written to `runtime/selected`; `dyna runtime check` passing, then committed or excluded).
+ * - the three places a description can live (project, home, user root) are named in the order dyna looks in them, with
+ *   no plugin copy to read and no local override.
+ * - step 2 runs when no description is found (or the human wants an environment that is not listed), looks at the
+ *   current environment itself (tools, environment variables, a command's help), takes the human's documentation in
+ *   all three forms the repository's AGENTS.md asks for (a link, a file, or text the human pastes in), asks where to
+ *   put the file, and keeps a project's `.idea-loop/` out of git.
  * - no file of setup names `handoff` or a runtime of the plugin's own (the preflight table included): the list of
  *   runtimes is whatever the descriptions say, not a list written into setup.
  * - the README says how a runtime is added (one more description, no dyna change), and mentions `runtime check`
@@ -56,36 +60,56 @@ test('the SKILL.md body stays within the 4500-character line', () => {
 
 test('runtime-env.md has the two steps, each with a completion condition', () => {
   const pick = section(ref, '1\\. 选运行环境');
-  const gen = section(ref, '2\\. 照模板生成新环境的说明');
+  const gen = section(ref, '2\\. 照模板生成这台机器的说明');
   assert.ok(pick, 'no step 「1. 选运行环境」');
-  assert.ok(gen, 'no step 「2. 照模板生成新环境的说明」');
+  assert.ok(gen, 'no step 「2. 照模板生成这台机器的说明」');
   assert.match(pick, /^完成条件：/m);
   assert.match(gen, /^完成条件：/m);
 });
 
-test('step 1 lists the descriptions with their markers, says what is found now, asks, writes `runtime/selected` and commits it', () => {
+test('the three places are named in the order dyna looks in them, and nothing reads the plugin for a description or talks of a local override', () => {
+  const at = (re) => ref.search(re);
+  const project = at(/项目：[^\n]*\.idea-loop\/runtime\/<名>\.md/);
+  const home = at(/home：`~\/home\/runtime\/<名>\.md`/);
+  const root = at(/用户根目录：`~\/\.idea-loop\/runtime\/<名>\.md`/);
+  assert.ok(project >= 0 && home > project && root > home, 'project, then home, then the user root');
+  assert.match(ref, /先找到的整份生效，三处之间不合并/);
+  assert.match(ref, /推荐放这里/, 'home is the recommended place');
+  assert.doesNotMatch(ref, /本机覆盖|按小节覆盖/);
+  assert.doesNotMatch(ref, /\$\{CLAUDE_PLUGIN_ROOT\}\/runtime\/\*|runtime\/\*\.md` 和/, 'step 1 does not read the plugin for descriptions');
+});
+
+test('step 1 lists the descriptions of all three places with their markers, says what is found now, asks, writes `runtime/selected` beside the description', () => {
   const s = section(ref, '1\\. 选运行环境');
+  assert.match(s, /读三处的 `runtime\/\*\.md`/);
   assert.match(s, /标记：/);
   assert.match(s, /dyna runtime name/);
+  assert.match(s, /认不出/);
   assert.match(s, /有标记的环境[^\n]*自己认得出/);
   assert.match(s, /人选的只在[^\n]*兜底/);
   assert.match(s, /『向人提问』/);
-  assert.match(s, /~\/home\/runtime\/selected/);
+  assert.match(s, /那份说明所在那一处的 `runtime\/selected`/);
   assert.match(s, /dyna home commit [^\n]*selected/);
 });
 
-test('step 2 reads the human\'s documentation, writes per capability from the template, has each section approved, checks, commits', () => {
-  const s = section(ref, '2\\. 照模板生成新环境的说明');
+test('step 2 runs when no description is found, looks at the current environment, reads the human\'s documentation, asks where to put it, writes per capability from the template, has each section approved, checks, commits or excludes', () => {
+  const s = section(ref, '2\\. 照模板生成这台机器的说明');
+  assert.match(s, /`dyna runtime name` 认不出时做/);
+  assert.match(s, /会话里有哪些工具/);
+  assert.match(s, /`env` 里有哪些环境变量/);
+  assert.match(s, /`help`/);
   assert.match(s, /文档（链接、文件，或直接贴进来的正文）/);
   assert.match(s, /「能力模板」/);
+  assert.doesNotMatch(s, /格式样例/, 'the plugin has no description to take the format from');
+  assert.match(s, /项目、home、用户根目录，推荐 home/);
   assert.match(s, /标记行/);
   assert.match(s, /标记：没有/);
   assert.match(s, /「没有」/);
   assert.match(s, /逐节摆给人批/);
-  assert.match(s, /~\/home\/runtime\/<名>\.md/);
-  assert.match(s, /dyna runtime check ~\/home\/runtime\/<名>\.md/);
+  assert.match(s, /dyna runtime check <文件>/);
   assert.match(s, /dyna home commit [^\n]*<名>\.md/);
-  assert.match(s, /完成条件：[^\n]*dyna runtime check[^\n]*dyna home commit/);
+  assert.match(s, /`\.idea-loop\/` 加进这个项目 `\.git\/info\/exclude`/);
+  assert.match(s, /完成条件：[^\n]*dyna runtime check[^\n]*提交或排除/);
 });
 
 test('no file of setup mentions handoff or a runtime of the plugin\'s own', () => {
@@ -98,8 +122,8 @@ test('no file of setup mentions handoff or a runtime of the plugin\'s own', () =
 
 test('the README says how setup picks and adds a runtime, and mentions runtime check and runtime record', () => {
   assert.match(readme, /`references\/runtime-env\.md`/);
-  assert.match(readme, /<home>\/runtime\/selected/);
-  assert.match(readme, /`dyna runtime check` has to pass before `dyna home commit`/);
+  assert.match(readme, /`runtime\/selected` beside the description/);
+  assert.match(readme, /`dyna runtime check` has to pass before it is committed/);
   assert.match(readme, /`dyna runtime check \[<file>\]` checks a description/);
   assert.match(readme, /`dyna runtime record`/);
 });

@@ -36,7 +36,7 @@ const reconcile = read('skills', 'productivity', 'dreaming', 'references', 'arch
 
 test('setup creates the weekly dreaming task the way its SEO module creates the seo-scan one', () => {
   // the steps live in setup's own reference (SKILL.md keeps its body short); the SKILL.md section must point at it
-  assert.ok(section(setup, '每周对账').includes('references/weekly-dreaming.md'));
+  assert.ok(section(setup, '定时任务').includes('references/weekly-dreaming.md')); // #420: one 「定时任务」 table
   const mine = weeklySteps;
   // the SEO module's steps file points at its own reference, which carries the steps
   assert.ok(section(seoSetup, '8. 每天扫描').includes('daily-scan.md'));
@@ -66,7 +66,7 @@ test('setup creates the weekly dreaming task the way its SEO module creates the 
   // a refusal and a missing capability are both recorded, not silently skipped
   assert.match(mine, /人拒绝/);
   assert.match(mine, /未做：运行环境 <名> 没有『定时任务』/);
-  assert.match(setup, /##\s*交回[\s\S]*每周对账/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'handback.md'), /每周对账/); // #420: hand-back items moved into handback.md
 });
 
 test('dreaming can be invoked by the model and points at the scope reference', () => {

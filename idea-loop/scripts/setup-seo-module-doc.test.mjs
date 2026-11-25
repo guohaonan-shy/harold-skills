@@ -47,7 +47,8 @@ test('setup asks per module, names SEO as the module, points at the steps, and h
   assert.match(m, /\*\*SEO\*\*/);
   assert.ok(m.includes('references/seo/steps.md'));
   assert.match(m, /^完成条件：/m);
-  assert.match(SETUP, /SEO 模块：接了还是「以后再说」/, 'the hand-back reports the module');
+  // #420: the hand-back keeps one line per section; the per-module items live in references/handback.md
+  assert.match(SETUP, /模块（各段接了还是「以后再说」/, 'the hand-back reports the modules');
 });
 
 test('every link in setup\'s body and in the SEO steps file resolves', () => {

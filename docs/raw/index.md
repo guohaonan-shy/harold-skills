@@ -124,6 +124,7 @@
 | [decisions/389](decisions/389.md) | conversation | 2026-11-22 | 决定记录 —— #389 插件里两处「用户流程」改成「用户路径」：夜里替人定的两件事与合并 |
 | [decisions/386](decisions/386.md) | conversation | 2026-11-23 | 决定记录 —— #386 一台设备一个调度 dispatch-home：开工前提、默认名额、模型钉法、命令行发布时机与合并顺序 |
 | [decisions/331](decisions/331.md) | conversation | 2026-11-23 | 决定记录 —— #331 调度给 0.2.0 父 issue 开了 triage 会话：暂停 harold-skills 调度，0.2.0 手动收尾；两条候选都不批 |
+| [decisions/478](decisions/478.md) | conversation | 2026-11-24 | 决定记录 —— #478 #471 真机验证开出的 triage 会话：#478 属于 0.2.0，挂到 #331 下先放着；候选不批 |
 | [decisions/388](decisions/388.md) | conversation | 2026-11-22 | 决定记录 —— #388 知识库 4 处死链：夜里替人定的三件事、死链检查另开还是评论、合并 |
 | [decisions/437](decisions/437.md) | conversation | 2026-11-23 | 决定记录 —— #437 dyna 缺五个命令：triage 定的三件事；无候选，顺带开 #464；todo 会话（PR #469）：S1 删参数、S2 已知限制、C1 下限收尾发版、dyna 改升 0.0.10，候选 1 条不批 |
 | [decisions/456](decisions/456.md) | conversation | 2026-11-23 | 决定记录 —— #456 改了 skill 怎么验：triage 定分支基于集成分支、目标用例两边都跑；无候选 |
@@ -131,9 +132,12 @@
 | [decisions/398](decisions/398.md) | conversation | 2026-11-22 | 决定记录 —— #398 triage 上限改成每轮新开几个、分组总数另设上限（默认 10）；无候选 |
 | [decisions/428](decisions/428.md) | conversation | 2026-11-23 | 决定记录 —— #428 影响本次改动的存量问题在本 PR 里修（三关同一判据，回放第 2 次过）；无候选 |
 | [decisions/471](decisions/471.md) | conversation | 2026-11-23 | 决定记录 —— #471 本期不加新运行环境（cmux、t3code 记进 #477 关 not planned）；dyna 不代理，运行环境的操作写进运行环境说明、按能力模板写；候选 2 条不批 |
+| [decisions/490](decisions/490.md) | conversation | 2026-11-24 | 决定记录 —— #490 运行环境说明搬出插件、setup 照模板生成，放项目/home/用户根目录三处（home 为主路）；无候选 |
 | [[2026-11-17-ai-eval-shape]] | conversation | 2026-11-17 | eval 写法的形状：把 toeflair 的 ai-eval 迁进 harold-skills，再补规则 |
 | [[2026-11-16-explorer-reads-impl-decisions]] | conversation | 2026-11-16 | explorer 读 spec 的范围：加读「实现决策」 |
 | [[2026-11-19-ui-measure-matrix-gaps]] | conversation | 2026-11-19 | ui-measure 矩阵缺口：margin/gap 与 pixelAnchor 两道题 |
 | [[2026-11-16-handback-lost-turn]] | conversation | 2026-11-16 | #292 交回后卡住：根因是那一轮的模型请求丢了 |
 | [[2026-11-16-issue-137-scope]] | conversation | 2026-11-16 | #137 的范围：拆成子 issue，除字数存量外随 0.2.0 发布 |
 | [[2026-11-16-refine-advisor-grill]] | conversation | 2026-11-16 | uiux-refine 重设计 grill：评委降为顾问、每轮交设计评审报告 |
+| [[2026-11-24-setup-modules-grill]] | conversation | 2026-11-24 | #420 triage：setup 接完核心后按设计、SEO、评测三段问；不并 #247、#241 暂缓、EVAL.md 留代码仓库根 |
+| [decisions/420](decisions/420.md) | conversation | 2026-11-24 | 决定记录 —— #420 的 triage 会话：setup 按设计、SEO、评测三段接模块，不并 #247，#241 暂缓，EVAL.md 留代码仓库根；无候选 |
