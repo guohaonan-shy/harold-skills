@@ -141,3 +141,4 @@
 | [[2026-11-16-refine-advisor-grill]] | conversation | 2026-11-16 | uiux-refine 重设计 grill：评委降为顾问、每轮交设计评审报告 |
 | [[2026-11-24-setup-modules-grill]] | conversation | 2026-11-24 | #420 triage：setup 接完核心后按设计、SEO、评测三段问；不并 #247、#241 暂缓、EVAL.md 留代码仓库根 |
 | [decisions/420](decisions/420.md) | conversation | 2026-11-24 | 决定记录 —— #420 的 triage 会话：setup 按设计、SEO、评测三段接模块，不并 #247，#241 暂缓，EVAL.md 留代码仓库根；无候选 |
+| [decisions/478](decisions/478.md) | conversation | 2026-11-25 | 决定记录 —— #478 用例开头照 #174 原会话的任务原文从 issue-session 进；用例分不出改前改后、回放能拉到真仓库两件记已知限制不开 issue；候选 1 条不批 |
