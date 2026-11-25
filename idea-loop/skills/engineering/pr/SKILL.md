@@ -14,7 +14,7 @@ description: GitHub 上 PR 描述怎么写、放在哪。开 draft PR、写或�
 PR 从分支上有第一个提交起就挂着，不等工单。接分支之后、切工单之前开（`idea-loop:issue-session` 的「实现」第 1 步；人直接调 `idea-loop:implement` 而还没有 PR 的，implement 开工时回到这里）。`.tmp/implement/<spec-slug>/prs.md` 已在就是开过了，跳过。完成条件：draft PR 已开，它的号和 worktree 路径记进 `prs.md`。
 
 1. **推集成分支，开 draft**：`dyna git push` 推上去，`dyna pr open <owner/repo> --base <基准分支> --title <标题> --body-file <正文文件>`（`<owner/repo>` 取 `where` 输出的 `repo`；默认就是 draft）。标题用 spec 标题（带署名行）。正文写 `Refs <owner>/<repo>#<号>`，指向 issue 的仓库和号，不写 `Closes`（issue 的 done 由合并步骤翻）。Linear 上的 issue：标题加前缀 `[<号>]`，正文第一行写 `Linear: <号>`。
-2. **写问题节的起头**：`dyna pr body set` 写 `problem`，取自 spec 的「问题陈述」，一两句现状和为什么改；视图交报告时补。`Refs` 那行在标记以外，不会被冲掉。
+2. **写问题节的起头**：`dyna pr body set` 写 `problem`，取自 spec 的「问题陈述」，一两句现状和为什么改，加一个视图（`dyna pr body set` 没有视图就拒写）：取 spec「问题陈述」里已有的数字或表，交报告时换成更合适的。`Refs` 那行在标记以外，不会被冲掉。
 
 ## PR 描述
 
@@ -22,7 +22,7 @@ PR 从分支上有第一个提交起就挂着，不等工单。接分支之后�
 
 | 节 | 这一节给读者什么 | 谁写 |
 |---|---|---|
-| 问题 `problem` | 现在是什么样、为什么要改，加一个视图证明问题真发生过、有多常见 | 开 draft PR 时写起头，review 编排者交报告时补视图 |
+| 问题 `problem` | 现在是什么样、为什么要改，加一个视图证明问题真发生过、有多常见 | 开 draft PR 时写起头（带一个视图），review 编排者交报告时重写 |
 | 概要 `outline` | 这次改了什么：一句短文字加最多两个视图；人定的事让方案多做的一块、没有对应问题的改动画在这里 | review 编排者，交报告时写（取自 spec 与落地结果） |
 | 证据 `evidence` | 之前 / 之后：同一个操作在基准分支和本分支各做一遍，之前看到问题、之后问题没了；问题几件就几组 | review 编排者，交报告时写（取自执行方的复现） |
 | 合并风险 `risk` | 门（双向 / 单向）、影响面、要特别注意的；人定的事带来的风险写在这里 | review 编排者，交报告时对着整个 PR 判 |
