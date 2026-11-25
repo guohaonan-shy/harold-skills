@@ -5,7 +5,7 @@
 
 **题的来源（goal_from）**：docs/spec/spec-for-agents/spec-for-agents.md User Stories 样式与检查 1
 
-**是/否题**：七节（问题陈述、方案、User Stories、实现决策、测试决策、Out of scope、关联）是否齐、顺序对，User Stories 里的期望行为编号是否对得上问题陈述的小节编号，且没有复现图、方案里的时序图和「根因」小节？
+**是/否题**：七节（问题陈述、方案、User Stories、实现决策、测试决策、Out of scope、关联）是否齐、顺序对（「杠杆诊断」插在任意两节之间不算错），User Stories 里的期望行为编号是否对得上问题陈述的小节编号（另外单列、标明是新加能力的条目不算编错），且没有复现图、方案里的时序图和「根因」小节？
 
 ## 样本改动
 
@@ -22,3 +22,4 @@ run-id 是 runner 打印的 run dir 的最后一段（形如 20261022T101500）�
   - 改前=否（两遍都是）：产出里有方案下的时序图（`![白天 triage 一轮的时序：红色是这份 spec 新增或改动的消息](…)`）和「### 根因」小节，还有开头判词「> #398 存在（只剩白天 triage 那一半）……」和方案下的「### 后端」。七节是齐的。花费 $5.30。
   - 样本改动：这一遍的题里写的是「没有复现图和『根因』小节」，评委把方案的时序图也算作要删的图；题随后改成「没有复现图、方案里的时序图和『根因』小节」（`case.json` 与 `sample.md` 同步改），答案不变。
 - 改后：待跑。等 #451 工单 02 落地后，由编排者当场跑：`retro-replay.mjs --case bugfix-spec-shape --cases-root idea-loop/evals/to-spec --worktree <本分支> --base <集成分支> --before-dyna <本地编的 dyna> --after-dyna <本地编的 dyna> --out <.tmp 下的目录>`（要用本地编的 dyna：`~/.idea-loop/bin/dyna` 太旧，`dyna home config apply --only rules` 会报错；编法见 `DEVELOPMENT.md`）。
+- 推翻 20261125T083725 改后=是 ｜ 评委两条理由都不成立：「杠杆诊断」按 #451 的 spec 可插在任意两节之间；第 3 条 User Story 原文标着「另加一条配置行为」，前两条对上问题陈述的两节。产出没有根因、图和判词，七节齐。Harold 2026-11-25「改判，并改题」。
