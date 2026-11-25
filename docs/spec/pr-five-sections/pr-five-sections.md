@@ -50,7 +50,7 @@ pr 的格式按「每个写入方各写一节」长出来，没有一个「读�
 
 ## 方案
 
-以 Matt Pocock 的 pr skill（Summary / Evidence / Merge Danger，Summary 的视图清单取自 Humanlayer 的 show-me）为底，按 Harold 在 #452 会话里逐块定的（`docs/raw/decisions/452.md` 题 1–27）改成五节，并用 5 个真实 PR 跑了四轮样本收敛（`.tmp/pr-samples/`，第四轮去掉代码块后 1486–2263 字）。
+以 Matt Pocock 的 pr skill（Summary / Evidence / Merge Danger，Summary 的视图清单取自 Humanlayer 的 show-me）为底，按 Harold 在 #452 会话里逐块定的（`docs/raw/decisions/452.md` 题 1–27）改成五节，并用 5 个真实 PR 跑了四轮样本收敛（`idea-loop/evals/pr/rounds/`，第四轮去掉代码块后 1486–2263 字）。
 
 **PR 描述的模板**（草稿已在 `idea-loop/skills/engineering/pr/references/description.md`）：
 
@@ -152,7 +152,7 @@ pr 的格式按「每个写入方各写一节」长出来，没有一个「读�
 
 ## 关联
 
-- 决定记录：`docs/raw/decisions/452.md`（题 1–27）；样本过程：`.tmp/pr-samples/`（不进 git，五个 PR 四轮产出与每轮笔记）。
+- 决定记录：`docs/raw/decisions/452.md`（题 1–27）；样本过程：`idea-loop/evals/pr/rounds/`（五个 PR 四轮产出与每轮笔记）。
 - #451（spec-for-agents，todo，分支 `issue/451-spec-structure`）：有重叠，两边都改 `home-rules.md`（#451 改「已按规则处理」的交付物名单，本 spec 扩写「一道题」，不同段落）和 evidence 的 description（#451 把「spec」改成「交 spec 的那段话」，本 spec 重写整句）；已在 #451 留评论（2026-11-25）和共享笔记 `451-452-align.md`。后合的在先合的基础上改，保留「交 spec 的那段话」。谁先谁后不限。
 - #438（evidence-forms，已合）：本 spec 在它的 evidence 上重写形态表；它的五个样本等 #451、#452 改完再跑（#438 决定）。
 - #341（skill-structure-checks，已合）：SKILL.md 4500 字线照 `skill-lint`。
