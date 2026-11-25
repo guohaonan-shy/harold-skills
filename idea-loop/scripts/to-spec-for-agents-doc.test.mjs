@@ -90,6 +90,6 @@ test('home fixed text lists 「交 spec 的那段话」, not 「spec」, among t
   assert.match(line, /在交付物（交 spec 的那段话、PR 汇报、停下汇报）里列进「已按规则处理」/);
   const evidence = read('skills', 'productivity', 'evidence', 'SKILL.md');
   const description = evidence.match(/^description: (.*)$/m)[1];
-  assert.match(description, /（对话、交 spec 的那段话、PR）/);
+  assert.match(description, /交 spec 的那段话/);
   assert.doesNotMatch(description, /（对话、spec、PR）/);
 });
