@@ -192,8 +192,8 @@ test('draft-spec\'s self-check names only sections the new template has', () => 
   assert.match(verify, /idea-loop:evidence` 的「证据是什么」/);
 });
 
-test('the command line still reads the older 验证 table (documented in the issues skill, where the format is)', () => {
+test('the issues skill no longer documents the removed spec verdict line', () => {
   const doc = read('skills', 'engineering', 'issues', 'references', 'category-and-spec.md');
-  assert.match(doc, /> #12 存在：/);
-  assert.match(doc, /「验证」表.*仍然认得/);
+  assert.doesNotMatch(doc, /> #12 存在：/);
+  assert.doesNotMatch(doc, /「验证」表/);
 });
