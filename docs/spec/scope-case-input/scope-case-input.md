@@ -30,23 +30,13 @@ issues: [478]
 
 只改 `case.json` 的 `prompt` 和 `annotations.md`，不改 runner、不改规则。
 
-- **prompt 开头**：待定（见「实现决策」），两种都把 #174 的位置、spec 路径、「已认领、在讨论里，开场那几步不用做」写清楚。回放会话没有 `gh` 登录（runner 的 `replayChildEnv`），万一它还去跑开场的 `gh issue view`，读不到、也写不了，不会去动真的 #174。
+- **prompt 开头照当时的现场**：#174 原会话（`~/.claude/projects/-Users-guohaonan-projects-TOEFLAIR-worktree-harold-skills-fervent-carson-14cb4a/3a64ac9f-….jsonl`）11-13 13:46:59 由调度卡片开出，任务原文让它「用 Skill 工具调 idea-loop:issue-session，参数 174」，13:47:02 调了，15:00:40 人才说「我们先根据最新的scope讨论下……」。所以用例开头用这段任务原文，把「按它从开场做起」换成「已认领、在分支上、PR #308 跑过第 1 轮 review、现在在讨论阶段，开场那几步不用再做」（回放只能从 15:00 那一刻接上，13:48–14:39 的 to-spec、实现、review 重演不了）。回放会话没有 `gh` 登录（runner 的 `replayChildEnv`），它万一还跑开场的 `gh issue view`，读不到、也写不了。
 - **保留人当时的原话**：前情 1、2 和「这一轮我说的是：「……」」三段人原话一字不改，只换开头那一句（会话在哪）。`quote`（人在 #174 retro 里说的判据原话）和 `question` 不动。`annotations.md`「材料怎么拼的」加一条：2026-11-25 #478 把开头改成从 issue-session 进，哪句是补的、为什么补；原来 2026-11-14「不用斜杠命令开头」那条写明是针对 `/idea-loop:decision-rules`（等于替会话读了规则），这次的斜杠命令是 issue 会话的真实入口，推荐法仍要会话自己去读。
 - **改动核对会被入口直接命中**：`issue-session/SKILL.md` 在改动集合里，prompt 以它的斜杠命令开头就算「用上了」。所以验收时另看事件流里改后那一遍有没有读 `review-standards.md`，写进结果。
 
 ## 实现决策
 
-- **待定：prompt 开头怎么写**。依据：`annotations.md` 2026-11-14 人定「不用斜杠命令开头」，针对的是直接喂规则的斜杠命令；喂 issue 会话入口算不算同一类，两种读法都说得通。
-  - **A（推荐）开头写斜杠命令**。改后 prompt 开头：
-    > /idea-loop:issue-session 174
-    >
-    > 这个 issue 我已经认领了，会话就在它的分支上，对应的 spec 是 docs/spec/replay-run-large-now/replay-run-large-now.md，这个仓库就在当前目录。现在在讨论阶段，开场认领、归位、接分支那几步都不用再做。前情，下面是我自己的原话：……（后面不变）
-
-    走一遍：会话一定进 issue-session，「边界」那一句在它眼前；推荐法在另一份文件里，读不读还是会话自己定，评委判的就是它。理由：喂的是 issue 会话的真实入口（调度、人接手都这样开），跟 11-14 去掉的「直接喂规则」不是一类。
-  - **B 写成像人说的话**。改后 prompt 开头：
-    > 我们接着 guohaonan-shy/harold-skills#174 这个 issue 的会话聊，issue 我已经认领了，在它的分支上，spec 是 docs/spec/replay-run-large-now/replay-run-large-now.md，仓库就在当前目录。前情，下面是我自己的原话：……（后面不变）
-
-    走一遍：会话要自己从 skill 清单里认出「人要接手某个 issue」去调 issue-session；跟 11-23 的三次一样，很可能还是不调，用例照旧测不到。
+- **prompt 开头用 #174 原会话的任务原文**（人 2026-11-25 定，在本会话里）：人问「将当时的上下文内容进行回放才是正经能判断yes/no吗？」，看过原会话的时间线后说「没问题」。11-14「不用斜杠命令开头」去掉的是直接喂要验的规则（`/idea-loop:decision-rules`），当时的现场没有这一步；issue-session 当时开场就加载了，补上它是还原现场。范围题推荐法在 `review-standards.md`，仍要会话自己去读。
 - **验证：回放**。用 `retro-replay.mjs --case scope-question-recommend --base b64b8781` 跑 3 次（改前插件是 #280 之前、注入 `decision-rules` 的那版），按多数定；另记每次改后那一遍有没有读 `review-standards.md`。估价约 $2–3.7 一次，3 次约 $8（评委走 Codex）。
 
 ## 已知限制
