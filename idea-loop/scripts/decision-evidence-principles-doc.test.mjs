@@ -137,23 +137,19 @@ test('the old decision skill is gone: no directory, no mention anywhere in the p
   assert.deepEqual(hits, [], `还提着旧名：${hits.join(', ')}`);
 });
 
-test('placement moved to the callers: to-spec figures.md and pr delivery-evidence.md', () => {
-  const figures = read('skills', 'engineering', 'to-spec', 'references', 'figures.md');
-  for (const phrase of ['problem-', 'tree-user-stories-', 'sequence-', '只留 PNG', '待补图']) assert.match(figures, new RegExp(phrase));
-  assert.match(read('skills', 'engineering', 'to-spec', 'SKILL.md'), /references\/figures\.md/);
+test('placement moved to the caller: pr delivery-evidence.md (to-spec no longer places figures: its spec is for downstream agents)', () => {
+  assert.equal(existsSync(join(pluginRoot, 'skills', 'engineering', 'to-spec', 'references', 'figures.md')), false);
+  assert.doesNotMatch(read('skills', 'engineering', 'to-spec', 'SKILL.md'), /references\/figures\.md/);
   const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
   for (const phrase of ['idea-loop-evidence-pr-', 'dyna pr evidence publish', 'cleanup', '看什么', '做素材本身就是一道验证']) assert.match(delivery, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
 });
 
-test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形态，只指「证据的几种形态」；交付证据补了录屏的分段和 <video>（#438 工单 02）', () => {
-  const figures = read('skills', 'engineering', 'to-spec', 'references', 'figures.md');
+test('pr 的 delivery-evidence.md 不再括号列形态，只指「证据的几种形态」；交付证据补了录屏的分段和 <video>（#438 工单 02）', () => {
   const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
-  for (const text of [figures, delivery]) {
-    assert.match(text, /照 `idea-loop:evidence` 的「证据的几种形态」/);
-    assert.doesNotMatch(text, /图怎么做（/, '形态又被括号列出来了');
-    assert.doesNotMatch(text, /UI 标注、UI flow/);
-  }
+  assert.match(delivery, /照 `idea-loop:evidence` 的「证据的几种形态」/);
+  assert.doesNotMatch(delivery, /图怎么做（/, '形态又被括号列出来了');
+  assert.doesNotMatch(delivery, /UI 标注、UI flow/);
   assert.match(delivery, /录屏[^。]*分段/);
   assert.match(delivery, /<video src="<地址>" controls><\/video>/);
 });
@@ -164,7 +160,6 @@ test('插件里指 evidence 形态的地方用现在的名字：「UI 流程图�
   const freeze = read('skills', 'design', 'uiux-refine', 'references', 'freeze.md');
   assert.match(freeze, /「UI 流程图」/);
   assert.match(freeze, /「截图标注」/);
-  assert.match(read('skills', 'engineering', 'to-spec', 'references', 'figures.md'), /前端交互子小节 \| UI 流程图/);
 });
 
 test('every cited section of the evidence skill exists, and nothing points at the removed references', () => {

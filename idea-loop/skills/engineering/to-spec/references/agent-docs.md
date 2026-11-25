@@ -1,6 +1,6 @@
 # 要改的是给 agent 读的文档
 
-spec 要改的是 skill、参考文件、agent 定义或 `AGENTS.md` 时，第 3 步探代码之外多做这件事：用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。
+spec 要改的是 skill、参考文件、agent 定义或 `AGENTS.md` 时，第 3 步探代码之外多做这件事：用 Skill 工具调 `idea-loop:writing-for-agents`，逐条杠杆给它下诊断，列谁在调它、各读哪几块；「方案」从这两样推出，每处改动标明对的是哪条杠杆。诊断写成 spec 里一节标题为「杠杆诊断」的小节，放在「实现决策」与「测试决策」之间，frontmatter 写 `changes_agent_docs: true`（`dyna spec check` 靠它核这一节在不在）。
 
 每处改动末尾一行「验证：」，五选一：
 

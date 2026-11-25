@@ -1,0 +1,10 @@
+{
+  "source": "docs/spec/spec-for-agents/spec-for-agents.md 的「人读会话」1：release/idea-loop-0.2.0 上 to-spec 的第 5 步「交代等人定的」只要求说出还剩哪几样标记，现状、目标、要人定的题散在 spec 的第一、三、五节，人要读 spec 才拼得出来。这是一份新能力的目标用例，没有出过错的那一刻可回放",
+  "commit": "5ef9a09a2111b03a9dbfc6a4208337c177a41b1f",
+  "prompt": "/idea-loop:to-spec 把下面这个 issue 起草成一份 spec（这个仓库就在当前目录）。\n\nissue guohaonan-shy/harold-skills#9001：issue-triager 的「还要你补」栏只列问题，看不出补完以后 issue 会翻去哪\n\n**区域**：idea-loop · `idea-loop/agents/issue-triager.md` 的「评论与交回」\n\n**优先级**：P2\n\n**issue-triager 判不了的 issue，评论分「已查清」和「还要你补」两栏，「还要你补」每条只写要补什么。** 人读到这条评论时，补完其中一条之后这个 issue 会被翻成 todo、triage 还是仍留在 backlog，评论里没有说，人要自己去猜，常见的结果是补了信息以后 issue 仍在 backlog 里躺着。\n\n希望「还要你补」的每一条后面多写一句：补上这一条之后，分拣员会建议它翻去哪（todo 或 triage），补不上就留在 backlog。\n\n我不在场，不会回复你：不要 git commit、git push、gh 的任何写操作（包括 issues handoff / issues open / issues set），不要合并。issue 的现状自己在仓库里核；spec 文件照 skill 的规则写进工作区。最后一段回复写明你停在哪一步：spec 草稿已经写好、交给我看的那一刻，以及 spec 的路径。",
+  "stop_at": "spec 草稿写进 docs/spec/<slug>/<slug>.md、交给人看的那一刻，也就是最后一段回复",
+  "question": "最后一段回复里，有没有依次写了现状（用户现在遇到什么）、目标（改完用户得到什么）、要你定（要人定的事，或明说没有）三块？",
+  "goal_from": "docs/spec/spec-for-agents/spec-for-agents.md 人读会话 1",
+  "size": "small",
+  "size_basis": "只驱动 to-spec 一个 skill（它调 evidence、writing-for-agents 等都是读 skill 文字）到 spec 草稿写好、最后一段回复写完的那一刻，不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送和 gh 写操作，没有付费外部服务"
+}

@@ -21,15 +21,15 @@
 
 ## 验收标准
 
-- [ ] to-spec 模板是七节中文版，每节一行「给下游什么」；正文和参考里没有判词、复现图、时序图、story 树、「根因」、「后端」「前端内部」子小节的要求；「前端交互」子小节、其他入口、需要 grill / 待定、seam、杠杆诊断都在。
-- [ ] to-spec 第 5 步要求会话里写现状 → 目标 → 要你定，题的写法指到 home 固定文案「要我定的事写成一道题」，不再指 decision-rules。
-- [ ] figures、issue-verdicts、plan-subsections 三份参考已删，没有任何文件还链接它们；agent-docs 参考有 `changes_agent_docs: true` 那句。
-- [ ] draft-spec 参考没有「结论行」；issue-session 正文 triage 第 2 步指到 to-spec 第 5 步。文档测试钉住这两条。
-- [ ] home-rules 与 evidence description 的名单已换成「交 spec 的那段话」。
-- [ ] `node --test idea-loop/scripts/*.test.mjs scripts/*.test.mjs` 全过（含改过的 to-spec doc test、no-project-leak）。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] to-spec 模板是七节中文版，每节一行「给下游什么」；正文和参考里没有判词、复现图、时序图、story 树、「根因」、「后端」「前端内部」子小节的要求；「前端交互」子小节、其他入口、需要 grill / 待定、seam、杠杆诊断都在。
+- [x] to-spec 第 5 步要求会话里写现状 → 目标 → 要你定，题的写法指到 home 固定文案「要我定的事写成一道题」，不再指 decision-rules。
+- [x] figures、issue-verdicts、plan-subsections 三份参考已删，没有任何文件还链接它们；agent-docs 参考有 `changes_agent_docs: true` 那句。
+- [x] draft-spec 参考没有「结论行」；issue-session 正文 triage 第 2 步指到 to-spec 第 5 步。文档测试钉住这两条。
+- [x] home-rules 与 evidence description 的名单已换成「交 spec 的那段话」。
+- [x] `node --test idea-loop/scripts/*.test.mjs scripts/*.test.mjs` 全过（含改过的 to-spec doc test、no-project-leak）。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 
