@@ -32,6 +32,7 @@
 | [[runtime-local-override]] | 本机对 runtime 的特殊做法写进 ~/home/runtime/<运行环境>.md，开场注入时同名小节整段替换 reference |
 | [[runtime-ops-in-docs]] | 运行环境的操作全写进运行环境说明，dyna 不再认环境分支；说明按能力模板写，新环境照模板生成 |
 | [[setup-modules]] | setup 接完核心后按设计、SEO、评测三段问接不接，按插件装没装出题，正文腾出篇幅 |
+| [[scope-case-input]] | 回放用例「范围题推荐」的输入改成从 issue-session 进，让它测得到「边界」那一句范围题推荐法 |
 | [[skill-change-verify]] | 改 skill 的每处改动在 spec 里写定怎么验，新能力也能写用例跑，落地时 dyna 核用例在、结果在 |
 | [[skill-rewrite]] | idea-loop 的 skill 与 agent 定义按写法规则逐份重写、五组合并，主体都不超过 4500 字 |
 | [[skill-structure-checks]] | skill 文件的常驻检查：写文件时 hook 对 home 下全部 skill 跑字数线 4500、对 idea-loop 跑行内命令绊线、review 报主文件增长、retro 先判能不能做成检查、没 CI 时同一 head 的全量只跑一次 |
