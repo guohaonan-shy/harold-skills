@@ -200,7 +200,7 @@ func Command(d Deps) *cobra.Command {
 	adrNew.Flags().String("project", "", "项目名（不带就取当前目录所在的项目）")
 	adr.AddCommand(adrNew)
 
-	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节；另有第五项 knowledge、skills（只在 --only 点名时做）：knowledge 把一个项目的引导文件和 docs/ 搬进 home；skills 把 ~/.claude/skills/ 逐个定去留、留的搬进 home 的 skills/ 并换成软链")
+	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节；另有第五项 knowledge、skills、memories（只在 --only 点名时做）：knowledge 把一个项目的引导文件和 docs/ 搬进 home；skills 把 ~/.claude/skills/ 逐个定去留、留的搬进 home 的 skills/ 并换成软链；memories 把各项目的记忆合并进 home 的 memory/")
 	pluginRoot := func() (string, error) {
 		root := d.env()(EnvPluginRoot)
 		if root == "" {
@@ -217,11 +217,20 @@ func Command(d Deps) *cobra.Command {
 		for _, id := range ids {
 			if id == KnowledgeItem {
 				knowledge = true
-			} else {
+			} else if id != MemoriesItem {
 				base = append(base, id)
 			}
 		}
 		return
+	}
+	// the memories item works on the machine's memory directories and is likewise only done when named
+	wantsMemories := func(ids []string) bool {
+		for _, id := range ids {
+			if id == MemoriesItem {
+				return true
+			}
+		}
+		return false
 	}
 	project := func(cmd *cobra.Command) string {
 		v, _ := cmd.Flags().GetString("project")
@@ -234,6 +243,10 @@ func Command(d Deps) *cobra.Command {
 		}
 		ids, withSkills := splitSkills(ids)
 		base, knowledge := split(ids)
+		memories := wantsMemories(ids)
+		if memories && (withSkills || knowledge) {
+			return errMemoriesAlone
+		}
 		var items []ConfigItem
 		if len(base) > 0 {
 			root, err := pluginRoot()
@@ -248,7 +261,23 @@ func Command(d Deps) *cobra.Command {
 			return d.planSkills(cmd, items, knowledge)
 		}
 		asJSON, _ := cmd.Flags().GetBool("json")
+		var m MemoriesPlan
+		if memories {
+			var err error
+			if m, err = PlanMemories(d.env()); err != nil {
+				return err
+			}
+		}
 		if !knowledge {
+			if memories {
+				if asJSON {
+					fmt.Fprint(d.out(), MemoriesPlanJSON(items, m))
+					return nil
+				}
+				fmt.Fprint(d.out(), ConfigTable(append(items, m.Item)))
+				fmt.Fprint(d.out(), MemoriesTable(m))
+				return nil
+			}
 			if asJSON {
 				fmt.Fprint(d.out(), ConfigJSON(items))
 				return nil
@@ -268,7 +297,7 @@ func Command(d Deps) *cobra.Command {
 		fmt.Fprint(d.out(), KnowledgeTables(k))
 		return nil
 	})
-	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project）、skills（只能按名字点）是另外的项，默认不含；两者不能同时点")
+	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project）、skills、memories（只能按名字点）是另外的项，默认不含；三者不能同时点")
 	plan.Flags().String("project", "", "knowledge 项用：项目名（不带就取当前目录所在的项目）")
 	plan.Flags().Bool("json", false, "输出 JSON；带 knowledge 时是 {items, project, inventory, hardcoded, prs}，存成文件填完「去哪」就是 apply --plan 要的")
 	apply := leaf("apply", "先备份，再做还没做的改动；都已做就什么都不写；--only knowledge --plan <文件> 把这个项目的引导文件和 docs/ 复制进 home 并提交；--only skills --plan <文件> 备份后按每行去留搬或删，全定了就换成软链并提交", sess, "", func(cmd *cobra.Command, args []string) error {
@@ -280,6 +309,9 @@ func Command(d Deps) *cobra.Command {
 		base, knowledge := split(ids)
 		if withSkills && knowledge {
 			return errSkillsAlone
+		}
+		if wantsMemories(ids) && (withSkills || knowledge) {
+			return errMemoriesAlone
 		}
 		if len(base) > 0 {
 			root, err := pluginRoot()
@@ -309,11 +341,18 @@ func Command(d Deps) *cobra.Command {
 			planFile, _ := cmd.Flags().GetString("plan")
 			done, err := ApplyKnowledge(d.env(), d.cwd(), project(cmd), planFile, d.env()(EnvPluginRoot), d.now())
 			d.println(done.Lines...)
+			if err != nil {
+				return err
+			}
+		}
+		if wantsMemories(ids) {
+			done, err := ApplyMemories(d.env(), d.cwd(), d.now())
+			d.println(done.Lines...)
 			return err
 		}
 		return nil
 	})
-	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project 和 --plan）、skills（只能按名字点，带 --plan）是另外的项，默认不含；两者不能同时点")
+	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project 和 --plan）、skills（只能按名字点，带 --plan）、memories（只能按名字点，不要 plan 文件）是另外的项，默认不含；三者不能同时点")
 	apply.Flags().String("project", "", "knowledge 项用：项目名（不带就取当前目录所在的项目）")
 	apply.Flags().String("plan", "", "knowledge 项用 plan --only knowledge --json 的输出，「去哪」填完；skills 项用 plan --only skills --json 的输出，每行 decision 填「留」或「删」")
 	config.AddCommand(plan, apply)
