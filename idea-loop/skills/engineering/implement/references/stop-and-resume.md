@@ -4,8 +4,8 @@
 
 1. 把分支推上去（PR 在接分支后就开了，号取 `prs.md`）。
    - **有 `大用例待跑`**（落地的交回里 `verified` 写了）：在会话里先告诉人几个用例、每个最长约 3×45 分钟、每个约 1.05–3.50 美元（起 agent 的更高）乘以个数，不等人点头，用 Bash 的 `run_in_background: true` 起 `node ~/.idea-loop/bin/retro-replay.mjs --cases <用例,用例> --run-large --pr <PR 号> --worktree <集成 worktree 绝对路径>`（不设 timeout），等它退出，不轮询；照 [references/replay-result.md](replay-result.md) 处理结果。
-2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `dyna pr loop next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。
-3. 更新 `reference` 的执行记录，推送。
+2. 照 `idea-loop:pr` 的「Review 汇报」写（来自实现）：handled 的每一条进「已按规则处理」，新落地工单的人验素材进「要你看的」，pending 的每一条写成「要你决定」，落地的改动写「能否回滚」。轮次取 `dyna pr loop next .tmp/review-loop/<PR 号>.md review impl`，条目标记写 `{"kind":"review","round":<轮次>,"from":"impl"}`，素材写本地路径；然后清空 handled。工单表和执行记录只留在这个文件里，不写进 PR 描述。
+3. 推送。
 4. **先看有没有要人拍板的事**：pending 不空（有等决定的事）。人验素材不算：它们照第 2 步列进「要你看的」（不勾），实现中途不停，最后收进 PR 描述的「要你做的事」，人在 PR 上一起看。
    - **有**：照 `idea-loop:pr` 的「在会话里给人看」按条目贴汇报，每项文字后紧跟它的素材；再发一条推送通知。停下等人，见下面「人回复后」。
    - **都没有**：不停，不等回复。第 2 步写进文件的条目就是留痕：已按规则处理照样列（人想推翻哪条，之后随时说，照「人回复后」的推翻处理），「要你看的」照常列（有人验素材的不勾，写明「留到 PR 描述的「要你做的事」看」；没有的不写这一节），条目末尾直接记一节「做了什么」（逐点：这次落地了什么、按规则处理了什么，带提交链接），不写「你的批示」。会话里只说一句落地了几张、已按规则处理几件，不发推送通知，然后往下走下面「全部落地」那一步。人验素材仍由人判，只是挪到 PR 描述里判；`dyna pr loop check` 对没有「要你决定」这一节的条目，记了「做了什么」就算处理完。

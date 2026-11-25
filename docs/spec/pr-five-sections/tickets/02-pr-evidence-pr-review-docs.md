@@ -19,6 +19,7 @@
 - [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
 - [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
 - [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [ ] 插件全量 `node --test` 里 pr / evidence 的 7 条文档测试绿（`the evidence skill is three sections…`、`the evidence sections say what evidence is…`、`「证据的几种形态」是一张六行的形态表…`、`every cited section of the evidence skill exists…`、`the PR description references the spec by title…`、`the PR description template has 能否回滚…`、`the shared writing rules are cited from evidence…`）（继承自 03）
 
 ## 选中的存量回归
 - 插件 scripts 下守 pr / pr-review / evidence 文档的那几条 doc test：这次改动正是它们守的文字。
