@@ -27,11 +27,6 @@ function section(doc, title) {
   const end = rest.findIndex((l) => l.startsWith('## '));
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
-const body = (doc) => {
-  const m = doc.match(/^---\n[\s\S]*?\n---\n/);
-  return m ? doc.slice(m[0].length) : doc;
-};
-const chars = (doc) => [...body(doc)].length;
 
 const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
 const issueSession = read('skills', 'engineering', 'issue-session', 'SKILL.md');
@@ -73,37 +68,35 @@ test('replay-result.md moved from issue-session to implement, and handles the ou
   assert.match(doc, /全过/);
   assert.match(doc, /有不过的/);
   assert.match(doc, /判定对.*判定错.*用例有问题|三个处理/s, 'the three rulings');
-  assert.match(doc, /retro-install\.mjs/, 'reinstall the fixed-path runner when it does not know --run-large');
+  assert.match(doc, /dyna retro install/, 'reinstall the fixed-path runner when it does not know --run-large');
   assert.match(doc, /unknown argument/);
   assert.doesNotMatch(doc, /夜|队列|macOS 通知|会话间消息|当场跑/, 'nothing of the night run is left');
 });
 
-test('issue-session has no paragraph about the replay result any more, and stays under 5000 characters', () => {
+test('issue-session has no paragraph about the replay result any more', () => {
   assert.doesNotMatch(issueSession, /规则回放的结果|replay-result|会话间消息/);
-  assert.ok(chars(issueSession) < 5000, `issue-session body is ${chars(issueSession)} characters`);
 });
 
 test('setup 「规则回放 runner」 installs the runner only; its reference removes the old scheduled task and the queue directory', () => {
-  assert.match(setup, /^## 规则回放 runner$/m);
+  assert.match(setup, /^## 定时任务$/m); // #420: the runner is a row of the 「定时任务」 table
+  assert.match(section(setup, '定时任务'), /规则回放 runner/);
   assert.doesNotMatch(setup, /夜间/);
-  assert.match(section(setup, '规则回放 runner'), /references\/replay-runner\.md/);
+  assert.match(section(setup, '定时任务'), /references\/replay-runner\.md/);
   assert.match(setupRef, /idea-loop-retro-replay/, 'delete the old scheduled task by its id');
   assert.match(setupRef, /『定时任务』/, 'with the scheduled-task capability');
   assert.match(setupRef, /~\/\.idea-loop\/replay-queue\//, 'delete the old queue directory');
-  assert.match(setupRef, /retro-install\.mjs/);
+  assert.match(setupRef, /dyna retro install/);
   assert.match(setupRef, /允许规则/);
-  assert.ok(chars(setup) < 5000, `setup body is ${chars(setup)} characters`);
-});
-
-test('implement SKILL.md body is not longer than it was before this change (9589 characters on main after #304)', () => {
-  assert.ok(chars(implement) <= 9589, `implement body is ${chars(implement)} characters`);
 });
 
 test('implementer: a large case is only written and committed; the result of `--run-large` is the orchestrator\'s', () => {
-  const doc = readFileSync(join(pluginRoot, 'agents', 'implementer.md'), 'utf8');
+  // the rule-ticket steps moved out of agents/implementer.md into references/rule-tickets.md (spec
+  // implementer-start-point-non-destructive, ticket 02): the positive sentences are read there, the queue words stay out of both
+  const def = readFileSync(join(pluginRoot, 'agents', 'implementer.md'), 'utf8');
+  const doc = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md');
   assert.match(doc, /大用例待跑：<用例>/);
   assert.match(doc, /PR 开出后当场跑/);
-  assert.doesNotMatch(doc, /--enqueue|夜里|夜间|回放在队列里|队列/);
+  for (const text of [def, doc]) assert.doesNotMatch(text, /--enqueue|夜里|夜间|回放在队列里|队列/);
   assert.match(doc, /规则回放 runner/, 'a runner that is not there means setup\'s 「规则回放 runner」 step was not done');
 });
 

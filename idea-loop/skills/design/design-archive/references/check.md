@@ -3,10 +3,10 @@
 写完 `delta/`、初扫写完草稿、校验报错要看懂时读。
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--delta <spec-slug>] [--no-used-by] [--workspaces <前缀,前缀>] [--json]
+dyna design archive check <项目目录> [--delta <spec-slug>] [--no-used-by] [--workspaces <前缀,前缀>] [--json]
 ```
 
-退出码 0 = 通过（可以带「提示」），1 = 有违规（逐条指名文件与字段），2 = 用法错误或不是仓库根。`--delta` 把 `tmp/<spec-slug>/delta/` 叠到 `prod/` 上（同 id 的对象以 `delta/` 为准，按 `removed.md` 去掉对象），判叠完之后的样子。`--no-used-by` 跳过规则 6 里 `usedBy` 那一半。`--workspaces mkt,app` 把组件文件名的工作区前缀交给校验（初扫时 `prod/index.md` 还不存在，没处声明）。
+退出码 0 = 通过（可以带「提示」），1 = 有违规（逐条指名文件与字段），2 = 用法错误。`--delta` 把 `tmp/<spec-slug>/delta/` 叠到 `prod/` 上（同 id 的对象以 `delta/` 为准，按 `removed.md` 去掉对象），判叠完之后的样子。`--no-used-by` 跳过规则 6 里 `usedBy` 那一半。`--workspaces mkt,app` 把组件文件名的工作区前缀交给校验（初扫时 `prod/index.md` 还不存在，没处声明）。
 
 **写完 `delta/` 的标志**：`--delta <spec-slug> --no-used-by` 退出码 0。
 
@@ -21,6 +21,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-check.mjs" <仓库根> [--del
 | 7 分段 | 分段的类型、`id` 写法、定位形状，边的 `from` / `section` 与状态的 `section` 指向声明过的段（逐条见下） |
 | 8 边的截图 | 边的 `shot` 写成 `<出发状态 id>@<边 id>.png`，边 id 是出发状态自己的边；不写在 `system` 边上，不写在声明了 `sections` 的状态上（逐条见下） |
 | 0 结构 | 读不出的文件、不认识的 `type`、缺了规则依赖的必填字段（逐项见 [writing.md](writing.md) 的「状态与边」）；`prod/index.md` 声明了 `workspaces` 时，每个组件文件名要带其中一个前缀 |
+
+`docs/design/` 下 `tmp/`、`prod/`、`pending/`、`index.md` 以外的目录是旧布局的冻结记录：校验对每个只打一条建议删的提示，不算违规。
 
 ## 规则 7 的逐条违规与提示
 

@@ -45,7 +45,7 @@ v1 的接法是：`grill` 的设计子树长出来后，一次性 handoff 给独
 
 准出物**只有一份方向说明**（固定七节，写进 spec §4），形状由 `direction-note-check.mjs` 校验。变种的渲染只服务于人当下的反应，不留存、不往下传。项目没有 `DESIGN.md` 的，语言在这一段被选出来并写成文件。原 `design-brief` 溶解在这里。
 
-### 2.4 uiux-refine：收敛，准出一个 HTML 画布 ⚠️ 已被取代（部分）→ [[0015-uiux-imagine-agent]]
+### 2.4 uiux-refine：收敛，准出一个 HTML 画布 ⚠️ 已被取代（部分）→ [[0015-uiux-imagine-agent]]；⚠️ 已被取代（部分：评委打磨环与减法 / AI tells 轮）→ [[0074-refine-judge-advisor]] §2
 
 也只能人调，且要一个全新会话。它读 spec 里那份方向说明，在 `DESIGN.md` 之下**从方向说明重建** preview（绝不从 imagine 的渲染物继续），执行者对评委跑双模型打磨环 —— **评委只收截图，分数从 finding 推导**，由 `critic-score.mjs` 对着它自己的 finding 复算。静态构图冻结之后才接动效段与素材段，再各跑一轮减法与 AI tells。
 
@@ -76,6 +76,12 @@ grill（按需 prototype）→ to-spec → [uiux-imagine → /clear → uiux-ref
 核实（2026-09-16 对 `origin/main`）：`idea-loop` 现为 **10 个 skill**、版本 0.0.8；`prototype` / `uiux-imagine` / `uiux-refine` 的 `SKILL.md`、`ui-measure.mjs` / `ui-compare.mjs` / `critic-score.mjs` / `direction-note-check.mjs`、`evals/` 的 baseline 均在树上；`design/` 目录 0 条目，全仓无退役残留引用；`node --test idea-loop/scripts/*.test.mjs` 84/84 通过。
 
 三个新 skill 被钉在 `evals/` 的一个真实 case 上，这是对本仓库「主观输出跳过 quantitative eval」约定的一处**有意例外**，理由写在根 `CLAUDE.md` §5。
+
+## 取代与演变
+
+- §2.1、§2.6 的 prototype：提交 1779ed6「grill 只管访谈，删除 prototype」删掉了 prototype skill。
+- §2.5「UI 实现标准是 reference 加脚本，不是 skill」：提交 a731b38 把它升成独立 skill `ui-measure`。
+- §2.2「Playwright 走插件自带 .mcp.json」：提交 236aaaf 改为用户级配置，插件 `.mcp.json` 里不再有 Playwright。
 
 ## 4 关联
 

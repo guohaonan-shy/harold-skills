@@ -2,14 +2,13 @@
  * Tripwire — the pr skill is written from its reader: two deliverables, each with a table of sections and
  * what each section gives the reader.
  *
- * Spec decision-rules-who-decides, ticket 03 (issue #80). Before: four deliverables (the PR description, a
+ * Spec who-decides, ticket 03 (issue #80). Before: four deliverables (the PR description, a
  * stop report, a review report, the review-loop file) grown one rule at a time, 11841 characters over five
  * files, with no place that said what a section is for. The human decided (2026-10-31): the deliverables
  * are the PR description on GitHub and one Review 汇报 in the conversation (stops during implementation and
  * review rounds are the same report); the review-loop file is only where that report is kept; both have a
  * 能否回滚 section; every 要你决定 item has one format. These checks pin: the two section tables (three
- * columns, no empty cell), the item format, the reference files and their total size, the SKILL.md body
- * under 5000 characters, no pointer left at the removed files or the removed names, and the shared writing
+ * columns, no empty cell), the item format, the reference files and their total size, no pointer left at the removed files or the removed names, and the shared writing
  * rules cited from evidence rather than restated.
  */
 import { test } from 'node:test';
@@ -52,19 +51,18 @@ test('the pr skill has exactly two section tables, one per deliverable, every ro
     }
   }
   const [description, report] = tables;
-  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '要你做的事', '参考']);
+  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '夜里替你定的', '等你定的', '要你做的事', '参考']);
   assert.deepEqual(report.map((r) => r[0]), ['开头一句', '已按规则处理', '要你决定', '能否回滚', '要你看的', '折叠区']);
 });
 
 test('the description table carries the script section names in order, with 能否回滚 after 怎么验证 and no 顺带开的 issue of its own', () => {
   const [description] = sectionTables(skill);
   const names = description.map((r) => r[0].match(/`([^`]*)`/)?.[1]);
-  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'your-todo', 'reference']);
+  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'live-check', 'night-decided', 'night-waiting', 'your-todo', 'reference']);
   assert.ok(!description.some((r) => r[0].includes('顺带开的 issue')));
 });
 
-test('the skill body is at most 5000 characters (UTF-8 characters, not bytes), and names only the two deliverables', () => {
-  assert.ok(chars(skill) <= 5000, `body is ${chars(skill)} characters`);
+test('the skill names only the two deliverables', () => {
   const description = skillRaw.match(/^description: (.*)$/m)[1];
   assert.match(description, /PR 描述/);
   assert.match(description, /Review 汇报/);
@@ -98,13 +96,13 @@ test('the Review 汇报 gives every 要你决定 item one format: now, impact, e
 test('the PR description template has 能否回滚 right after 怎么验证, and none of the sections that were folded away', () => {
   const text = readFileSync(join(prDir, 'references', 'description.md'), 'utf8');
   const heads = [...text.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '要你做的事', '参考']);
+  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '夜里替你定的', '等你定的', '要你做的事', '参考']);
   assert.doesNotMatch(text, /\*\*切法\*\*/);
 });
 
 test('the shared writing rules are cited from evidence, not restated in the pr skill', () => {
   const all = [skill, ...readdirSync(join(prDir, 'references')).map((f) => readFileSync(join(prDir, 'references', f), 'utf8'))].join('\n');
-  assert.match(skill, /idea-loop:evidence/);
+  assert.match(skill, /idea-loop:evidence` 的「证据是什么」/);
   for (const [name, re] of [['陌生叫法第一次出现', /第一次出现/], ['比对同条件', /同条件/], ['规模数字', /规模数字/], ['裸编号', /裸编号/], ['评判标准', /评判标准/]]) {
     assert.doesNotMatch(all, re, `pr 里复述了 evidence 的共用写法：${name}`);
   }
@@ -122,11 +120,10 @@ function walk(dir, out = []) {
 
 test('nothing in the plugin points at the removed stop-report / review-round files, the 停下汇报, or the 需要你决定 heading', () => {
   const hits = [];
-  for (const file of walk(pluginRoot)) {
+  // home's fixed text names the 停下汇报 as one of the deliverables a decision is listed in; it is the same word, not the removed file
+  for (const file of walk(pluginRoot).filter((f) => !f.endsWith('setup/references/home-rules.md'))) {
     const text = readFileSync(file, 'utf8');
-    // review-loop.mjs keeps reading the old 需要你决定 heading in files already written; that is its one mention
-    const scrubbed = file.endsWith('review-loop.mjs') ? text.replace(/需要你?决定|需要\|要/g, '') : text;
-    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(scrubbed)) hits.push(relative(pluginRoot, file));
+    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(text)) hits.push(relative(pluginRoot, file));
   }
   assert.deepEqual(hits, [], `还指着旧的停下汇报：${hits.join(', ')}`);
 });
@@ -139,6 +136,6 @@ test('the callers name the new sections: deliver.md writes rollback, not issues,
   // the steps of 「没活了就停下」 live in implement's own reference
   const implement = read('skills', 'engineering', 'implement', 'SKILL.md') + '\n' + read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
   assert.match(implement, /Review 汇报/);
-  assert.match(implement, /review-loop\.mjs" next[^\n]*review impl/);
+  assert.match(implement, /dyna pr loop next[^\n]*review impl/);
   assert.doesNotMatch(implement, /next[^\n]* pause/);
 });

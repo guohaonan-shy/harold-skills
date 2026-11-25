@@ -12,9 +12,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(pluginRoot, '..');
@@ -54,7 +54,8 @@ test('the 验证 field names its three ways in the template line and says what e
   assert.match(para, /是\/否题/);
   assert.match(para, /先在历史错误上看它红/);
   assert.match(para, /判不了/);
-  assert.match(para, /原因/);
+  assert.match(para, /判不了」和卡在哪/, '「判不了」写卡在哪，跟 spec 杠杆诊断里的写法对齐');
+  assert.doesNotMatch(para, /原因/);
 });
 
 test('the 做完的条件 of the candidate section counts nine items and checks the 验证 field', () => {
@@ -83,7 +84,7 @@ test('the pool reader still accepts the existing pool files, which have no 验�
   const dir = join(repoRoot, 'docs', 'records', 'retro-candidates');
   const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
   assert.ok(files.length > 0);
-  const r = spawnSync(process.execPath, [join(pluginRoot, 'scripts', 'retro-pool-count.mjs'), dir], { encoding: 'utf8' });
+  const r = runDyna(['retro', 'pool', 'count', dir]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(JSON.parse(r.stdout).problems, []);
 });

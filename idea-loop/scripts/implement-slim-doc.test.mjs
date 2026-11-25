@@ -1,12 +1,10 @@
 /**
- * Tripwire — `idea-loop:implement`'s SKILL.md stays inside the body limit; what only some runs reach lives behind
+ * Tripwire — `idea-loop:implement`'s SKILL.md stays slim; what only some runs reach lives behind
  * pointers in its own `references/`.
  *
- * Spec skill-edit-acceptance, ticket 01. The body had grown to 9414 characters (the limit in AGENTS.md「标准 plugin 目录结构」
- * is 5000: UTF-8 characters after the frontmatter, `awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`). The
+ * Spec skill-edit-acceptance, ticket 01. The body had grown to 9414 characters (the length line is `dyna spec skill-lint`'s). The
  * branches that only some runs walk (waiting for the human, redispatch, CI failures, other repositories, design
- * changes, a session that broke) moved to references; the steps every run walks stayed. This test catches the body
- * growing back, a title that other skills cite by name disappearing, and a pointer that names a file that is not there.
+ * changes, a session that broke) moved to references; the steps every run walks stayed. This test catches a title that other skills cite by name disappearing, and a pointer that names a file that is not there.
  * It cannot tell whether a moved branch is the right one to move: review judges that against `writing-for-agents`.
  */
 import { test } from 'node:test';
@@ -30,11 +28,6 @@ function body(doc) {
   }
   return rest.join('\n');
 }
-
-test('implement SKILL.md body is under 5000 characters (the limit in AGENTS.md)', () => {
-  const n = [...body(skill)].length;
-  assert.ok(n < 5000, `implement body is ${n} characters`);
-});
 
 // pr-review cites 「派工」「核对与落地」「回收」「等 CI」「设计变更」; the pr skill's review-loop reference cites 「没活了就停下」.
 test('the titles other skills cite by name are still in SKILL.md', () => {
@@ -68,8 +61,8 @@ test('every markdown link inside a reference opens from the reference file\'s ow
 test('the 「等 CI」 rule is written once: SKILL.md keeps the title and a pointer, the rule stays in the reference', () => {
   const line = skill.split('\n').find((l) => l.startsWith('**等 CI**'));
   assert.ok(line, 'no 「等 CI」 title');
-  assert.ok(!line.includes('gh pr checks'), 'SKILL.md repeats the wait command; the rule belongs in the reference only');
+  assert.doesNotMatch(line, /红了|无关|没有检查/, 'SKILL.md repeats the outcomes; the rule belongs in the reference only');
   assert.match(line, /references\/stop-and-resume\.md/, '「等 CI」 must point at the reference');
   const ref = readFileSync(join(skillDir, 'references', 'stop-and-resume.md'), 'utf8');
-  assert.match(ref, /\*\*等 CI\*\*：[^\n]*gh pr checks <PR 号> --watch/, 'the reference no longer holds the rule');
+  assert.match(ref, /\*\*等 CI\*\*：[^\n]*等这个 head 的检查跑完/, 'the reference no longer holds the rule');
 });

@@ -18,7 +18,7 @@ related: ["[[2026-11-05-issue-model-regrill]]", "[[0002-design-loop-v2-imagine-r
 2. **子 issue 被当成“归成一组”用**：整合定时任务（ADR-0021）把改同一处的 issue 挂到根下，开着的 10 个根下 27 个子 issue 并非从根拆出；Linear 上同样有汇总单下挂一堆不相干的 issue。
 3. **状态名对不上 Linear**：八个中文状态把设计、实现各拆成“待/中”；Linear 团队的 In Progress / In Review / Done 由 PR 推，而 idea-loop 要等 PR 合并才翻状态、PR 在实现全部做完才开；一个 issue 常在多个仓库各一个 PR，idea-loop 一个会话只认一个仓库。
 
-## 2 决策（how）
+## 2 决策（how） ⚠️ 已被取代（部分：「issue 正文统一格式」一条：背景改为必填，共五节）→ [[0071-issue-body-background]] §2
 
 - **七个状态**：backlog → triage → todo → in-progress → in-review → done，另有 canceled。GitHub 上开着的四个状态各一个 `status:*` label（backlog 是开着且没有 `status:*`，done/canceled 只看关闭 reason）；Linear 上对 workflow state。团队没开 Triage 的在 `ISSUE_TRACKER.md` 写“triage：跳过”，backlog 直接到 todo。
 - **spec 没有状态**：frontmatter 只留 `issues:`，spec 了结 = 它列的 issue 全关。`spec-status.mjs` 删除，读 spec 的函数移进 `spec.mjs`；翻状态的前提（triage→todo 时 spec 没有“需要 grill”“待定”、碰 UI 的设计已冻结；→done 时挂着的 PR 全部合并）由 `issues check` 判，`set` 先跑它。

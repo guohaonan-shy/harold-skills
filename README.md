@@ -12,6 +12,7 @@ Harold's personal collection of Claude Code skills, organized as a **Claude Code
 | [`content-creator/`](./content-creator/) | Content creation toolkit for short-video and social-feed creators. Currently ships `thumbnail-gen`. | Ready |
 | [`happy-life/`](./happy-life/) | Personal lifestyle skills for daily rituals and taste memory. Currently ships `daily-coffee-oracle`. | Ready |
 | [`idea-loop/`](./idea-loop/) | Closed loop from idea to shipped engineering — design-tree interview → spec → [design diverge → design converge] → tracer-bullet tickets → TDD implementation → three-axis PR review (Correctness / Standards / Spec) → knowledge-base reconciliation. The bracketed design pair runs only when the spec touches UI. Generalized out of a real project, reads the target repo's own conventions rather than hardcoding them. | Ready |
+| [`ai-eval/`](./ai-eval/) | Gate AI-pipeline changes: run a candidate on a fixed sample set, score it with deterministic asserts and Codex judges, compare against a stored baseline, and decide against the exit criteria in the project's own `EVAL.md`. Depends on PostHog (samples and scorers) and Codex (judge). | Ready |
 
 More plugins may be added over time.
 
@@ -30,6 +31,7 @@ Examples:
 /plugin install content-creator@harold-skills
 /plugin install happy-life@harold-skills
 /plugin install idea-loop@harold-skills
+/plugin install ai-eval@harold-skills
 ```
 
 ## Repository Structure

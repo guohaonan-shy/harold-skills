@@ -2,7 +2,7 @@
  * Doc test — whoever runs a replay reads the two products and answers the judge's question themselves, then compares.
  *
  * Spec replay-run-large-now, ticket 06. For a large case that is the orchestrator of `idea-loop:implement`
- * (`references/replay-result.md`); for a small case it is the implementer (`agents/implementer.md`). A disagreement with
+ * (`references/replay-result.md`); for a small case it is the implementer (`references/rule-tickets.md`, read from `agents/implementer.md`). A disagreement with
  * the judge stops the run and is put to the human (orchestrator) or handed back as `blocked` (implementer); neither
  * changes the verdict by itself. No script is involved: reading a product is judgement. This test reads the documents
  * and catches a sentence being dropped; it cannot tell whether a session then does what the text says.
@@ -17,7 +17,9 @@ const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 
 const result = read('skills', 'engineering', 'implement', 'references', 'replay-result.md');
-const implementer = read('agents', 'implementer.md');
+// the rule-ticket steps moved out of agents/implementer.md into implement's references/rule-tickets.md
+// (spec implementer-start-point-non-destructive, ticket 02); the implementer reads it behind a pointer.
+const implementer = read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md');
 const smallLine = implementer.split('\n').find((l) => l.startsWith('  - **小的**'));
 
 test('replay-result.md: read both products, answer the question yourself, compare with the judge', () => {
@@ -67,4 +69,38 @@ test('implementer: the paragraph on a judge you disagree with points at blocked,
 test('this change added no script: the comparison is judgement, written only in the two documents', () => {
   assert.doesNotMatch(result, /node .*compare|--compare/);
   assert.doesNotMatch(smallLine, /--compare/);
+});
+
+// Review round 2 of spec skill-change-verify, ticket 01: the replay entry gives a goal case that was already done before the
+// change its own options (take the rule out / the judge is wrong / a different case), so the document that tells the
+// orchestrator what to put to the human must not list only the three options of a quoted case anywhere.
+test('replay-result.md: every place that lists the options to the human gives both sets, by the kind of case', () => {
+  const listing = result.split('\n').filter((l) => /用例有问题/.test(l));
+  assert.ok(listing.length >= 1, 'no line lists the options at all');
+  for (const l of listing) {
+    assert.match(l, /本来不用加/, `a list of options without the already-done goal case's set: ${l.slice(0, 60)}`);
+    assert.match(l, /换一个改前做不到的用例/, `a list of options without the replacement case: ${l.slice(0, 60)}`);
+  }
+});
+
+test('replay-result.md: a case that did not pass is put to the human with the options its entry gives, by the kind of case', () => {
+  const m = result.match(/\*\*有不过的\*\*[^\n]*/);
+  assert.ok(m, 'no 有不过的 branch');
+  assert.doesNotMatch(m[0], /选项就是条目里的三个处理（判定对 \/ 判定错 \/ 用例有问题）/, 'still the quoted case\'s three options for every case');
+  assert.match(m[0], /选项就是条目里给这个用例写的那组/, 'the options are the entry\'s own, per case');
+  assert.match(m[0], /改前就做得到的目标用例/, 'the already-done goal case is named');
+  assert.match(m[0], /本来不用加/, 'its first option: the rule was not needed');
+});
+
+// Review round 2 of spec skill-change-verify, ticket 01 (same kind as the replay-result.md change): a small case the
+// implementer hands back as `blocked` gets the options of its kind too, the same sets the replay entry gives.
+test('implementer: a disagreement with the judge is handed back with the options by the kind of case', () => {
+  assert.match(smallLine, /原话用例是判定对 \/ 判定错 \/ 用例有问题/, 'the quoted case\'s three options');
+  assert.match(smallLine, /改前就做得到的目标用例是这段规则本来不用加（撤掉它）\/ 判定错 \/ 换一个改前做不到的用例/, 'the already-done goal case\'s three options');
+});
+
+test('implementer: a goal case that was already done before the change is handed back with the same three options as the replay entry', () => {
+  const goalLine = implementer.split('\n').find((l) => l.startsWith('  - **目标用例**'));
+  assert.ok(goalLine, 'the 目标用例 bullet is gone');
+  assert.match(goalLine, /按 `blocked` 交回，选项是这段规则本来不用加（撤掉它）\/ 判定错 \/ 换一个改前做不到的用例/);
 });

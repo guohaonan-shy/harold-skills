@@ -1,6 +1,6 @@
 # 发现清单与方向 agent 的文件约定
 
-一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `seo-issues.mjs`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；五个方向 agent 和被它们调用的方法 skill 都照这里写。
+一次 `seo-scan` 里，每个方向 agent 把发现写成一个 JSON 文件，`seo-scan` 合并后交给 `dyna seo file-issues`。这份文件定义发现的形状、文件放哪、未采集怎么写、agent 交回什么；方向 agent 和被它们调用的方法 skill 都照这里写。
 
 ## 一条发现
 
@@ -13,7 +13,7 @@
   "evidence": { "what": "调了什么工具、什么参数", "when": "YYYY-MM-DD", "values": "拿回的数值，一两句" },
   "ratio": { "numerator": 3, "denominator": 40 },
   "repro": "照着就能重跑的步骤：哪个 OpenSEO 工具、什么参数；或用什么 UA 请求哪个网址、看哪一行",
-  "fix": "建议的修法；还没定的写「需要诊断」或「需要决定：…」",
+  "fix": "建议的修法；还没想清楚写「需要诊断」或「需要决定：…」，这条照样交回，诊断和拍板在 issue 会话里做",
   "acceptance": ["能逐条独立检查的验收标准"],
   "assumptions": ["无人时代替提问用的默认值"],
   "content": { "keyword": "目标词", "pageType": "对比与研究 | 数据研究 | 故事 | 教程", "mode": "new | update" }
@@ -21,10 +21,9 @@
 ```
 
 - `ratio`、`assumptions`、`content` 可选，其余必填。
-- **同一种问题一条**：三十个页面缺描述是一条 `kind: missing-meta-description`、`targets` 列三十个网址，不是三十条。合并和去重都靠 `direction` + `kind`，所以同一方向里 `kind` 的拼法每次运行保持一致：优先用 OpenSEO 返回里现成的问题类型名（例如审计的 `issueType`）。
+- **同一种问题一条**：三十个页面缺描述是一条 `kind: missing-meta-description`、`targets` 列三十个网址。合并和去重都靠 `direction` + `kind`，所以同一方向里 `kind` 的拼法每次运行保持一致：优先用 OpenSEO 返回里现成的问题类型名（例如审计的 `issueType`）。
 - 文字里（`title`、`evidence.values`、`fix`）出现百分比，就带 `ratio`；否则整条被拒收。CTR 写「12 次点击 / 1,050 次展现」，再给 `ratio: { numerator: 12, denominator: 1050 }`。
 - `repro` 要能被一个没看过本次数据的人照着重跑：工具名加完整参数（含 `projectId`、日期范围），或一条 `curl -A '<UA>' <网址>` 加要看的那一行。triage 会话的验证就照它独立复现。
-- `fix` 还没想清楚时写「需要诊断」或「需要决定：…」，这条照样交回：诊断和拍板在 issue 会话里有人做。
 - `content` 只给要新写或改写正文的发现，`pageType` 只取那四个值，`mode` 是新开页（`new`）还是改已有页（`update`）。
 - `assumptions` 写清无人时你替人选了什么：「SEO.md 没写目标市场，按 MCP 默认 United States / English」。缺的项目信息不推断着用，写清缺什么、哪部分因此没做：「SEO.md 竞品为空，未挖竞品外链」。
 
@@ -40,8 +39,21 @@
   "ratio": { "numerator": 12, "denominator": 1050 },
   "repro": "get_search_console_performance projectId=<SEO.md 的项目> dimensions=[query,page] dateRange=last_28_days filters=[{dimension:page,operator:equals,expression:https://cookbook.example/blog/weeknight-dinners}]",
   "fix": "需要诊断：对照 get_serp_results 前 10 名的标题，看意图是不是「快手」而不是「清单」",
-  "acceptance": ["页面 title 包含目标词且不超过 seo-check 的宽度上限", "改动上线 28 天后同一查询的点击 / 展现高于本次"]
+  "acceptance": ["页面 title 包含目标词且不超过 `dyna seo check` 的宽度上限", "改动上线 28 天后同一查询的点击 / 展现高于本次"]
 }
+```
+
+## 提示模板
+
+`seo-scan` 起方向 agent 时，提示照这个模板填，不加别的：
+
+```
+SEO.md：<项目目录>/SEO.md
+项目目录：<项目目录绝对路径>
+OpenSEO 项目：<projectId>
+本次额度：<allow 里这个方向的数> credits
+运行目录：<运行目录绝对路径>
+今天：<YYYY-MM-DD>
 ```
 
 ## 调方法 skill
@@ -60,13 +72,16 @@ OpenSEO 项目：<projectId>
 
 ## 文件放哪
 
-- 运行目录由调用方给（`<仓库根>/.tmp/seo-scan/<YYYYMMDD-HHMM>/`）。发现清单写到 `<运行目录>/<方向>.json`：一个 JSON 数组，没有发现就是 `[]`。
-- 为了交给脚本而存的工具原始返回（审计逐页数据等）也放在运行目录里，文件名带方向前缀（`technical-audit-pages-current.json`）。运行目录以外不写任何文件。
+- 运行目录由调用方给（会话工作目录所在 git 仓库的根下的 `.tmp/seo-scan/<YYYYMMDD-HHMM>/`）。发现清单写到 `<运行目录>/<方向>.json`：一个 JSON 数组，没有发现就是 `[]`。
+- 为了交给命令而存的工具原始返回（审计逐页数据等）也放在运行目录里，文件名带方向前缀（`technical-audit-pages-current.json`）。运行目录以外不写任何文件。
+- 方向 agent 有话要写进研究日志、又不是发现的（technical 的「有意改动」），写成 `<运行目录>/<方向>-<名字>.txt`，一行，seo-scan 写研究日志时照抄；交回仍只有那一行。
 - **未采集**：这个方向的数据一样也没拿到（MCP 连不上、没有 Search Console 连接、额度为 0 而方法只剩付费调用），文件内容是只有一个对象的数组：
 
   ```json
   [{ "direction": "pages", "uncollected": "OpenSEO 项目没有连 Search Console" }]
   ```
+
+  agent 没有交回合法文件（文件不存在、不是 JSON 数组、报错退出）时，调用方替它写成同样形状的未采集，原因写 agent 的报错或「没有交回发现文件」。`results`（效果报告）方向的发现用被它回看的那个改动的方向做 `direction`，只有它的未采集对象写 `"direction": "results"`。
 
   拿到了一部分就交回拿到的那部分发现，缺的那块写进交回那一句（例：geo 方向没有 AI 可见性跟踪时，引用数据没采集，免费的站点自检照常交回发现）。
 - 写完先验一遍：`node -e 'const a=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(!Array.isArray(a))process.exit(1)' <文件>`，退出码 0 才交回。

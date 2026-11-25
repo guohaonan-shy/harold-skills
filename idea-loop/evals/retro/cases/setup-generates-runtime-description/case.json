@@ -1,0 +1,10 @@
+{
+  "source": "docs/spec/dyna-app-layer-cleanup/dyna-app-layer-cleanup.md 的 User Story 5：插件不再带任何具体运行环境的说明，一台新机器跑 setup，AI 照模板和当前环境生成一份。这是一份新能力的目标用例，没有出过错的那一刻可回放。输入取 release/idea-loop-0.2.0 的 5ef9a09a（spec 起草时的状态，插件还带着桌面端和 magi 两份说明）",
+  "commit": "5ef9a09a",
+  "prompt": "/idea-loop:setup 这是一台新机器上的 Claude 桌面端会话，~/home 里还没有 runtime/ 目录，项目和 home 的别的几步都已经做完、不用再做。你只做「运行环境」这一步：认出这台机器现在有没有运行环境的说明，没有就把它写出来，写到能用为止。\n\n我不在场，不会回复你，也不会有人来批：问我的每一道题写成一段话（题目、选项、你推荐哪个），按你推荐的选项接着往下做；摆给我批的每一节也照这样处理，当作已经批了。不要 git push、不要 gh 的任何写操作、不要改 ~/.claude 下的任何配置。最后一段回复写明：这一步你做到了哪里、问了我什么、写出的文件在哪、跑了哪些检查和结果。",
+  "stop_at": "setup 的「运行环境」这一步做完、交给人的那一刻：最后一段回复写明问了什么、写出的文件在哪、跑了哪些检查",
+  "question": "空 home 里，setup 是否问了人这份说明放在哪（项目、home、用户根目录），并照能力模板写出了一份说明、让 `dyna runtime check` 对它全过？",
+  "goal_from": "docs/spec/dyna-app-layer-cleanup/dyna-app-layer-cleanup.md User Story 5",
+  "size": "large",
+  "size_basis": "跑的是 setup 整个 skill（带 `references/runtime-env.md` 一路走到写文件和 `dyna runtime check`），而且这一步要用本 PR 编出的 dyna 0.0.15（`IDEA_LOOP_DYNA_BIN` 指过去；0.0.15 发布前，装在机器上的 dyna 在 `dyna-version` 范围外）；按「碰任何一样是大」算大，由编排者在 PR 开出后用 `--run-large` 当场跑，实现时不跑"
+}

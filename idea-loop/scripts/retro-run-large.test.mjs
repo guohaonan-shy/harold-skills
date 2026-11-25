@@ -17,10 +17,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { reviewLoopPath } from '../evals/retro/queue.mjs';
+import { dynaBinary, runDyna } from './dyna-test-bin.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RUNNER = join(HERE, '..', 'evals', 'retro', 'retro-replay.mjs');
-const REVIEW_LOOP = join(HERE, 'review-loop.mjs');
 
 const FAKE = `#!/usr/bin/env node
 const fs = require('node:fs');
@@ -48,15 +48,19 @@ if (pd) {
 }
 `;
 
-// A fake Codex companion that answers like the fake judge (yes for a product containing FIXED): the judge of every replay here.
-const FAKE_CODEX = `const fs = require('node:fs');
+// A fake `codex` (started by `dyna agent codex run` as `codex exec … -o OUT PROMPT`) that answers like the fake judge (yes for a
+// product containing FIXED): the judge of every replay here.
+const FAKE_CODEX = `#!/usr/bin/env node
+const fs = require('node:fs');
 const args = process.argv.slice(2);
-const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
+const prompt = args[args.length - 1] === '-' ? fs.readFileSync(0, 'utf8') : args[args.length - 1];
 fs.appendFileSync(process.env.FAKE_LOG, 'judge\\n');
 const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
 const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
 const ans = (s) => (s.includes('FIXED') ? '是' : '否');
-console.log(JSON.stringify({ A: { answer: ans(a), cite: 'fake cite A' }, B: { answer: ans(b), cite: 'fake cite B' } }));
+const said = JSON.stringify({ A: { answer: ans(a), cite: 'fake cite A' }, B: { answer: ans(b), cite: 'fake cite B' } }) + '\\n';
+fs.writeFileSync(args[args.indexOf('-o') + 1], said);
+process.stdout.write(said);
 `;
 
 const smallCase = (over = {}) => ({
@@ -103,8 +107,9 @@ function setup({ after = 'reply: FIXED', cases = { 'demo-case': {} }, afterFiles
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
   chmodSync(bin, 0o755);
-  const codex = join(root, 'fake-codex.cjs');
+  const codex = join(root, 'fake-codex');
   writeFileSync(codex, FAKE_CODEX);
+  chmodSync(codex, 0o755);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
   return { root, wt, bin, codex, log, out: join(root, 'out') };
@@ -113,14 +118,14 @@ function setup({ after = 'reply: FIXED', cases = { 'demo-case': {} }, afterFiles
 function runner(env, args) {
   const r = spawnSync(process.execPath, [RUNNER, ...args], {
     encoding: 'utf8',
-    env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, RETRO_CODEX_COMPANION: env.codex, FAKE_LOG: env.log },
+    env: { ...process.env, RETRO_CLAUDE_BIN: env.bin, RETRO_CODEX_BIN: env.codex, FAKE_LOG: env.log, IDEA_LOOP_DYNA_BIN: dynaBinary() },
     timeout: 120_000,
   });
   const calls = readFileSync(env.log, 'utf8').split('\n').filter(Boolean);
   return { ...r, calls };
 }
 
-const loopCheck = (wt, pr) => JSON.parse(spawnSync(process.execPath, [REVIEW_LOOP, 'check', reviewLoopPath(wt, pr)], { encoding: 'utf8' }).stdout);
+const loopCheck = (wt, pr) => JSON.parse(runDyna(['pr', 'loop', 'check', reviewLoopPath(wt, pr)]).stdout);
 
 const runLargeArgs = (env, pr, extra = []) => [
   '--worktree', env.wt, '--base', 'base-point', '--out', env.out, '--timeout-min', '1', ...(pr === null ? [] : ['--pr', String(pr)]), ...extra,
@@ -301,10 +306,10 @@ test('--run-large: a change that touched only scripts is n/a for the check and t
   assert.match(readFileSync(reviewLoopPath(env.wt, 12), 'utf8'), /改动核对：不适用/);
 });
 
-test('a stand-in claude without RETRO_CODEX_COMPANION never reaches a Codex: the stand-in judges, --run-large too', () => {
+test('a stand-in claude without RETRO_CODEX_BIN never reaches a Codex: the stand-in judges, --run-large too', () => {
   const env = setup();
-  const noCodexEnv = { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log };
-  delete noCodexEnv.RETRO_CODEX_COMPANION;
+  const noCodexEnv = { ...process.env, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, IDEA_LOOP_DYNA_BIN: dynaBinary() };
+  delete noCodexEnv.RETRO_CODEX_BIN;
   const r = spawnSync(process.execPath, [RUNNER, '--case', 'demo-case', '--run-large', ...runLargeArgs(env, 12)], { encoding: 'utf8', env: noCodexEnv, timeout: 120_000 });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /没找到 Codex，评委用 Claude/);

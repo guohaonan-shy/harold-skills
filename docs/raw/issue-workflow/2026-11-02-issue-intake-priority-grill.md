@@ -4,7 +4,7 @@ source_type: conversation
 captured: 2026-11-02
 title: 讨论 —— issue 越做越多：开 issue 时就挂模块、判 P0，调度只给 P0 和本期焦点出卡片，停掉 cloud 整合
 tags: [issue-workflow, issue-intake-priority]
-related: ["[[issue-intake-priority]]"]
+related: []
 ---
 
 > 格式约定：`## U<n>` 是人的发言，逐字保留；`## A<n>` 只保留结论与发现，取证过程/工具调用/中间推演略去。末尾一张「本轮决议」表。

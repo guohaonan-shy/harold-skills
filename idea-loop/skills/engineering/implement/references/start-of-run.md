@@ -2,12 +2,16 @@
 
 ## 开工：先开 PR
 
-PR 从 spec 提交就挂着，不等工单做完：平台据此在 issue 上看到它改到了哪。issue 会话已经在切工单之前开了（`.tmp/implement/<spec-slug>/prs.md` 在，接着上次的会话时也在），先于派工核一遍：
+PR 从分支上有第一个提交起就挂着，不等工单做完：平台据此在 issue 上看到它改到了哪。issue 会话已经在切工单之前开了（`.tmp/implement/<spec-slug>/prs.md` 在，接着上次的会话时也在），先于派工核一遍：
 
-1. **PR 都在**：`prs.md` 列的仓库覆盖了工单头 `**仓库**` 收齐的那些（都没写就是当前仓库）。没有 `prs.md`（人直接调进来的），或工单用到了没开 PR 的仓库，照 `idea-loop:pr` 的「开 draft PR」补开。
-2. **翻状态**：todo 会话认领时已经翻成 in-progress，是的就跳过；不是的（人直接调进来），`issues set <docs> in-progress <号>`。Linear 上 PR 一开集成就推，不手翻。
-3. **补 `reference`**：开 PR 时工单还没切，`reference` 只有 spec 的链接；工单切好后，用 `pr-body.mjs set` 把 spec 与工单补进去。
+1. **PR 在**：`prs.md` 里有这个 PR。没有 `prs.md`（人直接调进来的），照 `idea-loop:pr` 的「开 draft PR」补开。
+2. **翻状态**：todo 会话认领时已经翻成 in-progress，是的就跳过；不是的（人直接调进来），`dyna issues set <docs> in-progress <号>`。Linear 上 PR 一开集成就推，不手翻。
+3. **补 `reference`**：开 PR 时工单还没切，`reference` 只有 spec 的标题、home 里的路径和摘要；工单切好后，用 `dyna pr body set` 把 spec 与工单补进去。
 
 ## 会话断了
 
-会话断了：先查 `git worktree list` 里 pending 没记着的执行方 worktree：它的分支上有一个带这张工单 `Ticket:` 的提交、比集成分支只多这一个、工单格全勾或带 `⏭ 延后`，就当它交回了 `landed`，照「核对与落地」落地再回收；不是这样的，才照「回收」收掉后重派。然后重算可派的工单。
+会话断了：先查 `dyna worktree list` 里 pending 没记着的执行方 worktree：它的分支上有一个带这张工单 `Ticket:` 的提交、比集成分支只多这一个、工单格全勾或带 `⏭ 延后`，就当它交回了 `landed`，照「核对与落地」落地再回收；不是这样的，才照「回收」收掉后重派。然后重算可派的工单。
+
+## 第一次派工
+
+可派的有两张以上时，先用 Agent 工具起 `idea-loop:explorer`，给一句目的（验证命令、准备命令、测试写法、各工单现状在哪）、项目目录、这批工单和 spec 的路径、笔记目录 `.tmp/implement/<spec-slug>/notes/` 的绝对路径，等它交回，再派执行方。

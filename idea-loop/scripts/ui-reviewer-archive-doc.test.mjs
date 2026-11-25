@@ -43,3 +43,15 @@ test('archive mode still names the screenshot method it relies on', () => {
   assert.match(text, /idea-loop:design-archive[^\n]*「拍档案截图」/);
   assert.match(text, /idea-loop:design-archive[^\n]*「长页面的入口状态」/);
 });
+
+test('walkthrough mode points at its body in design-archive by name and section, and keeps the shape of the findings out of the definition', () => {
+  const text = section('每轮走查模式').map((l) => l.text).join('\n');
+  assert.match(text, /idea-loop:design-archive[^\n]*「UI 审查的每轮走查模式」/);
+  assert.doesNotMatch(text, /design-archive\/references\//, 'a section title, not a path into the references');
+  assert.doesNotMatch(doc, /"coverage"/);
+});
+
+test('the shared steps send a need without a frozen canvas to its own branch by name and section', () => {
+  const text = section('共用的步骤').map((l) => l.text).join('\n');
+  assert.match(text, /idea-loop:design-archive[^\n]*「UI 审查：没有冻结画布的需求」/);
+});

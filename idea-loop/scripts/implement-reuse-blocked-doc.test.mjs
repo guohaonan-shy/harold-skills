@@ -23,6 +23,7 @@ const implement = read('skills', 'engineering', 'implement', 'SKILL.md');
 // 「人回复后」 lives in the reference behind implement's 「没活了就停下」 pointer
 const stopRef = read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
 const implementer = read('agents', 'implementer.md');
+const stopDefer = read('skills', 'engineering', 'implement', 'references', 'stop-and-defer.md');
 const readme = read('README.md');
 
 /** From a marker line's start to the next `## ` heading (or the end). */
@@ -72,15 +73,21 @@ test('the opening no longer says every ticket\'s implementer is a new context', 
   assert.match(opening, /叫回/, '「前提」要提到卡住后可能被叫回');
 });
 
-test('the implementer\'s definition says it may be called back, and to merge the integration branch first', () => {
+test('the implementer\'s definition points at 「接着做」, which says it may be called back and to merge the integration branch first', () => {
   const start = implementer.indexOf('## 输入');
   const end = implementer.indexOf('\n## ', start + 1);
   const inputs = implementer.slice(start, end);
-  const line = inputs.split('\n').find((l) => l.includes('不是第一次做'));
-  assert.ok(line, '「输入」缺「这张工单不是第一次做」那一条');
+  const pointer = inputs.split('\n').find((l) => l.includes('stop-and-defer.md'));
+  assert.ok(pointer, '「输入」缺指向 stop-and-defer.md 的那一条');
+  assert.match(pointer, /「接着做」/, '指针要点名「接着做」');
+  assert.match(pointer, /不是第一次做/, '指针要写明什么时候去读：这张工单不是第一次做');
+  const again = from(stopDefer, '## 接着做', 'stop-and-defer.md');
+  const line = again.split('\n').find((l) => l.includes('不是第一次做'));
+  assert.ok(line, '「接着做」缺「这张工单不是第一次做」那一条');
   assert.match(line, /SendMessage 叫回来/, '要写明可能是同一个你被 SendMessage 叫回来');
   assert.match(line, /集成分支的最新提交合进来/, '被叫回时先把集成分支的最新提交合进来');
   assert.ok(line.indexOf('合进来') < line.indexOf('只做没勾'), '先合进来，再只做没勾的格');
+  assert.match(line, /已勾的格重跑/, '已勾的格重跑当初的测试');
 });
 
 test('README describes the redispatch the same way', () => {

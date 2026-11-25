@@ -17,6 +17,9 @@
 - `idea-loop/` — 从 idea 到工程落地的闭环：grill → spec → 设计 → 工单 → 实现 → review
 - `interview-coach/` — AI 工程方向的面试陪练
 - `happy-life/` — 个人生活小仪式
+- `ai-eval/` — AI 流水线改动的评测：样本、基线、判官、准出标准
+
+另外一个顶层目录 `dyna/` **不是插件**，`marketplace.json` 不列它：它是 idea-loop 的命令行 `dyna`（Go 写的，用 goreleaser 单独发布到 GitHub Releases，装在 `~/.idea-loop/bin/dyna`）。skill 和 agent 里写 `dyna <模块> <命令>`，插件根目录的 `dyna-version` 写它要的命令行版本范围，插件的 `bin/dyna` 是调它的小脚本。开发和发版的做法在 `DEVELOPMENT.md` 的「命令行 dyna」一节。改了 `dyna/` 下的代码就升 `dyna/internal/version/version.go` 的版本（`scripts/dyna-version.test.mjs` 守着）。
 
 改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同步改的是它自己的 `README.md`，不是这里。
 
@@ -26,12 +29,12 @@
 
 idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是这个仓库自己用的开发流程。在它上面工作时：
 
-- **本仓库的 `docs/` 也按 idea-loop 管**：issue 的状态（`status:*` label）只走 `idea-loop/scripts/issues.mjs`，不手改 label；spec 没有自己的状态，frontmatter 只留 `issues:`。
+- **本仓库的 `docs/` 也按 idea-loop 管**：issue 的状态（`status:*` label）只走 `dyna issues`，不手改 label；spec 没有自己的状态，frontmatter 只留 `issues:`。
 - **插件里不出现任何项目的信息**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；举例用任何项目都读得懂的通用例子，不用真实项目的名字和场景（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。
 - 下面五处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
-  1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `setup` / `agent-builder` / `seo-setup` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。`seo-scan` 可被模型调用：它由 seo-setup 建的每周定时任务起，有的运行环境（如 magi）的定时任务只能写「用 Skill 工具调」，起不了只能由人调用的 skill；它的出口是开成 backlog 的 issue，由每周的分拣按建议去向翻状态（人只补「还要你补」的和评估 triage 的）。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。`dreaming` 也可被模型调：普通对话里人说要对账、文档过期了就该起它，每周的定时任务照旧以斜杠命令触发；它只问人两类（`DESIGN.md` 和文档里的冲突），其余行按建议处置自己执行并合并。
-  2. **唯一在目标仓库 PR 上以 bot 身份发言**：只在合并时贴归档评论，从不以人的身份说话。
-  3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。`.mcp.json` 里的 OpenSEO 是远程 MCP，装了 idea-loop 的项目都会多一个它的连接；没连上时只有 seo 分类受影响。
+  1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `setup` / `agent-builder` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。`seo-scan` 可被模型调用：它由 `setup` 的 SEO 模块建的每天定时任务起，有的运行环境（如 magi）的定时任务只能写「用 Skill 工具调」，起不了只能由人调用的 skill；它有两个出口：一是扫描后当场分流的 issue（每个新开的 issue 起一个 `issue-triager`，当场翻成 canceled / triage / todo，不再进 backlog 等每周分拣；只有要 UI 设计的进 triage，人补的是 triage 的评估）；二是每 3 天一份的效果报告 PR（只改 `docs/`，检查过了合并，推送链接）。**SEO 自动合并是用户规则（home 固定文案「思考与决策」）里「只由我做」合并改了代码的 PR 的一条例外**：`type:seo/*` 的 PR 在检查与 `dyna seo check` 全过、两轴没有阻塞项、改动只落在 `SEO.md`「内容路径」内三条都满足时由 Claude 合并（上线自查失败开的 revert PR 同样），缺一条回到只由人合并；它只放开合并，「只由我做」里别的几样不动。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调（整页调研）；设计收敛每一轮给评委意见配参考的**轻用法**除外，会话自己起、不用人批，交回的只是一个文件，参考图只给人看。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。`dreaming` 也可被模型调：普通对话里人说要对账、文档过期了就该起它，每周的定时任务照旧以斜杠命令触发；它只问人这几类行（`DESIGN.md`、文档里的冲突、`GLOSSARY.md`、要删的暂缓设计，另加所有 `候选` 行），其余行按建议处置自己执行并合并。
+  2. **唯一在目标仓库 PR 上发言**：只在合并时贴归档评论；配了 GitHub App 由 bot 账号发，没配就用 gh 当前账号发，不加署名（人 2026-11-18 在 #296 定）。
+  3. **唯一带 `hooks/`、`.mcp.json` 与 `agents/`**：agent 的模型与思考强度钉在定义里。`.mcp.json` 里的 OpenSEO 和 Mobbin 是远程 MCP，装了 idea-loop 的项目都会多这两个连接；OpenSEO 没连上时只有 seo 分类受影响，Mobbin 没连上时只有设计调研（`uiux-research`）受影响。
   4. **唯一带 `evals/`**：理由见下面 §5。
   5. **skill 按分类目录放、没有 plugin 级 `references/`**：`skills/{engineering,design,productivity,seo}/<slug>/`，每份参考资料归一个 skill；规则在 `idea-loop/AGENTS.md`。
 
@@ -45,13 +48,13 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 ├── references/                      # plugin 级共享内容（按需）
 │   ├── conventions.md              #   跨 skill 行为约定（提问方式 / 覆盖策略 / 语言切换）
 │   └── *.md                         #   其他共享参考（如 cli-usage / colors / palette）
-├── evals/                           # 可选 —— 钉住的 baseline 与回放用例（只有 idea-loop 有，见 §5 的两个有意例外）
+├── evals/                           # 可选 —— 钉住的 baseline、回放与目标用例、标注样本（只有 idea-loop 有，见 §5）
 ├── hooks/hooks.json                 # 可选 —— 事件钩子，如 idea-loop 的 design-lint（只有 idea-loop 有）
 ├── .mcp.json                        # 可选 —— plugin 自带的 MCP server，如 idea-loop 的 headless Playwright
 ├── agents/                          # 可选 —— plugin 自带的 subagent 定义（<plugin>:<name>），如 idea-loop 的 designer / implementer
 └── skills/
     └── <skill-name>/
-        ├── SKILL.md                 # 主体 < 5000 字（量法见下面「要点」第一条）
+        ├── SKILL.md                 # 主体线 4500 字，`dyna spec skill-lint` 在写文件时和 review 时核（量法见下面「要点」第一条）
         ├── references/              # skill 自己的深度参考（按需，如 cases.md）
         └── scripts/                 # 可执行模板（按需，如 R/Python）
 ```
@@ -63,7 +66,7 @@ idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是�
 - 看内容是否需要 skill 特异性
 
 要点：
-- SKILL.md 主体保持精简（< 5000 字），把长篇领域知识、真实案例放 `skills/<name>/references/`
+- SKILL.md 主体保持精简（线 4500 字，`dyna spec skill-lint` 在写文件时和 review 时核），把长篇领域知识、真实案例放 `skills/<name>/references/`
   - 主体 = 去掉文件开头 frontmatter（两条 `---` 之间）之后的部分；「字」= UTF-8 字符数，一个汉字、一个字母、一个空格各算 1
   - 量法：`awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`
   - 不带 `LC_ALL` 的 `wc -m` 在 C locale（Claude Code 的 shell 默认）下数的是字节，一个汉字算 3
@@ -105,21 +108,26 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 
 ### 5. Eval 策略
 
-这些 skill 输出主观性强（研究方案、文本、图表风格、代码风格）—— **跳过 quantitative eval**，不做 baseline run 对比，vibe-based iteration 即可，所有 plugin 都一样。
+**改 skill 的每处改动都要写明怎么验**：spec 的杠杆诊断里每处末尾一行「验证：」，五选一，各自写什么见 `idea-loop/skills/engineering/to-spec/references/agent-docs.md`：检查（先在历史错误上见红）、回放、目标用例、不改行为、判不了（写卡在哪）。回放和目标用例是 skill 改动的验收手段：用例和 runner 在 `idea-loop/evals/retro/`。
+一个用例记下一个决策点（当时的提交、让 skill 产出东西的那句 prompt、停在哪、一道是/否题）：题从历史上人当时的原话写出（回放，`quote`），或从 spec 里一条 User Story / 期望行为写出（目标用例，`goal_from`，给新能力用）。
+改规则时，用改前、改后的插件在那个输入上各跑一遍，由判定会话回答是/否题并引出处：改前「否」、改后「是」才算这条规则真的让 skill 变了；改前就「是」的，不算过，由人判断换用例，还是这段规则本来不用加。人可以推翻判定，推翻记在用例旁的 `annotations.md`。
+它不打分，不是质量基线，只判一条规则对应的那一个点。能机械判定的规则不走这里，做成检查并先在历史错误上看到它失败。
+主观输出（研究方案、文本、图表风格）的定量 baseline 对比不做；目标项目的 AI 流水线评测归 `ai-eval` plugin，不在这一节。
 
-**第一个有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
+**有意例外：`idea-loop` 的 `uiux-research`**（baseline 在 `idea-loop/evals/uiux-research/`）。
 理由不是它更重要，是它的**产物形状还在跟人一起收敛**：它交出一页给人看的 HTML，这一页该包含什么、怎么写才对，现在没人能先写成断言。
 所以那里不判好坏、不打分：钉一组取自真实设计会话的 default prompt 加一份最小的产品上下文，一条命令跑，每个 case 把页面留在固定位置、旁边放一个文件让人标注问题，
 标注留档，逐步收敛出产物该包含什么。改了调研 agent、契约或 skill，就对着同一组问题再跑一遍给人看。
 写这条例外是为了让下一个读到它的人知道这是决定，不是遗漏；等产物形状稳了，标注收敛出的东西该变成 `research-check` 的机械检查，这个例外就可以收掉。
 
-**第二个有意例外：`idea-loop` 的 retro 回放**（用例和 runner 在 `idea-loop/evals/retro/`）。
-理由跟上一条不同：它不是质量基线，**不打分**，只判**一条规则对应的那一个点**——它是规则改动的验收。
-一个用例记下历史上出过问题的那个决策点（当时的提交、让 skill 产出东西的那句 prompt、停在哪、一道从人当时原话写出的是/否题）；
-改规则时，用改前、改后的插件在那个输入上各跑一遍，由判定会话回答是/否题并引出处：改前「否」、改后「是」才算这条规则真的让 skill 变了。
-改前就「是」的，说明用例没抓住问题，不算过。人可以推翻判定，推翻记在用例旁的 `annotations.md`。
-能机械判定的规则不走这里，做成检查并先在历史错误上看到它失败。
-这个例外跟 `uiux-research` 那条并存：那条等产物形状稳了会收掉，这条只要还有规则改动要验收就在。
+**有意例外：`idea-loop` 的「标注样本」**（一个 skill 一组，放 `idea-loop/evals/<skill>/cases/`；第一组是 evidence，在 `idea-loop/evals/evidence/cases/`）。
+理由：交付物（给人看的 spec、PR 描述、汇报、要人定的题）写得好不好，没法先写成断言，只能拿人当时追问的真实现场，改前、改后各跑一遍，让人在旁边标注。
+所以它**不打分**；它也不是单条规则的验收（那是上面的回放和目标用例），而是一组跟着某个 skill 的常驻样本，这个 skill 改了就重跑，看人当时追问的那几处现在是不是写好了。
+- **样本**：一个现场一个文件夹，格式就是 retro 回放用例（`case.json`：当时的提交、让 skill 产出那段的 prompt、停在哪、从人当时原话写的是/否题、原话、规模与依据），加两个文件：`sample.md`（给人看：当时产出的原文、人指出的问题、好的长什么样、换过现场的写明换了哪个、为什么）和 `annotations.md`。取不到当时输入的，换一个同类现场，写进 `sample.md`。
+- **runner**：复用 `idea-loop/evals/retro/retro-replay.mjs`，用 `--cases-root idea-loop/evals/<skill>` 指到这一组，不另写；改前用基准分支的插件，改后用本分支的插件，判定会话回答是/否题并引出处。
+- **人怎么推翻**：判定不对，或样本本身要改，记在样本旁的 `annotations.md`（推翻的写法跟回放一样），再 `--settle` 重判；人可以在那里写对这次产出的看法。
+- **什么时候跑**：改了这个 skill（正文、参考、调用它的地方讲它的那部分）就当场跑一遍；小用例当场跑，大用例在 PR 开出来之后照 `--run-large` 跑。
+- **第一组 evidence**：五个现场——`option-current-state-shown`、`spec-option-goal-figure`、`example-from-real-material`、`review-term-defined`、`review-current-state-verified`。#451（to-spec）、#452（pr）往这一条里加自己的一组（`idea-loop/evals/to-spec/`、`idea-loop/evals/pr/`），不另写例外。
 
 ### 6. allowed-tools 收窄到具体命令模式
 
@@ -158,5 +166,6 @@ issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类
 - `content-creator`：content-creator plugin 的 issue
 - `interview-coach`：interview-coach plugin 的 issue
 - `happy-life`：happy-life plugin 的 issue
+- `ai-eval`：ai-eval plugin 的 issue
 
 保留的 label：无

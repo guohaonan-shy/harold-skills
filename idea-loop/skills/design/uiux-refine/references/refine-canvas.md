@@ -4,14 +4,14 @@ refine 的画布是这份 spec 定稿用的高保真设计：方向说明的那�
 
 ## 放在哪
 
-一份 spec 一个目录，位置见 `idea-loop:wiki-conventions` 的「目录」（`design/tmp/<spec-slug>/canvas/`）。打磨时只在本地；冻结时删掉没签字的版本和 `work/`，其余提交在需求的工作分支上（[freeze.md](freeze.md)）：
+一份 spec 一个目录，位置见 `idea-loop:wiki-conventions` 的「目录」（`design/tmp/<spec-slug>/canvas/`）。打磨时只在本地；冻结时删掉没签字的版本和 `work/`，其余 `commit` 到 home（[freeze.md](freeze.md)）：
 
 ```
 canvas/
 ├── v1.html, v2.html, …        静态画布的各个版本
 ├── motion-v1.html, …          动效画布的各个版本（开了动效才有）
 ├── assets/                    画布引用的素材、矩阵截图、动效定格帧
-├── work/                      打磨过程：ledger.md、每轮评分 round-<N>.json、给评委的截图
+├── work/                      打磨过程：ledger.md（人定下的决策）、每轮一个 round-<N>/（见 ledger-and-report.md）
 ├── <spec-slug>-design.md      冻结记录（签字后才有）
 └── flows/                     写回 spec 的交互图（签字后才有）
 ```
@@ -22,7 +22,7 @@ lint hook 只认 `canvas/` 下直接放着的 HTML，所以画布不放进子目
 
 - 起手那一版是 `v1.html`。之后每一次改动，都从最新一版复制出下一版 `v<N+1>.html` 再改，旧版不动。
 - 最新一版就是当前的画布：预览、截图、评委看的都是它。
-- 一轮评审对应一个版本：`work/round-<N>.json` 评的是 `v<N>.html`，ledger 每一行写清是哪一版。
+- 一轮对应一个版本：`work/round-<N>/` 里放的是 `v<N>.html` 这一轮的东西（[ledger-and-report.md](ledger-and-report.md)）。
 - 签字签的是某一版，冻结记录和 spec 里的画布指针都写那一版的路径。
 - 动效画布从签过字的静态版本复制出 `motion-v1.html`，往后同样递增。
 

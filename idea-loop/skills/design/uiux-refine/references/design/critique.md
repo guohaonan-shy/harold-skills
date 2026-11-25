@@ -3,7 +3,7 @@
 Read at the static protocol's Gate 2 (isolated critique), for clearing AI tells, and at sign-off; at
 the motion gates for anything usability-relevant that motion touches. Run it over the rendered
 preview — screenshots and the real DOM (`getComputedStyle`), not the source. The mechanical subset
-already runs in `${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs`; this file carries what a regex can't
+already runs in the design lint (a hook that checks every write to a canvas); this file carries what a regex can't
 decide. Each pass answers a different question; running only one misses what the others catch.
 
 Severity for every finding: **P0** blocks the primary task or loses data; **P1** confuses or causes a

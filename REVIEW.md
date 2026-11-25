@@ -2,23 +2,26 @@
 
 ## 验证命令
 
-写代码时常跑前两条，提交前跑全量；review 时每一条都跑一遍。
+执行方只跑改动涉及的（前两条）；全量在 PR 转 ready 后跑一次（implement 的「等 CI」），之后 review 每轮 head 变了再跑，同一个 head 只跑一遍（`dyna pr full-suite` 记结果）；review 时其余每条都跑一遍。
 
 | 用途 | 命令 |
 |---|---|
-| 类型检查 | 无（纯 `.mjs`，没有类型检查） |
-| 单个测试文件 | `node --test <文件>` |
-| 全量测试 | `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'` |
-| lint | 无 |
+| 类型检查 | `.mjs` 没有类型检查；命令行 dyna：`cd dyna && go vet ./...` |
+| 单个测试文件 | `node --test <文件>`；命令行 dyna：`cd dyna && go test ./internal/<包>` |
+| 全量测试 | `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`；命令行 dyna：`cd dyna && go test ./...` |
+| 设计档案浏览器测试 | 分段拍摄生成的浏览器代码在真 Chromium 里跑的测试，不在全量测试里：命令行 dyna：`cd dyna && IDEA_LOOP_BROWSER_TESTS=1 go test ./internal/design/sections -run TestBrowserCodeRunsInARealBrowser -timeout 15m`（不设 `IDEA_LOOP_BROWSER_TESTS=1` 时跳过）。改了 `dyna/internal/design/sections`、它用到的截图比对，或这份测试本身时跑；约 5 分钟，放后台跑 |
+| lint | `.mjs` 没有；命令行 dyna：`cd dyna && gofmt -l .`（有输出就是没格式化） |
+| skill 与 agent 定义的结构 | `cd dyna && go run ./cmd/dyna spec skill-lint --changed origin/<基准分支>`（在仓库里的任意目录跑也行，已装的 dyna 同样）；review 每轮对这个 PR 改到的 SKILL.md 与 agent 定义跑，主体超 4500 字或 idea-loop 的文件写了行内 `gh` / `git` 命令就列出来，退出 1 |
 
 ## 额外要求
 
 - 改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同一个改动里同步它自己的 `README.md`（`AGENTS.md` 的约定）。
-- `SKILL.md` 的 frontmatter description 只做路由，主体 < 5000 字（量法见 `AGENTS.md`「标准 plugin 目录结构」的要点），`allowed-tools` 收窄到具体命令模式（`AGENTS.md`「SKILL.md 编写约定」）。
+- `SKILL.md` 的 frontmatter description 只做路由，主体线 4500 字（`dyna spec skill-lint` 在写文件时和 review 时核；量法见 `AGENTS.md`「标准 plugin 目录结构」的要点），`allowed-tools` 收窄到具体命令模式（`AGENTS.md`「SKILL.md 编写约定」）。
 - idea-loop 插件里（`evals/` 和 `scripts/` 下测试的夹具除外）不出现任何项目的信息，例子用通用的（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。
+- 改了命令行 `dyna/` 下的代码（`_test.go` 除外），同一个改动里升 `dyna/internal/version/version.go` 的版本，并把新版本的登记表存进 `dyna/registry/`（做法见 `DEVELOPMENT.md`「命令行 dyna」）；`scripts/dyna-version.test.mjs` 和 `go test` 守着。插件要的命令行版本范围写在 `idea-loop/dyna-version`，下限只在 skill 开始用新命令、新参数时提高，且那一版必须已经发布、登记表已存（`scripts/dyna-scan.test.mjs` 守着）。
 - 改了某个 plugin 目录下任何文件的 PR，交审核报告前按改动的性质升它 `.claude-plugin/plugin.json` 的 `version`，三档取最高的那一档：
   - **major**（1.0.0）：装了它的项目不改自己的配置或用法就会坏，比如删掉或改名一个 skill、改了一个 skill 的调用参数、产物换了位置。
-  - **minor**（0.1.0）：新增能力，或改了流程的行为但老用法照样能用，比如加一个 skill，或者某个流程从停下等人改成自己执行。
-  - **patch**（0.0.1）：不改行为的修正，比如修错字、修 bug、修说明里前后不一致的地方，以及只改 README 或测试。
+  - **minor**（0.1.0）：新增能力，或改了流程的行为但老用法照样能用；插件还在 0.x 时，只有大范围的重构或者使用方式的重大改动才算，比如整条流程重新划分阶段、人要重新学怎么调用。
+  - **patch**（0.0.1）：不改行为的修正，比如修错字、修 bug、修说明里前后不一致的地方，以及只改 README 或测试；插件还在 0.x 时，加 skill、agent、hook 或改已有流程的行为，老用法照样能用的，也算 patch，比如 retro 摆候选时多给一句去处推荐。
 
   定了哪一档、为什么，写进 PR 描述的「参考」。版本号从 main 上的当前版本往上升；合并前 main 已经升过（别的 PR 先合了），就从 main 的新版本重新按同一档升。`scripts/plugin-version.test.mjs` 守着「改了就必须升」。

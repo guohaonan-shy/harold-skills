@@ -20,7 +20,7 @@ related: ["[[2026-10-26-unstable-sections]]", "[[0002-design-loop-v2-imagine-ref
 - **脚本动画与自动轮播**：同一页面拍两次，各停在不同一刻，像素差 4.04% / 2.67%，对账误报。
 - 原有兜底全靠 `stable`，但它比的是冻结之后的两张，必然为真，三处文档里的兜底都没起作用。
 
-## 2 决策（how）
+## 2 决策（how） ⚠️ 已被取代（部分：滚动驱动段的检出判据与「结构相同的步骤只记第一个」）→ [[0077-scroll-driven-whole-pin]] §2
 
 - **页面时间在页面打开之前就停住，之后只按固定步长拨。** 两条时间一起管：页面时钟（计时器、`requestAnimationFrame`、`Date`、`performance.now`）和文档的 CSS 动画时间线（Chromium 的 `Animation.setPlaybackRate` 置 0）。「拨一步」= 时钟往前走 N 毫秒，同时把每个还没播完的动画的当前时间加 N，于是动画正常播完、正常触发结束事件，只是发生在固定的页面时间。拍图不拨时间，也不再用 `animations: 'disabled'`。只有 Chromium（DevTools 协议）。
 - **新增「装时间」一步**：`browser_navigate` 到入口之后、做交互之前先跑；一个页面一次会话装一次。点出来的状态由 agent 交互，之后要等界面变化时用小步拨，拨到「应看到什么」成立为止。
@@ -31,10 +31,10 @@ related: ["[[2026-10-26-unstable-sections]]", "[[0002-design-loop-v2-imagine-ref
 
 人的原话是「全部交给你了，你直接开始按照推荐」，所以滚动驱动段的建法与单屏状态一起换，是按推荐定的。
 
-## 3 结果（result）
+## 3 结果（result） ⚠️ 已被取代（部分：已知限制里窄侧栏（#128）一条）→ [[0077-scroll-driven-whole-pin]] §2
 
 - `idea-loop/scripts/design-archive-sections.mjs` 有子命令 `time`（装时间）、`step`（拨一步）、`measure`（含滚动驱动检出，`attribute` 的 `undeclaredScrollDriven`）、`shoot`（返回 `uncontrolled`）、`screen`（单屏状态）、`pinned`（按此刻视口直接截）。真 Chromium 浏览器测试覆盖脚本动画、计时器轮播、CSS 进度线轮播、点出来的标签、钉住的段、Worker 驱动的段。
 - 校验规则 7 认 `scrollDriven`，只能写 `true`。
 - 文档：`design-archive` skill 的 `references/shooting.md`（「共用的规矩」「滚动驱动的段」「看到什么 → 做什么」），`review-reconcile.md`（`uncontrolled` 的对账判法）、`review-archive.md`、dreaming 的 `initial-scan.md` 都已改用新信号。
 
-**已知限制（原 spec 的 Out of scope，仍有效）：** 页面时间管不到的内容只检出不做到按像素比；随滚动变的窄侧栏会让整段被认成滚动驱动、没有「不是滚动驱动」的声明（issue #128，仍开着，status:triage）；入口是加载中的长页面不能分段（issue #69，仍开着，status:triage）。
+**已知限制（原 spec 的 Out of scope，仍有效）：** 页面时间管不到的内容只检出不做到按像素比；随滚动变的窄侧栏会让整段被认成滚动驱动、没有「不是滚动驱动」的声明（issue #128，仍开着，status:todo）；入口是加载中的长页面不能分段（issue #69，仍开着，status:triage）⚠️ 已被取代（部分）→ [[0046-design-archive-loaded-sections]]。

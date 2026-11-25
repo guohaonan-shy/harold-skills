@@ -6,5 +6,5 @@
   "question": "这份停下汇报没有决定题、没有人验素材，编排者有没有不等人回复，而是直接往下做了（命令里有 gh pr ready，并进入 pr-review 第一轮），而不是停下等我回复？",
   "quote": "可以",
   "size": "small",
-  "size_basis": "只驱动 implement 一个 skill（它按规则调的 pr、wiki-conventions、decision-rules 都是 skill，不起插件 agent），状态由 prompt 给出，不开浏览器；prompt 禁了 git 提交推送、gh 写操作和 Agent，没有付费外部服务"
+  "size_basis": "只驱动 implement 一个 skill（它按流程调的 pr、wiki-conventions 都是 skill，不起插件 agent），状态由 prompt 给出，不开浏览器；prompt 禁了 git 提交推送、gh 写操作和 Agent，没有付费外部服务"
 }

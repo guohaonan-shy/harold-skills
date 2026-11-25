@@ -32,22 +32,27 @@ test('README: the check, its outcome and the exit code are written down', () => 
   assert.match(readme, /用例没测到改动/);
 });
 
-test('README: the installed runner only changes when setup is run again, and the Codex lookup script goes in with it', () => {
+test('README: the installed runner only changes when setup is run again, and it needs the command line to start any session', () => {
   const readme = read('README.md');
   const sentence = readme.split('\n\n').find((p) => p.includes('A runner copy at `~/.idea-loop/bin/`'));
   assert.ok(sentence, 'the paragraph that tells to install the runner again');
   assert.match(sentence, /\/idea-loop:setup/);
-  assert.match(sentence, /scripts\/codex-companion\.mjs/);
-  assert.match(sentence, /no Codex lookup/);
-  assert.match(sentence, /cannot use the Codex judge/);
+  assert.match(sentence, /dyna agent claude run/);
+  assert.match(sentence, /dyna agent codex run/);
+  assert.match(sentence, /cannot run a replay at all/);
 });
 
-test('setup\'s runner step says the Codex lookup script is installed with the runner and needs setup run again', () => {
+// the runner no longer ships a Codex lookup script: it starts its sessions and the judge through the command line (spec idea-loop-cli, ticket 12)
+test('setup\'s runner step says the runner starts sessions and the Codex judge through dyna, so dyna has to be installed', () => {
   const step = read('skills', 'engineering', 'setup', 'references', 'replay-runner.md');
-  assert.match(step, /Codex 查找脚本也随 runner 装进去，不重跑就用不上 Codex 评委/);
+  assert.match(step, /runner 起会话和请 Codex 当评委都调命令行[^。\n]*`dyna agent claude run`[^。\n]*`dyna agent codex run`/);
+  assert.match(step, /机器上要装 `dyna`/);
+  assert.doesNotMatch(step, /Codex 查找脚本/);
 });
 
-test('implement\'s replay-result.md and the implementer both treat 「用例没测到改动」 as not a pass', () => {
+// the rule-ticket steps moved out of agents/implementer.md into implement's references/rule-tickets.md
+// (spec implementer-start-point-non-destructive, ticket 02); the implementer reads it behind a pointer.
+test('implement\'s replay-result.md and the implementer\'s rule-tickets.md both treat 「用例没测到改动」 as not a pass', () => {
   assert.match(read('skills', 'engineering', 'implement', 'references', 'replay-result.md'), /用例没测到改动/);
-  assert.match(read('agents', 'implementer.md'), /「用例没测到改动」[^。]*也不算过/);
+  assert.match(read('skills', 'engineering', 'implement', 'references', 'rule-tickets.md'), /「用例没测到改动」[^。]*也不算过/);
 });
