@@ -25,7 +25,6 @@ const FIRST_GROUP = [
 // the to-spec group (#451): the style group, then the usefulness group
 const TO_SPEC_GROUP = [
   'bugfix-spec-shape',
-  'guard-four-covered',
   'one-stop-point',
   'skill-change-has-diagnosis',
   'ui-spec-shape',

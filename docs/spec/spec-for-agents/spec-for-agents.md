@@ -87,7 +87,7 @@ spec 只给下游 agent（切工单、探路、实现、review）读，照 Matt 
   - 样式组 `ui-spec-shape`：#65 起草设计档案滚动段（`1444794` 起，输入同 evidence 组的 `spec-option-goal-figure`），碰 UI，题：「有没有『前端交互』，且正文没有给人看的配图和判词？」
   - 样式组 `bugfix-spec-shape`：#398 起草 dispatch-triage-per-round（`32e23d72` 之前），只修问题，题：「七节齐、期望行为编号对得上问题陈述，且没有复现图和『根因』小节？」
   - 好用组 `one-stop-point`：#379 起草 dispatch-day-night-modes（`4c49b35b` 之前）；PR #382 review 第 1 轮 S2 发现 spec 前后两处说法不一致，Harold「第二件 统一」（`docs/raw/decisions/379.md` 题 8）。题：「夜里会话做到哪一步停，spec 里只有一种说法吗？」
-  - 好用组 `guard-four-covered`：同一现场，S1 发现 spec 只列夜里停的五类事、漏了护栏四样，Harold「第一件 我选择A」（题 7）。题：「夜里要停的事，spec 有没有把护栏里的四样也列进去？」
+  - 好用组 `guard-four-covered`：同一现场，S1 发现 spec 只列夜里停的五类事、漏了护栏四样，Harold「第一件 我选择A」（题 7）。题：「夜里要停的事，spec 有没有把护栏里的四样也列进去？」（Harold 2026-11-25 定删掉：改前的插件已把四样列全，测不出改动；组里剩四个）
 - **`plugin.json` 升 minor**：模板结构变了、新增一组评测样本（档位规则见 `REVIEW.md`「额外要求」）。
 
 ## 杠杆诊断

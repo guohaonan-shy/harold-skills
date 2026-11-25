@@ -21,7 +21,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', 'evals', 'to-spec');
 
 const STYLE_GROUP = ['skill-change-has-diagnosis', 'ui-spec-shape', 'bugfix-spec-shape'];
-const USEFUL_GROUP = ['one-stop-point', 'guard-four-covered'];
+const USEFUL_GROUP = ['one-stop-point'];
 const GROUP = [...STYLE_GROUP, ...USEFUL_GROUP].sort();
 
 test('the to-spec group lists exactly the five scenes and passes the replay case format check', () => {
