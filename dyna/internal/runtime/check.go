@@ -36,6 +36,33 @@ var (
 	headingStart = regexp.MustCompile(`^#{1,6}\s`)
 )
 
+var headingLine = regexp.MustCompile(`^(#{1,6})[ \t]+(.*?)[ \t]*$`)
+
+type heading struct {
+	line, level int
+	title       string
+}
+
+// headingsOf are the headings of a text, a line in a code fence never one.
+func headingsOf(lines []string) []heading {
+	var out []heading
+	fenced := false
+	for i, line := range lines {
+		t := strings.TrimSpace(line)
+		if strings.HasPrefix(t, "```") || strings.HasPrefix(t, "~~~") {
+			fenced = !fenced
+			continue
+		}
+		if fenced {
+			continue
+		}
+		if m := headingLine.FindStringSubmatch(line); m != nil {
+			out = append(out, heading{line: i, level: len(m[1]), title: m[2]})
+		}
+	}
+	return out
+}
+
 // nameOf is the item name a bold text gives: the text before a colon (「分组：没有」 is the item 分组, answered no).
 func nameOf(bold string) (name, tail string) {
 	name = strings.TrimSpace(bold)
@@ -251,9 +278,10 @@ type Checked struct {
 	Problems []string
 }
 
-// Check checks the description in file; with no file, every description with a marker line in the plugin and in
-// home, each as it is used (the plugin's file with the local override merged in).
-func Check(file string, env home.Env) (Checked, error) {
+// Check checks the description in file; with no file, every description with a marker line found in the three
+// places (the project, home, the user's root directory), the ones a same-named file in an earlier place shadows
+// included.
+func Check(file string, env home.Env, cwd string) (Checked, error) {
 	p, err := PluginFrom(env)
 	if err != nil {
 		return Checked{}, err
@@ -276,36 +304,18 @@ func Check(file string, env home.Env) (Checked, error) {
 		res.Problems = CheckDescription(file, string(b), caps, tmpl)
 		return res, nil
 	}
-	docs, err := p.Known(env)
-	if err != nil {
-		return Checked{}, err
-	}
+	docs := Found(env, cwd)
 	if len(docs) == 0 {
-		return Checked{}, nexterr.Plain("插件和 home 的 %s/ 里没有带标记行的运行环境说明", DataDir)
+		return Checked{}, nexterr.Plain("项目、home、用户根目录的 %s/ 里都没有带标记行的运行环境说明；%s", DataDir, SetupHint)
 	}
 	for _, d := range docs {
-		label := d.Name
-		var text string
-		if d.Path != "" {
-			label = d.Name + "（" + d.Path + "）"
-			if text, err = p.readFile(d.Path); err != nil {
-				return Checked{}, err
-			}
-		} else {
-			if text, err = p.read(DataDir, d.Name+".md"); err != nil {
-				return Checked{}, err
-			}
-			ov := loadOverride(d.Name, env)
-			switch {
-			case ov.failure != "":
-				res.Problems = append(res.Problems, d.Name+"："+ov.failedLine())
-			case ov.present:
-				label = d.Name + "（合并了本机覆盖 " + ov.path + "）"
-				text = merge(text, p.expand(ov.text)).text
-			}
+		label := d.Name + "（" + d.Path + "）"
+		b, err := os.ReadFile(d.Path)
+		if err != nil {
+			return Checked{}, nexterr.Plain("读不到 %s：%v", d.Path, err)
 		}
 		res.Labels = append(res.Labels, label)
-		res.Problems = append(res.Problems, CheckDescription(label, text, caps, tmpl)...)
+		res.Problems = append(res.Problems, CheckDescription(label, string(b), caps, tmpl)...)
 	}
 	return res, nil
 }

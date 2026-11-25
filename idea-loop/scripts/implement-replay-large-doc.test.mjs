@@ -78,9 +78,10 @@ test('issue-session has no paragraph about the replay result any more', () => {
 });
 
 test('setup 「规则回放 runner」 installs the runner only; its reference removes the old scheduled task and the queue directory', () => {
-  assert.match(setup, /^## 规则回放 runner$/m);
+  assert.match(setup, /^## 定时任务$/m); // #420: the runner is a row of the 「定时任务」 table
+  assert.match(section(setup, '定时任务'), /规则回放 runner/);
   assert.doesNotMatch(setup, /夜间/);
-  assert.match(section(setup, '规则回放 runner'), /references\/replay-runner\.md/);
+  assert.match(section(setup, '定时任务'), /references\/replay-runner\.md/);
   assert.match(setupRef, /idea-loop-retro-replay/, 'delete the old scheduled task by its id');
   assert.match(setupRef, /『定时任务』/, 'with the scheduled-task capability');
   assert.match(setupRef, /~\/\.idea-loop\/replay-queue\//, 'delete the old queue directory');

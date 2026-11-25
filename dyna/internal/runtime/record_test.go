@@ -59,11 +59,11 @@ func TestRecordingIssue471AddsOneEntryWithTheFieldsTheMorningSummaryReads(t *tes
 		t.Fatalf("%+v", list)
 	}
 	e := list[0]
-	if e["issue"] != float64(471) || e["desktopSessionId"] != "local_abc" || e["period"] != "todo" || e["openedAt"] != "2026-11-24T03:07:09.123Z" || len(e) != 4 {
+	if e["issue"] != float64(471) || e["sessionId"] != "local_abc" || e["period"] != "todo" || e["openedAt"] != "2026-11-24T03:07:09.123Z" || len(e) != 4 {
 		t.Fatalf("%+v", e)
 	}
 	// the file: a two-space-indented array, the keys in this order, a final newline
-	want := "[\n  {\n    \"issue\": 471,\n    \"desktopSessionId\": \"local_abc\",\n    \"openedAt\": \"2026-11-24T03:07:09.123Z\",\n    \"period\": \"todo\"\n  }\n]\n"
+	want := "[\n  {\n    \"issue\": 471,\n    \"sessionId\": \"local_abc\",\n    \"openedAt\": \"2026-11-24T03:07:09.123Z\",\n    \"period\": \"todo\"\n  }\n]\n"
 	if got := readFile(t, filepath.Join(dir, "harold-skills.json")); got != want {
 		t.Fatalf("file shape:\n%q\nwant\n%q", got, want)
 	}
@@ -79,7 +79,7 @@ func TestASecondRecordIsAppendedAfterTheFirstAndTheOldEntriesStay(t *testing.T) 
 		}
 	}
 	list := readRecords(t, filepath.Join(dir, "harold-skills.json"))
-	if len(list) != 3 || list[0]["desktopSessionId"] != "local_old" || list[1]["issue"] != float64(471) || list[2]["issue"] != float64(472) || list[2]["desktopSessionId"] != "s472" || list[2]["period"] != "triage" {
+	if len(list) != 3 || list[0]["desktopSessionId"] != "local_old" || list[1]["issue"] != float64(471) || list[2]["issue"] != float64(472) || list[2]["sessionId"] != "s472" || list[2]["period"] != "triage" {
 		t.Fatalf("%+v", list)
 	}
 	if entries, _ := os.ReadDir(dir); len(entries) != 1 {

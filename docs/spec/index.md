@@ -6,6 +6,7 @@
 | [[device-memory]] | 全设备一份记忆：设备级 dreaming 每周把根索引压在上限内、项目事实挪进项目目录 |
 | [[dispatch-one-per-device]] | 一台设备一个调度 dispatch-home：配置在 home、上限按状态、每 30 分钟一轮 |
 | [[dispatch-triage-per-round]] | 白天的 triage 也按每轮新开表里的上限个，triage 分组总数另设上限（表里新一列，默认 10） |
+| [[dyna-app-layer-cleanup]] | 运行环境说明搬出插件、由 setup 照模板生成；dyna 去掉写死的桌面端默认和应用层叫法 |
 | [[dyna-missing-commands]] | dyna 补上 skill 五处还要 agent 自己拼 gh / git 的命令：按状态列 issue、打 kind、空提交、按提交检出、等 PR 检查 |
 | [[edge-case-known-limit]] | 思考、决策、沟通、证据由 setup 写成 home 的固定文案；插件删掉 decision-rules，证据搬进 evidence |
 | [[evidence-forms]] | evidence 按五种形态分支（加录屏），从 home「证据」往下展开，配一组取自真实交付物的回放样本 |
@@ -15,6 +16,7 @@
 | [[pr-five-sections]] | PR 描述改成问题、概要、证据、合并风险、要你做的事五节，evidence 照 show-me 出视图菜单 |
 | [[runtime-local-override]] | 本机对 runtime 的特殊做法写进 ~/home/runtime/<运行环境>.md，开场注入时同名小节整段替换 reference |
 | [[runtime-ops-in-docs]] | 运行环境的操作全写进运行环境说明，dyna 不再认环境分支；说明按能力模板写，新环境照模板生成 |
+| [[setup-modules]] | setup 接完核心后按设计、SEO、评测三段问接不接，按插件装没装出题，正文腾出篇幅 |
 | [[skill-change-verify]] | 改 skill 的每处改动在 spec 里写定怎么验，新能力也能写用例跑，落地时 dyna 核用例在、结果在 |
 | [[skill-rewrite]] | idea-loop 的 skill 与 agent 定义按写法规则逐份重写、五组合并，主体都不超过 4500 字 |
 | [[skill-structure-checks]] | skill 文件的常驻检查：写文件时 hook 对 home 下全部 skill 跑字数线 4500、对 idea-loop 跑行内命令绊线、review 报主文件增长、retro 先判能不能做成检查、没 CI 时同一 head 的全量只跑一次 |

@@ -128,7 +128,7 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	dispatch := leaf("dispatch", "打印这台设备的调度表（JSON）：此刻所在时段、该派什么、每轮最多新开几个、各状态同时开着最多几个、不调度的项目、整张时段表和三个分组名；读 home 的 DISPATCH.md，没有就用默认", sess,
+	dispatch := leaf("dispatch", "打印这台设备的调度表（JSON）：此刻所在时段、该派什么、每轮最多新开几个、各状态同时开着最多几个、不调度的项目、整张时段表和调度按状态数会话的三个状态；读 home 的 DISPATCH.md，没有就用默认", sess,
 		"", func(cmd *cobra.Command, args []string) error {
 			var at *string
 			if cmd.Flags().Changed("at") {
