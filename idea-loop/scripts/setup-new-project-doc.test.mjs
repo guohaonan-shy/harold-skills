@@ -2,7 +2,7 @@
  * Tripwire — setup builds a new project's files in the project directory of home (docs/spec/skills-read-home, ticket 08).
  *
  * - The preflight asks `dyna home where` whether the project is connected and says what each outcome means;
- *   a 0.1.x project stops at 「迁移」 and nothing is written into the code repository.
+ *   a 0.1.x project goes to 「迁移」 (steps in references/migrate.md; the code repository only changes through a PR a human merges).
  * - A new project's bootstrap files and docs/ are written into <项目目录> and committed to home with `commit`; the
  *   `## idea-loop` block of the code repository's AGENTS.md is no longer written, and its template is gone.
  * - ISSUE_TRACKER.md templates have no 「仓库」 section; 「分类 label」 holds the categories, and the script that reads
@@ -46,14 +46,13 @@ test('the preflight asks `where` and says what each of its outcomes means', () =
   assert.match(section(body, '预检'), /项目接上了吗」看项目目录，不看代码仓库根/);
 });
 
-test('a 0.1.x project stops at 「迁移」: nothing is written, the where sentence and the found files go to the human', () => {
+test('a 0.1.x project goes through 「迁移」: the where sentence and the found files go to the human, the steps are in migrate.md', () => {
   const s = section(body, '迁移');
   assert.ok(s, 'SKILL.md has a 迁移 section');
-  assert.match(s, /停下/);
   assert.match(s, /`where` 的那句话/);
   assert.match(s, /认出的文件清单/);
-  assert.match(s, /不在代码仓库或项目目录里写任何文件/);
-  assert.match(s, /不往下走/);
+  assert.match(s, /references\/migrate\.md/);
+  assert.match(s, /人没说就不执行/);
   // the entry sits before the home step and the write step
   assert.ok(body.indexOf('## 迁移') < body.indexOf('## home'));
   assert.ok(body.indexOf('## home') < body.indexOf('## 写'));

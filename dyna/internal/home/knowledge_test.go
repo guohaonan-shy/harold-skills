@@ -154,6 +154,11 @@ func TestKnowledgePlanWritesNothingAndSortsTheTrackedFiles(t *testing.T) {
 	if got := p.row(t, "EVAL.md"); got.Class != home.ClassTools || got.Dest != home.DestStay {
 		t.Errorf("EVAL.md: %+v", got)
 	}
+	for _, name := range []string{".gitattributes", ".gitignore"} {
+		if got := p.row(t, name); got.Class != home.ClassTools || got.Dest != home.DestStay {
+			t.Errorf("%s stays in the repository (apply rewrites its docs/ lines by itself): %+v", name, got)
+		}
+	}
 	if got := p.row(t, "NOTES.txt"); got.Dest != "" {
 		t.Errorf("NOTES.txt should be left for a person: %+v", got)
 	}

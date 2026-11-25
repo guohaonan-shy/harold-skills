@@ -26,12 +26,12 @@ setup `SKILL.md` 的「迁移」一节：把「迁移本身的步骤待补进这
 
 ## 验收标准
 
-- [ ] setup 的文档测试：「迁移」一节有指向 `references/migrate.md` 的指针、没有「待补」；参考文件里五步都在、写明删 skill 前单独确认清单、记忆三小步同一次做完、`memory` 项不在登记时先切。
-- [ ] 把仓库的 `docs/` 删掉跑 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`：全过；有 `docs/` 时也全过。
-- [ ] dyna 新版本的登记表存好，`dyna-version` 下限对上，版本相关测试过；`cd dyna && go test ./...` 全过。
-- [ ] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
-- [ ] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
-- [ ] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
+- [x] setup 的文档测试：「迁移」一节有指向 `references/migrate.md` 的指针、没有「待补」；参考文件里五步都在、写明删 skill 前单独确认清单、记忆三小步同一次做完、`memory` 项不在登记时先切。
+- [x] 把仓库的 `docs/` 删掉跑 `node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`：全过；有 `docs/` 时也全过。
+- [x] dyna 新版本的登记表存好，`dyna-version` 下限对上，版本相关测试过；`cd dyna && go test ./...` 全过。
+- [x] 调过 `writing-for-agents`，交回 `verified` 里每个改到的 skill、agent 定义、skill 参考文件一行杠杆。
+- [x] 改到的 `SKILL.md` 正文按 `AGENTS.md` 的量法在上限内；超了就把只有部分运行才走到的分支挪进这个 skill 的参考文件，不删工单范围以外的句子。
+- [x] 照执行方定义「改规则的工单：怎么证明 skill 真的变了」选了一种证明并做完：能机械判定的做成检查、先在历史错误上见红；要判断的写回放用例并跑过，大用例写明待跑、由编排者当场跑。只改措辞、行为没变的写「不涉及：只改措辞」。
 
 ## 选中的存量回归
 

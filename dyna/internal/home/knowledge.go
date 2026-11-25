@@ -141,7 +141,8 @@ func groupOf(path string) (group, class, dest string) {
 			return "docs/" + parts[1] + "/", ClassKnowledge, DestProject
 		}
 		return path, ClassKnowledge, DestProject
-	case len(parts) == 1 && (path == "AGENTS.md" || path == "CLAUDE.md" || path == "EVAL.md" || strings.HasPrefix(path, "README")):
+	// .gitattributes and .gitignore stay in the repository; apply copies their lines that point at docs/ into home's own
+	case len(parts) == 1 && (path == "AGENTS.md" || path == "CLAUDE.md" || path == "EVAL.md" || path == ".gitattributes" || path == ".gitignore" || strings.HasPrefix(path, "README")):
 		return path, ClassTools, DestStay
 	case parts[0] == ".claude" && len(parts) > 1:
 		return ".claude/", ClassTools, DestStay
