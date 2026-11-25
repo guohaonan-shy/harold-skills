@@ -22,10 +22,6 @@ issues: [478]
 
 回放会话只拿到 prompt。不带斜杠命令，会话不会自己进 `issue-session`，「边界」那一句根本不在它眼前。
 
-## User Stories
-
-- **期望行为（对应问题 1）**：回放的改后那一遍从 `issue-session` 进入讨论，摆范围题前自己去读 `review-standards.md` 的范围题推荐法；评委判的是这条推荐法有没有让推荐变对。
-
 ## 方案
 
 只改 `case.json` 的 `prompt` 和 `annotations.md`，不改 runner、不改规则。
@@ -34,12 +30,22 @@ issues: [478]
 - **保留人当时的原话**：前情 1、2 和「这一轮我说的是：「……」」三段人原话一字不改，只换开头那一句（会话在哪）。`quote`（人在 #174 retro 里说的判据原话）和 `question` 不动。`annotations.md`「材料怎么拼的」加一条：2026-11-25 #478 把开头改成从 issue-session 进，哪句是补的、为什么补；原来 2026-11-14「不用斜杠命令开头」那条写明是针对 `/idea-loop:decision-rules`（等于替会话读了规则），这次的斜杠命令是 issue 会话的真实入口，推荐法仍要会话自己去读。
 - **改动核对会被入口直接命中**：`issue-session/SKILL.md` 在改动集合里，prompt 一开头就调它，就算「用上了」。所以验收时另看事件流里改后那一遍有没有读 `review-standards.md`，写进结果。
 
+## User Stories
+
+- **期望行为（对应问题 1）**：回放的改后那一遍从 `issue-session` 进入讨论，摆范围题前自己去读 `review-standards.md` 的范围题推荐法；评委判的是这条推荐法有没有让推荐变对。
+
 ## 实现决策
 
 - **prompt 开头用 #174 原会话的任务原文**（人 2026-11-25 定，在本会话里）：人问「将当时的上下文内容进行回放才是正经能判断yes/no吗？」，看过原会话的时间线后说「没问题」。11-14「不用斜杠命令开头」去掉的是直接喂要验的规则（`/idea-loop:decision-rules`），当时的现场没有这一步；issue-session 当时开场就加载了，补上它是还原现场。范围题推荐法在 `review-standards.md`，仍要会话自己去读。
 - **验证：回放**。用 `retro-replay.mjs --case scope-question-recommend --base b64b8781` 跑 3 次（改前插件是 #280 之前、注入 `decision-rules` 的那版），按多数定；另记每次改后那一遍有没有读 `review-standards.md`。估价约 $2–3.7 一次，3 次约 $8（评委走 Codex）。
 
-## 已知限制
+## 测试决策
+
+- 回放用例本身就是被改的对象；验法见「实现决策」的「验证：回放」（跑 3 次按多数定，另记改后那一遍有没有读 `review-standards.md`）。
+
+## Out of scope
+
+下面几件记成已知限制，这次不做：
 
 - **用例仍分不出改前改后**（2026-11-25 三次回放：改前 3 次「是」、改后 3 次「否」，见用例 `annotations.md`「从 issue-session 进场后的三次」）。人 11-25 定：这个 PR 只交付「进得了场」，不另开 issue；用例留作抽样。
 - **回放会话能拉到真仓库的最新代码**：runner 只把项目拷贝 `origin` 的推送地址指向空处，拉取地址还是真仓库，第 2 次改后那一遍 `git fetch origin main` 拉到了 11-25 的主分支。改拉取地址会碰到靠 `origin` 认仓库名的 skill，要单独设计。人 11-25 定：记成已知限制，不另开 issue。
