@@ -30,7 +30,7 @@ issues: [478]
 
 只改 `case.json` 的 `prompt` 和 `annotations.md`，不改 runner、不改规则。
 
-- **prompt 开头照当时的现场**：#174 原会话（`~/.claude/projects/-Users-guohaonan-projects-TOEFLAIR-worktree-harold-skills-fervent-carson-14cb4a/3a64ac9f-….jsonl`）11-13 13:46:59 由调度卡片开出，任务原文让它「用 Skill 工具调 idea-loop:issue-session，参数 174」，13:47:02 调了，15:00:40 人才说「我们先根据最新的scope讨论下……」。所以用例开头用这段任务原文，把「按它从开场做起」换成「已认领、在分支上、PR #308 跑过第 1 轮 review、现在在讨论阶段，开场那几步不用再做」（回放只能从 15:00 那一刻接上，13:48–14:39 的 to-spec、实现、review 重演不了）。回放会话没有 `gh` 登录（runner 的 `replayChildEnv`），它万一还跑开场的 `gh issue view`，读不到、也写不了。
+- **prompt 开头照当时的现场**：#174 原会话（`~/.claude/projects/-Users-guohaonan-projects-TOEFLAIR-worktree-harold-skills-fervent-carson-14cb4a/3a64ac9f-….jsonl`）11-13 13:46:59 由调度卡片开出，任务原文让它「用 Skill 工具调 idea-loop:issue-session，参数 174」，13:47:02 调了，15:00:40 人才说「我们先根据最新的scope讨论下……」。所以用例开头用这段任务原文，把「按它从开场做起」换成「已认领、在分支上、PR #308 跑过第 1 轮 review、现在在讨论阶段，开场那几步不用再做」（回放只能从 15:00 那一刻接上，13:48–14:39 的 to-spec、实现、review 重演不了）。原文括号里的 #174 标题去掉了：标题含「规则回放」，runner 拒收会让被测会话看出自己在被测的词（`cases.mjs` 的 `REVEALING_WORDS`）；标题只是 issue 的名字，不含要验的规则（review 第 1 轮 S1，人 11-25 选 A）。回放会话没有 `gh` 登录（runner 的 `replayChildEnv`），它万一还跑开场的 `gh issue view`，读不到、也写不了。
 - **保留人当时的原话**：前情 1、2 和「这一轮我说的是：「……」」三段人原话一字不改，只换开头那一句（会话在哪）。`quote`（人在 #174 retro 里说的判据原话）和 `question` 不动。`annotations.md`「材料怎么拼的」加一条：2026-11-25 #478 把开头改成从 issue-session 进，哪句是补的、为什么补；原来 2026-11-14「不用斜杠命令开头」那条写明是针对 `/idea-loop:decision-rules`（等于替会话读了规则），这次的斜杠命令是 issue 会话的真实入口，推荐法仍要会话自己去读。
 - **改动核对会被入口直接命中**：`issue-session/SKILL.md` 在改动集合里，prompt 一开头就调它，就算「用上了」。所以验收时另看事件流里改后那一遍有没有读 `review-standards.md`，写进结果。
 
