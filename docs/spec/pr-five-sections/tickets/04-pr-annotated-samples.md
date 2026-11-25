@@ -16,11 +16,11 @@
 `sample.md` 放当时的旧描述原文、四轮产出（分支上 `idea-loop/evals/pr/rounds/` 里已有）的位置与要点、Harold 的批示、好的长什么样。tofelair 仓库的 PR 取材用 gh 读（toeflair 仓库的 owner 从 rounds 下的 notes.md 里找）。
 
 ## 验收标准
-- [ ] `idea-loop/evals/pr/cases/` 下五个文件夹，每个有 `case.json`（字段与 evidence 组相同，`quote` 是上面的原话）、`sample.md`、`annotations.md`。
-- [ ] `retro-replay.mjs --cases-root idea-loop/evals/pr --dry-run`（或 runner 已有的只校验不跑的方式）对五个用例都不报格式错。
-- [ ] AGENTS.md §5「标注样本」写进了 pr 组；守它的根测试（`scripts/root-agents-annotated-samples.test.mjs`）跟着改并绿。
-- [ ] 改前 / 改后回放：大用例写明待跑，由编排者在 PR 开出来之后照 `--run-large` 跑。
-- [ ] 五个样本跑出的结果覆盖 02 改的三个 skill：pr 的描述五节（432-length、1136-reproduce、387-decision-risk）、evidence 的视图菜单（1072-frequency、1137-ui）、pr-review 交报告按五节写（387-decision-risk）（继承自 02）
+- [x] `idea-loop/evals/pr/cases/` 下五个文件夹，每个有 `case.json`（字段与 evidence 组相同，`quote` 是上面的原话）、`sample.md`、`annotations.md`。
+- [x] `retro-replay.mjs --cases-root idea-loop/evals/pr --dry-run`（或 runner 已有的只校验不跑的方式）对五个用例都不报格式错。
+- [x] AGENTS.md §5「标注样本」写进了 pr 组；守它的根测试（`scripts/root-agents-annotated-samples.test.mjs`）跟着改并绿。
+- [x] 改前 / 改后回放：大用例写明待跑，由编排者在 PR 开出来之后照 `--run-large` 跑。
+- [ ] 五个样本跑出的结果覆盖 02 改的三个 skill：pr 的描述五节（432-length、1136-reproduce、387-decision-risk）、evidence 的视图菜单（1072-frequency、1137-ui）、pr-review 交报告按五节写（387-decision-risk）（继承自 02） ⏭ 延后 → 编排者：五个大用例待跑 --run-large
 
 ## 选中的存量回归
 - 仓库根 `scripts/root-agents-annotated-samples.test.mjs`：守 AGENTS.md §5 的样本清单。
