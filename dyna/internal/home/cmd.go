@@ -200,7 +200,7 @@ func Command(d Deps) *cobra.Command {
 	adrNew.Flags().String("project", "", "项目名（不带就取当前目录所在的项目）")
 	adr.AddCommand(adrNew)
 
-	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节；另有第五项 knowledge（只在 --only 点名时做）：把一个项目的引导文件和 docs/ 搬进 home")
+	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节；另有第五项 knowledge、skills（只在 --only 点名时做）：knowledge 把一个项目的引导文件和 docs/ 搬进 home；skills 把 ~/.claude/skills/ 逐个定去留、留的搬进 home 的 skills/ 并换成软链")
 	pluginRoot := func() (string, error) {
 		root := d.env()(EnvPluginRoot)
 		if root == "" {
@@ -227,11 +227,12 @@ func Command(d Deps) *cobra.Command {
 		v, _ := cmd.Flags().GetString("project")
 		return v
 	}
-	plan := leaf("plan", "列出用户级改动各自的改前、改后、是否已做；--only knowledge 再出这个项目的盘点表、写死 docs/ 的文件、开着且改了 docs/ 的 PR；什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
+	plan := leaf("plan", "列出用户级改动各自的改前、改后、是否已做；--only knowledge 再出这个项目的盘点表、写死 docs/ 的文件、开着且改了 docs/ 的 PR；--only skills 出 ~/.claude/skills/ 每个 skill 的表（软链指向、近 30 天调用次数、去留留空）；什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
 		ids, err := only(cmd)
 		if err != nil {
 			return err
 		}
+		ids, withSkills := splitSkills(ids)
 		base, knowledge := split(ids)
 		var items []ConfigItem
 		if len(base) > 0 {
@@ -242,6 +243,9 @@ func Command(d Deps) *cobra.Command {
 			if items, err = PlanConfig(d.env(), root, base); err != nil {
 				return err
 			}
+		}
+		if withSkills {
+			return d.planSkills(cmd, items, knowledge)
 		}
 		asJSON, _ := cmd.Flags().GetBool("json")
 		if !knowledge {
@@ -264,15 +268,19 @@ func Command(d Deps) *cobra.Command {
 		fmt.Fprint(d.out(), KnowledgeTables(k))
 		return nil
 	})
-	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project）是第五项，默认不含")
+	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project）、skills（只能按名字点）是另外的项，默认不含；两者不能同时点")
 	plan.Flags().String("project", "", "knowledge 项用：项目名（不带就取当前目录所在的项目）")
 	plan.Flags().Bool("json", false, "输出 JSON；带 knowledge 时是 {items, project, inventory, hardcoded, prs}，存成文件填完「去哪」就是 apply --plan 要的")
-	apply := leaf("apply", "先备份，再做还没做的改动；都已做就什么都不写；--only knowledge --plan <文件> 把这个项目的引导文件和 docs/ 复制进 home 并提交", sess, "", func(cmd *cobra.Command, args []string) error {
+	apply := leaf("apply", "先备份，再做还没做的改动；都已做就什么都不写；--only knowledge --plan <文件> 把这个项目的引导文件和 docs/ 复制进 home 并提交；--only skills --plan <文件> 备份后按每行去留搬或删，全定了就换成软链并提交", sess, "", func(cmd *cobra.Command, args []string) error {
 		ids, err := only(cmd)
 		if err != nil {
 			return err
 		}
+		ids, withSkills := splitSkills(ids)
 		base, knowledge := split(ids)
+		if withSkills && knowledge {
+			return errSkillsAlone
+		}
 		if len(base) > 0 {
 			root, err := pluginRoot()
 			if err != nil {
@@ -291,6 +299,12 @@ func Command(d Deps) *cobra.Command {
 				d.println(fmt.Sprintf("没动：%s（别处的软链，要人处理）", strings.Join(done.Manual, "、")))
 			}
 		}
+		if withSkills {
+			planFile, _ := cmd.Flags().GetString("plan")
+			done, err := ApplySkills(d.env(), d.cwd(), planFile, d.now())
+			d.println(done.Lines...)
+			return err
+		}
 		if knowledge {
 			planFile, _ := cmd.Flags().GetString("plan")
 			done, err := ApplyKnowledge(d.env(), d.cwd(), project(cmd), planFile, d.env()(EnvPluginRoot), d.now())
@@ -299,9 +313,9 @@ func Command(d Deps) *cobra.Command {
 		}
 		return nil
 	})
-	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project 和 --plan）是第五项，默认不含")
+	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project 和 --plan）、skills（只能按名字点，带 --plan）是另外的项，默认不含；两者不能同时点")
 	apply.Flags().String("project", "", "knowledge 项用：项目名（不带就取当前目录所在的项目）")
-	apply.Flags().String("plan", "", "knowledge 项用：plan --only knowledge --json 的输出，「去哪」填完")
+	apply.Flags().String("plan", "", "knowledge 项用 plan --only knowledge --json 的输出，「去哪」填完；skills 项用 plan --only skills --json 的输出，每行 decision 填「留」或「删」")
 	config.AddCommand(plan, apply)
 
 	memory := registry.Group("memory", "设备记忆的检查")

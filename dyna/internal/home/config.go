@@ -329,10 +329,11 @@ func ParseOnly(value string, given bool) ([]string, error) {
 		}
 		ids = append(ids, s)
 	}
-	knowledge := false
+	knowledge, skills := false, false
 	for _, id := range ids {
-		known := id == KnowledgeItem
-		knowledge = knowledge || known
+		known := id == KnowledgeItem || id == SkillsItem
+		knowledge = knowledge || id == KnowledgeItem
+		skills = skills || id == SkillsItem
 		for _, k := range ConfigItems {
 			known = known || k == id
 		}
@@ -345,7 +346,7 @@ func ParseOnly(value string, given bool) ([]string, error) {
 		if got == "" {
 			got = "nothing"
 		}
-		return nil, fmt.Errorf("--only takes items from 1 plugin, 2 memory, 3 claude-md, 4 rules (numbers or names, comma-separated), or knowledge (by name, with --project); got %s", got)
+		return nil, fmt.Errorf("--only takes items from 1 plugin, 2 memory, 3 claude-md, 4 rules (numbers or names, comma-separated), or knowledge (by name, with --project) or skills (by name); got %s", got)
 	}
 	var out []string
 	for _, k := range ConfigItems {
@@ -358,6 +359,9 @@ func ParseOnly(value string, given bool) ([]string, error) {
 	}
 	if knowledge {
 		out = append(out, KnowledgeItem)
+	}
+	if skills {
+		out = append(out, SkillsItem)
 	}
 	return out, nil
 }
