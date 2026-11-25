@@ -21,11 +21,11 @@ evidence 组的 `spec-option-goal-figure`、`example-from-real-material` 两个�
 
 ## 验收标准
 
-- [ ] `idea-loop/evals/to-spec/` 下五个现场，每个有 `case.json`、`sample.md`、`annotations.md`，`case.json` 字段与 evidence 组一致、runner 读得进（`retro-replay.mjs --cases-root idea-loop/evals/to-spec` 至少能列出 / 校验五个用例不报格式错）。
-- [ ] 五个小用例改前（集成分支插件）、改后（本分支插件）各跑一遍出判定，结果写进各自的 `annotations.md`；大用例写明待跑，由编排者在 PR 开出后照 `--run-large` 跑。
-- [ ] `AGENTS.md` §5 写进了 to-spec 这一组，`scripts/root-agents-annotated-samples.test.mjs` 认它、全过。
-- [ ] evidence 组两个样本的题与 `stop_at` 已改，原话不变。
-- [ ] `node --test idea-loop/scripts/*.test.mjs scripts/*.test.mjs` 全过（含 no-project-leak：样本里引用的是本仓库自己的历史，按该测试的豁免规则放）。
+- [x] `idea-loop/evals/to-spec/` 下五个现场，每个有 `case.json`、`sample.md`、`annotations.md`，`case.json` 字段与 evidence 组一致、runner 读得进（`retro-replay.mjs --cases-root idea-loop/evals/to-spec` 至少能列出 / 校验五个用例不报格式错）。
+- [ ] 五个小用例改前（集成分支插件）、改后（本分支插件）各跑一遍出判定，结果写进各自的 `annotations.md`；大用例写明待跑，由编排者在 PR 开出后照 `--run-large` 跑。 ⏭ 延后 → PR 交付验收：改后那一遍要等工单 02 的 to-spec 落地，编排者在 02 落地后当场跑（各 `annotations.md` 里写了命令）。已做：`skill-change-has-diagnosis`、`bugfix-spec-shape`、`one-stop-point` 用集成分支插件预跑过（两边同一份旧插件，三遍都出了判定，`one-stop-point` 同插件两边答案不同，不能当证据）；`guard-four-covered` 同输入、没有单独跑；`ui-spec-shape` 是大用例，写明待跑。
+- [x] `AGENTS.md` §5 写进了 to-spec 这一组，`scripts/root-agents-annotated-samples.test.mjs` 认它、全过。
+- [x] evidence 组两个样本的题与 `stop_at` 已改，原话不变。
+- [x] `node --test idea-loop/scripts/*.test.mjs scripts/*.test.mjs` 全过（含 no-project-leak：样本里引用的是本仓库自己的历史，按该测试的豁免规则放）。
 
 ## 选中的存量回归
 
