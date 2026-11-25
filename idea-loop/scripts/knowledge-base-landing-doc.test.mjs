@@ -94,10 +94,10 @@ test('pr-review merge archives after the code PR merged, then deletes the ticket
   assert.doesNotMatch(deliver, /先推删工单的 docs 提交/);
 });
 
-test('the PR description references the spec by title, path in home and a summary, without a link', () => {
+test('the PR description refers to the spec by title, path in home and a summary, without a link', () => {
+  const skill = read('skills/engineering/pr/SKILL.md');
+  assert.match(skill, /spec、工单只写标题、home 里的路径和一句摘要，不放链接/);
   const d = read('skills/engineering/pr/references/description.md');
-  assert.match(d, /\*\*spec 与工单\*\*：<spec 标题>/);
-  assert.match(d, /不放链接/);
   assert.doesNotMatch(d, /\[<spec 标题>\]\(<链接>\)/);
 });
 
