@@ -159,7 +159,7 @@ type call struct {
 }
 
 func recorder(code int, calls *[]call) Runner {
-	return func(ctx context.Context, dir, name string, args []string, stdout, stderr io.Writer) (int, error) {
+	return func(ctx context.Context, dir, name string, args, env []string, stdout, stderr io.Writer) (int, error) {
 		*calls = append(*calls, call{dir, name, args})
 		io.WriteString(stdout, "node says hi\n")
 		return code, nil
@@ -283,7 +283,7 @@ func TestRunWithTheRealNodeRunsOnlyTheMatchingFileAndReturnsItsResult(t *testing
 
 func TestRunSaysWhenNodeCannotBeStarted(t *testing.T) {
 	root := pluginWithTests(t, "a.test.mjs")
-	failing := func(ctx context.Context, dir, name string, args []string, stdout, stderr io.Writer) (int, error) {
+	failing := func(ctx context.Context, dir, name string, args, env []string, stdout, stderr io.Writer) (int, error) {
 		return -1, errors.New("exec: \"node\": executable file not found in $PATH")
 	}
 	_, _, err := execCmd(Deps{Cwd: root, Run: failing}, "run")
