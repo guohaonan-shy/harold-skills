@@ -24,7 +24,7 @@ const STYLE_GROUP = ['skill-change-has-diagnosis', 'ui-spec-shape', 'bugfix-spec
 const USEFUL_GROUP = ['one-stop-point'];
 const GROUP = [...STYLE_GROUP, ...USEFUL_GROUP].sort();
 
-test('the to-spec group lists exactly the five scenes and passes the replay case format check', () => {
+test('the to-spec group lists exactly the four scenes and passes the replay case format check', () => {
   assert.deepEqual(loadCases(root).map((c) => c.name), GROUP);
   assert.deepEqual(checkCasesDir(root), []);
 });
