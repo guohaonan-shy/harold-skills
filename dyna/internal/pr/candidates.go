@@ -43,7 +43,7 @@ package pr
 // reader-facing text may carry a code-level reference — backticks, file:line, a path, a snake_case name, a commit
 // hash, a section number like §4.7. Those belong in `locations`, which only the fixer sees. Shape problems are
 // not discards: the finding stands, its wording has to be redone (`rewrite`). Rules:
-// skills/engineering/pr-review/references/review-standards.md and skills/engineering/pr/references/review-report.md
+// skills/engineering/pr-review/references/review-standards.md and skills/engineering/pr-review/references/review-report.md
 // of the plugin.
 //
 // A candidate is whatever JSON the reviewer wrote, so it is read the way the old script read it: a field is
@@ -314,9 +314,31 @@ func ShapeProblems(c Candidate, axis string) []string {
 		}
 	}
 	if !c.isRuled() {
+		if !hasView(c) {
+			problems = append(problems, NoViewProblem)
+		}
 		problems = append(problems, decideProblems(c.M["decide"])...)
 	}
 	return problems
+}
+
+// NoViewProblem is the shape problem of a question that shows nothing: the reader decides on what the question
+// shows, so a 要你决定 item carries at least one view. `candidates submit` prints the evidence skill's view menu
+// with it.
+const NoViewProblem = "问题里没有视图：现状、影响或例子里至少要有一个图片、代码块或表，或者配一张图（figure），挑能讲清要点的最小一种（下面是 idea-loop:evidence 的视图菜单）"
+
+// hasView is whether the question of a finding shows something: a figure, or an image, code block or table in the
+// words that state it.
+func hasView(c Candidate) bool {
+	if truthy(c.M["figure"]) {
+		return true
+	}
+	for _, k := range []string{"now", "impact", "example"} {
+		if countViews(c.str(k)) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // Discard is a candidate that was thrown out and why.

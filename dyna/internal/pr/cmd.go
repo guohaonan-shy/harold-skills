@@ -150,7 +150,7 @@ func Command(d Deps) *cobra.Command {
 				d.println(text)
 				return nil
 			}),
-		leaf("set <owner/repo> <pr> <section> <content.md>", "把文件的内容写成 PR 描述的这一节（空内容删掉这一节）；「参考」以外有代码层面的指称就拒写", "",
+		leaf("set <owner/repo> <pr> <section> <content.md>", "把文件的内容写成 PR 描述的这一节（空内容删掉这一节）；结构不对就拒写：问题、证据没有视图（同时打印 evidence 的视图菜单）、概要超两个视图、之前之后不成对或组数少于问题的件数、合并风险缺门和影响面、要你做的事不是复选框、除概要外写了提交号、函数名、文件路径、接口地址", "",
 			func(cmd *cobra.Command, args []string) error {
 				use := "body set <owner/repo> <pr> <" + sectionList() + "> <content.md>"
 				repo, pr, err := repoAndPR(use, args)
@@ -174,7 +174,7 @@ func Command(d Deps) *cobra.Command {
 				}
 				next, err := SetSection(current, name, string(content))
 				if err != nil {
-					return err
+					return d.withMenu(err)
 				}
 				if _, err := d.asLogin().Call("PATCH", fmt.Sprintf("repos/%s/pulls/%s", repo, pr), map[string]string{"body": next}); err != nil {
 					return err
@@ -450,6 +450,23 @@ func (d Deps) store(repo string) store {
 	return store{api: d.asLogin(), run: d.gh(), repo: repo}
 }
 
+// withMenu adds the evidence skill's view menu to a refusal for a missing view; when the menu cannot be read it
+// says so, and the section is refused all the same.
+func (d Deps) withMenu(err error) error {
+	se, ok := err.(*StructureError)
+	if !ok || !se.NeedsMenu {
+		return err
+	}
+	menu, merr := ViewMenu(d.env()(EnvPluginRoot))
+	if merr != nil {
+		return fmt.Errorf("%s\n\n%v", se.Error(), merr)
+	}
+	return fmt.Errorf("%s\n\n%s", se.Error(), menu)
+}
+
+// EnvPluginRoot is the plugin's directory, set by the plugin's own `bin/dyna`; the view menu is read from it.
+const EnvPluginRoot = "IDEA_LOOP_PLUGIN_ROOT"
+
 // prBody is the description of a PR as it is now.
 func (d Deps) prBody(repo, pr string) (string, error) {
 	raw, err := d.asLogin().Call("GET", fmt.Sprintf("repos/%s/pulls/%s", repo, pr), nil)
@@ -571,6 +588,7 @@ func (d Deps) submit(file, base, evidenceDir, round, spec string) error {
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "有 %d 条候选的措辞不合格，改好后再跑一次 dyna pr candidates submit：", len(res.Rewrite))
+	needsMenu := false
 	for _, r := range res.Rewrite {
 		id := strings.Trim(string(r.ID), `"`)
 		if id == "" {
@@ -578,6 +596,14 @@ func (d Deps) submit(file, base, evidenceDir, round, spec string) error {
 		}
 		for _, p := range r.Problems {
 			fmt.Fprintf(&b, "\n  %s：%s", id, p)
+			needsMenu = needsMenu || p == NoViewProblem
+		}
+	}
+	if needsMenu {
+		if menu, err := ViewMenu(d.env()(EnvPluginRoot)); err != nil {
+			fmt.Fprintf(&b, "\n\n%v", err)
+		} else {
+			fmt.Fprintf(&b, "\n\n%s", menu)
 		}
 	}
 	return &nexterr.Exit{Code: 2, Msg: b.String()}

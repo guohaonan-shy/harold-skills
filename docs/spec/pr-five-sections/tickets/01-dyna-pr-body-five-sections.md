@@ -20,13 +20,13 @@
 dyna 版本升一档到 0.0.16（集成分支现在 0.0.15），重存命令登记表，插件的 dyna 版本下限提到 0.0.16。代码注释里指向 pr skill 的 `review-report.md`、`review-loop.md` 的，改指向 pr-review skill 下同名文件（工单 02 把它们挪过去）。
 
 ## 验收标准
-- [ ] 单元测试：新节表顺序；旧节 `summary`/`changes`/`verification`/`rollback`/`night-decided`/`night-waiting`/`reference` 写入时被折叠或丢弃不报错。
-- [ ] 单元测试：拿 harold-skills#458 风格的旧描述（有「一句话」「怎么修」、无之前/之后）写入新问题节无视图时被拒，输出里含视图菜单（先见红）。
-- [ ] 单元测试：分支上 `idea-loop/evals/pr/rounds/*/description.md` 五份第四轮样本逐节写入全部通过（样本里不合规的地方先核：是样本错还是检查过严，过严就放宽检查，写进交回）；把 tofelair-1136 的「没验成」一行删掉再写证据节，组数对不上被拒。
-- [ ] 单元测试：要你做的事里有安装命令代码块通过；同样的文件路径写进合并风险被拒。
-- [ ] 单元测试：合并风险缺「门」行、或要特别注意的超过 3 条被拒；概要三个视图被拒。
-- [ ] 单元测试：`candidates submit` 问题无视图 / 只一个选项 / 无推荐各被拒。
-- [ ] dyna 版本 0.0.16，登记表已存，插件 dyna 版本下限 >=0.0.16，`scripts/dyna-version.test.mjs` 与 dyna 全量 `go test ./...` 绿。
+- [x] 单元测试：新节表顺序；旧节 `summary`/`changes`/`verification`/`rollback`/`night-decided`/`night-waiting`/`reference` 写入时被折叠或丢弃不报错。
+- [x] 单元测试：拿 harold-skills#458 风格的旧描述（有「一句话」「怎么修」、无之前/之后）写入新问题节无视图时被拒，输出里含视图菜单（先见红）。
+- [x] 单元测试：分支上 `idea-loop/evals/pr/rounds/*/description.md` 五份第四轮样本逐节写入全部通过（样本里不合规的地方先核：是样本错还是检查过严，过严就放宽检查，写进交回）；把 tofelair-1136 的「没验成」一行删掉再写证据节，组数对不上被拒。
+- [x] 单元测试：要你做的事里有安装命令代码块通过；同样的文件路径写进合并风险被拒。
+- [x] 单元测试：合并风险缺「门」行、或要特别注意的超过 3 条被拒；概要三个视图被拒。
+- [x] 单元测试：`candidates submit` 问题无视图 / 只一个选项 / 无推荐各被拒。
+- [x] dyna 版本 0.0.16，登记表已存，插件 dyna 版本下限 >=0.0.16，`scripts/dyna-version.test.mjs` 与 dyna 全量 `go test ./...` 绿。
 
 ## 选中的存量回归
 - dyna 的 pr 包全部测试（body、candidates、cmd、differential）：节表和拒写逻辑都在这里。
