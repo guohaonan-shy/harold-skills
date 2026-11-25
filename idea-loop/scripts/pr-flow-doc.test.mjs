@@ -145,7 +145,7 @@ test('pr: one issue, one PR; the report has no per-repository form', () => {
   const pr = read('skills/engineering/pr/SKILL.md');
   assert.match(pr, /一个 issue 一个 PR/);
   assert.doesNotMatch(pr, /主 PR/);
-  const report = read('skills/engineering/pr/references/review-report.md');
+  const report = read('skills/engineering/pr-review/references/review-report.md');
   assert.doesNotMatch(report, /几个仓库的 PR/);
   assert.match(report, /来自实现 · 第 N 次/);
 });

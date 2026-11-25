@@ -18,7 +18,7 @@ scope 和工单照 spec 与 `idea-loop:to-ticket`：编排者不改 scope、不�
 
 ## 开工：先开 PR
 
-派工前核一遍 PR 开齐、issue 在 in-progress、`reference` 补全：不满足的，读 [references/start-of-run.md](references/start-of-run.md) 的「开工：先开 PR」。review loop 文件、Review 汇报的存档以这个 PR 的号命名（下文 `<PR 号>` 都指它）。
+派工前核一遍 PR 开齐、issue 在 in-progress：不满足的，读 [references/start-of-run.md](references/start-of-run.md) 的「开工：先开 PR」。review loop 文件、Review 汇报的存档以这个 PR 的号命名（下文 `<PR 号>` 都指它）。
 
 ## 账本
 
@@ -41,7 +41,7 @@ scope 和工单照 spec 与 `idea-loop:to-ticket`：编排者不改 scope、不�
 每派一张：挑一个没人在听、也没分出去的端口；记下集成分支此刻的提交作起点 SHA；用 Agent 工具起 `idea-loop:implementer`，`isolation: "worktree"`、`run_in_background: true`，记下它返回的 agent id，**只给指针，不转述工单**：
 
 - 项目目录的绝对路径，工单与 spec 在它里面的绝对路径（工单在 home 里，执行方的 worktree 读不到，也不进它的 commit）
-- 起点 SHA、集成分支名、分到的端口、集成分支 worktree 的绝对路径
+- 起点 SHA、集成分支名、PR 的基准分支名、分到的端口、集成分支 worktree 的绝对路径
 - tmp 绝对路径 `<项目目录>/docs/design/tmp/<spec-slug>/`（还不存在也照给）
 - 已落地的提交列表
 - 有的话：「人的决定已写进工单」、上次的半成品分支

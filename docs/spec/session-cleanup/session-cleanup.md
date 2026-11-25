@@ -52,7 +52,7 @@ issue 会话 开场 ──dyna worktree add──▶ worktree（新：会话自�
 2. **`dyna worktree add` 并发重试**：几个会话同时在同一个 clone 里建 worktree，git 报锁（`.lock` 已存在）时等 1 秒重试，最多 5 次。
 3. **新命令 `dyna test exec -- <命令…>`**：在 `$TMPDIR/dyna-runs/<运行号>/` 建本次运行的目录，写一个 pid 文件；子进程的 `TMPDIR` 指到它的 `tmp/`；当前目录往上找到带 `dyna/go.mod` 的仓库就先把 dyna 编进这个目录，经 `DYNA_TEST_BIN` 传给子进程（不用 `IDEA_LOOP_DYNA_BIN`：插件启动器认它，测试启动器的用例会被它带偏）；子进程在自己的进程组里跑，结束、失败、收到 INT/TERM/HUP 时停掉整组、删目录，退出码照子进程的。开始时顺带删 `dyna-runs/` 下 pid 已不在的旧目录（被 KILL、崩溃留下的）。`dyna test run` 改为经同一套跑。
 4. **`dyna-test-bin.mjs`**：有 `DYNA_TEST_BIN` 就直接用它，不编；没有（直接跑 `node --test`）照旧现编，进程退出时删掉自己编的那份。
-5. dyna 版本 0.0.15 → 0.0.16，存登记表。插件 `dyna-version` 下限不动：skill 里用到的 `worktree add/remove` 是已有命令，`test exec` 只写进本仓库的 `REVIEW.md`。
+5. dyna 版本升一档（合并时 #452 已占 0.0.16，这里是 0.0.17），存登记表。插件 `dyna-version` 下限不动：skill 里用到的 `worktree add/remove` 是已有命令，`test exec` 只写进本仓库的 `REVIEW.md`。
 
 ### 插件（skill 与能力模板）
 

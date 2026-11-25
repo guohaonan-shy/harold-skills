@@ -13,6 +13,7 @@
 | [[home-bootstrap]] | 建 home：设备地图与项目清单、SessionStart hook 按项目注入项目地图、setup 一次改三处用户级配置 |
 | [[idea-loop-cli]] | idea-loop 的脚本收成 Go 写的 dyna 命令行单独发布，skill 只写命令，插件写命令行版本范围 |
 | [[in-scope-legacy-fix]] | 影响本次改动的存量问题在本 PR 里修，不再被当成无关存量自动开 issue |
+| [[pr-five-sections]] | PR 描述改成问题、概要、证据、合并风险、要你做的事五节，evidence 照 show-me 出视图菜单 |
 | [[runtime-local-override]] | 本机对 runtime 的特殊做法写进 ~/home/runtime/<运行环境>.md，开场注入时同名小节整段替换 reference |
 | [[runtime-ops-in-docs]] | 运行环境的操作全写进运行环境说明，dyna 不再认环境分支；说明按能力模板写，新环境照模板生成 |
 | [[scope-case-input]] | 回放用例「范围题推荐」的输入改成从 issue-session 进，让它测得到「边界」那一句范围题推荐法 |

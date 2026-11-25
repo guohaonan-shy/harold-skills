@@ -8,7 +8,7 @@
 |---|---|
 | 类型检查 | `.mjs` 没有类型检查；命令行 dyna：`cd dyna && go vet ./...` |
 | 单个测试文件 | `dyna test exec -- node --test <文件>`；命令行 dyna：`cd dyna && go test ./internal/<包>` |
-| 全量测试 | `dyna test exec -- node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`（`dyna test exec` 给这次运行一个自己的临时目录、只编一份 dyna，跑完、失败、中断都删掉；要 dyna 0.0.16 或更新，还没装上就先 `go -C dyna build -o ../.tmp/dyna ./cmd/dyna`，再用 `.tmp/dyna test exec -- …`）；命令行 dyna：`cd dyna && go test ./...` |
+| 全量测试 | `dyna test exec -- node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'`（`dyna test exec` 给这次运行一个自己的临时目录、只编一份 dyna，跑完、失败、中断都删掉；要 dyna 0.0.17 或更新，还没装上就先 `go -C dyna build -o ../.tmp/dyna ./cmd/dyna`，再用 `.tmp/dyna test exec -- …`）；命令行 dyna：`cd dyna && go test ./...` |
 | 设计档案浏览器测试 | 分段拍摄生成的浏览器代码在真 Chromium 里跑的测试，不在全量测试里：命令行 dyna：`cd dyna && IDEA_LOOP_BROWSER_TESTS=1 go test ./internal/design/sections -run TestBrowserCodeRunsInARealBrowser -timeout 15m`（不设 `IDEA_LOOP_BROWSER_TESTS=1` 时跳过）。改了 `dyna/internal/design/sections`、它用到的截图比对，或这份测试本身时跑；约 5 分钟，放后台跑 |
 | lint | `.mjs` 没有；命令行 dyna：`cd dyna && gofmt -l .`（有输出就是没格式化） |
 | skill 与 agent 定义的结构 | `cd dyna && go run ./cmd/dyna spec skill-lint --changed origin/<基准分支>`（在仓库里的任意目录跑也行，已装的 dyna 同样）；review 每轮对这个 PR 改到的 SKILL.md 与 agent 定义跑，主体超 4500 字或 idea-loop 的文件写了行内 `gh` / `git` 命令就列出来，退出 1 |
