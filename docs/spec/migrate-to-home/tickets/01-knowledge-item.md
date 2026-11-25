@@ -30,14 +30,14 @@
 
 ## 验收标准
 
-- [ ] 临时 `HOME` 下登记一个 `example-app`（仓库根有 `DEVELOPMENT.md`、`EVAL.md`、一个 `NOTES.txt`，`docs/` 下两个跟踪的文件和一个被忽略的文件，`.gitattributes` 有一条 `docs/design/prod/**` 的 LFS 规则）：出表不写任何文件；`EVAL.md` 归「仓库专属的工具」，`NOTES.txt` 的「去哪」为空；被忽略的文件不在表里。
-- [ ] 同上，plan 里 `NOTES.txt` 没填就执行：拒绝、什么都没写；填成「留在代码仓库」后执行：项目目录下有 `DEVELOPMENT.md` 和两个跟踪的文件、没有被忽略的那个和 `EVAL.md`，home 的 `.gitattributes` 有加了前缀的规则，home 多了一个提交，备份目录里有 plan 文件。
-- [ ] 复制 `docs/` 的第二个文件时让它失败：项目目录里没有 `docs/`；去掉失败后再执行，`docs/` 在、文件齐全。
-- [ ] 仓库 `AGENTS.md` 有「issue 分类」一节（一个父类带一个子类、「保留的 label：无」）、`ISSUE_TRACKER.md` 有「仓库」「分类 label」两节：执行后 home 里的 `ISSUE_TRACKER.md` 没有「仓库」一节，`ParseTypes` 读出那个父类和子类；代码仓库里的两份文件没变。
-- [ ] 一个跟踪的脚本写着 `docs/records/weekly/`、一个写着 `https://example.com/docs/registry`：只有前一个进「写死 `docs/` 的文件」表。假 `gh` 返回一个改了 `docs/` 的开着的 PR：它进 PR 表；假 `gh` 失败时出表仍成功、表里一行「查不到」。
-- [ ] 执行第二次什么都不改；之后 `Locate` 对这个项目返回已搬。
-- [ ] 不带 `--only` 的 `plan` 输出跟改动前一样只有四行（现有测试照旧过）。
-- [ ] `cd dyna && go test ./internal/home/...` 全过。
+- [x] 临时 `HOME` 下登记一个 `example-app`（仓库根有 `DEVELOPMENT.md`、`EVAL.md`、一个 `NOTES.txt`，`docs/` 下两个跟踪的文件和一个被忽略的文件，`.gitattributes` 有一条 `docs/design/prod/**` 的 LFS 规则）：出表不写任何文件；`EVAL.md` 归「仓库专属的工具」，`NOTES.txt` 的「去哪」为空；被忽略的文件不在表里。
+- [x] 同上，plan 里 `NOTES.txt` 没填就执行：拒绝、什么都没写；填成「留在代码仓库」后执行：项目目录下有 `DEVELOPMENT.md` 和两个跟踪的文件、没有被忽略的那个和 `EVAL.md`，home 的 `.gitattributes` 有加了前缀的规则，home 多了一个提交，备份目录里有 plan 文件。
+- [x] 复制 `docs/` 的第二个文件时让它失败：项目目录里没有 `docs/`；去掉失败后再执行，`docs/` 在、文件齐全。
+- [x] 仓库 `AGENTS.md` 有「issue 分类」一节（一个父类带一个子类、「保留的 label：无」）、`ISSUE_TRACKER.md` 有「仓库」「分类 label」两节：执行后 home 里的 `ISSUE_TRACKER.md` 没有「仓库」一节，`ParseTypes` 读出那个父类和子类；代码仓库里的两份文件没变。
+- [x] 一个跟踪的脚本写着 `docs/records/weekly/`、一个写着 `https://example.com/docs/registry`：只有前一个进「写死 `docs/` 的文件」表。假 `gh` 返回一个改了 `docs/` 的开着的 PR：它进 PR 表；假 `gh` 失败时出表仍成功、表里一行「查不到」。
+- [x] 执行第二次什么都不改；之后 `Locate` 对这个项目返回已搬。
+- [x] 不带 `--only` 的 `plan` 输出跟改动前一样只有四行（现有测试照旧过）。
+- [x] `cd dyna && go test ./internal/home/...` 全过。
 
 ## 选中的存量回归
 

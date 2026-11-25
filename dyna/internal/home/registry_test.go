@@ -53,8 +53,8 @@ func TestRegistryJSONHasEveryHomeCommandWithItsCallerAndItsArguments(t *testing.
 	for name, args := range map[string]string{
 		"home commit":         "message:positional,file:positional",
 		"home adr new":        "name:positional,project:flag",
-		"home config plan":    "json:flag,only:flag",
-		"home config apply":   "only:flag",
+		"home config plan":    "json:flag,only:flag,project:flag",
+		"home config apply":   "only:flag,plan:flag,project:flag",
 		"home glossary check": "file:positional,hook:flag,json:flag",
 		"home index":          "layer:flag,project:flag",
 		"home memory check":   "dir:positional",

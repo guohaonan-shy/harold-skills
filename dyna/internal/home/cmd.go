@@ -200,7 +200,7 @@ func Command(d Deps) *cobra.Command {
 	adrNew.Flags().String("project", "", "项目名（不带就取当前目录所在的项目）")
 	adr.AddCommand(adrNew)
 
-	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节")
+	config := registry.Group("config", "setup 的四处用户级配置：启用插件、记忆目录、CLAUDE.md 软链到 home 的 AGENTS.md、home 的 AGENTS.md 里的固定文案三节；另有第五项 knowledge（只在 --only 点名时做）：把一个项目的引导文件和 docs/ 搬进 home")
 	pluginRoot := func() (string, error) {
 		root := d.env()(EnvPluginRoot)
 		if root == "" {
@@ -212,52 +212,96 @@ func Command(d Deps) *cobra.Command {
 		v, _ := cmd.Flags().GetString("only")
 		return ParseOnly(v, cmd.Flags().Changed("only"))
 	}
-	plan := leaf("plan", "列出四处用户级改动各自的改前、改后、是否已做；什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
-		items, err := only(cmd)
+	// the knowledge item works on one project and is only done when named; the four others are the machine's
+	split := func(ids []string) (base []string, knowledge bool) {
+		for _, id := range ids {
+			if id == KnowledgeItem {
+				knowledge = true
+			} else {
+				base = append(base, id)
+			}
+		}
+		return
+	}
+	project := func(cmd *cobra.Command) string {
+		v, _ := cmd.Flags().GetString("project")
+		return v
+	}
+	plan := leaf("plan", "列出用户级改动各自的改前、改后、是否已做；--only knowledge 再出这个项目的盘点表、写死 docs/ 的文件、开着且改了 docs/ 的 PR；什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
+		ids, err := only(cmd)
 		if err != nil {
 			return err
 		}
-		root, err := pluginRoot()
-		if err != nil {
-			return err
+		base, knowledge := split(ids)
+		var items []ConfigItem
+		if len(base) > 0 {
+			root, err := pluginRoot()
+			if err != nil {
+				return err
+			}
+			if items, err = PlanConfig(d.env(), root, base); err != nil {
+				return err
+			}
 		}
-		plan, err := PlanConfig(d.env(), root, items)
-		if err != nil {
-			return err
-		}
-		if asJSON, _ := cmd.Flags().GetBool("json"); asJSON {
-			fmt.Fprint(d.out(), ConfigJSON(plan))
+		asJSON, _ := cmd.Flags().GetBool("json")
+		if !knowledge {
+			if asJSON {
+				fmt.Fprint(d.out(), ConfigJSON(items))
+				return nil
+			}
+			fmt.Fprint(d.out(), ConfigTable(items))
 			return nil
 		}
-		fmt.Fprint(d.out(), ConfigTable(plan))
+		k, err := PlanKnowledge(d.env(), d.cwd(), project(cmd))
+		if err != nil {
+			return err
+		}
+		if asJSON {
+			fmt.Fprint(d.out(), KnowledgePlanJSON(items, k))
+			return nil
+		}
+		fmt.Fprint(d.out(), ConfigTable(append(items, k.Item)))
+		fmt.Fprint(d.out(), KnowledgeTables(k))
 		return nil
 	})
-	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules")
-	plan.Flags().Bool("json", false, "输出 JSON")
-	apply := leaf("apply", "先备份 settings.json 和 CLAUDE.md，再做还没做的改动；都已做就什么都不写", sess, "", func(cmd *cobra.Command, args []string) error {
-		items, err := only(cmd)
+	plan.Flags().String("only", "", "只看这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project）是第五项，默认不含")
+	plan.Flags().String("project", "", "knowledge 项用：项目名（不带就取当前目录所在的项目）")
+	plan.Flags().Bool("json", false, "输出 JSON；带 knowledge 时是 {items, project, inventory, hardcoded, prs}，存成文件填完「去哪」就是 apply --plan 要的")
+	apply := leaf("apply", "先备份，再做还没做的改动；都已做就什么都不写；--only knowledge --plan <文件> 把这个项目的引导文件和 docs/ 复制进 home 并提交", sess, "", func(cmd *cobra.Command, args []string) error {
+		ids, err := only(cmd)
 		if err != nil {
 			return err
 		}
-		root, err := pluginRoot()
-		if err != nil {
+		base, knowledge := split(ids)
+		if len(base) > 0 {
+			root, err := pluginRoot()
+			if err != nil {
+				return err
+			}
+			done, err := ApplyConfig(d.env(), root, base, d.now())
+			if err != nil {
+				return err
+			}
+			if len(done.Changed) > 0 {
+				d.println(fmt.Sprintf("已改：%s；备份在 %s", strings.Join(done.Changed, "、"), done.Backup))
+			} else {
+				d.println("没有要改的项，什么都没写")
+			}
+			if len(done.Manual) > 0 {
+				d.println(fmt.Sprintf("没动：%s（别处的软链，要人处理）", strings.Join(done.Manual, "、")))
+			}
+		}
+		if knowledge {
+			planFile, _ := cmd.Flags().GetString("plan")
+			done, err := ApplyKnowledge(d.env(), d.cwd(), project(cmd), planFile, d.env()(EnvPluginRoot), d.now())
+			d.println(done.Lines...)
 			return err
-		}
-		done, err := ApplyConfig(d.env(), root, items, d.now())
-		if err != nil {
-			return err
-		}
-		if len(done.Changed) > 0 {
-			d.println(fmt.Sprintf("已改：%s；备份在 %s", strings.Join(done.Changed, "、"), done.Backup))
-		} else {
-			d.println("没有要改的项，什么都没写")
-		}
-		if len(done.Manual) > 0 {
-			d.println(fmt.Sprintf("没动：%s（别处的软链，要人处理）", strings.Join(done.Manual, "、")))
 		}
 		return nil
 	})
-	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules")
+	apply.Flags().String("only", "", "只做这几项：1,2,3,4 或 plugin,memory,claude-md,rules；knowledge（只能按名字点，带 --project 和 --plan）是第五项，默认不含")
+	apply.Flags().String("project", "", "knowledge 项用：项目名（不带就取当前目录所在的项目）")
+	apply.Flags().String("plan", "", "knowledge 项用：plan --only knowledge --json 的输出，「去哪」填完")
 	config.AddCommand(plan, apply)
 
 	memory := registry.Group("memory", "设备记忆的检查")

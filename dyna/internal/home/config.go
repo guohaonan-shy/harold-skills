@@ -290,7 +290,11 @@ func ConfigTable(items []ConfigItem) string {
 				n = k + 1
 			}
 		}
-		rows = append(rows, fmt.Sprintf("| %d | %s | %s | %s | %s |", n, esc(i.Label), esc(i.Before), esc(i.After), statusText[i.Status]))
+		num := "-"
+		if n > 0 {
+			num = strconv.Itoa(n)
+		}
+		rows = append(rows, fmt.Sprintf("| %s | %s | %s | %s | %s |", num, esc(i.Label), esc(i.Before), esc(i.After), statusText[i.Status]))
 	}
 	return strings.Join(rows, "\n") + "\n"
 }
@@ -325,8 +329,10 @@ func ParseOnly(value string, given bool) ([]string, error) {
 		}
 		ids = append(ids, s)
 	}
+	knowledge := false
 	for _, id := range ids {
-		known := false
+		known := id == KnowledgeItem
+		knowledge = knowledge || known
 		for _, k := range ConfigItems {
 			known = known || k == id
 		}
@@ -339,7 +345,7 @@ func ParseOnly(value string, given bool) ([]string, error) {
 		if got == "" {
 			got = "nothing"
 		}
-		return nil, fmt.Errorf("--only takes items from 1 plugin, 2 memory, 3 claude-md, 4 rules (numbers or names, comma-separated); got %s", got)
+		return nil, fmt.Errorf("--only takes items from 1 plugin, 2 memory, 3 claude-md, 4 rules (numbers or names, comma-separated), or knowledge (by name, with --project); got %s", got)
 	}
 	var out []string
 	for _, k := range ConfigItems {
@@ -349,6 +355,9 @@ func ParseOnly(value string, given bool) ([]string, error) {
 				break
 			}
 		}
+	}
+	if knowledge {
+		out = append(out, KnowledgeItem)
 	}
 	return out, nil
 }
@@ -362,6 +371,31 @@ type ConfigDone struct {
 
 func stamp(now time.Time) string {
 	return now.UTC().Format("2006-01-02T15-04-05Z")
+}
+
+// newBackupDir makes a fresh <home>/.backup/<time>/ and returns it.
+func newBackupDir(h string, now time.Time) (string, error) {
+	backup := filepath.Join(h, ".backup", stamp(now))
+	for n := 1; exists(backup); n++ {
+		backup = filepath.Join(h, ".backup", fmt.Sprintf("%s-%d", stamp(now), n))
+	}
+	return backup, os.MkdirAll(backup, 0o755)
+}
+
+// ensureBackupIgnored puts `.backup/` in home's .gitignore: settings.json can hold secrets in env.
+func ensureBackupIgnored(h string) error {
+	ignorePath := filepath.Join(h, ".gitignore")
+	ignore, _ := os.ReadFile(ignorePath)
+	for _, l := range strings.Split(string(ignore), "\n") {
+		if strings.TrimSpace(l) == ".backup/" {
+			return nil
+		}
+	}
+	text := string(ignore)
+	if text != "" && !strings.HasSuffix(text, "\n") {
+		text += "\n"
+	}
+	return os.WriteFile(ignorePath, []byte(text+".backup/\n"), 0o644)
 }
 
 // ApplyConfig does the selected items that are still to do.
@@ -408,11 +442,8 @@ func ApplyConfig(env Env, pluginRoot string, only []string, now time.Time) (Conf
 	}
 
 	// the backup comes first, and .backup/ must never reach git: settings.json can hold secrets in env
-	backup := filepath.Join(h, ".backup", stamp(now))
-	for n := 1; exists(backup); n++ {
-		backup = filepath.Join(h, ".backup", fmt.Sprintf("%s-%d", stamp(now), n))
-	}
-	if err := os.MkdirAll(backup, 0o755); err != nil {
+	backup, err := newBackupDir(h, now)
+	if err != nil {
 		return ConfigDone{}, err
 	}
 	if b, err := os.ReadFile(settingsPath); err == nil {
@@ -425,20 +456,8 @@ func ApplyConfig(env Env, pluginRoot string, only []string, now time.Time) (Conf
 			return ConfigDone{}, err
 		}
 	}
-	ignorePath := filepath.Join(h, ".gitignore")
-	ignore, _ := os.ReadFile(ignorePath)
-	ignored := false
-	for _, l := range strings.Split(string(ignore), "\n") {
-		ignored = ignored || strings.TrimSpace(l) == ".backup/"
-	}
-	if !ignored {
-		text := string(ignore)
-		if text != "" && !strings.HasSuffix(text, "\n") {
-			text += "\n"
-		}
-		if err := os.WriteFile(ignorePath, []byte(text+".backup/\n"), 0o644); err != nil {
-			return ConfigDone{}, err
-		}
+	if err := ensureBackupIgnored(h); err != nil {
+		return ConfigDone{}, err
 	}
 
 	if has("plugin") || has("memory") {
