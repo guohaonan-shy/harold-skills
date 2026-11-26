@@ -142,6 +142,8 @@ type Row struct {
 	Number   int
 	Labels   []string
 	SubTotal int
+	SubOpen  int // its sub-issues still open
+	Parent   int // its parent issue; 0 when it has none
 	Body     string
 }
 
@@ -162,9 +164,45 @@ func prList(prs []PR) string {
 
 // ReconcilePlan is the flips that need no one's judgement. An issue in in-progress or in-review whose PRs (closed
 // ones aside) are all merged goes to done; one in in-progress whose PRs are all ready or merged goes to in-review.
-// An issue with a label outside the states, or two status:* labels, is a problem.
+// A sub-issue goes to done from any open state but backlog once a PR names it and every PR naming it merged (a
+// parent's PR closes the sub-issues its spec covers). A parent whose PRs all merged with sub-issues still open
+// after this plan goes back to triage instead of done. An issue with a label outside the states, or two status:*
+// labels, is a problem.
 func ReconcilePlan(issues []Row, prs map[int][]PR) (actions []Action, problems []string) {
+	allMergedOf := func(n int) (bool, []PR) {
+		var live []PR
+		for _, p := range prs[n] {
+			if p.State != "closed" {
+				live = append(live, p)
+			}
+		}
+		if len(live) == 0 {
+			return false, nil
+		}
+		for _, p := range live {
+			if p.State != "merged" {
+				return false, live
+			}
+		}
+		return true, live
+	}
+	closing := map[int]int{} // parent → its sub-issues this plan closes
+	subDone := map[int]bool{}
 	for _, it := range issues {
+		cur := StateOf(it.Labels, true, "")
+		if it.Parent == 0 || !contains(States, cur) || cur == "backlog" {
+			continue
+		}
+		if ok, live := allMergedOf(it.Number); ok {
+			actions = append(actions, Action{N: it.Number, From: cur, To: "done", Why: "PR " + prList(live) + " 都已合并（父 issue #" + fmt.Sprint(it.Parent) + " 的 PR 写了它）"})
+			closing[it.Parent]++
+			subDone[it.Number] = true
+		}
+	}
+	for _, it := range issues {
+		if subDone[it.Number] {
+			continue
+		}
 		cur := StateOf(it.Labels, true, "")
 		if !contains(States, cur) {
 			n := 0
@@ -201,7 +239,11 @@ func ReconcilePlan(issues []Row, prs map[int][]PR) (actions []Action, problems [
 				noDraft = false
 			}
 		}
-		if allMerged {
+		if allMerged && it.SubOpen-closing[it.Number] > 0 {
+			if cur == "in-review" || cur == "in-progress" {
+				actions = append(actions, Action{N: it.Number, From: cur, To: "triage", Why: fmt.Sprintf("PR %s 都已合并，还有 %d 个子 issue 开着", prList(live), it.SubOpen-closing[it.Number])})
+			}
+		} else if allMerged {
 			actions = append(actions, Action{N: it.Number, From: cur, To: "done", Why: "PR " + prList(live) + " 都已合并"})
 		} else if cur == "in-progress" && noDraft {
 			actions = append(actions, Action{N: it.Number, From: cur, To: "in-review", Why: "PR " + prList(live) + " 都已 ready"})
@@ -550,7 +592,7 @@ func Candidates(gh GH, limit int, state string) ([]Candidate, error) {
 	}
 	var free []Issue
 	for _, i := range all {
-		if i.State == state && !(i.BlockedBy > 0) && !i.SubOf {
+		if i.State == state && !(i.BlockedBy > 0) && i.Parent == 0 {
 			free = append(free, i)
 		}
 	}
@@ -869,10 +911,21 @@ type ListedIssue struct {
 	Number    int      `json:"number"`
 	Title     string   `json:"title"`
 	Assignees []string `json:"assignees"`
+	Parent    *int     `json:"parent"`    // the parent issue; null when it has none
+	BlockedBy int      `json:"blockedBy"` // open issues blocking it
+	SubOpen   int      `json:"subOpen"`   // its sub-issues still open
 }
 
-// ListState is every open issue in state, lowest number first: whoever it is assigned to, whatever blocks it.
-func ListState(gh GH, state string) ([]ListedIssue, error) {
+// ListFilter narrows `list`: Unblocked drops issues an open issue blocks, TopLevel drops sub-issues, Parent (not 0)
+// keeps only the sub-issues of that issue.
+type ListFilter struct {
+	Unblocked bool
+	TopLevel  bool
+	Parent    int
+}
+
+// ListState is every open issue in state, lowest number first, whoever it is assigned to; narrowed by f.
+func ListState(gh GH, state string, f ListFilter) ([]ListedIssue, error) {
 	if state == "backlog" {
 		return nil, nexterr.New("dyna issues backlog <docs>", "--state 不收 backlog：它没有 status label，要列没有状态的 issue 用 issues backlog")
 	}
@@ -885,15 +938,21 @@ func ListState(gh GH, state string) ([]ListedIssue, error) {
 	}
 	var in []Issue
 	for _, i := range all {
-		if i.State == state {
-			in = append(in, i)
+		if i.State != state || (f.Unblocked && i.BlockedBy > 0) || (f.TopLevel && i.Parent != 0) || (f.Parent != 0 && i.Parent != f.Parent) {
+			continue
 		}
+		in = append(in, i)
 	}
 	sort.SliceStable(in, func(a, b int) bool { return in[a].Number < in[b].Number })
 	out := make([]ListedIssue, 0, len(in))
 	for _, i := range in {
 		as := append([]string{}, i.Assignees...)
-		out = append(out, ListedIssue{Number: i.Number, Title: i.Title, Assignees: as})
+		row := ListedIssue{Number: i.Number, Title: i.Title, Assignees: as, BlockedBy: i.BlockedBy, SubOpen: i.SubOpen}
+		if i.Parent != 0 {
+			p := i.Parent
+			row.Parent = &p
+		}
+		out = append(out, row)
 	}
 	return out, nil
 }
@@ -1061,6 +1120,9 @@ func checkFlip(gh GH, docs, state string, ref spec.IssueRef, o FlipOpts) (flip, 
 		f.prs = prs
 	}
 	t := Transition{PRs: f.prs, Comment: o.Comment, SkipDesign: o.SkipDesign, SkipTriage: SkipsTriage(tracker)}
+	if f.it != nil {
+		t.Sub, t.OpenSubs = f.it.Parent != 0, f.it.SubOpen
+	}
 	if _, md, ok := SpecFor(docs, ref); ok {
 		t.Spec = &md
 	}
@@ -1126,9 +1188,15 @@ func Reconcile(gh GH) (done, problems []string, err error) {
 	}
 	prs := map[int][]PR{}
 	rows := make([]Row, 0, len(open))
+	active := map[int]bool{}
 	for _, it := range open {
-		rows = append(rows, Row{Number: it.Number, Labels: it.Labels})
-		if (it.State == "in-progress" || it.State == "in-review") && it.Repo != "" {
+		if it.State == "in-progress" || it.State == "in-review" {
+			active[it.Number] = true
+		}
+	}
+	for _, it := range open {
+		rows = append(rows, Row{Number: it.Number, Labels: it.Labels, SubOpen: it.SubOpen, Parent: it.Parent})
+		if (active[it.Number] || (it.Parent != 0 && active[it.Parent])) && it.Repo != "" {
 			p, err := PRsOf(gh, it.Number, it.Repo)
 			if err != nil {
 				return nil, nil, err

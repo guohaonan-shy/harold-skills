@@ -42,7 +42,7 @@ func LinearRefusal(cmd string) string {
 }
 
 // GithubOnly are the commands that only make sense on GitHub.
-var GithubOnly = map[string]bool{"labels": true, "type": true, "set": true, "candidates": true, "reconcile": true, "migrate": true, "new": true, "priority": true, "kind": true, "list": true, "backlog": true, "note": true}
+var GithubOnly = map[string]bool{"labels": true, "type": true, "set": true, "candidates": true, "reconcile": true, "migrate": true, "new": true, "priority": true, "kind": true, "list": true, "backlog": true, "note": true, "sub": true}
 
 var skipRe = regexp.MustCompile(`(?im)^\s*(?:[-*]\s*)?(?:\|\s*)?(?:\*\*)?triage(?:\*\*)?\s*(?:[：:]|\|)\s*(?:\*\*)?跳过`)
 
@@ -236,11 +236,21 @@ func TypeSet(t *Types, values []string) ([]string, error) {
 // RequiredSections every issue body must have, filled.
 var RequiredSections = []string{"背景", "问题", "证据", "影响范围", "从哪发现"}
 
+// ParentSections are the sections of a parent issue's body: the group's shared problem, each sub-issue's own
+// problem gathered in one place, where they clash or share a fix (the starting point for a grill), and why they
+// belong together.
+var ParentSections = []string{"要解决什么", "子 issue 各自的问题", "冲突或共用的地方", "为什么放在一起"}
+
 var sectionRe = regexp.MustCompile(`^## +(.+?)\s*$`)
 
 // BodyErrors is what is wrong with an issue body: one line per required section (`## 问题` …) that is missing or
 // holds only whitespace. Empty when the body is fine.
-func BodyErrors(md string) []string {
+func BodyErrors(md string) []string { return sectionErrors(md, RequiredSections) }
+
+// ParentBodyErrors is what a parent issue's body lacks of ParentSections.
+func ParentBodyErrors(md string) []string { return sectionErrors(md, ParentSections) }
+
+func sectionErrors(md string, required []string) []string {
 	sections := map[string][]string{}
 	current := ""
 	has := false
@@ -256,7 +266,7 @@ func BodyErrors(md string) []string {
 		}
 	}
 	var errs []string
-	for _, name := range RequiredSections {
+	for _, name := range required {
 		body, ok := sections[name]
 		if !ok {
 			errs = append(errs, fmt.Sprintf("缺「%s」一节（## %s）", name, name))

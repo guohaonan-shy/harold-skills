@@ -181,6 +181,8 @@ type Transition struct {
 	Comment    string
 	SkipDesign bool
 	SkipTriage bool
+	Sub        bool // the issue is another issue's sub-issue
+	OpenSubs   int  // the issue's own sub-issues still open
 }
 
 // TransitionError is why flipping an issue from `from` to `to` is refused; "" when it may be flipped.
@@ -207,8 +209,18 @@ func TransitionError(from, to string, t Transition) string {
 	if to == "triage" && t.SkipTriage {
 		return fmt.Sprintf("项目文档（ISSUE_TRACKER.md）写了跳过 triage：不翻 triage，backlog 直接翻 todo（能翻成：%s）", list)
 	}
-	if !contains(Next[from], to) {
+	// A sub-issue a parent's spec covers is closed by the parent's PR (its `Refs` line), from whatever open state
+	// it waited in; a parent whose PR merged with sub-issues left goes back to triage to take up the rest.
+	subDone := to == "done" && t.Sub && from != "backlog"
+	parentBack := from == "in-review" && to == "triage" && t.OpenSubs > 0
+	if !contains(Next[from], to) && !subDone && !parentBack {
 		return fmt.Sprintf("「%s」不能翻成「%s」（能翻成：%s）", from, to, list)
+	}
+	if to == "done" && t.OpenSubs > 0 {
+		return fmt.Sprintf("还有 %d 个子 issue 开着：spec 覆盖了的由 PR 的 Refs 行一起关，没覆盖的留在父 issue 下，父 issue 翻 triage 接着评估", t.OpenSubs)
+	}
+	if parentBack && strings.TrimSpace(t.Comment) == "" {
+		return "父 issue 翻回 triage 要带 --comment：写清已合并的 PR 关了哪些子 issue、还剩哪些"
 	}
 	if NeedsComment[to] && strings.TrimSpace(t.Comment) == "" {
 		return "翻「backlog」要带 --comment：写清停在哪个阶段、分支叫什么，下一个会话靠它接上"

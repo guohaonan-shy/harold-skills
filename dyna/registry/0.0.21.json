@@ -1464,8 +1464,8 @@
     {
       "command": "issues body",
       "module": "issues",
-      "use": "body <docs> <body-file>",
-      "summary": "只核对正文的五节",
+      "use": "body <docs> <body-file> [--parent]",
+      "summary": "只核对正文的五节（--parent：父 issue 的四节）",
       "caller": "session",
       "next": "dyna issues new <docs> <title> <body-file>",
       "args": [
@@ -1478,6 +1478,18 @@
           "name": "body-file",
           "kind": "positional",
           "required": true
+        },
+        {
+          "name": "--parent",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "parent",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "按父 issue 的四节核"
         }
       ]
     },
@@ -1626,8 +1638,8 @@
     {
       "command": "issues list",
       "module": "issues",
-      "use": "list <docs> --state <triage|todo|in-progress|in-review>",
-      "summary": "JSON：这个状态下全部开着的 issue（号、标题、指派人），号从小到大；不按挡路、指派人过滤（派活用 candidates）",
+      "use": "list <docs> --state <triage|todo|in-progress|in-review> [--unblocked] [--top-level] [--parent <n>]",
+      "summary": "JSON：这个状态下开着的 issue（号、标题、指派人、父 issue、挡着它的、开着的子 issue），号从小到大；可只留没被挡的、不是子 issue 的、某个 issue 的子 issue；不按指派人过滤（派活用 candidates）",
       "caller": "session",
       "next": "dyna issues show <docs> <n>",
       "args": [
@@ -1642,11 +1654,42 @@
           "required": true
         },
         {
+          "name": "--unblocked",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "--top-level",
+          "kind": "positional",
+          "required": false
+        },
+        {
+          "name": "parent",
+          "kind": "flag",
+          "required": false,
+          "value": "int",
+          "description": "只留这个 issue 的子 issue"
+        },
+        {
           "name": "state",
           "kind": "flag",
           "required": false,
           "value": "string",
           "description": "triage / todo / in-progress / in-review"
+        },
+        {
+          "name": "top-level",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "只留不是子 issue 的"
+        },
+        {
+          "name": "unblocked",
+          "kind": "flag",
+          "required": false,
+          "value": "bool",
+          "description": "只留没被开着的 issue 挡着的"
         }
       ]
     },
@@ -1676,7 +1719,7 @@
       "command": "issues new",
       "module": "issues",
       "use": "new <docs> <title> <body-file>",
-      "summary": "开 issue：先核正文的五节和同标题的 open issue；打印新号",
+      "summary": "开 issue：先核正文的五节和同标题的 open issue；打印新号。带 --sub 开父 issue：正文核父 issue 的四节，挂上这些子 issue，优先级取它们里最高的",
       "caller": "session",
       "next": "dyna issues body <docs> <body-file>",
       "args": [
@@ -1722,6 +1765,13 @@
           "required": false,
           "value": "string",
           "description": "backlog（默认）或 todo"
+        },
+        {
+          "name": "sub",
+          "kind": "flag",
+          "required": false,
+          "value": "intSlice",
+          "description": "开父 issue：挂在它下面的 issue 号，可重复或逗号分隔（父 issue 的 --state 是 backlog 或 triage，默认 triage）"
         },
         {
           "name": "type",
@@ -1891,6 +1941,78 @@
           "name": "n",
           "kind": "positional",
           "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues sub add",
+      "module": "issues",
+      "use": "add <docs> <parent> <child>...",
+      "summary": "挂：子 issue 挂到父 issue 下（原来挂在别处的移过来），再同步父 issue 的优先级",
+      "caller": "session",
+      "next": "dyna issues sub list <docs> <parent>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "parent",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "child",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
+        }
+      ]
+    },
+    {
+      "command": "issues sub list",
+      "module": "issues",
+      "use": "list <docs> <parent>",
+      "summary": "列：JSON，父 issue 下的子 issue（开着的和关了的）",
+      "caller": "session",
+      "next": "dyna issues show <docs> <n>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "parent",
+          "kind": "positional",
+          "required": true
+        }
+      ]
+    },
+    {
+      "command": "issues sub remove",
+      "module": "issues",
+      "use": "remove <docs> <parent> <child>...",
+      "summary": "摘：子 issue 从父 issue 下摘掉，再同步父 issue 的优先级",
+      "caller": "session",
+      "next": "dyna issues sub list <docs> <parent>",
+      "args": [
+        {
+          "name": "docs",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "parent",
+          "kind": "positional",
+          "required": true
+        },
+        {
+          "name": "child",
+          "kind": "positional",
+          "required": true,
+          "variadic": true
         }
       ]
     },
