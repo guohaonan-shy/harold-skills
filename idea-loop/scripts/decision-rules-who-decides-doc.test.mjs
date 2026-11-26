@@ -94,14 +94,16 @@ test('retro\'s candidate format has a 归并 field, and so does everywhere that 
   }
 });
 
-test('the four pool candidates that pointed at handing-to-human now point at evidence; other lines untouched', () => {
+// the pool files live in this repository's own docs/ (a project directory in home once the repository is migrated)
+const poolDir = join(repoRoot, 'docs', 'records', 'retro-candidates');
+test('the four pool candidates that pointed at handing-to-human now point at evidence; other lines untouched', { skip: !existsSync(poolDir) && 'this repository has no docs/' }, () => {
   for (const f of [
     '2026-10-26-examples-from-real-material.md',
     '2026-10-26-goal-figures-for-human.md',
     '2026-10-31-handing-to-human-name-references.md',
     'retro-candidate-95.md',
   ]) {
-    const text = readFileSync(join(repoRoot, 'docs', 'records', 'retro-candidates', f), 'utf8');
+    const text = readFileSync(join(poolDir, f), 'utf8');
     const landing = text.split('\n').find((l) => l.startsWith('- 落点：'));
     assert.ok(landing, `${f} 没有落点一行`);
     assert.match(landing, /evidence/, `${f} 的落点还没改到 evidence`);
