@@ -24,11 +24,11 @@ test('文中写到的 issues 命令都是命令行认得的，已删的命令一
   }
 });
 
-test('三份 skill 里没有旧中文状态名、根 / 子 issue、整合、一组、advance / group、spec-status', () => {
+test('三份 skill 里没有旧中文状态名、根 issue、整合、advance / group、spec-status', () => {
   for (const n of NAMES) {
     const md = skill(n);
     for (const s of OLD_STATES) assert.ok(!md.includes(s), `${n} 还写着旧状态「${s}」`);
-    assert.doesNotMatch(md, /根 issue|子 issue|根号|一组|整合|不再被整合|没被整合/, `${n} 还带着根 / 子 issue 或整合的说法`);
+    assert.doesNotMatch(md, /根 issue|根号|整合|不再被整合|没被整合/, `${n} 还带着根 issue 或整合的说法`);
     assert.doesNotMatch(md, /\badvance\b|\bgroup <docs>|issues group|spec-status/, `${n} 还写着 advance / group / spec-status`);
   }
 });

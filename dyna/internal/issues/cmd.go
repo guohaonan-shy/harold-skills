@@ -74,7 +74,7 @@ func (s *session) println(lines ...string) {
 
 func (s *session) json(v any) { s.println(Dump(v)) }
 
-const commandList = "labels|type|show|check|set|new|body|priority|kind|list|backlog|note|candidates|reconcile|queues|migrate|read|block|guard"
+const commandList = "labels|type|show|check|set|new|body|priority|kind|list|backlog|note|candidates|reconcile|queues|migrate|read|block|sub|guard"
 
 // open resolves <docs> the way every command does: it must exist and be a project directory of home; a project
 // whose issues are on Linear refuses the commands that write GitHub.
@@ -309,7 +309,7 @@ func Command(d Deps) *cobra.Command {
 	set.Flags().String("comment", "", "翻状态时的评论（翻 backlog 必须写清停在哪）")
 	set.Flags().Bool("skip-design", false, "没装 design 插件时跳过「设计已冻结」的核对")
 
-	newCmd := leaf("new <docs> <title> <body-file>", "开 issue：先核正文的五节和同标题的 open issue；打印新号", sess,
+	newCmd := leaf("new <docs> <title> <body-file>", "开 issue：先核正文的五节和同标题的 open issue；打印新号。带 --sub 开父 issue：正文核父 issue 的四节，挂上这些子 issue，优先级取它们里最高的", sess,
 		"dyna issues body <docs> <body-file>", func(cmd *cobra.Command, args []string) error {
 			repo, _ := cmd.Flags().GetString("repo")
 			s, err := d.open("new", arg(args, 0), repo)
@@ -332,6 +332,18 @@ func Command(d Deps) *cobra.Command {
 			priority, _ := flags.GetString("priority")
 			kind, _ := flags.GetString("kind")
 			typeValues, _ := flags.GetStringArray("type")
+			subs, _ := flags.GetIntSlice("sub")
+			if len(subs) > 0 {
+				if repo != "" || priority != "" || kind != "" || len(typeValues) > 0 {
+					return fmt.Errorf("父 issue 不带 --repo / --priority / --kind / --type：优先级取子 issue 里最高的，分类和类型留在子 issue 上")
+				}
+				n, err := NewParent(s.gh, args[1], body, state, subs)
+				if err != nil {
+					return err
+				}
+				s.println(strconv.Itoa(n))
+				return nil
+			}
 			n, err := NewIssue(s.gh, types, NewIssueOpts{Title: args[1], Body: body, State: state, Priority: priority, Kind: kind, Types: typeValues, Repo: repo})
 			if err != nil {
 				return err
@@ -344,8 +356,9 @@ func Command(d Deps) *cobra.Command {
 	newCmd.Flags().String("kind", "", "bug / feature / improvement")
 	newCmd.Flags().StringArray("type", nil, "分类，如 seo/blog，可重复")
 	newCmd.Flags().String("repo", "", "开在别的仓库：owner/repo")
+	newCmd.Flags().IntSlice("sub", nil, "开父 issue：挂在它下面的 issue 号，可重复或逗号分隔（父 issue 的 --state 是 backlog 或 triage，默认 triage）")
 
-	body := leaf("body <docs> <body-file>", "只核对正文的五节", sess,
+	body := leaf("body <docs> <body-file> [--parent]", "只核对正文的五节（--parent：父 issue 的四节）", sess,
 		"dyna issues new <docs> <title> <body-file>", func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("body", arg(args, 0), "")
 			if err != nil {
@@ -358,12 +371,18 @@ func Command(d Deps) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if errs := BodyErrors(text); len(errs) > 0 {
+			check := BodyErrors
+			if p, _ := cmd.Flags().GetBool("parent"); p {
+				check = ParentBodyErrors
+			}
+			if errs := check(text); len(errs) > 0 {
 				return fmt.Errorf("正文不合格：%s", strings.Join(errs, "；"))
 			}
 			s.println("正文齐了")
 			return nil
 		})
+
+	body.Flags().Bool("parent", false, "按父 issue 的四节核")
 
 	priority := leaf("priority <docs> <P0|P1|P2|none> <n>...", "换 issue 的 priority:* label（none：只去掉）", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
@@ -419,7 +438,7 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	list := leaf("list <docs> --state <triage|todo|in-progress|in-review>", "JSON：这个状态下全部开着的 issue（号、标题、指派人），号从小到大；不按挡路、指派人过滤（派活用 candidates）", sess,
+	list := leaf("list <docs> --state <triage|todo|in-progress|in-review> [--unblocked] [--top-level] [--parent <n>]", "JSON：这个状态下开着的 issue（号、标题、指派人、父 issue、挡着它的、开着的子 issue），号从小到大；可只留没被挡的、不是子 issue 的、某个 issue 的子 issue；不按指派人过滤（派活用 candidates）", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("list", arg(args, 0), "")
 			if err != nil {
@@ -429,7 +448,10 @@ func Command(d Deps) *cobra.Command {
 			if state == "" {
 				return fmt.Errorf("usage: dyna issues list <docs> --state <%s>", strings.Join(ListStates, "|"))
 			}
-			rows, err := ListState(s.gh, state)
+			unblocked, _ := cmd.Flags().GetBool("unblocked")
+			top, _ := cmd.Flags().GetBool("top-level")
+			parent, _ := cmd.Flags().GetInt("parent")
+			rows, err := ListState(s.gh, state, ListFilter{Unblocked: unblocked, TopLevel: top, Parent: parent})
 			if err != nil {
 				return err
 			}
@@ -437,6 +459,9 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 	list.Flags().String("state", "", strings.Join(ListStates, " / "))
+	list.Flags().Bool("unblocked", false, "只留没被开着的 issue 挡着的")
+	list.Flags().Bool("top-level", false, "只留不是子 issue 的")
+	list.Flags().Int("parent", 0, "只留这个 issue 的子 issue")
 
 	backlog := leaf("backlog <docs> [limit]", "JSON：没有 status:* 的 open issue，最老的在前；等人补而没人答的不列", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
@@ -486,7 +511,7 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	candidates := leaf("candidates <docs> [limit]", "JSON：没被挡路的 todo（或 triage）issue，按「我的优先、再按优先级、再按等得久」排好", sess,
+	candidates := leaf("candidates <docs> [limit]", "JSON：没被挡路、也不是别的 issue 的子 issue 的 todo（或 triage）issue，按「我的优先、再按优先级、再按等得久」排好", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("candidates", arg(args, 0), "")
 			if err != nil {
@@ -551,7 +576,7 @@ func Command(d Deps) *cobra.Command {
 	migrate.Flags().Bool("apply", false, "真的改")
 
 	root.AddCommand(labels, typ, show, check, set, newCmd, body, priority, kind, list, backlog, note, candidates, reconcile, queues, migrate)
-	root.AddCommand(readCommand(d), blockCommand(d), guardCommand(d))
+	root.AddCommand(readCommand(d), blockCommand(d), subCommand(d), guardCommand(d))
 	return root
 }
 

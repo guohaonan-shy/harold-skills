@@ -13,7 +13,7 @@ description: GitHub 上 PR 描述怎么写、放在哪。开 draft PR、写或�
 
 PR 从分支上有第一个提交起就挂着，不等工单。接分支之后、切工单之前开（`idea-loop:issue-session` 的「实现」第 1 步；人直接调 `idea-loop:implement` 而还没有 PR 的，implement 开工时回到这里）。`.tmp/implement/<spec-slug>/prs.md` 已在就是开过了，跳过。完成条件：draft PR 已开，它的号和 worktree 路径记进 `prs.md`。
 
-1. **推集成分支，开 draft**：`dyna git push` 推上去，`dyna pr open <owner/repo> --base <基准分支> --title <标题> --body-file <正文文件>`（`<owner/repo>` 取 `where` 输出的 `repo`；默认就是 draft）。标题用 spec 标题。正文写 `Refs <owner>/<repo>#<号>`，指向 issue 的仓库和号，不写 `Closes`（issue 的 done 由合并步骤翻）。Linear 上的 issue：标题加前缀 `[<号>]`，正文第一行写 `Linear: <号>`。
+1. **推集成分支，开 draft**：`dyna git push` 推上去，`dyna pr open <owner/repo> --base <基准分支> --title <标题> --body-file <正文文件>`（`<owner/repo>` 取 `where` 输出的 `repo`；默认就是 draft）。标题用 spec 标题。正文写 `Refs <owner>/<repo>#<号>`，指向 issue 的仓库和号，spec 的 `issues:` 有几个号就写几行（父 issue 和它覆盖的子 issue），不写 `Closes`（issue 的 done 由合并步骤翻）。Linear 上的 issue：标题加前缀 `[<号>]`，正文第一行写 `Linear: <号>`。
 2. **写问题节的起头**：`dyna pr body set` 写 `problem`，取自 spec 的「问题陈述」，一两句现状和为什么改，加一个视图（`dyna pr body set` 没有视图就拒写）：取 spec「问题陈述」里已有的数字或表，交报告时换成更合适的。`Refs` 那行在标记以外，不会被冲掉。
 
 ## PR 描述

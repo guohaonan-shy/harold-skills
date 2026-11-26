@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -91,6 +92,8 @@ type Issue struct {
 	CreatedAt *string
 	UpdatedAt *string
 	SubTotal  int
+	SubOpen   int // sub-issues still open
+	Parent    int // the parent issue's number; 0 when it has none
 	BlockedBy int
 	IsPull    bool
 }
@@ -110,13 +113,17 @@ type restIssue struct {
 	CreatedAt     *string `json:"created_at"`
 	UpdatedAt     *string `json:"updated_at"`
 	SubIssues     *struct {
-		Total int `json:"total"`
+		Total     int `json:"total"`
+		Completed int `json:"completed"`
 	} `json:"sub_issues_summary"`
+	ParentURL    *string `json:"parent_issue_url"`
 	Dependencies *struct {
 		BlockedBy int `json:"blocked_by"`
 	} `json:"issue_dependencies_summary"`
 	PullRequest json.RawMessage `json:"pull_request"`
 }
+
+var parentURLRe = regexp.MustCompile(`/issues/(\d+)$`)
 
 var repoURLRe = regexp.MustCompile(`repos/([^/]+/[^/]+)$`)
 
@@ -162,6 +169,12 @@ func rowOf(i restIssue) Issue {
 	}
 	if i.SubIssues != nil {
 		it.SubTotal = i.SubIssues.Total
+		it.SubOpen = i.SubIssues.Total - i.SubIssues.Completed
+	}
+	if i.ParentURL != nil {
+		if m := parentURLRe.FindStringSubmatch(*i.ParentURL); m != nil {
+			it.Parent, _ = strconv.Atoi(m[1])
+		}
 	}
 	if i.Dependencies != nil {
 		it.BlockedBy = i.Dependencies.BlockedBy

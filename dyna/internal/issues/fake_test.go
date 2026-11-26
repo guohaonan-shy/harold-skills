@@ -115,10 +115,13 @@ func (f *fake) rest(i *fIssue) map[string]any {
 	if updated == "" {
 		updated = created
 	}
-	subs, blockers := 0, 0
+	subs, subsDone, blockers := 0, 0, 0
 	for _, c := range f.issues {
 		if c.SubOf == i.Number {
 			subs++
+			if !c.Open {
+				subsDone++
+			}
 		}
 	}
 	for _, b := range i.BlockedBy {
@@ -130,8 +133,11 @@ func (f *fake) rest(i *fIssue) map[string]any {
 		"number": i.Number, "id": 1000 + i.Number, "title": i.Title, "body": i.Body, "state": state, "state_reason": reason,
 		"labels": labels, "assignees": assignees, "created_at": created, "updated_at": updated,
 		"repository_url":             "https://api.github.com/repos/" + f.repo,
-		"sub_issues_summary":         map[string]int{"total": subs},
+		"sub_issues_summary":         map[string]int{"total": subs, "completed": subsDone},
 		"issue_dependencies_summary": map[string]int{"blocked_by": blockers, "total_blocked_by": len(i.BlockedBy)},
+	}
+	if i.SubOf != 0 {
+		m["parent_issue_url"] = fmt.Sprintf("https://api.github.com/repos/%s/issues/%d", f.repo, i.SubOf)
 	}
 	if i.Pull {
 		m["pull_request"] = map[string]any{}
@@ -244,6 +250,11 @@ func (f *fake) gh(given []string) (string, error) {
 					c.SubOf = 0
 				}
 			}
+		}
+		if m := regexp.MustCompile(`issues/(\d+)/sub_issues$`).FindStringSubmatch(path); m != nil && method == "POST" {
+			n, _ := strconv.Atoi(m[1])
+			id, _ := strconv.Atoi(strings.Split(args[5], "=")[1])
+			f.issues[id-1000].SubOf = n
 		}
 		if m := regexp.MustCompile(`issues/(\d+)/dependencies/blocked_by`).FindStringSubmatch(path); m != nil {
 			n, _ := strconv.Atoi(m[1])
