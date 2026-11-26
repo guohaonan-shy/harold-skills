@@ -52,7 +52,9 @@ test('a 0.1.x project goes through 「迁移」: the where sentence and the foun
   assert.match(s, /`where` 的那句话/);
   assert.match(s, /认出的文件清单/);
   assert.match(s, /references\/migrate\.md/);
-  assert.match(s, /人没说就不执行/);
+  // the 出表 → 人看 → 先备份 → 执行 cycle and 「人没说就不执行」 live in migrate.md only (single source)
+  assert.doesNotMatch(s, /人没说就不执行/);
+  assert.match(readFileSync(join(setupDir, 'references', 'migrate.md'), 'utf8'), /人没说就不执行/);
   // the entry sits before the home step and the write step
   assert.ok(body.indexOf('## 迁移') < body.indexOf('## home'));
   assert.ok(body.indexOf('## home') < body.indexOf('## 写'));

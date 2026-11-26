@@ -44,6 +44,8 @@ test('SKILL.md 「迁移」 points at references/migrate.md with a completion co
     assert.ok(!s.includes(detail), `body 「迁移」 summarises the reference (${detail})`);
   }
   assert.ok(body.indexOf('## 迁移') < body.indexOf('## home'));
+  // single source: the cycle 出表 → 人看 → 先备份 → 执行 is written in the reference only
+  assert.ok(!s.includes('出表 → 人看'), 'body 「迁移」 repeats the 出表 → 人看 → 先备份 → 执行 cycle the reference owns');
 });
 
 test('the SKILL.md body stays under the 4500-character line', () => {
@@ -67,6 +69,9 @@ test('step 1 registers the project and leaves the memory item for step 3', () =>
   assert.match(s, /home\.md/);
   assert.match(s, /home\.md 的第 3 步（四项用户级配置）这时不做/);
   assert.match(s, /`memory` 项[^\n]*第 3 步/);
+  // every project to migrate on the device is registered before step 3, so each memory directory gets its prefix
+  assert.match(s, /还有哪些 0\.1\.x 项目要迁，一并按本步登记/);
+  assert.match(s, /所有要迁的项目都在第 3 步之前登记好/);
 });
 
 test('step 2 plans, fills the plan, applies, and handles the open PRs and a refused docs check', () => {
@@ -86,6 +91,19 @@ test('step 3 does the three memory steps in one run, in order, and says what to 
   assert.match(s, /`dyna home memory check`/);
   assert.match(s, /autoMemoryDirectory[^\n]*改回备份里/);
   assert.match(s, /旧目录不动/);
+  // device-wide: done once; a later project's run is 「已是」 and skipped
+  assert.match(s, /整台设备做一次/);
+  assert.match(s, /整个跳过/);
+  assert.match(migrate, /第 3 步的记忆整台设备只做一次，后面的项目走到它是「已是」，跳过/);
+});
+
+test('step 5 judges the hard-coded docs/ table row by row: only this repo\'s own tools change, shown to the human first', () => {
+  const s = section(migrate, '5\\. 代码仓库的 PR');
+  assert.match(s, /「写死 `docs\/` 的文件」逐条判，只改这个仓库自己的工具读写自己知识库的行/);
+  for (const keep of ['写给装了插件的目标项目看的说明', '测试里当示例用的路径', '只是提到 `docs/` 的说明文字']) {
+    assert.ok(s.includes(keep), `step 5 lacks the 「不改」 class ${keep}`);
+  }
+  assert.match(s, /判完把要改的行摆给人过目，人说了再改/);
 });
 
 test('step 4 confirms the list of skills to delete once more before it applies', () => {

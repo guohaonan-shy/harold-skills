@@ -24,7 +24,7 @@ idea-loop 从项目目录读这几份配置：
 
 ## 迁移
 
-预检认出这是 0.1.x 的项目（判定见预检表）：预检表照给，把 `where` 的那句话和认出的文件清单交给人，再读 [references/migrate.md](references/migrate.md)，一步一步带人搬，每步「出表 → 人看 → 先备份 → 执行」，人没说就不执行。
+预检认出这是 0.1.x 的项目（判定见预检表）：预检表照给，把 `where` 的那句话和认出的文件清单交给人，再读 [references/migrate.md](references/migrate.md)，照它一步一步带人搬。
 
 完成条件：`dyna home projects` 里这个项目 `inHome: true`；记忆、用户级 skill 两项「已是」或人拒绝；删文件的 PR 已开。完成后往下走，按已接上的项目只补缺的。
 
