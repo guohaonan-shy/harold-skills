@@ -12,7 +12,7 @@
 3. **归档 review loop**：`dyna pr loop archive <loop> <owner/repo> <PR 号>`，每份汇报各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（[`review-loop.md`](review-loop.md)）。中途失败直接重跑，贴过的不会重复。
 4. **合并**：`dyna pr merge <owner/repo> <PR 号> --method <合并方式>`，合并方式取 `<项目目录>/DEVELOPMENT.md` 的「分支」节。合并失败就停下告诉人。
 5. **合并成功后做知识库收尾**：下面的「合并后归档并删工单」。合并失败就停下，这一步不做。
-6. **翻 done**：PR 合并后，`dyna issues set <docs> done <号>`（Linear 上集成推 Done，不手翻）。它核「挂着的 PR 全部合并」，不过就照它说的原因处理；漏翻了，`dyna issues reconcile <docs>` 会补。spec 随它覆盖的 issue 全部关闭而了结，不改 spec 自己。
+6. **翻 done**：PR 合并后，`dyna issues set <docs> done <号>`（Linear 上集成推 Done，不手翻）。一组的：先翻 spec `issues:` 里的子 issue，再翻父 issue；父 issue 还有没覆盖的子 issue 开着、`done` 被拒时，`dyna issues set <docs> triage <父号> --comment=<关了哪些、还剩哪些>`。它核「挂着的 PR 全部合并」，不过就照它说的原因处理；漏翻了，`dyna issues reconcile <docs>` 会补。spec 随它覆盖的 issue 全部关闭而了结，不改 spec 自己。
 7. **有上线自查的网址就做「上线后自查」**：`type:seo/*` 的 issue，且 PR 描述有「上线自查的网址」一节：下面的「上线后自查」，人说合并和自动合并两条路都走；它要等上线，起成后台命令后不干等，接着做第 8 步，结果回来再按里面的四种结局处理。没有这一节（人合并的 SEO PR 可能没写）就跳过，在会话里告诉人这次没做上线自查，因为没有网址。其余 issue 直接第 8 步。
 8. 做「合并后的清理」。
 

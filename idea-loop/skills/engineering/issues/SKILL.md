@@ -19,10 +19,13 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | 模块 | issue 落在项目的哪一块，项目自己定（`ISSUE_TRACKER.md` 的「分类 label」） |
 | 优先级 | P0 / P1 / P2，最多一个，没有就是没有；GitHub 上是 `priority:P0` / `priority:P1` / `priority:P2` label。P0 = 线上坏了、安全问题（权限、付款、数据越权），拿不准不判 |
 | blocked by | 挡着它的 issue |
+| 父 issue | 它所在的一组（见「一组」）；没有就是单独一个 |
 | 挂着的 PR | 这个 issue 的 PR，状态是 draft / ready / merged |
 | 评论 | 停在哪、等什么、为什么关；写法和认法见「评论」 |
 
-不用父子关系归组：一个 issue 一个会话、一份 spec；版本用 milestone，模块用分类，「这几个相关」写正文链接；平台上已有的父子关系照常读，不当成组。
+## 一组
+
+改的是同一处（同一段 prompt、页面、模块、文件），或一个的方案会推翻另一个的，归成一组：一个父 issue，其余挂在它下面当子 issue。一组一个会话、一份 spec，开在父 issue 上；子 issue 不单独派。父 issue 的正文把各子 issue 的问题汇总在一处，方便在会话里 grill；它的优先级取开着的子 issue 里最高的；spec 的 `issues:` 写父 issue 和这份 spec 覆盖的子 issue。模板、谁维护、合并时怎么关，读 [references/group.md](references/group.md)。版本用 milestone，模块用分类。
 
 ## 状态
 
@@ -45,7 +48,9 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | in-progress | in-review | PR 转 ready，第一轮 Review 汇报交给人 |
 | in-progress | triage | todo 会话起草 spec 时冒出要人定的：评论停在哪，人在 triage 里定 |
 | in-review | in-progress | 人批了要改、会话回去改 |
-| in-review | done | PR 合并 |
+| in-review | done | PR 合并；父 issue 还有子 issue 开着的不能翻 |
+| in-review | triage | 父 issue 的 PR 合并了、还有 spec 没覆盖的子 issue 开着：评论关了哪些、剩哪些，接着评估剩下的 |
+| 开着的子 issue（backlog 除外） | done | 父 issue 的 PR 写了它的 `Refs`，PR 合并 |
 | 任意开着的 | backlog | 人说先放着（见「先放着」） |
 | 任意开着的 | canceled | 人决定不做；验证为不存在 |
 
