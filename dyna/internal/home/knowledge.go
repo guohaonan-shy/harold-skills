@@ -72,7 +72,7 @@ type PRRow struct {
 	Title  string `json:"title"`
 }
 
-// KnowledgePlan is the three tables, and the item they belong to. It is also the file `apply --plan` reads.
+// KnowledgePlan is the three tables, and the item they belong to (only the item when the project is already moved). It is also the file `apply --plan` reads.
 type KnowledgePlan struct {
 	Project   string         `json:"project"`
 	Item      ConfigItem     `json:"item"`
@@ -273,6 +273,19 @@ func PlanKnowledge(env Env, cwd, project string) (KnowledgePlan, error) {
 	if err != nil {
 		return KnowledgePlan{}, err
 	}
+	if isDir(filepath.Join(t.ProjectDir, "docs")) {
+		// Already moved: the total row is all there is to say, and the three tables are not read.
+		return KnowledgePlan{
+			Project: t.Name,
+			Item: ConfigItem{
+				ID:     KnowledgeItem,
+				Label:  fmt.Sprintf("把 %s 的引导文件和 docs/ 搬进 %s", t.Name, t.ProjectDir),
+				Status: "already",
+				Before: "项目目录下已有 docs/，当作已搬",
+				After:  "项目目录下有这些文件（相对位置不变），并提交到 home",
+			},
+		}, nil
+	}
 	files, err := trackedFiles(t.CloneDir)
 	if err != nil {
 		return KnowledgePlan{}, err
@@ -293,10 +306,6 @@ func PlanKnowledge(env Env, cwd, project string) (KnowledgePlan, error) {
 		Status: "todo",
 		Before: fmt.Sprintf("在代码仓库 %s 里：%d 份引导文件、docs/ 下 %d 个跟踪的文件", t.CloneDir, boot, docs),
 		After:  "项目目录下有这些文件（相对位置不变），并提交到 home",
-	}
-	if isDir(filepath.Join(t.ProjectDir, "docs")) {
-		item.Status = "already"
-		item.Before = "项目目录下已有 docs/，当作已搬"
 	}
 	prs, why := docsPRs(env, t.CloneDir)
 	if prs == nil {
@@ -330,12 +339,23 @@ func KnowledgePlanJSON(items []ConfigItem, k KnowledgePlan) string {
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "  ")
+	if k.Item.Status == "already" {
+		// Already moved: no tables, so the file says only the items and the project.
+		_ = enc.Encode(struct {
+			Items   []ConfigItem `json:"items"`
+			Project string       `json:"project"`
+		}{out, k.Project})
+		return buf.String()
+	}
 	_ = enc.Encode(knowledgeJSON{Items: out, Project: k.Project, Inventory: k.Inventory, Hardcoded: k.Hardcoded, PRs: k.PRs, PRsError: k.PRsError})
 	return buf.String()
 }
 
 // KnowledgeTables are the three tables as Markdown.
 func KnowledgeTables(k KnowledgePlan) string {
+	if k.Item.Status == "already" {
+		return ""
+	}
 	esc := func(s string) string { return strings.ReplaceAll(s, "|", `\|`) }
 	var b strings.Builder
 	b.WriteString("\n### 盘点：" + k.Project + " 里 git 跟踪的文件\n\n")

@@ -371,6 +371,34 @@ func TestKnowledgeSecondApplyChangesNothingAndLocateSeesTheProjectAsMoved(t *tes
 	}
 }
 
+func TestKnowledgePlanOfAMovedProjectIsOnlyTheTotalRow(t *testing.T) {
+	k := newKnowledgeRig(t, prsJSON)
+	k.apply(k.planFile(t, k.plan(t))).ok(t)
+
+	table := k.run("plan", "--only", "knowledge", "--project", "example-app").ok(t).out
+	if !strings.Contains(table, "已是") {
+		t.Errorf("the total row should say 已是:\n%s", table)
+	}
+	for _, gone := range []string{"盘点", "写死 docs/", "开着且改了 docs/ 的 PR", "NOTES.txt", "查不到", "#12"} {
+		if strings.Contains(table, gone) {
+			t.Errorf("a moved project should print no tables, found %q:\n%s", gone, table)
+		}
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(k.run("plan", "--only", "knowledge", "--project", "example-app", "--json").ok(t).out), &raw); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"inventory", "hardcoded", "prs", "prsError"} {
+		if _, has := raw[key]; has {
+			t.Errorf("the JSON of a moved project should not carry %q", key)
+		}
+	}
+	if _, has := raw["items"]; !has {
+		t.Error("the JSON should still carry the items")
+	}
+}
+
 func TestKnowledgeIsOnlyDoneWhenNamed(t *testing.T) {
 	r := newRig(t, rigOpts{})
 	if got, err := home.ParseOnly("", false); err != nil || !reflect.DeepEqual(got, home.ConfigItems) || len(got) != 4 {
