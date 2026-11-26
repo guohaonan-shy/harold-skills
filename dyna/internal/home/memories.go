@@ -31,6 +31,72 @@ const MemoriesItem = "memories"
 
 const memoriesCommitMessage = "chore: 合并各项目的记忆"
 
+// memoriesSourcesFile is the list of directories already merged, kept in <home>/memory/ and committed with it. It
+// is not a .md file, so `dyna home memory check` does not take it for an entry. A directory on the list is
+// 已是 for good: whether its files are still there, or its prefix is the same, is not looked at again.
+const memoriesSourcesFile = ".merged-sources.json"
+
+type mergedSource struct {
+	Dir    string `json:"dir"`    // its name under ~/.claude/projects/
+	Prefix string `json:"prefix"` // the prefix its files were given when merged
+}
+
+type mergedSources struct {
+	Merged []mergedSource `json:"merged"`
+}
+
+func readMergedSources(target string) (map[string]mergedSource, error) {
+	out := map[string]mergedSource{}
+	path := filepath.Join(target, memoriesSourcesFile)
+	b, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return out, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var f mergedSources
+	if err := json.Unmarshal(b, &f); err != nil {
+		return nil, fmt.Errorf("读不懂 %s：%v", path, err)
+	}
+	for _, m := range f.Merged {
+		out[m.Dir] = m
+	}
+	return out, nil
+}
+
+// writeMergedSources writes the list with the given directories added, sorted by directory name.
+func writeMergedSources(target string, have map[string]mergedSource, add []MemoryDir) (string, error) {
+	all := map[string]mergedSource{}
+	for k, v := range have {
+		all[k] = v
+	}
+	for _, d := range add {
+		if _, ok := all[d.Dir]; !ok {
+			all[d.Dir] = mergedSource{Dir: d.Dir, Prefix: d.Prefix}
+		}
+	}
+	f := mergedSources{Merged: []mergedSource{}}
+	for _, m := range all {
+		f.Merged = append(f.Merged, m)
+	}
+	sort.Slice(f.Merged, func(i, j int) bool { return f.Merged[i].Dir < f.Merged[j].Dir })
+	b, err := json.MarshalIndent(f, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	path := filepath.Join(target, memoriesSourcesFile)
+	tmp := path + ".tmp-" + strconv.Itoa(os.Getpid())
+	if err := os.WriteFile(tmp, append(b, '\n'), 0o644); err != nil {
+		return "", err
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return "", err
+	}
+	return path, nil
+}
+
 // MemoryDir is one directory of memories: where it is, which project it belongs to, and whether it is copied.
 type MemoryDir struct {
 	Dir         string `json:"dir"`         // its name under ~/.claude/projects/
@@ -44,6 +110,8 @@ type MemoryDir struct {
 	memDir    string
 	names     []string
 	conflicts []string
+	recorded  bool // on the merged-sources list
+	byFiles   bool // not on the list, but every file is already in home with the same content
 }
 
 // MemoriesPlan is the item and its directories, in the order of their names.
@@ -127,6 +195,10 @@ func PlanMemories(env Env) (MemoriesPlan, error) {
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
 
+	merged, err := readMergedSources(target)
+	if err != nil {
+		return MemoriesPlan{}, err
+	}
 	used := map[string]int{}
 	var dirs []MemoryDir
 	for _, e := range entries {
@@ -182,6 +254,17 @@ func PlanMemories(env Env) (MemoriesPlan, error) {
 			d.Note = strings.TrimPrefix(d.Note+"；与前面的目录同名，前缀加 -"+strconv.Itoa(n), "；")
 		}
 
+		if m, ok := merged[e.Name()]; ok {
+			// merged before: it stays 已是 whatever became of its files and its prefix since
+			d.Status = "already"
+			d.recorded = true
+			d.Note = strings.TrimPrefix(d.Note+"；来源清单里记着已合并过", "；")
+			if m.Prefix != "" && m.Prefix != d.Prefix {
+				d.Note += "（当时的前缀是 " + m.Prefix + "）"
+			}
+			dirs = append(dirs, d)
+			continue
+		}
 		d.Status = "already"
 		for _, name := range names {
 			dst := filepath.Join(target, d.Prefix+"--"+name)
@@ -193,6 +276,7 @@ func PlanMemories(env Env) (MemoriesPlan, error) {
 				d.conflicts = append(d.conflicts, d.Prefix+"--"+name)
 			}
 		}
+		d.byFiles = d.Status == "already"
 		if len(d.conflicts) > 0 {
 			d.Note = strings.TrimPrefix(d.Note+"；冲突：home 的 memory/ 里已有内容不同的 "+strings.Join(d.conflicts, "、"), "；")
 		}
@@ -412,7 +496,24 @@ func ApplyMemories(env Env, cwd string, now time.Time) (MemoriesDone, error) {
 			copied++
 		}
 	}
-	lines = append(lines, fmt.Sprintf("已复制 %d 个项目目录的记忆（%d 个文件）到 %s，索引合进 %s", len(todo), copied, target, indexPath))
+	// the list goes in last: a run that stopped before it sees every directory as still to do. Directories whose
+	// files were already in home from an earlier merge are put on it too, while it is being written anyway.
+	merged, err := readMergedSources(target)
+	if err != nil {
+		return MemoriesDone{Lines: lines}, err
+	}
+	record := append([]MemoryDir{}, todo...)
+	for _, d := range plan.Dirs {
+		if d.byFiles {
+			record = append(record, d)
+		}
+	}
+	srcPath, err := writeMergedSources(target, merged, record)
+	if err != nil {
+		return MemoriesDone{Lines: lines}, err
+	}
+	homeFiles = append(homeFiles, srcPath)
+	lines = append(lines, fmt.Sprintf("已复制 %d 个项目目录的记忆（%d 个文件）到 %s，索引合进 %s，来源记进 %s", len(todo), copied, target, indexPath, srcPath))
 	res, err := Commit(memoriesCommitMessage, homeFiles, cwd, env)
 	lines = append(lines, res.Lines...)
 	if err != nil {

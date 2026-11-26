@@ -370,3 +370,98 @@ func TestMemoriesWithAnEmptyHomeStartsTheIndexWithoutALeadingBlankLine(t *testin
 		t.Errorf("index %q", got)
 	}
 }
+
+// A directory merged once stays merged: the list in <home>/memory/ is what says so, not whether its files are
+// still there or what its prefix would be today.
+
+func TestMemoriesMergedDirectoryStaysAlreadyAfterItsFilesAreCompressedAway(t *testing.T) {
+	m := newMemoriesRig(t)
+	m.two(t)
+	m.cfg("apply", "--only", "memories").ok(t)
+	if !strings.Contains(readFile(t, filepath.Join(m.home, "memory", ".merged-sources.json")), "-code-Mixed-Case") {
+		t.Fatal("apply should record the directories it merged in <home>/memory/.merged-sources.json")
+	}
+
+	// the memory pass compresses: one memory is deleted from home and the index is rewritten without it
+	if err := os.Remove(filepath.Join(m.home, "memory", "example-app--beta.md")); err != nil {
+		t.Fatal(err)
+	}
+	write(t, m.home, "memory/MEMORY.md", "## example-app\n- [Alpha rule](example-app--alpha.md) — alpha hook\n\n## mixed-case\n- [Gamma](mixed-case--gamma.md) — only line\n")
+	gitIn(t, m.home, "add", "-A")
+	gitIn(t, m.home, "commit", "-q", "-m", "compress")
+	before := snapshot(t, m.root)
+	commits := memCommits(t, m.home)
+
+	for _, d := range m.plan(t).Memories {
+		if d.Status != "already" {
+			t.Errorf("a merged directory is 已是 even with a file gone: %+v", d)
+		}
+	}
+	if !strings.Contains(m.cfg("plan", "--only", "memories").ok(t).out, "已是") {
+		t.Error("the table should say 已是")
+	}
+	out := m.cfg("apply", "--only", "memories").ok(t).out
+	if !strings.Contains(out, "什么都没写") {
+		t.Errorf("apply should say it wrote nothing:\n%s", out)
+	}
+	if !reflect.DeepEqual(snapshot(t, m.root), before) || memCommits(t, m.home) != commits {
+		t.Error("apply brought back what the compression took out")
+	}
+	if memIsFile(filepath.Join(m.home, "memory", "example-app--beta.md")) {
+		t.Error("the deleted memory is back")
+	}
+}
+
+func TestMemoriesMergedDirectoryStaysAlreadyWhenItsProjectIsRegisteredUnderANewName(t *testing.T) {
+	m := newMemoriesRig(t)
+	m.two(t)
+	m.cfg("apply", "--only", "memories").ok(t)
+
+	// the project of the second directory is put on the list now: its prefix would be "renamed", not "mixed-case"
+	agents := readFile(t, filepath.Join(m.home, "AGENTS.md"))
+	write(t, m.home, "AGENTS.md", agents+listLine("renamed", "https://github.com/acme/elsewhere"))
+	gitIn(t, m.home, "add", "-A")
+	gitIn(t, m.home, "commit", "-q", "-m", "register")
+	before := snapshot(t, m.root)
+	commits := memCommits(t, m.home)
+
+	var renamed bool
+	for _, d := range m.plan(t).Memories {
+		if d.Prefix == "renamed" {
+			renamed = true
+		}
+		if d.Status != "already" {
+			t.Errorf("a new prefix must not make a merged directory todo: %+v", d)
+		}
+	}
+	if !renamed {
+		t.Error("the plan should show the prefix the project has now")
+	}
+	m.cfg("apply", "--only", "memories").ok(t)
+	if !reflect.DeepEqual(snapshot(t, m.root), before) || memCommits(t, m.home) != commits {
+		t.Error("apply copied the directory again under its new prefix")
+	}
+	if memIsFile(filepath.Join(m.home, "memory", "renamed--gamma.md")) {
+		t.Error("renamed--gamma.md was copied")
+	}
+}
+
+func TestMemoriesAnotherDirectoryAddedLaterIsStillMergedAndTheListKeepsTheFirstOnes(t *testing.T) {
+	m := newMemoriesRig(t)
+	m.two(t)
+	m.cfg("apply", "--only", "memories").ok(t)
+	m.memDir(t, "-code-new", m.other, "- [N](n.md) — n\n", map[string]string{"n.md": "n\n"})
+	m.cfg("apply", "--only", "memories").ok(t)
+	if !memIsFile(filepath.Join(m.home, "memory", "mixed-case-2--n.md")) {
+		t.Error("a directory not on the list is merged")
+	}
+	list := readFile(t, filepath.Join(m.home, "memory", ".merged-sources.json"))
+	for _, want := range []string{"-code-example-app", "-code-Mixed-Case", "-code-new"} {
+		if !strings.Contains(list, want) {
+			t.Errorf("the list lacks %s:\n%s", want, list)
+		}
+	}
+	if st := gitIn(t, m.home, "status", "--porcelain"); st != "" {
+		t.Errorf("the list is committed with the rest:\n%s", st)
+	}
+}
