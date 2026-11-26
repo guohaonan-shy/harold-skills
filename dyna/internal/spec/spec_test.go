@@ -7,17 +7,17 @@ import (
 	"testing"
 )
 
-const base = "---\ntype: spec\nsummary: 重试不消耗配额\nissues: [12, FA-577]\n---\n\n# 重试\n\n## 方案\n\nx\n\n### 前端交互\n- 点重试\n\n## 实现决策\n\n无分歧。\n"
+const base = "---\ntype: spec\nsummary: 重试不消耗配额\nissues: [12, ENG-123]\n---\n\n# 重试\n\n## 方案\n\nx\n\n### 前端交互\n- 点重试\n\n## 实现决策\n\n无分歧。\n"
 
 func TestIssuesOfReadsNumbersAndLinearKeys(t *testing.T) {
 	got := IssuesOf(base)
-	if !reflect.DeepEqual(got, []IssueRef{{Num: 12}, {Key: "FA-577"}}) {
+	if !reflect.DeepEqual(got, []IssueRef{{Num: 12}, {Key: "ENG-123"}}) {
 		t.Fatal(got)
 	}
 	if len(IssuesOf("---\ntype: spec\n---\n")) != 0 {
 		t.Fatal("no issues line")
 	}
-	if (IssueRef{Num: 5}).Label() != "#5" || (IssueRef{Key: "FA-1"}).Label() != "FA-1" {
+	if (IssueRef{Num: 5}).Label() != "#5" || (IssueRef{Key: "ENG-1"}).Label() != "ENG-1" {
 		t.Fatal("labels")
 	}
 }
@@ -61,7 +61,7 @@ func TestCoveringFindsTheSpecThatListsTheIssue(t *testing.T) {
 	if _, _, ok := Covering(docs, IssueRef{Num: 13}); ok {
 		t.Fatal("13 is not covered")
 	}
-	if _, _, ok := Covering(docs, IssueRef{Key: "FA-577"}); !ok {
+	if _, _, ok := Covering(docs, IssueRef{Key: "ENG-123"}); !ok {
 		t.Fatal("a key is covered")
 	}
 }

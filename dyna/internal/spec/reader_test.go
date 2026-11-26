@@ -19,8 +19,8 @@ func TestFrontmatterReadsSummaryAndIssuesIgnoringATrailingComment(t *testing.T) 
 		want   []IssueRef
 	}{
 		{"[12, 15]", []IssueRef{{Num: 12}, {Num: 15}}},
-		{"[FA-577, 12]", []IssueRef{{Key: "FA-577"}, {Num: 12}}},
-		{"[FA-577]", []IssueRef{{Key: "FA-577"}}},
+		{"[ENG-123, 12]", []IssueRef{{Key: "ENG-123"}, {Num: 12}}},
+		{"[ENG-123]", []IssueRef{{Key: "ENG-123"}}},
 		{"", nil},
 	}
 	for _, c := range cases {

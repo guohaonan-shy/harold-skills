@@ -115,7 +115,7 @@ func num(v, what string) (int, error) {
 	return n, nil
 }
 
-// ref is an issue reference: a GitHub number, or a Linear key such as FA-577.
+// ref is an issue reference: a GitHub number, or a Linear key such as ENG-123.
 func ref(v, what string) (spec.IssueRef, error) {
 	if digitsOnly.MatchString(v) {
 		n, _ := strconv.Atoi(v)
@@ -124,7 +124,7 @@ func ref(v, what string) (spec.IssueRef, error) {
 	if linearKey.MatchString(v) {
 		return spec.IssueRef{Key: v}, nil
 	}
-	return spec.IssueRef{}, fmt.Errorf("%s「%s」不是 GitHub 的号（12）也不是 Linear 的号（FA-577）", what, v)
+	return spec.IssueRef{}, fmt.Errorf("%s「%s」不是 GitHub 的号（12）也不是 Linear 的号（ENG-123）", what, v)
 }
 
 func bodyFile(file string) (string, error) {

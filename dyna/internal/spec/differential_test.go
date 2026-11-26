@@ -43,7 +43,7 @@ func richDocs(t *testing.T) string {
 	spec := func(slug, front string) {
 		writeFile(t, filepath.Join(docs, "spec", slug, slug+".md"), "---\ntype: spec\n"+front+"---\n\n# "+slug+"\n\n## 方案\n\nx\n")
 	}
-	spec("practice-retry", "summary: 重试不消耗配额 <会> & 其他\nissues: [12, FA-577]\n")
+	spec("practice-retry", "summary: 重试不消耗配额 <会> & 其他\nissues: [12, ENG-123]\n")
 	spec("b-two", "summary: 第二份   # 起草 routine\nissues: [3]\nstatus: 实现中\n")
 	spec("a_one", "summary:\n")
 	spec("a-one", "tags: [x]\n")

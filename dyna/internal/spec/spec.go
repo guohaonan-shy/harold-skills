@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// IssueRef is an issue a spec covers: a GitHub number, or (Key set) a Linear key such as FA-577.
+// IssueRef is an issue a spec covers: a GitHub number, or (Key set) a Linear key such as ENG-123.
 type IssueRef struct {
 	Num int
 	Key string
@@ -22,7 +22,7 @@ type IssueRef struct {
 // IsKey reports whether the ref is a Linear key.
 func (r IssueRef) IsKey() bool { return r.Key != "" }
 
-// String is the ref as a bare value: "12" or "FA-577".
+// String is the ref as a bare value: "12" or "ENG-123".
 func (r IssueRef) String() string {
 	if r.IsKey() {
 		return r.Key
@@ -30,7 +30,7 @@ func (r IssueRef) String() string {
 	return strconv.Itoa(r.Num)
 }
 
-// Label is the ref as a person reads it: "#12" or "FA-577".
+// Label is the ref as a person reads it: "#12" or "ENG-123".
 func (r IssueRef) Label() string {
 	if r.IsKey() {
 		return r.Key
@@ -59,7 +59,7 @@ func Frontmatter(md string) map[string]string {
 var refRe = regexp.MustCompile(`[A-Za-z][A-Za-z0-9]*-\d+|\d+`)
 var digits = regexp.MustCompile(`^\d+$`)
 
-// IssuesOf is the issues a spec covers: frontmatter `issues: [12, FA-577]`.
+// IssuesOf is the issues a spec covers: frontmatter `issues: [12, ENG-123]`.
 func IssuesOf(md string) []IssueRef {
 	raw := Frontmatter(md)["issues"]
 	if raw == "" {

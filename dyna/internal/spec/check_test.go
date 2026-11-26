@@ -129,7 +129,7 @@ func TestCheckReportsTheOldFlatLayout(t *testing.T) {
 }
 
 func TestCheckReportsASpecDirectoryWithoutItsSpecFileAndCountsTickets(t *testing.T) {
-	docs := project(t, doc(opts{Issues: "[12, FA-577]"}))
+	docs := project(t, doc(opts{Issues: "[12, ENG-123]"}))
 	write(t, filepath.Join(docs, "spec", "practice-retry", "tickets", "01-a.md"), "x")
 	write(t, filepath.Join(docs, "spec", "practice-retry", "tickets", "02-b.md"), "x")
 	write(t, filepath.Join(docs, "spec", "empty", "notes.md"), "x")
@@ -137,7 +137,7 @@ func TestCheckReportsASpecDirectoryWithoutItsSpecFileAndCountsTickets(t *testing
 	if len(r.Problems) != 1 || r.Problems[0] != "docs/spec/empty/ 里没有 empty.md" {
 		t.Fatalf("%v", r.Problems)
 	}
-	if len(r.Specs) != 1 || r.Specs[0].Tickets != 2 || !reflect.DeepEqual(r.Specs[0].Issues, []any{12, "FA-577"}) {
+	if len(r.Specs) != 1 || r.Specs[0].Tickets != 2 || !reflect.DeepEqual(r.Specs[0].Issues, []any{12, "ENG-123"}) {
 		t.Fatalf("%+v", r.Specs)
 	}
 }
@@ -147,9 +147,9 @@ func TestCheckPrintsTheReportAsIndentedJSONWithEmptyListsAsBrackets(t *testing.T
 	if got != "{\n  \"specs\": [],\n  \"problems\": []\n}\n" {
 		t.Fatalf("got %q", got)
 	}
-	docs := project(t, doc(opts{Issues: "[12, FA-577]"}))
+	docs := project(t, doc(opts{Issues: "[12, ENG-123]"}))
 	got = Check(docs).JSON()
-	if !strings.Contains(got, "\"issues\": [\n        12,\n        \"FA-577\"\n      ]") || !strings.Contains(got, "\"summary\": \"重试不消耗配额\"") {
+	if !strings.Contains(got, "\"issues\": [\n        12,\n        \"ENG-123\"\n      ]") || !strings.Contains(got, "\"summary\": \"重试不消耗配额\"") {
 		t.Fatalf("got %s", got)
 	}
 }

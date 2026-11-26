@@ -392,7 +392,7 @@ func TestFileIssuesAndRecordListAreTheSameAsTheOldScripts(t *testing.T) {
 	if r := o.new("", "record", "list", docs); r.code != 0 || !strings.Contains(r.stdout, `"mergedOn": "2026-11-16"`) {
 		t.Fatalf("the list did not run: %d %s %s", r.code, r.stdout, r.stderr)
 	}
-	for _, args := range [][]string{{"list", docs}, {"list", docs, "--since=2026-11-01"}, {"list", docs, "--since=Nov"}, {"from-rollback", docs, "12"}, {"from-rollback", docs, "FA-1"}} {
+	for _, args := range [][]string{{"list", docs}, {"list", docs, "--since=2026-11-01"}, {"list", docs, "--since=Nov"}, {"from-rollback", docs, "12"}, {"from-rollback", docs, "ENG-1"}} {
 		o.same(false, "", "seo-live-record.mjs", args, append([]string{"record"}, args...)...)
 	}
 }

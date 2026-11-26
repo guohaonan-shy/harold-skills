@@ -32,6 +32,10 @@ const TELLS = [
   /\breal (product )?project\b/i,
   /\bthat project('s)?\b/i,
   /IntroTrialCTA|HomePage\.astro|btn-brand-inverse/,
+  // the company's issue tracker: team prefix plus number, the team-name sample, the GitHub org and repo (shapes only, no real number or title)
+  /\bFA-\d+/i,
+  /Fish（key/,
+  /fishaudio|fish-agent/i,
 ];
 
 function files(path) {

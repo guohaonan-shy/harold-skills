@@ -520,7 +520,7 @@ func TestFromRollbackReadsTheIssueBodyThroughGhAndDoesNotGuess(t *testing.T) {
 	if got, err := FromRollback(nullBody, "14"); err != nil || got {
 		t.Fatal("an issue with no body is an ordinary one")
 	}
-	if _, err := FromRollback(nullBody, "FA-577"); err == nil || !strings.Contains(err.Error(), "issue 号") {
+	if _, err := FromRollback(nullBody, "ENG-123"); err == nil || !strings.Contains(err.Error(), "issue 号") {
 		t.Fatal(err)
 	}
 	if _, err := FromRollback(func([]string) (string, error) { return "", fmt.Errorf("gh: not found") }, "12"); err == nil || !strings.Contains(err.Error(), "not found") {

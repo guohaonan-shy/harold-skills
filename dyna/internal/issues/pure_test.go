@@ -218,16 +218,16 @@ func TestRefsLinear(t *testing.T) {
 		title, body string
 		want        bool
 	}{
-		{"[FA-577] x", "", true},
-		{" [fa-577] x", "", true},
-		{"x", "a\nLinear: FA-577\nb", true},
-		{"x", "Linear: FA-577", true},
-		{"[FA-5770] x", "Linear: FA-5771", false},
-		{"see [FA-577]", "also Linear: FA-577 here", false},
+		{"[ENG-123] x", "", true},
+		{" [eng-123] x", "", true},
+		{"x", "a\nLinear: ENG-123\nb", true},
+		{"x", "Linear: ENG-123", true},
+		{"[ENG-1230] x", "Linear: ENG-1231", false},
+		{"see [ENG-123]", "also Linear: ENG-123 here", false},
 		{"", "", false},
 	}
 	for _, c := range cases {
-		if got := RefsLinear(c.title, c.body, "FA-577"); got != c.want {
+		if got := RefsLinear(c.title, c.body, "ENG-123"); got != c.want {
 			t.Errorf("RefsLinear(%q,%q)=%v", c.title, c.body, got)
 		}
 	}

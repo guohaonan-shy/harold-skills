@@ -704,7 +704,7 @@ func TestRecordListAndFromRollbackReadTheProjectsRepositoryNotWhateverRepository
 	if _, errs, code := (seoRun{env: env, gh: gh}).do("record", "list", docs, "--since=Nov"); code != 1 || !strings.Contains(errs, "--since") {
 		t.Fatal(code, errs)
 	}
-	if _, _, code := (seoRun{env: env, gh: gh}).do("record", "from-rollback", docs, "FA-577"); code != 1 {
+	if _, _, code := (seoRun{env: env, gh: gh}).do("record", "from-rollback", docs, "ENG-123"); code != 1 {
 		t.Fatal("not an issue number")
 	}
 }

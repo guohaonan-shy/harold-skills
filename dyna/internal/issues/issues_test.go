@@ -84,7 +84,7 @@ const githubTracker = "# Issue tracker：GitHub\n\n## 仓库\n\n这一节是旧�
 
 const typesTracker = "# Issue tracker：GitHub\n\n## 分类 label\n\nGitHub 上打成 `type:<父类>`。\n\n- `billing`：计费\n- `seo`：搜索流量\n  - `backlink`：外链\n  - `blog`\n- `uiux`：界面与交互\n\n保留的 label：`Idea`、`test infra`\n\n## 别的\n- `not-a-type`\n"
 
-const linearTracker = "# Issue tracker：Linear\n\n## 团队\n\nFish（key `FA`），issue 号形如 `FA-123`\n\n"
+const linearTracker = "# Issue tracker：Linear\n\n## 团队\n\nEngineering（key `ENG`），issue 号形如 `ENG-123`\n\n"
 
 const goodBody = "## 背景\n\n「重试」按钮：把失败的任务按原参数再交给队列一次；配额按每次交给队列扣一次\n\n## 问题\n\n重试会重复扣配额\n\n## 证据\n\n无，待验证\n\n## 影响范围\n\n所有点过重试的用户\n\n## 从哪发现\n\n#242 的复现\n"
 
@@ -1061,19 +1061,19 @@ func TestInALinearProjectTheCommandsThatWriteGitHubAreRefusedAndGHIsNeverCalled(
 }
 
 func TestCheckFromDoesNotReadTheIssueTakesALinearKeyAndReadsTheSpec(t *testing.T) {
-	p := docsWith(t, map[string]string{"retry": specText(sp{Issues: "[FA-577]", Fork: true})}, str(linearTracker), "")
+	p := docsWith(t, map[string]string{"retry": specText(sp{Issues: "[ENG-123]", Fork: true})}, str(linearTracker), "")
 	f := newFake()
-	refused(t, run(p, f, "check", p.docs, "todo", "FA-577", "--from=triage"), `FA-577：spec 里还有等人定的.*待定`)
+	refused(t, run(p, f, "check", p.docs, "todo", "ENG-123", "--from=triage"), `ENG-123：spec 里还有等人定的.*待定`)
 	eq(t, len(f.raw), 0, "no gh call at all")
-	must(t, os.WriteFile(filepath.Join(p.docs, "spec", "retry", "retry.md"), []byte(specText(sp{Issues: "[FA-577]"})), 0o644))
-	eq(t, run(p, f, "check", p.docs, "todo", "FA-577", "--from=triage").lines(), []string{"FA-577: triage → todo 可以翻"})
+	must(t, os.WriteFile(filepath.Join(p.docs, "spec", "retry", "retry.md"), []byte(specText(sp{Issues: "[ENG-123]"})), 0o644))
+	eq(t, run(p, f, "check", p.docs, "todo", "ENG-123", "--from=triage").lines(), []string{"ENG-123: triage → todo 可以翻"})
 	for _, c := range f.raw {
 		if c[0] == "api" {
 			t.Fatal("the issue API was called")
 		}
 	}
-	refused(t, run(p, f, "check", p.docs, "done", "FA-577", "--from=todo"), `能翻成`)
-	refused(t, run(p, f, "check", p.docs, "todo", "FA-577", "--from=实现中"), `不在状态机里`)
+	refused(t, run(p, f, "check", p.docs, "done", "ENG-123", "--from=todo"), `能翻成`)
+	refused(t, run(p, f, "check", p.docs, "todo", "ENG-123", "--from=实现中"), `不在状态机里`)
 	refused(t, run(p, f, "check", p.docs, "todo", "nope", "--from=triage"), `不是 GitHub 的号`)
 }
 
@@ -1081,16 +1081,16 @@ func TestCheckDoneFromInALinearProjectFindsThePRsByTitleOrLinearLine(t *testing.
 	p := docsWith(t, nil, str(linearTracker), "")
 	f := newFake()
 	f.prs["o/r"] = []*fPR{
-		linearPR(1, "[FA-577] 改 worker", "", "MERGED", false), linearPR(2, "[FA-5770] 别的", "", "OPEN", false), linearPR(3, "提到 FA-577 但不是前缀", "没有那一行", "OPEN", false),
-		linearPR(4, "接口", "说明\nLinear: FA-577\n", "OPEN", true), linearPR(5, "接口", "Linear: FA-57", "OPEN", false),
+		linearPR(1, "[ENG-123] 改 worker", "", "MERGED", false), linearPR(2, "[ENG-1230] 别的", "", "OPEN", false), linearPR(3, "提到 ENG-123 但不是前缀", "没有那一行", "OPEN", false),
+		linearPR(4, "接口", "说明\nLinear: ENG-123\n", "OPEN", true), linearPR(5, "接口", "Linear: ENG-12", "OPEN", false),
 	}
-	f.prs["o/api"] = []*fPR{linearPR(6, "[FA-577] 别的仓库", "", "OPEN", false)}
-	refused(t, run(p, f, "check", p.docs, "done", "FA-577", "--from=in-review"), `还有 PR 没合并：o/r#4（draft）`)
+	f.prs["o/api"] = []*fPR{linearPR(6, "[ENG-123] 别的仓库", "", "OPEN", false)}
+	refused(t, run(p, f, "check", p.docs, "done", "ENG-123", "--from=in-review"), `还有 PR 没合并：o/r#4（draft）`)
 	f.prs["o/r"][3].IsDraft = false
-	refused(t, run(p, f, "check", p.docs, "done", "FA-577", "--from=in-review"), `o/r#4（ready）`)
+	refused(t, run(p, f, "check", p.docs, "done", "ENG-123", "--from=in-review"), `o/r#4（ready）`)
 	f.prs["o/r"][3].State = "MERGED"
 	f.raw = nil
-	eq(t, run(p, f, "check", p.docs, "done", "FA-577", "--from=in-review").lines(), []string{"FA-577: in-review → done 可以翻"})
+	eq(t, run(p, f, "check", p.docs, "done", "ENG-123", "--from=in-review").lines(), []string{"ENG-123: in-review → done 可以翻"})
 	titleSearch, bodySearch := false, false
 	for _, c := range f.raw {
 		if c[0] != "pr" {
@@ -1101,41 +1101,41 @@ func TestCheckDoneFromInALinearProjectFindsThePRsByTitleOrLinearLine(t *testing.
 				t.Fatal("not the project's repo")
 			}
 		}
-		if contains(c, "FA-577 in:title") {
+		if contains(c, "ENG-123 in:title") {
 			titleSearch = true
 		}
-		if contains(c, "FA-577 in:body") {
+		if contains(c, "ENG-123 in:body") {
 			bodySearch = true
 		}
 	}
 	if !titleSearch || !bodySearch {
 		t.Fatal("both searches")
 	}
-	refused(t, run(p, f, "check", p.docs, "done", "FA-999", "--from=in-review"), `没有 PR 挂在`)
+	refused(t, run(p, f, "check", p.docs, "done", "ENG-999", "--from=in-review"), `没有 PR 挂在`)
 }
 
 func TestCheckInALinearProjectWithoutFromIsRefused(t *testing.T) {
 	p := docsWith(t, nil, str(linearTracker), "")
 	f := newFake()
-	refused(t, run(p, f, "check", p.docs, "todo", "FA-577"), `--from`)
+	refused(t, run(p, f, "check", p.docs, "todo", "ENG-123"), `--from`)
 	eq(t, len(f.raw), 0)
 }
 
 func TestALinearProjectLooksForPRsInTheRepoOfTheProjectListAndNeverAsksGHWhichRepo(t *testing.T) {
-	p := docsWith(t, nil, str("# Issue tracker：Linear\n\n## 团队\n\nFish（key `FA`）\n"), "")
+	p := docsWith(t, nil, str("# Issue tracker：Linear\n\n## 团队\n\nEngineering（key `ENG`）\n"), "")
 	f := newFake()
-	f.prs["o/r"] = []*fPR{linearPR(1, "[FA-577] x", "", "MERGED", false), linearPR(2, "[FA-1] y", "", "OPEN", false)}
-	eq(t, run(p, f, "check", p.docs, "done", "FA-577", "--from=in-review").lines(), []string{"FA-577: in-review → done 可以翻"})
+	f.prs["o/r"] = []*fPR{linearPR(1, "[ENG-123] x", "", "MERGED", false), linearPR(2, "[ENG-1] y", "", "OPEN", false)}
+	eq(t, run(p, f, "check", p.docs, "done", "ENG-123", "--from=in-review").lines(), []string{"ENG-123: in-review → done 可以翻"})
 	for _, c := range f.raw {
 		if c[0] == "repo" {
 			t.Fatal("gh repo view")
 		}
 	}
-	r := run(p, newFake(), "show", p.docs, "FA-577")
+	r := run(p, newFake(), "show", p.docs, "ENG-123")
 	_ = r
 	g := newFake()
 	g.prs["o/r"] = f.prs["o/r"]
-	r = run(p, g, "show", p.docs, "FA-577")
+	r = run(p, g, "show", p.docs, "ENG-123")
 	mustMatch(t, `"number": 1`, r.out)
 	mustMatch(t, `"state": "merged"`, r.out)
 }
@@ -1165,16 +1165,16 @@ func TestCheckFromInAGitHubProjectReadsNoIssueEither(t *testing.T) {
 }
 
 func TestShowInALinearProject(t *testing.T) {
-	p := docsWith(t, map[string]string{"retry": specText(sp{Issues: "[FA-577, 12]"})}, str(linearTracker), "")
+	p := docsWith(t, map[string]string{"retry": specText(sp{Issues: "[ENG-123, 12]"})}, str(linearTracker), "")
 	f := newFake()
-	f.prs["o/r"] = []*fPR{linearPR(1, "[FA-577] x", "", "OPEN", true), linearPR(2, "y", "Linear: FA-577", "MERGED", false)}
-	git := func([]string) (string, error) { return "main\nissue/FA-577-retry\norigin/issue/FA-577-retry\n", nil }
-	r := cli(p, f, git, "issues", "show", p.docs, "FA-577")
+	f.prs["o/r"] = []*fPR{linearPR(1, "[ENG-123] x", "", "OPEN", true), linearPR(2, "y", "Linear: ENG-123", "MERGED", false)}
+	git := func([]string) (string, error) { return "main\nissue/ENG-123-retry\norigin/issue/ENG-123-retry\n", nil }
+	r := cli(p, f, git, "issues", "show", p.docs, "ENG-123")
 	eq(t, r.code, 0, r.err)
-	mustMatch(t, `"number": "FA-577"`, r.out)
+	mustMatch(t, `"number": "ENG-123"`, r.out)
 	mustMatch(t, `"state": null`, r.out)
 	mustMatch(t, `"spec": "retry"`, r.out)
-	mustMatch(t, `"branch": "issue/FA-577-retry"`, r.out)
+	mustMatch(t, `"branch": "issue/ENG-123-retry"`, r.out)
 	mustMatch(t, `"state": "draft"`, r.out)
 	for _, c := range f.raw {
 		if c[0] == "api" {
