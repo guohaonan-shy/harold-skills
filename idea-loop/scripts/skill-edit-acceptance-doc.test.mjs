@@ -106,5 +106,5 @@ test('README rows for to-ticket and implement mention the cells and the skill-ed
   assert.match(implementRow, /dyna spec skill-edit/, 'implement 行要写 landed 核对跑 skill-edit');
   assert.match(implementRow, /杠杆|lever/, 'implement 行要写交回里的杠杆行');
   const plugin = JSON.parse(read('.claude-plugin', 'plugin.json'));
-  assert.match(plugin.version, /^\d+\.\d+\.\d+$/, 'plugin.json 的 version 要是 x.y.z 格式');
+  assert.match(plugin.version, /^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/, 'plugin.json 的 version 要是 x.y.z 或 x.y.z-<预发布> 格式');
 });

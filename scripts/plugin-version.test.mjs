@@ -118,6 +118,23 @@ test('versions compare as three numeric segments, not as strings', () => {
   assert.equal(compareVersions('0.1.14', '0.1.14'), 0);
 });
 
+test('a prerelease suffix sorts after the previous release and before its own release', () => {
+  assert.equal(compareVersions('0.2.0-beta.1', '0.1.50') > 0, true);
+  assert.equal(compareVersions('0.2.0', '0.2.0-beta.1') > 0, true);
+  assert.equal(compareVersions('0.2.0-beta.2', '0.2.0-beta.1') > 0, true);
+  assert.equal(compareVersions('0.2.0-beta.10', '0.2.0-beta.2') > 0, true);
+  assert.equal(compareVersions('0.2.0-rc.1', '0.2.0-beta.9') > 0, true);
+  assert.equal(compareVersions('0.2.0-beta.1', '0.2.0-beta.1'), 0);
+  assert.deepEqual(
+    findViolations({
+      changedFiles: ['idea-loop/README.md'],
+      baseVersions: { 'idea-loop': '0.1.50' },
+      currentVersions: { 'idea-loop': '0.2.0-beta.1' },
+    }),
+    [],
+  );
+});
+
 test('an unparsable version is reported instead of silently passing', () => {
   const v = findViolations({
     changedFiles: ['idea-loop/README.md'],
