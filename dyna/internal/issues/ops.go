@@ -533,7 +533,8 @@ type Candidate struct {
 }
 
 // Candidates are the issues of one state (`todo` by default, or `triage`) a dispatch round may hand out, in the
-// order to take them: none an open issue still blocks. Whose it is decides first. Those assigned to me (the login
+// order to take them: none an open issue still blocks, and none that is another issue's sub-issue (a sub-issue
+// goes with its parent, not in a session of its own). Whose it is decides first. Those assigned to me (the login
 // gh runs as) come alone, P0 → P1 → P2 → none, the lower number first within a priority; someone else's are never
 // handed out. Only when none of mine can go do the unassigned ones, by priority first as well and, within a
 // priority, the longest in the state first (since its `status:<state>` was last added; the creation time when the
@@ -549,7 +550,7 @@ func Candidates(gh GH, limit int, state string) ([]Candidate, error) {
 	}
 	var free []Issue
 	for _, i := range all {
-		if i.State == state && !(i.BlockedBy > 0) {
+		if i.State == state && !(i.BlockedBy > 0) && !i.SubOf {
 			free = append(free, i)
 		}
 	}

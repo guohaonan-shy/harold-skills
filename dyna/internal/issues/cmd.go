@@ -486,7 +486,7 @@ func Command(d Deps) *cobra.Command {
 			return nil
 		})
 
-	candidates := leaf("candidates <docs> [limit]", "JSON：没被挡路的 todo（或 triage）issue，按「我的优先、再按优先级、再按等得久」排好", sess,
+	candidates := leaf("candidates <docs> [limit]", "JSON：没被挡路、也不是别的 issue 的子 issue 的 todo（或 triage）issue，按「我的优先、再按优先级、再按等得久」排好", sess,
 		"dyna issues show <docs> <n>", func(cmd *cobra.Command, args []string) error {
 			s, err := d.open("candidates", arg(args, 0), "")
 			if err != nil {

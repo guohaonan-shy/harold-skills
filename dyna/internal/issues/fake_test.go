@@ -133,6 +133,9 @@ func (f *fake) rest(i *fIssue) map[string]any {
 		"sub_issues_summary":         map[string]int{"total": subs},
 		"issue_dependencies_summary": map[string]int{"blocked_by": blockers, "total_blocked_by": len(i.BlockedBy)},
 	}
+	if i.SubOf != 0 {
+		m["parent_issue_url"] = fmt.Sprintf("https://api.github.com/repos/%s/issues/%d", f.repo, i.SubOf)
+	}
 	if i.Pull {
 		m["pull_request"] = map[string]any{}
 	}

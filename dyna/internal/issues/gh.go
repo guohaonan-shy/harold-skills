@@ -91,6 +91,7 @@ type Issue struct {
 	CreatedAt *string
 	UpdatedAt *string
 	SubTotal  int
+	SubOf     bool
 	BlockedBy int
 	IsPull    bool
 }
@@ -112,6 +113,7 @@ type restIssue struct {
 	SubIssues     *struct {
 		Total int `json:"total"`
 	} `json:"sub_issues_summary"`
+	ParentURL    *string `json:"parent_issue_url"`
 	Dependencies *struct {
 		BlockedBy int `json:"blocked_by"`
 	} `json:"issue_dependencies_summary"`
@@ -163,6 +165,7 @@ func rowOf(i restIssue) Issue {
 	if i.SubIssues != nil {
 		it.SubTotal = i.SubIssues.Total
 	}
+	it.SubOf = i.ParentURL != nil && *i.ParentURL != ""
 	if i.Dependencies != nil {
 		it.BlockedBy = i.Dependencies.BlockedBy
 	}

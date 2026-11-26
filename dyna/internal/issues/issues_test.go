@@ -366,6 +366,14 @@ func TestCandidatesAreTodoIssuesNoOpenIssueBlocks(t *testing.T) {
 	eq(t, nums(candidatesOf(t, f, "1")), []int{2})
 }
 
+func TestCandidatesLeaveOutSubIssues(t *testing.T) {
+	kid, triageKid := open(3, "status:todo"), open(6, "status:triage")
+	kid.SubOf, triageKid.SubOf = 2, 2
+	f := newFake(open(2, "status:todo"), kid, open(5, "status:todo"), triageKid, open(7, "status:triage"))
+	eq(t, nums(candidatesOf(t, f)), []int{2, 5})
+	eq(t, nums(candidatesOf(t, f, "--state=triage")), []int{7})
+}
+
 func TestCandidatesMineFirstByPriorityThenNumber(t *testing.T) {
 	mine := func(i *fIssue) *fIssue { i.Assignees = []string{"me"}; return i }
 	i12 := mine(open(12, "status:todo", "priority:P0"))
