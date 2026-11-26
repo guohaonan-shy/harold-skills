@@ -228,6 +228,19 @@ func (w hookWorld) hook(event, cwd, id string, extra map[string]any) (string, in
 	return errs, code
 }
 
+// rebuilt writes the site's index again as a build would, and dates it a second ahead: Linux stamps a file's mtime
+// from a coarse kernel clock that can sit a few milliseconds behind time.Now, so a file written right after the
+// PreToolUse record could otherwise look older than the command that rebuilt it.
+func rebuilt(t *testing.T, w hookWorld, title string) {
+	t.Helper()
+	file := filepath.Join(w.root, "site/dist/index.html")
+	write(t, file, page(title))
+	ahead := time.Now().Add(time.Second)
+	if err := os.Chtimes(file, ahead, ahead); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func age(t *testing.T, file string) {
 	t.Helper()
 	old := time.Now().Add(-time.Minute)
@@ -242,7 +255,7 @@ func TestHookTheSiteBuildThatLeftAnErrorIsReportedBackWithExitTwo(t *testing.T) 
 	if _, code := w.hook("PreToolUse", w.root, "t1", nil); code != 0 {
 		t.Fatal("PreToolUse only records the start")
 	}
-	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
+	rebuilt(t, w, "")
 	errs, code := w.hook("PostToolUse", w.root, "t1", nil)
 	if code != 2 || !strings.Contains(errs, "Missing <title>") || !strings.Contains(errs, "seo-writing/references/checks.md") || strings.Contains(errs, "idea-loop:seo-check") || !strings.HasPrefix(errs, "构建产物 "+filepath.Join(w.root, "site/dist")+" 有 SEO error") || !strings.HasSuffix(errs, "改完重新构建；每条规则的理由见 idea-loop 插件的 skills/seo/seo-writing/references/checks.md。\n") {
 		t.Fatal(code, errs)
@@ -259,7 +272,7 @@ func TestHookSeoMdIsReadFromTheProjectDirectoryInHomeAndTheOutputDirectoryIsTheW
 	if _, code := w.hook("PreToolUse", sub, "t1b", nil); code != 0 {
 		t.Fatal("from a subdirectory of the worktree too")
 	}
-	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
+	rebuilt(t, w, "")
 	errs, code := w.hook("PostToolUse", sub, "t1b", nil)
 	if code != 2 || !strings.Contains(errs, filepath.Join(w.root, "site/dist")) {
 		t.Fatal(code, errs)
@@ -269,7 +282,7 @@ func TestHookSeoMdIsReadFromTheProjectDirectoryInHomeAndTheOutputDirectoryIsTheW
 func TestHookAProjectThatHasNotMovedIntoHomePassesSilentlyEvenWhenTheWorktreeStillHasSeoMd(t *testing.T) {
 	w := hookRepo(t, true, true, false, true)
 	w.hook("PreToolUse", w.root, "t1c", nil)
-	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
+	rebuilt(t, w, "")
 	if errs, code := w.hook("PostToolUse", w.root, "t1c", nil); code != 0 || errs != "" {
 		t.Fatal(code, errs)
 	}
@@ -283,7 +296,7 @@ func TestHookARepositoryTheProjectListDoesNotKnowPassesSilently(t *testing.T) {
 		t.Fatal(err, string(out))
 	}
 	w.hook("PreToolUse", w.root, "t1d", nil)
-	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
+	rebuilt(t, w, "")
 	if _, code := w.hook("PostToolUse", w.root, "t1d", nil); code != 0 {
 		t.Fatal(code)
 	}
@@ -301,7 +314,7 @@ func TestHookAnotherBuildThatDidNotTouchTheOutputDirPasses(t *testing.T) {
 
 func TestHookWithoutAPreToolUseRecordTheStartComesFromDurationMs(t *testing.T) {
 	w := hookRepo(t, true, true, true, false)
-	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
+	rebuilt(t, w, "")
 	if _, code := w.hook("PostToolUse", w.root, "never-seen", map[string]any{"duration_ms": 5000}); code != 2 {
 		t.Fatal("the build ran 5 seconds ago and touched the directory")
 	}
@@ -313,7 +326,7 @@ func TestHookWithoutAPreToolUseRecordTheStartComesFromDurationMs(t *testing.T) {
 func TestHookNoSeoMdNoCheck(t *testing.T) {
 	w := hookRepo(t, false, true, true, false)
 	w.hook("PreToolUse", w.root, "t3", nil)
-	write(t, filepath.Join(w.root, "site/dist/index.html"), page(""))
+	rebuilt(t, w, "")
 	if _, code := w.hook("PostToolUse", w.root, "t3", nil); code != 0 {
 		t.Fatal(code)
 	}
