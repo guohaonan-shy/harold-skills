@@ -93,3 +93,18 @@ test('home fixed text lists 「交 spec 的那段话」, not 「spec」, among t
   assert.match(description, /交 spec 的那段话/);
   assert.doesNotMatch(description, /（对话、spec、PR）/);
 });
+
+test('old specs are not migrated: the three places that run or explain the spec check say the structure reports only bind the spec written this run; the others stay listed, neither handled nor blocking', () => {
+  const dreaming = read('skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');
+  const places = {
+    'to-spec step 1 (the opening check)': read('skills', 'engineering', 'to-spec', 'SKILL.md').split('\n').find((l) => /^1\.\s+\*\*开工\*\*/.test(l)),
+    'issues category-and-spec (the line on dyna spec check)': read('skills', 'engineering', 'issues', 'references', 'category-and-spec.md').split('\n').find((l) => /`dyna spec index\|check <docs>`/.test(l)),
+    'dreaming proposal-table (the check before committing)': dreaming.slice(dreaming.indexOf('4. **提交前检查**'), dreaming.indexOf('5. 最后报告给人')),
+  };
+  for (const [where, text] of Object.entries(places)) {
+    assert.ok(text, `${where}: 找不到那一处`);
+    assert.match(text, /结构(报告|问题)/, `${where}: 没提结构报告`);
+    assert.match(text, /只管这次写/, `${where}: 没写结构报告只管这次写的 spec`);
+    assert.match(text, /不处理、不挡/, `${where}: 没写老 spec 的报告不处理、不挡路`);
+  }
+});

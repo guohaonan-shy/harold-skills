@@ -36,4 +36,4 @@
 - `idea-loop/scripts/to-spec-by-deliverable-doc.test.mjs`、`to-spec-diagnose-agent-docs-doc.test.mjs`、`to-spec-verify-lines-doc.test.mjs`：钉着 to-spec 现在的写法，被删的参考会让它们红，要改成钉新模板。
 - `idea-loop/scripts/no-project-leak.test.mjs`：改到的插件文字不能带项目信息。
 - 守 home 固定文案、setup 文案和注入长度的测试（setup 目录相关的 doc test）：改了 home-rules。
-- [ ] review 第 1 轮 S1（2026-11-26）：老 spec 不迁移——全量 spec 检查报出的结构问题（缺节、顺序错、缺「杠杆诊断」）只管这次写的 spec；老 spec 的结构报告照旧列出，但不处理、不挡路。在三处写明：to-spec 第 1 步开工检查的完成条件、issues 的参考里讲 spec 检查的那一处、dreaming 对账提交前的检查。写文件后的钩子照旧报。加一条文档测试钉住这三处。
+- [x] review 第 1 轮 S1（2026-11-26）：老 spec 不迁移——全量 spec 检查报出的结构问题（缺节、顺序错、缺「杠杆诊断」）只管这次写的 spec；老 spec 的结构报告照旧列出，但不处理、不挡路。在三处写明：to-spec 第 1 步开工检查的完成条件、issues 的参考里讲 spec 检查的那一处、dreaming 对账提交前的检查。写文件后的钩子照旧报。加一条文档测试钉住这三处。

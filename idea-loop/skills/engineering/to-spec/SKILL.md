@@ -9,7 +9,7 @@ spec 只给下游 agent 读（切工单、探路、实现、review），节的�
 
 ## 过程
 
-1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `dyna spec check <docs>`，报的问题照 `idea-loop:issues` 处理。完成条件：它没有未处理的报告。
+1. **开工**：issue tracker 怎么用在项目目录的 `ISSUE_TRACKER.md`，没有就告诉人先跑 `/idea-loop:setup`。用 Skill 工具调 `idea-loop:wiki-conventions` 和 `idea-loop:issues`。`<docs>` 指 `<项目目录>/docs/`（`idea-loop:wiki-conventions` 的「项目目录」）。先跑 `dyna spec check <docs>`，报的问题照 `idea-loop:issues` 处理。结构报告（缺节、七节顺序错、缺「杠杆诊断」）只管这次写的 spec，别的 spec 的照旧列出，不处理、不挡路。完成条件：除老 spec 的结构报告外，它没有未处理的报告。
 
 2. **落 raw**：上下文里有跟人的讨论才写，进 `<docs>/raw/<topic>/<YYYY-MM-DD>-<slug>.md`，frontmatter 和正文照 [`references/raw-template.md`](references/raw-template.md)。
 
