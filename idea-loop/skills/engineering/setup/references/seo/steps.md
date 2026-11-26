@@ -67,11 +67,21 @@
 
 ## 6. 加 SEO 的 issue 分类
 
-项目的分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节（setup 的「写」已建）。补上缺的 `seo` 父类和五个方向子类（`technical`、`pages`、`keywords`、`backlinks`、`geo`）的行，要补的原文和格式在 [issue-labels.md](issue-labels.md)。
+项目的分类写在 `<项目目录>/ISSUE_TRACKER.md` 的「分类 label」一节（setup 的「写」已建）。两个平台都先补上缺的 `seo` 父类和五个方向子类（`technical`、`pages`、`keywords`、`backlinks`、`geo`）的行，要补的原文和格式在 [issue-labels.md](issue-labels.md)。
 
-然后跑 `dyna issues labels <项目目录>/docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 setup 的「写」。
+然后看 `ISSUE_TRACKER.md` 的第一个标题，建 label：
 
-完成条件：`ISSUE_TRACKER.md` 的这一节多了 [issue-labels.md](issue-labels.md) 里的六行；`dyna issues labels` 已建出六个 `type:seo` 系列 label。
+- **GitHub 项目**（`# Issue tracker：GitHub`）：跑 `dyna issues labels <项目目录>/docs`，建出 `type:seo` 和五个 `type:seo/<方向>`。它列出的多余 label 只转告人，删不删归 setup 的「写」。
+- **Linear 项目**（`# Issue tracker：Linear`）：label 建在 Linear 团队里，团队取 `ISSUE_TRACKER.md` 的「团队」一节，不再问人。形状见 [issue-labels.md](issue-labels.md) 末尾：`seo` 是团队下的一个 label 组，五个方向是组里的子 label。
+  1. 用『调用 MCP』能力调 Linear MCP 的 `list_issue_labels`（`team`、`includeGroups: true`），看团队已有的。
+  2. 缺的用 `create_issue_label` 建：先建名为 `seo` 的 label 组，再建组里的 `technical`、`pages`、`keywords`、`backlinks`、`geo`；description 用 [issue-labels.md](issue-labels.md) 里每行「：」后那句。已有同名的复用，只补缺的。
+  3. 已有一个叫 `seo` 的普通 label（不是组），或某个方向名的 label 不在 `seo` 组里：不动它，交回写明是哪个、为什么没建，这一步记「未做（原因）」。
+  4. 会话里没有建 label 的工具：把要建的组和五个子 label 交给人在 Linear 的团队设置里建，记「未做：没有建 label 的工具」。
+  5. `ISSUE_TRACKER.md` 的「模块」行补上 `seo` 组。Linear 的 label 组不能嵌套，`seo` 组与团队已有的模块 label 组并列。
+
+完成条件：
+- GitHub：`ISSUE_TRACKER.md` 的这一节多了 [issue-labels.md](issue-labels.md) 里的六行；`dyna issues labels` 已建出六个 `type:seo` 系列 label。
+- Linear：`ISSUE_TRACKER.md` 的这一节多了 [issue-labels.md](issue-labels.md) 里的六行，且 `list_issue_labels` 里看得到 `seo` 组和五个子 label，或交回里写明哪个没建、为什么。
 
 ## 7. AI 可见性跟踪
 

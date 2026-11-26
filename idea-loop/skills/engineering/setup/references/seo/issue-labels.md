@@ -10,3 +10,5 @@ SEO 模块第 6 步，补进 `<项目目录>/ISSUE_TRACKER.md` 的「分类 labe
   - `backlinks`：外链：竞品有、我们没有的引用域，外联候选
   - `geo`：AI 搜索可见性：被 AI 回答提到和引用的情况、schema、llms.txt
 ```
+
+Linear 项目上，这六行对应成 Linear label：`seo` 是团队下的一个 label 组，五个方向是组里的子 label，说明文字同上面每行「：」后那句。组本身打不到 issue 上，打子 label 就带出父类，等同 GitHub 上打子类时父类一起打。
