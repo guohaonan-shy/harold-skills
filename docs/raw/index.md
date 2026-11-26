@@ -81,6 +81,7 @@
 | [decisions/137](decisions/137.md) | conversation | 2026-11-16 | 决定记录 —— #137 的 triage 会话：范围拆成 #339 #340 #341 随 0.2.0，#137 只压 idea-loop 的 design-modeling、pr-review；todo 会话合并 PR #373，候选 1 条不批 |
 | [decisions/295](decisions/295.md) | conversation | 2026-11-17 | 决定记录 —— #295 的 issue 会话：triage 定本机覆盖放进 home、同名小节整段替换；夜间 todo 会话落点对齐 dyna、合并 PR #408（dyna 0.0.3 未发）；候选 1 条不批 |
 | [decisions/311](decisions/311.md) | conversation | 2026-11-14 | 决定记录 —— #311 的 issue 会话：改 skill 的工单带三格、落地前核对（PR #317），版本改定 patch，retro 候选并进「0.x 行为改动升 patch」 |
+| [decisions/247](decisions/247.md) | conversation | 2026-11-16 | 决定记录 —— #247 的 triage 会话：0.2.0 装上后一次搬完，harold-skills 公开历史不改写；retro 候选「落地顺序不留空档的自己定」不批 |
 | [decisions/339](decisions/339.md) | conversation | 2026-11-18 | 决定记录 —— #339 idea-loop 命令行：父会话定的方案、bin/ 与子代理生图两次实测、跟 #340 的分工；todo 会话合并 PR #387（dyna 0.0.1/0.0.2 已发），候选 2 条：1 不批、1 改成 #340 的评论 |
 | [decisions/252](decisions/252.md) | conversation | 2026-11-16 | 决定记录 —— #252 建 home 的 triage 会话：第一版项目地图由 setup 起草、本机实测时不切记忆目录（等 #247 迁移时切），retro 候选「推迟的一步写明何时由谁做」不批 |
 | [decisions/188](decisions/188.md) | conversation | 2026-11-16 | 决定记录 —— #188 的 triage 与 todo 会话：seo-brief 角度候选对照站内文章，规则验收选写回放用例（跨仓库、付费、PR 开出后当场跑）；夜里按推荐定 4 件、人以 patch 合并 PR #402；无候选 |
