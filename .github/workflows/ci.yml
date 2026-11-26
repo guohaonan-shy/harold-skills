@@ -1,0 +1,61 @@
+name: ci
+
+# 每个 PR 和 main 上的每次推送跑 REVIEW.md「验证命令」里的机械检查：
+# dyna 的格式、vet、编译、Go 测试，插件小脚本的 node 测试，改到的 SKILL.md / agent 定义的结构。
+# 浏览器测试（IDEA_LOOP_BROWSER_TESTS）不在这里跑。idea-loop 的 implement / pr-review 用 `dyna pr checks` 读这里的结论。
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dyna:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dyna
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: dyna/go.mod
+          cache-dependency-path: dyna/go.sum
+      - name: gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then echo "没格式化：$out"; exit 1; fi
+      - name: go vet
+        run: go vet ./...
+      - name: go build
+        run: go build ./...
+      - name: go test
+        run: go test ./...
+
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: dyna/go.mod
+          cache-dependency-path: dyna/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: build dyna
+        run: go -C dyna build -o ../.tmp/dyna ./cmd/dyna
+      - name: node tests
+        run: .tmp/dyna test exec -- node --test '*/scripts/*.test.mjs' 'scripts/*.test.mjs'
+      - name: skill-lint
+        if: github.event_name == 'pull_request'
+        run: .tmp/dyna spec skill-lint --changed origin/${{ github.base_ref }}
