@@ -73,9 +73,14 @@ test('each platform reference states status, type, module and how a PR attaches 
   assert.match(body, /references\/linear\.md/);
 });
 
+// the repo's own ISSUE_TRACKER.md (moved to its project directory in home): the checks that read it are skipped
+// when it is not there
+const repoTracker = join(pluginRoot, '..', 'ISSUE_TRACKER.md');
+const hasRepoTracker = existsSync(repoTracker);
+
 for (const [name, file, section] of [
   ['setup template', join(pluginRoot, 'skills', 'engineering', 'setup', 'references', 'issue-tracker.md'), /^## 分类 label$/m],
-  ['repo ISSUE_TRACKER.md', join(pluginRoot, '..', 'ISSUE_TRACKER.md'), /^## 仓库$/m],
+  ...(hasRepoTracker ? [['repo ISSUE_TRACKER.md', repoTracker, /^## 仓库$/m]] : []),
 ]) {
   test(`${name} lists the seven states, the triage choice and its sections`, () => {
     const md = read(file);
@@ -86,8 +91,8 @@ for (const [name, file, section] of [
   });
 }
 
-test('the repo ISSUE_TRACKER.md has a choice for triage the command line can read (and does not skip triage)', () => {
-  const md = read(join(pluginRoot, '..', 'ISSUE_TRACKER.md'));
+test('the repo ISSUE_TRACKER.md has a choice for triage the command line can read (and does not skip triage)', { skip: !hasRepoTracker && 'this repository has no ISSUE_TRACKER.md' }, () => {
+  const md = read(repoTracker);
   assert.doesNotMatch(md, /^triage：跳过\s*$/m);
   assert.ok(md.match(/^triage：(用|跳过)\s*$/m));
 });

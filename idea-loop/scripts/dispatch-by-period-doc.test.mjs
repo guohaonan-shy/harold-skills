@@ -21,7 +21,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -67,8 +67,9 @@ test('nothing else in the plugin or the repo still says the dispatcher gives out
     ...walk(join(pluginRoot, 'skills')).filter((f) => f.endsWith('.md')),
     ...walk(join(pluginRoot, 'agents')),
     join(pluginRoot, 'README.md'),
+    // the repo's own ISSUE_TRACKER.md, only while it is still in the repo (it moved to its project directory in home)
     join(pluginRoot, '..', 'ISSUE_TRACKER.md'),
-  ];
+  ].filter((f) => existsSync(f));
   const hits = files.filter((f) => /调度卡片|调度会给它出会话卡片|给每个 todo 的 issue 出一张会话卡片|dispatcher card|session card/.test(readFileSync(f, 'utf8')));
   assert.deepEqual(hits, [], 'no doc says the dispatcher gives out cards');
   assert.ok(!files.some((f) => readFileSync(f, 'utf8').includes('独立队列')), '「独立队列」 stays gone');

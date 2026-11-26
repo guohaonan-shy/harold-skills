@@ -19,17 +19,17 @@
 - `happy-life/` — 个人生活小仪式
 - `ai-eval/` — AI 流水线改动的评测：样本、基线、判官、准出标准
 
-另外一个顶层目录 `dyna/` **不是插件**，`marketplace.json` 不列它：它是 idea-loop 的命令行 `dyna`（Go 写的，用 goreleaser 单独发布到 GitHub Releases，装在 `~/.idea-loop/bin/dyna`）。skill 和 agent 里写 `dyna <模块> <命令>`，插件根目录的 `dyna-version` 写它要的命令行版本范围，插件的 `bin/dyna` 是调它的小脚本。开发和发版的做法在 `DEVELOPMENT.md` 的「命令行 dyna」一节。改了 `dyna/` 下的代码就升 `dyna/internal/version/version.go` 的版本（`scripts/dyna-version.test.mjs` 守着）。
+另外一个顶层目录 `dyna/` **不是插件**，`marketplace.json` 不列它：它是 idea-loop 的命令行 `dyna`（Go 写的，用 goreleaser 单独发布到 GitHub Releases，装在 `~/.idea-loop/bin/dyna`）。skill 和 agent 里写 `dyna <模块> <命令>`，插件根目录的 `dyna-version` 写它要的命令行版本范围，插件的 `bin/dyna` 是调它的小脚本。开发和发版的做法在 `~/home/projects/harold-skills/DEVELOPMENT.md` 的「命令行 dyna」一节。改了 `dyna/` 下的代码就升 `dyna/internal/version/version.go` 的版本（`scripts/dyna-version.test.mjs` 守着）。
 
 改了某个 plugin 的 skill、agent、hook、脚本或产物位置，同步改的是它自己的 `README.md`，不是这里。
 
-说一个 plugin 的 PR 可以合并、或交它的审核报告时，一并说它把 `plugin.json` 的 `version` 升到了哪一版、哪一档（档位规则见 `REVIEW.md`「额外要求」）；没碰插件的，说「不碰插件，不升版本」。
+说一个 plugin 的 PR 可以合并、或交它的审核报告时，一并说它把 `plugin.json` 的 `version` 升到了哪一版、哪一档（档位规则见 `~/home/projects/harold-skills/REVIEW.md`「额外要求」）；没碰插件的，说「不碰插件，不升版本」。
 
 ### idea-loop 的约定与刻意例外
 
 idea-loop 是从一个真实项目（Toeflair）里通用化出来的，也是这个仓库自己用的开发流程。在它上面工作时：
 
-- **本仓库的 `docs/` 也按 idea-loop 管**：issue 的状态（`status:*` label）只走 `dyna issues`，不手改 label；spec 没有自己的状态，frontmatter 只留 `issues:`。
+- **本仓库的知识库在 `~/home/projects/harold-skills/docs/`，也按 idea-loop 管**：issue 的状态（`status:*` label）只走 `dyna issues`，不手改 label；spec 没有自己的状态，frontmatter 只留 `issues:`。
 - **插件里不出现任何项目的信息**：写进插件的规则读目标仓库自己的 `CLAUDE.md` / AGENTS.md 与配置；举例用任何项目都读得懂的通用例子，不用真实项目的名字和场景（`idea-loop/scripts/no-project-leak.test.mjs` 守着）。
 - 下面五处跟本仓库其它 plugin 的约定不同，都是决定，不是遗漏：
   1. **调用方式按出口定**：`uiux-imagine` / `uiux-refine` / `setup` / `agent-builder` 设 `disable-model-invocation: true`——它们每个出口都停在人身上，不该在无关对话里被触发。`seo-scan` 可被模型调用：它由 `setup` 的 SEO 模块建的每天定时任务起，有的运行环境（如 magi）的定时任务只能写「用 Skill 工具调」，起不了只能由人调用的 skill；它有两个出口：一是扫描后当场分流的 issue（每个新开的 issue 起一个 `issue-triager`，当场翻成 canceled / triage / todo，不再进 backlog 等每周分拣；只有要 UI 设计的进 triage，人补的是 triage 的评估）；二是每 3 天一份的效果报告 PR（只改 `docs/`，检查过了合并，推送链接）。**SEO 自动合并是用户规则（home 固定文案「思考与决策」）里「只由我做」合并改了代码的 PR 的一条例外**：`type:seo/*` 的 PR 在检查与 `dyna seo check` 全过、两轴没有阻塞项、改动只落在 `SEO.md`「内容路径」内三条都满足时由 Claude 合并（上线自查失败开的 revert PR 同样），缺一条回到只由人合并；它只放开合并，「只由我做」里别的几样不动。其余可被模型调用，是为了让上游能调起下游（`grill` 收工调 `to-spec`、调度自己排的定时 job 调 `issue-dispatch`、调度出的会话卡片调 `issue-session`、一张工单一路做到已 review 的 PR）；解锁的是「谁能调」，不是各自的前置。`uiux-research` 同理可被模型调——普通对话里人说「查一下别人怎么做」就该起它——但**查不查由人定**：imagine / refine 的执行者（uiux-imaginer、designer）不调研，只写「建议调研的问题」；它们的编排者也只在人说要查时才调（整页调研）；设计收敛每一轮给评委意见配参考的**轻用法**除外，会话自己起、不用人批，交回的只是一个文件，参考图只给人看。`grill` 和 `writing-for-agents` 也可被模型调：普通对话里人说要拷问一个想法、要写一份给 agent 的文档，就该起它们；`retro` 同理：`issue-session` 的「收尾」要调它，人在普通对话里说「retro 一下」也该起它，但候选批不批、开不开 issue 都由人定，它自己不改任何规则；`agent-builder` 也靠它调到 `writing-for-agents`。`dreaming` 也可被模型调：普通对话里人说要对账、文档过期了就该起它，每周的定时任务照旧以斜杠命令触发；它只问人这几类行（`DESIGN.md`、文档里的冲突、`GLOSSARY.md`、要删的暂缓设计，另加所有 `候选` 行），其余行按建议处置自己执行并合并。
@@ -145,29 +145,3 @@ description 常驻在每一轮的上下文里，只写触发它需要的东西�
 4. 有依赖关系的 skill 按上游 → 下游顺序构建
 5. 全部 skill 完成后再生成 plugin 的 `README.md`
 6. plugin 级共享参考统一放 `<plugin>/references/`；如有原始对话 / 真实案例可蒸馏到 `skills/<name>/references/cases.md`，没案例可跳过该步（excalidrawer 模式）
-
-## idea-loop
-
-- 本地开发（分支、worktree、开发服务器）：`DEVELOPMENT.md`
-- 验证命令与 review 要求：`REVIEW.md`
-- 代码规范：`CODING_STANDARDS.md`
-- 需求从哪进来、issue 的状态 label：`ISSUE_TRACKER.md`
-- issue 的分类 label：`AGENTS.md` 的「issue 分类」一节
-- 产品是给谁的、要做成什么样：`PRODUCT.md`
-- 术语：`GLOSSARY.md`（有就读）
-
-## issue 分类
-
-issue 除了 `status:*` 状态，还带分类 label：父类打成 `type:<父类>`，子类打成 `type:<父类>/<子类>`，打子类时父类一起打。idea-loop 验证 issue 时打，人也可以手动打。父类按 issue 落在哪个 plugin 分。另外每个 issue 带一个类型 label：`kind:bug`、`kind:feature`、`kind:improvement` 三选一。
-
-- `idea-loop`：idea-loop plugin 的 issue
-  - `engineering`：spec、工单、实现、review、issue 调度这条从想法到合并的流程
-  - `design`：设计调研、设计发散与收敛、设计档案、`DESIGN.md`
-  - `productivity`：grill、writing-for-agents、dreaming、知识库约定、决策规则这类不绑定某一段流程的能力
-- `excalidrawer`：excalidrawer plugin 的 issue
-- `content-creator`：content-creator plugin 的 issue
-- `interview-coach`：interview-coach plugin 的 issue
-- `happy-life`：happy-life plugin 的 issue
-- `ai-eval`：ai-eval plugin 的 issue
-
-保留的 label：无
