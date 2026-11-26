@@ -5,7 +5,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 **一次调用跑一轮。** 一轮看这个 issue 的 PR（`prs.md` 里的那个），交出两轴汇报，处理完人的批示。调用这个 skill 的会话是**编排者**：自己跑审查、处理条目、给人看汇报、派修复、人说合并时合并。审查只读，做法在 [`references/run-a-round.md`](references/run-a-round.md)；一轮问什么、什么算问题在 [`references/review-standards.md`](references/review-standards.md)；修复归 `idea-loop:implementer`；人说合并时照 [`references/merge.md`](references/merge.md)。
 
-开工先用 Skill 工具调 `idea-loop:pr`（汇报、PR 描述、review loop 文件的写法）。哪些条目不等人，照 `references/review-standards.md` 的「依据：只认四种」和会话已加载的用户规则（`~/.claude/CLAUDE.md`）。往来都在会话里，PR 上不开 thread。改 spec、工单的提交单独提交到 home（`docs(spec): …` / `docs(tickets): …`，照 `idea-loop:wiki-conventions` 的「知识库落地」）。
+开工先用 Skill 工具调 `idea-loop:pr`（PR 描述的写法）。哪些条目不等人，照 `references/review-standards.md` 的「依据：只认四种」和会话已加载的用户规则（`~/.claude/CLAUDE.md`）。往来都在会话里，PR 上不开 thread。改 spec、工单的提交单独提交到 home（`docs(spec): …` / `docs(tickets): …`，照 `idea-loop:wiki-conventions` 的「知识库落地」）。
 
 下文 `<loop>` 指 review loop 文件 `.tmp/review-loop/<PR 号>.md`（项目目录：`idea-loop:wiki-conventions` 的「项目目录」）。**设计产物**指 `<项目目录>/docs/design/tmp/<spec-slug>/` 下除 `research/` 以外的东西。
 
@@ -18,11 +18,11 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 ## 跑一轮
 
 1. 轮次取 `dyna pr loop next <loop> review`；工作目录 `.tmp/pr-review/<PR 号>/round-<N>/`。
-2. 自己跑这一轮：机械检查、并行起 Spec 与 Standards 两个 Codex 进程、核实候选、写汇报（候选已过 `dyna pr candidates submit`；格式见 `idea-loop:pr` 的「Review 汇报」），照 [`references/run-a-round.md`](references/run-a-round.md)。有设计产物时，起 Codex 的同一条消息里多起 ui-reviewer，先读 [`references/ui-walkthrough.md`](references/ui-walkthrough.md)。
+2. 自己跑这一轮：机械检查、并行起 Spec 与 Standards 两个 Codex 进程、核实候选、写汇报（候选已过 `dyna pr candidates submit`；格式见下面的「Review 汇报」），照 [`references/run-a-round.md`](references/run-a-round.md)。有设计产物时，起 Codex 的同一条消息里多起 ui-reviewer，先读 [`references/ui-walkthrough.md`](references/ui-walkthrough.md)。
 3. **先记文件**：汇报原样追加进 `<loop>` 为新条目。
 4. **处理照规则的条目**（「处理条目」），不等人。
-5. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，一个不剩，`<loop>` 里的条目同步改成同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另列 implement 期间开的存量问题 issue，照 `idea-loop:pr` 的「Review 汇报」。
-6. **给人看**：照 `idea-loop:pr` 的「在会话里给人看」。汇报里有缺词，念出来（概念加推荐叫法），问人要不要开一轮 `idea-loop:grill` 定下来。
+5. **补全**：汇报里「已按规则处理」每行的 `〔链接〕` 补成提交或 issue 链接，一个不剩，`<loop>` 里的条目同步改成同一份；没来得及落地的修复写「已派修，提交随后补上」。第 1 轮另列 implement 期间开的存量问题 issue，照下面的「Review 汇报」。
+6. **给人看**：照「Review 汇报」里的「在会话里给人看」。汇报里有缺词，念出来（概念加推荐叫法），问人要不要开一轮 `idea-loop:grill` 定下来。
 7. 用『推送』能力（`dyna runtime show 推送`）通知：第几轮、几条已按规则处理、几条要你决定；未完成的轴或检查明说。
 
 完成条件：汇报已记进 `<loop>`，照规则的条目处理完，人读到了汇报。
@@ -41,7 +41,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 
 人批示除了上表这些动作，还有疑问、设计变更、带出上线前后的事、推翻（上表每个动作怎么撤回）、要求改写汇报几种：[references/other-directives.md](references/other-directives.md)。
 
-全部处理完，在会话里回**一条**汇总，逐点说做了什么、带提交链接；同样的内容记进这一轮条目的「做了什么」，PR 描述 `your-todo` 里已决定的几项勾上。修复落地前不记「做了什么」；本来就没有修复的，记「没有要修的」。
+全部处理完，在会话里回**一条**汇总，逐点说做了什么、带提交链接；同样的内容记进这一轮条目的「做了什么」，PR 描述 `your-todo` 里人已看过的几项勾上。修复落地前不记「做了什么」；本来就没有修复的，记「没有要修的」。
 
 ### 回工单
 
@@ -64,3 +64,7 @@ description: 在一个 open 的 PR 上跑一轮两轴 review（Spec / Standards�
 1. **这一轮有修复**（只数「修」，照规则的和人批的都算）：`dyna pr loop next` 给的下一轮编号不超过 5（人触发的轮次也计入；人要再跑随时可以，不受这个上限约束），先走完「前提」（合入最新主分支、推送、等 CI 绿），再自动起下一轮：会话里说一句「第 N 轮的修复已落地，自动起第 N+1 轮」，发推送通知，回到「跑一轮」。编号超过 5 就不自动起：第 5 轮的修复落地后停下，说「已跑满 5 轮，第 5 轮的修复还没审，要再跑或合并请直接说」，等人。
 2. **没有修复，且没有要人定的事 → 不等人，交审核报告**。要人定的事：「要你决定」、未过的设计停点（冻结、`ui-measure` 瓶颈、归档设计档案的草稿过目，后者在人说合并后走，见 `references/merge.md` 的「合并前归档」）。用户规则「只由我做」里的事（例：推迁移）和未勾的人验素材写进报告给人，合并只由人说。照 [`references/deliver.md`](references/deliver.md) 做，然后停下，人读报告、追问、说合并。`type:seo/*` 的 issue 例外：条件满足就不停下，自动合并（[`references/seo-auto-merge.md`](references/seo-auto-merge.md)）。
 3. 其余：停下等人。
+
+## Review 汇报
+
+汇报的格式和在会话里给人看的做法：[`references/review-report.md`](references/review-report.md)；存档它的 review loop 文件：[`references/review-loop.md`](references/review-loop.md)。实现卡住的汇报（`idea-loop:implement`）同一个格式。

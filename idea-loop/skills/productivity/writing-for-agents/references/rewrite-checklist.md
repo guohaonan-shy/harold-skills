@@ -62,12 +62,12 @@ awk 'f>=2; /^---$/{f++}' <文件> | LC_ALL=en_US.UTF-8 wc -m
 | 评论里的 idea-loop 标记（读最近一条带标记的、写时自带） | `issues` 的「评论」 |
 | Linear 项目上怎么读写 issue | `issues` 的 Linear 做法 |
 | 暂缓的设计（问人要不要接着做、复制回中间物目录、接上中断恢复） | `wiki-conventions`「目录」里 `design/pending/` 那一行 |
-| 第 1 轮 review 把实现期间开的存量 issue 列进「已按规则处理」 | `pr` 的 Review 汇报 |
+| 第 1 轮 review 把实现期间开的存量 issue 列进「已按规则处理」 | `pr-review` 的 Review 汇报 |
 | 执行方交回前要跑的那一组测试 | `implementer` 定义「做」里「交回前跑」 |
 | SEO 方向 agent 的提示各行 | `seo-scan` 的 `findings.md`「提示模板」 |
 | dreaming 的收尾（推送三种情况、回滚、中间物清理、幂等） | `dreaming` 的 `proposal-table.md`「收尾」 |
 | ui-reviewer 的发现文件形状 | `design-archive` 的 `review-walkthrough.md` |
-| PR 描述、汇报、review loop 文件、PR 从 spec 提交就挂着 | `pr` |
+| PR 描述、PR 从 spec 提交就挂着 | `pr` |
 | red → green、什么测试值得留、只在系统边界 mock | `tdd` |
 | 运行环境的能力做法 | `dyna runtime show <能力>` |
 | 写法本身（杠杆、量法、命令归类） | `writing-for-agents` |

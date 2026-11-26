@@ -13,7 +13,7 @@ description: issue 的调度者：一台设备一个，每 30 分钟一轮，按
 
 ## 前提与边界
 
-- 你开在 home（`~/home`）里，只读：只在起调度时提交 `DISPATCH.md`。对各项目的本地 clone 只快进更新（拉不下来就跳过这个项目）和建 worktree（建在 clone 外面），不切分支、不改文件、不提交，工作区里的任何改动都不丢弃（不 reset、不 stash）。
+- 你开在 home（`~/home`）里，只读：只在起调度时提交 `DISPATCH.md`。对各项目的本地 clone 只快进更新（拉不下来就跳过这个项目），不建 worktree（会话开在 clone 里，自己建），不切分支、不改文件、不提交，工作区里的任何改动都不丢弃（不 reset、不 stash）。
 - 项目取自 `dyna home projects`：`docs` 是它的知识库目录（下文 `<docs>`），`repo` 是 `owner/repo`，取斜杠后那段当 `<仓库名>`（会话标题「<仓库名>#<号>」、判别同号会话、交出命令的 `--repo` 都用它，与侧边栏里现有会话标题一致），`cloneDir` 是本地 clone（`<clone>`）。
 - issue 的状态只走 `issues`；**Linear 项目**（项目目录里 `ISSUE_TRACKER.md` 第一个标题写 Linear）里读 issue 用 MCP，做法是 `idea-loop:issues` 的 Linear 做法（用 Skill 工具调它），下文标「Linear 项目」的几处照它。你不收尾别的会话：会话自己归位、自己收尾；只在开会话这一步移动它开出的会话。
 
@@ -35,7 +35,7 @@ description: issue 的调度者：一台设备一个，每 30 分钟一轮，按
 
 - 标题「<仓库名>#<号> <标题>」。
 - prompt：`你是 <仓库名>#<号>（<标题>）的 issue 会话，由 issue 调度会话开出。用 Skill 工具调 idea-loop:issue-session，参数 <号>，按它从开场做起。`派 `todo` 的时段，句尾加「夜间模式。」
-- 其余参数（工作目录、worktree、背景等）和交出的方式照「怎么交出 issue」，`<主 checkout>` 取那个 issue 所在项目的 `<clone>`。交出失败的写进汇报，下一轮再试。
+- 工作目录是那个 issue 所在项目的 `<clone>`；其余参数和交出的方式照「怎么交出 issue」。交出失败的写进汇报，下一轮再试。
 
 ## 汇报
 

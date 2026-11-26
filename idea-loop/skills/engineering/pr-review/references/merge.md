@@ -9,7 +9,7 @@
 1. `dyna pr loop check <loop>` 列出没处理完的条目，再看 PR 描述「要你做的事」还有没有没勾的；有未处理的条目或没勾的就提醒人一句，人仍然说合并就继续。
    报告交出后主分支可能又前进了：再做一次 `../SKILL.md`「前提」里「PR 先合入最新主分支」那一条，有新合入就推送、等 CI 绿，再往下。
 2. **有设计产物就先过「合并前归档」**：只写 `delta/`、跑归档校验，不写 `prod/`；走完再到第 3 步，没有就直接第 3 步。冻结时 `commit` 到 home 的画布和冻结记录就在 `tmp/<spec-slug>/` 里。**归档是合并步骤里的一步，没有钩子替你拦**：在网页上点合并、或在别的会话里合并会绕过第 5 步（只有每周 `/idea-loop:dreaming` 的「漏归档」兜底），所以合并统一在 issue 会话里做。只有调研目录的需求不归档：调研页随 `tmp/` 的生命周期删，想早点清就手动删；用进设计的调研结论已经写在方向说明或冻结记录里，随设计一起归档。
-3. **归档 review loop**：`dyna pr loop archive <loop> <owner/repo> <PR 号>`，每份汇报各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（`idea-loop:pr` 的「review loop 文件」）。中途失败直接重跑，贴过的不会重复。
+3. **归档 review loop**：`dyna pr loop archive <loop> <owner/repo> <PR 号>`，每份汇报各贴成 PR 上的一条评论，引用的本地图同时上传、换成链接（[`review-loop.md`](review-loop.md)）。中途失败直接重跑，贴过的不会重复。
 4. **合并**：`dyna pr merge <owner/repo> <PR 号> --method <合并方式>`，合并方式取 `<项目目录>/DEVELOPMENT.md` 的「分支」节。合并失败就停下告诉人。
 5. **合并成功后做知识库收尾**：下面的「合并后归档并删工单」。合并失败就停下，这一步不做。
 6. **翻 done**：PR 合并后，`dyna issues set <docs> done <号>`（Linear 上集成推 Done，不手翻）。它核「挂着的 PR 全部合并」，不过就照它说的原因处理；漏翻了，`dyna issues reconcile <docs>` 会补。spec 随它覆盖的 issue 全部关闭而了结，不改 spec 自己。
@@ -22,7 +22,7 @@
 
 1. **起 UI 审查（归档模式）**：用 Agent 工具起 `idea-loop:ui-reviewer`，只给指针：spec 名、项目目录的绝对路径、集成 worktree 的绝对路径、分到的端口、模式「归档」、图的前缀 `r<最近一轮的轮次>-ui-merge-`、草稿存放处 `.tmp/pr-review/<PR 号>/archive/`，和 `<loop>`（它从里面取人的批示写进「决定」）。
 2. **看它核得过不过**：
-   - **不通过**（`status: failed`，什么都没写）：把它交回的 `failed.json` 里的条目，按 `idea-loop:pr` 的「Review 汇报」的「要你决定」格式记成 review loop 的一条新条目（轮次取 `dyna pr loop next … review impl`，标记带 `"from":"impl"`，标题「来自实现 · 第 N 次 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（改实现 / 接受实现，走设计变更 / 不修）。人批示要改（不论改实现还是设计变更），照 [`deliver.md`](deliver.md) 的「报告之后人提了要改的」和 SKILL.md 的「处理条目」处理。处理完人再说合并，从「合并」第 1 步重来。
+   - **不通过**（`status: failed`，什么都没写）：把它交回的 `failed.json` 里的条目，按 [`review-report.md`](review-report.md) 的「要你决定」写法记成 review loop 的一条新条目（轮次取 `dyna pr loop next … review impl`，标记带 `"from":"impl"`，标题「来自实现 · 第 N 次 · 归档被拦下，核不过」），在会话里给人看，每条的图跟在文字后面。**不合并**，等人批示（改实现 / 接受实现，走设计变更 / 不修）。人批示要改（不论改实现还是设计变更），照 [`deliver.md`](deliver.md) 的「报告之后人提了要改的」和 SKILL.md 的「处理条目」处理。处理完人再说合并，从「合并」第 1 步重来。
    - **未完成**（服务起不来、页面打不开）：照实告诉人缺什么，**不合并、不归档**，不当成通过。
    - **通过**：往下。
 3. **在会话里给人看草稿**：把 `draft.md` 作为新条目记进 review loop 文件（`review` 类、`from` 写 `impl`，标题「来自实现 · 第 N 次 · 归档设计档案，等你过目草稿」），按条目一段一段贴，截图和动图跟在对应那条的文字后面，发推送通知。人要改，就把人的批示（记进「你的批示」）用 SendMessage 转回**同一个** ui-reviewer，它改完交回再贴，直到人说通过。
@@ -76,9 +76,11 @@ dyna seo verify-live <项目目录>/SEO.md <build 里的产物目录> --urls=.tm
 
 ## 合并后的清理
 
-合并之后逐项做，PR 描述「参考」里的清理清单就是这几项加上这个 PR 特有的：
+合并之后逐项做：这几项加上 review loop 文件里人的批示带出的「合并后」的事：
 
 1. **删素材分支**：`dyna pr evidence cleanup <owner/repo> <PR 号>`。
 2. **收掉还留着的执行方 worktree**（卡住过、没被回收的）：`<项目目录>/DEVELOPMENT.md` 的「清理」写了命令就先跑它；停掉它端口上的服务，`dyna worktree remove <路径> --force`（连它的分支一起删）。
 3. **删临时文件**：`.tmp/review-loop/<PR 号>.md`、`.tmp/implement/<spec-slug>/`、`.tmp/pr-review/<PR 号>/`。
-4. PR 描述「参考」清理清单里这个 PR 特有的几项。
+4. `<loop>` 里记了「合并后」的几项（批示带出的，见 `other-directives.md`）。
+
+人要在合并后做的事在 PR 描述 `your-todo` 里，不在这里。

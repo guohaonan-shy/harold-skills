@@ -4,6 +4,7 @@
 //   - `fixture design-archive` writes a small fictional design archive into a directory.
 //   - `skill-doc` checks one skill: every section other documents point at exists.
 //   - `run` runs the plugin's own *.test.mjs files, all of them or the ones whose name contains a word.
+//   - `exec` runs any command (a test suite, an eval) in a run directory of its own that is removed after.
 package testcmd
 
 import (
@@ -12,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -29,8 +29,8 @@ import (
 // envPluginRoot is the plugin's directory, which the plugin's own small script sets (the same name app uses).
 const envPluginRoot = "IDEA_LOOP_PLUGIN_ROOT"
 
-// Runner runs one process in dir with the given streams and returns its exit code.
-type Runner func(ctx context.Context, dir, name string, args []string, stdout, stderr io.Writer) (int, error)
+// Runner runs one process in dir with the given environment and streams and returns its exit code.
+type Runner func(ctx context.Context, dir, name string, args, env []string, stdout, stderr io.Writer) (int, error)
 
 // Deps is what the commands reach outside the process through; a field left nil is the real one.
 type Deps struct {
@@ -59,22 +59,7 @@ func (d Deps) run() Runner {
 	if d.Run != nil {
 		return d.Run
 	}
-	return execRunner
-}
-
-func execRunner(ctx context.Context, dir, name string, args []string, stdout, stderr io.Writer) (int, error) {
-	c := exec.CommandContext(ctx, name, args...)
-	c.Dir, c.Stdout, c.Stderr = dir, stdout, stderr
-	err := c.Run()
-	var ee *exec.ExitError
-	switch {
-	case err == nil:
-		return 0, nil
-	case errors.As(err, &ee):
-		return ee.ExitCode(), nil
-	default:
-		return -1, err
-	}
+	return groupRunner
 }
 
 // Command is the `test` module with the real outside world.
@@ -85,7 +70,7 @@ func CommandWith(d Deps) *cobra.Command {
 	root := registry.Group("test", "只给测试和改插件的人调的命令")
 	fix := registry.Group("fixture", "写出测试用的虚构数据到给定目录")
 	fix.AddCommand(designArchive())
-	root.AddCommand(fix, skillDoc(d), runTests(d))
+	root.AddCommand(fix, skillDoc(d), runTests(d), execCommand(d))
 	return root
 }
 
@@ -274,18 +259,12 @@ func runTests(d Deps) *cobra.Command {
 		} else {
 			fmt.Fprintf(cmd.ErrOrStderr(), "dyna test run：跑 %s 里名字含「%s」的 %d 个测试文件\n", root, match, len(picked))
 		}
-		ctx := cmd.Context()
-		if ctx == nil {
-			ctx = context.Background()
+		err = inRun(d, cmd, root, "node", append([]string{"--test"}, picked...))
+		var se startErr
+		if errors.As(err, &se) {
+			return fmt.Errorf("起不来 node：%v（跑插件的测试要装 Node）", se.error)
 		}
-		code, err := d.run()(ctx, root, "node", append([]string{"--test"}, picked...), cmd.OutOrStdout(), cmd.ErrOrStderr())
-		if err != nil {
-			return fmt.Errorf("起不来 node：%v（跑插件的测试要装 Node）", err)
-		}
-		if code != 0 {
-			return &nexterr.Exit{Code: code}
-		}
-		return nil
+		return err
 	}
 	registry.Mark(c, registry.CallerTest, "")
 	return c

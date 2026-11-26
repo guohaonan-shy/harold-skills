@@ -41,13 +41,13 @@ function walk(dir, out = []) {
   return out;
 }
 
-test('the evidence skill is three sections: what evidence is, the overall style, which figure; its description only routes', () => {
-  assert.deepEqual(headings(evidenceBody), ['证据是什么', '整体风格', '证据的几种形态']);
+test('the evidence skill is three sections: what evidence is, the view menu, how to lay views out; its description only routes', () => {
+  assert.deepEqual(headings(evidenceBody), ['证据是什么', '视图菜单', '怎么摆']);
   const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   assert.match(raw, /^---\nname: evidence\n/);
   assert.doesNotMatch(raw, /disable-model-invocation/, 'evidence 要能被别的 skill 和 agent 调到');
   const description = raw.match(/^description: (.+)$/m)[1];
-  for (const word of ['证据', '截图', '流程图', '图表', '动图']) assert.ok(description.includes(word), `description 缺触发词：${word}`);
+  for (const word of ['证据', '视图', '截图', '流程图', '图表', '动图', 'spec 的那段话']) assert.ok(description.includes(word), `description 缺触发词：${word}`);
 });
 
 test('the review standards give the basis as four kinds, with 「目标」, the scope-question recommendation, and no per-case dispositions', () => {
@@ -60,7 +60,7 @@ test('the review standards give the basis as four kinds, with 「目标」, the 
 });
 
 test('the 「边缘情形 → 要你决定」 line is gone from pr-review and pr', () => {
-  const places = [standards, read('skills', 'engineering', 'pr-review', 'SKILL.md'), read('skills', 'engineering', 'pr', 'references', 'review-report.md')];
+  const places = [standards, read('skills', 'engineering', 'pr-review', 'SKILL.md'), read('skills', 'engineering', 'pr-review', 'references', 'review-report.md')];
   for (const text of places) {
     assert.doesNotMatch(text, /只在兜底路径或罕见异常里出现|含被降级的边缘情形|边缘情形不放这里/);
   }
@@ -72,7 +72,7 @@ test('「要人定的写成一道题」 is not restated in the evidence skill', 
 });
 
 test('the evidence sections say what evidence is, the style, and the figure kinds; they decide no placement', () => {
-  for (const phrase of ['最新基准再核一次', '同条件', '复现', '用能说清要点的最小一种视图', '叠上去的东西要说明']) {
+  for (const phrase of ['最新基准再核一次', '同条件', '复现', '挑能讲清要点的最小一种视图', '叠上去的东西要说明']) {
     assert.match(evidenceBody, new RegExp(phrase), `evidence 缺：${phrase}`);
   }
   assert.match(evidenceBody, /放在哪[^\n]*由调用你的 skill 定/);
@@ -91,16 +91,24 @@ test('evidence 正文不重复 home「证据」一节，也没有跟 home「沟�
   assert.match(evidenceBody.split('\n## ')[0], /home 固定文案「证据」一节是总纲/, '正文开头缺「home 是总纲」那句');
 });
 
-test('「证据的几种形态」是一张六行的形态表，每行指向的做法文件都存在（#438 工单 02）', () => {
-  const section = evidenceBody.split('## 证据的几种形态')[1] ?? '';
+test('「视图菜单」按「要讲清的是什么」排：代码形状的视图在前，采集来的形态在后，每行指向的做法文件都存在（#452 工单 02）', () => {
+  const section = (evidenceBody.split('## 视图菜单')[1] ?? '').split('\n## ')[0];
   const rows = section.split('\n').filter((l) => l.startsWith('|')).slice(2); // 去掉表头和分隔行
-  assert.equal(rows.length, 6, `形态表应有六行，实际 ${rows.length}`);
-  assert.deepEqual(rows.map((r) => r.split('|')[1].trim()), ['截图标注', 'UI 流程图', '图表', '动图', '录屏', '表或一行例子']);
+  assert.deepEqual(
+    rows.map((r) => r.split('|')[2].trim()),
+    ['伪代码', '调用树', '组件树', '文件树', '时序图', '图表', '在上面几种上画 diff', '整块写出来', '截图标注', 'UI 流程图', '频率', '动图', '录屏', '表或一行例子'],
+  );
   // 做法文件写相对路径（review 第 1 轮 C1）：evidence 不在开场注入，读自己 references/ 下的文件照旧写相对路径
   const pointed = rows.flatMap((r) => [...r.matchAll(/`(references\/[\w.-]+\.md)`/g)].map((m) => m[1]));
-  assert.deepEqual(pointed.map((p) => p.split('/').pop()), ['screenshot.md', 'ui-flow.md', 'chart.md', 'gif.md', 'video.md']);
+  assert.deepEqual(pointed.map((p) => p.split('/').pop()), ['chart.md', 'chart.md', 'screenshot.md', 'ui-flow.md', 'gif.md', 'video.md']);
   for (const p of pointed) assert.ok(existsSync(join(evidenceDir, p)), `做法文件不存在：${p}`);
   assert.doesNotMatch(section, /mermaid/i);
+});
+
+test('视图菜单是一个稳定的小节：dyna 拒写问题或证据节时从它读出打印（#452 工单 02）', () => {
+  const lines = evidenceBody.split('\n');
+  assert.equal(lines.filter((l) => l === '## 视图菜单').length, 1, '「## 视图菜单」要恰好一个，dyna 按这个标题找');
+  assert.doesNotMatch(evidenceBody, /证据的几种形态/, '旧节名已被视图菜单取代');
 });
 
 test('evidence 的正文和它自己的做法文件指自己 references/ 下的文件时写相对路径，不写插件根下的完整路径（#438 工单 02，review 第 1 轮 C1）', () => {
@@ -146,11 +154,11 @@ test('placement moved to the callers: to-spec figures.md and pr delivery-evidenc
   assert.match(read('skills', 'engineering', 'pr', 'SKILL.md'), /references\/delivery-evidence\.md/);
 });
 
-test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形态，只指「证据的几种形态」；交付证据补了录屏的分段和 <video>（#438 工单 02）', () => {
+test('to-spec 的 figures.md 和 pr 的 delivery-evidence.md 不再括号列形态，只指「视图菜单」；交付证据补了录屏的分段和 <video>（#438、#452）', () => {
   const figures = read('skills', 'engineering', 'to-spec', 'references', 'figures.md');
   const delivery = read('skills', 'engineering', 'pr', 'references', 'delivery-evidence.md');
   for (const text of [figures, delivery]) {
-    assert.match(text, /照 `idea-loop:evidence` 的「证据的几种形态」/);
+    assert.match(text, /照 `idea-loop:evidence` 的「视图菜单」/);
     assert.doesNotMatch(text, /图怎么做（/, '形态又被括号列出来了');
     assert.doesNotMatch(text, /UI 标注、UI flow/);
   }
@@ -201,8 +209,8 @@ const STANDARDS_PATH = '${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/refer
 test('issue 会话「边界」和 PR 汇报写法读 review 标准时写从插件根目录起的完整位置，照字面找得到（#280 工单 02，review 第 1 轮 C2）', () => {
   const boundary = bodyOf(read('skills', 'engineering', 'issue-session', 'SKILL.md')).split('## 边界')[1] ?? '';
   assert.ok(boundary.includes(STANDARDS_PATH), 'issue-session 的「边界」没写 review 标准的完整位置');
-  const report = read('skills', 'engineering', 'pr', 'references', 'review-report.md');
-  assert.ok(report.includes(STANDARDS_PATH), 'pr 的汇报写法没写 review 标准的完整位置');
+  const report = read('skills', 'engineering', 'pr-review', 'references', 'review-report.md');
+  assert.ok(report.includes(STANDARDS_PATH), 'pr-review 的汇报写法没写 review 标准的完整位置');
   assert.ok(existsSync(join(pluginRoot, STANDARDS_PATH.replace('${CLAUDE_PLUGIN_ROOT}/', ''))), '写的位置不存在');
 });
 
