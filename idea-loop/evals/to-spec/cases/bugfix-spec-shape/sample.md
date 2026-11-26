@@ -35,7 +35,7 @@ harold-skills#398 的 triage 会话（2026-11-22），起草 `dispatch-triage-pe
 - 现场：提交 `68495e91`，prompt 是起草 spec 的那一句加 issue 正文，再加一段人在会话里已经定下的口径（取自决定记录 `docs/raw/decisions/398.md` 题 1–3 的原话，因为当时 spec 是人答完这三道题之后才起草的，不加这段，会话会停在「要人定」）；
 - 换过的地方：issue 正文取当前的版本（2026-11-25 `gh issue view 398`），当时的版本没有留存；
 - 大小：small；
-- 改前（集成分支的插件）2026-11-25 预跑过，见 `annotations.md`；改后要等 #451 工单 02 的 to-spec 落地。
+- 改前（集成分支的插件）2026-11-25 预跑过，见 `annotations.md`；改后 2026-11-25 已跑，运行编号与判定见 `annotations.md`。
 
 ## 样本改动
 

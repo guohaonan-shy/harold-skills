@@ -33,4 +33,4 @@ harold-skills#379 的 triage 会话（2026-11-18）起草 `dispatch-day-night-mo
 - 现场：提交 `220c39e0`，prompt 是起草 spec 的那一句加 issue 正文，再加一段人在会话里已经定下的五件事（取自决定记录 `docs/raw/decisions/379.md` 题 1–5，因为 spec 是人答完这几道题之后才起草的）；
 - 换过的地方：issue 正文取当前版本（2026-11-25 `gh issue view 379`），其中一处旧的 issue 状态名换成了普通说法「在实现」（插件里的文件不许出现旧的 issue 状态名，`issue-model-tripwire.test.mjs` 守着；2026-11-25 的预跑用的是改之前的字面，意思没变）；PR #382 的 review 原文取不到，人的话取自决定记录；原 spec 的两处说法是 agent 当时自己写出来的，回放里能不能再出现两种说法要看新的产出，所以题问的是「新 spec 里有几种说法」，不是「有没有复现原来那两句」；
 - 大小：small；
-- 改前（集成分支的插件）2026-11-25 预跑过，见 `annotations.md`；改后要等 #451 工单 02 的 to-spec 落地。
+- 改前（集成分支的插件）2026-11-25 预跑过，见 `annotations.md`；改后 2026-11-25 已跑，运行编号与判定见 `annotations.md`。

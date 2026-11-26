@@ -29,4 +29,4 @@ harold-skills#438 的 triage 会话（2026-11-23），起草 `evidence-forms`（
 - 现场：提交 `4355f4cc`（`957553fe` 的上一个，起草之前），prompt 是起草 spec 的那一句加 issue 正文；
 - 换过的地方：issue 正文取当前的版本（2026-11-25 `gh issue view 438`），当时的版本没有留存；正文里的「评测样本」「评测」「`idea-loop/evals/`」换成了「样本」「检查」「idea-loop 的样本目录」，因为 prompt 里不能出现会让会话看出自己在被测的词；
 - 大小：small，只起草一份文字规则的 spec，不要求出图；
-- 改前（集成分支的插件）2026-11-25 预跑过，两遍都是「否」（它不认识 `changes_agent_docs`），见 `annotations.md`。改后要等 #451 工单 02 的 to-spec 落地。
+- 改前（集成分支的插件）2026-11-25 预跑过，两遍都是「否」（它不认识 `changes_agent_docs`），见 `annotations.md`。改后 2026-11-25 已跑，运行编号与判定见 `annotations.md`。
