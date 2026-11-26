@@ -26,7 +26,6 @@ const SKILL = SKILL_FILE.split(/^---\s*$/m).slice(2).join('---');
 const RUBRIC = readIf(...WRITING_DIR, 'references', 'judge-rubric.md');
 const LOOP = readIf(...WRITING_DIR, 'references', 'revision-loop.md');
 const FORMAT = readIf('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
-const ISSUE_SESSION = readIf('skills', 'engineering', 'issue-session', 'SKILL.md');
 
 /** The body of `## <heading prefix>…` (up to the next `## ` heading), or '' when the heading is missing. */
 function section(doc, headingStart) {
@@ -67,18 +66,22 @@ test('SKILL.md: 无 or an empty extraLint / secondJudge skips that one, the loop
   assert.match(LOOP, /值是 `null`（没写，或写了 `无`）就当没有：这一样跳过，循环照常跑/);
 });
 
-test('SKILL.md: a premise is not fixed by the writer, and goes back to triage through the issue session', () => {
+test('SKILL.md: a premise is not fixed by the writer, and the reference spells out the hand-off to triage itself', () => {
   assert.match(STEP, /写作评委报出 `premise`（改它要动论点、章节或事实断言）：不自己改/);
   assert.match(STEP, /写作评委原话进交回的 `premise` 一节/);
   assert.match(STEP, /references\/revision-loop\.md` 的「`premise`」/);
-  // the reference it points at carries the hand-off to triage; the phrase it points at is the one issue-session actually has
-  assert.ok(ISSUE_SESSION.includes('起草中冒出了要人定的'), 'issue-session has the 「起草中冒出了要人定的」 clause');
-  assert.match(ISSUE_SESSION, /issues set <docs> triage/);
   const p = LOOP.split('\n## ').find((b) => b.startsWith('`premise`')) ?? '';
   assert.match(p, /写作评委的原话/);
-  assert.match(p, /已写的提交并 push/);
-  assert.match(p, /把 issue 翻回 triage，评论写要人定什么、分支名，并放写作评委原话/);
-  assert.match(p, /起草中冒出了要人定的/);
+  // step 3 carries the whole hand-off: push the draft on the issue branch, flip to triage with the comment, and who flips
+  assert.match(p, /提交到 issue 分支/);
+  assert.match(p, /`dyna git push`/);
+  assert.match(p, /`dyna issues set <docs> triage <号>/);
+  assert.match(p, /分支名/);
+  assert.match(p, /写作评委原话/);
+  assert.match(p, /翻状态是调用方的事，写稿的人不翻/);
+  // it no longer borrows a sentence from another skill, whose meaning has moved on
+  assert.doesNotMatch(p, /起草中冒出了要人定的/);
+  assert.doesNotMatch(p, /照 `issue-session`/);
 });
 
 test('SKILL.md: cover and og are called again when the title or the one-sentence thesis changed', () => {
