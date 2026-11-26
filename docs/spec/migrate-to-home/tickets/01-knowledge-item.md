@@ -44,3 +44,4 @@
 - `dyna/internal/home` 的 config 测试：同一个命令加了项，默认四项和 `--only` 的数字写法最容易被带坏。
 - `dyna/internal/home` 的 commit 测试：复用了它的提交与 docs 检查。
 - `dyna/internal/issues` 里读「分类 label」的测试：home 里写出的那一节要它读得出。
+- [ ] review 第 1 轮 S4（2026-11-26）：项目已搬（项目目录里已有 docs/）时，`plan --only knowledge` 只出这一项的总行「已是」，不再出盘点、写死路径、开着的 PR 三张表（JSON 同样不带这三段）；加一条测试：搬完再出表只有总行。
