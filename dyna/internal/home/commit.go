@@ -167,27 +167,27 @@ func Commit(message string, files []string, cwd string, env Env) (CommitResult, 
 	return CommitResult{Committed: sha != "", SHA: sha, Lines: lines}, nil
 }
 
-// guardDocs refuses when the docs/ of a project that one of the files (relative to home) belongs to has a
-// duplicate slug or a dead link. It judges the directory as it is on disk now, so a deleted file counts as gone.
+// guardDocs refuses when the docs/ of a project that one of the paths (relative to home) takes in has a
+// duplicate slug or a dead link. A path takes a project's docs/ in when it is docs/ itself, a file under it, or a
+// directory above it (projects/<name>, projects). It judges the directory as it is on disk now, so a deleted file
+// counts as gone.
 func guardDocs(realHome string, rels []string) error {
 	seen := map[string]bool{}
 	var report []string
 	for _, rel := range rels {
-		parts := strings.Split(filepath.ToSlash(rel), "/")
-		if len(parts) < 3 || parts[0] != "projects" || parts[2] != "docs" {
-			continue
-		}
-		docs := filepath.Join(realHome, "projects", parts[1], "docs")
-		if seen[docs] || !isDir(docs) {
-			continue
-		}
-		seen[docs] = true
-		rep, err := CheckDocs(docs)
-		if err != nil {
-			return err
-		}
-		if !rep.OK() {
-			report = append(report, rep.Describe("projects/"+parts[1]+"/docs/"))
+		for _, name := range projectsWhoseDocsAreTakenIn(realHome, rel) {
+			docs := filepath.Join(realHome, "projects", name, "docs")
+			if seen[docs] || !isDir(docs) {
+				continue
+			}
+			seen[docs] = true
+			rep, err := CheckDocs(docs)
+			if err != nil {
+				return err
+			}
+			if !rep.OK() {
+				report = append(report, rep.Describe("projects/"+name+"/docs/"))
+			}
 		}
 	}
 	if len(report) == 0 {
@@ -195,4 +195,25 @@ func guardDocs(realHome string, rels []string) error {
 	}
 	return nexterr.New("改掉上面列出的重名文件或链接（或把被链的文件放回去），再跑 dyna home commit <消息> <文件>...",
 		"home commit 拒绝：知识库没过检查，什么都没提交\n%s", strings.Join(report, "\n"))
+}
+
+// projectsWhoseDocsAreTakenIn names the projects whose docs/ a path relative to home covers.
+func projectsWhoseDocsAreTakenIn(realHome, rel string) []string {
+	parts := strings.Split(filepath.ToSlash(filepath.Clean(rel)), "/")
+	switch {
+	case parts[0] == ".", len(parts) == 1 && parts[0] == "projects":
+		entries, _ := os.ReadDir(filepath.Join(realHome, "projects"))
+		var names []string
+		for _, e := range entries {
+			if e.IsDir() {
+				names = append(names, e.Name())
+			}
+		}
+		return names
+	case parts[0] != "projects":
+		return nil
+	case len(parts) == 2, parts[2] == "docs":
+		return []string{parts[1]}
+	}
+	return nil
 }

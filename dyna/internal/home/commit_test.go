@@ -299,3 +299,30 @@ func TestAttachmentLinksResolveToAFileOfThatName(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 }
+
+// A path above docs/ (the project directory, projects/) takes docs/ in with it, so docs/ is checked too
+// (2026-11-26: `home commit <msg> ~/home/projects/<name>` pushed 389 files with 39 dead links past the guard).
+func TestCommitOfADirectoryAboveDocsStillChecksDocs(t *testing.T) {
+	for _, dir := range []string{"projects/example-app", "projects"} {
+		t.Run(dir, func(t *testing.T) {
+			w := moved(t, opts{})
+			write(t, w.home, docsRel+"/spec/a/a.md", "见 [[deleted-slug]]。\n")
+			before := commitCount(t, w.home)
+			r := w.run(w.home, "home", "commit", "migrate", filepath.Join(w.home, dir))
+			if r.code != 1 || !strings.Contains(r.err, docsRel+"/spec/a/a.md:1  [[deleted-slug]]") {
+				t.Fatalf("%+v", r)
+			}
+			if commitCount(t, w.home) != before || gitIn(t, w.home, "diff", "--cached", "--name-only") != "" {
+				t.Fatal("a commit or a staged file came out of a refusal")
+			}
+		})
+	}
+}
+
+// A file of the project outside docs/ does not take docs/ in, so a dead link there does not hold it up.
+func TestCommitOfAProjectFileOutsideDocsDoesNotCheckDocs(t *testing.T) {
+	w := moved(t, opts{})
+	write(t, w.home, docsRel+"/spec/a/a.md", "见 [[deleted-slug]]。\n")
+	write(t, w.home, "projects/example-app/memory/MEMORY.md", "x\n")
+	w.run(w.home, "home", "commit", "memory", "projects/example-app/memory/MEMORY.md").ok(t)
+}
