@@ -39,3 +39,4 @@
 | [[skill-rewrite]] | idea-loop 的 skill 与 agent 定义按写法规则逐份重写、五组合并，主体都不超过 4500 字 |
 | [[skill-structure-checks]] | skill 文件的常驻检查：写文件时 hook 对 home 下全部 skill 跑字数线 4500、对 idea-loop 跑行内命令绊线、review 报主文件增长、retro 先判能不能做成检查、没 CI 时同一 head 的全量只跑一次 |
 | [[skills-read-home]] | skill 与脚本从 home 的项目目录读写知识库，改动直接提交 home，dreaming-home 对账各项目 |
+| [[spec-for-agents]] | spec 只给下游 agent 读，照 Matt 的七节写；人读的现状→目标→要你定挪到会话 |

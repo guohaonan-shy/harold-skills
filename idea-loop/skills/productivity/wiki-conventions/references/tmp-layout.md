@@ -5,7 +5,7 @@ SKILL.md「中间产物」定了规则：中间产物放 `<worktree 根>/.tmp/<s
 ```
 <worktree 根>/.tmp/
 ├── grill/<YYYY-MM-DD>-<topic>/   复现过程的截图、网络日志、trace —— grill 收工时删
-├── to-spec/<spec-slug>/          spec 图的 excalidrawer 源文件（sugar JSON、.excalidraw）—— 只有 PNG 进 docs/，spec 定稿后可删
+├── to-spec/<spec-slug>/          起草时的复现输出（repro/）、SEO 研究的 context.json —— spec 定稿后可删
 ├── implement/<spec-slug>/        pending.md（等人决定的工单）、evidence/（人验素材）、notes/（explorer 的共享笔记）、browser.lock（浏览器锁）—— PR 合并后删
 ├── fake-mic/<会话名>/            一个带假麦克风的浏览器会话：config.json（会话配置）、mic.wav（喂进去的音频）、.playwright-cli/（快照）（运行环境的『浏览器』「要麦克风的流程」，`dyna runtime show 浏览器`）—— PR 合并后删
 ├── pr-review/<PR 号>/            每轮的 Codex 输出、机械检查输出、汇报、evidence/（review 配图）—— PR 合并后删

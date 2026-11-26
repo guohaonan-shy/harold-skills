@@ -11,9 +11,7 @@
 - 起草要跑 OpenSEO 的付费调用（SEO 研究）的：先看「起草与验证」那一份本周还剩多少。`get_project_context` 存成 `.tmp/to-spec/<spec-slug>/context.json`，`whoami` 读余额，跑 `dyna seo allocate <项目目录>/SEO.md <余额> --context <那份 context.json> --today <YYYY-MM-DD>`（不带方向，只出本周的账），读输出里 `week.shares` 的「起草与验证」的 `left`（也不超过 `week.floorRoom`）。这次研究预估要花的 credits 超过它就不跑：用『推送』告诉人是哪项研究、预估多少、本周还剩多少，spec 里写明这项研究没做。跑了的，用 `update_project_context` 的 `appendResearchLog` 记一笔，第一行 `起草 <YYYY-MM-DD>：issue #<号>`，第二行 `花费：<n | 未知> credits，余额 <n | 未知>，份：起草与验证`（「花费」行同 `idea-loop:seo-scan` 的研究日志，`dyna seo allocate` 靠它加总）。
 - issue 带 `type:seo/*` 的，再读项目目录的 `SEO.md` 的「内容原则」（`dyna seo parse <项目目录>/SEO.md` 输出里的 `principles`，每条带出处），与上一条先读的方向原则并列：选项、推荐和「需要 grill」的答案都以两者为据。没有 `SEO.md`，或这一节是空的，就当没有这类原则。
 
-## 结论行
-
-标题下一行：`> #<号> 存在：…`，格式见 `idea-loop:to-spec` 的模板。证据评论推翻了 issue 原来的说法，「根因」里写「修正：issue 原先认为 X，实测是 Y」。
+## 已经被做掉的
 
 起草时发现 issue 已经被做掉了：`dyna issues set <docs> canceled <号> --comment=<出处、核对的日期和提交>`，删掉这份 spec 的草稿，不提交，回会话的「收尾」。
 
@@ -26,8 +24,8 @@
 提交之前逐项核对，哪项不过回去改，改完再核：
 
 1. **结构**：`dyna spec check <docs>` 没有报这份 spec 的问题（旧平铺布局、遗留的 `status` 行）。
-2. **有着落**：issue 在 spec frontmatter 的 `issues` 里，标题下有它的一行结论。
-3. **复现过**：「问题陈述」里写了复现到的现象，来自证据评论或本次复现；只有 issue 原文的不算。
+2. **有着落**：issue 在 spec frontmatter 的 `issues` 里。
+3. **复现过**：「问题陈述」的文字里写了复现到的现象，来自证据评论或本次复现；只有 issue 原文的不算。
 4. **正文里没有机器的原始输出**：断言报错、堆栈、`[repro]` 日志、SQL 原文都改写成人话。
 5. **每条都有期望行为**：只修问题的 spec，「User Stories」里每个问题一行「期望行为」，编号跟「问题陈述」的小节对得上。
 6. **待定都落在「只由我做」「停下问我」里**：每条「待定」写明它落在用户规则（`~/.claude/CLAUDE.md`）「思考与决策」的「只由我做」或「停下问我」哪一条；不在里面的已写成定下的决定，带目标原文。选项的写法照「沟通」。
@@ -38,7 +36,7 @@
 
 issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、不停下，自己定完就提交；人在场接手时也照这条，人可以推翻；唯一的例外是 `idea-loop:seo-writing` 的 brief 分支的角度和封面主体，人在场时它们合成一问。
 
-- 「待定」：逐条照推荐改写成决定，依据写「AI 照推荐定：<推荐的理由>」，删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
+- 「待定」：逐条照推荐改写成决定，依据写「AI 照推荐定：<推荐的理由>」，删掉「待定」两个字；牵出的 User Stories 和测试决策一起改。
 - 「需要 grill」：照 spec 已有的结论和 `SEO.md`「内容原则」自己答完，删掉这一行。
 
 有「前端交互」小节的（要 UI 设计）不走这条：todo 会话照「起草中冒出了要人定的」那句 `dyna issues set <docs> triage <号> --comment=<要人定什么、spec 在 home 的提交号>` 翻回 triage，triage 会话照下面的流程跟人定。
@@ -46,7 +44,7 @@ issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、�
 其余的 issue，spec 里还有「需要 grill」或「待定」：用『推送』能力发一句话说要人定什么，然后停下等人。人开口后逐条处理：
 
 - 「需要 grill」：用 Skill 工具调 `idea-loop:grill`，按结果改 spec，删掉这一行。
-- 「待定」：人定了，把小节改写成定下的决定，写上依据（人的原话），删掉「待定」两个字；牵出的图、User Stories 和测试决策一起改。
+- 「待定」：人定了，把小节改写成定下的决定，写上依据（人的原话），删掉「待定」两个字；牵出的 User Stories 和测试决策一起改。
 - 人决定不做：`dyna issues set <docs> canceled <号> --comment=<人的原话>`，再记进「不做」清单 `<docs>/records/out-of-scope/<slug>.md`（目录没有就建）：`type: record`，一个概念一份文件，写是什么、为什么不做（人的原话）、相关 issue 号；同一个概念已有记录，往里追加号码。记录写好就 `commit` 到 home，不经分支和 PR（`idea-loop:wiki-conventions` 的「知识库落地」）。然后删掉这份 spec 的目录，不提交，回会话的「收尾」。
 - 人说先放着：回会话的「先放着」。
 - 都定完了：提交。

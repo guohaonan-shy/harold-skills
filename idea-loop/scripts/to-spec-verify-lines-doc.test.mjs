@@ -44,10 +44,9 @@ test('the test-decision table sends a skill change to the verification lines, no
   assert.match(row, /skill 改动写「见杠杆诊断各处的验证」/);
 });
 
-test('the sentence about issues that turn out not to exist moved to issue-verdicts.md, where the opening lines are written', () => {
-  assert.doesNotMatch(skill, /这些 issue 翻 canceled/);
-  const verdicts = readFileSync(join(root, 'references', 'issue-verdicts.md'), 'utf8');
-  assert.match(verdicts, /这些 issue 翻 canceled/);
+test('agent-docs.md: the spec says it changes agent documents in its frontmatter (`changes_agent_docs: true`) and puts the diagnosis in a section titled 「杠杆诊断」, which `dyna spec check` looks for', () => {
+  assert.match(branch, /frontmatter 写 `changes_agent_docs: true`/);
+  assert.match(branch, /「杠杆诊断」/);
 });
 
 test('AGENTS.md section 5: no longer opens with 「跳过 quantitative eval」; replay and goal case are the acceptance means; the uiux-research exception stays', () => {

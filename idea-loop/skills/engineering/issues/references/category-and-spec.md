@@ -8,4 +8,4 @@
 
 ## spec 与 issue
 
-spec 的 `issues:` 写这份 spec 属于的 issue。读 spec 内容、刷 `docs/spec/index.md`、查旧布局与遗留的 `status` 行，用 `dyna spec index|check <docs>`；`check` 报了旧平铺布局，停下提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。spec 标题下的结论格式命令要读：每个 issue 一行 `> #12 存在：…` 或 `> #12 不存在：…`，写法见 `idea-loop:to-spec` 的模板；旧 spec 的「验证」表（每行 `| #12 … | 存在 | … |`）仍然认得。
+spec 的 `issues:` 写这份 spec 属于的 issue。读 spec 内容、刷 `docs/spec/index.md`、查旧布局与遗留的 `status` 行，用 `dyna spec index|check <docs>`；`check` 报了旧平铺布局，停下提议照 `idea-loop:wiki-conventions` 的「从平铺布局迁移」迁移。`check` 报的结构问题（缺节、七节顺序错、缺「杠杆诊断」）只管这次写的 spec：别的 spec 的结构报告照旧列出，不处理、不挡路，老 spec 不迁移。

@@ -78,14 +78,7 @@ func Command(d Deps) *cobra.Command {
 				}
 				return Reindex(args[0])
 			}),
-		leaf("check <docs>", "列出 docs/spec/ 下的 spec（JSON），报旧平铺布局、缺 spec 文件、还留着 status 行的问题", "",
-			func(args []string) error {
-				if len(args) < 1 || args[0] == "" {
-					return usage("check <docs>")
-				}
-				_, err := io.WriteString(d.out(), Check(args[0]).JSON())
-				return err
-			}),
+		checkCommand(d),
 		leaf("landed <base-ref>", "列出集成分支上自与 <base-ref> 分叉以来已落地的工单（JSON：提交和工单名，旧的在前）", "",
 			func(args []string) error {
 				if len(args) < 1 || args[0] == "" {

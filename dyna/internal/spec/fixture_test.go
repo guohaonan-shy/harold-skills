@@ -1,71 +1,36 @@
 package spec
 
 import (
-	"fmt"
-	"regexp"
-	"sort"
 	"strings"
 )
 
-// opts shapes the spec text built by doc, the same shapes the old script's test built: the current template
-// (verdicts are quoted lines right under the title, the front-end interaction is a sub-section of 方案 and left
-// out when the spec touches no UI) and the older one (Legacy: a 「验证」 table, and the sub-sections under
-// 技术方案总览 with 「不涉及」 spelled out).
+// opts shapes the spec text built by doc: the current template (the seven sections in order, the front-end
+// interaction a sub-section of 方案 and left out when the spec touches no UI) and the older one (Legacy: the
+// sub-sections under 技术方案总览 with 「不涉及」 spelled out).
 type opts struct {
-	Status  string
-	UI      string
-	Freeze  bool
-	Grill   bool
-	Fork    bool
-	Issues  string
-	Verdict map[string]string // issue as written ("12" or "FA-577") → 存在 / 不存在
-	Legacy  bool
+	Status string
+	UI     string
+	Freeze bool
+	Grill  bool
+	Fork   bool
+	Issues string
+	Legacy bool
+	// ChangesAgentDocs writes `changes_agent_docs: true` into the frontmatter; Diagnosis adds a level-3
+	// 「杠杆诊断」 section under 方案.
+	ChangesAgentDocs bool
+	Diagnosis        bool
 }
 
-var plainNum = regexp.MustCompile(`^\d+$`)
-
 func doc(o opts) string {
-	keys := make([]string, 0, len(o.Verdict))
-	for k := range o.Verdict {
-		keys = append(keys, k)
-	}
-	// the old test listed verdicts in insertion order; numbers first (ascending), then keys, is the same for its cases
-	sort.Slice(keys, func(i, j int) bool {
-		ni, nj := plainNum.MatchString(keys[i]), plainNum.MatchString(keys[j])
-		if ni != nj {
-			return ni
-		}
-		return keys[i] < keys[j]
-	})
-	tag := func(n string) string {
-		if plainNum.MatchString(n) {
-			return "#" + n
-		}
-		return n
-	}
-	opening := ""
-	if !o.Legacy {
-		var lines []string
-		for _, n := range keys {
-			v := o.Verdict[n]
-			why := "上周 #9 已修，对着 main 核过"
-			if v == "存在" {
-				why = "重试一次就扣一次配额"
-			}
-			lines = append(lines, fmt.Sprintf("> %s %s：%s", tag(n), v, why))
-		}
-		opening = strings.Join(lines, "\n")
-	}
-	var rows []string
-	for _, n := range keys {
-		rows = append(rows, fmt.Sprintf("| #%s | %s | 复现 |", n, o.Verdict[n]))
-	}
-	table := "## 验证\n\n| issue | 结论 | 证据 |\n|---|---|---|\n" + strings.Join(rows, "\n") + "\n\n"
 	ui := ""
 	if o.UI != "" {
 		ui = "\n### 前端交互\n" + o.UI + "\n"
 	}
-	plan := "## 问题陈述\n\n重试会多扣一次配额。\n\n## 方案\n\n重试不再扣配额。\n" + ui + "\n"
+	diagnosis := ""
+	if o.Diagnosis {
+		diagnosis = "\n### 杠杆诊断\n改一处 skill。验证：检查。\n"
+	}
+	plan := "## 问题陈述\n\n重试会多扣一次配额。\n\n## 方案\n\n重试不再扣配额。\n" + ui + diagnosis + "\n## User Stories\n\n1. 作为用户，我想要重试不扣配额。\n\n"
 	uiLegacy := "不涉及。"
 	if o.UI != "" {
 		uiLegacy = o.UI
@@ -81,16 +46,16 @@ func doc(o opts) string {
 	if o.Issues != "" {
 		b.WriteString("\nissues: " + o.Issues)
 	}
+	if o.ChangesAgentDocs {
+		b.WriteString("\nchanges_agent_docs: true")
+	}
 	b.WriteString("\n---\n\n# 重试不消耗配额\n")
 	if o.Grill {
 		b.WriteString("\n> 需要 grill：要不要给重试单独的配额，条目里没定。\n")
 	}
-	if opening != "" {
-		b.WriteString("\n" + opening + "\n")
-	}
 	b.WriteString("\n")
 	if o.Legacy {
-		b.WriteString(table)
+		b.WriteString("## 问题陈述\n\n重试会多扣一次配额。\n\n")
 	} else {
 		b.WriteString(plan)
 	}
@@ -107,17 +72,12 @@ func doc(o opts) string {
 		b.WriteString(overview)
 	}
 	b.WriteString("\n## 测试决策\n")
+	if !o.Legacy {
+		b.WriteString("\n- 重试不扣配额：单元测试。\n\n## Out of scope\n\n- 配额上限。\n\n## 关联\n\n- 无。\n")
+	}
 	return b.String()
 }
 
 const uiBlock = "> 待补图：`uiux-refine` 冻结时按冻结画布补交互图，替换本节文字\n\n- 点重试 → 只重跑这一题"
 
 func replaceOnce(s, old, repl string) string { return strings.Replace(s, old, repl, 1) }
-
-func verdictMap(vs []Verdict) map[IssueRef]string {
-	m := map[IssueRef]string{}
-	for _, v := range vs {
-		m[v.Ref] = v.Word
-	}
-	return m
-}
