@@ -71,7 +71,7 @@ export function findViolations({ changedFiles, baseVersions, currentVersions, ba
 
     violations.push(
       `${plugin}: 这个插件目录下有改动，但 version 是 ${current}，没有比 ${baseRef} 上的 ${base} 大。` +
-        `没升过：按 REVIEW.md 的三档规则（major / minor / patch）从 ${base} 往上升。` +
+        `没升过：按 ~/home/projects/harold-skills/REVIEW.md 的三档规则（major / minor / patch）从 ${base} 往上升。` +
         `升过但等于 ${base}（别的 PR 先合并，撞号）：从 ${baseRef} 的新版本 ${base} 重新按同一档升。`,
     );
   }

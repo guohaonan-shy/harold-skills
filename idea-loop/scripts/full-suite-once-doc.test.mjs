@@ -8,7 +8,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,7 +19,11 @@ const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const stopAndResume = read('skills/engineering/implement/references/stop-and-resume.md');
 const runARound = read('skills/engineering/pr-review/references/run-a-round.md');
 const standards = read('skills/engineering/pr-review/references/review-standards.md');
-const reviewMd = readFileSync(join(repoRoot, 'REVIEW.md'), 'utf8');
+// this repository's own REVIEW.md (moved to its project directory in home): the check that reads it is skipped
+// when it is not there
+const reviewFile = join(repoRoot, 'REVIEW.md');
+const hasReview = existsSync(reviewFile);
+const reviewMd = hasReview ? readFileSync(reviewFile, 'utf8') : '';
 
 /** The text under a heading up to the next heading of the same or a higher level. */
 function section(doc, title) {
@@ -67,7 +71,7 @@ test('no place still tells a head with a local full run to run it a second time'
   assert.doesNotMatch(stopAndResume, /全量测试只在这里跑一遍/);
 });
 
-test('REVIEW.md 验证命令 says in its first sentence where the full suite runs', () => {
+test('REVIEW.md 验证命令 says in its first sentence where the full suite runs', { skip: !hasReview && 'this repository has no REVIEW.md' }, () => {
   const first = section(reviewMd, '验证命令').split('\n').find((l) => l.trim() !== '');
   const sentence = first.split('。')[0];
   assert.match(sentence, /执行方只跑改动涉及的（前两条）/);
