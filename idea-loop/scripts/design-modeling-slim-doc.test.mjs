@@ -1,12 +1,11 @@
 /**
- * Tripwire — `idea-loop:design-modeling`'s SKILL.md stays inside the body limit; the write path that only a run that
+ * Tripwire — `idea-loop:design-modeling`'s SKILL.md stays slim; the write path that only a run that
  * really writes `DESIGN.md` walks lives behind a pointer in `references/write.md`.
  *
- * Spec skill-body-limit-backlog, ticket 01. The body was 5485 characters (the limit in AGENTS.md「标准 plugin 目录结构」
- * is 5000: UTF-8 characters after the frontmatter, `awk 'f>=2; /^---$/{f++}' SKILL.md | LC_ALL=en_US.UTF-8 wc -m`).
+ * The body was 5485 characters when 「一次写入怎么走」 moved out (the length line is `dyna spec skill-lint`'s).
  * Runs that only write a design-law candidate or judge admission do not walk 「一次写入怎么走」, so it moved whole into
  * references/write.md; the title stayed because design-steward, dreaming and uiux-imagine cite it by name. This test
- * catches the body growing back, the title or the pointer disappearing, the steps being written twice, and the
+ * catches the title or the pointer disappearing, the steps being written twice, and the
  * reference losing a step. It cannot tell whether an agent reads the reference when it should.
  */
 import { test } from 'node:test';
@@ -40,9 +39,12 @@ function section(doc, title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
-test('design-modeling SKILL.md body is under 5000 characters (the limit in AGENTS.md)', () => {
-  const n = [...body(skill)].length;
-  assert.ok(n < 5000, `design-modeling body is ${n} characters`);
+test('「设计法候选的形态」 keeps its title and points at references/candidate.md, where the format lives', () => {
+  const text = section(skill, '设计法候选的形态');
+  assert.match(text, /references\/candidate\.md/);
+  assert.doesNotMatch(text, /并进：/, 'the format block moved to the reference');
+  const ref = readFileSync(join(skillDir, 'references', 'candidate.md'), 'utf8');
+  for (const k of ['并进：', '为什么：', '证据：']) assert.ok(ref.includes(k), `candidate.md lost ${k}`);
 });
 
 test('「一次写入怎么走」 keeps its title and is a one-sentence pointer to references/write.md that opens with the condition', () => {
@@ -55,17 +57,17 @@ test('「一次写入怎么走」 keeps its title and is a one-sentence pointer 
 
 test('the steps are in the reference: find the file, backup, wait for the human, lint, diff', () => {
   const ref = readFileSync(join(skillDir, 'references', 'write.md'), 'utf8');
-  assert.match(ref, /git ls-files \| grep -i 'DESIGN\.md\$'/, 'the find-the-file step is gone');
+  assert.match(ref, /<项目目录>\/DESIGN\.md/, 'the find-the-file step is gone');
   assert.match(ref, /\/tmp\/design-md\/before\.md/, 'the backup step is gone');
   assert.match(ref, /停下等人确认/, 'the wait-for-the-human step is gone');
-  assert.match(ref, /design\.md@latest lint/, 'the lint step is gone');
-  assert.match(ref, /design\.md@latest diff/, 'the diff step is gone');
+  assert.match(ref, /dyna design md lint/, 'the lint step is gone');
+  assert.match(ref, /dyna design md diff/, 'the diff step is gone');
 });
 
 test('the steps are written once: SKILL.md does not keep a copy', () => {
   const b = body(skill);
   assert.doesNotMatch(b, /\/tmp\/design-md\/before\.md/);
-  assert.doesNotMatch(b, /design\.md@latest (lint|diff)/);
+  assert.doesNotMatch(b, /dyna design md (lint|diff)/);
 });
 
 /** Review round 1 (ticket 01): the body opens straight on 「是什么」; 「结构」 holds the two-row table and two ### subsections. */

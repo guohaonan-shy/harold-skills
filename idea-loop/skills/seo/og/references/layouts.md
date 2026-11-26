@@ -1,6 +1,6 @@
 # 三种版式
 
-三种都只用 params 里的颜色和字体，标题在自己的字号范围内自动缩到放得下（范围见 `scripts/og-render.mjs` 的 `TITLE_SIZE`）；每种在长短标题、中英文下都不溢出（`scripts/og-render-browser.test.mjs` 逐个渲过）。
+三种都只用 params 里的颜色和字体，标题在自己的字号范围内自动缩到放得下（范围写在 `dyna seo og` 的代码里，`TITLE_SIZE`）；每种在长短标题、中英文下都不溢出（`dyna seo og` 自己的测试逐个渲过）。
 
 | 版式 | 长什么样 | 什么文章用 |
 |---|---|---|

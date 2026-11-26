@@ -5,15 +5,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/runtime-detect.mjs\" --inject decision-rules"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" runtime inject runtime --hook"
           },
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/runtime-detect.mjs\" --inject runtime"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" runtime inject reference --hook"
           },
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/runtime-detect.mjs\" --inject reference"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" home map --hook"
           }
         ]
       }
@@ -24,7 +24,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" issues guard --hook"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" worktree guard --hook"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" seo check --hook"
           }
         ]
       }
@@ -35,15 +43,23 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/design-lint-hook.mjs\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" design lint --hook"
           },
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/design-md-hook.mjs\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" design md lint --hook"
           },
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/glossary-check-hook.mjs\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" home glossary check --hook"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" spec skill-lint --hook"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" spec check --hook"
           }
         ]
       },
@@ -52,7 +68,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/seo-check-hook.mjs\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\" seo check --hook"
           }
         ]
       }

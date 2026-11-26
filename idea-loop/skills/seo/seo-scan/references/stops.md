@@ -4,7 +4,7 @@
 
 ## 认 OpenSEO
 
-会话里任何一个连接器（插件自带的、手动配置的、claude.ai 的，名字不拘）同时带 `whoami` 和 `get_project_context` 两个工具，就算 OpenSEO 在，往下走。一个都没有就停下：不调 OpenSEO、不写研究日志（日志也经 OpenSEO 写），不花 credits。定时任务触发时没人在场：用『推送』提醒（做法照 `idea-loop:runtime`），写交回的第一行。
+会话里任何一个连接器（插件自带的、手动配置的、claude.ai 的，名字不拘）同时带 `whoami` 和 `get_project_context` 两个工具，就算 OpenSEO 在，往下走。一个都没有就停下：不调 OpenSEO、不写研究日志（日志也经 OpenSEO 写），不花 credits。定时任务触发时没人在场：用『推送』提醒（做法照 `dyna runtime show 推送`），写交回的第一行。
 
 ```
 seo-scan <YYYY-MM-DD HH:MM> 停下：OpenSEO 没连上

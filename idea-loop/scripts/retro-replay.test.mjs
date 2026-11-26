@@ -8,16 +8,27 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { changeSetOf, pluginDiffOf, pluginRelDirOf, projectName, swapPluginFiles } from '../evals/retro/retro-replay.mjs';
+import { dynaBinary, runDyna } from './dyna-test-bin.mjs';
+import { applyHomeRules, changeSetOf, homeProblem, pluginDiffOf, pluginReadsHome, pluginRelDirOf, prepareHome, projectName, seedRulesMemory, swapPluginFiles } from '../evals/retro/retro-replay.mjs';
+import { normalizeRemote, parseProjects } from '../evals/retro/home-projects.mjs';
+import { validateCase } from '../evals/retro/cases.mjs';
 import {
+  homeAgentsMd, homeCopyEntries, homeProjectName, homeRemote, homeSourceOf, projectListLine, registerProject, withHome,
+  RULES_FILE, RULE_SECTIONS, RULES_MEMORY_FILE, rulesMemoryMd, sectionsOf, withDyna,
   decideOutcome, parseVerdict, relabelLarge, buildArtifact, buildWorkerPrompt, buildJudgePrompt,
   estimateCostUsd, fileBody, parseOverrides, settleVerdicts, productsInOrder, verdictsBySide, exercisedBy, applyExercised, replayChildEnv,
 } from '../evals/retro/replay.mjs';
+
+/** Where `dyna home where` puts the project that `cwd` is in, given this home: `{ ok: true, projectDir, docs, … }`, or `{ ok: false }` when it finds none. */
+function locate({ cwd, env }) {
+  const r = runDyna(['home', 'where'], { cwd, env });
+  return r.status === 0 ? { ok: true, ...JSON.parse(r.stdout) } : { ok: false, stderr: r.stderr };
+}
 
 const smallCase = () => ({
   commit: 'a1b2c3d',
@@ -37,6 +48,20 @@ test('before already "yes": the case did not catch the problem, even if after is
   const r = decideOutcome({ before: 'yes', after: 'yes' });
   assert.equal(r.outcome, 'case-missed');
   assert.match(r.reason, /用例没抓住问题/);
+});
+
+test('a goal case whose pre-change run already has it: "不过：改前就做得到", its own outcome, not "用例没抓住问题"', () => {
+  for (const after of ['yes', 'no']) {
+    const r = decideOutcome({ before: 'yes', after, goal: true });
+    assert.equal(r.outcome, 'already-done', after);
+    assert.match(r.reason, /不过：改前就做得到/);
+    assert.doesNotMatch(r.reason, /用例没抓住问题/);
+    assert.match(r.reason, /换用例|不用加/, 'says what the human decides next');
+  }
+  assert.equal(decideOutcome({ before: 'no', after: 'yes', goal: true }).outcome, 'pass');
+  assert.equal(decideOutcome({ before: 'no', after: 'no', goal: true }).outcome, 'fail');
+  assert.equal(decideOutcome({ before: 'no', after: undefined, goal: true }).outcome, 'inconclusive');
+  assert.equal(decideOutcome({ before: 'yes', after: 'yes' }).outcome, 'case-missed', 'a quote case keeps its wording');
 });
 
 test('before "yes" and after "no" is still a broken case first, not a regression verdict', () => {
@@ -99,6 +124,19 @@ test('the judge prompt carries the question and both products, and does not say 
   assert.ok(p.includes('BEFORE-BODY') && p.includes('AFTER-BODY'));
   assert.ok(!/改前|改后|before|after/i.test(p.replace('BEFORE-BODY', '').replace('AFTER-BODY', '')), 'no hint which side is the changed plugin');
   assert.match(p, /出处/);
+});
+
+test('the judge prompt says where the question came from: a quote case keeps the human words line, a goal case says it came from that spec expectation', () => {
+  const quoteP = buildJudgePrompt(smallCase(), 'A-BODY', 'B-BODY');
+  assert.ok(quoteP.includes(`（这道题是从人当时的这句话写出来的：${smallCase().quote}）`));
+  assert.doesNotMatch(quoteP, /spec/);
+  const { quote, ...rest } = smallCase();
+  const goal = { ...rest, goal_from: 'docs/spec/x/x.md 期望行为 1' };
+  const goalP = buildJudgePrompt(goal, 'A-BODY', 'B-BODY');
+  assert.ok(goalP.includes('这道题是从 spec 里这条期望写出来的：docs/spec/x/x.md 期望行为 1'));
+  assert.doesNotMatch(goalP, /人当时的这句话/);
+  assert.doesNotMatch(goalP, /undefined/);
+  assert.doesNotMatch(goalP, /改前|改后|新|旧/, 'still no hint which side is the changed plugin');
 });
 
 test('the whole judge prompt, products included, has no 改前 / 改后 / 新 / 旧 in it', () => {
@@ -183,6 +221,7 @@ test('settleVerdicts applies the human override for that run only, then decides'
 // The fake reads `<plugin-dir>/MARK` to decide what its worker session does:
 //   a line "reply: X"   final text X, and a file docs/out.md containing X
 //   a line "agent"      the session starts an Agent tool call, then goes on running (must be killed)
+//   a line "home-write: X"  X is written to <IDEA_LOOP_HOME>/projects/repo/docs/spec/out-home.md and committed in that home (as commit-to-home does)
 //   a line "peek: P"    the session looks at P (relative to its work dir) and records what it found there (null when missing)
 //   a line "bash: C"    the session issues a Bash tool call with command C (nothing is run)
 //   a line "readproj: P" the session issues a Read of P under its work dir, as an absolute path
@@ -199,7 +238,17 @@ const prompt = args[args.indexOf('-p') + 1];
 const pd = args.includes('--plugin-dir') ? args[args.indexOf('--plugin-dir') + 1] : null;
 fs.appendFileSync(process.env.FAKE_LOG, (pd ? 'worker' : 'judge') + '\\n');
 const dirIn = process.env.GH_CONFIG_DIR;
-const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
+const walk = (d, rel = '') => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).filter((e) => e.name !== '.git').flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name), rel + e.name + '/') : [rel + e.name])) : []);
+const hd = process.env.IDEA_LOOP_HOME;
+const home = hd ? { dir: hd, exists: fs.existsSync(hd), files: walk(hd).sort(), agents: fs.existsSync(path.join(hd, 'AGENTS.md')) ? fs.readFileSync(path.join(hd, 'AGENTS.md'), 'utf8') : null } : null;
+const sp = (cmd, a) => require('node:child_process').spawnSync(cmd, a, { cwd: process.cwd(), encoding: 'utf8' });
+const where = () => {
+  if (!process.env.IDEA_LOOP_DYNA_BIN || !hd) return {};
+  const w = sp(process.env.IDEA_LOOP_DYNA_BIN, ['home', 'where']);
+  const o = (a) => { const r = sp('git', a); return r.status === 0 ? r.stdout.trim() : null; };
+  return { where: { status: w.status, stdout: w.stdout, stderr: w.stderr }, origin: { fetch: o(['remote', 'get-url', 'origin']), push: o(['remote', 'get-url', '--push', 'origin']) } };
+};
+const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null, home, memory: fs.existsSync('.claude/CLAUDE.md') ? fs.readFileSync('.claude/CLAUDE.md', 'utf8') : null, dynaBin: process.env.IDEA_LOOP_DYNA_BIN ?? null, ...where() };
 fs.appendFileSync(process.env.FAKE_LOG + '.json', JSON.stringify({ kind: pd ? 'worker' : 'judge', prompt, cwd: process.cwd(), pluginDir: pd, probe }) + '\\n');
 const emit = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
 const result = (text) => emit({ type: 'result', result: text, total_cost_usd: 0.25, num_turns: 1, duration_ms: 5, modelUsage: { fake: {} } });
@@ -228,6 +277,14 @@ if (pd) {
     }
     fs.mkdirSync('docs', { recursive: true });
     fs.writeFileSync('docs/out.md', text);
+    const hw = /^home-write: (.*)$/m.exec(mark);
+    if (hw && hd) {
+      fs.mkdirSync(path.join(hd, 'projects', 'repo', 'docs', 'spec'), { recursive: true });
+      fs.writeFileSync(path.join(hd, 'projects', 'repo', 'docs', 'spec', 'out-home.md'), hw[1]);
+      const g = (...a) => require('node:child_process').spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...a], { cwd: hd });
+      g('add', '-A');
+      g('commit', '-q', '-m', 'spec');
+    }
     emit({ type: 'assistant', parent_tool_use_id: null, message: { content: [{ type: 'tool_use', id: 't1', name: 'Write', input: {} }] } });
     result(text);
   }
@@ -239,12 +296,14 @@ if (pd) {
 }
 `;
 
-// A fake Codex companion: `node <it> task --model … --effort … --prompt-file F --cwd D`. It answers like the fake judge does
-// (yes for a product containing FIXED), with some prose around the JSON the way a real one talks; FAKE_CODEX_FAIL makes it exit 2.
-const FAKE_CODEX = `// task
+// A fake `codex`, started by `dyna agent codex run` as `codex exec --sandbox read-only … -C D -m M -c … -o OUT PROMPT`. It answers like the
+// fake judge does (yes for a product containing FIXED), with some prose around the JSON the way a real one talks, on stdout and
+// in the -o file; FAKE_CODEX_FAIL makes it exit 2.
+const FAKE_CODEX = `#!/usr/bin/env node
 const fs = require('node:fs');
 const args = process.argv.slice(2);
-const prompt = fs.readFileSync(args[args.indexOf('--prompt-file') + 1], 'utf8');
+const prompt = args[args.length - 1] === '-' ? fs.readFileSync(0, 'utf8') : args[args.length - 1];
+const out = args[args.indexOf('-o') + 1];
 fs.appendFileSync(process.env.FAKE_LOG, 'codex\\n');
 const dirIn = process.env.GH_CONFIG_DIR;
 const probe = { GH_TOKEN: process.env.GH_TOKEN ?? null, GITHUB_TOKEN: process.env.GITHUB_TOKEN ?? null, GH_CONFIG_DIR: dirIn ?? null, ghDirEntries: dirIn && fs.existsSync(dirIn) ? fs.readdirSync(dirIn) : null, UNRELATED: process.env.UNRELATED_VAR ?? null };
@@ -253,15 +312,20 @@ if (process.env.FAKE_CODEX_FAIL) process.exit(2);
 const a = /产物 A[\\s\\S]*?(?=产物 B)/.exec(prompt)?.[0] ?? '';
 const b = /产物 B[\\s\\S]*/.exec(prompt)?.[0] ?? '';
 const ans = (s) => (s.includes('FIXED') ? '是' : '否');
-console.log('我读完了两份产物。');
-console.log(JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }));
+const said = '我读完了两份产物。\\n' + JSON.stringify({ A: { answer: ans(a), cite: 'codex cite A' }, B: { answer: ans(b), cite: 'codex cite B' } }) + '\\n';
+fs.writeFileSync(out, said);
+process.stdout.write(said);
 `;
 
-function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, snapshot = {} }) {
+function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFiles = {}, repoFiles = {}, snapshot = {}, origin, caseExtra = {} }) {
   const root = mkdtempSync(join(tmpdir(), 'retro-e2e-'));
   const repo = join(root, 'repo');
   mkdirSync(repo);
   writeFileSync(join(repo, 'README.md'), 'project at the decision commit\n');
+  for (const [rel, text] of Object.entries(repoFiles)) {
+    mkdirSync(dirname(join(repo, rel)), { recursive: true });
+    writeFileSync(join(repo, rel), text);
+  }
   for (const [rel, text] of Object.entries(snapshot)) {
     mkdirSync(dirname(join(repo, rel)), { recursive: true });
     writeFileSync(join(repo, rel), text);
@@ -271,6 +335,7 @@ function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFi
   g('add', '-A');
   g('commit', '-q', '-m', 'decision state');
   const commit = g('rev-parse', 'HEAD').stdout.trim();
+  if (origin) g('remote', 'add', 'origin', origin);
   // the plugins, each in a dir called idea-loop (as the real one is) under a side's own dir
   for (const [name, mark] of [['before', before], ['after', after]]) {
     mkdirSync(join(root, name, 'idea-loop'), { recursive: true });
@@ -283,13 +348,14 @@ function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFi
   const casesRoot = join(root, 'evals');
   const caseDir = join(casesRoot, 'cases', caseName);
   mkdirSync(caseDir, { recursive: true });
-  writeFileSync(join(caseDir, 'case.json'), JSON.stringify({ ...smallCase(), commit, size }, null, 2));
+  writeFileSync(join(caseDir, 'case.json'), JSON.stringify({ ...smallCase(), commit, size, ...caseExtra }, null, 2));
   writeFileSync(join(caseDir, 'annotations.md'), '# demo\n');
   const bin = join(root, 'fake-claude');
   writeFileSync(bin, FAKE);
   chmodSync(bin, 0o755);
-  const codex = join(root, 'fake-codex.cjs');
+  const codex = join(root, 'fake-codex');
   writeFileSync(codex, FAKE_CODEX);
+  chmodSync(codex, 0o755);
   const log = join(root, 'calls.log');
   writeFileSync(log, '');
   // where the runs work: a temp dir whose own path says nothing about a test
@@ -300,18 +366,18 @@ function setup({ before, after, size = 'small', caseName = 'demo-case', pluginFi
 /** What the fake `claude` was started with, one entry per session. */
 const sessions = (env) => (existsSync(`${env.log}.json`) ? readFileSync(`${env.log}.json`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 
-/** A Claude config dir with a Codex companion in the place the runner would look for the real one (a fake that logs "codex"). */
+/** A directory with a `codex` on it, for PATH: the place the runner would look for the real one (a fake that logs "codex"). */
 function realCodexLookalike(env) {
-  const dir = join(env.root, 'claude-config');
-  const script = join(dir, 'plugins', 'marketplaces', 'openai-codex', 'plugins', 'codex', 'scripts', 'codex-companion.mjs');
-  mkdirSync(dirname(script), { recursive: true });
-  writeFileSync(script, readFileSync(env.codex, 'utf8'));
+  const dir = join(env.root, 'path-with-codex');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'codex'), readFileSync(env.codex, 'utf8'));
+  chmodSync(join(dir, 'codex'), 0o755);
   return dir;
 }
 
 /**
- * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the companion path does not exist), 'fails' (it exits 2),
- * 'unset' (RETRO_CODEX_COMPANION is not set at all, while a Codex that would be found sits in the config dir).
+ * `codex`: 'fake' (the judge is the fake Codex), 'missing' (the codex path does not exist), 'fails' (it exits 2),
+ * 'unset' (RETRO_CODEX_BIN is not set at all, while a codex that would be found sits on PATH).
  * `order`: 'after-first' / 'before-first' fixes which letter the post-change product gets; left out it is random.
  */
 function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
@@ -323,8 +389,9 @@ function run(env, extra = [], { codex = 'fake', order, parentEnv = {} } = {}) {
     encoding: 'utf8',
     env: {
       ...process.env, ...parentEnv, RETRO_CLAUDE_BIN: env.bin, FAKE_LOG: env.log, TMPDIR: env.tmp,
-      RETRO_CODEX_COMPANION: codex === 'missing' ? join(env.root, 'no-codex-here.cjs') : env.codex,
-      ...(codex === 'unset' ? { RETRO_CODEX_COMPANION: undefined, CLAUDE_CONFIG_DIR: realCodexLookalike(env) } : {}),
+      IDEA_LOOP_DYNA_BIN: dynaBinary(),
+      RETRO_CODEX_BIN: codex === 'missing' ? join(env.root, 'no-codex-here') : env.codex,
+      ...(codex === 'unset' ? { RETRO_CODEX_BIN: undefined, PATH: `${realCodexLookalike(env)}:${process.env.PATH}` } : {}),
       ...(codex === 'fails' ? { FAKE_CODEX_FAIL: '1' } : {}),
       ...(order ? { RETRO_JUDGE_ORDER: order } : { RETRO_JUDGE_ORDER: '' }),
     },
@@ -358,6 +425,28 @@ test('e2e: the pre-change run already has it -> "用例没抓住问题", exit 1'
   assert.equal(r.status, 1);
   assert.equal(resultJson(env, r.stdout).outcome, 'case-missed');
   assert.match(r.stdout, /用例没抓住问题/);
+});
+
+test('e2e: a goal case (goal_from, no quote) whose pre-change run already has it -> "不过：改前就做得到", exit 1; settle keeps the wording', () => {
+  const env = setup({ before: 'reply: FIXED', after: 'reply: FIXED', caseExtra: { quote: undefined, goal_from: 'docs/spec/x/x.md 期望行为 1' } });
+  const r = run(env);
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  const res = resultJson(env, r.stdout);
+  assert.equal(res.outcome, 'already-done');
+  assert.equal(res.goal, true);
+  assert.match(r.stdout, /不过：改前就做得到/);
+  assert.doesNotMatch(r.stdout, /用例没抓住问题/);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const s = spawnSync(process.execPath, [RUNNER, '--settle', 'demo-case', '--run', dir, '--cases-root', env.casesRoot], { encoding: 'utf8' });
+  assert.equal(s.status, 1);
+  assert.match(s.stdout, /不过：改前就做得到/);
+});
+
+test('e2e: a goal case that fails before and holds after -> pass, exit 0', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', caseExtra: { quote: undefined, goal_from: 'docs/spec/x/x.md 期望行为 1' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(resultJson(env, r.stdout).outcome, 'pass');
 });
 
 test('e2e: the post-change run still lacks it -> fail, exit 1', () => {
@@ -440,9 +529,10 @@ test('e2e: the judge is the fake Codex: its answer decides, the result and the r
   assert.match(r.stdout, /不占 Claude 额度/);
   assert.ok(!sessions(env).some((x) => x.kind === 'judge'), 'no claude judging session');
   const [codex] = sessions(env).filter((x) => x.kind === 'codex');
-  assert.equal(codex.args[0], 'task');
-  assert.ok(codex.args.includes('--prompt-file'));
-  assert.ok(!codex.args.includes('--write'), 'Codex gets no write permission');
+  assert.equal(codex.args[0], 'exec');
+  assert.equal(codex.args[codex.args.indexOf('--sandbox') + 1], 'read-only', 'Codex gets no write permission');
+  assert.ok(!codex.args.includes('workspace-write') && !codex.args.includes('--write'), 'Codex gets no write permission');
+  assert.ok(codex.args.includes('gpt-5.6-sol'), 'the judge runs with the model the reviewers use');
   // the answer of a Codex that finds the post-change product lacking is a fail, the other way round a case that missed the problem
   const failing = setup({ before: 'reply: plain', after: 'reply: plain' });
   const f = run(failing);
@@ -700,59 +790,55 @@ test('exercisedBy: nothing used, or only things the change did not touch: not us
 // Spec session-start-inject-rules, ticket 01: the hook puts three kinds of file in the session at the start, so a run
 // does not need to read or call them for the change to reach it.
 const INJECTED_FILES = [
-  'skills/productivity/decision-rules/SKILL.md',
-  'skills/productivity/runtime/SKILL.md',
-  'skills/productivity/runtime/references/claude-desktop.md',
-  'skills/productivity/runtime/references/magi.md',
+  'runtime/capabilities.md',
+  'runtime/claude-desktop.md',
+  'runtime/magi.md',
 ];
 
 test('exercisedBy: a change to an injected file counts as used with no read or call in the stream, via "injected"', () => {
-  for (const [runtime, file] of [['claude-desktop', INJECTED_FILES[0]], ['claude-desktop', INJECTED_FILES[1]], ['claude-desktop', INJECTED_FILES[2]], ['magi', INJECTED_FILES[3]], ['magi', INJECTED_FILES[0]]]) {
+  for (const [runtime, file] of [['claude-desktop', INJECTED_FILES[0]], ['claude-desktop', INJECTED_FILES[1]], ['magi', INJECTED_FILES[2]], ['magi', INJECTED_FILES[0]]]) {
     const change = { files: [file], skills: [], agents: [] };
     assert.deepEqual(exercisedBy([], change, { roots: ROOTS, runtime }), { status: 'hit', via: 'injected', name: file, changed: 1 }, `${runtime} ${file}`);
   }
-  const decisionRules = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
-  const events = [tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/engineering/other/SKILL.md' }), { type: 'result', result: 'done' }];
-  assert.deepEqual(exercisedBy(events, decisionRules, { roots: ROOTS, runtime: 'magi' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[0], changed: 1 });
 });
 
 // Review round 1, S1: the hook injects only the reference of the session's own runtime.
 test("exercisedBy: the other runtime's reference is not injected: a change only to it needs a read or a call", () => {
-  const onlyMagi = { files: [INJECTED_FILES[3]], skills: ['idea-loop:runtime'], agents: [] };
+  const onlyMagi = { files: [INJECTED_FILES[2]], skills: [], agents: [] };
   assert.deepEqual(exercisedBy([], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 }, 'desktop session, only the magi reference changed, nothing read: not used');
-  const onlyDesktop = { files: [INJECTED_FILES[2]], skills: ['idea-loop:runtime'], agents: [] };
-  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 1 }, 'desktop session, the desktop reference changed: used, injected');
+  const onlyDesktop = { files: [INJECTED_FILES[1]], skills: [], agents: [] };
+  assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[1], changed: 1 }, 'desktop session, the desktop reference changed: used, injected');
   assert.deepEqual(exercisedBy([], onlyDesktop, { roots: ROOTS, runtime: 'magi' }), { status: 'miss', changed: 1 }, 'and the other way round');
   // read or called, it counts again
-  const read = tool('Read', { file_path: '/tmp/ab12/idea-loop/skills/productivity/runtime/references/magi.md' });
+  const read = tool('Read', { file_path: '/tmp/ab12/idea-loop/runtime/magi.md' });
   const r = exercisedBy([read], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' });
   assert.deepEqual([r.status, r.via], ['hit', 'read']);
+  // the runtime skill is gone: its data is a file, never a Skill call, so a call to a skill of that name counts for nothing
   const s = exercisedBy([tool('Skill', { skill: 'idea-loop:runtime' })], onlyMagi, { roots: ROOTS, runtime: 'claude-desktop' });
-  assert.deepEqual([s.status, s.via], ['hit', 'skill']);
+  assert.equal(s.status, 'miss');
 });
 
-test('exercisedBy: without a known runtime (unknown forced name, or none given) only decision-rules is injected', () => {
-  for (const file of [INJECTED_FILES[1], INJECTED_FILES[2], INJECTED_FILES[3]]) {
+test('exercisedBy: without a known runtime (unknown forced name, or none given) nothing is injected', () => {
+  for (const file of INJECTED_FILES) {
     const change = { files: [file], skills: [], agents: [] };
     assert.equal(exercisedBy([], change, { roots: ROOTS, runtime: null }).status, 'miss', file);
     assert.equal(exercisedBy([], change, { roots: ROOTS }).status, 'miss', `${file} (no runtime given)`);
   }
-  assert.equal(exercisedBy([], { files: [INJECTED_FILES[0]], skills: [], agents: [] }, { roots: ROOTS, runtime: null }).via, 'injected');
 });
 
-test('exercisedBy: when the stream also shows a read or a call, that is what is reported, not the injection', () => {
-  const change = { files: [INJECTED_FILES[0]], skills: ['idea-loop:decision-rules'], agents: [] };
-  const r = exercisedBy([tool('Skill', { skill: 'idea-loop:decision-rules' })], change, { roots: ROOTS, runtime: 'claude-desktop' });
-  assert.deepEqual([r.status, r.via], ['hit', 'skill']);
+test('exercisedBy: when the stream also shows a read, that is what is reported, not the injection', () => {
+  const change = { files: [INJECTED_FILES[1]], skills: [], agents: [] };
+  const r = exercisedBy([tool('Read', { file_path: '/tmp/ab12/idea-loop/runtime/claude-desktop.md' })], change, { roots: ROOTS, runtime: 'claude-desktop' });
+  assert.deepEqual([r.status, r.via], ['hit', 'read']);
 });
 
-test('exercisedBy: a change only to other skills, or to other files under the runtime skill, is still not used', () => {
+test('exercisedBy: a change only to other skills, or to other files under runtime/, is still not used', () => {
   assert.deepEqual(exercisedBy([], { files: ['skills/engineering/demo/SKILL.md'], skills: ['idea-loop:demo'], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'miss', changed: 1 });
-  const nearby = ['skills/productivity/decision-rules/references/more.md', 'skills/productivity/runtime/notes.md', 'skills/productivity/runtime-extra/SKILL.md', 'agents/decision-rules.md'];
+  const nearby = ['skills/productivity/evidence/references/more.md', 'runtime/notes.md', 'skills/productivity/runtime-extra/SKILL.md', 'agents/evidence.md'];
   for (const file of nearby) assert.equal(exercisedBy([], { files: [file], skills: [], agents: [] }, { roots: ROOTS, runtime: 'claude-desktop' }).status, 'miss', file);
   // a change set that has one injected file among others is used through the injected one
-  const mixed = { files: ['skills/engineering/demo/SKILL.md', INJECTED_FILES[2]], skills: ['idea-loop:demo'], agents: [] };
-  assert.deepEqual(exercisedBy([], mixed, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[2], changed: 2 });
+  const mixed = { files: ['skills/engineering/demo/SKILL.md', INJECTED_FILES[1]], skills: ['idea-loop:demo'], agents: [] };
+  assert.deepEqual(exercisedBy([], mixed, { roots: ROOTS, runtime: 'claude-desktop' }), { status: 'hit', via: 'injected', name: INJECTED_FILES[1], changed: 2 });
 });
 
 test('exercisedBy: an empty change set (only scripts changed) is not applicable, whatever the run did', () => {
@@ -772,7 +858,7 @@ test('applyExercised: not used turns any judged outcome into "not-exercised" and
   assert.deepEqual(applyExercised(pass, undefined), pass, 'a result written before this check existed');
 });
 
-test('changeSetOf: files added or modified under skills/ and agents/, the skills and agents they belong to, nothing else', () => {
+test('changeSetOf: files added or modified under skills/, agents/ and runtime/, the skills and agents they belong to, nothing else', () => {
   const root = mkdtempSync(join(tmpdir(), 'changeset-'));
   const put = (dir, rel, text) => {
     mkdirSync(dirname(join(root, dir, rel)), { recursive: true });
@@ -786,6 +872,8 @@ test('changeSetOf: files added or modified under skills/ and agents/, the skills
     put(dir, 'agents/kept.md', 'same');
     put(dir, 'agents/edited.md', dir === 'before' ? 'old' : 'new');
     put(dir, 'scripts/tool.mjs', dir === 'before' ? 'old' : 'new');
+    put(dir, 'runtime/magi.md', dir === 'before' ? 'old' : 'new');
+    put(dir, 'runtime/claude-desktop.md', 'same');
   }
   put('after', 'skills/productivity/brand-new/SKILL.md', 'x');
   put('after', 'skills/productivity/brand-new/references/deep/b.md', 'x');
@@ -795,7 +883,7 @@ test('changeSetOf: files added or modified under skills/ and agents/, the skills
   put('after', '.claude-plugin/plugin.json', '{"name":"my-plugin"}');
   const c = changeSetOf(join(root, 'before'), join(root, 'after'));
   assert.deepEqual(c.files, [
-    'agents/added.md', 'agents/edited.md', 'skills/engineering/edited/SKILL.md', 'skills/engineering/refs/references/a.md',
+    'agents/added.md', 'agents/edited.md', 'runtime/magi.md', 'skills/engineering/edited/SKILL.md', 'skills/engineering/refs/references/a.md',
     'skills/productivity/brand-new/SKILL.md', 'skills/productivity/brand-new/references/deep/b.md',
   ]);
   assert.deepEqual(c.skills, ['my-plugin:brand-new', 'my-plugin:edited', 'my-plugin:refs']);
@@ -882,7 +970,7 @@ test('e2e: --settle keeps "not-exercised" even when the human overrules the judg
   assert.equal(settled.judgedOutcome, 'pass', 'the override still reached the judged answers');
 });
 
-test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not go looking for the real Codex, the stand-in judges', () => {
+test('e2e: a stand-in claude without RETRO_CODEX_BIN: the runner does not go looking for the real Codex, the stand-in judges', () => {
   const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
   const r = run(env, [], { codex: 'unset' });
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -890,6 +978,231 @@ test('e2e: a stand-in claude without RETRO_CODEX_COMPANION: the runner does not 
   assert.deepEqual(r.calls.sort(), ['judge', 'worker', 'worker'], 'the judging session is the fake claude');
   assert.equal(resultJson(env, r.stdout).judge, 'claude');
   assert.match(r.stdout, /没找到 Codex，评委用 Claude/);
+});
+
+// ---------------------------------------------------------------------------------------------
+// The temporary home (工单 09): old cases get a home built out of the case commit, cases with `home_commit` get one cut from a home repository
+// ---------------------------------------------------------------------------------------------
+
+const TG = ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false'];
+const tgit = (cwd, ...a) => {
+  const r = spawnSync('git', [...TG, ...a], { cwd, encoding: 'utf8' });
+  assert.equal(r.status, 0, `git ${a.join(' ')}: ${r.stderr}`);
+  return r.stdout.trim();
+};
+/** A git repo at `dir` with these files in one commit; returns the commit. */
+function commitFiles(dir, files) {
+  mkdirSync(dir, { recursive: true });
+  tgit(dir, 'init', '-q', '-b', 'main');
+  for (const [rel, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(dir, rel)), { recursive: true });
+    writeFileSync(join(dir, rel), text);
+  }
+  tgit(dir, 'add', '-A');
+  tgit(dir, 'commit', '-q', '-m', 'state');
+  return tgit(dir, 'rev-parse', 'HEAD');
+}
+const walkFiles = (dir, rel = '') => (!existsSync(dir) ? [] : readdirSync(dir, { withFileTypes: true }).filter((e) => e.name !== '.git')
+  .flatMap((e) => (e.isDirectory() ? walkFiles(join(dir, e.name), `${rel}${e.name}/`) : [`${rel}${e.name}`]))).sort();
+
+const OLD_REPO_FILES = {
+  'docs/index.md': '# 索引\n',
+  'docs/spec/old/old.md': '一份旧 spec\n',
+  'DEVELOPMENT.md': '# 开发\n',
+  'REVIEW.md': '# review\n',
+  'GLOSSARY.md': '# 术语\n',
+  'AGENTS.md': '代码仓库自己的 AGENTS.md\n',
+  'src/app.js': 'code\n',
+};
+
+test('home copy: docs/ and the bootstrap files that exist go in; code and the repository\'s own AGENTS.md / CLAUDE.md stay out', () => {
+  assert.deepEqual(homeCopyEntries(['src', 'docs', 'REVIEW.md', 'AGENTS.md', 'CLAUDE.md', 'package.json', 'DEVELOPMENT.md']), ['docs', 'DEVELOPMENT.md', 'REVIEW.md']);
+  assert.deepEqual(homeCopyEntries(['src', 'README.md']), []);
+});
+
+test('the project list line is read back as this project, with the path and remote it was given', () => {
+  const entry = { name: 'demo-app', path: '/tmp/abc/demo-app', remote: 'git@github.com:acme/Demo-App.git' };
+  assert.equal(projectListLine(entry), 'demo-app（项目）: /tmp/abc/demo-app. Clone from git@github.com:acme/Demo-App.git if missing.');
+  assert.deepEqual(parseProjects(homeAgentsMd(entry)), [{ name: 'demo-app', path: '/tmp/abc/demo-app', remote: 'git@github.com:acme/Demo-App.git' }]);
+  assert.equal(homeProjectName('Demo-App'), 'demo-app');
+  assert.equal(homeRemote('https://github.com/acme/x.git\n', 'x'), 'https://github.com/acme/x.git');
+  assert.ok(normalizeRemote(homeRemote(null, 'x')), 'a repository with no origin is registered under a made-up remote that still parses');
+});
+
+test('registering a project in a home that has it: the line is replaced (name kept, path now the run\'s checkout); a home without it: the line is added; nothing else changes', () => {
+  const entry = { name: 'x', path: '/run/x', remote: 'https://github.com/acme/x' };
+  const home = ['# home', '', '## 设备地图', '', '地图', '', '## 项目', '', 'other（别的）: ~/o. Clone from https://github.com/acme/o if missing.', 'app（真实）: ~/projects/app. Clone from git@github.com:acme/x.git if missing.', '', '## 后面', '', '别的段', ''].join('\n');
+  const replaced = registerProject(home, entry);
+  assert.deepEqual(parseProjects(replaced).map((p) => [p.name, p.path]), [['other', '~/o'], ['app', '/run/x']]);
+  assert.ok(replaced.includes('## 后面\n\n别的段'), 'the other sections are as they were');
+  const added = registerProject(home, { ...entry, remote: 'https://github.com/acme/new' });
+  assert.deepEqual(parseProjects(added).map((p) => p.name), ['other', 'app', 'x']);
+  assert.ok(added.indexOf('x（项目）') < added.indexOf('## 后面'), 'added inside the 项目 section, not after the next one');
+  assert.deepEqual(parseProjects(registerProject('', entry)).map((p) => p.name), ['x']);
+});
+
+test('who is given what: an old case gives the post-change side a home built from the commit and the pre-change side an empty one; a case with home_commit gives both the home cut from it', () => {
+  assert.deepEqual(['before', 'after'].map((s) => homeSourceOf({}, s)), ['empty', 'project-docs']);
+  assert.deepEqual(['before', 'after'].map((s) => homeSourceOf({ home_commit: 'abc1234' }, s)), ['home-commit', 'home-commit']);
+  const env = { PATH: '/bin', IDEA_LOOP_HOME: '/the/machines/own/home' };
+  assert.equal(withHome(env, '/tmp/x/home').IDEA_LOOP_HOME, '/tmp/x/home', 'the session gets the temporary home, never the machine\'s');
+  assert.equal(env.IDEA_LOOP_HOME, '/the/machines/own/home', 'the environment it was made from is not changed');
+});
+
+test('the artifact says where home is and lists what the run wrote there, apart from the workspace; without a home it is as before', () => {
+  const a = buildArtifact({ resultText: '停在这', files: [], homeFiles: [{ path: 'projects/x/docs/spec/s/s.md', content: 'SPEC' }], homePath: '/tmp/r4nd/home' });
+  assert.match(a, /## home（\/tmp\/r4nd\/home）里写下或改动的文件/);
+  assert.match(a, /### projects\/x\/docs\/spec\/s\/s\.md\n\nSPEC/);
+  assert.match(a, /## 工作区里写下或改动的文件\n\n（没有写下或改动的文件）/);
+  assert.doesNotMatch(buildArtifact({ resultText: 'r', files: [] }), /home/);
+});
+
+test('prepareHome of an old case: the commit\'s docs/ and bootstrap files are in projects/<name>/, the list has the project, and where (01) finds it from the project and from a worktree of it', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-old-')));
+  const repo = join(root, 'code');
+  const commit = commitFiles(repo, OLD_REPO_FILES);
+  tgit(repo, 'remote', 'add', 'origin', 'git@github.com:acme/Demo-App.git');
+  // docs added after the case commit must not be in the home
+  mkdirSync(join(repo, 'docs', 'later'), { recursive: true });
+  writeFileSync(join(repo, 'docs', 'later', 'x.md'), 'after the commit\n');
+  tgit(repo, 'add', '-A');
+  tgit(repo, 'commit', '-q', '-m', 'later');
+  // the checkout the run works in (what the runner makes with prepareProject)
+  const project = join(root, 'run', 'Demo-App');
+  commitFiles(project, OLD_REPO_FILES);
+  tgit(project, 'remote', 'add', 'origin', 'git@github.com:acme/Demo-App.git');
+
+  const home = prepareHome({ c: { name: 'c', commit }, side: 'after', t: { repo }, project, name: projectName(repo) });
+  assert.equal(home.source, 'project-docs');
+  const files = walkFiles(home.dir);
+  for (const f of ['AGENTS.md', 'projects/demo-app/AGENTS.md', 'projects/demo-app/docs/index.md', 'projects/demo-app/docs/spec/old/old.md', 'projects/demo-app/DEVELOPMENT.md', 'projects/demo-app/REVIEW.md', 'projects/demo-app/GLOSSARY.md']) {
+    assert.ok(files.includes(f), `${f} is in the temporary home: ${files}`);
+  }
+  assert.ok(!files.some((f) => f.includes('src/') || f.includes('later')), 'no code, and nothing from after the case commit');
+  assert.doesNotMatch(readFileSync(join(home.dir, 'projects', 'demo-app', 'AGENTS.md'), 'utf8'), /代码仓库自己的/, 'the project map is written for the home, not the repository\'s own AGENTS.md');
+  assert.deepEqual(parseProjects(readFileSync(join(home.dir, 'AGENTS.md'), 'utf8')), [{ name: 'demo-app', path: project, remote: 'git@github.com:acme/Demo-App.git' }]);
+  assert.equal(tgit(home.dir, 'rev-parse', 'HEAD'), home.base, 'one commit, so what the run adds can be told from what was there');
+
+  const env = { PATH: process.env.PATH, HOME: root, IDEA_LOOP_HOME: home.dir };
+  const found = locate({ cwd: project, env });
+  assert.equal(found.ok, true, JSON.stringify(found));
+  assert.equal(found.projectDir, join(home.dir, 'projects', 'demo-app'));
+  assert.equal(found.docs, join(home.dir, 'projects', 'demo-app', 'docs'));
+  const wt = join(root, 'run', 'wt');
+  tgit(project, 'worktree', 'add', '-q', wt, '-b', 'side');
+  assert.equal(locate({ cwd: wt, env }).projectDir, found.projectDir, 'a worktree of the project is the same project');
+
+  // the pre-change side: a home with nothing in it, so no project is found and nothing of the machine's own home is
+  const empty = prepareHome({ c: { name: 'c', commit }, side: 'before', t: { repo }, project, name: projectName(repo) });
+  assert.equal(empty.base, null);
+  assert.deepEqual(walkFiles(empty.dir), []);
+  assert.equal(locate({ cwd: project, env: { ...env, IDEA_LOOP_HOME: empty.dir } }).ok, false);
+});
+
+test('prepareHome of a case with home_commit: both sides are cut from that commit of the home repository, each its own copy, the project\'s line pointed at the run\'s checkout', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-new-')));
+  const homeRepo = join(root, 'machine-home');
+  const homeCommit = commitFiles(homeRepo, {
+    'AGENTS.md': '# home\n\n## 项目\n\napp（真实）: ~/projects/app. Clone from git@github.com:acme/app.git if missing.\n',
+    'projects/app/AGENTS.md': '地图\n',
+    'projects/app/docs/spec/s/s.md': 'a spec in home\n',
+  });
+  // the home moves on after the commit: that must not reach the run
+  writeFileSync(join(homeRepo, 'projects', 'app', 'docs', 'newer.md'), 'newer\n');
+  tgit(homeRepo, 'add', '-A');
+  tgit(homeRepo, 'commit', '-q', '-m', 'newer');
+  const repo = join(root, 'code');
+  const commit = commitFiles(repo, { 'src/app.js': 'code\n' });
+  tgit(repo, 'remote', 'add', 'origin', 'https://github.com/acme/app');
+  const project = join(root, 'run', 'app');
+  commitFiles(project, { 'src/app.js': 'code\n' });
+  tgit(project, 'remote', 'add', 'origin', 'https://github.com/acme/app');
+  const c = { name: 'c', commit, home_commit: homeCommit };
+  const t = { repo, homeRepo };
+
+  const homes = ['before', 'after'].map((side) => prepareHome({ c, side, t, project, name: 'app' }));
+  assert.notEqual(homes[0].dir, homes[1].dir);
+  for (const h of homes) {
+    assert.equal(h.source, 'home-commit');
+    assert.deepEqual(walkFiles(h.dir), ['AGENTS.md', 'projects/app/AGENTS.md', 'projects/app/docs/spec/s/s.md']);
+    assert.deepEqual(parseProjects(readFileSync(join(h.dir, 'AGENTS.md'), 'utf8')), [{ name: 'app', path: project, remote: 'git@github.com:acme/app.git' }]);
+    assert.equal(locate({ cwd: project, env: { PATH: process.env.PATH, HOME: root, IDEA_LOOP_HOME: h.dir } }).projectDir, join(h.dir, 'projects', 'app'));
+  }
+  assert.equal(homeProblem(c, t), null);
+  assert.match(homeProblem(c, { repo }), /--home-repo/, 'a case with home_commit and no home repository named cannot start');
+  assert.match(homeProblem({ ...c, home_commit: 'deadbee' }, t), /没有提交 deadbee/);
+  assert.equal(homeProblem({ name: 'c', commit }, { repo }), null, 'an old case never needs one');
+});
+
+const workers = (env) => sessions(env).filter((x) => x.kind === 'worker');
+
+test('e2e old case: only the post-change run is given a home with the commit\'s docs/ in it, the pre-change run an empty one; where finds the project from the run\'s checkout; the checkout\'s origin cannot be pushed to', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', origin: 'git@github.com:acme/Demo.git', repoFiles: { 'docs/index.md': '# 知识库\n', 'DEVELOPMENT.md': '# 开发\n', 'src/a.js': 'x\n' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.deepEqual(before.home.files, [], 'the pre-change run: a home with nothing in it');
+  assert.equal(before.where.status, 1, 'and no project in it');
+  assert.deepEqual(after.home.files.filter((f) => !f.endsWith('AGENTS.md')), ['projects/demo/DEVELOPMENT.md', 'projects/demo/docs/index.md']);
+  assert.equal(after.where.status, 0, after.where.stderr);
+  assert.match(after.where.stdout, /"project": "demo"/);
+  assert.notEqual(before.home.dir, after.home.dir);
+  for (const h of [before.home.dir, after.home.dir]) assert.doesNotMatch(h, /retro|replay|回放|before|after|eval/i, `the temporary home's path says nothing about a test: ${h}`);
+  assert.equal(after.origin.fetch, 'git@github.com:acme/Demo.git', 'the project copy has the case repository\'s origin');
+  assert.notEqual(after.origin.push, after.origin.fetch, 'and a run cannot push to it');
+  // the homes are only for the run; a copy stays under the run dir
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  assert.ok(!existsSync(after.home.dir));
+  assert.ok(existsSync(join(dir, 'after', 'home', 'projects', 'demo', 'docs', 'index.md')));
+});
+
+test('e2e old case: what the post-change run writes in its home, and commits there, reaches the judge; the case passes on it alone', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: plain\nhome-write: FIXED the spec', repoFiles: { 'docs/index.md': '# 知识库\n' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const art = readFileSync(join(dir, 'after', 'artifact.md'), 'utf8');
+  assert.match(art, /## home（.+）里写下或改动的文件/);
+  assert.match(art, /### projects\/repo\/docs\/spec\/out-home\.md\n\nFIXED the spec/);
+  assert.doesNotMatch(readFileSync(join(dir, 'before', 'artifact.md'), 'utf8'), /## home/, 'a side given only an empty home has no home section');
+  assert.equal(resultJson(env, r.stdout).outcome, 'pass');
+});
+
+test('e2e case with home_commit: both runs get a home cut from it (their own copies, same content), --home-repo says where the home repository is, the list line points at the run\'s checkout', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', origin: 'https://github.com/acme/repo.git' });
+  const homeRepo = join(env.root, 'machine-home');
+  const homeCommit = commitFiles(homeRepo, {
+    'AGENTS.md': '# home\n\n## 项目\n\nrepo（真实）: ~/projects/elsewhere. Clone from git@github.com:acme/repo.git if missing.\n',
+    'projects/repo/AGENTS.md': '地图\n',
+    'projects/repo/docs/spec/s/s.md': 'a spec in home\n',
+  });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify({ ...c, home_commit: homeCommit }));
+  const r = run(env, ['--home-repo', homeRepo]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  for (const p of [before, after]) {
+    assert.deepEqual(p.home.files, ['AGENTS.md', 'projects/repo/AGENTS.md', 'projects/repo/docs/spec/s/s.md']);
+    assert.equal(p.where.status, 0, p.where.stderr);
+    assert.doesNotMatch(p.home.agents, /elsewhere/, 'the machine\'s own path of the project is not left in the list');
+  }
+  assert.notEqual(before.home.dir, after.home.dir, 'each run has its own copy: what one writes does not reach the other');
+  assert.ok(readFileSync(join(homeRepo, 'AGENTS.md'), 'utf8').includes('elsewhere'), 'the home repository itself is not touched');
+});
+
+test('e2e case with home_commit but no --home-repo: refused before any session starts, and so is a home repository that lacks the commit', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED' });
+  const homeRepo = join(env.root, 'machine-home');
+  commitFiles(homeRepo, { 'AGENTS.md': '# home\n' });
+  const c = JSON.parse(readFileSync(join(env.caseDir, 'case.json'), 'utf8'));
+  writeFileSync(join(env.caseDir, 'case.json'), JSON.stringify({ ...c, home_commit: 'deadbee' }));
+  const none = run(env);
+  assert.equal(none.status, 2);
+  assert.match(none.stderr, /--home-repo/);
+  const wrong = run(env, ['--home-repo', homeRepo]);
+  assert.equal(wrong.status, 2);
+  assert.match(wrong.stderr, /没有提交 deadbee/);
+  assert.deepEqual(wrong.calls, [], 'no session was started');
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -1082,4 +1395,202 @@ test('exercisedBy: a Bash command naming a changed file by its path relative to 
   assert.equal(used('cat tools/p/skills/b/SKILL.md'), 'miss');
   assert.equal(used('cat tools/p/skills/a/SKILL.md', []), 'miss', 'no project copy of the plugin: not counted');
   assert.equal(used('cat skills/a/SKILL.md', ['']), 'hit', 'a plugin at the project root');
+});
+
+// ---------------------------------------------------------------------------------------------
+// The fixed text (home's 思考与决策 / 沟通 / 证据): the pre-change side's home has none, the post-change side's has it, and the
+// session reads it from its project's .claude/CLAUDE.md
+// ---------------------------------------------------------------------------------------------
+
+const REAL_RULES = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', RULES_FILE), 'utf8');
+
+test('RULE_SECTIONS are the headings of the plugin\'s own fixed text, in order (the runner and dyna name the same three sections)', () => {
+  const headings = [...REAL_RULES.matchAll(/^## (.*?)\s*$/gm)].map((m) => m[1]);
+  assert.deepEqual(headings, RULE_SECTIONS);
+});
+
+test('sectionsOf: the named sections only, each from its heading to the next one, in file order; a ## in a code block ends nothing; none gives an empty string', () => {
+  const agents = ['# home', '', '## 沟通', '', '规矩一', '', '```', '## 不是标题', '```', '', '## 设备地图', '', '地图', '', '## 证据', '', '规矩二', ''].join('\n');
+  assert.equal(sectionsOf(agents), ['## 沟通\n\n规矩一\n\n```\n## 不是标题\n```', '## 证据\n\n规矩二'].join('\n\n'));
+  assert.equal(sectionsOf('# home\n\n## 设备地图\n\n地图\n'), '');
+  assert.equal(sectionsOf(REAL_RULES).split('\n').filter((l) => l.startsWith('## ')).join(','), RULE_SECTIONS.map((n) => `## ${n}`).join(','));
+});
+
+test('rulesMemoryMd keeps what the memory file already holds and adds the sections after it; withDyna sets the side\'s own dyna and changes nothing else', () => {
+  assert.equal(rulesMemoryMd('## 沟通\n\nx'), '## 沟通\n\nx\n');
+  assert.equal(rulesMemoryMd('## 沟通\n\nx', '项目自己的记忆\n\n'), '项目自己的记忆\n\n## 沟通\n\nx\n');
+  const env = { PATH: '/bin', IDEA_LOOP_DYNA_BIN: '/a/dyna' };
+  assert.equal(withDyna(env, '/b/dyna').IDEA_LOOP_DYNA_BIN, '/b/dyna');
+  assert.equal(env.IDEA_LOOP_DYNA_BIN, '/a/dyna');
+  assert.equal(withDyna(env, null), env, 'no side dyna: the environment as it is');
+});
+
+/** A plugin dir with (or without) the fixed text. */
+function rulesPlugin(root, name, withRules) {
+  const dir = join(root, name);
+  mkdirSync(join(dir, '.claude-plugin'), { recursive: true });
+  writeFileSync(join(dir, '.claude-plugin', 'plugin.json'), JSON.stringify({ name: 'idea-loop' }));
+  if (withRules) {
+    mkdirSync(dirname(join(dir, RULES_FILE)), { recursive: true });
+    writeFileSync(join(dir, RULES_FILE), REAL_RULES);
+  }
+  return dir;
+}
+
+test('applyHomeRules and prepareHome: a plugin that has the fixed text gets the three sections in its home (written by dyna, committed in the starting state); one that has not gets a home without them; nothing lands in this machine\'s ~/.claude', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-rules-')));
+  const repo = join(root, 'code');
+  const commit = commitFiles(repo, OLD_REPO_FILES);
+  const project = join(root, 'run', 'Demo-App');
+  commitFiles(project, OLD_REPO_FILES);
+  const oldPlugin = rulesPlugin(root, 'old', false);
+  const newPlugin = rulesPlugin(root, 'new', true);
+  const dyna = dynaBinary();
+  const machineHome = join(root, 'machine-home');
+  mkdirSync(machineHome);
+  const env = { ...process.env, HOME: machineHome };
+
+  const after = prepareHome({ c: { name: 'c', commit }, side: 'after', t: { repo }, project, name: projectName(repo), plugin: newPlugin, dyna, env });
+  const agents = readFileSync(join(after.dir, 'AGENTS.md'), 'utf8');
+  for (const n of RULE_SECTIONS) assert.match(agents, new RegExp(`^## ${n}$`, 'm'), `${n} is in the post-change home`);
+  assert.match(agents, /^## 项目$/m, 'the project list stays');
+  assert.equal(after.rules, sectionsOf(agents));
+  assert.ok(after.rules.includes('三句话的框架'), 'the sections are the plugin\'s text');
+  assert.equal(tgit(after.dir, 'rev-parse', 'HEAD'), after.base);
+  assert.equal(tgit(after.dir, 'status', '--short'), '', 'the fixed text is part of the starting state: nothing is left for the run to be credited with');
+  assert.deepEqual(readdirSync(machineHome), [], 'the backup dyna makes of the user-level files went to a throwaway HOME, not this machine\'s');
+
+  // the pre-change plugin: a home as before, with no fixed text
+  const before = prepareHome({ c: { name: 'c', commit }, side: 'before', t: { repo }, project, name: projectName(repo), plugin: oldPlugin, dyna, env });
+  assert.equal(before.base, null);
+  assert.equal(before.rules, '');
+  assert.deepEqual(walkFiles(before.dir), []);
+  const oldCaseAfterOldPlugin = prepareHome({ c: { name: 'c', commit }, side: 'after', t: { repo }, project, name: projectName(repo), plugin: oldPlugin, dyna, env });
+  assert.equal(oldCaseAfterOldPlugin.rules, '');
+  assert.doesNotMatch(readFileSync(join(oldCaseAfterOldPlugin.dir, 'AGENTS.md'), 'utf8'), /^## 沟通$/m);
+  assert.equal(applyHomeRules({ home: before.dir, plugin: oldPlugin, dyna, env }), '', 'without the text in the plugin nothing is written');
+  assert.deepEqual(walkFiles(before.dir), []);
+
+  // a pre-change side whose plugin does have the text still gets a home with it, even from an empty start
+  const emptyWithRules = prepareHome({ c: { name: 'c', commit }, side: 'before', t: { repo }, project, name: projectName(repo), plugin: newPlugin, dyna, env });
+  assert.ok(emptyWithRules.base);
+  assert.match(readFileSync(join(emptyWithRules.dir, 'AGENTS.md'), 'utf8'), /^## 证据$/m);
+});
+
+test('applyHomeRules: a dyna that cannot write the text is an error that says what to point the runner at, not a silent home without the rules', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'home-rules-bad-')));
+  const home = join(root, 'home');
+  mkdirSync(home);
+  const bad = join(root, 'bad-dyna');
+  writeFileSync(bad, '#!/bin/sh\necho unknown command >&2\nexit 2\n');
+  chmodSync(bad, 0o755);
+  assert.throws(() => applyHomeRules({ home, plugin: rulesPlugin(root, 'new', true), dyna: bad }), /--after-dyna.*unknown command/s);
+});
+
+test('seedRulesMemory: the sections go in the project\'s .claude/CLAUDE.md as part of the starting commit (after what the commit already had there); no text, nothing changes', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'seed-rules-')));
+  const project = join(root, 'p');
+  commitFiles(project, { 'README.md': 'x\n', '.claude/CLAUDE.md': '项目自己的记忆\n' });
+  const first = tgit(project, 'rev-parse', 'HEAD');
+  assert.equal(seedRulesMemory(project, ''), first, 'no text: the starting commit is the one it was');
+  const base = seedRulesMemory(project, '## 沟通\n\n三句话');
+  assert.notEqual(base, first);
+  assert.equal(readFileSync(join(project, RULES_MEMORY_FILE), 'utf8'), '项目自己的记忆\n\n## 沟通\n\n三句话\n');
+  assert.equal(tgit(project, 'status', '--short'), '');
+  assert.equal(tgit(project, 'rev-parse', 'HEAD'), base);
+});
+
+test('e2e: the post-change plugin has the fixed text: its run has it in its home and in the project\'s .claude/CLAUDE.md, the pre-change run neither; each side runs with its own dyna; the check counts it as used; the artifact does not credit the run with it', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', pluginFiles: { after: { [RULES_FILE]: REAL_RULES } }, repoFiles: { 'docs/index.md': '# 知识库\n' } });
+  const beforeDyna = join(env.root, 'dyna-before');
+  writeFileSync(beforeDyna, readFileSync(dynaBinary()));
+  chmodSync(beforeDyna, 0o755);
+  const afterDyna = dynaBinary();
+  const r = run(env, ['--before-dyna', beforeDyna, '--after-dyna', afterDyna]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.equal(before.memory, null, 'the pre-change run: no fixed text in its project memory');
+  assert.doesNotMatch(before.home.agents ?? '', /^## 沟通$/m, 'nor in its home');
+  assert.equal(after.memory.split('\n').filter((l) => l.startsWith('## ')).join(','), RULE_SECTIONS.map((n) => `## ${n}`).join(','), 'the post-change run: the three sections in its memory');
+  for (const n of RULE_SECTIONS) assert.match(after.home.agents, new RegExp(`^## ${n}$`, 'm'), 'and in its home');
+  assert.equal(before.dynaBin, beforeDyna, 'each side\'s session gets its own dyna');
+  assert.equal(after.dynaBin, afterDyna);
+  const result = resultJson(env, r.stdout);
+  assert.equal(result.outcome, 'pass');
+  assert.deepEqual([result.exercised.status, result.exercised.via, result.exercised.name], ['hit', 'injected', RULES_FILE], 'the session has the text from the start: no read or call shows it, and it still counts');
+  const dir = /run dir: (.+)/.exec(r.stdout)[1].trim();
+  const artifact = readFileSync(join(dir, 'after', 'artifact.md'), 'utf8');
+  assert.doesNotMatch(artifact, /\.claude\/CLAUDE\.md|### AGENTS\.md|## 思考与决策/, 'the starting state is not something the run wrote');
+  assert.match(artifact, /### docs\/out\.md/, 'only what the run itself wrote is listed in the workspace');
+  assert.match(artifact, /里写下或改动的文件\n\n[^#]*（没有写下或改动的文件）$/, 'and nothing in home');
+});
+
+test('e2e: neither plugin has the fixed text (a case about something else): no memory file, homes as before, and no dyna is forced on the sessions', () => {
+  const env = setup({ before: 'reply: plain', after: 'reply: FIXED', repoFiles: { 'docs/index.md': '# 知识库\n' } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.equal(before.memory, null);
+  assert.equal(after.memory, null);
+  assert.equal(before.dynaBin, dynaBinary(), 'the runner\'s own environment passes through');
+  assert.doesNotMatch(after.home.agents, /^## 沟通$/m);
+});
+
+test('a guard case watches that a rule does not reach too far: the post-change answer alone decides, a pre-change "yes" is expected there', () => {
+  assert.equal(decideOutcome({ before: '是', after: '是', guard: true }).outcome, 'pass');
+  assert.equal(decideOutcome({ before: '否', after: '是', guard: true }).outcome, 'pass');
+  assert.equal(decideOutcome({ before: '是', after: '否', guard: true }).outcome, 'fail', 'the new rule took the decision away from the human');
+  assert.equal(decideOutcome({ before: '是', after: '是' }).outcome, 'case-missed', 'without guard a pre-change "yes" still means the case missed the problem');
+  assert.equal(decideOutcome({ before: '是', after: '不知道', guard: true }).outcome, 'inconclusive');
+});
+
+test('validateCase: guard is optional and, when given, true or false', () => {
+  assert.deepEqual(validateCase({ ...smallCase(), guard: true }), []);
+  assert.deepEqual(validateCase({ ...smallCase(), guard: false }), []);
+  assert.deepEqual(validateCase(smallCase()), []);
+  assert.deepEqual(validateCase({ ...smallCase(), guard: 'yes' }).map((p) => p.field), ['guard']);
+});
+
+test('e2e: a guard case passes on the post-change "yes" although the pre-change run said "yes" too, and the result says it was a guard', () => {
+  const env = setup({ before: 'reply: FIXED', after: 'reply: FIXED', caseExtra: { guard: true } });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const result = resultJson(env, r.stdout);
+  assert.equal(result.outcome, 'pass');
+  assert.equal(result.guard, true);
+  assert.match(result.reason, /守边界/);
+});
+
+test('a pre-change plugin that already reads the knowledge base from home (its hooks tell the session where home is) is given the built home too; an older one still gets an empty one', () => {
+  assert.equal(homeSourceOf({}, 'before', { readsHome: true }), 'project-docs');
+  assert.equal(homeSourceOf({}, 'before', { readsHome: false }), 'empty');
+  assert.equal(homeSourceOf({}, 'before'), 'empty');
+  assert.equal(homeSourceOf({ home_commit: 'abc1234' }, 'before', { readsHome: true }), 'home-commit');
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'reads-home-')));
+  const withHook = join(root, 'with');
+  mkdirSync(join(withHook, 'hooks'), { recursive: true });
+  writeFileSync(join(withHook, 'hooks', 'hooks.json'), '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"\\"${CLAUDE_PLUGIN_ROOT}/bin/dyna\\" home map --hook"}]}]}}');
+  assert.equal(pluginReadsHome(withHook), true);
+  const without = join(root, 'without');
+  mkdirSync(join(without, 'hooks'), { recursive: true });
+  writeFileSync(join(without, 'hooks', 'hooks.json'), '{"hooks":{}}');
+  assert.equal(pluginReadsHome(without), false);
+  assert.equal(pluginReadsHome(join(root, 'no-hooks-at-all')), false);
+  assert.equal(pluginReadsHome(null), false);
+});
+
+test('e2e old case: a pre-change plugin from 0.2.0\'s line (it reads home) is given the commit\'s docs/ in its home, like the post-change one; only the fixed text tells the two homes apart', () => {
+  const hooks = '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"dyna home map --hook"}]}]}}';
+  const env = setup({
+    before: 'reply: plain', after: 'reply: FIXED',
+    pluginFiles: { before: { 'hooks/hooks.json': hooks }, after: { 'hooks/hooks.json': hooks, [RULES_FILE]: REAL_RULES } },
+    repoFiles: { 'docs/index.md': '# 知识库\n' },
+  });
+  const r = run(env);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const [before, after] = workers(env).map((s) => s.probe);
+  assert.ok(before.home.files.includes('projects/repo/docs/index.md'), `the pre-change run finds the knowledge base in its home: ${before.home.files}`);
+  assert.ok(after.home.files.includes('projects/repo/docs/index.md'));
+  assert.doesNotMatch(before.home.agents, /^## 沟通$/m);
+  assert.match(after.home.agents, /^## 沟通$/m);
 });

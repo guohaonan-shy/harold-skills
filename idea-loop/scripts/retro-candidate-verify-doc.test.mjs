@@ -11,10 +11,10 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(pluginRoot, '..');
@@ -22,7 +22,11 @@ const retroDir = join(pluginRoot, 'skills', 'productivity', 'retro');
 const skill = readFileSync(join(retroDir, 'SKILL.md'), 'utf8');
 const pool = readFileSync(join(retroDir, 'references', 'candidate-pool.md'), 'utf8');
 const record = readFileSync(join(retroDir, 'references', 'decision-record.md'), 'utf8');
-const recordsIndex = readFileSync(join(repoRoot, 'docs', 'records', 'index.md'), 'utf8');
+// this repository's own docs/ (a project directory in home once the repository is migrated): the checks that read it
+// are skipped when it is not there
+const recordsIndexFile = join(repoRoot, 'docs', 'records', 'index.md');
+const poolDir = join(repoRoot, 'docs', 'records', 'retro-candidates');
+const hasDocs = existsSync(recordsIndexFile) && existsSync(poolDir);
 
 const block = skill.match(/```\n(### 候选[\s\S]*?)```/);
 
@@ -54,7 +58,8 @@ test('the 验证 field names its three ways in the template line and says what e
   assert.match(para, /是\/否题/);
   assert.match(para, /先在历史错误上看它红/);
   assert.match(para, /判不了/);
-  assert.match(para, /原因/);
+  assert.match(para, /判不了」和卡在哪/, '「判不了」写卡在哪，跟 spec 杠杆诊断里的写法对齐');
+  assert.doesNotMatch(para, /原因/);
 });
 
 test('the 做完的条件 of the candidate section counts nine items and checks the 验证 field', () => {
@@ -73,17 +78,17 @@ test('the 做完的条件 of the candidate section counts nine items and checks 
 test('the places that repeat the candidate format carry the 验证 field too', () => {
   assert.match(pool, /^- 验证：/m, 'candidate-pool.md 的池文件格式里没有「验证」');
   assert.match(record, /^- 验证：/m, 'decision-record.md 的候选块里没有「验证」');
-  assert.match(recordsIndex, /验证/, 'docs/records/index.md 的池形状里没有「验证」');
+  if (hasDocs) assert.match(readFileSync(recordsIndexFile, 'utf8'), /验证/, 'docs/records/index.md 的池形状里没有「验证」');
   // order inside the pool file shape: 归并 then 验证 then 例子
   const shape = pool.match(/```markdown\n([\s\S]*?)```/)[1];
   assert.ok(shape.indexOf('- 归并') < shape.indexOf('- 验证') && shape.indexOf('- 验证') < shape.indexOf('- 例子'));
 });
 
-test('the pool reader still accepts the existing pool files, which have no 验证 line', () => {
-  const dir = join(repoRoot, 'docs', 'records', 'retro-candidates');
+test('the pool reader still accepts the existing pool files, which have no 验证 line', { skip: !hasDocs && 'this repository has no docs/' }, () => {
+  const dir = poolDir;
   const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
   assert.ok(files.length > 0);
-  const r = spawnSync(process.execPath, [join(pluginRoot, 'scripts', 'retro-pool-count.mjs'), dir], { encoding: 'utf8' });
+  const r = runDyna(['retro', 'pool', 'count', dir]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(JSON.parse(r.stdout).problems, []);
 });

@@ -1,6 +1,6 @@
 # 两版画布对比：矩阵、改动集、输出
 
-`"mode": "canvas-diff"` 的矩阵怎么写、脚本交回什么。它是什么、什么时候用，见 SKILL.md 的「两版画布对比」。
+`"mode": "canvas-diff"` 的矩阵怎么写、`dyna ui measure` 交回什么。它是什么、什么时候用，见 SKILL.md 的「两版画布对比」。
 
 ```json
 {

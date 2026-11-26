@@ -1,34 +1,43 @@
 /**
  * Tripwire — the wiki-conventions skill stays short, and everyone who points at one of its sections points at
- * one that exists (docs/spec/wiki-conventions-slim). Same two checks as design-archive-skill-doc.test.mjs,
- * shared through `skill-doc-check.mjs`.
+ * one that exists (docs/spec/wiki-conventions-slim). The check of design-archive-skill-doc.test.mjs,
+ * run by the command line (`dyna test skill-doc`).
  *
- * 1. The SKILL.md body (frontmatter stripped, UTF-8 characters) is under 5000. Details only some callers need
- *    live in `references/`, one pointer line from the section that owns them.
- * 2. Other skills and agents call the skill by name plus a section title (idea-loop:wiki-conventions 的「X」, written without backticks here so this note is not itself scanned).
+ * 1. Other skills and agents call the skill by name plus a section title (idea-loop:wiki-conventions 的「X」, written without backticks here so this note is not itself scanned).
  *    Section names are the contract: every title quoted that way must be a heading of the SKILL.md or of one of
- *    its `references/` files. `spec.mjs` quotes one in its error text too.
+ *    its `references/` files. `dyna spec check` quotes one in its error text too (dyna/internal/spec/check.go).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MAX_BODY_CHARS, bodyChars, danglingSectionPointers, mdFiles, headings } from './skill-doc-check.mjs';
+import { runDyna } from './dyna-test-bin.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skillDir = join(pluginRoot, 'skills', 'productivity', 'wiki-conventions');
+
+const mdFiles = (dir) => (existsSync(dir) ? readdirSync(dir).flatMap((name) => (statSync(join(dir, name)).isDirectory() ? mdFiles(join(dir, name)) : name.endsWith('.md') ? [join(dir, name)] : [])) : []);
+/** The headings of a markdown text, any level; lines inside a code fence are not headings. */
+function headings(text) {
+  let fenced = false;
+  const out = [];
+  for (const line of text.split('\n')) {
+    if (line.startsWith('```')) fenced = !fenced;
+    const m = !fenced && line.match(/^#{1,6}\s+(.+?)\s*$/);
+    if (m) out.push(m[1]);
+  }
+  return out;
+}
 const allHeadings = () => [join(skillDir, 'SKILL.md'), ...mdFiles(join(skillDir, 'references'))].flatMap((f) => headings(readFileSync(f, 'utf8')));
 
-test('wiki-conventions SKILL.md body is under 5000 characters', () => {
-  const n = bodyChars(skillDir);
-  assert.ok(n < MAX_BODY_CHARS, `SKILL.md body is ${n} characters; the limit is ${MAX_BODY_CHARS}. Move long material into references/.`);
-});
+// One call: exit 1 when a quoted section does not exist;
+// --min-pointers makes a wrong skill name (a check of nothing) red too.
+const check = () => runDyna(['test', 'skill-doc', skillDir, '--plugin', pluginRoot, '--min-pointers', '1']);
 
 test('every section of wiki-conventions that a skill or agent quotes exists as a heading of its SKILL.md or references/', () => {
-  const { seen, bad } = danglingSectionPointers({ pluginRoot, skillDir, skillName: 'wiki-conventions' });
-  assert.ok(seen > 0, 'expected the skills and agents to quote at least one wiki-conventions section');
-  assert.deepEqual(bad, [], `these wiki-conventions sections do not exist (renamed or moved?):\n${bad.join('\n')}`);
+  const r = check();
+  assert.equal(r.status, 0, `these wiki-conventions sections do not exist (renamed or moved?), or none are quoted:\n${r.stdout}${r.stderr}`);
 });
 
 test('every section name other files point at is still a heading (any level): section names are the contract', () => {
@@ -48,8 +57,8 @@ test('the body is two parts plus the scratch dir: the second-level headings are 
   assert.deepEqual(h2, ['目录', '生命周期', '中间产物']);
 });
 
-test('the section spec.mjs sends people to exists', () => {
-  const src = readFileSync(join(pluginRoot, 'scripts', 'spec.mjs'), 'utf8');
+test('the section `dyna spec check` sends people to exists', () => {
+  const src = readFileSync(join(pluginRoot, '..', 'dyna', 'internal', 'spec', 'check.go'), 'utf8');
   const titles = [...src.matchAll(/wiki-conventions 的「([^」]+)」/g)].map((m) => m[1]);
   assert.ok(titles.length > 0);
   const known = allHeadings();
@@ -64,4 +73,43 @@ test('the trimmed sections and parked references are gone, and the directory tab
   const table = md.slice(md.indexOf('## 目录'), md.indexOf('### frontmatter')).split('\n').filter((l) => l.startsWith('|'));
   assert.ok(table.length > 5);
   assert.deepEqual(table.filter((l) => /<[^>]*slug[^>]*>|NN-/.test(l)), []);
+});
+
+// ---- glossary folded in (docs/spec/skill-rewrite, ticket 03) ----
+// The glossary skill is gone: what goes in, the format, who writes, who reads, and wiring a project to it live in
+// wiki-conventions' own references/glossary.md, behind one pointer section (名字 「术语表」) that says when to read it.
+const pluginFiles = () => ['skills', 'agents'].flatMap((d) => mdFiles(join(pluginRoot, d)));
+const bodyOf = (raw) => raw.replace(/^---\n[\s\S]*?\n---\n/, '');
+const mainBody = () => bodyOf(readFileSync(join(skillDir, 'SKILL.md'), 'utf8'));
+const glossaryRef = join(skillDir, 'references', 'glossary.md');
+
+test('the glossary skill is gone and nothing in skills/ or agents/ calls idea-loop:glossary', () => {
+  assert.ok(!existsSync(join(pluginRoot, 'skills', 'productivity', 'glossary')), 'skills/productivity/glossary/ is back');
+  const hits = pluginFiles().filter((f) => /idea-loop:glossary\b/.test(readFileSync(f, 'utf8')));
+  assert.deepEqual(hits, []);
+});
+
+test('wiki-conventions has one 术语表 pointer to references/glossary.md, and its description carries the trigger', () => {
+  const md = mainBody();
+  assert.ok(headings(md).includes('术语表'), 'the 术语表 section is missing');
+  const lines = md.split('\n').filter((l) => l.includes('references/glossary.md'));
+  assert.equal(lines.length, 1, 'the pointer is written once');
+  assert.match(lines[0], /碰 `GLOSSARY\.md`[^。]*时读/);
+  const description = readFileSync(join(skillDir, 'SKILL.md'), 'utf8').match(/^description: (.+)$/m)?.[1] ?? '';
+  assert.match(description, /术语表/);
+});
+
+test('references/glossary.md keeps the glossary rules: what goes in, format, who writes, who reads, wiring a project', () => {
+  assert.ok(existsSync(glossaryRef), 'references/glossary.md is missing');
+  const hs = headings(readFileSync(glossaryRef, 'utf8'));
+  for (const h of ['收什么：三问全过才收', '文件与格式', '写：人拍板之后当场写', '读：所有产出命名的地方', '接入项目']) assert.ok(hs.includes(h), `「${h}」 is not a heading of references/glossary.md`);
+  assert.ok(!existsSync(join(skillDir, 'references', 'target-repo-setup.md')));
+});
+
+test('neither wiki-conventions SKILL.md nor the glossary reference carries decision history or inline git / gh commands', () => {
+  for (const f of [join(skillDir, 'SKILL.md'), glossaryRef]) {
+    const text = readFileSync(f, 'utf8');
+    assert.doesNotMatch(text, /20\d{2}-\d{2}-\d{2}|人定|原话|依据：/, `${f}: decision history`);
+    assert.doesNotMatch(text, /`(?:gh|git) [a-z]/, `${f}: an inline external command`);
+  }
 });

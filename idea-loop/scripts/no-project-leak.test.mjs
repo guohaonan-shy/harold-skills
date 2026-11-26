@@ -20,7 +20,8 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SCANNED = ['skills', 'agents', 'docs', 'README.md', 'AGENTS.md'];
+// the command line lives next to the plugin, not in it, and ships with the same promise: nothing of a real project
+const SCANNED = ['skills', 'agents', 'docs', 'README.md', 'AGENTS.md', 'bin', 'dyna-version', 'runtime', '../dyna'];
 
 const TELLS = [
   /toeflair|tofelair|\btoefl\b/i,
@@ -37,12 +38,12 @@ function files(path) {
   if (!statSync(path).isDirectory()) return [path];
   return readdirSync(path).flatMap((name) => {
     const p = join(path, name);
-    if (statSync(p).isDirectory()) return files(p);
-    return /\.(md|mjs|json|ya?ml|html)$/.test(name) ? [p] : [];
+    if (statSync(p).isDirectory()) return name === 'dist' ? [] : files(p);
+    return /\.(md|mjs|json|go|ya?ml|html)$|^dyna$/.test(name) ? [p] : [];
   });
 }
 
-test('skills, agents, docs, README and AGENTS.md carry no project-specific names or examples', () => {
+test('skills, agents, docs, README, AGENTS.md and the command line carry no project-specific names or examples', () => {
   const hits = [];
   for (const entry of SCANNED) {
     for (const file of files(join(pluginRoot, entry))) {
@@ -53,4 +54,15 @@ test('skills, agents, docs, README and AGENTS.md carry no project-specific names
     }
   }
   assert.deepEqual(hits, [], `project-specific content leaked into the plugin:\n${hits.join('\n')}`);
+});
+
+// home's fixed text is written into every user's home verbatim, so it is held to the same promise by name: the scan above
+// must reach the file (it lives under skills/), and it carries no issue or PR number of the project it was drawn from.
+const HOME_RULES = 'skills/engineering/setup/references/home-rules.md';
+
+test('the fixed text dyna writes into home is among the scanned files and names no project, issue or PR', () => {
+  const scanned = SCANNED.flatMap((entry) => files(join(pluginRoot, entry))).map((f) => relative(pluginRoot, f));
+  assert.ok(scanned.includes(HOME_RULES), `${HOME_RULES} is not under a scanned path`);
+  const text = readFileSync(join(pluginRoot, HOME_RULES), 'utf8');
+  assert.doesNotMatch(text, /#\d{2,}|\b(issue|PR)\s*#?\d+/i, 'an issue or PR number in the fixed text');
 });

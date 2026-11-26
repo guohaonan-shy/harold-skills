@@ -25,7 +25,7 @@ export function summarizeResults(results) {
   return { total: results.length, passed, notPassed: results.length - passed, allPassed: results.length > 0 && passed === results.length, cost: Math.round(cost * 100) / 100 };
 }
 
-const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', inconclusive: '没有结论', 'not-exercised': '用例没测到改动', 'no-result': '没跑出结果', 'bad-case': '用例有问题，没能跑' };
+const LABEL = { pass: '过', fail: '不过', 'case-missed': '用例没抓住问题', 'already-done': '不过：改前就做得到', inconclusive: '没有结论', 'not-exercised': '用例没测到改动', 'no-result': '没跑出结果', 'bad-case': '用例有问题，没能跑' };
 const YESNO = { yes: '是', no: '否' };
 const usd = (n) => (n == null ? '?' : `$${n.toFixed(2)}`);
 
@@ -53,7 +53,7 @@ function describeCase(r) {
 /**
  * One review-loop entry for the replay of one PR. A replay entry is a record the runner wrote:
  * when every case passed it says so under 做了什么 (nothing is waiting for the human); otherwise it carries a
- * 要你决定 and no 做了什么, so `review-loop.mjs check` lists it until the human has ruled and it was acted on.
+ * 要你决定 and no 做了什么, so `dyna pr loop check` lists it until the human has ruled and it was acted on.
  */
 export function buildReplayEntry({ round, ranAt, results }) {
   const s = summarizeResults(results);
@@ -68,13 +68,30 @@ export function buildReplayEntry({ round, ranAt, results }) {
   if (s.allPassed) {
     lines.push('### 做了什么', '- 全部用例都过，没有要处理的。');
   } else {
-    const bad = results.filter((r) => r.outcome !== 'pass').map((r) => `\`${r.case}\``).join('、');
-    lines.push(
-      `**要你决定**：${bad} 没过，不会自动重跑。`,
-      '- A：判定对，规则改动没达到目的（含「用例没测到改动」：改动没被触发到）—— 回到规则，接着改，再跑一次回放。',
-      '- B：判定错了 —— 在用例旁的 `annotations.md` 里推翻，再跑 `--settle`。',
-      '- C：用例本身有问题（没抓住问题、没测到改动、写不清）—— 先修用例再跑。',
-    );
+    const notPassed = results.filter((r) => r.outcome !== 'pass');
+    const names = (rs) => rs.map((r) => `\`${r.case}\``).join('、');
+    // A goal case that was already done before the change cannot be "the change missed its goal": the human's choice there
+    // is a different case, or taking the rule out. Every other case keeps the options it always had.
+    const done = notPassed.filter((r) => r.outcome === 'already-done');
+    const rest = notPassed.filter((r) => r.outcome !== 'already-done');
+    const scope = (rs, what) => (done.length && rest.length ? [`关于 ${names(rs)}（${what}）：`] : []);
+    lines.push(`**要你决定**：${names(notPassed)} 没过，不会自动重跑。`);
+    if (rest.length) {
+      lines.push(
+        ...scope(rest, '没过的其余用例'),
+        '- A：判定对，规则改动没达到目的（含「用例没测到改动」：改动没被触发到）—— 回到规则，接着改，再跑一次回放。',
+        '- B：判定错了 —— 在用例旁的 `annotations.md` 里推翻，再跑 `--settle`。',
+        '- C：用例本身有问题（没抓住问题、没测到改动、写不清）—— 先修用例再跑。',
+      );
+    }
+    if (done.length) {
+      lines.push(
+        ...scope(done, '目标用例，改前就做得到'),
+        '- A：判定对，这段规则本来不用加 —— 撤掉这段规则改动，不再跑回放。',
+        '- B：判定错了 —— 在用例旁的 `annotations.md` 里推翻，再跑 `--settle`。',
+        '- C：规则要留，但这个用例分不出改前改后 —— 换一个改前做不到的用例再跑。',
+      );
+    }
   }
   return `${lines.join('\n')}\n`;
 }
@@ -87,7 +104,7 @@ function nextReplayRound(text) {
       const rec = JSON.parse(m[1]);
       if (rec.kind === 'replay' && Number.isSafeInteger(rec.round)) max = Math.max(max, rec.round);
     } catch {
-      /* a malformed marker is review-loop.mjs's to report, not ours */
+      /* a malformed marker is `dyna pr loop`'s to report, not ours */
     }
   }
   return max + 1;

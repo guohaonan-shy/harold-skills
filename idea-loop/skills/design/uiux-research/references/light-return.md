@@ -85,7 +85,7 @@ Mobbin 没连上（清单里没有 Mobbin 的工具，或第一次搜索就要�
 ## 校验管什么
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/research-check.mjs" --light <落图目录>/research-light.json --opinions=1,2,3 [--ledger=1.1,1.2]
+dyna research submit --light <落图目录>/research-light.json --opinions=1,2,3 [--ledger=1.1,1.2]
 ```
 
 `--opinions` 是调用方给你的评委意见编号，`--ledger` 是 ledger 的编号（给了，推翻项就必须写其中一个）。它查：

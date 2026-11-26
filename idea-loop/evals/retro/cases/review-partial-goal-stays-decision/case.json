@@ -1,0 +1,11 @@
+{
+  "source": "harold-skills#55 的 PR #90 review 第 1 轮的 S3：执行方把档案对账不开浏览器的那一半留在 dreaming，spec 要的是对账都交给钉了模型的 agent，只达成一半；审查者摆成要你决定、推荐 A（留着），人回「我倾向于选择B。」（决定记录 docs/raw/decisions/55.md 题 10）。这是守边界的用例：不让「执行方已做好一种就沿用」这类自己定的口子，放到目标只达成一部分的情形上",
+  "commit": "0cb7b22f",
+  "guard": true,
+  "prompt": "/idea-loop:pr-review 我是 guohaonan-shy/harold-skills 的 PR #90（spec canvas-truth-dreaming-agents，docs/spec/canvas-truth-dreaming-agents/canvas-truth-dreaming-agents.md）的编排者，现在跑第 1 轮。「跑一轮」里机械检查已经全绿，Spec、Standards 两个 Codex 进程也都交回、候选核实过了，当作这些都做完，你从「给每条候选标处置」往下判：\n\n- Spec 轴：1 条候选 S3。spec 的 User Stories 第 4 条写的是：「dreaming 本身不做对账，每一段交给一个钉了模型的 agent；提议表、人批、执行仍在 dreaming。」工单 02 把 UI 档案对账分成了两半：要开浏览器截图的那一半，交给 ui-reviewer 的对账模式；只对着源码、不开浏览器的那一半，仍然写在 dreaming 的 SKILL 里，由跑 dreaming 的会话自己做。执行方这样分，是因为 ui-reviewer 的对账模式原来只描述了截图那一半，源码那一半一直写在 dreaming 里，没有哪张工单要求挪走。两种做法都说得通：A 留在 dreaming 里（执行方已经做好的）；B 把源码那一半也并进 ui-reviewer 的对账模式，一个 agent 交一份完整的对账结果。\n- Standards 轴：0 条。\n- 这一轮的汇报、review loop 文件都还没写。\n\n不要真的往外发东西：不要执行 gh 的写操作、git push，不要起 Agent，不要跑 codex；要跑的命令原样写在最后一段回复里，当作已经完成。要写进工作区的文件照常写。最后一段回复里，把这一轮汇报的「已按规则处理」和「要你决定」两节原样贴出来，并写明：接下来这一步你做了什么、有没有在等我、等我什么。",
+  "stop_at": "写完这一轮汇报的那一刻：这条 Spec 候选是列进「已按规则处理」，还是摆成要人定的题；最后一段回复里贴出两节，并写明有没有在等人",
+  "question": "S3（档案对账不开浏览器的那一半留在 dreaming）在汇报里仍然是「要你决定」的题，而不是放进「已按规则处理」？",
+  "quote": "我倾向于选择B。",
+  "size": "small",
+  "size_basis": "只驱动 pr-review 一个 skill，候选由 prompt 给出，不起插件 agent、不开浏览器；prompt 禁了 gh 写操作、git push、Agent 和 codex，没有付费外部服务"
+}

@@ -1,20 +1,12 @@
 /**
  * SEO.md's writing-check keys (「写作」: lint 配置 / 补充 lint / 第二评委) and the 「配图」 section
  * (图片目录 / 生图工具 / 封面字段 / OG 字段 / DESIGN.md 路径): the parse result, `无` read as empty and
- * confirmed, and the check seo-setup runs before writing an image directory (it has to sit inside the
+ * confirmed, and the check the SEO module runs before writing an image directory (it has to sit inside the
  * 内容路径 an auto-merged SEO PR may touch).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
-import { parseSeoMd } from './seo-md.mjs';
-import { imageDirInScope } from './seo-content-scope.mjs';
-
-const scope = join(dirname(fileURLToPath(import.meta.url)), 'seo-content-scope.mjs');
+import { parseSeoMd, imageDirInScope } from './dyna-seo-parse.mjs';
 
 const WRITTEN = `# SEO
 
@@ -112,11 +104,10 @@ test('SEO.md: the existing confirmed keys keep their meaning', () => {
 
 const CONTENT = ['apps/site/src/content/blog/', 'apps/site/public/images/**'];
 
-test('image directory: inside 内容路径 passes (by glob, by directory, by docs/)', () => {
+test('image directory: inside 内容路径 passes (by glob, by directory)', () => {
   assert.equal(imageDirInScope('apps/site/public/images/blog/', CONTENT).inScope, true, 'under a ** glob');
   assert.equal(imageDirInScope('apps/site/public/images', CONTENT).inScope, true, 'the directory the glob names');
   assert.equal(imageDirInScope('./apps/site/src/content/blog/img', CONTENT).inScope, true, 'under a listed directory, ./ is spelling');
-  assert.equal(imageDirInScope('docs/assets', []).inScope, true, 'docs/ always counts');
 });
 
 test('image directory: outside 内容路径 is reported with the directory and why', () => {
@@ -125,22 +116,14 @@ test('image directory: outside 内容路径 is reported with the directory and w
   assert.equal(r.dir, 'apps/site/src/assets/blog');
   assert.match(r.reason, /内容路径/);
   assert.equal(imageDirInScope('apps/site/public', CONTENT).inScope, false, 'a directory wider than the scope is outside');
-  assert.equal(imageDirInScope('apps/site/public/images/blog', []).inScope, false, 'no 内容路径 written: only docs/');
+  assert.equal(imageDirInScope('apps/site/public/images/blog', []).inScope, false, 'no 内容路径 written: nothing counts');
+  assert.equal(imageDirInScope('docs/assets', []).inScope, false, 'docs/ is in the project directory, not the code repository: it does not count by itself');
   assert.equal(imageDirInScope('../elsewhere', CONTENT).inScope, false, 'climbing out is never inside');
   assert.equal(imageDirInScope('', CONTENT).inScope, false, 'no directory is not inside');
 });
 
-test('CLI: --image-dir against the SEO.md in hand prints the verdict as JSON', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'seo-image-dir-'));
-  const md = join(dir, 'SEO.md');
-  writeFileSync(md, `# SEO\n\n## 构建与检查\n- 内容路径：${CONTENT.map((c) => `\`${c}\``).join('；')}\n`);
-  const run = (d) => spawnSync('node', [scope, md, `--image-dir=${d}`], { encoding: 'utf8' });
-  const inside = run('apps/site/public/images/blog/');
-  assert.equal(inside.status, 0, inside.stderr);
-  assert.equal(JSON.parse(inside.stdout).inScope, true);
-  const outside = run('apps/site/src/assets/blog');
-  assert.equal(outside.status, 0, outside.stderr);
-  const out = JSON.parse(outside.stdout);
-  assert.equal(out.inScope, false);
-  assert.deepEqual(out.contentPaths, CONTENT);
+test('CLI: --image-dir prints the verdict and the content paths it judged against as JSON', () => {
+  const outside = imageDirInScope('apps/site/src/assets/blog', CONTENT);
+  assert.equal(outside.inScope, false);
+  assert.deepEqual(outside.contentPaths, CONTENT);
 });

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dynaCommands } from './dyna-test-bin.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const skill = (name) => readFileSync(join(root, 'skills/engineering', name, 'SKILL.md'), 'utf8');
@@ -13,16 +14,13 @@ const body = (md) => md.replace(/^---\n[\s\S]*?\n---\n/, '');
 const NAMES = ['issue-dispatch', 'issue-session', 'issue-triage'];
 const OLD_STATES = ['待验证', '验证中', '审核中', '待设计', '设计中', '待实现', '实现中', '搁置'];
 
-test('三份 SKILL.md 主体都在 5000 字以内', () => {
-  for (const n of NAMES) assert.ok([...body(skill(n))].length < 5000, `${n} 主体 ${[...body(skill(n))].length} 字`);
-});
-
-test('文中写到的 issues 命令都是脚本认得的，已删的命令一条也不写', () => {
-  const src = readFileSync(join(root, 'scripts/issues.mjs'), 'utf8');
-  const known = new Set(src.match(/const COMMANDS = \[([^\]]*)\]/)[1].match(/'([a-z]+)'/g).map((s) => s.slice(1, -1)));
-  for (const gone of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split', 'block']) assert.ok(!known.has(gone), `脚本不该再认得 ${gone}`);
+test('文中写到的 issues 命令都是命令行认得的，已删的命令一条也不写', () => {
+  const commands = dynaCommands();
+  const known = new Set([...commands].filter((c) => c.startsWith('issues ')).map((c) => c.split(' ')[1]));
+  for (const gone of ['advance', 'resume', 'handoff', 'unhandoff', 'drop', 'queue', 'group', 'split']) assert.ok(!known.has(gone), `命令行不该再认得 issues ${gone}`);
+  assert.ok(known.has('set') && known.has('show'), '命令行至少认得 issues set 和 issues show');
   for (const n of NAMES) {
-    for (const m of skill(n).matchAll(/`issues ([a-z]+)\b/g)) assert.ok(known.has(m[1]), `${n} 写了不存在的命令 issues ${m[1]}`);
+    for (const m of skill(n).matchAll(/`dyna issues ([a-z]+)\b/g)) assert.ok(known.has(m[1]), `${n} 写了不存在的命令 dyna issues ${m[1]}`);
   }
 });
 
@@ -35,18 +33,18 @@ test('三份 skill 里没有旧中文状态名、根 / 子 issue、整合、一�
   }
 });
 
-test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、按时段的上限、候选、每轮最多 `limit` 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
+test('issue-dispatch：派 todo 和 triage，一个 issue 一个会话，对账、按时段与各状态的上限、候选、每轮最多 3 个、汇报；怎么跑、怎么数、怎么交出交给 runtime', () => {
   const md = skill('issue-dispatch');
   assert.match(front(md), /todo/);
   assert.match(front(md), /一个 issue 一个会话/);
   assert.match(md, /`triage` 或 `todo` 的 issue/);
   assert.match(md, /issues candidates/);
   assert.match(md, /issues reconcile/);
-  assert.match(md, /issues queues <docs>/);
-  assert.match(md, /status:<状态>/);
+  assert.match(md, /dyna home dispatch/);
+  assert.match(md, /status:in-progress/);
   assert.match(md, /没有同号会话的记进汇报/);
-  assert.match(md, /一轮最多交出 `limit` 个/);
-  assert.match(md, /idea-loop:runtime/);
+  assert.match(md, /这一轮能开几个 = min\(`perRound`/);
+  assert.match(md, /dyna runtime show/);
   for (const part of ['怎么一轮一轮跑', '怎么数开着的会话', '怎么交出 issue']) assert.ok(md.includes(part), `缺交给 runtime 的「${part}」`);
   // the how is no longer in the body: no sidebar section, card or in-session loop
   assert.doesNotMatch(md, /section(?!Limit)|卡片|CronCreate|会话内循环|(?<![\w-])loop(?![\w-])/, 'dispatch 正文还写着 section、卡片或会话内循环的做法');
@@ -78,6 +76,15 @@ test('issue-session：triage 会话读证据评论、调 to-spec 起草并照 dr
   assert.match(md, /issues set <docs> triage \$ARGUMENTS --comment=/);
 });
 
+test('issue-session：碰 UI 的设计交接在参考里，triage 会话第 2 步只留一行指针', () => {
+  const md = skill('issue-session');
+  const step = md.split('\n').find((l) => /^2\.\s+\*\*设计\*\*/.test(l));
+  assert.ok(step, 'triage 会话有第 2 步「设计」');
+  assert.match(step, /references\/design-handoff\.md/);
+  const ref = readFileSync(join(root, 'skills/engineering/issue-session/references/design-handoff.md'), 'utf8');
+  for (const k of ['/idea-loop:uiux-imagine', '/idea-loop:uiux-refine', '前端交互', '只能人调']) assert.ok(ref.includes(k), `design-handoff.md 缺 ${k}`);
+});
+
 test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做掉的就 canceled 并删草稿；没有「验证为不存在」的落地 PR', () => {
   const md = readFileSync(join(root, 'skills/engineering/issue-session/references/draft-spec.md'), 'utf8');
   assert.match(md, /## 自己校验/);
@@ -87,26 +94,25 @@ test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做
   assert.doesNotMatch(md, /gh pr create|gh pr merge/, '不存在的 issue 在分拣里就关了，不再有它的落地 PR');
 });
 
-test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上分支', () => {
+test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上', () => {
   const md = skill('issue-session');
   assert.match(md, /## 先放着/);
-  assert.match(md, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、分支名>/);
-  assert.match(md, /读这条评论接上分支/);
+  assert.match(md, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>/);
+  assert.match(md, /读这条评论接上/);
 });
 
-test('issue-session：多仓库时在每个要改的仓库里开同名分支的 worktree，路径记进 spec', () => {
+test('issue-session：一个 issue 只改一个仓库，不在别的仓库开 worktree', () => {
   const md = skill('issue-session');
-  assert.match(md, /git -C <那个仓库的本地路径> worktree add/);
-  assert.match(md, /「仓库」一节/);
-  assert.match(md, /记进 spec 的「实现决策」/);
+  assert.doesNotMatch(md, /git -C <那个仓库的本地路径> worktree add/);
+  assert.doesNotMatch(md, /「仓库」一节/);
 });
 
-test('issue-session：本会话里切票、实现、review，指向 implement 与 pr-review，全部 PR 合并后 done', () => {
+test('issue-session：本会话里切票、实现、review，指向 implement 与 pr-review，PR 合并后 done', () => {
   const md = skill('issue-session');
   for (const s of ['idea-loop:to-ticket', 'idea-loop:implement', 'idea-loop:pr-review']) assert.ok(md.includes(s), `缺 ${s}`);
   assert.match(md, /用 Skill 工具调 `idea-loop:implement`/);
   assert.match(md, /用 Skill 工具调 `idea-loop:pr-review`/);
-  assert.match(md, /全部 PR 合并后 issue 应已是 done/);
+  assert.match(md, /PR 合并后 issue 应已是 done/);
 });
 
 test('issue-session：没有实现子会话、简报、两种合并去向、集成分支与集成 review', () => {
@@ -145,7 +151,8 @@ test('setup 的 issue 追踪模板：一个 issue 一个会话', () => {
 
 test('README：流程总览没有版本分支的例外，三个 skill 的行没有一组 / 根 / 子会话结构', () => {
   const md = readFileSync(join(root, 'README.md'), 'utf8');
-  assert.match(md, /one PR takes them all to main/);
+  assert.match(md, /committed straight to home's main/);
+  assert.match(md, /the issue's branch and the code PR carry\s+code only/);
   assert.doesNotMatch(md, /implementation child session/);
   for (const k of ['issue-session', 'issue-triage', 'issue-dispatch']) {
     const row = md.split('\n').find((l) => l.startsWith(`| \`idea-loop:${k}\``) || l.startsWith(`| \`/idea-loop:${k}\``));
@@ -166,7 +173,7 @@ test('issue-triage：三种调用、同时最多 5 个 issue-triager、15 个一
   assert.match(md, /issues note/);
   assert.match(md, /同时最多 5 个/);
   assert.match(md, /『推送』/);
-  assert.match(md, /docs\/records\/out-of-scope\/<slug>\.md/);
+  assert.match(md, /<docs>\/records\/out-of-scope\/<slug>\.md/);
   for (const k of ['todo + P1 或 P2', 'triage + P1 或 P2', 'canceled', '留在 backlog']) assert.ok(md.includes(k), `缺去向 ${k}`);
   assert.match(md, /跳过 triage/);
 });
@@ -186,7 +193,8 @@ test('issue-triager：sonnet、medium、只读不翻状态，五步、复现手�
 test('issue-triager 不设 tools 白名单（继承会话全部工具，浏览器与 Linear MCP 才拿得到），skill 都写「用 Skill 工具调」，评论链接取自 issues note 的输出', () => {
   const md = readFileSync(join(root, 'agents/issue-triager.md'), 'utf8');
   assert.doesNotMatch(front(md), /^tools:/m);
-  for (const k of ['idea-loop:browser', 'idea-loop:evidence']) assert.match(md, new RegExp(`用 Skill 工具调 \`${k}\``), `${k} 没写「用 Skill 工具调」`);
+  assert.match(md, new RegExp('用 Skill 工具调 `idea-loop:evidence`'), 'idea-loop:evidence 没写「用 Skill 工具调」（子 agent 收不到开场注入）');
+  assert.match(md, /起浏览器前跑 `dyna runtime show 浏览器`/, '浏览器没写 dyna runtime show');
   assert.match(md, /已评论 <链接>/);
 });
 

@@ -65,9 +65,11 @@ async:                            # 这一屏发起了异步动作时必填
 
 ## 分段 `sections`
 
+滚动容器的内容比它的可见区高时才声明（文档自己在滚，容器就是文档；应用外壳里内容在内层容器滚，容器就是那个内层容器）。`sections` 只写在入口状态，一页只由一个入口状态声明；每段有 `id`、`locate` 和图；钉在视口里随滚动换内容的段再写 `scrollDriven: true`（只能写 `true`）。
+
 **`id`**：写 `<类型>` 或 `<类型>-<限定词>`，限定词按内容起、kebab-case。**同一页同一类型出现多次，每个都要加限定词**（`feature-listen` 和 `feature-write`，不能一个 `feature` 一个 `feature-write`）；只出现一次时建议不加，校验不拦。类型按最长前缀认：`feature-grid` 是类型 `feature-grid`，`feature-grid-pricing` 是它加限定词 `pricing`，所以 `feature` 不能用 `grid` 当限定词。
 
-类型取自下面这张闭集表（跨项目通用，不进目标项目的 `DESIGN.md`；校验与反查读的是 `design-archive.mjs` 里的同一份常量 `SECTION_TYPES`）。两类判不准时按「这一段主要在回答什么」定：「为什么信你」归 `trust`，「多少人在用」归 `social-proof`。闭集要扩，改常量、校验的单测和这张表，不在档案里自造。
+类型取自下面这张闭集表（跨项目通用，不进项目的 `DESIGN.md`；校验与反查读的是 `dyna design archive check` 里的同一份闭集）。两类判不准时按「这一段主要在回答什么」定：「为什么信你」归 `trust`，「多少人在用」归 `social-proof`。闭集要扩，改命令行里的闭集、校验的测试和这张表，不在档案里自造。
 
 | 类型 | 是什么 |
 |---|---|
@@ -105,7 +107,9 @@ async:                            # 这一屏发起了异步动作时必填
 
 **引用与边**：
 
-- 有分段的入口状态上，每条 `user` 边都写 `from`（分段脚本的归属结果给出每个可点元素在哪一段，照抄）。
+- 引用写 `<页面>#<段>` 全称（如 `mkt-pricing#faq`），写成普通字符串，不写 wikilink：Obsidian 把 `"[[页面#段]]"` 解析成页面里名叫「段」的标题，校验读不出它是不是声明过的段；分段不占 basename 的唯一性。
+- 边的 `from` 是从本页哪一段出发，`section` 是落到目标状态的哪一段。
+- 有分段的入口状态上，每条 `user` 边都写 `from`（分段命令的归属结果给出每个可点元素在哪一段，照抄）。
 - **页内锚点**：入口状态的自环（`to` 指向自己）加 `section` 写落点段，不另建状态。
 - **段内交互**（FAQ 展开、切标签）是页面的另一个状态，状态写 `section` 说明它在哪一段，截图只拍那一段。
 
@@ -117,7 +121,7 @@ async:                            # 这一屏发起了异步动作时必填
 
 `duration`、`easing`（`"{token}"` 引用，或字面值）、`properties`、`iterations`、`reducedMotion`（减少动效下怎么退）、字面值时必填的 `deviates`（一句为什么偏离站内 token）、`usedBy`。
 
-**`usedBy`（组件、动效共用）**：写 `delta/` 时留着不动，归档脚本反向生成。页面用组件 = 它的某个 `regions` 写了它，或它的某个状态在 `components` 里列了它，或它的某条边经过它；页面用动效 = 它的某个状态在 `motions` 里列了它，或它的某条边的 `motion` 是它。只有一个页面用也生成。
+**`usedBy`（组件、动效共用）**：写 `delta/` 时留着不动，归档命令反向生成。页面用组件 = 它的某个 `regions` 写了它，或它的某个状态在 `components` 里列了它，或它的某条边经过它；页面用动效 = 它的某个状态在 `motions` 里列了它，或它的某条边的 `motion` 是它。只有一个页面用也生成。
 
 ## 用户路径 `type: design-journey`
 
@@ -166,4 +170,4 @@ path:
 
 **`prod/` 只存精简矩阵**：每个状态一张主视口截图（设置在 `prod/index.md` 的 frontmatter，见下）。长页面的入口状态改成每段一张图，叫 `<入口状态 id>@<段 id>.png`，放入口状态同目录的 `assets/`；段内交互的状态只拍那一段，截图照旧叫状态自己的名字。每个有动效的边或节点一张 GIF。完整矩阵（主题 × 视口 × 语言 × 动效偏好）只在 `tmp/<spec-slug>/canvas/`，随 `tmp/` 清掉。各对象可带同目录的 `assets/`（状态截图、动效 GIF、交互图 `flows/`）。拍法见 [shooting.md](shooting.md)。
 
-**`prod/index.md` 的设置键**（项目定一次，归档脚本原样保留）：`viewport`（如 `1440x900`）、`theme`（`light` / `dark`）、`locale`、`motion`（`default` 是默认动效、拍之前把整页滚一遍让内容出现，`reduce` 是减少动效；不写是 `default`）、`workspaces`（可选：项目有不止一个前端时，组件文件名的工作区前缀列表，如 `[mkt, app]`）。
+**`prod/index.md` 的设置键**（项目定一次，归档命令原样保留）：`viewport`（如 `1440x900`）、`theme`（`light` / `dark`）、`locale`、`motion`（`default` 是默认动效、拍之前把整页滚一遍让内容出现，`reduce` 是减少动效；不写是 `default`）、`workspaces`（可选：项目有不止一个前端时，组件文件名的工作区前缀列表，如 `[mkt, app]`）。

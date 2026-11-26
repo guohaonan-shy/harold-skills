@@ -4,15 +4,15 @@
 
 ## 起的时候
 
-和 `idea-loop:pr-reviewer` **同一条消息**起 `idea-loop:ui-reviewer`（每轮走查模式），不等走查走完才起 pr-reviewer。
+和 [run-a-round.md](run-a-round.md) 的两个 Codex 进程**同一条消息**起 `idea-loop:ui-reviewer`（每轮走查模式），不等走查走完才起 Codex。
 
-- 给 ui-reviewer 的指针：spec 名、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。
-- 给 pr-reviewer 的多一个指针：将来的发现文件路径 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`。此时文件还不存在，pr-reviewer 自己等它。
+- 给 ui-reviewer 的指针：spec 名、项目目录的绝对路径、集成 worktree 的绝对路径、分到的端口（挑一个没人在听的）、模式、图的前缀 `r<轮次>-ui-`、这一轮的工作目录。
+- 它的发现文件写到 `.tmp/pr-review/<PR 号>/round-<N>/ui-findings.json`，文件写好前不存在；run-a-round.md 的「等 UI 走查的发现文件」等它。
 
 ## 盯着它交回
 
 - `ok`：发现文件已经在位，什么都不用做。
-- `status: incomplete`（服务起不来、页面打不开、锁拿不到），或 `skipped`、`failed` 而没有发现文件：立刻在这一轮的工作目录写 `ui-incomplete.md`（一句话：状态与原因）。pr-reviewer 看到它就不再等，UI 这一轴记「未完成」，写进汇报的「没覆盖到的」。
+- `status: incomplete`（服务起不来、页面打不开、锁拿不到），或 `skipped`、`failed` 而没有发现文件：UI 这一轴记「未完成」，一句话写下状态与原因，写进汇报的「没覆盖到的」，不再等它。
 
 照实告诉人：**未完成不等于没问题**，但不阻塞代码审查。
 

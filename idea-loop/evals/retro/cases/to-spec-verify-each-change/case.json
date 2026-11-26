@@ -1,0 +1,10 @@
+{
+  "source": "docs/spec/skill-change-verify/skill-change-verify.md 的问题 1：release/idea-loop-0.2.0 的 66b4d463 上 11 份 spec 里 8 份对 skill 改动在「测试决策」写「不涉及」，引仓库 AGENTS.md §5。这是一份新能力的目标用例，没有出过错的那一刻可回放",
+  "commit": "66b4d463",
+  "prompt": "/idea-loop:to-spec 把下面这个 issue 起草成一份 spec（这个仓库就在当前目录）。\n\nissue guohaonan-shy/harold-skills#9001：issue-triager 的「还要你补」栏只列问题，看不出补完以后 issue 会翻去哪\n\n**区域**：idea-loop · `idea-loop/agents/issue-triager.md` 的「评论与交回」\n\n**优先级**：P2\n\n**issue-triager 判不了的 issue，评论分「已查清」和「还要你补」两栏，「还要你补」每条只写要补什么。** 人读到这条评论时，补完其中一条之后这个 issue 会被翻成 todo、triage 还是仍留在 backlog，评论里没有说，人要自己去猜，常见的结果是补了信息以后 issue 仍在 backlog 里躺着。\n\n希望「还要你补」的每一条后面多写一句：补上这一条之后，分拣员会建议它翻去哪（todo 或 triage），补不上就留在 backlog。\n\n我不在场，不会回复你：不要 git commit、git push、gh 的任何写操作（包括 issues handoff / issues open / issues set），不要合并。issue 的现状自己在仓库里核；spec 文件照 skill 的规则写进工作区。最后一段回复写明你停在哪一步：spec 草稿已经写好、交给我看的那一刻，以及 spec 的路径。",
+  "stop_at": "spec 草稿写进 docs/spec/<slug>/<slug>.md、交给人看的那一刻",
+  "question": "起草出的 spec 里每处 skill 改动（对 skill、参考文件、agent 定义这类给 agent 读的文档的改动）都有一行验证、没有写「不涉及」吗？",
+  "goal_from": "docs/spec/skill-change-verify/skill-change-verify.md 期望行为 1",
+  "size": "small",
+  "size_basis": "只驱动 to-spec 一个 skill（它调 evidence、writing-for-agents 等都是读 skill 文字）到 spec 草稿写好的那一刻，不起插件 agent、不开浏览器；prompt 里禁了 git 提交、推送和 gh 写操作，没有付费外部服务"
+}

@@ -1,7 +1,7 @@
 ---
 name: uiux-research
 description: 调研别人怎么处理一个 UX 问题：流程、某类页面的常见做法、文案语气。人问别的产品怎么做时用，或设计收敛每一轮给评委意见配参考时用；视觉风格不归它。
-allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(git check-ignore:*), Bash(git ls-files:*), Bash(ls:*), Bash(node *research-check.mjs:*)
+allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(ls:*), Bash(dyna research submit:*), Bash(dyna serve:*)
 ---
 
 别人怎么做的、为什么这样做：你只管收输入、起调研、把结果交出去；怎么查、文件长什么样归 `idea-loop:uiux-researcher`。两个分支，看谁在要：
@@ -31,12 +31,12 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 ### 定落图目录
 
-项目根 = `git rev-parse --show-toplevel`。第一次用确认 `docs/design/tmp/` 被 git 忽略（`git check-ignore`），不在就照 `idea-loop:wiki-conventions` 的「本地忽略」追加到 `$(git rev-parse --git-common-dir)/info/exclude`：落图目录只在本地。
+项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿。落图目录在它的 `docs/design/tmp/` 下，只在本地：home 的提交只带列出的文件，调研页不会被带进去。
 
 | 情况 | 落图目录（绝对路径） |
 |---|---|
-| **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<项目根>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
-| **没有 spec**：普通对话 | `<项目根>/docs/design/tmp/research/<问题短名>/` |
+| **有 spec**：在 imagine / refine 的会话里调，或人点名了一份 spec，或这场对话明显在为某一份 spec 做设计 | `<项目目录>/docs/design/tmp/<spec-slug>/research/<问题短名>/`（imagine 和 refine 用同一处） |
+| **没有 spec**：普通对话 | `<项目目录>/docs/design/tmp/research/<问题短名>/` |
 
 拿不准是哪份 spec（有好几份 spec 在做设计、人也没点名）就按没有 spec 放，并在最后一句说明。
 
@@ -46,35 +46,29 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Bash(git rev-parse:*), Bash(gi
 
 1. 人的原话（一字不改）；
 2. 具名问题；
-3. 产品上下文：目标项目的 `DESIGN.md` 路径（有就给）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
+3. 产品上下文：项目目录（`DESIGN.md` 在它下面，有才有）、一句话说明当前在做什么、平台（web / ios，不确定按 web）；
 4. 落图目录的绝对路径。
 
-当前运行环境里 researcher 收不到 Mobbin 的原生工具（`idea-loop:runtime` 的「调用 MCP」小节写的不是原生工具调用）：再加一条，把调 Mobbin 三个搜索工具（`search_screens`、`search_flows`、`search_sections`）的写法，照那一节原样放进提示。
+当前运行环境里 researcher 收不到 Mobbin 的原生工具（`dyna runtime show 调用 MCP` 写的不是原生工具调用）：再加一条，把调 Mobbin 三个搜索工具（`search_screens`、`search_flows`、`search_sections`）的写法，照那一节原样放进提示。
 
 方向、参考图、上一轮的结论、你的倾向都不给：它从零查。它每次新起，做完就结束。
 
 ### 收到交回，摆给人
 
-交回应当只有 `index.html` 的绝对路径和一句结论。researcher 说 **Mobbin 没连上**：整页调研到此停下，不换来源、不重试；告诉人怎么连，照 `idea-loop:runtime` 的「装与设置」里 Mobbin 那一条（要 Mobbin 付费计划），说明只有设计调研受影响。交回末尾带 `ai_usage_notice` 的话，原样转给人。
+交回应当只有 `index.html` 的绝对路径和一句结论。researcher 说 **Mobbin 没连上**：整页调研到此停下，不换来源、不重试；告诉人怎么连，照 `dyna runtime show 装与设置` 里 Mobbin 那一条（要 Mobbin 付费计划），说明只有设计调研受影响。交回末尾带 `ai_usage_notice` 的话，原样转给人。
 
-1. **核对**：自己再跑一次校验：
-
-   ```
-   node "${CLAUDE_PLUGIN_ROOT}/scripts/research-check.mjs" <落图目录>/index.html
-   ```
-
-   不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。
-2. **把页面摆给人看**：照 `idea-loop:browser` 的「给人看」，在落图目录起静态服务器，打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
-3. 到此为止。要不要用、用哪些来源、转不转给谁，是人看完之后的话。
+1. **核对**：自己再跑一次 `dyna research submit <落图目录>/index.html`。不绿就把校验输出用 SendMessage 转回给 researcher 补，页面只由它改。researcher 说问题不成立或没做成的，原话告诉人。
+2. **把页面摆给人看**：照 `dyna runtime show 浏览器` 的「给人看」，在落图目录用 `dyna serve start` 起静态服务器，打开 `index.html`。跟页面一起说的话只有两样：具名问题、那一句结论；页面内容、截图、搜索过程留在页面里。
+3. 到此为止（完成条件：校验绿、页面摆给了人）。要不要用、用哪些来源、转不转给谁，是人看完之后的话。
 
 ## 轻用法
 
 设计收敛的会话每一轮在评委的意见交回之后起一次，不问人。
 
-1. **备好输入**：一个落图目录，每轮一个，放在 `<项目根>/docs/design/tmp/<spec-slug>/research/` 下（如 `round-2/`；`tmp/` 本地忽略的确认同整页调研的「定落图目录」）；各状态的截图路径；评委的每条意见按 `findings` 的顺序编成 `1`、`2`、……，带 `state`、`where`、`detail`、`why`、`reference`；人这一轮的意图与思路原话；ledger 全文（每条带编号）。
+1. **备好输入**：一个落图目录，每轮一个，放在 `<项目目录>/docs/design/tmp/<spec-slug>/research/` 下（如 `round-2/`；只在本地，同整页调研的「定落图目录」）；各状态的截图路径；评委的每条意见按 `findings` 的顺序编成 `1`、`2`、……，带 `state`、`where`、`detail`、`why`、`reference`；人这一轮的意图与思路原话；ledger 全文（每条带编号）。
 2. **起 `idea-loop:uiux-researcher`**：Agent 工具，交给它这五样，并说明走轻用法；运行环境收不到 Mobbin 原生工具时，同整页调研那样把调 Mobbin 的写法放进提示。它每次新起、做完就结束。
 3. **收到交回**：只有 `research-light.json` 的路径和一句话。自己再跑一次校验，命令和参数见 `references/light-return.md` 的「校验管什么」，`--opinions` 填刚才的编号，`--ledger` 填 ledger 的编号；不绿就把输出用 SendMessage 转回它补。Mobbin 没连上时文件也合格：会话不重试、不报错，报告里照出「这一轮没有参考图：Mobbin 没连上」。
-4. 到此为止。文件和截图留在落图目录，交给拼设计评审报告的那一步；你不读搜索结果、不下方向结论、不替人定要不要推翻 ledger。
+4. 到此为止（完成条件：校验绿）。文件和截图留在落图目录，交给拼设计评审报告的那一步；你不读搜索结果、不下方向结论、不替人定要不要推翻 ledger。
 
 ## 边界
 

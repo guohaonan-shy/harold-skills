@@ -1,39 +1,39 @@
 ---
 name: uiux-imagine
-description: 设计发散：从一份碰 UI 的 spec 出几个真正不同的变种，人定下方向后交给 uiux-refine。
+description: 设计发散：从一份碰 UI 的 spec 出几个真正不同的变种，人选定方向后交给 uiux-refine。
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(npx -y @google/design.md@latest:*), Bash(node *direction-note-check.mjs:*), Bash(node *issues.mjs:*), Bash(curl:*), Bash(codex exec:*), Bash(python3 -m http.server:*), Bash(git status:*), Bash(git worktree list:*), Bash(cp -R:*), Bash(git ls-files:*), Bash(git diff:*), Bash(git log:*), Bash(git show:*), AskUserQuestion
+allowed-tools: Read, Grep, Glob, Write(**/DESIGN.md), Edit(**/DESIGN.md), Bash(dyna design md lint:*), Bash(dyna design md diff:*), Bash(dyna design note submit:*), Bash(dyna issues set:*), Bash(dyna serve:*), Bash(cp -R:*), AskUserQuestion
 ---
 
-你是这次 imagine 的编排者：起一个 `idea-loop:uiux-imaginer` 出变种，把每一轮摆给人，把人的回复分好类交回去，直到人说方向没有要补的了，再让它写方向说明、导出交接画布。变种板只由 uiux-imaginer 改，方向定没定只由人宣布。
+你是这次 imagine 的编排者：起一个 `idea-loop:uiux-imaginer` 出变种，每一轮把结果摆给人、把人的回复分好类交回去，直到人宣布方向没有要补的了，再让它写方向说明、导出交接画布。交付物是 `imagine/direction-note.md` 和 `imagine/handoff/`。变种板只由 uiux-imaginer 改，方向定没定只由人宣布。
 
-先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。worktree 根 = `git rev-parse --show-toplevel`（不取会话的项目目录变量：worktree 会话里它指主 checkout）。下文的 `imagine/`、`canvas/`、`research/` 都在 worktree 根下的 `docs/design/tmp/<spec-slug>/`，本地、不进 git；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
+先用 Skill 工具调 `idea-loop:wiki-conventions`，看它的「目录」；再读 [`references/imagine-canvas.md`](references/imagine-canvas.md)（变种板、交接画布放在哪、怎么搭）。项目目录照那里的「项目目录」拿。下文的 `imagine/`、`canvas/`、`research/` 都在 `<项目目录>/docs/design/tmp/<spec-slug>/`，打磨时只在本地；交给 uiux-imaginer 的目录也用这个前缀写成绝对路径。
 
 ## 开工前
 
-- spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节（旧 spec 里它不是「不涉及」）、「实现决策」里还没有冻结摘要，才往下走。还有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
-- 它覆盖的 issue 应该在 triage（设计在 triage 里做，issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，先跑 `node "${CLAUDE_PLUGIN_ROOT}/scripts/issues.mjs" set "<worktree 根>/docs" triage <号>`；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
+- spec 里没有等人定的（开头的「需要 grill」、「实现决策」里的「待定」）、有「前端交互」小节、「实现决策」里还没有冻结摘要。有等人定的先跟人定完；已经冻结的不重开，除非人说要重开某几块（见「中断与恢复」）；还没有 spec 的，先用 `idea-loop:grill` 谈、`idea-loop:to-spec` 落成 spec。
+- 它覆盖的 issue 在 triage（issue 会话认领时已经翻过）。人直接调 imagine、issue 还在 backlog 的，用 `dyna issues set "<项目目录>/docs" triage <号>` 翻；项目跳过 triage 的（`ISSUE_TRACKER.md`）不翻。
 - `imagine/rounds.md` 在就是恢复，见「中断与恢复」。
-- **暂缓的设计**：主 checkout（`git worktree list` 第一行）的 `docs/design/pending/` 里有没有同一块界面的设计，有就问人要不要接着做。要的话把那个目录复制回当前 worktree 的 `docs/design/tmp/<spec-slug>/`（`cp -R`，pending 那份留着），再从「中断与恢复」接上；不要就照常往下。人说这块界面先不做的，照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行挪走。
+- **暂缓的设计**：`<项目目录>/docs/design/pending/` 里有同一块界面的设计，或人说这块界面先不做：照 `idea-loop:wiki-conventions` 的「目录」里 `design/pending/` 那一行。人要接着做的，从下面的「中断与恢复」接上。
+
+完成条件：上面四条都核过，才进「起步」。
 
 ## 起步
 
-1. 在 `imagine/`（没有就建）后台起一个静态服务器，活到这次 imagine 收工。
-2. 用 Agent 工具起 `idea-loop:uiux-imaginer`，给它：spec 路径与 `<spec-slug>`、目标项目的 `DESIGN.md` / `PRODUCT.md` 路径、`imagine/` 目录与预览地址、人调用时附的原话（不改写），任务是「起手」。人在开工前调过 `idea-loop:uiux-research` 的，再带上人要转的那几段调研文字（不带图、不带页面路径）。方向和高度由它定，你不转述。
+1. 用 `dyna serve start` 在 `imagine/`（没有就建）起静态服务器，活到这次 imagine 收工。
+2. 用 Agent 工具起 `idea-loop:uiux-imaginer`，任务是「起手」，给它：spec 路径与 `<spec-slug>`、项目目录（`DESIGN.md` / `PRODUCT.md` 在它下面）、`imagine/` 目录与预览地址、人调用时附的原话（逐字）。人在开工前调过 `idea-loop:uiux-research` 的，再带上人要转的那几段调研文字（只给文字）。方向和高度由它定，你不转述。
 
-这一个 uiux-imaginer 活过整个 imagine：之后人的每条意见都用 SendMessage 接着它的上下文交，不重起。
+完成条件：uiux-imaginer 交回第一轮。这一个 uiux-imaginer 活过整个 imagine：之后人的每条意见都用 SendMessage 接着它的上下文交，不重起。
 
 ## 每一轮
 
 uiux-imaginer 交付一轮之后：
 
 1. **摆给人**，不等人要：
-   - 先 `curl` 一下预览地址，app 可能在回合结束时停了服务器；不通就重起，换了端口在下一条消息里告诉它。
-   - 照 `idea-loop:browser` 的「给人看」打开交付里给的 `board.html?variant=…&state=…`，停在本轮改动的那个变种和状态。
-   - 配一份短清单，从交付里摘：这一轮有哪几个变种、各自赌什么、改了什么；还开着的问题（带它的推荐）；要人回的那句话；七节进度；要人判的取舍。「建议调研的问题」和取舍一起摆，每条带它的推荐做法：它已经按推荐做法渲染了，人说要查才调 `idea-loop:uiux-research`，不查就当推荐做法定了。截图和抓来的东西留在文件里，对话里只放清单。
-2. **代办它够不着的事**（交付里写了才做）：
-   - 生图要走 `codex exec`：照它给的用途、prompt、文件名生成，放进 `imagine/assets/`，告诉它「图已放好」。
-   - 项目没有 `DESIGN.md`，它交了「待写入 DESIGN.md」的草稿：第一份由你写。用 Skill 工具调 `idea-loop:design-modeling`，看它的「新建」与「一次写入怎么走」，把草稿摆给人确认措辞，人确认后才落笔，人改过的以人的为准。草稿缺东西就交回给它补，不自己猜。写完告诉它。
+   - 确认预览地址还通：app 可能在回合结束时停了服务器；不通就重起，换了端口在下一条消息里告诉它。
+   - 照 `dyna runtime show 浏览器` 的「给人看」打开交付里给的 `board.html?variant=…&state=…`，停在本轮改动的那个变种和状态。
+   - 配一份短清单，从交付里摘：这一轮有哪几个变种、各自赌什么、改了什么；还开着的问题（带它的推荐）；要人回的那句话；七节进度；要人判的取舍。「建议调研的问题」和取舍一起摆，每条带它的推荐做法：它已经按推荐做法渲染了，人说要查才调 `idea-loop:uiux-research`，不查就当推荐做法定了。截图和抓来的东西留在文件里。
+2. **项目没有 `DESIGN.md`，它交了「待写入 DESIGN.md」的草稿**（交付里写了才做）：第一份由你写。用 Skill 工具调 `idea-loop:design-modeling`，看它的「新建」与「一次写入怎么走」，把草稿摆给人确认措辞，人确认后才落笔，人改过的以人的为准。草稿缺东西就交回给它补，不自己猜。写完告诉它。
 3. **看能不能提议收工**。四条都满足，就在清单最后主动说「方向上没有开着的问题了，可以收工进 refine，你确认吗」：
    - 七节都填得出来，尤其「结构」：块序、每块的内容责任、读者先遇到什么，都能一句话说死；
    - 人最近一轮的话里只剩执行，没有方向了；
@@ -44,7 +44,7 @@ uiux-imaginer 交付一轮之后：
 
 ## 人的回复
 
-先判性质，不按语气。交给 uiux-imaginer 的带人的原话，不改写；一条回复里有几类就拆成几个任务一起交。
+先判性质，不按语气。交给 uiux-imaginer 的带人的原话（逐字）；一条回复里有几类就拆成几个任务一起交。
 
 | 人说的是 | 怎么办 |
 |---|---|
@@ -54,22 +54,24 @@ uiux-imaginer 交付一轮之后：
 | 「重探语言」 | 任务「重探语言」 |
 | 推翻了 spec 里的某一句（「这块要不要存在」「这功能不该放这里」） | 不交。问人：回 spec 用 `idea-loop:grill` 重谈，还是留在 imagine 里。回去的话 `imagine/` 原样留着，回来再调 imagine 走恢复 |
 | 要查别人怎么做 | 用 Skill 工具调 `idea-loop:uiux-research`，落图目录用这份 spec 的 `research/`，把调研页以文件发给人 |
-| 看完调研，说要转哪些 | 取出对应的文字（来源的场景 / 设计逻辑、页上的通用结论、页尾的决策条目），加人的原话，随「调向」交，标「调研结论（文字，来自 `research/<问题短名>`）」，提醒它用上了照常记。图和页面路径都不给；人不说转就不转 |
+| 看完调研，说要转哪些 | 取出对应的文字（来源的场景 / 设计逻辑、通用结论、页尾的决策条目），加人的原话，随「调向」交，标「调研结论（文字，来自 `research/<问题短名>`）」。图和页面路径都不给；人不说转就不转 |
 | 「方向没有要补的了」，或接受了收工提议 | 进「收工」 |
 
 **回 spec 只有一个理由：推翻了 spec 里的某一句**（要解决的问题、scope、一条 story）。判据是能不能指出被推翻的那一句；指不出来就是设计层的，交给 uiux-imaginer。拿不准就问人。imagine 不改 spec。
 
 ## 收工
 
-1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格原样摆给人确认；人的确认或改写交回去，任务「按确认改」。
+1. 任务「写方向说明」。它交回草稿和模型代填的那几格，你把这几格摆给人确认；人的确认或改写交回去，任务「按确认改」。
 2. 任务「导出交接画布」。它交付后你核对：
-   - 自己再跑一次校验：`node "${CLAUDE_PLUGIN_ROOT}/scripts/direction-note-check.mjs" "<worktree 根>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
-   - spec 没被动过（`git status` 里没有它）；
-   - 用『浏览器』打开 `<预览地址>/handoff/index.html`（照 `idea-loop:browser`），换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
+   - 自己再跑一次 `dyna design note submit "<项目目录>/docs/design/tmp/<spec-slug>/imagine/direction-note.md"`；
+   - spec 没被动过（项目目录里它的文件没有改动）；
+   - 用『浏览器』打开 `<预览地址>/handoff/index.html`（照 `dyna runtime show 浏览器`），换两个 `?state=` 点一点：打得开、状态能切、动效在、素材没缺、页面上没有变种切换和别的变种。
 
    不过就把问题交回去，它补完再核。
-3. 主动问人要不要把变种板再看一遍：清掉之后就看不到了，留着又会让下一段误以为它们是真值。人说看完了，任务「清」；它交付后关掉静态服务器。
+3. 主动问人要不要把变种板再看一遍：清掉之后就看不到了，留着又会让下一段误以为它们是真值。人说看完了，任务「清」；它交付后用 `dyna serve stop` 关掉静态服务器。
 4. 告诉人跑 `/idea-loop:uiux-refine`，就在这个会话里调。关于方向的话只住在方向说明里，想补一句先补进方向说明；执行层的要求可以直接在调 refine 时说。
+
+完成条件：`imagine/direction-note.md` 校验过、`imagine/handoff/` 自检过、人看完变种板、`imagine/` 里只剩这两样。
 
 ## 中断与恢复
 

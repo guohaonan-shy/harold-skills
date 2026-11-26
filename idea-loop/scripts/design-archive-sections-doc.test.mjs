@@ -1,20 +1,30 @@
 /**
  * Tripwire — every command line the docs show for the sections script is one the script accepts.
  *
- * The sections script has three subcommands, each with its own options (`COMMAND_FLAGS` in the script is
- * the single list the parser also uses). The agents and references quote the commands; a renamed option or
+ * `dyna design archive sections` has subcommands, each with its own options (the command registry of the dyna
+ * version the plugin asks for lists them). The agents and references quote the commands; a renamed option or
  * a made-up subcommand would send an agent into a usage error in the middle of a long shot. This greps the
- * skills and agents for lines that run the script and checks the subcommand and every `--option`.
+ * skills and agents for lines that run the command and checks the subcommand and every `--option`.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { COMMAND_FLAGS } from './design-archive-sections.mjs';
+import { lowerBound, readRange } from '../../scripts/dyna-scan.mjs';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SCANNED = ['skills', 'agents'];
+
+// The subcommands of `design archive sections` and their options, from the registry stored for the plugin's floor version.
+const floor = lowerBound(readRange(readFileSync(join(pluginRoot, 'dyna-version'), 'utf8')));
+const registry = JSON.parse(readFileSync(join(pluginRoot, '..', 'dyna', 'registry', `${floor}.json`), 'utf8'));
+const PREFIX = 'design archive sections ';
+const COMMAND_FLAGS = Object.fromEntries(
+  registry.commands.filter((c) => c.command.startsWith(PREFIX)).map((c) => [c.command.slice(PREFIX.length), c.args.filter((a) => a.kind === 'flag').map((a) => `--${a.name}`)]),
+);
+/** A line that runs one subcommand: `dyna design archive sections <name>`. */
+const runs = (name) => new RegExp(`dyna design archive sections\\s+${name}\\b`);
 
 function files(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -24,13 +34,13 @@ function files(dir) {
   });
 }
 
-test('every doc line that runs design-archive-sections names a real subcommand and only its own options', () => {
+test('every doc line that runs `dyna design archive sections` names a real subcommand and only its own options', () => {
   const bad = [];
   const seen = new Set();
   for (const dir of SCANNED) {
     for (const file of files(join(pluginRoot, dir))) {
       readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-        const m = line.match(/design-archive-sections\.mjs"?\s+(\S+)/);
+        const m = line.match(/dyna design archive sections\s+(\S+)/);
         if (!m || m[1].startsWith('`') || m[1].startsWith('的')) return;
         const where = `${relative(pluginRoot, file)}:${i + 1}  ${line.trim().slice(0, 110)}`;
         const command = m[1];
@@ -47,11 +57,11 @@ test('every doc line that runs design-archive-sections names a real subcommand a
   assert.deepEqual(bad, [], `these command lines do not match the script:\n${bad.join('\n')}`);
 });
 
-test('the places that shoot the design archive send a single-screen state to the sections script\'s `screen` command, and no longer put a no-animation style into the page', () => {
+test('the places that shoot the design archive send a single-screen state to the sections command\'s `screen` subcommand, and no longer put a no-animation style into the page', () => {
   const bad = [];
   for (const rel of ['skills/design/design-archive/references/review-archive.md', 'skills/design/design-archive/references/review-reconcile.md', 'skills/productivity/dreaming/references/initial-scan.md', 'skills/design/design-archive/references/shooting.md']) {
     const text = readFileSync(join(pluginRoot, rel), 'utf8');
-    if (!/design-archive-sections\.mjs"?\s+screen\b/.test(text)) bad.push(`${rel}: 没有指向 screen 子命令的命令行`);
+    if (!runs('screen').test(text)) bad.push(`${rel}: 没有指向 screen 子命令的命令行`);
     if (/animation:\s*none/.test(text)) bad.push(`${rel}: 还在教注入「animation: none」的关动画样式`);
     if (/照\s*`idea-loop:ui-measure`\s*的「三条环境约定」/.test(text)) bad.push(`${rel}: 还在叫人照 ui-measure 的「三条环境约定」拍（那三条只留给 UI 实现环）`);
   }
@@ -66,7 +76,7 @@ test('the shooting reference offers a case for a state taller than the main view
   if (!choose.includes('比主视口高、不分段的状态')) bad.push('shooting.md:「情形怎么选」里没有「比主视口高、不分段的状态」');
   if (!/^## 比主视口高、不分段的状态$/m.test(shooting)) bad.push('shooting.md: 没有「## 比主视口高、不分段的状态」这一节');
   for (const rel of ['skills/design/design-archive/references/shooting.md', 'skills/design/design-archive/references/review-reconcile.md', 'skills/design/design-archive/references/review-archive.md', 'skills/productivity/dreaming/references/initial-scan.md']) {
-    if (!/design-archive-sections\.mjs"?\s+cover\b/.test(read(rel))) bad.push(`${rel}: 拍单屏 / 不分段状态的地方没有指向 cover 子命令的命令行`);
+    if (!runs('cover').test(read(rel))) bad.push(`${rel}: 拍单屏 / 不分段状态的地方没有指向 cover 子命令的命令行`);
   }
   const route = read('skills/design/design-archive/SKILL.md').split('\n').find((line) => line.includes('references/shooting.md')) ?? '';
   if (!route.includes('比主视口高')) bad.push('SKILL.md: 「按需读」表里拍档案截图那一行没有列这种情形');
@@ -125,8 +135,9 @@ test('dreaming initial-scan.md: the sentence that points at the modelling trade-
   assert.match(line, /滚动驱动的段的步骤不算重复项/);
 });
 
-test('README: the sections script is described as taking only a whole-screen pin for scroll-driven — no narrower column taken by its text', () => {
+// The rule itself (only a pin at least half the viewport wide and half of it tall counts) lives in the command line now and is
+// pinned by its own tests (dyna/internal/design/sections); the README no longer describes the sections command line by line.
+test('README: no narrower pinned column is described as making a section scroll-driven', () => {
   const text = read('README.md');
   assert.doesNotMatch(text, /pinned column smaller than a screen/);
-  assert.match(text, /design-archive-sections\.mjs.*only a pin at least half the viewport wide and half of it tall counts/);
 });

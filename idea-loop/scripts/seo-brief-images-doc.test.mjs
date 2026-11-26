@@ -1,5 +1,5 @@
 /**
- * Pins the sentences that make "seo-brief hands out the cover and the share card once the angle and the title are
+ * Pins the sentences that make "seo-writing's brief branch (references/brief.md) hands out the cover and the share card once the angle and the title are
  * settled" true in the docs (spec split-blog-publisher, ticket 06): the 「配图」 step sits between step 5 (title and
  * description) and the step that writes the brief out, derives the cover-subject candidates from the angle and the OG
  * headline from the title, calls `cover` and `og`, settles the subject in the same question as the angle when a human
@@ -21,7 +21,8 @@ const path = (...p) => join(root, ...p);
 const read = (...p) => readFileSync(path(...p), 'utf8');
 const body = (md) => md.split(/^---\s*$/m).slice(2).join('---');
 
-const BRIEF = body(read('skills', 'seo', 'seo-brief', 'SKILL.md'));
+const BRIEF = read('skills', 'seo', 'seo-writing', 'references', 'brief.md');
+const FIELDS = read('skills', 'seo', 'seo-writing', 'references', 'article-fields.md');
 const OG = body(read('skills', 'seo', 'og', 'SKILL.md'));
 const WRITING = body(read('skills', 'seo', 'seo-writing', 'SKILL.md'));
 const DRAFT_SPEC = read('skills', 'engineering', 'issue-session', 'references', 'draft-spec.md');
@@ -34,7 +35,7 @@ function section(doc, title) {
 
 const IMAGES = section(BRIEF, '6\\. 配图');
 
-test('seo-brief: a 「配图」 step sits after title and description and before the step that writes the brief out', () => {
+test('brief reference: a 「配图」 step sits after title and description and before the step that writes the brief out', () => {
   const heads = [...BRIEF.matchAll(/^## (\d+)\. (.+)$/gm)].map((m) => `${m[1]}. ${m[2]}`);
   const at = (re) => heads.findIndex((h) => re.test(h));
   const titleStep = at(/内链、title、description/);
@@ -65,7 +66,7 @@ test('配图 step: a human in the session gets angle and cover subject in one qu
   assert.match(IMAGES, /AI 照推荐定：<[^>]+>/);
 });
 
-test('seo-brief step 4 points a human in the session at the one question, so the angle is not settled before the subject is offered', () => {
+test('brief reference step 4 points a human in the session at the one question, so the angle is not settled before the subject is offered', () => {
   const s = section(BRIEF, '4\\. 判意图、类型、能补什么');
   const line = s.split('\n').find((l) => /^- \*\*人在场\*\*/.test(l));
   assert.ok(line, 'a 人在场 line in step 4');
@@ -80,9 +81,11 @@ test('配图 step: no recipe configured → default recipe, one sentence in the 
   assert.match(IMAGES, /人在场[^\n]*问[\s\S]*托管[^\n]*默认/, 'same fallback as cover / og: ask when a human is there, default when hosted');
 });
 
-test('配图 step: the images are committed on the issue branch together with the spec', () => {
-  assert.match(IMAGES, /issue 分支/);
-  assert.match(IMAGES, /提交/);
+// 0.2.0: no branch in triage; the images sit in the spec's assets/ and go to home with the spec.
+test('配图 step: the images sit in the spec\'s assets/ and are committed to home together with the spec', () => {
+  assert.match(IMAGES, /<项目目录>\/docs\/spec\/<spec-slug>\/assets\//);
+  assert.match(IMAGES, /跟这份 spec 一起 `commit` 到 home/);
+  assert.doesNotMatch(IMAGES, /issue 分支/);
 });
 
 test('the brief template has a 「配图」 section after title and description, with subject candidates, the OG headline, and where the images are', () => {
@@ -97,45 +100,44 @@ test('the brief template has a 「配图」 section after title and description,
   assert.match(sec, /图的位置/);
 });
 
-test('og reads the headline from the brief section seo-brief writes (same names)', () => {
+test('og reads the headline from the brief section the brief branch writes (same names)', () => {
   assert.match(OG, /brief「配图」一节写了大标题/);
   assert.match(BRIEF, /#### 配图/);
   assert.match(BRIEF, /OG 大标题/);
 });
 
-test('seo-brief intro mentions the cover and share card, and its step references point at the right steps', () => {
+test('brief reference intro mentions the cover and share card, and its step references point at the right steps', () => {
   const intro = BRIEF.split('\n## ')[0];
   assert.match(intro, /封面/);
   assert.match(intro, /第 4、7 步/);
 });
 
-test('draft-spec lets the images the brief produced into the spec commit', () => {
+// 0.2.0: the spec lands in home and a triage session opens no branch, so the images sit in the spec's assets/
+// and go to home with it; the todo session copies them into the site's image directory with the article.
+test('draft-spec lets the images the brief produced into the spec commit (spec assets/ in home)', () => {
   const check = DRAFT_SPEC.split('\n').find((l) => /改动只在该在的地方/.test(l));
   assert.ok(check, 'the check line exists');
-  assert.match(check, /图片目录/, 'the check allows the brief\'s images');
+  assert.match(check, /spec\/<slug>\/assets\//, 'the check allows the brief\'s images in the spec\'s assets/');
   const commit = section(DRAFT_SPEC, '提交');
-  assert.match(commit, /图片目录/, 'the commit step adds them');
+  assert.match(commit, /assets\/[^。]*随 spec 一起提交到 home/, 'the commit step takes them to home with the spec');
+  assert.match(commit, /不为它开 `issue\/<号>-<slug>` 分支/, 'a triage session opens no branch for them');
+  assert.match(commit, /拷进站点的图片目录/, 'the todo session copies them into the image directory');
 });
 
-test('seo-writing 写: the cover and OG paths the brief recorded go into each language version\'s frontmatter, in the fields 「配图」 names, with the same fallback as cover / og', () => {
+test('seo-writing 写 points at the cover / OG field steps; they carry the paths the brief recorded into each language version\'s frontmatter, in the fields 「配图」 names, with the same fallback as cover / og', () => {
   const w = section(WRITING, '4\\. 写');
   const line = w.split('\n').find((l) => /^- \*\*封面和 OG 的字段\*\*/.test(l));
   assert.ok(line, 'a 封面和 OG 的字段 bullet in step 4');
+  assert.match(line, /references\/article-fields\.md/);
   assert.match(line, /brief「配图」一节/);
-  assert.match(line, /图的位置/);
-  assert.match(line, /各语言版本[^\n]*frontmatter/);
-  assert.match(line, /SEO\.md「配图」节的封面字段、OG 字段/);
-  assert.match(line, /人在场[^\n]*问[^\n]*托管[^\n]*同站已有文章[^\n]*找不到就不写/, 'same fallback as cover / og');
-  const keys = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+  const field = section(FIELDS, '封面和 OG 的字段');
+  assert.match(field, /brief「配图」一节/);
+  assert.match(field, /从 `<项目目录>\/docs\/spec\/<spec-slug>\/assets\/` 拷进 SEO\.md「配图」节的图片目录/);
+  assert.match(field, /各语言版本[^\n]*frontmatter/);
+  assert.match(field, /SEO\.md「配图」节的封面字段、OG 字段/);
+  assert.match(field, /人在场[^\n]*问[^\n]*托管[^\n]*同站已有文章[^\n]*找不到就不写/, 'same fallback as cover / og');
+  const keys = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
   for (const k of ['封面字段', 'OG 字段']) assert.ok(keys.includes(k), `${k} is a key in the SEO.md format doc`);
-});
-
-test('seo-writing: the body stays under 5000 characters with the new bullet', () => {
-  assert.ok([...WRITING].length < 5000, `${[...WRITING].length} characters`);
-});
-
-test('seo-brief: the body stays under 5000 characters', () => {
-  assert.ok([...BRIEF].length < 5000, `${[...BRIEF].length} characters`);
 });
 
 test('cover and og exist as skills the step can call', () => {

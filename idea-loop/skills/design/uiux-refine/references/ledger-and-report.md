@@ -11,12 +11,12 @@
 | `notes.md` | designer | 这一版的流水账：做了什么、遇到什么。不进 ledger |
 | `changeset.json` | designer | 改动集：`[{ "decision": "2.1", "states": [...], "anchors": [...] }]`，一条对应人上一轮的一条决策；第一轮写 `[]`。形状见 `idea-loop:ui-measure` 的「两版画布对比」 |
 | `shots/` | designer | 这一版每个状态的截图 |
-| `thoughts.md` | 你 | 人这一轮写下的每条思路，一条一行：`<编号> \| <人的原话>`，编号按顺序 `1`、`2`……；原话分了几行，后面的行直接接着写。报告脚本读它 |
-| `self-check.json` | 你 | designer 交回的「自检说明」抄成 `[{ "state": "...", "anchor": "...", "what": "...", "why": "..." }]`，每项四样都是非空文字，同一个 state + anchor 不写两次；没有自检改动就写 `[]`。报告脚本读它 |
+| `thoughts.md` | 你 | 人这一轮写下的每条思路，一条一行：`<编号> \| <人的原话>`，编号按顺序 `1`、`2`……；原话分了几行，后面的行直接接着写。报告命令读它 |
+| `self-check.json` | 你 | designer 交回的「自检说明」抄成 `[{ "state": "...", "anchor": "...", "what": "...", "why": "..." }]`，每项四样都是非空文字，同一个 state + anchor 不写两次；没有自检改动就写 `[]`。报告命令读它 |
 | `critic.json`、`context.json` | 你 | 评委的 JSON；`{ "states": [画布状态清单], "thoughts": [这一轮要评估的思路编号] }`，ledger 里标了「讨论后坚持」的思路不进 `thoughts` |
 | `matrix.json`、`canvas-diff.json` | 你 | 两版比对的矩阵和 `--json` 输出 |
 | `dissatisfied.json` | 你 | 人的不满标记，有才写 |
-| `report.html` | 报告脚本 | 本轮的设计评审报告 |
+| `report.html` | 报告命令 | 本轮的设计评审报告 |
 
 调研员的落图目录不在这里，在 `research/round-<N>/`（`idea-loop:uiux-research` 轻用法的约定）：它的 `research-light.json` 和 `shots/` 留在那里，不提交。
 
@@ -47,17 +47,17 @@
 
 ## 报告怎么拼
 
-脚本拼，不手写：
+命令拼，不手写：
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.json> --research <research/round-<N>/research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <这一版的预览地址> [--previous <上一版的预览地址>] [--dissatisfied <dissatisfied.json>] --self-check <self-check.json> --out <report.html>
+dyna design report --judge <critic.json> --research <research/round-<N>/research-light.json> --diff <canvas-diff.json> --thoughts <thoughts.md> --canvas <这一版的预览地址> [--previous <上一版的预览地址>] [--dissatisfied <dissatisfied.json>] --self-check <self-check.json> --out <report.html>
 ```
 
-输入的形状、页面顺序、`dissatisfied.json`（`[{ "opinion": <评委意见编号>, "quote": "<人的原话>" }]`，只对 `direction` 意见打）见脚本的头注释；退出码 `2` 是输入不对，输出会说哪一份、哪一项，补齐了重跑。脚本的输出摘要里有分数和要特别注意的项，对话里引用它。
+输入的形状、页面顺序、`dissatisfied.json`（`[{ "opinion": <评委意见编号>, "quote": "<人的原话>" }]`，只对 `direction` 意见打）见 `dyna design report --help`；退出码 `2` 是输入不对，输出会说哪一份、哪一项，补齐了重跑。命令的输出摘要里有分数和要特别注意的项，对话里引用它。
 
-`--thoughts` 读本轮的 `thoughts.md`：评委评估过的每条思路都要有人的原话，缺了脚本退出码 `2` 并列出缺的编号，先补 `thoughts.md` 再重跑（「讨论后坚持」的思路评委没评估，不用写进来）。
+`--thoughts` 读本轮的 `thoughts.md`：评委评估过的每条思路都要有人的原话，缺了命令退出码 `2` 并列出缺的编号，先补 `thoughts.md` 再重跑（「讨论后坚持」的思路评委没评估，不用写进来）。
 
-`--self-check` 每轮都传，没有自检改动就传 `[]`（不传，报告不提理由）。脚本把自检说明里的每一项按状态加锚点去对：
+`--self-check` 每轮都传，没有自检改动就传 `[]`（不传，报告不提理由）。命令把自检说明里的每一项按状态加锚点去对：
 
 - 对上一处没声明的改动：理由写在那一条旁边。
 - 对不上没声明的、对上一处已声明的改动（自检改的地方落在这一轮按决策改过的同一块里，比对把整块算成已声明）：也排进「没声明却变了的地方」，带这一块的改前改后、designer 的理由和这一块按哪几条决策改过，问人留还是撤；不用 designer 重跑。
@@ -67,9 +67,13 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/design-review-report.mjs" --judge <critic.js
 
 ## 报告怎么发
 
-照『发布审阅页』（`idea-loop:runtime`）把 `report.html` 发给人；当前运行环境做不了，就走它写的退路，`report.html` 留在 `round-<N>/` 里，告诉人用浏览器打开。不新增能力。
+照『发布审阅页』（做法照 `dyna runtime show 发布审阅页`）把 `report.html` 发给人；当前运行环境做不了，就走它写的退路，`report.html` 留在 `round-<N>/` 里，告诉人用浏览器打开。不新增能力。
 
 对话里放报告链接、分数、要特别注意的项；每个要特别注意的项可带一两句推荐理由，末尾可附一句「怎么回」（回复格式举例，如「1 收下」「2 不要，改成 X」）。其余留在报告页里。Mobbin 没连上时报告照出，页面里写明「这一轮没有参考图：Mobbin 没连上」，你不重试，对话里也提一句。
+
+## 方向性意见与人的不满
+
+评委判 `direction` 的意见，看人在这次 refine 里有没有对这一块表示过不满意（会话记录或 ledger 里有人的原话）：有，给报告命令打标记（`dissatisfied.json`），报告就推荐「回 imagine 重开这一块」，不再推荐保留；没有才推荐保留。人同意重开：照 [freeze.md](freeze.md) 的「部分冻结」处理，告诉人跑 `/idea-loop:uiux-imagine`，调用时附上这条意见的原文，由它交给新的 imaginer。
 
 ## 迁移：旧流程里的「人保留」
 

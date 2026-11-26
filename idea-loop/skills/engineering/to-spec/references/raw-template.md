@@ -1,6 +1,6 @@
 # raw transcript 的正文模板
 
-`docs/raw/<topic>/<YYYY-MM-DD>-<slug>.md` 的 frontmatter 与正文照下面写。
+`<docs>/raw/<topic>/<YYYY-MM-DD>-<slug>.md`（`<docs>` 同 `idea-loop:to-spec`）的 frontmatter 与正文照下面写。
 
 frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`、`title`、`tags: [<topic>, <feature-slug>]`、`related: ["[[<spec-slug>]]"]`。
 
@@ -23,4 +23,4 @@ frontmatter：`type: raw`、`source_type: conversation`、`captured: <今天>`�
 |---|---|
 ```
 
-引用过的外部材料（网页、PDF、查询结果、截图）抓进同一个 `docs/raw/<topic>/` 目录，各自带 `source_type` 和 `captured`；图片下载到 `assets/`，每张配一段文字描述，没有文字的图不算捕获。
+引用过的外部材料（网页、PDF、查询结果、截图）抓进同一个 `<docs>/raw/<topic>/` 目录，各自带 `source_type` 和 `captured`；图片下载到 `assets/`，每张配一段文字描述，没有文字的图不算捕获。

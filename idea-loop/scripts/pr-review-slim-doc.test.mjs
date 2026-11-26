@@ -1,5 +1,5 @@
 /**
- * Tripwire — pr-review's SKILL.md stays slim: body under 5000 characters (AGENTS.md「标准 plugin 目录结构」),
+ * Tripwire — pr-review's SKILL.md stays slim: 
  * each action written once, the ticket-return steps defined in one place, "what next after a round" in
  * one section, and the branches only some rounds take (UI walkthrough) behind a pointer.
  *
@@ -31,26 +31,26 @@ function section(title) {
   return rest.slice(0, end < 0 ? undefined : end).join('\n');
 }
 
-// The limit in AGENTS.md「标准 plugin 目录结构」. The design change, which only a round where the human accepted a
-// design that differs from the frozen canvas reaches, lives in references/design-change.md (spec skill-body-limit-backlog).
-test('the body is under 5000 characters (the limit in AGENTS.md)', () => {
-  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
-});
-
+// The design change, which only a round where the human accepted a
+// design that differs from the frozen canvas reaches, lives in references/design-change.md.
 test('the append-a-cell-to-the-ticket step is written once, under 回工单', () => {
   assert.equal(body.split('docs(tickets): <NN> — review 第').length - 1, 1, 'the ticket-cell commit message is spelled out more than once');
   const text = section('回工单');
-  assert.match(text, /git blame/);
-  assert.match(text, /ticket-ledger\.mjs/);
+  assert.match(text, /blame/);
+  assert.doesNotMatch(text, /`git blame`/, 'finding the owning commit is a goal, not a git line');
+  assert.match(text, /dyna spec ticket-of/);
   assert.match(text, /idea-loop:implementer/);
   assert.match(text, /Ticket:/);
-  assert.ok(body.split('回工单').length - 1 >= 3, 'the other places should refer to 回工单 by name');
+  assert.ok(body.split('回工单').length - 1 >= 2, 'the action table should refer to 回工单 by name, not spell the steps out again');
 });
 
-test('the actions are one table with an overturn column', () => {
+test('the actions are one table; how each is undone when the human overturns it lives in other-directives.md', () => {
   const rows = body.split('\n').filter((l) => /^\| \*\*(修|同步改|接受并补记|开 issue|不修)/.test(l));
   assert.equal(rows.length, 5, 'one row per action: 修/恢复, 同步改, 接受并补记, 开 issue, 不修');
-  assert.match(body, /\| 被推翻时 \|/);
+  assert.doesNotMatch(body, /\| 被推翻时 \|/, 'the overturn column moved behind the pointer');
+  const other = readFileSync(join(dir, 'references', 'other-directives.md'), 'utf8');
+  assert.match(other, /\| 被推翻的动作 \| 怎么撤回 \|/);
+  for (const action of ['修', '恢复', '同步改', '接受并补记', '开 issue']) assert.ok(other.includes(`**${action}**`), `other-directives.md has no undo for ${action}`);
 });
 
 test('where a round goes next is one section with the three outcomes', () => {
@@ -74,9 +74,25 @@ test('the auto-started next round runs the whole 前提 first (merge in the late
   assert.doesNotMatch(point1, /先等 CI（同前提）/, 'point 1 is back to waiting for CI only');
 });
 
-test('the rules decision-rules already owns are pointers, not restated lists', () => {
-  assert.match(body, /idea-loop:decision-rules/);
+test('what the user rules own are pointers, not restated lists', () => {
+  assert.match(body, /~\/\.claude\/CLAUDE\.md/);
+  assert.match(body, /依据：只认四种/);
   assert.doesNotMatch(body, /仍然停/);
+});
+
+// the round the reviewer agent used to run is a reference of pr-review's own now (spec idea-loop-cli, ticket 16)
+test('the round itself lives in references/run-a-round.md behind one pointer; there is no reviewer agent', () => {
+  assert.ok(existsSync(join(dir, 'references', 'run-a-round.md')), 'references/run-a-round.md is missing');
+  assert.match(body, /references\/run-a-round\.md/);
+  assert.doesNotMatch(body, /pr-reviewer/);
+  assert.ok(!existsSync(join(pluginRoot, 'agents', 'pr-reviewer.md')), 'agents/pr-reviewer.md is back');
+  const ref = readFileSync(join(dir, 'references', 'run-a-round.md'), 'utf8');
+  assert.match(ref, /dyna agent codex prompt spec/);
+  assert.match(ref, /dyna agent codex prompt standards/);
+  assert.match(ref, /dyna agent codex run/);
+  assert.match(ref, /dyna pr candidates submit/);
+  assert.match(ref, /dyna pr diagnostics filter/);
+  assert.doesNotMatch(ref, /companion|--write/);
 });
 
 test('the UI walkthrough lives in its own reference, with the condition for reading it', () => {
@@ -109,19 +125,20 @@ test('前提 merges the latest base branch in before the CI line; merge.md point
   const ciAt = text.search(/CI 全绿/);
   assert.ok(mergeAt >= 0, '前提 has no 合入最新主分支 line');
   assert.ok(mergeAt < ciAt, 'the merge-in line must come before the CI line');
-  assert.match(text, /merge 进 PR 分支，不 rebase/);
+  assert.match(text, /合并而不 rebase/);
+  assert.doesNotMatch(text, /`git (fetch|merge)`/);
   assert.match(text, /重新生成、不手拼/);
   assert.match(text, /推送/);
-  assert.match(text, /idea-loop:decision-rules/);
+  assert.match(text, /「停下问我」/);
   const merge = readRef('PR_REVIEW_MERGE_REF', 'skills', 'engineering', 'pr-review', 'references', 'merge.md');
   const step1 = merge.slice(merge.indexOf('## 合并\n'), merge.indexOf('\n2. '));
   assert.match(step1, /先合入最新主分支/, 'merge.md 合并 step 1 does not cite the 前提 line');
 });
 
-test('the round cap is written once: reviewer definition, report template and the other references do not repeat it', () => {
-  const reviewer = readRef('PR_REVIEWER_DEF', 'agents', 'pr-reviewer.md');
-  const template = readRef('PR_REVIEW_REPORT_REF', 'skills', 'engineering', 'pr', 'references', 'review-report.md');
-  assert.doesNotMatch(reviewer, /跑满两轮|已跑满/, 'the reviewer cannot know whether the loop stops after this round');
+test('the round cap is written once: the round reference (run-a-round.md), report template and the other references do not repeat it', () => {
+  const reviewer = readRef('PR_REVIEW_ROUND_REF', 'skills', 'engineering', 'pr-review', 'references', 'run-a-round.md');
+  const template = readRef('PR_REVIEW_REPORT_REF', 'skills', 'engineering', 'pr-review', 'references', 'review-report.md');
+  assert.doesNotMatch(reviewer, /跑满两轮|已跑满/, 'the round itself cannot know whether the loop stops after this round');
   assert.doesNotMatch(template, /跑满两轮|已跑满/, 'the report template must not carry the stop sentence');
   for (const f of ['design-change.md', 'merge.md', 'seo-auto-merge.md']) {
     const doc = readFileSync(join(dir, 'references', f), 'utf8');

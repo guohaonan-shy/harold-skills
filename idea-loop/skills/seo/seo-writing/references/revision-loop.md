@@ -1,18 +1,18 @@
 # 改稿循环的做法
 
-SKILL.md 第 5 步的细节：每个命令怎么跑、写作评委怎么起、两个写作评委怎么合、改什么不改什么、`premise` 怎么交、交回写什么。`S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`。
+SKILL.md 第 5 步的细节：每个命令怎么跑、写作评委怎么起、两个写作评委怎么合、改什么不改什么、`premise` 怎么交、交回写什么。
 
 ## 开场：读配置
 
-`node "S/seo-md.mjs" SEO.md`，从输出的 `writing` 取 `lintConfig`、`extraLint`、`secondJudge`，再取 `voice`、`failures`、`typeField`、`typeMap`。值是 `null`（没写，或写了 `无`）就当没有：这一样跳过，循环照常跑。没有 SEO.md 同样，lint 用默认值，写作评委只用写作评委一个。
+`dyna seo parse <项目目录>/SEO.md`，从输出的 `writing` 取 `lintConfig`（路径相对项目目录）、`extraLint`、`secondJudge`，再取 `voice`、`failures`、`typeField`、`typeMap`。值是 `null`（没写，或写了 `无`）就当没有：这一样跳过，循环照常跑。没有 SEO.md 同样，lint 用默认值，写作评委只用写作评委一个。
 
 ## 一轮
 
 ### 1. lint
 
-- 通用 lint：`node "S/writing-lint.mjs" [--config=<lintConfig>] <本篇所有语言版本文件>`。`lintConfig` 有值才带 `--config`。所有语言版本一次传，`locale-parity` 才比得上。输出 JSON 的 `rules` 按规则分组，每条带 `file`、`line`、`message`；退出码 0 是一条问题都没有。
+- 通用 lint：`dyna seo writing lint [--config=<项目目录>/<lintConfig>] <本篇所有语言版本文件>`。`lintConfig` 有值才带 `--config`。所有语言版本一次传，`locale-parity` 才比得上。输出 JSON 的 `rules` 按规则分组，每条带 `file`、`line`、`message`；退出码 0 是一条问题都没有。
 - 退出码 2 是命令或配置本身错了（原因在 stderr）：不是文章的问题。把原因写进交回的「没干净的」，这轮只靠写作评委，不算干净。
-- 补充 lint：`extraLint` 有值就在仓库根目录跑它，把本篇各语言版本的文件路径接在命令后面；退出码非 0 或输出里有问题行都算有问题，输出逐行读成问题。
+- 补充 lint：`extraLint` 有值就在代码仓库根目录跑它，把本篇各语言版本的文件路径接在命令后面；退出码非 0 或输出里有问题行都算有问题，输出逐行读成问题。
 
 ### 2. 写作评委
 
@@ -22,7 +22,7 @@ SKILL.md 第 5 步的细节：每个命令怎么跑、写作评委怎么起、�
 
 ### 3. 第二评委
 
-`secondJudge` 有值才跑：在仓库根目录跑这条命令，依次接上五个参数：稿件文件路径、评分表绝对路径、目标词、文章模式、语言。它要在标准输出打出同一形状的 JSON。命令失败、超时、限流、输出不是 JSON：这一轮记「第二评委跳过：<原因>」，不因此停，也不换别的模型顶替。
+`secondJudge` 有值才跑：在代码仓库根目录跑这条命令，依次接上五个参数：稿件文件路径、评分表绝对路径、目标词、文章模式、语言。它要在标准输出打出同一形状的 JSON。命令失败、超时、限流、输出不是 JSON：这一轮记「第二评委跳过：<原因>」，不因此停，也不换别的模型顶替。
 
 ### 4. 合并，决定改什么
 
@@ -49,7 +49,7 @@ SKILL.md 第 5 步的细节：每个命令怎么跑、写作评委怎么起、�
 
 1. 这一轮里不碰那条 `premise` 的改法照常改完，然后停，不进下一轮。
 2. 交回的 `premise` 一节逐条写写作评委的原话：哪个写作评委、`dimension`、`location`、`problem`、`fix` 原样贴，不转述。
-3. 调用方（issue 会话）把已写的提交并 push，照 `issue-session` 的「起草中冒出了要人定的」那句，`issues set <docs> triage <号> --comment=<要人定什么、分支名>`，评论里放写作评委原话；角度是人定的东西，所以回 triage，不在这里翻。
+3. 调用方（issue 会话）把已写的提交并 push，照 `issue-session` 的「起草中冒出了要人定的」把 issue 翻回 triage，评论写要人定什么、分支名，并放写作评委原话；角度是人定的东西，所以回 triage；翻状态是调用方的事，写稿的人不翻。
 
 ## 出图跟着变
 

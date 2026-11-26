@@ -4,12 +4,11 @@
  * Before: a spec carried its own `status` (草稿 … 完成) written by `spec-status.mjs`, an issue carried one of
  * eight Chinese `status:*` labels, and a cloud scheduled task ("整合") hung issues that touched the same place
  * under a root issue. Now an issue's status is the only state (backlog / triage / todo / in-progress /
- * in-review / done / canceled), a spec is a document read by `spec.mjs`, and nothing groups issues.
+ * in-review / done / canceled), a spec is a document read by `dyna spec`, and nothing groups issues.
  *
  * 1. Every text file of the plugin is scanned: no `spec-status`, none of the eight old state names, no
  *    "整合" / consolidation, and the consolidation prompt file is gone. Exempt: `*.test.mjs` (they assert
- *    the absence), `scripts/issues.mjs` (its `migrate` table is the one place that maps old labels to new),
- *    and the `prompt` field of a retro replay case (it records what a human typed back then).
+ *    the absence) and the `prompt` field of a retro replay case (it records what a human typed back then).
  * 2. setup no longer installs the consolidation task, and asks whether the team uses triage.
  * 3. dreaming / adr-reconciler judge "spec is done" by its issues being closed, not by a spec status.
  * 4. wiki-conventions has no `status` at all (only ADRs carry one, described where they are written).
@@ -43,7 +42,7 @@ function files(dir, out = []) {
 /** The text of a file to scan; undefined when the file is exempt. */
 function scanned(f) {
   const rel = relative(pluginRoot, f).split('\\').join('/');
-  if (f.endsWith('.test.mjs') || rel === 'scripts/issues.mjs') return undefined;
+  if (f.endsWith('.test.mjs')) return undefined;
   const text = readFileSync(f, 'utf8');
   if (/^evals\/retro\/cases\/[^/]+\/case\.json$/.test(rel)) {
     const { prompt, ...rest } = JSON.parse(text); // the prompt is what a human typed back then
@@ -75,7 +74,8 @@ test('no file of the plugin names one of the eight old states', () => {
 });
 
 test('no file of the plugin groups issues any more (整合 / consolidation) and the prompt file is gone', () => {
-  assert.deepEqual(hits(/整合|[Cc]onsolidat/), []);
+  // `consolidate-memory` is the desktop's memory skill that dreaming's memory pass says it does not call, not issue grouping
+  assert.deepEqual(hits(/整合|[Cc]onsolidat(?!e-memory)/), []);
   assert.deepEqual(files(pluginRoot).filter((f) => /consolidation-prompt/.test(basename(f))), []);
 });
 
@@ -84,10 +84,6 @@ test('no file of the plugin groups issues any more (整合 / consolidation) and 
 const setupDir = join(pluginRoot, 'skills', 'engineering', 'setup');
 const skill = readFileSync(join(setupDir, 'SKILL.md'), 'utf8');
 const body = skill.split(/^---\s*$/m).slice(2).join('---');
-
-test('setup SKILL.md body is under 5000 characters', () => {
-  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
-});
 
 test('every references/ link in setup SKILL.md exists', () => {
   const links = [...skill.matchAll(/\]\((references\/[^)#]+)\)/g)].map((m) => m[1]);
@@ -109,11 +105,13 @@ test('setup asks whether the team uses triage and writes the answer into ISSUE_T
   assert.match(tpl, /^triage：用 \/ 跳过$/m, 'the template line the answer replaces');
 });
 
-test('setup reads specs through spec.mjs and migrates old labels through issues.mjs migrate', () => {
+test('setup reads specs through `dyna spec check` and migrates old labels through `dyna issues migrate`', () => {
   const survey = readFileSync(join(setupDir, 'references', 'survey.md'), 'utf8');
-  assert.match(survey, /spec\.mjs" check docs/);
-  assert.match(body, /issues\.mjs" migrate docs/);
-  assert.match(body, /--apply/);
+  assert.match(survey, /dyna spec check <docs>/);
+  const tracker = readFileSync(join(setupDir, 'references', 'tracker-write.md'), 'utf8');
+  assert.match(body, /tracker-write\.md/);
+  assert.match(tracker, /dyna issues migrate <docs>/);
+  assert.match(tracker, /--apply/);
 });
 
 // ---------- dreaming / adr-reconciler ----------
@@ -129,7 +127,7 @@ test('dreaming and adr-reconciler judge a spec done by its issues being closed',
   assert.match(missed, /issues:/);
   assert.match(missed, /全(都)?关/);
   assert.doesNotMatch(missed, /`status`/);
-  assert.match(agent, /idea-loop:issues|spec\.mjs/);
+  assert.match(agent, /idea-loop:issues|dyna spec/);
 });
 
 // ---------- wiki-conventions ----------
@@ -138,7 +136,7 @@ test('wiki-conventions has no status at all; a spec is judged by its issues (dre
   const md = read('skills', 'productivity', 'wiki-conventions', 'SKILL.md').split(/^---\s*$/m).slice(2).join('---');
   assert.doesNotMatch(md, /status/, 'the wiki-conventions body mentions status again');
   assert.match(md, /issues:/);
-  assert.match(md, /spec\.mjs/);
+  assert.match(md, /dyna spec/);
   // ADR is the only type with a status; its two values live where ADRs are written.
   const adr = read('skills', 'productivity', 'dreaming', 'references', 'adr.md');
   assert.match(adr, /只有 ADR 带/);

@@ -110,11 +110,33 @@ test('foreignReferenceReads: a path into another skill\'s references', () => {
   assert.deepEqual(foreignReferenceReads(text, 'implement').map(([slug]) => slug), ['uiux-refine']);
 });
 
+/**
+ * The one sanctioned foreign read (writing-for-agents SKILL-MECHANICS.md「引用另一个 skill」): the review
+ * standards of `pr-review`, read by `issue-session` and `pr` by full path, because calling `pr-review`
+ * starts a whole review round. Anything else of `pr-review`'s references stays a violation.
+ */
+const SANCTIONED = {
+  'issue-session': ['skills/engineering/pr-review/references/review-standards.md'],
+  pr: ['skills/engineering/pr-review/references/review-standards.md'],
+};
+export function withoutSanctioned(text, ownSlug) {
+  return (SANCTIONED[ownSlug] ?? []).reduce((t, path) => t.split(path).join(''), text);
+}
+
+test('withoutSanctioned: only the review standards, only for issue-session and pr', () => {
+  const text = '读 ${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md。';
+  assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'issue-session'), 'issue-session'), []);
+  assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'pr'), 'pr'), []);
+  assert.equal(foreignReferenceReads(withoutSanctioned(text, 'implement'), 'implement').length, 1);
+  const other = '${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/run-a-round.md';
+  assert.equal(foreignReferenceReads(withoutSanctioned(other, 'pr'), 'pr').length, 1);
+});
+
 test('no skill reads another skill\'s private references', () => {
   const violations = [];
   for (const { slug, dir } of skillDirs()) {
     for (const file of walk(dir).filter((f) => f.endsWith('.md'))) {
-      const text = readFileSync(file, 'utf8');
+      const text = withoutSanctioned(readFileSync(file, 'utf8'), slug);
       for (const [other, excerpt] of foreignReferenceReads(text, slug)) {
         violations.push(`${relative(pluginRoot, file)} reads ${other}'s references: ${excerpt}`);
       }
@@ -131,11 +153,11 @@ test('agentReferenceProblems: a path that does not exist is reported with the ag
 
 test('agentReferenceProblems: reading a skill that does not start the agent is reported', () => {
   const text = '读 `${CLAUDE_PLUGIN_ROOT}/skills/engineering/implement/references/ui-tickets.md`。';
-  const problems = agentReferenceProblems('pr-reviewer', text, new Set(['pr-review']), () => true);
+  const problems = agentReferenceProblems('ui-reviewer', text, new Set(['pr-review']), () => true);
   assert.equal(problems.length, 1);
-  assert.match(problems[0], /agents\/pr-reviewer\.md reads skills\/engineering\/implement\/references\/ui-tickets\.md/);
-  assert.match(problems[0], /implement does not start pr-reviewer \(started by pr-review\)/);
-  assert.match(agentReferenceProblems('pr-reviewer', text, new Set(), () => true)[0], /started by no skill/);
+  assert.match(problems[0], /agents\/ui-reviewer\.md reads skills\/engineering\/implement\/references\/ui-tickets\.md/);
+  assert.match(problems[0], /implement does not start ui-reviewer \(started by pr-review\)/);
+  assert.match(agentReferenceProblems('ui-reviewer', text, new Set(), () => true)[0], /started by no skill/);
 });
 
 test('agentReferenceProblems: an existing path in a skill that starts the agent is fine, a directory and trailing dot too', () => {

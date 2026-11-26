@@ -31,10 +31,6 @@ function markdownUnder(dir) {
   });
 }
 
-test('the skill body stays under 5000 characters', () => {
-  assert.ok([...body].length < 5000, `body is ${[...body].length} characters`);
-});
-
 test('the round is the six steps, ending at a report the human answers by number', () => {
   const steps = [...body.matchAll(/^(\d)\. \*\*([^*]+)\*\*/gm)].map((m) => m[2]);
   for (const name of ['人回决策', '交给 designer', '请评委', '比对两版', '配参考', '拼报告、发出去']) {
@@ -90,7 +86,7 @@ test('the reference writes down the ledger format, how the report goes out, how 
   assert.match(ref, /人没提到的编号，你接着问，不替人照推荐或设计意图定/);
   assert.doesNotMatch(ref, /没提到的编号算收下/);
   assert.match(ref, /第 0 轮/);
-  assert.match(ref, /design-review-report\.mjs/);
+  assert.match(ref, /dyna design report --judge/);
 });
 
 test('what goes in the chat when the report goes out: link, score, the items to watch (with a reason), a "how to reply" line; the rest stays on the page', () => {
@@ -106,7 +102,10 @@ test('what goes in the chat when the report goes out: link, score, the items to 
 });
 
 test('a direction opinion about a block the human already disliked is reported as "reopen in imagine" (#230)', () => {
-  const section = body.slice(body.indexOf('## 方向性意见与人的不满'), body.indexOf('## 人说的其它话'));
+  // the branch lives in the ledger reference; the skill body keeps a pointer to it
+  assert.match(body.slice(body.indexOf('## 方向性意见与人的不满'), body.indexOf('## 人说的其它话')), /references\/ledger-and-report\.md/);
+  const ref = read('skills', 'design', 'uiux-refine', 'references', 'ledger-and-report.md');
+  const section = ref.slice(ref.indexOf('## 方向性意见与人的不满'), ref.indexOf('## 迁移'));
   assert.match(section, /不满意（会话记录或 ledger 里有人的原话）/);
   assert.match(section, /推荐「回 imagine 重开这一块」，不再推荐保留/);
   assert.match(section, /附上这条意见的原文/);

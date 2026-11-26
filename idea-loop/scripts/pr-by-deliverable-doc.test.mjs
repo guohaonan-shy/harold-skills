@@ -1,16 +1,15 @@
 /**
- * Tripwire — the pr skill is written from its reader: two deliverables, each with a table of sections and
- * what each section gives the reader.
+ * Tripwire — the pr skill is written from its reader: one deliverable, the PR description, with a table of
+ * its sections and what each gives the reader; the Review 汇报 and the review loop file belong to pr-review.
  *
- * Spec decision-rules-who-decides, ticket 03 (issue #80). Before: four deliverables (the PR description, a
- * stop report, a review report, the review-loop file) grown one rule at a time, 11841 characters over five
- * files, with no place that said what a section is for. The human decided (2026-10-31): the deliverables
- * are the PR description on GitHub and one Review 汇报 in the conversation (stops during implementation and
- * review rounds are the same report); the review-loop file is only where that report is kept; both have a
- * 能否回滚 section; every 要你决定 item has one format. These checks pin: the two section tables (three
- * columns, no empty cell), the item format, the reference files and their total size, the SKILL.md body
- * under 5000 characters, no pointer left at the removed files or the removed names, and the shared writing
- * rules cited from evidence rather than restated.
+ * Spec who-decides, ticket 03 (issue #80) split the pr skill by deliverable (the PR description on GitHub, and
+ * one Review 汇报 in the conversation kept in the review-loop file). Spec pr-five-sections, ticket 02 (issue
+ * #452) cut the description to five sections (问题, 概要, 证据, 合并风险, 要你做的事; an SEO PR adds 上线自查的网址)
+ * and moved the Review 汇报 and the review loop file, with everything about showing them, into pr-review. These
+ * checks pin: the one section table (three columns, no empty cell, the script section names in order), the
+ * template headings, the references of both skills, nothing of the old structure left in pr, the 汇报 item
+ * format pointing at home's 一道题 instead of restating it, no pointer at the removed files or names, the
+ * shared writing rules cited from evidence rather than restated, and the 「视图菜单」 section dyna prints.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,9 +19,9 @@ import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const prDir = join(pluginRoot, 'skills', 'engineering', 'pr');
+const prReviewDir = join(pluginRoot, 'skills', 'engineering', 'pr-review');
 const read = (...p) => readFileSync(join(pluginRoot, ...p), 'utf8');
 const bodyOf = (raw) => raw.replace(/^---\n[\s\S]*?\n---\n/, '');
-const chars = (s) => [...s].length;
 
 const skillRaw = readFileSync(join(prDir, 'SKILL.md'), 'utf8');
 const skill = bodyOf(skillRaw);
@@ -42,70 +41,83 @@ function sectionTables(text) {
   return tables;
 }
 
-test('the pr skill has exactly two section tables, one per deliverable, every row with a name, what it gives the reader, and who writes it', () => {
+test('the pr skill has exactly one section table, every row with a name, what it gives the reader, and who writes it', () => {
   const tables = sectionTables(skill);
-  assert.equal(tables.length, 2, '两份交付物各一张节表');
-  for (const rows of tables) {
-    for (const cells of rows) {
-      assert.equal(cells.length, 3, `一行三列：${cells.join(' | ')}`);
-      assert.ok(cells.every((c) => c.length > 0), `没有空格：${cells.join(' | ')}`);
-    }
+  assert.equal(tables.length, 1, 'PR 描述一张节表；汇报的节表在 pr-review');
+  for (const cells of tables[0]) {
+    assert.equal(cells.length, 3, `一行三列：${cells.join(' | ')}`);
+    assert.ok(cells.every((c) => c.length > 0), `没有空格：${cells.join(' | ')}`);
   }
-  const [description, report] = tables;
-  assert.deepEqual(description.map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '夜里替你定的', '等你定的', '要你做的事', '参考']);
-  assert.deepEqual(report.map((r) => r[0]), ['开头一句', '已按规则处理', '要你决定', '能否回滚', '要你看的', '折叠区']);
+  assert.deepEqual(tables[0].map((r) => r[0].replace(/`[^`]*`/g, '').trim()), ['问题', '概要', '证据', '合并风险', '要你做的事', '上线自查的网址']);
 });
 
-test('the description table carries the script section names in order, with 能否回滚 after 怎么验证 and no 顺带开的 issue of its own', () => {
+test('the description table carries the script section names in order', () => {
   const [description] = sectionTables(skill);
-  const names = description.map((r) => r[0].match(/`([^`]*)`/)?.[1]);
-  assert.deepEqual(names, ['summary', 'problem', 'changes', 'verification', 'rollback', 'live-check', 'night-decided', 'night-waiting', 'your-todo', 'reference']);
-  assert.ok(!description.some((r) => r[0].includes('顺带开的 issue')));
+  assert.deepEqual(description.map((r) => r[0].match(/`([^`]*)`/)?.[1]), ['problem', 'outline', 'evidence', 'risk', 'your-todo', 'live-check']);
 });
 
-test('the skill body is at most 5000 characters (UTF-8 characters, not bytes), and names only the two deliverables', () => {
-  assert.ok(chars(skill) <= 5000, `body is ${chars(skill)} characters`);
+test('the pr skill names only the PR description, and none of the old section names or the review-report sections are left in it', () => {
   const description = skillRaw.match(/^description: (.*)$/m)[1];
   assert.match(description, /PR 描述/);
-  assert.match(description, /Review 汇报/);
-  assert.doesNotMatch(description, /停下汇报/);
+  assert.doesNotMatch(description, /Review 汇报|review loop/);
+  const all = [skill, ...readdirSync(join(prDir, 'references')).map((f) => readFileSync(join(prDir, 'references', f), 'utf8'))].join('\n');
+  for (const name of ['summary', 'changes', 'verification', 'rollback', 'night-decided', 'night-waiting', 'reference']) {
+    assert.doesNotMatch(all, new RegExp(`\`${name}\``), `pr 里还写着旧节名 \`${name}\``);
+  }
+  assert.doesNotMatch(skill, /^## (Review 汇报|在会话里给人看|review loop 文件)/m, 'review 汇报三节已挪去 pr-review');
 });
 
-test('the pr skill has three reference files and they total no more than the four it replaced', () => {
-  // delivery-evidence.md moved in from evidence (spec decision-evidence-principles, #245); it is not one of the two deliverables
-  const all = readdirSync(join(prDir, 'references')).sort();
-  assert.deepEqual(all, ['delivery-evidence.md', 'description.md', 'review-loop.md', 'review-report.md']);
-  const files = all.filter((f) => f !== 'delivery-evidence.md');
-  // the four references before the rewrite: 2491 + 2888 + 1654 + 2444 characters
-  const total = files.reduce((n, f) => n + chars(readFileSync(join(prDir, 'references', f), 'utf8')), 0);
-  assert.ok(total <= 9477, `references total ${total} characters`);
+test('the pr skill has two reference files; the review report and the review loop file live in pr-review', () => {
+  assert.deepEqual(readdirSync(join(prDir, 'references')).sort(), ['delivery-evidence.md', 'description.md']);
+  assert.deepEqual(
+    readdirSync(join(prReviewDir, 'references')).filter((f) => /^review-(report|loop)\.md$/.test(f)).sort(),
+    ['review-loop.md', 'review-report.md'],
+  );
 });
 
-test('the Review 汇报 gives every 要你决定 item one format: now, impact, evidence, options with cost and rollback, recommendation', () => {
-  const text = readFileSync(join(prDir, 'references', 'review-report.md'), 'utf8');
-  const item = text.match(/#### [^\n]*\n([\s\S]*?)\n### 能否回滚/);
-  assert.ok(item, 'the template has a 要你决定 item before 能否回滚');
-  const at = ['现状', '对用户的影响', '证据', '选项', '推荐'].map((f) => item[1].indexOf(`**${f}**`));
-  assert.ok(at.every((i) => i >= 0), `item fields found at ${at}`);
-  assert.deepEqual([...at].sort((a, b) => a - b), at, 'fields are in the stated order');
-  assert.match(item[1], /代价[\s\S]*能否回滚|能否回滚[\s\S]*代价/, '每个选项带代价和能否回滚');
-  // the template has the sections the table names, in the table's order
-  const heads = [...text.matchAll(/^### (已按规则处理|要你决定|能否回滚|要你看的)/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ['已按规则处理', '要你决定', '能否回滚', '要你看的']);
-  assert.match(text, /Standards[\s\S]*规则原文[\s\S]*现状|现状[\s\S]*Standards[\s\S]*规则原文/, 'Standards 的规则原文写在现状里');
+test('the Review 汇报 has its section table in pr-review and writes the 要你决定 item as home\'s 一道题, not as a format of its own', () => {
+  const text = readFileSync(join(prReviewDir, 'references', 'review-report.md'), 'utf8');
+  const [table] = sectionTables(text);
+  assert.deepEqual(table.map((r) => r[0]), ['开头一句', '已按规则处理', '要你决定', '合并风险', '要你看的', '折叠区']);
+  const heads = [...text.matchAll(/^### (已按规则处理|要你决定|合并风险|要你看的)/gm)].map((m) => m[1]);
+  assert.deepEqual(heads, ['已按规则处理', '要你决定', '合并风险', '要你看的']);
+  assert.match(text, /照 home 固定文案「要我定的事写成一道题」/);
+  for (const old of ['**现状**', '**对用户的影响**', '**证据**：', '**选项**：', '**推荐**：']) {
+    assert.ok(!text.includes(old), `汇报里还有自己的一道题的形状：${old}`);
+  }
+  assert.match(text, /Standards 的题把规则原文写在问题里/);
+  for (const phrase of ['编号 `S1` / `C1` / 工单号只在这一次汇报内有效', '术语表缺的词', '给修复方的位置', '在会话里给人看']) {
+    assert.ok(text.includes(phrase), `review-report.md 缺：${phrase}`);
+  }
 });
 
-test('the PR description template has 能否回滚 right after 怎么验证, and none of the sections that were folded away', () => {
+test('the PR description template has the five sections in order, then the SEO one, and none of the sections that were folded away', () => {
   const text = readFileSync(join(prDir, 'references', 'description.md'), 'utf8');
   const heads = [...text.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ['一句话', '问题', '怎么修', '怎么验证', '能否回滚', '上线自查的网址', '夜里替你定的', '等你定的', '要你做的事', '参考']);
+  assert.deepEqual(heads, ['问题', '概要', '证据', '合并风险', '要你做的事', '上线自查的网址']);
   assert.doesNotMatch(text, /\*\*切法\*\*/);
+});
+
+test('pr has no review 汇报 sections while pr-review has them, and evidence has a 「视图菜单」 section', () => {
+  for (const name of ['review loop 文件', '在会话里给人看', 'Review 汇报']) {
+    assert.ok(!skill.includes(`## ${name}`), `pr 里还有「${name}」一节`);
+  }
+  const report = readFileSync(join(prReviewDir, 'references', 'review-report.md'), 'utf8');
+  const loop = readFileSync(join(prReviewDir, 'references', 'review-loop.md'), 'utf8');
+  assert.match(read('skills', 'engineering', 'pr-review', 'SKILL.md'), /^## Review 汇报$/m, 'pr-review 的 SKILL.md 有「Review 汇报」一节，别的 skill 照它的名字指过来');
+  assert.match(report, /^# Review 汇报的格式/m);
+  assert.match(report, /^## 在会话里给人看/m);
+  assert.match(loop, /^# review loop 文件/m);
+  const evidence = read('skills', 'productivity', 'evidence', 'SKILL.md');
+  assert.equal(evidence.split('\n').filter((l) => l === '## 视图菜单').length, 1);
 });
 
 test('the shared writing rules are cited from evidence, not restated in the pr skill', () => {
   const all = [skill, ...readdirSync(join(prDir, 'references')).map((f) => readFileSync(join(prDir, 'references', f), 'utf8'))].join('\n');
-  assert.match(skill, /idea-loop:evidence/);
-  for (const [name, re] of [['陌生叫法第一次出现', /第一次出现/], ['比对同条件', /同条件/], ['规模数字', /规模数字/], ['裸编号', /裸编号/], ['评判标准', /评判标准/]]) {
+  assert.match(skill, /idea-loop:evidence` 的「视图菜单」[\s\S]*「证据是什么」/);
+  assert.match(skill, /idea-loop:evidence` 的「视图菜单」/);
+  // description.md（#452 会话里人批过的草稿）里「没收的第一次出现时说清」是模板自己的一句，不算复述
+  for (const [name, re] of [['比对同条件', /同条件/], ['规模数字', /规模数字/], ['裸编号', /裸编号/], ['评判标准', /评判标准/]]) {
     assert.doesNotMatch(all, re, `pr 里复述了 evidence 的共用写法：${name}`);
   }
 });
@@ -122,23 +134,33 @@ function walk(dir, out = []) {
 
 test('nothing in the plugin points at the removed stop-report / review-round files, the 停下汇报, or the 需要你决定 heading', () => {
   const hits = [];
-  for (const file of walk(pluginRoot)) {
+  // home's fixed text names the 停下汇报 as one of the deliverables a decision is listed in; it is the same word, not the removed file
+  for (const file of walk(pluginRoot).filter((f) => !f.endsWith('setup/references/home-rules.md'))) {
     const text = readFileSync(file, 'utf8');
-    // review-loop.mjs keeps reading the old 需要你决定 heading in files already written; that is its one mention
-    const scrubbed = file.endsWith('review-loop.mjs') ? text.replace(/需要你?决定|需要\|要/g, '') : text;
-    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(scrubbed)) hits.push(relative(pluginRoot, file));
+    if (/stop-report|review-round\.md|停下汇报|需要你决定/.test(text)) hits.push(relative(pluginRoot, file));
   }
   assert.deepEqual(hits, [], `还指着旧的停下汇报：${hits.join(', ')}`);
 });
 
-test('the callers name the new sections: deliver.md writes rollback, not issues, and the implement skill reports through the one Review 汇报', () => {
+test('nothing in the plugin points at the pr skill\'s old review-report.md / review-loop.md paths', () => {
+  const hits = [];
+  for (const file of walk(pluginRoot)) {
+    const text = readFileSync(file, 'utf8');
+    const where = relative(pluginRoot, file);
+    // a path under pr/ (not pr-review/)
+    if (/skills\/engineering\/pr\/references\/review-(report|loop)\.md/.test(text)) hits.push(`${where}：指着 pr 下的旧路径`);
+  }
+  assert.deepEqual(hits, [], `还指着旧位置：${hits.join(', ')}`);
+});
+
+test('the callers name the new sections: deliver.md writes the five, not the old ones', () => {
   const deliver = read('skills', 'engineering', 'pr-review', 'references', 'deliver.md');
   const writes = deliver.match(/`problem`[^\n]*/)?.[0] ?? '';
-  assert.match(writes, /`rollback`/);
-  assert.doesNotMatch(writes, /`issues`/);
-  // the steps of 「没活了就停下」 live in implement's own reference
-  const implement = read('skills', 'engineering', 'implement', 'SKILL.md') + '\n' + read('skills', 'engineering', 'implement', 'references', 'stop-and-resume.md');
-  assert.match(implement, /Review 汇报/);
-  assert.match(implement, /review-loop\.mjs" next[^\n]*review impl/);
-  assert.doesNotMatch(implement, /next[^\n]* pause/);
+  for (const name of ['outline', 'evidence', 'risk', 'your-todo']) assert.match(writes, new RegExp(`\`${name}\``));
+  for (const name of ['changes', 'verification', 'rollback', 'summary', 'reference']) {
+    assert.doesNotMatch(deliver, new RegExp(`\`${name}\``), `deliver.md 还写着旧节名 \`${name}\``);
+  }
+  const other = read('skills', 'engineering', 'pr-review', 'references', 'other-directives.md');
+  assert.match(other, /追加进 PR 描述 `your-todo`/);
+  assert.doesNotMatch(other, /`rollback`|`reference`/);
 });

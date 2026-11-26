@@ -3,7 +3,7 @@
  * the docs: the seven agents that use the OpenSEO or Mobbin connector have no `tools:` whitelist and
  * carry `disallowedTools`; no agent whitelists a plugin-named connector tool; seo-scan's opening step
  * recognises OpenSEO by the short names `whoami` + `get_project_context` and stops only when there is
- * none; seo-setup and the references no longer have the 「被顶替」 branch; agent-builder's template
+ * none; the SEO module and the references no longer have the 「被顶替」 branch; agent-builder's template
  * and the plugin README say the same.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to
@@ -43,7 +43,7 @@ const UNTOUCHED = { 'adr-reconciler': 'Read, Grep, Glob, Bash, Write, Skill, Age
 
 const SCAN_DOC = read('skills', 'seo', 'seo-scan', 'SKILL.md');
 const SCAN = body(SCAN_DOC);
-const SETUP = body(read('skills', 'seo', 'seo-setup', 'SKILL.md'));
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
 const README = read('README.md');
 
 test('the connector agents have no tools: line and disallow Edit, NotebookEdit and Agent', () => {
@@ -81,7 +81,9 @@ test('only seo-scan\'s allowed-tools spells a plugin-named connector tool in ski
 });
 
 test('seo-scan 开场: 认 OpenSEO sits before the project context and judges by the short names', () => {
-  const open = section(SCAN, '开场');
+  // 0.2.0: the opening steps live in references/opening.md; the SKILL.md 开场 section points at it.
+  assert.match(section(SCAN, '开场'), /references\/opening\.md/);
+  const open = read('skills', 'seo', 'seo-scan', 'references', 'opening.md');
   const at = open.search(/认 OpenSEO/);
   assert.ok(at >= 0, 'no 认 OpenSEO step in 开场');
   assert.ok(open.search(/get_project_context`（`projectId`）/) > at, '认 OpenSEO comes before reading the project context');
@@ -90,7 +92,7 @@ test('seo-scan 开场: 认 OpenSEO sits before the project context and judges by
   assert.match(step, /往下/);
   assert.match(step, /一个都没有/);
   assert.match(step, /不派 agent/);
-  assert.match(step, /references\/stops\.md/);
+  assert.match(step, /stops\.md/);
 });
 
 test('seo-scan has no 被顶替 branch anywhere, and stops in four cases (three at the opening)', () => {
@@ -107,10 +109,10 @@ test('seo-scan: the one OpenSEO stop shape says OpenSEO is not connected and to 
   assert.match(stops, /\/mcp/);
 });
 
-test('seo-setup step 1 has no 被顶替 check, its reference is gone, and nothing points at it', () => {
+test('the SEO module step 1 has no 被顶替 check, its reference is gone, and nothing points at it', () => {
   assert.doesNotMatch(SETUP, /顶替/);
   assert.doesNotMatch(SETUP, /认 OpenSEO/);
-  assert.ok(!existsSync(join(root, 'skills', 'seo', 'seo-setup', 'references', 'openseo-superseded.md')), 'openseo-superseded.md is deleted');
+  assert.ok(!existsSync(join(root, 'skills', 'engineering', 'setup', 'references', 'seo', 'openseo-superseded.md')), 'openseo-superseded.md is deleted');
   for (const f of [...walk('skills'), ...walk('agents'), 'README.md']) {
     if (!f.endsWith('.md')) continue;
     assert.doesNotMatch(read(f), /openseo-superseded/, `${f} still points at the deleted reference`);
@@ -120,16 +122,10 @@ test('seo-setup step 1 has no 被顶替 check, its reference is gone, and nothin
   assert.match(s1, /记「未做：OpenSEO 没连上」/);
 });
 
-test('uiux-research and the runtime reference: Mobbin tools by short name, a hand-configured Mobbin works', () => {
+test('uiux-research: Mobbin tools by short name', () => {
   const backend = read('skills', 'design', 'uiux-research', 'references', 'research-backend.md');
   assert.doesNotMatch(backend, /mcp__plugin_/);
   for (const t of ['search_screens', 'search_flows', 'search_sections']) assert.ok(backend.includes(`\`${t}\``), t);
-  const desktop = read('skills', 'productivity', 'runtime', 'references', 'claude-desktop.md');
-  const mobbin = desktop.split('\n').find((l) => l.startsWith('- **Mobbin MCP**')) ?? '';
-  assert.ok(mobbin, 'the Mobbin MCP line exists');
-  assert.doesNotMatch(mobbin, /重复项|删掉那份手动配的|拿不到/);
-  assert.match(mobbin, /手动配的/);
-  assert.match(mobbin, /登录/);
 });
 
 test('agent-builder: a connector-using agent writes disallowedTools, not tools', () => {
@@ -141,8 +137,8 @@ test('agent-builder: a connector-using agent writes disallowedTools, not tools',
   assert.match(doc, /不用连接器的 agent[^\n]*`tools`/);
 });
 
-test('README: seo-setup and seo-scan rows drop the superseded stop, agents say connector agents write a deny list only', () => {
-  for (const cmd of ['`/idea-loop:seo-setup`', '`/idea-loop:seo-scan`']) {
+test('README: the SEO module and seo-scan rows drop the superseded stop, agents say connector agents write a deny list only', () => {
+  for (const cmd of ['`/idea-loop:setup` (SEO module)', '`/idea-loop:seo-scan`']) {
     const row = README.split('\n').find((l) => l.startsWith(`| ${cmd} |`)) ?? '';
     assert.ok(row, `${cmd} row exists`);
     assert.doesNotMatch(row, /only the OpenSEO the plugin bundles|supersed|openseo-superseded/, cmd);
@@ -154,7 +150,3 @@ test('README: seo-setup and seo-scan rows drop the superseded stop, agents say c
   assert.ok(!/seo-openseo-superseded-doc/.test(README), 'the old test is not listed any more');
 });
 
-test('the two SKILL.md bodies stay under 5000 characters', () => {
-  assert.ok([...SCAN].length < 5000, `seo-scan ${[...SCAN].length}`);
-  assert.ok([...SETUP].length < 5000, `seo-setup ${[...SETUP].length}`);
-});

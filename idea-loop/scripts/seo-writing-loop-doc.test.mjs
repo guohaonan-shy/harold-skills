@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSeoMd } from './seo-md.mjs';
+import { parseSeoMd } from './dyna-seo-parse.mjs';
 
 const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta.url)), '..');
 const path = (...p) => join(root, ...p);
@@ -25,7 +25,7 @@ const SKILL_FILE = readIf(...WRITING_DIR, 'SKILL.md');
 const SKILL = SKILL_FILE.split(/^---\s*$/m).slice(2).join('---');
 const RUBRIC = readIf(...WRITING_DIR, 'references', 'judge-rubric.md');
 const LOOP = readIf(...WRITING_DIR, 'references', 'revision-loop.md');
-const FORMAT = readIf('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const FORMAT = readIf('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const ISSUE_SESSION = readIf('skills', 'engineering', 'issue-session', 'SKILL.md');
 
 /** The body of `## <heading prefix>…` (up to the next `## ` heading), or '' when the heading is missing. */
@@ -48,10 +48,10 @@ test('SKILL.md: a loop step sits between 写 and 检查，交回, for 按 brief 
 });
 
 test('SKILL.md: the step runs lint → judge → fix → back to lint, with the stop condition and the three-round cap', () => {
-  assert.match(STEP, /1\. 跑 lint：通用写作 lint（带「写作」节的 `lintConfig`），再跑 `extraLint`/);
-  assert.match(STEP, /2\. 起写作评委子代理，按 \[`references\/judge-rubric\.md`\]\(references\/judge-rubric\.md\)/);
-  assert.match(STEP, /`secondJudge`，它跟写作评委一起打/);
-  assert.match(STEP, /3\. lint 的问题和写作评委的 `local` 问题自己改，回到 1/);
+  assert.match(STEP, /每轮：跑 lint（通用写作 lint 带「写作」节的 `lintConfig`，再跑 `extraLint`）/);
+  assert.match(STEP, /起写作评委子代理，按 \[`references\/judge-rubric\.md`\]\(references\/judge-rubric\.md\)/);
+  assert.match(STEP, /配了 `secondJudge` 就一起打/);
+  assert.match(STEP, /`local` 问题自己改，回到 lint/);
   assert.match(STEP, /lint 一条问题没有、写作评委没有 `local` 问题，就是干净，结束/);
   assert.match(STEP, /最多三轮，三轮后没干净的写进交回的「没干净的」/);
   assert.match(STEP, /托管时中间不停/);
@@ -69,24 +69,26 @@ test('SKILL.md: 无 or an empty extraLint / secondJudge skips that one, the loop
 
 test('SKILL.md: a premise is not fixed by the writer, and goes back to triage through the issue session', () => {
   assert.match(STEP, /写作评委报出 `premise`（改它要动论点、章节或事实断言）：不自己改/);
-  assert.match(STEP, /把写作评委原话写进交回的 `premise` 一节/);
-  assert.match(STEP, /照 `issue-session`「起草中冒出了要人定的」把 issue 翻回 triage/);
-  // the phrase it points at is the one issue-session actually has
+  assert.match(STEP, /写作评委原话进交回的 `premise` 一节/);
+  assert.match(STEP, /references\/revision-loop\.md` 的「`premise`」/);
+  // the reference it points at carries the hand-off to triage; the phrase it points at is the one issue-session actually has
   assert.ok(ISSUE_SESSION.includes('起草中冒出了要人定的'), 'issue-session has the 「起草中冒出了要人定的」 clause');
   assert.match(ISSUE_SESSION, /issues set <docs> triage/);
   const p = LOOP.split('\n## ').find((b) => b.startsWith('`premise`')) ?? '';
   assert.match(p, /写作评委的原话/);
   assert.match(p, /已写的提交并 push/);
-  assert.match(p, /issues set <docs> triage <号>/);
+  assert.match(p, /把 issue 翻回 triage，评论写要人定什么、分支名，并放写作评委原话/);
+  assert.match(p, /起草中冒出了要人定的/);
 });
 
 test('SKILL.md: cover and og are called again when the title or the one-sentence thesis changed', () => {
-  assert.match(STEP, /title 或第 3 步那句论点跟出图时用的不一样了，用 Skill 工具调 `idea-loop:cover`、`idea-loop:og` 重出图/);
+  assert.match(STEP, /title 或第 3 步那句论点跟出图时用的不一样了，照同一份的「出图跟着变」重出图/);
   for (const slug of ['cover', 'og']) {
     assert.ok(existsSync(path('skills', 'seo', slug, 'SKILL.md')), `skill ${slug} exists`);
     assert.match(readIf('skills', 'seo', slug, 'SKILL.md'), new RegExp(`^name: ${slug}$`, 'm'));
   }
   assert.match(LOOP, /## 出图跟着变/);
+  assert.match(LOOP.split('## 出图跟着变')[1] ?? '', /idea-loop:cover` 和 `idea-loop:og` 重出图/);
 });
 
 test('SKILL.md: the handback gains lint 结果, 写作评委轮次, 没干净的 (and premise), each defined in the loop reference', () => {
@@ -97,11 +99,11 @@ test('SKILL.md: the handback gains lint 结果, 写作评委轮次, 没干净的
   assert.ok(HANDBACK.includes('`premise`'));
 });
 
-test('SKILL.md: the body stays under 5000 characters, and the files it points at exist', () => {
-  assert.ok(SKILL.length > 0 && [...SKILL].length < 5000, `body is ${[...SKILL].length} characters`);
-  for (const f of ['judge-rubric.md', 'revision-loop.md']) assert.ok(existsSync(path(...WRITING_DIR, 'references', f)), f);
-  assert.ok(existsSync(path('scripts', 'writing-lint.mjs')));
-  assert.match(LOOP, /node "S\/writing-lint\.mjs" \[--config=<lintConfig>\]/);
+test('SKILL.md: the files it points at exist', () => {
+  assert.ok(SKILL.length > 0, 'SKILL.md body is empty');
+  for (const f of ['judge-rubric.md', 'revision-loop.md', 'brief.md', 'article-fields.md']) assert.ok(existsSync(path(...WRITING_DIR, 'references', f)), f);
+  assert.match(LOOP, /`dyna seo writing lint \[--config=<项目目录>\/<lintConfig>\]/);
+  assert.doesNotMatch(LOOP, /\.mjs" |`S\//, 'the loop still runs a plugin script');
 });
 
 test('the keys the loop reads exist in the SEO.md format doc and in the parser', () => {

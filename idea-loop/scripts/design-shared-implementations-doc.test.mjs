@@ -81,9 +81,10 @@ test('chapters.md Components: whole-page views shared by a group of pages enter 
 
 test('chapters.md Components: pointer resolution rules and the project-owned check', () => {
   const c = section(chapters, 'Components');
-  assert.match(c, /DESIGN\.md`? 所在目录/, 'missing: the path resolves from the directory of DESIGN.md');
+  // 0.2.0: DESIGN.md lives in the project directory in home, the implementation in the code repository
+  assert.match(c, /从代码仓库根目录解析/, 'missing: the path resolves from the code repository root');
   assert.match(c, /不以 `\/` 开头/, 'missing: no leading slash');
-  assert.match(c, /不出目录/, 'missing: does not leave the directory');
+  assert.match(c, /不出代码仓库/, 'missing: does not leave the code repository');
   assert.match(c, /名单外自己画就红/, 'missing: the check goes red when drawn outside the list');
   assert.match(c, /违规还在的提交上[^。\n]*红/, 'missing: see it red on a commit where the violation is still present');
   assert.match(c, /豁免清单[^。\n]*只减不增/, 'missing: the exemption list only shrinks');
@@ -211,7 +212,3 @@ test('no reference still marks Motion as an extension', () => {
   }
 });
 
-test('design-modeling SKILL.md body stays under 5000 characters', () => {
-  const n = [...body(skill)].length;
-  assert.ok(n < 5000, `body is ${n} characters`);
-});

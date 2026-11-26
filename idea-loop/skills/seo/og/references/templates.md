@@ -1,6 +1,6 @@
 # 改模板、新增版式
 
-版式是 `assets/<名字>.html`，`og-render.mjs layouts` 列出它们（下划线开头的文件是共享部分，不算版式）。每个版式是一个自包含的 1200×630 页面，不认识任何项目：颜色、字体、logo、文字都是占位。
+版式是 `assets/<名字>.html`，`dyna seo og layouts` 列出它们（下划线开头的文件是共享部分，不算版式）。每个版式是一个自包含的 1200×630 页面，不认识任何项目：颜色、字体、logo、文字都是占位。
 
 ## 占位
 
@@ -16,7 +16,7 @@
 
 ## 改完怎么验
 
-- 加一个版式：只放进 `assets/`，在 `scripts/og-render.mjs` 的 `TITLE_SIZE` 里写它的标题范围；`og-render-browser.test.mjs` 会自动按版式名跑长短、中英文标题的矩阵。
-- 改任何模板：`node --test scripts/og-render.test.mjs scripts/og-render-browser.test.mjs scripts/og-skill-doc.test.mjs scripts/no-project-leak.test.mjs`。
+- 加一个版式：只放进 `assets/`，在 `dyna seo og` 代码里的 `TITLE_SIZE` 写它的标题范围（改了 `dyna/` 就照 `DEVELOPMENT.md`「命令行 dyna」升版本）；它的测试会自动按版式名跑长短、中英文标题的矩阵。
+- 改任何模板：在 `dyna/` 里跑 `go test ./...`，再跑 `node --test scripts/og-skill-doc.test.mjs scripts/no-project-leak.test.mjs`。
 - 颗粒用 canvas 像素噪点，种子固定：同样的输入渲出同样的字节，`md5` 比对才有意义；不要换成 `feTurbulence`（截图里常不渲染）。
 - 渲染必须在浏览器里做：`rsvg-convert`、`magick` 这类命令行光栅化工具忽略网页字体和 CSS 新特性，出的字形是错的。

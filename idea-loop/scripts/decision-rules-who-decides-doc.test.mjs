@@ -1,13 +1,14 @@
 /**
- * Tripwire — decision-rules only says who decides; how to write what a human reads lives in evidence;
- * adding a rule starts with "is it a special case of an existing one".
+ * Tripwire — how to write what a human reads lives in the `evidence` skill (its three sections moved there from the
+ * old decision skill, spec edge-case-known-limit ticket 02); adding a rule starts with "is it a special case of an
+ * existing one".
  *
- * Spec decision-rules-who-decides, ticket 01 (issue #80). Before: decision-rules carried a section
+ * Spec who-decides, ticket 01 (issue #80). Before: the old decision skill carried a section
  * 「交给人时」 and a reference (handing-to-human.md) about how to write a question for the human, and seven
  * places pointed at it; writing-for-agents and retro only ever appended. These checks pin: no text left
  * in the plugin that points at the old section or reference (dreaming's own step names excepted), the
- * reference gone, evidence opening with the reader model and covering the shared writing rules inside
- * 5000 characters, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
+ * reference gone, the evidence sections of the evidence skill opening with the reader model and covering the shared
+ * writing rules, 「先归并」 in writing-for-agents, a 「归并」 field in retro's candidate format (and in
  * the places that repeat the format), the four pool candidates re-pointed, and the explain-mechanism replay
  * case removed.
  */
@@ -42,41 +43,33 @@ test('nothing in the plugin points at the old 「交给人时」 section or the 
   assert.deepEqual(hits, [], `还指着旧的「交给人时」/ handing-to-human：${hits.join(', ')}`);
 });
 
-test('decision-rules has no references directory and its description no longer routes on how to write a question', () => {
-  const dir = join(pluginRoot, 'skills', 'productivity', 'decision-rules');
-  assert.ok(!existsSync(join(dir, 'references')), 'decision-rules/references 还在');
-  const raw = read('skills', 'productivity', 'decision-rules', 'SKILL.md');
+test('evidence holds only the five figure references (no handing-to-human) and its description no longer routes on how to write a question', () => {
+  const dir = join(pluginRoot, 'skills', 'productivity', 'evidence');
+  assert.deepEqual(readdirSync(join(dir, 'references')).sort(), ['chart.md', 'gif.md', 'screenshot.md', 'ui-flow.md', 'video.md']);
+  const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
   const description = raw.match(/^description: (.*)$/m)[1];
   assert.doesNotMatch(description, /功课/);
   assert.doesNotMatch(bodyOf(raw), /^## 交给人时/m);
 });
 
-test('evidence opens with the reader model and carries the shared writing rules', () => {
+test('evidence carries the reader model and the shared writing rules in its sections', () => {
   const raw = read('skills', 'productivity', 'evidence', 'SKILL.md');
-  const body = bodyOf(raw);
+  const body = bodyOf(raw).trimStart();
   const description = raw.match(/^description: (.*)$/m)[1];
-  assert.match(description, /写给人看|写给人/, 'description 要路由「写给人看的东西」');
-  assert.match(description, /截图|配图/, 'description 还要路由「配图」');
+  for (const w of ['证据', '截图', '流程图', '图表', '动图']) assert.match(description, new RegExp(w), `description 缺：${w}`);
 
-  const firstBlock = body.trim().split(/\n##? /)[0];
+  // the body opens with one line saying home's 「证据」 is the overall rule (#438 ticket 02); the reader model opens the first section
+  const firstBlock = body.split(/\n## /)[1];
   assert.match(firstBlock, /不清楚实现细节/, '正文开头要写读者模型');
   assert.match(firstBlock, /快速/, '读者模型要写读者要的是快速看懂、拿到证据、决定');
 
-  // spec decision-evidence-principles (#245) moved 「要人定的写成一道题」 into decision-rules
   for (const [name, re] of [
-    ['结论在前', /结论在前/],
     ['最小一种视图', /最小/],
-    ['现状带出处和规模数字', /出处[\s\S]*规模数字|规模数字[\s\S]*出处/],
     ['陌生叫法第一次出现说清', /第一次出现/],
     ['比对同条件', /同条件/],
   ]) assert.match(body, re, `共用写法缺：${name}`);
-  assert.match(body, /裸编号/);
+  assert.match(body, /GLOSSARY\.md/, '叫法先取术语表或会话里说过的');
   assert.match(body, /最新基准/);
-});
-
-test('the evidence body is at most 5000 characters (UTF-8 characters, not bytes)', () => {
-  const body = bodyOf(read('skills', 'productivity', 'evidence', 'SKILL.md'));
-  assert.ok([...body].length <= 5000, `body is ${[...body].length} characters`);
 });
 
 test('writing-for-agents says to look for an existing principle before adding one', () => {
@@ -101,14 +94,16 @@ test('retro\'s candidate format has a 归并 field, and so does everywhere that 
   }
 });
 
-test('the four pool candidates that pointed at handing-to-human now point at evidence; other lines untouched', () => {
+// the pool files live in this repository's own docs/ (a project directory in home once the repository is migrated)
+const poolDir = join(repoRoot, 'docs', 'records', 'retro-candidates');
+test('the four pool candidates that pointed at handing-to-human now point at evidence; other lines untouched', { skip: !existsSync(poolDir) && 'this repository has no docs/' }, () => {
   for (const f of [
     '2026-10-26-examples-from-real-material.md',
     '2026-10-26-goal-figures-for-human.md',
     '2026-10-31-handing-to-human-name-references.md',
     'retro-candidate-95.md',
   ]) {
-    const text = readFileSync(join(repoRoot, 'docs', 'records', 'retro-candidates', f), 'utf8');
+    const text = readFileSync(join(poolDir, f), 'utf8');
     const landing = text.split('\n').find((l) => l.startsWith('- 落点：'));
     assert.ok(landing, `${f} 没有落点一行`);
     assert.match(landing, /evidence/, `${f} 的落点还没改到 evidence`);

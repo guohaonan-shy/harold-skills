@@ -1,8 +1,7 @@
 /**
  * Pins the sentences that make "每 3 天一份 SEO 效果报告" true in the docs: the results-analyst definition (inputs, where
  * the change list comes from, the two charts, the three blocks of the report, the 14-day rule, the findings it raises
- * and that nothing is rolled back for them), seo-scan's results direction and how the report lands (a docs-only PR from
- * a temporary worktree), the daily scheduled task seo-setup installs, SEO.md's optional 分析 section, and the old
+ * and that nothing is rolled back for them), seo-scan's results direction and how the report lands (committed straight to home), the daily scheduled task the SEO module installs, SEO.md's optional 分析 section, and the old
  * "不写周报" sentence being gone.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to see it fail there first.
@@ -26,9 +25,9 @@ const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
 const SCAN_BODY = body(SCAN);
 const REPORT = read('skills', 'seo', 'seo-scan', 'references', 'results-report.md');
 const LOG = read('skills', 'seo', 'seo-scan', 'references', 'research-log.md');
-const SETUP = body(read('skills', 'seo', 'seo-setup', 'SKILL.md'));
-const DAILY = read('skills', 'seo', 'seo-setup', 'references', 'daily-scan.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
+const DAILY = read('skills', 'engineering', 'setup', 'references', 'seo', 'daily-scan.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const README = read('README.md');
 const SEO_README = read('skills', 'seo', 'README.md');
 
@@ -48,16 +47,17 @@ test('results-analyst is defined like the other direction agents: a description 
   assert.equal(field(AGENT, 'disallowedTools'), 'Edit, NotebookEdit, Agent');
 });
 
-test('results-analyst takes the same five input lines as the other direction agents and reads findings.md and SEO.md first', () => {
+test('results-analyst takes the prompt lines from the shared template like the other direction agents and reads findings.md and SEO.md first', () => {
   assert.match(AGENT_BODY, /skills\/seo\/seo-scan\/references\/findings\.md/);
   const input = section(AGENT_BODY, '输入');
-  assert.match(input, /五行：SEO\.md 路径、OpenSEO 项目、本次额度、运行目录、今天/);
-  assert.match(input, /seo-md\.mjs/);
+  assert.match(input, /提示的各行照 findings\.md 的「提示模板」。\*\*项目目录\*\*读调用方在 prompt 里给的项目目录/);
+  assert.doesNotMatch(input, /提示里有六行/);
+  assert.match(input, /dyna seo parse/);
   assert.match(input, /「分析」/);
 });
 
-test('the change list comes from seo-live-record.mjs list, i.e. the 上线自查 comments on closed SEO issues', () => {
-  assert.match(AGENT_BODY, /seo-live-record\.mjs list/);
+test('the change list comes from dyna seo record list, i.e. the 上线自查 comments on closed SEO issues', () => {
+  assert.match(AGENT_BODY, /dyna seo record list/);
   assert.match(AGENT_BODY, /「上线自查」/);
   assert.match(AGENT_BODY, /已关/);
 });
@@ -148,30 +148,29 @@ test('seo-scan lands the report: a section that points at the reference, after �
   const s = section(SCAN_BODY, '效果报告');
   assert.match(s, /references\/results-report\.md/);
   assert.match(s, /docs\/records\/seo-results\/<日期>\.md/);
-  assert.match(s, /只改 `docs\/` 的 PR/);
+  assert.match(s, /`commit` 到 home/);
   assert.match(SCAN_BODY, /- 效果报告：/);
 });
 
-test('the reference lands the report from a temporary worktree under .tmp, merges the docs-only PR once checks pass, removes the worktree, pushes the link', () => {
+test('the reference lands the report straight in home: copy into the project directory, commit only those files, push the path', () => {
   assert.ok(REPORT, 'references/results-report.md does not exist');
-  assert.match(REPORT, /\.tmp\//);
-  assert.match(REPORT, /git worktree add/);
-  assert.match(REPORT, /主分支/);
   assert.match(REPORT, /docs\/records\/seo-results\/<日期>\.md/);
-  assert.match(REPORT, /docs\/records\/seo-results\/assets\//);
-  assert.match(REPORT, /只提交 `docs\/`|只改 `docs\/`/);
-  assert.match(REPORT, /gh pr create/);
-  assert.match(REPORT, /gh pr checks/);
-  assert.match(REPORT, /gh pr merge/);
-  assert.match(REPORT, /git worktree remove/);
+  assert.match(REPORT, /docs\/records\/seo-results\/assets/);
+  assert.match(REPORT, /dyna home commit/);
+  assert.match(REPORT, /只列这次放进去的文件/);
+  assert.match(REPORT, /home 没推上去/);
+  assert.doesNotMatch(REPORT, /git worktree|gh pr create|git push|git checkout/);
   assert.match(REPORT, /『推送』/);
   assert.match(REPORT, /idea-loop:wiki-conventions/);
   assert.match(REPORT, /type: record/, 'the report file carries the records frontmatter');
 });
 
-test('seo-scan can run what landing needs: allowed-tools has git add / commit / push and gh pr', () => {
+test('seo-scan can run what landing needs: allowed-tools has dyna home commit and no longer git add / commit / push or gh pr', () => {
   const tools = field(SCAN, 'allowed-tools');
-  for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)', 'Bash(git worktree:*)']) assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
+  assert.ok(tools.includes('Bash(dyna home commit:*)'), 'allowed-tools lacks dyna home commit');
+  for (const t of ['Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr:*)']) assert.ok(!tools.includes(t), `allowed-tools still has ${t}`);
+  assert.ok(tools.includes('Bash(dyna worktree:*)'), 'triage still uses a worktree, made with dyna worktree');
+  assert.ok(!tools.includes('Bash(git worktree:*)'), 'no hand-written git worktree');
 });
 
 test('the scan names results-analyst, so its private references stay private to seo-scan and the agent it starts', () => {
@@ -187,16 +186,16 @@ test('the research log: results is collected like any direction (so seo-due sees
   assert.match(tpl[1], /^采集：<方向> <N> 条；/);
 });
 
-test('seo-setup installs the scan every day, not every week; the old weekly reference is gone and the task id stays', () => {
+test('the SEO module installs the scan every day, not every week; the old weekly reference is gone and the task id stays', () => {
   assert.match(SETUP, /^## 8\. 每天扫描$/m);
   assert.doesNotMatch(SETUP, /每周扫描/);
-  assert.match(section(SETUP, '8. 每天扫描'), /references\/daily-scan\.md/);
+  assert.match(section(SETUP, '8. 每天扫描'), /daily-scan\.md/);
   assert.ok(DAILY, 'references/daily-scan.md does not exist');
-  assert.ok(!existsSync(path('skills', 'seo', 'seo-setup', 'references', 'weekly-scan.md')), 'weekly-scan.md is still there');
+  assert.ok(!existsSync(path('skills', 'engineering', 'setup', 'references', 'seo', 'weekly-scan.md')), 'weekly-scan.md is still there');
   assert.match(DAILY, /每天/);
   assert.match(DAILY, /^# 每天扫描$/m);
   assert.match(DAILY, /任务 id：`seo-scan-<仓库名>`/);
-  assert.match(DAILY, /每周一次（早先装的）[^\n]*改成每天/, 'an existing weekly task gets moved to daily');
+  assert.match(DAILY, /每周一次[^\n]*改成每天/, 'an existing weekly task gets moved to daily');
   assert.match(DAILY, /分钟避开 0 和 30/);
 });
 

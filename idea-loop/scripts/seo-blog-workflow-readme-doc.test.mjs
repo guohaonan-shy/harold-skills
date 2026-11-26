@@ -40,8 +40,8 @@ const SEO_BLOG = section(SEO_README, '##', '博客 workflow');
 test('idea-loop/README.md has a blog workflow section with the three steps and the two image skills', () => {
   assert.ok(BLOG, 'a "### The blog workflow" section exists');
   assert.match(BLOG, /\*\*Brief, with images\*\*[\s\S]*`idea-loop:cover`[\s\S]*`idea-loop:og`/);
-  assert.match(BLOG, /\*\*Draft, then a revision loop\*\*[\s\S]*`scripts\/writing-lint\.mjs`/);
-  assert.match(BLOG, /\*\*Publish\*\*[\s\S]*`seo-check`/);
+  assert.match(BLOG, /\*\*Draft, then a revision loop\*\*[\s\S]*`dyna seo writing lint`/);
+  assert.match(BLOG, /\*\*Publish\*\*[\s\S]*`dyna seo check`/);
 });
 
 test("the README says a `premise` goes back to triage with the writing judge's words, in night mode too", () => {
@@ -55,25 +55,24 @@ test('the README names what a project writes: the 写作 and 配图 keys of SEO.
   for (const k of ['lint 配置', '补充 lint', '第二评委', '`SEO.md` 「配图」', '`blog-cover`', '`og-card`', 'DESIGN.md']) {
     assert.ok(BLOG.includes(k), `README blog section names ${k}`);
   }
-  assert.match(BLOG, /skills\/seo\/seo-setup\/references\/seo-md\.md/);
+  assert.match(BLOG, /skills\/engineering\/setup\/references\/seo\/seo-md\.md/);
 });
 
-test('the README architecture tree lists the writing lint script and its tests', () => {
-  assert.match(README, /├── writing-lint\.mjs /);
-  assert.match(README, /├── writing-lint\.test\.mjs /);
+test('the README architecture tree lists the writing loop tripwires; the lint itself is `dyna seo writing lint`, no script', () => {
+  assert.doesNotMatch(README, /writing-lint\.mjs/);
   assert.match(README, /├── seo-writing-loop-doc\.test\.mjs /);
   assert.match(README, /├── seo-blog-workflow-readme-doc\.test\.mjs /);
 });
 
 test('the skills table lists cover and og, and the writing lint under seo-writing', () => {
-  assert.match(README, /\| `idea-loop:seo-brief`, `seo-writing`, `seo-outreach`, `seo-check`, `cover` \| SEO · solve \|[^\n]*writing-lint\.mjs/);
+  assert.match(README, /\| `idea-loop:seo-writing`, `seo-outreach`, `cover` \| SEO · solve \|[^\n]*`dyna seo writing lint`/);
   assert.match(README, /\| `idea-loop:og` \| SEO · solve \|/);
 });
 
 test('skills/seo/README.md has the same workflow, the project keys, and lists cover, og and the lint in the 解决 row', () => {
   assert.ok(SEO_BLOG, 'a "## 博客 workflow" section exists');
   assert.match(SEO_BLOG, /1\. \*\*brief 出图\*\*[\s\S]*`cover`[\s\S]*`og`/);
-  assert.match(SEO_BLOG, /2\. \*\*写作循环\*\*[\s\S]*`scripts\/writing-lint\.mjs`/);
+  assert.match(SEO_BLOG, /2\. \*\*写作循环\*\*[\s\S]*`dyna seo writing lint`/);
   assert.match(SEO_BLOG, /评论放写作评委原话/);
   assert.match(SEO_BLOG, /night-mode\.md/);
   for (const k of ['lint 配置', '补充 lint', '第二评委', '「配图」', '`blog-cover`', '`og-card`']) {
@@ -82,20 +81,19 @@ test('skills/seo/README.md has the same workflow, the project keys, and lists co
   const solve = SEO_README.split('\n').find((l) => l.startsWith('| 解决 |')) ?? '';
   assert.match(solve, /`cover`/);
   assert.match(solve, /`og`/);
-  assert.match(solve, /writing-lint\.mjs/);
+  assert.match(solve, /`dyna seo writing lint`/);
+  assert.doesNotMatch(SEO_README, /\.mjs\b/);
 });
 
 test('every skill, script and SEO.md key the blog sections name exists', () => {
   for (const f of [
     ['skills', 'seo', 'cover', 'SKILL.md'],
     ['skills', 'seo', 'og', 'SKILL.md'],
-    ['scripts', 'writing-lint.mjs'],
-    ['scripts', 'og-render.mjs'],
     ['skills', 'engineering', 'issue-session', 'references', 'night-mode.md'],
-    ['skills', 'seo', 'seo-setup', 'references', 'seo-md.md'],
+    ['skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md'],
   ]) {
     assert.ok(existsSync(join(root, ...f)), `${f.join('/')} exists`);
   }
-  const format = readIf('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+  const format = readIf('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
   for (const k of ['lint 配置', '补充 lint', '第二评委', '## 配图']) assert.ok(format.includes(k), `the format file has ${k}`);
 });

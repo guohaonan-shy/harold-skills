@@ -2,28 +2,27 @@
  * Tripwire — the plugin's flows stay runtime-agnostic.
  *
  * idea-loop's skills and agents write capabilities (scheduled task, browser, asking the human …);
- * how a capability is done in one runtime (claude-desktop, magi) lives only in the runtime skill's
- * references. This test scans skills/ and agents/ for runtime-specific writing (tool names, CLI
+ * how a capability is done in one runtime lives only in that machine's own runtime description (project, home or
+ * ~/.idea-loop/, written by setup; outside skills/ and agents/, so it is never scanned). This test scans skills/ and agents/ for runtime-specific writing (tool names, CLI
  * commands, settings paths — the list is in docs/adr/0026-runtime.md, "tripwire 的名单") and
  * reports every hit as "file:line  rule  original line". Scanning stays aligned with
  * no-project-leak.test.mjs (skills/ and agents/ are in both; scripts/ and evals/ are out of both).
  *
- * Exactly two things are let through, and why:
- *   1. skills/productivity/runtime/references/ — that is where runtime-specific writing belongs.
- *   2. `allowed-tools:` / `tools:` lines inside a file's frontmatter — those declare which tools a
- *      skill or agent may call; a tool declared but absent in some runtime is harmless, and the
- *      declaration is not a flow an agent follows. The same words in the body are still hits.
+ * Exactly one thing is let through, and why: `allowed-tools:` / `tools:` lines inside a file's frontmatter —
+ * those declare which tools a skill or agent may call; a tool declared but absent in some runtime is harmless,
+ * and the declaration is not a flow an agent follows. The same words in the body are still hits.
+ * (The runtime skill used to be a second exemption, its references/ being where runtime-specific writing
+ * belonged; the skill is deleted, and the plugin's runtime/ holds only the capability list.)
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname, relative, sep } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pluginRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SCANNED = ['skills', 'agents'];
-const ALLOWED_DIR = join('skills', 'productivity', 'runtime', 'references');
 
 const RULES = [
   ['scheduled-task tool', /create_scheduled_task|list_scheduled_tasks|list_task_runs|update_scheduled_task/],
@@ -56,7 +55,6 @@ function scan(root) {
     try { list = files(join(root, entry)); } catch { continue; }
     for (const file of list) {
       const rel = relative(root, file);
-      if (rel.startsWith(ALLOWED_DIR + sep)) continue;
       let inFront = false;
       readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
         if (/^---\s*$/.test(line)) {
@@ -82,7 +80,6 @@ function fixture() {
   put('skills/engineering/hardcoded/SKILL.md',
     '---\nname: hardcoded\nallowed-tools: AskUserQuestion, mcp__playwright__browser_click\n---\n\n先问人。\n用 create_scheduled_task 建任务。\n');
   put('agents/worker.md', '---\nname: worker\ntools: PushNotification\n---\n\n跑 `magi cron list`。\n');
-  put('skills/productivity/runtime/references/magi.md', '用 magi cron create。AskUserQuestion。\n');
   return root;
 }
 
@@ -94,13 +91,12 @@ test('fixture with hard-coded tool names goes red: every body hit is reported wi
   ]);
 });
 
-test('the same words in the runtime references and in frontmatter tool declarations are let through; in a body they are not', () => {
+test('the same words in frontmatter tool declarations are let through; in a body they are not', () => {
   const root = fixture();
-  assert.ok(!scan(root).some((h) => h.includes('references/')));
   assert.ok(!scan(root).some((h) => /:(3|4):/.test(h)), 'frontmatter allowed-tools / tools lines are exempt');
 });
 
 test('skills/ and agents/ write capability names, not runtime-specific tools', () => {
   const hits = scan(pluginRoot);
-  assert.deepEqual(hits, [], `runtime-specific writing outside the runtime references:\n${hits.join('\n')}`);
+  assert.deepEqual(hits, [], `runtime-specific writing outside the runtime data:\n${hits.join('\n')}`);
 });

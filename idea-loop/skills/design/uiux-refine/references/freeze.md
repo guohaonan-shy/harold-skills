@@ -20,7 +20,7 @@ docs/design/tmp/<spec-slug>/
 
 记录叫 `<spec-slug>-design.md` 而不是 `<spec-slug>.md`：wiki-link 按文件名解析，后者会跟 `docs/spec/<spec-slug>/<spec-slug>.md` 撞名。frontmatter 按 `idea-loop:wiki-conventions` 的「frontmatter」，`type: design`。
 
-这个目录被排除在 git 之外，打磨时只在本地。冻结后，`canvas/` 由编排者强制提交在需求的工作分支上，实现在同一个分支上接着做；它留到实现 PR 合并前的归档（归档模式从最终画布加实现写出 `delta/`，归档脚本把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
+打磨时只在本地、不提交。冻结后，`canvas/` 由编排者 `commit` 到 home；它留到代码 PR 合并之后的归档（归档模式在合并前从最终画布加实现写出 `delta/`，代码 PR 合并成功后归档命令把要长期留下的东西——状态、动效、决定、候选——并进 `prod/` 后清掉 `tmp/<spec-slug>/`）。
 
 冻结记录正文六节，短：
 
@@ -45,10 +45,10 @@ docs/design/tmp/<spec-slug>/
 - **一行 ledger 摘要**。
 - **状态矩阵与数据契约变更**：画布上有、项目现在渲染不出来的字段逐条列出。
 
-**「前端交互」的交互图**：用 Skill 工具调 `idea-loop:evidence`，照它的 UI flow（`references/ui-flow.md`），一个场景一张，截图取自冻结画布，规格照它的「UI 页面标注」，用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/flow-compose.mjs"` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
+**「前端交互」的交互图**：照 `idea-loop:evidence` 的「视图菜单」里的「UI 流程图」，一个场景一张，截图取自冻结画布，每一格的截图规格照它的「截图标注」，用 `dyna design flow compose` 拼，PNG 落 `docs/design/tmp/<spec-slug>/canvas/flows/`，替换掉冻结前那几行文字和「待补图」标记。
 
-- **每一步带 `state`**，填这一格对应的状态名（画布 `?state=<名字>` 的名字，与冻结摘要的状态矩阵同名）。**不带** `--archive` / `--delta`：冻结不写 `delta/`，档案里还没有这些状态，脚本核不了；对回档案状态由合并前的归档做。
-- **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档脚本靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图脚本退出码 2。
+- **每一步带 `state`**，填这一格对应的状态名（画布 `?state=<名字>` 的名字，与冻结摘要的状态矩阵同名）。**不带** `--archive` / `--delta`：冻结不写 `delta/`，档案里还没有这些状态，命令核不了；对回档案状态由合并前的归档做。
+- **文件名**：`flow-<n>-<page>--<state>.png`，`<page>--<state>` 是这张图第一格的状态名，归档命令靠它判断这张图属于哪个页面（图旁边的 `.states.json` 记着每一格的状态）。名字对不上第一格的状态，拼图命令退出码 2。
 - 改动的位置画红色光圈，图下一两句补截图里看不出来的规则。
 
 这一步不做，冻结设计跟 spec 两头脱节。

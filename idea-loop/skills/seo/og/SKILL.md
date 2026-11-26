@@ -3,14 +3,14 @@ name: og
 description: 文章的 OG 分享卡：做 OG、分享卡、重做 OG。brief 要出图，或文章的标题、论点变了要重出图时用；列表封面用兄弟 skill cover。
 ---
 
-OG 分享卡是文章被分享、被链接预览时露出的那张图，自带品牌：logo、大标题、一行副标题。版式是插件自带的 HTML 模板，颜色、字体、logo 来自项目的 `DESIGN.md`；项目没配就用中性默认。
+OG 分享卡是文章被分享、被链接预览时露出的那张图，自带品牌：logo、大标题、一行副标题。交付一张 1200×630 的 PNG，加上交回的版式、默认项和 `md5`。版式是插件自带的 HTML 模板，颜色、字体、logo 来自项目的 `DESIGN.md`；项目没配就用中性默认。
 
-下文 `S` 指 `${CLAUDE_PLUGIN_ROOT}/scripts`，`A` 指 `${CLAUDE_PLUGIN_ROOT}/skills/seo/og`。
+项目目录照 `idea-loop:wiki-conventions` 的「项目目录」拿。
 
 ## 1. 读项目的取值
 
-- 图片目录、OG 字段、DESIGN.md 路径：`node S/seo-md.mjs SEO.md`，取输出的 `images`（`dir`、`ogField`、`designMd`）。没有 SEO.md、没有「配图」节、键是 `无`，都读成空。
-- 找 DESIGN.md：`images.designMd` 指定的那份；没指定就 `git ls-files | grep -i 'DESIGN.md$'`，只有一份读它；多份又没指定，人在场就问，托管时当作没有。
+- 图片目录、OG 字段、DESIGN.md 路径：`dyna seo parse <项目目录>/SEO.md`，取输出的 `images`（`dir`、`ogField`、`designMd`）。没有 SEO.md、没有「配图」节、键是 `无`，都读成空。
+- 找 DESIGN.md：`images.designMd` 指定的那份（相对项目目录）；没指定读 `<项目目录>/DESIGN.md`；项目目录里有几份又没指定，人在场就问，托管时当作没有。
 - 从 DESIGN.md 取：front matter 的色板和字体 token，按角色对到 params 的 `colors`（`bg` 页面底色、`surface` 表面色、`ink` 正文色、`muted` 次要文字色、`accent` 品牌主色、`accentInk` 主色上的文字色）和 `font.family`（标题字阶的字体）；Components 章的「og-card」组件写了什么就用什么：版式名、`titleSize`、logo 文件路径。它没写的，退回默认。
 - `images.dir`、`images.ogField` 没写：人在场就问；托管时看同站已有文章里图片引用的目录、frontmatter 里放分享图的字段（出处写哪篇），找不到就把 PNG 放进 `.tmp/og/`、不动 frontmatter，交回里写明。
 
@@ -32,7 +32,7 @@ OG 分享卡是文章被分享、被链接预览时露出的那张图，自带�
 
 ## 3. 选版式
 
-`node S/og-render.mjs layouts` 列出版式。「og-card」出图配方指定了版式就用它；没指定用 `poster`，三种的区别和什么文章用哪种看 [`references/layouts.md`](references/layouts.md)。
+`dyna seo og layouts` 列出版式。「og-card」出图配方指定了版式就用它；没指定用 `poster`，三种的区别和什么文章用哪种看 [`references/layouts.md`](references/layouts.md)。
 
 完成条件：版式名在 `layouts` 的输出里。
 
@@ -45,10 +45,10 @@ OG 分享卡是文章被分享、被链接预览时露出的那张图，自带�
   "logo": "path/to/logo.png", "colors": { "accent": "#…" }, "font": { "family": "…" } }
 ```
 
-字段全集在 `S/og-render.mjs` 开头的注释。渲染：
+字段全集见 `dyna seo og render --help`。渲染：
 
 ```
-node S/og-render.mjs render <params.json> <图片目录，或 .tmp/og>/<文件名>.png
+dyna seo og render <params.json> <调用方给的输出目录，或图片目录，或 .tmp/og>/<文件名>.png
 ```
 
 | 退出码 | 意思 | 怎么办 |
@@ -56,9 +56,9 @@ node S/og-render.mjs render <params.json> <图片目录，或 .tmp/og>/<文件�
 | 0 | 写出了，输出里 `fit` 是 `ok`，`defaults` 列出落回默认的项 | 往下走 |
 | 2 | params 不合法 | 照 stderr 改 |
 | 4 | 文字缩到最小字号还放不下，输出的 `overflow` 说是哪一块 | 缩短那段字，或换一个版式；PNG 已写出但不能用 |
-| 1 | 没有可用的浏览器 | 命令已写出 HTML：用 Skill 工具调 `idea-loop:browser`，照它的做法打开 HTML，等 `<html>` 的 `data-fit` 变成 `ok`，截 1200×630 |
+| 1 | 没有可用的浏览器 | 命令已写出 HTML：照 `dyna runtime show 浏览器` 的「无头」打开 HTML，等 `<html>` 的 `data-fit` 变成 `ok`，截 1200×630 |
 
-完成条件：退出码 0（或 1 的退路里 `data-fit` 是 `ok`），PNG 在图片目录里。
+完成条件：退出码 0（或 1 的退路里 `data-fit` 是 `ok`），PNG 在输出目录或图片目录里。
 
 ## 5. 看图
 
@@ -68,8 +68,9 @@ node S/og-render.mjs render <params.json> <图片目录，或 .tmp/og>/<文件�
 
 ## 6. 写进文章，防缓存
 
-- `images.ogField` 的值写成图片的站点路径，形态照同一字段在已有文章里的写法；多语言版本各写各的。
-- 重渲同一个文件名后，预览服务在跑就 `node S/og-render.mjs md5 <png> --url <预览里这张图的地址>`：退出码 3 是服务器还给旧图，重启预览或换文件名；没有预览只记下 `md5`。
+- 调用方给了输出目录（`seo-writing` 的 brief 分支出图时给 spec 的 `assets/`）的，不写 frontmatter，只交回图的路径和 `md5`。
+- 否则 `images.ogField` 的值写成图片的站点路径，形态照同一字段在已有文章里的写法；多语言版本各写各的。
+- 重渲同一个文件名后，预览服务在跑就 `dyna seo og md5 <png> --url <预览里这张图的地址>`：退出码 3 是服务器还给旧图，重启预览或换文件名；没有预览只记下 `md5`。
 
 交回写：版式、哪些取值来自项目、哪些用了默认（`defaults`），默认的写一句「项目没配出图配方，用的默认」，图的路径和 `md5`。
 

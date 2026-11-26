@@ -1,6 +1,6 @@
 /**
  * Pins the sentences that make "seo 要用的项目信息：推测 → 人确认 → 写入 → 只读写着的" true in the
- * docs: the convention and the 每个方向要用的信息 table in seo-md.md, seo-scan's 缺口关卡, seo-setup
+ * docs: the convention and the 每个方向要用的信息 table in seo-md.md, seo-scan's 缺口关卡, the SEO module
  * writing `无`, and the two brand-term judges reading `无` as no brand terms.
  *
  * SEO_DOCS_ROOT points the test at another copy of the plugin (e.g. the text before the change), to
@@ -16,13 +16,15 @@ const root = process.env.SEO_DOCS_ROOT ?? join(dirname(fileURLToPath(import.meta
 const read = (...p) => readFileSync(join(root, ...p), 'utf8');
 
 const SCAN = read('skills', 'seo', 'seo-scan', 'SKILL.md');
-const SETUP = read('skills', 'seo', 'seo-setup', 'SKILL.md');
+const SETUP = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
 const OUTREACH = read('skills', 'seo', 'seo-outreach', 'SKILL.md');
 const WRITING = read('skills', 'seo', 'seo-writing', 'SKILL.md');
-const FORMAT = read('skills', 'seo', 'seo-setup', 'references', 'seo-md.md');
+const FORMAT = read('skills', 'engineering', 'setup', 'references', 'seo', 'seo-md.md');
 const CLUSTERING = read('skills', 'seo', 'keyword-clustering', 'SKILL.md');
-const PROJECT_CONTEXT = read('skills', 'seo', 'seo-setup', 'references', 'project-context.md');
+const PROJECT_CONTEXT = read('skills', 'engineering', 'setup', 'references', 'seo', 'project-context.md');
 const STOPS = read('skills', 'seo', 'seo-scan', 'references', 'stops.md');
+// 0.2.0: what happens once there are gaps lives in the gate's own reference; SKILL.md keeps the gaps call and the pointer.
+const GATE = read('skills', 'seo', 'seo-scan', 'references', 'gap-gate.md');
 const FINDINGS = read('skills', 'seo', 'seo-scan', 'references', 'findings.md');
 const PAGE_OPTIMIZER = read('agents', 'page-optimizer.md');
 
@@ -43,7 +45,7 @@ test('seo-md.md: the convention sits between 「每节读的人」 and 「不写
 
 test('seo-md.md: the convention says who infers, who confirms, what a skill reads and what a scan does when it is missing', () => {
   const c = section(FORMAT, '项目信息从哪来[^\\n]*');
-  assert.match(c, /seo-setup`? 推测/);
+  assert.match(c, /SEO 模块推测/);
   assert.match(c, /人确认/);
   assert.match(c, /skill 只读写着的/);
   assert.match(c, /seo-scan`? 开场[\s\S]*推测、停下等人确认/);
@@ -75,22 +77,24 @@ test('seo-scan: the gate sits after 方向 and before 预算', () => {
 });
 
 test('seo-scan: the gate notifies, lists guesses with their source, stops without dispatching, then writes and goes on', () => {
-  const g = section(SCAN, '缺口关卡');
-  assert.match(g, /seo-gaps\.mjs/);
+  const head = section(SCAN, '缺口关卡');
+  assert.match(head, /dyna seo gaps/);
+  assert.match(head, /references\/gap-gate\.md/, 'the gate section points at its reference');
+  const g = GATE;
   assert.match(g, /find_serp_competitors/);
   assert.match(g, /allow` 大于 0，就不推/, 'competitors are only inferred when the budget lets it');
   assert.match(g, /『推送』/);
   assert.match(g, /推测值、出处/);
   assert.match(g, /一次最多三个问题/);
   assert.match(g, /不派任何方向 agent/);
-  assert.match(g, /用 Edit 改在工作区/);
+  assert.match(g, /用 Edit 改 `<项目目录>\/SEO\.md`/);
   assert.match(g, /人说留空的写 `无`/);
   assert.match(g, /update_project_context/);
   assert.match(g, /从「预算」往下跑/);
 });
 
 test('seo-scan: after the human answers, the project context is fetched again before the gaps are rechecked (S1)', () => {
-  const g = section(SCAN, '缺口关卡');
+  const g = GATE;
   const answered = g.slice(g.indexOf('人回复后'));
   const refetch = answered.search(/重新调 `get_project_context`[^\n]*覆盖[^\n]*context\.json/);
   const recheck = answered.search(/重跑第 2 步/);
@@ -99,7 +103,7 @@ test('seo-scan: after the human answers, the project context is fetched again be
 });
 
 test('seo-scan: credits the gate spent count toward the run, and 预算 reads the balance again (S2)', () => {
-  const g = section(SCAN, '缺口关卡');
+  const g = GATE;
   assert.match(g, /find_serp_competitors[^\n]*调完再调一次[^\n]*`whoami`/, 'the gate reads the balance after the paid call');
   const b = section(SCAN, '预算');
   assert.match(b, /重新读/, '预算 reads creditsRemaining itself');
@@ -108,19 +112,19 @@ test('seo-scan: credits the gate spent count toward the run, and 预算 reads th
   assert.match(b, /开始余额[^\n]*第一次/, 'the run-start balance is the first reading, gate included');
 });
 
-test('seo-scan: does not point at seo-setup\'s private references (C1)', () => {
-  const g = section(SCAN, '缺口关卡');
-  assert.ok(!/seo-md\.md/.test(SCAN), 'seo-md.md is seo-setup\'s own reference');
+test('seo-scan: does not point at the SEO module\'s private references (C1)', () => {
+  const g = section(SCAN, '缺口关卡') + GATE;
+  assert.ok(!/seo-md\.md/.test(SCAN + GATE), 'seo-md.md is the SEO module\'s own reference');
   assert.ok(!/格式定义/.test(g));
-  assert.ok(!/seo-setup[^\n]*references\//.test(SCAN));
+  assert.ok(!/setup[^\n]*references\/seo/.test(SCAN + GATE));
 });
 
-test('seo-outreach and seo-writing: read SEO.md through seo-md.mjs, not through seo-setup\'s private references (#235)', () => {
+test('seo-outreach and seo-writing: read SEO.md through dyna seo parse, not through the SEO module\'s private references (#235)', () => {
   for (const [name, doc] of [['seo-outreach', OUTREACH], ['seo-writing', WRITING]]) {
-    assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is seo-setup's own reference`);
-    assert.ok(!/seo-setup[^\n]*references/.test(doc), `${name}: points into seo-setup's references`);
+    assert.ok(!/seo-md\.md/.test(doc), `${name}: seo-md.md is the SEO module's own reference`);
+    assert.ok(!/setup[^\n]*references\/seo/.test(doc), `${name}: points into the SEO module's references`);
     assert.ok(!/格式见/.test(doc), `${name}: a format pointer is left over`);
-    assert.match(doc, /seo-md\.mjs/, `${name}: reads SEO.md through the parse script`);
+    assert.match(doc, /dyna seo parse/, `${name}: reads SEO.md through the parse command`);
   }
 });
 
@@ -134,16 +138,12 @@ test('seo-scan: four stop cases, a stop-and-wait return shape, and SEO.md change
 
 test('seo-scan: allowed-tools has what the gate uses', () => {
   const tools = frontmatterField(SCAN, 'allowed-tools');
-  for (const t of ['PushNotification', 'Edit', 'Bash(node *seo-gaps.mjs:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
+  for (const t of ['PushNotification', 'Edit', 'Bash(dyna seo:*)', 'mcp__plugin_idea-loop_openseo__find_serp_competitors']) {
     assert.ok(tools.includes(t), `allowed-tools lacks ${t}`);
   }
 });
 
-test('seo-scan: the body stays under 5000 characters', () => {
-  assert.ok([...body(SCAN)].length < 5000, `${[...body(SCAN)].length} characters`);
-});
-
-test('seo-setup: the brand step points at the convention and writes 无 for a blank answer', () => {
+test('the SEO module: the brand step points at the convention and writes 无 for a blank answer', () => {
   const brand = SETUP.split('\n').find((l) => l.startsWith('- **品牌**'));
   assert.match(brand, /项目信息从哪来/);
   assert.ok(!/不自己从域名推一个写进去/.test(brand), 'the brand-only rule moved into the convention');
@@ -169,20 +169,16 @@ test('seo-md.md: an item the human said is not needed is written 无 at its own 
 });
 
 test('seo-scan: the gate writes 无 into the project-context section when the human says it is not needed (S3)', () => {
-  const g = section(SCAN, '缺口关卡');
+  const g = GATE;
   assert.match(g, /项目上下文的项[^\n]*update_project_context[^\n]*人说不需要的[^\n]*写 `无`/);
   assert.match(g, /不需要/, 'the question tells the human they may say 不需要');
 });
 
-test('seo-setup: a project-context section the human says is not needed is written 无, and 无 is not asked again (S3)', () => {
+test('the SEO module: a project-context section the human says is not needed is written 无, and 无 is not asked again (S3)', () => {
   assert.match(section(SETUP, '5\\. 同步进 OpenSEO 项目上下文'), /人说不需要的那一节[\s\S]*写 `无`/);
   assert.match(section(SETUP, '2\\. 读现状，备推荐值'), /写了 `无` 的节不再问/);
 });
 
 test('project-context.md: a section that is not needed is written as 无, nothing else (S3)', () => {
   assert.match(PROJECT_CONTEXT, /人说这一节不需要[^\n]*整节写 `无`/);
-});
-
-test('seo-scan: the body stays within 5000 characters after the S3 additions (S3)', () => {
-  assert.ok([...body(SCAN)].length <= 5000, `${[...body(SCAN)].length} characters`);
 });

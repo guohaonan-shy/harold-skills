@@ -3,7 +3,7 @@
  *
  * Spec canvas-truth-dreaming-agents, implementation decision 7. The behaviour lives in skill text, so
  * these checks pin the steps a reader has to be able to follow: setup creates the task the way
- * seo-setup creates seo-scan's, dreaming derives the baseline from the task's run history (and a
+ * setup's SEO module creates seo-scan's, dreaming derives the baseline from the task's run history (and a
  * hand-typed run does not move it), only the picked states go to the live wave while the source wave
  * stays full, and the proposal table's opening line and trailing note are written down.
  */
@@ -27,19 +27,19 @@ function section(doc, title) {
 
 const setup = read('skills', 'engineering', 'setup', 'SKILL.md');
 const weeklySteps = read('skills', 'engineering', 'setup', 'references', 'weekly-dreaming.md');
-const seoSetup = read('skills', 'seo', 'seo-setup', 'SKILL.md');
-const seoSetupSteps = read('skills', 'seo', 'seo-setup', 'references', 'daily-scan.md');
+const seoSetup = read('skills', 'engineering', 'setup', 'references', 'seo', 'steps.md');
+const seoSetupSteps = read('skills', 'engineering', 'setup', 'references', 'seo', 'daily-scan.md');
 const dreaming = read('skills', 'productivity', 'dreaming', 'SKILL.md');
 const scope = read('skills', 'productivity', 'dreaming', 'references', 'incremental-scope.md');
 const proposal = read('skills', 'productivity', 'dreaming', 'references', 'proposal-table.md');
 const reconcile = read('skills', 'productivity', 'dreaming', 'references', 'archive-reconcile.md');
 
-test('setup creates the weekly dreaming task the way seo-setup creates the seo-scan one', () => {
+test('setup creates the weekly dreaming task the way its SEO module creates the seo-scan one', () => {
   // the steps live in setup's own reference (SKILL.md keeps its body short); the SKILL.md section must point at it
-  assert.ok(section(setup, '每周对账').includes('references/weekly-dreaming.md'));
+  assert.ok(section(setup, '定时任务').includes('references/weekly-dreaming.md')); // #420: one 「定时任务」 table
   const mine = weeklySteps;
-  // seo-setup's SKILL.md section points at its own reference, which carries the steps
-  assert.ok(section(seoSetup, '8. 每天扫描').includes('references/daily-scan.md'));
+  // the SEO module's steps file points at its own reference, which carries the steps
+  assert.ok(section(seoSetup, '8. 每天扫描').includes('daily-scan.md'));
   const theirs = seoSetupSteps;
   // the same moving parts, in the same order: look, (no capability → hand the prompt over), ask, create, tell.
   const parts = [
@@ -49,7 +49,7 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
     ['minute', '分钟避开 0 和 30'],
   ];
   for (const [name, word] of parts) {
-    assert.ok(theirs.includes(word), `seo-setup no longer says the "${name}" part; update this test with it`);
+    assert.ok(theirs.includes(word), `the SEO module no longer says the "${name}" part; update this test with it`);
   }
   assert.doesNotMatch(theirs, /list_scheduled_tasks|AskUserQuestion|create_scheduled_task|桌面 app/);
   // seo-scan is model-invocable (2026-11-08), so no runtime needs a fallback for a human-invoked-only skill
@@ -57,16 +57,16 @@ test('setup creates the weekly dreaming task the way seo-setup creates the seo-s
   assert.ok(mine.includes('分钟避开 0 和 30'));
   assert.ok(mine.indexOf('列出已有的任务') < mine.indexOf('用『向人提问』问人'));
   assert.ok(mine.indexOf('用『向人提问』问人') < mine.indexOf('用『定时任务』创建'));
-  // no desktop tool name left: the how is in idea-loop:runtime
+  // no desktop tool name left: the how is `dyna runtime show`
   assert.doesNotMatch(mine, /list_scheduled_tasks|AskUserQuestion|create_scheduled_task|桌面 app/);
-  assert.match(mine, /idea-loop:runtime/);
+  assert.match(mine, /dyna runtime show/);
   // the prompt starts the skill (the way to write it is the runtime's), and what the runtime does at a missed run is told to the human
   assert.match(mine, /prompt：调起 `idea-loop:dreaming`/);
   assert.match(mine, /补不补跑[\s\S]*「行为」/);
   // a refusal and a missing capability are both recorded, not silently skipped
   assert.match(mine, /人拒绝/);
   assert.match(mine, /未做：运行环境 <名> 没有『定时任务』/);
-  assert.match(setup, /##\s*交回[\s\S]*每周对账/);
+  assert.match(read('skills', 'engineering', 'setup', 'references', 'handback.md'), /每周对账/); // #420: hand-back items moved into handback.md
 });
 
 test('dreaming can be invoked by the model and points at the scope reference', () => {
@@ -78,9 +78,10 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
   // the how (which tool, which field) is the runtime's; the scope says only what to read
   assert.doesNotMatch(scope, /list_task_runs|list_scheduled_tasks|桌面 app/);
   assert.match(scope, /读这个任务上次成功运行的时间/);
-  assert.match(scope, /idea-loop:runtime/);
+  assert.match(scope, /dyna runtime show/);
   assert.match(scope, /started_at/);
-  assert.match(scope, /git rev-list -1 --first-parent --before=/);
+  // the commit at that moment is found along the first-parent line, before started_at (the how is the agent's)
+  assert.match(scope, /first-parent 主线[^\n]*`origin\/<基准分支>` 上 `started_at` 之前最近的一个提交/);
   assert.match(scope, /origin\/<基准分支>/);
   assert.match(scope, /没有定时任务/);
   assert.match(scope, /没有一次成功的执行/);
@@ -90,11 +91,12 @@ test('the baseline comes from the scheduled task\'s last succeeded run; no task 
 });
 
 test('only the picked states go to the live wave; the source wave stays full; an empty pick still runs the source wave', () => {
-  assert.match(scope, /design-archive-query\.mjs" <worktree 根> affected <基准提交>/);
+  // the archive lives in the project directory and the code in a separate worktree: without --code-root the query looks for the base commit in the project directory and fails
+  assert.match(scope, /dyna design archive query <项目目录> affected <基准提交> --code-root <代码 worktree>/);
   assert.match(scope, /只用来定实时波/);
   assert.match(scope, /源码波每次全量/);
   assert.match(scope, /清单为空/);
-  assert.match(reconcile, /增量时就是 `query affected <基准提交>` 交回的 `states`/);
+  assert.match(reconcile, /增量时就是 `dyna design archive query <项目目录> affected <基准提交> --code-root <代码 worktree>` 交回的 `states`/);
   assert.match(reconcile, /增量时它也每次全量/);
 });
 

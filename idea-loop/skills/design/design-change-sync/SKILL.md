@@ -9,21 +9,24 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 没有设计稿的 UI 改动（没有画布）不走这一条：实现者在 `delta/` 记「最小差异」。
 
+交付物：冻结画布的最终一版 `v<终>`、冻结记录「冻结后的变更」里新记的一行、归属工单上追加的一格（只在代码跟新画布不一致、且来源不是接受实现时追加）。
+
 ## designer 做
 
 编排者用 Agent 工具新起 `idea-loop:designer`，任务「设计变更」，给：
 
-- 画布路径（`canvas/` 里最新一版）
+- **项目目录**的绝对路径：designer 读它来找 `<docs>`、`DESIGN.md`、`PRODUCT.md`，不拿到就没法开工；子代理拿不到注入的那一行，只认 prompt 里给的
+- 画布路径（项目目录下 `docs/design/tmp/<spec-slug>/canvas/` 里最新一版，给绝对路径）
 - 人的原话
 - 受影响的状态名（画布 `?state=` 的名字）
-- 相关截图（实现的截图、Review 汇报里那张图，或人给的）
+- 相关截图（实现的截图、review 汇报里那张图，或人给的）
 - 人看了评委意见后定要改的几条（有才给）
 
 它做：
 
 - 从最新一版复制出 `v<N+1>.html`，旧版不动，**只改受影响的格子**：人的原话对应的那几个状态的标记与样式。别的格一字不动；改完把没动的格在同一 viewport 下各截一张，跟改之前一致，不一致就修回。
 - 状态名与锚点名是契约，改格不改名；人要的是新增一格，用新名字，加进冻结摘要的状态矩阵。
-- 改过的格重截，覆盖 `assets/` 里同名的矩阵截图；用 `node "${CLAUDE_PLUGIN_ROOT}/scripts/design-lint.mjs" <v<N+1>.html 的路径>` 过一遍。
+- 改过的格重截，覆盖 `assets/` 里同名的矩阵截图。
 - 人的原话与画布、方向说明矛盾时，照人的原话改，交回时点出矛盾。不落 ledger：`work/` 在冻结时已经清掉，这一次的记录在冻结记录的「冻结后的变更」里，由编排者记。
 - 人看了评委意见、定了要改哪几条时，编排者用 SendMessage 接着这个 designer，从上一版再复制出下一版（`v<N+2>`、`v<N+3>`……），只改人定了的那几条指到的格。**终版**写作 `v<终>`：人定了提交的那一版，可能是第一次改出的，也可能是照评委意见再改后的；下面提交、记冻结记录、给工单追加格，指的都是它，不是第一次改出来的那一版。
 
@@ -33,13 +36,7 @@ description: 设计已冻结的需求里，人接受了一处跟画布不同的�
 
 编排者新起一个 `idea-loop:ui-master`，跑完即弃，只给：改动那几格的截图（标状态名）、冻结记录「意图」节的那句话、这一轮看静态。它是顾问：交回意见和分数，提不提交、改不改，由人定。
 
-把评委的 JSON 写成 `canvas/work/change-<序号>/critic.json`，再写同目录的 `context.json`（`{ "states": [这几格的状态名], "thoughts": [] }`），跑：
-
-```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<canvas>/work/change-<序号>/critic.json" --context "<canvas>/work/change-<序号>/context.json"
-```
-
-退出码 `2` 是评委的输出不合格式：作废，新起一个 ui-master 重评。合格只说明格式对，不判停。
+把评委的 JSON 写成 `canvas/work/change-<序号>/critic.json`，再写同目录的 `context.json`（`{ "states": [这几格的状态名], "thoughts": [] }`），用 `dyna design critic round`（`--context` 带上 `context.json`）校验。退出码 `2` 是评委的输出不合格式：作废，新起一个 ui-master 重评。合格只说明格式对，不判停。
 
 然后停下，把评委的每条意见（带编号）、分数、新旧两版截图交给人，照调用方 skill 写的方式摆。人逐条定：
 
@@ -53,14 +50,14 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/critic-score.mjs" "<canvas>/work/change-<序
 
 编排者：
 
-1. 提交画布：`git add -f docs/design/tmp/<spec-slug>/canvas/v<终>.html docs/design/tmp/<spec-slug>/canvas/assets docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和没提交的中间版不进），提交信息 `docs(design): <spec-slug> 设计变更 —— <一句话>`，推送到当前分支：实现期间是集成分支，review 期间是 PR 分支。
+1. 提交画布：照 `idea-loop:wiki-conventions` 的「知识库落地」`commit` 到 home，只列 `docs/design/tmp/<spec-slug>/canvas/v<终>.html`、`docs/design/tmp/<spec-slug>/canvas/assets`、`docs/design/tmp/<spec-slug>/canvas/<spec-slug>-design.md`（`work/` 和没提交的中间版不列），消息 `docs(design): <spec-slug> 设计变更 —— <一句话>`。画布不进代码分支，不用推送。
 2. 冻结记录「冻结后的变更」记一行，跟画布同一个提交（第一次记时把冻结时写的「无」换成表头）：
 
    ```
    | 日期 | 画布版本 | 改了哪几格 | 人的原话 | 评委分 |
    |---|---|---|---|---|
-   | 2026-10-24 | v6 | cookbook--search-loading | 「加载态不要骨架屏，一条细进度条就够」 | 9 |
+   | <日期> | v6 | cookbook--search-loading | 「加载态不要骨架屏，一条细进度条就够」 | 9 |
    ```
 
    「改了哪几格」写状态名，多格用逗号；「评委分」是人定提交那一版、评委给的分数（参考，不是关卡）；「画布版本」写 `v<终>`，是这一行之后的最终画布：它与冻结摘要里的画布指针不同时，以这一节最后一行的版本为准。
-3. 回到调用方 skill：代码跟新画布不一致、而且来源不是「接受实现」的，在归属工单的验收标准末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<终>.html 做，比对脚本对这一版`（`v<终>` 写成人定了提交的那一版的实际版本号），再由调用方派实现者照新画布做；接受实现的，代码不动。新画的那几格，人在上面「评委给意见，人定」那一步已经看过并定了提交；实现出来后在 review 里照常看到。
+3. 回到调用方 skill：代码跟新画布不一致、而且来源不是「接受实现」的，在归属工单的验收标准末尾追加 `- [ ] 设计变更（<日期>）：<格> 照 canvas/v<终>.html 做，比对命令对这一版`（`v<终>` 写成人定了提交的那一版的实际版本号），再由调用方派实现者照新画布做；接受实现的，代码不动。新画的那几格，人在上面「评委给意见，人定」那一步已经看过并定了提交；实现出来后在 review 里照常看到。

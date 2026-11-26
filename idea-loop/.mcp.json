@@ -1,9 +1,10 @@
 {
   "mcpServers": {
     "design-archive": {
-      "command": "node",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/dyna",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/scripts/design-archive-mcp.mjs"
+        "mcp",
+        "design-archive"
       ]
     },
     "openseo": {

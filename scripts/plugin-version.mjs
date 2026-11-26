@@ -4,9 +4,34 @@
  * feed it constructed inputs.
  */
 
-const VERSION = /^(\d+)\.(\d+)\.(\d+)$/;
+// `x.y.z`, optionally with a semver prerelease suffix such as `-beta.1` (a beta of x.y.z).
+const VERSION = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*))?$/;
 
-/** Compare two `x.y.z` strings numerically segment by segment. Returns <0, 0 or >0. */
+/** Compare two prerelease suffixes the semver way: dot-separated, numbers numerically, words as text, numbers first. */
+function comparePrerelease(a, b) {
+  const xa = a.split('.');
+  const xb = b.split('.');
+  for (let i = 0; i < Math.max(xa.length, xb.length); i++) {
+    if (xa[i] === undefined) return -1;
+    if (xb[i] === undefined) return 1;
+    const na = /^\d+$/.test(xa[i]);
+    const nb = /^\d+$/.test(xb[i]);
+    if (na && nb) {
+      const d = Number(xa[i]) - Number(xb[i]);
+      if (d !== 0) return d;
+    } else if (na !== nb) {
+      return na ? -1 : 1;
+    } else if (xa[i] !== xb[i]) {
+      return xa[i] < xb[i] ? -1 : 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Compare two `x.y.z[-prerelease]` strings: the three numbers segment by segment, then a release
+ * sorts after its own prereleases (`0.2.0-beta.1` < `0.2.0`). Returns <0, 0 or >0.
+ */
 export function compareVersions(a, b) {
   const pa = VERSION.exec(a);
   const pb = VERSION.exec(b);
@@ -15,7 +40,10 @@ export function compareVersions(a, b) {
     const d = Number(pa[i]) - Number(pb[i]);
     if (d !== 0) return d;
   }
-  return 0;
+  if (pa[4] === undefined && pb[4] === undefined) return 0;
+  if (pa[4] === undefined) return 1;
+  if (pb[4] === undefined) return -1;
+  return comparePrerelease(pa[4], pb[4]);
 }
 
 /**
@@ -35,7 +63,7 @@ export function findViolations({ changedFiles, baseVersions, currentVersions, ba
 
     if (!VERSION.test(current) || !VERSION.test(base)) {
       violations.push(
-        `${plugin}: 版本号不是 x.y.z（${baseRef} 上是 ${base}，当前是 ${current}），没法比大小；改成三段数字。`,
+        `${plugin}: 版本号不是 x.y.z 或 x.y.z-<预发布>（${baseRef} 上是 ${base}，当前是 ${current}），没法比大小；改成三段数字（可带 -beta.1 这类后缀）。`,
       );
       continue;
     }
