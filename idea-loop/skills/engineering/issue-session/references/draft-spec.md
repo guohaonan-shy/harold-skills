@@ -13,7 +13,7 @@
 
 ## 已经被做掉的
 
-起草时发现 issue 已经被做掉了：`dyna issues set <docs> canceled <号> --comment=<出处、核对的日期和提交>`，删掉这份 spec 的草稿，不提交，回会话的「收尾」。
+起草时发现 issue 已经被做掉了、或验证为不存在：先核证据齐不齐（线上数据、已合并的 PR、代码里能指到的检查），齐就 `dyna issues set <docs> done <号> --comment=<出处、核对的日期和提交>`，再告诉人；拿不准证据够不够才停下问。删掉这份 spec 的草稿，不提交，回会话的「收尾」。人决定不做的才是 `set canceled`。
 
 ## 功能级的标「需要 grill」
 

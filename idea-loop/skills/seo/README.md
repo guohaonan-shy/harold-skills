@@ -1,6 +1,6 @@
 # seo 分类
 
-SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，`seo-scan` 把问题提成 issue（`type:seo/<方向>`）并当场分流：每个新 issue 起一个 `issue-triager`，只有要 UI 设计的进 triage，判不了的进 todo，重复、「不做」、已实现、复现不出的 canceled；之后照 idea-loop 的 issue 会话走 triage、实现。项目配置只有根目录的一份 `SEO.md`（格式：[setup 的 SEO 模块参考](../engineering/setup/references/seo/seo-md.md)）。设计见 spec `idea-loop-seo`。
+SEO 的发现、入队和解决：方向 agent 从 OpenSEO 取数据找问题，`seo-scan` 把问题提成 issue（`type:seo/<方向>`）并当场分流：每个新 issue 起一个 `issue-triager`，只有要 UI 设计的进 triage，判不了的进 todo，已实现的 done，重复、「不做」、复现不出的 canceled；之后照 idea-loop 的 issue 会话走 triage、实现。项目配置只有根目录的一份 `SEO.md`（格式：[setup 的 SEO 模块参考](../engineering/setup/references/seo/seo-md.md)）。设计见 spec `idea-loop-seo`。
 
 | 层 | skill / agent |
 |---|---|

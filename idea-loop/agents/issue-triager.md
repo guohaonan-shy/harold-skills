@@ -19,7 +19,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:is
 
 1. **查重**：用关键词在开着的 issue 里搜，有同一个问题 → 建议 canceled，写「跟 #N 重复」。
 2. **「不做」清单**：`<docs>/records/out-of-scope/` 里命中 → 建议 canceled，附那一份的路径。
-3. **是否已实现**：查代码、已合并的 PR、`<docs>/adr/` → 建议 canceled，附出处（文件和行，或 PR 号）。issue 写的现状也要核过再信。
+3. **是否已实现**：查代码、已合并的 PR、`<docs>/adr/` → 建议 done，附出处（文件和行，或 PR 号）。issue 写的现状也要核过再信。
 4. **复现**：手段按 issue 的性质选。输出放 `.tmp/triage/<号>/`（日志、测试输出、截图都进文件，只读回判断要用的一两行）。
 
    | issue 的性质 | 复现手段 | 评论里写什么 |
@@ -37,10 +37,11 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:is
 |---|---|
 | todo + P1/P2 | 复现到了，修法只有一种显然的做法，不碰 UI、不加新能力 |
 | triage + P1/P2 | 复现到了，但要人定方案、要 grill，碰 UI 要设计，或是一个新能力 |
-| canceled | 重复、在「不做」清单里、已实现、复现不出 |
+| done | 已实现（附出处） |
+| canceled | 重复、在「不做」清单里、复现不出 |
 | 留在 backlog | 判不了 |
 
-**SEO issue**（带 `type:seo/*`）：只有 UI 设计建议 triage、判不了建议 todo。要新建或改组件、页面模板、样式的，建议 triage；要 grill、要定方案的，建议 todo（todo 会话照推荐定）；判不了的也建议 todo，不留在 backlog，也不因为拿不准就 canceled。canceled 仍只来自重复、在「不做」清单里、已实现、复现不出四种。
+**SEO issue**（带 `type:seo/*`）：只有 UI 设计建议 triage、判不了建议 todo。要新建或改组件、页面模板、样式的，建议 triage；要 grill、要定方案的，建议 todo（todo 会话照推荐定）；判不了的也建议 todo，不留在 backlog，也不因为拿不准就 canceled。canceled 仍只来自重复、在「不做」清单里、复现不出三种。
 
 项目跳过 triage 的（`ISSUE_TRACKER.md` 写了「triage：跳过」），没有 triage 这一行：要人评估的也建议 todo。你不判 P0；像 P0 的建议 P1，结论里标「疑似 P0」。
 
@@ -51,7 +52,7 @@ Linear 项目（`ISSUE_TRACKER.md` 第一个标题写 Linear）照 `idea-loop:is
 交回一行 JSON，别的不写；`comment` 填上面取到的评论地址，不自己拼：
 
 ```json
-{"issue": 12, "conclusion": "<一句话结论>", "comment": "<评论链接>", "route": "todo|triage|canceled|backlog", "priority": "P1|P2|null"}
+{"issue": 12, "conclusion": "<一句话结论>", "comment": "<评论链接>", "route": "todo|triage|done|canceled|backlog", "priority": "P1|P2|null"}
 ```
 
 ## 边界

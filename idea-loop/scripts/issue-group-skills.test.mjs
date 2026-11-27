@@ -97,8 +97,10 @@ test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做
 test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上', () => {
   const md = skill('issue-session');
   assert.match(md, /## 先放着/);
-  assert.match(md, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>/);
-  assert.match(md, /读这条评论接上/);
+  assert.match(md, /references\/hold\.md/);
+  const hold = readFileSync(join(root, 'skills/engineering/issue-session/references/hold.md'), 'utf8');
+  assert.match(hold, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>/);
+  assert.match(hold, /读这条评论接上/);
 });
 
 test('issue-session：一个 issue 只改一个仓库，不在别的仓库开 worktree', () => {

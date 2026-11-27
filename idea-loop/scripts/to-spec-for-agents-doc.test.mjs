@@ -48,11 +48,11 @@ test('agent-docs.md: frontmatter 写 changes_agent_docs: true', () => {
   assert.match(read('skills', 'engineering', 'to-spec', 'references', 'agent-docs.md'), /frontmatter 写 `changes_agent_docs: true`/);
 });
 
-test('draft-spec has no 结论行 section and keeps 「起草时发现已被做掉就翻 canceled」; the self-check no longer asks for a line under the title, writes the reproduction into the 问题陈述 text, and numbers the expected behaviours against its sub-sections', () => {
+test('draft-spec has no 结论行 section and keeps 「起草时发现已被做掉就翻 done 带证据评论」; the self-check no longer asks for a line under the title, writes the reproduction into the 问题陈述 text, and numbers the expected behaviours against its sub-sections', () => {
   const md = read(...SESSION, 'references', 'draft-spec.md');
   assert.doesNotMatch(md, /^## 结论行/m);
   assert.doesNotMatch(md, /> #<号> 存在/);
-  assert.match(md, /起草时发现 issue 已经被做掉了：`dyna issues set <docs> canceled <号> --comment=/);
+  assert.match(md, /起草时发现 issue 已经被做掉了、或验证为不存在：[\s\S]*`dyna issues set <docs> done <号> --comment=/);
   const check = md.slice(md.indexOf('## 自己校验'), md.indexOf('## 跟人定要 grill 的'));
   assert.doesNotMatch(check, /一行结论/);
   assert.match(check, /issue 在 spec frontmatter 的 `issues` 里/);

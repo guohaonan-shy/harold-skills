@@ -74,7 +74,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 
 ## 分流
 
-对 `issues.json` 里 `created` 的每个号（`commented` 的已在某个状态里，不分流）起一个 `idea-loop:issue-triager`，同时最多 5 个，照它交回的 `route` 翻：`canceled` 带结论翻 canceled，`triage` 翻 triage，`todo` 和判不了的 `backlog` 翻 todo，优先级照它的建议。备环境、翻状态、失败处理见 [references/routing.md](references/routing.md)。
+对 `issues.json` 里 `created` 的每个号（`commented` 的已在某个状态里，不分流）起一个 `idea-loop:issue-triager`，同时最多 5 个，照它交回的 `route` 翻：`done`、`canceled` 带结论翻 done、canceled，`triage` 翻 triage，`todo` 和判不了的 `backlog` 翻 todo，优先级照它的建议。备环境、翻状态、失败处理见 [references/routing.md](references/routing.md)。
 
 完成条件：`created` 的每个号都翻过或失败原因已记下；`created` 为空就跳过。
 
@@ -102,7 +102,7 @@ allowed-tools: Read, Write, Edit, Agent, PushNotification, Bash(git rev-parse:*)
 seo-scan <YYYY-MM-DD HH:MM> 跑完：<方向...>
 - <方向>：<N> 条发现 | 未采集（<原因>） | 预算跳过（<原因>）
 - issue：新建 <n>，评论 <n>，拒收 <n><；项目没有 seo 分类，跑一次 /idea-loop:setup 的 SEO 模块>
-- 分流：todo <n>，triage <n>，canceled <n>
+- 分流：todo <n>，triage <n>，done <n>，canceled <n>
 - 花费：<n | 未知> credits
 - 效果报告：<报告路径 | 没跑 | 没落成（原因）>
 - 研究日志：已写入 | 没写成（<原因>），摘要在 <log.txt 路径>

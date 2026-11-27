@@ -23,8 +23,8 @@ issue 是需求的入口，也是工作的队列：idea-loop 的调度给每个 
 | todo | `status:todo` | 可以被调度派成会话 |
 | in-progress | `status:in-progress` | 会话在做，spec 提交后开 draft PR |
 | in-review | `status:in-review` | PR 全部转 ready，等人看 |
-| done | closed，completed | 全部 PR 合并 |
-| canceled | closed，not planned | 不做；验证为不存在；重复 |
+| done | closed，completed | 全部 PR 合并；已被做掉、验证为不存在（带证据评论） |
+| canceled | closed，not planned | 不做；重复 |
 
 triage：用 / 跳过
 
