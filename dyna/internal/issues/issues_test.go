@@ -120,6 +120,47 @@ func TestSetRelabelsCommentsWithTheAIMarkerAndClosesDoneAndCanceledDroppingTheLa
 	eq(t, commentsOn(f.calls, 4), []string{issues.AIMarker + "\n不做了"})
 }
 
+func TestSetDoneWithACommentClosesAnIssueNoPRCoversAsCompletedAndPostsTheCommentAsWritten(t *testing.T) {
+	p := docsWith(t, nil, nil, "")
+	f := newFake(open(1, "status:triage", "type:bug"), open(2), open(3, "status:todo"), open(4, "status:in-progress"), open(5, "status:triage"), open(6, "status:triage"))
+	f.prs["o/r"] = []*fPR{pr(40, "Refs o/r#4", "MERGED", false), pr(50, "Refs o/r#5", "OPEN", true), pr(60, "Refs o/r#6", "CLOSED", false)}
+	evidence := "生产库 2026-11-11 查，最近 30 天 471 份报告，大写层名 0 处"
+
+	// no comment: refused, nothing written, the reason names the way out
+	r := run(p, f, "set", p.docs, "done", "1")
+	refused(t, r, `#1：.*--comment.*证据`)
+	eq(t, len(writes(f.calls)), 0)
+	refused(t, run(p, f, "check", p.docs, "done", "1"), `--comment`)
+	eq(t, run(p, f, "check", p.docs, "done", "1", "--comment="+evidence).lines(), []string{"#1: triage → done 可以翻"})
+	eq(t, len(writes(f.calls)), 0)
+
+	// with the comment: closed as completed, the status label gone, the comment posted without a PR prefix
+	eq(t, run(p, f, "set", p.docs, "done", "1", "--comment="+evidence).lines(), []string{"#1: triage → done（关闭，completed）"})
+	if f.issues[1].Open || f.issues[1].Reason != "completed" || !reflect.DeepEqual(f.issues[1].Labels, []string{"type:bug"}) {
+		t.Fatalf("%+v", f.issues[1])
+	}
+	eq(t, commentsOn(f.calls, 1), []string{issues.AIMarker + "\n" + evidence})
+
+	// backlog, todo and a PR that was closed unmerged work the same way
+	for _, n := range []int{2, 3, 6} {
+		run(p, f, "set", p.docs, "done", fmt.Sprint(n), "--comment="+evidence)
+		if f.issues[n].Open || f.issues[n].Reason != "completed" || len(f.issues[n].Labels) != 0 {
+			t.Fatalf("#%d: %+v", n, f.issues[n])
+		}
+		eq(t, commentsOn(f.calls, n), []string{issues.AIMarker + "\n" + evidence})
+	}
+
+	// an open PR, even a draft: refused with the comment too, the PR listed
+	n := len(writes(f.calls))
+	refused(t, run(p, f, "set", p.docs, "done", "5", "--comment="+evidence), `#5：还有 PR 没合并：o/r#50（draft）`)
+	// a merged PR on an issue still in progress: the old rule, it goes through in-review first
+	refused(t, run(p, f, "set", p.docs, "done", "4", "--comment="+evidence), `#4：「in-progress」不能翻成「done」`)
+	eq(t, len(writes(f.calls)), n)
+	if !f.issues[4].Open || !f.issues[5].Open {
+		t.Fatal("a refused flip closed an issue")
+	}
+}
+
 func TestSetChecksEveryFlipBeforeMakingAny(t *testing.T) {
 	p := docsWith(t, nil, nil, "")
 	f := newFake(open(1, "status:todo"), open(2))

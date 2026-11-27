@@ -213,8 +213,30 @@ func TransitionError(from, to string, t Transition) string {
 	// it waited in; a parent whose PR merged with sub-issues left goes back to triage to take up the rest.
 	subDone := to == "done" && t.Sub && from != "backlog"
 	parentBack := from == "in-review" && to == "triage" && t.OpenSubs > 0
-	if !contains(Next[from], to) && !subDone && !parentBack {
-		return fmt.Sprintf("「%s」不能翻成「%s」（能翻成：%s）", from, to, list)
+	// A PR is alive when it is not closed; open are the alive ones not yet merged.
+	var live, unmerged []PR
+	if to == "done" {
+		for _, p := range t.PRs {
+			if p.State != "closed" {
+				live = append(live, p)
+				if p.State != "merged" {
+					unmerged = append(unmerged, p)
+				}
+			}
+		}
+	}
+	// Closing on evidence: an open issue with no live PR (none, or every one closed unmerged) and a comment that
+	// says what the evidence is. Whether the comment really is evidence is up to whoever wrote it.
+	evidenceDone := to == "done" && len(Next[from]) > 0 && len(live) == 0 && strings.TrimSpace(t.Comment) != ""
+	if !contains(Next[from], to) && !subDone && !parentBack && !evidenceDone {
+		if len(unmerged) > 0 {
+			return unmergedError(unmerged)
+		}
+		why := fmt.Sprintf("「%s」不能翻成「%s」（能翻成：%s）", from, to, list)
+		if to == "done" && len(Next[from]) > 0 && len(live) == 0 {
+			why += "；" + evidenceHint
+		}
+		return why
 	}
 	if to == "done" && t.OpenSubs > 0 {
 		return fmt.Sprintf("还有 %d 个子 issue 开着：spec 覆盖了的由 PR 的 Refs 行一起关，没覆盖的留在父 issue 下，父 issue 翻 triage 接着评估", t.OpenSubs)
@@ -236,28 +258,26 @@ func TransitionError(from, to string, t Transition) string {
 			return "spec 碰 UI，「实现决策」里还没有「冻结摘要」——先设计；没装 design 插件时带 --skip-design，并在汇报里写明跳过了设计"
 		}
 	}
-	if to == "done" {
-		var live, open []PR
-		for _, p := range t.PRs {
-			if p.State != "closed" {
-				live = append(live, p)
-				if p.State != "merged" {
-					open = append(open, p)
-				}
-			}
-		}
+	if to == "done" && !evidenceDone {
 		if len(live) == 0 {
-			return "没有 PR 挂在这个 issue 上（PR 正文要有 `Refs <owner>/<repo>#<号>`）——全部 PR 合并才能翻 done"
+			return "没有 PR 挂在这个 issue 上（PR 正文要有 `Refs <owner>/<repo>#<号>`）——全部 PR 合并才能翻 done；" + evidenceHint
 		}
-		if len(open) > 0 {
-			var parts []string
-			for _, p := range open {
-				parts = append(parts, fmt.Sprintf("%s#%d（%s）", p.Repo, p.Number, p.State))
-			}
-			return "还有 PR 没合并：" + strings.Join(parts, "、")
+		if len(unmerged) > 0 {
+			return unmergedError(unmerged)
 		}
 	}
 	return ""
+}
+
+// evidenceHint is the way out of a refusal to flip to done when no PR is attached.
+const evidenceHint = "没有 PR 时带 `--comment` 写明证据（线上数据、已合并的 PR、代码里能指到的检查）可以翻 done"
+
+func unmergedError(open []PR) string {
+	var parts []string
+	for _, p := range open {
+		parts = append(parts, fmt.Sprintf("%s#%d（%s）", p.Repo, p.Number, p.State))
+	}
+	return "还有 PR 没合并：" + strings.Join(parts, "、")
 }
 
 // sortedKeys is the keys of a set, sorted.
