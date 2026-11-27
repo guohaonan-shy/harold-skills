@@ -56,9 +56,9 @@ test('the implementer does the same operation on the base branch and on its own 
   assert.match(dispatch, /起点 SHA、集成分支名、PR 的基准分支名/, 'implement hands the base branch to the executor');
 });
 
-test('night mode writes what it settles into the review loop file only, and a stop into a comment on the issue', () => {
+test('night mode notes what it settles in the review loop file and lists it in the report to the human, and writes a stop into a comment on the issue', () => {
   const night = read('skills', 'engineering', 'issue-session', 'references', 'night-mode.md');
-  assert.match(night, /按推荐定的，只记进 review loop 文件/);
+  assert.match(night, /按推荐定的，记进 review loop 文件的批示，也列进下一份交给人的汇报/);
   assert.match(night, /在 issue 上留一条评论（`dyna issues note`）/);
 });
 
@@ -74,7 +74,7 @@ test('home\'s fixed text writes a question as problem (with a view), options (co
   assert.ok(start >= 0, 'the question bullet is missing');
   const bullet = rules.slice(start, rules.indexOf('\n\n', start));
   const parts = bullet.split('\n').filter((l) => l.startsWith('  - '));
-  assert.equal(parts.length, 3, 'three parts: problem, options, recommendation');
+  assert.equal(parts.length, 4, 'four parts: problem, options, recommendation, and the sub-item for what was decided for the human');
   assert.match(parts[0], /^  - \*\*问题\*\*/);
   assert.match(parts[0], /视图/);
   assert.match(parts[0], /`idea-loop:evidence`/, 'which view to use is decided by evidence');
@@ -82,6 +82,7 @@ test('home\'s fixed text writes a question as problem (with a view), options (co
   assert.match(parts[1], /代价/);
   assert.match(parts[1], /能否撤回/);
   assert.match(parts[2], /^  - \*\*推荐\*\*/);
+  assert.match(parts[3], /^  - \*\*替我定掉、交给我的\*\*/);
   assert.match(bullet, /实现卡住停下的/);
   assert.match(bullet, /review 里要我决定的/);
 });

@@ -31,12 +31,13 @@ test('issue-session points at the night-mode reference in one line', () => {
   assert.match(lines[0], /夜间模式/, 'the line names the trigger the dispatcher writes into the task');
 });
 
-test('the reference says: never stop to ask, settle by the recommendation, record it in the review loop file only', () => {
+test('the reference says: never stop to ask, settle by the recommendation, note it in the review loop file and list it in the report to the human', () => {
   assert.match(reference, /不停下问人/);
   assert.match(reference, /按推荐定/);
-  assert.match(reference, /按推荐定的，只记进 review loop 文件/);
+  assert.match(reference, /按推荐定的，记进 review loop 文件的批示，也列进下一份交给人的汇报/);
   assert.doesNotMatch(reference, /dyna pr body/, 'the PR description is not written to at night');
   assert.match(reference, /选了什么、为什么、另一种是什么/);
+  assert.doesNotMatch(reference, /只记进 review loop 文件/);
   assert.match(reference, /「停下问我」/);
   assert.match(reference, /「只由我做」/);
 });

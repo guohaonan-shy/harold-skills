@@ -64,7 +64,7 @@ dyna agent codex run --model gpt-5.6-sol --effort high --prompt-file <工作目�
 照 [review-report.md](review-report.md) 写（来自 review），存成 `.tmp/pr-review/<PR 号>/round-<N>/report.md`：
 
 - 第一行是 review loop 的条目标记 `<!-- idea-loop-entry {"kind":"review","round":<N>} -->`。
-- 「已按规则处理」一节每条照规则的候选一行，行尾留 `〔链接〕` 占位（之后补成提交或 issue 链接）；列进这一节的不在下面重复。
+- 「已按规则处理」一节只放照规则的候选里属于四类的（分类和每条的写法照 home 固定文案「其余你自己定」「替我定掉、交给我的」），每条行尾留 `〔链接〕` 占位（之后补成提交或 issue 链接）；其余只关于代码怎么写的，一行一条记进「只关于代码怎么写的」一节，不进会话。列进这两节的不在下面重复。
 - **图写本地路径**，相对 review loop 文件所在的 `.tmp/review-loop/`，即 `../pr-review/<PR 号>/evidence/r<N>-….png`。不上传。
 - 写完自己读一遍折叠区以外的部分：有没有反引号、路径、提交号、章节编号。
 
