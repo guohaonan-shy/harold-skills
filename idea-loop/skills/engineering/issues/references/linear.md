@@ -18,8 +18,8 @@
 
 ## 谁翻状态
 
-- **in-progress、in-review、done 由 GitHub 集成按 PR 推**：PR 一开到 in-progress，转 ready 到 in-review，全部 PR 合并到 done。会话不手翻 in-review、done；in-progress 只在认领时先翻一次（集成要等 PR 才推）。
-- 其余（backlog、triage、todo、canceled）会话用 `save_issue` 翻。
+- **in-progress、in-review、done 由 GitHub 集成按 PR 推**：PR 一开到 in-progress，转 ready 到 in-review，全部 PR 合并到 done。会话不手翻 in-review、done（没有 PR 的证据关闭除外，见下一条）；in-progress 只在认领时先翻一次（集成要等 PR 才推）。
+- 其余（backlog、triage、todo、canceled）会话用 `save_issue` 翻。没有 PR、凭证据关的 done 也由会话用 `save_issue` 翻（集成只按 PR 推，没有 PR 推不了）。
 - **翻之前先核前提**：`dyna issues check <docs> <要翻成的状态> <号> --from=<现在的状态>`。Linear 项目上 `check` 不读 issue 状态，现在的状态由你用 `get_issue` 读出来，换算回七个状态名之一（对着状态表）传给 `--from`；它核 spec 有没有定完、PR 是不是全合并，不过就按它说的原因处理，不翻。没带 `--from` 它会拒绝。
 - `dyna issues show <docs> <号>` 照常给 spec、PR、分支；`state` 是 null。
 
@@ -33,7 +33,8 @@
 | 翻状态 | 先 `dyna issues check … --from=…`，再 `save_issue`（`id`: `<号>`、`state`: 目标状态的名字） |
 | 评论 | `save_comment`（`issueId`: `<号>`、`body`: 正文，不带开头） |
 | 先放着 | 先 `check --from=…`；`save_comment` 写停在哪、分支名；再 `save_issue` 翻 `state` 到 backlog 的名字 |
-| 取消（不做、验证为不存在） | 先 `check --from=…`；`save_comment` 写理由；再 `save_issue`（`id`、`state`: Canceled 的名字） |
+| 证据关闭（已被做掉、验证为不存在） | 先 `check … done <号> --from=… --comment=<证据>`（核对要带同一份证据，不带会因为没有评论拒绝）；`save_comment` 写同一份证据；再 `save_issue`（`id`、`state`: Done 的名字） |
+| 取消（不做） | 先 `check --from=…`；`save_comment` 写理由；再 `save_issue`（`id`、`state`: Canceled 的名字） |
 | 取消（重复） | 同上，但 `save_issue` 翻到 Duplicate 的名字（`ISSUE_TRACKER.md` canceled 那行的第二个名字；团队没有 Duplicate 就翻 Canceled），并带 `duplicateOf`: 原 issue 的号；评论写「跟 <原号> 重复」 |
 | 打类型 | `save_issue`（`id`、`addLabels`: [类型 label 名]）；单选组里已有别的类型的，同一次调用 `removeLabels` 去掉 |
 | 打模块 | `save_issue`（`id`、`addLabels`: [模块 label 名]，换模块时 `removeLabels` 去掉旧的）；`list_issue_labels`（`team`）看有哪些 |

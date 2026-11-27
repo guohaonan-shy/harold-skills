@@ -157,6 +157,44 @@ func TestDoneNeedsEveryPRMerged(t *testing.T) {
 	mustMatch(t, `没有 PR 挂在`, TransitionError("in-review", "done", Transition{PRs: []PR{{Repo: "o/r", Number: 2, State: "closed"}}}))
 }
 
+func TestDoneOnEvidenceNeedsACommentAndNoLivePR(t *testing.T) {
+	evidence := "生产库 30 天 6028 条问题卡，0 处"
+	// no comment: refused, and the reason points at the way out
+	for _, from := range []string{"backlog", "triage", "todo", "in-progress", "in-review"} {
+		mustMatch(t, "--comment.*证据", TransitionError(from, "done", Transition{}))
+		mustMatch(t, "--comment.*证据", TransitionError(from, "done", Transition{Comment: "  "}))
+	}
+	// a comment and no PR, or only PRs closed unmerged: any open state may flip to done
+	closedOnly := []PR{{Repo: "o/r", Number: 3, State: "closed"}}
+	for _, from := range []string{"backlog", "triage", "todo", "in-progress", "in-review"} {
+		for _, prs := range [][]PR{nil, closedOnly} {
+			if why := TransitionError(from, "done", Transition{PRs: prs, Comment: evidence}); why != "" {
+				t.Errorf("%s → done with %d PRs: %s", from, len(prs), why)
+			}
+		}
+	}
+	// a PR not merged yet is somebody working: refused with the comment too, and the PR is listed
+	for _, from := range []string{"backlog", "triage", "todo", "in-progress", "in-review"} {
+		mustMatch(t, `o/r#9（draft）`, TransitionError(from, "done", Transition{PRs: []PR{{Repo: "o/r", Number: 9, State: "draft"}}, Comment: evidence}))
+		mustMatch(t, `o/r#9（ready）.*o/r#3（draft）`, TransitionError(from, "done", Transition{PRs: []PR{{Repo: "o/r", Number: 9, State: "ready"}, {Repo: "o/r", Number: 3, State: "draft"}, {Repo: "o/r", Number: 4, State: "merged"}}, Comment: evidence}))
+	}
+	// the old path is unchanged: a merged PR takes in-review only, with or without a comment
+	merged := []PR{{Repo: "o/r", Number: 1, State: "merged"}}
+	for _, from := range []string{"backlog", "triage", "todo", "in-progress"} {
+		mustMatch(t, `不能翻成「done」`, TransitionError(from, "done", Transition{PRs: merged}))
+		mustMatch(t, `不能翻成「done」`, TransitionError(from, "done", Transition{PRs: merged, Comment: evidence}))
+	}
+	mustMatch(t, `能翻成：in-review / triage / backlog / canceled`, TransitionError("in-progress", "done", Transition{PRs: merged, Comment: evidence}))
+	if why := TransitionError("in-review", "done", Transition{PRs: merged}); why != "" {
+		t.Error(why)
+	}
+	// an issue whose sub-issues are still open stays refused, evidence or not
+	mustMatch(t, `2 个子 issue 开着`, TransitionError("triage", "done", Transition{Comment: evidence, OpenSubs: 2}))
+	// closed issues stay closed
+	mustMatch(t, `能翻成：无`, TransitionError("done", "canceled", Transition{Comment: evidence}))
+	mustMatch(t, `能翻成：无`, TransitionError("canceled", "done", Transition{Comment: evidence}))
+}
+
 func TestAProjectThatSkipsTriage(t *testing.T) {
 	mustMatch(t, `跳过 triage.*能翻成：todo / canceled`, TransitionError("backlog", "triage", Transition{SkipTriage: true}))
 	mustMatch(t, `能翻成：todo / canceled`, TransitionError("backlog", "in-review", Transition{SkipTriage: true}))

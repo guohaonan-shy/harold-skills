@@ -85,11 +85,12 @@ test('issue-session：碰 UI 的设计交接在参考里，triage 会话第 2 �
   for (const k of ['/idea-loop:uiux-imagine', '/idea-loop:uiux-refine', '前端交互', '只能人调']) assert.ok(ref.includes(k), `design-handoff.md 缺 ${k}`);
 });
 
-test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做掉的就 canceled 并删草稿；没有「验证为不存在」的落地 PR', () => {
+test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已被做掉或验证为不存在的就 done 带证据评论并删草稿；没有「验证为不存在」的落地 PR', () => {
   const md = readFileSync(join(root, 'skills/engineering/issue-session/references/draft-spec.md'), 'utf8');
   assert.match(md, /## 自己校验/);
   assert.match(md, /## 跟人定要 grill 的/);
-  assert.match(md, /issues set <docs> canceled <号> --comment=/);
+  assert.match(md, /issues set <docs> done <号> --comment=/);
+  assert.match(md, /人决定不做的才是 `set canceled`/, '人决定不做才走 canceled，已被做掉的不走');
   assert.match(md, /删掉这份 spec 的草稿/);
   assert.doesNotMatch(md, /gh pr create|gh pr merge/, '不存在的 issue 在分拣里就关了，不再有它的落地 PR');
 });
@@ -97,8 +98,10 @@ test('draft-spec：自己校验、跟人定要 grill 的、起草时发现已做
 test('issue-session：先放着 = set backlog 带评论，下一个会话读评论接上', () => {
   const md = skill('issue-session');
   assert.match(md, /## 先放着/);
-  assert.match(md, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>/);
-  assert.match(md, /读这条评论接上/);
+  assert.match(md, /references\/hold\.md/);
+  const hold = readFileSync(join(root, 'skills/engineering/issue-session/references/hold.md'), 'utf8');
+  assert.match(hold, /issues set <docs> backlog \$ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>/);
+  assert.match(hold, /读这条评论接上/);
 });
 
 test('issue-session：一个 issue 只改一个仓库，不在别的仓库开 worktree', () => {

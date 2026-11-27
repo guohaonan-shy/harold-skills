@@ -11,6 +11,7 @@
 
    | `route` | 执行 |
    |---|---|
+   | `done` | `dyna issues set <docs> done <号> --comment=<conclusion>` |
    | `canceled` | `dyna issues set <docs> canceled <号> --comment=<conclusion>` |
    | `triage` | `dyna issues set <docs> triage <号>` |
    | `todo` | `dyna issues set <docs> todo <号>` |
@@ -18,4 +19,4 @@
 
    `priority` 是 `P1` 或 `P2` 的，翻完再 `dyna issues priority <docs> <P1 或 P2> <号>`；`null` 就不打。项目跳过 triage（`ISSUE_TRACKER.md` 写了「triage：跳过」）时分拣员没有 `triage` 这一路，不会交回它。
 5. **失败不重试**：分拣员报错没交回、或 `dyna issues set` 被拒：这个号留在 backlog，原因记下，接着处理下一个；每周的 `issue-triage` 会把它捡起来。
-6. **收尾**：`dyna worktree remove <运行目录>/triage-worktree --force`。数一下三种翻法各几个，填进交回和研究日志的「分流」行；没翻成的号和原因另写进研究日志（超了字数先删它）。
+6. **收尾**：`dyna worktree remove <运行目录>/triage-worktree --force`。数一下各种翻法各几个，填进交回和研究日志的「分流」行；没翻成的号和原因另写进研究日志（超了字数先删它）。

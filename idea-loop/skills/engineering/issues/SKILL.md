@@ -36,13 +36,13 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | todo | 可以被调度派成会话 |
 | in-progress | 会话在做，spec 提交后开 draft PR |
 | in-review | PR 转 ready，等人看 |
-| done | PR 合并 |
-| canceled | 不做；验证为不存在；重复 |
+| done | PR 合并；已被做掉、验证为不存在（带证据评论） |
+| canceled | 不做；重复 |
 
 | 从 | 到 | 谁、什么时候 |
 |---|---|---|
 | （新开） | backlog | agent 或人开的；没有 `status:*` 的开着的 GitHub issue 也算 |
-| backlog | triage / todo / canceled | `idea-loop:issue-triage` 按子代理建议直接翻；不要人评估的直接 todo |
+| backlog | triage / todo / done / canceled | `idea-loop:issue-triage` 按子代理建议直接翻；不要人评估的直接 todo |
 | triage | todo | 人评估完：spec 里没有「需要 grill」「待定」，碰 UI 的设计已冻结 |
 | todo | in-progress | 调度派出的会话认领；spec 提交后开 draft PR |
 | in-progress | in-review | PR 转 ready，第一轮 Review 汇报交给人 |
@@ -52,12 +52,13 @@ issue 是一件事的唯一记录：它走到哪，只看它的状态。spec 是
 | in-review | triage | 父 issue 的 PR 合并了、还有 spec 没覆盖的子 issue 开着：评论关了哪些、剩哪些，接着评估剩下的 |
 | 开着的子 issue（backlog 除外） | done | 父 issue 的 PR 写了它的 `Refs`，PR 合并 |
 | 任意开着的 | backlog | 人说先放着（见「先放着」） |
-| 任意开着的 | canceled | 人决定不做；验证为不存在 |
+| 任意开着的 | done | 查出已被做掉或验证为不存在，带证据评论，没有活着的 PR |
+| 任意开着的 | canceled | 人决定不做 |
 
 - 项目没开 triage 的（`ISSUE_TRACKER.md` 的状态表写了「triage：跳过」），不翻 triage：backlog 直接翻 todo，grill 与设计在 todo 会话里做。
-- 前提由 `dyna issues set` 核：triage → todo，spec 不能还有「> 需要 grill」或「### 待定」，碰 UI 的要有冻结摘要（没装设计插件时带 `--skip-design`，并在汇报里写明跳过了设计）；→ done，挂着的 PR 合并。
+- 前提由 `dyna issues set` 核：triage → todo，spec 不能还有「> 需要 grill」或「### 待定」，碰 UI 的要有冻结摘要（没装设计插件时带 `--skip-design`，并在汇报里写明跳过了设计）；→ done，挂着的 PR 合并，或没有活着的 PR 且带非空 `--comment`（证据关闭，评论写出处和核对的提交）。
 - done、canceled 之后不再翻；重开是人的事。
-- Linear 上 in-progress、in-review、done 由集成按 PR 推，agent 不手翻，其余照这张表。
+- Linear 上 in-progress、in-review、done 由集成按 PR 推，agent 不手翻（凭证据关的 done 除外，见 linear 参考「谁翻状态」），其余照这张表。
 
 ## 正文
 

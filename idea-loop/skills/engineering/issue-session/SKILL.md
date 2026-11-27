@@ -35,7 +35,7 @@ argument-hint: "<issue 号>"
 
 ## triage 会话
 
-1. **起草**：输入是第 2 步读到的 issue 全文和分拣贴的证据评论。用 Skill 工具调 `idea-loop:to-spec` 起草，再照 [references/draft-spec.md](references/draft-spec.md) 自校验、在这里跟人 grill、把 spec 提交到 home。起草时发现已被做掉的、人决定不做的，去「收尾」；人说先放着，去「先放着」。
+1. **起草**：输入是第 2 步读到的 issue 全文和分拣贴的证据评论。用 Skill 工具调 `idea-loop:to-spec` 起草，再照 [references/draft-spec.md](references/draft-spec.md) 自校验、在这里跟人 grill、把 spec 提交到 home。起草时发现已被做掉或验证为不存在、证据齐的：`set done`（GitHub 上是 Closed as completed）贴证据评论并告诉人；拿不准证据够不够，停下问。人决定不做的才 `set canceled`（Not planned）；关了去「收尾」，先放着去「先放着」。
 2. **设计**：不碰 UI 的 spec 跳过。碰 UI 的照 [references/design-handoff.md](references/design-handoff.md) 带人过设计，停下等人；冻结结果提交到 home 之后，往下。
 3. **交给调度**：`dyna issues set <docs> todo $ARGUMENTS --comment=<spec 已提交到 home <提交号>>`，去「收尾」。`set todo` 被拒时，照它说的还差什么回去补。
 
@@ -53,7 +53,7 @@ home 里已有 spec 就读它；没有就用 Skill 工具调 `idea-loop:to-spec`
 
 ## 先放着
 
-人说先放着（任何一步）：已写的知识库改动提交到 home；已有分支且有未推送的代码提交，用 `dyna git push` 推上去；`dyna issues set <docs> backlog $ARGUMENTS --comment=<停在哪个阶段、有分支就写分支名>`，去「收尾」。下一个会话读这条评论接上。
+人说先放着：照 [references/hold.md](references/hold.md) 做，去「收尾」。
 
 ## 收尾
 

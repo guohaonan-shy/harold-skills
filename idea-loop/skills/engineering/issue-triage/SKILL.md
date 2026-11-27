@@ -23,17 +23,18 @@ backlog 里的 issue 没人验证过。你把它们交给 `idea-loop:issue-triag
 1. **备环境**：把 origin 取到最新，`dyna worktree add triage-<批次或 P0 的号> --detach --base <主分支>` 切一个游离在最新主分支上的 worktree，给子代理查代码、复现用（它打印路径）；中间物放它的 `.tmp/triage/<号>/`。
 2. **取一批**：`dyna issues backlog <docs> 15`。`全部`：不带上限列出全部，每批取还没处理过的最早 15 个。
 3. **派子代理**：每个 issue 起一个 `idea-loop:issue-triager`，给 issue 号、项目目录的绝对路径（`<docs>` 就在它下面）和上面 worktree 的绝对路径；**同时最多 5 个**，一个交回再补下一个。它们各自在 issue 上贴证据评论，交回一行 JSON（号、结论、评论链接、建议去向、建议优先级）。
-4. **照建议执行**：每个 issue 按子代理交回的建议去向翻。建议去向有四种：
+4. **照建议执行**：每个 issue 按子代理交回的建议去向翻。建议去向有五种：
 
    | 建议 | 执行 |
    |---|---|
    | todo + P1 或 P2 | `dyna issues set <docs> todo <号>`，`dyna issues priority <docs> <P1 或 P2> <号>` |
    | triage + P1 或 P2 | `dyna issues set <docs> triage <号>`，`dyna issues priority <docs> <P1 或 P2> <号>`；白天的调度会直接给它开 triage 会话 |
+   | done | `dyna issues set <docs> done <号> --comment=<理由>` |
    | canceled | `dyna issues set <docs> canceled <号> --comment=<理由>` |
    | 留在 backlog | 什么都不做 |
 
    项目跳过 triage 的（`ISSUE_TRACKER.md` 写了「triage：跳过」），没有 triage 这一行。
-   - **不替人拒需求**：canceled 只来自重复、命中「不做」清单、已实现、复现不出四种；子代理建议 canceled 而理由不在这四种里的，改翻 triage。拿不准值不值得做的翻 triage，不 canceled，交给人评估。
+   - **不替人拒需求**：canceled 只来自重复、命中「不做」清单、复现不出三种；子代理建议 canceled 而理由不在这三种里的，改翻 triage。拿不准值不值得做的翻 triage，不 canceled，交给人评估。
    - **疑似 P0**：结论里标了「疑似 P0」的，照建议去向翻，优先级写 P1；P0 由人改。
 5. **推送**：只在两种情况，用『推送』能力点名这几个号：有留在 backlog 的 issue（子代理评论里写了「还要你补」），或有疑似 P0。都没有，不推送。
 6. **收尾**：`dyna worktree remove <路径>` 删掉第 1 步的 worktree。`全部` 还有没处理的，回第 2 步，一批接一批跑完。

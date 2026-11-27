@@ -3,7 +3,7 @@
  *
  * Spec dreaming-triage-autonomous, ticket 03. Before: issue-triage laid the results out as one table, pushed
  * 「N 个 issue 等你批」 and stopped until the human approved row by row; a rejected request was written into the
- * `out-of-scope` list from that step. What stays: no step waits for approval, canceled has four sources and an
+ * `out-of-scope` list from that step. What stays: no step waits for approval, canceled has three sources and an
  * unsure request goes to triage, a push happens in two cases only (an issue left in backlog asking for more, a
  * suspected P0), `全部` runs batch after batch, and the `out-of-scope` record is written where the human
  * decides not to do it (issue-session's draft-spec), with only a pointer left in issue-triage.
@@ -30,16 +30,18 @@ test('issue-triage waits for no one: no table, no approval step', () => {
   }
 });
 
-test('issue-triage says how each of the four routes is carried out', () => {
+test('issue-triage says how each of the five routes is carried out', () => {
+  assert.match(triage, /建议去向有五种/);
   assert.match(triage, /issues set <docs> todo <号>/);
   assert.match(triage, /issues set <docs> triage <号>/);
   assert.match(triage, /issues priority <docs> <P1 或 P2> <号>/);
+  assert.match(triage, /issues set <docs> done <号> --comment=<理由>/);
   assert.match(triage, /issues set <docs> canceled <号> --comment=<理由>/);
   assert.match(triage, /留在 backlog[^\n]*什么都不做/);
 });
 
 test('issue-triage does not reject requests for the human: unsure goes to triage', () => {
-  assert.match(triage, /重复[\s\S]{0,40}不做[\s\S]{0,40}已实现[\s\S]{0,40}复现不出/);
+  assert.match(triage, /重复[\s\S]{0,40}不做[\s\S]{0,40}复现不出三种/);
   assert.match(triage, /拿不准值不值得做的翻 triage，不 canceled/);
 });
 
@@ -67,8 +69,8 @@ test('the out-of-scope record is written in draft-spec where the human decides n
 });
 
 test('issues and setup no longer say the human decides after triage', () => {
-  const row = issues.split('\n').find((l) => /^\|\s*backlog\s*\|\s*triage \/ todo \/ canceled/.test(l));
-  assert.ok(row, 'issues has no backlog → triage / todo / canceled row');
+  const row = issues.split('\n').find((l) => /^\|\s*backlog\s*\|\s*triage \/ todo \/ done \/ canceled/.test(l));
+  assert.ok(row, 'issues has no backlog → triage / todo / done / canceled row');
   assert.ok(!/分拣后人定/.test(row), 'the row still says the human decides after triage');
   assert.ok(!/等人批/.test(setup), 'setup 每周分拣 still says the table waits for the human');
   assert.ok(!/逐行批|批完一张/.test(weeklyTriage), 'weekly-triage.md still tells the human to approve row by row');
