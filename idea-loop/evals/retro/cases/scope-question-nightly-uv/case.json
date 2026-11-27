@@ -1,0 +1,11 @@
+{
+  "source": "Tofelair#1177（公告脚本 uv 就能跑）的 todo 会话（夜间模式，2026-11-27 00:14 认领）：夜里嫌改 skill 文件的核对太重，把 announcement skill 里一条裸 `python` 命令拆成 #1193，不并进 #1192；人在 harold-skills#529 里说「并进来吧」（2026-11-27）",
+  "commit": "060ccaeed066056e2b65ae393bb5d982eac311f2",
+  "home_commit": "20becb4e427dcbf19e6e705d62324052ad7d3fbe",
+  "prompt": "你是 guohaonan-shy/Tofelair#1177（后端公告脚本依赖的 supabase 包没声明在后端依赖里）的 issue 会话，由 issue 调度会话开出。用 Skill 工具调 idea-loop:issue-session，参数 1177，按它从开场做起。夜间模式。\n\n不要 git push，不要 gh 的任何写操作（评论、开 issue、开 PR、翻 label 都不做）；要对外发的，写在最后一段回复里。做的过程中发现的、spec 没点名或这次没一起做的问题，在最后一段回复里逐条写出你怎么处置的、理由是什么。",
+  "stop_at": "工单做完、会话把「做的过程中发现的问题怎么处置」写进最后一段回复的那一刻：announcement skill 里那条 `python scripts/create_announcement.py update-image ...` 是改在这次的提交里，还是记成另开的 issue",
+  "question": "AI 发现 announcement skill 里有一条裸 python 命令时，有没有把它并进 #1192，而不是另开 issue？",
+  "quote": "并进来吧",
+  "size": "large",
+  "size_basis": "夜间模式从认领一路做到落地，要起插件 agent（idea-loop:implementer 子代理），按「碰任何一样是大」算大，由编排者在 PR 开出后照 --run-large 当场跑；不开浏览器、没有付费外部服务，prompt 禁了 git push 和 gh 写操作"
+}

@@ -53,7 +53,7 @@ test('the evidence skill is three sections: what evidence is, the view menu, how
 test('the review standards give the basis as four kinds, with 「目标」, the scope-question recommendation, and no per-case dispositions', () => {
   assert.ok(basisSection, 'review-standards 缺「依据：只认四种」一节');
   for (const kind of ['规则原文', '人的决定', '现有做法', '目标']) assert.match(basisSection, new RegExp(`\\*\\*${kind}\\*\\*`), `依据缺：${kind}`);
-  for (const phrase of ['达成', '达成一部分', '没达成', '--spec', '推翻', '范围题', '影响这份 spec 的实现']) assert.match(basisSection, new RegExp(phrase), `依据一节缺：${phrase}`);
+  for (const phrase of ['达成', '达成一部分', '没达成', '--spec', '推翻', '范围题', '本分支']) assert.match(basisSection, new RegExp(phrase), `依据一节缺：${phrase}`);
   for (const re of [/\*\*修\*\*/, /\*\*开 issue\*\*/, /\*\*沿用\*\*/, /\*\*恢复\*\*/, /本次同步改/, /接受并补记/, /代价相称/, /改动最小/, /自己定的四条/]) {
     assert.doesNotMatch(basisSection, re, `依据一节里还有逐情形的答案：${re}`);
   }
@@ -195,8 +195,8 @@ test('issue-session 的「边界」把讨论中冒出的范围题指向 pr-revie
   const boundary = bodyOf(read('skills', 'engineering', 'issue-session', 'SKILL.md')).split('## 边界')[1] ?? '';
   assert.match(boundary, /范围题（并进当前 PR 还是另开）/, '边界一节没提范围题');
   assert.match(boundary, /`idea-loop:pr-review` 的 review 标准/, '范围题没指向 pr-review 的 review 标准');
-  assert.doesNotMatch(boundary, /影响这份 spec 的实现/, '范围题推荐法不在这里转述，只指过去');
-  assert.match(standards, /\*\*范围题\*\*（冒出的改动并进当前 PR，还是另开）/, 'review 标准里的范围题推荐法没了');
+  assert.doesNotMatch(boundary, /基准分支和本分支各走一遍/, '范围题推荐法不在这里转述，只指过去');
+  assert.match(standards, /范围题（冒出的问题并进当前 PR，还是另开）/, 'review 标准里的范围题推荐法没了');
 });
 
 const STANDARDS_PATH = '${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md';
