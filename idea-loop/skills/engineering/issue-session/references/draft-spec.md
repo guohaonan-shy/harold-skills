@@ -38,6 +38,7 @@ issue 带 `type:seo/*`、spec 没有「前端交互」小节的：不推送、�
 
 - 「待定」：逐条照推荐改写成决定，依据写「AI 照推荐定：<推荐的理由>」，删掉「待定」两个字；牵出的 User Stories 和测试决策一起改。
 - 「需要 grill」：照 spec 已有的结论和 `SEO.md`「内容原则」自己答完，删掉这一行。
+- 交 spec 的那段话（`idea-loop:to-spec` 第 5 步）里，这里替人定掉的每一条照 home 固定文案「替我定掉、交给我的」写成一道过去时的题；spec 里依据的写法不变。
 
 有「前端交互」小节的（要 UI 设计）不走这条：todo 会话照「起草中冒出了要人定的」那句 `dyna issues set <docs> triage <号> --comment=<要人定什么、spec 在 home 的提交号>` 翻回 triage，triage 会话照下面的流程跟人定。
 

@@ -1,0 +1,10 @@
+{
+  "source": "guohaonan-shy/Tofelair PR #1194（每个 worktree 的后端 API 测试用自己的一份测试数据，2026-11-27 合并）合并时贴的 review loop 归档评论里「来自实现 · 第 1 次」那一份；Tofelair#546 的 retro（2026-11-27）；harold-skills#531",
+  "commit": "84e6fd136f23e785878c22a1633e6b9c8e02558d",
+  "prompt": "/idea-loop:implement 我是 guohaonan-shy/Tofelair 的 PR #1194（每个 worktree 的后端 API 测试用自己的一份测试数据）的实现编排者。集成分支上唯一的工单 01 已经落地（提交 84e6fd136），分支已推送；pending 是空的，没有人验素材，没有大用例待跑。现在到「没活了就停下」的第 2 步：写这次停下的 Review 汇报（来自实现 · 第 1 次）。下面的事实都核对过，不用重查。\n\nhandled 账本里有 5 条（工单号 + 做了什么 + 依据）：\n\n1. 01 · 测试账号的 id 对齐 AI 任务分组：账号 id 用 UUIDv5 生成，若落进的 AI 任务分组和规范账号不同就换一个，直到每个 AI 任务同组。依据：本次修的存量，不这样做约两成的标记会落进没录过响应的候选分组，全量里 38 个失败；工单只写了「如 UUIDv5」。\n2. 01 · 练习的 slug 也带标记：slug 由标题在数据库里派生，标题不带标记（要进模型请求），两个 worktree 的同名练习第二个会拿到 `-2` 的 slug，练习记录那组并发就是这样失败的。依据：本次修的存量，它就是问题陈述里的一种失败。\n3. 01 · 测试用的数据库引擎关掉批量插入返回匹配、直接调 app 函数的测试和两处裸 `AsyncClient` 改走带互换的客户端：不然互换发生在语句发出前，多行插入对不上返回的主键，或发出去的是规范 id。依据：本次修的存量，不改这些测试在新运行层下就红。\n4. 01 · 重录后两份 `cases.json` 有字段顺序 diff：`get_practices_by_practice_id`、`get_practices_by_slug` 两份在 main 上同样重录就有约 308 行 diff（只是 `slug` 的位置），本次改动没有增减。已开 issue #1195。依据：不影响本次改动的存量。\n5. 01 · 其余已知限制，只记不开 issue：两个 worktree 同时跑到「表级锁」的并发用例时对方多等约 1 秒（只慢不失败）；旧代码的 worktree 仍会把带标记的题按 `practice_APITEST%` 一起删，合并后其他 worktree 拉到新代码才完全隔离；每个跑过 API 测试的 worktree 在本地库留两个测试用户（spec 已写明）。依据：spec「Out of scope」和「实现决策」的「残留」。\n\n其他事实：改前 578、改后 610 个后端测试全过，其中 32 个是新加的单元测试，`cases.json` 无 diff；机械检查 ruff、lint-imports 全绿。这次只改后端 API 测试的运行层和 `AGENTS.md` 的一句约定，没有后端业务代码、没有迁移，撤销合并即可。home 里的 `REVIEW.md` 把「同一时间只跑一个 pytest 进程」改成「同一个 worktree 里同一时间只跑一个」（home 提交 4c77986）。\n\n不要真的往外发东西：不要执行 gh 的写操作、git push，不要起 Agent；要跑的命令把它原样写在最后一段回复里，当作已经完成。汇报写进工作区的 .tmp/report.md，最后一段回复里贴这份汇报的全文，并写明有没有在等我、等我什么。",
+  "stop_at": "汇报写完、交给人的那一刻：.tmp/report.md 的内容，和最后一段回复里贴出的全文",
+  "question": "写到重录 diff 那一条时，有没有同时写出当时的问题（哪个字段、怎么变了）、至少两个选项、选了哪个和理由？",
+  "quote": "当时决策的问题是什么？你在哪些选项中选择了当前的选项，原因是什么？我觉的这个是核心",
+  "size": "small",
+  "size_basis": "只驱动 implement 一个 skill 写汇报，输入（handled 的 5 条及事实）由 prompt 给出，不起插件 agent、不开浏览器；prompt 禁了 gh 写操作、git push 和 Agent，没有付费外部服务"
+}
