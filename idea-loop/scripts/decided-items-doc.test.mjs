@@ -85,7 +85,8 @@ test('review-report: the 已按规则处理 row, template and bullet follow the 
   assert.ok(item, '要点里没有「已按规则处理」一条');
   assert.match(item, /「其余你自己定」/);
   assert.match(item, /「替我定掉、交给我的」/);
-  assert.match(item, /改了范围/);
+  assert.doesNotMatch(item, /改了范围|改了用户看得到的行为/, '四类只在 home 固定文案里写一处，这里只留指针');
+  assert.doesNotMatch(row, /改了范围|改了用户看得到的行为/, '表里也只留指针');
   assert.doesNotMatch(item, /每条一句/);
   const rest = report.split('\n').find((l) => l.startsWith('- **只关于代码怎么写的**'));
   assert.ok(rest, '要点里没有「只关于代码怎么写的」一条');
