@@ -112,22 +112,24 @@ test('foreignReferenceReads: a path into another skill\'s references', () => {
 
 /**
  * The one sanctioned foreign read (writing-for-agents SKILL-MECHANICS.md「引用另一个 skill」): the review
- * standards of `pr-review`, read by `issue-session` and `pr` by full path, because calling `pr-review`
- * starts a whole review round. Anything else of `pr-review`'s references stays a violation.
+ * standards of `pr-review`, read by `issue-session`, `pr` and `implement` (its「停，还是延后」, for the executor)
+ * by full path, because calling `pr-review` starts a whole review round. Anything else of `pr-review`'s references stays a violation.
  */
 const SANCTIONED = {
   'issue-session': ['skills/engineering/pr-review/references/review-standards.md'],
   pr: ['skills/engineering/pr-review/references/review-standards.md'],
+  implement: ['skills/engineering/pr-review/references/review-standards.md'],
 };
 export function withoutSanctioned(text, ownSlug) {
   return (SANCTIONED[ownSlug] ?? []).reduce((t, path) => t.split(path).join(''), text);
 }
 
-test('withoutSanctioned: only the review standards, only for issue-session and pr', () => {
+test('withoutSanctioned: only the review standards, only for issue-session, pr and implement', () => {
   const text = '读 ${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/review-standards.md。';
   assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'issue-session'), 'issue-session'), []);
   assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'pr'), 'pr'), []);
-  assert.equal(foreignReferenceReads(withoutSanctioned(text, 'implement'), 'implement').length, 1);
+  assert.deepEqual(foreignReferenceReads(withoutSanctioned(text, 'implement'), 'implement'), []);
+  assert.equal(foreignReferenceReads(withoutSanctioned(text, 'to-spec'), 'to-spec').length, 1);
   const other = '${CLAUDE_PLUGIN_ROOT}/skills/engineering/pr-review/references/run-a-round.md';
   assert.equal(foreignReferenceReads(withoutSanctioned(other, 'pr'), 'pr').length, 1);
 });

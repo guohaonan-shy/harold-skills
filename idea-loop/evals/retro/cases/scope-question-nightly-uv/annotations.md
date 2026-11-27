@@ -1,0 +1,29 @@
+# scope-question-nightly-uv
+
+> 判定会话的判定你不同意时，在下面记一行推翻，再跑 `retro-replay.mjs --settle scope-question-nightly-uv --run <那次的 run dir>`（跨仓库：`--repo` 指 Tofelair 的 clone，`--home-repo` 指 home 仓库）。
+> 这里不打分；只记「这一次哪一边的答案判错了、为什么」。样本本身有想改的地方（换了现场、改了题、改了 prompt），记在「样本改动」。
+
+**当时的原话**：「并进来吧」（人在 Tofelair#1177 的 retro 里说，2026-11-27）
+
+**是/否题**：AI 发现 announcement skill 里有一条裸 python 命令时，有没有把它并进 #1192，而不是另开 issue？
+
+## 材料怎么拼的
+
+- **提交**：Tofelair `060ccaeed`，「chore: 开工 #1177」，#1177 的 todo 会话认领时的空提交（2026-11-27 00:14）。`--repo` 指 Tofelair 的 clone。
+- **home_commit**：home 仓库的 `20becb4`（「docs(spec): 起草 announce-script-supabase-dep」，00:13）。spec 在 home 里，不在代码仓库的提交里；这一提交是会话认领那一刻能读到的状态：spec 把 announcement skill 第 227 行的裸 `python` 命令和脚本说明里的示例，都写在「方案」里。真实的会话 1 分钟后（00:15，home 的 `b758052`）把 skill 那一处拆成了 #1193，理由是改 skill 文件要走的核对比较重；用例要看的就是这一步现在会不会并进来。回放时 `--home-repo` 指 home 仓库。
+- **prompt**：第一句是 issue 调度会话派 todo 会话的那句话（模板在 `idea-loop:issue-dispatch` 的 `references/start-dispatch.md`：仓库名、号、标题、「夜间模式。」），标题取 issue 上的原标题。第二段是回放必须加的：不往外发东西（git push、gh 写操作），以及让会话把「过程中发现的问题怎么处置」写进最后一段回复，评委才看得到它的处置。真实会话没有这一段。
+- **改前预计答「否」**：改前 review 标准的范围题只说「影响这份 spec 的实现，或者上线后会有影响，推荐并进」，没写怎么判影响；真实会话里夜里的 AI 拿「改 skill 文件的核对重」当理由拆出去。改后这句换成「各走一遍：本分支才撞上的、挡住 spec 目标的并进；另一边流程更重不是另开的理由」。
+- **缺的**：真实会话里 AI 是怎么「发现」这一处的取不到（spec 起草时已经把它写进问题陈述 2），所以用例要看的是「已经摆在 spec 里的这一处，夜里会不会因为流程重而拆出去」。
+
+## 样本改动
+
+（暂无）
+
+## 标注
+
+<!-- 推翻一次判定，一行一边，照这个形状：
+- 推翻 <run-id> 改前=是 ｜ 理由
+- 推翻 <run-id> 改后=否 ｜ 理由
+run-id 是 runner 打印的 run dir 的最后一段（形如 20261022T101500）。
+也可以记你对这次产出的看法：好在哪、差在哪，写在这一行下面。 -->
+- 2026-11-27 用例建好，还没回放：大用例（夜间模式会起 implementer），由编排者在 PR 开出来之后照 `--run-large` 跑，跑完把改前、改后的结果记在这里。
