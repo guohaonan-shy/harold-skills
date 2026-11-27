@@ -33,7 +33,7 @@
 | 翻状态 | 先 `dyna issues check … --from=…`，再 `save_issue`（`id`: `<号>`、`state`: 目标状态的名字） |
 | 评论 | `save_comment`（`issueId`: `<号>`、`body`: 正文，不带开头） |
 | 先放着 | 先 `check --from=…`；`save_comment` 写停在哪、分支名；再 `save_issue` 翻 `state` 到 backlog 的名字 |
-| 证据关闭（已被做掉、验证为不存在） | 先 `check --from=…`；`save_comment` 写证据；再 `save_issue`（`id`、`state`: Done 的名字） |
+| 证据关闭（已被做掉、验证为不存在） | 先 `check … done <号> --from=… --comment=<证据>`（核对要带同一份证据，不带会因为没有评论拒绝）；`save_comment` 写同一份证据；再 `save_issue`（`id`、`state`: Done 的名字） |
 | 取消（不做） | 先 `check --from=…`；`save_comment` 写理由；再 `save_issue`（`id`、`state`: Canceled 的名字） |
 | 取消（重复） | 同上，但 `save_issue` 翻到 Duplicate 的名字（`ISSUE_TRACKER.md` canceled 那行的第二个名字；团队没有 Duplicate 就翻 Canceled），并带 `duplicateOf`: 原 issue 的号；评论写「跟 <原号> 重复」 |
 | 打类型 | `save_issue`（`id`、`addLabels`: [类型 label 名]）；单选组里已有别的类型的，同一次调用 `removeLabels` 去掉 |
